@@ -381,8 +381,6 @@ mp_create(const char *name, int flags, const char *type)
   mp->mp_prop_avdiff      = prop_create(mp->mp_prop_root, "avdiff");
   mp->mp_prop_avdiff_error= prop_create(mp->mp_prop_root, "avdiffError");
 
-  mp->mp_prop_audio_channels_root = prop_create(mp->mp_prop_audio, "channels");
-
   mp->mp_prop_canSkipBackward = 
     prop_create(mp->mp_prop_root, "canSkipBackward");
 
@@ -406,6 +404,8 @@ mp_create(const char *name, int flags, const char *type)
 
   prop_set_int(prop_create(mp->mp_prop_root, "canStop"), 1);
 
+  mp->mp_prop_ctrl = prop_create(mp->mp_prop_root, "ctrl");
+
   mp->mp_prop_model = prop_create(mp->mp_prop_root, "model");
 
   mp->mp_sub_currenttime = 
@@ -426,6 +426,49 @@ mp_create(const char *name, int flags, const char *type)
   //--------------------------------------------------
   // Settings
 
+
+
+  if(media_pipe_init_extra != NULL)
+    media_pipe_init_extra(mp);
+
+  return mp;
+}
+
+
+
+
+
+/**
+ *
+ */
+static void
+mp_settings_clear(media_pipe_t *mp)
+{
+  setting_destroyp(&mp->mp_setting_av_delta);
+  setting_destroyp(&mp->mp_setting_sv_delta);
+  setting_destroyp(&mp->mp_setting_sub_scale);
+  setting_destroyp(&mp->mp_setting_sub_displace_x);
+  setting_destroyp(&mp->mp_setting_sub_displace_y);
+  setting_destroyp(&mp->mp_setting_sub_on_video);
+  setting_destroyp(&mp->mp_setting_vzoom);
+  setting_destroyp(&mp->mp_setting_hstretch);
+  setting_destroyp(&mp->mp_setting_fstretch);
+  kvstore_deferred_flush();
+}
+
+
+/**
+ *
+ */
+static void
+mp_settings_init(media_pipe_t *mp, const char *url)
+{
+  prop_t *c = mp->mp_prop_ctrl;
+
+  TRACE(TRACE_DEBUG, "media", "Settings initialized for URL %s", url);
+
+  mp_settings_clear(mp);
+
   mp->mp_setting_vzoom =
     setting_create(SETTING_INT, mp->mp_setting_video_root,
                    SETTINGS_INITIAL_UPDATE,
@@ -434,6 +477,8 @@ mp_create(const char *name, int flags, const char *type)
                    SETTING_UNIT_CSTR("%"),
                    SETTING_VALUE(video_settings.vzoom),
                    SETTING_COURIER(mp->mp_pc),
+                   SETTING_WRITE_PROP(prop_create(c, "vzoom")),
+                   SETTING_KVSTORE(url, "vzoom"),
                    NULL);
 
   mp->mp_setting_hstretch =
@@ -442,6 +487,8 @@ mp_create(const char *name, int flags, const char *type)
                    SETTING_COURIER(mp->mp_pc),
                    SETTING_TITLE(_p("Stretch video to widescreen")),
                    SETTING_VALUE(video_settings.stretch_horizontal),
+                   SETTING_WRITE_PROP(prop_create(c, "hstretch")),
+                   SETTING_KVSTORE(url, "hstretch"),
                    NULL);
 
   mp->mp_setting_fstretch =
@@ -450,6 +497,8 @@ mp_create(const char *name, int flags, const char *type)
                    SETTING_COURIER(mp->mp_pc),
                    SETTING_TITLE(_p("Stretch video to fullscreen")),
                    SETTING_VALUE(video_settings.stretch_fullscreen),
+                   SETTING_WRITE_PROP(prop_create(c, "fstretch")),
+                   SETTING_KVSTORE(url, "fstretch"),
                    NULL);
 
   mp->mp_setting_av_delta =
@@ -461,6 +510,7 @@ mp_create(const char *name, int flags, const char *type)
                    SETTING_STEP(50),
                    SETTING_UNIT_CSTR("ms"),
                    SETTING_CALLBACK(update_av_delta, mp),
+                   SETTING_KVSTORE(url, "avdelta"),
                    NULL);
 
   mp->mp_setting_sv_delta =
@@ -472,6 +522,7 @@ mp_create(const char *name, int flags, const char *type)
                    SETTING_STEP(500),
                    SETTING_UNIT_CSTR("ms"),
                    SETTING_CALLBACK(update_sv_delta, mp),
+                   SETTING_KVSTORE(url, "svdelta"),
                    NULL);
 
   mp->mp_setting_sub_scale =
@@ -483,6 +534,8 @@ mp_create(const char *name, int flags, const char *type)
                    SETTING_STEP(5),
                    SETTING_UNIT_CSTR("%"),
                    SETTING_VALUE(subtitle_settings.scaling),
+                   SETTING_WRITE_PROP(prop_create(c, "subscale")),
+                   SETTING_KVSTORE(url, "subscale"),
                    NULL);
 
   mp->mp_setting_sub_on_video =
@@ -491,6 +544,8 @@ mp_create(const char *name, int flags, const char *type)
                    SETTING_COURIER(mp->mp_pc),
                    SETTING_TITLE(_p("Align subtitles on video frame")),
                    SETTING_VALUE(subtitle_settings.align_on_video),
+                   SETTING_WRITE_PROP(prop_create(c, "subalign")),
+                   SETTING_KVSTORE(url, "subalign"),
                    NULL);
 
   mp->mp_setting_sub_displace_y =
@@ -501,6 +556,8 @@ mp_create(const char *name, int flags, const char *type)
                    SETTING_STEP(5),
                    SETTING_UNIT_CSTR("px"),
                    SETTING_TITLE(_p("Subtitle vertical displacement")),
+                   SETTING_WRITE_PROP(prop_create(c, "subvdisplace")),
+                   SETTING_KVSTORE(url, "subvdisplace"),
                    NULL);
 
   mp->mp_setting_sub_displace_x =
@@ -511,9 +568,11 @@ mp_create(const char *name, int flags, const char *type)
                    SETTING_STEP(5),
                    SETTING_UNIT_CSTR("px"),
                    SETTING_TITLE(_p("Subtitle horizontal displacement")),
+                   SETTING_WRITE_PROP(prop_create(c, "subhdisplace")),
+                   SETTING_KVSTORE(url, "subhdisplace"),
                    NULL);
 
-  if(flags & MP_VIDEO && gconf.can_standby) {
+  if(mp->mp_flags & MP_VIDEO && gconf.can_standby) {
     mp->mp_setting_standby_after_eof =
       setting_create(SETTING_BOOL, mp->mp_setting_root,
                      SETTINGS_INITIAL_UPDATE,
@@ -522,12 +581,6 @@ mp_create(const char *name, int flags, const char *type)
                      SETTING_TITLE(_p("Go to standby after video ends")),
                      NULL);
   }
-
-
-  if(media_pipe_init_extra != NULL)
-    media_pipe_init_extra(mp);
-
-  return mp;
 }
 
 
@@ -596,15 +649,7 @@ mp_destroy(media_pipe_t *mp)
   if(media_pipe_fini_extra != NULL)
     media_pipe_fini_extra(mp);
 
-  setting_destroy(mp->mp_setting_av_delta);
-  setting_destroy(mp->mp_setting_sv_delta);
-  setting_destroy(mp->mp_setting_sub_scale);
-  setting_destroy(mp->mp_setting_sub_displace_x);
-  setting_destroy(mp->mp_setting_sub_displace_y);
-  setting_destroy(mp->mp_setting_sub_on_video);
-  setting_destroy(mp->mp_setting_vzoom);
-  setting_destroy(mp->mp_setting_hstretch);
-  setting_destroy(mp->mp_setting_fstretch);
+  mp_settings_clear(mp);
 
   if(mp->mp_setting_standby_after_eof)
     setting_destroy(mp->mp_setting_standby_after_eof);
@@ -1605,6 +1650,7 @@ void
 mp_set_url(media_pipe_t *mp, const char *url)
 {
   prop_set_string(mp->mp_prop_url, url);
+  mp_settings_init(mp, url);
 }
 
 

@@ -60,6 +60,8 @@ setting_t *settings_create_action(prop_t *parent, prop_t *title,
 
 void setting_destroy(setting_t *s);
 
+void setting_destroyp(setting_t **sp);
+
 void setting_detach(setting_t *s);
 
 void settings_init(void);
@@ -90,6 +92,8 @@ enum {
   SETTING_TAG_WRITE_INT,
   SETTING_TAG_ZERO_TEXT,
   SETTING_TAG_MUTEX,
+  SETTING_TAG_WRITE_PROP,
+  SETTING_TAG_KVSTORE,
 };
 
 #define SETTING_TITLE(a)                        SETTING_TAG_TITLE, a
@@ -110,6 +114,8 @@ enum {
 #define SETTING_WRITE_INT(a)                    SETTING_TAG_WRITE_INT, a
 #define SETTING_ZERO_TEXT(a)                    SETTING_TAG_ZERO_TEXT, a
 #define SETTING_MUTEX(a)                        SETTING_TAG_MUTEX, a
+#define SETTING_WRITE_PROP(a)                   SETTING_TAG_WRITE_PROP, a
+#define SETTING_KVSTORE(a, b)                   SETTING_TAG_KVSTORE, a, b
 #define SETTING_END                             NULL
 
 

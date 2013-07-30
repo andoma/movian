@@ -520,6 +520,7 @@ kv_url_opt_set(const char *url, int domain, const char *key,
   sqlite3_stmt *stmt;
   int rc;
   uint64_t id;
+  const char *str;
   va_list ap, apx;
   va_start(ap, type);
 
@@ -571,9 +572,12 @@ kv_url_opt_set(const char *url, int domain, const char *key,
     break;
 
   case KVSTORE_SET_STRING:
-    sqlite3_bind_text(stmt, 3, va_arg(apx, const char *), -1, SQLITE_STATIC);
-    break;
-
+    str = va_arg(apx, const char *);
+    if(str != NULL) {
+      sqlite3_bind_text(stmt, 3, str, -1, SQLITE_STATIC);
+      break;
+    }
+    // FALLTHRU
   case KVSTORE_SET_VOID:
     sqlite3_bind_null(stmt, 3);
     break;
@@ -715,6 +719,7 @@ kv_url_opt_set_deferred(const char *url, int domain, const char *key,
 
   kvstore_deferred_write_t *kdw;
   va_list ap;
+  const char *str;
   va_start(ap, type);
 
   hts_mutex_lock(&deferred_mutex);
@@ -746,7 +751,13 @@ kv_url_opt_set_deferred(const char *url, int domain, const char *key,
     break;
 
   case KVSTORE_SET_STRING:
-    kdw->kdw_string = strdup(va_arg(ap, const char *));
+    str = va_arg(ap, const char *);
+    printf("%s\n", str);
+    if(str != NULL) {
+      kdw->kdw_string = strdup(str);
+    } else {
+      kdw->kdw_type = KVSTORE_SET_VOID;
+    }
     break;
 
   default:

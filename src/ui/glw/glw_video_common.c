@@ -29,9 +29,6 @@
 #include "glw_renderer.h"
 #include "glw_texture.h"
 
-//static glw_video_engine_t glw_video_blank;
-
-
 static void glw_video_input(const frame_info_t *info, void *opaque);
 
 
@@ -593,61 +590,62 @@ glw_video_ctor(glw_t *w)
   gv->gv_vd = video_decoder_create(gv->gv_mp);
   video_playback_create(gv->gv_mp);
 
+  prop_t *c = gv->gv_mp->mp_prop_ctrl;
+
   gv->gv_vo_scaling_sub =
     prop_subscribe(0,
 		   PROP_TAG_SET_FLOAT, &gv->gv_vo_scaling,
 		   PROP_TAG_COURIER, w->glw_root->gr_courier,
-		   PROP_TAG_ROOT,
-		   settings_get_value(gv->gv_mp->mp_setting_sub_scale),
+		   PROP_TAG_ROOT, c,
+                   PROP_TAG_NAME("ctrl", "subscale"),
 		   NULL);
 
   gv->gv_vo_displace_y_sub =
     prop_subscribe(0,
 		   PROP_TAG_SET_INT, &gv->gv_vo_displace_y,
 		   PROP_TAG_COURIER, w->glw_root->gr_courier,
-		   PROP_TAG_ROOT,
-		   settings_get_value(gv->gv_mp->mp_setting_sub_displace_y),
+		   PROP_TAG_ROOT, c,
+                   PROP_TAG_NAME("ctrl", "subvdisplace"),
 		   NULL);
 
   gv->gv_vo_displace_x_sub =
     prop_subscribe(0,
 		   PROP_TAG_SET_INT, &gv->gv_vo_displace_x,
 		   PROP_TAG_COURIER, w->glw_root->gr_courier,
-		   PROP_TAG_ROOT,
-		   settings_get_value(gv->gv_mp->mp_setting_sub_displace_x),
+		   PROP_TAG_ROOT, c,
+                   PROP_TAG_NAME("ctrl", "subhdisplace"),
 		   NULL);
 
   gv->gv_vzoom_sub =
     prop_subscribe(0,
 		   PROP_TAG_SET_INT, &gv->gv_vzoom,
 		   PROP_TAG_COURIER, w->glw_root->gr_courier,
-		   PROP_TAG_ROOT,
-		   settings_get_value(gv->gv_mp->mp_setting_vzoom),
+		   PROP_TAG_ROOT, c,
+                   PROP_TAG_NAME("ctrl", "vzoom"),
 		   NULL);
 
   gv->gv_hstretch_sub =
     prop_subscribe(0,
 		   PROP_TAG_SET_INT, &gv->gv_hstretch,
 		   PROP_TAG_COURIER, w->glw_root->gr_courier,
-		   PROP_TAG_ROOT,
-		   settings_get_value(gv->gv_mp->mp_setting_hstretch),
+		   PROP_TAG_ROOT, c,
+                   PROP_TAG_NAME("ctrl", "hstretch"),
 		   NULL);
-
 
   gv->gv_fstretch_sub =
     prop_subscribe(0,
 		   PROP_TAG_SET_INT, &gv->gv_fstretch,
 		   PROP_TAG_COURIER, w->glw_root->gr_courier,
-		   PROP_TAG_ROOT,
-		   settings_get_value(gv->gv_mp->mp_setting_fstretch),
+		   PROP_TAG_ROOT, c,
+                   PROP_TAG_NAME("ctrl", "fstretch"),
 		   NULL);
 
   gv->gv_vo_on_video_sub =
     prop_subscribe(0,
 		   PROP_TAG_SET_INT, &gv->gv_vo_on_video,
 		   PROP_TAG_COURIER, w->glw_root->gr_courier,
-		   PROP_TAG_ROOT,
-		   settings_get_value(gv->gv_mp->mp_setting_sub_on_video),
+		   PROP_TAG_ROOT, c,
+                   PROP_TAG_NAME("ctrl", "subalign"),
 		   NULL);
 }
 

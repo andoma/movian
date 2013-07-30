@@ -375,6 +375,7 @@ typedef struct media_pipe {
   prop_t *mp_prop_root;
   prop_t *mp_prop_type;
   prop_t *mp_prop_io;
+  prop_t *mp_prop_ctrl;
   prop_t *mp_prop_notifications;
   prop_t *mp_prop_primary;
   prop_t *mp_prop_metadata;
@@ -412,19 +413,9 @@ typedef struct media_pipe {
   prop_t *mp_prop_buffer_current;
   prop_t *mp_prop_buffer_limit;
 
-
   prop_courier_t *mp_pc;
   prop_sub_t *mp_sub_currenttime;
   prop_sub_t *mp_sub_stats;
-
-  /* Audio info props */
-
-  prop_t *mp_prop_audio_channels_root;
-  prop_t *mp_prop_audio_channel[8];
-  prop_t *mp_prop_audio_channel_level[8];
-
-  int mp_cur_channels;
-  int64_t mp_cur_chlayout;
 
   int64_t mp_seek_base;
   int64_t mp_start_time;

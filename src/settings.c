@@ -32,7 +32,7 @@
 #include "prop/prop_nodefilter.h"
 #include "prop/prop_concat.h"
 #include "htsmsg/htsmsg_store.h"
-
+#include "db/kvstore.h"
 
 #define SETTINGS_URL "settings:"
 static prop_t *settings_root;
@@ -43,6 +43,7 @@ static prop_t *settings_nodes;
  *
  */
 struct setting {
+  LIST_ENTRY(setting) s_link;
   void *s_opaque;
   void *s_callback;
   prop_sub_t *s_sub;
@@ -52,7 +53,7 @@ struct setting {
   settings_saver_t *s_saver;
   void *s_saver_opaque;
   htsmsg_t *s_store;
-
+  prop_t *s_ext_value;
 
   char *s_id;
 
@@ -60,6 +61,7 @@ struct setting {
 
   char *s_store_name;
   char s_enable_writeback;
+  char s_kvstore;
 };
 
 static void init_dev_settings(void);
@@ -303,7 +305,21 @@ setting_destroy(setting_t *s)
   prop_destroy(s->s_root);
   prop_ref_dec(s->s_val);
   prop_ref_dec(s->s_root);
+  prop_ref_dec(s->s_ext_value);
   free(s);
+}
+
+
+/**
+ *
+ */
+void
+setting_destroyp(setting_t **sp)
+{
+  if(*sp) {
+    setting_destroy(*sp);
+    *sp = NULL;
+  }
 }
 
 
@@ -321,7 +337,7 @@ settings_get_value(setting_t *s)
  *
  */
 static void
-settings_save_setting(setting_t *s)
+setting_save_htsmsg(setting_t *s)
 {
   if(s->s_store_name != NULL)
     htsmsg_store_save(s->s_store, s->s_store_name);
@@ -341,11 +357,21 @@ settings_int_callback_ng(void *opaque, int v)
 
   if(cb) cb(s->s_opaque, v);
 
-  if(s->s_store && s->s_enable_writeback) {
+  if(s->s_ext_value)
+    prop_set_int(s->s_ext_value, v);
+
+  if(!s->s_enable_writeback)
+    return;
+
+  if(s->s_store) {
     htsmsg_delete_field(s->s_store, s->s_id);
     htsmsg_add_s32(s->s_store, s->s_id, v);
-    settings_save_setting(s);
+    setting_save_htsmsg(s);
   }
+
+  if(s->s_kvstore)
+    kv_url_opt_set_deferred(s->s_store_name, KVSTORE_DOMAIN_SETTING,
+                            s->s_id, KVSTORE_SET_INT, v);
 }
 
 
@@ -353,19 +379,30 @@ settings_int_callback_ng(void *opaque, int v)
  *
  */
 static void
-settings_string_callback_ng(void *opaque, const char *str)
+settings_string_callback_ng(void *opaque, rstr_t *rstr)
 {
   setting_t *s = opaque;
   prop_callback_string_t *cb = s->s_callback;
 
-  if(cb) cb(s->s_opaque, str);
+  if(cb) cb(s->s_opaque, rstr_get(rstr));
 
-  if(s->s_store && s->s_enable_writeback) {
+  if(s->s_ext_value)
+    prop_set_rstring(s->s_ext_value, rstr);
+
+  if(!s->s_enable_writeback)
+    return;
+
+  if(s->s_store) {
     htsmsg_delete_field(s->s_store, s->s_id);
-    if(str != NULL)
-      htsmsg_add_str(s->s_store, s->s_id, str);
-    settings_save_setting(s);
+    if(rstr != NULL)
+      htsmsg_add_str(s->s_store, s->s_id, rstr_get(rstr));
+    setting_save_htsmsg(s);
   }
+
+  if(s->s_kvstore)
+    kv_url_opt_set_deferred(s->s_store_name, KVSTORE_DOMAIN_SETTING, s->s_id,
+                            rstr ? KVSTORE_SET_STRING : KVSTORE_SET_VOID,
+                            rstr_get(rstr));
 }
 
 
@@ -397,15 +434,22 @@ settings_multiopt_callback_ng(void *opaque, prop_event_t event, ...)
   name = c ? prop_get_name(c) : NULL;
   va_end(ap);
 
+  if(s->s_ext_value)
+    prop_set_rstring(s->s_ext_value, name);
+
   if(cb != NULL)
     cb(s->s_opaque, rstr_get(name));
 
-  if(s->s_store && s->s_enable_writeback) {
-    htsmsg_delete_field(s->s_store, s->s_id);
-    if(name != NULL)
-      htsmsg_add_str(s->s_store, s->s_id, rstr_get(name));
-    settings_save_setting(s);
+  if(s->s_enable_writeback) {
+
+    if(s->s_store) {
+      htsmsg_delete_field(s->s_store, s->s_id);
+      if(name != NULL)
+        htsmsg_add_str(s->s_store, s->s_id, rstr_get(name));
+      setting_save_htsmsg(s);
+    }
   }
+
   rstr_release(name);
 }
 
@@ -502,12 +546,14 @@ setting_create(int type, prop_t *parent, int flags, ...)
       break;
 
     case SETTING_TAG_HTSMSG:
+      assert(!s->s_kvstore);
       mystrset(&s->s_id, va_arg(ap, const char *));
       s->s_store = va_arg(ap, htsmsg_t *);
       mystrset(&s->s_store_name, va_arg(ap, const char *));
       break;
 
     case SETTING_TAG_HTSMSG_CUSTOM_SAVER:
+      assert(!s->s_kvstore);
       mystrset(&s->s_id, va_arg(ap, const char *));
       s->s_store        = va_arg(ap, htsmsg_t *);
       s->s_saver        = va_arg(ap, settings_saver_t *);
@@ -579,9 +625,19 @@ setting_create(int type, prop_t *parent, int flags, ...)
       }
       break;
 
-
     case SETTING_TAG_ZERO_TEXT:
       prop_link(va_arg(ap, prop_t *), prop_create(s->s_root, "zerotext"));
+      break;
+
+    case SETTING_TAG_WRITE_PROP:
+      s->s_ext_value = prop_ref_inc(va_arg(ap, prop_t *));
+      break;
+
+    case SETTING_TAG_KVSTORE:
+      assert(s->s_store == NULL);
+      mystrset(&s->s_store_name, va_arg(ap, const char *));
+      mystrset(&s->s_id, va_arg(ap, const char *));
+      s->s_kvstore = 1;
       break;
 
     case 0:
@@ -613,6 +669,11 @@ setting_create(int type, prop_t *parent, int flags, ...)
     if(s->s_store != NULL)
       initial_int = htsmsg_get_u32_or_default(s->s_store, s->s_id,
                                               initial_int);
+
+    if(s->s_kvstore)
+      initial_int = kv_url_opt_get_int(s->s_store_name, KVSTORE_DOMAIN_SETTING,
+                                       s->s_id, initial_int);
+
     prop_set_int(s->s_val, initial_int);
     if(flags & SETTINGS_INITIAL_UPDATE)
       settings_int_callback_ng(s, initial_int);
@@ -633,13 +694,25 @@ setting_create(int type, prop_t *parent, int flags, ...)
     if(s->s_store != NULL)
       initial_str = htsmsg_get_str(s->s_store, s->s_id) ?: initial_str;
 
-    prop_set_string(s->s_val, initial_str);
+    rstr_t *initial = rstr_alloc(initial_str);
+
+    if(s->s_kvstore) {
+      rstr_t *r = kv_url_opt_get_rstr(s->s_store_name, KVSTORE_DOMAIN_SETTING,
+                                      s->s_id);
+      if(r != NULL)
+        rstr_set(&initial, r);
+    }
+
+    prop_set_rstring(s->s_val, initial);
+
     if(flags & SETTINGS_INITIAL_UPDATE)
-      settings_string_callback_ng(s, initial_str);
+      settings_string_callback_ng(s, initial);
+
+    rstr_release(initial);
 
     s->s_sub =
       prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_IGNORE_VOID,
-                     PROP_TAG_CALLBACK_STRING, settings_string_callback_ng, s,
+                     PROP_TAG_CALLBACK_RSTR, settings_string_callback_ng, s,
                      PROP_TAG_ROOT, s->s_val,
                      PROP_TAG_COURIER, pc,
                      PROP_TAG_MUTEX, mtx,
@@ -653,7 +726,15 @@ setting_create(int type, prop_t *parent, int flags, ...)
 
     prop_t *o = NULL;
 
-    if(initial_str != NULL)
+    if(s->s_kvstore) {
+      rstr_t *r = kv_url_opt_get_rstr(s->s_store_name, KVSTORE_DOMAIN_SETTING,
+                                      s->s_id);
+      if(r != NULL) {
+        o = prop_find(s->s_val, rstr_get(r), NULL);
+      }
+    }
+
+    if(o == NULL && initial_str != NULL)
       o = prop_find(s->s_val, initial_str, NULL);
 
     if(o == NULL) {
@@ -666,7 +747,7 @@ setting_create(int type, prop_t *parent, int flags, ...)
 
       if(flags & SETTINGS_INITIAL_UPDATE) {
         rstr_t *name = prop_get_name(o);
-        settings_string_callback_ng(s, rstr_get(name));
+        settings_string_callback_ng(s, name);
         rstr_release(name);
       }
       prop_ref_dec(o);
