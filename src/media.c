@@ -1650,7 +1650,9 @@ void
 mp_set_url(media_pipe_t *mp, const char *url)
 {
   prop_set_string(mp->mp_prop_url, url);
+  hts_mutex_lock(&mp->mp_mutex);
   mp_settings_init(mp, url);
+  hts_mutex_unlock(&mp->mp_mutex);
 }
 
 
