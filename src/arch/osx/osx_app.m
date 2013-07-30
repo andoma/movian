@@ -200,7 +200,8 @@ mainloop_courier_init(void)
  */
 - (void) applicationWillTerminate: (NSNotification *)not;
 {
-  htsmsg_store_flush();
+  showtime_flush_caches();
+  shutdown_hook_run(1);
   showtime_fini();
 }
 

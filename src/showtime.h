@@ -82,6 +82,8 @@ rstr_t *nls_get_rstringp(const char *string, const char *singularis, int val);
 
 void showtime_shutdown(int retcode);
 
+void showtime_flush_caches(void);
+
 uint32_t showtime_get_version_int(void);
 
 uint32_t showtime_parse_version_int(const char *str);
@@ -189,6 +191,8 @@ static inline void *mymemalign(size_t align, size_t size)
 
 
 void runcontrol_activity(void);
+
+void shutdown_hook_run(int early);
 
 void *shutdown_hook_add(void (*fn)(void *opaque, int exitcode), void *opaque,
 			int early);

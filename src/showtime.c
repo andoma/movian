@@ -517,7 +517,7 @@ shutdown_hook_add(void (*fn)(void *opaque, int exitcode), void *opaque,
 /**
  *
  */
-static void
+void
 shutdown_hook_run(int early)
 {
   shutdown_hook_t *sh;
@@ -525,6 +525,18 @@ shutdown_hook_run(int early)
     if(sh->early == early)
       sh->fn(sh->opaque, gconf.exit_code);
 }
+
+
+/**
+ *
+ */
+void
+showtime_flush_caches(void)
+{
+  kvstore_deferred_flush();
+  htsmsg_store_flush();
+}
+
 
 /**
  *
@@ -542,8 +554,7 @@ showtime_shutdown(int retcode)
 
   gconf.exit_code = retcode;
 
-  // Always write out pending settings ASAP
-  htsmsg_store_flush();
+  showtime_flush_caches();
 
   if(!arch_stop_req()) {
     // If arch_stop_req() returns -1 it will not actually
