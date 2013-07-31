@@ -1032,9 +1032,9 @@ websocket_input(http_connection_t *hc)
   }
   
 
-  if(opcode == 8) {
+  if(opcode == 9) {
     // PING
-    websocket_send(hc, 9, d, len);
+    websocket_send(hc, 10, d, len);
   } else {
     hc->hc_path->hp_ws_data(hc, opcode, d, len, hc->hc_opaque);
   }
