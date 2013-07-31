@@ -34,6 +34,9 @@
 typedef int (fa_load_cb_t)(void *opaque, int loaded, int total);
 
 struct prop;
+struct backend;
+struct htsbuf_queue;
+struct http_auth_req;
 
 int fileaccess_init(void);
 
@@ -203,38 +206,13 @@ buf_t *fa_load_query(const char *url,
 
 int fa_parent(char *dst, size_t dstlen, const char *url);
 
-struct backend;
-
 int fa_normalize(const char *url, char *dst, size_t dstlen);
 
 rstr_t *fa_absolute_path(rstr_t *filename, rstr_t *at);
 
 int fa_check_url(const char *url, char *errbuf, size_t errlen);
 
-struct htsbuf_queue;
 int fa_read_to_htsbuf(struct htsbuf_queue *hq, fa_handle_t *fh, int maxbytes);
-
-struct htsbuf_queue;
-
-int http_request(const char *url, const char **arguments, 
-                 buf_t **result,
-		 char *errbuf, size_t errlen,
-		 struct htsbuf_queue *postdata, const char *postcontenttype,
-		 int flags, struct http_header_list *headers_out,
-		 const struct http_header_list *headers_in, const char *method,
-		 fa_load_cb_t *cb, void *opaque);
-
-struct http_auth_req;
-int http_client_oauth(struct http_auth_req *har,
-		      const char *consumer_key,
-		      const char *consumer_secret,
-		      const char *token,
-		      const char *token_secret);
-
-int http_client_rawauth(struct http_auth_req *har, const char *str);
-
-void http_client_set_header(struct http_auth_req *har, const char *key,
-			    const char *value);
 
 void fa_pathjoin(char *dst, size_t dstlen, const char *p1, const char *p2);
 
@@ -280,6 +258,52 @@ fa_handle_t *fa_bwlimit_open(fa_handle_t *fa, int bps);
 // Compare reader
 
 fa_handle_t *fa_cmp_open(fa_handle_t *fa, const char *locafile);
+
+// HTTP client
+
+enum {
+  HTTP_TAG_ARG = 1,
+  HTTP_TAG_ARGINT,
+  HTTP_TAG_ARGLIST,
+  HTTP_TAG_RESULT_PTR,
+  HTTP_TAG_ERRBUF,
+  HTTP_TAG_POSTDATA,
+  HTTP_TAG_FLAGS,
+  HTTP_TAG_REQUEST_HEADER,
+  HTTP_TAG_REQUEST_HEADERS,
+  HTTP_TAG_RESPONSE_HEADERS,
+  HTTP_TAG_METHOD,
+  HTTP_TAG_PROGRESS_CALLBACK,
+};
+
+
+#define HTTP_ARG(a, b)                     HTTP_TAG_ARG, a, b
+#define HTTP_ARGINT(a, b)                  HTTP_TAG_ARGINT, a, b
+#define HTTP_ARGLIST(a)                    HTTP_TAG_ARGLIST, a
+#define HTTP_RESULT_PTR(a)                 HTTP_TAG_RESULT_PTR, a
+#define HTTP_ERRBUF(a, b)                  HTTP_TAG_ERRBUF, a, b
+#define HTTP_POSTDATA(a, b)                HTTP_TAG_POSTDATA, a, b
+#define HTTP_FLAGS(a)                      HTTP_TAG_FLAGS, a
+#define HTTP_REQUEST_HEADER(a, b)          HTTP_TAG_REQUEST_HEADER, a, b
+#define HTTP_REQUEST_HEADERS(a)            HTTP_TAG_REQUEST_HEADERS, a
+#define HTTP_RESPONSE_HEADERS(a)           HTTP_TAG_RESPONSE_HEADERS, a
+#define HTTP_METHOD(a)                     HTTP_TAG_METHOD, a
+#define HTTP_PROGRESS_CALLBACK(a, b)       HTTP_TAG_PROGRESS_CALLBACK, a, b
+
+int http_req(const char *url, ...);
+
+int http_client_oauth(struct http_auth_req *har,
+		      const char *consumer_key,
+		      const char *consumer_secret,
+		      const char *token,
+		      const char *token_secret);
+
+int http_client_rawauth(struct http_auth_req *har, const char *str);
+
+void http_client_set_header(struct http_auth_req *har, const char *key,
+			    const char *value);
+
+
 
 #endif /* FILEACCESS_H */
 

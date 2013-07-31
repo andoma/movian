@@ -983,12 +983,16 @@ http_headers_init(struct http_header_list *l, const http_file_t *hf)
  */
 static void
 http_headers_send(htsbuf_queue_t *q, struct http_header_list *def,
-		  const struct http_header_list *user)
+		  const struct http_header_list *user1,
+		  const struct http_header_list *user2)
 {
   http_header_t *hh;
 
-  if(user != NULL)
-    http_header_merge(def, user);
+  if(user1 != NULL)
+    http_header_merge(def, user1);
+
+  if(user2 != NULL)
+    http_header_merge(def, user2);
 
   LIST_FOREACH(hh, def, hh_link)
     htsbuf_qprintf(q, "%s: %s\r\n", hh->hh_key, hh->hh_value);
@@ -1581,7 +1585,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
   }
 
   http_cookie_append(hf->hf_connection->hc_hostname, hf->hf_path, &headers);
-  http_headers_send(&q, &headers, NULL);
+  http_headers_send(&q, &headers, NULL, NULL);
 
 
   if(hf->hf_debug)
@@ -1827,7 +1831,7 @@ again:
   http_headers_init(&headers, hf);
   http_headers_auth(&headers, hf, "GET", NULL);
   http_cookie_append(hf->hf_connection->hc_hostname, hf->hf_path, &headers);
-  http_headers_send(&q, &headers, NULL);
+  http_headers_send(&q, &headers, NULL, NULL);
 
   tcp_write_queue(hf->hf_connection->hc_tc, &q);
   code = http_read_response(hf, NULL);
@@ -2022,7 +2026,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
 	htsbuf_qprintf(&q, "Range: %s\r\n", range);
 
       http_cookie_append(hc->hc_hostname, hf->hf_path, &headers);
-      http_headers_send(&q, &headers, NULL);
+      http_headers_send(&q, &headers, NULL, NULL);
       if(hf->hf_debug)
 	htsbuf_hexdump(&q, "HTTP");
 
@@ -2297,10 +2301,15 @@ http_load(struct fa_protocol *fap, const char *url,
     http_header_add(&headers_in, "If-None-Match", *etag, 0);
   }
 
-  err = http_request(url, NULL, &b, errbuf, errlen, NULL, NULL,
-		     flags,
-		     &headers_out, &headers_in, NULL,
-		     cb, opaque);
+  err = http_req(url,
+                 HTTP_RESULT_PTR(&b),
+                 HTTP_ERRBUF(errbuf, errlen),
+                 HTTP_FLAGS(flags),
+                 HTTP_RESPONSE_HEADERS(&headers_out),
+                 HTTP_REQUEST_HEADERS(&headers_in),
+                 HTTP_PROGRESS_CALLBACK(cb, opaque),
+                 NULL);
+
   if(err == -1) {
     b = NULL;
     goto done;
@@ -2664,7 +2673,7 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
 
     http_headers_auth(&headers, hf, "PROPFIND", NULL);
     http_cookie_append(hf->hf_connection->hc_hostname, hf->hf_path, &headers);
-    http_headers_send(&q, &headers, NULL);
+    http_headers_send(&q, &headers, NULL, NULL);
 
     tcp_write_queue(hf->hf_connection->hc_tc, &q);
     code = http_read_response(hf, NULL);
@@ -2830,27 +2839,120 @@ http_request_partial(void *opaque, int amount)
   return 0;
 }
 
+
+/**
+ *
+ */
+struct http_req_xarg {
+  TAILQ_ENTRY(http_req_xarg) link;
+  const char *hdr;
+  const char *val;
+};
+
 /**
  *
  */
 int
-http_request(const char *url, const char **arguments, 
-             buf_t **result,
-	     char *errbuf, size_t errlen,
-	     htsbuf_queue_t *postdata, const char *postcontenttype,
-	     int flags, struct http_header_list *headers_out,
-	     const struct http_header_list *headers_in, const char *method,
-	     fa_load_cb_t *cb, void *opaque)
+http_req(const char *url, ...)
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   htsbuf_queue_t q;
   int code, r;
   int redircount = 0;
   struct http_header_list headers;
-  http_read_aux_t hra;
+  http_read_aux_t hra = {0};
+  int tag;
 
-  hra.cb = cb;
-  hra.opaque = opaque;
+  int flags = 0;
+  buf_t **result = NULL;
+  char *errbuf = NULL;
+  size_t errlen = 0;
+  const char *method = NULL;
+  htsbuf_queue_t *postdata = NULL;
+  const char *postcontenttype = NULL;
+  const char **arguments = NULL;
+  struct http_header_list *headers_out = NULL;
+  const struct http_header_list *headers_in = NULL;
+  struct http_header_list headers_in2;
+  const char *key, *value;
+  struct http_req_xarg *hrx;
+  char tmpbuf[32];
+
+  TAILQ_HEAD(, http_req_xarg) xargs;
+  TAILQ_INIT(&xargs);
+  LIST_INIT(&headers_in2);
+
+  va_list ap;
+  va_start(ap, url);
+
+  while((tag = va_arg(ap, int)) != 0) {
+    switch(tag) {
+    case HTTP_TAG_ARG:
+      hrx = alloca(sizeof(struct http_req_xarg));
+      hrx->hdr = va_arg(ap, const char *);
+      hrx->val = va_arg(ap, const char *);
+      TAILQ_INSERT_TAIL(&xargs, hrx, link);
+      break;
+
+    case HTTP_TAG_ARGINT:
+      hrx = alloca(sizeof(struct http_req_xarg));
+      hrx->hdr = va_arg(ap, const char *);
+      snprintf(tmpbuf, sizeof(tmpbuf), "%d", va_arg(ap, int));
+      hrx->val = mystrdupa(tmpbuf);
+      TAILQ_INSERT_TAIL(&xargs, hrx, link);
+      break;
+
+    case HTTP_TAG_ARGLIST:
+      arguments = va_arg(ap, const char **);
+      break;
+
+    case HTTP_TAG_RESULT_PTR:
+      result = va_arg(ap, buf_t **);
+      break;
+
+    case HTTP_TAG_ERRBUF:
+      errbuf = va_arg(ap, char *);
+      errlen = va_arg(ap, size_t);
+      break;
+
+    case HTTP_TAG_POSTDATA:
+      postdata = va_arg(ap, htsbuf_queue_t *);
+      postcontenttype = va_arg(ap, const char *);
+      break;
+
+    case HTTP_TAG_FLAGS:
+      flags = va_arg(ap, int);
+      break;
+
+    case HTTP_TAG_REQUEST_HEADER:
+      key = va_arg(ap, const char *);
+      value = va_arg(ap, const char *);
+      http_header_add(&headers_in2, key, value, 1);
+      break;
+
+    case HTTP_TAG_REQUEST_HEADERS:
+      headers_in = va_arg(ap, const struct http_header_list *);
+      break;
+
+    case HTTP_TAG_RESPONSE_HEADERS:
+      headers_out = va_arg(ap, struct http_header_list *);
+      break;
+
+    case HTTP_TAG_METHOD:
+      method = va_arg(ap, const char *);
+      break;
+
+    case HTTP_TAG_PROGRESS_CALLBACK:
+      hra.cb = va_arg(ap, fa_load_cb_t *);
+      hra.opaque = va_arg(ap, void *);
+      break;
+
+    default:
+      abort();
+    }
+  }
+
+
 
   if(headers_out != NULL)
     LIST_INIT(headers_out);
@@ -2862,12 +2964,8 @@ http_request(const char *url, const char **arguments,
  retry:
 
   http_connect(hf, errbuf, errlen);
-
-  if(hf->hf_connection == NULL) {
-    http_destroy(hf);
-    http_headers_free(headers_out);
-    return -1;
-  }
+  if(hf->hf_connection == NULL)
+    goto error;
 
   http_connection_t *hc = hf->hf_connection;
 
@@ -2879,9 +2977,10 @@ http_request(const char *url, const char **arguments,
   htsbuf_append(&q, " ", 1);
   htsbuf_append(&q, hf->hf_path, strlen(hf->hf_path));
 
+  char prefix = '?';
+
   if(arguments != NULL) {
     const char **args = arguments;
-    char prefix = '?';
 
     while(args[0] != NULL) {
       if(args[1] != NULL) {
@@ -2895,22 +2994,30 @@ http_request(const char *url, const char **arguments,
     }
   }
 
+  TAILQ_FOREACH(hrx, &xargs, link) {
+    htsbuf_append(&q, &prefix, 1);
+    htsbuf_append_and_escape_url(&q, hrx->hdr);
+    htsbuf_append(&q, "=", 1);
+    htsbuf_append_and_escape_url(&q, hrx->val);
+    prefix = '&';
+  }
+
 
   htsbuf_qprintf(&q, " HTTP/1.%d\r\n", hf->hf_version);
 
   http_headers_init(&headers, hf);
 
-  if(postdata != NULL) 
+  if(postdata != NULL)
     http_header_add_int(&headers, "Content-Length", postdata->hq_size);
 
-  if(postcontenttype != NULL) 
+  if(postcontenttype != NULL)
     http_header_add(&headers, "Content-Type", postcontenttype, 0);
 
   if(!(flags & FA_DISABLE_AUTH))
     http_headers_auth(&headers, hf, m, arguments);
 
   http_cookie_append(hc->hc_hostname, hf->hf_path, &headers);
-  http_headers_send(&q, &headers, headers_in);
+  http_headers_send(&q, &headers, headers_in, &headers_in2);
 
   if(hf->hf_debug)
     htsbuf_hexdump(&q, "HTTP");
@@ -2958,31 +3065,21 @@ http_request(const char *url, const char **arguments,
     if(flags & FA_NOFOLLOW)
       break;
 
-    if(redirect(hf, &redircount, errbuf, errlen, code, !no_content)) {
-      http_destroy(hf);
-      http_headers_free(headers_out);
-      return -1;
-    }
+    if(redirect(hf, &redircount, errbuf, errlen, code, !no_content))
+      goto error;
+
     goto retry;
 
   case 401:
-    if(authenticate(hf, errbuf, errlen, NULL, !no_content)) {
-      http_destroy(hf);
-      http_headers_free(headers_out);
-      return -1;
-    }
+    if(authenticate(hf, errbuf, errlen, NULL, !no_content))
+      goto error;
     goto retry;
 
   default:
     snprintf(errbuf, errlen, "HTTP error: %d", code);
-
     http_drain_content(hf);
-
-    http_destroy(hf);
-    http_headers_free(headers_out);
-    return -1;
+    goto error;
   }
-  
 
   z_stream z;
   if(hf->hf_content_encoding == HTTP_CE_GZIP) {
@@ -2990,7 +3087,7 @@ http_request(const char *url, const char **arguments,
     inflateInit2(&z, 16+MAX_WBITS);
   }
 
-  if(hf->hf_chunked_transfer == 0 && 
+  if(hf->hf_chunked_transfer == 0 &&
      hf->hf_connection_mode == CONNECTION_MODE_CLOSE) {
     int capacity = 16384;
     int size = 0;
@@ -3003,18 +3100,18 @@ http_request(const char *url, const char **arguments,
 	mem = myrealloc(mem, capacity + 1);
 	if(mem == NULL) {
 	  snprintf(errbuf, errlen, "Out of memory (%d)", capacity + 1);
-	  goto error;
+	  goto zerror;
 	}
       }
 
       if(hf->hf_content_encoding == HTTP_CE_GZIP) {
         char zbuf[2048];
 	r = tcp_read_data_nowait(hc->hc_tc, zbuf, sizeof(zbuf));
-	
+
 	z.next_in = (void *)zbuf;
 	z.avail_in = r > 0 ? r : 0;
 	while(1) {
-	
+
 	  z.next_out = (void *)(mem + size);
 	  z.avail_out = capacity - size;
 
@@ -3022,7 +3119,7 @@ http_request(const char *url, const char **arguments,
 	  if(zr < 0) {
 	    snprintf(errbuf, errlen, "zlib error %d (connection: close)", zr);
 	    free(mem);
-	    goto error;
+	    goto zerror;
 	  }
 	  size += (capacity - size) - z.avail_out;
 
@@ -3033,13 +3130,13 @@ http_request(const char *url, const char **arguments,
 	  mem = myrealloc(mem, capacity + 1);
 	  if(mem == NULL) {
 	    snprintf(errbuf, errlen, "Out of memory (%d)", capacity + 1);
-	    goto error;
+	    goto zerror;
 	  }
 	}
 
 	if(r < 0)
 	  break;
-	
+
       } else {
 
 	r = tcp_read_data_nowait(hc->hc_tc, mem + size, capacity - size);
@@ -3072,7 +3169,6 @@ http_request(const char *url, const char **arguments,
 	int csize;
 	if(tcp_read_line(hc->hc_tc, chunkheader, sizeof(chunkheader)) < 0)
 	  break;
- 
 
 	csize = strtol(chunkheader, NULL, 16);
 
@@ -3080,7 +3176,7 @@ http_request(const char *url, const char **arguments,
 	  buf = myrealloc(buf, size + csize + 1);
 	  if(buf == NULL) {
 	    snprintf(errbuf, errlen, "Out of memory (%zd)", size + csize + 1);
-	    goto error;
+	    goto zerror;
 	  }
 	  if(tcp_read_data(hc->hc_tc, buf + size, csize,
 			   http_request_partial, &hra))
@@ -3096,7 +3192,7 @@ http_request(const char *url, const char **arguments,
       }
       snprintf(errbuf, errlen, "Chunked transfer error");
       free(buf);
-      goto error;
+      goto zerror;
 
     } else {
 
@@ -3104,14 +3200,14 @@ http_request(const char *url, const char **arguments,
       buf = mymalloc(hf->hf_filesize + 1);
       if(buf == NULL) {
 	snprintf(errbuf, errlen, "Out of memory (%"PRId64")", hf->hf_filesize + 1);
-	goto error;
+	goto zerror;
       }
       r = tcp_read_data(hc->hc_tc, buf, hf->hf_filesize,
 			http_request_partial, &hra);
       if(r == -1) {
 	snprintf(errbuf, errlen, "HTTP read error");
 	free(buf);
-	goto error;
+	goto zerror;
       }
     }
 
@@ -3120,7 +3216,7 @@ http_request(const char *url, const char **arguments,
     if(hf->hf_content_encoding == HTTP_CE_GZIP) {
       z.next_in = (void *)buf;
       z.avail_in = size;
-      
+
       z.avail_out = 3 * size;
       uint8_t *buf2 = z.next_out = malloc(z.avail_out + 1);
 
@@ -3131,7 +3227,7 @@ http_request(const char *url, const char **arguments,
 		   z.avail_in, z.avail_out, hf->hf_filesize);
 	  free(buf);
 	  free(buf2);
-	  goto error;
+	  goto zerror;
 	}
 
 	if(z.avail_in == 0)
@@ -3142,13 +3238,13 @@ http_request(const char *url, const char **arguments,
 	  if(buf2 == NULL) {
 	    snprintf(errbuf, errlen, "Out of memory (%"PRId64")",
 		     (int64_t)(z.total_out * 2 + 1));
-	    goto error;
+	    goto zerror;
 	  }
 	  z.next_out = buf2 + z.total_out;
 	  z.avail_out = z.total_out;
 	}
       }
-	
+
       free(buf);
       buf = (void *)buf2;
       size = z.total_out;
@@ -3169,12 +3265,14 @@ http_request(const char *url, const char **arguments,
   hf->hf_rsize = 0;
   http_destroy(hf);
   return 0;
-  
- error:
+
+ zerror:
   if(hf->hf_content_encoding == HTTP_CE_GZIP)
     inflateEnd(&z);
+ error:
   http_destroy(hf);
   http_headers_free(headers_out);
+  http_headers_free(&headers_in2);
   return -1;
 
 }

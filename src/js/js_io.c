@@ -315,12 +315,17 @@ js_http_request(JSContext *cx, jsval *rval,
 
     buf_t *result = NULL;
 
-    int n = http_request(url, (const char **)httpargs, 
-			 headreq ? NULL : &result,
-			 errbuf, sizeof(errbuf),
-			 postdata, postcontenttype,
-			 flags,
-			 &response_headers, &in_headers, method, NULL, NULL);
+    int n = http_req(url,
+                     HTTP_ARGLIST(httpargs),
+                     HTTP_RESULT_PTR(headreq ? NULL : &result),
+                     HTTP_ERRBUF(errbuf, sizeof(errbuf)),
+                     HTTP_POSTDATA(postdata, postcontenttype),
+                     HTTP_FLAGS(flags),
+                     HTTP_RESPONSE_HEADERS(&response_headers),
+                     HTTP_REQUEST_HEADERS(&in_headers),
+                     HTTP_METHOD(method),
+                     NULL);
+
     JS_ResumeRequest(cx, s);
 
     if(httpargs != NULL)

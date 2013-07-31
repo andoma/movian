@@ -75,7 +75,6 @@ soap_exec(const char *uri, const char *service, int version, const char *method,
   htsmsg_t *out;
   htsbuf_queue_t post;
   buf_t *result;
-  struct http_header_list hdrs = {0};
   char tmp[100];
 
   htsbuf_queue_init(&post, 0);
@@ -91,13 +90,12 @@ soap_exec(const char *uri, const char *service, int version, const char *method,
   snprintf(tmp, sizeof(tmp),"\"urn:schemas-upnp-org:service:%s:%d#%s\"",
 	   service, version, method);
 
-  http_header_add(&hdrs, "SOAPACTION", tmp, 0);
-
-  r = http_request(uri, NULL, &result, errbuf, errlen,
-		   &post, "text/xml; charset=\"utf-8\"",
-		   0, NULL, &hdrs, NULL, NULL, NULL);
-
-  http_headers_free(&hdrs);
+  r = http_req(uri,
+               HTTP_RESULT_PTR(&result),
+               HTTP_ERRBUF(errbuf, errlen),
+               HTTP_POSTDATA(&post, "text/xml; charset=\"utf-8\""),
+               HTTP_REQUEST_HEADER("SOAPACTION", tmp),
+               NULL);
 
   htsbuf_queue_flush(&post);
 

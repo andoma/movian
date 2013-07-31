@@ -748,10 +748,11 @@ be_shoutcast_play(const char *url0, media_pipe_t *mp,
 
   // First get headers and check if we got a playlist url
   current_stream_idx = playlist_stream_cnt = 0;
-  n = http_request(url0, NULL, 
-		  &result, errbuf, errlen, 
-		   NULL, NULL, 0, &sc->sc_headers, NULL, NULL,
-		  NULL, NULL);
+  n = http_req(url0,
+               HTTP_RESULT_PTR(&result),
+               HTTP_ERRBUF(errbuf, errlen),
+               HTTP_RESPONSE_HEADERS(&sc->sc_headers),
+               NULL);
 
   if(n) {
     TRACE(TRACE_ERROR, "shoutcast", "Failed top open url %d: %s",n, errbuf);

@@ -322,11 +322,14 @@ attempt_upgrade(int accept_patch)
  
   buf_t *b;
 
-  int r = http_request(download_url, NULL, &b,
-		       errbuf, sizeof(errbuf), NULL, NULL,
-		       FA_COMPRESSION | FA_DEBUG,
-		       &response_headers, &req_headers, NULL,
-		       download_callback, NULL);
+  int r = http_req(download_url,
+                   HTTP_RESULT_PTR(&b),
+                   HTTP_ERRBUF(errbuf, sizeof(errbuf)),
+                   HTTP_FLAGS(FA_COMPRESSION),
+                   HTTP_RESPONSE_HEADERS(&response_headers),
+                   HTTP_REQUEST_HEADERS(&req_headers),
+                   HTTP_PROGRESS_CALLBACK(download_callback, NULL),
+                   NULL);
   
   if(r) {
     install_error(errbuf);

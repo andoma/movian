@@ -758,13 +758,12 @@ minidlna_get_srt(const char *url, htsmsg_t *sublist)
   struct http_header_list in, out;
   const char *s;
 
-  LIST_INIT(&in);
   LIST_INIT(&out);
-  
-  http_header_add(&in, "getCaptionInfo.sec", "1", 0);
 
-  if(!http_request(url, NULL, NULL, NULL, 0, NULL, 0,
-		   0, &out, &in, NULL, NULL, NULL)) {
+  if(!http_req(url,
+               HTTP_REQUEST_HEADER("getCaptionInfo.sec", "1"),
+               HTTP_RESPONSE_HEADERS(&out),
+               NULL)) {
     if((s = http_header_get(&out, "CaptionInfo.sec")) != NULL) {
 
       htsmsg_t *sub = htsmsg_create_map();
@@ -797,8 +796,9 @@ blind_srt_check(const char *url, htsmsg_t *sublist)
   strcpy(dot, ".srt");
 
   LIST_INIT(&out);
-  if(!http_request(srt, NULL, NULL, NULL, 0, NULL, 0,
-		   0, &out, NULL, NULL, NULL, NULL)) {
+  if(!http_req(srt,
+               HTTP_RESPONSE_HEADERS(&out),
+               NULL)) {
     const char *s;
     if((s = http_header_get(&out, "Content-Type")) != NULL) {
       if(!strcasecmp(s, "application/x-srt")) {

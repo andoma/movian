@@ -590,8 +590,10 @@ introspect_device(upnp_device_t *ud)
   htsmsg_t *m, *svclist, *dev;
   const char *uuid;
 
-  if(http_request(ud->ud_url, NULL, &b, errbuf, sizeof(errbuf),
-		  NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL)) {
+  if(http_req(ud->ud_url,
+              HTTP_RESULT_PTR(&b),
+              HTTP_ERRBUF(errbuf, sizeof(errbuf)),
+              NULL)) {
     TRACE(TRACE_INFO, "UPNP", "Unable to introspect %s -- %s",
 	  ud->ud_url, errbuf);
     return;
