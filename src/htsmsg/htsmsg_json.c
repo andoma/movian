@@ -220,3 +220,12 @@ htsmsg_json_deserialize(const char *src)
 {
   return json_deserialize(src, &json_to_htsmsg, NULL, NULL, 0);
 }
+
+/**
+ *
+ */
+htsmsg_t *
+htsmsg_json_deserialize2(const char *src, char *errbuf, size_t errlen)
+{
+  return json_deserialize(src, &json_to_htsmsg, NULL, errbuf, errlen);
+}

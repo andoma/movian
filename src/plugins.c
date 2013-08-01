@@ -522,7 +522,7 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
                   NULL, NULL)) == NULL)
     return -1;
 
-  ctrl = htsmsg_json_deserialize(buf_cstr(b));
+  ctrl = htsmsg_json_deserialize2(buf_cstr(b), errbuf, errlen);
   buf_release(b);
   if(ctrl != NULL) {
 
@@ -633,9 +633,6 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
     return r;
 
   } else {
-
-    snprintf(errbuf, errlen, "Unable parse JSON control file %s",
-	     ctrlfile);
     return -1;
   }
 }
