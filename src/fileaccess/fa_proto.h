@@ -69,6 +69,11 @@ typedef struct fa_protocol {
   int (*fap_read)(fa_handle_t *fh, void *buf, size_t size);
 
   /**
+   * Read from file. Same semantics as POSIX write(2)
+   */
+  int (*fap_write)(fa_handle_t *fh, const void *buf, size_t size);
+
+  /**
    * Seek in file. Same semantics as POSIX lseek(2)
    */
   int64_t (*fap_seek)(fa_handle_t *fh, int64_t pos, int whence);
@@ -90,14 +95,14 @@ typedef struct fa_protocol {
   /**
    * unlink (ie, delete) file
    */
-  int (*fap_unlink)(struct fa_protocol *fap, const char *url,
+  int (*fap_unlink)(const struct fa_protocol *fap, const char *url,
                     char *errbuf, size_t errsize);
 
   /**
    * delete directory
    */
-  int (*fap_rmdir)(struct fa_protocol *fap, const char *url,
-                    char *errbuf, size_t errsize);
+  int (*fap_rmdir)(const struct fa_protocol *fap, const char *url,
+                   char *errbuf, size_t errsize);
 
   /**
    * Add a reference to the url.
@@ -166,6 +171,14 @@ typedef struct fa_protocol {
   int (*fap_get_parts)(fa_dir_t *fa, const char *url,
 		       char *errbuf, size_t errsize);
 
+  /**
+   * Make directories
+   *
+   * Should do the equiv to POSIX mkdir -p
+   */
+
+  int (*fap_makedirs)(struct fa_protocol *fap, const char *url,
+                      char *errbuf, size_t errsize);
 
 } fa_protocol_t;
 

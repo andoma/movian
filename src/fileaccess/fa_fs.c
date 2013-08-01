@@ -29,6 +29,7 @@
 #include <limits.h>
 #include "showtime.h"
 #include "fileaccess.h"
+#include "misc/fs.h"
 
 #include "fa_proto.h"
 
@@ -40,7 +41,7 @@ typedef struct part {
 typedef struct fs_handle {
   fa_handle_t h;
   int part_count;
-  off_t total_size;
+  off_t total_size; // Only valid if part_count != 1
   int64_t read_pos;
   part_t parts[0];
 } fs_handle_t;
@@ -181,7 +182,29 @@ fs_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
   fs_handle_t *fh=NULL;
   struct stat st;
   int i;
-  int fd = open(url, O_RDONLY, 0);
+  int fd;
+
+  if(flags & FA_WRITE) {
+
+    int open_flags = O_RDWR | O_CREAT;
+
+    if(!(flags & FA_APPEND))
+      open_flags |= O_TRUNC;
+
+    fd = open(url, open_flags, 0666);
+    if(fd == -1) {
+      snprintf(errbuf, errlen, "%s", strerror(errno));
+      return NULL;
+    }
+
+
+    if(flags & FA_APPEND)
+      lseek(fd, 0, SEEK_END);
+
+    goto open_ok;
+  }
+
+  fd = open(url, O_RDONLY, 0);
 
   if(fd == -1) {
     snprintf(errbuf, errlen, "%s", strerror(errno));
@@ -214,17 +237,11 @@ fs_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
       fh->total_size += st.st_size;
     }
   } else {
-
-    //normal file
+    // normal file
+  open_ok:
     fh = calloc(1, sizeof(fs_handle_t) + sizeof(part_t));
     fh->part_count = 1;
     fh->parts[0].fd = fd;
-    if(fstat(fd, &st)) {
-      snprintf(errbuf, errlen, "%s", strerror(errno));
-      fs_close(&fh->h);
-      return NULL;
-    }
-    fh->total_size = st.st_size;
   }
 
   fh->h.fh_proto = fap;
@@ -263,6 +280,19 @@ fs_read(fa_handle_t *fh0, void *buf, size_t size)
   }
   fh->read_pos += rsize;
   return rsize;
+}
+
+
+/**
+ * Write to file
+ */
+static int
+fs_write(fa_handle_t *fh0, const void *buf, size_t size)
+{
+  fs_handle_t *fh = (fs_handle_t *)fh0;
+  if(fh->part_count == 1)
+    return write(fh->parts[0].fd, buf, size);
+  return 0;
 }
 
 /**
@@ -361,10 +391,10 @@ fs_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
 }
 
 /**
- * Rmdir (remote directory)
+ * Rmdir (remove directory)
  */
 static int
-fs_rmdir(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
+fs_rmdir(const fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
 {
   if(rmdir(url)) {
     snprintf(errbuf, errlen, "%s", strerror(errno));
@@ -378,7 +408,8 @@ fs_rmdir(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
  * Unlink (remove file)
  */
 static int
-fs_unlink(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
+fs_unlink(const fa_protocol_t *fap, const char *url,
+          char *errbuf, size_t errlen)
 {
   if(unlink(url)) {
     int piece_num,i;
@@ -402,6 +433,25 @@ fs_unlink(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
   return 0;
 }
 
+
+
+/**
+ *
+ */
+static int
+fs_makedirs(struct fa_protocol *fap, const char *url,
+            char *errbuf, size_t errsize)
+{
+
+  int r = makedirs(url);
+
+  if(r) {
+    snprintf(errbuf, errsize, "Unable to create directory: %s",
+             strerror(errno));
+    return -1;
+  }
+  return 0;
+}
 
 /**
  * FS change notification 
@@ -634,6 +684,7 @@ fa_protocol_t fa_protocol_fs = {
   .fap_open  = fs_open,
   .fap_close = fs_close,
   .fap_read  = fs_read,
+  .fap_write = fs_write,
   .fap_seek  = fs_seek,
   .fap_fsize = fs_fsize,
   .fap_stat  = fs_stat,
@@ -649,6 +700,7 @@ fa_protocol_t fa_protocol_fs = {
 #if ENABLE_REALPATH
   .fap_normalize = fs_normalize,
 #endif
+  .fap_makedirs = fs_makedirs,
 };
 
 FAP_REGISTER(fs);

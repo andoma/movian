@@ -2547,7 +2547,8 @@ smb_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
  *
  */
 static int
-smb_unlink(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
+smb_unlink(const fa_protocol_t *fap, const char *url,
+           char *errbuf, size_t errlen)
 {
   return cifs_delete(url, errbuf, errlen, 0);
 }
@@ -2556,7 +2557,8 @@ smb_unlink(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
  *
  */
 static int
-smb_rmdir(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
+smb_rmdir(const fa_protocol_t *fap, const char *url,
+          char *errbuf, size_t errlen)
 {
   return cifs_delete(url, errbuf, errlen, 1);
 }
