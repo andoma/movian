@@ -236,7 +236,7 @@ js_openURL(JSContext *cx, JSObject *obj, uintN argc,
 /**
  *
  */
-static JSFunctionSpec setting_functions[] = {
+static JSFunctionSpec nav_functions[] = {
     JS_FS("openURL", js_openURL, 1, 0, 0),
     JS_FS_END
 };
@@ -251,7 +251,7 @@ js_nav_create(JSContext *cx, prop_t *p)
   JSObject *proto = js_object_from_prop(cx, p);
   JSObject *obj = JS_NewObject(cx, &prop_ref_class, proto, NULL);
   JS_SetPrivate(cx, obj, prop_create_r(p, "eventsink"));
-  JS_DefineFunctions(cx, obj, setting_functions);
+  JS_DefineFunctions(cx, obj, nav_functions);
   return obj;
 }
 
