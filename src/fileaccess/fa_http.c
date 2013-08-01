@@ -2819,11 +2819,27 @@ static fa_protocol_t fa_protocol_webdavs = {
 FAP_REGISTER(webdavs);
 
 
+#define HTTP_TMP_SIZE 16384
 
 typedef struct http_read_aux {
   size_t total;
   fa_load_cb_t *cb;
   void *opaque;
+  char *tmpbuf;
+  char *errbuf;
+  size_t errlen;
+
+  int (*encoded_data)(http_file_t *hf, struct http_read_aux *hra,
+                      const void *data, int size);
+
+  int (*decoded_data)(http_file_t *hf, struct http_read_aux *hra,
+                      const void *data, int size);
+  z_stream zstream;
+
+  void *decoded_opaque;
+
+  void (*decoded_cleanup)(struct http_read_aux *hra);
+
 } http_read_aux_t;
 
 /**
@@ -2849,6 +2865,175 @@ struct http_req_xarg {
   const char *val;
 };
 
+
+/**
+ *
+ */
+static int
+append_buf(http_file_t *hf, struct http_read_aux *hra,
+           const void *data, int size)
+{
+  buf_t *b = hra->decoded_opaque;
+  char *tmp = myrealloc(b->b_ptr, b->b_size + size + 1);
+  if(tmp == NULL) {
+    free(b->b_ptr);
+    snprintf(hra->errbuf, hra->errlen, "out of memory");
+    return -1;
+  }
+
+  b->b_ptr = tmp;
+  memcpy(b->b_ptr + b->b_size, data, size);
+  b->b_size += size;
+  tmp[b->b_size] = 0;
+  return 0;
+}
+
+
+/**
+ *
+ */
+static void
+cleanup_buf(struct http_read_aux *hra)
+{
+  buf_release(hra->decoded_opaque);
+}
+
+
+/**
+ *
+ */
+static int
+append_gzip(http_file_t *hf, struct http_read_aux *hra,
+            const void *data, int size)
+{
+  z_stream *z = &hra->zstream;
+  char tmp[8192];
+  int zr;
+
+  if(size == 0) {
+    // EOF
+    assert(z->avail_in == 0);
+
+    while(1) {
+      z->next_out = (void *)tmp;
+      z->avail_out = sizeof(tmp);
+
+      zr = inflate(z, Z_FINISH);
+      if(zr < 0) {
+        snprintf(hra->errbuf, hra->errlen, "zlib error %d", zr);
+        return -1;
+      }
+      if(zr == Z_STREAM_END)
+        return hra->decoded_data(hf, hra, NULL, 0);
+
+      if(hra->decoded_data(hf, hra, tmp, sizeof(tmp) - z->avail_out))
+        return -1;
+    }
+  }
+
+  z->next_in = (void *)data;
+  z->avail_in = size;
+
+  while(z->avail_in) {
+    z->next_out = (void *)tmp;
+    z->avail_out = sizeof(tmp);
+
+    zr = inflate(z, Z_NO_FLUSH);
+    if(zr < 0) {
+      snprintf(hra->errbuf, hra->errlen, "zlib error %d", zr);
+      return -1;
+    }
+    if(hra->decoded_data(hf, hra, tmp, sizeof(tmp) - z->avail_out))
+      return -1;
+  }
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+http_recv_chunked(http_file_t *hf, http_read_aux_t *hra)
+{
+  char chunkheader[100];
+  http_connection_t *hc = hf->hf_connection;
+
+  while(1) {
+    int remain;
+    if(tcp_read_line(hc->hc_tc, chunkheader, sizeof(chunkheader)) < 0)
+      return -2;
+
+    remain = strtol(chunkheader, NULL, 16);
+    if(remain == 0)
+      break;
+
+    while(remain > 0) {
+      int rsize = MIN(remain, HTTP_TMP_SIZE);
+      if(tcp_read_data(hc->hc_tc, hra->tmpbuf, rsize,
+                       http_request_partial, hra))
+        return -2;
+
+      if(hra->encoded_data(hf, hra, hra->tmpbuf, rsize))
+        return -1;
+
+      remain -= rsize;
+    }
+
+    if(tcp_read_data(hc->hc_tc, chunkheader, 2, NULL, 0))
+      return -2;
+  }
+  hf->hf_rsize = 0;
+  return hra->encoded_data(hf, hra, NULL, 0);
+}
+
+
+/**
+ *
+ */
+static int
+http_recv_until_eof(http_file_t *hf, http_read_aux_t *hra)
+{
+  http_connection_t *hc = hf->hf_connection;
+
+  while(1) {
+    int r = tcp_read_data_nowait(hc->hc_tc, hra->tmpbuf, HTTP_TMP_SIZE);
+    if(r < 0)
+      break;
+
+    if(hra->encoded_data(hf, hra, hra->tmpbuf, r))
+      return -1;
+  }
+  return hra->encoded_data(hf, hra, NULL, 0);
+}
+
+
+/**
+ *
+ */
+static int
+http_recv(http_file_t *hf, http_read_aux_t *hra)
+{
+  http_connection_t *hc = hf->hf_connection;
+  int64_t remain = hf->hf_rsize;
+
+  while(remain > 0) {
+    int rsize = MIN(remain, HTTP_TMP_SIZE);
+
+    if(tcp_read_data(hc->hc_tc, hra->tmpbuf, rsize,
+                     http_request_partial, hra))
+      return -2;
+
+    if(hra->encoded_data(hf, hra, hra->tmpbuf, rsize))
+      return -1;
+
+    remain -= rsize;
+  }
+  hf->hf_rsize = 0;
+  return hra->encoded_data(hf, hra, hra->tmpbuf, 0);
+}
+
+
 /**
  *
  */
@@ -2857,14 +3042,13 @@ http_req(const char *url, ...)
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   htsbuf_queue_t q;
-  int code, r;
+  int code, r = -1;
   int redircount = 0;
   struct http_header_list headers;
   http_read_aux_t hra = {0};
   int tag;
 
   int flags = 0;
-  buf_t **result = NULL;
   char *errbuf = NULL;
   size_t errlen = 0;
   const char *method = NULL;
@@ -2884,6 +3068,8 @@ http_req(const char *url, ...)
 
   va_list ap;
   va_start(ap, url);
+
+  int want_result = 0;
 
   while((tag = va_arg(ap, int)) != 0) {
     switch(tag) {
@@ -2907,7 +3093,17 @@ http_req(const char *url, ...)
       break;
 
     case HTTP_TAG_RESULT_PTR:
-      result = va_arg(ap, buf_t **);
+      assert(hra.decoded_opaque == NULL);
+      assert(want_result == 0);
+      hra.decoded_opaque = calloc(1, sizeof(buf_t));
+      buf_t **ptr = va_arg(ap, buf_t **);
+      *ptr = hra.decoded_opaque;
+      hra.decoded_data = append_buf;
+      hra.decoded_cleanup = cleanup_buf;
+      buf_t *b = hra.decoded_opaque;
+      b->b_refcount = 1;
+      b->b_free = &free;
+      want_result = 1;
       break;
 
     case HTTP_TAG_ERRBUF:
@@ -2952,8 +3148,6 @@ http_req(const char *url, ...)
     }
   }
 
-
-
   if(headers_out != NULL)
     LIST_INIT(headers_out);
   hf->hf_version = 1;
@@ -2963,15 +3157,18 @@ http_req(const char *url, ...)
 
  retry:
 
+  hra.errbuf = errbuf;
+  hra.errlen = errlen;
+
   http_connect(hf, errbuf, errlen);
   if(hf->hf_connection == NULL)
-    goto error;
+    goto cleanup;
 
   http_connection_t *hc = hf->hf_connection;
 
   htsbuf_queue_init(&q, 0);
 
-  const char *m = method ?: postdata ? "POST": (result ? "GET" : "HEAD");
+  const char *m = method ?: postdata ? "POST": (want_result ? "GET" : "HEAD");
 
   htsbuf_append(&q, m, strlen(m));
   htsbuf_append(&q, " ", 1);
@@ -3037,13 +3234,15 @@ http_req(const char *url, ...)
     goto retry;
   }
 
-  int no_content = method == NULL && postdata == NULL && result == NULL;
+  int no_content = method == NULL && postdata == NULL && !want_result;
 
   switch(code) {
   case 200 ... 205:
     if(no_content) {
       hf->hf_rsize = 0;
       http_destroy(hf);
+      if(hra.decoded_cleanup)
+        hra.decoded_cleanup(&hra);
       return 0;
     }
     break;
@@ -3052,13 +3251,15 @@ http_req(const char *url, ...)
     // Not modified
     http_drain_content(hf);
     http_destroy(hf);
+    if(hra.decoded_cleanup)
+      hra.decoded_cleanup(&hra);
     return 304;
 
   case 302:
   case 303:
     postdata = NULL;
     postcontenttype = NULL;
-    method = result ? "GET" : "HEAD";
+    method = want_result ? "GET" : "HEAD";
     // FALLTHRU
   case 301:
   case 307:
@@ -3066,213 +3267,56 @@ http_req(const char *url, ...)
       break;
 
     if(redirect(hf, &redircount, errbuf, errlen, code, !no_content))
-      goto error;
+      goto cleanup;
 
     goto retry;
 
   case 401:
     if(authenticate(hf, errbuf, errlen, NULL, !no_content))
-      goto error;
+      goto cleanup;
     goto retry;
 
   default:
     snprintf(errbuf, errlen, "HTTP error: %d", code);
     http_drain_content(hf);
-    goto error;
+    goto cleanup;
   }
 
-  z_stream z;
   if(hf->hf_content_encoding == HTTP_CE_GZIP) {
-    memset(&z, 0, sizeof(z));
-    inflateInit2(&z, 16+MAX_WBITS);
-  }
-
-  if(hf->hf_chunked_transfer == 0 &&
-     hf->hf_connection_mode == CONNECTION_MODE_CLOSE) {
-    int capacity = 16384;
-    int size = 0;
-    char *mem = malloc(capacity + 1);
-
-    while(1) {
-
-      if(size == capacity) {
-	capacity *= 2;
-	mem = myrealloc(mem, capacity + 1);
-	if(mem == NULL) {
-	  snprintf(errbuf, errlen, "Out of memory (%d)", capacity + 1);
-	  goto zerror;
-	}
-      }
-
-      if(hf->hf_content_encoding == HTTP_CE_GZIP) {
-        char zbuf[2048];
-	r = tcp_read_data_nowait(hc->hc_tc, zbuf, sizeof(zbuf));
-
-	z.next_in = (void *)zbuf;
-	z.avail_in = r > 0 ? r : 0;
-	while(1) {
-
-	  z.next_out = (void *)(mem + size);
-	  z.avail_out = capacity - size;
-
-	  int zr = inflate(&z, r < 0 ? Z_FINISH : Z_NO_FLUSH);
-	  if(zr < 0) {
-	    snprintf(errbuf, errlen, "zlib error %d (connection: close)", zr);
-	    free(mem);
-	    goto zerror;
-	  }
-	  size += (capacity - size) - z.avail_out;
-
-	  if(z.avail_in == 0)
-	    break;
-
-	  capacity *= 2;
-	  mem = myrealloc(mem, capacity + 1);
-	  if(mem == NULL) {
-	    snprintf(errbuf, errlen, "Out of memory (%d)", capacity + 1);
-	    goto zerror;
-	  }
-	}
-
-	if(r < 0)
-	  break;
-
-      } else {
-
-	r = tcp_read_data_nowait(hc->hc_tc, mem + size, capacity - size);
-	if(r < 0)
-	  break;
-	size += r;
-      }
-
-    }
-
-    mem[size] = 0;
-
-    if(result != NULL) {
-      *result = buf_create_and_adopt(size, mem, &free);
-    } else {
-      free(mem);
-    }
-
+    inflateInit2(&hra.zstream, 16+MAX_WBITS);
+    hra.encoded_data = &append_gzip;
+    HF_TRACE(hf, "Inflating content using gzip");
   } else {
-
-    char *buf = NULL;
-    size_t size = 0;
-
-    hra.total = hf->hf_filesize;
-
-    if(hf->hf_chunked_transfer) {
-      char chunkheader[100];
-
-      while(1) {
-	int csize;
-	if(tcp_read_line(hc->hc_tc, chunkheader, sizeof(chunkheader)) < 0)
-	  break;
-
-	csize = strtol(chunkheader, NULL, 16);
-
-	if(csize > 0) {
-	  buf = myrealloc(buf, size + csize + 1);
-	  if(buf == NULL) {
-	    snprintf(errbuf, errlen, "Out of memory (%zd)", size + csize + 1);
-	    goto zerror;
-	  }
-	  if(tcp_read_data(hc->hc_tc, buf + size, csize,
-			   http_request_partial, &hra))
-	    break;
-
-	  size += csize;
-	}
-	if(tcp_read_data(hc->hc_tc, chunkheader, 2, NULL, 0))
-	  break;
-
-	if(csize == 0)
-	  goto done;
-      }
-      snprintf(errbuf, errlen, "Chunked transfer error");
-      free(buf);
-      goto zerror;
-
-    } else {
-
-      size = hf->hf_filesize;
-      buf = mymalloc(hf->hf_filesize + 1);
-      if(buf == NULL) {
-	snprintf(errbuf, errlen, "Out of memory (%"PRId64")", hf->hf_filesize + 1);
-	goto zerror;
-      }
-      r = tcp_read_data(hc->hc_tc, buf, hf->hf_filesize,
-			http_request_partial, &hra);
-      if(r == -1) {
-	snprintf(errbuf, errlen, "HTTP read error");
-	free(buf);
-	goto zerror;
-      }
-    }
-
-  done:
-
-    if(hf->hf_content_encoding == HTTP_CE_GZIP) {
-      z.next_in = (void *)buf;
-      z.avail_in = size;
-
-      z.avail_out = 3 * size;
-      uint8_t *buf2 = z.next_out = malloc(z.avail_out + 1);
-
-      while(1) {
-	int zr = inflate(&z, 0);
-	if(zr < 0) {
-	  snprintf(errbuf, errlen, "zlib error %d (%d %d %"PRId64")", zr,
-		   z.avail_in, z.avail_out, hf->hf_filesize);
-	  free(buf);
-	  free(buf2);
-	  goto zerror;
-	}
-
-	if(z.avail_in == 0)
-	  break;
-
-	if(z.avail_out == 0) {
-	  buf2 = myrealloc(buf2, z.total_out * 2 + 1);
-	  if(buf2 == NULL) {
-	    snprintf(errbuf, errlen, "Out of memory (%"PRId64")",
-		     (int64_t)(z.total_out * 2 + 1));
-	    goto zerror;
-	  }
-	  z.next_out = buf2 + z.total_out;
-	  z.avail_out = z.total_out;
-	}
-      }
-
-      free(buf);
-      buf = (void *)buf2;
-      size = z.total_out;
-    }
-
-    if(buf != NULL)
-      buf[size] = 0;
-    if(result != NULL) {
-      *result = buf_create_and_adopt(size, buf, &free);
-    } else {
-      free(buf);
-    }
+    hra.encoded_data = hra.decoded_data;
   }
 
-  if(hf->hf_content_encoding == HTTP_CE_GZIP)
-    inflateEnd(&z);
+  hra.tmpbuf = malloc(HTTP_TMP_SIZE);
 
-  hf->hf_rsize = 0;
-  http_destroy(hf);
-  return 0;
+  if(hf->hf_chunked_transfer) {
+    HF_TRACE(hf, "Chunked transfer");
+    r = http_recv_chunked(hf, &hra);
+  } else if(hf->hf_rsize == -1) {
+    HF_TRACE(hf, "Reading data until EOF");
+    r = http_recv_until_eof(hf, &hra);
+  } else {
+    HF_TRACE(hf, "Reading %"PRId64" bytes", hf->hf_rsize);
+    r = http_recv(hf, &hra);
+  }
 
- zerror:
+  if(r == -2)
+    snprintf(errbuf, errlen, "Network error");
+
   if(hf->hf_content_encoding == HTTP_CE_GZIP)
-    inflateEnd(&z);
- error:
-  http_destroy(hf);
-  http_headers_free(headers_out);
+    inflateEnd(&hra.zstream);
+
+ cleanup:
+  free(hra.tmpbuf);
+
+  if(r)
+    http_headers_free(headers_out);
   http_headers_free(&headers_in2);
-  return -1;
-
+  http_destroy(hf);
+  if(r && hra.decoded_cleanup)
+    hra.decoded_cleanup(&hra);
+  return r;
 }
