@@ -979,6 +979,7 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("sha1digest",       js_sha1digest, 1, 0, 0),
     JS_FS("xmlrpc",           js_xmlrpc, 3, 0, 0),
     JS_FS("getSubtitleLanguages", js_getsublang, 0, 0, 0),
+    JS_FS("basename",         js_basename, 1, 0, 0),
     JS_FS_END
 };
 
@@ -1169,6 +1170,7 @@ static JSFunctionSpec plugin_functions[] = {
     JS_FS("subscribe",        js_subscribe_global, 2, 0, 0),
     JS_FS("addSubtitleProvider", js_addsubprovider, 1, 0, 0),
     JS_FS("addItemHook",         js_addItemHook, 1, 0, 0),
+    JS_FS("copyFile",         js_copyfile, 2, 0, 0),
     JS_FS_END
 };
 

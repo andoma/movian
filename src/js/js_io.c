@@ -541,6 +541,63 @@ js_probe(JSContext *cx, JSObject *obj, uintN argc,
 }
 
 
+/**
+ *
+ */
+JSBool
+js_basename(JSContext *cx, JSObject *obj, uintN argc,
+            jsval *argv, jsval *rval)
+{
+  const char *url;
+  char tmp[URL_MAX];
+
+  if(!JS_ConvertArguments(cx, argc, argv, "s", &url))
+    return JS_FALSE;
+
+  fa_url_get_last_component(tmp, sizeof(tmp), url);
+
+  *rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, tmp));
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
+JSBool
+js_copyfile(JSContext *cx, JSObject *obj, uintN argc,
+            jsval *argv, jsval *rval)
+{
+  const char *from;
+  const char *to;
+  char path[URL_MAX];
+  char errbuf[256];
+
+  js_plugin_t *jsp = JS_GetPrivate(cx, obj);
+
+  if(!JS_ConvertArguments(cx, argc, argv, "ss", &from, &to))
+    return JS_FALSE;
+
+  if(strchr(to, '/')) {
+    JS_ReportError(cx, "Target file contains '/'");
+    return JS_FALSE;
+  }
+
+  snprintf(path, sizeof(path), "file://%s/plugins/%s/%s",
+           gconf.cache_path, jsp->jsp_id, to);
+
+  TRACE(TRACE_DEBUG, "JS", "Copying file from '%s' to '%s'", from, path);
+
+  if(fa_copy(path, from, errbuf, sizeof(errbuf))) {
+    JS_ReportError(cx, errbuf);
+    return JS_FALSE;
+  }
+
+  *rval = JSVAL_VOID;
+  return JS_TRUE;
+}
+
+
 static struct js_http_auth_list js_http_auths;
 
 
