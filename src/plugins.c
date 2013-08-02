@@ -1470,6 +1470,7 @@ add_view_type(htsmsg_t *store, prop_t *p,
                    SETTING_HTSMSG(id, store, "selectedviews"),
                    SETTING_CALLBACK(pvs_cb, pv),
                    SETTING_OPTION("default", _p("Default")),
+                   SETTING_MUTEX(&plugin_mutex),
                    NULL);
 
   plugin_view_entry_t *pve = calloc(1, sizeof(plugin_view_entry_t));
@@ -1522,6 +1523,9 @@ plugins_view_add(plugin_t *pl,
                  int select_now)
 {
   plugin_view_t *pv;
+
+  hts_mutex_assert(&plugin_mutex);
+
   prop_t *r = prop_create(prop_create(prop_get_global(), "glw"), "views");
   r = prop_create(prop_create(r, type), class);
 
