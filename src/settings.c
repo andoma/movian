@@ -461,6 +461,11 @@ settings_multiopt_callback_ng(void *opaque, prop_event_t event, ...)
         htsmsg_add_str(s->s_store, s->s_id, rstr_get(name));
       setting_save_htsmsg(s);
     }
+
+    if(s->s_kvstore)
+      kv_url_opt_set_deferred(s->s_store_name, KVSTORE_DOMAIN_SETTING, s->s_id,
+                              name ? KVSTORE_SET_STRING : KVSTORE_SET_VOID,
+                              rstr_get(name));
   }
 
   rstr_release(name);
