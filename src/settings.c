@@ -529,6 +529,11 @@ setting_create(int type, prop_t *parent, int flags, ...)
     s->s_val = prop_create_r(s->s_root, "options");
     break;
 
+
+  case SETTING_ACTION:
+    s->s_val = prop_create_r(s->s_root, "action");
+    break;
+
   default:
     abort();
   }
@@ -675,10 +680,11 @@ setting_create(int type, prop_t *parent, int flags, ...)
 
   prop_set(s->s_root, "type", PROP_SET_STRING,
            (const char *[]) {
-             [SETTING_INT]      = "integer",
-               [SETTING_BOOL]   = "bool",
-               [SETTING_STRING] = "string",
+             [SETTING_INT]        = "integer",
+               [SETTING_BOOL]     = "bool",
+               [SETTING_STRING]   = "string",
                [SETTING_MULTIOPT] = "multiopt",
+               [SETTING_ACTION]   = "action",
                }[type]);
 
   switch(type) {
@@ -779,6 +785,16 @@ setting_create(int type, prop_t *parent, int flags, ...)
     s->s_sub =
       prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
                      PROP_TAG_CALLBACK, settings_multiopt_callback_ng, s,
+                     PROP_TAG_ROOT, s->s_val,
+                     PROP_TAG_COURIER, pc,
+                     PROP_TAG_MUTEX, mtx,
+                     NULL);
+    break;
+
+  case SETTING_ACTION:
+    s->s_sub =
+      prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+                     PROP_TAG_CALLBACK, s->s_callback, s->s_opaque,
                      PROP_TAG_ROOT, s->s_val,
                      PROP_TAG_COURIER, pc,
                      PROP_TAG_MUTEX, mtx,

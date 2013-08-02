@@ -126,6 +126,7 @@ enum {
   SETTING_STRING,
   SETTING_BOOL,
   SETTING_MULTIOPT,
+  SETTING_ACTION,
 };
 
 setting_t *setting_create(int type, prop_t *parent, int flags, ...)
