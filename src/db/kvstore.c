@@ -752,7 +752,6 @@ kv_url_opt_set_deferred(const char *url, int domain, const char *key,
 
   case KVSTORE_SET_STRING:
     str = va_arg(ap, const char *);
-    printf("%s\n", str);
     if(str != NULL) {
       kdw->kdw_string = strdup(str);
     } else {
