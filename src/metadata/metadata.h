@@ -360,6 +360,9 @@ void metadb_bind_url_to_prop(void *db, const char *url, struct prop *parent);
 
 void metadb_set_video_restartpos(const char *url, int64_t pos);
 
+void metadb_mark_urls_as(const char **urls, int num_urls, int seen,
+                         int content_type);
+
 rstr_t *metadb_get_album_art(void *db, const char *album, const char *artist);
 
 int metadb_get_artist_pics(void *db, const char *artist, 

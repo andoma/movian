@@ -2778,3 +2778,80 @@ metadb_bind_url_to_prop(void *db, const char *url, prop_t *parent)
     metadb_bind_url_to_prop0(db, url, parent);
   metadb_close(db);
 }
+
+
+/**
+ *
+ */
+void
+metadb_mark_urls_as(const char **urls, int num_urls, int seen,
+                    int content_type)
+{
+  int i, j;
+  void *db;
+
+  if((db = metadb_get()) == NULL)
+    return;
+ again:
+  if(db_begin(db)) {
+    metadb_close(db);
+    return;
+  }
+
+  for(j = 0; j < num_urls; j++) {
+    const char *url = urls[j];
+
+    for(i = 0; i < 2; i++) {
+      sqlite3_stmt *stmt;
+      int rc;
+      if(!seen) {
+        rc = db_prepare(db, &stmt,
+                        "UPDATE item "
+                        "SET playcount = 0 "
+                        "WHERE url=?1"
+                        );
+
+      } else {
+
+        rc = db_prepare(db, &stmt,
+                        i == 0 ?
+                        "UPDATE item "
+                        "SET playcount = 1, "
+                        "lastplay = ?2 "
+                        "WHERE url=?1 AND playcount = 0"
+                        :
+                        "INSERT INTO item "
+                        "(url, contenttype, 1, lastplay) "
+                        "VALUES "
+                        "(?1, ?3, ?2)"
+                        );
+      }
+
+      if(rc != SQLITE_OK) {
+        db_rollback(db);
+        metadb_close(db);
+        return;
+      }
+
+      sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
+      sqlite3_bind_int(stmt, 2, time(NULL));
+      sqlite3_bind_int(stmt, 3, content_type);
+      rc = db_step(stmt);
+      sqlite3_finalize(stmt);
+      if(rc == SQLITE_LOCKED) {
+        db_rollback_deadlock(db);
+        goto again;
+      }
+      if(!seen)
+        break;
+      if(i == 0 && rc == SQLITE_DONE && sqlite3_changes(db) > 0)
+        break;
+    }
+  }
+  db_commit(db);
+  hts_mutex_lock(&mip_mutex);
+  for(j = 0; j < num_urls; j++)
+    mip_update_by_url(db, urls[j]);
+  hts_mutex_unlock(&mip_mutex);
+  metadb_close(db);
+}
