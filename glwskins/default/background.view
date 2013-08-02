@@ -1,11 +1,21 @@
+
+$ui.active_background =
+  $nav.currentpage.model.metadata.background ??
+  $nav.currentpage.glw.background ??
+  $ui.background;
+
+$ui.active_background_alpha =
+  iir(1 - ($ui.fullwindow || $ui.screensaverActive), 16) *
+  select(!isVoid($nav.currentpage.model.metadata.background),
+         $nav.currentpage.model.metadata.backgroundAlpha ?? 1,
+
+         select(!isVoid($nav.currentpage.glw.background),
+                $nav.currentpage.glw.backgroundAlpha ?? 1,
+
+                1));
+
 widget(backdrop, {
-
-  source: $nav.currentpage.model.metadata.background ?? 
-    $nav.currentpage.glw.background ??
-    $ui.background;
-
-  color: iir(1 - ($ui.fullwindow || $ui.screensaverActive), 16) * 
-    ($nav.currentpage.model.metadata.backgroundAlpha ??
-     $nav.currentpage.glw.backgroundAlpha ??
-     1);
+  hidden: $ui.nobackground;
+  source: $ui.active_background;
+  color: $ui.active_background_alpha;
 });

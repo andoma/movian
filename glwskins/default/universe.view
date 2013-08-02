@@ -21,7 +21,6 @@ onEvent(sysinfo, {
 widget(container_z, {
 
   widget(loader, {
-    hidden: $ui.nobackground;
     source: selectedElement(vectorize($global.glw.views.standard.background))
       ?? "background.view";
     effect: blend;
