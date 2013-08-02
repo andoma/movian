@@ -414,7 +414,8 @@ int64_t metadb_insert_videoitem(void *db, const char *url, int ds_id,
 
 int metadb_get_videoinfo(void *db, const char *url,
 			 struct metadata_source_queue *sources,
-			 int *fixed_ds, metadata_t **mdp);
+			 int *fixed_ds, metadata_t **mdp,
+                         int only_preferred);
 
 int64_t metadb_get_videoitem(void *db, const char *url);
 
@@ -453,7 +454,8 @@ metadata_lazy_video_t *metadata_bind_video_info(rstr_t *url, rstr_t *filename,
 						rstr_t *parent, int lonely,
 						int passive,
 						int year, int season,
-						int episode);
+						int episode,
+                                                int manual);
 
 void mlv_unbind(metadata_lazy_video_t *mlv, int cleanup);
 

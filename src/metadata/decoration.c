@@ -28,6 +28,11 @@
 #include "fileaccess/fileaccess.h"
 #include "settings.h"
 
+
+#define DECO_MODE_AUTO   0
+#define DECO_MODE_MANUAL 1
+#define DECO_MODE_OFF    2
+
 LIST_HEAD(deco_browse_list, deco_browse);
 TAILQ_HEAD(deco_item_queue, deco_item);
 LIST_HEAD(deco_item_list, deco_item);
@@ -86,9 +91,9 @@ struct deco_browse {
 
   int db_lonely_video_item;
 
-  int db_enabled;
+  int db_mode;
 
-  struct setting *db_setting_enabled;
+  struct setting *db_setting_mode;
   struct setting *db_setting_mark_all_as_seen;
   struct setting *db_setting_mark_all_as_unseen;
 };
@@ -166,6 +171,11 @@ analyze_video(deco_item_t *di)
 
   deco_browse_t *db = di->di_db;
 
+  if(db->db_mode == DECO_MODE_OFF)
+    return;
+
+  int manual = db->db_mode == DECO_MODE_MANUAL;
+
   rstr_t *fname;
 
   if(db->db_flags & DECO_FLAGS_RAW_FILENAMES) {
@@ -179,7 +189,7 @@ analyze_video(deco_item_t *di)
 					di->di_duration,
 					di->di_root, db->db_title,
 					db->db_lonely_video_item, 0,
-					-1, -1, -1);
+					-1, -1, -1, manual);
   rstr_release(fname);
 }
 
@@ -238,7 +248,7 @@ stem_analysis(deco_browse_t *db, deco_stem_t *ds)
 static void
 update_contents(deco_browse_t *db)
 {
-  int mask = db->db_enabled ? db->db_contents_mask : 0;
+  int mask = db->db_mode == DECO_MODE_AUTO ? db->db_contents_mask : 0;
 
   if(!(mask & DB_CONTENTS_ALBUM)) {
     prop_nf_pred_remove(db->db_pnf, db->db_audio_filter);
@@ -940,7 +950,7 @@ deco_browse_destroy(deco_browse_t *db)
 {
   prop_nf_release(db->db_pnf);
   deco_browse_clear(db);
-  setting_destroy(db->db_setting_enabled);
+  setting_destroy(db->db_setting_mode);
   setting_destroy(db->db_setting_mark_all_as_seen);
   setting_destroy(db->db_setting_mark_all_as_unseen);
   prop_unsubscribe(db->db_sub);
@@ -1072,31 +1082,38 @@ mark_all_as_unseen(void *opaque)
  *
  */
 static void
-set_enabled(void *opaque, int v)
+set_mode(void *opaque, const char *str)
 {
   deco_browse_t *db = opaque;
   deco_item_t *di;
 
-  if(v == db->db_enabled)
+  int v = atoi(str);
+
+  if(v == db->db_mode)
     return;
 
-  db->db_enabled = v;
+  db->db_mode = v;
 
-  if(db->db_enabled) {
+  LIST_FOREACH(di, &db->db_items_per_ct[CONTENT_VIDEO], di_type_link) {
+    if(di->di_mlv != NULL) {
+      mlv_unbind(di->di_mlv, 1);
+      di->di_mlv = NULL;
+    }
+  }
+
+  switch(v) {
+
+  case DECO_MODE_AUTO:
     deco_pendings = 1;
     db->db_pending_flags |= DB_PENDING_DEFERRED_FULL_ANALYSIS;
-
-    LIST_FOREACH(di, &db->db_items_per_ct[CONTENT_VIDEO], di_type_link) {
+    // FALLTHRU
+  case DECO_MODE_MANUAL:
+    LIST_FOREACH(di, &db->db_items_per_ct[CONTENT_VIDEO], di_type_link)
       analyze_video(di);
-    }
+    break;
 
-  } else {
-    LIST_FOREACH(di, &db->db_items_per_ct[CONTENT_VIDEO], di_type_link) {
-      if(di->di_mlv != NULL) {
-        mlv_unbind(di->di_mlv, 1);
-        di->di_mlv = NULL;
-      }
-    }
+  case DECO_MODE_OFF:
+    break;
   }
   update_contents(db);
 }
@@ -1118,7 +1135,7 @@ decorated_browse_create(prop_t *model, struct prop_nf *pnf, prop_t *items,
 
   db->db_sub =
     prop_subscribe(flags & DECO_FLAGS_NO_AUTO_DESTROY ?
-                   PROP_SUB_TRACK_DESTROY : 0,
+                   0 : PROP_SUB_TRACK_DESTROY,
                    PROP_TAG_CALLBACK, deco_browse_node_cb, db,
                    PROP_TAG_ROOT, items,
                    PROP_TAG_COURIER, deco_courier,
@@ -1133,14 +1150,16 @@ decorated_browse_create(prop_t *model, struct prop_nf *pnf, prop_t *items,
 
   prop_t *options = prop_create(model, "options");
 
-  db->db_setting_enabled =
-    setting_create(SETTING_BOOL, options,
+  db->db_setting_mode =
+    setting_create(SETTING_MULTIOPT, options,
                    SETTINGS_INITIAL_UPDATE | SETTINGS_RAW_NODES,
-                   SETTING_TITLE(_p("Metadata lookup")),
-                   SETTING_VALUE(1),
-                   SETTING_KVSTORE(db->db_url, "metadatadecoration"),
+                   SETTING_TITLE(_p("Metadata mode")),
+                   SETTING_KVSTORE(db->db_url, "metadatamode"),
                    SETTING_COURIER(deco_courier),
-                   SETTING_CALLBACK(set_enabled, db),
+                   SETTING_CALLBACK(set_mode, db),
+                   SETTING_OPTION("0", _p("Automatic")),
+                   SETTING_OPTION("1", _p("Manual")),
+                   SETTING_OPTION("2", _p("Off")),
                    NULL);
 
   db->db_setting_mark_all_as_seen =
@@ -1191,7 +1210,7 @@ deco_thread(void *aux)
       deco_browse_t *db;
 
       LIST_FOREACH(db, &deco_browses, db_link) {
-	if(db->db_pending_flags && db->db_enabled) {
+	if(db->db_pending_flags && db->db_mode == DECO_MODE_AUTO) {
 
 	  if(db->db_pending_flags & DB_PENDING_DEFERRED_ALBUM_ANALYSIS)
 	    album_analysis(db);

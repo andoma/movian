@@ -1867,7 +1867,8 @@ metadb_get_videoitem(void *db, const char *url)
 int
 metadb_get_videoinfo(void *db, const char *url,
 		     struct metadata_source_queue *sources,
-		     int *fixed_ds, metadata_t **mdp)
+		     int *fixed_ds, metadata_t **mdp,
+                     int only_preferred)
 {
   int rc;
   sqlite3_stmt *sel;
@@ -1903,6 +1904,11 @@ metadb_get_videoinfo(void *db, const char *url,
 
   if(fixed_ds)
     *fixed_ds = ds_id;
+
+  if(only_preferred && ds_id == 0) {
+    *mdp = NULL;
+    return 0;
+  }
 
   rc = db_prepare(db, &sel,
 		  "SELECT v.id, v.title, v.tagline, v.description, v.year, "

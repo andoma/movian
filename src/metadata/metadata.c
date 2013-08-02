@@ -678,7 +678,8 @@ struct metadata_lazy_video {
   unsigned char mlv_type;
   unsigned char mlv_lonely : 1;
   unsigned char mlv_passive : 1;
-  unsigned char mlv_qtype : 6;
+  unsigned char mlv_manual : 1;
+  unsigned char mlv_qtype : 5;
   union {
     int16_t mlv_season;
     int16_t mlv_year;
@@ -1007,7 +1008,8 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
   }
 
   if(!refresh) {
-    r = metadb_get_videoinfo(db, rstr_get(mlv->mlv_url), msl, &fixed_ds, &md);
+    r = metadb_get_videoinfo(db, rstr_get(mlv->mlv_url), msl, &fixed_ds, &md,
+                             mlv->mlv_manual);
     if(r) {
       return r;
     }
@@ -1018,7 +1020,8 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
 
   prop_set(mlv->mlv_m, "loading", PROP_SET_INT, 1);
 
-  if(md == NULL || !md->md_preferred) {
+
+  if(!mlv->mlv_manual && (md == NULL || !md->md_preferred)) {
 
     TAILQ_FOREACH(ms, &metadata_sources[mlv->mlv_type], ms_link) {
 
@@ -1209,7 +1212,8 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
       TRACE(TRACE_DEBUG, "METADATA", "Permanent error for %s",
 	    rstr_get(mlv->mlv_url));
 
-    r = metadb_get_videoinfo(db, rstr_get(mlv->mlv_url), msl, &fixed_ds, &md);
+    r = metadb_get_videoinfo(db, rstr_get(mlv->mlv_url), msl, &fixed_ds, &md,
+                             0);
     if(r) {
       prop_set(mlv->mlv_m, "loading", PROP_SET_INT, 0);
       return r;
@@ -1411,9 +1415,11 @@ load_sources(metadata_lazy_video_t *mlv)
   prop_t *c, *p = prop_create_r(mlv->mlv_source_opt, "options");
   int cur = metadb_item_get_preferred_ds(rstr_get(mlv->mlv_url));
 
-  c = prop_create_root(NULL);
-  prop_link(_p("Automatic"), prop_create(c, "title"));
-  pv = prop_vec_append(pv, c);
+  if(!mlv->mlv_manual) {
+    c = prop_create_root(NULL);
+    prop_link(_p("Automatic"), prop_create(c, "title"));
+    pv = prop_vec_append(pv, c);
+  }
 
   TAILQ_FOREACH(ms, &metadata_sources[mlv->mlv_type], ms_link) {
     if(!ms->ms_enabled)
@@ -1428,7 +1434,7 @@ load_sources(metadata_lazy_video_t *mlv)
   c = prop_create_root("1");
   prop_link(_p("None"), prop_create(c, "title"));
   pv = prop_vec_append(pv, c);
-  if(cur == 1)
+  if(cur == 1 || (mlv->mlv_manual && cur == 0))
     active = prop_ref_inc(c);
 
   prop_destroy_childs(p);
@@ -1936,7 +1942,8 @@ metadata_bind_video_info(rstr_t *url, rstr_t *filename,
 			 rstr_t *imdb_id, float duration,
 			 prop_t *root,
 			 rstr_t *folder, int lonely, int passive,
-			 int year, int season, int episode)
+			 int year, int season, int episode,
+                         int manual)
 {
   metadata_lazy_video_t *mlv = mlp_alloc(&mlc_video);
 
@@ -1948,6 +1955,7 @@ metadata_bind_video_info(rstr_t *url, rstr_t *filename,
   mlv->mlv_type = METADATA_TYPE_VIDEO;
   mlv->mlv_lonely = lonely;
   mlv->mlv_passive = passive;
+  mlv->mlv_manual = manual;
   mlv->mlv_root = prop_ref_inc(root);
   mlv->mlv_m = prop_create_r(root, "metadata");
 
@@ -2073,7 +2081,7 @@ metadata_get_video_data(const char *url)
   void *db = metadb_get();
   metadata_t *md;
 
-  int r = metadb_get_videoinfo(db, url, NULL, NULL, &md);
+  int r = metadb_get_videoinfo(db, url, NULL, NULL, &md, 0);
   metadb_close(db);
   if(r)
     return NULL;

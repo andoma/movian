@@ -600,7 +600,8 @@ js_item_bindVideoMetadata(JSContext *cx, JSObject *obj,
 
   ji->ji_mlv =
     metadata_bind_video_info(ji->ji_url, title, imdb, duration,
-			     ji->ji_root, NULL, 0, 0, year, season, episode);
+			     ji->ji_root, NULL, 0, 0, year, season, episode,
+                             0);
   rstr_release(imdb);
   rstr_release(title);
   
