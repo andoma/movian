@@ -30,11 +30,6 @@ typedef void (settings_saver_t)(void *opaque, htsmsg_t *htsmsg);
 struct setting;
 typedef struct setting setting_t;
 
-typedef struct settings_multiopt {
-  const char *id;
-  const char *title;
-  const char *icon;
-} settings_multiopt_t;
 
 prop_t *settings_add_dir(prop_t *parent, prop_t *title,
 			 const char *subtype, const char *icon,
