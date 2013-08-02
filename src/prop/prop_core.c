@@ -3509,6 +3509,29 @@ prop_unselect_ex(prop_t *parent, prop_sub_t *skipme)
  *
  */
 void
+prop_select_by_value_ex(prop_t *p, const char *name, prop_sub_t *skipme)
+{
+  hts_mutex_lock(&prop_mutex);
+
+  if(p->hp_type == PROP_DIR) {
+    prop_t *c;
+    TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link)
+      if(c->hp_name != NULL && !strcmp(c->hp_name, name))
+        break;
+
+    prop_notify_child(c, p, PROP_SELECT_CHILD, skipme, 0);
+    p->hp_selected = c;
+  }
+  hts_mutex_unlock(&prop_mutex);
+}
+
+
+
+
+/**
+ *
+ */
+void
 prop_suggest_focus(prop_t *p)
 {
   prop_t *parent;

@@ -336,6 +336,10 @@ void prop_unselect_ex(prop_t *parent, prop_sub_t *skipme);
 
 #define prop_unselect(parent) prop_unselect_ex(parent, NULL)
 
+void prop_select_by_value_ex(prop_t *p, const char *name, prop_sub_t *skipme);
+
+#define prop_select_by_value(p, name) prop_select_by_value_ex(p, name, NULL)
+
 void prop_suggest_focus(prop_t *p);
 
 void prop_destroy_childs(prop_t *parent);

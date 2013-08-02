@@ -69,7 +69,7 @@ typedef struct js_setting {
   LIST_ENTRY(js_setting) jss_link;
 
   char *jss_key;
-
+  char jss_freezed;
 } js_setting_t;
 
 
@@ -204,8 +204,10 @@ settings_update(JSContext *cx, js_setting_t *jss, jsval v)
 {
   jsval cb, *argv, result;
   void *mark;
+  jss->jss_freezed = 1;
   JS_SetProperty(cx, JSVAL_TO_OBJECT(jss->jss_obj), "value", &v);
-  
+  jss->jss_freezed = 0;
+
   JS_GetProperty(cx, JSVAL_TO_OBJECT(jss->jss_obj), "callback", &cb);
   argv = JS_PushArguments(cx, &mark, "v", v);
   JS_CallFunctionValue(cx, NULL, cb, 1, argv, &result);
@@ -271,6 +273,56 @@ js_action_function(void *opaque, prop_event_t event, ...)
   JS_CallFunctionValue(cx, NULL, cb, 0, NULL, &result);
 }
 
+static JSBool
+jss_set_value(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
+{
+  jsval v = *vp;
+  js_setting_t *jss = JS_GetPrivate(cx, obj);
+
+  if(jss->jss_freezed)
+    return JS_TRUE;
+
+  assert(jss->jss_s != NULL);
+
+  prop_t *p = settings_get_value(jss->jss_s);
+
+  JSBool b;
+  int32 i32;
+  JSString *str;
+
+  // We need to be a bit more strict about value types here so
+  // it's not possible to just use js_prop_set_from_jsval()
+
+  switch(settings_get_type(jss->jss_s)) {
+  case SETTING_INT:
+    if(!JS_ValueToInt32(cx, v, &i32))
+      return JS_FALSE;
+    prop_set_int(p, i32);
+    break;
+
+  case SETTING_BOOL:
+    if(!JS_ValueToBoolean(cx, v, &b))
+      return JS_FALSE;
+    prop_set_int(p, b);
+    break;
+
+  case SETTING_STRING:
+    str = JS_ValueToString(cx, v);
+    if(str == NULL)
+      return JS_FALSE;
+    prop_set_string(p, JS_GetStringBytes(str));
+    break;
+
+  case SETTING_MULTIOPT:
+    str = JS_ValueToString(cx, v);
+    if(str == NULL)
+      return JS_FALSE;
+    prop_select_by_value(p, JS_GetStringBytes(str));
+    break;
+  }
+  return JS_TRUE;
+}
+
 
 /**
  *
@@ -300,10 +352,14 @@ jss_create(JSContext *cx, JSObject *obj, const char *id, jsval *rval,
   jss->jss_obj = OBJECT_TO_JSVAL(JS_DefineObject(cx, obj, id,
 						 &setting_class, NULL, 0));
   *rval = jss->jss_obj;
-  JS_SetPrivate(cx, JSVAL_TO_OBJECT(jss->jss_obj), jss);
+  JSObject *o = JSVAL_TO_OBJECT(jss->jss_obj);
+  JS_SetPrivate(cx, o, jss);
 
   jsval v = OBJECT_TO_JSVAL(func);
-  JS_SetProperty(cx, JSVAL_TO_OBJECT(jss->jss_obj), "callback", &v);
+  JS_SetProperty(cx, o, "callback", &v);
+
+  JS_DefineProperty(cx, o, "value", JSVAL_NULL,
+		    NULL, jss_set_value, JSPROP_PERMANENT);
   return jss;
 }
 
@@ -806,11 +862,13 @@ js_createSettings(JSContext *cx, JSObject *obj, uintN argc,
   robj = JS_NewObjectWithGivenProto(cx, &setting_group_class, NULL, obj);
   jsg->jsg_val = *rval = OBJECT_TO_JSVAL(robj);
   JS_AddNamedRoot(cx, &jsg->jsg_val, "jsg");
-  
   JS_SetPrivate(cx, robj, jsg);
 
-
   JS_DefineFunctions(cx, robj, setting_functions);
+
+  jsval val = OBJECT_TO_JSVAL(js_object_from_prop(cx, jsg->jsg_root));
+  JS_SetProperty(cx, robj, "properties", &val);
+
   jsg->jsg_frozen = 0;
   return JS_TRUE;
 }
