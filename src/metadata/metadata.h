@@ -432,7 +432,7 @@ typedef struct deco_browse deco_browse_t;
 
 deco_browse_t *decorated_browse_create(struct prop *model, struct prop_nf *pnf,
                                        struct prop *items, rstr_t *title,
-                                       int flags);
+                                       int flags, const char *url);
 
 // Use if DECO_FLAGS_NO_AUTO_DESTROY
 void decorated_browse_destroy(deco_browse_t *db);
@@ -452,7 +452,7 @@ metadata_lazy_video_t *metadata_bind_video_info(rstr_t *url, rstr_t *filename,
 						int year, int season,
 						int episode);
 
-void mlv_unbind(metadata_lazy_video_t *mlv);
+void mlv_unbind(metadata_lazy_video_t *mlv, int cleanup);
 
 void mlv_set_imdb_id(metadata_lazy_video_t *mlv, rstr_t *imdb_id);
 

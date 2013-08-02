@@ -688,14 +688,38 @@ struct metadata_lazy_video {
 };
 
 
+/**
+ *
+ */
+static void
+mlv_cleanup(metadata_lazy_video_t *mlv)
+{
+  prop_set(mlv->mlv_m, "source",       PROP_SET_VOID);
+  prop_set(mlv->mlv_m, "icon",         PROP_SET_VOID);
+  prop_set(mlv->mlv_m, "tagline",      PROP_SET_VOID);
+  prop_set(mlv->mlv_m, "description",  PROP_SET_VOID);
+  prop_set(mlv->mlv_m, "backdrop",     PROP_SET_VOID);
+  prop_set(mlv->mlv_m, "genre",        PROP_SET_VOID);
+  prop_set(mlv->mlv_m, "year",         PROP_SET_VOID);
+  prop_set(mlv->mlv_m, "rating",       PROP_SET_VOID);
+  prop_set(mlv->mlv_m, "rating_count", PROP_SET_VOID);
+  prop_set(mlv->mlv_m, "vtype",        PROP_SET_VOID);
+}
+
+
+
 
 /**
  *
  */
 void
-mlv_unbind(metadata_lazy_video_t *mlv)
+mlv_unbind(metadata_lazy_video_t *mlv, int cleanup)
 {
   hts_mutex_lock(&metadata_mutex);
+  if(cleanup) {
+    mlv_cleanup(mlv);
+    prop_set(mlv->mlv_m, "title", PROP_SET_RSTRING, mlv->mlv_filename);
+  }
   mlp_destroy(&mlv->mlv_mlp);
   hts_mutex_unlock(&metadata_mutex);
 }
@@ -941,7 +965,6 @@ set_cast_n_crew(prop_t *p, metadata_t *md)
   set_people(p2, &md->md_crew, 1);
   prop_ref_dec(p2);
 }
-
 
 
 /**
@@ -1282,21 +1305,10 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
 
       if(mlv->mlv_m != NULL) {
 
-        prop_set(mlv->mlv_m, "source",      PROP_SET_VOID);
-        prop_set(mlv->mlv_m, "icon",        PROP_SET_VOID);
-        prop_set(mlv->mlv_m, "tagline",     PROP_SET_VOID);
-        prop_set(mlv->mlv_m, "description", PROP_SET_VOID);
-        prop_set(mlv->mlv_m, "backdrop",    PROP_SET_VOID);
-        prop_set(mlv->mlv_m, "genre",       PROP_SET_VOID);
-        prop_set(mlv->mlv_m, "year",        PROP_SET_VOID);
-        prop_set(mlv->mlv_m, "rating",      PROP_SET_VOID);
-        prop_set(mlv->mlv_m, "rating_count",PROP_SET_VOID);
-        prop_set(mlv->mlv_m, "vtype",       PROP_SET_VOID);
+        mlv_cleanup(mlv);
 
         title = title ?: rstr_dup(custom_title ?: mlv->mlv_filename);
-
         mlv->mlv_dsid = 0;
-
         build_info_text(mlv, NULL);
       }
     }

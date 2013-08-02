@@ -1081,7 +1081,7 @@ set_only_supported_files(void *opaque, prop_event_t event, ...)
     val = va_arg(ap, int);
     kv_url_opt_set(s->s_url, KVSTORE_DOMAIN_SYS, "supportedfiles",
 		   KVSTORE_SET_INT, val);
-     break;
+    break;
 
   default:
     break;
@@ -1129,7 +1129,8 @@ browse_as_dir(scanner_t *s)
   s->s_db =
     decorated_browse_create(s->s_model, s->s_pnf, s->s_nodes, s->s_title,
                             DECO_FLAGS_RAW_FILENAMES |
-                            DECO_FLAGS_NO_AUTO_DESTROY);
+                            DECO_FLAGS_NO_AUTO_DESTROY, 
+                            s->s_url);
 }
 
 /**

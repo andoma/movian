@@ -293,7 +293,7 @@ item_finalize(JSContext *cx, JSObject *obj)
   prop_ref_dec(ji->ji_root);
   rstr_release(ji->ji_url);
   if(ji->ji_mlv != NULL)
-    mlv_unbind(ji->ji_mlv);
+    mlv_unbind(ji->ji_mlv, 0);
   free(ji);
 }
 
@@ -596,7 +596,7 @@ js_item_bindVideoMetadata(JSContext *cx, JSObject *obj,
   int duration  = js_prop_int_or_default(cx, o, "duration", 0);
 
   if(ji->ji_mlv != NULL)
-    mlv_unbind(ji->ji_mlv);
+    mlv_unbind(ji->ji_mlv, 0);
 
   ji->ji_mlv =
     metadata_bind_video_info(ji->ji_url, title, imdb, duration,

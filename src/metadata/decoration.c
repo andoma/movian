@@ -24,7 +24,9 @@
 #include "prop/prop.h"
 #include "prop/prop_nodefilter.h"
 #include "db/db_support.h"
+#include "db/kvstore.h"
 #include "fileaccess/fileaccess.h"
+#include "settings.h"
 
 LIST_HEAD(deco_browse_list, deco_browse);
 TAILQ_HEAD(deco_item_queue, deco_item);
@@ -43,11 +45,15 @@ static int deco_pendings;
  */
 struct deco_browse {
   LIST_ENTRY(deco_browse) db_link;
+  char *db_url;
+
   prop_sub_t *db_sub;
+  prop_sub_t *db_sub_del;
   struct deco_item_queue db_items;
 
   prop_t *db_prop_contents;
   prop_t *db_prop_model;
+  prop_t *db_prop_items;
 
   int db_total;
   int db_types[CONTENT_num];
@@ -81,6 +87,10 @@ struct deco_browse {
   int db_flags;
 
   int db_lonely_video_item;
+
+  int db_enabled;
+
+  struct setting *db_enabled_setting;
 };
 
 
@@ -151,12 +161,9 @@ static void load_nfo(deco_item_t *di);
 static void
 analyze_video(deco_item_t *di)
 {
-  if(di->di_mlv != NULL)
+  if(di->di_mlv != NULL || di->di_url == NULL || di->di_filename == NULL)
     return;
 
-  if(di->di_url == NULL || di->di_filename == NULL)
-    return;
-  
   deco_browse_t *db = di->di_db;
 
   rstr_t *fname;
@@ -857,19 +864,18 @@ deco_browse_add_nodes(deco_browse_t *db, prop_vec_t *pv, deco_item_t *before)
   }
 }
 
-		     
 
 /**
  *
  */
 static void
-deco_item_destroy(deco_browse_t *db, deco_item_t *di)
+deco_item_destroy(deco_browse_t *db, deco_item_t *di, int cleanup)
 {
   if(di->di_ds != NULL) {
     LIST_REMOVE(di, di_stem_link);
     stem_release(di->di_ds);
   }
-  
+
   LIST_REMOVE(di, di_type_link);
   db->db_types[di->di_type]--;
   db->db_total--;
@@ -891,9 +897,9 @@ deco_item_destroy(deco_browse_t *db, deco_item_t *di)
   rstr_release(di->di_artist);
   rstr_release(di->di_url);
   rstr_release(di->di_filename);
-  
+
   if(di->di_mlv != NULL)
-    mlv_unbind(di->di_mlv);
+    mlv_unbind(di->di_mlv, cleanup);
 
   free(di);
 }
@@ -904,7 +910,7 @@ static void
 deco_browse_del_node(deco_browse_t *db, deco_item_t *di)
 {
   db->db_pending_flags |= DB_PENDING_DEFERRED_FULL_ANALYSIS;
-  deco_item_destroy(db, di);
+  deco_item_destroy(db, di, 0);
   deco_pendings = 1;
 }
 
@@ -913,13 +919,13 @@ deco_browse_del_node(deco_browse_t *db, deco_item_t *di)
  *
  */
 static void
-deco_browse_clear(deco_browse_t *db)
+deco_browse_clear(deco_browse_t *db, int cleanup)
 {
   deco_item_t *di;
 
   while((di = TAILQ_FIRST(&db->db_items)) != NULL) {
     prop_tag_clear(di->di_root, db);
-    deco_item_destroy(db, di);
+    deco_item_destroy(db, di, cleanup);
   }
 }
 
@@ -931,13 +937,17 @@ static void
 deco_browse_destroy(deco_browse_t *db)
 {
   prop_nf_release(db->db_pnf);
-  deco_browse_clear(db);
+  deco_browse_clear(db, 0);
+  setting_destroy(db->db_enabled_setting);
   prop_unsubscribe(db->db_sub);
+  prop_unsubscribe(db->db_sub_del);
   prop_ref_dec(db->db_prop_contents);
   prop_ref_dec(db->db_prop_model);
+  prop_ref_dec(db->db_prop_items);
   rstr_release(db->db_imdb_id);
   LIST_REMOVE(db, db_link);
   rstr_release(db->db_title);
+  free(db->db_url);
   free(db);
 }
 
@@ -987,7 +997,7 @@ deco_browse_node_cb(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_SET_VOID:
-    deco_browse_clear(db);
+    deco_browse_clear(db, 0);
     break;
 
   case PROP_DESTROYED:
@@ -1004,6 +1014,16 @@ deco_browse_node_cb(void *opaque, prop_event_t event, ...)
 /**
  *
  */
+static void
+deco_destroy_cb(void *opaque, prop_sub_t *s)
+{
+  deco_browse_destroy(opaque);
+}
+
+
+/**
+ *
+ */
 void
 decorated_browse_destroy(deco_browse_t *db)
 {
@@ -1012,31 +1032,93 @@ decorated_browse_destroy(deco_browse_t *db)
   hts_mutex_unlock(&deco_mutex);
 }
 
+
+/**
+ *
+ */
+static void
+set_enabled(void *opaque, int v)
+{
+  deco_browse_t *db = opaque;
+
+  if(v == db->db_enabled)
+    return;
+
+  db->db_enabled = v;
+
+  if(db->db_enabled) {
+    db->db_sub = prop_subscribe(0,
+                                PROP_TAG_CALLBACK, deco_browse_node_cb, db,
+                                PROP_TAG_ROOT, db->db_prop_items,
+                                PROP_TAG_COURIER, deco_courier,
+                                NULL);
+  } else {
+
+    db->db_current_contents = 0;
+    prop_set_void(db->db_prop_contents);
+    prop_nf_sort(db->db_pnf, NULL, 0, 1, NULL, 0);
+    prop_nf_sort(db->db_pnf, NULL, 0, 2, NULL, 0);
+
+    deco_browse_clear(db, 1);
+    prop_unsubscribe(db->db_sub);
+    db->db_sub = NULL;
+  }
+}
+
+
+/**
+ *
+ */
+static void
+add_enabled_opt(deco_browse_t *db, prop_t *model)
+{
+  prop_t *parent = prop_create(model, "options");
+
+  db->db_enabled_setting =
+    setting_create(SETTING_BOOL, parent,
+                   SETTINGS_INITIAL_UPDATE | SETTINGS_RAW_NODES,
+                   SETTING_TITLE(_p("Metadata lookup")),
+                   SETTING_VALUE(1),
+                   SETTING_KVSTORE(db->db_url, "metadatadecoration"),
+                   SETTING_COURIER(deco_courier),
+                   SETTING_CALLBACK(set_enabled, db),
+                   NULL);
+}
+
+
 /**
  *
  */
 deco_browse_t *
 decorated_browse_create(prop_t *model, struct prop_nf *pnf, prop_t *items,
-			rstr_t *title, int flags)
+			rstr_t *title, int flags, const char *url)
 {
-  hts_mutex_lock(&deco_mutex);
 
   deco_browse_t *db = calloc(1, sizeof(deco_browse_t));
+  db->db_url = strdup(url);
   TAILQ_INIT(&db->db_items);
-  db->db_sub = prop_subscribe(flags & DECO_FLAGS_NO_AUTO_DESTROY ? 0 :
-                              PROP_SUB_TRACK_DESTROY,
-			      PROP_TAG_CALLBACK, deco_browse_node_cb, db,
-			      PROP_TAG_ROOT, items,
-			      PROP_TAG_COURIER, deco_courier,
-			      NULL);
 
+  hts_mutex_lock(&deco_mutex);
+
+  if(!(flags & DECO_FLAGS_NO_AUTO_DESTROY)) {
+    db->db_sub_del =
+      prop_subscribe(PROP_SUB_TRACK_DESTROY,
+                     PROP_TAG_CALLBACK_DESTROYED, deco_destroy_cb, db,
+                     PROP_TAG_ROOT, model,
+                     PROP_TAG_COURIER, deco_courier,
+                     NULL);
+  }
 
   db->db_pnf = prop_nf_retain(pnf);
   LIST_INSERT_HEAD(&deco_browses, db, db_link);
   db->db_prop_model = prop_ref_inc(model);
+  db->db_prop_items = prop_ref_inc(items);
   db->db_prop_contents = prop_create_r(model, "contents");
   db->db_title = rstr_dup(title);
   db->db_flags = flags;
+
+  add_enabled_opt(db, model);
+
   hts_mutex_unlock(&deco_mutex);
   return db;
 }

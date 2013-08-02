@@ -715,7 +715,8 @@ browse_directory(upnp_browse_t *ub, const char *title)
 
   rstr_t *t = rstr_alloc(title);
   decorated_browse_create(ub->ub_model, pnf, ub->ub_items, t, 
-                          DECO_FLAGS_NO_AUTO_SORTING);
+                          DECO_FLAGS_NO_AUTO_SORTING,
+                          ub->ub_url);
   rstr_release(t);
   prop_nf_release(pnf);
 
