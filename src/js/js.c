@@ -1280,6 +1280,11 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
 		    NULL, jsp_setEnableSearch, JSPROP_PERMANENT);
   jsp->jsp_enable_search = 1;
 
+  prop_t *p = prop_create(prop_create(prop_get_global(), "plugin"), id);
+  val = OBJECT_TO_JSVAL(js_object_from_prop(cx, p));
+  JS_SetProperty(cx, pobj, "properties", &val);
+
+
   jsp->jsp_protect_object = 1;
 
   s = JS_CompileScript(cx, pobj, buf_cstr(buf), buf->b_size, url, 1);
