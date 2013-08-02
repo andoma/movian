@@ -37,6 +37,7 @@
 #include "misc/sha.h"
 #include "api/xmlrpc.h"
 #include "i18n.h"
+#include "plugins.h"
 
 prop_courier_t *js_global_pc;
 JSContext *js_global_cx;
@@ -944,7 +945,23 @@ js_getsublang(JSContext *cx, JSObject *obj,
 }
 
 
+/**
+ *
+ */
+static JSBool 
+js_selectView(JSContext *cx, JSObject *obj,
+              uintN argc, jsval *argv, jsval *rval)
+{
+  js_plugin_t *jsp = JS_GetPrivate(cx, obj);
+  const char *filename;
 
+  if(!JS_ConvertArguments(cx, argc, argv, "s", &filename))
+    return JS_FALSE;
+
+  plugin_select_view(jsp->jsp_id, filename);
+  *rval = JSVAL_NULL;
+  return JS_TRUE;
+}
 
 
 /**
@@ -1171,6 +1188,7 @@ static JSFunctionSpec plugin_functions[] = {
     JS_FS("addSubtitleProvider", js_addsubprovider, 1, 0, 0),
     JS_FS("addItemHook",         js_addItemHook, 1, 0, 0),
     JS_FS("copyFile",         js_copyfile, 2, 0, 0),
+    JS_FS("selectView",       js_selectView, 1, 0, 0),
     JS_FS_END
 };
 

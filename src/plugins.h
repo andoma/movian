@@ -35,3 +35,5 @@ void plugin_add_static(const char *id, const char *category,
 		       const char *synopsis,
 		       const char *description,
 		       void (*cb)(int enabled));
+
+void plugin_select_view(const char *plugin_id, const char *filename);

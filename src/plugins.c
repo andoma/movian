@@ -128,7 +128,7 @@ static void plugin_autoupgrade(void);
 static void plugins_view_settings_init(void);
 static void plugins_view_add(plugin_t *pl, const char *uit, const char *class,
 			     const char *title, const char *fullpath,
-                             int select_now);
+                             int select_now, const char *filename);
 static void plugin_unload_views(plugin_t *pl);
 
 static int autoupgrade;
@@ -570,7 +570,9 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
       snprintf(fullpath, sizeof(fullpath), "%s/%s", url, file);
 
 #if ENABLE_SPIDERMONKEY
+      hts_mutex_unlock(&plugin_mutex);
       r = js_plugin_load(id, fullpath, errbuf, errlen);
+      hts_mutex_lock(&plugin_mutex);
       if(!r)
 	pl->pl_unload = js_unload;
 #else
@@ -610,7 +612,9 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
 	    continue;
 	  snprintf(fullpath, sizeof(fullpath), "%s/%s", url, file);
 
-	  plugins_view_add(pl, uit, class, title, fullpath, by_user);
+          int dosel = htsmsg_get_u32_or_default(o, "select", by_user);
+
+	  plugins_view_add(pl, uit, class, title, fullpath, dosel, file);
 	}
       }
     }
@@ -1419,6 +1423,7 @@ typedef struct plugin_view_entry {
   LIST_ENTRY(plugin_view_entry) pve_plugin_link;
   LIST_ENTRY(plugin_view_entry) pve_type_link;
   char *pve_key;
+  char *pve_filename;
   prop_t *pve_type_prop;
   prop_t *pve_setting_prop; // Can be NULL (for "default" option)
 } plugin_view_entry_t;
@@ -1520,7 +1525,7 @@ static void
 plugins_view_add(plugin_t *pl,
 		 const char *type, const char *class,
 		 const char *title, const char *path,
-                 int select_now)
+                 int select_now, const char *filename)
 {
   plugin_view_t *pv;
 
@@ -1543,12 +1548,42 @@ plugins_view_add(plugin_t *pl,
 
   LIST_INSERT_HEAD(&pl->pl_views, pve, pve_plugin_link);
   pve->pve_key = strdup(path);
+  pve->pve_filename = strdup(filename);
 
   if(pv != NULL) {
     pve->pve_setting_prop = setting_add_option(pv->pv_s, path, title,
                                                select_now);
     LIST_INSERT_HEAD(&pv->pv_entries, pve, pve_type_link);
   }
+}
+
+
+/**
+ *
+ */
+void
+plugin_select_view(const char *plugin_id, const char *filename)
+{
+  plugin_t *pl;
+
+  TRACE(TRACE_DEBUG, "plugins", "Selecting view %s in plugin %s",
+        filename, plugin_id);
+
+  hts_mutex_lock(&plugin_mutex);
+
+  LIST_FOREACH(pl, &plugins, pl_link)
+    if(!strcmp(pl->pl_id, plugin_id))
+      break;
+
+  if(pl != NULL) {
+    plugin_view_entry_t *pve;
+    LIST_FOREACH(pve, &pl->pl_views, pve_plugin_link) {
+      if(!strcmp(pve->pve_filename, filename)) {
+        prop_select(pve->pve_setting_prop);
+      }
+    }
+  }
+  hts_mutex_unlock(&plugin_mutex);
 }
 
 
@@ -1567,6 +1602,7 @@ plugin_unload_views(plugin_t *pl)
       LIST_REMOVE(pve, pve_type_link);
     }
     free(pve->pve_key);
+    free(pve->pve_filename);
     prop_ref_dec(pve->pve_type_prop);
     free(pve);
   }
