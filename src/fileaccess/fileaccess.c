@@ -1395,3 +1395,32 @@ fa_read_to_htsbuf(struct htsbuf_queue *hq, fa_handle_t *fh, int maxbytes)
   }
   return -1;
 }
+
+
+/**
+ *
+ */
+void
+fa_sanitize_filename(char *f)
+{
+  while(*f) {
+    switch(*f) {
+
+    case 1 ... 31:
+    case '/':
+    case '\\':
+    case ':':
+    case '?':
+    case '"':
+    case '|':
+    case '<':
+    case '>':
+    case 128 ... 255:
+      *f = '_';
+      break;
+    default:
+      break;
+    }
+    f++;
+  }
+}

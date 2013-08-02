@@ -186,6 +186,8 @@ int fa_copy(const char *to, const char *from, char *errbuf, size_t errsize);
 
 int fa_makedirs(const char *url, char *errbuf, size_t errsize);
 
+void fa_sanitize_filename(char *filename);
+
 fa_handle_t *fa_notify_start(const char *url, void *opaque,
                              void (*change)(void *opaque,
                                             fa_notify_op_t op, 
