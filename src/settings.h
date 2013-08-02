@@ -47,6 +47,8 @@ prop_t *settings_create_separator(prop_t *parent, prop_t *caption);
 
 void settings_add_int(setting_t *s, int delta);
 
+int settings_get_type(const setting_t *s);
+
 prop_t *settings_get_value(setting_t *s);
 
 setting_t *settings_create_action(prop_t *parent, prop_t *title,

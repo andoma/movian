@@ -64,6 +64,7 @@ struct setting {
 
   char s_enable_writeback;
   char s_kvstore;
+  char s_type;
 };
 
 static void init_dev_settings(void);
@@ -338,6 +339,16 @@ settings_get_value(setting_t *s)
 /**
  *
  */
+int
+settings_get_type(const setting_t *s)
+{
+  return s->s_type;
+}
+
+
+/**
+ *
+ */
 static void
 setting_save_htsmsg(setting_t *s)
 {
@@ -495,6 +506,8 @@ setting_create(int type, prop_t *parent, int flags, ...)
   prop_t *opt;
   const char **optlist;
   va_list ap;
+
+  s->s_type = type;
 
   va_start(ap, flags);
 
