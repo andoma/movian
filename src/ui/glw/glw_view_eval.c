@@ -4479,6 +4479,64 @@ glwf_delta_dtor(glw_root_t *Gr, struct token *self)
 
 
 /**
+ *
+ */
+static int
+glwf_set(glw_view_eval_context_t *ec, struct token *self,
+         token_t **argv, unsigned int argc)
+{
+  token_t *a = argv[0], *b = argv[1];
+  prop_t *p;
+
+  if((a = resolve_property_name2(ec, a)) == NULL)
+    return -1;
+
+  if((b = token_resolve(ec, b)) == NULL)
+    return -1;
+
+  prop_ref_dec(self->t_extra);
+  self->t_extra = p = prop_ref_inc(a->t_prop);
+
+  switch(b->type) {
+  case TOKEN_FLOAT:
+    prop_set_float(p, b->t_float);
+    break;
+  case TOKEN_INT:
+    prop_set_int(p, b->t_int);
+    break;
+  case TOKEN_CSTRING:
+    prop_set_cstring(p, b->t_cstring);
+    break;
+  case TOKEN_RSTRING:
+    prop_set_rstring(p, b->t_rstring);
+    break;
+  case TOKEN_LINK:
+    prop_set_link(p, rstr_get(b->t_link_rtitle), rstr_get(b->t_link_rurl));
+    break;
+  default:
+    prop_set_void(p);
+    break;
+  }
+
+  ec->dynamic_eval |= GLW_VIEW_DYNAMIC_KEEP;
+  return 0;
+}
+
+
+/**
+ *
+ */
+static void
+glwf_set_dtor(glw_root_t *Gr, struct token *self)
+{
+  prop_t *p = self->t_extra;
+
+  prop_set_void(p);
+  prop_ref_dec(p);
+}
+
+
+/**
  * Return 1 if the current widget is visible (rendered)
  */
 static int 
@@ -5982,6 +6040,7 @@ static const token_func_t funcvec[] = {
   {"setDefaultFont", 1, glwf_setDefaultFont},
   {"rand", 0, glwf_rand},
   {"selectedElement", 1, glwf_selectedElement},
+  {"set", 2, glwf_set, glwf_null_ctor, glwf_set_dtor},
 
 };
 
