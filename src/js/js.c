@@ -1266,6 +1266,12 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
     JS_SetProperty(cx, pobj, "path", &val);
   }
 
+  if(gconf.cache_path) {
+    snprintf(path, sizeof(path), "file://%s/plugins/%s", gconf.cache_path, id);
+    val = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, path));
+    JS_SetProperty(cx, pobj, "filestorage", &val);
+  }
+
   JS_DefineProperty(cx, pobj, "URIRouting", BOOLEAN_TO_JSVAL(1),
 		    NULL, jsp_setEnableURIRoute, JSPROP_PERMANENT);
   jsp->jsp_enable_uri_routing = 1;
