@@ -570,6 +570,7 @@ js_copyfile(JSContext *cx, JSObject *obj, uintN argc,
 {
   const char *from;
   const char *to;
+  char *cleanup;
   char path[URL_MAX];
   char errbuf[256];
 
@@ -578,13 +579,12 @@ js_copyfile(JSContext *cx, JSObject *obj, uintN argc,
   if(!JS_ConvertArguments(cx, argc, argv, "ss", &from, &to))
     return JS_FALSE;
 
-  if(strchr(to, '/')) {
-    JS_ReportError(cx, "Target file contains '/'");
-    return JS_FALSE;
-  }
+  cleanup = mystrdupa(to);
+
+  fa_sanitize_filename(cleanup);
 
   snprintf(path, sizeof(path), "file://%s/plugins/%s/%s",
-           gconf.cache_path, jsp->jsp_id, to);
+           gconf.cache_path, jsp->jsp_id, cleanup);
 
   TRACE(TRACE_DEBUG, "JS", "Copying file from '%s' to '%s'", from, path);
 
@@ -593,7 +593,7 @@ js_copyfile(JSContext *cx, JSObject *obj, uintN argc,
     return JS_FALSE;
   }
 
-  *rval = JSVAL_VOID;
+  *rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, path));
   return JS_TRUE;
 }
 
