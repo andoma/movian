@@ -3303,8 +3303,10 @@ http_req(const char *url, ...)
     r = http_recv(hf, &hra);
   }
 
-  if(r == -2)
+  if(r == -2) {
     snprintf(errbuf, errlen, "Network error");
+    r = -1;
+  }
 
   if(hf->hf_content_encoding == HTTP_CE_GZIP)
     inflateEnd(&hra.zstream);
