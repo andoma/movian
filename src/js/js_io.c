@@ -91,11 +91,10 @@ http_response_toString(JSContext *cx, JSObject *obj, uintN argc,
       strstr(jhr->contenttype, "text/xml");
   } else {
     isxml = 0;
+    if(cs == NULL && !utf8_verify(buf_cstr(jhr->buf)))
+      cs = charset_get(NULL);
   }
   
-
-  if(cs == NULL && !utf8_verify(buf_cstr(jhr->buf)))
-    cs = charset_get(NULL);
 
   if(cs != NULL)
     r = tmpbuf = utf8_from_bytes(buf_cstr(jhr->buf), jhr->buf->b_size, cs->ptr);
