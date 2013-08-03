@@ -1,0 +1,7 @@
+Add setting during video playback that allows the user to alter volume
+but only for that particular video.
+
+Useful for videos that are too loud or too quiet.
+
+As with all other playback settings the volume adjustment is remembered
+by Showtime next time that particular video is played.
