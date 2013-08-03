@@ -86,6 +86,7 @@ CONFIG_LIST="
  xmp
  bughunt
  bspatch
+ connman
 "
 
 cleanup() {

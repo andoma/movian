@@ -46,6 +46,10 @@
 #include "backend/backend.h"
 #include "notifications.h"
 
+#if ENABLE_CONNMAN
+#include <gio/gio.h>
+#include "networking/connman.h"
+#endif
 
 DISPMANX_DISPLAY_HANDLE_T dispman_display;
 
@@ -61,10 +65,8 @@ hts_mutex_t display_mutex;
 hts_cond_t display_cond;
 
 static int display_status;
-
-
-
 static int runmode;
+
 
 /**
  *
@@ -777,6 +779,14 @@ main(int argc, char **argv)
 	     "  sudo setcap 'cap_sys_nice+ep %s'", gconf.binary);
     notify_add(NULL, NOTIFY_WARNING, NULL, 10,  rstr_alloc(buf));
   }
+
+
+#if ENABLE_CONNMAN
+  // connman uses dbus (via glib)
+  g_thread_init(NULL);
+  g_type_init();
+  connman_init();
+#endif
 
   rpi_mainloop();
   showtime_fini();

@@ -241,6 +241,9 @@ SRCS-$(CONFIG_HTTPSERVER) += \
 			src/upnp/upnp_renderingcontrol.c \
 			src/upnp/upnp_connectionmanager.c \
 
+SRCS-$(CONFIG_CONNMAN) += src/networking/connman.c
+SRCS-$(CONFIG_CONNMAN) += src/prop/prop_gvariant.c
+
 ##############################################################
 # Video support
 ##############################################################

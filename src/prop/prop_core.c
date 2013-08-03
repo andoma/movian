@@ -1546,6 +1546,70 @@ prop_create_root_ex(const char *name, int noalloc)
 }
 
 
+/**
+ *
+ */
+prop_t *
+prop_create_after(prop_t *parent, const char *name, prop_t *after,
+		  prop_sub_t *skipme)
+{
+  prop_t *p;
+  hts_mutex_lock(&prop_mutex);
+
+  if(parent != NULL && parent->hp_type != PROP_ZOMBIE) {
+
+    prop_make_dir(parent, skipme, "prop_create_after()");
+
+    TAILQ_FOREACH(p, &parent->hp_childs, hp_parent_link)
+      if(p->hp_name != NULL && !strcmp(p->hp_name, name))
+	break;
+
+    if(p == NULL) {
+
+      p = prop_make(name, 0, parent);
+  
+      if(after == NULL) {
+	TAILQ_INSERT_HEAD(&parent->hp_childs, p, hp_parent_link);
+      } else {
+	TAILQ_INSERT_AFTER(&parent->hp_childs, after, p, hp_parent_link);
+      }
+
+      prop_t *next = TAILQ_NEXT(p, hp_parent_link);
+      if(next == NULL) {
+	prop_notify_child2(p, parent, next, PROP_ADD_CHILD_BEFORE, skipme, 0);
+      } else {
+	prop_notify_child(p, parent, PROP_ADD_CHILD, skipme, 0);
+      }
+
+    } else {
+
+      prop_t *prev = TAILQ_PREV(p, prop_queue, hp_parent_link);
+
+      if(prev != after) {
+	
+	TAILQ_REMOVE(&parent->hp_childs, p, hp_parent_link);
+
+	if(after == NULL) {
+	  TAILQ_INSERT_HEAD(&parent->hp_childs, p, hp_parent_link);
+	} else {
+	  TAILQ_INSERT_AFTER(&parent->hp_childs, after, p, hp_parent_link);
+	}
+	
+	prop_t *next = TAILQ_NEXT(p, hp_parent_link);
+	prop_notify_child2(p, parent, next, PROP_MOVE_CHILD, skipme, 0);
+      }
+    }
+
+
+  } else {
+    p = NULL;
+  }
+
+  hts_mutex_unlock(&prop_mutex);
+  return p;
+}
+
+
 
 /**
  *
@@ -1832,6 +1896,41 @@ prop_destroy_childs(prop_t *p)
       prop_destroy_child(p, c);
     }
   }
+  hts_mutex_unlock(&prop_mutex);
+}
+
+
+/**
+ *
+ */
+static void
+prop_void_childs0(prop_t *p)
+{
+  if(p->hp_type == PROP_ZOMBIE)
+    return;
+  if(p->hp_type == PROP_DIR) {
+    prop_t *c;
+    TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link)
+      prop_void_childs0(c);
+  } else {
+    if(prop_clean(p))
+      return;
+    p->hp_type = PROP_VOID;
+    prop_notify_value(p, NULL, "prop_void_childs()", 0);
+  }
+}
+
+
+/**
+ *
+ */
+void
+prop_void_childs(prop_t *p)
+{
+  if(p == NULL)
+    return;
+  hts_mutex_lock(&prop_mutex);
+  prop_void_childs0(p);
   hts_mutex_unlock(&prop_mutex);
 }
 
@@ -3933,10 +4032,10 @@ prop_get_string(prop_t *p, ...)
   va_start(ap, p);
 
   hts_mutex_lock(&prop_mutex);
-
   p = prop_find0(p, ap);
 
   if(p != NULL) {
+
     switch(p->hp_type) {
     case PROP_RSTRING:
       r = rstr_dup(p->hp_rstring);

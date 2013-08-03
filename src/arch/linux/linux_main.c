@@ -24,11 +24,11 @@
 #include "showtime.h"
 #include "arch/arch.h"
 #include "arch/posix/posix.h"
-
 #include "linux.h"
 #include "prop/prop.h"
 #include "navigator.h"
 #include "service.h"
+#include "prop/prop_glib_courier.h"
 
 hts_mutex_t gdk_mutex;
 prop_courier_t *glibcourier;
@@ -54,67 +54,9 @@ gdk_release(void)
   hts_mutex_unlock(&gdk_mutex);
 }
 
-
-
-
-/**
- *
- */
-static void
-wakeup_glib_mainloop(void *aux)
-{
-  g_main_context_wakeup(g_main_context_default());
-}
-
-
-/**
- *
- */
-static gboolean
-courier_prepare(GSource *s, gint *timeout)
-{
-  *timeout = -1;
-  return FALSE;
-}
-
-
-/**
- *
- */
-static gboolean
-courier_check(GSource *s)
-{
-  return prop_courier_check(glibcourier);
-}
-
-
-/**
- *
- */
-static gboolean
-courier_dispatch(GSource *s, GSourceFunc callback, gpointer aux)
-{
-  prop_courier_poll(glibcourier);
-  return TRUE;
-}
-
-
-/**
- *
- */
-static GSourceFuncs source_funcs = {
-  courier_prepare, 
-  courier_check,
-  courier_dispatch,
-};
-
-
 static int running;
-
 extern const linux_ui_t ui_glw, ui_gu;
-
 static const linux_ui_t *ui_wanted = &ui_glw, *ui_current;
-
 
 
 /**
@@ -222,9 +164,7 @@ main(int argc, char **argv)
 
   showtime_init();
 
-  glibcourier = prop_courier_create_notify(wakeup_glib_mainloop, NULL);
-  g_source_attach(g_source_new(&source_funcs, sizeof(GSource)),
-		  g_main_context_default());
+  glibcourier = glib_courier_create(g_main_context_default());
 
   prop_subscribe(0,
 		 PROP_TAG_NAME("global", "eventsink"),
