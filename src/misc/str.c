@@ -735,6 +735,35 @@ utf8_put(char *out, int c)
  *
  */
 char *
+utf8_cleanup(const char *str)
+{
+  const char *s = str; 
+  int outlen = 1;
+  int c;
+  int bad = 0;
+  while((c = utf8_get(&s)) != 0) {
+    if(c == 0xfffd)
+      bad = 1;
+    outlen += utf8_put(NULL, c);
+  }
+
+  if(!bad)
+    return NULL;
+
+  char *out = malloc(outlen);
+  char *ret = out;
+  while((c = utf8_get(&str)) != 0)
+    out += utf8_put(out, c);
+
+  *out = 0;
+  return ret;
+}
+
+
+/**
+ *
+ */
+char *
 utf8_from_bytes(const char *str, int len, const uint16_t *cp)
 {
   char *r, *d;

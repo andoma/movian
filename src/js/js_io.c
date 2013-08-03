@@ -83,6 +83,12 @@ http_response_toString(JSContext *cx, JSObject *obj, uintN argc,
 	cs = charset_get(charset);
 	if(cs == NULL)
 	  TRACE(TRACE_INFO, "JS", "Unable to handle charset %s", charset);
+      } else {
+	tmpbuf = utf8_cleanup(r);
+	if(tmpbuf != NULL) {
+	  TRACE(TRACE_DEBUG, "JS", "Repairing broken UTF-8", charset);
+	  r = tmpbuf;
+	}
       }
     }
 
@@ -91,13 +97,15 @@ http_response_toString(JSContext *cx, JSObject *obj, uintN argc,
       strstr(jhr->contenttype, "text/xml");
   } else {
     isxml = 0;
-    if(cs == NULL && !utf8_verify(buf_cstr(jhr->buf)))
+    if(cs == NULL && !utf8_verify(r))
       cs = charset_get(NULL);
   }
   
 
-  if(cs != NULL)
+  if(cs != NULL) {
+    // Convert from given character set
     r = tmpbuf = utf8_from_bytes(buf_cstr(jhr->buf), jhr->buf->b_size, cs->ptr);
+  }
 
   if(isxml && 
      (r2 = strstr(r, "<?xml ")) != NULL &&
