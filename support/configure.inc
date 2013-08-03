@@ -81,6 +81,7 @@ CONFIG_LIST="
  tlsf
  airplay
  webpopup
+ webkit
  valgrind
  xmp
  bughunt

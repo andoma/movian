@@ -166,7 +166,9 @@ mainloop(void)
       aux= ui_current->start(nav);
     }
 
+#if ENABLE_WEBPOPUP
     linux_webpopup_check();
+#endif
     gtk_main_iteration();
   }
 
@@ -227,8 +229,9 @@ main(int argc, char **argv)
 		 PROP_TAG_COURIER, glibcourier, 
 		 NULL);
 
+#if ENABLE_WEBPOPUP
   linux_webpopup_init();
-
+#endif
   linux_init_monitors();
 
   mainloop();
