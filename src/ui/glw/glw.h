@@ -859,7 +859,7 @@ typedef struct glw_root {
   struct glw *gr_osk_widget;
   prop_sub_t *gr_osk_text_sub;
   prop_sub_t *gr_osk_ev_sub;
-
+  char *gr_osk_revert;
 
 } glw_root_t;
 
