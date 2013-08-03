@@ -71,11 +71,16 @@ pb_getProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 
   hts_mutex_lock(&prop_mutex);
 
+  if(p->hp_type != PROP_DIR) {
+    hts_mutex_unlock(&prop_mutex);
+    return JS_TRUE;
+  }
+
   if(JSVAL_IS_STRING(id)) {
     const char *name = JS_GetStringBytes(JSVAL_TO_STRING(id));
     TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link)
       if(c->hp_name != NULL && !strcmp(c->hp_name, name))
-        break;
+	break;
 
   } else if(JSVAL_IS_INT(id)) {
     int num = JSVAL_TO_INT(id);
