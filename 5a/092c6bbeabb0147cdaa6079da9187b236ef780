@@ -1,0 +1,8 @@
+Make it possible to configure how Showtime adds metadata from
+metadata providers. Setting is per-folder:
+
+- Automatic (Showtime tries to find best matching metadata by itself)
+- Manual (User needs to do action)
+- Off (No user action possible)
+
+Fixes #1602
