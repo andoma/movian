@@ -2823,6 +2823,7 @@ FAP_REGISTER(webdavs);
 
 typedef struct http_read_aux {
   size_t total;
+  int64_t bytes_completed;
   fa_load_cb_t *cb;
   void *opaque;
   char *tmpbuf;
@@ -2850,6 +2851,7 @@ http_request_partial(void *opaque, int amount)
 {
   http_read_aux_t *hra = opaque;
 
+  amount += hra->bytes_completed;
   if(hra->cb != NULL)
     return hra->cb(hra->opaque, amount, hra->total);
   return 0;
@@ -2977,6 +2979,8 @@ http_recv_chunked(http_file_t *hf, http_read_aux_t *hra)
       if(hra->encoded_data(hf, hra, hra->tmpbuf, rsize))
         return -1;
 
+      hra->bytes_completed += rsize;
+
       remain -= rsize;
     }
 
@@ -3003,6 +3007,7 @@ http_recv_until_eof(http_file_t *hf, http_read_aux_t *hra)
 
     if(hra->encoded_data(hf, hra, hra->tmpbuf, r))
       return -1;
+    hra->bytes_completed += r;
   }
   return hra->encoded_data(hf, hra, NULL, 0);
 }
@@ -3026,6 +3031,8 @@ http_recv(http_file_t *hf, http_read_aux_t *hra)
 
     if(hra->encoded_data(hf, hra, hra->tmpbuf, rsize))
       return -1;
+
+    hra->bytes_completed += rsize;
 
     remain -= rsize;
   }
@@ -3300,6 +3307,7 @@ http_req(const char *url, ...)
     r = http_recv_until_eof(hf, &hra);
   } else {
     HF_TRACE(hf, "Reading %"PRId64" bytes", hf->hf_rsize);
+    hra.total = hf->hf_rsize;
     r = http_recv(hf, &hra);
   }
 
