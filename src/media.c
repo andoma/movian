@@ -456,6 +456,7 @@ mp_settings_clear(media_pipe_t *mp)
   setting_destroyp(&mp->mp_setting_vzoom);
   setting_destroyp(&mp->mp_setting_hstretch);
   setting_destroyp(&mp->mp_setting_fstretch);
+  setting_destroyp(&mp->mp_setting_standby_after_eof);
   kvstore_deferred_flush();
 }
 
@@ -675,7 +676,6 @@ mp_destroy(media_pipe_t *mp)
   track_mgr_destroy(&mp->mp_audio_track_mgr);
   track_mgr_destroy(&mp->mp_subtitle_track_mgr);
 
-  prop_courier_destroy(mp->mp_pc);
 
   while((e = TAILQ_FIRST(&mp->mp_eq)) != NULL) {
     TAILQ_REMOVE(&mp->mp_eq, e, e_link);
@@ -689,6 +689,8 @@ mp_destroy(media_pipe_t *mp)
   mq_destroy(&mp->mp_video);
 
   prop_destroy(mp->mp_prop_root);
+
+  prop_courier_destroy(mp->mp_pc);
 
   video_overlay_flush_locked(mp, 0);
   dvdspu_destroy_all(mp);

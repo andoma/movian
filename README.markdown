@@ -16,7 +16,7 @@ For Ubuntu 12.04)
 	sudo apt-get install libfreetype6-dev libfontconfig1-dev libxext-dev libgl1-mesa-dev 
 	libasound2-dev libasound2-dev libgtk2.0-dev libxss-dev libxxf86vm-dev libxv-dev libcdio-cdda-dev 
 	libcddb2-dev libvdpau-dev yasm libpulse-dev libssl-dev curl
-	libwebkitgtk-dev
+	libwebkitgtk-dev libsqlite3-dev
 
 Then you need to configure:
 
