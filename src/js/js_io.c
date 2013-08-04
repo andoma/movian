@@ -83,6 +83,9 @@ http_response_toString(JSContext *cx, JSObject *obj, uintN argc,
 	cs = charset_get(charset);
 	if(cs == NULL)
 	  TRACE(TRACE_INFO, "JS", "Unable to handle charset %s", charset);
+        else
+          TRACE(TRACE_DEBUG, "JS", "Parsing charset %s as %s",
+                charset, cs->id);
       } else {
 	tmpbuf = utf8_cleanup(r);
 	if(tmpbuf != NULL) {
