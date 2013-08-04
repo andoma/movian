@@ -2905,6 +2905,17 @@ cleanup_buf(struct http_read_aux *hra)
  *
  */
 static int
+append_waste(http_file_t *hf, struct http_read_aux *hra,
+	     const void *data, int size)
+{
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
 append_gzip(http_file_t *hf, struct http_read_aux *hra,
             const void *data, int size)
 {
@@ -3078,6 +3089,8 @@ http_req(const char *url, ...)
 
   int want_result = 0;
 
+  hra.decoded_data = append_waste;
+
   while((tag = va_arg(ap, int)) != 0) {
     switch(tag) {
     case HTTP_TAG_ARG:
@@ -3102,8 +3115,11 @@ http_req(const char *url, ...)
     case HTTP_TAG_RESULT_PTR:
       assert(hra.decoded_opaque == NULL);
       assert(want_result == 0);
-      hra.decoded_opaque = calloc(1, sizeof(buf_t));
       buf_t **ptr = va_arg(ap, buf_t **);
+      if(ptr == NULL)
+	break;
+
+      hra.decoded_opaque = calloc(1, sizeof(buf_t));
       *ptr = hra.decoded_opaque;
       hra.decoded_data = append_buf;
       hra.decoded_cleanup = cleanup_buf;
@@ -3241,7 +3257,7 @@ http_req(const char *url, ...)
     goto retry;
   }
 
-  int no_content = method == NULL && postdata == NULL && !want_result;
+  int no_content = !strcmp(m, "HEAD");
 
   switch(code) {
   case 200 ... 205:
@@ -3270,9 +3286,10 @@ http_req(const char *url, ...)
     // FALLTHRU
   case 301:
   case 307:
-    if(flags & FA_NOFOLLOW)
+    if(flags & FA_NOFOLLOW) {
+      HF_TRACE(hf, "Not following redirect as requested by caller");
       break;
-
+    }
     if(redirect(hf, &redircount, errbuf, errlen, code, !no_content))
       goto cleanup;
 
@@ -3289,36 +3306,41 @@ http_req(const char *url, ...)
     goto cleanup;
   }
 
-  if(hf->hf_content_encoding == HTTP_CE_GZIP) {
-    inflateInit2(&hra.zstream, 16+MAX_WBITS);
-    hra.encoded_data = &append_gzip;
-    HF_TRACE(hf, "Inflating content using gzip");
+  if(!no_content) {
+
+    if(hf->hf_content_encoding == HTTP_CE_GZIP) {
+      inflateInit2(&hra.zstream, 16+MAX_WBITS);
+      hra.encoded_data = &append_gzip;
+      HF_TRACE(hf, "Inflating content using gzip");
+    } else {
+      hra.encoded_data = hra.decoded_data;
+    }
+
+    hra.tmpbuf = malloc(HTTP_TMP_SIZE);
+
+    if(hf->hf_chunked_transfer) {
+      HF_TRACE(hf, "Chunked transfer");
+      r = http_recv_chunked(hf, &hra);
+    } else if(hf->hf_rsize == -1) {
+      HF_TRACE(hf, "Reading data until EOF");
+      r = http_recv_until_eof(hf, &hra);
+    } else {
+      HF_TRACE(hf, "Reading %"PRId64" bytes", hf->hf_rsize);
+      hra.total = hf->hf_rsize;
+      r = http_recv(hf, &hra);
+    }
+
+    if(r == -2) {
+      snprintf(errbuf, errlen, "Network error");
+      r = -1;
+    }
+
+    if(hf->hf_content_encoding == HTTP_CE_GZIP)
+      inflateEnd(&hra.zstream);
   } else {
-    hra.encoded_data = hra.decoded_data;
+    HF_TRACE(hf, "No data transfered");
+    r = 0;
   }
-
-  hra.tmpbuf = malloc(HTTP_TMP_SIZE);
-
-  if(hf->hf_chunked_transfer) {
-    HF_TRACE(hf, "Chunked transfer");
-    r = http_recv_chunked(hf, &hra);
-  } else if(hf->hf_rsize == -1) {
-    HF_TRACE(hf, "Reading data until EOF");
-    r = http_recv_until_eof(hf, &hra);
-  } else {
-    HF_TRACE(hf, "Reading %"PRId64" bytes", hf->hf_rsize);
-    hra.total = hf->hf_rsize;
-    r = http_recv(hf, &hra);
-  }
-
-  if(r == -2) {
-    snprintf(errbuf, errlen, "Network error");
-    r = -1;
-  }
-
-  if(hf->hf_content_encoding == HTTP_CE_GZIP)
-    inflateEnd(&hra.zstream);
-
  cleanup:
   free(hra.tmpbuf);
 
