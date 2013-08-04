@@ -57,7 +57,7 @@ glw_settings_init(void)
 
   glw_settings.gs_setting_size =
     setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,
-                   SETTING_TITLE(_p("Userinterface size")),
+                   SETTING_TITLE(_p("Font and icon size")),
                    SETTING_RANGE(-10, 30),
                    SETTING_UNIT_CSTR("px"),
                    SETTING_WRITE_INT(&glw_settings.gs_size),
