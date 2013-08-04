@@ -41,10 +41,8 @@ json_str_read_char(const char **ptr)
   if(*s == 0)
     return -1;
 
-  if(*s != '\\') {
-    *ptr = s + 1;
-    return *s;
-  }
+  if(*s != '\\')
+    return utf8_get(ptr);
 
   s++;
   *ptr = s + 1;
