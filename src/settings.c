@@ -62,6 +62,8 @@ struct setting {
   char *s_store_name;
   prop_sub_t *s_sub_enabler;
 
+  prop_t *s_current_value;
+
   char s_enable_writeback;
   char s_kvstore;
   char s_type;
@@ -309,6 +311,7 @@ setting_destroy(setting_t *s)
   prop_ref_dec(s->s_val);
   prop_ref_dec(s->s_root);
   prop_ref_dec(s->s_ext_value);
+  prop_ref_dec(s->s_current_value);
   free(s);
 }
 
@@ -428,47 +431,69 @@ settings_multiopt_callback_ng(void *opaque, prop_event_t event, ...)
   setting_t *s = opaque;
   prop_callback_string_t *cb;
   prop_t *c;
-  rstr_t *name;
   va_list ap;
   va_start(ap, event);
 
   cb = s->s_callback;
 
-  if(event != PROP_SELECT_CHILD)
-    return;
+  switch(event) {
+  default:
+    break;
 
-  if(s->s_pending_value) {
-    free(s->s_pending_value);
-    s->s_pending_value = NULL;
-  }
-
-  c = va_arg(ap, prop_t *);
-
-  name = c ? prop_get_name(c) : NULL;
-  va_end(ap);
-
-  if(s->s_ext_value)
-    prop_set_rstring(s->s_ext_value, name);
-
-  if(cb != NULL)
-    cb(s->s_opaque, rstr_get(name));
-
-  if(s->s_enable_writeback) {
-
-    if(s->s_store) {
-      htsmsg_delete_field(s->s_store, s->s_id);
-      if(name != NULL)
-        htsmsg_add_str(s->s_store, s->s_id, rstr_get(name));
-      setting_save_htsmsg(s);
+  case PROP_SELECT_CHILD:
+    if(s->s_pending_value) {
+      free(s->s_pending_value);
+      s->s_pending_value = NULL;
     }
 
-    if(s->s_kvstore)
-      kv_url_opt_set_deferred(s->s_store_name, KVSTORE_DOMAIN_SETTING, s->s_id,
-                              name ? KVSTORE_SET_STRING : KVSTORE_SET_VOID,
-                              rstr_get(name));
-  }
+    c = va_arg(ap, prop_t *);
 
-  rstr_release(name);
+    prop_ref_dec(s->s_current_value);
+    s->s_current_value = prop_ref_inc(c);
+    rstr_t *name = c ? prop_get_name(c) : NULL;
+
+    printf("current is %p (%s)\n", s->s_current_value, rstr_get(name));
+
+    if(s->s_ext_value)
+      prop_set_rstring(s->s_ext_value, name);
+
+    if(cb != NULL)
+      cb(s->s_opaque, rstr_get(name));
+
+
+    if(s->s_enable_writeback) {
+
+      if(s->s_store) {
+	htsmsg_delete_field(s->s_store, s->s_id);
+	if(name != NULL)
+	  htsmsg_add_str(s->s_store, s->s_id, rstr_get(name));
+	setting_save_htsmsg(s);
+      }
+
+      if(s->s_kvstore)
+	kv_url_opt_set_deferred(s->s_store_name, KVSTORE_DOMAIN_SETTING,
+				s->s_id,
+				name ? KVSTORE_SET_STRING : KVSTORE_SET_VOID,
+				rstr_get(name));
+    }
+
+    rstr_release(name);
+
+    break;
+
+  case PROP_DEL_CHILD:
+    c = va_arg(ap, prop_t *);
+
+    if(c == s->s_current_value) {
+      c = prop_first_child(s->s_val);
+      if(c != NULL) {
+	prop_select(c);
+	prop_ref_dec(c);
+      }
+    }
+    break;
+  }
+  va_end(ap);
 }
 
 
