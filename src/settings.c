@@ -799,7 +799,7 @@ setting_create(int type, prop_t *parent, int flags, ...)
   case SETTING_ACTION:
     s->s_sub =
       prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
-                     PROP_TAG_CALLBACK, s->s_callback, s->s_opaque,
+                     PROP_TAG_CALLBACK_EVENT, s->s_callback, s->s_opaque,
                      PROP_TAG_ROOT, s->s_val,
                      PROP_TAG_COURIER, pc,
                      PROP_TAG_MUTEX, mtx,
