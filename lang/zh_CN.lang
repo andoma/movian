@@ -310,6 +310,10 @@ msg: 版本%s更新记录
 id: Check for updates now
 msg: 立刻检查更新
 
+id: Checking current installed version
+# Missing translation
+msg: 
+
 id: Checking for updates...
 msg: 正在检查更新...
 
@@ -330,6 +334,10 @@ msg: 新版本%s可用
 
 id: No upgrade available
 msg: 无可用更新
+
+id: Patching binary
+# Missing translation
+msg: 
 
 id: Restarting Showtime in %d seconds...
 msg: %d秒后重启Showtime...
@@ -357,6 +365,13 @@ msg: 当前视频CPU解码过慢
 
 id: Playback status
 msg: 播放信息
+
+#
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -426,39 +441,6 @@ msg: 使用原标题
 #
 id: System is low on memory (%d kB RAM available)
 msg: 系统内存偏少(%d kB RAM可用)
-
-#
-# ./src/audio/audio.c
-#
-id: Audio output
-msg: 音频输出
-
-id: Audio/Video sync delay
-msg: 音频/视频同步延迟
-
-id: Current output device
-msg: 当前输出设备
-
-id: Force stereo downmix
-msg: 强制混音到立体声
-
-id: Phantom LFE
-msg: 虚拟低音
-
-id: Phantom center
-msg: 虚拟中置
-
-id: Select audio output device and related configurations
-msg: 选择音频输出设备及相关配置
-
-id: Small front speakers
-msg: 小型前置音箱
-
-id: Swap LFE+center with surround
-msg: 切换低音+中置和环绕
-
-id: Switching audio output to %s
-msg: 切换音频输出到%s
 
 #
 # ./src/backend/dvd/cdda.c
@@ -655,6 +637,11 @@ msg: 启用文件删除功能
 id: File access
 msg: 文件访问
 
+id: %d archive parts
+# Missing plural translation for '%d archive parts' and '%d archive part'
+msg[0]: 
+msg[1]: 
+
 id: %d directories
 msg[0]: %d个文件夹
 msg[1]: %d个文件夹
@@ -703,18 +690,6 @@ id: Tertiary subtitle language code
 msg: 字幕第三语言代码
 
 #
-# ./src/ipc/serdev/lgtv.c
-#
-id: Automatic TV power on/off
-msg: 自动开启/关闭电视
-
-id: Input source
-msg: 输入源
-
-id: LG Television set
-msg: LG电视机
-
-#
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
@@ -741,6 +716,14 @@ msg: 字幕显示在视频帧内
 id: Audio delay
 msg: 音频延迟
 
+id: Audio volume
+# Missing translation
+msg: 
+
+id: Go to standby after video ends
+# Missing translation
+msg: 
+
 id: Stretch video to fullscreen
 msg: 拉升视频至全屏
 
@@ -750,8 +733,16 @@ msg: 拉伸视频至宽屏
 id: Subtitle delay
 msg: 字幕延迟
 
+id: Subtitle horizontal displacement
+# Missing translation
+msg: 
+
 id: Subtitle scaling
 msg: 字幕缩放
+
+id: Subtitle vertical displacement
+# Missing translation
+msg: 
 
 id: Video zoom
 msg: 视频缩放
@@ -763,11 +754,30 @@ id: Indexing
 msg: 正在索引
 
 #
-# ./src/metadata/metadata.c
+# ./src/metadata/decoration.c
 #
 id: Automatic
 msg: 自动
 
+id: Manual
+# Missing translation
+msg: 
+
+id: Mark all as seen
+# Missing translation
+msg: 
+
+id: Mark all as unseen
+# Missing translation
+msg: 
+
+id: Metadata mode
+# Missing translation
+msg: 
+
+#
+# ./src/metadata/metadata.c
+#
 id: Custom search query
 msg: 设置搜索条件
 
@@ -1137,9 +1147,6 @@ msg: 字幕大小
 id: Subtitle size and positioning
 msg: 字幕大小和位置
 
-id: Subtitle styling
-msg: 字幕样式
-
 id: Subtitles embedded in video file
 msg: 视频内嵌字幕
 
@@ -1173,14 +1180,9 @@ msg: 重置窄字体
 id: Reset subtitle font to default
 msg: 重置字幕字体
 
-id: Unable to load %s -- %s
-msg: 无法载入%s -- %s
-
-id: Unable to open %s for writing
-msg: 无法打开%s
-
-id: Unable to write to %s
-msg: 无法写入%s
+id: Unable to install font: %s
+# Missing translation
+msg: 
 
 id: Use font %s for
 msg: 使用字体%s
@@ -1189,19 +1191,32 @@ id: User interface
 msg: 用户界面
 
 #
+# ./src/ui/glw/glw_ps3.c
+#
+id: Seek using L2 and R2 button
+# Missing translation
+msg: 
+
+id: Yes with Select button
+# Missing translation
+msg: 
+
+#
 # ./src/ui/glw/glw_settings.c
 #
+id: Font and icon size
+# Missing translation
+msg: 
+
 id: Horizontal underscan
 msg: 水平欠扫描
 
 id: Screensaver delay
 msg: 屏幕保护延迟
 
-id: Userinterface size
-msg: 用户界面大小
-
-id: Vertical underscan
-msg: 垂直欠扫描
+id: Veritcal underscan
+# Missing translation
+msg: 
 
 #
 # ./src/ui/glw/glw_x11.c
@@ -1284,15 +1299,6 @@ msg: 无法查询Cell解码器，错误码0x%x
 #
 # ./src/video/video_settings.c
 #
-id: 1080
-msg: 1080
-
-id: 576
-msg: 576
-
-id: 720
-msg: 720
-
 id: Automatically play next video in list
 msg: 文件播放结束时自动播放列表中的下一个文件
 

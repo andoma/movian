@@ -310,6 +310,10 @@ msg: Ändringar för %s
 id: Check for updates now
 msg: Leta efter uppgraderingar nu
 
+id: Checking current installed version
+# Missing translation
+msg: 
+
 id: Checking for updates...
 msg: Letar efter uppdateringar
 
@@ -330,6 +334,10 @@ msg: Ny version %s är tillgänglig för nerladdning
 
 id: No upgrade available
 msg: Ingen uppgradering tillgänglig
+
+id: Patching binary
+# Missing translation
+msg: 
 
 id: Restarting Showtime in %d seconds...
 msg: Startar om Showtime om %d sekunder...
@@ -357,6 +365,13 @@ msg: CPUn är för långsam för att spela upp videon
 
 id: Playback status
 msg: Uppspelningsstatus
+
+#
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -426,39 +441,6 @@ msg: Använd orginaltitel
 #
 id: System is low on memory (%d kB RAM available)
 msg: System har lite ledigt minne (%d kB RAM tillgängligt)
-
-#
-# ./src/audio/audio.c
-#
-id: Audio output
-msg: Ljudutgång
-
-id: Audio/Video sync delay
-msg: Audio/Video synk delay
-
-id: Current output device
-msg: Nuvarande ljudutgång
-
-id: Force stereo downmix
-msg: Tvinga stereo nermix
-
-id: Phantom LFE
-msg: Fantom-LFE
-
-id: Phantom center
-msg: Fantom-center
-
-id: Select audio output device and related configurations
-msg: Välj ljudutgång och relaterad konfiguration
-
-id: Small front speakers
-msg: Små fronthögtalare
-
-id: Swap LFE+center with surround
-msg: Byt LFE+center med surround
-
-id: Switching audio output to %s
-msg: Byter till ljud utgång %s
 
 #
 # ./src/backend/dvd/cdda.c
@@ -655,13 +637,16 @@ msg: Tillåt borttagning av filer från menyn
 id: File access
 msg: Fill tillgång
 
+id: %d archive parts
+# Missing plural translation for '%d archive parts' and '%d archive part'
+msg[0]: 
+msg[1]: 
+
 id: %d directories
-# Missing plural translation for '%d directories' and '%d directory'
 msg[0]: %d kataloger
 msg[1]: %d katalog
 
 id: %d files
-# Missing plural translation for '%d files' and '%d file'
 msg[0]: %d filer
 msg[1]: %d fil
 
@@ -705,18 +690,6 @@ id: Tertiary subtitle language code
 msg: Tertiärt språk för undertexter
 
 #
-# ./src/ipc/serdev/lgtv.c
-#
-id: Automatic TV power on/off
-msg: Automatisk på/av kontroll av TVn
-
-id: Input source
-msg: Ingångskälla
-
-id: LG Television set
-msg: LG TV apparat
-
-#
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
@@ -743,6 +716,14 @@ msg: Justera undertexter till videons storlek
 id: Audio delay
 msg: Ljuddelay
 
+id: Audio volume
+# Missing translation
+msg: 
+
+id: Go to standby after video ends
+# Missing translation
+msg: 
+
 id: Stretch video to fullscreen
 msg: Sträck ut videon över hela skärmen
 
@@ -752,8 +733,16 @@ msg: Sträck ut videon horisontellt
 id: Subtitle delay
 msg: Undertexterdelay
 
+id: Subtitle horizontal displacement
+# Missing translation
+msg: 
+
 id: Subtitle scaling
 msg: Storlek på undertexter
+
+id: Subtitle vertical displacement
+# Missing translation
+msg: 
 
 id: Video zoom
 msg: Video zoom
@@ -765,11 +754,30 @@ id: Indexing
 msg: Indexerar
 
 #
-# ./src/metadata/metadata.c
+# ./src/metadata/decoration.c
 #
 id: Automatic
 msg: Automatisk
 
+id: Manual
+# Missing translation
+msg: 
+
+id: Mark all as seen
+# Missing translation
+msg: 
+
+id: Mark all as unseen
+# Missing translation
+msg: 
+
+id: Metadata mode
+# Missing translation
+msg: 
+
+#
+# ./src/metadata/metadata.c
+#
 id: Custom search query
 msg: Speciell sökfråga
 
@@ -1145,9 +1153,6 @@ msg: Storlek på undertexter
 id: Subtitle size and positioning
 msg: Storlek och position för undertexter
 
-id: Subtitle styling
-msg: Stil på undertexter
-
 id: Subtitles embedded in video file
 # Missing translation
 msg: 
@@ -1184,14 +1189,9 @@ msg: Återställ smalt typsnitt till standard
 id: Reset subtitle font to default
 msg: Återställ typsnitt för undertexter
 
-id: Unable to load %s -- %s
-msg: Kan ej ladda %s -- %s
-
-id: Unable to open %s for writing
-msg: Kan ej öppna %s för skrivning
-
-id: Unable to write to %s
-msg: Kan ej skriva till %s
+id: Unable to install font: %s
+# Missing translation
+msg: 
 
 id: Use font %s for
 msg: Använd typsnitt %s till
@@ -1200,19 +1200,32 @@ id: User interface
 msg: Användargränsnitt
 
 #
+# ./src/ui/glw/glw_ps3.c
+#
+id: Seek using L2 and R2 button
+# Missing translation
+msg: 
+
+id: Yes with Select button
+# Missing translation
+msg: 
+
+#
 # ./src/ui/glw/glw_settings.c
 #
+id: Font and icon size
+# Missing translation
+msg: 
+
 id: Horizontal underscan
 msg: Horisontell underskanning
 
 id: Screensaver delay
 msg: Skärmsläckartid
 
-id: Userinterface size
-msg: Storlek på användargränsnitt
-
-id: Vertical underscan
-msg: Vertikal underskanning
+id: Veritcal underscan
+# Missing translation
+msg: 
 
 #
 # ./src/ui/glw/glw_x11.c
@@ -1295,15 +1308,6 @@ msg: Kan ej fråga Cell codec. Fel 0x%x
 #
 # ./src/video/video_settings.c
 #
-id: 1080
-msg: 1080
-
-id: 576
-msg: 576
-
-id: 720
-msg: 720
-
 id: Automatically play next video in list
 msg: Spela nästa video i listan automatiskt
 

@@ -316,6 +316,10 @@ msg: Ændringslog for %s udgivelser
 id: Check for updates now
 msg: Søg efter opdateringer nu
 
+id: Checking current installed version
+# Missing translation
+msg: 
+
 id: Checking for updates...
 msg: Søger efter opdateringer...
 
@@ -336,6 +340,10 @@ msg: Ny version %s er klar til download
 
 id: No upgrade available
 msg: Ingen opdatering tilgængelig
+
+id: Patching binary
+# Missing translation
+msg: 
 
 id: Restarting Showtime in %d seconds...
 msg: Genstarter Showtime om %d sekunder...
@@ -363,6 +371,13 @@ msg: CPU'en er for langsom til at afkode denne video
 
 id: Playback status
 msg: Afspilningsstatus
+
+#
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -432,39 +447,6 @@ msg: Brug orginaltitel
 #
 id: System is low on memory (%d kB RAM available)
 msg: Systemet mangler hukommelse (%d Kb RAM tilgængelig)
-
-#
-# ./src/audio/audio.c
-#
-id: Audio output
-msg: Audio udgang
-
-id: Audio/Video sync delay
-msg: Audio/Video sync delay
-
-id: Current output device
-msg: Nuværende lydudgang
-
-id: Force stereo downmix
-msg: Tving stereo downmix
-
-id: Phantom LFE
-msg: Fantom LFE
-
-id: Phantom center
-msg: Fantom center
-
-id: Select audio output device and related configurations
-msg: Vælg lydudgang og relaterede konfigurationer
-
-id: Small front speakers
-msg: Små fronthøjtalere
-
-id: Swap LFE+center with surround
-msg: Byt LFE+center med surround
-
-id: Switching audio output to %s
-msg: Skifter lydudgang til %s
 
 #
 # ./src/backend/dvd/cdda.c
@@ -666,13 +648,16 @@ id: File access
 # Missing translation
 msg: 
 
+id: %d archive parts
+# Missing plural translation for '%d archive parts' and '%d archive part'
+msg[0]: 
+msg[1]: 
+
 id: %d directories
-# Missing plural translation for '%d directories' and '%d directory'
 msg[0]: 
 msg[1]: 
 
 id: %d files
-# Missing plural translation for '%d files' and '%d file'
 msg[0]: 
 msg[1]: 
 
@@ -717,18 +702,6 @@ id: Tertiary subtitle language code
 msg: Tertiær sprog for undertekster
 
 #
-# ./src/ipc/serdev/lgtv.c
-#
-id: Automatic TV power on/off
-msg: Automatisk tænd/sluk af TV
-
-id: Input source
-msg: Indputskilde
-
-id: LG Television set
-msg: LG TV
-
-#
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
@@ -755,6 +728,14 @@ msg: Juster undertekster efter videobillede
 id: Audio delay
 msg: Lyd forsinkelse
 
+id: Audio volume
+# Missing translation
+msg: 
+
+id: Go to standby after video ends
+# Missing translation
+msg: 
+
 id: Stretch video to fullscreen
 msg: Stræk video til hele skærmen
 
@@ -764,8 +745,16 @@ msg: Stræk video horisontalt
 id: Subtitle delay
 msg: Undertekster forsinkelse
 
+id: Subtitle horizontal displacement
+# Missing translation
+msg: 
+
 id: Subtitle scaling
 msg: Skalering af undertekster
+
+id: Subtitle vertical displacement
+# Missing translation
+msg: 
 
 id: Video zoom
 msg: Video zoom
@@ -777,11 +766,30 @@ id: Indexing
 msg: Indekserer
 
 #
-# ./src/metadata/metadata.c
+# ./src/metadata/decoration.c
 #
 id: Automatic
 msg: Automatisk
 
+id: Manual
+# Missing translation
+msg: 
+
+id: Mark all as seen
+# Missing translation
+msg: 
+
+id: Mark all as unseen
+# Missing translation
+msg: 
+
+id: Metadata mode
+# Missing translation
+msg: 
+
+#
+# ./src/metadata/metadata.c
+#
 id: Custom search query
 msg: Brugerdefinerede søgning
 
@@ -1161,9 +1169,6 @@ msg: Størrelse på undertekster
 id: Subtitle size and positioning
 msg: Størrelse på undertekster og position
 
-id: Subtitle styling
-msg: Stil på undertekster
-
 id: Subtitles embedded in video file
 # Missing translation
 msg: 
@@ -1200,14 +1205,9 @@ msg: Nulstil smal skrifttype til standard
 id: Reset subtitle font to default
 msg: Nulstil undertekst skrifttype til standard
 
-id: Unable to load %s -- %s
-msg: Kan ikke hente %s -- %s
-
-id: Unable to open %s for writing
-msg: Kan ikke åbne %s for skrivning
-
-id: Unable to write to %s
-msg: Kan ikke skrive til %s
+id: Unable to install font: %s
+# Missing translation
+msg: 
 
 id: Use font %s for
 msg: Benyt skrifttype %s til
@@ -1216,19 +1216,32 @@ id: User interface
 msg: Brugergrænseflade
 
 #
+# ./src/ui/glw/glw_ps3.c
+#
+id: Seek using L2 and R2 button
+# Missing translation
+msg: 
+
+id: Yes with Select button
+# Missing translation
+msg: 
+
+#
 # ./src/ui/glw/glw_settings.c
 #
+id: Font and icon size
+# Missing translation
+msg: 
+
 id: Horizontal underscan
 msg: Vandret underscanning
 
 id: Screensaver delay
 msg: Pauseskærm forsinkelse
 
-id: Userinterface size
-msg: Størrelse på brugergrænseflade
-
-id: Vertical underscan
-msg: Lodret underscanning
+id: Veritcal underscan
+# Missing translation
+msg: 
 
 #
 # ./src/ui/glw/glw_x11.c
@@ -1311,15 +1324,6 @@ msg: Kan ikke forespørge Cell codec. Fejl 0x%x
 #
 # ./src/video/video_settings.c
 #
-id: 1080
-msg: 1080
-
-id: 576
-msg: 576
-
-id: 720
-msg: 720
-
 id: Automatically play next video in list
 msg: Afspil automatisk næste video i listen
 

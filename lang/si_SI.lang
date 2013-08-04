@@ -332,6 +332,10 @@ msg: Spremembe %s izdaje
 id: Check for updates now
 msg: Preverite za posodobitve
 
+id: Checking current installed version
+# Missing translation
+msg: 
+
 id: Checking for updates...
 msg: Preverjanje posodobitev...
 
@@ -352,6 +356,10 @@ msg: Nova verzija %s je dosegljiva za prenos
 
 id: No upgrade available
 msg: Posodobitev ne obstaja
+
+id: Patching binary
+# Missing translation
+msg: 
 
 id: Restarting Showtime in %d seconds...
 msg: Ponoven zagon Showtime-a v %d sekundah...
@@ -379,6 +387,13 @@ msg: CPU je prepočasen za dekodiranje videa
 
 id: Playback status
 msg: Status predvajanja
+
+#
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -450,39 +465,6 @@ msg:
 #
 id: System is low on memory (%d kB RAM available)
 msg: Pomnilnik je skoraj poln (%d kb RAM na voljo)
-
-#
-# ./src/audio/audio.c
-#
-id: Audio output
-msg: Izhod zvoka
-
-id: Audio/Video sync delay
-msg: Audio/Video sinhronizacija upočasnjena
-
-id: Current output device
-msg: Trenutna izhodna naprava
-
-id: Force stereo downmix
-msg: Prisiliti Stereo-Downmix
-
-id: Phantom LFE
-msg: Phantom-LFE
-
-id: Phantom center
-msg: Phantom-center
-
-id: Select audio output device and related configurations
-msg: Izbor zvočnih izhodnih naprav in danih nastavitev
-
-id: Small front speakers
-msg: Majhen sprednji zvočnik
-
-id: Swap LFE+center with surround
-msg: Zamenjati LFE+Center z Surround-om
-
-id: Switching audio output to %s
-msg: Preklop zvočni izhod na %s um
 
 #
 # ./src/backend/dvd/cdda.c
@@ -691,13 +673,16 @@ id: File access
 # Missing translation
 msg: 
 
+id: %d archive parts
+# Missing plural translation for '%d archive parts' and '%d archive part'
+msg[0]: 
+msg[1]: 
+
 id: %d directories
-# Missing plural translation for '%d directories' and '%d directory'
 msg[0]: 
 msg[1]: 
 
 id: %d files
-# Missing plural translation for '%d files' and '%d file'
 msg[0]: 
 msg[1]: 
 
@@ -742,18 +727,6 @@ id: Tertiary subtitle language code
 msg: Tretji jezik podnapisov
 
 #
-# ./src/ipc/serdev/lgtv.c
-#
-id: Automatic TV power on/off
-msg: Avtomatski TV izklop/vklop
-
-id: Input source
-msg: Vhod
-
-id: LG Television set
-msg: Nastavitve za LG TV
-
-#
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
@@ -780,6 +753,14 @@ msg: Poravnava podnapisov z sliko
 id: Audio delay
 msg: Zamik zvoka
 
+id: Audio volume
+# Missing translation
+msg: 
+
+id: Go to standby after video ends
+# Missing translation
+msg: 
+
 id: Stretch video to fullscreen
 msg: Rastegne video v cel zaslon
 
@@ -789,8 +770,16 @@ msg: Raztegni video za Widescreen
 id: Subtitle delay
 msg: Zamik podnapisov
 
+id: Subtitle horizontal displacement
+# Missing translation
+msg: 
+
 id: Subtitle scaling
 msg: Velikost podnapisov
+
+id: Subtitle vertical displacement
+# Missing translation
+msg: 
 
 id: Video zoom
 msg: Video približevanje
@@ -803,11 +792,30 @@ id: Indexing
 msg: 
 
 #
-# ./src/metadata/metadata.c
+# ./src/metadata/decoration.c
 #
 id: Automatic
 msg: Avtomatsko
 
+id: Manual
+# Missing translation
+msg: 
+
+id: Mark all as seen
+# Missing translation
+msg: 
+
+id: Mark all as unseen
+# Missing translation
+msg: 
+
+id: Metadata mode
+# Missing translation
+msg: 
+
+#
+# ./src/metadata/metadata.c
+#
 id: Custom search query
 msg: Uporabniško iskanje
 
@@ -1217,9 +1225,6 @@ msg: Velikost podnapisov
 id: Subtitle size and positioning
 msg: Velikost in Položaj podnapisov
 
-id: Subtitle styling
-msg: Oblikovanje podnapisov
-
 id: Subtitles embedded in video file
 # Missing translation
 msg: 
@@ -1263,15 +1268,7 @@ id: Reset subtitle font to default
 # Missing translation
 msg: 
 
-id: Unable to load %s -- %s
-# Missing translation
-msg: 
-
-id: Unable to open %s for writing
-# Missing translation
-msg: 
-
-id: Unable to write to %s
+id: Unable to install font: %s
 # Missing translation
 msg: 
 
@@ -1284,19 +1281,32 @@ id: User interface
 msg: 
 
 #
+# ./src/ui/glw/glw_ps3.c
+#
+id: Seek using L2 and R2 button
+# Missing translation
+msg: 
+
+id: Yes with Select button
+# Missing translation
+msg: 
+
+#
 # ./src/ui/glw/glw_settings.c
 #
+id: Font and icon size
+# Missing translation
+msg: 
+
 id: Horizontal underscan
 msg: Horizontalen podscan
 
 id: Screensaver delay
 msg: Zamik ohranjevalnika zaslona
 
-id: Userinterface size
-msg: Velikost vmesnika
-
-id: Vertical underscan
-msg: Vertikalen podscan
+id: Veritcal underscan
+# Missing translation
+msg: 
 
 #
 # ./src/ui/glw/glw_x11.c
@@ -1379,15 +1389,6 @@ msg: Ne morem odpreti Cell-Kodeka. Napaka 0x%x
 #
 # ./src/video/video_settings.c
 #
-id: 1080
-msg: 1080
-
-id: 576
-msg: 576
-
-id: 720
-msg: 720
-
 id: Automatically play next video in list
 msg: Avtomatsko predvajajte naslednji video iz liste
 
