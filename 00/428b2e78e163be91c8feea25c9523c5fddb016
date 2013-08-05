@@ -1,0 +1,6 @@
+Rework subtitle scheduling a bit
+
+Fixes issue when, in external subtitles, new overlays didn't
+correctly appear if not all previous overlays had disappeared
+
+Fixes #1723
