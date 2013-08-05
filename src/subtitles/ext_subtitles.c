@@ -680,15 +680,18 @@ subtitles_pick(ext_subtitles_t *es, int64_t pts, media_pipe_t *mp)
   if(es->es_picker)
     return es->es_picker(es, pts);
 
-  if(vo != NULL && vo->vo_start <= pts && vo->vo_stop > pts)
-    return; // Already sent
-  
   if(vo != NULL) {
     vo = TAILQ_NEXT(vo, vo_link);
     if(vo != NULL && vo->vo_start <= pts && vo->vo_stop > pts) {
       vo_deliver(es, vo, mp, pts);
       return;
     }
+  }
+
+  vo = es->es_cur;
+
+  if(vo != NULL && vo->vo_start <= pts && vo->vo_stop > pts) {
+    return; // Already sent
   }
 
   TAILQ_FOREACH(vo, &es->es_entries, vo_link) {
