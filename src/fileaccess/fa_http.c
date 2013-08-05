@@ -1381,20 +1381,22 @@ redirect(http_file_t *hf, int *redircount, char *errbuf, size_t errlen,
     return -1;
   }
 
-  if(code == 301)
-    add_premanent_redirect(hf->hf_url, hf->hf_location);
-
   HF_TRACE(hf, "%s: Following redirect to %s%s", hf->hf_url, hf->hf_location,
 	   code == 301 ? ", (premanent)" : "");
 
-  free(hf->hf_url);
   
   const http_connection_t *hc = hf->hf_connection;
 
-  hf->hf_url = 
+  char *newurl =
     url_resolve_relative(hc->hc_ssl ? "https" : "http",
 			 hc->hc_hostname, hc->hc_port,
 			 hf->hf_path, hf->hf_location);
+
+  if(code == 301)
+    add_premanent_redirect(hf->hf_url, newurl);
+
+  free(hf->hf_url);
+  hf->hf_url = newurl;
 
   free(hf->hf_location);
   hf->hf_location = NULL;
