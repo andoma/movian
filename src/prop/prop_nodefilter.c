@@ -993,11 +993,12 @@ prop_nf_src_cb(void *opaque, prop_event_t event, ...)
     prop_nf_release0(nf);
     break;
 
-  case PROP_HAVE_MORE_CHILDS:
+  case PROP_HAVE_MORE_CHILDS_YES:
+  case PROP_HAVE_MORE_CHILDS_NO:
     if(nf->filter == NULL)
-      prop_have_more_childs0(nf->dst);
+      prop_have_more_childs0(nf->dst, event == PROP_HAVE_MORE_CHILDS_YES);
     else
-      nf->pending_have_more = 1;
+      nf->pending_have_more = event;
     break;
 
   case PROP_WANT_MORE_CHILDS:
@@ -1111,7 +1112,8 @@ nf_set_filter(void *opaque, const char *str)
   mystrset(&nf->filter, str);
 
   if(nf->filter == NULL && nf->pending_have_more) {
-    prop_have_more_childs0(nf->dst);
+    prop_have_more_childs0(nf->dst,
+                           nf->pending_have_more == PROP_HAVE_MORE_CHILDS_YES);
     nf->pending_have_more = 0;
   }
 

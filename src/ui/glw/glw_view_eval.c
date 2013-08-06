@@ -108,6 +108,7 @@ typedef struct sub_cloner {
   int sc_highest_active;
 
   char sc_have_more;
+  char sc_pending_more;
 
   struct clone_list sc_clones;
 
@@ -1116,12 +1117,12 @@ clone_eval(glw_clone_t *c)
 static void
 cloner_pagination_check(sub_cloner_t *sc)
 {
-  if(!sc->sc_have_more)
+  if(sc->sc_pending_more || !sc->sc_have_more)
     return;
 
   if(sc->sc_highest_active >= sc->sc_entries * 0.95 ||
      sc->sc_highest_active == sc->sc_entries - 1) {
-    sc->sc_have_more = 0;
+    sc->sc_pending_more = 1;
     if(sc->sc_sub.gps_sub != NULL)
       prop_want_more_childs(sc->sc_sub.gps_sub);
   }
@@ -1212,6 +1213,9 @@ clone_sig_handler(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     c->c_w = NULL;
     clone_free(gr, c);
     break;
+
+  case GLW_SIGNAL_WRAP_CHECK:
+    return sc->sc_have_more == 1;
 
   default:
     break;
@@ -1570,9 +1574,15 @@ prop_callback_cloner(void *opaque, prop_event_t event, ...)
     rpn = gps->gps_rpn;
     break;
 
-  case PROP_HAVE_MORE_CHILDS:
+  case PROP_HAVE_MORE_CHILDS_YES:
     sc->sc_have_more = 1;
+    sc->sc_pending_more = 0;
     cloner_pagination_check(sc);
+    break;
+
+  case PROP_HAVE_MORE_CHILDS_NO:
+    sc->sc_have_more = 0;
+    sc->sc_pending_more = 0;
     break;
 
 
@@ -1683,7 +1693,8 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
   case PROP_DESTROYED:
   case PROP_EXT_EVENT:
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
-  case PROP_HAVE_MORE_CHILDS:
+  case PROP_HAVE_MORE_CHILDS_YES:
+  case PROP_HAVE_MORE_CHILDS_NO:
   case PROP_WANT_MORE_CHILDS:
   case PROP_SUGGEST_FOCUS:
   case PROP_SET_STRING:
@@ -1756,7 +1767,8 @@ prop_callback_counter(void *opaque, prop_event_t event, ...)
   case PROP_DESTROYED:
   case PROP_EXT_EVENT:
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
-  case PROP_HAVE_MORE_CHILDS:
+  case PROP_HAVE_MORE_CHILDS_YES:
+  case PROP_HAVE_MORE_CHILDS_NO:
   case PROP_WANT_MORE_CHILDS:
   case PROP_SUGGEST_FOCUS:
   case PROP_SET_STRING:
@@ -1851,7 +1863,8 @@ ve_cb(void *opaque, prop_event_t event, ...)
   case PROP_DESTROYED:
   case PROP_EXT_EVENT:
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
-  case PROP_HAVE_MORE_CHILDS:
+  case PROP_HAVE_MORE_CHILDS_YES:
+  case PROP_HAVE_MORE_CHILDS_NO:
   case PROP_WANT_MORE_CHILDS:
   case PROP_SUGGEST_FOCUS:
   case PROP_SET_STRING:
@@ -2162,7 +2175,8 @@ prop_callback_vectorizer(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_SUGGEST_FOCUS:
-  case PROP_HAVE_MORE_CHILDS:
+  case PROP_HAVE_MORE_CHILDS_YES:
+  case PROP_HAVE_MORE_CHILDS_NO:
   case PROP_REQ_NEW_CHILD:
   case PROP_REQ_DELETE_VECTOR:
   case PROP_DESTROYED:
@@ -2237,7 +2251,7 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
       sub_cloner_t *sc = calloc(1, sizeof(sub_cloner_t));
       gps = &sc->sc_sub;
 
-      sc->sc_have_more = 1;
+      sc->sc_have_more = 2;
 
       sc->sc_originating_prop = prop_ref_inc(ec->prop);
       sc->sc_view_prop        = prop_ref_inc(ec->prop_viewx);

@@ -461,8 +461,8 @@ browse_items(upnp_browse_t *ub)
 	ub->ub_loaded_entries, ub->ub_total_entries);
 
   htsmsg_destroy(meta);
-  if(ub->ub_loaded_entries < ub->ub_total_entries)
-    prop_have_more_childs(ub->ub_items);
+  prop_have_more_childs(ub->ub_items,
+                        ub->ub_loaded_entries < ub->ub_total_entries);
   htsmsg_destroy(out);
 }
 

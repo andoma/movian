@@ -21,6 +21,7 @@
 #include "glw.h"
 #include "event.h"
 #include "glw_event.h"
+#include "glw_settings.h"
 
 typedef struct query {
   float x1, y1, x2, y2, xc, yc;
@@ -257,6 +258,21 @@ glw_move_item(glw_t *w, action_type_t how)
   return 0;
 }
 
+
+/**
+ *
+ */
+static int
+dowrap(glw_t *w)
+{
+  if(!glw_settings.gs_wrap)
+    return 0;
+
+  int r = !glw_signal0(w, GLW_SIGNAL_WRAP_CHECK, NULL);
+  return r;
+}
+
+
 /**
  *
  */
@@ -428,12 +444,14 @@ glw_navigate(glw_t *w, event_t *e, int local)
 	    loop = 0;
 
 	  } else {
-            wrap = glw_first_widget(c->glw_parent);
-	    while(wrap != NULL && !glw_is_child_focusable(wrap))
-	      wrap = glw_next_widget(wrap);
 
-            if(wrap == c || wrap == w)
-              wrap = NULL;
+            if(dowrap(c)) {
+              wrap = glw_first_widget(c->glw_parent);
+              while(wrap != NULL && !glw_is_child_focusable(wrap))
+                wrap = glw_next_widget(wrap);
+              if(wrap == c || wrap == w)
+                wrap = NULL;
+            }
 
 	    c = glw_next_widget(c);
 	  }
@@ -469,12 +487,13 @@ glw_navigate(glw_t *w, event_t *e, int local)
 	    loop = 0;
 
 	  } else {
-	    wrap = glw_last_widget(c->glw_parent);
-	    while(wrap != NULL && !glw_is_child_focusable(wrap))
-	      wrap = glw_prev_widget(wrap);
-
-            if(wrap == c || wrap == w)
-              wrap = NULL;
+            if(dowrap(c)) {
+              wrap = glw_last_widget(c->glw_parent);
+              while(wrap != NULL && !glw_is_child_focusable(wrap))
+                wrap = glw_prev_widget(wrap);
+              if(wrap == c || wrap == w)
+                wrap = NULL;
+            }
 
 	    c = glw_prev_widget(c);
 	  }

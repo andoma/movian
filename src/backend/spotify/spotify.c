@@ -3563,8 +3563,7 @@ ss_fill_tracks(sp_search *result, spotify_search_request_t *ssr)
   ssr->ssr_offset += ntracks;
   prop_set_int(ssr->ssr_entries, total);
 
-  if(ssr->ssr_offset != total)
-    prop_have_more_childs(ssr->ssr_nodes);
+  prop_have_more_childs(ssr->ssr_nodes, ssr->ssr_offset != total);
 }
 
 
@@ -3583,7 +3582,7 @@ ss_fill_albums(sp_search *result, spotify_search_request_t *ssr)
   int inc = 0;
   prop_vec_t *pv = prop_vec_create(nalbums);
 
-  prop_have_more_childs(ssr->ssr_nodes);
+  prop_have_more_childs(ssr->ssr_nodes, !!nalbums);
   for(i = 0; i < nalbums; i++) {
     album = f_sp_search_album(result, i);
     artist = f_sp_album_artist(album);
@@ -3639,7 +3638,7 @@ ss_fill_artists(sp_search *result, spotify_search_request_t *ssr)
   char link[URL_MAX];
   prop_vec_t *pv = prop_vec_create(nartists);
 
-  prop_have_more_childs(ssr->ssr_nodes);
+  prop_have_more_childs(ssr->ssr_nodes, !!nartists);
 
   for(i = 0; i < nartists; i++) {
     artist = f_sp_search_artist(result, i);
@@ -3680,7 +3679,7 @@ ss_fill_playlists(sp_search *result, spotify_search_request_t *ssr)
   prop_t *p, *metadata;
   prop_vec_t *pv = prop_vec_create(nplaylists);
 
-  prop_have_more_childs(ssr->ssr_nodes);
+  prop_have_more_childs(ssr->ssr_nodes, !!nplaylists);
 
   for(i = 0; i < nplaylists; i++) {
     
@@ -3759,7 +3758,7 @@ search_nodesub(void *opaque, prop_event_t event, ...)
 
   case PROP_WANT_MORE_CHILDS:
     if(ssr->ssr_last_search == ssr->ssr_offset) {
-      prop_have_more_childs(ssr->ssr_nodes);
+      prop_have_more_childs(ssr->ssr_nodes, 1);
       break;
     }
 

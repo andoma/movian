@@ -621,7 +621,8 @@ vq_entries_callback(void *opaque, prop_event_t event, ...)
   case PROP_DESTROYED:
     break;
 
-  case PROP_HAVE_MORE_CHILDS:
+  case PROP_HAVE_MORE_CHILDS_YES:
+  case PROP_HAVE_MORE_CHILDS_NO:
     break;
 
   default:

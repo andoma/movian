@@ -91,6 +91,14 @@ glw_settings_init(void)
                    SETTING_WRITE_INT(&glw_settings.gs_screensaver_delay),
                    SETTING_HTSMSG("screensaver", store, "glw"),
                    NULL);
+
+  glw_settings.gs_setting_wrap =
+    setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
+                   SETTING_TITLE(_p("Wrap when reaching beginning/end of lists")),
+                   SETTING_VALUE(1),
+                   SETTING_WRITE_BOOL(&glw_settings.gs_wrap),
+                   SETTING_HTSMSG("wrap", store, "glw"),
+                   NULL);
 }
 
 
@@ -104,6 +112,7 @@ glw_settings_fini(void)
   setting_destroy(glw_settings.gs_setting_underscan_v);
   setting_destroy(glw_settings.gs_setting_underscan_h);
   setting_destroy(glw_settings.gs_setting_size);
+  setting_destroy(glw_settings.gs_setting_wrap);
   prop_destroy(glw_settings.gs_settings);
   htsmsg_destroy(glw_settings.gs_settings_store);
 }

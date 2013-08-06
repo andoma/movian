@@ -294,6 +294,11 @@ typedef enum {
    */
   GLW_SIGNAL_MOVE,
 
+  /**
+   *
+   */
+  GLW_SIGNAL_WRAP_CHECK,
+
 } glw_signal_t;
 
 

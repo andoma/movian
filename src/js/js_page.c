@@ -1196,8 +1196,8 @@ js_model_nodesub(void *opaque, prop_event_t event, ...)
 
   case PROP_WANT_MORE_CHILDS:
     if(jm->jm_paginator) {
-      if(js_model_fill(jm->jm_cx, jm))
-	prop_have_more_childs(jm->jm_nodes);
+      int r = js_model_fill(jm->jm_cx, jm);
+      prop_have_more_childs(jm->jm_nodes, r);
     } else {
       jm->jm_pending_want_more = 1;
     }
@@ -1428,8 +1428,8 @@ js_open(js_model_t *jm)
 
     if(jm->jm_pending_want_more && jm->jm_paginator) {
       jm->jm_pending_want_more = 0;
-      if(js_model_fill(jm->jm_cx, jm))
-	prop_have_more_childs(jm->jm_nodes);
+      int r = js_model_fill(jm->jm_cx, jm);
+      prop_have_more_childs(jm->jm_nodes, r);
     }
   }
 
