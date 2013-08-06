@@ -3248,7 +3248,7 @@ http_req(const char *url, ...)
 
   if(postdata != NULL) {
     if(hf->hf_debug)
-      htsbuf_hexdump(&q, "HTTP-POSTDATA");
+      htsbuf_hexdump(postdata, "HTTP-POSTDATA");
 
     tcp_write_queue_dontfree(hf->hf_connection->hc_tc, postdata);
   }
