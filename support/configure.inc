@@ -390,9 +390,9 @@ bzip2_setup()
 
     tar -x -C "${BUILDDIR}" -f "${bzip2tarball}"
 
-    sed -i s#^CC=gcc\$#CC=${TOOLCHAIN}gcc# ${BZIP2_SRC_DIR}/Makefile
-    sed -i s#^AR=ar\$#AR=${TOOLCHAIN}ar# ${BZIP2_SRC_DIR}/Makefile
-    sed -i s#^RANLIB=ranlib\$#RANLIB=${TOOLCHAIN}ranlib# ${BZIP2_SRC_DIR}/Makefile
+    sed -ibak s#^CC=gcc\$#CC=${TOOLCHAIN}gcc# ${BZIP2_SRC_DIR}/Makefile
+    sed -ibak s#^AR=ar\$#AR=${TOOLCHAIN}ar# ${BZIP2_SRC_DIR}/Makefile
+    sed -ibak s#^RANLIB=ranlib\$#RANLIB=${TOOLCHAIN}ranlib# ${BZIP2_SRC_DIR}/Makefile
 
     echo >>${CONFIG_MAK} "BZIP2_BUILD_DIR=${BZIP2_SRC_DIR}"
 

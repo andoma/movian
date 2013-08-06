@@ -238,3 +238,29 @@ arch_pipe(int pipefd[2])
 {
   return pipe(pipefd);
 }
+
+void *
+mymalloc(size_t size)
+{
+  return malloc(size);
+}
+
+void *
+myrealloc(void *ptr, size_t size)
+{
+  return realloc(ptr, size);
+}
+
+void *
+mycalloc(size_t count, size_t size)
+{
+  return calloc(count, size);
+}
+
+void *
+mymemalign(size_t align, size_t size)
+{
+  void *p;
+  return posix_memalign(&p, align, size) ? NULL : p;
+}
+

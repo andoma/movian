@@ -18,10 +18,10 @@
  */
 
 #include <stdlib.h>
-#include <sys/param.h>
 
 #include "misc/queue.h"
 #include "misc/pool.h"
+#include "misc/minmax.h"
 #include "threads.h"
 
 static hts_mutex_t ets_mutex;

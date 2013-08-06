@@ -18,13 +18,13 @@
 
 #include <assert.h>
 #include <stdio.h>
-#include <sys/param.h>
 #include <string.h>
 #include <stdlib.h>
 
 #include "showtime.h"
 #include "arch/atomic.h"
 #include "pixmap.h"
+#include "misc/minmax.h"
 #include "misc/jpeg.h"
 #include "backend/backend.h"
 

@@ -600,13 +600,19 @@ js_InitRuntimeNumberState(JSContext *cx)
     number_constants[NC_MIN_VALUE].dval = u.d;
 
     locale = localeconv();
+
+#ifdef __ANDROID__
+    rt->thousandsSeparator = JS_strdup(cx, "'");
+    rt->decimalSeparator =   JS_strdup(cx, ".");
+    rt->numGrouping =        JS_strdup(cx, "\3\0");
+#else
     rt->thousandsSeparator =
         JS_strdup(cx, locale->thousands_sep ? locale->thousands_sep : "'");
     rt->decimalSeparator =
         JS_strdup(cx, locale->decimal_point ? locale->decimal_point : ".");
     rt->numGrouping =
         JS_strdup(cx, locale->grouping ? locale->grouping : "\3\0");
-
+#endif
     return rt->thousandsSeparator && rt->decimalSeparator && rt->numGrouping;
 }
 

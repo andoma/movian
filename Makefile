@@ -32,6 +32,7 @@ ALLDEPS += ${STAMPS}
 OPTFLAGS ?= -O2
 
 PROG=${BUILDDIR}/showtime
+LIB=${BUILDDIR}/libshowtime
 
 include ${BUILDDIR}/config.mak
 
@@ -657,6 +658,9 @@ ${PROG}.datadir: $(OBJS) $(ALLDEPS)  support/dataroot/datadir.c
 
 ${PROG}.osxapp: $(OBJS) $(ALLDEPS) support/dataroot/osxapp.c
 	$(CC) -o $@ $(OBJS) support/dataroot/osxapp.c $(LDFLAGS) ${LDFLAGS_cfg}
+
+${LIB}.so: $(OBJS) $(BUNDLE_OBJS) $(ALLDEPS)  support/dataroot/bundle.c
+	$(CC) -shared -o $@ $(OBJS) support/dataroot/bundle.c $(BUNDLE_OBJS) ${LDFLAGS_cfg}
 
 .PHONY: ${BUILDDIR}/zipbundles/bundle.zip
 

@@ -28,11 +28,8 @@
 #include <stdarg.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <net/if.h>
-#include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
-#include <ifaddrs.h>
 #include <pthread.h>
 
 #include "showtime.h"
@@ -511,50 +508,6 @@ tcp_huge_buffer(tcpcon_t *tc)
   int v = 192 * 1024;
   if(setsockopt(tc->fd, SOL_SOCKET, SO_RCVBUF, &v, sizeof(v)) == -1)
     TRACE(TRACE_ERROR, "TCP", "Unable to increase RCVBUF");
-}
-
-/**
- *
- */
-netif_t *
-net_get_interfaces(void)
-{
-  struct ifaddrs *ifa_list, *ifa;
-  struct netif *ni, *n;
-  int num = 0;
-
-  if(getifaddrs(&ifa_list) != 0) {
-    TRACE(TRACE_ERROR, "net", "getifaddrs failed: %s", strerror(errno));
-    return NULL;
-  }
-  
-  for(ifa = ifa_list; ifa != NULL; ifa = ifa->ifa_next)
-    num++;
-
-  n = ni = calloc(1, sizeof(struct netif) * (num + 1));
-  
-  for(ifa = ifa_list; ifa != NULL; ifa = ifa->ifa_next) {
-    if((ifa->ifa_flags & (IFF_UP | IFF_LOOPBACK | IFF_RUNNING)) != 
-       (IFF_UP | IFF_RUNNING) ||
-       ifa->ifa_addr == NULL || ifa->ifa_addr->sa_family != AF_INET)
-	 continue;
-
-    n->ipv4 = ntohl(((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr);
-    if(n->ipv4 == 0)
-      continue;
-
-    snprintf(n->ifname, sizeof(n->ifname), "%s", ifa->ifa_name);
-    n++;
-  }
-  
-  freeifaddrs(ifa_list);
-
-  if(ni->ipv4 == 0) {
-    free(ni);
-    return NULL;
-  }
-
-  return ni;
 }
 
 
