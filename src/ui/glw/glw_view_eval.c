@@ -772,9 +772,6 @@ resolve_property_name(glw_view_eval_context_t *ec, token_t *a)
 		       PROP_TAG_ROOT, ec->w->glw_root->gr_prop_nav,
 		       NULL);
 
-  if(p == NULL)
-    return glw_view_seterr(ec->ei, a, "Unable to resolve property");
-
   /* Transform TOKEN_PROPERTY_NAME -> TOKEN_PROPERTY */
 
   glw_view_free_chain(ec->gr, a->child);
