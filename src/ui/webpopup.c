@@ -18,6 +18,7 @@
 
 #include <string.h>
 
+#include "showtime.h"
 #include "webpopup.h"
 #include "misc/str.h"
 
@@ -27,6 +28,8 @@ webpopup_finalize_result(webpopup_result_t *wr)
   if(wr->wr_trapped.url != NULL) {
     char hn[256];
     char path[4096];
+
+    TRACE(TRACE_DEBUG, "webpopup", "Trapped URL: %s", wr->wr_trapped.url);
 
     url_split(NULL, 0, NULL, 0, hn, sizeof(hn),
               &wr->wr_trapped.port, path, sizeof(path), 
