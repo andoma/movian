@@ -599,13 +599,13 @@ js_InitRuntimeNumberState(JSContext *cx)
     u.s.lo = 1;
     number_constants[NC_MIN_VALUE].dval = u.d;
 
-    locale = localeconv();
 
 #ifdef __ANDROID__
     rt->thousandsSeparator = JS_strdup(cx, "'");
     rt->decimalSeparator =   JS_strdup(cx, ".");
     rt->numGrouping =        JS_strdup(cx, "\3\0");
 #else
+    locale = localeconv();
     rt->thousandsSeparator =
         JS_strdup(cx, locale->thousands_sep ? locale->thousands_sep : "'");
     rt->decimalSeparator =
