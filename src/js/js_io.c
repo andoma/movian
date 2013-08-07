@@ -780,6 +780,24 @@ js_setHeader(JSContext *cx, JSObject *obj,
 }
 
 
+/**
+ *
+ */
+static JSBool
+js_fail(JSContext *cx, JSObject *obj,
+        uintN argc, jsval *argv, jsval *rval)
+{
+  const char *reason;
+
+  if(!JS_ConvertArguments(cx, argc, argv, "s", &reason))
+    return JS_FALSE;
+
+  *rval = JSVAL_NULL;
+  http_client_fail_req(JS_GetPrivate(cx, obj), reason);
+  return JS_TRUE;
+}
+
+
 
 /**
  *
@@ -788,6 +806,7 @@ static JSFunctionSpec http_auth_functions[] = {
     JS_FS("oauthToken",      js_oauth,       4, 0, 0),
     JS_FS("rawAuth",         js_rawAuth,     1, 0, 0),
     JS_FS("setHeader",       js_setHeader,   2, 0, 0),
+    JS_FS("fail",            js_fail,        1, 0, 0),
     JS_FS_END
 };
 
@@ -834,11 +853,16 @@ js_http_auth_try(const char *url, struct http_auth_req *har)
   JS_PopArguments(cx, mark);
 
   JS_RemoveRoot(cx, &pobj);
+  JS_DestroyContext(cx);
+
+  if(!ret) {
+    http_client_fail_req(har, "Script error");
+    return 0;
+  }
 
   if(ret && JSVAL_IS_BOOLEAN(result) && JSVAL_TO_BOOLEAN(result))
     ret = 0;
   else
     ret = 1;
-  JS_DestroyContext(cx);
   return ret;
 }

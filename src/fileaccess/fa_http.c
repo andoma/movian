@@ -742,6 +742,9 @@ struct http_auth_req {
   const char **har_parameters;
   const http_file_t *har_hf;
   struct http_header_list *har_headers;
+  char *har_errbuf;
+  size_t har_errlen;
+  int har_force_fail;
 
 } http_auth_req_t;
 
@@ -927,6 +930,17 @@ http_client_set_header(struct http_auth_req *har, const char *key,
 /**
  *
  */
+void
+http_client_fail_req(struct http_auth_req *har, const char *reason)
+{
+  snprintf(har->har_errbuf, har->har_errlen, "%s", reason);
+  har->har_force_fail = 1;
+}
+
+
+/**
+ *
+ */
 static void
 http_send_verb(htsbuf_queue_t *q, http_file_t *hf, const char *method)
 {
@@ -1005,9 +1019,11 @@ http_headers_send(htsbuf_queue_t *q, struct http_header_list *def,
 /**
  *
  */
-static void
+static int
+  __attribute__ ((warn_unused_result))
 http_headers_auth(struct http_header_list *headers, http_file_t *hf,
-		  const char *method, const char **parameters)
+		  const char *method, const char **parameters,
+                  char *errbuf, size_t errlen)
 {
   http_auth_cache_t *hac;
   const char *hostname = hf->hf_connection->hc_hostname;
@@ -1020,14 +1036,21 @@ http_headers_auth(struct http_header_list *headers, http_file_t *hf,
   har.har_parameters = parameters;
   har.har_headers = headers;
   har.har_hf = hf;
+  har.har_errbuf = errbuf;
+  har.har_errlen = errlen;
+  har.har_force_fail = 0;
 
-  if(!js_http_auth_try(hf->hf_url, &har))
-    return;
+  if(!js_http_auth_try(hf->hf_url, &har)) {
+    if(har.har_force_fail)
+      return 1;
+    return 0;
+  }
+
 #endif
 
   if(hf->hf_auth != NULL) {
     http_header_add(headers, "Authorization", hf->hf_auth, 0);
-    return;
+    return 0;
   }
 
   hts_mutex_lock(&http_auth_caches_mutex);
@@ -1039,6 +1062,7 @@ http_headers_auth(struct http_header_list *headers, http_file_t *hf,
     }
   }
   hts_mutex_unlock(&http_auth_caches_mutex);
+  return 0;
 }
 
 
@@ -1575,15 +1599,18 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
   if(hf->hf_streaming) {
     http_send_verb(&q, hf, "GET");
-    http_headers_auth(&headers, hf, "GET", NULL);
+    if(http_headers_auth(&headers, hf, "GET", NULL, errbuf, errlen))
+      return -1;
     tcp_huge_buffer(hf->hf_connection->hc_tc);
   } else if(nohead) {
     http_send_verb(&q, hf, "GET");
     htsbuf_qprintf(&q, "Range: bytes=0-1\r\n");
-    http_headers_auth(&headers, hf, "GET", NULL);
+    if(http_headers_auth(&headers, hf, "GET", NULL, errbuf, errlen))
+      return -1;
   } else {
     http_send_verb(&q, hf, "HEAD");
-    http_headers_auth(&headers, hf, "HEAD", NULL);
+    if(http_headers_auth(&headers, hf, "HEAD", NULL, errbuf, errlen))
+      return -1;
   }
 
   http_cookie_append(hf->hf_connection->hc_hostname, hf->hf_path, &headers);
@@ -1831,7 +1858,8 @@ again:
   http_send_verb(&q, hf, "GET");
 
   http_headers_init(&headers, hf);
-  http_headers_auth(&headers, hf, "GET", NULL);
+  if(http_headers_auth(&headers, hf, "GET", NULL, errbuf, errlen))
+    return -1;
   http_cookie_append(hf->hf_connection->hc_hostname, hf->hf_path, &headers);
   http_headers_send(&q, &headers, NULL, NULL);
 
@@ -1963,7 +1991,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
   size_t totsize = 0; // Total data read
   size_t read_size;   // Amount of bytes to read in one round
   struct http_header_list headers;
-
+  char errbuf[512];
   if(size == 0)
     return 0;
 
@@ -2000,7 +2028,10 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
       http_send_verb(&q, hf, "GET");
 
       http_headers_init(&headers, hf);
-      http_headers_auth(&headers, hf, "GET", NULL);
+      if(http_headers_auth(&headers, hf, "GET", NULL, errbuf, sizeof(errbuf))) {
+        http_detach(hf, 0, errbuf);
+        return -1;
+      }
 
       char range[100];
 
@@ -2673,7 +2704,9 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
 		   hf->hf_version,
 		   fd != NULL ? 1 : 0);
 
-    http_headers_auth(&headers, hf, "PROPFIND", NULL);
+    if(http_headers_auth(&headers, hf, "PROPFIND", NULL, errbuf, errlen))
+      return -1;
+
     http_cookie_append(hf->hf_connection->hc_hostname, hf->hf_path, &headers);
     http_headers_send(&q, &headers, NULL, NULL);
 
@@ -3235,8 +3268,13 @@ http_req(const char *url, ...)
   if(postcontenttype != NULL)
     http_header_add(&headers, "Content-Type", postcontenttype, 0);
 
-  if(!(flags & FA_DISABLE_AUTH))
-    http_headers_auth(&headers, hf, m, arguments);
+  if(!(flags & FA_DISABLE_AUTH)) {
+    if(http_headers_auth(&headers, hf, m, arguments, errbuf, errlen)) {
+      htsbuf_queue_flush(&q);
+      r = -1;
+      goto cleanup;
+    }
+  }
 
   http_cookie_append(hc->hc_hostname, hf->hf_path, &headers);
   http_headers_send(&q, &headers, headers_in, &headers_in2);

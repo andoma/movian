@@ -314,7 +314,7 @@ int http_client_rawauth(struct http_auth_req *har, const char *str);
 void http_client_set_header(struct http_auth_req *har, const char *key,
 			    const char *value);
 
-
+void http_client_fail_req(struct http_auth_req *har, const char *reason);
 
 #endif /* FILEACCESS_H */
 
