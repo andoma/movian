@@ -469,9 +469,12 @@ mp_settings_init(media_pipe_t *mp, const char *url)
 {
   prop_t *c = mp->mp_prop_ctrl;
 
-  TRACE(TRACE_DEBUG, "media", "Settings initialized for URL %s", url);
-
   mp_settings_clear(mp);
+
+  if(url == NULL)
+    return;
+
+  TRACE(TRACE_DEBUG, "media", "Settings initialized for URL %s", url);
 
   mp->mp_setting_vzoom =
     setting_create(SETTING_INT, mp->mp_setting_video_root,
