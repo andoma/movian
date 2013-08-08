@@ -3132,7 +3132,8 @@ http_req(const char *url, ...)
       hrx = alloca(sizeof(struct http_req_xarg));
       hrx->hdr = va_arg(ap, const char *);
       hrx->val = va_arg(ap, const char *);
-      TAILQ_INSERT_TAIL(&xargs, hrx, link);
+      if(hrx->hdr != NULL && hrx->val != NULL)
+        TAILQ_INSERT_TAIL(&xargs, hrx, link);
       break;
 
     case HTTP_TAG_ARGINT:
@@ -3181,7 +3182,8 @@ http_req(const char *url, ...)
     case HTTP_TAG_REQUEST_HEADER:
       key = va_arg(ap, const char *);
       value = va_arg(ap, const char *);
-      http_header_add(&headers_in2, key, value, 1);
+      if(key != NULL && value != NULL)
+        http_header_add(&headers_in2, key, value, 1);
       break;
 
     case HTTP_TAG_REQUEST_HEADERS:
