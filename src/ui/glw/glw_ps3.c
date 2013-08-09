@@ -37,6 +37,7 @@
 #include "misc/extents.h"
 #include "misc/str.h"
 #include "navigator.h"
+#include "arch/arch.h"
 
 #include <psl1ght/lv2.h>
 #include <rsx/commands.h>
@@ -61,6 +62,7 @@ typedef struct glw_ps3 {
 
   glw_root_t gr;
 
+  int gp_stop;
   int gp_seekmode;
 
   VideoResolution res;
@@ -83,7 +85,7 @@ typedef struct glw_ps3 {
 
 } glw_ps3_t;
 
-
+glw_ps3_t *glwps3;
 char *rsx_address;
 static struct extent_pool *rsx_mempool;
 static hts_mutex_t rsx_mempool_lock;
@@ -390,7 +392,7 @@ eventHandle(u64 status, u64 param, void *userdata)
   glw_ps3_t *gp = userdata;
   switch(status) {
   case EVENT_REQUEST_EXITAPP:
-    gp->gr.gr_stop = 1;
+    gp->gp_stop = 1;
     break;
   case EVENT_MENU_OPEN:
     TRACE(TRACE_INFO, "XMB", "Opened");
@@ -506,7 +508,7 @@ drawFrame(glw_ps3_t *gp, int buffer, int with_universe)
 
   glw_rctx_t rc;
   glw_rctx_init(&rc, gp->gr.gr_width * gp->scale, gp->gr.gr_height, 1);
-  rc.rc_alpha = 1 - gp->gr.gr_stop * 0.1;
+  rc.rc_alpha = 1 - gp->gp_stop * 0.1;
   glw_layout0(gp->gr.gr_universe, &rc);
   glw_render0(gp->gr.gr_universe, &rc);
   glw_unlock(&gp->gr);
@@ -1066,10 +1068,10 @@ glw_ps3_mainloop(glw_ps3_t *gp)
 
 
   sysRegisterCallback(EVENT_SLOT0, eventHandle, gp);
-  while(gp->gr.gr_stop != 10) {
+  while(gp->gp_stop != 10) {
 
-    if(gp->gr.gr_stop)
-      gp->gr.gr_stop++;
+    if(gp->gp_stop)
+      gp->gp_stop++;
 
     handle_pads(gp);
     handle_kb(gp);
@@ -1106,7 +1108,7 @@ int
 glw_ps3_start(void)
 {
   glw_ps3_t *gp = calloc(1, sizeof(glw_ps3_t));
-
+  glwps3 = gp;
   prop_t *root = gp->gr.gr_prop_ui = prop_create(prop_get_global(), "ui");
   gp->gr.gr_prop_nav = nav_spawn();
 
@@ -1133,20 +1135,18 @@ glw_ps3_start(void)
   if(glw_init(gr))
     return 1;
 
-  setting_t *s =
-    settings_create_multiopt(glw_settings.gs_settings,
-			     "analogseekmode",
-			     _p("Seek using L2 and R2 button"),
-			     SETTINGS_INITIAL_UPDATE);
 
-  settings_multiopt_add_opt(s, "0", _p("Yes"), 1);
-  settings_multiopt_add_opt(s, "1", _p("Yes with Select button"), 0);
-  settings_multiopt_add_opt(s, "2", _p("No"), 0);
-
-  settings_multiopt_initiate(s, set_seekmode, gp,
-			     gr->gr_courier,
-			     glw_settings.gs_settings_store,
-			     glw_settings_save, gr);
+  setting_create(SETTING_MULTIOPT, glw_settings.gs_settings,
+                 SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Seek using L2 and R2 button")),
+                 SETTING_OPTION("0", _p("Yes")),
+                 SETTING_OPTION("1", _p("Yes with Select button")),
+                 SETTING_OPTION("2", _p("No")),
+                 SETTING_COURIER(gr->gr_courier),
+                 SETTING_CALLBACK(set_seekmode, gp),
+                 SETTING_HTSMSG("analogseekmode",
+                                glw_settings.gs_settings_store, "glw"),
+                 NULL);
 
   gr->gr_open_osk = osk_open;
 
@@ -1157,5 +1157,12 @@ glw_ps3_start(void)
   glw_unload_universe(gr);
   glw_reap(gr);
   glw_reap(gr);
+  return 0;
+}
+
+int
+arch_stop_req(void)
+{
+  glwps3->gp_stop = 1;
   return 0;
 }

@@ -22,10 +22,13 @@
 #include "gu.h"
 #include "event.h"
 
+#include "arch/linux/linux.h"
+
 #include <gdk/gdkkeysyms.h>
 #include <X11/Xlib.h>
 #include <gtk/gtk.h>
 
+static void gu_tab_destroy(gu_tab_t *gt);
 
 /**
  *
@@ -34,6 +37,9 @@ static gboolean
 window_key_pressed(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 {
   gu_window_t *gw = user_data;
+
+  if(event->keyval == GDK_F12)
+    event_dispatch(event_create_action(ACTION_SWITCH_UI));
 
   if(event->keyval == GDK_F11) {
 
@@ -69,16 +75,16 @@ window_state_event(GtkWidget *w, GdkEventWindowState *event, gpointer user_data)
 void
 gu_win_destroy(gu_window_t *gw)
 {
-  gtk_ui_t *gu = gw->gw_gu;
+  gu_tab_t *gt;
+  while((gt = LIST_FIRST(&gw->gw_tabs)) != NULL)
+    gu_tab_destroy(gt);
+
+  if(gw->gw_gu->gu_last_focused == gw)
+    gw->gw_gu->gu_last_focused = NULL;
 
   gtk_widget_destroy(gw->gw_window);
-
-
   LIST_REMOVE(gw, gw_link);
   free(gw);
-
-  if(LIST_FIRST(&gu->gu_windows) == NULL)
-    showtime_shutdown(0);
 }
 
 
@@ -88,9 +94,29 @@ gu_win_destroy(gu_window_t *gw)
 static gboolean 
 gw_close(GtkWidget *widget,GdkEvent *event, gpointer data)
 {
-  gu_win_destroy(data);
+  gu_window_t *gw = data;
+  gtk_ui_t *gu = gw->gw_gu;
+  gu_win_destroy(gw);
+
+  if(LIST_FIRST(&gu->gu_windows) == NULL)
+    showtime_shutdown(0);
+
   return TRUE;
 }
+
+
+/**
+ *
+ */
+static gboolean 
+gw_focused(GtkWidget *widget,GdkEvent *event, gpointer data)
+{
+  gu_window_t *gw = data;
+  gtk_ui_t *gu = gw->gw_gu;
+  gu->gu_last_focused = gw;
+  return TRUE;
+}
+
 
 /**
  *
@@ -127,7 +153,7 @@ tab_changed(GtkWidget *w, GtkNotebookPage *page,
  *
  */
 gu_window_t *
-gu_win_create(gtk_ui_t *gu, int all)
+gu_win_create(gtk_ui_t *gu, int all, prop_t *nav)
 {
   gu_window_t *gw = calloc(1, sizeof(gu_window_t));
 
@@ -137,11 +163,16 @@ gu_win_create(gtk_ui_t *gu, int all)
 
   gw->gw_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
+  gtk_widget_set_events(gw->gw_window, GDK_FOCUS_CHANGE_MASK);
+
   gtk_window_set_title(GTK_WINDOW(gw->gw_window), "Showtime");
   gtk_window_set_default_size(GTK_WINDOW(gw->gw_window), 640, 400);
 
   g_signal_connect(G_OBJECT(gw->gw_window), "delete_event",
 		   G_CALLBACK(gw_close), gw);
+
+  g_signal_connect(G_OBJECT(gw->gw_window), "focus-in-event",
+		   G_CALLBACK(gw_focused), gw);
 
   gw->gw_vbox = gtk_vbox_new(FALSE, 1);
   gtk_container_add(GTK_CONTAINER(gw->gw_window), gw->gw_vbox);
@@ -186,29 +217,37 @@ gu_win_create(gtk_ui_t *gu, int all)
   g_signal_connect(G_OBJECT(gw->gw_window), "window-state-event",
 		   G_CALLBACK(window_state_event), gw);
 
-  gu_tab_create(gw, 1);
+  gu_tab_create(gw, 1, nav);
 
   gtk_widget_show(gw->gw_window);
 
   return gw;
 }
 
+
+
+/**
+ *
+ */
+static void
+gu_tab_destroy(gu_tab_t *gt)
+{
+  gtk_widget_destroy(gt->gt_notebook);
+  prop_destroy(gt->gt_nav);
+  gt->gt_gw->gw_ntabs--;
+  LIST_REMOVE(gt, gt_link);
+  free(gt);
+}
+
 /**
  *
  */
 void
-gu_tab_destroy(gu_tab_t *gt)
+gu_tab_close(gu_tab_t *gt)
 {
   gu_window_t *gw = gt->gt_gw;
 
-  gtk_widget_destroy(gt->gt_notebook);
-
-  prop_destroy(gt->gt_nav);
-
-  LIST_REMOVE(gt, gt_link);
-  free(gt);
-
-  gw->gw_ntabs--;
+  gu_tab_destroy(gt);
 
   if(gw->gw_ntabs == 0) {
     gu_win_destroy(gw);
@@ -268,7 +307,7 @@ build_tab_header(gu_tab_t *gt)
  *
  */
 gu_tab_t *
-gu_tab_create(gu_window_t *gw, int select)
+gu_tab_create(gu_window_t *gw, int select, prop_t *nav)
 {
   gu_tab_t *gt = calloc(1, sizeof(gu_tab_t));
   prop_sub_t *s;
@@ -280,7 +319,7 @@ gu_tab_create(gu_window_t *gw, int select)
   gw->gw_current_tab = gt;
   gw->gw_ntabs++;
 
-  gt->gt_nav = nav_spawn(); // No navigator supplied, spawn one
+  gt->gt_nav = nav ?: nav_spawn();
   if(prop_set_parent(gt->gt_nav, prop_get_global()))
     abort();
 
@@ -326,28 +365,90 @@ gu_tab_create(gu_window_t *gw, int select)
 
   return gt;
 }
+#if 0
+
+#include <webkit/webkit.h>
+
+static void
+webkit_test(void)
+{
+/* Create the widgets */
+GtkWidget *main_window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+GtkWidget *scrolled_window = gtk_scrolled_window_new (NULL, NULL);
+GtkWidget *web_view = webkit_web_view_new ();
+
+/* Place the WebKitWebView in the GtkScrolledWindow */
+gtk_container_add (GTK_CONTAINER (scrolled_window), web_view);
+gtk_container_add (GTK_CONTAINER (main_window), scrolled_window);
+
+/* Open a webpage */
+webkit_web_view_load_uri (WEBKIT_WEB_VIEW (web_view), "http://www.gnome.org");
+
+/* Show the result */
+gtk_window_set_default_size (GTK_WINDOW (main_window), 800, 600);
+gtk_widget_show_all (main_window);
+
+}
+#endif
 
 
 /**
  *
  */
-int gu_start(void);
-
-int
-gu_start(void)
+static void *
+gu_start(struct prop *nav)
 {
   gu_pixbuf_init();
 
   gtk_ui_t *gu = calloc(1, sizeof(gtk_ui_t));
 
-  gu_win_create(gu, 1);
+  gu_win_create(gu, 1, nav);
 
   /* Init popup controller */
   gu_popup_init(gu);
 
-  gtk_main();
-  return 0;
+  return gu;
 }
+
+
+/**
+ *
+ */
+static struct prop *
+gu_stop(void *ui)
+{
+  gtk_ui_t *gu = ui;
+
+  gu_window_t *gw;
+  prop_t *nav = NULL;
+
+  gu_popup_fini(gu);
+
+  // Try to find the last/currently focused navigator and return that
+
+  gw = gu->gu_last_focused ?: LIST_FIRST(&gu->gu_windows);
+
+  if(gw != NULL)  {
+    nav = gw->gw_current_tab->gt_nav;
+    gw->gw_current_tab->gt_nav = NULL; // Don't destroy it below
+  }
+
+  // Destroy all windows (and tabs)
+
+  while((gw = LIST_FIRST(&gu->gu_windows)) != NULL)
+    gu_win_destroy(gw);
+
+  return nav;
+}
+
+
+/**
+ *
+ */
+const linux_ui_t ui_gu = {
+  .start = gu_start,
+  .stop  = gu_stop,
+};
 
 
 /**
@@ -440,7 +541,7 @@ gu_tab_open(gu_tab_t *gt, const char *url)
 void
 gu_nav_open_newwin(gtk_ui_t *gu, const char *url)
 {
-  gu_window_t *gw = gu_win_create(gu, 0);
+  gu_window_t *gw = gu_win_create(gu, 0, NULL);
   gu_tab_send_event(gw->gw_current_tab,
 		    event_create_openurl(url, NULL, NULL, NULL, NULL));
 }
@@ -452,6 +553,6 @@ gu_nav_open_newwin(gtk_ui_t *gu, const char *url)
 void
 gu_nav_open_newtab(gu_window_t *gw, const char *url)
 {
-  gu_tab_t *gt = gu_tab_create(gw, 0);
+  gu_tab_t *gt = gu_tab_create(gw, 0, NULL);
   gu_tab_send_event(gt, event_create_openurl(url, NULL, NULL, NULL, NULL));
 }

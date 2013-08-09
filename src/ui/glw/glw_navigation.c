@@ -21,6 +21,7 @@
 #include "glw.h"
 #include "event.h"
 #include "glw_event.h"
+#include "glw_settings.h"
 
 typedef struct query {
   float x1, y1, x2, y2, xc, yc;
@@ -257,13 +258,28 @@ glw_move_item(glw_t *w, action_type_t how)
   return 0;
 }
 
+
+/**
+ *
+ */
+static int
+dowrap(glw_t *w)
+{
+  if(!glw_settings.gs_wrap)
+    return 0;
+
+  int r = !glw_signal0(w, GLW_SIGNAL_WRAP_CHECK, NULL);
+  return r;
+}
+
+
 /**
  *
  */
 int
 glw_navigate(glw_t *w, event_t *e, int local)
 {
-  glw_t *w0 = w, *p, *c, *t = NULL, *d, *r = NULL;
+  glw_t *w0 = w, *p, *c, *t = NULL, *d, *r = NULL, *wrap;
   int pagemode = 0, retried = 0;
   int pagecnt;
   query_t query = {0};
@@ -402,11 +418,13 @@ glw_navigate(glw_t *w, event_t *e, int local)
       c = w;
       loop = 1;
       while(loop) {
+        wrap = NULL;
 	if(query.direction == 1) {
 	  /* Down / Right */
 	  if(pagemode == 1) {
 
-	    d = glw_next_widget(c);
+            d = glw_next_widget(c);
+
 	    if(d != NULL) {
 	      while(pagecnt--) {
 		c = d;
@@ -426,6 +444,15 @@ glw_navigate(glw_t *w, event_t *e, int local)
 	    loop = 0;
 
 	  } else {
+
+            if(dowrap(c)) {
+              wrap = glw_first_widget(c->glw_parent);
+              while(wrap != NULL && !glw_is_child_focusable(wrap))
+                wrap = glw_next_widget(wrap);
+              if(wrap == c || wrap == w)
+                wrap = NULL;
+            }
+
 	    c = glw_next_widget(c);
 	  }
 
@@ -453,23 +480,34 @@ glw_navigate(glw_t *w, event_t *e, int local)
 	    }
 
 	  } else if(pagemode == 2) {
-	    
 	    c = glw_first_widget(p);
-
-	    
 	    while(c != NULL && !glw_is_child_focusable(c))
 	      c = glw_next_widget(c);
 
 	    loop = 0;
 
 	  } else {
+            if(dowrap(c)) {
+              wrap = glw_last_widget(c->glw_parent);
+              while(wrap != NULL && !glw_is_child_focusable(wrap))
+                wrap = glw_prev_widget(wrap);
+              if(wrap == c || wrap == w)
+                wrap = NULL;
+            }
+
 	    c = glw_prev_widget(c);
 	  }
 
 	}
 
-	if(c == NULL)
-	  break;
+	if(c == NULL) {
+          if(wrap != NULL) {
+            find_candidate(wrap, &query, escape_score);
+            if(query.best)
+              break;
+          }
+          break;
+        }
 	find_candidate(c, &query, escape_score);
 	if(query.best)
 	  break;
@@ -484,7 +522,7 @@ glw_navigate(glw_t *w, event_t *e, int local)
   if(t != NULL) {
     glw_focus_set(t->glw_root, t, GLW_FOCUS_SET_INTERACTIVE);
     return 1;
-  } else if(retried == 0 && 
+  } else if(retried == 0 &&
 	    r != NULL && query.orientation == GLW_ORIENTATION_HORIZONTAL) {
     retried = 1;
     w = r;

@@ -360,6 +360,9 @@ void metadb_bind_url_to_prop(void *db, const char *url, struct prop *parent);
 
 void metadb_set_video_restartpos(const char *url, int64_t pos);
 
+void metadb_mark_urls_as(const char **urls, int num_urls, int seen,
+                         int content_type);
+
 rstr_t *metadb_get_album_art(void *db, const char *album, const char *artist);
 
 int metadb_get_artist_pics(void *db, const char *artist, 
@@ -411,7 +414,8 @@ int64_t metadb_insert_videoitem(void *db, const char *url, int ds_id,
 
 int metadb_get_videoinfo(void *db, const char *url,
 			 struct metadata_source_queue *sources,
-			 int *fixed_ds, metadata_t **mdp);
+			 int *fixed_ds, metadata_t **mdp,
+                         int only_preferred);
 
 int64_t metadb_get_videoitem(void *db, const char *url);
 
@@ -432,7 +436,7 @@ typedef struct deco_browse deco_browse_t;
 
 deco_browse_t *decorated_browse_create(struct prop *model, struct prop_nf *pnf,
                                        struct prop *items, rstr_t *title,
-                                       int flags);
+                                       int flags, const char *url);
 
 // Use if DECO_FLAGS_NO_AUTO_DESTROY
 void decorated_browse_destroy(deco_browse_t *db);
@@ -450,9 +454,10 @@ metadata_lazy_video_t *metadata_bind_video_info(rstr_t *url, rstr_t *filename,
 						rstr_t *parent, int lonely,
 						int passive,
 						int year, int season,
-						int episode);
+						int episode,
+                                                int manual);
 
-void mlv_unbind(metadata_lazy_video_t *mlv);
+void mlv_unbind(metadata_lazy_video_t *mlv, int cleanup);
 
 void mlv_set_imdb_id(metadata_lazy_video_t *mlv, rstr_t *imdb_id);
 

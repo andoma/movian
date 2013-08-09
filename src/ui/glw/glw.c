@@ -1719,11 +1719,6 @@ glw_dispatch_event(glw_root_t *gr, event_t *e)
 
   runcontrol_activity();
 
-  if(e->e_type_x == EVENT_STOP_UI) {
-    gr->gr_stop = 1;
-    return;
-  }
-
   if(e->e_type_x == EVENT_REPAINT_UI) {
     glw_text_flush(gr);
     return;
@@ -2373,13 +2368,18 @@ glw_osk_text(void *opaque, const char *str)
  *
  */
 static void
-glw_osk_ok(glw_root_t *gr)
+glw_osk_done(glw_root_t *gr, int submit)
 {
   glw_t *w = gr->gr_osk_widget;
   if(w != NULL) {
-    event_t *e = event_create_action(ACTION_SUBMIT);
-    glw_event_to_widget(w, e, 0);
-    event_release(e);
+    if(submit) {
+      event_t *e = event_create_action(ACTION_SUBMIT);
+      glw_event_to_widget(w, e, 0);
+      event_release(e);
+    } else {
+      glw_t *w = gr->gr_osk_widget;
+      w->glw_class->gc_update_text(w, gr->gr_osk_revert);
+    }
 
     glw_unref(gr->gr_osk_widget);
     prop_unsubscribe(gr->gr_osk_text_sub);
@@ -2392,11 +2392,7 @@ glw_osk_ok(glw_root_t *gr)
 
   prop_t *osk = prop_create(gr->gr_prop_ui, "osk");
   prop_set(osk, "show", PROP_SET_INT, 0);
-
-  
 }
-
-
 
 
 /**
@@ -2415,7 +2411,9 @@ glw_osk_event(void *opaque, prop_event_t event, ...)
   va_end(ap);
 
   if(event_is_action(e, ACTION_OK)) {
-    glw_osk_ok(opaque);
+    glw_osk_done(opaque, 1);
+  } else if(event_is_action(e, ACTION_CANCEL)) {
+    glw_osk_done(opaque, 0);
   }
 }
 
@@ -2428,6 +2426,7 @@ glw_osk_open(glw_root_t *gr, const char *title, const char *input,
 	     glw_t *w, int password)
 {
   prop_t *osk = prop_create(gr->gr_prop_ui, "osk");
+  mystrset(&gr->gr_osk_revert, input);
 
   if(gr->gr_osk_widget != NULL) {
     glw_unref(gr->gr_osk_widget);

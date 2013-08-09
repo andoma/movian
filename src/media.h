@@ -230,6 +230,8 @@ typedef struct media_buf {
     
     MB_CTRL_UNBLOCK,
 
+    MB_CTRL_SET_VOLUME,
+
   } mb_data_type;
 
   void *mb_data;
@@ -375,6 +377,7 @@ typedef struct media_pipe {
   prop_t *mp_prop_root;
   prop_t *mp_prop_type;
   prop_t *mp_prop_io;
+  prop_t *mp_prop_ctrl;
   prop_t *mp_prop_notifications;
   prop_t *mp_prop_primary;
   prop_t *mp_prop_metadata;
@@ -412,19 +415,9 @@ typedef struct media_pipe {
   prop_t *mp_prop_buffer_current;
   prop_t *mp_prop_buffer_limit;
 
-
   prop_courier_t *mp_pc;
   prop_sub_t *mp_sub_currenttime;
   prop_sub_t *mp_sub_stats;
-
-  /* Audio info props */
-
-  prop_t *mp_prop_audio_channels_root;
-  prop_t *mp_prop_audio_channel[8];
-  prop_t *mp_prop_audio_channel_level[8];
-
-  int mp_cur_channels;
-  int64_t mp_cur_chlayout;
 
   int64_t mp_seek_base;
   int64_t mp_start_time;
@@ -446,6 +439,7 @@ typedef struct media_pipe {
   prop_t *mp_setting_root;
 
   struct setting *mp_setting_av_delta;   // Audio vs. Video delta
+  struct setting *mp_setting_audio_vol;  // Audio volume
   struct setting *mp_setting_sv_delta;   // Subtitle vs. Video delta
   struct setting *mp_setting_sub_scale;  // Subtitle scaling
   struct setting *mp_setting_sub_displace_y;
@@ -637,7 +631,7 @@ void mp_set_duration(media_pipe_t *mp, int64_t duration);
 
 int64_t mq_realtime_delay(media_queue_t *mq);
 
-void mp_load_ext_sub(media_pipe_t *mp, const char *url);
+void mp_load_ext_sub(media_pipe_t *mp, const char *url, AVRational *framerate);
 
 void mq_update_stats(media_pipe_t *mp, media_queue_t *mq);
 

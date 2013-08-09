@@ -16,11 +16,16 @@ For Ubuntu 12.04)
 	sudo apt-get install libfreetype6-dev libfontconfig1-dev libxext-dev libgl1-mesa-dev 
 	libasound2-dev libasound2-dev libgtk2.0-dev libxss-dev libxxf86vm-dev libxv-dev libcdio-cdda-dev 
 	libcddb2-dev libvdpau-dev yasm libpulse-dev libssl-dev curl
-
+	libwebkitgtk-dev libsqlite3-dev
 
 Then you need to configure:
 
 	./configure
+
+If your system lacks libwebkitgtk (Ubunut 12.04 before 12.04.1) 
+you can configure with
+
+        ./configure --disable-webkit
 
 If any dependencies are missing the configure script will complain.
 You then have the option to disable that particular module/subsystem.
@@ -175,6 +180,9 @@ normal Linux desktop system and then copy the binary to the Raspberry Pi.
 
 If you just want to create a build to test with you can cheat a bit
 and use the same technique as the auto build system will do.
+
+Note that this requires a host that is 64 bit (due to how the
+toolchains are compiled)
 
 Check out the source from github on your normal Linux desktop (ie.
 not the Raspberry Pi) and do

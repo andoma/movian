@@ -94,7 +94,6 @@ enable cdda
 enable cddb
 enable libxss
 enable libxv
-enable serdev
 enable openssl
 enable locatedb
 enable vdpau
@@ -104,6 +103,7 @@ enable httpserver
 enable timegm
 enable inotify
 enable realpath
+enable webkit
 #enable airplay -- not functional yet
 #enable libxrandr  -- code does not really work yet
 
@@ -391,12 +391,12 @@ if enabled gu; then
     if pkg-config gtk+-2.0 && pkg-config gthread-2.0; then
 
 	if disabled libx11; then
-	    echo "GLW depends on libx11"
+	    echo "GU depends on libx11"
 	    die
 	fi
 
 	if disabled libxext; then
-	    echo "GLW depends on libxext"
+	    echo "GU depends on libxext"
 	    die
 	fi
 
@@ -408,6 +408,7 @@ if enabled gu; then
 	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs gthread-2.0`
 	echo >>${CONFIG_MAK} "CFLAGS_GTK += " `pkg-config --cflags gthread-2.0`
 	echo "Using GTK Threading:   `pkg-config --modversion gthread-2.0`"
+
     else
 	echo "GTK2 not found. Unable to build GU (GTK user interface)."
 	echo "To compile without it, configure with: --disable-gu"
@@ -415,6 +416,22 @@ if enabled gu; then
     fi
 else
     disable libxv
+fi
+
+#
+# webkit
+#
+if enabled webkit; then
+    if pkg-config webkit-1.0; then
+	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs webkit-1.0`
+	echo >>${CONFIG_MAK} "CFLAGS_GTK += " `pkg-config --cflags webkit-1.0`
+	echo "Using WebKit:          `pkg-config --modversion webkit-1.0`"
+	enable webpopup
+    else
+	echo "libwebkitgtk development files not found."
+	echo "To compile without it, configure with: --disable-webkit"
+	die
+    fi
 fi
 
 

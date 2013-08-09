@@ -18,7 +18,6 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/param.h>
 #include <time.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -34,6 +33,7 @@
 #include "showtime.h"
 #include "arch/atomic.h"
 #include "misc/sha.h"
+#include "misc/minmax.h"
 #if 0
 #define VFSTRACE(x...) TRACE(TRACE_DEBUG, "SQLITE_VFS", x)
 #else

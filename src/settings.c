@@ -32,7 +32,7 @@
 #include "prop/prop_nodefilter.h"
 #include "prop/prop_concat.h"
 #include "htsmsg/htsmsg_store.h"
-
+#include "db/kvstore.h"
 
 #define SETTINGS_URL "settings:"
 static prop_t *settings_root;
@@ -43,22 +43,30 @@ static prop_t *settings_nodes;
  *
  */
 struct setting {
+  LIST_ENTRY(setting) s_link;
   void *s_opaque;
   void *s_callback;
   prop_sub_t *s_sub;
   prop_t *s_root;
   prop_t *s_val;
-  int s_min;
-  int s_max;
 
   settings_saver_t *s_saver;
   void *s_saver_opaque;
   htsmsg_t *s_store;
+  prop_t *s_ext_value;
 
   char *s_id;
 
-  char *s_initial_value;
-  char *s_first;
+  char *s_pending_value;
+
+  char *s_store_name;
+  prop_sub_t *s_sub_enabler;
+
+  prop_t *s_current_value;
+
+  char s_enable_writeback;
+  char s_kvstore;
+  char s_type;
 };
 
 static void init_dev_settings(void);
@@ -209,145 +217,7 @@ setting_create_leaf(prop_t *parent, prop_t *title, const char *type,
   setting_t *s = calloc(1, sizeof(setting_t));
   s->s_root = prop_ref_inc(setting_add(parent, title, type, flags));
   s->s_val = prop_create_r(s->s_root, valuename);
-  
   return s;
-}
-
-
-/**
- *
- */
-static void
-settings_int_callback(void *opaque, int v)
-{
-  setting_t *s = opaque;
-  prop_callback_int_t *cb = s->s_callback;
-
-  if(cb) cb(s->s_opaque, v);
-
-  if(s->s_store && s->s_saver) {
-    htsmsg_delete_field(s->s_store, s->s_id);
-    htsmsg_add_s32(s->s_store, s->s_id, v);
-    s->s_saver(s->s_saver_opaque, s->s_store);
-  }
-}
-
-/**
- *
- */
-setting_t *
-settings_create_bool(prop_t *parent, const char *id, prop_t *title,
-		     int initial, htsmsg_t *store,
-		     prop_callback_int_t *cb, void *opaque,
-		     int flags, prop_courier_t *pc,
-		     settings_saver_t *saver, void *saver_opaque)
-{
-  setting_t *s = setting_create_leaf(parent, title, "bool", "value", flags);
-  prop_sub_t *sub;
-
-  s->s_id = strdup(id);
-  s->s_callback = cb;
-  s->s_opaque = opaque;
-
-  if(store != NULL)
-    initial = htsmsg_get_u32_or_default(store, id, initial);
-
-  prop_set_int(s->s_val, !!initial);
-
-  if(flags & SETTINGS_INITIAL_UPDATE)
-    settings_int_callback(s, !!initial);
-  
-  sub = prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_IGNORE_VOID,
-		       PROP_TAG_CALLBACK_INT, settings_int_callback, s,
-		       PROP_TAG_ROOT, s->s_val,
-		       PROP_TAG_COURIER, pc,
-		       NULL);
-  s->s_sub = sub;
-  s->s_store = store;
-  s->s_saver = saver;
-  s->s_saver_opaque = saver_opaque;
-  return s;
-}
-
-
-/**
- *
- */
-void
-settings_set_bool(setting_t *s, int v)
-{
-  prop_set_int(s->s_val, v);
-}
-
-
-/**
- *
- */
-void
-settings_toggle_bool(setting_t *s)
-{
-  prop_toggle_int(s->s_val);
-}
-
-
-/**
- *
- */
-setting_t *
-settings_create_int(prop_t *parent, const char *id, prop_t *title,
-		    int initial, htsmsg_t *store,
-		    int min, int max, int step,
-		    prop_callback_int_t *cb, void *opaque,
-		    int flags, const char *unit,
-		    prop_courier_t *pc,
-		    settings_saver_t *saver, void *saver_opaque)
-{
-  setting_t *s = setting_create_leaf(parent, title, "integer", "value", flags);
-  prop_sub_t *sub;
-
-  s->s_id = strdup(id);
-  s->s_callback = cb;
-  s->s_opaque = opaque;
-
-
-  if(store != NULL)
-    initial = htsmsg_get_s32_or_default(store, id, initial);
-
-  prop_set_int_clipping_range(s->s_val, min, max);
-
-  prop_set_int(prop_create(s->s_root, "min"), min);
-  prop_set_int(prop_create(s->s_root, "max"), max);
-  prop_set_int(prop_create(s->s_root, "step"), step);
-  prop_set_string(prop_create(s->s_root, "unit"), unit);
-
-  prop_set_int(s->s_val, initial);
-
-  s->s_min = min;
-  s->s_max = max;
-
-  if(flags & SETTINGS_INITIAL_UPDATE)
-    settings_int_callback(s, initial);
-
-  sub = prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_IGNORE_VOID,
-		       PROP_TAG_CALLBACK_INT, settings_int_callback, s,
-		       PROP_TAG_ROOT, s->s_val,
-		       PROP_TAG_COURIER, pc,
-		       NULL);
-  s->s_sub = sub;
-  s->s_store = store;
-  s->s_saver = saver;
-  s->s_saver_opaque = saver_opaque;
-  return s;
-}
-
-
-/**
- *
- */
-void
-settings_set_int(setting_t *s, int v)
-{
-  prop_set_int(s->s_val, v);
 }
 
 
@@ -358,210 +228,6 @@ void
 settings_add_int(setting_t *s, int delta)
 {
   prop_add_int(s->s_val, delta);
-}
-
-
-/**
- *
- */
-static void 
-callback_opt(void *opaque, prop_event_t event, ...)
-{
-  setting_t *s = opaque;
-  prop_callback_string_t *cb;
-  prop_t *c;
-  rstr_t *name;
-  va_list ap;
-  va_start(ap, event);
-
-  cb = s->s_callback;
-
-  if(event != PROP_SELECT_CHILD)
-    return;
-
-  c = va_arg(ap, prop_t *);
-
-  name = c ? prop_get_name(c) : NULL;
-  va_end(ap);
-
-  if(cb != NULL)
-    cb(s->s_opaque, rstr_get(name));
-
-  if(s->s_store != NULL && s->s_saver != NULL) {
-    htsmsg_delete_field(s->s_store, s->s_id);
-    if(name != NULL)
-      htsmsg_add_str(s->s_store, s->s_id, rstr_get(name));
-    s->s_saver(s->s_saver_opaque, s->s_store);
-  }
-  rstr_release(name);
-}
-
-
-/**
- *
- */
-setting_t *
-settings_create_multiopt(prop_t *parent, const char *id, prop_t *title,
-			 int flags)
-{
-  setting_t *s = setting_create_leaf(parent, title, "multiopt", "options", 
-				     flags);
-  s->s_id = strdup(id);
-  return s;
-}
-
-
-
-/**
- *
- */
-static prop_t *
-settings_multiopt_add(setting_t *s, const char *id, prop_t *o, int selected)
-{
-  if(selected) {
-    if(s->s_sub != NULL)
-      prop_select(o);
-    else
-      mystrset(&s->s_initial_value, id);
-  }
-
-  if(s->s_first == NULL)
-    s->s_first = strdup(id);
-  return o;
-}
-
-
-/**
- *
- */
-prop_t *
-settings_multiopt_add_opt(setting_t *s, const char *id, prop_t *title,
-			  int selected)
-{
-  prop_t *o = prop_create(s->s_val, id);
-  prop_link(title, prop_create(o, "title"));
-  return settings_multiopt_add(s, id, o, selected);
-}
-
-
-/**
- *
- */
-prop_t *
-settings_multiopt_add_opt_cstr(setting_t *s, const char *id, const char *title,
-			  int selected)
-{
-  prop_t *o = prop_create(s->s_val, id);
-  prop_set_string(prop_create(o, "title"), title);
-  return settings_multiopt_add(s, id, o, selected);
-}
-
-
-/**
- *
- */
-void
-settings_multiopt_initiate(setting_t *s,
-			   prop_callback_string_t *cb, void *opaque,
-			   prop_courier_t *pc, htsmsg_t *store,
-			   settings_saver_t *saver, void *saver_opaque)
-{
-  const char *str = store ? htsmsg_get_str(store, s->s_id) : NULL;
-  prop_t *o = str ? prop_find(s->s_val, str, NULL) : NULL;
-
-  if(o == NULL && s->s_initial_value != NULL)
-    o = prop_find(s->s_val, s->s_initial_value, NULL);
-
-  if(o == NULL && s->s_first != NULL)
-    o = prop_find(s->s_val, s->s_first, NULL);
-
-  if(o != NULL) {
-    prop_select(o);
-    rstr_t *name = prop_get_name(o);
-    cb(opaque, rstr_get(name));
-    rstr_release(name);
-    prop_ref_dec(o);
-  }
-  
-
-  s->s_callback = cb;
-  s->s_opaque = opaque;
-  
-  mystrset(&s->s_initial_value, NULL);
-
-
-  s->s_sub = prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
-			    PROP_TAG_CALLBACK, callback_opt, s, 
-			    PROP_TAG_ROOT, s->s_val, 
-			    PROP_TAG_COURIER, pc,
-			    NULL);
-
-  s->s_store = store;
-  s->s_saver = saver;
-  s->s_saver_opaque = saver_opaque;
-}
-
-
-/**
- *
- */
-static void
-settings_string_callback(void *opaque, const char *str)
-{
-  setting_t *s = opaque;
-  prop_callback_string_t *cb = s->s_callback;
-
-  if(cb) cb(s->s_opaque, str);
-
-  if(s->s_store && s->s_saver) {
-    htsmsg_delete_field(s->s_store, s->s_id);
-    if(str != NULL)
-      htsmsg_add_str(s->s_store, s->s_id, str);
-    s->s_saver(s->s_saver_opaque, s->s_store);
-  }
-}
-
-
-
-/**
- *
- */
-setting_t *
-settings_create_string(prop_t *parent, const char *id, prop_t *title,
-		       const char *initial, htsmsg_t *store,
-		       prop_callback_string_t *cb, void *opaque,
-		       int flags, prop_courier_t *pc,
-		       settings_saver_t *saver, void *saver_opaque)
-{
-  setting_t *s = setting_create_leaf(parent, title, "string", "value", flags);
-
-  s->s_id = strdup(id);
-  s->s_callback = cb;
-  s->s_opaque = opaque;
-
-  if(store != NULL)
-    initial = htsmsg_get_str(store, id) ?: initial;
-
-  if(initial != NULL)
-    prop_set_string(s->s_val, initial);
-
-  if(flags & SETTINGS_PASSWORD)
-    prop_set_int(prop_create(s->s_root, "password"), 1);
-
-  if(flags & SETTINGS_INITIAL_UPDATE)
-    settings_string_callback(s, initial);
-
-  s->s_sub =
-    prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_IGNORE_VOID,
-		   PROP_TAG_CALLBACK_STRING, settings_string_callback, s,
-		   PROP_TAG_ROOT, s->s_val,
-		   PROP_TAG_COURIER, pc,
-		   NULL);
-  
-  s->s_store = store;
-  s->s_saver = saver;
-  s->s_saver_opaque = saver_opaque;
-  return s;
 }
 
 
@@ -629,6 +295,7 @@ setting_detach(setting_t *s)
   prop_unparent(s->s_root);
 }
 
+
 /**
  *
  */
@@ -637,13 +304,28 @@ setting_destroy(setting_t *s)
 {
   s->s_callback = NULL;
   free(s->s_id);
-  free(s->s_initial_value);
-  free(s->s_first);
+  free(s->s_pending_value);
+  free(s->s_store_name);
   prop_unsubscribe(s->s_sub);
   prop_destroy(s->s_root);
   prop_ref_dec(s->s_val);
   prop_ref_dec(s->s_root);
+  prop_ref_dec(s->s_ext_value);
+  prop_ref_dec(s->s_current_value);
   free(s);
+}
+
+
+/**
+ *
+ */
+void
+setting_destroyp(setting_t **sp)
+{
+  if(*sp) {
+    setting_destroy(*sp);
+    *sp = NULL;
+  }
 }
 
 
@@ -660,11 +342,527 @@ settings_get_value(setting_t *s)
 /**
  *
  */
-prop_t *
-settings_get_node(setting_t *s)
+int
+settings_get_type(const setting_t *s)
 {
-  return s->s_root;
+  return s->s_type;
 }
+
+
+/**
+ *
+ */
+static void
+setting_save_htsmsg(setting_t *s)
+{
+  if(s->s_store_name != NULL)
+    htsmsg_store_save(s->s_store, s->s_store_name);
+  if(s->s_saver)
+    s->s_saver(s->s_saver_opaque, s->s_store);
+}
+
+
+/**
+ *
+ */
+static void
+settings_int_callback_ng(void *opaque, int v)
+{
+  setting_t *s = opaque;
+  prop_callback_int_t *cb = s->s_callback;
+
+  if(cb) cb(s->s_opaque, v);
+
+  if(s->s_ext_value)
+    prop_set_int(s->s_ext_value, v);
+
+  if(!s->s_enable_writeback)
+    return;
+
+  if(s->s_store) {
+    htsmsg_delete_field(s->s_store, s->s_id);
+    htsmsg_add_s32(s->s_store, s->s_id, v);
+    setting_save_htsmsg(s);
+  }
+
+  if(s->s_kvstore)
+    kv_url_opt_set_deferred(s->s_store_name, KVSTORE_DOMAIN_SETTING,
+                            s->s_id, KVSTORE_SET_INT, v);
+}
+
+
+/**
+ *
+ */
+static void
+settings_string_callback_ng(void *opaque, rstr_t *rstr)
+{
+  setting_t *s = opaque;
+  prop_callback_string_t *cb = s->s_callback;
+
+  if(cb) cb(s->s_opaque, rstr_get(rstr));
+
+  if(s->s_ext_value)
+    prop_set_rstring(s->s_ext_value, rstr);
+
+  if(!s->s_enable_writeback)
+    return;
+
+  if(s->s_store) {
+    htsmsg_delete_field(s->s_store, s->s_id);
+    if(rstr != NULL)
+      htsmsg_add_str(s->s_store, s->s_id, rstr_get(rstr));
+    setting_save_htsmsg(s);
+  }
+
+  if(s->s_kvstore)
+    kv_url_opt_set_deferred(s->s_store_name, KVSTORE_DOMAIN_SETTING, s->s_id,
+                            rstr ? KVSTORE_SET_STRING : KVSTORE_SET_VOID,
+                            rstr_get(rstr));
+}
+
+
+/**
+ *
+ */
+static void
+settings_multiopt_callback_ng(void *opaque, prop_event_t event, ...)
+{
+  setting_t *s = opaque;
+  prop_callback_string_t *cb;
+  prop_t *c;
+  va_list ap;
+  va_start(ap, event);
+
+  cb = s->s_callback;
+
+  switch(event) {
+  default:
+    break;
+
+  case PROP_SELECT_CHILD:
+    if(s->s_pending_value) {
+      free(s->s_pending_value);
+      s->s_pending_value = NULL;
+    }
+
+    c = va_arg(ap, prop_t *);
+
+    prop_ref_dec(s->s_current_value);
+    s->s_current_value = prop_ref_inc(c);
+    rstr_t *name = c ? prop_get_name(c) : NULL;
+
+    printf("current is %p (%s)\n", s->s_current_value, rstr_get(name));
+
+    if(s->s_ext_value)
+      prop_set_rstring(s->s_ext_value, name);
+
+    if(cb != NULL)
+      cb(s->s_opaque, rstr_get(name));
+
+
+    if(s->s_enable_writeback) {
+
+      if(s->s_store) {
+	htsmsg_delete_field(s->s_store, s->s_id);
+	if(name != NULL)
+	  htsmsg_add_str(s->s_store, s->s_id, rstr_get(name));
+	setting_save_htsmsg(s);
+      }
+
+      if(s->s_kvstore)
+	kv_url_opt_set_deferred(s->s_store_name, KVSTORE_DOMAIN_SETTING,
+				s->s_id,
+				name ? KVSTORE_SET_STRING : KVSTORE_SET_VOID,
+				rstr_get(name));
+    }
+
+    rstr_release(name);
+
+    break;
+
+  case PROP_DEL_CHILD:
+    c = va_arg(ap, prop_t *);
+
+    if(c == s->s_current_value) {
+      c = prop_first_child(s->s_val);
+      if(c != NULL) {
+	prop_select(c);
+	prop_ref_dec(c);
+      }
+    }
+    break;
+  }
+  va_end(ap);
+}
+
+
+/**
+ *
+ */
+static void
+settings_generic_set_int(void *opaque, int value)
+{
+  int *p = opaque;
+  *p = value;
+}
+
+
+/**
+ *
+ */
+static void
+settings_generic_set_int_from_str(void *opaque, const char *str)
+{
+  int *p = opaque;
+  *p = atoi(str);
+}
+
+
+/**
+ *
+ */
+setting_t *
+setting_create(int type, prop_t *parent, int flags, ...)
+{
+  setting_t *s = calloc(1, sizeof(setting_t));
+  prop_courier_t *pc = NULL;
+  hts_mutex_t *mtx = NULL;
+  int tag;
+  const char *str;
+  int initial_int = 0;
+  const char *initial_str = NULL;
+  int min = 0, max = 100, step = 1; // Just something
+  prop_t *opt;
+  const char **optlist;
+  va_list ap;
+
+  s->s_type = type;
+
+  va_start(ap, flags);
+
+  if(flags & SETTINGS_RAW_NODES)
+    s->s_root = prop_create_r(parent, NULL);
+  else
+    s->s_root = prop_create_r(parent ? prop_create(parent, "nodes") :
+                              settings_nodes, NULL);
+
+
+  switch(type) {
+  case SETTING_INT:
+  case SETTING_BOOL:
+  case SETTING_STRING:
+    s->s_val = prop_create_r(s->s_root, "value");
+    break;
+
+  case SETTING_MULTIOPT:
+    s->s_val = prop_create_r(s->s_root, "options");
+    break;
+
+
+  case SETTING_ACTION:
+    s->s_val = prop_create_r(s->s_root, "action");
+    break;
+
+  default:
+    abort();
+  }
+
+  prop_t *m = prop_create_r(s->s_root, "metadata");
+  prop_t *title = prop_create_r(m, "title");
+  prop_t *enabled = prop_create_r(s->s_root, "enabled");
+
+  do {
+    tag = va_arg(ap, int);
+    switch(tag) {
+    case SETTING_TAG_TITLE:
+      prop_link(va_arg(ap, prop_t *), title);
+      break;
+
+    case SETTING_TAG_TITLE_CSTR:
+      str = va_arg(ap, const char *);
+      prop_set_string(title, str);
+      break;
+
+    case SETTING_TAG_CALLBACK:
+      s->s_callback = va_arg(ap, void *);
+      s->s_opaque   = va_arg(ap, void *);
+      break;
+
+    case SETTING_TAG_COURIER:
+      pc = va_arg(ap, prop_courier_t *);
+      break;
+
+    case SETTING_TAG_MUTEX:
+      mtx = va_arg(ap, hts_mutex_t *);
+      break;
+
+    case SETTING_TAG_HTSMSG:
+      assert(!s->s_kvstore);
+      mystrset(&s->s_id, va_arg(ap, const char *));
+      s->s_store = va_arg(ap, htsmsg_t *);
+      mystrset(&s->s_store_name, va_arg(ap, const char *));
+      break;
+
+    case SETTING_TAG_HTSMSG_CUSTOM_SAVER:
+      assert(!s->s_kvstore);
+      mystrset(&s->s_id, va_arg(ap, const char *));
+      s->s_store        = va_arg(ap, htsmsg_t *);
+      s->s_saver        = va_arg(ap, settings_saver_t *);
+      s->s_saver_opaque = va_arg(ap, void *);
+      break;
+
+    case SETTING_TAG_VALUE:
+      switch(type) {
+      case SETTING_INT:
+      case SETTING_BOOL:
+        initial_int = va_arg(ap, int);
+        break;
+      case SETTING_STRING:
+      case SETTING_MULTIOPT:
+        initial_str = va_arg(ap, const char *);
+        break;
+      }
+      break;
+
+    case SETTING_TAG_RANGE:
+      min  = va_arg(ap, int);
+      max  = va_arg(ap, int);
+
+      prop_set_int_clipping_range(s->s_val, min, max);
+      break;
+
+    case SETTING_TAG_STEP:
+      step = va_arg(ap, int);
+      break;
+
+    case SETTING_TAG_UNIT_CSTR:
+      str = va_arg(ap, const char *);
+      prop_set(s->s_root, "unit", PROP_SET_STRING, str);
+      break;
+
+    case SETTING_TAG_OPTION:
+      opt = prop_create(s->s_val, va_arg(ap, const char *));
+      prop_link(va_arg(ap, prop_t *), prop_create(opt, "title"));
+      break;
+
+    case SETTING_TAG_OPTION_CSTR:
+      opt = prop_create(s->s_val, va_arg(ap, const char *));
+      str = va_arg(ap, const char *);
+      prop_set(opt, "title", PROP_SET_STRING, str);
+      break;
+
+    case SETTING_TAG_OPTION_LIST:
+      optlist = va_arg(ap, const char **);
+
+      while(*optlist) {
+        prop_t *opt = prop_create(s->s_val, optlist[0]);
+        prop_set(opt, "title", PROP_SET_STRING, optlist[1]);
+        optlist += 2;
+      }
+      break;
+
+    case SETTING_TAG_WRITE_INT:
+      s->s_opaque = va_arg(ap, int *);
+
+      switch(type) {
+      case SETTING_INT:
+      case SETTING_BOOL:
+        s->s_callback = &settings_generic_set_int;
+        break;
+      case SETTING_STRING:
+      case SETTING_MULTIOPT:
+        s->s_callback = &settings_generic_set_int_from_str;
+        break;
+      }
+      break;
+
+    case SETTING_TAG_ZERO_TEXT:
+      prop_link(va_arg(ap, prop_t *), prop_create(s->s_root, "zerotext"));
+      break;
+
+    case SETTING_TAG_WRITE_PROP:
+      s->s_ext_value = prop_ref_inc(va_arg(ap, prop_t *));
+      break;
+
+    case SETTING_TAG_KVSTORE:
+      assert(s->s_store == NULL);
+      mystrset(&s->s_store_name, va_arg(ap, const char *));
+      mystrset(&s->s_id, va_arg(ap, const char *));
+      s->s_kvstore = 1;
+      break;
+
+    case SETTING_TAG_PROP_ENABLER:
+      prop_link(va_arg(ap, prop_t *), enabled);
+      prop_ref_dec(enabled);
+      enabled = NULL;
+      break;
+
+    case 0:
+      break;
+
+    default:
+      fprintf(stderr, "%s: Unsupported tag value 0x%x\n",
+              __FUNCTION__, tag);
+      abort();
+    }
+  } while(tag);
+
+  prop_set(s->s_root, "type", PROP_SET_STRING,
+           (const char *[]) {
+             [SETTING_INT]        = "integer",
+               [SETTING_BOOL]     = "bool",
+               [SETTING_STRING]   = "string",
+               [SETTING_MULTIOPT] = "multiopt",
+               [SETTING_ACTION]   = "action",
+               }[type]);
+
+  switch(type) {
+
+  case SETTING_INT:
+    prop_set(s->s_root, "min",  PROP_SET_INT, min);
+    prop_set(s->s_root, "max",  PROP_SET_INT, max);
+    prop_set(s->s_root, "step", PROP_SET_INT, step);
+    // FALLTHRU
+  case SETTING_BOOL:
+    if(s->s_store != NULL)
+      initial_int = htsmsg_get_u32_or_default(s->s_store, s->s_id,
+                                              initial_int);
+
+    if(s->s_kvstore)
+      initial_int = kv_url_opt_get_int(s->s_store_name, KVSTORE_DOMAIN_SETTING,
+                                       s->s_id, initial_int);
+
+    prop_set_int(s->s_val, initial_int);
+    if(flags & SETTINGS_INITIAL_UPDATE)
+      settings_int_callback_ng(s, initial_int);
+
+    s->s_sub =
+      prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_IGNORE_VOID,
+                     PROP_TAG_CALLBACK_INT, settings_int_callback_ng, s,
+                     PROP_TAG_ROOT, s->s_val,
+                     PROP_TAG_COURIER, pc,
+                     PROP_TAG_MUTEX, mtx,
+                     NULL);
+    break;
+
+  case SETTING_STRING:
+    if(flags & SETTINGS_PASSWORD)
+      prop_set(s->s_root, "password", PROP_SET_INT, 1);
+
+    if(s->s_store != NULL)
+      initial_str = htsmsg_get_str(s->s_store, s->s_id) ?: initial_str;
+
+    rstr_t *initial = rstr_alloc(initial_str);
+
+    if(s->s_kvstore) {
+      rstr_t *r = kv_url_opt_get_rstr(s->s_store_name, KVSTORE_DOMAIN_SETTING,
+                                      s->s_id);
+      if(r != NULL)
+        rstr_set(&initial, r);
+    }
+
+    prop_set_rstring(s->s_val, initial);
+
+    if(flags & SETTINGS_INITIAL_UPDATE)
+      settings_string_callback_ng(s, initial);
+
+    rstr_release(initial);
+
+    s->s_sub =
+      prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_IGNORE_VOID,
+                     PROP_TAG_CALLBACK_RSTR, settings_string_callback_ng, s,
+                     PROP_TAG_ROOT, s->s_val,
+                     PROP_TAG_COURIER, pc,
+                     PROP_TAG_MUTEX, mtx,
+                     NULL);
+    break;
+
+
+  case SETTING_MULTIOPT:
+    if(s->s_store != NULL)
+      initial_str = htsmsg_get_str(s->s_store, s->s_id) ?: initial_str;
+
+    prop_t *o = NULL;
+
+    if(s->s_kvstore) {
+      rstr_t *r = kv_url_opt_get_rstr(s->s_store_name, KVSTORE_DOMAIN_SETTING,
+                                      s->s_id);
+      if(r != NULL) {
+        o = prop_find(s->s_val, rstr_get(r), NULL);
+      }
+    }
+
+    if(o == NULL && initial_str != NULL)
+      o = prop_find(s->s_val, initial_str, NULL);
+
+    if(o == NULL) {
+      mystrset(&s->s_pending_value, initial_str);
+      o = prop_first_child(s->s_val);
+    }
+
+    if(o != NULL) {
+      prop_select(o);
+
+      if(flags & SETTINGS_INITIAL_UPDATE) {
+        rstr_t *name = prop_get_name(o);
+        settings_string_callback_ng(s, name);
+        rstr_release(name);
+      }
+      prop_ref_dec(o);
+    }
+
+    s->s_sub =
+      prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+                     PROP_TAG_CALLBACK, settings_multiopt_callback_ng, s,
+                     PROP_TAG_ROOT, s->s_val,
+                     PROP_TAG_COURIER, pc,
+                     PROP_TAG_MUTEX, mtx,
+                     NULL);
+    break;
+
+  case SETTING_ACTION:
+    s->s_sub =
+      prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+                     PROP_TAG_CALLBACK_EVENT, s->s_callback, s->s_opaque,
+                     PROP_TAG_ROOT, s->s_val,
+                     PROP_TAG_COURIER, pc,
+                     PROP_TAG_MUTEX, mtx,
+                     NULL);
+    break;
+  }
+
+  if(enabled != NULL) {
+    prop_set_int(enabled, 1);
+    prop_ref_dec(enabled);
+  }
+
+  s->s_enable_writeback = 1;
+  prop_ref_dec(title);
+  prop_ref_dec(m);
+  return s;
+}
+
+
+/**
+ *
+ */
+prop_t *
+setting_add_option(setting_t *s, const char *id,
+                   const char *title, int sel)
+{
+  prop_t *opt = prop_create(s->s_val, id);
+  prop_set(opt, "title", PROP_SET_STRING, title);
+
+  if((s->s_pending_value && !strcmp(s->s_pending_value, id)) || sel) {
+    free(s->s_pending_value);
+    s->s_pending_value = NULL;
+    prop_select(opt);
+  }
+  return opt;
+}
+
+
 
 /**
  *
@@ -785,43 +983,18 @@ makesep(prop_t *title)
 
 }
 
-/**
- *
- */
-void
-settings_generic_save_settings(void *opaque, htsmsg_t *msg)
-{
-  htsmsg_store_save(msg, opaque);
-}
-
-
-/**
- *
- */
-void
-settings_generic_set_int(void *opaque, int value)
-{
-  int *p = opaque;
-  *p = value;
-}
-
-static htsmsg_t *devstore;
 
 /**
  *
  */
 static void
-add_dev_bool(const char *title, const char *id, int *val)
+add_dev_bool(htsmsg_t *s, const char *title, const char *id, int *val)
 {
-  prop_t *t = prop_create_root(NULL);
-  prop_set_string(t, title);
-
-  settings_create_bool(gconf.settings_dev, id, t, 0,
-		       devstore, settings_generic_set_bool,
-		       val,
-		       SETTINGS_INITIAL_UPDATE, NULL,
-		       settings_generic_save_settings, 
-		       (void *)"dev");
+  setting_create(SETTING_BOOL, gconf.settings_dev, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE_CSTR(title),
+                 SETTING_WRITE_BOOL(val),
+                 SETTING_HTSMSG(id, s, "dev"),
+                 NULL);
 }
 
 
@@ -831,9 +1004,7 @@ add_dev_bool(const char *title, const char *id, int *val)
 static void
 init_dev_settings(void)
 {
-
-  if((devstore = htsmsg_store_load("dev")) == NULL)
-    devstore = htsmsg_create_map();
+  htsmsg_t *s = htsmsg_store_load("dev") ?: htsmsg_create_map();
 
   gconf.settings_dev = settings_add_dir(prop_create_root(NULL),
 				  _p("Developer settings"), NULL, NULL,
@@ -844,31 +1015,31 @@ init_dev_settings(void)
   prop_set_string(prop_create(r, "description"),
 		  "Settings for developers. If you don't know what this is, don't touch it");
 
-  add_dev_bool("Various experimental features (Use at own risk)",
+  add_dev_bool(s, "Various experimental features (Use at own risk)",
 	       "experimental", &gconf.enable_experimental);
 
-  add_dev_bool("Enable binreplace",
+  add_dev_bool(s, "Enable binreplace",
 	       "binreplace", &gconf.enable_bin_replace);
 
-  add_dev_bool("Enable omnigrade",
+  add_dev_bool(s, "Enable omnigrade",
 	       "omnigrade", &gconf.enable_omnigrade);
 
-  add_dev_bool("Debug all HTTP requests",
+  add_dev_bool(s, "Debug all HTTP requests",
 	       "httpdebug", &gconf.enable_http_debug);
 
-  add_dev_bool("Disable HTTP connection reuse",
+  add_dev_bool(s, "Disable HTTP connection reuse",
 	       "nohttpreuse", &gconf.disable_http_reuse);
 
-  add_dev_bool("Log AV-diff stats",
+  add_dev_bool(s, "Log AV-diff stats",
 	       "detailedavdiff", &gconf.enable_detailed_avdiff);
 
-  add_dev_bool("Debug HLS",
+  add_dev_bool(s, "Debug HLS",
 	       "hlsdebug", &gconf.enable_hls_debug);
 
-  add_dev_bool("Debug FTP",
+  add_dev_bool(s, "Debug FTP",
 	       "ftpdebug", &gconf.enable_ftp_debug);
 
-  add_dev_bool("Upgrade using patches",
+  add_dev_bool(s, "Upgrade using patches",
 	       "patchupgrade", &gconf.enable_patched_upgrade);
 
 }

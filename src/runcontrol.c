@@ -56,26 +56,6 @@ runcontrol_activity(void)
 
 
 /**
- *
- */
-static void 
-set_autostandby(void *opaque, int value)
-{
-  standby_delay = value;
-}
-
-
-/**
- *
- */
-static void
-runcontrol_save_settings(void *opaque, htsmsg_t *msg)
-{
-  htsmsg_store_save(msg, "runcontrol");
-}
-
-
-/**
  * Periodically check if we should auto standby
  */ 
 static void
@@ -119,11 +99,15 @@ init_autostandby(void)
   if(store == NULL)
     store = htsmsg_create_map();
 
-  settings_create_int(gconf.settings_general,
-		      "autostandby", _p("Automatic standby"), 
-		      0, store, 0, 60, 5, set_autostandby, NULL,
-		      SETTINGS_INITIAL_UPDATE, " min", NULL,
-		      runcontrol_save_settings, NULL);
+  setting_create(SETTING_INT, gconf.settings_general, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Automatic standby")),
+                 SETTING_HTSMSG("autostandby", store, "runcontrol"),
+                 SETTING_WRITE_INT(&standby_delay),
+                 SETTING_RANGE(0, 60),
+                 SETTING_STEP(5),
+                 SETTING_UNIT_CSTR("min"),
+                 SETTING_ZERO_TEXT(_p("Off")),
+                 NULL);
 
   last_activity = showtime_get_ts();
 

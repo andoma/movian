@@ -164,8 +164,8 @@ fa_normalize(const char *url, char *dst, size_t dstlen)
 
   if((filename = fa_resolve_proto(url, &fap, NULL, NULL, 0)) == NULL)
     return -1;
-  
-  r = fap->fap_normalize ? fap->fap_normalize(fap, url, dst, dstlen) : -1;
+
+  r = fap->fap_normalize ? fap->fap_normalize(fap, filename, dst, dstlen) : -1;
   free(filename);
   return r;
 }
@@ -182,17 +182,25 @@ fa_open_ex(const char *url, char *errbuf, size_t errsize, int flags,
   char *filename;
   fa_handle_t *fh;
 
+  if(!(flags & FA_WRITE)) {
+    // Only do caching if we are in read only mode
 #if ENABLE_READAHEAD_CACHE
-  if(flags & FA_CACHE)
-    return fa_cache_open(url, errbuf, errsize, flags & ~FA_CACHE, stats);
+    if(flags & FA_CACHE)
+      return fa_cache_open(url, errbuf, errsize, flags & ~FA_CACHE, stats);
 #endif
-  if(flags & (FA_BUFFERED_SMALL | FA_BUFFERED_BIG))
-    return fa_buffered_open(url, errbuf, errsize, flags, stats);
+    if(flags & (FA_BUFFERED_SMALL | FA_BUFFERED_BIG))
+      return fa_buffered_open(url, errbuf, errsize, flags, stats);
+  }
 
   if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
     return NULL;
-  
-  fh = fap->fap_open(fap, filename, errbuf, errsize, flags, stats);
+
+  if(flags & FA_WRITE && fap->fap_write == NULL) {
+    snprintf(errbuf, errsize, "FS does not support writing");
+    fh = NULL;
+  } else {
+    fh = fap->fap_open(fap, filename, errbuf, errsize, flags, stats);
+  }
   free(filename);
 #ifdef FA_DUMP
   if(flags & FA_DUMP) 
@@ -276,6 +284,19 @@ fa_read(void *fh_, void *buf, size_t size)
   }
 #endif
   return r;
+}
+
+
+/**
+ *
+ */
+int
+fa_write(void *fh_, const void *buf, size_t size)
+{
+  fa_handle_t *fh = fh_;
+  if(size == 0)
+    return 0;
+  return fh->fh_proto->fap_write(fh, buf, size);
 }
 
 /**
@@ -916,6 +937,84 @@ bad:
 /**
  *
  */
+int
+fa_copy(const char *to, const char *from, char *errbuf, size_t errsize)
+{
+  char tmp[8192];
+  fa_handle_t *src = fa_open_ex(from, errbuf, errsize, 0, NULL);
+  if(src == NULL)
+    return -1;
+
+  if(fa_parent(tmp, sizeof(tmp), to)) {
+    snprintf(errbuf, errsize, "Unable to figure out parent dir for dest");
+    fa_close(src);
+    return -1;
+  }
+
+  if(fa_makedirs(tmp, errbuf, errsize)) {
+    fa_close(src);
+    return -1;
+  }
+
+  fa_handle_t *dst = fa_open_ex(to, errbuf, errsize, FA_WRITE, NULL);
+  if(dst == NULL) {
+    fa_close(src);
+    return -1;
+  }
+
+  int r;
+  while((r = fa_read(src, tmp, 8192)) > 0) {
+    if(fa_write(dst, tmp, r) != r) {
+      snprintf(errbuf, errsize, "Write error");
+      r = -2;
+      break;
+    }
+  }
+
+  if(r == -1)
+    snprintf(errbuf, errsize, "Read error");
+
+  const fa_protocol_t *dfap = dst->fh_proto;
+
+  fa_close(dst);
+  fa_close(src);
+  if(r < 0 && dfap->fap_unlink != NULL) {
+    // Remove destination file if we screwed up
+    dfap->fap_unlink(dfap, to, NULL, 0);
+  }
+
+  return r;
+}
+
+
+/**
+ *
+ */
+int
+fa_makedirs(const char *url, char *errbuf, size_t errsize)
+{
+  fa_protocol_t *fap;
+  char *filename;
+  int r;
+
+  if((filename = fa_resolve_proto(url, &fap, NULL, NULL, 0)) == NULL)
+    return -1;
+
+  if(fap->fap_makedirs == NULL) {
+    snprintf(errbuf, errsize, "No mkdir support in filesystem");
+    r = -1;
+  } else {
+    r = fap->fap_makedirs(fap, filename, errbuf, errsize);
+  }
+  free(filename);
+  return r;
+}
+
+
+
+/**
+ *
+ */
 void
 fileaccess_register_entry(fa_protocol_t *fap)
 {
@@ -943,18 +1042,15 @@ fileaccess_init(void)
 
   htsmsg_t *store;
 
-  if((store = htsmsg_store_load("faconf")) == NULL)
-    store = htsmsg_create_map();
+  store = htsmsg_store_load("faconf") ?: htsmsg_create_map();
 
-  settings_create_separator(gconf.settings_general,
-			  _p("File access"));
+  settings_create_separator(gconf.settings_general, _p("File access"));
 
-  settings_create_bool(gconf.settings_general,
-		       "delete", _p("Enable file deletion from item menu"),
-		       0, store, settings_generic_set_bool, &gconf.fa_allow_delete,
-		       SETTINGS_INITIAL_UPDATE, NULL,
-		       settings_generic_save_settings,
-		       (void *)"faconf");
+  setting_create(SETTING_BOOL, gconf.settings_general, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Enable file deletion from item menu")),
+                 SETTING_WRITE_BOOL(&gconf.fa_allow_delete),
+                 SETTING_HTSMSG("delete", store, "faconf"),
+                 NULL);
 
   return 0;
 }
@@ -1298,4 +1394,33 @@ fa_read_to_htsbuf(struct htsbuf_queue *hq, fa_handle_t *fh, int maxbytes)
     maxbytes -= l;
   }
   return -1;
+}
+
+
+/**
+ *
+ */
+void
+fa_sanitize_filename(char *f)
+{
+  while(*f) {
+    switch(*f) {
+
+    case 1 ... 31:
+    case '/':
+    case '\\':
+    case ':':
+    case '?':
+    case '"':
+    case '|':
+    case '<':
+    case '>':
+    case 128 ... 255:
+      *f = '_';
+      break;
+    default:
+      break;
+    }
+    f++;
+  }
 }

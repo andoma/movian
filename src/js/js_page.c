@@ -293,7 +293,7 @@ item_finalize(JSContext *cx, JSObject *obj)
   prop_ref_dec(ji->ji_root);
   rstr_release(ji->ji_url);
   if(ji->ji_mlv != NULL)
-    mlv_unbind(ji->ji_mlv);
+    mlv_unbind(ji->ji_mlv, 0);
   free(ji);
 }
 
@@ -596,11 +596,12 @@ js_item_bindVideoMetadata(JSContext *cx, JSObject *obj,
   int duration  = js_prop_int_or_default(cx, o, "duration", 0);
 
   if(ji->ji_mlv != NULL)
-    mlv_unbind(ji->ji_mlv);
+    mlv_unbind(ji->ji_mlv, 0);
 
   ji->ji_mlv =
     metadata_bind_video_info(ji->ji_url, title, imdb, duration,
-			     ji->ji_root, NULL, 0, 0, year, season, episode);
+			     ji->ji_root, NULL, 0, 0, year, season, episode,
+                             0);
   rstr_release(imdb);
   rstr_release(title);
   
@@ -1195,8 +1196,8 @@ js_model_nodesub(void *opaque, prop_event_t event, ...)
 
   case PROP_WANT_MORE_CHILDS:
     if(jm->jm_paginator) {
-      if(js_model_fill(jm->jm_cx, jm))
-	prop_have_more_childs(jm->jm_nodes);
+      int r = js_model_fill(jm->jm_cx, jm);
+      prop_have_more_childs(jm->jm_nodes, r);
     } else {
       jm->jm_pending_want_more = 1;
     }
@@ -1427,8 +1428,8 @@ js_open(js_model_t *jm)
 
     if(jm->jm_pending_want_more && jm->jm_paginator) {
       jm->jm_pending_want_more = 0;
-      if(js_model_fill(jm->jm_cx, jm))
-	prop_have_more_childs(jm->jm_nodes);
+      int r = js_model_fill(jm->jm_cx, jm);
+      prop_have_more_childs(jm->jm_nodes, r);
     }
   }
 

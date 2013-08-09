@@ -24,7 +24,14 @@
 #include "prop/prop.h"
 #include "prop/prop_nodefilter.h"
 #include "db/db_support.h"
+#include "db/kvstore.h"
 #include "fileaccess/fileaccess.h"
+#include "settings.h"
+
+
+#define DECO_MODE_AUTO   0
+#define DECO_MODE_MANUAL 1
+#define DECO_MODE_OFF    2
 
 LIST_HEAD(deco_browse_list, deco_browse);
 TAILQ_HEAD(deco_item_queue, deco_item);
@@ -43,6 +50,8 @@ static int deco_pendings;
  */
 struct deco_browse {
   LIST_ENTRY(deco_browse) db_link;
+  char *db_url;
+
   prop_sub_t *db_sub;
   struct deco_item_queue db_items;
 
@@ -81,6 +90,12 @@ struct deco_browse {
   int db_flags;
 
   int db_lonely_video_item;
+
+  int db_mode;
+
+  struct setting *db_setting_mode;
+  struct setting *db_setting_mark_all_as_seen;
+  struct setting *db_setting_mark_all_as_unseen;
 };
 
 
@@ -151,13 +166,15 @@ static void load_nfo(deco_item_t *di);
 static void
 analyze_video(deco_item_t *di)
 {
-  if(di->di_mlv != NULL)
+  if(di->di_mlv != NULL || di->di_url == NULL || di->di_filename == NULL)
     return;
 
-  if(di->di_url == NULL || di->di_filename == NULL)
-    return;
-  
   deco_browse_t *db = di->di_db;
+
+  if(db->db_mode == DECO_MODE_OFF)
+    return;
+
+  int manual = db->db_mode == DECO_MODE_MANUAL;
 
   rstr_t *fname;
 
@@ -172,7 +189,7 @@ analyze_video(deco_item_t *di)
 					di->di_duration,
 					di->di_root, db->db_title,
 					db->db_lonely_video_item, 0,
-					-1, -1, -1);
+					-1, -1, -1, manual);
   rstr_release(fname);
 }
 
@@ -231,13 +248,15 @@ stem_analysis(deco_browse_t *db, deco_stem_t *ds)
 static void
 update_contents(deco_browse_t *db)
 {
-  if(!(db->db_contents_mask & DB_CONTENTS_ALBUM)) {
+  int mask = db->db_mode == DECO_MODE_AUTO ? db->db_contents_mask : 0;
+
+  if(!(mask & DB_CONTENTS_ALBUM)) {
     prop_nf_pred_remove(db->db_pnf, db->db_audio_filter);
     db->db_audio_filter = 0;
   }
 
 
-  if(db->db_contents_mask & DB_CONTENTS_IMAGES) {
+  if(mask & DB_CONTENTS_IMAGES) {
     if(db->db_current_contents == DB_CONTENTS_IMAGES)
       return;
     db->db_current_contents = DB_CONTENTS_IMAGES;
@@ -249,7 +268,7 @@ update_contents(deco_browse_t *db)
     return;
   }
 
-  if(db->db_contents_mask & DB_CONTENTS_ALBUM) {
+  if(mask & DB_CONTENTS_ALBUM) {
     if(db->db_current_contents == DB_CONTENTS_ALBUM)
       return;
     db->db_current_contents = DB_CONTENTS_ALBUM;
@@ -269,7 +288,7 @@ update_contents(deco_browse_t *db)
     return;
   }
 
-  if(db->db_contents_mask & DB_CONTENTS_TV_SEASON) {
+  if(mask & DB_CONTENTS_TV_SEASON) {
     if(db->db_current_contents == DB_CONTENTS_TV_SEASON)
       return;
     db->db_current_contents = DB_CONTENTS_TV_SEASON;
@@ -857,7 +876,6 @@ deco_browse_add_nodes(deco_browse_t *db, prop_vec_t *pv, deco_item_t *before)
   }
 }
 
-		     
 
 /**
  *
@@ -869,7 +887,7 @@ deco_item_destroy(deco_browse_t *db, deco_item_t *di)
     LIST_REMOVE(di, di_stem_link);
     stem_release(di->di_ds);
   }
-  
+
   LIST_REMOVE(di, di_type_link);
   db->db_types[di->di_type]--;
   db->db_total--;
@@ -891,9 +909,9 @@ deco_item_destroy(deco_browse_t *db, deco_item_t *di)
   rstr_release(di->di_artist);
   rstr_release(di->di_url);
   rstr_release(di->di_filename);
-  
+
   if(di->di_mlv != NULL)
-    mlv_unbind(di->di_mlv);
+    mlv_unbind(di->di_mlv, 0);
 
   free(di);
 }
@@ -932,12 +950,16 @@ deco_browse_destroy(deco_browse_t *db)
 {
   prop_nf_release(db->db_pnf);
   deco_browse_clear(db);
+  setting_destroy(db->db_setting_mode);
+  setting_destroy(db->db_setting_mark_all_as_seen);
+  setting_destroy(db->db_setting_mark_all_as_unseen);
   prop_unsubscribe(db->db_sub);
   prop_ref_dec(db->db_prop_contents);
   prop_ref_dec(db->db_prop_model);
   rstr_release(db->db_imdb_id);
   LIST_REMOVE(db, db_link);
   rstr_release(db->db_title);
+  free(db->db_url);
   free(db);
 }
 
@@ -983,7 +1005,8 @@ deco_browse_node_cb(void *opaque, prop_event_t event, ...)
     
   case PROP_SET_DIR:
   case PROP_WANT_MORE_CHILDS:
-  case PROP_HAVE_MORE_CHILDS:
+  case PROP_HAVE_MORE_CHILDS_YES:
+  case PROP_HAVE_MORE_CHILDS_NO:
     break;
 
   case PROP_SET_VOID:
@@ -1001,6 +1024,8 @@ deco_browse_node_cb(void *opaque, prop_event_t event, ...)
 }
 
 
+
+
 /**
  *
  */
@@ -1012,24 +1037,110 @@ decorated_browse_destroy(deco_browse_t *db)
   hts_mutex_unlock(&deco_mutex);
 }
 
+
+/**
+ *
+ */
+static void
+mark_content_as(deco_browse_t *db, int content_type, int seen)
+{
+  deco_item_t *di;
+  int num_videos = db->db_types[content_type];
+  const char **urls = malloc(sizeof(const char *) * num_videos);
+
+  int i = 0;
+  LIST_FOREACH(di, &db->db_items_per_ct[content_type], di_type_link)
+    urls[i++] = rstr_get(di->di_url);
+
+  metadb_mark_urls_as(urls, num_videos, seen, content_type);
+  free(urls);
+}
+
+
+/**
+ *
+ */
+static void
+mark_all_as_seen(void *opaque)
+{
+  deco_browse_t *db = opaque;
+  mark_content_as(db, CONTENT_VIDEO, 1);
+}
+
+
+/**
+ *
+ */
+static void
+mark_all_as_unseen(void *opaque)
+{
+  deco_browse_t *db = opaque;
+  mark_content_as(db, CONTENT_VIDEO, 0);
+}
+
+
+/**
+ *
+ */
+static void
+set_mode(void *opaque, const char *str)
+{
+  deco_browse_t *db = opaque;
+  deco_item_t *di;
+
+  int v = atoi(str);
+
+  if(v == db->db_mode)
+    return;
+
+  db->db_mode = v;
+
+  LIST_FOREACH(di, &db->db_items_per_ct[CONTENT_VIDEO], di_type_link) {
+    if(di->di_mlv != NULL) {
+      mlv_unbind(di->di_mlv, 1);
+      di->di_mlv = NULL;
+    }
+  }
+
+  switch(v) {
+
+  case DECO_MODE_AUTO:
+    deco_pendings = 1;
+    db->db_pending_flags |= DB_PENDING_DEFERRED_FULL_ANALYSIS;
+    // FALLTHRU
+  case DECO_MODE_MANUAL:
+    LIST_FOREACH(di, &db->db_items_per_ct[CONTENT_VIDEO], di_type_link)
+      analyze_video(di);
+    break;
+
+  case DECO_MODE_OFF:
+    break;
+  }
+  update_contents(db);
+}
+
+
 /**
  *
  */
 deco_browse_t *
 decorated_browse_create(prop_t *model, struct prop_nf *pnf, prop_t *items,
-			rstr_t *title, int flags)
+			rstr_t *title, int flags, const char *url)
 {
-  hts_mutex_lock(&deco_mutex);
 
   deco_browse_t *db = calloc(1, sizeof(deco_browse_t));
+  db->db_url = strdup(url);
   TAILQ_INIT(&db->db_items);
-  db->db_sub = prop_subscribe(flags & DECO_FLAGS_NO_AUTO_DESTROY ? 0 :
-                              PROP_SUB_TRACK_DESTROY,
-			      PROP_TAG_CALLBACK, deco_browse_node_cb, db,
-			      PROP_TAG_ROOT, items,
-			      PROP_TAG_COURIER, deco_courier,
-			      NULL);
 
+  hts_mutex_lock(&deco_mutex);
+
+  db->db_sub =
+    prop_subscribe(flags & DECO_FLAGS_NO_AUTO_DESTROY ?
+                   0 : PROP_SUB_TRACK_DESTROY,
+                   PROP_TAG_CALLBACK, deco_browse_node_cb, db,
+                   PROP_TAG_ROOT, items,
+                   PROP_TAG_COURIER, deco_courier,
+                   NULL);
 
   db->db_pnf = prop_nf_retain(pnf);
   LIST_INSERT_HEAD(&deco_browses, db, db_link);
@@ -1037,6 +1148,37 @@ decorated_browse_create(prop_t *model, struct prop_nf *pnf, prop_t *items,
   db->db_prop_contents = prop_create_r(model, "contents");
   db->db_title = rstr_dup(title);
   db->db_flags = flags;
+
+  prop_t *options = prop_create(model, "options");
+
+  db->db_setting_mode =
+    setting_create(SETTING_MULTIOPT, options,
+                   SETTINGS_INITIAL_UPDATE | SETTINGS_RAW_NODES,
+                   SETTING_TITLE(_p("Metadata mode")),
+                   SETTING_KVSTORE(db->db_url, "metadatamode"),
+                   SETTING_COURIER(deco_courier),
+                   SETTING_CALLBACK(set_mode, db),
+                   SETTING_OPTION("0", _p("Automatic")),
+                   SETTING_OPTION("1", _p("Manual")),
+                   SETTING_OPTION("2", _p("Off")),
+                   NULL);
+
+  db->db_setting_mark_all_as_seen =
+    setting_create(SETTING_ACTION, options,
+                   SETTINGS_INITIAL_UPDATE | SETTINGS_RAW_NODES,
+                   SETTING_TITLE(_p("Mark all as seen")),
+                   SETTING_COURIER(deco_courier),
+                   SETTING_CALLBACK(mark_all_as_seen, db),
+                   NULL);
+
+  db->db_setting_mark_all_as_unseen =
+    setting_create(SETTING_ACTION, options,
+                   SETTINGS_INITIAL_UPDATE | SETTINGS_RAW_NODES,
+                   SETTING_TITLE(_p("Mark all as unseen")),
+                   SETTING_COURIER(deco_courier),
+                   SETTING_CALLBACK(mark_all_as_unseen, db),
+                   NULL);
+
   hts_mutex_unlock(&deco_mutex);
   return db;
 }
@@ -1069,7 +1211,7 @@ deco_thread(void *aux)
       deco_browse_t *db;
 
       LIST_FOREACH(db, &deco_browses, db_link) {
-	if(db->db_pending_flags) {
+	if(db->db_pending_flags && db->db_mode == DECO_MODE_AUTO) {
 
 	  if(db->db_pending_flags & DB_PENDING_DEFERRED_ALBUM_ANALYSIS)
 	    album_analysis(db);

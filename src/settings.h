@@ -16,8 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SETTINGS_H__
-#define SETTINGS_H__
+#pragma once
 
 #include "prop/prop.h"
 #include "htsmsg/htsmsg.h"
@@ -31,11 +30,6 @@ typedef void (settings_saver_t)(void *opaque, htsmsg_t *htsmsg);
 struct setting;
 typedef struct setting setting_t;
 
-typedef struct settings_multiopt {
-  const char *id;
-  const char *title;
-  const char *icon;
-} settings_multiopt_t;
 
 prop_t *settings_add_dir(prop_t *parent, prop_t *title,
 			 const char *subtype, const char *icon,
@@ -51,57 +45,11 @@ prop_t *settings_add_url(prop_t *parent, prop_t *title,
 
 prop_t *settings_create_separator(prop_t *parent, prop_t *caption);
 
-
-
-setting_t *settings_create_bool(prop_t *parent, const char *id, 
-				prop_t *title, int initial, htsmsg_t *store,
-				prop_callback_int_t *cb, void *opaque,
-				int flags, prop_courier_t *pc,
-				settings_saver_t *saver, void *saver_opaque);
-
-void settings_set_bool(setting_t *s, int v);
-
-void settings_toggle_bool(setting_t *s);
-
-setting_t *settings_create_multiopt(prop_t *parent, const char *id,
-				    prop_t *title, int flags);
-
-prop_t *settings_multiopt_add_opt(setting_t *parent, const char *id,
-				  prop_t *title, int selected);
-
-prop_t *settings_multiopt_add_opt_cstr(setting_t *parent, const char *id,
-				       const char *title, int selected);
-
-void settings_multiopt_initiate(setting_t *s,
-				prop_callback_string_t *cb, void *opaque,
-				prop_courier_t *pc,
-				htsmsg_t *store,
-				settings_saver_t *saver, void *saver_opaque);
-
-setting_t *settings_create_string(prop_t *parent, const char *id, 
-				  prop_t *title, const char *initial, 
-				  htsmsg_t *store,
-				  prop_callback_string_t *cb, void *opaque,
-				  int flags, prop_courier_t *pc,
-				  settings_saver_t *saver, void *saver_opaque);
-
-setting_t *settings_create_int(prop_t *parent, const char *id, 
-			       prop_t *title,
-			       int initial, htsmsg_t *store,
-			       int min, int max, int step,
-			       prop_callback_int_t *cb, void *opaque,
-			       int flags, const char *unit,
-			       prop_courier_t *pc,
-			       settings_saver_t *saver, void *saver_opaque);
-
-
-void settings_set_int(setting_t *s, int v);
-
 void settings_add_int(setting_t *s, int delta);
 
-prop_t *settings_get_value(setting_t *s);
+int settings_get_type(const setting_t *s);
 
-prop_t *settings_get_node(setting_t *s);
+prop_t *settings_get_value(setting_t *s);
 
 setting_t *settings_create_action(prop_t *parent, prop_t *title,
 				  prop_callback_t *cb, void *opaque,
@@ -109,15 +57,11 @@ setting_t *settings_create_action(prop_t *parent, prop_t *title,
 
 void setting_destroy(setting_t *s);
 
+void setting_destroyp(setting_t **sp);
+
 void setting_detach(setting_t *s);
 
 void settings_init(void);
-
-void settings_generic_save_settings(void *opaque, htsmsg_t *msg);
-
-#define settings_generic_set_bool settings_generic_set_int
-
-void settings_generic_set_int(void *opaque, int value);
 
 void settings_create_info(prop_t *parent, const char *image,
 			  prop_t *description);
@@ -128,4 +72,65 @@ prop_t *settings_create_bound_string(prop_t *parent, prop_t *title,
 
 prop_t *makesep(prop_t *title);
 
-#endif /* SETTINGS_H__ */
+enum {
+  SETTING_TAG_TITLE = 1,
+  SETTING_TAG_TITLE_CSTR,
+  SETTING_TAG_VALUE,
+  SETTING_TAG_CALLBACK,
+  SETTING_TAG_COURIER,
+  SETTING_TAG_HTSMSG,
+  SETTING_TAG_HTSMSG_CUSTOM_SAVER,
+  SETTING_TAG_RANGE,
+  SETTING_TAG_STEP,
+  SETTING_TAG_UNIT_CSTR,
+  SETTING_TAG_OPTION,
+  SETTING_TAG_OPTION_CSTR,
+  SETTING_TAG_OPTION_LIST,
+  SETTING_TAG_WRITE_INT,
+  SETTING_TAG_ZERO_TEXT,
+  SETTING_TAG_MUTEX,
+  SETTING_TAG_WRITE_PROP,
+  SETTING_TAG_PROP_ENABLER,
+  SETTING_TAG_KVSTORE,
+};
+
+#define SETTING_TITLE(a)                        SETTING_TAG_TITLE, a
+#define SETTING_TITLE_CSTR(a)                   SETTING_TAG_TITLE_CSTR, a
+#define SETTING_VALUE(a)                        SETTING_TAG_VALUE, a
+#define SETTING_CALLBACK(a, b)                  SETTING_TAG_CALLBACK, a, b
+#define SETTING_COURIER(a)                      SETTING_TAG_COURIER, a
+#define SETTING_HTSMSG(a, b, c)                 SETTING_TAG_HTSMSG, a, b, c
+#define SETTING_HTSMSG_CUSTOM_SAVER(a, b, c, d) \
+   SETTING_TAG_HTSMSG_CUSTOM_SAVER, a, b, c, d
+#define SETTING_RANGE(a, b)                     SETTING_TAG_RANGE, a, b
+#define SETTING_STEP(a)                         SETTING_TAG_STEP, a
+#define SETTING_UNIT_CSTR(a)                    SETTING_TAG_UNIT_CSTR, a
+#define SETTING_OPTION(a, b)                    SETTING_TAG_OPTION, a, b
+#define SETTING_OPTION_CSTR(a, b)               SETTING_TAG_OPTION_CSTR, a, b
+#define SETTING_OPTION_LIST(a)                  SETTING_TAG_OPTION_LIST, a
+#define SETTING_WRITE_BOOL(a)                   SETTING_TAG_WRITE_INT, a
+#define SETTING_WRITE_INT(a)                    SETTING_TAG_WRITE_INT, a
+#define SETTING_ZERO_TEXT(a)                    SETTING_TAG_ZERO_TEXT, a
+#define SETTING_MUTEX(a)                        SETTING_TAG_MUTEX, a
+#define SETTING_WRITE_PROP(a)                   SETTING_TAG_WRITE_PROP, a
+#define SETTING_KVSTORE(a, b)                   SETTING_TAG_KVSTORE, a, b
+#define SETTING_PROP_ENABLER(a)                 SETTING_TAG_PROP_ENABLER, a
+#define SETTING_END                             NULL
+
+
+
+
+
+enum {
+  SETTING_INT,
+  SETTING_STRING,
+  SETTING_BOOL,
+  SETTING_MULTIOPT,
+  SETTING_ACTION,
+};
+
+setting_t *setting_create(int type, prop_t *parent, int flags, ...)
+  __attribute__((__sentinel__(0)));
+
+prop_t *setting_add_option(setting_t *s, const char *id,
+                           const char *title, int sel);

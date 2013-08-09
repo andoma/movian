@@ -32,8 +32,32 @@
 #include "prop/prop.h"
 #include "db/db_support.h"
 #include "kvstore.h"
+#include "misc/callout.h"
+
+LIST_HEAD(kvstore_deferred_write_list, kvstore_deferred_write);
+
+
+typedef struct kvstore_deferred_write {
+  LIST_ENTRY(kvstore_deferred_write) kdw_link;
+  char *kdw_url;
+  int kdw_domain;
+  char *kdw_key;
+
+  int kdw_type;
+  union {
+    char *kdw_string;
+    int kdw_int;
+  };
+
+} kvstore_deferred_write_t;
+
+
 
 static db_pool_t *kvstore_pool;
+static struct kvstore_deferred_write_list deferred_writes;
+static callout_t deferred_callout;
+static hts_mutex_t deferred_mutex;
+
 
 /**
  *
@@ -73,6 +97,8 @@ kvstore_init(void)
 {
   sqlite3 *db;
   char buf[256];
+
+  hts_mutex_init(&deferred_mutex);
 
   snprintf(buf, sizeof(buf), "%s/kvstore", gconf.persistent_path);
   mkdir(buf, 0770);
@@ -193,8 +219,10 @@ kv_value_cb(void *opaque, prop_event_t event, ...)
     if(kpb->kpb_id == -1) {
 
       rc = get_url(db, kpb->kpb_url, &kpb->kpb_id);
-      if(rc == SQLITE_LOCKED)
+      if(rc == SQLITE_LOCKED) {
+        db_rollback_deadlock(db);
 	goto again;
+      }
 
       if(rc != SQLITE_OK) {
 	db_rollback(db);
@@ -323,7 +351,8 @@ kv_cb(void *opaque, prop_event_t event, ...)
   case PROP_SET_VOID:
   case PROP_SET_DIR:
   case PROP_REQ_DELETE_VECTOR:
-  case PROP_HAVE_MORE_CHILDS:
+  case PROP_HAVE_MORE_CHILDS_YES:
+  case PROP_HAVE_MORE_CHILDS_NO:
   case PROP_WANT_MORE_CHILDS:
     break;
 
@@ -492,6 +521,7 @@ kv_url_opt_set(const char *url, int domain, const char *key,
   sqlite3_stmt *stmt;
   int rc;
   uint64_t id;
+  const char *str;
   va_list ap, apx;
   va_start(ap, type);
 
@@ -506,8 +536,10 @@ kv_url_opt_set(const char *url, int domain, const char *key,
   }
 
   rc = get_url(db, url, &id);
-  if(rc == SQLITE_LOCKED)
+  if(rc == SQLITE_LOCKED) {
+    db_rollback_deadlock(db);
     goto again;
+  }
 
   if(rc != SQLITE_OK) {
     db_rollback(db);
@@ -541,9 +573,12 @@ kv_url_opt_set(const char *url, int domain, const char *key,
     break;
 
   case KVSTORE_SET_STRING:
-    sqlite3_bind_text(stmt, 3, va_arg(apx, const char *), -1, SQLITE_STATIC);
-    break;
-
+    str = va_arg(apx, const char *);
+    if(str != NULL) {
+      sqlite3_bind_text(stmt, 3, str, -1, SQLITE_STATIC);
+      break;
+    }
+    // FALLTHRU
   case KVSTORE_SET_VOID:
     sqlite3_bind_null(stmt, 3);
     break;
@@ -559,4 +594,178 @@ kv_url_opt_set(const char *url, int domain, const char *key,
   }
   db_commit(db);
   kvstore_close(db);
+}
+
+
+/**
+ *
+ */
+void
+kvstore_deferred_flush(void)
+{
+  kvstore_deferred_write_t *kdw;
+  void *db;
+  sqlite3_stmt *stmt;
+  int rc;
+  uint64_t id = 0;
+  const char *current_url;
+
+  db = kvstore_get();
+  if(db == NULL)
+    return;
+
+  hts_mutex_lock(&deferred_mutex);
+
+ again:
+  if(db_begin(db))
+    goto err;
+
+  current_url = NULL;
+
+  LIST_FOREACH(kdw, &deferred_writes, kdw_link) {
+
+    if(current_url == NULL || strcmp(kdw->kdw_url, current_url)) {
+
+      rc = get_url(db, kdw->kdw_url, &id);
+      if(rc == SQLITE_LOCKED) {
+        db_rollback_deadlock(db);
+        goto again;
+      }
+
+      if(rc != SQLITE_OK) {
+        db_rollback(db);
+        goto err;
+      }
+      current_url = kdw->kdw_url;
+    }
+
+    rc = db_prepare(db, &stmt,
+                    "INSERT OR REPLACE INTO url_kv "
+                    "(url_id, key, value, domain) "
+                    "VALUES "
+                    "(?1, ?2, ?3, ?4)"
+                    );
+
+    if(rc != SQLITE_OK) {
+      db_rollback(db);
+      goto err;
+    }
+
+    sqlite3_bind_int64(stmt, 1, id);
+    sqlite3_bind_text(stmt, 2, kdw->kdw_key, -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 4, kdw->kdw_domain);
+
+    switch(kdw->kdw_type) {
+    case KVSTORE_SET_INT:
+      sqlite3_bind_int(stmt, 3, kdw->kdw_int);
+      break;
+
+    case KVSTORE_SET_STRING:
+      sqlite3_bind_text(stmt, 3, kdw->kdw_string, -1, SQLITE_STATIC);
+      break;
+
+    case KVSTORE_SET_VOID:
+      sqlite3_bind_null(stmt, 3);
+      break;
+
+    default:
+      break;
+    }
+    rc = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    if(rc == SQLITE_LOCKED) {
+      db_rollback_deadlock(db);
+      goto again;
+    }
+  }
+
+  db_commit(db);
+
+ err:
+
+
+  while((kdw = LIST_FIRST(&deferred_writes)) != NULL) {
+    LIST_REMOVE(kdw, kdw_link);
+    free(kdw->kdw_url);
+    free(kdw->kdw_key);
+    if(kdw->kdw_type == KVSTORE_SET_STRING)
+      free(kdw->kdw_string);
+    free(kdw);
+  }
+
+
+  hts_mutex_unlock(&deferred_mutex);
+  kvstore_close(db);
+
+}
+
+
+/**
+ *
+ */
+static void
+deferred_callout_fire(struct callout *c, void *opaque)
+{
+  kvstore_deferred_flush();
+}
+
+
+/**
+ *
+ */
+void
+kv_url_opt_set_deferred(const char *url, int domain, const char *key,
+                        int type, ...)
+{
+
+  kvstore_deferred_write_t *kdw;
+  va_list ap;
+  const char *str;
+  va_start(ap, type);
+
+  hts_mutex_lock(&deferred_mutex);
+
+  LIST_FOREACH(kdw, &deferred_writes, kdw_link) {
+    if(!strcmp(kdw->kdw_url, url) &&
+       !strcmp(kdw->kdw_key, key) &&
+       kdw->kdw_domain == domain)
+      break;
+  }
+
+  if(kdw == NULL) {
+    kdw = malloc(sizeof(kvstore_deferred_write_t));
+    kdw->kdw_url    = strdup(url);
+    kdw->kdw_key    = strdup(key);
+    kdw->kdw_domain = domain;
+    LIST_INSERT_HEAD(&deferred_writes, kdw, kdw_link);
+  } else {
+    if(kdw->kdw_type == KVSTORE_SET_STRING)
+      free(kdw->kdw_string);
+  }
+
+
+  kdw->kdw_type = type;
+
+  switch(type) {
+  case KVSTORE_SET_INT:
+    kdw->kdw_int = va_arg(ap, int);
+    break;
+
+  case KVSTORE_SET_STRING:
+    str = va_arg(ap, const char *);
+    if(str != NULL) {
+      kdw->kdw_string = strdup(str);
+    } else {
+      kdw->kdw_type = KVSTORE_SET_VOID;
+    }
+    break;
+
+  default:
+    break;
+  }
+
+  hts_mutex_unlock(&deferred_mutex);
+
+  callout_arm(&deferred_callout, deferred_callout_fire, NULL, 5);
+  va_end(ap);
 }

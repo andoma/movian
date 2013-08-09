@@ -37,6 +37,7 @@
 #include "misc/sha.h"
 #include "api/xmlrpc.h"
 #include "i18n.h"
+#include "plugins.h"
 
 prop_courier_t *js_global_pc;
 JSContext *js_global_cx;
@@ -794,6 +795,9 @@ js_webpopup(JSContext *cx, JSObject *obj,
   case WEBPOPUP_LOAD_ERROR:
     t = "neterror";
     break;
+  default:
+    t = "error";
+    break;
   }
 
   jsval val;
@@ -941,7 +945,23 @@ js_getsublang(JSContext *cx, JSObject *obj,
 }
 
 
+/**
+ *
+ */
+static JSBool 
+js_selectView(JSContext *cx, JSObject *obj,
+              uintN argc, jsval *argv, jsval *rval)
+{
+  js_plugin_t *jsp = JS_GetPrivate(cx, obj);
+  const char *filename;
 
+  if(!JS_ConvertArguments(cx, argc, argv, "s", &filename))
+    return JS_FALSE;
+
+  plugin_select_view(jsp->jsp_id, filename);
+  *rval = JSVAL_NULL;
+  return JS_TRUE;
+}
 
 
 /**
@@ -976,6 +996,7 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("sha1digest",       js_sha1digest, 1, 0, 0),
     JS_FS("xmlrpc",           js_xmlrpc, 3, 0, 0),
     JS_FS("getSubtitleLanguages", js_getsublang, 0, 0, 0),
+    JS_FS("basename",         js_basename, 1, 0, 0),
     JS_FS_END
 };
 
@@ -1166,6 +1187,8 @@ static JSFunctionSpec plugin_functions[] = {
     JS_FS("subscribe",        js_subscribe_global, 2, 0, 0),
     JS_FS("addSubtitleProvider", js_addsubprovider, 1, 0, 0),
     JS_FS("addItemHook",         js_addItemHook, 1, 0, 0),
+    JS_FS("copyFile",         js_copyfile, 2, 0, 0),
+    JS_FS("selectView",       js_selectView, 1, 0, 0),
     JS_FS_END
 };
 
@@ -1261,6 +1284,12 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
     JS_SetProperty(cx, pobj, "path", &val);
   }
 
+  if(gconf.cache_path) {
+    snprintf(path, sizeof(path), "file://%s/plugins/%s", gconf.cache_path, id);
+    val = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, path));
+    JS_SetProperty(cx, pobj, "filestorage", &val);
+  }
+
   JS_DefineProperty(cx, pobj, "URIRouting", BOOLEAN_TO_JSVAL(1),
 		    NULL, jsp_setEnableURIRoute, JSPROP_PERMANENT);
   jsp->jsp_enable_uri_routing = 1;
@@ -1268,6 +1297,11 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
   JS_DefineProperty(cx, pobj, "search", BOOLEAN_TO_JSVAL(1),
 		    NULL, jsp_setEnableSearch, JSPROP_PERMANENT);
   jsp->jsp_enable_search = 1;
+
+  prop_t *p = prop_create(prop_create(prop_get_global(), "plugin"), id);
+  val = OBJECT_TO_JSVAL(js_object_from_prop(cx, p));
+  JS_SetProperty(cx, pobj, "properties", &val);
+
 
   jsp->jsp_protect_object = 1;
 

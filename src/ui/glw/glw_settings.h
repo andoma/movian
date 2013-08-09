@@ -23,11 +23,13 @@ typedef struct glw_settings {
   int gs_underscan_h;
   int gs_underscan_v;
   int gs_screensaver_delay;
+  int gs_wrap;
 
   struct setting *gs_setting_size;
   struct setting *gs_setting_underscan_v;
   struct setting *gs_setting_underscan_h;
   struct setting *gs_setting_screensaver;
+  struct setting *gs_setting_wrap;
 
   struct prop *gs_settings;
   struct htsmsg *gs_settings_store;
@@ -37,8 +39,6 @@ typedef struct glw_settings {
 extern glw_settings_t glw_settings;
 
 void glw_settings_adj_size(int delta);
-
-void glw_settings_save(void *opaque, htsmsg_t *msg);
 
 void glw_settings_init(void);
 

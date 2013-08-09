@@ -83,6 +83,15 @@ http_response_toString(JSContext *cx, JSObject *obj, uintN argc,
 	cs = charset_get(charset);
 	if(cs == NULL)
 	  TRACE(TRACE_INFO, "JS", "Unable to handle charset %s", charset);
+        else
+          TRACE(TRACE_DEBUG, "JS", "Parsing charset %s as %s",
+                charset, cs->id);
+      } else {
+	tmpbuf = utf8_cleanup(r);
+	if(tmpbuf != NULL) {
+	  TRACE(TRACE_DEBUG, "JS", "Repairing broken UTF-8", charset);
+	  r = tmpbuf;
+	}
       }
     }
 
@@ -91,14 +100,15 @@ http_response_toString(JSContext *cx, JSObject *obj, uintN argc,
       strstr(jhr->contenttype, "text/xml");
   } else {
     isxml = 0;
+    if(cs == NULL && !utf8_verify(r))
+      cs = charset_get(NULL);
   }
   
 
-  if(cs == NULL && !utf8_verify(buf_cstr(jhr->buf)))
-    cs = charset_get(NULL);
-
-  if(cs != NULL)
+  if(cs != NULL) {
+    // Convert from given character set
     r = tmpbuf = utf8_from_bytes(buf_cstr(jhr->buf), jhr->buf->b_size, cs->ptr);
+  }
 
   if(isxml && 
      (r2 = strstr(r, "<?xml ")) != NULL &&
@@ -315,12 +325,17 @@ js_http_request(JSContext *cx, jsval *rval,
 
     buf_t *result = NULL;
 
-    int n = http_request(url, (const char **)httpargs, 
-			 headreq ? NULL : &result,
-			 errbuf, sizeof(errbuf),
-			 postdata, postcontenttype,
-			 flags,
-			 &response_headers, &in_headers, method, NULL, NULL);
+    int n = http_req(url,
+                     HTTP_ARGLIST(httpargs),
+                     HTTP_RESULT_PTR(headreq ? NULL : &result),
+                     HTTP_ERRBUF(errbuf, sizeof(errbuf)),
+                     HTTP_POSTDATA(postdata, postcontenttype),
+                     HTTP_FLAGS(flags),
+                     HTTP_RESPONSE_HEADERS(&response_headers),
+                     HTTP_REQUEST_HEADERS(&in_headers),
+                     HTTP_METHOD(method),
+                     NULL);
+
     JS_ResumeRequest(cx, s);
 
     if(httpargs != NULL)
@@ -536,6 +551,63 @@ js_probe(JSContext *cx, JSObject *obj, uintN argc,
 }
 
 
+/**
+ *
+ */
+JSBool
+js_basename(JSContext *cx, JSObject *obj, uintN argc,
+            jsval *argv, jsval *rval)
+{
+  const char *url;
+  char tmp[URL_MAX];
+
+  if(!JS_ConvertArguments(cx, argc, argv, "s", &url))
+    return JS_FALSE;
+
+  fa_url_get_last_component(tmp, sizeof(tmp), url);
+
+  *rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, tmp));
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
+JSBool
+js_copyfile(JSContext *cx, JSObject *obj, uintN argc,
+            jsval *argv, jsval *rval)
+{
+  const char *from;
+  const char *to;
+  char *cleanup;
+  char path[URL_MAX];
+  char errbuf[256];
+
+  js_plugin_t *jsp = JS_GetPrivate(cx, obj);
+
+  if(!JS_ConvertArguments(cx, argc, argv, "ss", &from, &to))
+    return JS_FALSE;
+
+  cleanup = mystrdupa(to);
+
+  fa_sanitize_filename(cleanup);
+
+  snprintf(path, sizeof(path), "file://%s/plugins/%s/%s",
+           gconf.cache_path, jsp->jsp_id, cleanup);
+
+  TRACE(TRACE_DEBUG, "JS", "Copying file from '%s' to '%s'", from, path);
+
+  if(fa_copy(path, from, errbuf, sizeof(errbuf))) {
+    JS_ReportError(cx, errbuf);
+    return JS_FALSE;
+  }
+
+  *rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, path));
+  return JS_TRUE;
+}
+
+
 static struct js_http_auth_list js_http_auths;
 
 
@@ -708,6 +780,24 @@ js_setHeader(JSContext *cx, JSObject *obj,
 }
 
 
+/**
+ *
+ */
+static JSBool
+js_fail(JSContext *cx, JSObject *obj,
+        uintN argc, jsval *argv, jsval *rval)
+{
+  const char *reason;
+
+  if(!JS_ConvertArguments(cx, argc, argv, "s", &reason))
+    return JS_FALSE;
+
+  *rval = JSVAL_NULL;
+  http_client_fail_req(JS_GetPrivate(cx, obj), reason);
+  return JS_TRUE;
+}
+
+
 
 /**
  *
@@ -716,6 +806,7 @@ static JSFunctionSpec http_auth_functions[] = {
     JS_FS("oauthToken",      js_oauth,       4, 0, 0),
     JS_FS("rawAuth",         js_rawAuth,     1, 0, 0),
     JS_FS("setHeader",       js_setHeader,   2, 0, 0),
+    JS_FS("fail",            js_fail,        1, 0, 0),
     JS_FS_END
 };
 
@@ -762,11 +853,16 @@ js_http_auth_try(const char *url, struct http_auth_req *har)
   JS_PopArguments(cx, mark);
 
   JS_RemoveRoot(cx, &pobj);
+  JS_DestroyContext(cx);
+
+  if(!ret) {
+    http_client_fail_req(har, "Script error");
+    return 0;
+  }
 
   if(ret && JSVAL_IS_BOOLEAN(result) && JSVAL_TO_BOOLEAN(result))
     ret = 0;
   else
     ret = 1;
-  JS_DestroyContext(cx);
   return ret;
 }

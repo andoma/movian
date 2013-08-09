@@ -76,7 +76,8 @@ typedef enum {
   PROP_DESTROYED,
   PROP_EXT_EVENT,
   PROP_SUBSCRIPTION_MONITOR_ACTIVE,
-  PROP_HAVE_MORE_CHILDS,
+  PROP_HAVE_MORE_CHILDS_YES,
+  PROP_HAVE_MORE_CHILDS_NO,
   PROP_WANT_MORE_CHILDS,
   PROP_SUGGEST_FOCUS,
   PROP_REQ_MOVE_CHILD,
@@ -336,6 +337,10 @@ void prop_unselect_ex(prop_t *parent, prop_sub_t *skipme);
 
 #define prop_unselect(parent) prop_unselect_ex(parent, NULL)
 
+void prop_select_by_value_ex(prop_t *p, const char *name, prop_sub_t *skipme);
+
+#define prop_select_by_value(p, name) prop_select_by_value_ex(p, name, NULL)
+
 void prop_suggest_focus(prop_t *p);
 
 void prop_destroy_childs(prop_t *parent);
@@ -387,6 +392,8 @@ void prop_courier_stop(prop_courier_t *pc);
 
 prop_t *prop_find(prop_t *parent, ...)  __attribute__((__sentinel__(0)));
 
+prop_t *prop_first_child(prop_t *p);
+
 void prop_send_ext_event(prop_t *p, event_t *e);
 
 
@@ -416,7 +423,7 @@ rstr_t *prop_get_name(prop_t *p);
 
 void prop_want_more_childs(prop_sub_t *s);
 
-void prop_have_more_childs(prop_t *p);
+void prop_have_more_childs(prop_t *p, int yes);
 
 void prop_mark_childs(prop_t *p);
 

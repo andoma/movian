@@ -17,11 +17,11 @@
  */
 
 #include <stdio.h>
-#include <sys/param.h>
-#include "arch/atomic.h"
 #include <string.h>
 #include <stdlib.h>
 
+#include "misc/minmax.h"
+#include "arch/atomic.h"
 #include "pixmap.h"
 #include "dbl.h"
 #include "htsmsg/htsmsg_xml.h"

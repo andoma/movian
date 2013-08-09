@@ -268,7 +268,6 @@ static int trex_element(TRex *exp)
 	}
 
 	{
-		int op;
 		TRexBool isgreedy = TRex_False;
 		unsigned short p0 = 0, p1 = 0;
 		switch(*exp->_p){
@@ -302,7 +301,6 @@ static int trex_element(TRex *exp)
 		}
 		if(isgreedy) {
 			int nnode = trex_newnode(exp,OP_GREEDY);
-			op = OP_GREEDY;
 			exp->_nodes[nnode].left = ret;
 			exp->_nodes[nnode].right = ((p0)<<16)|p1;
 			ret = nnode;

@@ -551,7 +551,7 @@ nav_page_setup_prop(navigator_t *nav, nav_page_t *np, const char *view,
   prop_set_int(np->np_bookmarked, nav_page_is_bookmarked(np));
 
   np->np_bookmarked_sub = 
-    prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+    prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_IGNORE_VOID,
 		   PROP_TAG_ROOT, np->np_bookmarked,
 		   PROP_TAG_CALLBACK_INT, nav_page_bookmarked_set, np,
 		   PROP_TAG_COURIER, nav_courier,
@@ -895,8 +895,6 @@ bm_set_url(void *opaque, rstr_t *str)
 }
 
 
-
-
 /**
  *
  */
@@ -904,7 +902,6 @@ static void
 bm_set_type(void *opaque, rstr_t *str)
 {
   bookmark_t *bm = opaque;
-
   rstr_set(&bm->bm_type, str);
   service_set_type(bm->bm_service, str);
   bookmarks_save();
@@ -1018,7 +1015,7 @@ bookmark_add(const char *title, const char *url, const char *type,
 		 PROP_TAG_COURIER, nav_courier,
 		 NULL);
 
-  // Construct the edit page
+  // Construct the settings page
 
   prop_t *m = prop_create(p, "model");
   prop_t *md = prop_create(p, "metadata");
@@ -1035,22 +1032,18 @@ bookmark_add(const char *title, const char *url, const char *type,
   settings_create_bound_string(m, _p("Title"), prop_create(md, "title"));
   settings_create_bound_string(m, _p("URL"), prop_create(md, "url"));
 
-  bm->bm_type_setting = 
-    settings_create_multiopt(m, "type", _p("Type"), 0);
-
-  settings_multiopt_add_opt(bm->bm_type_setting, "other",  _p("Other"),
-			    !strcmp(type, "other"));
-  settings_multiopt_add_opt(bm->bm_type_setting, "music",  _p("Music"),
-			    !strcmp(type, "music"));
-  settings_multiopt_add_opt(bm->bm_type_setting, "video",  _p("Video"),
-			    !strcmp(type, "video"));
-  settings_multiopt_add_opt(bm->bm_type_setting, "tv",     _p("TV"),
-			    !strcmp(type, "tv"));
-  settings_multiopt_add_opt(bm->bm_type_setting, "photos", _p("Photos"),
-			    !strcmp(type, "photos"));
-  
-  settings_multiopt_initiate(bm->bm_type_setting, change_type, bm,
-			     nav_courier, NULL, NULL, NULL);
+  bm->bm_type_setting =
+    setting_create(SETTING_MULTIOPT, m, SETTINGS_INITIAL_UPDATE,
+                   SETTING_TITLE(_p("Type")),
+                   SETTING_VALUE(type),
+                   SETTING_OPTION("other",  _p("Other")),
+                   SETTING_OPTION("music",  _p("Music")),
+                   SETTING_OPTION("video",  _p("Video")),
+                   SETTING_OPTION("tv",     _p("TV")),
+                   SETTING_OPTION("photos", _p("Photos")),
+                   SETTING_CALLBACK(change_type, bm),
+                   SETTING_COURIER(nav_courier),
+                   NULL);
 
   prop_link(prop_create(md, "url"), prop_create(md, "shortdesc"));
 
@@ -1058,7 +1051,7 @@ bookmark_add(const char *title, const char *url, const char *type,
   settings_create_info(m, NULL,
 		       service_get_statustxt_prop(bm->bm_service));
 
-  bm->bm_delete = 
+  bm->bm_delete =
     settings_create_action(m, _p("Delete"), bm_delete, bm, 0, nav_courier);
 
   if(prop_set_parent(p, bookmark_nodes))

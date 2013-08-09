@@ -17,7 +17,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef linux
+#if defined(linux) && !defined(__ANDROID__)
 #include <sys/prctl.h>
 #include <sys/resource.h>
 #include <unistd.h>
@@ -104,7 +104,7 @@ thread_trampoline(void *aux)
   trampoline_t *t = aux;
   void *r;
 
-#if defined(linux)
+#if defined(linux) && !defined(__ANDROID__)
   if(posix_set_thread_priorities)
     setpriority(PRIO_PROCESS, syscall(224), t->prio);
   prctl(PR_SET_NAME, t->title, 0, 0, 0);
@@ -152,10 +152,11 @@ hts_thread_create_joinable(const char *title, hts_thread_t *p,
 {
   pthread_attr_t attr;
   pthread_attr_init(&attr);
-  pthread_attr_setstacksize(&attr, 128 * 1024);
+  if(prio)
+    pthread_attr_setstacksize(&attr, 128 * 1024);
 
 
-#ifdef linux
+#if defined(linux) && !defined(__ANDROID__)
   if(prio <= -10 && posix_set_thread_priorities) {
     pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
     pthread_attr_setschedpolicy(&attr, SCHED_RR);

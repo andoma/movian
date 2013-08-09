@@ -108,6 +108,7 @@ typedef struct sub_cloner {
   int sc_highest_active;
 
   char sc_have_more;
+  char sc_pending_more;
 
   struct clone_list sc_clones;
 
@@ -772,9 +773,6 @@ resolve_property_name(glw_view_eval_context_t *ec, token_t *a)
 		       PROP_TAG_ROOT, ec->w->glw_root->gr_prop_nav,
 		       NULL);
 
-  if(p == NULL)
-    return glw_view_seterr(ec->ei, a, "Unable to resolve property");
-
   /* Transform TOKEN_PROPERTY_NAME -> TOKEN_PROPERTY */
 
   glw_view_free_chain(ec->gr, a->child);
@@ -1119,12 +1117,12 @@ clone_eval(glw_clone_t *c)
 static void
 cloner_pagination_check(sub_cloner_t *sc)
 {
-  if(!sc->sc_have_more)
+  if(sc->sc_pending_more || !sc->sc_have_more)
     return;
 
   if(sc->sc_highest_active >= sc->sc_entries * 0.95 ||
      sc->sc_highest_active == sc->sc_entries - 1) {
-    sc->sc_have_more = 0;
+    sc->sc_pending_more = 1;
     if(sc->sc_sub.gps_sub != NULL)
       prop_want_more_childs(sc->sc_sub.gps_sub);
   }
@@ -1215,6 +1213,9 @@ clone_sig_handler(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     c->c_w = NULL;
     clone_free(gr, c);
     break;
+
+  case GLW_SIGNAL_WRAP_CHECK:
+    return sc->sc_have_more == 1;
 
   default:
     break;
@@ -1573,9 +1574,15 @@ prop_callback_cloner(void *opaque, prop_event_t event, ...)
     rpn = gps->gps_rpn;
     break;
 
-  case PROP_HAVE_MORE_CHILDS:
+  case PROP_HAVE_MORE_CHILDS_YES:
     sc->sc_have_more = 1;
+    sc->sc_pending_more = 0;
     cloner_pagination_check(sc);
+    break;
+
+  case PROP_HAVE_MORE_CHILDS_NO:
+    sc->sc_have_more = 0;
+    sc->sc_pending_more = 0;
     break;
 
 
@@ -1686,7 +1693,8 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
   case PROP_DESTROYED:
   case PROP_EXT_EVENT:
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
-  case PROP_HAVE_MORE_CHILDS:
+  case PROP_HAVE_MORE_CHILDS_YES:
+  case PROP_HAVE_MORE_CHILDS_NO:
   case PROP_WANT_MORE_CHILDS:
   case PROP_SUGGEST_FOCUS:
   case PROP_SET_STRING:
@@ -1759,7 +1767,8 @@ prop_callback_counter(void *opaque, prop_event_t event, ...)
   case PROP_DESTROYED:
   case PROP_EXT_EVENT:
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
-  case PROP_HAVE_MORE_CHILDS:
+  case PROP_HAVE_MORE_CHILDS_YES:
+  case PROP_HAVE_MORE_CHILDS_NO:
   case PROP_WANT_MORE_CHILDS:
   case PROP_SUGGEST_FOCUS:
   case PROP_SET_STRING:
@@ -1854,7 +1863,8 @@ ve_cb(void *opaque, prop_event_t event, ...)
   case PROP_DESTROYED:
   case PROP_EXT_EVENT:
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
-  case PROP_HAVE_MORE_CHILDS:
+  case PROP_HAVE_MORE_CHILDS_YES:
+  case PROP_HAVE_MORE_CHILDS_NO:
   case PROP_WANT_MORE_CHILDS:
   case PROP_SUGGEST_FOCUS:
   case PROP_SET_STRING:
@@ -2165,7 +2175,8 @@ prop_callback_vectorizer(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_SUGGEST_FOCUS:
-  case PROP_HAVE_MORE_CHILDS:
+  case PROP_HAVE_MORE_CHILDS_YES:
+  case PROP_HAVE_MORE_CHILDS_NO:
   case PROP_REQ_NEW_CHILD:
   case PROP_REQ_DELETE_VECTOR:
   case PROP_DESTROYED:
@@ -2240,7 +2251,7 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
       sub_cloner_t *sc = calloc(1, sizeof(sub_cloner_t));
       gps = &sc->sc_sub;
 
-      sc->sc_have_more = 1;
+      sc->sc_have_more = 2;
 
       sc->sc_originating_prop = prop_ref_inc(ec->prop);
       sc->sc_view_prop        = prop_ref_inc(ec->prop_viewx);
@@ -4479,6 +4490,64 @@ glwf_delta_dtor(glw_root_t *Gr, struct token *self)
 
 
 /**
+ *
+ */
+static int
+glwf_set(glw_view_eval_context_t *ec, struct token *self,
+         token_t **argv, unsigned int argc)
+{
+  token_t *a = argv[0], *b = argv[1];
+  prop_t *p;
+
+  if((a = resolve_property_name2(ec, a)) == NULL)
+    return -1;
+
+  if((b = token_resolve(ec, b)) == NULL)
+    return -1;
+
+  prop_ref_dec(self->t_extra);
+  self->t_extra = p = prop_ref_inc(a->t_prop);
+
+  switch(b->type) {
+  case TOKEN_FLOAT:
+    prop_set_float(p, b->t_float);
+    break;
+  case TOKEN_INT:
+    prop_set_int(p, b->t_int);
+    break;
+  case TOKEN_CSTRING:
+    prop_set_cstring(p, b->t_cstring);
+    break;
+  case TOKEN_RSTRING:
+    prop_set_rstring(p, b->t_rstring);
+    break;
+  case TOKEN_LINK:
+    prop_set_link(p, rstr_get(b->t_link_rtitle), rstr_get(b->t_link_rurl));
+    break;
+  default:
+    prop_set_void(p);
+    break;
+  }
+
+  ec->dynamic_eval |= GLW_VIEW_DYNAMIC_KEEP;
+  return 0;
+}
+
+
+/**
+ *
+ */
+static void
+glwf_set_dtor(glw_root_t *Gr, struct token *self)
+{
+  prop_t *p = self->t_extra;
+
+  prop_set_void(p);
+  prop_ref_dec(p);
+}
+
+
+/**
  * Return 1 if the current widget is visible (rendered)
  */
 static int 
@@ -5982,6 +6051,7 @@ static const token_func_t funcvec[] = {
   {"setDefaultFont", 1, glwf_setDefaultFont},
   {"rand", 0, glwf_rand},
   {"selectedElement", 1, glwf_selectedElement},
+  {"set", 2, glwf_set, glwf_null_ctor, glwf_set_dtor},
 
 };
 

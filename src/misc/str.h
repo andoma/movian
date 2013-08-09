@@ -35,6 +35,8 @@ int utf8_verify(const char *str);
 
 int utf8_put(char *out, int c);
 
+char *utf8_cleanup(const char *str);
+
 const char *mystrstr(const char *haystack, const char *needle);
 
 void strvec_addp(char ***str, const char *v);
@@ -77,6 +79,7 @@ void utf16_to_utf8(char **bufp, size_t *lenp);
 typedef struct {
   const char *id, *title;
   const uint16_t *ptr;
+  const char **aliases;
 } charset_t;
 
 const charset_t *charset_get(const char *id);

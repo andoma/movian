@@ -29,6 +29,7 @@
 #include "arch/posix/posix.h"
 #include "osx.h"
 #include "ui/webpopup.h"
+#include "htsmsg/htsmsg_store.h"
 
 prop_courier_t *mainloop_courier;
 
@@ -113,6 +114,16 @@ arch_exit(void)
 /**
  *
  */
+int
+arch_stop_req(void)
+{
+  return 0;
+}
+
+
+/**
+ *
+ */
 const char *
 showtime_get_system_type(void)
 {
@@ -189,6 +200,8 @@ mainloop_courier_init(void)
  */
 - (void) applicationWillTerminate: (NSNotification *)not;
 {
+  showtime_flush_caches();
+  shutdown_hook_run(1);
   showtime_fini();
 }
 

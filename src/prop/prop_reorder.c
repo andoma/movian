@@ -154,7 +154,8 @@ src_cb(void *opaque, prop_event_t event, ...)
 
   case PROP_SET_DIR:
   case PROP_REQ_DELETE_VECTOR:
-  case PROP_HAVE_MORE_CHILDS:
+  case PROP_HAVE_MORE_CHILDS_YES:
+  case PROP_HAVE_MORE_CHILDS_NO:
   case PROP_WANT_MORE_CHILDS:
     break;
 

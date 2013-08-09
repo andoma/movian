@@ -16,8 +16,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <sys/param.h>
 #include <stdlib.h>
+
+#include "misc/minmax.h"
 #include "net.h"
 
 /**

@@ -305,6 +305,11 @@ pixbuf_loader_thread(void *aux)
 void
 gu_pixbuf_init(void)
 {
+  static int initialiezed;
+  if(initialiezed)
+    return;
+  initialiezed = 1;
+
   TAILQ_INIT(&pbaqueue);
   TAILQ_INIT(&pixbufcache);
 

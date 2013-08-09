@@ -173,6 +173,7 @@ widget(deck, {
     SEP(_("Audio settings"));
 
     cloner($self.media.audio.settings.nodes, loader, {
+      hidden: !$self.enabled;
       source: "skin://pages/listitems/" + $self.type + ".view";
       time: 0.3;
       noInitialTransform: true;
@@ -187,6 +188,7 @@ widget(deck, {
     SEP(_("Subtitle settings"));
 
     cloner($self.media.subtitle.settings.nodes, loader, {
+      hidden: !$self.enabled;
       source: "skin://pages/listitems/" + $self.type + ".view";
       time: 0.3;
       noInitialTransform: true;
@@ -200,6 +202,7 @@ widget(deck, {
     SEP(_("Video settings"));
 
     cloner($self.media.video.settings.nodes, loader, {
+      hidden: !$self.enabled;
       source: "skin://pages/listitems/" + $self.type + ".view";
       time: 0.3;
       noInitialTransform: true;

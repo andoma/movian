@@ -51,7 +51,6 @@ CONFIG_LIST="
  libgme
  libxss
  libxv
- serdev
  openssl
  polarssl
  librtmp
@@ -82,6 +81,7 @@ CONFIG_LIST="
  tlsf
  airplay
  webpopup
+ webkit
  valgrind
  xmp
  bughunt
@@ -169,7 +169,7 @@ cp_if_changed(){
 
 download_file() {
     local __resultvar=$2
-    local URL_HASH=`echo "$1" | shasum  | awk '{print $1}'`
+    local URL_HASH=`echo "$1" | ${SHASUM}  | awk '{print $1}'`
     mkdir -p ${TOPDIR}/.downloadcache
     local DLPATH=${TOPDIR}/.downloadcache/${URL_HASH}
     if [ ! -f "${DLPATH}" ]; then
@@ -255,6 +255,9 @@ setup_env(){
 	CC="ccache $CC"
 	CXX="ccache $CXX"
     fi
+
+    which >/dev/null 2>&1 shasum  && SHASUM=shasum
+    which >/dev/null 2>&1 sha1sum && SHASUM=sha1sum
 
     mkdir -p ${BUILDDIR}
     BUILDDIR=`cd ${BUILDDIR} && pwd`
@@ -390,9 +393,9 @@ bzip2_setup()
 
     tar -x -C "${BUILDDIR}" -f "${bzip2tarball}"
 
-    sed -i s#^CC=gcc\$#CC=${TOOLCHAIN}gcc# ${BZIP2_SRC_DIR}/Makefile
-    sed -i s#^AR=ar\$#AR=${TOOLCHAIN}ar# ${BZIP2_SRC_DIR}/Makefile
-    sed -i s#^RANLIB=ranlib\$#RANLIB=${TOOLCHAIN}ranlib# ${BZIP2_SRC_DIR}/Makefile
+    sed -ibak s#^CC=gcc\$#CC=${TOOLCHAIN}gcc# ${BZIP2_SRC_DIR}/Makefile
+    sed -ibak s#^AR=ar\$#AR=${TOOLCHAIN}ar# ${BZIP2_SRC_DIR}/Makefile
+    sed -ibak s#^RANLIB=ranlib\$#RANLIB=${TOOLCHAIN}ranlib# ${BZIP2_SRC_DIR}/Makefile
 
     echo >>${CONFIG_MAK} "BZIP2_BUILD_DIR=${BZIP2_SRC_DIR}"
 

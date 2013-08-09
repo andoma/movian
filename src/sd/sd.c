@@ -150,24 +150,35 @@ sd_add_service(service_instance_t *si, const char *title,
     si->si_settings = settings_add_dir_cstr(gconf.settings_sd,
 					    title, NULL, NULL,
 					    description, NULL);
-    
-    si->si_setting_enabled = 
-      settings_create_bool(si->si_settings, "enabled", _p("Enabled"), 1,
-			   si->si_settings_store, NULL, NULL,
-			   SETTINGS_INITIAL_UPDATE, NULL,
-			   sd_settings_saver, si);
 
-    si->si_setting_title = 
-      settings_create_string(si->si_settings, "title", _p("Name"), title,
-			     si->si_settings_store, NULL, NULL,
-			     SETTINGS_INITIAL_UPDATE, NULL,
-			     sd_settings_saver, si);
+    si->si_setting_enabled =
+      setting_create(SETTING_BOOL, si->si_settings, SETTINGS_INITIAL_UPDATE,
+                     SETTING_TITLE(_p("Enabled")),
+                     SETTING_VALUE(1),
+                     SETTING_HTSMSG_CUSTOM_SAVER("enabled",
+                                                 si->si_settings_store,
+                                                 sd_settings_saver,
+                                                 si),
+                     NULL);
 
-    si->si_setting_type = 
-      settings_create_string(si->si_settings, "type", _p("Type"), contents,
-			     si->si_settings_store, NULL, NULL,
-			     SETTINGS_INITIAL_UPDATE, NULL,
-			     sd_settings_saver, si);
+    si->si_setting_title =
+      setting_create(SETTING_STRING, si->si_settings, SETTINGS_INITIAL_UPDATE,
+                     SETTING_TITLE(_p("Name")),
+                     SETTING_HTSMSG_CUSTOM_SAVER("title",
+                                                 si->si_settings_store,
+                                                 sd_settings_saver,
+                                                 si),
+                     NULL);
+
+
+    si->si_setting_type =
+      setting_create(SETTING_STRING, si->si_settings, SETTINGS_INITIAL_UPDATE,
+                     SETTING_TITLE(_p("Type")),
+                     SETTING_HTSMSG_CUSTOM_SAVER("type",
+                                                 si->si_settings_store,
+                                                 sd_settings_saver,
+                                                 si),
+                     NULL);
   }
 
   update_service(si);

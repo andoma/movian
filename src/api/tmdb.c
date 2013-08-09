@@ -568,20 +568,20 @@ tmdb_init(void)
 
   htsmsg_t *store = htsmsg_store_load("tmdb") ?: htsmsg_create_map();
 
-  settings_create_string(tmdb->ms_settings, "language",
-			 _p("Language (ISO 639-1 code)"),
-			 NULL, store, set_lang, NULL,
-			 SETTINGS_INITIAL_UPDATE, NULL,
-			 settings_generic_save_settings, 
-			 (void *)"tmdb");
+  setting_create(SETTING_STRING, tmdb->ms_settings, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Language (ISO 639-1 code)")),
+                 SETTING_CALLBACK(set_lang, NULL),
+                 SETTING_HTSMSG("language", store, "tmdb"),
+                 NULL);
 
-  settings_create_bool(tmdb->ms_settings, "enabled", _p("Use original title"),
-		       0, store, use_orig_title, NULL,
-		       SETTINGS_INITIAL_UPDATE, NULL,
-		       settings_generic_save_settings, 
-		       (void *)"tmdb");
 
+  setting_create(SETTING_BOOL, tmdb->ms_settings, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Use original title")),
+                 SETTING_CALLBACK(use_orig_title, NULL),
+                 SETTING_HTSMSG("enabled", store, "tmdb"),
+                 NULL);
 }
+
 
 INITME(INIT_GROUP_API, tmdb_init);
 

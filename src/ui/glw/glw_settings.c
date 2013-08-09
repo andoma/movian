@@ -39,9 +39,66 @@ glw_settings_adj_size(int delta)
  *
  */
 void
-glw_settings_save(void *opaque, htsmsg_t *msg)
+glw_settings_init(void)
 {
-  htsmsg_store_save(msg, "glw");
+  glw_settings.gs_settings_store = htsmsg_store_load("glw");
+
+  if(glw_settings.gs_settings_store == NULL)
+    glw_settings.gs_settings_store = htsmsg_create_map();
+
+
+  glw_settings.gs_settings = prop_create_root(NULL);
+  prop_concat_add_source(gconf.settings_look_and_feel,
+			 prop_create(glw_settings.gs_settings, "nodes"),
+			 NULL);
+
+  prop_t *s = glw_settings.gs_settings;
+  htsmsg_t *store = glw_settings.gs_settings_store;
+
+  glw_settings.gs_setting_size =
+    setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,
+                   SETTING_TITLE(_p("Font and icon size")),
+                   SETTING_RANGE(-10, 30),
+                   SETTING_UNIT_CSTR("px"),
+                   SETTING_WRITE_INT(&glw_settings.gs_size),
+                   SETTING_HTSMSG("size", store, "glw"),
+                   NULL);
+
+  glw_settings.gs_setting_underscan_h =
+    setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,
+                   SETTING_TITLE(_p("Horizontal underscan")),
+                   SETTING_RANGE(-100, 100),
+                   SETTING_UNIT_CSTR("px"),
+                   SETTING_WRITE_INT(&glw_settings.gs_underscan_h),
+                   SETTING_HTSMSG("underscan_h", store, "glw"),
+                   NULL);
+
+  glw_settings.gs_setting_underscan_v =
+    setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,
+                   SETTING_TITLE(_p("Veritcal underscan")),
+                   SETTING_RANGE(-100, 100),
+                   SETTING_UNIT_CSTR("px"),
+                   SETTING_WRITE_INT(&glw_settings.gs_underscan_v),
+                   SETTING_HTSMSG("underscan_v", store, "glw"),
+                   NULL);
+
+  glw_settings.gs_setting_screensaver =
+    setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,
+                   SETTING_TITLE(_p("Screensaver delay")),
+                   SETTING_VALUE(10),
+                   SETTING_RANGE(1, 60),
+                   SETTING_UNIT_CSTR("min"),
+                   SETTING_WRITE_INT(&glw_settings.gs_screensaver_delay),
+                   SETTING_HTSMSG("screensaver", store, "glw"),
+                   NULL);
+
+  glw_settings.gs_setting_wrap =
+    setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
+                   SETTING_TITLE(_p("Wrap when reaching beginning/end of lists")),
+                   SETTING_VALUE(1),
+                   SETTING_WRITE_BOOL(&glw_settings.gs_wrap),
+                   SETTING_HTSMSG("wrap", store, "glw"),
+                   NULL);
 }
 
 
@@ -49,62 +106,13 @@ glw_settings_save(void *opaque, htsmsg_t *msg)
  *
  */
 void
-glw_settings_init(void)
-{
-  glw_settings.gs_settings_store = htsmsg_store_load("glw");
-  
-  if(glw_settings.gs_settings_store == NULL)
-    glw_settings.gs_settings_store = htsmsg_create_map();
-
-  
-  glw_settings.gs_settings = prop_create_root(NULL);
-  prop_concat_add_source(gconf.settings_look_and_feel,
-			 prop_create(glw_settings.gs_settings, "nodes"),
-			 NULL);
-
-  glw_settings.gs_setting_size =
-    settings_create_int(glw_settings.gs_settings, "size",
-			_p("Userinterface size"), 0,
-			glw_settings.gs_settings_store, -10, 30, 1,
-			settings_generic_set_int, &glw_settings.gs_size,
-			SETTINGS_INITIAL_UPDATE, "px", NULL,
-			glw_settings_save, NULL);
-
-  glw_settings.gs_setting_underscan_h =
-    settings_create_int(glw_settings.gs_settings, "underscan_h",
-			_p("Horizontal underscan"), 0,
-			glw_settings.gs_settings_store, -100, +100, 1,
-			settings_generic_set_int, &glw_settings.gs_underscan_h,
-			SETTINGS_INITIAL_UPDATE, "px", NULL,
-			glw_settings_save, NULL);
-
-  glw_settings.gs_setting_underscan_v =
-    settings_create_int(glw_settings.gs_settings, "underscan_v",
-			_p("Vertical underscan"), 0,
-			glw_settings.gs_settings_store, -100, +100, 1,
-			settings_generic_set_int, &glw_settings.gs_underscan_v,
-			SETTINGS_INITIAL_UPDATE, "px", NULL,
-			glw_settings_save, NULL);
-
-
-  glw_settings.gs_setting_screensaver =
-    settings_create_int(glw_settings.gs_settings, "screensaver",
-			_p("Screensaver delay"),
-			10, glw_settings.gs_settings_store, 1, 60, 1,
-			settings_generic_set_int,
-			&glw_settings.gs_screensaver_delay,
-			SETTINGS_INITIAL_UPDATE, " min", NULL,
-			glw_settings_save, NULL);
-
-}
-
-void
 glw_settings_fini(void)
 {
   setting_destroy(glw_settings.gs_setting_screensaver);
   setting_destroy(glw_settings.gs_setting_underscan_v);
   setting_destroy(glw_settings.gs_setting_underscan_h);
   setting_destroy(glw_settings.gs_setting_size);
+  setting_destroy(glw_settings.gs_setting_wrap);
   prop_destroy(glw_settings.gs_settings);
   htsmsg_destroy(glw_settings.gs_settings_store);
 }

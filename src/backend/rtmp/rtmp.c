@@ -222,9 +222,10 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
     event_select_track_t *est = (event_select_track_t *)e;
     prop_set_string(mp->mp_prop_subtitle_track_current, est->id);
     if(!strcmp(est->id, "sub:off")) {
-      mp_load_ext_sub(mp, NULL);
+      mp_load_ext_sub(mp, NULL, NULL);
       } else {
-      mp_load_ext_sub(mp, est->id);
+      AVRational framerate = {1000000, r->vframeduration};
+      mp_load_ext_sub(mp, est->id, &framerate);
     }
 
   }

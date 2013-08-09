@@ -333,10 +333,11 @@ xmlrpc_request(const char *url, const char *method, htsmsg_t *params,
   htsmsg_destroy(params);
   htsbuf_qprintf(&q, "</params></methodCall>\n");
 
-  int n = http_request(url, NULL,
-		       &result, errbuf, errlen,
-		       &q, "text/xml", 0, NULL, NULL,
-		       NULL, NULL, NULL);
+  int n = http_req(url,
+                   HTTP_RESULT_PTR(&result),
+                   HTTP_ERRBUF(errbuf, errlen),
+                   HTTP_POSTDATA(&q, "text/xml"),
+                   NULL);
 
   htsbuf_queue_flush(&q);
 

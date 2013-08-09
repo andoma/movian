@@ -71,11 +71,16 @@ pb_getProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 
   hts_mutex_lock(&prop_mutex);
 
+  if(p->hp_type != PROP_DIR) {
+    hts_mutex_unlock(&prop_mutex);
+    return JS_TRUE;
+  }
+
   if(JSVAL_IS_STRING(id)) {
     const char *name = JS_GetStringBytes(JSVAL_TO_STRING(id));
     TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link)
       if(c->hp_name != NULL && !strcmp(c->hp_name, name))
-        break;
+	break;
 
   } else if(JSVAL_IS_INT(id)) {
     int num = JSVAL_TO_INT(id);
@@ -236,7 +241,7 @@ js_openURL(JSContext *cx, JSObject *obj, uintN argc,
 /**
  *
  */
-static JSFunctionSpec setting_functions[] = {
+static JSFunctionSpec nav_functions[] = {
     JS_FS("openURL", js_openURL, 1, 0, 0),
     JS_FS_END
 };
@@ -251,7 +256,7 @@ js_nav_create(JSContext *cx, prop_t *p)
   JSObject *proto = js_object_from_prop(cx, p);
   JSObject *obj = JS_NewObject(cx, &prop_ref_class, proto, NULL);
   JS_SetPrivate(cx, obj, prop_create_r(p, "eventsink"));
-  JS_DefineFunctions(cx, obj, setting_functions);
+  JS_DefineFunctions(cx, obj, nav_functions);
   return obj;
 }
 

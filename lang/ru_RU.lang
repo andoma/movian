@@ -17,11 +17,9 @@ msg: Удалить текущую страницу из закладок
 # ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
 id: Activate sleep timer
-# Missing translation
 msg: Включить таймер сна
 
 id: Disable sleep timer
-# Missing translation
 msg: Выключить таймер сна
 
 id: Exit Showtime
@@ -52,11 +50,9 @@ id: System
 msg: Система
 
 id: Time until sleep
-# Missing translation
 msg: Время до сна
 
 id: min
-# Missing translation
 msg: мин
 
 #
@@ -189,7 +185,6 @@ msg: Плитка
 # ./glwskins/default/pages/home_clist.view
 #
 id: Apps
-# Missing translation
 msg: Приложения
 
 id: Dismiss
@@ -315,6 +310,10 @@ msg: Лог изменений для релиза %s
 id: Check for updates now
 msg: Проверить обновления сейчас
 
+id: Checking current installed version
+# Missing translation
+msg: 
+
 id: Checking for updates...
 msg: Проверка обновлений...
 
@@ -335,6 +334,10 @@ msg: Новая версия %s доступна для загрузки
 
 id: No upgrade available
 msg: Нет обновлений
+
+id: Patching binary
+# Missing translation
+msg: 
 
 id: Restarting Showtime in %d seconds...
 msg: Перезапуск Showtime через %d секунд...
@@ -362,6 +365,13 @@ msg: CPU является слишком медленным для декоди�
 
 id: Playback status
 msg: Статус воспроизведения
+
+#
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -431,39 +441,6 @@ msg: Использовать оригинальное название
 #
 id: System is low on memory (%d kB RAM available)
 msg: Мало памяти (доступно %d Кб RAM)
-
-#
-# ./src/audio/audio.c
-#
-id: Audio output
-msg: Аудио выход
-
-id: Audio/Video sync delay
-msg: Задержка Audio/Video синхронизации
-
-id: Current output device
-msg: Текущее устройство вывода
-
-id: Force stereo downmix
-msg: Принудительный даунмикс в стерео
-
-id: Phantom LFE
-msg: Фантом-LFE
-
-id: Phantom center
-msg: Фантом-центр
-
-id: Select audio output device and related configurations
-msg: Выбор устройства вывода аудио и его конфигурации
-
-id: Small front speakers
-msg: Маленькие фронтальные динамики
-
-id: Swap LFE+center with surround
-msg: Замена LFE+центр на surround
-
-id: Switching audio output to %s
-msg: Переключение звука на %s 
 
 #
 # ./src/backend/dvd/cdda.c
@@ -613,15 +590,12 @@ id: Artists
 msg: Артисты
 
 id: Date (newest first)
-# Missing translation
 msg: Дата (сперва новые)
 
 id: Date (oldest first)
-# Missing translation
 msg: Дата (сперва старые)
 
 id: Deleted %s
-# Missing translation
 msg: Удаление %s
 
 id: Filename
@@ -643,7 +617,6 @@ id: Sort on
 msg: Сортировать по
 
 id: Unable to delete %s\n%s
-# Missing translation
 msg: Не удалось удалить %s\n%s
 
 #
@@ -656,24 +629,24 @@ msg: Поиск с использованием spotlight
 # ./src/fileaccess/fileaccess.c
 #
 id: Are you sure you want to delete:
-# Missing translation
 msg: Вы уверены, что хотите удалить:
 
 id: Enable file deletion from item menu
-# Missing translation
 msg: Включить удаление файла из пункта меню
 
 id: File access
-# Missing translation
 msg: Доступ к файлу
 
+id: %d archive parts
+# Missing plural translation for '%d archive parts' and '%d archive part'
+msg[0]: 
+msg[1]: 
+
 id: %d directories
-# Missing plural translation for '%d directories' and '%d directory'
 msg[0]: %d директорий
 msg[1]: %d директория
 
 id: %d files
-# Missing plural translation for '%d files' and '%d file'
 msg[0]: %d файлов
 msg[1]: %d файл
 
@@ -681,7 +654,6 @@ msg[1]: %d файл
 # ./src/i18n.c
 #
 id: Ignore 'The' at beginning of words when sorting
-# Missing translation
 msg: Игнорировать 'The' в начале слова при сортировке
 
 id: Language
@@ -718,18 +690,6 @@ id: Tertiary subtitle language code
 msg: Код третьего языка субтитров
 
 #
-# ./src/ipc/serdev/lgtv.c
-#
-id: Automatic TV power on/off
-msg: Автоматическое вкл/выкл TV
-
-id: Input source
-msg: Источник на входе
-
-id: LG Television set
-msg: Телевизор LG
-
-#
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
@@ -756,6 +716,14 @@ msg: Выравнивание субтитров в кадре
 id: Audio delay
 msg: Задержка аудио
 
+id: Audio volume
+# Missing translation
+msg: 
+
+id: Go to standby after video ends
+# Missing translation
+msg: 
+
 id: Stretch video to fullscreen
 msg: Растянуть видео во весь экран
 
@@ -765,8 +733,16 @@ msg: Растянуть видео на широкий экран
 id: Subtitle delay
 msg: Задержка субтитров
 
+id: Subtitle horizontal displacement
+# Missing translation
+msg: 
+
 id: Subtitle scaling
 msg: Масштаб субтитров
+
+id: Subtitle vertical displacement
+# Missing translation
+msg: 
 
 id: Video zoom
 msg: Масштаб видео
@@ -778,11 +754,30 @@ id: Indexing
 msg: Индексация
 
 #
-# ./src/metadata/metadata.c
+# ./src/metadata/decoration.c
 #
 id: Automatic
 msg: Автоматический
 
+id: Manual
+# Missing translation
+msg: 
+
+id: Mark all as seen
+# Missing translation
+msg: 
+
+id: Mark all as unseen
+# Missing translation
+msg: 
+
+id: Metadata mode
+# Missing translation
+msg: 
+
+#
+# ./src/metadata/metadata.c
+#
 id: Custom search query
 msg: Пользовательский поисковый запрос
 
@@ -916,7 +911,6 @@ id: Automatically upgrade plugins
 msg: Автоматическое обновление плагинов
 
 id: Available apps
-# Missing translation
 msg: Доступные приложения
 
 id: Background
@@ -926,7 +920,6 @@ id: Beta testing passwords
 msg: Пароли бета-теста
 
 id: Browse available apps
-# Missing translation
 msg: Просмотр доступных приложений
 
 id: Browsing
@@ -954,7 +947,6 @@ id: Home page
 msg: Главный экран
 
 id: Installed apps
-# Missing translation
 msg: Установленные приложения
 
 id: Installed version higher than available
@@ -988,7 +980,6 @@ id: Online TV
 msg: Онлайн-ТВ
 
 id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
-# Missing translation
 msg: Плагин %s %s был удален, потому что он вызывает проблемы.\nПопробуйте переустановить вручную другую версию.
 
 id: Plugins
@@ -1091,25 +1082,21 @@ msg: Системные настройки
 # ./src/subtitles/subtitles.c
 #
 id: Any subtitle in central folder
-# Missing translation
 msg: Любые субтитры в основной папке
 
 id: Any subtitle in same folder as video
-# Missing translation
 msg: Любые субтитры в одной папке с видео
 
 id: Auto
 msg: Авто
 
 id: Automatically select from this source
-# Missing translation
 msg: Автоматически выбирать из этого источника
 
 id: Center
 msg: Центр
 
 id: Central subtitle folder
-# Missing translation
 msg: Основная папка субтитров
 
 id: Color
@@ -1137,11 +1124,9 @@ id: Outline size
 msg: Размер контура
 
 id: Path to central folder
-# Missing translation
 msg: Путь к основной папке 
 
 id: Providers for Subtitles
-# Missing translation
 msg: Поставщики для субтитров
 
 id: Right
@@ -1162,19 +1147,13 @@ msg: Размер субтитров
 id: Subtitle size and positioning
 msg: Размер и позиция субтитров
 
-id: Subtitle styling
-msg: Стиль субтитров
-
 id: Subtitles embedded in video file
-# Missing translation
 msg: Субтитры встроенные в видеофайл
 
 id: Subtitles with matching filename in central folder
-# Missing translation
 msg: Субтитры с соответствующим именем файла в основной папке
 
 id: Subtitles with matching filename in same folder as video
-# Missing translation
 msg: Субтитры с соответствующим именем файла в одной папке с видео
 
 #
@@ -1201,14 +1180,9 @@ msg: Сброс узкого шрифта по умолчанию
 id: Reset subtitle font to default
 msg: Сброс шрифта субтитров по умолчанию
 
-id: Unable to load %s -- %s
-msg: Невозможно загрузить: %s -- %s
-
-id: Unable to open %s for writing
-msg: Невозможно открыть для записи: %s
-
-id: Unable to write to %s
-msg: Невозможно записать в: %s
+id: Unable to install font: %s
+# Missing translation
+msg: 
 
 id: Use font %s for
 msg: Использовать шрифт %s для
@@ -1217,19 +1191,32 @@ id: User interface
 msg: Пользовательский интерфейс
 
 #
+# ./src/ui/glw/glw_ps3.c
+#
+id: Seek using L2 and R2 button
+# Missing translation
+msg: 
+
+id: Yes with Select button
+# Missing translation
+msg: 
+
+#
 # ./src/ui/glw/glw_settings.c
 #
+id: Font and icon size
+# Missing translation
+msg: 
+
 id: Horizontal underscan
 msg: Горизонтальное сжатие
 
 id: Screensaver delay
 msg: Задержка скринсейвера
 
-id: Userinterface size
-msg: Размер интерфейса пользователя
-
-id: Vertical underscan
-msg: Вертикальное сжатие
+id: Veritcal underscan
+# Missing translation
+msg: 
 
 #
 # ./src/ui/glw/glw_x11.c
@@ -1312,15 +1299,6 @@ msg: Невозможно запросить Cell-кодек. Ошибка 0x%x
 #
 # ./src/video/video_settings.c
 #
-id: 1080
-msg: 1080
-
-id: 576
-msg: 576
-
-id: 720
-msg: 720
-
 id: Automatically play next video in list
 msg: Автоматически проигрывать следующее видео в списке
 

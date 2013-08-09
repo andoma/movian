@@ -320,6 +320,10 @@ msg: Veranderingen voor %s uitgaven
 id: Check for updates now
 msg: Nu op updates controleren
 
+id: Checking current installed version
+# Missing translation
+msg: 
+
 id: Checking for updates...
 msg: Controleren op updates...
 
@@ -340,6 +344,10 @@ msg: Nieuwe versie %s kan worden gedownload
 
 id: No upgrade available
 msg: Geen updates beschikbaar
+
+id: Patching binary
+# Missing translation
+msg: 
 
 id: Restarting Showtime in %d seconds...
 msg: Showtime herstarten in %d seconden...
@@ -367,6 +375,13 @@ msg: De CPU is te langzaam om deze video te decoderen
 
 id: Playback status
 msg: Afspeelstatus
+
+#
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -436,39 +451,6 @@ msg: Originele titel gebruiken
 #
 id: System is low on memory (%d kB RAM available)
 msg: Het systeem heeft weinig geheugen over (%d kB RAM beschikbaar)
-
-#
-# ./src/audio/audio.c
-#
-id: Audio output
-msg: Geluidsuitvoer
-
-id: Audio/Video sync delay
-msg: Vertraging audio-/videosynchronisatie
-
-id: Current output device
-msg: Huidige uitvoerapparaat
-
-id: Force stereo downmix
-msg: Stereo downmix forceren
-
-id: Phantom LFE
-msg: Virtueel LFE
-
-id: Phantom center
-msg: Virtueel midden
-
-id: Select audio output device and related configurations
-msg: Selecteer het geluidsuitvoerapparaat en gerelateerde configuraties
-
-id: Small front speakers
-msg: Kleine voorluidsprekers
-
-id: Swap LFE+center with surround
-msg: LFE+center omwisselen met surround
-
-id: Switching audio output to %s
-msg: Geluidsuitvoer overschakelen naar %s
 
 #
 # ./src/backend/dvd/cdda.c
@@ -670,13 +652,16 @@ id: File access
 # Missing translation
 msg: 
 
+id: %d archive parts
+# Missing plural translation for '%d archive parts' and '%d archive part'
+msg[0]: 
+msg[1]: 
+
 id: %d directories
-# Missing plural translation for '%d directories' and '%d directory'
 msg[0]: 
 msg[1]: 
 
 id: %d files
-# Missing plural translation for '%d files' and '%d file'
 msg[0]: 
 msg[1]: 
 
@@ -721,18 +706,6 @@ id: Tertiary subtitle language code
 msg: Tertiaire audiotaal
 
 #
-# ./src/ipc/serdev/lgtv.c
-#
-id: Automatic TV power on/off
-msg: Tv automatisch aan- en uitzetten
-
-id: Input source
-msg: Invoerbron
-
-id: LG Television set
-msg: LG-televisietoestel
-
-#
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
@@ -759,6 +732,14 @@ msg: Ondertiteling op videoframe aanpassen
 id: Audio delay
 msg: Geluidsvertaging
 
+id: Audio volume
+# Missing translation
+msg: 
+
+id: Go to standby after video ends
+# Missing translation
+msg: 
+
 id: Stretch video to fullscreen
 msg: Video uitrekken naar volledig scherm
 
@@ -768,8 +749,16 @@ msg: Video uitrekken naar breedbeeld
 id: Subtitle delay
 msg: Ondertitelingsvertaging
 
+id: Subtitle horizontal displacement
+# Missing translation
+msg: 
+
 id: Subtitle scaling
 msg: Ondertitelingsgrootte
+
+id: Subtitle vertical displacement
+# Missing translation
+msg: 
 
 id: Video zoom
 msg: Videovergroting
@@ -781,11 +770,30 @@ id: Indexing
 msg: Indexeren
 
 #
-# ./src/metadata/metadata.c
+# ./src/metadata/decoration.c
 #
 id: Automatic
 msg: Automatisch
 
+id: Manual
+# Missing translation
+msg: 
+
+id: Mark all as seen
+# Missing translation
+msg: 
+
+id: Mark all as unseen
+# Missing translation
+msg: 
+
+id: Metadata mode
+# Missing translation
+msg: 
+
+#
+# ./src/metadata/metadata.c
+#
 id: Custom search query
 msg: Aangepaste zoekopdracht
 
@@ -1165,9 +1173,6 @@ msg: Ondertitelingsgrootte
 id: Subtitle size and positioning
 msg: Ondertitelingsgrootte en -positionering
 
-id: Subtitle styling
-msg: Ondertitelingsstijl
-
 id: Subtitles embedded in video file
 # Missing translation
 msg: 
@@ -1204,14 +1209,9 @@ msg: Herstel small lettertype naar standaard
 id: Reset subtitle font to default
 msg: Herstel ondertitel lettertype naar standaard
 
-id: Unable to load %s -- %s
-msg: Laden niet mogelijk: %s -- %s
-
-id: Unable to open %s for writing
-msg: Kan %s niet openen om te schrijven
-
-id: Unable to write to %s
-msg: Kan niet schrijven naar %s
+id: Unable to install font: %s
+# Missing translation
+msg: 
 
 id: Use font %s for
 msg: Lettertype %s gebruiken voor
@@ -1220,19 +1220,32 @@ id: User interface
 msg: Gebruikersinterface
 
 #
+# ./src/ui/glw/glw_ps3.c
+#
+id: Seek using L2 and R2 button
+# Missing translation
+msg: 
+
+id: Yes with Select button
+# Missing translation
+msg: 
+
+#
 # ./src/ui/glw/glw_settings.c
 #
+id: Font and icon size
+# Missing translation
+msg: 
+
 id: Horizontal underscan
 msg: Horizontale underscan
 
 id: Screensaver delay
 msg: Vertraging schermbeveiliging
 
-id: Userinterface size
-msg: Grootte gebruikersinterface
-
-id: Vertical underscan
-msg: Verticale underscan
+id: Veritcal underscan
+# Missing translation
+msg: 
 
 #
 # ./src/ui/glw/glw_x11.c
@@ -1315,15 +1328,6 @@ msg: De Cell-codec kon niet worden aangevraagd. Fout 0x%x
 #
 # ./src/video/video_settings.c
 #
-id: 1080
-msg: 1080
-
-id: 576
-msg: 576
-
-id: 720
-msg: 720
-
 id: Automatically play next video in list
 msg: De volgende video in de lijst automatisch afspelen
 

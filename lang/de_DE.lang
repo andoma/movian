@@ -310,6 +310,10 @@ msg: Änderungen %s
 id: Check for updates now
 msg: Jetzt auf Updates prüfen
 
+id: Checking current installed version
+# Missing translation
+msg: 
+
 id: Checking for updates...
 msg: Prüfe auf Updates...
 
@@ -330,6 +334,10 @@ msg: Neue Version %s ist verfügbar
 
 id: No upgrade available
 msg: Kein Update verfügbar
+
+id: Patching binary
+# Missing translation
+msg: 
 
 id: Restarting Showtime in %d seconds...
 msg: Showtime wird in %s Sekunden neugestartet
@@ -357,6 +365,13 @@ msg: CPU ist zu langsam um das Video zu dekodieren
 
 id: Playback status
 msg: Wiedergabestatus
+
+#
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -426,39 +441,6 @@ msg: Originaltitel benutzen
 #
 id: System is low on memory (%d kB RAM available)
 msg: Speicher ist knapp (%d kb RAM verfügbar)
-
-#
-# ./src/audio/audio.c
-#
-id: Audio output
-msg: Audioausgabe
-
-id: Audio/Video sync delay
-msg: Audio/Video sync Verzögerung
-
-id: Current output device
-msg: Aktuelles Ausgabegerät
-
-id: Force stereo downmix
-msg: Stereo-Downmix erzwingen
-
-id: Phantom LFE
-msg: Phantom-LFE
-
-id: Phantom center
-msg: Phantom-center
-
-id: Select audio output device and related configurations
-msg: Audiogerätewahl und Einstellungen
-
-id: Small front speakers
-msg: kleine Frontlautsprecher
-
-id: Swap LFE+center with surround
-msg: LFE+Center mit Surround tauschen
-
-id: Switching audio output to %s
-msg: Schalte Audioausgabe auf %s um
 
 #
 # ./src/backend/dvd/cdda.c
@@ -655,6 +637,11 @@ msg: Aktiviere Löschmöglichkeit im Menü
 id: File access
 msg: Datei-Zugriff
 
+id: %d archive parts
+# Missing plural translation for '%d archive parts' and '%d archive part'
+msg[0]: 
+msg[1]: 
+
 id: %d directories
 msg[0]: %d Verzeichniss
 msg[1]: %d Verzeichnisse
@@ -703,18 +690,6 @@ id: Tertiary subtitle language code
 msg: Dritte Untertitel-Sprache
 
 #
-# ./src/ipc/serdev/lgtv.c
-#
-id: Automatic TV power on/off
-msg: Automatisch den Fernseher An-/Ausschalten
-
-id: Input source
-msg: Eingang
-
-id: LG Television set
-msg: LG Fernseher
-
-#
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
@@ -741,6 +716,14 @@ msg: Untertitel im Bild anzeigen
 id: Audio delay
 msg: Audioverzögerung
 
+id: Audio volume
+# Missing translation
+msg: 
+
+id: Go to standby after video ends
+# Missing translation
+msg: 
+
 id: Stretch video to fullscreen
 msg: Video auf Vollbild strecken
 
@@ -750,8 +733,16 @@ msg: Video auf Bildschirmbreite strecken
 id: Subtitle delay
 msg: Untertitelverzögerung
 
+id: Subtitle horizontal displacement
+# Missing translation
+msg: 
+
 id: Subtitle scaling
 msg: Untertitelskalierung
+
+id: Subtitle vertical displacement
+# Missing translation
+msg: 
 
 id: Video zoom
 msg: Videozoom
@@ -763,11 +754,30 @@ id: Indexing
 msg: Indizieren
 
 #
-# ./src/metadata/metadata.c
+# ./src/metadata/decoration.c
 #
 id: Automatic
 msg: Automatisch
 
+id: Manual
+# Missing translation
+msg: 
+
+id: Mark all as seen
+# Missing translation
+msg: 
+
+id: Mark all as unseen
+# Missing translation
+msg: 
+
+id: Metadata mode
+# Missing translation
+msg: 
+
+#
+# ./src/metadata/metadata.c
+#
 id: Custom search query
 msg: Eigene Suchanfrage
 
@@ -1137,9 +1147,6 @@ msg: Untertitelgröße
 id: Subtitle size and positioning
 msg: Untertitelgröße und Position
 
-id: Subtitle styling
-msg: Untertitelstil
-
 id: Subtitles embedded in video file
 msg: Untertitel im Video eingebunden
 
@@ -1173,14 +1180,9 @@ msg: Engen Text auf Standard setzen
 id: Reset subtitle font to default
 msg: Untertitelschriftart auf Standard setzen
 
-id: Unable to load %s -- %s
-msg: Kann %s -- %s nicht laden
-
-id: Unable to open %s for writing
-msg: Kann %s nicht zum Schreiben öffnen
-
-id: Unable to write to %s
-msg: Kann %s nicht beschreiben
+id: Unable to install font: %s
+# Missing translation
+msg: 
 
 id: Use font %s for
 msg: Benutze Font %s für 
@@ -1189,19 +1191,32 @@ id: User interface
 msg: Benutzeroberfläche
 
 #
+# ./src/ui/glw/glw_ps3.c
+#
+id: Seek using L2 and R2 button
+# Missing translation
+msg: 
+
+id: Yes with Select button
+# Missing translation
+msg: 
+
+#
 # ./src/ui/glw/glw_settings.c
 #
+id: Font and icon size
+# Missing translation
+msg: 
+
 id: Horizontal underscan
 msg: Horizontaler underscan
 
 id: Screensaver delay
 msg: Bildschirmschonerverzögerung
 
-id: Userinterface size
-msg: Menügröße
-
-id: Vertical underscan
-msg: Vertikaler underscan
+id: Veritcal underscan
+# Missing translation
+msg: 
 
 #
 # ./src/ui/glw/glw_x11.c
@@ -1284,15 +1299,6 @@ msg: Kann Cell-Codec nicht abfragen. Fehler 0x%x
 #
 # ./src/video/video_settings.c
 #
-id: 1080
-msg: 1080
-
-id: 576
-msg: 576
-
-id: 720
-msg: 720
-
 id: Automatically play next video in list
 msg: Nächstes Video in der Liste automatisch starten 
 

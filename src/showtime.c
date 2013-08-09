@@ -368,9 +368,6 @@ parse_opts(int argc, char **argv)
 #endif
 	     "   -v <view>         - Use specific view for <url>.\n"
 	     "   --cache <path>    - Set path for cache [%s].\n"
-#if ENABLE_SERDEV
-	     "   --serdev          - Probe service ports for devices.\n"
-#endif
 #if ENABLE_HTTPSERVER
 	     "   --disable-upnp    - Disable UPNP/DLNA stack.\n"
 #endif
@@ -417,12 +414,6 @@ parse_opts(int argc, char **argv)
       gconf.listen_on_stdin = 1;
       argc -= 1; argv += 1;
       continue;
-#if ENABLE_SERDEV
-    } else if(!strcmp(argv[0], "--serdev")) {
-      gconf.enable_serdev = 1;
-      argc -= 1; argv += 1;
-      continue;
-#endif
 #if ENABLE_HTTPSERVER
     } else if(!strcmp(argv[0], "--disable-upnp")) {
       gconf.disable_upnp = 1;
@@ -526,7 +517,7 @@ shutdown_hook_add(void (*fn)(void *opaque, int exitcode), void *opaque,
 /**
  *
  */
-static void
+void
 shutdown_hook_run(int early)
 {
   shutdown_hook_t *sh;
@@ -534,6 +525,18 @@ shutdown_hook_run(int early)
     if(sh->early == early)
       sh->fn(sh->opaque, gconf.exit_code);
 }
+
+
+/**
+ *
+ */
+void
+showtime_flush_caches(void)
+{
+  kvstore_deferred_flush();
+  htsmsg_store_flush();
+}
+
 
 /**
  *
@@ -551,12 +554,19 @@ showtime_shutdown(int retcode)
 
   gconf.exit_code = retcode;
 
-  // run early shutdown hooks (those must be fast)
-  shutdown_hook_run(1);
+  showtime_flush_caches();
 
-  htsmsg_store_flush();
+  if(!arch_stop_req()) {
+    // If arch_stop_req() returns -1 it will not actually
+    // exit showtime but rather suspend the UI and turn off HDMI ,etc
+    // Typically used on some targets where we want to enter a 
+    // semi-standby state.
+    // So only do shutdown hooks if we are about to exit for real.
 
-  event_to_ui(event_create_type(EVENT_STOP_UI));
+    // Run early shutdown hooks (those must be fast since this
+    // function may be called from UI thread)
+    shutdown_hook_run(1);
+  }
 }
 
 

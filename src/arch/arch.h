@@ -27,3 +27,12 @@ void arch_exit(void) __attribute__((noreturn));
 int64_t arch_cache_avail_bytes(void);
 
 int arch_pipe(int pipefd[2]);
+
+// If arch_stop_req() returns non ozer it will not actually
+// schedule an exit of showtime but rather suspend the UI and turn off 
+// video output, etc
+//
+// Typically used on some targets where we want to enter a 
+// semi-standby state.
+
+int arch_stop_req(void);

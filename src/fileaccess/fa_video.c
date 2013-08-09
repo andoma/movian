@@ -171,14 +171,14 @@ select_subtitle_track(media_pipe_t *mp, AVFormatContext *fctx, const char *id)
     prop_set_string(mp->mp_prop_subtitle_track_current, id);
     mp->mp_video.mq_stream2 = -1;
 
-    mp_load_ext_sub(mp, NULL);
+    mp_load_ext_sub(mp, NULL, NULL);
 
   } else if(!strncmp(id, "libav:", strlen("libav:"))) {
     unsigned int idx = atoi(id + strlen("libav:"));
     if(idx < fctx->nb_streams) {
       AVCodecContext *ctx = fctx->streams[idx]->codec;
       if(ctx->codec_type == AVMEDIA_TYPE_SUBTITLE) {
-	mp_load_ext_sub(mp, NULL);
+	mp_load_ext_sub(mp, NULL, NULL);
 	mp->mp_video.mq_stream2 = idx;
 	prop_set_string(mp->mp_prop_subtitle_track_current, id);
       }
@@ -187,8 +187,8 @@ select_subtitle_track(media_pipe_t *mp, AVFormatContext *fctx, const char *id)
 
     mp->mp_video.mq_stream2 = -1;
     prop_set_string(mp->mp_prop_subtitle_track_current, id);
-
-    mp_load_ext_sub(mp, id);
+    mp_load_ext_sub(mp, id,
+                    &fctx->streams[mp->mp_video.mq_stream]->avg_frame_rate);
   }
 }
 

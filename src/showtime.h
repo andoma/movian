@@ -82,6 +82,8 @@ rstr_t *nls_get_rstringp(const char *string, const char *singularis, int val);
 
 void showtime_shutdown(int retcode);
 
+void showtime_flush_caches(void);
+
 uint32_t showtime_get_version_int(void);
 
 uint32_t showtime_parse_version_int(const char *str);
@@ -164,8 +166,6 @@ void my_localtime(const time_t *timep, struct tm *tm);
  * OOM conditions
  */
 
-#if defined(ENABLE_TLSF) && defined(PS3)
-
 void *mymalloc(size_t size);
 
 void *myrealloc(void *ptr, size_t size);
@@ -174,21 +174,9 @@ void *mycalloc(size_t count, size_t size);
 
 void *mymemalign(size_t align, size_t size);
 
-#else
-
-#define mymalloc(size) malloc(size)
-#define myrealloc(ptr, size) realloc(ptr, size)
-#define mycalloc(count, size) calloc(count, size)
-static inline void *mymemalign(size_t align, size_t size)
-{
-  void *p;
-  return posix_memalign(&p, align, size) ? NULL : p;
-}
-
-#endif
-
-
 void runcontrol_activity(void);
+
+void shutdown_hook_run(int early);
 
 void *shutdown_hook_add(void (*fn)(void *opaque, int exitcode), void *opaque,
 			int early);
@@ -219,10 +207,6 @@ typedef struct gconf {
   int ffmpeglog;
   int noui;
   int fullscreen;
-
-#if ENABLE_SERDEV
-  int enable_serdev;
-#endif
 
   int can_standby;
   int can_poweroff;

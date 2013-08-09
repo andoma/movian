@@ -117,7 +117,6 @@ lastfm_load_artistinfo(void *db, const char *artist,
   char errbuf[100];
   int n, page = 1;
   htsmsg_t *xml, *info;
-  char str[20];
   int totalpages;
 
   if(lastfm == NULL)
@@ -125,14 +124,15 @@ lastfm_load_artistinfo(void *db, const char *artist,
 
   TRACE(TRACE_DEBUG, "lastfm", "Loading images for artist %s", artist);
 
-  n = http_request("http://ws.audioscrobbler.com/2.0/",
-		   (const char *[]){"method", "artist.getinfo",
-		       "artist", artist,
-		       "api_key", LASTFM_APIKEY,
-		       NULL, NULL},
-		   &result, errbuf, sizeof(errbuf),
-		   NULL, NULL, FA_COMPRESSION, NULL, NULL, NULL,
-		   NULL, NULL);
+  n = http_req("http://ws.audioscrobbler.com/2.0/",
+               HTTP_ARG("method", "artist.getinfo"),
+               HTTP_ARG("artist", artist),
+               HTTP_ARG("api_key", LASTFM_APIKEY),
+               HTTP_RESULT_PTR(&result),
+               HTTP_ERRBUF(errbuf, sizeof(errbuf)),
+               HTTP_FLAGS(FA_COMPRESSION),
+               NULL);
+
   if(n) {
     TRACE(TRACE_DEBUG, "lastfm", "HTTP query to lastfm failed: %s",  errbuf);
     return;
@@ -160,17 +160,16 @@ lastfm_load_artistinfo(void *db, const char *artist,
 
   while(1) {
 
-    snprintf(str, sizeof(str), "%d", page);
-    n = http_request("http://ws.audioscrobbler.com/2.0/",
-		     (const char *[]){"method", "artist.getimages",
-			 "mbid", mbid,
-			 "api_key", LASTFM_APIKEY,
-			 "order", "popularity",
-			 "page", str,
-			 NULL, NULL},
-		     &result, errbuf, sizeof(errbuf),
-		     NULL, NULL, FA_COMPRESSION, NULL, NULL, NULL,
-		     NULL, NULL);
+    n = http_req("http://ws.audioscrobbler.com/2.0/",
+                 HTTP_ARG("method", "artist.getimages"),
+                 HTTP_ARG("mbid", mbid),
+                 HTTP_ARG("api_key", LASTFM_APIKEY),
+                 HTTP_ARG("order", "popularity"),
+                 HTTP_ARGINT("page", page),
+                 HTTP_RESULT_PTR(&result),
+                 HTTP_ERRBUF(errbuf, sizeof(errbuf)),
+                 HTTP_FLAGS(FA_COMPRESSION),
+                 NULL);
 
     if(n) {
       TRACE(TRACE_DEBUG, "lastfm", "HTTP query to lastfm failed: %s",  errbuf);
@@ -306,15 +305,15 @@ lastfm_load_albuminfo(void *db, const char *album, const char *artist)
 
   TRACE(TRACE_DEBUG, "lastfm", "Loading coverart for album %s", album);
 
-  n = http_request("http://ws.audioscrobbler.com/2.0/",
-		   (const char *[]){"method", "album.getinfo",
-		       "artist", artist,
-		       "album", album,
-		       "api_key", LASTFM_APIKEY,
-		       NULL, NULL},
-		   &result, errbuf, sizeof(errbuf),
-		   NULL, NULL, FA_COMPRESSION, NULL, NULL, NULL,
-		   NULL, NULL);
+  n = http_req("http://ws.audioscrobbler.com/2.0/",
+               HTTP_ARG("method", "album.getinfo"),
+               HTTP_ARG("artist", artist),
+               HTTP_ARG("album", album),
+               HTTP_ARG("api_key", LASTFM_APIKEY),
+               HTTP_RESULT_PTR(&result),
+               HTTP_ERRBUF(errbuf, sizeof(errbuf)),
+               HTTP_FLAGS(FA_COMPRESSION | FA_DEBUG),
+               NULL);
 
   if(n) {
     TRACE(TRACE_DEBUG, "lastfm", "HTTP query to lastfm failed: %s",  errbuf);

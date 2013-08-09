@@ -407,7 +407,8 @@ prop_notify_free_payload(prop_notify_t *n)
   case PROP_SET_STRING:
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
   case PROP_WANT_MORE_CHILDS:
-  case PROP_HAVE_MORE_CHILDS:
+  case PROP_HAVE_MORE_CHILDS_YES:
+  case PROP_HAVE_MORE_CHILDS_NO:
   case PROP_DESTROYED:
   case PROP_ADOPT_RSTRING:
     break;
@@ -736,7 +737,8 @@ prop_dispatch_one(prop_notify_t *n)
 
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
   case PROP_WANT_MORE_CHILDS:
-  case PROP_HAVE_MORE_CHILDS:
+  case PROP_HAVE_MORE_CHILDS_YES:
+  case PROP_HAVE_MORE_CHILDS_NO:
     if(pt != NULL)
       pt(s, n->hpn_event, s->hps_user_int);
     else
@@ -3509,6 +3511,29 @@ prop_unselect_ex(prop_t *parent, prop_sub_t *skipme)
  *
  */
 void
+prop_select_by_value_ex(prop_t *p, const char *name, prop_sub_t *skipme)
+{
+  hts_mutex_lock(&prop_mutex);
+
+  if(p->hp_type == PROP_DIR) {
+    prop_t *c;
+    TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link)
+      if(c->hp_name != NULL && !strcmp(c->hp_name, name))
+        break;
+
+    prop_notify_child(c, p, PROP_SELECT_CHILD, skipme, 0);
+    p->hp_selected = c;
+  }
+  hts_mutex_unlock(&prop_mutex);
+}
+
+
+
+
+/**
+ *
+ */
+void
 prop_suggest_focus(prop_t *p)
 {
   prop_t *parent;
@@ -3570,6 +3595,20 @@ prop_find(prop_t *p, ...)
   prop_t *c = prop_ref_inc(prop_find0(p, ap));
   hts_mutex_unlock(&prop_mutex);
   va_end(ap);
+  return c;
+}
+
+
+/**
+ *
+ */
+prop_t *
+prop_first_child(prop_t *p)
+{
+  hts_mutex_lock(&prop_mutex);
+  prop_t *c = p && p->hp_type == PROP_DIR ? TAILQ_FIRST(&p->hp_childs) : NULL;
+  c = prop_ref_inc(c);
+  hts_mutex_unlock(&prop_mutex);
   return c;
 }
 
@@ -4152,9 +4191,10 @@ prop_want_more_childs(prop_sub_t *s)
  *
  */
 void
-prop_have_more_childs0(prop_t *p)
+prop_have_more_childs0(prop_t *p, int yes)
 {
-  prop_send_event(p, PROP_HAVE_MORE_CHILDS);
+  prop_send_event(p,
+                  yes ? PROP_HAVE_MORE_CHILDS_YES : PROP_HAVE_MORE_CHILDS_NO);
 }
 
 
@@ -4162,10 +4202,10 @@ prop_have_more_childs0(prop_t *p)
  *
  */
 void
-prop_have_more_childs(prop_t *p)
+prop_have_more_childs(prop_t *p, int yes)
 {
   hts_mutex_lock(&prop_mutex);
-  prop_have_more_childs0(p);
+  prop_have_more_childs0(p, yes);
   hts_mutex_unlock(&prop_mutex);
 }
 

@@ -328,6 +328,10 @@ msg: Seznam změn verze %s
 id: Check for updates now
 msg: Zkontrolovat aktualizace
 
+id: Checking current installed version
+# Missing translation
+msg: 
+
 id: Checking for updates...
 msg: Kontroluji aktualizace:
 
@@ -348,6 +352,10 @@ msg: Nová verze %s je ke stažení
 
 id: No upgrade available
 msg: Upgrade není k dispozici
+
+id: Patching binary
+# Missing translation
+msg: 
 
 id: Restarting Showtime in %d seconds...
 msg: Showtsime bude restartován za %d sekund...
@@ -375,6 +383,13 @@ msg: CPU je příliš pomalý pro dekódování tohoto videa
 
 id: Playback status
 msg: Stav přehrávání
+
+#
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -446,39 +461,6 @@ msg:
 #
 id: System is low on memory (%d kB RAM available)
 msg: Systém má málo paměti (%d kb RAM volných)
-
-#
-# ./src/audio/audio.c
-#
-id: Audio output
-msg: Výstup zvuku
-
-id: Audio/Video sync delay
-msg: Audio/Video synchronizace
-
-id: Current output device
-msg: Aktivní výstupní zařízení
-
-id: Force stereo downmix
-msg: Vnutit Stereo-Downmix
-
-id: Phantom LFE
-msg: Phantom-LFE
-
-id: Phantom center
-msg: Phantom-center
-
-id: Select audio output device and related configurations
-msg: Výběr zvukového výstupního zařízení a související nastavení
-
-id: Small front speakers
-msg: Malé přední reproduktory
-
-id: Swap LFE+center with surround
-msg: Zaměnit LFE+Center <-> Surround
-
-id: Switching audio output to %s
-msg: Přepnout výstup zvuku na %s
 
 #
 # ./src/backend/dvd/cdda.c
@@ -687,13 +669,16 @@ id: File access
 # Missing translation
 msg: 
 
+id: %d archive parts
+# Missing plural translation for '%d archive parts' and '%d archive part'
+msg[0]: 
+msg[1]: 
+
 id: %d directories
-# Missing plural translation for '%d directories' and '%d directory'
 msg[0]: 
 msg[1]: 
 
 id: %d files
-# Missing plural translation for '%d files' and '%d file'
 msg[0]: 
 msg[1]: 
 
@@ -738,18 +723,6 @@ id: Tertiary subtitle language code
 msg: Třetí jazyk titulků
 
 #
-# ./src/ipc/serdev/lgtv.c
-#
-id: Automatic TV power on/off
-msg: Automatické zapnutí/vypnutí TV
-
-id: Input source
-msg: Vstup
-
-id: LG Television set
-msg: Nastavení LG TV
-
-#
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
@@ -776,6 +749,14 @@ msg: Zarovnat titulky do obrazu
 id: Audio delay
 msg: Zpoždění zvuku
 
+id: Audio volume
+# Missing translation
+msg: 
+
+id: Go to standby after video ends
+# Missing translation
+msg: 
+
 id: Stretch video to fullscreen
 msg: Roztáhnout video na celou obrazovku
 
@@ -785,8 +766,16 @@ msg: Roztáhnout video na šířku
 id: Subtitle delay
 msg: Zpoždění titulků
 
+id: Subtitle horizontal displacement
+# Missing translation
+msg: 
+
 id: Subtitle scaling
 msg: Velikost titulků
+
+id: Subtitle vertical displacement
+# Missing translation
+msg: 
 
 id: Video zoom
 msg: Video zoom
@@ -799,11 +788,30 @@ id: Indexing
 msg: 
 
 #
-# ./src/metadata/metadata.c
+# ./src/metadata/decoration.c
 #
 id: Automatic
 msg: Automaticky
 
+id: Manual
+# Missing translation
+msg: 
+
+id: Mark all as seen
+# Missing translation
+msg: 
+
+id: Mark all as unseen
+# Missing translation
+msg: 
+
+id: Metadata mode
+# Missing translation
+msg: 
+
+#
+# ./src/metadata/metadata.c
+#
 id: Custom search query
 msg: Uživatelské hledání
 
@@ -1212,9 +1220,6 @@ msg: Velikost titulků
 id: Subtitle size and positioning
 msg: Velikost a pozice titulků
 
-id: Subtitle styling
-msg: Styl titulků
-
 id: Subtitles embedded in video file
 # Missing translation
 msg: 
@@ -1258,15 +1263,7 @@ id: Reset subtitle font to default
 # Missing translation
 msg: 
 
-id: Unable to load %s -- %s
-# Missing translation
-msg: 
-
-id: Unable to open %s for writing
-# Missing translation
-msg: 
-
-id: Unable to write to %s
+id: Unable to install font: %s
 # Missing translation
 msg: 
 
@@ -1279,19 +1276,32 @@ id: User interface
 msg: 
 
 #
+# ./src/ui/glw/glw_ps3.c
+#
+id: Seek using L2 and R2 button
+# Missing translation
+msg: 
+
+id: Yes with Select button
+# Missing translation
+msg: 
+
+#
 # ./src/ui/glw/glw_settings.c
 #
+id: Font and icon size
+# Missing translation
+msg: 
+
 id: Horizontal underscan
 msg: Horizontální podscan
 
 id: Screensaver delay
 msg: Zpoždění spořiče
 
-id: Userinterface size
-msg: Velikost rozhraní
-
-id: Vertical underscan
-msg: Vertikální podscan
+id: Veritcal underscan
+# Missing translation
+msg: 
 
 #
 # ./src/ui/glw/glw_x11.c
@@ -1374,15 +1384,6 @@ msg: Unable to query Cell codec. Error 0x%x
 #
 # ./src/video/video_settings.c
 #
-id: 1080
-msg: 1080
-
-id: 576
-msg: 576
-
-id: 720
-msg: 720
-
 id: Automatically play next video in list
 msg: Automaticky přehrát další video v seznamu
 

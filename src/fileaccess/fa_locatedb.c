@@ -417,10 +417,13 @@ locatedb_init(void)
   htsmsg_t *store = htsmsg_store_load("locatedb") ?: htsmsg_create_map();
   prop_t *s = search_get_settings();
 
-  settings_create_bool(s, "enable", _p("Search using Unix locatedb"), 1, 
-		       store, settings_generic_set_bool, &locatedb_enabled,
-		       SETTINGS_INITIAL_UPDATE, NULL,
-		       settings_generic_save_settings, (void *)"locatedb");
+  setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Search using Unix locatedb")),
+                 SETTING_VALUE(1),
+                 SETTING_WRITE_BOOL(&locatedb_enabled),
+                 SETTING_HTSMSG("enable", store, "locatedb"),
+                 NULL);
+
   return 0;
 }
 

@@ -320,6 +320,10 @@ msg: Changement effectuée pour la version %s
 id: Check for updates now
 msg: Rechercher les mises à jour
 
+id: Checking current installed version
+# Missing translation
+msg: 
+
 id: Checking for updates...
 msg: Recherche de mises à jour...
 
@@ -340,6 +344,10 @@ msg: La version %s est disponible au téléchargement
 
 id: No upgrade available
 msg: Pas de mise à jour disponible
+
+id: Patching binary
+# Missing translation
+msg: 
 
 id: Restarting Showtime in %d seconds...
 msg: Showtime va redémarrer dans %d seconds...
@@ -367,6 +375,13 @@ msg: Le CPU est trop faible pour décoder cette vidéo
 
 id: Playback status
 msg: Status de la lecture
+
+#
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -436,39 +451,6 @@ msg: Utiliser le titre d'origine
 #
 id: System is low on memory (%d kB RAM available)
 msg: Mémoire système faible (%d kB de RAM restant)
-
-#
-# ./src/audio/audio.c
-#
-id: Audio output
-msg: Sortie audio
-
-id: Audio/Video sync delay
-msg: Délai de la synchro Audio/Video
-
-id: Current output device
-msg: Appareil en sortie
-
-id: Force stereo downmix
-msg: Forcer le remixage en stéréo
-
-id: Phantom LFE
-msg: LFE (basse) fantôme
-
-id: Phantom center
-msg: Centre fantôme
-
-id: Select audio output device and related configurations
-msg: Sélectionner la sortie audio et les configurations liées
-
-id: Small front speakers
-msg: Petites enceintes frontales
-
-id: Swap LFE+center with surround
-msg: Inverser LFE+centre avec le surround
-
-id: Switching audio output to %s
-msg: Changer la sortie pour %s
 
 #
 # ./src/backend/dvd/cdda.c
@@ -670,13 +652,16 @@ id: File access
 # Missing translation
 msg: 
 
+id: %d archive parts
+# Missing plural translation for '%d archive parts' and '%d archive part'
+msg[0]: 
+msg[1]: 
+
 id: %d directories
-# Missing plural translation for '%d directories' and '%d directory'
 msg[0]: 
 msg[1]: 
 
 id: %d files
-# Missing plural translation for '%d files' and '%d file'
 msg[0]: 
 msg[1]: 
 
@@ -721,18 +706,6 @@ id: Tertiary subtitle language code
 msg: Code tertiaire de la langue pour les sous-titres
 
 #
-# ./src/ipc/serdev/lgtv.c
-#
-id: Automatic TV power on/off
-msg: Marche/Arrêt automatique de la TV
-
-id: Input source
-msg: Source d'entrée
-
-id: LG Television set
-msg: Paramètres des TV LG
-
-#
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
@@ -759,6 +732,14 @@ msg: Faire correspondre les sous-titres avec l'image vidéo
 id: Audio delay
 msg: Délai audio
 
+id: Audio volume
+# Missing translation
+msg: 
+
+id: Go to standby after video ends
+# Missing translation
+msg: 
+
 id: Stretch video to fullscreen
 msg: Étirer la vidéo en plein écran
 
@@ -768,8 +749,16 @@ msg: Étirer la vidéo pour les écrans large
 id: Subtitle delay
 msg: Délai des sous-titres
 
+id: Subtitle horizontal displacement
+# Missing translation
+msg: 
+
 id: Subtitle scaling
 msg: Échelle des sous-titres
+
+id: Subtitle vertical displacement
+# Missing translation
+msg: 
 
 id: Video zoom
 msg: Zoom vidéo
@@ -781,11 +770,30 @@ id: Indexing
 msg: Indexage
 
 #
-# ./src/metadata/metadata.c
+# ./src/metadata/decoration.c
 #
 id: Automatic
 msg: Automatique
 
+id: Manual
+# Missing translation
+msg: 
+
+id: Mark all as seen
+# Missing translation
+msg: 
+
+id: Mark all as unseen
+# Missing translation
+msg: 
+
+id: Metadata mode
+# Missing translation
+msg: 
+
+#
+# ./src/metadata/metadata.c
+#
 id: Custom search query
 msg: Recherche personnalisée
 
@@ -1165,9 +1173,6 @@ msg: Taille des sous-titres
 id: Subtitle size and positioning
 msg: Taille et position des sous-titres
 
-id: Subtitle styling
-msg: Style des sous-titres
-
 id: Subtitles embedded in video file
 # Missing translation
 msg: 
@@ -1204,14 +1209,9 @@ msg: Réinitialiser l'espacement par défaut
 id: Reset subtitle font to default
 msg: Réinitialiser la police des sous-titres par défaut
 
-id: Unable to load %s -- %s
-msg: Impossible de charger %s -- %s
-
-id: Unable to open %s for writing
-msg: Impossible d'ouvrir %s en écriture
-
-id: Unable to write to %s
-msg: Impossible d'écrire sur %s
+id: Unable to install font: %s
+# Missing translation
+msg: 
 
 id: Use font %s for
 msg: utiliser la police %s pour
@@ -1220,19 +1220,32 @@ id: User interface
 msg: Interface utilisateur
 
 #
+# ./src/ui/glw/glw_ps3.c
+#
+id: Seek using L2 and R2 button
+# Missing translation
+msg: 
+
+id: Yes with Select button
+# Missing translation
+msg: 
+
+#
 # ./src/ui/glw/glw_settings.c
 #
+id: Font and icon size
+# Missing translation
+msg: 
+
 id: Horizontal underscan
 msg: Underscan horizontal
 
 id: Screensaver delay
 msg: Délai avant l'économiseur d'écran
 
-id: Userinterface size
-msg: Taille de l'interface utilisateur
-
-id: Vertical underscan
-msg: Underscan vertical
+id: Veritcal underscan
+# Missing translation
+msg: 
 
 #
 # ./src/ui/glw/glw_x11.c
@@ -1315,15 +1328,6 @@ msg: Imposible d'avoir le codec Cell. Error 0x%x
 #
 # ./src/video/video_settings.c
 #
-id: 1080
-msg: 1080
-
-id: 576
-msg: 576
-
-id: 720
-msg: 720
-
 id: Automatically play next video in list
 msg: Jouer la vidéo suivante automatiquement
 

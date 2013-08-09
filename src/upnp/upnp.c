@@ -418,39 +418,50 @@ add_content_directory(upnp_service_t *us, const char *hostname, int port)
 
   snprintf(buf, sizeof(buf), "%s (%s) on %s:%d",
 	   title, ud->ud_modelNumber ?: "Unknown version", hostname, port);
-  us->us_settings = settings_add_dir_cstr(gconf.settings_sd, title, NULL, 
+  us->us_settings = settings_add_dir_cstr(gconf.settings_sd, title, NULL,
 					  us->us_icon_url, buf, NULL);
 
-  us->us_setting_enabled = 
-    settings_create_bool(us->us_settings, "enabled",
-			 _p("Enabled on home screen"), 1,
-			 us->us_settings_store, NULL, NULL,
-			 SETTINGS_INITIAL_UPDATE, NULL,
-			 upnp_settings_saver, us);
+  us->us_setting_enabled =
+    setting_create(SETTING_BOOL, us->us_settings, SETTINGS_INITIAL_UPDATE,
+                   SETTING_TITLE(_p("Enabled on home screen")),
+                   SETTING_VALUE(1),
+                   SETTING_HTSMSG_CUSTOM_SAVER("enabled",
+                                               us->us_settings_store,
+                                               upnp_settings_saver,
+                                               us),
+                   NULL);
 
   us->us_setting_title =
-    settings_create_string(us->us_settings, "title", _p("Name"), title,
-			   us->us_settings_store, NULL, NULL,
-			   SETTINGS_INITIAL_UPDATE, NULL,
-			   upnp_settings_saver, us);
-  
+    setting_create(SETTING_BOOL, us->us_settings, SETTINGS_INITIAL_UPDATE,
+                   SETTING_TITLE(_p("Name")),
+                   SETTING_VALUE(title),
+                   SETTING_HTSMSG_CUSTOM_SAVER("title",
+                                               us->us_settings_store,
+                                               upnp_settings_saver,
+                                               us),
+                   NULL);
+
   const char *contents = "other";
 
-  us->us_setting_type = 
-    settings_create_string(us->us_settings, "type", _p("Type"), contents,
-			   us->us_settings_store, NULL, NULL,
-			   SETTINGS_INITIAL_UPDATE, NULL,
-			   upnp_settings_saver, us);
+  us->us_setting_type =
+    setting_create(SETTING_BOOL, us->us_settings, SETTINGS_INITIAL_UPDATE,
+                   SETTING_TITLE(_p("Type")),
+                   SETTING_VALUE(contents),
+                   SETTING_HTSMSG_CUSTOM_SAVER("type",
+                                               us->us_settings_store,
+                                               upnp_settings_saver,
+                                               us),
+                   NULL);
 
   us->us_service = service_create(svcid, NULL, us->us_local_url, NULL,
 				  us->us_icon_url, 1, 0,
 				  SVC_ORIGIN_DISCOVERED);
 
-  prop_link(settings_get_value(us->us_setting_title), 
+  prop_link(settings_get_value(us->us_setting_title),
 	    prop_create(us->us_service->s_root, "title"));
-  prop_link(settings_get_value(us->us_setting_type), 
+  prop_link(settings_get_value(us->us_setting_type),
 	    prop_create(us->us_service->s_root, "type"));
-  prop_link(settings_get_value(us->us_setting_enabled), 
+  prop_link(settings_get_value(us->us_setting_enabled),
 	    prop_create(us->us_service->s_root, "enabled"));
 
 
@@ -579,8 +590,10 @@ introspect_device(upnp_device_t *ud)
   htsmsg_t *m, *svclist, *dev;
   const char *uuid;
 
-  if(http_request(ud->ud_url, NULL, &b, errbuf, sizeof(errbuf),
-		  NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL)) {
+  if(http_req(ud->ud_url,
+              HTTP_RESULT_PTR(&b),
+              HTTP_ERRBUF(errbuf, sizeof(errbuf)),
+              NULL)) {
     TRACE(TRACE_INFO, "UPNP", "Unable to introspect %s -- %s",
 	  ud->ud_url, errbuf);
     return;

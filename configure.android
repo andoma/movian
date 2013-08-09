@@ -1,0 +1,59 @@
+#!/bin/bash
+
+OS="android"
+DEFAULT_UI="glw"
+CONFIGURE_POSTFIX="android"
+
+source support/configure.inc
+
+show_help(){
+  common_help
+  exit 1
+}
+
+for opt do
+  optval="${opt#*=}"
+  case "$opt" in
+  --help) show_help
+  ;;
+  *)
+  common_opt $opt $optval
+  esac
+done
+
+TOOLCHAIN=${TOPDIR}/build.android/tc/bin/arm-linux-androideabi-
+
+CC=${TOOLCHAIN}gcc
+CXX=${TOOLCHAIN}g++
+
+setup_env "$@"
+
+enable sqlite_internal
+enable spidermonkey
+enable glw_backend_opengl_es
+enable glw
+enable polarssl
+enable librtmp
+enable httpserver
+#enable dvd
+enable libfreetype
+enable stdin
+enable trex
+
+bzip2_setup
+freetype_setup --host=arm-linux-gnueabihf
+
+LIBAV_CFLAGS="-I${EXT_INSTALL_DIR}/include"
+LIBAV_LDFLAGS="-L${EXT_INSTALL_DIR}/lib"
+LIBAV_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=armv7 --target-os=linux"
+
+libav_setup
+rtmpdump_setup
+xmp_setup
+
+# libspotify_setup "12.1.103-Linux-armv6-bcm2708hardfp"
+
+cat >> ${CONFIG_MAK} <<EOF
+EOF
+
+finalize

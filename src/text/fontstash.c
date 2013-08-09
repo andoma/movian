@@ -17,10 +17,7 @@
  */
 
 #include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
+#include <stdlib.h>
 
 #include "showtime.h"
 #include "prop/prop.h"
@@ -116,38 +113,16 @@ static void
 font_install(font_t *f, const char *url)
 {
   char errbuf[256];
-  char path[512];
+  char path[URL_MAX];
   if(f->f_installed_path != NULL)
     return;
 
-  buf_t *b = fa_load(url, NULL, errbuf, sizeof(errbuf), NULL, 0, NULL, NULL);
-  if(b == NULL) {
-    notify_add(NULL, NOTIFY_ERROR, NULL, 5, _("Unable to load %s -- %s"),
-	       url, errbuf);
-    return;
-  }
+  snprintf(path, sizeof(path),
+           "file://%s/installedfonts/%s", gconf.persistent_path, f->f_title);
 
-  snprintf(path, sizeof(path), "%s/installedfonts", gconf.persistent_path);
-  mkdir(path, 0770);
-
-  snprintf(path, sizeof(path), "%s/installedfonts/%s",
-	   gconf.persistent_path, f->f_title);
-  unlink(path);
-  
-  int fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0660);
-  if(fd == -1) {
-
+  if(fa_copy(path, url, errbuf, sizeof(errbuf))) {
     notify_add(NULL, NOTIFY_ERROR, NULL, 5,
-	       _("Unable to open %s for writing"), path);
-    buf_release(b);
-    return;
-  }
-  size_t size = b->b_size;
-  size_t r = write(fd, b->b_ptr, b->b_size);
-  buf_release(b);
-  if(close(fd) || r != size) {
-    notify_add(NULL, NOTIFY_ERROR, NULL, 5,
-	       _("Unable to write to %s"), path);
+	       _("Unable to install font: %s"), errbuf);
     return;
   }
 

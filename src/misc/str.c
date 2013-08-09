@@ -735,6 +735,35 @@ utf8_put(char *out, int c)
  *
  */
 char *
+utf8_cleanup(const char *str)
+{
+  const char *s = str; 
+  int outlen = 1;
+  int c;
+  int bad = 0;
+  while((c = utf8_get(&s)) != 0) {
+    if(c == 0xfffd)
+      bad = 1;
+    outlen += utf8_put(NULL, c);
+  }
+
+  if(!bad)
+    return NULL;
+
+  char *out = malloc(outlen);
+  char *ret = out;
+  while((c = utf8_get(&str)) != 0)
+    out += utf8_put(out, c);
+
+  *out = 0;
+  return ret;
+}
+
+
+/**
+ *
+ */
+char *
 utf8_from_bytes(const char *str, int len, const uint16_t *cp)
 {
   char *r, *d;
@@ -1137,33 +1166,96 @@ extern const uint16_t CP1250[];
 extern const uint16_t CP1251[];
 extern const uint16_t CP1252[];
 extern const uint16_t CP1253[];
+extern const uint16_t CP1254[];
 extern const uint16_t CP1255[];
 extern const uint16_t CP1256[];
+extern const uint16_t CP1257[];
+extern const uint16_t CP1258[];
 
+#define ALIAS(x...) (const char *[]){x, NULL}
 
 const static charset_t charsets[] = {
-  {"ISO-8859-1", "ISO-8859-1 (Latin-1)", ISO_8859_1},  // Must be first
-  {"ISO-8859-2", "ISO-8859-2 (Latin-2)", ISO_8859_2},
-  {"ISO-8859-3", "ISO-8859-3 (Latin-3)", ISO_8859_3},
-  {"ISO-8859-4", "ISO-8859-4 (Latin-4)", ISO_8859_4},
-  {"ISO-8859-5", "ISO-8859-5 (Latin/Cyrillic)", ISO_8859_5},
-  {"ISO-8859-6", "ISO-8859-6 (Latin/Arabic)", ISO_8859_6},
-  {"ISO-8859-7", "ISO-8859-7 (Latin/Greek)", ISO_8859_7},
-  {"ISO-8859-8", "ISO-8859-8 (Latin/Hebrew)", ISO_8859_8},
-  {"ISO-8859-9", "ISO-8859-9 (Turkish)", ISO_8859_9},
-  {"ISO-8859-10", "ISO-8859-10 (Latin-5)", ISO_8859_10},
+   // ISO-8869-1 must be first
+  {"ISO-8859-1", "ISO-8859-1 (Latin-1)", ISO_8859_1,
+   ALIAS("iso-ir-100",
+         "ISO_8859-1",
+         "latin1",
+         "l1",
+         "IBM819",
+         "CP819",
+         "csISOLatin1")},
+  {"ISO-8859-2", "ISO-8859-2 (Latin-2)", ISO_8859_2,
+   ALIAS("iso-ir-101",
+         "ISO_8859-2",
+         "latin2",
+         "l2",
+         "csISOLatin2")},
+  {"ISO-8859-3", "ISO-8859-3 (Latin-3)", ISO_8859_3,
+   ALIAS("iso-ir-109",
+         "ISO_8859-3",
+         "latin3",
+         "l3",
+         "csISOLatin3")},
+  {"ISO-8859-4", "ISO-8859-4 (Latin-4)", ISO_8859_4,
+   ALIAS("iso-ir-110",
+         "ISO_8859-4",
+         "latin4",
+         "l4",
+         "csISOLatin4")},
+  {"ISO-8859-5", "ISO-8859-5 (Latin/Cyrillic)", ISO_8859_5,
+   ALIAS("iso-ir-144",
+         "ISO_8859-5",
+         "cyrillic",
+         "csISOLatinCyrillic")},
+  {"ISO-8859-6", "ISO-8859-6 (Latin/Arabic)", ISO_8859_6,
+   ALIAS("iso-ir-127",
+         "ISO_8859-6",
+         "ECMA-114",
+         "ASMO-708",
+         "arabic",
+         "csISOLatinArabic")},
+  {"ISO-8859-7", "ISO-8859-7 (Latin/Greek)", ISO_8859_7,
+   ALIAS("iso-ir-126",
+         "ISO_8859-7",
+         "ELOT_928",
+         "ECMA-118",
+         "greek",
+         "greek8",
+         "csISOLatinGreek")},
+  {"ISO-8859-8", "ISO-8859-8 (Latin/Hebrew)", ISO_8859_8,
+   ALIAS("iso-ir-138",
+         "ISO_8859-8",
+         "hebrew",
+         "csISOLatinHebrew")},
+  {"ISO-8859-9", "ISO-8859-9 (Latin-5/Turkish)", ISO_8859_9,
+   ALIAS("iso-ir-148",
+         "ISO_8859-9",
+         "latin5",
+         "l5",
+         "csISOLatin5")},
+  {"ISO-8859-10", "ISO-8859-10 (Latin-6)", ISO_8859_10,
+   ALIAS("iso-ir-157",
+         "l6",
+         "ISO_8859-10:1992",
+         "csISOLatin6",
+         "latin6")},
   {"ISO-8859-11", "ISO-8859-11 (Latin/Thai)", ISO_8859_11},
   {"ISO-8859-13", "ISO-8859-13 (Baltic Rim)", ISO_8859_13},
   {"ISO-8859-14", "ISO-8859-14 (Celtic)", ISO_8859_14},
   {"ISO-8859-15", "ISO-8859-15 (Latin-9)", ISO_8859_15},
   {"ISO-8859-16", "ISO-8859-16 (Latin-10)", ISO_8859_16},
-  {"CP1250", "Windows 1250", CP1250},
-  {"CP1251", "Windows 1251", CP1251},
-  {"CP1252", "Windows 1252", CP1252},
-  {"CP1253", "Windows 1253", CP1253},
-  {"CP1255", "Windows 1255", CP1255},
-  {"CP1256", "Windows 1256", CP1256},
+  {"CP1250", "Windows 1250", CP1250, ALIAS("windows-1250", "cswindows1250")},
+  {"CP1251", "Windows 1251", CP1251, ALIAS("windows-1251", "cswindows1251")},
+  {"CP1252", "Windows 1252", CP1252, ALIAS("windows-1252", "cswindows1252")},
+  {"CP1253", "Windows 1253", CP1253, ALIAS("windows-1253", "cswindows1253")},
+  {"CP1254", "Windows 1254", CP1254, ALIAS("windows-1254", "cswindows1254")},
+  {"CP1255", "Windows 1255", CP1255, ALIAS("windows-1255", "cswindows1255")},
+  {"CP1256", "Windows 1256", CP1256, ALIAS("windows-1256", "cswindows1256")},
+  {"CP1257", "Windows 1257", CP1257, ALIAS("windows-1257", "cswindows1257")},
+  {"CP1258", "Windows 1258", CP1258, ALIAS("windows-1258", "cswindows1258")},
 };
+
+#undef ALIAS
 
 const charset_t *
 charset_get_idx(unsigned int i)
@@ -1177,13 +1269,23 @@ const charset_t *
 charset_get(const char *id)
 {
   int i;
-
+  const char **a;
   if(id == NULL)
     return &charsets[0];
 
-  for(i = 0; i < sizeof(charsets) / sizeof(charsets[0]); i++)
-    if(!strcasecmp(id, charsets[i].id)) 
+  for(i = 0; i < sizeof(charsets) / sizeof(charsets[0]); i++) {
+    if(!strcasecmp(id, charsets[i].id))
       return &charsets[i];
+    a = charsets[i].aliases;
+    if(a == NULL)
+      continue;
+    while(*a) {
+      if(!strcasecmp(id, *a))
+        return &charsets[i];
+      a++;
+    }
+  }
+
   return NULL;
 }
 

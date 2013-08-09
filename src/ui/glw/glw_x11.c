@@ -49,6 +49,8 @@
 #include "video/vdpau.h"
 #endif
 
+#include "arch/linux/linux.h"
+
 //#define WITH_RECORDER
 
 #include "glw_rec.h"
@@ -56,6 +58,9 @@
 typedef struct glw_x11 {
 
   glw_root_t gr;
+
+  int running;
+  hts_thread_t thread;
 
   Display *display;
   int screen;
@@ -93,7 +98,6 @@ typedef struct glw_x11 {
   Status status;
 
   int working_vsync;
-  int force_no_vsync;
 
   struct x11_screensaver_state *sss;
 
@@ -120,18 +124,6 @@ typedef struct glw_x11 {
 } glw_x11_t;
 
 #define AUTOHIDE_TIMEOUT 100 // XXX: in frames.. bad
-
-
-/**
- * Use can remap mousewheel to up/down key actions
- */
-static void
-gx11_set_wheel_mapping(void *opaque, int value)
-{
-  glw_x11_t *gx11 = opaque;
-  gx11->map_mouse_wheel_to_keys = value;
-}
-
 
 
 /**
@@ -345,7 +337,7 @@ window_open(glw_x11_t *gx11, int fullscreen)
 
   glw_opengl_init_context(&gx11->gr);
 
-  if(gx11->glXSwapIntervalSGI != NULL && gx11->force_no_vsync ==0)
+  if(gx11->glXSwapIntervalSGI != NULL)
     gx11->glXSwapIntervalSGI(1);
 
   gx11->working_vsync = check_vsync(gx11);
@@ -583,8 +575,6 @@ glw_x11_init(glw_x11_t *gx11)
   int attribs[10];
   int na = 0;
   
-  XInitThreads();
-
   int use_locales = XSupportsLocale() && XSetLocaleModifiers("") != NULL;
 
   if((gx11->display = XOpenDisplay(gx11->displayname_real)) == NULL) {
@@ -837,6 +827,7 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
       break;
     }
   }
+
 #if ENABLE_VALGRIND
   if(keysym == XK_F1 && state == Mod1Mask) {
     CALLGRIND_START_INSTRUMENTATION;
@@ -998,7 +989,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
   }
 #endif
 
-  while(!gx11->gr.gr_stop) {
+  while(gx11->running) {
 
     if(gx11->fullwindow)
       autohide_cursor(gx11);
@@ -1245,34 +1236,26 @@ eventsink(void *opaque, prop_event_t event, ...)
   va_end(ap);
 }
 
+
 /**
  *
  */
-
-int glw_x11_start(void);
-
-int
-glw_x11_start(void)
+static void *
+glw_x11_thread(void *aux)
 {
-  glw_x11_t *gx11 = calloc(1, sizeof(glw_x11_t));
-
-  gx11->gr.gr_prop_ui = prop_create_root("ui");
-  gx11->gr.gr_prop_nav = nav_spawn();
+  glw_x11_t *gx11 = aux;
+  glw_root_t *gr = &gx11->gr;
 
   gx11->displayname_real = getenv("DISPLAY");
 
   // This may aid some vsync problems with nVidia drivers
-  if(!gx11->force_no_vsync)
-    setenv("__GL_SYNC_TO_VBLANK", "1", 1);
-
+  setenv("__GL_SYNC_TO_VBLANK", "1", 1);
 
   if(glw_x11_init(gx11))
-     return 1;
-
-  glw_root_t *gr = &gx11->gr;
+     return NULL;
   
   if(glw_init(gr))
-    return 1;
+    return NULL;
 
 #ifdef CONFIG_NVCTRL
   gx11->nvidia = nvidia_init(gx11->display, gx11->screen,
@@ -1282,12 +1265,14 @@ glw_x11_start(void)
 #endif
 
   gx11->settings_mouse_btn =
-    settings_create_bool(glw_settings.gs_settings, "map_mouse_wheel_to_keys",
-			 _p("Map mouse wheel to up/down"),
-			 0, glw_settings.gs_settings_store,
-			 gx11_set_wheel_mapping, gx11, 
-			 SETTINGS_INITIAL_UPDATE, gr->gr_courier,
-			 glw_settings_save, gr);
+    setting_create(SETTING_BOOL, glw_settings.gs_settings,
+                   SETTINGS_INITIAL_UPDATE,
+                   SETTING_TITLE(_p("Map mouse wheel to up/down")),
+                   SETTING_HTSMSG("map_mouse_wheel_to_keys",
+                                  glw_settings.gs_settings_store, "glw"),
+                   SETTING_COURIER(gr->gr_courier),
+                   SETTING_WRITE_BOOL(&gx11->map_mouse_wheel_to_keys),
+                   NULL);
 
   prop_sub_t *evsub =
     prop_subscribe(0,
@@ -1318,5 +1303,48 @@ glw_x11_start(void)
   prop_unsubscribe(evsub);
 
   glw_fini(gr);
-  return 0;
+  return NULL;
 }
+
+
+
+/**
+ *
+ */
+static void *
+glw_x11_start(struct prop *nav)
+{
+  glw_x11_t *gx11 = calloc(1, sizeof(glw_x11_t));
+
+  gx11->gr.gr_prop_ui = prop_create_root("ui");
+  gx11->gr.gr_prop_nav = nav ?: nav_spawn();
+  gx11->running = 1;
+
+  hts_thread_create_joinable("glw", &gx11->thread, 
+			     glw_x11_thread, gx11, 0);
+
+  return gx11;
+}
+
+/**
+ *
+ */
+static prop_t *
+glw_x11_stop(void *aux)
+{
+  glw_x11_t *gx11 = aux;
+  glw_root_t *gr = &gx11->gr;
+  prop_t *nav = gr->gr_prop_nav;
+  gx11->running = 0;
+  hts_thread_join(&gx11->thread);
+  prop_destroy(gr->gr_prop_ui);
+  free(gx11);
+  return nav;
+}
+
+
+
+const linux_ui_t ui_glw = {
+  .start = glw_x11_start,
+  .stop  = glw_x11_stop,
+};

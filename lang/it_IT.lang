@@ -314,6 +314,10 @@ msg: Changelog per i rilasci %s
 id: Check for updates now
 msg: Cerca aggiornamenti ora
 
+id: Checking current installed version
+# Missing translation
+msg: 
+
 id: Checking for updates...
 msg: Ricerca di aggiornamenti...
 
@@ -334,6 +338,10 @@ msg: Disponibile la nuova versione %s
 
 id: No upgrade available
 msg: Nessun aggiornamento disponibile
+
+id: Patching binary
+# Missing translation
+msg: 
 
 id: Restarting Showtime in %d seconds...
 msg: Riavvio di Showtime in %d secondi...
@@ -361,6 +369,13 @@ msg: CPU troppo lenta per poter decodificare questo video
 
 id: Playback status
 msg: Stato di riproduzione
+
+#
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -430,39 +445,6 @@ msg: Usa titolo originale
 #
 id: System is low on memory (%d kB RAM available)
 msg: Memoria in esaurimento (%d kB di RAM disponibile)
-
-#
-# ./src/audio/audio.c
-#
-id: Audio output
-msg: Uscita audio
-
-id: Audio/Video sync delay
-msg: Ritardo di sincronizzazione Audio/Video
-
-id: Current output device
-msg: Periferica d'uscita attuale
-
-id: Force stereo downmix
-msg: Forza stereo downmix
-
-id: Phantom LFE
-msg: Phantom LFE
-
-id: Phantom center
-msg: Phantom center
-
-id: Select audio output device and related configurations
-msg: Seleziona periferica d'uscita audio e relative impostazioni
-
-id: Small front speakers
-msg: Altoparlanti piccoli frontali
-
-id: Swap LFE+center with surround
-msg: Scambia LFE+center con surround
-
-id: Switching audio output to %s
-msg: Cambio dell'uscita audio a %s
 
 #
 # ./src/backend/dvd/cdda.c
@@ -664,13 +646,16 @@ id: File access
 # Missing translation
 msg: 
 
+id: %d archive parts
+# Missing plural translation for '%d archive parts' and '%d archive part'
+msg[0]: 
+msg[1]: 
+
 id: %d directories
-# Missing plural translation for '%d directories' and '%d directory'
 msg[0]: 
 msg[1]: 
 
 id: %d files
-# Missing plural translation for '%d files' and '%d file'
 msg[0]: 
 msg[1]: 
 
@@ -715,18 +700,6 @@ id: Tertiary subtitle language code
 msg: Codice di linguaggio terziario per i sottotitoli
 
 #
-# ./src/ipc/serdev/lgtv.c
-#
-id: Automatic TV power on/off
-msg: Controllo spegnimento automatico TV
-
-id: Input source
-msg: Sorgente di ingresso
-
-id: LG Television set
-msg: Apparato TV LG
-
-#
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
@@ -753,6 +726,14 @@ msg: Allineare sottotitoli su frame video
 id: Audio delay
 msg: Ritardo audio
 
+id: Audio volume
+# Missing translation
+msg: 
+
+id: Go to standby after video ends
+# Missing translation
+msg: 
+
 id: Stretch video to fullscreen
 msg: Adatta video a Schermo Pieno
 
@@ -762,8 +743,16 @@ msg: Adatta video a widescreen
 id: Subtitle delay
 msg: Ritardo sottotitoli
 
+id: Subtitle horizontal displacement
+# Missing translation
+msg: 
+
 id: Subtitle scaling
 msg: Dimensione dei sottotitoli
+
+id: Subtitle vertical displacement
+# Missing translation
+msg: 
 
 id: Video zoom
 msg: Zoom video
@@ -775,11 +764,30 @@ id: Indexing
 msg: Indicizzando
 
 #
-# ./src/metadata/metadata.c
+# ./src/metadata/decoration.c
 #
 id: Automatic
 msg: Automatico
 
+id: Manual
+# Missing translation
+msg: 
+
+id: Mark all as seen
+# Missing translation
+msg: 
+
+id: Mark all as unseen
+# Missing translation
+msg: 
+
+id: Metadata mode
+# Missing translation
+msg: 
+
+#
+# ./src/metadata/metadata.c
+#
 id: Custom search query
 msg: Ricerca personalizzata
 
@@ -1156,9 +1164,6 @@ msg: Dimensione sottotitoli
 id: Subtitle size and positioning
 msg: Dimensione e posizione dei sottotitoli
 
-id: Subtitle styling
-msg: Stile sottotitoli
-
 id: Subtitles embedded in video file
 # Missing translation
 msg: 
@@ -1195,14 +1200,9 @@ msg: Ripristina carattere stretto di default
 id: Reset subtitle font to default
 msg: Ripristina carattere sottotitoli di default
 
-id: Unable to load %s -- %s
-msg: Impossibile caricare %s -- %s
-
-id: Unable to open %s for writing
-msg: Impossibile aprire %s per la scrittura
-
-id: Unable to write to %s
-msg: Impossibile scrivere su %s
+id: Unable to install font: %s
+# Missing translation
+msg: 
 
 id: Use font %s for
 msg: Usa il font %s per
@@ -1211,19 +1211,32 @@ id: User interface
 msg: Interfaccia utente
 
 #
+# ./src/ui/glw/glw_ps3.c
+#
+id: Seek using L2 and R2 button
+# Missing translation
+msg: 
+
+id: Yes with Select button
+# Missing translation
+msg: 
+
+#
 # ./src/ui/glw/glw_settings.c
 #
+id: Font and icon size
+# Missing translation
+msg: 
+
 id: Horizontal underscan
 msg: Underscan orizzontale
 
 id: Screensaver delay
 msg: Attesa prima dello screensaver
 
-id: Userinterface size
-msg: Dimensione interfaccia utente
-
-id: Vertical underscan
-msg: Underscan verticale
+id: Veritcal underscan
+# Missing translation
+msg: 
 
 #
 # ./src/ui/glw/glw_x11.c
@@ -1306,15 +1319,6 @@ msg: Impossibile richiedere il Cell codec. Errore 0x%x
 #
 # ./src/video/video_settings.c
 #
-id: 1080
-msg: 1080
-
-id: 576
-msg: 576
-
-id: 720
-msg: 720
-
 id: Automatically play next video in list
 msg: Riproduci automaticamente il successivo video nella lista
 

@@ -762,7 +762,8 @@ gds_node_sub(void *opaque, prop_event_t event, ...)
 
   case PROP_REQ_DELETE_VECTOR:
   case PROP_WANT_MORE_CHILDS:
-  case PROP_HAVE_MORE_CHILDS:
+  case PROP_HAVE_MORE_CHILDS_YES:
+  case PROP_HAVE_MORE_CHILDS_NO:
     break;
 
   default:

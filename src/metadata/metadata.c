@@ -678,7 +678,8 @@ struct metadata_lazy_video {
   unsigned char mlv_type;
   unsigned char mlv_lonely : 1;
   unsigned char mlv_passive : 1;
-  unsigned char mlv_qtype : 6;
+  unsigned char mlv_manual : 1;
+  unsigned char mlv_qtype : 5;
   union {
     int16_t mlv_season;
     int16_t mlv_year;
@@ -688,14 +689,38 @@ struct metadata_lazy_video {
 };
 
 
+/**
+ *
+ */
+static void
+mlv_cleanup(metadata_lazy_video_t *mlv)
+{
+  prop_set(mlv->mlv_m, "source",       PROP_SET_VOID);
+  prop_set(mlv->mlv_m, "icon",         PROP_SET_VOID);
+  prop_set(mlv->mlv_m, "tagline",      PROP_SET_VOID);
+  prop_set(mlv->mlv_m, "description",  PROP_SET_VOID);
+  prop_set(mlv->mlv_m, "backdrop",     PROP_SET_VOID);
+  prop_set(mlv->mlv_m, "genre",        PROP_SET_VOID);
+  prop_set(mlv->mlv_m, "year",         PROP_SET_VOID);
+  prop_set(mlv->mlv_m, "rating",       PROP_SET_VOID);
+  prop_set(mlv->mlv_m, "rating_count", PROP_SET_VOID);
+  prop_set(mlv->mlv_m, "vtype",        PROP_SET_VOID);
+}
+
+
+
 
 /**
  *
  */
 void
-mlv_unbind(metadata_lazy_video_t *mlv)
+mlv_unbind(metadata_lazy_video_t *mlv, int cleanup)
 {
   hts_mutex_lock(&metadata_mutex);
+  if(cleanup) {
+    mlv_cleanup(mlv);
+    prop_set(mlv->mlv_m, "title", PROP_SET_RSTRING, mlv->mlv_filename);
+  }
   mlp_destroy(&mlv->mlv_mlp);
   hts_mutex_unlock(&metadata_mutex);
 }
@@ -943,7 +968,6 @@ set_cast_n_crew(prop_t *p, metadata_t *md)
 }
 
 
-
 /**
  * Must be in a transaction
  */
@@ -984,7 +1008,8 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
   }
 
   if(!refresh) {
-    r = metadb_get_videoinfo(db, rstr_get(mlv->mlv_url), msl, &fixed_ds, &md);
+    r = metadb_get_videoinfo(db, rstr_get(mlv->mlv_url), msl, &fixed_ds, &md,
+                             mlv->mlv_manual);
     if(r) {
       return r;
     }
@@ -995,7 +1020,8 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
 
   prop_set(mlv->mlv_m, "loading", PROP_SET_INT, 1);
 
-  if(md == NULL || !md->md_preferred) {
+
+  if(!mlv->mlv_manual && (md == NULL || !md->md_preferred)) {
 
     TAILQ_FOREACH(ms, &metadata_sources[mlv->mlv_type], ms_link) {
 
@@ -1186,7 +1212,8 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
       TRACE(TRACE_DEBUG, "METADATA", "Permanent error for %s",
 	    rstr_get(mlv->mlv_url));
 
-    r = metadb_get_videoinfo(db, rstr_get(mlv->mlv_url), msl, &fixed_ds, &md);
+    r = metadb_get_videoinfo(db, rstr_get(mlv->mlv_url), msl, &fixed_ds, &md,
+                             0);
     if(r) {
       prop_set(mlv->mlv_m, "loading", PROP_SET_INT, 0);
       return r;
@@ -1282,21 +1309,10 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
 
       if(mlv->mlv_m != NULL) {
 
-        prop_set(mlv->mlv_m, "source",      PROP_SET_VOID);
-        prop_set(mlv->mlv_m, "icon",        PROP_SET_VOID);
-        prop_set(mlv->mlv_m, "tagline",     PROP_SET_VOID);
-        prop_set(mlv->mlv_m, "description", PROP_SET_VOID);
-        prop_set(mlv->mlv_m, "backdrop",    PROP_SET_VOID);
-        prop_set(mlv->mlv_m, "genre",       PROP_SET_VOID);
-        prop_set(mlv->mlv_m, "year",        PROP_SET_VOID);
-        prop_set(mlv->mlv_m, "rating",      PROP_SET_VOID);
-        prop_set(mlv->mlv_m, "rating_count",PROP_SET_VOID);
-        prop_set(mlv->mlv_m, "vtype",       PROP_SET_VOID);
+        mlv_cleanup(mlv);
 
         title = title ?: rstr_dup(custom_title ?: mlv->mlv_filename);
-
         mlv->mlv_dsid = 0;
-
         build_info_text(mlv, NULL);
       }
     }
@@ -1399,9 +1415,11 @@ load_sources(metadata_lazy_video_t *mlv)
   prop_t *c, *p = prop_create_r(mlv->mlv_source_opt, "options");
   int cur = metadb_item_get_preferred_ds(rstr_get(mlv->mlv_url));
 
-  c = prop_create_root(NULL);
-  prop_link(_p("Automatic"), prop_create(c, "title"));
-  pv = prop_vec_append(pv, c);
+  if(!mlv->mlv_manual) {
+    c = prop_create_root(NULL);
+    prop_link(_p("Automatic"), prop_create(c, "title"));
+    pv = prop_vec_append(pv, c);
+  }
 
   TAILQ_FOREACH(ms, &metadata_sources[mlv->mlv_type], ms_link) {
     if(!ms->ms_enabled)
@@ -1416,7 +1434,7 @@ load_sources(metadata_lazy_video_t *mlv)
   c = prop_create_root("1");
   prop_link(_p("None"), prop_create(c, "title"));
   pv = prop_vec_append(pv, c);
-  if(cur == 1)
+  if(cur == 1 || (mlv->mlv_manual && cur == 0))
     active = prop_ref_inc(c);
 
   prop_destroy_childs(p);
@@ -1924,7 +1942,8 @@ metadata_bind_video_info(rstr_t *url, rstr_t *filename,
 			 rstr_t *imdb_id, float duration,
 			 prop_t *root,
 			 rstr_t *folder, int lonely, int passive,
-			 int year, int season, int episode)
+			 int year, int season, int episode,
+                         int manual)
 {
   metadata_lazy_video_t *mlv = mlp_alloc(&mlc_video);
 
@@ -1936,6 +1955,7 @@ metadata_bind_video_info(rstr_t *url, rstr_t *filename,
   mlv->mlv_type = METADATA_TYPE_VIDEO;
   mlv->mlv_lonely = lonely;
   mlv->mlv_passive = passive;
+  mlv->mlv_manual = manual;
   mlv->mlv_root = prop_ref_inc(root);
   mlv->mlv_m = prop_create_r(root, "metadata");
 
@@ -2061,7 +2081,7 @@ metadata_get_video_data(const char *url)
   void *db = metadb_get();
   metadata_t *md;
 
-  int r = metadb_get_videoinfo(db, url, NULL, NULL, &md);
+  int r = metadb_get_videoinfo(db, url, NULL, NULL, &md, 0);
   metadb_close(db);
   if(r)
     return NULL;
@@ -2530,9 +2550,13 @@ metadata_add_source(const char *name, const char *description,
 
   prop_tag_set(ms->ms_settings, metadata_courier, ms);
 
-  settings_create_bool(ms->ms_settings, "enabled", _p("Enabled"),
-		       ms->ms_enabled, NULL, ms_set_enable, ms,
-		       0, metadata_courier, NULL, NULL);
+
+  setting_create(SETTING_BOOL, ms->ms_settings, 0,
+                 SETTING_TITLE(_p("Enabled")),
+                 SETTING_COURIER(metadata_courier),
+                 SETTING_CALLBACK(ms_set_enable, ms),
+                 SETTING_VALUE(ms->ms_enabled),
+                 NULL);
 
   ms_set_enable(ms, enabled);
 

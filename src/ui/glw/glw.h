@@ -294,6 +294,11 @@ typedef enum {
    */
   GLW_SIGNAL_MOVE,
 
+  /**
+   *
+   */
+  GLW_SIGNAL_WRAP_CHECK,
+
 } glw_signal_t;
 
 
@@ -659,7 +664,6 @@ typedef struct glw_root {
   int gr_prop_maxtime;
 
   int gr_reduce_cpu;
-  int gr_stop;
   prop_sub_t *gr_evsub;
 
   pool_t *gr_token_pool;
@@ -860,7 +864,7 @@ typedef struct glw_root {
   struct glw *gr_osk_widget;
   prop_sub_t *gr_osk_text_sub;
   prop_sub_t *gr_osk_ev_sub;
-
+  char *gr_osk_revert;
 
 } glw_root_t;
 

@@ -328,6 +328,10 @@ msg: %s 版本的更新紀錄
 id: Check for updates now
 msg: 立即檢查更新
 
+id: Checking current installed version
+# Missing translation
+msg: 
+
 id: Checking for updates...
 msg: 正在檢查更新…
 
@@ -348,6 +352,10 @@ msg: 已有 %s 版更新可供下載
 
 id: No upgrade available
 msg: 尚未有任何更新
+
+id: Patching binary
+# Missing translation
+msg: 
 
 id: Restarting Showtime in %d seconds...
 msg: 將於 %s 秒後重新載入 Showtime
@@ -375,6 +383,13 @@ msg: 處理器速度過慢，無法正常解碼視訊信號
 
 id: Playback status
 msg: 影片資訊
+
+#
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -446,39 +461,6 @@ msg:
 #
 id: System is low on memory (%d kB RAM available)
 msg: 系統記憶體不足（剩餘 %d kB 可用）
-
-#
-# ./src/audio/audio.c
-#
-id: Audio output
-msg: 音訊輸出
-
-id: Audio/Video sync delay
-msg: 視訊／音訊同步延遲
-
-id: Current output device
-msg: 音訊輸出裝置
-
-id: Force stereo downmix
-msg: 降低混音(downmix)至立體聲(stereo)
-
-id: Phantom LFE
-msg: 虛擬低頻聲道(Phantom-LFE)
-
-id: Phantom center
-msg: 虛擬中置聲道(Phantom-center)
-
-id: Select audio output device and related configurations
-msg: 選擇音訊輸出裝置與相關設定
-
-id: Small front speakers
-msg: 迷你前置揚聲器
-
-id: Swap LFE+center with surround
-msg: 使用環繞效果代替低頻與中間聲道
-
-id: Switching audio output to %s
-msg: 設定音訊輸出為 %s
 
 #
 # ./src/backend/dvd/cdda.c
@@ -687,13 +669,16 @@ id: File access
 # Missing translation
 msg: 
 
+id: %d archive parts
+# Missing plural translation for '%d archive parts' and '%d archive part'
+msg[0]: 
+msg[1]: 
+
 id: %d directories
-# Missing plural translation for '%d directories' and '%d directory'
 msg[0]: 
 msg[1]: 
 
 id: %d files
-# Missing plural translation for '%d files' and '%d file'
 msg[0]: 
 msg[1]: 
 
@@ -738,18 +723,6 @@ id: Tertiary subtitle language code
 msg: 第三字幕語言代碼
 
 #
-# ./src/ipc/serdev/lgtv.c
-#
-id: Automatic TV power on/off
-msg: 自動開啟或關閉電視機
-
-id: Input source
-msg: 輸入訊號源
-
-id: LG Television set
-msg: LG 電視機
-
-#
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
@@ -776,6 +749,14 @@ msg: 字幕與視訊校正
 id: Audio delay
 msg: 音訊延遲
 
+id: Audio volume
+# Missing translation
+msg: 
+
+id: Go to standby after video ends
+# Missing translation
+msg: 
+
 id: Stretch video to fullscreen
 msg: 延展影片至全螢幕
 
@@ -785,8 +766,16 @@ msg: 延展影片至寬螢幕
 id: Subtitle delay
 msg: 字幕延遲
 
+id: Subtitle horizontal displacement
+# Missing translation
+msg: 
+
 id: Subtitle scaling
 msg: 字幕大小
+
+id: Subtitle vertical displacement
+# Missing translation
+msg: 
 
 id: Video zoom
 msg: 視訊縮放
@@ -799,11 +788,30 @@ id: Indexing
 msg: 
 
 #
-# ./src/metadata/metadata.c
+# ./src/metadata/decoration.c
 #
 id: Automatic
 msg: 自動
 
+id: Manual
+# Missing translation
+msg: 
+
+id: Mark all as seen
+# Missing translation
+msg: 
+
+id: Mark all as unseen
+# Missing translation
+msg: 
+
+id: Metadata mode
+# Missing translation
+msg: 
+
+#
+# ./src/metadata/metadata.c
+#
 id: Custom search query
 msg: 自訂搜尋
 
@@ -1212,9 +1220,6 @@ msg: 字幕大小
 id: Subtitle size and positioning
 msg: 字幕大小及位置
 
-id: Subtitle styling
-msg: 字幕樣式
-
 id: Subtitles embedded in video file
 # Missing translation
 msg: 
@@ -1258,15 +1263,7 @@ id: Reset subtitle font to default
 # Missing translation
 msg: 
 
-id: Unable to load %s -- %s
-# Missing translation
-msg: 
-
-id: Unable to open %s for writing
-# Missing translation
-msg: 
-
-id: Unable to write to %s
+id: Unable to install font: %s
 # Missing translation
 msg: 
 
@@ -1279,19 +1276,32 @@ id: User interface
 msg: 
 
 #
+# ./src/ui/glw/glw_ps3.c
+#
+id: Seek using L2 and R2 button
+# Missing translation
+msg: 
+
+id: Yes with Select button
+# Missing translation
+msg: 
+
+#
 # ./src/ui/glw/glw_settings.c
 #
+id: Font and icon size
+# Missing translation
+msg: 
+
 id: Horizontal underscan
 msg: 水平欠掃描
 
 id: Screensaver delay
 msg: 螢幕保護程式啟動時間
 
-id: Userinterface size
-msg: 使用者介面尺寸
-
-id: Vertical underscan
-msg: 垂直欠掃描
+id: Veritcal underscan
+# Missing translation
+msg: 
 
 #
 # ./src/ui/glw/glw_x11.c
@@ -1374,15 +1384,6 @@ msg: 無法查詢 Cell 解碼套件。錯誤 0x%x
 #
 # ./src/video/video_settings.c
 #
-id: 1080
-msg: 1080
-
-id: 576
-msg: 576
-
-id: 720
-msg: 720
-
 id: Automatically play next video in list
 msg: 自動接續播放列表中的媒體檔案
 

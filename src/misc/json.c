@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
@@ -32,103 +33,104 @@ static const char *json_parse_value(const char *s, void *parent,
 				    void *opaque,
 				    const char **failp, const char **failmsg);
 
+
+static int
+json_str_read_char(const char **ptr)
+{
+  const char *s = *ptr;
+  if(*s == 0)
+    return -1;
+
+  if(*s != '\\')
+    return utf8_get(ptr);
+
+  s++;
+  *ptr = s + 1;
+
+  int v = 0, i;
+
+  switch(*s) {
+  default:    return *s;
+  case 0:     return -1;
+  case 'b':   return '\b';
+  case 'f':   return '\f';
+  case 'n':   return '\n';
+  case 'r':   return '\r';
+  case 't':   return '\t';
+  case 'u':
+
+    s++;
+    for(i = 0; i < 4; i++) {
+      v = v << 4;
+      switch(*s) {
+      case '0' ... '9':
+        v |= *s - '0';
+        break;
+      case 'a' ... 'f':
+        v |= *s - 'a' + 10;
+        break;
+      case 'A' ... 'F':
+        v |= *s - 'F' + 10;
+        break;
+      default:
+        return -2;
+      }
+      s++;
+    }
+    *ptr = s;
+    return v;
+  }
+}
+
+
+
+
+
+
 /**
  * Returns a newly allocated string
  */
 static char *
-json_parse_string(const char *s, const char **endp,
+json_parse_string(const char *start, const char **endp,
 		  const char **failp, const char **failmsg)
 {
-  const char *start;
-  char *r, *a, *b;
-  int l, esc = 0;
+  const char *s;
+  while(*start > 0 && *start < 33)
+    start++;
 
-  while(*s > 0 && *s < 33)
-    s++;
-
-  if(*s != '"')
+  if(*start != '"')
     return NOT_THIS_TYPE;
 
-  s++;
-  start = s;
+  start++;
 
-  while(1) {
-    if(*s == 0) {
+  int len = 0;
+  for(s = start; *s != '"';) {
+
+    int v = json_str_read_char(&s);
+    if(v == -1) {
       *failmsg = "Unexpected end of JSON message";
       *failp = s;
       return NULL;
     }
-
-    if(*s == '\\') {
-      esc = 1;
-    } else if(*s == '"' && s[-1] != '\\') {
-
-      *endp = s + 1;
-
-      /* End */
-      l = s - start;
-      r = malloc(l + 1);
-      memcpy(r, start, l);
-      r[l] = 0;
-
-      if(esc) {
-	/* Do deescaping inplace */
-
-	a = b = r;
-
-	while(*a) {
-	  if(*a == '\\') {
-	    a++;
-	    if(*a == 'b')
-	      *b++ = '\b';
-	    else if(*a == 'f')
-	      *b++ = '\f';
-	    else if(*a == 'n')
-	      *b++ = '\n';
-	    else if(*a == 'r')
-	      *b++ = '\r';
-	    else if(*a == 't')
-	      *b++ = '\t';
-	    else if(*a == 'u') {
-	      // Unicode character
-	      int i, v = 0;
-
-	      a++;
-	      for(i = 0; i < 4; i++) {
-		v = v << 4;
-		switch(a[i]) {
-		case '0' ... '9':
-		  v |= a[i] - '0';
-		  break;
-		case 'a' ... 'f':
-		  v |= a[i] - 'a' + 10;
-		  break;
-		case 'A' ... 'F':
-		  v |= a[i] - 'F' + 10;
-		  break;
-		default:
-		  free(r);
-		  *failmsg = "Incorrect escape sequence";
-		  *failp = (a - r) + start;
-		  return NULL;
-		}
-	      }
-	      a+=3;
-	      b += utf8_put(b, v);
-	    } else {
-	      *b++ = *a;
-	    }
-	    a++;
-	  } else {
-	    *b++ = *a++;
-	  }
-	}
-	*b = 0;
-      }
-      return r;
+    if(v == -2) {
+      *failmsg = "Incorrect escape sequence";
+      *failp = s;
+      return NULL;
     }
-    s++;
+    len += utf8_put(NULL, v);
   }
+
+  char *r = malloc(len + 1);
+  char *dst = r;
+  r[len] = 0;
+
+  for(s = start; *s != '"';) {
+    int v = json_str_read_char(&s);
+    assert(v > 0);
+    dst += utf8_put(dst, v);
+  }
+  *endp = s + 1;
+  return r;
 }
 
 
