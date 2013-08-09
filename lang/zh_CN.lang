@@ -311,8 +311,7 @@ id: Check for updates now
 msg: 立刻检查更新
 
 id: Checking current installed version
-# Missing translation
-msg: 
+msg: 检查当前安装的版本
 
 id: Checking for updates...
 msg: 正在检查更新...
@@ -336,8 +335,7 @@ id: No upgrade available
 msg: 无可用更新
 
 id: Patching binary
-# Missing translation
-msg: 
+msg: 补丁包
 
 id: Restarting Showtime in %d seconds...
 msg: %d秒后重启Showtime...
@@ -370,8 +368,7 @@ msg: 播放信息
 # ./glwskins/default/pages/wideinfo/video.view
 #
 id: Seen:
-# Missing translation
-msg: 
+msg: 看过
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -638,9 +635,8 @@ id: File access
 msg: 文件访问
 
 id: %d archive parts
-# Missing plural translation for '%d archive parts' and '%d archive part'
-msg[0]: 
-msg[1]: 
+msg[0]: %d个分卷
+msg[1]: %d个分卷
 
 id: %d directories
 msg[0]: %d个文件夹
@@ -717,12 +713,10 @@ id: Audio delay
 msg: 音频延迟
 
 id: Audio volume
-# Missing translation
-msg: 
+msg: 音量
 
 id: Go to standby after video ends
-# Missing translation
-msg: 
+msg: 视频播放结束后自动待机
 
 id: Stretch video to fullscreen
 msg: 拉升视频至全屏
@@ -734,15 +728,13 @@ id: Subtitle delay
 msg: 字幕延迟
 
 id: Subtitle horizontal displacement
-# Missing translation
-msg: 
+msg: 字幕水平移位
 
 id: Subtitle scaling
 msg: 字幕缩放
 
 id: Subtitle vertical displacement
-# Missing translation
-msg: 
+msg: 字幕垂直移位
 
 id: Video zoom
 msg: 视频缩放
@@ -760,20 +752,16 @@ id: Automatic
 msg: 自动
 
 id: Manual
-# Missing translation
-msg: 
+msg: 手动
 
 id: Mark all as seen
-# Missing translation
-msg: 
+msg: 标记所有为已播放
 
 id: Mark all as unseen
-# Missing translation
-msg: 
+msg: 标记所有为未播放
 
 id: Metadata mode
-# Missing translation
-msg: 
+msg: 元数据模式
 
 #
 # ./src/metadata/metadata.c
@@ -1181,8 +1169,7 @@ id: Reset subtitle font to default
 msg: 重置字幕字体
 
 id: Unable to install font: %s
-# Missing translation
-msg: 
+msg: 无法安装字体：%s
 
 id: Use font %s for
 msg: 使用字体%s
@@ -1194,19 +1181,16 @@ msg: 用户界面
 # ./src/ui/glw/glw_ps3.c
 #
 id: Seek using L2 and R2 button
-# Missing translation
-msg: 
+msg: 使用L2/R2快速进退
 
 id: Yes with Select button
-# Missing translation
-msg: 
+msg: 使用Select按键确认
 
 #
 # ./src/ui/glw/glw_settings.c
 #
 id: Font and icon size
-# Missing translation
-msg: 
+msg: 字体和图标大小
 
 id: Horizontal underscan
 msg: 水平欠扫描
@@ -1215,8 +1199,7 @@ id: Screensaver delay
 msg: 屏幕保护延迟
 
 id: Veritcal underscan
-# Missing translation
-msg: 
+msg: 垂直欠扫描
 
 #
 # ./src/ui/glw/glw_x11.c
