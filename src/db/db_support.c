@@ -587,11 +587,21 @@ static struct sqlite3_mutex_methods sqlite_mutexes = {
 
 
 
+static void
+db_log(void *aux, int code, const char *str)
+{
+  TRACE(code == 0 ? TRACE_INFO : TRACE_ERROR,
+        "SQLITE", "%s (code: %d)", str, code);
+}
+
+
 void
 db_init(void)
 {
+  sqlite3_temp_directory = gconf.cache_path;
 #if ENABLE_SQLITE_LOCKING
   sqlite3_config(SQLITE_CONFIG_MUTEX, &sqlite_mutexes);
 #endif
+  sqlite3_config(SQLITE_CONFIG_LOG, &db_log, NULL);
   sqlite3_initialize();
 }
