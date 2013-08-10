@@ -395,6 +395,23 @@ tcp_shutdown(tcpcon_t *tc)
 /**
  *
  */
+tcpcon_t *
+tcp_from_fd(int fd)
+{
+  tcpcon_t *tc = calloc(1, sizeof(tcpcon_t));
+  tc->fd = fd;
+  htsbuf_queue_init(&tc->spill, 0);
+  tc->read = tcp_read;
+  tc->write = tcp_write;
+  return tc;
+}
+
+
+
+
+/**
+ *
+ */
 netif_t *
 net_get_interfaces(void)
 {
