@@ -244,6 +244,7 @@ typedef struct gconf {
   struct prop *settings_sd;
   struct prop *settings_general;
   struct prop *settings_dev;
+  struct prop *settings_network;
   struct prop_concat *settings_look_and_feel;
 
   hts_mutex_t state_mutex;
