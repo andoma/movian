@@ -252,14 +252,26 @@ js_newctx(JSErrorReporter er)
 static JSBool 
 js_trace(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-  const char *str;
+  jsval v;
   const char *id = "JS";
 
-  if (!JS_ConvertArguments(cx, argc, argv, "s/s", &str, &id))
+  if (!JS_ConvertArguments(cx, argc, argv, "v/s", &v, &id))
     return JS_FALSE;
 
-  TRACE(TRACE_DEBUG, id, "%s", str);
-  *rval = JSVAL_VOID;  /* return undefined */
+  if(JSVAL_IS_OBJECT(v)) {
+    htsbuf_queue_t q;
+    htsbuf_queue_init(&q, INT32_MAX);
+
+    js_json_encode_from_object(cx, JSVAL_TO_OBJECT(v), &q);
+    char *str = htsbuf_to_string(&q);
+    htsbuf_queue_flush(&q);
+    TRACE(TRACE_DEBUG, id, "%s", str);
+    free(str);
+  } else {
+    const char *str = JS_GetStringBytes(JS_ValueToString(cx, v));
+    TRACE(TRACE_DEBUG, id, "%s", str);
+  }
+  *rval = JSVAL_VOID;
   return JS_TRUE;
 }
 
