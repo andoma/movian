@@ -63,6 +63,22 @@ tcp_write_queue_dontfree(tcpcon_t *tc, htsbuf_queue_t *q)
 /**
  *
  */
+void
+tcp_printf(tcpcon_t *tc, const char *fmt, ...)
+{
+  char buf[2048];
+  va_list ap;
+  va_start(ap, fmt);
+  int len = vsnprintf(buf, sizeof(buf), fmt, ap);
+  va_end(ap);
+
+  tc->write(tc, buf, len);
+}
+
+
+/**
+ *
+ */
 static int
 tcp_read_into_spill(tcpcon_t *tc)
 {
@@ -178,3 +194,74 @@ tcp_read_data_nowait(tcpcon_t *tc, char *buf, const size_t bufsize)
 
   return tc->read(tc, buf + tot, bufsize - tot, 0, NULL, NULL);
 }
+
+
+#include <netinet/in.h>
+
+/**
+ *
+ */
+static void
+net_addr_from_sockaddr_in(net_addr_t *na, const struct sockaddr_in *sin)
+{
+  na->na_family = 4;
+  na->na_port = ntohs(sin->sin_port);
+  memcpy(na->na_addr, &sin->sin_addr, 4);
+}
+
+
+/**
+ *
+ */
+void
+net_local_addr_from_fd(net_addr_t *na, int fd)
+{
+  socklen_t slen = sizeof(struct sockaddr_in);
+  struct sockaddr_in self;
+
+  if(!getsockname(fd, (struct sockaddr *)&self, &slen)) {
+    net_addr_from_sockaddr_in(na, &self);
+  } else {
+    memset(na, 0, sizeof(net_addr_t));
+  }
+}
+
+
+/**
+ *
+ */
+void
+net_remote_addr_from_fd(net_addr_t *na, int fd)
+{
+  socklen_t slen = sizeof(struct sockaddr_in);
+  struct sockaddr_in self;
+
+  if(!getpeername(fd, (struct sockaddr *)&self, &slen)) {
+    net_addr_from_sockaddr_in(na, &self);
+  } else {
+    memset(na, 0, sizeof(net_addr_t));
+  }
+}
+
+
+/**
+ *
+ */
+void
+net_fmt_host(char *dst, size_t dstlen, const net_addr_t *na)
+{
+  switch(na->na_family) {
+  case 4:
+    snprintf(dst, dstlen, "%d.%d.%d.%d",
+             na->na_addr[0],
+             na->na_addr[1],
+             na->na_addr[2],
+             na->na_addr[3]);
+    break;
+
+  default:
+    if(dstlen)
+      *dst = 0;
+  }
+}
+

@@ -23,14 +23,13 @@
 #include "htsmsg/htsbuf.h"
 #include "misc/strtab.h"
 #include "http.h"
+#include "asyncio.h"
 
 typedef struct http_connection http_connection_t;
 
 typedef int (http_callback_t)(http_connection_t *hc, 
 			      const char *remain, void *opaque,
 			      http_cmd_t method);
-
-void http_server_init(void);
 
 void *http_path_add(const char *path, void *opaque, http_callback_t *callback,
 		    int leaf);
@@ -59,8 +58,6 @@ void websocket_sendq(http_connection_t *hc, int opcode, htsbuf_queue_t *hq);
 
 void http_set_opaque(http_connection_t *hc, void *opaque);
 
-struct prop_courier *http_get_courier(http_connection_t *hc);
-
 int http_send_reply(http_connection_t *hc, int rc, const char *content, 
 		    const char *encoding, const char *location, int maxage,
 		    htsbuf_queue_t *output);
@@ -85,6 +82,7 @@ void *http_get_post_data(http_connection_t *hc, size_t *sizep, int steal);
 void http_set_response_hdr(http_connection_t *hc, const char *name,
 			   const char *value);
 
-extern int http_server_port;
+
+extern int http_server_port; // XXX
 
 #endif // HTTP_SERVER_H__

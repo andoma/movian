@@ -231,6 +231,23 @@ getstreamsocket(int family, char *errbuf, size_t errbufsize)
   return fd;
 }
 
+
+/**
+ *
+ */
+tcpcon_t *
+tcp_from_fd(int fd)
+{
+  tcpcon_t *tc = calloc(1, sizeof(tcpcon_t));
+  tc->fd = fd;
+  htsbuf_queue_init(&tc->spill, 0);
+  tc->read = tcp_read;
+  tc->write = tcp_write;
+  return tc;
+}
+
+
+
 /**
  *
  */
@@ -513,6 +530,8 @@ tcp_huge_buffer(tcpcon_t *tc)
 
 /**
  * Called from code in arch/
+ *
+ * XXX: Should be initialized from showtime.c
  */
 void
 net_initialize(void)

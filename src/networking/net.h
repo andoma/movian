@@ -38,6 +38,17 @@
 #include "htsmsg/htsbuf.h"
 
 
+typedef struct net_addr {
+  // Somewhat less retarded struct for passing IP addresses
+
+  uint8_t na_family;
+  uint16_t na_port;   // host order
+  uint8_t na_addr[16];
+
+} net_addr_t;
+
+
+
 typedef int (net_read_cb_t)(void *opaque, int done);
 
 typedef struct tcpcon {
@@ -67,9 +78,13 @@ void net_initialize(void);
 tcpcon_t *tcp_connect(const char *hostname, int port, char *errbuf,
 		      size_t errbufsize, int timeout, int ssl);
 
+tcpcon_t *tcp_from_fd(int fd);
+
 int tcp_write_queue(tcpcon_t *nc, htsbuf_queue_t *q);
 
 int tcp_write_queue_dontfree(tcpcon_t *nc, htsbuf_queue_t *q);
+
+void tcp_printf(tcpcon_t *tc, const char *fmt, ...);
 
 int tcp_read_line(tcpcon_t *nc, char *buf, const size_t bufsize);
 
@@ -97,5 +112,10 @@ typedef struct netif {
 
 netif_t *net_get_interfaces(void);
 
+void net_local_addr_from_fd(net_addr_t *na, int fd);
+
+void net_remote_addr_from_fd(net_addr_t *na, int fd);
+
+void net_fmt_host(char *dst, size_t dstlen, const net_addr_t *na);
 
 #endif /* NET_H__ */

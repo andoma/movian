@@ -271,6 +271,7 @@ typedef struct inithelper {
     INIT_GROUP_API,
     INIT_GROUP_IPC,
     INIT_GROUP_STATIC_APPS,
+    INIT_GROUP_ASYNCIO,
   } group;
   void (*fn)(void);
 } inithelper_t;

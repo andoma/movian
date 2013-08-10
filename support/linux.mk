@@ -9,6 +9,7 @@ SRCS += src/arch/linux/linux_main.c \
 	src/arch/linux/linux_trap.c \
 	src/arch/posix/posix.c \
 	src/arch/posix/posix_threads.c \
+	src/networking/asyncio_posix.c \
 	src/networking/net_posix.c \
 	src/networking/net_ifaddr.c \
 	src/fileaccess/fa_opencookie.c \

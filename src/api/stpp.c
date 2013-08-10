@@ -347,7 +347,7 @@ stpp_cmd_sub(stpp_t *stpp, unsigned int id, int propref, const char *path)
 
   ss->ss_stpp = stpp;
   ss->ss_sub = prop_subscribe(PROP_SUB_ALT_PATH,
-			      PROP_TAG_COURIER, http_get_courier(stpp->stpp_hc),
+			      PROP_TAG_COURIER, asyncio_courier,
 			      PROP_TAG_NAMESTR, path,
 			      PROP_TAG_CALLBACK, stpp_sub_json, ss,
 			      PROP_TAG_ROOT, p,
