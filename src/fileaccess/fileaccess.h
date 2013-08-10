@@ -156,6 +156,7 @@ typedef enum {
 
 
 fa_dir_t *fa_scandir(const char *url, char *errbuf, size_t errsize);
+int fa_scandir2(fa_dir_t *fd, const char *url, char *errbuf, size_t errsize);
 
 fa_dir_t *fa_get_parts(const char *url, char *errbuf, size_t errsize);
 

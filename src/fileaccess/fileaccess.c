@@ -376,6 +376,32 @@ fa_scandir(const char *url, char *errbuf, size_t errsize)
 /**
  *
  */
+int
+fa_scandir2(fa_dir_t *fd, const char *url, char *errbuf, size_t errsize)
+{
+  fa_protocol_t *fap;
+  char *filename;
+  int rval = 0;
+
+  if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
+    return -1;
+
+  if(fap->fap_scan != NULL) {
+    if(fap->fap_scan(fd, filename, errbuf, errsize))
+      rval = -1;
+
+  } else {
+    snprintf(errbuf, errsize, "Protocol does not implement directory scanning");
+    rval = -1;
+  }
+  free(filename);
+  return rval;
+}
+
+
+/**
+ *
+ */
 fa_dir_t *
 fa_get_parts(const char *url, char *errbuf, size_t errsize)
 {
