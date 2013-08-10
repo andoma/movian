@@ -159,6 +159,7 @@ SRCS +=	src/htsmsg/htsbuf.c \
 # Virtual FS system
 ##############################################################
 SRCS += src/fileaccess/fileaccess.c \
+	src/fileaccess/fa_vfs.c \
 	src/fileaccess/fa_fs.c \
 	src/fileaccess/fa_rar.c \
 	src/fileaccess/fa_http.c \
