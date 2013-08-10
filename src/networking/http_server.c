@@ -39,6 +39,7 @@
 #include "arch/arch.h"
 #include "asyncio.h"
 
+#include "upnp/upnp.h"
 
 static LIST_HEAD(, http_path) http_paths;
 LIST_HEAD(http_connection_list, http_connection); 
