@@ -214,7 +214,6 @@ db_upgrade_schema(sqlite3 *db, const char *schemadir, const char *dbname)
   char buf[256];
 
   db_one_statement(db, "pragma journal_mode=wal;", NULL);
-  db_one_statement(db, "pragma case_sensitive_like=1;", NULL);
 
   if(db_get_int_from_query(db, "pragma user_version", &ver)) {
     TRACE(TRACE_ERROR, "DB", "%s: Unable to query db version", dbname);
@@ -329,15 +328,53 @@ db_pool_create(const char *path, int size)
   return dp;
 }
 
+
+/**
+ *
+ */
+sqlite3 *
+db_open(const char *path, int flags)
+{
+  int rc;
+  sqlite3 *db;
+
+  rc = sqlite3_open_v2(path, &db,
+		       SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE |
+		       SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE,
+		       NULL);
+
+  if(rc) {
+    TRACE(TRACE_ERROR, "DB", "%s: Unable to open database: %s",
+	  path, sqlite3_errmsg(db));
+    sqlite3_close(db);
+    return NULL;
+  }
+
+  db_one_statement(db, "PRAGMA synchronous = normal", path);
+  if(flags & DB_OPEN_CASE_SENSITIVE_LIKE)
+    db_one_statement(db, "PRAGMA case_sensitive_like=1", path);
+  db_one_statement(db, "PRAGMA foreign_keys=1", path);
+
+  int freelist_count;
+  int page_count;
+
+  db_get_int_from_query(db, "PRAGMA freelist_count", &freelist_count);
+  db_get_int_from_query(db, "PRAGMA page_count",     &page_count);
+
+  TRACE(TRACE_DEBUG, "DB", "Opened database %s pages: free=%d total=%d",
+        path, freelist_count, page_count);
+
+  return db;
+}
+
+
 /**
  *
  */
 sqlite3 *
 db_pool_get(db_pool_t *dp)
 {
-  int rc;
   int i;
-  char *errmsg;
   sqlite3 *db;
 
   if(dp == NULL)
@@ -361,28 +398,7 @@ db_pool_get(db_pool_t *dp)
 
   hts_mutex_unlock(&dp->dp_mutex);
 
-  rc = sqlite3_open_v2(dp->dp_path, &db,
-		       SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | 
-		       SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE,
-		       NULL);
-
-  if(rc) {
-    TRACE(TRACE_ERROR, "DB", "%s: Unable to open database: %s",
-	  dp->dp_path, sqlite3_errmsg(db));
-    sqlite3_close(db);
-    return NULL;
-  }
-
-  rc = sqlite3_exec(db, "PRAGMA synchronous = normal;", NULL, NULL, &errmsg);
-  if(rc) {
-    TRACE(TRACE_ERROR, 
-	  "DB", "%s: Unable to set synchronous mode to NORMAL: %s",
-	  dp->dp_path, errmsg);
-    sqlite3_free(errmsg);
-    sqlite3_close(db);
-    return NULL;
-  }
-  return db;
+  return db_open(dp->dp_path, DB_OPEN_CASE_SENSITIVE_LIKE);
 }
 
 /**

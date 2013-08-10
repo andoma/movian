@@ -31,6 +31,10 @@ int db_preparex(sqlite3 *db, sqlite3_stmt **ppStmt, const char *zSql,
 #define db_rollback_deadlock(db) db_rollback_deadlock0(db, __FUNCTION__)
 
 
+#define DB_OPEN_CASE_SENSITIVE_LIKE 0x1
+
+sqlite3 *db_open(const char *path, int flags);
+
 int db_upgrade_schema(sqlite3 *db, const char *schemadir, const char *dbname);
 
 typedef struct db_pool db_pool_t;

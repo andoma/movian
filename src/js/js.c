@@ -1189,6 +1189,7 @@ static JSFunctionSpec plugin_functions[] = {
     JS_FS("addItemHook",         js_addItemHook, 1, 0, 0),
     JS_FS("copyFile",         js_copyfile, 2, 0, 0),
     JS_FS("selectView",       js_selectView, 1, 0, 0),
+    JS_FS("openDb",           js_db_open, 1, 0, 0),
     JS_FS_END
 };
 
