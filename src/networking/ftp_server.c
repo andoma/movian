@@ -153,7 +153,7 @@ ftp_write(ftp_connection_t *fc, int code, const char *fmt, ...)
           "FTP-SERVER", "SEND: %s", buf);
 
   len += snprintf(buf + len, sizeof(buf) - len, "\r\n");
-  fc->fc_tc->write(fc->fc_tc, buf, len);
+  tcp_write_data(fc->fc_tc, buf, len);
 }
 
 

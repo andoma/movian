@@ -33,7 +33,7 @@
 #include <pthread.h>
 
 #include "showtime.h"
-#include "net.h"
+#include "net_i.h"
 
 
 #if ENABLE_HTTPSERVER

@@ -19,7 +19,7 @@
 #include <stdlib.h>
 
 #include "misc/minmax.h"
-#include "net.h"
+#include "net_i.h"
 
 /**
  *
@@ -153,7 +153,7 @@ tcp_read_line(tcpcon_t *tc, char *buf,const size_t bufsize)
  *
  */
 int
-tcp_read_data(tcpcon_t *tc, char *buf, size_t bufsize,
+tcp_read_data(tcpcon_t *tc, void *buf, size_t bufsize,
 	      net_read_cb_t *cb, void *opaque)
 {
   int r = buf ? htsbuf_read(&tc->spill, buf, bufsize) :
@@ -265,3 +265,12 @@ net_fmt_host(char *dst, size_t dstlen, const net_addr_t *na)
   }
 }
 
+
+/**
+ *
+ */
+int
+tcp_write_data(tcpcon_t *tc, const char *buf, const size_t bufsize)
+{
+  return tc->write(tc, buf, bufsize);
+}
