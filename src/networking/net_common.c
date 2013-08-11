@@ -18,6 +18,8 @@
 
 #include <stdlib.h>
 
+#include <sys/socket.h>
+
 #include "misc/minmax.h"
 #include "net_i.h"
 
