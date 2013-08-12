@@ -769,7 +769,6 @@ static int ftp_server_port, ftp_server_enable;
 static void
 enable_disable(void)
 {
-  printf("enable:%d port:%d\n", ftp_server_enable, ftp_server_port);
   if(ftp_server_port && ftp_server_enable) {
 
     if(ftp_server_fd && asyncio_get_port(ftp_server_fd) == ftp_server_port)
