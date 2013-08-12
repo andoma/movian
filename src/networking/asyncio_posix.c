@@ -22,7 +22,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#include <fcntl.h>
 #include <poll.h>
 #include <errno.h>
 #include <netinet/in.h>
@@ -172,7 +171,7 @@ asyncio_add_fd(int fd, int events, asyncio_fd_callback_t *cb, void *opaque)
   af->af_callback = cb;
   af->af_opaque = opaque;
 
-  fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
+  net_change_nonblocking(fd, 1);
 
   LIST_INSERT_HEAD(&asyncio_fds, af, af_link);
   asyncio_num_fds++;
@@ -254,7 +253,7 @@ asyncio_accept(asyncio_fd_t *af, void *opaque, int events)
   int fd, val;
 
   fd = accept(af->af_fd, (struct sockaddr *)&si, &sl);
-  fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) & ~O_NONBLOCK);
+  net_change_nonblocking(fd, 0);
 
   if(fd == -1) {
     TRACE(TRACE_ERROR, "TCP", "%s: Accept error: %s", strerror(errno));

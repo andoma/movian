@@ -435,3 +435,14 @@ void
 net_initialize(void)
 {
 }
+
+
+/**
+ *
+ */
+void
+net_change_nonblocking(int fd, int on)
+{
+  int optval = on;
+  netSetSockOpt(fd, SOL_SOCKET, SO_NBIO, &optval, sizeof(optval));
+}

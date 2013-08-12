@@ -551,3 +551,19 @@ net_initialize(void)
   CRYPTO_set_id_callback(ssl_tid_fn);
 #endif
 }
+
+
+/**
+ *
+ */
+void
+net_change_nonblocking(int fd, int on)
+{
+  int flags = fcntl(fd, F_GETFL);
+  if(on) {
+    flags |= O_NONBLOCK;
+  } else {
+    flags &= ~O_NONBLOCK;
+  }
+  fcntl(fd, F_SETFL, flags);
+}

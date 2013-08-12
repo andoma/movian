@@ -68,8 +68,7 @@ void tcp_huge_buffer(tcpcon_t *tc);
 
 void tcp_shutdown(tcpcon_t *tc);
 
-
-
+void net_change_nonblocking(int fd, int on);
 
 typedef struct netif {
   uint32_t ipv4;
