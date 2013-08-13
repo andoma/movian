@@ -16,12 +16,24 @@ for opt do
   case "$opt" in
   --help) show_help
   ;;
+  --ndk=*) NDK="$optval"
+  ;;
   *)
   common_opt $opt $optval
   esac
 done
 
-TOOLCHAIN=${TOPDIR}/build.android/tc/bin/arm-linux-androideabi-
+TOOLCHAIN=${TOPDIR}/build.android/toolchain/bin/arm-linux-androideabi-
+
+if [ ! -f "${TOOLCHAIN}gcc" ]; then
+    echo "Installing toolchain..."
+    if [ ! -f "${NDK}/build/tools/make-standalone-toolchain.sh" ]; then
+        echo "NDK not found, either set NDK environment varable or specify --ndk=/path/to/ndk"
+        die
+    fi
+    ${NDK}/build/tools/make-standalone-toolchain.sh --platform=android-18 --install-dir=${TOPDIR}/build.android/toolchain
+fi
+
 
 CC=${TOOLCHAIN}gcc
 CXX=${TOOLCHAIN}g++
