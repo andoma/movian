@@ -141,6 +141,23 @@ js_prop_int_or_default(JSContext *cx, JSObject *o, const char *prop, int d)
 /**
  *
  */
+int64_t
+js_prop_int64_or_default(JSContext *cx, JSObject *o, const char *prop,
+                         int64_t d)
+{
+  jsval val;
+  if(!JS_GetProperty(cx, o, prop, &val))
+    return d;
+  double v;
+  if(!JSVAL_IS_NUMBER(val) || !JS_ValueToNumber(cx, val, &v))
+    return d;
+  return v;
+}
+
+
+/**
+ *
+ */
 void
 js_set_prop_str(JSContext *cx, JSObject *o, const char *prop, const char *str)
 {
@@ -1100,6 +1117,7 @@ js_plugin_unload0(JSContext *cx, js_plugin_t *jsp)
   js_event_destroy_handlers(cx, &jsp->jsp_event_handlers);
   js_subscription_flush_from_list(cx, &jsp->jsp_subscriptions);
   js_subprovider_flush_from_plugin(cx, jsp);
+  js_faprovider_flush_from_plugin(cx, jsp);
   js_hook_flush_from_plugin(cx, jsp);
 }
 
@@ -1198,6 +1216,7 @@ static JSFunctionSpec plugin_functions[] = {
     JS_FS("getDescriptor",    js_get_descriptor, 0, 0, 0),
     JS_FS("subscribe",        js_subscribe_global, 2, 0, 0),
     JS_FS("addSubtitleProvider", js_addsubprovider, 1, 0, 0),
+    JS_FS("addFileAccessProvider", js_addfaprovider, 1, 0, 0),
     JS_FS("addItemHook",         js_addItemHook, 1, 0, 0),
     JS_FS("copyFile",         js_copyfile, 2, 0, 0),
     JS_FS("selectView",       js_selectView, 1, 0, 0),
