@@ -917,6 +917,12 @@ settings_init(void)
 		     _p("System related settings"),
 		     "settings:general");
 
+
+  gconf.settings_network =
+    settings_add_dir(NULL, _p("Network settings"), "network", NULL,
+                     _p("Network services, etc"),
+                     "settings:network");
+
   // Look and feel settings
 
   prop_t *lnf =

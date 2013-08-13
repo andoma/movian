@@ -27,7 +27,7 @@
 #include <stdio.h>
 #include <math.h>
 
-//#include <libavutil/mem.h>
+#include <libavutil/mem.h>
 
 #include "showtime.h"
 #include "video_decoder.h"

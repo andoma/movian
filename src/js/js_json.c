@@ -27,8 +27,6 @@
 #include "js.h"
 #include "blobcache.h"
 
-static int json_encode_from_object(JSContext *cx, JSObject *obj,
-				   htsbuf_queue_t *out);
 /**
  *
  */
@@ -73,7 +71,7 @@ js_json_emit_jsval(JSContext *cx, jsval value, htsbuf_queue_t *out)
     if(!strcmp(c->name, "XML"))   // Treat some classes special
       js_json_emit_str(cx, value, out);
     else {
-      if(json_encode_from_object(cx, obj, out))
+      if(js_json_encode_from_object(cx, obj, out))
 	htsbuf_append(out, "null", 4);
     }
   }
@@ -85,8 +83,8 @@ js_json_emit_jsval(JSContext *cx, jsval value, htsbuf_queue_t *out)
 /**
  *
  */
-static int
-json_encode_from_object(JSContext *cx, JSObject *obj, htsbuf_queue_t *out)
+int
+js_json_encode_from_object(JSContext *cx, JSObject *obj, htsbuf_queue_t *out)
 {
   int objtype = 0;
   JSIdArray *ida;
@@ -173,7 +171,7 @@ js_json_encode(JSContext *cx, JSObject *obj,
 
   htsbuf_queue_init(&out, 0);
 
-  json_encode_from_object(cx, o, &out);
+  js_json_encode_from_object(cx, o, &out);
 
   len = out.hq_size;
   r = malloc(out.hq_size+1);
@@ -324,7 +322,7 @@ js_cache_put(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 
   // json encode object
   htsbuf_queue_init(&out, 0);
-  if (json_encode_from_object(cx, o, &out) != 0) {
+  if (js_json_encode_from_object(cx, o, &out) != 0) {
     JS_ReportError(cx, "Not an JSON object");
     return JS_FALSE;
   }

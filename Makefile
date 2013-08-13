@@ -159,6 +159,7 @@ SRCS +=	src/htsmsg/htsbuf.c \
 # Virtual FS system
 ##############################################################
 SRCS += src/fileaccess/fileaccess.c \
+	src/fileaccess/fa_vfs.c \
 	src/fileaccess/fa_fs.c \
 	src/fileaccess/fa_rar.c \
 	src/fileaccess/fa_http.c \
@@ -226,6 +227,7 @@ SRCS-$(CONFIG_AIRPLAY) += src/api/airplay.c
 ##############################################################
 SRCS += src/networking/net_common.c \
 	src/networking/http.c \
+	src/networking/ftp_server.c \
 
 SRCS-$(CONFIG_HTTPSERVER) += src/networking/http_server.c
 SRCS-$(CONFIG_HTTPSERVER) += src/networking/ssdp.c
@@ -546,6 +548,7 @@ SRCS-$(CONFIG_SPIDERMONKEY) += ext/spidermonkey/jsapi.c	\
                         src/js/js_event.c               \
                         src/js/js_metaprovider.c        \
                         src/js/js_hook.c                \
+                        src/js/js_db.c                  \
 
 ${BUILDDIR}/ext/spidermonkey/%.o : CFLAGS = \
 	-Iext/spidermonkey -Isrc/arch/nspr

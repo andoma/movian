@@ -42,9 +42,15 @@
 #endif
 
 #if ENABLE_OPENSSL
+#include <openssl/ssl.h>
+#include <openssl/err.h>
 #include <openssl/hmac.h>
 #endif
 
+#if ENABLE_POLARSSL
+#include "polarssl/net.h"
+#include "polarssl/havege.h"
+#endif
 
 static uint8_t nonce[20];
 

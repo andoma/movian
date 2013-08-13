@@ -54,6 +54,7 @@ xmp_setup
 # libspotify_setup "12.1.103-Linux-armv6-bcm2708hardfp"
 
 cat >> ${CONFIG_MAK} <<EOF
+LDFLAGS_cfg +=  -lGLESv2 -llog
 EOF
 
 finalize

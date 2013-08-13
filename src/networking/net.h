@@ -20,62 +20,44 @@
 #define NET_H__
 
 #include "config.h"
-
-#if ENABLE_OPENSSL
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#endif
-
-#if ENABLE_POLARSSL
-#include "polarssl/net.h"
-#include "polarssl/ssl.h"
-#include "polarssl/havege.h"
-#endif
-
-
 #include <sys/types.h>
 #include <stdint.h>
 #include "htsmsg/htsbuf.h"
 
 
+typedef struct net_addr {
+  // Somewhat less retarded struct for passing IP addresses
+
+  uint8_t na_family;
+  uint16_t na_port;   // host order
+  uint8_t na_addr[16];
+
+} net_addr_t;
+
+
+
 typedef int (net_read_cb_t)(void *opaque, int done);
 
-typedef struct tcpcon {
-  int fd;
-
-  htsbuf_queue_t spill;
-
-  int (*write)(struct tcpcon *, const void *, size_t);
-  int (*read)(struct tcpcon *, void *, size_t, int,
-	      net_read_cb_t *cb, void *opaque);
-
-#if ENABLE_OPENSSL
-  SSL *ssl;
-#endif
-
-#if ENABLE_POLARSSL
-    ssl_context *ssl;
-    ssl_session *ssn;
-    havege_state *hs;
-#endif
-
-} tcpcon_t;
-
+typedef struct tcpcon tcpcon_t;
 
 void net_initialize(void);
 
 tcpcon_t *tcp_connect(const char *hostname, int port, char *errbuf,
 		      size_t errbufsize, int timeout, int ssl);
 
+tcpcon_t *tcp_from_fd(int fd);
+
 int tcp_write_queue(tcpcon_t *nc, htsbuf_queue_t *q);
 
 int tcp_write_queue_dontfree(tcpcon_t *nc, htsbuf_queue_t *q);
 
+void tcp_printf(tcpcon_t *tc, const char *fmt, ...);
+
 int tcp_read_line(tcpcon_t *nc, char *buf, const size_t bufsize);
 
-#define tcp_write_data(tc, data, len) ((tc)->write(tc, data, len))
+int tcp_write_data(tcpcon_t *nc, const char *buf, const size_t bufsize);
 
-int tcp_read_data(tcpcon_t *nc, char *buf, const size_t bufsize,
+int tcp_read_data(tcpcon_t *nc, void *buf, const size_t bufsize,
 		  net_read_cb_t *cb, void *opaque);
 
 int tcp_read_data_nowait(tcpcon_t *nc, char *buf, const size_t bufsize);
@@ -86,8 +68,7 @@ void tcp_huge_buffer(tcpcon_t *tc);
 
 void tcp_shutdown(tcpcon_t *tc);
 
-
-
+void net_change_nonblocking(int fd, int on);
 
 typedef struct netif {
   uint32_t ipv4;
@@ -97,5 +78,10 @@ typedef struct netif {
 
 netif_t *net_get_interfaces(void);
 
+void net_local_addr_from_fd(net_addr_t *na, int fd);
+
+void net_remote_addr_from_fd(net_addr_t *na, int fd);
+
+void net_fmt_host(char *dst, size_t dstlen, const net_addr_t *na);
 
 #endif /* NET_H__ */

@@ -5,6 +5,7 @@
 #if ENABLE_LIBAV
 
 #include <libavutil/md5.h>
+#include <libavutil/mem.h>
 
 #define md5_decl(ctx) struct AVMD5 *ctx = NULL;
 

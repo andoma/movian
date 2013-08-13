@@ -10,6 +10,7 @@
 
 extern prop_courier_t *js_global_pc;
 extern JSContext *js_global_cx;
+struct htsbuf_queue;
 
 LIST_HEAD(js_route_list, js_route);
 LIST_HEAD(js_searcher_list, js_searcher);
@@ -161,6 +162,9 @@ JSBool js_json_encode(JSContext *cx, JSObject *obj,
 JSBool  js_json_decode(JSContext *cx, JSObject *obj,
 		       uintN argc, jsval *argv, jsval *rval);
 
+int js_json_encode_from_object(JSContext *cx, JSObject *obj,
+                               struct htsbuf_queue *out);
+
 JSBool js_cache_put(JSContext *cx, JSObject *obj, uintN argc,
 		    jsval *argv, jsval *rval);
 
@@ -172,6 +176,9 @@ JSBool js_get_descriptor(JSContext *cx, JSObject *obj, uintN argc,
 
 JSBool js_subscribe_global(JSContext *cx, JSObject *obj, uintN argc,
 			   jsval *argv, jsval *rval);
+
+JSBool js_db_open(JSContext *cx, JSObject *obj, uintN argc,
+                  jsval *argv, jsval *rval);
 
 struct http_auth_req;
 int js_http_auth_try(const char *url, struct http_auth_req *har);

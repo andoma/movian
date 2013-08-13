@@ -21,10 +21,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <poll.h>
 #include <errno.h>
-
 #include <netinet/in.h>
 
 #include <libavutil/base64.h>
@@ -40,12 +37,13 @@
 #include "misc/sha.h"
 #include "prop/prop.h"
 #include "arch/arch.h"
+#include "asyncio.h"
 
+#include "upnp/upnp.h"
 
-int http_server_port;
 static LIST_HEAD(, http_path) http_paths;
 LIST_HEAD(http_connection_list, http_connection); 
-
+int http_server_port;
 
 /**
  *
@@ -68,9 +66,9 @@ typedef struct http_path {
  */
 struct http_connection {
   
-  LIST_ENTRY(http_connection) hc_link;
   int hc_fd;
-  int hc_events;
+
+  asyncio_fd_t *hc_afd;
 
   int hc_state;
 #define HCS_COMMAND   0
@@ -104,12 +102,13 @@ struct http_connection {
   size_t hc_post_len;
   size_t hc_post_offset;
 
-  char hc_myaddr[32];
+
+  net_addr_t hc_local_addr;
 
   const http_path_t *hc_path;
   void *hc_opaque;
 
-  struct http_server *hc_server;
+  char hc_my_addr[128]; // hc_local_addr as text
 };
 
 
@@ -134,22 +133,7 @@ static struct strtab HTTP_versiontab[] = {
 };
 
 
-
-/**
- *
- */
-typedef struct http_server {
-  int hs_numcon;
-  int hs_fd;
-  int hs_pipe[2];
-
-  int hs_fds_size;
-  struct pollfd *hs_fds;
-
-  struct http_connection_list hs_connections;
-  prop_courier_t *hs_courier;
-
-} http_server_t;
+static asyncio_fd_t *http_server_fd;
 
 static int http_write(http_connection_t *hc);
 
@@ -1163,7 +1147,8 @@ http_write(http_connection_t *hc)
     if(r != l) {
       // Failed to write it all
       hd->hd_data_off += r;
-      hc->hc_events |= POLLOUT;
+
+      asyncio_add_events(hc->hc_afd, ASYNCIO_WRITE);
       return 0;
     }
 
@@ -1171,7 +1156,7 @@ http_write(http_connection_t *hc)
     free(hd->hd_data);
     free(hd);
   }
-  hc->hc_events &= ~POLLOUT;
+  asyncio_rem_events(hc->hc_afd, ASYNCIO_WRITE);
   return 0;
 }
 
@@ -1180,16 +1165,16 @@ http_write(http_connection_t *hc)
  *
  */
 static int
-http_io(http_connection_t *hc, int revents)
+http_io(http_connection_t *hc, int events)
 {
   int r;
-  if(revents & (POLLHUP | POLLERR))
+  if(events & ASYNCIO_ERROR)
     return 1;
 
-  if(revents & POLLIN) {
+  if(events & ASYNCIO_READ) {
     int rlen = 1000;
     char *mem = malloc(rlen);
-    
+
     r = read(hc->hc_fd, mem, rlen);
     if(r > 0) {
       htsbuf_append_prealloc(&hc->hc_input, mem, r);
@@ -1209,7 +1194,7 @@ http_io(http_connection_t *hc, int revents)
  *
  */
 static void
-http_close(http_server_t *hs, http_connection_t *hc)
+http_close(http_connection_t *hc)
 {
   hsprintf("%p: ----------------- CLOSED CONNECTION\n", hc);
   htsbuf_queue_flush(&hc->hc_input);
@@ -1217,9 +1202,8 @@ http_close(http_server_t *hs, http_connection_t *hc)
   http_headers_free(&hc->hc_req_args);
   http_headers_free(&hc->hc_request_headers);
   http_headers_free(&hc->hc_response_headers);
-  LIST_REMOVE(hc, hc_link);
-  hs->hs_numcon--;
   close(hc->hc_fd);
+  asyncio_del_fd(hc->hc_afd);
   free(hc->hc_url);
   free(hc->hc_url_orig);
   free(hc->hc_post_data);
@@ -1233,16 +1217,35 @@ http_close(http_server_t *hs, http_connection_t *hc)
 /**
  *
  */
+static void
+http_io_callback(asyncio_fd_t *af, void *opaque, int events)
+{
+  http_connection_t *hc = opaque;
+  if(http_io(opaque, events))
+    http_close(hc);
+}
+
+
+
+/**
+ *
+ */
 const char *
 http_get_my_host(http_connection_t *hc)
 {
-  return hc->hc_myaddr;
+  if(!hc->hc_my_addr)
+    net_fmt_host(hc->hc_my_addr, sizeof(hc->hc_my_addr), &hc->hc_local_addr);
+  return hc->hc_my_addr;
 }
 
+
+/**
+ *
+ */
 int
 http_get_my_port(http_connection_t *hc)
 {
-  return http_server_port;
+  return hc->hc_local_addr.na_port;
 }
 
 
@@ -1250,127 +1253,17 @@ http_get_my_port(http_connection_t *hc)
  *
  */
 static void
-http_accept(http_server_t *hs)
+http_accept(void *opaque, int fd, const net_addr_t *local_addr,
+            const net_addr_t *remote_addr)
 {
-  struct sockaddr_in si;
-  socklen_t sl = sizeof(struct sockaddr_in);
-  int fd, val;
-  http_connection_t *hc;
-  socklen_t slen;
-  struct sockaddr_in self;
-
-  fd = accept(hs->hs_fd, (struct sockaddr *)&si, &sl);
-
-  if(fd == -1) {
-    TRACE(TRACE_ERROR, "HTTPSRV", "Accept error: %s", strerror(errno));
-    sleep(1);
-    return;
-  }
-
-  hc = calloc(1, sizeof(http_connection_t));
-  hc->hc_server = hs;
+  http_connection_t *hc = calloc(1, sizeof(http_connection_t));
   hc->hc_fd = fd;
-  hc->hc_events = POLLIN | POLLHUP | POLLERR;
-  LIST_INSERT_HEAD(&hs->hs_connections, hc, hc_link);
-  hs->hs_numcon++;
+  hc->hc_afd = asyncio_add_fd(fd, ASYNCIO_READ | ASYNCIO_ERROR,
+                              http_io_callback, hc);
   htsbuf_queue_init(&hc->hc_input, 0);
   htsbuf_queue_init(&hc->hc_output, 0);
 
-  fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
-
-  val = 1;
-  setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &val, sizeof(val));
-  
-#ifdef TCP_KEEPIDLE
-  val = 30;
-  setsockopt(fd, IPPROTO_TCP, TCP_KEEPIDLE, &val, sizeof(val));
-#endif
-
-#ifdef TCP_KEEPINVL
-  val = 15;
-  setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL, &val, sizeof(val));
-#endif
-
-#ifdef TCP_KEEPCNT
-  val = 5;
-  setsockopt(fd, IPPROTO_TCP, TCP_KEEPCNT, &val, sizeof(val));
-#endif
-
-#ifdef TCP_NODELAY
-  val = 1;
-  setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &val, sizeof(val));
-#endif
-
-  slen = sizeof(struct sockaddr_in);
-  if(!getsockname(fd, (struct sockaddr *)&self, &slen)) {
-    uint32_t ip = ntohl(self.sin_addr.s_addr);
-    snprintf(hc->hc_myaddr, sizeof(hc->hc_myaddr),
-	     "%d.%d.%d.%d",
-	     (ip >> 24) & 0xff,
-	     (ip >> 16) & 0xff,
-	     (ip >> 8)  & 0xff,
-	     (ip)       & 0xff);
-  } else {
-    hc->hc_myaddr[0] = 0;
-  }
-  hsprintf("%p: ----------------- NEW CONNECTION\n", hc);
-}
-
-
-/**
- *
- */
-static void *
-http_server(void *aux)
-{
-  http_server_t *hs = aux;
-  int n, r;
-  http_connection_t *hc, *nxt;
-
-  while(1) {
-    n = hs->hs_numcon + 2;
-
-    if(hs->hs_fds_size < n) {
-      hs->hs_fds_size = n + 3;
-      hs->hs_fds = realloc(hs->hs_fds, sizeof(struct pollfd) * hs->hs_fds_size);
-    }
-
-    n = 0;
-    LIST_FOREACH(hc, &hs->hs_connections, hc_link) {
-      hs->hs_fds[n].fd = hc->hc_fd;
-      hs->hs_fds[n].events = hc->hc_events;
-      n++;
-    }
-
-    hs->hs_fds[n].fd = hs->hs_fd;
-    hs->hs_fds[n].events = POLLIN;
-    n++;
-    hs->hs_fds[n].fd = hs->hs_pipe[0];
-    hs->hs_fds[n].events = POLLIN;
-    n++;
-    r = poll(hs->hs_fds, n, -1);
-
-    if(r == -1)
-      continue;
-
-    n = 0;
-    for(hc = LIST_FIRST(&hs->hs_connections); hc != NULL; hc = nxt) {
-      nxt = LIST_NEXT(hc, hc_link);
-
-      if(http_io(hc, hs->hs_fds[n].revents)) {
-	http_close(hs, hc);
-      }
-      n++;
-    }
-    if(hs->hs_fds[n].revents & POLLIN)
-      http_accept(hs);
-    if(hs->hs_fds[n+1].revents & POLLIN) {
-      char dump;
-      if(read(hs->hs_pipe[0], &dump, 1) == 1)
-	prop_courier_poll(hs->hs_courier);
-    }
-  }
-  return NULL;
+  hc->hc_local_addr  = *local_addr;
 }
 
 
@@ -1378,75 +1271,18 @@ http_server(void *aux)
  *
  */
 static void
-http_courier_notify(void *opaque)
-{
-  http_server_t *hs = opaque;
-  if(write(hs->hs_pipe[1], "x", 1) != 1)
-    TRACE(TRACE_ERROR, "HTTP", "Pipe problems");
-}
-
-
-
-/**
- *
- */
-void
 http_server_init(void)
 {
-  int fd;
-  struct sockaddr_in si = {0};
-  socklen_t sl = sizeof(struct sockaddr_in);
-  int one = 1, i;
-  http_server_t *hs;
+  http_server_fd = asyncio_listen("http-server",
+                                  42000,
+                                  http_accept,
+                                  NULL, 1);
 
-  if((fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1)
-    return;
-
-  si.sin_family = AF_INET;
-
-  setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(int));
-
-  for(i = 0; i < 100; i++) {
-    si.sin_port = htons(42000 + i);
-    if(!bind(fd, (struct sockaddr *)&si, sizeof(struct sockaddr_in)))
-      break;
+  if(http_server_fd != NULL) {
+    http_server_port = asyncio_get_port(http_server_fd);
+    if(!gconf.disable_upnp)
+      upnp_init();
   }
-
-  if(i == 100) {
-    si.sin_port = 0;
-    if(bind(fd, (struct sockaddr *)&si, sizeof(struct sockaddr_in)) == -1) {
-      TRACE(TRACE_ERROR, "HTTPSRV", "Unable to bind");
-      close(fd);
-      return;
-    }
-    if(getsockname(fd, (struct sockaddr *)&si, &sl) == -1) {
-      TRACE(TRACE_ERROR, "HTTPSRV", "Unable to figure local port");
-      close(fd);
-      return;
-    }
-    http_server_port = ntohs(si.sin_port);
-  } else {
-    http_server_port = 42000 + i;
-  }
-
-  TRACE(TRACE_INFO, "HTTPSRV", "Listening on port %d", http_server_port);
-
-  listen(fd, 1);
-  hs = calloc(1, sizeof(http_server_t));
-
-  arch_pipe(hs->hs_pipe);
-  hs->hs_fd = fd;  
-  hs->hs_courier = prop_courier_create_notify(http_courier_notify, hs);
-  hts_thread_create_detached("httpsrv", http_server, hs,
-			     THREAD_PRIO_MODEL);
 }
 
-
-/**
- *
- */
-prop_courier_t *
-http_get_courier(http_connection_t *hc)
-{
-  return hc->hc_server->hs_courier;
-}
+INITME(INIT_GROUP_ASYNCIO, http_server_init);

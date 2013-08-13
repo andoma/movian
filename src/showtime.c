@@ -58,11 +58,8 @@
 #if ENABLE_GLW
 #include "src/ui/glw/glw_settings.h"
 #endif
-#if ENABLE_HTTPSERVER
-#include "networking/http_server.h"
-#include "networking/ssdp.h"
-#include "upnp/upnp.h"
-#endif
+
+#include "networking/asyncio.h"
 
 #if ENABLE_LIBAV
 #include <libavformat/avformat.h>
@@ -322,12 +319,8 @@ showtime_init(void)
   /* Initialize various external APIs */
   init_group(INIT_GROUP_API);
 
-  /* HTTP server and UPNP */
-#if ENABLE_HTTPSERVER
-  http_server_init();
-  if(!gconf.disable_upnp)
-    upnp_init();
-#endif
+  /* Asynchronous IO (Used by HTTP server, etc) */
+  asyncio_init();
 
   runcontrol_init();
 }

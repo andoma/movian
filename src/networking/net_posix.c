@@ -33,7 +33,7 @@
 #include <pthread.h>
 
 #include "showtime.h"
-#include "net.h"
+#include "net_i.h"
 
 
 #if ENABLE_HTTPSERVER
@@ -230,6 +230,23 @@ getstreamsocket(int family, char *errbuf, size_t errbufsize)
 
   return fd;
 }
+
+
+/**
+ *
+ */
+tcpcon_t *
+tcp_from_fd(int fd)
+{
+  tcpcon_t *tc = calloc(1, sizeof(tcpcon_t));
+  tc->fd = fd;
+  htsbuf_queue_init(&tc->spill, 0);
+  tc->read = tcp_read;
+  tc->write = tcp_write;
+  return tc;
+}
+
+
 
 /**
  *
@@ -513,6 +530,8 @@ tcp_huge_buffer(tcpcon_t *tc)
 
 /**
  * Called from code in arch/
+ *
+ * XXX: Should be initialized from showtime.c
  */
 void
 net_initialize(void)
@@ -531,4 +550,20 @@ net_initialize(void)
   CRYPTO_set_locking_callback(ssl_lock_fn);
   CRYPTO_set_id_callback(ssl_tid_fn);
 #endif
+}
+
+
+/**
+ *
+ */
+void
+net_change_nonblocking(int fd, int on)
+{
+  int flags = fcntl(fd, F_GETFL);
+  if(on) {
+    flags |= O_NONBLOCK;
+  } else {
+    flags &= ~O_NONBLOCK;
+  }
+  fcntl(fd, F_SETFL, flags);
 }

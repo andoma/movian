@@ -97,6 +97,7 @@ static webpopup_t *wp_current;
     code = [((NSHTTPURLResponse *)response) statusCode];
 
   if(code != 200) {
+    TRACE(TRACE_DEBUG, "OSX-WEBKIT", "Error %d", code);
     [self shutdown:WEBPOPUP_LOAD_ERROR];
     return;
   }
@@ -167,7 +168,7 @@ static webpopup_t *wp_current;
 
     _webpopup = wp;
 
-    NSRect frame = NSMakeRect(300.0, 300.0, 600, 400);
+    NSRect frame = NSMakeRect(300.0, 300.0, 1280, 800);
     _window = [[NSWindow alloc] initWithContentRect:frame
                                           styleMask:NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask
                                             backing:NSBackingStoreBuffered
@@ -195,12 +196,12 @@ static webpopup_t *wp_current;
     [[_webview mainFrame] loadRequest:[NSURLRequest requestWithURL:[NSURL
                                                                       URLWithString:url]]];
 
-
+#if 0
     NSProgressIndicator *noteSpinner = [[[NSProgressIndicator alloc] initWithFrame:NSMakeRect(NSMidX(frame)-16, NSMidY(frame)-16, 32, 32)] autorelease];
     [noteSpinner setStyle:NSProgressIndicatorSpinningStyle];
     [noteSpinner startAnimation:self];
     [_webview addSubview:noteSpinner];
-
+#endif
   }
 
   return self;
