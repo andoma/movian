@@ -1,6 +1,6 @@
 language: Russian
 native: Русский 
-maintainer: pvc1 <pvc1@yandex.ru>
+maintainer: pvc1 <pvc1@yandex.ru>,thx to T915 <T915@inbox.ru> 
 #
 # ./glwskins/default/cmdmenu.view
 #
@@ -77,10 +77,10 @@ id: Delete
 msg: Удалить
 
 id: Mark as seen
-msg: Пометить как просмотренное
+msg: Пометить как воспроизведённое
 
 id: Mark as unseen
-msg: Пометить как непросмотренное
+msg: Пометить как невоспроизведённое
 
 id: Play from beginning
 msg: Воспроизведение с начала
@@ -311,8 +311,7 @@ id: Check for updates now
 msg: Проверить обновления сейчас
 
 id: Checking current installed version
-# Missing translation
-msg: 
+msg: Проверка текущей установленной версии
 
 id: Checking for updates...
 msg: Проверка обновлений...
@@ -336,8 +335,7 @@ id: No upgrade available
 msg: Нет обновлений
 
 id: Patching binary
-# Missing translation
-msg: 
+msg: Обновление файлов
 
 id: Restarting Showtime in %d seconds...
 msg: Перезапуск Showtime через %d секунд...
@@ -370,8 +368,7 @@ msg: Статус воспроизведения
 # ./glwskins/default/pages/wideinfo/video.view
 #
 id: Seen:
-# Missing translation
-msg: 
+msg: Воспроизведено:
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -596,7 +593,7 @@ id: Date (oldest first)
 msg: Дата (сперва старые)
 
 id: Deleted %s
-msg: Удаление %s
+msg: Удалено: %s
 
 id: Filename
 msg: Имя файла
@@ -638,23 +635,22 @@ id: File access
 msg: Доступ к файлу
 
 id: %d archive parts
-# Missing plural translation for '%d archive parts' and '%d archive part'
-msg[0]: 
-msg[1]: 
+msg[0]: частей архива: %d
+msg[1]: частей архива: %d
 
 id: %d directories
-msg[0]: %d директорий
-msg[1]: %d директория
+msg[0]: папок: %d
+msg[1]: папок: %d
 
 id: %d files
-msg[0]: %d файлов
-msg[1]: %d файл
+msg[0]: файлов: %d
+msg[1]: файлов: %d
 
 #
 # ./src/i18n.c
 #
 id: Ignore 'The' at beginning of words when sorting
-msg: Игнорировать 'The' в начале слова при сортировке
+msg: Игнорировать 'The' в начале названия при сортировке
 
 id: Language
 msg: Язык
@@ -717,12 +713,10 @@ id: Audio delay
 msg: Задержка аудио
 
 id: Audio volume
-# Missing translation
-msg: 
+msg: Громкость
 
 id: Go to standby after video ends
-# Missing translation
-msg: 
+msg: Отключить систему по окончании видео
 
 id: Stretch video to fullscreen
 msg: Растянуть видео во весь экран
@@ -734,15 +728,13 @@ id: Subtitle delay
 msg: Задержка субтитров
 
 id: Subtitle horizontal displacement
-# Missing translation
-msg: 
+msg: Горизонтальное смещение субтитров
 
 id: Subtitle scaling
 msg: Масштаб субтитров
 
 id: Subtitle vertical displacement
-# Missing translation
-msg: 
+msg: Вертикальное смещение субтитров
 
 id: Video zoom
 msg: Масштаб видео
@@ -760,20 +752,16 @@ id: Automatic
 msg: Автоматический
 
 id: Manual
-# Missing translation
-msg: 
+msg: Ручной
 
 id: Mark all as seen
-# Missing translation
-msg: 
+msg: Пометить всё как воспроизведённое
 
 id: Mark all as unseen
-# Missing translation
-msg: 
+msg: Пометить всё как невоспроизведённое
 
 id: Metadata mode
-# Missing translation
-msg: 
+msg: Режим получения метаданных
 
 #
 # ./src/metadata/metadata.c
@@ -1148,7 +1136,7 @@ id: Subtitle size and positioning
 msg: Размер и позиция субтитров
 
 id: Subtitles embedded in video file
-msg: Субтитры встроенные в видеофайл
+msg: Субтитры, встроенные в видеофайл
 
 id: Subtitles with matching filename in central folder
 msg: Субтитры с соответствующим именем файла в основной папке
@@ -1181,8 +1169,7 @@ id: Reset subtitle font to default
 msg: Сброс шрифта субтитров по умолчанию
 
 id: Unable to install font: %s
-# Missing translation
-msg: 
+msg: Невозможно установить шрифт: %s 
 
 id: Use font %s for
 msg: Использовать шрифт %s для
@@ -1194,19 +1181,16 @@ msg: Пользовательский интерфейс
 # ./src/ui/glw/glw_ps3.c
 #
 id: Seek using L2 and R2 button
-# Missing translation
-msg: 
+msg: Перемотка видео кнопками L2 и R2
 
 id: Yes with Select button
-# Missing translation
-msg: 
+msg: С нажатой кнопкой Select
 
 #
 # ./src/ui/glw/glw_settings.c
 #
 id: Font and icon size
-# Missing translation
-msg: 
+msg: Размер шрифта и значков
 
 id: Horizontal underscan
 msg: Горизонтальное сжатие
@@ -1214,9 +1198,8 @@ msg: Горизонтальное сжатие
 id: Screensaver delay
 msg: Задержка скринсейвера
 
-id: Veritcal underscan
-# Missing translation
-msg: 
+id: Vertical underscan
+msg: Вертикальное сжатие
 
 #
 # ./src/ui/glw/glw_x11.c
