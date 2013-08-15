@@ -312,7 +312,7 @@ lastfm_load_albuminfo(void *db, const char *album, const char *artist)
                HTTP_ARG("api_key", LASTFM_APIKEY),
                HTTP_RESULT_PTR(&result),
                HTTP_ERRBUF(errbuf, sizeof(errbuf)),
-               HTTP_FLAGS(FA_COMPRESSION | FA_DEBUG),
+               HTTP_FLAGS(FA_COMPRESSION),
                NULL);
 
   if(n) {
