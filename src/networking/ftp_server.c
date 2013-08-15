@@ -96,7 +96,7 @@ ftp_server_scandir(const char *url, char *errbuf, size_t errlen)
 {
   fa_dir_t *fd = fa_dir_alloc();
 
-  if(fa_protocol_vfs.fap_scan(fd, url, errbuf, errlen)) {
+  if(fa_protocol_vfs.fap_scan(&fa_protocol_vfs, fd, url, errbuf, errlen)) {
     fa_dir_free(fd);
     return NULL;
   }

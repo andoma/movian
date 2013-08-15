@@ -159,7 +159,8 @@ resolve_mapping(const char *path, char *newpath, size_t newpathlen)
  *
  */
 static int
-vfs_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
+vfs_scandir(fa_protocol_t *fap, fa_dir_t *fd, const char *url,
+            char *errbuf, size_t errlen)
 {
   char newpath[1024];
 

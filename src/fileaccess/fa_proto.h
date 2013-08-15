@@ -52,7 +52,7 @@ typedef struct fa_protocol {
   /**
    * Directory scan url for files. 
    */
-  int (*fap_scan)(fa_dir_t *fa, const char *url,
+  int (*fap_scan)(struct fa_protocol *fap, fa_dir_t *fa, const char *url,
 		  char *errbuf, size_t errsize);
 
   /**

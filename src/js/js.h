@@ -213,6 +213,8 @@ int js_prop_fn(JSContext *cx, JSObject *o, const char *prop, jsval *ret);
 
 int js_prop_int_or_default(JSContext *cx, JSObject *o, const char *prop, int d);
 
+int js_prop_bool(JSContext *cx, JSObject *o, const char *prop, int d);
+
 int64_t js_prop_int64_or_default(JSContext *cx, JSObject *o, const char *prop,
                                  int64_t d);
 

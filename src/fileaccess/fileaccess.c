@@ -396,7 +396,7 @@ fa_scandir(const char *url, char *errbuf, size_t errsize)
 
   if(fap->fap_scan != NULL) {
     fd = fa_dir_alloc();
-    if(fap->fap_scan(fd, filename, errbuf, errsize)) {
+    if(fap->fap_scan(fap, fd, filename, errbuf, errsize)) {
       fa_dir_free(fd);
       fd = NULL;
     }
@@ -424,7 +424,7 @@ fa_scandir2(fa_dir_t *fd, const char *url, char *errbuf, size_t errsize)
     return -1;
 
   if(fap->fap_scan != NULL) {
-    if(fap->fap_scan(fd, filename, errbuf, errsize))
+    if(fap->fap_scan(fap, fd, filename, errbuf, errsize))
       rval = -1;
 
   } else {

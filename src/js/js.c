@@ -141,6 +141,25 @@ js_prop_int_or_default(JSContext *cx, JSObject *o, const char *prop, int d)
 /**
  *
  */
+int
+js_prop_bool(JSContext *cx, JSObject *o, const char *prop, int d)
+{
+  jsval val;
+  if(!JS_GetProperty(cx, o, prop, &val))
+    return d;
+  if(JSVAL_IS_BOOLEAN(val)) {
+    printf("%s = %lx\n", prop, val);
+    return val == JSVAL_TRUE;
+  }
+  if(JSVAL_IS_INT(val))
+    return !!JSVAL_TO_INT(val);
+  return d;
+}
+
+
+/**
+ *
+ */
 int64_t
 js_prop_int64_or_default(JSContext *cx, JSObject *o, const char *prop,
                          int64_t d)

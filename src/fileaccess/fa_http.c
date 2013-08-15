@@ -1915,7 +1915,8 @@ again:
  *
  */
 static int
-http_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
+http_scandir(fa_protocol_t *fap, fa_dir_t *fd, const char *url,
+             char *errbuf, size_t errlen)
 {
   int retval;
   http_file_t *hf = calloc(1, sizeof(http_file_t));
@@ -2807,7 +2808,8 @@ dav_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
  *
  */
 static int
-dav_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
+dav_scandir(fa_protocol_t *fap, fa_dir_t *fd, const char *url,
+            char *errbuf, size_t errlen)
 {
   int retval;
   http_file_t *hf = calloc(1, sizeof(http_file_t));
