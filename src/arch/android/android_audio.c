@@ -1,0 +1,273 @@
+#include <assert.h>
+#include <string.h>
+
+#include <SLES/OpenSLES.h>
+#include <SLES/OpenSLES_Android.h>
+
+#include "audio2/audio.h"
+
+typedef struct decoder {
+  audio_decoder_t ad;
+  SLObjectItf d_engine;
+  SLObjectItf d_mixer;
+  SLObjectItf d_player;
+
+  // Interfaces
+
+  SLEngineItf d_eif;
+  SLPlayItf d_pif;
+  SLAndroidSimpleBufferQueueItf d_bif;
+
+
+  int d_framesize;
+  void *d_pcmbuf;
+
+  int d_pcmbuf_offset;
+  int d_pcmbuf_num_buffers;
+  int d_pcmbuf_size;
+
+  int d_avail_buffers;
+
+
+} decoder_t;
+
+static void buffer_callback(SLAndroidSimpleBufferQueueItf bq, void *context);
+
+/**
+ *
+ */
+static int
+android_audio_init(audio_decoder_t *ad)
+{
+  decoder_t *d = (decoder_t *)ad;
+
+
+  if(slCreateEngine(&d->d_engine, 0, NULL, 0, NULL, NULL)) {
+    TRACE(TRACE_ERROR, "SLES", "Unable to create engine");
+    return -1;
+  }
+
+  if((*d->d_engine)->Realize(d->d_engine, SL_BOOLEAN_FALSE)) {
+    TRACE(TRACE_ERROR, "SLES", "Unable to relize engine");
+    return -1;
+  }
+
+  if((*d->d_engine)->GetInterface(d->d_engine, SL_IID_ENGINE, &d->d_eif)) {
+    TRACE(TRACE_ERROR, "SLES", "Unable to get interface for engine");
+    return -1;
+  }
+
+  TRACE(TRACE_DEBUG, "SLES", "Engine opened");
+
+  if((*d->d_eif)->CreateOutputMix(d->d_eif, &d->d_mixer, 0, NULL, NULL)) {
+    TRACE(TRACE_ERROR, "SLES", "Unable to create output mixer");
+    return -1;
+  }
+
+  if((*d->d_mixer)->Realize(d->d_mixer, SL_BOOLEAN_FALSE)) {
+    TRACE(TRACE_ERROR, "SLES", "Unable to realize output mixer");
+    return -1;
+  }
+
+  TRACE(TRACE_DEBUG, "SLES", "Mixer opened");
+  return 0;
+}
+
+
+/**
+ *
+ */
+static void
+android_stop_player(decoder_t *d)
+{
+  d->d_avail_buffers = 0;
+  free(d->d_pcmbuf);
+
+  if(d->d_player != NULL) {
+    (*d->d_player)->Destroy(d->d_player);
+    d->d_player = NULL;
+    d->d_eif = NULL;
+    d->d_pif = NULL;
+    d->d_bif = NULL;
+  }
+}
+
+/**
+ *
+ */
+static void
+android_audio_fini(audio_decoder_t *ad)
+{
+  decoder_t *d = (decoder_t *)ad;
+
+  android_stop_player(d);
+  (*d->d_mixer)->Destroy(d->d_mixer);
+  (*d->d_engine)->Destroy(d->d_engine);
+}
+
+
+
+
+/**
+ *
+ */
+static int
+android_audio_reconfig(audio_decoder_t *ad)
+{
+  decoder_t *d = (decoder_t *)ad;
+
+  android_stop_player(d);
+
+  int num_buffers = 2;
+  int num_pcm_buffers = 2;
+
+  SLDataLocator_AndroidSimpleBufferQueue loc_bufq = {
+    SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE, num_buffers};
+
+  ad->ad_out_sample_format  = AV_SAMPLE_FMT_S16;
+  ad->ad_out_channel_layout = AV_CH_LAYOUT_STEREO;
+
+  d->d_framesize = 2 * sizeof(int16_t);
+
+  ad->ad_tile_size = 1024;
+
+  d->d_pcmbuf_size = d->d_framesize * ad->ad_tile_size;
+  d->d_pcmbuf = malloc(d->d_pcmbuf_size * num_pcm_buffers);
+
+  SLDataFormat_PCM format_pcm = {SL_DATAFORMAT_PCM,
+                                 2,
+                                 SL_SAMPLINGRATE_48,
+                                 SL_PCMSAMPLEFORMAT_FIXED_16,
+                                 SL_PCMSAMPLEFORMAT_FIXED_16,
+                                 SL_SPEAKER_FRONT_LEFT |
+                                 SL_SPEAKER_FRONT_RIGHT,
+                                 SL_BYTEORDER_LITTLEENDIAN};
+
+  ad->ad_out_sample_rate = ad->ad_in_sample_rate;
+  format_pcm.samplesPerSec = ad->ad_in_sample_rate * 1000;
+
+  SLDataSource audioSrc = {&loc_bufq, &format_pcm};
+
+  // configure audio sink
+  SLDataLocator_OutputMix loc_outmix = {SL_DATALOCATOR_OUTPUTMIX,
+                                        d->d_mixer};
+  SLDataSink audioSnk = {&loc_outmix, NULL};
+
+  // create audio player
+  const SLInterfaceID ids[2] = {SL_IID_BUFFERQUEUE, SL_IID_VOLUME};
+  const SLboolean req[2]     = {SL_BOOLEAN_TRUE,    SL_BOOLEAN_TRUE};
+
+  if((*d->d_eif)->CreateAudioPlayer(d->d_eif, &d->d_player,
+                                    &audioSrc, &audioSnk,
+                                    2, ids, req)) {
+    TRACE(TRACE_ERROR, "SLES", "Unable to create audio player");
+    return -1;
+  }
+
+  // realize the player
+  if((*d->d_player)->Realize(d->d_player, SL_BOOLEAN_FALSE)) {
+    TRACE(TRACE_ERROR, "SLES", "Unable to realize audio player");
+    return -1;
+  }
+
+  // get the play interface
+  if((*d->d_player)->GetInterface(d->d_player, SL_IID_PLAY, &d->d_pif)) {
+    TRACE(TRACE_ERROR, "SLES", "Unable to get player interface");
+    return -1;
+  }
+
+  // get the buffer queue interface
+  if((*d->d_player)->GetInterface(d->d_player, SL_IID_BUFFERQUEUE,
+                                  &d->d_bif)) {
+    TRACE(TRACE_ERROR, "SLES", "Unable to get buffer queue interface");
+    return -1;
+  }
+
+  // register callback on the buffer queue
+  if((*d->d_bif)->RegisterCallback(d->d_bif, buffer_callback, ad)) {
+    TRACE(TRACE_ERROR, "SLES", "Unable to register callback");
+    return -1;
+  }
+
+  // set the player's state to playing
+  if((*d->d_pif)->SetPlayState(d->d_pif, SL_PLAYSTATE_PLAYING)) {
+    TRACE(TRACE_ERROR, "SLES", "Unable to set playback state");
+    return -1;
+  }
+  d->d_avail_buffers = num_buffers;
+  d->d_pcmbuf_num_buffers = num_pcm_buffers;
+  return 0;
+}
+
+
+/**
+ *
+ */
+static void
+buffer_callback(SLAndroidSimpleBufferQueueItf bq, void *context)
+{
+  decoder_t *d = context;
+  media_pipe_t *mp = d->ad.ad_mp;
+  hts_mutex_lock(&mp->mp_mutex);
+  d->d_avail_buffers++;
+  hts_cond_signal(&mp->mp_audio.mq_avail);
+  hts_mutex_unlock(&mp->mp_mutex);
+}
+
+
+/**
+ *
+ */
+static int
+android_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
+{
+  decoder_t *d = (decoder_t *)ad;
+  SLresult result;
+
+  if(d->d_avail_buffers == 0)
+    return 1;
+
+  assert(samples <= ad->ad_tile_size);
+
+  void *pcm = d->d_pcmbuf + (d->d_pcmbuf_offset * d->d_pcmbuf_size);
+
+  uint8_t *data[8] = {0};
+  data[0] = pcm;
+  int r = avresample_read(ad->ad_avr, data, ad->ad_tile_size);
+  result = (*d->d_bif)->Enqueue(d->d_bif, pcm, r * d->d_framesize);
+
+  d->d_avail_buffers--;
+  d->d_pcmbuf_offset++;
+
+  if(d->d_pcmbuf_offset == d->d_pcmbuf_num_buffers)
+    d->d_pcmbuf_offset = 0;
+
+  if(result)
+    TRACE(TRACE_ERROR, "SLES", "Enqueue failed 0x%x", result);
+
+  return 0;
+}
+
+
+
+/**
+ *
+ */
+static audio_class_t android_audio_class = {
+  .ac_alloc_size     = sizeof(decoder_t),
+  .ac_init           = android_audio_init,
+  .ac_fini           = android_audio_fini,
+  .ac_reconfig       = android_audio_reconfig,
+  .ac_deliver_locked = android_audio_deliver,
+};
+
+
+/**
+ *
+ */
+audio_class_t *
+audio_driver_init(void)
+{
+  return &android_audio_class;
+}
+

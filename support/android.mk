@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := ${LIB}.so
 
 SRCS += src/arch/android/android.c \
-	src/arch/posix/posix_threads.c \
+	src/arch/android/android_threads.c \
 	src/networking/net_posix.c \
 	src/networking/asyncio_posix.c \
 	src/networking/net_android.c \
@@ -11,7 +11,10 @@ SRCS += src/arch/android/android.c \
 
 
 
-${BUILDDIR}/src/arch/android/android_glw.o : CFLAGS = ${OPTFLAGS} -Wall -Werror
+${BUILDDIR}/src/arch/android/%.o : CFLAGS = ${OPTFLAGS} \
+	-Wall -Werror -Wwrite-strings -Wno-deprecated-declarations \
+			-Wno-multichar -std=gnu99
+
 
 ${TOPDIR}/android/Showtime/libs/armeabi/libshowtime.so: ${LIB}.so
 	@mkdir -p $(dir $@)
