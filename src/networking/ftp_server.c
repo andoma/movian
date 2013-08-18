@@ -543,11 +543,6 @@ cmd_RETR(ftp_connection_t *fc, char *args)
   char pathbuf[1024];
   char errbuf[256];
 
-  if(fc->fc_type != 'I') {
-    ftp_write(fc, 550, "%s: File transfer not possible in ASCII mode", args);
-    return 0;
-  }
-
   construct_path(pathbuf, sizeof(pathbuf), fc, args);
 
   fa_handle_t *fh = ftp_server_open(pathbuf, errbuf, sizeof(errbuf), 0);
@@ -600,11 +595,6 @@ cmd_STOR(ftp_connection_t *fc, char *args)
 {
   char pathbuf[1024];
   char errbuf[256];
-
-  if(fc->fc_type != 'I') {
-    ftp_write(fc, 550, "%s: File transfer not possible in ASCII mode", args);
-    return 0;
-  }
 
   construct_path(pathbuf, sizeof(pathbuf), fc, args);
 
