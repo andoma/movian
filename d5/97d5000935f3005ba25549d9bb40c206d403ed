@@ -1,0 +1,5 @@
+Fix problem with underscan settings
+
+Recent regression
+
+Fixes #1727
