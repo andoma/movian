@@ -50,7 +50,7 @@
 #include "notifications.h"
 
 static struct fa_protocol_list fileaccess_all_protocols;
-static hts_mutex_t fap_mutex;
+static HTS_MUTEX_DECL(fap_mutex);
 
 /**
  *
@@ -1128,8 +1128,6 @@ fileaccess_init(void)
 {
   fa_protocol_t *fap;
   fa_imageloader_init();
-
-  hts_mutex_init(&fap_mutex);
 
   LIST_FOREACH(fap, &fileaccess_all_protocols, fap_link)
     if(fap->fap_init != NULL)

@@ -87,3 +87,7 @@ typedef pthread_key_t hts_key_t;
 
 #endif
 
+#define HTS_MUTEX_DECL(name) hts_mutex_t name = PTHREAD_MUTEX_INITIALIZER
+
+
+
