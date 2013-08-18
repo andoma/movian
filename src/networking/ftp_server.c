@@ -379,9 +379,10 @@ cmd_PASV(ftp_connection_t *fc, char *args)
     return 1;
 
   // XXX: We should bind on same interface as connection arrives
+  si.sin_family = AF_INET;
 
   if(bind(fd, (struct sockaddr *)&si, sizeof(struct sockaddr_in)) == -1) {
-    TRACE(TRACE_ERROR, "FTP-SERVER", "Unable to bind");
+    TRACE(TRACE_ERROR, "FTP-SERVER", "Unable to bind -- %s", strerror(errno));
     close(fd);
     return 1;
   }
