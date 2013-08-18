@@ -1,0 +1,10 @@
+Add built-in FTP server
+
+FTP server is default disabled but can be enabled in
+Settings -> Network settings
+
+To add directories in the FTP server root you need to have a bookmark
+for the directory and set the new 'Published in Virtual File System'
+setting to true for each bookmark you want to have in the FTP server.
+
+The FTP server is still very much beta so feedback will be appreciated
