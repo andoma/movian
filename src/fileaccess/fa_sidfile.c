@@ -38,7 +38,8 @@
  *
  */
 static int
-sidfile_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
+sidfile_scandir(fa_protocol_t *fap, fa_dir_t *fd,
+                const char *url, char *errbuf, size_t errlen)
 {
   void *fh = NULL;
   char *p, *fpath = mystrdupa(url);

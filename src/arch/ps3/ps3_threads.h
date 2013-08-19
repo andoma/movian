@@ -162,3 +162,11 @@ typedef struct thread_info {
 
 extern struct thread_info_list threads;
 extern hts_mutex_t thread_info_mutex;
+
+#define HTS_MUTEX_DECL(name) \
+hts_mutex_t name; \
+ static void  __attribute__((constructor)) global_mtx_init_ ## name(void) { \
+   hts_mutex_init(&name); \
+ }
+
+

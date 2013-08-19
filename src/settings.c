@@ -726,7 +726,7 @@ setting_create(int type, prop_t *parent, int flags, ...)
     // FALLTHRU
   case SETTING_BOOL:
     if(s->s_store != NULL)
-      initial_int = htsmsg_get_u32_or_default(s->s_store, s->s_id,
+      initial_int = htsmsg_get_s32_or_default(s->s_store, s->s_id,
                                               initial_int);
 
     if(s->s_kvstore)

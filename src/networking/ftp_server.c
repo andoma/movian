@@ -96,7 +96,7 @@ ftp_server_scandir(const char *url, char *errbuf, size_t errlen)
 {
   fa_dir_t *fd = fa_dir_alloc();
 
-  if(fa_protocol_vfs.fap_scan(fd, url, errbuf, errlen)) {
+  if(fa_protocol_vfs.fap_scan(&fa_protocol_vfs, fd, url, errbuf, errlen)) {
     fa_dir_free(fd);
     return NULL;
   }
@@ -379,9 +379,10 @@ cmd_PASV(ftp_connection_t *fc, char *args)
     return 1;
 
   // XXX: We should bind on same interface as connection arrives
+  si.sin_family = AF_INET;
 
   if(bind(fd, (struct sockaddr *)&si, sizeof(struct sockaddr_in)) == -1) {
-    TRACE(TRACE_ERROR, "FTP-SERVER", "Unable to bind");
+    TRACE(TRACE_ERROR, "FTP-SERVER", "Unable to bind -- %s", strerror(errno));
     close(fd);
     return 1;
   }
@@ -542,11 +543,6 @@ cmd_RETR(ftp_connection_t *fc, char *args)
   char pathbuf[1024];
   char errbuf[256];
 
-  if(fc->fc_type != 'I') {
-    ftp_write(fc, 550, "%s: File transfer not possible in ASCII mode", args);
-    return 0;
-  }
-
   construct_path(pathbuf, sizeof(pathbuf), fc, args);
 
   fa_handle_t *fh = ftp_server_open(pathbuf, errbuf, sizeof(errbuf), 0);
@@ -599,11 +595,6 @@ cmd_STOR(ftp_connection_t *fc, char *args)
 {
   char pathbuf[1024];
   char errbuf[256];
-
-  if(fc->fc_type != 'I') {
-    ftp_write(fc, 550, "%s: File transfer not possible in ASCII mode", args);
-    return 0;
-  }
 
   construct_path(pathbuf, sizeof(pathbuf), fc, args);
 

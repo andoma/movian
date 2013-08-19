@@ -116,8 +116,6 @@ void fa_dir_print(fa_dir_t *fd);
  *
  */
 LIST_HEAD(fa_protocol_list, fa_protocol);
-extern struct fa_protocol_list fileaccess_all_protocols;
-
 
 #define FA_DEBUG           0x1
 // #define FA_DUMP  0x2

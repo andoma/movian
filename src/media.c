@@ -471,7 +471,7 @@ mp_settings_init(media_pipe_t *mp, const char *url)
 
   mp_settings_clear(mp);
 
-  if(url == NULL)
+  if(url == NULL || !(mp->mp_flags & MP_VIDEO))
     return;
 
   TRACE(TRACE_DEBUG, "media", "Settings initialized for URL %s", url);

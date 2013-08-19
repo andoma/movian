@@ -49,8 +49,33 @@
 #include "settings.h"
 #include "notifications.h"
 
-struct fa_protocol_list fileaccess_all_protocols;
+static struct fa_protocol_list fileaccess_all_protocols;
+static HTS_MUTEX_DECL(fap_mutex);
 
+/**
+ *
+ */
+static void
+fap_release(fa_protocol_t *fap)
+{
+  if(fap->fap_fini == NULL)
+    return;
+
+  if(atomic_add(&fap->fap_refcount, -1) > 1)
+    return;
+
+  fap->fap_fini(fap);
+}
+
+
+/**
+ *
+ */
+static void
+fap_retain(fa_protocol_t *fap)
+{
+  atomic_add(&fap->fap_refcount, 1);
+}
 
 /**
  *
@@ -104,12 +129,18 @@ fa_resolve_proto(const char *url, fa_protocol_t **p,
     }
   }
 
+
+  hts_mutex_lock(&fap_mutex);
+
   LIST_FOREACH(fap, &fileaccess_all_protocols, fap_link) {
     if(strcmp(fap->fap_name, buf))
       continue;
     *p = fap;
+    fap_retain(fap);
+    hts_mutex_unlock(&fap_mutex);
     return strdup(fap->fap_flags & FAP_INCLUDE_PROTO_IN_URL ? url0 : url);
   }
+  hts_mutex_unlock(&fap_mutex);
   snprintf(errbuf, errsize, "Protocol %s not supported", buf);
   return NULL;
 }
@@ -129,6 +160,7 @@ fa_can_handle(const char *url, char *errbuf, size_t errsize)
 
   if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
     return 0;
+  fap_release(fap);
   free(filename);
   return 1;
 }
@@ -166,6 +198,7 @@ fa_normalize(const char *url, char *dst, size_t dstlen)
     return -1;
 
   r = fap->fap_normalize ? fap->fap_normalize(fap, filename, dst, dstlen) : -1;
+  fap_release(fap);
   free(filename);
   return r;
 }
@@ -201,6 +234,7 @@ fa_open_ex(const char *url, char *errbuf, size_t errsize, int flags,
   } else {
     fh = fap->fap_open(fap, filename, errbuf, errsize, flags, stats);
   }
+  fap_release(fap);
   free(filename);
 #ifdef FA_DUMP
   if(flags & FA_DUMP) 
@@ -233,6 +267,7 @@ fa_open_vpaths(const char *url, const char **vpaths,
 #ifdef FA_DUMP
   fh->fh_dump_fd = -1;
 #endif
+  fap_release(fap);
   free(filename);
 
   return fh;
@@ -339,6 +374,7 @@ fa_stat(const char *url, struct fa_stat *buf, char *errbuf, size_t errsize)
     return -1;
 
   r = fap->fap_stat(fap, filename, buf, errbuf, errsize, 0);
+  fap_release(fap);
   free(filename);
 
   return r;
@@ -360,7 +396,7 @@ fa_scandir(const char *url, char *errbuf, size_t errsize)
 
   if(fap->fap_scan != NULL) {
     fd = fa_dir_alloc();
-    if(fap->fap_scan(fd, filename, errbuf, errsize)) {
+    if(fap->fap_scan(fap, fd, filename, errbuf, errsize)) {
       fa_dir_free(fd);
       fd = NULL;
     }
@@ -368,6 +404,7 @@ fa_scandir(const char *url, char *errbuf, size_t errsize)
     snprintf(errbuf, errsize, "Protocol does not implement directory scanning");
     fd = NULL;
   }
+  fap_release(fap);
   free(filename);
   return fd;
 }
@@ -387,13 +424,14 @@ fa_scandir2(fa_dir_t *fd, const char *url, char *errbuf, size_t errsize)
     return -1;
 
   if(fap->fap_scan != NULL) {
-    if(fap->fap_scan(fd, filename, errbuf, errsize))
+    if(fap->fap_scan(fap, fd, filename, errbuf, errsize))
       rval = -1;
 
   } else {
     snprintf(errbuf, errsize, "Protocol does not implement directory scanning");
     rval = -1;
   }
+  fap_release(fap);
   free(filename);
   return rval;
 }
@@ -422,6 +460,7 @@ fa_get_parts(const char *url, char *errbuf, size_t errsize)
     snprintf(errbuf, errsize, "Protocol does not implement part scanning");
     fd = NULL;
   }
+  fap_release(fap);
   free(filename);
   return fd;
 }
@@ -468,6 +507,7 @@ fa_reference(const char *url)
     return NULL;
 
   fh = fap->fap_reference != NULL ? fap->fap_reference(fap, filename) : NULL;
+  fap_release(fap);
   free(filename);
   return fh;
 }
@@ -502,11 +542,13 @@ fa_notify_start(const char *url, void *opaque,
     return NULL;
 
   if(fap->fap_notify_start == NULL) {
+    fap_release(fap);
     free(filename);
     return NULL;
   }
 
   fh = fap->fap_notify_start(fap, filename, opaque, change);
+  fap_release(fap);
   free(filename);
   return fh;
 }
@@ -810,6 +852,7 @@ unlink_items(const struct delscan_item_queue *diq)
     if(r)
       TRACE(TRACE_ERROR, "FS", "Unable to delete %s -- %s",
 	    rstr_get(di->url), errbuf);
+    fap_release(fap);
     free(filename);
   }
 }
@@ -949,10 +992,12 @@ fa_unlink(const char *url, char *errbuf, size_t errsize)
   unlink_items(&diq);
   free_items(&diq);
 
+  fap_release(fap);
   free(filename);
   return 0;
 
 bad:
+  fap_release(fap);
   free(filename);
   free_items(&diq);
   return -1;
@@ -1032,6 +1077,7 @@ fa_makedirs(const char *url, char *errbuf, size_t errsize)
   } else {
     r = fap->fap_makedirs(fap, filename, errbuf, errsize);
   }
+  fap_release(fap);
   free(filename);
   return r;
 }
@@ -1046,6 +1092,33 @@ fileaccess_register_entry(fa_protocol_t *fap)
 {
   LIST_INSERT_HEAD(&fileaccess_all_protocols, fap, fap_link);
 }
+
+
+/**
+ *
+ */
+void
+fileaccess_register_dynamic(fa_protocol_t *fap)
+{
+  fap->fap_refcount = 1;
+  hts_mutex_lock(&fap_mutex);
+  LIST_INSERT_HEAD(&fileaccess_all_protocols, fap, fap_link);
+  hts_mutex_unlock(&fap_mutex);
+}
+
+
+/**
+ *
+ */
+void
+fileaccess_unregister_dynamic(fa_protocol_t *fap)
+{
+  hts_mutex_lock(&fap_mutex);
+  LIST_REMOVE(fap, fap_link);
+  hts_mutex_unlock(&fap_mutex);
+  fap_release(fap);
+}
+
 
 /**
  *
@@ -1114,19 +1187,22 @@ fa_load(const char *url, const char **vpaths,
 	  // Upper layer can deal with expired data, pass it
 	  *cache_control = is_expired;
 	  free(etag);
-	  free(filename);
+          fap_release(fap);
+          free(filename);
 	  return buf;
 	}
 	
 	// It was not expired, return it
 	if(!is_expired) {
 	  free(etag);
+          fap_release(fap);
 	  free(filename);
 	  return buf;
 	}
       } else if(cache_control != NULL) {
 	snprintf(errbuf, errlen, "Not cached");
 	free(etag);
+        fap_release(fap);
 	free(filename);
 	return NULL;
       }
@@ -1138,6 +1214,7 @@ fa_load(const char *url, const char **vpaths,
     data2 = fap->fap_load(fap, filename, errbuf, errlen,
 			  &etag, &mtime, &max_age, flags, cb, opaque);
     
+    fap_release(fap);
     free(filename);
     if(data2 == NOT_MODIFIED) {
       if(cache_control == BYPASS_CACHE)
@@ -1170,6 +1247,7 @@ fa_load(const char *url, const char **vpaths,
 #ifdef FA_DUMP
   fh->fh_dump_fd = -1;
 #endif
+  fap_release(fap);
   free(filename);
 
   if(fh == NULL)
@@ -1254,6 +1332,7 @@ fa_check_url(const char *url, char *errbuf, size_t errlen)
 
   
   r = fap->fap_stat(fap, filename, &fs, errbuf, errlen, 1);
+  fap_release(fap);
   free(filename);
 
   if(r == 0)
@@ -1295,9 +1374,11 @@ fa_url_get_last_component(char *dst, size_t dstlen, const char *url)
   if((filename = fa_resolve_proto(url, &fap, NULL, NULL, 0)) != NULL) {
     if(fap->fap_get_last_component != NULL) {
       fap->fap_get_last_component(fap, filename, dst, dstlen);
+      fap_release(fap);
       free(filename);
       return;
     }
+    fap_release(fap);
     free(filename);
   }
 

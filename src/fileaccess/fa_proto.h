@@ -39,7 +39,11 @@ typedef struct fa_protocol {
 #define FAP_ALLOW_CACHE          0x2
 #define FAP_NO_PARKING           0x4
 
+  int fap_refcount;
+
   void (*fap_init)(void);
+
+  void (*fap_fini)(struct fa_protocol *fap);
 
   LIST_ENTRY(fa_protocol) fap_link;
 
@@ -48,7 +52,7 @@ typedef struct fa_protocol {
   /**
    * Directory scan url for files. 
    */
-  int (*fap_scan)(fa_dir_t *fa, const char *url,
+  int (*fap_scan)(struct fa_protocol *fap, fa_dir_t *fa, const char *url,
 		  char *errbuf, size_t errsize);
 
   /**
@@ -184,14 +188,15 @@ typedef struct fa_protocol {
 
 
 
+void fileaccess_register_dynamic(fa_protocol_t *fap);
+
+void fileaccess_unregister_dynamic(fa_protocol_t *fap);
+
 void fileaccess_register_entry(fa_protocol_t *fap);
 
 #define FAP_REGISTER(name) \
   static void  __attribute__((constructor)) fap_register_ ## name(void) { \
-    static int cnt;							\
-    if(!cnt)								\
-      fileaccess_register_entry(&fa_protocol_ ## name);			\
-    cnt++;								\
+    fileaccess_register_entry(&fa_protocol_ ## name);			\
   }
 
 #endif /* FA_PROTO_H__ */

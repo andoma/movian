@@ -185,7 +185,8 @@ b_fsize(fa_handle_t *handle)
  *
  */
 static int
-b_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
+b_scandir(fa_protocol_t *fap, fa_dir_t *fd, const char *url,
+          char *errbuf, size_t errlen)
 {
   fa_dir_entry_t *fde, *last = NULL;
   struct filebundle *fb;
@@ -325,7 +326,7 @@ b_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
     return FAP_STAT_OK;
   }
 
-  if(b_scandir(NULL, url, errbuf, errlen))
+  if(b_scandir(fap, NULL, url, errbuf, errlen))
     return FAP_STAT_ERR;
 
   fs->fs_type = CONTENT_DIR;

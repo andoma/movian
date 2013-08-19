@@ -2215,7 +2215,8 @@ cifs_scandir(cifs_tree_t *ct, const char *path, fa_dir_t *fd,
 
 
 static int
-smb_scandir(fa_dir_t *fa, const char *url, char *errbuf, size_t errlen)
+smb_scandir(fa_protocol_t *fap, fa_dir_t *fa, const char *url,
+            char *errbuf, size_t errlen)
 {
   char filename[512];
   cifs_tree_t *ct;

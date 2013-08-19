@@ -22,6 +22,7 @@ LIST_HEAD(js_event_handler_list, js_event_handler);
 LIST_HEAD(js_subscription_list, js_subscription);
 LIST_HEAD(js_subprovider_list, js_subprovider);
 LIST_HEAD(js_hook_list, js_hook);
+LIST_HEAD(js_faprovider_list, js_faprovider);
 
 
 /**
@@ -45,6 +46,7 @@ typedef struct js_plugin {
   struct js_subscription_list jsp_subscriptions;
   struct js_subprovider_list jsp_subproviders;
   struct js_hook_list jsp_hooks;
+  struct js_faprovider_list jsp_faproviders;
 
   struct fa_handle *jsp_ref;
 
@@ -149,6 +151,8 @@ void js_subscription_flush_from_list(JSContext *cx,
 
 void js_subprovider_flush_from_plugin(JSContext *cx, js_plugin_t *jsp);
 
+void js_faprovider_flush_from_plugin(JSContext *cx, js_plugin_t *jsp);
+
 void js_hook_flush_from_plugin(JSContext *cx, js_plugin_t *jsp);
 
 JSObject *js_object_from_prop(JSContext *cx, prop_t *p);
@@ -209,6 +213,11 @@ int js_prop_fn(JSContext *cx, JSObject *o, const char *prop, jsval *ret);
 
 int js_prop_int_or_default(JSContext *cx, JSObject *o, const char *prop, int d);
 
+int js_prop_bool(JSContext *cx, JSObject *o, const char *prop, int d);
+
+int64_t js_prop_int64_or_default(JSContext *cx, JSObject *o, const char *prop,
+                                 int64_t d);
+
 void js_set_prop_str(JSContext *cx, JSObject *o, const char *prop,
 		     const char *str);
 
@@ -226,6 +235,9 @@ JSObject *js_nav_create(JSContext *cx, prop_t *p);
 
 JSBool js_addsubprovider(JSContext *cx, JSObject *obj, uintN argc, 
 			 jsval *argv, jsval *rval);
+
+JSBool js_addfaprovider(JSContext *cx, JSObject *obj, uintN argc, 
+                        jsval *argv, jsval *rval);
 
 void js_hook_init(void); // Replace with init helper
 

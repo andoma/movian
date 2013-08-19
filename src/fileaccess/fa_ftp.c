@@ -554,7 +554,8 @@ ftp_list_dir(ftp_connection_t *fc, const char *path, fa_dir_t *fd)
  *
  */
 static int
-ftp_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
+ftp_scandir(fa_protocol_t *fap, fa_dir_t *fd,
+            const char *url, char *errbuf, size_t errlen)
 {
   ftp_file_t *ff = ftp_file_init(url, errbuf, errlen, 0);
   if(ff == NULL)
