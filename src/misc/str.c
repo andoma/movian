@@ -25,8 +25,10 @@
 #include "misc/str.h"
 #include "showtime.h"
 #include "sha.h"
+#include "i18n.h"
 
 #include "unicode_casefolding.h"
+#include "charset_detector.h"
 
 /**
  * De-escape HTTP URL
@@ -764,10 +766,36 @@ utf8_cleanup(const char *str)
  *
  */
 char *
-utf8_from_bytes(const char *str, int len, const uint16_t *cp)
+utf8_from_bytes(const char *str, int len, const charset_t *cs,
+		char *how, size_t howlen)
 {
   char *r, *d;
   len = !len ? strlen(str) : len;
+
+  if(cs == NULL) {
+    cs = i18n_get_default_charset();
+    if(cs == NULL) {
+      const char *lang = NULL;
+      const char *name = charset_detector(str, len, &lang);
+      if(name != NULL) {
+	cs = charset_get(name);
+	if(cs != NULL)
+	  snprintf(how, howlen, "Decoded as %s (detected language: %s)",
+		   name, lang);
+	else
+	  TRACE(TRACE_ERROR, "STR", "Language %s not found internally",
+		name);
+      }
+    } else {
+      snprintf(how, howlen, "Decoded as %s (specified by user)",
+	       cs->title);
+    }
+  } else {
+    snprintf(how, howlen, "Decoded as %s (specified by request)",
+	     cs->title);
+  }
+
+  const uint16_t *cp = cs ? cs->ptr : NULL;
 
   int i, olen = 0;
   for(i = 0; i < len; i++) {

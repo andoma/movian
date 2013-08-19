@@ -34,6 +34,7 @@
 #include "vobsub.h"
 #include "text/text.h"
 #include "subtitles.h"
+#include "misc/charset_detector.h"
 
 /**
  *
@@ -222,10 +223,9 @@ load_srt(const char *url, const char *buf, size_t len, int force_utf8)
   if(force_utf8 || utf8_verify(buf)) {
     linereader_init(&lr, buf, len);
   } else {
-    TRACE(TRACE_INFO, "Subtitles",
-	  "%s is not valid UTF-8. Decoding it as %s",
-	  url, charset_get_name(i18n_get_srt_charset()));
-    tmp = utf8_from_bytes(buf, len, i18n_get_srt_charset());
+    char how[256];
+    tmp = utf8_from_bytes(buf, len, NULL, how, sizeof(how));
+    TRACE(TRACE_INFO, "Subtitles", "%s is not valid UTF-8. %s", url, how);
     linereader_init(&lr, tmp, strlen(tmp));
   }
 
@@ -412,10 +412,9 @@ load_sub(const char *url, char *buf, size_t len, int force_utf8,
 
   if(force_utf8 || utf8_verify(buf)) {
   } else {
-    TRACE(TRACE_INFO, "Subtitles",
-	  "%s is not valid UTF-8. Decoding it as %s",
-	  url, charset_get_name(i18n_get_srt_charset()));
-    tmp = utf8_from_bytes(buf, len, i18n_get_srt_charset());
+    char how[256];
+    tmp = utf8_from_bytes(buf, len, NULL, how, sizeof(how));
+    TRACE(TRACE_INFO, "Subtitles", "%s is not valid UTF-8. %s", url, how);
     buf = tmp;
   }
 

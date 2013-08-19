@@ -107,7 +107,8 @@ http_response_toString(JSContext *cx, JSObject *obj, uintN argc,
 
   if(cs != NULL) {
     // Convert from given character set
-    r = tmpbuf = utf8_from_bytes(buf_cstr(jhr->buf), jhr->buf->b_size, cs->ptr);
+    r = tmpbuf = utf8_from_bytes(buf_cstr(jhr->buf), jhr->buf->b_size, cs,
+				 NULL, 0);
   }
 
   if(isxml && 

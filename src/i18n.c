@@ -33,7 +33,7 @@ static void nls_init(prop_t *parent, htsmsg_t *store);
 
 static char lang_audio[3][4];
 static char lang_subtitle[3][4];
-static const uint16_t *srt_charset;
+static const charset_t *default_charset;
 
 static void
 set_lang(void *opaque, const char *str)
@@ -53,13 +53,19 @@ set_lang(void *opaque, const char *str)
 }
 
 static void
-set_srt_charset(void *opaque, const char *str)
+set_default_charset(void *opaque, const char *str)
 {
+  if(!strcmp(str ?: "", "auto")) {
+    default_charset = NULL;
+    TRACE(TRACE_DEBUG, "i18n", "Default charset is auto");
+    return;
+  }
+
   const charset_t *cs = charset_get(str);
 
   if(cs != NULL) {
-    srt_charset = cs->ptr;
-    TRACE(TRACE_DEBUG, "i18n", "SRT charset is %s", cs->title);
+    default_charset = cs;
+    TRACE(TRACE_DEBUG, "i18n", "Default charset is %s", cs->title);
   }
 }
 
@@ -125,18 +131,21 @@ i18n_init(void)
   const charset_t *cs;
   for(i = 0; (cs = charset_get_idx(i)) != NULL; i++) {}
 
-  optlist = alloca((i * 2 + 1) * sizeof(const char *));
+  optlist = alloca((i * 2 + 3) * sizeof(const char *));
+
+  optlist[0] = "auto";
+  optlist[1] = "Auto";
 
   for(i = 0; (cs = charset_get_idx(i)) != NULL; i++) {
-    optlist[i * 2 + 0] = cs->id;
-    optlist[i * 2 + 1] = cs->title;
+    optlist[i * 2 + 2] = cs->id;
+    optlist[i * 2 + 3] = cs->title;
   }
-  optlist[i * 2] = NULL;
+  optlist[i * 2 + 2] = NULL;
 
   setting_create(SETTING_MULTIOPT, s, SETTINGS_INITIAL_UPDATE,
-                 SETTING_TITLE(_p("SRT character set")),
-                 SETTING_HTSMSG("srt_charset", store, "i18n"),
-                 SETTING_CALLBACK(set_srt_charset, NULL),
+                 SETTING_TITLE(_p("Default character set")),
+                 SETTING_HTSMSG("default_charset", store, "i18n"),
+                 SETTING_CALLBACK(set_default_charset, NULL),
                  SETTING_OPTION_LIST(optlist),
                  NULL);
 
@@ -197,10 +206,10 @@ i18n_subtitle_lang(unsigned int num)
 /**
  *
  */
-const uint16_t *
-i18n_get_srt_charset(void)
+const charset_t *
+i18n_get_default_charset(void)
 {
-  return srt_charset;
+  return default_charset;
 }
 
 
