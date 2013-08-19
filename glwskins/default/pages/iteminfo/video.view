@@ -125,7 +125,7 @@ widget(container_y, {
 	});
 
 	widget(label, {
-	  caption: fmt(_pl('Seen %d times', "Seen %d time", $args.playcount), $args.playcount);
+	  caption: fmt(_pl("Seen %d times", "Seen %d time", $args.playcount), $args.playcount);
 	  TextStyleItem();
 	});
 
