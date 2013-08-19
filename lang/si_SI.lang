@@ -256,6 +256,10 @@ msg: Ocena:
 id: Year:
 msg: Leto:
 
+id: Seen %d times
+msg[0]: 
+msg[1]: 
+
 #
 # ./glwskins/default/pages/listitems/add.view
 #
@@ -674,7 +678,6 @@ id: File access
 msg: 
 
 id: %d archive parts
-# Missing plural translation for '%d archive parts' and '%d archive part'
 msg[0]: 
 msg[1]: 
 
@@ -933,6 +936,10 @@ msg: Ostalo
 id: Photos
 msg: Slike
 
+id: Published in Virtual File System
+# Missing translation
+msg: 
+
 id: Removed bookmark: %s
 msg: Odstranjene priljubljene: %s
 
@@ -947,6 +954,21 @@ msg: Tip
 
 id: URL
 msg: URL
+
+#
+# ./src/networking/ftp_server.c
+#
+id: Enable FTP server
+# Missing translation
+msg: 
+
+id: FTP server
+# Missing translation
+msg: 
+
+id: Server TCP port
+# Missing translation
+msg: 
 
 #
 # ./src/plugins.c
@@ -1144,6 +1166,14 @@ id: Look and feel
 # Missing translation
 msg: 
 
+id: Network services, etc
+# Missing translation
+msg: 
+
+id: Network settings
+# Missing translation
+msg: 
+
 id: Settings useful for developers
 msg: Nastavitve uporabne za ustvarjalce
 
@@ -1304,7 +1334,11 @@ msg: Horizontalen podscan
 id: Screensaver delay
 msg: Zamik ohranjevalnika zaslona
 
-id: Veritcal underscan
+id: Vertical underscan
+# Missing translation
+msg: 
+
+id: Wrap when reaching beginning/end of lists
 # Missing translation
 msg: 
 

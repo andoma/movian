@@ -238,6 +238,10 @@ msg: Bewertung:
 id: Year:
 msg: Jahr:
 
+id: Seen %d times
+msg[0]: 
+msg[1]: 
+
 #
 # ./glwskins/default/pages/listitems/add.view
 #
@@ -638,7 +642,6 @@ id: File access
 msg: Datei-Zugriff
 
 id: %d archive parts
-# Missing plural translation for '%d archive parts' and '%d archive part'
 msg[0]: 
 msg[1]: 
 
@@ -886,6 +889,10 @@ msg: Andere
 id: Photos
 msg: Foto
 
+id: Published in Virtual File System
+# Missing translation
+msg: 
+
 id: Removed bookmark: %s
 msg: Lesezeichen %s entfernt
 
@@ -900,6 +907,21 @@ msg: Typ
 
 id: URL
 msg: URL
+
+#
+# ./src/networking/ftp_server.c
+#
+id: Enable FTP server
+# Missing translation
+msg: 
+
+id: FTP server
+# Missing translation
+msg: 
+
+id: Server TCP port
+# Missing translation
+msg: 
 
 #
 # ./src/plugins.c
@@ -1072,6 +1094,14 @@ msg: Allgemeine Einstellungen
 id: Look and feel
 msg: Aussehen und Bedienung
 
+id: Network services, etc
+# Missing translation
+msg: 
+
+id: Network settings
+# Missing translation
+msg: 
+
 id: Settings useful for developers
 msg: Nützliche Einstellungen für Entwickler
 
@@ -1214,7 +1244,11 @@ msg: Horizontaler underscan
 id: Screensaver delay
 msg: Bildschirmschonerverzögerung
 
-id: Veritcal underscan
+id: Vertical underscan
+# Missing translation
+msg: 
+
+id: Wrap when reaching beginning/end of lists
 # Missing translation
 msg: 
 
