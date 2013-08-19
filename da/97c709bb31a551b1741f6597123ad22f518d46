@@ -1,0 +1,19 @@
+Add support for auto detection of character encoding
+
+For some subtitle files (downloaded or locally stored) which
+is not UTF-8 encoded Showtime used to decode the file using
+the 'SRT character set' setting in Settings -> Languages.
+
+This has now changed a bit.
+
+The 'SRT character set' setting has been renamed to 'Default character set'
+as the setting does not only influense SRT files but also SUB files and
+a few other things where the character encoding is not explicitly set.
+
+On top of that the setting now defaults to 'Auto' which means that
+Showtime tries to guess the encoding based on an algorithm.
+Some initial tests shows that it's able to guess right most of the
+times for subtitle files.
+
+If it should do the wrong guess the user is always free to configure
+the 'Default character set' to something else than Auto
