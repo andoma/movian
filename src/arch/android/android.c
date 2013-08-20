@@ -32,8 +32,9 @@
 #include "service.h"
 #include "networking/net.h"
 #include "ui/glw/glw.h"
-
+#include "prop/prop_jni.h"
 #include "android.h"
+
 JavaVM *JVM;
 
 /**
@@ -223,6 +224,8 @@ Java_com_showtimemediacenter_showtime_STCore_coreInit(JNIEnv *env, jobject obj, 
   net_initialize();
 
   showtime_init();
+
+  prop_jni_init();
 
   service_create("music", "Music", "file:///sdcard/Music",
                  "music", NULL, 0, 1, SVC_ORIGIN_SYSTEM);
