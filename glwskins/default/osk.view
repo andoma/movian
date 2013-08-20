@@ -61,6 +61,7 @@ $view.shifted = $view.shift ^^ $view.caps;
 }
 
 widget(container_y, {
+  onEvent(cancel, deliverEvent($ui.osk.eventSink, "Cancel"));
   padding: [$ui.width / 6, 0];
   space(1);
   widget(backdrop, {
