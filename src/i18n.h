@@ -17,12 +17,14 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+struct charset;
+
 void i18n_init(void);
 
 int i18n_audio_score(const char *str);
 
 int i18n_subtitle_score(const char *str);
 
-const uint16_t *i18n_get_srt_charset(void);
+const struct charset *i18n_get_default_charset(void);
 
 const char *i18n_subtitle_lang(unsigned int num);

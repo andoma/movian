@@ -359,24 +359,31 @@ hv_parse_key(hls_variant_parser_t *hvp, const char *baseurl, const char *V)
 /**
  *
  */
-static void
+static int
 variant_update(hls_variant_t *hv, hls_t *h)
 {
+  char errbuf[1024];
   if(hv->hv_frozen)
-    return;
+    return 0;
 
   time_t now;
   time(&now);
 
   if(hv->hv_loaded == now)
-    return;
-
-  hv->hv_loaded = now;
+    return 0;
 
   HLS_TRACE(h, "Updating variant %d", hv->hv_bitrate);
 
-  buf_t *b = fa_load(hv->hv_url, NULL, NULL, 0, NULL, 
+  buf_t *b = fa_load(hv->hv_url, NULL, errbuf, sizeof(errbuf), NULL, 
 		     FA_COMPRESSION, NULL, NULL);
+
+  if(b == NULL) {
+    TRACE(TRACE_ERROR, "HLS", "Unable to open %s -- %s", hv->hv_url, errbuf);
+    return 1;
+  }
+
+  hv->hv_loaded = now;
+
   b = buf_make_writable(b);
 
   double duration = 0;
@@ -449,6 +456,7 @@ variant_update(hls_variant_t *hv, hls_t *h)
 
   buf_release(b);
   rstr_release(hvp.hvp_key_url);
+  return 0;
 }
 
 
@@ -654,6 +662,8 @@ variant_update_metadata(hls_t *h, hls_variant_t *hv, int availbw)
 static hls_segment_t *
 demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
 {
+  int retry = 0;
+
  again:
   // If no variant is requested we switch to the seek (low bw) variant
   // also swtich to seek variant if we want to seek (gasp!)
@@ -675,7 +685,15 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
      hv->hv_current_seg->hs_seq != hd->hd_seq ||
      hd->hd_seek_to != AV_NOPTS_VALUE) {
 
-    variant_update(hv, h);
+    if(variant_update(hv, h)) {
+
+      if(retry)
+       	return HLS_SEGMENT_NYA;
+
+      retry = 1;
+      hd->hd_req = NULL;
+      goto again;
+    }
 
     if(hd->hd_seq == 0) {
 

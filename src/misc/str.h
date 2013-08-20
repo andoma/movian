@@ -62,8 +62,6 @@ char *url_resolve_relative_from_base(const char *base, const char *url);
 
 
 
-char *utf8_from_bytes(const char *str, int len, const uint16_t *table);
-
 int hexnibble(char c);
 
 void ucs2_to_utf8(uint8_t *dst, size_t dstlen,
@@ -76,11 +74,14 @@ size_t utf8_to_ascii(uint8_t *dst, const char *src);
 void utf16_to_utf8(char **bufp, size_t *lenp);
 
 
-typedef struct {
+typedef struct charset {
   const char *id, *title;
   const uint16_t *ptr;
   const char **aliases;
 } charset_t;
+
+char *utf8_from_bytes(const char *str, int len, const charset_t *cs,
+		      char *msg, size_t msglen);
 
 const charset_t *charset_get(const char *id);
 

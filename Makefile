@@ -113,6 +113,7 @@ SRCS +=	src/misc/ptrvec.c \
 	src/misc/unicode_composition.c \
 	src/misc/pool.c \
 	src/misc/buf.c \
+	src/misc/charset_detector.c \
 
 SRCS-${CONFIG_TREX} += ext/trex/trex.c
 

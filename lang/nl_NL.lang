@@ -248,6 +248,10 @@ msg: Beoordeling:
 id: Year:
 msg: Jaar:
 
+id: Seen %d times
+msg[0]: 
+msg[1]: 
+
 #
 # ./glwskins/default/pages/listitems/add.view
 #
@@ -653,7 +657,6 @@ id: File access
 msg: 
 
 id: %d archive parts
-# Missing plural translation for '%d archive parts' and '%d archive part'
 msg[0]: 
 msg[1]: 
 
@@ -902,6 +905,10 @@ msg: Overige
 id: Photos
 msg: Foto's
 
+id: Published in Virtual File System
+# Missing translation
+msg: 
+
 id: Removed bookmark: %s
 msg: Bladwijzer verwijderd: %s
 
@@ -916,6 +923,21 @@ msg: Type
 
 id: URL
 msg: URL
+
+#
+# ./src/networking/ftp_server.c
+#
+id: Enable FTP server
+# Missing translation
+msg: 
+
+id: FTP server
+# Missing translation
+msg: 
+
+id: Server TCP port
+# Missing translation
+msg: 
 
 #
 # ./src/plugins.c
@@ -1092,6 +1114,14 @@ msg: Algemene instellingen
 id: Look and feel
 msg: Uiterlijk
 
+id: Network services, etc
+# Missing translation
+msg: 
+
+id: Network settings
+# Missing translation
+msg: 
+
 id: Settings useful for developers
 msg: Handige instellingen voor ontwikkelaars
 
@@ -1243,7 +1273,11 @@ msg: Horizontale underscan
 id: Screensaver delay
 msg: Vertraging schermbeveiliging
 
-id: Veritcal underscan
+id: Vertical underscan
+# Missing translation
+msg: 
+
+id: Wrap when reaching beginning/end of lists
 # Missing translation
 msg: 
 

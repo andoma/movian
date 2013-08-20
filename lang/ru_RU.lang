@@ -238,6 +238,10 @@ msg: Рейтинг:
 id: Year:
 msg: Год:
 
+id: Seen %d times
+msg[0]: 
+msg[1]: 
+
 #
 # ./glwskins/default/pages/listitems/add.view
 #
@@ -874,6 +878,10 @@ msg: Прочее
 id: Photos
 msg: Фото
 
+id: Published in Virtual File System
+# Missing translation
+msg: 
+
 id: Removed bookmark: %s
 msg: Удалить закладки: %s
 
@@ -888,6 +896,21 @@ msg: Тип
 
 id: URL
 msg: URL
+
+#
+# ./src/networking/ftp_server.c
+#
+id: Enable FTP server
+# Missing translation
+msg: 
+
+id: FTP server
+# Missing translation
+msg: 
+
+id: Server TCP port
+# Missing translation
+msg: 
 
 #
 # ./src/plugins.c
@@ -1060,6 +1083,14 @@ msg: Главные настройки
 id: Look and feel
 msg: Внешний вид интерфейса
 
+id: Network services, etc
+# Missing translation
+msg: 
+
+id: Network settings
+# Missing translation
+msg: 
+
 id: Settings useful for developers
 msg: Настройки полезные для разработчиков
 
@@ -1199,7 +1230,12 @@ id: Screensaver delay
 msg: Задержка скринсейвера
 
 id: Vertical underscan
-msg: Вертикальное сжатие
+# Missing translation
+msg: 
+
+id: Wrap when reaching beginning/end of lists
+# Missing translation
+msg: 
 
 #
 # ./src/ui/glw/glw_x11.c

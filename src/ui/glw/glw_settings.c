@@ -75,7 +75,7 @@ glw_settings_init(void)
 
   glw_settings.gs_setting_underscan_v =
     setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,
-                   SETTING_TITLE(_p("Veritcal underscan")),
+                   SETTING_TITLE(_p("Vertical underscan")),
                    SETTING_RANGE(-100, 100),
                    SETTING_UNIT_CSTR("px"),
                    SETTING_WRITE_INT(&glw_settings.gs_underscan_v),

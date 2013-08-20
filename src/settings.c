@@ -452,8 +452,6 @@ settings_multiopt_callback_ng(void *opaque, prop_event_t event, ...)
     s->s_current_value = prop_ref_inc(c);
     rstr_t *name = c ? prop_get_name(c) : NULL;
 
-    printf("current is %p (%s)\n", s->s_current_value, rstr_get(name));
-
     if(s->s_ext_value)
       prop_set_rstring(s->s_ext_value, name);
 

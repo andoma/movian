@@ -608,7 +608,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     if(utf8_verify(tmp)) {
       title = rstr_alloc(tmp);
     } else {
-      char *t = utf8_from_bytes(tmp, 0, i18n_get_srt_charset());
+      char *t = utf8_from_bytes(tmp, 0, NULL, NULL, 0);
       title = rstr_alloc(t);
       free(t);
     }

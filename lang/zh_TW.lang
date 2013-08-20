@@ -252,6 +252,10 @@ msg: 評價
 id: Year:
 msg: 年份
 
+id: Seen %d times
+msg[0]: 
+msg[1]: 
+
 #
 # ./glwskins/default/pages/listitems/add.view
 #
@@ -670,7 +674,6 @@ id: File access
 msg: 
 
 id: %d archive parts
-# Missing plural translation for '%d archive parts' and '%d archive part'
 msg[0]: 
 msg[1]: 
 
@@ -929,6 +932,10 @@ msg: 其他
 id: Photos
 msg: 相片
 
+id: Published in Virtual File System
+# Missing translation
+msg: 
+
 id: Removed bookmark: %s
 msg: 書籤 %s 已經移除
 
@@ -943,6 +950,21 @@ msg: 類型
 
 id: URL
 msg: 網址
+
+#
+# ./src/networking/ftp_server.c
+#
+id: Enable FTP server
+# Missing translation
+msg: 
+
+id: FTP server
+# Missing translation
+msg: 
+
+id: Server TCP port
+# Missing translation
+msg: 
 
 #
 # ./src/plugins.c
@@ -1139,6 +1161,14 @@ id: Look and feel
 # Missing translation
 msg: 
 
+id: Network services, etc
+# Missing translation
+msg: 
+
+id: Network settings
+# Missing translation
+msg: 
+
 id: Settings useful for developers
 msg: 開發者相關設定
 
@@ -1299,7 +1329,11 @@ msg: 水平欠掃描
 id: Screensaver delay
 msg: 螢幕保護程式啟動時間
 
-id: Veritcal underscan
+id: Vertical underscan
+# Missing translation
+msg: 
+
+id: Wrap when reaching beginning/end of lists
 # Missing translation
 msg: 
 

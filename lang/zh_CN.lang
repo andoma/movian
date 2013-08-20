@@ -238,6 +238,10 @@ msg: 评分
 id: Year:
 msg: 年份
 
+id: Seen %d times
+msg[0]: 
+msg[1]: 
+
 #
 # ./glwskins/default/pages/listitems/add.view
 #
@@ -635,8 +639,13 @@ id: File access
 msg: 文件访问
 
 id: %d archive parts
+<<<<<<< HEAD
 msg[0]: %d个分卷
 msg[1]: %d个分卷
+=======
+msg[0]: 
+msg[1]: 
+>>>>>>> upstream/master
 
 id: %d directories
 msg[0]: %d个文件夹
@@ -716,7 +725,7 @@ id: Audio volume
 msg: 音量
 
 id: Go to standby after video ends
-msg: 视频播放结束后自动待机
+msg: 视频播放结束后自动关机
 
 id: Stretch video to fullscreen
 msg: 拉升视频至全屏
@@ -874,6 +883,9 @@ msg: 其它
 id: Photos
 msg: 照片
 
+id: Published in Virtual File System
+msg: 虚拟文件系统中已发布
+
 id: Removed bookmark: %s
 msg: 删除书签: %s
 
@@ -888,6 +900,18 @@ msg: 类型
 
 id: URL
 msg: URL
+
+#
+# ./src/networking/ftp_server.c
+#
+id: Enable FTP server
+msg: 启用FTP服务器
+
+id: FTP server
+msg: FTP服务器
+
+id: Server TCP port
+msg: 服务器TCP端口
 
 #
 # ./src/plugins.c
@@ -1010,7 +1034,7 @@ msg: 视频流
 # ./src/runcontrol.c
 #
 id: Automatic standby
-msg: 自动待机
+msg: 自动关机
 
 id: Logout
 msg: 注销
@@ -1059,6 +1083,12 @@ msg: 全局设置
 
 id: Look and feel
 msg: 外观
+
+id: Network services, etc
+msg: 网络服务等
+
+id: Network settings
+msg: 网络设置
 
 id: Settings useful for developers
 msg: 供开发者使用的设置
@@ -1200,6 +1230,9 @@ msg: 屏幕保护延迟
 
 id: Veritcal underscan
 msg: 垂直欠扫描
+
+id: Wrap when reaching beginning/end of lists
+msg: 列表浏览开始结尾循环
 
 #
 # ./src/ui/glw/glw_x11.c

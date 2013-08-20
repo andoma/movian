@@ -238,6 +238,10 @@ msg: Värdering:
 id: Year:
 msg: År:
 
+id: Seen %d times
+msg[0]: Sedd %d gånger
+msg[1]: Sedd %d gång
+
 #
 # ./glwskins/default/pages/listitems/add.view
 #
@@ -311,8 +315,7 @@ id: Check for updates now
 msg: Leta efter uppgraderingar nu
 
 id: Checking current installed version
-# Missing translation
-msg: 
+msg: Kontrollerar nuvarande installerad version
 
 id: Checking for updates...
 msg: Letar efter uppdateringar
@@ -336,8 +339,7 @@ id: No upgrade available
 msg: Ingen uppgradering tillgänglig
 
 id: Patching binary
-# Missing translation
-msg: 
+msg: Patchar binär
 
 id: Restarting Showtime in %d seconds...
 msg: Startar om Showtime om %d sekunder...
@@ -370,8 +372,7 @@ msg: Uppspelningsstatus
 # ./glwskins/default/pages/wideinfo/video.view
 #
 id: Seen:
-# Missing translation
-msg: 
+msg: Seen:
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -638,7 +639,6 @@ id: File access
 msg: Fill tillgång
 
 id: %d archive parts
-# Missing plural translation for '%d archive parts' and '%d archive part'
 msg[0]: 
 msg[1]: 
 
@@ -717,12 +717,10 @@ id: Audio delay
 msg: Ljuddelay
 
 id: Audio volume
-# Missing translation
-msg: 
+msg: Volym
 
 id: Go to standby after video ends
-# Missing translation
-msg: 
+msg: Gå till standby efter videon är slut
 
 id: Stretch video to fullscreen
 msg: Sträck ut videon över hela skärmen
@@ -734,15 +732,13 @@ id: Subtitle delay
 msg: Undertexterdelay
 
 id: Subtitle horizontal displacement
-# Missing translation
-msg: 
+msg: Horisontell position för undertexter
 
 id: Subtitle scaling
 msg: Storlek på undertexter
 
 id: Subtitle vertical displacement
-# Missing translation
-msg: 
+msg: Vertikal positiono för undertexter
 
 id: Video zoom
 msg: Video zoom
@@ -760,20 +756,16 @@ id: Automatic
 msg: Automatisk
 
 id: Manual
-# Missing translation
-msg: 
+msg: Manuell
 
 id: Mark all as seen
-# Missing translation
-msg: 
+msg: Markera alla som sedda
 
 id: Mark all as unseen
-# Missing translation
-msg: 
+msg: Markera alla som osedda
 
 id: Metadata mode
-# Missing translation
-msg: 
+msg: Läge för metadata
 
 #
 # ./src/metadata/metadata.c
@@ -886,6 +878,9 @@ msg: Annat
 id: Photos
 msg: Foton
 
+id: Published in Virtual File System
+msg: Publiserad i virtuella filsystemet
+
 id: Removed bookmark: %s
 msg: Tog bort bokmärke: %s
 
@@ -900,6 +895,18 @@ msg: Typ
 
 id: URL
 msg: URL
+
+#
+# ./src/networking/ftp_server.c
+#
+id: Enable FTP server
+msg: Gör FTP tjänst tillgänglig
+
+id: FTP server
+msg: FTP tjänst
+
+id: Server TCP port
+msg: Servern's TCP port
 
 #
 # ./src/plugins.c
@@ -1072,6 +1079,12 @@ msg: Globala inställningar
 id: Look and feel
 msg: Utseende och stil
 
+id: Network services, etc
+msg: Nätverkstjänster, etc
+
+id: Network settings
+msg: Nätverkstjänster
+
 id: Settings useful for developers
 msg: Inställningar användbara för utvecklare
 
@@ -1082,26 +1095,22 @@ msg: Systemrelaterade inställningar
 # ./src/subtitles/subtitles.c
 #
 id: Any subtitle in central folder
-# Missing translation
-msg: 
+msg: Samtliga undertexter i central katalog
 
 id: Any subtitle in same folder as video
-# Missing translation
-msg: 
+msg: Samtliga undertexter i samma katalog som videon
 
 id: Auto
 msg: Auto
 
 id: Automatically select from this source
-# Missing translation
-msg: 
+msg: Välj automatiskt från den här källan
 
 id: Center
 msg: Centrerad
 
 id: Central subtitle folder
-# Missing translation
-msg: 
+msg: Central katalog för undertexter
 
 id: Color
 msg: Färg
@@ -1128,12 +1137,10 @@ id: Outline size
 msg: Storlek på konturer
 
 id: Path to central folder
-# Missing translation
-msg: 
+msg: Sökväg till centrala katalogen
 
 id: Providers for Subtitles
-# Missing translation
-msg: 
+msg: Sökväg till undertexter
 
 id: Right
 msg: Höger
@@ -1154,16 +1161,13 @@ id: Subtitle size and positioning
 msg: Storlek och position för undertexter
 
 id: Subtitles embedded in video file
-# Missing translation
-msg: 
+msg: Undertexter inbäddade i videofilen
 
 id: Subtitles with matching filename in central folder
-# Missing translation
-msg: 
+msg: Undertexter med matchande filnamn i centrala katalogen
 
 id: Subtitles with matching filename in same folder as video
-# Missing translation
-msg: 
+msg: Undertexter med matchande filnamn i samma katalog som videon
 
 #
 # ./src/text/fontstash.c
@@ -1190,8 +1194,7 @@ id: Reset subtitle font to default
 msg: Återställ typsnitt för undertexter
 
 id: Unable to install font: %s
-# Missing translation
-msg: 
+msg: Kan ej installera font: %s
 
 id: Use font %s for
 msg: Använd typsnitt %s till
@@ -1203,19 +1206,16 @@ msg: Användargränsnitt
 # ./src/ui/glw/glw_ps3.c
 #
 id: Seek using L2 and R2 button
-# Missing translation
-msg: 
+msg: Sök med L2 och R2 knapparna
 
 id: Yes with Select button
-# Missing translation
-msg: 
+msg: Ja, med selectknappen
 
 #
 # ./src/ui/glw/glw_settings.c
 #
 id: Font and icon size
-# Missing translation
-msg: 
+msg: Storlek på font och ikoner
 
 id: Horizontal underscan
 msg: Horisontell underskanning
@@ -1223,9 +1223,11 @@ msg: Horisontell underskanning
 id: Screensaver delay
 msg: Skärmsläckartid
 
-id: Veritcal underscan
-# Missing translation
-msg: 
+id: Vertical underscan
+msg: Vertikal underskanning
+
+id: Wrap when reaching beginning/end of lists
+msg: Gå runt när man når början/slutet av listor
 
 #
 # ./src/ui/glw/glw_x11.c
