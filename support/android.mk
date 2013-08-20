@@ -26,7 +26,7 @@ apk: ${ADIR}/libs/armeabi/libshowtime.so
 	cd ${ADIR} && ANDROID_HOME=${SDK} ant debug
 
 install: apk
-	${ADB} install -r $<
+	${ADB} install -r ${ADIR}/bin/Showtime-debug.apk
 
 run:
 	${ADB} shell am start -n com.showtimemediacenter.showtime/.ShowtimeActivity
