@@ -6,8 +6,13 @@ CONFIGURE_POSTFIX="android"
 
 source support/configure.inc
 
+SDK="${ANDROID_HOME}"
+NDK="${ANDROID_HOME}/../ndk"
+
 show_help(){
   common_help
+  echo "  --sdk=PREFIX          Use Android SDK from this path [$SDK]"
+  echo "  --ndk=DIR             Use Android NDK from this path [$NDK]"
   exit 1
 }
 
@@ -18,10 +23,29 @@ for opt do
   ;;
   --ndk=*) NDK="$optval"
   ;;
+  --sdk=*) SDK="$optval"
+  ;;
   *)
   common_opt $opt $optval
   esac
 done
+
+if [ -z "${SDK}" ]; then
+    echo "Android SDK not found"
+    echo "Either specify path to SDK using --sdk=/path/to/sdk"
+    echo " OR "
+    echo "Set ANDROID_HOME environment variable"
+    die
+fi
+
+echo "Using Android SDK at : ${SDK}"
+echo
+
+if [ ! -x "${SDK}/tools/ant" ]; then
+    echo "''ant'' not found in ${SDK}/tools/"
+    echo "Check that your configured path to the SDK is correct"
+    die
+fi
 
 TOOLCHAIN=${TOPDIR}/build.android/toolchain/bin/arm-linux-androideabi-
 
@@ -67,6 +91,16 @@ xmp_setup
 
 cat >> ${CONFIG_MAK} <<EOF
 LDFLAGS_cfg +=  -lOpenSLES -lGLESv2 -llog
+SDK = ${SDK}
+NDK = ${NDK}
+ADB = ${SDK}/platform-tools/adb
 EOF
 
 finalize
+
+echo
+echo "NOTE: Support for Android is still experimental"
+echo "NOTE: Video playback does not work at all"
+echo "NOTE: A lot of other things are probably broken as well"
+echo "NOTE: You have been warned"
+echo

@@ -1,4 +1,4 @@
-build.*
+/build.*
 config.default
 *~
 ps3support
