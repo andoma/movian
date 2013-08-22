@@ -239,8 +239,8 @@ id: Year:
 msg: Год:
 
 id: Seen %d times
-msg[0]: 
-msg[1]: 
+msg[0]: Просмотрено %d раз(а)
+msg[1]: Просмотрено %d раз(а)
 
 #
 # ./glwskins/default/pages/listitems/add.view
