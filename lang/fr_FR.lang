@@ -1,6 +1,6 @@
 language: French
 native: Français
-maintainer: Jérôme Steunou <g_rom_sempai@hotmail.com>
+maintainer: Niconico27
 #
 # ./glwskins/default/cmdmenu.view
 #
@@ -17,12 +17,10 @@ msg: Supprimer la page actuel des favoris
 # ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
 id: Activate sleep timer
-# Missing translation
-msg: 
+msg: Activer la mise en veille
 
 id: Disable sleep timer
-# Missing translation
-msg: 
+msg: Désactiver la mise en veille
 
 id: Exit Showtime
 msg: Sortie Showtime
@@ -52,12 +50,10 @@ id: System
 msg: Système
 
 id: Time until sleep
-# Missing translation
-msg: 
+msg: Veille dans
 
 id: min
-# Missing translation
-msg: 
+msg: minutes
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_dir.view
@@ -189,8 +185,7 @@ msg: Carrelée
 # ./glwskins/default/pages/home_clist.view
 #
 id: Apps
-# Missing translation
-msg: 
+msg: Applications
 
 id: Dismiss
 msg: Rejeter
@@ -202,27 +197,22 @@ msg: Recherche / Ouvrir URL
 # ./glwskins/default/pages/iteminfo/image.view
 #
 id: Camera: 
-# Missing translation
-msg: 
+msg: Caméra:
 
 id: Date: 
-# Missing translation
-msg: 
+msg: Date:
 
 #
 # ./glwskins/default/pages/iteminfo/plugin.view
 #
 id: Author: 
-# Missing translation
-msg: 
+msg: Auteur:
 
 id: Available version: 
-# Missing translation
-msg: 
+msg: Version disponible:
 
 id: Installed version: 
-# Missing translation
-msg: 
+msg: Version installée:
 
 id: Showtime %s or newer is required
 msg: Showtime %s ou plus récent est nécessaire
@@ -249,8 +239,8 @@ id: Year:
 msg: Année:
 
 id: Seen %d times
-msg[0]: 
-msg[1]: 
+msg[0]: Vu %d fois
+msg[1]: Vu %d fois
 
 #
 # ./glwskins/default/pages/listitems/add.view
@@ -325,8 +315,7 @@ id: Check for updates now
 msg: Rechercher les mises à jour
 
 id: Checking current installed version
-# Missing translation
-msg: 
+msg: Vérification de version installée
 
 id: Checking for updates...
 msg: Recherche de mises à jour...
@@ -350,8 +339,7 @@ id: No upgrade available
 msg: Pas de mise à jour disponible
 
 id: Patching binary
-# Missing translation
-msg: 
+msg: Patch des fichiers binaires
 
 id: Restarting Showtime in %d seconds...
 msg: Showtime va redémarrer dans %d seconds...
@@ -384,8 +372,7 @@ msg: Status de la lecture
 # ./glwskins/default/pages/wideinfo/video.view
 #
 id: Seen:
-# Missing translation
-msg: 
+msg: Vu:
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -610,8 +597,7 @@ id: Date (oldest first)
 msg: Date (plus ancien)
 
 id: Deleted %s
-# Missing translation
-msg: 
+msg: Suppression de %s
 
 id: Filename
 msg: Nom du fichier
@@ -632,8 +618,7 @@ id: Sort on
 msg: Activer le tri
 
 id: Unable to delete %s\n%s
-# Missing translation
-msg: 
+msg: Impossible de supprimer %s\n%s
 
 #
 # ./src/fileaccess/fa_spotlight.c
@@ -645,35 +630,31 @@ msg: Chercher via spotlight
 # ./src/fileaccess/fileaccess.c
 #
 id: Are you sure you want to delete:
-# Missing translation
-msg: 
+msg: Etes-vous sur de vouloir supprimer:
 
 id: Enable file deletion from item menu
-# Missing translation
-msg: 
+msg: Activer l'option Supprimer depuis le menu du fichier
 
 id: File access
-# Missing translation
-msg: 
+msg: Accès au fichier
 
 id: %d archive parts
-msg[0]: 
-msg[1]: 
+msg[0]: %d fichiers d'archive
+msg[1]: %d fichiers d'archive
 
 id: %d directories
-msg[0]: 
-msg[1]: 
+msg[0]: %d répertoires
+msg[1]: %d répertoires
 
 id: %d files
-msg[0]: 
-msg[1]: 
+msg[0]: %d fichiers
+msg[1]: %d fichiers
 
 #
 # ./src/i18n.c
 #
 id: Ignore 'The' at beginning of words when sorting
-# Missing translation
-msg: 
+msg: Ignorer 'The' au début du fichier pour le tri
 
 id: Language
 msg: Langue
@@ -736,12 +717,10 @@ id: Audio delay
 msg: Délai audio
 
 id: Audio volume
-# Missing translation
-msg: 
+msg: Volume Audio
 
 id: Go to standby after video ends
-# Missing translation
-msg: 
+msg: Mettre en veille à la fin de la vidéo
 
 id: Stretch video to fullscreen
 msg: Étirer la vidéo en plein écran
@@ -753,15 +732,13 @@ id: Subtitle delay
 msg: Délai des sous-titres
 
 id: Subtitle horizontal displacement
-# Missing translation
-msg: 
+msg: Déplacement horizontal des sous titres
 
 id: Subtitle scaling
 msg: Échelle des sous-titres
 
 id: Subtitle vertical displacement
-# Missing translation
-msg: 
+msg: Déplacement vertical des sous titres
 
 id: Video zoom
 msg: Zoom vidéo
@@ -779,20 +756,16 @@ id: Automatic
 msg: Automatique
 
 id: Manual
-# Missing translation
-msg: 
+msg: Manuel
 
 id: Mark all as seen
-# Missing translation
-msg: 
+msg: Marquer tout les éléments comme vu
 
 id: Mark all as unseen
-# Missing translation
-msg: 
+msg: Marquer tout les éléments comme non-vu
 
 id: Metadata mode
-# Missing translation
-msg: 
+msg: Metadata mode
 
 #
 # ./src/metadata/metadata.c
@@ -906,8 +879,7 @@ id: Photos
 msg: Photos
 
 id: Published in Virtual File System
-# Missing translation
-msg: 
+msg: Publié dans le Système de fichiers virtuels
 
 id: Removed bookmark: %s
 msg: Favori supprimé: %s
@@ -928,16 +900,13 @@ msg: URL
 # ./src/networking/ftp_server.c
 #
 id: Enable FTP server
-# Missing translation
-msg: 
+msg: Activer le serveur FTP
 
 id: FTP server
-# Missing translation
-msg: 
+msg: Serveur FTP
 
 id: Server TCP port
-# Missing translation
-msg: 
+msg: Port TCP du serveur
 
 #
 # ./src/plugins.c
@@ -949,8 +918,7 @@ id: Automatically upgrade plugins
 msg: Mise à jour automatique des extensions
 
 id: Available apps
-# Missing translation
-msg: 
+msg: Applications disponible
 
 id: Background
 msg: Fond
@@ -959,8 +927,7 @@ id: Beta testing passwords
 msg: Mots de passe de test bêta
 
 id: Browse available apps
-# Missing translation
-msg: 
+msg: Parcourir les applications disponible
 
 id: Browsing
 msg: Navigation
@@ -987,8 +954,7 @@ id: Home page
 msg: Page d'accueil
 
 id: Installed apps
-# Missing translation
-msg: 
+msg: Applications installées
 
 id: Installed version higher than available
 msg: Version installée supérieure à celle disponible
@@ -1021,8 +987,7 @@ id: Online TV
 msg: TV en ligne
 
 id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
-# Missing translation
-msg: 
+msg: Le plugin %s %s a été désintallé car il peut causer des problèmes.\nVous devez essayer d'installer une version différente manuellement.
 
 id: Plugins
 msg: Extensions
@@ -1115,12 +1080,10 @@ id: Look and feel
 msg: Aspect
 
 id: Network services, etc
-# Missing translation
-msg: 
+msg: Services réseaux, etc
 
 id: Network settings
-# Missing translation
-msg: 
+msg: Paramètres réseaux
 
 id: Settings useful for developers
 msg: Paramètres utiles pour les développeurs
@@ -1132,26 +1095,22 @@ msg: Paramètres liés au système
 # ./src/subtitles/subtitles.c
 #
 id: Any subtitle in central folder
-# Missing translation
-msg: 
+msg: Sous-titres dans le dossier principal
 
 id: Any subtitle in same folder as video
-# Missing translation
-msg: 
+msg: Sous-titres dans le dossier de la vidéo
 
 id: Auto
 msg: Auto
 
 id: Automatically select from this source
-# Missing translation
-msg: 
+msg: Sélectionner automatiquement depuis cette source
 
 id: Center
 msg: Centrer
 
 id: Central subtitle folder
-# Missing translation
-msg: 
+msg: Dossier principal des sous-titres
 
 id: Color
 msg: Couleur
@@ -1178,12 +1137,10 @@ id: Outline size
 msg: Taille du contour
 
 id: Path to central folder
-# Missing translation
-msg: 
+msg: Adresse du dossier principal
 
 id: Providers for Subtitles
-# Missing translation
-msg: 
+msg: Fournisseurs de sous-titres
 
 id: Right
 msg: Droite
@@ -1204,16 +1161,13 @@ id: Subtitle size and positioning
 msg: Taille et position des sous-titres
 
 id: Subtitles embedded in video file
-# Missing translation
-msg: 
+msg: Sous-titres intégrés à la vidéo
 
 id: Subtitles with matching filename in central folder
-# Missing translation
-msg: 
+msg: Sous-titres ayant le même nom que le fichier trouvés dans le dossier principal
 
 id: Subtitles with matching filename in same folder as video
-# Missing translation
-msg: 
+msg: Sous-titres ayant le même nom que le fichier trouvés dans le dossier du fichier
 
 #
 # ./src/text/fontstash.c
@@ -1240,8 +1194,7 @@ id: Reset subtitle font to default
 msg: Réinitialiser la police des sous-titres par défaut
 
 id: Unable to install font: %s
-# Missing translation
-msg: 
+msg: Impossible d'installer la police: %s
 
 id: Use font %s for
 msg: utiliser la police %s pour
@@ -1253,19 +1206,16 @@ msg: Interface utilisateur
 # ./src/ui/glw/glw_ps3.c
 #
 id: Seek using L2 and R2 button
-# Missing translation
-msg: 
+msg: Rechercher avec les boutons L2 et R2
 
 id: Yes with Select button
-# Missing translation
-msg: 
+msg: Valider avec le bouton Select
 
 #
 # ./src/ui/glw/glw_settings.c
 #
 id: Font and icon size
-# Missing translation
-msg: 
+msg: Taille de police et d'icône
 
 id: Horizontal underscan
 msg: Underscan horizontal
@@ -1274,12 +1224,10 @@ id: Screensaver delay
 msg: Délai avant l'économiseur d'écran
 
 id: Vertical underscan
-# Missing translation
-msg: 
+msg: Underscan Vertical
 
 id: Wrap when reaching beginning/end of lists
-# Missing translation
-msg: 
+msg: Bouclez quand le début/fin de la liste est atteint
 
 #
 # ./src/ui/glw/glw_x11.c
