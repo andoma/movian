@@ -130,7 +130,7 @@ add2lineresolve(const char *binary, void *addr, char *buf0, size_t buflen)
 static void
 addr2text(char *out, size_t outlen, void *ptr)
 {
-  Dl_info dli;
+  Dl_info dli = {};
   char buf[256];
   int r = dladdr(ptr, &dli);
   
