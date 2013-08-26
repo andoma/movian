@@ -536,8 +536,11 @@ cec_callback(void *callback_data, uint32_t param0, uint32_t param1,
 	     uint32_t param2, uint32_t param3, uint32_t param4)
 {
   VC_CEC_NOTIFY_T reason  = (VC_CEC_NOTIFY_T) CEC_CB_REASON(param0);
-#if 0
+  VC_CEC_MESSAGE_T msg;
+  CEC_OPCODE_T opcode;
+
   uint32_t len     = CEC_CB_MSG_LENGTH(param0);
+#if 1
   uint32_t retval  = CEC_CB_RC(param0);
   printf("cec_callback: debug: "
 	 "reason=0x%04x, len=0x%02x, retval=0x%02x, "
@@ -545,10 +548,20 @@ cec_callback(void *callback_data, uint32_t param0, uint32_t param1,
 	 reason, len, retval, param1, param2, param3, param4);
 #endif
 
-  VC_CEC_MESSAGE_T msg;
-  CEC_OPCODE_T opcode;
-  if(vc_cec_param2message(param0, param1, param2, param3, param4, &msg))
-    return;
+
+  msg.length = len - 1;
+  msg.initiator = CEC_CB_INITIATOR(param1);
+  msg.follower  = CEC_CB_FOLLOWER(param1);
+
+  if(msg.length) {
+    uint32_t tmp = param1 >> 8;
+    memcpy(msg.payload,                      &tmp,    sizeof(uint32_t)-1);
+    memcpy(msg.payload+sizeof(uint32_t)-1,   &param2, sizeof(uint32_t));
+    memcpy(msg.payload+sizeof(uint32_t)*2-1, &param3, sizeof(uint32_t));
+    memcpy(msg.payload+sizeof(uint32_t)*3-1, &param4, sizeof(uint32_t));
+  } else {
+    memset(msg.payload, 0, sizeof(msg.payload));
+  }
 
 
   switch(reason) {
