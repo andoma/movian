@@ -28,7 +28,6 @@ for opt do
 done
 
 [ -z "$TOOLCHAIN" ] && die_cause "--toolchain not specified"
-[ -z "$VCROOT" ]    && die_cause "--vcroot not specified"
 
 CC=${TOOLCHAIN}gcc
 CXX=${TOOLCHAIN}g++
@@ -77,6 +76,10 @@ if [ -n "$SYSROOT" ]; then
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lbz2"
 
     enable connman
+
+    if [ -z "$VCROOT" ]; then
+	VCROOT="${SYSROOT}/usr"
+    fi
 
 else
     zlib_setup
