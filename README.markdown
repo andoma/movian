@@ -1,19 +1,19 @@
 Showtime mediaplayer
 ====================
 
-(c) 2006 - 2011 Andreas Öman, et al.
+(c) 2006 - 2013 Andreas Öman, et al.
 
 Settings are stored in `~/.hts/showtime`
 
 For more information and latest versions, please visit:
-[http://www.lonelycoder.com/hts/](http://www.lonelycoder.com/hts/)
+[https://showtimemediacenter.com](http://showtimemediacenter.com)
 
 ## How to build for Linux
 
 First you need to satisfy some dependencies:
-For Ubuntu 12.04)  
+(For Ubuntu 12.04 LTS)  
 
-	sudo apt-get install libfreetype6-dev libfontconfig1-dev libxext-dev libgl1-mesa-dev 
+	sudo apt-get install build-essential libfreetype6-dev libfontconfig1-dev libxext-dev libgl1-mesa-dev 
 	libasound2-dev libasound2-dev libgtk2.0-dev libxss-dev libxxf86vm-dev libxv-dev libcdio-cdda-dev 
 	libcddb2-dev libvdpau-dev yasm libpulse-dev libssl-dev curl
 	libwebkitgtk-dev libsqlite3-dev
@@ -22,7 +22,7 @@ Then you need to configure:
 
 	./configure
 
-If your system lacks libwebkitgtk (Ubunut 12.04 before 12.04.1) 
+If your system lacks libwebkitgtk (pre Ubuntu 12.04.1 LTS) 
 you can configure with
 
         ./configure --disable-webkit
@@ -32,10 +32,10 @@ You then have the option to disable that particular module/subsystem.
 
 	make
 
-Build the binary, after build the binary resides in `build.linux/`.
+Build the binary, after build the binary resides in `./build.linux`.
 Thus, to start it, just type:
 
-	build.linux/showtime
+	./build.linux/showtime
 
 
 ## How to build for Mac OS X
@@ -175,14 +175,14 @@ sending log messages.
 ## How to build for Raspberry Pi
 
 Showtime for Raspberry Pi can only be built using cross compilation
-on a "normal" Linux host. In order word you will compile it on your
+on a "normal" Linux host. In other words you need to compile it on your
 normal Linux desktop system and then copy the binary to the Raspberry Pi.
 
 If you just want to create a build to test with you can cheat a bit
 and use the same technique as the auto build system will do.
 
-Note that this requires a host that is 64 bit (due to how the
-toolchains are compiled)
+Note: at current time it's required that host that is 64-bit (because rpi
+toolchain is 64-bit)
 
 Check out the source from github on your normal Linux desktop (ie.
 not the Raspberry Pi) and do
@@ -193,7 +193,7 @@ not the Raspberry Pi) and do
 This will start off and download all necessary components to build Showtime
 and will eventually start building it as well. It will take some time.
 
-Once completed a binary will end up here: build.rpi/showtime
+Once completed a binary will end up here: ./build.rpi/showtime
 
 Copy this file to the Raspberry Pi and run it.
 
