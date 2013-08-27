@@ -170,7 +170,7 @@ render_unlocked(glw_root_t *gr)
 				  rj->rgb_mul.b, rj->alpha);
 
     if(gp->gp_uniform_time != -1)
-      glUniform1f(gp->gp_uniform_time, gr->gr_time);
+      glUniform1f(gp->gp_uniform_time, gr->gr_time_sec);
 
     if(gp->gp_uniform_resolution != -1)
       glUniform2f(gp->gp_uniform_resolution, rj->width, rj->height);
@@ -374,7 +374,7 @@ shader_render(struct glw_root *root,
   }
 
   if(gp->gp_uniform_time != -1)
-    glUniform1f(gp->gp_uniform_time, root->gr_time);
+    glUniform1f(gp->gp_uniform_time, root->gr_time_sec);
 
   if(gp->gp_uniform_resolution != -1)
     glUniform2f(gp->gp_uniform_resolution, rc->rc_width, rc->rc_height);

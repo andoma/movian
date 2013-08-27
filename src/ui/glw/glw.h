@@ -709,13 +709,15 @@ typedef struct glw_root {
   int64_t gr_hz_sample;
   prop_t *gr_is_fullscreen;   // Set if our window is in fullscreen
 
-  float gr_time;
+  uint64_t gr_time_usec;
+  float gr_time_sec;
 
   /**
    * Screensaver
    */
 
-  int gr_screensaver_counter; // In frames
+  int64_t gr_screensaver_reset_at;
+
   int gr_screensaver_force_enable;
   prop_t *gr_screensaver_active;
 
@@ -1409,5 +1411,7 @@ void glw_gtb_set_caption_raw(glw_t *w, uint32_t *uc, int len);
 extern const float glw_identitymtx[16];
 
 void glw_icon_flush(glw_root_t *gr);
+
+void glw_reset_screensaver(glw_root_t *gr);
 
 #endif /* GLW_H */

@@ -212,7 +212,8 @@ glw_init(glw_root_t *gr)
   gr->gr_framerate = 60;
   gr->gr_frameduration = 1000000 / gr->gr_framerate;
   gr->gr_ui_start = showtime_get_ts();
-
+  gr->gr_frame_start = gr->gr_ui_start;
+  glw_reset_screensaver(gr);
   gr->gr_open_osk = glw_osk_open;
 
   return 0;
@@ -396,13 +397,20 @@ glw_signal_handler_clean(glw_t *w)
  *
  */
 static int
-glw_screensaver_is_active(glw_root_t *gr)
+glw_screensaver_is_active(const glw_root_t *gr)
 {
-  return gr->gr_screensaver_force_enable ||
-    (gr->gr_is_fullscreen && gr->gr_framerate &&
-     glw_settings.gs_screensaver_delay &&
-     (gr->gr_screensaver_counter > 
-      glw_settings.gs_screensaver_delay * gr->gr_framerate * 60));
+  if(gr->gr_screensaver_force_enable)
+    return 0;
+
+  if(!gr->gr_is_fullscreen)
+    return 0;
+
+  int64_t d = glw_settings.gs_screensaver_delay;
+
+  if(!d)
+    return 0;
+
+  return gr->gr_frame_start > gr->gr_screensaver_reset_at + d * 60000000LL;
 }
 
 
@@ -452,9 +460,10 @@ glw_prepare_frame(glw_root_t *gr, int flags)
 
   glw_update_sizes(gr);
 
-  gr->gr_frame_start = showtime_get_ts();
+  gr->gr_frame_start        = showtime_get_ts();
   gr->gr_frame_start_avtime = showtime_get_avtime();
-  gr->gr_time = (gr->gr_frame_start - gr->gr_ui_start) / 1000000.0;
+  gr->gr_time_usec          = gr->gr_frame_start - gr->gr_ui_start;
+  gr->gr_time_sec           = gr->gr_time_usec / 1000000.0f;
 
   if(!(flags & GLW_NO_FRAMERATE_UPDATE)) {
 
@@ -472,8 +481,6 @@ glw_prepare_frame(glw_root_t *gr, int flags)
     }
   }
   gr->gr_frames++;
-
-  gr->gr_screensaver_counter++;
 
   if(gr->gr_be_prepare != NULL)
     gr->gr_be_prepare(gr);
@@ -1556,7 +1563,7 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
 
   if(gpe->type != GLW_POINTER_MOTION_REFRESH) {
     runcontrol_activity();
-    gr->gr_screensaver_counter = 0;
+    glw_reset_screensaver(gr);
     gr->gr_screensaver_force_enable = 0;
   }
 
@@ -1704,7 +1711,7 @@ int
 glw_kill_screensaver(glw_root_t *gr)
 {
   int r = glw_screensaver_is_active(gr);
-  gr->gr_screensaver_counter = 0;
+  glw_reset_screensaver(gr);
   gr->gr_screensaver_force_enable = 0;
   return r;
 }
@@ -2457,4 +2464,14 @@ glw_osk_open(glw_root_t *gr, const char *title, const char *input,
 		   PROP_TAG_ROOT, gr->gr_prop_ui,
 		   PROP_TAG_COURIER, gr->gr_courier,
 		   NULL);
+}
+
+
+/**
+ *
+ */
+void
+glw_reset_screensaver(glw_root_t *gr)
+{
+  gr->gr_screensaver_reset_at = gr->gr_frame_start;
 }

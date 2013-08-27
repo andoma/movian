@@ -3320,7 +3320,7 @@ glwf_event(glw_view_eval_context_t *ec, struct token *self,
 
 typedef struct glwf_changed_extra {
 
-  int threshold;
+  int64_t deadline;
   token_type_t type;
 
   union {
@@ -3344,6 +3344,7 @@ glwf_changed(glw_view_eval_context_t *ec, struct token *self,
 	     token_t **argv, unsigned int argc)
 
 {
+  const glw_root_t *gr = ec->w->glw_root;
   token_t *a, *b, *c, *r;
   glwf_changed_extra_t *e = self->t_extra;
   int change = 0;
@@ -3461,15 +3462,12 @@ glwf_changed(glw_view_eval_context_t *ec, struct token *self,
 
   if(change == 1) {
     if(e->transition > 0 || supp_first == 0)
-      e->threshold = b->t_float * (1000000 / ec->gr->gr_frameduration);
+      e->deadline = (int64_t)(b->t_float * 1000000.0) + gr->gr_frame_start;
     e->transition = 1;
   }
 
-  if(e->threshold > 0)
-    e->threshold--;
-
   r = eval_alloc(self, ec, TOKEN_FLOAT);
-  if(e->threshold > 0) {
+  if(e->deadline > gr->gr_frame_start) {
     r->t_float = 1;
     ec->dynamic_eval |= GLW_VIEW_DYNAMIC_EVAL_EVERY_FRAME;
   }
@@ -3568,10 +3566,11 @@ glwf_iir(glw_view_eval_context_t *ec, struct token *self,
 
 
 typedef struct glw_scurve_extra {
-  float x;
-  float xd;
+  int64_t deadline;
+  int64_t starttime;
+  int total;
 
-  float start;
+  float startval;
   float current;
   float target;
   float time_up;
@@ -3587,6 +3586,7 @@ static int
 glwf_scurve(glw_view_eval_context_t *ec, struct token *self,
 	    token_t **argv, unsigned int argc)
 {
+  const glw_root_t *gr = ec->w->glw_root;
   token_t *a, *b, *c;
   token_t *r;
   float f, v, tup, tdown;
@@ -3612,20 +3612,26 @@ glwf_scurve(glw_view_eval_context_t *ec, struct token *self,
   tdown = token2float(c?:b);
 
   if(s->target != f || s->time_up != tup || s->time_down != tdown) {
-    s->start = s->target;
+    s->startval = s->target;
     s->target = f;
     s->time_up = tup;
     s->time_down = tdown;
-    s->x = 0;
-    float t = s->target < s->start ? tdown : tup;
-    s->xd = 1.0 / (1000000 * t / ec->w->glw_root->gr_frameduration);
+    float t = s->target < s->startval ? tdown : tup;
+    s->starttime = gr->gr_frame_start;
+    s->total = 1000000.0f * t;
+    if(s->total == 0)
+      s->total = 1;
+    s->deadline = gr->gr_frame_start + s->total;
   }
 
-  s->x += s->xd;
+  if(gr->gr_frame_start <  s->deadline) {
 
-  if(s->x < 1.0) {
-    v = GLW_S(s->x);
-    s->current = GLW_LERP(v, s->start, s->target);
+    int cur   = gr->gr_frame_start - s->starttime;
+
+    float x = (float)cur / s->total;
+
+    v = GLW_S(x);
+    s->current = GLW_LERP(v, s->startval, s->target);
     ec->dynamic_eval |= GLW_VIEW_DYNAMIC_EVAL_EVERY_FRAME;
   } else {
     s->current = s->target;
@@ -4836,6 +4842,7 @@ static int
 glwf_sinewave(glw_view_eval_context_t *ec, struct token *self,
 	      token_t **argv, unsigned int argc)
 {
+  const glw_root_t *gr = ec->w->glw_root;
   token_t *a = argv[0];
   token_t *r;
 
@@ -4843,13 +4850,12 @@ glwf_sinewave(glw_view_eval_context_t *ec, struct token *self,
     return -1;
 
   float p = token2float(a);
-  self->t_extra_float += 2 * M_PI / (ec->w->glw_root->gr_framerate * p);
+  int64_t v64 = (double)gr->gr_time_sec / p * 4096.0;
 
-  if(self->t_extra_float > 2 * M_PI)
-    self->t_extra_float -= 2 * M_PI;
+  int v = v64 & 0xfff;
 
   r = eval_alloc(self, ec, TOKEN_FLOAT);
-  r->t_float = sin(self->t_extra_float);
+  r->t_float = sin(v * 0.00153398f);
   eval_push(ec, r);
   ec->dynamic_eval |= GLW_VIEW_DYNAMIC_EVAL_EVERY_FRAME;
   return 0;
@@ -4864,11 +4870,10 @@ glwf_monotime(glw_view_eval_context_t *ec, struct token *self,
 	      token_t **argv, unsigned int argc)
 {
   token_t *r;
-  glw_root_t *gr = ec->w->glw_root;
-  double d = gr->gr_frames * (double)gr->gr_frameduration / 1000000.0;
+  const glw_root_t *gr = ec->w->glw_root;
 
   r = eval_alloc(self, ec, TOKEN_FLOAT);
-  r->t_float = d;
+  r->t_float = gr->gr_time_sec;
   eval_push(ec, r);
   ec->dynamic_eval |= GLW_VIEW_DYNAMIC_EVAL_EVERY_FRAME;
   return 0;
@@ -4902,7 +4907,7 @@ typedef struct glwf_delay_extra {
 
   float oldval;
   float curval;
-  int counter;
+  int64_t deadline;
 
 } glwf_delay_extra_t;
 
@@ -4915,6 +4920,7 @@ glwf_delay(glw_view_eval_context_t *ec, struct token *self,
 	   token_t **argv, unsigned int argc)
 
 {
+  glw_root_t *gr = ec->w->glw_root;
   token_t *a, *b, *c, *r;
   float f;
   glwf_delay_extra_t *e = self->t_extra;
@@ -4930,14 +4936,13 @@ glwf_delay(glw_view_eval_context_t *ec, struct token *self,
   if(f != e->curval) {
     // trig
     e->oldval = e->curval;
-    e->counter = token2float(f >= e->curval ? b : c) * 1000000.0 / 
-      ec->w->glw_root->gr_frameduration;
+    e->deadline = (int64_t)(token2float(f >= e->curval ? b : c) * 1000000.0) +
+      gr->gr_frame_start;
     e->curval = f;
   }
   
-  if(e->counter > 0) {
+  if(e->deadline > gr->gr_frame_start) {
     f = e->oldval;
-    e->counter--;
     ec->dynamic_eval |= GLW_VIEW_DYNAMIC_EVAL_EVERY_FRAME;
   } else {
     eval_push(ec, a);

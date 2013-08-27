@@ -775,7 +775,7 @@ glw_video_render(glw_t *w, const glw_rctx_t *rc)
   glw_video_t *gv = (glw_video_t *)w;
   glw_rctx_t rc0 = *rc;
 
-  w->glw_root->gr_screensaver_counter = 0;
+  glw_reset_screensaver(w->glw_root);
 
   glw_video_rctx_adjust(&rc0, gv);
 
