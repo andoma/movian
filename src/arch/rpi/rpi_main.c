@@ -40,7 +40,6 @@
 #include "arch/linux/linux.h"
 #include "prop/prop.h"
 #include "ui/glw/glw.h"
-#include "ui/background.h"
 #include "navigator.h"
 #include "omx.h"
 #include "backend/backend.h"
@@ -86,11 +85,13 @@ static float bg_current_alpha;
 static VC_RECT_T bg_src_rect;
 static VC_RECT_T bg_dst_rect;
 
+
+
 /**
- *
+ * Must be called under gr_lock()
  */
 static void
-bg_refresh_element(void)
+bg_refresh_element(int force_flush)
 {
   DISPMANX_UPDATE_HANDLE_T u = vc_dispmanx_update_start(0);
 
@@ -98,6 +99,11 @@ bg_refresh_element(void)
   alpha.flags =  DISPMANX_FLAGS_ALPHA_FIXED_ALL_PIXELS;
   alpha.opacity = bg_current_alpha * 255;
   alpha.mask = 0;
+
+  if(force_flush) {
+    vc_dispmanx_element_remove(u, bg_element);
+    bg_element = 0;
+  }
 
   if(alpha.opacity == 0) {
     if(bg_element) {
@@ -123,17 +129,17 @@ bg_refresh_element(void)
 }
 
 
-
-
 /**
  *
  */
 static void
-set_bg_image(rstr_t *url, const char **vpaths, void *opaque)
+set_bg_image(rstr_t *url, const char **vpaths, glw_root_t *gr)
 {
   char errbuf[256];
   image_meta_t im = {0};
   unsigned int w, h;
+
+  glw_unlock(gr);
 
   graphics_get_display_size(0, &w, &h);
 
@@ -143,6 +149,7 @@ set_bg_image(rstr_t *url, const char **vpaths, void *opaque)
   pixmap_t *pm;
   pm = backend_imageloader(url, &im, vpaths, errbuf, sizeof(errbuf),
 			   NULL, NULL, NULL);
+  glw_lock(gr);
 
   if(pm == NULL) {
     TRACE(TRACE_ERROR, "BG", "Unable to load %s -- %s", rstr_get(url), errbuf);
@@ -160,9 +167,11 @@ set_bg_image(rstr_t *url, const char **vpaths, void *opaque)
     it = VC_IMAGE_RGB888;
     break;
   default:
+    TRACE(TRACE_ERROR, "BG", "Can't handle format %d", pm->pm_type);
     pixmap_release(pm);
     return;
   }
+
 
   if(bg_resource)
     vc_dispmanx_resource_delete(bg_resource);
@@ -170,7 +179,7 @@ set_bg_image(rstr_t *url, const char **vpaths, void *opaque)
 
   bg_resource =
     vc_dispmanx_resource_create(it, pm->pm_width, pm->pm_height, &ip);
-  
+
   vc_dispmanx_rect_set(&bg_src_rect, 0, 0,
 		       pm->pm_width << 16, pm->pm_height << 16);
   vc_dispmanx_rect_set(&bg_dst_rect, 0, 0,
@@ -181,21 +190,161 @@ set_bg_image(rstr_t *url, const char **vpaths, void *opaque)
 
   pixmap_release(pm);
 
-  bg_refresh_element();
+  bg_refresh_element(1);
 }
+
 
 /**
  *
  */
 static void
-set_bg_alpha(float alpha, void *opaque)
+set_bg_alpha(float alpha)
 {
+  if(bg_current_alpha == alpha)
+    return;
+
   bg_current_alpha = alpha;
-  bg_refresh_element();
+  bg_refresh_element(0);
+}
+
+static int backdrop_loader_run;
+static hts_cond_t backdrop_loader_cond;
+LIST_HEAD(backdrop_list, backdrop);
+
+struct backdrop_list backdrops;
+
+typedef struct backdrop {
+  LIST_ENTRY(backdrop) link;
+  rstr_t *url;
+  float alpha;
+  int mark;
+  int refcount;
+} backdrop_t;
+
+static backdrop_t *backdrop_current;
+static backdrop_t *backdrop_pending;
+
+/**
+ *
+ */
+static void
+backdrop_release(backdrop_t *b)
+{
+  if(atomic_add(&b->refcount, -1) > 1)
+    return;
+
+  rstr_release(b->url);
+  free(b);
+}
+
+
+/**
+ *
+ */
+static void *
+backdrop_loader(void *aux)
+{
+  glw_root_t *gr = aux;
+
+  glw_lock(gr);
+
+  while(backdrop_loader_run) {
+
+    if(backdrop_pending == NULL) {
+      hts_cond_wait(&backdrop_loader_cond, &gr->gr_mutex);
+      continue;
+    }
+
+
+    if(backdrop_current)
+      backdrop_release(backdrop_current);
+
+    rstr_t *tgt = backdrop_pending->url;
+    backdrop_current = backdrop_pending;
+
+    backdrop_pending = NULL;
+
+    TRACE(TRACE_DEBUG, "RPI", "Backdrop loading %s", rstr_get(tgt));
+    set_bg_image(tgt, gr->gr_vpaths, gr);
+  }
+  if(backdrop_current)
+    backdrop_release(backdrop_current);
+  glw_unlock(gr);
+  return NULL;
 }
 
 
 
+/**
+ *
+ */
+static void
+pick_backdrop(glw_root_t *gr)
+{
+  char path[512];
+  float alpha;
+  backdrop_t *b, *next;
+
+  for(int i = 0; i < gr->gr_externalize_cnt; i++) {
+    if(glw_image_get_details(gr->gr_externalized[i],
+			     path, sizeof(path), &alpha))
+      continue;
+
+    LIST_FOREACH(b, &backdrops, link) {
+      if(!strcmp(rstr_get(b->url), path))
+	break;
+    }
+
+    if(b == NULL) {
+      b = calloc(1, sizeof(backdrop_t));
+      b->url = rstr_alloc(path);
+      LIST_INSERT_HEAD(&backdrops, b, link);
+      b->refcount = 1;
+    }
+
+    b->mark = 1;
+    b->alpha = alpha;
+  }
+  
+  backdrop_t *best = NULL;
+
+  for(b = LIST_FIRST(&backdrops); b != NULL; b = next) {
+    next = LIST_NEXT(b, link);
+    if(b->mark) {
+      if(best == NULL || b->alpha > best->alpha)
+	best = b;
+
+      b->mark = 0;
+    } else {
+      LIST_REMOVE(b, link);
+      backdrop_release(b);
+    }
+  }
+
+  if(best == NULL) {
+    set_bg_alpha(0);
+    return;
+  }
+
+
+  if(backdrop_current != NULL)
+    set_bg_alpha(backdrop_current->alpha);
+
+  if(best == backdrop_pending || best == backdrop_current)
+    return;  // have correct or at least on our way
+
+  if(backdrop_pending)
+    backdrop_release(backdrop_pending);
+
+  backdrop_pending = best;
+  atomic_add(&best->refcount, 1);
+  hts_cond_signal(&backdrop_loader_cond);
+}
+
+
+/**
+ *
+ */
 static void
 the_alarm(int x)
 {
@@ -214,10 +363,6 @@ ui_create(void)
   gr->gr_reduce_cpu = 1;
   gr->gr_prop_ui = prop_create_root("ui");
   gr->gr_prop_nav = nav_spawn();
-  prop_set(gr->gr_prop_ui, "nobackground", PROP_SET_INT, 1);
-
-  background_init(gr->gr_prop_ui, gr->gr_prop_nav,
-		  set_bg_image, set_bg_alpha, NULL);
 
   if(glw_init(gr)) {
     TRACE(TRACE_ERROR, "GLW", "Unable to init GLW");
@@ -266,6 +411,8 @@ ui_run(glw_root_t *gr, EGLDisplay dpy)
   EGLContext context;
   EGLSurface surface;
 
+  hts_thread_t backdrop_loader_tid;
+
   static const EGLint attribute_list[] = {
     EGL_RED_SIZE, 8,
     EGL_GREEN_SIZE, 8,
@@ -291,7 +438,6 @@ ui_run(glw_root_t *gr, EGLDisplay dpy)
 			     &config, 1, &num_config);
 
     if(glGetError()) {
-      printf("gmm\n");
       sleep(1);
       continue;
     }
@@ -363,6 +509,13 @@ ui_run(glw_root_t *gr, EGLDisplay dpy)
 
   TRACE(TRACE_DEBUG, "RPI", "UI starting");
 
+  hts_cond_init(&backdrop_loader_cond, &gr->gr_mutex);
+
+  backdrop_loader_run = 1;
+  hts_thread_create_joinable("bgloader", &backdrop_loader_tid,
+			     backdrop_loader, gr, 
+			     THREAD_PRIO_UI_WORKER_LOW);
+
   while(runmode == RUNMODE_RUNNING &&
 	display_status == DISPLAY_STATUS_ON) {
 
@@ -371,12 +524,17 @@ ui_run(glw_root_t *gr, EGLDisplay dpy)
     glViewport(0, 0, gr->gr_width, gr->gr_height);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
+    gr->gr_can_externalize = 1;
+    gr->gr_externalize_cnt = 0;
+
     glw_prepare_frame(gr, 0);
 
     glw_rctx_t rc;
     glw_rctx_init(&rc, gr->gr_width, gr->gr_height, 1);
     glw_layout0(gr->gr_universe, &rc);
     glw_render0(gr->gr_universe, &rc);
+
+    pick_backdrop(gr);
 
     glw_unlock(gr);
     glw_post_scene(gr);
@@ -385,6 +543,15 @@ ui_run(glw_root_t *gr, EGLDisplay dpy)
   glw_reap(gr);
   glw_reap(gr);
   glw_flush(gr);
+
+  glw_lock(gr);
+  backdrop_loader_run = 1;
+  hts_cond_signal(&backdrop_loader_cond);
+  glw_unlock(gr);
+
+  hts_thread_join(&backdrop_loader_tid);
+
+  hts_cond_destroy(&backdrop_loader_cond);
 
   eglMakeCurrent(dpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
   eglDestroySurface(dpy, surface);

@@ -80,6 +80,7 @@ typedef struct glw_image {
   uint8_t gi_need_reload : 1;
   uint8_t gi_loading_new_url : 1;
   uint8_t gi_recompile : 1;
+  uint8_t gi_externalized : 1;
 
   int16_t gi_fixed_size;
   int16_t gi_radius;
@@ -259,6 +260,10 @@ static void
 glw_image_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_image_t *gi = (void *)w;
+
+  if(gi->gi_externalized)
+    return;
+
   const glw_loadable_texture_t *glt = gi->gi_current;
   float alpha_self;
   float blur = 1 - (rc->rc_sharpness * w->glw_sharpness);
@@ -777,6 +782,20 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
     }
   }
 
+  if(gr->gr_can_externalize &&
+     rc->rc_width == gr->gr_width && 
+     rc->rc_height == gr->gr_height && 
+     w->glw_class == &glw_backdrop) {
+
+
+    if(gr->gr_externalize_cnt < GLW_MAX_EXTERNALIZED) {
+      gr->gr_externalized[gr->gr_externalize_cnt++] = w;
+      gi->gi_externalized = 1;
+      return;
+    }
+  }
+  
+  gi->gi_externalized = 0;
 
   if(gi->gi_pending_url != NULL) {
     // Request to load
@@ -858,6 +877,8 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
       glw_signal0(w, GLW_SIGNAL_READINESS, NULL);
     }
   } else if(glw_is_tex_inited(&glt->glt_texture)) {
+
+    gr->gr_can_externalize = 0;
 
     int r = !gi->gi_loading_new_url;
 
@@ -1425,6 +1446,10 @@ get_identity(glw_t *w)
   glw_loadable_texture_t *glt = gi->gi_current;
   if(glt)
     return rstr_get(glt->glt_url);
+
+  glt = gi->gi_pending;
+  if(glt)
+    return rstr_get(glt->glt_url);
   return rstr_get(gi->gi_pending_url);
 }
 
@@ -1442,6 +1467,25 @@ glw_icon_flush(glw_root_t *gr)
 			GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y);
   }
 }
+
+/**
+ *
+ */
+int
+glw_image_get_details(glw_t *w, char *path, size_t pathlen, float *alpha)
+{
+  if(w->glw_class != &glw_backdrop)
+    return -1;
+
+  glw_image_t *gi = (glw_image_t *)w;
+  const char *p = get_identity(w);
+  if(p == NULL)
+    return -1;
+  snprintf(path, pathlen, "%s", p);
+  *alpha = w->glw_alpha * gi->gi_col_mul.g;
+  return 0;
+}
+
 
 /**
  *

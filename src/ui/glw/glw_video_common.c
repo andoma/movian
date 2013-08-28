@@ -524,6 +524,7 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
   switch(signal) {
   case GLW_SIGNAL_LAYOUT:
+    w->glw_root->gr_can_externalize = 0;
 
     rc = extra;
     rc0 = *rc;

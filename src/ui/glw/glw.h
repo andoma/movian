@@ -868,6 +868,15 @@ typedef struct glw_root {
   prop_sub_t *gr_osk_ev_sub;
   char *gr_osk_revert;
 
+  // Backdrop render helper
+
+  int gr_can_externalize;
+
+#define GLW_MAX_EXTERNALIZED 4
+
+  int gr_externalize_cnt;
+  struct glw *gr_externalized[GLW_MAX_EXTERNALIZED];
+
 } glw_root_t;
 
 
@@ -1413,5 +1422,7 @@ extern const float glw_identitymtx[16];
 void glw_icon_flush(glw_root_t *gr);
 
 void glw_reset_screensaver(glw_root_t *gr);
+
+int glw_image_get_details(glw_t *w, char *path, size_t pathlen, float *alpha);
 
 #endif /* GLW_H */
