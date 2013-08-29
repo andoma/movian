@@ -1,6 +1,6 @@
 language: Russian
 native: Русский 
-maintainer: pvc1 <pvc1@yandex.ru>,thx to T915 <T915@inbox.ru> 
+maintainer: pvc1 <pvc1@yandex.ru> 
 #
 # ./glwskins/default/cmdmenu.view
 #
@@ -239,8 +239,8 @@ id: Year:
 msg: Год:
 
 id: Seen %d times
-msg[0]: Просмотрено %d раз(а)
-msg[1]: Просмотрено %d раз(а)
+msg[0]: Воспроизведено раз: %d
+msg[1]: Воспроизведено раз: %d
 
 #
 # ./glwskins/default/pages/listitems/add.view
@@ -879,7 +879,7 @@ id: Photos
 msg: Фото
 
 id: Published in Virtual File System
-msg: Опубликовать в Виртуальной Файловой Системе
+msg: Опубликовано в Виртуальной Файловой Системе
 
 id: Removed bookmark: %s
 msg: Удалить закладки: %s
@@ -900,13 +900,13 @@ msg: URL
 # ./src/networking/ftp_server.c
 #
 id: Enable FTP server
-msg: Включить FTP сервер
+msg: Включить FTP-сервер
 
 id: FTP server
-msg: FTP сервер
+msg: FTP-сервер
 
 id: Server TCP port
-msg: TCP порт сервера
+msg: TCP-порт сервера
 
 #
 # ./src/plugins.c
@@ -1080,7 +1080,7 @@ id: Look and feel
 msg: Внешний вид интерфейса
 
 id: Network services, etc
-msg: Сетевые услуги и т.д.
+msg: Сетевые услуги и т.п.
 
 id: Network settings
 msg: Сетевые настройки
