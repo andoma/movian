@@ -213,13 +213,11 @@ Java_com_showtimemediacenter_showtime_STCore_coreInit(JNIEnv *env, jobject obj, 
   (*env)->ReleaseStringUTFChars(env, j_settings, settings);
   (*env)->ReleaseStringUTFChars(env, j_cachedir, cachedir);
 
-  gconf.concurrency = 1; // FIX REAL VALUE
+  gconf.concurrency =   sysconf(_SC_NPROCESSORS_CONF);
 
   setlocale(LC_ALL, "");
 
   signal(SIGPIPE, SIG_IGN);
-
-  TRACE(TRACE_INFO, "core", "Using %d CPU(s)", gconf.concurrency);
 
   net_initialize();
 
