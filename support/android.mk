@@ -2,14 +2,16 @@
 
 SRCS += src/arch/android/android.c \
 	src/arch/android/android_threads.c \
+	src/arch/android/android_video_codec.c \
 	src/networking/net_posix.c \
 	src/networking/asyncio_posix.c \
 	src/networking/net_android.c \
 	src/fileaccess/fa_funopen.c \
 	src/arch/android/android_audio.c \
 	src/arch/android/android_glw.c \
+	src/arch/android/android_support.c \
 	src/prop/prop_jni.c \
-
+	src/ui/glw/glw_video_android.c \
 
 
 ${BUILDDIR}/src/arch/android/%.o : CFLAGS = ${OPTFLAGS} \
@@ -29,7 +31,7 @@ install: apk
 	${ADB} install -r ${ADIR}/bin/Showtime-debug.apk
 
 run:
-	${ADB} shell am start -n com.showtimemediacenter.showtime/.ShowtimeActivity
+	${ADB} shell am start -n com.showtimemediacenter.showtime/.GLWActivity
 
 stop:
 	${ADB} shell am force-stop com.showtimemediacenter.showtime

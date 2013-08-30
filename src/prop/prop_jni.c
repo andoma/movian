@@ -14,6 +14,9 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include <assert.h>
+
 #include <jni.h>
 
 #include "showtime.h"
@@ -21,7 +24,7 @@
 #include "prop/prop.h"
 #include "misc/redblack.h"
 #include "misc/dbl.h"
-
+#include "arch/android/android.h"
 #include "prop_jni.h"
 
 extern JavaVM *JVM;
@@ -31,11 +34,11 @@ RB_HEAD(jni_prop_tree, jni_prop);
 LIST_HEAD(jni_prop_list, jni_prop);
 
 static struct jni_subscription_tree jni_subscriptions;
-static struct jni_prop_tree jni_props;
+//static struct jni_prop_tree jni_props;
 //static int jni_prop_tally;
 static int jni_sub_tally;
-static hts_mutex_t jni_prop_mutex;
 static prop_courier_t *jni_courier;
+
 
 typedef struct jni_subscription {
 
@@ -44,6 +47,19 @@ typedef struct jni_subscription {
   prop_sub_t *js_sub;
   struct jni_prop_list js_props; // Exported props
   jobject js_cbif;
+
+  union {
+
+    struct {
+      // For scalar subscriptions
+      jmethodID js_setstr;
+      jmethodID js_setint;
+      jmethodID js_setfloat;
+      jmethodID js_setvoid;
+    };
+
+  };
+
 } jni_subscription_t;
 
 
@@ -56,35 +72,21 @@ js_cmp(const jni_subscription_t *a, const jni_subscription_t *b)
   return a->js_id - b->js_id;
 }
 
-/**
- * An exported property
- */
-typedef struct jni_prop {
-  RB_ENTRY(jni_prop) jp_link;
-  unsigned int jp_id;
-  prop_t *jp_prop;
-  jni_subscription_t *jp_sub;
-  LIST_ENTRY(jni_prop) jp_sub_link;
-} jni_prop_t;
 
-
-#if 0
 /**
  *
  */
-static int
-jp_cmp(const jni_prop_t *a, const jni_prop_t *b)
+static void
+jni_sub_node_cb(void *opaque, prop_event_t event, ...)
 {
-  return a->jp_id - b->jp_id;
 }
-#endif
 
 
 /**
  *
  */
 static void
-jni_sub_cb(void *opaque, prop_event_t event, ...)
+jni_sub_scalar_cb(void *opaque, prop_event_t event, ...)
 {
   JNIEnv *env;
   int r = (*JVM)->GetEnv(JVM, (void **)&env, JNI_VERSION_1_6);
@@ -98,11 +100,8 @@ jni_sub_cb(void *opaque, prop_event_t event, ...)
   va_list ap;
 
   jni_subscription_t *js = opaque;
-  jmethodID mid;
   double dbl;
   int i32;
-
-  jclass c = (*env)->GetObjectClass(env, js->js_cbif);
 
   va_start(ap, event);
 
@@ -113,71 +112,52 @@ jni_sub_cb(void *opaque, prop_event_t event, ...)
   case PROP_SET_RSTRING:
       str = rstr_get(va_arg(ap, rstr_t *));
 
-    if((mid = (*env)->GetMethodID(env, c, "set", "(Ljava/lang/String;)V"))) {
+    if(js->js_setstr) {
       jstring jstr = (*env)->NewStringUTF(env, str);
-      (*env)->CallVoidMethod(env, js->js_cbif, mid, jstr);
+      (*env)->CallVoidMethod(env, js->js_cbif, js->js_setstr, jstr);
+    } else if(js->js_setfloat) {
+      dbl = my_str2double(str, NULL);
+      (*env)->CallVoidMethod(env, js->js_cbif, js->js_setfloat, dbl);
+    } else if(js->js_setint) {
+      i32 = atoi(str);
+      (*env)->CallVoidMethod(env, js->js_cbif, js->js_setint, i32);
     } else {
-      (*env)->ExceptionClear(env);
-      if((mid = (*env)->GetMethodID(env, c, "set", "(F)V"))) {
-        dbl = my_str2double(str, NULL);
-        (*env)->CallVoidMethod(env, js->js_cbif, mid, dbl);
-      } else {
-        (*env)->ExceptionClear(env);
-        if((mid = (*env)->GetMethodID(env, c, "set", "(I)V"))) {
-          i32 = atoi(str);
-          (*env)->CallVoidMethod(env, js->js_cbif, mid, i32);
-        } else {
-          TRACE(TRACE_DEBUG, "JNI_PROP", "Appropriate set() not found for string");
-        }
-      }
+      TRACE(TRACE_DEBUG, "JNI_PROP", "Appropriate set() not found for string");
     }
     break;
 
   case PROP_SET_FLOAT:
     dbl = va_arg(ap, double);
-    if((mid = (*env)->GetMethodID(env, c, "set", "(F)V"))) {
-      (*env)->CallVoidMethod(env, js->js_cbif, mid, dbl);
+    if(js->js_setfloat) {
+      (*env)->CallVoidMethod(env, js->js_cbif, js->js_setfloat, dbl);
+    } else if(js->js_setint) {
+      (*env)->CallVoidMethod(env, js->js_cbif, js->js_setint, (int)dbl);
+    } else if(js->js_setstr) {
+      char buf[32];
+      my_double2str(buf, sizeof(buf), dbl);
+      jstring jstr = (*env)->NewStringUTF(env, buf);
+      (*env)->CallVoidMethod(env, js->js_cbif, js->js_setstr, jstr);
     } else {
-      (*env)->ExceptionClear(env);
-      if((mid = (*env)->GetMethodID(env, c, "set", "(I)V"))) {
-        (*env)->CallVoidMethod(env, js->js_cbif, mid, (int)dbl);
-      } else {
-        (*env)->ExceptionClear(env);
-        if((mid = (*env)->GetMethodID(env, c, "set", "(Ljava/lang/String;)V"))) {
-          char buf[32];
-          my_double2str(buf, sizeof(buf), dbl);
-          jstring jstr = (*env)->NewStringUTF(env, buf);
-          (*env)->CallVoidMethod(env, js->js_cbif, mid, jstr);
-        } else {
-          TRACE(TRACE_DEBUG, "JNI_PROP", "Appropriate set() not found for float");
-        }
-      }
+      TRACE(TRACE_DEBUG, "JNI_PROP", "Appropriate set() not found for float");
     }
     break;
 
   case PROP_SET_INT:
     i32 = va_arg(ap, int);
 
-    if((mid = (*env)->GetMethodID(env, c, "set", "(I)V"))) {
-      (*env)->CallVoidMethod(env, js->js_cbif, mid, i32);
+    if(js->js_setint) {
+      (*env)->CallVoidMethod(env, js->js_cbif, js->js_setint, i32);
+    } else if(js->js_setfloat) {
+      (*env)->CallVoidMethod(env, js->js_cbif, js->js_setfloat, (float)i32);
+    } else if(js->js_setstr) {
+      char buf[32];
+      snprintf(buf, sizeof(buf), "%d", i32);
+      jstring jstr = (*env)->NewStringUTF(env, buf);
+      (*env)->CallVoidMethod(env, js->js_cbif, js->js_setstr, jstr);
     } else {
-      (*env)->ExceptionClear(env);
-      if((mid = (*env)->GetMethodID(env, c, "set", "(F)V"))) {
-        (*env)->CallVoidMethod(env, js->js_cbif, mid, (float)i32);
-      } else {
-        (*env)->ExceptionClear(env);
-        if((mid = (*env)->GetMethodID(env, c, "set", "(Ljava/lang/String;)V"))) {
-          char buf[32];
-          snprintf(buf, sizeof(buf), "%d", i32);
-          jstring jstr = (*env)->NewStringUTF(env, buf);
-          (*env)->CallVoidMethod(env, js->js_cbif, mid, jstr);
-        } else {
-          TRACE(TRACE_DEBUG, "JNI_PROP", "Appropriate set() not found for int");
-        }
-      }
+      TRACE(TRACE_DEBUG, "JNI_PROP", "Appropriate set() not found for int");
     }
     break;
-
 
   default:
     TRACE(TRACE_DEBUG, "JNI_PROP", "Not hanlding event %d", event);
@@ -204,7 +184,7 @@ jni_sub_find(int id)
   return RB_FIND(&jni_subscriptions, &skel, js_link, js_cmp);
 }
 
-
+#if 0
 /**
  *
  */
@@ -231,32 +211,23 @@ js_clear_props(jni_subscription_t *js)
   }
 }
 
+#endif
 
 
-JNIEXPORT jint JNICALL
-Java_com_showtimemediacenter_showtime_STCore_sub(JNIEnv *env,
-                                                 jobject obj,
-                                                 jint j_propid,
-                                                 jstring j_path,
-                                                 jobject j_cbif);
 
-JNIEXPORT jint JNICALL
-Java_com_showtimemediacenter_showtime_STCore_sub(JNIEnv *env,
-                                                 jobject obj,
-                                                 jint j_propid,
-                                                 jstring j_path,
-                                                 jobject j_cbif)
+static jni_subscription_t *
+makesub(JNIEnv *env,
+        prop_callback_t *cb,
+        jint j_propid,
+        jstring j_path,
+        jobject j_cbif)
 {
   jni_subscription_t *js = malloc(sizeof(jni_subscription_t));
   const char *path = (*env)->GetStringUTFChars(env, j_path, 0);
 
-  TRACE(TRACE_DEBUG, "PROP_JNI", "Subscribe to %s", path);
-
   js->js_cbif = (*env)->NewGlobalRef(env, j_cbif);
 
-  hts_mutex_lock(&jni_prop_mutex);
-
-  prop_t *p = prop_get_global();
+  prop_t *p = j_propid ? (prop_t *)j_propid : prop_get_global();
 
   js->js_id = ++jni_sub_tally;
 
@@ -265,40 +236,109 @@ Java_com_showtimemediacenter_showtime_STCore_sub(JNIEnv *env,
 
   js->js_sub = prop_subscribe(PROP_SUB_ALT_PATH,
 			      PROP_TAG_NAMESTR, path,
-			      PROP_TAG_CALLBACK, jni_sub_cb, js,
+			      PROP_TAG_CALLBACK, cb, js,
 			      PROP_TAG_ROOT, p,
                               PROP_TAG_COURIER, jni_courier,
 			      NULL);
 
-  hts_mutex_unlock(&jni_prop_mutex);
-
   (*env)->ReleaseStringUTFChars(env, j_path, path);
+  return js;
+}
+
+
+
+
+
+
+
+JNIEXPORT jint JNICALL
+Java_com_showtimemediacenter_showtime_STCore_subScalar(JNIEnv *, jobject , jint, jstring, jobject);
+
+JNIEXPORT jint JNICALL
+Java_com_showtimemediacenter_showtime_STCore_subScalar(JNIEnv *env,
+                                                       jobject obj,
+                                                       jint j_propid,
+                                                       jstring j_path,
+                                                       jobject j_cbif)
+{
+  jni_subscription_t *js;
+  js = makesub(env, jni_sub_scalar_cb, j_propid, j_path, j_cbif);
+
+  jclass c = (*env)->GetObjectClass(env, js->js_cbif);
+
+  js->js_setstr   = (*env)->GetMethodID(env, c, "set", "(Ljava/lang/String;)V");
+  (*env)->ExceptionClear(env);
+  js->js_setint   = (*env)->GetMethodID(env, c, "set", "(I)V");
+  (*env)->ExceptionClear(env);
+  js->js_setfloat = (*env)->GetMethodID(env, c, "set", "(F)V");
+  (*env)->ExceptionClear(env);
+
+  return js->js_id;
+}
+
+
+JNIEXPORT jint JNICALL
+Java_com_showtimemediacenter_showtime_STCore_subNodes(JNIEnv *, jobject , jint, jstring, jobject);
+
+
+JNIEXPORT jint JNICALL
+Java_com_showtimemediacenter_showtime_STCore_subNodes(JNIEnv *env,
+                                                      jobject obj,
+                                                      jint j_propid,
+                                                      jstring j_path,
+                                                      jobject j_cbif)
+{
+  jni_subscription_t *js;
+  js = makesub(env, jni_sub_node_cb, j_propid, j_path, j_cbif);
   return js->js_id;
 }
 
 
 JNIEXPORT void JNICALL
-Java_com_showtimemediacenter_showtime_STCore_unsub(JNIEnv *env,
-                                                   jobject obj,
-                                                   jint j_sid);
+Java_com_showtimemediacenter_showtime_STCore_unsub(JNIEnv *env, jobject obj, jint j_sid);
 
 JNIEXPORT void JNICALL
-Java_com_showtimemediacenter_showtime_STCore_unsub(JNIEnv *env,
-                                                   jobject obj,
-                                                   jint j_sid)
+Java_com_showtimemediacenter_showtime_STCore_unsub(JNIEnv *env, jobject obj, jint j_sid)
 {
-  hts_mutex_lock(&jni_prop_mutex);
-
   jni_subscription_t *js = jni_sub_find(j_sid);
 
   if(js != NULL) {
-    js_clear_props(js);
+    //    js_clear_props(js);
     prop_unsubscribe(js->js_sub);
     RB_REMOVE(&jni_subscriptions, js, js_link);
+    (*env)->DeleteGlobalRef(env, js->js_cbif);
     free(js);
   }
+}
 
-  hts_mutex_unlock(&jni_prop_mutex);
+JNIEXPORT void JNICALL
+Java_com_showtimemediacenter_showtime_STCore_propRelease(JNIEnv *env, jobject obj, jint j_prop);
+
+JNIEXPORT void JNICALL
+Java_com_showtimemediacenter_showtime_STCore_propRelease(JNIEnv *env, jobject obj, jint j_prop)
+{
+  prop_t *p = (prop_t *)j_prop;
+  prop_ref_dec(p);
+}
+
+
+
+static jclass notify_class;
+static jmethodID notify_mid;
+
+/**
+ *
+ */
+static void
+jni_prop_wakeup(void *opaque)
+{
+  JNIEnv *env;
+  int r = (*JVM)->GetEnv(JVM, (void **)&env, JNI_VERSION_1_6);
+
+  if(r)
+    return;
+  (*env)->CallStaticVoidMethod(env, notify_class, notify_mid);
+
 }
 
 
@@ -306,9 +346,20 @@ Java_com_showtimemediacenter_showtime_STCore_unsub(JNIEnv *env,
  *
  */
 void
-prop_jni_init(void)
+prop_jni_init(JNIEnv *env)
 {
-  hts_mutex_init(&jni_prop_mutex);
-  jni_courier = prop_courier_create_thread(&jni_prop_mutex, "jniprop");
+  jni_courier = prop_courier_create_notify(jni_prop_wakeup, NULL);
+  notify_mid= (*env)->GetStaticMethodID(env, STCore,
+                                        "wakeupMainDispatcher", "()V");
+  assert(notify_mid != 0);
 }
 
+
+/**
+ *
+ */
+void
+prop_jni_poll(void)
+{
+  prop_courier_poll(jni_courier);
+}

@@ -242,6 +242,20 @@ android_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
   if(d->d_pcmbuf_offset == d->d_pcmbuf_num_buffers)
     d->d_pcmbuf_offset = 0;
 
+  if(pts != AV_NOPTS_VALUE) {
+
+    media_pipe_t *mp = ad->ad_mp;
+    hts_mutex_lock(&mp->mp_clock_mutex);
+
+    int delay = 42666; // 2 * 1024 samples in 48kHz
+
+    mp->mp_audio_clock = pts - delay;
+    mp->mp_audio_clock_epoch = epoch;
+    mp->mp_audio_clock_avtime = showtime_get_avtime();
+
+    hts_mutex_unlock(&mp->mp_clock_mutex);
+  }
+
   if(result)
     TRACE(TRACE_ERROR, "SLES", "Enqueue failed 0x%x", result);
 

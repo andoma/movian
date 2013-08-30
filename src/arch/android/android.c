@@ -34,8 +34,11 @@
 #include "ui/glw/glw.h"
 #include "prop/prop_jni.h"
 #include "android.h"
+#include "navigator.h"
 
 JavaVM *JVM;
+jclass STCore;
+prop_t *android_nav;
 
 /**
  *
@@ -223,7 +226,10 @@ Java_com_showtimemediacenter_showtime_STCore_coreInit(JNIEnv *env, jobject obj, 
 
   showtime_init();
 
-  prop_jni_init();
+  jclass c = (*env)->FindClass(env, "com/showtimemediacenter/showtime/STCore");
+  STCore = (*env)->NewGlobalRef(env, c);
+
+  prop_jni_init(env);
 
   service_create("music", "Music", "file:///sdcard/Music",
                  "music", NULL, 0, 1, SVC_ORIGIN_SYSTEM);
@@ -231,4 +237,15 @@ Java_com_showtimemediacenter_showtime_STCore_coreInit(JNIEnv *env, jobject obj, 
   service_create("music", "Movies", "file:///sdcard/Movies",
                  "video", NULL, 0, 1, SVC_ORIGIN_SYSTEM);
 
+  android_nav = nav_spawn();
+}
+
+
+/**
+ *
+ */
+JNIEXPORT void JNICALL
+Java_com_showtimemediacenter_showtime_STCore_pollCourier(JNIEnv *env, jobject obj)
+{
+  prop_jni_poll();
 }
