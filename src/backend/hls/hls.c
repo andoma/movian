@@ -45,6 +45,9 @@
  * http://tools.ietf.org/html/draft-pantos-http-live-streaming-07
  * http://developer.apple.com/library/ios/#technotes/tn2288/
  * http://developer.apple.com/library/ios/#technotes/tn2224/
+ *
+ * Buffer-Based Rate Adaptation for HTTP Video Streaming
+ *    http://conferences.sigcomm.org/sigcomm/2013/papers/fhmn/p9.pdf
  */
 
 #define TESTURL "http://devimages.apple.com.edgekey.net/resources/http-streaming/examples/bipbop_16x9/bipbop_16x9_variant.m3u8"
