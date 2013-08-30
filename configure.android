@@ -79,18 +79,24 @@ enable trex
 bzip2_setup
 freetype_setup --host=arm-linux-gnueabihf
 
-LIBAV_CFLAGS="-I${EXT_INSTALL_DIR}/include"
-LIBAV_LDFLAGS="-L${EXT_INSTALL_DIR}/lib"
+ARCH_CFLAGS="-march=armv7-a -mfloat-abi=softfp -mfpu=neon"
+ARCH_LDFLAGS="-march=armv7-a -Wl,--fix-cortex-a8"
+
+LIBAV_CFLAGS="-I${EXT_INSTALL_DIR}/include ${ARCH_CFLAGS}"
+LIBAV_LDFLAGS="-L${EXT_INSTALL_DIR}/lib  ${ARCH_LDFLAGS}"
 LIBAV_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=armv7 --target-os=linux"
 
 libav_setup
 rtmpdump_setup
 xmp_setup
+libyuv_setup
 
 # libspotify_setup "12.1.103-Linux-armv6-bcm2708hardfp"
 
 cat >> ${CONFIG_MAK} <<EOF
-LDFLAGS_cfg +=  -lOpenSLES -lGLESv2 -llog
+CFLAGS_arch = ${ARCH_CFLAGS}
+CFLAGS_cfg += ${ARCH_CFLAGS}
+LDFLAGS_cfg += ${ARCH_LDFLAGS} -lOpenSLES -lGLESv2 -llog -landroid -ljnigraphics
 SDK = ${SDK}
 NDK = ${NDK}
 ADB = ${SDK}/platform-tools/adb
