@@ -361,6 +361,7 @@ parse_opts(int argc, char **argv)
 #endif
 	     "   -v <view>         - Use specific view for <url>.\n"
 	     "   --cache <path>    - Set path for cache [%s].\n"
+	     "   --persistent <path> - Set path for persistent stuff [%s].\n"
 #if ENABLE_HTTPSERVER
 	     "   --disable-upnp    - Disable UPNP/DLNA stack.\n"
 #endif
@@ -378,7 +379,8 @@ parse_opts(int argc, char **argv)
 	     "\n",
 	     htsversion_full,
 	     argv0,
-	     gconf.cache_path);
+	     gconf.cache_path,
+	     gconf.persistent_path);
       exit(0);
       argc--;
       argv++;
@@ -458,6 +460,9 @@ parse_opts(int argc, char **argv)
       argc -= 2; argv += 2;
     } else if (!strcmp(argv[0], "--cache") && argc > 1) {
       mystrset(&gconf.cache_path, argv[1]);
+      argc -= 2; argv += 2;
+    } else if (!strcmp(argv[0], "--persistent") && argc > 1) {
+      mystrset(&gconf.persistent_path, argv[1]);
       argc -= 2; argv += 2;
     } else if (!strcmp(argv[0], "--ui") && argc > 1) {
       mystrset(&gconf.ui, argv[1]);
