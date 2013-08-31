@@ -28,3 +28,16 @@ ${PROG}.stripped: ${PROG}.bundle
 	${STRIP} -o $@ $<
 
 stripped: ${PROG}.stripped
+
+SQDIR=${BUILDDIR}/sqfs
+
+${BUILDDIR}/showtime.sqfs: ${PROG}.stripped
+	rm -rf "${SQDIR}"
+	mkdir -p "${SQDIR}/bin"
+	mkdir -p "${SQDIR}/lib"
+	cp ${PROG}.stripped "${SQDIR}/bin/showtime"
+	cp -d ${LIBSPOTIFY_PATH}/lib/libspotify.* "${SQDIR}/lib"
+
+	mksquashfs "${SQDIR}" ${BUILDDIR}/showtime.sqfs  -noD -noF -noI -noappend
+
+squashfs: ${BUILDDIR}/showtime.sqfs
