@@ -545,7 +545,7 @@ ui_run(glw_root_t *gr, EGLDisplay dpy)
   glw_flush(gr);
 
   glw_lock(gr);
-  backdrop_loader_run = 1;
+  backdrop_loader_run = 0;
   hts_cond_signal(&backdrop_loader_cond);
   glw_unlock(gr);
 
@@ -969,6 +969,7 @@ main(int argc, char **argv)
 #endif
 
   rpi_mainloop();
+  shutdown_hook_run(1);
   showtime_fini();
   arch_exit();
 }
@@ -991,6 +992,6 @@ int
 arch_stop_req(void)
 {
   runmode = RUNMODE_EXIT;
-  return 0;
+  return -1;
 }
 
