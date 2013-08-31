@@ -394,12 +394,14 @@ attempt_upgrade(int accept_patch)
 	fname, (int)b->b_size);
 
   if(unlink(fname)) {
-    install_error("Unlink failed");
-    buf_release(b);
-    return -1;
+    if(gconf.upgrade_path == NULL) {
+      install_error("Unlink failed");
+      buf_release(b);
+      return -1;
+    }
+  } else {
+    TRACE(TRACE_DEBUG, "upgrade", "Executable removed, rewriting");
   }
-
-  TRACE(TRACE_DEBUG, "upgrade", "Executable removed, rewriting");
 
   fd = open(fname, O_CREAT | O_RDWR, 0777);
   if(fd == -1) {
