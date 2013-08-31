@@ -258,7 +258,7 @@ install_error(const char *str)
 static int
 attempt_upgrade(int accept_patch)
 {
-  const char *fname = gconf.binary;
+  const char *fname = gconf.upgrade_path ?: gconf.binary;
   uint8_t digest[20];
   char digeststr[41];
   char errbuf[1024];
@@ -498,8 +498,9 @@ set_upgrade_track(void *opaque, const char *str)
 void
 upgrade_init(void)
 {
-  
-  if(gconf.binary == NULL)
+  const char *fname = gconf.upgrade_path ?: gconf.binary;
+
+  if(fname == NULL)
     return;
 
 #if PS3

@@ -196,6 +196,7 @@ typedef struct gconf {
 
   char *dirname;   // Directory where executable resides
   char *binary;    // Executable itself
+  char *upgrade_path; // What to upgrade
 
   char *cache_path;
   char *persistent_path;
