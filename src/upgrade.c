@@ -536,7 +536,9 @@ upgrade_init(void)
                  SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Upgrade to releases from")),
                  SETTING_HTSMSG("track", store, "upgrade"),
+#if defined(PS3)
                  SETTING_OPTION("stable",  _p("Stable")),
+#endif
                  SETTING_OPTION("testing", _p("Testing")),
                  SETTING_CALLBACK(set_upgrade_track, NULL),
                  NULL);
