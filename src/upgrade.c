@@ -503,6 +503,11 @@ upgrade_init(void)
   if(fname == NULL)
     return;
 
+#if RPISTOS
+  artifact_type = "sqfs";
+  archname = "rpi";
+#endif
+
 #if PS3
   artifact_type = "self";
   archname = "ps3";
