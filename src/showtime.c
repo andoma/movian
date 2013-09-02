@@ -188,12 +188,16 @@ swthread(void *aux)
 
   while(1) {
 
-    while(gconf.swrefresh == 0)
-      hts_cond_wait(&gconf.state_cond, &gconf.state_mutex);
+    int timeout = 0;
+
+    while(gconf.swrefresh == 0) {
+      timeout = hts_cond_wait_timeout(&gconf.state_cond, &gconf.state_mutex,
+				      86400000);
     
     gconf.swrefresh = 0;
     hts_mutex_unlock(&gconf.state_mutex);
-    plugins_upgrade_check();
+    if(!timeout)
+      plugins_upgrade_check();
     upgrade_refresh();
     hts_mutex_lock(&gconf.state_mutex);
   }
