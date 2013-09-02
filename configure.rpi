@@ -113,6 +113,7 @@ LDFLAGS_cfg += -lopenmaxil -lGLESv2 -lEGL -lvcos -lbcm_host -lvchiq_arm
 LDFLAGS_cfg += -lpthread -lrt -ldl
 EOF
 
+echo >>${CONFIG_H} "#define SHOWTIME_LIBDIR \"/stos/mnt/showtime/lib\""
 
 if enabled release; then
     # the rpi firmware have assignment to variables that are only
