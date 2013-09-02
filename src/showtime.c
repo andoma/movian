@@ -190,7 +190,7 @@ swthread(void *aux)
 
     int timeout = 0;
 
-    while(gconf.swrefresh == 0) {
+    while(gconf.swrefresh == 0)
       timeout = hts_cond_wait_timeout(&gconf.state_cond, &gconf.state_mutex,
 				      86400000);
     
