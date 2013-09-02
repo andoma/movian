@@ -41,6 +41,8 @@ void showtime_init(void);
 
 void showtime_fini(void);
 
+void showtime_swrefresh(void);
+
 extern void panic(const char *fmt, ...) __attribute__((noreturn, format(printf, 1, 2)));
 
 extern const char *showtime_dataroot(void);
@@ -208,6 +210,7 @@ typedef struct gconf {
   int ffmpeglog;
   int noui;
   int fullscreen;
+  int swrefresh;
 
   int can_standby;
   int can_poweroff;

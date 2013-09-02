@@ -175,14 +175,45 @@ swthread(void *aux)
   
   hts_mutex_lock(&gconf.state_mutex);
   gconf.state_plugins_loaded = 1;
-  hts_cond_signal(&gconf.state_cond);
+  hts_cond_broadcast(&gconf.state_cond);
   hts_mutex_unlock(&gconf.state_mutex);
 
   plugins_upgrade_check();
 
   upgrade_init();
+
+
+  hts_mutex_lock(&gconf.state_mutex);
+  gconf.swrefresh = 0;
+
+  while(1) {
+
+    while(gconf.swrefresh == 0)
+      hts_cond_wait(&gconf.state_cond, &gconf.state_mutex);
+    
+    gconf.swrefresh = 0;
+    hts_mutex_unlock(&gconf.state_mutex);
+    plugins_upgrade_check();
+    upgrade_refresh();
+    hts_mutex_lock(&gconf.state_mutex);
+  }
   return NULL;
 }
+
+
+/**
+ *
+ */
+void
+showtime_swrefresh(void)
+{
+  hts_mutex_lock(&gconf.state_mutex);
+  gconf.swrefresh = 1;
+  hts_cond_broadcast(&gconf.state_cond);
+  hts_mutex_unlock(&gconf.state_mutex);
+}
+
+
 
 /**
  *

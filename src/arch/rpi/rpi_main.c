@@ -893,6 +893,7 @@ rpi_mainloop(void)
   while(runmode != RUNMODE_EXIT) {
 
     if(display_status == DISPLAY_STATUS_ON && runmode == RUNMODE_RUNNING) {
+      showtime_swrefresh();
       ui_run(gr, dpy);
     } else {
       glw_lock(gr);

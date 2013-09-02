@@ -568,3 +568,13 @@ upgrade_init(void)
 		 PROP_TAG_NAME("global", "upgrade", "eventSink"),
 		 NULL);
 }
+
+
+/**
+ *
+ */
+void
+upgrade_refresh(void)
+{
+  check_upgrade(notify_upgrades);
+}
