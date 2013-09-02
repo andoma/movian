@@ -709,7 +709,7 @@ cec_callback(void *callback_data, uint32_t param0, uint32_t param1,
   uint32_t len     = CEC_CB_MSG_LENGTH(param0);
 #if 1
   uint32_t retval  = CEC_CB_RC(param0);
-  printf("cec_callback: debug: "
+  TRACE(TRACE_DEBUG, "CEC", 
 	 "reason=0x%04x, len=0x%02x, retval=0x%02x, "
 	 "param1=0x%08x, param2=0x%08x, param3=0x%08x, param4=0x%08x\n",
 	 reason, len, retval, param1, param2, param3, param4);
@@ -742,10 +742,10 @@ cec_callback(void *callback_data, uint32_t param0, uint32_t param1,
   case VC_CEC_RX:
 
     opcode = CEC_CB_OPCODE(param1);
-#if 1
-    printf("opcode = %x (from:0x%x to:0x%x)\n", opcode,
-	   CEC_CB_INITIATOR(param1), CEC_CB_FOLLOWER(param1));
-#endif
+    TRACE(TRACE_DEBUG, "CEC", 
+	  "opcode = %x (from:0x%x to:0x%x)\n", opcode,
+	  CEC_CB_INITIATOR(param1), CEC_CB_FOLLOWER(param1));
+
     switch(opcode) {
     case CEC_Opcode_GiveDevicePowerStatus:
       give_device_power_status(&msg);
