@@ -19,6 +19,7 @@
 #include "showtime.h"
 
 #include "event.h"
+#include "misc/str.h"
 
 #include <bcm_host.h>
 #include <OMX_Core.h>
@@ -154,24 +155,66 @@ cec_emit_key_down(int code)
 
 
 
+static void
+cec_send_msg(int follower, uint8_t *response, int len, int is_reply)
+{
+  int opcode = response[0];
+  char hexbuf[64];
+
+  bin2hex(hexbuf, sizeof(hexbuf), response + 1, len - 1);
+
+  TRACE(TRACE_DEBUG, "CEC", 
+	"TX: %-27s [0x%02x]          (to:0x%x) %s\n",
+	cec_cmd_to_str[opcode], opcode,
+	follower, hexbuf);
+
+  vc_cec_send_message(follower, response, len, is_reply);
+}
 
 
 
-const uint32_t myVendorId = CEC_VENDOR_ID_BROADCOM;
-uint16_t physical_address;
-CEC_AllDevices_T logical_address;
 
+static const uint32_t myVendorId = CEC_VENDOR_ID_BROADCOM;
+static uint16_t physical_address;
+static CEC_AllDevices_T logical_address;
+static uint16_t active_physical_address;
+
+
+static void
+send_image_view_on(void)
+{
+  uint8_t response[1];
+  response[0] = CEC_Opcode_ImageViewOn;
+  cec_send_msg(0x0, response, 1, VC_FALSE);
+}
+
+
+static void
+send_active_source(int is_reply)
+{
+  TRACE(TRACE_DEBUG, "CEC",
+	"Sending active source. Physical address: 0x%x",
+	physical_address);
+  vc_cec_send_ActiveSource(physical_address, is_reply);
+  cec_we_are_not_active = 0;
+  active_physical_address = physical_address;
+}
 
 
 static void
 SetStreamPath(const VC_CEC_MESSAGE_T *msg)
 {
-    uint16_t requestedAddress;
+  uint16_t requestedAddress;
 
-    requestedAddress = (msg->payload[1] << 8) + msg->payload[2];
-    if (requestedAddress != physical_address)
-        return;
-    vc_cec_send_ActiveSource(physical_address, VC_FALSE);
+  requestedAddress = (msg->payload[1] << 8) + msg->payload[2];
+  if (requestedAddress != physical_address) {
+    TRACE(TRACE_DEBUG, "CEC",
+	  "SetStreamPath -> requestAddress 0x%x not us, ignoring",
+	  requestedAddress);
+
+    return;
+  }
+  send_active_source(VC_FALSE);
 }
 
 
@@ -182,7 +225,7 @@ give_device_power_status(const VC_CEC_MESSAGE_T *msg)
     uint8_t response[2];
     response[0] = CEC_Opcode_ReportPowerStatus;
     response[1] = CEC_POWER_STATUS_ON;
-    vc_cec_send_message(msg->initiator, response, 2, VC_TRUE);
+    cec_send_msg(msg->initiator, response, 2, VC_TRUE);
 }
 
 
@@ -194,7 +237,7 @@ give_device_vendor_id(const VC_CEC_MESSAGE_T *msg)
   response[1] = (uint8_t) ((myVendorId >> 16) & 0xff);
   response[2] = (uint8_t) ((myVendorId >> 8) & 0xff);
   response[3] = (uint8_t) ((myVendorId >> 0) & 0xff);
-  vc_cec_send_message(msg->initiator, response, 4, VC_TRUE);
+  cec_send_msg(msg->initiator, response, 4, VC_TRUE);
 }
 
 
@@ -204,19 +247,19 @@ send_cec_version(const VC_CEC_MESSAGE_T *msg)
   uint8_t response[2];
   response[0] = CEC_Opcode_CECVersion;
   response[1] = 0x5;
-  vc_cec_send_message(msg->initiator, response, 2, VC_TRUE);
+  cec_send_msg(msg->initiator, response, 2, VC_TRUE);
 }
 
 
 static void
 vc_cec_report_physicalAddress(uint8_t dest)
 {
-    uint8_t msg[4];
-    msg[0] = CEC_Opcode_ReportPhysicalAddress;
-    msg[1] = (uint8_t) ((physical_address) >> 8 & 0xff);
-    msg[2] = (uint8_t) ((physical_address) >> 0 & 0xff);
-    msg[3] = CEC_DeviceType_Tuner;
-    vc_cec_send_message(CEC_BROADCAST_ADDR, msg, 4, VC_TRUE);
+  uint8_t msg[4];
+  msg[0] = CEC_Opcode_ReportPhysicalAddress;
+  msg[1] = (uint8_t) ((physical_address) >> 8 & 0xff);
+  msg[2] = (uint8_t) ((physical_address) >> 0 & 0xff);
+  msg[3] = CEC_DeviceType_Tuner;
+  cec_send_msg(CEC_BROADCAST_ADDR, msg, 4, VC_TRUE);
 }
 
 static void
@@ -225,7 +268,7 @@ send_deck_status(const VC_CEC_MESSAGE_T *msg)
   uint8_t response[2];
   response[0] = CEC_Opcode_DeckStatus;
   response[1] = CEC_DECK_INFO_NO_MEDIA;
-  vc_cec_send_message(msg->initiator, response, 2, VC_TRUE);
+  cec_send_msg(msg->initiator, response, 2, VC_TRUE);
 }
 
 
@@ -236,7 +279,22 @@ send_osd_name(const VC_CEC_MESSAGE_T *msg, const char *name)
   int l = MIN(14, strlen(name));
   response[0] = CEC_Opcode_SetOSDName;
   memcpy(response + 1, name, l);
-  vc_cec_send_message(msg->initiator, response, l+1, VC_TRUE);
+  cec_send_msg(msg->initiator, response, l+1, VC_TRUE);
+}
+
+
+/**
+ *
+ */
+static void
+handle_ActiveSource(const VC_CEC_MESSAGE_T *msg)
+{
+  active_physical_address = (msg->payload[1] << 8) | msg->payload[2];
+  cec_we_are_not_active = active_physical_address != physical_address;
+
+  TRACE(TRACE_DEBUG, "CEC", "Currently active address: 0x%x. That is %sus", 
+	active_physical_address,
+	cec_we_are_not_active ? "not " : "");
 }
 
 
@@ -247,9 +305,10 @@ cec_callback(void *callback_data, uint32_t param0, uint32_t param1,
   VC_CEC_NOTIFY_T reason  = (VC_CEC_NOTIFY_T) CEC_CB_REASON(param0);
   VC_CEC_MESSAGE_T msg;
   CEC_OPCODE_T opcode;
+  char hexbuf[64];
 
   uint32_t len     = CEC_CB_MSG_LENGTH(param0);
-#if 1
+#if 0
   uint32_t retval  = CEC_CB_RC(param0);
   TRACE(TRACE_DEBUG, "CEC", 
 	 "reason=0x%04x, len=0x%02x, retval=0x%02x, "
@@ -277,6 +336,7 @@ cec_callback(void *callback_data, uint32_t param0, uint32_t param1,
   default:
     break;
   case VC_CEC_BUTTON_PRESSED:
+    TRACE(TRACE_DEBUG, "CEC", "Key down: %x", msg.payload[1]);
     cec_emit_key_down(msg.payload[1]);
     break;
 
@@ -284,9 +344,16 @@ cec_callback(void *callback_data, uint32_t param0, uint32_t param1,
   case VC_CEC_RX:
 
     opcode = CEC_CB_OPCODE(param1);
+    bin2hex(hexbuf, sizeof(hexbuf), msg.payload+1, msg.length-1);
     TRACE(TRACE_DEBUG, "CEC", 
-	  "%s (from:0x%x to:0x%x)\n", cec_cmd_to_str[opcode],
-	  CEC_CB_INITIATOR(param1), CEC_CB_FOLLOWER(param1));
+	  "RX: %-27s [0x%02x] (from:0x%x to:0x%x) %s\n",
+	  cec_cmd_to_str[opcode], opcode,
+	  CEC_CB_INITIATOR(param1), CEC_CB_FOLLOWER(param1),
+	  hexbuf);
+
+    if(CEC_CB_FOLLOWER(param1) != logical_address &&
+       CEC_CB_FOLLOWER(param1) != 0xf)
+      return;
 
     switch(opcode) {
     case CEC_Opcode_GiveDevicePowerStatus:
@@ -317,7 +384,24 @@ cec_callback(void *callback_data, uint32_t param0, uint32_t param1,
       send_deck_status(&msg);
       break;
 
+    case CEC_Opcode_RequestActiveSource:
+      if(active_physical_address == physical_address)
+	send_active_source(VC_FALSE);
+      break;
+
+    case CEC_Opcode_ActiveSource:
+      handle_ActiveSource(&msg);
+      break;
+
+    case CEC_Opcode_Standby:
+      cec_we_are_not_active = 1;
+      break;
+
     default:
+      TRACE(TRACE_DEBUG, "CEC", "Unhandled RX command: 0x%02x", opcode);
+
+      if(msg.follower == 0xf)
+	break; // Never Abort on broadcast messages
       vc_cec_send_FeatureAbort(msg.initiator, opcode,
 			       CEC_Abort_Reason_Unrecognised_Opcode);
       break;
@@ -397,6 +481,11 @@ cec_thread(void *aux)
   }
 
   vc_cec_set_logical_address(logical_address, CEC_DeviceType_Rec, myVendorId);
+
+  sleep(1);
+  send_image_view_on();
+  sleep(1);
+  send_active_source(0);
 
   while(1) {
     sleep(1);

@@ -56,6 +56,7 @@ DISPMANX_DISPLAY_HANDLE_T dispman_display;
 
 
 int display_status;
+int cec_we_are_not_active;
 static int runmode;
 
 
@@ -387,6 +388,24 @@ ui_create(void)
 /**
  *
  */
+static int
+ui_should_run(void)
+{
+  if(cec_we_are_not_active)
+    return 0;
+
+  if(runmode != RUNMODE_RUNNING)
+    return 0;
+
+  if(display_status != DISPLAY_STATUS_ON)
+    return 0;
+
+  return 1;
+}
+
+/**
+ *
+ */
 static void
 ui_run(glw_root_t *gr, EGLDisplay dpy)
 {
@@ -508,8 +527,7 @@ ui_run(glw_root_t *gr, EGLDisplay dpy)
 			     backdrop_loader, gr, 
 			     THREAD_PRIO_UI_WORKER_LOW);
 
-  while(runmode == RUNMODE_RUNNING &&
-	display_status == DISPLAY_STATUS_ON) {
+  while(ui_should_run()) {
 
     glw_lock(gr);
 
@@ -575,7 +593,7 @@ rpi_mainloop(void)
 
   while(runmode != RUNMODE_EXIT) {
 
-    if(display_status == DISPLAY_STATUS_ON && runmode == RUNMODE_RUNNING) {
+    if(ui_should_run()) {
       showtime_swrefresh();
       ui_run(gr, dpy);
     } else {
