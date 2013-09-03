@@ -753,7 +753,8 @@ delete_items(scanner_t *s, prop_vec_t *pv)
       continue;
 
 
-    if(fa_unlink(rstr_get(fde->fde_url), errbuf, sizeof(errbuf))) {
+    if(fa_unlink_recursive(rstr_get(fde->fde_url),
+                           errbuf, sizeof(errbuf), 1) < 0) {
       notify_add(NULL, NOTIFY_ERROR, NULL, 5,
                  _("Unable to delete %s\n%s"),
                  rstr_get(fde->fde_filename), errbuf);

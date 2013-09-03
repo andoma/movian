@@ -200,6 +200,34 @@ vfs_scandir(fa_protocol_t *fap, fa_dir_t *fd, const char *url,
 /**
  *
  */
+static int
+resolve_mapping2(const char *url, char *newpath, size_t newpathlen,
+                 char *errbuf, size_t errlen)
+{
+  if(*url != '/') {
+    snprintf(errbuf, errlen, "No such file or directory");
+    return -1;
+  }
+
+  url++;
+
+  if(resolve_mapping(url, newpath, newpathlen)) {
+    snprintf(errbuf, errlen, "Invalid virtual directory");
+    return -1;
+  }
+
+  if(*newpath == 0) {
+    snprintf(errbuf, errlen, "Invalid virtual directory");
+    return -1;
+  }
+  return 0;
+}
+
+
+
+/**
+ *
+ */
 static fa_handle_t *
 vfs_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
          int flags, struct prop *stats)
@@ -209,22 +237,8 @@ vfs_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
   if(!strcmp(url, "/README.TXT"))
     return memfile_make(READMETXT, strlen(READMETXT));
 
-  if(*url != '/') {
-    snprintf(errbuf, errlen, "No such file or directory");
+  if(resolve_mapping2(url, newpath, sizeof(newpath), errbuf, errlen))
     return NULL;
-  }
-
-  url++;
-
-  if(resolve_mapping(url, newpath, sizeof(newpath))) {
-    snprintf(errbuf, errlen, "Invalid virtual directory");
-    return NULL;
-  }
-
-  if(*newpath == 0) {
-    snprintf(errbuf, errlen, "Invalid virtual directory");
-    return NULL;
-  }
   return fa_open_ex(newpath, errbuf, errlen, flags, stats);
 }
 
@@ -263,6 +277,72 @@ vfs_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
 }
 
 
+
+/**
+ *
+ */
+static int
+vfs_makedirs(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
+{
+  char newpath[1024];
+
+  if(resolve_mapping2(url, newpath, sizeof(newpath), errbuf, errlen))
+    return -1;
+
+  return fa_makedirs(newpath, errbuf, errlen);
+}
+
+
+/**
+ *
+ */
+static int
+vfs_unlink(const fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
+{
+  char newpath[1024];
+
+  if(resolve_mapping2(url, newpath, sizeof(newpath), errbuf, errlen))
+    return -1;
+
+  return fa_unlink(newpath, errbuf, errlen);
+}
+
+
+/**
+ *
+ */
+static int
+vfs_rmdir(const fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
+{
+  char newpath[1024];
+
+  if(resolve_mapping2(url, newpath, sizeof(newpath), errbuf, errlen))
+    return -1;
+
+  return fa_rmdir(newpath, errbuf, errlen);
+}
+
+
+/**
+ *
+ */
+static int
+vfs_rename(const fa_protocol_t *fap, const char *old, const char *new,
+           char *errbuf, size_t errlen)
+{
+  char newpath[1024];
+  char oldpath[1024];
+
+  if(resolve_mapping2(new, newpath, sizeof(newpath), errbuf, errlen))
+    return -1;
+
+  if(resolve_mapping2(old, oldpath, sizeof(oldpath), errbuf, errlen))
+    return -1;
+
+  return fa_rename(oldpath, newpath, errbuf, errlen);
+}
+
+
 /**
  *
  */
@@ -282,6 +362,10 @@ fa_protocol_t fa_protocol_vfs = {
   .fap_scan  = vfs_scandir,
   .fap_open  = vfs_open,
   .fap_stat  = vfs_stat,
+  .fap_makedirs = vfs_makedirs,
+  .fap_unlink   = vfs_unlink,
+  .fap_rmdir    = vfs_rmdir,
+  .fap_rename   = vfs_rename,
 };
 
 FAP_REGISTER(vfs);

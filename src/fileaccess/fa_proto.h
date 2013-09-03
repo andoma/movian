@@ -108,6 +108,13 @@ typedef struct fa_protocol {
   int (*fap_rmdir)(const struct fa_protocol *fap, const char *url,
                    char *errbuf, size_t errsize);
 
+
+  /**
+   * Returns -2 if not on same FS
+   */
+  int (*fap_rename)(const struct fa_protocol *fap, const char *old,
+                    const char *new, char *errbuf, size_t errsize);
+
   /**
    * Add a reference to the url.
    *

@@ -454,6 +454,21 @@ fs_makedirs(struct fa_protocol *fap, const char *url,
   return 0;
 }
 
+
+/**
+ *
+ */
+static int
+fs_rename(const fa_protocol_t *fap, const char *old, const char *new,
+          char *errbuf, size_t errlen)
+{
+  if(rename(old, new)) {
+    snprintf(errbuf, errlen, "%s", strerror(errno));
+    return -1;
+  }
+  return 0;
+}
+
 /**
  * FS change notification 
  */
@@ -691,6 +706,7 @@ fa_protocol_t fa_protocol_fs = {
   .fap_stat  = fs_stat,
   .fap_unlink= fs_unlink,
   .fap_rmdir = fs_rmdir,
+  .fap_rename = fs_rename,
 #if ENABLE_INOTIFY
   //  .fap_notify = fs_notify,
 #endif

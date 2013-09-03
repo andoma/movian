@@ -179,7 +179,14 @@ int fa_can_handle(const char *url, char *errbuf, size_t errsize);
 fa_handle_t *fa_reference(const char *url);
 void fa_unreference(fa_handle_t *fh);
 
+int fa_unlink_recursive(const char *url, char *errbuf, size_t errsize,
+                        int verify);
+
 int fa_unlink(const char *url, char *errbuf, size_t errsize);
+
+int fa_rmdir(const char *url, char *errbuf, size_t errsize);
+
+int fa_rename(const char *old, const char *new, char *errbuf, size_t errsize);
 
 int fa_copy(const char *to, const char *from, char *errbuf, size_t errsize);
 
