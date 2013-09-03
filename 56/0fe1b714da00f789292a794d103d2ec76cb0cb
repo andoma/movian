@@ -1,0 +1,5 @@
+FTP Server: Add support for:
+
+- Deleting of files and directories
+- Directory creation
+- Rename/Move of files
