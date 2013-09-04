@@ -3,18 +3,16 @@ build()
 {
     mkdir -p ${WORKINGDIR}
 
-    TEMPFILE="${WORKINGDIR}/tmpfile.zip"
     TOOLCHAIN_URL=http://www.lonelycoder.com/download/arm-unknown-linux-gnueabi.tar.gz
     TOOLCHAIN="${WORKINGDIR}/arm-unknown-linux-gnueabi"
- 
-    FW_HASH="2bcb2bc77be4ff5d9ecc79be73d527eba4e65366"
-    FW_URL="https://github.com/raspberrypi/firmware/archive/${FW_HASH}.zip"
-    FW_PATH="${WORKINGDIR}/firmware-${FW_HASH}"
 
-   
+    SYSROOT_URL=http://www.lonelycoder.com/download/rpi_alpha_sysroot.tar.gz
+    SYSROOT="${WORKINGDIR}/rpi_alpha_sysroot"
+
+  
     cleanup() {
 	echo "Cleaning up"
-	rm -rf "${TOOLCHAIN}" "${FW_PATH}" "${TEMPFILE}"
+	rm -rf "${TOOLCHAIN}" "${SYSROOT}" "${TEMPFILE}"
 	exit 1
     }
     
@@ -40,22 +38,22 @@ build()
     fi
 
 
-    echo "RPi firmware from: '${FW_URL}' Local install in: ${FW_PATH}"
-    if [ -d "${FW_PATH}" ]; then
-	echo "Firmware seems to exist"
+    echo "Sysroot firmware from: '${SYSROOT_URL}' Local install in: ${SYSROOT}"
+    if [ -d "${SYSROOT}" ]; then
+	echo "Sysroot seems to exist"
     else
 	set +e
 	trap cleanup SIGINT
 	(
 	    set -eu
-	    cd ${WORKINGDIR}
-	    curl -L "${FW_URL}" >"${TEMPFILE}"
-	    unzip "${TEMPFILE}"
+	    mkdir -p ${SYSROOT}
+	    cd ${SYSROOT}
+	    curl -L "${SYSROOT_URL}" | tar xfz - --strip-components=1
 	)
 	
 	STATUS=$?
 	if [ $STATUS -ne 0 ]; then
-	    echo "Unable to stage firmware"
+	    echo "Unable to stage sysroot"
 	    cleanup
 	fi
 	trap SIGINT
@@ -80,12 +78,15 @@ build()
 
     ./configure.rpi --build=${TARGET} \
 	--toolchain="${TOOLCHAIN}/bin/arm-linux-gnueabihf-" \
-	--vcroot="${FW_PATH}/hardfp/opt/vc/" \
+	--sysroot="${SYSROOT}" \
 	${RELEASE} \
 	--cleanbuild \
 	${USE_CCACHE}
 
-    make ${JARGS} BUILD=${TARGET}
+    make ${JARGS} BUILD=${TARGET} squashfs
+
+    artifact build.${TARGET}/showtime.sqfs sqfs application/octet-stream showtime.sqfs
+
 }
 
 deps()

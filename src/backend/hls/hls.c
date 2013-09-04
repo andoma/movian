@@ -37,6 +37,7 @@
 #include "fileaccess/fileaccess.h"
 #include "fileaccess/fa_libav.h"
 #include "hls.h"
+#include "subtitles/subtitles.h"
 
 /**
  * Relevant docs:
@@ -44,6 +45,9 @@
  * http://tools.ietf.org/html/draft-pantos-http-live-streaming-07
  * http://developer.apple.com/library/ios/#technotes/tn2288/
  * http://developer.apple.com/library/ios/#technotes/tn2224/
+ *
+ * Buffer-Based Rate Adaptation for HTTP Video Streaming
+ *    http://conferences.sigcomm.org/sigcomm/2013/papers/fhmn/p9.pdf
  */
 
 #define TESTURL "http://devimages.apple.com.edgekey.net/resources/http-streaming/examples/bipbop_16x9/bipbop_16x9_variant.m3u8"
@@ -846,6 +850,33 @@ demuxer_select_variant_simple(hls_t *h, hls_demuxer_t *hd)
 #define MB_EOF ((void *)-1)
 #define MB_NYA ((void *)-2)
 
+
+
+/**
+ *
+ */
+static void
+select_subtitle_track(media_pipe_t *mp, const char *id)
+{
+  TRACE(TRACE_DEBUG, "HLS", "Selecting subtitle track %s", id);
+
+  mp_send_cmd(mp, &mp->mp_video, MB_CTRL_FLUSH_SUBTITLES);
+
+  if(!strcmp(id, "sub:off")) {
+    prop_set_string(mp->mp_prop_subtitle_track_current, id);
+    mp->mp_video.mq_stream2 = -1;
+
+    mp_load_ext_sub(mp, NULL, NULL);
+
+  } else {
+
+    mp->mp_video.mq_stream2 = -1;
+    prop_set_string(mp->mp_prop_subtitle_track_current, id);
+    mp_load_ext_sub(mp, id, NULL);
+  }
+}
+
+
 /**
  *
  */
@@ -859,6 +890,7 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
   const char *canonical_url = va->canonical_url;
   int restartpos_last = -1;
   int64_t last_timestamp_presented = AV_NOPTS_VALUE;
+  sub_scanner_t *ss = NULL;
 
   mp->mp_video.mq_stream = 0;
   mp->mp_audio.mq_stream = 1;
@@ -909,6 +941,10 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 	mb = MB_NYA;
 	continue;
       }
+
+      if(ss == NULL && hs->hs_variant->hv_frozen)
+	ss = sub_scanner_create(h->h_baseurl, mp->mp_prop_subtitle_tracks, va,
+				hs->hs_variant->hv_duration / 1000000LL);
 
       AVPacket pkt;
       int r = av_read_frame(hs->hs_fctx, &pkt);
@@ -1029,6 +1065,10 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
     } else if(event_is_action(e, ACTION_STOP)) {
       mp_set_playstatus_stop(mp);
 
+    } else if(event_is_type(e, EVENT_SELECT_SUBTITLE_TRACK)) {
+      event_select_track_t *est = (event_select_track_t *)e;
+      select_subtitle_track(mp, est->id);
+
     } else if(event_is_type(e, EVENT_EXIT) ||
 	      event_is_type(e, EVENT_PLAY_URL)) {
       break;
@@ -1061,6 +1101,9 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 
   if(hd->hd_current != NULL)
     variant_close_current_seg(hd->hd_current);
+
+  sub_scanner_destroy(ss);
+
   return e;
 }
 

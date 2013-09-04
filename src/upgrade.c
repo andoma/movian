@@ -258,7 +258,7 @@ install_error(const char *str)
 static int
 attempt_upgrade(int accept_patch)
 {
-  const char *fname = gconf.binary;
+  const char *fname = gconf.upgrade_path ?: gconf.binary;
   uint8_t digest[20];
   char digeststr[41];
   char errbuf[1024];
@@ -394,12 +394,14 @@ attempt_upgrade(int accept_patch)
 	fname, (int)b->b_size);
 
   if(unlink(fname)) {
-    install_error("Unlink failed");
-    buf_release(b);
-    return -1;
+    if(gconf.upgrade_path == NULL) {
+      install_error("Unlink failed");
+      buf_release(b);
+      return -1;
+    }
+  } else {
+    TRACE(TRACE_DEBUG, "upgrade", "Executable removed, rewriting");
   }
-
-  TRACE(TRACE_DEBUG, "upgrade", "Executable removed, rewriting");
 
   fd = open(fname, O_CREAT | O_RDWR, 0777);
   if(fd == -1) {
@@ -498,9 +500,15 @@ set_upgrade_track(void *opaque, const char *str)
 void
 upgrade_init(void)
 {
-  
-  if(gconf.binary == NULL)
+  const char *fname = gconf.upgrade_path ?: gconf.binary;
+
+  if(fname == NULL)
     return;
+
+#if RPISTOS
+  artifact_type = "sqfs";
+  archname = "rpi";
+#endif
 
 #if PS3
   artifact_type = "self";
@@ -528,7 +536,9 @@ upgrade_init(void)
                  SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Upgrade to releases from")),
                  SETTING_HTSMSG("track", store, "upgrade"),
+#if defined(PS3)
                  SETTING_OPTION("stable",  _p("Stable")),
+#endif
                  SETTING_OPTION("testing", _p("Testing")),
                  SETTING_CALLBACK(set_upgrade_track, NULL),
                  NULL);
@@ -557,4 +567,14 @@ upgrade_init(void)
 		 PROP_TAG_CALLBACK, upgrade_cb, NULL,
 		 PROP_TAG_NAME("global", "upgrade", "eventSink"),
 		 NULL);
+}
+
+
+/**
+ *
+ */
+void
+upgrade_refresh(void)
+{
+  check_upgrade(notify_upgrades);
 }

@@ -20,13 +20,14 @@ for opt do
   ;;
   --vcroot=*) VCROOT="$optval"
   ;;
+  --sysroot=*) SYSROOT="$optval"
+  ;;
   *)
   common_opt $opt $optval
   esac
 done
 
 [ -z "$TOOLCHAIN" ] && die_cause "--toolchain not specified"
-[ -z "$VCROOT" ]    && die_cause "--vcroot not specified"
 
 CC=${TOOLCHAIN}gcc
 CXX=${TOOLCHAIN}g++
@@ -44,14 +45,49 @@ enable httpserver
 enable dvd
 enable libfreetype
 enable stdin
-
-zlib_setup
-bzip2_setup
-freetype_setup --host=arm-linux-gnueabihf
+enable realpath
+enable bspatch
 
 LIBAV_CFLAGS="-mfpu=vfp -mcpu=arm1176jzf-s -I${EXT_INSTALL_DIR}/include"
 LIBAV_LDFLAGS="-L${EXT_INSTALL_DIR}/lib"
 LIBAV_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=arm --cpu=arm1176jzf-s --target-os=linux --disable-armv5te --disable-neon --enable-armv6t2 --enable-armv6 --enable-vfp"
+
+if [ -n "$SYSROOT" ]; then 
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += --sysroot=$SYSROOT"
+    echo >>${CONFIG_MAK} "CFLAGS_cfg += --sysroot=$SYSROOT"
+
+    LIBAV_CFLAGS="--sysroot=$SYSROOT ${LIBAV_CFLAGS}"
+    LIBAV_LDFLAGS="--sysroot=$SYSROOT ${LIBAV_LDFLAGS}"
+
+    export PKG_CONFIG_SYSROOT_DIR="$SYSROOT"
+    export PKG_CONFIG_LIBDIR="$SYSROOT/usr/lib/pkgconfig"
+
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs zlib`
+    echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags zlib`
+    echo "Using zlib:            `pkg-config --modversion zlib`"
+
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs freetype2`
+    echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags freetype2`
+    echo "Using freetype:        `pkg-config --modversion freetype2`"
+
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs gio-2.0`
+    echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags gio-2.0`
+    echo "Using gio:             `pkg-config --modversion gio-2.0`"
+
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lbz2"
+
+    enable connman
+
+    if [ -z "$VCROOT" ]; then
+	VCROOT="${SYSROOT}/usr"
+    fi
+
+else
+    zlib_setup
+    bzip2_setup
+    freetype_setup --host=arm-linux-gnueabihf
+fi
+
 
 libav_setup
 rtmpdump_setup
@@ -59,11 +95,15 @@ xmp_setup
 
 libspotify_setup "12.1.103-Linux-armv6-bcm2708hardfp"
 
+
+
+
+
 cat >> ${CONFIG_MAK} <<EOF
 CFLAGS_cfg +=  -fgnu89-inline
 CFLAGS_cfg += -mfpu=vfp -mcpu=arm1176jzf-s -funwind-tables
 CFLAGS_cfg += -DOMX_SKIP64BIT
-
+CFLAGS_cfg += -DRPISTOS
 CFLAGS_cfg  += -I${VCROOT}/include
 CFLAGS_cfg  += -I${VCROOT}/include/IL
 CFLAGS_cfg  += -I${VCROOT}/include/interface/vcos/pthreads/
@@ -72,6 +112,8 @@ LDFLAGS_cfg += -L${VCROOT}/lib
 LDFLAGS_cfg += -lopenmaxil -lGLESv2 -lEGL -lvcos -lbcm_host -lvchiq_arm
 LDFLAGS_cfg += -lpthread -lrt -ldl
 EOF
+
+echo >>${CONFIG_H} "#define SHOWTIME_LIBDIR \"/stos/mnt/showtime/lib\""
 
 if enabled release; then
     # the rpi firmware have assignment to variables that are only

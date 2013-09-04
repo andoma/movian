@@ -1,6 +1,6 @@
 language: Russian
 native: Русский 
-maintainer: pvc1 <pvc1@yandex.ru>,thx to T915 <T915@inbox.ru> 
+maintainer: pvc1 <pvc1@yandex.ru> 
 #
 # ./glwskins/default/cmdmenu.view
 #
@@ -239,8 +239,8 @@ id: Year:
 msg: Год:
 
 id: Seen %d times
-msg[0]: 
-msg[1]: 
+msg[0]: Воспроизведено раз: %d
+msg[1]: Воспроизведено раз: %d
 
 #
 # ./glwskins/default/pages/listitems/add.view
@@ -879,8 +879,7 @@ id: Photos
 msg: Фото
 
 id: Published in Virtual File System
-# Missing translation
-msg: 
+msg: Опубликовано в Виртуальной Файловой Системе
 
 id: Removed bookmark: %s
 msg: Удалить закладки: %s
@@ -901,16 +900,13 @@ msg: URL
 # ./src/networking/ftp_server.c
 #
 id: Enable FTP server
-# Missing translation
-msg: 
+msg: Включить FTP-сервер
 
 id: FTP server
-# Missing translation
-msg: 
+msg: FTP-сервер
 
 id: Server TCP port
-# Missing translation
-msg: 
+msg: TCP-порт сервера
 
 #
 # ./src/plugins.c
@@ -1084,12 +1080,10 @@ id: Look and feel
 msg: Внешний вид интерфейса
 
 id: Network services, etc
-# Missing translation
-msg: 
+msg: Сетевые услуги и т.п.
 
 id: Network settings
-# Missing translation
-msg: 
+msg: Сетевые настройки
 
 id: Settings useful for developers
 msg: Настройки полезные для разработчиков
@@ -1230,12 +1224,10 @@ id: Screensaver delay
 msg: Задержка скринсейвера
 
 id: Vertical underscan
-# Missing translation
-msg: 
+msg: Вертикальное сжатие
 
 id: Wrap when reaching beginning/end of lists
-# Missing translation
-msg: 
+msg: Переход при достижении начала/конца списка
 
 #
 # ./src/ui/glw/glw_x11.c

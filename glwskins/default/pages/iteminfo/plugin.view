@@ -82,9 +82,6 @@ widget(container_y, {
     });
   });
 
-
-  trace("status", $args.status.statustxt);
-
   widget(backdrop, {
     source: "skin://graphics/indent.png";
     border: 16;

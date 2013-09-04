@@ -24,13 +24,16 @@
 #include "showtime.h"
 #include "arch/arch.h"
 #include "arch/posix/posix.h"
-
 #include "linux.h"
 #include "prop/prop.h"
 #include "navigator.h"
+#include "service.h"
+#include "prop/prop_glib_courier.h"
 
 hts_mutex_t gdk_mutex;
 prop_courier_t *glibcourier;
+
+static void add_xdg_paths(void);
 
 /**
  *
@@ -51,67 +54,9 @@ gdk_release(void)
   hts_mutex_unlock(&gdk_mutex);
 }
 
-
-
-
-/**
- *
- */
-static void
-wakeup_glib_mainloop(void *aux)
-{
-  g_main_context_wakeup(g_main_context_default());
-}
-
-
-/**
- *
- */
-static gboolean
-courier_prepare(GSource *s, gint *timeout)
-{
-  *timeout = -1;
-  return FALSE;
-}
-
-
-/**
- *
- */
-static gboolean
-courier_check(GSource *s)
-{
-  return prop_courier_check(glibcourier);
-}
-
-
-/**
- *
- */
-static gboolean
-courier_dispatch(GSource *s, GSourceFunc callback, gpointer aux)
-{
-  prop_courier_poll(glibcourier);
-  return TRUE;
-}
-
-
-/**
- *
- */
-static GSourceFuncs source_funcs = {
-  courier_prepare, 
-  courier_check,
-  courier_dispatch,
-};
-
-
 static int running;
-
 extern const linux_ui_t ui_glw, ui_gu;
-
 static const linux_ui_t *ui_wanted = &ui_glw, *ui_current;
-
 
 
 /**
@@ -219,9 +164,7 @@ main(int argc, char **argv)
 
   showtime_init();
 
-  glibcourier = prop_courier_create_notify(wakeup_glib_mainloop, NULL);
-  g_source_attach(g_source_new(&source_funcs, sizeof(GSource)),
-		  g_main_context_default());
+  glibcourier = glib_courier_create(g_main_context_default());
 
   prop_subscribe(0,
 		 PROP_TAG_NAME("global", "eventsink"),
@@ -233,6 +176,8 @@ main(int argc, char **argv)
   linux_webpopup_init();
 #endif
   linux_init_monitors();
+
+  add_xdg_paths();
 
   mainloop();
 
@@ -249,4 +194,42 @@ void
 arch_exit(void)
 {
   exit(gconf.exit_code);
+}
+
+/**
+ *
+ */
+static void
+add_xdg_path(const char *class, const char *type)
+{
+  char id[64];
+  char cmd[256];
+  char path[512];
+  snprintf(cmd, sizeof(cmd), "xdg-user-dir %s", class);
+  FILE *fp = popen(cmd, "r");
+  if(fp == NULL)
+    return;
+
+  if(fscanf(fp, "%511[^\n]", path) == 1) {
+    char *title = strrchr(path, '/');
+    title = title ? title + 1 : path;
+
+    snprintf(id, sizeof(id), "xdg-user-dir-%s", class);
+
+    service_create(id, title, path, type, NULL, 0, 1,
+		   SVC_ORIGIN_SYSTEM);
+  }
+  fclose(fp);
+}
+
+
+/**
+ *
+ */
+static void
+add_xdg_paths(void)
+{
+  add_xdg_path("MUSIC", "music");
+  add_xdg_path("PICTURES", "photos");
+  add_xdg_path("VIDEOS", "video");
 }

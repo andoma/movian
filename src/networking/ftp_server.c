@@ -55,6 +55,8 @@ typedef struct ftp_connection {
 
   char *fc_username;
 
+  char *fc_pending_RNFR;
+
 } ftp_connection_t;
 
 
@@ -85,6 +87,46 @@ ftp_server_open(const char *url, char *errbuf, size_t errlen, int flags)
 {
   return fa_protocol_vfs.fap_open(&fa_protocol_vfs, url, errbuf, errlen,
                                   flags, NULL);
+}
+
+
+/**
+ *
+ */
+static int
+ftp_server_makedirs(const char *url, char *errbuf, size_t errlen)
+{
+  return fa_protocol_vfs.fap_makedirs(&fa_protocol_vfs, url, errbuf, errlen);
+}
+
+
+/**
+ *
+ */
+static int
+ftp_server_unlink(const char *url, char *errbuf, size_t errlen)
+{
+  return fa_protocol_vfs.fap_unlink(&fa_protocol_vfs, url, errbuf, errlen);
+}
+
+
+/**
+ *
+ */
+static int
+ftp_server_rmdir(const char *url, char *errbuf, size_t errlen)
+{
+  return fa_protocol_vfs.fap_rmdir(&fa_protocol_vfs, url, errbuf, errlen);
+}
+
+
+/**
+ *
+ */
+static int
+ftp_server_rename(const char *old, const char *new, char *errbuf, size_t errlen)
+{
+  return fa_protocol_vfs.fap_rename(&fa_protocol_vfs, old, new, errbuf, errlen);
 }
 
 
@@ -640,6 +682,120 @@ cmd_STOR(ftp_connection_t *fc, char *args)
 }
 
 
+/**
+ *
+ */
+static int
+cmd_MKD(ftp_connection_t *fc, char *args)
+{
+  char pathbuf[1024];
+  char errbuf[256];
+
+  construct_path(pathbuf, sizeof(pathbuf), fc, args);
+
+  if(ftp_server_makedirs(pathbuf, errbuf, sizeof(errbuf))) {
+    ftp_write(fc, 550, "%s: %s", args, errbuf);
+    return 0;
+  }
+  ftp_write(fc, 257, "\"%s\" directory created.", args);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+cmd_DELE(ftp_connection_t *fc, char *args)
+{
+  char pathbuf[1024];
+  char errbuf[256];
+
+  construct_path(pathbuf, sizeof(pathbuf), fc, args);
+
+  if(ftp_server_unlink(pathbuf, errbuf, sizeof(errbuf))) {
+    ftp_write(fc, 550, "%s: %s", args, errbuf);
+    return 0;
+  }
+  ftp_write(fc, 250, "DELE command successful.");
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+cmd_RMD(ftp_connection_t *fc, char *args)
+{
+  char pathbuf[1024];
+  char errbuf[256];
+
+  construct_path(pathbuf, sizeof(pathbuf), fc, args);
+
+  if(ftp_server_rmdir(pathbuf, errbuf, sizeof(errbuf))) {
+    ftp_write(fc, 550, "%s: %s", args, errbuf);
+    return 0;
+  }
+  ftp_write(fc, 250, "RMD command successful.");
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+cmd_RNFR(ftp_connection_t *fc, char *args)
+{
+  char pathbuf[1024];
+  char errbuf[256];
+
+  construct_path(pathbuf, sizeof(pathbuf), fc, args);
+
+  struct fa_stat fs;
+  int err = ftp_server_stat(pathbuf, &fs, errbuf, sizeof(errbuf));
+  if(err) {
+    ftp_write(fc, 550, "%s: %s", args, errbuf);
+    return 0;
+  }
+
+  mystrset(&fc->fc_pending_RNFR, pathbuf);
+  ftp_write(fc, 350, "File exists, ready for destination name");
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+cmd_RNTO(ftp_connection_t *fc, char *args)
+{
+  char pathbuf[1024];
+  char errbuf[256];
+
+  if(fc->fc_pending_RNFR == NULL) {
+    ftp_write(fc, 503, "Bad sequence of commands");
+    return 0;
+  }
+
+  construct_path(pathbuf, sizeof(pathbuf), fc, args);
+
+  int r = ftp_server_rename(fc->fc_pending_RNFR, pathbuf,
+                            errbuf, sizeof(errbuf));
+
+  mystrset(&fc->fc_pending_RNFR, NULL);
+
+  if(r) {
+    ftp_write(fc, 550, "%s: %s", args, errbuf);
+  } else {
+    ftp_write(fc, 250, "RNTO command successful.");
+  }
+  return 0;
+}
+
+
 
 #define FTPCMD_NEED_ARGS 0x1
 #define FTPCMD_AUTH_REQ  0x2
@@ -656,13 +812,22 @@ struct {
   { "SYST", cmd_SYST, FTPCMD_AUTH_REQ},
   { "FEAT", cmd_FEAT, FTPCMD_AUTH_REQ},
   { "PWD",  cmd_PWD,  FTPCMD_AUTH_REQ},
+  { "XPWD", cmd_PWD,  FTPCMD_AUTH_REQ},
   { "CWD",  cmd_CWD,  FTPCMD_AUTH_REQ},
+  { "XCWD", cmd_CWD,  FTPCMD_AUTH_REQ},
   { "PASV", cmd_PASV, FTPCMD_AUTH_REQ},
   { "LIST", cmd_LIST, FTPCMD_AUTH_REQ},
   { "SIZE", cmd_SIZE, FTPCMD_AUTH_REQ | FTPCMD_NEED_ARGS},
   { "TYPE", cmd_TYPE, FTPCMD_AUTH_REQ | FTPCMD_NEED_ARGS},
   { "RETR", cmd_RETR, FTPCMD_AUTH_REQ | FTPCMD_NEED_ARGS},
   { "STOR", cmd_STOR, FTPCMD_AUTH_REQ | FTPCMD_NEED_ARGS},
+  { "MKD",  cmd_MKD,  FTPCMD_AUTH_REQ | FTPCMD_NEED_ARGS},
+  { "XMKD", cmd_MKD,  FTPCMD_AUTH_REQ | FTPCMD_NEED_ARGS},
+  { "DELE", cmd_DELE, FTPCMD_AUTH_REQ | FTPCMD_NEED_ARGS},
+  { "RMD",  cmd_RMD,  FTPCMD_AUTH_REQ | FTPCMD_NEED_ARGS},
+  { "XRMD", cmd_RMD,  FTPCMD_AUTH_REQ | FTPCMD_NEED_ARGS},
+  { "RNFR", cmd_RNFR, FTPCMD_AUTH_REQ | FTPCMD_NEED_ARGS},
+  { "RNTO", cmd_RNTO, FTPCMD_AUTH_REQ | FTPCMD_NEED_ARGS},
 };
 
 
@@ -723,6 +888,7 @@ ftp_session(void *aux)
 
   tcp_close(fc->fc_tc);
   free(fc->fc_username);
+  free(fc->fc_pending_RNFR);
   free(fc->fc_wd);
   if(fc->fc_accept_socket != -1)
     close(fc->fc_accept_socket);

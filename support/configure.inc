@@ -86,6 +86,7 @@ CONFIG_LIST="
  xmp
  bughunt
  bspatch
+ connman
 "
 
 cleanup() {
@@ -364,6 +365,19 @@ xmp_setup() {
 #
 #
 #
+libyuv_setup() {
+    if disabled xmp; then
+        return
+    fi
+
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lyuv"
+    add_stamp libyuv
+}
+
+
+#
+#
+#
 zlib_setup()
 {
     ZLIB_VER="1.2.3"
@@ -468,6 +482,7 @@ STRIP=${TOOLCHAIN}strip
 OBJDUMP=${TOOLCHAIN}objdump
 OBJCOPY=${TOOLCHAIN}objcopy
 RANLIB=${TOOLCHAIN}ranlib
+AR=${TOOLCHAIN}ar
 EXT_INSTALL_DIR=${EXT_INSTALL_DIR}
 EOF
 

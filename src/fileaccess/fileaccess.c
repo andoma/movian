@@ -861,15 +861,18 @@ unlink_items(const struct delscan_item_queue *diq)
 /**
  *
  */
-static void
+static int
 free_items(struct delscan_item_queue *diq)
 {
   delscan_item_t *a, *b;
+  int cnt = 0;
   for(a = TAILQ_FIRST(diq); a != NULL; a = b) {
     b = TAILQ_NEXT(a, link);
     rstr_release(a->url);
     free(a);
+    cnt++;
   }
+  return cnt;
 }
 
 /**
@@ -930,7 +933,7 @@ verify_delete(const struct delscan_item_queue *diq)
  *
  */
 int
-fa_unlink(const char *url, char *errbuf, size_t errsize)
+fa_unlink_recursive(const char *url, char *errbuf, size_t errsize, int verify)
 {
   fa_protocol_t *fap;
   fa_stat_t st;
@@ -984,17 +987,17 @@ fa_unlink(const char *url, char *errbuf, size_t errsize)
     goto bad;
   }
       
-  if(verify_delete(&diq) != MESSAGE_POPUP_OK) {
+  if(verify && verify_delete(&diq) != MESSAGE_POPUP_OK) {
     snprintf(errbuf, errsize, "Canceled by user");
     goto bad;
   }
 
   unlink_items(&diq);
-  free_items(&diq);
+  int retval = free_items(&diq);
 
   fap_release(fap);
   free(filename);
-  return 0;
+  return retval;
 
 bad:
   fap_release(fap);
@@ -1068,7 +1071,7 @@ fa_makedirs(const char *url, char *errbuf, size_t errsize)
   char *filename;
   int r;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, NULL, 0)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
     return -1;
 
   if(fap->fap_makedirs == NULL) {
@@ -1079,6 +1082,102 @@ fa_makedirs(const char *url, char *errbuf, size_t errsize)
   }
   fap_release(fap);
   free(filename);
+  return r;
+}
+
+
+/**
+ *
+ */
+int
+fa_unlink(const char *url, char *errbuf, size_t errsize)
+{
+  fa_protocol_t *fap;
+  char *filename;
+  int r;
+
+  if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
+    return -1;
+
+  if(fap->fap_unlink == NULL) {
+    snprintf(errbuf, errsize, "No unlink support in filesystem");
+    r = -1;
+  } else {
+    r = fap->fap_unlink(fap, filename, errbuf, errsize);
+  }
+  fap_release(fap);
+  free(filename);
+  return r;
+}
+
+
+/**
+ *
+ */
+int
+fa_rmdir(const char *url, char *errbuf, size_t errsize)
+{
+  fa_protocol_t *fap;
+  char *filename;
+  int r;
+
+  if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
+    return -1;
+
+  if(fap->fap_rmdir == NULL) {
+    snprintf(errbuf, errsize, "No rmdir support in filesystem");
+    r = -1;
+  } else {
+    r = fap->fap_rmdir(fap, filename, errbuf, errsize);
+  }
+  fap_release(fap);
+  free(filename);
+  return r;
+}
+
+
+/**
+ *
+ */
+int
+fa_rename(const char *old, const char *new, char *errbuf, size_t errsize)
+{
+  fa_protocol_t *old_fap;
+  char *old_filename;
+  fa_protocol_t *new_fap;
+  char *new_filename;
+  int r;
+
+  if((old_filename = fa_resolve_proto(old, &old_fap,
+                                      NULL, errbuf, errsize)) == NULL)
+    return -1;
+
+  if((new_filename = fa_resolve_proto(new, &new_fap,
+                                      NULL, errbuf, errsize)) == NULL) {
+
+    fap_release(old_fap);
+    free(old_filename);
+    return -1;
+  }
+
+  r = -1;
+
+  if(old_fap != new_fap) {
+    snprintf(errbuf, errsize, "Cross filesystem renames not supported");
+  } else {
+
+    if(old_fap->fap_rename == NULL) {
+      snprintf(errbuf, errsize, "No rename support in filesystem");
+    } else {
+      r = old_fap->fap_rename(old_fap, old_filename, new_filename,
+                              errbuf, errsize);
+    }
+  }
+
+  fap_release(old_fap);
+  free(old_filename);
+  fap_release(new_fap);
+  free(new_filename);
   return r;
 }
 

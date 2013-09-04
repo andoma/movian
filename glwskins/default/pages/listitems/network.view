@@ -1,0 +1,83 @@
+
+widget(backdrop, {
+  
+  source: "highlight.png";
+  autoRefocusable: true;
+  focusable: true;
+  focusOnClick: true;
+
+ onEvent(activate, deliverEvent($self, "connect"));
+  
+  alphaSelf: iir(isFocused() * 1, 8) + isHovered() * 0.1;
+
+  widget(container_x, {
+    spacing: 13;
+    widget(icon, {
+      color: select(isFocused(), 1.0, 0.6);
+      source: translate($self.metadata.type,
+			"dataroot://resources/svg/Settings.svg",
+			"wifi", "dataroot://resources/svg/Wifi.svg",
+			"ethernet", "dataroot://resources/svg/Ethernet.svg"
+		 );
+      sizeScale: 2;
+      shadow: true;
+    });
+ 
+    widget(icon, {
+      color: select(isFocused(), 1.0, 0.6);
+      source: translate($self.metadata.state,
+			"",
+			"failure",       "dataroot://resources/svg/Alert.svg",
+			"association",   "dataroot://resources/svg/Radio.svg",
+			"configuration", "dataroot://resources/svg/Trafic.svg",
+			"ready",         "dataroot://resources/svg/Link.svg",
+			"disconnect",    "dataroot://resources/svg/Out.svg",
+			"online",        "dataroot://resources/svg/Check.svg"
+		       );
+      sizeScale: 2;
+      shadow: true;
+    });
+     
+    widget(label, {
+      filterConstraintX: true;
+      shadow: true;
+      outline: true;
+      color: select(isFocused(), 1.0, 0.6);
+	
+      caption: $self.metadata.title;
+      sizeScale: 1.2;
+    });
+
+    widget(label, {
+      filterConstraintX: true;
+      shadow: true;
+      outline: true;
+      color: select(isFocused(), 1.0, 0.6);
+      caption: select($self.metadata.state == "failure",
+		      $self.metadata.error,
+		      $self.metadata.ipv4.address);
+    });
+
+
+    widget(icon, {
+      color: select(isFocused(), 1.0, 0.6);
+      source: select(isVoid($self.metadata.security),
+		     "", 
+		     "dataroot://resources/svg/Lock.svg"
+		    );
+      sizeScale: 2;
+      shadow: true;
+    });
+
+    widget(icon, {
+      color: select(isFocused(), 1.0, 0.6);
+      source: select($self.metadata.favorite,
+		     "dataroot://resources/svg/Favorite.svg",
+		     "");
+      sizeScale: 2;
+      shadow: true;
+    });
+
+
+  });
+});

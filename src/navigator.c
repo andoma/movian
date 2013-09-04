@@ -72,7 +72,7 @@ typedef struct bookmark {
   rstr_t *bm_icon;
 
   int bm_vfs;
-  int bm_vfs_active;
+  int bm_vfs_id;
 
   service_t *bm_service;
 
@@ -881,21 +881,21 @@ static void
 update_vfs_mapping(bookmark_t *bm)
 {
   if(bm->bm_vfs && bm->bm_title && rstr_get(bm->bm_title)[0]) {
-    if(bm->bm_vfs_active)
+    if(bm->bm_vfs_id)
       return;
 
     if(bm->bm_url && rstr_get(bm->bm_url)[0]) {
-      vfs_add_mapping(rstr_get(bm->bm_title), rstr_get(bm->bm_url));
-      bm->bm_vfs_active = 1;
+      bm->bm_vfs_id = vfs_add_mapping(rstr_get(bm->bm_title),
+				      rstr_get(bm->bm_url));
     } else {
-      vfs_del_mapping(rstr_get(bm->bm_title));
-      bm->bm_vfs_active = 0;
+      vfs_del_mapping(bm->bm_vfs_id);
+      bm->bm_vfs_id = 0;
     }
   } else {
-    if(!bm->bm_vfs_active)
+    if(!bm->bm_vfs_id)
       return;
-    vfs_del_mapping(rstr_get(bm->bm_title));
-    bm->bm_vfs_active = 0;
+    vfs_del_mapping(bm->bm_vfs_id);
+    bm->bm_vfs_id = 0;
   }
 }
 

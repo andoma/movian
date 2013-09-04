@@ -1,3 +1,7 @@
 #pragma once
 
-void prop_jni_init(void);
+#include <jni.h>
+
+void prop_jni_init(JNIEnv *env);
+
+void prop_jni_poll(void);

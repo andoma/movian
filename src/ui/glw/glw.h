@@ -709,13 +709,15 @@ typedef struct glw_root {
   int64_t gr_hz_sample;
   prop_t *gr_is_fullscreen;   // Set if our window is in fullscreen
 
-  float gr_time;
+  uint64_t gr_time_usec;
+  float gr_time_sec;
 
   /**
    * Screensaver
    */
 
-  int gr_screensaver_counter; // In frames
+  int64_t gr_screensaver_reset_at;
+
   int gr_screensaver_force_enable;
   prop_t *gr_screensaver_active;
 
@@ -865,6 +867,15 @@ typedef struct glw_root {
   prop_sub_t *gr_osk_text_sub;
   prop_sub_t *gr_osk_ev_sub;
   char *gr_osk_revert;
+
+  // Backdrop render helper
+
+  int gr_can_externalize;
+
+#define GLW_MAX_EXTERNALIZED 4
+
+  int gr_externalize_cnt;
+  struct glw *gr_externalized[GLW_MAX_EXTERNALIZED];
 
 } glw_root_t;
 
@@ -1409,5 +1420,9 @@ void glw_gtb_set_caption_raw(glw_t *w, uint32_t *uc, int len);
 extern const float glw_identitymtx[16];
 
 void glw_icon_flush(glw_root_t *gr);
+
+void glw_reset_screensaver(glw_root_t *gr);
+
+int glw_image_get_details(glw_t *w, char *path, size_t pathlen, float *alpha);
 
 #endif /* GLW_H */

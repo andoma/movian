@@ -526,6 +526,8 @@ js_createMultiOpt(JSContext *cx, JSObject *obj, uintN argc,
                    SETTING_CALLBACK(js_store_update_string, jss),
                    SETTING_VALUE(r ? rstr_get(r) : defvalue),
                    SETTING_OPTION_LIST(options),
+                   SETTING_HTSMSG_CUSTOM_SAVER(id, jsg->jsg_store,
+                                               js_setting_group_save, jsg),
                    NULL);
 
   strvec_free(options);

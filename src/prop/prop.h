@@ -186,6 +186,9 @@ prop_t *prop_create_root_ex(const char *name, int noalloc)
 #define prop_create_root(name) \
   prop_create_root_ex(name, __builtin_constant_p(name))
 
+prop_t *prop_create_after(prop_t *parent, const char *name, prop_t *after,
+			  prop_sub_t *skipme);
+
 void prop_destroy(prop_t *p);
 
 void prop_destroy_by_name(prop_t *parent, const char *name);
@@ -344,6 +347,8 @@ void prop_select_by_value_ex(prop_t *p, const char *name, prop_sub_t *skipme);
 void prop_suggest_focus(prop_t *p);
 
 void prop_destroy_childs(prop_t *parent);
+
+void prop_void_childs(prop_t *parent);
 
 prop_t *prop_get_by_name(const char **name, int follow_symlinks, ...)
      __attribute__((__sentinel__(0)));

@@ -1,20 +1,23 @@
 .DEFAULT_GOAL := ${PROG}.stripped
 
 SRCS += src/arch/rpi/rpi_main.c \
+	src/arch/rpi/rpi_cec.c \
 	src/arch/rpi/omx.c \
 	src/arch/rpi/rpi_audio.c \
 	src/arch/rpi/rpi_video.c \
 	src/arch/rpi/rpi_pixmap.c \
 	src/ui/glw/glw_video_rpi.c \
-	src/ui/background.c \
 	src/prop/prop_posix.c \
+	src/prop/prop_glib_courier.c \
 
 SRCS += src/arch/linux/linux_misc.c \
 	src/arch/linux/linux_trap.c \
 	src/fileaccess/fa_opencookie.c \
 	src/arch/posix/posix.c \
 	src/arch/posix/posix_threads.c \
+	src/networking/asyncio_posix.c \
 	src/networking/net_posix.c \
+	src/networking/net_ifaddr.c \
 	src/ipc/devevent.c \
 
 #
@@ -26,3 +29,16 @@ ${PROG}.stripped: ${PROG}.bundle
 	${STRIP} -o $@ $<
 
 stripped: ${PROG}.stripped
+
+SQDIR=${BUILDDIR}/sqfs
+
+${BUILDDIR}/showtime.sqfs: ${PROG}.stripped
+	rm -rf "${SQDIR}"
+	mkdir -p "${SQDIR}/bin"
+	mkdir -p "${SQDIR}/lib"
+	cp ${PROG}.stripped "${SQDIR}/bin/showtime"
+	cp -d ${LIBSPOTIFY_PATH}/lib/libspotify.* "${SQDIR}/lib"
+
+	mksquashfs "${SQDIR}" ${BUILDDIR}/showtime.sqfs  -noD -noF -noI -noappend
+
+squashfs: ${BUILDDIR}/showtime.sqfs

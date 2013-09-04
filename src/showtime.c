@@ -175,14 +175,49 @@ swthread(void *aux)
   
   hts_mutex_lock(&gconf.state_mutex);
   gconf.state_plugins_loaded = 1;
-  hts_cond_signal(&gconf.state_cond);
+  hts_cond_broadcast(&gconf.state_cond);
   hts_mutex_unlock(&gconf.state_mutex);
 
   plugins_upgrade_check();
 
   upgrade_init();
+
+
+  hts_mutex_lock(&gconf.state_mutex);
+  gconf.swrefresh = 0;
+
+  while(1) {
+
+    int timeout = 0;
+
+    while(gconf.swrefresh == 0)
+      timeout = hts_cond_wait_timeout(&gconf.state_cond, &gconf.state_mutex,
+				      86400000);
+    
+    gconf.swrefresh = 0;
+    hts_mutex_unlock(&gconf.state_mutex);
+    if(!timeout)
+      plugins_upgrade_check();
+    upgrade_refresh();
+    hts_mutex_lock(&gconf.state_mutex);
+  }
   return NULL;
 }
+
+
+/**
+ *
+ */
+void
+showtime_swrefresh(void)
+{
+  hts_mutex_lock(&gconf.state_mutex);
+  gconf.swrefresh = 1;
+  hts_cond_broadcast(&gconf.state_cond);
+  hts_mutex_unlock(&gconf.state_mutex);
+}
+
+
 
 /**
  *
@@ -361,6 +396,7 @@ parse_opts(int argc, char **argv)
 #endif
 	     "   -v <view>         - Use specific view for <url>.\n"
 	     "   --cache <path>    - Set path for cache [%s].\n"
+	     "   --persistent <path> - Set path for persistent stuff [%s].\n"
 #if ENABLE_HTTPSERVER
 	     "   --disable-upnp    - Disable UPNP/DLNA stack.\n"
 #endif
@@ -378,7 +414,8 @@ parse_opts(int argc, char **argv)
 	     "\n",
 	     htsversion_full,
 	     argv0,
-	     gconf.cache_path);
+	     gconf.cache_path,
+	     gconf.persistent_path);
       exit(0);
       argc--;
       argv++;
@@ -459,11 +496,17 @@ parse_opts(int argc, char **argv)
     } else if (!strcmp(argv[0], "--cache") && argc > 1) {
       mystrset(&gconf.cache_path, argv[1]);
       argc -= 2; argv += 2;
+    } else if (!strcmp(argv[0], "--persistent") && argc > 1) {
+      mystrset(&gconf.persistent_path, argv[1]);
+      argc -= 2; argv += 2;
     } else if (!strcmp(argv[0], "--ui") && argc > 1) {
       mystrset(&gconf.ui, argv[1]);
       argc -= 2; argv += 2;
     } else if (!strcmp(argv[0], "--skin") && argc > 1) {
       mystrset(&gconf.skin, argv[1]);
+      argc -= 2; argv += 2;
+    } else if (!strcmp(argv[0], "--upgrade-path") && argc > 1) {
+      mystrset(&gconf.upgrade_path, argv[1]);
       argc -= 2; argv += 2;
 #ifdef __APPLE__
     /* ignore -psn argument, process serial number */
