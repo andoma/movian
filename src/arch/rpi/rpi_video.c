@@ -181,6 +181,16 @@ rpi_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 
   switch(mc->codec_id) {
 
+  case CODEC_ID_H263:
+    fmt = OMX_VIDEO_CodingH263;
+    name = "h263 (VideoCore)";
+    break;
+
+  case CODEC_ID_MPEG4:
+    fmt = OMX_VIDEO_CodingMPEG4;
+    name = "MPEG-4 (VideoCore)";
+    break;
+
   case CODEC_ID_H264:
     fmt = OMX_VIDEO_CodingAVC;
     name = "h264 (VideoCore)";
