@@ -17,10 +17,10 @@ msg: 将当前页从书签删除
 # ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
 id: Activate sleep timer
-msg: 启用休眠定时器
+msg: 启用定时关机
 
 id: Disable sleep timer
-msg: 禁用休眠定时器
+msg: 禁用定时关机
 
 id: Exit Showtime
 msg: 退出Showtime
@@ -50,7 +50,7 @@ id: System
 msg: 系统
 
 id: Time until sleep
-msg: 直到休眠
+msg: 直到关机
 
 id: min
 msg: 最小
