@@ -242,6 +242,7 @@ font_make_installed(font_t *f)
   
   prop_set(p, "type", PROP_SET_STRING, "font");
   prop_setv(p, "metadata", "title", NULL, PROP_SET_STRING, f->f_title);
+  prop_set(p, "url", PROP_SET_RSTRING, f->f_installed_path);
   prop_link(f->f_status, prop_create(p, "status"));
   if(prop_set_parent(p, fontstash_installed_root))
     abort();
