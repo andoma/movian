@@ -361,7 +361,7 @@ fs_sub_scan_dir(sub_scanner_t *ss, const char *url, const char *video,
     }
 
     const char *postfix = strrchr(rstr_get(fde->fde_url), '.');
-    if(!strcasecmp(postfix, ".zip")) {
+    if(postfix != NULL && !strcasecmp(postfix, ".zip")) {
       char zipurl[1024];
       snprintf(zipurl, sizeof(zipurl), "zip://%s", rstr_get(fde->fde_url));
       fs_sub_scan_dir(ss, zipurl, video, descend_filter, level - 1, sp1, sp2);
