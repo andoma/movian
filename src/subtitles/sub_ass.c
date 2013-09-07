@@ -484,6 +484,7 @@ ass_handle_override(ass_dialoge_t *ad, const char *src, int len)
   }
 }
 
+extern char font_subs[];
 
 /**
  *
@@ -535,7 +536,12 @@ ad_dialogue_decode(const ass_decoder_ctx_t *adc, const char *line,
     ad_txt_append(&ad, TR_CODE_BOLD_ON);
   if(as->as_italic)
     ad_txt_append(&ad, TR_CODE_ITALIC_ON);
-  if(as->as_fontname)
+
+  if(font_subs[0])
+    ad_txt_append(&ad, TR_CODE_FONT_FAMILY |
+		  freetype_family_id(font_subs, fontdomain));
+  
+  else if(as->as_fontname)
     ad_txt_append(&ad, TR_CODE_FONT_FAMILY |
 		  freetype_family_id(as->as_fontname, fontdomain));
 

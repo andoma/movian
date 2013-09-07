@@ -116,6 +116,8 @@ video_subtitles_lavc(media_pipe_t *mp, media_buf_t *mb,
 
 #endif
 
+extern char font_subs[];
+
 /**
  *
  */
@@ -133,18 +135,23 @@ video_overlay_render_cleartext(const char *txt, int64_t start, int64_t stop,
     vo = calloc(1, sizeof(video_overlay_t));
   } else {
 
-    uint32_t pfx[5];
+    uint32_t pfx[6];
 
     pfx[0] = TR_CODE_COLOR | subtitle_settings.color;
     pfx[1] = TR_CODE_SHADOW | subtitle_settings.shadow_displacement;
     pfx[2] = TR_CODE_SHADOW_COLOR | subtitle_settings.shadow_color;
     pfx[3] = TR_CODE_OUTLINE | subtitle_settings.outline_size;
     pfx[4] = TR_CODE_OUTLINE_COLOR | subtitle_settings.outline_color;
+    int pfxlen = 5;
+
+    if(font_subs[0])
+      pfx[pfxlen++] = TR_CODE_FONT_FAMILY |
+	freetype_family_id(font_subs, fontdomain);
 
     uc = text_parse(txt, &len, 
 		    tags ? (TEXT_PARSE_TAGS | TEXT_PARSE_HTML_ENTETIES | 
 			    TEXT_PARSE_SLOPPY_TAGS) : 0,
-		    pfx, 5, fontdomain);
+		    pfx, pfxlen, fontdomain);
     if(uc == NULL)
       return NULL;
 
