@@ -1,0 +1,3 @@
+Fix problem making subtitle scanner crash if it found a file without file ending
+
+Fixes #1716
