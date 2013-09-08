@@ -167,7 +167,7 @@ subtitle_provider_register(subtitle_provider_t *sp, const char *id,
   sp->sp_setting_autosel =
     setting_create(SETTING_BOOL, sp->sp_settings, 0,
                    SETTING_VALUE(sp->sp_autosel),
-                   SETTING_VALUE(_p("Automatically select from this source")),
+                   SETTING_TITLE(_p("Automatically select from this source")),
                    SETTING_CALLBACK(sp_set_autosel, sp),
                    SETTING_MUTEX(&subtitle_provider_mutex),
                    NULL);
