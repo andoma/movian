@@ -24,20 +24,9 @@
 #include "showtime.h"
 #include "video/video_decoder.h"
 #include "omx.h"
+#include "rpi_video.h"
 
 static char omx_enable_mpg2;
-
-
-/**
- *
- */
-typedef struct rpi_video_codec {
-  omx_component_t *rvc_decoder;
-  hts_cond_t rvc_avail_cond;
-  int rvc_last_epoch;
-  const char *rvc_name;
-  int rvc_name_set;
-} rpi_video_codec_t;
 
 
 
@@ -159,15 +148,9 @@ static void
 rpi_codec_reconfigure(struct media_codec *mc)
 {
   media_pipe_t *mp = mc->mp;
-  rpi_video_codec_t *rvc = mc->opaque;
-
-  frame_info_t fi;
-  memset(&fi, 0, sizeof(fi));
-  fi.fi_type    = 'omx';
-  fi.fi_data[0] = (void *)rvc->rvc_decoder;
-  mp->mp_video_frame_deliver(&fi, mp->mp_video_frame_opaque);
-
+  mp->mp_set_video_codec('omx', mc, mp->mp_video_frame_opaque);
 }
+
 
 /**
  *

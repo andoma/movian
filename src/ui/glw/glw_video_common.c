@@ -30,7 +30,7 @@
 #include "glw_texture.h"
 
 static void glw_video_input(const frame_info_t *info, void *opaque);
-
+static int glw_set_video_codec(uint32_t type, media_codec_t *mc, void *opaque);
 
 
 /**
@@ -586,6 +586,7 @@ glw_video_ctor(glw_t *w)
   LIST_INSERT_HEAD(&gr->gr_video_decoders, gv, gv_global_link);
 
   gv->gv_mp->mp_video_frame_deliver = glw_video_input;
+  gv->gv_mp->mp_set_video_codec = glw_set_video_codec;
   gv->gv_mp->mp_video_frame_opaque = gv;
 
   gv->gv_vd = video_decoder_create(gv->gv_mp);
@@ -970,6 +971,29 @@ glw_video_input(const frame_info_t *fi, void *opaque)
   }
 
   hts_mutex_unlock(&gv->gv_surface_mutex);
+}
+
+
+/**
+ *
+ */
+static int
+glw_set_video_codec(uint32_t type, media_codec_t *mc, void *opaque)
+{
+  glw_video_t *gv = opaque;
+  glw_video_engine_t *gve;
+  int r = -1;
+  hts_mutex_lock(&gv->gv_surface_mutex);
+  
+  LIST_FOREACH(gve, &engines, gve_link) {
+    if(gve->gve_type == type) {
+      r = gve->gve_set_codec(mc, gv);
+      break;
+    }
+  }
+
+  hts_mutex_unlock(&gv->gv_surface_mutex);
+  return r;
 }
 
 
