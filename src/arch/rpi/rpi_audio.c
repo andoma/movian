@@ -9,7 +9,6 @@ typedef struct decoder {
   omx_component_t *d_render;
   omx_tunnel_t *d_clock_tun;
   int d_bpf; // Bytes per frame
-  int d_first_sent;
   int d_last_epoch;
 } decoder_t;
 
@@ -147,6 +146,10 @@ rpi_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
   omx_component_t *oc = d->d_render;
   OMX_BUFFERHEADERTYPE *buf;
 
+  if(ad->ad_discontinuity && pts == PTS_UNSET) {
+    avresample_read(ad->ad_avr, NULL, samples);
+    return 0;
+  }
 
   if((buf = oc->oc_avail) == NULL)
     return 1;
@@ -169,9 +172,9 @@ rpi_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
     buf->nFlags |= OMX_BUFFERFLAG_DISCONTINUITY;
   }
 
-  if(!d->d_first_sent && pts != PTS_UNSET) {
-    buf->nFlags |= OMX_BUFFERFLAG_STARTTIME;
-    d->d_first_sent = 1;
+  if(ad->ad_discontinuity) {
+    buf->nFlags |= OMX_BUFFERFLAG_STARTTIME | OMX_BUFFERFLAG_DISCONTINUITY;
+    ad->ad_discontinuity = 0;
   }
 
   buf->nOffset = 0;
@@ -191,12 +194,25 @@ rpi_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
 /**
  *
  */
+static void
+rpi_audio_flush(audio_decoder_t *ad)
+{
+  decoder_t *d = (decoder_t *)ad;
+  if(d->d_render)
+    omx_flush_port(d->d_render, 100);
+}
+
+
+/**
+ *
+ */
 static audio_class_t rpi_audio_class = {
   .ac_alloc_size     = sizeof(decoder_t),
   .ac_init           = rpi_audio_init,
   .ac_fini           = rpi_audio_fini,
   .ac_reconfig       = rpi_audio_reconfig,
   .ac_deliver_locked = rpi_audio_deliver,
+  .ac_flush          = rpi_audio_flush,
 };
 
 

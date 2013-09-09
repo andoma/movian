@@ -478,6 +478,8 @@ audio_decode_thread(void *aux)
   if(ac->ac_init != NULL)
     ac->ac_init(ad);
 
+  ad->ad_discontinuity = 1;
+
   hts_mutex_lock(&mp->mp_mutex);
 
   while(run) {
@@ -492,7 +494,7 @@ audio_decode_thread(void *aux)
     media_buf_t *data = TAILQ_FIRST(&mq->mq_q_data);
     media_buf_t *ctrl = TAILQ_FIRST(&mq->mq_q_ctrl);
 
-    if(avail >= ad->ad_tile_size && blocked == 0 && !ad->ad_paused) {
+    if(avail >= ad->ad_tile_size && blocked == 0 && !ad->ad_paused && !ctrl) {
       assert(avail != 0);
 
       int samples = MIN(ad->ad_tile_size, avail);
@@ -570,6 +572,7 @@ audio_decode_thread(void *aux)
 
 	if(mp->mp_seek_audio_done != NULL)
 	  mp->mp_seek_audio_done(mp);
+	ad->ad_discontinuity = 1;
 	break;
 
       case MB_CTRL_EXIT:

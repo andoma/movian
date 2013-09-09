@@ -42,7 +42,7 @@ typedef struct webpopup {
   hts_cond_t wp_cond;
 
   GtkWidget *wp_win;
-  GtkWidget *wp_scrolled_win;
+  //  GtkWidget *wp_scrolled_win;
   GtkWidget *wp_webview;
 
 } webpopup_t;
@@ -54,8 +54,10 @@ typedef struct webpopup {
 static void
 finalize(webpopup_t *wp, int code)
 {
-  webkit_web_view_stop_loading(WEBKIT_WEB_VIEW(wp->wp_webview));
+  if(wp->wp_wr.wr_resultcode != -1)
+    return;
   wp->wp_wr.wr_resultcode = code;
+  webkit_web_view_stop_loading(WEBKIT_WEB_VIEW(wp->wp_webview));
   LIST_INSERT_HEAD(&pending_close, wp, wp_link);
 }
 
@@ -77,8 +79,8 @@ navigation_policy_decision_requested(WebKitWebView             *web_view,
   if(mystrbegins(uri, wp->wp_trap)) {
     TRACE(TRACE_DEBUG, "Webkit", "Opening %s -- Final URI reached", uri);
     mystrset(&wp->wp_wr.wr_trapped.url, uri);
-    webkit_web_policy_decision_ignore(decision);
     finalize(wp, WEBPOPUP_TRAPPED_URL);
+    webkit_web_policy_decision_ignore(decision);
 
   } else {
     TRACE(TRACE_DEBUG, "Webkit", "Opening %s", uri);
@@ -100,6 +102,9 @@ load_error(WebKitWebView  *web_view,
 	   gpointer        user_data) 
 {
   webpopup_t *wp = user_data;
+
+  if(wp->wp_wr.wr_resultcode != -1)
+    return TRUE;
 
   TRACE(TRACE_ERROR, "WebKit", "Failed to load %s -- %s",
 	uri, web_error->message);
@@ -130,21 +135,21 @@ linux_webpopup_check(void)
   webpopup_t *wp;
   while((wp = LIST_FIRST(&pending_open)) != NULL) {
     LIST_REMOVE(wp, wp_link);
-
     wp->wp_win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(wp->wp_win), wp->wp_title);
-    wp->wp_scrolled_win = gtk_scrolled_window_new(NULL, NULL);
     wp->wp_webview = webkit_web_view_new();
 
-#if 0    
+
+#if 0
+    wp->wp_scrolled_win = gtk_scrolled_window_new(NULL, NULL);
+    gtk_container_add(GTK_CONTAINER(wp->wp_scrolled_win), wp->wp_webview);
+    gtk_container_add(GTK_CONTAINER(wp->wp_win), wp->wp_scrolled_win);
+#else
     WebKitWebSettings *s =
       webkit_web_view_get_settings(WEBKIT_WEB_VIEW(wp->wp_webview));
     g_object_set(G_OBJECT(s), "auto-resize-window", 1, NULL);
+    gtk_container_add(GTK_CONTAINER(wp->wp_win), wp->wp_webview);
 #endif
-
-    gtk_container_add(GTK_CONTAINER(wp->wp_scrolled_win), wp->wp_webview);
-    gtk_container_add(GTK_CONTAINER(wp->wp_win), wp->wp_scrolled_win);
-
     g_signal_connect(G_OBJECT(wp->wp_webview),
 		     "navigation-policy-decision-requested",
 		     G_CALLBACK(navigation_policy_decision_requested), wp);
@@ -157,7 +162,9 @@ linux_webpopup_check(void)
 		     G_CALLBACK(closed_window), wp);
 
     webkit_web_view_load_uri(WEBKIT_WEB_VIEW(wp->wp_webview), wp->wp_url);
-    gtk_window_set_default_size(GTK_WINDOW(wp->wp_win), 1200, 800);
+
+    //gtk_window_set_default_size(GTK_WINDOW(wp->wp_win), 1200, 800);
+
     gtk_widget_show_all(wp->wp_win);
   }
 

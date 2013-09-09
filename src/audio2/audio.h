@@ -36,6 +36,8 @@ typedef struct audio_decoder {
   int64_t ad_pts;
   int ad_epoch;
 
+  int ad_discontinuity;
+
   int ad_tile_size;   // Number of samples to be delivered per round
   int ad_delay;       // Audio output delay in us
 

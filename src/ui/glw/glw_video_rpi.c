@@ -32,6 +32,7 @@
 
 #include "video/video_settings.h"
 #include "arch/rpi/omx.h"
+#include "arch/rpi/rpi_video.h"
 
 
 typedef struct rpi_video_display {
@@ -46,6 +47,8 @@ typedef struct rpi_video_display {
   int64_t rvd_pts;
 
   glw_video_t *rvd_gv;
+
+  media_codec_t *rvd_mc; // Current media codec
 
 } rpi_video_display_t;
 
@@ -156,6 +159,10 @@ rvd_reset(glw_video_t *gv)
 
   omx_component_destroy(rvd->rvd_vrender);
   omx_component_destroy(rvd->rvd_vsched);
+
+  if(rvd->rvd_mc != NULL)
+    media_codec_deref(rvd->rvd_mc);
+
   free(rvd);
 }
 
@@ -182,7 +189,7 @@ rvd_blackout(glw_video_t *gv)
 }
 
 
-static void rvd_deliver(const frame_info_t *fi, glw_video_t *gv);
+static int rvd_set_codec(media_codec_t *mc, glw_video_t *gv);
 
 /**
  * Tunneled OMX
@@ -193,7 +200,7 @@ static glw_video_engine_t glw_video_rvd = {
   .gve_render   = rvd_render,
   .gve_reset    = rvd_reset,
   .gve_init     = rvd_init,
-  .gve_deliver  = rvd_deliver,
+  .gve_set_codec= rvd_set_codec,
   .gve_blackout = rvd_blackout,
 };
 
@@ -202,48 +209,53 @@ GLW_REGISTER_GVE(glw_video_rvd);
 /**
  *
  */
-static void
-rvd_deliver(const frame_info_t *fi, glw_video_t *gv)
+static int
+rvd_set_codec(media_codec_t *mc, glw_video_t *gv)
 {
   media_pipe_t *mp = gv->gv_mp;
 
   glw_video_configure(gv, &glw_video_rvd);
 
   rpi_video_display_t *rvd = gv->gv_aux;
+  rpi_video_codec_t *rvc = mc->opaque;
+  
 
-  if(fi->fi_data[0]) {
+  if(rvd->rvd_vrender == NULL) {
 
-    if(rvd->rvd_vrender == NULL) {
+    rvd->rvd_vrender = omx_component_create("OMX.broadcom.video_render",
+					    NULL, NULL);
+    rvd->rvd_vsched  = omx_component_create("OMX.broadcom.video_scheduler",
+					    NULL, NULL);
 
-      rvd->rvd_vrender = omx_component_create("OMX.broadcom.video_render",
-					      NULL, NULL);
-      rvd->rvd_vsched  = omx_component_create("OMX.broadcom.video_scheduler",
-					      NULL, NULL);
+    rvd->rvd_vsched->oc_opaque = rvd;
+    rvd->rvd_vrender->oc_opaque = rvd;
 
-      rvd->rvd_vsched->oc_opaque = rvd;
-      rvd->rvd_vrender->oc_opaque = rvd;
-
-      gv->gv_vd->vd_render_component = rvd->rvd_vrender;
+    gv->gv_vd->vd_render_component = rvd->rvd_vrender;
        
-      omx_enable_buffer_marks(rvd->rvd_vrender);
+    omx_enable_buffer_marks(rvd->rvd_vrender);
 
-      rvd->rvd_tun_clock_vsched =
-	omx_tunnel_create(omx_get_clock(mp), 81, rvd->rvd_vsched, 12);
+    rvd->rvd_tun_clock_vsched =
+      omx_tunnel_create(omx_get_clock(mp), 81, rvd->rvd_vsched, 12);
     
-      rvd->rvd_vsched->oc_port_settings_changed_cb =
-	vsched_port_settings_changed;
+    rvd->rvd_vsched->oc_port_settings_changed_cb =
+      vsched_port_settings_changed;
 
-      rvd->rvd_vrender->oc_event_mark_cb = buffer_mark;
+    rvd->rvd_vrender->oc_event_mark_cb = buffer_mark;
 
-      omx_set_state(rvd->rvd_vrender, OMX_StateIdle);
-    }
-
-    if(rvd->rvd_tun_vdecoder_vsched != NULL)
-      omx_tunnel_destroy(rvd->rvd_tun_vdecoder_vsched);
-      
-    rvd->rvd_tun_vdecoder_vsched =
-      omx_tunnel_create((void *)fi->fi_data[0], 131, rvd->rvd_vsched, 10);
-
-    omx_set_state(rvd->rvd_vsched,  OMX_StateExecuting);
+    omx_set_state(rvd->rvd_vrender, OMX_StateIdle);
   }
+
+  if(rvd->rvd_tun_vdecoder_vsched != NULL)
+    omx_tunnel_destroy(rvd->rvd_tun_vdecoder_vsched);
+      
+  if(rvd->rvd_mc != NULL)
+    media_codec_deref(rvd->rvd_mc);
+
+  rvd->rvd_mc = media_codec_ref(mc);
+
+  rvd->rvd_tun_vdecoder_vsched =
+    omx_tunnel_create(rvc->rvc_decoder, 131, rvd->rvd_vsched, 10);
+
+  omx_set_state(rvd->rvd_vsched,  OMX_StateExecuting);
+  return 0;
 }

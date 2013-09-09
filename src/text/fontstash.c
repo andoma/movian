@@ -52,10 +52,12 @@ typedef struct font {
 static htsmsg_t *store;
 static hts_mutex_t font_mutex;
 static struct font_list fonts;
-static prop_t *font_prop_main, *font_prop_cond, *font_prop_subs;
+static prop_t *font_prop_main, *font_prop_cond;
+static prop_t *font_prop_subs;
 static prop_t *fontstash_installed_root;
 static prop_t *fontstash_browse_nodes;
 
+char font_subs[256];
 
 static void font_make_installed(font_t *f);
 
@@ -184,6 +186,7 @@ use_font(font_t *f, const char *url)
     htsmsg_delete_field(store, "subfont");
     htsmsg_add_str(store, "subfont", f->f_title);
     prop_set_rstring(font_prop_subs, f->f_installed_path);
+    snprintf(font_subs, sizeof(font_subs), "%s", rstr_get(f->f_installed_path));
     prop_set_int(f->f_prop_subfont, 1);
     break;
   }
@@ -242,6 +245,7 @@ font_make_installed(font_t *f)
   
   prop_set(p, "type", PROP_SET_STRING, "font");
   prop_setv(p, "metadata", "title", NULL, PROP_SET_STRING, f->f_title);
+  prop_set(p, "url", PROP_SET_RSTRING, f->f_installed_path);
   prop_link(f->f_status, prop_create(p, "status"));
   if(prop_set_parent(p, fontstash_installed_root))
     abort();
@@ -294,6 +298,7 @@ reset_font(int id)
     break;
   case 2:
     prop_set_void(font_prop_subs);
+    font_subs[0] = 0;
     break;
   }
   htsmsg_store_save(store, "fontstash");
@@ -402,6 +407,8 @@ fontstash_init(void)
 
     if(subfont && !strcmp(f->f_title, subfont)) {
       prop_set_rstring(font_prop_subs, f->f_installed_path);
+      snprintf(font_subs, sizeof(font_subs), "%s",
+	       rstr_get(f->f_installed_path));
       prop_set_int(f->f_prop_subfont, 1);
     }
     font_make_installed(f);

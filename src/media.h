@@ -125,11 +125,6 @@ typedef struct frame_info {
 } frame_info_t;
 
 
-/**
- *
- */
-typedef void (video_frame_deliver_t)(const frame_info_t *info, void *opaque);
-
 
 /**
  *
@@ -158,6 +153,13 @@ typedef struct media_codec {
   void (*reconfigure)(struct media_codec *mc);
 
 } media_codec_t;
+
+/**
+ *
+ */
+typedef void (video_frame_deliver_t)(const frame_info_t *info, void *opaque);
+typedef int (set_video_codec_t)(uint32_t type, struct media_codec *mc,
+				void *opaque);
 
 
 /**
@@ -354,7 +356,8 @@ typedef struct media_pipe {
 
   void *mp_video_frame_opaque;
   video_frame_deliver_t *mp_video_frame_deliver;
-  
+  set_video_codec_t *mp_set_video_codec;
+
   hts_mutex_t mp_overlay_mutex; // Also protects mp_spu_queue
   struct video_overlay_queue mp_overlay_queue;
   struct dvdspu_queue mp_spu_queue;

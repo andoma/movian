@@ -540,6 +540,7 @@ upgrade_init(void)
                  SETTING_OPTION("stable",  _p("Stable")),
 #endif
                  SETTING_OPTION("testing", _p("Testing")),
+                 SETTING_OPTION_CSTR("master", "Bleeding Edge (Very unstable)"),
                  SETTING_CALLBACK(set_upgrade_track, NULL),
                  NULL);
 
