@@ -315,8 +315,7 @@ id: Check for updates now
 msg: Sprawdź dostępność aktualizacji
 
 id: Checking current installed version
-# Missing translation
-msg: 
+msg: Sprawdzanie zainstalowanej wersji
 
 id: Checking for updates...
 msg: Sprawdzanie aktualizacji...
@@ -340,8 +339,7 @@ id: No upgrade available
 msg: Brak aktualizacji
 
 id: Patching binary
-# Missing translation
-msg: 
+msg: Uaktualnianie plików binarnych
 
 id: Restarting Showtime in %d seconds...
 msg: Restart Showtime za %d sekund...
@@ -374,8 +372,7 @@ msg: Status odtwarzania
 # ./glwskins/default/pages/wideinfo/video.view
 #
 id: Seen:
-# Missing translation
-msg: 
+msg: Widziano:
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -720,12 +717,10 @@ id: Audio delay
 msg: Opóźnienie audio
 
 id: Audio volume
-# Missing translation
-msg: 
+msg: Głośność
 
 id: Go to standby after video ends
-# Missing translation
-msg: 
+msg: Przejdź w stan czuwania po zakończonym video
 
 id: Stretch video to fullscreen
 msg: Rozciągnij obraz do pełnego ekranu
@@ -737,15 +732,13 @@ id: Subtitle delay
 msg: Opóźnienie napisów
 
 id: Subtitle horizontal displacement
-# Missing translation
-msg: 
+msg: Przesunięcie napisów w poziomie
 
 id: Subtitle scaling
 msg: Skalowanie napisów
 
 id: Subtitle vertical displacement
-# Missing translation
-msg: 
+msg: Przesunięcie napisów w pionie
 
 id: Video zoom
 msg: Zbliżenie
@@ -763,20 +756,16 @@ id: Automatic
 msg: Automatyczne
 
 id: Manual
-# Missing translation
-msg: 
+msg: Ręczny
 
 id: Mark all as seen
-# Missing translation
-msg: 
+msg: Oznacz wszystkie jako widziane
 
 id: Mark all as unseen
-# Missing translation
-msg: 
+msg: Oznacz wszystkie jako nie widziane
 
 id: Metadata mode
-# Missing translation
-msg: 
+msg: Tryb metadanych
 
 #
 # ./src/metadata/metadata.c
@@ -890,8 +879,7 @@ id: Photos
 msg: Zdjęcia
 
 id: Published in Virtual File System
-# Missing translation
-msg: 
+msg: Znajdują sie w Wirtualnym Systemie Plikó
 
 id: Removed bookmark: %s
 msg: Usunięto zakładkę: %s
@@ -912,16 +900,13 @@ msg: Adres URL
 # ./src/networking/ftp_server.c
 #
 id: Enable FTP server
-# Missing translation
-msg: 
+msg: Włącz serwer FTP
 
 id: FTP server
-# Missing translation
-msg: 
+msg: Serwer FTP
 
 id: Server TCP port
-# Missing translation
-msg: 
+msg: Port TCP serwera
 
 #
 # ./src/plugins.c
@@ -1095,12 +1080,10 @@ id: Look and feel
 msg: Wygląd i odczucia
 
 id: Network services, etc
-# Missing translation
-msg: 
+msg: Usługi sieciowe, itp
 
 id: Network settings
-# Missing translation
-msg: 
+msg: Ustawienia Sieciowe
 
 id: Settings useful for developers
 msg: Ustawienia pomocne dla deweloperów
@@ -1211,8 +1194,7 @@ id: Reset subtitle font to default
 msg: Zmień czcionkę napisów na domyślną
 
 id: Unable to install font: %s
-# Missing translation
-msg: 
+msg: Nie można zainstalować czcionki: %s
 
 id: Use font %s for
 msg: Użyj czcionki %s dla
@@ -1224,19 +1206,16 @@ msg: Interfejs Użytkownika
 # ./src/ui/glw/glw_ps3.c
 #
 id: Seek using L2 and R2 button
-# Missing translation
-msg: 
+msg: Przeszukuj używając przycisków L2 i R2
 
 id: Yes with Select button
-# Missing translation
-msg: 
+msg: Przycisk Select jako Tak
 
 #
 # ./src/ui/glw/glw_settings.c
 #
 id: Font and icon size
-# Missing translation
-msg: 
+msg: Czcionka i rozmiar ikon
 
 id: Horizontal underscan
 msg: Przesunięcie poziome
@@ -1245,12 +1224,10 @@ id: Screensaver delay
 msg: Opóźnienie wygaszacza ekranu
 
 id: Vertical underscan
-# Missing translation
-msg: 
+msg: Przesunięcie pionowe
 
 id: Wrap when reaching beginning/end of lists
-# Missing translation
-msg: 
+msg: Zawiń listę po osiągnięciu końca/początku
 
 #
 # ./src/ui/glw/glw_x11.c
