@@ -37,6 +37,7 @@
 
 #define PBO_RELEASE_BEFORE_MAP
 
+#define NUM_SURFACES 4
 
 #include "video/video_decoder.h"
 #include "video/video_playback.h"
@@ -129,6 +130,7 @@ surface_init(glw_video_t *gv, glw_video_surface_t *gvs)
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, gvs->gvs_pbo[i]);
     glBufferData(GL_PIXEL_UNPACK_BUFFER,gvs->gvs_size[i], NULL, GL_STREAM_DRAW);
     gvs->gvs_data[i] = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
+    assert(gvs->gvs_data[i] != NULL);
   }
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
   TAILQ_INSERT_TAIL(&gv->gv_avail_queue, gvs, gvs_link);
@@ -164,7 +166,7 @@ yuvp_init(glw_video_t *gv)
 
   memset(gv->gv_cmatrix_cur, 0, sizeof(float) * 16);
 
-  for(i = 0; i < 3; i++) {
+  for(i = 0; i < NUM_SURFACES; i++) {
     glw_video_surface_t *gvs = &gv->gv_surfaces[i];
     TAILQ_INSERT_TAIL(&gv->gv_avail_queue, gvs, gvs_link);
   }
@@ -250,6 +252,9 @@ gv_surface_pixmap_release(glw_video_t *gv, glw_video_surface_t *gvs,
 {
   int i;
 
+  assert(gvs != gv->gv_sa);
+  assert(gvs != gv->gv_sb);
+
   TAILQ_REMOVE(fromqueue, gvs, gvs_link);
 
   if(gvs->gvs_uploaded) {
@@ -266,6 +271,7 @@ gv_surface_pixmap_release(glw_video_t *gv, glw_video_surface_t *gvs,
 #endif
 
       gvs->gvs_data[i] = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
+      assert(gvs->gvs_data[i] != NULL);
     }
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
   }
@@ -579,7 +585,8 @@ yuvp_deliver(const frame_info_t *fi, glw_video_t *gv)
       h = hvec[i];
       src = fi->fi_data[i];
       dst = s->gvs_data[i];
- 
+      assert(dst != NULL);
+      
       while(h--) {
 	memcpy(dst, src, w);
 	dst += w;

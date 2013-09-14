@@ -369,10 +369,6 @@ glw_video_newframe_blend(glw_video_t *gv, video_decoder_t *vd, int flags,
 
     int epoch = sa->gvs_epoch;
 
-    /* There are frames available that we are going to display,
-       push back old frames to decoder */
-    while((s = TAILQ_FIRST(&gv->gv_displaying_queue)) != NULL)
-      release(gv, s, &gv->gv_displaying_queue);
 
     /* */
     sb = TAILQ_NEXT(sa, gvs_link);
@@ -389,6 +385,7 @@ glw_video_newframe_blend(glw_video_t *gv, video_decoder_t *vd, int flags,
 	}
 
 	if(code == AVDIFF_CATCH_UP) {
+	  gv->gv_sa = NULL;
 	  release(gv, sa, &gv->gv_decoded_queue);
 	  kalman_init(&gv->gv_avfilter);
 	  goto again;
@@ -402,6 +399,16 @@ glw_video_newframe_blend(glw_video_t *gv, video_decoder_t *vd, int flags,
     }
     if(sb != NULL && sb->gvs_duration == 0)
       glw_video_enqueue_for_display(gv, sb, &gv->gv_decoded_queue);
+
+
+    /* There are frames available that we are going to display,
+       push back old frames to decoder */
+    while((s = TAILQ_FIRST(&gv->gv_displaying_queue)) != NULL) {
+      if(s != gv->gv_sa && s != gv->gv_sb)
+	release(gv, s, &gv->gv_displaying_queue);
+      else
+	break;
+    }
 
   }
   return pts;
