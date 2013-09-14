@@ -189,7 +189,7 @@ void *shutdown_hook_add(void (*fn)(void *opaque, int exitcode), void *opaque,
 #define SHOWTIME_EXIT_LOGOUT   12
 #define SHOWTIME_EXIT_RESTART  13
 #define SHOWTIME_EXIT_SHELL    14
-
+#define SHOWTIME_EXIT_REBOOT   15
 
 
 typedef struct gconf {
