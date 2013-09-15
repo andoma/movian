@@ -30,6 +30,8 @@ static prop_t *log_root;
 
 static int entries;
 
+#define UI_LOG_LINES 200
+
 TAILQ_HEAD(trace_entry_queue, trace_entry);
 SIMPLEQ_HEAD(tracetmp_queue, tracetmp);
 
@@ -120,9 +122,9 @@ tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap)
 
 
   int zapcnt = 0;
-  if(entries > 50) {
-    zapcnt = entries - 50;
-    entries = 50;
+  if(entries > UI_LOG_LINES) {
+    zapcnt = entries - UI_LOG_LINES;
+    entries = UI_LOG_LINES;
   }
 
   hts_mutex_unlock(&trace_mutex);
