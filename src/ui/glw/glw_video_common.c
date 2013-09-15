@@ -107,8 +107,9 @@ glw_video_rctx_adjust(glw_rctx_t *rc, const glw_video_t *gv)
  *
  */
 static int
-glw_video_widget_event(event_t *e, media_pipe_t *mp, int in_menu)
+glw_video_widget_event(event_t *e, glw_video_t *gv)
 {
+  media_pipe_t *mp = gv->gv_mp;
   if(event_is_action(e, ACTION_PLAYPAUSE) ||
      event_is_action(e, ACTION_PLAY) ||
      event_is_action(e, ACTION_PAUSE) ||
@@ -117,15 +118,19 @@ glw_video_widget_event(event_t *e, media_pipe_t *mp, int in_menu)
     return 1;
   }
 
+
   if(event_is_action(e, ACTION_UP) ||
      event_is_action(e, ACTION_DOWN) ||
      event_is_action(e, ACTION_LEFT) ||
      event_is_action(e, ACTION_RIGHT)) {
     
-    if(in_menu) {
+    if(gv->gv_spu_in_menu) {
       mp_enqueue_event(mp, e);
       return 1;
     }
+
+    if(!(gv->gv_flags & GLW_VIDEO_DPAD_SEEK))
+      return 0;
 
     if(event_is_action(e, ACTION_LEFT)) {
       e = event_create_action(ACTION_SEEK_BACKWARD);
@@ -540,7 +545,7 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
     return 0;
 
   case GLW_SIGNAL_EVENT:
-    return glw_video_widget_event(extra, gv->gv_mp, gv->gv_spu_in_menu);
+    return glw_video_widget_event(extra, gv);
 
   case GLW_SIGNAL_DESTROY:
     hts_mutex_lock(&gv->gv_surface_mutex);
@@ -569,6 +574,8 @@ glw_video_ctor(glw_t *w)
 {
   glw_video_t *gv = (glw_video_t *)w;
   glw_root_t *gr = w->glw_root;
+
+  gv->gv_flags |= GLW_VIDEO_DPAD_SEEK;
 
   kalman_init(&gv->gv_avfilter);
 

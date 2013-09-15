@@ -1064,6 +1064,7 @@ static const token_attrib_t attribtab[] = {
   
   {"primary",         mod_flag, GLW_VIDEO_PRIMARY, mod_video_flags},
   {"noAudio",         mod_flag, GLW_VIDEO_NO_AUDIO, mod_video_flags},
+  {"dpadSeek",        mod_flag, GLW_VIDEO_DPAD_SEEK, mod_video_flags},
 
   {"alpha",           set_float,  0, set_alpha},
   {"blur",            set_float,  0, set_blur},
