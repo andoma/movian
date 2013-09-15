@@ -4334,6 +4334,35 @@ glwf_focusedChild(glw_view_eval_context_t *ec, struct token *self,
 }
 
 
+/**
+ * Returns the focused child index 
+ *
+ * Only works if we have a cloner that spawns the childs
+ */
+static int 
+glwf_focusedIndex(glw_view_eval_context_t *ec, struct token *self,
+		  token_t **argv, unsigned int argc)
+{
+  glw_t *w = ec->w;
+  token_t *r;
+
+  ec->dynamic_eval |= GLW_VIEW_DYNAMIC_EVAL_FOCUSED_CHILD_CHANGE;
+
+  if(w->glw_focused == NULL || w->glw_focused->glw_clone == NULL) {
+    r = eval_alloc(self, ec, TOKEN_VOID);
+    eval_push(ec, r);
+    return 0;
+  }
+
+  glw_clone_t *c = w->glw_focused->glw_clone;
+  sub_cloner_t *sc = c->c_sc;
+  if(!sc->sc_positions_valid)
+    cloner_resequence(sc);
+  r = eval_alloc(self, ec, TOKEN_INT);
+  r->t_int = c->c_pos;
+  eval_push(ec, r);
+  return 0;
+}
 
 
 /**
@@ -5990,6 +6019,62 @@ glwf_selectedElement(glw_view_eval_context_t *ec, struct token *self,
 /**
  *
  */
+static int
+glwf_cloneIndex(glw_view_eval_context_t *ec, struct token *self,
+		     token_t **argv, unsigned int argc)
+{
+  glw_clone_t *c = ec->w->glw_clone;
+  token_t *r = eval_alloc(self, ec, TOKEN_INT);
+  r->t_int = 0;
+  if(c != NULL) {
+    sub_cloner_t *sc = c->c_sc;
+    if(!sc->sc_positions_valid)
+      cloner_resequence(sc);
+    r->t_int = c->c_pos;
+  }
+   // XXX replace with some kind of DYNAMIC_EVAL_SIBLING_RESEQUENCE
+  ec->dynamic_eval |= GLW_VIEW_DYNAMIC_EVAL_EVERY_FRAME;
+  eval_push(ec, r);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+glwf_abs(glw_view_eval_context_t *ec, struct token *self,
+		     token_t **argv, unsigned int argc)
+{
+  token_t *a, *r;
+
+  if((a = token_resolve(ec, argv[0])) == NULL)
+    return -1;
+
+  switch(a->type) {
+  case TOKEN_FLOAT:
+    r = eval_alloc(self, ec, TOKEN_FLOAT);
+    r->t_float = fabsf(a->t_float);
+    break;
+
+  case TOKEN_INT:
+    r = eval_alloc(self, ec, TOKEN_INT);
+    r->t_int = abs(a->t_int);
+    break;
+
+  default:
+    r = eval_alloc(self, ec, TOKEN_INT);
+    r->t_int = 0;
+    break;
+  }
+  eval_push(ec, r);
+  return 0;
+}
+
+
+/**
+ *
+ */
 static const token_func_t funcvec[] = {
   {"widget", 1, glwf_widget, NULL, NULL, glwf_resolve_widget_class},
   {"cloner", 3, glwf_cloner},
@@ -6018,6 +6103,7 @@ static const token_func_t funcvec[] = {
   {"isHovered", 0, glwf_isHovered},
   {"isPressed", 0, glwf_isPressed},
   {"focusedChild", 0, glwf_focusedChild},
+  {"focusedIndex", 0, glwf_focusedIndex},
   {"getCaption", 1, glwf_getCaption},
   {"bind", 1, glwf_bind},
   {"delta", 2, glwf_delta, glwf_delta_ctor, glwf_delta_dtor},
@@ -6057,7 +6143,8 @@ static const token_func_t funcvec[] = {
   {"rand", 0, glwf_rand},
   {"selectedElement", 1, glwf_selectedElement},
   {"set", 2, glwf_set, glwf_null_ctor, glwf_set_dtor},
-
+  {"cloneIndex", 0, glwf_cloneIndex},
+  {"abs", 1, glwf_abs},
 };
 
 
