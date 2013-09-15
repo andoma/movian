@@ -39,6 +39,7 @@ static char omx_enable_mjpeg;
 static void
 rpi_video_port_settings_changed(omx_component_t *oc)
 {
+  TRACE(TRACE_DEBUG, "VideoCore", "Video decoder output port settings changed");
   media_codec_t *mc = oc->oc_opaque;
   media_pipe_t *mp = mc->mp;
   hts_mutex_lock(&mp->mp_mutex);
