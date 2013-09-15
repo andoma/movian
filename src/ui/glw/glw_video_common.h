@@ -224,6 +224,12 @@ typedef struct glw_video {
 
   int gv_spu_in_menu;
 
+  // 2D cordinates on screen
+
+  glw_rect_t gv_rect;
+
+  int gv_invisible;
+
 } glw_video_t;
 
 

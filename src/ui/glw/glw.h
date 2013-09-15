@@ -155,6 +155,11 @@ typedef struct glw_rgb {
   float r, g, b;
 } glw_rgb_t;
 
+typedef struct glw_rect {
+  int x1, x2;
+  int y1, y2;
+} glw_rect_t;
+
 /**
  * Image flags
  */
@@ -1424,5 +1429,7 @@ void glw_icon_flush(glw_root_t *gr);
 void glw_reset_screensaver(glw_root_t *gr);
 
 int glw_image_get_details(glw_t *w, char *path, size_t pathlen, float *alpha);
+
+void glw_project(glw_rect_t *r, const glw_rctx_t *rc, const glw_root_t *gr);
 
 #endif /* GLW_H */

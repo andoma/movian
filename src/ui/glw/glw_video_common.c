@@ -781,6 +781,7 @@ glw_video_set(glw_t *w, va_list ap)
 void 
 glw_video_render(glw_t *w, const glw_rctx_t *rc)
 {
+  const glw_root_t *gr = w->glw_root;
   glw_video_t *gv = (glw_video_t *)w;
   glw_rctx_t rc0 = *rc;
 
@@ -799,6 +800,25 @@ glw_video_render(glw_t *w, const glw_rctx_t *rc)
   if(gv->gv_vzoom != 100) {
     float zoom = gv->gv_vzoom / 100.0f;
     glw_Scalef(&rc1, zoom, zoom, 1.0);
+  }
+
+  glw_project(&gv->gv_rect, rc, gr);
+
+  int invisible = 0;
+  if(gv->gv_rect.x1 >= gr->gr_width)
+    invisible = 1;
+  if(gv->gv_rect.x2 < 0)
+    invisible = 1;
+  if(gv->gv_rect.y1 >= gr->gr_height)
+    invisible = 1;
+  if(gv->gv_rect.y2 < 0)
+    invisible = 1;
+
+  if(gv->gv_invisible != invisible) {
+    gv->gv_invisible = invisible;
+    event_t *e = event_create_int(EVENT_VIDEO_VISIBILITY, !gv->gv_invisible);
+    mp_enqueue_event(gv->gv_mp, e);
+    event_release(e);
   }
 
   if(gv->gv_engine != NULL)
