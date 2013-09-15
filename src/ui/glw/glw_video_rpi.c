@@ -242,8 +242,8 @@ rvd_set_codec(media_codec_t *mc, glw_video_t *gv)
 
     rvd->rvd_vrender->oc_event_mark_cb = buffer_mark;
 
-    omx_set_state(rvd->rvd_vrender, OMX_StateIdle);
   }
+  omx_set_state(rvd->rvd_vrender, OMX_StateIdle);
 
   if(rvd->rvd_tun_vdecoder_vsched != NULL)
     omx_tunnel_destroy(rvd->rvd_tun_vdecoder_vsched);
