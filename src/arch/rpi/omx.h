@@ -53,8 +53,7 @@ omxchk0(OMX_ERRORTYPE er, const char *fn, int line)
 {
   if(!er)
     return;
-  printf("%s: OMX Error (line:%d) 0x%x\n", fn, line, er);
-  abort();
+  panic("%s: OMX Error (line:%d) 0x%x\n", fn, line, er);
 }
 
 
