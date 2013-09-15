@@ -16,9 +16,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "linux.h"
+
 #if defined(__i386__) || defined(__x86_64__) || defined(__arm__)
 
-// Only do this on x86 for now
 
 #define _GNU_SOURCE
 #include <link.h>
@@ -31,12 +32,12 @@
 #include <stdarg.h>
 #include <limits.h>
 
+#include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
 #include "showtime.h"
-#include "linux.h"
 
 #define TRAPMSG(fmt...) TRACE(TRACE_EMERG, "CRASH", fmt)
 
@@ -45,6 +46,75 @@
 static char line1[200];
 static char libs[2048];
 static char self[PATH_MAX];
+static char *symbuf;
+
+
+/**
+ *
+ */
+static void
+load_symfile(void)
+{
+  char buf[1024];
+  snprintf(buf, sizeof(buf), "%s.syms", gconf.binary);
+
+  int fd = open(buf, O_RDONLY);
+  if(fd == -1)
+    return;
+
+  struct stat st;
+  fstat(fd, &st);
+
+  symbuf = mmap(NULL, st.st_size + 4096, PROT_READ | PROT_WRITE,
+		MAP_PRIVATE, fd, 0);
+  if(symbuf == MAP_FAILED) {
+    fprintf(stderr, "Unable to map symfile %s -- %s\n",
+	    buf, strerror(errno));
+    close(fd);
+    symbuf = NULL;
+    return;
+  }
+}
+
+
+/**
+ *
+ */
+static int
+resolve_syms(void **ptr, const char **symvec, int *symoffset, int frames)
+{
+  char *s = symbuf;
+  int i;
+  for(i = 0; i < frames; i++) {
+    symvec[i] = NULL;
+    symoffset[i] = 0;
+  }
+
+  if(s == NULL)
+    return -1;
+  
+  while(s) {
+    int64_t addr = strtol(s, NULL, 16);
+    if(addr > 0x10000) {
+      for(i = 0; i < frames; i++) {
+	int64_t a0 = (intptr_t)ptr[i];
+	if(a0 >= addr) {
+	  symvec[i] = strchr(s, ' ');
+	  if(symvec[i])
+	    symvec[i]++;
+	  symoffset[i] = a0 - addr;
+	}
+      }
+    }
+
+    s = strchr(s, '\n');
+    if(s == NULL)
+      return 0;
+    *s++ = 0;
+  }
+  return 0;
+}
+
 
 static void
 sappend(char *buf, size_t l, const char *fmt, ...)
@@ -153,7 +223,37 @@ addr2text(char *out, size_t outlen, void *ptr)
 }
 
 
+/**
+ *
+ */
+static void
+dumpstack(void *frames[], int nframes)
+{
+  const char *sym[nframes];
+  int symoffset[nframes];
+  char buf[256];
+  int i;
 
+  TRAPMSG("STACKTRACE (%d frames)", nframes);
+
+  resolve_syms(frames, sym, symoffset, nframes);
+  
+
+  for(i = 0; i < nframes; i++) {
+    if(sym[i] == NULL) {
+      addr2text(buf, sizeof(buf), frames[i]);
+    } else {
+      snprintf(buf, sizeof(buf), "%s+0x%x", sym[i], symoffset[i]);
+    }
+    TRAPMSG("%s", buf);
+  }
+}
+
+
+
+/**
+ *
+ */
 static void 
 traphandler(int sig, siginfo_t *si, void *UC)
 {
@@ -161,7 +261,6 @@ traphandler(int sig, siginfo_t *si, void *UC)
   static void *frames[MAXFRAMES];
   char buf[256];
   int nframes = backtrace(frames, MAXFRAMES);
-  int i;
   const char *reason = NULL;
 
   TRAPMSG("Signal: %d in %s ", sig, line1);
@@ -213,6 +312,7 @@ traphandler(int sig, siginfo_t *si, void *UC)
 #else
   char tmpbuf[1024];
   snprintf(tmpbuf, sizeof(tmpbuf), "Register dump [%d]: ", NGREG);
+  int i;
   for(i = 0; i < NGREG; i++) {
 #if __WORDSIZE == 64
     sappend(tmpbuf, sizeof(tmpbuf), "%016llx ", uc->uc_mcontext.gregs[i]);
@@ -223,12 +323,7 @@ traphandler(int sig, siginfo_t *si, void *UC)
   TRAPMSG("%s", tmpbuf);
 #endif
 
-  TRAPMSG("STACKTRACE (%d frames)", nframes);
-
-  for(i = 0; i < nframes; i++) {
-    addr2text(buf, sizeof(buf), frames[i]);
-    TRAPMSG("%s", buf);
-  }
+  dumpstack(frames, nframes);
 }
 
 
@@ -240,7 +335,6 @@ callback(struct dl_phdr_info *info, size_t size, void *data)
     sappend(libs, sizeof(libs), "%s ", info->dlpi_name);
   return 0;
 }
-
 
 /**
  *
@@ -284,15 +378,45 @@ trap_init(void)
   sigaction(SIGFPE,  &sa, &old);
 
   sigprocmask(SIG_UNBLOCK, &m, NULL);
+
+
+  load_symfile();
+}
+
+
+void
+panic(const char *fmt, ...)
+{
+  va_list ap;
+
+  static void *frames[MAXFRAMES];
+  int nframes = backtrace(frames, MAXFRAMES);
+
+  va_start(ap, fmt);
+  tracev(0, TRACE_EMERG, "PANIC", fmt, ap);
+  va_end(ap);
+
+  dumpstack(frames, nframes);
+  exit(1);
 }
 
 #else
-
-void trap_init(void);
 
 void
 trap_init(void)
 {
 
 }
+
+void
+panic(const char *fmt, ...)
+{
+  va_list ap;
+
+  va_start(ap, fmt);
+  tracev(0, TRACE_EMERG, "PANIC", fmt, ap);
+  va_end(ap);
+  abort();
+}
+
 #endif
