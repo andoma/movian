@@ -275,10 +275,14 @@ hc_binreplace(http_connection_t *hc, const char *remain, void *opaque,
   if(method != HTTP_CMD_POST || data == NULL)
     return 405;
   
-  TRACE(TRACE_INFO, "BINREPLACE", "Replacing %s with %d bytes received",
-	gconf.binary, (int)len);
+  const char *fname = gconf.upgrade_path ?: gconf.binary;
 
-  int fd = open(gconf.binary, O_TRUNC | O_RDWR, 0777);
+  TRACE(TRACE_INFO, "BINREPLACE", "Replacing %s with %d bytes received",
+	fname, (int)len);
+
+  unlink(fname);
+
+  int fd = open(fname, O_CREAT | O_RDWR, 0777);
   if(fd == -1) {
     TRACE(TRACE_ERROR, "BINREPLACE", "Unable to open file");
     return HTTP_STATUS_UNSUPPORTED_MEDIA_TYPE;
