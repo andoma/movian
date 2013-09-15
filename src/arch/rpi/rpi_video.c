@@ -301,13 +301,22 @@ rpi_codec_init(void)
 {
   char buf[64];
   vc_gencmd(buf, sizeof(buf), "codec_enabled MPG2");
+  TRACE(TRACE_INFO, "VideoCore", "%s", buf);
   omx_enable_mpg2 = !strcmp(buf, "MPG2=enabled");
+
   vc_gencmd(buf, sizeof(buf), "codec_enabled VP8");
+  TRACE(TRACE_INFO, "VideoCore", "%s", buf);
   omx_enable_vp8 = !strcmp(buf, "VP8=enabled");
+
   vc_gencmd(buf, sizeof(buf), "codec_enabled VP6");
+  TRACE(TRACE_INFO, "VideoCore", "%s", buf);
   omx_enable_vp6 = !strcmp(buf, "VP6=enabled");
+
   vc_gencmd(buf, sizeof(buf), "codec_enabled MJPG");
+  TRACE(TRACE_INFO, "VideoCore", "%s", buf);
   omx_enable_mjpeg = !strcmp(buf, "MJPG=enabled");
+
+
 }
 
 
