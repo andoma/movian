@@ -34,6 +34,10 @@
 #include "htsmsg/htsmsg_store.h"
 #include "db/kvstore.h"
 
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+
 #define SETTINGS_URL "settings:"
 static prop_t *settings_root;
 static prop_t *settings_nodes;
@@ -1006,6 +1010,35 @@ add_dev_bool(htsmsg_t *s, const char *title, const char *id, int *val)
  *
  */
 static void
+set_netlog(void *opaque, const char *str)
+{
+  if(str == NULL) {
+    gconf.log_server_ipv4 = 0;
+    return;
+  }
+  char *msg = mystrdupa(str);
+
+  char *p = strchr(msg, ':');
+  if(p != NULL) {
+    *p++ = 0;
+    gconf.log_server_port = atoi(p);
+  } else {
+    gconf.log_server_port = 4000;
+  }
+
+  struct in_addr addr;
+
+  if(inet_pton(AF_INET, msg, &addr) != 1) {
+    gconf.log_server_ipv4 = 0;
+  } else {
+    gconf.log_server_ipv4 = addr.s_addr;
+  }
+}
+
+/**
+ *
+ */
+static void
 init_dev_settings(void)
 {
   htsmsg_t *s = htsmsg_store_load("dev") ?: htsmsg_create_map();
@@ -1045,5 +1078,13 @@ init_dev_settings(void)
 
   add_dev_bool(s, "Upgrade using patches",
 	       "patchupgrade", &gconf.enable_patched_upgrade);
+
+
+
+  setting_create(SETTING_STRING, gconf.settings_dev, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE_CSTR("Network log destination"),
+                 SETTING_CALLBACK(set_netlog, NULL),
+                 SETTING_HTSMSG("netlogdest", s, "dev"),
+                 NULL);
 
 }

@@ -265,33 +265,12 @@ my_trace(const char *fmt, ...)
 	 (struct sockaddr*)&log_server, sizeof(log_server));
 }
 
-
-static int decorate_trace = 1;
-
 /**
  *
  */
 void
 trace_arch(int level, const char *prefix, const char *str)
 {
-  const char *sgr, *sgroff;
-
-  switch(level) {
-  case TRACE_EMERG: sgr = "\033[31m"; break;
-  case TRACE_ERROR: sgr = "\033[31m"; break;
-  case TRACE_INFO:  sgr = "\033[33m"; break;
-  case TRACE_DEBUG: sgr = "\033[32m"; break;
-  default:          sgr = "\033[35m"; break;
-  }
-
-  if(!decorate_trace) {
-    sgr = "";
-    sgroff = "";
-  } else {
-    sgroff = "\033[0m";
-  }
-
-  my_trace("%s%s %s%s\n", sgr, prefix, str, sgroff);
 }
 
 

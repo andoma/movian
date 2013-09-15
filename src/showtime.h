@@ -260,6 +260,8 @@ typedef struct gconf {
 
   int ignore_the_prefix;
 
+  uint32_t log_server_ipv4;
+  int log_server_port;
 
 } gconf_t;
 
