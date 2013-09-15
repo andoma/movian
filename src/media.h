@@ -232,7 +232,7 @@ typedef struct media_buf {
     
     MB_CTRL_UNBLOCK,
 
-    MB_CTRL_SET_VOLUME,
+    MB_CTRL_SET_VOLUME_MULTIPLIER,
 
   } mb_data_type;
 
@@ -247,6 +247,7 @@ typedef struct media_buf {
     int mb_rate;
     int mb_codecid;
     int mb_font_context;
+    float mb_float;
   };
 
 
@@ -465,6 +466,14 @@ typedef struct media_pipe {
   void (*mp_seek_video_done)(struct media_pipe *mp);
   void (*mp_hold_changed)(struct media_pipe *mp);
 
+
+  /**
+   * Volume control
+   */
+
+  int mp_vol_user;
+  float mp_vol_ui;
+
 } media_pipe_t;
 
 extern void (*media_pipe_init_extra)(media_pipe_t *mp);
@@ -618,6 +627,8 @@ void mp_set_playstatus_by_hold(media_pipe_t *mp, int hold, const char *msg);
 void mp_set_playstatus_stop(media_pipe_t *mp);
 
 void mp_set_url(media_pipe_t *mp, const char *url);
+
+void mp_send_volume_update_locked(media_pipe_t *mp);
 
 #define MP_PLAY_CAPS_SEEK 0x1
 #define MP_PLAY_CAPS_PAUSE 0x2

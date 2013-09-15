@@ -735,6 +735,24 @@ thaw(glw_t *w)
  *
  */
 static void
+set_audio_volume(glw_video_t *gv, float v)
+{
+  media_pipe_t *mp = gv->gv_mp;
+
+  if(mp->mp_vol_ui == v)
+    return;
+
+  hts_mutex_lock(&mp->mp_mutex);
+  mp->mp_vol_ui = v;
+  mp_send_volume_update_locked(mp);
+  hts_mutex_unlock(&mp->mp_mutex);
+}
+
+
+/**
+ *
+ */
+static void
 glw_video_set(glw_t *w, va_list ap)
 {
   glw_video_t *gv = (glw_video_t *)w;
@@ -770,6 +788,10 @@ glw_video_set(glw_t *w, va_list ap)
 	prop_ref_dec(gv->gv_model);
 
       gv->gv_model = prop_ref_inc(va_arg(ap, prop_t *));
+      break;
+
+    case GLW_ATTRIB_AUDIO_VOLUME:
+      set_audio_volume(gv, va_arg(ap, double));
       break;
 
     default:

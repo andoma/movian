@@ -133,6 +133,7 @@ typedef enum {
   GLW_ATTRIB_ALPHA_FALLOFF,
   GLW_ATTRIB_BLUR_FALLOFF,
   GLW_ATTRIB_RADIUS,
+  GLW_ATTRIB_AUDIO_VOLUME,
   GLW_ATTRIB_num,
 } glw_attribute_t;
 
@@ -1265,6 +1266,7 @@ do {						\
   case GLW_ATTRIB_CENTER:                       \
   case GLW_ATTRIB_ALPHA_FALLOFF:                \
   case GLW_ATTRIB_BLUR_FALLOFF:                 \
+  case GLW_ATTRIB_AUDIO_VOLUME:                 \
     (void)va_arg(ap, double);			\
     break;					\
   }						\

@@ -1085,6 +1085,7 @@ static const token_attrib_t attribtab[] = {
   {"focusable",       set_float,  0, glw_set_focus_weight},
   {"childAspect",     set_float,  GLW_ATTRIB_CHILD_ASPECT},
   {"center",          set_float,  GLW_ATTRIB_CENTER},
+  {"audioVolume",     set_float,  GLW_ATTRIB_AUDIO_VOLUME},
 
   {"height",          set_int,  0, set_height},
   {"width",           set_int,  0, set_width},
