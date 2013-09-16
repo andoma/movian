@@ -400,7 +400,7 @@ static int
 glw_screensaver_is_active(const glw_root_t *gr)
 {
   if(gr->gr_screensaver_force_enable)
-    return 0;
+    return 1;
 
   if(!gr->gr_is_fullscreen)
     return 0;
