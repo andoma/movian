@@ -43,6 +43,7 @@ typedef struct omx_tunnel {
   int ot_srcport;
   omx_component_t *ot_dst;
   int ot_dstport;
+  const char *ot_name;
 } omx_tunnel_t;
 
 
@@ -80,7 +81,8 @@ int omx_wait_fill_buffer(omx_component_t *oc, OMX_BUFFERHEADERTYPE *buf);
 void omx_wait_buffers(omx_component_t *oc);
 void omx_release_buffers(omx_component_t *oc, int port);
 omx_tunnel_t *omx_tunnel_create(omx_component_t *src, int srcport,
-				omx_component_t *dst, int dstport);
+				omx_component_t *dst, int dstport,
+				const char *name);
 void omx_tunnel_destroy(omx_tunnel_t *ot);
 int64_t omx_get_media_time(omx_component_t *oc);
 void omx_flush_port(omx_component_t *oc, int port);

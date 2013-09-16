@@ -82,7 +82,8 @@ rvd_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
       omx_tunnel_destroy(rvd->rvd_tun_vsched_vrender);
     
     rvd->rvd_tun_vsched_vrender =
-      omx_tunnel_create(rvd->rvd_vsched, 11, rvd->rvd_vrender, 90);
+      omx_tunnel_create(rvd->rvd_vsched, 11, rvd->rvd_vrender, 90,
+			"vsched -> vrender");
 
     omx_set_state(rvd->rvd_vrender, OMX_StateExecuting);
 
@@ -138,6 +139,8 @@ rvd_reset(glw_video_t *gv)
 {
   rpi_video_display_t *rvd = gv->gv_aux;
 
+  omx_tunnel_destroy(rvd->rvd_tun_clock_vsched);
+
   omx_flush_port(rvd->rvd_vsched, 10);
   omx_flush_port(rvd->rvd_vsched, 11);
 
@@ -149,7 +152,6 @@ rvd_reset(glw_video_t *gv)
   if(rvd->rvd_tun_vdecoder_vsched != NULL)
     omx_tunnel_destroy(rvd->rvd_tun_vdecoder_vsched);
 
-  omx_tunnel_destroy(rvd->rvd_tun_clock_vsched);
 
   omx_set_state(rvd->rvd_vrender,  OMX_StateIdle);
   omx_set_state(rvd->rvd_vsched,   OMX_StateIdle);
@@ -235,7 +237,8 @@ rvd_set_codec(media_codec_t *mc, glw_video_t *gv)
     omx_enable_buffer_marks(rvd->rvd_vrender);
 
     rvd->rvd_tun_clock_vsched =
-      omx_tunnel_create(omx_get_clock(mp), 81, rvd->rvd_vsched, 12);
+      omx_tunnel_create(omx_get_clock(mp), 81, rvd->rvd_vsched, 12,
+			"clock -> vsched");
     
     rvd->rvd_vsched->oc_port_settings_changed_cb =
       vsched_port_settings_changed;
@@ -254,7 +257,8 @@ rvd_set_codec(media_codec_t *mc, glw_video_t *gv)
   rvd->rvd_mc = media_codec_ref(mc);
 
   rvd->rvd_tun_vdecoder_vsched =
-    omx_tunnel_create(rvc->rvc_decoder, 131, rvd->rvd_vsched, 10);
+    omx_tunnel_create(rvc->rvc_decoder, 131, rvd->rvd_vsched, 10,
+		      "vdecoder -> vsched");
 
   omx_set_state(rvd->rvd_vsched,  OMX_StateExecuting);
   return 0;

@@ -117,7 +117,8 @@ omx_wait_command(omx_component_t *oc)
 {
   hts_mutex_lock(&oc->oc_event_mtx);
   while(!oc->oc_cmd_done)
-    hts_cond_wait(&oc->oc_event_cond, &oc->oc_event_mtx);
+    if(hts_cond_wait_timeout(&oc->oc_event_cond, &oc->oc_event_mtx, 250))
+      break;
   hts_mutex_unlock(&oc->oc_event_mtx);
 }
 
@@ -323,7 +324,7 @@ omx_release_buffers(omx_component_t *oc, int port)
  */
 omx_tunnel_t *
 omx_tunnel_create(omx_component_t *src, int srcport, omx_component_t *dst,
-		  int dstport)
+		  int dstport, const char *name)
 {
   OMX_STATETYPE state;
   omxchk(OMX_GetState(src->oc_handle, &state));
@@ -331,8 +332,8 @@ omx_tunnel_create(omx_component_t *src, int srcport, omx_component_t *dst,
   if(state == OMX_StateLoaded)
     omx_set_state(src, OMX_StateIdle);
 
-  omxdbg("Creating tunnel from %s:%d to %s:%d\n",
-	 src->oc_name, srcport, dst->oc_name, dstport);
+  omxdbg("Creating tunnel %s from %s:%d to %s:%d\n",
+	 name, src->oc_name, srcport, dst->oc_name, dstport);
 
   omx_send_command(src, OMX_CommandPortDisable, srcport, NULL, 1);
   omx_send_command(dst, OMX_CommandPortDisable, dstport, NULL, 1);
@@ -349,6 +350,7 @@ omx_tunnel_create(omx_component_t *src, int srcport, omx_component_t *dst,
   ot->ot_srcport = srcport;
   ot->ot_dst = dst;
   ot->ot_dstport = dstport;
+  ot->ot_name = name;
   return ot;
 }
 
@@ -368,9 +370,10 @@ omx_port_enable(omx_component_t *c, int port)
 void
 omx_tunnel_destroy(omx_tunnel_t *ot)
 {
-  omxdbg("Destroying tunnel\n");
-  omx_send_command(ot->ot_src, OMX_CommandPortDisable, ot->ot_srcport, NULL, 0);
-  omx_send_command(ot->ot_dst, OMX_CommandPortDisable, ot->ot_dstport, NULL, 0);
+  omxdbg("Destroying tunnel %s\n", ot->ot_name);
+  omx_send_command(ot->ot_src, OMX_CommandPortDisable, ot->ot_srcport, NULL, 1);
+  omx_send_command(ot->ot_dst, OMX_CommandPortDisable, ot->ot_dstport, NULL, 1);
+
   omxchk(OMX_SetupTunnel(ot->ot_src->oc_handle, ot->ot_srcport, NULL, 0));
   free(ot);
 }

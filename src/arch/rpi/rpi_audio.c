@@ -72,7 +72,8 @@ rpi_audio_reconfig(audio_decoder_t *ad)
 
 
   if(mp->mp_extra)
-    d->d_clock_tun = omx_tunnel_create(omx_get_clock(mp), 80, d->d_render, 101);
+    d->d_clock_tun = omx_tunnel_create(omx_get_clock(mp), 80, d->d_render, 101,
+				       "clock -> audio");
 
   // Initialize audio render
   OMX_PARAM_PORTDEFINITIONTYPE param;
