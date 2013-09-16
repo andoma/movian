@@ -34,7 +34,6 @@
 #include "vobsub.h"
 #include "text/text.h"
 #include "subtitles.h"
-#include "misc/charset_detector.h"
 
 /**
  *

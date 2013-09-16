@@ -465,6 +465,33 @@ pulseaudio_fini(audio_decoder_t *ad)
   pa_threaded_mainloop_unlock(mainloop);
 }
 
+
+/**
+ *
+ */
+static void
+pulseaudio_set_volume(struct audio_decoder *ad, float scale)
+{
+  decoder_t *d = (decoder_t *)ad;
+  pa_threaded_mainloop_lock(mainloop);
+  if(d->s) {
+    pa_operation *o;
+    pa_cvolume cv;
+
+    memset(&cv, 0, sizeof(cv));
+    pa_cvolume_set(&cv, d->ss.channels, pa_sw_volume_from_linear(scale));
+
+    o = pa_context_set_sink_input_volume(ctx,
+					 pa_stream_get_index(d->s),
+					 &cv, NULL, NULL);
+    if(o != NULL)
+      pa_operation_unref(o);
+  }
+  pa_threaded_mainloop_unlock(mainloop);
+}
+
+
+
 /**
  *
  */
@@ -477,6 +504,7 @@ static audio_class_t pulseaudio_audio_class = {
   .ac_reconfig     = pulseaudio_audio_reconfig,
   .ac_deliver_unlocked = pulseaudio_audio_deliver,
   .ac_check_passthru = pulseaudio_check_passthru,
+  .ac_set_volume     = pulseaudio_set_volume,
 };
 
 

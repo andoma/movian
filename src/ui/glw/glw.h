@@ -133,6 +133,7 @@ typedef enum {
   GLW_ATTRIB_ALPHA_FALLOFF,
   GLW_ATTRIB_BLUR_FALLOFF,
   GLW_ATTRIB_RADIUS,
+  GLW_ATTRIB_AUDIO_VOLUME,
   GLW_ATTRIB_num,
 } glw_attribute_t;
 
@@ -154,6 +155,11 @@ typedef struct glw_vertex {
 typedef struct glw_rgb {
   float r, g, b;
 } glw_rgb_t;
+
+typedef struct glw_rect {
+  int x1, x2;
+  int y1, y2;
+} glw_rect_t;
 
 /**
  * Image flags
@@ -183,6 +189,7 @@ typedef struct glw_rgb {
  */
 #define GLW_VIDEO_PRIMARY       0x1
 #define GLW_VIDEO_NO_AUDIO      0x2
+#define GLW_VIDEO_DPAD_SEEK     0x4
 
 typedef enum {
   GLW_POINTER_LEFT_PRESS,
@@ -1259,6 +1266,7 @@ do {						\
   case GLW_ATTRIB_CENTER:                       \
   case GLW_ATTRIB_ALPHA_FALLOFF:                \
   case GLW_ATTRIB_BLUR_FALLOFF:                 \
+  case GLW_ATTRIB_AUDIO_VOLUME:                 \
     (void)va_arg(ap, double);			\
     break;					\
   }						\
@@ -1424,5 +1432,7 @@ void glw_icon_flush(glw_root_t *gr);
 void glw_reset_screensaver(glw_root_t *gr);
 
 int glw_image_get_details(glw_t *w, char *path, size_t pathlen, float *alpha);
+
+void glw_project(glw_rect_t *r, const glw_rctx_t *rc, const glw_root_t *gr);
 
 #endif /* GLW_H */

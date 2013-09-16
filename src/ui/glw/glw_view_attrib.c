@@ -1064,6 +1064,7 @@ static const token_attrib_t attribtab[] = {
   
   {"primary",         mod_flag, GLW_VIDEO_PRIMARY, mod_video_flags},
   {"noAudio",         mod_flag, GLW_VIDEO_NO_AUDIO, mod_video_flags},
+  {"dpadSeek",        mod_flag, GLW_VIDEO_DPAD_SEEK, mod_video_flags},
 
   {"alpha",           set_float,  0, set_alpha},
   {"blur",            set_float,  0, set_blur},
@@ -1084,6 +1085,7 @@ static const token_attrib_t attribtab[] = {
   {"focusable",       set_float,  0, glw_set_focus_weight},
   {"childAspect",     set_float,  GLW_ATTRIB_CHILD_ASPECT},
   {"center",          set_float,  GLW_ATTRIB_CENTER},
+  {"audioVolume",     set_float,  GLW_ATTRIB_AUDIO_VOLUME},
 
   {"height",          set_int,  0, set_height},
   {"width",           set_int,  0, set_width},

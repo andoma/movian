@@ -24,6 +24,7 @@ typedef struct audio_class {
   void (*ac_play)(struct audio_decoder *ad);
   void (*ac_flush)(struct audio_decoder *ad);
   int (*ac_check_passthru)(struct audio_decoder *ad, int codec);
+  void (*ac_set_volume)(struct audio_decoder *ad, float scale);
 } audio_class_t;
 
 
@@ -65,8 +66,6 @@ typedef struct audio_decoder {
   int ad_spdif_frame_size;
   int ad_spdif_frame_alloc;
 
-  double ad_matrix[64];
-  int ad_matrix_loaded;
   float ad_vol_scale;
 } audio_decoder_t;
 

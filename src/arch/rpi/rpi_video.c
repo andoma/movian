@@ -27,6 +27,9 @@
 #include "rpi_video.h"
 
 static char omx_enable_mpg2;
+static char omx_enable_vp8;
+static char omx_enable_vp6;
+static char omx_enable_mjpeg;
 
 
 
@@ -36,6 +39,7 @@ static char omx_enable_mpg2;
 static void
 rpi_video_port_settings_changed(omx_component_t *oc)
 {
+  TRACE(TRACE_DEBUG, "VideoCore", "Video decoder output port settings changed");
   media_codec_t *mc = oc->oc_opaque;
   media_pipe_t *mp = mc->mp;
   hts_mutex_lock(&mp->mp_mutex);
@@ -186,6 +190,29 @@ rpi_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
     name = "MPEG2 (VideoCore)";
     break;
 
+  case CODEC_ID_VP8:
+    if(!omx_enable_vp8)
+      return 1;
+    fmt = OMX_VIDEO_CodingVP8;
+    name = "VP8 (VideoCore)";
+    break;
+
+  case CODEC_ID_VP6F:
+  case CODEC_ID_VP6A:
+    if(!omx_enable_vp6)
+      return 1;
+    fmt = OMX_VIDEO_CodingVP6;
+    name = "VP6 (VideoCore)";
+    break;
+
+  case CODEC_ID_MJPEG:
+  case CODEC_ID_MJPEGB:
+    if(!omx_enable_mjpeg)
+      return 1;
+    fmt = OMX_VIDEO_CodingMJPEG;
+    name = "MJPEG (VideoCore)";
+    break;
+
 #if 0
   case CODEC_ID_VC1:
   case CODEC_ID_WMV3:
@@ -251,7 +278,7 @@ rpi_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
     buf->nOffset = 0;
     buf->nFilledLen = mcp->extradata_size;
     memcpy(buf->pBuffer, mcp->extradata, buf->nFilledLen);
-    buf->nFlags = OMX_BUFFERFLAG_CODECCONFIG;
+    buf->nFlags = OMX_BUFFERFLAG_CODECCONFIG | OMX_BUFFERFLAG_ENDOFFRAME;
     omxchk(OMX_EmptyThisBuffer(rvc->rvc_decoder->oc_handle, buf));
   }
 
@@ -275,7 +302,22 @@ rpi_codec_init(void)
 {
   char buf[64];
   vc_gencmd(buf, sizeof(buf), "codec_enabled MPG2");
+  TRACE(TRACE_INFO, "VideoCore", "%s", buf);
   omx_enable_mpg2 = !strcmp(buf, "MPG2=enabled");
+
+  vc_gencmd(buf, sizeof(buf), "codec_enabled VP8");
+  TRACE(TRACE_INFO, "VideoCore", "%s", buf);
+  omx_enable_vp8 = !strcmp(buf, "VP8=enabled");
+
+  vc_gencmd(buf, sizeof(buf), "codec_enabled VP6");
+  TRACE(TRACE_INFO, "VideoCore", "%s", buf);
+  omx_enable_vp6 = !strcmp(buf, "VP6=enabled");
+
+  vc_gencmd(buf, sizeof(buf), "codec_enabled MJPG");
+  TRACE(TRACE_INFO, "VideoCore", "%s", buf);
+  omx_enable_mjpeg = !strcmp(buf, "MJPG=enabled");
+
+
 }
 
 

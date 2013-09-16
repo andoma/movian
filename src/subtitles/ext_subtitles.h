@@ -31,6 +31,9 @@ typedef struct ext_subtitles {
   void (*es_dtor)(struct ext_subtitles *es);
   void (*es_picker)(struct ext_subtitles *es, int64_t pts);
 
+  int es_utf8_clean;
+  const struct charset *es_detected_charset;
+
 } ext_subtitles_t;
 
 void subtitles_destroy(ext_subtitles_t *sub);

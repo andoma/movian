@@ -107,8 +107,9 @@ glw_video_rctx_adjust(glw_rctx_t *rc, const glw_video_t *gv)
  *
  */
 static int
-glw_video_widget_event(event_t *e, media_pipe_t *mp, int in_menu)
+glw_video_widget_event(event_t *e, glw_video_t *gv)
 {
+  media_pipe_t *mp = gv->gv_mp;
   if(event_is_action(e, ACTION_PLAYPAUSE) ||
      event_is_action(e, ACTION_PLAY) ||
      event_is_action(e, ACTION_PAUSE) ||
@@ -117,15 +118,19 @@ glw_video_widget_event(event_t *e, media_pipe_t *mp, int in_menu)
     return 1;
   }
 
+
   if(event_is_action(e, ACTION_UP) ||
      event_is_action(e, ACTION_DOWN) ||
      event_is_action(e, ACTION_LEFT) ||
      event_is_action(e, ACTION_RIGHT)) {
     
-    if(in_menu) {
+    if(gv->gv_spu_in_menu) {
       mp_enqueue_event(mp, e);
       return 1;
     }
+
+    if(!(gv->gv_flags & GLW_VIDEO_DPAD_SEEK))
+      return 0;
 
     if(event_is_action(e, ACTION_LEFT)) {
       e = event_create_action(ACTION_SEEK_BACKWARD);
@@ -369,10 +374,6 @@ glw_video_newframe_blend(glw_video_t *gv, video_decoder_t *vd, int flags,
 
     int epoch = sa->gvs_epoch;
 
-    /* There are frames available that we are going to display,
-       push back old frames to decoder */
-    while((s = TAILQ_FIRST(&gv->gv_displaying_queue)) != NULL)
-      release(gv, s, &gv->gv_displaying_queue);
 
     /* */
     sb = TAILQ_NEXT(sa, gvs_link);
@@ -389,6 +390,7 @@ glw_video_newframe_blend(glw_video_t *gv, video_decoder_t *vd, int flags,
 	}
 
 	if(code == AVDIFF_CATCH_UP) {
+	  gv->gv_sa = NULL;
 	  release(gv, sa, &gv->gv_decoded_queue);
 	  kalman_init(&gv->gv_avfilter);
 	  goto again;
@@ -402,6 +404,16 @@ glw_video_newframe_blend(glw_video_t *gv, video_decoder_t *vd, int flags,
     }
     if(sb != NULL && sb->gvs_duration == 0)
       glw_video_enqueue_for_display(gv, sb, &gv->gv_decoded_queue);
+
+
+    /* There are frames available that we are going to display,
+       push back old frames to decoder */
+    while((s = TAILQ_FIRST(&gv->gv_displaying_queue)) != NULL) {
+      if(s != gv->gv_sa && s != gv->gv_sb)
+	release(gv, s, &gv->gv_displaying_queue);
+      else
+	break;
+    }
 
   }
   return pts;
@@ -533,7 +545,7 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
     return 0;
 
   case GLW_SIGNAL_EVENT:
-    return glw_video_widget_event(extra, gv->gv_mp, gv->gv_spu_in_menu);
+    return glw_video_widget_event(extra, gv);
 
   case GLW_SIGNAL_DESTROY:
     hts_mutex_lock(&gv->gv_surface_mutex);
@@ -562,6 +574,8 @@ glw_video_ctor(glw_t *w)
 {
   glw_video_t *gv = (glw_video_t *)w;
   glw_root_t *gr = w->glw_root;
+
+  gv->gv_flags |= GLW_VIDEO_DPAD_SEEK;
 
   kalman_init(&gv->gv_avfilter);
 
@@ -721,6 +735,24 @@ thaw(glw_t *w)
  *
  */
 static void
+set_audio_volume(glw_video_t *gv, float v)
+{
+  media_pipe_t *mp = gv->gv_mp;
+
+  if(mp->mp_vol_ui == v)
+    return;
+
+  hts_mutex_lock(&mp->mp_mutex);
+  mp->mp_vol_ui = v;
+  mp_send_volume_update_locked(mp);
+  hts_mutex_unlock(&mp->mp_mutex);
+}
+
+
+/**
+ *
+ */
+static void
 glw_video_set(glw_t *w, va_list ap)
 {
   glw_video_t *gv = (glw_video_t *)w;
@@ -758,6 +790,10 @@ glw_video_set(glw_t *w, va_list ap)
       gv->gv_model = prop_ref_inc(va_arg(ap, prop_t *));
       break;
 
+    case GLW_ATTRIB_AUDIO_VOLUME:
+      set_audio_volume(gv, va_arg(ap, double));
+      break;
+
     default:
       GLW_ATTRIB_CHEW(attrib, ap);
       break;
@@ -774,6 +810,7 @@ glw_video_set(glw_t *w, va_list ap)
 void 
 glw_video_render(glw_t *w, const glw_rctx_t *rc)
 {
+  const glw_root_t *gr = w->glw_root;
   glw_video_t *gv = (glw_video_t *)w;
   glw_rctx_t rc0 = *rc;
 
@@ -792,6 +829,25 @@ glw_video_render(glw_t *w, const glw_rctx_t *rc)
   if(gv->gv_vzoom != 100) {
     float zoom = gv->gv_vzoom / 100.0f;
     glw_Scalef(&rc1, zoom, zoom, 1.0);
+  }
+
+  glw_project(&gv->gv_rect, rc, gr);
+
+  int invisible = 0;
+  if(gv->gv_rect.x1 >= gr->gr_width)
+    invisible = 1;
+  if(gv->gv_rect.x2 < 0)
+    invisible = 1;
+  if(gv->gv_rect.y1 >= gr->gr_height)
+    invisible = 1;
+  if(gv->gv_rect.y2 < 0)
+    invisible = 1;
+
+  if(gv->gv_invisible != invisible) {
+    gv->gv_invisible = invisible;
+    event_t *e = event_create_int(EVENT_VIDEO_VISIBILITY, !gv->gv_invisible);
+    mp_enqueue_event(gv->gv_mp, e);
+    event_release(e);
   }
 
   if(gv->gv_engine != NULL)

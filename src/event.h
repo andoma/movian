@@ -156,6 +156,7 @@ typedef enum {
   EVENT_SELECT_SUBTITLE_TRACK,
 
   EVENT_PLAYBACK_PRIORITY,   // 0 = best, higher value == less important 
+  EVENT_VIDEO_VISIBILITY,    // 1 = visible (default), 0 = not visible
 
   EVENT_STOP_UI,
 

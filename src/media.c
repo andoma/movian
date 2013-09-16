@@ -22,6 +22,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <string.h>
+#include <math.h>
 
 #include "media.h"
 #include "showtime.h"
@@ -69,7 +70,7 @@ static void update_av_delta(void *opaque, int value);
 
 static void update_sv_delta(void *opaque, int value);
 
-static void update_audio_volume(void *opaque, int value);
+static void update_audio_volume_user(void *opaque, int value);
 
 static void media_eventsink(void *opaque, prop_event_t event, ...);
 
@@ -267,6 +268,7 @@ mp_create(const char *name, int flags, const char *type)
   prop_t *p;
 
   mp = calloc(1, sizeof(media_pipe_t));
+  mp->mp_vol_ui = 1.0f;
 
   mp->mp_satisfied = -1;
   mp->mp_epoch = 1;
@@ -527,7 +529,7 @@ mp_settings_init(media_pipe_t *mp, const char *url)
                    SETTING_TITLE(_p("Audio volume")),
                    SETTING_RANGE(-50, 50),
                    SETTING_UNIT_CSTR("dB"),
-                   SETTING_CALLBACK(update_audio_volume, mp),
+                   SETTING_CALLBACK(update_audio_volume_user, mp),
                    SETTING_KVSTORE(url, "audiovolume"),
                    SETTING_PROP_ENABLER(prop_create(c, "canAdjustVolume")),
                    NULL);
@@ -1579,15 +1581,26 @@ update_sv_delta(void *opaque, int v)
 /**
  *
  */
+void
+mp_send_volume_update_locked(media_pipe_t *mp)
+{
+  float v = pow(10.0f, mp->mp_vol_user / 20.0f) * mp->mp_vol_ui;
+  media_buf_t *mb = media_buf_alloc_locked(mp, 0);
+  mb->mb_data_type = MB_CTRL_SET_VOLUME_MULTIPLIER;
+  mb->mb_float = v;
+  mb_enq(mp, &mp->mp_audio, mb);
+}
+
+
+/**
+ *
+ */
 static void
-update_audio_volume(void *opaque, int value)
+update_audio_volume_user(void *opaque, int value)
 {
   media_pipe_t *mp = opaque;
-
-  media_buf_t *mb = media_buf_alloc_locked(mp, 0);
-  mb->mb_data_type = MB_CTRL_SET_VOLUME;
-  mb->mb_data32 = value;
-  mb_enq(mp, &mp->mp_audio, mb);
+  mp->mp_vol_user = value;
+  mp_send_volume_update_locked(mp);
 }
 
 

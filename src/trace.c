@@ -21,6 +21,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <netinet/in.h>
 
 #include "prop/prop.h"
 #include "showtime.h"
@@ -29,6 +30,8 @@ static hts_mutex_t trace_mutex;
 static prop_t *log_root;
 
 static int entries;
+
+#define UI_LOG_LINES 200
 
 TAILQ_HEAD(trace_entry_queue, trace_entry);
 SIMPLEQ_HEAD(tracetmp_queue, tracetmp);
@@ -47,6 +50,78 @@ extern int trace_level;
 static int trace_initialized;
 static int log_fd;
 static int64_t log_start_ts;
+
+
+/**
+ *
+ */
+static void
+trace_net_raw(const char *fmt, ...)
+{
+  static int trace_fd = -1;
+  static int logport, logaddr;
+  static struct sockaddr_in log_server;
+
+  char msg[1000];
+  va_list ap;
+
+  if(trace_fd == -1 ||
+     logport != gconf.log_server_port || 
+     logaddr != gconf.log_server_ipv4) {
+
+    logport = gconf.log_server_port;
+    logaddr = gconf.log_server_ipv4;
+
+
+    if(logaddr == 0) {
+      if(trace_fd != -1) {
+	close(trace_fd);
+      }
+      return;
+    }
+
+#ifndef linux
+    log_server.sin_len = sizeof(log_server);
+#endif
+    log_server.sin_family = AF_INET;
+    log_server.sin_port = htons(logport);
+    log_server.sin_addr.s_addr = logaddr;
+    trace_fd = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if(trace_fd == -1)
+      return;
+  }
+
+  if(trace_fd == -1)
+    return;
+
+  va_start(ap, fmt);
+  vsnprintf(msg, sizeof(msg), fmt, ap);
+  va_end(ap);
+
+  sendto(trace_fd, msg, strlen(msg), 0,
+	 (struct sockaddr*)&log_server, sizeof(log_server));
+}
+
+
+
+/**
+ *
+ */
+static void
+trace_net(int level, const char *prefix, const char *str)
+{
+  const char *sgr;
+
+  switch(level) {
+  case TRACE_EMERG: sgr = "\033[31m"; break;
+  case TRACE_ERROR: sgr = "\033[31m"; break;
+  case TRACE_INFO:  sgr = "\033[33m"; break;
+  case TRACE_DEBUG: sgr = "\033[32m"; break;
+  default:          sgr = "\033[35m"; break;
+  }
+
+  trace_net_raw("%s%s %s\033[0m\n", sgr, prefix, str);
+}
 
 
 
@@ -90,6 +165,9 @@ tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap)
   while((s = strsep(&p, "\n")) != NULL) {
     if(!*s)
       continue; // Avoid empty lines
+
+    trace_net(level, buf2, s);
+
     if(level <= gconf.trace_level)
       trace_arch(level, buf2, s);
     if(!(flags & TRACE_NO_PROP) && level != TRACE_EMERG) {
@@ -120,9 +198,9 @@ tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap)
 
 
   int zapcnt = 0;
-  if(entries > 50) {
-    zapcnt = entries - 50;
-    entries = 50;
+  if(entries > UI_LOG_LINES) {
+    zapcnt = entries - UI_LOG_LINES;
+    entries = UI_LOG_LINES;
   }
 
   hts_mutex_unlock(&trace_mutex);

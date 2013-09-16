@@ -299,10 +299,15 @@ rpi_pixmap_decode(pixmap_t *pm, const image_meta_t *im,
   }
 
   if(rpd->rpd_change != 2) {
-    while(rpd->rpd_change == 0)
+    while(rpd->rpd_change == 0 && !rpd->rpd_decoder->oc_stream_corrupt)
       hts_cond_wait(&rpd->rpd_cond, &rpd->rpd_mtx);
 
+    
+
     hts_mutex_unlock(&rpd->rpd_mtx);
+    if(rpd->rpd_decoder->oc_stream_corrupt)
+      goto err;
+
     setup_tunnel(rpd);
   } else {
     hts_mutex_unlock(&rpd->rpd_mtx);

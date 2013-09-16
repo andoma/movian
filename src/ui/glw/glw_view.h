@@ -244,12 +244,11 @@ typedef struct glw_clone {
   LIST_ENTRY(glw_clone) c_link;
   struct sub_cloner *c_sc;
   glw_t *c_w;
-  int c_pos;
   prop_t *c_prop;
-
-  char c_evaluated;
-
   prop_t *c_clone_root;
+
+  uint16_t c_pos;
+  char c_evaluated;
 
 } glw_clone_t;
 

@@ -2475,3 +2475,47 @@ glw_reset_screensaver(glw_root_t *gr)
 {
   gr->gr_screensaver_reset_at = gr->gr_frame_start;
 }
+
+
+const static float projection[16] = {
+  2.414213,0.000000,0.000000,0.000000,
+  0.000000,2.414213,0.000000,0.000000,
+  0.000000,0.000000,1.033898,-1.000000,
+  0.000000,0.000000,2.033898,0.000000
+};
+
+
+/**
+ *
+ */
+void
+glw_project(glw_rect_t *r, const glw_rctx_t *rc, const glw_root_t *gr)
+{
+  Mtx tmp;
+
+  PMtx tm, tp;
+  Vec4 T0, T1;
+  Vec4 V0, V1;
+
+  glw_pmtx_mul_prepare(tm,  rc->rc_mtx);
+  glw_pmtx_mul_vec4(T0, tm, glw_vec4_make(-1,  1, 0, 1));
+  glw_pmtx_mul_vec4(T1, tm, glw_vec4_make( 1, -1, 0, 1));
+
+  memcpy(tmp, projection, sizeof(float) * 16);
+  glw_pmtx_mul_prepare(tp, tmp);
+
+  glw_pmtx_mul_vec4(V0, tp, T0);
+  glw_pmtx_mul_vec4(V1, tp, T1);
+
+  float w;
+
+  w = glw_vec4_extract(V0, 3);
+
+  r->x1 = roundf((1.0 + (glw_vec4_extract(V0, 0) / w)) * gr->gr_width  / 2.0);
+  r->y1 = roundf((1.0 - (glw_vec4_extract(V0, 1) / w)) * gr->gr_height / 2.0);
+
+  w = glw_vec4_extract(V1, 3);
+
+  r->x2 = roundf((1.0 + (glw_vec4_extract(V1, 0) / w)) * gr->gr_width  / 2.0);
+  r->y2 = roundf((1.0 - (glw_vec4_extract(V1, 1) / w)) * gr->gr_height / 2.0);
+}
