@@ -169,6 +169,8 @@ typedef struct hls {
 
   hls_demuxer_t h_primary;
 
+  int h_playback_priority;
+
 } hls_t;
 
 #define HLS_TRACE(h, x...) do {			\
@@ -841,7 +843,7 @@ demuxer_select_variant_simple(hls_t *h, hls_demuxer_t *hd)
     if(hv->hv_bitrate < hd->hd_bw)
       break;
   }
-  if(hv == NULL)
+  if(hv == NULL || h->h_playback_priority)
     hv = hd->hd_seek;
   
   hd->hd_req = hv;
@@ -891,6 +893,7 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
   int restartpos_last = -1;
   int64_t last_timestamp_presented = AV_NOPTS_VALUE;
   sub_scanner_t *ss = NULL;
+  h->h_playback_priority = va->priority;
 
   mp->mp_video.mq_stream = 0;
   mp->mp_audio.mq_stream = 1;
@@ -1016,7 +1019,7 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
       mb->mb_keyframe = !!(pkt.flags & AV_PKT_FLAG_KEY);
     }
 
-    if(mb == MB_NYA) {
+    if(mb == MB_NYA || mb == NULL) {
       // Nothing to send yet
       e = mp_dequeue_event_deadline(mp, 1000);
       mb = NULL;
@@ -1050,6 +1053,10 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 	  metadb_set_video_restartpos(canonical_url, ets->ts / 1000);
 	}
       }
+
+    } else if(event_is_type(e, EVENT_PLAYBACK_PRIORITY)) {
+      event_int_t *ei = (event_int_t *)e;
+      h->h_playback_priority = ei->val;
 
     } else if(event_is_type(e, EVENT_SEEK)) {
 
