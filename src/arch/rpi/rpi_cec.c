@@ -28,6 +28,8 @@
 
 #include "rpi.h"
 
+#define CEC_VENDOR_ID_LG 0xe091
+
 static const char *cec_cmd_to_str[] = {
   [0x00] = "FeatureAbort",
   [0x04] = "ImageViewOn",
@@ -174,7 +176,8 @@ cec_send_msg(int follower, uint8_t *response, int len, int is_reply)
 
 
 
-static const uint32_t myVendorId = CEC_VENDOR_ID_BROADCOM;
+static uint32_t myVendorId = CEC_VENDOR_ID_BROADCOM;
+static uint32_t tv_vendor_id;
 static uint16_t physical_address;
 static CEC_AllDevices_T logical_address;
 static uint16_t active_physical_address;
@@ -219,13 +222,12 @@ SetStreamPath(const VC_CEC_MESSAGE_T *msg)
 
 
 static void
-give_device_power_status(const VC_CEC_MESSAGE_T *msg)
+give_device_power_status(int target, int status)
 {
-    // Send CEC_Opcode_ReportPowerStatus
-    uint8_t response[2];
-    response[0] = CEC_Opcode_ReportPowerStatus;
-    response[1] = CEC_POWER_STATUS_ON;
-    cec_send_msg(msg->initiator, response, 2, VC_TRUE);
+  uint8_t response[2];
+  response[0] = CEC_Opcode_ReportPowerStatus;
+  response[1] = status;
+  cec_send_msg(target, response, 2, VC_TRUE);
 }
 
 
@@ -267,7 +269,12 @@ send_deck_status(const VC_CEC_MESSAGE_T *msg)
 {
   uint8_t response[2];
   response[0] = CEC_Opcode_DeckStatus;
-  response[1] = CEC_DECK_INFO_NO_MEDIA;
+
+  if(tv_vendor_id == CEC_VENDOR_ID_LG) {
+    response[1] = 0x20;
+  } else {
+    response[1] = CEC_DECK_INFO_NO_MEDIA;
+  }
   cec_send_msg(msg->initiator, response, 2, VC_TRUE);
 }
 
@@ -297,6 +304,114 @@ handle_ActiveSource(const VC_CEC_MESSAGE_T *msg)
 	cec_we_are_not_active ? "not " : "");
 }
 
+/**
+ *
+ */
+static void
+lginit()
+{
+  uint8_t msg[4];
+  
+  give_device_power_status(CEC_TV_ADDRESS, CEC_POWER_STATUS_ON_PENDING);
+
+  myVendorId = CEC_VENDOR_ID_LG;
+  //  vc_cec_set_vendor_id(myVendorId);
+
+  msg[0] = CEC_Opcode_DeviceVendorID;
+  msg[1] = myVendorId >> 16;
+  msg[2] = myVendorId >> 8;
+  msg[3] = myVendorId;
+  cec_send_msg(0xf, msg, 4, VC_FALSE);
+
+  msg[0] = CEC_Opcode_ReportPhysicalAddress;
+  msg[1] = physical_address >> 8;
+  msg[2] = physical_address;
+  msg[3] = CEC_DeviceType_Rec;
+  cec_send_msg(0xf, msg, 4, VC_FALSE);
+
+  give_device_power_status(CEC_TV_ADDRESS,CEC_POWER_STATUS_ON);
+
+  msg[0] = CEC_Opcode_ImageViewOn;
+  cec_send_msg(CEC_TV_ADDRESS, msg, 1, VC_FALSE);
+
+  msg[0] = CEC_Opcode_ActiveSource;
+  msg[1] = physical_address >> 8;
+  msg[2] = physical_address;
+  cec_send_msg(CEC_BROADCAST_ADDR, msg, 3, VC_FALSE);
+}
+
+
+/**
+ *
+ */
+static void
+handle_device_vendor_id(const VC_CEC_MESSAGE_T *msg)
+{
+  int deviceid = 
+    (msg->payload[1] << 16) | (msg->payload[2] << 8) | msg->payload[3];
+  
+  if(msg->initiator != 0)
+    return;
+
+  TRACE(TRACE_DEBUG, "CEC", "TV device id: 0x%06x", deviceid);
+  tv_vendor_id = deviceid;
+  if(deviceid == 0xe091) {
+    lginit();
+  }
+}
+
+#define SL_COMMAND_UNKNOWN_01           0x01
+#define SL_COMMAND_UNKNOWN_02           0x02
+
+#define SL_COMMAND_REQUEST_POWER_STATUS 0xa0
+#define SL_COMMAND_POWER_ON             0x03
+#define SL_COMMAND_CONNECT_REQUEST      0x04
+#define SL_COMMAND_SET_DEVICE_MODE      0x05
+
+/**
+ *
+ */
+static void
+handle_vendor_command_lg(const VC_CEC_MESSAGE_T *msg)
+{
+  uint8_t response[8];
+
+  switch(msg->payload[1]) {
+  case SL_COMMAND_UNKNOWN_01:
+    response[0] = CEC_Opcode_VendorCommand;
+    response[1] = 0x02;
+    response[2] = 0x01;
+    cec_send_msg(msg->initiator, response, 3, VC_TRUE);
+    break;
+
+  case SL_COMMAND_CONNECT_REQUEST:
+    response[0] = CEC_Opcode_VendorCommand;
+    response[1] = SL_COMMAND_SET_DEVICE_MODE;
+    response[2] = CEC_DeviceType_Rec ;
+    vc_cec_send_message(msg->initiator, response, 3, VC_TRUE);
+
+    response[0] = CEC_Opcode_ImageViewOn ;
+    vc_cec_send_message(CEC_TV_ADDRESS, response, 1, VC_FALSE);
+
+    response[0] = CEC_Opcode_ActiveSource ;
+    response[1] = physical_address >> 8;
+    response[2] = physical_address;
+    vc_cec_send_message(CEC_BROADCAST_ADDR, response, 3, VC_FALSE);
+    
+    vc_cec_set_osd_name("Showtime");
+    break;
+  }  
+}
+
+/**
+ *
+ */
+static void
+handle_vendor_command(const VC_CEC_MESSAGE_T *msg)
+{
+  if(myVendorId == CEC_VENDOR_ID_LG)
+    handle_vendor_command_lg(msg);
+}
 
 static void
 cec_callback(void *callback_data, uint32_t param0, uint32_t param1,
@@ -357,7 +472,7 @@ cec_callback(void *callback_data, uint32_t param0, uint32_t param1,
 
     switch(opcode) {
     case CEC_Opcode_GiveDevicePowerStatus:
-      give_device_power_status(&msg);
+      give_device_power_status(msg.initiator, CEC_POWER_STATUS_ON);
       break;
 
     case CEC_Opcode_GiveDeviceVendorID:
@@ -395,6 +510,14 @@ cec_callback(void *callback_data, uint32_t param0, uint32_t param1,
 
     case CEC_Opcode_Standby:
       cec_we_are_not_active = 1;
+      break;
+
+    case CEC_Opcode_DeviceVendorID:
+      handle_device_vendor_id(&msg);
+      break;
+
+    case CEC_Opcode_VendorCommand:
+      handle_vendor_command(&msg);
       break;
 
     default:
