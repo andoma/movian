@@ -138,6 +138,7 @@ typedef struct hls_demuxer {
   struct hls_variant_queue hd_variants;
   
   int64_t hd_seek_to;
+  int hd_seek_initial;
   int hd_seq;
 
   hls_variant_t *hd_current;
@@ -170,6 +171,8 @@ typedef struct hls {
   hls_demuxer_t h_primary;
 
   int h_playback_priority;
+
+  int h_live;
 
 } hls_t;
 
@@ -714,6 +717,12 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
 
     hls_segment_t *hs;
 
+    h->h_live = !hv->hv_frozen;
+
+    // Initial seek on live streams make no sense, void that
+    if(!hv->hv_frozen && hd->hd_seek_to != PTS_UNSET && hd->hd_seek_initial)
+      hd->hd_seek_to = PTS_UNSET;
+
     if(hd->hd_seek_to != PTS_UNSET) {
       hs = hv_find_segment_by_time(hv, hd->hd_seek_to);
     } else {
@@ -751,15 +760,15 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
  *
  */
 static void
-hls_seek(hls_t *h, int64_t pts, int64_t ts)
+hls_seek(hls_t *h, int64_t pts, int64_t ts, int initial)
 {
   hls_demuxer_t *hd = &h->h_primary;
-
   mp_flush(h->h_mp, 0);
 
   h->h_mp->mp_video.mq_seektarget = pts;
   h->h_mp->mp_audio.mq_seektarget = pts;
   hd->hd_seek_to = ts;
+  hd->hd_seek_initial = initial;
   prop_set(h->h_mp->mp_prop_root, "seektime", PROP_SET_FLOAT, ts / 1000000.0);
 }
 
@@ -922,7 +931,7 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
       !(va->flags & BACKEND_VIDEO_START_FROM_BEGINNING))) {
     int64_t start = video_get_restartpos(canonical_url) * 1000;
     if(start) {
-      hls_seek(h, start, start);
+      hls_seek(h, start, start, 1);
     }
   }
 
@@ -1008,13 +1017,13 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
         }
       }
 
-       if(mb->mb_data_type == MB_VIDEO) {
-	 if(hd->hd_delta_ts == PTS_UNSET && mb->mb_pts != PTS_UNSET)
-	   hd->hd_delta_ts = mb->mb_pts - hs->hs_time_offset;
+      if(mb->mb_data_type == MB_VIDEO) {
+	if(hd->hd_delta_ts == PTS_UNSET && mb->mb_pts != PTS_UNSET)
+	  hd->hd_delta_ts = mb->mb_pts - hs->hs_time_offset;
 
-	 mb->mb_drive_clock = 1;
-	 mb->mb_delta = hd->hd_delta_ts;
-       }
+	mb->mb_drive_clock = 1;
+	mb->mb_delta = hd->hd_delta_ts;
+      }
 
       mb->mb_keyframe = !!(pkt.flags & AV_PKT_FLAG_KEY);
     }
@@ -1067,7 +1076,7 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 
       event_ts_t *ets = (event_ts_t *)e;
 
-      hls_seek(h, ets->ts + hd->hd_delta_ts, ets->ts);
+      hls_seek(h, ets->ts + hd->hd_delta_ts, ets->ts, 0);
 
     } else if(event_is_action(e, ACTION_STOP)) {
       mp_set_playstatus_stop(mp);
@@ -1087,20 +1096,23 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
   if(mb != NULL && mb != MB_EOF && mb != MB_NYA)
     media_buf_free_unlocked(mp, mb);
 
-  // Compute stop position (in percentage of video length)
+  if(!h->h_live) {
 
-  int spp = mp->mp_duration ? mp->mp_seek_base * 100 / mp->mp_duration : 0;
+    // Compute stop position (in percentage of video length)
 
-  if(spp >= video_settings.played_threshold || event_is_type(e, EVENT_EOF)) {
-    metadb_set_video_restartpos(canonical_url, -1);
-    metadb_register_play(canonical_url, 1, CONTENT_VIDEO);
-    TRACE(TRACE_DEBUG, "Video",
-	  "Playback reached %d%%, counting as played (%s)",
-	  spp, canonical_url);
-  } else if(last_timestamp_presented != PTS_UNSET) {
-    metadb_set_video_restartpos(canonical_url, last_timestamp_presented / 1000);
+    int spp = mp->mp_duration ? mp->mp_seek_base * 100 / mp->mp_duration : 0;
+
+    if(spp >= video_settings.played_threshold || event_is_type(e, EVENT_EOF)) {
+      metadb_set_video_restartpos(canonical_url, -1);
+      metadb_register_play(canonical_url, 1, CONTENT_VIDEO);
+      TRACE(TRACE_DEBUG, "Video",
+	    "Playback reached %d%%, counting as played (%s)",
+	    spp, canonical_url);
+    } else if(last_timestamp_presented != PTS_UNSET) {
+      metadb_set_video_restartpos(canonical_url,
+				  last_timestamp_presented / 1000);
+    }
   }
-
   // Shutdown
 
   mp_flush(mp, 0);
