@@ -372,6 +372,8 @@ parse_opts(int argc, char **argv)
   argv++;
   argc--;
 
+  gconf.showtime_shell_fd = -1;
+
   while(argc > 0) {
     if(!strcmp(argv[0], "-h") || !strcmp(argv[0], "--help")) {
       printf("Showtime %s\n"
@@ -507,6 +509,9 @@ parse_opts(int argc, char **argv)
       argc -= 2; argv += 2;
     } else if (!strcmp(argv[0], "--upgrade-path") && argc > 1) {
       mystrset(&gconf.upgrade_path, argv[1]);
+      argc -= 2; argv += 2;
+    } else if (!strcmp(argv[0], "--showtime-shell-fd") && argc > 1) {
+      gconf.showtime_shell_fd = atoi(argv[1]);
       argc -= 2; argv += 2;
 #ifdef __APPLE__
     /* ignore -psn argument, process serial number */

@@ -24,6 +24,7 @@
 #define SETTINGS_INITIAL_UPDATE 0x1
 #define SETTINGS_PASSWORD       0x2 // Make a password entry (hidden display)
 #define SETTINGS_RAW_NODES      0x4
+#define SETTINGS_FIRST          0x8 // Insert at head 
 
 typedef void (settings_saver_t)(void *opaque, htsmsg_t *htsmsg);
 
@@ -41,7 +42,8 @@ prop_t *settings_add_dir_cstr(prop_t *parent, const char *title,
 
 prop_t *settings_add_url(prop_t *parent, prop_t *title,
 			 const char *subtype, const char *icon,
-			 prop_t *shortdesc, const char *url);
+			 prop_t *shortdesc, const char *url,
+			 int flags);
 
 prop_t *settings_create_separator(prop_t *parent, prop_t *caption);
 

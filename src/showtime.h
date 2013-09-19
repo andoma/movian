@@ -263,6 +263,8 @@ typedef struct gconf {
   uint32_t log_server_ipv4;
   int log_server_port;
 
+  int showtime_shell_fd;
+
 } gconf_t;
 
 extern gconf_t gconf;
