@@ -18,6 +18,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "misc/callout.h"
 #include "htsmsg/htsmsg.h"
