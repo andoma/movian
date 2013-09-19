@@ -437,10 +437,10 @@ attempt_upgrade(int accept_patch)
 static void *
 install_thread(void *aux)
 {
-  if(gconf.enable_patched_upgrade) {
-    if(!attempt_upgrade(1))
-      return NULL;
-  }
+#if CONFIG_BSPATCH
+  if(!attempt_upgrade(1))
+    return NULL;
+#endif
 
   attempt_upgrade(0);
   return NULL;
