@@ -188,6 +188,9 @@ int fa_rmdir(const char *url, char *errbuf, size_t errsize);
 
 int fa_rename(const char *old, const char *new, char *errbuf, size_t errsize);
 
+int fa_copy_from_fh(const char *to, fa_handle_t *src,
+                    char *errbuf, size_t errsize);
+
 int fa_copy(const char *to, const char *from, char *errbuf, size_t errsize);
 
 int fa_makedirs(const char *url, char *errbuf, size_t errsize);

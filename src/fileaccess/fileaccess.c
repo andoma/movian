@@ -1007,19 +1007,15 @@ bad:
 
 }
 
-
 /**
  *
  */
 int
-fa_copy(const char *to, const char *from, char *errbuf, size_t errsize)
+fa_copy_from_fh(const char *to, fa_handle_t *src, char *errbuf, size_t errsize)
 {
   char tmp[8192];
-  fa_handle_t *src = fa_open_ex(from, errbuf, errsize, 0, NULL);
-  if(src == NULL)
-    return -1;
 
-  if(fa_parent(tmp, sizeof(tmp), to)) {
+ if(fa_parent(tmp, sizeof(tmp), to)) {
     snprintf(errbuf, errsize, "Unable to figure out parent dir for dest");
     fa_close(src);
     return -1;
@@ -1037,7 +1033,7 @@ fa_copy(const char *to, const char *from, char *errbuf, size_t errsize)
   }
 
   int r;
-  while((r = fa_read(src, tmp, 8192)) > 0) {
+  while((r = fa_read(src, tmp, sizeof(tmp))) > 0) {
     if(fa_write(dst, tmp, r) != r) {
       snprintf(errbuf, errsize, "Write error");
       r = -2;
@@ -1058,6 +1054,19 @@ fa_copy(const char *to, const char *from, char *errbuf, size_t errsize)
   }
 
   return r;
+}
+
+
+/**
+ *
+ */
+int
+fa_copy(const char *to, const char *from, char *errbuf, size_t errsize)
+{
+  fa_handle_t *src = fa_open_ex(from, errbuf, errsize, 0, NULL);
+  if(src == NULL)
+    return -1;
+  return fa_copy_from_fh(to, src, errbuf, errsize);
 }
 
 
