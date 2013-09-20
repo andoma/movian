@@ -20,6 +20,32 @@ typedef struct decoder {
   } buffers[NUM_BUFS];
 } decoder_t;
 
+static CFRunLoopRef audio_run_loop;
+
+
+static void
+do_nothing(CFRunLoopTimerRef timer, void *info)
+{
+}
+
+/**
+ *
+ */
+static void *
+audio_thread(void *aux)
+{
+  audio_run_loop = CFRunLoopGetCurrent();
+  __sync_synchronize();
+
+  CFRunLoopTimerRef r =
+    CFRunLoopTimerCreate(NULL, CFAbsoluteTimeGetCurrent(),
+                         1000000.0f, 0, 0, do_nothing, NULL);
+  CFRunLoopAddTimer(CFRunLoopGetCurrent(), r, kCFRunLoopCommonModes);
+  while(1)
+    CFRunLoopRun();
+  return NULL;
+}
+
 
 /**
  *
@@ -176,7 +202,7 @@ mac_audio_reconfig(audio_decoder_t *ad)
 
   TRACE(TRACE_DEBUG, "AudioQueue", "Init %d Hz", ad->ad_out_sample_rate);
 
-  r = AudioQueueNewOutput(&desc, return_buf, d, CFRunLoopGetMain(),
+  r = AudioQueueNewOutput(&desc, return_buf, d, audio_run_loop,
                           kCFRunLoopCommonModes, 0, &d->aq);
   if(r) {
     d->aq = NULL;
@@ -191,6 +217,7 @@ mac_audio_reconfig(audio_decoder_t *ad)
     d->aq = NULL;
     return 1;
   }
+  AudioQueueSetParameter(d->aq, kAudioQueueParam_Volume, ad->ad_vol_scale);
   return 0;
 }
 
@@ -204,6 +231,18 @@ mac_audio_pause(audio_decoder_t *ad)
   decoder_t *d = (decoder_t *)ad;
   if(d->aq)
     AudioQueuePause(d->aq);
+}
+
+
+/**
+ *
+ */
+static void
+mac_audio_set_volume(audio_decoder_t *ad, float level)
+{
+  decoder_t *d = (decoder_t *)ad;
+  if(d->aq)
+    AudioQueueSetParameter(d->aq, kAudioQueueParam_Volume, level);
 }
 
 
@@ -288,11 +327,21 @@ static audio_class_t mac_audio_class = {
   .ac_pause = mac_audio_pause,
   .ac_play  = mac_audio_play,
   .ac_flush = mac_audio_flush,
+  .ac_set_volume = mac_audio_set_volume,
 };
 
 audio_class_t *
 audio_driver_init(void)
 {
+  hts_thread_create_detached("audioloop", audio_thread, NULL, 0);
+  while(1) {
+
+    __sync_synchronize();
+    if(audio_run_loop != NULL)
+      break;
+    usleep(100);
+  }
+
   return &mac_audio_class;
 }
 
