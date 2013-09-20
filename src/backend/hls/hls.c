@@ -107,6 +107,8 @@ typedef struct hls_variant {
 
   char hv_frozen;
   char hv_audio_only;
+  int hv_h264_profile;
+  int hv_h264_level;
   int hv_target_duration;
 
   time_t hv_loaded; /* last time it was loaded successfully
@@ -476,14 +478,34 @@ static void
 hls_dump(const hls_t *h)
 {
   const hls_variant_t *hv;
+  const char *txt;
   HLS_TRACE(h, "Base URL: %s", h->h_baseurl);
   HLS_TRACE(h, "Variants");
   TAILQ_FOREACH(hv, &h->h_primary.hd_variants, hv_link) {
     HLS_TRACE(h, "  %s", hv->hv_url);
     HLS_TRACE(h, "    bitrate:    %d", hv->hv_bitrate);
-    HLS_TRACE(h, "    resolution: %d x %d", hv->hv_width, hv->hv_height);
-    if(hv->hv_audio_only)
+
+    if(hv->hv_audio_only) {
       HLS_TRACE(h, "    Audio only\n");
+      continue;
+    }
+
+    switch(hv->hv_h264_profile) {
+    case 66:
+      txt = "h264 Baseline";
+      break;
+    case 77:
+      txt = "h264 Main";
+      break;
+    default:
+      txt = "<unknown>";
+      break;
+    }
+
+    HLS_TRACE(h, "    Video resolution: %d x %d  Profile: %s  Level: %d.%d",
+              hv->hv_width, hv->hv_height, txt,
+              hv->hv_h264_level / 10,
+              hv->hv_h264_level % 10);
   }
 }
 
@@ -1169,6 +1191,31 @@ hls_ext_x_media(hls_t *h, const char *V)
 }
 
 
+// from https://developer.apple.com/library/ios/documentation/networkinginternet/conceptual/streamingmediaguide/StreamingMediaGuide.pdf
+
+static const struct {
+  const char *name;
+  int profile;
+  int level;
+} AVC_h264_codecs[] = {
+
+  // Baseline
+  { "avc1.42001e",   66, 30},
+  { "avc1.66.30",    66, 30},
+  { "avc1.42001f",   66, 31},
+
+  // Main
+  { "avc1.4d001e",   77, 30},
+  { "avc1.77.30",    77, 30},
+  { "avc1.4d001f",   77, 31},
+  { "avc1.4d0028",   77, 40},
+
+  // High
+  { "avc1.64001f",   100, 31},
+  { "avc1.640028",   100, 40},
+  { "avc1.640029",   100, 41}, // Spec says 4.0 but that must be a typo
+};
+
 
 /**
  *
@@ -1197,8 +1244,19 @@ hls_ext_x_stream_inf(hls_t *h, const char *V, hls_variant_t **hvp)
       hv->hv_subs_group = strdup(value);
     else if(!strcmp(key, "PROGRAM-ID"))
       hv->hv_program = atoi(value);
-    else if(!strcmp(key, "CODECS"))
-      hv->hv_audio_only = !strstr(value, "avc1");
+    else if(!strcmp(key, "CODECS")) {
+
+      if(!strstr(value, "avc1"))
+        hv->hv_audio_only = 1;
+
+      for(int i = 0; i < ARRAYSIZE(AVC_h264_codecs); i++) {
+        if(strstr(value, AVC_h264_codecs[i].name)) {
+          hv->hv_h264_profile = AVC_h264_codecs[i].profile;
+          hv->hv_h264_level = AVC_h264_codecs[i].level;
+          break;
+        }
+      }
+    }
     else if(!strcmp(key, "RESOLUTION")) {
       const char *h = strchr(value, 'x');
       if(h != NULL) {
