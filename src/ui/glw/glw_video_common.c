@@ -831,7 +831,7 @@ glw_video_render(glw_t *w, const glw_rctx_t *rc)
     glw_Scalef(&rc1, zoom, zoom, 1.0);
   }
 
-  glw_project(&gv->gv_rect, rc, gr);
+  glw_project(&gv->gv_rect, &rc1, gr);
 
   int invisible = 0;
   if(gv->gv_rect.x1 >= gr->gr_width)
