@@ -1079,7 +1079,8 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 	last_timestamp_presented = ets->ts;
 
 	// Update restartpos every 5 seconds
-	if(sec < restartpos_last || sec >= restartpos_last + 5) {
+	if(!h->h_live &&
+           (sec < restartpos_last || sec >= restartpos_last + 5)) {
 	  restartpos_last = sec;
 	  metadb_set_video_restartpos(canonical_url, ets->ts / 1000);
 	}
