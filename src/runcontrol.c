@@ -213,6 +213,12 @@ do_open_shell(void *opaque, prop_event_t event, ...)
   showtime_shutdown(SHOWTIME_EXIT_SHELL);
 }
 
+static void
+do_standby(void *opaque, prop_event_t event, ...)
+{
+  showtime_shutdown(SHOWTIME_EXIT_STANDBY);
+}
+
 
 static void
 do_exit(void *opaque, prop_event_t event, ...)
@@ -267,6 +273,8 @@ runcontrol_init(void)
   if(gconf.can_standby) {
     init_autostandby();
     init_sleeptimer(rc);
+    settings_create_action(gconf.settings_general, _p("Standby"),
+			   do_standby, NULL, 0, NULL);
   }
 
   if(gconf.can_poweroff)
