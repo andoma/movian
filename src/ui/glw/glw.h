@@ -891,21 +891,19 @@ typedef struct glw_root {
  * Render context
  */
 typedef struct glw_rctx {
+  // Current ModelView Matrix
+  Mtx rc_mtx;
+
   float rc_alpha;
   float rc_sharpness;
 
   int16_t rc_width;
   int16_t rc_height;
 
-  struct glw_cursor_painter *rc_cursor_painter;
-
   uint8_t rc_inhibit_shadows; // Used when rendering low res passes in bloom filter
   uint8_t rc_inhibit_matrix_store; // Avoid storing matrix in mirrored view, etc
   uint8_t rc_layer;
   uint8_t rc_overscanning;
-
-  // Current ModelView Matrix
-  Mtx rc_mtx;
 
 } glw_rctx_t;
 
