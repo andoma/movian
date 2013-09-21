@@ -3,6 +3,7 @@
 SRCS += src/arch/android/android.c \
 	src/arch/android/android_threads.c \
 	src/arch/android/android_video_codec.c \
+        src/video/h264_annexb.c \
 	src/networking/net_posix.c \
 	src/networking/asyncio_posix.c \
 	src/networking/net_android.c \
