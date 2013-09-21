@@ -47,10 +47,13 @@ public class STCore {
 
     // Create / Destroy subscriptions
 
-    public static native int subScalar(int prop, String path, Subscription.Callback cb);
+    public static native int subValue(int prop, String path, ValueSubscription.Callback cb);
+    public static native int subNodes(int prop, String path, NodeSubscriptionCallback cb);
     public static native int unSub(int id);
 
-    // Release a property
+    // Properties
+
+    public static native int propRetain(int id);
 
     public static native void propRelease(int id);
 
