@@ -1047,7 +1047,6 @@ static const token_attrib_t attribtab[] = {
   {"leftBorder",      mod_flag, GLW_IMAGE_BORDER_LEFT,  mod_img_flags},
   {"rightBorder",     mod_flag, GLW_IMAGE_BORDER_RIGHT, mod_img_flags},
 
-  {"aspectFixedBorders",mod_flag, GLW_IMAGE_ASPECT_FIXED_BORDERS, mod_img_flags},
   {"cornerTopLeft",     mod_flag, GLW_IMAGE_CORNER_TOPLEFT,       mod_img_flags},
   {"cornerTopRight",    mod_flag, GLW_IMAGE_CORNER_TOPRIGHT,      mod_img_flags},
   {"cornerBottomLeft",  mod_flag, GLW_IMAGE_CORNER_BOTTOMLEFT,    mod_img_flags},
@@ -1086,6 +1085,7 @@ static const token_attrib_t attribtab[] = {
   {"childAspect",     set_float,  GLW_ATTRIB_CHILD_ASPECT},
   {"center",          set_float,  GLW_ATTRIB_CENTER},
   {"audioVolume",     set_float,  GLW_ATTRIB_AUDIO_VOLUME},
+  {"aspect",          set_float,  GLW_ATTRIB_ASPECT},
 
   {"height",          set_int,  0, set_height},
   {"width",           set_int,  0, set_width},

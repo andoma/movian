@@ -27,6 +27,8 @@ typedef struct glw_image {
 
   float gi_angle;
 
+  float gi_aspect;
+
   rstr_t *gi_pending_url;
   glw_loadable_texture_t *gi_current;
   glw_loadable_texture_t *gi_pending;
@@ -35,9 +37,6 @@ typedef struct glw_image {
   int16_t gi_border_right;
   int16_t gi_border_top;
   int16_t gi_border_bottom;
-
-  int16_t gi_border_left_afix;
-  int16_t gi_border_right_afix;
 
   int16_t gi_padding_left;
   int16_t gi_padding_right;
@@ -460,16 +459,8 @@ glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
     tex[3][1] = glt->glt_ys;
   }
 
-  if(gi->gi_bitmap_flags & GLW_IMAGE_ASPECT_FIXED_BORDERS) {
-    BL = rc->rc_height * gi->gi_border_left / glt->glt_ys;
-    BR = rc->rc_height * gi->gi_border_right / glt->glt_ys;
-    gi->gi_border_left_afix = BL;
-    gi->gi_border_right_afix = BR;
-    update_box(gi);
-  } else {
-    BL = gi->gi_border_left;
-    BR = gi->gi_border_right;
-  }
+  BL = gi->gi_border_left;
+  BR = gi->gi_border_right;
 
 
   vex[0][0] = GLW_MIN(-1.0f + 2.0f * (gi->gi_margin_left + gi->gi_automargin_left)  / rc->rc_width, 0.0f);
@@ -754,7 +745,7 @@ glw_image_tex_load(glw_image_t *gi, rstr_t *url, int width, int height)
     flags |= GLW_TEX_REPEAT;
 
   return glw_tex_create(gi->w.glw_root, url, flags, width, height,
-                        gi->gi_radius, gi->gi_shadow);
+                        gi->gi_radius, gi->gi_shadow, gi->gi_aspect);
 }
 
 
@@ -1129,11 +1120,11 @@ static void
 update_box(glw_image_t *gi)
 {
   gi->gi_box_left =
-    gi->gi_margin_left + (gi->gi_border_left_afix ?: gi->gi_border_left) + gi->gi_padding_left;
+    gi->gi_margin_left   + gi->gi_border_left   + gi->gi_padding_left;
   gi->gi_box_top =
-    gi->gi_margin_top + gi->gi_border_top + gi->gi_padding_top;
+    gi->gi_margin_top    + gi->gi_border_top    + gi->gi_padding_top;
   gi->gi_box_right =
-    gi->gi_margin_right + (gi->gi_border_left_afix ?: gi->gi_border_right) + gi->gi_padding_right;
+    gi->gi_margin_right  + gi->gi_border_right  + gi->gi_padding_right;
   gi->gi_box_bottom =
     gi->gi_margin_bottom + gi->gi_border_bottom + gi->gi_padding_bottom;
 
@@ -1386,7 +1377,7 @@ glw_image_set(glw_t *w, va_list ap)
   glw_image_t *gi = (glw_image_t *)w;
   glw_attribute_t attrib;
   int r;
-
+  float f;
   do {
     attrib = va_arg(ap, int);
     switch(attrib) {
@@ -1402,6 +1393,14 @@ glw_image_set(glw_t *w, va_list ap)
     case GLW_ATTRIB_ALPHA_EDGES:
       gi->gi_alpha_edge = va_arg(ap, int);
       gi->gi_mode = GI_MODE_ALPHA_EDGES;
+      break;
+
+    case GLW_ATTRIB_ASPECT:
+      f = va_arg(ap, double);
+      if(gi->gi_aspect != f) {
+        gi->gi_aspect = f;
+        gi->gi_update = 1;
+      }
       break;
 
     case GLW_ATTRIB_CHILD_ASPECT:

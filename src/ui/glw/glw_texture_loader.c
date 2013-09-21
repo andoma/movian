@@ -234,6 +234,7 @@ loader_thread(void *aux)
       im.im_corner_radius = glt->glt_radius;
       im.im_corner_selection = glt->glt_flags & 0xf;
       im.im_shadow = glt->glt_shadow;
+      im.im_req_aspect = glt->glt_req_aspect;
 
       if(glt->glt_q == &gr->gr_tex_load_queue[LQ_TENTATIVE]) {
 	cache_control = 0;
@@ -497,7 +498,7 @@ glw_tex_deref(glw_root_t *gr, glw_loadable_texture_t *glt)
  */
 glw_loadable_texture_t *
 glw_tex_create(glw_root_t *gr, rstr_t *filename, int flags, int xs, int ys,
-	       int radius, int shadow)
+	       int radius, int shadow, float aspect)
 {
   glw_loadable_texture_t *glt;
 
@@ -510,7 +511,8 @@ glw_tex_create(glw_root_t *gr, rstr_t *filename, int flags, int xs, int ys,
        glt->glt_req_xs == xs &&
        glt->glt_req_ys == ys &&
        glt->glt_radius == radius &&
-       glt->glt_shadow == shadow)
+       glt->glt_shadow == shadow &&
+       glt->glt_req_aspect == aspect)
       break;
 
   if(glt == NULL) {
@@ -523,6 +525,7 @@ glw_tex_create(glw_root_t *gr, rstr_t *filename, int flags, int xs, int ys,
     glt->glt_req_ys = ys;
     glt->glt_radius = radius;
     glt->glt_shadow = shadow;
+    glt->glt_req_aspect = aspect;
   }
 
   glt->glt_refcnt++;

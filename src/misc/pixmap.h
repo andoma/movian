@@ -54,6 +54,7 @@ typedef enum {
  *
  */
 typedef struct image_meta {
+  float im_req_aspect;
   int im_req_width;
   int im_req_height;
   int im_max_width;
@@ -163,10 +164,19 @@ int color_is_not_gray(uint32_t rgb);
 
 void pixmap_horizontal_gradient(pixmap_t *pm, const int *top, const int *btm);
 
+/**
+ * PIXMAP_CORNER_ selects which corners to actually carve out
+ * in pixmap_rounded_corners
+ */
 #define PIXMAP_CORNER_TOPLEFT     0x1
 #define PIXMAP_CORNER_TOPRIGHT    0x2
 #define PIXMAP_CORNER_BOTTOMLEFT  0x4
 #define PIXMAP_CORNER_BOTTOMRIGHT 0x8
+
+/**
+ *
+ */
+#define PIXMAP_ALLOW_SMALL_ASPECT_DISTORTION  0x10
 
 pixmap_t *pixmap_rounded_corners(pixmap_t *pm, int r, int which);
 

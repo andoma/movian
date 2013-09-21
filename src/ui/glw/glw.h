@@ -134,6 +134,8 @@ typedef enum {
   GLW_ATTRIB_BLUR_FALLOFF,
   GLW_ATTRIB_RADIUS,
   GLW_ATTRIB_AUDIO_VOLUME,
+  GLW_ATTRIB_ASPECT,
+  GLW_ATTRIB_CHILD_SCALE,
   GLW_ATTRIB_num,
 } glw_attribute_t;
 
@@ -182,7 +184,6 @@ typedef struct glw_rect {
 #define GLW_IMAGE_BORDER_ONLY          0x8000
 #define GLW_IMAGE_BORDER_LEFT          0x10000
 #define GLW_IMAGE_BORDER_RIGHT         0x20000
-#define GLW_IMAGE_ASPECT_FIXED_BORDERS 0x40000
 
 /**
  * Video flags
@@ -1265,6 +1266,8 @@ do {						\
   case GLW_ATTRIB_ALPHA_FALLOFF:                \
   case GLW_ATTRIB_BLUR_FALLOFF:                 \
   case GLW_ATTRIB_AUDIO_VOLUME:                 \
+  case GLW_ATTRIB_ASPECT:                       \
+  case GLW_ATTRIB_CHILD_SCALE:                  \
     (void)va_arg(ap, double);			\
     break;					\
   }						\
