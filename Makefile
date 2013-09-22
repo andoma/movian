@@ -336,6 +336,8 @@ SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
 			src/ui/glw/glw_list.c \
 			src/ui/glw/glw_clist.c \
 			src/ui/glw/glw_array.c \
+			src/ui/glw/glw_grid.c \
+			src/ui/glw/glw_gridrow.c \
 			src/ui/glw/glw_deck.c \
 			src/ui/glw/glw_playfield.c \
 			src/ui/glw/glw_layer.c \
