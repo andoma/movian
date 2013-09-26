@@ -117,9 +117,6 @@ void video_deliver_frame_avctx(video_decoder_t *vd,
                                struct AVFrame *frame,
 			       const media_buf_meta_t *mbm, int decode_time);
 
-
-void video_flush_avctx(media_codec_t *mc, video_decoder_t *vd);
-
 void video_deliver_frame(video_decoder_t *vd, const frame_info_t *info);
 
 #endif /* VIDEO_DECODER_H */

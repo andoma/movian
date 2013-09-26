@@ -64,66 +64,6 @@ vd_init_timings(video_decoder_t *vd)
 
 #define vd_valid_duration(t) ((t) > 10000ULL && (t) < 1000000ULL)
 
-static void 
-vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
-{
-  int got_pic = 0;
-  media_pipe_t *mp = vd->vd_mp;
-  media_codec_t *cw = mb->mb_cw;
-  AVCodecContext *ctx = cw->ctx;
-  AVFrame *frame = vd->vd_frame;
-  int t;
-
-  vd->vd_reorder[vd->vd_reorder_ptr] = mb->mb_meta;
-  ctx->reordered_opaque = vd->vd_reorder_ptr;
-  vd->vd_reorder_ptr = (vd->vd_reorder_ptr + 1) & VIDEO_DECODER_REORDER_MASK;
-
-  /*
-   * If we are seeking, drop any non-reference frames
-   */
-  ctx->skip_frame = mb->mb_skip == 1 ? AVDISCARD_NONREF : AVDISCARD_DEFAULT;
-  avgtime_start(&vd->vd_decode_time);
-
-  AVPacket avpkt;
-  av_init_packet(&avpkt);
-  avpkt.data = mb->mb_data;
-  avpkt.size = mb->mb_size;
-
-  avcodec_decode_video2(ctx, frame, &got_pic, &avpkt);
-
-  t = avgtime_stop(&vd->vd_decode_time, mq->mq_prop_decode_avg,
-		   mq->mq_prop_decode_peak);
-
-  if(mp->mp_stats)
-    mp_set_mq_meta(mq, cw->ctx->codec, cw->ctx);
-
-  const media_buf_meta_t *mbm = &vd->vd_reorder[frame->reordered_opaque];
-
-  if(got_pic == 0 || mbm->mbm_skip == 1) 
-    return;
-
-  video_deliver_frame_avctx(vd, mp, mq, ctx, frame, mbm, t);
-}
-
-
-/**
- *
- */
-void
-video_flush_avctx(media_codec_t *mc, video_decoder_t *vd)
-{
-  AVCodecContext *ctx = mc->ctx;
-  int got_pic = 0;
-  AVPacket avpkt;
-  av_init_packet(&avpkt);
-  avpkt.data = NULL;
-  avpkt.size = 0;
-  do {
-    avcodec_decode_video2(ctx, vd->vd_frame, &got_pic, &avpkt);
-  } while(got_pic);
-  avcodec_flush_buffers(ctx);
-}
-
 
 /**
  *
@@ -416,7 +356,7 @@ vd_thread(void *aux)
     case MB_CTRL_FLUSH:
       vd_init_timings(vd);
       vd->vd_interlaced = 0;
-      
+
       hts_mutex_lock(&mp->mp_overlay_mutex);
       video_overlay_flush_locked(mp, 1);
       dvdspu_flush_locked(mp);
@@ -425,11 +365,7 @@ vd_thread(void *aux)
       mp->mp_video_frame_deliver(NULL, mp->mp_video_frame_opaque);
 
       if(mc_current != NULL) {
-	if(mc_current->flush != NULL)
-	  mc_current->flush(mc_current, vd);
-	else
-	  video_flush_avctx(mc_current, vd);
-
+        mc_current->flush(mc_current, vd);
 	media_codec_deref(mc_current);
 	mc_current = NULL;
       }
@@ -455,11 +391,7 @@ vd_thread(void *aux)
 
       size = mb->mb_size;
 
-      if(mc->decode)
-	mc->decode(mc, vd, mq, mb, reqsize);
-      else
-	vd_decode_video(vd, mq, mb);
-
+      mc->decode(mc, vd, mq, mb, reqsize);
       update_vbitrate(mp, mq, size, vd);
       reqsize = -1;
       break;

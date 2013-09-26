@@ -88,6 +88,7 @@ CONFIG_LIST="
  connman
  libntfs
  miner
+ cedar
 "
 
 cleanup() {

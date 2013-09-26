@@ -23,6 +23,7 @@
 
 #include <stddef.h>
 #include <stdlib.h>
+#include "media.h"
 
 typedef struct h264_annexb_ctx {
   int lsize;
@@ -44,3 +45,8 @@ static inline void h264_to_annexb_cleanup(h264_annexb_ctx_t *ctx)
   free(ctx->extradata);
 
 }
+
+int h264_annexb_to_avc(media_codec_t *mc, media_pipe_t *mp,
+                       int (*create)(media_codec_t *mc,
+                                     const media_codec_params_t *mcp,
+                                     media_pipe_t *mp));

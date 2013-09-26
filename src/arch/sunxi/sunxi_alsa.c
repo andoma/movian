@@ -1,4 +1,3 @@
-#pragma once
 /*
  *  Showtime Mediacenter
  *  Copyright (C) 2007-2013 Lonelycoder AB
@@ -19,15 +18,21 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
-#pragma once
+#include <time.h>
 
-void metadata_from_libav(char *dst, size_t dstlen, 
-			 const AVCodec *codec, const AVCodecContext *avctx);
+#include "showtime.h"
+#include "audio2/alsa.h"
 
-void mp_set_mq_meta(media_queue_t *mq,
-		    const AVCodec *codec, const AVCodecContext *avctx);
 
-struct media_codec;
-struct video_decoder;
+int64_t
+showtime_get_avtime(void)
+{
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  return ts.tv_sec * 1000000LL + ts.tv_nsec / 1000;
+}
 
-void libav_video_flush(struct media_codec *mc, struct video_decoder *vd);
+const char *alsa_get_devicename(void)
+{
+  return "hw:1,0";
+}

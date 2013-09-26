@@ -94,6 +94,9 @@ TAILQ_HEAD(dvdspu_queue, dvdspu);
  */
 typedef struct frame_info {
   uint8_t *fi_data[4];
+
+  void (*fi_refop)(void *data, int delta); // Depends (A LOT) on fi_type
+
   int fi_pitch[4];
 
   uint32_t fi_type;

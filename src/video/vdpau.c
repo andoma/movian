@@ -607,7 +607,7 @@ vdpau_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   mc->ctx->opaque = mc;
   mc->opaque = vc;
   mc->decode = vdpau_decode;
-  mc->flush  = video_flush_avctx;
+  mc->flush  = libav_video_flush;
   mc->close  = vdpau_codec_close;
   mc->reinit = vdpau_codec_reinit;
   return 0;
