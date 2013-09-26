@@ -65,6 +65,7 @@ typedef struct glw_video_surface {
   int gvs_id;
 
   void *gvs_opaque;
+  int gvs_format;
 
 #if CONFIG_GLW_BACKEND_OPENGL
   GLuint gvs_pbo[3];

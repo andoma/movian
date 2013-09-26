@@ -80,6 +80,7 @@ typedef struct glw_image {
   uint8_t gi_loading_new_url : 1;
   uint8_t gi_recompile : 1;
   uint8_t gi_externalized : 1;
+  uint8_t gi_saturated : 1;
 
   int16_t gi_fixed_size;
   int16_t gi_radius;
@@ -276,6 +277,9 @@ glw_image_render(glw_t *w, const glw_rctx_t *rc)
 
   alpha_self = rc->rc_alpha * w->glw_alpha * gi->gi_alpha_self * gi->gi_autofade;
 
+
+  const glw_rgb_t *rgb_off = gi->gi_saturated ? &gi->gi_col_off : NULL;
+
   if(gi->gi_mode == GI_MODE_NORMAL || gi->gi_mode == GI_MODE_ALPHA_EDGES) {
 
     if(glt == NULL || !glw_is_tex_inited(&glt->glt_texture))
@@ -308,7 +312,7 @@ glw_image_render(glw_t *w, const glw_rctx_t *rc)
 
       glw_renderer_draw(&gi->gi_gr, w->glw_root, &rc0,
 			&glt->glt_texture,
-			&gi->gi_col_mul, &gi->gi_col_off, alpha_self, blur,
+			&gi->gi_col_mul, rgb_off, alpha_self, blur,
 			gi->gi_prog);
 
       if(gi->gi_bitmap_flags & GLW_IMAGE_ADDITIVE)
@@ -333,7 +337,7 @@ glw_image_render(glw_t *w, const glw_rctx_t *rc)
 
       glw_renderer_draw(&gi->gi_gr, w->glw_root, rc,
 			&glt->glt_texture,
-			&gi->gi_col_mul, &gi->gi_col_off, alpha_self, blur,
+			&gi->gi_col_mul, rgb_off, alpha_self, blur,
 			gi->gi_prog);
 
       if(gi->gi_bitmap_flags & GLW_IMAGE_ADDITIVE)
@@ -1051,6 +1055,8 @@ compute_colors(glw_image_t *gi)
   gi->gi_col_off.r = gi->gi_saturation;
   gi->gi_col_off.g = gi->gi_saturation;
   gi->gi_col_off.b = gi->gi_saturation;
+
+  gi->gi_saturated = gi->gi_saturation > 0;
 }
 
 

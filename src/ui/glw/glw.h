@@ -857,6 +857,8 @@ typedef struct glw_root {
 					 * ie, the triangle should be blurred
 					 */
 
+#define GLW_RENDER_COLOR_OFFSET     0x4
+
 
   float *gr_vtmp_buffer;  // temporary buffer for emitting vertices
   int gr_vtmp_cur;

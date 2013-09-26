@@ -214,10 +214,7 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 
     } else { 
 
-      glw_renderer_vtx_col(&gtb->gtb_text_renderer, 0, 1,1,1,1);
-      glw_renderer_vtx_col(&gtb->gtb_text_renderer, 1, 1,1,1,1);
-      glw_renderer_vtx_col(&gtb->gtb_text_renderer, 2, 1,1,1,1);
-      glw_renderer_vtx_col(&gtb->gtb_text_renderer, 3, 1,1,1,1);
+      glw_renderer_vtx_col_reset(&gtb->gtb_text_renderer);
 
       switch(w->glw_alignment) {
       case LAYOUT_ALIGN_JUSTIFIED:
