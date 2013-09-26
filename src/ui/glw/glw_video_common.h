@@ -173,11 +173,6 @@ typedef struct glw_video {
    */
   struct glw_video_surface_queue gv_decoded_queue;
 
-  int gv_layer;
-  int gv_running;
-  int gv_idgen;
-
-
   int64_t gv_nextpts;
 
   void *gv_aux;
