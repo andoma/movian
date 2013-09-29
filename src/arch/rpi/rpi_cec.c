@@ -311,11 +311,15 @@ static void
 lginit()
 {
   uint8_t msg[4];
+
+  static int lg_inited;
+  if(lg_inited)
+    return;
+  lg_inited = 1;
   
   give_device_power_status(CEC_TV_ADDRESS, CEC_POWER_STATUS_ON_PENDING);
 
   myVendorId = CEC_VENDOR_ID_LG;
-  //  vc_cec_set_vendor_id(myVendorId);
 
   msg[0] = CEC_Opcode_DeviceVendorID;
   msg[1] = myVendorId >> 16;
