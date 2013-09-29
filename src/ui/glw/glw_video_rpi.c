@@ -106,6 +106,9 @@ rvd_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
 static void
 buffer_mark(omx_component_t *oc, void *ptr)
 {
+  if(ptr == NULL)
+    return;
+
   rpi_video_display_t *rvd = oc->oc_opaque;
   glw_video_t *gv = rvd->rvd_gv;
   media_pipe_t *mp = gv->gv_mp;
