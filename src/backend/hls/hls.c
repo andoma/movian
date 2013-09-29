@@ -81,7 +81,9 @@ typedef struct hls_segment {
   int hs_vstream;
   int hs_astream;
 
-  int hs_crypto;
+  uint8_t hs_crypto;
+  uint8_t hs_corrupt;
+
   rstr_t *hs_key_url;
   uint8_t hs_iv[16];
 
@@ -573,10 +575,16 @@ demuxer_update_bw(hls_t *h, hls_demuxer_t *hd)
 }
 
 
+typedef enum {
+  SEGMENT_OPEN_OK,
+  SEGMENT_OPEN_NOT_FOUND,
+  SEGMENT_OPEN_CORRUPT,
+} segment_open_result_t;
+
 /**
  *
  */
-static int
+static segment_open_result_t
 segment_open(hls_t *h, hls_segment_t *hs, int fast_fail)
 {
   int err, j;
@@ -605,7 +613,7 @@ segment_open(hls_t *h, hls_segment_t *hs, int fast_fail)
   if(fh == NULL) {
     TRACE(TRACE_INFO, "HLS", "Unable to open segment %s -- %s",
 	  hs->hs_url, errbuf);
-    return -1;
+    return SEGMENT_OPEN_NOT_FOUND;
   }
   
   if(hs->hs_byte_size != -1 && hs->hs_byte_offset != -1)
@@ -625,7 +633,7 @@ segment_open(hls_t *h, hls_segment_t *hs, int fast_fail)
 	TRACE(TRACE_ERROR, "HLS", "Unable to load key file %s",
 	      rstr_get(hs->hs_key_url));
 	fa_close(fh);
-	return -1;
+	return SEGMENT_OPEN_NOT_FOUND;
       }
 
       rstr_set(&hv->hv_key_url, hs->hs_key_url);
@@ -634,13 +642,18 @@ segment_open(hls_t *h, hls_segment_t *hs, int fast_fail)
     fh = fa_aescbc_open(fh, hs->hs_iv, buf_c8(hv->hv_key));
   }
 
+  AVIOContext *avio = fa_libav_reopen(fh);
   hs->hs_fctx = avformat_alloc_context();
-  hs->hs_fctx->pb = fa_libav_reopen(fh);
+  hs->hs_fctx->pb = avio;
 
   if((err = avformat_open_input(&hs->hs_fctx, hs->hs_url,
 				h->h_fmt, NULL)) != 0) {
-    TRACE(TRACE_ERROR, "HLS", "Unable to open TS file %d", err);
-    return -1;
+    TRACE(TRACE_ERROR, "HLS",
+	  "Unable to open TS file (%s) segment seq: %d error %d",
+	  hs->hs_url, hs->hs_seq, err);
+
+    fa_libav_close(avio);
+    return SEGMENT_OPEN_CORRUPT;
   }
 
   hs->hs_fctx->flags |= AVFMT_FLAG_NOFILLIN;
@@ -665,7 +678,7 @@ segment_open(hls_t *h, hls_segment_t *hs, int fast_fail)
       break;
     }
   }
-  return 0;
+  return SEGMENT_OPEN_OK;
 }
 
 
@@ -686,6 +699,7 @@ variant_update_metadata(hls_t *h, hls_variant_t *hv, int availbw)
 
 #define HLS_SEGMENT_EOF ((hls_segment_t *)-1)
 #define HLS_SEGMENT_NYA ((hls_segment_t *)-2) // Not yet available
+#define HLS_SEGMENT_ERR ((hls_segment_t *)-3) // Stream broken
 
 /**
  *
@@ -758,11 +772,43 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
 	return HLS_SEGMENT_NYA;
     }
 
-    if(segment_open(h, hs, hv != hd->hd_seek)) {
+    // If we're not playing from the seek segment (ie. our "fallback" segment)
+    // we ask for fast fail so we can retry with another segment
 
+    segment_open_result_t rcode = segment_open(h, hs, hv != hd->hd_seek);
+
+    switch(rcode) {
+    case SEGMENT_OPEN_OK:
+      break;
+
+    case SEGMENT_OPEN_NOT_FOUND:
+
+      /*
+       * Segment can not be found (but since it's listed in the playlist
+       * it *should* be there, retry with something directly else unless we're
+       * at our seek variant in which case we wait a short while (by
+       * returning the special Not-Yet-Available segment)
+       */
+      if(hv == hd->hd_seek)
+	return HLS_SEGMENT_NYA;
+
+      /* 
+       * Variants are sorted in bitrate descending order, so just
+       * step down one
+       */
+      hd->hd_req = TAILQ_NEXT(hv, hv_link);
+      goto again;
+
+    case SEGMENT_OPEN_CORRUPT:
+      /*
+       * File is there, but we are not able to parse it correctly
+       * (broken key?, not a TS file, whatever)
+       * Mark it as broken and try something else
+       */
+      hs->hs_corrupt = 1;
       if(hv == hd->hd_seek) {
-	usleep(100000);
-	goto again;
+	// We give up now
+	return HLS_SEGMENT_ERR;
       }
       hd->hd_req = TAILQ_NEXT(hv, hv_link);
       goto again;
@@ -880,6 +926,49 @@ demuxer_select_variant_simple(hls_t *h, hls_demuxer_t *hd)
   hd->hd_req = hv;
 }
 
+
+/**
+ *
+ */
+static void
+demuxer_select_variant_random(hls_t *h, hls_demuxer_t *hd)
+{
+  hls_variant_t *hv;
+  int cnt = 0;
+
+  TAILQ_FOREACH(hv, &hd->hd_variants, hv_link)
+    if(!hv->hv_audio_only)
+      cnt++;
+  
+  int r = rand() % cnt;
+  cnt = 0;
+  TAILQ_FOREACH(hv, &hd->hd_variants, hv_link) {
+    if(hv->hv_audio_only)
+      continue;
+    if(r == cnt)
+      break;
+    cnt++;
+  }
+
+  if(hv == NULL)
+    hv = hd->hd_seek;
+  HLS_TRACE(h, "Randomly selected bitrate %d", hv->hv_bitrate);
+  hd->hd_req = hv;
+}
+
+/**
+ *
+ */
+static void
+demuxer_select_variant(hls_t *h, hls_demuxer_t *hd)
+{
+  if(1)
+    demuxer_select_variant_simple(h, hd);
+  else
+    demuxer_select_variant_random(h, hd);
+}
+
+
 #define MB_EOF ((void *)-1)
 #define MB_NYA ((void *)-2)
 
@@ -963,11 +1052,13 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
   while(1) {
 
     if(mb == NULL) {
+      mp->mp_eof = 0;
 
       hls_segment_t *hs = demuxer_get_segment(h, hd);
 
-      if(hs == HLS_SEGMENT_EOF) {
+      if(hs == HLS_SEGMENT_EOF || hs == HLS_SEGMENT_ERR) {
 	mb = MB_EOF;
+	mp->mp_eof = 1;
 	continue;
       }
 
@@ -988,7 +1079,7 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
       if(r) {
 	hd->hd_seq++;
 	demuxer_update_bw(h, hd);
-	demuxer_select_variant_simple(h, hd);
+	demuxer_select_variant(h, hd);
 	continue;
       }
 
