@@ -20,6 +20,8 @@
 
 #include "event.h"
 #include "misc/str.h"
+#include "htsmsg/htsmsg_store.h"
+#include "settings.h"
 
 #include <bcm_host.h>
 #include <OMX_Core.h>
@@ -182,7 +184,7 @@ static uint16_t physical_address;
 static CEC_AllDevices_T logical_address;
 static uint16_t active_physical_address;
 
-
+#if 0
 static void
 send_image_view_on(void)
 {
@@ -190,6 +192,7 @@ send_image_view_on(void)
   response[0] = CEC_Opcode_ImageViewOn;
   cec_send_msg(0x0, response, 1, VC_FALSE);
 }
+#endif
 
 
 static void
@@ -557,6 +560,17 @@ tv_service_callback(void *callback_data, uint32_t reason,
   }
 }
 
+static int fixed_la;
+
+/**
+ *
+ */
+static void
+set_logical_address(void *opaque, const char *str)
+{
+  fixed_la = str ? atoi(str) & 0xf : 0;
+}
+
 
 /**
  * We deal with CEC and HDMI events, etc here
@@ -565,6 +579,15 @@ static void *
 cec_thread(void *aux)
 {
   TV_DISPLAY_STATE_T state;
+
+  htsmsg_t *s = htsmsg_store_load("cec") ?: htsmsg_create_map();
+
+  setting_create(SETTING_STRING, gconf.settings_dev,
+		 SETTINGS_INITIAL_UPDATE,
+		 SETTING_TITLE_CSTR("CEC Logical address"),
+		 SETTING_CALLBACK(set_logical_address, NULL),
+		 SETTING_HTSMSG("logicaladdress", s, "cec"),
+		 NULL);
 
   vc_tv_register_callback(tv_service_callback, NULL);
   vc_tv_get_display_state(&state);
@@ -588,37 +611,36 @@ cec_thread(void *aux)
   }
 
 
-  const int addresses = 
-    (1 << CEC_AllDevices_eRec1) |
-    (1 << CEC_AllDevices_eRec2) |
-    (1 << CEC_AllDevices_eRec3) |
-    (1 << CEC_AllDevices_eFreeUse);
+  if(!fixed_la) {
+    const int addresses = 
+      (1 << CEC_AllDevices_eRec1) |
+      (1 << CEC_AllDevices_eRec2) |
+      (1 << CEC_AllDevices_eRec3) |
+      (1 << CEC_AllDevices_eFreeUse);
 
-  for(logical_address = 0; logical_address < 15; logical_address++) {
-    if(((1 << logical_address) & addresses) == 0)
-      continue;
-    if(vc_cec_poll_address(CEC_AllDevices_eRec1) > 0)
-      break;
-  }
+    for(logical_address = 0; logical_address < 15; logical_address++) {
+      if(((1 << logical_address) & addresses) == 0)
+	continue;
+      if(vc_cec_poll_address(logical_address) > 0)
+	break;
+    }
 
-  if(logical_address == 15) {
-    printf("Unable to find a free logical address, retrying\n");
-    sleep(1);
-    goto restart;
+    if(logical_address == 15) {
+      printf("Unable to find a free logical address, retrying\n");
+      sleep(1);
+      goto restart;
+    }
+
+  } else {
+    logical_address = fixed_la;
   }
 
   vc_cec_set_logical_address(logical_address, CEC_DeviceType_Rec, myVendorId);
-
-  sleep(1);
-  send_image_view_on();
-  sleep(1);
-  send_active_source(0);
 
   while(1) {
     sleep(1);
   }
 
-  vc_cec_set_logical_address(0xd, CEC_DeviceType_Rec, myVendorId);
   return NULL;
 }
 
