@@ -55,7 +55,7 @@
 DISPMANX_DISPLAY_HANDLE_T dispman_display;
 
 
-int display_status;
+int display_status = DISPLAY_STATUS_ON;
 int cec_we_are_not_active;
 static int runmode;
 
@@ -592,7 +592,6 @@ rpi_mainloop(void)
   runmode = RUNMODE_RUNNING;
 
   while(runmode != RUNMODE_EXIT) {
-
     if(ui_should_run()) {
       showtime_swrefresh();
       ui_run(gr, dpy);
@@ -627,8 +626,6 @@ main(int argc, char **argv)
   vc_tv_power_off();
   vc_tv_hdmi_power_on_preferred();
 
-  rpi_cec_init();
-
 
   omx_init();
 
@@ -643,6 +640,8 @@ main(int argc, char **argv)
   trap_init();
 
   showtime_init();
+
+  rpi_cec_init();
 
   linux_init_monitors();
 
