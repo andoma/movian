@@ -132,6 +132,7 @@ pending_store_write(pending_store_t *ps)
     bytes += hd->hd_data_len;
   }
   htsbuf_queue_flush(&hq);
+  fsync(fd);
   close(fd);
 
   if(!ok) {
