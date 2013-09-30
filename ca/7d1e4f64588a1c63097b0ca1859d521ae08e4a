@@ -1,0 +1,1 @@
+rpi/cec: Keep our device type consistent to CEC_DeviceType_Tuner
