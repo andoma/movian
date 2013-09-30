@@ -1,0 +1,4 @@
+rpi: Fix a couple of issues related to CEC on Raspberry Pi
+- Avoid turning on TV during application start
+- Add option in 'settings:dev' to set our CEC logical address
+- Fix a race during startup that might cause black display
