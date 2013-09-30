@@ -338,7 +338,7 @@ lginit()
   msg[0] = CEC_Opcode_ReportPhysicalAddress;
   msg[1] = physical_address >> 8;
   msg[2] = physical_address;
-  msg[3] = CEC_DeviceType_Rec;
+  msg[3] = CEC_DeviceType_Tuner;
   cec_send_msg(0xf, msg, 4, VC_FALSE);
 
   give_device_power_status(CEC_TV_ADDRESS,CEC_POWER_STATUS_ON);
@@ -398,13 +398,13 @@ handle_vendor_command_lg(const VC_CEC_MESSAGE_T *msg)
   case SL_COMMAND_CONNECT_REQUEST:
     response[0] = CEC_Opcode_VendorCommand;
     response[1] = SL_COMMAND_SET_DEVICE_MODE;
-    response[2] = CEC_DeviceType_Rec ;
+    response[2] = CEC_DeviceType_Tuner;
     vc_cec_send_message(msg->initiator, response, 3, VC_TRUE);
 
-    response[0] = CEC_Opcode_ImageViewOn ;
+    response[0] = CEC_Opcode_ImageViewOn;
     vc_cec_send_message(CEC_TV_ADDRESS, response, 1, VC_FALSE);
 
-    response[0] = CEC_Opcode_ActiveSource ;
+    response[0] = CEC_Opcode_ActiveSource;
     response[1] = physical_address >> 8;
     response[2] = physical_address;
     vc_cec_send_message(CEC_BROADCAST_ADDR, response, 3, VC_FALSE);
@@ -640,7 +640,7 @@ cec_thread(void *aux)
     logical_address = fixed_la;
   }
 
-  vc_cec_set_logical_address(logical_address, CEC_DeviceType_Rec, myVendorId);
+  vc_cec_set_logical_address(logical_address, CEC_DeviceType_Tuner, myVendorId);
 
   while(1) {
     sleep(1);
