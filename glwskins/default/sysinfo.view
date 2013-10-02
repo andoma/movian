@@ -1,9 +1,53 @@
 #import "skin://common.view"
 
+
+
 #define InfoLabel() {
   shadow: true;
   outline: true;
   color: 0.6;
+}
+
+
+#define InfoLine(TITLE, VAL) {
+  widget(container_x, {
+    spacing: 10;
+    widget(label, {
+      filterConstraintX: true;
+      InfoLabel();
+      align: right;
+      caption: TITLE + ":";
+    });
+    widget(label, {
+      weight: 2;
+      filterConstraintX: true;
+      TextStyleItem();
+      caption: VAL;
+    });
+  });
+}
+
+#define InfoBar(TITLE, VAL) {
+  widget(container_x, {
+    spacing: 10;
+    widget(label, {
+      filterConstraintX: true;
+      InfoLabel();
+      align: right;
+      caption: TITLE + ":";
+    });
+
+    widget(container_z, {
+      widget(quad, {
+        color: 0.4;
+      });
+      widget(bar, {
+        color1: 1;
+        color2: 1;
+	fill: VAL;
+      });
+    });
+  });
 }
 
 
@@ -17,15 +61,15 @@ widget(container_y, {
       border: 56;
       borderOnly: true;
       padding: -56;
-      
+
       widget(backdrop, {
 	alphaSelf: 0.85;
 	source: "skin://graphics/popupmenu2.png";
 	border: 56;
 	color: 0;
-	
+
 	widget(container_y, {
-	  
+
 	  widget(label, {
 	    TextStyleItem();
 	    caption: fmt("Showtime %s", $global.showtime.version);
@@ -33,25 +77,18 @@ widget(container_y, {
 	  });
 
 	  VerticalSeparator();
-	  
-	  widget(container_x, {
-	    
-	    spacing: 10;
-	    
-	    widget(container_y, {
-	      widget(label, {
-		InfoLabel();
-		align: right;
-		caption: _("Memory usage:");
-	      });
-	    });
-	    widget(container_y, {
-	      widget(label, {
-		TextStyleItem();
-		caption: fmt("%d kB", $global.system.mem.activeMem);
-	      });
-	    });
-	  });
+
+          InfoLine(_("Memory usage"),
+                   fmt("%d kB", $global.system.mem.activeMem));
+          InfoLine(_("System Total"),
+                   fmt("%d kB", $global.system.mem.systotal));
+          InfoLine(_("System Free"),
+                   fmt("%d kB", $global.system.mem.sysfree));
+
+          cloner($global.system.cpuinfo.cpus, container_z, {
+            InfoBar($self.name, $self.load)
+          });
+
 	});
       });
     });

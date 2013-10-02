@@ -35,6 +35,7 @@
 #include "prop/prop_jni.h"
 #include "android.h"
 #include "navigator.h"
+#include "arch/linux/linux_process_monitor.h"
 
 JavaVM *JVM;
 jclass STCore;
@@ -236,6 +237,8 @@ Java_com_showtimemediacenter_showtime_STCore_coreInit(JNIEnv *env, jobject obj, 
 
   service_create("music", "Movies", "file:///sdcard/Movies",
                  "video", NULL, 0, 1, SVC_ORIGIN_SYSTEM);
+
+  linux_process_monitor_init();
 
   android_nav = nav_spawn();
 }
