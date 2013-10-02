@@ -964,10 +964,12 @@ mp_dequeue_event_deadline(media_pipe_t *mp, int timeout)
 {
   event_t *e;
 
+  int64_t ts = showtime_get_ts() + timeout * 1000;
+
   hts_mutex_lock(&mp->mp_mutex);
 
   while((e = TAILQ_FIRST(&mp->mp_eq)) == NULL) {
-    if(hts_cond_wait_timeout(&mp->mp_backpressure, &mp->mp_mutex, timeout))
+    if(hts_cond_wait_timeout_abs(&mp->mp_backpressure, &mp->mp_mutex, ts))
       break;
   }
   if(e != NULL)

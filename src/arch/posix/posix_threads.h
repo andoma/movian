@@ -111,4 +111,6 @@ typedef pthread_key_t hts_key_t;
 #define HTS_MUTEX_DECL(name) hts_mutex_t name = PTHREAD_MUTEX_INITIALIZER
 
 
+int hts_cond_wait_timeout_abs(hts_cond_t *c, hts_mutex_t *m, int64_t ts);
+
 
