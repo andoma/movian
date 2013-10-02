@@ -94,6 +94,10 @@ libyuv_setup
 # libspotify_setup "12.1.103-Linux-armv6-bcm2708hardfp"
 
 cat >> ${CONFIG_MAK} <<EOF
+CFLAGS_cfg += -I/Users/andoma/slipstream/berlin/images/22sept/gtv/vendor/marvell/prebuilts/jb_dmp/amp/include
+LDFLAGS_cfg += -L/Users/andoma/slipstream/berlin/images/22sept/gtv/vendor/marvell/prebuilts/jb_dmp/amp/lib
+LDFLAGS_cfg += -lampclient -lOSAL
+
 CFLAGS_arch = ${ARCH_CFLAGS}
 CFLAGS_cfg += ${ARCH_CFLAGS}
 LDFLAGS_cfg += ${ARCH_LDFLAGS} -lOpenSLES -lGLESv2 -llog -landroid -ljnigraphics

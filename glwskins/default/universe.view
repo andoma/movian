@@ -19,14 +19,14 @@ onEvent(sysinfo, {
 
 
 widget(container_z, {
-
+/*
   widget(loader, {
     source: selectedElement(vectorize($global.glw.views.standard.background))
       ?? "background.view";
     effect: blend;
     time: 0.3;
   });
-
+*/
   widget(loader, {
     source: selectedElement(vectorize($global.glw.views.standard.loading))
       ?? "loading.view";
@@ -176,4 +176,29 @@ widget(container_z, {
   widget(underscan, {
 #import "sysinfo.view"
   });
+
+/*
+  widget(rotator, {
+    widget(image, {
+      source: "http://d3gtl9l2a4fn1j.cloudfront.net/t/p/w500/tAXARVreJnWfoANIHASmgYk4SB0.jpg";
+    });
+  });
+  widget(displacement, {
+    translation:[-0.5,0,0];
+    widget(rotator, {
+      widget(image, {
+	source: "http://d3gtl9l2a4fn1j.cloudfront.net/t/p/w500/tAXARVreJnWfoANIHASmgYk4SB0.jpg";
+      });
+    });
+  });
+
+  widget(displacement, {
+    translation:[0.5,0,0];
+    widget(rotator, {
+      widget(image, {
+	source: "http://d3gtl9l2a4fn1j.cloudfront.net/t/p/w500/tAXARVreJnWfoANIHASmgYk4SB0.jpg";
+      });
+    });
+  });
+*/
 });
