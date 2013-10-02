@@ -8,12 +8,28 @@ SRCS += src/arch/android/android.c \
 	src/networking/asyncio_posix.c \
 	src/networking/net_android.c \
 	src/fileaccess/fa_funopen.c \
-	src/arch/android/android_audio.c \
 	src/arch/android/android_glw.c \
 	src/arch/android/android_support.c \
 	src/prop/prop_jni.c \
 	src/ui/glw/glw_video_android.c \
 
+SRCS+=  src/arch/linux/linux_process_monitor.c
+
+SRCS+=  src/pipelines/amp/amp.c \
+	src/pipelines/amp/amp_video.c \
+	src/ui/glw/glw_video_amp.c \
+
+
+SRCS +=	src/pipelines/amp/amp_audio.c 
+
+#SRCS +=	src/arch/android/android_audio.c
+
+#SRCS +=	src/video/amp_video.c
+
+
+${BUILDDIR}/src/pipelines/amp/%.o : CFLAGS = ${OPTFLAGS} -Wmissing-prototypes -Wmissing-declarations -Wimplicit-function-declaration -Werror  -Wno-multichar
+
+${BUILDDIR}/src/video/amp_video.o : CFLAGS = ${OPTFLAGS} -Wmissing-prototypes -Wmissing-declarations -Wimplicit-function-declaration -Werror  -Wno-multichar
 
 ${BUILDDIR}/src/arch/android/%.o : CFLAGS = ${OPTFLAGS} \
 	-Wall -Werror -Wwrite-strings -Wno-deprecated-declarations \
