@@ -1013,6 +1013,8 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
   int restartpos_last = -1;
   int64_t last_timestamp_presented = AV_NOPTS_VALUE;
   sub_scanner_t *ss = NULL;
+  int sub_scan_considered = 0;
+
   h->h_playback_priority = va->priority;
 
   mp->mp_video.mq_stream = 0;
@@ -1067,9 +1069,11 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 	continue;
       }
 
-      if(ss == NULL && hs->hs_variant->hv_frozen)
+      if(!sub_scan_considered && hs->hs_variant->hv_frozen) {
+        sub_scan_considered = 1;
 	ss = sub_scanner_create(h->h_baseurl, mp->mp_prop_subtitle_tracks, va,
 				hs->hs_variant->hv_duration / 1000000LL);
+      }
 
       AVPacket pkt;
       int r = av_read_frame(hs->hs_fctx, &pkt);
