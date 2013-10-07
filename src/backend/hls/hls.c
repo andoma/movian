@@ -772,9 +772,13 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
 
   hls_variant_t *hv = hd->hd_current;
 
+  int live_preload =
+    h->h_playback_activation == VIDEO_ACTIVATION_PRELOAD && !hv->hv_frozen;
+
   if(hv->hv_current_seg == NULL ||
      hv->hv_current_seg->hs_seq != hd->hd_seq ||
-     hd->hd_seek_to != AV_NOPTS_VALUE) {
+     hd->hd_seek_to != AV_NOPTS_VALUE ||
+     live_preload) {
 
     if(variant_update(hv, h)) {
 
@@ -809,16 +813,16 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
 
     } else {
 
-      int seq;
-      if(hd->hd_seq) {
-        seq = hd->hd_seq;
-      } else if(hv->hv_frozen) {
-        seq = hv->hv_first_seq;
-      } else {
-	seq = MAX(hv->hv_last_seq - 2, hv->hv_first_seq);
+      if(hd->hd_seq == 0 || live_preload) {
+
+        if(hv->hv_frozen) {
+          hd->hd_seq = hv->hv_first_seq;
+        } else {
+          hd->hd_seq = MAX(hv->hv_last_seq - 2, hv->hv_first_seq);
+        }
       }
 
-      hs = hv_find_segment_by_seq(hv, seq);
+      hs = hv_find_segment_by_seq(hv, hd->hd_seq);
     }
 
     if(hs == hv->hv_current_seg && hs != NULL)
@@ -837,7 +841,6 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
                           ie. just download the entire segment */
 
     if(h->h_playback_activation < VIDEO_ACTIVATION_PRELOAD) {
-      hd->hd_seq = hs->hs_seq;
       streaming = 1;
     }
 
