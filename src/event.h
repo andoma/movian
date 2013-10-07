@@ -192,12 +192,13 @@ typedef struct event_queue {
  *
  */
 typedef struct event {
-  int     e_refcount;
-  int     e_mapped;
   struct prop *e_nav;
-  event_type_t e_type_x;
   void (*e_dtor)(struct event *e);
   TAILQ_ENTRY(event) e_link;
+  int64_t e_ts;
+  int     e_refcount;
+  int     e_mapped;
+  event_type_t e_type_x;
   char e_payload[0];
 } event_t;
 
