@@ -40,6 +40,7 @@ void *
 event_create(event_type_t type, size_t size)
 {
   event_t *e = malloc(size);
+  e->e_ts = showtime_get_ts();
   e->e_nav = NULL;
   e->e_dtor = NULL;
   e->e_refcount = 1;
