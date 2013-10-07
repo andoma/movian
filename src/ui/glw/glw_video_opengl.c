@@ -85,10 +85,9 @@ surface_reset(glw_video_t *gv, glw_video_surface_t *gvs)
   for(i = 0; i < 3; i++) {
     t->pbo[i] = gvs->gvs_pbo[i];
     t->tex[i] = gvs->gvs_textures[i];
-    gvs->gvs_pbo[i] = 0;
-    gvs->gvs_textures[i] = 0;
-    gvs->gvs_data[i] = NULL;
+
   }
+  memset(gvs, 0, sizeof(glw_video_surface_t));
 }
 
 

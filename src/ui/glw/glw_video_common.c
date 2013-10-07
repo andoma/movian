@@ -110,6 +110,9 @@ static int
 glw_video_widget_event(event_t *e, glw_video_t *gv)
 {
   media_pipe_t *mp = gv->gv_mp;
+  if(mp == NULL)
+    return 0;
+
   if(event_is_action(e, ACTION_PLAYPAUSE) ||
      event_is_action(e, ACTION_PLAY) ||
      event_is_action(e, ACTION_PAUSE) ||
@@ -420,6 +423,147 @@ glw_video_newframe_blend(glw_video_t *gv, video_decoder_t *vd, int flags,
 }
 
 
+
+/**
+ * Fire up the media pipeline and decoder
+ *
+ * We only do this for certain activation levels to avoid resource
+ * waste
+ */
+static void
+create_pipeline(glw_video_t *gv)
+{
+  glw_root_t *gr = gv->w.glw_root;
+
+  kalman_init(&gv->gv_avfilter);
+
+  gv->gv_active = 1;
+
+  gv->gv_mp = mp_create("Video decoder", MP_VIDEO | MP_PRIMABLE, NULL);
+
+  prop_link(gv->gv_mp->mp_prop_root, gv->gv_media_prop);
+
+#if CONFIG_GLW_BACKEND_OPENGL
+  if(video_settings.vdpau)
+    gv->gv_mp->mp_vdpau_dev = gr->gr_be.gbr_vdpau_dev;
+#endif
+
+  gv->gv_mp->mp_video_frame_deliver = glw_video_input;
+  gv->gv_mp->mp_set_video_codec = glw_set_video_codec;
+  gv->gv_mp->mp_video_frame_opaque = gv;
+
+  gv->gv_vd = video_decoder_create(gv->gv_mp);
+  video_playback_create(gv->gv_mp);
+
+  prop_t *c = gv->gv_mp->mp_prop_ctrl;
+
+  gv->gv_vo_scaling_sub =
+    prop_subscribe(0,
+		   PROP_TAG_SET_FLOAT, &gv->gv_vo_scaling,
+		   PROP_TAG_COURIER, gr->gr_courier,
+		   PROP_TAG_ROOT, c,
+                   PROP_TAG_NAME("ctrl", "subscale"),
+		   NULL);
+
+  gv->gv_vo_displace_y_sub =
+    prop_subscribe(0,
+		   PROP_TAG_SET_INT, &gv->gv_vo_displace_y,
+		   PROP_TAG_COURIER, gr->gr_courier,
+		   PROP_TAG_ROOT, c,
+                   PROP_TAG_NAME("ctrl", "subvdisplace"),
+		   NULL);
+
+  gv->gv_vo_displace_x_sub =
+    prop_subscribe(0,
+		   PROP_TAG_SET_INT, &gv->gv_vo_displace_x,
+		   PROP_TAG_COURIER, gr->gr_courier,
+		   PROP_TAG_ROOT, c,
+                   PROP_TAG_NAME("ctrl", "subhdisplace"),
+		   NULL);
+
+  gv->gv_vzoom_sub =
+    prop_subscribe(0,
+		   PROP_TAG_SET_INT, &gv->gv_vzoom,
+		   PROP_TAG_COURIER, gr->gr_courier,
+		   PROP_TAG_ROOT, c,
+                   PROP_TAG_NAME("ctrl", "vzoom"),
+		   NULL);
+
+  gv->gv_hstretch_sub =
+    prop_subscribe(0,
+		   PROP_TAG_SET_INT, &gv->gv_hstretch,
+		   PROP_TAG_COURIER, gr->gr_courier,
+		   PROP_TAG_ROOT, c,
+                   PROP_TAG_NAME("ctrl", "hstretch"),
+		   NULL);
+
+  gv->gv_fstretch_sub =
+    prop_subscribe(0,
+		   PROP_TAG_SET_INT, &gv->gv_fstretch,
+		   PROP_TAG_COURIER, gr->gr_courier,
+		   PROP_TAG_ROOT, c,
+                   PROP_TAG_NAME("ctrl", "fstretch"),
+		   NULL);
+
+  gv->gv_vo_on_video_sub =
+    prop_subscribe(0,
+		   PROP_TAG_SET_INT, &gv->gv_vo_on_video,
+		   PROP_TAG_COURIER, gr->gr_courier,
+		   PROP_TAG_ROOT, c,
+                   PROP_TAG_NAME("ctrl", "subalign"),
+		   NULL);
+}
+
+
+
+/**
+ *
+ */
+static void
+destroy_pipeline(glw_video_t *gv)
+{
+  if(gv->gv_mp == NULL) {
+    assert(gv->gv_vd == NULL);
+    return;
+  }
+
+  prop_unlink(gv->gv_media_prop);
+
+  video_playback_stop(gv->gv_mp);
+
+  assert(gv->gv_vd != NULL);
+
+  /* This will wake up a decoder thread that's waiting to get
+     available surfaces */
+
+  hts_mutex_lock(&gv->gv_surface_mutex);
+  gv->gv_active = 0;
+  hts_cond_signal(&gv->gv_avail_queue_cond);
+  hts_cond_signal(&gv->gv_init_cond);
+  hts_mutex_unlock(&gv->gv_surface_mutex);
+
+  video_decoder_destroy(gv->gv_vd);
+  gv->gv_vd = NULL;
+
+  mp_ref_dec(gv->gv_mp);
+  gv->gv_mp = NULL;
+
+  prop_unsubscribe(gv->gv_vo_scaling_sub);
+  prop_unsubscribe(gv->gv_vo_displace_x_sub);
+  prop_unsubscribe(gv->gv_vo_displace_y_sub);
+  prop_unsubscribe(gv->gv_vzoom_sub);
+  prop_unsubscribe(gv->gv_hstretch_sub);
+  prop_unsubscribe(gv->gv_fstretch_sub);
+  prop_unsubscribe(gv->gv_vo_on_video_sub);
+
+  hts_mutex_lock(&gv->gv_surface_mutex);
+  glw_video_configure(gv, NULL);
+  glw_video_surfaces_cleanup(gv);
+  hts_mutex_unlock(&gv->gv_surface_mutex);
+
+  mystrset(&gv->gv_current_url, NULL);
+}
+
 /**
  *
  */
@@ -427,24 +571,28 @@ static void
 glw_video_play(glw_video_t *gv)
 {
   event_t *e;
-  
-  if(gv->gv_freezed)
+  if(gv->gv_freezed || gv->gv_activation >= VIDEO_ACTIVATION_PASSIVE)
     return;
+
+  if(gv->gv_mp == NULL)
+    create_pipeline(gv);
 
   if(!strcmp(gv->gv_current_url ?: "", gv->gv_pending_url ?: ""))
     return;
 
   mystrset(&gv->gv_current_url, gv->gv_pending_url ?: "");
 
-  e = event_create_playurl(gv->gv_current_url, 
+  e = event_create_playurl(gv->gv_current_url,
 			   !!(gv->gv_flags & GLW_VIDEO_PRIMARY),
 			   gv->gv_priority,
 			   !!(gv->gv_flags & GLW_VIDEO_NO_AUDIO),
 			   gv->gv_model,
-			   gv->gv_how);
+			   gv->gv_how,
+                           gv->gv_activation);
   mp_enqueue_event(gv->gv_mp, e);
   event_release(e);
 }
+
 
 
 /**
@@ -455,39 +603,23 @@ static void
 glw_video_dtor(glw_t *w)
 {
   glw_video_t *gv = (glw_video_t *)w;
-  video_decoder_t *vd = gv->gv_vd;
 
-  prop_ref_dec(gv->gv_model);
-  prop_unsubscribe(gv->gv_vo_scaling_sub);
-  prop_unsubscribe(gv->gv_vo_displace_x_sub);
-  prop_unsubscribe(gv->gv_vo_displace_y_sub);
-  prop_unsubscribe(gv->gv_vzoom_sub);
-  prop_unsubscribe(gv->gv_hstretch_sub);
-  prop_unsubscribe(gv->gv_fstretch_sub);
-  prop_unsubscribe(gv->gv_vo_on_video_sub);
+  destroy_pipeline(gv);
 
   free(gv->gv_current_url);
   free(gv->gv_pending_url);
   free(gv->gv_how);
 
   glw_video_overlay_deinit(gv);
-  
+
   LIST_REMOVE(gv, gv_global_link);
-
-  hts_mutex_lock(&gv->gv_surface_mutex);  /* Not strictly necessary
-					     but keep asserts happy 
-					  */
-  glw_video_surfaces_cleanup(gv);
-  hts_mutex_unlock(&gv->gv_surface_mutex);
-
-  video_decoder_destroy(vd);
 
   hts_cond_destroy(&gv->gv_avail_queue_cond);
   hts_cond_destroy(&gv->gv_init_cond);
   hts_mutex_destroy(&gv->gv_surface_mutex);
 
-  mp_ref_dec(gv->gv_mp);
-  gv->gv_mp = NULL;
+  prop_ref_dec(gv->gv_model);
+  prop_ref_dec(gv->gv_media_prop);
 }
 
 
@@ -500,6 +632,9 @@ glw_video_newframe(glw_t *w, int flags)
   glw_video_t *gv = (glw_video_t *)w;
   video_decoder_t *vd = gv->gv_vd;
   int64_t pts;
+
+  if(vd == NULL)
+    return;
 
   hts_mutex_lock(&gv->gv_surface_mutex);
 
@@ -531,7 +666,6 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
 			  void *extra)
 {
   glw_video_t *gv = (glw_video_t *)w;
-  video_decoder_t *vd = gv->gv_vd;
   glw_rctx_t *rc, rc0;
 
   switch(signal) {
@@ -548,16 +682,18 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
     return glw_video_widget_event(extra, gv);
 
   case GLW_SIGNAL_DESTROY:
-    hts_mutex_lock(&gv->gv_surface_mutex);
-    hts_cond_signal(&gv->gv_avail_queue_cond);
-    hts_cond_signal(&gv->gv_init_cond);
-    hts_mutex_unlock(&gv->gv_surface_mutex);
-    video_playback_destroy(gv->gv_mp);
-    video_decoder_stop(vd);
+    // Tell video player thread to exit ASAP
+    if(gv->gv_mp != NULL)
+      video_playback_stop(gv->gv_mp);
+
     return 0;
 
   case GLW_SIGNAL_POINTER_EVENT:
-    return glw_video_overlay_pointer_event(vd, gv->gv_width, gv->gv_height,
+    if(gv->gv_mp == NULL || gv->gv_vd == NULL)
+      return 0;
+
+    return glw_video_overlay_pointer_event(gv->gv_vd,
+                                           gv->gv_width, gv->gv_height,
 					   extra, gv->gv_mp);
 
   default:
@@ -573,14 +709,9 @@ static void
 glw_video_ctor(glw_t *w)
 {
   glw_video_t *gv = (glw_video_t *)w;
-  glw_root_t *gr = w->glw_root;
+  glw_root_t *gr = gv->w.glw_root;
 
   gv->gv_flags |= GLW_VIDEO_DPAD_SEEK;
-
-  kalman_init(&gv->gv_avfilter);
-
-  //  gv->gv_cfg_req.gvc_engine = &glw_video_blank;
-  //  gv->gv_cfg_cur.gvc_engine = &glw_video_blank;
 
   TAILQ_INIT(&gv->gv_avail_queue);
   TAILQ_INIT(&gv->gv_parked_queue);
@@ -591,78 +722,7 @@ glw_video_ctor(glw_t *w)
   hts_cond_init(&gv->gv_avail_queue_cond, &gv->gv_surface_mutex);
   hts_cond_init(&gv->gv_init_cond, &gv->gv_surface_mutex);
 
-  gv->gv_mp = mp_create("Video decoder", MP_VIDEO | MP_PRIMABLE, NULL);
-#if CONFIG_GLW_BACKEND_OPENGL
-  if(video_settings.vdpau)
-    gv->gv_mp->mp_vdpau_dev = gr->gr_be.gbr_vdpau_dev;
-#endif
-
   LIST_INSERT_HEAD(&gr->gr_video_decoders, gv, gv_global_link);
-
-  gv->gv_mp->mp_video_frame_deliver = glw_video_input;
-  gv->gv_mp->mp_set_video_codec = glw_set_video_codec;
-  gv->gv_mp->mp_video_frame_opaque = gv;
-
-  gv->gv_vd = video_decoder_create(gv->gv_mp);
-  video_playback_create(gv->gv_mp);
-
-  prop_t *c = gv->gv_mp->mp_prop_ctrl;
-
-  gv->gv_vo_scaling_sub =
-    prop_subscribe(0,
-		   PROP_TAG_SET_FLOAT, &gv->gv_vo_scaling,
-		   PROP_TAG_COURIER, w->glw_root->gr_courier,
-		   PROP_TAG_ROOT, c,
-                   PROP_TAG_NAME("ctrl", "subscale"),
-		   NULL);
-
-  gv->gv_vo_displace_y_sub =
-    prop_subscribe(0,
-		   PROP_TAG_SET_INT, &gv->gv_vo_displace_y,
-		   PROP_TAG_COURIER, w->glw_root->gr_courier,
-		   PROP_TAG_ROOT, c,
-                   PROP_TAG_NAME("ctrl", "subvdisplace"),
-		   NULL);
-
-  gv->gv_vo_displace_x_sub =
-    prop_subscribe(0,
-		   PROP_TAG_SET_INT, &gv->gv_vo_displace_x,
-		   PROP_TAG_COURIER, w->glw_root->gr_courier,
-		   PROP_TAG_ROOT, c,
-                   PROP_TAG_NAME("ctrl", "subhdisplace"),
-		   NULL);
-
-  gv->gv_vzoom_sub =
-    prop_subscribe(0,
-		   PROP_TAG_SET_INT, &gv->gv_vzoom,
-		   PROP_TAG_COURIER, w->glw_root->gr_courier,
-		   PROP_TAG_ROOT, c,
-                   PROP_TAG_NAME("ctrl", "vzoom"),
-		   NULL);
-
-  gv->gv_hstretch_sub =
-    prop_subscribe(0,
-		   PROP_TAG_SET_INT, &gv->gv_hstretch,
-		   PROP_TAG_COURIER, w->glw_root->gr_courier,
-		   PROP_TAG_ROOT, c,
-                   PROP_TAG_NAME("ctrl", "hstretch"),
-		   NULL);
-
-  gv->gv_fstretch_sub =
-    prop_subscribe(0,
-		   PROP_TAG_SET_INT, &gv->gv_fstretch,
-		   PROP_TAG_COURIER, w->glw_root->gr_courier,
-		   PROP_TAG_ROOT, c,
-                   PROP_TAG_NAME("ctrl", "fstretch"),
-		   NULL);
-
-  gv->gv_vo_on_video_sub =
-    prop_subscribe(0,
-		   PROP_TAG_SET_INT, &gv->gv_vo_on_video,
-		   PROP_TAG_COURIER, w->glw_root->gr_courier,
-		   PROP_TAG_ROOT, c,
-                   PROP_TAG_NAME("ctrl", "subalign"),
-		   NULL);
 }
 
 
@@ -739,6 +799,9 @@ set_audio_volume(glw_video_t *gv, float v)
 {
   media_pipe_t *mp = gv->gv_mp;
 
+  if(mp == NULL)
+    return;
+
   if(mp->mp_vol_ui == v)
     return;
 
@@ -753,11 +816,40 @@ set_audio_volume(glw_video_t *gv, float v)
  *
  */
 static void
+set_activation(glw_video_t *gv, int level)
+{
+  if(gv->gv_activation == level)
+    return;
+
+  gv->gv_activation = level;
+
+  if(gv->gv_activation == VIDEO_ACTIVATION_PASSIVE) {
+
+    if(gv->gv_mp != NULL)
+      destroy_pipeline(gv);
+
+    return;
+
+  } else {
+    // Will also create pipeline for us
+    glw_video_play(gv);
+  }
+
+  event_t *e = event_create_int(EVENT_PLAYBACK_ACTIVATION, gv->gv_activation);
+  mp_enqueue_event(gv->gv_mp, e);
+  event_release(e);
+}
+
+
+/**
+ *
+ */
+static void
 glw_video_set(glw_t *w, va_list ap)
 {
   glw_video_t *gv = (glw_video_t *)w;
   glw_attribute_t attrib;
-  prop_t *p, *p2;
+  prop_t *p;
   event_t *e;
 
   do {
@@ -767,10 +859,10 @@ glw_video_set(glw_t *w, va_list ap)
     case GLW_ATTRIB_PROPROOTS3:
       p = va_arg(ap, void *);
       assert(p != NULL);
-      p2 = prop_create(p, "media");
-      
-      prop_link(gv->gv_mp->mp_prop_root, p2);
-      
+
+      prop_ref_dec(gv->gv_media_prop);
+      gv->gv_media_prop = prop_create_r(p, "media");
+
       (void)va_arg(ap, void *); // Parent, just throw it away
       (void)va_arg(ap, void *); // Clone, just throw it away
       break;
@@ -778,20 +870,24 @@ glw_video_set(glw_t *w, va_list ap)
     case GLW_ATTRIB_PRIORITY:
       gv->gv_priority = va_arg(ap, int);
 
-      e = event_create_int(EVENT_PLAYBACK_PRIORITY, gv->gv_priority);
-      mp_enqueue_event(gv->gv_mp, e);
-      event_release(e);
+      if(gv->gv_mp != NULL) {
+        e = event_create_int(EVENT_PLAYBACK_PRIORITY, gv->gv_priority);
+        mp_enqueue_event(gv->gv_mp, e);
+        event_release(e);
+      }
       break;
 
     case GLW_ATTRIB_PROP_MODEL:
-      if(gv->gv_model)
-	prop_ref_dec(gv->gv_model);
-
+      prop_ref_dec(gv->gv_model);
       gv->gv_model = prop_ref_inc(va_arg(ap, prop_t *));
       break;
 
     case GLW_ATTRIB_AUDIO_VOLUME:
       set_audio_volume(gv, va_arg(ap, double));
+      break;
+
+    case GLW_ATTRIB_ACTIVATION:
+      set_activation(gv, va_arg(ap, int));
       break;
 
     default:
@@ -845,9 +941,12 @@ glw_video_render(glw_t *w, const glw_rctx_t *rc)
 
   if(gv->gv_invisible != invisible) {
     gv->gv_invisible = invisible;
-    event_t *e = event_create_int(EVENT_VIDEO_VISIBILITY, !gv->gv_invisible);
-    mp_enqueue_event(gv->gv_mp, e);
-    event_release(e);
+
+    if(gv->gv_mp != NULL) {
+      event_t *e = event_create_int(EVENT_VIDEO_VISIBILITY, !gv->gv_invisible);
+      mp_enqueue_event(gv->gv_mp, e);
+      event_release(e);
+    }
   }
 
   if(gv->gv_engine != NULL)
@@ -891,20 +990,23 @@ glw_video_configure(glw_video_t *gv, const glw_video_engine_t *engine)
 
     if(gv->gv_engine != NULL)
       gv->gv_engine->gve_reset(gv);
-    
+
     gv->gv_engine = engine;
 
-    if(engine->gve_init_on_ui_thread) {
-      gv->gv_need_init = 1;
-      while(1) {
-	if(gv->w.glw_flags & GLW_DESTROYING)
-	  return 1;
-	if(!gv->gv_need_init)
-	  break;
-	hts_cond_wait(&gv->gv_init_cond, &gv->gv_surface_mutex);
+    if(engine != NULL) {
+
+      if(engine->gve_init_on_ui_thread) {
+        gv->gv_need_init = 1;
+        while(1) {
+          if(!gv->gv_active)
+            return 1;
+          if(!gv->gv_need_init)
+            break;
+          hts_cond_wait(&gv->gv_init_cond, &gv->gv_surface_mutex);
+        }
+      } else {
+        engine->gve_init(gv);
       }
-    } else {
-      engine->gve_init(gv);
     }
   }
   return 0;
@@ -935,12 +1037,12 @@ glw_video_get_surface(glw_video_t *gv, const int *w, const int *h)
   hts_mutex_assert(&gv->gv_surface_mutex);
 
   while(1) {
-    if(gv->w.glw_flags & GLW_DESTROYING)
+    if(!gv->gv_active)
       return NULL;
 
     if((gvs = TAILQ_FIRST(&gv->gv_avail_queue)) != NULL) {
       TAILQ_REMOVE(&gv->gv_avail_queue, gvs, gvs_link);
-      
+
       if(w == NULL)
 	return gvs;
 
@@ -958,7 +1060,7 @@ glw_video_get_surface(glw_video_t *gv, const int *w, const int *h)
       gvs->gvs_height[0] = h[0];
       gvs->gvs_height[1] = h[1];
       gvs->gvs_height[2] = h[2];
-      
+
       if(gv->gv_engine != NULL && gv->gv_engine->gve_surface_init != NULL) {
 	gv->gv_engine->gve_surface_init(gv, gvs);
 	return gvs;

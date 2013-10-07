@@ -104,8 +104,6 @@ typedef struct video_decoder {
 
 video_decoder_t *video_decoder_create(media_pipe_t *mp);
 
-void video_decoder_stop(video_decoder_t *vd);
-
 void video_decoder_destroy(video_decoder_t *vd);
 
 void video_deliver_frame_avctx(video_decoder_t *vd,

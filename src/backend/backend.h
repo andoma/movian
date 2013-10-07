@@ -60,6 +60,8 @@ typedef enum {
 typedef struct video_args {
   int flags;
   int priority;
+  int activation;
+  int64_t event_time;
   const char *mimetype;
   const char *canonical_url;
   const char *title;

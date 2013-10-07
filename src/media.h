@@ -62,6 +62,16 @@ enum codec_id {
 
 #define PTS_UNSET INT64_C(0x8000000000000000)
 
+typedef enum {
+
+  VIDEO_ACTIVATION_FULL,
+  VIDEO_ACTIVATION_LOW_BITRATE,
+  VIDEO_ACTIVATION_PRELOAD,
+  VIDEO_ACTIVATION_PASSIVE,
+
+} video_activation_t;
+
+
 void media_init(void);
 
 struct media_buf;

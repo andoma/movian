@@ -239,7 +239,8 @@ static event_t *
 play_video(const char *url, struct media_pipe *mp,
 	   int flags, int priority,
 	   char *errbuf, size_t errlen,
-	   video_queue_t *vq)
+	   video_queue_t *vq, int activation,
+           int64_t event_time)
 {
   htsmsg_t *subs, *sources;
   const char *str;
@@ -258,7 +259,8 @@ play_video(const char *url, struct media_pipe *mp,
   va.season = -1;
 
   va.priority = priority;
-
+  va.activation = activation;
+  va.event_time = event_time;
   LIST_INIT(&vsources);
 
   mp_reinit_streams(mp);
@@ -279,7 +281,7 @@ play_video(const char *url, struct media_pipe *mp,
 	TRACE(TRACE_DEBUG, "vp", "Page %s redirects to video source %s\n",
 	      url, rstr_get(r));
 	event_t *e = play_video(rstr_get(r), mp, flags, priority,
-				errbuf, errlen, vq);
+				errbuf, errlen, vq, activation, event_time);
 	rstr_release(r);
 	return e;
       }
@@ -733,14 +735,16 @@ video_player_idle(void *aux)
   int play_priority = 0;
   rstr_t *play_url = NULL;
   int force_continuous = 0;
-
+  int activation = 0;
+  int64_t event_time = 0;
   while(run) {
     
     if(play_url != NULL) {
       prop_set_void(errprop);
       e = play_video(rstr_get(play_url), mp, 
 		     play_flags, play_priority, 
-		     errbuf, sizeof(errbuf), vq);
+		     errbuf, sizeof(errbuf), vq, activation,
+                     event_time);
       mp_bump_epoch(mp);
       if(e == NULL)
 	prop_set_string(errprop, errbuf);
@@ -769,9 +773,10 @@ video_player_idle(void *aux)
       if(ep->no_audio)
 	play_flags |= BACKEND_VIDEO_NO_AUDIO;
       play_priority = ep->priority;
+      activation = ep->activation;
+      event_time = e->e_ts;
 
-      TRACE(TRACE_DEBUG, "vp", "Playing %s flags:0x%x", ep->url,
-	    play_flags);
+      TRACE(TRACE_DEBUG, "vp", "Playing %s flags:0x%x", ep->url, play_flags);
 
       if(vq != NULL)
 	video_queue_destroy(vq);
@@ -843,7 +848,7 @@ video_playback_create(media_pipe_t *mp)
  *
  */
 void
-video_playback_destroy(media_pipe_t *mp)
+video_playback_stop(media_pipe_t *mp)
 {
   event_t *e = event_create_type(EVENT_EXIT);
   mp_enqueue_event(mp, e);
