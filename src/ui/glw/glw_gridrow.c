@@ -180,6 +180,7 @@ glw_gridrow_ctor(glw_t *w)
 static glw_class_t glw_gridrow = {
   .gc_name = "gridrow",
   .gc_instance_size = sizeof(glw_gridrow_t),
+  .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_nav_descend_mode = GLW_NAV_DESCEND_ALL,
   .gc_render = glw_gridrow_render,
   .gc_set = glw_gridrow_set,
