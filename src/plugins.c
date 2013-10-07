@@ -642,8 +642,6 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
 }
 
 
-
-
 /**
  *
  */
@@ -670,6 +668,32 @@ plugin_load_installed(void)
   }
 }
 
+
+
+/**
+ *
+ */
+static void
+plugin_load_bundled(void)
+{
+  char path[200];
+  char errbuf[200];
+  fa_dir_entry_t *fde;
+
+  snprintf(path, sizeof(path), "dataroot://bundled_apps");
+
+  fa_dir_t *fd = fa_scandir(path, NULL, 0);
+
+  if(fd != NULL) {
+    RB_FOREACH(fde, &fd->fd_entries, fde_link) {
+      if(plugin_load(rstr_get(fde->fde_url), errbuf, sizeof(errbuf), 0, 1, 0)) {
+	TRACE(TRACE_ERROR, "plugins", "Unable to load %s\n%s", 
+              rstr_get(fde->fde_url), errbuf);
+      }
+    }
+    fa_dir_free(fd);
+  }
+}
 
 
 /**
@@ -1050,6 +1074,7 @@ plugins_init2(void)
 {
   hts_mutex_lock(&plugin_mutex);
   plugin_load_installed();
+  plugin_load_bundled();
   static_apps_state = htsmsg_store_load("staticapps") ?: htsmsg_create_map();
   init_group(INIT_GROUP_STATIC_APPS);
   hts_mutex_unlock(&plugin_mutex);
