@@ -31,7 +31,7 @@ struct prop;
 
 void video_playback_create(media_pipe_t *mp);
 
-void video_playback_destroy(media_pipe_t *mp);
+void video_playback_stop(media_pipe_t *mp);
 
 struct prop *video_queue_find_next(struct video_queue *vq, 
 				   struct prop *current, int reverse,

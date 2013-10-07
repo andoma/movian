@@ -519,7 +519,7 @@ video_decoder_create(media_pipe_t *mp)
  *
  */
 void
-video_decoder_stop(video_decoder_t *vd)
+video_decoder_destroy(video_decoder_t *vd)
 {
   media_pipe_t *mp = vd->vd_mp;
 
@@ -528,14 +528,6 @@ video_decoder_stop(video_decoder_t *vd)
   hts_thread_join(&vd->vd_decoder_thread);
   mp_ref_dec(vd->vd_mp);
   vd->vd_mp = NULL;
-}
 
-
-/**
- *
- */
-void
-video_decoder_destroy(video_decoder_t *vd)
-{
   free(vd);
 }

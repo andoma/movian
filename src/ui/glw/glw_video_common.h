@@ -122,6 +122,7 @@ typedef struct glw_video {
   int gv_priority;
   prop_t *gv_model;
   prop_t *gv_origin;
+  prop_t *gv_media_prop;
   char gv_freezed;
 
   /**
@@ -230,6 +231,10 @@ typedef struct glw_video {
   glw_rect_t gv_rect;
 
   int gv_invisible;
+
+  video_activation_t gv_activation;
+
+  int gv_active;
 
 } glw_video_t;
 

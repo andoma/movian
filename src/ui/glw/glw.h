@@ -140,6 +140,7 @@ typedef enum {
   GLW_ATTRIB_AUDIO_VOLUME,
   GLW_ATTRIB_ASPECT,
   GLW_ATTRIB_CHILD_SCALE,
+  GLW_ATTRIB_ACTIVATION,
   GLW_ATTRIB_num,
 } glw_attribute_t;
 
@@ -1256,6 +1257,7 @@ do {						\
   case GLW_ATTRIB_Y_SPACING:                    \
   case GLW_ATTRIB_SCROLL_THRESHOLD:             \
   case GLW_ATTRIB_RADIUS:			\
+  case GLW_ATTRIB_ACTIVATION:			\
     (void)va_arg(ap, int);			\
     break;					\
   case GLW_ATTRIB_ANGLE:			\

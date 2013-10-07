@@ -1110,6 +1110,7 @@ static const token_attrib_t attribtab[] = {
   {"scrollThreshold", set_int,    GLW_ATTRIB_SCROLL_THRESHOLD},
   {"divider",         set_int,    0, set_divider},
   {"cornerRadius",    set_int,    GLW_ATTRIB_RADIUS},
+  {"activation",      set_int,    GLW_ATTRIB_ACTIVATION},
 
   {"color",           set_float3, 0, set_rgb},
   {"translation",     set_float3, 0, set_translation},

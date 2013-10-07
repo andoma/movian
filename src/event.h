@@ -160,6 +160,7 @@ typedef enum {
 
   EVENT_PLAYBACK_PRIORITY,   // 0 = best, higher value == less important 
   EVENT_VIDEO_VISIBILITY,    // 1 = visible (default), 0 = not visible
+  EVENT_PLAYBACK_ACTIVATION,
 
   EVENT_STOP_UI,
 
@@ -250,6 +251,7 @@ typedef struct event_playurl {
   int priority;
   int no_audio;
   struct prop *origin;
+  int activation;
   struct prop *model;
   char *how;
 } event_playurl_t;
@@ -319,7 +321,8 @@ event_t *event_create_str(event_type_t et, const char *url);
 
 event_t *event_create_playurl(const char *url, int primary, int priority,
 			      int no_audio, struct prop *model,
-			      const char *how, struct prop *origin);
+			      const char *how, struct prop *origin,
+			      int activation);
 
 event_t *event_create_openurl(const char *url, const char *view,
 			      struct prop *origin, struct prop *model,

@@ -180,7 +180,7 @@ android_yuvp_deliver(const frame_info_t *fi, glw_video_t *gv)
   int a_epoch;
 
  recheck:
-  if(gv->w.glw_flags & GLW_DESTROYING)
+  if(!gv->gv_active)
     return;
 
   int64_t now = showtime_get_ts();
@@ -286,7 +286,7 @@ android_xxxx_deliver(const frame_info_t *fi, glw_video_t *gv)
   int a_epoch;
 
  recheck:
-  if(gv->w.glw_flags & GLW_DESTROYING)
+  if(!gv->gv_active)
     return;
 
   int64_t now = showtime_get_ts();
@@ -442,7 +442,7 @@ surface_deliver(const frame_info_t *fi, glw_video_t *gv)
   lastts  = ts;
 
  recheck:
-  if(gv->w.glw_flags & GLW_DESTROYING)
+  if(!gv->gv_active)
     return;
 
   int64_t now = showtime_get_ts();
