@@ -24,9 +24,6 @@ SRCS +=	src/pipelines/amp/amp_audio.c
 
 #SRCS +=	src/arch/android/android_audio.c
 
-#SRCS +=	src/video/amp_video.c
-
-
 ${BUILDDIR}/src/pipelines/amp/%.o : CFLAGS = ${OPTFLAGS} -Wmissing-prototypes -Wmissing-declarations -Wimplicit-function-declaration -Werror  -Wno-multichar
 
 ${BUILDDIR}/src/video/amp_video.o : CFLAGS = ${OPTFLAGS} -Wmissing-prototypes -Wmissing-declarations -Wimplicit-function-declaration -Werror  -Wno-multichar
