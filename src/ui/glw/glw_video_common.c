@@ -545,6 +545,12 @@ destroy_pipeline(glw_video_t *gv)
   video_decoder_destroy(gv->gv_vd);
   gv->gv_vd = NULL;
 
+  hts_mutex_lock(&gv->gv_surface_mutex);
+  glw_video_configure(gv, NULL);
+  glw_video_surfaces_cleanup(gv);
+  hts_mutex_unlock(&gv->gv_surface_mutex);
+
+
   mp_ref_dec(gv->gv_mp);
   gv->gv_mp = NULL;
 
@@ -555,11 +561,6 @@ destroy_pipeline(glw_video_t *gv)
   prop_unsubscribe(gv->gv_hstretch_sub);
   prop_unsubscribe(gv->gv_fstretch_sub);
   prop_unsubscribe(gv->gv_vo_on_video_sub);
-
-  hts_mutex_lock(&gv->gv_surface_mutex);
-  glw_video_configure(gv, NULL);
-  glw_video_surfaces_cleanup(gv);
-  hts_mutex_unlock(&gv->gv_surface_mutex);
 
   mystrset(&gv->gv_current_url, NULL);
 }
