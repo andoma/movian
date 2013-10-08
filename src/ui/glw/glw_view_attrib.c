@@ -1035,6 +1035,7 @@ static const token_attrib_t attribtab[] = {
   {"automargin",            mod_flag, GLW2_AUTOMARGIN,             mod_flags2},
   {"expediteSubscriptions", mod_flag, GLW2_EXPEDITE_SUBSCRIPTIONS, mod_flags2},
   {"reverseRender",         mod_flag, GLW2_REVERSE_RENDER,         mod_flags2},
+  {"noClip",                mod_flag, GLW2_NOCLIP,                 mod_flags2},
 
   {"fixedSize",       mod_flag, GLW_IMAGE_FIXED_SIZE,   mod_img_flags},
   {"bevelLeft",       mod_flag, GLW_IMAGE_BEVEL_LEFT,   mod_img_flags},
