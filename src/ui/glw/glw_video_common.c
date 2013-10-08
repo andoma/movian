@@ -659,6 +659,29 @@ glw_video_newframe(glw_t *w, int flags)
 }
 
 
+
+/**
+ *
+ */
+static void
+set_visibility(glw_video_t *gv, int invisible)
+{
+  if(gv->gv_invisible == invisible)
+    return;
+
+  if(gv->gv_engine != NULL && gv->gv_engine->gve_set_mute != NULL)
+    gv->gv_engine->gve_set_mute(gv, invisible);
+
+  gv->gv_invisible = invisible;
+
+  if(gv->gv_mp != NULL) {
+    event_t *e = event_create_int(EVENT_VIDEO_VISIBILITY, !gv->gv_invisible);
+    mp_enqueue_event(gv->gv_mp, e);
+    event_release(e);
+  }
+}
+
+
 /**
  *
  */
@@ -670,6 +693,10 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
   glw_rctx_t *rc, rc0;
 
   switch(signal) {
+  case GLW_SIGNAL_INACTIVE:
+    set_visibility(gv, 1);
+    return 0;
+
   case GLW_SIGNAL_LAYOUT:
     w->glw_root->gr_can_externalize = 0;
 
@@ -940,15 +967,10 @@ glw_video_render(glw_t *w, const glw_rctx_t *rc)
   if(gv->gv_rect.y2 < 0)
     invisible = 1;
 
-  if(gv->gv_invisible != invisible) {
-    gv->gv_invisible = invisible;
+  set_visibility(gv, invisible);
 
-    if(gv->gv_mp != NULL) {
-      event_t *e = event_create_int(EVENT_VIDEO_VISIBILITY, !gv->gv_invisible);
-      mp_enqueue_event(gv->gv_mp, e);
-      event_release(e);
-    }
-  }
+  if(invisible)
+    return;
 
   if(gv->gv_engine != NULL)
     gv->gv_engine->gve_render(gv, &rc1);
@@ -986,6 +1008,8 @@ int
 glw_video_configure(glw_video_t *gv, const glw_video_engine_t *engine)
 {
   hts_mutex_assert(&gv->gv_surface_mutex);
+
+  gv->gv_invisible = -1;
 
   if(gv->gv_engine != engine) {
 
