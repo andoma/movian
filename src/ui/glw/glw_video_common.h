@@ -263,6 +263,8 @@ typedef struct glw_video_engine {
 
   void (*gve_surface_init)(glw_video_t *gv, glw_video_surface_t *gvs);
 
+  void (*gve_set_mute)(glw_video_t *gv, int mute);
+
   LIST_ENTRY(glw_video_engine) gve_link;
 
 } glw_video_engine_t;
