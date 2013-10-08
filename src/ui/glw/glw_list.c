@@ -33,7 +33,6 @@ typedef struct glw_list {
   int current_pos;
   int page_size;
   int touched;
-  int noclip;
 
   int velocity;
 
@@ -62,7 +61,7 @@ typedef struct glw_list {
 #define glw_parent_width  glw_parent_val[1].i32
 #define glw_parent_pos    glw_parent_val[2].f
 #define glw_parent_inst   glw_parent_val[3].i32
-
+#define glw_parent_layouted glw_parent_val[4].i32
 
 const static float top_plane[4] = {0,-1,0,1};
 const static float bottom_plane[4] = {0,1,0,1};
@@ -180,9 +179,12 @@ glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
     
 
     if(ypos - l->filtered_pos > -height &&
-       ypos - l->filtered_pos <  height * 2)
+       ypos - l->filtered_pos <  height * 2) {
       glw_layout0(c, &rc0);
-
+      c->glw_parent_layouted = 1;
+    } else {
+      c->glw_parent_layouted = 0;
+    }
     if(c == l->scroll_to_me) {
       l->scroll_to_me = NULL;
      
@@ -268,6 +270,9 @@ glw_list_layout_x(glw_list_t *l, glw_rctx_t *rc)
     if(xpos - l->filtered_pos > -width0 &&
        xpos - l->filtered_pos <  width0 * 2) {
       glw_layout0(c, &rc0);
+      c->glw_parent_layouted = 1;
+    } else {
+      c->glw_parent_layouted = 0;
     }
 
     if(c == l->scroll_to_me) {
@@ -304,7 +309,8 @@ glw_list_layout_x(glw_list_t *l, glw_rctx_t *rc)
  */
 static void
 glw_list_y_render_one(glw_list_t *l, glw_t *c, int width, int height,
-                      const glw_rctx_t *rc0, const glw_rctx_t *rc1)
+                      const glw_rctx_t *rc0, const glw_rctx_t *rc1,
+                      int noclip)
 {
   int ct, cb;
   int ft, fb;
@@ -312,7 +318,7 @@ glw_list_y_render_one(glw_list_t *l, glw_t *c, int width, int height,
   float y = c->glw_parent_pos - l->filtered_pos;
   glw_rctx_t rc2;
 
-  if(!l->noclip && (y + c->glw_parent_height < 0 || y > height)) {
+  if(!noclip && (y + c->glw_parent_height < 0 || y > height)) {
     c->glw_flags |= GLW_CLIPPED;
     return;
   } else {
@@ -321,7 +327,7 @@ glw_list_y_render_one(glw_list_t *l, glw_t *c, int width, int height,
   
   ct = cb = ft = fb = -1;
   
-  if(l->noclip) {
+  if(noclip) {
     if(y < 0) 
       ft = glw_fader_enable(gr, rc0, top_plane,
                             l->alpha_falloff, l->blur_falloff);
@@ -371,29 +377,32 @@ glw_list_render_y(glw_t *w, const glw_rctx_t *rc)
   if(rc->rc_alpha < 0.01f)
     return;
 
+  int noclip = l->alpha_falloff > 0 || l->blur_falloff > 0 ||
+    w->glw_flags2 & GLW2_NOCLIP;
 
   rc0 = *rc;
-  if(l->noclip)
+  if(noclip)
     glw_store_matrix(w, &rc0);
 
   glw_reposition(&rc0, l->padding_left, rc->rc_height - l->padding_top,
 		 rc->rc_width  - l->padding_right, l->padding_bottom);
 
-  if(!l->noclip)
+  if(!noclip)
     glw_store_matrix(w, &rc0);
   rc1 = rc0;
 
   glw_Translatef(&rc1, 0, 2.0f * l->filtered_pos / rc0.rc_height, 0);
   
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
-    if(c->glw_flags & GLW_HIDDEN)
+    if(c->glw_flags & GLW_HIDDEN || !c->glw_parent_layouted)
       continue;
     if(w->glw_focused != c)
-      glw_list_y_render_one(l, c, rc0.rc_width, rc0.rc_height, &rc0, &rc1);
+      glw_list_y_render_one(l, c, rc0.rc_width, rc0.rc_height, &rc0, &rc1,
+                            noclip);
   }
   if(w->glw_focused != NULL)
     glw_list_y_render_one(l, w->glw_focused, rc0.rc_width, rc0.rc_height,
-                          &rc0, &rc1);
+                          &rc0, &rc1, noclip);
 }
 
 
@@ -415,7 +424,10 @@ glw_list_render_x(glw_t *w, const glw_rctx_t *rc)
   if(rc->rc_alpha < 0.01f)
     return;
 
-  if(l->noclip)
+  int noclip = l->alpha_falloff > 0 || l->blur_falloff > 0 ||
+    w->glw_flags2 & GLW2_NOCLIP;
+
+  if(noclip)
     glw_store_matrix(w, rc);
 
   rc0 = *rc;
@@ -424,18 +436,18 @@ glw_list_render_x(glw_t *w, const glw_rctx_t *rc)
   height = rc0.rc_height;
   width = rc0.rc_width;
 
-  if(!l->noclip)
+  if(!noclip)
     glw_store_matrix(w, &rc0);
   rc1 = rc0;
 
   glw_Translatef(&rc1, -2.0f * l->filtered_pos / width, 0, 0);
   
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
-    if(c->glw_flags & GLW_HIDDEN)
+    if(c->glw_flags & GLW_HIDDEN || !c->glw_parent_layouted)
       continue;
 
     x = c->glw_parent_pos - l->filtered_pos;
-    if(!l->noclip && (x + c->glw_parent_width < 0 || x > width)) {
+    if(!noclip && (x + c->glw_parent_width < 0 || x > width)) {
       c->glw_flags |= GLW_CLIPPED;
       continue;
     } else {
@@ -444,7 +456,7 @@ glw_list_render_x(glw_t *w, const glw_rctx_t *rc)
 
     lc = rclip = lf = rf = -1;
 
-    if(l->noclip) {
+    if(noclip) {
       if(x < 0) {
 	lf = glw_fader_enable(w->glw_root, &rc0, left_plane,
 			      l->alpha_falloff, l->blur_falloff);
@@ -678,12 +690,10 @@ glw_list_set(glw_t *w, va_list ap)
 
     case GLW_ATTRIB_ALPHA_FALLOFF:
       l->alpha_falloff = va_arg(ap, double);
-      l->noclip = 1;
       break;
 
     case GLW_ATTRIB_BLUR_FALLOFF:
       l->blur_falloff = va_arg(ap, double);
-      l->noclip = 1;
       break;
 
     case GLW_ATTRIB_SCROLL_THRESHOLD:
