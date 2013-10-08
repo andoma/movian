@@ -39,6 +39,7 @@
     });
 
     widget(container_z, {
+      weight: 2;
       widget(quad, {
         color: 0.4;
       });
@@ -76,6 +77,9 @@ widget(container_y, {
 	    caption: fmt("Showtime %s", $global.showtime.version);
 	    align: center;
 	  });
+
+          InfoLine(_("Framerate"),
+                   fmt("%2.2f Hz", $ui.framerate));
 
 	  VerticalSeparator();
 
