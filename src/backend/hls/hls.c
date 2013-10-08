@@ -564,9 +564,7 @@ demuxer_update_bw(hls_t *h, hls_demuxer_t *hd)
   if(h->h_blocked != hs->hs_block_cnt || ts < 1)
     return;
 
-  uint64_t bw = 8000000ULL * hs->hs_size / ts;
-
-  bw = MIN(bw, 100000000); // Clamp to 100Mbps to avoid wrap
+  int bw = MIN(8000000ULL * hs->hs_size / ts, 100000000);
 
   if(hd->hd_bw == 0) {
     hd->hd_bw = bw;
