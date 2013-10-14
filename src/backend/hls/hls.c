@@ -387,7 +387,7 @@ variant_update(hls_variant_t *hv, hls_t *h)
   if(hv->hv_loaded == now)
     return 0;
 
-  HLS_TRACE(h, "Updating variant %d", hv->hv_bitrate);
+  int64_t ts = showtime_get_ts();
 
   buf_t *b = fa_load(hv->hv_url, NULL, errbuf, sizeof(errbuf), NULL, 
 		     FA_COMPRESSION, NULL, NULL);
@@ -406,6 +406,7 @@ variant_update(hls_variant_t *hv, hls_t *h)
   int byte_size = -1;
   int seq = 1;
   hls_variant_parser_t hvp;
+  int newsegs = 0;
 
   memset(&hvp, 0, sizeof(hvp));
 
@@ -462,8 +463,8 @@ variant_update(hls_variant_t *hv, hls_t *h)
 	byte_size = -1;
 
 	hv->hv_last_seq = hs->hs_seq;
+        newsegs++;
 
-        HLS_TRACE(h, "Added new seq %d", hs->hs_seq);
       }
       seq++;
     }
@@ -471,6 +472,13 @@ variant_update(hls_variant_t *hv, hls_t *h)
 
   buf_release(b);
   rstr_release(hvp.hvp_key_url);
+
+  ts = showtime_get_ts() - ts;
+
+  HLS_TRACE(h, "%s: Updating variant %d in %d us. %d new segments",
+            h->h_mp->mp_name, hv->hv_bitrate,
+            (int)ts, newsegs);
+
   return 0;
 }
 
@@ -483,7 +491,7 @@ hls_dump(const hls_t *h)
 {
   const hls_variant_t *hv;
   const char *txt;
-  HLS_TRACE(h, "Base URL: %s", h->h_baseurl);
+  HLS_TRACE(h, "%s: Base URL: %s", h->h_mp->mp_name, h->h_baseurl);
   HLS_TRACE(h, "Variants");
   TAILQ_FOREACH(hv, &h->h_primary.hd_variants, hv_link) {
     HLS_TRACE(h, "  %s", hv->hv_url);
@@ -573,8 +581,8 @@ demuxer_update_bw(hls_t *h, hls_demuxer_t *hd)
   } else {
     hd->hd_bw = (bw + hd->hd_bw * 3) / 4;
   }
-  HLS_TRACE(h, "Estimated bandwidth: %d bps (filtered: %d bps)",
-	    bw, hd->hd_bw);
+  HLS_TRACE(h, "%s: Estimated bandwidth: %d bps (filtered: %d bps)",
+	    h->h_mp->mp_name, bw, hd->hd_bw);
 }
 
 
@@ -601,19 +609,24 @@ segment_open(hls_t *h, hls_segment_t *hs, int fast_fail, int streaming)
 
   int flags = 0;
 
-  if(streaming)
+  if(streaming) {
     flags |= FA_STREAMING;
+  } else {
+    if(hs->hs_byte_size != -1 && hs->hs_byte_offset != -1)
+      flags |= FA_BUFFERED_SMALL;
+    else
+      flags |= FA_BUFFERED_BIG;
+  }
+
 
   if(fast_fail)
     flags |= FA_FAST_FAIL;
 
-  if(hs->hs_byte_size != -1 && hs->hs_byte_offset != -1)
-    flags |= FA_BUFFERED_SMALL;
 
   hs->hs_opened_at = showtime_get_ts();
   hs->hs_block_cnt = h->h_blocked;
   
-  HLS_TRACE(h, "Open segment %d in %d bps @ %s",
+  HLS_TRACE(h, "%s: Open segment %d in %d bps @ %s", h->h_mp->mp_name,
 	    hs->hs_seq, hs->hs_variant->hv_bitrate, hs->hs_url);
 
   fh = fa_open_ex(hs->hs_url, errbuf, sizeof(errbuf), flags, NULL);
@@ -682,7 +695,7 @@ segment_open(hls_t *h, hls_segment_t *hs, int fast_fail, int streaming)
       if(hs->hs_astream == -1 && ctx->codec_id == CODEC_ID_AAC)
 	hs->hs_astream = j;
       break;
-	
+
     default:
       break;
     }
@@ -1080,6 +1093,13 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
     break;
   }
 
+  hd->hd_seek = TAILQ_FIRST(&hd->hd_variants);
+
+  if(TAILQ_NEXT(hd->hd_seek, hv_link) != NULL && 0)
+    hd->hd_seek = TAILQ_NEXT(hd->hd_seek, hv_link);
+
+
+
   if(va->flags & BACKEND_VIDEO_RESUME ||
      (video_settings.resume_mode == VIDEO_RESUME_YES &&
       !(va->flags & BACKEND_VIDEO_START_FROM_BEGINNING))) {
@@ -1096,7 +1116,16 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 
     if(mb == NULL) {
       mp->mp_eof = 0;
+
+      if(actset && h->h_playback_activation < VIDEO_ACTIVATION_PRELOAD)
+        HLS_TRACE(h, "%s: Before get_segment: %d us\n", mp->mp_name,
+                  (int)(showtime_get_ts() - actset));
+
       hls_segment_t *hs = demuxer_get_segment(h, hd);
+
+      if(actset && h->h_playback_activation < VIDEO_ACTIVATION_PRELOAD)
+        HLS_TRACE(h, "%s: After get_segment: %d us\n", mp->mp_name,
+                  (int)(showtime_get_ts() - actset));
 
       if(hs == HLS_SEGMENT_EOF || hs == HLS_SEGMENT_ERR) {
 	mb = MB_EOF;
@@ -1121,7 +1150,13 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
       }
 
       AVPacket pkt;
+      if(actset && h->h_playback_activation < VIDEO_ACTIVATION_PRELOAD)
+        HLS_TRACE(h, "%s: Before read frame: %d us\n", mp->mp_name,
+                  (int)(showtime_get_ts() - actset));
       int r = av_read_frame(hs->hs_fctx, &pkt);
+      if(actset && h->h_playback_activation < VIDEO_ACTIVATION_PRELOAD)
+        HLS_TRACE(h, "%s: After read frame: %d us\n", mp->mp_name,
+                  (int)(showtime_get_ts() - actset));
       if(r == AVERROR(EAGAIN))
         continue;
 
@@ -1209,8 +1244,8 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
       mb = NULL; /* Enqueue succeeded */
 
       if(actset) {
-        int64_t delay = showtime_get_ts() - actset;
-        TRACE(TRACE_DEBUG, "HLS", "Delay until enqueue: %dus\n", (int)delay);
+        HLS_TRACE(h, "%s: Delay until enqueue: %d us\n", mp->mp_name,
+                  (int)(showtime_get_ts() - actset));
         actset = 0;
       }
 
@@ -1242,6 +1277,17 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 
       if(h->h_playback_activation != ei->val) {
         h->h_playback_activation = ei->val;
+        HLS_TRACE(h, "%s: Got activation after %d us\n", mp->mp_name,
+                  (int)(showtime_get_ts() - e->e_ts));
+
+        if(h->h_playback_activation >= VIDEO_ACTIVATION_PRELOAD) {
+          HLS_TRACE(h, "%s: Flush", mp->mp_name);
+          mp_flush(mp, 0);
+
+          if(mb != NULL && mb != MB_EOF && mb != MB_NYA)
+            media_buf_free_unlocked(mp, mb);
+          mb = NULL;
+        }
         actset = e->e_ts;
       }
 
