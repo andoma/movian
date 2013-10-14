@@ -91,71 +91,15 @@ amp_video_alloc_buffer(amp_video_t *av)
 /**
  *
  */
-static UINT32
-amp_video_buffer_fullness(amp_video_t *av)
-{
-  HRESULT ret;
-  UINT32 num_bd_remained;
-
-  ret = AMP_BDCHAIN_GetItemNum(av->video_stream_queue, &num_bd_remained);
-  assert(ret == SUCCESS);
-  return MAX_VIDEO_STREAM_SIZE - num_bd_remained;
-}
-
-
-/**
- *
- */
 static void
-amp_video_flush(struct media_codec *mc, struct video_decoder *vd)
+amp_video_free_buffer(amp_video_t *av)
 {
-  amp_video_t *av = mc->opaque;
-  av->annexb.extradata_injected = 0;
-  av->av_configured = 0;
-}
-
-
-/**
- *
- */
-static void
-amp_video_close(struct media_codec *mc)
-{
-  HRESULT ret;
-
-  amp_video_t *av = mc->opaque;
-  const amp_extra_t *ae = mc->mp->mp_extra;
-
-  AMP_RPC(ret, AMP_VDEC_SetState, av->amp_vdec, AMP_IDLE);
-  assert(ret == SUCCESS);
-
-  ret = AMP_DisconnectApp(av->amp_vdec, AMP_PORT_INPUT, 0, amp_vdec_callback);
-  assert(ret == SUCCESS);
-
-  AMP_RPC(ret, AMP_VDEC_Close, av->amp_vdec);
-  assert(ret == SUCCESS);
-
-  AMP_RPC(ret, AMP_VDEC_Destroy, av->amp_vdec);
-  assert(ret == SUCCESS);
-
-  while(1) {
-    UINT32 num_bd_allocated;
-
-    ret = AMP_BDCHAIN_GetItemNum(av->video_stream_queue, &num_bd_allocated);
-    assert(ret == SUCCESS);
-
-    if(num_bd_allocated < MAX_VIDEO_STREAM_SIZE) {
-      usleep(50000);
-    } else {
-      break;
-    }
-  }
-
   AMP_BD_HANDLE buf_desc;
   UINT32 num_bd_allocated;
   UINT32 i;
   AMP_BDTAG_MEMINFO *mem_info;
   AMP_SHM_HANDLE handle_share_mem;
+  HRESULT ret;
 
   ret = AMP_BDCHAIN_GetItemNum(av->video_stream_queue, &num_bd_allocated);
   assert(ret == SUCCESS);
@@ -178,7 +122,122 @@ amp_video_close(struct media_codec *mc)
 
   ret = AMP_SHM_Release(handle_share_mem);
   assert(ret == SUCCESS);
+}
 
+
+/**
+ *
+ */
+static UINT32
+amp_video_buffer_fullness(amp_video_t *av)
+{
+  HRESULT ret;
+  UINT32 num_bd_remained;
+
+  ret = AMP_BDCHAIN_GetItemNum(av->video_stream_queue, &num_bd_remained);
+  assert(ret == SUCCESS);
+  return MAX_VIDEO_STREAM_SIZE - num_bd_remained;
+}
+
+
+/**
+ *
+ */
+static void
+amp_video_init_vdec(amp_video_t *av, amp_extra_t *ae)
+{
+  HRESULT ret;
+  AMP_COMPONENT_CONFIG amp_config;
+
+  amp_video_alloc_buffer(av);
+
+  AMP_RPC(ret, AMP_FACTORY_CreateComponent, amp_factory,
+          AMP_COMPONENT_VDEC, 0, &av->amp_vdec);
+  assert(ret == SUCCESS);
+
+  AmpMemClear(&amp_config, sizeof(AMP_COMPONENT_CONFIG));
+  amp_config._d = AMP_COMPONENT_VDEC;
+  amp_config._u.pVDEC.mode = AMP_TUNNEL;
+  amp_config._u.pVDEC.uiType = MEDIA_VES_AVC;
+  amp_config._u.pVDEC.uiFlag |= 1 << 9;
+  AMP_RPC(ret, AMP_VDEC_Open, av->amp_vdec, &amp_config);
+  assert(ret == SUCCESS);
+
+  ret = AMP_ConnectApp(av->amp_vdec, AMP_PORT_INPUT, 0, amp_vdec_callback, av);
+  assert(ret == SUCCESS);
+
+  AMP_RPC(ret, AMP_VDEC_SetState, av->amp_vdec, AMP_EXECUTING);
+  assert(ret == SUCCESS);
+}
+
+
+/**
+ *
+ */
+static void
+amp_video_deinit_vdec(amp_video_t *av, const amp_extra_t *ae,
+                      const media_pipe_t *mp)
+{
+  HRESULT ret;
+
+  if(!av->av_running)
+    return;
+
+  TRACE(TRACE_DEBUG, "AMP", "%s: Deinit VDEC", mp->mp_name);
+
+  av->av_running = 0;
+
+  AMP_RPC(ret, AMP_VDEC_SetState, av->amp_vdec, AMP_IDLE);
+  assert(ret == SUCCESS);
+
+  ret = AMP_DisconnectApp(av->amp_vdec, AMP_PORT_INPUT, 0, amp_vdec_callback);
+  assert(ret == SUCCESS);
+
+  AMP_RPC(ret, AMP_VDEC_Close, av->amp_vdec);
+  assert(ret == SUCCESS);
+
+  AMP_RPC(ret, AMP_VDEC_Destroy, av->amp_vdec);
+  assert(ret == SUCCESS);
+
+  while(1) {
+    UINT32 num_bd_allocated;
+
+    ret = AMP_BDCHAIN_GetItemNum(av->video_stream_queue, &num_bd_allocated);
+    assert(ret == SUCCESS);
+
+    if(num_bd_allocated < MAX_VIDEO_STREAM_SIZE) {
+      usleep(5000);
+    } else {
+      break;
+    }
+  }
+
+  amp_video_free_buffer(av);
+  TRACE(TRACE_DEBUG, "AMP", "%s: Deinit VDEC done", mp->mp_name);
+}
+
+
+/**
+ *
+ */
+static void
+amp_video_flush(struct media_codec *mc, struct video_decoder *vd)
+{
+  amp_video_t *av = mc->opaque;
+  av->annexb.extradata_injected = 0;
+  av->av_configured = 0;
+  amp_video_deinit_vdec(av, mc->mp->mp_extra, mc->mp);
+}
+
+
+/**
+ *
+ */
+static void
+amp_video_close(struct media_codec *mc)
+{
+  amp_video_t *av = mc->opaque;
+  amp_video_deinit_vdec(av, mc->mp->mp_extra, mc->mp);
 
   h264_to_annexb_cleanup(&av->annexb);
   free(av);
@@ -190,7 +249,7 @@ amp_video_close(struct media_codec *mc)
  */
 static void
 video_packet_enqueue(amp_video_t *av, const void *data, int length,
-                     uint64_t pts, uint64_t dts)
+                     uint64_t pts, uint64_t dts, const media_pipe_t *mp)
 {
   HRESULT ret;
   UINT32 num_bd_remained;
@@ -205,12 +264,13 @@ video_packet_enqueue(amp_video_t *av, const void *data, int length,
   assert(ret == SUCCESS);
 
   if(num_bd_remained == 0) {
-    TRACE(TRACE_DEBUG, "AMP", "Video buffer overflow\n");
+    TRACE(TRACE_DEBUG, "AMP", "%s: Video buffer overflow", mp->mp_name);
     return;
   }
 
   if(length > VIDEO_ES_BUFFER_SIZE) {
-    TRACE(TRACE_DEBUG, "AMP", "Unexpected video frame size %d\n", length);
+    TRACE(TRACE_DEBUG, "AMP", "%s: Unexpected video frame size %d",
+          length, mp->mp_name);
     return;
   }
 
@@ -273,14 +333,33 @@ video_packet_enqueue(amp_video_t *av, const void *data, int length,
  *
  */
 static void
-submit_au(amp_video_t *av, void *data, size_t len, int64_t pts, int64_t dts)
+submit_au(amp_video_t *av, void *data, size_t len, int64_t pts, int64_t dts,
+          const media_pipe_t *mp)
 {
   const static AVRational mpeg_tc = {1, 90000};
 
   pts = pts != PTS_UNSET ? av_rescale_q(pts, AV_TIME_BASE_Q, mpeg_tc) : pts;
   dts = dts != PTS_UNSET ? av_rescale_q(dts, AV_TIME_BASE_Q, mpeg_tc) : dts;
 
-  video_packet_enqueue(av, data, len, pts, dts);
+  video_packet_enqueue(av, data, len, pts, dts, mp);
+}
+
+
+/**
+ *
+ */
+static void
+try_configure(amp_video_t *av, media_codec_t *mc, media_pipe_t *mp)
+{
+  if(av->av_configured)
+    return;
+
+  if(!mp->mp_set_video_codec('amp', mc, mp->mp_video_frame_opaque)) {
+    av->av_configured = 1;
+  } else {
+    TRACE(TRACE_DEBUG, "AMP", "%s: Video codec failed to enable video output",
+          mp->mp_name);
+  }
 }
 
 
@@ -294,23 +373,42 @@ amp_video_decode(struct media_codec *mc, struct video_decoder *vd,
   media_pipe_t *mp = mq->mq_mp;
   amp_video_t *av = mc->opaque;
 
+  //  TRACE(TRACE_DEBUG, "AMPVDEC", "%s: Video packet enqueue", mp->mp_name);
+
+  if(!av->av_running) {
+    av->av_running = 1;
+    amp_video_init_vdec(av, mp->mp_extra);
+  }
+
+  int r = 0;
   while(1) {
 
     int fullness = amp_video_buffer_fullness(av);
 
     // XXX This is crap, real events should be used here instead
 
-    TRACE(TRACE_DEBUG, "AMP", "video fullness: %d", fullness);
     if(fullness >  MAX_VIDEO_STREAM_SIZE * 7 / 8) {
       usleep(10000);
+
+      try_configure(av, mc, mp);
+      r++;
+      if(r > 10)
+        TRACE(TRACE_DEBUG, "AMP", "%s: Stalling cause pipeline is full",
+              mp->mp_name);
+
+      if(r > 20)
+        return;
+
       continue;
     }
     break;
   }
 
+  try_configure(av, mc, mp);
+
   if(av->annexb.extradata != NULL && !av->annexb.extradata_injected) {
     submit_au(av, av->annexb.extradata, av->annexb.extradata_size,
-              mb->mb_pts, mb->mb_dts);
+              mb->mb_pts, mb->mb_dts, mp);
     av->annexb.extradata_injected = 1;
   }
 
@@ -318,14 +416,9 @@ amp_video_decode(struct media_codec *mc, struct video_decoder *vd,
   size_t size   = mb->mb_size;
 
   h264_to_annexb(&av->annexb, &data, &size);
-  submit_au(av, data, size, mb->mb_pts, mb->mb_dts);
+  submit_au(av, data, size, mb->mb_pts, mb->mb_dts, mp);
 
-  TRACE(TRACE_DEBUG, "AMP", "Enqueued video frame");
 
-  if(!av->av_configured) {
-    av->av_configured = 1;
-    mp->mp_set_video_codec('amp', mc, mp->mp_video_frame_opaque);
-  }
 }
 
 
@@ -337,7 +430,6 @@ amp_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
                  media_pipe_t *mp)
 {
   HRESULT ret;
-  AMP_COMPONENT_CONFIG amp_config;
   amp_extra_t *ae = mp->mp_extra;
 
   if(mc->codec_id != CODEC_ID_H264)
@@ -349,31 +441,6 @@ amp_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 
   if(mcp != NULL && mcp->extradata_size)
     h264_to_annexb_init(&av->annexb, mcp->extradata, mcp->extradata_size);
-
-  int64_t t0 = showtime_get_ts();
-
-  amp_video_alloc_buffer(av);
-
-  AMP_RPC(ret, AMP_FACTORY_CreateComponent, amp_factory,
-          AMP_COMPONENT_VDEC, 0, &av->amp_vdec);
-  assert(ret == SUCCESS);
-
-  AmpMemClear(&amp_config, sizeof(AMP_COMPONENT_CONFIG));
-  amp_config._d = AMP_COMPONENT_VDEC;
-  amp_config._u.pVDEC.mode = AMP_TUNNEL;
-  amp_config._u.pVDEC.uiType = MEDIA_VES_AVC;
-  amp_config._u.pVDEC.uiFlag |= 1 << 9;
-  AMP_RPC(ret, AMP_VDEC_Open, av->amp_vdec, &amp_config);
-  assert(ret == SUCCESS);
-
-  ret = AMP_ConnectApp(av->amp_vdec, AMP_PORT_INPUT, 0, amp_vdec_callback, av);
-  assert(ret == SUCCESS);
-
-  AMP_RPC(ret, AMP_VDEC_SetState, av->amp_vdec, AMP_EXECUTING);
-  assert(ret == SUCCESS);
-
-  TRACE(TRACE_DEBUG, "AMP", "Video codec setup time: %d",
-        (int)(showtime_get_ts() - t0));
 
   mc->decode = amp_video_decode;
   mc->flush  = amp_video_flush;
