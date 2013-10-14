@@ -439,7 +439,8 @@ create_pipeline(glw_video_t *gv)
 
   gv->gv_active = 1;
 
-  gv->gv_mp = mp_create("Video decoder", MP_VIDEO | MP_PRIMABLE, NULL);
+  gv->gv_mp = mp_create(gv->w.glw_id ?: "GLW Video",
+                        MP_VIDEO | MP_PRIMABLE, NULL);
 
   prop_link(gv->gv_mp->mp_prop_root, gv->gv_media_prop);
 
@@ -851,6 +852,9 @@ set_activation(glw_video_t *gv, int level)
 
   gv->gv_activation = level;
 
+  TRACE(TRACE_DEBUG, "GLW", "%s: Activation set to %d",
+        gv->w.glw_id ?: "GLW Video", level);
+
   if(gv->gv_activation == VIDEO_ACTIVATION_PASSIVE) {
 
     if(gv->gv_mp != NULL)
@@ -862,6 +866,9 @@ set_activation(glw_video_t *gv, int level)
     // Will also create pipeline for us
     glw_video_play(gv);
   }
+
+  if(gv->gv_mp == NULL)
+    return;
 
   event_t *e = event_create_int(EVENT_PLAYBACK_ACTIVATION, gv->gv_activation);
   mp_enqueue_event(gv->gv_mp, e);
