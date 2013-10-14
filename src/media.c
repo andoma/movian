@@ -268,6 +268,8 @@ mp_create(const char *name, int flags, const char *type)
   prop_t *p;
 
   mp = calloc(1, sizeof(media_pipe_t));
+  mp->mp_name = strdup(name);
+
   mp->mp_vol_ui = 1.0f;
 
   mp->mp_satisfied = -1;
@@ -284,8 +286,6 @@ mp_create(const char *name, int flags, const char *type)
   mp->mp_refcount = 1;
 
   mp->mp_buffer_limit = 1 * 1024 * 1024; 
-
-  mp->mp_name = name;
 
   hts_mutex_init(&mp->mp_mutex);
   hts_mutex_init(&mp->mp_clock_mutex);
@@ -709,6 +709,8 @@ mp_destroy(media_pipe_t *mp)
 
   if(mp->mp_satisfied == 0)
     atomic_add(&media_buffer_hungry, -1);
+
+  free(mp->mp_name);
 
   free(mp);
 }
