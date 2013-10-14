@@ -43,7 +43,7 @@ glw_gridrow_layout(glw_gridrow_t *ggr, glw_rctx_t *rc)
     glw_lp(&gg->filtered_xpos, w->glw_root, gg->current_xpos, 0.1);
 
   int xpos = 0;
-  int offset = rc->rc_width / 2 - gg->filtered_xpos;
+  int offset = rc->rc_width / 2 - gg->filtered_xpos - col_width / 2;
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
@@ -56,7 +56,7 @@ glw_gridrow_layout(glw_gridrow_t *ggr, glw_rctx_t *rc)
 
     if(c == ggr->scroll_to_me) {
       ggr->scroll_to_me = NULL;
-      gg->current_xpos = xpos + col_width / 2;
+      gg->current_xpos = xpos;
     }
     xpos += col_width;
     c->glw_norm_weight = scale;
