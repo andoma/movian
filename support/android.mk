@@ -51,4 +51,4 @@ stop:
 	${ADB} shell am force-stop com.showtimemediacenter.showtime
 
 logcat:
-	${ADB} logcat ActivityManager:I Showtime:D AndroidRuntime:D DEBUG:D *:S
+	${ADB} logcat -v time ActivityManager:I Showtime:D AndroidRuntime:D DEBUG:D *:S
