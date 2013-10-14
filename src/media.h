@@ -345,7 +345,7 @@ typedef struct media_track_mgr {
 typedef struct media_pipe {
   int mp_refcount;
 
-  const char *mp_name;
+  char *mp_name;
 
   LIST_ENTRY(media_pipe) mp_stack_link;
   int mp_flags;
