@@ -35,5 +35,7 @@ typedef struct amp_video {
   AMP_COMPONENT amp_vdec;
 
   int av_configured;
-  
+
+  int av_running;
+
 } amp_video_t;

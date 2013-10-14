@@ -54,8 +54,10 @@ amp_mp_init(media_pipe_t *mp)
   AMP_RPC(ret, AMP_CLK_SetClockRate, ae->amp_clk, 1000, 1000);
   assert(ret == SUCCESS);
 
+#if 0
   AMP_RPC(ret, AMP_CLK_SetState,  ae->amp_clk, AMP_EXECUTING);
   assert(ret == SUCCESS);
+#endif
 }
 
 

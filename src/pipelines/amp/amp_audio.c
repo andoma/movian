@@ -94,10 +94,10 @@ amp_audio_stop(decoder_t *d)
 
   ret = AMP_SND_RemoveInputTunnel(d->amp_sound, d->amp_tunnel);
   assert(ret == SUCCESS);
-
+#if 0
   ret = AMP_DisconnectComp(ae->amp_clk, 1, d->amp_aren, 0);
   assert(ret == SUCCESS);
-
+#endif
   ret = AMP_DisconnectComp(d->amp_adec, 0, d->amp_aren, 1);
   assert(ret == SUCCESS);
 
@@ -322,10 +322,10 @@ amp_audio_reconfig(audio_decoder_t *ad)
 
   ret = AMP_ConnectComp(d->amp_adec, 0, d->amp_aren, 1);
   assert(ret == SUCCESS);
-
+#if 0
   ret = AMP_ConnectComp(ae->amp_clk, 1, d->amp_aren, 0);
   assert(ret == SUCCESS);
-
+#endif
   ret = AMP_SND_SetupInputTunnel(d->amp_sound, d->amp_aren, 0, &d->amp_tunnel);
   assert(ret == SUCCESS);
 
