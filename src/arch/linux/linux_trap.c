@@ -39,6 +39,8 @@
 
 #include "showtime.h"
 
+int (*extra_traphandler)(int sig, siginfo_t *si, void *UC);
+
 #define TRAPMSG(fmt...) TRACE(TRACE_EMERG, "CRASH", fmt)
 
 #define MAXFRAMES 100
@@ -258,6 +260,10 @@ static void
 traphandler(int sig, siginfo_t *si, void *UC)
 {
   ucontext_t *uc = UC;
+
+  if(extra_traphandler != NULL && !extra_traphandler(sig, si, UC))
+    return;
+    
   static void *frames[MAXFRAMES];
   char buf[256];
   int nframes = backtrace(frames, MAXFRAMES);
@@ -324,6 +330,7 @@ traphandler(int sig, siginfo_t *si, void *UC)
 #endif
 
   dumpstack(frames, nframes);
+  _exit(8);
 }
 
 
@@ -370,7 +377,7 @@ trap_init(void)
   sigaddset(&m, SIGFPE);
 
   sa.sa_sigaction = traphandler;
-  sa.sa_flags = SA_SIGINFO | SA_RESETHAND;
+  sa.sa_flags = SA_SIGINFO;
   sigaction(SIGSEGV, &sa, &old);
   sigaction(SIGBUS,  &sa, &old);
   sigaction(SIGILL,  &sa, &old);
