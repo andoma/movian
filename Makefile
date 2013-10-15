@@ -257,6 +257,12 @@ SRCS-$(CONFIG_VDPAU)    += src/video/vdpau.c
 SRCS-$(CONFIG_PS3_VDEC) += src/video/ps3_vdec.c src/video/h264_annexb.c
 SRCS-$(CONFIG_VDA)      += src/video/vda.c
 
+SRCS-$(CONFIG_AMP) += \
+	src/pipelines/amp/amp.c \
+	src/pipelines/amp/amp_video.c \
+	src/ui/glw/glw_video_amp.c \
+	src/pipelines/amp/amp_audio.c
+
 ##############################################################
 # Subtitles
 ##############################################################

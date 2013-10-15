@@ -15,14 +15,7 @@ SRCS += src/arch/android/android.c \
 
 SRCS+=  src/arch/linux/linux_process_monitor.c
 
-SRCS+=  src/pipelines/amp/amp.c \
-	src/pipelines/amp/amp_video.c \
-	src/ui/glw/glw_video_amp.c \
-
-
-SRCS +=	src/pipelines/amp/amp_audio.c 
-
-#SRCS +=	src/arch/android/android_audio.c
+SRCS +=	src/arch/android/android_audio.c
 
 ${BUILDDIR}/src/pipelines/amp/%.o : CFLAGS = ${OPTFLAGS} -Wmissing-prototypes -Wmissing-declarations -Wimplicit-function-declaration -Werror  -Wno-multichar
 
