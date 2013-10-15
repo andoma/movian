@@ -531,6 +531,20 @@ fab_seek_is_fast(fa_handle_t *handle)
 /**
  *
  */
+static int
+fab_info(fa_handle_t *handle, fa_info_t *fi)
+{
+  buffered_file_t *bf = (buffered_file_t *)handle;
+  fa_handle_t *fh = bf->bf_src;
+  if(fh->fh_proto->fap_info != NULL)
+    return fh->fh_proto->fap_info(fh, fi);
+  return 1;
+}
+
+
+/**
+ *
+ */
 static fa_protocol_t fa_protocol_buffered = {
   .fap_name  = "buffer",
   .fap_close = fab_close,
@@ -538,6 +552,7 @@ static fa_protocol_t fa_protocol_buffered = {
   .fap_seek  = fab_seek,
   .fap_fsize = fab_fsize,
   .fap_seek_is_fast = fab_seek_is_fast,
+  .fap_info = fab_info,
 };
 
 
