@@ -1,0 +1,37 @@
+widget(container_z, {
+
+  widget(video, {
+    source: $view.currentFocused.url;
+  });
+
+  widget(grid, {
+
+    widget(gridrow, {
+
+      $view.currentFocused = focusedChild();
+
+      cloner($page.model.nodes, container_y, {
+        focusable: true;
+
+        space(4);
+
+        widget(container_z, {
+          filterConstraintY: true;
+          widget(quad, {
+            color: 0;
+            alpha: 0.5;
+          });
+          widget(label, {
+            caption: $self.metadata.title;
+            color: 0.5 + isFocused();
+            align: center;
+            sizeScale: 3;
+            shadow: true;
+            outline: true;
+          });
+        });
+        space(1);
+      });
+    });
+  });
+});
