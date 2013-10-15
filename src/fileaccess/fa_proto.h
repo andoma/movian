@@ -199,6 +199,12 @@ typedef struct fa_protocol {
   int (*fap_makedirs)(struct fa_protocol *fap, const char *url,
                       char *errbuf, size_t errsize);
 
+  /**
+   * Get some additional info about a filehandle
+   */
+
+  int (*fap_info)(fa_handle_t *fh, fa_info_t *fi);
+
 } fa_protocol_t;
 
 

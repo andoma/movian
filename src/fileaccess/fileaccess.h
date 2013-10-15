@@ -49,6 +49,14 @@ int fileaccess_init(void);
  */
 RB_HEAD(fa_dir_entry_tree, fa_dir_entry);
 
+#define FA_REMOTE_CACHE_UNKNOWN 0
+#define FA_REMOTE_CACHE_HIT     1
+#define FA_REMOTE_CACHE_MISS    2
+
+typedef struct fa_info {
+  int remote_cache_status;
+} fa_info_t;
+
 
 /**
  *
@@ -197,6 +205,8 @@ int fa_copy_from_fh(const char *to, fa_handle_t *src,
 int fa_copy(const char *to, const char *from, char *errbuf, size_t errsize);
 
 int fa_makedirs(const char *url, char *errbuf, size_t errsize);
+
+int fa_info(fa_handle_t *fh, fa_info_t *fi);
 
 void fa_sanitize_filename(char *filename);
 

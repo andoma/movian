@@ -86,6 +86,8 @@ typedef struct hls_segment {
 
   uint8_t hs_crypto;
 
+  uint8_t hs_remote_cache_status;
+
   rstr_t *hs_key_url;
   uint8_t hs_iv[16];
 
@@ -641,16 +643,25 @@ segment_open(hls_t *h, hls_segment_t *hs, int fast_fail, int streaming)
   hs->hs_opened_at = showtime_get_ts();
   hs->hs_block_cnt = h->h_blocked;
   
-  HLS_TRACE(h, "%s: Open segment %d in %d bps @ %s", h->h_mp->mp_name,
-	    hs->hs_seq, hs->hs_variant->hv_bitrate, hs->hs_url);
-
   fh = fa_open_ex(hs->hs_url, errbuf, sizeof(errbuf), flags, NULL);
   if(fh == NULL) {
     TRACE(TRACE_INFO, "HLS", "Unable to open segment %s -- %s",
 	  hs->hs_url, errbuf);
     return SEGMENT_OPEN_NOT_FOUND;
   }
-  
+
+  fa_info_t fi = {0};
+  fa_info(fh, &fi);
+
+  HLS_TRACE(h, "%s: Open segment %d in %d bps @ %s Remote cache: %s",
+            h->h_mp->mp_name,
+            hs->hs_seq, hs->hs_variant->hv_bitrate, hs->hs_url,
+            fi.remote_cache_status == FA_REMOTE_CACHE_HIT  ? "Hit" :
+            fi.remote_cache_status == FA_REMOTE_CACHE_MISS ? "Miss" :
+            "Unknown");
+
+  hs->hs_remote_cache_status = fi.remote_cache_status;
+
   if(hs->hs_byte_size != -1 && hs->hs_byte_offset != -1)
     fh = fa_slice_open(fh, hs->hs_byte_offset, hs->hs_byte_size);
 
@@ -726,10 +737,15 @@ static void
 variant_update_metadata(hls_t *h, hls_variant_t *hv, int availbw)
 {
   mp_set_duration(h->h_mp, hv->hv_duration);
+  const hls_segment_t *hs = hv->hv_current_seg;
   char buf[256];
   snprintf(buf, sizeof(buf),
-	   "HLS %d kbps (Avail: %d kbps)", 
-	   hv->hv_bitrate / 1000, availbw / 1000);
+	   "HLS %d kbps (Avail: %d kbps) %s", 
+	   hv->hv_bitrate / 1000, availbw / 1000,
+           hs->hs_remote_cache_status == FA_REMOTE_CACHE_HIT  ? "Cache hit"  :
+           hs->hs_remote_cache_status == FA_REMOTE_CACHE_MISS ? "Cache miss" :
+           "");
+
   prop_set(h->h_mp->mp_prop_metadata, "format", PROP_SET_STRING, buf);
 }
 

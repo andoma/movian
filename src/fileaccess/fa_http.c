@@ -229,6 +229,8 @@ typedef struct http_file {
 #define HTTP_CE_IDENTITY 0
 #define HTTP_CE_GZIP 1
 
+  fa_info_t hf_info;
+
   int hf_max_age;
 
   prop_t *hf_stats_speed;
@@ -1283,6 +1285,7 @@ http_read_response(http_file_t *hf, struct http_header_list *headers)
   free(hf->hf_content_type);
   hf->hf_content_type = NULL;
   hf->hf_max_age = 30;
+  hf->hf_info.remote_cache_status = FA_REMOTE_CACHE_UNKNOWN;
 
   HF_TRACE(hf, "%s: Response:", hf->hf_url);
 
@@ -1350,6 +1353,15 @@ http_read_response(http_file_t *hf, struct http_header_list *headers)
       free(hf->hf_location);
       hf->hf_location = strdup(argv[1]);
       continue;
+    }
+
+
+    if(!strcasecmp(argv[0], "X-Cache")) {
+      if(!strncasecmp(argv[1], "hit from", 8)) {
+        hf->hf_info.remote_cache_status = FA_REMOTE_CACHE_HIT;
+      } else if(!strncasecmp(argv[1], "miss from", 9)) {
+        hf->hf_info.remote_cache_status = FA_REMOTE_CACHE_MISS;
+      }
     }
 
     if(!strcasecmp(argv[0], "Keep-Alive")) {
@@ -2031,6 +2043,18 @@ http_seek_is_fast(fa_handle_t *handle)
 
 
 /**
+ *
+ */
+static int
+http_info(fa_handle_t *handle, fa_info_t *fi)
+{
+  http_file_t *hf = (http_file_t *)handle;
+  *fi = hf->hf_info;
+  return 0;
+}
+
+
+/**
  * Read from file
  */
 static int
@@ -2532,6 +2556,7 @@ static fa_protocol_t fa_protocol_http = {
   .fap_load = http_load,
   .fap_get_last_component = http_get_last_component,
   .fap_seek_is_fast = http_seek_is_fast,
+  .fap_info = http_info,
 };
 
 FAP_REGISTER(http);
@@ -2553,6 +2578,7 @@ static fa_protocol_t fa_protocol_https = {
   .fap_load = http_load,
   .fap_get_last_component = http_get_last_component,
   .fap_seek_is_fast = http_seek_is_fast,
+  .fap_info = http_info,
 };
 
 FAP_REGISTER(https);
@@ -2893,6 +2919,7 @@ static fa_protocol_t fa_protocol_webdav = {
   .fap_load = http_load,
   .fap_get_last_component = http_get_last_component,
   .fap_seek_is_fast = http_seek_is_fast,
+  .fap_info = http_info,
 };
 FAP_REGISTER(webdav);
 
@@ -2912,6 +2939,7 @@ static fa_protocol_t fa_protocol_webdavs = {
   .fap_load = http_load,
   .fap_get_last_component = http_get_last_component,
   .fap_seek_is_fast = http_seek_is_fast,
+  .fap_info = http_info,
 };
 FAP_REGISTER(webdavs);
 
