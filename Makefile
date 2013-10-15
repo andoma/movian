@@ -263,6 +263,11 @@ SRCS-$(CONFIG_AMP) += \
 	src/ui/glw/glw_video_amp.c \
 	src/pipelines/amp/amp_audio.c
 
+SRCS-$(CONFIG_CEDAR) += \
+	src/ui/glw/glw_video_sunxi.c \
+	src/video/cedar.c \
+	ext/tlsf/tlsf.c \
+
 ##############################################################
 # Subtitles
 ##############################################################

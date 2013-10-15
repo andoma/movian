@@ -32,6 +32,10 @@
 
 #include <libavutil/common.h>
 
+#ifdef __ANDROID__
+#define OLD_VE
+#endif
+
 // #define CEDAR_TRAP
 
 #ifdef CEDAR_TRAP
@@ -334,7 +338,11 @@ cedar_codec_open(media_codec_t *mc, const const media_codec_params_t *mcp,
   }
 
   printf("tut-a\n");
+#ifdef OLD_VE
+  Handle *ve = libve_open(&cfg, &si);
+#else
   Handle *ve = libve_open(&cfg, &si, NULL);
+#endif
   printf("tut-b\n");
   if(ve == NULL) {
     TRACE(TRACE_ERROR, "libve", "Unable to open libve");
@@ -567,7 +575,21 @@ fbm_init(u32 max_frame_num, u32 min_frame_num,
   return fbm;
 }
 
-    
+#ifdef OLD_VE
+static Handle
+fbm_init_ex(u32 max_frame_num, u32 min_frame_num,
+	    u32 size_y[], u32 size_u[], u32 size_v[],
+	    u32 size_alpha[], _3d_mode_e _3d_mode,
+	    pixel_format_e format)
+{
+  return fbm_init(max_frame_num, min_frame_num,
+		  size_y[0], size_u[0], size_v[0], size_alpha[0],
+		  format);
+}
+
+
+#else
+
 static Handle
 fbm_init_ex(u32 max_frame_num, u32 min_frame_num,
 	    u32 size_y[], u32 size_u[], u32 size_v[],
@@ -578,10 +600,16 @@ fbm_init_ex(u32 max_frame_num, u32 min_frame_num,
 		  size_y[0], size_u[0], size_v[0], size_alpha[0],
 		  format);
 }
+#endif
 
 
+#ifdef OLD_VE
+static void
+fbm_deinit(Handle h)
+#else
 static void
 fbm_deinit(Handle h, void *parent)
+#endif
 {
   fbm_t *fbm = h;
   fbm_release(fbm);
@@ -645,6 +673,7 @@ fbm_decoder_share_frame(vpicture_t *f, Handle h)
   abort();
 }
 
+#ifndef OLD_VE
 
 
 static Handle
@@ -686,6 +715,21 @@ fbm_alloc_YV12_frame_buffer(Handle h)
   printf("%s\n", __FUNCTION__);
 }
 
+#endif
+
+#ifdef OLD_VE
+
+
+IFBM_t IFBM = {
+  fbm_init,
+  fbm_deinit,
+  fbm_decoder_request_frame,
+  fbm_decoder_return_frame,
+  fbm_decoder_share_frame,
+  fbm_init_ex,
+};
+
+#else
 
 
 IFBM_t IFBM = {
@@ -701,7 +745,7 @@ IFBM_t IFBM = {
   fbm_alloc_YV12_frame_buffer,
 };
 
-
+#endif
 
 /****************************************************************************
  * VBV interface
@@ -967,4 +1011,4 @@ cedar_codec_init(void)
 #endif
 }
 
-REGISTER_CODEC(cedar_codec_init, cedar_codec_open, 100);
+REGISTER_CODEC(cedar_codec_init, cedar_codec_open, 10);

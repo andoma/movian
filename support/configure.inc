@@ -88,6 +88,7 @@ CONFIG_LIST="
  bspatch
  connman
  amp
+ cedar
 "
 
 cleanup() {

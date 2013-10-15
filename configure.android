@@ -103,8 +103,6 @@ NDK = ${NDK}
 ADB = ${SDK}/platform-tools/adb
 EOF
 
-finalize
-
 if enabled amp; then
 cat >> ${CONFIG_MAK} <<EOF
 CFLAGS_cfg += -I/Users/andoma/slipstream/berlin/images/22sept/gtv/vendor/marvell/prebuilts/jb_dmp/amp/include
@@ -112,6 +110,18 @@ LDFLAGS_cfg += -L/Users/andoma/slipstream/berlin/images/22sept/gtv/vendor/marvel
 LDFLAGS_cfg += -lampclient -lOSAL
 EOF
 fi
+
+if enabled cedar; then
+cat >> ${CONFIG_MAK} <<EOF
+CFLAGS_cfg += -I/Users/andoma/slipstream/allwinner/cedar/libvecoredemo_android_A10_yuv2rgb/vdecoder/libvecore
+CFLAGS_cfg += -I${TOPDIR}/support/sunxi/libv
+LDFLAGS_cfg += -L/Users/andoma/slipstream/allwinner/cedar/libvecoredemo_android_A10_yuv2rgb/vdecoder/libvecore
+LDFLAGS_cfg += -lvecore
+EOF
+fi
+
+finalize
+
 
 echo
 echo "NOTE: Support for Android is still experimental"

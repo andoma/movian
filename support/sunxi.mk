@@ -19,8 +19,6 @@ SRCS += src/arch/sunxi/sunxi_main.c \
 	src/arch/sunxi/sunxi_alsa.c \
 	ext/tlsf/tlsf.c \
 	src/prop/prop_glib_courier.c \
-	src/ui/glw/glw_video_sunxi.c \
-	src/video/cedar.c \
 
 SRCS +=	src/video/cedar2.c \
 
