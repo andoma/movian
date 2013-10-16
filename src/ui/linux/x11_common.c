@@ -184,7 +184,7 @@ vo_set_source(void *opaque, const char *url)
   if(url == NULL)
     return;
 
-  e = event_create_playurl(url, 1, 0, 0, NULL, NULL);
+  e = event_create_playurl(url, 1, 0, 0, NULL, NULL, 0);
   mp_enqueue_event(vo->vo_mp, e);
   event_release(e);
 }
@@ -338,8 +338,7 @@ x11_vo_destroy(struct video_output *vo)
   prop_unsubscribe(vo->vo_sub_source);
 
   
-  video_playback_destroy(vo->vo_mp);
-  video_decoder_stop(vo->vo_vd);
+  video_playback_stop(vo->vo_mp);
   mp_ref_dec(vo->vo_mp);
   video_decoder_destroy(vo->vo_vd);
 

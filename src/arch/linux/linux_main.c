@@ -29,6 +29,7 @@
 #include "navigator.h"
 #include "service.h"
 #include "prop/prop_glib_courier.h"
+#include "linux_process_monitor.h"
 
 hts_mutex_t gdk_mutex;
 prop_courier_t *glibcourier;
@@ -175,7 +176,7 @@ main(int argc, char **argv)
 #if ENABLE_WEBPOPUP
   linux_webpopup_init();
 #endif
-  linux_init_monitors();
+  linux_process_monitor_init();
 
   add_xdg_paths();
 
