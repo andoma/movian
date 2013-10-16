@@ -87,6 +87,9 @@ video_reset_common(glw_video_t *gv)
   ioctl(sunxi.dispfd, DISP_CMD_VIDEO_STOP, args);
   ioctl(sunxi.dispfd,DISP_CMD_LAYER_CLOSE, args);
   ioctl(sunxi.dispfd, DISP_CMD_LAYER_RELEASE, args);
+
+  TRACE(TRACE_DEBUG, "GLW", "%s: Released layer %d",
+	gv->gv_mp->mp_name, args);
   free(dv);
   gv->gv_aux = NULL;
 }
@@ -219,75 +222,6 @@ video_set_param(dispman_video_t *dv, glw_video_surface_t *gvs)
 }
 
 
-
-#if 0
-/**
- *
- */
-static void
-video_set_param2(dispman_video_t *dv, glw_video_surface_t *gvs)
-{
-  unsigned long args[4] = {0};
-  int r;
-  __disp_layer_info_t l;
-
-
-  memset(&l, 0, sizeof(l));
-    
-  l.mode = DISP_LAYER_WORK_MODE_SCALER;
-  l.pipe = 0;
-
-  l.fb.size.width  = gvs->gvs_width[0];
-  l.fb.size.height = gvs->gvs_height[0];
-  l.fb.br_swap       = 0;
-  l.fb.cs_mode = DISP_BT601;
-  l.fb.addr[0] = va_to_pa(gvs->gvs_data[0])+ 0x40000000;
-  l.fb.addr[1] = va_to_pa(gvs->gvs_data[1])+ 0x40000000;
-  l.fb.addr[2] = va_to_pa(gvs->gvs_data[2])+ 0x40000000;
-
-  switch(gvs->gvs_format) {
-  case DISPMAN_VIDEO_YUV420P:
-    l.fb.mode   = DISP_MOD_NON_MB_PLANAR;
-    l.fb.format = DISP_FORMAT_YUV420;
-    break;
-
-  case DISPMAN_VIDEO_CEDAR:
-    l.fb.mode   = DISP_MOD_MB_UV_COMBINED;
-    l.fb.format = DISP_FORMAT_YUV420;
-    l.fb.seq    = DISP_SEQ_UVUV;
-    break;
-
-  default:
-    abort();
-  }
-
-
-  l.ck_enable        = 0;
-  l.alpha_en         = 0;
-  l.alpha_val        = 0xff;
-  l.src_win.x        = 0;
-  l.src_win.y        = 0;
-  l.src_win.width    = gvs->gvs_width[0];
-  l.src_win.height   = gvs->gvs_height[0];
-  l.scn_win.x        = 0;
-  l.scn_win.y        = 0;
-  l.scn_win.width    = 1280; // HUH
-  l.scn_win.height   = 720;
-    
-  printf("output configured %d x %d\n", l.src_win.width, l.src_win.height);
-
-  args[1] = dv->dv_layer;
-  args[2] = (__u32)&l;
-  args[3] = 0;
-  r = ioctl(sunxi.dispfd,DISP_CMD_LAYER_SET_PARA,(void*)args);
-  if(r)
-    perror("ioctl(disphd,DISP_CMD_LAYER_SET_PARA)");
-}
-#endif
-
-
-
-
 /**
  *
  */
@@ -297,6 +231,12 @@ video_init(glw_video_t *gv)
   unsigned long args[4] = {0};
   int scr = 0;
   int i;
+
+  args[0] = scr;
+  args[1] = DISP_LAYER_WORK_MODE_SCALER;
+  int hlay = ioctl(sunxi.dispfd, DISP_CMD_LAYER_REQUEST, args);
+  if(hlay == -1)
+    return -1;
 
   dispman_video_t *dv = calloc(1, sizeof(dispman_video_t));
 
@@ -309,22 +249,13 @@ video_init(glw_video_t *gv)
     gvs->gvs_data[2] = NULL;
     TAILQ_INSERT_TAIL(&gv->gv_avail_queue, gvs, gvs_link);
   }
-  
-  args[0] = scr;
-  args[1] = DISP_LAYER_WORK_MODE_SCALER;
-  int hlay = ioctl(sunxi.dispfd, DISP_CMD_LAYER_REQUEST, args);
-  if(hlay == -1)
-    exit(3);
 
   dv->dv_layer = hlay;
-  printf("Got layer %d\n", hlay);
+  TRACE(TRACE_DEBUG, "GLW", "%s: Got layer %d for output",
+	gv->gv_mp->mp_name, hlay);
 
   return 0;
 }
-
-
-
-
 
 
 /**
