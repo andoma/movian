@@ -85,7 +85,7 @@ video_reset_common(glw_video_t *gv)
   unsigned long args[4] = {0};
   args[1] = dv->dv_layer;
   ioctl(sunxi.dispfd, DISP_CMD_VIDEO_STOP, args);
-  ioctl(sunxi.dispfd,DISP_CMD_LAYER_CLOSE, args);
+  ioctl(sunxi.dispfd, DISP_CMD_LAYER_CLOSE, args);
   ioctl(sunxi.dispfd, DISP_CMD_LAYER_RELEASE, args);
 
   TRACE(TRACE_DEBUG, "GLW", "%s: Released layer %d",
@@ -359,20 +359,9 @@ video_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
 
     TAILQ_REMOVE(&gv->gv_decoded_queue, s, gvs_link);
     TAILQ_INSERT_TAIL(&gv->gv_displaying_queue, s, gvs_link);
-
   }
-
-
   return pts;
 }
-
-
-const static float projection[16] = {
-  2.414213,0.000000,0.000000,0.000000,
-  0.000000,2.414213,0.000000,0.000000,
-  0.000000,0.000000,1.033898,-1.000000,
-  0.000000,0.000000,2.033898,0.000000
-};
 
 
 /**
@@ -381,53 +370,22 @@ const static float projection[16] = {
 static void
 video_render(glw_video_t *gv, glw_rctx_t *rc)
 {
-  glw_root_t *gr = gv->w.glw_root;
   dispman_video_t *dv = (dispman_video_t *)gv->gv_aux;
-  Mtx foo;
 
-  PMtx tm, tp;
-  Vec4 T0, T1;
-  Vec4 V0, V1;
-  if(dv->dv_layer == 0)
+  if(dv->dv_layer == 0 ||
+     gv->gv_rect.x2 <= gv->gv_rect.x1 ||
+     gv->gv_rect.y2 <= gv->gv_rect.y1)
     return;
-
-  glw_pmtx_mul_prepare(tm,  rc->rc_mtx);
-  glw_pmtx_mul_vec4(T0, tm, glw_vec4_make(-1,  1, 0, 1));
-  glw_pmtx_mul_vec4(T1, tm, glw_vec4_make( 1, -1, 0, 1));
-
-  memcpy(foo, projection, sizeof(float) * 16);
-  glw_pmtx_mul_prepare(tp, foo);
-  
-  glw_pmtx_mul_vec4(V0, tp, T0);
-  glw_pmtx_mul_vec4(V1, tp, T1);
-
-  int x1, y1, x2, y2;
-  
-  float w;
-
-  w = glw_vec4_extract(V0, 3);
-
-  x1 = roundf((1.0 + (glw_vec4_extract(V0, 0) / w)) * gr->gr_width  / 2.0);
-  y1 = roundf((1.0 - (glw_vec4_extract(V0, 1) / w)) * gr->gr_height / 2.0);
-
-  w = glw_vec4_extract(V1, 3);
-  
-  x2 = roundf((1.0 + (glw_vec4_extract(V1, 0) / w)) * gr->gr_width  / 2.0);
-  y2 = roundf((1.0 - (glw_vec4_extract(V1, 1) / w)) * gr->gr_height / 2.0);
 
   __disp_rect_t rect;
-
-  if(x2 <= x1 || y2 <= y1)
-    return;
-
-  rect.x = x1;
-  rect.y = y1;
-  rect.width = x2 - x1;
-  rect.height = y2 - y1;
+  rect.x      = gv->gv_rect.x1;
+  rect.y      = gv->gv_rect.y1;
+  rect.width  = gv->gv_rect.x2 - gv->gv_rect.x1;
+  rect.height = gv->gv_rect.y2 - gv->gv_rect.y1;
 
   unsigned long args[4] = {0};
   args[0] = 0;
-  args[1] =  dv->dv_layer;
+  args[1] = dv->dv_layer;
   args[2] = (intptr_t)&rect;
   
   ioctl(sunxi.dispfd, DISP_CMD_LAYER_SET_SCN_WINDOW, &args);
