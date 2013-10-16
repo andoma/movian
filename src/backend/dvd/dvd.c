@@ -1011,11 +1011,11 @@ dvd_process_event(dvd_player_t *dp, event_t *e)
 
   } else if(event_is_action(e, ACTION_SKIP_BACKWARD)) {
     
-    mp_flush(mp, 1);
+    mp_flush(mp, 0);
     dvdnav_prev_pg_search(dp->dp_dvdnav);
 
   } else if(event_is_action(e, ACTION_SKIP_FORWARD)) {
-    mp_flush(mp, 1);
+    mp_flush(mp, 0);
     dvdnav_next_pg_search(dp->dp_dvdnav);
 
   } else if(event_is_action(e, ACTION_STOP)) {

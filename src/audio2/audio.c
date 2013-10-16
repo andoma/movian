@@ -405,7 +405,18 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 	ad->ad_in_sample_format  = frame->format;
 	ad->ad_in_channel_layout = frame->channel_layout;
 
-	ac->ac_reconfig(ad);
+	if(ac->ac_reconfig(ad)) {
+	  ad->ad_in_sample_rate = 0;
+
+	  int sleeptime = 1000000LL * frame->nb_samples / frame->sample_rate;
+	  usleep(sleeptime);
+
+	  if(ad->ad_avr != NULL) {
+	    avresample_close(ad->ad_avr);
+	    ad->ad_avr = NULL;
+	  }
+	  return;
+	}
 
 	if(ad->ad_avr == NULL)
 	  ad->ad_avr = avresample_alloc_context();
@@ -442,7 +453,7 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 	      av_get_sample_fmt_name(ad->ad_out_sample_format));
 
 	if(avresample_open(ad->ad_avr)) {
-	  TRACE(TRACE_ERROR, "AudioQueue", "Unable to open resampler");
+	  TRACE(TRACE_ERROR, "Audio", "Unable to open resampler");
 	  avresample_free(&ad->ad_avr);
 	}
 
@@ -566,8 +577,22 @@ audio_decode_thread(void *aux)
 	break;
 
       case MB_CTRL_FLUSH:
-	if(ac->ac_flush)
-	  ac->ac_flush(ad);
+	if(ac->ac_flush != NULL) {
+	  if(ac->ac_flush(ad, mb->mb_data32)) {
+	    // Player shutdown, reset state so we reconfigure it on
+	    // next data packet
+	    ad->ad_in_sample_rate = 0;
+	    if(ad->ad_avr != NULL) {
+	      avresample_close(ad->ad_avr);
+	      ad->ad_avr = NULL;
+	    }
+	  }
+	}
+
+	hts_mutex_lock(&mp->mp_clock_mutex);
+	mp->mp_audio_clock_epoch = 0;
+	hts_mutex_unlock(&mp->mp_clock_mutex);
+
 	ad->ad_pts = AV_NOPTS_VALUE;
 
 	if(mp->mp_seek_audio_done != NULL)

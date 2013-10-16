@@ -46,9 +46,10 @@ alsa_audio_fini(audio_decoder_t *ad)
   if(d->h != NULL) {
     snd_pcm_close(d->h);
     d->h = NULL;
-    TRACE(TRACE_DEBUG, "ALSA", "Closing device");
+    TRACE(TRACE_DEBUG, "ALSA", "%s: Closed device", ad->ad_mp->mp_name);
   }
   free(d->tmp);
+  d->tmp = NULL;
 }
 
 
@@ -63,12 +64,6 @@ alsa_audio_reconfig(audio_decoder_t *ad)
   int r;
 
   alsa_audio_fini(ad);
-
-  if(d->h != NULL) {
-    snd_pcm_close(d->h);
-    d->h = NULL;
-    TRACE(TRACE_DEBUG, "ALSA", "Closing device");
-  }
 
   const char *dev = alsa_get_devicename();
 
@@ -209,15 +204,23 @@ alsa_audio_play(audio_decoder_t *ad)
 /**
  *
  */
-static void
-alsa_audio_flush(audio_decoder_t *ad)
+static int
+alsa_audio_flush(audio_decoder_t *ad, int lasting)
 {
   decoder_t *d = (decoder_t *)ad;
   if(d->h == NULL)
-    return;
+    return 0;
+
+  d->samples = 0;
+
+  if(lasting) {
+    alsa_audio_fini(ad);
+    return 1;
+  }
+   
   snd_pcm_drop(d->h);
   snd_pcm_prepare(d->h);
-  d->samples = 0;
+  return 0;
 }
 
 

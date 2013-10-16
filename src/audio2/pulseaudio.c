@@ -387,17 +387,18 @@ pulseaudio_audio_play(audio_decoder_t *ad)
 /**
  *
  */
-static void
-pulseaudio_audio_flush(audio_decoder_t *ad)
+static int
+pulseaudio_audio_flush(audio_decoder_t *ad, int lasting)
 {
   decoder_t *d = (decoder_t *)ad;
   if(d->s == NULL)
-    return;
+    return 0;
   pa_threaded_mainloop_lock(mainloop);
   pa_operation *o = pa_stream_flush(d->s, NULL, NULL);
   if(o != NULL)
     pa_operation_unref(o);
   pa_threaded_mainloop_unlock(mainloop);
+  return 0;
 }
 
 /**

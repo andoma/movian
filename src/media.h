@@ -611,7 +611,7 @@ void mp_send_cmd_data(media_pipe_t *mp, media_queue_t *mq, int cmd, void *d);
 void mp_send_cmd_u32(media_pipe_t *mp, media_queue_t *mq, int cmd, 
 		     uint32_t u);
 
-void mp_flush(media_pipe_t *mp, int blackout);
+void mp_flush(media_pipe_t *mp, int lasting);
 
 void mq_flush(media_pipe_t *mp, media_queue_t *mq, int full);
 

@@ -281,12 +281,13 @@ mac_audio_play(audio_decoder_t *ad)
 /**
  *
  */
-static void
-mac_audio_flush(audio_decoder_t *ad)
+static int
+mac_audio_flush(audio_decoder_t *ad, int lasting)
 {
   decoder_t *d = (decoder_t *)ad;
   if(d->aq)
     AudioQueueReset(d->aq);
+  return 0;
 }
 
 
