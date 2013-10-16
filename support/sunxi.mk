@@ -19,6 +19,7 @@ SRCS += src/arch/sunxi/sunxi_main.c \
 	src/arch/sunxi/sunxi_alsa.c \
 	ext/tlsf/tlsf.c \
 	src/prop/prop_glib_courier.c \
+	src/arch/linux/linux_process_monitor.c \
 
 SRCS +=	src/video/cedar2.c \
 

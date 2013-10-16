@@ -35,6 +35,7 @@
 #include "ui/glw/glw.h"
 
 #include "arch/sunxi/sunxi.h"
+#include "arch/linux/linux_process_monitor.h"
 
 static int ctrlc = 0;
 static int running = 1;
@@ -338,7 +339,7 @@ main(int argc, char **argv)
 
   sunxi_init();
 
-  linux_init_monitors();
+  linux_process_monitor_init();
 
   /**
    * Wait for SIGTERM / SIGINT, but only in this thread

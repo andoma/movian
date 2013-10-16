@@ -115,7 +115,7 @@ if enabled cedar; then
 cat >> ${CONFIG_MAK} <<EOF
 CFLAGS_cfg  += -I${TOPDIR}/support/sunxi/android
 CFLAGS_cfg  += -I${TOPDIR}/support/sunxi/libv
-LDFLAGS_cfg += -L{TOPDIR}/support/sunxi/android
+LDFLAGS_cfg += -L${TOPDIR}/support/sunxi/android
 LDFLAGS_cfg += -lvecore
 EOF
 fi

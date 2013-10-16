@@ -37,6 +37,8 @@
 #include "navigator.h"
 #include "arch/linux/linux_process_monitor.h"
 
+#include "arch/sunxi/sunxi.h"
+
 JavaVM *JVM;
 jclass STCore;
 prop_t *android_nav;
@@ -239,6 +241,8 @@ Java_com_showtimemediacenter_showtime_STCore_coreInit(JNIEnv *env, jobject obj, 
                  "video", NULL, 0, 1, SVC_ORIGIN_SYSTEM);
 
   linux_process_monitor_init();
+
+  sunxi_init();
 
   android_nav = nav_spawn();
 }
