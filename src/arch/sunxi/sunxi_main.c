@@ -293,6 +293,7 @@ ui_run(void)
 
   // Reap twice makes all resources flushed out of memory
   glw_lock(gr);
+  glw_unload_universe(gr);
   glw_reap(gr);
   glw_reap(gr);
   glw_unlock(gr);
