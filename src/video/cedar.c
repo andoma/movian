@@ -29,6 +29,7 @@
 #include "arch/sunxi/sunxi.h"
 #include "video_decoder.h"
 #include "cedar.h"
+#include "h264_annexb.h"
 
 #include <libavutil/common.h>
 
@@ -109,10 +110,6 @@ fbm_release(fbm_t *fbm)
     return;
   hts_mutex_lock(&sunxi.gfxmem_mutex);
   for(i = 0; i < fbm->numpics; i++) {
-    printf("FBM_RELEASE(%d[%p %p%p])\n", i,
-	   fbm->pics[i].pic.y,
-	   fbm->pics[i].pic.u,
-	   fbm->pics[i].pic.v);
     tlsf_free(sunxi.gfxmem, fbm->pics[i].pic.y);
     tlsf_free(sunxi.gfxmem, fbm->pics[i].pic.u);
     tlsf_free(sunxi.gfxmem, fbm->pics[i].pic.v);
@@ -166,8 +163,8 @@ cedar_decode(struct media_codec *mc, struct video_decoder *vd,
   cedar_packet_t *cp = calloc(1, sizeof(cedar_packet_t));
 
   //  assert(mb->mb_pts != AV_NOPTS_VALUE);
-  printf("=== PACKET DECODE START ====================================\n");
-  hexdump("PACKET", mb->mb_data, MIN(16, mb->mb_size));
+  //  printf("=== PACKET DECODE START ====================================\n");
+  //  hexdump("PACKET", mb->mb_data, MIN(16, mb->mb_size));
   // Copy packet to cedar mem
   hts_mutex_lock(&sunxi.gfxmem_mutex);
   cp->cp_vsd.data = tlsf_malloc(sunxi.gfxmem, mb->mb_size);
@@ -183,7 +180,11 @@ cedar_decode(struct media_codec *mc, struct video_decoder *vd,
   cp->cp_vsd.valid = 1;
   TAILQ_INSERT_TAIL(&cd->cd_queue, cp, cp_link);
 
+  avgtime_start(&vd->vd_decode_time);
   vresult_e res = libve_decode(0, 0, 0, cd->cd_ve);
+  avgtime_stop(&vd->vd_decode_time, mq->mq_prop_decode_avg,
+	       mq->mq_prop_decode_peak);
+
   if(res < 0) {
     TRACE(TRACE_ERROR, "CEDAR", "libve_decode() failed, possible mem leak");
     return;
@@ -217,6 +218,7 @@ cedar_decode(struct media_codec *mc, struct video_decoder *vd,
     fi.fi_delta       = mb->mb_delta;
     fi.fi_duration    = mb->mb_duration > 10000 ?
       mb->mb_duration : cd->cd_estimated_duration;
+
     fi.fi_drive_clock = mb->mb_drive_clock;
     fi.fi_interlaced  =!pic->pic.is_progressive;
     fi.fi_tff         = pic->pic.top_field_first;
@@ -285,10 +287,13 @@ cedar_codec_open(media_codec_t *mc, const const media_codec_params_t *mcp,
 
   case CODEC_ID_H264:
     si.format = STREAM_FORMAT_H264;
-    if(mcp != NULL) {
-      si.init_data     = (void *)mcp->extradata;
-      si.init_data_len = mcp->extradata_size;
-    }
+
+    if(mcp == NULL || mcp->extradata == NULL || mcp->extradata_size == 0 ||
+       ((const uint8_t *)mcp->extradata)[0] != 1)
+      return h264_annexb_to_avc(mc, mp, &cedar_codec_open);
+  
+    si.init_data     = (void *)mcp->extradata;
+    si.init_data_len = mcp->extradata_size;
     break;
 
   case CODEC_ID_MPEG2VIDEO:
@@ -337,13 +342,11 @@ cedar_codec_open(media_codec_t *mc, const const media_codec_params_t *mcp,
     break;
   }
 
-  printf("tut-a\n");
 #ifdef OLD_VE
   Handle *ve = libve_open(&cfg, &si);
 #else
   Handle *ve = libve_open(&cfg, &si, NULL);
 #endif
-  printf("tut-b\n");
   if(ve == NULL) {
     TRACE(TRACE_ERROR, "libve", "Unable to open libve");
     return 1;
@@ -352,7 +355,6 @@ cedar_codec_open(media_codec_t *mc, const const media_codec_params_t *mcp,
   cedar_decoder_t *cd = calloc(1, sizeof(cedar_decoder_t));
 
   cd->cd_ve = ve;
-  printf("tut\n");
   TAILQ_INIT(&cd->cd_queue);
   libve_set_vbv(cd, ve);
 
@@ -362,7 +364,6 @@ cedar_codec_open(media_codec_t *mc, const const media_codec_params_t *mcp,
   mc->decode = cedar_decode;
   mc->close = cedar_close;
   mc->flush = cedar_flush;
-  printf("pip\n");
   return 0;
 }
 
@@ -383,7 +384,6 @@ ve_enable_clock(u8 enable, u32 speed)
 {
   if(enable) {
     ioctl(sunxi.cedarfd, IOCTL_ENABLE_VE, 0);
-    printf("Clock set to %d\n", speed);
     ioctl(sunxi.cedarfd, IOCTL_SET_VE_FREQ, speed / 1000000);
   } else {
     ioctl(sunxi.cedarfd, IOCTL_DISABLE_VE, 0);
@@ -542,17 +542,12 @@ fbm_init(u32 max_frame_num, u32 min_frame_num,
   hts_mutex_init(&fbm->fbm_mutex);
   fbm->refcount = 1;
 
-  printf("FBM_INIT(%d)\n", max_frame_num);
-
   fbm->numpics = max_frame_num;
   fbm->fmt = format;
   hts_mutex_lock(&sunxi.gfxmem_mutex);
   for(i = 0; i < max_frame_num; i++) {
     fbm->pics[i].pic.id = i;
     fbm->pics[i].fbm = fbm;
-
-    printf(" alloc %d %d %d\n", size_y, size_u, size_v);
-
     fbm->pics[i].pic.size_y     = size_y;
     fbm->pics[i].pic.size_u     = size_u;
     fbm->pics[i].pic.size_v     = size_v;
@@ -562,12 +557,6 @@ fbm_init(u32 max_frame_num, u32 min_frame_num,
       tlsf_memalign(sunxi.gfxmem, 1024, size_u) : NULL;
     fbm->pics[i].pic.v = size_v ?
       tlsf_memalign(sunxi.gfxmem, 1024, size_v) : NULL;
-
-    printf(" alloc = %p %p %p\n",
-	   fbm->pics[i].pic.y,
-	   fbm->pics[i].pic.u,
-	   fbm->pics[i].pic.v);
-
     TAILQ_INSERT_HEAD(&fbm->fbm_avail, &fbm->pics[i], link);
   }
   hts_mutex_unlock(&sunxi.gfxmem_mutex);

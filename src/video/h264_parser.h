@@ -2,6 +2,8 @@
 
 #include <stddef.h>
 
+#include "misc/bitstream.h"
+
 #define REFLIST_DEBUG
 
 #define SLICE_TYPE_P	0
