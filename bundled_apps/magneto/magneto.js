@@ -10,11 +10,11 @@
   var channels = [
     ["SVT1",         newURL + "57050bdd9f2244b18705b05a37fc2dab"],
     ["SVT2",         newURL + "a00f02b775e64b50915b12a403fe24d6"],
-    ["TV3",          oldURL + "840e81fd327842c7a1538416b418786e"],
-//    ["TV4",          "f57c3034561347cfbc940007049de602"],
-    ["Discovery",    oldURL + "5a013bb9ce53422d9b40debe58f7ab1b"],
-    ["MTV",          oldURL + "849aed5bbb8d4ba8b2c53a38cff86ac7"],
-    ["C More First", oldURL + "72709ae1171c402a9cff74368830c458"]
+    ["TV3",          newURL + "840e81fd327842c7a1538416b418786e"],
+    ["TV4",          newURL + "f57c3034561347cfbc940007049de602"],
+    ["Discovery",    newURL + "5a013bb9ce53422d9b40debe58f7ab1b"],
+    ["MTV",          newURL + "849aed5bbb8d4ba8b2c53a38cff86ac7"],
+    ["C More First", newURL + "72709ae1171c402a9cff74368830c458"]
   ];
 
   function populate_model(page) {
