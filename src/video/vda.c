@@ -9,6 +9,7 @@
 #include "media.h"
 #include "video_decoder.h"
 #include "video_settings.h"
+#include "h264_annexb.h"
 
 LIST_HEAD(vda_frame_list, vda_frame);
 
@@ -41,6 +42,9 @@ typedef struct vda_decoder {
   int vdad_estimated_duration;
   int64_t vdad_last_pts;
 
+  int vdad_width;
+  int vdad_height;
+
 } vda_decoder_t;
 
 
@@ -62,7 +66,7 @@ vf_cmp(const vda_frame_t *a, const vda_frame_t *b)
  *
  */
 static void
-emit_frame(vda_decoder_t *vdad, vda_frame_t *vf)
+emit_frame(vda_decoder_t *vdad, vda_frame_t *vf, media_queue_t *mq)
 {
   int i;
   CGSize siz;
@@ -112,6 +116,11 @@ emit_frame(vda_decoder_t *vdad, vda_frame_t *vf)
 
   CVPixelBufferUnlockBaseAddress(vf->vf_buf, 0);
   vdad->vdad_last_pts = vf->vf_pts;
+
+  char fmt[64];
+  snprintf(fmt, sizeof(fmt), "h264 (VDA) %d x %d", fi.fi_width, fi.fi_height);
+  prop_set_string(mq->mq_prop_codec, fmt);
+
 }
 
 /**
@@ -242,8 +251,7 @@ vda_decode(struct media_codec *mc, struct video_decoder *vd,
   CFRelease(user_info);
   CFRelease(coded_frame);
 
-  prop_set_string(mq->mq_prop_codec, "h264 (VDA)");
- 
+
   hts_mutex_lock(&vdad->vdad_mutex);
 
   if(vdad->vdad_flush_to != PTS_UNSET) {
@@ -252,7 +260,7 @@ vda_decode(struct media_codec *mc, struct video_decoder *vd,
 	break;
       LIST_REMOVE(vf, vf_link);
       hts_mutex_unlock(&vdad->vdad_mutex);
-      emit_frame(vdad, vf);
+      emit_frame(vdad, vf, mq);
       hts_mutex_lock(&vdad->vdad_mutex);
       CFRelease(vf->vf_buf);
       free(vf);
@@ -287,7 +295,7 @@ static void
 vda_close(struct media_codec *mc)
 {
   vda_decoder_t *vdad = mc->opaque;
-  VDADecoderFlush(vdad->vdad_decoder, 0);  
+  VDADecoderFlush(vdad->vdad_decoder, 0);
   VDADecoderDestroy(vdad->vdad_decoder);
   destroy_frames(vdad);
 }
@@ -310,16 +318,17 @@ video_vda_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   CFMutableDictionaryRef isp;
   CFNumberRef cv_pix_fmt;
 
-
-  if(!video_settings.vda)
+  if(mc->codec_id != CODEC_ID_H264 || !video_settings.vda)
     return 1;
-  
+
+  if(mcp == NULL || mcp->extradata == NULL || mcp->extradata_size == 0 ||
+     ((const uint8_t *)mcp->extradata)[0] != 1)
+    return h264_annexb_to_avc(mc, mp, &video_vda_codec_create);
+
+
+
   const int pixfmt = kCVPixelFormatType_420YpCbCr8Planar;
   const int avc1 = 'avc1';
-
-  if(mcp == NULL || mc->codec_id != CODEC_ID_H264 ||
-     mcp->extradata == NULL || mcp->extradata_size == 0)
-    return 1;
 
   ci = CFDictionaryCreateMutable(kCFAllocatorDefault,
 				 4,
@@ -352,7 +361,6 @@ video_vda_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   CFDictionarySetValue(ba, kCVPixelBufferIOSurfacePropertiesKey, isp);
   
   vda_decoder_t *vdad = calloc(1, sizeof(vda_decoder_t));
-  
 
   status = VDADecoderCreate(ci, ba, (void *)vda_callback,
 			    vdad, &vdad->vdad_decoder);
@@ -381,8 +389,7 @@ video_vda_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   mc->close = vda_close;
   mc->flush = vda_flush;
 
-  TRACE(TRACE_INFO, "VDA", "Opened decoder");
-  
+  TRACE(TRACE_DEBUG, "VDA", "Opened decoder");
   return 0;
 }
 

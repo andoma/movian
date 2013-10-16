@@ -230,7 +230,7 @@ void h264_parser_fini(h264_parser_t *hp);
 
 void h264_parser_decode_slice_header(h264_parser_t *hp, bitstream_t *bs);
 
-void h264_parser_decode_sps(h264_parser_t *hp, bitstream_t *bs);
+int h264_parser_decode_sps(h264_parser_t *hp, bitstream_t *bs, h264_sps_t *sps);
 
 void h264_parser_decode_pps(h264_parser_t *hp, bitstream_t *bs);
 

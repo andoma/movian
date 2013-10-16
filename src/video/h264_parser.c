@@ -31,18 +31,21 @@ decode_scaling_list(bitstream_t *bs, int size)
 /**
  *
  */
-void
-h264_parser_decode_sps(h264_parser_t *hp, bitstream_t *bs)
+int
+h264_parser_decode_sps(h264_parser_t *hp, bitstream_t *bs, h264_sps_t *sps)
 {
   int profile = bs->read_bits(bs, 8);
   bs->skip_bits(bs, 8);
   int level = bs->read_bits(bs, 8);
   int sps_id = bs->read_golomb_ue(bs);
 
-  if(sps_id >= H264_PARSER_NUM_SPS)
-    return;
-
-  h264_sps_t *sps = &hp->sps_array[sps_id];
+  if(hp == NULL) {
+    assert(sps != NULL);
+  } else {
+    if(sps_id >= H264_PARSER_NUM_SPS)
+      return -1;
+    sps = &hp->sps_array[sps_id];
+  }
 
   sps->profile = profile;
   sps->level   = level;
@@ -93,7 +96,7 @@ h264_parser_decode_sps(h264_parser_t *hp, bitstream_t *bs)
 
   } else if(sps->poc_type != 2) {
     printf("Illegal poc\n");
-    return;
+    return -1;
   }
 
   sps->num_ref_frames = bs->read_golomb_ue(bs);
@@ -114,6 +117,7 @@ h264_parser_decode_sps(h264_parser_t *hp, bitstream_t *bs)
     bs->read_golomb_ue(bs);
     bs->read_golomb_ue(bs);
   }
+  return sps_id;
 }
 
 
@@ -208,7 +212,7 @@ h264_parser_init(h264_parser_t *hp,
       break;
 
     init_rbits(&bs, data+3, s-3);
-    h264_parser_decode_sps(hp, &bs);
+    h264_parser_decode_sps(hp, &bs, NULL);
     data += s;
     len -= s;
   }
@@ -958,7 +962,7 @@ h264_parser_decode_nal_from_bs(h264_parser_t *hp, bitstream_t *bs)
     h264_parser_decode_slice_header(hp, bs);
     break;
   case 7: // SPS
-    h264_parser_decode_sps(hp, bs);
+    h264_parser_decode_sps(hp, bs, NULL);
     break;
   case 8: // PPS
     h264_parser_decode_pps(hp, bs);
