@@ -196,6 +196,8 @@ const static action_type_t *btn_to_action[end_of_AKEYCODE] = {
   [AKEYCODE_DPAD_CENTER]     = AVEC(ACTION_ACTIVATE),
   [AKEYCODE_MENU]            = AVEC(ACTION_MENU),
   [AKEYCODE_STAR]            = AVEC(ACTION_ITEMMENU),
+  [AKEYCODE_ENTER]           = AVEC(ACTION_ACTIVATE),
+  [AKEYCODE_DEL]             = AVEC(ACTION_NAV_BACK),
 };
 
 
