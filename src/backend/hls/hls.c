@@ -1107,13 +1107,12 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
     hd->hd_seek = hv;
     break;
   }
-
+#if 0
   hd->hd_seek = TAILQ_FIRST(&hd->hd_variants);
 
   if(TAILQ_NEXT(hd->hd_seek, hv_link) != NULL && 0)
     hd->hd_seek = TAILQ_NEXT(hd->hd_seek, hv_link);
-
-
+#endif
 
   if(va->flags & BACKEND_VIDEO_RESUME ||
      (video_settings.resume_mode == VIDEO_RESUME_YES &&
