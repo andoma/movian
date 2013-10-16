@@ -1237,9 +1237,14 @@ mp_seek_in_queues(media_pipe_t *mp, int64_t pos)
 
 /**
  *
+ * If 'lasting' is set it means that we expect this flush to not
+ * be immediatelly followed by more packets (ie, it's not a seek)
+ *
+ * Decoders should deallocate limited (hw) resources if possible
+ *
  */
 void
-mp_flush(media_pipe_t *mp, int blank)
+mp_flush(media_pipe_t *mp, int lasting)
 {
   media_queue_t *v = &mp->mp_video;
   media_queue_t *a = &mp->mp_audio;
@@ -1253,12 +1258,14 @@ mp_flush(media_pipe_t *mp, int blank)
   if(v->mq_stream >= 0) {
     mb = media_buf_alloc_locked(mp, 0);
     mb->mb_data_type = MB_CTRL_FLUSH;
+    mb->mb_data32 = lasting;
     mb_enq(mp, v, mb);
   }
 
   if(a->mq_stream >= 0) {
     mb = media_buf_alloc_locked(mp, 0);
     mb->mb_data_type = MB_CTRL_FLUSH;
+    mb->mb_data32 = lasting;
     mb_enq(mp, a, mb);
   }
 

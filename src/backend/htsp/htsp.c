@@ -1329,7 +1329,7 @@ zap_channel(htsp_connection_t *hc, htsp_subscription_t *hs,
   hts_mutex_lock(&hc->hc_subscription_mutex);
   hs->hs_sid = atomic_add(&hc->hc_sid_generator, 1);
 
-  mp_flush(hs->hs_mp, 1);
+  mp_flush(hs->hs_mp, 0);
   hts_mutex_unlock(&hc->hc_subscription_mutex);
 
   m = htsmsg_create_map();

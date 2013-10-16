@@ -195,12 +195,13 @@ rpi_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
 /**
  *
  */
-static void
-rpi_audio_flush(audio_decoder_t *ad)
+static int
+rpi_audio_flush(audio_decoder_t *ad, int lasting)
 {
   decoder_t *d = (decoder_t *)ad;
   if(d->d_render)
     omx_flush_port(d->d_render, 100);
+  return 0;
 }
 
 

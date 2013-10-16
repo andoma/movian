@@ -1296,7 +1296,7 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 
         if(h->h_playback_activation >= VIDEO_ACTIVATION_PRELOAD) {
           HLS_TRACE(h, "%s: Flush", mp->mp_name);
-          mp_flush(mp, 0);
+          mp_flush(mp, 1);
 
           if(mb != NULL && mb != MB_EOF && mb != MB_NYA)
             media_buf_free_unlocked(mp, mb);

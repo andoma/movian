@@ -22,7 +22,7 @@ typedef struct audio_class {
 
   void (*ac_pause)(struct audio_decoder *ad);
   void (*ac_play)(struct audio_decoder *ad);
-  void (*ac_flush)(struct audio_decoder *ad);
+  int (*ac_flush)(struct audio_decoder *ad, int lasting);
   int (*ac_check_passthru)(struct audio_decoder *ad, int codec);
   void (*ac_set_volume)(struct audio_decoder *ad, float scale);
 } audio_class_t;
