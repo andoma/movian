@@ -985,13 +985,13 @@ glw_video_render(glw_t *w, const glw_rctx_t *rc)
   glw_project(&gv->gv_rect, &rc1, gr);
 
   int invisible = 0;
-  if(gv->gv_rect.x1 >= gr->gr_width)
+  if(gv->gv_rect.x1 >= gr->gr_width - 10)
     invisible = 1;
-  if(gv->gv_rect.x2 < 0)
+  if(gv->gv_rect.x2 < 10)
     invisible = 1;
-  if(gv->gv_rect.y1 >= gr->gr_height)
+  if(gv->gv_rect.y1 >= gr->gr_height - 10)
     invisible = 1;
-  if(gv->gv_rect.y2 < 0)
+  if(gv->gv_rect.y2 < 10)
     invisible = 1;
 
   set_visibility(gv, invisible);
