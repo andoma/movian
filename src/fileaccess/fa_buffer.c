@@ -535,10 +535,10 @@ fab_seek_is_fast(fa_handle_t *handle)
  *
  */
 static int
-fab_info(fa_handle_t *handle, fa_info_t *fi)
+fab_info(const fa_handle_t *handle, fa_info_t *fi)
 {
-  buffered_file_t *bf = (buffered_file_t *)handle;
-  fa_handle_t *fh = bf->bf_src;
+  const buffered_file_t *bf = (buffered_file_t *)handle;
+  const fa_handle_t *fh = bf->bf_src;
   if(fh->fh_proto->fap_info != NULL)
     return fh->fh_proto->fap_info(fh, fi);
   return 1;

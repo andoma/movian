@@ -639,6 +639,7 @@ segment_open(hls_t *h, hls_segment_t *hs, int fast_fail, int streaming)
   if(fast_fail)
     flags |= FA_FAST_FAIL;
 
+  flags |= FA_TIMINGS;
 
   hs->hs_opened_at = showtime_get_ts();
   hs->hs_block_cnt = h->h_blocked;
@@ -650,17 +651,8 @@ segment_open(hls_t *h, hls_segment_t *hs, int fast_fail, int streaming)
     return SEGMENT_OPEN_NOT_FOUND;
   }
 
-  fa_info_t fi = {0};
-  fa_info(fh, &fi);
-
-  HLS_TRACE(h, "%s: Open segment %d in %d bps @ %s Remote cache: %s",
-            h->h_mp->mp_name,
-            hs->hs_seq, hs->hs_variant->hv_bitrate, hs->hs_url,
-            fi.remote_cache_status == FA_REMOTE_CACHE_HIT  ? "Hit" :
-            fi.remote_cache_status == FA_REMOTE_CACHE_MISS ? "Miss" :
-            "Unknown");
-
-  hs->hs_remote_cache_status = fi.remote_cache_status;
+  // Take extra what you do with this shadowed fh
+  const fa_handle_t *orig_fh = fh;
 
   if(hs->hs_byte_size != -1 && hs->hs_byte_offset != -1)
     fh = fa_slice_open(fh, hs->hs_byte_offset, hs->hs_byte_size);
@@ -684,7 +676,6 @@ segment_open(hls_t *h, hls_segment_t *hs, int fast_fail, int streaming)
 
       rstr_set(&hv->hv_key_url, hs->hs_key_url);
     }
-      
     fh = fa_aescbc_open(fh, hs->hs_iv, buf_c8(hv->hv_key));
   }
 
@@ -726,6 +717,24 @@ segment_open(hls_t *h, hls_segment_t *hs, int fast_fail, int streaming)
       break;
     }
   }
+
+  fa_info_t fi = {0};
+  fa_info(orig_fh, &fi);
+
+  HLS_TRACE(h, "%s: Open segment %d in %d bps @ %s Remote cache: %s. "
+            "Connect: %dms, Header: %dms, First byte: %dms",
+            h->h_mp->mp_name,
+            hs->hs_seq, hs->hs_variant->hv_bitrate, hs->hs_url,
+            fi.remote_cache_status == FA_REMOTE_CACHE_HIT  ? "Hit" :
+            fi.remote_cache_status == FA_REMOTE_CACHE_MISS ? "Miss" :
+            "Unknown",
+            fi.connect_time / 1000,
+            fi.time_to_headers / 1000,
+            fi.time_to_first_byte / 1000);
+
+  hs->hs_remote_cache_status = fi.remote_cache_status;
+
+
   return SEGMENT_OPEN_OK;
 }
 

@@ -315,7 +315,7 @@ fa_seek_is_fast(void *fh_)
  *
  */
 int
-fa_info(fa_handle_t *fh, fa_info_t *fi)
+fa_info(const fa_handle_t *fh, fa_info_t *fi)
 {
   if(fh->fh_proto->fap_info != NULL)
     return fh->fh_proto->fap_info(fh, fi);
