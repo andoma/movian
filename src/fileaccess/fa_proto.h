@@ -195,7 +195,7 @@ typedef struct fa_protocol {
    * Get some additional info about a filehandle
    */
 
-  int (*fap_info)(fa_handle_t *fh, fa_info_t *fi);
+  int (*fap_info)(const fa_handle_t *fh, fa_info_t *fi);
 
 } fa_protocol_t;
 

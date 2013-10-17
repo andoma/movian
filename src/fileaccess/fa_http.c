@@ -136,7 +136,7 @@ http_server_quirk_set_get(const char *hostname, int quirk)
 
 
 /**
- * Connection parking
+ * Connecttion parking
  */
 TAILQ_HEAD(http_connection_queue , http_connection);
 
@@ -226,6 +226,10 @@ typedef struct http_file {
 #define HTTP_CE_IDENTITY 0
 #define HTTP_CE_GZIP 1
 
+  char hf_timings;
+
+  char hf_did_first_read;
+
   fa_info_t hf_info;
 
   int hf_max_age;
@@ -237,6 +241,10 @@ typedef struct http_file {
   int hf_stats_ptr;
   int hf_num_stats;
   char hf_line[4096];
+
+  int64_t hf_open_ts;  /* Timestamp for start of http_read()
+                        * Used for timing info
+                        */
 
 } http_file_t;
 
@@ -1572,8 +1580,15 @@ http_connect(http_file_t *hf, char *errbuf, int errlen)
   if(hf->hf_fast_fail)
     timeout = 2000;
 
+  int64_t ts;
+  if(hf->hf_timings)
+    ts = showtime_get_ts();
+
   hf->hf_connection = http_connection_get(hostname, port, ssl, errbuf, errlen,
 					  hf->hf_debug, timeout);
+
+  if(hf->hf_timings)
+    hf->hf_info.connect_time = showtime_get_ts() - ts;
 
   return hf->hf_connection ? 0 : -1;
 }
@@ -1645,6 +1660,9 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
     http_detach(hf, 0, "Read error on reused connection, retrying");
     goto reconnect;
   }
+
+  if(hf->hf_timings)
+    hf->hf_info.time_to_headers = showtime_get_ts() - hf->hf_open_ts;
 
   switch(code) {
   case 200:
@@ -1953,6 +1971,11 @@ http_open_ex(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
   hf->hf_debug = !!(flags & FA_DEBUG) || gconf.enable_http_debug;
   hf->hf_streaming = !!(flags & FA_STREAMING);
   hf->hf_fast_fail = !!(flags & FA_FAST_FAIL);
+  hf->hf_timings   = !!(flags & FA_TIMINGS);
+
+  if(hf->hf_timings)
+    hf->hf_open_ts = showtime_get_ts();
+
   if(stats != NULL) {
     hf->hf_stats_speed = prop_ref_inc(prop_create(stats, "bitrate"));
     prop_set_int(prop_create(stats, "bitrateValid"), 1);
@@ -2001,10 +2024,28 @@ http_seek_is_fast(fa_handle_t *handle)
  *
  */
 static int
-http_info(fa_handle_t *handle, fa_info_t *fi)
+http_info(const fa_handle_t *handle, fa_info_t *fi)
 {
-  http_file_t *hf = (http_file_t *)handle;
+  const http_file_t *hf = (const http_file_t *)handle;
   *fi = hf->hf_info;
+  return 0;
+}
+
+
+/**
+ * Callback used to measure HTTP read timings
+ */
+static int
+http_read_do_timings(void *opaque, int amount)
+{
+  http_file_t *hf = opaque;
+
+  if(hf->hf_did_first_read)
+    return 0;
+  hf->hf_did_first_read = 1;
+  hf->hf_info.time_to_first_byte = showtime_get_ts() - hf->hf_open_ts;
+
+
   return 0;
 }
 
@@ -2025,6 +2066,8 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
   char errbuf[512];
   if(size == 0)
     return 0;
+
+  const int do_first_byte_timings = hf->hf_timings && !hf->hf_did_first_read;
 
   /* Max 5 retries */
   for(i = 0; i < 5; i++) {
@@ -2102,6 +2145,9 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
 	goto retry;
       }
 
+      if(do_first_byte_timings)
+        hf->hf_info.time_to_headers = showtime_get_ts() - hf->hf_open_ts;
+
       switch(code) {
       case 206:
 	// Range transfer OK
@@ -2156,7 +2202,9 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
 
     if(read_size > 0) {
       assert(totsize + read_size <= size);
-      if(tcp_read_data(hc->hc_tc, buf + totsize, read_size, NULL, NULL)) {
+      if(tcp_read_data(hc->hc_tc, buf + totsize, read_size,
+                       do_first_byte_timings ? http_read_do_timings : NULL,
+                       hf)) {
 	// Fail but we can retry a couple of times
 	http_detach(hf, 0, "Read error during fa_read()");
 	continue;
@@ -2176,7 +2224,9 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
       hf->hf_chunk_size -= read_size;
 
       if(hf->hf_chunk_size == 0) {
-	if(tcp_read_data(hc->hc_tc, chunkheader, 2, NULL, NULL))
+	if(tcp_read_data(hc->hc_tc, chunkheader, 2,
+                         do_first_byte_timings ? http_read_do_timings : NULL,
+                         hf))
 	  goto bad;
       }
     }

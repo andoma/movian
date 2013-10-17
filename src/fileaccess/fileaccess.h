@@ -52,6 +52,9 @@ RB_HEAD(fa_dir_entry_tree, fa_dir_entry);
 
 typedef struct fa_info {
   int remote_cache_status;
+  int connect_time;
+  int time_to_headers;
+  int time_to_first_byte;
 } fa_info_t;
 
 
@@ -139,6 +142,9 @@ LIST_HEAD(fa_protocol_list, fa_protocol);
 #define FA_APPEND          0x800  /* Only if FA_WRITE:
                                      Seek to EOF when opening
                                      otherwise truncate */
+#define FA_TIMINGS         0x1000 /* Do timings where appropriate
+                                   * and populate fa_info_t fields
+                                   */
 
 /**
  *
@@ -203,7 +209,7 @@ int fa_copy(const char *to, const char *from, char *errbuf, size_t errsize);
 
 int fa_makedirs(const char *url, char *errbuf, size_t errsize);
 
-int fa_info(fa_handle_t *fh, fa_info_t *fi);
+int fa_info(const fa_handle_t *fh, fa_info_t *fi);
 
 void fa_sanitize_filename(char *filename);
 
