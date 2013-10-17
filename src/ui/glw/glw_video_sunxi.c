@@ -94,6 +94,40 @@ video_reset_common(glw_video_t *gv)
   gv->gv_aux = NULL;
 }
 
+/**
+ *
+ */
+static void
+stop_layer(dispman_video_t *dv)
+{
+  unsigned long args[4] = {0};
+  args[1] = dv->dv_layer;
+  assert(dv->dv_layer > 0);
+  ioctl(sunxi.dispfd, DISP_CMD_VIDEO_STOP, args);
+  ioctl(sunxi.dispfd, DISP_CMD_LAYER_CLOSE, args);
+
+  dv->dv_running = 0;
+}
+
+
+/**
+ *
+ */
+static void
+sunxi_video_set_mute(glw_video_t *gv, int muted)
+{
+  if(muted == 0)
+    return;
+
+  dispman_video_t *dv = (dispman_video_t *)gv->gv_aux;
+
+  if(!dv->dv_running)
+    return;
+  TRACE(TRACE_INFO, "GLW", "%s: Muted", gv->gv_mp->mp_name);
+  stop_layer(dv);
+}
+
+
 
 /**
  *
@@ -156,7 +190,8 @@ video_reset_cedar2(glw_video_t *gv)
  *
  */
 static void
-video_set_param(dispman_video_t *dv, glw_video_surface_t *gvs)
+video_set_param(dispman_video_t *dv, glw_video_surface_t *gvs,
+		const media_pipe_t *mp)
 {
   unsigned long args[4] = {0};
   int r;
@@ -210,8 +245,9 @@ video_set_param(dispman_video_t *dv, glw_video_surface_t *gvs)
   l.scn_win.y        = 0;
   l.scn_win.width    = 1280; // HUH
   l.scn_win.height   = 720;
-    
-  printf("output configured %d x %d\n", l.src_win.width, l.src_win.height);
+
+  TRACE(TRACE_DEBUG, "GLW", "%s: Video surface set to %d x %d",
+	mp->mp_name, l.src_win.width, l.src_win.height);
 
   args[1] = dv->dv_layer;
   args[2] = (__u32)&l;
@@ -251,7 +287,7 @@ video_init(glw_video_t *gv)
   }
 
   dv->dv_layer = hlay;
-  TRACE(TRACE_DEBUG, "GLW", "%s: Got layer %d for output",
+  TRACE(TRACE_INFO, "GLW", "%s: Got layer %d for output",
 	gv->gv_mp->mp_name, hlay);
 
   return 0;
@@ -271,19 +307,21 @@ video_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
   int64_t pts = AV_NOPTS_VALUE;
   dispman_video_t *dv = (dispman_video_t *)gv->gv_aux;
 
-  args[1] = dv->dv_layer;
-  int curnr = ioctl(sunxi.dispfd, DISP_CMD_VIDEO_GET_FRAME_ID, args);
+  if(dv->dv_layer) {
 
+    args[1] = dv->dv_layer;
 
-  /*
-   * Remove frames if they are idle and push back to the decoder 
-   */
-  while((s = TAILQ_FIRST(&gv->gv_displaying_queue)) != NULL) {
-    if(s->gvs_id >= curnr)
-      break;
-    TAILQ_REMOVE(&gv->gv_displaying_queue, s, gvs_link);
-    TAILQ_INSERT_TAIL(&gv->gv_avail_queue, s, gvs_link);
-    hts_cond_signal(&gv->gv_avail_queue_cond);
+    int curnr = ioctl(sunxi.dispfd, DISP_CMD_VIDEO_GET_FRAME_ID, args);
+    /**
+     * Remove frames if they are idle and push back to the decoder 
+     */
+    while((s = TAILQ_FIRST(&gv->gv_displaying_queue)) != NULL) {
+      if(s->gvs_id >= curnr)
+	break;
+      TAILQ_REMOVE(&gv->gv_displaying_queue, s, gvs_link);
+      TAILQ_INSERT_TAIL(&gv->gv_avail_queue, s, gvs_link);
+      hts_cond_signal(&gv->gv_avail_queue_cond);
+    }
   }
 
   int64_t aclock;
@@ -314,28 +352,34 @@ video_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
     if(pts != AV_NOPTS_VALUE && (pts - delta) >= aclock)
       break;
 
-    video_set_param(dv, s);
+    video_set_param(dv, s, mp);
       
     if(!dv->dv_running) {
-      int r;
-
-      dv->dv_running = 1;
-
 
       args[1] = dv->dv_layer;
-      r = ioctl(sunxi.dispfd,DISP_CMD_LAYER_OPEN,(void*)args);
-      if(r)
-	perror("ioctl(disphd,DISP_CMD_LAYER_OPEN)");
+      if(ioctl(sunxi.dispfd,DISP_CMD_LAYER_OPEN,(void*)args)) {
+	TRACE(TRACE_ERROR, "GLW", "%s: Failed to open layer %d -- %s",
+	      mp->mp_name, dv->dv_layer, strerror(errno));
+	return PTS_UNSET;
+      }
       
       args[1] = dv->dv_layer;
-      if(ioctl(sunxi.dispfd, DISP_CMD_LAYER_BOTTOM, args))
-	perror("ioctl(disphd,DISP_CMD_LAYER_BOTTOM)");
+      if(ioctl(sunxi.dispfd, DISP_CMD_LAYER_BOTTOM, args)) {
+	TRACE(TRACE_ERROR, "GLW", "%s: Failed to set layer %d zorder -- %s",
+	      mp->mp_name, dv->dv_layer, strerror(errno));
+	ioctl(sunxi.dispfd, DISP_CMD_LAYER_CLOSE, args);
+	return PTS_UNSET;
+      }
 
       args[1] = dv->dv_layer;
-      r = ioctl(sunxi.dispfd, DISP_CMD_VIDEO_START, args);
-      if(r)
-	perror("ioctl(sunxi.dispfd, DISP_CMD_VIDEO_START");
+      if(ioctl(sunxi.dispfd, DISP_CMD_VIDEO_START, args)) {
+	TRACE(TRACE_ERROR, "GLW", "%s: Failed to start video on layer %d -- %s",
+	      mp->mp_name, dv->dv_layer, strerror(errno));
+	ioctl(sunxi.dispfd, DISP_CMD_LAYER_CLOSE, args);
+	return PTS_UNSET;
+      }
     }
+
 
     __disp_video_fb_t   frmbuf;
     memset(&frmbuf, 0, sizeof(__disp_video_fb_t));
@@ -347,10 +391,19 @@ video_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
     frmbuf.id              = s->gvs_id;
     
     args[1] = dv->dv_layer;
+
     args[2] = (intptr_t)&frmbuf;
+
     if(ioctl(sunxi.dispfd, DISP_CMD_VIDEO_SET_FB, args)) {
-      perror("DISP_CMD_VIDEO_SET_FB failed.\n");
+      TRACE(TRACE_ERROR, "GLW", "%s: Failed to set FB on layer %d -- %s",
+	    mp->mp_name, dv->dv_layer, strerror(errno));
+      args[2] = 0;
+      ioctl(sunxi.dispfd, DISP_CMD_LAYER_CLOSE, args);
+      return PTS_UNSET;
     }
+
+    dv->dv_running = 1;
+
     if(pts != AV_NOPTS_VALUE)
       gv->gv_nextpts = pts + s->gvs_duration;
 
@@ -398,12 +451,13 @@ static void deliver_yuvp(const frame_info_t *fi, glw_video_t *gv);
  *
  */
 static glw_video_engine_t glw_video_sunxi = {
-  .gve_type = 'YUVP',
+  .gve_type     = 'YUVP',
   .gve_newframe = video_newframe,
-  .gve_render = video_render,
-  .gve_reset = video_reset_free,
-  .gve_init = video_init,
-  .gve_deliver = deliver_yuvp,
+  .gve_render   = video_render,
+  .gve_reset    = video_reset_free,
+  .gve_init     = video_init,
+  .gve_deliver  = deliver_yuvp,
+  .gve_set_mute = sunxi_video_set_mute,
 };
 
 GLW_REGISTER_GVE(glw_video_sunxi);
@@ -461,12 +515,13 @@ static void cedar_deliver(const frame_info_t *fi, glw_video_t *gv);
  *
  */
 static glw_video_engine_t glw_video_sunxi_cedar = {
-  .gve_type = 'CEDR',
+  .gve_type     = 'CEDR',
   .gve_newframe = video_newframe,
-  .gve_render = video_render,
-  .gve_reset = video_reset_cedar,
-  .gve_init = video_init,
-  .gve_deliver = cedar_deliver,
+  .gve_render   = video_render,
+  .gve_reset    = video_reset_cedar,
+  .gve_init     = video_init,
+  .gve_deliver  = cedar_deliver,
+  .gve_set_mute = sunxi_video_set_mute,
 };
 
 GLW_REGISTER_GVE(glw_video_sunxi_cedar);
@@ -519,12 +574,13 @@ static void cedar2_deliver(const frame_info_t *fi, glw_video_t *gv);
  *
  */
 static glw_video_engine_t glw_video_sunxi_cedar2 = {
-  .gve_type = 'CED2',
+  .gve_type     = 'CED2',
   .gve_newframe = video_newframe,
-  .gve_render = video_render,
-  .gve_reset = video_reset_cedar2,
-  .gve_init = video_init,
-  .gve_deliver = cedar2_deliver,
+  .gve_render   = video_render,
+  .gve_reset    = video_reset_cedar2,
+  .gve_init     = video_init,
+  .gve_deliver  = cedar2_deliver,
+  .gve_set_mute = sunxi_video_set_mute,
 };
 
 GLW_REGISTER_GVE(glw_video_sunxi_cedar2);
