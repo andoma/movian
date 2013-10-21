@@ -272,24 +272,25 @@ glw_video_compute_avdiff(glw_root_t *gr, media_pipe_t *mp,
 
   prop_set_int(mp->mp_prop_avdiff_error, code);
 
-  if(gconf.enable_detailed_avdiff) {
-    static int64_t lastpts, lastaclock, lastclock;
+  if(gconf.enable_detailed_avdiff && gv->gv_activation == 0) {
 
-    TRACE(TRACE_DEBUG, "AVDIFF", "E:%3d %10f %10d %15"PRId64":a:%-8"PRId64" %15"PRId64":v:%-8"PRId64" %15"PRId64" %15"PRId64" %s %lld", 
+    TRACE(TRACE_DEBUG, "AVDIFF", "%s: Epoch:%3d/%-3d %10f %10d %15"PRId64":a:%-8"PRId64" %15"PRId64":v:%-8"PRId64" %15"PRId64" %15"PRId64" %s %lld", 
+          mp->mp_name,
 	  epoch,
+          mp->mp_audio_clock_epoch,
 	  gv->gv_avdiff_x,
 	  gv->gv_avdiff,
 	  aclock,
-	  aclock - lastaclock,
+	  aclock - gv->gv_lastaclock,
 	  pts,
-	  pts - lastpts,
+	  pts - gv->gv_lastpts,
 	  mp->mp_audio_clock,
-	  gr->gr_frame_start_avtime - lastclock,
+	  gr->gr_frame_start_avtime - gv->gv_lastclock,
 	  statustab[code],
 	  showtime_get_avtime() - aclock);
-    lastpts = pts;
-    lastaclock = aclock;
-    lastclock = gr->gr_frame_start_avtime;
+    gv->gv_lastpts = pts;
+    gv->gv_lastaclock = aclock;
+    gv->gv_lastclock = gr->gr_frame_start_avtime;
   }
   return code;
 }

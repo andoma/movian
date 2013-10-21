@@ -236,6 +236,12 @@ typedef struct glw_video {
 
   int gv_active;
 
+  // Debug stats helpers
+
+  int64_t gv_lastpts;
+  int64_t gv_lastaclock;
+  int64_t gv_lastclock;
+
 } glw_video_t;
 
 
