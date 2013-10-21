@@ -1616,14 +1616,16 @@ http_connect(http_file_t *hf, char *errbuf, int errlen)
   if(hf->hf_fast_fail)
     timeout = 2000;
 
+  const int do_timings = hf->hf_timings;
   int64_t ts;
-  if(hf->hf_timings)
+
+  if(do_timings)
     ts = showtime_get_ts();
 
   hf->hf_connection = http_connection_get(hostname, port, ssl, errbuf, errlen,
 					  hf->hf_debug, timeout);
 
-  if(hf->hf_timings)
+  if(do_timings)
     hf->hf_info.connect_time = showtime_get_ts() - ts;
 
   return hf->hf_connection ? 0 : -1;

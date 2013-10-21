@@ -85,8 +85,7 @@ typedef struct hls_segment {
   int hs_astream;
 
   uint8_t hs_crypto;
-
-  uint8_t hs_remote_cache_status;
+  uint8_t hs_corrupt;
 
   rstr_t *hs_key_url;
   uint8_t hs_iv[16];
@@ -95,6 +94,8 @@ typedef struct hls_segment {
 
   int64_t hs_opened_at;
   int hs_block_cnt;
+
+  fa_info_t hs_fa_info;
 
 } hls_segment_t;
 
@@ -732,8 +733,7 @@ segment_open(hls_t *h, hls_segment_t *hs, int fast_fail, int streaming)
             fi.time_to_headers / 1000,
             fi.time_to_first_byte / 1000);
 
-  hs->hs_remote_cache_status = fi.remote_cache_status;
-
+  hs->hs_fa_info = fi;
 
   return SEGMENT_OPEN_OK;
 }
@@ -748,14 +748,25 @@ variant_update_metadata(hls_t *h, hls_variant_t *hv, int availbw)
   mp_set_duration(h->h_mp, hv->hv_duration);
   const hls_segment_t *hs = hv->hv_current_seg;
   char buf[256];
+
+  const int rcs = hs->hs_fa_info.remote_cache_status;
+
   snprintf(buf, sizeof(buf),
 	   "HLS %d kbps (Avail: %d kbps) %s", 
 	   hv->hv_bitrate / 1000, availbw / 1000,
-           hs->hs_remote_cache_status == FA_REMOTE_CACHE_HIT  ? "Cache hit"  :
-           hs->hs_remote_cache_status == FA_REMOTE_CACHE_MISS ? "Cache miss" :
+           rcs == FA_REMOTE_CACHE_HIT  ? "Cache hit"  :
+           rcs == FA_REMOTE_CACHE_MISS ? "Cache miss" :
            "");
 
   prop_set(h->h_mp->mp_prop_metadata, "format", PROP_SET_STRING, buf);
+
+  snprintf(buf, sizeof(buf),
+	   "Connect: %dms, Headers: %dms, 1st byte: %dms",
+	   hs->hs_fa_info.connect_time / 1000,
+	   hs->hs_fa_info.time_to_headers / 1000,
+	   hs->hs_fa_info.time_to_first_byte / 1000);
+
+  prop_set(h->h_mp->mp_prop_metadata, "timings", PROP_SET_STRING, buf);
 }
 
 
