@@ -70,6 +70,12 @@ widget(grid, {
                 outline: true;
               });
 
+              widget(label, {
+                caption: $self.media.metadata.timings;
+                shadow: true;
+                outline: true;
+              });
+
               widget(bar, {
                 height: $ui.size;
                 color1: 1;
