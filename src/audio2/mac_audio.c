@@ -265,8 +265,25 @@ static int
 mac_audio_flush(audio_decoder_t *ad, int lasting)
 {
   decoder_t *d = (decoder_t *)ad;
-  if(d->aq)
-    AudioQueueReset(d->aq);
+
+  if(!d->aq)
+    return 0;
+
+  if(lasting) {
+    AudioQueueDispose(d->aq, true);
+
+    for(int i = 0; i < NUM_BUFS; i++) {
+      d->buffers[i].buf = NULL;
+      d->buffers[i].avail = 0;
+      d->buffers[i].size = 0;
+    }
+
+    d->aq = NULL;
+    return 1;
+  }
+
+
+  AudioQueueReset(d->aq);
   return 0;
 }
 
