@@ -65,14 +65,22 @@ widget(grid, {
 
               widget(label, {
                 caption: $self.media.metadata.format;
-                shadow: true;
-                outline: true;
               });
 
               widget(label, {
                 caption: $self.media.metadata.timings;
-                shadow: true;
-                outline: true;
+              });
+
+              widget(label, {
+		caption: translate($self.media.avdiffError,
+				   fmt("%d ms", $self.media.avdiff * 1000),
+				   1, "Huge diff",
+				   2, "Epoch mismatch",
+				   3, fmt("%d ms holding",
+					  $self.media.avdiff * 1000),
+				   4, fmt("%d ms catching up",
+					  $self.media.avdiff * 1000)
+				  );
               });
 
               widget(bar, {
