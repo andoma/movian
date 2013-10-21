@@ -569,10 +569,6 @@ audio_decode_thread(void *aux)
 	  }
 	}
 
-	hts_mutex_lock(&mp->mp_clock_mutex);
-	mp->mp_audio_clock_epoch = 0;
-	hts_mutex_unlock(&mp->mp_clock_mutex);
-
 	ad->ad_pts = AV_NOPTS_VALUE;
 
 	if(mp->mp_seek_audio_done != NULL)
