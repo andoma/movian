@@ -1267,6 +1267,9 @@ mp_flush(media_pipe_t *mp, int lasting)
     mb_enq(mp, a, mb);
   }
 
+  if(lasting)
+    mp->mp_epoch++;
+
   if(mp->mp_satisfied == 0) {
     atomic_add(&media_buffer_hungry, -1);
     mp->mp_satisfied = 1;
