@@ -360,6 +360,7 @@ sunxi_ve_wait(int timeout)
 
 
 static int sram_write_ptr;
+static uint32_t cedar_mirror[4096];
 
 static uint32_t cedar_sram_mirror[4096];
 
@@ -401,6 +402,21 @@ dump_refs(void)
 	 cedar_sram_mirror[VE_SRAM_H264_REF_LIST1 / 4 + 2],
 	 cedar_sram_mirror[VE_SRAM_H264_REF_LIST1 / 4 + 3]);
 }
+
+static void
+dump_regs(void)
+{
+  printf("REGS: %08x %08x %08x %08x %08x %08x %08x %08x\n",
+	 cedar_mirror[VE_H264_FRAME_SIZE],
+	 cedar_mirror[VE_H264_PIC_HDR],
+	 cedar_mirror[VE_H264_SLICE_HDR],
+	 cedar_mirror[VE_H264_SLICE_HDR2],
+	 cedar_mirror[VE_H264_PRED_WEIGHT],
+	 cedar_mirror[VE_H264_QP_PARAM],
+	 cedar_mirror[VE_H264_CUR_MB_NUM],
+	 cedar_mirror[VE_H264_SDROT_CTRL]);
+}
+
 #if 0
 static void
 dump_weights(void)
@@ -413,6 +429,9 @@ dump_weights(void)
 void
 cedar_decode_write32(int off, int value)
 {
+  if(off < 4096)
+    cedar_mirror[off] = value;
+
   switch(off) {
   case VE_H264_RAM_WRITE_PTR:
     assert((value & 3) == 0);
@@ -439,9 +458,9 @@ cedar_decode_write32(int off, int value)
     switch(value & 0xf) {
     case 8:
       printf("Decode h264 start\n");
-
-      dump_dpb();
-      dump_refs();
+      dump_regs();
+      if(0) dump_dpb();
+      if(0) dump_refs();
       return;
     case 2:
     case 4:
@@ -450,7 +469,7 @@ cedar_decode_write32(int off, int value)
     }
     break;
   }
-  printf("Write32(0x%04x) = 0x%08x\n", off, value);
+  //  printf("Write32(0x%04x) = 0x%08x\n", off, value);
 }
 
 
