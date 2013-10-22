@@ -53,6 +53,8 @@ typedef struct dispman_video {
   int dv_height;
   int dv_format;
 
+  int64_t last_frame_start;
+  int64_t last_aclock;
 
 } dispman_video_t;
 
@@ -331,13 +333,16 @@ video_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
     mp->mp_audio_clock_avtime + mp->mp_avdelta;
   
   hts_mutex_unlock(&mp->mp_clock_mutex);
-  if(0) {
-    static int64_t last_frame_start, last_aclock;
-    printf("%10lld %10lld\n", gr->gr_frame_start_avtime - last_frame_start,
-	   aclock - last_aclock);
+  if(1) {
+    printf("%10s: %10lld %10lld %d %s\n",
+	   mp->mp_name,
+	   gr->gr_frame_start_avtime - dv->last_frame_start,
+	   aclock - dv->last_aclock,
+	   gv->gv_activation,
+	   TAILQ_FIRST(&gv->gv_decoded_queue) ? "available frames" : "");
   
-    last_aclock = aclock;
-    last_frame_start = gr->gr_frame_start_avtime;
+    dv->last_aclock = aclock;
+    dv->last_frame_start = gr->gr_frame_start_avtime;
   }
   while((s = TAILQ_FIRST(&gv->gv_decoded_queue)) != NULL) {
     int64_t delta = gr->gr_frameduration * 2;
@@ -423,25 +428,28 @@ video_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
 static void
 video_render(glw_video_t *gv, glw_rctx_t *rc)
 {
+  hts_mutex_lock(&gv->gv_surface_mutex);
+
   dispman_video_t *dv = (dispman_video_t *)gv->gv_aux;
 
-  if(dv->dv_layer == 0 ||
-     gv->gv_rect.x2 <= gv->gv_rect.x1 ||
-     gv->gv_rect.y2 <= gv->gv_rect.y1)
-    return;
+  if(dv->dv_layer != 0 &&
+     gv->gv_rect.x2 > gv->gv_rect.x1 &&
+     gv->gv_rect.y2 > gv->gv_rect.y1) {
 
-  __disp_rect_t rect;
-  rect.x      = gv->gv_rect.x1;
-  rect.y      = gv->gv_rect.y1;
-  rect.width  = gv->gv_rect.x2 - gv->gv_rect.x1;
-  rect.height = gv->gv_rect.y2 - gv->gv_rect.y1;
+    __disp_rect_t rect;
+    rect.x      = gv->gv_rect.x1;
+    rect.y      = gv->gv_rect.y1;
+    rect.width  = gv->gv_rect.x2 - gv->gv_rect.x1;
+    rect.height = gv->gv_rect.y2 - gv->gv_rect.y1;
 
-  unsigned long args[4] = {0};
-  args[0] = 0;
-  args[1] = dv->dv_layer;
-  args[2] = (intptr_t)&rect;
-  
-  ioctl(sunxi.dispfd, DISP_CMD_LAYER_SET_SCN_WINDOW, &args);
+    unsigned long args[4] = {0};
+    args[0] = 0;
+    args[1] = dv->dv_layer;
+    args[2] = (intptr_t)&rect;
+
+    ioctl(sunxi.dispfd, DISP_CMD_LAYER_SET_SCN_WINDOW, &args);
+  }
+  hts_mutex_unlock(&gv->gv_surface_mutex);
 }
 
 

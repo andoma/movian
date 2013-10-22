@@ -167,6 +167,10 @@ cedar_decode(struct media_codec *mc, struct video_decoder *vd,
   //  hexdump("PACKET", mb->mb_data, MIN(16, mb->mb_size));
   // Copy packet to cedar mem
   hts_mutex_lock(&sunxi.gfxmem_mutex);
+
+  if(tlsf_check_heap(sunxi.gfxmem))
+    panic("TLSF heap is broken");
+
   cp->cp_vsd.data = tlsf_malloc(sunxi.gfxmem, mb->mb_size);
   hts_mutex_unlock(&sunxi.gfxmem_mutex);
   memcpy(cp->cp_vsd.data, mb->mb_data, mb->mb_size);
