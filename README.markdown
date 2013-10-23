@@ -12,10 +12,7 @@ For more information and latest versions, please visit:
 First you need to satisfy some dependencies:
 For Ubuntu 12.04)  
 
-	sudo apt-get install libfreetype6-dev libfontconfig1-dev libxext-dev libgl1-mesa-dev 
-	libasound2-dev libasound2-dev libgtk2.0-dev libxss-dev libxxf86vm-dev libxv-dev libcdio-cdda-dev 
-	libcddb2-dev libvdpau-dev yasm libpulse-dev libssl-dev curl
-	libwebkitgtk-dev libsqlite3-dev
+	sudo apt-get install libfreetype6-dev libfontconfig1-dev libxext-dev libgl1-mesa-dev libasound2-dev libasound2-dev libgtk2.0-dev libxss-dev libxxf86vm-dev libxv-dev libcdio-cdda-dev libcddb2-dev libvdpau-dev yasm libpulse-dev libssl-dev curl libwebkitgtk-dev libsqlite3-dev
 
 Then you need to configure:
 
@@ -24,17 +21,17 @@ Then you need to configure:
 If your system lacks libwebkitgtk (Ubuntu 12.04 before 12.04.1) 
 you can configure with
 
-        ./configure --disable-webkit
+	./configure --disable-webkit
 
 If any dependencies are missing the configure script will complain.
 You then have the option to disable that particular module/subsystem.
 
 	make
 
-Build the binary, after build the binary resides in `build.linux/`.
+Build the binary, after build the binary resides in `./build.linux/`.
 Thus, to start it, just type:
 
-	build.linux/showtime
+	./build.linux/showtime
 
 Settings are stored in `~/.hts/showtime`
 
@@ -94,4 +91,12 @@ $ ./Autobuild.sh -t ps3
 
 ## How to build for Raspberry Pi
 
+First you need to satisfy some dependencies (For Ubuntu 12.04LTS 64bit):
+
+	sudo apt-get install git-core build-essential autoconf bison flex libelf-dev libtool pkg-config texinfo libncurses5-dev libz-dev python-dev libssl-dev libgmp3-dev ccache zip squashfs-tools
+
 $ ./Autobuild.sh -t rpi
+
+To update Showtime on rpi with compiled one, enable Binreplace in settings:dev and issue:
+
+	curl --data-binary @build.rpi/showtime.sqfs http://rpi_ip_address:42000/showtime/replace 
