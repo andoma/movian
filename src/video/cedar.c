@@ -72,6 +72,8 @@ typedef struct fbm {
   struct picture_queue fbm_avail;
   struct picture_queue fbm_queued;
   struct picture_queue fbm_display;
+  char fbm_name[64];  // Copy of mp_name
+
   picture_t pics[0];
 } fbm_t;
 
@@ -92,12 +94,22 @@ typedef struct cedar_decoder {
 
   int cd_metaptr;
 
+  char cd_name[64];  // Copy of mp_name
+
   media_buf_t cd_meta[NUM_FRAME_META];
   int64_t cd_last_pts;
   int cd_estimated_duration;
 } cedar_decoder_t;
 
 
+static int countq(struct picture_queue *pq)
+{
+  int cnt = 0;
+  picture_t *p;
+  TAILQ_FOREACH(p, pq, link)
+    cnt++;
+  return cnt;
+}
 /**
  *
  */
@@ -109,6 +121,10 @@ fbm_release(fbm_t *fbm)
   if(atomic_add(&fbm->refcount, -1) > 1)
     return;
   hts_mutex_lock(&sunxi.gfxmem_mutex);
+
+  int queued  = countq(&fbm->fbm_queued);
+  int display = countq(&fbm->fbm_display);
+
   for(i = 0; i < fbm->numpics; i++) {
     tlsf_free(sunxi.gfxmem, fbm->pics[i].pic.y);
     tlsf_free(sunxi.gfxmem, fbm->pics[i].pic.u);
@@ -118,10 +134,14 @@ fbm_release(fbm_t *fbm)
 
   hts_mutex_destroy(&fbm->fbm_mutex);
 
+  if(queued)
+    panic("FBM %p (%s) still have queued frames", fbm, fbm->fbm_name);
+
+  if(display)
+    panic("FBM %p (%s) still have displaying frames", fbm, fbm->fbm_name);
+
   free(fbm);
-
 }
-
 
 
 /**
@@ -132,7 +152,6 @@ cedar_frame_done(void *P)
 {
   picture_t *pic = P;
   fbm_t *fbm = pic->fbm;
-
   hts_mutex_lock(&fbm->fbm_mutex);
   TAILQ_REMOVE(&fbm->fbm_display, pic, link);
   TAILQ_INSERT_HEAD(&fbm->fbm_avail, pic, link);
@@ -167,10 +186,6 @@ cedar_decode(struct media_codec *mc, struct video_decoder *vd,
   //  hexdump("PACKET", mb->mb_data, MIN(16, mb->mb_size));
   // Copy packet to cedar mem
   hts_mutex_lock(&sunxi.gfxmem_mutex);
-
-  if(tlsf_check_heap(sunxi.gfxmem))
-    panic("TLSF heap is broken");
-
   cp->cp_vsd.data = tlsf_malloc(sunxi.gfxmem, mb->mb_size);
   hts_mutex_unlock(&sunxi.gfxmem_mutex);
   memcpy(cp->cp_vsd.data, mb->mb_data, mb->mb_size);
@@ -197,6 +212,8 @@ cedar_decode(struct media_codec *mc, struct video_decoder *vd,
   fbm_t *fbm = libve_get_fbm(cd->cd_ve);
   if(fbm == NULL)
     return;
+
+  snprintf(fbm->fbm_name, sizeof(fbm->fbm_name), "%s", cd->cd_name);
 
   picture_t *pic;
 
@@ -356,8 +373,9 @@ cedar_codec_open(media_codec_t *mc, const const media_codec_params_t *mcp,
     return 1;
   }
 
-  cedar_decoder_t *cd = calloc(1, sizeof(cedar_decoder_t));
 
+  cedar_decoder_t *cd = calloc(1, sizeof(cedar_decoder_t));
+  snprintf(cd->cd_name, sizeof(cd->cd_name), "%s", mp->mp_name);
   cd->cd_ve = ve;
   TAILQ_INIT(&cd->cd_queue);
   libve_set_vbv(cd, ve);
@@ -589,9 +607,11 @@ fbm_init_ex(u32 max_frame_num, u32 min_frame_num,
 	    u32 size_alpha[], _3d_mode_e _3d_mode,
 	    pixel_format_e format, uint8_t unknown, void *parent)
 {
-  return fbm_init(max_frame_num, min_frame_num,
-		  size_y[0], size_u[0], size_v[0], size_alpha[0],
-		  format);
+  fbm_t *fbm;
+  fbm = fbm_init(max_frame_num, min_frame_num,
+		 size_y[0], size_u[0], size_v[0], size_alpha[0],
+		 format);
+  return fbm;
 }
 #endif
 
