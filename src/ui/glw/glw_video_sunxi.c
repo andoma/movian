@@ -86,12 +86,13 @@ video_reset_common(glw_video_t *gv)
   dispman_video_t *dv = (dispman_video_t *)gv->gv_aux;
   unsigned long args[4] = {0};
   args[1] = dv->dv_layer;
+  assert(dv->dv_layer >= 100 && dv->dv_layer < 105);
   ioctl(sunxi.dispfd, DISP_CMD_VIDEO_STOP, args);
   ioctl(sunxi.dispfd, DISP_CMD_LAYER_CLOSE, args);
   ioctl(sunxi.dispfd, DISP_CMD_LAYER_RELEASE, args);
 
   TRACE(TRACE_DEBUG, "GLW", "%s: Released layer %d",
-	gv->gv_mp->mp_name, args);
+	gv->gv_mp->mp_name, dv->dv_layer);
   free(dv);
   gv->gv_aux = NULL;
 }
@@ -152,10 +153,11 @@ static void
 video_reset_cedar(glw_video_t *gv)
 {
   int i;
-
   for(i = 0; i < GLW_VIDEO_MAX_SURFACES; i++)
-    if(gv->gv_surfaces[i].gvs_opaque)
+    if(gv->gv_surfaces[i].gvs_opaque) {
       cedar_frame_done(gv->gv_surfaces[i].gvs_opaque);
+      gv->gv_surfaces[i].gvs_opaque = NULL;
+    }
   video_reset_common(gv);
 }
 
