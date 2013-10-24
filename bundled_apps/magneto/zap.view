@@ -1,5 +1,4 @@
-
-
+$self.directClose = 1;
 
 widget(grid, {
   widget(gridrow, {
