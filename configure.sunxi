@@ -111,7 +111,7 @@ CFLAGS_cfg += -funwind-tables
 CFLAGS_cfg += -I/home/andoma/sunxi/cedarx-libs/libcedarv/linux-armhf2/vdecoder/libve
 CFLAGS_cfg += -I/home/andoma/sunxi/cedarx-libs/libcedarv/linux-armhf2/vdecoder
 
-CFLAGS_cfg += -I${TOPDIR}/sunxi/libv
+CFLAGS_cfg += -I${TOPDIR}/support/sunxi/libv
 LDFLAGS_cfg += -L/home/andoma/sunxi/cedarx-libs/libcedarv/linux-armhf2/vdecoder/libve
 LDFLAGS_cfg += -lvecore
 
