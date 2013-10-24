@@ -247,7 +247,7 @@ glw_video_compute_avdiff(glw_root_t *gr, media_pipe_t *mp,
       code = AVDIFF_NO_LOCK;
     }
 
-    if(mp->mp_stats) {
+    if(1) {
       if(!gv->gv_avdiff_update_thres) {
 	prop_set_float(mp->mp_prop_avdiff, gv->gv_avdiff_x);
 	gv->gv_avdiff_update_thres = 5;
@@ -259,8 +259,7 @@ glw_video_compute_avdiff(glw_root_t *gr, media_pipe_t *mp,
 
   hts_mutex_unlock(&mp->mp_clock_mutex);
 
-  if(mp->mp_stats)
-    prop_set_int(mp->mp_prop_avdiff_error, code);
+  prop_set_int(mp->mp_prop_avdiff_error, code);
 
   if(gconf.enable_detailed_avdiff) {
     static int64_t lastpts, lastaclock, lastclock;
