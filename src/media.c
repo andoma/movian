@@ -1026,10 +1026,8 @@ mq_update_stats(media_pipe_t *mp, media_queue_t *mq)
   }
 
 
-  if(mp->mp_stats) {
-    prop_set_int(mq->mq_prop_qlen_cur, mq->mq_packets_current);
-    prop_set_int(mp->mp_prop_buffer_current, mp->mp_buffer_current);
-  }
+  prop_set_int(mq->mq_prop_qlen_cur, mq->mq_packets_current);
+  prop_set_int(mp->mp_prop_buffer_current, mp->mp_buffer_current);
 }
 
 
