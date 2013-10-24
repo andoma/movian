@@ -44,6 +44,13 @@ sunxi_init(void)
     perror("open(/dev/disp)");
     exit(1);
   }
+
+  
+  sunxi.fb0fd = open("/dev/fb0", O_RDWR);
+  if(sunxi.fb0fd == -1) {
+    perror("open(/dev/fb0)");
+    exit(1);
+  }
 #if 0
   int tmp = SUNXI_DISP_VERSION;
   if(ioctl(sunxi.dispfd, DISP_CMD_VERSION, &tmp) < 0) {

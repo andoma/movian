@@ -13,6 +13,7 @@
 typedef struct sunxi {
   int cedarfd;
   int dispfd;
+  int fb0fd;
   cedarv_env_info_t env_info;
   tlsf_pool gfxmem;
   uint32_t gfxmembase;

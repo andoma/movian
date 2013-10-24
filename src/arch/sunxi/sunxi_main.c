@@ -246,8 +246,9 @@ ui_run(void)
 
   int64_t ts0 = 0;
 
+  int framenum = ioctl(sunxi.fb0fd, 0x4740);
+  printf("Starting at frame %d\n", framenum);
   while(running) {
-
 
 
     glw_lock(gr);
@@ -270,9 +271,21 @@ ui_run(void)
 
     glw_post_scene(gr);
     
-
     int64_t ts2 = showtime_get_ts();
     eglSwapBuffers(su.su_dpy, surface);
+#if 0
+    int err = ioctl(sunxi.fb0fd, 0x4741, framenum);
+    if(err < 0)
+      printf("Swap error: %d\n", err);
+    else {
+      framenum = err + 1;
+      static int foo;
+      
+      if(framenum - foo != 1)
+	printf("delta:%d\n", framenum - foo);
+      foo = framenum;
+    }
+#endif
     int64_t ts3 = showtime_get_ts();
     if(0)printf("ts3-ts2 = %lld\n", ts3 - ts2);
 
