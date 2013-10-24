@@ -620,6 +620,7 @@ static int
 cedar_h264_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
                         media_pipe_t *mp)
 {
+  return 1;
 
   if(mc->codec_id != CODEC_ID_H264)
     return 1;
