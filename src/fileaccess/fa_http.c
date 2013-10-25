@@ -1369,6 +1369,8 @@ http_read_response(http_file_t *hf, struct http_header_list *headers)
         hf->hf_info.remote_cache_status = FA_REMOTE_CACHE_HIT;
       } else if(!strncasecmp(argv[1], "miss from", 9)) {
         hf->hf_info.remote_cache_status = FA_REMOTE_CACHE_MISS;
+      } else if(!strncasecmp(argv[1], "refreshhit from", 15)) {
+        hf->hf_info.remote_cache_status = FA_REMOTE_CACHE_REFRESH_HIT;
       }
     }
 
