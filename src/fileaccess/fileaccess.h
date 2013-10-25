@@ -46,9 +46,10 @@ int fileaccess_init(void);
  */
 RB_HEAD(fa_dir_entry_tree, fa_dir_entry);
 
-#define FA_REMOTE_CACHE_UNKNOWN 0
-#define FA_REMOTE_CACHE_HIT     1
-#define FA_REMOTE_CACHE_MISS    2
+#define FA_REMOTE_CACHE_UNKNOWN     0
+#define FA_REMOTE_CACHE_HIT         1
+#define FA_REMOTE_CACHE_MISS        2
+#define FA_REMOTE_CACHE_REFRESH_HIT 3
 
 typedef struct fa_info {
   int remote_cache_status;
