@@ -118,9 +118,8 @@ typedef struct hls_variant {
   int hv_h264_level;
   int hv_target_duration;
 
-  time_t hv_loaded; /* last time it was loaded successfully
-                     *  0 means not loaded
-                     */
+  int64_t hv_next_load; /* Don't reload before this time have passed
+                         */
 
   int hv_program;
   int hv_bitrate;
@@ -193,6 +192,8 @@ typedef struct hls {
   int h_playback_activation;
 
   int h_live;
+
+  int h_work_flags;
 
 } hls_t;
 
@@ -400,23 +401,20 @@ variant_update(hls_variant_t *hv, hls_t *h)
   if(hv->hv_frozen)
     return 0;
 
-  time_t now;
-  time(&now);
-
-  if(hv->hv_loaded == now)
-    return 0;
-
   int64_t ts = showtime_get_ts();
 
-  buf_t *b = fa_load(hv->hv_url, NULL, errbuf, sizeof(errbuf), NULL, 
+  if(ts < hv->hv_next_load)
+    return 0;
+
+  HLS_TRACE(h, "%s: Starting variant update", h->h_mp->mp_name);
+
+  buf_t *b = fa_load(hv->hv_url, NULL, errbuf, sizeof(errbuf), DISABLE_CACHE,
 		     FA_COMPRESSION, NULL, NULL);
 
   if(b == NULL) {
     TRACE(TRACE_ERROR, "HLS", "Unable to open %s -- %s", hv->hv_url, errbuf);
     return 1;
   }
-
-  hv->hv_loaded = now;
 
   b = buf_make_writable(b);
 
@@ -426,6 +424,8 @@ variant_update(hls_variant_t *hv, hls_t *h)
   int seq = 1;
   hls_variant_parser_t hvp;
   int newsegs = 0;
+
+  hv->hv_next_load = ts + 500000LL;
 
   memset(&hvp, 0, sizeof(hvp));
 
@@ -476,13 +476,16 @@ variant_update(hls_variant_t *hv, hls_t *h)
 	if(hv->hv_target_duration == 0)
 	  hv->hv_target_duration = duration;
 
+        newsegs++;
+
+        hv->hv_next_load = ts + hv->hv_target_duration * 1000000LL;
+
 	hs->hs_seq = seq;
 	duration = 0;
 	byte_offset = -1;
 	byte_size = -1;
 
 	hv->hv_last_seq = hs->hs_seq;
-        newsegs++;
 
       }
       seq++;
@@ -743,7 +746,7 @@ segment_open(hls_t *h, hls_segment_t *hs, int fast_fail, int streaming)
  *
  */
 static void
-variant_update_metadata(hls_t *h, hls_variant_t *hv, int availbw)
+update_metadata(hls_t *h, hls_variant_t *hv, int availbw)
 {
   mp_set_duration(h->h_mp, hv->hv_duration);
   const hls_segment_t *hs = hv->hv_current_seg;
@@ -810,7 +813,7 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
 
   // Need to switch variant? Need to close current segment if so
   if(hd->hd_req != hd->hd_current) {
-    
+
     if(hd->hd_current != NULL)
       variant_close_current_seg(hd->hd_current);
 
@@ -819,8 +822,9 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
 
   hls_variant_t *hv = hd->hd_current;
 
-  int live_preload =
+  const int live_preload =
     h->h_playback_activation == VIDEO_ACTIVATION_PRELOAD && !hv->hv_frozen;
+
 
   if(hv->hv_current_seg == NULL ||
      hv->hv_current_seg->hs_seq != hd->hd_seq ||
@@ -953,7 +957,7 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
 
     hv->hv_current_seg = hs;
 
-    variant_update_metadata(h, hv, hd->hd_bw);
+    update_metadata(h, hv, hd->hd_bw);
   }
 
   hls_segment_t *hs = hv->hv_current_seg;
@@ -1325,7 +1329,7 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 
     if(mb == MB_NYA || mb == NULL) {
       // Nothing to send yet
-      e = mp_dequeue_event_deadline(mp, 1000);
+      e = mp_dequeue_event_deadline(mp, 500);
       mb = NULL;
       if(e == NULL)
 	continue;
