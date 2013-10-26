@@ -394,7 +394,7 @@ handle_vendor_command_lg(const VC_CEC_MESSAGE_T *msg)
   case SL_COMMAND_UNKNOWN_01:
     response[0] = CEC_Opcode_VendorCommand;
     response[1] = 0x02;
-    response[2] = 0x01;
+    response[2] = 0x03;
     cec_send_msg(msg->initiator, response, 3, VC_TRUE);
     break;
 
