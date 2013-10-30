@@ -105,6 +105,14 @@
     page.loading = false;
   });
 
+  plugin.addURI("magneto:postersvideo", function(page) {
+    page.metadata.glwview = plugin.path + "posters.view";
+    page.type = "directory";
+    page.contents = "items";
+    page.loading = false;
+    page.metadata.enablevideo = true;
+  });
+
 
 
   plugin.addURI("magneto:start", function(page) {
@@ -119,6 +127,10 @@
 
     page.appendItem("magneto:posters", "directory", {
       title: "Posters demo"
+    });
+
+    page.appendItem("magneto:postersvideo", "directory", {
+      title: "Posters demo with video"
     });
 
     page.appendItem("", "separator", {
