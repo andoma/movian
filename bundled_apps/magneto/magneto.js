@@ -49,6 +49,26 @@
     });
   }
 
+
+  function populate_model_macbook(page) {
+    page.type = "directory";
+    page.contents = "items";
+    page.loading = false;
+
+    var url = "hls:http://aether:8080/out/"
+
+    page.appendItem(url + 'svt1/hls.m3u8', "video", {
+      title: "SVT1"
+    });
+    page.appendItem(url + 'svt2/hls.m3u8', "video", {
+      title: "SVT2"
+    });
+    page.appendItem(url + 'tv3/hls.m3u8', "video", {
+      title: "TV3"
+    });
+
+  }
+
   plugin.addURI("magneto:channels", function(page) {
     populate_model(page);
   });
@@ -72,6 +92,11 @@
   plugin.addURI("magneto:5", function(page) {
     page.metadata.glwview = plugin.path + "zap.view";
     populate_model(page);
+  });
+
+  plugin.addURI("magneto:6", function(page) {
+    page.metadata.glwview = plugin.path + "zap.view";
+    populate_model_macbook(page);
   });
 
 
@@ -98,6 +123,10 @@
 
     page.appendItem("magneto:5", "directory", {
       title: "Zap lab"
+    });
+
+    page.appendItem("magneto:6", "directory", {
+      title: "Zap lab on macbook"
     });
 
   });
