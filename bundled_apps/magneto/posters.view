@@ -35,18 +35,35 @@
   });
 }
 
-widget(container_y, {
-  padding: [0, $ui.height / 8];
-  widget(list_x, {
-    spacing: $ui.size;
-    scrollThreshold: $ui.width / 8;
+widget(container_z, {
 
-    ITEM("Breaking Bad",  "breaking-bad-poster.jpg");
-    ITEM("Archer",        "archer-poster.jpg");
-    ITEM("Animal Planet", "animalplanet-poster.jpg");
-    ITEM("African cats",  "lion-poster.jpg");
-    ITEM("Baseball",      "baseball-poster.jpg");
-    ITEM("Inside Gymnastics", "gymnastics-poster.jpg");
-    ITEM("Soccer",        "soccer-poster.jpg");
+  widget(container_y, {
+    padding: [0, $ui.height / 8];
+    widget(list_x, {
+      spacing: $ui.size;
+      scrollThreshold: $ui.width / 8;
+
+      ITEM("Breaking Bad",  "breaking-bad-poster.jpg");
+      ITEM("Archer",        "archer-poster.jpg");
+      ITEM("Animal Planet", "animalplanet-poster.jpg");
+      ITEM("African cats",  "lion-poster.jpg");
+      ITEM("Baseball",      "baseball-poster.jpg");
+      ITEM("Inside Gymnastics", "gymnastics-poster.jpg");
+      ITEM("Soccer",        "soccer-poster.jpg");
+    });
   });
+
+  widget(container_y, {
+    space(3);
+    widget(container_x, {
+      space(3);
+
+      widget(video, {
+        source: "hls:http://aether:8080/out/svt1/hls.m3u8";
+        activation: select($page.model.metadata.enablevideo, 0, 3);
+      });
+    });
+  });
+
+
 });
