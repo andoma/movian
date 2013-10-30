@@ -83,7 +83,6 @@
     populate_model(page);
   });
 
-
   plugin.addURI("magneto:4", function(page) {
     page.metadata.glwview = plugin.path + "activation.view";
     populate_model(page);
@@ -99,11 +98,32 @@
     populate_model_macbook(page);
   });
 
+  plugin.addURI("magneto:posters", function(page) {
+    page.metadata.glwview = plugin.path + "posters.view";
+    page.type = "directory";
+    page.contents = "items";
+    page.loading = false;
+  });
+
+
 
   plugin.addURI("magneto:start", function(page) {
     page.type = "directory";
     page.contents = "items";
     page.loading = false;
+    page.metadata.title = "Slipstream demo app";
+
+    page.appendItem("magneto:6", "directory", {
+      title: "Stream zapping (local content)"
+    });
+
+    page.appendItem("magneto:posters", "directory", {
+      title: "Posters demo"
+    });
+
+    page.appendItem("", "separator", {
+      title: "Experimental"
+    });
 
     page.appendItem("magneto:channels", "directory", {
       title: "Normal channel list"
@@ -125,9 +145,6 @@
       title: "Zap lab"
     });
 
-    page.appendItem("magneto:6", "directory", {
-      title: "Zap lab on macbook"
-    });
 
   });
 
