@@ -362,7 +362,7 @@ vd_thread(void *aux)
       mp->mp_video_frame_deliver(NULL, mp->mp_video_frame_opaque);
 
       if(mc_current != NULL) {
-        mc_current->flush(mc_current, vd);
+        mc_current->flush(mc_current, vd, mb->mb_data32);
 	media_codec_deref(mc_current);
 	mc_current = NULL;
       }

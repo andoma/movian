@@ -456,7 +456,7 @@ decode_nal(cedar_decoder_t *cd, const uint8_t *data, int len)
 
 
 static void
-cedar_flush(struct media_codec *mc, struct video_decoder *vd)
+cedar_flush(struct media_codec *mc, struct video_decoder *vd, int lasting)
 {
 
 }

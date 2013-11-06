@@ -329,13 +329,17 @@ video_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
   }
 
   int64_t aclock;
-
+  int aepoch;
   hts_mutex_lock(&mp->mp_clock_mutex);
   aclock = mp->mp_audio_clock + gr->gr_frame_start_avtime - 
     mp->mp_audio_clock_avtime + mp->mp_avdelta;
-  
+
+  const int aclock_valid = !!mp->mp_audio_clock_epoch;
+
+  aepoch = mp->mp_audio_clock_epoch;
+
   hts_mutex_unlock(&mp->mp_clock_mutex);
-  if(1) {
+  if(0) {
     printf("%10s: %10lld %10lld %d %s\n",
 	   mp->mp_name,
 	   gr->gr_frame_start_avtime - dv->last_frame_start,
@@ -346,21 +350,40 @@ video_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
     dv->last_aclock = aclock;
     dv->last_frame_start = gr->gr_frame_start_avtime;
   }
+
   while((s = TAILQ_FIRST(&gv->gv_decoded_queue)) != NULL) {
     int64_t delta = gr->gr_frameduration * 2;
     int64_t d;
     pts = s->gvs_pts;
+    int epoch = s->gvs_epoch;
 
     d = s->gvs_pts - aclock;
 
-    if(s->gvs_pts == AV_NOPTS_VALUE || d < -5000000LL || d > 5000000LL)
+    if(gv->gv_nextpts_epoch == epoch &&
+       (pts == AV_NOPTS_VALUE || d < -5000000LL || d > 5000000LL)) {
       pts = gv->gv_nextpts;
+    }
 
-    if(pts != AV_NOPTS_VALUE && (pts - delta) >= aclock)
+    if(pts != AV_NOPTS_VALUE && (pts - delta) >= aclock && aclock_valid) {
+
+      if(gconf.enable_detailed_avdiff && gv->gv_activation == 0)
+        TRACE(TRACE_DEBUG, "AVDIFF",
+              "%s: Not sending frame %d:%lld %d:%lld diff:%lld\n",
+              mp->mp_name,
+              s->gvs_epoch,
+              (pts - delta), aepoch, aclock,
+              (pts - delta) - aclock);
+
       break;
-
+    } else {
+      if(gconf.enable_detailed_avdiff && gv->gv_activation == 0)
+        TRACE(TRACE_DEBUG, "AVDIFF",
+              "%s:     Sending frame %d:%lld %d:%lld\n",
+             mp->mp_name, s->gvs_epoch,
+             (pts - delta), aepoch, aclock);
+    }
     video_set_param(dv, s, mp);
-      
+
     if(!dv->dv_running) {
 
       args[1] = dv->dv_layer;
@@ -411,8 +434,10 @@ video_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
 
     dv->dv_running = 1;
 
-    if(pts != AV_NOPTS_VALUE)
+    if(pts != AV_NOPTS_VALUE) {
       gv->gv_nextpts = pts + s->gvs_duration;
+      gv->gv_nextpts_epoch = epoch;
+    }
 
     gv->gv_width  = s->gvs_width[0];
     gv->gv_height = s->gvs_height[0];

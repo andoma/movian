@@ -493,14 +493,20 @@ hata_decode(struct media_codec *mc, struct video_decoder *vd,
  *
  */
 static void
-hata_flush(struct media_codec *mc, struct video_decoder *vd)
+hata_flush(struct media_codec *mc, struct video_decoder *vd, int lasting)
 {
   h264_annexb_to_avc_t *hata = mc->opaque;
   mc = hata->hata_decoder;
 
   if(mc == NULL || mc->flush == NULL)
     return;
-  mc->flush(mc, vd);
+  mc->flush(mc, vd, lasting);
+
+  if(lasting) {
+    if(mc != NULL)
+      media_codec_deref(mc);
+    hata->hata_decoder = NULL;
+  }
 }
 
 

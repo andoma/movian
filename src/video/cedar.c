@@ -33,9 +33,18 @@
 
 #include <libavutil/common.h>
 
+
+static hts_mutex_t cedar_mutex;
+
 #ifdef __ANDROID__
 #define OLD_VE
 #endif
+
+#define CEDAR_USE_HATA
+
+// #define CEDAR_DECODE_LOCK
+
+ #define CEDAR_SESSION_LOCK
 
 // #define CEDAR_TRAP
 
@@ -163,7 +172,7 @@ cedar_frame_done(void *P)
  *
  */
 static void
-cedar_flush(struct media_codec *mc, struct video_decoder *vd)
+cedar_flush(struct media_codec *mc, struct video_decoder *vd, int lasting)
 {
   cedar_decoder_t *cd = mc->opaque;
   libve_reset(1, cd->cd_ve);
@@ -195,28 +204,52 @@ cedar_decode(struct media_codec *mc, struct video_decoder *vd,
   cp->cp_vsd.pcr = cd->cd_metaptr;
   cd->cd_metaptr = (cd->cd_metaptr + 1) & (NUM_FRAME_META-1);
 
-
   cp->cp_vsd.valid = 1;
   TAILQ_INSERT_TAIL(&cd->cd_queue, cp, cp_link);
+
+#ifdef CEDAR_DECODE_LOCK
+  hts_mutex_lock(&cedar_mutex);
+#endif
+  //  printf("%s: decode start\n", cd->cd_name);
+
+  int64_t ts = showtime_get_ts();
 
   avgtime_start(&vd->vd_decode_time);
   vresult_e res = libve_decode(0, 0, 0, cd->cd_ve);
   avgtime_stop(&vd->vd_decode_time, mq->mq_prop_decode_avg,
 	       mq->mq_prop_decode_peak);
 
+
   if(res < 0) {
     TRACE(TRACE_ERROR, "CEDAR", "libve_decode() failed, possible mem leak");
+#ifdef CEDAR_DECODE_LOCK
+    hts_mutex_unlock(&cedar_mutex);
+#endif
     return;
   }
 
+  int dectime = showtime_get_ts() - ts;
+  if(dectime > 1000000) {
+    printf("%s: Decode time %d very high\n", cd->cd_name, dectime);
+    exit(0);
+  }
   fbm_t *fbm = libve_get_fbm(cd->cd_ve);
-  if(fbm == NULL)
+  if(fbm == NULL) {
+    printf("%s: FBM IS NULL\n", cd->cd_name);
+#ifdef CEDAR_DECODE_LOCK
+    hts_mutex_unlock(&cedar_mutex);
+#endif
     return;
-
+  }
   snprintf(fbm->fbm_name, sizeof(fbm->fbm_name), "%s", cd->cd_name);
 
-  picture_t *pic;
+  //  printf("%s: decode end\n", cd->cd_name);
 
+#ifdef CEDAR_DECODE_LOCK
+  hts_mutex_unlock(&cedar_mutex);
+#endif
+
+  picture_t *pic;
   hts_mutex_lock(&fbm->fbm_mutex);
   while((pic = TAILQ_FIRST(&fbm->fbm_queued)) != NULL) {
     TAILQ_REMOVE(&fbm->fbm_queued, pic, link);
@@ -228,7 +261,7 @@ cedar_decode(struct media_codec *mc, struct video_decoder *vd,
     if(cd->cd_last_pts != AV_NOPTS_VALUE && mb->mb_pts != AV_NOPTS_VALUE) {
       int64_t d = mb->mb_pts - cd->cd_last_pts;
 
-      if(d > 1000 && d < 1000000)
+      if(d > 1000 && d < 100000)
 	cd->cd_estimated_duration = d;
     }
 
@@ -282,6 +315,10 @@ cedar_close(struct media_codec *mc)
   cedar_decoder_t *cd = mc->opaque;
   libve_close(1, cd->cd_ve);
   free(cd);
+  printf("%s: Close\n", cd->cd_name);
+#ifdef CEDAR_SESSION_LOCK
+  hts_mutex_unlock(&cedar_mutex);
+#endif
 }
 
 
@@ -308,13 +345,16 @@ cedar_codec_open(media_codec_t *mc, const const media_codec_params_t *mcp,
 
   case CODEC_ID_H264:
     si.format = STREAM_FORMAT_H264;
-
+#ifdef CEDAR_USE_HATA
     if(mcp == NULL || mcp->extradata == NULL || mcp->extradata_size == 0 ||
        ((const uint8_t *)mcp->extradata)[0] != 1)
       return h264_annexb_to_avc(mc, mp, &cedar_codec_open);
-  
-    si.init_data     = (void *)mcp->extradata;
-    si.init_data_len = mcp->extradata_size;
+#endif
+
+    if(mcp != NULL) {
+      si.init_data     = (void *)mcp->extradata;
+      si.init_data_len = mcp->extradata_size;
+    }
     break;
 
   case CODEC_ID_MPEG2VIDEO:
@@ -363,6 +403,10 @@ cedar_codec_open(media_codec_t *mc, const const media_codec_params_t *mcp,
     break;
   }
 
+#ifdef CEDAR_SESSION_LOCK
+  hts_mutex_lock(&cedar_mutex);
+#endif
+
 #ifdef OLD_VE
   Handle *ve = libve_open(&cfg, &si);
 #else
@@ -370,6 +414,9 @@ cedar_codec_open(media_codec_t *mc, const const media_codec_params_t *mcp,
 #endif
   if(ve == NULL) {
     TRACE(TRACE_ERROR, "libve", "Unable to open libve");
+#ifdef CEDAR_SESSION_LOCK
+    hts_mutex_unlock(&cedar_mutex);
+#endif
     return 1;
   }
 
@@ -397,7 +444,7 @@ cedar_codec_open(media_codec_t *mc, const const media_codec_params_t *mcp,
 static void
 ve_reset_hardware(void)
 {
-  ioctl(sunxi.cedarfd, IOCTL_RESET_VE, 0);
+  //  ioctl(sunxi.cedarfd, IOCTL_RESET_VE, 0);
 }
 
 
@@ -406,7 +453,8 @@ ve_enable_clock(u8 enable, u32 speed)
 {
   if(enable) {
     ioctl(sunxi.cedarfd, IOCTL_ENABLE_VE, 0);
-    ioctl(sunxi.cedarfd, IOCTL_SET_VE_FREQ, speed / 1000000);
+    printf("Settings %d instead of %d\n", 240, speed);
+    //    ioctl(sunxi.cedarfd, IOCTL_SET_VE_FREQ, 240);
   } else {
     ioctl(sunxi.cedarfd, IOCTL_DISABLE_VE, 0);
   }
@@ -573,12 +621,32 @@ fbm_init(u32 max_frame_num, u32 min_frame_num,
     fbm->pics[i].pic.size_y     = size_y;
     fbm->pics[i].pic.size_u     = size_u;
     fbm->pics[i].pic.size_v     = size_v;
-    fbm->pics[i].pic.y = size_y ?
-      tlsf_memalign(sunxi.gfxmem, 1024, size_y) : NULL;
-    fbm->pics[i].pic.u = size_u ?
-      tlsf_memalign(sunxi.gfxmem, 1024, size_u) : NULL;
-    fbm->pics[i].pic.v = size_v ?
-      tlsf_memalign(sunxi.gfxmem, 1024, size_v) : NULL;
+
+
+
+    if(size_y) {
+      fbm->pics[i].pic.y = tlsf_memalign(sunxi.gfxmem, 1024, size_y);
+      if(fbm->pics[i].pic.y == NULL)
+        panic("Out of CEDAR memory");
+    } else {
+      fbm->pics[i].pic.y = NULL;
+    }
+
+    if(size_u) {
+      fbm->pics[i].pic.u = tlsf_memalign(sunxi.gfxmem, 1024, size_u);
+      if(fbm->pics[i].pic.u == NULL)
+        panic("Out of CEDAR memory");
+    } else {
+      fbm->pics[i].pic.u = NULL;
+    }
+
+    if(size_v) {
+      fbm->pics[i].pic.v = tlsf_memalign(sunxi.gfxmem, 1024, size_v);
+      if(fbm->pics[i].pic.v == NULL)
+        panic("Out of CEDAR memory");
+    } else {
+      fbm->pics[i].pic.v = NULL;
+    }
     TAILQ_INSERT_HEAD(&fbm->fbm_avail, &fbm->pics[i], link);
   }
   hts_mutex_unlock(&sunxi.gfxmem_mutex);
@@ -634,8 +702,12 @@ fbm_decoder_request_frame(Handle h)
 {
   fbm_t *fbm = h;
 
+  int64_t ts = showtime_get_ts();
   hts_mutex_lock(&fbm->fbm_mutex);
-
+  ts = showtime_get_ts() - ts;
+  if(ts > 100000) {
+    panic("Request frame long timeout %lld", ts);
+  }
   picture_t *pic = TAILQ_FIRST(&fbm->fbm_avail);
   if(pic != NULL)
     TAILQ_REMOVE(&fbm->fbm_avail, pic, link);
@@ -657,6 +729,7 @@ fbm_decoder_return_frame(vpicture_t *f, u8 valid, Handle h)
   if(valid) {
     TAILQ_INSERT_TAIL(&fbm->fbm_queued, pic, link);
   } else {
+    printf("%s: Return invalid frame: %d %p\n", fbm->fbm_name, valid, fbm);
     TAILQ_INSERT_HEAD(&fbm->fbm_avail, pic, link);
   }
   hts_mutex_unlock(&fbm->fbm_mutex);
@@ -1016,6 +1089,9 @@ cedar_trap(int sig, siginfo_t *si, void *UC)
 static void
 cedar_codec_init(void)
 {
+  hts_mutex_init(&cedar_mutex);
+  ioctl(sunxi.cedarfd, IOCTL_RESET_VE, 0);
+
 #ifdef CEDAR_TRAP
   extra_traphandler = cedar_trap;
 
