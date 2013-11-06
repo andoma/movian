@@ -17,6 +17,7 @@ SRCS += src/arch/linux/linux_misc.c \
 	src/prop/prop_glib_courier.c \
 	src/arch/linux/linux_process_monitor.c \
 	src/arch/meson/meson_main.c \
+	src/video/video_meson.c \
 
 
 ${PROG}.stripped: ${PROG}.bundle

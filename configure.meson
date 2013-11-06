@@ -105,6 +105,8 @@ CFLAGS_cfg += -funwind-tables
 
 LDFLAGS_cfg += -lpthread -lrt -ldl
 
+CFLAGS_cfg += -I${TOPDIR}/support/amlogic/include/
+
 CFLAGS_cfg  += -I/home/andoma/amlogic/gpu/usr/include
 LDFLAGS_cfg += -L/home/andoma/amlogic/gpu/usr/lib
 LDFLAGS_cfg += -lEGL -lGLESv2 -lMali
