@@ -27,7 +27,7 @@
   });
 }
 
-#define InfoBar(TITLE, VAL) {
+#define InfoBar(TITLE, VAL, TEXT) {
   widget(container_x, {
     spacing: 10;
     widget(label, {
@@ -47,6 +47,13 @@
         color2: 1;
 	fill: VAL;
       });
+    });
+
+    widget(label, {
+      filterConstraintX: true;
+      InfoLabel();
+      align: right;
+      caption: TEXT;
     });
   });
 }
@@ -90,7 +97,7 @@ widget(container_y, {
                    fmt("%d kB", $global.system.mem.sysfree));
 
           cloner($global.system.cpuinfo.cpus, container_z, {
-            InfoBar($self.name, $self.load)
+              InfoBar($self.name, $self.load, fmt("%d MHz", $self.freq));
           });
 
 	});

@@ -54,6 +54,7 @@ static callout_t timer;
 static prop_t *p_cpuroot;
 static prop_t *p_cpu[17];
 static prop_t *p_load[16];
+static prop_t *p_freq[16];
 
 /**
  *
@@ -66,6 +67,7 @@ cpu_monitor_do(void)
   uint64_t v1, v2, v3, v4, v5, v6, v7, di, tot, dt;
   char buf[100];
   char s1[22];
+  char path[256];
   FILE *f;
 
   f = fopen("/proc/stat", "r");
@@ -103,12 +105,28 @@ cpu_monitor_do(void)
 	  snprintf(buf, sizeof(buf), "CPU%d", id);
           prop_set(p_cpu[id], "name", PROP_SET_STRING, buf);
 	  p_load[id] = prop_create(p_cpu[id], "load");
+	  p_freq[id] = prop_create(p_cpu[id], "freq");
 	}
 	float v = 1.0 - ((float)di / (float)dt);
 	if(v < 0) v = 0;
 	else if(v > 1) v = 1;
 
 	prop_set_float(p_load[id], v);
+
+
+        snprintf(path, sizeof(path),
+                 "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_cur_freq", id);
+        FILE *f2 = fopen(path, "r");
+        if(f2 != NULL) {
+          char data2[64];
+          while(fgets(data2, sizeof(data2), f2) != NULL) {
+            int freq;
+            if(sscanf(data2, "%d", &freq) == 1)
+              prop_set_int(p_freq[id], freq / 1000);
+            break;
+          }
+          fclose(f2);
+        }
       }
     }
     last_idle[id] = v4;
