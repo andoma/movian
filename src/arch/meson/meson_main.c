@@ -77,6 +77,21 @@ typedef struct sunxi_ui {
 static sunxi_ui_t su;
 
 
+
+/**
+ *
+ */
+static void
+set_blank(int value)
+{
+  FILE *fp = fopen("/sys/class/graphics/fb0/blank", "w");
+  if(fp == NULL)
+    return;
+
+  fprintf(fp, "%d\n", value);
+  fclose(fp);
+}
+
 /**
  *
  */
@@ -120,19 +135,6 @@ ui_init(void)
     return 1;
   }
 
-  printf("noc:%d\n", noc);
-
-  int i;
-  for(i = 0; i < noc; i++) {
-    int d[4];
-    eglGetConfigAttrib(su.su_dpy, configs[i], EGL_RED_SIZE,   &d[0]);
-    eglGetConfigAttrib(su.su_dpy, configs[i], EGL_GREEN_SIZE, &d[1]);
-    eglGetConfigAttrib(su.su_dpy, configs[i], EGL_BLUE_SIZE,  &d[2]);
-    eglGetConfigAttrib(su.su_dpy, configs[i], EGL_ALPHA_SIZE, &d[3]);
-    printf("Config #%d RGBA color depth: %d %d %d %d\n",
-	   i, d[0], d[1], d[2], d[3]);
-  }
-
   su.su_config = configs[0];
 
   glw_root_t *gr = &su.su_gr;
@@ -164,7 +166,6 @@ ui_init(void)
 }
 
 
-
 /**
  *
  */
@@ -174,8 +175,25 @@ ui_run(void)
   glw_root_t *gr = &su.su_gr;
   fbdev_window fbwin = {0};
 
-  gr->gr_width  = 1280;
-  gr->gr_height = 720;
+
+  int fd = open("/dev/fb0", O_RDWR);
+  if(fd == -1) {
+    TRACE(TRACE_ERROR, "EGL", "Failed to open /dev/fb0");
+    return -1;
+  }
+
+  struct fb_var_screeninfo si;
+  int r = ioctl(fd, FBIOGET_VSCREENINFO, &si);
+  close(fd);
+  if(r) {
+    TRACE(TRACE_ERROR, "EGL", "Unable to query for screen dimensions");
+    return -1;
+  }
+
+  TRACE(TRACE_DEBUG, "EGL", "Screen dimensions %d x %d", si.xres, si.yres);
+
+  gr->gr_width  = si.xres;
+  gr->gr_height = si.yres;
 
   fbwin.width  = gr->gr_width;
   fbwin.height = gr->gr_height;
@@ -190,7 +208,7 @@ ui_run(void)
   }
 
   eglBindAPI(EGL_OPENGL_ES_API);
-        
+
   EGLContext ctx = eglCreateContext(su.su_dpy, su.su_config, EGL_NO_CONTEXT,
 				    ui_ctx_attribs);
 
@@ -202,12 +220,11 @@ ui_run(void)
   eglMakeCurrent(su.su_dpy, surface, surface, ctx);
   glw_opengl_init_context(gr);
 
-  //  eglSwapInterval(su.su_dpy, 1);
-
   glClearColor(0,0,0,0);
 
-  while(running) {
+  set_blank(0);
 
+  while(running) {
 
     glw_lock(gr);
     
@@ -351,5 +368,5 @@ showtime_get_avtime(void)
 
 const char *alsa_get_devicename(void)
 {
-  return "hw:1,0";
+  return "hw:0,0";
 }
