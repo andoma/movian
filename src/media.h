@@ -481,6 +481,8 @@ typedef struct media_pipe {
   void (*mp_seek_audio_done)(struct media_pipe *mp);
   void (*mp_seek_video_done)(struct media_pipe *mp);
   void (*mp_hold_changed)(struct media_pipe *mp);
+  void (*mp_set_audio_clock)(struct media_pipe *mp, int64_t pts, int epoch,
+                             int discont);
 
 
   /**
