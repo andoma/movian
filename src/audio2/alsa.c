@@ -12,6 +12,8 @@ typedef struct decoder {
   int64_t samples;
   int max_frames_per_write;
   void *tmp;
+
+  int underrun;
 } decoder_t;
 
 
@@ -115,6 +117,7 @@ alsa_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
     usleep(100000);
     TRACE(TRACE_DEBUG, "ALSA", "Audio underrun");
     d->samples = 0;
+    d->underrun = 1;
     goto retry;
   }
 
@@ -136,6 +139,12 @@ alsa_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
       ts += d->samples * 1000000LL / ad->ad_out_sample_rate;
 
       hts_mutex_lock(&mp->mp_clock_mutex);
+
+      if(mp->mp_set_audio_clock != NULL) {
+        mp->mp_set_audio_clock(mp, pts, epoch, d->underrun);
+        d->underrun = 0;
+      }
+
       mp->mp_audio_clock_avtime = ts;
       mp->mp_audio_clock = pts;
       mp->mp_audio_clock_epoch = epoch;
