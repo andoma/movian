@@ -935,13 +935,9 @@ static int
 set_args(glw_view_eval_context_t *ec, const token_attrib_t *a,
 	   struct token *t)
 {
-  if(t->type != TOKEN_PROPERTY_OWNER &&
-     t->type != TOKEN_PROPERTY_REF)
-    return glw_view_seterr(ec->ei, t,
-			   "Attribute '%s' expects a property, got %s",
-			   a->name, token2name(t));
-
-  glw_set(ec->w, GLW_ATTRIB_ARGS, t->t_prop, NULL);
+  if(t->type == TOKEN_PROPERTY_OWNER ||
+     t->type == TOKEN_PROPERTY_REF)
+    glw_set(ec->w, GLW_ATTRIB_ARGS, t->t_prop, NULL);
   return 0;
 }
 
