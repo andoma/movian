@@ -77,4 +77,7 @@ int http_ctime(time_t *tp, const char *d);
 
 const char *http_asctime(time_t tp, char *out, size_t outlen);
 
+void http_parse_uri_args(struct http_header_list *hc, char *args,
+			 int append);
+
 #endif // HTTP_H__

@@ -316,6 +316,15 @@ SRCS-$(CONFIG_DVD_WII)   += src/backend/dvd/wii_dvd.c
 SRCS-$(CONFIG_CDDA)      += src/backend/dvd/cdda.c
 
 ##############################################################
+# Bittorrent
+##############################################################
+SRCS                     += \
+	src/backend/bittorrent/magnet.c \
+	src/backend/bittorrent/torrent.c \
+	src/backend/bittorrent/tracker.c \
+
+
+##############################################################
 # TV
 ##############################################################
 SRCS  += src/backend/htsp/htsp.c \

@@ -278,11 +278,12 @@ net_fmt_host(char *dst, size_t dstlen, const net_addr_t *na)
 {
   switch(na->na_family) {
   case 4:
-    snprintf(dst, dstlen, "%d.%d.%d.%d",
+    snprintf(dst, dstlen, "%d.%d.%d.%d:%d",
              na->na_addr[0],
              na->na_addr[1],
              na->na_addr[2],
-             na->na_addr[3]);
+             na->na_addr[3],
+	     na->na_port);
     break;
 
   default:
@@ -290,6 +291,37 @@ net_fmt_host(char *dst, size_t dstlen, const net_addr_t *na)
       *dst = 0;
   }
 }
+
+
+
+/**
+ *
+ */
+const char *
+net_addr_str(const net_addr_t *na)
+{
+  static __thread char buf[64];
+  net_fmt_host(buf, sizeof(buf), na);
+  return buf;
+}
+
+
+/**
+ *
+ */
+int
+net_addr_cmp(const net_addr_t *a, const net_addr_t *b)
+{
+  if(a->na_family != b->na_family)
+    return 1;
+  if(a->na_port != b->na_port)
+    return 1;
+  if(a->na_family == 4)
+    return memcmp(a->na_addr, b->na_addr, 4);
+
+  return 1;
+}
+
 
 
 /**

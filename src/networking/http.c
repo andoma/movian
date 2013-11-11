@@ -25,6 +25,7 @@
 #include <string.h>
 #include "http.h"
 #include "misc/time.h"
+#include "misc/str.h"
 
 /**
  *
@@ -210,4 +211,30 @@ http_asctime(time_t tp, char *out, size_t outlen)
 	   tm.tm_min,
 	   tm.tm_sec);
   return out;
+}
+
+/**
+ * Parse arguments of a URI, not perfect, but works for us
+ */
+void
+http_parse_uri_args(struct http_header_list *list, char *args,
+		    int append)
+{
+  char *k, *v;
+
+  while(args) {
+    k = args;
+    if((args = strchr(args, '=')) == NULL)
+      break;
+    *args++ = 0;
+    v = args;
+    args = strchr(args, '&');
+
+    if(args != NULL)
+      *args++ = 0;
+
+    url_deescape(k);
+    url_deescape(v);
+    http_header_add(list, k, v, append);
+  }
 }

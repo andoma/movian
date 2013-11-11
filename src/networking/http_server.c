@@ -499,60 +499,6 @@ http_exec(http_connection_t *hc, const http_path_t *hp, char *remain,
 
 
 /**
- * De-escape HTTP URL
- */
-static void
-http_deescape(char *s)
-{
-  char v, *d = s;
-
-  while(*s) {
-    if(*s == '+') {
-      *d++ = ' ';
-      s++;
-    } else if(*s == '%') {
-      s++;
-      switch(*s) {
-      case '0' ... '9':
-	v = (*s - '0') << 4;
-	break;
-      case 'a' ... 'f':
-	v = (*s - 'a' + 10) << 4;
-	break;
-      case 'A' ... 'F':
-	v = (*s - 'A' + 10) << 4;
-	break;
-      default:
-	*d = 0;
-	return;
-      }
-      s++;
-      switch(*s) {
-      case '0' ... '9':
-	v |= (*s - '0');
-	break;
-      case 'a' ... 'f':
-	v |= (*s - 'a' + 10);
-	break;
-      case 'A' ... 'F':
-	v |= (*s - 'A' + 10);
-	break;
-      default:
-	*d = 0;
-	return;
-      }
-      s++;
-
-      *d++ = v;
-    } else {
-      *d++ = *s++;
-    }
-  }
-  *d = 0;
-}
-
-
-/**
  *
  */
 const char *
@@ -610,30 +556,6 @@ http_tokenize(char *buf, char **vec, int vecsize, int delimiter)
 }
 
 
-/**
- * Parse arguments of a HTTP GET url, not perfect, but works for us
- */
-static void
-http_parse_get_args(http_connection_t *hc, char *args)
-{
-  char *k, *v;
-
-  while(args) {
-    k = args;
-    if((args = strchr(args, '=')) == NULL)
-      break;
-    *args++ = 0;
-    v = args;
-    args = strchr(args, '&');
-
-    if(args != NULL)
-      *args++ = 0;
-
-    http_deescape(k);
-    http_deescape(v);
-    http_header_add(&hc->hc_req_args, k, v, 0);
-  }
-}
 
 #define WSGUID "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 
@@ -697,7 +619,7 @@ http_cmd_get(http_connection_t *hc, http_cmd_t method)
   }
 
   if(args != NULL)
-    http_parse_get_args(hc, args);
+    http_parse_uri_args(&hc->hc_req_args, args, 0);
 
   const char *c = http_header_get(&hc->hc_request_headers, "Connection");
   const char *u = http_header_get(&hc->hc_request_headers, "Upgrade");
@@ -762,7 +684,7 @@ http_read_post(http_connection_t *hc)
     }
 
     if(!strcmp(argv[0], "application/x-www-form-urlencoded"))
-      http_parse_get_args(hc, hc->hc_post_data);
+      http_parse_uri_args(&hc->hc_req_args, hc->hc_post_data, 0);
   }
 
   hp = http_resolve(hc, &remain, &args);
@@ -1221,7 +1143,7 @@ http_close(http_connection_t *hc)
  *
  */
 static void
-http_io_callback(asyncio_fd_t *af, void *opaque, int events)
+http_io_callback(asyncio_fd_t *af, void *opaque, int events, int error)
 {
   http_connection_t *hc = opaque;
   if(http_io(opaque, events))
