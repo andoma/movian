@@ -7,3 +7,6 @@
 [submodule "ext/xmp"]
 	path = ext/xmp
 	url = git://github.com/andoma/xmp
+[submodule "ext/libntfs_ext"]
+	path = ext/libntfs_ext
+	url = https://github.com/andoma/libntfs_ext.git

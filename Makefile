@@ -177,6 +177,8 @@ SRCS += src/fileaccess/fileaccess.c \
 	src/fileaccess/fa_imageloader.c \
 	src/fileaccess/fa_indexer.c \
 
+
+
 SRCS += src/fileaccess/fa_ftp.c \
 	src/fileaccess/ftpparse.c \
 
@@ -193,6 +195,7 @@ SRCS-$(CONFIG_LIBGME)          += src/fileaccess/fa_gmefile.c
 SRCS-$(CONFIG_LOCATEDB)        += src/fileaccess/fa_locatedb.c
 SRCS-$(CONFIG_SPOTLIGHT)       += src/fileaccess/fa_spotlight.c
 SRCS-$(CONFIG_READAHEAD_CACHE) += src/fileaccess/fa_cache.c
+SRCS-$(CONFIG_LIBNTFS)         += src/fileaccess/fa_ntfs.c
 
 SRCS += ext/audio/sid.c
 
@@ -605,6 +608,51 @@ ${BUILDDIR}/ext/polarssl-1.2.0/library/%.o : CFLAGS = -Wall ${OPTFLAGS}
 ifeq ($(CONFIG_POLARSSL), yes)
 CFLAGS_com += -Iext/polarssl-1.2.0/include
 endif
+
+##############################################################
+# 
+##############################################################
+
+SRCS-$(CONFIG_LIBNTFS) += \
+	ext/libntfs_ext/source/acls.c \
+	ext/libntfs_ext/source/attrib.c \
+	ext/libntfs_ext/source/attrlist.c \
+	ext/libntfs_ext/source/bitmap.c \
+	ext/libntfs_ext/source/bootsect.c \
+	ext/libntfs_ext/source/cache.c \
+	ext/libntfs_ext/source/cache2.c \
+	ext/libntfs_ext/source/collate.c \
+	ext/libntfs_ext/source/compress.c \
+	ext/libntfs_ext/source/debug.c \
+	ext/libntfs_ext/source/device.c \
+	ext/libntfs_ext/source/device_io.c \
+	ext/libntfs_ext/source/dir.c \
+	ext/libntfs_ext/source/efs.c \
+	ext/libntfs_ext/source/gekko_io.c \
+	ext/libntfs_ext/source/index.c \
+	ext/libntfs_ext/source/inode.c \
+	ext/libntfs_ext/source/lcnalloc.c \
+	ext/libntfs_ext/source/logfile.c \
+	ext/libntfs_ext/source/logging.c \
+	ext/libntfs_ext/source/mft.c \
+	ext/libntfs_ext/source/misc.c \
+	ext/libntfs_ext/source/mst.c \
+	ext/libntfs_ext/source/ntfs.c \
+	ext/libntfs_ext/source/ntfsdir.c \
+	ext/libntfs_ext/source/ntfsfile.c \
+	ext/libntfs_ext/source/ntfsinternal.c \
+	ext/libntfs_ext/source/object_id.c \
+	ext/libntfs_ext/source/realpath.c \
+	ext/libntfs_ext/source/reparse.c \
+	ext/libntfs_ext/source/runlist.c \
+	ext/libntfs_ext/source/security.c \
+	ext/libntfs_ext/source/unistr.c \
+	ext/libntfs_ext/source/volume.c \
+	ext/libntfs_ext/source/xattrs.c \
+
+${BUILDDIR}/ext/libntfs_ext/source/%.o : CFLAGS = -Wall ${OPTFLAGS} \
+	-DHAVE_CONFIG_H -Iext/libntfs_ext/source -Iext/libntfs_ext/include \
+	-DPS3_GEKKO
 
 ##############################################################
 # TLSF (Two Level Segregated Fit) memory allocator
