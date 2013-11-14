@@ -59,7 +59,7 @@ widget(container_z, {
       space(3);
 
       widget(video, {
-        source: "hls:http://aether:8080/out/svt1/hls.m3u8";
+        source: "hls:http://172.31.254.254:8080/out/svt1/hls.m3u8";
         activation: select($page.model.metadata.enablevideo, 0, 3);
       });
     });

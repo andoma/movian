@@ -55,7 +55,7 @@
     page.contents = "items";
     page.loading = false;
 
-    var url = "hls:http://aether:8080/out/"
+    var url = "hls:http://172.31.254.254:8080/out/"
 
     page.appendItem(url + 'svt1/hls.m3u8', "video", {
       title: "SVT1"
@@ -86,6 +86,11 @@
   plugin.addURI("magneto:4", function(page) {
     page.metadata.glwview = plugin.path + "activation.view";
     populate_model(page);
+  });
+
+  plugin.addURI("magneto:4b", function(page) {
+    page.metadata.glwview = plugin.path + "activation.view";
+    populate_model_macbook(page);
   });
 
   plugin.addURI("magneto:5", function(page) {
@@ -135,6 +140,22 @@
 
     page.appendItem("", "separator", {
       title: "Experimental"
+    });
+
+    page.appendItem("http://172.31.254.254:8080/the.dark.knight.rises.2012.1080p.bluray.dts.x264-publichd.mkv", "video", {
+      title: "The Dark Knight Rises"
+    });
+
+    page.appendItem("http://172.31.254.254:8080/multibitrate.ts", "video", {
+      title: "Multiresolution annexb stream"
+    });
+
+    page.appendItem("http://172.31.254.254:8080/cedar/good.mkv", "video", {
+      title: "Big Buck Bunny (no weighted pred)"
+    });
+
+    page.appendItem("http://172.31.254.254:8080/cedar/bad.mkv", "video", {
+      title: "Big Buck Bunny (weighted pred)"
     });
 
     page.appendItem("magneto:channels", "directory", {
