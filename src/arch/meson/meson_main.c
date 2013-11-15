@@ -166,6 +166,83 @@ ui_init(void)
 }
 
 
+
+/**
+ *
+ */
+static void
+writeval(const char *str, int val)
+{
+  FILE *fp = fopen(str, "w");
+  if(fp == NULL)
+    return;
+
+  fprintf(fp, "%d\n", val);
+  fclose(fp);
+}
+
+
+
+/**
+ *
+ */
+static unsigned int
+get_val(const char *str)
+{
+  int val, cnt;
+  FILE *fp = fopen(str, "r");
+  if(fp == NULL)
+    return 0;
+
+  if(fscanf(fp, "%d:%u\n", &cnt, &val) != 2)
+    val = 0;
+  fclose(fp);
+  return val;
+}
+
+
+/**
+ *
+ */
+static void
+mali_setup_perf(void)
+{
+  // reset
+  writeval("/debug/mali/pp/pp0/counter_src0", -1);
+  writeval("/debug/mali/pp/pp0/counter_src1", -1);
+  writeval("/debug/mali/pp/pp1/counter_src0", -1);
+  writeval("/debug/mali/pp/pp1/counter_src1", -1);
+
+  // enable
+  writeval("/debug/mali/pp/pp0/counter_src0", 37);
+  writeval("/debug/mali/pp/pp0/counter_src1", 31);
+  writeval("/debug/mali/pp/pp1/counter_src0", 37);
+  writeval("/debug/mali/pp/pp1/counter_src1", 31);
+}
+
+/**
+ *
+ */
+static void
+mali_read_val(void)
+{
+  int pp0_cycles;
+  int pp0_fragments;
+  int pp1_cycles;
+  int pp1_fragments;
+
+  pp0_cycles    = get_val("/debug/mali/pp/pp0/counter_src0");
+  pp0_fragments = get_val("/debug/mali/pp/pp0/counter_src1");
+  pp1_cycles    = get_val("/debug/mali/pp/pp1/counter_src0");
+  pp1_fragments = get_val("/debug/mali/pp/pp1/counter_src1");
+
+  printf("%10u %10u %10u %10u\n",
+	 pp0_cycles, pp0_fragments,
+	 pp1_cycles, pp1_fragments);
+}
+
+
+
 /**
  *
  */
@@ -224,6 +301,8 @@ ui_run(void)
 
   set_blank(0);
 
+  mali_setup_perf();
+
   while(running) {
 
     glw_lock(gr);
@@ -231,7 +310,7 @@ ui_run(void)
     glViewport(0, 0, gr->gr_width, gr->gr_height);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     
-    gr->gr_can_externalize = 1;
+    //    gr->gr_can_externalize = 1;
     gr->gr_externalize_cnt = 0;
 
     glw_prepare_frame(gr, 0);
@@ -252,6 +331,7 @@ ui_run(void)
       ctrlc = 2;
       showtime_shutdown(0);
     }
+    mali_read_val();
 
   }
 
