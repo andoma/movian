@@ -18,6 +18,7 @@ SRCS += src/arch/linux/linux_misc.c \
 	src/arch/linux/linux_process_monitor.c \
 	src/arch/meson/meson_main.c \
 	src/video/video_meson.c \
+	src/ui/glw/glw_video_meson.c \
 
 
 ${PROG}.stripped: ${PROG}.bundle
