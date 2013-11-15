@@ -274,7 +274,7 @@ vda_decode(struct media_codec *mc, struct video_decoder *vd,
  *
  */
 static void
-vda_flush(struct media_codec *mc, struct video_decoder *vd)
+vda_flush(struct media_codec *mc, struct video_decoder *vd, int lasting)
 {
   vda_decoder_t *vdad = mc->opaque;
 
