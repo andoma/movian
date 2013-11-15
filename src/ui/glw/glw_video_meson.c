@@ -32,14 +32,24 @@
 
 #include "video/video_settings.h"
 
+
+
+
+
 typedef struct meson_video_display {
 
   int64_t mvd_pts;
 
   glw_video_t *mvd_gv;
 
+  glw_rect_t mvd_rect;
+
 } meson_video_display_t;
 
+
+static hts_mutex_t meson_display_global_mutex;
+
+//static meson_video_display_t *current_mvd;
 
 /**
  *
@@ -53,6 +63,7 @@ mvd_init(glw_video_t *gv)
 
   mvd->mvd_gv = gv;
   gv->gv_aux = mvd;
+
   return 0;
 }
 
@@ -63,18 +74,27 @@ mvd_init(glw_video_t *gv)
 static int64_t
 mvd_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
 {
+  meson_video_display_t *mvd = gv->gv_aux;
+#if 0
+  hts_mutex_lock(&meson_display_global_mutex);
+
+  if(gv->gv_activation == 0) {
+    if(current_mvd != mvd) {
+      if(current_mvd == NULL) {
+	TRACE(TRACE_DEBUG, "GLW", "%s is primary video", gv->gv_name);
+	current_mvd = mvd;
+      }
+    }
+  } else {
+    if(current_mvd == mvd) {
+      TRACE(TRACE_DEBUG, "GLW", "%s is no longer primary video", gv->gv_name);
+      current_mvd = NULL;
+    }
+  }
+
+  hts_mutex_unlock(&meson_display_global_mutex);
+#endif
   return mvd->mvd_pts;
-}
-
-
-/**
- *
- */
-static void
-vsched_port_settings_changed(omx_component_t *oc)
-{
-  meson_video_display_t *mvd = oc->oc_opaque;
-  mvd->mvd_reconfigure = 1;
 }
 
 
@@ -85,33 +105,12 @@ static void
 mvd_reset(glw_video_t *gv)
 {
   meson_video_display_t *mvd = gv->gv_aux;
-
-  omx_tunnel_destroy(mvd->mvd_tun_clock_vsched);
-
-  omx_flush_port(mvd->mvd_vsched, 10);
-  omx_flush_port(mvd->mvd_vsched, 11);
-
-  omx_flush_port(mvd->mvd_vrender, 90);
-
-  if(mvd->mvd_tun_vsched_vrender != NULL) 
-    omx_tunnel_destroy(mvd->mvd_tun_vsched_vrender);
-  
-  if(mvd->mvd_tun_vdecoder_vsched != NULL)
-    omx_tunnel_destroy(mvd->mvd_tun_vdecoder_vsched);
-
-
-  omx_set_state(mvd->mvd_vrender,  OMX_StateIdle);
-  omx_set_state(mvd->mvd_vsched,   OMX_StateIdle);
-
-  omx_set_state(mvd->mvd_vrender,  OMX_StateLoaded);
-  omx_set_state(mvd->mvd_vsched,   OMX_StateLoaded);
-
-  omx_component_destroy(mvd->mvd_vrender);
-  omx_component_destroy(mvd->mvd_vsched);
-
-  if(mvd->mvd_mc != NULL)
-    media_codec_deref(mvd->mvd_mc);
-
+#if 0
+  hts_mutex_lock(&meson_display_global_mutex);
+  if(current == mvd)
+    current = NULL;
+  hts_mutex_unlock(&meson_display_global_mutex);
+#endif
   free(mvd);
 }
 
@@ -122,6 +121,26 @@ mvd_reset(glw_video_t *gv)
 static void
 mvd_render(glw_video_t *gv, glw_rctx_t *rc)
 {
+  meson_video_display_t *mvd = gv->gv_aux;
+
+  if(gv->gv_activation >= 2)
+    return;
+
+  hts_mutex_lock(&meson_display_global_mutex);
+
+  if(memcmp(&mvd->mvd_rect, &gv->gv_rect, sizeof(glw_rect_t))) {
+    mvd->mvd_rect = gv->gv_rect;
+    FILE *fp = fopen("/sys/class/video/axis", "w");
+    if(fp != NULL) {
+      fprintf(fp, "%d %d %d %d",
+	      gv->gv_rect.x1,
+	      gv->gv_rect.y1,
+	      gv->gv_rect.x2,
+	      gv->gv_rect.y2);
+      fclose(fp);
+    }
+  }
+  hts_mutex_unlock(&meson_display_global_mutex);
 }
 
 
@@ -131,20 +150,16 @@ mvd_render(glw_video_t *gv, glw_rctx_t *rc)
 static void
 mvd_blackout(glw_video_t *gv)
 {
-  meson_video_display_t *mvd = gv->gv_aux;
-  omx_flush_port(mvd->mvd_vsched, 10);
-  omx_flush_port(mvd->mvd_vsched, 11);
-  omx_flush_port(mvd->mvd_vrender, 90);
 }
 
 
 static int mvd_set_codec(media_codec_t *mc, glw_video_t *gv);
 
 /**
- * Tunneled OMX
+ * Meson video
  */
 static glw_video_engine_t glw_video_mvd = {
-  .gve_type = 'omx',
+  .gve_type     = 'mesn',
   .gve_newframe = mvd_newframe,
   .gve_render   = mvd_render,
   .gve_reset    = mvd_reset,
@@ -161,53 +176,7 @@ GLW_REGISTER_GVE(glw_video_mvd);
 static int
 mvd_set_codec(media_codec_t *mc, glw_video_t *gv)
 {
-  media_pipe_t *mp = gv->gv_mp;
-
   glw_video_configure(gv, &glw_video_mvd);
-
-  meson_video_display_t *mvd = gv->gv_aux;
-  meson_video_codec_t *rvc = mc->opaque;
-  
-
-  if(mvd->mvd_vrender == NULL) {
-
-    mvd->mvd_vrender = omx_component_create("OMX.broadcom.video_render",
-					    NULL, NULL);
-    mvd->mvd_vsched  = omx_component_create("OMX.broadcom.video_scheduler",
-					    NULL, NULL);
-
-    mvd->mvd_vsched->oc_opaque = mvd;
-    mvd->mvd_vrender->oc_opaque = mvd;
-
-    gv->gv_vd->vd_render_component = mvd->mvd_vrender;
-       
-    omx_enable_buffer_marks(mvd->mvd_vrender);
-
-    mvd->mvd_tun_clock_vsched =
-      omx_tunnel_create(omx_get_clock(mp), 81, mvd->mvd_vsched, 12,
-			"clock -> vsched");
-    
-    mvd->mvd_vsched->oc_port_settings_changed_cb =
-      vsched_port_settings_changed;
-
-    mvd->mvd_vrender->oc_event_mark_cb = buffer_mark;
-
-  }
-  omx_set_state(mvd->mvd_vrender, OMX_StateIdle);
-
-  if(mvd->mvd_tun_vdecoder_vsched != NULL)
-    omx_tunnel_destroy(mvd->mvd_tun_vdecoder_vsched);
-      
-  if(mvd->mvd_mc != NULL)
-    media_codec_deref(mvd->mvd_mc);
-
-  mvd->mvd_mc = media_codec_ref(mc);
-
-  mvd->mvd_tun_vdecoder_vsched =
-    omx_tunnel_create(rvc->rvc_decoder, 131, mvd->mvd_vsched, 10,
-		      "vdecoder -> vsched");
-
-  omx_set_state(mvd->mvd_vsched,  OMX_StateExecuting);
   return 0;
 }
 

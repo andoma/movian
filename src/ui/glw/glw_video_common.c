@@ -661,7 +661,7 @@ glw_video_newframe(glw_t *w, int flags)
     hts_cond_signal(&gv->gv_init_cond);
   }
 
-  if(gv->gv_engine != NULL)
+  if(gv->gv_engine != NULL && gv->gv_engine->gve_newframe != NULL)
     pts = gv->gv_engine->gve_newframe(gv, vd, flags);
   else
     pts = PTS_UNSET;
@@ -999,7 +999,7 @@ glw_video_render(glw_t *w, const glw_rctx_t *rc)
   if(invisible)
     return;
 
-  if(gv->gv_engine != NULL)
+  if(gv->gv_engine != NULL && gv->gv_engine->gve_render != NULL)
     gv->gv_engine->gve_render(gv, &rc1);
 
   glw_video_overlay_render(gv, rc, &rc0);
@@ -1040,12 +1040,12 @@ glw_video_configure(glw_video_t *gv, const glw_video_engine_t *engine)
 
   if(gv->gv_engine != engine) {
 
-    if(gv->gv_engine != NULL)
+    if(gv->gv_engine != NULL && gv->gv_engine->gve_reset != NULL)
       gv->gv_engine->gve_reset(gv);
 
     gv->gv_engine = engine;
 
-    if(engine != NULL) {
+    if(engine != NULL && engine->gve_init != NULL) {
 
       if(engine->gve_init_on_ui_thread) {
         gv->gv_need_init = 1;
@@ -1214,7 +1214,7 @@ glw_set_video_codec(uint32_t type, media_codec_t *mc, void *opaque)
 void
 glw_video_surfaces_cleanup(glw_video_t *gv)
 {
-  if(gv->gv_engine != NULL)
+  if(gv->gv_engine != NULL && gv->gv_engine->gve_reset != NULL)
     gv->gv_engine->gve_reset(gv);
   
   glw_video_reap(gv);
@@ -1306,3 +1306,24 @@ GLW_REGISTER_GVE(glw_video_lavc);
 
 #endif
 
+
+static void video_deliver_zero(const frame_info_t *fi, glw_video_t *gv);
+
+
+/**
+ *
+ */
+static glw_video_engine_t glw_video_zero = {
+  .gve_type = 'ZERO',
+  .gve_deliver = video_deliver_zero,
+};
+
+GLW_REGISTER_GVE(glw_video_zero);
+
+static void
+video_deliver_zero(const frame_info_t *fi, glw_video_t *gv)
+{
+  glw_video_configure(gv, &glw_video_zero);
+  
+}
+ 
