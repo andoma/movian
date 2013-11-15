@@ -163,13 +163,15 @@ static int key_to_action[][3] = {
 
   // These should be configurable
 
+  {KEY_HOME,               ACTION_MENU},
   {KEY_MEDIA,              ACTION_MENU},
   {KEY_MENU,               ACTION_ITEMMENU},
   {KEY_PROG1,              ACTION_LOGWINDOW},
   {KEY_PROG2,              ACTION_SHOW_MEDIA_STATS},
   {KEY_PROG3,              ACTION_SYSINFO},
-  
-  
+
+  {BTN_LEFT,               ACTION_ACTIVATE},
+  {BTN_RIGHT,              ACTION_NAV_BACK},
   {0,0}
 };
 
