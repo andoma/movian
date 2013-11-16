@@ -17,12 +17,10 @@ msg: Rimuovi la pagina attuale dai preferiti
 # ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
 id: Activate sleep timer
-# Missing translation
-msg: 
+msg: Attiva timer spegnimento
 
 id: Disable sleep timer
-# Missing translation
-msg: 
+msg: Disattiva timer spegnimento
 
 id: Exit Showtime
 msg: Esci da Showtime
@@ -52,12 +50,10 @@ id: System
 msg: Sistema
 
 id: Time until sleep
-# Missing translation
-msg: 
+msg: Tempo allo spegnimento
 
 id: min
-# Missing translation
-msg: 
+msg: min
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_dir.view
@@ -319,8 +315,7 @@ id: Check for updates now
 msg: Cerca aggiornamenti ora
 
 id: Checking current installed version
-# Missing translation
-msg: 
+msg: Controllo della versione installata attualmente
 
 id: Checking for updates...
 msg: Ricerca di aggiornamenti...
@@ -344,8 +339,7 @@ id: No upgrade available
 msg: Nessun aggiornamento disponibile
 
 id: Patching binary
-# Missing translation
-msg: 
+msg: Patch dei binari
 
 id: Restarting Showtime in %d seconds...
 msg: Riavvio di Showtime in %d secondi...
@@ -378,8 +372,7 @@ msg: Stato di riproduzione
 # ./glwskins/default/pages/wideinfo/video.view
 #
 id: Seen:
-# Missing translation
-msg: 
+msg: Visto:
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -604,8 +597,7 @@ id: Date (oldest first)
 msg: Data (dal piu' vecchio)
 
 id: Deleted %s
-# Missing translation
-msg: 
+msg: Eliminato %s
 
 id: Filename
 msg: Nome file
@@ -626,8 +618,7 @@ id: Sort on
 msg: Ordina
 
 id: Unable to delete %s\n%s
-# Missing translation
-msg: 
+msg: Impossibile eliminare %s\n%s
 
 #
 # ./src/fileaccess/fa_spotlight.c
@@ -639,16 +630,13 @@ msg: Cerca usando spotlight
 # ./src/fileaccess/fileaccess.c
 #
 id: Are you sure you want to delete:
-# Missing translation
-msg: 
+msg: Sicuro di voler eliminare:
 
 id: Enable file deletion from item menu
-# Missing translation
-msg: 
+msg: Attiva eliminazione file dal menu
 
 id: File access
-# Missing translation
-msg: 
+msg: Accesso al file
 
 id: %d archive parts
 msg[0]: 
@@ -666,8 +654,7 @@ msg[1]:
 # ./src/i18n.c
 #
 id: Ignore 'The' at beginning of words when sorting
-# Missing translation
-msg: 
+msg: Ignora 'The' all'inizio delle parole durante l'ordinamento
 
 id: Language
 msg: Linguaggio
@@ -730,12 +717,10 @@ id: Audio delay
 msg: Ritardo audio
 
 id: Audio volume
-# Missing translation
-msg: 
+msg: Volume audio
 
 id: Go to standby after video ends
-# Missing translation
-msg: 
+msg: Vai in standby dopo la fine del video
 
 id: Stretch video to fullscreen
 msg: Adatta video a Schermo Pieno
@@ -747,15 +732,13 @@ id: Subtitle delay
 msg: Ritardo sottotitoli
 
 id: Subtitle horizontal displacement
-# Missing translation
-msg: 
+msg: Spostamento orizzontale dei sottotitoli
 
 id: Subtitle scaling
 msg: Dimensione dei sottotitoli
 
 id: Subtitle vertical displacement
-# Missing translation
-msg: 
+msg: Spostamento verticale dei sottotitoli
 
 id: Video zoom
 msg: Zoom video
@@ -773,20 +756,16 @@ id: Automatic
 msg: Automatico
 
 id: Manual
-# Missing translation
-msg: 
+msg: Manuale
 
 id: Mark all as seen
-# Missing translation
-msg: 
+msg: Segna tutto come visto
 
 id: Mark all as unseen
-# Missing translation
-msg: 
+msg: Segna tutto come non visto
 
 id: Metadata mode
-# Missing translation
-msg: 
+msg: Modalita' metadata
 
 #
 # ./src/metadata/metadata.c
@@ -900,8 +879,7 @@ id: Photos
 msg: Foto
 
 id: Published in Virtual File System
-# Missing translation
-msg: 
+msg: Pubblicato nel file system virtuale
 
 id: Removed bookmark: %s
 msg: Segnalibro rimosso: %s
@@ -922,16 +900,13 @@ msg: URL
 # ./src/networking/ftp_server.c
 #
 id: Enable FTP server
-# Missing translation
-msg: 
+msg: Attiva server FTP
 
 id: FTP server
-# Missing translation
-msg: 
+msg: Server FTP
 
 id: Server TCP port
-# Missing translation
-msg: 
+msg: Porta TCP del server
 
 #
 # ./src/plugins.c
@@ -1012,8 +987,7 @@ id: Online TV
 msg: TV online
 
 id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
-# Missing translation
-msg: 
+msg: Il plugin %s %s è stato disinstallato perché potrebbe causare problemi.\nPuoi provare a reinstallare una versione diversa manualmente.
 
 id: Plugins
 msg: Plugins
@@ -1106,12 +1080,10 @@ id: Look and feel
 msg: Aspetto e comportamento
 
 id: Network services, etc
-# Missing translation
-msg: 
+msg: Servizi di rete, ecc
 
 id: Network settings
-# Missing translation
-msg: 
+msg: Impostazioni di rete
 
 id: Settings useful for developers
 msg: Impostazioni utili per sviluppatori
@@ -1123,26 +1095,22 @@ msg: Impostazioni relative al sistema
 # ./src/subtitles/subtitles.c
 #
 id: Any subtitle in central folder
-# Missing translation
-msg: 
+msg: Qualsiasi sottotitolo nella cartella principale
 
 id: Any subtitle in same folder as video
-# Missing translation
-msg: 
+msg: Qualsiasi sottotitolo nella stessa cartella del video
 
 id: Auto
 msg: Auto
 
 id: Automatically select from this source
-# Missing translation
-msg: 
+msg: Seleziona automaticamente da questa fonte
 
 id: Center
 msg: Al centro
 
 id: Central subtitle folder
-# Missing translation
-msg: 
+msg: Cartella principale sottotitoli
 
 id: Color
 msg: Colore
@@ -1169,12 +1137,10 @@ id: Outline size
 msg: Dimensioni contorni
 
 id: Path to central folder
-# Missing translation
-msg: 
+msg: Percorso della cartella principale
 
 id: Providers for Subtitles
-# Missing translation
-msg: 
+msg: Provider dei sottotitoli
 
 id: Right
 msg: Destra
@@ -1195,16 +1161,13 @@ id: Subtitle size and positioning
 msg: Dimensione e posizione dei sottotitoli
 
 id: Subtitles embedded in video file
-# Missing translation
-msg: 
+msg: Sottotitoli contenuti nel file video
 
 id: Subtitles with matching filename in central folder
-# Missing translation
-msg: 
+msg: Sottotitoli nella cartella principale con nome coincidente
 
 id: Subtitles with matching filename in same folder as video
-# Missing translation
-msg: 
+msg: Sottotitoli nella stessa cartella del video con nome coincidente
 
 #
 # ./src/text/fontstash.c
@@ -1231,8 +1194,7 @@ id: Reset subtitle font to default
 msg: Ripristina carattere sottotitoli di default
 
 id: Unable to install font: %s
-# Missing translation
-msg: 
+msg: Impossibile installare il font: %s
 
 id: Use font %s for
 msg: Usa il font %s per
@@ -1244,19 +1206,16 @@ msg: Interfaccia utente
 # ./src/ui/glw/glw_ps3.c
 #
 id: Seek using L2 and R2 button
-# Missing translation
-msg: 
+msg: Salta nella posizione usando i tasti L2 e R2
 
 id: Yes with Select button
-# Missing translation
-msg: 
+msg: Si con il tasto Select
 
 #
 # ./src/ui/glw/glw_settings.c
 #
 id: Font and icon size
-# Missing translation
-msg: 
+msg: Dimensione icona e font
 
 id: Horizontal underscan
 msg: Underscan orizzontale
@@ -1265,12 +1224,10 @@ id: Screensaver delay
 msg: Attesa prima dello screensaver
 
 id: Vertical underscan
-# Missing translation
-msg: 
+msg: Underscan verticale
 
 id: Wrap when reaching beginning/end of lists
-# Missing translation
-msg: 
+msg: Riavvolgi quando raggiungi l'inizio o la fine delle liste
 
 #
 # ./src/ui/glw/glw_x11.c
