@@ -58,9 +58,10 @@ typedef struct glw_renderer_cache {
   float grc_fader_blur[NUM_FADERS];
 
   char grc_blurred;
+  char grc_colored;
+  uint16_t grc_num_vertices;
 
   float *grc_vertices;
-  uint16_t grc_num_vertices;
 } glw_renderer_cache_t;
 
 /**
@@ -75,7 +76,6 @@ typedef struct glw_renderer {
 
   char gr_static_indices;
   char gr_dirty;
-  char gr_blended_attributes;
   char gr_color_attributes;
   unsigned char gr_framecmp;
   unsigned char gr_cacheptr;
@@ -115,6 +115,8 @@ void glw_renderer_vtx_st2(glw_renderer_t *gr, int vertex,
 
 void glw_renderer_vtx_col(glw_renderer_t *gr, int vertex,
 			  float r, float g, float b, float a);
+
+void glw_renderer_vtx_col_reset(glw_renderer_t *gr);
 
 void glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
 		       const glw_rctx_t *rc,

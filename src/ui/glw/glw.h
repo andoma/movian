@@ -134,6 +134,8 @@ typedef enum {
   GLW_ATTRIB_BLUR_FALLOFF,
   GLW_ATTRIB_RADIUS,
   GLW_ATTRIB_AUDIO_VOLUME,
+  GLW_ATTRIB_ASPECT,
+  GLW_ATTRIB_CHILD_SCALE,
   GLW_ATTRIB_num,
 } glw_attribute_t;
 
@@ -182,7 +184,6 @@ typedef struct glw_rect {
 #define GLW_IMAGE_BORDER_ONLY          0x8000
 #define GLW_IMAGE_BORDER_LEFT          0x10000
 #define GLW_IMAGE_BORDER_RIGHT         0x20000
-#define GLW_IMAGE_ASPECT_FIXED_BORDERS 0x40000
 
 /**
  * Video flags
@@ -856,6 +857,8 @@ typedef struct glw_root {
 					 * ie, the triangle should be blurred
 					 */
 
+#define GLW_RENDER_COLOR_OFFSET     0x4
+
 
   float *gr_vtmp_buffer;  // temporary buffer for emitting vertices
   int gr_vtmp_cur;
@@ -891,21 +894,19 @@ typedef struct glw_root {
  * Render context
  */
 typedef struct glw_rctx {
+  // Current ModelView Matrix
+  Mtx rc_mtx;
+
   float rc_alpha;
   float rc_sharpness;
 
   int16_t rc_width;
   int16_t rc_height;
 
-  struct glw_cursor_painter *rc_cursor_painter;
-
   uint8_t rc_inhibit_shadows; // Used when rendering low res passes in bloom filter
   uint8_t rc_inhibit_matrix_store; // Avoid storing matrix in mirrored view, etc
   uint8_t rc_layer;
   uint8_t rc_overscanning;
-
-  // Current ModelView Matrix
-  Mtx rc_mtx;
 
 } glw_rctx_t;
 
@@ -1267,6 +1268,8 @@ do {						\
   case GLW_ATTRIB_ALPHA_FALLOFF:                \
   case GLW_ATTRIB_BLUR_FALLOFF:                 \
   case GLW_ATTRIB_AUDIO_VOLUME:                 \
+  case GLW_ATTRIB_ASPECT:                       \
+  case GLW_ATTRIB_CHILD_SCALE:                  \
     (void)va_arg(ap, double);			\
     break;					\
   }						\

@@ -9,5 +9,6 @@ typedef struct rpi_video_codec {
   int rvc_last_epoch;
   const char *rvc_name;
   int rvc_name_set;
+  int rvc_b_frames;
 } rpi_video_codec_t;
 

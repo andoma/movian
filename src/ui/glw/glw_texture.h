@@ -51,6 +51,7 @@ typedef struct glw_loadable_texture {
   unsigned int glt_refcnt;
 
   float glt_aspect;
+  float glt_req_aspect;
 
   glw_backend_texture_t glt_texture;
 
@@ -88,7 +89,8 @@ void glw_tex_fini(glw_root_t *gr);
 glw_loadable_texture_t *glw_tex_create(glw_root_t *gr, rstr_t *url,
 				       int flags, int xs, int ys,
 				       int corner_radius,
-                                       int drop_shadow);
+                                       int drop_shadow,
+                                       float aspect);
 
 void glw_tex_deref(glw_root_t *gr, glw_loadable_texture_t *ht);
 

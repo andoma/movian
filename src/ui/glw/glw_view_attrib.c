@@ -935,13 +935,9 @@ static int
 set_args(glw_view_eval_context_t *ec, const token_attrib_t *a,
 	   struct token *t)
 {
-  if(t->type != TOKEN_PROPERTY_OWNER &&
-     t->type != TOKEN_PROPERTY_REF)
-    return glw_view_seterr(ec->ei, t,
-			   "Attribute '%s' expects a property, got %s",
-			   a->name, token2name(t));
-
-  glw_set(ec->w, GLW_ATTRIB_ARGS, t->t_prop, NULL);
+  if(t->type == TOKEN_PROPERTY_OWNER ||
+     t->type == TOKEN_PROPERTY_REF)
+    glw_set(ec->w, GLW_ATTRIB_ARGS, t->t_prop, NULL);
   return 0;
 }
 
@@ -1047,7 +1043,6 @@ static const token_attrib_t attribtab[] = {
   {"leftBorder",      mod_flag, GLW_IMAGE_BORDER_LEFT,  mod_img_flags},
   {"rightBorder",     mod_flag, GLW_IMAGE_BORDER_RIGHT, mod_img_flags},
 
-  {"aspectFixedBorders",mod_flag, GLW_IMAGE_ASPECT_FIXED_BORDERS, mod_img_flags},
   {"cornerTopLeft",     mod_flag, GLW_IMAGE_CORNER_TOPLEFT,       mod_img_flags},
   {"cornerTopRight",    mod_flag, GLW_IMAGE_CORNER_TOPRIGHT,      mod_img_flags},
   {"cornerBottomLeft",  mod_flag, GLW_IMAGE_CORNER_BOTTOMLEFT,    mod_img_flags},
@@ -1086,11 +1081,14 @@ static const token_attrib_t attribtab[] = {
   {"childAspect",     set_float,  GLW_ATTRIB_CHILD_ASPECT},
   {"center",          set_float,  GLW_ATTRIB_CENTER},
   {"audioVolume",     set_float,  GLW_ATTRIB_AUDIO_VOLUME},
+  {"aspect",          set_float,  GLW_ATTRIB_ASPECT},
 
   {"height",          set_int,  0, set_height},
   {"width",           set_int,  0, set_width},
 
   {"fill",            set_float,  GLW_ATTRIB_FILL},
+
+  {"childScale",      set_float,  GLW_ATTRIB_CHILD_SCALE},
 
   {"childWidth",      set_int,    GLW_ATTRIB_CHILD_WIDTH},
   {"childHeight",     set_int,    GLW_ATTRIB_CHILD_HEIGHT},

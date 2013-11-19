@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <netinet/in.h>
+#include <sys/socket.h>
 
 #include "prop/prop.h"
 #include "showtime.h"

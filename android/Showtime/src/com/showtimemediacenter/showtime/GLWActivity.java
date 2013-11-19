@@ -33,11 +33,8 @@ public class GLWActivity extends Activity implements VideoRendererProvider {
 
         mGLWView = new GLWView(getApplication(), this);
         mRoot.addView(mGLWView);
-        /*
-        sv = new SurfaceView(getApplication());
-        mRoot.addView(sv);
-        */
-        setContentView(mRoot);
+
+       setContentView(mRoot);
     }
 
     @Override

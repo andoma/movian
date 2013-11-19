@@ -9,7 +9,7 @@ public class Prop {
     private int id;
 
     public Prop(int propertyId) {
-        id = propertyId;
+        id = STCore.propRetain(propertyId);
     }
 
     public int getPropId() {

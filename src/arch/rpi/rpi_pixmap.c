@@ -119,7 +119,8 @@ setup_tunnel(rpi_pixmap_decoder_t *rpd)
   rpd->rpd_tunnel = omx_tunnel_create(rpd->rpd_decoder,
 				      rpd->rpd_decoder->oc_outport,
 				      rpd->rpd_resizer,
-				      rpd->rpd_resizer->oc_inport);
+				      rpd->rpd_resizer->oc_inport,
+				      "decoder -> resizer");
   OMX_INIT_STRUCTURE(portdef);
 
   portdef.nPortIndex = rpd->rpd_resizer->oc_outport;

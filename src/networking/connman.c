@@ -870,7 +870,8 @@ connman_init(void)
   prop_concat_add_source(pc, prop_create(connman_settings, "nodes"), delim);
  
   settings_add_url(gconf.settings_network,
-		   _p("Network connections"), NULL, NULL, NULL, MYURL);
+		   _p("Network connections"), NULL, NULL, NULL, MYURL,
+		   SETTINGS_FIRST);
 
   hts_thread_create_detached("connman", connman_thread, NULL, 
 			     THREAD_PRIO_BGTASK);

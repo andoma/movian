@@ -17,6 +17,8 @@
  */
 
 #include <stdio.h>
+#include <unistd.h>
+#include <errno.h>
 
 #include "misc/callout.h"
 #include "htsmsg/htsmsg.h"
@@ -41,6 +43,9 @@ static prop_t *sleeptime_prop;
 static int sleeptime;
 static int sleeptimer_enabled;
 static callout_t sleep_timer;
+static htsmsg_t *rcstore;
+
+
 
 /**
  * Called from various places to indicate that user is active
@@ -95,13 +100,9 @@ current_media_playstatus(void *opaque, const char *str)
 static void
 init_autostandby(void)
 {
-  htsmsg_t *store = htsmsg_store_load("runcontrol");
-  if(store == NULL)
-    store = htsmsg_create_map();
-
   setting_create(SETTING_INT, gconf.settings_general, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Automatic standby")),
-                 SETTING_HTSMSG("autostandby", store, "runcontrol"),
+                 SETTING_HTSMSG("autostandby", rcstore, "runcontrol"),
                  SETTING_WRITE_INT(&standby_delay),
                  SETTING_RANGE(0, 60),
                  SETTING_STEP(5),
@@ -212,12 +213,32 @@ do_open_shell(void *opaque, prop_event_t event, ...)
   showtime_shutdown(SHOWTIME_EXIT_SHELL);
 }
 
+static void
+do_standby(void *opaque, prop_event_t event, ...)
+{
+  showtime_shutdown(SHOWTIME_EXIT_STANDBY);
+}
+
 
 static void
 do_exit(void *opaque, prop_event_t event, ...)
 {
   showtime_shutdown(0);
 }
+
+
+/**
+ *
+ */
+static void
+set_ssh_server(void *opaque, int on)
+{
+  char cmd = on ? 1 : 2;
+  if(write(gconf.showtime_shell_fd, &cmd, 1) != 1) {
+    TRACE(TRACE_ERROR, "SSHD", "Unable to send cmd -- %s", strerror(errno));
+  }
+}
+
 
 /**
  *
@@ -244,12 +265,16 @@ runcontrol_init(void)
        !gconf.can_not_exit))
     return;
 
+  rcstore = htsmsg_store_load("runcontrol") ?: htsmsg_create_map();
+
   settings_create_separator(gconf.settings_general, 
 			  _p("Starting and stopping Showtime"));
 
   if(gconf.can_standby) {
     init_autostandby();
     init_sleeptimer(rc);
+    settings_create_action(gconf.settings_general, _p("Standby"),
+			   do_standby, NULL, 0, NULL);
   }
 
   if(gconf.can_poweroff)
@@ -267,4 +292,16 @@ runcontrol_init(void)
   if(!gconf.can_not_exit)
     settings_create_action(gconf.settings_general, _p("Exit Showtime"),
 			   do_exit, NULL, 0, NULL);
+
+  if(gconf.showtime_shell_fd > 0) {
+
+    settings_create_separator(gconf.settings_network, _p("SSH server"));
+
+    setting_create(SETTING_BOOL, gconf.settings_network,SETTINGS_INITIAL_UPDATE,
+		   SETTING_TITLE(_p("Enable SSH server")),
+		   SETTING_VALUE(0),
+		   SETTING_CALLBACK(set_ssh_server, NULL),
+		   SETTING_HTSMSG("sshserver", rcstore, "runcontrol"),
+		   NULL);
+  }
 }

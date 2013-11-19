@@ -48,17 +48,21 @@ typedef struct jni_subscription {
   struct jni_prop_list js_props; // Exported props
   jobject js_cbif;
 
-  union {
 
-    struct {
-      // For scalar subscriptions
-      jmethodID js_setstr;
-      jmethodID js_setint;
-      jmethodID js_setfloat;
-      jmethodID js_setvoid;
-    };
+#define SUB_METHODS 4
+  jmethodID js_methods[SUB_METHODS];
 
-  };
+  // Value subscription
+#define js_setstr     js_methods[0]
+#define js_setint     js_methods[1]
+#define js_setfloat   js_methods[2]
+#define js_setvoid    js_methods[3]
+
+  // Node subscription
+#define js_mknode     js_methods[0]
+#define js_addnodes   js_methods[1]
+#define js_delnodes   js_methods[2]
+#define js_movenode   js_methods[3]
 
 } jni_subscription_t;
 
@@ -86,7 +90,7 @@ jni_sub_node_cb(void *opaque, prop_event_t event, ...)
  *
  */
 static void
-jni_sub_scalar_cb(void *opaque, prop_event_t event, ...)
+jni_sub_value_cb(void *opaque, prop_event_t event, ...)
 {
   JNIEnv *env;
   int r = (*JVM)->GetEnv(JVM, (void **)&env, JNI_VERSION_1_6);
@@ -156,6 +160,22 @@ jni_sub_scalar_cb(void *opaque, prop_event_t event, ...)
       (*env)->CallVoidMethod(env, js->js_cbif, js->js_setstr, jstr);
     } else {
       TRACE(TRACE_DEBUG, "JNI_PROP", "Appropriate set() not found for int");
+    }
+    break;
+
+  case PROP_SET_DIR:
+  case PROP_SET_VOID:
+    if(js->js_setvoid) {
+      (*env)->CallVoidMethod(env, js->js_cbif, js->js_setvoid);
+    } if(js->js_setint) {
+      (*env)->CallVoidMethod(env, js->js_cbif, js->js_setint, 0);
+    } else if(js->js_setfloat) {
+      (*env)->CallVoidMethod(env, js->js_cbif, js->js_setfloat, 0);
+    } else if(js->js_setstr) {
+      jstring jstr = (*env)->NewStringUTF(env, "");
+      (*env)->CallVoidMethod(env, js->js_cbif, js->js_setstr, jstr);
+    } else {
+      TRACE(TRACE_DEBUG, "JNI_PROP", "Appropriate set() not found for void");
     }
     break;
 
@@ -252,17 +272,17 @@ makesub(JNIEnv *env,
 
 
 JNIEXPORT jint JNICALL
-Java_com_showtimemediacenter_showtime_STCore_subScalar(JNIEnv *, jobject , jint, jstring, jobject);
+Java_com_showtimemediacenter_showtime_STCore_subValue(JNIEnv *, jobject , jint, jstring, jobject);
 
 JNIEXPORT jint JNICALL
-Java_com_showtimemediacenter_showtime_STCore_subScalar(JNIEnv *env,
+Java_com_showtimemediacenter_showtime_STCore_subValue(JNIEnv *env,
                                                        jobject obj,
                                                        jint j_propid,
                                                        jstring j_path,
                                                        jobject j_cbif)
 {
   jni_subscription_t *js;
-  js = makesub(env, jni_sub_scalar_cb, j_propid, j_path, j_cbif);
+  js = makesub(env, jni_sub_value_cb, j_propid, j_path, j_cbif);
 
   jclass c = (*env)->GetObjectClass(env, js->js_cbif);
 
@@ -271,6 +291,8 @@ Java_com_showtimemediacenter_showtime_STCore_subScalar(JNIEnv *env,
   js->js_setint   = (*env)->GetMethodID(env, c, "set", "(I)V");
   (*env)->ExceptionClear(env);
   js->js_setfloat = (*env)->GetMethodID(env, c, "set", "(F)V");
+  (*env)->ExceptionClear(env);
+  js->js_setvoid  = (*env)->GetMethodID(env, c, "set", "()V");
   (*env)->ExceptionClear(env);
 
   return js->js_id;
@@ -290,6 +312,15 @@ Java_com_showtimemediacenter_showtime_STCore_subNodes(JNIEnv *env,
 {
   jni_subscription_t *js;
   js = makesub(env, jni_sub_node_cb, j_propid, j_path, j_cbif);
+
+  jclass c = (*env)->GetObjectClass(env, js->js_cbif);
+
+  js->js_addnodes = (*env)->GetMethodID(env, c, "addNodes", "([II)V");
+  (*env)->ExceptionClear(env);
+  js->js_setfloat = (*env)->GetMethodID(env, c, "delNodes", "([I)V");
+  (*env)->ExceptionClear(env);
+  js->js_setvoid  = (*env)->GetMethodID(env, c, "moveNode", "(II)V");
+  (*env)->ExceptionClear(env);
   return js->js_id;
 }
 
@@ -302,13 +333,20 @@ Java_com_showtimemediacenter_showtime_STCore_unsub(JNIEnv *env, jobject obj, jin
 {
   jni_subscription_t *js = jni_sub_find(j_sid);
 
-  if(js != NULL) {
-    //    js_clear_props(js);
-    prop_unsubscribe(js->js_sub);
-    RB_REMOVE(&jni_subscriptions, js, js_link);
+  if(js == NULL)
+    return;
+
+  //    js_clear_props(js);
+  prop_unsubscribe(js->js_sub);
+  RB_REMOVE(&jni_subscriptions, js, js_link);
+  if(js->js_cbif)
     (*env)->DeleteGlobalRef(env, js->js_cbif);
-    free(js);
-  }
+
+  for(int i = 0; i < SUB_METHODS; i++)
+    if(js->js_methods[i])
+      (*env)->DeleteGlobalRef(env, js->js_methods[i]);
+
+  free(js);
 }
 
 JNIEXPORT void JNICALL
@@ -317,8 +355,18 @@ Java_com_showtimemediacenter_showtime_STCore_propRelease(JNIEnv *env, jobject ob
 JNIEXPORT void JNICALL
 Java_com_showtimemediacenter_showtime_STCore_propRelease(JNIEnv *env, jobject obj, jint j_prop)
 {
-  prop_t *p = (prop_t *)j_prop;
-  prop_ref_dec(p);
+  prop_ref_dec((prop_t *)j_prop);
+}
+
+
+JNIEXPORT void JNICALL
+Java_com_showtimemediacenter_showtime_STCore_propRetain(JNIEnv *env, jobject obj, jint j_prop);
+
+JNIEXPORT void JNICALL
+Java_com_showtimemediacenter_showtime_STCore_propRetain(JNIEnv *env, jobject obj, jint j_prop)
+{
+  prop_t *p = prop_ref_inc((prop_t *)j_prop);
+  (void)p;
 }
 
 

@@ -373,7 +373,7 @@ fontstash_init(void)
   prop_concat_add_source(gconf.settings_look_and_feel,
 			 prop_create(p, "nodes"), NULL);
 
-  settings_add_url(p, _p("Fonts"), NULL, NULL, NULL, "fontstash:");
+  settings_add_url(p, _p("Fonts"), NULL, NULL, NULL, "fontstash:", 0);
 
   char path[512];
 

@@ -93,11 +93,23 @@ static prop_t *
 setting_get(prop_t *parent, int flags)
 {
   prop_t *p;
-  if(flags & SETTINGS_RAW_NODES)
+
+
+  if(flags & SETTINGS_FIRST) {
+    parent = parent ? prop_create(parent, "nodes") : settings_nodes;
+    p = prop_create_root(NULL);
+    prop_t *before = prop_first_child(parent);
+    if(prop_set_parent_ex(p, parent, before, NULL)) {
+      prop_destroy(p);
+      return NULL;
+    }
+    prop_ref_dec(before);
+  } else if(flags & SETTINGS_RAW_NODES) {
     p = prop_create(parent, NULL);
-  else
+  } else {
     p = prop_create(parent ? prop_create(parent, "nodes") : settings_nodes,
 		    NULL);
+  }
   return p;
 }
 
@@ -176,9 +188,10 @@ settings_add_dir(prop_t *parent, prop_t *title, const char *subtype,
 prop_t *
 settings_add_url(prop_t *parent, prop_t *title,
 		 const char *subtype, const char *icon,
-		 prop_t *shortdesc, const char *url)
+		 prop_t *shortdesc, const char *url,
+		 int flags)
 {
-  prop_t *p = setting_add(parent, title, "settings", 0);
+  prop_t *p = setting_add(parent, title, "settings", flags);
   prop_t *metadata = prop_create(p, "metadata");
 
   if(shortdesc != NULL)
@@ -1076,10 +1089,8 @@ init_dev_settings(void)
   add_dev_bool(s, "Debug FTP",
 	       "ftpdebug", &gconf.enable_ftp_debug);
 
-  add_dev_bool(s, "Upgrade using patches",
-	       "patchupgrade", &gconf.enable_patched_upgrade);
-
-
+  add_dev_bool(s, "Debug CEC",
+	       "cecdebug", &gconf.enable_cec_debug);
 
   setting_create(SETTING_STRING, gconf.settings_dev, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE_CSTR("Network log destination"),

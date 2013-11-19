@@ -81,7 +81,9 @@ typedef struct hls_segment {
   int hs_vstream;
   int hs_astream;
 
-  int hs_crypto;
+  uint8_t hs_crypto;
+  uint8_t hs_corrupt;
+
   rstr_t *hs_key_url;
   uint8_t hs_iv[16];
 
@@ -107,6 +109,8 @@ typedef struct hls_variant {
 
   char hv_frozen;
   char hv_audio_only;
+  int hv_h264_profile;
+  int hv_h264_level;
   int hv_target_duration;
 
   time_t hv_loaded; /* last time it was loaded successfully
@@ -138,6 +142,7 @@ typedef struct hls_demuxer {
   struct hls_variant_queue hd_variants;
   
   int64_t hd_seek_to;
+  int hd_seek_initial;
   int hd_seq;
 
   hls_variant_t *hd_current;
@@ -168,6 +173,10 @@ typedef struct hls {
   int h_blocked;
 
   hls_demuxer_t h_primary;
+
+  int h_playback_priority;
+
+  int h_live;
 
 } hls_t;
 
@@ -471,14 +480,34 @@ static void
 hls_dump(const hls_t *h)
 {
   const hls_variant_t *hv;
+  const char *txt;
   HLS_TRACE(h, "Base URL: %s", h->h_baseurl);
   HLS_TRACE(h, "Variants");
   TAILQ_FOREACH(hv, &h->h_primary.hd_variants, hv_link) {
     HLS_TRACE(h, "  %s", hv->hv_url);
     HLS_TRACE(h, "    bitrate:    %d", hv->hv_bitrate);
-    HLS_TRACE(h, "    resolution: %d x %d", hv->hv_width, hv->hv_height);
-    if(hv->hv_audio_only)
+
+    if(hv->hv_audio_only) {
       HLS_TRACE(h, "    Audio only\n");
+      continue;
+    }
+
+    switch(hv->hv_h264_profile) {
+    case 66:
+      txt = "h264 Baseline";
+      break;
+    case 77:
+      txt = "h264 Main";
+      break;
+    default:
+      txt = "<unknown>";
+      break;
+    }
+
+    HLS_TRACE(h, "    Video resolution: %d x %d  Profile: %s  Level: %d.%d",
+              hv->hv_width, hv->hv_height, txt,
+              hv->hv_h264_level / 10,
+              hv->hv_h264_level % 10);
   }
 }
 
@@ -546,10 +575,16 @@ demuxer_update_bw(hls_t *h, hls_demuxer_t *hd)
 }
 
 
+typedef enum {
+  SEGMENT_OPEN_OK,
+  SEGMENT_OPEN_NOT_FOUND,
+  SEGMENT_OPEN_CORRUPT,
+} segment_open_result_t;
+
 /**
  *
  */
-static int
+static segment_open_result_t
 segment_open(hls_t *h, hls_segment_t *hs, int fast_fail)
 {
   int err, j;
@@ -578,7 +613,7 @@ segment_open(hls_t *h, hls_segment_t *hs, int fast_fail)
   if(fh == NULL) {
     TRACE(TRACE_INFO, "HLS", "Unable to open segment %s -- %s",
 	  hs->hs_url, errbuf);
-    return -1;
+    return SEGMENT_OPEN_NOT_FOUND;
   }
   
   if(hs->hs_byte_size != -1 && hs->hs_byte_offset != -1)
@@ -598,7 +633,7 @@ segment_open(hls_t *h, hls_segment_t *hs, int fast_fail)
 	TRACE(TRACE_ERROR, "HLS", "Unable to load key file %s",
 	      rstr_get(hs->hs_key_url));
 	fa_close(fh);
-	return -1;
+	return SEGMENT_OPEN_NOT_FOUND;
       }
 
       rstr_set(&hv->hv_key_url, hs->hs_key_url);
@@ -607,13 +642,18 @@ segment_open(hls_t *h, hls_segment_t *hs, int fast_fail)
     fh = fa_aescbc_open(fh, hs->hs_iv, buf_c8(hv->hv_key));
   }
 
+  AVIOContext *avio = fa_libav_reopen(fh);
   hs->hs_fctx = avformat_alloc_context();
-  hs->hs_fctx->pb = fa_libav_reopen(fh);
+  hs->hs_fctx->pb = avio;
 
   if((err = avformat_open_input(&hs->hs_fctx, hs->hs_url,
 				h->h_fmt, NULL)) != 0) {
-    TRACE(TRACE_ERROR, "HLS", "Unable to open TS file %d", err);
-    return -1;
+    TRACE(TRACE_ERROR, "HLS",
+	  "Unable to open TS file (%s) segment seq: %d error %d",
+	  hs->hs_url, hs->hs_seq, err);
+
+    fa_libav_close(avio);
+    return SEGMENT_OPEN_CORRUPT;
   }
 
   hs->hs_fctx->flags |= AVFMT_FLAG_NOFILLIN;
@@ -638,7 +678,7 @@ segment_open(hls_t *h, hls_segment_t *hs, int fast_fail)
       break;
     }
   }
-  return 0;
+  return SEGMENT_OPEN_OK;
 }
 
 
@@ -659,6 +699,7 @@ variant_update_metadata(hls_t *h, hls_variant_t *hv, int availbw)
 
 #define HLS_SEGMENT_EOF ((hls_segment_t *)-1)
 #define HLS_SEGMENT_NYA ((hls_segment_t *)-2) // Not yet available
+#define HLS_SEGMENT_ERR ((hls_segment_t *)-3) // Stream broken
 
 /**
  *
@@ -712,6 +753,12 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
 
     hls_segment_t *hs;
 
+    h->h_live = !hv->hv_frozen;
+
+    // Initial seek on live streams make no sense, void that
+    if(!hv->hv_frozen && hd->hd_seek_to != PTS_UNSET && hd->hd_seek_initial)
+      hd->hd_seek_to = PTS_UNSET;
+
     if(hd->hd_seek_to != PTS_UNSET) {
       hs = hv_find_segment_by_time(hv, hd->hd_seek_to);
     } else {
@@ -725,11 +772,43 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
 	return HLS_SEGMENT_NYA;
     }
 
-    if(segment_open(h, hs, hv != hd->hd_seek)) {
+    // If we're not playing from the seek segment (ie. our "fallback" segment)
+    // we ask for fast fail so we can retry with another segment
 
+    segment_open_result_t rcode = segment_open(h, hs, hv != hd->hd_seek);
+
+    switch(rcode) {
+    case SEGMENT_OPEN_OK:
+      break;
+
+    case SEGMENT_OPEN_NOT_FOUND:
+
+      /*
+       * Segment can not be found (but since it's listed in the playlist
+       * it *should* be there, retry with something directly else unless we're
+       * at our seek variant in which case we wait a short while (by
+       * returning the special Not-Yet-Available segment)
+       */
+      if(hv == hd->hd_seek)
+	return HLS_SEGMENT_NYA;
+
+      /* 
+       * Variants are sorted in bitrate descending order, so just
+       * step down one
+       */
+      hd->hd_req = TAILQ_NEXT(hv, hv_link);
+      goto again;
+
+    case SEGMENT_OPEN_CORRUPT:
+      /*
+       * File is there, but we are not able to parse it correctly
+       * (broken key?, not a TS file, whatever)
+       * Mark it as broken and try something else
+       */
+      hs->hs_corrupt = 1;
       if(hv == hd->hd_seek) {
-	usleep(100000);
-	goto again;
+	// We give up now
+	return HLS_SEGMENT_ERR;
       }
       hd->hd_req = TAILQ_NEXT(hv, hv_link);
       goto again;
@@ -749,15 +828,15 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
  *
  */
 static void
-hls_seek(hls_t *h, int64_t pts, int64_t ts)
+hls_seek(hls_t *h, int64_t pts, int64_t ts, int initial)
 {
   hls_demuxer_t *hd = &h->h_primary;
-
   mp_flush(h->h_mp, 0);
 
   h->h_mp->mp_video.mq_seektarget = pts;
   h->h_mp->mp_audio.mq_seektarget = pts;
   hd->hd_seek_to = ts;
+  hd->hd_seek_initial = initial;
   prop_set(h->h_mp->mp_prop_root, "seektime", PROP_SET_FLOAT, ts / 1000000.0);
 }
 
@@ -841,11 +920,54 @@ demuxer_select_variant_simple(hls_t *h, hls_demuxer_t *hd)
     if(hv->hv_bitrate < hd->hd_bw)
       break;
   }
-  if(hv == NULL)
+  if(hv == NULL || h->h_playback_priority)
     hv = hd->hd_seek;
   
   hd->hd_req = hv;
 }
+
+
+/**
+ *
+ */
+static void
+demuxer_select_variant_random(hls_t *h, hls_demuxer_t *hd)
+{
+  hls_variant_t *hv;
+  int cnt = 0;
+
+  TAILQ_FOREACH(hv, &hd->hd_variants, hv_link)
+    if(!hv->hv_audio_only)
+      cnt++;
+  
+  int r = rand() % cnt;
+  cnt = 0;
+  TAILQ_FOREACH(hv, &hd->hd_variants, hv_link) {
+    if(hv->hv_audio_only)
+      continue;
+    if(r == cnt)
+      break;
+    cnt++;
+  }
+
+  if(hv == NULL)
+    hv = hd->hd_seek;
+  HLS_TRACE(h, "Randomly selected bitrate %d", hv->hv_bitrate);
+  hd->hd_req = hv;
+}
+
+/**
+ *
+ */
+static void
+demuxer_select_variant(hls_t *h, hls_demuxer_t *hd)
+{
+  if(1)
+    demuxer_select_variant_simple(h, hd);
+  else
+    demuxer_select_variant_random(h, hd);
+}
+
 
 #define MB_EOF ((void *)-1)
 #define MB_NYA ((void *)-2)
@@ -891,6 +1013,7 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
   int restartpos_last = -1;
   int64_t last_timestamp_presented = AV_NOPTS_VALUE;
   sub_scanner_t *ss = NULL;
+  h->h_playback_priority = va->priority;
 
   mp->mp_video.mq_stream = 0;
   mp->mp_audio.mq_stream = 1;
@@ -919,7 +1042,7 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
       !(va->flags & BACKEND_VIDEO_START_FROM_BEGINNING))) {
     int64_t start = video_get_restartpos(canonical_url) * 1000;
     if(start) {
-      hls_seek(h, start, start);
+      hls_seek(h, start, start, 1);
     }
   }
 
@@ -929,11 +1052,13 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
   while(1) {
 
     if(mb == NULL) {
+      mp->mp_eof = 0;
 
       hls_segment_t *hs = demuxer_get_segment(h, hd);
 
-      if(hs == HLS_SEGMENT_EOF) {
+      if(hs == HLS_SEGMENT_EOF || hs == HLS_SEGMENT_ERR) {
 	mb = MB_EOF;
+	mp->mp_eof = 1;
 	continue;
       }
 
@@ -954,7 +1079,7 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
       if(r) {
 	hd->hd_seq++;
 	demuxer_update_bw(h, hd);
-	demuxer_select_variant_simple(h, hd);
+	demuxer_select_variant(h, hd);
 	continue;
       }
 
@@ -1005,18 +1130,18 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
         }
       }
 
-       if(mb->mb_data_type == MB_VIDEO) {
-	 if(hd->hd_delta_ts == PTS_UNSET && mb->mb_pts != PTS_UNSET)
-	   hd->hd_delta_ts = mb->mb_pts - hs->hs_time_offset;
+      if(mb->mb_data_type == MB_VIDEO) {
+	if(hd->hd_delta_ts == PTS_UNSET && mb->mb_pts != PTS_UNSET)
+	  hd->hd_delta_ts = mb->mb_pts - hs->hs_time_offset;
 
-	 mb->mb_drive_clock = 1;
-	 mb->mb_delta = hd->hd_delta_ts;
-       }
+	mb->mb_drive_clock = 1;
+	mb->mb_delta = hd->hd_delta_ts;
+      }
 
       mb->mb_keyframe = !!(pkt.flags & AV_PKT_FLAG_KEY);
     }
 
-    if(mb == MB_NYA) {
+    if(mb == MB_NYA || mb == NULL) {
       // Nothing to send yet
       e = mp_dequeue_event_deadline(mp, 1000);
       mb = NULL;
@@ -1045,11 +1170,16 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 	last_timestamp_presented = ets->ts;
 
 	// Update restartpos every 5 seconds
-	if(sec < restartpos_last || sec >= restartpos_last + 5) {
+	if(!h->h_live &&
+           (sec < restartpos_last || sec >= restartpos_last + 5)) {
 	  restartpos_last = sec;
 	  metadb_set_video_restartpos(canonical_url, ets->ts / 1000);
 	}
       }
+
+    } else if(event_is_type(e, EVENT_PLAYBACK_PRIORITY)) {
+      event_int_t *ei = (event_int_t *)e;
+      h->h_playback_priority = ei->val;
 
     } else if(event_is_type(e, EVENT_SEEK)) {
 
@@ -1060,7 +1190,7 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 
       event_ts_t *ets = (event_ts_t *)e;
 
-      hls_seek(h, ets->ts + hd->hd_delta_ts, ets->ts);
+      hls_seek(h, ets->ts + hd->hd_delta_ts, ets->ts, 0);
 
     } else if(event_is_action(e, ACTION_STOP)) {
       mp_set_playstatus_stop(mp);
@@ -1080,20 +1210,23 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
   if(mb != NULL && mb != MB_EOF && mb != MB_NYA)
     media_buf_free_unlocked(mp, mb);
 
-  // Compute stop position (in percentage of video length)
+  if(!h->h_live) {
 
-  int spp = mp->mp_duration ? mp->mp_seek_base * 100 / mp->mp_duration : 0;
+    // Compute stop position (in percentage of video length)
 
-  if(spp >= video_settings.played_threshold || event_is_type(e, EVENT_EOF)) {
-    metadb_set_video_restartpos(canonical_url, -1);
-    metadb_register_play(canonical_url, 1, CONTENT_VIDEO);
-    TRACE(TRACE_DEBUG, "Video",
-	  "Playback reached %d%%, counting as played (%s)",
-	  spp, canonical_url);
-  } else if(last_timestamp_presented != PTS_UNSET) {
-    metadb_set_video_restartpos(canonical_url, last_timestamp_presented / 1000);
+    int spp = mp->mp_duration ? mp->mp_seek_base * 100 / mp->mp_duration : 0;
+
+    if(spp >= video_settings.played_threshold || event_is_type(e, EVENT_EOF)) {
+      metadb_set_video_restartpos(canonical_url, -1);
+      metadb_register_play(canonical_url, 1, CONTENT_VIDEO);
+      TRACE(TRACE_DEBUG, "Video",
+	    "Playback reached %d%%, counting as played (%s)",
+	    spp, canonical_url);
+    } else if(last_timestamp_presented != PTS_UNSET) {
+      metadb_set_video_restartpos(canonical_url,
+				  last_timestamp_presented / 1000);
+    }
   }
-
   // Shutdown
 
   mp_flush(mp, 0);
@@ -1150,6 +1283,31 @@ hls_ext_x_media(hls_t *h, const char *V)
 }
 
 
+// from https://developer.apple.com/library/ios/documentation/networkinginternet/conceptual/streamingmediaguide/StreamingMediaGuide.pdf
+
+static const struct {
+  const char *name;
+  int profile;
+  int level;
+} AVC_h264_codecs[] = {
+
+  // Baseline
+  { "avc1.42001e",   66, 30},
+  { "avc1.66.30",    66, 30},
+  { "avc1.42001f",   66, 31},
+
+  // Main
+  { "avc1.4d001e",   77, 30},
+  { "avc1.77.30",    77, 30},
+  { "avc1.4d001f",   77, 31},
+  { "avc1.4d0028",   77, 40},
+
+  // High
+  { "avc1.64001f",   100, 31},
+  { "avc1.640028",   100, 40},
+  { "avc1.640029",   100, 41}, // Spec says 4.0 but that must be a typo
+};
+
 
 /**
  *
@@ -1178,8 +1336,19 @@ hls_ext_x_stream_inf(hls_t *h, const char *V, hls_variant_t **hvp)
       hv->hv_subs_group = strdup(value);
     else if(!strcmp(key, "PROGRAM-ID"))
       hv->hv_program = atoi(value);
-    else if(!strcmp(key, "CODECS"))
-      hv->hv_audio_only = !strstr(value, "avc1");
+    else if(!strcmp(key, "CODECS")) {
+
+      if(!strstr(value, "avc1"))
+        hv->hv_audio_only = 1;
+
+      for(int i = 0; i < ARRAYSIZE(AVC_h264_codecs); i++) {
+        if(strstr(value, AVC_h264_codecs[i].name)) {
+          hv->hv_h264_profile = AVC_h264_codecs[i].profile;
+          hv->hv_h264_level = AVC_h264_codecs[i].level;
+          break;
+        }
+      }
+    }
     else if(!strcmp(key, "RESOLUTION")) {
       const char *h = strchr(value, 'x');
       if(h != NULL) {

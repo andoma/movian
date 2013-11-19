@@ -65,7 +65,6 @@ glw_renderer_init(glw_renderer_t *gr, int num_vertices, int num_triangles,
     gr->gr_vertices[i * VERTEX_SIZE + 7] = 1;
   }
   gr->gr_dirty = 1;
-  gr->gr_blended_attributes = 0;
   gr->gr_color_attributes = 0;
 }
 
@@ -182,11 +181,31 @@ glw_renderer_vtx_col(glw_renderer_t *gr, int vertex,
   gr->gr_vertices[vertex * VERTEX_SIZE + 5] = g;
   gr->gr_vertices[vertex * VERTEX_SIZE + 6] = b;
   gr->gr_vertices[vertex * VERTEX_SIZE + 7] = a;
-  if(a <= 0.99)
-    gr->gr_blended_attributes = 1;
   gr->gr_dirty = 1;
   gr->gr_color_attributes = 1;
+}
 
+
+/**
+ * 
+ */
+void
+glw_renderer_vtx_col_reset(glw_renderer_t *gr)
+{
+  if(!gr->gr_color_attributes)
+    return;
+
+  for(int i = 0; i < gr->gr_num_vertices; i++) {
+    gr->gr_vertices[i * VERTEX_SIZE + 3] = 1;
+
+    gr->gr_vertices[i * VERTEX_SIZE + 4] = 1;
+    gr->gr_vertices[i * VERTEX_SIZE + 5] = 1;
+    gr->gr_vertices[i * VERTEX_SIZE + 6] = 1;
+    gr->gr_vertices[i * VERTEX_SIZE + 7] = 1;
+  }  
+
+  gr->gr_dirty = 1;
+  gr->gr_color_attributes = 0;
 }
 
 
@@ -257,6 +276,7 @@ fader(glw_root_t *gr, glw_renderer_cache_t *grc,
 
 
     if(ar > 0) {
+      grc->grc_colored = 1;
       glw_vec4_mul_c3(c1, 1 + D1 / ar);
       glw_vec4_mul_c3(c2, 1 + D2 / ar);
       glw_vec4_mul_c3(c3, 1 + D3 / ar);
@@ -923,6 +943,9 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
 
     if(grc->grc_blurred)
       flags |= GLW_RENDER_BLUR_ATTRIBUTE;
+
+    if(grc->grc_colored)
+      flags |= GLW_RENDER_COLOR_ATTRIBUTES;
 
     root->gr_render(root, NULL, tex, root->gr_stencil_texture,
 		    rgb_mul, rgb_off, alpha, blur,

@@ -106,8 +106,13 @@ get_program(const glw_backend_root_t *gbr,
       glBindTexture(gbr->gbr_primary_texture_mode, t1->tex);
       glActiveTexture(GL_TEXTURE0);
 
+    } else if(doblur) {
+      gp = gbr->gbr_renderer_tex_blur;
+
+    } else if(!flags) {
+      gp = gbr->gbr_renderer_tex_simple;
     } else {
-      gp = doblur ? gbr->gbr_renderer_tex_blur : gbr->gbr_renderer_tex;
+      gp = gbr->gbr_renderer_tex;
     }
 
     glBindTexture(gbr->gbr_primary_texture_mode, t0->tex);
@@ -282,9 +287,10 @@ shader_render_delayed(struct glw_root *root,
     break;
   }
 
-  if(rgb_off != NULL)
+  if(rgb_off != NULL) {
     rj->rgb_off = *rgb_off;
-  else {
+    flags |= GLW_RENDER_COLOR_OFFSET;
+  } else {
     rj->rgb_off.r = 0;
     rj->rgb_off.g = 0;
     rj->rgb_off.b = 0;
@@ -346,6 +352,10 @@ shader_render(struct glw_root *root,
 	      const glw_rctx_t *rc)
 {
   glw_backend_root_t *gbr = &root->gr_be;
+
+  if(rgb_off != NULL)
+    flags |= GLW_RENDER_COLOR_OFFSET;
+
   glw_program_t *gp = get_program(gbr, t0, t1, blur, flags, up);
 
   if(gp == NULL)
@@ -638,6 +648,11 @@ glw_opengl_shaders_init(glw_root_t *gr, int delayed)
   SHADERPATH("f_tex.glsl");
   fs = glw_compile_shader(path, GL_FRAGMENT_SHADER, gr);
   gbr->gbr_renderer_tex = glw_link_program(gbr, "Texture", vs, fs);
+  glDeleteShader(fs);
+
+  SHADERPATH("f_tex_simple.glsl");
+  fs = glw_compile_shader(path, GL_FRAGMENT_SHADER, gr);
+  gbr->gbr_renderer_tex_simple = glw_link_program(gbr, "TextureSimple", vs, fs);
   glDeleteShader(fs);
 
   SHADERPATH("f_tex_stencil.glsl");

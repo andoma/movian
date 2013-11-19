@@ -33,6 +33,10 @@ class VideoRenderer extends SurfaceView implements SurfaceHolder.Callback {
         return surface;
     }
 
+    public Surface getSurfaceUnlocked() {
+        return surface;
+    }
+
     public void releaseSurface() {
         lock.unlock();
     }

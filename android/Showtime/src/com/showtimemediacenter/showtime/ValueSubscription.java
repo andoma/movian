@@ -4,12 +4,12 @@ import java.io.File;
 import android.content.Context;
 import android.util.Log;
 
-public class Subscription {
+public class ValueSubscription {
 
     private int id;
 
-    public Subscription(Prop p, String path, Callback callback) {
-        id = STCore.subScalar((int)(p != null ? p.getPropId() : 0), path, callback);
+    public ValueSubscription(Prop p, String path, Callback callback) {
+        id = STCore.subValue((int)(p != null ? p.getPropId() : 0), path, callback);
     }
 
     public void stop() {
@@ -25,6 +25,5 @@ public class Subscription {
     }
 
     public interface Callback {
-
     }
 }

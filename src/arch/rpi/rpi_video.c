@@ -62,6 +62,27 @@ rpi_codec_decode(struct media_codec *mc, struct video_decoder *vd,
   const void *data = mb->mb_data;
   size_t len       = mb->mb_size;
 
+  if(mc->codec_id == CODEC_ID_MPEG4) {
+
+    if(mb->mb_size <= 7)
+      return;
+
+    int frame_type = 0;
+    const uint8_t *d = data;
+    if(d[0] == 0x00 && d[1] == 0x00 && d[2] == 0x01 && d[3] == 0xb6)
+      frame_type = d[4] >> 6;
+
+    if(frame_type == 2)
+      rvc->rvc_b_frames = 100;
+
+    if(rvc->rvc_b_frames)
+      rvc->rvc_b_frames--;
+
+    if(mb->mb_pts == PTS_UNSET && mb->mb_dts != PTS_UNSET &&
+       (!rvc->rvc_b_frames || frame_type == 2)) // 2 == B frame
+      mb->mb_pts = mb->mb_dts;
+  }
+
   media_buf_meta_t *mbm = &vd->vd_reorder[vd->vd_reorder_ptr];
   *mbm = mb->mb_meta;
   vd->vd_reorder_ptr = (vd->vd_reorder_ptr + 1) & VIDEO_DECODER_REORDER_MASK;

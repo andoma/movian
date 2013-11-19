@@ -3,6 +3,7 @@
 SRCS += src/arch/android/android.c \
 	src/arch/android/android_threads.c \
 	src/arch/android/android_video_codec.c \
+        src/video/h264_annexb.c \
 	src/networking/net_posix.c \
 	src/networking/asyncio_posix.c \
 	src/networking/net_android.c \
@@ -37,4 +38,4 @@ stop:
 	${ADB} shell am force-stop com.showtimemediacenter.showtime
 
 logcat:
-	${ADB} logcat ActivityManager:I Showtime:D AndroidRuntime:D *:S
+	${ADB} logcat ActivityManager:I Showtime:D AndroidRuntime:D DEBUG:D *:S

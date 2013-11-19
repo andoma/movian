@@ -65,6 +65,7 @@ typedef struct glw_video_surface {
   int gvs_id;
 
   void *gvs_opaque;
+  int gvs_format;
 
 #if CONFIG_GLW_BACKEND_OPENGL
   GLuint gvs_pbo[3];
@@ -172,11 +173,6 @@ typedef struct glw_video {
    * Freshly decoded surfaces are enqueued here
    */
   struct glw_video_surface_queue gv_decoded_queue;
-
-  int gv_layer;
-  int gv_running;
-  int gv_idgen;
-
 
   int64_t gv_nextpts;
 
