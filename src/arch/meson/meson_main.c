@@ -63,18 +63,18 @@ static const EGLint ui_win_attribs[] = {
   EGL_NONE
 };
 
-typedef struct sunxi_ui {
-  glw_root_t su_gr;
+typedef struct meson_ui {
+  glw_root_t mu_gr;
 
-  EGLDisplay su_dpy;
-  EGLConfig su_config;
+  EGLDisplay mu_dpy;
+  EGLConfig mu_config;
 
 
-  int su_fullwindow;
-  int su_screensaver;
-} sunxi_ui_t;
+  int mu_fullwindow;
+  int mu_screensaver;
+} meson_ui_t;
 
-static sunxi_ui_t su;
+static meson_ui_t mu;
 
 
 
@@ -98,8 +98,8 @@ set_blank(int value)
 static void
 set_in_fullwindow(void *opaque, int v)
 {
-  sunxi_ui_t *su = opaque;
-  su->su_fullwindow = v;
+  meson_ui_t *su = opaque;
+  su->mu_fullwindow = v;
 }
 
 
@@ -109,8 +109,8 @@ set_in_fullwindow(void *opaque, int v)
 static void
 set_in_screensaver(void *opaque, int v)
 {
-  sunxi_ui_t *su = opaque;
-  su->su_screensaver = v;
+  meson_ui_t *mu = opaque;
+  mu->mu_screensaver = v;
 }
 
 
@@ -122,22 +122,22 @@ ui_init(void)
 {
   EGLConfig configs[32];
   int noc;
-  su.su_dpy = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+  mu.mu_dpy = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 
-  if(eglInitialize(su.su_dpy, NULL, NULL) != EGL_TRUE) {
+  if(eglInitialize(mu.mu_dpy, NULL, NULL) != EGL_TRUE) {
     TRACE(TRACE_ERROR, "EGL", "eglInitialize failed");
     return 1;
   }
 
-  if(eglChooseConfig(su.su_dpy, ui_config_attribs, configs,
+  if(eglChooseConfig(mu.mu_dpy, ui_config_attribs, configs,
 		     ARRAYSIZE(configs), &noc) != EGL_TRUE) {
     TRACE(TRACE_ERROR, "EGL", "Unable to choose config");
     return 1;
   }
 
-  su.su_config = configs[0];
+  mu.mu_config = configs[0];
 
-  glw_root_t *gr = &su.su_gr;
+  glw_root_t *gr = &mu.mu_gr;
 
   gr->gr_prop_ui = prop_create_root("ui");
   gr->gr_prop_nav = nav_spawn();
@@ -151,14 +151,14 @@ ui_init(void)
 
   prop_subscribe(0,
 		 PROP_TAG_NAME("ui","fullwindow"),
-		 PROP_TAG_CALLBACK_INT, set_in_fullwindow, &su,
+		 PROP_TAG_CALLBACK_INT, set_in_fullwindow, &mu,
 		 PROP_TAG_ROOT, gr->gr_prop_ui,
 		 PROP_TAG_COURIER, gr->gr_courier,
 		 NULL);
 
   prop_subscribe(0,
 		 PROP_TAG_NAME("ui","screensaverActive"),
-		 PROP_TAG_CALLBACK_INT, set_in_screensaver, &su,
+		 PROP_TAG_CALLBACK_INT, set_in_screensaver, &mu,
 		 PROP_TAG_ROOT, gr->gr_prop_ui,
 		 PROP_TAG_COURIER, gr->gr_courier,
 		 NULL);
@@ -249,7 +249,7 @@ mali_read_val(void)
 static int
 ui_run(void)
 {
-  glw_root_t *gr = &su.su_gr;
+  glw_root_t *gr = &mu.mu_gr;
   fbdev_window fbwin = {0};
 
 
@@ -275,7 +275,7 @@ ui_run(void)
   fbwin.width  = gr->gr_width;
   fbwin.height = gr->gr_height;
 
-  EGLSurface surface = eglCreateWindowSurface(su.su_dpy, su.su_config,
+  EGLSurface surface = eglCreateWindowSurface(mu.mu_dpy, mu.mu_config,
 					      (EGLNativeWindowType)&fbwin,
 					      ui_win_attribs);
   if(surface == EGL_NO_SURFACE) {
@@ -286,7 +286,7 @@ ui_run(void)
 
   eglBindAPI(EGL_OPENGL_ES_API);
 
-  EGLContext ctx = eglCreateContext(su.su_dpy, su.su_config, EGL_NO_CONTEXT,
+  EGLContext ctx = eglCreateContext(mu.mu_dpy, mu.mu_config, EGL_NO_CONTEXT,
 				    ui_ctx_attribs);
 
   if(ctx == EGL_NO_CONTEXT) {
@@ -294,7 +294,7 @@ ui_run(void)
     return -1;
   }
 
-  eglMakeCurrent(su.su_dpy, surface, surface, ctx);
+  eglMakeCurrent(mu.mu_dpy, surface, surface, ctx);
   glw_opengl_init_context(gr);
 
   glClearColor(0,0,0,0);
@@ -325,7 +325,7 @@ ui_run(void)
 
     glw_post_scene(gr);
     
-    eglSwapBuffers(su.su_dpy, surface);
+    eglSwapBuffers(mu.mu_dpy, surface);
 
     if(ctrlc == 1) {
       ctrlc = 2;
@@ -344,12 +344,12 @@ ui_run(void)
   glw_unlock(gr);
 
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-  eglSwapBuffers(su.su_dpy, surface);
+  eglSwapBuffers(mu.mu_dpy, surface);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-  eglSwapBuffers(su.su_dpy, surface);
+  eglSwapBuffers(mu.mu_dpy, surface);
 
-  eglDestroyContext(su.su_dpy, ctx);
-  eglDestroySurface(su.su_dpy, surface);
+  eglDestroyContext(mu.mu_dpy, ctx);
+  eglDestroySurface(mu.mu_dpy, surface);
 
   return 0;
 }
