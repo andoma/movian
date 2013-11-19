@@ -93,6 +93,53 @@ set_blank(int value)
 /**
  *
  */
+static int
+screen_init(void)
+{
+  int fd = open("/sys/class/display/mode", O_WRONLY);
+
+  if(fd == -1) {
+    TRACE(TRACE_ERROR, "EGL", "Failed to open /sys/class/display/mode");
+    return -1;
+  }
+  const char disp_mode[] = "1080p50hz";
+  int wlen = write(fd, disp_mode, strlen(disp_mode));
+  if (wlen < strlen(disp_mode)) {
+    TRACE(TRACE_ERROR, "EGL", "Failed to write to /sys/class/display/mode");
+    close(fd);
+    return -1;
+  }
+
+  close(fd);
+  fd = open("/dev/fb0", O_RDWR);
+  if(fd == -1) {
+    TRACE(TRACE_ERROR, "EGL", "Failed to open /dev/fb0");
+    return -1;
+  }
+
+  struct fb_var_screeninfo si;
+  int r = ioctl(fd, FBIOGET_VSCREENINFO, &si);
+  if(r) {
+    TRACE(TRACE_ERROR, "EGL", "Unable to query for screen dimensions");
+    return -1;
+  }
+  /* Yay magic numbers! TODO(mla) */
+  si.xres = 1920;
+  si.yres = 1080;
+  si.xres_virtual = 1920;
+  si.yres_virtual = 2160;
+  si.bits_per_pixel = 32;
+
+  r = ioctl(fd, FBIOPUT_VSCREENINFO, &si);
+  if (r) {
+    TRACE(TRACE_ERROR, "EGL", "Unable to set screen dimensions");
+    return -1;
+  }
+  return 0;
+}
+/**
+ *
+ */
 static void
 set_in_fullwindow(void *opaque, int v)
 {
@@ -370,6 +417,8 @@ main(int argc, char **argv)
   gconf.binary = argv[0];
   
   linux_check_capabilities();
+
+  screen_init();
 
   posix_init();
 
