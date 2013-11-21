@@ -5,13 +5,33 @@
 #include <errno.h>
 #include <stdlib.h>
 
+// #define LOCK_TIME_TRACING
+
 /**
  * Mutexes
  */
 typedef pthread_mutex_t hts_mutex_t;
 
 #define hts_mutex_init(m)            pthread_mutex_init((m), NULL)
+
+#ifdef LOCK_TIME_TRACING
+extern pthread_t lock_time_trace_pid;
+extern void hts_mutex_lock_check(hts_mutex_t *m, const char *file, int line);
+
+static inline void hts_mutex_lock_i(hts_mutex_t *m, const char *file, int line) {
+  if(pthread_self() == lock_time_trace_pid)
+    hts_mutex_lock_check(m, file, line);
+  else
+    pthread_mutex_lock(m);
+}
+
+#define hts_mutex_lock(m) hts_mutex_lock_i(m, __FILE__, __LINE__)
+
+#else
 #define hts_mutex_lock(m)            pthread_mutex_lock(m)
+#endif
+
+
 #define hts_mutex_unlock(m)          pthread_mutex_unlock(m)
 #define hts_mutex_destroy(m)         pthread_mutex_destroy(m)
 extern void hts_mutex_init_recursive(hts_mutex_t *m);

@@ -187,3 +187,52 @@ hts_thread_create_joinable(const char *title, hts_thread_t *p,
 
   TRACE(TRACE_DEBUG, "thread", "Created thread: %s", title);
 }
+
+
+#ifdef LOCK_TIME_TRACING
+
+pthread_t lock_time_trace_pid;
+int lock_wait_time_max = 10000;
+
+void init_lock_time_tracing(pthread_t pid, int maxtime);
+
+void init_lock_time_tracing(pthread_t pid, int maxtime)
+{
+  lock_time_trace_pid = pid;
+  lock_wait_time_max = maxtime;
+}
+
+
+extern void stackdump(const char *fmt, ...);
+
+
+/**
+ *
+ */
+void
+hts_mutex_lock_check(hts_mutex_t *m, const char *file, int line)
+{
+  struct timespec ts, s;
+  clock_gettime(CLOCK_REALTIME, &ts);
+  s = ts;
+
+  int delta = lock_wait_time_max;
+
+  ts.tv_sec  += delta / 1000000;
+  ts.tv_nsec += delta * 1000;
+
+  if(ts.tv_nsec > 1000000000) {
+    ts.tv_sec++;
+    ts.tv_nsec -= 1000000000;
+  }
+
+  if(pthread_mutex_timedlock(m, &ts) == ETIMEDOUT) {
+    clock_gettime(CLOCK_REALTIME, &ts);
+    int64_t t1 = ts.tv_sec * 1000000LL + (ts.tv_nsec / 1000);
+    int64_t t0 = s.tv_sec * 1000000LL  + (s.tv_nsec / 1000);
+    
+    stackdump("Lock at %s:%d took %dus to lock", file, line, (int)(t1 - t0));
+    pthread_mutex_lock(m);
+  }
+}
+#endif
