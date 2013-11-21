@@ -125,8 +125,10 @@ audio_decoder_create(struct media_pipe *mp)
   ad->ad_epoch = 0;
   ad->ad_vol_scale = 1.0f;
 
+  int prio = ac->ac_decoder_can_low_pri ? THREAD_PRIO_AUDIO_DECODER : THREAD_PRIO_AUDIO;
+
   hts_thread_create_joinable("audio decoder", &ad->ad_tid,
-                             audio_decode_thread, ad, THREAD_PRIO_AUDIO);
+                             audio_decode_thread, ad, prio);
   return ad;
 }
 
