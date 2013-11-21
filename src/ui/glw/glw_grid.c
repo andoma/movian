@@ -38,7 +38,9 @@ glw_grid_layout(glw_grid_t *gg, glw_rctx_t *rc)
   const float scale = gg->child_scale;
   int row_height = rc->rc_height * scale;
 
-  glw_lp(&gg->filtered_ypos, w->glw_root, gg->current_ypos, 0.1);
+  int cyp = gg->current_ypos + row_height / 2;
+
+  glw_lp(&gg->filtered_ypos, w->glw_root, cyp, 0.1);
 
   int ypos = 0;
   int offset = rc->rc_height / 2 - gg->filtered_ypos;
@@ -55,7 +57,7 @@ glw_grid_layout(glw_grid_t *gg, glw_rctx_t *rc)
 
     if(c == gg->scroll_to_me) {
       gg->scroll_to_me = NULL;
-      gg->current_ypos = ypos + row_height / 2;
+      gg->current_ypos = ypos;
     }
     ypos += row_height;
     c->glw_norm_weight = scale;
