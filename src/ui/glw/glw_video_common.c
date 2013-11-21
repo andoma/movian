@@ -453,7 +453,7 @@ create_pipeline(glw_video_t *gv)
   gv->gv_mp->mp_set_video_codec = glw_set_video_codec;
   gv->gv_mp->mp_video_frame_opaque = gv;
 
-  gv->gv_vd = video_decoder_create(gv->gv_mp);
+  gv->gv_vd = video_decoder_create(gv->gv_mp, gv->gv_activation);
   video_playback_create(gv->gv_mp);
 
   prop_t *c = gv->gv_mp->mp_prop_ctrl;
@@ -877,9 +877,20 @@ set_activation(glw_video_t *gv, int level)
 
   hts_mutex_unlock(&gv->gv_surface_mutex);
 
+
+  media_pipe_t *mp = gv->gv_mp;
+
+  hts_mutex_lock(&mp->mp_mutex);
+
   event_t *e = event_create_int(EVENT_PLAYBACK_ACTIVATION, gv->gv_activation);
-  mp_enqueue_event(gv->gv_mp, e);
+  mp_enqueue_event_locked(mp, e);
   event_release(e);
+
+  gv->gv_vd->vd_activation = gv->gv_activation;
+  // Wakeup video decoder
+  hts_cond_signal(&mp->mp_video.mq_avail);
+
+  hts_mutex_unlock(&mp->mp_mutex);
 }
 
 

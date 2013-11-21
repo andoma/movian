@@ -162,8 +162,9 @@ typedef struct media_codec {
   void (*decode_locked)(struct media_codec *mc, struct video_decoder *vd,
                         struct media_queue *mq, struct media_buf *mb);
 
-  void (*flush)(struct media_codec *mc, struct video_decoder *vd,
-                int lasting);
+  void (*relinquish)(struct media_codec *mc, struct video_decoder *vd);
+
+  void (*flush)(struct media_codec *mc, struct video_decoder *vd);
 
   void (*close)(struct media_codec *mc);
   void (*reinit)(struct media_codec *mc);
@@ -602,7 +603,11 @@ struct event *mb_enqueue_with_events_ex(media_pipe_t *mp, media_queue_t *mq,
 void mb_enqueue_always(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb);
 
 void mp_enqueue_event(media_pipe_t *mp, struct event *e);
+
+void mp_enqueue_event_locked(media_pipe_t *mp, event_t *e);
+
 struct event *mp_dequeue_event(media_pipe_t *mp);
+
 struct event *mp_dequeue_event_deadline(media_pipe_t *mp, int timeout);
 
 struct event *mp_wait_for_empty_queues(media_pipe_t *mp);

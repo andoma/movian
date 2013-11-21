@@ -71,7 +71,7 @@ libav_decode_video(struct media_codec *mc, struct video_decoder *vd,
  *
  */
 void
-libav_video_flush(media_codec_t *mc, video_decoder_t *vd, int lasting)
+libav_video_flush(media_codec_t *mc, video_decoder_t *vd)
 {
   AVCodecContext *ctx = mc->ctx;
   int got_pic = 0;

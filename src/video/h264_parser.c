@@ -1105,7 +1105,7 @@ dummy_decode(struct media_codec *mc, struct video_decoder *vd,
 
 
 static void
-dummy_flush(struct media_codec *mc, struct video_decoder *vd, int lasting)
+dummy_flush(struct media_codec *mc, struct video_decoder *vd)
 {
 
 }
