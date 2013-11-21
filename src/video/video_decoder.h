@@ -46,6 +46,8 @@ typedef struct video_decoder {
 
   int vd_run;
 
+  int vd_activation;
+
   int vd_hold;
 
   LIST_ENTRY(glw_video) vd_global_link;
@@ -107,7 +109,7 @@ typedef struct video_decoder {
 
 } video_decoder_t;
 
-video_decoder_t *video_decoder_create(media_pipe_t *mp);
+video_decoder_t *video_decoder_create(media_pipe_t *mp, int gv_activation);
 
 void video_decoder_destroy(video_decoder_t *vd);
 

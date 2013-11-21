@@ -853,7 +853,7 @@ send_hold(media_pipe_t *mp)
 /**
  *
  */
-static void
+void
 mp_enqueue_event_locked(media_pipe_t *mp, event_t *e)
 {
   event_select_track_t *est = (event_select_track_t *)e;

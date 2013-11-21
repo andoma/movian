@@ -396,6 +396,15 @@ vd_thread(void *aux)
 
       if(mc_current != NULL) {
         mc_current->flush(mc_current, vd);
+
+        // If mb_data32 is set it's a "long lasting flush" meaning that the
+        // decoder can relinquish any hardware it has exclusive access to
+
+        if(mb->mb_data32 && mc_current->relinquish)
+          mc_current->relinquish(mc_current, vd);
+
+        mc_current->flush(mc_current, vd);
+
 	media_codec_deref(mc_current);
 	mc_current = NULL;
       }
@@ -508,10 +517,11 @@ vd_thread(void *aux)
 
 
 video_decoder_t *
-video_decoder_create(media_pipe_t *mp)
+video_decoder_create(media_pipe_t *mp, int activation)
 {
   video_decoder_t *vd = calloc(1, sizeof(video_decoder_t));
   vd->vd_run = 1;
+  vd->vd_activation = activation;
   mp_ref_inc(mp);
   vd->vd_mp = mp;
 
