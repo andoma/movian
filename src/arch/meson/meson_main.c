@@ -424,7 +424,7 @@ ui_run(void)
       showtime_shutdown(0);
     }
     if(0)mali_read_val(gr);
-    tsync_debug();
+    if(0)tsync_debug();
 
     ts = showtime_get_ts() - ts;
     if(ts > 30000) {
