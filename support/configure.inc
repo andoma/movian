@@ -247,7 +247,9 @@ add_stamp() {
 }
 
 setup_env(){
-    BUILDDIR=build.${BUILD}
+    if [ -z ${BUILDDIR+X} ]; then
+	    BUILDDIR=build.${BUILD}
+    fi
 
     if enabled cleanbuild; then
 	echo "Cleaning builddir: ${BUILDDIR}"
