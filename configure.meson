@@ -4,6 +4,8 @@ OS="meson"
 DEFAULT_UI="glw"
 CONFIGURE_POSTFIX="meson"
 
+cd `dirname $0`
+
 source support/configure.inc
 
 show_help(){
