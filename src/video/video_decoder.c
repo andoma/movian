@@ -269,9 +269,7 @@ vd_thread(void *aux)
   media_queue_t *mq = &mp->mp_video;
   media_buf_t *mb;
   media_codec_t *mc, *mc_current = NULL;
-  int run = 1;
   int reqsize = -1;
-  int size;
   int reinit = 0;
 
   const media_buf_meta_t *mbm = NULL;
@@ -280,7 +278,7 @@ vd_thread(void *aux)
 
   hts_mutex_lock(&mp->mp_mutex);
 
-  while(run) {
+  while(vd->vd_run) {
 
     if(mbm != vd->vd_reorder_current) {
       mbm = vd->vd_reorder_current;
@@ -333,14 +331,46 @@ vd_thread(void *aux)
     mq_update_stats(mp, mq);
 
     hts_cond_signal(&mp->mp_backpressure);
-    hts_mutex_unlock(&mp->mp_mutex);
 
     mc = mb->mb_cw;
 
+    if(mb->mb_data_type == MB_VIDEO) {
+
+      const int size = mb->mb_size;
+
+      if(mc != mc_current) {
+	if(mc_current != NULL)
+	  media_codec_deref(mc_current);
+
+	mc_current = media_codec_ref(mc);
+      }
+
+      if(mc->decode_locked != NULL) {
+
+        mc->decode_locked(mc, vd, mq, mb);
+
+      } else {
+
+        hts_mutex_unlock(&mp->mp_mutex);
+
+        if(reinit) {
+          if(mc->reinit != NULL)
+            mc->reinit(mc);
+          reinit = 0;
+        }
+        mc->decode(mc, vd, mq, mb, reqsize);
+        hts_mutex_lock(&mp->mp_mutex);
+      }
+
+      update_vbitrate(mp, mq, size, vd);
+      reqsize = -1;
+      media_buf_free_locked(mp, mb);
+      continue;
+    }
+
+    hts_mutex_unlock(&mp->mp_mutex);
+
     switch(mb->mb_data_type) {
-    case MB_CTRL_EXIT:
-      run = 0;
-      break;
 
     case MB_CTRL_PAUSE:
       vd->vd_hold = 1;
@@ -372,26 +402,6 @@ vd_thread(void *aux)
 	mp->mp_seek_video_done(mp);
       break;
 
-    case MB_VIDEO:
-      if(mc != mc_current) {
-	if(mc_current != NULL)
-	  media_codec_deref(mc_current);
-
-	mc_current = media_codec_ref(mc);
-      }
-
-      if(reinit) {
-	if(mc->reinit != NULL)
-	  mc->reinit(mc);
-	reinit = 0;
-      }
-
-      size = mb->mb_size;
-
-      mc->decode(mc, vd, mq, mb, reqsize);
-      update_vbitrate(mp, mq, size, vd);
-      reqsize = -1;
-      break;
 
     case MB_CTRL_REQ_OUTPUT_SIZE:
       reqsize = mb->mb_data32;
@@ -498,7 +508,7 @@ video_decoder_t *
 video_decoder_create(media_pipe_t *mp)
 {
   video_decoder_t *vd = calloc(1, sizeof(video_decoder_t));
-
+  vd->vd_run = 1;
   mp_ref_inc(mp);
   vd->vd_mp = mp;
 
@@ -507,7 +517,6 @@ video_decoder_create(media_pipe_t *mp)
   hts_thread_create_joinable("video decoder", 
 			     &vd->vd_decoder_thread, vd_thread, vd,
 			     THREAD_PRIO_VIDEO);
-  
   return vd;
 }
 
@@ -520,9 +529,14 @@ video_decoder_destroy(video_decoder_t *vd)
 {
   media_pipe_t *mp = vd->vd_mp;
 
-  mp_send_cmd(mp, &mp->mp_video, MB_CTRL_EXIT);
+  TRACE(TRACE_DEBUG, "VD", "Telling video decoder to quit");
+  hts_mutex_lock(&mp->mp_mutex);
+  vd->vd_run = 0;
+  hts_cond_signal(&mp->mp_video.mq_avail);
+  hts_mutex_unlock(&mp->mp_mutex);
 
   hts_thread_join(&vd->vd_decoder_thread);
+  TRACE(TRACE_DEBUG, "VD", "Telling video decoder to quit -- thread joined");
   mp_ref_dec(vd->vd_mp);
   vd->vd_mp = NULL;
 

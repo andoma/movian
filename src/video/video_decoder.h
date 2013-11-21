@@ -41,6 +41,8 @@ typedef struct video_decoder {
 
   hts_thread_t vd_decoder_thread;
 
+  int vd_run;
+
   int vd_hold;
 
   LIST_ENTRY(glw_video) vd_global_link;

@@ -159,6 +159,9 @@ typedef struct media_codec {
   void (*decode)(struct media_codec *mc, struct video_decoder *vd,
 		 struct media_queue *mq, struct media_buf *mb, int reqsize);
 
+  void (*decode_locked)(struct media_codec *mc, struct video_decoder *vd,
+                        struct media_queue *mq, struct media_buf *mb);
+
   void (*flush)(struct media_codec *mc, struct video_decoder *vd,
                 int lasting);
 
