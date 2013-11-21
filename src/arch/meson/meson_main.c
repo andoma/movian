@@ -34,6 +34,9 @@
 #include "GLES2/gl2.h"
 #include "ui/glw/glw.h"
 
+#include <gio/gio.h>
+#include "networking/connman.h"
+
 static int ctrlc = 0;
 static int running = 1;
 
@@ -522,6 +525,9 @@ main(int argc, char **argv)
 
   if(ui_init())
     exit(1);
+  // connman uses dbus (via glib)
+  g_type_init();
+  connman_init();
 
   ui_run();
 
