@@ -134,7 +134,6 @@ tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap)
 {
   static char buf[1024];
   char buf2[64];
-  char buf3[64];
   char *s, *p;
   const char *leveltxt;
   int l;
@@ -151,7 +150,7 @@ tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap)
   switch(level) {
   case TRACE_EMERG: leveltxt = "EMERG"; break;
   case TRACE_ERROR: leveltxt = "ERROR"; break;
-  case TRACE_INFO:  leveltxt = "INFO";  break;
+  case TRACE_INFO:  leveltxt = "INFO ";  break;
   case TRACE_DEBUG: leveltxt = "DEBUG"; break;
   default:          leveltxt = "?????"; break;
   }
@@ -160,8 +159,10 @@ tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap)
 
   p = buf;
 
-  snprintf(buf2, sizeof(buf2), "%s [%s]:", subsys, leveltxt);
+  snprintf(buf2, sizeof(buf2), "%-16s [%s]:", subsys, leveltxt);
   l = strlen(buf2);
+
+  int ts = (showtime_get_ts() - log_start_ts) / 1000LL;
 
   while((s = strsep(&p, "\n")) != NULL) {
     if(!*s)
@@ -170,7 +171,7 @@ tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap)
     trace_net(level, buf2, s);
 
     if(level <= gconf.trace_level)
-      trace_arch(level, buf2, s);
+      trace_arch(level, buf2, s, ts);
     if(!(flags & TRACE_NO_PROP) && level != TRACE_EMERG) {
       tt = alloca(sizeof(tracetmp_t));
       tt->s1 = mystrdupa(buf2);
@@ -178,13 +179,15 @@ tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap)
       SIMPLEQ_INSERT_TAIL(&q, tt, link);
       entries++;
     }
+
     if(log_fd != -1) {
-      int ts = (showtime_get_ts() - log_start_ts) / 1000LL;
+      char buf3[64];
       snprintf(buf3, sizeof(buf3), "%02d:%02d:%02d.%03d: ",
-	       ts / 3600000,
-	       (ts / 60000) % 60,
-	       (ts / 1000) % 60,
-	       ts % 1000);
+               ts / 3600000,
+               (ts / 60000) % 60,
+               (ts / 1000) % 60,
+               ts % 1000);
+
 
       if(write(log_fd, buf3, strlen(buf3)) != strlen(buf3) ||
 	 write(log_fd, buf2, strlen(buf2)) != strlen(buf2) ||

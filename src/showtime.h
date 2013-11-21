@@ -119,7 +119,7 @@ void trace(int flags, int level, const char *subsys, const char *fmt, ...);
 
 void tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap);
 
-void trace_arch(int level, const char *prefix, const char *buf);
+void trace_arch(int level, const char *prefix, const char *buf, int ts);
 
 #define TRACE(level, subsys, fmt...) trace(0, level, subsys, fmt)
 
