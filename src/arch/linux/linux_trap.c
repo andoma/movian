@@ -232,17 +232,24 @@ addr2text(char *out, size_t outlen, void *ptr)
  *
  */
 static void
-dumpstack(void *frames[], int nframes)
+dumpstack(void *frames[], int nframes, const char *pfx)
 {
   const char *sym[nframes];
   int symoffset[nframes];
   char buf[256];
   int i;
+  int level;
 
-  TRAPMSG("STACKTRACE (%d frames)", nframes);
+  if(pfx == NULL) {
+    level = TRACE_EMERG;
+    pfx = "CRASH";
+  } else {
+    level = TRACE_DEBUG;
+  }
+
+  TRACE(level, pfx, "STACKTRACE (%d frames)", nframes);
 
   resolve_syms(frames, sym, symoffset, nframes);
-  
 
   for(i = 0; i < nframes; i++) {
     if(sym[i] == NULL) {
@@ -250,7 +257,7 @@ dumpstack(void *frames[], int nframes)
     } else {
       snprintf(buf, sizeof(buf), "%s+0x%x", sym[i], symoffset[i]);
     }
-    TRAPMSG("%s", buf);
+    TRACE(level, pfx, "%s", buf);
   }
 }
 
@@ -332,7 +339,7 @@ traphandler(int sig, siginfo_t *si, void *UC)
   TRAPMSG("%s", tmpbuf);
 #endif
 
-  dumpstack(frames, nframes);
+  dumpstack(frames, nframes, NULL);
   _exit(8);
 }
 
@@ -412,8 +419,27 @@ panic(const char *fmt, ...)
   tracev(0, TRACE_EMERG, "PANIC", fmt, ap);
   va_end(ap);
 
-  dumpstack(frames, nframes);
+  dumpstack(frames, nframes, NULL);
   exit(1);
+}
+
+
+
+void stackdump(const char *fmt, ...);
+
+void
+stackdump(const char *fmt, ...)
+{
+  va_list ap;
+
+  static void *frames[MAXFRAMES];
+  int nframes = backtrace(frames, MAXFRAMES);
+
+  va_start(ap, fmt);
+  tracev(0, TRACE_DEBUG, "BACKTRACE", fmt, ap);
+  va_end(ap);
+
+  dumpstack(frames, nframes, "BACKTRACE");
 }
 
 #else

@@ -72,6 +72,7 @@ extern int hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delta);
  */
 #define THREAD_PRIO_AUDIO         -10
 #define THREAD_PRIO_VIDEO         -5
+#define THREAD_PRIO_AUDIO_DECODER  2
 #define THREAD_PRIO_DEMUXER        3
 #define THREAD_PRIO_UI_WORKER_HIGH 5
 #define THREAD_PRIO_UI_WORKER_MED  8
