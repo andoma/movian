@@ -147,6 +147,9 @@ void pixmap_composite(pixmap_t *dst, const pixmap_t *src,
 pixmap_t *pixmap_create(int width, int height, pixmap_type_t type,
 			int margin);
 
+pixmap_t *pixmap_create2(int width, int height, pixmap_type_t type,
+                         int margin, int clear);
+
 void pixmap_box_blur(pixmap_t *pm, int boxw, int boxh);
 
 pixmap_t *pixmap_decode(pixmap_t *pm, const image_meta_t *im,

@@ -97,12 +97,11 @@ pixmap_alloc_coded(const void *data, size_t size, pixmap_type_t type)
   return pm;
 }
 
-
 /**
  *
  */
 pixmap_t *
-pixmap_create(int width, int height, pixmap_type_t type, int margin)
+pixmap_create2(int width, int height, pixmap_type_t type, int margin, int clear)
 {
   int bpp = bytes_per_pixel(type);
   const int rowalign = PIXMAP_ROW_ALIGN - 1;
@@ -125,11 +124,22 @@ pixmap_create(int width, int height, pixmap_type_t type, int margin)
       free(pm);
       return NULL;
     }
-    memset(pm->pm_data, 0, pm->pm_linesize * pm->pm_height);
+    if(clear)
+      memset(pm->pm_data, 0, pm->pm_linesize * pm->pm_height);
   }
 
   pm->pm_aspect = (float)width / (float)height;
   return pm;
+}
+
+
+/**
+ *
+ */
+pixmap_t *
+pixmap_create(int width, int height, pixmap_type_t type, int margin)
+{
+  return pixmap_create2(width, height, type, margin, 1);
 }
 
 
