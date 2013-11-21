@@ -883,6 +883,13 @@ set_activation(glw_video_t *gv, int level)
   if(gv->gv_mp == NULL)
     return;
 
+  hts_mutex_lock(&gv->gv_surface_mutex);
+
+  if(gv->gv_engine != NULL && gv->gv_engine->gve_set_activation != NULL)
+      gv->gv_engine->gve_set_activation(gv, gv->gv_activation);
+
+  hts_mutex_unlock(&gv->gv_surface_mutex);
+
   event_t *e = event_create_int(EVENT_PLAYBACK_ACTIVATION, gv->gv_activation);
   mp_enqueue_event(gv->gv_mp, e);
   event_release(e);
@@ -1324,6 +1331,165 @@ static void
 video_deliver_zero(const frame_info_t *fi, glw_video_t *gv)
 {
   glw_video_configure(gv, &glw_video_zero);
-  
 }
- 
+
+
+
+/********************************************************************************
+ * Just display a pixmap instead of the video
+ */
+
+static void video_pm_deliver(const frame_info_t *fi, glw_video_t *gv);
+
+
+
+
+
+
+typedef struct video_pm_aux {
+  glw_backend_texture_t vpa_gbt;
+  glw_renderer_t vpa_renderer;
+} video_pm_aux_t;
+
+
+
+/**
+ *
+ */
+static int
+video_pm_init(glw_video_t *gv)
+{
+  int i;
+
+  gv->gv_aux = calloc(1, sizeof(video_pm_aux_t));
+
+  for(i = 0; i < 2; i++) {
+    glw_video_surface_t *gvs = &gv->gv_surfaces[i];
+    TAILQ_INSERT_TAIL(&gv->gv_avail_queue, gvs, gvs_link);
+  }
+  return 0;
+}
+
+typedef struct reap_task {
+  glw_video_reap_task_t hdr;
+  video_pm_aux_t *vpa;
+} reap_task_t;
+
+/**
+ *
+ */
+static void
+do_reap(glw_video_t *gv, reap_task_t *t)
+{
+  video_pm_aux_t *vpa = t->vpa;
+  glDeleteTextures(1, &vpa->vpa_gbt.tex);
+  glw_renderer_free(&vpa->vpa_renderer);
+  free(vpa);
+}
+
+
+/**
+ *
+ */
+static void
+video_pm_reset(glw_video_t *gv)
+{
+  int i;
+
+  reap_task_t *t = glw_video_add_reap_task(gv, sizeof(reap_task_t), do_reap);
+  t->vpa = gv->gv_aux;
+  gv->gv_aux = NULL;
+
+  for(i = 0; i < 2; i++) {
+    glw_video_surface_t *gvs = &gv->gv_surfaces[i];
+    pixmap_t *pm = gvs->gvs_data[0];
+    if(pm != NULL)
+      pixmap_release(pm);
+  }
+}
+
+
+/**
+ *
+ */
+static void
+video_pm_render(glw_video_t *gv, glw_rctx_t *rc)
+{
+  video_pm_aux_t *vpa = gv->gv_aux;
+  glw_video_surface_t *gvs;
+
+  gvs = TAILQ_FIRST(&gv->gv_decoded_queue);
+  if(gvs != NULL) {
+    pixmap_t *pm = gvs->gvs_data[0];
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+    glw_tex_upload(gv->w.glw_root, gv->gv_aux, pm, 0);
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, PIXMAP_ROW_ALIGN);
+
+    pixmap_release(pm);
+    gvs->gvs_data[0] = NULL;
+
+    TAILQ_REMOVE(&gv->gv_decoded_queue, gvs, gvs_link);
+    TAILQ_INSERT_TAIL(&gv->gv_avail_queue, gvs, gvs_link);
+  }
+
+  if(!glw_renderer_initialized(&vpa->vpa_renderer)) {
+    glw_renderer_init_quad(&vpa->vpa_renderer);
+    glw_renderer_vtx_pos(&vpa->vpa_renderer, 0, -1, -1, 0);
+    glw_renderer_vtx_pos(&vpa->vpa_renderer, 1,  1, -1, 0);
+    glw_renderer_vtx_pos(&vpa->vpa_renderer, 2,  1,  1, 0);
+    glw_renderer_vtx_pos(&vpa->vpa_renderer, 3, -1,  1, 0);
+
+    glw_renderer_vtx_st(&vpa->vpa_renderer, 0,  0,  1);
+    glw_renderer_vtx_st(&vpa->vpa_renderer, 1,  1,  1);
+    glw_renderer_vtx_st(&vpa->vpa_renderer, 2,  1,  0);
+    glw_renderer_vtx_st(&vpa->vpa_renderer, 3,  0,  0);
+  }
+
+  if(!vpa->vpa_gbt.tex) {
+    printf("No texture yet\n");
+    return;
+  }
+
+  glw_renderer_draw(&vpa->vpa_renderer, gv->w.glw_root, rc,
+		    &vpa->vpa_gbt,
+		    NULL, NULL, rc->rc_alpha * gv->w.glw_alpha, 0,
+                    NULL);
+}
+
+
+/**
+ *
+ */
+static glw_video_engine_t glw_video_pm = {
+  .gve_type = 'PM',
+  .gve_render  = video_pm_render,
+  .gve_deliver = video_pm_deliver,
+  .gve_init    = video_pm_init,
+  .gve_reset   = video_pm_reset,
+};
+
+GLW_REGISTER_GVE(glw_video_pm);
+
+static void
+video_pm_deliver(const frame_info_t *fi, glw_video_t *gv)
+{
+  glw_video_surface_t *gvs;
+  glw_video_configure(gv, &glw_video_pm);
+
+  if((gvs = glw_video_get_surface(gv, NULL, NULL)) == NULL)
+    return;
+
+  pixmap_t *pm = (pixmap_t *)fi->fi_data[0];
+
+  gvs->gvs_data[0] = pixmap_dup(pm);
+
+  gvs->gvs_width[0] = pm->pm_width;
+  gvs->gvs_height[0] = pm->pm_height;
+
+  glw_video_put_surface(gv, gvs, fi->fi_pts, fi->fi_epoch,
+                        fi->fi_duration, 0, 0);
+}
+
