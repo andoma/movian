@@ -24,10 +24,6 @@ SRCS += src/arch/linux/linux_misc.c \
 ${PROG}.stripped: ${PROG}.bundle
 	${STRIP} -o $@ $<
 
-strip: ${PROG}.stripped
-
-
-
 install: ${PROG}.stripped
 	mkdir -p ${INSTDIR}/bin
 	mkdir -p ${INSTDIR}/lib
@@ -38,3 +34,21 @@ install: ${PROG}.stripped
 	cp -a ${LIBSPOTIFY_PATH}/lib/lib* ${INSTDIR}/lib/
 	${STRIP} ${INSTDIR}/lib/*.so
 
+strip: ${PROG}.stripped
+
+SQDIR=${BUILDDIR}/sqfs
+SYMS=${BUILDDIR}/showtime.syms
+
+${SYMS}: ${PROG}.bundle support/meson.mk
+	${OBJDUMP} -t -j .text $< | awk '{print $$1 " " $$NF}'|sort >$@
+
+${BUILDDIR}/showtime.sqfs: ${PROG}.stripped ${SYMS}
+	rm -rf "${SQDIR}"
+	mkdir -p "${SQDIR}/bin"
+	mkdir -p "${SQDIR}/lib"
+	cp ${PROG}.stripped "${SQDIR}/bin/showtime"
+	cp ${SYMS} "${SQDIR}/bin/showtime.syms"
+
+	mksquashfs "${SQDIR}" ${BUILDDIR}/showtime.sqfs  -noD -noF -noI -noappend
+
+squashfs: ${BUILDDIR}/showtime.sqfs
