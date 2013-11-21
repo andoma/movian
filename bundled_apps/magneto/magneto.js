@@ -177,9 +177,74 @@
     page.appendItem("magneto:5", "directory", {
       title: "Zap lab"
     });
-
-
   });
 
+
+//  var webgate = "http://dev1.benski.cloud.spotify.net:8080/";
+
+  var webgate = "https://mwebgw.spotify.com/";
+
+  function api(method, obj) {
+    return showtime.httpReq(webgate + method, obj);
+  }
+
+  function jsonApi(method, obj) {
+    return showtime.JSONDecode(api(method, obj))
+  }
+
+  var store = plugin.createStore('authinfo', true);
+
+  function auth(authreq) {
+
+    // This function should return 'true' if we handled the request.
+    // We should always do that even if something fails because nothing
+    // else will be able to auth magneto requests
+
+    if(!("token" in store)) {
+
+      var credentials = plugin.getAuthCredentials("Magneto Login",
+	                                          "Need login",
+                                                  true);
+      var token = api("login", {
+        postdata: {
+          username: 'ludde_test',
+          password: 'test1'
+        }
+      })
+      var v = api("getToken", {
+        postdata: {
+          login: token
+        }
+      })
+      store.token = v.toString();
+    }
+    return authreq.setHeader('Authorization',
+                             'Oauth oauth_token="' + store.token + '"');
+  }
+
+  plugin.addHTTPAuth(webgate +".*", auth);
+
+  plugin.addURI("magneto:logintest", function(page) {
+    page.type = "directory";
+    page.contents = "items";
+    page.loading = false;
+    page.metadata.title = "Slipstream demo app";
+    page.metadata.glwview = plugin.path + "zap.view";
+
+    var v = jsonApi("epg/channels2", {
+      args: {
+        f: 'json'
+      }
+    })
+
+    for(var i in v.channels) {
+      var ch = v.channels[i];
+      var url = ch.playlist_url;
+      page.appendItem(url, "video", {
+	title: ch.long_name,
+        icon: 'imageset:' + showtime.JSONEncode(ch.logo)
+      });
+    }
+  });
 
 })(this);
