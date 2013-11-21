@@ -75,6 +75,8 @@ typedef struct meson_ui {
 static meson_ui_t mu;
 
 
+extern void init_lock_time_tracing(hts_thread_t pid, int maxtime);
+
 
 /**
  *
