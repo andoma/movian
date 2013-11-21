@@ -214,6 +214,45 @@ ui_init(void)
 
 
 
+
+static int
+read_value_from_file(const char *path)
+{
+  int fd = open(path, O_RDONLY);
+  if(fd < 0)
+    return -1;
+
+  char buf[64];
+  int r = read(fd, buf, 63);
+  close(fd);
+  if(r < 0)
+    return -1;
+
+  buf[r] = 0;
+  return strtol(buf, NULL, 0);
+}
+
+static void
+tsync_debug(void)
+{
+  int pts_pcrscr = read_value_from_file("/sys/class/tsync/pts_pcrscr");
+  int pts_video  = read_value_from_file("/sys/class/tsync/pts_video");
+
+  static int last_pcrscr;
+  static int last_video;
+
+  TRACE(TRACE_DEBUG, "TSYNC", "P:%12d:%-8d V:%12d:%-8d Diff:%-10d\n",
+        pts_pcrscr,
+        pts_pcrscr - last_pcrscr,
+        pts_video,
+        pts_video - last_video,
+        pts_video - pts_pcrscr);
+
+  last_video = pts_video;
+  last_pcrscr = pts_pcrscr;
+}
+
+
 /**
  *
  */
@@ -271,21 +310,27 @@ mali_setup_perf(void)
  *
  */
 static void
-mali_read_val(void)
+mali_read_val(const glw_root_t *gr)
 {
-  int pp0_cycles;
-  int pp0_fragments;
-  int pp1_cycles;
-  int pp1_fragments;
 
-  pp0_cycles    = get_val("/debug/mali/pp/pp0/counter_src0");
-  pp0_fragments = get_val("/debug/mali/pp/pp0/counter_src1");
-  pp1_cycles    = get_val("/debug/mali/pp/pp1/counter_src0");
-  pp1_fragments = get_val("/debug/mali/pp/pp1/counter_src1");
+  int cur[4];
+  static int last[4];
 
-  printf("%10u %10u %10u %10u\n",
-	 pp0_cycles, pp0_fragments,
-	 pp1_cycles, pp1_fragments);
+  cur[0] = get_val("/debug/mali/pp/pp0/counter_src0");
+  cur[1] = get_val("/debug/mali/pp/pp0/counter_src1");
+  cur[2] = get_val("/debug/mali/pp/pp1/counter_src0");
+  cur[3] = get_val("/debug/mali/pp/pp1/counter_src1");
+
+  printf("%10u %10u %10u %10u @ %2.2f fps\n",
+         cur[0] - last[0],
+         cur[1] - last[1],
+         cur[2] - last[2],
+         cur[3] - last[3],
+         gr->gr_framerate);
+  last[0] = cur[0];
+  last[1] = cur[1];
+  last[2] = cur[2];
+  last[3] = cur[3];
 }
 
 
@@ -352,6 +397,8 @@ ui_run(void)
 
   while(running) {
 
+    int64_t ts = showtime_get_ts();
+
     glw_lock(gr);
     
     glViewport(0, 0, gr->gr_width, gr->gr_height);
@@ -378,7 +425,13 @@ ui_run(void)
       ctrlc = 2;
       showtime_shutdown(0);
     }
-    mali_read_val();
+    if(0)mali_read_val(gr);
+    tsync_debug();
+
+    ts = showtime_get_ts() - ts;
+    if(ts > 30000) {
+      TRACE(TRACE_INFO, "MAINLOOP", "VERY HIGH FRAME DELAY: %d", (int)ts);
+    }
 
   }
 
@@ -409,6 +462,20 @@ doexit(int x)
     exit(0);
   ctrlc = 1;
 }
+
+
+static void
+set_main_thread_prio(void)
+{
+  struct sched_param params = {};
+  params.sched_priority = sched_get_priority_max(SCHED_RR);
+  printf("The prio is %d\n", params.sched_priority);
+  int ret = pthread_setschedparam(pthread_self(), SCHED_RR, &params);
+
+  printf("set_main_thread_prio: %d\n", ret);
+}
+
+
 
 /**
  * Program main()
@@ -451,6 +518,9 @@ main(int argc, char **argv)
   extern int posix_set_thread_priorities;
   if(!posix_set_thread_priorities)
     printf("tut prio error WAT?!\n");
+
+  if(1)
+    set_main_thread_prio();
 
   if(ui_init())
     exit(1);
