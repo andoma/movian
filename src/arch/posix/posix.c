@@ -122,7 +122,7 @@ posix_init(void)
  *
  */
 void
-trace_arch(int level, const char *prefix, const char *str)
+trace_arch(int level, const char *prefix, const char *str, int ts)
 {
   const char *sgr, *sgroff;
   int prio = LOG_ERR;
@@ -142,7 +142,12 @@ trace_arch(int level, const char *prefix, const char *str)
     sgroff = "\033[0m";
   }
 
-  fprintf(stderr, "%s%s %s%s\n", sgr, prefix, str, sgroff);
+  fprintf(stderr, "%s%02d:%02d:%02d.%03d: %s %s%s\n", sgr,
+          ts / 3600000,
+          (ts / 60000) % 60,
+          (ts / 1000) % 60,
+          ts % 1000,
+          prefix, str, sgroff);
 
   if(gconf.trace_to_syslog)
     syslog(prio, "%s %s", prefix, str);
