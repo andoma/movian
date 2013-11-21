@@ -12,6 +12,8 @@ struct audio_decoder;
 typedef struct audio_class {
   size_t ac_alloc_size;
 
+  int ac_decoder_can_low_pri;
+
   int (*ac_init)(struct audio_decoder *ad);
   void (*ac_fini)(struct audio_decoder *ad);
   int (*ac_reconfig)(struct audio_decoder *ad);
