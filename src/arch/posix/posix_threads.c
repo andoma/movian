@@ -142,6 +142,26 @@ thread_trampoline(void *aux)
 
 
 
+/**
+ *
+ */
+static void
+set_thread_attrs(pthread_attr_t *attr, int prio, const char *title)
+{
+  if(prio)
+    pthread_attr_setstacksize(attr, 128 * 1024);
+
+#if defined(linux)
+  if(prio <= -10 && posix_set_thread_priorities) {
+    pthread_attr_setinheritsched(attr, PTHREAD_EXPLICIT_SCHED);
+    pthread_attr_setschedpolicy(attr, SCHED_RR);
+    struct sched_param param = {0};
+    param.sched_priority = sched_get_priority_min(SCHED_RR) - prio;
+    pthread_attr_setschedparam(attr, &param);
+  }
+#endif
+
+}
 
 /**
  *
@@ -154,7 +174,9 @@ hts_thread_create_detached(const char *title, void *(*func)(void *), void *aux,
   pthread_attr_t attr;
   pthread_attr_init(&attr);
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-  pthread_attr_setstacksize(&attr, 128 * 1024);
+
+  set_thread_attrs(&attr, prio, title);
+
   pthread_create(&id, &attr, thread_trampoline,
 		 make_trampoline(title, func, aux, prio));
   pthread_attr_destroy(&attr);
@@ -166,19 +188,8 @@ hts_thread_create_joinable(const char *title, hts_thread_t *p,
 {
   pthread_attr_t attr;
   pthread_attr_init(&attr);
-  if(prio)
-    pthread_attr_setstacksize(&attr, 128 * 1024);
 
-
-#if defined(linux)
-  if(prio <= -10 && posix_set_thread_priorities) {
-    pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
-    pthread_attr_setschedpolicy(&attr, SCHED_RR);
-    struct sched_param param = {0};
-    param.sched_priority = sched_get_priority_max(SCHED_RR);
-    pthread_attr_setschedparam(&attr, &param);
-  }
-#endif
+  set_thread_attrs(&attr, prio, title);
 
   pthread_create(p, &attr, thread_trampoline,
 		 make_trampoline(title, func, aux, prio));
