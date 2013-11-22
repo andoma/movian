@@ -43,13 +43,14 @@ typedef struct meson_video_display {
   glw_video_t *mvd_gv;
 
   glw_rect_t mvd_rect;
+  glw_rect_t mvd_delay;
+
+  int64_t mvd_last_clock;
+
 
 } meson_video_display_t;
 
 
-static hts_mutex_t meson_display_global_mutex;
-
-//static meson_video_display_t *current_mvd;
 
 /**
  *
@@ -76,7 +77,19 @@ mvd_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
 {
   meson_video_display_t *mvd = gv->gv_aux;
 #if 0
-  hts_mutex_lock(&meson_display_global_mutex);
+  glw_root_t *gr = gv->w.glw_root;
+  media_pipe_t *mp = gv->gv_mp;
+
+  hts_mutex_lock(&mp->mp_clock_mutex);
+
+  int64_t aclock = mp->mp_audio_clock + gr->gr_frame_start_avtime
+    - mp->mp_audio_clock_avtime + mp->mp_avdelta;
+
+  hts_mutex_unlock(&mp->mp_clock_mutex);
+
+  TRACE(TRACE_DEBUG, "ACLOCK", "%16lld:%d", aclock, (int)(aclock - mvd->mvd_last_clock));
+
+  mvd->mvd_last_clock = aclock;
 
   if(gv->gv_activation == 0) {
     if(current_mvd != mvd) {
@@ -92,7 +105,6 @@ mvd_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
     }
   }
 
-  hts_mutex_unlock(&meson_display_global_mutex);
 #endif
   return mvd->mvd_pts;
 }
@@ -106,10 +118,8 @@ mvd_reset(glw_video_t *gv)
 {
   meson_video_display_t *mvd = gv->gv_aux;
 #if 0
-  hts_mutex_lock(&meson_display_global_mutex);
   if(current == mvd)
     current = NULL;
-  hts_mutex_unlock(&meson_display_global_mutex);
 #endif
   free(mvd);
 }
@@ -122,25 +132,27 @@ static void
 mvd_render(glw_video_t *gv, glw_rctx_t *rc)
 {
   meson_video_display_t *mvd = gv->gv_aux;
-
+#if 0
   if(gv->gv_activation >= 2)
     return;
+#endif
 
-  hts_mutex_lock(&meson_display_global_mutex);
+  if(memcmp(&mvd->mvd_rect, &mvd->mvd_delay, sizeof(glw_rect_t))) {
+    mvd->mvd_rect = mvd->mvd_delay;
 
-  if(memcmp(&mvd->mvd_rect, &gv->gv_rect, sizeof(glw_rect_t))) {
-    mvd->mvd_rect = gv->gv_rect;
+
     FILE *fp = fopen("/sys/class/video/axis", "w");
     if(fp != NULL) {
       fprintf(fp, "%d %d %d %d",
-	      gv->gv_rect.x1,
-	      gv->gv_rect.y1,
-	      gv->gv_rect.x2,
-	      gv->gv_rect.y2);
+	      mvd->mvd_rect.x1,
+	      mvd->mvd_rect.y1,
+	      mvd->mvd_rect.x2,
+	      mvd->mvd_rect.y2);
       fclose(fp);
     }
   }
-  hts_mutex_unlock(&meson_display_global_mutex);
+
+  mvd->mvd_delay = gv->gv_rect;
 }
 
 
