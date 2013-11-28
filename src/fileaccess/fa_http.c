@@ -453,7 +453,10 @@ validate_cookie(const char *req_host, const char *req_path,
    * attribute.
    */
   const char *s = strstr(req_host, domain);
-  if(s == NULL || s[strlen(domain)] != 0)
+
+  if(s == NULL && *domain == '.' && !strcmp(req_host, domain + 1))
+    s = req_host;
+  else if(s == NULL || s[strlen(domain)] != 0)
     return 3;
 
   /*
