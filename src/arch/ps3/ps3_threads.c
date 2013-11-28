@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include <stdio.h>
 
+#include <psl1ght/lv2.h>
 
 #include "showtime.h"
 #include "ps3.h"
@@ -611,3 +612,39 @@ int hts_cond_wait_timeoutx(hts_cond_t *c, hts_mutex_t *m, int delay, const char 
 
 #endif
 
+
+
+
+typedef struct {
+  sys_mutex_attribute_t	attr;
+  sys_ppu_thread_t	owner;
+  int			lock_counter;
+  int			cond_ref_counter;
+  sys_cond_t		cond_id;		// Always Zero (0) in this field
+  uint32_t              A_POINTER;
+  uint32_t		wait_threads_num;
+  uint32_t		wait_all_threads_num;
+} sys_dbg_mutex_information_t;
+
+
+
+
+void
+mutex_dump_info(sys_mutex_t lock)
+{
+  // sys_process_getpid() // syscall 1
+
+  sys_dbg_mutex_information_t info;
+
+  int pid = Lv2Syscall0(1);
+  TRACE(TRACE_DEBUG, "MUTEX", "I am pid 0x%x the mutex is 0x%x", pid, lock);
+  int x = Lv2Syscall3(933, pid, lock, (uint64_t)&info);
+
+  TRACE(TRACE_DEBUG, "MUTEX", "Mutex info for 0x%x PID:%d err:0x%x", lock, pid, x);
+  if(x)
+    return;
+
+  TRACE(TRACE_DEBUG, "MUTEX", "  Owner:0x%x lock:%d condref:%d, wait_threads:%d",
+	info.owner, info.lock_counter, info.cond_ref_counter,
+	info.wait_threads_num);
+}
