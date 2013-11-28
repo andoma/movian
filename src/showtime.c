@@ -243,6 +243,7 @@ showtime_init(void)
 
   /* Callout framework */
   callout_init();
+  prop_init_late();
 
   /* Initialize htsmsg_store() */
   htsmsg_store_init();

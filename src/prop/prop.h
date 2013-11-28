@@ -116,6 +116,8 @@ prop_t *prop_get_global(void);
 
 void prop_init(void);
 
+void prop_init_late(void);
+
 /**
  * Use with PROP_TAG_NAME_VECTOR
  */
