@@ -144,7 +144,8 @@ Java_com_showtimemediacenter_showtime_STCore_glwStep(JNIEnv *env,
   glw_root_t *gr = &agr->gr;
 
   glw_lock(gr);
-
+  gr->gr_can_externalize = 1;
+  gr->gr_externalize_cnt = 0;
   glViewport(0, 0, gr->gr_width, gr->gr_height);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
   glw_prepare_frame(gr, 0);
