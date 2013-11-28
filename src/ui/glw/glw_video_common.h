@@ -120,6 +120,7 @@ typedef struct glw_video {
 
   int gv_flags;
   int gv_priority;
+  float gv_audio_volume;
   prop_t *gv_model;
   prop_t *gv_origin;
   prop_t *gv_media_prop;
