@@ -27,6 +27,7 @@
 #include "misc/strtab.h"
 #include "settings.h"
 #include "htsmsg/htsmsg_store.h"
+#include "misc/str.h"
 
 #ifdef CONFIG_AVAHI
 #include "avahi.h"
@@ -106,20 +107,6 @@ update_service(service_instance_t *si)
  *
  */
 static void
-remove_bad_chars(char *s)
-{
-  while(*s) {
-    if(*s == ':' || *s == '/')
-      *s = '_';
-    s++;
-  }
-}
-
-
-/**
- *
- */
-static void
 sd_settings_saver(void *opaque, htsmsg_t *msg)
 {
   service_instance_t *si = opaque;
@@ -142,7 +129,7 @@ sd_add_service(service_instance_t *si, const char *title,
     si->si_url = strdup(url);
     
     snprintf(tmp, sizeof(tmp), "sd/%s", url);
-    remove_bad_chars(tmp+3);
+    str_cleanup(tmp + 3, "/:");
 
     si->si_settings_path = strdup(tmp);
     si->si_settings_store = htsmsg_store_load(tmp) ?: htsmsg_create_map();

@@ -30,6 +30,21 @@
 #include "unicode_casefolding.h"
 #include "charset_detector.h"
 
+
+/**
+ * Remove forbidden characters
+ */
+void
+str_cleanup(char *s, const char *forbidden)
+{
+  while(*s) {
+    if(index(forbidden, *s))
+      *s = '_';
+    s++;
+  }
+}
+
+
 /**
  * De-escape HTTP URL
  */
