@@ -15,8 +15,6 @@ extern hts_mutex_t service_mutex;
  *
  */
 typedef struct service {
-  int s_ref;
-  int s_zombie;
 
   LIST_ENTRY(service) s_link;
   prop_t *s_root;
@@ -26,9 +24,30 @@ typedef struct service {
   prop_t *s_prop_status_txt;
 
   char *s_url;
-
+  char *s_title;
+  int s_ref;
+  int s_zombie;
   int s_do_probe;
   int s_need_probe;
+
+  /** 
+   * Stuff for, so called, managed service follows
+   */
+
+  char *s_settings_path;
+  struct htsmsg *s_settings_store;
+
+  prop_t *s_settings;
+
+  struct setting *s_setting_enabled;
+
+  struct setting *s_setting_title;
+  struct setting *s_setting_type;
+  struct setting *s_setting_vfs;
+
+  int s_vfs_id;
+
+
 } service_t;
 
 
@@ -70,6 +89,16 @@ service_t *service_create(const char *id,
 			  int probe,
 			  int enabled,
 			  service_origin_t origin);
+
+service_t *service_create_managed(const char *id,
+				  const char *title,
+				  const char *url,
+				  const char *type,
+				  const char *icon,
+				  int probe,
+				  int enabled,
+				  service_origin_t origin,
+				  int vfsable);
 
 void service_set_type(service_t *svc, rstr_t *type);
 
