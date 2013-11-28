@@ -442,6 +442,13 @@ create_pipeline(glw_video_t *gv)
   gv->gv_mp = mp_create(gv->w.glw_id ?: "GLW Video",
                         MP_VIDEO | MP_PRIMABLE, NULL);
 
+  media_pipe_t *mp = gv->gv_mp;
+
+  hts_mutex_lock(&mp->mp_mutex);
+  mp->mp_vol_ui = gv->gv_audio_volume;
+  mp_send_volume_update_locked(mp);
+  hts_mutex_unlock(&mp->mp_mutex);
+
   prop_link(gv->gv_mp->mp_prop_root, gv->gv_media_prop);
 
 #if CONFIG_GLW_BACKEND_OPENGL
@@ -740,6 +747,7 @@ glw_video_ctor(glw_t *w)
   glw_video_t *gv = (glw_video_t *)w;
   glw_root_t *gr = gv->w.glw_root;
 
+  gv->gv_audio_volume = 1;
   gv->gv_flags |= GLW_VIDEO_DPAD_SEEK;
 
   TAILQ_INIT(&gv->gv_avail_queue);
@@ -828,10 +836,12 @@ set_audio_volume(glw_video_t *gv, float v)
 {
   media_pipe_t *mp = gv->gv_mp;
 
-  if(mp == NULL)
+  if(gv->gv_audio_volume == v)
     return;
 
-  if(mp->mp_vol_ui == v)
+  gv->gv_audio_volume = v;
+
+  if(mp == NULL)
     return;
 
   hts_mutex_lock(&mp->mp_mutex);
