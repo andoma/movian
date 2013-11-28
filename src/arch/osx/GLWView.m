@@ -124,7 +124,106 @@ newframe(CVDisplayLinkRef displayLink, const CVTimeStamp *now,
   return kCVReturnSuccess;
 }
 
+- (void)glwMouseEvent:(int)type event:(NSEvent*)event {  
+  NSPoint loc = [event locationInWindow];
+  glw_pointer_event_t gpe;
 
+#if 0
+  if(gcocoa.is_cursor_hidden) 
+    [self glwUnHideCursor];
+#endif
+
+  gpe.x = (2.0 * loc.x / gr->gr_width) - 1;
+  gpe.y = (2.0 * loc.y / gr->gr_height) - 1;
+  gpe.type = type;
+  if(type == GLW_POINTER_SCROLL)
+    gpe.delta_y = -[event deltaY];
+  
+  glw_lock(gr);
+  glw_pointer_event(gr, &gpe);
+  glw_unlock(gr);
+}
+
+- (void)scrollWheel:(NSEvent *)event {
+  [self glwMouseEvent:GLW_POINTER_SCROLL event:event];
+}
+
+
+- (void)glwEventFromMouseEvent:(NSEvent *)event {
+  struct {
+    int nsevent;
+    int glw_event;
+  } events[] = {
+    {NSLeftMouseDown, GLW_POINTER_LEFT_PRESS},
+    {NSLeftMouseUp, GLW_POINTER_LEFT_RELEASE},
+    {NSRightMouseDown, GLW_POINTER_RIGHT_PRESS},
+    {NSRightMouseUp, GLW_POINTER_RIGHT_RELEASE}
+  };
+  
+  int i;
+  for(i = 0; i < sizeof(events)/sizeof(events[0]); i++) {
+    if(events[i].nsevent != [event type])
+      continue;
+    
+    if([event type] == NSLeftMouseDown ||
+       [event type] == NSRightMouseDown)
+      mouse_down++;
+    else
+      mouse_down--;
+    
+    [self glwMouseEvent:events[i].glw_event event:event];
+    return;
+  }
+
+  if([event type] == NSOtherMouseUp) {
+    event_t *e = event_create_action(ACTION_MENU);
+    event_to_ui(e);
+  }
+}
+
+
+
+- (void)mouseDown:(NSEvent *)event {
+  [self glwEventFromMouseEvent:event];
+}
+
+- (void)mouseMoved:(NSEvent *)event {
+  [self glwMouseEvent:GLW_POINTER_MOTION_UPDATE event:event];
+}
+
+- (void)mouseDragged:(NSEvent *)event {
+  [self glwMouseEvent:GLW_POINTER_MOTION_UPDATE event:event];
+}
+- (void)mouseUp:(NSEvent *)event {
+  [self glwEventFromMouseEvent:event];
+}
+
+- (void)rightMouseDown:(NSEvent *)event {
+  [self glwEventFromMouseEvent:event];
+}
+
+- (void)rightMouseDragged:(NSEvent *)event {
+  [self glwMouseEvent:GLW_POINTER_MOTION_UPDATE event:event];
+}
+- (void)rightMouseUp:(NSEvent *)event {
+  [self glwEventFromMouseEvent:event];
+}
+
+- (void)otherMouseDown:(NSEvent *)event {
+  [self glwEventFromMouseEvent:event];
+}
+
+- (void)otherMouseDragged:(NSEvent *)event {
+  [self glwMouseEvent:GLW_POINTER_MOTION_UPDATE event:event];
+}
+
+- (void)otherMouseUp:(NSEvent *)event {
+  [self glwEventFromMouseEvent:event];
+}
+
+- (void)viewDidMoveToWindow {
+  [[self window] setAcceptsMouseMovedEvents:YES];
+}
 
 /**
  *
@@ -307,6 +406,7 @@ newframe(CVDisplayLinkRef displayLink, const CVTimeStamp *now,
  *
  */
 - (void)becomeKeyWindow {
+  [[self window] setAcceptsMouseMovedEvents:YES];
 }
 
 

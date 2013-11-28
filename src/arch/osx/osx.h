@@ -37,6 +37,7 @@ void webpopup_init(void);
   bool minimized;
   bool compositeKey;
   bool stopped;
+  int mouse_down;
   CVDisplayLinkRef m_displayLink;
 }
 - (id)initWithFrame:(NSRect)frameRect :(struct glw_root *)gr :(bool)fs;
