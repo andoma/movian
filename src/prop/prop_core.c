@@ -2717,7 +2717,7 @@ prop_unsubscribe0(prop_sub_t *s)
     prop_originator_tracking_t *pot, *next;
     for(pot = s->hps_pots; pot != NULL; pot = next) {
       next = pot->pot_next;
-      prop_ref_dec(pot->pot_p);
+      prop_ref_dec_locked(pot->pot_p);
       pool_put(pot_pool, pot);
     }
   } else {
@@ -3570,7 +3570,7 @@ restore_and_descend(prop_t *dst, prop_t *src, prop_sub_t *skipme,
       if(s->hps_origin != broken_link)
 	continue;
       
-      prop_ref_dec(s->hps_origin);
+      prop_ref_dec_locked(s->hps_origin);
       s->hps_origin = NULL;
 
     } else {
@@ -3590,7 +3590,7 @@ restore_and_descend(prop_t *dst, prop_t *src, prop_sub_t *skipme,
 
       do {
 	pot2 = pot->pot_next;
-	prop_ref_dec(pot->pot_p);
+	prop_ref_dec_locked(pot->pot_p);
 	pool_put(pot_pool, pot);
 	pot = pot2;
       } while(pot != NULL);
