@@ -87,6 +87,7 @@ CONFIG_LIST="
  bughunt
  bspatch
  connman
+ libntfs
 "
 
 cleanup() {

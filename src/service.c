@@ -22,10 +22,14 @@
 #include "showtime.h"
 #include "service.h"
 #include "misc/strtab.h"
+#include "misc/str.h"
 #include "prop/prop_nodefilter.h"
 #include "prop/prop_concat.h"
 #include "prop/prop_reorder.h"
 #include "backend/backend.h"
+#include "htsmsg/htsmsg_store.h"
+#include "settings.h"
+#include "fileaccess/fa_vfs.h"
 
 LIST_HEAD(service_type_list, service_type);
 
@@ -157,7 +161,26 @@ service_destroy(service_t *s)
   hts_mutex_lock(&service_mutex);
   prop_destroy(s->s_root);
   free(s->s_url);
+  free(s->s_title);
+
+  free(s->s_settings_path);
+
+  if(s->s_settings_store != NULL)
+    htsmsg_destroy(s->s_settings_store);
+
+  if(s->s_setting_enabled != NULL)
+    setting_destroy(s->s_setting_enabled);
+  if(s->s_setting_title != NULL)
+    setting_destroy(s->s_setting_title);
+  if(s->s_setting_type != NULL)
+    setting_destroy(s->s_setting_type);
+  if(s->s_setting_vfs != NULL)
+    setting_destroy(s->s_setting_vfs);
+
+  prop_destroy(s->s_settings);
   
+
+
   LIST_REMOVE(s, s_link);
   s->s_zombie = 1;
   if(--s->s_ref == 0)
@@ -264,6 +287,125 @@ service_create(const char *id,
 {
   return service_create0(id, title, NULL, url, type,
 			 icon, probe, enabled, origin);
+}
+
+
+
+/**
+ *
+ */
+static void
+service_settings_saver(void *opaque, htsmsg_t *msg)
+{
+  service_t *s = opaque;
+  htsmsg_store_save(msg, s->s_settings_path);
+}
+
+
+/**
+ *
+ */
+static void 
+service_set_vfs(void *opaque, int v)
+{
+  service_t *s = opaque;
+  if(v) {
+    if(!s->s_vfs_id)
+      s->s_vfs_id = vfs_add_mapping(s->s_title, s->s_url);
+  } else {
+    if(s->s_vfs_id)
+      vfs_del_mapping(s->s_vfs_id);
+    s->s_vfs_id = 0;
+  }
+}
+
+
+/**
+ *
+ */
+service_t *
+service_create_managed(const char *id0,
+		       const char *title,
+		       const char *url,
+		       const char *type,
+		       const char *icon,
+		       int probe,
+		       int enabled,
+		       service_origin_t origin,
+		       int vfsable)
+{
+
+  char *id = mystrdupa(id0);
+  str_cleanup(id , "/:.");
+
+  service_t *s = service_create0(id, NULL, NULL, url, NULL,
+				 icon, probe, enabled, origin);
+
+  s->s_url = strdup(url);
+  s->s_title = strdup(title);
+  
+  char tmp[100];
+
+  snprintf(tmp, sizeof(tmp), "managed_service2/%s", id);
+
+  s->s_settings_path = strdup(tmp);
+  s->s_settings_store = htsmsg_store_load(tmp) ?: htsmsg_create_map();
+
+  s->s_settings = settings_add_dir_cstr(gconf.settings_sd,
+					title, type, icon,
+					NULL, NULL);
+
+  s->s_setting_enabled =
+    setting_create(SETTING_BOOL, s->s_settings, SETTINGS_INITIAL_UPDATE,
+		   SETTING_TITLE(_p("Enabled")),
+		   SETTING_VALUE(enabled),
+		   SETTING_HTSMSG_CUSTOM_SAVER("enabled",
+					       s->s_settings_store,
+					       service_settings_saver,
+					       s),
+		   NULL);
+
+  s->s_setting_title =
+    setting_create(SETTING_STRING, s->s_settings, SETTINGS_INITIAL_UPDATE,
+		   SETTING_TITLE(_p("Name")),
+		   SETTING_VALUE(title),
+		   SETTING_HTSMSG_CUSTOM_SAVER("title",
+					       s->s_settings_store,
+					       service_settings_saver,
+					       s),
+		   NULL);
+
+
+  s->s_setting_type =
+      setting_create(SETTING_STRING, s->s_settings, SETTINGS_INITIAL_UPDATE,
+                     SETTING_TITLE(_p("Type")),
+		     SETTING_VALUE(type),
+                     SETTING_HTSMSG_CUSTOM_SAVER("type",
+                                                 s->s_settings_store,
+                                                 service_settings_saver,
+                                                 s),
+                     NULL);
+
+  if(vfsable) {
+    s->s_setting_vfs =
+      setting_create(SETTING_BOOL, s->s_settings, SETTINGS_INITIAL_UPDATE,
+		     SETTING_TITLE(_p("Published in Virtual File System")),
+		     SETTING_CALLBACK(service_set_vfs, s),
+		     SETTING_HTSMSG_CUSTOM_SAVER("vfs",
+						 s->s_settings_store,
+						 service_settings_saver,
+						 s),
+		     NULL);
+  }
+
+  prop_link(settings_get_value(s->s_setting_title),
+	    prop_create(s->s_root, "title"));
+  prop_link(settings_get_value(s->s_setting_type), 
+	    prop_create(s->s_root, "type"));
+  prop_link(settings_get_value(s->s_setting_enabled), 
+	    prop_create(s->s_root, "enabled"));
+
+  return s;
 }
 
 

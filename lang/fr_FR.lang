@@ -11,7 +11,7 @@ id: Open settings
 msg: Ouvrir les paramètres
 
 id: Remove current page from bookmarks
-msg: Supprimer la page actuel des favoris
+msg: Supprimer la page actuelle des favoris
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_common.view
@@ -164,7 +164,7 @@ id: Slideshow
 msg: Diaporama
 
 id: Tvchannels
-msg: TV chaînes
+msg: Chaînes TV
 
 id: View
 msg: Vu
@@ -315,7 +315,7 @@ id: Check for updates now
 msg: Rechercher les mises à jour
 
 id: Checking current installed version
-msg: Vérification de version installée
+msg: Vérification de la version installée
 
 id: Checking for updates...
 msg: Recherche de mises à jour...
@@ -474,10 +474,10 @@ msg: URL HTSP invalide
 # ./src/backend/search.c
 #
 id: Search
-msg: Chercher
+msg: Rechercher
 
 id: Search result for: %s
-msg: Résultat de recherche pour : %s
+msg: Résultat de la recherche pour : %s
 
 #
 # ./src/backend/spotify/spotify.c
@@ -561,7 +561,7 @@ id: Can't handle content type %d
 msg: Ne peut gérer le contenu de type %d
 
 id: Unable to open file: %s
-msg: Incapable d'ouvre le fichier : %s
+msg: Impossible d'ouvrir le fichier : %s
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -591,10 +591,10 @@ id: Artists
 msg: Artistes
 
 id: Date (newest first)
-msg: Date (plus récent)
+msg: Date (plus récent en premier)
 
 id: Date (oldest first)
-msg: Date (plus ancien)
+msg: Date (plus ancien en premier)
 
 id: Deleted %s
 msg: Suppression de %s
@@ -747,7 +747,7 @@ msg: Zoom vidéo
 # ./src/metadata/browsemdb.c
 #
 id: Indexing
-msg: Indexage
+msg: Indexation
 
 #
 # ./src/metadata/decoration.c
@@ -759,10 +759,10 @@ id: Manual
 msg: Manuel
 
 id: Mark all as seen
-msg: Marquer tout les éléments comme vu
+msg: Marquer tous les éléments comme vu
 
 id: Mark all as unseen
-msg: Marquer tout les éléments comme non-vu
+msg: Marquer tous les éléments comme non-vu
 
 id: Metadata mode
 msg: Metadata mode
@@ -804,7 +804,7 @@ id: Movie
 msg: Film
 
 id: Movie title
-msg: Film titre
+msg: Titre du Film
 
 id: No data found
 msg: Pas de données trouvés
@@ -831,7 +831,7 @@ id: custom IMDb ID
 msg: Id IMDb personnalisé
 
 id: custom query
-msg: Recherche personnalisée
+msg: Requête personnalisée
 
 id: filename
 msg: Nom de fichier
@@ -852,7 +852,7 @@ id: Clear all metadata
 msg: Effacer toutes les métadonnées
 
 id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
-msg: Effacer toutes les métadonnées veut dire perdre <b>TOUTES</B> les informations à propos de:\n\nSi le film/piste a été vue\nNombre de fois que le film/piste a été vue\bPosition de la lecture actuelle\n\nCela effacera également toutes les métadonnées stockées provenant, par exemple de themoviedb.org, etc\n\nEtes-vous sur de vouloir continuer?
+msg: Effacer toutes les métadonnées veut dire perdre <b>TOUTES</B> les informations à propos de:\n\nSi le film/piste a été vue\nNombre de fois que le film/piste a été vue\nPosition de la lecture actuelle\n\nCela effacera également toutes les métadonnées stockées provenant, par exemple de themoviedb.org, etc\n\nEtes-vous sur de vouloir continuer?
 
 #
 # ./src/navigator.c
@@ -912,7 +912,7 @@ msg: Port TCP du serveur
 # ./src/plugins.c
 #
 id: Alternate plugin Repository URL
-msg: Adresse URL de Repositroy alternative
+msg: Adresse URL de Repository alternative
 
 id: Automatically upgrade plugins
 msg: Mise à jour automatique des extensions
@@ -921,10 +921,10 @@ id: Available apps
 msg: Applications disponible
 
 id: Background
-msg: Fond
+msg: Fond d'écran
 
 id: Beta testing passwords
-msg: Mots de passe de test bêta
+msg: Mots de passe pour les bêta tests
 
 id: Browse available apps
 msg: Parcourir les applications disponible
@@ -975,7 +975,7 @@ id: Music streaming
 msg: Musique en streaming
 
 id: Not installable
-msg: Pas installable
+msg: Non installable
 
 id: Not installed
 msg: Non installé
@@ -987,19 +987,19 @@ id: Online TV
 msg: TV en ligne
 
 id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
-msg: Le plugin %s %s a été désintallé car il peut causer des problèmes.\nVous devez essayer d'installer une version différente manuellement.
+msg: Le plugin %s %s a été désintallé car il peut causer des problèmes.\nVous devriez essayer d'installer une version différente manuellement.
 
 id: Plugins
 msg: Extensions
 
 id: Preferred views from plugins
-msg: Vues privilégiées des plugins
+msg: Vues préférées des plugins
 
 id: Screen saver
 msg: Economiseur d'écran
 
 id: TV channels
-msg: Chaînes de TV
+msg: Chaînes TV
 
 id: Unable to load plugin.json: %s
 msg: Impossible de charger le plugin.json: %s
@@ -1062,19 +1062,19 @@ id: Applications and installed plugins
 msg: Applications et extensions installées
 
 id: Developer settings
-msg: Paramètres avancées (développeur)
+msg: Paramètres avancés (développeur)
 
 id: Discovered media sources
 msg: Sources de médias découvertes
 
 id: Fonts and user interface styling
-msg: Polices et le style d'interface utilisateur
+msg: Polices et style de l'interface utilisateur
 
 id: General
 msg: Général
 
 id: Global settings
-msg: Paramètres globaux
+msg: Paramètres généraux
 
 id: Look and feel
 msg: Aspect
@@ -1125,7 +1125,7 @@ id: Generic settings for video subtitles
 msg: Paramètres génériques pour les sous-titres
 
 id: Ignore embedded styling
-msg: Ignorer les styles embarqués
+msg: Ignorer les styles intégré
 
 id: Left
 msg: Gauche
@@ -1302,10 +1302,10 @@ id: Unable to open Cell codec. Error 0x%x
 msg: Impossible d'ouvrir le codec Cell. Error 0x%x
 
 id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
-msg: Impossible d'ouvrir le codec Cell. Incapable d'allouer %d octects de RAM
+msg: Impossible d'ouvrir le codec Cell. Impossible d'allouer %d octects de RAM
 
 id: Unable to query Cell codec. Error 0x%x
-msg: Imposible d'avoir le codec Cell. Error 0x%x
+msg: Impossible d'avoir le codec Cell. Error 0x%x
 
 #
 # ./src/video/video_settings.c
@@ -1314,7 +1314,7 @@ id: Automatically play next video in list
 msg: Jouer la vidéo suivante automatiquement
 
 id: Count video as played when reaching
-msg: Compter la vidéo comme jouée quand la lecture atteint
+msg: Compter la vidéo comme vue quand la lecture atteint
 
 id: Enable VDA
 msg: Activer VDA
@@ -1345,4 +1345,3 @@ msg: Accélération vidéo et comportement de l'affichage
 
 id: Video playback
 msg: Lecture vidéo
-

@@ -70,6 +70,9 @@ rtmpdump_setup
 xmp_setup
 bzip2_setup
 
+enable libntfs
+update_ext_submodule libntfs_ext
+
 cat >> ${CONFIG_MAK} <<EOF
 CFLAGS_cfg += -mminimal-toc -DWORDS_BIGENDIAN
 CFLAGS_cfg += -DPATH_MAX=512 -DPS3

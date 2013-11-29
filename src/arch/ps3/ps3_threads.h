@@ -170,3 +170,4 @@ hts_mutex_t name; \
  }
 
 
+void mutex_dump_info(sys_mutex_t lock);

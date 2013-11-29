@@ -115,6 +115,7 @@
   [window setContentView:view];
   [window setDelegate:self];
   [window makeKeyAndOrderFront:nil];
+  [window setAcceptsMouseMovedEvents:YES];
 }
 
 

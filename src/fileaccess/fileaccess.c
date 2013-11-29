@@ -133,8 +133,15 @@ fa_resolve_proto(const char *url, fa_protocol_t **p,
   hts_mutex_lock(&fap_mutex);
 
   LIST_FOREACH(fap, &fileaccess_all_protocols, fap_link) {
-    if(strcmp(fap->fap_name, buf))
-      continue;
+
+    if(fap->fap_match_proto != NULL) {
+      if(fap->fap_match_proto(buf))
+	continue;
+    } else {
+      if(strcmp(fap->fap_name, buf))
+	continue;
+    }
+
     *p = fap;
     fap_retain(fap);
     hts_mutex_unlock(&fap_mutex);
