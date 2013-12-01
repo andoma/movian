@@ -50,6 +50,8 @@ static void prop_unlink0(prop_t *p, prop_sub_t *skipme, const char *origin,
 
 static void prop_flood_flag(prop_t *p, int set, int clr);
 
+static void prop_destroy_childs0(prop_t *p);
+
 #define PROPTRACE(fmt...) trace(TRACE_NO_PROP, TRACE_DEBUG, "prop", fmt)
 
 #ifdef PROP_SUB_STATS
@@ -1390,8 +1392,11 @@ prop_clean(prop_t *p)
     return 1;
   }
   switch(p->hp_type) {
-  case PROP_ZOMBIE:
   case PROP_DIR:
+    prop_destroy_childs0(p);
+    break;
+
+  case PROP_ZOMBIE:
     return 1;
 
   case PROP_VOID:
@@ -1892,19 +1897,28 @@ prop_destroy(prop_t *p)
 /**
  *
  */
+static void
+prop_destroy_childs0(prop_t *p)
+{
+  prop_t *c, *next;
+  for(c = TAILQ_FIRST(&p->hp_childs); c != NULL; c = next) {
+    next = TAILQ_NEXT(c, hp_parent_link);
+    prop_destroy_child(p, c);
+  }
+}
+
+
+/**
+ *
+ */
 void
 prop_destroy_childs(prop_t *p)
 {
   if(p == NULL)
     return;
   hts_mutex_lock(&prop_mutex);
-  if(p->hp_type == PROP_DIR) {
-    prop_t *c, *next;
-    for(c = TAILQ_FIRST(&p->hp_childs); c != NULL; c = next) {
-      next = TAILQ_NEXT(c, hp_parent_link);
-      prop_destroy_child(p, c);
-    }
-  }
+  if(p->hp_type == PROP_DIR)
+    prop_destroy_childs0(p);
   hts_mutex_unlock(&prop_mutex);
 }
 
