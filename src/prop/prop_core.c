@@ -3548,8 +3548,9 @@ relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme,
       if(c->hp_name == NULL)
 	continue;
 
-      prop_t *z = prop_create0(src, c->hp_name, NULL, 0);
-      
+      prop_t *z = prop_create0(src, c->hp_name, NULL,
+                               c->hp_flags & PROP_NAME_NOT_ALLOCATED);
+
       if(c->hp_type == PROP_DIR)
 	prop_make_dir(z, skipme, origin);
 
@@ -3630,7 +3631,8 @@ restore_and_descend(prop_t *dst, prop_t *src, prop_sub_t *skipme,
     if(c->hp_name == NULL)
       continue;
 
-    prop_t *z = prop_create0(dst, c->hp_name, NULL, 0);
+    prop_t *z = prop_create0(dst, c->hp_name, NULL,
+                             c->hp_flags & PROP_NAME_NOT_ALLOCATED);
 
     if(c->hp_type == PROP_DIR)
       prop_make_dir(z, skipme, origin);
