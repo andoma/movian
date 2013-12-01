@@ -4701,7 +4701,7 @@ glwf_trace(glw_view_eval_context_t *ec, struct token *self,
     TRACE(TRACE_DEBUG, "GLW", "%s: (void)", rstr_get(a->t_rstring), b->t_int);
     break;
   default:
-    TRACE(TRACE_DEBUG, "GLW", "%s: ???", rstr_get(a->t_rstring));
+    TRACE(TRACE_DEBUG, "GLW", "%s: %s", rstr_get(a->t_rstring), token2name(b));
     break;
   }
   return 0;
