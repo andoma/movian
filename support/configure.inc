@@ -45,7 +45,6 @@ CONFIG_LIST="
  stdin
  release
  avahi
- appleremote
  bonjour
  nvctrl
  libgme

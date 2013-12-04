@@ -40,7 +40,6 @@ enable glw
 enable glw_frontend_cocoa
 enable glw_backend_opengl
 enable coreaudio
-#enable appleremote
 enable bonjour
 enable spotlight
 enable spidermonkey
@@ -155,12 +154,6 @@ echo >>${CONFIG_MAK} "LDFLAGS_cfg += -weak_framework VideoDecodeAcceleration"
 
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework CoreAudio"
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework AudioToolBox"
-
-# Carbon, Remote Control Wrapper uses it
-if enabled appleremote; then
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework Carbon"
-fi
-
 
 #
 # libspotify

@@ -442,19 +442,6 @@ SRCS-$(CONFIG_LIRC) +=  src/ipc/lirc.c
 SRCS-$(CONFIG_STDIN)+=  src/ipc/stdin.c
 
 ##############################################################
-# Apple remote and keyspan front row remote
-##############################################################
-SRCS-$(CONFIG_APPLEREMOTE) += \
-			src/ui/appleremote/AppleRemote.m \
-			src/ui/appleremote/GlobalKeyboardDevice.m \
-			src/ui/appleremote/HIDRemoteControlDevice.m \
-			src/ui/appleremote/KeyspanFrontRowControl.m \
-			src/ui/appleremote/MultiClickRemoteBehavior.m \
-			src/ui/appleremote/RemoteControl.m \
-			src/ui/appleremote/RemoteControlContainer.m \
-			src/ui/appleremote/ShowtimeMainController.m
-
-##############################################################
 # RTMP
 ##############################################################
 SRCS-$(CONFIG_LIBRTMP) +=	ext/rtmpdump/librtmp/amf.c \
