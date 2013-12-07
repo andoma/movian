@@ -73,6 +73,14 @@ typedef enum {
   SEGMENT_OPEN_IN_PROGRESS,
 } segment_open_result_t;
 
+
+typedef enum {
+  HLS_BITRATE_ALGO_ADAPTIVE_SIMPLE = 0,
+  HLS_BITRATE_ALGO_LOWEST,
+  HLS_BITRATE_ALGO_RANDOM,
+} hls_bitrate_algo_t;
+
+
 /**
  *
  */
@@ -247,6 +255,8 @@ typedef struct hls {
   int h_live;
 
   int h_work_flags;
+
+  hls_bitrate_algo_t h_bitrate_algo;
 
 } hls_t;
 
@@ -1290,7 +1300,23 @@ demuxer_select_variant_simple(const hls_t *h, const hls_demuxer_t *hd)
     if(hv->hv_bitrate < hd->hd_bw)
       break;
   }
-  return hv ?: hd->hd_seek;
+  return hv;
+}
+
+
+/**
+ *
+ */
+static hls_variant_t *
+demuxer_select_variant_lowest(const hls_t *h, const hls_demuxer_t *hd)
+{
+  hls_variant_t *hv;
+  TAILQ_FOREACH_REVERSE(hv, &hd->hd_variants, hls_variant_queue, hv_link) {
+    if(hv->hv_audio_only)
+      continue;
+    return hv;
+  }
+  return NULL;
 }
 
 
@@ -1309,7 +1335,6 @@ demuxer_select_variant_random(const hls_t *h, const hls_demuxer_t *hd)
 
     if(!hv->hv_audio_only)
       cnt++;
-  
   }
 
   int r = rand() % cnt;
@@ -1324,10 +1349,6 @@ demuxer_select_variant_random(const hls_t *h, const hls_demuxer_t *hd)
       break;
     cnt++;
   }
-
-  if(hv == NULL)
-    hv = hd->hd_seek;
-  HLS_TRACE(h, "Randomly selected bitrate %d", hv->hv_bitrate);
   return hv;
 }
 
@@ -1337,11 +1358,24 @@ demuxer_select_variant_random(const hls_t *h, const hls_demuxer_t *hd)
 static void
 demuxer_select_variant(hls_t *h, hls_demuxer_t *hd)
 {
-  hls_variant_t *hv;
-  if(1)
+  hls_variant_t *hv = NULL;
+
+  switch(h->h_bitrate_algo) {
+  case HLS_BITRATE_ALGO_LOWEST:
+    hv = demuxer_select_variant_lowest(h, hd);
+    break;
+
+  case HLS_BITRATE_ALGO_ADAPTIVE_SIMPLE:
     hv = demuxer_select_variant_simple(h, hd);
-  else
+    break;
+
+  case HLS_BITRATE_ALGO_RANDOM:
     hv = demuxer_select_variant_random(h, hd);
+    break;
+  }
+
+  if(hv == NULL)
+    hv = hd->hd_seek;
 
   hd->hd_req = hv;
 }
