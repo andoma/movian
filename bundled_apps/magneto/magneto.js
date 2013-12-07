@@ -121,6 +121,14 @@
     page.loading = false;
   });
 
+  plugin.addURI("magneto:mbpchannels", function(page) {
+    page.metadata.glwview = plugin.path + "zap.view";
+    page.type = "directory";
+    page.contents = "items";
+    populate_model_macbook(page);
+    page.loading = false;
+  });
+
   //****************************************************************************
   //****************************************************************************
   //****************************************************************************
@@ -135,7 +143,7 @@
       title: "Online channels"
     });
 
-    page.appendItem("magneto:6", "directory", {
+    page.appendItem("magneto:mbpchannels", "directory", {
       title: "Stream zapping (local content)"
     });
 
@@ -259,9 +267,15 @@
       debug: true
     })
 
-    showtime.print(showtime.JSONEncode(v));
+    for(var i in v.channels) {
+      var ch = v.channels[i];
+      var url = ch.playlist_url;
 
-
+      page.appendItem(url, "video", {
+	title: ch.long_name,
+        icon: ch.logo ? 'imageset:' + showtime.JSONEncode(ch.logo) : null
+      });
+    }
   });
 
 
