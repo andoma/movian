@@ -77,6 +77,7 @@ typedef enum {
 typedef enum {
   HLS_BITRATE_ALGO_ADAPTIVE_SIMPLE = 0,
   HLS_BITRATE_ALGO_LOWEST,
+  HLS_BITRATE_ALGO_HIGHEST,
   HLS_BITRATE_ALGO_RANDOM,
 } hls_bitrate_algo_t;
 
@@ -1363,6 +1364,10 @@ demuxer_select_variant(hls_t *h, hls_demuxer_t *hd)
   switch(h->h_bitrate_algo) {
   case HLS_BITRATE_ALGO_LOWEST:
     hv = demuxer_select_variant_lowest(h, hd);
+    break;
+
+  case HLS_BITRATE_ALGO_HIGHEST:
+    hv = TAILQ_FIRST(&hd->hd_variants);
     break;
 
   case HLS_BITRATE_ALGO_ADAPTIVE_SIMPLE:
