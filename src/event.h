@@ -174,6 +174,8 @@ typedef enum {
 
   EVENT_PROPREF,
 
+  EVENT_WAKEUP,
+
   EVENT_DYNAMIC_ACTION,
 
 } event_type_t;

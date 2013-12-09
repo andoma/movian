@@ -65,11 +65,71 @@ TAILQ_HEAD(hls_segment_queue, hls_segment);
 #define HLS_CRYPTO_NONE   0
 #define HLS_CRYPTO_AES128 1
 
+
+typedef enum {
+  SEGMENT_OPEN_OK = 0,
+  SEGMENT_OPEN_NOT_FOUND,
+  SEGMENT_OPEN_CORRUPT,
+  SEGMENT_OPEN_IN_PROGRESS,
+} segment_open_result_t;
+
+/**
+ *
+ */
+typedef struct iojob {
+
+  int ij_refcount;
+
+  media_pipe_t *ij_mp; // We hold a ref
+
+  hts_mutex_t ij_mutex;
+
+  buf_t *ij_buf;
+
+  char *ij_url;
+
+  int ij_flags;
+
+  char ij_type;
+#define IOJOB_TYPE_LOAD_BUF     1
+#define IOJOB_TYPE_OPEN_SEGMENT 2
+
+  char ij_disable_cache;
+
+  char ij_done;
+
+  int64_t ij_byte_offset;
+
+  int ij_byte_size;
+
+  int ij_crypto;
+
+  segment_open_result_t ij_open_result;
+
+  int64_t ij_size;
+
+  AVFormatContext *ij_fctx;
+
+  fa_info_t ij_fa_info;
+
+  rstr_t *ij_key_url;
+
+  uint8_t ij_iv[16];
+
+  char ij_errbuf[64];
+
+} iojob_t;
+
+
+
 /**
  *
  */
 typedef struct hls_segment {
   TAILQ_ENTRY(hls_segment) hs_link;
+
+  TAILQ_ENTRY(hls_segment) hs_load_link;
+
   char *hs_url;
   int hs_size;
   int hs_byte_offset;
@@ -97,6 +157,8 @@ typedef struct hls_segment {
 
   fa_info_t hs_fa_info;
 
+  iojob_t *hs_iojob;
+
 } hls_segment_t;
 
 
@@ -107,44 +169,37 @@ typedef struct hls_variant {
   TAILQ_ENTRY(hls_variant) hv_link;
   char *hv_url;
 
+  int hv_width;
+  int hv_height;
+  char *hv_subs_group;
+  char *hv_audio_group;
+  char hv_audio_only;
+  int hv_h264_profile;
+  int hv_h264_level;
+  int hv_program;
+  int hv_bitrate;
+
   int hv_last_seq;
   int hv_first_seq;
 
   struct hls_segment_queue hv_segments;
 
   char hv_frozen;
-  char hv_audio_only;
-  int hv_h264_profile;
-  int hv_h264_level;
   int hv_target_duration;
 
-  int64_t hv_next_load; /* Don't reload before this time have passed
-                         */
-
-  int hv_program;
-  int hv_bitrate;
-
-  int hv_width;
-  int hv_height;
-
-  int hv_corrupt_counter;
-
-#define HV_CORRUPT_LIMIT 3 /* If corrupt_counter >= this, we never consider
-			    * this variant again
-			    */
-
-  char *hv_subs_group;
-  char *hv_audio_group;
+  int64_t hv_next_load; // Don't reload before this time have passed
+  int64_t hv_next_critical_load; /* We have to reload before this time have
+                                    passed */
 
   int64_t hv_duration;
 
   hls_segment_t *hv_current_seg;
 
-  rstr_t *hv_key_url;
-  buf_t *hv_key;
+  iojob_t *hv_iojob;
 
   uint8_t hv_is_corrupt;
-
+  int hv_corrupt_counter;
+#define HV_CORRUPT_LIMIT 3
 } hls_variant_t;
 
 
@@ -181,8 +236,6 @@ typedef struct hls {
   media_codec_t *h_codec_h264;
   media_codec_t *h_codec_aac;
 
-  AVInputFormat *h_fmt;
-
   int h_blocked;
 
   hls_demuxer_t h_primary;
@@ -197,10 +250,200 @@ typedef struct hls {
 
 } hls_t;
 
+
 #define HLS_TRACE(h, x...) do {			\
   if((h)->h_debug)				\
     TRACE(TRACE_DEBUG, "HLS", x);		\
   } while(0)
+
+
+
+/**
+ *
+ */
+static void
+iojob_release(iojob_t *ij)
+{
+  if(atomic_add(&ij->ij_refcount, -1) != 1)
+    return;
+
+  mp_ref_dec(ij->ij_mp);
+
+  hts_mutex_destroy(&ij->ij_mutex);
+  rstr_release(ij->ij_key_url);
+  if(ij->ij_buf != NULL)
+    buf_release(ij->ij_buf);
+
+  if(ij->ij_fctx != NULL)
+    fa_libav_close_format(ij->ij_fctx);
+
+  free(ij->ij_url);
+  free(ij);
+}
+
+
+
+/**
+ *
+ */
+static int
+iojob_do_open_segment(iojob_t *ij)
+{
+  fa_handle_t *fh;
+  buf_t *key;
+  int err;
+
+  fh = fa_open_ex(ij->ij_url, ij->ij_errbuf, sizeof(ij->ij_errbuf),
+                  ij->ij_flags, NULL);
+  if(fh == NULL) {
+    TRACE(TRACE_INFO, "HLS", "Unable to open segment %s -- %s",
+          ij->ij_url, ij->ij_errbuf);
+    return SEGMENT_OPEN_NOT_FOUND;
+  }
+
+  // Take extra what you do with this shadowed fh
+  const fa_handle_t *orig_fh = fh;
+
+  if(ij->ij_byte_size != -1 && ij->ij_byte_offset != -1)
+    fh = fa_slice_open(fh, ij->ij_byte_offset, ij->ij_byte_size);
+
+  ij->ij_size = fa_fsize(fh);
+
+  switch(ij->ij_crypto) {
+  case HLS_CRYPTO_AES128:
+
+    key = fa_load(rstr_get(ij->ij_key_url), NULL,
+                         ij->ij_errbuf, sizeof(ij->ij_errbuf),
+                  NULL, 0, NULL, NULL);
+    if(key == NULL) {
+      TRACE(TRACE_ERROR, "HLS", "Unable to load key file %s",
+            rstr_get(ij->ij_key_url));
+      fa_close(fh);
+      return SEGMENT_OPEN_NOT_FOUND;
+    }
+    fh = fa_aescbc_open(fh, ij->ij_iv, buf_c8(key));
+    buf_release(key);
+  }
+
+  //  fh = fa_bwlimit_open(fh, 4000000 / 8);
+
+
+  AVInputFormat *fmt = av_find_input_format("mpegts");
+
+  AVIOContext *avio = fa_libav_reopen(fh);
+  ij->ij_fctx = avformat_alloc_context();
+  ij->ij_fctx->pb = avio;
+
+  if((err = avformat_open_input(&ij->ij_fctx, ij->ij_url,
+				fmt, NULL)) != 0) {
+    TRACE(TRACE_ERROR, "HLS",
+	  "Unable to open TS file (%s) error %d",
+	  ij->ij_url, err);
+
+    assert(ij->ij_fctx == NULL);
+    fa_libav_close(avio);
+    return SEGMENT_OPEN_CORRUPT;
+  }
+
+  ij->ij_fctx->flags |= AVFMT_FLAG_NOFILLIN;
+
+  memset(&ij->ij_fa_info, 0, sizeof(fa_info_t));
+  fa_info(orig_fh, &ij->ij_fa_info);
+  return SEGMENT_OPEN_OK;
+}
+
+
+/**
+ *
+ */
+static void *
+iojob_thread(void *aux)
+{
+  iojob_t *ij = aux;
+  buf_t *b;
+
+  switch(ij->ij_type) {
+  case IOJOB_TYPE_OPEN_SEGMENT:
+    ij->ij_open_result = iojob_do_open_segment(ij);
+    hts_mutex_lock(&ij->ij_mutex);
+    ij->ij_done = 1;
+    hts_mutex_unlock(&ij->ij_mutex);
+    break;
+
+  case IOJOB_TYPE_LOAD_BUF:
+    for(int i = 0; i < 3; i++) {
+      b = fa_load(ij->ij_url, NULL,
+                  ij->ij_errbuf, sizeof(ij->ij_errbuf),
+                  ij->ij_disable_cache ? DISABLE_CACHE : NULL,
+                  ij->ij_flags, NULL, NULL);
+      if(b != NULL)
+        break;
+    }
+    hts_mutex_lock(&ij->ij_mutex);
+    ij->ij_buf = b;
+    ij->ij_done = 1;
+    hts_mutex_unlock(&ij->ij_mutex);
+    break;
+  }
+
+  event_t *e = event_create_int(EVENT_WAKEUP, 0);
+  mp_enqueue_event(ij->ij_mp, e);
+  event_release(e);
+
+  iojob_release(ij);
+  return NULL;
+}
+
+/**
+ *
+ */
+static iojob_t *
+iojob_create(const char *url, int flags, int type, media_pipe_t *mp)
+{
+  iojob_t *ij = calloc(1, sizeof(iojob_t));
+  ij->ij_refcount = 2; // One for thread, one for caller
+  ij->ij_mp = mp;
+  mp_ref_inc(mp);
+  hts_mutex_init(&ij->ij_mutex);
+  ij->ij_url = strdup(url);
+  ij->ij_flags = flags;
+  ij->ij_type = type;
+  return ij;
+}
+
+
+/**
+ *
+ */
+static iojob_t *
+iojob_load_buf(const char *url, int flags, int disable_cache,
+               media_pipe_t *mp)
+{
+  iojob_t *ij = iojob_create(url, flags, IOJOB_TYPE_LOAD_BUF, mp);
+  ij->ij_disable_cache = disable_cache;
+  hts_thread_create_detached("iojob", iojob_thread, ij, THREAD_PRIO_DEMUXER);
+  return ij;
+}
+
+
+/**
+ *
+ */
+static iojob_t *
+iojob_open_segment(const char *url, int flags, media_pipe_t *mp,
+                   int64_t byte_offset, int byte_size,
+                   int crypto, rstr_t *keyurl, const uint8_t *iv)
+{
+  iojob_t *ij = iojob_create(url, flags, IOJOB_TYPE_OPEN_SEGMENT, mp);
+  ij->ij_byte_offset = byte_offset;
+  ij->ij_byte_size   = byte_size;
+  ij->ij_crypto      = crypto;
+  ij->ij_key_url = rstr_dup(keyurl);
+  memcpy(ij->ij_iv, iv, 16);
+
+  hts_thread_create_detached("iojob", iojob_thread, ij, THREAD_PRIO_DEMUXER);
+  return ij;
+}
 
 
 /**
@@ -261,9 +504,11 @@ variant_destroy(hls_variant_t *hv)
 
   free(hv->hv_subs_group);
   free(hv->hv_audio_group);
-  buf_release(hv->hv_key);
-  rstr_release(hv->hv_key_url);
   free(hv->hv_url);
+
+  if(hv->hv_iojob)
+    iojob_release(hv->hv_iojob);
+  free(hv);
 }
 
 
@@ -394,30 +639,9 @@ hv_parse_key(hls_variant_parser_t *hvp, const char *baseurl, const char *V)
 /**
  *
  */
-static int
-variant_update(hls_variant_t *hv, hls_t *h)
+static void
+variant_update(hls_variant_t *hv, hls_t *h, buf_t *b, int64_t now)
 {
-  char errbuf[1024];
-  if(hv->hv_frozen)
-    return 0;
-
-  int64_t ts = showtime_get_ts();
-
-  if(ts < hv->hv_next_load)
-    return 0;
-
-  HLS_TRACE(h, "%s: Starting variant update", h->h_mp->mp_name);
-
-  buf_t *b = fa_load(hv->hv_url, NULL, errbuf, sizeof(errbuf), DISABLE_CACHE,
-		     FA_COMPRESSION, NULL, NULL);
-
-  if(b == NULL) {
-    TRACE(TRACE_ERROR, "HLS", "Unable to open %s -- %s", hv->hv_url, errbuf);
-    return 1;
-  }
-
-  b = buf_make_writable(b);
-
   double duration = 0;
   int byte_offset = -1;
   int byte_size = -1;
@@ -425,7 +649,7 @@ variant_update(hls_variant_t *hv, hls_t *h)
   hls_variant_parser_t hvp;
   int newsegs = 0;
 
-  hv->hv_next_load = ts + 500000LL;
+  hv->hv_next_critical_load = hv->hv_next_load = now + 500000LL;
 
   memset(&hvp, 0, sizeof(hvp));
 
@@ -478,7 +702,10 @@ variant_update(hls_variant_t *hv, hls_t *h)
 
         newsegs++;
 
-        hv->hv_next_load = ts + hv->hv_target_duration * 1000000LL;
+        hv->hv_next_load = now + hv->hv_target_duration * 1000000LL;
+
+        hv->hv_next_critical_load =
+          now + 2 * hv->hv_target_duration * 1000000LL;
 
 	hs->hs_seq = seq;
 	duration = 0;
@@ -492,16 +719,11 @@ variant_update(hls_variant_t *hv, hls_t *h)
     }
   }
 
-  buf_release(b);
   rstr_release(hvp.hvp_key_url);
 
-  ts = showtime_get_ts() - ts;
-
-  HLS_TRACE(h, "%s: Updating variant %d in %d us. %d new segments",
+  HLS_TRACE(h, "%s: Updating variant %d. %d new segments",
             h->h_mp->mp_name, hv->hv_bitrate,
-            (int)ts, newsegs);
-
-  return 0;
+            newsegs);
 }
 
 
@@ -569,6 +791,11 @@ variant_close_current_seg(hls_variant_t *hv)
 
   hls_segment_t *hs = hv->hv_current_seg;
 
+  if(hs->hs_iojob != NULL) {
+    iojob_release(hs->hs_iojob);
+    hs->hs_iojob = NULL;
+  }
+
   if(hs->hs_fctx != NULL)
     fa_libav_close_format(hs->hs_fctx);
   hs->hs_fctx = NULL;
@@ -608,37 +835,90 @@ demuxer_update_bw(hls_t *h, hls_demuxer_t *hd)
 }
 
 
-typedef enum {
-  SEGMENT_OPEN_OK,
-  SEGMENT_OPEN_NOT_FOUND,
-  SEGMENT_OPEN_CORRUPT,
-} segment_open_result_t;
 
 /**
  *
  */
 static segment_open_result_t
-segment_open(hls_t *h, hls_segment_t *hs, int fast_fail, int streaming)
+segment_open(const hls_t *h, hls_segment_t *hs, int fast_fail)
 {
-  int err, j;
-  fa_handle_t *fh;
-  char errbuf[256];
+  int j;
+
+  if(hs->hs_iojob != NULL) {
+    iojob_t *ij = hs->hs_iojob;
+    hts_mutex_lock(&ij->ij_mutex);
+
+    if(!ij->ij_done) {
+      hts_mutex_unlock(&ij->ij_mutex);
+      return SEGMENT_OPEN_IN_PROGRESS;
+    }
+
+    // Copy back result
+
+    hs->hs_fa_info = ij->ij_fa_info;
+    hs->hs_fctx    = ij->ij_fctx;
+    hs->hs_size    = ij->ij_size;
+    segment_open_result_t open_result = ij->ij_open_result;
+
+    ij->ij_fctx = NULL;
+
+    iojob_release(ij);
+    hts_mutex_unlock(&ij->ij_mutex);
+    hs->hs_iojob = NULL;
+
+    HLS_TRACE(h, "%s: Open segment %d in %d bps @ %s Remote cache: %s. "
+              "Connect: %dms, Header: %dms, First byte: %dms",
+              h->h_mp->mp_name,
+              hs->hs_seq, hs->hs_variant->hv_bitrate, hs->hs_url,
+              hs->hs_fa_info.remote_cache_status == FA_REMOTE_CACHE_HIT  ? "Hit" :
+              hs->hs_fa_info.remote_cache_status == FA_REMOTE_CACHE_MISS ? "Miss" :
+              "Unknown",
+              hs->hs_fa_info.connect_time / 1000,
+              hs->hs_fa_info.time_to_headers / 1000,
+              hs->hs_fa_info.time_to_first_byte / 1000);
+
+    if(open_result != SEGMENT_OPEN_OK) {
+      assert(hs->hs_fctx = NULL);
+      return open_result;
+    }
+
+    hs->hs_vstream = -1;
+    hs->hs_astream = -1;
+
+    for(j = 0; j < hs->hs_fctx->nb_streams; j++) {
+      const AVCodecContext *ctx = hs->hs_fctx->streams[j]->codec;
+
+      switch(ctx->codec_type) {
+      case AVMEDIA_TYPE_VIDEO:
+        if(hs->hs_vstream == -1 && ctx->codec_id == CODEC_ID_H264)
+          hs->hs_vstream = j;
+        break;
+
+      case AVMEDIA_TYPE_AUDIO:
+        if(hs->hs_astream == -1 && ctx->codec_id == CODEC_ID_AAC)
+          hs->hs_astream = j;
+        break;
+
+      default:
+        break;
+      }
+    }
+
+    return SEGMENT_OPEN_OK;
+  }
 
   assert(hs->hs_fctx == NULL);
-
-  hls_variant_t *hv = hs->hs_variant;
+  assert(hs->hs_iojob == NULL);
 
   int flags = 0;
 
-  if(streaming) {
+  if(0) {
     flags |= FA_STREAMING;
+  } else if(hs->hs_byte_size != -1 && hs->hs_byte_offset != -1) {
+    flags |= FA_BUFFERED_SMALL;
   } else {
-    if(hs->hs_byte_size != -1 && hs->hs_byte_offset != -1)
-      flags |= FA_BUFFERED_SMALL;
-    else
-      flags |= FA_BUFFERED_BIG;
+    flags |= FA_BUFFERED_BIG;
   }
-
 
   if(fast_fail)
     flags |= FA_FAST_FAIL;
@@ -647,98 +927,13 @@ segment_open(hls_t *h, hls_segment_t *hs, int fast_fail, int streaming)
 
   hs->hs_opened_at = showtime_get_ts();
   hs->hs_block_cnt = h->h_blocked;
-  
-  fh = fa_open_ex(hs->hs_url, errbuf, sizeof(errbuf), flags, NULL);
-  if(fh == NULL) {
-    TRACE(TRACE_INFO, "HLS", "Unable to open segment %s -- %s",
-	  hs->hs_url, errbuf);
-    return SEGMENT_OPEN_NOT_FOUND;
-  }
 
-  // Take extra what you do with this shadowed fh
-  const fa_handle_t *orig_fh = fh;
+  hs->hs_iojob =
+    iojob_open_segment(hs->hs_url, flags, h->h_mp,
+                       hs->hs_byte_offset, hs->hs_byte_size,
+                       hs->hs_crypto, hs->hs_key_url, hs->hs_iv);
 
-  if(hs->hs_byte_size != -1 && hs->hs_byte_offset != -1)
-    fh = fa_slice_open(fh, hs->hs_byte_offset, hs->hs_byte_size);
-
-
-  hs->hs_size = fa_fsize(fh);
-
-  switch(hs->hs_crypto) {
-  case HLS_CRYPTO_AES128:
-
-    if(!rstr_eq(hs->hs_key_url, hv->hv_key_url)) {
-      buf_release(hv->hv_key);
-      hv->hv_key = fa_load(rstr_get(hs->hs_key_url), NULL,
-			   errbuf, sizeof(errbuf), NULL, 0, NULL, NULL);
-      if(hv->hv_key == NULL) {
-	TRACE(TRACE_ERROR, "HLS", "Unable to load key file %s",
-	      rstr_get(hs->hs_key_url));
-	fa_close(fh);
-	return SEGMENT_OPEN_NOT_FOUND;
-      }
-
-      rstr_set(&hv->hv_key_url, hs->hs_key_url);
-    }
-    fh = fa_aescbc_open(fh, hs->hs_iv, buf_c8(hv->hv_key));
-  }
-
-  //  fh = fa_bwlimit_open(fh, 4000000 / 8);
-
-  AVIOContext *avio = fa_libav_reopen(fh);
-  hs->hs_fctx = avformat_alloc_context();
-  hs->hs_fctx->pb = avio;
-
-  if((err = avformat_open_input(&hs->hs_fctx, hs->hs_url,
-				h->h_fmt, NULL)) != 0) {
-    TRACE(TRACE_ERROR, "HLS",
-	  "Unable to open TS file (%s) segment seq: %d error %d",
-	  hs->hs_url, hs->hs_seq, err);
-
-    fa_libav_close(avio);
-    return SEGMENT_OPEN_CORRUPT;
-  }
-
-  hs->hs_fctx->flags |= AVFMT_FLAG_NOFILLIN;
-  hs->hs_vstream = -1;
-  hs->hs_astream = -1;
-
-  for(j = 0; j < hs->hs_fctx->nb_streams; j++) {
-    const AVCodecContext *ctx = hs->hs_fctx->streams[j]->codec;
-
-    switch(ctx->codec_type) {
-    case AVMEDIA_TYPE_VIDEO:
-      if(hs->hs_vstream == -1 && ctx->codec_id == CODEC_ID_H264)
-	hs->hs_vstream = j;
-      break;
-
-    case AVMEDIA_TYPE_AUDIO:
-      if(hs->hs_astream == -1 && ctx->codec_id == CODEC_ID_AAC)
-	hs->hs_astream = j;
-      break;
-
-    default:
-      break;
-    }
-  }
-
-  fa_info_t fi = {0};
-  fa_info(orig_fh, &fi);
-
-  HLS_TRACE(h, "%s: Open segment %d in %d bps @ %s Remote cache: %s. "
-            "Connect: %dms, Header: %dms, First byte: %dms",
-            h->h_mp->mp_name,
-            hs->hs_seq, hs->hs_variant->hv_bitrate, hs->hs_url,
-            fi.remote_cache_status == FA_REMOTE_CACHE_HIT  ? "Hit" :
-            fi.remote_cache_status == FA_REMOTE_CACHE_MISS ? "Miss" :
-            "Unknown",
-            fi.connect_time / 1000,
-            fi.time_to_headers / 1000,
-            fi.time_to_first_byte / 1000);
-
-  hs->hs_fa_info = fi;
-
-  return SEGMENT_OPEN_OK;
+  return SEGMENT_OPEN_IN_PROGRESS;
 }
 
 
@@ -801,10 +996,8 @@ hls_select_seek_variant(const hls_t *h, hls_demuxer_t *hd)
  *
  */
 static hls_segment_t *
-demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
+demuxer_get_segment(hls_t *h, hls_demuxer_t *hd, int hurry)
 {
-  int retry = 0;
-
  again:
   // If no variant is requested we switch to the seek (low bw) variant
   // also swtich to seek variant if we want to seek (gasp!)
@@ -825,148 +1018,172 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
   const int live_preload =
     h->h_playback_activation == VIDEO_ACTIVATION_PRELOAD && !hv->hv_frozen;
 
+  /**
+   * First, check if the currently opened segment is the one we want
+   */
+  if(hv->hv_current_seg != NULL &&
+     hv->hv_current_seg->hs_seq == hd->hd_seq &&
+     hd->hd_seek_to == AV_NOPTS_VALUE &&
+     !live_preload)
+    return hv->hv_current_seg;
 
-  if(hv->hv_current_seg == NULL ||
-     hv->hv_current_seg->hs_seq != hd->hd_seq ||
-     hd->hd_seek_to != AV_NOPTS_VALUE ||
-     live_preload) {
-
-    if(variant_update(hv, h)) {
-
-      if(retry)
-       	return HLS_SEGMENT_NYA;
-
-      retry = 1;
-      hd->hd_req = NULL;
-      goto again;
+  if(!hv->hv_frozen) {
+    /**
+     * It's not frozen (not yet loaded or is a live variant)
+     */
+    if(hurry) {
+      if(showtime_get_ts() < hv->hv_next_critical_load) {
+        goto skip_refresh;
+      }
     }
 
-    h->h_live = !hv->hv_frozen;
+    buf_t *b;
 
-    // Initial seek on live streams make no sense, nullify that
-    if(h->h_live && hd->hd_seek_to != PTS_UNSET && hd->hd_seek_initial) {
-      hd->hd_seek_to = PTS_UNSET;
-      h->h_mp->mp_video.mq_seektarget = PTS_UNSET;
-      h->h_mp->mp_audio.mq_seektarget = PTS_UNSET;
-    }
+    if(hv->hv_iojob != NULL) {
 
-    hls_segment_t *hs;
+      iojob_t *ij = hv->hv_iojob;
 
-    if(hd->hd_seek_to != PTS_UNSET) {
-      // We have a requested time
-      hs = hv_find_segment_by_time(hv, hd->hd_seek_to);
+      hts_mutex_lock(&ij->ij_mutex);
 
-      if(hs == NULL)
+      if(!ij->ij_done) {
+        hts_mutex_unlock(&ij->ij_mutex);
         return HLS_SEGMENT_NYA;
+      }
 
-      hd->hd_seq = hs->hs_seq;
-      hd->hd_seek_to = PTS_UNSET;
+      if(ij->ij_buf == NULL) {
+        TRACE(TRACE_ERROR, "HLS", "Unable to open %s -- %s",
+              ij->ij_url, ij->ij_errbuf);
+        iojob_release(ij);
+        hts_mutex_unlock(&ij->ij_mutex);
+        return HLS_SEGMENT_ERR;
+      }
+
+      b = ij->ij_buf;
+      ij->ij_buf = NULL;
+      hts_mutex_unlock(&ij->ij_mutex);
+
+      iojob_release(hv->hv_iojob);
+      hv->hv_iojob = NULL;
+
+      b = buf_make_writable(b);
+      variant_update(hv, h, b, showtime_get_ts());
+      buf_release(b);
 
     } else {
 
-      if(hd->hd_seq == 0 || live_preload) {
+      int64_t ts = showtime_get_ts();
 
-        if(hv->hv_frozen) {
-          hd->hd_seq = hv->hv_first_seq;
-        } else {
-          hd->hd_seq = MAX(hv->hv_last_seq - 2, hv->hv_first_seq);
-        }
-      }
-
-      hs = hv_find_segment_by_seq(hv, hd->hd_seq);
-    }
-
-    if(hs == hv->hv_current_seg && hs != NULL)
-      return hs;
-
-    variant_close_current_seg(hv);
-
-    if(hs == NULL) {
-      if(hv->hv_frozen)
-	return HLS_SEGMENT_EOF;
-      else
-	return HLS_SEGMENT_NYA;
-    }
-
-    int streaming = 0; /* Set if we want to do a non-range HTTP request
-                          ie. just download the entire segment */
-
-    if(h->h_playback_activation < VIDEO_ACTIVATION_PRELOAD) {
-      streaming = 1;
-    }
-
-    // If we're not playing from the seek segment (ie. our "fallback" segment)
-    // we ask for fast fail so we can retry with another segment
-
-    segment_open_result_t rcode = segment_open(h, hs, hv != hd->hd_seek,
-                                               streaming);
-
-    switch(rcode) {
-    case SEGMENT_OPEN_OK:
-      break;
-
-    case SEGMENT_OPEN_NOT_FOUND:
-
-      /*
-       * Segment can not be found (but since it's listed in the playlist
-       * it *should* be there, retry with something directly else unless we're
-       * at our seek variant in which case we wait a short while (by
-       * returning the special Not-Yet-Available segment)
+      /**
+       * Do not reload variant until a given time has passed
        */
-      if(hv == hd->hd_seek)
-	return HLS_SEGMENT_NYA;
-
-      /* 
-       * Variants are sorted in bitrate descending order, so just
-       * step down one
-       */
-      hd->hd_req = TAILQ_NEXT(hv, hv_link);
-      goto again;
-
-    case SEGMENT_OPEN_CORRUPT:
-      /*
-       * File is there, but we are not able to parse it correctly
-       * (broken key?, not a TS file, whatever)
-       * Mark it as broken and try something else
-       */
-      hv->hv_is_corrupt = 1;
-      hv->hv_corrupt_counter++;
-
-      if(hv->hv_corrupt_counter >= HV_CORRUPT_LIMIT) {
-	HLS_TRACE(h, "Variant %d does not seem to work at all, ignoring",
-		  hv->hv_bitrate);
-
-	if(hv == hd->hd_seek)
-	  hls_select_seek_variant(h, hd);
+       if(ts >= hv->hv_next_load) {
+        hv->hv_iojob = iojob_load_buf(hv->hv_url, FA_COMPRESSION, 1, h->h_mp);
+        return HLS_SEGMENT_NYA;
       }
-
-
-      TAILQ_FOREACH(hv, &hd->hd_variants, hv_link) {
-	if(!hv->hv_is_corrupt)
-	  break;
-      }
-
-      if(hv == NULL) {
-	// Nothing works, give up
-	return HLS_SEGMENT_ERR;
-      }
-      hd->hd_req = hv;
-      goto again;
     }
+  }
+ skip_refresh:
+  h->h_live = !hv->hv_frozen;
 
-
-    hv->hv_current_seg = hs;
-
-    update_metadata(h, hv, hd->hd_bw);
+  // Initial seek on live streams make no sense, nullify that
+  if(h->h_live && hd->hd_seek_to != PTS_UNSET && hd->hd_seek_initial) {
+    hd->hd_seek_to = PTS_UNSET;
+    h->h_mp->mp_video.mq_seektarget = PTS_UNSET;
+    h->h_mp->mp_audio.mq_seektarget = PTS_UNSET;
   }
 
-  hls_segment_t *hs = hv->hv_current_seg;
+  hls_segment_t *hs;
 
-  // All is fine now, unmark corruption
-  TAILQ_FOREACH(hv, &hd->hd_variants, hv_link)
-    hv->hv_is_corrupt = 0;
+  if(hd->hd_seek_to != PTS_UNSET) {
+    // We have a requested time
+    hs = hv_find_segment_by_time(hv, hd->hd_seek_to);
 
-  return hs;
+    if(hs == NULL)
+      return HLS_SEGMENT_NYA;
+
+    hd->hd_seq = hs->hs_seq;
+    hd->hd_seek_to = PTS_UNSET;
+
+  } else if(hurry && hv->hv_current_seg != NULL) {
+    hs = hv->hv_current_seg;
+    hd->hd_seq = hs->hs_seq;
+
+  } else {
+
+    if(hd->hd_seq == 0 || live_preload) {
+
+      if(hv->hv_frozen) {
+        hd->hd_seq = hv->hv_first_seq;
+      } else {
+        hd->hd_seq = MAX(hv->hv_last_seq - 2, hv->hv_first_seq);
+      }
+    }
+
+    hs = hv_find_segment_by_seq(hv, hd->hd_seq);
+  }
+
+  if(hs == hv->hv_current_seg && hs != NULL)
+    return hs;
+
+
+  if(hs == NULL) {
+    if(hv->hv_frozen)
+      return HLS_SEGMENT_EOF;
+    else
+      return HLS_SEGMENT_NYA;
+  }
+
+
+  // If we're not playing from the seek segment (ie. our "fallback" segment)
+  // we ask for fast fail so we can retry with another segment
+
+  segment_open_result_t rcode = segment_open(h, hs, hv != hd->hd_seek);
+
+  switch(rcode) {
+  case SEGMENT_OPEN_IN_PROGRESS:
+    return HLS_SEGMENT_NYA;
+
+  case SEGMENT_OPEN_OK:
+    break;
+
+  case SEGMENT_OPEN_NOT_FOUND:
+
+    /*
+     * Segment can not be found (but since it's listed in the playlist
+     * it *should* be there, retry with something directly else unless we're
+     * at our seek variant in which case we wait a short while (by
+     * returning the special Not-Yet-Available segment)
+     */
+    if(hv == hd->hd_seek)
+      return HLS_SEGMENT_NYA;
+
+    /* 
+     * Variants are sorted in bitrate descending order, so just
+     * step down one
+     */
+    hd->hd_req = TAILQ_NEXT(hv, hv_link);
+    goto again;
+
+  case SEGMENT_OPEN_CORRUPT:
+    /*
+     * File is there, but we are not able to parse it correctly
+     * (broken key?, not a TS file, whatever)
+     * Mark it as broken and try something else
+     */
+    hs->hs_corrupt = 1;
+    if(hv == hd->hd_seek) {
+      // We give up now
+      return HLS_SEGMENT_ERR;
+    }
+    hd->hd_req = TAILQ_NEXT(hv, hv_link);
+    goto again;
+  }
+
+  variant_close_current_seg(hv);
+  hv->hv_current_seg = hs;
+
+  update_metadata(h, hv, hd->hd_bw);
+  return hv->hv_current_seg;
 }
 
 
@@ -1214,6 +1431,8 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 
   hd->hd_current = hd->hd_seek;
 
+  int hurry = 0;
+
   while(1) {
 
     if(mb == NULL) {
@@ -1223,7 +1442,7 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
         HLS_TRACE(h, "%s: Before get_segment: %d us\n", mp->mp_name,
                   (int)(showtime_get_ts() - actset));
 
-      hls_segment_t *hs = demuxer_get_segment(h, hd);
+      hls_segment_t *hs = demuxer_get_segment(h, hd, hurry);
 
       if(actset && h->h_playback_activation < VIDEO_ACTIVATION_PRELOAD)
         HLS_TRACE(h, "%s: After get_segment: %d us\n", mp->mp_name,
@@ -1345,8 +1564,11 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 					     &h->h_blocked)) == NULL) {
       mb = NULL; /* Enqueue succeeded */
 
+      hurry = 0;
+
       if(actset) {
-        HLS_TRACE(h, "%s: Delay until enqueue: %d us\n", mp->mp_name,
+        TRACE(TRACE_INFO, "HLS",
+              "%s: Delay until enqueue: %d us\n", mp->mp_name,
                   (int)(showtime_get_ts() - actset));
         actset = 0;
       }
@@ -1381,6 +1603,8 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
         h->h_playback_activation = ei->val;
         HLS_TRACE(h, "%s: Got activation after %d us\n", mp->mp_name,
                   (int)(showtime_get_ts() - e->e_ts));
+
+        hurry = !h->h_playback_activation;
 
         if(h->h_playback_activation >= VIDEO_ACTIVATION_PRELOAD) {
           HLS_TRACE(h, "%s: Flush", mp->mp_name);
@@ -1604,7 +1828,6 @@ hls_play_extm3u(char *buf, const char *url, media_pipe_t *mp,
   hls_demuxer_init(&h.h_primary);
   h.h_mp = mp;
   h.h_baseurl = url;
-  h.h_fmt = av_find_input_format("mpegts");
   h.h_codec_h264 = media_codec_create(CODEC_ID_H264, 0, NULL, NULL, NULL, mp);
   h.h_codec_aac  = media_codec_create(CODEC_ID_AAC,  0, NULL, NULL, NULL, mp);
   h.h_debug = gconf.enable_hls_debug;
