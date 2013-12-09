@@ -515,6 +515,11 @@ upgrade_init(void)
   archname = "ps3";
 #endif
 
+#if MESONSTOS
+  artifact_type = "sqfs";
+  archname = "meson";
+#endif
+
   if(artifact_type == NULL || archname == NULL)
     return;
 

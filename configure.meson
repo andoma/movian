@@ -103,6 +103,8 @@ xmp_setup
 
 cat >> ${CONFIG_MAK} <<EOF
 
+CFLAGS_cfg += -DMESONSTOS
+
 CFLAGS_cfg += -funwind-tables
 
 LDFLAGS_cfg += -lpthread -lrt -ldl

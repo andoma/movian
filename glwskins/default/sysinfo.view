@@ -83,6 +83,8 @@ widget(container_y, {
 	    caption: fmt("Showtime %s", $global.showtime.version);
 	    align: center;
 	  });
+	  InfoLine(_("OS version"), $global.showtime.os-version);
+	  InfoLine(_("Kernel"), $global.showtime.kernel-version);
 
           InfoLine(_("Framerate"),
                    fmt("%2.2f Hz", $ui.framerate));

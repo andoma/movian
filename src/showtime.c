@@ -68,6 +68,9 @@
 #include <libavutil/avutil.h>
 #endif
 
+#if MESONSTOS
+#include <sys/utsname.h>
+#endif
 
 #include "misc/fs.h"
 
@@ -147,7 +150,42 @@ init_global_info(void)
 
   prop_set_string(prop_create(s, "version"), htsversion);
   prop_set_string(prop_create(s, "fullversion"), htsversion_full);
+
+#if MESONSTOS
+  FILE *fp = fopen("/etc/os-release", "r");
+  char *line = NULL;
+  size_t len = 0;
+  ssize_t read;
+  while ((read = getline(&line, &len, fp)) != -1) {
+    char *key;
+    char *val;
+    if (sscanf(line, "%m[A-Z]=%ms", &key, &val) != 2)
+      continue;
+
+    if (strcmp(key, "VERSION")) {
+      free(key);
+      free(val);
+      continue;
+    }
+    prop_set_string(prop_create(s, "os-version"), val);
+    free(key);
+    free(val);
+    break;
+  }
+  if (line)
+    free(line);
+
+  fclose(fp);
+
+  struct utsname un;
+  if (uname(&un) == 0)
+    prop_set_string(prop_create(s, "kernel-version"), un.release);
+
+  prop_set_string(prop_create(s, "copyright"), "© 2006 - 2012 Andreas Öman\n"
+		  "© 2013 - 2014 Spotify Ltd");
+#else
   prop_set_string(prop_create(s, "copyright"), "© 2006 - 2012 Andreas Öman");
+#endif
 
 }
 
