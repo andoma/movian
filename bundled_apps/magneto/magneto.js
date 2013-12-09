@@ -114,6 +114,13 @@
     page.loading = false;
   });
 
+  plugin.addURI("magneto:livechannels", function(page) {
+    page.type = "directory";
+    page.contents = "items";
+    load_all_channels(page);
+    page.loading = false;
+  });
+
   //****************************************************************************
   //****************************************************************************
   //****************************************************************************
@@ -138,6 +145,10 @@
 
     page.appendItem("magneto:postersvideo", "directory", {
       title: "Posters demo with video"
+    });
+
+    page.appendItem("magneto:livechannels", "directory", {
+      title: "Standard channel list"
     });
 
     page.appendItem("magneto:pwnz", "directory", {
