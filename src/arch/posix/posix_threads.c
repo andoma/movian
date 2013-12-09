@@ -133,7 +133,6 @@ thread_trampoline(void *aux)
 #if ENABLE_EMU_THREAD_SPECIFICS
   hts_thread_exit_specific();
 #endif
-  TRACE(TRACE_DEBUG, "thread", "Thread %s exited", t->title);
 
   free(t->title);
   free(t);
@@ -159,8 +158,6 @@ hts_thread_create_detached(const char *title, void *(*func)(void *), void *aux,
   pthread_create(&id, &attr, thread_trampoline,
 		 make_trampoline(title, func, aux, prio));
   pthread_attr_destroy(&attr);
-  TRACE(TRACE_DEBUG, "thread", "Created detached thread: %s", title);
-
 }
 
 void
@@ -186,8 +183,6 @@ hts_thread_create_joinable(const char *title, hts_thread_t *p,
   pthread_create(p, &attr, thread_trampoline,
 		 make_trampoline(title, func, aux, prio));
   pthread_attr_destroy(&attr);
-
-  TRACE(TRACE_DEBUG, "thread", "Created thread: %s", title);
 }
 
 
