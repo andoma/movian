@@ -49,6 +49,6 @@ ${BUILDDIR}/showtime.sqfs: ${PROG}.stripped ${SYMS}
 	cp ${PROG}.stripped "${SQDIR}/bin/showtime"
 	cp ${SYMS} "${SQDIR}/bin/showtime.syms"
 
-	mksquashfs "${SQDIR}" ${BUILDDIR}/showtime.sqfs  -noD -noF -noI -noappend
+	${MKSQUASHFS} "${SQDIR}" ${BUILDDIR}/showtime.sqfs  -noD -noF -noI -noappend
 
 squashfs: ${BUILDDIR}/showtime.sqfs

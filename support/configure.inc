@@ -16,6 +16,7 @@ BUILD=${CONFIGURE_POSTFIX}
 TMPDIR=${TOPDIR}/tmp
 GLW_DEFAULT_SKIN="default"
 DEFAULT_LOGTARGET=""
+MKSQUASHFS="mksquashfs"
 
 CONFIG_LIST="
  libasound
@@ -223,6 +224,8 @@ common_opt(){
   else
       die_invalid_opt $1
   fi
+  ;;
+  --mksquashfs=*) MKSQUASHFS="$2"
   ;;
 
   --jobs=*)
@@ -488,6 +491,7 @@ OBJCOPY=${TOOLCHAIN}objcopy
 RANLIB=${TOOLCHAIN}ranlib
 AR=${TOOLCHAIN}ar
 EXT_INSTALL_DIR=${EXT_INSTALL_DIR}
+MKSQUASHFS=${MKSQUASHFS}
 EOF
 
     if enabled libav; then
