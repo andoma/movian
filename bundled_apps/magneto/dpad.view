@@ -7,8 +7,8 @@ widget(grid, {
       widget(video, {
         id: "SVT1";
         dpadSeek: false;
-        source: "hls:http://172.31.254.254:8080/out/svt1/hls.m3u8";
-        activation: select(isFocused(), 0, 3);
+        source: "hls:http://magneto-vm3u.spotify.net/57050bdd9f2244b18705b05a37fc2dab/p.m3u8";
+        activation: select(isFocused(), 0, 2);
       });
     });
 
@@ -17,8 +17,8 @@ widget(grid, {
       widget(video, {
         id: "SVT2";
         dpadSeek: false;
-        source: "hls:http://172.31.254.254:8080/out/svt2/hls.m3u8";
-        activation: select(isFocused(), 0, 3);
+        source: "hls:http://magneto-vm3u.spotify.net/a00f02b775e64b50915b12a403fe24d6/p.m3u8";
+        activation: select(isFocused(), 0, 2);
       });
     });
   });
@@ -29,8 +29,8 @@ widget(grid, {
       widget(video, {
         id: "TV3";
         dpadSeek: false;
-        source: "hls:http://172.31.254.254:8080/out/tv3/hls.m3u8";
-        activation: select(isFocused(), 0, 3);
+        source: "hls:http://magneto-vm3u.spotify.net/840e81fd327842c7a1538416b418786e/p.m3u8";
+        activation: select(isFocused(), 0, 2);
       });
     });
 
