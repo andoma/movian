@@ -1583,6 +1583,7 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
       }
 
       mb->mb_keyframe = !!(pkt.flags & AV_PKT_FLAG_KEY);
+      mb->mb_meta.mbm_source_sequence = hs->hs_seq;
     }
 
     if(mb == MB_NYA || mb == NULL) {

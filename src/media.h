@@ -192,6 +192,7 @@ typedef struct media_buf_meta {
   int64_t mbm_dts;
   int mbm_epoch;
   uint32_t mbm_duration;
+  uint32_t mbm_source_sequence;
   uint32_t mbm_aspect_override      : 2;
   uint32_t mbm_skip                 : 2;
   uint32_t mbm_keyframe             : 1;
