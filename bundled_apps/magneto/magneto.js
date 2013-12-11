@@ -265,26 +265,18 @@
         f: 'json'
       },
       debug: true
-    })
+    });
 
-    for(var i in v.channels) {
-      var ch = v.channels[i];
-      var url = ch.playlist_url;
-
-      page.appendItem(url, "video", {
-	title: ch.long_name,
-        icon: ch.logo ? 'imageset:' + showtime.JSONEncode(ch.logo) : null
-      });
-    }
+    page.source = v.playlist_url;
+    page.type = 'video';
+    page.loading = false;
   });
-
 
   //****************************************************************************
   //****************************************************************************
   //****************************************************************************
 
   plugin.addURI("projectxx:epgevent:(.*)", function(page, gid) {
-
 
     var v = jsonApi("metadata/event/" + gid, {
       args: {
@@ -293,8 +285,15 @@
       debug: true
     })
 
-    showtime.print(showtime.JSONEncode(v));
+//    showtime.print(showtime.JSONEncode(v, true));
 
+
+    var url = v.channel.playlist_url + "?start=" + v.start_ms + "&stop=" + v.stop_ms;
+
+    showtime.print(url);
+    page.source = url;
+    page.type = 'video';
+    page.loading = false;
   });
 
 
