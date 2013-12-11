@@ -106,6 +106,13 @@
     page.loading = false;
   });
 
+  plugin.addURI("magneto:dpad", function(page) {
+    page.metadata.glwview = plugin.path + "dpad.view";
+    page.type = "directory";
+    page.contents = "items";
+    page.loading = false;
+  });
+
   plugin.addURI("magneto:pwnz", function(page) {
     page.metadata.glwview = plugin.path + "pwnz.view";
     page.type = "directory";
