@@ -235,6 +235,8 @@ typedef struct glw_video {
 
   video_activation_t gv_activation;
 
+  int gv_preload_hold;
+
   int gv_active;
 
   // Debug stats helpers

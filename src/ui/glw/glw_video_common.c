@@ -34,6 +34,7 @@
 
 static void glw_video_input(const frame_info_t *info, void *opaque);
 static int glw_set_video_codec(uint32_t type, media_codec_t *mc, void *opaque);
+static void set_activation0(glw_video_t *gv, int level);
 
 
 /**
@@ -655,6 +656,12 @@ glw_video_newframe(glw_t *w, int flags)
   video_decoder_t *vd = gv->gv_vd;
   int64_t pts;
 
+  if(gv->gv_preload_hold) {
+    if(--gv->gv_preload_hold == 0) {
+      set_activation0(gv, VIDEO_ACTIVATION_PRELOAD);
+    }
+  }
+
   if(vd == NULL)
     return;
 
@@ -868,15 +875,12 @@ set_audio_volume(glw_video_t *gv, float v)
  *
  */
 static void
-set_activation(glw_video_t *gv, int level)
+set_activation0(glw_video_t *gv, int level)
 {
-  if(gv->gv_activation == level)
-    return;
-
   gv->gv_activation = level;
 
   TRACE(TRACE_DEBUG, "GLW", "%s: Activation set to %d",
-        gv->w.glw_id ?: "GLW Video", level);
+        gv->w.glw_id ?: "GLW Video", gv->gv_activation);
 
   if(gv->gv_activation == VIDEO_ACTIVATION_PASSIVE) {
 
@@ -910,11 +914,34 @@ set_activation(glw_video_t *gv, int level)
   event_release(e);
 
   gv->gv_vd->vd_activation = gv->gv_activation;
+  TRACE(TRACE_DEBUG, "GLW", "%s: Wakeup video decoder because activation=%d",
+        mp->mp_name, gv->gv_activation);
   // Wakeup video decoder
   hts_cond_signal(&mp->mp_video.mq_avail);
 
   hts_mutex_unlock(&mp->mp_mutex);
 }
+
+/**
+ *
+ */
+static void
+set_activation(glw_video_t *gv, int level)
+{
+  if(gv->gv_activation == level)
+    return;
+
+
+  if(gv->gv_activation == VIDEO_ACTIVATION_PASSIVE &&
+     level             == VIDEO_ACTIVATION_PRELOAD) {
+    gv->gv_preload_hold = 20;
+    return;
+  } else {
+    gv->gv_preload_hold = 0;
+  }
+  set_activation0(gv, level);
+}
+
 
 
 /**
