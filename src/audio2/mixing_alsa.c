@@ -7,7 +7,7 @@
 #include "alsa.h"
 
 #define CHANNELS 2
-#define FRAMES   1024
+#define FRAMES   2048
 #define BUFFER_SIZE (CHANNELS * FRAMES)
 
 
@@ -114,7 +114,7 @@ alsa_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
     hts_cond_wait(&d->cond, &mixer_mutex);
 
   ts  = d->system_time[d->wptr];
-  ts -= buffer_delay;
+  ts += buffer_delay;
 
   hts_mutex_unlock(&mixer_mutex);
 
@@ -130,7 +130,9 @@ alsa_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
     hts_mutex_lock(&mp->mp_clock_mutex);
 
     if(mp->mp_set_audio_clock != NULL)
-      mp->mp_set_audio_clock(mp, pts, epoch, 0);
+      mp->mp_set_audio_clock(mp, pts - buffer_delay, epoch, 0);
+
+    //    TRACE(TRACE_DEBUG, "MALSA", "%s: ts is %lld", mp->mp_name, ts);
 
     mp->mp_audio_clock_avtime = ts;
     mp->mp_audio_clock = pts;
@@ -216,7 +218,6 @@ alsa_render_thread(void *aux)
   snd_pcm_status_alloca(&status);
 
   while(1) {
-
     c = snd_pcm_wait(h, 100);
     if(c >= 0) {
       c = snd_pcm_avail_update(h);
@@ -224,8 +225,7 @@ alsa_render_thread(void *aux)
     if(c == -EPIPE) {
       snd_pcm_prepare(h);
       samples = 0;
-      usleep(100000);
-      TRACE(TRACE_DEBUG, "ALSA", "Audio underrun");
+      TRACE(TRACE_ERROR, "ALSA", "Audio underrun");
       continue;
     }
 
@@ -275,10 +275,12 @@ alsa_render_thread(void *aux)
       memset(buffer, 0, BUFFER_SIZE * sizeof(int16_t));
 
     int r = snd_pcm_writei(h, buffer, FRAMES);
-    samples += r;
+    if(r > 0)
+      samples += r;
   }
   return NULL;
 }
+
 
 /**
  *
