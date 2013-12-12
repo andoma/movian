@@ -1456,6 +1456,9 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
   mp->mp_audio.mq_seektarget = AV_NOPTS_VALUE;
   mp->mp_seek_base = 0;
 
+  if(h->h_bitrate_algo == HLS_BITRATE_ALGO_HIGHEST)
+    hd->hd_seek = TAILQ_FIRST(&hd->hd_variants);
+
 
   if(va->flags & BACKEND_VIDEO_RESUME ||
      (video_settings.resume_mode == VIDEO_RESUME_YES &&
@@ -1866,6 +1869,7 @@ hls_play_extm3u(char *buf, const char *url, media_pipe_t *mp,
   hls_t h;
   memset(&h, 0, sizeof(h));
   hls_demuxer_init(&h.h_primary);
+  h.h_bitrate_algo = HLS_BITRATE_ALGO_HIGHEST;
   h.h_mp = mp;
   h.h_baseurl = url;
   h.h_codec_h264 = media_codec_create(CODEC_ID_H264, 0, NULL, NULL, NULL, mp);
