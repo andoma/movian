@@ -467,10 +467,22 @@ glw_prepare_frame(glw_root_t *gr, int flags)
 
   glw_update_sizes(gr);
 
+  int64_t last_start = gr->gr_frame_start;
+
   gr->gr_frame_start        = showtime_get_ts();
   gr->gr_frame_start_avtime = showtime_get_avtime();
   gr->gr_time_usec          = gr->gr_frame_start - gr->gr_ui_start;
   gr->gr_time_sec           = gr->gr_time_usec / 1000000.0f;
+
+  unsigned int delta = gr->gr_frame_start - last_start;
+  if(delta > 500000)
+    delta = 500000;
+  if(delta > 30000) {
+    gr->gr_framecomp = 1 + (delta / 20000);
+    printf("Framecomp:%d (%d)\n", gr->gr_framecomp, delta);
+  } else {
+    gr->gr_framecomp = 1;
+  }
 
   if(!(flags & GLW_NO_FRAMERATE_UPDATE)) {
 

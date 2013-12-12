@@ -697,6 +697,8 @@ typedef struct glw_root {
 
   struct glw_queue gr_destroyer_queue;
 
+  int gr_framecomp; /* Should be increased from 1 to 1+number of frames
+                       missed since last redraw */
   int gr_frameduration;
   float gr_framerate;
 
@@ -1194,7 +1196,8 @@ void glw_stencil_disable(glw_root_t *gr);
 static inline void
 glw_lp(float *v, const glw_root_t *gr, float t, float alpha)
 {
-  *v = *v + alpha * (t - *v);
+  for(int i = 0; i < gr->gr_framecomp; i++)
+    *v = *v + alpha * (t - *v);
 }
 
 
