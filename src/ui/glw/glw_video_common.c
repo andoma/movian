@@ -1397,6 +1397,8 @@ static void video_pm_deliver(const frame_info_t *fi, glw_video_t *gv);
 typedef struct video_pm_aux {
   glw_backend_texture_t vpa_gbt;
   glw_renderer_t vpa_renderer;
+  int vpa_cnt;
+  int vpa_done;
 } video_pm_aux_t;
 
 
@@ -1409,7 +1411,10 @@ video_pm_init(glw_video_t *gv)
 {
   int i;
 
-  gv->gv_aux = calloc(1, sizeof(video_pm_aux_t));
+  video_pm_aux_t *vpa = gv->gv_aux = calloc(1, sizeof(video_pm_aux_t));
+
+  vpa->vpa_cnt = 0;
+  vpa->vpa_done = 0;
 
   for(i = 0; i < 2; i++) {
     glw_video_surface_t *gvs = &gv->gv_surfaces[i];
@@ -1472,7 +1477,9 @@ video_pm_render(glw_video_t *gv, glw_rctx_t *rc)
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
+    int64_t ts = showtime_get_ts();
     glw_tex_upload(gv->w.glw_root, gv->gv_aux, pm, 0);
+    printf("Texture upload took %d\n", (int)(showtime_get_ts() - ts));
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, PIXMAP_ROW_ALIGN);
 
@@ -1481,6 +1488,8 @@ video_pm_render(glw_video_t *gv, glw_rctx_t *rc)
 
     TAILQ_REMOVE(&gv->gv_decoded_queue, gvs, gvs_link);
     TAILQ_INSERT_TAIL(&gv->gv_avail_queue, gvs, gvs_link);
+
+    vpa->vpa_cnt = 1;
   }
 
   if(!glw_renderer_initialized(&vpa->vpa_renderer)) {
@@ -1507,6 +1516,26 @@ video_pm_render(glw_video_t *gv, glw_rctx_t *rc)
                     NULL);
 }
 
+/**
+ *
+ */
+static int64_t
+video_pm_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
+{
+  video_pm_aux_t *vpa = gv->gv_aux;
+
+  if(vpa->vpa_cnt && !vpa->vpa_done) {
+    vpa->vpa_cnt++;
+    if(vpa->vpa_cnt > 3) {
+      printf("All done\n");
+      vpa->vpa_done = 1;
+      hts_cond_signal(&gv->gv_avail_queue_cond);
+    }
+  }
+
+  return PTS_UNSET;
+}
+
 
 /**
  *
@@ -1517,6 +1546,7 @@ static glw_video_engine_t glw_video_pm = {
   .gve_deliver = video_pm_deliver,
   .gve_init    = video_pm_init,
   .gve_reset   = video_pm_reset,
+  .gve_newframe = video_pm_newframe,
 };
 
 GLW_REGISTER_GVE(glw_video_pm);
@@ -1530,6 +1560,7 @@ video_pm_deliver(const frame_info_t *fi, glw_video_t *gv)
   if((gvs = glw_video_get_surface(gv, NULL, NULL)) == NULL)
     return;
 
+  video_pm_aux_t *vpa = gv->gv_aux;
   pixmap_t *pm = (pixmap_t *)fi->fi_data[0];
 
   gvs->gvs_data[0] = pixmap_dup(pm);
@@ -1539,5 +1570,8 @@ video_pm_deliver(const frame_info_t *fi, glw_video_t *gv)
 
   glw_video_put_surface(gv, gvs, fi->fi_pts, fi->fi_epoch,
                         fi->fi_duration, 0, 0);
+
+  while(!vpa->vpa_done && gv->gv_active)
+    hts_cond_wait(&gv->gv_avail_queue_cond, &gv->gv_surface_mutex);
 }
 
