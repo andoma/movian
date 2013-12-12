@@ -2165,8 +2165,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
 
       } else if(hf->hf_streaming || hf->hf_consecutive_read > STREAMING_LIMIT) {
 	if(!hf->hf_streaming)
-	  TRACE(TRACE_DEBUG, "HTTP", "%s: switching to streaming mode",
-		hf->hf_url);
+	  HF_TRACE(hf, "%s: switching to streaming mode", hf->hf_url);
 	snprintf(range, sizeof(range), "bytes=%"PRId64"-", hf->hf_pos);
 	tcp_huge_buffer(hf->hf_connection->hc_tc);
 
