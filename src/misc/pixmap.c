@@ -30,6 +30,7 @@
 #include "misc/minmax.h"
 #include "misc/jpeg.h"
 #include "backend/backend.h"
+#include "sys/mman.h"
 
 #if ENABLE_LIBAV
 #include <libavcodec/avcodec.h>
@@ -270,7 +271,13 @@ pixmap_release(pixmap_t *pm)
     return;
 
   if(!pixmap_is_coded(pm)) {
-    free(pm->pm_pixels);
+
+    if(pm->pm_flags & PIXMAP_MMAPED) {
+      size_t size = pm->pm_height * pm->pm_linesize;
+      munmap(pm->pm_pixels, size);
+    } else {
+      free(pm->pm_pixels);
+    }
     free(pm->pm_charpos);
   } else {
     free(pm->pm_data);

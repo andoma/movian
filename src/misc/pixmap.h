@@ -96,6 +96,8 @@ typedef struct pixmap {
 #define PIXMAP_TEXT_WRAPPED 0x2    // Contains wrapped text
 #define PIXMAP_TEXT_TRUNCATED 0x4 // Contains truncated text
 #define PIXMAP_COLORIZED      0x8
+#define PIXMAP_MMAPED         0x10
+
   pixmap_type_t pm_type;
 
 
