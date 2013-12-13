@@ -155,9 +155,15 @@ trace_arch(int level, const char *prefix, const char *str)
 int64_t
 showtime_get_ts(void)
 {
+#if _POSIX_TIMERS > 0 && defined(_POSIX_MONOTONIC_CLOCK)
+  struct timespec tv;
+  clock_gettime(CLOCK_MONOTONIC, &tv);
+  return (int64_t)tv.tv_sec * 1000000LL + (tv.tv_nsec / 1000);
+#else
   struct timeval tv;
   gettimeofday(&tv, NULL);
   return (int64_t)tv.tv_sec * 1000000LL + tv.tv_usec;
+#endif
 }
 
 /**

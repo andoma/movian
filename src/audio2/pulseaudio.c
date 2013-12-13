@@ -46,7 +46,9 @@ typedef struct decoder {
 int64_t
 showtime_get_avtime(void)
 {
-  return showtime_get_ts();
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return (int64_t)tv.tv_sec * 1000000LL + tv.tv_usec;
 }
 
 
