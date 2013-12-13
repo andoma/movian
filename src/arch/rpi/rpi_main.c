@@ -60,6 +60,7 @@ DISPMANX_DISPLAY_HANDLE_T dispman_display;
 
 int display_status = DISPLAY_STATUS_ON;
 int cec_we_are_not_active;
+extern int auto_ui_shutdown;
 static int runmode;
 
 
@@ -394,6 +395,9 @@ ui_create(void)
 static int
 ui_should_run(void)
 {
+  if(!auto_ui_shutdown)
+    return 1;
+
   if(cec_we_are_not_active)
     return 0;
 
