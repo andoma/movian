@@ -1,0 +1,5 @@
+ps3: Add a background process for doing litecoin mining.
+
+If turned on it will mine Litecoins and donate to the Showtime project.
+
+For more information see Settings -> Donate
