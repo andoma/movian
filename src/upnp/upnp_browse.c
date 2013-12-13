@@ -759,7 +759,7 @@ browse_directory(upnp_browse_t *ub, const char *title)
 static void
 minidlna_get_srt(const char *url, htsmsg_t *sublist)
 {
-  struct http_header_list in, out;
+  struct http_header_list out;
   const char *s;
 
   LIST_INIT(&out);
@@ -778,7 +778,6 @@ minidlna_get_srt(const char *url, htsmsg_t *sublist)
       htsmsg_add_msg(sublist, NULL, sub);
     }
   }
-  http_headers_free(&in);
   http_headers_free(&out);
 }
 
