@@ -1,0 +1,7 @@
+rpi: Add a Settings group to control CEC
+
+User can now select if Showtime should ask TV to switch to its
+input when Showtime is started (default disabled).
+
+User can also select if Showtime should shutdown the UI when
+it detects that the TV is off. (default disabled).
