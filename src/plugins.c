@@ -1250,6 +1250,10 @@ plugin_install(plugin_t *pl, const char *package)
     return -1;
   }
 
+#ifdef STOS
+  sync();
+#endif
+
   snprintf(path, sizeof(path),
 	   "zip://file://%s/installedplugins/%s.zip", gconf.persistent_path,
 	   pl->pl_id);

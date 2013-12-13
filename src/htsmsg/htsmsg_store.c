@@ -177,6 +177,9 @@ htsmsg_store_flush(void)
     pending_store_destroy(ps);
   }
   hts_mutex_unlock(&pending_store_mutex);
+#ifdef STOS
+  sync();
+#endif
 }
 
 

@@ -417,6 +417,10 @@ attempt_upgrade(int accept_patch)
   fail |= !!close(fd);
   buf_release(b);
 
+#ifdef STOS
+  sync();
+#endif
+
   if(fail) {
     install_error("Unable to write to file");
     return -1;

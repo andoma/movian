@@ -103,7 +103,7 @@ cat >> ${CONFIG_MAK} <<EOF
 CFLAGS_cfg +=  -fgnu89-inline
 CFLAGS_cfg += -mfpu=vfp -mcpu=arm1176jzf-s -funwind-tables
 CFLAGS_cfg += -DOMX_SKIP64BIT
-CFLAGS_cfg += -DRPISTOS
+CFLAGS_cfg += -DRPISTOS -DSTOS
 CFLAGS_cfg  += -I${VCROOT}/include
 CFLAGS_cfg  += -I${VCROOT}/include/IL
 CFLAGS_cfg  += -I${VCROOT}/include/interface/vcos/pthreads/
