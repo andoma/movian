@@ -73,8 +73,8 @@ mftb(void)
 static prop_t *sysprop;
 static prop_t *memprop;
 
-#define LOW_MEM_LOW_WATER  20 * 1024 * 1024
-#define LOW_MEM_HIGH_WATER 30 * 1024 * 1024
+#define LOW_MEM_LOW_WATER  5 * 1024 * 1024
+#define LOW_MEM_HIGH_WATER 15 * 1024 * 1024
 
 
 static void
