@@ -257,7 +257,7 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 
       struct pollfd pfd;
       pfd.fd = fd;
-      pfd.events = POLLOUT;
+      pfd.events = POLLOUT | POLLERR;
       pfd.revents = 0;
 
       r = netPoll(&pfd, 1, timeout);
@@ -271,6 +271,12 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
       if(r == -1) {
 	snprintf(errbuf, errbufsize, "poll() error: %s", 
 		 strerror(net_errno));
+	netClose(fd);
+	return NULL;
+      }
+
+      if(pfd.revents & POLLERR) {
+	snprintf(errbuf, errbufsize, "Connection refused");
 	netClose(fd);
 	return NULL;
       }

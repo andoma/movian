@@ -87,6 +87,7 @@ CONFIG_LIST="
  bspatch
  connman
  libntfs
+ miner
 "
 
 cleanup() {

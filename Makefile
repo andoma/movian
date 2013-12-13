@@ -647,6 +647,11 @@ ${BUILDDIR}/ext/libntfs_ext/source/%.o : CFLAGS = -Wall ${OPTFLAGS} \
 
 SRCS-${CONFIG_TLSF} += ext/tlsf/tlsf.c
 
+##############################################################
+# Miner
+##############################################################
+
+SRCS-${CONFIG_MINER} += ext/miner/miner.c \
 
 include support/${OS}.mk
 
@@ -723,6 +728,10 @@ ${PROG}.ziptail: $(OBJS) $(ALLDEPS) $(BUILDDIR)/support/dataroot/ziptail.o
 ${BUILDDIR}/%.o: %.c $(ALLDEPS)
 	@mkdir -p $(dir $@)
 	$(CC) -MD -MP $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg) -c -o $@ $(C)/$<
+
+${BUILDDIR}/%.o: %.S $(ALLDEPS)
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg) -c -o $@ $(C)/$<
 
 ${BUILDDIR}/%.o: %.m $(ALLDEPS)
 	@mkdir -p $(dir $@)

@@ -690,3 +690,16 @@ htsmsg_get_cdata(htsmsg_t *m, const char *field)
   return htsmsg_get_str_multi(m, field, "cdata", NULL);
 }
 
+
+/**
+ *
+ */
+int
+htsmsg_get_children(htsmsg_t *msg)
+{
+  htsmsg_field_t *f;
+  int cnt = 0;
+  TAILQ_FOREACH(f, &msg->hm_fields, hmf_link)
+    cnt++;
+  return cnt;
+}

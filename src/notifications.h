@@ -51,7 +51,7 @@ int message_popup(const char *message, int flags, const char **extra);
 
 int text_dialog(const char *message, char** string, int flags);
 
-prop_t *add_news(const char *message, const char *location,
-		 const char *caption);
+prop_t *add_news(const char *id, const char *message,
+		 const char *location, const char *caption);
  
 #endif // NOTIFICATIONS_H__

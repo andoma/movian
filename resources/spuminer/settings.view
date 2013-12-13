@@ -1,0 +1,93 @@
+
+widget(container_y, {
+  padding: $ui.size * 2;
+  spacing: $ui.size * 2;
+  widget(icon, {
+    align: center;
+    sizeScale: 6;
+    source: "icon_16_litecoin.png";
+  });
+
+  widget(label, {
+    align: center;
+    caption: "If you like Showtime you can donate money to the project by letting your Playstation 3 mine Litecoins while Showtime is running.";
+    maxlines: 2;
+    shadow: true;
+    outline: true;
+    sizeScale: 1.5;
+  });
+
+  widget(label, {
+    align: center;
+    caption: "Mining will not interfere with video playback performance as it only uses the leftover capacity of the SPU processors.";
+    maxlines: 2;
+    shadow: true;
+    outline: true;
+  });
+
+  widget(label, {
+    align: center;
+    caption: "Apart from enabling this option you do not need to do anything else to make your donations for the project.";
+    maxlines: 2;
+    shadow: true;
+    outline: true;
+  });
+
+  widget(label, {
+    align: center;
+    caption: "For more information about Litecoin, please visit http://litecoin.org";
+    maxlines: 2;
+    shadow: true;
+    outline: true;
+  });
+
+  widget(label, {
+    alpha: iir(select($global.spuminer.enabled, 0, 1), 8);
+    align: center;
+    caption: "Please consider enabling this option.    / Andreas Öman - Project leader";
+    shadow: true;
+    outline: true;
+  });
+
+  widget(container_x, {
+    align: center;
+    widget(label, {
+      caption: "Enable mining: ";
+      shadow: true;
+      outline: true;
+      sizeScale: 1.5;
+    });
+
+    widget(container_z, {
+      focusable: true;
+      
+      onEvent(activate, {
+	$global.spuminer.enabled = !$global.spuminer.enabled;
+      });
+
+      width: $ui.size * 10;
+      widget(quad, {
+	alpha: 0.3;
+      });
+
+      widget(label, {
+	align: center;
+	caption: select($global.spuminer.enabled, "Yes", "No");
+	shadow: true;
+	outline: true;
+	sizeScale: 1.5;
+      });
+    });
+  });
+
+  widget(label, {
+    alpha: iir(select($global.spuminer.enabled, 1, 0), 8);
+    align: center;
+    caption: "Thanks for your support!";
+    sizeScale: 3;
+    shadow: true;
+    outline: true;
+  });
+
+});
+

@@ -60,6 +60,7 @@ enable ps3_vdec
 enable sqlite_vfs
 enable sqlite_locking
 enable tlsf
+enable miner
 
 mkdir -p ${BUILDDIR}/libav
 ${PS3DEV}/host/ppu/bin/ppu-gcc -c -o ${BUILDDIR}/libav/mallocstub.o ${TOPDIR}/support/mallocstub.c
@@ -80,6 +81,7 @@ CFLAGS_cfg += -I${PSL1GHT}/target/include
 CFLAGS_cfg += -I${PS3DEV}/host/ppu/include
 CFLAGS_cfg += -I${PS3DEV}/host/ppu/include/freetype2
 BUNDLES+=src/ui/glw/rsx
+BUNDLES+=resources/spuminer
 SQLITE_PLATFORM_DEFINES += -DSQLITE_OS_OTHER=1
 EOF
 
