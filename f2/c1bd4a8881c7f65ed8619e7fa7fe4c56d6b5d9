@@ -1,0 +1,3 @@
+Fix a crash in UPnP code.
+
+Bug typically caused crashes when playing next item from a UPnP/DLNA share
