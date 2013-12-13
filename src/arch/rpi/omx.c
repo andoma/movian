@@ -286,7 +286,10 @@ omx_get_buffer_locked(omx_component_t *oc)
   OMX_BUFFERHEADERTYPE *buf;
 
   while((buf = oc->oc_avail) == NULL)
-    hts_cond_wait(oc->oc_avail_cond, oc->oc_avail_mtx);
+    if(hts_cond_wait_timeout(oc->oc_avail_cond, oc->oc_avail_mtx, 3000)) {
+      TRACE(TRACE_ERROR, "OMX", "Timeout while waiting for buffer");
+      return NULL;
+    }
   oc->oc_avail = buf->pAppPrivate;
   oc->oc_inflight_buffers++;
   return buf;

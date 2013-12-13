@@ -92,6 +92,8 @@ rpi_codec_decode(struct media_codec *mc, struct video_decoder *vd,
 
   while(len > 0) {
     OMX_BUFFERHEADERTYPE *buf = omx_get_buffer(rvc->rvc_decoder);
+    if(buf == NULL)
+      return;
     buf->nOffset = 0;
     buf->nFilledLen = MIN(len, buf->nAllocLen);
     memcpy(buf->pBuffer, data, buf->nFilledLen);
