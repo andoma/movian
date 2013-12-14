@@ -541,7 +541,7 @@ cmd_LIST(ftp_connection_t *fc, char *args)
       fa_stat(rstr_get(fde->fde_url), &fde->fde_stat, NULL, 0);
 
     tcp_printf(tc,
-               "%crwx------  1 nobody nobody %10"PRIu64" May  5 11:20 %s%\r\n",
+               "%crwx------  1 nobody nobody %10"PRIu64" May  5 11:20 %s\r\n",
                fde->fde_type == CONTENT_DIR ? 'd' : '-',
                fde->fde_stat.fs_size,
                rstr_get(fde->fde_filename));
