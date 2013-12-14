@@ -303,9 +303,7 @@ miner_spu_ctrl(void *aux)
     if(!m->m_running)
       break;
 
-    if(!submitted) 
-      goto cont;
-
+    goto cont;
   }
 
  out:
