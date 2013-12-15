@@ -178,7 +178,6 @@ main(int argc, char **argv)
 #if ENABLE_WEBPOPUP
   linux_webpopup_init();
 #endif
-  linux_init_monitors();
 
   add_xdg_paths();
 

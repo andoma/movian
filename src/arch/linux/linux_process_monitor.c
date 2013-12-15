@@ -38,10 +38,6 @@
 #include "arch/posix/posix.h"
 #include "arch/arch.h"
 
-#include "linux_process_monitor.h"
-
-
-
 /**
  *
  */
@@ -176,10 +172,12 @@ timercb(callout_t *c, void *aux)
 /**
  *
  */
-void
+static void
 linux_process_monitor_init(void)
 {
   p_sys = prop_create(prop_get_global(), "system");
   p_cpuroot = prop_create(prop_create(p_sys, "cpuinfo"), "cpus");
   timercb(NULL, NULL);
 }
+
+INITME(INIT_GROUP_API, linux_process_monitor_init);
