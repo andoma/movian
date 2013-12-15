@@ -294,6 +294,7 @@ ntfs_periodic(struct callout *c, void *opaque)
     ntfs_dev_t *d = &ntfs_devs[i];
 
     if(!r) {
+      d->hold_counter = 0;
       if(!d->inserted)
 	continue;
 
