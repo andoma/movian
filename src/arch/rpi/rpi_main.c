@@ -652,8 +652,6 @@ main(int argc, char **argv)
 
   rpi_cec_init();
 
-  linux_init_monitors();
-
   extern int posix_set_thread_priorities;
 
   if(!posix_set_thread_priorities) {
