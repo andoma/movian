@@ -132,7 +132,7 @@ const static action_type_t *btn_to_action[256] = {
   [CEC_User_Control_Rewind]      = AVEC(ACTION_SEEK_BACKWARD),
   [CEC_User_Control_FastForward] = AVEC(ACTION_SEEK_FORWARD),
 
-  [CEC_User_Control_Rewind]      = AVEC(ACTION_SKIP_BACKWARD),
+  [CEC_User_Control_Backward]    = AVEC(ACTION_SKIP_BACKWARD),
   [CEC_User_Control_Forward]     = AVEC(ACTION_SKIP_FORWARD),
 
   [CEC_User_Control_Record]      = AVEC(ACTION_RECORD),
