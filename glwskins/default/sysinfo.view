@@ -9,8 +9,9 @@
 }
 
 
-#define InfoLine(TITLE, VAL) {
+#define InfoLine(TITLE, VAL, HIDDEN=false) {
   widget(container_x, {
+    hidden: HIDDEN;
     spacing: 10;
     widget(label, {
       filterConstraintX: true;
@@ -84,7 +85,13 @@ widget(container_y, {
                    fmt("%d kB", $global.system.mem.systotal));
           InfoLine(_("System Free"),
                    fmt("%d kB", $global.system.mem.sysfree));
-
+          InfoLine(_("CPU Temp"),
+                   fmt("%d°C", $global.system.temp.cpu),
+		   isVoid($global.system.temp.cpu));
+          InfoLine(_("GPU Temp"),
+                   fmt("%d°C", $global.system.temp.gpu),
+		   isVoid($global.system.temp.gpu));
+	  
           cloner($global.system.cpuinfo.cpus, container_z, {
             InfoBar($self.name, $self.load)
           });

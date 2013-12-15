@@ -72,6 +72,7 @@ mftb(void)
 
 static prop_t *sysprop;
 static prop_t *memprop;
+static prop_t *tempprop;
 
 #define LOW_MEM_LOW_WATER  5 * 1024 * 1024
 #define LOW_MEM_HIGH_WATER 15 * 1024 * 1024
@@ -111,6 +112,11 @@ memlogger_fn(callout_t *co, void *aux)
   if(meminfo.avail > LOW_MEM_HIGH_WATER)
     low_mem_warning = 0;
 
+  uint32_t temp;
+  Lv2Syscall2(383, 0, (uint64_t)&temp); // CPU temp
+  prop_set(tempprop, "cpu", PROP_SET_INT, temp >> 24);
+  Lv2Syscall2(383, 1, (uint64_t)&temp); // RSX temp
+  prop_set(tempprop, "gpu", PROP_SET_INT, temp >> 24);
 }
 
 
@@ -510,6 +516,7 @@ main(int argc, char **argv)
 
   sysprop = prop_create(prop_get_global(), "system");
   memprop = prop_create(sysprop, "mem");
+  tempprop = prop_create(sysprop, "temp");
   callout_arm(&memlogger, memlogger_fn, NULL, 1);
 
 #if ENABLE_PS3_VDEC
