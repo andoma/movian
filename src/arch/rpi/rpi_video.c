@@ -1,6 +1,6 @@
 /*
- *  h264 passthrough decoder
- *  Copyright (C) 2013 Andreas Öman
+ *  Showtime Mediacenter
+ *  Copyright (C) 2007-2013 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,6 +14,9 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  This program is also available under a commercial proprietary license.
+ *  For more information, contact andreas@lonelycoder.com
  */
 
 #include <stdio.h>
@@ -89,6 +92,8 @@ rpi_codec_decode(struct media_codec *mc, struct video_decoder *vd,
 
   while(len > 0) {
     OMX_BUFFERHEADERTYPE *buf = omx_get_buffer(rvc->rvc_decoder);
+    if(buf == NULL)
+      return;
     buf->nOffset = 0;
     buf->nFilledLen = MIN(len, buf->nAllocLen);
     memcpy(buf->pBuffer, data, buf->nFilledLen);

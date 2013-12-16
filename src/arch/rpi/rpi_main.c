@@ -1,6 +1,6 @@
 /*
- *  Showtime mediacenter
- *  Copyright (C) 2007-2012 Andreas Öman
+ *  Showtime Mediacenter
+ *  Copyright (C) 2007-2013 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,6 +14,9 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  This program is also available under a commercial proprietary license.
+ *  For more information, contact andreas@lonelycoder.com
  */
 
 #include <sys/types.h>
@@ -57,6 +60,7 @@ DISPMANX_DISPLAY_HANDLE_T dispman_display;
 
 int display_status = DISPLAY_STATUS_ON;
 int cec_we_are_not_active;
+extern int auto_ui_shutdown;
 static int runmode;
 
 
@@ -66,7 +70,9 @@ static int runmode;
 int64_t
 showtime_get_avtime(void)
 {
-  return showtime_get_ts();
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return (int64_t)tv.tv_sec * 1000000LL + tv.tv_usec;
 }
 
 
@@ -391,6 +397,9 @@ ui_create(void)
 static int
 ui_should_run(void)
 {
+  if(!auto_ui_shutdown)
+    return 1;
+
   if(cec_we_are_not_active)
     return 0;
 
@@ -642,8 +651,6 @@ main(int argc, char **argv)
   showtime_init();
 
   rpi_cec_init();
-
-  linux_init_monitors();
 
   extern int posix_set_thread_priorities;
 

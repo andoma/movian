@@ -1,6 +1,6 @@
 /*
- *  Showtime UPNP
- *  Copyright (C) 2010 Andreas Öman
+ *  Showtime Mediacenter
+ *  Copyright (C) 2007-2013 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,6 +14,9 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  This program is also available under a commercial proprietary license.
+ *  For more information, contact andreas@lonelycoder.com
  */
 #include <stdio.h>
 
@@ -756,7 +759,7 @@ browse_directory(upnp_browse_t *ub, const char *title)
 static void
 minidlna_get_srt(const char *url, htsmsg_t *sublist)
 {
-  struct http_header_list in, out;
+  struct http_header_list out;
   const char *s;
 
   LIST_INIT(&out);
@@ -775,7 +778,6 @@ minidlna_get_srt(const char *url, htsmsg_t *sublist)
       htsmsg_add_msg(sublist, NULL, sub);
     }
   }
-  http_headers_free(&in);
   http_headers_free(&out);
 }
 

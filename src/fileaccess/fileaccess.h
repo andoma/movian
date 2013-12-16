@@ -1,6 +1,6 @@
 /*
- *  File access, abstract interface for accessing files
- *  Copyright (C) 2008 Andreas Öman
+ *  Showtime Mediacenter
+ *  Copyright (C) 2007-2013 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,6 +14,9 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  This program is also available under a commercial proprietary license.
+ *  For more information, contact andreas@lonelycoder.com
  */
 
 #ifndef FILEACCESS_H
@@ -321,6 +324,9 @@ int http_client_oauth(struct http_auth_req *har,
 int http_client_rawauth(struct http_auth_req *har, const char *str);
 
 void http_client_set_header(struct http_auth_req *har, const char *key,
+			    const char *value);
+
+void http_client_set_cookie(struct http_auth_req *har, const char *key,
 			    const char *value);
 
 void http_client_fail_req(struct http_auth_req *har, const char *reason);

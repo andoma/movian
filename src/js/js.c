@@ -1,8 +1,6 @@
 /*
- *  Showtime mediacenter
- *  Copyright (C) 2007-2009 Andreas Öman
- *  Copyright (C) 2011-2012 Fábio Ferreira
- *  Copyright (C) 2012 Henrik Andersson
+ *  Showtime Mediacenter
+ *  Copyright (C) 2007-2013 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,6 +14,9 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  This program is also available under a commercial proprietary license.
+ *  For more information, contact andreas@lonelycoder.com
  */
 
 #include <sys/types.h>

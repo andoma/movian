@@ -1,6 +1,6 @@
 /*
- *  Functions for manipulating HTS messages
- *  Copyright (C) 2007 Andreas Öman
+ *  Showtime Mediacenter
+ *  Copyright (C) 2007-2013 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,6 +14,9 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  This program is also available under a commercial proprietary license.
+ *  For more information, contact andreas@lonelycoder.com
  */
 
 #ifndef HTSMSG_H_
@@ -317,5 +320,7 @@ htsmsg_t *htsmsg_get_map_in_list(htsmsg_t *m, int num);
 htsmsg_t *htsmsg_get_map_by_field_if_name(htsmsg_field_t *f, const char *name);
 
 const char *htsmsg_get_cdata(htsmsg_t *m, const char *field);
+
+int htsmsg_get_children(htsmsg_t *msg);
 
 #endif /* HTSMSG_H_ */

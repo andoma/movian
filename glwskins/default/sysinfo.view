@@ -1,9 +1,54 @@
 #import "skin://common.view"
 
+
+
 #define InfoLabel() {
   shadow: true;
   outline: true;
   color: 0.6;
+}
+
+
+#define InfoLine(TITLE, VAL, HIDDEN=false) {
+  widget(container_x, {
+    hidden: HIDDEN;
+    spacing: 10;
+    widget(label, {
+      filterConstraintX: true;
+      InfoLabel();
+      align: right;
+      caption: TITLE + ":";
+    });
+    widget(label, {
+      weight: 2;
+      filterConstraintX: true;
+      TextStyleItem();
+      caption: VAL;
+    });
+  });
+}
+
+#define InfoBar(TITLE, VAL) {
+  widget(container_x, {
+    spacing: 10;
+    widget(label, {
+      filterConstraintX: true;
+      InfoLabel();
+      align: right;
+      caption: TITLE + ":";
+    });
+
+    widget(container_z, {
+      widget(quad, {
+        color: 0.4;
+      });
+      widget(bar, {
+        color1: 1;
+        color2: 1;
+	fill: VAL;
+      });
+    });
+  });
 }
 
 
@@ -17,15 +62,15 @@ widget(container_y, {
       border: 56;
       borderOnly: true;
       padding: -56;
-      
+
       widget(backdrop, {
 	alphaSelf: 0.85;
 	source: "skin://graphics/popupmenu2.png";
 	border: 56;
 	color: 0;
-	
+
 	widget(container_y, {
-	  
+
 	  widget(label, {
 	    TextStyleItem();
 	    caption: fmt("Showtime %s", $global.showtime.version);
@@ -33,25 +78,24 @@ widget(container_y, {
 	  });
 
 	  VerticalSeparator();
+
+          InfoLine(_("Memory usage"),
+                   fmt("%d kB", $global.system.mem.activeMem));
+          InfoLine(_("System Total"),
+                   fmt("%d kB", $global.system.mem.systotal));
+          InfoLine(_("System Free"),
+                   fmt("%d kB", $global.system.mem.sysfree));
+          InfoLine(_("CPU Temp"),
+                   fmt("%d°C", $global.system.temp.cpu),
+		   isVoid($global.system.temp.cpu));
+          InfoLine(_("GPU Temp"),
+                   fmt("%d°C", $global.system.temp.gpu),
+		   isVoid($global.system.temp.gpu));
 	  
-	  widget(container_x, {
-	    
-	    spacing: 10;
-	    
-	    widget(container_y, {
-	      widget(label, {
-		InfoLabel();
-		align: right;
-		caption: _("Memory usage:");
-	      });
-	    });
-	    widget(container_y, {
-	      widget(label, {
-		TextStyleItem();
-		caption: fmt("%d kB", $global.system.mem.activeMem);
-	      });
-	    });
-	  });
+          cloner($global.system.cpuinfo.cpus, container_z, {
+            InfoBar($self.name, $self.load)
+          });
+
 	});
       });
     });

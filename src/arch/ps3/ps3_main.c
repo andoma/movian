@@ -1,7 +1,6 @@
 /*
- *  Arch specifics for PS3
- *
- *  Copyright (C) 2011 Andreas Öman
+ *  Showtime Mediacenter
+ *  Copyright (C) 2007-2013 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,6 +14,9 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  This program is also available under a commercial proprietary license.
+ *  For more information, contact andreas@lonelycoder.com
  */
 
 #include <sys/types.h>
@@ -70,9 +72,10 @@ mftb(void)
 
 static prop_t *sysprop;
 static prop_t *memprop;
+static prop_t *tempprop;
 
-#define LOW_MEM_LOW_WATER  20 * 1024 * 1024
-#define LOW_MEM_HIGH_WATER 30 * 1024 * 1024
+#define LOW_MEM_LOW_WATER  5 * 1024 * 1024
+#define LOW_MEM_HIGH_WATER 15 * 1024 * 1024
 
 
 static void
@@ -109,6 +112,11 @@ memlogger_fn(callout_t *co, void *aux)
   if(meminfo.avail > LOW_MEM_HIGH_WATER)
     low_mem_warning = 0;
 
+  uint32_t temp;
+  Lv2Syscall2(383, 0, (uint64_t)&temp); // CPU temp
+  prop_set(tempprop, "cpu", PROP_SET_INT, temp >> 24);
+  Lv2Syscall2(383, 1, (uint64_t)&temp); // RSX temp
+  prop_set(tempprop, "gpu", PROP_SET_INT, temp >> 24);
 }
 
 
@@ -508,6 +516,7 @@ main(int argc, char **argv)
 
   sysprop = prop_create(prop_get_global(), "system");
   memprop = prop_create(sysprop, "mem");
+  tempprop = prop_create(sysprop, "temp");
   callout_arm(&memlogger, memlogger_fn, NULL, 1);
 
 #if ENABLE_PS3_VDEC

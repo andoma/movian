@@ -1,6 +1,6 @@
 /*
- *  Networking under POSIX
- *  Copyright (C) 2007-2008 Andreas Öman
+ *  Showtime Mediacenter
+ *  Copyright (C) 2007-2013 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,6 +14,9 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  This program is also available under a commercial proprietary license.
+ *  For more information, contact andreas@lonelycoder.com
  */
 
 #include "config.h"
@@ -254,7 +257,7 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 
       struct pollfd pfd;
       pfd.fd = fd;
-      pfd.events = POLLOUT;
+      pfd.events = POLLOUT | POLLERR;
       pfd.revents = 0;
 
       r = netPoll(&pfd, 1, timeout);
@@ -268,6 +271,12 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
       if(r == -1) {
 	snprintf(errbuf, errbufsize, "poll() error: %s", 
 		 strerror(net_errno));
+	netClose(fd);
+	return NULL;
+      }
+
+      if(pfd.revents & POLLERR) {
+	snprintf(errbuf, errbufsize, "Connection refused");
 	netClose(fd);
 	return NULL;
       }

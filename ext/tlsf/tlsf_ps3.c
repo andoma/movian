@@ -9,7 +9,7 @@
 #include "ext/tlsf/tlsf.h"
 #include "networking/http_server.h"
 
-#define GPOOL_SIZE (96 * 1024 * 1024)
+#define GPOOL_SIZE (80 * 1024 * 1024)
 
 static int memstats(http_connection_t *hc, const char *remain, void *opaque,
 		    http_cmd_t method);

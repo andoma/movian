@@ -1,6 +1,6 @@
 /*
- *  HTTP file access
- *  Copyright (C) 2008 Andreas Öman
+ *  Showtime Mediacenter
+ *  Copyright (C) 2007-2013 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,6 +14,9 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  This program is also available under a commercial proprietary license.
+ *  For more information, contact andreas@lonelycoder.com
  */
 #include "config.h"
 #include <stdlib.h>
@@ -632,8 +635,10 @@ http_cookie_set(char *cookie, http_file_t *hf)
  */
 static void
 http_cookie_append(const char *req_host, const char *req_path,
-		   struct http_header_list *headers)
+		   struct http_header_list *headers,
+		   struct http_header_list *extra_cookies)
 {
+  http_header_t *hh;
   http_cookie_t *hc;
   htsbuf_queue_t hq;
   const char *s = "";
@@ -650,6 +655,9 @@ http_cookie_append(const char *req_host, const char *req_path,
     if(validate_cookie(req_host, req_path, hc->hc_domain, hc->hc_path))
       continue;
 
+    if(http_header_get(extra_cookies, hc->hc_name))
+      continue;
+
     htsbuf_append(&hq, s, strlen(s));
     htsbuf_append(&hq, hc->hc_name, strlen(hc->hc_name));
     htsbuf_append(&hq, "=", 1);
@@ -658,6 +666,14 @@ http_cookie_append(const char *req_host, const char *req_path,
   }
 
   hts_mutex_unlock(&http_cookies_mutex);
+
+  LIST_FOREACH(hh, extra_cookies, hh_link) {
+    htsbuf_append(&hq, s, strlen(s));
+    htsbuf_append(&hq, hh->hh_key, strlen(hh->hh_key));
+    htsbuf_append(&hq, "=", 1);
+    htsbuf_append(&hq, hh->hh_value, strlen(hh->hh_value));
+    s="; ";
+  }
 
   if(hq.hq_size == 0)
     return;
@@ -751,6 +767,7 @@ struct http_auth_req {
   const char **har_parameters;
   const http_file_t *har_hf;
   struct http_header_list *har_headers;
+  struct http_header_list *har_cookies;
   char *har_errbuf;
   size_t har_errlen;
   int har_force_fail;
@@ -940,6 +957,17 @@ http_client_set_header(struct http_auth_req *har, const char *key,
  *
  */
 void
+http_client_set_cookie(struct http_auth_req *har, const char *key,
+		       const char *value)
+{
+  http_header_add(har->har_cookies, key, value, 0);
+}
+
+
+/**
+ *
+ */
+void
 http_client_fail_req(struct http_auth_req *har, const char *reason)
 {
   snprintf(har->har_errbuf, har->har_errlen, "%s", reason);
@@ -1030,7 +1058,9 @@ http_headers_send(htsbuf_queue_t *q, struct http_header_list *def,
  */
 static int
   __attribute__ ((warn_unused_result))
-http_headers_auth(struct http_header_list *headers, http_file_t *hf,
+http_headers_auth(struct http_header_list *headers,
+		  struct http_header_list *cookies,
+		  http_file_t *hf,
 		  const char *method, const char **parameters,
                   char *errbuf, size_t errlen)
 {
@@ -1044,14 +1074,17 @@ http_headers_auth(struct http_header_list *headers, http_file_t *hf,
   har.har_method = method;
   har.har_parameters = parameters;
   har.har_headers = headers;
+  har.har_cookies = cookies;
   har.har_hf = hf;
   har.har_errbuf = errbuf;
   har.har_errlen = errlen;
   har.har_force_fail = 0;
 
   if(!js_http_auth_try(hf->hf_url, &har)) {
-    if(har.har_force_fail)
+    if(har.har_force_fail) {
+      http_headers_free(cookies);
       return 1;
+    }
     return 0;
   }
 
@@ -1582,6 +1615,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
   int redircount = 0;
   int nohead; // Set if server can't handle HEAD method
   struct http_header_list headers;
+  struct http_header_list cookies;
 
   reconnect:
 
@@ -1605,24 +1639,28 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
  again:
 
   http_headers_init(&headers, hf);
+  LIST_INIT(&cookies);
 
   if(hf->hf_streaming) {
     http_send_verb(&q, hf, "GET");
-    if(http_headers_auth(&headers, hf, "GET", NULL, errbuf, errlen))
+    if(http_headers_auth(&headers, &cookies, hf, "GET", NULL, errbuf, errlen))
       return -1;
     tcp_huge_buffer(hf->hf_connection->hc_tc);
   } else if(nohead) {
     http_send_verb(&q, hf, "GET");
     htsbuf_qprintf(&q, "Range: bytes=0-1\r\n");
-    if(http_headers_auth(&headers, hf, "GET", NULL, errbuf, errlen))
+    if(http_headers_auth(&headers, &cookies, hf, "GET", NULL, errbuf, errlen))
       return -1;
   } else {
     http_send_verb(&q, hf, "HEAD");
-    if(http_headers_auth(&headers, hf, "HEAD", NULL, errbuf, errlen))
+    if(http_headers_auth(&headers, &cookies, hf, "HEAD", NULL, errbuf, errlen))
       return -1;
   }
 
-  http_cookie_append(hf->hf_connection->hc_hostname, hf->hf_path, &headers);
+  http_cookie_append(hf->hf_connection->hc_hostname, hf->hf_path, &headers,
+		     &cookies);
+  http_headers_free(&cookies);
+
   http_headers_send(&q, &headers, NULL, NULL);
 
 
@@ -1854,7 +1892,7 @@ http_index_fetch(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen)
   htsbuf_queue_t q;
   char *buf;
   int redircount = 0;
-  struct http_header_list headers;
+  struct http_header_list headers, cookies;
 
 reconnect:
   if(http_connect(hf, errbuf, errlen))
@@ -1867,9 +1905,13 @@ again:
   http_send_verb(&q, hf, "GET");
 
   http_headers_init(&headers, hf);
-  if(http_headers_auth(&headers, hf, "GET", NULL, errbuf, errlen))
+  LIST_INIT(&cookies);
+
+  if(http_headers_auth(&headers, &cookies, hf, "GET", NULL, errbuf, errlen))
     return -1;
-  http_cookie_append(hf->hf_connection->hc_hostname, hf->hf_path, &headers);
+  http_cookie_append(hf->hf_connection->hc_hostname, hf->hf_path, &headers,
+		     &cookies);
+  http_headers_free(&cookies);
   http_headers_send(&q, &headers, NULL, NULL);
 
   tcp_write_queue(hf->hf_connection->hc_tc, &q);
@@ -2000,7 +2042,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
   char chunkheader[100];
   size_t totsize = 0; // Total data read
   size_t read_size;   // Amount of bytes to read in one round
-  struct http_header_list headers;
+  struct http_header_list headers, cookies;
   char errbuf[512];
   if(size == 0)
     return 0;
@@ -2038,7 +2080,9 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
       http_send_verb(&q, hf, "GET");
 
       http_headers_init(&headers, hf);
-      if(http_headers_auth(&headers, hf, "GET", NULL, errbuf, sizeof(errbuf))) {
+      LIST_INIT(&cookies);
+      if(http_headers_auth(&headers, &cookies, hf, "GET", NULL,
+			   errbuf, sizeof(errbuf))) {
         http_detach(hf, 0, errbuf);
         return -1;
       }
@@ -2068,7 +2112,8 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
       if(range[0])
 	htsbuf_qprintf(&q, "Range: %s\r\n", range);
 
-      http_cookie_append(hc->hc_hostname, hf->hf_path, &headers);
+      http_cookie_append(hc->hc_hostname, hf->hf_path, &headers, &cookies);
+      http_headers_free(&cookies);
       http_headers_send(&q, &headers, NULL, NULL);
       if(hf->hf_debug)
 	htsbuf_hexdump(&q, "HTTP");
@@ -2695,7 +2740,7 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
   int redircount = 0;
   char err0[128];
   int i;
-  struct http_header_list headers;
+  struct http_header_list headers, cookies;
 
   for(i = 0; i < 5; i++) {
 
@@ -2713,11 +2758,15 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
 		   hf->hf_path,
 		   hf->hf_version,
 		   fd != NULL ? 1 : 0);
-
-    if(http_headers_auth(&headers, hf, "PROPFIND", NULL, errbuf, errlen))
+    LIST_INIT(&cookies);
+    if(http_headers_auth(&headers, &cookies, 
+			 hf, "PROPFIND", NULL, errbuf, errlen))
       return -1;
 
-    http_cookie_append(hf->hf_connection->hc_hostname, hf->hf_path, &headers);
+    http_cookie_append(hf->hf_connection->hc_hostname, hf->hf_path, &headers,
+		       &cookies);
+    http_headers_free(&cookies);
+
     http_headers_send(&q, &headers, NULL, NULL);
 
     tcp_write_queue(hf->hf_connection->hc_tc, &q);
@@ -3121,7 +3170,7 @@ http_req(const char *url, ...)
   const char **arguments = NULL;
   struct http_header_list *headers_out = NULL;
   const struct http_header_list *headers_in = NULL;
-  struct http_header_list headers_in2;
+  struct http_header_list headers_in2, cookies;
   const char *key, *value;
   struct http_req_xarg *hrx;
   char tmpbuf[32];
@@ -3281,15 +3330,20 @@ http_req(const char *url, ...)
   if(postcontenttype != NULL)
     http_header_add(&headers, "Content-Type", postcontenttype, 0);
 
+  LIST_INIT(&cookies);
+
   if(!(flags & FA_DISABLE_AUTH)) {
-    if(http_headers_auth(&headers, hf, m, arguments, errbuf, errlen)) {
+    if(http_headers_auth(&headers, &cookies, hf, m, arguments,
+			 errbuf, errlen)) {
       htsbuf_queue_flush(&q);
       r = -1;
       goto cleanup;
     }
   }
 
-  http_cookie_append(hc->hc_hostname, hf->hf_path, &headers);
+  http_cookie_append(hc->hc_hostname, hf->hf_path, &headers, &cookies);
+  http_headers_free(&cookies);
+
   http_headers_send(&q, &headers, headers_in, &headers_in2);
 
   if(hf->hf_debug)

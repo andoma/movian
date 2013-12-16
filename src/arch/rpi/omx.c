@@ -1,3 +1,23 @@
+/*
+ *  Showtime Mediacenter
+ *  Copyright (C) 2007-2013 Lonelycoder AB
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  This program is also available under a commercial proprietary license.
+ *  For more information, contact andreas@lonelycoder.com
+ */
 #include <assert.h>
 #include <string.h>
 
@@ -266,7 +286,10 @@ omx_get_buffer_locked(omx_component_t *oc)
   OMX_BUFFERHEADERTYPE *buf;
 
   while((buf = oc->oc_avail) == NULL)
-    hts_cond_wait(oc->oc_avail_cond, oc->oc_avail_mtx);
+    if(hts_cond_wait_timeout(oc->oc_avail_cond, oc->oc_avail_mtx, 3000)) {
+      TRACE(TRACE_ERROR, "OMX", "Timeout while waiting for buffer");
+      return NULL;
+    }
   oc->oc_avail = buf->pAppPrivate;
   oc->oc_inflight_buffers++;
   return buf;

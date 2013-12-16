@@ -1,6 +1,6 @@
 /*
- *  Notifications
- *  Copyright (C) 2009 Andreas Öman
+ *  Showtime Mediacenter
+ *  Copyright (C) 2007-2013 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,6 +14,9 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  This program is also available under a commercial proprietary license.
+ *  For more information, contact andreas@lonelycoder.com
  */
 
 #include <stdarg.h>
@@ -298,10 +301,10 @@ text_dialog(const char *message, char **answer, int flags)
  *
  */
 static void
-dismis_news(const char *message)
+dismis_news(const char *id)
 {
-  TRACE(TRACE_DEBUG, "news", "Dismissed news: %s", message);
-  htsmsg_add_u32(dismissed_news_out, message, 1);
+  TRACE(TRACE_DEBUG, "news", "Dismissed news: %s", id);
+  htsmsg_add_u32(dismissed_news_out, id, 1);
   htsmsg_store_save(dismissed_news_out, "dismissed_news");
 }
 
@@ -327,9 +330,9 @@ news_sink(void *opaque, prop_event_t event, ...)
     e = va_arg(ap, event_t *);
     if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
       if(!strcmp(e->e_payload, "dismiss")) {
-	rstr_t *message = prop_get_string(p, "message", NULL);
-	dismis_news(rstr_get(message));
-	rstr_release(message);
+	rstr_t *id = prop_get_string(p, "id", NULL);
+	dismis_news(rstr_get(id));
+	rstr_release(id);
 	prop_destroy(opaque);
       }
     }
@@ -347,7 +350,8 @@ news_sink(void *opaque, prop_event_t event, ...)
  *
  */
 prop_t *
-add_news(const char *message, const char *location, const char *caption)
+add_news(const char *id, const char *message,
+	 const char *location, const char *caption)
 {
   prop_t *p, *ret = NULL;
 
@@ -357,12 +361,13 @@ add_news(const char *message, const char *location, const char *caption)
 
   if(dismissed_news_out != NULL) {
 
-    if(htsmsg_get_u32_or_default(dismissed_news_in, message, 0)) {
-      dismis_news(message);
+    if(htsmsg_get_u32_or_default(dismissed_news_in, id, 0)) {
+      dismis_news(id);
     } else {
       
       p = prop_create_root(NULL);
       prop_set_string(prop_create(p, "message"), message);
+      prop_set_string(prop_create(p, "id"), id);
       prop_set_string(prop_create(p, "location"), location);
       prop_set_string(prop_create(p, "caption"), caption);
 		       

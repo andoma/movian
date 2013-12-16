@@ -71,7 +71,7 @@ widget(container_y, {
 
   cloner($global.news, container_x, {
     spacing: $ui.size;
-    padding: [$ui.size*2, 0];
+    padding: [$ui.size*2, $ui.size / 3];
 
     widget(icon, {
       source: "dataroot://resources/svg/Alert.svg";

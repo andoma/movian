@@ -1,6 +1,6 @@
 /*
- *  Showtime mediacenter
- *  Copyright (C) 2007-2013 Andreas Öman
+ *  Showtime Mediacenter
+ *  Copyright (C) 2007-2013 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,6 +14,9 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  This program is also available under a commercial proprietary license.
+ *  For more information, contact andreas@lonelycoder.com
  */
 
 #include "showtime.h"
@@ -29,6 +32,11 @@
 #include <interface/vchiq_arm/vchiq_if.h>
 
 #include "rpi.h"
+
+static int fixed_la;
+static int control_input;
+
+int auto_ui_shutdown;
 
 #define CEC_VENDOR_ID_LG 0xe091
 
@@ -124,7 +132,7 @@ const static action_type_t *btn_to_action[256] = {
   [CEC_User_Control_Rewind]      = AVEC(ACTION_SEEK_BACKWARD),
   [CEC_User_Control_FastForward] = AVEC(ACTION_SEEK_FORWARD),
 
-  [CEC_User_Control_Rewind]      = AVEC(ACTION_SKIP_BACKWARD),
+  [CEC_User_Control_Backward]    = AVEC(ACTION_SKIP_BACKWARD),
   [CEC_User_Control_Forward]     = AVEC(ACTION_SKIP_FORWARD),
 
   [CEC_User_Control_Record]      = AVEC(ACTION_RECORD),
@@ -206,6 +214,7 @@ send_active_source(int is_reply)
 	    physical_address);
   vc_cec_send_ActiveSource(physical_address, is_reply);
   cec_we_are_not_active = 0;
+  CEC_DEBUG("We are active");
   active_physical_address = physical_address;
 }
 
@@ -304,9 +313,31 @@ handle_ActiveSource(const VC_CEC_MESSAGE_T *msg)
   active_physical_address = (msg->payload[1] << 8) | msg->payload[2];
   cec_we_are_not_active = active_physical_address != physical_address;
 
+
   CEC_DEBUG("Currently active address: 0x%x. That is %sus", 
 	    active_physical_address,
 	    cec_we_are_not_active ? "not " : "");
+
+  CEC_DEBUG("We are %sactive", cec_we_are_not_active ? "not " : "");
+}
+
+
+/**
+ *
+ */
+static void
+handle_routing_change(const VC_CEC_MESSAGE_T *msg)
+{
+  uint16_t last = (msg->payload[1] << 8) | msg->payload[2];
+  uint16_t cur  = (msg->payload[3] << 8) | msg->payload[4];
+  cec_we_are_not_active = cur != physical_address;
+
+  active_physical_address = cur;
+
+  CEC_DEBUG("Routing change 0x%x -> 0x%x. That is %sus", 
+	    last, cur, cec_we_are_not_active ? "not " : "");
+
+  CEC_DEBUG("We are %sactive", cec_we_are_not_active ? "not " : "");
 }
 
 /**
@@ -343,13 +374,16 @@ lginit()
 
   give_device_power_status(CEC_TV_ADDRESS,CEC_POWER_STATUS_ON);
 
-  msg[0] = CEC_Opcode_ImageViewOn;
-  cec_send_msg(CEC_TV_ADDRESS, msg, 1, VC_FALSE);
 
-  msg[0] = CEC_Opcode_ActiveSource;
-  msg[1] = physical_address >> 8;
-  msg[2] = physical_address;
-  cec_send_msg(CEC_BROADCAST_ADDR, msg, 3, VC_FALSE);
+  if(control_input) {
+    msg[0] = CEC_Opcode_ImageViewOn;
+    cec_send_msg(CEC_TV_ADDRESS, msg, 1, VC_FALSE);
+
+    msg[0] = CEC_Opcode_ActiveSource;
+    msg[1] = physical_address >> 8;
+    msg[2] = physical_address;
+    cec_send_msg(CEC_BROADCAST_ADDR, msg, 3, VC_FALSE);
+  }
 }
 
 
@@ -391,7 +425,7 @@ handle_vendor_command_lg(const VC_CEC_MESSAGE_T *msg)
   case SL_COMMAND_UNKNOWN_01:
     response[0] = CEC_Opcode_VendorCommand;
     response[1] = 0x02;
-    response[2] = 0x01;
+    response[2] = 0x03;
     cec_send_msg(msg->initiator, response, 3, VC_TRUE);
     break;
 
@@ -401,14 +435,17 @@ handle_vendor_command_lg(const VC_CEC_MESSAGE_T *msg)
     response[2] = CEC_DeviceType_Tuner;
     vc_cec_send_message(msg->initiator, response, 3, VC_TRUE);
 
-    response[0] = CEC_Opcode_ImageViewOn;
-    vc_cec_send_message(CEC_TV_ADDRESS, response, 1, VC_FALSE);
 
-    response[0] = CEC_Opcode_ActiveSource;
-    response[1] = physical_address >> 8;
-    response[2] = physical_address;
-    vc_cec_send_message(CEC_BROADCAST_ADDR, response, 3, VC_FALSE);
-    
+    if(control_input) {
+      response[0] = CEC_Opcode_ImageViewOn;
+      vc_cec_send_message(CEC_TV_ADDRESS, response, 1, VC_FALSE);
+
+      response[0] = CEC_Opcode_ActiveSource;
+      response[1] = physical_address >> 8;
+      response[2] = physical_address;
+      vc_cec_send_message(CEC_BROADCAST_ADDR, response, 3, VC_FALSE);
+    }
+
     vc_cec_set_osd_name("Showtime");
     break;
   }  
@@ -493,6 +530,10 @@ cec_callback(void *callback_data, uint32_t param0, uint32_t param1,
       SetStreamPath(&msg);
       break;
 
+    case CEC_Opcode_RoutingChange:
+      handle_routing_change(&msg);
+      break;
+
     case CEC_Opcode_GivePhysicalAddress:
       vc_cec_report_physicalAddress(msg.initiator);
       break;
@@ -520,6 +561,7 @@ cec_callback(void *callback_data, uint32_t param0, uint32_t param1,
 
     case CEC_Opcode_Standby:
       cec_we_are_not_active = 1;
+      CEC_DEBUG("We are not active");
       break;
 
     case CEC_Opcode_DeviceVendorID:
@@ -566,7 +608,6 @@ tv_service_callback(void *callback_data, uint32_t reason,
   }
 }
 
-static int fixed_la;
 
 /**
  *
@@ -588,9 +629,31 @@ cec_thread(void *aux)
 
   htsmsg_t *s = htsmsg_store_load("cec") ?: htsmsg_create_map();
 
-  setting_create(SETTING_STRING, gconf.settings_dev,
+  prop_t *set;
+
+  set =
+    settings_add_dir(NULL, _p("Consumer Electronics Control"),
+		     "display", NULL,
+		     _p("Configure how Showtime communicates with your TV"),
+		     "settings:cec");
+
+  setting_create(SETTING_BOOL, set,
 		 SETTINGS_INITIAL_UPDATE,
-		 SETTING_TITLE_CSTR("CEC Logical address"),
+		 SETTING_TITLE_CSTR("Switch TV input source"),
+		 SETTING_WRITE_BOOL(&control_input),
+		 SETTING_HTSMSG("controlinput", s, "cec"),
+		 NULL);
+
+  setting_create(SETTING_BOOL, set,
+		 SETTINGS_INITIAL_UPDATE,
+		 SETTING_TITLE_CSTR("Shutdown UI when TV is off"),
+		 SETTING_WRITE_BOOL(&auto_ui_shutdown),
+		 SETTING_HTSMSG("auto_shutdown", s, "cec"),
+		 NULL);
+
+  setting_create(SETTING_STRING, set,
+		 SETTINGS_INITIAL_UPDATE,
+		 SETTING_TITLE_CSTR("Override CEC Logical address"),
 		 SETTING_CALLBACK(set_logical_address, NULL),
 		 SETTING_HTSMSG("logicaladdress", s, "cec"),
 		 NULL);

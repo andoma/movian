@@ -1,5 +1,6 @@
 /*
- *  Copyright (C) 2013 Andreas Öman
+ *  Showtime Mediacenter
+ *  Copyright (C) 2007-2013 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -13,6 +14,9 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  This program is also available under a commercial proprietary license.
+ *  For more information, contact andreas@lonelycoder.com
  */
 
 #include <stdio.h>
@@ -140,7 +144,8 @@ Java_com_showtimemediacenter_showtime_STCore_glwStep(JNIEnv *env,
   glw_root_t *gr = &agr->gr;
 
   glw_lock(gr);
-
+  gr->gr_can_externalize = 1;
+  gr->gr_externalize_cnt = 0;
   glViewport(0, 0, gr->gr_width, gr->gr_height);
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
   glw_prepare_frame(gr, 0);

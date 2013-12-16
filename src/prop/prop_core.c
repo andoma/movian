@@ -1,6 +1,6 @@
 /*
- *  Property trees
- *  Copyright (C) 2008 Andreas Öman
+ *  Showtime Mediacenter
+ *  Copyright (C) 2007-2013 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,6 +14,9 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  This program is also available under a commercial proprietary license.
+ *  For more information, contact andreas@lonelycoder.com
  */
 
 #include <stdio.h>
@@ -49,6 +52,8 @@ static void prop_unlink0(prop_t *p, prop_sub_t *skipme, const char *origin,
 			 struct prop_notify_queue *pnq);
 
 static void prop_flood_flag(prop_t *p, int set, int clr);
+
+static void prop_destroy_childs0(prop_t *p);
 
 #define PROPTRACE(fmt...) trace(TRACE_NO_PROP, TRACE_DEBUG, "prop", fmt)
 
@@ -1390,8 +1395,11 @@ prop_clean(prop_t *p)
     return 1;
   }
   switch(p->hp_type) {
-  case PROP_ZOMBIE:
   case PROP_DIR:
+    prop_destroy_childs0(p);
+    break;
+
+  case PROP_ZOMBIE:
     return 1;
 
   case PROP_VOID:
@@ -1892,19 +1900,28 @@ prop_destroy(prop_t *p)
 /**
  *
  */
+static void
+prop_destroy_childs0(prop_t *p)
+{
+  prop_t *c, *next;
+  for(c = TAILQ_FIRST(&p->hp_childs); c != NULL; c = next) {
+    next = TAILQ_NEXT(c, hp_parent_link);
+    prop_destroy_child(p, c);
+  }
+}
+
+
+/**
+ *
+ */
 void
 prop_destroy_childs(prop_t *p)
 {
   if(p == NULL)
     return;
   hts_mutex_lock(&prop_mutex);
-  if(p->hp_type == PROP_DIR) {
-    prop_t *c, *next;
-    for(c = TAILQ_FIRST(&p->hp_childs); c != NULL; c = next) {
-      next = TAILQ_NEXT(c, hp_parent_link);
-      prop_destroy_child(p, c);
-    }
-  }
+  if(p->hp_type == PROP_DIR)
+    prop_destroy_childs0(p);
   hts_mutex_unlock(&prop_mutex);
 }
 
@@ -2717,7 +2734,7 @@ prop_unsubscribe0(prop_sub_t *s)
     prop_originator_tracking_t *pot, *next;
     for(pot = s->hps_pots; pot != NULL; pot = next) {
       next = pot->pot_next;
-      prop_ref_dec(pot->pot_p);
+      prop_ref_dec_locked(pot->pot_p);
       pool_put(pot_pool, pot);
     }
   } else {
@@ -3534,8 +3551,9 @@ relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme,
       if(c->hp_name == NULL)
 	continue;
 
-      prop_t *z = prop_create0(src, c->hp_name, NULL, 0);
-      
+      prop_t *z = prop_create0(src, c->hp_name, NULL,
+                               c->hp_flags & PROP_NAME_NOT_ALLOCATED);
+
       if(c->hp_type == PROP_DIR)
 	prop_make_dir(z, skipme, origin);
 
@@ -3570,7 +3588,7 @@ restore_and_descend(prop_t *dst, prop_t *src, prop_sub_t *skipme,
       if(s->hps_origin != broken_link)
 	continue;
       
-      prop_ref_dec(s->hps_origin);
+      prop_ref_dec_locked(s->hps_origin);
       s->hps_origin = NULL;
 
     } else {
@@ -3590,7 +3608,7 @@ restore_and_descend(prop_t *dst, prop_t *src, prop_sub_t *skipme,
 
       do {
 	pot2 = pot->pot_next;
-	prop_ref_dec(pot->pot_p);
+	prop_ref_dec_locked(pot->pot_p);
 	pool_put(pot_pool, pot);
 	pot = pot2;
       } while(pot != NULL);
@@ -3616,7 +3634,8 @@ restore_and_descend(prop_t *dst, prop_t *src, prop_sub_t *skipme,
     if(c->hp_name == NULL)
       continue;
 
-    prop_t *z = prop_create0(dst, c->hp_name, NULL, 0);
+    prop_t *z = prop_create0(dst, c->hp_name, NULL,
+                             c->hp_flags & PROP_NAME_NOT_ALLOCATED);
 
     if(c->hp_type == PROP_DIR)
       prop_make_dir(z, skipme, origin);
