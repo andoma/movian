@@ -601,7 +601,13 @@ showtime_shutdown(int retcode)
 
   showtime_flush_caches();
 
-  if(!arch_stop_req()) {
+  TRACE(TRACE_DEBUG, "core", "Caches flushed");
+
+  int r = arch_stop_req();
+
+  TRACE(TRACE_DEBUG, "core", "arch stop=%d", r);
+
+  if(!r) {
     // If arch_stop_req() returns -1 it will not actually
     // exit showtime but rather suspend the UI and turn off HDMI ,etc
     // Typically used on some targets where we want to enter a 

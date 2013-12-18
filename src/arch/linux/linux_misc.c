@@ -108,3 +108,17 @@ linux_check_capabilities(void)
     posix_set_thread_priorities = 1;
   }
 }
+
+
+/**
+ *
+ */
+void
+arch_sync_path(const char *path)
+{
+  int fd = open(path, O_RDONLY);
+  if(fd == -1)
+    return;
+  syscall(SYS_syncfs, fd);
+  close(fd);
+}

@@ -25,6 +25,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "showtime.h"
 #include "upgrade.h"
@@ -373,7 +374,8 @@ attempt_upgrade(int accept_patch)
   TRACE(TRACE_DEBUG, "upgrade", "Verifying SHA-1 of %d bytes",
         (int)b->b_size);
 
-  prop_set_string(upgrade_status, "install");
+
+  prop_set_string(upgrade_status, "verify");
 
   int match;
 
@@ -393,38 +395,98 @@ attempt_upgrade(int accept_patch)
     return -1;
   }
 
-  TRACE(TRACE_INFO, "upgrade", "Replacing %s with %d bytes received",
-	fname, (int)b->b_size);
+  prop_set_string(upgrade_status, "install");
 
-  if(unlink(fname)) {
-    if(gconf.upgrade_path == NULL) {
-      install_error("Unlink failed");
-      buf_release(b);
-      return -1;
+  prop_set(upgrade_root, "size", PROP_SET_INT, b->b_size);
+  prop_set_float(upgrade_progress, 0);
+
+  const char *instpath;
+
+  int overwrite = 1;
+#ifdef STOS
+  overwrite = 0;
+#endif
+
+  if(overwrite) {
+
+    if(unlink(fname)) {
+      if(gconf.upgrade_path == NULL) {
+	install_error("Unlink failed");
+	buf_release(b);
+	return -1;
+      }
+    } else {
+      TRACE(TRACE_DEBUG, "upgrade", "Executable removed, rewriting");
     }
+
+    instpath = fname;
+
   } else {
-    TRACE(TRACE_DEBUG, "upgrade", "Executable removed, rewriting");
+
+    char dlpath[PATH_MAX];
+    snprintf(dlpath, sizeof(dlpath), "%s.tmp", fname);
+    instpath = dlpath;
+
+
   }
 
-  fd = open(fname, O_CREAT | O_RDWR, 0777);
+  TRACE(TRACE_INFO, "upgrade", "Writing %s from %d bytes received",
+	instpath, (int)b->b_size);
+
+  int flags = O_CREAT | O_RDWR;
+#ifdef STOS
+  flags |= O_SYNC;
+#endif
+
+  fd = open(instpath, flags, 0777);
   if(fd == -1) {
     install_error("Unable to open file");
     buf_release(b);
     return -1;
   }
 
-  int fail = write(fd, b->b_ptr, b->b_size) != b->b_size;
-  fail |= !!close(fd);
+
+  int len = b->b_size;
+  void *ptr = b->b_ptr;
+
+
+  while(len > 0) {
+    int to_write = MIN(len, 65536);
+    r = write(fd, ptr, to_write);
+    if(r != to_write) {
+      install_error(strerror(errno));
+      close(fd);
+      unlink(instpath);
+      buf_release(b);
+      return -1;
+    }
+
+    len -= to_write;
+    ptr += to_write;
+    prop_set_float(upgrade_progress,
+		   (float)(b->b_size - len) / (float)b->b_size);
+  }
+
   buf_release(b);
 
-#ifdef STOS
-  sync();
-#endif
-
-  if(fail) {
-    install_error("Unable to write to file");
+  if(close(fd)) {
+    install_error(strerror(errno));
+    unlink(instpath);
     return -1;
   }
+
+  if(!overwrite) {
+    TRACE(TRACE_INFO, "upgrade", "Renaming %s -> %s", instpath, fname);
+    if(rename(instpath, fname)) {
+      install_error(strerror(errno));
+      unlink(instpath);
+      return -1;
+    }
+  }
+
+#ifdef STOS
+  arch_sync_path(fname);
+#endif
 
   TRACE(TRACE_INFO, "upgrade", "All done, restarting");
   prop_set_string(upgrade_status, "countdown");

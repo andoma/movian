@@ -36,7 +36,7 @@
 #include "htsmsg_json.h"
 #include "htsmsg_store.h"
 #include "misc/callout.h"
-
+#include "arch/arch.h"
 #define SETTINGS_STORE_DELAY 2 // seconds
 
 LIST_HEAD(pending_store_list, pending_store);
@@ -177,8 +177,9 @@ htsmsg_store_flush(void)
     pending_store_destroy(ps);
   }
   hts_mutex_unlock(&pending_store_mutex);
+
 #ifdef STOS
-  sync();
+  arch_sync_path(showtime_settings_path);
 #endif
 }
 
