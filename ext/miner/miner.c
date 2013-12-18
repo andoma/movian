@@ -297,8 +297,6 @@ miner_spu_ctrl(void *aux)
     ts /= 1000000;
     if(ts == 0)
       ts = 1;
-    TRACE(TRACE_DEBUG, "SPUMINER", "%d hashes / second",
-	  (int)(hashes_done / ts));
 
     if(!m->m_running)
       break;
