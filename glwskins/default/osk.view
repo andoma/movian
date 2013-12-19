@@ -62,6 +62,7 @@ $view.shifted = $view.shift ^^ $view.caps;
 
 widget(container_y, {
   onEvent(cancel, deliverEvent($ui.osk.eventSink, "Cancel"));
+  onEvent(back,   deliverEvent($ui.osk.eventSink, "Cancel"));
   padding: [$ui.width / 6, 0];
   space(1);
   widget(backdrop, {
@@ -121,7 +122,7 @@ widget(container_y, {
 	KEY("9", ")");
 	KEY("0", "=");
 	KEY("+", "?");
-	KEY("'", "'");
+	KEY("'", "@");
 	ACTION("BS", targetedEvent("input", Backspace), 2);
       });
 
