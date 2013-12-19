@@ -640,7 +640,7 @@ playqueue_load_with_source(prop_t *track, prop_t *source, int flags)
   playqueue_clear();
 
   if(!(flags & PQ_NO_SKIP)) {
-    playqueue_startme = prop_ref_inc(track);
+    playqueue_startme = prop_follow(track);
     playqueue_start_paused = flags & PQ_PAUSED ? 1 : 0;
   }
 
