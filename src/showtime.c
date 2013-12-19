@@ -412,7 +412,6 @@ parse_opts(int argc, char **argv)
 	     "   --plugin-repo     - URL to plugin repository\n"
 	     "                       Intended for plugin development\n"
 	     "   -j <path>           Load javascript file\n"
-	     "   --ui <ui>           Select user interface\n"
 	     "   --skin <skin>     Select skin (for GLW ui)\n"
 	     "\n"
 	     "  URL is any URL-type supported by Showtime, "
