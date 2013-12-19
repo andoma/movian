@@ -167,6 +167,9 @@ main(int argc, char **argv)
 
   showtime_init();
 
+  if(gconf.ui && !strcmp(gconf.ui, "gu"))
+    ui_wanted = &ui_gu;
+
   glibcourier = glib_courier_create(g_main_context_default());
 
   prop_subscribe(0,
