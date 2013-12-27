@@ -574,9 +574,10 @@ audio_decode_thread(void *aux)
 	  mp->mp_seek_audio_done(mp);
 	ad->ad_discontinuity = 1;
 
-	if(ad->ad_avr != NULL)
+	if(ad->ad_avr != NULL) {
 	  avresample_read(ad->ad_avr, NULL, avresample_available(ad->ad_avr));
-	assert(avresample_available(ad->ad_avr) == 0);
+	  assert(avresample_available(ad->ad_avr) == 0);
+	}
 	break;
 
       case MB_CTRL_EXIT:
