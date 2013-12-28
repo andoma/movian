@@ -247,6 +247,7 @@ glw_fini(glw_root_t *gr)
   pool_destroy(gr->gr_clone_pool);
   prop_courier_destroy(gr->gr_courier);
   hts_mutex_destroy(&gr->gr_mutex);
+  free(gr->gr_vtmp_buffer);
 }
 
 
