@@ -397,13 +397,13 @@ ui_create(void)
 static int
 ui_should_run(void)
 {
+  if(runmode != RUNMODE_RUNNING)
+    return 0;
+
   if(!auto_ui_shutdown)
     return 1;
 
   if(cec_we_are_not_active)
-    return 0;
-
-  if(runmode != RUNMODE_RUNNING)
     return 0;
 
   if(display_status != DISPLAY_STATUS_ON)
@@ -697,6 +697,6 @@ int
 arch_stop_req(void)
 {
   runmode = RUNMODE_EXIT;
-  return -1;
+  return 0;
 }
 

@@ -30,6 +30,8 @@ int64_t arch_cache_avail_bytes(void);
 
 int arch_pipe(int pipefd[2]);
 
+void arch_sync_path(const char *path);
+
 // If arch_stop_req() returns non ozer it will not actually
 // schedule an exit of showtime but rather suspend the UI and turn off 
 // video output, etc

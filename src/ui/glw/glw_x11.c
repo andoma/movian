@@ -967,14 +967,16 @@ glw_x11_mainloop(glw_x11_t *gx11)
   clock_gettime(CLOCK_MONOTONIC, &tp);
   start = (int64_t)tp.tv_sec * 1000000LL + tp.tv_nsec / 1000;
 
-  prop_subscribe(0,
-		 PROP_TAG_NAME("ui","fullwindow"),
-		 PROP_TAG_CALLBACK_INT, glw_x11_in_fullwindow, gx11,
-		 PROP_TAG_ROOT, gx11->gr.gr_prop_ui,
-		 NULL);
+  prop_sub_t *fwsub =
+    prop_subscribe(0,
+		   PROP_TAG_NAME("ui","fullwindow"),
+		   PROP_TAG_COURIER, gx11->gr.gr_courier,
+		   PROP_TAG_CALLBACK_INT, glw_x11_in_fullwindow, gx11,
+		   PROP_TAG_ROOT, gx11->gr.gr_prop_ui,
+		   NULL);
 
   if(!gx11->wm_flags || gx11->no_screensaver)
-    // No window manager, disable screensaver right away
+    // No window manager, disable system screen saver right away
     gx11->sss = x11_screensaver_suspend(gx11->display);
 
   glw_set_fullscreen(&gx11->gr, gx11->is_fullscreen);
@@ -1172,6 +1174,9 @@ glw_x11_mainloop(glw_x11_t *gx11)
 
     frame++;
 
+    if(!gx11->is_fullscreen)
+      gx11->gr.gr_screensaver_reset_at = gx11->gr.gr_frame_start;
+
     if(!gx11->working_vsync) {
       int64_t deadline = frame * 1000000LL / 60 + start;
       struct timespec req;
@@ -1207,6 +1212,8 @@ glw_x11_mainloop(glw_x11_t *gx11)
 
   if(gx11->sss != NULL)
     x11_screensaver_resume(gx11->sss);
+
+  prop_unsubscribe(fwsub);
 
   window_shutdown(gx11);
   XFlush(gx11->display);

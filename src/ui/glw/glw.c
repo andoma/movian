@@ -108,7 +108,10 @@ static void
 glw_update_sizes(glw_root_t *gr)
 {
   int val;
-  int base_size = gr->gr_height / 35; // 35 is just something
+  int bs1 = gr->gr_height / 35; // 35 is just something
+  int bs2 = gr->gr_width  / 65; // 65 is another value
+
+  int base_size = MIN(bs1, bs2);
 
   val = GLW_CLAMP(base_size + glw_settings.gs_size, 14, 40);
   
@@ -244,6 +247,7 @@ glw_fini(glw_root_t *gr)
   pool_destroy(gr->gr_clone_pool);
   prop_courier_destroy(gr->gr_courier);
   hts_mutex_destroy(&gr->gr_mutex);
+  free(gr->gr_vtmp_buffer);
 }
 
 

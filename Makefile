@@ -301,11 +301,6 @@ SRCS  += src/backend/htsp/htsp.c \
 SRCS  += src/backend/hls/hls.c \
 
 ##############################################################
-# Shoutcast
-##############################################################
-SRCS-$(CONFIG_LIBAV)  += src/backend/shoutcast/shoutcast.c \
-
-##############################################################
 # Spotify
 ##############################################################
 SRCS-${CONFIG_SPOTIFY} += src/backend/spotify/spotify.c

@@ -20,6 +20,44 @@
   });
 }
 
+#define BAR() {
+  widget(container_x, {
+	
+    space(1);
+    spacing: 10;
+    widget(label, {
+      caption: fmt("%2d%%", $global.upgrade.progress * 100);
+      shadow: true;
+      outline: true;
+    });
+    
+    widget(container_y, {
+      align: center;
+      widget(container_z, {
+	widget(backdrop, {
+	  border: 4;
+	  height: 8;
+	  source: "skin://playdecks/duration-bar-bg.png";
+	});
+      
+	widget(clip, {
+	  clipping: [-1, 0, 1 - $global.upgrade.progress, 0];
+	  widget(backdrop, {
+	    margin: [-8, -3, -8, -5];
+	    border: [16, 8];
+	    source: "skin://playdecks/duration-bar-colorized.png";
+	  });
+	});
+      });
+    });
+    widget(label, {
+      caption: value2size($global.upgrade.size);
+      shadow: true;
+      outline: true;
+    });
+    space(1);
+  });
+}
 
 
 
@@ -170,41 +208,19 @@ widget(container_y, {
 	align: center;
       });
       
-      widget(container_x, {
-	
-	space(1);
-	spacing: 10;
-	widget(label, {
-	  caption: fmt("%2d%%", $global.upgrade.progress * 100);
-	  shadow: true;
-	  outline: true;
-	});
-    
-	widget(container_y, {
-	  align: center;
-	  widget(container_z, {
-	    widget(backdrop, {
-	      border: 4;
-	      height: 8;
-	      source: "skin://playdecks/duration-bar-bg.png";
-	    });
-      
-	    widget(clip, {
-	      clipping: [-1, 0, 1 - $global.upgrade.progress, 0];
-	      widget(backdrop, {
-		margin: [-8, -3, -8, -5];
-		border: [16, 8];
-		source: "skin://playdecks/duration-bar-colorized.png";
-	      });
-	    });
-	  });
-	});
-	widget(label, {
-	  caption: value2size($global.upgrade.size);
-	  shadow: true;
-	  outline: true;
-	});
-	space(1);
+      BAR();
+    });
+
+
+    widget(container_y, {
+      id: "verify";
+      align: center;
+
+      widget(label, {
+	caption: _("Verifying...");
+	shadow: true;
+	outline: true;
+	align: center;
       });
     });
 
@@ -218,6 +234,7 @@ widget(container_y, {
 	outline: true;
 	align: center;
       });
+      BAR();
     });
 
 

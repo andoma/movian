@@ -2423,6 +2423,8 @@ http_load(struct fa_protocol *fap, const char *url,
     free(*etag);
     if((s = http_header_get(&headers_out, "etag")) != NULL) {
       *etag = strdup(s);
+    } else {
+      *etag = NULL;
     }
   }
 

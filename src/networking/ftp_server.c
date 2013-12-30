@@ -268,6 +268,7 @@ static int
 cmd_FEAT(ftp_connection_t *fc, char *args)
 {
   ftp_write(fc, PRE(211), "Features supported");
+  ftp_write(fc, 0, "UTF8");
   ftp_write(fc, 0, "SIZE");
   ftp_write(fc, 211, "End");
   return 0;
@@ -799,6 +800,23 @@ cmd_RNTO(ftp_connection_t *fc, char *args)
 }
 
 
+/**
+ *
+ */
+static int
+cmd_OPTS(ftp_connection_t *fc, char *args)
+{
+  if(!strcasecmp(args, "UTF8 ON")) {
+    ftp_write(fc, 200, "UTF8 set to on");
+  } else if(!strcasecmp(args, "UTF8 OFF")) {
+    ftp_write(fc, 200, "UTF8 set to off");
+  } else {
+    ftp_write(fc, 500, "%s: Not understood", args);
+  }
+  return 0;
+}
+
+
 
 #define FTPCMD_NEED_ARGS 0x1
 #define FTPCMD_AUTH_REQ  0x2
@@ -831,6 +849,7 @@ struct {
   { "XRMD", cmd_RMD,  FTPCMD_AUTH_REQ | FTPCMD_NEED_ARGS},
   { "RNFR", cmd_RNFR, FTPCMD_AUTH_REQ | FTPCMD_NEED_ARGS},
   { "RNTO", cmd_RNTO, FTPCMD_AUTH_REQ | FTPCMD_NEED_ARGS},
+  { "OPTS", cmd_OPTS, FTPCMD_AUTH_REQ | FTPCMD_NEED_ARGS},
 };
 
 

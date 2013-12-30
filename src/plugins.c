@@ -39,6 +39,7 @@
 #include "prop/prop_concat.h"
 #include "notifications.h"
 #include "misc/strtab.h"
+#include "arch/arch.h"
 
 #if ENABLE_SPIDERMONKEY
 #include "js/js.h"
@@ -1250,13 +1251,14 @@ plugin_install(plugin_t *pl, const char *package)
     return -1;
   }
 
-#ifdef STOS
-  sync();
-#endif
 
   snprintf(path, sizeof(path),
 	   "zip://file://%s/installedplugins/%s.zip", gconf.persistent_path,
 	   pl->pl_id);
+
+#ifdef STOS
+  arch_sync_path(path);
+#endif
 
   if(plugin_load(path, errbuf, sizeof(errbuf), 1, 1, 1)) {
     prop_set_string(pl->pl_statustxt, errbuf);
