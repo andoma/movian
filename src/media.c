@@ -884,29 +884,34 @@ mp_enqueue_event_locked(media_pipe_t *mp, event_t *e)
     mp->mp_hold = action_update_hold_by_event(mp->mp_hold, e);
     mp_set_playstatus_by_hold_locked(mp, NULL);
     send_hold(mp);
-    return;
-      
+
   } else if(event_is_type(e, EVENT_INTERNAL_PAUSE)) {
 
     mp->mp_hold = 1;
 
     mp_set_playstatus_by_hold_locked(mp, e->e_payload);
     send_hold(mp);
-    return;
 
   } else if(event_is_action(e, ACTION_SEEK_BACKWARD)) {
     mp_direct_seek(mp, mp->mp_seek_base -= 15000000);
-    return;
-  }
-
-  if(event_is_action(e, ACTION_SEEK_FORWARD)) {
+  } else if(event_is_action(e, ACTION_SEEK_FORWARD)) {
     mp_direct_seek(mp, mp->mp_seek_base += 15000000);
+  } else if(event_is_action(e, ACTION_SHOW_MEDIA_STATS)) {
+    prop_toggle_int(mp->mp_prop_stats);
+  } else if(event_is_action(e, ACTION_SHUFFLE)) {
+    prop_toggle_int(mp->mp_prop_shuffle);
+  } else if(event_is_action(e, ACTION_REPEAT)) {
+    prop_toggle_int(mp->mp_prop_repeat);
+  } else if(event_is_action(e, ACTION_CYCLE_AUDIO)) {
+    track_mgr_next_track(&mp->mp_audio_track_mgr);
+  } else if(event_is_action(e, ACTION_CYCLE_SUBTITLE)) {
+    track_mgr_next_track(&mp->mp_subtitle_track_mgr);
+  } else {
+    atomic_add(&e->e_refcount, 1);
+    TAILQ_INSERT_TAIL(&mp->mp_eq, e, e_link);
+    hts_cond_signal(&mp->mp_backpressure);
     return;
   }
-
-  atomic_add(&e->e_refcount, 1);
-  TAILQ_INSERT_TAIL(&mp->mp_eq, e, e_link);
-  hts_cond_signal(&mp->mp_backpressure);
 }
 
 /**
@@ -1652,21 +1657,8 @@ media_eventsink(void *opaque, prop_event_t event, ...)
 
   if(event_is_type(e, EVENT_PLAYTRACK)) {
     playqueue_event_handler(e);
-
   } else if(media_primary != NULL) {
-    if(event_is_action(e, ACTION_SHOW_MEDIA_STATS)) {
-      prop_toggle_int(media_primary->mp_prop_stats);
-    } else if(event_is_action(e, ACTION_SHUFFLE)) {
-      prop_toggle_int(media_primary->mp_prop_shuffle);
-    } else if(event_is_action(e, ACTION_REPEAT)) {
-      prop_toggle_int(media_primary->mp_prop_repeat);
-    } else if(event_is_action(e, ACTION_CYCLE_AUDIO)) {
-      track_mgr_next_track(&media_primary->mp_audio_track_mgr);
-    } else if(event_is_action(e, ACTION_CYCLE_SUBTITLE)) {
-      track_mgr_next_track(&media_primary->mp_subtitle_track_mgr);
-    } else {
-      mp_enqueue_event(media_primary, e);
-    }
+    mp_enqueue_event(media_primary, e);
   } else {
     playqueue_event_handler(e);
   }

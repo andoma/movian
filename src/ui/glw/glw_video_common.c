@@ -113,20 +113,28 @@ static int
 glw_video_widget_event(event_t *e, glw_video_t *gv)
 {
   media_pipe_t *mp = gv->gv_mp;
+  event_int_t *eu = (event_int_t *)e;
+
   if(event_is_action(e, ACTION_PLAYPAUSE) ||
      event_is_action(e, ACTION_PLAY) ||
      event_is_action(e, ACTION_PAUSE) ||
-     event_is_action(e, ACTION_ACTIVATE)) {
+     event_is_action(e, ACTION_SHOW_MEDIA_STATS)) {
     mp_enqueue_event(mp, e);
     return 1;
   }
 
+  if(event_is_type(e, EVENT_UNICODE) && eu->val == 32) {
+    // Convert [space] into playpause
+    e = event_create_action(ACTION_PLAYPAUSE);
+    mp_enqueue_event(mp, e);
+    event_release(e);
+    return 1;
+  }
 
   if(event_is_action(e, ACTION_UP) ||
      event_is_action(e, ACTION_DOWN) ||
      event_is_action(e, ACTION_LEFT) ||
      event_is_action(e, ACTION_RIGHT)) {
-    
     if(gv->gv_spu_in_menu) {
       mp_enqueue_event(mp, e);
       return 1;
