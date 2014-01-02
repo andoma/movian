@@ -1434,6 +1434,8 @@ js_init(void)
   jsval val;
   JSFunction *fn;
 
+  http_auth_req_register(&js_http_auth_try);
+
   js_page_init();
   js_hook_init();
 

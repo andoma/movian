@@ -348,5 +348,9 @@ void http_client_set_cookie(struct http_auth_req *har, const char *key,
 
 void http_client_fail_req(struct http_auth_req *har, const char *reason);
 
+void http_auth_req_register(int (*cb)(const char *url,
+                                      struct http_auth_req *har));
+
+
 #endif /* FILEACCESS_H */
 

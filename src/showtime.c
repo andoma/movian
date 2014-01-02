@@ -55,7 +55,9 @@
 #include "subtitles/subtitles.h"
 #include "db/db_support.h"
 #include "htsmsg/htsmsg_store.h"
+#if ENABLE_SPIDERMONKEY
 #include "js/js.h"
+#endif
 #include "db/kvstore.h"
 #include "upgrade.h"
 #if ENABLE_GLW
@@ -382,10 +384,10 @@ showtime_init(void)
 
   /* Video settings */
   video_settings_init();
-
+#if ENABLE_SPIDERMONKEY
   if(gconf.load_jsfile)
     js_load(gconf.load_jsfile);
-
+#endif
   /* Various interprocess communication stuff (D-Bus on Linux, etc) */
   init_group(INIT_GROUP_IPC);
 

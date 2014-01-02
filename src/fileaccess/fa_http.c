@@ -772,6 +772,34 @@ kvcomp(const void *A, const void *B)
 }
 
 
+/**
+ *
+ */
+typedef struct http_auth_provider {
+  int (*cb)(const char *url, struct http_auth_req *har);
+} http_auth_provider_t;
+
+#define HTTP_AUTH_PROVIDERS_MAX 4
+
+static http_auth_provider_t http_auth_providers[HTTP_AUTH_PROVIDERS_MAX];
+
+/**
+ *
+ */
+void
+http_auth_req_register(int (*cb)(const char *url, struct http_auth_req *har))
+{
+  int i;
+  for(i = 0; i < HTTP_AUTH_PROVIDERS_MAX; i++) {
+    if(http_auth_providers[i].cb == NULL) {
+      http_auth_providers[i].cb = cb;
+      return;
+    }
+  }
+  fprintf(stderr, "Max # of http auth providers reached\n");
+  exit(1);
+}
+
 struct http_auth_req {
   const char *har_method;
   const char **har_parameters;
@@ -1078,7 +1106,6 @@ http_headers_auth(struct http_header_list *headers,
   const char *hostname = hf->hf_connection->hc_hostname;
   int port = hf->hf_connection->hc_port;
 
-#if ENABLE_SPIDERMONKEY
   struct http_auth_req har;
 
   har.har_method = method;
@@ -1090,15 +1117,16 @@ http_headers_auth(struct http_header_list *headers,
   har.har_errlen = errlen;
   har.har_force_fail = 0;
 
-  if(!js_http_auth_try(hf->hf_url, &har)) {
-    if(har.har_force_fail) {
-      http_headers_free(cookies);
-      return 1;
+  int i;
+  for(i = 0; i < HTTP_AUTH_PROVIDERS_MAX; i++) {
+    if(http_auth_providers[i].cb != NULL) {
+      if(!http_auth_providers[i].cb(hf->hf_url, &har)) {
+        if(har.har_force_fail)
+          return 1;
+        return 0;
+      }
     }
-    return 0;
   }
-
-#endif
 
   if(hf->hf_auth != NULL) {
     http_header_add(headers, "Authorization", hf->hf_auth, 0);
