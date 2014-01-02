@@ -324,6 +324,9 @@ upgrade_file(int accept_patch, const char *fname, const char *url,
   flags |= O_SYNC;
 #endif
 
+  if(!overwrite)
+    flags |= O_TRUNC;
+
   fd = open(instpath, flags, 0777);
   if(fd == -1) {
     install_error("Unable to open file", url);
@@ -648,6 +651,7 @@ static int
 stos_perform_upgrade(int accept_patch)
 {
   char localfile[256];
+  int rval = 0;
   if(mount("/dev/mmcblk0p1", "/boot", "vfat", MS_REMOUNT, NULL)) {
     install_error("Unable to remount /boot to read-write", NULL);
     return 2;
@@ -686,15 +690,15 @@ stos_perform_upgrade(int accept_patch)
     TRACE(TRACE_DEBUG, "STOS", "Downloading %s (%s) to %s",
 	  dlurl, name, localfile);
 
-    if(upgrade_file(accept_patch, localfile, dlurl, dlsize, digest, n))
-      goto bad;
+    if(upgrade_file(accept_patch, localfile, dlurl, dlsize, digest, n)) {
+      rval = 1;
+      break;
+    }
   }
-
-  mount("/dev/mmcblk0p1", "/boot", "vfat", MS_REMOUNT | MS_RDONLY, NULL);
-  return 0;
- bad:
-  mount("/dev/mmcblk0p1", "/boot", "vfat", MS_REMOUNT | MS_RDONLY, NULL);
-  return 1;
+  TRACE(TRACE_DEBUG, "STOS", "Syncing filesystems");
+  sync();
+  TRACE(TRACE_DEBUG, "STOS", "Syncing filesystems done");
+  return rval;
 }
 
 #endif
