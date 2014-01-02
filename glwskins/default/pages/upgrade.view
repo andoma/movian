@@ -202,7 +202,7 @@ widget(container_y, {
       align: center;
 
       widget(label, {
-	caption: _("Downloading...");
+	caption: fmt(_("Downloading %s"), $global.upgrade.task);
 	shadow: true;
 	outline: true;
 	align: center;
@@ -211,13 +211,12 @@ widget(container_y, {
       BAR();
     });
 
-
     widget(container_y, {
       id: "verify";
       align: center;
 
       widget(label, {
-	caption: _("Verifying...");
+	caption: fmt(_("Verifying %s"), $global.upgrade.task);
 	shadow: true;
 	outline: true;
 	align: center;
@@ -229,7 +228,7 @@ widget(container_y, {
       align: center;
 
       widget(label, {
-	caption: _("Installing...");
+	caption: fmt(_("Installing %s"), $global.upgrade.task);
 	shadow: true;
 	outline: true;
 	align: center;
@@ -256,7 +255,8 @@ widget(container_y, {
       align: center;
 
       widget(label, {
-	caption: _("Checking current installed version");
+	caption: fmt(_("Checking installed version of %s"),
+		       $global.upgrade.task);
 	shadow: true;
 	outline: true;
 	align: center;
@@ -268,7 +268,7 @@ widget(container_y, {
       align: center;
 
       widget(label, {
-	caption: _("Patching binary");
+	caption: fmt(_("Patching %s"), $global.upgrade.task);
 	shadow: true;
 	outline: true;
 	align: center;
