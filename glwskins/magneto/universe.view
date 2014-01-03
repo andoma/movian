@@ -8,6 +8,8 @@ widget(grid, {
   spacing: 10;
   childScale: 0.3 + iir($view.zoom * 0.7, 10);
 
+  $view.currentTileY = getTileY();
+
   cloner($global.magneto.categories, container_y, {
 
     widget(expander_y, {
@@ -23,6 +25,8 @@ widget(grid, {
 
     widget(gridrow, {
 
+      $view.currentTileX = getTileX();
+
       spacing: 10;
       childScale: 0.2 + iir($view.zoom * 0.8, 10);
 
@@ -33,6 +37,10 @@ widget(grid, {
         onEvent(activate, {
           $view.zoom = 1;
         });
+
+        $clone.activation = select(isFocused(),
+                                   select($view.zoom, 0, 2),
+                                   select(abs(getTileX() - $view.currentTileX) + abs(getTileY() - $view.currentTileY) == 1, 2, 3));
 
         widget(deck, {
 
@@ -79,13 +87,26 @@ widget(grid, {
 
           widget(container_z, {
 
-            widget(label, {
-              align: center;
-              bold: true;
-              caption: $self.title;
+            widget(video, {
+              dpadSeek: false;
+
+              source: $self.videouri;
+              activation: $clone.activation; 
             });
           });
           page: $view.zoom;
+        });
+
+        widget(label, {
+          align: center;
+          bold: true;
+          sizeScale: 2;
+          caption: translate($clone.activation, "???",
+                             0, "Full play",
+                             1, "Low play",
+                             2, "Prefetch",
+                             3, "Idle");
+
         });
       });
     });
