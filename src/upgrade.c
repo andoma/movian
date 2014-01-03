@@ -173,36 +173,36 @@ upgrade_file(int accept_patch, const char *fname, const char *url,
     // Figure out SHA-1 of currently running binary
 
     fd = open(fname, O_RDONLY);
-    if(fd == -1)
-      return -1;
+    if(fd != -1) {
 
-    struct stat st;
-    if(fstat(fd, &st)) {
-      close(fd);
-      return -1;
-    }
+      struct stat st;
+      if(fstat(fd, &st)) {
+	close(fd);
+	return -1;
+      }
 
-    current_size = st.st_size;
-    current_data = halloc(current_size);
-    if(current_data == NULL) {
+      current_size = st.st_size;
+      current_data = halloc(current_size);
+      if(current_data == NULL) {
+	close(fd);
+	return -1;
+      }
+      if(read(fd, current_data, current_size) != current_size) {
+	hfree(current_data, current_size);
+	close(fd);
+	return -1;
+      }
       close(fd);
-      return -1;
-    }
-    if(read(fd, current_data, current_size) != current_size) {
-      hfree(current_data, current_size);
-      close(fd);
-      return -1;
-    }
-    close(fd);
 
-    sha1_init(shactx);
-    sha1_update(shactx, current_data, current_size);
-    sha1_final(shactx, digest);
-    bin2hex(digeststr, sizeof(digeststr), digest, sizeof(digest));
-    snprintf(ae, sizeof(ae), "bspatch-from-%s", digeststr);
-    http_header_add(&req_headers, "Accept-Encoding", ae, 0);
-    TRACE(TRACE_DEBUG, "upgrade", "Asking for patch for %s (%s)",
-	  fname, digeststr);
+      sha1_init(shactx);
+      sha1_update(shactx, current_data, current_size);
+      sha1_final(shactx, digest);
+      bin2hex(digeststr, sizeof(digeststr), digest, sizeof(digest));
+      snprintf(ae, sizeof(ae), "bspatch-from-%s", digeststr);
+      http_header_add(&req_headers, "Accept-Encoding", ae, 0);
+      TRACE(TRACE_DEBUG, "upgrade", "Asking for patch for %s (%s)",
+	    fname, digeststr);
+    }
   }
 #endif
 
@@ -520,11 +520,12 @@ check_upgrade(int set_news)
     const char *stosVersion = htsmsg_get_str(manifest, "stosVersion");
     if(stosVersion != NULL) {
       stos_req_version = showtime_parse_version_int(stosVersion);
-      TRACE(TRACE_DEBUG, "STOS", "Required version for upgrade: %s (%d)",
-	    stosVersion, stos_req_version);
 
       if(stos_current_version < stos_req_version) {
 	stos_upgrade_needed = 1;
+	TRACE(TRACE_DEBUG, "STOS", "Required version for upgrade: %s (%d)",
+	      stosVersion, stos_req_version);
+
 	TRACE(TRACE_DEBUG, "STOS",
 	      "Need to perform STOS upgrade, checking what is available");
 	if(stos_check_upgrade()) {
