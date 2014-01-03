@@ -750,8 +750,10 @@ video_player_idle(void *aux)
 		     errbuf, sizeof(errbuf), vq, activation,
                      event_time);
       mp_bump_epoch(mp);
-      if(e == NULL)
+      if(e == NULL) {
 	prop_set_string(errprop, errbuf);
+        TRACE(TRACE_ERROR, "Video", "%s: Error %s", mp->mp_name, errbuf);
+      }
     }
 
     if(e == NULL) {
