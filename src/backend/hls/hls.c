@@ -302,8 +302,13 @@ hv_find_segment_by_time(const hls_variant_t *hv, int64_t pos)
 {
   hls_segment_t *hs;
   TAILQ_FOREACH_REVERSE(hs, &hv->hv_segments, hls_segment_queue, hs_link) {
-    if(hs->hs_time_offset <= pos)
+    if(hs->hs_time_offset <= pos) {
+      if(hs == TAILQ_LAST(&hv->hv_segments, hls_segment_queue)) {
+	if(pos > hs->hs_time_offset + hs->hs_duration)
+	  return NULL;
+      }
       break;
+    }
   }
   return hs;
 }
@@ -1040,11 +1045,16 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
     break;
   }
 
+  mp->mp_video.mq_seektarget = AV_NOPTS_VALUE;
+  mp->mp_audio.mq_seektarget = AV_NOPTS_VALUE;
+  mp->mp_seek_base = 0;
+
   if(va->flags & BACKEND_VIDEO_RESUME ||
      (video_settings.resume_mode == VIDEO_RESUME_YES &&
       !(va->flags & BACKEND_VIDEO_START_FROM_BEGINNING))) {
     int64_t start = video_get_restartpos(canonical_url) * 1000;
     if(start) {
+      mp->mp_seek_base = start;
       hls_seek(h, start, start, 1);
     }
   }
