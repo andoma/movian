@@ -1,0 +1,4 @@
+Fix a long standing issue with image view in the UI, causing
+just the spinner to appear and no image to be shown
+
+Fixes #1803
