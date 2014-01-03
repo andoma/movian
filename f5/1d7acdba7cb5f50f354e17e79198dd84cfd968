@@ -1,0 +1,5 @@
+hls: Fix issues when seeking past end of track
+
+In particular caused problems when doing continous play
+
+Fixes #1818
