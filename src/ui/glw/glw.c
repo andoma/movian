@@ -1330,7 +1330,10 @@ glw_focus_open_path_close_all_other(glw_t *w)
       continue;
     c->glw_flags |= GLW_FOCUS_BLOCKED;
     if(c->glw_flags & GLW_IN_FOCUS_PATH) {
-      glw_focus_set(w->glw_root, NULL, GLW_FOCUS_SET_AUTOMATIC);
+
+      glw_t *d = glw_focus_by_path(c);
+      if(d != NULL)
+        glw_focus_set(w->glw_root, NULL, GLW_FOCUS_SET_AUTOMATIC);
     }
   }
 
