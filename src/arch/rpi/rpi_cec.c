@@ -23,6 +23,7 @@
 
 #include "event.h"
 #include "misc/str.h"
+#include "misc/callout.h"
 #include "htsmsg/htsmsg_store.h"
 #include "settings.h"
 
@@ -119,7 +120,6 @@ static const char *cec_cmd_to_str[] = {
 const static action_type_t *btn_to_action[256] = {
   [CEC_User_Control_Select]      = AVEC(ACTION_ACTIVATE),
   [CEC_User_Control_Left]        = AVEC(ACTION_LEFT),
-  [CEC_User_Control_Left]        = AVEC(ACTION_LEFT),
   [CEC_User_Control_Up]          = AVEC(ACTION_UP),
   [CEC_User_Control_Right]       = AVEC(ACTION_RIGHT),
   [CEC_User_Control_Down]        = AVEC(ACTION_DOWN),
@@ -146,10 +146,36 @@ const static action_type_t *btn_to_action[256] = {
 };
 
 
+const static action_type_t *stop_meta_actions[256] = {
+  [CEC_User_Control_Select]      = AVEC(ACTION_LOGWINDOW),
+
+  [CEC_User_Control_Pause]       = AVEC(ACTION_NAV_BACK),
+  [CEC_User_Control_Play]        = AVEC(ACTION_SHOW_MEDIA_STATS),
+  [CEC_User_Control_Stop]        = AVEC(ACTION_STOP),
+
+  [CEC_User_Control_Rewind]      = AVEC(ACTION_ITEMMENU),
+  [CEC_User_Control_FastForward] = AVEC(ACTION_MENU),
+
+  [CEC_User_Control_Backward]    = AVEC(ACTION_ITEMMENU),
+  [CEC_User_Control_Forward]     = AVEC(ACTION_MENU),
+};
+
+
 #define CEC_DEBUG(fmt...) do {			\
   if(gconf.enable_cec_debug)			\
     TRACE(TRACE_DEBUG, "CEC", fmt);		\
   } while(0)
+
+
+static int stop_is_meta_key = 1;
+
+static callout_t cec_stop_key_timer;
+
+static void
+cec_stop_key_cb(struct callout *c, void *opaque)
+{
+  event_to_ui(event_create_action(ACTION_STOP));
+}
 
 
 /**
@@ -158,7 +184,20 @@ const static action_type_t *btn_to_action[256] = {
 static void
 cec_emit_key_down(int code)
 {
-  const action_type_t *avec = btn_to_action[code];
+  if(code == CEC_User_Control_Stop && stop_is_meta_key && 
+     !callout_isarmed(&cec_stop_key_timer)) {
+    callout_arm_hires(&cec_stop_key_timer, cec_stop_key_cb, NULL, 1000000);
+    return;
+  }
+
+  const action_type_t *avec;
+  if(callout_isarmed(&cec_stop_key_timer)) {
+    avec = stop_meta_actions[code];
+    callout_disarm(&cec_stop_key_timer);
+  } else {
+    avec = btn_to_action[code];
+  }
+
   if(avec != NULL) {
     int i = 0;
     while(avec[i] != 0)
@@ -649,6 +688,13 @@ cec_thread(void *aux)
 		 SETTING_TITLE_CSTR("Shutdown UI when TV is off"),
 		 SETTING_WRITE_BOOL(&auto_ui_shutdown),
 		 SETTING_HTSMSG("auto_shutdown", s, "cec"),
+		 NULL);
+
+  setting_create(SETTING_BOOL, set,
+		 SETTINGS_INITIAL_UPDATE,
+		 SETTING_TITLE_CSTR("Use Stop button to send other remote codes"),
+		 SETTING_WRITE_BOOL(&stop_is_meta_key),
+		 SETTING_HTSMSG("stop_is_meta_key", s, "cec"),
 		 NULL);
 
   setting_create(SETTING_STRING, set,
