@@ -8,6 +8,8 @@
 #include "showtime.h"
 #include "fileaccess/fileaccess.h"
 #include "htsmsg/htsmsg_json.h"
+#include "media.h"
+#include "backend/backend.h"
 
 #define MAGNETO_LOG "magneto"
 
@@ -107,6 +109,41 @@ imageset_set(htsmsg_t *m, prop_t *p, const char *name)
   rstr_release(r);
 }
 
+#if 0
+/**
+ *
+ */
+static htsmsg_t *
+event_resolve(const char *eventid)
+{
+  char url[512];
+  snprintf(url, sizeof(url), MAGNETO_WEBGATE"vmetadata/event/%s",
+           eventid);
+
+  int r;
+  char errbuf[512];
+  buf_t *result;
+
+  r = http_req(url,
+               HTTP_FLAGS(FA_DEBUG),
+               HTTP_RESULT_PTR(&result),
+               HTTP_ARG("f", "json"),
+               HTTP_ERRBUF(errbuf, sizeof(errbuf)),
+               NULL);
+
+  if(r) {
+    TRACE(TRACE_ERROR, MAGNETO_LOG, "Failed to load %s -- %s",
+          url, errbuf);
+    return NULL;
+  }
+
+  htsmsg_t *doc = htsmsg_json_deserialize(buf_cstr(result));
+  buf_release(result);
+  return doc;
+}
+#endif
+
+
 /**
  *
  */
@@ -115,19 +152,26 @@ story_add(magneto_category_t *mc, htsmsg_t *story)
 {
   prop_t *p = prop_create_root(NULL);
 
-  //  htsmsg_print(story);
+  htsmsg_t *ri = htsmsg_get_map(story, "recommended_item");
+  if(ri == NULL)
+    return;
 
   htsmsg_t *metadata = htsmsg_get_map(story, "metadata");
   if(metadata == NULL)
     return;
 
-  const char *title       = htsmsg_get_str(metadata, "subtitle");
+  const char *uri         = htsmsg_get_str(ri, "uri");
+  const char *title       = htsmsg_get_str(ri, "display_name");
+  const char *subtitle    = htsmsg_get_str(metadata, "subtitle");
   const char *description = htsmsg_get_str(metadata, "description");
 
+  prop_set(p, "videouri",    PROP_SET_STRING, uri);
   prop_set(p, "title",       PROP_SET_STRING, title);
+  prop_set(p, "subtitle",    PROP_SET_STRING, subtitle);
   prop_set(p, "description", PROP_SET_STRING, description);
 
   imageset_set(htsmsg_get_list(story, "hero_image"), p, "icon");
+
 
   if(prop_set_parent(p, mc->mc_prop_stories))
     abort();
@@ -308,7 +352,7 @@ magneto_model_thread(void *aux)
 /**
  *
  */
-static void
+static int
 magneto_model_init(void)
 {
   TAILQ_INIT(&magneto_categories);
@@ -321,6 +365,110 @@ magneto_model_init(void)
 
   hts_thread_create_detached("magnetomodel", magneto_model_thread, NULL,
                              THREAD_PRIO_MODEL);
+  return 0;
 }
 
-INITME(INIT_GROUP_API, magneto_model_init);
+
+/**
+ *
+ */
+static event_t *
+magneto_model_playvideo(const char *uri, media_pipe_t *mp,
+                        char *errbuf, size_t errlen,
+                        video_queue_t *vq, struct vsource_list *vsl,
+                        const video_args_t *va0)
+{
+  const char *gid = mystrbegins(uri, "projectxx:epgevent:");
+  if(gid == NULL) {
+    snprintf(errbuf, errlen, "Invalid URL");
+    return NULL;
+  }
+
+  char url[512];
+  snprintf(url, sizeof(url), MAGNETO_WEBGATE"vmetadata/event/%s", gid);
+
+  int r;
+  buf_t *result;
+
+  r = http_req(url,
+               HTTP_FLAGS(FA_DEBUG),
+               HTTP_RESULT_PTR(&result),
+               HTTP_ARG("f", "json"),
+               HTTP_ERRBUF(errbuf, errlen),
+               NULL);
+
+  if(r) {
+    TRACE(TRACE_ERROR, MAGNETO_LOG, "Failed to load %s -- %s",
+          url, errbuf);
+    return NULL;
+  }
+
+  htsmsg_t *doc = htsmsg_json_deserialize(buf_cstr(result));
+  buf_release(result);
+
+  if(doc == NULL) {
+    snprintf(errbuf, errlen, "Invalid JSON");
+    return NULL;
+  }
+
+  int64_t start_ms = 0, stop_ms = 0;
+  if(htsmsg_get_s64(doc, "start_ms", &start_ms)) {
+    snprintf(errbuf, errlen, "Missing start_ms");
+    htsmsg_destroy(doc);
+    return NULL;
+  }
+
+  if(htsmsg_get_s64(doc, "stop_ms", &stop_ms)) {
+    snprintf(errbuf, errlen, "Missing stop_ms");
+    htsmsg_destroy(doc);
+    return NULL;
+  }
+
+  htsmsg_t *channel = htsmsg_get_map(doc, "channel");
+  if(channel == NULL) {
+    snprintf(errbuf, errlen, "Missing channel");
+    htsmsg_destroy(doc);
+    return NULL;
+  }
+
+  const char *playlist_url = htsmsg_get_str(channel, "playlist_url");
+  if(playlist_url == NULL) {
+    snprintf(errbuf, errlen, "Missing playlist_url");
+    htsmsg_destroy(doc);
+    return NULL;
+  }
+
+  char hlsurl[256];
+  snprintf(hlsurl, sizeof(hlsurl),
+           "hls:%s?start=%"PRId64"&duration=%"PRId64,
+           playlist_url, start_ms, stop_ms - start_ms);
+
+  TRACE(TRACE_DEBUG, MAGNETO_LOG, "Redirecting %s -> %s",
+        uri, hlsurl);
+
+  return backend_play_video(hlsurl, mp, errbuf, errlen, vq, vsl, va0);
+}
+
+
+/**
+ *
+ */
+static int
+magneto_model_canhandle(const char *url)
+{
+  return !strncmp(url, "projectxx:epgevent:",
+                  strlen("projectxx:epgevent:"));
+}
+
+
+/**
+ *
+ */
+static backend_t be_hls = {
+  .be_init        = magneto_model_init,
+  .be_canhandle   = magneto_model_canhandle,
+  .be_play_video  = magneto_model_playvideo,
+};
+
+BE_REGISTER(hls);
+
