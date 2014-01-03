@@ -907,6 +907,11 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int conditional)
     return -1;
   }
 
+  if(a->type == TOKEN_PROPERTY_NAME)
+    if(resolve_property_name(ec, a))
+      return -1;
+    
+
   if(conditional && b->type == TOKEN_VOID) {
     eval_push(ec, b);
     return 0;
@@ -928,11 +933,7 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int conditional)
     r = a->t_attrib->set(ec, a->t_attrib, b);
     break;
 
-  case TOKEN_PROPERTY_NAME:
-    if(resolve_property_name(ec, a))
-      return -1;
-
-  case TOKEN_PROPERTY_REF:
+   case TOKEN_PROPERTY_REF:
     
     switch(b->type) {
     case TOKEN_RSTRING:

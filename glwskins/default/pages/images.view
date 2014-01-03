@@ -27,7 +27,7 @@ widget(container_y, {
       
       widget(image, {
 	align: center;
-	source: $self.focused.url;
+	source: $view.focused.url;
 	$view.ready = delay(isReady(), 0, 0.25);
       });
 
@@ -65,8 +65,7 @@ widget(container_y, {
 
 	scrollThreshold: $ui.width / 10;
 
-	
-	&self.focused = focusedChild();
+	&view.focused ?= focusedChild();
 	
 	cloner($page.model.nodes, loader, {
 	  noInitialTransform: true;
