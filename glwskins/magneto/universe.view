@@ -1,0 +1,93 @@
+$view.zoom = 0;
+
+onEvent(back, {
+  $view.zoom = 0;
+});
+
+widget(grid, {
+  spacing: 10;
+  childScale: 0.3 + iir($view.zoom * 0.7, 10);
+
+  cloner($global.magneto.categories, container_y, {
+
+    widget(expander_y, {
+      expansion: 1 - iir(select($view.zoom, 1, 0), 10);
+      alpha:     1 - iir(select($view.zoom, 1, 0), 10);
+      widget(label, {
+        bold: true;
+        sizeScale: 2;
+        padding: [40, 0];
+        caption: $self.title;
+      });
+    });
+
+    widget(gridrow, {
+
+      spacing: 10;
+      childScale: 0.2 + iir($view.zoom * 0.8, 10);
+
+      cloner($self.stories, container_z, {
+
+        focusable: true;
+
+        onEvent(activate, {
+          $view.zoom = 1;
+        });
+
+        widget(deck, {
+
+          // The icon page
+
+          effect: blend;
+          time: 1;
+          noInitialTransform: true;
+
+          widget(container_z, {
+
+            alpha: iir(isFocused(), 3) * 0.5 + 0.5;
+
+            widget(quad, {
+              alpha: iir(isFocused(), 3);
+            });
+
+            widget(image, {
+              source: $self.icon;
+            });
+
+            widget(container_y, {
+              space(1);
+
+              widget(container_z, {
+
+                height: $ui.size;
+
+                widget(quad, {
+                  alpha: 0.8;
+                  color: 0;
+                });
+
+                widget(label, {
+                  align: center;
+                  bold: true;
+                  caption: $self.title;
+                });
+              });
+            });
+          });
+
+          // The video page
+
+          widget(container_z, {
+
+            widget(label, {
+              align: center;
+              bold: true;
+              caption: $self.title;
+            });
+          });
+          page: $view.zoom;
+        });
+      });
+    });
+  });
+});
