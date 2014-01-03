@@ -36,14 +36,15 @@ glw_grid_layout(glw_grid_t *gg, glw_rctx_t *rc)
   glw_t *c;
   glw_rctx_t rc0 = *rc;
   const float scale = gg->child_scale;
-  int row_height = rc->rc_height * scale;
+  const float row_height = rc->rc_height * scale;
 
-  int cyp = gg->current_ypos + row_height / 2;
+  glw_lp(&gg->filtered_xtile, w->glw_root, gg->current_xtile, 0.1);
+  glw_lp(&gg->filtered_ytile, w->glw_root, gg->current_ytile, 0.1);
 
-  glw_lp(&gg->filtered_ypos, w->glw_root, cyp, 0.1);
 
-  int ypos = 0;
-  int offset = rc->rc_height / 2 - gg->filtered_ypos;
+  float ypos = -rc->rc_height * scale * 0.5;
+  float offset = rc->rc_height / 2 - gg->filtered_ytile * scale * rc->rc_height - (gg->filtered_ytile * gg->spacing);
+  int ytile = 0;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
@@ -53,13 +54,18 @@ glw_grid_layout(glw_grid_t *gg, glw_rctx_t *rc)
     c->glw_parent_height = row_height;
 
     rc0.rc_height = row_height;
-    glw_layout0(c, &rc0);
+
+    if(c->glw_parent_pos > -rc->rc_height / 2 &&
+       c->glw_parent_pos <  rc->rc_height * 1.5) {
+      glw_layout0(c, &rc0);
+    }
 
     if(c == gg->scroll_to_me) {
       gg->scroll_to_me = NULL;
-      gg->current_ypos = ypos;
+      gg->current_ytile = ytile;
     }
-    ypos += row_height;
+    ytile++;
+    ypos += row_height + gg->spacing;
     c->glw_norm_weight = scale;
   }
 }
@@ -72,21 +78,24 @@ static void
 glw_grid_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_t *c;
-  glw_rctx_t rc0;
-
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
-    rc0 = *rc;
 
-    glw_reposition(&rc0,
-		   0,
-		   rc->rc_height - c->glw_parent_pos,
-		   rc->rc_width,
-		   rc->rc_height - c->glw_parent_pos - c->glw_parent_height);
+    if(c->glw_parent_pos > -rc->rc_height / 2 &&
+       c->glw_parent_pos <  rc->rc_height * 1.5) {
 
-    glw_render0(c, &rc0);
+      glw_rctx_t rc0 = *rc;
+
+      glw_reposition(&rc0,
+                     0,
+                     rc->rc_height - c->glw_parent_pos,
+                     rc->rc_width,
+                     rc->rc_height - c->glw_parent_pos - c->glw_parent_height);
+
+      glw_render0(c, &rc0);
+    }
   }
 }
 
@@ -155,6 +164,10 @@ glw_grid_set(glw_t *w, va_list ap)
       gg->child_scale = va_arg(ap, double);
       break;
 
+    case GLW_ATTRIB_SPACING:
+      gg->spacing = va_arg(ap, int);
+      break;
+
     default:
       GLW_ATTRIB_CHEW(attrib, ap);
       break;
@@ -180,12 +193,14 @@ glw_class_t glw_grid = {
   .gc_name = "grid",
   .gc_instance_size = sizeof(glw_grid_t),
   .gc_nav_descend_mode = GLW_NAV_DESCEND_FOCUSED,
+  .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY | GLW_CAN_HIDE_CHILDS,
   .gc_render = glw_grid_render,
   .gc_set = glw_grid_set,
   .gc_signal_handler = glw_grid_callback,
   .gc_child_orientation = GLW_ORIENTATION_VERTICAL,
   .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION,
   .gc_ctor = glw_grid_ctor,
+  .gc_escape_score = 100,
 
 };
 

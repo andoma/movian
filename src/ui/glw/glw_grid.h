@@ -28,13 +28,15 @@ typedef struct glw_grid {
 
   float child_scale;
 
-  int current_ypos;
-  float filtered_ypos;
+  int current_ytile;
+  float filtered_ytile;
 
-  int current_xpos;
-  float filtered_xpos;
+  int current_xtile;
+  float filtered_xtile;
 
   glw_t *scroll_to_me;
+
+  int16_t spacing;
 
 } glw_grid_t;
 
@@ -45,4 +47,7 @@ typedef struct glw_gridrow {
   float child_scale;
 
   glw_t *scroll_to_me;
+
+  int16_t spacing;
+
 } glw_gridrow_t;

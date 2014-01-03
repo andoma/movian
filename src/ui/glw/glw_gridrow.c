@@ -26,27 +26,47 @@
 #define glw_parent_pos    glw_parent_val[0].i32
 #define glw_parent_width  glw_parent_val[1].i32
 
+
+/**
+ * Super lame, we should pass it in glw_rctx_t instead i think
+ */
+static glw_grid_t *
+get_grid(glw_t *w)
+{
+  glw_grid_t *gg;
+  gg = (glw_grid_t *)w->glw_parent;
+
+  if(gg->w.glw_class == &glw_grid)
+    return gg;
+
+  gg = (glw_grid_t *)w->glw_parent->glw_parent;
+  if(gg->w.glw_class == &glw_grid)
+    return gg;
+  return NULL;
+}
+
+
+
 /**
  *
  */
 static void
 glw_gridrow_layout(glw_gridrow_t *ggr, glw_rctx_t *rc)
 {
-  glw_grid_t *gg = (glw_grid_t *)ggr->w.glw_parent;
-  if(gg->w.glw_class != &glw_grid)
+  glw_grid_t *gg = get_grid(&ggr->w);
+  if(gg == NULL)
     return;
 
   glw_t *w = &ggr->w;
   glw_t *c;
   glw_rctx_t rc0 = *rc;
   const float scale = ggr->child_scale;
-  int col_width = rc->rc_width * scale;
+  const float col_width = rc->rc_width * scale;
 
-  if(gg->w.glw_focused == w)
-    glw_lp(&gg->filtered_xpos, w->glw_root, gg->current_xpos, 0.1);
+  float xpos = 0;
+  float offset = rc->rc_width / 2 - gg->filtered_xtile * scale * rc->rc_width - col_width / 2 - (gg->filtered_xtile * ggr->spacing);
+  int xtile = 0;
 
-  int xpos = 0;
-  int offset = rc->rc_width / 2 - gg->filtered_xpos - col_width / 2;
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
@@ -55,13 +75,18 @@ glw_gridrow_layout(glw_gridrow_t *ggr, glw_rctx_t *rc)
     c->glw_parent_width  = col_width;
 
     rc0.rc_width = col_width;
-    glw_layout0(c, &rc0);
+
+    if(c->glw_parent_pos > -rc->rc_width / 2 &&
+       c->glw_parent_pos <  rc->rc_width * 1.5) {
+      glw_layout0(c, &rc0);
+    }
 
     if(c == ggr->scroll_to_me) {
       ggr->scroll_to_me = NULL;
-      gg->current_xpos = xpos;
+      gg->current_xtile = xtile;
     }
-    xpos += col_width;
+    xtile++;
+    xpos += col_width + ggr->spacing;
     c->glw_norm_weight = scale;
   }
 }
@@ -74,21 +99,24 @@ static void
 glw_gridrow_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_t *c;
-  glw_rctx_t rc0;
 
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
-    rc0 = *rc;
 
-    glw_reposition(&rc0,
-		   c->glw_parent_pos,
-		   rc->rc_height,
-		   c->glw_parent_pos + c->glw_parent_width,
-                   0);
+    if(c->glw_parent_pos > -rc->rc_width / 2 &&
+       c->glw_parent_pos <  rc->rc_width * 1.5) {
+      glw_rctx_t rc0 = *rc;
 
-    glw_render0(c, &rc0);
+      glw_reposition(&rc0,
+                     c->glw_parent_pos,
+                     rc->rc_height,
+                     c->glw_parent_pos + c->glw_parent_width,
+                     0);
+
+      glw_render0(c, &rc0);
+    }
   }
 }
 
@@ -157,6 +185,10 @@ glw_gridrow_set(glw_t *w, va_list ap)
       ggr->child_scale = va_arg(ap, double);
       break;
 
+    case GLW_ATTRIB_SPACING:
+      ggr->spacing = va_arg(ap, int);
+      break;
+
     default:
       GLW_ATTRIB_CHEW(attrib, ap);
       break;
@@ -183,7 +215,7 @@ glw_gridrow_ctor(glw_t *w)
 static glw_class_t glw_gridrow = {
   .gc_name = "gridrow",
   .gc_instance_size = sizeof(glw_gridrow_t),
-  .gc_flags = GLW_CAN_HIDE_CHILDS,
+  .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY | GLW_CAN_HIDE_CHILDS,
   .gc_nav_descend_mode = GLW_NAV_DESCEND_ALL,
   .gc_render = glw_gridrow_render,
   .gc_set = glw_gridrow_set,
@@ -191,6 +223,7 @@ static glw_class_t glw_gridrow = {
   .gc_child_orientation = GLW_ORIENTATION_HORIZONTAL,
   .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION,
   .gc_ctor = glw_gridrow_ctor,
+  .gc_escape_score = 100,
 };
 
 GLW_REGISTER_CLASS(glw_gridrow);
