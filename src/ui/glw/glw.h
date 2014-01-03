@@ -312,6 +312,11 @@ typedef enum {
    */
   GLW_SIGNAL_WRAP_CHECK,
 
+  /**
+   * Emitted by grid to all its childs when tile position changed
+   */
+  GLW_SIGNAL_TILE_CHANGED,
+
 } glw_signal_t;
 
 

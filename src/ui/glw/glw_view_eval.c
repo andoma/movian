@@ -29,6 +29,7 @@
 #include "glw_view.h"
 #include "glw.h"
 #include "glw_event.h"
+#include "glw_grid.h"
 #include "backend/backend.h"
 #include "misc/pixmap.h"
 #include "settings.h"
@@ -1023,7 +1024,8 @@ eval_dynamic_widget_meta_sig(glw_t *w, void *opaque,
      signal == GLW_SIGNAL_CAN_SCROLL_CHANGED ||
      signal == GLW_SIGNAL_FULLWINDOW_CONSTRAINT_CHANGED ||
      signal == GLW_SIGNAL_READINESS ||
-     signal == GLW_SIGNAL_RESELECT_CHANGED)
+     signal == GLW_SIGNAL_RESELECT_CHANGED ||
+     signal == GLW_SIGNAL_TILE_CHANGED)
     eval_dynamic(w, opaque, NULL, NULL, NULL, NULL);
   return 0;
 }
@@ -5349,6 +5351,42 @@ glwf_getHeight(glw_view_eval_context_t *ec, struct token *self,
 
 
 /**
+ *
+ */
+static int
+glwf_getTileX(glw_view_eval_context_t *ec, struct token *self,
+	       token_t **argv, unsigned int argc)
+{
+  token_t *r;
+
+  ec->dynamic_eval |= GLW_VIEW_DYNAMIC_EVAL_WIDGET_META;
+
+  r = eval_alloc(self, ec, TOKEN_INT);
+  r->t_int = glw_grid_get_tile_x(ec->w);
+  eval_push(ec, r);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+glwf_getTileY(glw_view_eval_context_t *ec, struct token *self,
+	       token_t **argv, unsigned int argc)
+{
+  token_t *r;
+
+  ec->dynamic_eval |= GLW_VIEW_DYNAMIC_EVAL_WIDGET_META;
+
+  r = eval_alloc(self, ec, TOKEN_INT);
+  r->t_int = glw_grid_get_tile_y(ec->w);
+  eval_push(ec, r);
+  return 0;
+}
+
+
+/**
  * 
  */
 static int 
@@ -6164,6 +6202,8 @@ static const token_func_t funcvec[] = {
   {"set", 2, glwf_set, glwf_null_ctor, glwf_set_dtor},
   {"cloneIndex", 0, glwf_cloneIndex},
   {"abs", 1, glwf_abs},
+  {"getTileX", 0, glwf_getTileX},
+  {"getTileY", 0, glwf_getTileY},
 };
 
 

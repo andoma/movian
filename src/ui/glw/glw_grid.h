@@ -51,3 +51,10 @@ typedef struct glw_gridrow {
   int16_t spacing;
 
 } glw_gridrow_t;
+
+
+int glw_grid_get_tile_x(glw_t *w);
+
+int glw_grid_get_tile_y(glw_t *w);
+
+void glw_grid_flood_signal(glw_t *w);

@@ -25,6 +25,22 @@
 
 #define glw_parent_pos    glw_parent_val[0].i32
 #define glw_parent_height glw_parent_val[1].i32
+#define glw_parent_tile_y glw_parent_val[2].i32
+
+
+/**
+ *
+ */
+void
+glw_grid_flood_signal(glw_t *w)
+{
+  glw_signal0(w, GLW_SIGNAL_TILE_CHANGED, NULL);
+  glw_t *c;
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+    glw_grid_flood_signal(c);
+  }
+}
+
 
 /**
  *
@@ -62,8 +78,18 @@ glw_grid_layout(glw_grid_t *gg, glw_rctx_t *rc)
 
     if(c == gg->scroll_to_me) {
       gg->scroll_to_me = NULL;
-      gg->current_ytile = ytile;
+
+      if(gg->current_ytile != ytile) {
+        gg->current_ytile = ytile;
+        glw_signal0(w, GLW_SIGNAL_TILE_CHANGED, NULL);
+      }
     }
+
+    if(c->glw_parent_tile_y != ytile) {
+      c->glw_parent_tile_y = ytile;
+      glw_grid_flood_signal(c);
+    }
+
     ytile++;
     ypos += row_height + gg->spacing;
     c->glw_norm_weight = scale;
@@ -185,6 +211,32 @@ glw_grid_ctor(glw_t *w)
   glw_grid_t *gg = (glw_grid_t *)w;
   gg->child_scale = 1.0f;
 }
+
+
+/**
+ *
+ */
+int
+glw_grid_get_tile_y(glw_t *w)
+{
+  if(w->glw_class == &glw_grid) {
+    glw_grid_t *gg = (glw_grid_t *)w;
+    return gg->current_ytile;
+  }
+
+  while(w->glw_parent) {
+    if(w->glw_parent->glw_class == &glw_grid)
+      break;
+    w = w->glw_parent;
+  }
+
+  glw_t *p = w->glw_parent;
+  if(p == NULL)
+    return 0;
+
+  return w->glw_parent_tile_y;
+}
+
 
 /**
  *

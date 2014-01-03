@@ -25,6 +25,7 @@
 
 #define glw_parent_pos    glw_parent_val[0].i32
 #define glw_parent_width  glw_parent_val[1].i32
+#define glw_parent_tile_x glw_parent_val[2].i32
 
 
 /**
@@ -83,8 +84,17 @@ glw_gridrow_layout(glw_gridrow_t *ggr, glw_rctx_t *rc)
 
     if(c == ggr->scroll_to_me) {
       ggr->scroll_to_me = NULL;
-      gg->current_xtile = xtile;
+      if(gg->current_xtile != xtile) {
+        gg->current_xtile = xtile;
+        glw_signal0(w, GLW_SIGNAL_TILE_CHANGED, NULL);
+      }
     }
+
+    if(c->glw_parent_tile_x != xtile) {
+      c->glw_parent_tile_x = xtile;
+      glw_grid_flood_signal(c);
+    }
+
     xtile++;
     xpos += col_width + ggr->spacing;
     c->glw_norm_weight = scale;
@@ -158,6 +168,8 @@ glw_gridrow_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
   case GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE:
     scroll_to_me(ggr, extra);
+  case GLW_SIGNAL_FOCUS_CHILD_AUTOMATIC:
+    glw_signal0(w, GLW_SIGNAL_TILE_CHANGED, NULL);
     return 0;
 
   case GLW_SIGNAL_CHILD_DESTROYED:
@@ -227,3 +239,32 @@ static glw_class_t glw_gridrow = {
 };
 
 GLW_REGISTER_CLASS(glw_gridrow);
+
+
+/**
+ *
+ */
+int
+glw_grid_get_tile_x(glw_t *w)
+{
+  if(w->glw_class == &glw_gridrow) {
+    glw_grid_t *gg = get_grid(w);
+    return gg ? gg->current_xtile : 0;
+  }
+
+  if(w->glw_class == &glw_gridrow)
+    return w->glw_focused ? w->glw_focused->glw_parent_tile_x : 0;
+
+  while(w->glw_parent) {
+    if(w->glw_parent->glw_class == &glw_gridrow)
+      break;
+    w = w->glw_parent;
+  }
+
+  glw_t *p = w->glw_parent;
+  if(p == NULL)
+    return 0;
+
+  return w->glw_parent_tile_x;
+}
+
