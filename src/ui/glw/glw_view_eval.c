@@ -664,6 +664,11 @@ eval_eq(glw_view_eval_context_t *ec, struct token *self, int neq)
   if((aa = token_as_string(a)) != NULL &&
      (bb = token_as_string(b)) != NULL) {
     rr = !strcmp(aa, bb);
+
+  } else if(a->type == TOKEN_INT && b->type == TOKEN_FLOAT) {
+    rr = a->t_int == (int)b->t_float;
+  } else if(a->type == TOKEN_FLOAT && b->type == TOKEN_INT) {
+    rr = (int)a->t_float == b->t_int;
   } else if(a->type != b->type) {
     rr = 0;
   } else {
