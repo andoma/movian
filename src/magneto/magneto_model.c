@@ -125,7 +125,6 @@ event_resolve(const char *eventid)
   buf_t *result;
 
   r = http_req(url,
-               HTTP_FLAGS(FA_DEBUG),
                HTTP_RESULT_PTR(&result),
                HTTP_ARG("f", "json"),
                HTTP_ERRBUF(errbuf, sizeof(errbuf)),
@@ -391,7 +390,6 @@ magneto_model_playvideo(const char *uri, media_pipe_t *mp,
   buf_t *result;
 
   r = http_req(url,
-               HTTP_FLAGS(FA_DEBUG),
                HTTP_RESULT_PTR(&result),
                HTTP_ARG("f", "json"),
                HTTP_ERRBUF(errbuf, errlen),
