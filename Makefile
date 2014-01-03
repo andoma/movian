@@ -662,6 +662,11 @@ SRCS-${CONFIG_TLSF} += ext/tlsf/tlsf.c
 ##############################################################
 
 SRCS-${CONFIG_MINER} += ext/miner/miner.c \
+##############################################################
+# Magneto code
+##############################################################
+
+SRCS += src/magneto/magneto_model.c \
 
 include support/${OS}.mk
 
