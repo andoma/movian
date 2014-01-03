@@ -109,38 +109,60 @@ imageset_set(htsmsg_t *m, prop_t *p, const char *name)
   rstr_release(r);
 }
 
-#if 0
 /**
  *
  */
-static htsmsg_t *
-event_resolve(const char *eventid)
+static int
+make_hls_url(htsmsg_t *doc, char *out, size_t outlen)
 {
-  char url[512];
-  snprintf(url, sizeof(url), MAGNETO_WEBGATE"vmetadata/event/%s",
-           eventid);
+  int64_t start_ms = 0, stop_ms = 0;
+  if(htsmsg_get_s64(doc, "start_ms", &start_ms))
+    return -1;
 
-  int r;
-  char errbuf[512];
-  buf_t *result;
+  if(htsmsg_get_s64(doc, "stop_ms", &stop_ms))
+    return -1;
 
-  r = http_req(url,
-               HTTP_RESULT_PTR(&result),
-               HTTP_ARG("f", "json"),
-               HTTP_ERRBUF(errbuf, sizeof(errbuf)),
-               NULL);
+  htsmsg_t *channel = htsmsg_get_map(doc, "channel");
+  if(channel == NULL)
+    return -1;
 
-  if(r) {
-    TRACE(TRACE_ERROR, MAGNETO_LOG, "Failed to load %s -- %s",
-          url, errbuf);
-    return NULL;
-  }
+  const char *playlist_url = htsmsg_get_str(channel, "playlist_url");
+  if(playlist_url == NULL)
+    return -1;
 
-  htsmsg_t *doc = htsmsg_json_deserialize(buf_cstr(result));
-  buf_release(result);
-  return doc;
+  snprintf(out, outlen,
+           "hls:%s?start=%"PRId64"&duration=%"PRId64,
+           playlist_url, start_ms, stop_ms - start_ms);
+  return 0;
 }
-#endif
+
+
+/**
+ *
+ */
+static void
+event_add(magneto_category_t *mc, htsmsg_t *story)
+{
+  prop_t *p = prop_create_root(NULL);
+
+  htsmsg_t *episode = htsmsg_get_map(story, "episode");
+
+  const char *title       = htsmsg_get_str(story, "title");
+  const char *description = htsmsg_get_str(story, "description");
+
+  char hls_url[512];
+  if(!make_hls_url(story, hls_url, sizeof(hls_url)))
+    prop_set(p, "videouri",    PROP_SET_STRING, hls_url);
+
+  prop_set(p, "title",       PROP_SET_STRING, title);
+  prop_set(p, "description", PROP_SET_STRING, description);
+
+  if(episode != NULL)
+    imageset_set(htsmsg_get_list(episode, "thumbnail"), p, "icon");
+
+  if(prop_set_parent(p, mc->mc_prop_stories))
+    abort();
+}
 
 
 /**
@@ -170,7 +192,6 @@ story_add(magneto_category_t *mc, htsmsg_t *story)
   prop_set(p, "description", PROP_SET_STRING, description);
 
   imageset_set(htsmsg_get_list(story, "hero_image"), p, "icon");
-
 
   if(prop_set_parent(p, mc->mc_prop_stories))
     abort();
@@ -209,14 +230,24 @@ category_load(magneto_category_t *mc)
   }
 
   htsmsg_t *stories = htsmsg_get_list(doc, "stories");
+  htsmsg_t *events  = htsmsg_get_list(doc, "events");
+  htsmsg_field_t *f;
 
   if(stories != NULL) {
-    htsmsg_field_t *f;
     HTSMSG_FOREACH(f, stories) {
       htsmsg_t *story = htsmsg_get_map_by_field(f);
       if(story == NULL)
         continue; // field was not a map
       story_add(mc, story);
+    }
+  }
+
+  if(events != NULL) {
+    HTSMSG_FOREACH(f, events) {
+      htsmsg_t *event = htsmsg_get_map_by_field(f);
+      if(event == NULL)
+        continue; // field was not a map
+      event_add(mc, event);
     }
   }
   htsmsg_destroy(doc);
@@ -409,42 +440,20 @@ magneto_model_playvideo(const char *uri, media_pipe_t *mp,
     return NULL;
   }
 
-  int64_t start_ms = 0, stop_ms = 0;
-  if(htsmsg_get_s64(doc, "start_ms", &start_ms)) {
-    snprintf(errbuf, errlen, "Missing start_ms");
-    htsmsg_destroy(doc);
+  char hls_url[256];
+  r = make_hls_url(doc, hls_url, sizeof(hls_url));
+
+  htsmsg_destroy(doc);
+
+  if(r) {
+    snprintf(errbuf, errlen,
+             "Unable to construt HLS URL -- missing params");
     return NULL;
   }
 
-  if(htsmsg_get_s64(doc, "stop_ms", &stop_ms)) {
-    snprintf(errbuf, errlen, "Missing stop_ms");
-    htsmsg_destroy(doc);
-    return NULL;
-  }
+  TRACE(TRACE_DEBUG, MAGNETO_LOG, "Redirecting %s -> %s", uri, hls_url);
 
-  htsmsg_t *channel = htsmsg_get_map(doc, "channel");
-  if(channel == NULL) {
-    snprintf(errbuf, errlen, "Missing channel");
-    htsmsg_destroy(doc);
-    return NULL;
-  }
-
-  const char *playlist_url = htsmsg_get_str(channel, "playlist_url");
-  if(playlist_url == NULL) {
-    snprintf(errbuf, errlen, "Missing playlist_url");
-    htsmsg_destroy(doc);
-    return NULL;
-  }
-
-  char hlsurl[256];
-  snprintf(hlsurl, sizeof(hlsurl),
-           "hls:%s?start=%"PRId64"&duration=%"PRId64,
-           playlist_url, start_ms, stop_ms - start_ms);
-
-  TRACE(TRACE_DEBUG, MAGNETO_LOG, "Redirecting %s -> %s",
-        uri, hlsurl);
-
-  return backend_play_video(hlsurl, mp, errbuf, errlen, vq, vsl, va0);
+  return backend_play_video(hls_url, mp, errbuf, errlen, vq, vsl, va0);
 }
 
 
