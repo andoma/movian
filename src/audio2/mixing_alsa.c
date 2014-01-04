@@ -100,7 +100,6 @@ alsa_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
 {
   decoder_t *d = (decoder_t *)ad;
   media_pipe_t *mp = ad->ad_mp;
-  int c;
 
   int64_t ts;
   int delay = 0;
@@ -120,9 +119,7 @@ alsa_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
 
   planes[0] = (void *) (d->tmp + (d->wptr * BUFFER_SIZE));
 
-  c = avresample_read(ad->ad_avr, planes, FRAMES);
-
-  assert(c == FRAMES);
+  avresample_read(ad->ad_avr, planes, FRAMES);
 
   d->wptr = (d->wptr + 1) & (SLOTS - 1);
 
