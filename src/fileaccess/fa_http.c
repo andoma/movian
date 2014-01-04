@@ -3409,6 +3409,16 @@ http_req(const char *url, ...)
       goto cleanup;
     goto retry;
 
+  case 206:
+    /* We got "Partial Content" without asking for it.  Some servers
+       (FlashCom/3.5.7) seem to "remember" Range requests from
+       previous queries on same connection if it's not overwritten
+       with a new Range: HTTP header. Clearly a bug, but we'll deal
+       with it by redoing the request
+    */
+    http_detach(hf, 0, "Got 206 without asking for it");
+    goto retry;
+
   default:
     snprintf(errbuf, errlen, "HTTP error: %d", code);
     http_drain_content(hf);
