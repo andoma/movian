@@ -49,7 +49,7 @@
 
 extern char *showtime_bin;
 
-static const char *ctrlbase = "http://showtime.lonelycoder.com/upgrade/";
+static const char *ctrlbase = "http://com.spotify.magneto.outcast.doozer.s3-website-eu-west-1.amazonaws.com/showtime";
 static const char *artifact_type;
 static const char *archname;
 
@@ -69,7 +69,7 @@ static int inhibit_checks = 1;
 static prop_t *news_ref;
 
 #if STOS
-static const char *ctrlbase_stos = "http://showtime.lonelycoder.com/stos/";
+static const char *ctrlbase_stos = "http://com.spotify.magneto.outcast.doozer.s3-website-eu-west-1.amazonaws.com/stos";
 static int stos_upgrade_needed;
 static int stos_current_version;
 static int stos_req_version;
@@ -861,7 +861,7 @@ upgrade_init(void)
 
 #if MESONSTOS
   artifact_type = "sqfs";
-  archname = "meson";
+  archname = "meson6";
 #endif
 
   if(artifact_type == NULL || archname == NULL)
