@@ -4,8 +4,7 @@ build()
     mkdir -p ${WORKINGDIR}
 
     TOOLCHAIN_HASH=376766b6504cd4da67f87ad213ac730230e4ee1e
-
-    TOOLCHAIN_URL=http://com.spotify.magneto.outcast.doozer.s3-website-eu-west-1.amazonaws.com/file/${TOOLCHAIN_HASH}
+    TOOLCHAIN_URL=https://djo0w2q39wuyp.cloudfront.net/file/${TOOLCHAIN_HASH}
     TOOLCHAIN="${WORKINGDIR}/${TOOLCHAIN_HASH}"
 
     cleanup() {
