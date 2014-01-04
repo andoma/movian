@@ -89,7 +89,7 @@ widget(grid, {
 
             widget(video, {
               dpadSeek: false;
-
+              id: $self.title;
               source: $self.videouri;
               activation: $clone.activation; 
             });

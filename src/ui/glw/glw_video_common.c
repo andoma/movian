@@ -767,6 +767,9 @@ glw_video_ctor(glw_t *w)
   glw_video_t *gv = (glw_video_t *)w;
   glw_root_t *gr = gv->w.glw_root;
 
+  gv->gv_activation = VIDEO_ACTIVATION_PASSIVE;
+  gv->gv_activation_attr = VIDEO_ACTIVATION_PASSIVE;
+
   gv->gv_audio_volume = 1;
   gv->gv_flags |= GLW_VIDEO_DPAD_SEEK;
 
@@ -928,9 +931,10 @@ set_activation0(glw_video_t *gv, int level)
 static void
 set_activation(glw_video_t *gv, int level)
 {
-  if(gv->gv_activation == level)
+  if(gv->gv_activation_attr == level)
     return;
 
+  gv->gv_activation_attr = level;
 
   if(gv->gv_activation == VIDEO_ACTIVATION_PASSIVE &&
      level             == VIDEO_ACTIVATION_PRELOAD) {
@@ -1479,7 +1483,6 @@ video_pm_render(glw_video_t *gv, glw_rctx_t *rc)
 
     int64_t ts = showtime_get_ts();
     glw_tex_upload(gv->w.glw_root, gv->gv_aux, pm, 0);
-    printf("Texture upload took %d\n", (int)(showtime_get_ts() - ts));
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, PIXMAP_ROW_ALIGN);
 
@@ -1506,7 +1509,6 @@ video_pm_render(glw_video_t *gv, glw_rctx_t *rc)
   }
 
   if(!vpa->vpa_gbt.tex) {
-    printf("No texture yet\n");
     return;
   }
 
@@ -1527,7 +1529,6 @@ video_pm_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
   if(vpa->vpa_cnt && !vpa->vpa_done) {
     vpa->vpa_cnt++;
     if(vpa->vpa_cnt > 3) {
-      printf("All done\n");
       vpa->vpa_done = 1;
       hts_cond_signal(&gv->gv_avail_queue_cond);
     }

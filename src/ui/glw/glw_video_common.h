@@ -234,6 +234,7 @@ typedef struct glw_video {
   int gv_invisible;
 
   video_activation_t gv_activation;
+  video_activation_t gv_activation_attr;
 
   int gv_preload_hold;
 

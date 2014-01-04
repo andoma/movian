@@ -32,6 +32,7 @@ widget(container_z, {
 
     widget(container_z, {
       widget(video, {
+        activation: 0;
 	how: $self.how;
 	model: $self.openedFrom;
 	origin: $self.origin;
