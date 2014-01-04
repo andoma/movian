@@ -475,6 +475,7 @@ static backend_t be_hls = {
   .be_init        = magneto_model_init,
   .be_canhandle   = magneto_model_canhandle,
   .be_play_video  = magneto_model_playvideo,
+  .be_open        = backend_open_video,
 };
 
 BE_REGISTER(hls);
