@@ -54,7 +54,8 @@ build()
 	--cleanbuild \
 	${USE_CCACHE} \
         --enable-magneto \
-        --disable-spidermonkey
+        --disable-spidermonkey \
+        --disable-xmp \
 
 
     make ${JARGS} BUILD=${TARGET} squashfs
