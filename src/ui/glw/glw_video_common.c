@@ -1481,7 +1481,6 @@ video_pm_render(glw_video_t *gv, glw_rctx_t *rc)
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-    int64_t ts = showtime_get_ts();
     glw_tex_upload(gv->w.glw_root, gv->gv_aux, pm, 0);
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, PIXMAP_ROW_ALIGN);
