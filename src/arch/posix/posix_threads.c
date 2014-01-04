@@ -57,7 +57,7 @@ hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delta)
   gettimeofday(&tv, NULL);
   TIMEVAL_TO_TIMESPEC(&tv, &ts);
 #else
-  clock_gettime(CLOCK_REALTIME, &ts);
+  clock_gettime(CLOCK_MONOTONIC, &ts);
 #endif
 
   ts.tv_sec  +=  delta / 1000;
@@ -85,6 +85,22 @@ hts_cond_wait_timeout_abs(hts_cond_t *c, hts_mutex_t *m, int64_t deadline)
   return pthread_cond_timedwait(c, m, &ts) == ETIMEDOUT;
 }
 
+
+extern void
+arch_hts_cond_init(hts_cond_t *c)
+{
+#ifdef __APPLE__
+  pthread_cond_init(c);
+#else
+  pthread_condattr_t attr;
+  pthread_condattr_init(&attr);
+  pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
+  pthread_cond_init(c, &attr);
+  pthread_condattr_destroy(&attr);
+#endif
+
+
+}
 
 /**
  *
