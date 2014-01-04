@@ -34,8 +34,8 @@ typedef struct json_deserializer {
   void (*jd_add_string)(void *jd_opaque, void *parent,
 			const char *name, char *str);
 
-  void (*jd_add_long)(void *jd_opaque, void *parent,
-		      const char *name, long v);
+  void (*jd_add_i64)(void *jd_opaque, void *parent,
+		      const char *name, int64_t v);
 
   void (*jd_add_double)(void *jd_opaque, void *parent,
 			const char *name, double d);
