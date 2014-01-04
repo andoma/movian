@@ -90,6 +90,7 @@ CONFIG_LIST="
  libntfs
  miner
  cedar
+ magneto
 "
 
 cleanup() {
@@ -527,8 +528,10 @@ EOF
     # Static web resources
     echo >>${CONFIG_MAK} "BUNDLES+=resources/static"
 
-    # Bundled apps
-    echo >>${CONFIG_MAK} "BUNDLES+=bundled_apps"
+
+    if enabled magneto; then
+        echo >>${CONFIG_MAK} "BUNDLES+=glwskins/magneto"
+    fi
 
     # sqlite
     if enabled sqlite_vfs; then

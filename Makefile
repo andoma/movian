@@ -666,7 +666,7 @@ SRCS-${CONFIG_MINER} += ext/miner/miner.c \
 # Magneto code
 ##############################################################
 
-SRCS += src/magneto/magneto_model.c \
+SRCS-${CONFIG_MAGNETO} += src/magneto/magneto_model.c \
 
 include support/${OS}.mk
 

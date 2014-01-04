@@ -13,6 +13,16 @@ show_help(){
   exit 1
 }
 
+enable sqlite_internal
+enable spidermonkey
+enable glw_backend_opengl_es
+enable glw
+enable httpserver
+enable libfreetype
+enable stdin
+enable realpath
+enable bspatch
+
 for opt do
   optval="${opt#*=}"
   case "$opt" in
@@ -34,18 +44,6 @@ CXX=${TOOLCHAIN}g++
 
 setup_env "$@"
 
-enable sqlite_internal
-enable spidermonkey
-enable glw_backend_opengl_es
-enable glw
-#enable polarssl
-#enable librtmp
-enable httpserver
-#enable dvd
-enable libfreetype
-enable stdin
-enable realpath
-enable bspatch
 
 LIBAV_CFLAGS="-I${EXT_INSTALL_DIR}/include"
 LIBAV_LDFLAGS="-L${EXT_INSTALL_DIR}/lib"
