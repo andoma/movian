@@ -1135,6 +1135,7 @@ static const token_attrib_t attribtab[] = {
   {"parent",          set_propref, GLW_ATTRIB_PROP_PARENT},
   {"self",            set_propref, GLW_ATTRIB_PROP_SELF},
   {"model",           set_propref, GLW_ATTRIB_PROP_MODEL},
+  {"origin",          set_propref, GLW_ATTRIB_PROP_ORIGIN},
 };
 
 

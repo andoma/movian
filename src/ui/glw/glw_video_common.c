@@ -452,7 +452,8 @@ glw_video_play(glw_video_t *gv)
 			   gv->gv_priority,
 			   !!(gv->gv_flags & GLW_VIDEO_NO_AUDIO),
 			   gv->gv_model,
-			   gv->gv_how);
+			   gv->gv_how,
+			   gv->gv_origin);
   mp_enqueue_event(gv->gv_mp, e);
   event_release(e);
 }
@@ -469,6 +470,7 @@ glw_video_dtor(glw_t *w)
   video_decoder_t *vd = gv->gv_vd;
 
   prop_ref_dec(gv->gv_model);
+  prop_ref_dec(gv->gv_origin);
   prop_unsubscribe(gv->gv_vo_scaling_sub);
   prop_unsubscribe(gv->gv_vo_displace_x_sub);
   prop_unsubscribe(gv->gv_vo_displace_y_sub);
@@ -799,6 +801,13 @@ glw_video_set(glw_t *w, va_list ap)
 	prop_ref_dec(gv->gv_model);
 
       gv->gv_model = prop_ref_inc(va_arg(ap, prop_t *));
+      break;
+
+    case GLW_ATTRIB_PROP_ORIGIN:
+      if(gv->gv_origin)
+	prop_ref_dec(gv->gv_origin);
+
+      gv->gv_origin = prop_ref_inc(va_arg(ap, prop_t *));
       break;
 
     case GLW_ATTRIB_AUDIO_VOLUME:

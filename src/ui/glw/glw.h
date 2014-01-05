@@ -106,6 +106,7 @@ typedef enum {
   GLW_ATTRIB_PROP_PARENT,
   GLW_ATTRIB_PROP_SELF,
   GLW_ATTRIB_PROP_MODEL,
+  GLW_ATTRIB_PROP_ORIGIN,
   GLW_ATTRIB_ANGLE,
   GLW_ATTRIB_MODE,
   GLW_ATTRIB_TIME,
@@ -1236,6 +1237,7 @@ do {						\
   case GLW_ATTRIB_PROP_PARENT:			\
   case GLW_ATTRIB_PROP_SELF:			\
   case GLW_ATTRIB_PROP_MODEL:			\
+  case GLW_ATTRIB_PROP_ORIGIN:			\
   case GLW_ATTRIB_BIND_TO_ID: 			\
   case GLW_ATTRIB_PAGE_BY_ID:			\
     (void)va_arg(ap, void *);			\

@@ -125,6 +125,8 @@ typedef struct js_model {
 
   int jm_pending_want_more;
 
+  int jm_sync;  // Synchronous mode (no callbacks allowed, etc)
+
 } js_model_t;
 
 
@@ -146,11 +148,12 @@ js_page_init(void)
  *
  */
 static js_model_t *
-js_model_create(JSContext *cx, jsval openfunc)
+js_model_create(JSContext *cx, jsval openfunc, int sync)
 {
   js_model_t *jm = calloc(1, sizeof(js_model_t));
   jm->jm_refcount = 1;
   jm->jm_openfunc = openfunc;
+  jm->jm_sync = sync;
   JS_AddNamedRoot(cx, &jm->jm_openfunc, "openfunc");
   TAILQ_INIT(&jm->jm_items);
   return jm;
@@ -855,7 +858,7 @@ js_appendModel(JSContext *cx, JSObject *obj, uintN argc,
   prop_set_rstring(prop_create(item, "url"), url);
   rstr_release(url);
 
-  jm = js_model_create(cx, JSVAL_VOID);
+  jm = js_model_create(cx, JSVAL_VOID, 0);
 
   init_model_props(jm, item);
   prop_set_string(jm->jm_type, type);
@@ -982,7 +985,7 @@ js_page_dump(JSContext *cx, JSObject *obj, uintN argc,
  */
 static JSBool 
 js_page_redirect(JSContext *cx, JSObject *obj, uintN argc,
-	      jsval *argv, jsval *rval)
+		 jsval *argv, jsval *rval)
 {
   js_model_t *jm = JS_GetPrivate(cx, obj);
   const char *url;
@@ -990,9 +993,17 @@ js_page_redirect(JSContext *cx, JSObject *obj, uintN argc,
   if (!JS_ConvertArguments(cx, argc, argv, "s", &url))
     return JS_FALSE;
 
-  event_t *e = event_create_str(EVENT_REDIRECT, url);
-  prop_send_ext_event(jm->jm_eventsink, e);
-  event_release(e);
+  if(jm->jm_sync) {
+
+    if(backend_open(jm->jm_root, url, 1))
+      nav_open_errorf(jm->jm_root, _("No handler for URL"));
+
+  } else {
+
+    event_t *e = event_create_str(EVENT_REDIRECT, url);
+    prop_send_ext_event(jm->jm_eventsink, e);
+    event_release(e);
+  }
 
   *rval = JSVAL_VOID;
   return JS_TRUE;
@@ -1099,13 +1110,21 @@ js_page_subscribe(JSContext *cx, JSObject *obj, uintN argc,
 /**
  *
  */
-static JSFunctionSpec page_functions[] = {
+static JSFunctionSpec page_functions_courier[] = {
     JS_FS("onEvent",            js_page_onEvent, 2, 0, 0),
+    JS_FS("waitForValue",       js_page_wfv,     2, 0, 0),
+    JS_FS("subscribe",          js_page_subscribe, 2, 0, 0),
+    JS_FS_END
+};
+
+
+/**
+ *
+ */
+static JSFunctionSpec page_functions_sync[] = {
     JS_FS("error",              js_page_error,   1, 0, 0),
     JS_FS("redirect",           js_page_redirect,1, 0, 0),
     JS_FS("dump",               js_page_dump,    0, 0, 0),
-    JS_FS("waitForValue",       js_page_wfv,     2, 0, 0),
-    JS_FS("subscribe",          js_page_subscribe, 2, 0, 0),
     JS_FS("getItems",           js_page_items,   0, 0, 0),
     JS_FS_END
 };
@@ -1341,7 +1360,9 @@ js_open_invoke(JSContext *cx, js_model_t *jm)
   JSObject *obj = make_model_object(cx, jm, &pageobj);
 
   if(jm->jm_pc != NULL)
-    JS_DefineFunctions(cx, obj, page_functions);
+    JS_DefineFunctions(cx, obj, page_functions_courier);
+
+  JS_DefineFunctions(cx, obj, page_functions_sync);
 
   if(jm->jm_url != NULL)
     js_createPageOptions(cx, obj, jm->jm_url, jm->jm_options);
@@ -1493,7 +1514,7 @@ js_backend_open(prop_t *page, const char *url, int sync)
 
   JSContext *cx = js_newctx(NULL);
   JS_BeginRequest(cx);
-  jm = js_model_create(cx, jsr->jsr_openfunc);
+  jm = js_model_create(cx, jsr->jsr_openfunc, sync);
   JS_EndRequest(cx);
   JS_DestroyContext(cx);
 
@@ -1541,7 +1562,7 @@ js_backend_search(struct prop *model, const char *query)
     if(!jss->jss_jsp->jsp_enable_search)
       continue;
 
-    jm = js_model_create(cx, jss->jss_openfunc);
+    jm = js_model_create(cx, jss->jss_openfunc, 0);
     strvec_addp(&jm->jm_args, query);
 
     search_class_create(parent, &jm->jm_nodes, &jm->jm_entries, 

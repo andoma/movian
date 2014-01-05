@@ -1307,7 +1307,8 @@ zap_channel(htsp_connection_t *hc, htsp_subscription_t *hs,
   htsmsg_t *m;
   const char *err;
 
-  rstr_t *tmp = video_queue_find_next(vq, rstr_get(*url), reverse, 1);
+  //  rstr_t *tmp = video_queue_find_next(vq, rstr_get(*url), reverse, 1);
+  rstr_t *tmp = NULL;
   if(tmp == NULL)
     return 0;
   const char *q = strstr(rstr_get(tmp), "/channel/");

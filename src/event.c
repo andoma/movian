@@ -223,10 +223,10 @@ static void
 event_playurl_dtor(event_t *e)
 {
   event_playurl_t *ep = (event_playurl_t *)e;
-  if(ep->model != NULL)
-    prop_destroy(ep->model);
+  prop_destroy(ep->model);
   free(ep->url);
   free(ep->how);
+  prop_ref_dec(ep->origin);
 }
 
 /**
@@ -234,12 +234,13 @@ event_playurl_dtor(event_t *e)
  */
 event_t *
 event_create_playurl(const char *url, int primary, int priority, int no_audio,
-		     prop_t *model, const char *how)
+		     prop_t *model, const char *how, prop_t *origin)
 {
   event_playurl_t *ep = event_create(EVENT_PLAY_URL, sizeof(event_playurl_t));
   ep->url = strdup(url);
   ep->how = how ? strdup(how) : NULL;
   ep->model = prop_xref_addref(model);
+  ep->origin = prop_ref_inc(origin);
   ep->primary = primary;
   ep->priority = priority;
   ep->no_audio = no_audio;

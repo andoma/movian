@@ -34,6 +34,7 @@ widget(container_z, {
       widget(video, {
 	how: $self.how;
 	model: $self.openedFrom;
+	origin: $self.origin;
 	primary: true;
 	source: $self.source;
 	focusable: true;
