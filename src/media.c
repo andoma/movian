@@ -651,12 +651,24 @@ mq_flush_q(media_pipe_t *mp, media_queue_t *mq, struct media_buf_queue *q,
  * Must be called with mp locked
  */
 static void
-mq_flush(media_pipe_t *mp, media_queue_t *mq, int full)
+mq_flush_locked(media_pipe_t *mp, media_queue_t *mq, int full)
 {
   mq_flush_q(mp, mq, &mq->mq_q_data, full);
   mq_flush_q(mp, mq, &mq->mq_q_ctrl, full);
   mq_flush_q(mp, mq, &mq->mq_q_aux, full);
   mq_update_stats(mp, mq);
+}
+
+
+/**
+ * Must be called with mp locked
+ */
+void
+mq_flush(media_pipe_t *mp, media_queue_t *mq, int full)
+{
+  hts_mutex_lock(&mp->mp_mutex);
+  mq_flush_locked(mp, mq, full);
+  hts_mutex_unlock(&mp->mp_mutex);
 }
 
 
@@ -694,8 +706,8 @@ mp_destroy(media_pipe_t *mp)
     event_release(e);
   }
 
-  mq_flush(mp, &mp->mp_audio, 1);
-  mq_flush(mp, &mp->mp_video, 1);
+  mq_flush_locked(mp, &mp->mp_audio, 1);
+  mq_flush_locked(mp, &mp->mp_video, 1);
 
   mq_destroy(&mp->mp_audio);
   mq_destroy(&mp->mp_video);
@@ -1249,8 +1261,8 @@ mp_flush(media_pipe_t *mp, int blank)
 
   hts_mutex_lock(&mp->mp_mutex);
 
-  mq_flush(mp, a, 0);
-  mq_flush(mp, v, 0);
+  mq_flush_locked(mp, a, 0);
+  mq_flush_locked(mp, v, 0);
 
   if(v->mq_stream >= 0) {
     mb = media_buf_alloc_locked(mp, 0);
