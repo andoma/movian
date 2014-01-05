@@ -1,0 +1,10 @@
+upnp: Use URL to video file as canonical URL
+
+Since we no longer need canonicalUrl in order to do continuous play we
+are much better of keeping the object ID away from it.
+
+One upside is that Showtime now recognizes the same move in terms of
+'seen', playcount, etc even if viewed from different folders on a UPNP server.
+Tested with Twonky and MiniDLNA
+
+Fixes #1788 (I hope)
