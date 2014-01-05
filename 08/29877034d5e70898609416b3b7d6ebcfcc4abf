@@ -1,0 +1,3 @@
+Rework "Continuous video playback" implementation
+
+Continuous playback should now work ok in youtube, etc
