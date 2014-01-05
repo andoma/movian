@@ -1039,10 +1039,6 @@ be_upnp_browse(prop_t *page, const char *url, int sync)
   upnp_browse_t *ub = calloc(1, sizeof(upnp_browse_t));
   ub->ub_url = strdup(url);
 
-  char *hash = strchr(ub->ub_url, '#');
-  if(hash != NULL)
-    *hash = 0;
-
   ub->ub_page = prop_ref_inc(page);
   ub->ub_source = prop_create_r(ub->ub_page, "source");
 
