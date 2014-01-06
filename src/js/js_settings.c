@@ -286,8 +286,6 @@ jss_set_value(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 
   assert(jss->jss_s != NULL);
 
-  prop_t *p = settings_get_value(jss->jss_s);
-
   JSBool b;
   int32 i32;
   JSString *str;
@@ -299,27 +297,27 @@ jss_set_value(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
   case SETTING_INT:
     if(!JS_ValueToInt32(cx, v, &i32))
       return JS_FALSE;
-    prop_set_int(p, i32);
+    setting_set(jss->jss_s, SETTING_INT, i32);
     break;
 
   case SETTING_BOOL:
     if(!JS_ValueToBoolean(cx, v, &b))
       return JS_FALSE;
-    prop_set_int(p, b);
+    setting_set(jss->jss_s, SETTING_BOOL, b);
     break;
 
   case SETTING_STRING:
     str = JS_ValueToString(cx, v);
     if(str == NULL)
       return JS_FALSE;
-    prop_set_string(p, JS_GetStringBytes(str));
+    setting_set(jss->jss_s, SETTING_STRING, JS_GetStringBytes(str));
     break;
 
   case SETTING_MULTIOPT:
     str = JS_ValueToString(cx, v);
     if(str == NULL)
       return JS_FALSE;
-    prop_select_by_value(p, JS_GetStringBytes(str));
+    setting_set(jss->jss_s, SETTING_STRING, JS_GetStringBytes(str));
     break;
   }
   return JS_TRUE;

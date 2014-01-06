@@ -80,32 +80,6 @@ si_destroy(service_instance_t *si)
   free(si);
 }
 
-
-
-/**
- *
- */
-static void
-update_service(service_instance_t *si)
-{
-  if(si->si_service == NULL &&
-     si->si_setting_enabled &&
-     si->si_setting_title &&
-     si->si_setting_type) {
-
-    si->si_service = service_create(si->si_id, NULL, si->si_url, NULL, NULL,
-				    si->si_probe, 0,
-				    SVC_ORIGIN_DISCOVERED);
-    prop_link(settings_get_value(si->si_setting_title), 
-	      prop_create(si->si_service->s_root, "title"));
-    prop_link(settings_get_value(si->si_setting_type), 
-	      prop_create(si->si_service->s_root, "type"));
-    prop_link(settings_get_value(si->si_setting_enabled), 
-	      prop_create(si->si_service->s_root, "enabled"));
-  }
-}
-
-
 /**
  *
  */
@@ -126,54 +100,64 @@ sd_add_service(service_instance_t *si, const char *title,
 	       int probe, const char *description)
 {
   si->si_probe = probe;
-  if(si->si_settings == NULL) {
-    char tmp[100];
 
-    si->si_url = strdup(url);
+  if(si->si_settings != NULL)
+    return;
+
+  char tmp[100];
+
+  si->si_url = strdup(url);
     
-    snprintf(tmp, sizeof(tmp), "sd/%s", url);
-    str_cleanup(tmp + 3, "/:");
+  snprintf(tmp, sizeof(tmp), "sd/%s", url);
+  str_cleanup(tmp + 3, "/:");
 
-    si->si_settings_path = strdup(tmp);
-    si->si_settings_store = htsmsg_store_load(tmp) ?: htsmsg_create_map();
+  si->si_settings_path = strdup(tmp);
+  si->si_settings_store = htsmsg_store_load(tmp) ?: htsmsg_create_map();
 
-    si->si_settings = settings_add_dir_cstr(gconf.settings_sd,
-					    title, NULL, NULL,
-					    description, NULL);
+  si->si_settings = settings_add_dir_cstr(gconf.settings_sd,
+					  title, NULL, NULL,
+					  description, NULL);
 
-    si->si_setting_enabled =
-      setting_create(SETTING_BOOL, si->si_settings, SETTINGS_INITIAL_UPDATE,
-		     SETTING_TITLE(_p("Enabled on home screen")),
-                     SETTING_VALUE(0),
-                     SETTING_HTSMSG_CUSTOM_SAVER("enabled",
-                                                 si->si_settings_store,
-                                                 sd_settings_saver,
-                                                 si),
-                     NULL);
+  si->si_service = service_create(si->si_id, NULL, si->si_url, NULL, NULL,
+				  si->si_probe, 0,
+				  SVC_ORIGIN_DISCOVERED);
 
-    si->si_setting_title =
-      setting_create(SETTING_STRING, si->si_settings, SETTINGS_INITIAL_UPDATE,
-                     SETTING_TITLE(_p("Name")),
-		     SETTING_VALUE(title),
-                     SETTING_HTSMSG_CUSTOM_SAVER("title",
-                                                 si->si_settings_store,
-                                                 sd_settings_saver,
-                                                 si),
-                     NULL);
+  prop_t *r = si->si_service->s_root;
+
+  si->si_setting_enabled =
+    setting_create(SETTING_BOOL, si->si_settings, SETTINGS_INITIAL_UPDATE,
+		   SETTING_TITLE(_p("Enabled on home screen")),
+		   SETTING_VALUE(0),
+		   SETTING_WRITE_PROP(prop_create(r, "enabled")),
+		   SETTING_HTSMSG_CUSTOM_SAVER("enabled",
+					       si->si_settings_store,
+					       sd_settings_saver,
+					       si),
+		   NULL);
+
+  si->si_setting_title =
+    setting_create(SETTING_STRING, si->si_settings,
+		   SETTINGS_INITIAL_UPDATE | SETTINGS_EMPTY_IS_DEFAULT,
+		   SETTING_TITLE(_p("Name")),
+		   SETTING_VALUE(title),
+		   SETTING_WRITE_PROP(prop_create(r, "title")),
+		   SETTING_HTSMSG_CUSTOM_SAVER("title",
+					       si->si_settings_store,
+					       sd_settings_saver,
+					       si),
+		   NULL);
 
 
-    si->si_setting_type =
-      setting_create(SETTING_STRING, si->si_settings, SETTINGS_INITIAL_UPDATE,
-                     SETTING_TITLE(_p("Type")),
-		     SETTING_VALUE(contents),
-                     SETTING_HTSMSG_CUSTOM_SAVER("type",
-                                                 si->si_settings_store,
-                                                 sd_settings_saver,
-                                                 si),
-                     NULL);
-  }
-
-  update_service(si);
+  si->si_setting_type =
+    setting_create(SETTING_STRING, si->si_settings, SETTINGS_INITIAL_UPDATE,
+		   SETTING_TITLE(_p("Type")),
+		   SETTING_VALUE(contents),
+		   SETTING_WRITE_PROP(prop_create(r, "type")),
+		   SETTING_HTSMSG_CUSTOM_SAVER("type",
+					       si->si_settings_store,
+					       sd_settings_saver,
+					       si),
+		   NULL);
 }
 
 /**

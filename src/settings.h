@@ -28,6 +28,7 @@
 #define SETTINGS_PASSWORD       0x2 // Make a password entry (hidden display)
 #define SETTINGS_RAW_NODES      0x4
 #define SETTINGS_FIRST          0x8 // Insert at head 
+#define SETTINGS_EMPTY_IS_DEFAULT 0x10 // Empty string makes it be default
 
 typedef void (settings_saver_t)(void *opaque, htsmsg_t *htsmsg);
 
@@ -53,8 +54,6 @@ prop_t *settings_create_separator(prop_t *parent, prop_t *caption);
 void settings_add_int(setting_t *s, int delta);
 
 int settings_get_type(const setting_t *s);
-
-prop_t *settings_get_value(setting_t *s);
 
 setting_t *settings_create_action(prop_t *parent, prop_t *title,
 				  prop_callback_t *cb, void *opaque,
@@ -139,3 +138,5 @@ setting_t *setting_create(int type, prop_t *parent, int flags, ...)
 
 prop_t *setting_add_option(setting_t *s, const char *id,
                            const char *title, int sel);
+
+void setting_set(setting_t *s, int type, ...);

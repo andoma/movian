@@ -71,6 +71,9 @@ struct setting {
 
   prop_t *s_current_value;
 
+  rstr_t *s_default_str;
+
+  int s_flags;
   char s_enable_writeback;
   char s_kvstore;
   char s_type;
@@ -323,6 +326,7 @@ void
 setting_destroy(setting_t *s)
 {
   s->s_callback = NULL;
+  rstr_release(s->s_default_str);
   free(s->s_id);
   free(s->s_pending_value);
   free(s->s_store_name);
@@ -346,16 +350,6 @@ setting_destroyp(setting_t **sp)
     setting_destroy(*sp);
     *sp = NULL;
   }
-}
-
-
-/**
- *
- */
-prop_t *
-settings_get_value(setting_t *s)
-{
-  return s->s_val;
 }
 
 
@@ -420,10 +414,16 @@ settings_string_callback_ng(void *opaque, rstr_t *rstr)
   setting_t *s = opaque;
   prop_callback_string_t *cb = s->s_callback;
 
-  if(cb) cb(s->s_opaque, rstr_get(rstr));
+  rstr_t *outval = rstr;
+
+  if((rstr == NULL || rstr_get(rstr)[0] == 0) &&
+     (s->s_flags & SETTINGS_EMPTY_IS_DEFAULT))
+    outval = s->s_default_str;
+
+  if(cb) cb(s->s_opaque, rstr_get(outval));
 
   if(s->s_ext_value)
-    prop_set_rstring(s->s_ext_value, rstr);
+    prop_set_rstring(s->s_ext_value, outval);
 
   if(!s->s_enable_writeback)
     return;
@@ -556,7 +556,7 @@ setting_create(int type, prop_t *parent, int flags, ...)
   va_list ap;
 
   s->s_type = type;
-
+  s->s_flags = flags;
   va_start(ap, flags);
 
   if(flags & SETTINGS_RAW_NODES)
@@ -768,10 +768,19 @@ setting_create(int type, prop_t *parent, int flags, ...)
     if(flags & SETTINGS_PASSWORD)
       prop_set(s->s_root, "password", PROP_SET_INT, 1);
 
-    if(s->s_store != NULL)
-      initial_str = htsmsg_get_str(s->s_store, s->s_id) ?: initial_str;
+    s->s_default_str = rstr_alloc(initial_str);
 
-    rstr_t *initial = rstr_alloc(initial_str);
+    rstr_t *initial = NULL;
+
+    if(s->s_store != NULL) {
+      const char *v = htsmsg_get_str(s->s_store, s->s_id);
+      if(v != NULL && (!(flags & SETTINGS_EMPTY_IS_DEFAULT) || v[0] != 0)) {
+	initial = rstr_alloc(v);
+      }
+    }
+
+    if(initial == NULL)
+      initial = rstr_dup(s->s_default_str);
 
     if(s->s_kvstore) {
       rstr_t *r = kv_url_opt_get_rstr(s->s_store_name, KVSTORE_DOMAIN_SETTING,
@@ -880,6 +889,43 @@ setting_add_option(setting_t *s, const char *id,
   return opt;
 }
 
+
+/**
+ *
+ */
+void
+setting_set(setting_t *s, int type, ...)
+{
+  if(s->s_type != type)
+    return;
+
+  const char *str;
+  int i32;
+  va_list ap;
+  va_start(ap, type);
+
+  switch(type) {
+  case SETTING_INT:
+  case SETTING_BOOL:
+    i32 = va_arg(ap, int);
+    prop_set_int(s->s_val, i32);
+    break;
+
+  case SETTING_STRING:
+    str = va_arg(ap, const char *);
+    if((str == NULL || *str == 0) && (s->s_flags & SETTINGS_EMPTY_IS_DEFAULT))
+      prop_set_rstring(s->s_val, s->s_default_str);
+    else
+      prop_set_string(s->s_val, str);
+    break;
+
+  case SETTING_MULTIOPT:
+    str = va_arg(ap, const char *);
+    prop_select_by_value(s->s_val, str);
+    break;
+  }
+  va_end(ap);
+}
 
 
 /**

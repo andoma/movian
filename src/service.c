@@ -359,6 +359,7 @@ service_create_managed(const char *id0,
     setting_create(SETTING_BOOL, s->s_settings, SETTINGS_INITIAL_UPDATE,
 		   SETTING_TITLE(_p("Enabled on home screen")),
 		   SETTING_VALUE(enabled),
+		   SETTING_WRITE_PROP(prop_create(s->s_root, "enabled")),
 		   SETTING_HTSMSG_CUSTOM_SAVER("enabled",
 					       s->s_settings_store,
 					       service_settings_saver,
@@ -366,9 +367,11 @@ service_create_managed(const char *id0,
 		   NULL);
 
   s->s_setting_title =
-    setting_create(SETTING_STRING, s->s_settings, SETTINGS_INITIAL_UPDATE,
+    setting_create(SETTING_STRING, s->s_settings,
+		   SETTINGS_INITIAL_UPDATE | SETTINGS_EMPTY_IS_DEFAULT,
 		   SETTING_TITLE(_p("Name")),
 		   SETTING_VALUE(title),
+		   SETTING_WRITE_PROP(prop_create(s->s_root, "title")),
 		   SETTING_HTSMSG_CUSTOM_SAVER("title",
 					       s->s_settings_store,
 					       service_settings_saver,
@@ -380,6 +383,7 @@ service_create_managed(const char *id0,
       setting_create(SETTING_STRING, s->s_settings, SETTINGS_INITIAL_UPDATE,
                      SETTING_TITLE(_p("Type")),
 		     SETTING_VALUE(type),
+		     SETTING_WRITE_PROP(prop_create(s->s_root, "type")),
                      SETTING_HTSMSG_CUSTOM_SAVER("type",
                                                  s->s_settings_store,
                                                  service_settings_saver,
@@ -397,14 +401,6 @@ service_create_managed(const char *id0,
 						 s),
 		     NULL);
   }
-
-  prop_link(settings_get_value(s->s_setting_title),
-	    prop_create(s->s_root, "title"));
-  prop_link(settings_get_value(s->s_setting_type), 
-	    prop_create(s->s_root, "type"));
-  prop_link(settings_get_value(s->s_setting_enabled), 
-	    prop_create(s->s_root, "enabled"));
-
   return s;
 }
 
