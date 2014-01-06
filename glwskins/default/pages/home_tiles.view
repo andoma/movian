@@ -215,7 +215,7 @@ widget(array, {
 		       "setting",  "Settings",
 		       "plugin",   "Plugin",
 		       "photos",   "Pictures") + ".svg",
-	     navOpen($self.url), $self.badge);
+	     navOpen($self.url, void, $self), $self.badge);
   });
 });
 });

@@ -26,6 +26,68 @@
 #include "media.h"
 #include "libav.h"
 #include "fileaccess/fa_libav.h"
+#include "video/video_decoder.h"
+
+static void
+libav_decode_video(struct media_codec *mc, struct video_decoder *vd,
+                   struct media_queue *mq, struct media_buf *mb, int reqsize)
+{
+  int got_pic = 0;
+  media_pipe_t *mp = vd->vd_mp;
+  AVCodecContext *ctx = mc->ctx;
+  AVFrame *frame = vd->vd_frame;
+  int t;
+
+  vd->vd_reorder[vd->vd_reorder_ptr] = mb->mb_meta;
+  ctx->reordered_opaque = vd->vd_reorder_ptr;
+  vd->vd_reorder_ptr = (vd->vd_reorder_ptr + 1) & VIDEO_DECODER_REORDER_MASK;
+
+  /*
+   * If we are seeking, drop any non-reference frames
+   */
+  ctx->skip_frame = mb->mb_skip == 1 ? AVDISCARD_NONREF : AVDISCARD_DEFAULT;
+  avgtime_start(&vd->vd_decode_time);
+
+  AVPacket avpkt;
+  av_init_packet(&avpkt);
+  avpkt.data = mb->mb_data;
+  avpkt.size = mb->mb_size;
+
+  avcodec_decode_video2(ctx, frame, &got_pic, &avpkt);
+
+  t = avgtime_stop(&vd->vd_decode_time, mq->mq_prop_decode_avg,
+		   mq->mq_prop_decode_peak);
+
+  if(mp->mp_stats)
+    mp_set_mq_meta(mq, ctx->codec, ctx);
+
+  const media_buf_meta_t *mbm = &vd->vd_reorder[frame->reordered_opaque];
+
+  if(got_pic == 0 || mbm->mbm_skip == 1)
+    return;
+
+  video_deliver_frame_avctx(vd, mp, mq, ctx, frame, mbm, t);
+}
+
+
+/**
+ *
+ */
+void
+libav_video_flush(media_codec_t *mc, video_decoder_t *vd)
+{
+  AVCodecContext *ctx = mc->ctx;
+  int got_pic = 0;
+  AVPacket avpkt;
+  av_init_packet(&avpkt);
+  avpkt.data = NULL;
+  avpkt.size = 0;
+  do {
+    avcodec_decode_video2(ctx, vd->vd_frame, &got_pic, &avpkt);
+  } while(got_pic);
+  avcodec_flush_buffers(ctx);
+}
+
 
 /**
  *
@@ -46,9 +108,8 @@ media_codec_create_lavc(media_codec_t *cw, const media_codec_params_t *mcp,
     // We create codec instances later in audio thread.
     return 0;
   }
-  
-  cw->ctx = cw->fmt_ctx ?: avcodec_alloc_context3(codec);
 
+  cw->ctx = cw->fmt_ctx ?: avcodec_alloc_context3(codec);
   //  cw->codec_ctx->debug = FF_DEBUG_PICT_INFO | FF_DEBUG_BUGS;
 
   if(mcp != NULL && mcp->extradata != NULL && !cw->ctx->extradata) {
@@ -71,6 +132,11 @@ media_codec_create_lavc(media_codec_t *cw, const media_codec_params_t *mcp,
       av_freep(&cw->ctx);
     return -1;
   }
+  if(codec->type == AVMEDIA_TYPE_VIDEO) {
+    cw->decode = &libav_decode_video;
+    cw->flush  = &libav_video_flush;
+  }
+
   return 0;
 }
 

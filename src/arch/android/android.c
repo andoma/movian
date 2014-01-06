@@ -41,6 +41,8 @@
 #include "navigator.h"
 #include "arch/linux/linux_process_monitor.h"
 
+#include "arch/sunxi/sunxi.h"
+
 JavaVM *JVM;
 jclass STCore;
 prop_t *android_nav;

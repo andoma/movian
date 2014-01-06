@@ -42,9 +42,26 @@ static char omx_enable_mjpeg;
 static void
 rpi_video_port_settings_changed(omx_component_t *oc)
 {
-  TRACE(TRACE_DEBUG, "VideoCore", "Video decoder output port settings changed");
   media_codec_t *mc = oc->oc_opaque;
+  const rpi_video_codec_t *rvc = mc->opaque;
   media_pipe_t *mp = mc->mp;
+
+  OMX_PARAM_PORTDEFINITIONTYPE port_image;
+  OMX_INIT_STRUCTURE(port_image);
+  port_image.nPortIndex = 131;
+
+  if(OMX_GetParameter(oc->oc_handle, OMX_IndexParamPortDefinition,
+		      &port_image) == OMX_ErrorNone) {
+    char codec_info[64];
+    snprintf(codec_info, sizeof(codec_info), "%s %dx%dp (VideoCore)", 
+	     rvc->rvc_name,
+	     port_image.format.video.nFrameWidth,
+	     port_image.format.video.nFrameHeight);
+    prop_set_string(mp->mp_video.mq_prop_codec, codec_info);
+    TRACE(TRACE_DEBUG, "VideoCore",
+	  "Video decoder output port settings changed to %s", codec_info);
+  }
+
   hts_mutex_lock(&mp->mp_mutex);
   media_buf_t *mb = media_buf_alloc_locked(mp, 0);
   mb->mb_data_type = MB_CTRL_RECONFIGURE;
@@ -128,10 +145,6 @@ rpi_codec_decode(struct media_codec *mc, struct video_decoder *vd,
 
     omxchk(OMX_EmptyThisBuffer(rvc->rvc_decoder->oc_handle, buf));
   }
-  if(rvc->rvc_name_set)
-    return;
-  rvc->rvc_name_set = 1;
-  prop_set_string(mq->mq_prop_codec, rvc->rvc_name);
 }
 
 
@@ -196,31 +209,31 @@ rpi_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 
   case CODEC_ID_H263:
     fmt = OMX_VIDEO_CodingH263;
-    name = "h263 (VideoCore)";
+    name = "h263";
     break;
 
   case CODEC_ID_MPEG4:
     fmt = OMX_VIDEO_CodingMPEG4;
-    name = "MPEG-4 (VideoCore)";
+    name = "MPEG-4";
     break;
 
   case CODEC_ID_H264:
     fmt = OMX_VIDEO_CodingAVC;
-    name = "h264 (VideoCore)";
+    name = "h264";
     break;
 
   case CODEC_ID_MPEG2VIDEO:
     if(!omx_enable_mpg2)
       return 1;
     fmt = OMX_VIDEO_CodingMPEG2;
-    name = "MPEG2 (VideoCore)";
+    name = "MPEG2";
     break;
 
   case CODEC_ID_VP8:
     if(!omx_enable_vp8)
       return 1;
     fmt = OMX_VIDEO_CodingVP8;
-    name = "VP8 (VideoCore)";
+    name = "VP8";
     break;
 
   case CODEC_ID_VP6F:
@@ -228,7 +241,7 @@ rpi_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
     if(!omx_enable_vp6)
       return 1;
     fmt = OMX_VIDEO_CodingVP6;
-    name = "VP6 (VideoCore)";
+    name = "VP6";
     break;
 
   case CODEC_ID_MJPEG:
@@ -236,7 +249,7 @@ rpi_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
     if(!omx_enable_mjpeg)
       return 1;
     fmt = OMX_VIDEO_CodingMJPEG;
-    name = "MJPEG (VideoCore)";
+    name = "MJPEG";
     break;
 
 #if 0

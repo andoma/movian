@@ -406,9 +406,8 @@ load_sub(const char *url, char *buf, size_t len, int force_utf8,
   char *tmp = NULL;
   AVRational fr0 = {25, 1};
 
-  if(fr == NULL) {
+  if(fr == NULL || fr->num == 0 || fr->den == 0)
     fr = &fr0;
-  }
 
   TAILQ_INIT(&es->es_entries);
 

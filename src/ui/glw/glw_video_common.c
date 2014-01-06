@@ -113,20 +113,28 @@ static int
 glw_video_widget_event(event_t *e, glw_video_t *gv)
 {
   media_pipe_t *mp = gv->gv_mp;
+  event_int_t *eu = (event_int_t *)e;
+
   if(event_is_action(e, ACTION_PLAYPAUSE) ||
      event_is_action(e, ACTION_PLAY) ||
      event_is_action(e, ACTION_PAUSE) ||
-     event_is_action(e, ACTION_ACTIVATE)) {
+     event_is_action(e, ACTION_SHOW_MEDIA_STATS)) {
     mp_enqueue_event(mp, e);
     return 1;
   }
 
+  if(event_is_type(e, EVENT_UNICODE) && eu->val == 32) {
+    // Convert [space] into playpause
+    e = event_create_action(ACTION_PLAYPAUSE);
+    mp_enqueue_event(mp, e);
+    event_release(e);
+    return 1;
+  }
 
   if(event_is_action(e, ACTION_UP) ||
      event_is_action(e, ACTION_DOWN) ||
      event_is_action(e, ACTION_LEFT) ||
      event_is_action(e, ACTION_RIGHT)) {
-    
     if(gv->gv_spu_in_menu) {
       mp_enqueue_event(mp, e);
       return 1;
@@ -444,7 +452,8 @@ glw_video_play(glw_video_t *gv)
 			   gv->gv_priority,
 			   !!(gv->gv_flags & GLW_VIDEO_NO_AUDIO),
 			   gv->gv_model,
-			   gv->gv_how);
+			   gv->gv_how,
+			   gv->gv_origin);
   mp_enqueue_event(gv->gv_mp, e);
   event_release(e);
 }
@@ -461,6 +470,7 @@ glw_video_dtor(glw_t *w)
   video_decoder_t *vd = gv->gv_vd;
 
   prop_ref_dec(gv->gv_model);
+  prop_ref_dec(gv->gv_origin);
   prop_unsubscribe(gv->gv_vo_scaling_sub);
   prop_unsubscribe(gv->gv_vo_displace_x_sub);
   prop_unsubscribe(gv->gv_vo_displace_y_sub);
@@ -791,6 +801,13 @@ glw_video_set(glw_t *w, va_list ap)
 	prop_ref_dec(gv->gv_model);
 
       gv->gv_model = prop_ref_inc(va_arg(ap, prop_t *));
+      break;
+
+    case GLW_ATTRIB_PROP_ORIGIN:
+      if(gv->gv_origin)
+	prop_ref_dec(gv->gv_origin);
+
+      gv->gv_origin = prop_ref_inc(va_arg(ap, prop_t *));
       break;
 
     case GLW_ATTRIB_AUDIO_VOLUME:

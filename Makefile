@@ -253,10 +253,19 @@ SRCS-$(CONFIG_CONNMAN) += src/prop/prop_gvariant.c
 SRCS += src/video/video_playback.c \
 	src/video/video_decoder.c \
 	src/video/video_settings.c \
+	src/video/h264_parser.c \
+	src/misc/bitstream.c \
+	src/video/h264_annexb.c \
 
 SRCS-$(CONFIG_VDPAU)    += src/video/vdpau.c
-SRCS-$(CONFIG_PS3_VDEC) += src/video/ps3_vdec.c src/video/h264_annexb.c
+SRCS-$(CONFIG_PS3_VDEC) += src/video/ps3_vdec.c
 SRCS-$(CONFIG_VDA)      += src/video/vda.c
+
+SRCS-$(CONFIG_CEDAR) += \
+	src/ui/glw/glw_video_sunxi.c \
+	src/video/cedar.c \
+	ext/tlsf/tlsf.c \
+	src/arch/sunxi/sunxi.c \
 
 ##############################################################
 # Subtitles

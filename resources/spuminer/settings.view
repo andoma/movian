@@ -1,7 +1,7 @@
 
 widget(container_y, {
   padding: $ui.size * 2;
-  spacing: $ui.size * 2;
+  spacing: $ui.size;
   widget(icon, {
     align: center;
     sizeScale: 6;

@@ -85,7 +85,6 @@ typedef struct hls_segment {
   int hs_astream;
 
   uint8_t hs_crypto;
-  uint8_t hs_corrupt;
 
   rstr_t *hs_key_url;
   uint8_t hs_iv[16];
@@ -125,6 +124,13 @@ typedef struct hls_variant {
 
   int hv_width;
   int hv_height;
+
+  int hv_corrupt_counter;
+
+#define HV_CORRUPT_LIMIT 3 /* If corrupt_counter >= this, we never consider
+			    * this variant again
+			    */
+
   char *hv_subs_group;
   char *hv_audio_group;
 
@@ -134,6 +140,8 @@ typedef struct hls_variant {
 
   rstr_t *hv_key_url;
   buf_t *hv_key;
+
+  uint8_t hv_is_corrupt;
 
 } hls_variant_t;
 
@@ -302,8 +310,13 @@ hv_find_segment_by_time(const hls_variant_t *hv, int64_t pos)
 {
   hls_segment_t *hs;
   TAILQ_FOREACH_REVERSE(hs, &hv->hv_segments, hls_segment_queue, hs_link) {
-    if(hs->hs_time_offset <= pos)
+    if(hs->hs_time_offset <= pos) {
+      if(hs == TAILQ_LAST(&hv->hv_segments, hls_segment_queue)) {
+	if(pos > hs->hs_time_offset + hs->hs_duration)
+	  return NULL;
+      }
       break;
+    }
   }
   return hs;
 }
@@ -598,7 +611,7 @@ segment_open(hls_t *h, hls_segment_t *hs, int fast_fail)
 
   hls_variant_t *hv = hs->hs_variant;
 
-  int flags = FA_STREAMING;
+  int flags = FA_STREAMING | FA_DEBUG;
 
   if(fast_fail)
     flags |= FA_FAST_FAIL;
@@ -647,6 +660,7 @@ segment_open(hls_t *h, hls_segment_t *hs, int fast_fail)
 
   AVIOContext *avio = fa_libav_reopen(fh);
   hs->hs_fctx = avformat_alloc_context();
+  hs->hs_fctx->debug = 1;
   hs->hs_fctx->pb = avio;
 
   if((err = avformat_open_input(&hs->hs_fctx, hs->hs_url,
@@ -697,6 +711,26 @@ variant_update_metadata(hls_t *h, hls_variant_t *hv, int availbw)
 	   "HLS %d kbps (Avail: %d kbps)", 
 	   hv->hv_bitrate / 1000, availbw / 1000);
   prop_set(h->h_mp->mp_prop_metadata, "format", PROP_SET_STRING, buf);
+}
+
+
+
+/**
+ * Select which variant to use for seeking
+ */
+static void
+hls_select_seek_variant(const hls_t *h, hls_demuxer_t *hd)
+{
+  hls_variant_t *hv;
+  TAILQ_FOREACH_REVERSE(hv, &hd->hd_variants, hls_variant_queue, hv_link) {
+    if(hv->hv_audio_only)
+      continue;
+    if(hv->hv_corrupt_counter >= HV_CORRUPT_LIMIT)
+      continue;
+    hd->hd_seek = hv;
+    HLS_TRACE(h, "Variant %d selected for seeking", hv->hv_bitrate);
+    return;
+  }
 }
 
 
@@ -808,12 +842,28 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
        * (broken key?, not a TS file, whatever)
        * Mark it as broken and try something else
        */
-      hs->hs_corrupt = 1;
-      if(hv == hd->hd_seek) {
-	// We give up now
+      hv->hv_is_corrupt = 1;
+      hv->hv_corrupt_counter++;
+
+      if(hv->hv_corrupt_counter >= HV_CORRUPT_LIMIT) {
+	HLS_TRACE(h, "Variant %d does not seem to work at all, ignoring",
+		  hv->hv_bitrate);
+
+	if(hv == hd->hd_seek)
+	  hls_select_seek_variant(h, hd);
+      }
+
+
+      TAILQ_FOREACH(hv, &hd->hd_variants, hv_link) {
+	if(!hv->hv_is_corrupt)
+	  break;
+      }
+
+      if(hv == NULL) {
+	// Nothing works, give up
 	return HLS_SEGMENT_ERR;
       }
-      hd->hd_req = TAILQ_NEXT(hv, hv_link);
+      hd->hd_req = hv;
       goto again;
     }
 
@@ -823,7 +873,14 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
     hd->hd_seq = hs->hs_seq;
     variant_update_metadata(h, hv, hd->hd_bw);
   }
-  return hv->hv_current_seg;
+
+  hls_segment_t *hs = hv->hv_current_seg;
+
+  // All is fine now, unmark corruption
+  TAILQ_FOREACH(hv, &hd->hd_variants, hv_link)
+    hv->hv_is_corrupt = 0;
+
+  return hs;
 }
 
 
@@ -920,6 +977,9 @@ demuxer_select_variant_simple(hls_t *h, hls_demuxer_t *hd)
   hls_variant_t *hv;
 
   TAILQ_FOREACH(hv, &hd->hd_variants, hv_link) {
+    if(hv->hv_corrupt_counter >= HV_CORRUPT_LIMIT)
+      continue;
+
     if(hv->hv_bitrate < hd->hd_bw)
       break;
   }
@@ -939,13 +999,21 @@ demuxer_select_variant_random(hls_t *h, hls_demuxer_t *hd)
   hls_variant_t *hv;
   int cnt = 0;
 
-  TAILQ_FOREACH(hv, &hd->hd_variants, hv_link)
+  TAILQ_FOREACH(hv, &hd->hd_variants, hv_link) {
+    if(hv->hv_corrupt_counter >= HV_CORRUPT_LIMIT)
+      continue;
+
     if(!hv->hv_audio_only)
       cnt++;
   
+  }
+
   int r = rand() % cnt;
   cnt = 0;
   TAILQ_FOREACH(hv, &hd->hd_variants, hv_link) {
+    if(hv->hv_corrupt_counter >= HV_CORRUPT_LIMIT)
+      continue;
+
     if(hv->hv_audio_only)
       continue;
     if(r == cnt)
@@ -1016,6 +1084,8 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
   int restartpos_last = -1;
   int64_t last_timestamp_presented = AV_NOPTS_VALUE;
   sub_scanner_t *ss = NULL;
+  int sub_scanning_done = 0;
+
   h->h_playback_priority = va->priority;
 
   mp->mp_video.mq_stream = 0;
@@ -1030,21 +1100,20 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 
   mp_configure(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE, MP_BUFFER_DEEP, 0);
 
-  hls_variant_t *hv;
   hls_demuxer_t *hd = &h->h_primary;
 
-  TAILQ_FOREACH_REVERSE(hv, &hd->hd_variants, hls_variant_queue, hv_link) {
-    if(hv->hv_audio_only)
-      continue;
-    hd->hd_seek = hv;
-    break;
-  }
+  hls_select_seek_variant(h, hd);
+
+  mp->mp_video.mq_seektarget = AV_NOPTS_VALUE;
+  mp->mp_audio.mq_seektarget = AV_NOPTS_VALUE;
+  mp->mp_seek_base = 0;
 
   if(va->flags & BACKEND_VIDEO_RESUME ||
      (video_settings.resume_mode == VIDEO_RESUME_YES &&
       !(va->flags & BACKEND_VIDEO_START_FROM_BEGINNING))) {
     int64_t start = video_get_restartpos(canonical_url) * 1000;
     if(start) {
+      mp->mp_seek_base = start;
       hls_seek(h, start, start, 1);
     }
   }
@@ -1070,9 +1139,11 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 	continue;
       }
 
-      if(ss == NULL && hs->hs_variant->hv_frozen)
+      if(!sub_scanning_done && hs->hs_variant->hv_frozen) {
+	sub_scanning_done = 1;
 	ss = sub_scanner_create(h->h_baseurl, mp->mp_prop_subtitle_tracks, va,
 				hs->hs_variant->hv_duration / 1000000LL);
+      }
 
       AVPacket pkt;
       int r = av_read_frame(hs->hs_fctx, &pkt);

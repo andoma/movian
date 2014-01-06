@@ -674,49 +674,48 @@ video_queue_destroy(video_queue_t *vq)
 /**
  *
  */
-rstr_t *
-video_queue_find_next(video_queue_t *vq, const char *url, int reverse,
+prop_t *
+video_queue_find_next(video_queue_t *vq, prop_t *current, int reverse,
 		      int wrap)
 {
-  rstr_t *r = NULL;
   video_queue_entry_t *vqe;
-  const char *cu = NULL;
 
-  if(url == NULL)
+  if(current == NULL)
     return NULL;
-
-  if(!strncmp(url, "videoparams:", strlen("videoparams:"))) {
-    htsmsg_t *m = htsmsg_json_deserialize(url + strlen("videoparams:"));
-    cu = m ? htsmsg_get_str(m, "canonicalUrl") : NULL;
-    cu = cu ? mystrdupa(cu) : NULL;
-    htsmsg_destroy(m);
-  }
 
   hts_mutex_lock(&video_queue_mutex);
 
-  TAILQ_FOREACH(vqe, &vq->vq_entries, vqe_link) {
-    if(vqe->vqe_url != NULL &&
-       (!strcmp(url, rstr_get(vqe->vqe_url)) ||
-	(cu && !strcmp(cu, rstr_get(vqe->vqe_url)))) &&
-       vqe->vqe_type != NULL && 
-       (!strcmp("video", rstr_get(vqe->vqe_type)) || 
-	!strcmp("tvchannel", rstr_get(vqe->vqe_type))))
+  TAILQ_FOREACH(vqe, &vq->vq_entries, vqe_link)
+    if(prop_compare(vqe->vqe_root, current))
       break;
-  }
 
-  if(vqe != NULL) {
+  while(vqe != NULL) {
 
     if(reverse) {
       vqe = TAILQ_PREV(vqe, video_queue_entry_queue, vqe_link);
     } else {
       vqe = TAILQ_NEXT(vqe, vqe_link);
     }
+    
+    if(vqe == NULL)
+      break;
+
+    const char *t = rstr_get(vqe->vqe_type);
+    if(t != NULL) {
+      if(strcmp(t, "video") && strcmp(t, "tvchannel"))
+	continue;
+    }
+    break;
   }
 
-  if(vqe != NULL)
-    r = rstr_dup(vqe->vqe_url);
+  if(vqe == NULL) {
+    hts_mutex_unlock(&video_queue_mutex);
+    return NULL;
+  }
+  
+  prop_t *p = prop_follow(vqe->vqe_root);
   hts_mutex_unlock(&video_queue_mutex);
-  return r;
+  return p;
 }
 
 
@@ -736,6 +735,7 @@ video_player_idle(void *aux)
   int play_priority = 0;
   rstr_t *play_url = NULL;
   int force_continuous = 0;
+  prop_t *origin = NULL;
 
   while(run) {
     
@@ -776,13 +776,18 @@ video_player_idle(void *aux)
       TRACE(TRACE_DEBUG, "vp", "Playing %s flags:0x%x", ep->url,
 	    play_flags);
 
-      if(vq != NULL)
+      prop_ref_dec(origin);
+      if(vq != NULL) {
 	video_queue_destroy(vq);
-
-      if(ep->model)
-	vq = video_queue_create(ep->model);
-      else
 	vq = NULL;
+      }
+
+      origin = prop_ref_inc(ep->origin);
+      if(ep->model != NULL && origin != NULL) {
+	vq = video_queue_create(ep->model);
+      } else {
+	vq = NULL;
+      }
       rstr_release(play_url);
       play_url = rstr_alloc(ep->url);
 
@@ -801,19 +806,31 @@ video_player_idle(void *aux)
     } else if(event_is_type(e, EVENT_EOF) || 
 	      event_is_action(e, ACTION_SKIP_FORWARD) || 
 	      event_is_action(e, ACTION_SKIP_BACKWARD)) {
-      rstr_t *next = NULL;
+
+      // Try to figure out which track to play next
+
+      prop_t *next = NULL;
       int skp = event_is_action(e, ACTION_SKIP_FORWARD) ||
 	event_is_action(e, ACTION_SKIP_BACKWARD);
       if(vq && (video_settings.continuous_playback || force_continuous || skp))
-	next = video_queue_find_next(vq, rstr_get(play_url),
+	next = video_queue_find_next(vq, origin,
 				     event_is_action(e, ACTION_SKIP_BACKWARD), 
 				     0);
       
+      prop_ref_dec(origin);
+      origin = NULL;
+
       if(skp)
 	play_flags |= BACKEND_VIDEO_START_FROM_BEGINNING;
 
       rstr_release(play_url);
-      play_url = rstr_dup(next);
+
+      if(next != NULL) {
+	play_url = prop_get_string(next, "url", NULL);
+	origin = next;
+      } else {
+	play_url = NULL;
+      }
       if(play_url == NULL)
 	mp_set_playstatus_stop(mp);
     }
@@ -825,6 +842,7 @@ video_player_idle(void *aux)
   rstr_release(play_url);
   if(vq != NULL)
     video_queue_destroy(vq);
+  prop_ref_dec(origin);
   prop_ref_dec(errprop);
   mp_ref_dec(mp);
   return NULL;

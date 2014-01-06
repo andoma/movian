@@ -31,6 +31,8 @@ void linux_webpopup_init(void);
 
 void linux_webpopup_check(void);
 
+void linux_init_monitors(void);
+
 struct prop;
 
 typedef struct linux_ui {

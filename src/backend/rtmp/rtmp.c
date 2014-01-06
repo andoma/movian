@@ -668,6 +668,8 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
   event_t *e;
   char *url = mystrdupa(url0);
 
+  prop_set(mp->mp_prop_metadata, "format", PROP_SET_STRING, "RTMP");
+
   va.flags |= BACKEND_VIDEO_NO_FS_SCAN;
 
   prop_set_string(mp->mp_prop_type, "video");

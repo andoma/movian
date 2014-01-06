@@ -48,6 +48,9 @@ typedef struct rpi_video_display {
 
   int rvd_reconfigure;
   int64_t rvd_pts;
+  int64_t rvd_last_pts;
+
+  int rvd_estimated_duration;
 
   glw_video_t *rvd_gv;
 
@@ -116,9 +119,17 @@ buffer_mark(omx_component_t *oc, void *ptr)
   glw_video_t *gv = rvd->rvd_gv;
   media_pipe_t *mp = gv->gv_mp;
   video_decoder_t *vd = gv->gv_vd;
-  const media_buf_meta_t *mbm = ptr;
+  media_buf_meta_t *mbm = ptr;
+
+  rvd->rvd_last_pts = rvd->rvd_pts;
 
   rvd->rvd_pts = mbm->mbm_pts;
+
+  if(mbm->mbm_duration == 0) {
+    if(rvd->rvd_last_pts != PTS_UNSET && rvd->rvd_pts != PTS_UNSET)
+      rvd->rvd_estimated_duration = rvd->rvd_pts - rvd->rvd_last_pts;
+    mbm->mbm_duration = rvd->rvd_estimated_duration;
+  }
 
   hts_mutex_lock(&mp->mp_mutex);
   vd->vd_reorder_current = mbm;

@@ -1,0 +1,129 @@
+#!/bin/bash
+
+OS="sunxi"
+DEFAULT_UI="glw"
+CONFIGURE_POSTFIX="sunxi"
+
+source support/configure.inc
+
+show_help(){
+  common_help
+  exit 1
+}
+
+for opt do
+  optval="${opt#*=}"
+  case "$opt" in
+  --help) show_help
+  ;;
+  --toolchain=*) TOOLCHAIN="$optval"
+  ;;
+  --sysroot=*) SYSROOT="$optval"
+  ;;
+  *)
+  common_opt $opt $optval
+  esac
+done
+
+[ -z "$TOOLCHAIN" ] && die_cause "--toolchain not specified"
+
+CC=${TOOLCHAIN}gcc
+CXX=${TOOLCHAIN}g++
+
+setup_env "$@"
+
+enable sqlite_internal
+enable spidermonkey
+enable glw_backend_opengl_es
+enable glw
+#enable polarssl
+#enable librtmp
+enable httpserver
+#enable dvd
+enable libfreetype
+enable stdin
+enable realpath
+enable bspatch
+enable sunxi
+enable cedar
+
+LIBAV_CFLAGS="-I${EXT_INSTALL_DIR}/include"
+LIBAV_LDFLAGS="-L${EXT_INSTALL_DIR}/lib"
+LIBAV_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=arm --target-os=linux --enable-neon"
+
+if [ -n "$SYSROOT" ]; then 
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += --sysroot=$SYSROOT"
+    echo >>${CONFIG_MAK} "CFLAGS_cfg += --sysroot=$SYSROOT"
+
+    LIBAV_CFLAGS="--sysroot=$SYSROOT ${LIBAV_CFLAGS}"
+    LIBAV_LDFLAGS="--sysroot=$SYSROOT ${LIBAV_LDFLAGS}"
+
+    export PKG_CONFIG_SYSROOT_DIR="$SYSROOT"
+    export PKG_CONFIG_LIBDIR="$SYSROOT/usr/lib/pkgconfig"
+
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs zlib`
+    echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags zlib`
+    echo "Using zlib:            `pkg-config --modversion zlib`"
+
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs freetype2`
+    echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags freetype2`
+    echo "Using freetype:        `pkg-config --modversion freetype2`"
+
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs gio-2.0`
+    echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags gio-2.0`
+    echo "Using gio:             `pkg-config --modversion gio-2.0`"
+
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs alsa`
+    echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags alsa`
+    echo "Using ALSA:            `pkg-config --modversion alsa`"
+
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs openssl`
+    echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags openssl`
+    echo "Using OpenSSL:         `pkg-config --modversion openssl`"
+
+    enable openssl
+
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lbz2"
+
+    enable connman
+
+else
+    zlib_setup
+    bzip2_setup
+    freetype_setup --host=arm-linux-gnueabihf
+fi
+
+
+libav_setup
+rtmpdump_setup
+xmp_setup
+
+libspotify_setup "12.1.103-Linux-armv6-bcm2708hardfp"
+
+
+
+
+
+cat >> ${CONFIG_MAK} <<EOF
+
+CFLAGS_cfg += -funwind-tables
+
+CFLAGS_cfg += -I${TOPDIR}/support/sunxi/libv/include
+LDFLAGS_cfg += -L${TOPDIR}/support/sunxi/libv/lib
+LDFLAGS_cfg += -lvecore
+
+
+CFLAGS_cfg += -I${TOPDIR}/support/sunxi/mali/include
+LDFLAGS_cfg += -L${TOPDIR}/support/sunxi/mali/lib
+LDFLAGS_cfg += -lEGL -lGLESv2 -lUMP -lMali
+
+LDFLAGS_cfg += -lpthread -lrt -ldl
+
+
+
+
+EOF
+
+echo >>${CONFIG_H} "#define SHOWTIME_LIBDIR \"/stos/mnt/showtime/lib\""
+
+finalize

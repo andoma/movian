@@ -239,10 +239,10 @@ add_item(htsmsg_t *item, prop_t *root, const char *trackid, prop_t **trackptr,
 		     strlen("object.item.videoItem"))) {
 
     char vurl[URL_MAX];
-    snprintf(vurl, sizeof(vurl), "%s:%s#%s", baseurl, id, url);
+    snprintf(vurl, sizeof(vurl), "%s:%s", baseurl, id);
     make_videoItem(c, m, item, vurl);
     if(db != NULL)
-      metadb_bind_url_to_prop(db, vurl, c);
+      metadb_bind_url_to_prop(db, url, c);
   } else if(!strncmp(cls, "object.item.imageItem",
 		     strlen("object.item.imageItem"))) {
     prop_set_string(prop_create(c, "url"), url);
@@ -826,9 +826,6 @@ browse_video_item(upnp_browse_t *ub, htsmsg_t *item)
   htsmsg_t *tags, *res;
   htsmsg_field_t *f;
   const char *url = NULL, *mimetype = NULL, *title;
-  char *str, *vpstr;
-  size_t len;
-  char canonicalurl[512];
 
   if((tags = htsmsg_get_map(item, "tags")) == NULL)
     return browse_fail(ub, "UPNP Video playback: No tags in item");
@@ -868,10 +865,8 @@ browse_video_item(upnp_browse_t *ub, htsmsg_t *item)
 
   // Construct videoparam JSON blob
 
-  snprintf(canonicalurl, sizeof(canonicalurl), "%s#%s", ub->ub_url, url);
-
   htsmsg_t *vp = htsmsg_create_map();
-  htsmsg_add_str(vp, "canonicalUrl", canonicalurl);
+  htsmsg_add_str(vp, "canonicalUrl", url);
 
   htsmsg_add_u32(vp, "no_fs_scan", 1); /* Don't try to scan parent directory
 					* for subtitles
@@ -896,15 +891,9 @@ browse_video_item(upnp_browse_t *ub, htsmsg_t *item)
 
   htsmsg_add_msg(vp, "subtitles", subtitles);
   
-  str = htsmsg_json_serialize_to_str(vp, 0);
-  len = strlen(str);
-  vpstr = malloc(len + strlen("videoparams:") + 1);
-  strcpy(vpstr, "videoparams:");
-  strcpy(vpstr + strlen("videoparams:"), str);
-  free(str);
-
-  prop_set_string(ub->ub_source, vpstr);
-  free(vpstr);
+  rstr_t *rstr = htsmsg_json_serialize_to_rstr(vp, "videoparams:");
+  prop_set_rstring(ub->ub_source, rstr);
+  rstr_release(rstr);
 
   prop_set_int(ub->ub_direct_close, 1);
   prop_set_string(ub->ub_type, "video");
@@ -1049,10 +1038,6 @@ be_upnp_browse(prop_t *page, const char *url, int sync)
 {
   upnp_browse_t *ub = calloc(1, sizeof(upnp_browse_t));
   ub->ub_url = strdup(url);
-
-  char *hash = strchr(ub->ub_url, '#');
-  if(hash != NULL)
-    *hash = 0;
 
   ub->ub_page = prop_ref_inc(page);
   ub->ub_source = prop_create_r(ub->ub_page, "source");

@@ -651,12 +651,24 @@ mq_flush_q(media_pipe_t *mp, media_queue_t *mq, struct media_buf_queue *q,
  * Must be called with mp locked
  */
 static void
-mq_flush(media_pipe_t *mp, media_queue_t *mq, int full)
+mq_flush_locked(media_pipe_t *mp, media_queue_t *mq, int full)
 {
   mq_flush_q(mp, mq, &mq->mq_q_data, full);
   mq_flush_q(mp, mq, &mq->mq_q_ctrl, full);
   mq_flush_q(mp, mq, &mq->mq_q_aux, full);
   mq_update_stats(mp, mq);
+}
+
+
+/**
+ * Must be called with mp locked
+ */
+void
+mq_flush(media_pipe_t *mp, media_queue_t *mq, int full)
+{
+  hts_mutex_lock(&mp->mp_mutex);
+  mq_flush_locked(mp, mq, full);
+  hts_mutex_unlock(&mp->mp_mutex);
 }
 
 
@@ -694,8 +706,8 @@ mp_destroy(media_pipe_t *mp)
     event_release(e);
   }
 
-  mq_flush(mp, &mp->mp_audio, 1);
-  mq_flush(mp, &mp->mp_video, 1);
+  mq_flush_locked(mp, &mp->mp_audio, 1);
+  mq_flush_locked(mp, &mp->mp_video, 1);
 
   mq_destroy(&mp->mp_audio);
   mq_destroy(&mp->mp_video);
@@ -884,29 +896,34 @@ mp_enqueue_event_locked(media_pipe_t *mp, event_t *e)
     mp->mp_hold = action_update_hold_by_event(mp->mp_hold, e);
     mp_set_playstatus_by_hold_locked(mp, NULL);
     send_hold(mp);
-    return;
-      
+
   } else if(event_is_type(e, EVENT_INTERNAL_PAUSE)) {
 
     mp->mp_hold = 1;
 
     mp_set_playstatus_by_hold_locked(mp, e->e_payload);
     send_hold(mp);
-    return;
 
   } else if(event_is_action(e, ACTION_SEEK_BACKWARD)) {
     mp_direct_seek(mp, mp->mp_seek_base -= 15000000);
-    return;
-  }
-
-  if(event_is_action(e, ACTION_SEEK_FORWARD)) {
+  } else if(event_is_action(e, ACTION_SEEK_FORWARD)) {
     mp_direct_seek(mp, mp->mp_seek_base += 15000000);
+  } else if(event_is_action(e, ACTION_SHOW_MEDIA_STATS)) {
+    prop_toggle_int(mp->mp_prop_stats);
+  } else if(event_is_action(e, ACTION_SHUFFLE)) {
+    prop_toggle_int(mp->mp_prop_shuffle);
+  } else if(event_is_action(e, ACTION_REPEAT)) {
+    prop_toggle_int(mp->mp_prop_repeat);
+  } else if(event_is_action(e, ACTION_CYCLE_AUDIO)) {
+    track_mgr_next_track(&mp->mp_audio_track_mgr);
+  } else if(event_is_action(e, ACTION_CYCLE_SUBTITLE)) {
+    track_mgr_next_track(&mp->mp_subtitle_track_mgr);
+  } else {
+    atomic_add(&e->e_refcount, 1);
+    TAILQ_INSERT_TAIL(&mp->mp_eq, e, e_link);
+    hts_cond_signal(&mp->mp_backpressure);
     return;
   }
-
-  atomic_add(&e->e_refcount, 1);
-  TAILQ_INSERT_TAIL(&mp->mp_eq, e, e_link);
-  hts_cond_signal(&mp->mp_backpressure);
 }
 
 /**
@@ -1244,8 +1261,8 @@ mp_flush(media_pipe_t *mp, int blank)
 
   hts_mutex_lock(&mp->mp_mutex);
 
-  mq_flush(mp, a, 0);
-  mq_flush(mp, v, 0);
+  mq_flush_locked(mp, a, 0);
+  mq_flush_locked(mp, v, 0);
 
   if(v->mq_stream >= 0) {
     mb = media_buf_alloc_locked(mp, 0);
@@ -1652,21 +1669,8 @@ media_eventsink(void *opaque, prop_event_t event, ...)
 
   if(event_is_type(e, EVENT_PLAYTRACK)) {
     playqueue_event_handler(e);
-
   } else if(media_primary != NULL) {
-    if(event_is_action(e, ACTION_SHOW_MEDIA_STATS)) {
-      prop_toggle_int(media_primary->mp_prop_stats);
-    } else if(event_is_action(e, ACTION_SHUFFLE)) {
-      prop_toggle_int(media_primary->mp_prop_shuffle);
-    } else if(event_is_action(e, ACTION_REPEAT)) {
-      prop_toggle_int(media_primary->mp_prop_repeat);
-    } else if(event_is_action(e, ACTION_CYCLE_AUDIO)) {
-      track_mgr_next_track(&media_primary->mp_audio_track_mgr);
-    } else if(event_is_action(e, ACTION_CYCLE_SUBTITLE)) {
-      track_mgr_next_track(&media_primary->mp_subtitle_track_mgr);
-    } else {
-      mp_enqueue_event(media_primary, e);
-    }
+    mp_enqueue_event(media_primary, e);
   } else {
     playqueue_event_handler(e);
   }

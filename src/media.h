@@ -94,6 +94,9 @@ TAILQ_HEAD(dvdspu_queue, dvdspu);
  */
 typedef struct frame_info {
   uint8_t *fi_data[4];
+
+  void (*fi_refop)(void *data, int delta); // Depends (A LOT) on fi_type
+
   int fi_pitch[4];
 
   uint32_t fi_type;
@@ -599,6 +602,8 @@ void mp_send_cmd_u32(media_pipe_t *mp, media_queue_t *mq, int cmd,
 		     uint32_t u);
 
 void mp_flush(media_pipe_t *mp, int blackout);
+
+void mq_flush(media_pipe_t *mp, media_queue_t *mq, int full);
 
 void mp_bump_epoch(media_pipe_t *mp);
 
