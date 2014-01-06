@@ -98,6 +98,7 @@ asyncio_dopoll(void)
   LIST_FOREACH(af, &asyncio_fds, af_link) {
     fds[n].fd = af->af_fd;
     fds[n].events = af->af_poll_events;
+    fds[n].revents = 0;
     afds[n] = af;
     af->af_refcount++;
     n++;
@@ -105,20 +106,7 @@ asyncio_dopoll(void)
 
   assert(n == asyncio_num_fds);
 
-  int r = poll(fds, n, -1);
-  if(r == -1) {
-    TRACE(TRACE_ERROR, "ASYNCIO", "Poll failed -- %s errno:%d",
-	  strerror(errno), errno);
-    TRACE(TRACE_ERROR, "ASYNCIO", "FD dump follows");
-
-    LIST_FOREACH(af, &asyncio_fds, af_link) {
-      af->af_refcount--; // Release ref taken above before poll
-      TRACE(TRACE_ERROR, "ASYNCIO", "FD 0x%x events:%x refcount:%d (%s)",
-	    af->af_fd, af->af_poll_events, af->af_refcount, af->af_name);
-    }
-    sleep(1);
-    return;
-  }
+  poll(fds, n, -1);
 
   for(int i = 0; i < n; i++) {
     af = afds[i];
