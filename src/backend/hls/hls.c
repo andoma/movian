@@ -611,7 +611,7 @@ segment_open(hls_t *h, hls_segment_t *hs, int fast_fail)
 
   hls_variant_t *hv = hs->hs_variant;
 
-  int flags = FA_STREAMING | FA_DEBUG;
+  int flags = FA_STREAMING;
 
   if(fast_fail)
     flags |= FA_FAST_FAIL;
@@ -660,7 +660,6 @@ segment_open(hls_t *h, hls_segment_t *hs, int fast_fail)
 
   AVIOContext *avio = fa_libav_reopen(fh);
   hs->hs_fctx = avformat_alloc_context();
-  hs->hs_fctx->debug = 1;
   hs->hs_fctx->pb = avio;
 
   if((err = avformat_open_input(&hs->hs_fctx, hs->hs_url,
