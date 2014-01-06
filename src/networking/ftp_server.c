@@ -865,8 +865,8 @@ ftp_session(void *aux)
 
   net_fmt_host(buf, sizeof(buf), &fc->fc_local_addr);
 
-  ftp_write(fc, 220, "%s FTP server (Showtime %s %s) ready.",
-            buf, htsversion, showtime_get_system_type());
+  ftp_write(fc, 220, "%s FTP server (%s  Version %s) ready.",
+            buf, gconf.system_name, htsversion);
 
   while(1) {
     if(tcp_read_line(fc->fc_tc, buf, sizeof(buf)))

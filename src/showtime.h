@@ -268,6 +268,8 @@ typedef struct gconf {
 
   int showtime_shell_fd;
 
+  char system_name[64];
+
 } gconf_t;
 
 extern gconf_t gconf;

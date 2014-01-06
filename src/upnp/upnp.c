@@ -143,15 +143,16 @@ send_dev_description(http_connection_t *hc, const char *remain, void *opaque,
 		 "<dlna:X_DLNADOC xmlns:dlna=\"urn:schemas-dlna-org:device-1-0\">DMR-1.50</dlna:X_DLNADOC>"
 		 "<dlna:X_DLNADOC xmlns:dlna=\"urn:schemas-dlna-org:device-1-0\">M-DMR-1.50</dlna:X_DLNADOC>"
 		 "<deviceType>urn:schemas-upnp-org:device:MediaRenderer:2</deviceType>"
-		 "<friendlyName>Showtime</friendlyName>"
-		 "<manufacturer>Andreas Öman</manufacturer>"
-		 "<modelDescription>HTS Showtime Mediaplayer</modelDescription>"
-		 "<modelName>HTS Showtime Mediaplayer</modelName>"
+		 "<friendlyName>%s</friendlyName>"
+		 "<manufacturer>Lonelycoder AB</manufacturer>"
+		 "<modelDescription>Showtime Media center</modelDescription>"
+		 "<modelName>Showtime Media center</modelName>"
 		 "<modelNumber>%s</modelNumber>"
 		 "<UDN>uuid:%s</UDN>"
 		 "<UPC/>"
 		 "<presentationURL/>"
 		 "<serviceList>",
+		 gconf.system_name,
 		 htsversion_full,
 		 upnp_uuid);
 

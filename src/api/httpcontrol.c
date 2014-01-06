@@ -345,8 +345,8 @@ hc_diagnostics(http_connection_t *hc, const char *remain, void *opaque,
 
   htsbuf_qprintf(&out, 
 		 "<html><body>"
-		 "Showtime version %s<br><br>"
-		 ,
+		 "<strong>%s</strong> Version %s<br><br>"
+		 , gconf.system_name,
 		 htsversion_full);
 
   for(i = 0; i <= 5; i++) {
