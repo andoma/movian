@@ -777,13 +777,16 @@ subtitles_load(media_pipe_t *mp, const char *url, AVRational *fr)
     }
   }
 
+  uint8_t header[64];
+  memcpy(header, b->b_ptr, MIN(b->b_size, 64));
+
   b = buf_make_writable(b);
   sub = subtitles_create(url, b->b_ptr, b->b_size, fr);
   if(sub == NULL) {
     TRACE(TRACE_ERROR, "Subtitles",
-	  "Unable to load %s -- Unknown format, dump of first bytes follows", 
-	  url);
-    hexdump("Subtitles", b->b_ptr, MIN(b->b_size, 64));
+	  "Unable to load %s -- Unknown format (%d bytes), dump of first 64 bytes follows",
+	  url, (int)b->b_size);
+    hexdump("Subtitles", header, MIN(b->b_size, 64));
   }
   buf_release(b);
   return sub;
