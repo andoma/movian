@@ -402,6 +402,12 @@ panic(const char *fmt, ...)
   static void *frames[MAXFRAMES];
   int nframes = backtrace(frames, MAXFRAMES);
 
+  signal(SIGSEGV, SIG_DFL);
+  signal(SIGBUS,  SIG_DFL);
+  signal(SIGILL,  SIG_DFL);
+  signal(SIGABRT, SIG_DFL);
+  signal(SIGFPE,  SIG_DFL);
+
   va_start(ap, fmt);
   tracev(0, TRACE_EMERG, "PANIC", fmt, ap);
   va_end(ap);
