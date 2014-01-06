@@ -314,11 +314,12 @@ msg: Changement effectuée pour la version %s
 id: Check for updates now
 msg: Rechercher les mises à jour
 
-id: Checking current installed version
-msg: Vérification de la version installée
-
 id: Checking for updates...
 msg: Recherche de mises à jour...
+
+id: Checking installed version of %s
+# Missing translation
+msg: 
 
 id: Current version:
 msg: Version actuelle:
@@ -326,11 +327,13 @@ msg: Version actuelle:
 id: Download and install...
 msg: Télécharge et installe...
 
-id: Downloading...
-msg: Téléchargement...
+id: Downloading %s
+# Missing translation
+msg: 
 
-id: Installing...
-msg: Installation...
+id: Installing %s
+# Missing translation
+msg: 
 
 id: New version %s is available for download
 msg: La version %s est disponible au téléchargement
@@ -338,8 +341,9 @@ msg: La version %s est disponible au téléchargement
 id: No upgrade available
 msg: Pas de mise à jour disponible
 
-id: Patching binary
-msg: Patch des fichiers binaires
+id: Patching %s
+# Missing translation
+msg: 
 
 id: Restarting Showtime in %d seconds...
 msg: Showtime va redémarrer dans %d seconds...
@@ -358,6 +362,10 @@ msg: Test
 
 id: Unable to query for new version
 msg: Recherche de nouvelle mise à jour impossible
+
+id: Verifying %s
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/video.view
@@ -416,8 +424,25 @@ msg: Aucun media chargé
 #
 # ./glwskins/default/sysinfo.view
 #
-id: Memory usage:
-msg: Mémoire utilisée:
+id: CPU Temp
+# Missing translation
+msg: 
+
+id: GPU Temp
+# Missing translation
+msg: 
+
+id: Memory usage
+# Missing translation
+msg: 
+
+id: System Free
+# Missing translation
+msg: 
+
+id: System Total
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/universe.view
@@ -442,6 +467,17 @@ msg: Utiliser le titre d'origine
 #
 id: System is low on memory (%d kB RAM available)
 msg: Mémoire système faible (%d kB de RAM restant)
+
+#
+# ./src/arch/rpi/rpi_cec.c
+#
+id: Configure how Showtime communicates with your TV
+# Missing translation
+msg: 
+
+id: Consumer Electronics Control
+# Missing translation
+msg: 
 
 #
 # ./src/backend/dvd/cdda.c
@@ -653,6 +689,10 @@ msg[1]: %d fichiers
 #
 # ./src/i18n.c
 #
+id: Default character set
+# Missing translation
+msg: 
+
 id: Ignore 'The' at beginning of words when sorting
 msg: Ignorer 'The' au début du fichier pour le tri
 
@@ -674,9 +714,6 @@ msg: Code principale de la langue pour la piste audio
 id: Primary subtitle language code
 msg: Code principale de la langue pour les sous-titres
 
-id: SRT character set
-msg: Encodage des caractères pour les fichiers SRT
-
 id: Secondary audio language code
 msg: Code secondaire de la langue pour la piste audio
 
@@ -688,6 +725,12 @@ msg: Code tertiaire de la langue pour la piste audio
 
 id: Tertiary subtitle language code
 msg: Code tertiaire de la langue pour les sous-titres
+
+#
+# ./src/js/js_page.c
+#
+id: No handler for URL
+msg: Pas de prise en charge pour cette URL
 
 #
 # ./src/keymapper.c
@@ -869,9 +912,6 @@ msg: Favoris
 id: Music
 msg: Musique
 
-id: No handler for URL
-msg: Pas de prise en charge pour cette URL
-
 id: Other
 msg: Autre
 
@@ -895,6 +935,17 @@ msg: Type
 
 id: URL
 msg: URL
+
+#
+# ./src/networking/connman.c
+#
+id: Enable Wi-Fi
+# Missing translation
+msg: 
+
+id: Network connections
+# Missing translation
+msg: 
 
 #
 # ./src/networking/ftp_server.c
@@ -1031,6 +1082,10 @@ msg: Streaming vidéo
 id: Automatic standby
 msg: Mise en veille automatique
 
+id: Enable SSH server
+# Missing translation
+msg: 
+
 id: Logout
 msg: Déconnexion
 
@@ -1040,12 +1095,23 @@ msg: Ouvrir le shell
 id: Power off system
 msg: Eteindre le système
 
+id: SSH server
+# Missing translation
+msg: 
+
+id: Standby
+# Missing translation
+msg: 
+
 id: Starting and stopping Showtime
 msg: Démarrer et Arrêter Showtime
 
 #
 # ./src/sd/sd.c
 #
+id: Enabled on home screen
+msg: Activé sur la page d'accueil
+
 id: Name
 msg: Nom
 
@@ -1087,6 +1153,10 @@ msg: Paramètres réseaux
 
 id: Settings useful for developers
 msg: Paramètres utiles pour les développeurs
+
+id: System name
+# Missing translation
+msg: 
 
 id: System related settings
 msg: Paramètres liés au système
@@ -1269,12 +1339,6 @@ id: Upgrade to releases from
 msg: Mise à jour depuis
 
 #
-# ./src/upnp/upnp.c
-#
-id: Enabled on home screen
-msg: Activé sur la page d'accueil
-
-#
 # ./src/upnp/upnp_browse.c
 #
 id: Device not found
@@ -1345,3 +1409,4 @@ msg: Accélération vidéo et comportement de l'affichage
 
 id: Video playback
 msg: Lecture vidéo
+

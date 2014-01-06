@@ -332,12 +332,12 @@ msg: Seznam změn verze %s
 id: Check for updates now
 msg: Zkontrolovat aktualizace
 
-id: Checking current installed version
-# Missing translation
-msg: 
-
 id: Checking for updates...
 msg: Kontroluji aktualizace:
+
+id: Checking installed version of %s
+# Missing translation
+msg: 
 
 id: Current version:
 msg: Současná verze:
@@ -345,11 +345,13 @@ msg: Současná verze:
 id: Download and install...
 msg: Stáhnout a nainstalovat...
 
-id: Downloading...
-msg: Stahuji...
+id: Downloading %s
+# Missing translation
+msg: 
 
-id: Installing...
-msg: Instaluji...
+id: Installing %s
+# Missing translation
+msg: 
 
 id: New version %s is available for download
 msg: Nová verze %s je ke stažení
@@ -357,7 +359,7 @@ msg: Nová verze %s je ke stažení
 id: No upgrade available
 msg: Upgrade není k dispozici
 
-id: Patching binary
+id: Patching %s
 # Missing translation
 msg: 
 
@@ -378,6 +380,10 @@ msg: Testovací
 
 id: Unable to query for new version
 msg: Nepodařilo se zjistit novou verzi
+
+id: Verifying %s
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/video.view
@@ -437,8 +443,25 @@ msg: Žádné médium
 #
 # ./glwskins/default/sysinfo.view
 #
-id: Memory usage:
-msg: Využití paměti:
+id: CPU Temp
+# Missing translation
+msg: 
+
+id: GPU Temp
+# Missing translation
+msg: 
+
+id: Memory usage
+# Missing translation
+msg: 
+
+id: System Free
+# Missing translation
+msg: 
+
+id: System Total
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/universe.view
@@ -465,6 +488,17 @@ msg:
 #
 id: System is low on memory (%d kB RAM available)
 msg: Systém má málo paměti (%d kb RAM volných)
+
+#
+# ./src/arch/rpi/rpi_cec.c
+#
+id: Configure how Showtime communicates with your TV
+# Missing translation
+msg: 
+
+id: Consumer Electronics Control
+# Missing translation
+msg: 
 
 #
 # ./src/backend/dvd/cdda.c
@@ -688,6 +722,10 @@ msg[1]:
 #
 # ./src/i18n.c
 #
+id: Default character set
+# Missing translation
+msg: 
+
 id: Ignore 'The' at beginning of words when sorting
 # Missing translation
 msg: 
@@ -710,9 +748,6 @@ msg: Jazyk zvuku
 id: Primary subtitle language code
 msg: Výchozí jazyk titulků
 
-id: SRT character set
-msg: Znaková sada SRT titulků
-
 id: Secondary audio language code
 msg: Druhý jazyk zvuku
 
@@ -724,6 +759,12 @@ msg: Třetí jazyk zvuku
 
 id: Tertiary subtitle language code
 msg: Třetí jazyk titulků
+
+#
+# ./src/js/js_page.c
+#
+id: No handler for URL
+msg: Nelze zpracovat URL
 
 #
 # ./src/keymapper.c
@@ -923,9 +964,6 @@ msg: Oblíbené
 id: Music
 msg: Hudba
 
-id: No handler for URL
-msg: Nelze zpracovat URL
-
 id: Other
 msg: Ostatní
 
@@ -950,6 +988,17 @@ msg: Typ
 
 id: URL
 msg: URL
+
+#
+# ./src/networking/connman.c
+#
+id: Enable Wi-Fi
+# Missing translation
+msg: 
+
+id: Network connections
+# Missing translation
+msg: 
 
 #
 # ./src/networking/ftp_server.c
@@ -1111,6 +1160,10 @@ msg:
 id: Automatic standby
 msg: Automatické vypnutí
 
+id: Enable SSH server
+# Missing translation
+msg: 
+
 id: Logout
 msg: Odhlásit
 
@@ -1120,12 +1173,23 @@ msg: Příkazová řádka
 id: Power off system
 msg: Vyonout systém
 
+id: SSH server
+# Missing translation
+msg: 
+
+id: Standby
+# Missing translation
+msg: 
+
 id: Starting and stopping Showtime
 msg: Start a ukončení Showtime
 
 #
 # ./src/sd/sd.c
 #
+id: Enabled on home screen
+msg: Omogočen v glavnem meniju
+
 id: Name
 msg: Název
 
@@ -1171,6 +1235,10 @@ msg:
 
 id: Settings useful for developers
 msg: Nastavení pro vývojáře
+
+id: System name
+# Missing translation
+msg: 
 
 id: System related settings
 msg: Systémová nastavení
@@ -1375,12 +1443,6 @@ msg: Upgrade aplikace
 
 id: Upgrade to releases from
 msg: Upgradovat na vydání z
-
-#
-# ./src/upnp/upnp.c
-#
-id: Enabled on home screen
-msg: Omogočen v glavnem meniju
 
 #
 # ./src/upnp/upnp_browse.c

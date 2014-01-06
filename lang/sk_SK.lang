@@ -332,12 +332,12 @@ msg: Zoznam zmien verzie %s
 id: Check for updates now
 msg: Skontrolovať aktualizácie
 
-id: Checking current installed version
-# Missing translation
-msg: 
-
 id: Checking for updates...
 msg: Kontrolujem aktualizácie:
+
+id: Checking installed version of %s
+# Missing translation
+msg: 
 
 id: Current version:
 msg: Súčasná verzia:
@@ -345,11 +345,13 @@ msg: Súčasná verzia:
 id: Download and install...
 msg: Stiahnuť a nainštalovať...
 
-id: Downloading...
-msg: Sťahujem...
+id: Downloading %s
+# Missing translation
+msg: 
 
-id: Installing...
-msg: Inštalujem...
+id: Installing %s
+# Missing translation
+msg: 
 
 id: New version %s is available for download
 msg: Nová verzia %s je k stiahnuťiu
@@ -357,7 +359,7 @@ msg: Nová verzia %s je k stiahnuťiu
 id: No upgrade available
 msg: Upgrade nie je k dispozícii
 
-id: Patching binary
+id: Patching %s
 # Missing translation
 msg: 
 
@@ -378,6 +380,10 @@ msg: Testovací
 
 id: Unable to query for new version
 msg: Nepodarilo sa zistiť novú verziu
+
+id: Verifying %s
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/video.view
@@ -437,8 +443,25 @@ msg: Žiadne médium
 #
 # ./glwskins/default/sysinfo.view
 #
-id: Memory usage:
-msg: Využitie pamäte:
+id: CPU Temp
+# Missing translation
+msg: 
+
+id: GPU Temp
+# Missing translation
+msg: 
+
+id: Memory usage
+# Missing translation
+msg: 
+
+id: System Free
+# Missing translation
+msg: 
+
+id: System Total
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/universe.view
@@ -465,6 +488,17 @@ msg:
 #
 id: System is low on memory (%d kB RAM available)
 msg: Systém má málo pamäte (%d kb RAM volných)
+
+#
+# ./src/arch/rpi/rpi_cec.c
+#
+id: Configure how Showtime communicates with your TV
+# Missing translation
+msg: 
+
+id: Consumer Electronics Control
+# Missing translation
+msg: 
 
 #
 # ./src/backend/dvd/cdda.c
@@ -688,6 +722,10 @@ msg[1]:
 #
 # ./src/i18n.c
 #
+id: Default character set
+# Missing translation
+msg: 
+
 id: Ignore 'The' at beginning of words when sorting
 # Missing translation
 msg: 
@@ -710,9 +748,6 @@ msg: Jazyk zvuku
 id: Primary subtitle language code
 msg: Predvolený jazyk titulkov
 
-id: SRT character set
-msg: Znaková sada SRT titulkov
-
 id: Secondary audio language code
 msg: Druhý jazyk zvuku
 
@@ -724,6 +759,12 @@ msg: Tretí jazyk zvuku
 
 id: Tertiary subtitle language code
 msg: Tretí jazyk titulkov
+
+#
+# ./src/js/js_page.c
+#
+id: No handler for URL
+msg: Nemožno spracovať URL
 
 #
 # ./src/keymapper.c
@@ -923,9 +964,6 @@ msg: Obľúbené
 id: Music
 msg: Hudba
 
-id: No handler for URL
-msg: Nemožno spracovať URL
-
 id: Other
 msg: Ostatné
 
@@ -950,6 +988,17 @@ msg: Typ
 
 id: URL
 msg: URL
+
+#
+# ./src/networking/connman.c
+#
+id: Enable Wi-Fi
+# Missing translation
+msg: 
+
+id: Network connections
+# Missing translation
+msg: 
 
 #
 # ./src/networking/ftp_server.c
@@ -1111,6 +1160,10 @@ msg:
 id: Automatic standby
 msg: Automatické vypnutie
 
+id: Enable SSH server
+# Missing translation
+msg: 
+
 id: Logout
 msg: Odhlásiť
 
@@ -1120,12 +1173,23 @@ msg: Príkazové riadky
 id: Power off system
 msg: Vypnúť systém
 
+id: SSH server
+# Missing translation
+msg: 
+
+id: Standby
+# Missing translation
+msg: 
+
 id: Starting and stopping Showtime
 msg: Štart a ukončenie Showtime
 
 #
 # ./src/sd/sd.c
 #
+id: Enabled on home screen
+msg: Povolené na domovskej obrazovke
+
 id: Name
 msg: Názov
 
@@ -1171,6 +1235,10 @@ msg:
 
 id: Settings useful for developers
 msg: Nastavenia pre vývojárov
+
+id: System name
+# Missing translation
+msg: 
 
 id: System related settings
 msg: Systémové nastavenia
@@ -1375,12 +1443,6 @@ msg: Upgrade aplikácie
 
 id: Upgrade to releases from
 msg: Upgradovať na vydanie z
-
-#
-# ./src/upnp/upnp.c
-#
-id: Enabled on home screen
-msg: Povolené na domovskej obrazovke
 
 #
 # ./src/upnp/upnp_browse.c

@@ -314,12 +314,12 @@ msg: Log de alterações para as releases %s
 id: Check for updates now
 msg: Procurar por atualizações agora
 
-id: Checking current installed version
-# Missing translation
-msg: 
-
 id: Checking for updates...
 msg: A procurar por atualizações...
+
+id: Checking installed version of %s
+# Missing translation
+msg: 
 
 id: Current version:
 msg: Versão atual:
@@ -327,11 +327,13 @@ msg: Versão atual:
 id: Download and install...
 msg: Efetuar download e instalar...
 
-id: Downloading...
-msg: A efetuar download...
+id: Downloading %s
+# Missing translation
+msg: 
 
-id: Installing...
-msg: A instalar...
+id: Installing %s
+# Missing translation
+msg: 
 
 id: New version %s is available for download
 msg: Uma nova versão %s está disponível para download
@@ -339,7 +341,7 @@ msg: Uma nova versão %s está disponível para download
 id: No upgrade available
 msg: Não existem atualizações disponíveis
 
-id: Patching binary
+id: Patching %s
 # Missing translation
 msg: 
 
@@ -360,6 +362,10 @@ msg: Teste
 
 id: Unable to query for new version
 msg: Não foi possível procurar uma nova versão
+
+id: Verifying %s
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/video.view
@@ -419,8 +425,25 @@ msg: Nenhum media carregado
 #
 # ./glwskins/default/sysinfo.view
 #
-id: Memory usage:
-msg: Uso de memória:
+id: CPU Temp
+# Missing translation
+msg: 
+
+id: GPU Temp
+# Missing translation
+msg: 
+
+id: Memory usage
+# Missing translation
+msg: 
+
+id: System Free
+# Missing translation
+msg: 
+
+id: System Total
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/universe.view
@@ -445,6 +468,17 @@ msg: Usar título original
 #
 id: System is low on memory (%d kB RAM available)
 msg: O sistema está com pouca memória (%d kB RAM disponível)
+
+#
+# ./src/arch/rpi/rpi_cec.c
+#
+id: Configure how Showtime communicates with your TV
+# Missing translation
+msg: 
+
+id: Consumer Electronics Control
+# Missing translation
+msg: 
 
 #
 # ./src/backend/dvd/cdda.c
@@ -656,6 +690,10 @@ msg[1]: %d ficheiro
 #
 # ./src/i18n.c
 #
+id: Default character set
+# Missing translation
+msg: 
+
 id: Ignore 'The' at beginning of words when sorting
 msg: Na ordenação, ignorar 'The' no ínicio das palavras
 
@@ -677,9 +715,6 @@ msg: Código do idioma de áudio primário
 id: Primary subtitle language code
 msg: Código do idioma de legendas primário
 
-id: SRT character set
-msg: Conjunto de caracteres SRT
-
 id: Secondary audio language code
 msg: Código do idioma de áudio secundário
 
@@ -691,6 +726,12 @@ msg: Código do idioma de áudio terciário
 
 id: Tertiary subtitle language code
 msg: Código do idioma de legendas terciário
+
+#
+# ./src/js/js_page.c
+#
+id: No handler for URL
+msg: Nenhum handler para o URL
 
 #
 # ./src/keymapper.c
@@ -880,9 +921,6 @@ msg: Favoritos
 id: Music
 msg: Música
 
-id: No handler for URL
-msg: Nenhum handler para o URL
-
 id: Other
 msg: Outro
 
@@ -907,6 +945,17 @@ msg: Tipo
 
 id: URL
 msg: Endereço
+
+#
+# ./src/networking/connman.c
+#
+id: Enable Wi-Fi
+# Missing translation
+msg: 
+
+id: Network connections
+# Missing translation
+msg: 
 
 #
 # ./src/networking/ftp_server.c
@@ -1046,6 +1095,10 @@ msg: Streaming de vídeo
 id: Automatic standby
 msg: Modo de espera automático
 
+id: Enable SSH server
+# Missing translation
+msg: 
+
 id: Logout
 msg: Logout
 
@@ -1055,12 +1108,23 @@ msg: Abrir shell
 id: Power off system
 msg: Desligar o sistema
 
+id: SSH server
+# Missing translation
+msg: 
+
+id: Standby
+# Missing translation
+msg: 
+
 id: Starting and stopping Showtime
 msg: Iniciar e parar o Showtime
 
 #
 # ./src/sd/sd.c
 #
+id: Enabled on home screen
+msg: Ativo na página inicial
+
 id: Name
 msg: Nome
 
@@ -1104,6 +1168,10 @@ msg:
 
 id: Settings useful for developers
 msg: Configurações úteis para programadores
+
+id: System name
+# Missing translation
+msg: 
 
 id: System related settings
 msg: Configurações relacionadas com o sistema
@@ -1290,12 +1358,6 @@ msg: Atualização de software
 
 id: Upgrade to releases from
 msg: Atualizar para releases desde
-
-#
-# ./src/upnp/upnp.c
-#
-id: Enabled on home screen
-msg: Ativo na página inicial
 
 #
 # ./src/upnp/upnp_browse.c

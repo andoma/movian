@@ -336,12 +336,12 @@ msg: Spremembe %s izdaje
 id: Check for updates now
 msg: Preverite za posodobitve
 
-id: Checking current installed version
-# Missing translation
-msg: 
-
 id: Checking for updates...
 msg: Preverjanje posodobitev...
+
+id: Checking installed version of %s
+# Missing translation
+msg: 
 
 id: Current version:
 msg: Trenutna verzija:
@@ -349,11 +349,13 @@ msg: Trenutna verzija:
 id: Download and install...
 msg: Prenos in nalaganje...
 
-id: Downloading...
-msg: Prenašanje...
+id: Downloading %s
+# Missing translation
+msg: 
 
-id: Installing...
-msg: Nalaganje...
+id: Installing %s
+# Missing translation
+msg: 
 
 id: New version %s is available for download
 msg: Nova verzija %s je dosegljiva za prenos
@@ -361,7 +363,7 @@ msg: Nova verzija %s je dosegljiva za prenos
 id: No upgrade available
 msg: Posodobitev ne obstaja
 
-id: Patching binary
+id: Patching %s
 # Missing translation
 msg: 
 
@@ -382,6 +384,10 @@ msg: Testno
 
 id: Unable to query for new version
 msg: Nemogoče preveriti za novo verzijo
+
+id: Verifying %s
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/video.view
@@ -441,8 +447,25 @@ msg: Medij ni naložen
 #
 # ./glwskins/default/sysinfo.view
 #
-id: Memory usage:
-msg: Velikost uporabljenega spomina:
+id: CPU Temp
+# Missing translation
+msg: 
+
+id: GPU Temp
+# Missing translation
+msg: 
+
+id: Memory usage
+# Missing translation
+msg: 
+
+id: System Free
+# Missing translation
+msg: 
+
+id: System Total
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/universe.view
@@ -469,6 +492,17 @@ msg:
 #
 id: System is low on memory (%d kB RAM available)
 msg: Pomnilnik je skoraj poln (%d kb RAM na voljo)
+
+#
+# ./src/arch/rpi/rpi_cec.c
+#
+id: Configure how Showtime communicates with your TV
+# Missing translation
+msg: 
+
+id: Consumer Electronics Control
+# Missing translation
+msg: 
 
 #
 # ./src/backend/dvd/cdda.c
@@ -692,6 +726,10 @@ msg[1]:
 #
 # ./src/i18n.c
 #
+id: Default character set
+# Missing translation
+msg: 
+
 id: Ignore 'The' at beginning of words when sorting
 # Missing translation
 msg: 
@@ -714,9 +752,6 @@ msg: Jezik zvoka
 id: Primary subtitle language code
 msg: Prednostni jezik podnapisov
 
-id: SRT character set
-msg: Nastavitve za SRT podnapise
-
 id: Secondary audio language code
 msg: Drugi jezik zvoka
 
@@ -728,6 +763,12 @@ msg: Tretji jezik zvoka
 
 id: Tertiary subtitle language code
 msg: Tretji jezik podnapisov
+
+#
+# ./src/js/js_page.c
+#
+id: No handler for URL
+msg: URL povezave ni mogoče obdelati
 
 #
 # ./src/keymapper.c
@@ -927,9 +968,6 @@ msg: Priljubljene
 id: Music
 msg: Glasba
 
-id: No handler for URL
-msg: URL povezave ni mogoče obdelati
-
 id: Other
 msg: Ostalo
 
@@ -954,6 +992,17 @@ msg: Tip
 
 id: URL
 msg: URL
+
+#
+# ./src/networking/connman.c
+#
+id: Enable Wi-Fi
+# Missing translation
+msg: 
+
+id: Network connections
+# Missing translation
+msg: 
 
 #
 # ./src/networking/ftp_server.c
@@ -1115,6 +1164,10 @@ msg:
 id: Automatic standby
 msg: Avtomatsko mirovanje
 
+id: Enable SSH server
+# Missing translation
+msg: 
+
 id: Logout
 msg: Odjava
 
@@ -1124,12 +1177,23 @@ msg: Odpri jedro
 id: Power off system
 msg: Izklop Sitema
 
+id: SSH server
+# Missing translation
+msg: 
+
+id: Standby
+# Missing translation
+msg: 
+
 id: Starting and stopping Showtime
 msg: Zagon in Ustavitev Showtime-a
 
 #
 # ./src/sd/sd.c
 #
+id: Enabled on home screen
+msg: Omogočen v glavnem meniju
+
 id: Name
 msg: Ime
 
@@ -1176,6 +1240,10 @@ msg:
 
 id: Settings useful for developers
 msg: Nastavitve uporabne za ustvarjalce
+
+id: System name
+# Missing translation
+msg: 
 
 id: System related settings
 msg: Nastavitve primerne sistemu
@@ -1380,12 +1448,6 @@ msg: Posodobitev programa
 
 id: Upgrade to releases from
 msg: Posodobitev o izdaji
-
-#
-# ./src/upnp/upnp.c
-#
-id: Enabled on home screen
-msg: Omogočen v glavnem meniju
 
 #
 # ./src/upnp/upnp_browse.c

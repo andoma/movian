@@ -319,12 +319,12 @@ msg: Registro de cambios para %s Versiones
 id: Check for updates now
 msg: Buscar actualizaciones ahora
 
-id: Checking current installed version
-# Missing translation
-msg: 
-
 id: Checking for updates...
 msg: Buscando actualizaciones...
+
+id: Checking installed version of %s
+# Missing translation
+msg: 
 
 id: Current version:
 msg: Versión actual:
@@ -332,11 +332,13 @@ msg: Versión actual:
 id: Download and install...
 msg: Descargar e instalar...
 
-id: Downloading...
-msg: Descargando...
+id: Downloading %s
+# Missing translation
+msg: 
 
-id: Installing...
-msg: Instalando...
+id: Installing %s
+# Missing translation
+msg: 
 
 id: New version %s is available for download
 msg: Nueva Versión %s disponible para descargar
@@ -344,7 +346,7 @@ msg: Nueva Versión %s disponible para descargar
 id: No upgrade available
 msg: Ninguna actualización disponible
 
-id: Patching binary
+id: Patching %s
 # Missing translation
 msg: 
 
@@ -365,6 +367,10 @@ msg: Probando
 
 id: Unable to query for new version
 msg: Incapaz de buscar nueva versión
+
+id: Verifying %s
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/video.view
@@ -424,8 +430,25 @@ msg: Ningún medio cargado
 #
 # ./glwskins/default/sysinfo.view
 #
-id: Memory usage:
-msg: Uso de Memoria:
+id: CPU Temp
+# Missing translation
+msg: 
+
+id: GPU Temp
+# Missing translation
+msg: 
+
+id: Memory usage
+# Missing translation
+msg: 
+
+id: System Free
+# Missing translation
+msg: 
+
+id: System Total
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/universe.view
@@ -450,6 +473,17 @@ msg: Usar titulo original
 #
 id: System is low on memory (%d kB RAM available)
 msg: Sistema con baja memoria (%d kB RAM disponible)
+
+#
+# ./src/arch/rpi/rpi_cec.c
+#
+id: Configure how Showtime communicates with your TV
+# Missing translation
+msg: 
+
+id: Consumer Electronics Control
+# Missing translation
+msg: 
 
 #
 # ./src/backend/dvd/cdda.c
@@ -666,6 +700,10 @@ msg[1]:
 #
 # ./src/i18n.c
 #
+id: Default character set
+# Missing translation
+msg: 
+
 id: Ignore 'The' at beginning of words when sorting
 # Missing translation
 msg: 
@@ -688,9 +726,6 @@ msg: Código de idioma del audio primario
 id: Primary subtitle language code
 msg: Código de idioma del subtítulo primario
 
-id: SRT character set
-msg: Juego de caracteres SRT
-
 id: Secondary audio language code
 msg: Código de idioma del audio secundario
 
@@ -702,6 +737,12 @@ msg: Código de idioma del audio terciario
 
 id: Tertiary subtitle language code
 msg: Código de idioma del subtítulo terciario
+
+#
+# ./src/js/js_page.c
+#
+id: No handler for URL
+msg: Sin soporte para URL
 
 #
 # ./src/keymapper.c
@@ -891,9 +932,6 @@ msg: Marcadores
 id: Music
 msg: Música
 
-id: No handler for URL
-msg: Sin soporte para URL
-
 id: Other
 msg: Otros
 
@@ -918,6 +956,17 @@ msg: Tipo
 
 id: URL
 msg: URL
+
+#
+# ./src/networking/connman.c
+#
+id: Enable Wi-Fi
+# Missing translation
+msg: 
+
+id: Network connections
+# Missing translation
+msg: 
 
 #
 # ./src/networking/ftp_server.c
@@ -1061,6 +1110,10 @@ msg: Transmision de Video
 id: Automatic standby
 msg: Modo espera automático
 
+id: Enable SSH server
+# Missing translation
+msg: 
+
 id: Logout
 msg: Desconectarse
 
@@ -1070,12 +1123,23 @@ msg: Abrir consola
 id: Power off system
 msg: Apagar sistema
 
+id: SSH server
+# Missing translation
+msg: 
+
+id: Standby
+# Missing translation
+msg: 
+
 id: Starting and stopping Showtime
 msg: Apagar y encender Showtime
 
 #
 # ./src/sd/sd.c
 #
+id: Enabled on home screen
+msg: Activar pantalla Inicio
+
 id: Name
 msg: Nombre
 
@@ -1119,6 +1183,10 @@ msg:
 
 id: Settings useful for developers
 msg: Ajustes útiles para desarrolladores
+
+id: System name
+# Missing translation
+msg: 
 
 id: System related settings
 msg: Ajustes relacionados al sistema
@@ -1314,12 +1382,6 @@ msg: Mejora de software
 
 id: Upgrade to releases from
 msg: Actualización de versión desde
-
-#
-# ./src/upnp/upnp.c
-#
-id: Enabled on home screen
-msg: Activar pantalla Inicio
 
 #
 # ./src/upnp/upnp_browse.c

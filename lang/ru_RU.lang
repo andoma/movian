@@ -314,11 +314,12 @@ msg: Лог изменений для релиза %s
 id: Check for updates now
 msg: Проверить обновления сейчас
 
-id: Checking current installed version
-msg: Проверка текущей установленной версии
-
 id: Checking for updates...
 msg: Проверка обновлений...
+
+id: Checking installed version of %s
+# Missing translation
+msg: 
 
 id: Current version:
 msg: Текущая версия:
@@ -326,11 +327,13 @@ msg: Текущая версия:
 id: Download and install...
 msg: Загрузить и установить...
 
-id: Downloading...
-msg: Загрузка...
+id: Downloading %s
+# Missing translation
+msg: 
 
-id: Installing...
-msg: Установка...
+id: Installing %s
+# Missing translation
+msg: 
 
 id: New version %s is available for download
 msg: Новая версия %s доступна для загрузки
@@ -338,8 +341,9 @@ msg: Новая версия %s доступна для загрузки
 id: No upgrade available
 msg: Нет обновлений
 
-id: Patching binary
-msg: Обновление файлов
+id: Patching %s
+# Missing translation
+msg: 
 
 id: Restarting Showtime in %d seconds...
 msg: Перезапуск Showtime через %d секунд...
@@ -358,6 +362,10 @@ msg: Тестовый
 
 id: Unable to query for new version
 msg: Невозможно проверить новую версию
+
+id: Verifying %s
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/video.view
@@ -416,8 +424,25 @@ msg: Медиа-файл не загружен
 #
 # ./glwskins/default/sysinfo.view
 #
-id: Memory usage:
-msg: Использование памяти:
+id: CPU Temp
+# Missing translation
+msg: 
+
+id: GPU Temp
+# Missing translation
+msg: 
+
+id: Memory usage
+# Missing translation
+msg: 
+
+id: System Free
+# Missing translation
+msg: 
+
+id: System Total
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/universe.view
@@ -442,6 +467,17 @@ msg: Использовать оригинальное название
 #
 id: System is low on memory (%d kB RAM available)
 msg: Мало памяти (доступно %d Кб RAM)
+
+#
+# ./src/arch/rpi/rpi_cec.c
+#
+id: Configure how Showtime communicates with your TV
+# Missing translation
+msg: 
+
+id: Consumer Electronics Control
+# Missing translation
+msg: 
 
 #
 # ./src/backend/dvd/cdda.c
@@ -653,6 +689,10 @@ msg[1]: файлов: %d
 #
 # ./src/i18n.c
 #
+id: Default character set
+# Missing translation
+msg: 
+
 id: Ignore 'The' at beginning of words when sorting
 msg: Игнорировать 'The' в начале названия при сортировке
 
@@ -674,9 +714,6 @@ msg: Код основного языка аудио
 id: Primary subtitle language code
 msg: Код основного языка субтитров
 
-id: SRT character set
-msg: Набор символов SRT
-
 id: Secondary audio language code
 msg: Код второго языка аудио
 
@@ -688,6 +725,12 @@ msg: Код третьего языка аудио
 
 id: Tertiary subtitle language code
 msg: Код третьего языка субтитров
+
+#
+# ./src/js/js_page.c
+#
+id: No handler for URL
+msg: Нет обработчика для URL
 
 #
 # ./src/keymapper.c
@@ -869,9 +912,6 @@ msg: Закладки
 id: Music
 msg: Музыка
 
-id: No handler for URL
-msg: Нет обработчика для URL
-
 id: Other
 msg: Прочее
 
@@ -895,6 +935,17 @@ msg: Тип
 
 id: URL
 msg: URL
+
+#
+# ./src/networking/connman.c
+#
+id: Enable Wi-Fi
+# Missing translation
+msg: 
+
+id: Network connections
+# Missing translation
+msg: 
 
 #
 # ./src/networking/ftp_server.c
@@ -1031,6 +1082,10 @@ msg: Потоковое видео
 id: Automatic standby
 msg: Автоматический режим ожидания
 
+id: Enable SSH server
+# Missing translation
+msg: 
+
 id: Logout
 msg: Выход из системы
 
@@ -1040,12 +1095,23 @@ msg: Открыть оболочку
 id: Power off system
 msg: Отключение системы
 
+id: SSH server
+# Missing translation
+msg: 
+
+id: Standby
+# Missing translation
+msg: 
+
 id: Starting and stopping Showtime
 msg: Запуск и остановка Showtime
 
 #
 # ./src/sd/sd.c
 #
+id: Enabled on home screen
+msg: Включено на главном экране
+
 id: Name
 msg: Имя
 
@@ -1087,6 +1153,10 @@ msg: Сетевые настройки
 
 id: Settings useful for developers
 msg: Настройки полезные для разработчиков
+
+id: System name
+# Missing translation
+msg: 
 
 id: System related settings
 msg: Системные настройки
@@ -1267,12 +1337,6 @@ msg: Обновление ПО
 
 id: Upgrade to releases from
 msg: Обновление до релиза
-
-#
-# ./src/upnp/upnp.c
-#
-id: Enabled on home screen
-msg: Включено на главном экране
 
 #
 # ./src/upnp/upnp_browse.c

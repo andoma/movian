@@ -314,11 +314,12 @@ msg: Ändringar för %s
 id: Check for updates now
 msg: Leta efter uppgraderingar nu
 
-id: Checking current installed version
-msg: Kontrollerar nuvarande installerad version
-
 id: Checking for updates...
 msg: Letar efter uppdateringar
+
+id: Checking installed version of %s
+# Missing translation
+msg: 
 
 id: Current version:
 msg: Nuvarande version:
@@ -326,11 +327,13 @@ msg: Nuvarande version:
 id: Download and install...
 msg: Ladda ner och installera..
 
-id: Downloading...
-msg: Laddar ner...
+id: Downloading %s
+# Missing translation
+msg: 
 
-id: Installing...
-msg: Installerar...
+id: Installing %s
+# Missing translation
+msg: 
 
 id: New version %s is available for download
 msg: Ny version %s är tillgänglig för nerladdning
@@ -338,8 +341,9 @@ msg: Ny version %s är tillgänglig för nerladdning
 id: No upgrade available
 msg: Ingen uppgradering tillgänglig
 
-id: Patching binary
-msg: Patchar binär
+id: Patching %s
+# Missing translation
+msg: 
 
 id: Restarting Showtime in %d seconds...
 msg: Startar om Showtime om %d sekunder...
@@ -358,6 +362,10 @@ msg: Test
 
 id: Unable to query for new version
 msg: Kan ej fråga efter ny version
+
+id: Verifying %s
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/video.view
@@ -416,8 +424,25 @@ msg: Ingen media laddad
 #
 # ./glwskins/default/sysinfo.view
 #
-id: Memory usage:
-msg: Minnesanvändande:
+id: CPU Temp
+# Missing translation
+msg: 
+
+id: GPU Temp
+# Missing translation
+msg: 
+
+id: Memory usage
+# Missing translation
+msg: 
+
+id: System Free
+# Missing translation
+msg: 
+
+id: System Total
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/universe.view
@@ -442,6 +467,17 @@ msg: Använd orginaltitel
 #
 id: System is low on memory (%d kB RAM available)
 msg: System har lite ledigt minne (%d kB RAM tillgängligt)
+
+#
+# ./src/arch/rpi/rpi_cec.c
+#
+id: Configure how Showtime communicates with your TV
+# Missing translation
+msg: 
+
+id: Consumer Electronics Control
+# Missing translation
+msg: 
 
 #
 # ./src/backend/dvd/cdda.c
@@ -653,6 +689,10 @@ msg[1]: %d fil
 #
 # ./src/i18n.c
 #
+id: Default character set
+# Missing translation
+msg: 
+
 id: Ignore 'The' at beginning of words when sorting
 msg: Ignorerar 'The' i början av ord vid sortering
 
@@ -674,9 +714,6 @@ msg: Primärt språk för ljud
 id: Primary subtitle language code
 msg: Primärt språk för undertexter
 
-id: SRT character set
-msg: Teckenkodning för SRT undertexter
-
 id: Secondary audio language code
 msg: Sekundärt språk för ljud
 
@@ -688,6 +725,12 @@ msg: Tertiärt språk för ljud
 
 id: Tertiary subtitle language code
 msg: Tertiärt språk för undertexter
+
+#
+# ./src/js/js_page.c
+#
+id: No handler for URL
+msg: Ingen hanterare för URLen
 
 #
 # ./src/keymapper.c
@@ -869,9 +912,6 @@ msg: Bokmärken
 id: Music
 msg: Musik
 
-id: No handler for URL
-msg: Ingen hanterare för URLen
-
 id: Other
 msg: Annat
 
@@ -895,6 +935,17 @@ msg: Typ
 
 id: URL
 msg: URL
+
+#
+# ./src/networking/connman.c
+#
+id: Enable Wi-Fi
+# Missing translation
+msg: 
+
+id: Network connections
+# Missing translation
+msg: 
 
 #
 # ./src/networking/ftp_server.c
@@ -1031,6 +1082,10 @@ msg: Videoströmning
 id: Automatic standby
 msg: Automatisk standby
 
+id: Enable SSH server
+# Missing translation
+msg: 
+
 id: Logout
 msg: Logout
 
@@ -1040,12 +1095,23 @@ msg: Öppna skal
 id: Power off system
 msg: Stäng av systemet
 
+id: SSH server
+# Missing translation
+msg: 
+
+id: Standby
+# Missing translation
+msg: 
+
 id: Starting and stopping Showtime
 msg: Starta och stanna Showtime
 
 #
 # ./src/sd/sd.c
 #
+id: Enabled on home screen
+msg: Tillgänglig på hemsidan
+
 id: Name
 msg: Namn
 
@@ -1087,6 +1153,10 @@ msg: Nätverkstjänster
 
 id: Settings useful for developers
 msg: Inställningar användbara för utvecklare
+
+id: System name
+# Missing translation
+msg: 
 
 id: System related settings
 msg: Systemrelaterade inställningar
@@ -1267,12 +1337,6 @@ msg: Uppgradera mjukvara
 
 id: Upgrade to releases from
 msg: Uppgradera till släppta mjukvaror från
-
-#
-# ./src/upnp/upnp.c
-#
-id: Enabled on home screen
-msg: Tillgänglig på hemsidan
 
 #
 # ./src/upnp/upnp_browse.c

@@ -314,11 +314,12 @@ msg: Changelog per i rilasci %s
 id: Check for updates now
 msg: Cerca aggiornamenti ora
 
-id: Checking current installed version
-msg: Controllo della versione installata attualmente
-
 id: Checking for updates...
 msg: Ricerca di aggiornamenti...
+
+id: Checking installed version of %s
+# Missing translation
+msg: 
 
 id: Current version:
 msg: Versione attuale:
@@ -326,11 +327,13 @@ msg: Versione attuale:
 id: Download and install...
 msg: Scarica e installa...
 
-id: Downloading...
-msg: Scaricamento...
+id: Downloading %s
+# Missing translation
+msg: 
 
-id: Installing...
-msg: Installazione...
+id: Installing %s
+# Missing translation
+msg: 
 
 id: New version %s is available for download
 msg: Disponibile la nuova versione %s
@@ -338,8 +341,9 @@ msg: Disponibile la nuova versione %s
 id: No upgrade available
 msg: Nessun aggiornamento disponibile
 
-id: Patching binary
-msg: Patch dei binari
+id: Patching %s
+# Missing translation
+msg: 
 
 id: Restarting Showtime in %d seconds...
 msg: Riavvio di Showtime in %d secondi...
@@ -358,6 +362,10 @@ msg: Da testare
 
 id: Unable to query for new version
 msg: Impossibile cercare nuove versioni
+
+id: Verifying %s
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/video.view
@@ -416,8 +424,25 @@ msg: Nessun media caricato
 #
 # ./glwskins/default/sysinfo.view
 #
-id: Memory usage:
-msg: Utilizzo memoria:
+id: CPU Temp
+# Missing translation
+msg: 
+
+id: GPU Temp
+# Missing translation
+msg: 
+
+id: Memory usage
+# Missing translation
+msg: 
+
+id: System Free
+# Missing translation
+msg: 
+
+id: System Total
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/universe.view
@@ -442,6 +467,17 @@ msg: Usa titolo originale
 #
 id: System is low on memory (%d kB RAM available)
 msg: Memoria in esaurimento (%d kB di RAM disponibile)
+
+#
+# ./src/arch/rpi/rpi_cec.c
+#
+id: Configure how Showtime communicates with your TV
+# Missing translation
+msg: 
+
+id: Consumer Electronics Control
+# Missing translation
+msg: 
 
 #
 # ./src/backend/dvd/cdda.c
@@ -653,6 +689,10 @@ msg[1]:
 #
 # ./src/i18n.c
 #
+id: Default character set
+# Missing translation
+msg: 
+
 id: Ignore 'The' at beginning of words when sorting
 msg: Ignora 'The' all'inizio delle parole durante l'ordinamento
 
@@ -674,9 +714,6 @@ msg: Codice di linguaggio primario per l'audio
 id: Primary subtitle language code
 msg: Codice di linguaggio primario per i sottotitoli
 
-id: SRT character set
-msg: Set di caratteri per sottotitoli in formato SRT
-
 id: Secondary audio language code
 msg: Codice di linguaggio secondario per l'audio
 
@@ -688,6 +725,12 @@ msg: Codice di linguaggio terziario per l'audio
 
 id: Tertiary subtitle language code
 msg: Codice di linguaggio terziario per i sottotitoli
+
+#
+# ./src/js/js_page.c
+#
+id: No handler for URL
+msg: Nessun handler per URL
 
 #
 # ./src/keymapper.c
@@ -869,9 +912,6 @@ msg: Segnalibri
 id: Music
 msg: Musica
 
-id: No handler for URL
-msg: Nessun handler per URL
-
 id: Other
 msg: Altro
 
@@ -895,6 +935,17 @@ msg: Tipo
 
 id: URL
 msg: URL
+
+#
+# ./src/networking/connman.c
+#
+id: Enable Wi-Fi
+# Missing translation
+msg: 
+
+id: Network connections
+# Missing translation
+msg: 
 
 #
 # ./src/networking/ftp_server.c
@@ -1031,6 +1082,10 @@ msg: Streaming video
 id: Automatic standby
 msg: Standby automatico
 
+id: Enable SSH server
+# Missing translation
+msg: 
+
 id: Logout
 msg: Uscita
 
@@ -1040,12 +1095,23 @@ msg: Apri shell
 id: Power off system
 msg: Spegni sistema
 
+id: SSH server
+# Missing translation
+msg: 
+
+id: Standby
+# Missing translation
+msg: 
+
 id: Starting and stopping Showtime
 msg: Avvio e chiusura Showtime
 
 #
 # ./src/sd/sd.c
 #
+id: Enabled on home screen
+msg: Attivo nella schermata principale
+
 id: Name
 msg: Nome
 
@@ -1087,6 +1153,10 @@ msg: Impostazioni di rete
 
 id: Settings useful for developers
 msg: Impostazioni utili per sviluppatori
+
+id: System name
+# Missing translation
+msg: 
 
 id: System related settings
 msg: Impostazioni relative al sistema
@@ -1267,12 +1337,6 @@ msg: Aggiornamento software
 
 id: Upgrade to releases from
 msg: Aggiorna ai rilasci da
-
-#
-# ./src/upnp/upnp.c
-#
-id: Enabled on home screen
-msg: Attivo nella schermata principale
 
 #
 # ./src/upnp/upnp_browse.c

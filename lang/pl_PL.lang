@@ -314,11 +314,12 @@ msg: Lista zmian dla %s
 id: Check for updates now
 msg: Sprawdź dostępność aktualizacji
 
-id: Checking current installed version
-msg: Sprawdzanie zainstalowanej wersji
-
 id: Checking for updates...
 msg: Sprawdzanie aktualizacji...
+
+id: Checking installed version of %s
+# Missing translation
+msg: 
 
 id: Current version:
 msg: Obecna wersja:
@@ -326,11 +327,13 @@ msg: Obecna wersja:
 id: Download and install...
 msg: Pobierz i zainstaluj...
 
-id: Downloading...
-msg: Pobieranie...
+id: Downloading %s
+# Missing translation
+msg: 
 
-id: Installing...
-msg: Instalowanie...
+id: Installing %s
+# Missing translation
+msg: 
 
 id: New version %s is available for download
 msg: Nowa wersja %s jest dostępna do pobrania
@@ -338,8 +341,9 @@ msg: Nowa wersja %s jest dostępna do pobrania
 id: No upgrade available
 msg: Brak aktualizacji
 
-id: Patching binary
-msg: Uaktualnianie plików binarnych
+id: Patching %s
+# Missing translation
+msg: 
 
 id: Restarting Showtime in %d seconds...
 msg: Restart Showtime za %d sekund...
@@ -358,6 +362,10 @@ msg: Testowe
 
 id: Unable to query for new version
 msg: Nie można sprawdzić dostępności nowej wersji
+
+id: Verifying %s
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/video.view
@@ -416,8 +424,25 @@ msg: Brak danych
 #
 # ./glwskins/default/sysinfo.view
 #
-id: Memory usage:
-msg: Zużycie pamięci:
+id: CPU Temp
+# Missing translation
+msg: 
+
+id: GPU Temp
+# Missing translation
+msg: 
+
+id: Memory usage
+# Missing translation
+msg: 
+
+id: System Free
+# Missing translation
+msg: 
+
+id: System Total
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/universe.view
@@ -442,6 +467,17 @@ msg: Użyj oryginalnego tytułu
 #
 id: System is low on memory (%d kB RAM available)
 msg: Mała ilość dostępnej pamięci (dostępne %d kB RAM)
+
+#
+# ./src/arch/rpi/rpi_cec.c
+#
+id: Configure how Showtime communicates with your TV
+# Missing translation
+msg: 
+
+id: Consumer Electronics Control
+# Missing translation
+msg: 
 
 #
 # ./src/backend/dvd/cdda.c
@@ -653,6 +689,10 @@ msg[1]: %d plik
 #
 # ./src/i18n.c
 #
+id: Default character set
+# Missing translation
+msg: 
+
 id: Ignore 'The' at beginning of words when sorting
 msg: Przy sortowaniu ignoruj 'The' jeśli występuje w wyrazie
 
@@ -674,9 +714,6 @@ msg: Podstawowy język audio
 id: Primary subtitle language code
 msg: Podstawowy język napisów
 
-id: SRT character set
-msg: Zestaw znaków SRT
-
 id: Secondary audio language code
 msg: Drugi język audio
 
@@ -688,6 +725,12 @@ msg: Trzeci język audio
 
 id: Tertiary subtitle language code
 msg: Trzeci język napisów
+
+#
+# ./src/js/js_page.c
+#
+id: No handler for URL
+msg: Brak wsparcia dla URL
 
 #
 # ./src/keymapper.c
@@ -869,9 +912,6 @@ msg: Zakładki
 id: Music
 msg: Muzyka
 
-id: No handler for URL
-msg: Brak wsparcia dla URL
-
 id: Other
 msg: Inne
 
@@ -895,6 +935,17 @@ msg: Typ
 
 id: URL
 msg: Adres URL
+
+#
+# ./src/networking/connman.c
+#
+id: Enable Wi-Fi
+# Missing translation
+msg: 
+
+id: Network connections
+# Missing translation
+msg: 
 
 #
 # ./src/networking/ftp_server.c
@@ -1031,6 +1082,10 @@ msg: Strumieniowanie Video
 id: Automatic standby
 msg: Automatyczny tryb gotowości
 
+id: Enable SSH server
+# Missing translation
+msg: 
+
 id: Logout
 msg: Wyloguj
 
@@ -1040,12 +1095,23 @@ msg: Otwórz linię komend
 id: Power off system
 msg: Wyłącz system
 
+id: SSH server
+# Missing translation
+msg: 
+
+id: Standby
+# Missing translation
+msg: 
+
 id: Starting and stopping Showtime
 msg: Uruchamianie i zatrzymywanie Showtime
 
 #
 # ./src/sd/sd.c
 #
+id: Enabled on home screen
+msg: Dostępne na ekranie głównym
+
 id: Name
 msg: Nazwa
 
@@ -1087,6 +1153,10 @@ msg: Ustawienia Sieciowe
 
 id: Settings useful for developers
 msg: Ustawienia pomocne dla deweloperów
+
+id: System name
+# Missing translation
+msg: 
 
 id: System related settings
 msg: Ustawienia związane z systemem
@@ -1267,12 +1337,6 @@ msg: Aktualizacja oprogramowania
 
 id: Upgrade to releases from
 msg: Aktualizuj do wersji z
-
-#
-# ./src/upnp/upnp.c
-#
-id: Enabled on home screen
-msg: Dostępne na ekranie głównym
 
 #
 # ./src/upnp/upnp_browse.c
