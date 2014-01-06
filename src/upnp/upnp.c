@@ -427,7 +427,7 @@ add_content_directory(upnp_service_t *us, const char *hostname, int port)
   us->us_setting_enabled =
     setting_create(SETTING_BOOL, us->us_settings, SETTINGS_INITIAL_UPDATE,
                    SETTING_TITLE(_p("Enabled on home screen")),
-                   SETTING_VALUE(1),
+                   SETTING_VALUE(0),
                    SETTING_HTSMSG_CUSTOM_SAVER("enabled",
                                                us->us_settings_store,
                                                upnp_settings_saver,
@@ -466,7 +466,6 @@ add_content_directory(upnp_service_t *us, const char *hostname, int port)
 	    prop_create(us->us_service->s_root, "type"));
   prop_link(settings_get_value(us->us_setting_enabled),
 	    prop_create(us->us_service->s_root, "enabled"));
-
 
 }
 

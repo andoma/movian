@@ -222,7 +222,7 @@ add_xdg_path(const char *class, const char *type)
     snprintf(id, sizeof(id), "xdg-user-dir-%s", class);
 
     service_create_managed(id, title, path, type, NULL, 0, 1,
-			   SVC_ORIGIN_SYSTEM, 1);
+			   SVC_ORIGIN_SYSTEM, 1, "Desktop folder");
   }
   fclose(fp);
 }

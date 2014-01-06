@@ -190,13 +190,16 @@ scan_root_fs(callout_t *co, void *aux)
 
       const char *name = d->d_name;
       const char *type = "other";
-      if(!strcmp(name, "dev_hdd0"))
+      const char *desc;
+      if(!strcmp(name, "dev_hdd0")) {
 	name = "PS3 HDD";
-      else if(!strncmp(name, "dev_usb", strlen("dev_usb"))) {
+	desc = "Internal Harddrive";
+      } else if(!strncmp(name, "dev_usb", strlen("dev_usb"))) {
 	snprintf(dpyname, sizeof(dpyname), "USB Drive %d",
 		 atoi(name + strlen("dev_usb")));
 	type = "usb";
 	name = dpyname;
+	desc = "External Harddrive";
       }
       else if(!strcmp(name, "dev_bdvd") ||
 	      !strcmp(name, "dev_ps2disc")) {
@@ -205,7 +208,8 @@ scan_root_fs(callout_t *co, void *aux)
       }
 
       rfn->service = service_create_managed(name, name, fname, type, NULL, 0, 1,
-					    SVC_ORIGIN_MEDIA, 1);
+					    SVC_ORIGIN_MEDIA, 1,
+					    name);
       LIST_INSERT_HEAD(&rootfsnodes, rfn, link);
     }
     rfn->mark = 0;

@@ -143,8 +143,8 @@ sd_add_service(service_instance_t *si, const char *title,
 
     si->si_setting_enabled =
       setting_create(SETTING_BOOL, si->si_settings, SETTINGS_INITIAL_UPDATE,
-                     SETTING_TITLE(_p("Enabled")),
-                     SETTING_VALUE(1),
+		     SETTING_TITLE(_p("Enabled on home screen")),
+                     SETTING_VALUE(0),
                      SETTING_HTSMSG_CUSTOM_SAVER("enabled",
                                                  si->si_settings_store,
                                                  sd_settings_saver,

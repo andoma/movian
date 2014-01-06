@@ -136,10 +136,6 @@ service_init(void)
 		       PROP_NF_CMP_EQ, 0, NULL, 
 		       PROP_NF_MODE_EXCLUDE);
 
-  prop_nf_pred_str_add(pnf, "node.origin",
-		       PROP_NF_CMP_EQ, "discovered", NULL, 
-		       PROP_NF_MODE_EXCLUDE);
-
   prop_t *stable = prop_create(gs, "stable");
   prop_reorder_create(stable, tmp, 0, "allSourcesOrder");
 
@@ -335,7 +331,8 @@ service_create_managed(const char *id0,
 		       int probe,
 		       int enabled,
 		       service_origin_t origin,
-		       int vfsable)
+		       int vfsable,
+		       const char *description)
 {
 
   char *id = mystrdupa(id0);
@@ -356,11 +353,11 @@ service_create_managed(const char *id0,
 
   s->s_settings = settings_add_dir_cstr(gconf.settings_sd,
 					title, type, icon,
-					NULL, NULL);
+					description, NULL);
 
   s->s_setting_enabled =
     setting_create(SETTING_BOOL, s->s_settings, SETTINGS_INITIAL_UPDATE,
-		   SETTING_TITLE(_p("Enabled")),
+		   SETTING_TITLE(_p("Enabled on home screen")),
 		   SETTING_VALUE(enabled),
 		   SETTING_HTSMSG_CUSTOM_SAVER("enabled",
 					       s->s_settings_store,
