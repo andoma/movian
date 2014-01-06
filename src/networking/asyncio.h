@@ -37,7 +37,8 @@ void asyncio_init(void);
 #define ASYNCIO_CLOSED          0x8
 
 asyncio_fd_t *asyncio_add_fd(int fd, int events,
-                             asyncio_fd_callback_t *cb, void *opaque);
+                             asyncio_fd_callback_t *cb, void *opaque,
+			     const char *name);
 
 void asyncio_set_events(asyncio_fd_t *af, int events);
 

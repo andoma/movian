@@ -1262,7 +1262,7 @@ http_accept(void *opaque, int fd, const net_addr_t *local_addr,
   http_connection_t *hc = calloc(1, sizeof(http_connection_t));
   hc->hc_fd = fd;
   hc->hc_afd = asyncio_add_fd(fd, ASYNCIO_READ | ASYNCIO_ERROR,
-                              http_io_callback, hc);
+                              http_io_callback, hc, "HTTP connection");
   htsbuf_queue_init(&hc->hc_input, 0);
   htsbuf_queue_init(&hc->hc_output, 0);
 
