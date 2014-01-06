@@ -107,7 +107,15 @@ asyncio_dopoll(void)
 
   int r = poll(fds, n, -1);
   if(r == -1) {
-    TRACE(TRACE_ERROR, "ASYNCIO", "Poll failed -- %s", strerror(errno));
+    TRACE(TRACE_ERROR, "ASYNCIO", "Poll failed -- %s errno:%d",
+	  strerror(errno), errno);
+    TRACE(TRACE_ERROR, "ASYNCIO", "FD dump follows");
+
+    LIST_FOREACH(af, &asyncio_fds, af_link) {
+      af->af_refcount--; // Release ref taken above before poll
+      TRACE(TRACE_ERROR, "ASYNCIO", "FD 0x%x events:%x refcount:%d (%s)",
+	    af->af_fd, af->af_poll_events, af->af_refcount, af->af_name);
+    }
     sleep(1);
     return;
   }
