@@ -149,7 +149,7 @@ pending_store_write(pending_store_t *ps)
   if(!rename_cant_overwrite && rename(fullpath, fullpath2)) {
 
     if(errno == EEXIST) {
-      TRACE(TRACE_ERROR, "Settings", 
+      TRACE(TRACE_DEBUG, "Settings", 
 	    "Seems like rename() can not overwrite, retrying");
       rename_cant_overwrite = 1;
       goto retry;
