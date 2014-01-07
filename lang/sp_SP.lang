@@ -1,28 +1,26 @@
-﻿language: Spanish
+language: Spanish
 native: Español
 maintainer: Diego Franco <diegofernandofranco@gmail.com>
 #
 # ./glwskins/default/cmdmenu.view
 #
 id: Add current page to bookmarks
-msg: Agregar Pagina actual a Marcadores
+msg: Agregar Página actual a Marcadores
 
 id: Open settings
-msg: Abrir Configuracion
+msg: Abrir Configuración
 
 id: Remove current page from bookmarks
-msg: Remover Pagina actual de Marcadores
+msg: Remover Página actual de Marcadores
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
 id: Activate sleep timer
-# Missing translation
-msg: 
+msg: Activar temporizador de apagado
 
 id: Disable sleep timer
-# Missing translation
-msg: 
+msg: Desactivar temporizador de apagado
 
 id: Exit Showtime
 msg: Salir de Showtime
@@ -43,7 +41,7 @@ id: Power off
 msg: Apagar
 
 id: Reload current page
-msg: Recargar Pagina actual
+msg: Recargar Página actual
 
 id: Suspend
 msg: Suspender
@@ -52,12 +50,10 @@ id: System
 msg: Sistema
 
 id: Time until sleep
-# Missing translation
-msg: 
+msg: Tiempo para apagar
 
 id: min
-# Missing translation
-msg: 
+msg: min
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_dir.view
@@ -114,7 +110,7 @@ id: Audio tracks
 msg: Pistas de audio
 
 id: Chapters
-msg: Capitulos
+msg: Capítulos
 
 id: Seek by time
 msg: Buscar por tiempo
@@ -168,7 +164,7 @@ id: Slideshow
 msg: Presentación
 
 id: Tvchannels
-msg: Canales de Tv
+msg: Canales de TV
 
 id: View
 msg: Vista
@@ -177,7 +173,7 @@ msg: Vista
 # ./glwskins/default/pages/discovered.view
 #
 id: Discovered resources on local network
-msg: Buscar recursos en red local
+msg: Recursos encontrados en la Red Local
 
 #
 # ./glwskins/default/pages/home.view
@@ -189,8 +185,7 @@ msg: Mozaico
 # ./glwskins/default/pages/home_clist.view
 #
 id: Apps
-# Missing translation
-msg: 
+msg: Apps
 
 id: Dismiss
 msg: Descartar
@@ -244,8 +239,8 @@ id: Year:
 msg: Año:
 
 id: Seen %d times
-msg[0]: 
-msg[1]: 
+msg[0]: Visto %d vez
+msg[1]: Visto %d veces
 
 #
 # ./glwskins/default/pages/listitems/add.view
@@ -272,7 +267,7 @@ id: Main
 msg: Principal
 
 id: Subs
-msg: Subtitulos
+msg: Subtítulos
 
 #
 # ./glwskins/default/pages/listitems/plugin.view
@@ -323,8 +318,7 @@ id: Checking for updates...
 msg: Buscando actualizaciones...
 
 id: Checking installed version of %s
-# Missing translation
-msg: 
+msg: Verificando versión instalada de %s
 
 id: Current version:
 msg: Versión actual:
@@ -333,12 +327,10 @@ id: Download and install...
 msg: Descargar e instalar...
 
 id: Downloading %s
-# Missing translation
-msg: 
+msg: Descargando %s
 
 id: Installing %s
-# Missing translation
-msg: 
+msg: Instalando %s
 
 id: New version %s is available for download
 msg: Nueva Versión %s disponible para descargar
@@ -347,8 +339,7 @@ id: No upgrade available
 msg: Ninguna actualización disponible
 
 id: Patching %s
-# Missing translation
-msg: 
+msg: Reparando %s
 
 id: Restarting Showtime in %d seconds...
 msg: Reiniciando Showtime en %d segundos...
@@ -366,11 +357,10 @@ id: Testing
 msg: Probando
 
 id: Unable to query for new version
-msg: Incapaz de buscar nueva versión
+msg: No se pudo encontrar una nueva versión
 
 id: Verifying %s
-# Missing translation
-msg: 
+msg: Verificando %s
 
 #
 # ./glwskins/default/pages/video.view
@@ -385,17 +375,16 @@ msg: Estatus de reproducción
 # ./glwskins/default/pages/wideinfo/video.view
 #
 id: Seen:
-# Missing translation
-msg: 
+msg: Visto:
 
 #
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
-msg: Capitulo: %d
+msg: Capítulo: %d
 
 id: Title: %d
-msg: Titulo: %d
+msg: Título: %d
 
 #
 # ./glwskins/default/popups/auth.view
@@ -431,24 +420,19 @@ msg: Ningún medio cargado
 # ./glwskins/default/sysinfo.view
 #
 id: CPU Temp
-# Missing translation
-msg: 
+msg: Temp CPU
 
 id: GPU Temp
-# Missing translation
-msg: 
+msg: Temp GPU
 
 id: Memory usage
-# Missing translation
-msg: 
+msg: Memoria usada
 
 id: System Free
-# Missing translation
-msg: 
+msg: Memoria Libre
 
 id: System Total
-# Missing translation
-msg: 
+msg: Memoria Total
 
 #
 # ./glwskins/default/universe.view
@@ -466,7 +450,7 @@ id: Language (ISO 639-1 code)
 msg: Languaje (Codigo ISO 639-1)
 
 id: Use original title
-msg: Usar titulo original
+msg: Usar título original
 
 #
 # ./src/arch/ps3/ps3_main.c
@@ -478,21 +462,19 @@ msg: Sistema con baja memoria (%d kB RAM disponible)
 # ./src/arch/rpi/rpi_cec.c
 #
 id: Configure how Showtime communicates with your TV
-# Missing translation
-msg: 
+msg: Configurar cómo Showtime se comunica con su TV
 
 id: Consumer Electronics Control
-# Missing translation
-msg: 
+msg: Consumer Electronics Control
 
 #
 # ./src/backend/dvd/cdda.c
 #
 id: Invalid CD URL
-msg: URL de CD no válida
+msg: URL de CD no es válida
 
 id: Invalid CD track
-msg: Pista de CD no válida
+msg: Pista de CD no es válida
 
 id: Unable to open CD
 msg: No se puede abrir CD
@@ -639,8 +621,7 @@ id: Date (oldest first)
 msg: Fecha (antiguos primero
 
 id: Deleted %s
-# Missing translation
-msg: 
+msg: Borrado %s
 
 id: Filename
 msg: Nombre de Archivo
@@ -661,8 +642,7 @@ id: Sort on
 msg: Orden activo
 
 id: Unable to delete %s\n%s
-# Missing translation
-msg: 
+msg: No se pudo borrar %s\n%s
 
 #
 # ./src/fileaccess/fa_spotlight.c
@@ -674,39 +654,34 @@ msg: Buscar usando spotlight
 # ./src/fileaccess/fileaccess.c
 #
 id: Are you sure you want to delete:
-# Missing translation
-msg: 
+msg: ¿Está seguro que desea borrar:
 
 id: Enable file deletion from item menu
-# Missing translation
-msg: 
+msg: Habilitar borrar archivos desde menú
 
 id: File access
-# Missing translation
-msg: 
+msg: Acceso a Archivos
 
 id: %d archive parts
-msg[0]: 
-msg[1]: 
+msg[0]: %d parte de archivo
+msg[1]: %d partes de archivo
 
 id: %d directories
-msg[0]: 
-msg[1]: 
+msg[0]: %d directorio
+msg[1]: %d directorios
 
 id: %d files
-msg[0]: 
-msg[1]: 
+msg[0]: %d archivo
+msg[1]: %d archivos
 
 #
 # ./src/i18n.c
 #
 id: Default character set
-# Missing translation
-msg: 
+msg: Conjunto de caracteres predeterminados
 
 id: Ignore 'The' at beginning of words when sorting
-# Missing translation
-msg: 
+msg: Ignorar 'The' al inicio del título al ordenar
 
 id: Language
 msg: Idioma
@@ -772,12 +747,10 @@ id: Audio delay
 msg: Retraso de audio
 
 id: Audio volume
-# Missing translation
-msg: 
+msg: Volumen del audio
 
 id: Go to standby after video ends
-# Missing translation
-msg: 
+msg: Apagar equipo al finalizar el video
 
 id: Stretch video to fullscreen
 msg: Estirar video a pantalla completa
@@ -789,15 +762,13 @@ id: Subtitle delay
 msg: Retraso de subtítulos
 
 id: Subtitle horizontal displacement
-# Missing translation
-msg: 
+msg: Desplazamiento horizontal del subtítulo
 
 id: Subtitle scaling
 msg: Escala de subtítulos
 
 id: Subtitle vertical displacement
-# Missing translation
-msg: 
+msg: Desplazamiento vertical del subtítulo
 
 id: Video zoom
 msg: Zoom de Video
@@ -806,7 +777,7 @@ msg: Zoom de Video
 # ./src/metadata/browsemdb.c
 #
 id: Indexing
-msg: Indexacion
+msg: Indexación
 
 #
 # ./src/metadata/decoration.c
@@ -815,32 +786,28 @@ id: Automatic
 msg: Automático
 
 id: Manual
-# Missing translation
-msg: 
+msg: Manual
 
 id: Mark all as seen
-# Missing translation
-msg: 
+msg: Marcar todo como visto
 
 id: Mark all as unseen
-# Missing translation
-msg: 
+msg: Marcar todo como no visto
 
 id: Metadata mode
-# Missing translation
-msg: 
+msg: Modo metadatos
 
 #
 # ./src/metadata/metadata.c
 #
 id: Custom search query
-msg: buscar consulta personalizada
+msg: Búsqueda personalizada
 
 id: Custom title
-msg: Titulo personalizado
+msg: Título personalizado
 
 id: Embedded in file
-msg: Incluido en archivo
+msg: Incluído en archivo
 
 id: Enabled
 msg: Habilitado
@@ -864,10 +831,10 @@ id: Metadata source
 msg: Fuente de Metadatos
 
 id: Movie
-msg: Pelicula
+msg: Película
 
 id: Movie title
-msg: Titulo de Pelicula
+msg: Título de Película
 
 id: No data found
 msg: No se encontraron datos
@@ -879,13 +846,13 @@ id: Providers for Music
 msg: Proveedores de Música
 
 id: Providers for Video
-msg: Proveedor de Video
+msg: Proveedores de Video
 
 id: Refresh metadata
 msg: Refrescar Metadatos
 
 id: Title, Season, Episode
-msg: Titulo, Temporada, Episodio
+msg: Título, Temporada, Episodio
 
 id: Track %d
 msg: Pista %d
@@ -915,13 +882,13 @@ id: Clear all metadata
 msg: Limpiar todos los metadatos
 
 id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
-msg: Limpiar todos los metadatos significa perder <b>toda</b> la informacion acerca:\n\nSi una cancion/pelicula ha sido vista\nNumero de veces una cancion/pelicula ha sido reproducida\nPosicion de resumen de reproduccion\n\nTambien sera borrado el cached de los metadatos provenientes de fuentes externas como themoviedb.org, etc\n\nEsta seguro de proceder?
+msg: Limpiar todos los metadatos significa perder <b>toda</b> la información acerca:\n\nSi una canción/película ha sido vista\nNúmero de veces que una cancion/película ha sido reproducida\nPosición de resumen de reproducción\n\nTambién será borrado el cache de los metadatos provenientes de fuentes externas como themoviedb.org, etc\n\nEstá seguro de proceder?
 
 #
 # ./src/navigator.c
 #
 id: Add and remove items on homepage
-msg: Agregar y remover items de pagina principal
+msg: Agregar y remover items de página principal
 
 id: Added new bookmark: %s
 msg: Nuevo marcador agregado: %s
@@ -939,8 +906,7 @@ id: Photos
 msg: Fotos
 
 id: Published in Virtual File System
-# Missing translation
-msg: 
+msg: Publicado en el Virtual File System
 
 id: Removed bookmark: %s
 msg: Marcador removido: %s
@@ -949,7 +915,7 @@ id: TV
 msg: TV
 
 id: Title
-msg: Titulo
+msg: Título
 
 id: Type
 msg: Tipo
@@ -961,56 +927,49 @@ msg: URL
 # ./src/networking/connman.c
 #
 id: Enable Wi-Fi
-# Missing translation
-msg: 
+msg: Activar Wi-Fi
 
 id: Network connections
-# Missing translation
-msg: 
+msg: Conexiones de red
 
 #
 # ./src/networking/ftp_server.c
 #
 id: Enable FTP server
-# Missing translation
-msg: 
+msg: Activar servidor FTP
 
 id: FTP server
-# Missing translation
-msg: 
+msg: Servidor FTP
 
 id: Server TCP port
-# Missing translation
-msg: 
+msg: Puerto TCP del servidor
 
 #
 # ./src/plugins.c
 #
 id: Alternate plugin Repository URL
-msg: URL alternativa de repositorio de Plugins
+msg: URL alternativa del repositorio de Plugins
 
 id: Automatically upgrade plugins
 msg: Actualizar automáticamente plugins
 
 id: Available apps
-# Missing translation
-msg: 
+msg: Apps disponibles
 
 id: Background
 msg: Fondo
 
 id: Beta testing passwords
-msg: Contraseñas de testeo Beta
+msg: Contraseñas para testeo Beta
 
 id: Browse available apps
-# Missing translation
-msg: 
+msg: Navegar las Apps disponibles
 
 id: Browsing
 msg: Explorando
 
 id: Cloud services
-msg: Servicios de nube
+msg: Servicios en la nube
 
 id: Corrupt plugin bundle
 msg: Paquete de plugin corrupto
@@ -1028,14 +987,13 @@ id: File open error
 msg: Error al abrir archivo
 
 id: Home page
-msg: Pagina Principal
+msg: Página Principal
 
 id: Installed apps
-# Missing translation
-msg: 
+msg: Apps instaladas
 
 id: Installed version higher than available
-msg: Version instalada superior a la disponible
+msg: Versión instalada superior a la disponible
 
 id: Installing
 msg: Instalando
@@ -1047,10 +1005,10 @@ id: Loading screen
 msg: Cargando pantalla
 
 id: Movies
-msg: Peliculas
+msg: Películas
 
 id: Music streaming
-msg: Transmision de musica
+msg: Transmisión de música
 
 id: Not installable
 msg: No instalable
@@ -1062,11 +1020,10 @@ id: Not upgradable
 msg: No actualizable
 
 id: Online TV
-msg: Tv en linea
+msg: TV en línea
 
 id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
-# Missing translation
-msg: 
+msg: Plugin %s %s ha sido desinstalado porque puede causar problemas.\nTrate reinstalando manualmente una versión diferente.
 
 id: Plugins
 msg: Plugins
@@ -1081,10 +1038,10 @@ id: TV channels
 msg: Canales de TV
 
 id: Unable to load plugin.json: %s
-msg: No se puede cargar plugin.json: %s
+msg: No se pudo cargar plugin.json: %s
 
 id: Unable to load plugin.json: Malformed JSON
-msg: No se puede cargar plugin.json: JSON Malformado
+msg: No se pudo cargar plugin.json: JSON Malformado
 
 id: Uncategorized
 msg: Sin categoria
@@ -1096,23 +1053,22 @@ id: Upgradable
 msg: Actualizable
 
 id: Upgraded plugin %s to version %s
-msg: Actualizar plugin %s a versión %s
+msg: Plugin %s actualizado a versión %s
 
 id: User interface extensions
 msg: Extensiones de interfaz de usuario
 
 id: Video streaming
-msg: Transmision de Video
+msg: Transmisión de Video
 
 #
 # ./src/runcontrol.c
 #
 id: Automatic standby
-msg: Modo espera automático
+msg: Modo apagado automático
 
 id: Enable SSH server
-# Missing translation
-msg: 
+msg: Activar servidor SSH
 
 id: Logout
 msg: Desconectarse
@@ -1124,12 +1080,10 @@ id: Power off system
 msg: Apagar sistema
 
 id: SSH server
-# Missing translation
-msg: 
+msg: Servidor SSH
 
 id: Standby
-# Missing translation
-msg: 
+msg: Apagar
 
 id: Starting and stopping Showtime
 msg: Apagar y encender Showtime
@@ -1138,7 +1092,7 @@ msg: Apagar y encender Showtime
 # ./src/sd/sd.c
 #
 id: Enabled on home screen
-msg: Activar pantalla Inicio
+msg: Activar en pantalla Inicio
 
 id: Name
 msg: Nombre
@@ -1174,19 +1128,16 @@ id: Look and feel
 msg: Aspecto y comportamiento
 
 id: Network services, etc
-# Missing translation
-msg: 
+msg: Servicios de red, etc
 
 id: Network settings
-# Missing translation
-msg: 
+msg: Configuración de Red
 
 id: Settings useful for developers
 msg: Ajustes útiles para desarrolladores
 
 id: System name
-# Missing translation
-msg: 
+msg: Nombre del sistema
 
 id: System related settings
 msg: Ajustes relacionados al sistema
@@ -1195,26 +1146,22 @@ msg: Ajustes relacionados al sistema
 # ./src/subtitles/subtitles.c
 #
 id: Any subtitle in central folder
-# Missing translation
-msg: 
+msg: Cualquier subtítulo en la carpeta central
 
 id: Any subtitle in same folder as video
-# Missing translation
-msg: 
+msg: Cualquier subtítulo en la misma carpeta del video
 
 id: Auto
 msg: Automático
 
 id: Automatically select from this source
-# Missing translation
-msg: 
+msg: Seleccionar automáticamente
 
 id: Center
 msg: Centrado
 
 id: Central subtitle folder
-# Missing translation
-msg: 
+msg: Carpeta Central de Subtítulos
 
 id: Color
 msg: Color
@@ -1241,12 +1188,10 @@ id: Outline size
 msg: Tamaño del Contorno
 
 id: Path to central folder
-# Missing translation
-msg: 
+msg: Ruta de la carpeta central
 
 id: Providers for Subtitles
-# Missing translation
-msg: 
+msg: Proveedores de Subtítulos
 
 id: Right
 msg: Derecha
@@ -1267,16 +1212,13 @@ id: Subtitle size and positioning
 msg: Posición y tamaño de subtítulos
 
 id: Subtitles embedded in video file
-# Missing translation
-msg: 
+msg: Subtítulos incluídos en el archivo de video
 
 id: Subtitles with matching filename in central folder
-# Missing translation
-msg: 
+msg: Subtítulos en la carpeta central con nombres similares al del video
 
 id: Subtitles with matching filename in same folder as video
-# Missing translation
-msg: 
+msg: Subtítulos con nombres similares en la misma carpeta del video
 
 #
 # ./src/text/fontstash.c
@@ -1294,17 +1236,16 @@ id: Narrow text
 msg: Texto estrecho
 
 id: Reset main font to default
-msg: Restaurar fuente principal a por defecto
+msg: Restaurar fuente principal predeterminada
 
 id: Reset narrow font to default
-msg: Restaurar fuente estrecha a por defecto
+msg: Restaurar fuente estrecha predeterminada
 
 id: Reset subtitle font to default
-msg: Restaurar fuente de subtitulo a por defecto
+msg: Restaurar fuente predeterminada de subtítulo
 
 id: Unable to install font: %s
-# Missing translation
-msg: 
+msg: No se pudo instalar fuente: %s
 
 id: Use font %s for
 msg: Usar fuente %s para
@@ -1316,19 +1257,16 @@ msg: Interfaz de usuario
 # ./src/ui/glw/glw_ps3.c
 #
 id: Seek using L2 and R2 button
-# Missing translation
-msg: 
+msg: Buscar usando botones L2 y R2
 
 id: Yes with Select button
-# Missing translation
-msg: 
+msg: Sí con botón Select
 
 #
 # ./src/ui/glw/glw_settings.c
 #
 id: Font and icon size
-# Missing translation
-msg: 
+msg: Tamaño de fuente e ícono
 
 id: Horizontal underscan
 msg: Underscan Horizontal
@@ -1337,12 +1275,10 @@ id: Screensaver delay
 msg: Espera del protector de pantalla
 
 id: Vertical underscan
-# Missing translation
-msg: 
+msg: Underscan Vertical
 
 id: Wrap when reaching beginning/end of lists
-# Missing translation
-msg: 
+msg: Volver al inicio al llegar al fin de las listas
 
 #
 # ./src/ui/glw/glw_x11.c
@@ -1372,10 +1308,10 @@ id: Notify about upgrades
 msg: Notificar actualizaciones
 
 id: Open download page
-msg: Abrir pagina de descarga
+msg: Abrir página de descarga
 
 id: Showtime version %s is available
-msg: Showtima versión %s disponible
+msg: Showtime versión %s disponible
 
 id: Software upgrade
 msg: Mejora de software
@@ -1390,10 +1326,10 @@ id: Device not found
 msg: Dispositivo no encontrado
 
 id: Malformed URI after device
-msg: URI malformado después de dispositivo
+msg: URI malformado después del dispositivo
 
 id: Malformed URI after service
-msg: URI malformado después de servicio
+msg: URI malformado después del servicio
 
 id: Service not found
 msg: Servicio no encontrado
@@ -1402,7 +1338,7 @@ msg: Servicio no encontrado
 # ./src/video/ps3_vdec.c
 #
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
-msg: Cell-h264: Forzando nivel 4.2 para contenido en nivel %d.%d. Puede no reproducir el video.
+msg: Cell-h264: Forzando nivel 4.2 para contenido en nivel %d.%d. Puede impedir reproducir el video.
 
 id: Unable to accelerate %s, library not loaded.
 msg: No se pudo acelerar %s, catálogo no fue cargado.
@@ -1453,5 +1389,5 @@ id: Video acceleration and display behaviour
 msg: Aceleración de video y comportamiento de pantalla
 
 id: Video playback
-msg: Reproducción de video
+msg: Reproducción de Video
 
