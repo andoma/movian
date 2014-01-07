@@ -408,8 +408,8 @@ struct ip_mreq {
 /**
  *
  */
-static void *
-ssdp_thread(void *aux)
+static void
+ssdp_loop(void)
 {
   struct sockaddr_in si = {0};
   int fdm, fdu;
@@ -434,7 +434,8 @@ ssdp_thread(void *aux)
 
   if(bind(fdm, (struct sockaddr *)&si, sizeof(struct sockaddr_in)) == -1) {
     TRACE(TRACE_ERROR, "SSDP", "Unable to bind -- %s", strerror(errno));
-    return NULL;
+    close(fdm);
+    return;
   }
 
   memset(&imr, 0, sizeof(imr));
@@ -443,7 +444,8 @@ ssdp_thread(void *aux)
 		sizeof(struct ip_mreq)) == -1) {
     TRACE(TRACE_ERROR, "SSDP", "Unable to join 239.255.255.250: %s",
 	  strerror(errno));
-    return NULL;
+    close(fdm);
+    return;
   }
 
   fdu = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -457,12 +459,16 @@ ssdp_thread(void *aux)
 
   if(bind(fdu, (struct sockaddr *)&si, sizeof(struct sockaddr_in)) == -1) {
     TRACE(TRACE_ERROR, "SSDP", "Unable to bind");
-    return NULL;
+    close(fdu);
+    close(fdm);
+    return;
   }
 
   if(getsockname(fdu, (struct sockaddr *)&ssdp_selfaddr, &sl) == -1) {
     TRACE(TRACE_ERROR, "SSDP", "Unable to figure local port");
-    return NULL;
+    close(fdu);
+    close(fdm);
+    return;
   }
 
   ssdp_fdm = fdm;
@@ -489,9 +495,21 @@ ssdp_thread(void *aux)
     if(r > 0 && fds[1].revents & POLLIN)
       ssdp_input(fdu, 0);
   }
-  return NULL;
 }
 
+
+/**
+ *
+ */
+static void *
+ssdp_thread(void *aux)
+{
+  while(1) {
+    ssdp_loop();
+    sleep(1);
+  }
+  return NULL;
+}
 
 /**
  *
