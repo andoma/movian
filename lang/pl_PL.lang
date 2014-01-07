@@ -32,7 +32,7 @@ id: Navigation
 msg: Nawigacja
 
 id: Open Settings
-msg: Otwórz ustawienia
+msg: Otwórz Ustawienia
 
 id: Playqueue
 msg: Lista odtwarzania
@@ -71,7 +71,7 @@ id: Continue from %s
 msg: Wznów od %s
 
 id: Continue playback here
-msg: Wznów odtwarzanie tutaj
+msg: Kontynuuj od danego miejsca
 
 id: Delete
 msg: Usuń
@@ -173,7 +173,7 @@ msg: Widok
 # ./glwskins/default/pages/discovered.view
 #
 id: Discovered resources on local network
-msg: Wykryte zasoby w sieci LAN
+msg: Zasoby wykryte w sieci LAN
 
 #
 # ./glwskins/default/pages/home.view
@@ -197,22 +197,22 @@ msg: Szukaj / Otwórz URL
 # ./glwskins/default/pages/iteminfo/image.view
 #
 id: Camera: 
-msg: Kamera:
+msg: Kamera: 
 
 id: Date: 
-msg: Data:
+msg: Data: 
 
 #
 # ./glwskins/default/pages/iteminfo/plugin.view
 #
 id: Author: 
-msg: Autor:
+msg: Autor: 
 
 id: Available version: 
-msg: Dostępna wersja:
+msg: Dostępna wersja: 
 
 id: Installed version: 
-msg: Zainstalowana wersja:
+msg: Zainstalowana wersja: 
 
 id: Showtime %s or newer is required
 msg: Wymagany Showtime w wersji %s lub nowszy
@@ -221,7 +221,7 @@ msg: Wymagany Showtime w wersji %s lub nowszy
 # ./glwskins/default/pages/iteminfo/video.view
 #
 id: Duration:
-msg: Długość:
+msg: Czas trwania:
 
 id: File date:
 msg: Data pliku:
@@ -239,8 +239,8 @@ id: Year:
 msg: Rok:
 
 id: Seen %d times
-msg[0]: 
-msg[1]: 
+msg[0]: Widziany %d razy
+msg[1]: Widziany %d raz
 
 #
 # ./glwskins/default/pages/listitems/add.view
@@ -261,7 +261,7 @@ msg: Tak
 # ./glwskins/default/pages/listitems/font.view
 #
 id: Condensed
-msg: Skondensowany
+msg: Skupiony
 
 id: Main
 msg: Główny
@@ -297,7 +297,7 @@ msg: Ścieżka %d / %d
 # ./glwskins/default/pages/slideshow.view
 #
 id: Paused
-msg: Zapauzowany
+msg: Wstrzymany
 
 #
 # ./glwskins/default/pages/upgrade.view
@@ -318,8 +318,7 @@ id: Checking for updates...
 msg: Sprawdzanie aktualizacji...
 
 id: Checking installed version of %s
-# Missing translation
-msg: 
+msg: Sprawdzanie zainstalowanej wersji %s
 
 id: Current version:
 msg: Obecna wersja:
@@ -328,12 +327,10 @@ id: Download and install...
 msg: Pobierz i zainstaluj...
 
 id: Downloading %s
-# Missing translation
-msg: 
+msg: Pobieranie %s
 
 id: Installing %s
-# Missing translation
-msg: 
+msg: Instalowanie %s
 
 id: New version %s is available for download
 msg: Nowa wersja %s jest dostępna do pobrania
@@ -342,8 +339,7 @@ id: No upgrade available
 msg: Brak aktualizacji
 
 id: Patching %s
-# Missing translation
-msg: 
+msg: Wgrywanie poprawki dla %s
 
 id: Restarting Showtime in %d seconds...
 msg: Restart Showtime za %d sekund...
@@ -364,8 +360,7 @@ id: Unable to query for new version
 msg: Nie można sprawdzić dostępności nowej wersji
 
 id: Verifying %s
-# Missing translation
-msg: 
+msg: Weryfikowanie %s
 
 #
 # ./glwskins/default/pages/video.view
@@ -404,7 +399,7 @@ id: Remember me
 msg: Zapamiętaj
 
 id: Username
-msg: Nazwa użytkownika
+msg: Użytkownik
 
 #
 # ./glwskins/default/popups/common.view
@@ -425,24 +420,19 @@ msg: Brak danych
 # ./glwskins/default/sysinfo.view
 #
 id: CPU Temp
-# Missing translation
-msg: 
+msg: Temp. CPU
 
 id: GPU Temp
-# Missing translation
-msg: 
+msg: Temp. GPU
 
 id: Memory usage
-# Missing translation
-msg: 
+msg: Użycie pamięci
 
 id: System Free
-# Missing translation
-msg: 
+msg: Wolne
 
 id: System Total
-# Missing translation
-msg: 
+msg: Ogółem
 
 #
 # ./glwskins/default/universe.view
@@ -472,12 +462,10 @@ msg: Mała ilość dostępnej pamięci (dostępne %d kB RAM)
 # ./src/arch/rpi/rpi_cec.c
 #
 id: Configure how Showtime communicates with your TV
-# Missing translation
-msg: 
+msg: Skonfiguruj tryb w jakim Showtime komunikuje się z TV
 
 id: Consumer Electronics Control
-# Missing translation
-msg: 
+msg: Consumer Electronics Control (CEC)
 
 #
 # ./src/backend/dvd/cdda.c
@@ -498,7 +486,7 @@ id: DVD
 msg: DVD
 
 id: DVD read error, restarting disc
-msg: Błąd odczytu DVD, restart płyty
+msg: Błąd odczytu DVD, ponowny odczyt płyty
 
 #
 # ./src/backend/htsp/htsp.c
@@ -666,7 +654,7 @@ msg: Szukaj używając spotlight
 # ./src/fileaccess/fileaccess.c
 #
 id: Are you sure you want to delete:
-msg: Czy napewno chcesz usunąć:
+msg: Czy na pewno chcesz usunąć:
 
 id: Enable file deletion from item menu
 msg: Włącz opcję usuwania pliku w menu
@@ -675,8 +663,8 @@ id: File access
 msg: Dostęp do pliku
 
 id: %d archive parts
-msg[0]: 
-msg[1]: 
+msg[0]: %d części archiwum
+msg[1]: %d część archiwum
 
 id: %d directories
 msg[0]: %d foldery
@@ -690,8 +678,7 @@ msg[1]: %d plik
 # ./src/i18n.c
 #
 id: Default character set
-# Missing translation
-msg: 
+msg: Domyślny zestaw znaków
 
 id: Ignore 'The' at beginning of words when sorting
 msg: Przy sortowaniu ignoruj 'The' jeśli występuje w wyrazie
@@ -895,7 +882,7 @@ id: Clear all metadata
 msg: Usuń wszystkie metadane
 
 id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
-msg: Usunięcie wszystkich metadanych oznacza utratę <b>WSZYSTKICH<\b> informacji typu:\n\nCzy ścieżka/film był widziany\nIle razy był/a odtwarzany/a\nPozycji wznowienia\n\nZostaną usunięte także metadane pobrane z serwisów zewnętrznych jak themoviedb.org, itp.\n\nCzy napewno kontynuować?
+msg: Usunięcie wszystkich metadanych oznacza utratę <b>WSZYSTKICH<\b> informacji typu:\n\nCzy ścieżka/film był widziany\nIle razy był/a odtwarzany/a\nPozycji wznowienia\n\nZostaną usunięte także metadane pobrane z serwisów zewnętrznych jak themoviedb.org, itp.\n\nCzy na pewno kontynuować?
 
 #
 # ./src/navigator.c
@@ -940,12 +927,10 @@ msg: Adres URL
 # ./src/networking/connman.c
 #
 id: Enable Wi-Fi
-# Missing translation
-msg: 
+msg: Włącz Wi-Fi
 
 id: Network connections
-# Missing translation
-msg: 
+msg: Połączenia sieciowe
 
 #
 # ./src/networking/ftp_server.c
@@ -1083,8 +1068,7 @@ id: Automatic standby
 msg: Automatyczny tryb gotowości
 
 id: Enable SSH server
-# Missing translation
-msg: 
+msg: Włącz dostęp po SSH
 
 id: Logout
 msg: Wyloguj
@@ -1096,12 +1080,10 @@ id: Power off system
 msg: Wyłącz system
 
 id: SSH server
-# Missing translation
-msg: 
+msg: Serwer SSH
 
 id: Standby
-# Missing translation
-msg: 
+msg: Tryb oczekiwania
 
 id: Starting and stopping Showtime
 msg: Uruchamianie i zatrzymywanie Showtime
@@ -1155,8 +1137,7 @@ id: Settings useful for developers
 msg: Ustawienia pomocne dla deweloperów
 
 id: System name
-# Missing translation
-msg: 
+msg: Nazwa systemu
 
 id: System related settings
 msg: Ustawienia związane z systemem
@@ -1231,7 +1212,7 @@ id: Subtitle size and positioning
 msg: Rozmiar i pozycja napisów
 
 id: Subtitles embedded in video file
-msg: Napisy zintegrowane z plikiem video
+msg: Napisy wklejone w plik video
 
 id: Subtitles with matching filename in central folder
 msg: Napisy z pasującą nazwą z głównego folderu
