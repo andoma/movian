@@ -42,7 +42,6 @@
 #define SSDP_RESPONSE 3
 
 
-static struct sockaddr_in ssdp_selfaddr;
 static int ssdp_fdm, ssdp_fdu, ssdp_run = 1;
 static char *ssdp_uuid;
 
@@ -416,7 +415,6 @@ ssdp_loop(void)
   int one = 1, r;
   int64_t next_send = 0;
   struct pollfd fds[2];
-  socklen_t sl = sizeof(struct sockaddr_in);
   struct ip_mreq imr;
 
   fdm = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -459,13 +457,6 @@ ssdp_loop(void)
 
   if(bind(fdu, (struct sockaddr *)&si, sizeof(struct sockaddr_in)) == -1) {
     TRACE(TRACE_ERROR, "SSDP", "Unable to bind");
-    close(fdu);
-    close(fdm);
-    return;
-  }
-
-  if(getsockname(fdu, (struct sockaddr *)&ssdp_selfaddr, &sl) == -1) {
-    TRACE(TRACE_ERROR, "SSDP", "Unable to figure local port");
     close(fdu);
     close(fdm);
     return;
