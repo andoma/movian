@@ -64,6 +64,78 @@ hc_open(http_connection_t *hc, const char *remain, void *opaque,
 }
 
 
+/**
+ *
+ */
+static void
+diag_html(http_connection_t *hc, htsbuf_queue_t *out)
+{
+  char p1[1000];
+  time_t t0;
+  int i;
+
+  time(&t0);
+
+  for(i = 0; i <= 5; i++) {
+    struct stat st;
+    snprintf(p1, sizeof(p1), "%s/log/showtime.log.%d", gconf.cache_path,i);
+    if(stat(p1, &st)) 
+      continue;
+    char timestr[32];
+    time_t modtime = t0 - st.st_mtime;
+    if(modtime < 60)
+      snprintf(timestr, sizeof(timestr), "%d seconds", (int)modtime);
+    else if(modtime < 3600)
+      snprintf(timestr, sizeof(timestr), "%d minutes", (int)modtime / 60);
+    else
+      snprintf(timestr, sizeof(timestr), "%d hours", (int)modtime / 3600);
+
+
+    htsbuf_qprintf(out,
+		   "showtime.log.%d (Last modified %s ago): <a href=\"/showtime/logfile/%d\">View</a> | <a href=\"/showtime/logfile/%d?mode=download\">Download</a>| <a href=\"/showtime/logfile/%d?mode=pastebin\">Pastebin</a><br>", i, timestr, i, i, i);
+  }
+}
+
+/**
+ *
+ */
+static int
+hc_root_old(http_connection_t *hc)
+{
+  htsbuf_queue_t out;
+
+  const char *url = http_arg_get_req(hc, "url");
+
+  if(url != NULL) {
+    event_dispatch(event_create_openurl(url, NULL, NULL, NULL, NULL));
+    return http_redirect(hc, "/");
+  }
+
+  htsbuf_queue_init(&out, 0);
+
+  htsbuf_qprintf(&out, 
+		 "<html><body>"
+		 "<h2>%s</h2><p>Version %s"
+		 , gconf.system_name,
+		 htsversion_full);
+
+  htsbuf_qprintf(&out, 
+		 "<form name=\"input\" method=\"get\">"
+		 "Open URL in Showtime: "
+		 "<input type=\"text\" name=\"url\" style=\"width:500px\"/>"
+		 "<input type=\"submit\" value=\"Open\" />"
+		 "</form>");
+  
+  htsbuf_qprintf(&out, "<h3>Diagnostics</h3>"); 
+
+  diag_html(hc, &out);
+
+  htsbuf_qprintf(&out, "</body></html>");
+		 
+  return http_send_reply(hc, 0, "text/html", NULL, NULL, 0, &out);
+}
+
+
 static int
 hc_done(http_connection_t *hc, const char *remain, void *opaque,
         http_cmd_t method)
@@ -337,11 +409,6 @@ hc_diagnostics(http_connection_t *hc, const char *remain, void *opaque,
   htsbuf_queue_t out;
   htsbuf_queue_init(&out, 0);
   extern const char *htsversion_full;
-  char p1[1000];
-  time_t t0;
-  int i;
-
-  time(&t0);
 
   htsbuf_qprintf(&out, 
 		 "<html><body>"
@@ -349,26 +416,9 @@ hc_diagnostics(http_connection_t *hc, const char *remain, void *opaque,
 		 , gconf.system_name,
 		 htsversion_full);
 
-  for(i = 0; i <= 5; i++) {
-    struct stat st;
-    snprintf(p1, sizeof(p1), "%s/log/showtime.log.%d", gconf.cache_path,i);
-    if(stat(p1, &st)) 
-      continue;
-    char timestr[32];
-    time_t modtime = t0 - st.st_mtime;
-    if(modtime < 60)
-      snprintf(timestr, sizeof(timestr), "%d seconds", (int)modtime);
-    else if(modtime < 3600)
-      snprintf(timestr, sizeof(timestr), "%d minutes", (int)modtime / 60);
-    else
-      snprintf(timestr, sizeof(timestr), "%d hours", (int)modtime / 3600);
+  diag_html(hc, &out);
 
-
-    htsbuf_qprintf(&out,
-		   "showtime.log.%d (Last modified %s ago): <a href=\"/showtime/logfile/%d\">View</a> | <a href=\"/showtime/logfile/%d?mode=download\">Download</a>| <a href=\"/showtime/logfile/%d?mode=pastebin\">Pastebin</a><br>", i, timestr, i, i, i);
-  }
-  htsbuf_qprintf(&out, 
-		 "</body></html>");
+  htsbuf_qprintf(&out, "</body></html>");
 
   return http_send_reply(hc, 0, "text/html; charset=utf-8", NULL, NULL, 0, &out);
 }
@@ -618,7 +668,7 @@ hc_root(http_connection_t *hc, const char *remain, void *opaque,
 	  http_cmd_t method)
 {
   if(!gconf.enable_experimental)
-    return 403;
+    return hc_root_old(hc);
   return hc_serve_file(hc, "dataroot://resources/static/index.html", NULL);
 }
 

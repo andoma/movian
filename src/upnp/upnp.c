@@ -148,9 +148,11 @@ send_dev_description(http_connection_t *hc, const char *remain, void *opaque,
 		 "<modelDescription>Showtime Media center</modelDescription>"
 		 "<modelName>Showtime Media center</modelName>"
 		 "<modelNumber>%s</modelNumber>"
+		 "<manufacturerURL>https://www.lonelycoder.com/</manufacturerURL>"
+		 "<modelURL>https://showtimemediacenter.com/</modelURL>"
 		 "<UDN>uuid:%s</UDN>"
 		 "<UPC/>"
-		 "<presentationURL/>"
+		 "<presentationURL>/</presentationURL>"
 		 "<serviceList>",
 		 gconf.system_name,
 		 htsversion_full,
