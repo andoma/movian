@@ -17,10 +17,10 @@ msg: 将当前页从书签删除
 # ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
 id: Activate sleep timer
-msg: 启用休眠定时器
+msg: 启用定时关机
 
 id: Disable sleep timer
-msg: 禁用休眠定时器
+msg: 禁用定时关机
 
 id: Exit Showtime
 msg: 退出Showtime
@@ -50,7 +50,7 @@ id: System
 msg: 系统
 
 id: Time until sleep
-msg: 直到休眠
+msg: 直到关机
 
 id: min
 msg: 最小
@@ -314,6 +314,9 @@ msg: 版本%s更新记录
 id: Check for updates now
 msg: 立刻检查更新
 
+id: Checking current installed version
+msg: 检查当前安装的版本
+
 id: Checking for updates...
 msg: 正在检查更新...
 
@@ -380,8 +383,7 @@ msg: 播放信息
 # ./glwskins/default/pages/wideinfo/video.view
 #
 id: Seen:
-# Missing translation
-msg: 
+msg: 看过
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -676,8 +678,8 @@ id: File access
 msg: 文件访问
 
 id: %d archive parts
-msg[0]: 
-msg[1]: 
+msg[0]: %d个分卷
+msg[1]: %d个分卷
 
 id: %d directories
 msg[0]: %d个文件夹
@@ -761,12 +763,10 @@ id: Audio delay
 msg: 音频延迟
 
 id: Audio volume
-# Missing translation
-msg: 
+msg: 音量
 
 id: Go to standby after video ends
-# Missing translation
-msg: 
+msg: 视频播放结束后自动关机
 
 id: Stretch video to fullscreen
 msg: 拉升视频至全屏
@@ -778,15 +778,13 @@ id: Subtitle delay
 msg: 字幕延迟
 
 id: Subtitle horizontal displacement
-# Missing translation
-msg: 
+msg: 字幕水平移位
 
 id: Subtitle scaling
 msg: 字幕缩放
 
 id: Subtitle vertical displacement
-# Missing translation
-msg: 
+msg: 字幕垂直移位
 
 id: Video zoom
 msg: 视频缩放
@@ -804,20 +802,16 @@ id: Automatic
 msg: 自动
 
 id: Manual
-# Missing translation
-msg: 
+msg: 手动
 
 id: Mark all as seen
-# Missing translation
-msg: 
+msg: 标记所有为已播放
 
 id: Mark all as unseen
-# Missing translation
-msg: 
+msg: 标记所有为未播放
 
 id: Metadata mode
-# Missing translation
-msg: 
+msg: 元数据模式
 
 #
 # ./src/metadata/metadata.c
@@ -928,8 +922,7 @@ id: Photos
 msg: 照片
 
 id: Published in Virtual File System
-# Missing translation
-msg: 
+msg: 虚拟文件系统中已发布
 
 id: Removed bookmark: %s
 msg: 删除书签: %s
@@ -961,16 +954,13 @@ msg:
 # ./src/networking/ftp_server.c
 #
 id: Enable FTP server
-# Missing translation
-msg: 
+msg: 启用FTP服务器
 
 id: FTP server
-# Missing translation
-msg: 
+msg: FTP服务器
 
 id: Server TCP port
-# Missing translation
-msg: 
+msg: 服务器TCP端口
 
 #
 # ./src/plugins.c
@@ -1093,7 +1083,7 @@ msg: 视频流
 # ./src/runcontrol.c
 #
 id: Automatic standby
-msg: 自动待机
+msg: 自动关机
 
 id: Enable SSH server
 # Missing translation
@@ -1159,12 +1149,10 @@ id: Look and feel
 msg: 外观
 
 id: Network services, etc
-# Missing translation
-msg: 
+msg: 网络服务等
 
 id: Network settings
-# Missing translation
-msg: 
+msg: 网络设置
 
 id: Settings useful for developers
 msg: 供开发者使用的设置
@@ -1279,8 +1267,7 @@ id: Reset subtitle font to default
 msg: 重置字幕字体
 
 id: Unable to install font: %s
-# Missing translation
-msg: 
+msg: 无法安装字体：%s
 
 id: Use font %s for
 msg: 使用字体%s
@@ -1292,19 +1279,16 @@ msg: 用户界面
 # ./src/ui/glw/glw_ps3.c
 #
 id: Seek using L2 and R2 button
-# Missing translation
-msg: 
+msg: 使用L2/R2快速进退
 
 id: Yes with Select button
-# Missing translation
-msg: 
+msg: 使用Select按键确认
 
 #
 # ./src/ui/glw/glw_settings.c
 #
 id: Font and icon size
-# Missing translation
-msg: 
+msg: 字体和图标大小
 
 id: Horizontal underscan
 msg: 水平欠扫描
@@ -1312,13 +1296,11 @@ msg: 水平欠扫描
 id: Screensaver delay
 msg: 屏幕保护延迟
 
-id: Vertical underscan
-# Missing translation
-msg: 
+id: Veritcal underscan
+msg: 垂直欠扫描
 
 id: Wrap when reaching beginning/end of lists
-# Missing translation
-msg: 
+msg: 列表浏览开始结尾循环
 
 #
 # ./src/ui/glw/glw_x11.c
