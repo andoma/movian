@@ -61,7 +61,6 @@ static char *showtime_settings_path;
 static void
 pending_store_destroy(pending_store_t *ps)
 {
-  LIST_REMOVE(ps, ps_link);
   htsmsg_destroy(ps->ps_msg);
   free(ps->ps_path);
   free(ps);
@@ -173,8 +172,11 @@ htsmsg_store_flush(void)
   pending_store_t *ps;
   hts_mutex_lock(&pending_store_mutex);
   while((ps = LIST_FIRST(&pending_stores)) != NULL) {
+    LIST_REMOVE(ps, ps_link);
+    hts_mutex_unlock(&pending_store_mutex);
     pending_store_write(ps);
     pending_store_destroy(ps);
+    hts_mutex_lock(&pending_store_mutex);
   }
   hts_mutex_unlock(&pending_store_mutex);
 
@@ -430,8 +432,10 @@ htsmsg_store_remove(const char *pathfmt, ...)
       if(!strcmp(ps->ps_path, fullpath))
 	break;
     
-    if(ps != NULL)
+    if(ps != NULL) {
+      LIST_REMOVE(ps, ps_link);
       pending_store_destroy(ps);
+    }
 
     unlink(fullpath);
     hts_mutex_unlock(&pending_store_mutex);
