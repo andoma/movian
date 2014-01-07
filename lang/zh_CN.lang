@@ -321,8 +321,7 @@ id: Checking for updates...
 msg: 正在检查更新...
 
 id: Checking installed version of %s
-# Missing translation
-msg: 
+msg: 检查%s的安装版本
 
 id: Current version:
 msg: 当前版本：
@@ -331,12 +330,10 @@ id: Download and install...
 msg: 正在下载并安装...
 
 id: Downloading %s
-# Missing translation
-msg: 
+msg: 正在下载%s
 
 id: Installing %s
-# Missing translation
-msg: 
+msg: 正在安装%s
 
 id: New version %s is available for download
 msg: 新版本%s可用
@@ -345,8 +342,7 @@ id: No upgrade available
 msg: 无可用更新
 
 id: Patching %s
-# Missing translation
-msg: 
+msg: 正在更新%s
 
 id: Restarting Showtime in %d seconds...
 msg: %d秒后重启Showtime...
@@ -367,8 +363,7 @@ id: Unable to query for new version
 msg: 无法检查最新版
 
 id: Verifying %s
-# Missing translation
-msg: 
+msg: 正在验证%s
 
 #
 # ./glwskins/default/pages/video.view
@@ -428,24 +423,19 @@ msg: 未载入媒体
 # ./glwskins/default/sysinfo.view
 #
 id: CPU Temp
-# Missing translation
-msg: 
+msg: CPU温度
 
 id: GPU Temp
-# Missing translation
-msg: 
+msg: GPU温度
 
 id: Memory usage
-# Missing translation
-msg: 
+msg: 内存占用
 
 id: System Free
-# Missing translation
-msg: 
+msg: 系统剩余
 
 id: System Total
-# Missing translation
-msg: 
+msg: 系统总数
 
 #
 # ./glwskins/default/universe.view
@@ -475,12 +465,10 @@ msg: 系统内存偏少(%d kB RAM可用)
 # ./src/arch/rpi/rpi_cec.c
 #
 id: Configure how Showtime communicates with your TV
-# Missing translation
-msg: 
+msg: 配置Showtime和电视的交互
 
 id: Consumer Electronics Control
-# Missing translation
-msg: 
+msg: 消费型电子产品控制
 
 #
 # ./src/backend/dvd/cdda.c
@@ -693,8 +681,7 @@ msg[1]: %d个文件
 # ./src/i18n.c
 #
 id: Default character set
-# Missing translation
-msg: 
+msg: 默认字符集
 
 id: Ignore 'The' at beginning of words when sorting
 msg: 排序时忽略开头的'The'
@@ -943,12 +930,10 @@ msg: URL
 # ./src/networking/connman.c
 #
 id: Enable Wi-Fi
-# Missing translation
-msg: 
+msg: 启用Wi-Fi
 
 id: Network connections
-# Missing translation
-msg: 
+msg: 网络连接
 
 #
 # ./src/networking/ftp_server.c
@@ -1086,8 +1071,7 @@ id: Automatic standby
 msg: 自动关机
 
 id: Enable SSH server
-# Missing translation
-msg: 
+msg: 启用SSH服务器
 
 id: Logout
 msg: 注销
@@ -1099,12 +1083,10 @@ id: Power off system
 msg: 关机
 
 id: SSH server
-# Missing translation
-msg: 
+msg: SSH服务器
 
 id: Standby
-# Missing translation
-msg: 
+msg: 关机
 
 id: Starting and stopping Showtime
 msg: 启动和关闭Showtime
@@ -1158,8 +1140,7 @@ id: Settings useful for developers
 msg: 供开发者使用的设置
 
 id: System name
-# Missing translation
-msg: 
+msg: 系统名称
 
 id: System related settings
 msg: 系统相关设置
