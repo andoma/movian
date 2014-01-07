@@ -309,7 +309,7 @@ id: Available version:
 msg: Versione disponibile:
 
 id: Changelog for %s releases
-msg: Changelog per i rilasci %s
+msg: Changelog per i rilasci di %s
 
 id: Check for updates now
 msg: Cerca aggiornamenti ora
@@ -318,8 +318,7 @@ id: Checking for updates...
 msg: Ricerca di aggiornamenti...
 
 id: Checking installed version of %s
-# Missing translation
-msg: 
+msg: Controllo della versione installata di %s
 
 id: Current version:
 msg: Versione attuale:
@@ -328,12 +327,10 @@ id: Download and install...
 msg: Scarica e installa...
 
 id: Downloading %s
-# Missing translation
-msg: 
+msg: Scaricando %s
 
 id: Installing %s
-# Missing translation
-msg: 
+msg: Installando %s
 
 id: New version %s is available for download
 msg: Disponibile la nuova versione %s
@@ -342,8 +339,7 @@ id: No upgrade available
 msg: Nessun aggiornamento disponibile
 
 id: Patching %s
-# Missing translation
-msg: 
+msg: Patchando %s
 
 id: Restarting Showtime in %d seconds...
 msg: Riavvio di Showtime in %d secondi...
@@ -364,8 +360,7 @@ id: Unable to query for new version
 msg: Impossibile cercare nuove versioni
 
 id: Verifying %s
-# Missing translation
-msg: 
+msg: Verificando %s
 
 #
 # ./glwskins/default/pages/video.view
@@ -425,24 +420,19 @@ msg: Nessun media caricato
 # ./glwskins/default/sysinfo.view
 #
 id: CPU Temp
-# Missing translation
-msg: 
+msg: Temperatura CPU
 
 id: GPU Temp
-# Missing translation
-msg: 
+msg: Temperatura GPU
 
 id: Memory usage
-# Missing translation
-msg: 
+msg: Memoria utilizzata
 
 id: System Free
-# Missing translation
-msg: 
+msg: Libera
 
 id: System Total
-# Missing translation
-msg: 
+msg: Totale
 
 #
 # ./glwskins/default/universe.view
@@ -472,12 +462,10 @@ msg: Memoria in esaurimento (%d kB di RAM disponibile)
 # ./src/arch/rpi/rpi_cec.c
 #
 id: Configure how Showtime communicates with your TV
-# Missing translation
-msg: 
+msg: Configura come Showtime comunica con la tua TV
 
 id: Consumer Electronics Control
-# Missing translation
-msg: 
+msg: Canale CEC
 
 #
 # ./src/backend/dvd/cdda.c
@@ -690,8 +678,7 @@ msg[1]:
 # ./src/i18n.c
 #
 id: Default character set
-# Missing translation
-msg: 
+msg: Collezione carattere di default
 
 id: Ignore 'The' at beginning of words when sorting
 msg: Ignora 'The' all'inizio delle parole durante l'ordinamento
@@ -940,12 +927,10 @@ msg: URL
 # ./src/networking/connman.c
 #
 id: Enable Wi-Fi
-# Missing translation
-msg: 
+msg: Attiva Wi-Fi
 
 id: Network connections
-# Missing translation
-msg: 
+msg: Connessioni di rete
 
 #
 # ./src/networking/ftp_server.c
@@ -1083,8 +1068,7 @@ id: Automatic standby
 msg: Standby automatico
 
 id: Enable SSH server
-# Missing translation
-msg: 
+msg: Attiva server SSH
 
 id: Logout
 msg: Uscita
@@ -1096,12 +1080,10 @@ id: Power off system
 msg: Spegni sistema
 
 id: SSH server
-# Missing translation
-msg: 
+msg: Server SSH
 
 id: Standby
-# Missing translation
-msg: 
+msg: Standby
 
 id: Starting and stopping Showtime
 msg: Avvio e chiusura Showtime
@@ -1155,8 +1137,7 @@ id: Settings useful for developers
 msg: Impostazioni utili per sviluppatori
 
 id: System name
-# Missing translation
-msg: 
+msg: Nome di sistema
 
 id: System related settings
 msg: Impostazioni relative al sistema
