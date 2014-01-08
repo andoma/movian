@@ -28,7 +28,7 @@ widget(backdrop, {
                   "plugin", "dataroot://resources/svg/Plugin.svg"
 		 );
       sizeScale: 2;
-      shadow: true;
+      shadow: isVoid($self.metadata.icon);
     });
       
     widget(container_y, {

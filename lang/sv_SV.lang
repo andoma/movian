@@ -2,6 +2,25 @@ language: Swedish
 native: Svenska
 maintainer: Andreas Öman <andreas@lonelycoder.com>
 #
+# ./ext/miner/miner.c
+#
+id: Do you like Showtime? You can donate money to the project by mining Litecoins on your PS3
+# Missing translation
+msg: 
+
+id: Donate money to the Showtime project by mining litecoints
+# Missing translation
+msg: 
+
+id: Donations
+# Missing translation
+msg: 
+
+id: Show me more
+# Missing translation
+msg: 
+
+#
 # ./glwskins/default/cmdmenu.view
 #
 id: Add current page to bookmarks
@@ -442,6 +461,37 @@ msg: Ljud tyst
 
 id: Master volume: %d dB
 msg: Huvudvolym: %d dB
+
+#
+# ./resources/spuminer/settings.view
+#
+id: Apart from enabling this option you do not need to do anything else to make your donations for the project.
+# Missing translation
+msg: 
+
+id: Enable mining
+# Missing translation
+msg: 
+
+id: For more information about Litecoin, please visit http://litecoin.org
+# Missing translation
+msg: 
+
+id: If you like Showtime you can donate money to the project by letting your Playstation 3 mine Litecoins while Showtime is running.
+# Missing translation
+msg: 
+
+id: Mining will not interfere with video playback performance as it only uses the leftover capacity of the SPU processors.
+# Missing translation
+msg: 
+
+id: Please consider enabling this option. / %s
+# Missing translation
+msg: 
+
+id: Thanks for your support!
+# Missing translation
+msg: 
 
 #
 # ./src/api/tmdb.c

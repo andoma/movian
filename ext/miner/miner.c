@@ -539,7 +539,9 @@ miner_init(void)
   hts_mutex_init(&m->m_sock_mutex);
 
   settings_add_url(NULL,
-		   _p("Donations"), NULL, NULL, NULL, MYURL, 0);
+		   _p("Donations"), NULL,
+		   "dataroot://resources/spuminer/icon_16_litecoin.png",
+		   _p("Donate money to the Showtime project by mining litecoints"), MYURL, 0);
 
   miner_store = htsmsg_store_load("spuminer") ?: htsmsg_create_map();
 

@@ -2,6 +2,25 @@
 native: 简体中文
 maintainer: Rural Hunter<ruralhunter@gmail.com>
 #
+# ./ext/miner/miner.c
+#
+id: Do you like Showtime? You can donate money to the project by mining Litecoins on your PS3
+# Missing translation
+msg: 
+
+id: Donate money to the Showtime project by mining litecoints
+# Missing translation
+msg: 
+
+id: Donations
+# Missing translation
+msg: 
+
+id: Show me more
+# Missing translation
+msg: 
+
+#
 # ./glwskins/default/cmdmenu.view
 #
 id: Add current page to bookmarks
@@ -314,9 +333,6 @@ msg: 版本%s更新记录
 id: Check for updates now
 msg: 立刻检查更新
 
-id: Checking current installed version
-msg: 检查当前安装的版本
-
 id: Checking for updates...
 msg: 正在检查更新...
 
@@ -445,6 +461,37 @@ msg: 已静音
 
 id: Master volume: %d dB
 msg: 主音量: %d dB
+
+#
+# ./resources/spuminer/settings.view
+#
+id: Apart from enabling this option you do not need to do anything else to make your donations for the project.
+# Missing translation
+msg: 
+
+id: Enable mining
+# Missing translation
+msg: 
+
+id: For more information about Litecoin, please visit http://litecoin.org
+# Missing translation
+msg: 
+
+id: If you like Showtime you can donate money to the project by letting your Playstation 3 mine Litecoins while Showtime is running.
+# Missing translation
+msg: 
+
+id: Mining will not interfere with video playback performance as it only uses the leftover capacity of the SPU processors.
+# Missing translation
+msg: 
+
+id: Please consider enabling this option. / %s
+# Missing translation
+msg: 
+
+id: Thanks for your support!
+# Missing translation
+msg: 
 
 #
 # ./src/api/tmdb.c
@@ -1277,8 +1324,9 @@ msg: 水平欠扫描
 id: Screensaver delay
 msg: 屏幕保护延迟
 
-id: Veritcal underscan
-msg: 垂直欠扫描
+id: Vertical underscan
+# Missing translation
+msg: 
 
 id: Wrap when reaching beginning/end of lists
 msg: 列表浏览开始结尾循环

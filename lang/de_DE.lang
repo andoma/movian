@@ -2,6 +2,25 @@ language: German
 native: Deutsch
 maintainer: Maximilian Jänsch <showtime@jaensch-koloska.de>
 #
+# ./ext/miner/miner.c
+#
+id: Do you like Showtime? You can donate money to the project by mining Litecoins on your PS3
+# Missing translation
+msg: 
+
+id: Donate money to the Showtime project by mining litecoints
+# Missing translation
+msg: 
+
+id: Donations
+# Missing translation
+msg: 
+
+id: Show me more
+# Missing translation
+msg: 
+
+#
 # ./glwskins/default/cmdmenu.view
 #
 id: Add current page to bookmarks
@@ -318,7 +337,6 @@ id: Checking for updates...
 msg: Prüfe auf Updates...
 
 id: Checking installed version of %s
-# Missing translation
 msg: Prüfe installierte Version von %s
 
 id: Current version:
@@ -328,11 +346,9 @@ id: Download and install...
 msg: Heunterladen und installieren...
 
 id: Downloading %s
-# Missing translation
 msg: Lade %s herunter
 
 id: Installing %s
-# Missing translation
 msg: Installiere %s
 
 id: New version %s is available for download
@@ -342,7 +358,6 @@ id: No upgrade available
 msg: Kein Update verfügbar
 
 id: Patching %s
-# Missing translation
 msg: Patche %s
 
 id: Restarting Showtime in %d seconds...
@@ -364,7 +379,6 @@ id: Unable to query for new version
 msg: Kann nicht auf neue Version prüfen
 
 id: Verifying %s
-# Missing translation
 msg: Prüfe %s
 
 #
@@ -380,7 +394,6 @@ msg: Wiedergabestatus
 # ./glwskins/default/pages/wideinfo/video.view
 #
 id: Seen:
-# Missing translation
 msg: Gesehen:
 
 #
@@ -426,23 +439,18 @@ msg: Keine Medien geladen
 # ./glwskins/default/sysinfo.view
 #
 id: CPU Temp
-# Missing translation
 msg: CPU Temperatur
 
 id: GPU Temp
-# Missing translation
 msg: GPU Temperatur
 
 id: Memory usage
-# Missing translation
 msg: Speicher-Nutzung
 
 id: System Free
-# Missing translation
 msg: System frei
 
 id: System Total
-# Missing translation
 msg: System gesamt
 
 #
@@ -453,6 +461,37 @@ msg: Ton aus
 
 id: Master volume: %d dB
 msg: Lautstärke: %d dB
+
+#
+# ./resources/spuminer/settings.view
+#
+id: Apart from enabling this option you do not need to do anything else to make your donations for the project.
+# Missing translation
+msg: 
+
+id: Enable mining
+# Missing translation
+msg: 
+
+id: For more information about Litecoin, please visit http://litecoin.org
+# Missing translation
+msg: 
+
+id: If you like Showtime you can donate money to the project by letting your Playstation 3 mine Litecoins while Showtime is running.
+# Missing translation
+msg: 
+
+id: Mining will not interfere with video playback performance as it only uses the leftover capacity of the SPU processors.
+# Missing translation
+msg: 
+
+id: Please consider enabling this option. / %s
+# Missing translation
+msg: 
+
+id: Thanks for your support!
+# Missing translation
+msg: 
 
 #
 # ./src/api/tmdb.c
@@ -473,11 +512,9 @@ msg: Speicher ist knapp (%d kb RAM verfügbar)
 # ./src/arch/rpi/rpi_cec.c
 #
 id: Configure how Showtime communicates with your TV
-# Missing translation
 msg: Einstellen wie Showtime sich mit dem Fernseher verbindet
 
 id: Consumer Electronics Control
-# Missing translation
 msg: Consumer Electronics Control (CEC)
 
 #
@@ -691,7 +728,6 @@ msg[1]: %d Dateien
 # ./src/i18n.c
 #
 id: Default character set
-# Missing translation
 msg: Standard Zeichensatz
 
 id: Ignore 'The' at beginning of words when sorting
@@ -761,11 +797,9 @@ id: Audio delay
 msg: Audioverzögerung
 
 id: Audio volume
-# Missing translation
 msg: Lautstärke
 
 id: Go to standby after video ends
-# Missing translation
 msg: Nach Filmende in Satndby gehen
 
 id: Stretch video to fullscreen
@@ -778,14 +812,12 @@ id: Subtitle delay
 msg: Untertitelverzögerung
 
 id: Subtitle horizontal displacement
-# Missing translation
 msg: Horizontale Untertitelverschiebung
 
 id: Subtitle scaling
 msg: Untertitelskalierung
 
 id: Subtitle vertical displacement
-# Missing translation
 msg: Vertikale Untertitelverschiebung
 
 id: Video zoom
@@ -804,19 +836,15 @@ id: Automatic
 msg: Automatisch
 
 id: Manual
-# Missing translation
 msg: Manuell
 
 id: Mark all as seen
-# Missing translation
 msg: Alle als gesehen markieren
 
 id: Mark all as unseen
-# Missing translation
 msg: Alle als ungesehen markieren
 
 id: Metadata mode
-# Missing translation
 msg: Metadaten-Modus
 
 #
@@ -928,7 +956,6 @@ id: Photos
 msg: Foto
 
 id: Published in Virtual File System
-# Missing translation
 msg: Im virtuellen Dateisystem veröffentlicht 
 
 id: Removed bookmark: %s
@@ -950,26 +977,21 @@ msg: URL
 # ./src/networking/connman.c
 #
 id: Enable Wi-Fi
-# Missing translation
 msg: Wi-Fi einschalten
 
 id: Network connections
-# Missing translation
 msg: Netzwerk Verbindungen
 
 #
 # ./src/networking/ftp_server.c
 #
 id: Enable FTP server
-# Missing translation
 msg: FTP-Server aktivieren
 
 id: FTP server
-# Missing translation
 msg: FTP-Server
 
 id: Server TCP port
-# Missing translation
 msg: Server TCP-Port
 
 #
@@ -1096,7 +1118,6 @@ id: Automatic standby
 msg: Automatisch in standby wechseln
 
 id: Enable SSH server
-# Missing translation
 msg: SSH-Server einschalten
 
 id: Logout
@@ -1109,11 +1130,9 @@ id: Power off system
 msg: System abschalten
 
 id: SSH server
-# Missing translation
 msg: SSH-Server
 
 id: Standby
-# Missing translation
 msg: Standby
 
 id: Starting and stopping Showtime
@@ -1159,18 +1178,15 @@ id: Look and feel
 msg: Aussehen und Bedienung
 
 id: Network services, etc
-# Missing translation
 msg: Netzwerkdienste, usw.
 
 id: Network settings
-# Missing translation
 msg: Netzwerk Einstellungen
 
 id: Settings useful for developers
 msg: Nützliche Einstellungen für Entwickler
 
 id: System name
-# Missing translation
 msg: System Name
 
 id: System related settings
@@ -1279,7 +1295,6 @@ id: Reset subtitle font to default
 msg: Untertitelschriftart auf Standard setzen
 
 id: Unable to install font: %s
-# Missing translation
 msg: Kann Schriftart: %s nicht installieren
 
 id: Use font %s for
@@ -1292,18 +1307,15 @@ msg: Benutzeroberfläche
 # ./src/ui/glw/glw_ps3.c
 #
 id: Seek using L2 and R2 button
-# Missing translation
 msg: Suche per L2 und R2
 
 id: Yes with Select button
-# Missing translation
 msg: JA mit Selct-Knopf
 
 #
 # ./src/ui/glw/glw_settings.c
 #
 id: Font and icon size
-# Missing translation
 msg: Schrift und Icon Größe
 
 id: Horizontal underscan
@@ -1313,11 +1325,9 @@ id: Screensaver delay
 msg: Bildschirmschonerverzögerung
 
 id: Vertical underscan
-# Missing translation
 msg: Vertikaler underscan
 
 id: Wrap when reaching beginning/end of lists
-# Missing translation
 msg: Endlose Bewegung durch Listen
 
 #

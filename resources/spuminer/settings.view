@@ -10,7 +10,7 @@ widget(container_y, {
 
   widget(label, {
     align: center;
-    caption: "If you like Showtime you can donate money to the project by letting your Playstation 3 mine Litecoins while Showtime is running.";
+    caption: _("If you like Showtime you can donate money to the project by letting your Playstation 3 mine Litecoins while Showtime is running.");
     maxlines: 2;
     shadow: true;
     outline: true;
@@ -19,7 +19,7 @@ widget(container_y, {
 
   widget(label, {
     align: center;
-    caption: "Mining will not interfere with video playback performance as it only uses the leftover capacity of the SPU processors.";
+    caption: _("Mining will not interfere with video playback performance as it only uses the leftover capacity of the SPU processors.");
     maxlines: 2;
     shadow: true;
     outline: true;
@@ -27,7 +27,7 @@ widget(container_y, {
 
   widget(label, {
     align: center;
-    caption: "Apart from enabling this option you do not need to do anything else to make your donations for the project.";
+    caption: _("Apart from enabling this option you do not need to do anything else to make your donations for the project.");
     maxlines: 2;
     shadow: true;
     outline: true;
@@ -35,7 +35,7 @@ widget(container_y, {
 
   widget(label, {
     align: center;
-    caption: "For more information about Litecoin, please visit http://litecoin.org";
+    caption: _("For more information about Litecoin, please visit http://litecoin.org");
     maxlines: 2;
     shadow: true;
     outline: true;
@@ -44,7 +44,7 @@ widget(container_y, {
   widget(label, {
     alpha: iir(select($global.spuminer.enabled, 0, 1), 8);
     align: center;
-    caption: "Please consider enabling this option.    / Andreas Öman - Project leader";
+    caption: fmt(_("Please consider enabling this option. / %s"), "Andreas Öman - Project leader");
     shadow: true;
     outline: true;
   });
@@ -52,7 +52,7 @@ widget(container_y, {
   widget(container_x, {
     align: center;
     widget(label, {
-      caption: "Enable mining: ";
+      caption: _("Enable mining") + ": ";
       shadow: true;
       outline: true;
       sizeScale: 1.5;
@@ -72,7 +72,7 @@ widget(container_y, {
 
       widget(label, {
 	align: center;
-	caption: select($global.spuminer.enabled, "Yes", "No");
+	caption: select($global.spuminer.enabled, _("Yes"), _("No"));
 	shadow: true;
 	outline: true;
 	sizeScale: 1.5;
@@ -83,7 +83,7 @@ widget(container_y, {
   widget(label, {
     alpha: iir(select($global.spuminer.enabled, 1, 0), 8);
     align: center;
-    caption: "Thanks for your support!";
+    caption: _("Thanks for your support!");
     sizeScale: 3;
     shadow: true;
     outline: true;
