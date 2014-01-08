@@ -5,20 +5,16 @@ maintainer: Rural Hunter<ruralhunter@gmail.com>
 # ./ext/miner/miner.c
 #
 id: Do you like Showtime? You can donate money to the project by mining Litecoins on your PS3
-# Missing translation
-msg: 
+msg: 您喜欢Showtime吗？可以利用PS3的计算能力挖莱特币来帮助这个项目哦
 
 id: Donate money to the Showtime project by mining litecoints
-# Missing translation
-msg: 
+msg: 通过挖莱特币捐献给Showtime
 
 id: Donations
-# Missing translation
-msg: 
+msg: 捐献
 
 id: Show me more
-# Missing translation
-msg: 
+msg: 显示更多
 
 #
 # ./glwskins/default/cmdmenu.view
@@ -466,32 +462,25 @@ msg: 主音量: %d dB
 # ./resources/spuminer/settings.view
 #
 id: Apart from enabling this option you do not need to do anything else to make your donations for the project.
-# Missing translation
-msg: 
+msg: 给这个项目以帮助，除了启用这个选项外你不许要做任何额外操作。
 
 id: Enable mining
-# Missing translation
-msg: 
+msg: 启用挖矿
 
 id: For more information about Litecoin, please visit http://litecoin.org
-# Missing translation
-msg: 
+msg: 想了解更多莱特币的相关信息，请访问http://litecoin.org
 
 id: If you like Showtime you can donate money to the project by letting your Playstation 3 mine Litecoins while Showtime is running.
-# Missing translation
-msg: 
+msg: 如果你喜欢Showtime，你可以让你的PS3在Showtime运行的时候作为莱特币挖矿机挖矿捐献给这个项目
 
 id: Mining will not interfere with video playback performance as it only uses the leftover capacity of the SPU processors.
-# Missing translation
-msg: 
+msg: 挖矿不会影响视频播放性能，它只会利用PS3空闲的计算能力。
 
 id: Please consider enabling this option. / %s
-# Missing translation
-msg: 
+msg: 请考虑启用此选项。/ %s
 
 id: Thanks for your support!
-# Missing translation
-msg: 
+msg: 感谢您的支持！
 
 #
 # ./src/api/tmdb.c
@@ -1325,8 +1314,7 @@ id: Screensaver delay
 msg: 屏幕保护延迟
 
 id: Vertical underscan
-# Missing translation
-msg: 
+msg: 垂直欠扫描
 
 id: Wrap when reaching beginning/end of lists
 msg: 列表浏览开始结尾循环
