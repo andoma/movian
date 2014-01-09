@@ -8,7 +8,7 @@ id: Do you like Showtime? You can donate money to the project by mining Litecoin
 msg: 您喜欢Showtime吗？可以利用PS3的计算能力挖莱特币来帮助这个项目哦
 
 id: Donate money to the Showtime project by mining litecoints
-msg: 通过挖莱特币捐献给Showtime
+msg: 挖莱特币捐献给Showtime
 
 id: Donations
 msg: 捐献
@@ -462,7 +462,7 @@ msg: 主音量: %d dB
 # ./resources/spuminer/settings.view
 #
 id: Apart from enabling this option you do not need to do anything else to make your donations for the project.
-msg: 给这个项目以帮助，除了启用这个选项外你不许要做任何额外操作。
+msg: 给这个项目作贡献，除了启用这个选项外你不许要做任何额外操作。
 
 id: Enable mining
 msg: 启用挖矿
