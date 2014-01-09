@@ -5,20 +5,16 @@ maintainer: Diego Franco <diegofernandofranco@gmail.com>
 # ./ext/miner/miner.c
 #
 id: Do you like Showtime? You can donate money to the project by mining Litecoins on your PS3
-# Missing translation
-msg: 
+msg: Le gusta Showtime? Usted puede donar dinero al proyecto produciendo Litecoins en su PS3
 
 id: Donate money to the Showtime project by mining litecoints
-# Missing translation
-msg: 
+msg: Donar dinero al proyecto Showtime produciendo Litecoins
 
 id: Donations
-# Missing translation
-msg: 
+msg: Donaciones
 
 id: Show me more
-# Missing translation
-msg: 
+msg: Ver más
 
 #
 # ./glwskins/default/cmdmenu.view
@@ -51,7 +47,7 @@ id: Navigation
 msg: Navegación
 
 id: Open Settings
-msg: Abrir Configuración
+msg: Abrir Ajustes Globales
 
 id: Playqueue
 msg: Cola de reproducción
@@ -78,10 +74,10 @@ msg: min
 # ./glwskins/default/cmdmenu/cmdmenu_dir.view
 #
 id: Add '%s' to home screen
-msg: Agregar '%s' a pantalla principal
+msg: Agregar '%s' a la pantalla principal
 
 id: Remove '%s' from home screen
-msg: Remover '%s' de pantalla principal
+msg: Remover '%s' de la pantalla principal
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_item.view
@@ -328,7 +324,7 @@ id: Available version:
 msg: Versión disponible:
 
 id: Changelog for %s releases
-msg: Registro de cambios para %s Versiones
+msg: Registro de cambios para las versiones %s
 
 id: Check for updates now
 msg: Buscar actualizaciones ahora
@@ -466,32 +462,25 @@ msg: Volumen principal: %d dB
 # ./resources/spuminer/settings.view
 #
 id: Apart from enabling this option you do not need to do anything else to make your donations for the project.
-# Missing translation
-msg: 
+msg: Aparte de habilitar esta opción, usted no necesita hacer nada más para hacer sus donaciones para el proyecto.
 
 id: Enable mining
-# Missing translation
-msg: 
+msg: Habilitar Litecoins
 
 id: For more information about Litecoin, please visit http://litecoin.org
-# Missing translation
-msg: 
+msg: Para más información acerca Litecoins, por favor visite http://litecoin.org
 
 id: If you like Showtime you can donate money to the project by letting your Playstation 3 mine Litecoins while Showtime is running.
-# Missing translation
-msg: 
+msg: Si le gusta Showtime, usted puede donar dinero al proyecto permitiendo que su Playstation 3 produzca Litecoins mientras utiliza Showtime.
 
 id: Mining will not interfere with video playback performance as it only uses the leftover capacity of the SPU processors.
-# Missing translation
-msg: 
+msg: Litecoins no interfiere con la reproducción de sus vídeos, ya que sólo utiliza la capacidad excendente de los procesadores SPU.
 
 id: Please consider enabling this option. / %s
-# Missing translation
-msg: 
+msg: Por favor, considere habilitar esta opción.
 
 id: Thanks for your support!
-# Missing translation
-msg: 
+msg: Gracias por su apoyo!
 
 #
 # ./src/api/tmdb.c
@@ -731,7 +720,7 @@ id: Default character set
 msg: Conjunto de caracteres predeterminados
 
 id: Ignore 'The' at beginning of words when sorting
-msg: Ignorar 'The' al inicio del título al ordenar
+msg: Ignorar 'The' al inicio de los títulos al ordenar
 
 id: Language
 msg: Idioma
@@ -1013,7 +1002,7 @@ id: Beta testing passwords
 msg: Contraseñas para testeo Beta
 
 id: Browse available apps
-msg: Navegar las Apps disponibles
+msg: Explorar las Apps disponibles
 
 id: Browsing
 msg: Explorando
@@ -1028,7 +1017,7 @@ id: Default
 msg: Por defecto
 
 id: Disk write error
-msg: Error en escritura de disco
+msg: Error en escritura al disco
 
 id: Downloading
 msg: Descargando
@@ -1106,7 +1095,7 @@ id: Upgraded plugin %s to version %s
 msg: Plugin %s actualizado a versión %s
 
 id: User interface extensions
-msg: Extensiones de interfaz de usuario
+msg: Extensiones del interfaz del usuario
 
 id: Video streaming
 msg: Transmisión de Video
@@ -1166,7 +1155,7 @@ id: Discovered media sources
 msg: Medios Encontrados
 
 id: Fonts and user interface styling
-msg: Fuentes y estilo de interfaz de usuario
+msg: Fuentes y estilo del interfaz del usuario
 
 id: General
 msg: General
@@ -1178,7 +1167,7 @@ id: Look and feel
 msg: Aspecto y comportamiento
 
 id: Network services, etc
-msg: Servicios de red, etc
+msg: Servicios de red
 
 id: Network settings
 msg: Configuración de Red
@@ -1220,7 +1209,7 @@ id: External file
 msg: Archivo externo
 
 id: Force subtitles to reside on video frame
-msg: Forzar subtítulo sobre cuadro de video
+msg: Forzar subtítulo se muestre sobre el cuadro del video
 
 id: Generic settings for video subtitles
 msg: Ajustes genéricos para subtítulos
