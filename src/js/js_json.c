@@ -235,7 +235,7 @@ add_double(void *opaque, void *parent, const char *name, double v)
 }
 
 static void 
-add_long(void *opaque, void *parent, const char *name, long v)
+add_i64(void *opaque, void *parent, const char *name, int64_t v)
 {
   if(v <= INT32_MAX && v >= INT32_MIN && INT_FITS_IN_JSVAL(v))
     js_set_prop_jsval(opaque, parent, name, INT_TO_JSVAL(v));
@@ -266,7 +266,7 @@ static const json_deserializer_t json_to_jsapi = {
   .jd_destroy_obj     = destroy_obj,
   .jd_add_obj         = add_obj,
   .jd_add_string      = add_string,
-  .jd_add_long        = add_long,
+  .jd_add_i64         = add_i64,
   .jd_add_double      = add_double,
   .jd_add_bool        = add_bool,
   .jd_add_null        = add_null,
