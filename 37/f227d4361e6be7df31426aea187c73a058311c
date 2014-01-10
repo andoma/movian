@@ -1,0 +1,4 @@
+Make system name configurable in Settings -> Network
+Also use system name in UPnP, FTP server, HTTP diag page
+
+Fixes #1833
