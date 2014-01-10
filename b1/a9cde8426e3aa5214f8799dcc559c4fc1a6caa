@@ -1,0 +1,3 @@
+When user can rename discovered services, revert to original name if configured name is empty
+
+Fixes #1831
