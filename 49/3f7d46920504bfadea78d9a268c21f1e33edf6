@@ -1,0 +1,5 @@
+The "Enable on home screen" setting was broken for discovered services
+
+This is now fixed
+
+Fixes #1824
