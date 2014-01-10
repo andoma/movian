@@ -92,7 +92,7 @@ diag_html(http_connection_t *hc, htsbuf_queue_t *out)
 
 
     htsbuf_qprintf(out,
-		   "showtime.log.%d (Last modified %s ago): <a href=\"/showtime/logfile/%d\">View</a> | <a href=\"/showtime/logfile/%d?mode=download\">Download</a>| <a href=\"/showtime/logfile/%d?mode=pastebin\">Pastebin</a><br>", i, timestr, i, i, i);
+		   "showtime-%d.log (Last modified %s ago): <a href=\"/showtime/logfile/%d\">View</a> | <a href=\"/showtime/logfile/%d?mode=download\">Download</a>| <a href=\"/showtime/logfile/%d?mode=pastebin\">Pastebin</a><br>", i, timestr, i, i, i);
   }
 }
 
@@ -478,7 +478,7 @@ hc_logfile(http_connection_t *hc, const char *remain, void *opaque,
 
   htsbuf_append_buf(&out, buf);
   if (mode != NULL && !strcmp(mode, "download")) {
-    snprintf(p1, sizeof(p1), "attachment; filename=\"showtime.log.%d\"", n);
+    snprintf(p1, sizeof(p1), "attachment; filename=\"showtime-%d.log\"", n);
     http_set_response_hdr(hc, "Content-Disposition", p1);
   }
   return http_send_reply(hc, 0, "text/plain; charset=utf-8", NULL, NULL, 0, &out);
