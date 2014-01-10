@@ -227,7 +227,8 @@ buf_t *fa_load_query(const char *url,
                      char *errbuf, size_t errlen, int *cache_control,
                      const char **arguments, int flags);
 
-int fa_parent(char *dst, size_t dstlen, const char *url);
+int fa_parent(char *dst, size_t dstlen, const char *url)
+  __attribute__ ((warn_unused_result));
 
 int fa_normalize(const char *url, char *dst, size_t dstlen);
 

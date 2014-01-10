@@ -787,6 +787,8 @@ subtitles_load(media_pipe_t *mp, const char *url, AVRational *fr)
 	  "Unable to load %s -- Unknown format (%d bytes), dump of first 64 bytes follows",
 	  url, (int)b->b_size);
     hexdump("Subtitles", header, MIN(b->b_size, 64));
+  } else {
+    TRACE(TRACE_DEBUG, "Subtitles", "Loaded %s OK", url);
   }
   buf_release(b);
   return sub;

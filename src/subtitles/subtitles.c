@@ -450,9 +450,9 @@ sub_scanner_thread(void *aux)
 
   if(!(ss->ss_beflags & BACKEND_VIDEO_NO_FS_SCAN)) {
     char parent[URL_MAX];
-    fa_parent(parent, sizeof(parent), ss->ss_url);
-    fs_sub_scan_dir(ss, parent, fname, "subs", 2,
-                    sp_same_filename, sp_any_filename);
+    if(!fa_parent(parent, sizeof(parent), ss->ss_url))
+      fs_sub_scan_dir(ss, parent, fname, "subs", 2,
+		      sp_same_filename, sp_any_filename);
   }
 
   hts_mutex_lock(&subtitle_provider_mutex);

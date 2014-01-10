@@ -1431,6 +1431,13 @@ fa_parent(char *dst, size_t dstlen, const char *url)
       }
       snprintf(dst, dstlen, "%s://%s/", proto, parent);
       return 0;
+    } else {
+#if PS3
+      if(!strncmp(proto, "ntfs", 4)) {
+	snprintf(dst, dstlen, "%s://", proto);
+	return 0;
+      }
+#endif
     }
   }
   return -1;
