@@ -2271,11 +2271,8 @@ track_mgr_destroy(media_track_mgr_t *mtm)
 static void
 track_mgr_next_track(media_track_mgr_t *mtm)
 {
-  media_pipe_t *mp = mtm->mtm_mp;
   media_track_t *mt;
 
-  hts_mutex_lock(&mp->mp_mutex);
-  
   mt = mtm->mtm_current ? TAILQ_NEXT(mtm->mtm_current, mt_link) : NULL;
   
   if(mt == NULL)
@@ -2287,8 +2284,6 @@ track_mgr_next_track(media_track_mgr_t *mtm)
     event_release(e);
     mtm->mtm_current = mt;
   }
-
-  hts_mutex_unlock(&mp->mp_mutex);
 }
 
 
