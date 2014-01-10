@@ -593,6 +593,8 @@ static struct sqlite3_mutex_methods sqlite_mutexes = {
 static void
 db_log(void *aux, int code, const char *str)
 {
+  if(code == 19 || code == 262)
+    return;
   TRACE(code == 0 ? TRACE_INFO : TRACE_ERROR,
         "SQLITE", "%s (code: %d)", str, code);
 }
