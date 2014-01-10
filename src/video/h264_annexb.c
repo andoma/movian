@@ -140,8 +140,6 @@ h264_to_annexb_init(h264_annexb_ctx_t *ctx, const uint8_t *data, int len)
     return;
 
   int lsize = (data[4] & 0x3) + 1;
-  if(lsize == 3)
-    return;
 
   n = data[5] & 0x1f;
   data += 6;
