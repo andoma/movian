@@ -90,7 +90,7 @@ extern void
 arch_hts_cond_init(hts_cond_t *c)
 {
 #ifdef __APPLE__
-  pthread_cond_init(c);
+  pthread_cond_init(c, NULL);
 #else
   pthread_condattr_t attr;
   pthread_condattr_init(&attr);
