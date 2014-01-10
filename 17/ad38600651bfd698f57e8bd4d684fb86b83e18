@@ -1,0 +1,3 @@
+ps: Fix problem that caused SRT files located in top level folder on NTFS not to be loaded
+
+Fixes #1799
