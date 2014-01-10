@@ -1,0 +1,3 @@
+Fix recently introduced bug that caused subtitle/audio track cycle button to crash Showtime
+
+Fixes #1846
