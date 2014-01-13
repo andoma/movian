@@ -77,6 +77,7 @@ us_destroy(upnp_service_t *us)
   setting_destroy(us->us_setting_title);
   setting_destroy(us->us_setting_type);
   prop_destroy(us->us_settings);
+  service_destroy(us->us_service);
 
   free(us->us_settings_path);
   htsmsg_destroy(us->us_settings_store);
