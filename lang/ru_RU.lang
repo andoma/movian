@@ -5,20 +5,16 @@ maintainer: pvc1 <pvc1@yandex.ru>
 # ./ext/miner/miner.c
 #
 id: Do you like Showtime? You can donate money to the project by mining Litecoins on your PS3
-# Missing translation
-msg: 
+msg: Нравится Showtime? Вы можете пожертвовать деньги на проект через майнинг Litecoins на вашей PS3
 
 id: Donate money to the Showtime project by mining litecoints
-# Missing translation
-msg: 
+msg: Пожертвовать деньги на проект Showtime через майнинг litecoins
 
 id: Donations
-# Missing translation
-msg: 
+msg: Пожертвования
 
 id: Show me more
-# Missing translation
-msg: 
+msg: Показать мне больше
 
 #
 # ./glwskins/default/cmdmenu.view
@@ -337,8 +333,7 @@ id: Checking for updates...
 msg: Проверка обновлений...
 
 id: Checking installed version of %s
-# Missing translation
-msg: 
+msg: Проверка установленной версии %s
 
 id: Current version:
 msg: Текущая версия:
@@ -347,12 +342,10 @@ id: Download and install...
 msg: Загрузить и установить...
 
 id: Downloading %s
-# Missing translation
-msg: 
+msg: Загрузка %s
 
 id: Installing %s
-# Missing translation
-msg: 
+msg: Установка %s
 
 id: New version %s is available for download
 msg: Новая версия %s доступна для загрузки
@@ -361,8 +354,7 @@ id: No upgrade available
 msg: Нет обновлений
 
 id: Patching %s
-# Missing translation
-msg: 
+msg: Исправление %s
 
 id: Restarting Showtime in %d seconds...
 msg: Перезапуск Showtime через %d секунд...
@@ -383,8 +375,7 @@ id: Unable to query for new version
 msg: Невозможно проверить новую версию
 
 id: Verifying %s
-# Missing translation
-msg: 
+msg: Проверка %s
 
 #
 # ./glwskins/default/pages/video.view
@@ -444,24 +435,19 @@ msg: Медиа-файл не загружен
 # ./glwskins/default/sysinfo.view
 #
 id: CPU Temp
-# Missing translation
-msg: 
+msg: Температура CPU
 
 id: GPU Temp
-# Missing translation
-msg: 
+msg: Температура GPU
 
 id: Memory usage
-# Missing translation
-msg: 
+msg: Использование памяти
 
 id: System Free
-# Missing translation
-msg: 
+msg: Свободно
 
 id: System Total
-# Missing translation
-msg: 
+msg: Всего
 
 #
 # ./glwskins/default/universe.view
@@ -476,32 +462,25 @@ msg: Общая громкость: %d дБ
 # ./resources/spuminer/settings.view
 #
 id: Apart from enabling this option you do not need to do anything else to make your donations for the project.
-# Missing translation
-msg: 
+msg: Помимо включения этой опции, вам не нужно ничего делать больше, чтобы сделать свое пожертвование для проекта.
 
 id: Enable mining
-# Missing translation
-msg: 
+msg: Включить майнинг
 
 id: For more information about Litecoin, please visit http://litecoin.org
-# Missing translation
-msg: 
+msg: Дополнительные сведения о Litecoin на сайте http://litecoin.org
 
 id: If you like Showtime you can donate money to the project by letting your Playstation 3 mine Litecoins while Showtime is running.
-# Missing translation
-msg: 
+msg: Если вам нравится Showtime, то вы можете пожертвовать деньги для проекта, позволив вашей Playstation 3 майнить Litecoins, пока запущен Showtime.
 
 id: Mining will not interfere with video playback performance as it only uses the leftover capacity of the SPU processors.
-# Missing translation
-msg: 
+msg: Майнинг не влияет на производительность для воспроизведения видео, т.к. н использует оставшуюся часть потенциала SPU процессоров.
 
 id: Please consider enabling this option. / %s
-# Missing translation
-msg: 
+msg: Пожалуйста, обратите внимание включение этой опции. / %s
 
 id: Thanks for your support!
-# Missing translation
-msg: 
+msg: Спасибо за вашу поддержку!
 
 #
 # ./src/api/tmdb.c
@@ -522,12 +501,10 @@ msg: Мало памяти (доступно %d Кб RAM)
 # ./src/arch/rpi/rpi_cec.c
 #
 id: Configure how Showtime communicates with your TV
-# Missing translation
-msg: 
+msg: Настройка соединения Showtime с вашим ТВ
 
 id: Consumer Electronics Control
-# Missing translation
-msg: 
+msg: Управление бытовой электроникой
 
 #
 # ./src/backend/dvd/cdda.c
@@ -740,8 +717,7 @@ msg[1]: файлов: %d
 # ./src/i18n.c
 #
 id: Default character set
-# Missing translation
-msg: 
+msg: Набор символов по умолчанию
 
 id: Ignore 'The' at beginning of words when sorting
 msg: Игнорировать 'The' в начале названия при сортировке
@@ -990,12 +966,10 @@ msg: URL
 # ./src/networking/connman.c
 #
 id: Enable Wi-Fi
-# Missing translation
-msg: 
+msg: Включить Wi-Fi
 
 id: Network connections
-# Missing translation
-msg: 
+msg: Сетевые подключения
 
 #
 # ./src/networking/ftp_server.c
@@ -1133,8 +1107,7 @@ id: Automatic standby
 msg: Автоматический режим ожидания
 
 id: Enable SSH server
-# Missing translation
-msg: 
+msg: Включить SSH-сервер
 
 id: Logout
 msg: Выход из системы
@@ -1146,12 +1119,10 @@ id: Power off system
 msg: Отключение системы
 
 id: SSH server
-# Missing translation
-msg: 
+msg: SSH-сервер
 
 id: Standby
-# Missing translation
-msg: 
+msg: Режим ожидания
 
 id: Starting and stopping Showtime
 msg: Запуск и остановка Showtime
@@ -1205,8 +1176,7 @@ id: Settings useful for developers
 msg: Настройки полезные для разработчиков
 
 id: System name
-# Missing translation
-msg: 
+msg: Имя системы
 
 id: System related settings
 msg: Системные настройки
