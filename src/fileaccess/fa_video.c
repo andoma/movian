@@ -274,7 +274,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 	char buf[512];
 	if(av_strerror(r, buf, sizeof(buf)))
 	  snprintf(buf, sizeof(buf), "Error %d", r);
-	TRACE(TRACE_DEBUG, "Video", "Playback reached EOF: %s", buf);
+	TRACE(TRACE_DEBUG, "Video", "Playback reached EOF: %s (%d)", buf, r);
 	mb = MB_SPECIAL_EOF;
 	mp->mp_eof = 1;
 	continue;
