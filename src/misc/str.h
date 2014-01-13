@@ -24,6 +24,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+struct buf;
+
 uint32_t html_makecolor(const char *str);
 
 void url_deescape(char *s);
@@ -93,7 +95,7 @@ size_t utf8_to_ucs2(uint8_t *dst, const char *src, int little_endian);
 
 size_t utf8_to_ascii(uint8_t *dst, const char *src);
 
-void utf16_to_utf8(char **bufp, size_t *lenp);
+struct buf *utf16_to_utf8(struct buf *b);
 
 
 typedef struct charset {

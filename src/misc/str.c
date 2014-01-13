@@ -24,7 +24,8 @@
 #include <string.h>
 #include <assert.h>
 
-#include "misc/str.h"
+#include "buf.h"
+#include "str.h"
 #include "showtime.h"
 #include "sha.h"
 #include "i18n.h"
@@ -1453,15 +1454,14 @@ html_makecolor(const char *str)
 /**
  *
  */
-void
-utf16_to_utf8(char **bufp, size_t *lenp)
+buf_t *
+utf16_to_utf8(buf_t *b)
 {
-  void *freeme = *bufp;
-  const char *src = *bufp;
-  size_t len = *lenp;
+  const char *src = buf_cstr(b);
+  size_t len = b->b_size;
   int le = 0;
   if(len < 2)
-    return;
+    return NULL;
 
   if(src[0] == 0xff && src[1] == 0xfe) {
     le = 1;
@@ -1475,16 +1475,17 @@ utf16_to_utf8(char **bufp, size_t *lenp)
   const char *src2 = src;
   size_t len2 = len;
 
-  int olen = 1;
+  int olen = 0;
   while(len >= 2) {
     int c = src[!le] | src[le] << 8;
     olen += utf8_put(NULL, c);
     src += 2;
     len -= 2;
   }
-  freeme = *bufp;
-  *lenp = olen - 1;
-  char *o2 = *bufp = malloc(olen);
+
+  buf_t *out = buf_create(olen);
+
+  char *o2 = buf_str(out);
   while(len2 >= 2) {
     int c = src2[!le] | src2[le] << 8;
     o2 += utf8_put(o2, c);
@@ -1492,8 +1493,9 @@ utf16_to_utf8(char **bufp, size_t *lenp)
     len2 -= 2;
   }
   *o2++ = 0;
-  assert(o2 == *bufp + olen);
-  free(freeme);
+  assert(o2 == buf_str(out) + olen + 1);
+  buf_release(b);
+  return out;
 }
 
 

@@ -273,13 +273,13 @@ load_srt(const char *url, const char *buf, size_t len, int force_utf8)
  *
  */
 static int
-is_ttml(const char *buf, size_t len)
+is_ttml(buf_t *buf)
 {
-  if(len < 30)
+  if(buf_len(buf) < 30)
     return 0;
-  if(memcmp(buf, "<?xml", 5))
+  if(memcmp(buf_cstr(buf), "<?xml", 5))
     return 0;
-  if(strstr(buf, "http://www.w3.org/2006/10/ttaf1") == NULL)
+  if(strstr(buf_cstr(buf), "http://www.w3.org/2006/10/ttaf1") == NULL)
     return 0;
   return 1;
 }
@@ -310,10 +310,10 @@ ttml_time_expression(const char *str)
  * TTML docs here: http://www.w3.org/TR/ttaf1-dfxp/
  */
 static ext_subtitles_t *
-load_ttml(const char *url, char **buf, size_t len)
+load_ttml(const char *url, buf_t *buf)
 {
   char errbuf[256];
-  htsmsg_t *xml = htsmsg_xml_deserialize(*buf, errbuf, sizeof(errbuf));
+  htsmsg_t *xml = htsmsg_xml_deserialize_buf2(buf, errbuf, sizeof(errbuf));
   htsmsg_t *subs;
   htsmsg_field_t *f;
 
@@ -321,8 +321,6 @@ load_ttml(const char *url, char **buf, size_t len)
     TRACE(TRACE_INFO, "Subtitles", "Unable to load TTML: %s", errbuf);
     return NULL;
   }
-
-  *buf = NULL;
 
   subs = htsmsg_get_map_multi(xml, "tags",
 			      "tt", "tags",
@@ -596,28 +594,33 @@ es_sort(ext_subtitles_t *es)
  *
  */
 static ext_subtitles_t *
-subtitles_create(const char *path, char *buf, size_t len, AVRational *fr)
+subtitles_create(const char *path, buf_t *buf, AVRational *fr)
 {
   ext_subtitles_t *s = NULL;
-  
-  if(is_ttml(buf, len)) {
-    s = load_ttml(path, &buf, len);
+  if(is_ttml(buf)) {
+    s = load_ttml(path, buf);
   } else {
 
     int force_utf8 = 0;
-    char *b0 = buf;
-    if(len > 2 && ((buf[0] == 0xff && buf[1] == 0xfe) ||
-		   (buf[0] == 0xfe && buf[1] == 0xff))) {
+    const uint8_t *u8 = buf_c8(buf);
+    int off = 0;
+
+    if(buf_len(buf) > 2 && ((u8[0] == 0xff && u8[1] == 0xfe) ||
+                            (u8[0] == 0xfe && u8[1] == 0xff))) {
       // UTF-16 BOM
-      utf16_to_utf8(&buf, &len);
+      buf = utf16_to_utf8(buf);
       force_utf8 = 1;
-      b0 = buf;
-    } else if(len > 3 && buf[0] == 0xef && buf[1] == 0xbb && buf[2] == 0xbf) {
+    } else if(buf_len(buf) > 3 &&
+              u8[0] == 0xef && u8[1] == 0xbb && u8[2] == 0xbf) {
       // UTF-8 BOM
       force_utf8 = 1;
-      b0 += 3;
-      len -= 3;
+      off = 3;
     }
+
+    buf = buf_make_writable(buf);
+
+    char *b0 = buf_str(buf) + off;
+    int len  = buf_len(buf) - off;
 
     if(is_srt(b0, len))
       s = load_srt(path, b0, len, force_utf8);
@@ -625,6 +628,8 @@ subtitles_create(const char *path, char *buf, size_t len, AVRational *fr)
       s = load_ssa(path, b0, len);
     if(is_sub(b0, len))
       s = load_sub(path, b0, len, force_utf8, fr);
+
+    buf_release(buf);
   }
 
   if(s)
@@ -780,8 +785,7 @@ subtitles_load(media_pipe_t *mp, const char *url, AVRational *fr)
   uint8_t header[64];
   memcpy(header, b->b_ptr, MIN(b->b_size, 64));
 
-  b = buf_make_writable(b);
-  sub = subtitles_create(url, b->b_ptr, b->b_size, fr);
+  sub = subtitles_create(url, b, fr);
   if(sub == NULL) {
     TRACE(TRACE_ERROR, "Subtitles",
 	  "Unable to load %s -- Unknown format (%d bytes), dump of first 64 bytes follows",
@@ -790,6 +794,5 @@ subtitles_load(media_pipe_t *mp, const char *url, AVRational *fr)
   } else {
     TRACE(TRACE_DEBUG, "Subtitles", "Loaded %s OK", url);
   }
-  buf_release(b);
   return sub;
 }

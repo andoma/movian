@@ -43,6 +43,8 @@ buf_str(buf_t *b)
   return (char *)b->b_ptr;
 }
 
+#define buf_len(buf) ((buf)->b_size)
+
 #define buf_c8(buf) ((const uint8_t *)(buf)->b_ptr)
 
 void buf_release(buf_t *b);
