@@ -153,6 +153,7 @@ glw_event_map_playTrack_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
   
   e->e_mapped = 1;
   event_bubble(w, e);
+  event_release(e);
 }
 
 
