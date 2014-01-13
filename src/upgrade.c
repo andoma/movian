@@ -479,7 +479,7 @@ check_upgrade_err(const char *msg)
 /**
  *
  */
-static void
+static int
 check_upgrade(int set_news)
 {
   char url[1024];
@@ -488,10 +488,12 @@ check_upgrade(int set_news)
   char errbuf[1024];
 
   if(inhibit_checks)
-    return;
+    return 0;
 
-  if(upgrade_track == NULL)
-    return check_upgrade_err("No release track specified");
+  if(upgrade_track == NULL) {
+    check_upgrade_err("No release track specified");
+    return 0;
+  }
 
   prop_set_string(upgrade_status, "checking");
 
@@ -503,14 +505,18 @@ check_upgrade(int set_news)
 
   b = fa_load(url, NULL, errbuf, sizeof(errbuf),
               NULL, FA_DISABLE_AUTH, NULL, NULL);
-  if(b == NULL)
-    return check_upgrade_err(errbuf);
+  if(b == NULL) {
+    check_upgrade_err(errbuf);
+    return 1;
+  }
 
   json = htsmsg_json_deserialize(buf_cstr(b));
   buf_release(b);
 
-  if(json == NULL)
-    return check_upgrade_err("Malformed JSON in repository");
+  if(json == NULL) {
+    check_upgrade_err("Malformed JSON in repository");
+    return 0;
+  }
 
 #if STOS
   stos_upgrade_needed = 0;
@@ -640,11 +646,11 @@ check_upgrade(int set_news)
     }
   }
   htsmsg_destroy(json);
-  return;
+  return 0;
  err:
   prop_set_string(upgrade_status, "checkError");
   htsmsg_destroy(json);
-  return;
+  return 0;
 }
 
 #if STOS
@@ -907,7 +913,6 @@ upgrade_init(void)
      abort();
 
   inhibit_checks = 0;
-  check_upgrade(notify_upgrades);
 
   prop_subscribe(0,
 		 PROP_TAG_CALLBACK, upgrade_cb, NULL,
@@ -919,8 +924,8 @@ upgrade_init(void)
 /**
  *
  */
-void
+int
 upgrade_refresh(void)
 {
-  check_upgrade(notify_upgrades);
+  return check_upgrade(notify_upgrades);
 }

@@ -674,6 +674,7 @@ plugin_load_installed(void)
 }
 
 
+#define REPO_ERROR_NETWORK ((void *)-1)
 
 /**
  *
@@ -707,7 +708,7 @@ repo_get(const char *repo, char *errbuf, size_t errlen)
 		    FA_COMPRESSION | FA_DISABLE_AUTH);
   hts_mutex_lock(&plugin_mutex);
   if(b == NULL)
-    return NULL;
+    return REPO_ERROR_NETWORK;
 
   json = htsmsg_json_deserialize(buf_cstr(b));
   buf_release(b);
@@ -739,17 +740,17 @@ repo_get(const char *repo, char *errbuf, size_t errlen)
 /**
  *
  */
-static void
+static int
 plugin_load_repo(void)
 {
   plugin_t *pl, *next;
   char errbuf[512];
   htsmsg_t *msg = repo_get(get_repo(), errbuf, sizeof(errbuf));
 
-  if(msg == NULL) {
+  if(msg == REPO_ERROR_NETWORK || msg == NULL) {
     TRACE(TRACE_ERROR, "plugins", "Unable to load repo %s -- %s",
 	  get_repo(), errbuf);
-    return;
+    return msg == REPO_ERROR_NETWORK ? -1 : 0;
   }
 
   htsmsg_t *r = htsmsg_get_list(msg, "plugins");
@@ -819,6 +820,7 @@ plugin_load_repo(void)
     }
   }
   htsmsg_destroy(msg);
+  return 0;
 }
 
 
@@ -1062,14 +1064,17 @@ plugins_init2(void)
 /**
  *
  */
-void
+int
 plugins_upgrade_check(void)
 {
   hts_mutex_lock(&plugin_mutex);
-  plugin_load_repo();
-  update_global_state();
-  plugin_autoupgrade();
+  int r = plugin_load_repo();
+  if(!r) {
+    update_global_state();
+    plugin_autoupgrade();
+  }
   hts_mutex_unlock(&plugin_mutex);
+  return r;
 }
 
 

@@ -181,10 +181,23 @@ swthread(void *aux)
   hts_cond_broadcast(&gconf.state_cond);
   hts_mutex_unlock(&gconf.state_mutex);
 
-  plugins_upgrade_check();
-
   upgrade_init();
 
+  for(int i = 0; i < 10; i++) {
+    if(!plugins_upgrade_check())
+      break;
+    TRACE(TRACE_DEBUG, "plugins",
+          "Failed to update repo, retrying in %d seconds", i + 1);
+    sleep(i + i);
+  }
+
+  for(int i = 0; i < 10; i++) {
+    if(!upgrade_refresh())
+      break;
+    sleep(i + 1);
+    TRACE(TRACE_DEBUG, "upgrade",
+          "Failed to check for app upgrade, retrying in %d seconds", i + 1);
+  }
 
   hts_mutex_lock(&gconf.state_mutex);
   gconf.swrefresh = 0;

@@ -23,4 +23,4 @@
 
 void upgrade_init(void);
 
-void upgrade_refresh(void);
+int upgrade_refresh(void);

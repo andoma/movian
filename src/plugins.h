@@ -25,7 +25,7 @@ void plugins_init(const char *loadme);
 
 void plugins_init2(void);
 
-void plugins_upgrade_check(void);
+int plugins_upgrade_check(void);
 
 void plugin_open_file(prop_t *page, const char *url);
 
