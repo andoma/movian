@@ -319,7 +319,7 @@ ssdp_input(int fd, int mc)
   socklen_t slen = sizeof(struct sockaddr_in);
   netif_t *ni;
 
-  r = recvfrom(fd, buf, sizeof(buf), 0, (struct sockaddr *)&si, &slen);
+  r = recvfrom(fd, buf, sizeof(buf)-1, 0, (struct sockaddr *)&si, &slen);
   if(r < 1)
     return;
   buf[r] = 0;
