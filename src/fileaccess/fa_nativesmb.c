@@ -55,6 +55,7 @@ LIST_HEAD(cifs_tree_list, cifs_tree);
 static struct cifs_connection_list cifs_connections;
 static hts_mutex_t smb_global_mutex;
 
+#define NBT_TIMEOUT 30000
 
 /**
  *
@@ -1254,6 +1255,20 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
 /**
  *
  */
+static void
+dump_request_list(cifs_connection_t *cc)
+{
+  nbt_req_t *nr;
+  SMBTRACE("List of pending reuqests");
+  LIST_FOREACH(nr, &cc->cc_pending_nbt_requests, nr_link) {
+    SMBTRACE("  Pending request %d", nr->nr_mid);
+  }
+}
+
+
+/**
+ *
+ */
 static void *
 smb_dispatch(void *aux)
 {
@@ -1293,15 +1308,16 @@ smb_dispatch(void *aux)
 	break;
 
     if(nr != NULL) {
-
       nr->nr_result = 0;
       nr->nr_response = buf;
       nr->nr_response_len = len;
       hts_cond_broadcast(&cc->cc_cond);
 
     } else {
-      SMBTRACE("%s:%d unexpected response pid=%d mid=%d",
-	       cc->cc_hostname, cc->cc_port, letoh_16(h->pid), mid);
+      SMBTRACE("%s:%d unexpected response pid=%d mid=%d on %p",
+	       cc->cc_hostname, cc->cc_port, letoh_16(h->pid), mid, cc);
+      dump_request_list(cc);
+
       free(buf);
     }
     hts_mutex_unlock(&smb_global_mutex);
@@ -1483,9 +1499,13 @@ nbt_async_req_reply(cifs_connection_t *cc,
   nbt_req_t *nr = nbt_async_req(cc, request, request_len);
 
   while(nr->nr_result == -1) {
-    if(hts_cond_wait_timeout(&cc->cc_cond, &smb_global_mutex, 5000)) {
-      TRACE(TRACE_ERROR, "SMB", "%s:%d request timeout",
-	    cc->cc_hostname, cc->cc_port);
+    if(hts_cond_wait_timeout(&cc->cc_cond, &smb_global_mutex, NBT_TIMEOUT)) {
+      TRACE(TRACE_ERROR, "SMB", "%s:%d request timeout (%d) on %p",
+	    cc->cc_hostname, cc->cc_port, nr->nr_mid, cc);
+
+
+      dump_request_list(cc);
+
       cc->cc_broken = 1;
       break;
     }
@@ -1507,24 +1527,19 @@ nbt_async_req_reply(cifs_connection_t *cc,
  *
  */
 static void
-cifs_release_tree(cifs_tree_t *ct)
+cifs_release_tree(cifs_tree_t *ct, int full)
 {
   ct->ct_cc->cc_auto_close = 0;
-
+  assert(ct->ct_refcount > 0);
   ct->ct_refcount--;
-  hts_mutex_unlock(&smb_global_mutex);
-
-  // We never disconnect from trees anyway
-  /*
-  if(ct->ct_refcount > 0) {
+  if(ct->ct_refcount > 0 || !full) {
     hts_mutex_unlock(&smb_global_mutex);
     return;
   }
-  cifs_release_connection(ct->ct_cc);
   LIST_REMOVE(ct, ct_link);
+  cifs_release_connection(ct->ct_cc);
   free(ct->ct_share);
   free(ct);
-  */
 }
 
 /**
@@ -1603,7 +1618,7 @@ smb_tree_connect_andX(cifs_connection_t *cc, const char *share,
 	       share, cc->cc_hostname);
 
       if(non_interactive && retry_reason) {
-	cifs_release_tree(ct);
+	cifs_release_tree(ct, 1);
 	return SAMBA_NEED_AUTH;
       }
 
@@ -1705,7 +1720,7 @@ smb_tree_connect_andX(cifs_connection_t *cc, const char *share,
  out:
   if(ct->ct_status == CT_ERROR) {
     snprintf(errbuf, errlen, "%s", ct->ct_errbuf);
-    cifs_release_tree(ct);
+    cifs_release_tree(ct, 1);
     return NULL;
   }
   return ct;
@@ -1823,7 +1838,7 @@ static int
 release_tree_io_error(cifs_tree_t *ct, char *errbuf, size_t errlen)
 {
   snprintf(errbuf, errlen, "I/O error");
-  cifs_release_tree(ct);
+  cifs_release_tree(ct, 1);
   return -1;
 }
 
@@ -1836,7 +1851,7 @@ static int
 release_tree_protocol_error(cifs_tree_t *ct, char *errbuf, size_t errlen)
 {
   snprintf(errbuf, errlen, "Protocol error");
-  cifs_release_tree(ct);
+  cifs_release_tree(ct, 1);
   return -1;
 }
 
@@ -1850,17 +1865,18 @@ check_smb_error(cifs_tree_t *ct, void *rbuf, size_t rlen, size_t runt_lim,
 
   if(errcode) {
     snprintf(errbuf, errlen, "SMB Error 0x%08x", errcode);
-  bad:
     free(rbuf);
-    cifs_release_tree(ct);
+    cifs_release_tree(ct, 0);
     return -1;
   }
-  
+
   if(rlen < runt_lim) {
     snprintf(errbuf, errlen, "Short packet");
-    goto bad;
+    free(rbuf);
+    cifs_release_tree(ct, 1);
+    return -1;
   }
-  
+
   return 0;
 }
 
@@ -1937,7 +1953,7 @@ cifs_enum_shares(cifs_connection_t *cc, fa_dir_t *fd,
   const uint16_t *params = rbuf + poff;
   if(letoh_16(params[0]) != 0) {
     free(rbuf);
-    cifs_release_tree(ct);
+    cifs_release_tree(ct, 1);
     snprintf(errbuf, errlen, "RPC status %d", letoh_16(params[0]));
     return -1;
   }
@@ -1961,7 +1977,7 @@ cifs_enum_shares(cifs_connection_t *cc, fa_dir_t *fd,
     }
     p += strlen(p)+1+padding+4;
   }
-  cifs_release_tree(ct);
+  cifs_release_tree(ct, 0);
 
   free(rbuf);
   return 0;  
@@ -2020,14 +2036,14 @@ cifs_delete(const char *url, char *errbuf, size_t errlen, int dir)
   
   if(nbt_async_req_reply(ct->ct_cc, reqbuf, tlen, &rbuf, &rlen)) {
     snprintf(errbuf, errlen, "I/O error");
-    cifs_release_tree(ct);
+    cifs_release_tree(ct, 1);
     return -1;
   }
 
   if(check_smb_error(ct, rbuf, rlen, sizeof(SMB_t), errbuf, errlen))
     return -1;
 
-  cifs_release_tree(ct);
+  cifs_release_tree(ct, 0);
   free(rbuf);
   return 0;
 }
@@ -2235,7 +2251,7 @@ smb_scandir(fa_protocol_t *fap, fa_dir_t *fa, const char *url,
     if(cifs_scandir(ct, filename, fa, errbuf, errlen))
       return -1;
 
-    cifs_release_tree(ct);
+    cifs_release_tree(ct, 0);
     return 0;
 
   case CIFS_RESOLVE_CONNECTION:
@@ -2305,7 +2321,7 @@ smb_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
   
   if(nbt_async_req_reply(ct->ct_cc, req, tlen, &rbuf, &rlen)) {
     snprintf(errbuf, errlen, "I/O error");
-    cifs_release_tree(ct);
+    cifs_release_tree(ct, 1);
     return NULL;
   }
 
@@ -2348,7 +2364,7 @@ smb_close(fa_handle_t *fh)
   req->fid = sf->sf_fid;
   req->wordcount = 3;
   nbt_write(ct->ct_cc, req, sizeof(SMB_CLOSE_req_t));
-  cifs_release_tree(sf->sf_ct);
+  cifs_release_tree(sf->sf_ct, 0);
   free(sf);
 }
 
@@ -2415,7 +2431,8 @@ smb_read(fa_handle_t *fh, void *buf, size_t size)
 	break;
 
     if(nr != NULL) {
-      if(hts_cond_wait_timeout(&ct->ct_cc->cc_cond, &smb_global_mutex, 5000)) {
+      if(hts_cond_wait_timeout(&ct->ct_cc->cc_cond, &smb_global_mutex,
+                               NBT_TIMEOUT)) {
 	break;
       }
     } else {
@@ -2532,7 +2549,7 @@ smb_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
   case CIFS_RESOLVE_TREE:
     if(cifs_stat(ct, filename, fs, errbuf, errlen))
       return FAP_STAT_ERR;
-    cifs_release_tree(ct);
+    cifs_release_tree(ct, 0);
     return FAP_STAT_OK;
 
   case CIFS_RESOLVE_CONNECTION:
