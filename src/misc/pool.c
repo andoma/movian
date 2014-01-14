@@ -34,6 +34,13 @@
 #define POOL_BY_MALLOC
 #endif
 
+//#define POOL_BY_MMAP
+
+#ifdef POOL_BY_MMAP
+#include <sys/mman.h>
+#endif
+
+
 
 /**
  *
@@ -207,7 +214,11 @@ pool_get(pool_t *p)
 #endif
 {
   p->p_num_out++;
-#ifdef POOL_BY_MALLOC
+#if defined(POOL_BY_MMAP)
+  return mmap(NULL, p->p_item_size_req, PROT_WRITE | PROT_READ,
+              MAP_ANON | MAP_PRIVATE, -1, 0);
+
+#elif defined(POOL_BY_MALLOC)
   if(p->p_flags & POOL_ZERO_MEM)
     return calloc(1, p->p_item_size_req);
   else
@@ -243,7 +254,9 @@ pool_get(pool_t *p)
 void
 pool_put(pool_t *p, void *ptr)
 {
-#ifdef POOL_BY_MALLOC
+#if defined(POOL_BY_MMAP)
+  mprotect(ptr, p->p_item_size_req, PROT_NONE);
+#elif defined(POOL_BY_MALLOC)
   free(ptr);
 #else
 
