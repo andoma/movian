@@ -5,20 +5,16 @@ maintainer: Niconico27
 # ./ext/miner/miner.c
 #
 id: Do you like Showtime? You can donate money to the project by mining Litecoins on your PS3
-# Missing translation
-msg: 
+msg: Aimez-vous Showtime ? Vous pouvez faire un don en minant des Litecoins depuis votre PS3
 
 id: Donate money to the Showtime project by mining litecoints
-# Missing translation
-msg: 
+msg: Faire un don au projet Showtime en minant des litecoins
 
 id: Donations
-# Missing translation
-msg: 
+msg: Don
 
 id: Show me more
-# Missing translation
-msg: 
+msg: En savoir plus
 
 #
 # ./glwskins/default/cmdmenu.view
@@ -337,8 +333,7 @@ id: Checking for updates...
 msg: Recherche de mises à jour...
 
 id: Checking installed version of %s
-# Missing translation
-msg: 
+msg: Vérification de la version installée de %s
 
 id: Current version:
 msg: Version actuelle:
@@ -347,12 +342,10 @@ id: Download and install...
 msg: Télécharge et installe...
 
 id: Downloading %s
-# Missing translation
-msg: 
+msg: Téléchargement %s
 
 id: Installing %s
-# Missing translation
-msg: 
+msg: Installation %s
 
 id: New version %s is available for download
 msg: La version %s est disponible au téléchargement
@@ -361,8 +354,7 @@ id: No upgrade available
 msg: Pas de mise à jour disponible
 
 id: Patching %s
-# Missing translation
-msg: 
+msg: Mise en place du patch %s
 
 id: Restarting Showtime in %d seconds...
 msg: Showtime va redémarrer dans %d seconds...
@@ -383,8 +375,7 @@ id: Unable to query for new version
 msg: Recherche de nouvelle mise à jour impossible
 
 id: Verifying %s
-# Missing translation
-msg: 
+msg: Vérification %s
 
 #
 # ./glwskins/default/pages/video.view
@@ -444,24 +435,19 @@ msg: Aucun media chargé
 # ./glwskins/default/sysinfo.view
 #
 id: CPU Temp
-# Missing translation
-msg: 
+msg: Température du CPU
 
 id: GPU Temp
-# Missing translation
-msg: 
+msg: Température du GPU
 
 id: Memory usage
-# Missing translation
-msg: 
+msg: Mémoire utilisée
 
 id: System Free
-# Missing translation
-msg: 
+msg: Espace libre
 
 id: System Total
-# Missing translation
-msg: 
+msg: Espace  totale
 
 #
 # ./glwskins/default/universe.view
@@ -476,32 +462,25 @@ msg: Volume principal : %d dB
 # ./resources/spuminer/settings.view
 #
 id: Apart from enabling this option you do not need to do anything else to make your donations for the project.
-# Missing translation
-msg: 
+msg: Une fois cette option activée vous n'avez rien d'autre à faire pour envoyer vos dons à ce projet
 
 id: Enable mining
-# Missing translation
-msg: 
+msg: Activer le minage
 
 id: For more information about Litecoin, please visit http://litecoin.org
-# Missing translation
-msg: 
+msg: Pour plus d'informations sur les Litecoin, allez sur http://litecoin.org
 
 id: If you like Showtime you can donate money to the project by letting your Playstation 3 mine Litecoins while Showtime is running.
-# Missing translation
-msg: 
+msg: Si vous voulez soutenir le projet Showtime vous pouvez faire des dons en laissant votre Playstation 3 miner des litecoins pendant son utilisation
 
 id: Mining will not interfere with video playback performance as it only uses the leftover capacity of the SPU processors.
-# Missing translation
-msg: 
+msg: Miner n'interfèreras pas les performances lors d'une lecture car çela utilise les ressources inexploitées des processeurs SPU
 
 id: Please consider enabling this option. / %s
-# Missing translation
-msg: 
+msg: Activez cette option s'il vous plait. / %s
 
 id: Thanks for your support!
-# Missing translation
-msg: 
+msg: Merci pour votre aide !
 
 #
 # ./src/api/tmdb.c
@@ -522,12 +501,10 @@ msg: Mémoire système faible (%d kB de RAM restant)
 # ./src/arch/rpi/rpi_cec.c
 #
 id: Configure how Showtime communicates with your TV
-# Missing translation
-msg: 
+msg: Configurer comment Showtime communique avec votre TV
 
 id: Consumer Electronics Control
-# Missing translation
-msg: 
+msg: Consumer Electronics Control (CEC)
 
 #
 # ./src/backend/dvd/cdda.c
@@ -740,8 +717,7 @@ msg[1]: %d fichiers
 # ./src/i18n.c
 #
 id: Default character set
-# Missing translation
-msg: 
+msg: Jeu de caractères par défaut
 
 id: Ignore 'The' at beginning of words when sorting
 msg: Ignorer 'The' au début du fichier pour le tri
@@ -990,12 +966,10 @@ msg: URL
 # ./src/networking/connman.c
 #
 id: Enable Wi-Fi
-# Missing translation
-msg: 
+msg: Activer le Wifi
 
 id: Network connections
-# Missing translation
-msg: 
+msg: Connexions réseaux
 
 #
 # ./src/networking/ftp_server.c
@@ -1133,8 +1107,7 @@ id: Automatic standby
 msg: Mise en veille automatique
 
 id: Enable SSH server
-# Missing translation
-msg: 
+msg: Activer le serveur SSH
 
 id: Logout
 msg: Déconnexion
@@ -1146,12 +1119,10 @@ id: Power off system
 msg: Eteindre le système
 
 id: SSH server
-# Missing translation
-msg: 
+msg: Serveur SSH
 
 id: Standby
-# Missing translation
-msg: 
+msg: Veille
 
 id: Starting and stopping Showtime
 msg: Démarrer et Arrêter Showtime
@@ -1205,8 +1176,7 @@ id: Settings useful for developers
 msg: Paramètres utiles pour les développeurs
 
 id: System name
-# Missing translation
-msg: 
+msg: Nom du système
 
 id: System related settings
 msg: Paramètres liés au système
@@ -1459,4 +1429,3 @@ msg: Accélération vidéo et comportement de l'affichage
 
 id: Video playback
 msg: Lecture vidéo
-
