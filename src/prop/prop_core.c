@@ -151,6 +151,8 @@ prop_ref_dec_traced(prop_t *p, const char *file, int line)
   if(p == NULL)
     return;
 
+  assert(p->hp_magic == PROP_MAGIC);
+
   if(p->hp_flags & PROP_REF_TRACED) {
     struct prop_ref_trace *prt = malloc(sizeof(struct prop_ref_trace));
     prt->file = file;
@@ -173,6 +175,7 @@ prop_ref_dec_traced(prop_t *p, const char *file, int line)
 
   hts_mutex_lock(&prop_mutex);
   assert(p->hp_tags == NULL);
+  memset(p, 0xdd, sizeof(prop_t));
   pool_put(prop_pool, p);
   hts_mutex_unlock(&prop_mutex);
 }
@@ -186,6 +189,8 @@ prop_ref_dec_traced_locked(prop_t *p, const char *file, int line)
 {
   if(p == NULL)
     return;
+
+  assert(p->hp_magic == PROP_MAGIC);
 
   if(p->hp_flags & PROP_REF_TRACED) {
     struct prop_ref_trace *prt = malloc(sizeof(struct prop_ref_trace));
@@ -208,6 +213,7 @@ prop_ref_dec_traced_locked(prop_t *p, const char *file, int line)
   prop_tag_dump(p);
 
   assert(p->hp_tags == NULL);
+  memset(p, 0xdd, sizeof(prop_t));
   pool_put(prop_pool, p);
 }
 
