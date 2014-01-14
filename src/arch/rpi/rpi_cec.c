@@ -182,8 +182,9 @@ static int64_t stop_key_timeout;
 static void
 cec_emit_key_down(int code)
 {
-  if(code == CEC_User_Control_Stop && stop_is_meta_key && 
+  if(code == CEC_User_Control_Stop && stop_is_meta_key &&
      stop_key_timeout < showtime_get_ts()) {
+    CEC_DEBUG("Stop key intercepted as modifier");
     stop_key_timeout = showtime_get_ts() + 1000000;
     return;
   }
@@ -191,6 +192,7 @@ cec_emit_key_down(int code)
   const action_type_t *avec;
   if(stop_key_timeout > showtime_get_ts()) {
     avec = stop_meta_actions[code];
+    CEC_DEBUG("Selecting from alt key mapping: code:%d -> avec=%p", code, avec);
   } else {
     avec = btn_to_action[code];
   }
@@ -535,7 +537,7 @@ cec_callback(void *callback_data, uint32_t param0, uint32_t param1,
   default:
     break;
   case VC_CEC_BUTTON_PRESSED:
-    CEC_DEBUG("Key down: %x", msg.payload[1]);
+    CEC_DEBUG("Key down: %x (%d)", msg.payload[1], stop_is_meta_key);
     cec_emit_key_down(msg.payload[1]);
     break;
 
