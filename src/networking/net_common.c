@@ -279,3 +279,13 @@ tcp_write_data(tcpcon_t *tc, const char *buf, const size_t bufsize)
 {
   return tc->write(tc, buf, bufsize);
 }
+
+
+/**
+ *
+ */
+int
+tcp_get_fd(const tcpcon_t *tc)
+{
+  return tc->fd;
+}

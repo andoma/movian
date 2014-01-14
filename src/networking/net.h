@@ -50,6 +50,8 @@ tcpcon_t *tcp_connect(const char *hostname, int port, char *errbuf,
 
 tcpcon_t *tcp_from_fd(int fd);
 
+int tcp_get_fd(const tcpcon_t *tc);
+
 int tcp_write_queue(tcpcon_t *nc, htsbuf_queue_t *q);
 
 int tcp_write_queue_dontfree(tcpcon_t *nc, htsbuf_queue_t *q);
