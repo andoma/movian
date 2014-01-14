@@ -913,7 +913,8 @@ prop_nf_release0(struct prop_nf *pnf)
     nf_clear(pnf);
 
   prop_unsubscribe0(pnf->dstsub);
-  prop_destroy0(pnf->dst);
+  if(pnf->dst != NULL)
+    prop_destroy0(pnf->dst);
 
   assert(TAILQ_FIRST(&pnf->in) == NULL);
   if(pnf->sorted) {
@@ -991,7 +992,8 @@ prop_nf_src_cb(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_DESTROYED:
-    prop_unsubscribe0(nf->srcsub);
+    if(nf->srcsub != NULL)
+      prop_unsubscribe0(nf->srcsub);
     nf->srcsub = NULL;
     prop_nf_release0(nf);
     break;
@@ -1139,6 +1141,7 @@ prop_nf_create(prop_t *dst, prop_t *src, prop_t *filter, int flags)
   nf->flags = flags;
   TAILQ_INIT(&nf->in);
   TAILQ_INIT(&nf->out_queue);
+  nf->pnf_refcount = 1 + (flags & PROP_NF_AUTODESTROY ? 1 : 0);
 
   nf->dst = flags & PROP_NF_TAKE_DST_OWNERSHIP ? dst : prop_xref_addref(dst);
   nf->src = src;
@@ -1163,7 +1166,6 @@ prop_nf_create(prop_t *dst, prop_t *src, prop_t *filter, int flags)
 			      PROP_TAG_ROOT, src,
 			      NULL);
 
-  nf->pnf_refcount = 1 + (flags & PROP_NF_AUTODESTROY ? 1 : 0);
 
   hts_mutex_unlock(&prop_mutex);
 
