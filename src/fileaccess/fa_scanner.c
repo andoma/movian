@@ -41,6 +41,12 @@
 #include "fa_indexer.h"
 #include "notifications.h"
 
+#define SCAN_TRACE(x...) do {			\
+    if(gconf.enable_fa_scanner_debug)           \
+      TRACE(TRACE_DEBUG, "FA", x);              \
+  } while(0)
+
+
 extern int media_buffer_hungry;
 
 typedef enum {
@@ -435,7 +441,7 @@ scanner_release(scanner_t *s)
 {
   if(atomic_add(&s->s_refcount, -1) > 1)
     return;
-
+  assert(s->s_refcount == 0);
   fa_unreference(s->s_ref);
   if(s->s_pnf != NULL)
     prop_nf_release(s->s_pnf);
@@ -449,8 +455,8 @@ scanner_release(scanner_t *s)
 static int
 scanner_entry_setup(scanner_t *s, fa_dir_entry_t *fde, const char *src)
 {
-  TRACE(TRACE_DEBUG, "FA", "%s: File %s added by %s",
-	s->s_url, rstr_get(fde->fde_url), src);
+  SCAN_TRACE("%s: File %s added by %s",
+             s->s_url, rstr_get(fde->fde_url), src);
 
   if(fde->fde_type == CONTENT_FILE)
     fde->fde_type = type_from_filename(rstr_get(fde->fde_filename));
@@ -475,8 +481,8 @@ scanner_entry_setup(scanner_t *s, fa_dir_entry_t *fde, const char *src)
 static void
 scanner_entry_destroy(scanner_t *s, fa_dir_entry_t *fde, const char *src)
 {
-  TRACE(TRACE_DEBUG, "FA", "%s: File %s removed by %s",
-	s->s_url, rstr_get(fde->fde_url), src);
+  SCAN_TRACE("%s: File %s removed by %s",
+             s->s_url, rstr_get(fde->fde_url), src);
   metadb_unparent_item(getdb(s), rstr_get(fde->fde_url));
   if(fde->fde_prop != NULL)
     prop_destroy(fde->fde_prop);
@@ -534,8 +540,8 @@ rescan(scanner_t *s)
     return -1; 
 
   if(s->s_fd->fd_count != fd->fd_count) {
-    TRACE(TRACE_DEBUG, "FA", "%s: Rescanning found %d items, previously %d",
-	  s->s_url, fd->fd_count, s->s_fd->fd_count);
+    SCAN_TRACE("%s: Rescanning found %d items, previously %d",
+               s->s_url, fd->fd_count, s->s_fd->fd_count);
   }
 
   for(a = RB_FIRST(&s->s_fd->fd_entries); a != NULL; a = n) {
@@ -596,13 +602,13 @@ doscan(scanner_t *s, int with_notify)
   if(s->s_fd == NULL) {
     s->s_fd = fa_scandir(s->s_url, errbuf, sizeof(errbuf));
     if(s->s_fd != NULL) {
-      TRACE(TRACE_DEBUG, "FA", "%s: Found %d by directory scanning",
-	    s->s_url, s->s_fd->fd_count);
+      SCAN_TRACE("%s: Found %d by directory scanning",
+              s->s_url, s->s_fd->fd_count);
       err = 0;
     }
   } else {
-    TRACE(TRACE_DEBUG, "FA", "%s: Found %d items in cache",
-	  s->s_url, s->s_fd->fd_count);
+    SCAN_TRACE("%s: Found %d items in cache",
+               s->s_url, s->s_fd->fd_count);
     pending_rescan = 1;
   }
   prop_set_int(s->s_loading, 0);
@@ -632,8 +638,11 @@ doscan(scanner_t *s, int with_notify)
     s->s_fd = fa_dir_alloc();
   }
 
-  if(pending_rescan)
+  if(pending_rescan) {
+    SCAN_TRACE("%s: Starting rescan", s->s_url);
     err = rescan(s);
+    SCAN_TRACE("%s: Rescan completed: %d", s->s_url, err);
+  }
 
   closedb(s);
 #if 0
@@ -1119,8 +1128,10 @@ add_only_supported_files(scanner_t *s, prop_t *model,
 		 PROP_TAG_ROOT, value,
 		 NULL);
 
-  if(prop_set_parent(n, parent))
+  if(prop_set_parent(n, parent)) {
     prop_destroy(n);
+    *valp = NULL;
+  }
 }
 
 
@@ -1146,6 +1157,12 @@ fa_scanner_page(const char *url, time_t url_mtime,
                 prop_t *direct_close, rstr_t *title)
 {
   scanner_t *s = scanner_create(url, url_mtime);
+
+  /* One reference to the scanner thread
+     and one to the scanner_stop subscription
+  */
+  s->s_refcount = 2;
+
   s->s_playme = rstr_alloc(playme);
 
   s->s_nodes = prop_create_r(model, "source");
@@ -1165,7 +1182,7 @@ fa_scanner_page(const char *url, time_t url_mtime,
                             prop_create(s->s_model, "filter"),
                             PROP_NF_AUTODESTROY);
 
-  prop_set_int(prop_create(s->s_model, "canFilter"), 1);
+  prop_set(s->s_model, "canFilter", PROP_SET_INT, 1);
 
   prop_nf_pred_int_add(s->s_pnf, "node.hidden",
 		       PROP_NF_CMP_EQ, 1, NULL, 
@@ -1183,10 +1200,6 @@ fa_scanner_page(const char *url, time_t url_mtime,
 		       PROP_NF_CMP_EQ, "file", onlysupported, 
 		       PROP_NF_MODE_EXCLUDE);
 
-  /* One reference to the scanner thread
-     and one to the scanner_stop subscription
-  */
-  s->s_refcount += 2;
 
   s->s_ref = fa_reference(s->s_url);
 

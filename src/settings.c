@@ -1180,6 +1180,9 @@ init_dev_settings(void)
   add_dev_bool(s, "Debug CEC",
 	       "cecdebug", &gconf.enable_cec_debug);
 
+  add_dev_bool(s, "Debug directory listing",
+	       "cecdebug", &gconf.enable_fa_scanner_debug);
+
   setting_create(SETTING_STRING, gconf.settings_dev, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE_CSTR("Network log destination"),
                  SETTING_CALLBACK(set_netlog, NULL),

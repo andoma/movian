@@ -277,6 +277,9 @@ be_file_open(prop_t *page, const char *url, int sync)
   foa->page = prop_ref_inc(page);
   foa->url = strdup(url);
 
+  prop_t *m = prop_create(page, "model");
+  prop_set(m, "loading", PROP_SET_INT, 1);
+
   hts_thread_create_detached("fa_open", fa_open_thread, foa,
 			     THREAD_PRIO_MODEL);
   return 0;
