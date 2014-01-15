@@ -344,9 +344,13 @@ backend_probe(const char *url, char *errbuf, size_t errlen)
 int
 backend_open_video(prop_t *page, const char *url, int sync)
 {
-  prop_set_int(prop_create(page, "directClose"), 1);
-  prop_set_string(prop_create(page, "source"), url);
-  prop_set_string(prop_create(prop_create(page, "model"), "type"), "video");
+  prop_set(page, "directClose", PROP_SET_INT, 1);
+  prop_set(page, "source", PROP_SET_STRING, url);
+
+  prop_t *m = prop_create_r(page, "model");
+  prop_set(m, "type", PROP_SET_STRING, "video");
+  prop_set(m, "loading", PROP_SET_INT, 0);
+  prop_ref_dec(m);
   return 0;
 }
 
