@@ -21,6 +21,8 @@ CPU=generic
 ARCH=`uname -m`
 MACOSXTARGET=""
 MACOSXSDK=""
+CC=cc
+CXX=c++
 
 show_help(){
   common_help
@@ -80,36 +82,11 @@ for opt do
   esac
 done
 
+
 setup_env "$@"
 
 enable libpthread
 enable zlib
-
-#
-# c compiler
-#
-checkcc() {
-    cat >$TMPDIR/1.c <<EOF
-int main() {
-  return 0;
-}
-EOF
-    $CC 2>/dev/null $TMPDIR/1.c -o $TMPDIR/1.bin 
-}
-
-if [ "x$CC" != "x" ]; then
-    echo >>${CONFIG_MAK} "CC=$CC"
-    CC="$CC"
-else
-    CC="cc"
-fi
-
-if checkcc; then 
-    echo "Using C compiler:      $CC"
-else
-    echo "C compiler ($CC) is not working"
-    die
-fi
 
 #
 # Check SDK path and set target version
