@@ -59,7 +59,7 @@ glw_grid_layout(glw_grid_t *gg, glw_rctx_t *rc)
 
 
   float ypos = -rc->rc_height * scale * 0.5;
-  float offset = rc->rc_height / 2 - gg->filtered_ytile * scale * rc->rc_height - (gg->filtered_ytile * gg->spacing);
+  float offset = round(rc->rc_height / 2 - gg->filtered_ytile * scale * rc->rc_height - (gg->filtered_ytile * gg->spacing));
   int ytile = 0;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
@@ -71,10 +71,7 @@ glw_grid_layout(glw_grid_t *gg, glw_rctx_t *rc)
 
     rc0.rc_height = row_height;
 
-    if(c->glw_parent_pos > -rc->rc_height / 2 &&
-       c->glw_parent_pos <  rc->rc_height * 1.5) {
-      glw_layout0(c, &rc0);
-    }
+    glw_layout0(c, &rc0);
 
     if(c == gg->scroll_to_me) {
       gg->scroll_to_me = NULL;
@@ -109,9 +106,8 @@ glw_grid_render(glw_t *w, const glw_rctx_t *rc)
     if(c->glw_flags & GLW_HIDDEN)
       continue;
 
-    if(c->glw_parent_pos > -rc->rc_height / 2 &&
-       c->glw_parent_pos <  rc->rc_height * 1.5) {
-
+    if(c->glw_parent_pos + c->glw_parent_height > 0 &&
+       c->glw_parent_pos < rc->rc_height) {
       glw_rctx_t rc0 = *rc;
 
       glw_reposition(&rc0,

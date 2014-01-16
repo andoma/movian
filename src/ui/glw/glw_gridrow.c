@@ -65,7 +65,7 @@ glw_gridrow_layout(glw_gridrow_t *ggr, glw_rctx_t *rc)
   const float col_width = rc->rc_width * scale;
 
   float xpos = 0;
-  float offset = rc->rc_width / 2 - gg->filtered_xtile * scale * rc->rc_width - col_width / 2 - (gg->filtered_xtile * ggr->spacing);
+  float offset = round(rc->rc_width / 2 - gg->filtered_xtile * scale * rc->rc_width - col_width / 2 - (gg->filtered_xtile * ggr->spacing));
   int xtile = 0;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
@@ -77,10 +77,7 @@ glw_gridrow_layout(glw_gridrow_t *ggr, glw_rctx_t *rc)
 
     rc0.rc_width = col_width;
 
-    if(c->glw_parent_pos > -rc->rc_width / 2 &&
-       c->glw_parent_pos <  rc->rc_width * 1.5) {
-      glw_layout0(c, &rc0);
-    }
+    glw_layout0(c, &rc0);
 
     if(c == ggr->scroll_to_me) {
       ggr->scroll_to_me = NULL;
@@ -115,8 +112,8 @@ glw_gridrow_render(glw_t *w, const glw_rctx_t *rc)
     if(c->glw_flags & GLW_HIDDEN)
       continue;
 
-    if(c->glw_parent_pos > -rc->rc_width / 2 &&
-       c->glw_parent_pos <  rc->rc_width * 1.5) {
+    if(c->glw_parent_pos + c->glw_parent_width > 0 &&
+       c->glw_parent_pos < rc->rc_width) {
       glw_rctx_t rc0 = *rc;
 
       glw_reposition(&rc0,
