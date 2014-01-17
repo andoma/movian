@@ -5017,7 +5017,7 @@ glwf_delay(glw_view_eval_context_t *ec, struct token *self,
 static void
 glwf_delay_ctor(struct token *self)
 {
-  self->t_extra = calloc(1, sizeof(glwf_changed_extra_t));
+  self->t_extra = calloc(1, sizeof(glwf_delay_extra_t));
 }
 
 
