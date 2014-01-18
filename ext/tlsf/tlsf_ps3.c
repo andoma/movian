@@ -201,6 +201,11 @@ mymalloc(size_t bytes)
   hts_mutex_lock(&mutex);
   void *r = tlsf_malloc(gpool, bytes);
   hts_mutex_unlock(&mutex);
+
+  if(r == NULL)
+    trace(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
+          "malloc(%d) failed", (int)bytes);
+
   return r;
 }
 
@@ -214,6 +219,9 @@ myrealloc(void *ptr, size_t bytes)
     tlsf_free(gpool, ptr);
 
   hts_mutex_unlock(&mutex);
+  if(r == NULL)
+    trace(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
+          "realloc(%d) failed", (int)bytes);
   return r;
 }
 
@@ -222,6 +230,9 @@ mycalloc(size_t nmemb, size_t bytes)
 {
   void *r = mymalloc(bytes * nmemb);
   memset(r, 0, bytes * nmemb);
+  if(r == NULL)
+    trace(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
+          "calloc(%d,%d) failed", (int)nmemb, (int)bytes);
   return r;
 }
 
@@ -236,6 +247,9 @@ void *mymemalign(size_t align, size_t bytes)
   hts_mutex_lock(&mutex);
   void *r = tlsf_memalign(gpool, align, bytes);
   hts_mutex_unlock(&mutex);
+  if(r == NULL)
+    trace(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
+          "memalign(%d,%d) failed", (int)align, (int)bytes);
   return r;
 }
 
