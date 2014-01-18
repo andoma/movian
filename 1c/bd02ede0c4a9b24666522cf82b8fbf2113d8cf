@@ -1,0 +1,3 @@
+Fix a long standing bug causing directory listings to sometimes be corrupted over SMB/CIFS
+
+Fixes #1011
