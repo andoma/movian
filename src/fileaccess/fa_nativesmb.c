@@ -46,7 +46,10 @@
 
 #define SMB_ECHO_INTERVAL 30
 
-#define SMBTRACE(x...) trace(0, TRACE_DEBUG, "SMB", x)
+#define SMBTRACE(x...) do {                     \
+    if(gconf.enable_smb_debug)                  \
+      trace(0, TRACE_DEBUG, "SMB", x);          \
+  } while(0)
 
 LIST_HEAD(cifs_connection_list, cifs_connection);
 LIST_HEAD(nbt_req_list, nbt_req);
@@ -70,6 +73,8 @@ typedef struct nbt_req {
   int nr_offset;
   int nr_cnt;
   int nr_last;
+  int nr_is_trans2;
+  int nr_data_count;
 } nbt_req_t;
 
 
@@ -1308,9 +1313,76 @@ smb_dispatch(void *aux)
 	break;
 
     if(nr != NULL) {
+      SMBTRACE("%s:%d Got response for mid=%d (err:0x%08x len:%d%s)",
+               cc->cc_hostname, cc->cc_port, mid,
+               letoh_32(h->errorcode), len, 
+               nr->nr_is_trans2 ? ", TRANS2" : "");
+
+      if(nr->nr_is_trans2 && h->errorcode == 0 &&
+         len >= sizeof(TRANS2_reply_t)) {
+
+        // We do reassembly of TRANS2 here
+        const TRANS2_reply_t *tr = (const TRANS2_reply_t *)buf;
+
+        int total_count = letoh_16(tr->total_data_count);
+
+        nr->nr_data_count += letoh_16(tr->data_count);
+
+        if(nr->nr_response == NULL) {
+
+          // We can't deal with any parameters that's not sent in
+          // first packet
+          if(tr->total_param_count != tr->param_count) {
+            TRACE(TRACE_ERROR, "SMB",
+                  "%s:%d Unable to reassemble trans2, param count err:%d,%d",
+                  cc->cc_hostname, cc->cc_port,
+                  letoh_16(tr->total_param_count),
+                  letoh_16(tr->param_count));
+
+          bad_trans2:
+            nr->nr_result = 1;
+            free(buf);
+            free(nr->nr_response);
+            nr->nr_response = NULL;
+            nr->nr_response_len = 0;
+            hts_cond_broadcast(&cc->cc_cond);
+            hts_mutex_unlock(&smb_global_mutex);
+            continue;
+          }
+
+
+          nr->nr_response = buf;
+          nr->nr_response_len = len;
+        } else {
+          void *payload = buf + sizeof(TRANS2_reply_t);
+          int payload_len = len - sizeof(TRANS2_reply_t);
+          if(payload_len < 0) {
+            TRACE(TRACE_ERROR, "SMB",
+                  "%s:%d Unable to reassemble trans2, payload_len=%d",
+                  cc->cc_hostname, cc->cc_port, payload_len);
+            goto bad_trans2;
+          }
+
+          nr->nr_response = realloc(nr->nr_response,
+                                    nr->nr_response_len + payload_len);
+
+          memcpy(nr->nr_response + nr->nr_response_len,
+                 payload, payload_len);
+          nr->nr_response_len += payload_len;
+          free(buf);
+        }
+
+        if(nr->nr_data_count < total_count) {
+          hts_mutex_unlock(&smb_global_mutex);
+          continue; // Not complete yet
+        }
+
+      } else {
+        nr->nr_response = buf;
+        nr->nr_response_len = len;
+      }
+
       nr->nr_result = 0;
-      nr->nr_response = buf;
-      nr->nr_response_len = len;
       hts_cond_broadcast(&cc->cc_cond);
 
     } else {
@@ -1471,14 +1543,15 @@ cifs_get_connection(const char *hostname, int port, char *errbuf, size_t errlen,
  *
  */
 static nbt_req_t *
-nbt_async_req(cifs_connection_t *cc, void *request, int request_len)
+nbt_async_req(cifs_connection_t *cc, void *request, int request_len,
+              int is_trans2)
 {
   SMB_t *h = request + 4;
-  nbt_req_t *nr = malloc(sizeof(nbt_req_t));
+  nbt_req_t *nr = calloc(1, sizeof(nbt_req_t));
 
   nr->nr_result = -1;
-  nr->nr_response = NULL;
   nr->nr_mid = cc->cc_mid_generator++;
+  nr->nr_is_trans2 = is_trans2;
   h->pid = htole_16(2);
   h->mid = htole_16(nr->nr_mid);
   nbt_write(cc, request, request_len);
@@ -1494,9 +1567,10 @@ nbt_async_req(cifs_connection_t *cc, void *request, int request_len)
 static int
 nbt_async_req_reply(cifs_connection_t *cc,
 		    void *request, int request_len,
-		    void **responsep, int *response_lenp)
+		    void **responsep, int *response_lenp,
+                    int is_trans2)
 {
-  nbt_req_t *nr = nbt_async_req(cc, request, request_len);
+  nbt_req_t *nr = nbt_async_req(cc, request, request_len, is_trans2);
 
   while(nr->nr_result == -1) {
     if(hts_cond_wait_timeout(&cc->cc_cond, &smb_global_mutex, NBT_TIMEOUT)) {
@@ -1686,7 +1760,7 @@ smb_tree_connect_andX(cifs_connection_t *cc, const char *share,
     hts_cond_init(&ct->ct_cond, &smb_global_mutex);
     ct->ct_status = CT_CONNECTING;
 
-    if(nbt_async_req_reply(cc, req, tlen, &rbuf, &rlen)) {
+    if(nbt_async_req_reply(cc, req, tlen, &rbuf, &rlen, 0)) {
       ct->ct_status = CT_ERROR;
       snprintf(ct->ct_errbuf, sizeof(ct->ct_errbuf), "Connection lost");
     } else {
@@ -1865,6 +1939,7 @@ check_smb_error(cifs_tree_t *ct, void *rbuf, size_t rlen, size_t runt_lim,
 
   if(errcode) {
     snprintf(errbuf, errlen, "SMB Error 0x%08x", errcode);
+    SMBTRACE("Error: 0x%08x", errcode);
     free(rbuf);
     cifs_release_tree(ct, 0);
     return -1;
@@ -1933,7 +2008,7 @@ cifs_enum_shares(cifs_connection_t *cc, fa_dir_t *fd,
 
   memcpy(&req->payload[0], "\\PIPE\\LANMAN\0\0\0WrLeh\0B13BWz\0\x01\0\xa0\x1f", 32);
 
-  if(nbt_async_req_reply(ct->ct_cc, req, tlen, &rbuf, &rlen))
+  if(nbt_async_req_reply(ct->ct_cc, req, tlen, &rbuf, &rlen, 0))
     return release_tree_io_error(ct, errbuf, errlen);
   
   if(check_smb_error(ct, rbuf, rlen, sizeof(TRANS_reply_t), errbuf, errlen))
@@ -2034,7 +2109,7 @@ cifs_delete(const char *url, char *errbuf, size_t errlen, int dir)
   void *rbuf;
   int rlen;
   
-  if(nbt_async_req_reply(ct->ct_cc, reqbuf, tlen, &rbuf, &rlen)) {
+  if(nbt_async_req_reply(ct->ct_cc, reqbuf, tlen, &rbuf, &rlen, 0)) {
     snprintf(errbuf, errlen, "I/O error");
     cifs_release_tree(ct, 1);
     return -1;
@@ -2074,7 +2149,7 @@ cifs_stat(cifs_tree_t *ct, const char *filename, fa_stat_t *fs,
     req->level_of_interest = htole_16(0x101+i);
     utf8_to_smb(ct->ct_cc, req->data, fname);
 
-    if(nbt_async_req_reply(ct->ct_cc, req, tlen, &rbuf, &rlen))
+    if(nbt_async_req_reply(ct->ct_cc, req, tlen, &rbuf, &rlen, 1))
       return release_tree_io_error(ct, errbuf, errlen);
 
     if(check_smb_error(ct, rbuf, rlen, sizeof(TRANS2_reply_t), errbuf, errlen))
@@ -2177,8 +2252,7 @@ cifs_scandir(cifs_tree_t *ct, const char *path, fa_dir_t *fd,
       tlen = sizeof(SMB_TRANS2_FIND_req_t) + 1;
     }
 
-
-    if(nbt_async_req_reply(ct->ct_cc, req, tlen, &rbuf, &rlen))
+    if(nbt_async_req_reply(ct->ct_cc, req, tlen, &rbuf, &rlen, 1))
       return release_tree_io_error(ct, errbuf, errlen);
 
     if(check_smb_error(ct, rbuf, rlen, sizeof(TRANS2_reply_t), errbuf, errlen))
@@ -2319,7 +2393,7 @@ smb_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
   req->name_len = htole_16(plen - cc->cc_unicode - 1);
   req->byte_count = htole_16(plen + cc->cc_unicode);
   
-  if(nbt_async_req_reply(ct->ct_cc, req, tlen, &rbuf, &rlen)) {
+  if(nbt_async_req_reply(ct->ct_cc, req, tlen, &rbuf, &rlen, 0)) {
     snprintf(errbuf, errlen, "I/O error");
     cifs_release_tree(ct, 1);
     return NULL;
@@ -2414,7 +2488,7 @@ smb_read(fa_handle_t *fh, void *buf, size_t size)
     req->wordcount = 12;
     req->andx_command = 0xff;
 
-    nr = nbt_async_req(ct->ct_cc, req, sizeof(SMB_READ_ANDX_req_t));
+    nr = nbt_async_req(ct->ct_cc, req, sizeof(SMB_READ_ANDX_req_t), 0);
     LIST_INSERT_HEAD(&reqs, nr, nr_multi_link);
 
     nr->nr_offset = total;
@@ -2607,7 +2681,8 @@ cifs_periodic(struct callout *c, void *opaque)
   req->data[0] = 0x13;
   req->data[1] = 0x37;
   
-  if(!nbt_async_req_reply(cc, req, sizeof(EchoRequest_t) + 2, &rbuf, &rlen)) {
+  if(!nbt_async_req_reply(cc, req, sizeof(EchoRequest_t) + 2,
+                          &rbuf, &rlen, 0)) {
     //  EchoReply_t *resp = rbuf;
     //uint32_t errcode = letoh_32(resp->hdr.errorcode);
     free(rbuf);

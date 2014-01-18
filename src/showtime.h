@@ -236,6 +236,7 @@ typedef struct gconf {
   int enable_ftp_debug;
   int enable_cec_debug;
   int enable_fa_scanner_debug;
+  int enable_smb_debug;
 
   const char *devplugin;
   const char *plugin_repo;

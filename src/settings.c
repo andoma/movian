@@ -1181,7 +1181,10 @@ init_dev_settings(void)
 	       "cecdebug", &gconf.enable_cec_debug);
 
   add_dev_bool(s, "Debug directory listing",
-	       "cecdebug", &gconf.enable_fa_scanner_debug);
+	       "fascannerdebug", &gconf.enable_fa_scanner_debug);
+
+  add_dev_bool(s, "Debug SMB/CIFS (Windows File Sharing)",
+	       "smbdebug", &gconf.enable_smb_debug);
 
   setting_create(SETTING_STRING, gconf.settings_dev, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE_CSTR("Network log destination"),
