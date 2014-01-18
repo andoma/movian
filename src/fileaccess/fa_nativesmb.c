@@ -1325,6 +1325,15 @@ smb_dispatch(void *aux)
         const TRANS2_reply_t *tr = (const TRANS2_reply_t *)buf;
 
         int total_count = letoh_16(tr->total_data_count);
+        int count = letoh_16(tr->param_count) + letoh_16(tr->data_count);
+
+        if(count > len - sizeof(TRANS2_reply_t)) {
+          TRACE(TRACE_ERROR, "SMB",
+                "%s:%d malformed trans2, %d > %d",
+                cc->cc_hostname, cc->cc_port,
+                count, len - sizeof(TRANS2_reply_t));
+          goto bad_trans2;
+        }
 
         nr->nr_data_count += letoh_16(tr->data_count);
 
@@ -1352,23 +1361,22 @@ smb_dispatch(void *aux)
 
 
           nr->nr_response = buf;
-          nr->nr_response_len = len;
+          nr->nr_response_len = count + sizeof(TRANS2_reply_t);
         } else {
           void *payload = buf + sizeof(TRANS2_reply_t);
-          int payload_len = len - sizeof(TRANS2_reply_t);
-          if(payload_len < 0) {
+          if(count < 0) {
             TRACE(TRACE_ERROR, "SMB",
-                  "%s:%d Unable to reassemble trans2, payload_len=%d",
-                  cc->cc_hostname, cc->cc_port, payload_len);
+                  "%s:%d Unable to reassemble trans2, total_count=%d",
+                  cc->cc_hostname, cc->cc_port, count);
             goto bad_trans2;
           }
 
           nr->nr_response = realloc(nr->nr_response,
-                                    nr->nr_response_len + payload_len);
+                                    nr->nr_response_len + count);
 
           memcpy(nr->nr_response + nr->nr_response_len,
-                 payload, payload_len);
-          nr->nr_response_len += payload_len;
+                 payload, count);
+          nr->nr_response_len += count;
           free(buf);
         }
 
