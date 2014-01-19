@@ -36,7 +36,7 @@ static const char *READMETXT =
   "This is Showtime's virtual file system\n"
   "\n"
   "To add stuff here go to Settings -> Bookmarks in Showtime's UI\n"
-  "and mark items as 'Publised in Virtual File System'\n";
+  "and mark items as 'Published in Virtual File System'\n";
 
 /**
  *
