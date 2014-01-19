@@ -2085,6 +2085,9 @@ prop_move0(prop_t *p, prop_t *before, prop_sub_t *skipme)
   if(TAILQ_NEXT(p, hp_parent_link) != before) {
 
     parent = p->hp_parent;
+    if(parent == NULL)
+      return;
+
     TAILQ_REMOVE(&parent->hp_childs, p, hp_parent_link);
   
     if(before != NULL) {
