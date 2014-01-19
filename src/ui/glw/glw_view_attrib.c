@@ -423,6 +423,11 @@ set_float3(glw_view_eval_context_t *ec, const token_attrib_t *a,
     v[0] = v[1] = v[2] = t->t_int;
     vec3 = v;
     break;
+
+  case TOKEN_VOID:
+    v[0] = v[1] = v[2] = 0;
+    vec3 = v;
+    break;
   default:
     return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a vec3, got %s",
 			   a->name, token2name(t));

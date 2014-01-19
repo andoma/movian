@@ -3891,9 +3891,12 @@ glwf_fmt(glw_view_eval_context_t *ec, struct token *self,
   if((a = token_resolve(ec, a)) == NULL)
     return -1;
   
-  if((fmt = token_as_string(a)) == NULL)
-    return glw_view_seterr(ec->ei, a,
-			   "fmt() first argument is not a string");
+  if((fmt = token_as_string(a)) == NULL) {
+    r = eval_alloc(self, ec, TOKEN_RSTRING);
+    r->t_rstring = rstr_alloc("");
+    eval_push(ec, r);
+    return 0;
+  }
 
   num_res_args = argc - 1;
   if(num_res_args > 0) {
