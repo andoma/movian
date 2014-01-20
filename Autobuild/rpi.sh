@@ -61,6 +61,7 @@ build()
     fi
 
 
+    set +e
     which ccache >/dev/null
     if [ $? -eq 0 ]; then
 	echo "Using ccache"
@@ -69,20 +70,18 @@ build()
     else
 	USE_CCACHE=""
     fi
-
-
-
-
+    set -e
 
     set -x
-
     ./configure.rpi --build=${TARGET} \
 	--toolchain="${TOOLCHAIN}/bin/arm-linux-gnueabihf-" \
 	--sysroot="${SYSROOT}" \
 	${RELEASE} \
 	--cleanbuild \
-	${USE_CCACHE}
+	${USE_CCACHE} \
+        --downloadcache="${WORKINGDIR}/downloadcache"
 
+    set +x
     make ${JARGS} BUILD=${TARGET} squashfs
 
     artifact build.${TARGET}/showtime.sqfs sqfs application/octet-stream showtime.sqfs

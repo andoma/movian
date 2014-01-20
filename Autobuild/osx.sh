@@ -1,5 +1,6 @@
 build()
 {
+    set +e
     which ccache >/dev/null
     if [ $? -eq 0 ]; then
 	echo "Using ccache"
@@ -9,8 +10,13 @@ build()
     else
 	USE_CCACHE=""
     fi
+    set -e
 
-    ./configure.osx ${RELEASE} --cleanbuild ${USE_CCACHE}
+    set -x
+    ./configure.osx ${RELEASE} --cleanbuild ${USE_CCACHE} \
+        --downloadcache="${WORKINGDIR}/downloadcache"
+
+    set +x
     make ${JARGS} dist
     artifact build.osx/Showtime.dmg dmg application/octet-stream Showtime.dmg
 

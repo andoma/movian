@@ -14,6 +14,7 @@
 TOPDIR=`pwd`
 BUILD=${CONFIGURE_POSTFIX}
 TMPDIR=${TOPDIR}/tmp
+DOWNLOADCACHE=${TOPDIR}/.downloadcache
 GLW_DEFAULT_SKIN="default"
 DEFAULT_LOGTARGET=""
 
@@ -173,8 +174,8 @@ cp_if_changed(){
 download_file() {
     local __resultvar=$2
     local URL_HASH=`echo "$1" | ${SHASUM}  | awk '{print $1}'`
-    mkdir -p ${TOPDIR}/.downloadcache
-    local DLPATH=${TOPDIR}/.downloadcache/${URL_HASH}
+    mkdir -p "${DOWNLOADCACHE}"
+    local DLPATH="${DOWNLOADCACHE}/${URL_HASH}"
     if [ ! -f "${DLPATH}" ]; then
 	echo "Downloading $1"
 	curl -f -L -o "${DLPATH}" "$1" || die_cause "Unable to download file" 
@@ -193,12 +194,12 @@ common_help(){
   echo "Standard options:"
   echo "  --help                   Print this message"
   echo "  --build=BUILD            Build in build.BUILD [build.$BUILD]"
-  echo "  --jobs=N                 Allow N jobs at once"
   echo "  --release                Stage for release"
   echo "  --cleanbuild             Erase builddir before configuring"
   echo "  --ccache                 Enable use of ccache"
   echo "  --extra-cflags           Extra cflags"
   echo "  --extra-ldflags          Extra ldflags"
+  echo "  --downloadcache          Where to download files during build [$DOWNLOADCACHE]"
   echo ""
   echo "Platform specific options:"
 }
@@ -214,6 +215,8 @@ common_opt(){
   --extra-cflags=*) EXTRA_CFLAGS="$2"
   ;;
   --extra-ldflags=*) EXTRA_LDFLAGS="$2"
+  ;;
+  --downloadcache=*) DOWNLOADCACHE="$2"
   ;;
 
   --enable-?*|--disable-?*)

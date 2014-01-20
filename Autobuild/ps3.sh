@@ -49,7 +49,12 @@ build()
 	USE_CCACHE=""
     fi
 
-    ./configure.ps3 ${JOBSARGS} --build=${TARGET} ${RELEASE} --cleanbuild ${USE_CCACHE}
+    ./configure.ps3 --build=${TARGET} \
+        ${RELEASE} \
+        --cleanbuild \
+        ${USE_CCACHE} \
+        --downloadcache="${WORKINGDIR}/downloadcache"
+
 
     make ${JARGS} BUILD=${TARGET} pkg self
     artifact build.${TARGET}/showtime.self self application/octect-stream showtime.self
