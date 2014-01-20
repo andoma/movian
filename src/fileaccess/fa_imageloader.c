@@ -472,6 +472,7 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
     
     if(cb != NULL && cb(opaque, 0, 1)) {
       snprintf(errbuf, errlen, "Aborted");
+      av_free_packet(&pkt);
       break;
     }
 
@@ -516,6 +517,7 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
     if(pm == NULL) {
       ifv_close();
       snprintf(errbuf, errlen, "Out of memory");
+      av_free(frame);
       return NULL;
     }
 
@@ -527,6 +529,7 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
       ifv_close();
       snprintf(errbuf, errlen, "Scaling failed");
       pixmap_release(pm);
+      av_free(frame);
       return NULL;
     }
     
