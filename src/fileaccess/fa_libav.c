@@ -32,10 +32,7 @@ static int
 fa_libav_read(void *opaque, uint8_t *buf, int size)
 {
   fa_handle_t *fh = opaque;
-  int r = fa_read(fh, buf, size);
-  if(r != size)
-    TRACE(TRACE_DEBUG, "libav", "Short read wanted:%d got:%d", size, r);
-  return r;
+  return fa_read(fh, buf, size);
 }
 
 
@@ -49,10 +46,7 @@ fa_libav_seek(void *opaque, int64_t offset, int whence)
   if(whence == AVSEEK_SIZE)
     return fa_fsize(fh);
 
-  int64_t pos = fa_seek(fh, offset, whence & ~AVSEEK_FORCE);
-  if(pos == -1)
-    TRACE(TRACE_DEBUG, "libav", "Seek %"PRId64",%d failed", offset, whence);
-  return pos;
+  return fa_seek(fh, offset, whence & ~AVSEEK_FORCE);
 }
 
 
