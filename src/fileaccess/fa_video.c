@@ -499,6 +499,9 @@ build_chapters(media_pipe_t *mp, AVFormatContext *fctx, const char *url)
   char buf[URL_MAX];
 
   int items = fctx->nb_chapters;
+
+  TRACE(TRACE_DEBUG, "Video", "%d chapters", items);
+
   seek_index_t *si = mymalloc(sizeof(seek_index_t) +
 			      sizeof(seek_item_t) * items);
   if(si == NULL)
