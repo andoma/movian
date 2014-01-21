@@ -81,7 +81,7 @@ typedef struct ftp_file {
 } ftp_file_t;
 
 #define FTP_TRACE(x...) do {                  \
-    if(gconf.enable_ftp_debug)                \
+    if(gconf.enable_ftp_client_debug)         \
       TRACE(TRACE_DEBUG, "FTP", x);           \
   } while(0)
 

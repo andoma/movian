@@ -233,7 +233,8 @@ typedef struct gconf {
   int enable_experimental;
   int enable_detailed_avdiff;
   int enable_hls_debug;
-  int enable_ftp_debug;
+  int enable_ftp_client_debug;
+  int enable_ftp_server_debug;
   int enable_cec_debug;
   int enable_fa_scanner_debug;
   int enable_smb_debug;

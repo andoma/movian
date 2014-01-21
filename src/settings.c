@@ -1174,8 +1174,11 @@ init_dev_settings(void)
   add_dev_bool(s, "Debug HLS",
 	       "hlsdebug", &gconf.enable_hls_debug);
 
-  add_dev_bool(s, "Debug FTP",
-	       "ftpdebug", &gconf.enable_ftp_debug);
+  add_dev_bool(s, "Debug FTP Client",
+	       "ftpdebug", &gconf.enable_ftp_client_debug);
+
+  add_dev_bool(s, "Debug FTP Server",
+	       "ftpserverdebug", &gconf.enable_ftp_server_debug);
 
   add_dev_bool(s, "Debug CEC",
 	       "cecdebug", &gconf.enable_cec_debug);

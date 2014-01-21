@@ -47,7 +47,6 @@ typedef struct ftp_connection {
 
   char *fc_wd;
 
-  char fc_debug;
   char fc_type;
   char fc_eol[3];
 
@@ -193,7 +192,7 @@ ftp_write(ftp_connection_t *fc, int code, const char *fmt, ...)
   len += vsnprintf(buf + len, sizeof(buf) - len, fmt, ap);
   va_end(ap);
 
-  if(fc->fc_debug)
+  if(gconf.enable_ftp_server_debug)
     TRACE(code >= 400 ? TRACE_ERROR : TRACE_DEBUG,
           "FTP-SERVER", "SEND: %s", buf);
 
@@ -385,7 +384,7 @@ cmd_CWD(ftp_connection_t *fc, char *args)
     err = 1;
   }
 
-  if(fc->fc_debug) {
+  if(gconf.enable_ftp_server_debug) {
 
     if(!err)
       TRACE(TRACE_DEBUG, "FTP-SERVER", "CHDIR: '%s' OK", newpath);
@@ -523,7 +522,7 @@ cmd_LIST(ftp_connection_t *fc, char *args)
     path = fc->fc_wd;
   }
 
-  if(fc->fc_debug)
+  if(gconf.enable_ftp_server_debug)
     TRACE(TRACE_DEBUG, "FTP-SERVER", "Listing '%s'", path);
 
   fa_dir_t *fd = ftp_server_scandir(path, errbuf, sizeof(errbuf));
@@ -872,7 +871,7 @@ ftp_session(void *aux)
     if(tcp_read_line(fc->fc_tc, buf, sizeof(buf)))
       break;
 
-    if(fc->fc_debug)
+    if(gconf.enable_ftp_server_debug)
       TRACE(TRACE_DEBUG, "FTP-SERVER", "RECV: %s", buf);
 
     char *args = strchr(buf, ' ');
@@ -930,7 +929,6 @@ ftp_accept(void *opaque, int fd, const net_addr_t *local_addr,
   fc->fc_tc = tcp_from_fd(fd);
   fc->fc_local_addr  = *local_addr;
   fc->fc_remote_addr = *remote_addr;
-  fc->fc_debug = 1;
   fc->fc_accept_socket = -1;
   set_wd(fc, "/");
   set_type(fc, 'A');
