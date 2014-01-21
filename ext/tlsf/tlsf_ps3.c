@@ -9,7 +9,7 @@
 #include "ext/tlsf/tlsf.h"
 #include "networking/http_server.h"
 
-#define GPOOL_SIZE (80 * 1024 * 1024)
+#define GPOOL_SIZE (96 * 1024 * 1024)
 
 static int memstats(http_connection_t *hc, const char *remain, void *opaque,
 		    http_cmd_t method);
@@ -202,10 +202,11 @@ mymalloc(size_t bytes)
   void *r = tlsf_malloc(gpool, bytes);
   hts_mutex_unlock(&mutex);
 
-  if(r == NULL)
+  if(r == NULL) {
     trace(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
           "malloc(%d) failed", (int)bytes);
-
+    errno = ENOMEM;
+  }
   return r;
 }
 
@@ -219,9 +220,11 @@ myrealloc(void *ptr, size_t bytes)
     tlsf_free(gpool, ptr);
 
   hts_mutex_unlock(&mutex);
-  if(r == NULL)
+  if(r == NULL) {
     trace(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
           "realloc(%d) failed", (int)bytes);
+    errno = ENOMEM;
+  }
   return r;
 }
 
@@ -230,14 +233,14 @@ mycalloc(size_t nmemb, size_t bytes)
 {
   void *r = mymalloc(bytes * nmemb);
   memset(r, 0, bytes * nmemb);
-  if(r == NULL)
+  if(r == NULL) {
     trace(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
           "calloc(%d,%d) failed", (int)nmemb, (int)bytes);
+    errno = ENOMEM;
+  }
   return r;
 }
 
-
-void *mymemalign(size_t align, size_t bytes);
 
 void *mymemalign(size_t align, size_t bytes)
 {
@@ -247,15 +250,14 @@ void *mymemalign(size_t align, size_t bytes)
   hts_mutex_lock(&mutex);
   void *r = tlsf_memalign(gpool, align, bytes);
   hts_mutex_unlock(&mutex);
-  if(r == NULL)
+  if(r == NULL) {
     trace(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
           "memalign(%d,%d) failed", (int)align, (int)bytes);
+    errno = ENOMEM;
+  }
   return r;
 }
 
-
-
-void myfree(void *ptr);
 
 void myfree(void *ptr)
 {
