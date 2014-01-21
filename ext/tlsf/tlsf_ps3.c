@@ -3,6 +3,7 @@
 #include <psl1ght/lv2.h>
 #include <malloc.h>
 #include <limits.h>
+#include <errno.h>
 
 #include "arch/threads.h"
 #include "showtime.h"
