@@ -260,6 +260,8 @@ void *mymemalign(size_t align, size_t bytes)
 }
 
 
+void myfree(void *ptr);
+
 void myfree(void *ptr)
 {
   if(ptr == NULL)
