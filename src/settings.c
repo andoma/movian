@@ -1188,7 +1188,10 @@ init_dev_settings(void)
 
   add_dev_bool(s, "Debug SMB/CIFS (Windows File Sharing)",
 	       "smbdebug", &gconf.enable_smb_debug);
-
+#ifdef PS3
+  add_dev_bool(s, "Log memory usage",
+	       "memdebug", &gconf.enable_mem_debug);
+#endif
   setting_create(SETTING_STRING, gconf.settings_dev, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE_CSTR("Network log destination"),
                  SETTING_CALLBACK(set_netlog, NULL),

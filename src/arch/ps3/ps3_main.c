@@ -102,6 +102,20 @@ memlogger_fn(callout_t *co, void *aux)
   prop_set_int(prop_create(memprop, "activeMem"), mi.uordblks / 1024);
   prop_set_int(prop_create(memprop, "inactiveMem"), mi.fordblks / 1024);
 
+  if(gconf.enable_mem_debug) {
+    TRACE(TRACE_DEBUG, "MEM",
+          "SysTotal: %d kB, "
+          "SysFree: %d kB, "
+          "Memory Used: %d kB, "
+          "Fragments: %d kB, "
+          "Inactive: %d kB",
+          meminfo.total / 1024,
+          meminfo.avail / 1024,
+          mi.uordblks / 1024,
+          mi.ordblks / 1024,
+          mi.fordblks / 1024);
+  }
+
   if(meminfo.avail < LOW_MEM_LOW_WATER && !low_mem_warning) {
     low_mem_warning = 1;
     notify_add(NULL, NOTIFY_ERROR, NULL, 5,
