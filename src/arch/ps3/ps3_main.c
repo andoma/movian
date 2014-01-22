@@ -107,12 +107,12 @@ memlogger_fn(callout_t *co, void *aux)
           "SysTotal: %d kB, "
           "SysFree: %d kB, "
           "Memory Used: %d kB, "
-          "Fragments: %d kB, "
+          "Fragments: %d, "
           "Inactive: %d kB",
           meminfo.total / 1024,
           meminfo.avail / 1024,
           mi.uordblks / 1024,
-          mi.ordblks / 1024,
+          mi.ordblks,
           mi.fordblks / 1024);
   }
 
