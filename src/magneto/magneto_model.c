@@ -19,6 +19,7 @@ static char auth_header[512];
 static hts_mutex_t auth_mutex;
 
 static prop_t *magneto_prop_root;
+static prop_t *magneto_prop_error;
 static prop_t *magneto_prop_categories;
 
 TAILQ_HEAD(magneto_category_queue, magneto_category);
@@ -291,30 +292,30 @@ category_add(const char *id, const char *type, const char *title,
 /**
  *
  */
-static void
-categories_load(void)
+static int
+categories_load(char *errbuf, int errlen)
 {
+  char reqerrbuf[512];
   int r;
-  char errbuf[512];
   buf_t *result;
 
   r = http_req(MAGNETO_WEBGATE"magneto-categories-view/v1/categories/ipad",
                HTTP_ARG("f", "json"),
                HTTP_RESULT_PTR(&result),
-               HTTP_ERRBUF(errbuf, sizeof(errbuf)),
+               HTTP_ERRBUF(reqerrbuf, sizeof(reqerrbuf)),
                NULL);
 
   if(r) {
-    TRACE(TRACE_ERROR, MAGNETO_LOG, "categories failed -- %s", errbuf);
-    return;
+    snprintf(errbuf, errlen,  "categories failed -- %s", reqerrbuf);
+    return -1;
   }
 
   htsmsg_t *doc = htsmsg_json_deserialize(buf_cstr(result));
   buf_release(result);
 
   if(doc == NULL) {
-    TRACE(TRACE_ERROR, MAGNETO_LOG, "categories failed to decode JSON");
-    return;
+    snprintf(errbuf, errlen, "categories failed to decode JSON");
+    return -1;
   }
 
   htsmsg_t *categories = htsmsg_get_list(doc, "categories");
@@ -358,6 +359,8 @@ categories_load(void)
     }
   }
   htsmsg_destroy(doc);
+
+  return 0;
 }
 
 
@@ -369,12 +372,26 @@ categories_load(void)
 static void *
 magneto_model_thread(void *aux)
 {
-  categories_load();
-  //   prop_print_tree(magneto_prop_root, 1);
+  char errbuf[512];
+
+  while(1) {
+    if(categories_load(errbuf, sizeof(errbuf))) {
+      prop_set_string(magneto_prop_error, errbuf);
+      TRACE(TRACE_ERROR, MAGNETO_LOG, "%s", errbuf);
+      break;
+    } else {
+      prop_set_void(magneto_prop_error);
+    }
+
+    //prop_print_tree(magneto_prop_root, 1);
+
+    sleep(10);
+  }
+
   while(1) {
     sleep(1);
-
   }
+
   return NULL;
 }
 
@@ -391,6 +408,7 @@ magneto_model_init(void)
   http_auth_req_register(&magneto_auth);
 
   magneto_prop_root = prop_create(prop_get_global(), "magneto");
+  magneto_prop_error = prop_create(magneto_prop_root, "error");
   magneto_prop_categories = prop_create(magneto_prop_root, "categories");
 
   hts_thread_create_detached("magnetomodel", magneto_model_thread, NULL,

@@ -4,111 +4,119 @@ onEvent(back, {
   $view.zoom = 0;
 });
 
-widget(grid, {
-  spacing: 10;
-  childScale: 0.3 + iir($view.zoom * 0.7, 10);
+widget(container_z, {
+  widget(grid, {
+    spacing: 10;
+    childScale: 0.3 + iir($view.zoom * 0.7, 10);
 
-  $view.currentTileY = getTileY();
+    $view.currentTileY = getTileY();
 
-  cloner($global.magneto.categories, container_y, {
+    cloner($global.magneto.categories, container_y, {
 
-    widget(expander_y, {
-      expansion: 1 - iir(select($view.zoom, 1, 0), 10);
-      alpha:     1 - iir(select($view.zoom, 1, 0), 10);
-      widget(label, {
-        bold: true;
-        sizeScale: 2;
-        padding: [40, 0];
-        caption: $self.title;
-      });
-    });
-
-    widget(gridrow, {
-
-      $view.currentTileX = getTileX();
-
-      spacing: 10;
-      childScale: 0.2 + iir($view.zoom * 0.8, 10);
-
-      cloner($self.stories, container_z, {
-
-        focusable: true;
-
-        onEvent(activate, {
-          $view.zoom = 1;
+      widget(expander_y, {
+        expansion: 1 - iir(select($view.zoom, 1, 0), 10);
+        alpha:     1 - iir(select($view.zoom, 1, 0), 10);
+        widget(label, {
+          bold: true;
+          sizeScale: 2;
+          padding: [40, 0];
+          caption: $self.title;
         });
+      });
 
-        $clone.activation = select(isFocused(),
-                                   select($view.zoom, 0, 2),
-                                   select(abs(getTileX() - $view.currentTileX) + abs(getTileY() - $view.currentTileY) == 1, 2, 3));
+      widget(gridrow, {
 
-        widget(deck, {
+        $view.currentTileX = getTileX();
 
-          // The icon page
+        spacing: 10;
+        childScale: 0.2 + iir($view.zoom * 0.8, 10);
 
-          effect: blend;
-          time: 1;
-          noInitialTransform: true;
+        cloner($self.stories, container_z, {
 
-          widget(container_z, {
+          focusable: true;
 
-            alpha: iir(isFocused(), 3) * 0.5 + 0.5;
+          onEvent(activate, {
+            $view.zoom = 1;
+          });
 
-            widget(quad, {
-              alpha: iir(isFocused(), 3);
-            });
+          $clone.activation = select(isFocused(),
+                                     select($view.zoom, 0, 2),
+                                     select(abs(getTileX() - $view.currentTileX) + abs(getTileY() - $view.currentTileY) == 1, 2, 3));
 
-            widget(image, {
-              source: $self.icon;
-            });
+          widget(deck, {
 
-            widget(container_y, {
-              space(1);
+            // The icon page
 
-              widget(container_z, {
+            effect: blend;
+            time: 1;
+            noInitialTransform: true;
 
-                height: $ui.size;
+            widget(container_z, {
 
-                widget(quad, {
-                  alpha: 0.8;
-                  color: 0;
-                });
+              alpha: iir(isFocused(), 3) * 0.5 + 0.5;
 
-                widget(label, {
-                  align: center;
-                  bold: true;
-                  caption: $self.title;
+              widget(quad, {
+                alpha: iir(isFocused(), 3);
+              });
+
+              widget(image, {
+                source: $self.icon;
+              });
+
+              widget(container_y, {
+                space(1);
+
+                widget(container_z, {
+
+                  height: $ui.size;
+
+                  widget(quad, {
+                    alpha: 0.8;
+                    color: 0;
+                  });
+
+                  widget(label, {
+                    align: center;
+                    bold: true;
+                    caption: $self.title;
+                  });
                 });
               });
             });
-          });
 
-          // The video page
+            // The video page
 
-          widget(container_z, {
+            widget(container_z, {
 
-            widget(video, {
-              dpadSeek: false;
-              id: $self.title;
-              source: $self.videouri;
-              activation: $clone.activation; 
+              widget(video, {
+                dpadSeek: false;
+                id: $self.title;
+                source: $self.videouri;
+                activation: $clone.activation;
+              });
             });
+            page: $view.zoom;
           });
-          page: $view.zoom;
-        });
 
-        widget(label, {
-          align: center;
-          bold: true;
-          sizeScale: 2;
-          caption: translate($clone.activation, "???",
-                             0, "Full play",
-                             1, "Low play",
-                             2, "Prefetch",
-                             3, "Idle");
+          widget(label, {
+            align: center;
+            bold: true;
+            sizeScale: 2;
+            caption: translate($clone.activation, "???",
+                               0, "Full play",
+                               1, "Low play",
+                               2, "Prefetch",
+                               3, "Idle");
 
+          });
         });
       });
     });
+  });
+
+  widget(label, {
+    align: center;
+    caption: $global.magneto.error;
+    hidden: $global.magneto.error == void;
   });
 });
