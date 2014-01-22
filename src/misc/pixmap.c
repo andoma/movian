@@ -804,7 +804,7 @@ pixmap_box_blur(pixmap_t *pm, int boxw, int boxh)
 
 
 
-  tmp = malloc(ls * h * sizeof(unsigned int));
+  tmp = mymalloc(ls * h * sizeof(unsigned int));
   if(tmp == NULL)
     return;
 
@@ -1047,7 +1047,7 @@ pixmap_drop_shadow(pixmap_t *pm, int boxw, int boxh)
     return;
   }
 
-  tmp = malloc(pm->pm_width * pm->pm_height * sizeof(unsigned int));
+  tmp = mymalloc(pm->pm_width * pm->pm_height * sizeof(unsigned int));
   if(tmp == NULL)
     return;
 
