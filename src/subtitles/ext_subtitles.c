@@ -446,9 +446,13 @@ load_sub(const char *url, char *buf, size_t len, int force_utf8,
     outbuf[4] = TR_CODE_OUTLINE_COLOR | subtitle_settings.outline_color;
     int outptr = 5;
 
-    while(*s && outptr <= 1000) {
-      if(*s == '{') {
-        s++;
+    while(outptr <= 1000) {
+
+      int c = utf8_get((const char **)&s);
+      if(c == 0)
+        break;
+
+      if(c == '{') {
 
         int doreset = 0;
 
@@ -495,9 +499,8 @@ load_sub(const char *url, char *buf, size_t len, int force_utf8,
 
         if(*s)
           s++;
-        continue;
 
-      } else if(*s == '|') {
+      } else if(c == '|') {
         outbuf[outptr++] = '\n';
 
         if(reset_color) {
@@ -521,9 +524,8 @@ load_sub(const char *url, char *buf, size_t len, int force_utf8,
         }
 
       } else {
-        outbuf[outptr++] = *s;
+        outbuf[outptr++] = c;
       }
-      s++;
     }
 
 
