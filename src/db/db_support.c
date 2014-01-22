@@ -599,6 +599,34 @@ db_log(void *aux, int code, const char *str)
         "SQLITE", "%s (code: %d)", str, code);
 }
 
+#if 0
+#include "misc/callout.h"
+
+static callout_t memlogger;
+
+static void
+memlogger_fn(callout_t *co, void *aux)
+{
+  callout_arm(&memlogger, memlogger_fn, NULL, 1);
+
+  int dyn_current, dyn_highwater;
+  int pgc_current, pgc_highwater;
+  int scr_current, scr_highwater;
+
+  sqlite3_status(SQLITE_STATUS_MEMORY_USED,
+                 &dyn_current, &dyn_highwater, 0);
+  sqlite3_status(SQLITE_STATUS_PAGECACHE_USED,
+                 &pgc_current, &pgc_highwater, 0);
+  sqlite3_status(SQLITE_STATUS_SCRATCH_USED,
+                 &scr_current, &scr_highwater, 0);
+
+  TRACE(TRACE_DEBUG, "SQLITE", "Mem %d (%d)  PGC: %d (%d) Scratch: %d (%d)",
+        dyn_current, dyn_highwater,
+        pgc_current, pgc_highwater,
+        scr_current, scr_highwater);
+
+}
+#endif
 
 void
 db_init(void)
@@ -608,5 +636,12 @@ db_init(void)
   sqlite3_config(SQLITE_CONFIG_MUTEX, &sqlite_mutexes);
 #endif
   sqlite3_config(SQLITE_CONFIG_LOG, &db_log, NULL);
+
   sqlite3_initialize();
+#ifdef PS3
+  sqlite3_soft_heap_limit(2000000);
+#endif
+#if 0
+  callout_arm(&memlogger, memlogger_fn, NULL, 1);
+#endif
 }
