@@ -34,7 +34,55 @@ static void __attribute__((constructor)) mallocsetup(void)
   http_path_add("/showtime/memstats", NULL, memstats, 1);
 }
 
+typedef struct memstats {
+  int used;
+  int free;
+  int segs;
+} memstats_t;
 
+
+static void
+mywalker(void *ptr, size_t size, int used, void *user)
+{
+  memstats_t *ms = user;
+  if(used)
+    ms->used += size;
+  else {
+    ms->free += size;
+    ms->segs++;
+  }
+}
+
+
+struct mallinfo mallinfo(void)
+{
+  struct mallinfo mi;
+  memstats_t ms = {0};
+  mi.arena =  GPOOL_SIZE;
+
+  hts_mutex_lock(&mutex);
+  tlsf_walk_heap(gpool, mywalker, &ms);
+  hts_mutex_unlock(&mutex);
+
+  mi.ordblks = ms.segs;
+  mi.uordblks = ms.used;
+  mi.fordblks = ms.free;
+  return mi;
+}
+
+
+static void
+memtrace(void)
+{
+  memstats_t ms = {0};
+  hts_mutex_lock(&mutex);
+  tlsf_walk_heap(gpool, mywalker, &ms);
+  hts_mutex_unlock(&mutex);
+
+  trace(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
+        "Memory allocator status -- Used: %d Free: %d Segments: %d",
+        ms.used, ms.free, ms.segs);
+}
 
 void *malloc(size_t bytes)
 {
@@ -45,8 +93,10 @@ void *malloc(size_t bytes)
   hts_mutex_lock(&mutex);
   r = tlsf_malloc(gpool, bytes);
   hts_mutex_unlock(&mutex);
-  if(r == NULL)
+  if(r == NULL) {
+    memtrace();
     panic("OOM: malloc(%d)", (int)bytes);
+  }
   return r;
 }
 
@@ -66,8 +116,10 @@ void *realloc(void *ptr, size_t bytes)
   hts_mutex_lock(&mutex);
   r = tlsf_realloc(gpool, ptr, bytes);
   hts_mutex_unlock(&mutex);
-  if(r == NULL && bytes > 0)
+  if(r == NULL && bytes > 0) {
+    memtrace();
     panic("OOM: realloc(%p, %d)", ptr, (int)bytes);
+  }
   return r;
 }
 
@@ -81,8 +133,10 @@ void *memalign(size_t align, size_t bytes)
   hts_mutex_lock(&mutex);
   r = tlsf_memalign(gpool, align, bytes);
   hts_mutex_unlock(&mutex);
-  if(r == NULL)
+  if(r == NULL) {
+    memtrace();
     panic("OOM: memalign(%d, %d)", (int)align, (int)bytes);
+  }
   return r;
 }
 
@@ -122,41 +176,6 @@ void *_realloc_r(struct _reent *r, void *ptr, size_t size)
 	return realloc(ptr, size);
 }
 
-typedef struct memstats {
-  int used;
-  int free;
-  int segs;
-} memstats_t;
-
-
-static void
-mywalker(void *ptr, size_t size, int used, void *user)
-{
-  memstats_t *ms = user;
-  if(used)
-    ms->used += size;
-  else {
-    ms->free += size;
-    ms->segs++;
-  }
-}
-
-
-struct mallinfo mallinfo(void)
-{
-  struct mallinfo mi;
-  memstats_t ms = {0};
-  mi.arena =  GPOOL_SIZE;
-
-  hts_mutex_lock(&mutex);
-  tlsf_walk_heap(gpool, mywalker, &ms);
-  hts_mutex_unlock(&mutex);
-
-  mi.ordblks = ms.segs;
-  mi.uordblks = ms.used;
-  mi.fordblks = ms.free;
-  return mi;
-}
 
 static int
 memstats(http_connection_t *hc, const char *remain, void *opaque,
@@ -204,6 +223,7 @@ mymalloc(size_t bytes)
   hts_mutex_unlock(&mutex);
 
   if(r == NULL) {
+    memtrace();
     trace(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
           "malloc(%d) failed", (int)bytes);
     errno = ENOMEM;
@@ -222,6 +242,7 @@ myrealloc(void *ptr, size_t bytes)
 
   hts_mutex_unlock(&mutex);
   if(r == NULL) {
+    memtrace();
     trace(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
           "realloc(%d) failed", (int)bytes);
     errno = ENOMEM;
@@ -235,6 +256,7 @@ mycalloc(size_t nmemb, size_t bytes)
   void *r = mymalloc(bytes * nmemb);
   memset(r, 0, bytes * nmemb);
   if(r == NULL) {
+    memtrace();
     trace(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
           "calloc(%d,%d) failed", (int)nmemb, (int)bytes);
     errno = ENOMEM;
@@ -252,6 +274,7 @@ void *mymemalign(size_t align, size_t bytes)
   void *r = tlsf_memalign(gpool, align, bytes);
   hts_mutex_unlock(&mutex);
   if(r == NULL) {
+    memtrace();
     trace(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
           "memalign(%d,%d) failed", (int)align, (int)bytes);
     errno = ENOMEM;
