@@ -2469,6 +2469,12 @@ JS_GC(JSContext *cx)
     js_GC(cx, GC_NORMAL);
 }
 
+extern JS_PUBLIC_API(int)
+JS_GCBytes(JSRuntime *r)
+{
+    return r->gcBytes;
+}
+
 JS_PUBLIC_API(void)
 JS_MaybeGC(JSContext *cx)
 {

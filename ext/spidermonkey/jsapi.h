@@ -1099,6 +1099,9 @@ JS_DumpHeap(JSContext *cx, FILE *fp, void* startThing, uint32 startKind,
 extern JS_PUBLIC_API(void)
 JS_GC(JSContext *cx);
 
+extern JS_PUBLIC_API(int)
+JS_GCBytes(JSRuntime *r);
+
 extern JS_PUBLIC_API(void)
 JS_MaybeGC(JSContext *cx);
 

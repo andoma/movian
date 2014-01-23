@@ -88,6 +88,8 @@ typedef struct js_context_private {
 
 void js_load(const char *url);
 
+int js_get_mem_usage(void);
+
 JSContext *js_newctx(JSErrorReporter er);
 
 htsmsg_t *js_htsmsg_from_object(JSContext *cx, JSObject *obj);

@@ -1543,6 +1543,14 @@ js_load(const char *url)
 			     THREAD_PRIO_MODEL);
 }
 
+/**
+ *
+ */
+int
+js_get_mem_usage(void)
+{
+  return JS_GCBytes(runtime);
+}
 
 /**
  *
