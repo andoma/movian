@@ -85,6 +85,12 @@ widget(container_y, {
                    fmt("%d kB", $global.system.mem.systotal));
           InfoLine(_("System Free"),
                    fmt("%d kB", $global.system.mem.sysfree));
+          InfoLine(_("Fragmentation"),
+                   fmt("%d", $global.system.mem.unusedChunks),
+		   isVoid($global.system.mem.unusedChunks));
+          InfoLine(_("Inactive mem"),
+                   fmt("%d kB", $global.system.mem.inaciveMem),
+                   isVoid($global.system.mem.inaciveMem));
           InfoLine(_("CPU Temp"),
                    fmt("%d°C", $global.system.temp.cpu),
 		   isVoid($global.system.temp.cpu));
