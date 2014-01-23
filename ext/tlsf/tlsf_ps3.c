@@ -37,7 +37,12 @@ static void __attribute__((constructor)) mallocsetup(void)
 typedef struct memstats {
   int used;
   int free;
-  int segs;
+  int used_segs;
+  int free_segs;
+
+  uint16_t hist_used[33];
+  uint16_t hist_free[33];
+
 } memstats_t;
 
 
@@ -45,11 +50,16 @@ static void
 mywalker(void *ptr, size_t size, int used, void *user)
 {
   memstats_t *ms = user;
-  if(used)
+  const int clz = __builtin_clz(size);
+
+  if(used) {
     ms->used += size;
-  else {
+    ms->used_segs++;
+    ms->hist_used[clz]++;
+  } else {
     ms->free += size;
-    ms->segs++;
+    ms->free_segs++;
+    ms->hist_free[clz]++;
   }
 }
 
@@ -64,7 +74,7 @@ struct mallinfo mallinfo(void)
   tlsf_walk_heap(gpool, mywalker, &ms);
   hts_mutex_unlock(&mutex);
 
-  mi.ordblks = ms.segs;
+  mi.ordblks = ms.free_segs;
   mi.uordblks = ms.used;
   mi.fordblks = ms.free;
   return mi;
@@ -80,8 +90,20 @@ memtrace(void)
   hts_mutex_unlock(&mutex);
 
   trace(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
-        "Memory allocator status -- Used: %d Free: %d Segments: %d",
-        ms.used, ms.free, ms.segs);
+        "Memory allocator status -- Used: %d (%d segs) Free: %d (%d segs)",
+        ms.used, ms.used_segs, ms.free, ms.free_segs);
+
+#if ENABLE_SPIDERMONKEY
+  extern int js_get_mem_usage(void);
+  trace(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
+        "Memory used by Spidermonkey: %d bytes", js_get_mem_usage());
+#endif
+
+  for(int i = 0; i < 33; i++) {
+    trace(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
+          "%d: %8d %8d",
+          i, ms.hist_used[i], ms.hist_free[i]);
+  }
 }
 
 void *malloc(size_t bytes)
@@ -189,8 +211,8 @@ memstats(http_connection_t *hc, const char *remain, void *opaque,
   hts_mutex_unlock(&mutex);
   
   htsbuf_queue_init(&out, 0);
-  htsbuf_qprintf(&out, "Used: %d, Free: %d, Segments: %d\n",
-		 ms.used, ms.free, ms.segs);
+  htsbuf_qprintf(&out, "Used: %d (%d segs), Free: %d (%d segs)\n",
+		 ms.used, ms.used_segs, ms.free, ms.free_segs);
 
   return http_send_reply(hc, 0, "text/ascii", NULL, NULL, 0, &out);
 }
