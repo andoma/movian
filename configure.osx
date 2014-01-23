@@ -89,12 +89,12 @@ enable zlib
 # c compiler
 #
 checkcc() {
-    cat >$TMPDIR/1.c <<EOF
+    cat >$CONFIG_TMP/1.c <<EOF
 int main() {
   return 0;
 }
 EOF
-    $CC 2>/dev/null $TMPDIR/1.c -o $TMPDIR/1.bin 
+    $CC 2>/dev/null $CONFIG_TMP/1.c -o $CONFIG_TMP/1.bin
 }
 
 if [ "x$CC" != "x" ]; then

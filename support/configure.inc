@@ -13,7 +13,6 @@
 
 TOPDIR=`pwd`
 BUILD=${CONFIGURE_POSTFIX}
-TMPDIR=${TOPDIR}/tmp
 GLW_DEFAULT_SKIN="default"
 DEFAULT_LOGTARGET=""
 MKSQUASHFS="mksquashfs"
@@ -94,7 +93,7 @@ CONFIG_LIST="
 "
 
 cleanup() {
-    rm -rf $TMPDIR
+    rm -rf $CONFIG_TMP
 }
 
 die() {
@@ -254,6 +253,8 @@ setup_env(){
     if [ -z ${BUILDDIR+X} ]; then
 	    BUILDDIR=build.${BUILD}
     fi
+    
+    CONFIG_TMP=${BUILDDIR}/tmp
 
     if enabled cleanbuild; then
 	echo "Cleaning builddir: ${BUILDDIR}"
@@ -284,8 +285,8 @@ setup_env(){
     mkdir -p ${EXT_INSTALL_DIR}/include ${EXT_INSTALL_DIR}/lib
 
     # Create a tmpdir used during configure
-    mkdir -p ${TMPDIR}
-    TMPDIR=`cd ${TMPDIR} && pwd`
+    mkdir -p ${CONFIG_TMP}
+    CONFIG_TMP=`cd ${CONFIG_TMP} && pwd`
 
     # Create config.mak
     cat > ${CONFIG_MAK} << EOF 

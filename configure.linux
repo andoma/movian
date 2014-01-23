@@ -48,32 +48,32 @@ show_help(){
 
 
 check_header() {
-    cat >$TMPDIR/1.c <<EOF
+    cat >$CONFIG_TMP/1.c <<EOF
 #include <$1>
 int main() {
  return 0;
 }
 EOF
-    $CC 2>/dev/null $TMPDIR/1.c -o $TMPDIR/1.bin
+    $CC 2>/dev/null $CONFIG_TMP/1.c -o $CONFIG_TMP/1.bin
 }
 
 check_header_cpp() {
-    cat >$TMPDIR/1.cpp <<EOF
+    cat >$CONFIG_TMP/1.cpp <<EOF
 #include <$1>
 int main() {
  return 0;
 }
 EOF
-    $CXX $TMPDIR/1.cpp -o $TMPDIR/1.bin
+    $CXX $CONFIG_TMP/1.cpp -o $CONFIG_TMP/1.bin
 }
 
 check_lib() {
-    cat >$TMPDIR/1.c <<EOF
+    cat >$CONFIG_TMP/1.c <<EOF
 int main() {
  return 0;
 }
 EOF
-    $CC 2>/dev/null $TMPDIR/1.c -o $TMPDIR/1.bin -l$1
+    $CC 2>/dev/null $CONFIG_TMP/1.c -o $CONFIG_TMP/1.bin -l$1
 }
 
 fatal() {
@@ -185,23 +185,23 @@ fi
 #
 
 checkcc() {
-    cat >$TMPDIR/1.c <<EOF
+    cat >$CONFIG_TMP/1.c <<EOF
 int main() {
  return 0;
 }
 EOF
-    $CC 2>/dev/null $TMPDIR/1.c -o $TMPDIR/1.bin 
+    $CC 2>/dev/null $CONFIG_TMP/1.c -o $CONFIG_TMP/1.bin
 }
     
 
 
 checkcxx() {
-    cat >$TMPDIR/1.cpp <<EOF
+    cat >$CONFIG_TMP/1.cpp <<EOF
 int main() {
  return 0;
 }
 EOF
-    $CXX 2>/dev/null $TMPDIR/1.cpp -o $TMPDIR/1.bin 
+    $CXX 2>/dev/null $CONFIG_TMP/1.cpp -o $CONFIG_TMP/1.bin
 }
     
 
