@@ -505,10 +505,17 @@ EOF
 	echo >>${CONFIG_MAK} "CFLAGS_cfg += -DUSE_POLARSSL"
     fi
 
-
     # Generate default skin path for GLW
     if enabled glw; then
-	echo >>${CONFIG_MAK} "BUNDLES+=glwskins/${GLW_DEFAULT_SKIN}"
+	echo >>${CONFIG_MAK} "BUNDLES+=glwskins/default"
+    fi
+
+    if enabled magneto; then
+        GLW_DEFAULT_SKIN="magneto"
+        echo >>${CONFIG_MAK} "BUNDLES+=glwskins/magneto"
+    fi
+
+    if enabled glw; then
 	echo >>${CONFIG_H} "#define SHOWTIME_GLW_DEFAULT_SKIN \""${GLW_DEFAULT_SKIN}"\""
     fi
 
@@ -519,7 +526,7 @@ EOF
 
     # Fonts
     echo >>${CONFIG_MAK} "BUNDLES+=resources/fonts"
-    
+
     # SVG icons
     echo >>${CONFIG_MAK} "BUNDLES+=resources/svg"
 
@@ -528,11 +535,6 @@ EOF
 
     # Static web resources
     echo >>${CONFIG_MAK} "BUNDLES+=resources/static"
-
-
-    if enabled magneto; then
-        echo >>${CONFIG_MAK} "BUNDLES+=glwskins/magneto"
-    fi
 
     # sqlite
     if enabled sqlite_vfs; then
