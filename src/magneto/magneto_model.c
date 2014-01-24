@@ -378,9 +378,9 @@ magneto_model_thread(void *aux)
     if(categories_load(errbuf, sizeof(errbuf))) {
       prop_set_string(magneto_prop_error, errbuf);
       TRACE(TRACE_ERROR, MAGNETO_LOG, "%s", errbuf);
-      break;
     } else {
       prop_set_void(magneto_prop_error);
+      break;
     }
 
     //prop_print_tree(magneto_prop_root, 1);
