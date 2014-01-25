@@ -123,8 +123,10 @@ glw_video_widget_event(event_t *e, glw_video_t *gv)
     return 1;
   }
 
-  if(event_is_type(e, EVENT_UNICODE) && eu->val == 32) {
-    // Convert [space] into playpause
+  if((event_is_type(e, EVENT_UNICODE) && eu->val == 32) ||
+     (event_is_action(e, ACTION_ACTIVATE) && !gv->gv_spu_in_menu &&
+      gv->gv_flags & GLW_VIDEO_DPAD_SEEK)) {
+    // Convert event into playpause
     e = event_create_action(ACTION_PLAYPAUSE);
     mp_enqueue_event(mp, e);
     event_release(e);
