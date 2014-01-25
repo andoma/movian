@@ -756,6 +756,9 @@ attempt_upgrade(int accept_patch)
 static void *
 install_thread(void *aux)
 {
+  if(showtime_download_url == NULL)
+    return NULL;
+
 #if CONFIG_BSPATCH
   int r = attempt_upgrade(1);
   if(r != -1)
@@ -873,6 +876,10 @@ upgrade_init(void)
   upgrade_progress = prop_create(upgrade_root, "progress");
   upgrade_error    = prop_create(upgrade_root, "error");
   upgrade_task     = prop_create(upgrade_root, "task");
+
+  // Set status to "upToDate" until we know better
+
+  prop_set_string(upgrade_status, "upToDate");
 
 
   htsmsg_t *store;
