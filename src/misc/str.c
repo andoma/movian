@@ -819,13 +819,19 @@ utf8_from_bytes(const char *str, int len, const charset_t *cs,
   for(i = 0; i < len; i++) {
     if(str[i] == 0)
       break;
-    olen += utf8_put(NULL, cp ? cp[(uint8_t)str[i]] : str[i]);
+    int c = cp ? cp[(uint8_t)str[i]] : str[i];
+    if(c == 0)
+      c = 0xfffd;
+    olen += utf8_put(NULL, c);
   }
   d = r = malloc(olen + 1);
   for(i = 0; i < len; i++) {
     if(str[i] == 0)
       break;
-    d += utf8_put(d, cp ? cp[(uint8_t)str[i]] : str[i]);
+    int c = cp ? cp[(uint8_t)str[i]] : str[i];
+    if(c == 0)
+      c = 0xfffd;
+    d += utf8_put(d, c);
   }
   *d = 0;
   return r;
