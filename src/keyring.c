@@ -130,7 +130,8 @@ keyring_lookup(const char *id, char **username, char **password,
     prop_set_string(prop_create(p, "source"), source);
     prop_set_string(prop_create(p, "reason"), reason);
     prop_set_int(prop_create(p, "disableUsername"), username == NULL);
-    prop_set_int(prop_create(p, "disableDomain"), domain == NULL);
+    prop_set_int(prop_create(p, "disablePassword"), password == NULL);
+    prop_set_int(prop_create(p, "disableDomain"),   domain   == NULL);
 
     prop_set_int(prop_create(p, "canRemember"),
 		 !!(flags & KEYRING_SHOW_REMEMBER_ME));
@@ -186,10 +187,12 @@ keyring_lookup(const char *id, char **username, char **password,
 	rstr_release(r);
       }
 
-      r = prop_get_string(pass, NULL);
-      htsmsg_add_str(m, "password", r ? rstr_get(r) : "");
-      *password = strdup(r ? rstr_get(r) : "");
-      rstr_release(r);
+      if(password != NULL) {
+        r = prop_get_string(pass, NULL);
+        htsmsg_add_str(m, "password", r ? rstr_get(r) : "");
+        *password = strdup(r ? rstr_get(r) : "");
+        rstr_release(r);
+      }
 
       if(parent != NULL) {
 	htsmsg_add_msg(parent, id, m);

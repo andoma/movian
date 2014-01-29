@@ -50,10 +50,12 @@ widget(container_x, {
 	);
 
 	widget(label, {
+	  hidden: $self.disablePassword;
 	  caption: _("Password");
 	});
       
 	popupInputField(
+	  hidden: $self.disablePassword;
 	  widget(text, {
 	    description: _("Password");
 	    id: "password";
