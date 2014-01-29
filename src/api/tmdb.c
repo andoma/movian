@@ -174,7 +174,7 @@ tmdb_configure(void)
 			     "api_key", TMDB_APIKEY,
 			       "language", getlang(),
 			       NULL, NULL},
-			   FA_COMPRESSION);
+			   FA_COMPRESSION | FA_IMPORTANT);
 
     if(result == NULL) {
       TRACE(TRACE_INFO, "TMDB", "Unable to get configuration -- %s", errbuf);

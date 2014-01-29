@@ -32,7 +32,10 @@ int blobcache_get_meta(const char *key, const char *stash,
 		       char **etag, time_t *mtime);
 
 int blobcache_put(const char *key, const char *stash, buf_t *buf,
-		  int maxage, const char *etag, time_t mtime);
+		  int maxage, const char *etag, time_t mtime,
+                  int flags);
+
+#define BLOBCACHE_IMPORTANT_ITEM 0x1
 
 void blobcache_init(void);
 

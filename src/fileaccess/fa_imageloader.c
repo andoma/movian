@@ -362,7 +362,7 @@ write_thumb(const AVCodecContext *src, const AVFrame *sframe,
   int r = avcodec_encode_video2(ctx, &out, oframe, &got_packet);
   if(r >= 0 && got_packet) {
     buf_t *b = buf_create_and_adopt(out.size, out.data, &av_free);
-    blobcache_put(cacheid, "videothumb", b, INT32_MAX, NULL, mtime);
+    blobcache_put(cacheid, "videothumb", b, INT32_MAX, NULL, mtime, 0);
     buf_release(b);
   } else {
     assert(out.data == NULL);

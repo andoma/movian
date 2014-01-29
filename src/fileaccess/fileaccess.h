@@ -134,6 +134,8 @@ LIST_HEAD(fa_protocol_list, fa_protocol);
 #define FA_APPEND          0x800  /* Only if FA_WRITE:
                                      Seek to EOF when opening
                                      otherwise truncate */
+#define FA_IMPORTANT       0x1000
+
 
 /**
  *

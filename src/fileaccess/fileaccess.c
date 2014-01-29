@@ -1375,7 +1375,13 @@ fa_load(const char *url, const char **vpaths,
 
     if(data2 && cache_control != DISABLE_CACHE &&
        (cache_control || max_age || etag || mtime)) {
-      no_change = blobcache_put(url, "fa_load", data2, max_age, etag, mtime);
+
+      int bc_flags = 0;
+      if(flags & FA_IMPORTANT)
+        bc_flags |= BLOBCACHE_IMPORTANT_ITEM;
+
+      no_change = blobcache_put(url, "fa_load", data2, max_age, etag, mtime,
+                                bc_flags);
 
     } else {
       no_change = 0;

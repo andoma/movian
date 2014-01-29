@@ -43,7 +43,10 @@
 #include "settings.h"
 #include "notifications.h"
 
-#define BC2_MAGIC_current 0x62630206
+// Flags
+
+#define BC2_MAGIC_07      0x62630207
+#define BC2_MAGIC_06      0x62630206
 #define BC2_MAGIC_05      0x62630205
 
 typedef struct blobcache_item {
@@ -56,9 +59,10 @@ typedef struct blobcache_item {
   uint32_t bi_modtime;
   uint32_t bi_size;
   uint8_t bi_content_type_len;
+  uint8_t bi_flags;
 } blobcache_item_t;
 
-typedef struct blobcache_diskitem {
+typedef struct blobcache_diskitem_06 {
   uint64_t di_key_hash;
   uint64_t di_content_hash;
   uint32_t di_lastaccess;
@@ -68,7 +72,20 @@ typedef struct blobcache_diskitem {
   uint8_t di_etaglen;
   uint8_t di_content_type_len;
   uint8_t di_etag[0];
-} __attribute__((packed)) blobcache_diskitem_t;
+} __attribute__((packed)) blobcache_diskitem_06_t;
+
+typedef struct blobcache_diskitem_07 {
+  uint64_t di_key_hash;
+  uint64_t di_content_hash;
+  uint32_t di_lastaccess;
+  uint32_t di_expiry;
+  uint32_t di_modtime;
+  uint32_t di_size;
+  uint8_t di_flags;
+  uint8_t di_etaglen;
+  uint8_t di_content_type_len;
+  uint8_t di_etag[0];
+} __attribute__((packed)) blobcache_diskitem_07_t;
 
 
 TAILQ_HEAD(blobcache_flush_queue, blobcache_flush);
@@ -175,7 +192,7 @@ save_index(void)
   uint8_t *out, *base;
   int i;
   blobcache_item_t *p;
-  blobcache_diskitem_t *di;
+  blobcache_diskitem_07_t *di;
   size_t siz;
 
   if(!index_dirty)
@@ -192,7 +209,7 @@ save_index(void)
 
   for(i = 0; i < ITEM_HASH_SIZE; i++) {
     for(p = hashvector[i]; p != NULL; p = p->bi_link) {
-      siz += sizeof(blobcache_diskitem_t);
+      siz += sizeof(blobcache_diskitem_07_t);
       siz += p->bi_etag ? strlen(p->bi_etag) : 0;
       items++;
     }
@@ -203,7 +220,7 @@ save_index(void)
     close(fd);
     return;
   }
-  *(uint32_t *)out = BC2_MAGIC_current;
+  *(uint32_t *)out = BC2_MAGIC_07;
   out += 4;
   *(uint32_t *)out = items;
   out += 4;
@@ -212,16 +229,17 @@ save_index(void)
   for(i = 0; i < ITEM_HASH_SIZE; i++) {
     for(p = hashvector[i]; p != NULL; p = p->bi_link) {
       const int etaglen = p->bi_etag ? strlen(p->bi_etag) : 0;
-      di = (blobcache_diskitem_t *)out;
+      di = (blobcache_diskitem_07_t *)out;
       di->di_key_hash     = p->bi_key_hash;
       di->di_content_hash = p->bi_content_hash;
       di->di_lastaccess   = p->bi_lastaccess;
       di->di_expiry       = p->bi_expiry;
       di->di_modtime      = p->bi_modtime;
       di->di_size         = p->bi_size;
+      di->di_flags        = p->bi_flags;
       di->di_etaglen      = etaglen;
       di->di_content_type_len = p->bi_content_type_len;
-      out += sizeof(blobcache_diskitem_t);
+      out += sizeof(blobcache_diskitem_07_t);
       if(etaglen) {
 	memcpy(out, p->bi_etag, etaglen);
 	out += etaglen;
@@ -260,7 +278,6 @@ load_index(void)
   void *base;
   int i;
   blobcache_item_t *p;
-  blobcache_diskitem_t *di;
   struct stat st;
   uint8_t digest[20];
 
@@ -305,8 +322,13 @@ load_index(void)
   int items = *(uint32_t *)in;
   in += 4;
 
+  TRACE(TRACE_DEBUG, "blobcache", "Cache magic 0x%08x %d items", magic, items);
+
   switch(magic) {
-  case BC2_MAGIC_current: {
+  case BC2_MAGIC_06:
+    TRACE(TRACE_INFO, "blobcache", "Upgrading from older format 0x%08x", magic);
+    // FALLTHRU
+  case BC2_MAGIC_07: {
     if(*(uint32_t *)in > time(NULL)) {
       TRACE(TRACE_INFO, "blobcache",
 	    "Clock going backwards, throwing away cache");
@@ -329,19 +351,44 @@ load_index(void)
 
 
   for(i = 0; i < items; i++) {
-    di = (blobcache_diskitem_t *)in;
     p = pool_get(item_pool);
+    int etaglen;
 
-    p->bi_key_hash     = di->di_key_hash;
-    p->bi_content_hash = di->di_content_hash;
-    p->bi_lastaccess   = di->di_lastaccess;
-    p->bi_expiry       = di->di_expiry;
-    p->bi_modtime      = di->di_modtime;
-    p->bi_size         = di->di_size;
-    p->bi_content_type_len = di->di_content_type_len;
-    int etaglen        = di->di_etaglen;
+    switch(magic) {
+    case BC2_MAGIC_05:
+    case BC2_MAGIC_06: {
+      const blobcache_diskitem_06_t *di = (blobcache_diskitem_06_t *)in;
 
-    in += sizeof(blobcache_diskitem_t);
+      p->bi_key_hash         = di->di_key_hash;
+      p->bi_content_hash     = di->di_content_hash;
+      p->bi_lastaccess       = di->di_lastaccess;
+      p->bi_expiry           = di->di_expiry;
+      p->bi_modtime          = di->di_modtime;
+      p->bi_size             = di->di_size;
+      p->bi_content_type_len = di->di_content_type_len;
+      p->bi_flags            = 0;
+      etaglen                = di->di_etaglen;
+      in += sizeof(blobcache_diskitem_06_t);
+    }
+      break;
+
+    case BC2_MAGIC_07: {
+      const blobcache_diskitem_07_t *di = (blobcache_diskitem_07_t *)in;
+
+      p->bi_key_hash         = di->di_key_hash;
+      p->bi_content_hash     = di->di_content_hash;
+      p->bi_lastaccess       = di->di_lastaccess;
+      p->bi_expiry           = di->di_expiry;
+      p->bi_modtime          = di->di_modtime;
+      p->bi_size             = di->di_size;
+      p->bi_content_type_len = di->di_content_type_len;
+      p->bi_flags            = di->di_flags;
+      etaglen                = di->di_etaglen;
+      in += sizeof(blobcache_diskitem_07_t);
+    }
+      break;
+    }
+
     if(etaglen) {
       p->bi_etag = malloc(etaglen+1);
       memcpy(p->bi_etag, in, etaglen);
@@ -364,7 +411,8 @@ load_index(void)
  */
 int
 blobcache_put(const char *key, const char *stash, buf_t *b,
-              int maxage, const char *etag, time_t mtime)
+              int maxage, const char *etag, time_t mtime,
+              int flags)
 {
   uint64_t dk = digest_key(key, stash);
   uint64_t dc = digest_content(b->b_ptr, b->b_size);
@@ -391,6 +439,7 @@ blobcache_put(const char *key, const char *stash, buf_t *b,
     p->bi_modtime = mtime;
     p->bi_expiry = now + maxage;
     p->bi_lastaccess = now;
+    p->bi_flags = flags;
     mystrset(&p->bi_etag, etag);
     hts_mutex_unlock(&cache_lock);
     return 1;
@@ -424,6 +473,7 @@ blobcache_put(const char *key, const char *stash, buf_t *b,
   current_cache_size += p->bi_size;
   p->bi_content_type_len = b->b_content_type ?
     strlen(rstr_get(b->b_content_type)) : 0;
+  p->bi_flags = flags;
   hts_mutex_unlock(&cache_lock);
   return 0;
 }
@@ -662,6 +712,13 @@ accesstimecmp(const void *A, const void *B)
 {
   const blobcache_item_t *a = *(const blobcache_item_t **)A;
   const blobcache_item_t *b = *(const blobcache_item_t **)B;
+
+  const int a_imp = !!(a->bi_flags & BLOBCACHE_IMPORTANT_ITEM);
+  const int b_imp = !!(b->bi_flags & BLOBCACHE_IMPORTANT_ITEM);
+
+  if(a_imp != b_imp)
+    return a_imp - b_imp;
+
   return a->bi_lastaccess - b->bi_lastaccess;
 }
 
