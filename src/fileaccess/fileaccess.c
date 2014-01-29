@@ -1274,7 +1274,22 @@ fileaccess_init(void)
 
 
 /**
+ * WTF does cache_control mean?
  *
+ * NULL          - Normal transparent caching (With expiry, etc)
+ *
+ * ptr to an int - If it's pointing to an int the load will stop if
+ *                 there is an entry in the cache and it is
+ *                 expired. In this case the pointed to int will be
+ *                 set to 1.
+ *
+ * DISABLE_CACHE - No cache operations at all
+ *
+ * BYPASS_CACHE - Don't read from cache. But use cache metadata when
+ *                loading object from network. This is used to refresh
+ *                objects we already know are expired. Typically
+ *                used by image loaders to refresh already displayed
+ *                expired images.
  */
 buf_t *
 fa_load(const char *url, const char **vpaths,
@@ -1342,22 +1357,35 @@ fa_load(const char *url, const char **vpaths,
       return buf;
     }
 
+    if(data2 == NULL && buf != NULL) {
+      /* We have a cached entry and failed to load the new one.
+         Return the cached entry anyway. It must be better than nothing
+      */
+      free(etag);
+      return buf;
+    }
+
     buf_release(buf);
 
-    int d;
+      /* no_change is set if we stored same object again in cache.
+         It is cheap to compute since we need to calc md5 sum of blob
+         to store anyway.
+      */
+    int no_change;
+
     if(data2 && cache_control != DISABLE_CACHE &&
        (cache_control || max_age || etag || mtime)) {
-      d = blobcache_put(url, "fa_load", data2, max_age, etag, mtime);
+      no_change = blobcache_put(url, "fa_load", data2, max_age, etag, mtime);
+
     } else {
-      d = 0;
+      no_change = 0;
     }
     free(etag);
 
-    if(cache_control == BYPASS_CACHE && d) {
+    if(cache_control == BYPASS_CACHE && no_change) {
       buf_release(data2);
       return NOT_MODIFIED;
     }
-
     return data2;
   }
 
