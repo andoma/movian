@@ -1620,6 +1620,7 @@ plugin_unload_views(plugin_t *pl)
     }
     free(pve->pve_key);
     free(pve->pve_filename);
+    prop_destroy(pve->pve_type_prop);
     prop_ref_dec(pve->pve_type_prop);
     free(pve);
   }
