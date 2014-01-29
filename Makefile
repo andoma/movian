@@ -114,6 +114,7 @@ SRCS +=	src/misc/ptrvec.c \
 	src/misc/pool.c \
 	src/misc/buf.c \
 	src/misc/charset_detector.c \
+	src/misc/big5.c \
 
 SRCS-${CONFIG_TREX} += ext/trex/trex.c
 

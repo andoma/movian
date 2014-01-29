@@ -22,7 +22,7 @@
 #include <stdint.h>
 
 #include "charset_detector.h"
-
+#include "big5.h"
 
 typedef struct ngram_lang {
     const int32_t ngrams[64];
@@ -708,6 +708,8 @@ const char *
 charset_detector(const char *str, int len, const char **lp)
 {
   int histogram[256] = {};
+  if(lp)
+    *lp = NULL;
 
   for(int i = 0; i < len; i++)
     histogram[(unsigned int)str[i]]++;
@@ -720,6 +722,12 @@ charset_detector(const char *str, int len, const char **lp)
       break;
     }
   }
+
+  if(!c1bytes) {
+    if(big5_convert(NULL, NULL, str, len, 1) > 0)
+      return "BIG5";
+  }
+
   float best_score = 0;
   const char *best = NULL;
 

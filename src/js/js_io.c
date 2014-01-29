@@ -61,6 +61,7 @@ http_response_toString(JSContext *cx, JSObject *obj, uintN argc,
 {
   js_http_response_t *jhr = JS_GetPrivate(cx, obj);
   char *tmpbuf = NULL;
+  buf_t *buf = NULL;
   int isxml;
   const charset_t *cs = NULL;
 
@@ -106,12 +107,11 @@ http_response_toString(JSContext *cx, JSObject *obj, uintN argc,
     if(cs == NULL && !utf8_verify(r))
       cs = charset_get(NULL);
   }
-  
 
   if(cs != NULL) {
     // Convert from given character set
-    r = tmpbuf = utf8_from_bytes(buf_cstr(jhr->buf), jhr->buf->b_size, cs,
-				 NULL, 0);
+    buf = utf8_from_bytes(buf_cstr(jhr->buf), jhr->buf->b_size, cs, NULL, 0);
+    r = buf_cstr(buf);
   }
 
   if(isxml && 
@@ -122,6 +122,7 @@ http_response_toString(JSContext *cx, JSObject *obj, uintN argc,
     *rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, r));
   }
   free(tmpbuf);
+  buf_release(buf);
   return JS_TRUE;
 }
 

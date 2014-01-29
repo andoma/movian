@@ -216,14 +216,14 @@ is_ass(const char *buf, size_t len)
  *
  */
 static ext_subtitles_t *
-load_srt(const char *url, const char *buf, size_t len, int force_utf8)
+load_srt(const char *url, const char *buf, size_t len)
 {
   int n;
   size_t tlen = 0;
   int64_t start, stop, pstart = -1, pstop = -1;
   linereader_t lr;
   ext_subtitles_t *es = calloc(1, sizeof(ext_subtitles_t));
-  char *txt = NULL, *tmp = NULL;
+  char *txt = NULL;
   size_t txtoff = 0;
 
   // Skip over any initial control characters (Issue #1885)
@@ -233,16 +233,7 @@ load_srt(const char *url, const char *buf, size_t len, int force_utf8)
   }
 
   TAILQ_INIT(&es->es_entries);
-
-  if(force_utf8 || utf8_verify(buf)) {
-    linereader_init(&lr, buf, len);
-  } else {
-    char how[256];
-    tmp = utf8_from_bytes(buf, len, NULL, how, sizeof(how));
-    TRACE(TRACE_INFO, "Subtitles", "%s is not valid UTF-8. %s", url, how);
-    linereader_init(&lr, tmp, strlen(tmp));
-  }
-
+  linereader_init(&lr, buf, len);
   while(1) {
     if((n = linereader_next(&lr)) < 0)
       break;
@@ -276,7 +267,6 @@ load_srt(const char *url, const char *buf, size_t len, int force_utf8)
     es_insert_text(es, txt, pstart, pstop, 1);
   }
   free(txt);
-  free(tmp);
   return es;
 }
 
@@ -409,26 +399,15 @@ is_sub(const char *buf, size_t len)
  *
  */
 static ext_subtitles_t *
-load_sub(const char *url, char *buf, size_t len, int force_utf8,
-         AVRational *fr)
+load_sub(const char *url, char *buf, size_t len, AVRational *fr)
 {
   ext_subtitles_t *es = calloc(1, sizeof(ext_subtitles_t));
-  char *tmp = NULL;
   AVRational fr0 = {25, 1};
 
   if(fr == NULL || fr->num == 0 || fr->den == 0)
     fr = &fr0;
 
   TAILQ_INIT(&es->es_entries);
-
-  if(force_utf8 || utf8_verify(buf)) {
-  } else {
-    char how[256];
-    tmp = utf8_from_bytes(buf, len, NULL, how, sizeof(how));
-    TRACE(TRACE_INFO, "Subtitles", "%s is not valid UTF-8. %s", url, how);
-    buf = tmp;
-  }
-
 
   LINEPARSE(s, buf) {
     int start, stop;
@@ -552,7 +531,6 @@ load_sub(const char *url, char *buf, size_t len, int force_utf8,
     TAILQ_INSERT_TAIL(&es->es_entries, vo, vo_link);
 
   }
-  free(tmp);
   return es;
 }
 
@@ -607,23 +585,14 @@ load_txt_line(ext_subtitles_t *es, const char *src, int len,
  *
  */
 static ext_subtitles_t *
-load_txt(const char *url, char *buf, size_t len, int force_utf8)
+load_txt(const char *url, char *buf, size_t len)
 {
   ext_subtitles_t *es = calloc(1, sizeof(ext_subtitles_t));
   linereader_t lr;
-  char *tmp;
   int n;
 
   TAILQ_INIT(&es->es_entries);
-
-  if(force_utf8 || utf8_verify(buf)) {
-    linereader_init(&lr, buf, len);
-  } else {
-    char how[256];
-    tmp = utf8_from_bytes(buf, len, NULL, how, sizeof(how));
-    TRACE(TRACE_INFO, "Subtitles", "%s is not valid UTF-8. %s", url, how);
-    linereader_init(&lr, tmp, strlen(tmp));
-  }
+  linereader_init(&lr, buf, len);
 
   while(1) {
     if((n = linereader_next(&lr)) < 0)
@@ -692,6 +661,21 @@ es_sort(ext_subtitles_t *es)
 /**
  *
  */
+static buf_t *
+convert_to_utf8(buf_t *src, const char *url)
+{
+  char how[256];
+  buf_t *b = utf8_from_bytes(buf_cstr(src), buf_len(src), NULL,
+                             how, sizeof(how));
+  TRACE(TRACE_INFO, "Subtitles", "%s is not valid UTF-8. %s", url, how);
+  buf_release(src);
+  return b;
+}
+
+
+/**
+ *
+ */
 static ext_subtitles_t *
 subtitles_create(const char *path, buf_t *buf, AVRational *fr)
 {
@@ -700,7 +684,6 @@ subtitles_create(const char *path, buf_t *buf, AVRational *fr)
     s = load_ttml(path, buf);
   } else {
 
-    int force_utf8 = 0;
     const uint8_t *u8 = buf_c8(buf);
     int off = 0;
 
@@ -708,30 +691,31 @@ subtitles_create(const char *path, buf_t *buf, AVRational *fr)
                             (u8[0] == 0xfe && u8[1] == 0xff))) {
       // UTF-16 BOM
       buf = utf16_to_utf8(buf);
-      force_utf8 = 1;
     } else if(buf_len(buf) > 3 &&
               u8[0] == 0xef && u8[1] == 0xbb && u8[2] == 0xbf) {
       // UTF-8 BOM
-      force_utf8 = 1;
       off = 3;
+    } else if(utf8_verify(buf_cstr(buf))) {
+      // It's UTF-8 clean
+    } else {
+      buf = convert_to_utf8(buf, path);
     }
 
     buf = buf_make_writable(buf);
-
     char *b0 = buf_str(buf) + off;
     int len  = buf_len(buf) - off;
 
     if(is_srt(b0, len))
-      s = load_srt(path, b0, len, force_utf8);
+      s = load_srt(path, b0, len);
     if(is_ass(b0, len))
       s = load_ssa(path, b0, len);
     if(is_sub(b0, len))
-      s = load_sub(path, b0, len, force_utf8, fr);
+      s = load_sub(path, b0, len, fr);
     if(is_txt(b0, len))
-      s = load_txt(path, b0, len, force_utf8);
+      s = load_txt(path, b0, len);
 
-    buf_release(buf);
   }
+  buf_release(buf);
 
   if(s)
     es_sort(s);

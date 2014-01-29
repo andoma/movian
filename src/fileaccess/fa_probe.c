@@ -213,10 +213,8 @@ fa_probe_spc(metadata_t *md, const uint8_t *pb, const char *filename)
 static void 
 fa_probe_psid(metadata_t *md, uint8_t *pb)
 {
-  md->md_title  = rstr_alloc(utf8_from_bytes((char *)pb + 0x16, 32, NULL,
-					     NULL, 0));
-  md->md_artist = rstr_alloc(utf8_from_bytes((char *)pb + 0x36, 32, NULL,
-					     NULL, 0));
+  md->md_title = rstr_from_bytes((char *)pb + 0x16, 32, NULL, NULL, 0);
+  md->md_artist = rstr_from_bytes((char *)pb + 0x36, 32, NULL, NULL, 0);
 }
 
 

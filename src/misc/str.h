@@ -100,12 +100,17 @@ struct buf *utf16_to_utf8(struct buf *b);
 
 typedef struct charset {
   const char *id, *title;
-  const uint16_t *ptr;
+  const uint16_t *table;
+  int (*convert)(const struct charset *cs, char *dst,
+                 const char *src, int len, int strict);
   const char **aliases;
 } charset_t;
 
-char *utf8_from_bytes(const char *str, int len, const charset_t *cs,
-		      char *msg, size_t msglen);
+struct buf *utf8_from_bytes(const char *str, int len, const charset_t *cs,
+                            char *msg, size_t msglen);
+
+struct rstr *rstr_from_bytes(const char *str, int len, const charset_t *cs,
+                             char *msg, size_t msglen);
 
 const charset_t *charset_get(const char *id);
 
