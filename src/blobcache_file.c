@@ -387,6 +387,8 @@ load_index(void)
       in += sizeof(blobcache_diskitem_07_t);
     }
       break;
+    default:
+      abort(); // Prevent compilers whining about etaglen not initialized
     }
 
     if(etaglen) {
