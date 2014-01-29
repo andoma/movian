@@ -174,6 +174,12 @@ is_srt(const char *buf, size_t len)
   int n;
   int64_t start, stop;
 
+  // Skip over any initial control characters (Issue #1885)
+  while(len && *buf && *buf < 32) {
+    len--;
+    buf++;
+  }
+
   linereader_init(&lr, buf, len);
 
   if(linereader_next(&lr) < 0)
@@ -219,7 +225,13 @@ load_srt(const char *url, const char *buf, size_t len, int force_utf8)
   ext_subtitles_t *es = calloc(1, sizeof(ext_subtitles_t));
   char *txt = NULL, *tmp = NULL;
   size_t txtoff = 0;
-  
+
+  // Skip over any initial control characters (Issue #1885)
+  while(len && *buf && *buf < 32) {
+    len--;
+    buf++;
+  }
+
   TAILQ_INIT(&es->es_entries);
 
   if(force_utf8 || utf8_verify(buf)) {
