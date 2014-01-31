@@ -5,20 +5,16 @@ maintainer: Cichy <ml.cichy@gmail.com>
 # ./ext/miner/miner.c
 #
 id: Do you like Showtime? You can donate money to the project by mining Litecoins on your PS3
-# Missing translation
-msg: 
+msg: Lubisz Showtime'a? Wspomóż go poprzez wydobywanie Litecoinów na swoim PS3
 
 id: Donate money to the Showtime project by mining litecoints
-# Missing translation
-msg: 
+msg: Wspomóż projekt poprzez wydobywanie Litecoinów
 
 id: Donations
-# Missing translation
-msg: 
+msg: Dotacje
 
 id: Show me more
-# Missing translation
-msg: 
+msg: Pokaż więcej
 
 #
 # ./glwskins/default/cmdmenu.view
@@ -358,7 +354,7 @@ id: No upgrade available
 msg: Brak aktualizacji
 
 id: Patching %s
-msg: Wgrywanie poprawki dla %s
+msg: Poprawka dla %s
 
 id: Restarting Showtime in %d seconds...
 msg: Restart Showtime za %d sekund...
@@ -466,32 +462,25 @@ msg: Głośność: %d dB
 # ./resources/spuminer/settings.view
 #
 id: Apart from enabling this option you do not need to do anything else to make your donations for the project.
-# Missing translation
-msg: 
+msg: Nie musisz nic robić po włączeniu tej opcji, aby wspomóc projekt
 
 id: Enable mining
-# Missing translation
-msg: 
+msg: Włącz wydobywanie
 
 id: For more information about Litecoin, please visit http://litecoin.org
-# Missing translation
-msg: 
+msg: Więcej informacji o Litecoinie na stronie http://litecoin.org
 
 id: If you like Showtime you can donate money to the project by letting your Playstation 3 mine Litecoins while Showtime is running.
-# Missing translation
-msg: 
+msg: Jeśli lubisz Showtime'a wspomóż projekt zezwalając na wydobywanie Litecoinów przez Playstation 3 w trakcie używania programu
 
 id: Mining will not interfere with video playback performance as it only uses the leftover capacity of the SPU processors.
-# Missing translation
-msg: 
+msg: Wydobywanie nie obciąży systemu w trakcie odtwarzania ponieważ używa tylko szczątkowych możliwości SPU
 
 id: Please consider enabling this option. / %s
-# Missing translation
-msg: 
+msg: Weź pod uwagę włączenie Tej opcji. / %s
 
 id: Thanks for your support!
-# Missing translation
-msg: 
+msg: Dziękuję za wsparcie!
 
 #
 # ./src/api/tmdb.c
