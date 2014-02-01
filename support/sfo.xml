@@ -1,10 +1,10 @@
 <?xml version="1.0" ?>
 <sfo>
 	<value name="APP_VER" type="string">
-		01.00
+		04.05
 	</value>
 	<value name="ATTRIBUTE" type="integer">
-		0
+		5
 	</value>
 	<value name="BOOTABLE" type="integer">
 		1
@@ -13,7 +13,7 @@
 		AV
 	</value>
 	<value name="LICENSE" type="string">
-		Showtime is licenced under GPLv3. For more information see http://www.lonelycoder.com/showtime
+		Showtime is licenced under GPLv3. For more information see https://showtimemediacenter/
 	</value>
 	<value name="PARENTAL_LEVEL" type="integer">
 		0
@@ -25,7 +25,7 @@
 		63
 	</value>
 	<value name="SOUND_FORMAT" type="integer">
-		279
+		791
 	</value>
 	<value name="TITLE" type="string">
 		Showtime
