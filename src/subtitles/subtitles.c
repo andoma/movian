@@ -304,6 +304,13 @@ check_subtitle_file(sub_scanner_t *ss,
 
     type = "SUB";
 
+  } else if(!strcasecmp(postfix, ".txt")) {
+
+    if(subtitles_txt_probe(sub_url))
+      return;
+
+    type = "TXT";
+
   } else if(!strcasecmp(postfix, ".idx")) {
 
     hts_mutex_lock(&ss->ss_mutex);
