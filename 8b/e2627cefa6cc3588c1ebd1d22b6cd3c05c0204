@@ -1,0 +1,5 @@
+ps3: Add PSP Remote support
+
+This requires a reinstall of the PKG
+
+Fixes #399
