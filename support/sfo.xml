@@ -13,7 +13,7 @@
 		AV
 	</value>
 	<value name="LICENSE" type="string">
-		Showtime is licenced under GPLv3. For more information see https://showtimemediacenter/
+		Showtime is licenced under GPLv3. For more information see https://showtimemediacenter.com/
 	</value>
 	<value name="PARENTAL_LEVEL" type="integer">
 		0
