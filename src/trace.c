@@ -304,18 +304,24 @@ trace_init(void)
   snprintf(p1, sizeof(p1), "%s/log", gconf.cache_path);
   mkdir(p1, 0777);
 
+  // Remove legacy logfile names. This can be removed some time in the future
+  for(i = 0; i <= 5; i++) {
+    snprintf(p1, sizeof(p1), "%s/log/showtime.log.%d", gconf.cache_path, i);
+    unlink(p1);
+  }
+
   // Rotate logfiles
 
-  snprintf(p1, sizeof(p1), "%s/log/showtime.log.5", gconf.cache_path);
+  snprintf(p1, sizeof(p1), "%s/log/showtime-5.log", gconf.cache_path);
   unlink(p1);
 
   for(i = 4; i >= 0; i--) {
-    snprintf(p1, sizeof(p1), "%s/log/showtime.log.%d", gconf.cache_path,i);
-    snprintf(p2, sizeof(p2), "%s/log/showtime.log.%d", gconf.cache_path,i+1);
+    snprintf(p1, sizeof(p1), "%s/log/showtime-%d.log", gconf.cache_path,i);
+    snprintf(p2, sizeof(p2), "%s/log/showtime-%d.log", gconf.cache_path,i+1);
     rename(p1, p2);
   }
   
-  snprintf(p1, sizeof(p1), "%s/log/showtime.log.0", gconf.cache_path);
+  snprintf(p1, sizeof(p1), "%s/log/showtime-0.log", gconf.cache_path);
   log_fd = open(p1, O_CREAT | O_TRUNC | O_WRONLY, 0644);
   static const char logstartmark[] = "--MARK-- START\n";
   if(write(log_fd, logstartmark, strlen(logstartmark)) !=

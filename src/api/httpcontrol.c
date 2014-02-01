@@ -78,7 +78,7 @@ diag_html(http_connection_t *hc, htsbuf_queue_t *out)
 
   for(i = 0; i <= 5; i++) {
     struct stat st;
-    snprintf(p1, sizeof(p1), "%s/log/showtime.log.%d", gconf.cache_path,i);
+    snprintf(p1, sizeof(p1), "%s/log/showtime-%d.log", gconf.cache_path,i);
     if(stat(p1, &st)) 
       continue;
     char timestr[32];
@@ -440,7 +440,7 @@ hc_logfile(http_connection_t *hc, const char *remain, void *opaque,
   const char *mode = http_arg_get_req(hc, "mode");
 
   char p1[500];
-  snprintf(p1, sizeof(p1), "%s/log/showtime.log.%d", gconf.cache_path, n);
+  snprintf(p1, sizeof(p1), "%s/log/showtime-%d.log", gconf.cache_path, n);
   buf_t *buf = fa_load(p1, NULL, NULL, 0, NULL, 0, NULL, NULL);
 
   if(buf == NULL)
