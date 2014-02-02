@@ -584,6 +584,129 @@ nls_lang_metadata(const char *path, char *errbuf, size_t errlen,
   return -1;
 }
 
+
+/**
+ *
+ */
+static char *
+find_str(char *s, int len, const char *needle)
+{
+  int nlen = strlen(needle);
+  if(len < nlen)
+    return NULL;
+
+  len -= nlen;
+  for(int i = 0; i < len; i++) {
+    int j;
+    for(j = 0; j < nlen; j++) {
+      if(s[i+j] != needle[j]) {
+        break;
+      }
+    }
+    if(j == nlen)
+      return s + i;
+  }
+  return NULL;
+}
+
+
+
+
+/**
+ *
+ */
+static htsmsg_t *
+decode_multipart(char *s, int len, const char *boundary0)
+{
+  char *s0 = s;
+
+  int blen = strlen(boundary0);
+  char *boundary = alloca(blen + 3);
+  boundary[0] = '-';
+  boundary[1] = '-';
+  memcpy(boundary + 2, boundary0, blen + 1);
+
+  char *boundary2 = alloca(blen + 5);
+  boundary2[0] = 0xd;
+  boundary2[1] = 0xa;
+  boundary2[2] = '-';
+  boundary2[3] = '-';
+  memcpy(boundary2 + 4, boundary0, blen + 1);
+
+  char *line = find_str(s, len, boundary);
+  if(line)
+    line += strlen(boundary);
+
+  if(line == NULL) {
+    free(s);
+    return NULL;
+  }
+
+  htsmsg_t *parts = htsmsg_create_map();
+
+  parts->hm_free_opaque = &free;
+  parts->hm_opaque = s;
+
+  while(line != NULL) {
+    while(*line && *line < 32)
+      line++;
+
+    if(*line == 0)
+      break;
+
+    const char *name;
+    char *next;
+
+    while(1) {
+      char *eol = strchr(line, 0xd);
+      if(eol == NULL) {
+        name = NULL;
+        break;
+      }
+      if(eol[1] != 0xa) {
+        name = NULL;
+        break;
+      }
+      *eol = 0;
+      next = eol + 2;
+
+      if(*line == 0)
+        break;
+
+      const char *v;
+      if((v = mystrbegins(line, "Content-Disposition:")) != NULL) {
+        name = mystrstr(v, "name=\"");
+        if(name != NULL) {
+          name += strlen("name=\"");
+          char *eon = strchr(name, '"');
+          if(eon != NULL) {
+            *eon = 0;
+          } else {
+            name = NULL;
+          }
+        }
+      }
+      line = next;
+    }
+
+    char *data = next;
+    next = find_str(data, len - (data - s0), boundary2);
+    if(next == NULL)
+      break;
+
+    int datasize = next - data;
+    *next = 0;
+    next += strlen(boundary2);
+
+    if(name != NULL)
+      htsmsg_add_binptr(parts, name, data, datasize);
+
+    line = next;
+  }
+  return parts;
+}
+
+
 /**
  *
  */
@@ -592,15 +715,61 @@ upload_translation(http_connection_t *hc, const char *remain, void *opaque,
 		   http_cmd_t method)
 {
   size_t len;
-  void *data = http_get_post_data(hc, &len, 0);
+  htsbuf_queue_t out;
+  htsbuf_queue_init(&out, 0);
 
-  if(method != HTTP_CMD_POST || data == NULL)
-    return 405;
+  htsbuf_qprintf(&out,"<html><body>");
 
-  nls_clear();
-  nls_load_from_data(data);
-  TRACE(TRACE_INFO, "i18n", "Loading language from HTTP POST");
-  return HTTP_STATUS_OK;
+  if(method == HTTP_CMD_POST) {
+    void *data = http_get_post_data(hc, &len, 1);
+    if(data == NULL)
+      return 405;
+
+    const char *ct = http_arg_get_hdr(hc, "Content-Type");
+    if(ct == NULL) {
+      free(data);
+      return 400;
+    }
+
+    if(!strncasecmp(ct, "multipart/form-data", strlen("multipart/form-data"))) {
+      const char *b = mystrstr(ct, "boundary=");
+      if(b == NULL) {
+        free(data);
+        return 400;
+      }
+      b += strlen("boundary=");
+      htsmsg_t *m = decode_multipart(data, len, b);
+
+      if(m == NULL)
+        return 400;
+
+      const void *bin;
+      size_t binlen;
+      if(!htsmsg_get_bin(m, "file", &bin, &binlen)) {
+        nls_load_from_data((void *)bin);
+        htsbuf_qprintf(&out, "<p>Language updated</p>");
+      }
+
+      htsmsg_destroy(m);
+
+    } else {
+      nls_clear();
+      nls_load_from_data(data);
+      free(data);
+      TRACE(TRACE_INFO, "i18n", "Loading language from raw HTTP POST");
+      return 200;
+    }
+  }
+
+  htsbuf_qprintf(&out,
+                 "<h3>Load new translation file into Showtime</h3>"
+                 "<form method=\"post\" enctype=\"multipart/form-data\">"
+                 "<label for=\"file\">.lang file:</label>"
+                 "<input type=\"file\" name=\"file\" id=\"file\"><br>"
+                 "<input type=\"submit\" name=\"submit\" value=\"Submit\">"
+                 "</form></body></html>");
+
+  return http_send_reply(hc, 0, "text/html", NULL, NULL, 0, &out);
 }
 
 
