@@ -654,8 +654,8 @@ decode_multipart(char *s, int len, const char *boundary0)
     if(*line == 0)
       break;
 
-    const char *name;
-    char *next;
+    const char *name = NULL;
+    char *next = NULL;
 
     while(1) {
       char *eol = strchr(line, 0xd);
@@ -690,6 +690,8 @@ decode_multipart(char *s, int len, const char *boundary0)
     }
 
     char *data = next;
+    if(next == NULL)
+      break;
     next = find_str(data, len - (data - s0), boundary2);
     if(next == NULL)
       break;
