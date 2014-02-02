@@ -300,16 +300,18 @@ check_subtitle_file(sub_scanner_t *ss,
 
     type = "ASS / SSA";
 
-  } else if(!strcasecmp(postfix, ".sub")) {
+  } else if(!strcasecmp(postfix, ".sub") ||
+            !strcasecmp(postfix, ".txt") ||
+            !strcasecmp(postfix, ".mpl")) {
 
-    type = "SUB";
+    type = subtitles_probe(sub_url);
 
-  } else if(!strcasecmp(postfix, ".txt")) {
-
-    if(subtitles_txt_probe(sub_url))
+    if(type == NULL) {
+      TRACE(TRACE_DEBUG, "Subtitles", "%s is not a recognized subtitle format",
+            sub_url);
       return;
-
-    type = "TXT";
+    }
+    TRACE(TRACE_DEBUG, "Subtitles", "%s probed as %s", sub_url, type);
 
   } else if(!strcasecmp(postfix, ".idx")) {
 

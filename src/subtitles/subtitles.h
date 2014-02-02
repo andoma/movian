@@ -118,4 +118,4 @@ int subtitles_embedded_score(void);
 
 int subtitles_embedded_autosel(void);
 
-int subtitles_txt_probe(const char *url);
+const char *subtitles_probe(const char *url);

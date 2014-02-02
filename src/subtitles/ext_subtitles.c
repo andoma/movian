@@ -368,16 +368,17 @@ load_ttml(const char *url, buf_t *buf)
  *
  */
 static int
-get_sub_timestamp(const char *buf, int *start, int *stop)
+get_sub_mpl_timestamp(const char *buf, int *start, int *stop,
+                      char left, char right)
 {
   const char *b = buf;
-  if(*b != '{')
+  if(*b != left)
     return -1;
   *start = strtol(b + 1, (char **)&b, 10);
-  if(b[0] != '}' || b[1] != '{')
+  if(b[0] != right || b[1] != left)
     return -1;
   *stop = strtol(b + 2, (char **)&b, 10);
-  if(b[0] != '}')
+  if(b[0] != right)
     return -1;
 
   return b + 1 - buf;
@@ -391,7 +392,18 @@ static int
 is_sub(const char *buf, size_t len)
 {
   int start, stop;
-  return get_sub_timestamp(buf, &start, &stop) != -1;
+  return get_sub_mpl_timestamp(buf, &start, &stop, '{', '}') != -1;
+}
+
+
+/**
+ *
+ */
+static int
+is_mpl(const char *buf, size_t len)
+{
+  int start, stop;
+  return get_sub_mpl_timestamp(buf, &start, &stop, '[', ']') != -1;
 }
 
 
@@ -399,25 +411,31 @@ is_sub(const char *buf, size_t len)
  *
  */
 static ext_subtitles_t *
-load_sub(const char *url, char *buf, size_t len, AVRational *fr)
+load_sub_variant(const char *url, char *buf, size_t len, AVRational *fr,
+                 int mpl)
 {
   ext_subtitles_t *es = calloc(1, sizeof(ext_subtitles_t));
-  AVRational fr0 = {25, 1};
+  AVRational sub_default = {25, 1};
+  AVRational mpl_default = {10, 1};
+  AVRational fr0;
+
+  const char left  = "{["[mpl];
+  const char right = "}]"[mpl];
 
   if(fr == NULL || fr->num == 0 || fr->den == 0)
-    fr = &fr0;
+    fr = mpl ? &mpl_default : &sub_default;
 
   TAILQ_INIT(&es->es_entries);
 
   LINEPARSE(s, buf) {
     int start, stop;
-    int x = get_sub_timestamp(s, &start, &stop);
+    int x = get_sub_mpl_timestamp(s, &start, &stop, left, right);
     if(x <= 0)
       continue;
 
     s += x;
 
-    if(start == 1 && stop == 1) {
+    if(!mpl && start == 1 && stop == 1) {
       // Set framerate
       fr0.num = my_str2double(s, NULL) * 1000000.0;
       fr0.den = 1000000;
@@ -437,13 +455,18 @@ load_sub(const char *url, char *buf, size_t len, AVRational *fr)
     outbuf[4] = TR_CODE_OUTLINE_COLOR | subtitle_settings.outline_color;
     int outptr = 5;
 
+    int sol = 1;
+
     while(outptr <= 1000) {
 
       int c = utf8_get((const char **)&s);
       if(c == 0)
         break;
 
-      if(c == '{') {
+      if(c == '/' && mpl) {
+        outbuf[outptr++] = TR_CODE_ITALIC_ON;
+        reset_italic = 1;
+      } else if(c == '{') {
 
         int doreset = 0;
 
@@ -513,10 +536,12 @@ load_sub(const char *url, char *buf, size_t len, AVRational *fr)
           outbuf[outptr++] = TR_CODE_FONT_RESET;
           reset_italic = 0;
         }
-
+        sol = 1;
+        continue;
       } else {
         outbuf[outptr++] = c;
       }
+      sol = 0;
     }
 
 
@@ -707,11 +732,13 @@ subtitles_create(const char *path, buf_t *buf, AVRational *fr)
 
     if(is_srt(b0, len))
       s = load_srt(path, b0, len);
-    if(is_ass(b0, len))
+    else if(is_ass(b0, len))
       s = load_ssa(path, b0, len);
-    if(is_sub(b0, len))
-      s = load_sub(path, b0, len, fr);
-    if(is_txt(b0, len))
+    else if(is_sub(b0, len))
+      s = load_sub_variant(path, b0, len, fr, 0);
+    else if(is_mpl(b0, len))
+      s = load_sub_variant(path, b0, len, NULL, 1);
+    else if(is_txt(b0, len))
       s = load_txt(path, b0, len);
 
   }
@@ -887,11 +914,21 @@ subtitles_load(media_pipe_t *mp, const char *url, AVRational *fr)
 /**
  *
  */
-int
-subtitles_txt_probe(const char *url)
+const char *
+subtitles_probe(const char *url)
 {
+  const char *ret;
   buf_t *b = fa_load(url, NULL, NULL, 0, 0, 0, NULL, NULL);
-  int r = is_txt(buf_cstr(b), buf_len(b));
+
+  if(is_txt(buf_cstr(b), buf_len(b)))
+    ret = "TXT";
+  else if(is_mpl(buf_cstr(b), buf_len(b)))
+    ret = "MPL";
+  else if(is_sub(buf_cstr(b), buf_len(b)))
+    ret = "SUB";
+  else
+    ret = NULL;
+
   buf_release(b);
-  return !r;
+  return ret;
 }
