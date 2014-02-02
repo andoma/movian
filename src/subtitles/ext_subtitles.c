@@ -463,7 +463,7 @@ load_sub_variant(const char *url, char *buf, size_t len, AVRational *fr,
       if(c == 0)
         break;
 
-      if(c == '/' && mpl) {
+      if(c == '/' && mpl && sol) {
         outbuf[outptr++] = TR_CODE_ITALIC_ON;
         reset_italic = 1;
       } else if(c == '{') {
