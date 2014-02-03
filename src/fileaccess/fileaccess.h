@@ -178,6 +178,7 @@ int fa_seek_is_fast(void *fh);
 int fa_stat(const char *url, struct fa_stat *buf, char *errbuf, size_t errsize);
 int fa_findfile(const char *path, const char *file, 
 		char *fullpath, size_t fullpathlen);
+void fa_set_read_timeout(void *fh_, int ms);
 
 int fa_can_handle(const char *url, char *errbuf, size_t errsize);
 

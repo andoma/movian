@@ -73,6 +73,8 @@ void tcp_huge_buffer(tcpcon_t *tc);
 
 void tcp_shutdown(tcpcon_t *tc);
 
+void tcp_set_read_timeout(tcpcon_t *tc, int ms);
+
 void net_change_nonblocking(int fd, int on);
 
 typedef struct netif {

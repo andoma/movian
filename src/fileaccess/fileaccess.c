@@ -370,6 +370,19 @@ fa_fsize(void *fh_)
   return fh->fh_proto->fap_fsize(fh);
 }
 
+
+/**
+ *
+ */
+void
+fa_set_read_timeout(void *fh_, int ms)
+{
+  fa_handle_t *fh = fh_;
+  if(fh->fh_proto->fap_set_read_timeout == NULL)
+    return;
+  fh->fh_proto->fap_set_read_timeout(fh, ms);
+}
+
 /**
  *
  */

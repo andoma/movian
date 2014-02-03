@@ -199,6 +199,14 @@ typedef struct fa_protocol {
   int (*fap_makedirs)(struct fa_protocol *fap, const char *url,
                       char *errbuf, size_t errsize);
 
+
+  /**
+   * Set read timeout
+   *
+   * If a read cannot be satisfied within this time, we return error
+   */
+  void (*fap_set_read_timeout)(fa_handle_t *fh, int ms);
+
 } fa_protocol_t;
 
 

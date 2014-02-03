@@ -231,6 +231,8 @@ typedef struct http_file {
 
   int hf_max_age;
 
+  int hf_read_timeout;
+
   prop_t *hf_stats_speed;
 
 #define STAT_VEC_SIZE 20
@@ -1420,7 +1422,7 @@ http_detach(http_file_t *hf, int reusable, const char *reason)
   if(hf->hf_connection == NULL)
     return;
 
-  if(reusable && !gconf.disable_http_reuse) {
+  if(reusable && !gconf.disable_http_reuse && hf->hf_read_timeout == 0) {
     http_connection_park(hf->hf_connection, hf->hf_debug, hf->hf_max_age);
   } else {
     http_connection_destroy(hf->hf_connection, hf->hf_debug, reason);
@@ -1552,6 +1554,21 @@ authenticate(http_file_t *hf, char *errbuf, size_t errlen, int *non_interactive,
 /**
  *
  */
+static void
+http_set_read_timeout(fa_handle_t *fh, int ms)
+{
+  http_file_t *hf = (http_file_t *)fh;
+
+  hf->hf_read_timeout = ms;
+
+  if(hf->hf_connection != NULL)
+    tcp_set_read_timeout(hf->hf_connection->hc_tc, ms);
+}
+
+
+/**
+ *
+ */
 static int
 http_connect(http_file_t *hf, char *errbuf, int errlen)
 {
@@ -1598,6 +1615,9 @@ http_connect(http_file_t *hf, char *errbuf, int errlen)
 
   hf->hf_connection = http_connection_get(hostname, port, ssl, errbuf, errlen,
 					  hf->hf_debug, timeout);
+
+  if(hf->hf_read_timeout != 0 && hf->hf_connection != NULL)
+    tcp_set_read_timeout(hf->hf_connection->hc_tc, hf->hf_read_timeout);
 
   return hf->hf_connection ? 0 : -1;
 }
@@ -1677,8 +1697,13 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
   switch(code) {
   case 200:
-    if(hf->hf_streaming)
+    if(hf->hf_streaming) {
+      if(hf->hf_filesize == -1)
+        hf->hf_rsize = INT64_MAX;
+
+      HF_TRACE(hf, "Opened in streaming mode");
       return 0;
+    }
 
     if(nohead) {
       http_detach(hf, 0, "Range request not understood");
@@ -2052,6 +2077,9 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
     /* If not connected, try to (re-)connect */
   retry:
     if((hc = hf->hf_connection) == NULL) {
+      if(hf->hf_fast_fail)
+        return -1;
+
       if(http_connect(hf, NULL, 0))
 	return -1;
       hc = hf->hf_connection;
@@ -2068,6 +2096,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
 
     } else {
 
+      HF_TRACE(hf, "read() needs to send a new GET request");
       read_size = size - totsize;
 
       /* Must send a new request */
@@ -2532,6 +2561,7 @@ static fa_protocol_t fa_protocol_http = {
   .fap_load = http_load,
   .fap_get_last_component = http_get_last_component,
   .fap_seek_is_fast = http_seek_is_fast,
+  .fap_set_read_timeout = http_set_read_timeout,
 };
 
 FAP_REGISTER(http);
@@ -2553,6 +2583,7 @@ static fa_protocol_t fa_protocol_https = {
   .fap_load = http_load,
   .fap_get_last_component = http_get_last_component,
   .fap_seek_is_fast = http_seek_is_fast,
+  .fap_set_read_timeout = http_set_read_timeout,
 };
 
 FAP_REGISTER(https);
@@ -2893,6 +2924,7 @@ static fa_protocol_t fa_protocol_webdav = {
   .fap_load = http_load,
   .fap_get_last_component = http_get_last_component,
   .fap_seek_is_fast = http_seek_is_fast,
+  .fap_set_read_timeout = http_set_read_timeout,
 };
 FAP_REGISTER(webdav);
 
@@ -2912,6 +2944,7 @@ static fa_protocol_t fa_protocol_webdavs = {
   .fap_load = http_load,
   .fap_get_last_component = http_get_last_component,
   .fap_seek_is_fast = http_seek_is_fast,
+  .fap_set_read_timeout = http_set_read_timeout,
 };
 FAP_REGISTER(webdavs);
 
