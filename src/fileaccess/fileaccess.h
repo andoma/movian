@@ -135,7 +135,8 @@ LIST_HEAD(fa_protocol_list, fa_protocol);
                                      Seek to EOF when opening
                                      otherwise truncate */
 #define FA_IMPORTANT       0x1000
-
+#define FA_NO_RETRIES      0x2000
+#define FA_NO_PARKING      0x4000
 
 /**
  *
@@ -148,10 +149,14 @@ typedef struct fa_handle {
 } fa_handle_t;
 
 
+struct http_header_list;
+
 /**
  *
  */
 typedef struct fa_open_extra {
+  const struct http_header_list *foe_request_headers;
+  struct http_header_list *foe_response_headers;
   struct prop *foe_stats;
 } fa_open_extra_t;
 

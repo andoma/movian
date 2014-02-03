@@ -223,6 +223,8 @@ typedef struct http_file {
 
   char hf_fast_fail;
 
+  char hf_no_retries;
+
   char hf_req_compression;
   
   char hf_content_encoding;
@@ -234,6 +236,10 @@ typedef struct http_file {
   int hf_read_timeout;
 
   prop_t *hf_stats_speed;
+
+  const struct http_header_list *hf_user_request_headers;
+  struct http_header_list *hf_user_response_headers;
+
 
 #define STAT_VEC_SIZE 20
   int hf_stats[STAT_VEC_SIZE];
@@ -1681,7 +1687,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 		     &cookies);
   http_headers_free(&cookies);
 
-  http_headers_send(&q, &headers, NULL, NULL);
+  http_headers_send(&q, &headers, hf->hf_user_request_headers, NULL);
 
 
   if(hf->hf_debug)
@@ -1689,7 +1695,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
   tcp_write_queue(hf->hf_connection->hc_tc, &q);
 
-  code = http_read_response(hf, NULL);
+  code = http_read_response(hf, hf->hf_user_response_headers);
   if(code == -1 && hf->hf_connection->hc_reused) {
     http_detach(hf, 0, "Read error on reused connection, retrying");
     goto reconnect;
@@ -1937,10 +1943,10 @@ again:
   http_cookie_append(hf->hf_connection->hc_hostname, hf->hf_path, &headers,
 		     &cookies);
   http_headers_free(&cookies);
-  http_headers_send(&q, &headers, NULL, NULL);
+  http_headers_send(&q, &headers, hf->hf_user_request_headers, NULL);
 
   tcp_write_queue(hf->hf_connection->hc_tc, &q);
-  code = http_read_response(hf, NULL);
+  code = http_read_response(hf, hf->hf_user_response_headers);
   if(code == -1 && hf->hf_connection->hc_reused) {
     http_detach(hf, 0, "Read error on reused connection");
     goto reconnect;
@@ -2011,10 +2017,14 @@ http_open_ex(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
   hf->hf_debug = !!(flags & FA_DEBUG) || gconf.enable_http_debug;
   hf->hf_streaming = !!(flags & FA_STREAMING);
   hf->hf_fast_fail = !!(flags & FA_FAST_FAIL);
-  if(foe != NULL && foe->foe_stats != NULL) {
-    prop_t *stats = foe->foe_stats;
-    hf->hf_stats_speed = prop_ref_inc(prop_create(stats, "bitrate"));
-    prop_set_int(prop_create(stats, "bitrateValid"), 1);
+  hf->hf_no_retries = !!(flags & FA_NO_RETRIES);
+  if(foe != NULL) {
+    if(foe->foe_stats != NULL) {
+      hf->hf_stats_speed = prop_ref_inc(prop_create(foe->foe_stats, "bitrate"));
+      prop_set(foe->foe_stats, "bitrateValid", PROP_SET_INT, 1);
+    }
+    hf->hf_user_request_headers  = foe->foe_request_headers;
+    hf->hf_user_response_headers = foe->foe_response_headers;
   }
 
   if(!http_open0(hf, 1, errbuf, errlen, non_interactive)) {
@@ -2078,7 +2088,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
     /* If not connected, try to (re-)connect */
   retry:
     if((hc = hf->hf_connection) == NULL) {
-      if(hf->hf_fast_fail)
+      if(hf->hf_no_retries)
         return -1;
 
       if(http_connect(hf, NULL, 0))
@@ -2144,13 +2154,13 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
 
       http_cookie_append(hc->hc_hostname, hf->hf_path, &headers, &cookies);
       http_headers_free(&cookies);
-      http_headers_send(&q, &headers, NULL, NULL);
+      http_headers_send(&q, &headers, hf->hf_user_request_headers, NULL);
       if(hf->hf_debug)
 	htsbuf_hexdump(&q, "HTTP");
 
       tcp_write_queue(hc->hc_tc, &q);
 
-      code = http_read_response(hf, NULL);
+      code = http_read_response(hf, hf->hf_user_response_headers);
       if(code == -1 && hf->hf_connection->hc_reused) {
 	http_detach(hf, 0, "Read error on reused connection, retrying");
 	goto retry;
@@ -2801,10 +2811,10 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
 		       &cookies);
     http_headers_free(&cookies);
 
-    http_headers_send(&q, &headers, NULL, NULL);
+    http_headers_send(&q, &headers, hf->hf_user_request_headers, NULL);
 
     tcp_write_queue(hf->hf_connection->hc_tc, &q);
-    code = http_read_response(hf, NULL);
+    code = http_read_response(hf, hf->hf_user_response_headers);
 
     if(code == -1) {
       if(hf->hf_connection->hc_reused)

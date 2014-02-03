@@ -81,6 +81,8 @@ typedef struct buffered_file {
 
   int64_t bf_size;
 
+  int bf_flags;
+
   char *bf_url;
 
   buffered_zone_t bf_zones[BF_ZONES];
@@ -267,7 +269,8 @@ fab_close(fa_handle_t *handle)
 #ifdef FILE_PARKING
   buffered_file_t *closeme = NULL, *bf = (buffered_file_t *)handle;
 
-  if(bf->bf_src->fh_proto->fap_flags & FAP_NO_PARKING) {
+  if(bf->bf_src->fh_proto->fap_flags & FAP_NO_PARKING ||
+     bf->bf_flags & FA_NO_PARKING) {
     fab_destroy((buffered_file_t *)handle);
     return;
   }
@@ -609,6 +612,7 @@ fa_buffered_open(const char *url, char *errbuf, size_t errsize, int flags,
   bf->bf_url = strdup(url);
   bf->bf_min_request = mflags & FA_BUFFERED_BIG ? 256 * 1024 : 64 * 1024;
   bf->bf_mem_size = 1024 * 1024;
+  bf->bf_flags = flags;
 
   bf->bf_src = fh;
   bf->bf_size = -1;
