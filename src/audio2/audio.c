@@ -547,6 +547,10 @@ audio_decode_thread(void *aux)
 	audio_process_audio(ad, mb);
 	break;
 
+      case MB_SET_PROP_STRING:
+        prop_set_string(mb->mb_prop, mb->mb_data);
+	break;
+
       case MB_CTRL_SET_VOLUME_MULTIPLIER:
         ad->ad_vol_scale = mb->mb_float;
 	if(ac->ac_set_volume != NULL)

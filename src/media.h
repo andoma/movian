@@ -210,7 +210,7 @@ typedef struct media_buf {
   enum {
     MB_VIDEO,
     MB_AUDIO,
-
+    MB_SET_PROP_STRING,
 
     MB_DVD_CLUT,
     MB_DVD_RESET_SPU,
@@ -254,6 +254,7 @@ typedef struct media_buf {
     int mb_codecid;
     int mb_font_context;
     float mb_float;
+    prop_t *mb_prop;
   };
 
 
@@ -600,6 +601,9 @@ void mp_send_cmd(media_pipe_t *mp, media_queue_t *mq, int cmd);
 void mp_send_cmd_data(media_pipe_t *mp, media_queue_t *mq, int cmd, void *d);
 void mp_send_cmd_u32(media_pipe_t *mp, media_queue_t *mq, int cmd, 
 		     uint32_t u);
+
+void mp_send_prop_set_string(media_pipe_t *mp, media_queue_t *mq,
+                             prop_t *prop, const char *str);
 
 void mp_flush(media_pipe_t *mp, int blackout);
 

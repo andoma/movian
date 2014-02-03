@@ -1344,6 +1344,38 @@ mp_send_cmd_u32(media_pipe_t *mp, media_queue_t *mq, int cmd, uint32_t u)
 }
 
 
+/**
+ *
+ */
+static void
+mb_prop_dtor(media_buf_t *mb)
+{
+  prop_ref_dec(mb->mb_prop);
+}
+
+
+/**
+ *
+ */
+void
+mp_send_prop_set_string(media_pipe_t *mp, media_queue_t *mq,
+                        prop_t *prop, const char *str)
+{
+  media_buf_t *mb;
+
+  int datasize = strlen(str) + 1;
+  hts_mutex_lock(&mp->mp_mutex);
+
+  mb = media_buf_alloc_locked(mp, datasize);
+  memcpy(mb->mb_data, str, datasize);
+  mb->mb_data_type = MB_SET_PROP_STRING;
+  mb->mb_prop = prop_ref_inc(prop);
+  mb->mb_dtor = mb_prop_dtor;
+  mb_enq(mp, mq, mb);
+  hts_mutex_unlock(&mp->mp_mutex);
+}
+
+
 
 /**
  *
