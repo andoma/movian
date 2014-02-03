@@ -36,6 +36,10 @@
       artist: "Tip & Firefox"
     });
 
+    page.appendItem("icecast:http://pub5.di.fm:80/di_lounge_aac?2e78d68667c824ab4b667fa8", "audio", {
+      title: "DI.FM - Lounge"
+    });
+
     page.loading = false;
   });
 })(this);
