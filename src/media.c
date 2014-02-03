@@ -67,6 +67,8 @@ void (*media_pipe_fini_extra)(media_pipe_t *mp);
 
 static int mp_seek_in_queues(media_pipe_t *mp, int64_t pos);
 
+static void mp_flush_locked(media_pipe_t *mp);
+
 static void seek_by_propchange(void *opaque, prop_event_t event, ...);
 
 static void update_av_delta(void *opaque, int value);
@@ -843,6 +845,10 @@ send_hold(media_pipe_t *mp)
   event_t *e = event_create_int(EVENT_HOLD, mp->mp_hold);
   TAILQ_INSERT_TAIL(&mp->mp_eq, e, e_link);
   hts_cond_signal(&mp->mp_backpressure);
+
+  if(mp->mp_flags & MP_FLUSH_ON_HOLD)
+    mp_flush_locked(mp);
+
   if(mp->mp_hold_changed != NULL)
     mp->mp_hold_changed(mp);
 }
@@ -1252,14 +1258,12 @@ mp_seek_in_queues(media_pipe_t *mp, int64_t pos)
 /**
  *
  */
-void
-mp_flush(media_pipe_t *mp, int blank)
+static void
+mp_flush_locked(media_pipe_t *mp)
 {
   media_queue_t *v = &mp->mp_video;
   media_queue_t *a = &mp->mp_audio;
   media_buf_t *mb;
-
-  hts_mutex_lock(&mp->mp_mutex);
 
   mq_flush_locked(mp, a, 0);
   mq_flush_locked(mp, v, 0);
@@ -1280,9 +1284,18 @@ mp_flush(media_pipe_t *mp, int blank)
     atomic_add(&media_buffer_hungry, -1);
     mp->mp_satisfied = 1;
   }
+}
 
+
+/**
+ *
+ */
+void
+mp_flush(media_pipe_t *mp, int blank)
+{
+  hts_mutex_lock(&mp->mp_mutex);
+  mp_flush_locked(mp);
   hts_mutex_unlock(&mp->mp_mutex);
-
 }
 
 
@@ -1751,7 +1764,13 @@ mp_set_duration(media_pipe_t *mp, int64_t duration)
 void
 mp_configure(media_pipe_t *mp, int caps, int buffer_size, int64_t duration)
 {
+  hts_mutex_lock(&mp->mp_mutex);
   mp->mp_max_realtime_delay = 0;
+
+  if(caps & MP_PLAY_CAPS_FLUSH_ON_HOLD)
+    mp->mp_flags |= MP_FLUSH_ON_HOLD;
+  else
+    mp->mp_flags &= ~MP_FLUSH_ON_HOLD;
 
   prop_set_int(mp->mp_prop_canSeek,  caps & MP_PLAY_CAPS_SEEK  ? 1 : 0);
   prop_set_int(mp->mp_prop_canPause, caps & MP_PLAY_CAPS_PAUSE ? 1 : 0);
@@ -1773,6 +1792,7 @@ mp_configure(media_pipe_t *mp, int caps, int buffer_size, int64_t duration)
 
   prop_set_int(mp->mp_prop_buffer_limit, mp->mp_buffer_limit);
   mp_set_duration(mp, duration);
+  hts_mutex_unlock(&mp->mp_mutex);
 }
 
 
