@@ -770,8 +770,6 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
   event_t *e = NULL;
   const char *title;
 
-  prop_set_string(mp->mp_prop_type, "dvd");
-
   TRACE(TRACE_DEBUG, "DVD", "Starting playback of %s", url);
 
   prop_set_stringf(prop_create(mp->mp_prop_metadata, "format"), "DVD");
@@ -802,10 +800,11 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
 
   mp_become_primary(mp);
 
+  /* Might wanna use deep buffering but it requires some modification
+     to buffer draining code */
+
   mp_configure(mp, MP_PLAY_CAPS_PAUSE | MP_PLAY_CAPS_EJECT,
-	       MP_BUFFER_SHALLOW, 0); /* Might wanna use deep buffering
-					 but it requires some modification
-					 to buffer draining code */
+	       MP_BUFFER_SHALLOW, 0, "dvd");
 
   mp_set_playstatus_by_hold(mp, dp->dp_hold, NULL);
 

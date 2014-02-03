@@ -386,7 +386,6 @@ typedef struct media_pipe {
   /* Props */
 
   prop_t *mp_prop_root;
-  prop_t *mp_prop_type;
   prop_t *mp_prop_io;
   prop_t *mp_prop_ctrl;
   prop_t *mp_prop_notifications;
@@ -572,7 +571,7 @@ media_buf_t *media_buf_alloc_locked(media_pipe_t *mp, size_t payloadsize);
 media_buf_t *media_buf_alloc_unlocked(media_pipe_t *mp, size_t payloadsize);
 media_buf_t *media_buf_from_avpkt_unlocked(media_pipe_t *mp, struct AVPacket *pkt);
 
-media_pipe_t *mp_create(const char *name, int flags, const char *type);
+media_pipe_t *mp_create(const char *name, int flags);
 
 void mp_reinit_streams(media_pipe_t *mp);
 
@@ -649,7 +648,7 @@ void mp_send_volume_update_locked(media_pipe_t *mp);
 #define MP_BUFFER_DEEP    3
 
 void mp_configure(media_pipe_t *mp, int caps, int buffer_mode,
-		  int64_t duration);
+		  int64_t duration, const char *type);
 
 void mp_set_duration(media_pipe_t *mp, int64_t duration);
 

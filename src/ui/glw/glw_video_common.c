@@ -606,7 +606,7 @@ glw_video_ctor(glw_t *w)
   hts_cond_init(&gv->gv_avail_queue_cond, &gv->gv_surface_mutex);
   hts_cond_init(&gv->gv_init_cond, &gv->gv_surface_mutex);
 
-  gv->gv_mp = mp_create("Video decoder", MP_VIDEO | MP_PRIMABLE, NULL);
+  gv->gv_mp = mp_create("Video decoder", MP_VIDEO | MP_PRIMABLE);
 #if CONFIG_GLW_BACKEND_OPENGL
   if(video_settings.vdpau)
     gv->gv_mp->mp_vdpau_dev = gr->gr_be.gbr_vdpau_dev;

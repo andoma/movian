@@ -307,7 +307,7 @@ x11_vo_create(Display *dpy, int win, prop_courier_t *pc, prop_t *self,
 
   vo->vo_gc = XCreateGC(vo->vo_dpy, vo->vo_win, 0, &xgcv);
 
-  vo->vo_mp = mp_create("Video decoder", MP_VIDEO | MP_PRIMABLE, NULL);
+  vo->vo_mp = mp_create("Video decoder", MP_VIDEO | MP_PRIMABLE);
   vo->vo_mp->mp_video_frame_deliver = deliver_fn;
   vo->vo_mp->mp_video_frame_opaque = vo;
 

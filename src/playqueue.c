@@ -838,7 +838,7 @@ playqueue_init(void)
 
   hts_mutex_init(&playqueue_mutex);
 
-  playqueue_mp = mp_create("playqueue", MP_PRIMABLE, "tracks");
+  playqueue_mp = mp_create("playqueue", MP_PRIMABLE);
 
   TAILQ_INIT(&playqueue_entries);
   TAILQ_INIT(&playqueue_source_entries);

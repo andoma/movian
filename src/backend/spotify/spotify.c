@@ -4210,7 +4210,7 @@ be_spotify_play(const char *url, media_pipe_t *mp,
   hts_mutex_unlock(&spotify_mutex);
 
   mp_configure(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE,
-	       MP_BUFFER_NONE, 0);
+	       MP_BUFFER_NONE, 0, "tracks");
 
   mp_set_playstatus_by_hold(mp, hold, NULL);
 

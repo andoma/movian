@@ -852,12 +852,10 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
 
   // Start it
   mp_configure(mp, (seek_is_fast ? MP_PLAY_CAPS_SEEK : 0) | MP_PLAY_CAPS_PAUSE,
-	       MP_BUFFER_DEEP, fctx->duration);
+	       MP_BUFFER_DEEP, fctx->duration, "video");
 
   if(!(va.flags & BACKEND_VIDEO_NO_AUDIO))
     mp_become_primary(mp);
-
-  prop_set_string(mp->mp_prop_type, "video");
 
   seek_index_t *si = build_index(mp, fctx, url);
   seek_index_t *ci = build_chapters(mp, fctx, url);

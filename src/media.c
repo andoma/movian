@@ -269,7 +269,7 @@ mq_destroy(media_queue_t *mq)
  *
  */
 media_pipe_t *
-mp_create(const char *name, int flags, const char *type)
+mp_create(const char *name, int flags)
 {
   media_pipe_t *mp;
   prop_t *p;
@@ -306,9 +306,6 @@ mp_create(const char *name, int flags, const char *type)
 
   mp->mp_prop_root = prop_create(media_prop_sources, NULL);
   mp->mp_prop_metadata    = prop_create(mp->mp_prop_root, "metadata");
-
-  mp->mp_prop_type = prop_create(mp->mp_prop_root, "type");
-  prop_set_string(mp->mp_prop_type, type);
 
   mp->mp_prop_primary = prop_create(mp->mp_prop_root, "primary");
 
@@ -1762,7 +1759,8 @@ mp_set_duration(media_pipe_t *mp, int64_t duration)
  *
  */
 void
-mp_configure(media_pipe_t *mp, int caps, int buffer_size, int64_t duration)
+mp_configure(media_pipe_t *mp, int caps, int buffer_size, int64_t duration,
+             const char *type)
 {
   hts_mutex_lock(&mp->mp_mutex);
   mp->mp_max_realtime_delay = 0;
@@ -1775,6 +1773,8 @@ mp_configure(media_pipe_t *mp, int caps, int buffer_size, int64_t duration)
   prop_set_int(mp->mp_prop_canSeek,  caps & MP_PLAY_CAPS_SEEK  ? 1 : 0);
   prop_set_int(mp->mp_prop_canPause, caps & MP_PLAY_CAPS_PAUSE ? 1 : 0);
   prop_set_int(mp->mp_prop_canEject, caps & MP_PLAY_CAPS_EJECT ? 1 : 0);
+
+  prop_set(mp->mp_prop_root, "type", PROP_SET_STRING, type);
 
   switch(buffer_size) {
   case MP_BUFFER_NONE:

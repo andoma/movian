@@ -672,8 +672,6 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
 
   va.flags |= BACKEND_VIDEO_NO_FS_SCAN;
 
-  prop_set_string(mp->mp_prop_type, "video");
-
   rtmp_log_level = RTMP_LOGINFO;
   RTMP_LogSetLevel(rtmp_log_level);
 
@@ -729,7 +727,7 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
     r.seekpos_video = AV_NOPTS_VALUE;
   }
 
-  mp_configure(mp, MP_PLAY_CAPS_PAUSE, MP_BUFFER_DEEP, 0);
+  mp_configure(mp, MP_PLAY_CAPS_PAUSE, MP_BUFFER_DEEP, 0, "video");
   mp->mp_max_realtime_delay = (r.r->Link.timeout - 1) * 1000000;
 
   mp_become_primary(mp);
