@@ -56,7 +56,7 @@ jf_fini(fa_protocol_t *fap)
 static fa_handle_t *
 jf_open(struct fa_protocol *fap, const char *url,
         char *errbuf, size_t errsize, int flags,
-        struct prop *stats)
+        struct fa_open_extra *foe)
 {
   js_faprovider_t *jf = (js_faprovider_t *)fap;
   jsval openfn;
@@ -90,7 +90,7 @@ jf_open(struct fa_protocol *fap, const char *url,
     redirect = mystrdupa(JS_GetStringBytes(JSVAL_TO_STRING(result)));
     JS_LeaveLocalRootScope(cx);
     JS_DestroyContext(cx);
-    return fa_open_ex(redirect, errbuf, errsize, flags, stats);
+    return fa_open_ex(redirect, errbuf, errsize, flags, foe);
   }
 
   snprintf(errbuf, errsize, "Unable to open file, unsupported retaval");

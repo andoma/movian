@@ -75,22 +75,6 @@ fa_libav_reopen(fa_handle_t *fh)
   return avio;
 }
 
-#if 0
-/**
- *
- */
-AVIOContext *
-fa_libav_open(const char *url, int buf_size, char *errbuf, size_t errlen,
-	      int flags, struct prop *stats)
-{
-  fa_handle_t *fh;
-
-  if((fh = fa_open_ex(url, errbuf, errlen, flags, stats)) == NULL)
-    return NULL;
-  return fa_libav_reopen(fh, buf_size);
-}
-#endif
-
 
 /**
  *

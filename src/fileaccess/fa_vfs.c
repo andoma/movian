@@ -234,7 +234,7 @@ resolve_mapping2(const char *url, char *newpath, size_t newpathlen,
  */
 static fa_handle_t *
 vfs_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
-         int flags, struct prop *stats)
+         int flags, struct fa_open_extra *foe)
 {
   char newpath[1024];
 
@@ -243,7 +243,7 @@ vfs_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
 
   if(resolve_mapping2(url, newpath, sizeof(newpath), errbuf, errlen))
     return NULL;
-  return fa_open_ex(newpath, errbuf, errlen, flags, stats);
+  return fa_open_ex(newpath, errbuf, errlen, flags, foe);
 }
 
 

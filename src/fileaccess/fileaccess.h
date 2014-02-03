@@ -151,6 +151,14 @@ typedef struct fa_handle {
 /**
  *
  */
+typedef struct fa_open_extra {
+  struct prop *foe_stats;
+} fa_open_extra_t;
+
+
+/**
+ *
+ */
 typedef enum {
   FA_NOTIFY_ADD,
   FA_NOTIFY_DEL,
@@ -166,7 +174,7 @@ fa_dir_t *fa_get_parts(const char *url, char *errbuf, size_t errsize);
 #define fa_open(u, e, es) fa_open_ex(u, e, es, 0, NULL)
 
 void *fa_open_ex(const char *url, char *errbuf, size_t errsize, int flags,
-		 struct prop *stats);
+		 struct fa_open_extra *foe);
 void *fa_open_vpaths(const char *url, const char **vpaths,
 		     char *errbuf, size_t errsize, int flags);
 void fa_close(void *fh);
@@ -245,7 +253,7 @@ void fa_pathjoin(char *dst, size_t dstlen, const char *p1, const char *p2);
 
 void fa_url_get_last_component(char *dst, size_t dstlen, const char *url);
 
-// Cache
+// Cache (XXX: Remove me)
 
 void fa_cache_init(void);
 
@@ -255,7 +263,7 @@ fa_handle_t *fa_cache_open(const char *url, char *errbuf,
 // Buffered I/O
 
 fa_handle_t *fa_buffered_open(const char *url, char *errbuf, size_t errsize,
-			      int flags, struct prop *stats);
+			      int flags, struct fa_open_extra *foe);
 
 // Memory backed files
 

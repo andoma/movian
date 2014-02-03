@@ -93,7 +93,7 @@ resolve_file(const char *url)
  */
 static fa_handle_t *
 b_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
-       int flags, struct prop *stats)
+       int flags, struct fa_open_extra *foe)
 {
   const struct filebundle_entry *fbe;
   fa_bundle_fh_t *fh;
@@ -387,7 +387,7 @@ find_memfile(const char *url)
  */
 static fa_handle_t *
 mf_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
-	int flags, struct prop *stats)
+	int flags, struct fa_open_extra *foe)
 {
   const memfile_t *mf = find_memfile(url);
   if(mf == NULL) {

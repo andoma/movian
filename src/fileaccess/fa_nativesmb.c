@@ -2359,7 +2359,7 @@ typedef struct smb_file {
  */
 static fa_handle_t *
 smb_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
-	 int flags, struct prop *stats)
+	 int flags, struct fa_open_extra *foe)
 {
   char filename[512];
   cifs_tree_t *ct;

@@ -576,7 +576,7 @@ ftp_scandir(fa_protocol_t *fap, fa_dir_t *fd,
 static fa_handle_t *
 ftp_open(struct fa_protocol *fap, const char *url,
          char *errbuf, size_t errsize, int flags,
-         struct prop *stats)
+         struct fa_open_extra *foe)
 {
   ftp_file_t *ff = ftp_file_init(url, errbuf, errsize, 0);
   if(ff == NULL)

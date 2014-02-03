@@ -668,7 +668,7 @@ typedef struct rar_fd {
  */
 static fa_handle_t *
 rar_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
-	 int flags, struct prop *stats)
+	 int flags, struct fa_open_extra *foe)
 {
   rar_file_t *rf;
   rar_fd_t *rfd;

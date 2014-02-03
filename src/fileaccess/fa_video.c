@@ -600,7 +600,12 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
    * Check file type
    */
   fa_handle_t *fh;
-  fh = fa_open_ex(url, errbuf, errlen, FA_BUFFERED_BIG, mp->mp_prop_io);
+
+  fa_open_extra_t foe = {
+    .foe_stats = mp->mp_prop_io
+  };
+
+  fh = fa_open_ex(url, errbuf, errlen, FA_BUFFERED_BIG, &foe);
   if(fh == NULL)
     return NULL;
 

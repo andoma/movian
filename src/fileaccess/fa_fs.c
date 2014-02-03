@@ -181,7 +181,7 @@ fs_close(fa_handle_t *fh0)
  */
 static fa_handle_t *
 fs_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
-	int flags, struct prop *stats)
+	int flags, struct fa_open_extra *foe)
 {
   fs_handle_t *fh=NULL;
   struct stat st;

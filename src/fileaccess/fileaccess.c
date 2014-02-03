@@ -219,7 +219,7 @@ fa_normalize(const char *url, char *dst, size_t dstlen)
  */
 void *
 fa_open_ex(const char *url, char *errbuf, size_t errsize, int flags,
-	   struct prop *stats)
+	   struct fa_open_extra *foe)
 {
   fa_protocol_t *fap;
   char *filename;
@@ -229,10 +229,10 @@ fa_open_ex(const char *url, char *errbuf, size_t errsize, int flags,
     // Only do caching if we are in read only mode
 #if ENABLE_READAHEAD_CACHE
     if(flags & FA_CACHE)
-      return fa_cache_open(url, errbuf, errsize, flags & ~FA_CACHE, stats);
+      return fa_cache_open(url, errbuf, errsize, flags & ~FA_CACHE, foe);
 #endif
     if(flags & (FA_BUFFERED_SMALL | FA_BUFFERED_BIG))
-      return fa_buffered_open(url, errbuf, errsize, flags, stats);
+      return fa_buffered_open(url, errbuf, errsize, flags, foe);
   }
 
   if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
@@ -242,7 +242,7 @@ fa_open_ex(const char *url, char *errbuf, size_t errsize, int flags,
     snprintf(errbuf, errsize, "FS does not support writing");
     fh = NULL;
   } else {
-    fh = fap->fap_open(fap, filename, errbuf, errsize, flags, stats);
+    fh = fap->fap_open(fap, filename, errbuf, errsize, flags, foe);
   }
   fap_release(fap);
   free(filename);

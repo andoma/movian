@@ -2003,7 +2003,7 @@ http_scandir(fa_protocol_t *fap, fa_dir_t *fd, const char *url,
  */
 static fa_handle_t *
 http_open_ex(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
-             int *non_interactive, int flags, prop_t *stats)
+             int *non_interactive, int flags, struct fa_open_extra *foe)
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   hf->hf_version = 1;
@@ -2011,7 +2011,8 @@ http_open_ex(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
   hf->hf_debug = !!(flags & FA_DEBUG) || gconf.enable_http_debug;
   hf->hf_streaming = !!(flags & FA_STREAMING);
   hf->hf_fast_fail = !!(flags & FA_FAST_FAIL);
-  if(stats != NULL) {
+  if(foe != NULL && foe->foe_stats != NULL) {
+    prop_t *stats = foe->foe_stats;
     hf->hf_stats_speed = prop_ref_inc(prop_create(stats, "bitrate"));
     prop_set_int(prop_create(stats, "bitrateValid"), 1);
   }
@@ -2027,9 +2028,9 @@ http_open_ex(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
 
 static fa_handle_t *
 http_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
-	  int flags, struct prop *stats)
+	  int flags, struct fa_open_extra *foe)
 {
-  return http_open_ex(fap, url, errbuf, errlen, NULL, flags, stats);
+  return http_open_ex(fap, url, errbuf, errlen, NULL, flags, foe);
 }
 
 

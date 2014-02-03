@@ -719,7 +719,7 @@ static fa_protocol_t zip_file_protocol = {
  */
 static fa_handle_t *
 zip_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
-	 int flags, struct prop *stat)
+	 int flags, struct fa_open_extra *foe)
 {
   zip_file_t *zf;
   zip_fh_t *zfh;

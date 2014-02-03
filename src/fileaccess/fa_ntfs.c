@@ -95,8 +95,8 @@ ntfs_scandir(fa_protocol_t *fap, fa_dir_t *fd,
  */
 static fa_handle_t *
 ntfs_open(struct fa_protocol *fap, const char *url,
-         char *errbuf, size_t errsize, int flags,
-         struct prop *stats)
+          char *errbuf, size_t errsize, int flags,
+          struct fa_open_extra *foe)
 {
   int fd;
 

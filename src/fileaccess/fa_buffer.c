@@ -563,7 +563,7 @@ static fa_protocol_t fa_protocol_buffered = {
  */
 fa_handle_t *
 fa_buffered_open(const char *url, char *errbuf, size_t errsize, int flags,
-		 struct prop *stats)
+                 struct fa_open_extra *foe)
 {
   buffered_file_t *closeme = NULL;
   fa_handle_t *fh = NULL;
@@ -598,7 +598,7 @@ fa_buffered_open(const char *url, char *errbuf, size_t errsize, int flags,
   int mflags = flags;
   flags &= ~ (FA_BUFFERED_SMALL | FA_BUFFERED_BIG);
 
-  fh = fa_open_ex(url, errbuf, errsize, flags, stats);
+  fh = fa_open_ex(url, errbuf, errsize, flags, foe);
   if(fh == NULL)
     return NULL;
 
