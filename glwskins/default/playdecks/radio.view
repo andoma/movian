@@ -28,8 +28,8 @@ widget(container_z, {
 	align: center;
 	widget(label, {
 	  caption: join(" • ",
-			$global.media.current.metadata.artist,
-			$global.media.current.metadata.title);
+			$global.media.current.metadata.title,
+			$global.media.current.radioinfo),
 
 	  shadow: true;
 	  outline: true;
