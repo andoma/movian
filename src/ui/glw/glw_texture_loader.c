@@ -280,13 +280,13 @@ loader_thread(void *aux)
 	  glt_enqueue(gr, glt, LQ_OTHER);
 	} else if(glt->glt_q == &gr->gr_tex_load_queue[LQ_REFRESH]) {
 	  TRACE(TRACE_INFO, "GLW",
-		"Unable to load %s -- %s -- using cached copy", 
+		"Unable to load image %s -- %s -- using cached copy", 
 		rstr_get(url), errbuf);
 	  glt->glt_state = GLT_STATE_VALID;
 	} else {
 	  // if glt->glt_url is NULL we have aborted so don't ERR log
 	  if(glt->glt_url != NULL)
-	    TRACE(TRACE_ERROR, "GLW", "Unable to load %s -- %s", 
+	    TRACE(TRACE_ERROR, "GLW", "Unable to load image %s -- %s", 
 		  rstr_get(url), errbuf);
 	  else
 	    TRACE(TRACE_DEBUG, "GLW", "Aborted load of %s", 
