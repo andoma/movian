@@ -147,7 +147,7 @@ set_bg_image(rstr_t *url, const char **vpaths, glw_root_t *gr)
 
   pixmap_t *pm;
   pm = backend_imageloader(url, &im, vpaths, errbuf, sizeof(errbuf),
-			   NULL, NULL, NULL);
+			   NULL, NULL);
   glw_lock(gr);
 
   if(pm == NULL) {

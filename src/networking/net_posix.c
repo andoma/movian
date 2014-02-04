@@ -91,8 +91,7 @@ ssl_read(tcpcon_t *tc, void *buf, size_t len, int all,
     tot += c;
 
     if(cb != NULL)
-      if(cb(opaque, tot))
-	return -1;
+      cb(opaque, tot);
   }
   return tot;
 }
