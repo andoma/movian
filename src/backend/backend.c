@@ -178,7 +178,7 @@ typedef struct cached_image {
 struct pixmap *
 backend_imageloader(rstr_t *url0, const image_meta_t *im0,
 		    const char **vpaths, char *errbuf, size_t errlen,
-		    int *cache_control, be_load_cb_t *cb, void *opaque)
+		    int *cache_control, cancellable_t *c)
 {
   const char *url = rstr_get(url0);
   htsmsg_t *m = NULL;
@@ -262,13 +262,12 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im0,
   if(nb == NULL || nb->be_imageloader == NULL) {
     snprintf(errbuf, errlen, "No backend for URL");
   } else {
-    pm = nb->be_imageloader(url, &im, vpaths, errbuf, errlen, cache_control,
-			    cb, opaque);
+    pm = nb->be_imageloader(url, &im, vpaths, errbuf, errlen, cache_control, c);
 
     if(pm != NULL && pm != NOT_MODIFIED && !im.im_no_decoding) {
 
-      if(cb != NULL && cb(opaque, pm->pm_size, pm->pm_size)) {
-	snprintf(errbuf, errlen, "Aborted");
+      if(c != NULL && c->cancelled) {
+	snprintf(errbuf, errlen, "Cancelled");
 	pixmap_release(pm);
 	return NULL;
       }

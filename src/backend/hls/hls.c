@@ -404,7 +404,7 @@ variant_update(hls_variant_t *hv, hls_t *h)
   HLS_TRACE(h, "Updating variant %d", hv->hv_bitrate);
 
   buf_t *b = fa_load(hv->hv_url, NULL, errbuf, sizeof(errbuf), NULL, 
-		     FA_COMPRESSION, NULL, NULL);
+		     FA_COMPRESSION, NULL, NULL, NULL);
 
   if(b == NULL) {
     TRACE(TRACE_ERROR, "HLS", "Unable to open %s -- %s", hv->hv_url, errbuf);
@@ -644,7 +644,7 @@ segment_open(hls_t *h, hls_segment_t *hs, int fast_fail)
     if(!rstr_eq(hs->hs_key_url, hv->hv_key_url)) {
       buf_release(hv->hv_key);
       hv->hv_key = fa_load(rstr_get(hs->hs_key_url), NULL,
-			   errbuf, sizeof(errbuf), NULL, 0, NULL, NULL);
+			   errbuf, sizeof(errbuf), NULL, 0, NULL, NULL, NULL);
       if(hv->hv_key == NULL) {
 	TRACE(TRACE_ERROR, "HLS", "Unable to load key file %s",
 	      rstr_get(hs->hs_key_url));
@@ -1517,7 +1517,8 @@ hls_playvideo(const char *url, media_pipe_t *mp,
     url = TESTURL;
   if(!strcmp(url, "test2"))
     url = TESTURL2;
-  buf = fa_load(url, NULL, errbuf, errlen, NULL, FA_COMPRESSION, NULL, NULL);
+  buf = fa_load(url, NULL, errbuf, errlen, NULL, FA_COMPRESSION, NULL, NULL,
+                NULL);
 
   if(buf == NULL)
     return NULL;

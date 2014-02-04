@@ -1014,7 +1014,7 @@ htsp_thread(void *aux)
     while(1) {
       char errbuf[256];
       hc->hc_tc = tcp_connect(hc->hc_hostname, hc->hc_port,
-			      errbuf, sizeof(errbuf), 3000, 0);
+			      errbuf, sizeof(errbuf), 3000, 0, NULL);
       if(hc->hc_tc != NULL)
 	break;
 
@@ -1067,7 +1067,7 @@ htsp_connection_find(const char *url, char *path, size_t pathlen,
 
   TRACE(TRACE_DEBUG, "HTSP", "Connecting to %s:%d", hostname, port);
 
-  tc = tcp_connect(hostname, port, errbuf, errlen, 3000, 0);
+  tc = tcp_connect(hostname, port, errbuf, errlen, 3000, 0, NULL);
   if(tc == NULL) {
     hts_mutex_unlock(&htsp_global_mutex);
     TRACE(TRACE_ERROR, "HTSP", "Connection to %s:%d failed: %s", 

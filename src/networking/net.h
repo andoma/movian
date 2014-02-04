@@ -38,15 +38,19 @@ typedef struct net_addr {
 } net_addr_t;
 
 
+struct cancellable;
 
-typedef int (net_read_cb_t)(void *opaque, int done);
+typedef void (net_read_cb_t)(void *opaque, int bytes_done);
 
 typedef struct tcpcon tcpcon_t;
 
 void net_initialize(void);
 
 tcpcon_t *tcp_connect(const char *hostname, int port, char *errbuf,
-		      size_t errbufsize, int timeout, int ssl);
+		      size_t errbufsize, int timeout, int ssl,
+                      struct cancellable *c);
+
+void tcp_set_cancellable(tcpcon_t *tc, struct cancellable *c);
 
 tcpcon_t *tcp_from_fd(int fd);
 

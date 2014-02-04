@@ -96,7 +96,8 @@ vobsub_probe(const char *url, const char *filename,
     return;
   }
 
-  b = fa_load(url, NULL, errbuf, sizeof(errbuf), DISABLE_CACHE, 0, NULL, NULL);
+  b = fa_load(url, NULL, errbuf, sizeof(errbuf), DISABLE_CACHE, 0, NULL, NULL,
+              NULL);
   if(b == NULL) {
     TRACE(TRACE_ERROR, "VOBSUB", "Unable to load %s -- %s", url, errbuf);
     return;
@@ -559,7 +560,7 @@ vobsub_load(const char *json, char *errbuf, size_t errlen,
   buf_t *b;
 
   if((b = fa_load(idxfile, NULL, errbuf, errlen,
-                  DISABLE_CACHE, 0, NULL, NULL)) == NULL)
+                  DISABLE_CACHE, 0, NULL, NULL, NULL)) == NULL)
     return NULL;
 
   vobsub_t *vs = calloc(1, sizeof(vobsub_t));

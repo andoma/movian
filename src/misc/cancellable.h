@@ -18,47 +18,29 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
-
-
 #pragma once
 
-#include "net.h"
-#include "misc/cancellable.h"
-
-#if ENABLE_OPENSSL
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#endif
-
-#if ENABLE_POLARSSL
-#include "polarssl/net.h"
-#include "polarssl/ssl.h"
-#include "polarssl/havege.h"
-#endif
+typedef struct cancellable {
+  int cancelled;
+  void (*cancel)(void *opaque);
+  void *opaque;
+} cancellable_t;
 
 
-struct tcpcon {
-  int fd;
+static inline int cancellable_is_cancelled(const cancellable_t *c)
+{
+  return c != NULL && c->cancelled;
+}
 
-  htsbuf_queue_t spill;
+void cancellable_bind(cancellable_t *c, void (*fn)(void *opaque),
+                      void *opaque);
 
-  int (*write)(struct tcpcon *, const void *, size_t);
-  int (*read)(struct tcpcon *, void *, size_t, int,
-	      net_read_cb_t *cb, void *opaque);
+void cancellable_unbind(cancellable_t *c);
 
-#if ENABLE_OPENSSL
-  SSL *ssl;
-#endif
+void cancellable_cancel(cancellable_t *c);
 
-#if ENABLE_POLARSSL
-    ssl_context *ssl;
-    ssl_session *ssn;
-    havege_state *hs;
-#endif
-
-  cancellable_t *c;
-
-};
-
-void tcp_cancel(void *aux);
-
+static inline void cancellable_reset(cancellable_t *c)
+{
+  c->cancelled = 0;
+  c->cancel = NULL;
+}

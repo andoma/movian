@@ -207,7 +207,7 @@ vsource_load_hls(struct vsource_list *list, const char *url)
   buf_t *b;
   char errbuf[256];
 
-  b = fa_load(url, NULL, errbuf, sizeof(errbuf), NULL, 0, NULL, NULL);
+  b = fa_load(url, NULL, errbuf, sizeof(errbuf), NULL, 0, NULL, NULL, NULL);
 
   if(b == NULL) {
     TRACE(TRACE_INFO, "HLS", "Unable to open %s -- %s", url, errbuf);

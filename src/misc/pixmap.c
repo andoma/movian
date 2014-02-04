@@ -1555,7 +1555,7 @@ main(int argc, char **argv)
 static pixmap_t *
 be_showtime_pixmap_loader(const char *url, const image_meta_t *im,
 			  const char **vpaths, char *errbuf, size_t errlen,
-			  int *cache_control, be_load_cb_t *cb, void *opaque)
+			  int *cache_control, cancellable_t *c)
 {
   pixmap_t *pm;
   int w = im->im_req_width, h = im->im_req_height;

@@ -33,8 +33,9 @@
 #include "navigator.h"
 #include "misc/redblack.h"
 #include "misc/buf.h"
+#include "misc/cancellable.h"
 
-typedef int (fa_load_cb_t)(void *opaque, int loaded, int total);
+typedef void (fa_load_cb_t)(void *opaque, int loaded, int total);
 
 struct prop;
 struct backend;
@@ -158,6 +159,7 @@ typedef struct fa_open_extra {
   const struct http_header_list *foe_request_headers;
   struct http_header_list *foe_response_headers;
   struct prop *foe_stats;
+  struct cancellable *foe_c;
 } fa_open_extra_t;
 
 
@@ -181,7 +183,8 @@ fa_dir_t *fa_get_parts(const char *url, char *errbuf, size_t errsize);
 void *fa_open_ex(const char *url, char *errbuf, size_t errsize, int flags,
 		 struct fa_open_extra *foe);
 void *fa_open_vpaths(const char *url, const char **vpaths,
-		     char *errbuf, size_t errsize, int flags);
+		     char *errbuf, size_t errsize, int flags,
+                     struct fa_open_extra *foe);
 void fa_close(void *fh);
 int fa_read(void *fh, void *buf, size_t size);
 int fa_write(void *fh, const void *buf, size_t size);
@@ -235,7 +238,7 @@ int fa_scanner_scan(const char *url, time_t mtime);
 
 buf_t *fa_load(const char *url, const char **vpaths,
                char *errbuf, size_t errlen, int *cache_control, int flags,
-               fa_load_cb_t *cb, void *opaque);
+               fa_load_cb_t *cb, void *opaque, cancellable_t *c);
 
 buf_t *fa_load_and_close(fa_handle_t *fh);
 
@@ -314,6 +317,7 @@ enum {
   HTTP_TAG_RESPONSE_HEADERS,
   HTTP_TAG_METHOD,
   HTTP_TAG_PROGRESS_CALLBACK,
+  HTTP_TAG_CANCELLABLE,
 };
 
 
@@ -329,6 +333,7 @@ enum {
 #define HTTP_RESPONSE_HEADERS(a)           HTTP_TAG_RESPONSE_HEADERS, a
 #define HTTP_METHOD(a)                     HTTP_TAG_METHOD, a
 #define HTTP_PROGRESS_CALLBACK(a, b)       HTTP_TAG_PROGRESS_CALLBACK, a, b
+#define HTTP_CANCELLABLE(a)                HTTP_TAG_CANCELLABLE, a
 
 int http_req(const char *url, ...);
 

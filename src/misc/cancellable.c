@@ -19,46 +19,55 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 
+#include "arch/threads.h"
 
-#pragma once
+#include "cancellable.h"
 
-#include "net.h"
-#include "misc/cancellable.h"
+static HTS_MUTEX_DECL(cancellable_mutex);
 
-#if ENABLE_OPENSSL
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#endif
+/**
+ *
+ */
+void
+cancellable_bind(cancellable_t *c, void (*fn)(void *opaque), void *opaque)
+{
+  hts_mutex_lock(&cancellable_mutex);
+  c->cancel = fn;
+  c->opaque = opaque;
 
-#if ENABLE_POLARSSL
-#include "polarssl/net.h"
-#include "polarssl/ssl.h"
-#include "polarssl/havege.h"
-#endif
+  if(c->cancelled)
+    fn(opaque);
+
+  hts_mutex_unlock(&cancellable_mutex);
+}
 
 
-struct tcpcon {
-  int fd;
+/**
+ *
+ */
+void
+cancellable_unbind(cancellable_t *c)
+{
+  if(c == NULL)
+    return;
+  hts_mutex_lock(&cancellable_mutex);
+  c->cancel = NULL;
+  c->opaque = NULL;
+  hts_mutex_unlock(&cancellable_mutex);
+}
 
-  htsbuf_queue_t spill;
 
-  int (*write)(struct tcpcon *, const void *, size_t);
-  int (*read)(struct tcpcon *, void *, size_t, int,
-	      net_read_cb_t *cb, void *opaque);
+/**
+ *
+ */
+void
+cancellable_cancel(cancellable_t *c)
+{
+  hts_mutex_lock(&cancellable_mutex);
 
-#if ENABLE_OPENSSL
-  SSL *ssl;
-#endif
+  c->cancelled = 1;
+  if(c->cancel != NULL)
+    c->cancel(c->opaque);
 
-#if ENABLE_POLARSSL
-    ssl_context *ssl;
-    ssl_session *ssn;
-    havege_state *hs;
-#endif
-
-  cancellable_t *c;
-
-};
-
-void tcp_cancel(void *aux);
-
+  hts_mutex_unlock(&cancellable_mutex);
+}

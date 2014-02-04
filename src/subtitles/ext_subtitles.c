@@ -870,7 +870,7 @@ subtitles_load(media_pipe_t *mp, const char *url, AVRational *fr)
   TRACE(TRACE_DEBUG, "Subtitles", "Trying to load %s", url);
 
   buf_t *b = fa_load(url, NULL, errbuf, sizeof(errbuf),
-                     DISABLE_CACHE, 0, NULL, NULL);
+                     DISABLE_CACHE, 0, NULL, NULL, NULL);
 
   if(b == NULL) {
     TRACE(TRACE_ERROR, "Subtitles", "Unable to load %s -- %s", 
@@ -918,7 +918,7 @@ const char *
 subtitles_probe(const char *url)
 {
   const char *ret;
-  buf_t *b = fa_load(url, NULL, NULL, 0, 0, 0, NULL, NULL);
+  buf_t *b = fa_load(url, NULL, NULL, 0, 0, 0, NULL, NULL, NULL);
 
   if(is_txt(buf_cstr(b), buf_len(b)))
     ret = "TXT";

@@ -240,6 +240,7 @@ typedef struct http_file {
   const struct http_header_list *hf_user_request_headers;
   struct http_header_list *hf_user_response_headers;
 
+  cancellable_t *hf_c;
 
 #define STAT_VEC_SIZE 20
   int hf_stats[STAT_VEC_SIZE];
@@ -269,7 +270,8 @@ http_connection_destroy(http_connection_t *hc, int dbg, const char *reason)
  */
 static http_connection_t *
 http_connection_get(const char *hostname, int port, int ssl,
-		    char *errbuf, int errlen, int dbg, int timeout)
+		    char *errbuf, int errlen, int dbg, int timeout,
+                    cancellable_t *c)
 {
   http_connection_t *hc, *next;
   tcpcon_t *tc;
@@ -298,6 +300,7 @@ http_connection_get(const char *hostname, int port, int ssl,
       HTTP_TRACE(dbg, "Reusing connection to %s:%d (id=%d)",
 		 hc->hc_hostname, hc->hc_port, hc->hc_id);
       hc->hc_reused = 1;
+      tcp_set_cancellable(hc->hc_tc, c);
       return hc;
     }
   }
@@ -305,7 +308,8 @@ http_connection_get(const char *hostname, int port, int ssl,
   id = ++http_connection_tally;
   hts_mutex_unlock(&http_connections_mutex);
 
-  if((tc = tcp_connect(hostname, port, errbuf, errlen, timeout, ssl)) == NULL) {
+  if((tc = tcp_connect(hostname, port, errbuf, errlen,
+                       timeout, ssl, c)) == NULL) {
     HTTP_TRACE(dbg, "Connection to %s:%d failed", hostname, port);
     return NULL;
   }
@@ -332,6 +336,8 @@ http_connection_park(http_connection_t *hc, int dbg, int max_age)
   http_connection_t *next;
 
   time(&now);
+
+  tcp_set_cancellable(hc->hc_tc, NULL);
 
   HTTP_TRACE(dbg, "Parking connection to %s:%d (id=%d)",
 	     hc->hc_hostname, hc->hc_port, hc->hc_id);
@@ -1620,7 +1626,7 @@ http_connect(http_file_t *hf, char *errbuf, int errlen)
     timeout = 2000;
 
   hf->hf_connection = http_connection_get(hostname, port, ssl, errbuf, errlen,
-					  hf->hf_debug, timeout);
+					  hf->hf_debug, timeout, hf->hf_c);
 
   if(hf->hf_read_timeout != 0 && hf->hf_connection != NULL)
     tcp_set_read_timeout(hf->hf_connection->hc_tc, hf->hf_read_timeout);
@@ -2025,6 +2031,7 @@ http_open_ex(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
     }
     hf->hf_user_request_headers  = foe->foe_request_headers;
     hf->hf_user_response_headers = foe->foe_response_headers;
+    hf->hf_c = foe->foe_c;
   }
 
   if(!http_open0(hf, 1, errbuf, errlen, non_interactive)) {
@@ -2408,7 +2415,8 @@ static buf_t *
 http_load(struct fa_protocol *fap, const char *url,
 	  char *errbuf, size_t errlen,
 	  char **etag, time_t *mtime, int *max_age,
-	  int flags, fa_load_cb_t *cb, void *opaque)
+	  int flags, fa_load_cb_t *cb, void *opaque,
+          cancellable_t *c)
 {
   buf_t *b;
   int err;
@@ -2436,6 +2444,7 @@ http_load(struct fa_protocol *fap, const char *url,
                  HTTP_RESPONSE_HEADERS(&headers_out),
                  HTTP_REQUEST_HEADERS(&headers_in),
                  HTTP_PROGRESS_CALLBACK(cb, opaque),
+                 HTTP_CANCELLABLE(c),
                  NULL);
 
   if(err == -1) {
@@ -2987,15 +2996,14 @@ typedef struct http_read_aux {
 /**
  *
  */
-static int
+static void
 http_request_partial(void *opaque, int amount)
 {
   http_read_aux_t *hra = opaque;
 
   amount += hra->bytes_completed;
   if(hra->cb != NULL)
-    return hra->cb(hra->opaque, amount, hra->total);
-  return 0;
+    hra->cb(hra->opaque, amount, hra->total);
 }
 
 
@@ -3307,6 +3315,10 @@ http_req(const char *url, ...)
     case HTTP_TAG_PROGRESS_CALLBACK:
       hra.cb = va_arg(ap, fa_load_cb_t *);
       hra.opaque = va_arg(ap, void *);
+      break;
+
+    case HTTP_TAG_CANCELLABLE:
+      hf->hf_c = va_arg(ap, cancellable_t *);
       break;
 
     default:

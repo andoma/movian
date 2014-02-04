@@ -406,7 +406,7 @@ js_get_descriptor(JSContext *cx, JSObject *obj,
 
   snprintf(pe + 1, sizeof(pdesc) - (pe - pdesc), "plugin.json");
 
-  b = fa_load(pdesc, NULL, errbuf, sizeof(errbuf), NULL, 0, NULL, NULL);
+  b = fa_load(pdesc, NULL, errbuf, sizeof(errbuf), NULL, 0, NULL, NULL, NULL);
   if (b == NULL) {
     TRACE(TRACE_ERROR, "JS", "Unable to read %s -- %s", pdesc, errbuf);
     return JS_FALSE;

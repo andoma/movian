@@ -1488,7 +1488,8 @@ cifs_get_connection(const char *hostname, int port, char *errbuf, size_t errlen,
     hts_mutex_unlock(&smb_global_mutex);
 
     cc->cc_tc = tcp_connect(hostname, port,
-			    cc->cc_errbuf, sizeof(cc->cc_errbuf), 3000, 0);
+			    cc->cc_errbuf, sizeof(cc->cc_errbuf), 3000, 0,
+                            NULL);
 
     hts_mutex_lock(&smb_global_mutex);
 

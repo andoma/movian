@@ -64,8 +64,7 @@ polarssl_read(tcpcon_t *tc, void *buf, size_t len, int all,
       return -1;
     tot += ret;
     if(cb != NULL)
-      if(cb(opaque, tot))
-	return -1;
+      cb(opaque, tot);
   }
   return tot;
 }
@@ -119,8 +118,7 @@ tcp_read(tcpcon_t *tc, void *buf, size_t len, int all,
 	return len;
 
       if(cb != NULL)
-	if(cb(opaque, off))
-	  return -1;
+	cb(opaque, off);
 
     } else {
       return x;
@@ -169,7 +167,7 @@ getstreamsocket(int family, char *errbuf, size_t errbufsize)
  */
 tcpcon_t *
 tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
-	    int timeout, int ssl)
+	    int timeout, int ssl, cancellable_t *c)
 {
   struct net_hostent *hp;
   char *tmphstbuf;
@@ -252,6 +250,18 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
     free(tmphstbuf);
   }
 
+
+
+  tcpcon_t *tc = calloc(1, sizeof(tcpcon_t));
+  tc->fd = fd;
+  tc->c = c;
+  htsbuf_queue_init(&tc->spill, 0);
+
+  if(c != NULL)
+    cancellable_bind(c, tcp_cancel, tc);
+
+
+
   if(r < 0) {
     if(net_errno == NET_EINPROGRESS) {
 
@@ -264,20 +274,20 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
       if(r == 0) {
 	/* Timeout */
 	snprintf(errbuf, errbufsize, "Connection attempt timed out");
-	netClose(fd);
+        tcp_close(tc);
 	return NULL;
       }
       
       if(r == -1) {
 	snprintf(errbuf, errbufsize, "poll() error: %s", 
 		 strerror(net_errno));
-	netClose(fd);
+        tcp_close(tc);
 	return NULL;
       }
 
       if(pfd.revents & POLLERR) {
 	snprintf(errbuf, errbufsize, "Connection refused");
-	netClose(fd);
+        tcp_close(tc);
 	return NULL;
       }
 
@@ -291,7 +301,7 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 
   if(err != 0) {
     snprintf(errbuf, errbufsize, "%s", strerror(err));
-    netClose(fd);
+    tcp_close(tc);
     return NULL;
   }
   
@@ -304,20 +314,13 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
     return NULL;
   }
 
-  tcpcon_t *tc = calloc(1, sizeof(tcpcon_t));
-  tc->fd = fd;
-  htsbuf_queue_init(&tc->spill, 0);
-
-
   if(ssl) {
 #if ENABLE_POLARSSL
     if(1) {
       tc->ssl = malloc(sizeof(ssl_context));
       if(ssl_init(tc->ssl)) {
 	snprintf(errbuf, errlen, "SSL failed to initialize");
-	close(fd);
-	free(tc->ssl);
-	free(tc);
+        tcp_close(tc);
 	return NULL;
       }
 
@@ -401,6 +404,7 @@ tcp_close(tcpcon_t *tc)
     free(tc->hs);
   }
 #endif
+  cancellable_unbind(tc->c);
   htsbuf_queue_flush(&tc->spill);
   netClose(tc->fd);
   free(tc);

@@ -23,6 +23,7 @@
 #define BACKEND_H__
 
 #include "prop/prop.h"
+#include "misc/cancellable.h"
 
 struct pixmap;
 struct media_pipe;
@@ -32,7 +33,7 @@ struct image_meta;
 struct vsource_list;
 typedef struct video_queue video_queue_t;
 
-typedef int (be_load_cb_t)(void *opaque, int loaded, int total);
+typedef void (be_load_cb_t)(void *opaque, int loaded, int total);
 
 /**
  * Kept in sync with service_status_t
@@ -112,7 +113,7 @@ typedef struct backend {
 				   const char **vpaths,
 				   char *errbuf, size_t errlen,
 				   int *cache_control,
-				   be_load_cb_t *cb, void *opaque);
+                                   cancellable_t *c);
 
   int (*be_normalize)(const char *url, char *dst, size_t dstlen);
 
@@ -154,7 +155,7 @@ struct pixmap *backend_imageloader(rstr_t *url, const struct image_meta *im,
 				   const char **vpaths,
 				   char *errbuf, size_t errlen,
 				   int *cache_control,
-				   be_load_cb_t *cb, void *opaque)
+                                   cancellable_t *c)
      __attribute__ ((warn_unused_result));
 
 backend_t *backend_canhandle(const char *url)

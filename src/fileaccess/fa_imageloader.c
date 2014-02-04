@@ -57,8 +57,7 @@ static AVCodec *thumbcodec;
 
 static pixmap_t *fa_image_from_video(const char *url, const image_meta_t *im,
 				     char *errbuf, size_t errlen,
-				     int *cache_control,
-				     fa_load_cb_t *cb, void *opaque);
+				     int *cache_control, cancellable_t *c);
 #endif
 
 /**
@@ -82,14 +81,14 @@ fa_imageloader_init(void)
 static pixmap_t *
 fa_imageloader2(const char *url, const char **vpaths,
 		char *errbuf, size_t errlen, int *cache_control,
-		fa_load_cb_t *cb, void *opaque)
+                cancellable_t *c)
 {
   buf_t *buf;
   jpeg_meminfo_t mi;
   pixmap_type_t fmt;
   int width = -1, height = -1, orientation = 0;
 
-  buf = fa_load(url, vpaths, errbuf, errlen, cache_control, 0, cb, opaque);
+  buf = fa_load(url, vpaths, errbuf, errlen, cache_control, 0, NULL, NULL, c);
   if(buf == NULL || buf == NOT_MODIFIED)
     return (pixmap_t *)buf;
 
@@ -168,7 +167,7 @@ jpeginfo_reader(void *handle, void *buf, off_t offset, size_t size)
 pixmap_t *
 fa_imageloader(const char *url, const struct image_meta *im,
 	       const char **vpaths, char *errbuf, size_t errlen,
-	       int *cache_control, fa_load_cb_t *cb, void *opaque)
+	       int *cache_control, cancellable_t *c)
 {
   uint8_t p[16];
   int r;
@@ -179,16 +178,18 @@ fa_imageloader(const char *url, const struct image_meta *im,
 
 #if ENABLE_LIBAV
   if(strchr(url, '#'))
-    return fa_image_from_video(url, im, errbuf, errlen, cache_control,
-			       cb, opaque);
+    return fa_image_from_video(url, im, errbuf, errlen, cache_control, c);
 #endif
 
   if(!im->im_want_thumb)
-    return fa_imageloader2(url, vpaths, errbuf, errlen, cache_control,
-			   cb, opaque);
+    return fa_imageloader2(url, vpaths, errbuf, errlen, cache_control, c);
+
+  fa_open_extra_t foe = {
+    .foe_c = c
+  };
 
   if((fh = fa_open_vpaths(url, vpaths, errbuf, errlen,
-			  FA_BUFFERED_SMALL)) == NULL)
+			  FA_BUFFERED_SMALL, &foe)) == NULL)
     return NULL;
 
   if(ONLY_CACHED(cache_control)) {
@@ -381,7 +382,7 @@ write_thumb(const AVCodecContext *src, const AVFrame *sframe,
 static pixmap_t *
 fa_image_from_video2(const char *url, const image_meta_t *im, 
 		     const char *cacheid, char *errbuf, size_t errlen,
-		     int sec, time_t mtime, fa_load_cb_t *cb, void *opaque)
+		     int sec, time_t mtime, cancellable_t *c)
 {
   pixmap_t *pm = NULL;
 
@@ -462,16 +463,15 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
     int r;
 
     r = av_read_frame(ifv_fctx, &pkt);
-    
+
     if(r == AVERROR(EAGAIN))
       continue;
-    
-    if(r == AVERROR_EOF) {
+
+    if(r == AVERROR_EOF)
       break;
-    }
-    
-    if(cb != NULL && cb(opaque, 0, 1)) {
-      snprintf(errbuf, errlen, "Aborted");
+
+    if(cancellable_is_cancelled(c)) {
+      snprintf(errbuf, errlen, "Cancelled");
       av_free_packet(&pkt);
       break;
     }
@@ -563,7 +563,7 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
 static pixmap_t *
 fa_image_from_video(const char *url0, const image_meta_t *im,
 		    char *errbuf, size_t errlen, int *cache_control,
-		    fa_load_cb_t *cb, void *opaque)
+		    cancellable_t *c)
 {
   static char *stated_url;
   static fa_stat_t fs;
@@ -615,7 +615,7 @@ fa_image_from_video(const char *url0, const image_meta_t *im,
 
   hts_mutex_lock(&image_from_video_mutex[1]);
   pm = fa_image_from_video2(url, im, cacheid, errbuf, errlen,
-			    secs, stattime, cb, opaque);
+			    secs, stattime, c);
   hts_mutex_unlock(&image_from_video_mutex[1]);
   return pm;
 }

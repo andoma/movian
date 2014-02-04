@@ -504,7 +504,7 @@ check_upgrade(int set_news)
 	   archname);
 
   b = fa_load(url, NULL, errbuf, sizeof(errbuf),
-              NULL, FA_DISABLE_AUTH, NULL, NULL);
+              NULL, FA_DISABLE_AUTH, NULL, NULL, NULL);
   if(b == NULL) {
     check_upgrade_err(errbuf);
     return 1;

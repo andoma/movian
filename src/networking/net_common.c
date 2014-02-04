@@ -289,3 +289,31 @@ tcp_get_fd(const tcpcon_t *tc)
 {
   return tc->fd;
 }
+
+
+/**
+ *
+ */
+void
+tcp_cancel(void *aux)
+{
+  tcpcon_t *tc = aux;
+  shutdown(tc->fd, SHUT_RDWR);
+}
+
+
+/**
+ *
+ */
+void
+tcp_set_cancellable(tcpcon_t *tc, struct cancellable *c)
+{
+  if(tc->c == c)
+    return;
+
+  cancellable_unbind(tc->c);
+
+  tc->c = c;
+  if(tc->c != NULL)
+    cancellable_bind(tc->c, tcp_cancel, tc);
+}

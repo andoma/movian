@@ -423,7 +423,7 @@ plugin_props_from_file(prop_t *prop, const char *zipfile)
   buf_t *b;
 
   snprintf(path, sizeof(path), "zip://%s/plugin.json", zipfile);
-  b = fa_load(path, NULL, errbuf, sizeof(errbuf), NULL, 0, NULL, NULL);
+  b = fa_load(path, NULL, errbuf, sizeof(errbuf), NULL, 0, NULL, NULL, NULL);
   if(b == NULL) {
     TRACE(TRACE_ERROR, "plugins", "Unable to open %s -- %s", path, errbuf);
     return;
@@ -522,7 +522,7 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
   snprintf(ctrlfile, sizeof(ctrlfile), "%s/plugin.json", url);
 
   if((b = fa_load(ctrlfile, NULL, errbuf, errlen, NULL, 0,
-                  NULL, NULL)) == NULL)
+                  NULL, NULL, NULL)) == NULL)
     return -1;
 
   ctrl = htsmsg_json_deserialize2(buf_cstr(b), errbuf, errlen);
@@ -1197,7 +1197,7 @@ plugin_install(plugin_t *pl, const char *package)
   rstr_release(s);
 
   buf_t *b = fa_load(package, NULL, errbuf, sizeof(errbuf),
-                     NULL, 0, NULL, NULL);
+                     NULL, 0, NULL, NULL, NULL);
 
   if(b == NULL) {
     prop_set_string(pl->pl_statustxt, errbuf);
@@ -1403,7 +1403,7 @@ plugin_open_file(prop_t *page, const char *url)
   buf_t *b;
 
   snprintf(path, sizeof(path), "zip://%s/plugin.json", url);
-  b = fa_load(path, NULL, errbuf, sizeof(errbuf), NULL, 0, NULL, NULL);
+  b = fa_load(path, NULL, errbuf, sizeof(errbuf), NULL, 0, NULL, NULL, NULL);
   if(b == NULL) {
     nav_open_errorf(page, _("Unable to load plugin.json: %s"), errbuf);
     return;

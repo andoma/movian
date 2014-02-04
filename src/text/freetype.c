@@ -322,7 +322,8 @@ face_create_from_uri(const char *path, int font_domain, const char **vpaths)
     if(face->url != NULL && !strcmp(face->url, path) &&
        face->font_domain == font_domain)
       return face;
-  fa_handle_t *fh = fa_open_vpaths(path, vpaths, errbuf, sizeof(errbuf), 0);
+  fa_handle_t *fh = fa_open_vpaths(path, vpaths, errbuf, sizeof(errbuf), 0,
+                                   NULL);
   if(fh == NULL) {
     TRACE(TRACE_ERROR, "Freetype", "Unable to load font: %s -- %s",
 	  path, errbuf);

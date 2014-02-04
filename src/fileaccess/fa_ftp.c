@@ -209,7 +209,7 @@ fc_connect(const char *hostname, int port,
     hts_mutex_unlock(&ftp_global_mutex);
   }
 
-  if((tc = tcp_connect(hostname, port, errbuf, errlen, 5000, 0)) == NULL)
+  if((tc = tcp_connect(hostname, port, errbuf, errlen, 5000, 0, NULL)) == NULL)
     return NULL;
 
   fc = calloc(1, sizeof(ftp_connection_t));
@@ -339,7 +339,7 @@ ftp_open_data_transfer(ftp_connection_t *fc)
 
   snprintf(host, sizeof(host), "%d.%d.%d.%d", d[0], d[1], d[2], d[3]);
   int port = d[4] * 256 + d[5];
-  tcpcon_t *tc = tcp_connect(host, port, buf, sizeof(buf), 5000, 0);
+  tcpcon_t *tc = tcp_connect(host, port, buf, sizeof(buf), 5000, 0, NULL);
   if(tc == NULL) {
     TRACE(TRACE_ERROR, "FTP", "Data channel connection failed to %s:%d -- %s",
           host, port, buf);

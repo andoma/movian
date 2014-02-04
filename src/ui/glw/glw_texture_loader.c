@@ -35,6 +35,16 @@
  *
  */
 static void
+glt_cancel(glw_loadable_texture_t *glt)
+{
+  cancellable_cancel(&glt->glt_cancellable);
+}
+
+
+/**
+ *
+ */
+static void
 glw_tex_purge_stash(glw_root_t *gr, int stash)
 {
   while(gr->gr_tex_stash[stash].size > gr->gr_tex_stash[stash].limit) {
@@ -125,6 +135,7 @@ glw_tex_autoflush(glw_root_t *gr)
 
     case GLT_STATE_LOADING:
       glt->glt_state = GLT_STATE_LOAD_ABORT;
+      glt_cancel(glt);
       break;
 
     case GLT_STATE_STASHED:
@@ -196,17 +207,6 @@ glt_enqueue(glw_root_t *gr, glw_loadable_texture_t *glt, int q)
 /**
  *
  */
-static int
-img_load_cb(void *opaque, int loaded, int total)
-{
-  glw_loadable_texture_t *glt = opaque;
-  return glt->glt_url == NULL || glt->glt_state == GLT_STATE_LOAD_ABORT;
-}
-
-
-/**
- *
- */
 static void *
 loader_thread(void *aux)
 {
@@ -250,9 +250,11 @@ loader_thread(void *aux)
 	ccptr = NULL;
       }
 
+      cancellable_reset(&glt->glt_cancellable);
+
       glw_unlock(gr);
       pm = backend_imageloader(url, &im, gr->gr_vpaths, errbuf, sizeof(errbuf),
-			       ccptr, img_load_cb, glt);
+			       ccptr, &glt->glt_cancellable);
 
       glw_lock(gr);
 
@@ -459,6 +461,7 @@ glw_tex_deref(glw_root_t *gr, glw_loadable_texture_t *glt)
 
   if(glt->glt_refcnt > 0) {
 
+    // Loading state holds a ref, so this means that we're the only one
     if(glt->glt_refcnt == 1 && glt->glt_state == GLT_STATE_LOADING)
       goto unlink;
     return;
@@ -489,7 +492,10 @@ glw_tex_deref(glw_root_t *gr, glw_loadable_texture_t *glt)
 
   if(glt->glt_url == NULL)
     return;
+
  unlink:
+  if(glt->glt_state == GLT_STATE_LOADING)
+    glt_cancel(glt);
   rstr_release(glt->glt_url);
   glt->glt_url = NULL;
   LIST_REMOVE(glt, glt_global_link);

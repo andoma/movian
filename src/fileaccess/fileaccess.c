@@ -261,7 +261,8 @@ fa_open_ex(const char *url, char *errbuf, size_t errsize, int flags,
  */
 void *
 fa_open_vpaths(const char *url, const char **vpaths,
-	       char *errbuf, size_t errsize, int flags)
+	       char *errbuf, size_t errsize, int flags,
+               fa_open_extra_t *foe)
 {
   fa_protocol_t *fap;
   char *filename;
@@ -271,9 +272,9 @@ fa_open_vpaths(const char *url, const char **vpaths,
     return NULL;
   
   if(flags & (FA_BUFFERED_SMALL | FA_BUFFERED_BIG))
-    return fa_buffered_open(url, errbuf, errsize, flags, NULL);
+    return fa_buffered_open(url, errbuf, errsize, flags, foe);
 
-  fh = fap->fap_open(fap, filename, errbuf, errsize, flags, NULL);
+  fh = fap->fap_open(fap, filename, errbuf, errsize, flags, foe);
 #ifdef FA_DUMP
   fh->fh_dump_fd = -1;
 #endif
@@ -1313,7 +1314,7 @@ fileaccess_init(void)
 buf_t *
 fa_load(const char *url, const char **vpaths,
 	char *errbuf, size_t errlen, int *cache_control, int flags,
-	fa_load_cb_t *cb, void *opaque)
+	fa_load_cb_t *cb, void *opaque, cancellable_t *c)
 {
   fa_protocol_t *fap;
   fa_handle_t *fh;
@@ -1364,7 +1365,7 @@ fa_load(const char *url, const char **vpaths,
       blobcache_get_meta(url, "fa_load", &etag, &mtime);
     
     data2 = fap->fap_load(fap, filename, errbuf, errlen,
-			  &etag, &mtime, &max_age, flags, cb, opaque);
+			  &etag, &mtime, &max_age, flags, cb, opaque, c);
     
     fap_release(fap);
     free(filename);
@@ -1649,7 +1650,7 @@ fa_load_query(const char *url0,
   char *url = htsbuf_to_string(&q);
 
   buf_t *b = fa_load(url, NULL, errbuf, errlen, cache_control, flags,
-                     NULL, NULL);
+                     NULL, NULL, NULL);
   free(url);
   htsbuf_queue_flush(&q);
   return b;
