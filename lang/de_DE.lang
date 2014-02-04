@@ -391,12 +391,6 @@ id: Playback status
 msg: Wiedergabestatus
 
 #
-# ./glwskins/default/pages/wideinfo/video.view
-#
-id: Seen:
-msg: Gesehen:
-
-#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -441,8 +435,16 @@ msg: Keine Medien geladen
 id: CPU Temp
 msg: CPU Temperatur
 
+id: Fragmentation
+# Missing translation
+msg: 
+
 id: GPU Temp
 msg: GPU Temperatur
+
+id: Inactive mem
+# Missing translation
+msg: 
 
 id: Memory usage
 msg: Speicher-Nutzung
@@ -709,8 +711,13 @@ msg: Wirklich löschen:
 id: Enable file deletion from item menu
 msg: Aktiviere Löschmöglichkeit im Menü
 
-id: File access
-msg: Datei-Zugriff
+id: File browsing
+# Missing translation
+msg: 
+
+id: Show filename extensions
+# Missing translation
+msg: 
 
 id: %d archive parts
 msg[0]: %d Archivteil 

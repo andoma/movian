@@ -1,15 +1,11 @@
-﻿language: Greek
+language: Greek
 native: Ελληνικά
 maintainer: ananias47 & panos kosmo ananias47@hotmail.com 
-Special thanks : panos kosmo
-
-
-
 #
 # ./ext/miner/miner.c
 #
-id:Do you like Showtime? You can donate money to the project by mining Litecoins on your PS3
-msg:Σου αρέσει το Showtime? Μπορείς να προσφέρεις χρήματα στο project χρησιμοποιώντας  Litecoins στο PS3
+id: Do you like Showtime? You can donate money to the project by mining Litecoins on your PS3
+msg: Σου αρέσει το Showtime? Μπορείς να προσφέρεις χρήματα στο project χρησιμοποιώντας  Litecoins στο PS3
 
 id: Donate money to the Showtime project by mining litecoints
 msg: Κάνε μια δωρεά στο Showtime χρησιμοποιώντας τα  litecoints
@@ -234,7 +230,8 @@ id: Installed version:
 msg: Εγκατεστημένη Έκδοση:
 
 id: Showtime %s or newer is required
-msg:Χρειάζεται  Showtime %s ή νεότερη έκδοση 
+msg: Χρειάζεται  Showtime %s ή νεότερη έκδοση 
+
 #
 # ./glwskins/default/pages/iteminfo/video.view
 #
@@ -257,7 +254,9 @@ id: Year:
 msg: Έτος:
 
 id: Seen %d times
-msg: Προβλήθηκε %d φορές 
+# Missing plural translation for 'Seen %d times' and 'Seen %d time'
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwskins/default/pages/listitems/add.view
@@ -389,12 +388,6 @@ id: Playback status
 msg: Κατάσταση Αναπαραγωγής
 
 #
-# ./glwskins/default/pages/wideinfo/video.view
-#
-id: Seen:
-msg: Προβολή:
-
-#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -439,8 +432,16 @@ msg: Δεν φορτώθηκε μέσο
 id: CPU Temp
 msg: Θερμ. CPU
 
+id: Fragmentation
+# Missing translation
+msg: 
+
 id: GPU Temp
 msg: Θερμ. GPU
+
+id: Inactive mem
+# Missing translation
+msg: 
 
 id: Memory usage
 msg: Χρήση μνήμης
@@ -674,7 +675,7 @@ id: Off
 msg: Κλειστό
 
 id: Show only supported files
-msg:Παρουσίαση μόνο υποστηριζόμενων αρχείων
+msg: Παρουσίαση μόνο υποστηριζόμενων αρχείων
 
 id: Sort folders first
 msg: Πρώτα τα μικρά αρχεία
@@ -700,17 +701,26 @@ msg: Είσαι σίγουρος ότι θέλεις να διαγραφεί:
 id: Enable file deletion from item menu
 msg: Ενεργοποίηση διαγραφής αρχείων από το  μενού εργαλείων
 
-id: File access
-msg: Πρόσβαση στο αρχείο
+id: File browsing
+# Missing translation
+msg: 
+
+id: Show filename extensions
+# Missing translation
+msg: 
 
 id: %d archive parts
 msg[0]: %d κομμάτια αρχείου
 
 id: %d directories
-msg: %d κατάλογοι
+# Missing plural translation for '%d directories' and '%d directory'
+msg[0]: 
+msg[1]: 
 
 id: %d files
-msg: %d αρχεία
+# Missing plural translation for '%d files' and '%d file'
+msg[0]: 
+msg[1]: 
 
 #
 # ./src/i18n.c
@@ -981,6 +991,7 @@ msg: FTP-Server
 
 id: Server TCP port
 msg: Θύρα Server TCP 
+
 #
 # ./src/plugins.c
 #
@@ -1427,3 +1438,4 @@ msg: Επιτάχυνση βίντεο και ρυθμίσεις αναπαρα�
 
 id: Video playback
 msg: Αναπαραγωγή Βίντεο
+

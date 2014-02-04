@@ -387,12 +387,6 @@ id: Playback status
 msg: 播放信息
 
 #
-# ./glwskins/default/pages/wideinfo/video.view
-#
-id: Seen:
-msg: 看过
-
-#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -437,8 +431,16 @@ msg: 未载入媒体
 id: CPU Temp
 msg: CPU温度
 
+id: Fragmentation
+# Missing translation
+msg: 
+
 id: GPU Temp
 msg: GPU温度
+
+id: Inactive mem
+# Missing translation
+msg: 
 
 id: Memory usage
 msg: 内存占用
@@ -698,8 +700,13 @@ msg: 是否确定要删除：
 id: Enable file deletion from item menu
 msg: 启用文件删除功能
 
-id: File access
-msg: 文件访问
+id: File browsing
+# Missing translation
+msg: 
+
+id: Show filename extensions
+# Missing translation
+msg: 
 
 id: %d archive parts
 msg[0]: %d个分卷

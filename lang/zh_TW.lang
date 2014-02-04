@@ -414,13 +414,6 @@ id: Playback status
 msg: 影片資訊
 
 #
-# ./glwskins/default/pages/wideinfo/video.view
-#
-id: Seen:
-# Missing translation
-msg: 
-
-#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -466,7 +459,15 @@ id: CPU Temp
 # Missing translation
 msg: 
 
+id: Fragmentation
+# Missing translation
+msg: 
+
 id: GPU Temp
+# Missing translation
+msg: 
+
+id: Inactive mem
 # Missing translation
 msg: 
 
@@ -753,7 +754,11 @@ id: Enable file deletion from item menu
 # Missing translation
 msg: 
 
-id: File access
+id: File browsing
+# Missing translation
+msg: 
+
+id: Show filename extensions
 # Missing translation
 msg: 
 

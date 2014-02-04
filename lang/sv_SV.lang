@@ -391,12 +391,6 @@ id: Playback status
 msg: Uppspelningsstatus
 
 #
-# ./glwskins/default/pages/wideinfo/video.view
-#
-id: Seen:
-msg: Seen:
-
-#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -441,8 +435,16 @@ msg: Ingen media laddad
 id: CPU Temp
 msg: CPU Temp
 
+id: Fragmentation
+# Missing translation
+msg: 
+
 id: GPU Temp
 msg: GPU Temp
+
+id: Inactive mem
+# Missing translation
+msg: 
 
 id: Memory usage
 msg: Minnesanvändning
@@ -709,8 +711,13 @@ msg: Är du säker att du vill ta bort:
 id: Enable file deletion from item menu
 msg: Tillåt borttagning av filer från menyn
 
-id: File access
-msg: Fill tillgång
+id: File browsing
+# Missing translation
+msg: 
+
+id: Show filename extensions
+# Missing translation
+msg: 
 
 id: %d archive parts
 msg[0]: 

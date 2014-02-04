@@ -387,12 +387,6 @@ id: Playback status
 msg: Статус воспроизведения
 
 #
-# ./glwskins/default/pages/wideinfo/video.view
-#
-id: Seen:
-msg: Воспроизведено:
-
-#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -437,8 +431,16 @@ msg: Медиа-файл не загружен
 id: CPU Temp
 msg: Температура CPU
 
+id: Fragmentation
+# Missing translation
+msg: 
+
 id: GPU Temp
 msg: Температура GPU
+
+id: Inactive mem
+# Missing translation
+msg: 
 
 id: Memory usage
 msg: Использование памяти
@@ -698,8 +700,13 @@ msg: Вы уверены, что хотите удалить:
 id: Enable file deletion from item menu
 msg: Включить удаление файла из пункта меню
 
-id: File access
-msg: Доступ к файлу
+id: File browsing
+# Missing translation
+msg: 
+
+id: Show filename extensions
+# Missing translation
+msg: 
 
 id: %d archive parts
 msg[0]: частей архива: %d

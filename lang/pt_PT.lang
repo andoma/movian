@@ -396,13 +396,6 @@ id: Playback status
 msg: Estado da reprodução
 
 #
-# ./glwskins/default/pages/wideinfo/video.view
-#
-id: Seen:
-# Missing translation
-msg: 
-
-#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -448,7 +441,15 @@ id: CPU Temp
 # Missing translation
 msg: 
 
+id: Fragmentation
+# Missing translation
+msg: 
+
 id: GPU Temp
+# Missing translation
+msg: 
+
+id: Inactive mem
 # Missing translation
 msg: 
 
@@ -722,8 +723,13 @@ msg: Tem a certeza que pretende eliminar:
 id: Enable file deletion from item menu
 msg: Ativar eliminação de ficheiros através do item de menu
 
-id: File access
-msg: Acesso a ficheiros
+id: File browsing
+# Missing translation
+msg: 
+
+id: Show filename extensions
+# Missing translation
+msg: 
 
 id: %d archive parts
 msg[0]: 
