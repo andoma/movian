@@ -276,8 +276,10 @@ open_stream(icecast_play_context_t *ipc)
 static void
 close_stream(icecast_play_context_t *ipc)
 {
-  media_codec_deref(ipc->ipc_mc);
-  media_format_deref(ipc->ipc_mf);
+  if(ipc->ipc_mc != NULL)
+    media_codec_deref(ipc->ipc_mc);
+  if(ipc->ipc_mf != NULL)
+    media_format_deref(ipc->ipc_mf);
   ipc->ipc_mc = NULL;
   ipc->ipc_mf = NULL;
   flush_sources(ipc);
