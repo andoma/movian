@@ -1,0 +1,1429 @@
+﻿language: Greek
+native: Ελληνικά
+maintainer: ananias47 & panos kosmo ananias47@hotmail.com 
+Special thanks : panos kosmo
+
+
+
+#
+# ./ext/miner/miner.c
+#
+id:Do you like Showtime? You can donate money to the project by mining Litecoins on your PS3
+msg:Σου αρέσει το Showtime? Μπορείς να προσφέρεις χρήματα στο project χρησιμοποιώντας  Litecoins στο PS3
+
+id: Donate money to the Showtime project by mining litecoints
+msg: Κάνε μια δωρεά στο Showtime χρησιμοποιώντας τα  litecoints
+
+id: Donations
+msg: Δωρεές
+
+id: Show me more
+msg: Περισσότερα
+
+#
+# ./glwskins/default/cmdmenu.view
+#
+id: Add current page to bookmarks
+msg: Προσθήκη της τρέχουσας σελίδας στους σελιδοδείκτες 
+
+id: Open settings
+msg: Άνοιγμα Ρυθμίσεων 
+
+id: Remove current page from bookmarks
+msg: Αφαίρεση της τρέχουσας σελίδας από τους σελιδοδείκτες
+
+#
+# ./glwskins/default/cmdmenu/cmdmenu_common.view
+#
+id: Activate sleep timer
+msg: Ενεργοποίηση χρονοδιακόπτη διακοπής λειτουργίας
+
+id: Disable sleep timer
+msg: Απενεργοποίηση χρονοδιακόπτη διακοπής λειτουργίας
+
+id: Exit Showtime
+msg: Έξοδος από το  Showtime 
+
+id: Go to Home screen
+msg: Μετάβαση στην αρχική σελίδα
+
+id: Navigation
+msg: Πλοήγηση 
+
+id: Open Settings
+msg: Άνοιγμα Ρυθμίσεων
+
+id: Playqueue
+msg: Αναπαραγωγή Λίστας
+
+id: Power off
+msg: Τερματισμός
+
+id: Reload current page
+msg: Ανανέωση τρέχουσας σελίδας
+
+id: Suspend
+msg: Αναστολή λειτουργείας
+
+id: System
+msg: Σύστημα
+
+id: Time until sleep
+msg: Χρόνος μέχρι να αδρανοποιηθεί το σύστημα
+
+id: min
+msg: λεπτό
+
+#
+# ./glwskins/default/cmdmenu/cmdmenu_dir.view
+#
+id: Add '%s' to home screen
+msg: Προσθήκη '%s' στην αρχική σελίδα
+
+id: Remove '%s' from home screen
+msg: : Αφαίρεση  '%s' από την αρχική σελίδα
+
+#
+# ./glwskins/default/cmdmenu/cmdmenu_item.view
+#
+id: Continue from %s
+msg: Συνέχεια από %s
+
+id: Continue playback here
+msg: Συνέχεια αναπαραγωγής από εδώ
+
+id: Delete
+msg: Διαγραφή 
+
+id: Mark as seen
+msg: Μαρκάρισμα ότι το έχω δει
+
+id: Mark as unseen
+msg: Μαρκάρισμα ότι δεν το έχω δει
+
+id: Play from beginning
+msg: Αναπαραγωγή από την αρχή
+
+id: Play until end of list
+msg: Αναπαραγωγή μέχρι το τέλος της λίστας
+
+id: Queue
+msg: Λίστα
+
+id: Star
+msg: Προσθήκη στα αγαπημένα
+
+id: Unstar
+msg: Αφαίρεση από τα αγαπημένα
+
+#
+# ./glwskins/default/cmdmenu/cmdmenu_video.view
+#
+id: Audio
+msg: Ήχος
+
+id: Audio settings
+msg: Ρύθμισης  Ήχου
+
+id: Audio tracks
+msg: Μουσικά Κομμάτια 
+
+id: Chapters
+msg: Κεφάλαια 
+
+id: Seek by time
+msg: Αναζήτηση κατά χρονική περίοδο
+
+id: Settings
+msg: Ρυθμίσεις
+
+id: Subtitle settings
+msg: Ρυθμίσεις Υποτίτλων
+
+id: Subtitle tracks
+msg: Κομμάτια Υποτίτλων
+
+id: Subtitles
+msg: Υπότιτλοι
+
+id: Video
+msg: Βίντεο
+
+id: Video menu
+msg: Μενού Βίντεο
+
+id: Video settings
+msg: Ρυθμίσεις Βίντεο
+
+#
+# ./glwskins/default/log.view
+#
+id: System log
+msg: Καταγραφή Συστήματος 
+
+#
+# ./glwskins/default/pages/directory.view
+#
+id: Album
+msg: Άλμπουμ
+
+id: Artist
+msg: Καλλιτέχνης
+
+id: Custom
+msg: Τροποποιημένα
+
+id: Images
+msg: Εικόνες
+
+id: List
+msg: Λίστα 
+
+id: Slideshow
+msg: Παρουσίαση
+
+id: Tvchannels
+msg: Κανάλια TV
+
+id: View
+msg: Προβολή
+
+#
+# ./glwskins/default/pages/discovered.view
+#
+id: Discovered resources on local network
+msg: Ανακαλύφθηκαν πηγές στο τοπικό δίκτυο
+
+#
+# ./glwskins/default/pages/home.view
+#
+id: Tiled
+msg: Πλακίδια
+
+#
+# ./glwskins/default/pages/home_clist.view
+#
+id: Apps
+msg: Εφαρμογές 
+
+id: Dismiss
+msg: Ματαίωση
+
+id: Search / Open URL
+msg: Αναζήτηση/Άνοιγμα URL
+
+#
+# ./glwskins/default/pages/iteminfo/image.view
+#
+id: Camera: 
+msg: Κάμερα:
+
+id: Date: 
+msg: Ημερομηνία: 
+
+#
+# ./glwskins/default/pages/iteminfo/plugin.view
+#
+id: Author: 
+msg: Συγγραφέας:
+
+id: Available version: 
+msg: Διαθέσιμη Έκδοση:
+
+id: Installed version: 
+msg: Εγκατεστημένη Έκδοση:
+
+id: Showtime %s or newer is required
+msg:Χρειάζεται  Showtime %s ή νεότερη έκδοση 
+#
+# ./glwskins/default/pages/iteminfo/video.view
+#
+id: Duration:
+msg: Διάρκεια:
+
+id: File date:
+msg: Ημερομηνία Αρχείου:
+
+id: Genre:
+msg: Είδος:
+
+id: Metadata from
+msg: Metadata από
+
+id: Rating:
+msg: Βαθμολογία: 
+
+id: Year:
+msg: Έτος:
+
+id: Seen %d times
+msg: Προβλήθηκε %d φορές 
+
+#
+# ./glwskins/default/pages/listitems/add.view
+#
+id: Add new entry
+msg: Προθήκη νέας καταχώρησης 
+
+#
+# ./glwskins/default/pages/listitems/bool.view
+#
+id: No
+msg: Όχι
+
+id: Yes
+msg: Ναι 
+
+#
+# ./glwskins/default/pages/listitems/font.view
+#
+id: Condensed
+msg: Συνοπτικές
+
+id: Main
+msg: Κύρια
+
+id: Subs
+msg: Υπότιτλοι
+
+#
+# ./glwskins/default/pages/listitems/plugin.view
+#
+id: Install
+msg: Εγκατάσταση
+
+id: Uninstall
+msg: Απεγκατάσταση
+
+id: Upgrade
+msg: Αναβάθμιση
+
+#
+# ./glwskins/default/pages/openerror.view
+#
+id: Unable to open resource
+msg: Αδυναμία ανοίγματος πηγής !
+
+#
+# ./glwskins/default/pages/playqueue.view
+#
+id: Track %d / %d
+msg: Κομμάτι  %d / %d
+
+#
+# ./glwskins/default/pages/slideshow.view
+#
+id: Paused
+msg: Διακόπηκε
+
+#
+# ./glwskins/default/pages/upgrade.view
+#
+id: An error occured during download
+msg: Ένα σφάλμα συνέβη κατά την διάρκεια της λήψης!
+
+id: Available version:
+msg: Διαθέσιμη Έκδοση:
+
+id: Changelog for %s releases
+msg: Αλλαγές για την %s έκδοση
+
+id: Check for updates now
+msg: Έλεγχος για ενημερώσεις 
+
+id: Checking for updates...
+msg: Ελέγχει για ενημερώσεις
+
+id: Checking installed version of %s
+msg: Έλεγχος εγκατεστημένης έκδοσης %s
+
+id: Current version:
+msg: Τρέχουσα έκδοση:
+
+id: Download and install...
+msg: Λήψη και εγκατάσταση...
+
+id: Downloading %s
+msg: Λήψη %s
+
+id: Installing %s
+msg: Εγκατάσταση %s
+
+id: New version %s is available for download
+msg: Καινούρια έκδοση %s είναι διαθέσιμη για λήψη
+
+id: No upgrade available
+msg: Δεν υπάρχει διαθέσιμη αναβάθμιση
+
+id: Patching %s
+msg: Patching %s
+
+id: Restarting Showtime in %d seconds...
+msg: Επανεκκίνηση του Showtime σε %d δευτερόλεπτα….
+
+id: Retry...
+msg: Επανάληψη...
+
+id: Showtime is up to date
+msg: Το Showtime είναι ενημερωμένο
+
+id: Stable
+msg: Σταθερή 
+
+id: Testing
+msg: Δοκιμαστική 
+
+id: Unable to query for new version
+msg: Αδυναμία αναζήτησης νέας έκδοσης
+
+id: Verifying %s
+msg: Επαλήθευση %s
+
+#
+# ./glwskins/default/pages/video.view
+#
+id: CPU is too slow to decode this video
+msg: Ο CPU είναι πολύ αργός για να αποκωδικοποιήσει αυτό το βίντεο
+
+id: Playback status
+msg: Κατάσταση Αναπαραγωγής
+
+#
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+msg: Προβολή:
+
+#
+# ./glwskins/default/playdecks/dvd.view
+#
+id: Chapter: %d
+msg: Κεφάλαιο: %d
+
+id: Title: %d
+msg: Τίτλος: %d
+
+#
+# ./glwskins/default/popups/auth.view
+#
+id: Domain
+msg: Διεύθυνση Δικτύου
+
+id: Password
+msg: Κωδικός
+
+id: Remember me
+msg: Απομνημόνευση
+
+id: Username
+msg: Όνομα Χρήστη
+
+#
+# ./glwskins/default/popups/common.view
+#
+id: Cancel
+msg: Ακύρωση
+
+id: OK
+msg: OK
+
+#
+# ./glwskins/default/screensaver.view
+#
+id: No media loaded
+msg: Δεν φορτώθηκε μέσο
+
+#
+# ./glwskins/default/sysinfo.view
+#
+id: CPU Temp
+msg: Θερμ. CPU
+
+id: GPU Temp
+msg: Θερμ. GPU
+
+id: Memory usage
+msg: Χρήση μνήμης
+
+id: System Free
+msg: Διαθέσιμη
+
+id: System Total
+msg: Ολική
+
+#
+# ./glwskins/default/universe.view
+#
+id: Audio muted
+msg: Ήχος σε σίγαση
+
+id: Master volume: %d dB
+msg: Ήχος εξόδου: %d dB
+
+#
+# ./resources/spuminer/settings.view
+#
+id: Apart from enabling this option you do not need to do anything else to make your donations for the project.
+msg: Εκτός από το να ενεργοποιήσετε αυτήν την επιλογή δεν χρειάζεται να κάνετε κάτι άλλο  για την δωρεά σας στο project.
+
+id: Enable mining
+msg: Ενεργοποίηση κατάθεσης
+
+id: For more information about Litecoin, please visit http://litecoin.org
+msg: Για περισσότερες πληροφορίες για το Litecoin παρακαλώ επισκεφθείτε την ιστοσελίδα http://litecoin.org
+
+id: If you like Showtime you can donate money to the project by letting your Playstation 3 mine Litecoins while Showtime is running.
+msg: Εάν σου αρέσει το Showtime μπορείς να κάνεις μια δωρεά για το project αφήνοντας το PS3 να καταθέσει Litecoins όταν το Showtime τρέχει 
+
+id: Mining will not interfere with video playback performance as it only uses the leftover capacity of the SPU processors.
+msg: Η κατάθεση δεν θα επηρεάσει την αναπαραγωγή επειδή χρησιμοποιεί μόνο την εναπομείναντα χωρητικότητα του επεξεργαστή SPU
+
+id: Please consider enabling this option. / %s
+msg: Παρακαλώ σκεφτείτε να ενεργοποιείστε  αυτήν την επιλογή. / %s
+
+id: Thanks for your support!
+msg: Ευχαριστώ πολύ για την υποστήριξη σας !
+
+#
+# ./src/api/tmdb.c
+#
+id: Language (ISO 639-1 code)
+msg: Γλώσσα (κωδικοποίηση ISO 639-1)
+
+id: Use original title
+msg: Χρησιμοποίηση πρωτότυπου τίτλου
+
+#
+# ./src/arch/ps3/ps3_main.c
+#
+id: System is low on memory (%d kB RAM available)
+msg: Το σύστημα είναι χαμηλό σε μνήμη (%d kB RAM διαθέσιμα)
+
+#
+# ./src/arch/rpi/rpi_cec.c
+#
+id: Configure how Showtime communicates with your TV
+msg: Επιβεβαιώστε την επικοινωνία του Showtime με την TV
+
+id: Consumer Electronics Control
+msg: Ηλεκτρονικά Συστήματα Ελέγχου Καταναλωτών (CEC)
+
+#
+# ./src/backend/dvd/cdda.c
+#
+id: Invalid CD URL
+msg: Μη έγκυρη διεύθυνση CD
+
+id: Invalid CD track
+msg: Μη έγκυρο κομμάτι CD
+
+id: Unable to open CD
+msg: Αδυναμία ανοίγματος CD
+
+#
+# ./src/backend/dvd/dvd.c
+#
+id: DVD
+msg: DVD
+
+id: DVD read error, restarting disc
+msg: Σφάλμα αναπαραγωγής DVD, επανεκκίνηση δίσκου
+
+#
+# ./src/backend/htsp/htsp.c
+#
+id: Invalid HTSP URL
+msg: Μη έγκυρη διεύθυνση HTSP
+
+#
+# ./src/backend/search.c
+#
+id: Search
+msg: Αναζήτηση
+
+id: Search result for: %s
+msg: Αποτελέσματα αναζήτησης για: %s
+
+#
+# ./src/backend/spotify/spotify.c
+#
+id: Albums
+msg: Άλμπουμ
+
+id: Automatic login when Showtime starts
+msg: Αυτόματη είσοδο όταν ξεκινάει το Showtime
+
+id: Collaborative
+msg: Συνεργασία
+
+id: Compilations
+msg: Συλλογές
+
+id: Forget me
+msg: Διαγραφή στοιχείων μου
+
+id: Friends
+msg: Φίλοι
+
+id: High bitrate
+msg: Υψηλό bitrate
+
+id: Inbox
+msg: Εισερχόμενα
+
+id: New albums on Spotify
+msg: Νέα άλμπουμ στο Spotify
+
+id: New releases
+msg: Νέες Κυκλοφορίες 
+
+id: Offline
+msg: Αποσυνδεδεμένος
+
+id: Offline sync in 96kbps
+msg: Συγχρονισμός εκτός σύνδεσης στα 96kbps
+
+id: Playlists
+msg: Λίστες Αναπαραγωγής
+
+id: Relogin (switch user)
+msg: Επανασύνδεση (αλλαγή χρήστη)
+
+id: Search result
+msg: Αποτελέσματα Αναζήτησης
+
+id: Singles
+msg: Μονά
+
+id: Spotify friends
+msg: Φίλοι στο Spotify
+
+id: Spotify music service
+msg: Spotify μουσική υπηρεσία
+
+id: Spotify playlists
+msg: Λίστες αναπαραγωγής του Spotify
+
+id: Spotify: Connection error: %s
+msg: Spotify: Σφάλμα Σύνδεσης: %s
+
+id: Starred
+msg: Αγαπημένα
+
+#
+# ./src/blobcache_file.c
+#
+id: Cache cleared
+msg: Η μνημη Cache καθαρίστηκε
+
+id: Clear cached files
+msg: Καθάρισμα αρχείων Cache
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+msg: Δεν μπορεί να χειριστεί τον τύπο περιεχομένου
+
+id: Unable to open file: %s
+msg: Δεν μπορεί να ανοιχτεί το αρχείο: %s
+
+#
+# ./src/fileaccess/fa_locatedb.c
+#
+id: Search using Unix locatedb
+msg: Αναζήτηση μέσω Unix Locatedb
+
+#
+# ./src/fileaccess/fa_nativesmb.c
+#
+id: Access denied
+msg: Η πρόσβαση απορρίφθηκε
+
+id: Account restricted
+msg: Ο λογαριασμός έχει περιοριστεί
+
+id: Bad network share name
+msg: Λάθος όνομα κοινόχρηστου δικτύου
+
+id: Logon failure
+msg: Σφάλμα κατά την είσοδο
+
+#
+# ./src/fileaccess/fa_scanner.c
+#
+id: Artists
+msg: Καλλιτέχνης
+
+id: Date (newest first)
+msg: Ημερομηνία  (Νεότερα)
+
+id: Date (oldest first)
+msg: Ημερομηνία (Παλαιότερα)
+
+id: Deleted %s
+msg: Διαγράφηκε %s
+
+id: Filename
+msg: Όνομα Αρχείου
+
+id: Indexed mode
+msg: Λειτουργία Ευρετηρίου
+
+id: Off
+msg: Κλειστό
+
+id: Show only supported files
+msg:Παρουσίαση μόνο υποστηριζόμενων αρχείων
+
+id: Sort folders first
+msg: Πρώτα τα μικρά αρχεία
+
+id: Sort on
+msg: Ταξινόμηση
+
+id: Unable to delete %s\n%s
+msg: Αδυναμία Διαγραφής %s\n%s
+
+#
+# ./src/fileaccess/fa_spotlight.c
+#
+id: Search using spotlight
+msg: Αναζήτηση μέσω Spotlight
+
+#
+# ./src/fileaccess/fileaccess.c
+#
+id: Are you sure you want to delete:
+msg: Είσαι σίγουρος ότι θέλεις να διαγραφεί:
+
+id: Enable file deletion from item menu
+msg: Ενεργοποίηση διαγραφής αρχείων από το  μενού εργαλείων
+
+id: File access
+msg: Πρόσβαση στο αρχείο
+
+id: %d archive parts
+msg[0]: %d κομμάτια αρχείου
+
+id: %d directories
+msg: %d κατάλογοι
+
+id: %d files
+msg: %d αρχεία
+
+#
+# ./src/i18n.c
+#
+id: Default character set
+msg: Προεπιλεγμένος Χαρακτήρας
+
+id: Ignore 'The' at beginning of words when sorting
+msg: Αγνόησε το 'The' στην αρχή τον λέξεων κατά την ταξινόμηση
+
+id: Language
+msg: Γλώσσα
+
+id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+msg: Οι κωδικοποιήσεις γλώσσας θα πρέπει να ρυθμίζονται ως τρεις χαρακτήρες κωδικοποίησης  ISO, π.χ. (eng, swe, fra)
+
+id: Languages
+msg: Γλώσσες
+
+id: Preferred languages
+msg: Προτιμώμενη γλώσσα
+
+id: Primary audio language code
+msg: Πρωτεύων κωδικοποίηση γλώσσας ήχου
+
+id: Primary subtitle language code
+msg: Πρωτεύων κωδικοποίηση γλώσσας υποτίτλων
+
+id: Secondary audio language code
+msg: Δευτερεύων κωδικοποίηση γλώσσας ήχου
+
+id: Secondary subtitle language code
+msg: Δευτερεύων κωδικοποίηση γλώσσας υποτίτλων
+
+id: Tertiary audio language code
+msg: Τριτεύων κωδικοποίηση γλώσσας ήχου
+
+id: Tertiary subtitle language code
+msg: Τριτεύων κωδικοποίηση γλώσσας υποτίτλων
+
+#
+# ./src/js/js_page.c
+#
+id: No handler for URL
+msg: Δεν υπάρχει κρατημένο URL
+
+#
+# ./src/keymapper.c
+#
+id: Configure mapping of keyboard and remote controller keys
+msg: Ρύθμιση χρήσης των κουμπιών του πληκτρολογίου και του τηλεχειριστηρίου
+
+id: Keymapper
+msg: Χάρτης Πλήκτρων
+
+#
+# ./src/keyring.c
+#
+id: Forget remembered passwords
+msg: Διαγραφή αποθηκεμένων κωδικών
+
+id: Rembered passwords erased
+msg: Οι αποθηκεμένοι κωδικοί σβήστηκαν 
+
+#
+# ./src/media.c
+#
+id: Align subtitles on video frame
+msg: Συγχρονισμός υποτίτλων στο βίντεο
+
+id: Audio delay
+msg: Καθυστέρηση ήχου
+
+id: Audio volume
+msg: Ένταση ήχου
+
+id: Go to standby after video ends
+msg: Τερματισμός λειτουργίας όταν τελειώσει το βίντεο
+
+id: Stretch video to fullscreen
+msg: Αναπαραγωγή βίντεο σε  πλήρη οθόνη
+
+id: Stretch video to widescreen
+msg: Αναπαραγωγή βίντεο σε  ευρεία οθόνη
+
+id: Subtitle delay
+msg: Καθυστέρηση υποτίτλων
+
+id: Subtitle horizontal displacement
+msg: Οριζόντια μετατόπιση υποτίτλων
+
+id: Subtitle scaling
+msg: Κλιμάκωση υποτίτλων
+
+id: Subtitle vertical displacement
+msg: Κάθετη μετατόπιση υποτίτλων
+
+id: Video zoom
+msg: Μεγέθυνση βίντεο
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+msg: Εύρεση
+
+#
+# ./src/metadata/decoration.c
+#
+id: Automatic
+msg: Αυτόματο
+
+id: Manual
+msg: Χειροκίνητο
+
+id: Mark all as seen
+msg: Μαρκάρισμα όλον ότι τα έχω δει
+
+id: Mark all as unseen
+msg: Μαρκάρισμα όλον ότι δεν τα έχω δει
+
+id: Metadata mode
+msg: Λειτουργία- Metadata
+
+#
+# ./src/metadata/metadata.c
+#
+id: Custom search query
+msg: Ερώτημα προσαρμοσμένης αναζήτησης
+
+id: Custom title
+msg: Τροποποιημένος τίτλος
+
+id: Embedded in file
+msg: Ενσωματωμένο στο αρχείο
+
+id: Enabled
+msg: Ενεργοποιημένο
+
+id: IMDb ID
+msg: IMDb ID
+
+id: Metadata
+msg: Metadata
+
+id: Metadata configuration and provider settings
+msg: Διαμόρφωση Metadata και ρυθμίσεις παρόχου
+
+id: Metadata loaded from '%s' using %s
+msg: Τα Metadata φορτώθηκαν από '%s', σε χρήση %s
+
+id: Metadata search
+msg: Αναζήτηση Metadata
+
+id: Metadata source
+msg: Πηγή Metadata
+
+id: Movie
+msg: Ταινία
+
+id: Movie title
+msg: Τίτλος Ταινίας
+
+id: No data found
+msg: Δεν βρέθηκαν δεδομένα
+
+id: None
+msg: Κανένα
+
+id: Providers for Music
+msg: Πάροχοι Μουσικής
+
+id: Providers for Video
+msg: Πάροχοι Βίντεο
+
+id: Refresh metadata
+msg: Ανανέωση Metadata
+
+id: Title, Season, Episode
+msg: Τίτλος, Σεζόν, Επεισόδιο
+
+id: Track %d
+msg: Τίτλος %d
+
+id: custom IMDb ID
+msg: Τροποποίηση  IMDb ID
+
+id: custom query
+msg: Τροποποιημένη Αναζήτηση
+
+id: filename
+msg: Όνομα αρχείου
+
+id: filename as TV episode
+msg: Όνομα αρχείου ως επεισόδιο TV
+
+id: folder name
+msg: Όνομα φακέλου
+
+#
+# ./src/metadata/metadb.c
+#
+id: %d items deleted
+msg: %d αρχεία διαγράφηκαν
+
+id: Clear all metadata
+msg: Καθαρισμός όλον των αρχείων metadata
+
+id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
+msg: Καθάρισμα όλον των αρχείων metadata σημαίνει απώλεια όλων των πληροφοριών για ένα αρχείο/ταινία που έχεις δει. Επιπλέον ο αριθμός των φορών που έχει παιχτεί ένα αρχείο/ταινία και η θέση για την συνέχιση μιας αναπαραγωγής,  θα διαγράφουν επίσης τα αρχεία cache των metadata από τις εξωτερικές πηγές όπως του themoviedb.org. Είσαι σίγουρος ότι θέλεις να προχωρήσεις;
+
+#
+# ./src/navigator.c
+#
+id: Add and remove items on homepage
+msg: Προθήκη και αφαίρεση δυνατοτήτων στην αρχική οθόνη 
+
+id: Added new bookmark: %s
+msg: Προστέθηκε νέος σελιδοδείκτης: %s
+
+id: Bookmarks
+msg: Σελιδοδείκτες
+
+id: Music
+msg: Μουσική
+
+id: Other
+msg: Άλλα
+
+id: Photos
+msg: Φωτογραφίες
+
+id: Published in Virtual File System
+msg: Δημοσίευση στο εικονικό σύστημα αρχείων
+
+id: Removed bookmark: %s
+msg: Αφαιρέθηκε ο σελιδοδείκτης: %s 
+
+id: TV
+msg: TV
+
+id: Title
+msg: Τίτλος
+
+id: Type
+msg: Τύπος
+
+id: URL
+msg: URL
+
+#
+# ./src/networking/connman.c
+#
+id: Enable Wi-Fi
+msg: Ενεργοποίηση Wi-Fi 
+
+id: Network connections
+msg: Συνδέσεις Δικτύου
+
+#
+# ./src/networking/ftp_server.c
+#
+id: Enable FTP server
+msg: Ενεργοποίηση FTP-Server 
+
+id: FTP server
+msg: FTP-Server
+
+id: Server TCP port
+msg: Θύρα Server TCP 
+#
+# ./src/plugins.c
+#
+id: Alternate plugin Repository URL
+msg: Εναλλακτική διεύθυνση URL για τα πρόσθετα
+
+id: Automatically upgrade plugins
+msg: Αυτόματη αναβάθμιση επεκτάσεων
+
+id: Available apps
+msg: Διαθέσιμες Εφαρμογές
+
+id: Background
+msg: Υπόβαθρο
+
+id: Beta testing passwords
+msg: Κωδικοί δοκιμαστικής έκδοσης 
+
+id: Browse available apps
+msg: Αναζήτηση διαθέσιμων εφαρμογών
+
+id: Browsing
+msg: Αναζήτηση
+
+id: Cloud services
+msg: Υπηρεσίες Cloud
+
+id: Corrupt plugin bundle
+msg: Κατεστραμμένο πακέτο πρόσθετου
+
+id: Default
+msg: Προεπιλογή
+
+id: Disk write error
+msg: Σφάλμα εγγραφής δίσκου!
+
+id: Downloading
+msg: Λήψη
+
+id: File open error
+msg: Σφάλμα κατά το άνοιγμα αρχείου
+
+id: Home page
+msg: Αρχική Σελίδα
+
+id: Installed apps
+msg: Εγκατεστημένες Εφαρμογές
+
+id: Installed version higher than available
+msg: Η εγκατεστημένη έκδοση είναι πιο πρόσφατη από την διαθέσιμη
+
+id: Installing
+msg: Εγκατάσταση
+
+id: List of albums
+msg: Λίστες Άλμπουμ
+
+id: Loading screen
+msg: Οθόνη Φόρτισης
+
+id: Movies
+msg: Ταινίες
+
+id: Music streaming
+msg: Streaming  Μουσικής
+
+id: Not installable
+msg: Δεν μπορεί να εγκατασταθεί
+
+id: Not installed
+msg: Δεν εγκαταστάθηκε
+
+id: Not upgradable
+msg: Δεν μπορεί να αναβαθμιστεί
+
+id: Online TV
+msg: Διαδικτυακή TV
+
+id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
+msg: Το πρόσθετο %s % αποκαταστάθηκε επειδή μπορεί να προκαλέσει προβλήματα. Προσπάθησε να επανεγκαταστάσεις μια διαφορετική έκδοση χειροκίνητα.
+
+id: Plugins
+msg: Πρόσθετα
+
+id: Preferred views from plugins
+msg: Προτιμώμενες προβολές από τα πρόσθετα
+
+id: Screen saver
+msg: Προφύλαξη Οθόνης
+
+id: TV channels
+msg: Κανάλια TV
+
+id: Unable to load plugin.json: %s
+msg: Αδυναμία φόρτωσης plugin.json: %s
+
+id: Unable to load plugin.json: Malformed JSON
+msg: Αδυναμία φόρτωσης plugin.json: Ακατάλληλο JSON
+
+id: Uncategorized
+msg: Κατηγοριοποίηση 
+
+id: Up to date
+msg: Ενημερωμένο
+
+id: Upgradable
+msg: Αναβαθμίσιμο
+
+id: Upgraded plugin %s to version %s
+msg: Αναβάθμιση πρόσθετου %s στην έκδοση %s
+
+id: User interface extensions
+msg: Πρόσθετα Περιβάλλοντος Χρήστη
+
+id: Video streaming
+msg: Streaming Βίντεο
+
+#
+# ./src/runcontrol.c
+#
+id: Automatic standby
+msg: Αυτόματος Τερματισμός Λειτουργίας
+
+id: Enable SSH server
+msg: Ενεργοποίηση SSH-Server 
+
+id: Logout
+msg: Αποσύνδεση
+
+id: Open shell
+msg: Άνοιγμα Shell 
+
+id: Power off system
+msg: Τερματισμός Συστήματος 
+
+id: SSH server
+msg: SSH-Server
+
+id: Standby
+msg: Τερματισμός Λειτουργίας
+
+id: Starting and stopping Showtime
+msg: Σταμάτημα και ξεκίνημα του Showtime
+
+#
+# ./src/sd/sd.c
+#
+id: Enabled on home screen
+msg: Ενεργοποίηση στην αρχική σελίδα
+
+id: Name
+msg: Όνομα
+
+#
+# ./src/service.c
+#
+id: Local network
+msg: Τοπικό Δίκτυο
+
+#
+# ./src/settings.c
+#
+id: Applications and installed plugins
+msg: Εφαρμογές και Εγκατεστημένα Πρόσθετα
+
+id: Developer settings
+msg: Επιλογές Προγραμματιστών
+
+id: Discovered media sources
+msg: Ανακαλυφθέντες Πηγές 
+
+id: Fonts and user interface styling
+msg: Στυλ και γραμματοσειρά περιβάλλοντος χρήστη 
+
+id: General
+msg: Γενικά
+
+id: Global settings
+msg: Γενικές Ρυθμίσεις
+
+id: Look and feel
+msg: Εμφάνιση και Αίσθηση
+
+id: Network services, etc
+msg: Δικτυακές Υπηρεσίες, κλπ.
+
+id: Network settings
+msg: Ρυθμίσεις Δικτύου
+
+id: Settings useful for developers
+msg: Ρυθμίσεις χρήσιμες για τους προγραμματιστές
+
+id: System name
+msg: Όνομα Συστήματος
+
+id: System related settings
+msg: Ρυθμίσεις σχετιζόμενες με το σύστημα
+
+#
+# ./src/subtitles/subtitles.c
+#
+id: Any subtitle in central folder
+msg: Οποιοσδήποτε υπότιτλος στον κεντρικό φάκελο
+
+id: Any subtitle in same folder as video
+msg: Οποιοσδήποτε υπότιτλος στον ίδιο φάκελο με το βίντεο
+
+id: Auto
+msg: Αυτόματο
+
+id: Automatically select from this source
+msg: Αυτόματη επιλογή από αυτήν την πηγή
+
+id: Center
+msg: Κεντρικά
+
+id: Central subtitle folder
+msg: Κεντρικός φάκελος υποτίτλων
+
+id: Color
+msg: Χρώμα
+
+id: External file
+msg: Εξωτερικό αρχείο
+
+id: Force subtitles to reside on video frame
+msg: Εξαναγκασμένη προσαρμογή των υπότιτλων στο καρέ του βίντεο
+
+id: Generic settings for video subtitles
+msg: Γενικές ρυθμίσεις για τους υποτίτλους των βίντεο
+
+id: Ignore embedded styling
+msg: Αγνοήστε τα ενσωματωμένα στυλ
+
+id: Left
+msg: Αριστερά
+
+id: Outline color
+msg: Χρώμα περιγράμματος
+
+id: Outline size
+msg: Μέγεθος περιγράμματος
+
+id: Path to central folder
+msg: Διαδρομή για τον κεντρικό φάκελο
+
+id: Providers for Subtitles
+msg: Πάροχοι υποτίτλων
+
+id: Right
+msg: Δεξιά
+
+id: Shadow color
+msg: Σκιώδες χρώμα
+
+id: Shadow offset
+msg: Σκιώδης αντιστάθμιση
+
+id: Subtitle position
+msg: Θέση υποτίτλων
+
+id: Subtitle size
+msg: Μέγεθος υποτίτλων
+
+id: Subtitle size and positioning
+msg: Μέγεθος και θέση υποτίτλων
+
+id: Subtitles embedded in video file
+msg: Οι υπότιτλοι είναι ενσωματωμένοι στο βίντεο
+
+id: Subtitles with matching filename in central folder
+msg: Υπότιτλοι με ίδιο άνομα αρχείου στον κεντρικό φάκελο
+
+id: Subtitles with matching filename in same folder as video
+msg: Υπότιτλοι με ίδιο όνομα αρχείου στον ίδιο φάκελο με το βίντεο
+
+#
+# ./src/text/fontstash.c
+#
+id: Defaults
+msg: Προεπιλεγμένα
+
+id: Fonts
+msg: Γραμματοσειρές
+
+id: Installed fonts
+msg: Εγκατεστημένες γραμματοσειρές
+
+id: Narrow text
+msg: Λεπτό κείμενο 
+
+id: Reset main font to default
+msg: Επαναφορά κύριας γραμματοσειράς στην προεπιλεγμένη
+
+id: Reset narrow font to default
+msg: Επαναφορά λεπτής γραμματοσειράς στην προεπιλεγμένη
+
+id: Reset subtitle font to default
+msg: Επαναφορά γραμματοσειράς υποτίτλων στην προεπιλεγμένη
+
+id: Unable to install font: %s
+msg: Αδυναμία εγκατάστασης γραμματοσειράς: %s
+
+id: Use font %s for
+msg: Χρήση γραμματοσειράς %s σε 
+
+id: User interface
+msg: Περιβάλλον Χρήστη 
+
+#
+# ./src/ui/glw/glw_ps3.c
+#
+id: Seek using L2 and R2 button
+msg: Μετάβαση με την χρήση των L2 και R2 κουμπιών
+
+id: Yes with Select button
+msg: Επιλογή “ναι” με την χρήση του κουμπιού select
+
+#
+# ./src/ui/glw/glw_settings.c
+#
+id: Font and icon size
+msg: Μέγεθος γραμματοσειράς και εικονιδίων
+
+id: Horizontal underscan
+msg: Οριζόντιο underscan (περίγραμμα)
+
+id: Screensaver delay
+msg: Καθυστέρηση προφύλαξης οθόνης
+
+id: Vertical underscan
+msg: Κάθετο underscan (περίγραμμα)
+
+id: Wrap when reaching beginning/end of lists
+msg: Ατελείωτες κινήσεις μέσα  στους καταλόγους
+
+#
+# ./src/ui/glw/glw_x11.c
+#
+id: Map mouse wheel to up/down
+msg: Χρήση ρόδας ποντικιού πάνω/κάτω
+
+#
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+msg: Αυτόματη μετάβαση σε αυτήν την λειτουργεία 
+
+id: DVI-Video color range
+msg: Ποικιλία χρωμάτων DVI-Βίντεο
+
+id: Switch to this mode now
+msg: Μετάβαση σε αυτήν την λειτουργεία τώρα
+
+id: Video modes
+msg: Λειτουργείες Βίντεο
+
+#
+# ./src/upgrade.c
+#
+id: Notify about upgrades
+msg: Ενημέρωση για αναβαθμίσεις
+
+id: Open download page
+msg: Άνοιγμα σελίδας λήψης
+
+id: Showtime version %s is available
+msg: Η έκδοση %s του Showtime είναι διαθέσιμη
+
+id: Software upgrade
+msg: Αναβάθμιση Προγράμματος 
+
+id: Upgrade to releases from
+msg: Ενημέρωση για
+
+#
+# ./src/upnp/upnp_browse.c
+#
+id: Device not found
+msg: Η συσκευή δεν βρέθηκε
+
+id: Malformed URI after device
+msg: Άκυρη URI από την συσκευή
+
+id: Malformed URI after service
+msg: Άκυρη URI από την υπηρεσία
+
+id: Service not found
+msg: Η υπηρεσία δεν βρέθηκε
+
+#
+# ./src/video/ps3_vdec.c
+#
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+msg: Cell-h264: Εξαναγκασμός του επιπέδου 4.2 να χωρέσει στο επίπεδο %d.%d. Η αναπαραγωγή μπορεί να διακοπεί.
+
+id: Unable to accelerate %s, library not loaded.
+msg: Αδυναμία επιτάχυνσης %s, η βιβλιοθήκη δεν φορτώθηκε.
+
+id: Unable to open Cell codec. Error 0x%x
+msg: Αδυναμία ανοίγματος του κώδικα Cell. Σφάλμα 0x%x.
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+msg: Αδυναμία ανοίγματος του κώδικα Cell. Αδυναμία ανευρέσεις %d bytes της RAM
+
+id: Unable to query Cell codec. Error 0x%x
+msg: Αδυναμία αναζήτησης του κώδικα Cell. Σφάλμα 0x%x
+
+#
+# ./src/video/video_settings.c
+#
+id: Automatically play next video in list
+msg: Αυτόματη αναπαραγωγή του επόμενου βίντεο στην λίστα 
+
+id: Count video as played when reaching
+msg: Υπολόγισε ότι το βίντεο έχει παιχτεί όταν φθάσει στο 
+
+id: Enable VDA
+msg: Ενεργοποίηση VDA
+
+id: Enable VDPAU
+msg: Ενεργοποίηση VDPAU
+
+id: Maximum resolution for deinterlacer
+msg: Μέγιστη ανάλυση για τον επανακωδικοποιητή
+
+id: No limit
+msg: Χωρίς όριο
+
+id: Preferred VDPAU deinterlacer method
+msg: Προτιμώμενη μέθοδος επανακωδικοποίησης
+
+id: Resume video playback
+msg: Συνέχιση αναπαραγωγής βίντεο
+
+id: Temporal
+msg: Προσωρινός
+
+id: Temporal/Spatial
+msg: Προσωρινός/Με Διαστήματα
+
+id: Video acceleration and display behaviour
+msg: Επιτάχυνση βίντεο και ρυθμίσεις αναπαραγωγής
+
+id: Video playback
+msg: Αναπαραγωγή Βίντεο
