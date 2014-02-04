@@ -1274,12 +1274,18 @@ fileaccess_init(void)
 
   store = htsmsg_store_load("faconf") ?: htsmsg_create_map();
 
-  settings_create_separator(gconf.settings_general, _p("File access"));
+  settings_create_separator(gconf.settings_general, _p("File browsing"));
 
   setting_create(SETTING_BOOL, gconf.settings_general, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Enable file deletion from item menu")),
                  SETTING_WRITE_BOOL(&gconf.fa_allow_delete),
                  SETTING_HTSMSG("delete", store, "faconf"),
+                 NULL);
+
+  setting_create(SETTING_BOOL, gconf.settings_general, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Show filename extensions")),
+                 SETTING_WRITE_BOOL(&gconf.show_filename_extensions),
+                 SETTING_HTSMSG("filenameextensions", store, "faconf"),
                  NULL);
 
   return 0;
