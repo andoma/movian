@@ -71,6 +71,7 @@ struct media_buf;
 struct media_queue;
 struct media_pipe;
 struct video_decoder;
+struct cancellable;
 
 #define MP_SKIP_LIMIT 2000000 /* µs that must before a skip back is
 				 actually considered a restart */
@@ -481,6 +482,11 @@ typedef struct media_pipe {
   int mp_vol_user;
   float mp_vol_ui;
 
+  /**
+   * Cancellable must be accessed under mp_mutex protection
+   */
+  struct cancellable *mp_cancellable;
+
 } media_pipe_t;
 
 extern void (*media_pipe_init_extra)(media_pipe_t *mp);
@@ -655,6 +661,8 @@ void mp_configure(media_pipe_t *mp, int caps, int buffer_mode,
 		  int64_t duration, const char *type);
 
 void mp_set_duration(media_pipe_t *mp, int64_t duration);
+
+void mp_set_cancellable(media_pipe_t *mp, struct cancellable *c);
 
 int64_t mq_realtime_delay(media_queue_t *mq);
 

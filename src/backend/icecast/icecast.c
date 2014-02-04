@@ -31,6 +31,7 @@
 #include "fileaccess/fa_proto.h"
 #include "fileaccess/fa_libav.h"
 #include "misc/str.h"
+#include "misc/cancellable.h"
 #include "networking/http.h"
 
 TAILQ_HEAD(icecast_source_queue, icecast_source);
@@ -59,6 +60,8 @@ typedef struct icecast_play_context {
   struct http_header_list ipc_response_headers;
 
   prop_t *ipc_radio_info;
+
+  cancellable_t ipc_cancellable;
 
 } icecast_play_context_t;
 
@@ -151,7 +154,8 @@ open_stream(icecast_play_context_t *ipc)
 
   fa_open_extra_t foe = {
     .foe_request_headers  = &ipc->ipc_request_headers,
-    .foe_response_headers = &ipc->ipc_response_headers
+    .foe_response_headers = &ipc->ipc_response_headers,
+    .foe_c =                &ipc->ipc_cancellable,
   };
 
   if(num_dead == ipc->ipc_nsources) {
@@ -201,6 +205,10 @@ open_stream(icecast_play_context_t *ipc)
 
     if(fh == NULL) {
       is->is_dead = 1;
+      if(ipc->ipc_cancellable.cancelled)
+        return -1;
+
+
       TRACE(TRACE_INFO, "Radio", "Unable to open %s -- %s, trying another URL",
             ipc->ipc_url, errbuf);
 
@@ -321,6 +329,8 @@ stream_radio(icecast_play_context_t *ipc, char *errbuf, size_t errlen)
 
   http_header_add(&ipc->ipc_request_headers, "Icy-MetaData", "1", 1);
 
+  mp_set_cancellable(mp, &ipc->ipc_cancellable);
+
   while(1) {
 
     /**
@@ -430,6 +440,8 @@ stream_radio(icecast_play_context_t *ipc, char *errbuf, size_t errlen)
     }
     event_release(e);
   }
+
+  mp_set_cancellable(mp, NULL);
 
   if(mb != NULL && mb != MB_SPECIAL_EOF)
     media_buf_free_unlocked(mp, mb);

@@ -922,6 +922,14 @@ mp_enqueue_event_locked(media_pipe_t *mp, event_t *e)
   } else if(event_is_action(e, ACTION_CYCLE_SUBTITLE)) {
     track_mgr_next_track(&mp->mp_subtitle_track_mgr);
   } else {
+
+    if(event_is_type(e, EVENT_PLAYQUEUE_JUMP) || 
+       event_is_action(e, ACTION_STOP) ||
+       event_is_action(e, ACTION_SKIP_FORWARD)) {
+      if(mp->mp_cancellable != NULL)
+        cancellable_cancel(mp->mp_cancellable);
+    }
+
     atomic_add(&e->e_refcount, 1);
     TAILQ_INSERT_TAIL(&mp->mp_eq, e, e_link);
     hts_cond_signal(&mp->mp_backpressure);
@@ -1824,6 +1832,18 @@ mp_configure(media_pipe_t *mp, int caps, int buffer_size, int64_t duration,
 
   prop_set_int(mp->mp_prop_buffer_limit, mp->mp_buffer_limit);
   mp_set_duration(mp, duration);
+  hts_mutex_unlock(&mp->mp_mutex);
+}
+
+
+/**
+ *
+ */
+void
+mp_set_cancellable(media_pipe_t *mp, struct cancellable *c)
+{
+  hts_mutex_lock(&mp->mp_mutex);
+  mp->mp_cancellable = c;
   hts_mutex_unlock(&mp->mp_mutex);
 }
 
