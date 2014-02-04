@@ -64,7 +64,7 @@ load_vp(const char *filename)
 	   showtime_dataroot(), filename);
 
   if((b = fa_load(url, NULL, errmsg, sizeof(errmsg), NULL,
-		  0, NULL, NULL)) == NULL) {
+		  0, NULL, NULL, NULL)) == NULL) {
     TRACE(TRACE_ERROR, "glw", "Unable to load shader %s -- %s\n",
 	  url, log);
     return NULL;
@@ -142,7 +142,7 @@ load_fp(glw_root_t *gr, const char *filename)
 	   showtime_dataroot(), filename);
 
   if((b = fa_load(url, NULL, errmsg, sizeof(errmsg), NULL,
-		   0, NULL, NULL)) == NULL) {
+                  0, NULL, NULL, NULL)) == NULL) {
     TRACE(TRACE_ERROR, "glw", "Unable to load shader %s -- %s\n",
 	  url, log);
     return NULL;
