@@ -2107,13 +2107,11 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
     }
 
     if(hf->hf_rsize > 0) {
-      /* We have pending data input on the socket */
-
-      if(hf->hf_rsize < size - totsize)
-	/* We can not read more data than is available */
-	read_size = hf->hf_rsize;
-      else
-	read_size = size - totsize;
+      /*
+       * We have pending data input on the socket,
+       * However, we can not read more data than is available,
+       */
+      read_size = MIN(hf->hf_rsize, size - totsize);
 
     } else {
 
@@ -2231,16 +2229,17 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
     if(read_size > 0) {
       assert(totsize + read_size <= size);
       if(tcp_read_data(hc->hc_tc, buf + totsize, read_size, NULL, NULL)) {
-	// Fail but we can retry a couple of times
-	http_detach(hf, 0, "Read error during fa_read()");
-	continue;
+        // Fail, so disconnect
+        http_detach(hf, 0, "Read error during fa_read()");
+        // But we can retry a couple of times
+        continue;
       }
 
-      hf->hf_pos   += read_size;
-      hf->hf_rsize -= read_size;
-      totsize      += read_size;
-
+      hf->hf_pos              += read_size;
+      hf->hf_rsize            -= read_size;
+      totsize                 += read_size;
       hf->hf_consecutive_read += read_size;
+
     } else {
       hf->hf_rsize = 0;
     }
