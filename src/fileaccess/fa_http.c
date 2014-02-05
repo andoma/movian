@@ -2212,7 +2212,24 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
 
       if(hf->hf_rsize < read_size)
 	read_size = hf->hf_rsize;
+    }
 
+    if(hf->hf_filesize == -1 && hf->hf_streaming &&
+       !hf->hf_chunked_transfer) {
+      // Read until EOF
+
+      while(read_size) {
+        int r = tcp_read_to_eof(hc->hc_tc, buf + totsize, read_size,
+                                NULL, NULL);
+        if(r < 0)
+          return totsize;
+
+        read_size               -= r;
+        hf->hf_pos              += r;
+        totsize                 += r;
+        hf->hf_consecutive_read += r;
+      }
+      return totsize;
     }
 
 
