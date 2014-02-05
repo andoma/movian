@@ -313,8 +313,12 @@ js_http_request(JSContext *cx, jsval *rval,
   if(cache && method == NULL && !headreq && !postdata) {
     LIST_INIT(&response_headers);
 
-    buf_t *b = fa_load_query(url, errbuf, sizeof(errbuf), NULL,
-			     (const char **)httpargs, flags);
+    buf_t *b = fa_load(url,
+                       FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
+                       FA_LOAD_QUERY_ARGVEC(httpargs),
+                       FA_LOAD_FLAGS(flags),
+                       FA_LOAD_CANCELLABLE(c),
+                       NULL);
     JS_ResumeRequest(cx, s);
 
     if(b == NULL) {

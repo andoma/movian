@@ -257,12 +257,14 @@ int fa_scanner_scan(const char *url, time_t mtime);
  */
 
 enum {
-  FA_LOAD_TAG_ERRBUF,
+  FA_LOAD_TAG_ERRBUF = 1,
   FA_LOAD_TAG_CACHE_CONTROL,
   FA_LOAD_TAG_FLAGS,
   FA_LOAD_TAG_PROGRESS_CALLBACK,
   FA_LOAD_TAG_CANCELLABLE,
   FA_LOAD_TAG_VPATHS,
+  FA_LOAD_TAG_QUERY_ARG,
+  FA_LOAD_TAG_QUERY_ARGVEC,
 };
 
 #define FA_LOAD_ERRBUF(a, b)            FA_LOAD_TAG_ERRBUF, a, b
@@ -271,14 +273,12 @@ enum {
 #define FA_LOAD_PROGRESS_CALLBACK(a, b) FA_LOAD_TAG_PROGRESS_CALLBACK, a, b
 #define FA_LOAD_CANCELLABLE(a)          FA_LOAD_TAG_CANCELLABLE, a
 #define FA_LOAD_VPATHS(a)               FA_LOAD_TAG_VPATHS, a
+#define FA_LOAD_QUERY_ARG(a, b)         FA_LOAD_TAG_QUERY_ARG, a, b
+#define FA_LOAD_QUERY_ARGVEC(a)         FA_LOAD_TAG_QUERY_ARGVEC, a
 
 buf_t *fa_load(const char *url, ...)  __attribute__((__sentinel__(0)));
 
 buf_t *fa_load_and_close(fa_handle_t *fh);
-
-buf_t *fa_load_query(const char *url,
-                     char *errbuf, size_t errlen, int *cache_control,
-                     const char **arguments, int flags);
 
 int fa_parent(char *dst, size_t dstlen, const char *url)
   __attribute__ ((warn_unused_result));

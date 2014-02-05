@@ -62,8 +62,10 @@ loadxml(const char *fmt, ...)
   vsnprintf(url+strlen(url), sizeof(url)-strlen(url), fmt, ap);
   va_end(ap);
 
-  buf_t *result = fa_load_query(url, errbuf, sizeof(errbuf), NULL,
-                                NULL, FA_COMPRESSION);
+  buf_t *result = fa_load(url,
+                          FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
+                          FA_LOAD_FLAGS(FA_COMPRESSION),
+                          NULL);
 
   if(result == NULL) {
     TRACE(TRACE_INFO, "TVDB", "Unable to query for %s -- %s", url, errbuf);
@@ -367,12 +369,11 @@ tvdb_query_by_episode(void *db, const char *item_url,
   buf_t *result;
   char errbuf[256];
   
-  result = fa_load_query("http://www.thetvdb.com/api/GetSeries.php",
-			 errbuf, sizeof(errbuf), NULL,
-			 (const char *[]){
-			   "seriesname", title,
-			     NULL, NULL},
-			 FA_COMPRESSION);
+  result = fa_load("http://www.thetvdb.com/api/GetSeries.php",
+                   FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
+                   FA_LOAD_QUERY_ARG("seriesname", title),
+                   FA_LOAD_FLAGS(FA_COMPRESSION),
+                   NULL);
 
   if(result == NULL) {
     TRACE(TRACE_INFO, "TVDB", "Unable to search for %s -- %s", title, errbuf);

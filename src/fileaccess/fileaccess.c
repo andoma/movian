@@ -1296,6 +1296,15 @@ fileaccess_init(void)
 /**
  *
  */
+typedef struct loadarg {
+  SIMPLEQ_ENTRY(loadarg) link;
+  const char *key;
+  const char *value;
+} loadarg_t;
+
+/**
+ *
+ */
 buf_t *
 fa_load(const char *url, ...)
 {
@@ -1317,9 +1326,12 @@ fa_load(const char *url, ...)
   int is_expired = 0;
   buf_t *buf = NULL;
   int tag;
-
+  loadarg_t *la;
   va_list ap;
   va_start(ap, url);
+
+  SIMPLEQ_HEAD(, loadarg) qargs;
+  SIMPLEQ_INIT(&qargs);
 
   while((tag = va_arg(ap, int)) != 0) {
     switch(tag) {
@@ -1349,12 +1361,54 @@ fa_load(const char *url, ...)
       vpaths = va_arg(ap, const char **);
       break;
 
+    case FA_LOAD_TAG_QUERY_ARG:
+      la = alloca(sizeof(loadarg_t));
+      la->key = va_arg(ap, const char *);
+      la->value = va_arg(ap, const char *);
+      if(la->value != NULL && la->key != NULL)
+        SIMPLEQ_INSERT_TAIL(&qargs, la, link);
+      break;
+
+    case FA_LOAD_TAG_QUERY_ARGVEC: {
+      const char **args = va_arg(ap, const char **);
+
+      while(args[0] != NULL) {
+        if(args[1] != NULL) {
+          la = alloca(sizeof(loadarg_t));
+          la->key = args[0];
+          la->value = args[1];
+          SIMPLEQ_INSERT_TAIL(&qargs, la, link);
+        }
+        args += 2;
+      }
+    }
+      break;
+
     default:
       abort();
     }
   }
 
   va_end(ap);
+
+  if(SIMPLEQ_FIRST(&qargs) != NULL) {
+    // Construct URL with query args
+    htsbuf_queue_t q;
+    htsbuf_queue_init(&q, 0);
+
+    htsbuf_append(&q, url, strlen(url));
+    char prefix = '?';
+    SIMPLEQ_FOREACH(la, &qargs, link) {
+      htsbuf_append(&q, &prefix, 1);
+      htsbuf_append_and_escape_url(&q, la->key);
+      htsbuf_append(&q, "=", 1);
+      htsbuf_append_and_escape_url(&q, la->value);
+      prefix = '&';
+    }
+    char *newurl = htsbuf_to_string(&q);
+    url = mystrdupa(newurl); // Copy it to stack to avoid all free()s
+    free(newurl);
+  }
 
   if((filename = fa_resolve_proto(url, &fap, vpaths, errbuf, errlen)) == NULL)
     return NULL;
@@ -1678,47 +1732,6 @@ fa_load_and_close(fa_handle_t *fh)
 
   mem[size] = 0;
   return buf_create_and_adopt(size, mem, &free);
-}
-
-
-/**
- *
- */
-buf_t *
-fa_load_query(const char *url0,
-	      char *errbuf, size_t errlen, int *cache_control,
-	      const char **arguments, int flags)
-{
-  htsbuf_queue_t q;
-  htsbuf_queue_init(&q, 0);
-
-  htsbuf_append(&q, url0, strlen(url0));
-  if(arguments != NULL) {
-    const char **args = arguments;
-    char prefix = '?';
-    
-    while(args[0] != NULL) {
-      if(args[1] != NULL) {
-	htsbuf_append(&q, &prefix, 1);
-	htsbuf_append_and_escape_url(&q, args[0]);
-	htsbuf_append(&q, "=", 1);
-	htsbuf_append_and_escape_url(&q, args[1]);
-	prefix = '&';
-      }
-      args += 2;
-    }
-  }
-  
-  char *url = htsbuf_to_string(&q);
-
-  buf_t *b = fa_load(url,
-                      FA_LOAD_ERRBUF(errbuf, errlen),
-                      FA_LOAD_CACHE_CONTROL(cache_control),
-                      FA_LOAD_FLAGS(flags),
-                      NULL);
-  free(url);
-  htsbuf_queue_flush(&q);
-  return b;
 }
 
 
