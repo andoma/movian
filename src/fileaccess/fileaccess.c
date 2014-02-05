@@ -1596,22 +1596,53 @@ fa_url_get_last_component(char *dst, size_t dstlen, const char *url)
 buf_t *
 fa_load_and_close(fa_handle_t *fh)
 {
-  size_t r;
+  int r;
   size_t size = fa_fsize(fh);
-  if(size == -1)
-    return NULL;
-
-  uint8_t *mem = mymalloc(size+1);
-  if(mem == NULL)
-    return NULL;
+  uint8_t *mem;
 
   fa_seek(fh, 0, SEEK_SET);
-  r = fa_read(fh, mem, size);
-  fa_close(fh);
 
-  if(r != size) {
-    free(mem);
-    return NULL;
+  if(size == -1) {
+    size = 0;
+    size_t alloced = 0;
+    mem = NULL;
+
+    while(1) {
+
+      alloced = alloced * 2 + 1000;
+      mem = myreallocf(mem, alloced + 1);
+      if(mem == NULL) {
+        fa_close(fh);
+        return NULL;
+      }
+
+      int max_read = alloced - size;
+      r = fa_read(fh, mem + size, max_read);
+      if(r < 0) {
+        fa_close(fh);
+        free(mem);
+        return NULL;
+      }
+
+      size += r;
+
+      if(r < max_read)
+        break;
+    }
+
+  } else {
+
+    mem = mymalloc(size+1);
+    if(mem == NULL)
+      return NULL;
+
+    r = fa_read(fh, mem, size);
+    fa_close(fh);
+
+    if(r != size) {
+      free(mem);
+      return NULL;
+    }
   }
 
   mem[size] = 0;
