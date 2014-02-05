@@ -66,6 +66,9 @@ int tcp_read_line(tcpcon_t *nc, char *buf, const size_t bufsize);
 
 int tcp_write_data(tcpcon_t *nc, const char *buf, const size_t bufsize);
 
+int tcp_read_to_eof(tcpcon_t *tc, void *buf, size_t bufsize,
+                    net_read_cb_t *cb, void *opaque);
+
 int tcp_read_data(tcpcon_t *nc, void *buf, const size_t bufsize,
 		  net_read_cb_t *cb, void *opaque);
 
