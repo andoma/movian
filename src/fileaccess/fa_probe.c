@@ -318,7 +318,7 @@ fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh,
     buf_t *buf;
 
     snprintf(path, sizeof(path), "zip://%s/plugin.json", url);
-    buf = fa_load(path, NULL, NULL, 0, NULL, 0, NULL, NULL, NULL);
+    buf = fa_load(path, NULL);
     if(buf != NULL) {
       htsmsg_t *json = htsmsg_json_deserialize(buf_cstr(buf));
       buf_release(buf);

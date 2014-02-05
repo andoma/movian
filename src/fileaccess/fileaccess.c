@@ -1294,28 +1294,20 @@ fileaccess_init(void)
 
 
 /**
- * WTF does cache_control mean?
  *
- * NULL          - Normal transparent caching (With expiry, etc)
- *
- * ptr to an int - If it's pointing to an int the load will stop if
- *                 there is an entry in the cache and it is
- *                 expired. In this case the pointed to int will be
- *                 set to 1.
- *
- * DISABLE_CACHE - No cache operations at all
- *
- * BYPASS_CACHE - Don't read from cache. But use cache metadata when
- *                loading object from network. This is used to refresh
- *                objects we already know are expired. Typically
- *                used by image loaders to refresh already displayed
- *                expired images.
  */
 buf_t *
-fa_load(const char *url, const char **vpaths,
-	char *errbuf, size_t errlen, int *cache_control, int flags,
-	fa_load_cb_t *cb, void *opaque, cancellable_t *c)
+fa_load(const char *url, ...)
 {
+  const char **vpaths = NULL;
+  char *errbuf = NULL;
+  size_t errlen = 0;
+  int *cache_control = NULL;
+  int flags = 0;
+  fa_load_cb_t *cb = NULL;
+  void *opaque = NULL;
+  cancellable_t *c = NULL;
+
   fa_protocol_t *fap;
   fa_handle_t *fh;
   char *filename;
@@ -1324,6 +1316,45 @@ fa_load(const char *url, const char **vpaths,
   time_t mtime = 0;
   int is_expired = 0;
   buf_t *buf = NULL;
+  int tag;
+
+  va_list ap;
+  va_start(ap, url);
+
+  while((tag = va_arg(ap, int)) != 0) {
+    switch(tag) {
+    case FA_LOAD_TAG_ERRBUF:
+      errbuf = va_arg(ap, char *);
+      errlen = va_arg(ap, size_t);
+      break;
+
+    case FA_LOAD_TAG_CACHE_CONTROL:
+      cache_control = va_arg(ap, int *);
+      break;
+
+    case FA_LOAD_TAG_FLAGS:
+      flags = va_arg(ap, int);
+      break;
+
+    case FA_LOAD_TAG_PROGRESS_CALLBACK:
+      cb = va_arg(ap, fa_load_cb_t *);
+      opaque = va_arg(ap, void *);
+      break;
+
+    case FA_LOAD_TAG_CANCELLABLE:
+      c = va_arg(ap, cancellable_t *);
+      break;
+
+    case FA_LOAD_TAG_VPATHS:
+      vpaths = va_arg(ap, const char **);
+      break;
+
+    default:
+      abort();
+    }
+  }
+
+  va_end(ap);
 
   if((filename = fa_resolve_proto(url, &fap, vpaths, errbuf, errlen)) == NULL)
     return NULL;
@@ -1680,8 +1711,11 @@ fa_load_query(const char *url0,
   
   char *url = htsbuf_to_string(&q);
 
-  buf_t *b = fa_load(url, NULL, errbuf, errlen, cache_control, flags,
-                     NULL, NULL, NULL);
+  buf_t *b = fa_load(url,
+                      FA_LOAD_ERRBUF(errbuf, errlen),
+                      FA_LOAD_CACHE_CONTROL(cache_control),
+                      FA_LOAD_FLAGS(flags),
+                      NULL);
   free(url);
   htsbuf_queue_flush(&q);
   return b;

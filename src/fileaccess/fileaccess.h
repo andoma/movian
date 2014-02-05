@@ -236,9 +236,43 @@ void fa_scanner_page(const char *url, time_t mtime,
 
 int fa_scanner_scan(const char *url, time_t mtime);
 
-buf_t *fa_load(const char *url, const char **vpaths,
-               char *errbuf, size_t errlen, int *cache_control, int flags,
-               fa_load_cb_t *cb, void *opaque, cancellable_t *c);
+/**
+ *
+ * A word about cache control
+ *
+ * NULL          - Normal transparent caching (With expiry, etc)
+ *
+ * ptr to an int - If it's pointing to an int the load will stop if
+ *                 there is an entry in the cache and it is
+ *                 expired. In this case the pointed to int will be
+ *                 set to 1.
+ *
+ * DISABLE_CACHE - No cache operations at all
+ *
+ * BYPASS_CACHE - Don't read from cache. But use cache metadata when
+ *                loading object from network. This is used to refresh
+ *                objects we already know are expired. Typically
+ *                used by image loaders to refresh already displayed
+ *                expired images.
+ */
+
+enum {
+  FA_LOAD_TAG_ERRBUF,
+  FA_LOAD_TAG_CACHE_CONTROL,
+  FA_LOAD_TAG_FLAGS,
+  FA_LOAD_TAG_PROGRESS_CALLBACK,
+  FA_LOAD_TAG_CANCELLABLE,
+  FA_LOAD_TAG_VPATHS,
+};
+
+#define FA_LOAD_ERRBUF(a, b)            FA_LOAD_TAG_ERRBUF, a, b
+#define FA_LOAD_CACHE_CONTROL(a)        FA_LOAD_TAG_CACHE_CONTROL, a
+#define FA_LOAD_FLAGS(a)                FA_LOAD_TAG_FLAGS, a
+#define FA_LOAD_PROGRESS_CALLBACK(a, b) FA_LOAD_TAG_PROGRESS_CALLBACK, a, b
+#define FA_LOAD_CANCELLABLE(a)          FA_LOAD_TAG_CANCELLABLE, a
+#define FA_LOAD_VPATHS(a)               FA_LOAD_TAG_VPATHS, a
+
+buf_t *fa_load(const char *url, ...)  __attribute__((__sentinel__(0)));
 
 buf_t *fa_load_and_close(fa_handle_t *fh);
 
@@ -335,7 +369,7 @@ enum {
 #define HTTP_PROGRESS_CALLBACK(a, b)       HTTP_TAG_PROGRESS_CALLBACK, a, b
 #define HTTP_CANCELLABLE(a)                HTTP_TAG_CANCELLABLE, a
 
-int http_req(const char *url, ...);
+int http_req(const char *url, ...)  __attribute__((__sentinel__(0)));
 
 int http_client_oauth(struct http_auth_req *har,
 		      const char *consumer_key,

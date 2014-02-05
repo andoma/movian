@@ -392,8 +392,10 @@ stos_check_upgrade(void)
   buf_t *b;
   snprintf(url, sizeof(url), "%s/master-%s.json", ctrlbase_stos, archname);
 
-  b = fa_load(url, NULL, errbuf, sizeof(errbuf),
-              NULL, FA_DISABLE_AUTH, NULL, NULL, NULL);
+  b = fa_load(url,
+               FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
+               FA_LOAD_FLAGS(FA_DISABLE_AUTH),
+               NULL);
   if(b == NULL) {
     TRACE(TRACE_ERROR, "STOS", "Unable to query for STOS manifest -- %s",
 	  errbuf);
@@ -503,8 +505,11 @@ check_upgrade(int set_news)
   snprintf(url, sizeof(url), "%s/%s-%s.json", ctrlbase, upgrade_track,
 	   archname);
 
-  b = fa_load(url, NULL, errbuf, sizeof(errbuf),
-              NULL, FA_DISABLE_AUTH, NULL, NULL, NULL);
+  b = fa_load(url,
+               FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
+               FA_LOAD_FLAGS(FA_DISABLE_AUTH),
+               NULL);
+
   if(b == NULL) {
     check_upgrade_err(errbuf);
     return 1;

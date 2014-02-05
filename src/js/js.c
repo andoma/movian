@@ -1291,8 +1291,7 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
   
   ref = fa_reference(url);
 
-  if((buf = fa_load(url, NULL, errbuf, errlen, NULL, 0, NULL, NULL,
-                    NULL)) == NULL) {
+  if((buf = fa_load(url, FA_LOAD_ERRBUF(errbuf, errlen), NULL)) == NULL) {
     fa_unreference(ref);
     return -1;
   }

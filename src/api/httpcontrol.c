@@ -443,7 +443,7 @@ hc_logfile(http_connection_t *hc, const char *remain, void *opaque,
 
   char p1[500];
   snprintf(p1, sizeof(p1), "%s/log/showtime-%d.log", gconf.cache_path, n);
-  buf_t *buf = fa_load(p1, NULL, NULL, 0, NULL, 0, NULL, NULL, NULL);
+  buf_t *buf = fa_load(p1, NULL);
 
   if(buf == NULL)
     return 404;
@@ -651,7 +651,7 @@ hc_serve_file(http_connection_t *hc, const char *file, const char *contenttype)
     }
   }
 
-  buf_t *b = fa_load(file, NULL, NULL, 0, NULL, 0, NULL, NULL, NULL);
+  buf_t *b = fa_load(file, NULL);
   if(b == NULL)
     return 404;
 

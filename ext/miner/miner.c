@@ -513,8 +513,9 @@ miner_init(void)
   snprintf(url, sizeof(url), "%s/resources/spuminer/a.out", 
           showtime_dataroot());
 
-  if((b = fa_load(url, NULL, errmsg, sizeof(errmsg), NULL,
-                  0, NULL, NULL, NULL)) == NULL) {
+  if((b = fa_load(url,
+                  FA_LOAD_ERRBUF(errmsg, sizeof(errmsg)),
+                  NULL)) == NULL) {
     TRACE(TRACE_ERROR, "SPUMINER", "Unable to load SPU image %s -- %s",
          url, errmsg);
     return;

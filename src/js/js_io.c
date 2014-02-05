@@ -509,8 +509,9 @@ js_readFile(JSContext *cx, JSObject *obj, uintN argc,
     return JS_FALSE;
 
   jsrefcount s = JS_SuspendRequest(cx);
-  result = fa_load(url, NULL, errbuf, sizeof(errbuf), NULL, 0, NULL, NULL,
-                   NULL);
+  result = fa_load(url,
+                    FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
+                    NULL);
   JS_ResumeRequest(cx, s);
 
   if(result == NULL) {
