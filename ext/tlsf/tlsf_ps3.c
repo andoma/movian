@@ -259,9 +259,6 @@ myrealloc(void *ptr, size_t bytes)
   hts_mutex_lock(&mutex);
   void *r = tlsf_realloc(gpool, ptr, bytes);
 
-  if(r == NULL && bytes > 0 && ptr != NULL)
-    tlsf_free(gpool, ptr);
-
   hts_mutex_unlock(&mutex);
   if(r == NULL) {
     memtrace();

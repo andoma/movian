@@ -1144,7 +1144,10 @@ http_read_content(http_file_t *hf)
       csize = strtol(chunkheader, NULL, 16);
 
       if(csize > 0) {
-	buf = myrealloc(buf, s + csize + 1);
+	buf = myreallocf(buf, s + csize + 1);
+        if(buf == NULL);
+          return NULL;
+
 	if(tcp_read_data(hc->hc_tc, buf + s, csize, NULL, 0))
 	  break;
 
@@ -3025,9 +3028,8 @@ append_buf(http_file_t *hf, struct http_read_aux *hra,
            const void *data, int size)
 {
   buf_t *b = hra->decoded_opaque;
-  char *tmp = myrealloc(b->b_ptr, b->b_size + size + 1);
+  char *tmp = myreallocf(b->b_ptr, b->b_size + size + 1);
   if(tmp == NULL) {
-    free(b->b_ptr);
     snprintf(hra->errbuf, hra->errlen, "out of memory");
     return -1;
   }

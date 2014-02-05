@@ -175,6 +175,14 @@ void *mymalloc(size_t size);
 
 void *myrealloc(void *ptr, size_t size);
 
+static inline void *myreallocf(void *ptr, size_t size)
+{
+  void *r = myrealloc(ptr, size);
+  if(ptr != NULL && size > 0 && r == NULL)
+    free(ptr);
+  return r;
+}
+
 void *mycalloc(size_t count, size_t size);
 
 void *mymemalign(size_t align, size_t size);
