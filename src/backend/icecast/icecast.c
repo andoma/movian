@@ -89,8 +89,22 @@ flush_sources(icecast_play_context_t *ipc)
 /**
  *
  */
-static int
-parse_playlist(icecast_play_context_t *ipc, char *buf)
+static void
+add_source(icecast_play_context_t *ipc, const char *url)
+{
+    icecast_source_t *is = malloc(sizeof(icecast_source_t));
+    is->is_url = url_resolve_relative_from_base(ipc->ipc_url, url);
+    is->is_dead = 0;
+    TAILQ_INSERT_TAIL(&ipc->ipc_sources, is, is_link);
+    ipc->ipc_nsources++;
+}
+
+
+/**
+ *
+ */
+static void
+parse_pls(icecast_play_context_t *ipc, char *buf)
 {
   flush_sources(ipc);
 
@@ -99,19 +113,21 @@ parse_playlist(icecast_play_context_t *ipc, char *buf)
       continue;
     if((line = strchr(line + 4, '=')) == NULL)
       continue;
-    icecast_source_t *is = malloc(sizeof(icecast_source_t));
-    is->is_url = url_resolve_relative_from_base(ipc->ipc_url, line + 1);
-    is->is_dead = 0;
-    TAILQ_INSERT_TAIL(&ipc->ipc_sources, is, is_link);
-    ipc->ipc_nsources++;
+    add_source(ipc, line + 1);
   }
+}
 
-  if(ipc->ipc_nsources == 0) {
-    TRACE(TRACE_ERROR, "Radio", "No files found in playlist %s",
-          ipc->ipc_url);
-    return 1;
+
+/**
+ *
+ */
+static void
+parse_m3u(icecast_play_context_t *ipc, char *buf)
+{
+  LINEPARSE(line, buf) {
+    if(*line != '#')
+      add_source(ipc, line);
   }
-  return 0;
 }
 
 
@@ -145,7 +161,7 @@ open_stream(icecast_play_context_t *ipc)
   const char *url;
 
   const int flags = FA_STREAMING | FA_NO_RETRIES |
-    FA_BUFFERED_SMALL | FA_NO_PARKING;
+    FA_BUFFERED_SMALL | FA_NO_PARKING | FA_DEBUG;
 
  again:
   num_dead = num_deads(ipc);
@@ -170,20 +186,63 @@ open_stream(icecast_play_context_t *ipc)
       return -1;
     }
 
-    int r = fa_read(fh, pbuf, sizeof(pbuf));
+    const char *ct = http_header_get(&ipc->ipc_response_headers,
+                                     "content-type");
 
-    if(r > 10 && !memcmp(pbuf, "[playlist]", 10)) {
+    int is_m3u = 0;
+    int is_pls = 0;
+
+    int r = fa_read(fh, pbuf, sizeof(pbuf - 1));
+    if(r >= 0)
+      pbuf[r] = 0;
+
+    if(ct != NULL) {
+      TRACE(TRACE_DEBUG, "Radio",
+            "%s content-type: %s", ipc->ipc_url, ct);
+
+      if(!strcasecmp(ct, "application/x-mpegurl") ||
+         !strcasecmp(ct, "audio/x-mpegurl")) {
+        TRACE(TRACE_DEBUG, "Radio",
+              "%s is an .m3u playlist according to content-type", ipc->ipc_url);
+        is_m3u = 1;
+      }
+    } else if(r > 10 && !memcmp(pbuf, "[playlist]", 10)) {
       // The URL points to a playlist, parse it
-      TRACE(TRACE_DEBUG, "Radio", "%s is a playlist", ipc->ipc_url);
+      TRACE(TRACE_DEBUG, "Radio", "%s is a .pls playlist based on content",
+            ipc->ipc_url);
+      is_pls = 1;
+    } else if(strstr(pbuf, "http://") || strstr(pbuf, "https://")) {
+      TRACE(TRACE_DEBUG, "Radio", "%s guessed to be an m3u based on content",
+            ipc->ipc_url);
+      is_m3u = 1;
+    }
+
+
+    if(is_pls || is_m3u) {
+
       buf_t *b = fa_load_and_close(fh);
       if(b == NULL) {
-        TRACE(TRACE_ERROR, "Radio", "Unable to load playlist %s",
+        TRACE(TRACE_ERROR, "Radio", "Unable to load .pls playlist %s",
               ipc->ipc_url);
         return -1;
       }
 
-      if(parse_playlist(ipc, buf_str(b)))
+      flush_sources(ipc);
+
+      if(is_pls) {
+        parse_pls(ipc, buf_str(b));
+      } else {
+        parse_m3u(ipc, buf_str(b));
+      }
+      buf_release(b);
+
+
+      if(ipc->ipc_nsources == 0) {
+        TRACE(TRACE_ERROR, "Radio", "No files found in playlist %s",
+              ipc->ipc_url);
         return -1;
+      }
+
       goto again;
     }
     fa_seek(fh, 0, SEEK_SET);
