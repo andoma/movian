@@ -191,10 +191,13 @@ open_stream(icecast_play_context_t *ipc)
 
     int is_m3u = 0;
     int is_pls = 0;
-
-    int r = fa_read(fh, pbuf, sizeof(pbuf - 1));
-    if(r >= 0)
-      pbuf[r] = 0;
+    int r = fa_read(fh, pbuf, sizeof(pbuf)-1);
+    if(r < 0) {
+      TRACE(TRACE_ERROR, "Radio", "Unable to probe %s",
+            ipc->ipc_url);
+      return -1;
+    }
+    pbuf[r] = 0;
 
     if(ct != NULL) {
       TRACE(TRACE_DEBUG, "Radio",
@@ -206,7 +209,9 @@ open_stream(icecast_play_context_t *ipc)
               "%s is an .m3u playlist according to content-type", ipc->ipc_url);
         is_m3u = 1;
       }
-    } else if(r > 10 && !memcmp(pbuf, "[playlist]", 10)) {
+    }
+
+    if(r > 10 && !memcmp(pbuf, "[playlist]", 10)) {
       // The URL points to a playlist, parse it
       TRACE(TRACE_DEBUG, "Radio", "%s is a .pls playlist based on content",
             ipc->ipc_url);
@@ -222,7 +227,7 @@ open_stream(icecast_play_context_t *ipc)
 
       buf_t *b = fa_load_and_close(fh);
       if(b == NULL) {
-        TRACE(TRACE_ERROR, "Radio", "Unable to load .pls playlist %s",
+        TRACE(TRACE_ERROR, "Radio", "Unable to read playlist %s",
               ipc->ipc_url);
         return -1;
       }
