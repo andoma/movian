@@ -432,15 +432,13 @@ id: CPU Temp
 msg: Temp. CPU
 
 id: Fragmentation
-# Missing translation
-msg: 
+msg: Fragmentacja
 
 id: GPU Temp
 msg: Temp. GPU
 
 id: Inactive mem
-# Missing translation
-msg: 
+msg: Nieaktywna pamięć
 
 id: Memory usage
 msg: Użycie pamięci
@@ -701,12 +699,10 @@ id: Enable file deletion from item menu
 msg: Włącz opcję usuwania pliku w menu
 
 id: File browsing
-# Missing translation
-msg: 
+msg: Przeglądanie plików
 
 id: Show filename extensions
-# Missing translation
-msg: 
+msg: Pokaż razszerzenia plików
 
 id: %d archive parts
 msg[0]: %d części archiwum
