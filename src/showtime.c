@@ -640,6 +640,7 @@ void
 showtime_fini(void)
 {
   audio_fini();
+  nav_fini();
   backend_fini();
   TRACE(TRACE_DEBUG, "core", "Backend finished");
   shutdown_hook_run(0);

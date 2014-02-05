@@ -49,18 +49,8 @@ typedef struct js_hook {
 
 } js_hook_t;
 
-static hts_mutex_t hook_mutex;
+static HTS_MUTEX_DECL(hook_mutex);
 static struct js_hook_list js_hooks;
-
-
-/**
- *
- */
-void
-js_hook_init(void)
-{
-  hts_mutex_init(&hook_mutex);
-}
 
 
 /**

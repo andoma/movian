@@ -33,6 +33,8 @@
  */
 void nav_init(void);
 
+void nav_fini(void);
+
 prop_t *nav_spawn(void);
 
 void nav_open(const char *url, const char *view);

@@ -21,16 +21,17 @@
 
 #include <sys/types.h>
 #include <assert.h>
+#include <unistd.h>
 #include <string.h>
+
 #include "js.h"
-
-
 #include "backend/backend.h"
 #include "backend/backend_prop.h"
 #include "backend/search.h"
 #include "navigator.h"
 #include "misc/str.h"
 #include "misc/regex.h"
+#include "misc/cancellable.h"
 #include "prop/prop_nodefilter.h"
 #include "event.h"
 #include "metadata/metadata.h"
@@ -38,10 +39,13 @@
 
 TAILQ_HEAD(js_item_queue, js_item);
 
-static hts_mutex_t js_page_mutex; // protects global lists
+LIST_HEAD(js_model_list, js_model);
+
+static HTS_MUTEX_DECL(js_page_mutex); // protects global lists
 
 static struct js_route_list js_routes;
 static struct js_searcher_list js_searchers;
+static struct js_model_list js_models;
 
 static JSFunctionSpec item_proto_functions[];
 
@@ -79,6 +83,8 @@ typedef struct js_searcher {
 typedef struct js_model {
 
   js_context_private_t jm_ctxpriv; // Must be first
+
+  LIST_ENTRY(js_model) jm_link;
 
   int jm_refcount;
 
@@ -127,6 +133,10 @@ typedef struct js_model {
 
   int jm_sync;  // Synchronous mode (no callbacks allowed, etc)
 
+  struct js_setting_group_list jm_setting_groups;
+
+  cancellable_t jm_cancellable;
+
 } js_model_t;
 
 
@@ -135,14 +145,6 @@ static JSObject *make_model_object(JSContext *cx, js_model_t *jm,
 
 static void install_nodesub(js_model_t *jm);
 
-/**
- *
- */
-void
-js_page_init(void)
-{
-  hts_mutex_init(&js_page_mutex);
-}
 
 /**
  *
@@ -154,8 +156,10 @@ js_model_create(JSContext *cx, jsval openfunc, int sync)
   jm->jm_refcount = 1;
   jm->jm_openfunc = openfunc;
   jm->jm_sync = sync;
+  jm->jm_ctxpriv.jcp_c = &jm->jm_cancellable;
   JS_AddNamedRoot(cx, &jm->jm_openfunc, "openfunc");
   TAILQ_INIT(&jm->jm_items);
+  LIST_INSERT_HEAD(&js_models, jm, jm_link);
   return jm;
 }
 
@@ -189,6 +193,9 @@ js_model_destroy(js_model_t *jm)
   if(jm->jm_pc != NULL)
     prop_courier_destroy(jm->jm_pc);
   free(jm->jm_url);
+  hts_mutex_lock(&js_page_mutex);
+  LIST_REMOVE(jm, jm_link);
+  hts_mutex_unlock(&js_page_mutex);
   free(jm);
 }
 
@@ -1365,7 +1372,8 @@ js_open_invoke(JSContext *cx, js_model_t *jm)
   JS_DefineFunctions(cx, obj, page_functions_sync);
 
   if(jm->jm_url != NULL)
-    js_createPageOptions(cx, obj, jm->jm_url, jm->jm_options);
+    js_createPageOptions(cx, obj, jm->jm_url, jm->jm_options,
+                         &jm->jm_setting_groups);
 
   if(jm->jm_args != NULL) {
     argfmt[0] = 'o';
@@ -1457,6 +1465,8 @@ js_open(js_model_t *jm)
   }
 
   JS_RemoveRoot(cx, &jm->jm_item_proto);
+
+  js_setting_group_flush_from_list(cx, &jm->jm_setting_groups);
 
   js_model_release(jm);
 
@@ -1722,9 +1732,39 @@ js_page_flush_from_plugin(JSContext *cx, js_plugin_t *jsp)
   js_route_t *jsr;
   js_searcher_t *jss;
 
+  hts_mutex_lock(&js_page_mutex);
+
   while((jsr = LIST_FIRST(&jsp->jsp_routes)) != NULL)
     js_route_delete(cx, jsr);
 
   while((jss = LIST_FIRST(&jsp->jsp_searchers)) != NULL)
     js_searcher_delete(cx, jss);
+
+  hts_mutex_unlock(&js_page_mutex);
+}
+
+
+
+/**
+ *
+ */
+int
+js_wait_for_models_to_terminate(void)
+{
+  int i;
+  js_model_t *jm;
+  hts_mutex_lock(&js_page_mutex);
+  LIST_FOREACH(jm, &js_models, jm_link)
+    cancellable_cancel(&jm->jm_cancellable);
+
+  for(i = 0; i < 100; i++) {
+    if(LIST_FIRST(&js_models) == NULL)
+      break;
+
+    hts_mutex_unlock(&js_page_mutex);
+    usleep(10000);
+    hts_mutex_lock(&js_page_mutex);
+  }
+  hts_mutex_unlock(&js_page_mutex);
+  return i == 100;
 }

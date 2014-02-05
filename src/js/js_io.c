@@ -296,9 +296,13 @@ js_http_request(JSContext *cx, jsval *rval,
     JS_DestroyIdArray(cx, ida);
   }
 
+  struct cancellable *c = NULL;
   const js_context_private_t *jcp = JS_GetContextPrivate(cx);
-  if(jcp != NULL && jcp->jcp_flags & JCP_DISABLE_AUTH)
-    flags |= FA_DISABLE_AUTH;
+  if(jcp != NULL) {
+    if(jcp->jcp_flags & JCP_DISABLE_AUTH)
+      flags |= FA_DISABLE_AUTH;
+    c = jcp->jcp_c;
+  }
 
   if(method != NULL && !strcmp(method, "HEAD")) {
     method = NULL;
@@ -343,6 +347,7 @@ js_http_request(JSContext *cx, jsval *rval,
                      HTTP_RESPONSE_HEADERS(&response_headers),
                      HTTP_REQUEST_HEADERS(&in_headers),
                      HTTP_METHOD(method),
+                     HTTP_CANCELLABLE(c),
                      NULL);
 
     JS_ResumeRequest(cx, s);

@@ -81,8 +81,9 @@ typedef struct js_plugin {
  */
 typedef struct js_context_private {
   int jcp_flags;
-
 #define JCP_DISABLE_AUTH 0x1
+
+  struct cancellable *jcp_c;
 
 } js_context_private_t;
 
@@ -140,7 +141,8 @@ JSBool js_createStore(JSContext *cx, JSObject *obj, uintN argc,
 		      jsval *argv, jsval *rval);
 
 JSBool js_createPageOptions(JSContext *cx, JSObject *page, const char *url,
-			    prop_t *options);
+			    prop_t *options,
+                            struct js_setting_group_list *list);
 
 JSBool js_onEvent(JSContext *cx, JSObject *obj,
 		  uintN argc, jsval *argv, jsval *rval);
@@ -162,9 +164,12 @@ void js_prop_set_from_jsval(JSContext *cx, prop_t *p, jsval value);
 
 void js_page_flush_from_plugin(JSContext *cx, js_plugin_t *jp);
 
+int js_wait_for_models_to_terminate(void);
+
 void js_io_flush_from_plugin(JSContext *cx, js_plugin_t *jsp);
 
-void js_setting_group_flush_from_plugin(JSContext *cx, js_plugin_t *jsp);
+void js_setting_group_flush_from_list(JSContext *cx,
+                                      struct js_setting_group_list *list);
 
 void js_service_flush_from_plugin(JSContext *cx, js_plugin_t *jsp);
 
@@ -218,8 +223,6 @@ void js_event_dispatch(JSContext *cx, struct js_event_handler_list *list,
 void js_event_handler_create(JSContext *cx, struct js_event_handler_list *list,
 			     const char *filter, jsval fun);
 
-void js_page_init(void);
-
 JSBool js_subscribe(JSContext *cx, uintN argc,
 		    jsval *argv, jsval *rval, prop_t *root, const char *pname,
 		    struct js_subscription_list *list, prop_courier_t *pc,
@@ -260,8 +263,6 @@ JSBool js_addsubprovider(JSContext *cx, JSObject *obj, uintN argc,
 
 JSBool js_addfaprovider(JSContext *cx, JSObject *obj, uintN argc, 
                         jsval *argv, jsval *rval);
-
-void js_hook_init(void); // Replace with init helper
 
 JSBool js_addItemHook(JSContext *cx, JSObject *obj, uintN argc,
                       jsval *argv, jsval *rval);

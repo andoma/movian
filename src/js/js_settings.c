@@ -168,13 +168,18 @@ jsg_destroy(JSContext *cx, js_setting_group_t *jsg)
 }
 
 
+/**
+ *
+ */
 void
-js_setting_group_flush_from_plugin(JSContext *cx, js_plugin_t *jsp)
+js_setting_group_flush_from_list(JSContext *cx,
+                                 struct js_setting_group_list *list)
 {
   js_setting_group_t *jsg;
-  while((jsg = LIST_FIRST(&jsp->jsp_setting_groups)) != NULL)
+  while((jsg = LIST_FIRST(list)) != NULL)
     jsg_destroy(cx, jsg);
 }
+
 
 /**
  *
@@ -925,11 +930,12 @@ static JSClass page_options_class = {
  */
 JSBool
 js_createPageOptions(JSContext *cx, JSObject *page, const char *url,
-		     prop_t *options)
+		     prop_t *options, struct js_setting_group_list *list)
 {
   js_setting_group_t *jsg = calloc(1, sizeof(js_setting_group_t));
   JSObject *robj;
-  jsg->jsg_refcount = 1;
+  jsg->jsg_refcount = 2;
+  LIST_INSERT_HEAD(list, jsg, jsg_link);
   jsg->jsg_frozen = 1;
   jsg->jsg_kv_url = strdup(url);
   jsg->jsg_root = prop_ref_inc(options);

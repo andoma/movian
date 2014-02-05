@@ -56,6 +56,8 @@ static void bookmarks_save(void);
 static struct bookmark_list bookmarks;
 static struct navigator_list navigators;
 
+static HTS_MUTEX_DECL(nav_mutex);
+
 /**
  *
  */
@@ -198,6 +200,7 @@ nav_update_bookmarked(void)
 static navigator_t *
 nav_create(prop_t *prop)
 {
+  hts_mutex_lock(&nav_mutex);
   navigator_t *nav = calloc(1, sizeof(navigator_t));
 
   LIST_INSERT_HEAD(&navigators, nav, nav_link);
@@ -230,6 +233,8 @@ nav_create(prop_t *prop)
 		   NULL);
 
   nav_open0(nav, NAV_HOME, NULL, NULL, NULL, NULL);
+
+  hts_mutex_unlock(&nav_mutex);
 
   static int initial_opened = 0;
 
@@ -266,7 +271,7 @@ nav_spawn(void)
 void
 nav_init(void)
 {
-  nav_courier = prop_courier_create_thread(NULL, "navigator");
+  nav_courier = prop_courier_create_thread(&nav_mutex, "navigator");
   bookmarks_init();
 }
 
@@ -361,6 +366,24 @@ nav_close_all(navigator_t *nav, int with_prop)
 
   while((np = TAILQ_LAST(&nav->nav_pages, nav_page_queue)) != NULL)
     nav_close(np, with_prop);
+}
+
+
+
+
+/**
+ *
+ */
+void
+nav_fini(void)
+{
+  hts_mutex_lock(&nav_mutex);
+  navigator_t *nav;
+
+  LIST_FOREACH(nav, &navigators, nav_link) {
+    nav_close_all(nav, 1);
+  }
+  hts_mutex_unlock(&nav_mutex);
 }
 
 
