@@ -253,7 +253,6 @@ typedef struct media_buf {
     int32_t mb_data32;
     int mb_rate;
     int mb_codecid;
-    int mb_font_context;
     float mb_float;
     prop_t *mb_prop;
   };
@@ -262,6 +261,7 @@ typedef struct media_buf {
   uint8_t mb_stream;
 
   uint8_t mb_channels;
+  uint16_t mb_font_context;
 
 } media_buf_t;
 
