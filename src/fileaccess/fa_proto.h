@@ -161,7 +161,9 @@ typedef struct fa_protocol {
                      char *errbuf, size_t errlen,
                      char **etag, time_t *mtime, int *max_age,
                      int flags, fa_load_cb_t *cb, void *opaque,
-                     cancellable_t *c);
+                     cancellable_t *c,
+                     struct http_header_list *request_headers,
+                     struct http_header_list *response_headers);
 
   /**
    * Normalize the given URL.

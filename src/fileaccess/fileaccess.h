@@ -265,6 +265,10 @@ enum {
   FA_LOAD_TAG_VPATHS,
   FA_LOAD_TAG_QUERY_ARG,
   FA_LOAD_TAG_QUERY_ARGVEC,
+  FA_LOAD_TAG_MIN_EXPIRE,
+  FA_LOAD_TAG_REQUEST_HEADERS,
+  FA_LOAD_TAG_RESPONSE_HEADERS,
+
 };
 
 #define FA_LOAD_ERRBUF(a, b)            FA_LOAD_TAG_ERRBUF, a, b
@@ -275,6 +279,9 @@ enum {
 #define FA_LOAD_VPATHS(a)               FA_LOAD_TAG_VPATHS, a
 #define FA_LOAD_QUERY_ARG(a, b)         FA_LOAD_TAG_QUERY_ARG, a, b
 #define FA_LOAD_QUERY_ARGVEC(a)         FA_LOAD_TAG_QUERY_ARGVEC, a
+#define FA_LOAD_MIN_EXPIRE(a)           FA_LOAD_TAG_MIN_EXPIRE, a
+#define FA_LOAD_REQUEST_HEADERS(a)      FA_LOAD_TAG_REQUEST_HEADERS, a
+#define FA_LOAD_RESPONSE_HEADERS(a)     FA_LOAD_TAG_RESPONSE_HEADERS, a
 
 buf_t *fa_load(const char *url, ...)  __attribute__((__sentinel__(0)));
 

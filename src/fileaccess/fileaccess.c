@@ -1316,6 +1316,9 @@ fa_load(const char *url, ...)
   fa_load_cb_t *cb = NULL;
   void *opaque = NULL;
   cancellable_t *c = NULL;
+  int min_expire = 0;
+  struct http_header_list *request_headers = NULL;
+  struct http_header_list *response_headers = NULL;
 
   fa_protocol_t *fap;
   fa_handle_t *fh;
@@ -1384,6 +1387,18 @@ fa_load(const char *url, ...)
     }
       break;
 
+    case FA_LOAD_TAG_MIN_EXPIRE:
+      min_expire = va_arg(ap, int);
+      break;
+
+    case FA_LOAD_TAG_REQUEST_HEADERS:
+      request_headers = va_arg(ap, struct http_header_list *);
+      break;
+
+    case FA_LOAD_TAG_RESPONSE_HEADERS:
+      response_headers = va_arg(ap, struct http_header_list *);
+      break;
+
     default:
       abort();
     }
@@ -1450,7 +1465,8 @@ fa_load(const char *url, ...)
       blobcache_get_meta(url, "fa_load", &etag, &mtime);
     
     data2 = fap->fap_load(fap, filename, errbuf, errlen,
-			  &etag, &mtime, &max_age, flags, cb, opaque, c);
+			  &etag, &mtime, &max_age, flags, cb, opaque, c,
+                          request_headers, response_headers);
     
     fap_release(fap);
     free(filename);
@@ -1477,6 +1493,12 @@ fa_load(const char *url, ...)
          to store anyway.
       */
     int no_change;
+
+    /*
+     * If caller specified a minimum expire (to force stuff to stay in
+     * cache for a given time), up max_age
+     */
+    max_age = MAX(min_expire, max_age);
 
     if(data2 && cache_control != DISABLE_CACHE &&
        (cache_control || max_age || etag || mtime)) {

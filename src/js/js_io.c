@@ -185,6 +185,20 @@ js_http_add_args(char ***httpargs, JSContext *cx, JSObject *argobj)
 }
 
 
+/**
+ *
+ */
+static int
+disable_cache_on_http_headers(struct http_header_list *list)
+{
+  http_header_t *hh;
+  LIST_FOREACH(hh, list, hh_link) {
+    if(!strcasecmp(hh->hh_key, "user-agent"))
+      continue;
+    return 1;
+  }
+  return 0;
+}
 
 
 /**
@@ -200,12 +214,13 @@ js_http_request(JSContext *cx, jsval *rval,
   char errbuf[256];
   htsbuf_queue_t *postdata = NULL;
   const char *postcontenttype = NULL;
-  struct http_header_list in_headers;
+  struct http_header_list request_headers;
   int flags = 0;
   int headreq = 0;
   int cache = 0;
+  int min_expire = 0;
 
-  LIST_INIT(&in_headers);
+  LIST_INIT(&request_headers);
 
   if(ctrlobj) {
     if(js_is_prop_true(cx, ctrlobj, "debug"))
@@ -218,6 +233,10 @@ js_http_request(JSContext *cx, jsval *rval,
       cache = 1;
     if(js_is_prop_true(cx, ctrlobj, "compression"))
       flags |= FA_COMPRESSION;
+    min_expire = js_prop_int_or_default(cx, ctrlobj, "cacheTime", 0);
+
+    if(min_expire)
+      cache = 1;
   }
 
   if(argobj != NULL)
@@ -288,7 +307,7 @@ js_http_request(JSContext *cx, jsval *rval,
 			 &value) || JSVAL_IS_VOID(value))
 	continue;
 
-      http_header_add(&in_headers,
+      http_header_add(&request_headers,
 		      JS_GetStringBytes(JSVAL_TO_STRING(name)),
 		      JS_GetStringBytes(JS_ValueToString(cx, value)), 0);
     }
@@ -313,20 +332,37 @@ js_http_request(JSContext *cx, jsval *rval,
   js_http_response_t *jhr;
   jsrefcount s = JS_SuspendRequest(cx);
 
+  LIST_INIT(&response_headers);
+
+  /**
+   * If user add specific HTTP headers we will disable caching
+   * A few header types are OK to send though since I don't
+   * think it will affect result that much
+   */
+  if(cache)
+    cache = !disable_cache_on_http_headers(&request_headers);
 
   if(cache && method == NULL && !headreq && !postdata) {
-    LIST_INIT(&response_headers);
+
+    /**
+     * If it's a GET request and cache is enabled, run it thru
+     * fa_load() to get caching
+     */
 
     buf_t *b = fa_load(url,
                        FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
                        FA_LOAD_QUERY_ARGVEC(httpargs),
                        FA_LOAD_FLAGS(flags),
                        FA_LOAD_CANCELLABLE(c),
+                       FA_LOAD_MIN_EXPIRE(min_expire),
+                       FA_LOAD_REQUEST_HEADERS(&request_headers),
+                       FA_LOAD_RESPONSE_HEADERS(&response_headers),
                        NULL);
     JS_ResumeRequest(cx, s);
 
     if(b == NULL) {
       JS_ReportError(cx, errbuf);
+      http_headers_free(&request_headers);
       return JS_FALSE;
     }
 
@@ -345,7 +381,7 @@ js_http_request(JSContext *cx, jsval *rval,
                      HTTP_POSTDATA(postdata, postcontenttype),
                      HTTP_FLAGS(flags),
                      HTTP_RESPONSE_HEADERS(&response_headers),
-                     HTTP_REQUEST_HEADERS(&in_headers),
+                     HTTP_REQUEST_HEADERS(&request_headers),
                      HTTP_METHOD(method),
                      HTTP_CANCELLABLE(c),
                      NULL);
@@ -360,6 +396,7 @@ js_http_request(JSContext *cx, jsval *rval,
 
     if(n) {
       JS_ReportError(cx, errbuf);
+      http_headers_free(&request_headers);
       return JS_FALSE;
     }
 
@@ -369,6 +406,8 @@ js_http_request(JSContext *cx, jsval *rval,
     mystrset(&jhr->contenttype,
 	     http_header_get(&response_headers, "content-type"));
   }
+
+  http_headers_free(&request_headers);
 
   JSObject *robj = JS_NewObjectWithGivenProto(cx, &http_response_class,
 					      NULL, NULL);

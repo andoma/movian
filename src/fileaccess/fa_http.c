@@ -2435,7 +2435,9 @@ http_load(struct fa_protocol *fap, const char *url,
 	  char *errbuf, size_t errlen,
 	  char **etag, time_t *mtime, int *max_age,
 	  int flags, fa_load_cb_t *cb, void *opaque,
-          cancellable_t *c)
+          cancellable_t *c,
+          struct http_header_list *request_headers,
+          struct http_header_list *response_headers)
 {
   buf_t *b;
   int err;
@@ -2446,22 +2448,28 @@ http_load(struct fa_protocol *fap, const char *url,
   LIST_INIT(&headers_in);
   LIST_INIT(&headers_out);
 
+  if(request_headers == NULL)
+    request_headers = &headers_in;
+
+  if(response_headers == NULL)
+    response_headers = &headers_out;
+
   if(mtime != NULL && *mtime) {
     char txt[40];
     http_asctime(*mtime, txt, sizeof(txt));
-    http_header_add(&headers_in, "If-Modified-Since", txt, 0);
+    http_header_add(request_headers, "If-Modified-Since", txt, 0);
   }
 
   if(etag != NULL && *etag != NULL) {
-    http_header_add(&headers_in, "If-None-Match", *etag, 0);
+    http_header_add(request_headers, "If-None-Match", *etag, 0);
   }
 
   err = http_req(url,
                  HTTP_RESULT_PTR(&b),
                  HTTP_ERRBUF(errbuf, errlen),
                  HTTP_FLAGS(flags),
-                 HTTP_RESPONSE_HEADERS(&headers_out),
-                 HTTP_REQUEST_HEADERS(&headers_in),
+                 HTTP_RESPONSE_HEADERS(response_headers),
+                 HTTP_REQUEST_HEADERS(request_headers),
                  HTTP_PROGRESS_CALLBACK(cb, opaque),
                  HTTP_CANCELLABLE(c),
                  NULL);
@@ -2476,20 +2484,20 @@ http_load(struct fa_protocol *fap, const char *url,
     goto done;
   }
 
-  s = http_header_get(&headers_out, "content-type");
+  s = http_header_get(response_headers, "content-type");
   if(s != NULL && b != NULL)
     b->b_content_type = rstr_alloc(s);
 
   if(mtime != NULL) {
     *mtime = 0;
-    if((s = http_header_get(&headers_out, "last-modified")) != NULL) {
+    if((s = http_header_get(response_headers, "last-modified")) != NULL) {
       http_ctime(mtime, s);
     }
   }
 
   if(etag != NULL) {
     free(*etag);
-    if((s = http_header_get(&headers_out, "etag")) != NULL) {
+    if((s = http_header_get(response_headers, "etag")) != NULL) {
       *etag = strdup(s);
     } else {
       *etag = NULL;
@@ -2497,14 +2505,14 @@ http_load(struct fa_protocol *fap, const char *url,
   }
 
   if(max_age != NULL) {
-    if((s  = http_header_get(&headers_out, "date")) != NULL && 
-       (s2 = http_header_get(&headers_out, "expires")) != NULL) {
+    if((s  = http_header_get(response_headers, "date")) != NULL && 
+       (s2 = http_header_get(response_headers, "expires")) != NULL) {
       time_t expires, sdate;
       if(!http_ctime(&sdate, s) && !http_ctime(&expires, s2))
 	*max_age = expires - sdate;
     }
 
-    if((s = http_header_get(&headers_out, "cache-control")) != NULL) {
+    if((s = http_header_get(response_headers, "cache-control")) != NULL) {
       if((s2 = strstr(s, "max-age=")) != NULL) {
 	*max_age = atoi(s2 + strlen("max-age="));
       }
@@ -2516,8 +2524,11 @@ http_load(struct fa_protocol *fap, const char *url,
   }
 
  done:
-  http_headers_free(&headers_in);
-  http_headers_free(&headers_out);
+  if(request_headers == &headers_in)
+    http_headers_free(&headers_in);
+
+  if(response_headers == &headers_out)
+    http_headers_free(&headers_out);
   return b;
 }
 
