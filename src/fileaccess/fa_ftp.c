@@ -418,7 +418,7 @@ ftp_file_size(ftp_file_t *ff)
 
   if(r == 213)
     ff->ff_size = strtoll(ret, NULL, 10);
-  return -1;
+  return ff->ff_size;
 }
 
 #if 0
@@ -483,6 +483,8 @@ static int
 ftp_list_dir_LIST(ftp_connection_t *fc, const char *path, fa_dir_t *fd)
 {
   tcpcon_t *tc = ftp_open_data_transfer(fc);
+  if(tc == NULL)
+    return -1;
 
   char resp[1024];
 
@@ -596,14 +598,17 @@ static void
 ftp_close(fa_handle_t *fh)
 {
   ftp_file_t *ff = (ftp_file_t *)fh;
-  int r = 0;
+  int drop = 0;
+  FTP_TRACE("[%dd]: Close, xfer:%s", ff->ff_fc->fc_id,
+            ff->ff_xfer ? "yes" : "no");
   if(ff->ff_xfer != NULL) {
     tcp_close(ff->ff_xfer);
     ff->ff_xfer = NULL;
-    r = fc_read_result(ff->ff_fc, NULL, 0);
+    fc_read_result(ff->ff_fc, NULL, 0);
+    drop = 1;
   }
   // Disconnect control channel if we got a permanent error
-  ftp_file_release(ff, r >= 500);
+  ftp_file_release(ff, drop);
 }
 
 
