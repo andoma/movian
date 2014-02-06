@@ -584,8 +584,10 @@ js_getAuthCredentials(JSContext *cx, JSObject *obj,
   flags |= forcetmp ? 0 : KEYRING_SHOW_REMEMBER_ME | KEYRING_REMEMBER_ME_SET;
 
 
+  jsrefcount s = JS_SuspendRequest(cx);
   r = keyring_lookup(buf, &username, &password, NULL, NULL,
 		     source, reason, flags);
+  JS_ResumeRequest(cx, s);
 
   if(r == 1) {
     *rval = BOOLEAN_TO_JSVAL(0);
