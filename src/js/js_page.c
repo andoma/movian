@@ -42,6 +42,7 @@ TAILQ_HEAD(js_item_queue, js_item);
 LIST_HEAD(js_model_list, js_model);
 
 static HTS_MUTEX_DECL(js_page_mutex); // protects global lists
+static HTS_MUTEX_DECL(js_model_mutex); // protects global model lists
 
 static struct js_route_list js_routes;
 static struct js_searcher_list js_searchers;
@@ -159,7 +160,9 @@ js_model_create(JSContext *cx, jsval openfunc, int sync)
   jm->jm_ctxpriv.jcp_c = &jm->jm_cancellable;
   JS_AddNamedRoot(cx, &jm->jm_openfunc, "openfunc");
   TAILQ_INIT(&jm->jm_items);
+  hts_mutex_lock(&js_model_mutex);
   LIST_INSERT_HEAD(&js_models, jm, jm_link);
+  hts_mutex_unlock(&js_model_mutex);
   return jm;
 }
 
@@ -193,9 +196,9 @@ js_model_destroy(js_model_t *jm)
   if(jm->jm_pc != NULL)
     prop_courier_destroy(jm->jm_pc);
   free(jm->jm_url);
-  hts_mutex_lock(&js_page_mutex);
+  hts_mutex_lock(&js_model_mutex);
   LIST_REMOVE(jm, jm_link);
-  hts_mutex_unlock(&js_page_mutex);
+  hts_mutex_unlock(&js_model_mutex);
   free(jm);
 }
 
@@ -1753,7 +1756,7 @@ js_wait_for_models_to_terminate(void)
 {
   int i;
   js_model_t *jm;
-  hts_mutex_lock(&js_page_mutex);
+  hts_mutex_lock(&js_model_mutex);
   LIST_FOREACH(jm, &js_models, jm_link)
     cancellable_cancel(&jm->jm_cancellable);
 
@@ -1761,10 +1764,10 @@ js_wait_for_models_to_terminate(void)
     if(LIST_FIRST(&js_models) == NULL)
       break;
 
-    hts_mutex_unlock(&js_page_mutex);
+    hts_mutex_unlock(&js_model_mutex);
     usleep(10000);
-    hts_mutex_lock(&js_page_mutex);
+    hts_mutex_lock(&js_model_mutex);
   }
-  hts_mutex_unlock(&js_page_mutex);
+  hts_mutex_unlock(&js_model_mutex);
   return i == 100;
 }
