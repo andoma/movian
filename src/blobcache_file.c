@@ -34,7 +34,6 @@
 #include "showtime.h"
 #include "blobcache.h"
 #include "misc/pool.h"
-#include "misc/callout.h"
 #include "misc/sha.h"
 #include "misc/md5.h"
 #include "arch/arch.h"
