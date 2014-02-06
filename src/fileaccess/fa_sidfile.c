@@ -69,8 +69,8 @@ sidfile_scandir(fa_protocol_t *fap, fa_dir_t *fd,
     return -1;
   }
 
-  album = rstr_from_bytes((char *)buf + 0x16, 32, NULL, NULL, 0);
-  artist = rstr_from_bytes((char *)buf + 0x36, 32, NULL, NULL, 0);
+  album = rstr_from_bytes_len((char *)buf + 0x16, 32);
+  artist = rstr_from_bytes_len((char *)buf + 0x36, 32);
 
   tracks = buf[0xf];
   for(i = 0; i < tracks; i++) {

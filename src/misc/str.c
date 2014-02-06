@@ -823,14 +823,32 @@ utf8_from_bytes(const char *str, int len, const charset_t *cs,
  *
  */
 rstr_t *
-rstr_from_bytes(const char *str, int len, const charset_t *cs,
-		char *how, size_t howlen)
+rstr_from_bytes(const char *str)
 {
-  buf_t *b = utf8_from_bytes(str, len, cs, how, howlen);
+  if(utf8_verify(str))
+    return rstr_alloc(str);
+
+  buf_t *b = utf8_from_bytes(str, strlen(str), NULL, NULL, 0);
   rstr_t *r = rstr_alloc(buf_cstr(b));
   buf_release(b);
   return r;
 }
+
+
+/**
+ *
+ */
+struct rstr *
+rstr_from_bytes_len(const char *str, int len)
+{
+  char *zstr = malloc(len + 1);
+  memcpy(zstr, str, len);
+  zstr[len] = 0;
+  rstr_t *r = rstr_from_bytes(zstr);
+  free(zstr);
+  return r;
+}
+
 
 static uint16_t *casefoldtable;
 static int casefoldtablelen;
