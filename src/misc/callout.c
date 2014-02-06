@@ -125,7 +125,20 @@ callout_loop(void *aux)
       LIST_REMOVE(c, c_link);
       c->c_callback = NULL;
       hts_mutex_unlock(&callout_mutex);
-      cc(c, c->c_opaque);
+
+
+      if(gconf.enable_callout_debug) {
+        const int64_t tstart = showtime_get_ts();
+        cc(c, c->c_opaque);
+        const int64_t tend = showtime_get_ts();
+        if(tend - tstart > 1000) {
+          TRACE(TRACE_DEBUG, "Callout", "%p,%p took %d us", cc, c->c_opaque,
+                (int)tend - tstart);
+        }
+      } else {
+        cc(c, c->c_opaque);
+      }
+
       hts_mutex_lock(&callout_mutex);
     }
 
