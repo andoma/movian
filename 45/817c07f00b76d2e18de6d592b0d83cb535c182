@@ -1,0 +1,3 @@
+Make it possible to upload and test new .lang files directly into Showtime
+
+Access this feature at http://showtimehost:42000/showtime/translation
