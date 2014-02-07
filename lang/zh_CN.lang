@@ -432,15 +432,13 @@ id: CPU Temp
 msg: CPU温度
 
 id: Fragmentation
-# Missing translation
-msg: 
+msg: 碎片
 
 id: GPU Temp
 msg: GPU温度
 
 id: Inactive mem
-# Missing translation
-msg: 
+msg: 不活动内存
 
 id: Memory usage
 msg: 内存占用
@@ -701,12 +699,10 @@ id: Enable file deletion from item menu
 msg: 启用文件删除功能
 
 id: File browsing
-# Missing translation
-msg: 
+msg: 文件浏览
 
 id: Show filename extensions
-# Missing translation
-msg: 
+msg: 显示文件扩展名
 
 id: %d archive parts
 msg[0]: %d个分卷
