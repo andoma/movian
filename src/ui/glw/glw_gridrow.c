@@ -64,8 +64,11 @@ glw_gridrow_layout(glw_gridrow_t *ggr, glw_rctx_t *rc)
   const float scale = ggr->child_scale;
   const float col_width = rc->rc_width * scale;
 
+
+  glw_lp(&ggr->filtered_xtile, w->glw_root, ggr->current_xtile, 0.1);
+
   float xpos = 0;
-  float offset = round(rc->rc_width / 2 - gg->filtered_xtile * scale * rc->rc_width - col_width / 2 - (gg->filtered_xtile * ggr->spacing));
+  float offset = round(rc->rc_width / 2 - ggr->filtered_xtile * scale * rc->rc_width - col_width / 2 - (ggr->filtered_xtile * ggr->spacing));
   int xtile = 0;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
@@ -81,8 +84,8 @@ glw_gridrow_layout(glw_gridrow_t *ggr, glw_rctx_t *rc)
 
     if(c == ggr->scroll_to_me) {
       ggr->scroll_to_me = NULL;
-      if(gg->current_xtile != xtile) {
-        gg->current_xtile = xtile;
+      if(ggr->current_xtile != xtile) {
+        ggr->current_xtile = xtile;
         glw_signal0(w, GLW_SIGNAL_TILE_CHANGED, NULL);
       }
     }
@@ -225,7 +228,7 @@ static glw_class_t glw_gridrow = {
   .gc_name = "gridrow",
   .gc_instance_size = sizeof(glw_gridrow_t),
   .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY | GLW_CAN_HIDE_CHILDS,
-  .gc_nav_descend_mode = GLW_NAV_DESCEND_ALL,
+  .gc_nav_descend_mode = GLW_NAV_DESCEND_FOCUSED,
   .gc_render = glw_gridrow_render,
   .gc_set = glw_gridrow_set,
   .gc_signal_handler = glw_gridrow_callback,
@@ -244,14 +247,6 @@ GLW_REGISTER_CLASS(glw_gridrow);
 int
 glw_grid_get_tile_x(glw_t *w)
 {
-  if(w->glw_class == &glw_gridrow) {
-    glw_grid_t *gg = get_grid(w);
-    return gg ? gg->current_xtile : 0;
-  }
-
-  if(w->glw_class == &glw_gridrow)
-    return w->glw_focused ? w->glw_focused->glw_parent_tile_x : 0;
-
   while(w->glw_parent) {
     if(w->glw_parent->glw_class == &glw_gridrow)
       break;
@@ -259,9 +254,26 @@ glw_grid_get_tile_x(glw_t *w)
   }
 
   glw_t *p = w->glw_parent;
-  if(p == NULL)
+  if(p == NULL) {
     return 0;
+  }
 
   return w->glw_parent_tile_x;
 }
+
+int
+glw_grid_get_current_tile_x(glw_t *w)
+{
+  while(w && w->glw_class != &glw_gridrow) {
+    w = w->glw_parent;
+  }
+
+  if(w == NULL)
+    return 0;
+
+
+  glw_gridrow_t *ggr = (glw_gridrow_t *)w;
+  return ggr->current_xtile;
+}
+
 

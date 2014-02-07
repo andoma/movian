@@ -5392,6 +5392,42 @@ glwf_getTileY(glw_view_eval_context_t *ec, struct token *self,
 
 
 /**
+ *
+ */
+static int
+glwf_getCurrentTileX(glw_view_eval_context_t *ec, struct token *self,
+    token_t **argv, unsigned int argc)
+{
+  token_t *r;
+
+  ec->dynamic_eval |= GLW_VIEW_DYNAMIC_EVAL_EVERY_FRAME;
+
+  r = eval_alloc(self, ec, TOKEN_INT);
+  r->t_int = glw_grid_get_current_tile_x(ec->w);
+  eval_push(ec, r);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+glwf_getCurrentTileY(glw_view_eval_context_t *ec, struct token *self,
+    token_t **argv, unsigned int argc)
+{
+  token_t *r;
+
+  ec->dynamic_eval |= GLW_VIEW_DYNAMIC_EVAL_EVERY_FRAME;
+
+  r = eval_alloc(self, ec, TOKEN_INT);
+  r->t_int = glw_grid_get_current_tile_y(ec->w);
+  eval_push(ec, r);
+  return 0;
+}
+
+
+/**
  * 
  */
 static int 
@@ -6209,6 +6245,8 @@ static const token_func_t funcvec[] = {
   {"abs", 1, glwf_abs},
   {"getTileX", 0, glwf_getTileX},
   {"getTileY", 0, glwf_getTileY},
+  {"getCurrentTileX", 0, glwf_getCurrentTileX},
+  {"getCurrentTileY", 0, glwf_getCurrentTileY},
 };
 
 

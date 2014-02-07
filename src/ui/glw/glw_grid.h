@@ -31,9 +31,6 @@ typedef struct glw_grid {
   int current_ytile;
   float filtered_ytile;
 
-  int current_xtile;
-  float filtered_xtile;
-
   glw_t *scroll_to_me;
 
   int16_t spacing;
@@ -48,6 +45,9 @@ typedef struct glw_gridrow {
 
   glw_t *scroll_to_me;
 
+  int current_xtile;
+  float filtered_xtile;
+
   int16_t spacing;
 
 } glw_gridrow_t;
@@ -56,5 +56,9 @@ typedef struct glw_gridrow {
 int glw_grid_get_tile_x(glw_t *w);
 
 int glw_grid_get_tile_y(glw_t *w);
+
+int glw_grid_get_current_tile_x(glw_t *w);
+
+int glw_grid_get_current_tile_y(glw_t *w);
 
 void glw_grid_flood_signal(glw_t *w);

@@ -54,7 +54,6 @@ glw_grid_layout(glw_grid_t *gg, glw_rctx_t *rc)
   const float scale = gg->child_scale;
   const float row_height = rc->rc_height * scale;
 
-  glw_lp(&gg->filtered_xtile, w->glw_root, gg->current_xtile, 0.1);
   glw_lp(&gg->filtered_ytile, w->glw_root, gg->current_ytile, 0.1);
 
 
@@ -215,11 +214,6 @@ glw_grid_ctor(glw_t *w)
 int
 glw_grid_get_tile_y(glw_t *w)
 {
-  if(w->glw_class == &glw_grid) {
-    glw_grid_t *gg = (glw_grid_t *)w;
-    return gg->current_ytile;
-  }
-
   while(w->glw_parent) {
     if(w->glw_parent->glw_class == &glw_grid)
       break;
@@ -227,12 +221,26 @@ glw_grid_get_tile_y(glw_t *w)
   }
 
   glw_t *p = w->glw_parent;
-  if(p == NULL)
+  if(p == NULL) {
     return 0;
+  }
 
   return w->glw_parent_tile_y;
 }
 
+int
+glw_grid_get_current_tile_y(glw_t *w)
+{
+  while(w && w->glw_class != &glw_grid) {
+    w = w->glw_parent;
+  }
+
+  if(w == NULL)
+    return 0;
+
+  glw_grid_t *gg = (glw_grid_t *)w;
+  return gg->current_ytile;
+}
 
 /**
  *
