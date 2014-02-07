@@ -3,7 +3,6 @@ native: Русский
 maintainer: pvc1 <pvc1@yandex.ru> 
 #
 # ./ext/miner/miner.c
-#
 id: Do you like Showtime? You can donate money to the project by mining Litecoins on your PS3
 msg: Нравится Showtime? Вы можете пожертвовать деньги на проект через майнинг Litecoins на вашей PS3
 
@@ -432,15 +431,13 @@ id: CPU Temp
 msg: Температура CPU
 
 id: Fragmentation
-# Missing translation
-msg: 
+msg: Фрагментация
 
 id: GPU Temp
 msg: Температура GPU
 
 id: Inactive mem
-# Missing translation
-msg: 
+msg: Неактивная память
 
 id: Memory usage
 msg: Использование памяти
@@ -701,12 +698,10 @@ id: Enable file deletion from item menu
 msg: Включить удаление файла из пункта меню
 
 id: File browsing
-# Missing translation
-msg: 
+msg: Просмотр файлов
 
 id: Show filename extensions
-# Missing translation
-msg: 
+msg: Отображать расширения у файлов
 
 id: %d archive parts
 msg[0]: частей архива: %d
