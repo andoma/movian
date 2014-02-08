@@ -61,6 +61,7 @@
 #if ENABLE_GLW
 #include "src/ui/glw/glw_settings.h"
 #endif
+#include "playqueue.h"
 
 #include "networking/asyncio.h"
 
@@ -609,6 +610,8 @@ showtime_shutdown(int retcode)
     arch_exit();
   }
 
+  event_dispatch(event_create_action(ACTION_STOP));
+
   gconf.exit_code = retcode;
 
   showtime_flush_caches();
@@ -639,8 +642,12 @@ showtime_shutdown(int retcode)
 void
 showtime_fini(void)
 {
+  playqueue_fini();
+  TRACE(TRACE_DEBUG, "core", "Playqueue finished");
   audio_fini();
+  TRACE(TRACE_DEBUG, "core", "Audio finihsed");
   nav_fini();
+  TRACE(TRACE_DEBUG, "core", "Navigator finihsed");
   backend_fini();
   TRACE(TRACE_DEBUG, "core", "Backend finished");
   shutdown_hook_run(0);
