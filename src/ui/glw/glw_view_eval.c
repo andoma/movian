@@ -5513,39 +5513,86 @@ glwf_clamp(glw_view_eval_context_t *ec, struct token *self,
 }
 
 
-static int 
+static int
 glwf_join(glw_view_eval_context_t *ec, struct token *self,
 	  token_t **argv, unsigned int argc)
 {
   token_t *sep, *t;
   int i;
   char *ret = NULL;
-  const char *s = NULL;
-  
+  const char *parts[argc];
+  int rich[argc];
+  int nparts = 0;
+  int nriches = 0;
+
+  memset(parts, 0, sizeof(const char *) * argc);
+  memset(rich, 0, sizeof(int) * argc);
+
   if(argc < 2)
     return glw_view_seterr(ec->ei, self,
 			   "join() requires at least two arguments");
-  
+
   if((sep = token_resolve(ec, argv[0])) == NULL)
     return -1;
-  
+
   if(sep->type != TOKEN_RSTRING)
     return glw_view_seterr(ec->ei, sep,
 			   "first arg (separator) must be a string");
 
-  for(i = 1; i < argc; i++)  {
+  for(i = 1; i < argc; i++) {
     if((t = token_resolve(ec, argv[i])) == NULL)
       continue;
-    const char *x = token_as_string(t);
-    if(x == NULL)
+    if(t->type == TOKEN_RSTRING) {
+      parts[nparts] = rstr_get(t->t_rstring);
+      rich[nparts] = t->t_rstrtype == PROP_STR_RICH;
+      nriches += t->t_rstrtype == PROP_STR_RICH;
+    } else if(t->type == TOKEN_LINK) {
+      parts[nparts] = rstr_get(t->t_rstring);
+    } else if(t->type == TOKEN_CSTRING) {
+      parts[nparts] = t->t_cstring;
+    } else {
       continue;
+    }
+    nparts++;
+  }
+
+  int sep_rich = sep->t_rstrtype == PROP_STR_RICH;
+  const char *sep_str = rstr_get(sep->t_rstring);
+  const char *s = NULL;
+
+  token_t *r = eval_alloc(self, ec, TOKEN_RSTRING);
+  if(nriches == 0 && sep_rich == 0) {
+    // No rich texts
+  } else if(nriches == nparts && sep_rich) {
+    // All is rich
+    r->t_rstrtype = PROP_STR_RICH;
+  } else {
+    // Some are rich, need to promote non-rich texts
+    r->t_rstrtype = PROP_STR_RICH;
+
+    if(!sep_rich) {
+      char *tmp = alloca(html_enteties_escape(sep_str, NULL));
+      html_enteties_escape(sep_str, tmp);
+      sep_str = tmp;
+    }
+
+    for(i = 0; i < nparts; i++) {
+      if(!rich[i]) {
+        char *tmp = alloca(html_enteties_escape(parts[i], NULL));
+        html_enteties_escape(parts[i], tmp);
+        parts[i] = tmp;
+      }
+    }
+  }
+
+  for(i = 0; i < nparts; i++) {
     if(s != NULL)
       strappend(&ret, s);
-    strappend(&ret, x);
+    strappend(&ret, parts[i]);
     if(s == NULL)
-      s = rstr_get(sep->t_rstring);
+      s = sep_str;
   }
-  token_t *r = eval_alloc(self, ec, TOKEN_RSTRING);
+
   r->t_rstring = rstr_alloc(ret);
   free(ret);
   eval_push(ec, r);
