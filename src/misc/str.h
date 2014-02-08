@@ -109,8 +109,9 @@ typedef struct charset {
 struct buf *utf8_from_bytes(const char *str, int len, const charset_t *cs,
                             char *msg, size_t msglen);
 
-struct rstr *rstr_from_bytes(const char *str, int len, const charset_t *cs,
-                             char *msg, size_t msglen);
+struct rstr *rstr_from_bytes(const char *str);
+
+struct rstr *rstr_from_bytes_len(const char *str, int len);
 
 const charset_t *charset_get(const char *id);
 

@@ -38,4 +38,6 @@ struct backend;
 
 int playqueue_open(prop_t *page);
 
+void playqueue_fini(void);
+
 #endif /* PLAYQUEUE_H__ */

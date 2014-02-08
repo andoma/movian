@@ -648,11 +648,10 @@ icymeta_parse(icecast_play_context_t *ipc, const char *buf)
     const char *end = strchr(title, '\'');
     if(end != NULL) {
       int tlen = end - title;
-      char *x = alloca(tlen + 1);
-      memcpy(x, title, tlen);
-      x[tlen] = 0;
+      rstr_t *t = rstr_from_bytes_len(title, tlen);
       mp_send_prop_set_string(ipc->ipc_mp, &ipc->ipc_mp->mp_audio,
-                              ipc->ipc_radio_info, x);
+                              ipc->ipc_radio_info, rstr_get(t));
+      rstr_release(t);
     }
   }
 }

@@ -2847,9 +2847,9 @@ metadb_mark_urls_as(const char **urls, int num_urls, int seen,
                         "WHERE url=?1 AND playcount = 0"
                         :
                         "INSERT INTO item "
-                        "(url, contenttype, 1, lastplay) "
+                        "(url, contenttype, playcount, lastplay) "
                         "VALUES "
-                        "(?1, ?3, ?2)"
+                        "(?1, ?3, 1, ?2)"
                         );
       }
 

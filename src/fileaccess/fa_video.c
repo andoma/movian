@@ -616,12 +616,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     if(x)
       *x = 0;
 
-    if(utf8_verify(tmp)) {
-      title = rstr_alloc(tmp);
-    } else {
-      title = rstr_from_bytes(tmp, 0, NULL, NULL, 0);
-    }
-
+    title = rstr_from_bytes(tmp);
     va.title = rstr_get(title);
 
     prop_set(mp->mp_prop_metadata, "title", PROP_SET_RSTRING, title);

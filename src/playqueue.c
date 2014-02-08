@@ -876,6 +876,13 @@ playqueue_init(void)
 }
 
 
+void
+playqueue_fini(void)
+{
+  event_dispatch(event_create_action(ACTION_STOP));
+  playqueue_clear();
+}
+
 
 int
 playqueue_open(prop_t *page)
