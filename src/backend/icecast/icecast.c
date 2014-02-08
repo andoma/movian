@@ -32,6 +32,7 @@
 #include "fileaccess/fa_libav.h"
 #include "misc/str.h"
 #include "misc/cancellable.h"
+#include "htsmsg/htsmsg_xml.h"
 #include "networking/http.h"
 
 TAILQ_HEAD(icecast_source_queue, icecast_source);
@@ -134,6 +135,41 @@ parse_m3u(icecast_play_context_t *ipc, char *buf)
 /**
  *
  */
+static void
+parse_xspf(icecast_play_context_t *ipc, buf_t *b)
+{
+  char errbuf[512];
+  htsmsg_t *m = htsmsg_xml_deserialize_buf2(b, errbuf, sizeof(errbuf));
+  if(m == NULL) {
+    TRACE(TRACE_ERROR, "Radio", "Unable to parse XSPF -- %s", errbuf);
+    return;
+  }
+
+  htsmsg_t *list = htsmsg_get_map_multi(m,
+                                        "tags", "playlist",
+                                        "tags", "trackList",
+                                        "tags", NULL);
+
+  if(list != NULL) {
+    htsmsg_field_t *f;
+    HTSMSG_FOREACH(f, list) {
+      htsmsg_t *t;
+      if((t = htsmsg_get_map_by_field_if_name(f, "track")) == NULL)
+        continue;
+      if((t = htsmsg_get_map(t, "tags")) == NULL)
+        continue;
+      const char *loc = htsmsg_get_cdata(t, "location");
+      if(loc != NULL)
+        add_source(ipc, loc);
+    }
+  }
+  htsmsg_destroy(m);
+}
+
+
+/**
+ *
+ */
 static int
 num_deads(const icecast_play_context_t *ipc)
 {
@@ -192,6 +228,16 @@ open_stream(icecast_play_context_t *ipc)
 
     int is_m3u = 0;
     int is_pls = 0;
+    int is_xspf = 0;
+
+    if(ct != NULL)
+      TRACE(TRACE_DEBUG, "Radio", "%s content-type: %s", ipc->ipc_url, ct);
+
+    if(ct != NULL && !strcasecmp(ct, "application/xspf+xml")) {
+      is_xspf = 1;
+      goto load;
+    }
+
     int r = fa_read(fh, pbuf, sizeof(pbuf)-1);
     if(r < 0) {
       TRACE(TRACE_ERROR, "Radio", "Unable to probe %s",
@@ -200,16 +246,18 @@ open_stream(icecast_play_context_t *ipc)
     }
     pbuf[r] = 0;
 
-    if(ct != NULL) {
+    if(ct != NULL &&
+       (!strcasecmp(ct, "application/x-mpegurl") ||
+        !strcasecmp(ct, "audio/x-mpegurl"))) {
       TRACE(TRACE_DEBUG, "Radio",
-            "%s content-type: %s", ipc->ipc_url, ct);
+            "%s is an .m3u playlist according to content-type", ipc->ipc_url);
+      is_m3u = 1;
+    }
 
-      if(!strcasecmp(ct, "application/x-mpegurl") ||
-         !strcasecmp(ct, "audio/x-mpegurl")) {
-        TRACE(TRACE_DEBUG, "Radio",
-              "%s is an .m3u playlist according to content-type", ipc->ipc_url);
-        is_m3u = 1;
-      }
+    if(r > 5 && !memcmp(pbuf, "<?xml", 5)) {
+      TRACE(TRACE_DEBUG, "Radio", "%s is a XSPF playlist based on content",
+            ipc->ipc_url);
+      is_xspf = 1;
     }
 
     if(r > 10 && !memcmp(pbuf, "[playlist]", 10)) {
@@ -223,8 +271,8 @@ open_stream(icecast_play_context_t *ipc)
       is_m3u = 1;
     }
 
-
-    if(is_pls || is_m3u) {
+ load:
+    if(is_pls || is_m3u || is_xspf) {
 
       buf_t *b = fa_load_and_close(fh);
       if(b == NULL) {
@@ -235,7 +283,10 @@ open_stream(icecast_play_context_t *ipc)
 
       flush_sources(ipc);
 
-      if(is_pls) {
+      if(is_xspf) {
+        parse_xspf(ipc, b);
+        b = NULL;
+      } else if(is_pls) {
         parse_pls(ipc, buf_str(b));
       } else {
         parse_m3u(ipc, buf_str(b));
