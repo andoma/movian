@@ -672,6 +672,8 @@ setting_create(int type, prop_t *parent, int flags, ...)
 
     case SETTING_TAG_OPTION_LIST:
       optlist = va_arg(ap, const char **);
+      if(optlist == NULL)
+        break;
 
       while(*optlist) {
         prop_t *opt = prop_create(s->s_val, optlist[0]);
