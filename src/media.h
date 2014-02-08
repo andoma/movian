@@ -345,6 +345,7 @@ typedef struct media_pipe {
 #define MP_ON_STACK      0x2
 #define MP_VIDEO         0x4
 #define MP_FLUSH_ON_HOLD 0x8
+#define MP_ALWAYS_SATISFIED 0x10
 
   int mp_eof;   // End of file: We don't expect to need to read more data
   int mp_hold;  // Paused
@@ -652,6 +653,7 @@ void mp_send_volume_update_locked(media_pipe_t *mp);
 #define MP_PLAY_CAPS_PAUSE         0x2
 #define MP_PLAY_CAPS_EJECT         0x4
 #define MP_PLAY_CAPS_FLUSH_ON_HOLD 0x8
+#define MP_PLAY_CAPS_ALWAYS_SATISFIED 0x10
 
 #define MP_BUFFER_NONE    0
 #define MP_BUFFER_SHALLOW 2
