@@ -402,7 +402,7 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
 
     AVIOContext *avio = fa_libav_reopen(fh);
 
-    if((fctx = fa_libav_open_format(avio, url, NULL, 0, NULL)) == NULL) {
+    if((fctx = fa_libav_open_format(avio, url, NULL, 0, NULL, 0, 0)) == NULL) {
       fa_libav_close(avio);
       snprintf(errbuf, errlen, "Unable to open format");
       return NULL;

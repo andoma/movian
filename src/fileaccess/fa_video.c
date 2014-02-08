@@ -695,7 +695,7 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
 
   AVFormatContext *fctx;
   if((fctx = fa_libav_open_format(avio, url, errbuf, errlen,
-				  va.mimetype)) == NULL) {
+				  va.mimetype, 0, -1)) == NULL) {
     fa_libav_close(avio);
     return NULL;
   }

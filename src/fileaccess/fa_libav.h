@@ -33,6 +33,8 @@ void fa_libav_close(AVIOContext *io);
 struct AVFormatContext *fa_libav_open_format(AVIOContext *avio,
 					     const char *url,
 					     char *errbuf, size_t errlen,
-					     const char *mimetype);
+					     const char *mimetype,
+                                             int probe_size,
+                                             int max_analyze_duration);
 
 void fa_libav_close_format(struct AVFormatContext *fctx);

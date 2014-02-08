@@ -182,8 +182,8 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
     return NULL;
   }
 
-  if((fctx = fa_libav_open_format(avio, url, 
-				  errbuf, errlen, mimetype)) == NULL) {
+  if((fctx = fa_libav_open_format(avio, url, errbuf, errlen, mimetype,
+                                  0, -1)) == NULL) {
     fa_libav_close(avio);
     return NULL;
   }
