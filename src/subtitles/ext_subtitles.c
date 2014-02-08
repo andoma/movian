@@ -627,7 +627,7 @@ load_txt(const char *url, char *buf, size_t len)
 
     if(sscanf(lr.buf, "%02d:%2d:%02d:%02d %02d:%02d:%02d:%02d ",
               &s[0], &s[1], &s[2], &s[3], &s[4], &s[5], &s[6], &s[7]) != 8)
-      break;
+      continue;
 
     unsigned int start = s[0] * 360000 + s[1] * 6000 + s[2] * 100 + s[3];
     unsigned int stop  = s[4] * 360000 + s[5] * 6000 + s[6] * 100 + s[7];
@@ -635,6 +635,85 @@ load_txt(const char *url, char *buf, size_t len)
   }
   return es;
 }
+
+
+/**
+ *
+ */
+static int
+is_tmp(const char *buf, size_t len)
+{
+  int x;
+  return sscanf(buf, "%02d:%2d:%02d:", &x, &x, &x) == 3;
+}
+
+
+/**
+ *
+ */
+static void
+load_tmp_line(ext_subtitles_t *es, const char *src, int len,
+              unsigned int start)
+{
+  if(len < 9)
+    return;
+
+  src += 9;
+  len -= 9;
+
+  char *dst = alloca(len + 1);
+  const char *txt = dst;
+
+  int delay = len / 14.7f;
+
+  while(len) {
+    if(src[0] < 32)
+      break;
+
+    if(src[0] == '|') {
+      *dst++ = '\n';
+      src += 1;
+    } else {
+      *dst++ = *src++;
+    }
+    len--;
+  }
+  if(delay < 2)
+    delay = 2;
+  *dst = 0;
+  es_insert_text(es, txt, start * 1000000LL, (start + delay) * 1000000LL, 0);
+}
+
+
+/**
+ *
+ */
+static ext_subtitles_t *
+load_tmp(const char *url, char *buf, size_t len)
+{
+  ext_subtitles_t *es = calloc(1, sizeof(ext_subtitles_t));
+  linereader_t lr;
+  int n;
+
+  TAILQ_INIT(&es->es_entries);
+  linereader_init(&lr, buf, len);
+
+  while(1) {
+    if((n = linereader_next(&lr)) < 0)
+      break;
+
+    int s[3];
+
+    if(sscanf(lr.buf, "%02d:%2d:%02d:", &s[0], &s[1], &s[2]) != 3)
+      continue;
+
+    unsigned int start = s[0] * 3600 + s[1] * 60 + s[2];
+    load_tmp_line(es, lr.buf, lr.ll, start);
+  }
+  return es;
+}
+
+
 
 /**
  *
@@ -660,7 +739,7 @@ vocmp(const void *A, const void *B)
  *
  */
 static void
-es_sort(ext_subtitles_t *es)
+es_sort(ext_subtitles_t *es, int trim_stop)
 {
   video_overlay_t *vo, **vec;
   int cnt = 0, i;
@@ -675,6 +754,12 @@ es_sort(ext_subtitles_t *es)
     vec[cnt++] = vo;
   
   qsort(vec, cnt, sizeof(video_overlay_t *), vocmp);
+
+  if(trim_stop) {
+    // Trim so no stop time is higher than next items start time
+    for(i = 0; i < cnt - 1; i++)
+      vec[i]->vo_stop = MIN(vec[i]->vo_stop, vec[i + 1]->vo_start);
+  }
 
   TAILQ_INIT(&es->es_entries);
   for(i = 0; i < cnt; i++)
@@ -704,6 +789,7 @@ convert_to_utf8(buf_t *src, const char *url)
 static ext_subtitles_t *
 subtitles_create(const char *path, buf_t *buf, AVRational *fr)
 {
+  int trim_stop = 0;
   ext_subtitles_t *s = NULL;
   if(is_ttml(buf)) {
     s = load_ttml(path, buf);
@@ -740,12 +826,15 @@ subtitles_create(const char *path, buf_t *buf, AVRational *fr)
       s = load_sub_variant(path, b0, len, NULL, 1);
     else if(is_txt(b0, len))
       s = load_txt(path, b0, len);
-
+    else if(is_tmp(b0, len)) {
+      s = load_tmp(path, b0, len);
+      trim_stop = 1;
+    }
   }
   buf_release(buf);
 
   if(s)
-    es_sort(s);
+    es_sort(s, trim_stop);
   return s;
 }
 
@@ -928,6 +1017,8 @@ subtitles_probe(const char *url)
     ret = "MPL";
   else if(is_sub(buf_cstr(b), buf_len(b)))
     ret = "SUB";
+  else if(is_tmp(buf_cstr(b), buf_len(b)))
+    ret = "TMP";
   else
     ret = NULL;
 
