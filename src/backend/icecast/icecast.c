@@ -647,6 +647,8 @@ icymeta_fsize(fa_handle_t *handle)
 static void
 icymeta_parse(icecast_play_context_t *ipc, const char *buf)
 {
+  hexdump("icymeta", buf, strlen(buf));
+
   const char *title = mystrstr(buf, "StreamTitle='");
   if(title != NULL) {
     title += strlen("StreamTitle='");
