@@ -510,6 +510,7 @@ stream_radio(icecast_play_context_t *ipc, char *errbuf, size_t errlen)
     event_release(e);
   }
 
+  prop_set_void(ipc->ipc_radio_info);
   mp_set_cancellable(mp, NULL);
 
   if(mb != NULL && mb != MB_SPECIAL_EOF)
