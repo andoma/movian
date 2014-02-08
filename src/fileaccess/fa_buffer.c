@@ -599,7 +599,7 @@ fa_buffered_open(const char *url, char *errbuf, size_t errsize, int flags,
     return fh;
 
   int mflags = flags;
-  flags &= ~ (FA_BUFFERED_SMALL | FA_BUFFERED_BIG);
+  flags &= ~ (FA_BUFFERED_SMALL | FA_BUFFERED_BIG | FA_BUFFERED_NO_PREFETCH);
 
   fh = fa_open_ex(url, errbuf, errsize, flags, foe);
   if(fh == NULL)
@@ -610,7 +610,8 @@ fa_buffered_open(const char *url, char *errbuf, size_t errsize, int flags,
 
   buffered_file_t *bf = calloc(1, sizeof(buffered_file_t));
   bf->bf_url = strdup(url);
-  bf->bf_min_request = mflags & FA_BUFFERED_BIG ? 256 * 1024 : 64 * 1024;
+  if(!(mflags & FA_BUFFERED_NO_PREFETCH))
+    bf->bf_min_request = mflags & FA_BUFFERED_BIG ? 256 * 1024 : 64 * 1024;
   bf->bf_mem_size = 1024 * 1024;
   bf->bf_flags = flags;
 

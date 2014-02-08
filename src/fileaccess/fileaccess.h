@@ -138,6 +138,7 @@ LIST_HEAD(fa_protocol_list, fa_protocol);
 #define FA_IMPORTANT       0x1000
 #define FA_NO_RETRIES      0x2000
 #define FA_NO_PARKING      0x4000
+#define FA_BUFFERED_NO_PREFETCH 0x8000
 
 /**
  *
