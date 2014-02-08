@@ -104,6 +104,7 @@ static const struct {
   { "video/x-msvideo", "avi" },
   { "video/vnd.dlna.mpeg-tts,", "mpegts" },
   { "video/avi", "avi" },
+  { "video/nsv", "nsv" },
   { "audio/x-mpeg", "mp3" },
   { "audio/mpeg", "mp3" },
 };
