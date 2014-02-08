@@ -1018,7 +1018,8 @@ mq_update_stats(media_pipe_t *mp, media_queue_t *mq)
 {
   int satisfied = mp->mp_eof ||
     mp->mp_buffer_current == 0 ||
-    mp->mp_buffer_current * 8 > mp->mp_buffer_limit * 7;
+    mp->mp_buffer_current * 8 > mp->mp_buffer_limit * 7 ||
+    mp->mp_flags & MP_ALWAYS_SATISFIED;
 
   if(satisfied) {
     if(mp->mp_satisfied == 0) {
@@ -1809,6 +1810,13 @@ mp_configure(media_pipe_t *mp, int caps, int buffer_size, int64_t duration,
     mp->mp_flags |= MP_FLUSH_ON_HOLD;
   else
     mp->mp_flags &= ~MP_FLUSH_ON_HOLD;
+
+
+  if(caps & MP_PLAY_CAPS_ALWAYS_SATISFIED) {
+    mp->mp_flags |= MP_ALWAYS_SATISFIED;
+  } else {
+    mp->mp_flags &= ~MP_ALWAYS_SATISFIED;
+  }
 
   prop_set_int(mp->mp_prop_canSeek,  caps & MP_PLAY_CAPS_SEEK  ? 1 : 0);
   prop_set_int(mp->mp_prop_canPause, caps & MP_PLAY_CAPS_PAUSE ? 1 : 0);
