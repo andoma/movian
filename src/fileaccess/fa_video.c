@@ -427,7 +427,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 
   // Compute stop position (in percentage of video length)
 
-  int spp = mp->mp_seek_base * 100 / fctx->duration;
+  int spp = fctx->duration ? (mp->mp_seek_base * 100 / fctx->duration) : 0;
 
   if(spp >= video_settings.played_threshold || event_is_type(e, EVENT_EOF)) {
     metadb_set_video_restartpos(canonical_url, -1);
