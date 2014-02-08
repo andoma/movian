@@ -1037,6 +1037,8 @@ strvec_split(const char *str, char ch)
 void
 strvec_free(char **s)
 {
+  if(s == NULL)
+    return;
   void *m = s;
   for(;*s != NULL; s++)
     free(*s);
