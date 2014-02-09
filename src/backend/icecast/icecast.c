@@ -706,8 +706,11 @@ icymeta_parse(icecast_play_context_t *ipc, const char *buf)
     title += strlen("StreamTitle='");
     const char *end = strchr(title, '\'');
     if(end != NULL) {
+      char how[128];
       int tlen = end - title;
-      rstr_t *t = rstr_from_bytes_len(title, tlen);
+      rstr_t *t = rstr_from_bytes_len(title, tlen, how, sizeof(how));
+      TRACE(TRACE_DEBUG, "Radio", "Title decoded as %s to '%s'",
+            rstr_get(t), how);
       mp_send_prop_set_string(ipc->ipc_mp, &ipc->ipc_mp->mp_audio,
                               ipc->ipc_radio_info, rstr_get(t));
       rstr_release(t);
