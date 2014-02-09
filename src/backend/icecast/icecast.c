@@ -64,6 +64,8 @@ typedef struct icecast_play_context {
 
   cancellable_t ipc_cancellable;
 
+  char ipc_streaminfo_set;
+
 } icecast_play_context_t;
 
 
@@ -394,6 +396,7 @@ open_stream(icecast_play_context_t *ipc)
   }
 
   mp_become_primary(ipc->ipc_mp);
+  ipc->ipc_streaminfo_set = 0;
   return 0;
 }
 
@@ -709,10 +712,16 @@ icymeta_parse(icecast_play_context_t *ipc, const char *buf)
       char how[128];
       int tlen = end - title;
       rstr_t *t = rstr_from_bytes_len(title, tlen, how, sizeof(how));
+
       TRACE(TRACE_DEBUG, "Radio", "Title decoded as %s to '%s'",
             rstr_get(t), how);
-      mp_send_prop_set_string(ipc->ipc_mp, &ipc->ipc_mp->mp_audio,
-                              ipc->ipc_radio_info, rstr_get(t));
+      if(!ipc->ipc_streaminfo_set) {
+        prop_set_rstring(ipc->ipc_radio_info, t);
+        ipc->ipc_streaminfo_set = 1;
+      } else {
+        mp_send_prop_set_string(ipc->ipc_mp, &ipc->ipc_mp->mp_audio,
+                                ipc->ipc_radio_info, rstr_get(t));
+      }
       rstr_release(t);
     }
   }
