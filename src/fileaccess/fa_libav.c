@@ -107,6 +107,7 @@ static const struct {
   { "video/nsv", "nsv" },
   { "audio/x-mpeg", "mp3" },
   { "audio/mpeg", "mp3" },
+  { "application/ogg", "ogg" },
 };
 
 
