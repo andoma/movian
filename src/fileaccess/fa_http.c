@@ -1121,6 +1121,20 @@ http_headers_auth(struct http_header_list *headers,
   return 0;
 }
 
+/**
+ *
+ */
+static void
+trace_request(htsbuf_queue_t *hq)
+{
+  char *r = malloc(hq->hq_size + 1);
+  htsbuf_peek(hq, r, hq->hq_size);
+  r[hq->hq_size] = 0;
+  LINEPARSE(s, r)
+    TRACE(TRACE_DEBUG, "HTTP", "> %s", s);
+  free(r);
+}
+
 
 /**
  *
@@ -1307,7 +1321,7 @@ http_read_response(http_file_t *hf, struct http_header_list *headers)
     if(tcp_read_line(hc->hc_tc, hf->hf_line, sizeof(hf->hf_line)) < 0)
       return -1;
 
-    HF_TRACE(hf, "  %s", hf->hf_line);
+    HF_TRACE(hf, "< %s", hf->hf_line);
 
     if(hf->hf_line[0] == 0)
       break;
@@ -1700,7 +1714,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
 
   if(hf->hf_debug)
-    htsbuf_hexdump(&q, "HTTP");
+    trace_request(&q);
 
   tcp_write_queue(hf->hf_connection->hc_tc, &q);
 
@@ -2164,7 +2178,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
       http_headers_free(&cookies);
       http_headers_send(&q, &headers, hf->hf_user_request_headers, NULL);
       if(hf->hf_debug)
-	htsbuf_hexdump(&q, "HTTP");
+        trace_request(&q);
 
       tcp_write_queue(hc->hc_tc, &q);
 
@@ -3434,7 +3448,7 @@ http_req(const char *url, ...)
   http_headers_send(&q, &headers, headers_in, &headers_in2);
 
   if(hf->hf_debug)
-    htsbuf_hexdump(&q, "HTTP");
+    trace_request(&q);
 
   tcp_write_queue(hf->hf_connection->hc_tc, &q);
 
