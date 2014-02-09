@@ -707,7 +707,7 @@ icymeta_parse(icecast_play_context_t *ipc, const char *buf)
   const char *title = mystrstr(buf, "StreamTitle='");
   if(title != NULL) {
     title += strlen("StreamTitle='");
-    const char *end = strchr(title, '\'');
+    const char *end = strstr(title, "';");
     if(end != NULL) {
       char how[128];
       int tlen = end - title;
