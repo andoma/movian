@@ -263,7 +263,7 @@ parse_str(uint32_t *output, const char *str, int flags, int context)
       str = s2;
     }
 
-    if(flags & TEXT_PARSE_HTML_ENTETIES && c == '&') {
+    if(flags & TEXT_PARSE_HTML_ENTITIES && c == '&') {
       const char *s2 = str;
       int lp = 0;
       if(tmp == NULL)

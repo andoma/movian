@@ -151,10 +151,7 @@ video_overlay_render_cleartext(const char *txt, int64_t start, int64_t stop,
       pfx[pfxlen++] = TR_CODE_FONT_FAMILY |
 	freetype_family_id(font_subs, fontdomain);
 
-    uc = text_parse(txt, &len, 
-		    tags ? (TEXT_PARSE_TAGS | TEXT_PARSE_HTML_ENTETIES | 
-			    TEXT_PARSE_SLOPPY_TAGS) : 0,
-		    pfx, pfxlen, fontdomain);
+    uc = text_parse(txt, &len, tags, pfx, pfxlen, fontdomain);
     if(uc == NULL)
       return NULL;
 
@@ -213,7 +210,10 @@ video_overlay_decode(media_pipe_t *mp, media_buf_t *mb)
     vo = video_overlay_render_cleartext(str, mb->mb_pts,
 					mb->mb_duration ?
 					mb->mb_pts + mb->mb_duration :
-					PTS_UNSET, 1,
+					PTS_UNSET,
+                                        TEXT_PARSE_TAGS |
+                                        TEXT_PARSE_HTML_ENTITIES |
+                                        TEXT_PARSE_SLOPPY_TAGS,
 					mb->mb_font_context);
 
     if(vo != NULL)

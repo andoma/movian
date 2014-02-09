@@ -226,6 +226,9 @@ load_srt(const char *url, const char *buf, size_t len)
   char *txt = NULL;
   size_t txtoff = 0;
 
+  const int tag_flags = TEXT_PARSE_TAGS | TEXT_PARSE_HTML_ENTITIES |
+    TEXT_PARSE_SLOPPY_TAGS;
+
   // Skip over any initial control characters (Issue #1885)
   while(len && *buf && *buf < 32) {
     len--;
@@ -241,7 +244,7 @@ load_srt(const char *url, const char *buf, size_t len)
     if(get_srt_timestamp(&lr, &start, &stop) == 0) {
       if(txt != NULL && pstart != -1 && pstop != -1) {
 	txt[txtoff] = 0;
-	es_insert_text(es, txt, pstart, pstop, 1);
+	es_insert_text(es, txt, pstart, pstop, tag_flags);
 	free(txt);
 	txt = NULL;
 	tlen = 0;
@@ -264,7 +267,7 @@ load_srt(const char *url, const char *buf, size_t len)
 
   if(txt != NULL && pstart != -1 && pstop != -1) {
     txt[txtoff] = 0;
-    es_insert_text(es, txt, pstart, pstop, 1);
+    es_insert_text(es, txt, pstart, pstop, tag_flags);
   }
   free(txt);
   return es;
