@@ -159,7 +159,7 @@ shadow_tag(uint32_t *output, int olen, const char *attrib, const char *value,
  *
  */
 static int
-tag_to_code(char *s, uint32_t *output, int olen, int context, int flags)
+html_tag_to_code(char *s, uint32_t *output, int olen, int context, int flags)
 {
   char *tag;
   int endtag = 0;
@@ -181,21 +181,21 @@ tag_to_code(char *s, uint32_t *output, int olen, int context, int flags)
   while(len > 0 && s[len-1] == ' ')
     s[len--] = 0;
 
-  if(!endtag && !strcasecmp(tag, "p"))
+  if(!endtag && !strcasecmp(tag, "p")) {
     c = TR_CODE_START;
-  else if(!endtag && !strcasecmp(tag, "br"))
+  } else if(!endtag && !strcasecmp(tag, "br")) {
     c = TR_CODE_NEWLINE;
-  else if(!endtag && !strcasecmp(tag, "hr"))
+  } else if(!endtag && !strcasecmp(tag, "hr")) {
     c = TR_CODE_HR;
-  else if(!endtag && !strcasecmp(tag, "margin"))
+  } else if(!endtag && !strcasecmp(tag, "margin")) {
     c = TR_CODE_SET_MARGIN;
-  else if(!strcasecmp(tag, "center"))
+  } else if(!strcasecmp(tag, "center")) {
     c = endtag ? TR_CODE_CENTER_OFF : TR_CODE_CENTER_ON;
-  else if(!strcasecmp(tag, "i"))
+  } else if(!strcasecmp(tag, "i")) {
     c = endtag ? TR_CODE_ITALIC_OFF : TR_CODE_ITALIC_ON;
-  else if(!strcasecmp(tag, "b"))
+  } else if(!strcasecmp(tag, "b")) {
     c =  endtag ? TR_CODE_BOLD_OFF : TR_CODE_BOLD_ON;
-  else if(!strncasecmp(tag, "font", 4)) {
+  } else if(!strncasecmp(tag, "font", 4)) {
     if(endtag)
       c = TR_CODE_FONT_RESET;
     else
@@ -205,15 +205,16 @@ tag_to_code(char *s, uint32_t *output, int olen, int context, int flags)
       c = TR_CODE_OUTLINE;
     else
       return attrib_parser(tag+7, output, olen, outline_tag, context);
-  } else if(!strncasecmp(tag, "shadow", 6))
+  } else if(!strncasecmp(tag, "shadow", 6)) {
     if(endtag)
       c = TR_CODE_SHADOW;
     else
       return attrib_parser(tag+6, output, olen, shadow_tag, context);
-  else if(flags & TEXT_PARSE_SLOPPY_TAGS)
+  } else if(flags & TEXT_PARSE_SLOPPY_TAGS) {
     return -1;
-  else
+  } else {
     return olen;
+  }
 
   return add_one_code(c, output, olen);
 }
@@ -253,7 +254,7 @@ parse_str(uint32_t *output, const char *str, int flags, int context)
       }
       tmp[lp] = 0;
 
-      int r = tag_to_code(tmp, output, olen, context, flags);
+      int r = html_tag_to_code(tmp, output, olen, context, flags);
       if(r != -1) {
 	olen = r;
 	p = -1;
