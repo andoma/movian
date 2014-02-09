@@ -713,8 +713,8 @@ icymeta_parse(icecast_play_context_t *ipc, const char *buf)
       int tlen = end - title;
       rstr_t *t = rstr_from_bytes_len(title, tlen, how, sizeof(how));
 
-      TRACE(TRACE_DEBUG, "Radio", "Title decoded as %s to '%s'",
-            rstr_get(t), how);
+      TRACE(TRACE_DEBUG, "Radio", "Title decoded as '%s' to '%s'",
+            how, rstr_get(t));
       if(!ipc->ipc_streaminfo_set) {
         prop_set_rstring(ipc->ipc_radio_info, t);
         ipc->ipc_streaminfo_set = 1;
