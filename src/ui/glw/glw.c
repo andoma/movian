@@ -2153,9 +2153,6 @@ glw_get_path(glw_t *w)
   if(w == NULL)
     return "<null>";
 
-  if(w->glw_id != NULL)
-    return w->glw_id;
-
   static char buf[1024];
   buf[0] = 0;
   glw_get_path_r(buf, sizeof(buf), w);
