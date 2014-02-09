@@ -690,7 +690,7 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
       TRACE(TRACE_DEBUG, "Video", "Unable to compute opensub hash");
   }
 
-  AVIOContext *avio = fa_libav_reopen(fh);
+  AVIOContext *avio = fa_libav_reopen(fh, 0);
   va.filesize = avio_size(avio);
 
   AVFormatContext *fctx;

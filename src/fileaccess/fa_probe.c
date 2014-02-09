@@ -695,7 +695,7 @@ fa_probe_metadata(const char *url, char *errbuf, size_t errsize,
     return md;
   }
 
-  AVIOContext *avio = fa_libav_reopen(fh);
+  AVIOContext *avio = fa_libav_reopen(fh, 0);
  
   if((fctx = fa_libav_open_format(avio, url, errbuf, errsize,
                                   NULL, 0, -1)) == NULL) {

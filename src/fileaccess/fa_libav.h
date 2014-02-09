@@ -26,7 +26,7 @@
 
 struct AVFormatContext;
 
-AVIOContext *fa_libav_reopen(fa_handle_t *fh);
+AVIOContext *fa_libav_reopen(fa_handle_t *fh, int no_seek);
 
 void fa_libav_close(AVIOContext *io);
 

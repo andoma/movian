@@ -54,11 +54,11 @@ fa_libav_seek(void *opaque, int64_t offset, int whence)
  *
  */
 AVIOContext *
-fa_libav_reopen(fa_handle_t *fh)
+fa_libav_reopen(fa_handle_t *fh, int no_seek)
 {
   AVIOContext *avio;
 
-  int seekable = fa_fsize(fh) != -1;
+  int seekable = !no_seek && fa_fsize(fh) != -1;
 
   if(seekable)
     if(fa_seek(fh, 0, SEEK_SET) != 0)

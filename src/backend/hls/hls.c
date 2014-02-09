@@ -661,7 +661,7 @@ segment_open(hls_t *h, hls_segment_t *hs, int fast_fail)
     fh = fa_aescbc_open(fh, hs->hs_iv, buf_c8(hv->hv_key));
   }
 
-  AVIOContext *avio = fa_libav_reopen(fh);
+  AVIOContext *avio = fa_libav_reopen(fh, 0);
   hs->hs_fctx = avformat_alloc_context();
   hs->hs_fctx->pb = avio;
 

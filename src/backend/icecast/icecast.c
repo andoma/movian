@@ -347,7 +347,7 @@ open_stream(icecast_play_context_t *ipc)
       fh = icy_meta_parser(ipc, fh, stride);
   }
 
-  AVIOContext *avio = fa_libav_reopen(fh);
+  AVIOContext *avio = fa_libav_reopen(fh, 1);
 
   if(avio == NULL) {
     fa_close(fh);
@@ -484,7 +484,7 @@ stream_radio(icecast_play_context_t *ipc, char *errbuf, size_t errlen)
       if(r != 0) {
 	char msg[100];
 	fa_ffmpeg_error_to_txt(r, msg, sizeof(msg));
-	TRACE(TRACE_ERROR, "Radio", "Playback error: %s", msg);
+	TRACE(TRACE_ERROR, "Radio", "Playback error: %s (%d)", msg, r);
         close_stream(ipc);
         continue;
       }

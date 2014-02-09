@@ -400,7 +400,7 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
     if(fh == NULL)
       return NULL;
 
-    AVIOContext *avio = fa_libav_reopen(fh);
+    AVIOContext *avio = fa_libav_reopen(fh, 0);
 
     if((fctx = fa_libav_open_format(avio, url, NULL, 0, NULL, 0, 0)) == NULL) {
       fa_libav_close(avio);
