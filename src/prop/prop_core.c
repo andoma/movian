@@ -3679,7 +3679,7 @@ prop_unlink0(prop_t *p, prop_sub_t *skipme, const char *origin,
  *
  */
 void
-prop_link0(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard)
+prop_link0(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard, int debug)
 {
   prop_notify_t *n;
   prop_sub_t *s;
@@ -3690,10 +3690,24 @@ prop_link0(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard)
   if(src->hp_type == PROP_ZOMBIE || dst->hp_type == PROP_ZOMBIE)
     return;
 
+  if(debug) {
+    printf("Link %s -> %s\n", prop_get_DN(src, 1), prop_get_DN(dst, 1));
+  }
+
   TAILQ_INIT(&pnq);
 
   if(dst->hp_originator != NULL)
     prop_unlink0(dst, skipme, "prop_link()/unlink", &pnq);
+
+  if(debug) {
+    printf("--- Destination [%s] after unlink ---\n", prop_get_DN(dst, 1));
+    prop_print_tree0(dst, 0, 1);
+    printf("\n\n\n");
+
+    printf("--- Source [%s] after unlink ---\n", prop_get_DN(src, 1));
+    prop_print_tree0(src, 0, 1);
+    printf("\n\n\n");
+  }
 
   if(hard == PROP_LINK_XREFED ||
      (hard == PROP_LINK_XREFED_IF_ORPHANED && src->hp_parent == NULL)) {
@@ -3720,6 +3734,17 @@ prop_link0(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard)
       prop_notify_free(n);
     }
   }
+
+  if(debug) {
+    printf("--- Destination [%s] after link ---\n", prop_get_DN(dst, 1));
+    prop_print_tree0(dst, 0, 1);
+    printf("\n\n\n");
+
+    printf("--- Source [%s] after link ---\n", prop_get_DN(src, 1));
+    prop_print_tree0(src, 0, 1);
+    printf("\n\n\n");
+  }
+
 }
 
 
@@ -3727,13 +3752,13 @@ prop_link0(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard)
  *
  */
 void
-prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard)
+prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard, int debug)
 {
   if(src == NULL || dst == NULL)
     return;
 
   hts_mutex_lock(&prop_mutex);
-  prop_link0(src, dst, skipme, hard);
+  prop_link0(src, dst, skipme, hard, debug);
   hts_mutex_unlock(&prop_mutex);
 }
 

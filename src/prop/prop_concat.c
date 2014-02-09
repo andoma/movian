@@ -101,7 +101,7 @@ add_child(prop_concat_source_t *pcs, prop_concat_t *pc, prop_t *p)
   prop_t *out = prop_make(NULL, 0, NULL);
   prop_tag_set(p, pcs, out);
   prop_tag_set(out, pcs, p);
-  prop_link0(p, out, NULL, 0);
+  prop_link0(p, out, NULL, 0, 0);
   
   prop_set_parent0(out, pc->pc_dst, find_next_out(pcs), NULL);
   
@@ -138,7 +138,7 @@ src_cb(void *opaque, prop_event_t event, ...)
     out = prop_make(NULL, 0, NULL);
     prop_tag_set(p, pcs, out);
     prop_tag_set(out, pcs, p);
-    prop_link0(p, out, NULL, 0);
+    prop_link0(p, out, NULL, 0, 0);
 
     q = va_arg(ap, prop_t *);
     before = prop_tag_get(q, pcs);

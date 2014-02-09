@@ -856,7 +856,7 @@ set_prop_from_token(prop_t *p, token_t *t)
  *
  */
 static int
-eval_assign(glw_view_eval_context_t *ec, struct token *self, int conditional)
+eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
 {
   token_t *b = eval_pop(ec), *a = eval_pop(ec);
   int r = 0;
@@ -899,7 +899,7 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int conditional)
 	    a->type == TOKEN_PROPERTY_REF) {
 
     if(b->t_prop != a->t_prop)
-      prop_link(b->t_prop, a->t_prop);
+      prop_link_ex(b->t_prop, a->t_prop, NULL, PROP_LINK_NORMAL, how == 2);
     eval_push(ec, b);
     return 0;
 
@@ -912,7 +912,7 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int conditional)
       return -1;
     
 
-  if(conditional && b->type == TOKEN_VOID) {
+  if(how == 1 && b->type == TOKEN_VOID) {
     eval_push(ec, b);
     return 0;
   }
@@ -954,7 +954,7 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int conditional)
       break;
     case TOKEN_PROPERTY_REF:
       if(b->t_prop != a->t_prop)
-	prop_link(b->t_prop, a->t_prop);
+	prop_link_ex(b->t_prop, a->t_prop, NULL, PROP_LINK_NORMAL, how == 2);
       break;
     default:
       prop_set_void(a->t_prop);
@@ -1282,7 +1282,7 @@ cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
 
   sc->sc_entries++;
 
-  c->c_clone_root = prop_create_root(NULL);
+  c->c_clone_root = prop_create_root("clone");
 
   c->c_w = glw_create(gr, sc->sc_cloner_class, parent, b, p);
   c->c_w->glw_clone = c;
@@ -2487,6 +2487,11 @@ glw_view_eval_rpn0(token_t *t0, glw_view_eval_context_t *ec)
 
     case TOKEN_COND_ASSIGNMENT:
       if(eval_assign(ec, t, 1))
+	return -1;
+      break;
+
+    case TOKEN_DEBUG_ASSIGNMENT:
+      if(eval_assign(ec, t, 2))
 	return -1;
       break;
 

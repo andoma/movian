@@ -413,7 +413,8 @@ void prop_move0(prop_t *p, prop_t *before, prop_sub_t *skipme);
 
 void prop_req_move0(prop_t *p, prop_t *before, prop_sub_t *skipme);
 
-void prop_link0(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard);
+void prop_link0(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard,
+                int debug);
 
 int prop_set_parent0(prop_t *p, prop_t *parent, prop_t *before, 
 		     prop_sub_t *skipme);

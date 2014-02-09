@@ -198,7 +198,7 @@ glw_view_create(glw_root_t *gr, rstr_t *url,
   ec.prop_parent = prop_parent;
   ec.prop_args    = args;
   ec.prop_clone = prop_clone;
-  v->viewprop = ec.prop_viewx = prop_create_root(NULL);
+  v->viewprop = ec.prop_viewx = prop_create_root("view");
   ec.sublist = &ec.w->glw_prop_subscriptions;
 
   if(glw_view_eval_block(t, &ec)) {

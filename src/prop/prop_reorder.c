@@ -111,7 +111,7 @@ add_child(prop_reorder_t *pr, prop_t *p)
 {
   prop_t *out = prop_make(NULL, 0, NULL);
   prop_tag_set(p, pr, out);
-  prop_link0(p, out, NULL, 0);
+  prop_link0(p, out, NULL, 0, 0);
   prop_set_parent0(out, pr->pr_dst, get_before(pr, get_id(p)), NULL);
 }
 

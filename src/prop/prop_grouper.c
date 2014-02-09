@@ -154,7 +154,7 @@ node_update_group(pg_node_t *pgn, const char *group)
   LIST_INSERT_HEAD(&pgn->pgn_group->pgg_entries, pgn, pgn_group_link);
 
   pgn->pgn_out = prop_make(NULL, 0, NULL);
-  prop_link0(pgn->pgn_in, pgn->pgn_out, NULL, 0);
+  prop_link0(pgn->pgn_in, pgn->pgn_out, NULL, 0, 0);
 
   prop_set_parent0(pgn->pgn_out, pgn->pgn_group->pgg_nodes, NULL, NULL);
 }
