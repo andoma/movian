@@ -123,9 +123,11 @@ int fontconfig_resolve(int uc, uint8_t style, const char *family,
 		       char *urlbuf, size_t urllen);
 #endif
 
-#define TEXT_PARSE_TAGS          0x1
+#define TEXT_PARSE_HTML_TAGS     0x1
 #define TEXT_PARSE_HTML_ENTITIES 0x2
 #define TEXT_PARSE_SLOPPY_TAGS   0x4 // Unknown tags are parsed as normal text
+#define TEXT_PARSE_SUB_TAGS      0x8
+#define TEXT_PARSE_SLASH_PREFIX  0x10
 
 uint32_t *text_parse(const char *str, int *lenp, int flags,
 		     const uint32_t *prefix, int prefixlen,

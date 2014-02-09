@@ -211,7 +211,7 @@ video_overlay_decode(media_pipe_t *mp, media_buf_t *mb)
 					mb->mb_duration ?
 					mb->mb_pts + mb->mb_duration :
 					PTS_UNSET,
-                                        TEXT_PARSE_TAGS |
+                                        TEXT_PARSE_HTML_TAGS |
                                         TEXT_PARSE_HTML_ENTITIES |
                                         TEXT_PARSE_SLOPPY_TAGS,
 					mb->mb_font_context);

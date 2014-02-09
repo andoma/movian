@@ -32,6 +32,15 @@
 /**
  *
  */
+typedef struct parse_ctx {
+  char eol_reset_bold;
+  char eol_reset_italic;
+  char eol_reset_color;
+} parse_ctx_t;
+
+/**
+ *
+ */
 static int 
 add_one_code(int c, uint32_t *output, int olen)
 {
@@ -224,17 +233,113 @@ html_tag_to_code(char *s, uint32_t *output, int olen, int context, int flags)
  *
  */
 static int
-parse_str(uint32_t *output, const char *str, int flags, int context)
+sub_tag_to_code(char *s, uint32_t *output, int olen, int context, int flags,
+                parse_ctx_t *pc)
 {
+  while(*s == ' ')
+    s++;
+  if(*s == 0)
+    return olen;
+
+  int doreset = 0;
+
+  switch(*s) {
+  default:
+  bad:
+    if(flags & TEXT_PARSE_SLOPPY_TAGS) {
+      return -1;
+    } else {
+      return olen;
+    }
+
+  case 'y':
+    doreset = 1;
+    // FALLTHRU
+  case 'Y':
+    if(s[1] != ':')
+      goto bad;
+
+    while(*s) {
+      if(*s == 'b') {
+        olen = add_one_code(TR_CODE_BOLD_ON, output, olen);
+        pc->eol_reset_bold = doreset;
+      } else if(*s == 'i') {
+        olen = add_one_code(TR_CODE_ITALIC_ON, output, olen);
+        pc->eol_reset_italic = doreset;
+      }
+      s++;
+    }
+    break;
+
+  case 'c':
+    pc->eol_reset_color = 1;
+    // FALLTHRU
+  case 'C':
+    if(s[1] != ':')
+      goto bad;
+    if(s[2] != '$')
+      goto bad;
+    if(strlen(s) < 9)
+      break;
+    s+= 3;
+    olen = add_one_code(TR_CODE_COLOR |
+                        (hexnibble(s[0]) << 20) |
+                        (hexnibble(s[1]) << 16) |
+                        (hexnibble(s[2]) << 12) |
+                        (hexnibble(s[3]) <<  8) |
+                        (hexnibble(s[4]) <<  4) |
+                        (hexnibble(s[5])      ),
+                        output, olen);
+    break;
+  }
+  return olen;
+}
+
+
+/**
+ *
+ */
+static int
+parse_str(uint32_t *output, const char *str, int flags, int context,
+          int default_color)
+{
+  parse_ctx_t pc = {0};
   int olen = 0, c, p = -1, d;
   int l = strlen(str);
   char *tmp = NULL;
+  int sol = 1; // Start of line
 
   while((c = utf8_get(&str)) != 0) {
     if(c == '\r')
       continue;
 
-    if(flags & TEXT_PARSE_TAGS && c == '<') {
+    if(c == '\n') {
+      sol = 1;
+      if(pc.eol_reset_color) {
+        olen = add_one_code(TR_CODE_COLOR | default_color,
+                            output, olen);
+        pc.eol_reset_color = 0;
+      }
+
+      if(pc.eol_reset_bold) {
+        olen = add_one_code(TR_CODE_BOLD_OFF, output, olen);
+        pc.eol_reset_bold = 0;
+      }
+
+      if(pc.eol_reset_italic) {
+        olen = add_one_code(TR_CODE_ITALIC_OFF, output, olen);
+        pc.eol_reset_italic = 0;
+      }
+    }
+
+
+    if(flags & TEXT_PARSE_SLASH_PREFIX && sol && c == '/') {
+      olen = add_one_code(TR_CODE_ITALIC_ON, output, olen);
+      sol = 0;
+      continue;
+    }
+
+    if(flags & TEXT_PARSE_HTML_TAGS && c == '<') {
       const char *s2 = str;
       int lp = 0;
       if(tmp == NULL)
@@ -255,6 +360,36 @@ parse_str(uint32_t *output, const char *str, int flags, int context)
       tmp[lp] = 0;
 
       int r = html_tag_to_code(tmp, output, olen, context, flags);
+      if(r != -1) {
+	olen = r;
+	p = -1;
+	continue;
+      }
+      // Failed to parse tag
+      str = s2;
+    }
+
+    if(flags & TEXT_PARSE_SUB_TAGS && c == '{') {
+      const char *s2 = str;
+      int lp = 0;
+      if(tmp == NULL)
+	tmp = malloc(l);
+
+      while((d = utf8_get(&str)) != 0) {
+	if(d == '}')
+	  break;
+	tmp[lp++] = d;
+      }
+      if(d == 0) {
+	if(output != NULL)
+	  output[olen] = '{';
+	olen++;
+	str = s2;
+	continue;
+      }
+      tmp[lp] = 0;
+      printf("%s\n", tmp);
+      int r = sub_tag_to_code(tmp, output, olen, context, flags, &pc);
       if(r != -1) {
 	olen = r;
 	p = -1;
@@ -300,9 +435,8 @@ parse_str(uint32_t *output, const char *str, int flags, int context)
       p = -1;
     } else {
       p = c;
-      if(output != NULL)
-	output[olen] = c;
-      olen++;
+      olen = add_one_code(c, output, olen);
+      sol = 0;
     }
   }
   free(tmp);
@@ -318,14 +452,19 @@ text_parse(const char *str, int *lenp, int flags,
 	   const uint32_t *prefix, int prefixlen, int context)
 {
   uint32_t *buf;
+  int default_color = 0xffffff;
+  for(int i = 0; i < prefixlen; i++) {
+    if((prefix[i] & 0xff000000) == TR_CODE_COLOR)
+      default_color = prefix[i] & 0xffffff;
+  }
 
-  *lenp = parse_str(NULL, str, flags, context);
+  *lenp = parse_str(NULL, str, flags, context, default_color);
   if(*lenp == 0)
     return NULL;
   *lenp += prefixlen;
   buf = malloc(*lenp * sizeof(int));
   memcpy(buf, prefix, prefixlen * sizeof(int));
-  parse_str(buf+prefixlen, str, flags, context);
+  parse_str(buf+prefixlen, str, flags, context, default_color);
   return buf;
   
 }

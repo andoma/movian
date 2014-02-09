@@ -722,7 +722,7 @@ caption_set_internal(glw_text_bitmap_t *gtb, const char *str, int type)
   }
   
   if(gtb->gtb_type == PROP_STR_RICH)
-    flags |= TEXT_PARSE_TAGS | TEXT_PARSE_HTML_ENTITIES;
+    flags |= TEXT_PARSE_HTML_TAGS | TEXT_PARSE_HTML_ENTITIES;
 
   free(gtb->gtb_uc_buffer);
   gtb->gtb_uc_buffer = text_parse(gtb->gtb_caption ?: "", &len, flags,
