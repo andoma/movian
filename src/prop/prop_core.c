@@ -3556,17 +3556,17 @@ relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme,
     /* Take care of all childs */
     prop_t *c;
 
-    TAILQ_FOREACH(c, &dst->hp_childs, hp_parent_link) {
+    TAILQ_FOREACH(c, &src->hp_childs, hp_parent_link) {
       if(c->hp_name == NULL)
 	continue;
 
-      prop_t *z = prop_create0(src, c->hp_name, NULL,
+      prop_t *z = prop_create0(dst, c->hp_name, NULL,
                                c->hp_flags & PROP_NAME_NOT_ALLOCATED);
 
       if(c->hp_type == PROP_DIR)
 	prop_make_dir(z, skipme, origin);
 
-      relink_subscriptions(z, c, skipme, origin, prepend);
+      relink_subscriptions(c, z, skipme, origin, prepend);
     }
   }
 }
@@ -3658,19 +3658,19 @@ restore_and_descend(prop_t *dst, prop_t *src, prop_sub_t *skipme,
  *
  */
 static void
-prop_unlink0(prop_t *p, prop_sub_t *skipme, const char *origin,
+prop_unlink0(prop_t *dst, prop_sub_t *skipme, const char *origin,
 	     struct prop_notify_queue *pnq)
 {
-  prop_t *o = p->hp_originator;
+  prop_t *o = dst->hp_originator;
 
-  p->hp_originator = NULL;
-  LIST_REMOVE(p, hp_originator_link);
+  dst->hp_originator = NULL;
+  LIST_REMOVE(dst, hp_originator_link);
 
-  restore_and_descend(p, o, skipme, origin, pnq, p);
+  restore_and_descend(dst, o, skipme, origin, pnq, dst);
 
-  if(p->hp_flags & PROP_XREFED_ORIGINATOR) {
+  if(dst->hp_flags & PROP_XREFED_ORIGINATOR) {
     prop_destroy0(o);
-    p->hp_flags &= ~PROP_XREFED_ORIGINATOR;
+    dst->hp_flags &= ~PROP_XREFED_ORIGINATOR;
   }
 }
 
