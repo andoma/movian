@@ -174,6 +174,18 @@ typedef enum {
 } fa_notify_op_t;
 
 
+/**
+ *
+ */
+typedef enum {
+  FAP_OK = 0,
+  FAP_ERROR = -1,
+  FAP_NEED_AUTH = -2,
+  FAP_NOT_SUPPORTED = -3,
+  FAP_PERMISSION_DENIED = -3,
+} fa_err_code_t;
+
+
 fa_dir_t *fa_scandir(const char *url, char *errbuf, size_t errsize);
 int fa_scandir2(fa_dir_t *fd, const char *url, char *errbuf, size_t errsize);
 
@@ -210,6 +222,12 @@ int fa_unlink(const char *url, char *errbuf, size_t errsize);
 int fa_rmdir(const char *url, char *errbuf, size_t errsize);
 
 int fa_rename(const char *old, const char *new, char *errbuf, size_t errsize);
+
+fa_err_code_t fa_set_xattr(const char *url, const char *name,
+                           const void *data, size_t len);
+
+fa_err_code_t fa_get_xattr(const char *url, const char *name,
+                           void **datap, size_t *lenp);
 
 int fa_copy_from_fh(const char *to, fa_handle_t *src,
                     char *errbuf, size_t errsize);

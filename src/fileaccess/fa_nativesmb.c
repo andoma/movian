@@ -656,6 +656,7 @@ typedef struct {
 #define TRANS2_FIND_FIRST2	    1
 #define TRANS2_FIND_NEXT2	    2
 #define TRANS2_QUERY_PATH_INFORMATION 5
+#define TRANS2_SET_PATH_INFORMATION   6
 
 
 #if defined(__BIG_ENDIAN__)
@@ -878,6 +879,7 @@ smb_init_t2_header(cifs_connection_t *cc, TRANS2_req_t *t2, int cmd,
 
   t2->data_offset       = htole_16(68 + param_count);
   t2->data_count        = htole_16(data_count);
+  t2->total_data_count  = htole_16(data_count);
 
   t2->byte_count        = htole_16(3 + param_count + data_count);
 }
@@ -2673,6 +2675,164 @@ smb_rmdir(const fa_protocol_t *fap, const char *url,
   return cifs_delete(url, errbuf, errlen, 1);
 }
 
+/**
+ * Simple helper for setting one one EA
+ */
+typedef struct eahdr {
+  uint32_t list_len;
+  uint8_t ea_flags;
+  uint8_t name_len;
+  uint16_t data_len;
+  char data[0];
+
+} __attribute__((packed)) eahdr_t;
+
+/**
+ * Set extended attribute
+ */
+static fa_err_code_t
+smb_set_xattr(struct fa_protocol *fap, const char *url,
+              const char *name,
+              const void *data, size_t data_len)
+{
+  char filename[512];
+  int r;
+  cifs_tree_t *ct;
+  cifs_connection_t *cc;
+  const int name_len = strlen(name);
+
+  if(data == NULL)
+    data_len = 0;
+
+  r = cifs_resolve(url, filename, sizeof(filename), NULL, 0, 0, &ct, &cc);
+
+  if(r != CIFS_RESOLVE_TREE)
+    return -1;
+
+  backslashify(filename);
+
+  int plen = utf8_to_smb(ct->ct_cc, NULL, filename);
+  int dlen = sizeof(eahdr_t) + name_len + 1 + data_len;
+  int tlen = sizeof(SMB_TRANS2_PATH_QUERY_req_t) + plen + dlen;
+  void *rbuf;
+  int rlen;
+  SMB_TRANS2_PATH_QUERY_req_t *req = alloca(tlen);
+
+  memset(req, 0, tlen);
+  smb_init_t2_header(ct->ct_cc, &req->t2, TRANS2_SET_PATH_INFORMATION,
+                     6 + plen, dlen, ct->ct_tid);
+
+  req->level_of_interest = htole_16(2); // SMB_SET_FILE_EA
+  utf8_to_smb(ct->ct_cc, req->data, filename);
+  eahdr_t *ea = (void *)(req->data + plen);
+  ea->list_len = htole_32(dlen);
+  ea->name_len = name_len;
+  ea->data_len = htole_16(data_len);
+  memcpy(ea->data, name, name_len + 1);
+  if(data != NULL)
+    memcpy(ea->data + name_len + 1, data, data_len);
+
+  if(nbt_async_req_reply(ct->ct_cc, req, tlen, &rbuf, &rlen, 1))
+    return release_tree_io_error(ct, NULL, 0);
+
+  const SMB_t *reply = rbuf;
+  uint32_t errcode = letoh_32(reply->errorcode);
+  free(rbuf);
+  cifs_release_tree(ct, 0);
+
+  if(errcode)
+    return FAP_NOT_SUPPORTED;
+
+  return FAP_OK;
+}
+
+/**
+ * Simple helper for getting one one EA
+ */
+typedef struct get_eahdr {
+  uint32_t list_len;
+  uint8_t name_len;
+  char data[0];
+} __attribute__((packed)) get_eahdr_t;
+
+/**
+ * Get extended attribute
+ */
+static fa_err_code_t
+smb_get_xattr(struct fa_protocol *fap, const char *url,
+              const char *name,
+              void **datap, size_t *lenp)
+{
+  char filename[512];
+  int r;
+  cifs_tree_t *ct;
+  cifs_connection_t *cc;
+  const int name_len = strlen(name);
+
+  r = cifs_resolve(url, filename, sizeof(filename), NULL, 0, 0, &ct, &cc);
+
+  if(r != CIFS_RESOLVE_TREE)
+    return -1;
+
+  backslashify(filename);
+  cc = ct->ct_cc;
+  int plen = utf8_to_smb(ct->ct_cc, NULL, filename);
+  int dlen = sizeof(get_eahdr_t) + name_len + 1;
+  int tlen = sizeof(SMB_TRANS2_PATH_QUERY_req_t) + plen + dlen;
+  void *rbuf;
+  int rlen;
+  SMB_TRANS2_PATH_QUERY_req_t *req = alloca(tlen);
+
+  memset(req, 0, tlen);
+  smb_init_t2_header(ct->ct_cc, &req->t2, TRANS2_QUERY_PATH_INFORMATION,
+                     6 + plen, dlen, ct->ct_tid);
+
+  req->level_of_interest = htole_16(3); // SMB_INFO_QUERY_EAS_FROM_LIST
+  utf8_to_smb(ct->ct_cc, req->data, filename);
+
+  get_eahdr_t *ea = (void *)(req->data + plen);
+  ea->list_len = htole_32(dlen);
+  ea->name_len = name_len;
+  memcpy(ea->data, name, name_len + 1);
+
+  if(nbt_async_req_reply(ct->ct_cc, req, tlen, &rbuf, &rlen, 1))
+    return release_tree_io_error(ct, NULL, 0);
+
+  const TRANS2_reply_t *t2resp = rbuf;
+
+  uint32_t errcode = letoh_32(t2resp->hdr.errorcode);
+  int retcode;
+
+  if(errcode) {
+    retcode = FAP_ERROR;
+  } else {
+
+    int offset = letoh_16(t2resp->data_offset);
+    int len    = letoh_16(t2resp->data_count);
+
+
+    if(len < sizeof(eahdr_t)) {
+      retcode = FAP_ERROR;
+    } else {
+      retcode = FAP_OK;
+      const eahdr_t *ea = (void *)(rbuf + offset);
+      const int dlen = letoh_16(ea->data_len);
+      if(dlen > 0) {
+        *datap = malloc(dlen);
+        memcpy(*datap, ea->data + ea->name_len + 1, dlen);
+        *lenp = dlen;
+      } else {
+        *datap = NULL;
+        *lenp = 0;
+      }
+    }
+  }
+  free(rbuf);
+  cifs_release_tree(ct, 0);
+  return retcode;
+}
+
+
 
 /**
  *
@@ -2740,5 +2900,7 @@ static fa_protocol_t fa_protocol_smb = {
   .fap_stat  = smb_stat,
   .fap_unlink= smb_unlink,
   .fap_rmdir = smb_rmdir,
+  .fap_set_xattr = smb_set_xattr,
+  .fap_get_xattr = smb_get_xattr,
 };
 FAP_REGISTER(smb);

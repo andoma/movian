@@ -1215,6 +1215,53 @@ fa_rename(const char *old, const char *new, char *errbuf, size_t errsize)
 }
 
 
+/**
+ *
+ */
+fa_err_code_t
+fa_set_xattr(const char *url, const char *name, const void *data, size_t len)
+{
+  fa_protocol_t *fap;
+  char *filename;
+  int r;
+
+  if((filename = fa_resolve_proto(url, &fap, NULL, NULL, 0)) == NULL)
+    return FAP_NOT_SUPPORTED;
+
+  if(fap->fap_set_xattr == NULL) {
+    r = FAP_NOT_SUPPORTED;
+  } else {
+    r = fap->fap_set_xattr(fap, filename, name, data, len);
+  }
+  fap_release(fap);
+  free(filename);
+  return r;
+}
+
+
+/**
+ *
+ */
+fa_err_code_t
+fa_get_xattr(const char *url, const char *name, void **datap, size_t *lenp)
+{
+  fa_protocol_t *fap;
+  char *filename;
+  int r;
+
+  if((filename = fa_resolve_proto(url, &fap, NULL, NULL, 0)) == NULL)
+    return FAP_NOT_SUPPORTED;
+
+  if(fap->fap_get_xattr == NULL) {
+    r = FAP_NOT_SUPPORTED;
+  } else {
+    r = fap->fap_get_xattr(fap, filename, name, datap, lenp);
+  }
+  fap_release(fap);
+  free(filename);
+  return r;
+}
+
 
 /**
  *

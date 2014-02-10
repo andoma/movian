@@ -25,15 +25,6 @@
 #include "fileaccess.h"
 
 
-typedef enum {
-  FAP_OK = 0,
-  FAP_ERROR = -1,
-  FAP_NEED_AUTH = -2,
-  FAP_NOT_SUPPORTED = -3,
-  FAP_PERMISSION_DENIED = -3,
-} fap_err_code_t;
-
-
 /**
  * File access protocol
  */
@@ -211,6 +202,20 @@ typedef struct fa_protocol {
    * If a read cannot be satisfied within this time, we return error
    */
   void (*fap_set_read_timeout)(fa_handle_t *fh, int ms);
+
+  /**
+   * Set extended attribute
+   */
+  fa_err_code_t (*fap_set_xattr)(struct fa_protocol *fap, const char *url,
+                                 const char *name,
+                                 const void *data, size_t len);
+
+  /**
+   * Get extended attribute
+   */
+  fa_err_code_t (*fap_get_xattr)(struct fa_protocol *fap, const char *url,
+                                 const char *name,
+                                 void **datap, size_t *lenp);
 
 } fa_protocol_t;
 
