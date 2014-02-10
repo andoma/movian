@@ -26,10 +26,12 @@
 
 
 typedef enum {
-  FAP_STAT_OK = 0,
-  FAP_STAT_ERR = -1,
-  FAP_STAT_NEED_AUTH = -2,
-} fap_stat_code_t;
+  FAP_OK = 0,
+  FAP_ERROR = -1,
+  FAP_NEED_AUTH = -2,
+  FAP_NOT_SUPPORTED = -3,
+  FAP_PERMISSION_DENIED = -3,
+} fap_err_code_t;
 
 
 /**

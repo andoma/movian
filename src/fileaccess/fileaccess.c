@@ -1623,7 +1623,7 @@ fa_check_url(const char *url, char *errbuf, size_t errlen)
 
   if(r == 0)
     return BACKEND_PROBE_OK;
-  if(r == FAP_STAT_NEED_AUTH) {
+  if(r == FAP_NEED_AUTH) {
     snprintf(errbuf, errlen, "Authentication required");
     return BACKEND_PROBE_AUTH;
   }

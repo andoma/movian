@@ -770,7 +770,7 @@ ftp_stat(struct fa_protocol *fap, const char *url, struct fa_stat *fs,
   ftp_file_t *ff = ftp_file_init(url, errbuf, errsize, non_interactive);
 
   if(ff == NULL)
-    return FAP_STAT_ERR;
+    return FAP_ERROR;
 
   memset(fs, 0, sizeof(struct fa_stat));
 
@@ -786,7 +786,7 @@ ftp_stat(struct fa_protocol *fap, const char *url, struct fa_stat *fs,
       goto bad;
 
     if(mystrbegins(resp, "250-")) {
-      int rval = FAP_STAT_ERR;
+      int rval = FAP_ERROR;
       if(ftp_read_line(fc, resp, sizeof(resp)) < 0)
         goto bad;
       const char *t = mystrstr(resp, "type=");
@@ -815,7 +815,7 @@ ftp_stat(struct fa_protocol *fap, const char *url, struct fa_stat *fs,
                                           mkint(m +  8, 2),
                                           mkint(m + 10, 2),
                                           mkint(m + 12, 2))) {
-          rval = FAP_STAT_OK;
+          rval = FAP_OK;
         }
       }
 
@@ -870,13 +870,13 @@ ftp_stat(struct fa_protocol *fap, const char *url, struct fa_stat *fs,
 
     *fs = fde->fde_stat;
     fa_dir_free(fd);
-    return FAP_STAT_OK;
+    return FAP_OK;
   }
   ftp_file_release(ff, 0);
-  return FAP_STAT_OK;
+  return FAP_OK;
  bad:
   ftp_file_release(ff, 0);
-  return FAP_STAT_ERR;
+  return FAP_ERROR;
 }
 
 

@@ -1523,7 +1523,7 @@ authenticate(http_file_t *hf, char *errbuf, size_t errlen, int *non_interactive,
   int r;
 
   if(hf->hf_auth_failed > 0 && non_interactive) {
-    *non_interactive = FAP_STAT_NEED_AUTH;
+    *non_interactive = FAP_NEED_AUTH;
     return -1;
   }
   

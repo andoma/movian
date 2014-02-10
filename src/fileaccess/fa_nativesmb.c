@@ -2630,16 +2630,16 @@ smb_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
   
   switch(r) {
   default:
-    return FAP_STAT_ERR;
+    return FAP_ERROR;
 
   case CIFS_RESOLVE_NEED_AUTH:
-    return FAP_STAT_NEED_AUTH;
+    return FAP_NEED_AUTH;
 
   case CIFS_RESOLVE_TREE:
     if(cifs_stat(ct, filename, fs, errbuf, errlen))
-      return FAP_STAT_ERR;
+      return FAP_ERROR;
     cifs_release_tree(ct, 0);
-    return FAP_STAT_OK;
+    return FAP_OK;
 
   case CIFS_RESOLVE_CONNECTION:
     memset(fs, 0, sizeof(struct fa_stat));
@@ -2648,7 +2648,7 @@ smb_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
     fs->fs_type = CONTENT_DIR;
     cc->cc_refcount--;
     hts_mutex_unlock(&smb_global_mutex);
-    return FAP_STAT_OK;
+    return FAP_OK;
   }
 }
 

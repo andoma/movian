@@ -199,13 +199,13 @@ ntfs_stat(struct fa_protocol *fap, const char *url, struct fa_stat *fs,
   struct stat st;
   if(ps3ntfs_stat(url, &st)) {
     snprintf(errbuf, errsize, "No such file");
-    return FAP_STAT_ERR;
+    return FAP_ERROR;
   }
   memset(fs, 0, sizeof(struct fa_stat));
   fs->fs_size = st.st_size;
   fs->fs_mtime = st.st_mtime;
   fs->fs_type = S_ISDIR(st.st_mode) ? CONTENT_DIR : CONTENT_FILE;
-  return 0;
+  return FAP_OK;
 }
 
 static int
