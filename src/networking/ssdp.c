@@ -407,8 +407,8 @@ struct ip_mreq {
 /**
  *
  */
-static void
-ssdp_loop(void)
+static int
+ssdp_loop(int log_fail)
 {
   struct sockaddr_in si = {0};
   int fdm, fdu;
@@ -431,19 +431,21 @@ ssdp_loop(void)
   si.sin_port = htons(1900);
 
   if(bind(fdm, (struct sockaddr *)&si, sizeof(struct sockaddr_in)) == -1) {
-    TRACE(TRACE_ERROR, "SSDP", "Unable to bind -- %s", strerror(errno));
+    if(log_fail)
+      TRACE(TRACE_ERROR, "SSDP", "Unable to bind -- %s", strerror(errno));
     close(fdm);
-    return;
+    return 1;
   }
 
   memset(&imr, 0, sizeof(imr));
   imr.imr_multiaddr.s_addr = htonl(0xeffffffa); // 239.255.255.250
   if(setsockopt(fdm, IPPROTO_IP, IP_ADD_MEMBERSHIP, &imr, 
 		sizeof(struct ip_mreq)) == -1) {
-    TRACE(TRACE_ERROR, "SSDP", "Unable to join 239.255.255.250: %s",
-	  strerror(errno));
+    if(log_fail)
+      TRACE(TRACE_ERROR, "SSDP", "Unable to join 239.255.255.250: %s",
+            strerror(errno));
     close(fdm);
-    return;
+    return 1;
   }
 
   fdu = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -456,10 +458,11 @@ ssdp_loop(void)
   si.sin_port = 0;
 
   if(bind(fdu, (struct sockaddr *)&si, sizeof(struct sockaddr_in)) == -1) {
-    TRACE(TRACE_ERROR, "SSDP", "Unable to bind");
+    if(log_fail)
+      TRACE(TRACE_ERROR, "SSDP", "Unable to bind -- %s", strerror(errno));
     close(fdu);
     close(fdm);
-    return;
+    return 1;
   }
 
   ssdp_fdm = fdm;
@@ -471,6 +474,8 @@ ssdp_loop(void)
   fds[0].events = POLLIN;
   fds[1].fd = fdu;
   fds[1].events = POLLIN;
+
+  TRACE(TRACE_DEBUG, "SSDP", "Running");
 
   while(ssdp_run) {
     
@@ -486,6 +491,7 @@ ssdp_loop(void)
     if(r > 0 && fds[1].revents & POLLIN)
       ssdp_input(fdu, 0);
   }
+  return 0;
 }
 
 
@@ -495,8 +501,9 @@ ssdp_loop(void)
 static void *
 ssdp_thread(void *aux)
 {
+  int log_fail = 1;
   while(1) {
-    ssdp_loop();
+    log_fail = !ssdp_loop(log_fail);
     sleep(1);
   }
   return NULL;
