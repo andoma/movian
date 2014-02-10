@@ -71,10 +71,13 @@ callout_arm_abs(callout_t *d, callout_callback_t *callback, void *opaque,
  *
  */
 void
-callout_arm(callout_t *d, callout_callback_t *callback,
-	     void *opaque, int delta)
+callout_arm_x(callout_t *d, callout_callback_t *callback,
+              void *opaque, int delta,
+              const char *file, int line)
 {
   uint64_t deadline = showtime_get_ts() + delta * 1000000LL;
+  d->c_armed_by_file = file;
+  d->c_armed_by_line = line;
   callout_arm_abs(d, callback, opaque, deadline);
 }
 
@@ -82,10 +85,13 @@ callout_arm(callout_t *d, callout_callback_t *callback,
  *
  */
 void
-callout_arm_hires(callout_t *d, callout_callback_t *callback,
-		  void *opaque, uint64_t delta)
+callout_arm_hires_x(callout_t *d, callout_callback_t *callback,
+                    void *opaque, uint64_t delta,
+                    const char *file, int line)
 {
   uint64_t deadline = showtime_get_ts() + delta;
+  d->c_armed_by_file = file;
+  d->c_armed_by_line = line;
   callout_arm_abs(d, callback, opaque, deadline);
 }
 
@@ -119,27 +125,21 @@ callout_loop(void *aux)
   while(1) {
 
     now = showtime_get_ts();
-  
+
     while((c = LIST_FIRST(&callouts)) != NULL && c->c_deadline <= now) {
       cc = c->c_callback;
       LIST_REMOVE(c, c_link);
       c->c_callback = NULL;
+      const char *file = c->c_armed_by_file;
+      int line         = c->c_armed_by_line;
       hts_mutex_unlock(&callout_mutex);
-
-
-      if(gconf.enable_callout_debug) {
-        const int64_t tstart = showtime_get_ts();
-        cc(c, c->c_opaque);
-        const int64_t tend = showtime_get_ts();
-        if(tend - tstart > 1000) {
-          TRACE(TRACE_DEBUG, "Callout", "%p,%p took %d us", cc, c->c_opaque,
-                (int)tend - tstart);
-        }
-      } else {
-        cc(c, c->c_opaque);
-      }
-
+      cc(c, c->c_opaque);
       hts_mutex_lock(&callout_mutex);
+      int64_t ts = showtime_get_ts();
+      if(ts - now > 1000000)
+        TRACE(TRACE_DEBUG, "Callout", "%s:%d executed for %dus",
+              file, line, (int)(ts - now));
+      now = ts;
     }
 
     if((c = LIST_FIRST(&callouts)) != NULL) {

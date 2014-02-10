@@ -33,13 +33,23 @@ typedef struct callout {
   callout_callback_t *c_callback;
   void *c_opaque;
   uint64_t c_deadline;
+  const char *c_armed_by_file;
+  int c_armed_by_line;
 } callout_t;
 
-void callout_arm(callout_t *c, callout_callback_t *callback,
-		  void *opaque, int delta);
+void callout_arm_x(callout_t *c, callout_callback_t *callback,
+                   void *opaque, int delta, const char *file, int line);
 
-void callout_arm_hires(callout_t *d, callout_callback_t *callback,
-		       void *opaque, uint64_t delta);
+#define callout_arm(a,b,c,d) callout_arm_x(a,b,c,d,__FILE__,__LINE__);
+
+void callout_arm_hires_x(callout_t *d, callout_callback_t *callback,
+                         void *opaque, uint64_t delta,
+                         const char *file, int line);
+
+#define callout_arm_hires(a,b,c,d) \
+ callout_arm_hires_x(a,b,c,d,__FILE__,__LINE__);
+
+
 
 void callout_disarm(callout_t *c);
 
