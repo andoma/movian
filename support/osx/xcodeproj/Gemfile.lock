@@ -1,0 +1,24 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    activesupport (3.2.16)
+      i18n (~> 0.6, >= 0.6.4)
+      multi_json (~> 1.0)
+    colored (1.2)
+    i18n (0.6.9)
+    mini_portile (0.5.2)
+    multi_json (1.8.4)
+    nokogiri (1.6.1)
+      mini_portile (~> 0.5.0)
+    rake (10.1.1)
+    xcodeproj (0.14.1)
+      activesupport (~> 3.0)
+      colored (~> 1.2)
+      rake
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  nokogiri
+  xcodeproj
