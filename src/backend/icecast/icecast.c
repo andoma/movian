@@ -481,11 +481,32 @@ stream_radio(icecast_play_context_t *ipc, char *errbuf, size_t errlen)
       if(r == AVERROR(EAGAIN))
 	continue;
 
+
       if(r != 0) {
-	char msg[100];
-	fa_ffmpeg_error_to_txt(r, msg, sizeof(msg));
-	TRACE(TRACE_ERROR, "Radio", "Playback error: %s (%d)", msg, r);
+        if(r != AVERROR_EOF) {
+          char msg[100];
+          fa_ffmpeg_error_to_txt(r, msg, sizeof(msg));
+          TRACE(TRACE_ERROR, "Radio", "Playback error: %s (%d)", msg, r);
+        }
         close_stream(ipc);
+
+	while((e = mp_wait_for_empty_queues(mp)) != NULL) {
+	  if(event_is_type(e, EVENT_PLAYQUEUE_JUMP) ||
+	     event_is_action(e, ACTION_SKIP_BACKWARD) ||
+	     event_is_action(e, ACTION_SKIP_FORWARD) ||
+	     event_is_action(e, ACTION_STOP)) {
+	    mp_flush(mp, 0);
+	    break;
+	  }
+	  event_release(e);
+	}
+
+	if(e == NULL || r == AVERROR_EOF) {
+	  e = event_create_type(EVENT_EOF);
+          break;
+        }
+        if(e != NULL)
+          break;
         continue;
       }
 
