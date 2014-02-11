@@ -49,7 +49,7 @@ calloutcmp(callout_t *a, callout_t *b)
  */
 static void
 callout_arm_abs(callout_t *d, callout_callback_t *callback, void *opaque,
-		uint64_t deadline)
+		uint64_t deadline, const char *file, int line)
 {
   hts_mutex_lock(&callout_mutex);
 
@@ -61,6 +61,8 @@ callout_arm_abs(callout_t *d, callout_callback_t *callback, void *opaque,
   d->c_callback = callback;
   d->c_opaque = opaque;
   d->c_deadline = deadline;
+  d->c_armed_by_file = file;
+  d->c_armed_by_line = line;
 
   LIST_INSERT_SORTED(&callouts, d, c_link, calloutcmp);
   hts_cond_signal(&callout_cond);
@@ -76,9 +78,7 @@ callout_arm_x(callout_t *d, callout_callback_t *callback,
               const char *file, int line)
 {
   uint64_t deadline = showtime_get_ts() + delta * 1000000LL;
-  d->c_armed_by_file = file;
-  d->c_armed_by_line = line;
-  callout_arm_abs(d, callback, opaque, deadline);
+  callout_arm_abs(d, callback, opaque, deadline, file, line);
 }
 
 /**
@@ -90,9 +90,7 @@ callout_arm_hires_x(callout_t *d, callout_callback_t *callback,
                     const char *file, int line)
 {
   uint64_t deadline = showtime_get_ts() + delta;
-  d->c_armed_by_file = file;
-  d->c_armed_by_line = line;
-  callout_arm_abs(d, callback, opaque, deadline);
+  callout_arm_abs(d, callback, opaque, deadline, file, line);
 }
 
 /**
