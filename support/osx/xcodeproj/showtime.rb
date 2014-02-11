@@ -20,10 +20,10 @@ xcscheme_path = File.join(SHOWTIME_ROOT, "Showtime.xcodeproj/xcshareddata/xcsche
 FileUtils.cp_r("Showtime.xcodeproj", SHOWTIME_ROOT)
 
 xml = Nokogiri::XML(open(xcscheme_path, "rb"))
-xml.xpath("//LaunchAction").each do |node|
+xml.xpath("//ProfileAction|//LaunchAction").each do |node|
   node.attributes["customWorkingDirectory"].value = File.expand_path(".", SHOWTIME_ROOT)
 end
-xml.xpath("//LaunchAction/PathRunnable").each do |node|
+xml.xpath("//ProfileAction/PathRunnable|//LaunchAction/PathRunnable").each do |node|
   node.attributes["FilePath"].value = File.expand_path("build.osx/Showtime.app", SHOWTIME_ROOT)
 end
 open(xcscheme_path, "wb").write(xml.to_xml)

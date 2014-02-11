@@ -35,13 +35,13 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       launchStyle = "0"
       useCustomWorkingDirectory = "YES"
-      customWorkingDirectory = "${SHOWTIME_ROOT}"
+      customWorkingDirectory = "/changeme"
       buildConfiguration = "Debug"
       ignoresPersistentStateOnLaunch = "NO"
       debugDocumentVersioning = "YES"
       allowLocationSimulation = "YES">
       <PathRunnable
-        FilePath = "${SHOWTIME_ROOT}/build.osx/Showtime.app">
+         FilePath = "/changeme">
       </PathRunnable>
       <AdditionalOptions>
       </AdditionalOptions>
@@ -49,9 +49,13 @@
    <ProfileAction
       shouldUseLaunchSchemeArgsEnv = "YES"
       savedToolIdentifier = ""
-      useCustomWorkingDirectory = "NO"
+      useCustomWorkingDirectory = "YES"
+      customWorkingDirectory = "/changeme"
       buildConfiguration = "Release"
       debugDocumentVersioning = "YES">
+      <PathRunnable
+         FilePath = "/changeme">
+      </PathRunnable>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">
