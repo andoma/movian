@@ -35,7 +35,7 @@
 #include "video/video_playback.h"
 #include "video/video_settings.h"
 #include "subtitles/subtitles.h"
-#include "metadata/metadata.h"
+#include "metadata/playinfo.h"
 
 typedef struct {
 
@@ -211,7 +211,7 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
 
     if(sec != r->restartpos_last && r->can_seek) {
       r->restartpos_last = sec;
-      metadb_set_video_restartpos(r->canonical_url, mp->mp_seek_base / 1000);
+      playinfo_set_restartpos(r->canonical_url, mp->mp_seek_base / 1000);
     }
 
   } else if(r->can_seek && event_is_type(e, EVENT_SEEK)) {
@@ -683,7 +683,7 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
   if(va.flags & BACKEND_VIDEO_RESUME ||
      (video_settings.resume_mode == VIDEO_RESUME_YES &&
       !(va.flags & BACKEND_VIDEO_START_FROM_BEGINNING)))
-    start = video_get_restartpos(va.canonical_url);
+    start = playinfo_get_restartpos(va.canonical_url);
 
   if(!RTMP_SetupURL(r.r, url)) {
     snprintf(errbuf, errlen, "Unable to setup RTMP-session");
@@ -732,7 +732,7 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
 
   mp_become_primary(mp);
 
-  metadb_register_play(va.canonical_url, 0, CONTENT_VIDEO);
+  playinfo_register_play(va.canonical_url, 0, CONTENT_VIDEO);
 
   r.canonical_url = va.canonical_url;
   r.restartpos_last = -1;
@@ -749,8 +749,8 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
     if(p >= video_settings.played_threshold) {
       TRACE(TRACE_DEBUG, "RTMP", "Playback reached %d%%, counting as played",
 	    p);
-      metadb_register_play(va.canonical_url, 1, CONTENT_VIDEO);
-      metadb_set_video_restartpos(va.canonical_url, -1);
+      playinfo_register_play(va.canonical_url, 1, CONTENT_VIDEO);
+      playinfo_set_restartpos(va.canonical_url, -1);
     }
   }
 

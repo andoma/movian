@@ -51,6 +51,7 @@
 #include "misc/md5.h"
 #include "misc/str.h"
 #include "i18n.h"
+#include "metadata/playinfo.h"
 
 typedef struct seek_item {
   prop_t *si_prop;
@@ -251,7 +252,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
   if(flags & BACKEND_VIDEO_RESUME ||
      (video_settings.resume_mode == VIDEO_RESUME_YES &&
       !(flags & BACKEND_VIDEO_START_FROM_BEGINNING))) {
-    int64_t start = video_get_restartpos(canonical_url) * 1000;
+    int64_t start = playinfo_get_restartpos(canonical_url) * 1000;
     if(start) {
       mp->mp_seek_base = start;
       video_seek(fctx, mp, &mb, start, "restart position");
@@ -379,7 +380,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 	// Update restartpos every 5 seconds
 	if(sec < restartpos_last || sec >= restartpos_last + 5) {
 	  restartpos_last = sec;
-	  metadb_set_video_restartpos(canonical_url, ets->ts / 1000);
+	  playinfo_set_restartpos(canonical_url, ets->ts / 1000);
 	}
       
 	if(sec != lastsec) {
@@ -430,13 +431,13 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
   int spp = fctx->duration ? (mp->mp_seek_base * 100 / fctx->duration) : 0;
 
   if(spp >= video_settings.played_threshold || event_is_type(e, EVENT_EOF)) {
-    metadb_set_video_restartpos(canonical_url, -1);
-    metadb_register_play(canonical_url, 1, CONTENT_VIDEO);
+    playinfo_set_restartpos(canonical_url, -1);
+    playinfo_register_play(canonical_url, 1, CONTENT_VIDEO);
     TRACE(TRACE_DEBUG, "Video",
 	  "Playback reached %d%%, counting as played (%s)",
 	  spp, canonical_url);
   } else if(last_timestamp_presented != PTS_UNSET) {
-    metadb_set_video_restartpos(canonical_url, last_timestamp_presented / 1000);
+    playinfo_set_restartpos(canonical_url, last_timestamp_presented / 1000);
   }
   return e;
 }
@@ -860,7 +861,7 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
   seek_index_t *si = build_index(mp, fctx, url);
   seek_index_t *ci = build_chapters(mp, fctx, url);
 
-  metadb_register_play(va.canonical_url, 0, CONTENT_VIDEO);
+  playinfo_register_play(va.canonical_url, 0, CONTENT_VIDEO);
 
   event_t *e;
   e = video_player_loop(fctx, cwvec, mp, va.flags, errbuf, errlen,

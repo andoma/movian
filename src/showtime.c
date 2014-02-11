@@ -296,10 +296,12 @@ showtime_init(void)
     gconf.persistent_path = NULL;
   }
 
+  /* Per-item key/value store */
+  kvstore_init();
+
   /* Metadata init */
   metadata_init();
   metadb_init();
-  kvstore_init();
   subtitles_init();
 
   /* Metadata decoration init */

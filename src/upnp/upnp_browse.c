@@ -32,7 +32,7 @@
 #include "upnp.h"
 #include "fileaccess/fileaccess.h"
 #include "db/kvstore.h"
-
+#include "metadata/playinfo.h"
 
 /**
  * UPNP browse request
@@ -234,7 +234,7 @@ add_item(htsmsg_t *item, prop_t *root, const char *trackid, prop_t **trackptr,
     prop_set_string(prop_create(c, "url"), url);
     make_audioItem(c, m, item);
     if(db != NULL)
-      metadb_bind_url_to_prop(db, url, c);
+      playinfo_bind_url_to_prop(db, url, c);
   } else if(!strncmp(cls, "object.item.videoItem",
 		     strlen("object.item.videoItem"))) {
 
@@ -242,7 +242,7 @@ add_item(htsmsg_t *item, prop_t *root, const char *trackid, prop_t **trackptr,
     snprintf(vurl, sizeof(vurl), "%s:%s", baseurl, id);
     make_videoItem(c, m, item, vurl);
     if(db != NULL)
-      metadb_bind_url_to_prop(db, url, c);
+      playinfo_bind_url_to_prop(db, url, c);
   } else if(!strncmp(cls, "object.item.imageItem",
 		     strlen("object.item.imageItem"))) {
     prop_set_string(prop_create(c, "url"), url);

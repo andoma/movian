@@ -347,8 +347,6 @@ void metadb_parent_item(void *db, const char *url, const char *parent_url);
 
 void metadb_unparent_item(void *db, const char *url);
 
-void metadb_register_play(const char *url, int inc, int content_type);
-
 int metadb_item_set_preferred_ds(void *opaque, const char *url, int ds_id);
 
 int metadb_item_get_preferred_ds(const char *url);
@@ -357,23 +355,12 @@ rstr_t *metadb_item_get_user_title(const char *url);
 
 void metadb_item_set_user_title(const char *url, const char *title);
 
-#define METADB_AUDIO_PLAY_THRESHOLD (10 * 1000000)
-
-void metadb_bind_url_to_prop(void *db, const char *url, struct prop *parent);
-
-void metadb_set_video_restartpos(const char *url, int64_t pos);
-
-void metadb_mark_urls_as(const char **urls, int num_urls, int seen,
-                         int content_type);
-
 rstr_t *metadb_get_album_art(void *db, const char *album, const char *artist);
 
 int metadb_get_artist_pics(void *db, const char *artist, 
 			   void (*cb)(void *opaque, const char *url,
 				      int width, int height),
 			   void *opaque);
-
-int64_t video_get_restartpos(const char *url);
 
 int64_t metadb_artist_get_by_title(void *db, const char *title, int ds_id,
 				   const char *ext_id);

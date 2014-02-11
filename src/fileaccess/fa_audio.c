@@ -37,6 +37,7 @@
 #include "fileaccess.h"
 #include "fa_libav.h"
 #include "notifications.h"
+#include "metadata/playinfo.h"
 
 #if ENABLE_LIBGME
 #include <gme/gme.h>
@@ -320,9 +321,9 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
       ets = (event_ts_t *)e;
 
       if(registered_play == 0) {
-	if(ets->ts > METADB_AUDIO_PLAY_THRESHOLD) {
+	if(ets->ts > PLAYINFO_AUDIO_PLAY_THRESHOLD) {
 	  registered_play = 1;
-	  metadb_register_play(url, 1, CONTENT_AUDIO);
+	  playinfo_register_play(url, 1, CONTENT_AUDIO);
 	}
       }
 

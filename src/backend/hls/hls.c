@@ -36,7 +36,7 @@
 #include "misc/queue.h"
 #include "video/video_playback.h"
 #include "video/video_settings.h"
-#include "metadata/metadata.h"
+#include "metadata/playinfo.h"
 #include "fileaccess/fileaccess.h"
 #include "fileaccess/fa_libav.h"
 #include "hls.h"
@@ -1112,7 +1112,7 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
   if(va->flags & BACKEND_VIDEO_RESUME ||
      (video_settings.resume_mode == VIDEO_RESUME_YES &&
       !(va->flags & BACKEND_VIDEO_START_FROM_BEGINNING))) {
-    int64_t start = video_get_restartpos(canonical_url) * 1000;
+    int64_t start = playinfo_get_restartpos(canonical_url) * 1000;
     if(start) {
       mp->mp_seek_base = start;
       hls_seek(h, start, start, 1);
@@ -1248,7 +1248,7 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 	if(!h->h_live &&
            (sec < restartpos_last || sec >= restartpos_last + 5)) {
 	  restartpos_last = sec;
-	  metadb_set_video_restartpos(canonical_url, ets->ts / 1000);
+	  playinfo_set_restartpos(canonical_url, ets->ts / 1000);
 	}
       }
 
@@ -1292,14 +1292,13 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
     int spp = mp->mp_duration ? mp->mp_seek_base * 100 / mp->mp_duration : 0;
 
     if(spp >= video_settings.played_threshold || event_is_type(e, EVENT_EOF)) {
-      metadb_set_video_restartpos(canonical_url, -1);
-      metadb_register_play(canonical_url, 1, CONTENT_VIDEO);
+      playinfo_set_restartpos(canonical_url, -1);
+      playinfo_register_play(canonical_url, 1, CONTENT_VIDEO);
       TRACE(TRACE_DEBUG, "Video",
 	    "Playback reached %d%%, counting as played (%s)",
 	    spp, canonical_url);
     } else if(last_timestamp_presented != PTS_UNSET) {
-      metadb_set_video_restartpos(canonical_url,
-				  last_timestamp_presented / 1000);
+      playinfo_set_restartpos(canonical_url, last_timestamp_presented / 1000);
     }
   }
   // Shutdown

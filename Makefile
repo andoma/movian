@@ -79,6 +79,7 @@ SRCS += src/showtime.c \
 	src/prop/prop_reorder.c \
 	src/metadata/metadata.c \
 	src/metadata/metadb.c \
+	src/metadata/playinfo.c \
 	src/metadata/decoration.c \
 	src/metadata/browsemdb.c \
 
