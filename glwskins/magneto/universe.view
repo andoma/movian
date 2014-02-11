@@ -1,4 +1,4 @@
-$view.zoom = 0;
+$view.zoom = 1;
 
 onEvent(back, {
   $view.zoom = 0;
@@ -44,7 +44,7 @@ widget(container_z, {
             // The icon page
 
             effect: blend;
-            time: 1;
+            time: 0.5;
             noInitialTransform: true;
 
             widget(container_z, {
@@ -99,11 +99,34 @@ widget(container_z, {
             bold: true;
             sizeScale: 2;
             caption: translate($clone.activation, "???",
-                               0, "Full play",
+                               0, "",
                                1, "Low play",
                                2, "Prefetch",
                                3, "Idle");
 
+          });
+
+          widget(container_y, {
+            alpha: select($view.zoom, 1, 0);
+            align: topleft;
+            padding: 10;
+              widget(label, {
+                shadow: 1;
+                bold: true;
+                sizeScale: 1;
+                caption: $parent.title;
+                     });
+              widget(label, {
+                shadow: 1;
+                bold: true;
+                sizeScale: 1.5;
+                caption: $self.title;
+                     });
+              widget(label, {
+                shadow: 1;
+                sizeScale: 1;
+                caption: select($self.title != $self.subtitle, $self.subtitle, "");
+            });
           });
         });
       });
