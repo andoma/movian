@@ -358,8 +358,8 @@ db_open(const char *path, int flags)
     db_one_statement(db, "PRAGMA case_sensitive_like=1", path);
   db_one_statement(db, "PRAGMA foreign_keys=1", path);
 
-  int freelist_count;
-  int page_count;
+  int freelist_count = 0;
+  int page_count = 0;
 
   db_get_int_from_query(db, "PRAGMA freelist_count", &freelist_count);
   db_get_int_from_query(db, "PRAGMA page_count",     &page_count);
