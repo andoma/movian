@@ -2153,12 +2153,25 @@ prop_get_DN(prop_t *p, int compact)
   static __thread char buf[4][256];
   
   const int maxlen = 256;
+  prop_t *revvec[32];
   char *s = buf[idx];
   int len = 0;
-  *s = 0;
-
   int pfx = 0;
-  while(p) {
+
+
+  int d;
+  for(d = 0; d < 32; d++) {
+    if(p == NULL)
+      break;
+    revvec[d] = p;
+    p = p->hp_parent;
+  }
+
+
+  *s = 0;
+  d--;
+  for(;d >= 0;d--) {
+    p = revvec[d];
 #ifdef PROP_DEBUG
     assert(p->hp_magic == PROP_MAGIC);
 #endif
@@ -2172,7 +2185,6 @@ prop_get_DN(prop_t *p, int compact)
 		      LIST_FIRST(&p->hp_value_subscriptions) ? "Vs" : "");
     }
     pfx = 1;
-    p = p->hp_parent;
   }
 
   idx = (idx + 1) & 3;
@@ -3696,16 +3708,32 @@ prop_link0(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard, int debug)
 
   TAILQ_INIT(&pnq);
 
-  if(dst->hp_originator != NULL)
+  if(dst->hp_originator != NULL) {
+
+    if(debug) {
+      printf("--- Destination [%s] before unlink ---\n", prop_get_DN(dst, 1));
+      prop_print_tree0(dst, 0, 2);
+      printf("\n\n\n");
+
+      printf("--- Previous origin [%s] before unlink ---\n",
+             prop_get_DN(dst->hp_originator, 1));
+      prop_print_tree0(dst->hp_originator, 0, 3);
+      printf("\n\n\n");
+    }
+
+
     prop_unlink0(dst, skipme, "prop_link()/unlink", &pnq);
+    if(debug)
+      printf("\tUnlink done (destination had previous linkage)\n");
+  }
 
   if(debug) {
-    printf("--- Destination [%s] after unlink ---\n", prop_get_DN(dst, 1));
-    prop_print_tree0(dst, 0, 1);
+    printf("--- Destination [%s] before link ---\n", prop_get_DN(dst, 1));
+    prop_print_tree0(dst, 0, 3);
     printf("\n\n\n");
 
-    printf("--- Source [%s] after unlink ---\n", prop_get_DN(src, 1));
-    prop_print_tree0(src, 0, 1);
+    printf("--- Source [%s] before link ---\n", prop_get_DN(src, 1));
+    prop_print_tree0(src, 0, 3);
     printf("\n\n\n");
   }
 
@@ -3737,11 +3765,11 @@ prop_link0(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard, int debug)
 
   if(debug) {
     printf("--- Destination [%s] after link ---\n", prop_get_DN(dst, 1));
-    prop_print_tree0(dst, 0, 1);
+    prop_print_tree0(dst, 0, 3);
     printf("\n\n\n");
 
     printf("--- Source [%s] after link ---\n", prop_get_DN(src, 1));
-    prop_print_tree0(src, 0, 1);
+    prop_print_tree0(src, 0, 3);
     printf("\n\n\n");
   }
 
@@ -4634,7 +4662,7 @@ prop_destroy_marked_childs(prop_t *p)
  *
  */
 void
-prop_print_tree0(prop_t *p, int indent, int followlinks)
+prop_print_tree0(prop_t *p, int indent, int flags)
 {
   prop_t *c;
 
@@ -4643,15 +4671,14 @@ prop_print_tree0(prop_t *p, int indent, int followlinks)
 	  p->hp_flags & PROP_MULTI_SUB ? 'M' : ' ',
 	  p->hp_flags & PROP_MULTI_NOTIFY ? 'N' : ' ');
 
-
   if(p->hp_originator != NULL) {
-    if(followlinks) {
+    if(flags & 1) {
       fprintf(stderr, "<symlink> => ");
-      prop_print_tree0(p->hp_originator, indent, followlinks);
-    } else {
-      fprintf(stderr, "<symlink> -> %s\n", p->hp_originator->hp_name);
+      prop_print_tree0(p->hp_originator, indent, flags);
+      return;
     }
-    return;
+    fprintf(stderr, "<symlink> -> %s (Not followed) -> ",
+            p->hp_originator->hp_name);
   }
 
   switch(p->hp_type) {
@@ -4679,7 +4706,7 @@ prop_print_tree0(prop_t *p, int indent, int followlinks)
   case PROP_DIR:
     fprintf(stderr, "<directory>\n");
     TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link)
-      prop_print_tree0(c, indent + 4, followlinks);
+      prop_print_tree0(c, indent + 4, flags);
     break;
 
   case PROP_VOID:
@@ -4691,10 +4718,10 @@ prop_print_tree0(prop_t *p, int indent, int followlinks)
     break;
   }
 
-  if(followlinks >= 2) {
+  if(flags & 2) {
     prop_sub_t *s;
     LIST_FOREACH(s, &p->hp_value_subscriptions, hps_value_prop_link) {
-      fprintf(stderr, "%*.s  Subscriber: %s\n", indent, "",
+      fprintf(stderr, "%*.s \033[1mSubscriber: %s\033[0m\n", indent, "",
 	      prop_get_DN(s->hps_canonical_prop, 1));
     }
   }
