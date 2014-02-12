@@ -23,6 +23,7 @@
 #include "media.h"
 #include "showtime.h"
 #include "fileaccess/fileaccess.h"
+#include "metadata/playinfo.h"
 
 
 
