@@ -3565,20 +3565,26 @@ relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme,
   }
 
   if(dst->hp_type == PROP_DIR && src->hp_type == PROP_DIR) {
-    /* Take care of all childs */
     prop_t *c;
 
-    TAILQ_FOREACH(c, &src->hp_childs, hp_parent_link) {
+    /**
+     * Take care of childs,
+     * We iterate over the destination tree, since that's where
+     * any _currently_ active subscriptions are located that we
+     * must reattach.
+     */
+
+    TAILQ_FOREACH(c, &dst->hp_childs, hp_parent_link) {
       if(c->hp_name == NULL)
 	continue;
 
-      prop_t *z = prop_create0(dst, c->hp_name, NULL,
+      prop_t *z = prop_create0(src, c->hp_name, NULL,
                                c->hp_flags & PROP_NAME_NOT_ALLOCATED);
 
       if(c->hp_type == PROP_DIR)
 	prop_make_dir(z, skipme, origin);
 
-      relink_subscriptions(c, z, skipme, origin, prepend);
+      relink_subscriptions(z, c, skipme, origin, prepend);
     }
   }
 }
@@ -3650,18 +3656,18 @@ restore_and_descend(prop_t *dst, prop_t *src, prop_sub_t *skipme,
     return;
 
   prop_t *c;
-  TAILQ_FOREACH(c, &src->hp_childs, hp_parent_link) {
+  TAILQ_FOREACH(c, &dst->hp_childs, hp_parent_link) {
 
     if(c->hp_name == NULL)
       continue;
 
-    prop_t *z = prop_create0(dst, c->hp_name, NULL,
+    prop_t *z = prop_create0(src, c->hp_name, NULL,
                              c->hp_flags & PROP_NAME_NOT_ALLOCATED);
 
     if(c->hp_type == PROP_DIR)
       prop_make_dir(z, skipme, origin);
 
-    restore_and_descend(z, c, skipme, origin, pnq, broken_link);
+    restore_and_descend(c, z, skipme, origin, pnq, broken_link);
   }
 }
 
