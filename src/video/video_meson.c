@@ -72,7 +72,7 @@ writeval(const char *str, int val)
 static void
 set_tsync_enable(int enable)
 {
-  writeval("/sys/class/tsync/enable", 1);
+  writeval("/sys/class/tsync/enable", enable);
 }
 
 const static AVRational mpeg_tc = {1, 90000};
@@ -460,7 +460,7 @@ meson_video_init(void)
   prop_active = prop_create(p, "active");
   prop_buffer = prop_create(p, "buffer");
 
-  set_tsync_enable(1);
+  set_tsync_enable(0);
 }
 
 REGISTER_CODEC(meson_video_init, meson_video_open, 10);
