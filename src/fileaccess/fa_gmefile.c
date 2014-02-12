@@ -212,7 +212,7 @@ fa_gme_playfile_internal(media_pipe_t *mp, const void *buf, size_t size,
 	mb->mb_pts = gme_tell(emu) * 1000;
 	mb->mb_drive_clock = 1;
 
-	if(!registered_play && mb->mb_pts > METADB_AUDIO_PLAY_THRESHOLD) {
+	if(!registered_play && mb->mb_pts > PLAYINFO_AUDIO_PLAY_THRESHOLD) {
 	  registered_play = 1;
 	  metadb_register_play(url, 1, CONTENT_AUDIO);
 	}
