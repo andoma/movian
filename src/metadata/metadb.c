@@ -38,8 +38,6 @@
 #include "settings.h"
 #include "notifications.h"
 
-#define METADATA_VERSION_STR "1"
-
 // If not set to true by metadb_init() no metadb actions will occur
 static db_pool_t *metadb_pool;
 
@@ -207,10 +205,9 @@ db_item_create(sqlite3 *db, const char *url, int contenttype, time_t mtime,
 
   rc = db_prepare(db, &stmt,
 		  "INSERT INTO item "
-		  "(url, contenttype, mtime, parent, metadataversion, "
-                  "indexstatus) "
+		  "(url, contenttype, mtime, parent, indexstatus) "
 		  "VALUES "
-		  "(?1, ?2, ?3, ?4, " METADATA_VERSION_STR ", ?5)");
+		  "(?1, ?2, ?3, ?4, ?5)");
 
   if(rc != SQLITE_OK)
     return METADATA_PERMANENT_ERROR;
@@ -1208,33 +1205,37 @@ metadb_metadata_writex(void *db, const char *url, time_t mtime,
     char sql[512];
 
     snprintf(sql, sizeof(sql),
-             "UPDATE item SET metadataversion=" METADATA_VERSION_STR
+             "UPDATE item SET "
              "%s"
              "%s"
              "%s"
              "%s"
              " WHERE id=?1",
-             md->md_contenttype ? ", contenttype=?2" : "",
-             mtime              ? ", mtime=?3" : "",
-             parent_id          ? ", parent=?4" : "",
-             indexstatus        ? ", indexstatus=?5" : "");
-    
-    rc = db_prepare(db, &stmt, sql);
+             md->md_contenttype ? "contenttype=?2," : "",
+             mtime              ? "mtime=?3," : "",
+             parent_id          ? "parent=?4," : "",
+             indexstatus        ? "indexstatus=?5," : "");
 
-    if(rc != SQLITE_OK)
-      return METADATA_PERMANENT_ERROR;
+    char *x = strrchr(sql, ',');
+    if(x != NULL) {
+      *x = 0;
+      rc = db_prepare(db, &stmt, sql);
 
-    sqlite3_bind_int64(stmt, 1, item_id);
+      if(rc != SQLITE_OK)
+        return METADATA_PERMANENT_ERROR;
 
-    sqlite3_bind_int(stmt,   2, md->md_contenttype);
-    sqlite3_bind_int(stmt,   3, mtime);
-    sqlite3_bind_int64(stmt, 4, parent_id);
-    sqlite3_bind_int(stmt,   5, indexstatus);
+      sqlite3_bind_int64(stmt, 1, item_id);
 
-    rc = db_step(stmt);
-    sqlite3_finalize(stmt);
-    if(rc == METADATA_DEADLOCK)
-      return METADATA_DEADLOCK;
+      sqlite3_bind_int(stmt,   2, md->md_contenttype);
+      sqlite3_bind_int(stmt,   3, mtime);
+      sqlite3_bind_int64(stmt, 4, parent_id);
+      sqlite3_bind_int(stmt,   5, indexstatus);
+
+      rc = db_step(stmt);
+      sqlite3_finalize(stmt);
+      if(rc == METADATA_DEADLOCK)
+        return METADATA_DEADLOCK;
+    }
   }
 
   int r;
@@ -2180,9 +2181,7 @@ metadb_metadata_get(void *db, const char *url, time_t mtime)
   rc = db_prepare(db, &sel,
 		  "SELECT id,contenttype,parent from item "
 		  "where url=?1 AND "
-		  "mtime=?2 AND "
-		  "metadataversion=" METADATA_VERSION_STR
-		  );
+		  "mtime=?2");
 
   if(rc != SQLITE_OK) {
     db_rollback(db);
