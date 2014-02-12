@@ -520,7 +520,7 @@ main(int argc, char **argv)
   if(!posix_set_thread_priorities)
     printf("tut prio error WAT?!\n");
 
-  if(1)
+  if(0)
     set_main_thread_prio();
 
   if(ui_init())
