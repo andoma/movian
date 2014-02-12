@@ -204,7 +204,7 @@ make_imageItem(prop_t *c, prop_t *m, htsmsg_t *item)
  */
 static void
 add_item(htsmsg_t *item, prop_t *root, const char *trackid, prop_t **trackptr,
-	 prop_sub_t *skip, const char *baseurl, void *db)
+	 prop_sub_t *skip, const char *baseurl)
 {
   const char *cls, *id, *url;
 
@@ -233,16 +233,14 @@ add_item(htsmsg_t *item, prop_t *root, const char *trackid, prop_t **trackptr,
 	      strlen("object.item.audioItem"))) {
     prop_set_string(prop_create(c, "url"), url);
     make_audioItem(c, m, item);
-    if(db != NULL)
-      playinfo_bind_url_to_prop(db, url, c);
+    playinfo_bind_url_to_prop(url, c);
   } else if(!strncmp(cls, "object.item.videoItem",
 		     strlen("object.item.videoItem"))) {
 
     char vurl[URL_MAX];
     snprintf(vurl, sizeof(vurl), "%s:%s", baseurl, id);
     make_videoItem(c, m, item, vurl);
-    if(db != NULL)
-      playinfo_bind_url_to_prop(db, url, c);
+    playinfo_bind_url_to_prop(url, c);
   } else if(!strncmp(cls, "object.item.imageItem",
 		     strlen("object.item.imageItem"))) {
     prop_set_string(prop_create(c, "url"), url);
@@ -311,20 +309,17 @@ nodes_from_meta(htsmsg_t *meta, prop_t *root, const char *trackid,
   if(items == NULL)
     return;
 
-  void *db = metadb_get();
-
   HTSMSG_FOREACH(f, items) {
     if(!strcmp(f->hmf_name, "item")) {
       htsmsg_t *item = htsmsg_get_map_by_field(f);
       if(item != NULL)
-	add_item(item, root, trackid, trackptr, skip, baseurl, db);
+	add_item(item, root, trackid, trackptr, skip, baseurl);
     } else if(baseurl != NULL && !strcmp(f->hmf_name, "container")) {
       htsmsg_t *container = htsmsg_get_map_by_field(f);
       if(container != NULL)
 	add_container(container, root, baseurl, skip);
     }
   }
-  metadb_close(db);
 }
 
 

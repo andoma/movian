@@ -145,7 +145,7 @@ js_db_upgrade(JSContext *cx, JSObject *obj, uintN argc,
   if(!JS_ConvertArguments(cx, argc, argv, "s", &path))
     return JS_FALSE;
 
-  r = db_upgrade_schema(jd->jd_db, path, jd->jd_name);
+  r = db_upgrade_schema(jd->jd_db, path, jd->jd_name, NULL, NULL);
 
   *rval = BOOLEAN_TO_JSVAL(!r);
   return JS_TRUE;

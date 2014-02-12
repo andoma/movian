@@ -1293,7 +1293,7 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 
     if(spp >= video_settings.played_threshold || event_is_type(e, EVENT_EOF)) {
       playinfo_set_restartpos(canonical_url, -1);
-      playinfo_register_play(canonical_url, 1, CONTENT_VIDEO);
+      playinfo_register_play(canonical_url, 1);
       TRACE(TRACE_DEBUG, "Video",
 	    "Playback reached %d%%, counting as played (%s)",
 	    spp, canonical_url);

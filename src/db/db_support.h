@@ -56,7 +56,8 @@ int db_preparex(sqlite3 *db, sqlite3_stmt **ppStmt, const char *zSql,
 
 sqlite3 *db_open(const char *path, int flags);
 
-int db_upgrade_schema(sqlite3 *db, const char *schemadir, const char *dbname);
+int db_upgrade_schema(sqlite3 *db, const char *schemadir, const char *dbname,
+                      const char *extra_db, const char *extra_db_path);
 
 typedef struct db_pool db_pool_t;
 

@@ -323,7 +323,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
       if(registered_play == 0) {
 	if(ets->ts > PLAYINFO_AUDIO_PLAY_THRESHOLD) {
 	  registered_play = 1;
-	  playinfo_register_play(url, 1, CONTENT_AUDIO);
+	  playinfo_register_play(url, 1);
 	}
       }
 

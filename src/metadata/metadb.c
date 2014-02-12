@@ -106,6 +106,7 @@ metadb_init(void)
 {
   sqlite3 *db;
   char buf[256];
+  char buf2[256];
 
   snprintf(buf, sizeof(buf), "%s/metadb", gconf.persistent_path);
   mkdir(buf, 0770);
@@ -119,8 +120,9 @@ metadb_init(void)
     return;
 
   snprintf(buf, sizeof(buf), "%s/resources/metadb", showtime_dataroot());
+  snprintf(buf2, sizeof(buf2), "%s/kvstore/kvstore.db", gconf.persistent_path);
 
-  int r = db_upgrade_schema(db, buf, "metadb");
+  int r = db_upgrade_schema(db, buf, "metadb", "kvstore", buf2);
 
   metadb_close(db);
 

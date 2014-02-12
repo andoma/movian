@@ -210,16 +210,32 @@ db_rollback_deadlock0(sqlite3 *db, const char *src)
  *
  */
 int
-db_upgrade_schema(sqlite3 *db, const char *schemadir, const char *dbname)
+db_upgrade_schema(sqlite3 *db, const char *schemadir, const char *dbname,
+                  const char *extra_db, const char *extra_db_path)
 {
   int ver, tgtver = 0;
   char path[256];
   char buf[256];
+  char detach[256];
+
+  if(extra_db != NULL) {
+    char tmp[256];
+    snprintf(tmp, sizeof(tmp),
+             "ATTACH DATABASE '%s' AS %s", extra_db_path, extra_db);
+    snprintf(detach, sizeof(detach), "DETACH DATABASE %s", extra_db);
+    if(db_one_statement(db, tmp, NULL)) {
+      TRACE(TRACE_ERROR, "DB", "%s: Unable to %s", tmp);
+      return -1;
+    }
+  } else {
+    detach[0] = 0;
+  }
 
   db_one_statement(db, "pragma journal_mode=wal;", NULL);
 
   if(db_get_int_from_query(db, "pragma user_version", &ver)) {
     TRACE(TRACE_ERROR, "DB", "%s: Unable to query db version", dbname);
+    if(detach[0]) db_one_statement(db, detach, NULL);
     return -1;
   }
 
@@ -231,6 +247,7 @@ db_upgrade_schema(sqlite3 *db, const char *schemadir, const char *dbname)
   if(fd == NULL) {
     TRACE(TRACE_ERROR, "DB",
 	  "%s: Unable to scan schema dir %s -- %s", dbname, schemadir , buf);
+    if(detach[0]) db_one_statement(db, detach, NULL);
     return -1;
   }
 
@@ -245,13 +262,17 @@ db_upgrade_schema(sqlite3 *db, const char *schemadir, const char *dbname)
   if(ver > tgtver) {
     TRACE(TRACE_ERROR, "DB", "%s: Installed version %d is too high for "
 	  "this version of Showtime", dbname, ver);
+    if(detach[0]) db_one_statement(db, detach, NULL);
     return -1;
   }
+
+  int enable_fk = 0;
 
   while(1) {
 
     if(ver == tgtver) {
       TRACE(TRACE_DEBUG, "DB", "%s: At current version %d", dbname, ver);
+      if(detach[0]) db_one_statement(db, detach, NULL);
       return 0;
     }
 
@@ -265,7 +286,14 @@ db_upgrade_schema(sqlite3 *db, const char *schemadir, const char *dbname)
       TRACE(TRACE_ERROR, "DB",
 	    "%s: Unable to upgrade db schema to version %d using %s -- %s",
 	    dbname, ver, path, buf);
+      if(detach[0]) db_one_statement(db, detach, NULL);
       return -1;
+    }
+
+
+    if(strstr(buf_cstr(sql), "-- schema-upgrade:disable-fk")) {
+      db_one_statement(db, "PRAGMA foreign_keys=OFF;", NULL);
+      enable_fk = 1;
     }
 
     db_begin(db);
@@ -298,11 +326,19 @@ db_upgrade_schema(sqlite3 *db, const char *schemadir, const char *dbname)
     }
 
     db_commit(db);
+    if(enable_fk) {
+      db_one_statement(db, "PRAGMA foreign_keys=ON;", NULL);
+      enable_fk = 0;
+    }
     TRACE(TRACE_INFO, "DB", "%s: Upgraded to version %d", dbname, ver);
     buf_release(sql);
   }
  fail:
+  if(detach[0]) db_one_statement(db, detach, NULL);
   db_rollback(db);
+
+  if(enable_fk)
+    db_one_statement(db, "PRAGMA foreign_keys=ON;", NULL);
   return -1;
 }
 

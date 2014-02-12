@@ -1056,7 +1056,7 @@ mark_content_as(deco_browse_t *db, int content_type, int seen)
   LIST_FOREACH(di, &db->db_items_per_ct[content_type], di_type_link)
     urls[i++] = rstr_get(di->di_url);
 
-  playinfo_mark_urls_as(urls, num_videos, seen, content_type);
+  playinfo_mark_urls_as(urls, num_videos, seen);
   free(urls);
 }
 

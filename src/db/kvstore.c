@@ -50,6 +50,7 @@ typedef struct kvstore_deferred_write {
   union {
     char *kdw_string;
     int kdw_int;
+    int64_t kdw_int64;
   };
 
 } kvstore_deferred_write_t;
@@ -116,7 +117,7 @@ kvstore_init(void)
 
   snprintf(buf, sizeof(buf), "%s/resources/kvstore", showtime_dataroot());
 
-  int r = db_upgrade_schema(db, buf, "kvstore");
+  int r = db_upgrade_schema(db, buf, "kvstore", NULL, NULL);
 
   kvstore_close(db);
 
@@ -511,6 +512,22 @@ kv_url_opt_get_int(const char *url, int domain, const char *key, int def)
 }
 
 
+/**
+ *
+ */
+int64_t
+kv_url_opt_get_int64(const char *url, int domain, const char *key, int64_t def)
+{
+  void *db = kvstore_get();
+  sqlite3_stmt *stmt = kv_url_opt_get(db, url, domain, key);
+  int64_t v = def;
+  if(stmt) {
+    v = sqlite3_column_int64(stmt, 0);
+    sqlite3_finalize(stmt);
+  }
+  kvstore_close(db);
+  return v;
+}
 
 
 /**
@@ -573,6 +590,10 @@ kv_url_opt_set(const char *url, int domain, const char *key,
   switch(type) {
   case KVSTORE_SET_INT:
     sqlite3_bind_int(stmt, 3, va_arg(apx, int));
+    break;
+
+  case KVSTORE_SET_INT64:
+    sqlite3_bind_int64(stmt, 3, va_arg(apx, int64_t));
     break;
 
   case KVSTORE_SET_STRING:
@@ -661,6 +682,10 @@ kvstore_deferred_flush(void)
     switch(kdw->kdw_type) {
     case KVSTORE_SET_INT:
       sqlite3_bind_int(stmt, 3, kdw->kdw_int);
+      break;
+
+    case KVSTORE_SET_INT64:
+      sqlite3_bind_int(stmt, 3, kdw->kdw_int64);
       break;
 
     case KVSTORE_SET_STRING:
@@ -752,6 +777,10 @@ kv_url_opt_set_deferred(const char *url, int domain, const char *key,
   switch(type) {
   case KVSTORE_SET_INT:
     kdw->kdw_int = va_arg(ap, int);
+    break;
+
+  case KVSTORE_SET_INT64:
+    kdw->kdw_int64 = va_arg(ap, int64_t);
     break;
 
   case KVSTORE_SET_STRING:

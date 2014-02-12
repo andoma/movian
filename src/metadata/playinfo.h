@@ -21,21 +21,17 @@
 
 #pragma once
 
-#include "metadata.h" // Remove as soon as we get rid of content_type here
-
 struct prop;
 
 #define PLAYINFO_AUDIO_PLAY_THRESHOLD (10 * 1000000)
 
-void playinfo_register_play(const char *url, int inc, int content_type);
+void playinfo_register_play(const char *url, int inc);
 
 void playinfo_set_restartpos(const char *url, int64_t pos_ms);
 
 int64_t playinfo_get_restartpos(const char *url);
 
-void playinfo_bind_url_to_prop(void *db, const char *url,
-                               struct prop *parent);
+void playinfo_bind_url_to_prop(const char *url, struct prop *parent);
 
-void playinfo_mark_urls_as(const char **urls, int num_urls, int seen,
-                           int content_type);
+void playinfo_mark_urls_as(const char **urls, int num_urls, int seen);
 

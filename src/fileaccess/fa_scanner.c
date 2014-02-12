@@ -351,8 +351,7 @@ deep_probe(fa_dir_entry_t *fde, scanner_t *s)
 
     if(fde->fde_prop != NULL && !fde->fde_bound_to_metadb) {
       fde->fde_bound_to_metadb = 1;
-      playinfo_bind_url_to_prop(getdb(s), rstr_get(fde->fde_url),
-                                fde->fde_prop);
+      playinfo_bind_url_to_prop(rstr_get(fde->fde_url), fde->fde_prop);
     }
   }
 

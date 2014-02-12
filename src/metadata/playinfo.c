@@ -30,6 +30,7 @@
 #include "prop/prop.h"
 #include "metadata.h"
 #include "db/db_support.h"
+#include "db/kvstore.h"
 #include "showtime.h"
 #include "playinfo.h"
 
@@ -37,67 +38,23 @@
 
 static HTS_MUTEX_DECL(mip_mutex);
 
-static void update_by_url(sqlite3 *db, const char *url);
+static void update_by_url(const char *url);
 
 /**
  *
  */
 void
-playinfo_register_play(const char *url, int inc, int content_type)
+playinfo_register_play(const char *url, int inc)
 {
-  int rc;
-  int i;
-  void *db;
+  int cur = kv_url_opt_get_int(url, KVSTORE_DOMAIN_SYS, "playcount", 0);
 
-  if((db = metadb_get()) == NULL)
-    return;
+  kv_url_opt_set(url, KVSTORE_DOMAIN_SYS, "playcount",
+                 KVSTORE_SET_INT, cur + inc);
 
- again:
-  if(db_begin(db)) {
-    metadb_close(db);
-    return;
-  }
+  kv_url_opt_set(url, KVSTORE_DOMAIN_SYS, "lastplay",
+                 KVSTORE_SET_INT, (int)(time(NULL)));
 
-  for(i = 0; i < 2; i++) {
-    sqlite3_stmt *stmt;
-
-    rc = db_prepare(db, &stmt,
-		    i == 0 ? 
-		    "UPDATE item "
-		    "SET playcount = playcount + ?3, "
-		    "lastplay = ?2 "
-		    "WHERE url=?1"
-		    :
-		    "INSERT INTO item "
-		    "(url, contenttype, playcount, lastplay) "
-		    "VALUES "
-		    "(?1, ?4, ?3, ?2)"
-		    );
-
-    if(rc != SQLITE_OK) {
-      db_rollback(db);
-      metadb_close(db);
-      return;
-    }
-
-    sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
-    sqlite3_bind_int(stmt, 2, time(NULL));
-    sqlite3_bind_int(stmt, 3, inc);
-    sqlite3_bind_int(stmt, 4, content_type);
-    rc = db_step(stmt);
-    sqlite3_finalize(stmt);
-    if(rc == SQLITE_LOCKED) {
-      db_rollback_deadlock(db);
-      goto again;
-    }
-    if(i == 0 && rc == SQLITE_DONE && sqlite3_changes(db) > 0)
-      break;
-  }
-  db_commit(db);
-  hts_mutex_lock(&mip_mutex);
-  update_by_url(db, url);
-  hts_mutex_unlock(&mip_mutex);
-  metadb_close(db);
+  update_by_url(url);
 }
 
 
@@ -108,57 +65,9 @@ playinfo_register_play(const char *url, int inc, int content_type)
 void
 playinfo_set_restartpos(const char *url, int64_t pos_ms)
 {
-  int rc;
-  int i;
-  void *db;
-
-  if(pos_ms >= 0 && pos_ms < 60000)
-    return;
-
-  if((db = metadb_get()) == NULL)
-    return;
- again:
-  if(db_begin(db)) {
-    metadb_close(db);
-    return;
-  }
-
-  for(i = 0; i < 2; i++) {
-    sqlite3_stmt *stmt;
-
-    rc = db_prepare(db, &stmt,
-		    i == 0 ? 
-		    "UPDATE item "
-		    "SET restartposition = ?2, contenttype = ?3 "
-		    "WHERE url=?1"
-		    :
-		    "INSERT INTO item "
-		    "(url, contenttype, restartposition) "
-		    "VALUES "
-		    "(?1, ?3, ?2)");
-
-    if(rc != SQLITE_OK) {
-      db_rollback(db);
-      metadb_close(db);
-      return;
-    }
-
-    sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
-    if(pos_ms > 0)
-      sqlite3_bind_int64(stmt, 2, pos_ms);
-    sqlite3_bind_int(stmt, 3, CONTENT_VIDEO);
-    rc = db_step(stmt);
-    sqlite3_finalize(stmt);
-    if(rc == SQLITE_LOCKED) {
-      db_rollback_deadlock(db);
-      goto again;
-    }
-    if(i == 0 && rc == SQLITE_DONE && sqlite3_changes(db) > 0)
-      break;
-  }
-  db_commit(db);
-  update_by_url(db, url);
-  metadb_close(db);
+  kv_url_opt_set(url, KVSTORE_DOMAIN_SYS, "restartposition",
+                 pos_ms <= 0 ? KVSTORE_SET_VOID : KVSTORE_SET_INT64, pos_ms);
+  update_by_url(url);
 }
 
 
@@ -168,30 +77,7 @@ playinfo_set_restartpos(const char *url, int64_t pos_ms)
 int64_t
 playinfo_get_restartpos(const char *url)
 {
-  int rc;
-  void *db;
-  sqlite3_stmt *stmt;
-  int64_t rval = 0;
-
-  if((db = metadb_get()) == NULL)
-    return 0;
-
-  rc = db_prepare(db, &stmt,
-		  "SELECT restartposition "
-		  "FROM item "
-		  "WHERE url = ?1"
-		  );
-
-  if(rc == SQLITE_OK) {
-    sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
-    rc = db_step(stmt);
-
-    if(rc == SQLITE_ROW)
-      rval = sqlite3_column_int64(stmt, 0);
-    sqlite3_finalize(stmt);
-  }
-  metadb_close(db);
-  return rval;
+  return kv_url_opt_get_int64(url, KVSTORE_DOMAIN_SYS, "restartposition", 0);
 }
 
 /**
@@ -204,7 +90,6 @@ typedef struct metadb_item_prop {
   prop_t *mip_restartpos;
 
   char *mip_url;
-  
   prop_sub_t *mip_destroy_sub;
   prop_sub_t *mip_playcount_sub;
 
@@ -227,34 +112,17 @@ typedef struct metadb_item_info {
 /**
  *
  */
-static int
-mip_get(sqlite3 *db, const char *url, metadb_item_info_t *mii)
+static void
+mip_get(const char *url, metadb_item_info_t *mii)
 {
-  int rc = METADATA_PERMANENT_ERROR;
-  sqlite3_stmt *stmt;
+  mii->mii_playcount  =
+    kv_url_opt_get_int(url, KVSTORE_DOMAIN_SYS, "playcount", 0);
 
-  rc = db_prepare(db, &stmt,
-		  "SELECT "
-		  "playcount,lastplay,restartposition "
-		  "FROM item "
-		  "WHERE url=?1"
-		  );
+  mii->mii_lastplayed =
+    kv_url_opt_get_int(url, KVSTORE_DOMAIN_SYS, "lastplayed", 0);
 
-  if(rc != SQLITE_OK)
-    return METADATA_PERMANENT_ERROR;
-
-  sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
-
-  rc = db_step(stmt);
-  if(rc == SQLITE_ROW) {
-    mii->mii_playcount  = sqlite3_column_int(stmt, 0);
-    mii->mii_lastplayed = sqlite3_column_int(stmt, 1);
-    mii->mii_restartpos = sqlite3_column_int(stmt, 2);
-    rc = 0;
-  }
-
-  sqlite3_finalize(stmt);
-  return rc;
+  mii->mii_restartpos =
+    kv_url_opt_get_int64(url, KVSTORE_DOMAIN_SYS, "restartposition", 0);
 }
 
 
@@ -275,25 +143,20 @@ mip_set(metadb_item_prop_t *mip, const metadb_item_info_t *mii)
  *
  */
 static void
-update_by_url(sqlite3 *db, const char *url)
+update_by_url(const char *url)
 {
-  metadb_item_prop_t *mip;
   metadb_item_info_t mii;
-  int loaded = 0;
 
-  unsigned int hash = mystrhash(url) % MIP_HASHWIDTH;
+  mip_get(url, &mii);
 
-  LIST_FOREACH(mip, &mip_hash[hash], mip_link) {
-    if(strcmp(mip->mip_url, url))
-      continue;
+  metadb_item_prop_t *mip;
+  const unsigned int hash = mystrhash(url) % MIP_HASHWIDTH;
 
-    if(loaded == 0) {
-      if(mip_get(db, url, &mii))
-	break;
-      loaded = 1;
-    }
-    mip_set(mip, &mii);
-  }
+  hts_mutex_lock(&mip_mutex);
+  LIST_FOREACH(mip, &mip_hash[hash], mip_link)
+    if(!strcmp(mip->mip_url, url))
+      mip_set(mip, &mii);
+  hts_mutex_unlock(&mip_mutex);
 }
 
 
@@ -337,8 +200,6 @@ static void
 metadb_set_playcount(void *opaque, prop_event_t event, ...)
 {
   metadb_item_prop_t *mip = opaque;
-  int rc, i;
-  void *db;
   va_list ap;
 
   if(event == PROP_DESTROYED) {
@@ -352,52 +213,9 @@ metadb_set_playcount(void *opaque, prop_event_t event, ...)
   int v = va_arg(ap, int);
   va_end(ap);
 
-  if((db = metadb_get()) == NULL)
-    return;
- again:
-  if(db_begin(db)) {
-    metadb_close(db);
-    return;
-  }
-
-  for(i = 0; i < 2; i++) {
-    sqlite3_stmt *stmt;
-    rc = db_prepare(db, &stmt, 
-		    i == 0 ? 
-		    "UPDATE item "
-		    "SET playcount = ?2 "
-		    "WHERE url=?1"
-		    :
-		    "INSERT INTO item "
-		    "(url, playcount, metadataversion) "
-		    "VALUES "
-		    "(?1, ?2, " METADATA_VERSION_STR ")"
-		    );
-    
-    if(rc != SQLITE_OK) {
-      db_rollback(db);
-      metadb_close(db);
-      return;
-    }
-
-    sqlite3_bind_text(stmt, 1, mip->mip_url, -1, SQLITE_STATIC);
-    sqlite3_bind_int64(stmt, 2, v);
-    rc = db_step(stmt);
-    sqlite3_finalize(stmt);
-    if(rc == SQLITE_LOCKED) {
-      db_rollback_deadlock(db);
-      goto again;
-    }
-
-    if(rc == SQLITE_DONE && sqlite3_changes(db) == 0) {
-      continue;
-    }
-    break;
-  }
-
-  db_commit(db);
-  update_by_url(db, mip->mip_url);
-  metadb_close(db);
+  kv_url_opt_set(mip->mip_url, KVSTORE_DOMAIN_SYS, "playcount",
+                 KVSTORE_SET_INT, v);
+  update_by_url(mip->mip_url);
 }
 
 
@@ -405,13 +223,16 @@ metadb_set_playcount(void *opaque, prop_event_t event, ...)
 /**
  *
  */
-static void
-metadb_bind_url_to_prop0(void *db, const char *url, prop_t *parent)
+void
+playinfo_bind_url_to_prop(const char *url, prop_t *parent)
 {
+  metadb_item_info_t mii;
+  mip_get(url, &mii);
+
   metadb_item_prop_t *mip = malloc(sizeof(metadb_item_prop_t));
 
   hts_mutex_lock(&mip_mutex);
-  mip->mip_refcount = 2;
+  mip->mip_refcount = 2;  // One per subscription created below
 
   mip->mip_destroy_sub =
     prop_subscribe(PROP_SUB_TRACK_DESTROY,
@@ -437,14 +258,9 @@ metadb_bind_url_to_prop0(void *db, const char *url, prop_t *parent)
   assert(mip->mip_playcount_sub != NULL);
 
   mip->mip_url = strdup(url);
-  
   unsigned int hash = mystrhash(url) % MIP_HASHWIDTH;
-  
   LIST_INSERT_HEAD(&mip_hash[hash], mip, mip_link);
-  
-  metadb_item_info_t mii;
-  if(!mip_get(db, url, &mii))
-    mip_set(mip, &mii);
+  mip_set(mip, &mii);
   hts_mutex_unlock(&mip_mutex);
 }
 
@@ -453,89 +269,11 @@ metadb_bind_url_to_prop0(void *db, const char *url, prop_t *parent)
  *
  */
 void
-playinfo_bind_url_to_prop(void *db, const char *url, prop_t *parent)
+playinfo_mark_urls_as(const char **urls, int num_urls, int seen)
 {
-  if(db != NULL)
-    return metadb_bind_url_to_prop0(db, url, parent);
-
-  if((db = metadb_get()) != NULL)
-    metadb_bind_url_to_prop0(db, url, parent);
-  metadb_close(db);
-}
-
-
-/**
- *
- */
-void
-playinfo_mark_urls_as(const char **urls, int num_urls, int seen,
-                      int content_type)
-{
-  int i, j;
-  void *db;
-
-  if((db = metadb_get()) == NULL)
-    return;
- again:
-  if(db_begin(db)) {
-    metadb_close(db);
-    return;
+  for(int j = 0; j < num_urls; j++) {
+    kv_url_opt_set(urls[j], KVSTORE_DOMAIN_SYS, "playcount",
+                   KVSTORE_SET_INT, seen);
+    update_by_url(urls[j]);
   }
-
-  for(j = 0; j < num_urls; j++) {
-    const char *url = urls[j];
-
-    for(i = 0; i < 2; i++) {
-      sqlite3_stmt *stmt;
-      int rc;
-      if(!seen) {
-        rc = db_prepare(db, &stmt,
-                        "UPDATE item "
-                        "SET playcount = 0 "
-                        "WHERE url=?1"
-                        );
-
-      } else {
-
-        rc = db_prepare(db, &stmt,
-                        i == 0 ?
-                        "UPDATE item "
-                        "SET playcount = 1, "
-                        "lastplay = ?2 "
-                        "WHERE url=?1 AND playcount = 0"
-                        :
-                        "INSERT INTO item "
-                        "(url, contenttype, playcount, lastplay) "
-                        "VALUES "
-                        "(?1, ?3, 1, ?2)"
-                        );
-      }
-
-      if(rc != SQLITE_OK) {
-        db_rollback(db);
-        metadb_close(db);
-        return;
-      }
-
-      sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
-      sqlite3_bind_int(stmt, 2, time(NULL));
-      sqlite3_bind_int(stmt, 3, content_type);
-      rc = db_step(stmt);
-      sqlite3_finalize(stmt);
-      if(rc == SQLITE_LOCKED) {
-        db_rollback_deadlock(db);
-        goto again;
-      }
-      if(!seen)
-        break;
-      if(i == 0 && rc == SQLITE_DONE && sqlite3_changes(db) > 0)
-        break;
-    }
-  }
-  db_commit(db);
-  hts_mutex_lock(&mip_mutex);
-  for(j = 0; j < num_urls; j++)
-    update_by_url(db, urls[j]);
-  hts_mutex_unlock(&mip_mutex);
-  metadb_close(db);
 }

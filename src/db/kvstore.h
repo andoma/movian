@@ -42,9 +42,13 @@ rstr_t *kv_url_opt_get_rstr(const char *url, int domain, const char *key);
 
 int kv_url_opt_get_int(const char *url, int domain, const char *key, int def);
 
+int64_t kv_url_opt_get_int64(const char *url, int domain,
+                             const char *key, int64_t def);
+
 #define KVSTORE_SET_STRING 1
 #define KVSTORE_SET_INT    2
 #define KVSTORE_SET_VOID   3
+#define KVSTORE_SET_INT64  4
 
 void kv_url_opt_set(const char *url, int domain, const char *key,
 		    int type, ...);

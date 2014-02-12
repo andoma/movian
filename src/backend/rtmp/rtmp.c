@@ -732,7 +732,7 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
 
   mp_become_primary(mp);
 
-  playinfo_register_play(va.canonical_url, 0, CONTENT_VIDEO);
+  playinfo_register_play(va.canonical_url, 0);
 
   r.canonical_url = va.canonical_url;
   r.restartpos_last = -1;
@@ -749,7 +749,7 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
     if(p >= video_settings.played_threshold) {
       TRACE(TRACE_DEBUG, "RTMP", "Playback reached %d%%, counting as played",
 	    p);
-      playinfo_register_play(va.canonical_url, 1, CONTENT_VIDEO);
+      playinfo_register_play(va.canonical_url, 1);
       playinfo_set_restartpos(va.canonical_url, -1);
     }
   }

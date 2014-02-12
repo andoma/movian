@@ -432,7 +432,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 
   if(spp >= video_settings.played_threshold || event_is_type(e, EVENT_EOF)) {
     playinfo_set_restartpos(canonical_url, -1);
-    playinfo_register_play(canonical_url, 1, CONTENT_VIDEO);
+    playinfo_register_play(canonical_url, 1);
     TRACE(TRACE_DEBUG, "Video",
 	  "Playback reached %d%%, counting as played (%s)",
 	  spp, canonical_url);
@@ -861,7 +861,7 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
   seek_index_t *si = build_index(mp, fctx, url);
   seek_index_t *ci = build_chapters(mp, fctx, url);
 
-  playinfo_register_play(va.canonical_url, 0, CONTENT_VIDEO);
+  playinfo_register_play(va.canonical_url, 0);
 
   event_t *e;
   e = video_player_loop(fctx, cwvec, mp, va.flags, errbuf, errlen,
