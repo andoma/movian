@@ -65,7 +65,7 @@ glw_gridrow_layout(glw_gridrow_t *ggr, glw_rctx_t *rc)
   const float col_width = rc->rc_width * scale;
 
 
-  glw_lp(&ggr->filtered_xtile, w->glw_root, ggr->current_xtile, 0.1);
+  glw_lp(&ggr->filtered_xtile, w->glw_root, ggr->current_xtile, 0.2);
 
   float xpos = 0;
   float offset = round(rc->rc_width / 2 - ggr->filtered_xtile * scale * rc->rc_width - col_width / 2 - (ggr->filtered_xtile * ggr->spacing));

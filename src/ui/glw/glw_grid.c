@@ -54,7 +54,7 @@ glw_grid_layout(glw_grid_t *gg, glw_rctx_t *rc)
   const float scale = gg->child_scale;
   const float row_height = rc->rc_height * scale;
 
-  glw_lp(&gg->filtered_ytile, w->glw_root, gg->current_ytile, 0.1);
+  glw_lp(&gg->filtered_ytile, w->glw_root, gg->current_ytile, 0.2);
 
 
   float ypos = -rc->rc_height * scale * 0.5;
