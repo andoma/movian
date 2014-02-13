@@ -255,6 +255,12 @@ void
 pool_put(pool_t *p, void *ptr)
 {
 #if defined(POOL_BY_MMAP)
+
+#if defined(MADV_FREE)
+  madvise(ptr, p->p_item_size_req, MADV_FREE);
+#elif defined(MADV_DONT_NEED)
+  madvise(ptr, p->p_item_size_req, MADV_DONTNEED);
+#endif
   mprotect(ptr, p->p_item_size_req, PROT_NONE);
 #elif defined(POOL_BY_MALLOC)
   free(ptr);
