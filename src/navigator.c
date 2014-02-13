@@ -667,7 +667,7 @@ nav_back(navigator_t *nav)
 
     nav_select(nav, prev, NULL);
 
-    if(np->np_direct_close)
+    if(np->np_direct_close || gconf.enable_nav_always_close)
       nav_close(np, 1);
   }
 }
