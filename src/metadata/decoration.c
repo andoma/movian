@@ -1208,7 +1208,7 @@ deco_thread(void *aux)
     r = prop_courier_wait(deco_courier, &q, do_timo);
     hts_mutex_lock(&deco_mutex);
 
-    prop_notify_dispatch(&q);
+    prop_notify_dispatch(&q, 0);
 
     if(r && deco_pendings) {
       deco_pendings = 0;

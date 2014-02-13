@@ -2719,7 +2719,7 @@ metadata_thread(void *aux)
     int r = prop_courier_wait(metadata_courier, &q, timo);
     hts_mutex_lock(&metadata_mutex);
 
-    prop_notify_dispatch(&q);
+    prop_notify_dispatch(&q, 0);
 
     if(r)
       mlp_dispatch();

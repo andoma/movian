@@ -273,7 +273,8 @@ nav_spawn(void)
 void
 nav_init(void)
 {
-  nav_courier = prop_courier_create_thread(&nav_mutex, "navigator");
+  nav_courier = prop_courier_create_thread(&nav_mutex, "navigator",
+                                           PROP_COURIER_TRACE_TIMES);
   bookmarks_init();
 }
 

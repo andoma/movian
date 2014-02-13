@@ -302,7 +302,7 @@ mp_create(const char *name, int flags)
   TAILQ_INIT(&mp->mp_spu_queue);
 
   hts_cond_init(&mp->mp_backpressure, &mp->mp_mutex);
-  mp->mp_pc = prop_courier_create_thread(&mp->mp_mutex, "mp");
+  mp->mp_pc = prop_courier_create_thread(&mp->mp_mutex, "mp", 0);
 
   mp->mp_prop_root = prop_create(media_prop_sources, NULL);
   mp->mp_prop_metadata    = prop_create(mp->mp_prop_root, "metadata");

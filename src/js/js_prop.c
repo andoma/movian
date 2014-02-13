@@ -339,7 +339,7 @@ js_wait_for_value(JSContext *cx, prop_t *root, const char *subname,
     jsrefcount s = JS_SuspendRequest(cx);
     prop_courier_wait(pc, &q, 0);
     JS_ResumeRequest(cx, s);
-    prop_notify_dispatch(&q);
+    prop_notify_dispatch(&q, 0);
   }
 
   prop_unsubscribe(s);

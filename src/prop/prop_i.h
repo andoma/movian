@@ -63,6 +63,7 @@ struct prop_courier {
   hts_thread_t pc_thread;
   int pc_run;
   int pc_detached;
+  int pc_flags;
 
   void (*pc_notify)(void *opaque);
   void *pc_opaque;
@@ -71,7 +72,7 @@ struct prop_courier {
   void (*pc_epilogue)(void);
 
   int pc_refcount;
-
+  char *pc_name;
 };
 
 
@@ -196,10 +197,19 @@ struct prop {
   uint8_t hp_type;
 
   /**
+   * Extended refcount. Used to keep contents of the property alive
+   * We limit this to 255, should never be a problem. And it's checked
+   * in the code as well
+   * Protected by mutex
+   */
+  uint8_t hp_xref;
+
+
+  /**
    * Various flags
    * Protected by mutex
    */
-  uint8_t hp_flags;
+  uint16_t hp_flags;
 
 
   /**
@@ -242,14 +252,11 @@ struct prop {
    */
 #define PROP_MARKED                0x80
 
-
   /**
-   * Extended refcount. Used to keep contents of the property alive
-   * We limit this to 255, should never be a problem. And it's checked
-   * in the code as well
-   * Protected by mutex
+   * For unlink mark and sweep
    */
-  uint8_t hp_xref;
+#define PROP_INT_MARKED            0x100
+
 
   /**
    * Tags. Protected by prop_tag_mutex
@@ -402,6 +409,10 @@ struct prop_sub {
   int hps_user_int;
 
 
+#ifdef PROP_SUB_RECORD_SOURCE
+  const char *hps_file;
+  int hps_line;
+#endif
 };
 
 prop_t *prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme, 

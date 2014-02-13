@@ -32,7 +32,9 @@
 
 #if ENABLE_BUGHUNT
 #define PROP_DEBUG
+#define PROP_SUB_RECORD_SOURCE
 #endif
+
 
 typedef struct prop_courier prop_courier_t;
 typedef struct prop prop_t;
@@ -171,7 +173,18 @@ enum {
 #define PROP_TAG_NAME(name...) \
  PROP_TAG_NAME_VECTOR, (const char *[]){name, NULL}
 
+#ifdef PROP_SUB_RECORD_SOURCE
+
+prop_sub_t *prop_subscribe_ex(const char *file, int line, int flags,
+                              ...) __attribute__((__sentinel__(0)));
+
+#define prop_subscribe(flags...) prop_subscribe_ex(__FILE__, __LINE__, flags)
+
+#else
+
 prop_sub_t *prop_subscribe(int flags, ...) __attribute__((__sentinel__(0)));
+
+#endif
 
 void prop_unsubscribe(prop_sub_t *s);
 
@@ -365,8 +378,11 @@ void prop_request_delete(prop_t *p);
 
 void prop_request_delete_multi(prop_vec_t *pv);
 
+#define PROP_COURIER_TRACE_TIMES 0x1
+
 prop_courier_t *prop_courier_create_thread(hts_mutex_t *entrymutex,
-					   const char *name);
+					   const char *name,
+                                           int flags);
 
 prop_courier_t *prop_courier_create_passive(void);
 
@@ -397,7 +413,7 @@ int prop_courier_check(prop_courier_t *pc);
 
 void prop_courier_destroy(prop_courier_t *pc);
 
-void prop_notify_dispatch(struct prop_notify_queue *q);
+void prop_notify_dispatch(struct prop_notify_queue *q, const char *tracename);
 
 void prop_courier_stop(prop_courier_t *pc);
 

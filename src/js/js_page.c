@@ -1459,7 +1459,7 @@ js_open(js_model_t *jm)
     jsrefcount s = JS_SuspendRequest(cx);
     prop_courier_wait(jm->jm_pc, &q, 0);
     JS_ResumeRequest(cx, s);
-    prop_notify_dispatch(&q);
+    prop_notify_dispatch(&q, 0);
 
     if(jm->jm_pending_want_more && jm->jm_paginator) {
       jm->jm_pending_want_more = 0;
