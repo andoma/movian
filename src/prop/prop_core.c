@@ -813,8 +813,8 @@ prop_notify_dispatch(struct prop_notify_queue *q, const char *trace_name)
       int64_t ts = showtime_get_ts();
       prop_dispatch_one(n);
       ts = showtime_get_ts() - ts;
-      if(ts > 100) {
-        TRACE(ts > 10000 ? TRACE_INFO : TRACE_DEBUG,
+      if(ts > 10000) {
+        TRACE(ts > 100000 ? TRACE_INFO : TRACE_DEBUG,
               "PROP", "%s: Dispatch of [%s] took %d us",
               trace_name, info, (int)ts);
       }
