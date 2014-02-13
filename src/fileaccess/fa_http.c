@@ -3360,6 +3360,14 @@ http_req(const char *url, ...)
       hf->hf_c = va_arg(ap, cancellable_t *);
       break;
 
+    case HTTP_TAG_CONNECT_TIMEOUT:
+      hf->hf_connect_timeout = va_arg(ap, int);
+      break;
+
+    case HTTP_TAG_READ_TIMEOUT:
+      hf->hf_read_timeout = va_arg(ap, int);
+      break;
+
     default:
       abort();
     }

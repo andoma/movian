@@ -597,6 +597,8 @@ introspect_device(upnp_device_t *ud)
   if(http_req(ud->ud_url,
               HTTP_RESULT_PTR(&b),
               HTTP_ERRBUF(errbuf, sizeof(errbuf)),
+              HTTP_CONNECT_TIMEOUT(2000),
+              HTTP_READ_TIMEOUT(1000),
               NULL)) {
     TRACE(TRACE_INFO, "UPNP", "Unable to introspect %s -- %s",
 	  ud->ud_url, errbuf);

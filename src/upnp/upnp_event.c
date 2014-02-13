@@ -100,6 +100,8 @@ upnp_event_send_and_free(send_event_t *set)
            HTTP_POSTDATA(&set->out, "text/xml; charset=\"utf-8\""),
            HTTP_REQUEST_HEADERS(&set->hdrs),
            HTTP_METHOD("NOTIFY"),
+           HTTP_READ_TIMEOUT(200),
+           HTTP_CONNECT_TIMEOUT(700),
            NULL);
   http_headers_free(&set->hdrs);
   htsbuf_queue_flush(&set->out);

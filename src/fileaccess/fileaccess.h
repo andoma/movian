@@ -378,6 +378,8 @@ enum {
   HTTP_TAG_METHOD,
   HTTP_TAG_PROGRESS_CALLBACK,
   HTTP_TAG_CANCELLABLE,
+  HTTP_TAG_CONNECT_TIMEOUT,
+  HTTP_TAG_READ_TIMEOUT,
 };
 
 
@@ -394,6 +396,8 @@ enum {
 #define HTTP_METHOD(a)                     HTTP_TAG_METHOD, a
 #define HTTP_PROGRESS_CALLBACK(a, b)       HTTP_TAG_PROGRESS_CALLBACK, a, b
 #define HTTP_CANCELLABLE(a)                HTTP_TAG_CANCELLABLE, a
+#define HTTP_CONNECT_TIMEOUT(a)            HTTP_TAG_CONNECT_TIMEOUT, a
+#define HTTP_READ_TIMEOUT(a)               HTTP_TAG_READ_TIMEOUT, a
 
 int http_req(const char *url, ...)  __attribute__((__sentinel__(0)));
 
