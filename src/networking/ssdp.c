@@ -502,7 +502,7 @@ static void *
 ssdp_thread(void *aux)
 {
   int log_fail = 1;
-  while(1) {
+  while(ssdp_run) {
     log_fail = !ssdp_loop(log_fail);
     sleep(1);
   }
