@@ -3624,6 +3624,50 @@ relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme,
 }
 
 
+/**
+ *
+ */
+static int
+search_for_linkage(prop_t *src, prop_t *link)
+{
+  prop_sub_t *s;
+
+  LIST_FOREACH(s, &src->hp_value_subscriptions, hps_value_prop_link) {
+    if(s->hps_origin == NULL)
+      continue;
+
+    if(!s->hps_multiple_origins) {
+      if(s->hps_origin != link)
+	continue;
+    } else {
+      prop_originator_tracking_t *pot;
+
+      for(pot = s->hps_pots; pot != NULL; pot = pot->pot_next)
+        if(pot->pot_p == link)
+          break;
+
+      if(pot == NULL)
+        continue;
+    }
+    return 1;
+  }
+
+  if(src->hp_type != PROP_DIR)
+    return 0;
+
+  prop_t *c;
+  TAILQ_FOREACH(c, &src->hp_childs, hp_parent_link) {
+
+    if(c->hp_name == NULL)
+      continue;
+
+    if(search_for_linkage(c, link))
+      return 1;
+  }
+  return 0;
+}
+
+
 
 /**
  *
@@ -3637,6 +3681,9 @@ restore_and_descend(prop_t *dst, prop_t *src, prop_sub_t *skipme,
 
   while(src->hp_originator != NULL)
     src = src->hp_originator;
+
+  if(!search_for_linkage(src, broken_link))
+    return;
 
   for(s = LIST_FIRST(&src->hp_value_subscriptions); s != NULL; s = next) {
     next = LIST_NEXT(s, hps_value_prop_link);
@@ -3690,18 +3737,18 @@ restore_and_descend(prop_t *dst, prop_t *src, prop_sub_t *skipme,
     return;
 
   prop_t *c;
-  TAILQ_FOREACH(c, &dst->hp_childs, hp_parent_link) {
+  TAILQ_FOREACH(c, &src->hp_childs, hp_parent_link) {
 
     if(c->hp_name == NULL)
       continue;
 
-    prop_t *z = prop_create0(src, c->hp_name, NULL,
+    prop_t *z = prop_create0(dst, c->hp_name, NULL,
                              c->hp_flags & PROP_NAME_NOT_ALLOCATED);
 
     if(c->hp_type == PROP_DIR)
       prop_make_dir(z, skipme, origin);
 
-    restore_and_descend(c, z, skipme, origin, pnq, broken_link);
+    restore_and_descend(z, c, skipme, origin, pnq, broken_link);
   }
 }
 
