@@ -235,6 +235,7 @@ typedef struct event_openurl {
   struct prop *origin;
   struct prop *model;
   char *how;
+  char *parent_url;
 } event_openurl_t;
 
 
@@ -251,6 +252,7 @@ typedef struct event_playurl {
   struct prop *origin;
   struct prop *model;
   char *how;
+  char *parent_url;
 } event_playurl_t;
 
 
@@ -318,11 +320,12 @@ event_t *event_create_str(event_type_t et, const char *url);
 
 event_t *event_create_playurl(const char *url, int primary, int priority,
 			      int no_audio, struct prop *model,
-			      const char *how, struct prop *origin);
+			      const char *how, struct prop *origin,
+                              const char *parent_url);
 
 event_t *event_create_openurl(const char *url, const char *view,
 			      struct prop *origin, struct prop *model,
-			      const char *how);
+			      const char *how, const char *parent_url);
 
 event_t *event_create_playtrack(struct prop *track,
 				struct prop *psource,

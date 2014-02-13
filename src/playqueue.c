@@ -1062,7 +1062,7 @@ player_thread(void *aux)
 
 	TRACE(TRACE_DEBUG, "playqueue", "Nothing on queue, waiting");
 	/* Make sure we no longer claim current playback focus */
-	mp_set_url(mp, NULL);
+	mp_set_url(mp, NULL, NULL, NULL);
 	mp_shutdown(playqueue_mp);
     
 	prop_unlink(mp->mp_prop_metadata);
@@ -1112,7 +1112,7 @@ player_thread(void *aux)
 
     hts_mutex_lock(&playqueue_mutex);
 
-    mp_set_url(mp, pqe->pqe_url);
+    mp_set_url(mp, pqe->pqe_url, NULL, NULL);
     pqe_current = pqe;
     update_pq_meta();
 

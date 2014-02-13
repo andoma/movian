@@ -102,6 +102,7 @@ typedef struct nav_page {
 
   prop_t *np_prop_root;
   char *np_url;
+  char *np_parent_url;
 
   int np_direct_close;
 
@@ -156,7 +157,8 @@ static void nav_eventsink(void *opaque, event_t *e);
 static void nav_dtor_tracker(void *opaque, prop_event_t event, ...);
 
 static void nav_open0(navigator_t *nav, const char *url, const char *view,
-		      prop_t *origin, prop_t *model, const char *how);
+		      prop_t *origin, prop_t *model, const char *how,
+                      const char *parent_url);
 
 static void page_redirect(nav_page_t *np, const char *url);
 
@@ -232,7 +234,7 @@ nav_create(prop_t *prop)
 		   PROP_TAG_ROOT, nav->nav_prop_root,
 		   NULL);
 
-  nav_open0(nav, NAV_HOME, NULL, NULL, NULL, NULL);
+  nav_open0(nav, NAV_HOME, NULL, NULL, NULL, NULL, NULL);
 
   hts_mutex_unlock(&nav_mutex);
 
@@ -246,7 +248,7 @@ nav_create(prop_t *prop)
     hts_mutex_unlock(&gconf.state_mutex);
 
     event_t *e = event_create_openurl(gconf.initial_url, gconf.initial_view,
-                                      NULL, NULL, NULL);
+                                      NULL, NULL, NULL, NULL);
     prop_send_ext_event(eventsink, e);
     event_release(e);
   }
@@ -352,6 +354,7 @@ nav_close(nav_page_t *np, int with_prop)
   prop_ref_dec(np->np_origin);
   rstr_release(np->np_title);
   free(np->np_url);
+  free(np->np_parent_url);
   free(np);
 }
 
@@ -564,6 +567,8 @@ nav_page_setup_prop(nav_page_t *np, const char *view, const char *how)
 		   NULL);
 
   prop_set_string(prop_create(np->np_prop_root, "url"), np->np_url);
+  prop_set_string(prop_create(np->np_prop_root, "parentUrl"),
+                  np->np_parent_url);
 
   np->np_direct_close_sub = 
     prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
@@ -616,13 +621,14 @@ nav_page_setup_prop(nav_page_t *np, const char *view, const char *how)
  */
 static void
 nav_open0(navigator_t *nav, const char *url, const char *view, prop_t *origin,
-	  prop_t *model, const char *how)
+	  prop_t *model, const char *how, const char *parent_url)
 {
   nav_page_t *np = calloc(1, sizeof(nav_page_t));
 
   TRACE(TRACE_INFO, "navigator", "Opening %s", url);
   np->np_nav = nav;
   np->np_url = strdup(url);
+  np->np_parent_url = parent_url ? strdup(parent_url) : NULL;
   np->np_opened_from = prop_ref_inc(model);
   np->np_origin = prop_ref_inc(origin);
   np->np_direct_close = 0;
@@ -643,7 +649,7 @@ nav_open0(navigator_t *nav, const char *url, const char *view, prop_t *origin,
 void
 nav_open(const char *url, const char *view)
 {
-  event_dispatch(event_create_openurl(url, view, NULL, NULL, NULL));
+  event_dispatch(event_create_openurl(url, view, NULL, NULL, NULL, NULL));
 }
 
 
@@ -761,10 +767,10 @@ nav_eventsink(void *opaque, event_t *e)
     nav_fwd(nav);
 
   } else if(event_is_action(e, ACTION_HOME)) {
-    nav_open0(nav, NAV_HOME, NULL, NULL, NULL, NULL);
+    nav_open0(nav, NAV_HOME, NULL, NULL, NULL, NULL, NULL);
 
   } else if(event_is_action(e, ACTION_PLAYQUEUE)) {
-    nav_open0(nav, "playqueue:", NULL, NULL, NULL, NULL);
+    nav_open0(nav, "playqueue:", NULL, NULL, NULL, NULL, NULL);
 
   } else if(event_is_action(e, ACTION_RELOAD_DATA)) {
     nav_reload_current(nav);
@@ -772,7 +778,8 @@ nav_eventsink(void *opaque, event_t *e)
   } else if(event_is_type(e, EVENT_OPENURL)) {
     ou = (event_openurl_t *)e;
     if(ou->url != NULL)
-      nav_open0(nav, ou->url, ou->view, ou->origin, ou->model, ou->how);
+      nav_open0(nav, ou->url, ou->view, ou->origin, ou->model, ou->how,
+                ou->parent_url);
     else
       TRACE(TRACE_INFO, "Navigator", "Tried to open NULL URL");
   }

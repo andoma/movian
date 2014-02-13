@@ -76,6 +76,8 @@ typedef struct video_args {
   int64_t filesize;
   uint64_t opensubhash;
   uint8_t subdbhash[16]; // md5sum of first 64k + last 64k
+  const char *parent_url;
+  const char *parent_title;
 
 } video_args_t;
 
@@ -173,6 +175,7 @@ int backend_open_video(prop_t *page, const char *url, int sync);
 int backend_resolve_item(const char *url, prop_t *item)
      __attribute__ ((warn_unused_result));
 
+rstr_t *backend_normalize(rstr_t *url);
 
 void backend_search(prop_t *model, const char *url);
 

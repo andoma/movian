@@ -455,7 +455,8 @@ glw_video_play(glw_video_t *gv)
 			   !!(gv->gv_flags & GLW_VIDEO_NO_AUDIO),
 			   gv->gv_model,
 			   gv->gv_how,
-			   gv->gv_origin);
+			   gv->gv_origin,
+                           gv->gv_parent_url);
   mp_enqueue_event(gv->gv_mp, e);
   event_release(e);
 }
@@ -484,6 +485,7 @@ glw_video_dtor(glw_t *w)
   free(gv->gv_current_url);
   free(gv->gv_pending_url);
   free(gv->gv_how);
+  free(gv->gv_parent_url);
 
   glw_video_overlay_deinit(gv);
   
@@ -707,6 +709,17 @@ set_how(glw_t *w, const char *how)
   glw_video_play(gv);
 }
 
+
+/**
+ *
+ */
+static void
+set_parent_url(glw_video_t *gv, const char *parent_url)
+{
+  mystrset(&gv->gv_parent_url, parent_url);
+}
+
+
 /**
  *
  */
@@ -810,6 +823,10 @@ glw_video_set(glw_t *w, va_list ap)
 	prop_ref_dec(gv->gv_origin);
 
       gv->gv_origin = prop_ref_inc(va_arg(ap, prop_t *));
+      break;
+
+    case GLW_ATTRIB_PARENT_URL:
+      set_parent_url(gv, va_arg(ap, const char *));
       break;
 
     case GLW_ATTRIB_AUDIO_VOLUME:

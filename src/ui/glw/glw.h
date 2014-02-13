@@ -140,6 +140,7 @@ typedef enum {
   GLW_ATTRIB_AUDIO_VOLUME,
   GLW_ATTRIB_ASPECT,
   GLW_ATTRIB_CHILD_SCALE,
+  GLW_ATTRIB_PARENT_URL,
   GLW_ATTRIB_num,
 } glw_attribute_t;
 
@@ -1240,6 +1241,7 @@ do {						\
   case GLW_ATTRIB_PROP_ORIGIN:			\
   case GLW_ATTRIB_BIND_TO_ID: 			\
   case GLW_ATTRIB_PAGE_BY_ID:			\
+  case GLW_ATTRIB_PARENT_URL:			\
     (void)va_arg(ap, void *);			\
     break;					\
   case GLW_ATTRIB_MODE:                         \

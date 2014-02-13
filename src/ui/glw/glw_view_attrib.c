@@ -95,6 +95,12 @@ set_description(glw_t *w, const char *str)
     w->glw_class->gc_set_desc(w, str);
 }
 
+static void
+set_parent_url(glw_t *w, const char *str)
+{
+  glw_set(w, GLW_ATTRIB_PARENT_URL, str, NULL);
+}
+
 
 /**
  *
@@ -1014,6 +1020,7 @@ static const token_attrib_t attribtab[] = {
   {"id",              set_string, 0, set_id},
   {"how",             set_string, 0, set_how},
   {"description",     set_string, 0, set_description},
+  {"parentUrl",       set_string, 0, set_parent_url},
   {"caption",         set_caption, 0},
   {"font",            set_font, 0},
   {"fragmentShader",  set_fs, 0},

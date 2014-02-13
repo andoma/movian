@@ -471,7 +471,8 @@ mp_settings_clear(media_pipe_t *mp)
  *
  */
 static void
-mp_settings_init(media_pipe_t *mp, const char *url)
+mp_settings_init(media_pipe_t *mp, const char *url, const char *parent_url,
+                 const char *parent_title)
 {
   prop_t *c = mp->mp_prop_ctrl;
 
@@ -480,7 +481,9 @@ mp_settings_init(media_pipe_t *mp, const char *url)
   if(url == NULL || !(mp->mp_flags & MP_VIDEO))
     return;
 
-  TRACE(TRACE_DEBUG, "media", "Settings initialized for URL %s", url);
+  TRACE(TRACE_DEBUG, "media",
+        "Settings initialized for URL %s in folder: %s [%s]",
+        url, parent_title, parent_url);
 
   mp->mp_setting_vzoom =
     setting_create(SETTING_INT, mp->mp_setting_video_root,
@@ -523,6 +526,7 @@ mp_settings_init(media_pipe_t *mp, const char *url)
                    SETTING_STEP(50),
                    SETTING_UNIT_CSTR("ms"),
                    SETTING_CALLBACK(update_av_delta, mp),
+                   SETTING_WRITE_PROP(prop_create(c, "avdelta")),
                    SETTING_KVSTORE(url, "avdelta"),
                    NULL);
 
@@ -534,6 +538,7 @@ mp_settings_init(media_pipe_t *mp, const char *url)
                    SETTING_RANGE(-50, 50),
                    SETTING_UNIT_CSTR("dB"),
                    SETTING_CALLBACK(update_audio_volume_user, mp),
+                   SETTING_WRITE_PROP(prop_create(c, "audiovolume")),
                    SETTING_KVSTORE(url, "audiovolume"),
                    SETTING_PROP_ENABLER(prop_create(c, "canAdjustVolume")),
                    NULL);
@@ -547,6 +552,7 @@ mp_settings_init(media_pipe_t *mp, const char *url)
                    SETTING_STEP(500),
                    SETTING_UNIT_CSTR("ms"),
                    SETTING_CALLBACK(update_sv_delta, mp),
+                   SETTING_WRITE_PROP(prop_create(c, "svdelta")),
                    SETTING_KVSTORE(url, "svdelta"),
                    NULL);
 
@@ -597,7 +603,7 @@ mp_settings_init(media_pipe_t *mp, const char *url)
                    SETTING_KVSTORE(url, "subhdisplace"),
                    NULL);
 
-  if(mp->mp_flags & MP_VIDEO && gconf.can_standby) {
+  if(gconf.can_standby) {
     mp->mp_setting_standby_after_eof =
       setting_create(SETTING_BOOL, mp->mp_setting_root,
                      SETTINGS_INITIAL_UPDATE,
@@ -1771,11 +1777,12 @@ mp_set_playstatus_stop(media_pipe_t *mp)
  *
  */
 void
-mp_set_url(media_pipe_t *mp, const char *url)
+mp_set_url(media_pipe_t *mp, const char *url, const char *parent_url,
+           const char *parent_title)
 {
   prop_set_string(mp->mp_prop_url, url);
   hts_mutex_lock(&mp->mp_mutex);
-  mp_settings_init(mp, url);
+  mp_settings_init(mp, url, parent_url, parent_title);
   hts_mutex_unlock(&mp->mp_mutex);
 }
 

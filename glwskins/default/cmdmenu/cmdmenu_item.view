@@ -36,7 +36,7 @@ commandMenuChrome(
   // Play (video) from beginning
 
   ITEM(_("Play from beginning"),  {
-    fireEvent(navOpen($args.url, void, $args, $self.model, "beginning"));
+    fireEvent(navOpen($args.url, void, $args, $self.model, "beginning", $self.url));
     $clone.itemMenu = false;
   }, "dataroot://resources/svg/Play.svg",
        $args.type == "video");
@@ -44,7 +44,7 @@ commandMenuChrome(
   // Continue (video) playback
 
   ITEM(fmt(_("Continue from %s"), value2duration($args.restartpos)),  {
-    fireEvent(navOpen($args.url, void, $args, $self.model, "resume"));
+    fireEvent(navOpen($args.url, void, $args, $self.model, "resume", $self.url));
     $clone.itemMenu = false;
   }, "dataroot://resources/svg/Play.svg",
        $args.type == "video" && $args.restartpos > 0);
@@ -52,7 +52,7 @@ commandMenuChrome(
   // Play (video) from beginning
 
   ITEM(_("Play until end of list"), {
-    fireEvent(navOpen($args.url, void, $args, $self.model, "continuous"));
+    fireEvent(navOpen($args.url, void, $args, $self.model, "continuous", $self.url));
     $clone.itemMenu = false;
   }, "dataroot://resources/svg/Play.svg",
        $args.type == "video");

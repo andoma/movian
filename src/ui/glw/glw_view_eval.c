@@ -2991,14 +2991,15 @@ static int
 glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
 	     token_t **argv, unsigned int argc)
 {
-  token_t *a, *b, *c, *d, *e, *r;
+  token_t *a, *b, *c, *d, *e, *f, *r;
   const char *url;
   const char *view = NULL;
   const char *how = NULL;
   prop_t *origin = NULL;
   prop_t *model = NULL;
+  const char *purl = NULL;
 
-  if(argc < 1 || argc > 5)
+  if(argc < 1 || argc > 6)
     return glw_view_seterr(ec->ei, self, "navOpen(): Invalid number of args");
 
   if((a = token_resolve(ec, argv[0])) == NULL)
@@ -3062,8 +3063,22 @@ glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
 			     "Fifth argument is not a string or (void)");
   }
 
+
+  if(argc > 5) {
+    if((f = token_resolve(ec, argv[5])) == NULL)
+      return -1;
+
+    if(f->type == TOKEN_VOID)
+      purl = NULL;
+    else if(f->type == TOKEN_RSTRING)
+      purl = rstr_get(f->t_rstring);
+    else
+      return glw_view_seterr(ec->ei, f, "navOpen(): "
+			     "Sixth argument is not a string or (void)");
+  }
+
   r = eval_alloc(self, ec, TOKEN_EVENT);
-  r->t_gem = glw_event_map_navOpen_create(url, view, origin, model, how);
+  r->t_gem = glw_event_map_navOpen_create(url, view, origin, model, how, purl);
   eval_push(ec, r);
   return 0;
 }

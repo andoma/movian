@@ -42,7 +42,7 @@ widget(container_y, {
 	  focusable: true;
 	  width: $ui.size * 12;
 
-	  onEvent(activate, navOpen($self.url, void, void, $parent.model));
+	  onEvent(activate, navOpen($self.url, void, void, $parent.model, void, $parent.url));
 
 	  widget(stencil, {
 	    source: "skin://graphics/stencil.png";

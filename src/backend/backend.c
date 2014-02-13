@@ -97,7 +97,7 @@ backend_play_video(const char *url, struct media_pipe *mp,
     return NULL;
   }
 
-  mp_set_url(mp, va->canonical_url);
+  mp_set_url(mp, va->canonical_url, va->parent_url, va->parent_title);
 
   return nb->be_play_video(url, mp, errbuf, errlen, vq, vsl, va);
 }
@@ -402,6 +402,28 @@ backend_open(prop_t *page, const char *url, int sync)
 
   be->be_open(page, url, sync);
   return 0;
+}
+
+
+/**
+ *
+ */
+rstr_t *
+backend_normalize(rstr_t *url)
+{
+  if(url == NULL)
+    return NULL;
+
+  backend_t *be = backend_canhandle(rstr_get(url));
+  char tmp[1024];
+  if(be == NULL || be->be_normalize == NULL)
+    return url;
+
+  if(!be->be_normalize(rstr_get(url), tmp, sizeof(tmp))) {
+    rstr_release(url);
+    return rstr_alloc(tmp);
+  }
+  return url;
 }
 
 

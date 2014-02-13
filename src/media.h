@@ -645,7 +645,8 @@ void mp_set_playstatus_by_hold(media_pipe_t *mp, int hold, const char *msg);
 
 void mp_set_playstatus_stop(media_pipe_t *mp);
 
-void mp_set_url(media_pipe_t *mp, const char *url);
+void mp_set_url(media_pipe_t *mp, const char *url, const char *parent_url,
+                const char *parent_title);
 
 void mp_send_volume_update_locked(media_pipe_t *mp);
 

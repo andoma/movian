@@ -6,7 +6,7 @@ widget(backdrop, {
   autoRefocusable: true;
   focusable: true;
   focusOnClick: true;
-  onEvent(activate, navOpen($self.url, void, $self, $parent.model));
+  onEvent(activate, navOpen($self.url, void, $self, $parent.model, void, $parent.url));
   
   alphaSelf: iir(isFocused() * 1, 8) + isHovered() * 0.1;
 
