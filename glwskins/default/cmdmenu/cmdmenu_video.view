@@ -24,18 +24,28 @@ widget(deck, {
     }, "dataroot://resources/svg/Script.svg");
 
     ITEM(_("Seek by time"), {
-      $view.page = 4;
+      $view.page = 6;
     }, "dataroot://resources/svg/SeekByFrame.svg",
 	 $global.media.current.seekindex.available);
 
     ITEM(_("Chapters"), {
-      $view.page = 5;
+      $view.page = 7;
     }, "dataroot://resources/svg/Book.svg",
 	 $global.media.current.chapterindex.available);
 
-    ITEM(_("Settings"), {
+    SEP(_("Settings"));
+
+    ITEM(_("Audio"), {
       $view.page = 3;
-    }, "dataroot://resources/svg/Settings.svg");
+    }, "dataroot://resources/svg/Music.svg");
+
+    ITEM(_("Subtitles"), {
+      $view.page = 4;
+    }, "dataroot://resources/svg/Script.svg");
+
+    ITEM(_("Video"), {
+      $view.page = 5;
+    }, "dataroot://resources/svg/Movie.svg");
 
     cloner($self.media.settings.nodes, loader, {
       source: "skin://pages/listitems/" + $self.type + ".view";
@@ -160,7 +170,7 @@ widget(deck, {
 
   commandMenuChromeWide(
 
-    SEP(_("Settings"));
+    SEP(_("Audio settings"));
 
     cloner($self.media.audio.settings.nodes, loader, {
       hidden: !$self.enabled;
@@ -168,6 +178,14 @@ widget(deck, {
       time: 0.3;
       noInitialTransform: true;
     });
+  );
+
+
+  // Page 4 - Subtitle settings
+
+  commandMenuChromeWide(
+
+    SEP(_("Subtitle settings"));
 
     cloner($self.media.subtitle.settings.nodes, loader, {
       hidden: !$self.enabled;
@@ -175,6 +193,13 @@ widget(deck, {
       time: 0.3;
       noInitialTransform: true;
     });
+  );
+
+  // Page 5 - Video settings
+
+  commandMenuChromeWide(
+
+    SEP(_("Video settings"));
 
     cloner($self.media.video.settings.nodes, loader, {
       hidden: !$self.enabled;
@@ -184,7 +209,7 @@ widget(deck, {
     });
   );
 
-  // Page 4 - Seek by time
+  // Page 6 - Seek by time
 
 
   commandMenuChromeUltraWide(
@@ -263,7 +288,7 @@ widget(deck, {
   );
 
 
-  // Page 5 - Chapters
+  // Page 7 - Chapters
 
   commandMenuChromeWide(
 
