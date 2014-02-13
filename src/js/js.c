@@ -625,10 +625,13 @@ js_message(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
   if(!JS_ConvertArguments(cx, argc, argv, "sbb", &message, &ok, &cancel))
     return JS_FALSE;
 
+  jsrefcount s = JS_SuspendRequest(cx);
+
   r = message_popup(message, 
 		    (ok     ? MESSAGE_POPUP_OK : 0) |
 		    (cancel ? MESSAGE_POPUP_CANCEL : 0) | 
 		    MESSAGE_POPUP_RICH_TEXT, NULL);
+  JS_ResumeRequest(cx, s);
 
   switch(r) {
   case MESSAGE_POPUP_OK:
@@ -721,11 +724,13 @@ js_textDialog(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval
   if(!JS_ConvertArguments(cx, argc, argv, "sbb", &message, &ok, &cancel))
     return JS_FALSE;
 
+  jsrefcount s = JS_SuspendRequest(cx);
   r = text_dialog(message, &input, 
 		    (ok     ? MESSAGE_POPUP_OK : 0) |
 		    (cancel ? MESSAGE_POPUP_CANCEL : 0) | 
 		    MESSAGE_POPUP_RICH_TEXT);
-  
+  JS_ResumeRequest(cx, s);
+
   if(r == 1) {
     *rval = BOOLEAN_TO_JSVAL(0);
     return JS_TRUE;
