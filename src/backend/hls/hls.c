@@ -615,9 +615,6 @@ segment_open(hls_t *h, hls_segment_t *hs, int fast_fail)
 
   int flags = FA_STREAMING;
 
-  if(fast_fail)
-    flags |= FA_FAST_FAIL;
-
   if(hs->hs_byte_size != -1 && hs->hs_byte_offset != -1)
     flags |= FA_BUFFERED_SMALL;
 
@@ -627,7 +624,12 @@ segment_open(hls_t *h, hls_segment_t *hs, int fast_fail)
   HLS_TRACE(h, "Open segment %d in %d bps @ %s",
 	    hs->hs_seq, hs->hs_variant->hv_bitrate, hs->hs_url);
 
-  fh = fa_open_ex(hs->hs_url, errbuf, sizeof(errbuf), flags, NULL);
+  fa_open_extra_t foe = {0};
+
+  if(fast_fail)
+    foe.foe_open_timeout = 2000;
+
+  fh = fa_open_ex(hs->hs_url, errbuf, sizeof(errbuf), flags, &foe);
   if(fh == NULL) {
     TRACE(TRACE_INFO, "HLS", "Unable to open segment %s -- %s",
 	  hs->hs_url, errbuf);

@@ -130,7 +130,6 @@ LIST_HEAD(fa_protocol_list, fa_protocol);
 #define FA_DISABLE_AUTH    0x40
 #define FA_COMPRESSION     0x80
 #define FA_NOFOLLOW        0x100
-#define FA_FAST_FAIL       0x200
 #define FA_WRITE           0x400  // Open for writing (always creates file)
 #define FA_APPEND          0x800  /* Only if FA_WRITE:
                                      Seek to EOF when opening
@@ -161,6 +160,7 @@ typedef struct fa_open_extra {
   struct http_header_list *foe_response_headers;
   struct prop *foe_stats;
   struct cancellable *foe_c;
+  int foe_open_timeout; // In ms
 } fa_open_extra_t;
 
 

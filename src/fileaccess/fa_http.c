@@ -221,8 +221,6 @@ typedef struct http_file {
 		      * rather than random seeking 
 		      */
 
-  char hf_fast_fail;
-
   char hf_no_retries;
 
   char hf_req_compression;
@@ -233,6 +231,7 @@ typedef struct http_file {
 
   int hf_max_age;
 
+  int hf_connect_timeout;
   int hf_read_timeout;
 
   prop_t *hf_stats_speed;
@@ -1637,10 +1636,7 @@ http_connect(http_file_t *hf, char *errbuf, int errlen)
   if(!hf->hf_path[0])
     strcpy(hf->hf_path, "/");
 
-  int timeout = 30000;
-
-  if(hf->hf_fast_fail)
-    timeout = 2000;
+  const int timeout = hf->hf_connect_timeout ?: 30000;
 
   hf->hf_connection = http_connection_get(hostname, port, ssl, errbuf, errlen,
 					  hf->hf_debug, timeout, hf->hf_c);
@@ -2039,7 +2035,6 @@ http_open_ex(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
   hf->hf_url = strdup(url);
   hf->hf_debug = !!(flags & FA_DEBUG) || gconf.enable_http_debug;
   hf->hf_streaming = !!(flags & FA_STREAMING);
-  hf->hf_fast_fail = !!(flags & FA_FAST_FAIL);
   hf->hf_no_retries = !!(flags & FA_NO_RETRIES);
   if(foe != NULL) {
     if(foe->foe_stats != NULL) {
@@ -2049,6 +2044,7 @@ http_open_ex(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
     hf->hf_user_request_headers  = foe->foe_request_headers;
     hf->hf_user_response_headers = foe->foe_response_headers;
     hf->hf_c = foe->foe_c;
+    hf->hf_connect_timeout = foe->foe_open_timeout;
   }
 
   if(!http_open0(hf, 1, errbuf, errlen, non_interactive)) {
