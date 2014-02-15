@@ -2846,6 +2846,21 @@ prop_unsubscribe(prop_sub_t *s)
 }
 
 
+/**
+ *
+ */
+void
+prop_sub_reemit(prop_sub_t *s)
+{
+  if(s == NULL)
+    return;
+
+  hts_mutex_lock(&prop_mutex);
+  prop_build_notify_value(s, 0, "reemit", s->hps_value_prop, NULL, 0);
+  hts_mutex_unlock(&prop_mutex);
+}
+
+
 
 /**
  *
@@ -2990,6 +3005,32 @@ prop_set_rstring_ex(prop_t *p, prop_sub_t *skipme, rstr_t *rstr)
 /**
  *
  */
+static void
+prop_set_cstring_exl(prop_t *p, prop_sub_t *skipme, const char *cstr)
+{
+  if(p->hp_type == PROP_ZOMBIE) {
+    return;
+  }
+
+  if(p->hp_type != PROP_CSTRING) {
+
+    if(prop_clean(p)) {
+      return;
+    }
+
+  } else if(!strcmp(p->hp_cstring, cstr)) {
+    return;
+  }
+
+  p->hp_cstring = cstr;
+  p->hp_type = PROP_CSTRING;
+  prop_notify_value(p, skipme, "prop_set_cstring()", 0);
+}
+
+
+/**
+ *
+ */
 void
 prop_set_cstring_ex(prop_t *p, prop_sub_t *skipme, const char *cstr)
 {
@@ -3002,30 +3043,10 @@ prop_set_cstring_ex(prop_t *p, prop_sub_t *skipme, const char *cstr)
   }
 
   hts_mutex_lock(&prop_mutex);
-
-  if(p->hp_type == PROP_ZOMBIE) {
-    hts_mutex_unlock(&prop_mutex);
-    return;
-  }
-
-  if(p->hp_type != PROP_CSTRING) {
-
-    if(prop_clean(p)) {
-      hts_mutex_unlock(&prop_mutex);
-      return;
-    }
-
-  } else if(!strcmp(p->hp_cstring, cstr)) {
-    hts_mutex_unlock(&prop_mutex);
-    return;
-  }
-
-  p->hp_cstring = cstr;
-  p->hp_type = PROP_CSTRING;
-  p->hp_rstrtype = 0;
-
-  prop_set_epilogue(skipme, p, "prop_set_cstring()");
+  prop_set_cstring_exl(p, skipme, cstr);
+  hts_mutex_unlock(&prop_mutex);
 }
+
 
 /**
  *
@@ -3471,6 +3492,43 @@ prop_set_void_ex(prop_t *p, prop_sub_t *skipme)
 
   hts_mutex_lock(&prop_mutex);
   prop_set_void_exl(p, skipme);
+  hts_mutex_unlock(&prop_mutex);
+}
+
+/**
+ *
+ */
+void
+prop_copy_ex(prop_t *dst, prop_sub_t *skipme, prop_t *src)
+{
+  if(dst == NULL)
+    return;
+
+  hts_mutex_lock(&prop_mutex);
+
+  if(src == NULL) {
+    prop_set_void_exl(dst, skipme);
+  } else {
+    switch(src->hp_type) {
+    case PROP_INT:
+      prop_set_int_exl(dst, skipme, src->hp_int);
+      break;
+    case PROP_FLOAT:
+      prop_set_float_exl(dst, skipme, src->hp_float, 0);
+      break;
+    case PROP_RSTRING:
+      prop_set_rstring_exl(dst, skipme, src->hp_rstring);
+      break;
+    case PROP_CSTRING:
+      prop_set_cstring_exl(dst, skipme, src->hp_cstring);
+      break;
+    default:
+      prop_set_void_exl(dst, skipme);
+      break;
+
+    }
+  }
+
   hts_mutex_unlock(&prop_mutex);
 }
 
@@ -4434,6 +4492,48 @@ prop_get_string(prop_t *p, ...)
     case PROP_INT:
       snprintf(buf, sizeof(buf), "%d", p->hp_int);
       r = rstr_alloc(buf);
+      break;
+    default:
+      break;
+    }
+  }
+  hts_mutex_unlock(&prop_mutex);
+  va_end(ap);
+  return r;
+}
+
+
+/**
+ *
+ */
+int
+prop_get_int(prop_t *p, ...)
+{
+  int r = 0;
+  va_list ap;
+
+  va_start(ap, p);
+
+  hts_mutex_lock(&prop_mutex);
+  p = prop_find0(p, ap);
+
+  if(p != NULL) {
+
+    switch(p->hp_type) {
+    case PROP_RSTRING:
+      r = atoi(rstr_get(p->hp_rstring));
+      break;
+    case PROP_CSTRING:
+      r = atoi(p->hp_cstring);
+      break;
+    case PROP_LINK:
+      r = atoi(rstr_get(p->hp_link_rtitle));
+      break;
+    case PROP_FLOAT:
+      r = p->hp_float;
+      break;
+    case PROP_INT:
+      r = p->hp_int;
       break;
     default:
       break;

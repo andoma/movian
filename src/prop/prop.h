@@ -188,6 +188,8 @@ prop_sub_t *prop_subscribe(int flags, ...) __attribute__((__sentinel__(0)));
 
 void prop_unsubscribe(prop_sub_t *s);
 
+void prop_sub_reemit(prop_sub_t *s);
+
 prop_t *prop_create_ex(prop_t *parent, const char *name,
 		       prop_sub_t *skipme, int noalloc, int incref)
      __attribute__ ((malloc));
@@ -291,7 +293,13 @@ void prop_set_link_ex(prop_t *p, prop_sub_t *skipme, const char *title,
 
 #define prop_set_cstring(p, cstr) prop_set_cstring_ex(p, NULL, cstr)
 
+void prop_copy_ex(prop_t *dst, prop_sub_t *skipme, prop_t *src);
+
+#define prop_copy(dst, src) prop_copy_ex(dst, NULL, src)
+
 rstr_t *prop_get_string(prop_t *p, ...) __attribute__((__sentinel__(0)));
+
+int prop_get_int(prop_t *p, ...) __attribute__((__sentinel__(0)));
 
 char **prop_get_name_of_childs(prop_t *p);
 
