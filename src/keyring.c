@@ -123,7 +123,7 @@ keyring_lookup(const char *id, char **username, char **password,
 
   if(flags & KEYRING_QUERY_USER) {
     htsmsg_t *parent;
-    prop_t *p = prop_create_root(NULL);
+    prop_t *p = prop_ref_inc(prop_create_root(NULL));
 
     prop_set_string(prop_create(p, "type"), "auth");
     prop_set_string(prop_create(p, "id"), id);
@@ -135,7 +135,7 @@ keyring_lookup(const char *id, char **username, char **password,
 
     prop_set_int(prop_create(p, "canRemember"),
 		 !!(flags & KEYRING_SHOW_REMEMBER_ME));
-    prop_t *rememberMe = prop_create(p, "rememberMe");
+    prop_t *rememberMe = prop_create_r(p, "rememberMe");
     prop_set_int(rememberMe, remember);
 
     prop_sub_t *remember_sub = 
@@ -144,9 +144,9 @@ keyring_lookup(const char *id, char **username, char **password,
 		   PROP_TAG_ROOT, rememberMe,
 		   NULL);
 
-    prop_t *user = prop_create(p, "username");
-    prop_t *pass = prop_create(p, "password");
-    prop_t *dom = prop_create(p, "domain");
+    prop_t *user = prop_create_r(p, "username");
+    prop_t *pass = prop_create_r(p, "password");
+    prop_t *dom = prop_create_r(p, "domain");
     if(domain != NULL)
       prop_set_string(dom, *domain);
 
@@ -211,6 +211,11 @@ keyring_lookup(const char *id, char **username, char **password,
       *remember_me = remember;
 
     prop_destroy(p);
+    prop_ref_dec(p);
+    prop_ref_dec(user);
+    prop_ref_dec(pass);
+    prop_ref_dec(dom);
+    prop_ref_dec(rememberMe);
 
     if(event_is_action(e, ACTION_CANCEL)) {
       /* return CANCEL to caller */

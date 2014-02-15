@@ -613,7 +613,7 @@ showtime_shutdown(int retcode)
   }
 
   event_dispatch(event_create_action(ACTION_STOP));
-
+  prop_destroy_by_name(prop_get_global(), "popups");
   gconf.exit_code = retcode;
 
   showtime_flush_caches();
@@ -644,6 +644,7 @@ showtime_shutdown(int retcode)
 void
 showtime_fini(void)
 {
+  prop_destroy_by_name(prop_get_global(), "popups");
   playqueue_fini();
   TRACE(TRACE_DEBUG, "core", "Playqueue finished");
   audio_fini();

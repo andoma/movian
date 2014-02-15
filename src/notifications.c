@@ -156,14 +156,23 @@ eventsink(void *opaque, prop_event_t event, ...)
   va_list ap;
   va_start(ap, event);
 
-  if(event != PROP_EXT_EVENT)
-    return;
+  switch(event) {
+  default:
+    break;
+  case PROP_EXT_EVENT:
+    if(*ep)
+      event_release(*ep);
+    e = va_arg(ap, event_t *);
+    atomic_add(&e->e_refcount, 1);
+    *ep = e;
+    break;
 
-  if(*ep)
-    event_release(*ep);
-  e = va_arg(ap, event_t *);
-  atomic_add(&e->e_refcount, 1);
-  *ep = e;
+  case PROP_DESTROYED:
+    if(*ep)
+      event_release(*ep);
+    *ep = event_create_action(ACTION_CANCEL);
+    break;
+  }
 }
 
 
@@ -177,8 +186,8 @@ popup_display(prop_t *p)
   event_t *e = NULL;
 
   prop_t *r = prop_create(p, "eventSink");
-  prop_sub_t *s = prop_subscribe(0, 
-				 PROP_TAG_CALLBACK, eventsink, &e, 
+  prop_sub_t *s = prop_subscribe(PROP_SUB_TRACK_DESTROY,
+				 PROP_TAG_CALLBACK, eventsink, &e,
 				 PROP_TAG_ROOT, r,
 				 PROP_TAG_COURIER, pc,
 				 NULL);
@@ -207,7 +216,7 @@ message_popup(const char *message, int flags, const char **extra)
   prop_t *p;
   int rval;
 
-  p = prop_create_root(NULL);
+  p = prop_ref_inc(prop_create_root(NULL));
 
   prop_set_string(prop_create(p, "type"), "message");
   prop_set_string_ex(prop_create(p, "message"), NULL, message,
@@ -237,6 +246,7 @@ message_popup(const char *message, int flags, const char **extra)
 
   event_t *e = popup_display(p);
   prop_destroy(p);
+  prop_ref_dec(p);
   
   if(event_is_action(e, ACTION_OK))
     rval = MESSAGE_POPUP_OK;
@@ -261,7 +271,7 @@ text_dialog(const char *message, char **answer, int flags)
 {
   rstr_t *r;
   *answer = NULL;
-  prop_t *p = prop_create_root(NULL);
+  prop_t *p = prop_ref_inc(prop_create_root(NULL));
 
   prop_set_string(prop_create(p, "type"), "textDialog");
   prop_set_string_ex(prop_create(p, "message"), NULL, message,
@@ -284,7 +294,7 @@ text_dialog(const char *message, char **answer, int flags)
   }
   
   prop_destroy(p);
-  
+  prop_ref_dec(p);
   if(event_is_action(e, ACTION_CANCEL)) {
     event_release(e);
     return -1;
