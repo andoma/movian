@@ -25,6 +25,7 @@
 #include <stdlib.h>
 
 #include "config.h"
+#include "settings.h"
 
 #if ENABLE_LIBAV
 #include <libavcodec/avcodec.h>
@@ -446,24 +447,21 @@ typedef struct media_pipe {
    * Settings
    */
 
+  prop_t *mp_setting_root;
+
   prop_t *mp_setting_video_root;
   prop_t *mp_setting_audio_root;
   prop_t *mp_setting_subtitle_root;
-  prop_t *mp_setting_root;
 
-  struct setting *mp_setting_av_delta;   // Audio vs. Video delta
-  struct setting *mp_setting_audio_vol;  // Audio volume
-  struct setting *mp_setting_sv_delta;   // Subtitle vs. Video delta
-  struct setting *mp_setting_sub_scale;  // Subtitle scaling
-  struct setting *mp_setting_sub_displace_y;
-  struct setting *mp_setting_sub_displace_x;
-  struct setting *mp_setting_sub_on_video; // Subtitle always on video
-  struct setting *mp_setting_vzoom;      // Video zoom in %
-  struct setting *mp_setting_hstretch;   // Horizontal stretch
-  struct setting *mp_setting_fstretch;   // Fullscreen stretch
-  struct setting *mp_setting_vdpau_deinterlace;      // Deinterlace interlaced content
-  struct setting *mp_setting_standby_after_eof;
+  struct setting_list mp_settings_video;
+  struct setting_list mp_settings_audio;
+  struct setting_list mp_settings_subtitle;
 
+  struct setting_list mp_settings_video_dir;
+  struct setting_list mp_settings_audio_dir;
+  struct setting_list mp_settings_subtitle_dir;
+
+  struct setting_list mp_settings_other;
 
   /**
    * Extra (created by media_pipe_init_extra)

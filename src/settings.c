@@ -50,12 +50,17 @@ static prop_t *settings_nodes;
  *
  */
 struct setting {
-  LIST_ENTRY(setting) s_link;
+  LIST_ENTRY(setting) s_group_link;
   void *s_opaque;
   void *s_callback;
   prop_sub_t *s_sub;
   prop_t *s_root;
   prop_t *s_val;
+  prop_t *s_current_origin;
+
+  prop_sub_t *s_inherited_value_sub;
+  prop_sub_t *s_inherited_origin_sub;
+  struct setting *s_parent;
 
   settings_saver_t *s_saver;
   void *s_saver_opaque;
@@ -73,10 +78,17 @@ struct setting {
 
   rstr_t *s_default_str;
 
+  char s_origin[10];
+
+  int s_refcount;
+
   int s_flags;
-  char s_enable_writeback;
-  char s_kvstore;
   char s_type;
+
+  char s_enable_writeback : 1;
+  char s_kvstore          : 1;
+  char s_on_group_list    : 1;
+  char s_value_set        : 1;
 };
 
 static void init_dev_settings(void);
@@ -238,6 +250,7 @@ setting_create_leaf(prop_t *parent, prop_t *title, const char *type,
 		    const char *valuename, int flags)
 {
   setting_t *s = calloc(1, sizeof(setting_t));
+  s->s_refcount = 1;
   s->s_root = prop_ref_inc(setting_add(parent, title, type, flags));
   s->s_val = prop_create_r(s->s_root, valuename);
   return s;
@@ -322,23 +335,55 @@ setting_detach(setting_t *s)
 /**
  *
  */
-void
-setting_destroy(setting_t *s)
+static void
+setting_release(setting_t *s)
 {
-  s->s_callback = NULL;
+  if(atomic_add(&s->s_refcount, -1) > 1)
+    return;
+
+  if(s->s_parent != NULL)
+    setting_release(s->s_parent);
+
+  prop_ref_dec(s->s_val);
+  prop_ref_dec(s->s_current_origin);
+  prop_ref_dec(s->s_root);
+  prop_ref_dec(s->s_ext_value);
+  prop_ref_dec(s->s_current_value);
+
   rstr_release(s->s_default_str);
   free(s->s_id);
   free(s->s_pending_value);
   free(s->s_store_name);
-  prop_unsubscribe(s->s_sub);
-  prop_destroy(s->s_root);
-  prop_ref_dec(s->s_val);
-  prop_ref_dec(s->s_root);
-  prop_ref_dec(s->s_ext_value);
-  prop_ref_dec(s->s_current_value);
   free(s);
 }
 
+/**
+ *
+ */
+void
+setting_destroy(setting_t *s)
+{
+  if(s->s_on_group_list)
+    LIST_REMOVE(s, s_group_link);
+  s->s_callback = NULL;
+  prop_unsubscribe(s->s_sub);
+  prop_unsubscribe(s->s_inherited_value_sub);
+  prop_unsubscribe(s->s_inherited_origin_sub);
+  prop_destroy(s->s_root);
+  setting_release(s);
+}
+
+
+/**
+ *
+ */
+void
+setting_group_destroy(struct setting_list *list)
+{
+  setting_t *s;
+  while((s = LIST_FIRST(list)) != NULL)
+    setting_destroy(s);
+}
 
 /**
  *
@@ -385,10 +430,15 @@ settings_int_callback_ng(void *opaque, int v)
   setting_t *s = opaque;
   prop_callback_int_t *cb = s->s_callback;
 
+  s->s_value_set = 1;
+
   if(cb) cb(s->s_opaque, v);
 
   if(s->s_ext_value)
     prop_set_int(s->s_ext_value, v);
+
+  if(s->s_flags & SETTINGS_DEBUG)
+    TRACE(TRACE_DEBUG, "Settings", "Value set to %d", v);
 
   if(!s->s_enable_writeback)
     return;
@@ -399,9 +449,50 @@ settings_int_callback_ng(void *opaque, int v)
     setting_save_htsmsg(s);
   }
 
-  if(s->s_kvstore)
+  if(s->s_kvstore) {
     kv_url_opt_set_deferred(s->s_store_name, KVSTORE_DOMAIN_SETTING,
                             s->s_id, KVSTORE_SET_INT, v);
+  }
+
+  prop_set_string(s->s_current_origin, s->s_origin);
+}
+
+
+/**
+ *
+ */
+static void
+settings_int_inherited_value(void *opaque, int v)
+{
+  setting_t *s = opaque;
+
+  if(s->s_value_set)
+    return;
+
+  if(s->s_flags & SETTINGS_DEBUG)
+    TRACE(TRACE_DEBUG, "Settings", "Value set to %d (inherited)", v);
+
+  prop_callback_int_t *cb = s->s_callback;
+
+  prop_set_int_ex(s->s_val, s->s_sub, v);
+
+  if(cb) cb(s->s_opaque, v);
+
+  if(s->s_ext_value)
+    prop_set_int(s->s_ext_value, v);
+}
+
+
+/**
+ *
+ */
+static void
+settings_int_inherited_origin(void *opaque, rstr_t *origin)
+{
+  setting_t *s = opaque;
+
+  if(!s->s_value_set)
+    prop_set_rstring(s->s_current_origin, origin);
 }
 
 
@@ -541,7 +632,7 @@ settings_generic_set_int_from_str(void *opaque, const char *str)
  *
  */
 setting_t *
-setting_create(int type, prop_t *parent, int flags, ...)
+setting_create(int type, prop_t *model, int flags, ...)
 {
   setting_t *s = calloc(1, sizeof(setting_t));
   prop_courier_t *pc = NULL;
@@ -554,17 +645,24 @@ setting_create(int type, prop_t *parent, int flags, ...)
   prop_t *opt;
   const char **optlist;
   va_list ap;
+  int i32;
+  struct setting_list *list;
 
+  s->s_refcount = 1;
   s->s_type = type;
   s->s_flags = flags;
+  strcpy(s->s_origin, "local");
   va_start(ap, flags);
 
-  if(flags & SETTINGS_RAW_NODES)
-    s->s_root = prop_create_r(parent, NULL);
-  else
-    s->s_root = prop_create_r(parent ? prop_create(parent, "nodes") :
-                              settings_nodes, NULL);
-
+  if(model == NULL) {
+    s->s_root = prop_ref_inc(prop_create_root(NULL));
+  } else if(flags & SETTINGS_RAW_NODES) {
+    s->s_root = prop_create_r(model, NULL);
+  } else {
+    prop_t *nodes = prop_create_r(model, "nodes");
+    s->s_root = prop_create_r(nodes, NULL);
+    prop_ref_dec(nodes);
+  }
 
   switch(type) {
   case SETTING_INT:
@@ -589,6 +687,7 @@ setting_create(int type, prop_t *parent, int flags, ...)
   prop_t *m = prop_create_r(s->s_root, "metadata");
   prop_t *title = prop_create_r(m, "title");
   prop_t *enabled = prop_create_r(s->s_root, "enabled");
+  s->s_current_origin = prop_create_r(s->s_root, "origin");
 
   do {
     tag = va_arg(ap, int);
@@ -718,6 +817,23 @@ setting_create(int type, prop_t *parent, int flags, ...)
       enabled = NULL;
       break;
 
+    case SETTING_TAG_VALUE_ORIGIN:
+      snprintf(s->s_origin, sizeof(s->s_origin), "%s",
+               va_arg(ap, const char *));
+      break;
+
+    case SETTING_TAG_GROUP:
+      list = va_arg(ap, struct setting_list *);
+      LIST_INSERT_HEAD(list, s, s_group_link);
+      s->s_on_group_list = 1;
+      break;
+
+    case SETTING_TAG_INHERIT:
+      s->s_parent = va_arg(ap, setting_t *);
+      atomic_add(&s->s_parent->s_refcount, 1);
+      initial_int = INT32_MIN;
+      break;
+
     case 0:
       break;
 
@@ -745,17 +861,42 @@ setting_create(int type, prop_t *parent, int flags, ...)
     prop_set(s->s_root, "step", PROP_SET_INT, step);
     // FALLTHRU
   case SETTING_BOOL:
+
+    i32 = INT32_MIN;
+
     if(s->s_store != NULL)
-      initial_int = htsmsg_get_s32_or_default(s->s_store, s->s_id,
-                                              initial_int);
+      i32 = htsmsg_get_s32_or_default(s->s_store, s->s_id, INT32_MIN);
 
     if(s->s_kvstore)
-      initial_int = kv_url_opt_get_int(s->s_store_name, KVSTORE_DOMAIN_SETTING,
-                                       s->s_id, initial_int);
+      i32 = kv_url_opt_get_int(s->s_store_name, KVSTORE_DOMAIN_SETTING,
+                               s->s_id, INT32_MIN);
 
-    prop_set_int(s->s_val, initial_int);
-    if(flags & SETTINGS_INITIAL_UPDATE)
-      settings_int_callback_ng(s, initial_int);
+    if(i32 == INT32_MIN)
+      i32 = initial_int;
+
+    if(i32 != INT32_MIN) {
+      // If this setting originated the value, then set it
+
+      // Clamp value
+      if(type == SETTING_INT) {
+
+
+        int x = MIN(max, MAX(min, i32));
+
+        if(x != i32)
+          TRACE(TRACE_DEBUG, "Settings", "Value %d clamped to %d", i32, x);
+        i32 = x;
+
+      } else if(type == SETTING_BOOL) {
+        i32 = !!i32;
+      }
+
+      s->s_value_set = 1;
+      prop_set_string(s->s_current_origin, s->s_origin);
+      prop_set_int(s->s_val, i32);
+      if(flags & SETTINGS_INITIAL_UPDATE)
+        settings_int_callback_ng(s, i32);
+    }
 
     s->s_sub =
       prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_IGNORE_VOID,
@@ -764,6 +905,25 @@ setting_create(int type, prop_t *parent, int flags, ...)
                      PROP_TAG_COURIER, pc,
                      PROP_TAG_MUTEX, mtx,
                      NULL);
+
+    if(s->s_parent != NULL) {
+      s->s_inherited_value_sub =
+        prop_subscribe(PROP_SUB_IGNORE_VOID,
+                       PROP_TAG_CALLBACK_INT, settings_int_inherited_value, s,
+                       PROP_TAG_ROOT, s->s_parent->s_val,
+                       PROP_TAG_COURIER, pc,
+                       PROP_TAG_MUTEX, mtx,
+                       NULL);
+
+      s->s_inherited_origin_sub =
+        prop_subscribe(PROP_SUB_IGNORE_VOID,
+                       PROP_TAG_CALLBACK_RSTR, settings_int_inherited_origin, s,
+                       PROP_TAG_NAMED_ROOT, s->s_parent->s_root, "setting",
+                       PROP_TAG_NAME("setting", "origin"),
+                       PROP_TAG_COURIER, pc,
+                       PROP_TAG_MUTEX, mtx,
+                       NULL);
+    }
     break;
 
   case SETTING_STRING:
@@ -927,6 +1087,80 @@ setting_set(setting_t *s, int type, ...)
     break;
   }
   va_end(ap);
+}
+
+
+/**
+ *
+ */
+void
+setting_reset(setting_t *s)
+{
+  if(s->s_parent == NULL) {
+    TRACE(TRACE_ERROR, "Settings", "Unable to reset setting without ancestor");
+    return;
+  }
+  s->s_value_set = 0;
+
+  if(s->s_store) {
+    htsmsg_delete_field(s->s_store, s->s_id);
+    setting_save_htsmsg(s);
+  }
+
+  if(s->s_kvstore)
+    kv_url_opt_set_deferred(s->s_store_name, KVSTORE_DOMAIN_SETTING, s->s_id,
+                            KVSTORE_SET_VOID);
+
+  prop_sub_reemit(s->s_inherited_value_sub);
+  prop_sub_reemit(s->s_inherited_origin_sub);
+}
+
+
+/**
+ *
+ */
+void
+setting_group_reset(struct setting_list *list)
+{
+  setting_t *s;
+  LIST_FOREACH(s, list, s_group_link)
+    setting_reset(s);
+}
+
+
+/**
+ *
+ */
+void
+setting_push_to_ancestor(setting_t *s, const char *ancestor)
+{
+  setting_t *a;
+
+  printf("Pushing to %s\n", ancestor);
+
+  for(a = s; a != NULL; a = a->s_parent) {
+    printf("Checking %p (%s)\n", a, a->s_origin);
+    if(!strcmp(ancestor, a->s_origin))
+      break;
+  }
+  if(a == NULL) {
+    TRACE(TRACE_ERROR, "Settings", "Unable to find setting anscestor %s",
+          ancestor);
+    return;
+  }
+  prop_copy(a->s_val, s->s_val);
+}
+
+
+/**
+ *
+ */
+void
+setting_group_push_to_ancestor(struct setting_list *list, const char *ancestor)
+{
+  setting_t *s;
+  LIST_FOREACH(s, list, s_group_link)
+    setting_push_to_ancestor(s, ancestor);
 }
 
 

@@ -79,9 +79,13 @@ typedef struct subtitle_provider {
  *
  */
 struct subtitle_settings {
-  int scaling;
+
+  struct setting *scaling_setting;
+  struct setting *align_on_video_setting;
+  struct setting *vertical_displacement_setting;
+  struct setting *horizontal_displacement_setting;
+
   int alignment;   // LAYOUT_ALIGN_ from layout.h
-  int align_on_video;
   int style_override;
   int color;
   int shadow_color;

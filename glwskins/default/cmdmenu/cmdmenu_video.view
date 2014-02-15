@@ -177,6 +177,9 @@ widget(deck, {
       source: "skin://pages/listitems/" + $self.type + ".view";
       time: 0.3;
       noInitialTransform: true;
+      args: {
+        showOrigin = true;
+      };
     });
   );
 
@@ -192,6 +195,9 @@ widget(deck, {
       source: "skin://pages/listitems/" + $self.type + ".view";
       time: 0.3;
       noInitialTransform: true;
+      args: {
+        showOrigin = true;
+      };
     });
   );
 
@@ -206,6 +212,9 @@ widget(deck, {
       source: "skin://pages/listitems/" + $self.type + ".view";
       time: 0.3;
       noInitialTransform: true;
+      args: {
+        showOrigin = true;
+      };
     });
   );
 

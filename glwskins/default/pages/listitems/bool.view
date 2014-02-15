@@ -30,6 +30,15 @@ widget(backdrop, {
       align: right;
       source: select($self.value, "options-on.png", "options-off.png");
     });
-    
+
+    widget(icon, {
+      hidden: !$args.showOrigin;
+      color: select(isFocused(), 1.0, 0.6);
+      source: translate($self.origin, void,
+                        "global", "dataroot://resources/svg/Settings.svg",
+                        "directory", "dataroot://resources/svg/Folder.svg",
+                        "local", "dataroot://resources/svg/Movie.svg"
+                        );
+    });
   });
 });

@@ -29,6 +29,7 @@
 #define SETTINGS_RAW_NODES      0x4
 #define SETTINGS_FIRST          0x8 // Insert at head 
 #define SETTINGS_EMPTY_IS_DEFAULT 0x10 // Empty string makes it be default
+#define SETTINGS_DEBUG            0x20
 
 typedef void (settings_saver_t)(void *opaque, htsmsg_t *htsmsg);
 
@@ -76,6 +77,8 @@ prop_t *settings_create_bound_string(prop_t *parent, prop_t *title,
 
 prop_t *makesep(prop_t *title);
 
+LIST_HEAD(setting_list, setting);
+
 enum {
   SETTING_TAG_TITLE = 1,
   SETTING_TAG_TITLE_CSTR,
@@ -96,6 +99,9 @@ enum {
   SETTING_TAG_WRITE_PROP,
   SETTING_TAG_PROP_ENABLER,
   SETTING_TAG_KVSTORE,
+  SETTING_TAG_VALUE_ORIGIN,
+  SETTING_TAG_GROUP,
+  SETTING_TAG_INHERIT,
 };
 
 #define SETTING_TITLE(a)                        SETTING_TAG_TITLE, a
@@ -119,10 +125,10 @@ enum {
 #define SETTING_WRITE_PROP(a)                   SETTING_TAG_WRITE_PROP, a
 #define SETTING_KVSTORE(a, b)                   SETTING_TAG_KVSTORE, a, b
 #define SETTING_PROP_ENABLER(a)                 SETTING_TAG_PROP_ENABLER, a
+#define SETTING_VALUE_ORIGIN(a)                 SETTING_TAG_VALUE_ORIGIN, a
+#define SETTING_GROUP(a)                        SETTING_TAG_GROUP, a
+#define SETTING_INHERIT(a)                      SETTING_TAG_INHERIT, a
 #define SETTING_END                             NULL
-
-
-
 
 
 enum {
@@ -140,3 +146,14 @@ prop_t *setting_add_option(setting_t *s, const char *id,
                            const char *title, int sel);
 
 void setting_set(setting_t *s, int type, ...);
+
+void setting_reset(setting_t *s);
+
+void setting_push_to_ancestor(setting_t *s, const char *ancestor);
+
+void setting_group_destroy(struct setting_list *list);
+
+void setting_group_push_to_ancestor(struct setting_list *list,
+                                    const char *ancestor);
+
+void setting_group_reset(struct setting_list *list);

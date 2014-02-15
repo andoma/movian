@@ -25,9 +25,10 @@ void video_settings_init(void);
 
 struct video_settings {
   int vdpau;
-  int stretch_horizontal;
-  int stretch_fullscreen;
-  int vzoom;
+
+  struct setting *vzoom_setting;
+  struct setting *stretch_horizontal_setting;
+  struct setting *stretch_fullscreen_setting;
 
   enum {
     VIDEO_RESUME_NO = 0,

@@ -28,6 +28,7 @@
 #include "audio.h"
 #include "libav.h"
 #include "htsmsg/htsmsg_store.h"
+#include "settings.h"
 
 #include <libavutil/avutil.h>
 #include <libavcodec/avcodec.h>
@@ -89,9 +90,41 @@ audio_mastervol_init(void)
 /**
  *
  */
-void 
+void
 audio_init(void)
 {
+  htsmsg_t *store = htsmsg_store_load("audio2");
+  if(store == NULL)
+    store = htsmsg_create_map();
+
+  prop_t *asettings =
+    settings_add_dir(NULL, _p("Audio settings"), NULL, NULL,
+                     _p("Setup audio output"),
+                     "settings:audio");
+
+  settings_create_separator(asettings, _p("Audio during for video playback"));
+
+  gconf.setting_av_volume =
+    setting_create(SETTING_INT, asettings,
+                   SETTINGS_INITIAL_UPDATE,
+                   SETTING_TITLE(_p("Audio gain adjustment during video playback")),
+                   SETTING_RANGE(-12, 12),
+                   SETTING_UNIT_CSTR("dB"),
+                   SETTING_HTSMSG("videovolume", store, "audio2"),
+                   SETTING_VALUE_ORIGIN("global"),
+                   NULL);
+
+  gconf.setting_av_sync =
+    setting_create(SETTING_INT, asettings,
+                   SETTINGS_INITIAL_UPDATE,
+                   SETTING_TITLE(_p("Audio delay")),
+                   SETTING_RANGE(-5000, 5000),
+                   SETTING_STEP(50),
+                   SETTING_UNIT_CSTR("ms"),
+                   SETTING_HTSMSG("avdelta", store, "audio2"),
+                   SETTING_VALUE_ORIGIN("global"),
+                   NULL);
+
   audio_mastervol_init();
   audio_class = audio_driver_init();
 }

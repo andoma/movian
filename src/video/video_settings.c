@@ -80,26 +80,29 @@ video_settings_init(void)
                  NULL);
 #endif
 
-  setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
-                 SETTING_TITLE(_p("Stretch video to widescreen")),
-                 SETTING_HTSMSG("stretch_horizontal", store, "videoplayback"),
-                 SETTING_WRITE_BOOL(&video_settings.stretch_horizontal),
-                 NULL);
+  video_settings.vzoom_setting =
+    setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,
+                   SETTING_TITLE(_p("Video zoom")),
+                   SETTING_UNIT_CSTR("%"),
+                   SETTING_RANGE(50, 200),
+                   SETTING_VALUE(100),
+                   SETTING_HTSMSG("vzoom", store, "videoplayback"),
+                   SETTING_VALUE_ORIGIN("global"),
+                   NULL);
 
-  setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
-                 SETTING_TITLE(_p("Stretch video to fullscreen")),
-                 SETTING_HTSMSG("stretch_fullscreen", store, "videoplayback"),
-                 SETTING_WRITE_BOOL(&video_settings.stretch_fullscreen),
-                 NULL);
+  video_settings.stretch_horizontal_setting =
+    setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
+                   SETTING_TITLE(_p("Stretch video to widescreen")),
+                   SETTING_HTSMSG("stretch_horizontal", store, "videoplayback"),
+                   SETTING_VALUE_ORIGIN("global"),
+                   NULL);
 
-  setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,
-                 SETTING_TITLE(_p("Video zoom")),
-                 SETTING_WRITE_INT(&video_settings.vzoom),
-                 SETTING_UNIT_CSTR("%"),
-                 SETTING_RANGE(50, 200),
-                 SETTING_VALUE(100),
-                 SETTING_HTSMSG("vzoom", store, "videoplayback"),
-                 NULL);
+  video_settings.stretch_fullscreen_setting =
+    setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
+                   SETTING_TITLE(_p("Stretch video to fullscreen")),
+                   SETTING_HTSMSG("stretch_fullscreen", store, "videoplayback"),
+                   SETTING_VALUE_ORIGIN("global"),
+                   NULL);
 
   setting_create(SETTING_MULTIOPT, s, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Resume video playback")),

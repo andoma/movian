@@ -268,6 +268,9 @@ typedef struct gconf {
   struct prop *settings_network;
   struct prop_concat *settings_look_and_feel;
 
+  struct setting *setting_av_volume; // Maybe move to audio.h
+  struct setting *setting_av_sync;   // Maybe move to audio.h
+
   hts_mutex_t state_mutex;
   hts_cond_t state_cond;
 
