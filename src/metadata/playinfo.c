@@ -38,7 +38,7 @@
 
 static HTS_MUTEX_DECL(mip_mutex);
 
-static void update_by_url(const char *url);
+static void update_by_url(const char *url, int dolock);
 
 /**
  *
@@ -54,7 +54,7 @@ playinfo_register_play(const char *url, int inc)
   kv_url_opt_set(url, KVSTORE_DOMAIN_SYS, "lastplay",
                  KVSTORE_SET_INT, (int)(time(NULL)));
 
-  update_by_url(url);
+  update_by_url(url, 1);
 }
 
 
@@ -67,7 +67,7 @@ playinfo_set_restartpos(const char *url, int64_t pos_ms)
 {
   kv_url_opt_set(url, KVSTORE_DOMAIN_SYS, "restartposition",
                  pos_ms <= 0 ? KVSTORE_SET_VOID : KVSTORE_SET_INT64, pos_ms);
-  update_by_url(url);
+  update_by_url(url, 1);
 }
 
 
@@ -143,7 +143,7 @@ mip_set(metadb_item_prop_t *mip, const metadb_item_info_t *mii)
  *
  */
 static void
-update_by_url(const char *url)
+update_by_url(const char *url, int dolock)
 {
   metadb_item_info_t mii;
 
@@ -152,11 +152,13 @@ update_by_url(const char *url)
   metadb_item_prop_t *mip;
   const unsigned int hash = mystrhash(url) % MIP_HASHWIDTH;
 
-  hts_mutex_lock(&mip_mutex);
+  if(dolock)
+    hts_mutex_lock(&mip_mutex);
   LIST_FOREACH(mip, &mip_hash[hash], mip_link)
     if(!strcmp(mip->mip_url, url))
       mip_set(mip, &mii);
-  hts_mutex_unlock(&mip_mutex);
+  if(dolock)
+    hts_mutex_unlock(&mip_mutex);
 }
 
 
@@ -215,7 +217,7 @@ metadb_set_playcount(void *opaque, prop_event_t event, ...)
 
   kv_url_opt_set(mip->mip_url, KVSTORE_DOMAIN_SYS, "playcount",
                  KVSTORE_SET_INT, v);
-  update_by_url(mip->mip_url);
+  update_by_url(mip->mip_url, 0);
 }
 
 
@@ -274,6 +276,6 @@ playinfo_mark_urls_as(const char **urls, int num_urls, int seen)
   for(int j = 0; j < num_urls; j++) {
     kv_url_opt_set(urls[j], KVSTORE_DOMAIN_SYS, "playcount",
                    KVSTORE_SET_INT, seen);
-    update_by_url(urls[j]);
+    update_by_url(urls[j], 1);
   }
 }
