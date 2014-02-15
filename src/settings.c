@@ -1198,6 +1198,9 @@ init_dev_settings(void)
   add_dev_bool(s, "Always close pages when pressing back",
 	       "navalwaysclose", &gconf.enable_nav_always_close);
 
+  add_dev_bool(s, "Debug read/writes to URL key/value store",
+	       "kvstoredebug", &gconf.enable_kvstore_debug);
+
   setting_create(SETTING_STRING, gconf.settings_dev, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE_CSTR("Network log destination"),
                  SETTING_CALLBACK(set_netlog, NULL),

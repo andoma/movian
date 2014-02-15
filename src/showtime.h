@@ -248,6 +248,7 @@ typedef struct gconf {
   int enable_smb_debug;
   int enable_mem_debug;
   int enable_nav_always_close;
+  int enable_kvstore_debug;
 
   const char *devplugin;
   const char *plugin_repo;
