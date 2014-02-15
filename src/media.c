@@ -26,6 +26,7 @@
 #include <time.h>
 #include <string.h>
 #include <math.h>
+#include <stdio.h>
 
 #include "media.h"
 #include "showtime.h"
