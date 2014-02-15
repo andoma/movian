@@ -388,7 +388,6 @@ parse_str(uint32_t *output, const char *str, int flags, int context,
 	continue;
       }
       tmp[lp] = 0;
-      printf("%s\n", tmp);
       int r = sub_tag_to_code(tmp, output, olen, context, flags, &pc);
       if(r != -1) {
 	olen = r;
