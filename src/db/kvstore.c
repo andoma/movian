@@ -512,6 +512,13 @@ kv_url_opt_get_int(const char *url, int domain, const char *key, int def)
   if(stmt) {
     v = sqlite3_column_int(stmt, 0);
     sqlite3_finalize(stmt);
+    if(gconf.enable_kvstore_debug)
+      TRACE(TRACE_DEBUG, "kvstore","get: url=%s key=%s domain=%d value=%d",
+            url, key, domain, v);
+  } else {
+    if(gconf.enable_kvstore_debug)
+      TRACE(TRACE_DEBUG, "kvstore","get: url=%s key=%s domain=%d value=UNSET",
+            url, key, domain);
   }
   kvstore_close(db);
   return v;
@@ -604,7 +611,7 @@ kw_write(void *db, const kvstore_write_t *kw, int64_t id)
     rc = SQLITE_OK;
 
   if(gconf.enable_kvstore_debug)
-    TRACE(TRACE_DEBUG, "kvstore","url=%s key=%s domain=%d value=%s rc=%d",
+    TRACE(TRACE_DEBUG, "kvstore", "set: url=%s key=%s domain=%d value=%s rc=%d",
           kw->kw_url, kw->kw_key, kw->kw_domain, value, rc);
   return rc;
 }
