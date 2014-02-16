@@ -107,6 +107,7 @@ typedef struct cifs_connection {
   struct nbt_req_list cc_pending_nbt_requests;
 
   char cc_broken;
+  char cc_wait_for_ping;
   uint16_t cc_uid;
   uint16_t cc_max_buffer_size;
   uint16_t cc_max_mpx_count;
@@ -1303,7 +1304,14 @@ smb_dispatch(void *aux)
     h = buf;
     mid = letoh_16(h->mid);
 
-    if(h->pid == htole_16(1)) {
+    if(h->pid == htole_16(3)) {
+      SMBTRACE("%s:%d got echo reply", cc->cc_hostname, cc->cc_port);
+      // SMB_ECHO is always transfered on PID 3
+      cc->cc_wait_for_ping = 0;
+    }
+
+    // We run all requests on PID 2, so if it's not 2, free data
+    if(h->pid != htole_16(2)) {
       free(buf);
       continue;
     }
@@ -2841,8 +2849,6 @@ static void
 cifs_periodic(struct callout *c, void *opaque)
 {
   cifs_connection_t *cc = opaque;
-  void *rbuf;
-  int rlen;
 
   EchoRequest_t *req = alloca(sizeof(EchoRequest_t) + 2);
   memset(req, 0, sizeof(EchoRequest_t) + 2);
@@ -2855,13 +2861,16 @@ cifs_periodic(struct callout *c, void *opaque)
   req->byte_count = htole_16(2);
   req->data[0] = 0x13;
   req->data[1] = 0x37;
-  
-  if(!nbt_async_req_reply(cc, req, sizeof(EchoRequest_t) + 2,
-                          &rbuf, &rlen, 0)) {
-    //  EchoReply_t *resp = rbuf;
-    //uint32_t errcode = letoh_32(resp->hdr.errorcode);
-    free(rbuf);
+
+  req->hdr.pid = htole_16(3); // PING
+  nbt_write(cc, req, sizeof(EchoRequest_t) + 2);
+
+  if(cc->cc_wait_for_ping) {
+    cc->cc_broken = 1;
+    SMBTRACE("%s:%d no ping response", cc->cc_hostname, cc->cc_port);
   }
+
+  cc->cc_wait_for_ping = 1;
 
   callout_arm(&cc->cc_timer, cifs_periodic, cc, SMB_ECHO_INTERVAL);
   cc->cc_auto_close++;
