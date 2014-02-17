@@ -33,6 +33,7 @@
 
 typedef struct js_http_response {
   buf_t *buf;
+  char *url;
   char *contenttype;
 } js_http_response_t;
 
@@ -47,6 +48,7 @@ http_response_finalize(JSContext *cx, JSObject *obj)
   js_http_response_t *jhr = JS_GetPrivate(cx, obj);
 
   free(jhr->contenttype);
+  free(jhr->url);
   buf_release(jhr->buf);
   free(jhr);
 }
@@ -86,14 +88,16 @@ http_response_toString(JSContext *cx, JSObject *obj, uintN argc,
       if(strcasecmp(charset, "utf-8")) {
 	cs = charset_get(charset);
 	if(cs == NULL)
-	  TRACE(TRACE_INFO, "JS", "Unable to handle charset %s", charset);
+	  TRACE(TRACE_INFO, "JS", "%s: Unable to handle charset %s",
+                jhr->url, charset);
         else
-          TRACE(TRACE_DEBUG, "JS", "Parsing charset %s as %s",
-                charset, cs->id);
+          TRACE(TRACE_DEBUG, "JS", "%s: Parsing charset %s as %s",
+                jhr->url, charset, cs->id);
       } else {
 	tmpbuf = utf8_cleanup(r);
 	if(tmpbuf != NULL) {
-	  TRACE(TRACE_DEBUG, "JS", "Repairing broken UTF-8", charset);
+	  TRACE(TRACE_DEBUG, "JS", "%s: Repairing broken UTF-8",
+                jhr->url, charset);
 	  r = tmpbuf;
 	}
       }
@@ -104,8 +108,43 @@ http_response_toString(JSContext *cx, JSObject *obj, uintN argc,
       strstr(jhr->contenttype, "text/xml");
   } else {
     isxml = 0;
-    if(cs == NULL && !utf8_verify(r))
+  }
+
+  if(cs == NULL && !utf8_verify(r)) {
+    // Does not parse as valid UTF-8, we need to do something
+
+    // Try to scan document for <meta http-equiv -tags
+    char *start = strstr(buf_cstr(jhr->buf), "<meta http-equiv=\"");
+    if(start != NULL) {
+      start += strlen("<meta http-equiv=\"");
+      char *end = strchr(start + 1, '>');
+      int len = end - start;
+      if(len < 1024) {
+        char *copy = alloca(len + 1);
+        memcpy(copy, start, len);
+        copy[len] = 0;
+        if(!strncasecmp(copy, "content-type", strlen("content-type"))) {
+          const char *charset = strstr(copy, "charset=");
+          if(charset != NULL) {
+            charset += strlen("charset=");
+            char *e = strchr(charset, '"');
+            if(e != NULL) {
+              *e = 0;
+              cs = charset_get(charset);
+              TRACE(TRACE_DEBUG, "JS",
+                    "%s: Found meta tag claiming charset %s",
+                    jhr->url, charset);
+            }
+          }
+        }
+      }
+    }
+
+    if(cs == NULL) {
+      TRACE(TRACE_DEBUG, "JS", jhr->url,
+            "%s: No charset found and not utf-8, treting as latin-1");
       cs = charset_get(NULL);
+    }
   }
 
   if(cs != NULL) {
@@ -406,6 +445,7 @@ js_http_request(JSContext *cx, jsval *rval,
     mystrset(&jhr->contenttype,
 	     http_header_get(&response_headers, "content-type"));
   }
+  jhr->url = strdup(url);
 
   http_headers_free(&request_headers);
 
