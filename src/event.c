@@ -558,8 +558,8 @@ event_dispatch(event_t *e)
 const static int action_from_fkey[13][2] = {
   { 0, 0 },
   { ACTION_MENU,             ACTION_PLAYQUEUE },
-  { ACTION_SHOW_MEDIA_STATS, 0 },
-  { ACTION_ITEMMENU,         0 },
+  { ACTION_SHOW_MEDIA_STATS, ACTION_SKIP_BACKWARD },
+  { ACTION_ITEMMENU,         ACTION_SKIP_FORWARD },
   { ACTION_LOGWINDOW,        ACTION_ENABLE_SCREENSAVER },
 
   { ACTION_RELOAD_UI,        ACTION_RELOAD_DATA },
