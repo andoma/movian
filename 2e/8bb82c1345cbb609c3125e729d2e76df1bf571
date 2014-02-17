@@ -1,0 +1,6 @@
+Make it possible to move scrollbar from D-pad.
+
+Also when returning to list the list will change focused item to
+visible item on screen
+
+Fixes #1111
