@@ -45,17 +45,17 @@ widget(container_y, {
       space(1);
 
       widget(label, {
-	hidden: !$args.metadata.installed_version;
+	hidden: !$args.status.installedVersion;
 	TextStyleItem();
 	caption: '<font color="#888">' + _("Installed version: ") + '</font>' + 
-	  $args.metadata.installed_version;
+	  $args.status.installedVersion;
       });
 
       widget(label, {
-	hidden: !$args.metadata.available_version;
+	hidden: !$args.status.availableVersion;
 	TextStyleItem();
 	caption: '<font color="#888">' + _("Available version: ") + '</font>' + 
-	  $args.metadata.available_version;
+	  $args.status.availableVersion;
       });
 
       widget(label, {

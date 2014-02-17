@@ -74,10 +74,9 @@ static char *plugin_beta_passwords;
 static hts_mutex_t plugin_mutex;
 static char *devplugin;
 
-static prop_t *plugin_root_installed;
-static prop_t *plugin_root_repo;
-
-static prop_t *plugin_root_model;
+static prop_t *plugin_root_list;
+static prop_t *plugin_start_model;
+static prop_t *plugin_repo_model;
 
 LIST_HEAD(plugin_list, plugin);
 LIST_HEAD(plugin_view_list, plugin_view);
@@ -93,35 +92,23 @@ typedef struct plugin {
   char *pl_package;
   char *pl_title;
 
-  prop_t *pl_inst_prop;
-
   char *pl_inst_ver;
   char *pl_repo_ver;
   char *pl_showtime_min_version;
 
-  int pl_loaded;
-  int pl_installed;
-  int pl_can_upgrade;
-
   prop_t *pl_status;
-  prop_t *pl_statustxt;
-  prop_t *pl_minver;
-
-  prop_t *pl_canInstall;
-  prop_t *pl_canUpgrade;
-  prop_t *pl_cantUpgrade;
-  prop_t *pl_canUninstall;
-  prop_t *pl_prop_installed;
-
-
-  int pl_new_version_avail;
 
   void (*pl_unload)(struct plugin *pl);
 
   struct plugin_view_entry_list pl_views;
-  
-  int pl_mark;
+
   void (*pl_enable_cb)(int enabled);
+
+  char pl_loaded;
+  char pl_installed;
+  char pl_can_upgrade;
+  char pl_new_version_avail;
+  char pl_mark;
 
 } plugin_t;
 
@@ -190,13 +177,6 @@ plugin_find(const char *id)
   pl->pl_id = strdup(id);
 
   pl->pl_status = prop_create_root(NULL);
-  pl->pl_statustxt = prop_create(pl->pl_status, "statustxt");
-  pl->pl_minver = prop_create(pl->pl_status, "minver");
-  pl->pl_canInstall   = prop_create(pl->pl_status, "canInstall");
-  pl->pl_canUpgrade   = prop_create(pl->pl_status, "canUpgrade");
-  pl->pl_cantUpgrade   = prop_create(pl->pl_status, "cantUpgrade");
-  pl->pl_canUninstall = prop_create(pl->pl_status, "canUninstall");
-  pl->pl_prop_installed = prop_create(pl->pl_status, "installed");
 
   LIST_INSERT_HEAD(&plugins, pl, pl_link);
   return pl;
@@ -232,19 +212,20 @@ update_state(plugin_t *pl)
   int cantUpgrade = 0;
   rstr_t *status = NULL;
 
-  int version_dep_ok = 
+  int version_dep_ok =
     pl->pl_showtime_min_version == NULL ||
     showtime_parse_version_int(pl->pl_showtime_min_version) <=
     showtime_get_version_int();
 
-  prop_set_void(pl->pl_minver);
+  prop_set(pl->pl_status, "minver", PROP_SET_VOID);
   pl->pl_new_version_avail = 0;
 
   if(pl->pl_installed == 0) {
 
     if(!version_dep_ok) {
       status = _("Not installable");
-      prop_set_string(pl->pl_minver, pl->pl_showtime_min_version);
+      prop_set(pl->pl_status, "minver", PROP_SET_STRING,
+               pl->pl_showtime_min_version);
 
     } else {
 
@@ -267,7 +248,8 @@ update_state(plugin_t *pl)
 
 	if(!version_dep_ok) {
 	  status = _("Not upgradable");
-	  prop_set_string(pl->pl_minver, pl->pl_showtime_min_version);
+          prop_set(pl->pl_status, "minver", PROP_SET_STRING,
+                   pl->pl_showtime_min_version);
 	  cantUpgrade = 1;
 	} else {
 	  status = _("Upgradable");
@@ -280,12 +262,15 @@ update_state(plugin_t *pl)
   }
 
   pl->pl_can_upgrade = canUpgrade;
-  prop_set_int(pl->pl_canInstall,   canInstall);
-  prop_set_int(pl->pl_canUninstall, canUninstall);
-  prop_set_int(pl->pl_canUpgrade,   canUpgrade);
-  prop_set_int(pl->pl_cantUpgrade,  cantUpgrade);
-  prop_set_int(pl->pl_prop_installed, pl->pl_installed);
-  prop_set_rstring(pl->pl_statustxt, status);
+  prop_set(pl->pl_status, "canInstall",   PROP_SET_INT, canInstall);
+  prop_set(pl->pl_status, "canUninstall", PROP_SET_INT, canUninstall);
+  prop_set(pl->pl_status, "canUpgrade",   PROP_SET_INT, canUpgrade);
+  prop_set(pl->pl_status, "cantUpgrade",  PROP_SET_INT, cantUpgrade);
+  prop_set(pl->pl_status, "installed",    PROP_SET_INT, pl->pl_installed);
+  prop_set(pl->pl_status, "statustxt",    PROP_SET_RSTRING, status);
+  prop_set(pl->pl_status, "loaded",       PROP_SET_INT, pl->pl_loaded);
+  prop_set(pl->pl_status, "installedVersion", PROP_SET_STRING, pl->pl_inst_ver);
+  prop_set(pl->pl_status, "availableVersion", PROP_SET_STRING, pl->pl_repo_ver);
   rstr_release(status);
 }
 
@@ -337,9 +322,8 @@ plugin_event(void *opaque, prop_event_t event, ...)
  *
  */
 static void
-plugin_fill_prop0(struct htsmsg *pm, struct prop *p,
-		  const char *basepath, int as_installed,
-		  plugin_t *pl)
+plugin_fill_prop(struct htsmsg *pm, struct prop *p,
+                 const char *basepath, plugin_t *pl)
 {
   const char *title = htsmsg_get_str(pm, "title") ?: pl->pl_id;
   const char *icon  = htsmsg_get_str(pm, "icon");
@@ -354,60 +338,41 @@ plugin_fill_prop0(struct htsmsg *pm, struct prop *p,
 		 PROP_TAG_MUTEX, &plugin_mutex,
 		 NULL);
 
-  prop_t *metadata = prop_create(p, "metadata");
+  prop_t *tmp = prop_create_r(p, "status");
+  prop_link(pl->pl_status, tmp);
+  prop_ref_dec(tmp);
 
-  prop_link(pl->pl_status, prop_create(p, "status"));
+  prop_t *metadata = prop_create_r(p, "metadata");
 
-  prop_set_string(prop_create(metadata, "title"), title);
-  prop_set_string(prop_create(metadata, "category"), cat ?: "other");
+  prop_set(metadata, "title",    PROP_SET_STRING, title);
+  prop_set(metadata, "category", PROP_SET_STRING, cat ?: "other");
 
-  prop_set_string_ex(prop_create(metadata, "description"),
-		     NULL,
-		     htsmsg_get_str(pm, "description"),
+  tmp = prop_create_r(metadata, "description");
+  prop_set_string_ex(tmp, NULL, htsmsg_get_str(pm, "description"),
 		     PROP_STR_RICH);
+  prop_ref_dec(tmp);
 
-  prop_set_string(prop_create(metadata, "synopsis"),
-		  htsmsg_get_str(pm, "synopsis"));
+  prop_set(metadata, "synopsis", PROP_SET_STRING,
+           htsmsg_get_str(pm, "synopsis"));
 
-  prop_set_string(prop_create(metadata, "author"),
-		  htsmsg_get_str(pm, "author"));
+  prop_set(metadata, "author", PROP_SET_STRING,
+           htsmsg_get_str(pm, "author"));
 
-  prop_set_string(prop_create(metadata, "version"),
-		  htsmsg_get_str(pm, "version"));
-
-  if(as_installed) {
-
-    prop_set_string(prop_create(metadata, "installed_version"),
-		    htsmsg_get_str(pm, "version"));
-
-    prop_link(prop_create(prop_create(prop_create(plugin_root_repo, pl->pl_id),
-				      "metadata"), "version"),
-	      prop_create(metadata, "available_version"));
-
-
-  } else {
-
-    prop_set_string(prop_create(metadata, "available_version"),
-		    htsmsg_get_str(pm, "version"));
-
-    prop_t *inst = prop_create(plugin_root_installed, pl->pl_id);
-    prop_t *instm = prop_create(inst, "metadata");
-
-    prop_link(prop_create(instm, "version"),
-	      prop_create(metadata, "installed_version"));
-  }
+  prop_set(metadata, "version", PROP_SET_STRING,
+           htsmsg_get_str(pm, "version"));
 
   if(icon != NULL) {
     if(basepath != NULL) {
       char url[512];
       snprintf(url, sizeof(url), "%s/%s", basepath, icon);
-      prop_set_string(prop_create(metadata, "icon"), url);
+      prop_set(metadata, "icon", PROP_SET_STRING,url);
     } else {
       char *iconurl = url_resolve_relative_from_base(get_repo(), icon);
-      prop_set_string(prop_create(metadata, "icon"), iconurl);
+      prop_set(metadata, "icon", PROP_SET_STRING, iconurl);
       free(iconurl);
     }
   }
+  prop_ref_dec(metadata);
 }
 
 
@@ -444,7 +409,7 @@ plugin_props_from_file(prop_t *prop, const char *zipfile)
 
 
     snprintf(path, sizeof(path), "zip://%s", zipfile);
-    plugin_fill_prop0(pm, prop, path, 0, pl);
+    plugin_fill_prop(pm, prop, path, pl);
     prop_set(prop, "package", PROP_SET_STRING, zipfile);
     update_state(pl);
     hts_mutex_unlock(&plugin_mutex);
@@ -458,27 +423,13 @@ plugin_props_from_file(prop_t *prop, const char *zipfile)
  *
  */
 static void
-plugin_prop_setup(htsmsg_t *pm, plugin_t *pl, const char *basepath,
-		  int as_installed)
+plugin_prop_setup(htsmsg_t *pm, plugin_t *pl, const char *basepath)
 {
   prop_t *p;
-
   hts_mutex_assert(&plugin_mutex);
-
-  if(as_installed) {
-    if(pl->pl_inst_prop == NULL)
-      pl->pl_inst_prop = prop_create(plugin_root_installed, pl->pl_id);
-
-    p = pl->pl_inst_prop;
-
-  } else {
-
-    p = prop_create(plugin_root_repo, pl->pl_id);
-  }
-
+  p = prop_create(plugin_root_list, pl->pl_id);
   prop_set(p, "type", PROP_SET_STRING, "plugin");
-
-  plugin_fill_prop0(pm, p, basepath, as_installed, pl);
+  plugin_fill_prop(pm, p, basepath, pl);
 }
 
 
@@ -628,12 +579,11 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
     if(!r) {
 
       if(as_installed) {
-	plugin_prop_setup(ctrl, pl, url, 1);
-	mystrset(&pl->pl_inst_ver, htsmsg_get_str(ctrl, "version"));
+	plugin_prop_setup(ctrl, pl, url);
 	pl->pl_installed = 1;
+        mystrset(&pl->pl_inst_ver, htsmsg_get_str(ctrl, "version"));
       }
 
-      mystrset(&pl->pl_inst_ver, htsmsg_get_str(ctrl, "version"));
       mystrset(&pl->pl_title, htsmsg_get_str(ctrl, "title") ?: id);
 
       pl->pl_loaded = 1;
@@ -744,6 +694,7 @@ repo_get(const char *repo, char *errbuf, size_t errlen)
 }
 
 
+
 /**
  *
  */
@@ -776,7 +727,7 @@ plugin_load_repo(void)
 	continue;
       pl = plugin_find(id);
       pl->pl_mark = 0;
-      plugin_prop_setup(pm, pl, NULL, 0);
+      plugin_prop_setup(pm, pl, NULL);
       mystrset(&pl->pl_repo_ver, htsmsg_get_str(pm, "version"));
       mystrset(&pl->pl_showtime_min_version,
 	       htsmsg_get_str(pm, "showtimeVersion"));
@@ -790,12 +741,11 @@ plugin_load_repo(void)
       }
     }
 
-
     for(pl = LIST_FIRST(&plugins); pl != NULL; pl = next) {
       next = LIST_NEXT(pl, pl_link);
+      prop_set(pl->pl_status, "inRepo", PROP_SET_INT, !pl->pl_mark);
       if(pl->pl_mark && !pl->pl_enable_cb) {
 	pl->pl_mark = 0;
-	prop_destroy_by_name(plugin_root_repo, pl->pl_id);
       }
     }
   }
@@ -854,32 +804,26 @@ plugin_autoupgrade(void)
   update_global_state();
 }
 
+
 /**
  *
  */
 static void
-plugins_setup_root_props(void)
+plugin_setup_start_model(void)
 {
   prop_concat_t *pc;
   struct prop_nf *pnf;
   prop_t *d, *p;
 
-  htsmsg_t *store = htsmsg_store_load("pluginconf") ?: htsmsg_create_map();
-  prop_t *parent = prop_create(prop_get_global(), "plugins");
-
-  plugin_root_installed = prop_create(parent, "installed");
-  plugin_root_repo = prop_create(parent, "repo");
-  plugin_root_model = prop_create_root(NULL);
-
-
-  prop_set_int(prop_create(plugin_root_model, "safeui"), 1);
-  prop_set_string(prop_create(plugin_root_model, "contents"), "plugins");
-  prop_set_string(prop_create(plugin_root_model, "type"), "directory");
+  plugin_start_model = prop_create_root(NULL);
+  prop_set(plugin_start_model, "safeui",  PROP_SET_INT, 1);
+  prop_set(plugin_start_model, "contents", PROP_SET_STRING, "plugins");
+  prop_set(plugin_start_model, "type",     PROP_SET_STRING, "directory");
 
   prop_link(_p("Apps"),
-	    prop_create(prop_create(plugin_root_model, "metadata"), "title"));
+	    prop_create(prop_create(plugin_start_model, "metadata"), "title"));
 
-  pc = prop_concat_create(prop_create(plugin_root_model, "nodes"), 0);
+  pc = prop_concat_create(prop_create(plugin_start_model, "nodes"), 0);
 
   // Top items
 
@@ -896,16 +840,108 @@ plugins_setup_root_props(void)
   // Installed plugins
 
   prop_t *inst = prop_create_root(NULL);
-  pnf = prop_nf_create(inst, plugin_root_installed, NULL, PROP_NF_AUTODESTROY);
-  prop_nf_sort(pnf, "node.metadata.title", 0, 0, NULL, 1);
-
+  pnf = prop_nf_create(inst, plugin_root_list, NULL, PROP_NF_AUTODESTROY);
+  prop_nf_pred_int_add(pnf, "node.status.installed",
+                       PROP_NF_CMP_NEQ, 1, NULL, PROP_NF_MODE_EXCLUDE);
 
   d = prop_create_root(NULL);
   prop_link(_p("Installed apps"),
 	    prop_create(prop_create(d, "metadata"), "title"));
   prop_set_string(prop_create(d, "type"), "separator");
   prop_concat_add_source(pc, inst, d);
+}
 
+/**
+ *
+ */
+static void
+plugin_setup_repo_model(void)
+{
+  int i;
+  struct prop_nf *pnf;
+  prop_concat_t *pc;
+
+  prop_t *model = prop_create_root(NULL);
+  plugin_repo_model = model;
+  prop_set(model, "type",     PROP_SET_STRING, "directory");
+  prop_set(model, "safeui",   PROP_SET_INT,    1);
+  prop_set(model, "contents", PROP_SET_STRING, "plugins");
+
+  prop_link(_p("Available apps"),
+	    prop_create(prop_create(model, "metadata"), "title"));
+
+  pc = prop_concat_create(prop_create(model, "nodes"), 0);
+
+  // Create filters per category
+
+  for(i = 0; i < PLUGIN_CAT_num; i++) {
+    const char *catname = val2str(i, catnames);
+    prop_t *cat = prop_create(model, catname);
+    pnf = prop_nf_create(cat, plugin_root_list, NULL, PROP_NF_AUTODESTROY);
+
+    prop_nf_pred_str_add(pnf, "node.metadata.category",
+			 PROP_NF_CMP_NEQ, catname, NULL,
+			 PROP_NF_MODE_EXCLUDE);
+    prop_nf_pred_int_add(pnf, "node.status.inRepo",
+			 PROP_NF_CMP_NEQ, 1, NULL,
+			 PROP_NF_MODE_EXCLUDE);
+    prop_nf_sort(pnf, "node.metadata.title", 0, 0, NULL, 1);
+    prop_nf_release(pnf);
+
+    prop_t *header = prop_create_root(NULL);
+    prop_set(header, "type", PROP_SET_STRING, "separator");
+
+    prop_t *gn = NULL;
+    switch(i) {
+    case PLUGIN_CAT_TV:
+      gn = _p("Online TV");
+      break;
+
+    case PLUGIN_CAT_VIDEO:
+      gn = _p("Video streaming");
+      break;
+
+    case PLUGIN_CAT_MUSIC:
+      gn = _p("Music streaming");
+      break;
+
+    case PLUGIN_CAT_CLOUD:
+      gn = _p("Cloud services");
+      break;
+
+    case PLUGIN_CAT_GLWVIEW:
+      gn = _p("User interface extensions");
+      break;
+
+    case PLUGIN_CAT_SUBTITLES:
+      gn = _p("Subtitles");
+      break;
+
+    default:
+      gn = _p("Uncategorized");
+      break;
+    }
+
+    prop_link(gn, prop_create(prop_create(header, "metadata"), "title"));
+    prop_concat_add_source(pc, cat, header);
+  }
+
+}
+
+
+/**
+ *
+ */
+static void
+plugins_setup_root_props(void)
+{
+  htsmsg_t *store = htsmsg_store_load("pluginconf") ?: htsmsg_create_map();
+  prop_t *parent = prop_create(prop_get_global(), "plugins");
+
+  plugin_root_list = prop_create(parent, "nodes");
+
+  plugin_setup_start_model();
+  plugin_setup_repo_model();
 
   // Settings
 
@@ -969,12 +1005,11 @@ plugin_static_event(void *opaque, prop_event_t event, ...)
 	install_static(pl);
       } else if(!strcmp(e->e_payload, "uninstall")) {
 	pl->pl_installed = 0;
-	prop_destroy(pl->pl_inst_prop);
-	pl->pl_inst_prop = NULL;
       } else {
 	break;
       }
     }
+    prop_set(pl->pl_status, "installed", PROP_SET_INT, pl->pl_installed);
     pl->pl_enable_cb(pl->pl_installed);
     htsmsg_delete_field(static_apps_state, pl->pl_id);
     htsmsg_add_u32(static_apps_state, pl->pl_id, pl->pl_installed);
@@ -993,14 +1028,10 @@ static void
 install_static(plugin_t *pl)
 {
   prop_t *p;
-  p = pl->pl_inst_prop = prop_create(plugin_root_installed, pl->pl_id);
+  p = prop_create(plugin_root_list, pl->pl_id);
   prop_set(p, "type", PROP_SET_STRING, "plugin");
 
   prop_link(pl->pl_status, prop_create(p, "status"));
-
-  prop_t *s = prop_create(plugin_root_repo, pl->pl_id);
-
-  prop_link(prop_create(s, "metadata"), prop_create(p, "metadata"));
 
   prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_SINGLETON,
 		 PROP_TAG_CALLBACK, plugin_static_event, pl,
@@ -1022,7 +1053,7 @@ plugin_add_static(const char *id, const char *category,
 {
   plugin_t *pl = plugin_find(id);
   pl->pl_enable_cb = cb;
-  prop_t *p = prop_create(plugin_root_repo, pl->pl_id);
+  prop_t *p = prop_create(plugin_root_list, pl->pl_id);
   prop_set(p, "type", PROP_SET_STRING, "plugin");
 
   prop_t *metadata = prop_create(p, "metadata");
@@ -1169,8 +1200,6 @@ plugin_remove(plugin_t *pl)
 
   plugin_unload(pl);
 
-  prop_destroy(pl->pl_inst_prop);
-  pl->pl_inst_prop = NULL;
   pl->pl_installed = 0;
   pl->pl_loaded = 0;
   mystrset(&pl->pl_inst_ver, NULL);
@@ -1186,29 +1215,33 @@ plugin_install(plugin_t *pl, const char *package)
 {
   char errbuf[200];
   char path[200];
-  rstr_t *s;
 
   if(package == NULL)
     package = pl->pl_package;
 
+  prop_t *status = prop_create_r(pl->pl_status, "statustxt");
+
   if(package == NULL) {
-    prop_set_string(pl->pl_statustxt, "No package file specified");
+    prop_unlink(status);
+    prop_set_string(status, "No package file specified");
+    prop_ref_dec(status);
     return -1;
   }
 
   TRACE(TRACE_INFO, "plugins", "Downloading plugin %s from %s",
 	pl->pl_id, package);
 
-  s = _("Downloading");
-  prop_set_rstring(pl->pl_statustxt, s);
-  rstr_release(s);
+  prop_link(_p("Downloading"), status);
+  prop_set(pl->pl_status, "canInstall", PROP_SET_INT, 0);
 
-  buf_t *b = fa_load(package,
-                      FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
-                      NULL);
+  buf_t *b = fa_load(package, FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)), NULL);
 
   if(b == NULL) {
-    prop_set_string(pl->pl_statustxt, errbuf);
+    prop_unlink(status);
+    prop_set_string(status, errbuf);
+  cleanup:
+    prop_set(pl->pl_status, "canInstall", PROP_SET_INT, 1);
+    prop_ref_dec(status);
     return -1;
   }
 
@@ -1216,17 +1249,14 @@ plugin_install(plugin_t *pl, const char *package)
 
   if(b->b_size < 4 ||
      buf[0] != 0x50 || buf[1] != 0x4b || buf[2] != 0x03 || buf[3] != 0x04) {
-    s = _("Corrupt plugin bundle");
-    prop_set_rstring(pl->pl_statustxt, s);
-    rstr_release(s);
-    return -1;
+    prop_link(_p("Corrupt plugin bundle"), status);
+    goto cleanup;
   }
-  
+
   TRACE(TRACE_INFO, "plugins", "Plugin %s valid ZIP archive %d bytes",
 	pl->pl_id, (int)b->b_size);
-  s = _("Installing");
-  prop_set_rstring(pl->pl_statustxt, s);
-  rstr_release(s);
+
+  prop_link(_p("Installing"), status);
 
   snprintf(path, sizeof(path), "%s/installedplugins", gconf.persistent_path);
   mkdir(path, 0770);
@@ -1242,26 +1272,21 @@ plugin_install(plugin_t *pl, const char *package)
 
   int fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0660);
   if(fd == -1) {
-    s = _("File open error");
-    prop_set_rstring(pl->pl_statustxt, s);
-    rstr_release(s);
-
     TRACE(TRACE_ERROR, "plugins", "Unable to write to %s -- %s",
 	  path, strerror(errno));
+    prop_link(_p("File open error"), status);
     buf_release(b);
-    return -1;
+    goto cleanup;
   }
   size_t bsize = b->b_size;
   size_t r = write(fd, buf, bsize);
   buf_release(b);
   if(close(fd) || r != bsize) {
-    buf_release(b);
-    s = _("Disk write error");
-    prop_set_rstring(pl->pl_statustxt, s);
-    rstr_release(s);
     TRACE(TRACE_ERROR, "plugins", "Unable to write to %s -- %s",
 	  path, strerror(errno));
-    return -1;
+    buf_release(b);
+    prop_link(_p("Disk write error"), status);
+    goto cleanup;
   }
 
 
@@ -1274,96 +1299,13 @@ plugin_install(plugin_t *pl, const char *package)
 #endif
 
   if(plugin_load(path, errbuf, sizeof(errbuf), 1, 1, 1)) {
-    prop_set_string(pl->pl_statustxt, errbuf);
+    prop_unlink(status);
     TRACE(TRACE_ERROR, "plugins", "Unable to load %s -- %s", path, errbuf);
-    return -1;
+    prop_set_string(status, errbuf);
+    goto cleanup;
   }
+  prop_ref_dec(status);
   return 0;
-}
-
-
-/**
- *
- */
-static void
-plugin_open_start(prop_t *page)
-{
-  prop_link(plugin_root_model, prop_create(page, "model"));
-}
-
-
-/**
- *
- */
-static void
-plugin_open_repo(prop_t *page)
-{
-  int i;
-  struct prop_nf *pnf;
-  prop_concat_t *pc;
-  prop_t *model = prop_create(page, "model");
-  prop_set_string(prop_create(model, "type"), "directory");
-  prop_set_int(prop_create(model, "safeui"), 1);
-  prop_set_string(prop_create(model, "contents"), "plugins");
-
-  prop_link(_p("Available apps"),
-	    prop_create(prop_create(model, "metadata"), "title"));
-
-  pc = prop_concat_create(prop_create(model, "nodes"), 0); // XXX leak
-
-  // Create filters per category
-
-  for(i = 0; i < PLUGIN_CAT_num; i++) {
-    const char *catname = val2str(i, catnames);
-    prop_t *cat = prop_create(model, catname);
-    pnf = prop_nf_create(cat, plugin_root_repo, NULL, PROP_NF_AUTODESTROY);
-    
-    prop_nf_pred_str_add(pnf, "node.metadata.category", 
-			 PROP_NF_CMP_NEQ, catname, NULL,
-			 PROP_NF_MODE_EXCLUDE);
-    prop_nf_sort(pnf, "node.metadata.title", 0, 0, NULL, 1);
-    prop_nf_release(pnf);
-
-
-    prop_t *header = prop_create_root(NULL);
-    
-    prop_set_string(prop_create(header, "type"), "separator");
-
-    prop_t *gn = NULL;
-    switch(i) {
-    case PLUGIN_CAT_TV:
-      gn = _p("Online TV");
-      break;
-
-    case PLUGIN_CAT_VIDEO:
-      gn = _p("Video streaming");
-      break;
-
-    case PLUGIN_CAT_MUSIC:
-      gn = _p("Music streaming");
-      break;
-
-    case PLUGIN_CAT_CLOUD:
-      gn = _p("Cloud services");
-      break;
-
-    case PLUGIN_CAT_GLWVIEW:
-      gn = _p("User interface extensions");
-      break;
-
-    case PLUGIN_CAT_SUBTITLES:
-      gn = _p("Subtitles");
-      break;
-
-    default:
-      gn = _p("Uncategorized");
-      break;
-    }
-
-    prop_link(gn, prop_create(prop_create(header, "metadata"), "title"));
-    prop_concat_add_source(pc, cat, header);
-  }
-  plugins_upgrade_check();
 }
 
 
@@ -1374,16 +1316,13 @@ static int
 plugin_open_url(prop_t *page, const char *url, int sync)
 {
   if(!strcmp(url, "plugin:start")) {
-    plugin_open_start(page);
-    return 0;
+    prop_link(plugin_start_model, prop_create(page, "model"));
+  } else if(!strcmp(url, "plugin:repo")) {
+    prop_link(plugin_repo_model, prop_create(page, "model"));
+    plugins_upgrade_check();
+  } else {
+    nav_open_error(page, "Invalid URI");
   }
-
-  if(!strcmp(url, "plugin:repo")) {
-    plugin_open_repo(page);
-    return 0;
-  }
-
-  nav_open_error(page, "Invalid URI");
   return 0;
 }
 
