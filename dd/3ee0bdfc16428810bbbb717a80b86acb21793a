@@ -1,0 +1,13 @@
+Improve video playback settings a quite a bit
+
+Most settings (except subtitle sync offset) are stored in a database
+for each video file. In addition to that the user can choose to save
+the settings as a default for the current folder the video resides in.
+This can be very useful for TV series, etc where the user want to
+do some specific changes to the playback config for that particular
+set of video items.
+
+In addition to this, it's now also possible to apply the current
+configuration as the global configuration
+
+Fixes #1836
