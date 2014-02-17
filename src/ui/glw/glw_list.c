@@ -489,7 +489,35 @@ glw_list_render_x(glw_t *w, const glw_rctx_t *rc)
 static void
 glw_list_scroll(glw_list_t *l, glw_scroll_t *gs)
 {
-  l->current_pos = GLW_MAX(gs->value * (l->total_size - l->page_size), 0);
+  int top = GLW_MAX(gs->value * (l->total_size - l->page_size), 0);
+
+  l->current_pos = top;
+
+  int bottom = top + l->page_size;
+
+  glw_t *c = l->w.glw_focused;
+
+  if(c == NULL)
+    return;
+
+
+  if(c->glw_parent_pos < top) {
+
+    while(c != NULL && c->glw_parent_pos < top) {
+      c = glw_next_widget(c);
+    }
+
+    if(c != NULL)
+      l->w.glw_focused = c;
+  } else if(c->glw_parent_pos > bottom) {
+
+    while(c != NULL && c->glw_parent_pos > bottom) {
+      c = glw_prev_widget(c);
+    }
+
+    if(c != NULL)
+      l->w.glw_focused = c;
+  }
 }
 
 

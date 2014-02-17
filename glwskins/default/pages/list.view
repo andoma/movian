@@ -44,9 +44,7 @@ widget(keyintercept, {
 	  bind("list");
 	  width: 4;
 	  focusable: 0.001; // canScroll();
-	  navFocusable: false;
 	  alpha: iir(canScroll(), 16);
-	  
 	  widget(quad, {
 	    alpha: iir(0.3 + 0.3 * (isFocused() || isPressed()), 4) + isHovered();
 	  });
