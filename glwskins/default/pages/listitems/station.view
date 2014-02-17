@@ -1,0 +1,37 @@
+#import "skin://common.view"
+
+widget(backdrop, {
+  
+  source: "highlight.png";
+  autoRefocusable: true;
+  focusable: true;
+  focusOnClick: true;
+  onEvent(activate, playTrackFromSource($self, $parent.model));
+  
+  alphaSelf: iir(isFocused() * 1, 8) + isHovered() * 0.1;
+
+  suggestFocus($self.playing);
+
+  widget(container_x, {
+    widget(icon, {
+      align: left;
+      color: select(isFocused(), 1.0, 0.6);
+      source: "dataroot://resources/svg/Radio.svg";
+      shadow: true;
+    });
+
+    widget(icon, {
+      align: left;
+      color: select(isFocused(), 1.0, 0.6);
+      source: translate($self.media.playstatus, void,
+			"play", "dataroot://resources/svg/Play.svg",
+			"pause", "dataroot://resources/svg/Pause.svg");
+    });
+    widget(label, {
+      TextStyleItem();
+      color: select(isFocused(), 1.0, 0.6);
+      caption: $self.metadata.title;
+      ellipsize: true;
+    });
+  });
+});
