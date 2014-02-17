@@ -118,22 +118,24 @@ http_response_toString(JSContext *cx, JSObject *obj, uintN argc,
     if(start != NULL) {
       start += strlen("<meta http-equiv=\"");
       char *end = strchr(start + 1, '>');
-      int len = end - start;
-      if(len < 1024) {
-        char *copy = alloca(len + 1);
-        memcpy(copy, start, len);
-        copy[len] = 0;
-        if(!strncasecmp(copy, "content-type", strlen("content-type"))) {
-          const char *charset = strstr(copy, "charset=");
-          if(charset != NULL) {
-            charset += strlen("charset=");
-            char *e = strchr(charset, '"');
-            if(e != NULL) {
-              *e = 0;
-              cs = charset_get(charset);
-              TRACE(TRACE_DEBUG, "JS",
-                    "%s: Found meta tag claiming charset %s",
-                    jhr->url, charset);
+      if(end != NULL) {
+        int len = end - start;
+        if(len < 1024) {
+          char *copy = alloca(len + 1);
+          memcpy(copy, start, len);
+          copy[len] = 0;
+          if(!strncasecmp(copy, "content-type", strlen("content-type"))) {
+            const char *charset = strstr(copy, "charset=");
+            if(charset != NULL) {
+              charset += strlen("charset=");
+              char *e = strchr(charset, '"');
+              if(e != NULL) {
+                *e = 0;
+                cs = charset_get(charset);
+                TRACE(TRACE_DEBUG, "JS",
+                      "%s: Found meta tag claiming charset %s",
+                      jhr->url, charset);
+              }
             }
           }
         }
