@@ -624,25 +624,9 @@ trampoline_destroyed(prop_sub_t *s, prop_event_t event, ...)
 /**
  *
  */
-void
-prop_dispatch_one(prop_notify_t *n)
+static void
+notify_invoke(prop_sub_t *s, prop_notify_t *n)
 {
-  prop_sub_t *s = n->hpn_sub;
-
-  assert((s->hps_flags & PROP_SUB_INTERNAL) == 0);
-
-  if(s->hps_lock != NULL)
-    s->hps_lockmgr(s->hps_lock, 1);
-    
-  if(s->hps_zombie) {
-
-    if(s->hps_lock != NULL)
-      s->hps_lockmgr(s->hps_lock, 0);
-
-    prop_notify_free_payload(n);
-    return;
-  }
-
   prop_callback_t *cb = s->hps_callback;
   prop_trampoline_t *pt = s->hps_trampoline;
 
@@ -788,6 +772,32 @@ prop_dispatch_one(prop_notify_t *n)
   case PROP_ADOPT_RSTRING:
     break;
   }
+}
+
+
+/**
+ *
+ */
+void
+prop_dispatch_one(prop_notify_t *n)
+{
+  prop_sub_t *s = n->hpn_sub;
+
+  assert((s->hps_flags & PROP_SUB_INTERNAL) == 0);
+
+  if(s->hps_lock != NULL)
+    s->hps_lockmgr(s->hps_lock, 1);
+    
+  if(s->hps_zombie) {
+
+    if(s->hps_lock != NULL)
+      s->hps_lockmgr(s->hps_lock, 0);
+
+    prop_notify_free_payload(n);
+    return;
+  }
+
+  notify_invoke(s, n);
 
   if(s->hps_lock != NULL)
     s->hps_lockmgr(s->hps_lock, 0);
@@ -938,7 +948,6 @@ get_notify(prop_sub_t *s)
   prop_notify_t *n = pool_get(notify_pool);
   atomic_add(&s->hps_refcount, 1);
   n->hpn_sub = s;
-  assert((s->hps_flags & PROP_SUB_INTERNAL) == 0);
   return n;
 }
 
@@ -991,7 +1000,7 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
       break;
     }
   }
-  if(direct || s->hps_flags & PROP_SUB_INTERNAL) {
+  if((direct || s->hps_flags & PROP_SUB_INTERNAL) && pnq == NULL) {
 
     /* Direct mode can be requested during subscribe to get
        the current values updated directly without dispatch
@@ -3663,28 +3672,39 @@ relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme,
     }
   }
 
-  if(dst->hp_type == PROP_DIR && src->hp_type == PROP_DIR) {
-    prop_t *c;
+  if(dst->hp_type != PROP_DIR)
+    return;
 
-    /**
-     * Take care of childs,
-     * We iterate over the destination tree, since that's where
-     * any _currently_ active subscriptions are located that we
-     * must reattach.
-     */
+  switch(src->hp_type) {
+  case PROP_DIR:
+    break;
+  case PROP_VOID:
+    prop_make_dir(src, skipme, origin);
+    break;
+  default:
+    return;
+  }
 
-    TAILQ_FOREACH(c, &dst->hp_childs, hp_parent_link) {
-      if(c->hp_name == NULL)
-	continue;
+  prop_t *c;
 
-      prop_t *z = prop_create0(src, c->hp_name, NULL,
-                               c->hp_flags & PROP_NAME_NOT_ALLOCATED);
+  /**
+   * Take care of childs,
+   * We iterate over the destination tree, since that's where
+   * any _currently_ active subscriptions are located that we
+   * must reattach.
+   */
 
-      if(c->hp_type == PROP_DIR)
-	prop_make_dir(z, skipme, origin);
+  TAILQ_FOREACH(c, &dst->hp_childs, hp_parent_link) {
+    if(c->hp_name == NULL)
+      continue;
 
-      relink_subscriptions(z, c, skipme, origin, prepend);
-    }
+    prop_t *z = prop_create0(src, c->hp_name, NULL,
+                             c->hp_flags & PROP_NAME_NOT_ALLOCATED);
+
+    if(c->hp_type == PROP_DIR)
+      prop_make_dir(z, skipme, origin);
+
+    relink_subscriptions(z, c, skipme, origin, prepend);
   }
 }
 
@@ -3862,6 +3882,13 @@ prop_link0(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard, int debug)
 
   if(dst->hp_originator != NULL) {
 
+    if(dst->hp_originator == src) {
+      // Linking against itself again, this is a NOP
+      if(debug)
+        printf("Duplicate link is a NOP\n");
+      return;
+    }
+
     if(debug) {
       printf("--- Destination [%s] before unlink ---\n", prop_get_DN(dst, 1));
       prop_print_tree0(dst, 0, 3);
@@ -3908,7 +3935,14 @@ prop_link0(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard, int debug)
 
     if(s->hps_pending_unlink) {
       s->hps_pending_unlink = 0;
-      courier_enqueue(s, n);
+
+      if(s->hps_flags & PROP_SUB_INTERNAL) {
+        notify_invoke(s, n);
+        prop_sub_ref_dec_locked(s);
+        pool_put(notify_pool, n);
+      } else {
+        courier_enqueue(s, n);
+      }
     } else {
       // Already updated by the new linkage
       prop_notify_free(n);
