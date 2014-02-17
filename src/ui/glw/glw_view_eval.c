@@ -2325,6 +2325,9 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
 		       PROP_TAG_NAMED_ROOT, ec->prop_clone, "clone",
 		       PROP_TAG_ROOT, w->glw_root->gr_prop_ui,
 		       PROP_TAG_ROOT, w->glw_root->gr_prop_nav,
+#ifdef PROP_SUB_RECORD_SOURCE
+                       PROP_TAG_SOURCE, rstr_get(self->file), self->line,
+#endif
 		       NULL);
   }
 

@@ -2556,6 +2556,13 @@ prop_subscribe(int flags, ...)
       lockmgr = va_arg(ap, void *);
       break;
 
+#ifdef PROP_SUB_RECORD_SOURCE
+    case PROP_TAG_SOURCE:
+      file = va_arg(ap, const char *);
+      line = va_arg(ap, int);
+#endif
+      break;
+
     case PROP_TAG_END:
       break;
 
@@ -4912,8 +4919,12 @@ prop_print_tree0(prop_t *p, int indent, int flags)
   if(flags & 2) {
     prop_sub_t *s;
     LIST_FOREACH(s, &p->hp_value_subscriptions, hps_value_prop_link) {
-      fprintf(stderr, "%*.s \033[1mSubscriber: %s\033[0m\n", indent, "",
-	      prop_get_DN(s->hps_canonical_prop, 1));
+      fprintf(stderr, "%*.s \033[1mSubscriber: ", indent, "");
+#ifdef PROP_SUB_RECORD_SOURCE
+      fprintf(stderr, "%s:%d ", s->hps_file, s->hps_line);
+#endif
+      fprintf(stderr, "[%s] @ %p p=%p\033[0m\n",
+        prop_get_DN(s->hps_canonical_prop, 1), s, s->hps_canonical_prop);
     }
   }
 }

@@ -168,6 +168,9 @@ enum {
   PROP_TAG_MUTEX,
   PROP_TAG_EXTERNAL_LOCK,
   PROP_TAG_NAMESTR,
+#ifdef PROP_SUB_RECORD_SOURCE
+  PROP_TAG_SOURCE,
+#endif
 };
 
 #define PROP_TAG_NAME(name...) \
