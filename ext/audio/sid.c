@@ -1287,7 +1287,7 @@ be_sidplayer_play(const char *url0, media_pipe_t *mp,
 
       sample += CHUNK_SIZE;
 
-      int16_t *samples = mb->mb_data;
+      int16_t *samples = (void *)mb->mb_data;
 
       nSamplesRendered = 0;
 

@@ -29,6 +29,10 @@
 #include "fileaccess/fa_libav.h"
 #include "video/video_decoder.h"
 
+
+/**
+ *
+ */
 static void
 libav_decode_video(struct media_codec *mc, struct video_decoder *vd,
                    struct media_queue *mq, struct media_buf *mb, int reqsize)
@@ -39,7 +43,7 @@ libav_decode_video(struct media_codec *mc, struct video_decoder *vd,
   AVFrame *frame = vd->vd_frame;
   int t;
 
-  vd->vd_reorder[vd->vd_reorder_ptr] = mb->mb_meta;
+  copy_mbm_from_mb(&vd->vd_reorder[vd->vd_reorder_ptr], mb);
   ctx->reordered_opaque = vd->vd_reorder_ptr;
   vd->vd_reorder_ptr = (vd->vd_reorder_ptr + 1) & VIDEO_DECODER_REORDER_MASK;
 
@@ -49,12 +53,7 @@ libav_decode_video(struct media_codec *mc, struct video_decoder *vd,
   ctx->skip_frame = mb->mb_skip == 1 ? AVDISCARD_NONREF : AVDISCARD_DEFAULT;
   avgtime_start(&vd->vd_decode_time);
 
-  AVPacket avpkt;
-  av_init_packet(&avpkt);
-  avpkt.data = mb->mb_data;
-  avpkt.size = mb->mb_size;
-
-  avcodec_decode_video2(ctx, frame, &got_pic, &avpkt);
+  avcodec_decode_video2(ctx, frame, &got_pic, &mb->mb_pkt);
 
   t = avgtime_stop(&vd->vd_decode_time, mq->mq_prop_decode_avg,
 		   mq->mq_prop_decode_peak);

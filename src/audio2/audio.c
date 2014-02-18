@@ -297,13 +297,11 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
   media_queue_t *mq = &mp->mp_audio;
   int r;
   int got_frame;
-  AVPacket avpkt;
-  int offset = 0;
 
   if(mb->mb_skip || mb->mb_stream != mq->mq_stream) 
     return;
 
-  while(offset < mb->mb_size) {
+  while(mb->mb_size) {
 
     if(mb->mb_cw == NULL) {
       frame->sample_rate = mb->mb_rate;
@@ -339,7 +337,7 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 	ad->ad_in_sample_rate = 0;
 
 	audio_cleanup_spdif_muxer(ad);
-  
+
 	if(ac->ac_check_passthru != NULL && codec != NULL &&
 	   ac->ac_check_passthru(ad, mc->codec_id)) {
 
@@ -347,12 +345,8 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 	}
       }
 
-      av_init_packet(&avpkt);
-      avpkt.data = mb->mb_data + offset;
-      avpkt.size = mb->mb_size - offset;
-
       if(ad->ad_spdif_muxer != NULL) {
-	av_write_frame(ad->ad_spdif_muxer, &avpkt);
+	av_write_frame(ad->ad_spdif_muxer, &mb->mb_pkt);
 	avio_flush(ad->ad_spdif_muxer->pb);
 	ad->ad_pts = mb->mb_pts;
 	ad->ad_epoch = mb->mb_epoch;
@@ -375,7 +369,7 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 	}
       }
 
-      r = avcodec_decode_audio4(ctx, frame, &got_frame, &avpkt);
+      r = avcodec_decode_audio4(ctx, frame, &got_frame, &mb->mb_pkt);
       if(r < 0)
 	return;
 
@@ -384,7 +378,7 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 
 	if(frame->sample_rate == 0 && mb->mb_cw->fmt_ctx)
 	  frame->sample_rate = mb->mb_cw->fmt_ctx->sample_rate;
-    
+
 	if(frame->sample_rate == 0)
 	  return;
       }
@@ -407,10 +401,10 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 
     }
 
-    if(offset == 0 && mb->mb_pts != AV_NOPTS_VALUE) {
-        
+    if(mb->mb_pts != PTS_UNSET) {
+
       int od = 0, id = 0;
-          
+
       if(ad->ad_avr != NULL) {
 	od = avresample_available(ad->ad_avr) *
 	  1000000LL / ad->ad_out_sample_rate;
@@ -419,22 +413,23 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
       }
       ad->ad_pts = mb->mb_pts - od - id;
       ad->ad_epoch = mb->mb_epoch;
-      //        printf("od=%-20d id=%-20d PTS=%-20ld oPTS=%-20ld\n",
-      // od, id, mb->mb_pts, pts);
-        
+
       if(mb->mb_drive_clock)
 	mp_set_current_time(mp, mb->mb_pts - ad->ad_delay,
 			    mb->mb_epoch, mb->mb_delta);
+      mb->mb_pts = PTS_UNSET; // No longer valid
     }
 
-    offset += r;
+
+    mb->mb_data += r;
+    mb->mb_size -= r;
 
     if(got_frame) {
 
       if(frame->sample_rate    != ad->ad_in_sample_rate ||
 	 frame->format         != ad->ad_in_sample_format ||
 	 frame->channel_layout != ad->ad_in_channel_layout) {
-          
+
 	ad->ad_in_sample_rate    = frame->sample_rate;
 	ad->ad_in_sample_format  = frame->format;
 	ad->ad_in_channel_layout = frame->channel_layout;
@@ -445,7 +440,7 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 	  ad->ad_avr = avresample_alloc_context();
 	else
 	  avresample_close(ad->ad_avr);
-          
+
 	av_opt_set_int(ad->ad_avr, "in_sample_fmt",
 		       ad->ad_in_sample_format, 0);
 	av_opt_set_int(ad->ad_avr, "in_sample_rate", 
@@ -459,7 +454,7 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 		       ad->ad_out_sample_rate, 0);
 	av_opt_set_int(ad->ad_avr, "out_channel_layout",
 		       ad->ad_out_channel_layout, 0);
-          
+
 	char buf1[128];
 	char buf2[128];
 
@@ -586,7 +581,7 @@ audio_decode_thread(void *aux)
 	break;
 
       case MB_SET_PROP_STRING:
-        prop_set_string(mb->mb_prop, mb->mb_data);
+        prop_set_string(mb->mb_prop, (void *)mb->mb_data);
 	break;
 
       case MB_CTRL_SET_VOLUME_MULTIPLIER:

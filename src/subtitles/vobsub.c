@@ -298,7 +298,7 @@ demux_pes(const vobsub_t *vs, media_pipe_t *mp,
       mb->mb_data_type = MB_CTRL_DVD_SPU2;
       mb->mb_dts = dts;
       mb->mb_pts = pts;
-      uint32_t *d = mb->mb_data;
+      uint32_t *d = (uint32_t *)mb->mb_data;
       d[16] = vs->vs_width;
       d[17] = vs->vs_height;
       memcpy(mb->mb_data, vs->vs_clut, 16 * 4);

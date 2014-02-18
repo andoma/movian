@@ -426,7 +426,7 @@ vd_thread(void *aux)
       break;
 
     case MB_DVD_CLUT:
-      dvdspu_decode_clut(vd->vd_dvd_clut, mb->mb_data);
+      dvdspu_decode_clut(vd->vd_dvd_clut, (void *)mb->mb_data);
       break;
 
     case MB_DVD_SPU:
@@ -437,7 +437,7 @@ vd_thread(void *aux)
 
     case MB_CTRL_DVD_SPU2:
       dvdspu_enqueue(mp, mb->mb_data+72, mb->mb_size-72,
-		     mb->mb_data,
+		     (void *)mb->mb_data,
 		     ((const uint32_t *)mb->mb_data)[16],
 		     ((const uint32_t *)mb->mb_data)[17],
 		     mb->mb_pts);
@@ -461,8 +461,8 @@ vd_thread(void *aux)
          subtitles_destroy(vd->vd_ext_subtitles);
 
       // Steal subtitle from the media_buf
-      vd->vd_ext_subtitles = mb->mb_data;
-      mb->mb_data = NULL; 
+      vd->vd_ext_subtitles = (void *)mb->mb_data;
+      mb->mb_data = NULL;
       hts_mutex_lock(&mp->mp_overlay_mutex);
       video_overlay_flush_locked(mp, 1);
       hts_mutex_unlock(&mp->mp_overlay_mutex);

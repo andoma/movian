@@ -318,7 +318,7 @@ dvd_lpcm(dvd_player_t *dp, const uint8_t *buf, int len,
   memcpy(mb->mb_data, buf, len);
 #else
   const uint16_t *src = (const uint16_t *)buf;
-  uint16_t *dst = mb->mb_data;
+  uint16_t *dst = (void *)mb->mb_data;
   int i;
   for(i = 0; i < len / 2; i++) {
     *dst++ = (*src >> 8) | (*src << 8) ;

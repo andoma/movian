@@ -348,6 +348,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
       }
 
       mb->mb_keyframe = !!(pkt.flags & AV_PKT_FLAG_KEY);
+      av_free_packet(&pkt);
     }
 
     /*

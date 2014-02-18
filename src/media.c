@@ -164,6 +164,16 @@ media_buf_alloc_unlocked(media_pipe_t *mp, size_t size)
 
 
 #if ENABLE_LIBAV
+
+/**
+ *
+ */
+static void
+media_buf_dtor_avpacket(media_buf_t *mb)
+{
+  av_packet_unref(&mb->mb_pkt);
+}
+
 /**
  *
  */
@@ -176,16 +186,27 @@ media_buf_from_avpkt_unlocked(media_pipe_t *mp, AVPacket *pkt)
   mb = pool_get(mp->mp_mb_pool);
   hts_mutex_unlock(&mp->mp_mutex);
 
-  mb->mb_dtor = media_buf_dtor_freedata;
+  mb->mb_dtor = media_buf_dtor_avpacket;
 
-  mb->mb_data = malloc(pkt->size +   FF_INPUT_BUFFER_PADDING_SIZE);
-  memset(mb->mb_data + pkt->size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
-  memcpy(mb->mb_data, pkt->data, pkt->size);
-  mb->mb_size = pkt->size;
-
-  av_free_packet(pkt);
+  av_packet_ref(&mb->mb_pkt, pkt);
   return mb;
 }
+
+
+/**
+ *
+ */
+void
+copy_mbm_from_mb(media_buf_meta_t *mbm, const media_buf_t *mb)
+{
+  mbm->mbm_delta     = mb->mb_delta;
+  mbm->mbm_pts       = mb->mb_pts;
+  mbm->mbm_dts       = mb->mb_dts;
+  mbm->mbm_epoch     = mb->mb_epoch;
+  mbm->mbm_duration  = mb->mb_duration;
+  mbm->mbm_flags.u32 = mb->mb_flags.u32;
+}
+
 #endif
 
 /**
@@ -2644,7 +2665,7 @@ static void
 ext_sub_dtor(media_buf_t *mb)
 {
   if(mb->mb_data != NULL)
-    subtitles_destroy(mb->mb_data);
+    subtitles_destroy((void *)mb->mb_data);
 }
 
 
@@ -2656,10 +2677,10 @@ mp_load_ext_sub(media_pipe_t *mp, const char *url, AVRational *framerate)
 {
   media_buf_t *mb = media_buf_alloc_unlocked(mp, 0);
   mb->mb_data_type = MB_CTRL_EXT_SUBTITLE;
-  
+
   if(url != NULL)
-    mb->mb_data = subtitles_load(mp, url, framerate);
-  
+    mb->mb_data = (void *)subtitles_load(mp, url, framerate);
+
   mb->mb_dtor = ext_sub_dtor;
   hts_mutex_lock(&mp->mp_mutex);
   mb_enq(mp, &mp->mp_video, mb);

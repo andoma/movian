@@ -1879,8 +1879,12 @@ htsp_mux_input(htsp_connection_t *hc, htsmsg_t *m)
       mb->mb_data_type = hss->hss_data_type;
       mb->mb_stream = hss->hss_index;
 
-      if(htsmsg_get_u32(m, "duration", &mb->mb_duration))
+      uint32_t u32;
+
+      if(htsmsg_get_u32(m, "duration", &u32))
 	mb->mb_duration = 0;
+      else
+        mb->mb_duration = u32;
 
       if(htsmsg_get_s64(m, "dts", &mb->mb_dts))
 	mb->mb_dts = PTS_UNSET;
