@@ -30,6 +30,8 @@
 
 #include <sqlite3.h>
 
+#include <arpa/inet.h>
+
 #include "config.h"
 #include "showtime.h"
 #include "prop/prop.h"
