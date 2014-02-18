@@ -1,0 +1,17 @@
+Store per-file settings in filesystem (instead of database)
+
+Showtime will now store settings for each file and folder (such as
+selected subtitle track, video zoom, folder sorting, etc, etc)
+in the filesystem. The information is stored using Extended
+Attributes. Currenetly this is supported for SMB (Windows shares)
+only.
+
+The upside here is that if you have multiple Showtime installations
+accessing the same windows share they will now share the settings
+between them. So you can start watching a movie on one machine
+and then just continue where you left off on another machine.
+
+Also, the settings will stick to the file even if it's moved
+on the server.
+
+This is default on (but can be turned off in Settings -> General)
