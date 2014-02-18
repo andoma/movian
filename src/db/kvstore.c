@@ -37,6 +37,8 @@
 #include "kvstore.h"
 #include "misc/callout.h"
 
+#include "fileaccess/fileaccess.h"
+
 LIST_HEAD(kvstore_write_list, kvstore_write);
 
 
@@ -62,6 +64,13 @@ static struct kvstore_write_list deferred_writes;
 static callout_t deferred_callout;
 static hts_mutex_t deferred_mutex;
 
+
+static const char *domain_to_name[] = {
+  [KVSTORE_DOMAIN_SYS] = "sys",
+  [KVSTORE_DOMAIN_PROP] = "prop",
+  [KVSTORE_DOMAIN_PLUGIN] = "plugin",
+  [KVSTORE_DOMAIN_SETTING] = "setting"
+};
 
 /**
  *
@@ -482,9 +491,45 @@ kv_url_opt_get(void *db, const char *url, int domain, const char *key)
 /**
  *
  */
+static fa_err_code_t
+opt_get_ea(const char *url, int domain, const char *key,
+           void **datap, size_t *sizep)
+{
+  if(!gconf.fa_kvstore_as_xattr)
+    return FAP_NOT_SUPPORTED;
+
+  char ea[512];
+  snprintf(ea, sizeof(ea), "showtime.default.%s.%s",
+           domain_to_name[domain], key);
+
+  return fa_get_xattr(url, ea, datap, sizep);
+}
+
+
+/**
+ *
+ */
 rstr_t *
 kv_url_opt_get_rstr(const char *url, int domain, const char *key)
 {
+  if(url == NULL)
+    return NULL;
+
+  void *data;
+  size_t size;
+  fa_err_code_t err = opt_get_ea(url, domain, key, &data, &size);
+
+  if(err == 0 && size > 0) {
+
+    rstr_t *rval = rstr_allocl(data, size);
+
+    if(gconf.enable_kvstore_debug)
+      TRACE(TRACE_DEBUG, "kvstore",
+            "GET XA url=%s key=%s domain=%d value=%s",
+            url, key, domain, rstr_get(rval));
+    return rval;
+  }
+
   void *db = kvstore_get();
   sqlite3_stmt *stmt = kv_url_opt_get(db, url, domain, key);
   rstr_t *r = NULL;
@@ -506,6 +551,21 @@ kv_url_opt_get_int(const char *url, int domain, const char *key, int def)
   if(url == NULL)
     return def;
 
+  void *data;
+  size_t size;
+  fa_err_code_t err = opt_get_ea(url, domain, key, &data, &size);
+
+  if(err == 0 && size == 4) {
+    int rval = ntohl(*(int *)data);
+    free(data);
+
+    if(gconf.enable_kvstore_debug)
+      TRACE(TRACE_DEBUG, "kvstore",
+            "GET XA url=%s key=%s domain=%d value=%d",
+            url, key, domain, rval);
+    return rval;
+  }
+
   void *db = kvstore_get();
   sqlite3_stmt *stmt = kv_url_opt_get(db, url, domain, key);
   int v = def;
@@ -513,11 +573,11 @@ kv_url_opt_get_int(const char *url, int domain, const char *key, int def)
     v = sqlite3_column_int(stmt, 0);
     sqlite3_finalize(stmt);
     if(gconf.enable_kvstore_debug)
-      TRACE(TRACE_DEBUG, "kvstore","get: url=%s key=%s domain=%d value=%d",
+      TRACE(TRACE_DEBUG, "kvstore","GET DB url=%s key=%s domain=%d value=%d",
             url, key, domain, v);
   } else {
     if(gconf.enable_kvstore_debug)
-      TRACE(TRACE_DEBUG, "kvstore","get: url=%s key=%s domain=%d value=UNSET",
+      TRACE(TRACE_DEBUG, "kvstore","GET DB url=%s key=%s domain=%d value=UNSET",
             url, key, domain);
   }
   kvstore_close(db);
@@ -531,12 +591,42 @@ kv_url_opt_get_int(const char *url, int domain, const char *key, int def)
 int64_t
 kv_url_opt_get_int64(const char *url, int domain, const char *key, int64_t def)
 {
+  if(url == NULL)
+    return def;
+
+  void *data;
+  size_t size;
+  fa_err_code_t err = opt_get_ea(url, domain, key, &data, &size);
+
+  if(err == 0 && size == 8) {
+    int64_t rval = *(int64_t *)data;
+#if !defined(__BIG_ENDIAN__)
+    rval = __builtin_bswap64(rval);
+#endif
+    free(data);
+
+    if(gconf.enable_kvstore_debug)
+      TRACE(TRACE_DEBUG, "kvstore",
+            "GET XA url=%s key=%s domain=%d value=%"PRId64,
+            url, key, domain, rval);
+    return rval;
+  }
+
+
   void *db = kvstore_get();
   sqlite3_stmt *stmt = kv_url_opt_get(db, url, domain, key);
   int64_t v = def;
   if(stmt) {
     v = sqlite3_column_int64(stmt, 0);
     sqlite3_finalize(stmt);
+    if(gconf.enable_kvstore_debug)
+      TRACE(TRACE_DEBUG, "kvstore",
+            "GET DB url=%s key=%s domain=%d value=%"PRId64,
+            url, key, domain, v);
+  } else {
+    if(gconf.enable_kvstore_debug)
+      TRACE(TRACE_DEBUG, "kvstore","GET DB url=%s key=%s domain=%d value=UNSET",
+            url, key, domain);
   }
   kvstore_close(db);
   return v;
@@ -547,7 +637,7 @@ kv_url_opt_get_int64(const char *url, int domain, const char *key, int64_t def)
  *
  */
 static int
-kw_write(void *db, const kvstore_write_t *kw, int64_t id)
+kv_write_db(void *db, const kvstore_write_t *kw, int64_t id)
 {
   int rc;
   char vtmp[64];
@@ -586,7 +676,7 @@ kw_write(void *db, const kvstore_write_t *kw, int64_t id)
 
     case KVSTORE_SET_INT64:
       sqlite3_bind_int(stmt, 4, kw->kw_int64);
-      snprintf(vtmp, sizeof(vtmp), "%d", kw->kw_int);
+      snprintf(vtmp, sizeof(vtmp), "%"PRId64, kw->kw_int64);
       break;
 
     case KVSTORE_SET_STRING:
@@ -611,9 +701,73 @@ kw_write(void *db, const kvstore_write_t *kw, int64_t id)
     rc = SQLITE_OK;
 
   if(gconf.enable_kvstore_debug)
-    TRACE(TRACE_DEBUG, "kvstore", "set: url=%s key=%s domain=%d value=%s rc=%d",
+    TRACE(TRACE_DEBUG, "kvstore",
+          "SET DB url=%s key=%s domain=%d value=%s rc=%d",
           kw->kw_url, kw->kw_key, kw->kw_domain, value, rc);
   return rc;
+}
+
+
+/**
+ *
+ */
+static int
+kv_write_xattr(const kvstore_write_t *kw)
+{
+  char vtmp[64];
+  const char *value = vtmp;
+
+  char ea[512];
+  int i32;
+#if !defined(__BIG_ENDIAN__)
+  int64_t i64;
+#endif
+  const void *data;
+  size_t size;
+  snprintf(ea, sizeof(ea), "showtime.default.%s.%s",
+           domain_to_name[kw->kw_domain], kw->kw_key);
+
+  switch(kw->kw_type) {
+  case KVSTORE_SET_INT:
+    i32 = htonl(kw->kw_int);
+    data = &i32;
+    size = 4;
+    snprintf(vtmp, sizeof(vtmp), "%d", kw->kw_int);
+    break;
+
+  case KVSTORE_SET_INT64:
+    size = 8;
+#if defined(__BIG_ENDIAN__)
+    data = &kw->kw_int64;
+#else
+    i64 = __builtin_bswap64(kw->kw_int64);
+    data = &i64;
+#endif
+    snprintf(vtmp, sizeof(vtmp), "%"PRId64, kw->kw_int64);
+    break;
+
+  case KVSTORE_SET_STRING:
+    data = kw->kw_string;
+    size = strlen(kw->kw_string);
+    value = kw->kw_string;
+    break;
+
+  case KVSTORE_SET_VOID:
+    data = NULL;
+    size = 0;
+    value = "[DELETED]";
+    break;
+  default:
+    abort();
+  }
+  int rc = fa_set_xattr(kw->kw_url, ea, data, size);
+
+  if(gconf.enable_kvstore_debug)
+    TRACE(TRACE_DEBUG, "kvstore",
+          "SET XA url=%s key=%s domain=%d value=%s rc=%d",
+          kw->kw_url, kw->kw_key, kw->kw_domain, value, rc);
+
+  return !!rc;
 }
 
 
@@ -628,28 +782,6 @@ kv_url_opt_set(const char *url, int domain, const char *key,
   int rc;
   uint64_t id;
   va_list ap;
-
-  db = kvstore_get();
-  if(db == NULL)
-    return;
-  
- again:
-  if(db_begin(db)) {
-    kvstore_close(db);
-    return;
-  }
-
-  rc = get_url(db, url, &id);
-  if(rc == SQLITE_LOCKED) {
-    db_rollback_deadlock(db);
-    goto again;
-  }
-
-  if(rc != SQLITE_OK) {
-    db_rollback(db);
-    kvstore_close(db);
-    return;
-  }
 
   kvstore_write_t kw;
   kw.kw_url    = (char *)url;
@@ -679,7 +811,34 @@ kv_url_opt_set(const char *url, int domain, const char *key,
   }
   va_end(ap);
 
-  rc = kw_write(db, &kw, id);
+  if(gconf.fa_kvstore_as_xattr) {
+    if(!kv_write_xattr(&kw))
+      return;
+  }
+
+  db = kvstore_get();
+  if(db == NULL)
+    return;
+  
+ again:
+  if(db_begin(db)) {
+    kvstore_close(db);
+    return;
+  }
+
+  rc = get_url(db, url, &id);
+  if(rc == SQLITE_LOCKED) {
+    db_rollback_deadlock(db);
+    goto again;
+  }
+
+  if(rc != SQLITE_OK) {
+    db_rollback(db);
+    kvstore_close(db);
+    return;
+  }
+
+  rc = kv_write_db(db, &kw, id);
   if(rc == SQLITE_LOCKED) {
     db_rollback_deadlock(db);
     goto again;
@@ -715,6 +874,11 @@ kvstore_deferred_flush(void)
 
   LIST_FOREACH(kw, &deferred_writes, kw_link) {
 
+    if(gconf.fa_kvstore_as_xattr) {
+      if(!kv_write_xattr(kw))
+        continue;
+    }
+
     if(current_url == NULL || strcmp(kw->kw_url, current_url)) {
 
       rc = get_url(db, kw->kw_url, &id);
@@ -730,7 +894,7 @@ kvstore_deferred_flush(void)
       current_url = kw->kw_url;
     }
 
-    rc = kw_write(db, kw, id);
+    rc = kv_write_db(db, kw, id);
     if(rc == SQLITE_LOCKED) {
       db_rollback_deadlock(db);
       goto again;

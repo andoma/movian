@@ -277,6 +277,7 @@ typedef struct gconf {
   int state_plugins_loaded;
 
   int fa_allow_delete;
+  int fa_kvstore_as_xattr;
   int show_filename_extensions;
   int ignore_the_prefix;
 

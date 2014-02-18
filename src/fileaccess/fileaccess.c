@@ -1331,6 +1331,13 @@ fileaccess_init(void)
                  NULL);
 
   setting_create(SETTING_BOOL, gconf.settings_general, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Store per-file settings in filesystem")),
+                 SETTING_WRITE_BOOL(&gconf.fa_kvstore_as_xattr),
+                 SETTING_VALUE(1),
+                 SETTING_HTSMSG("enablexattr", store, "faconf"),
+                 NULL);
+
+  setting_create(SETTING_BOOL, gconf.settings_general, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Show filename extensions")),
                  SETTING_WRITE_BOOL(&gconf.show_filename_extensions),
                  SETTING_HTSMSG("filenameextensions", store, "faconf"),
