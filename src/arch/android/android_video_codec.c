@@ -426,19 +426,19 @@ android_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 
   switch(mc->codec_id) {
 
-  case CODEC_ID_H264:
+  case AV_CODEC_ID_H264:
     type = "video/avc";
     break;
 
-  case CODEC_ID_H263:
+  case AV_CODEC_ID_H263:
     type = "video/3gpp";
     break;
 
-  case CODEC_ID_MPEG4:
+  case AV_CODEC_ID_MPEG4:
     type = "video/mp4v-es";
     break;
 
-  case CODEC_ID_VP8:
+  case AV_CODEC_ID_VP8:
     type = "video/x-vnd.on2.vp8";
     break;
 
@@ -480,7 +480,7 @@ android_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 
     if(mcp->extradata != NULL && mcp->extradata_size) {
 
-      if(mc->codec_id == CODEC_ID_H264) {
+      if(mc->codec_id == AV_CODEC_ID_H264) {
 
         h264_to_annexb_init(&avc->avc_annexb, mcp->extradata,
                             mcp->extradata_size);

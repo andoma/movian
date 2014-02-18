@@ -19,6 +19,7 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 
+#include <ctype.h>
 #include <libavformat/avformat.h>
 #include <libavutil/audioconvert.h>
 
@@ -101,9 +102,9 @@ media_codec_create_lavc(media_codec_t *cw, const media_codec_params_t *mcp,
   if(codec == NULL)
     return -1;
 
-  if(cw->codec_id == CODEC_ID_AC3 ||
-     cw->codec_id == CODEC_ID_EAC3 ||
-     cw->codec_id == CODEC_ID_DTS) {
+  if(cw->codec_id == AV_CODEC_ID_AC3 ||
+     cw->codec_id == AV_CODEC_ID_EAC3 ||
+     cw->codec_id == AV_CODEC_ID_DTS) {
 
     // We create codec instances later in audio thread.
     return 0;
@@ -119,7 +120,7 @@ media_codec_create_lavc(media_codec_t *cw, const media_codec_params_t *mcp,
     cw->ctx->extradata_size = mcp->extradata_size;
   }
 
-  if(cw->codec_id == CODEC_ID_H264 && gconf.concurrency > 1) {
+  if(cw->codec_id == AV_CODEC_ID_H264 && gconf.concurrency > 1) {
     cw->ctx->thread_count = gconf.concurrency;
     if(mcp && mcp->cheat_for_speed)
       cw->ctx->flags2 |= CODEC_FLAG2_FAST;
@@ -185,7 +186,7 @@ metadata_from_libav(char *dst, size_t dstlen,
     n++;
   }
 
-  if(codec->id  == CODEC_ID_H264) {
+  if(codec->id  == AV_CODEC_ID_H264) {
     const char *p;
     switch(avctx->profile) {
     case FF_PROFILE_H264_BASELINE:  p = "Baseline";  break;

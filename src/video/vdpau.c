@@ -508,31 +508,31 @@ vdpau_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 
   switch(mc->codec_id) {
 
-  case CODEC_ID_MPEG1VIDEO:
+  case AV_CODEC_ID_MPEG1VIDEO:
     profile = VDP_DECODER_PROFILE_MPEG1; 
     codec = avcodec_find_decoder_by_name("mpegvideo_vdpau");
     refframes = 2;
     break;
 
-  case CODEC_ID_MPEG2VIDEO:
+  case AV_CODEC_ID_MPEG2VIDEO:
     profile = VDP_DECODER_PROFILE_MPEG2_MAIN; 
     codec = avcodec_find_decoder_by_name("mpegvideo_vdpau");
     refframes = 2;
     break;
 
-  case CODEC_ID_H264:
+  case AV_CODEC_ID_H264:
     profile = VDP_DECODER_PROFILE_H264_HIGH; 
     codec = avcodec_find_decoder_by_name("h264_vdpau");
     refframes = 16;
     break;
 #if 0 // Seems broken
-  case CODEC_ID_VC1:
+  case AV_CODEC_ID_VC1:
     profile = VDP_DECODER_PROFILE_VC1_ADVANCED; 
     mc->codec = avcodec_find_decoder_by_name("vc1_vdpau");
     refframes = 16;
     break;
 
-  case CODEC_ID_WMV3:
+  case AV_CODEC_ID_WMV3:
     profile = VDP_DECODER_PROFILE_VC1_MAIN;
     mc->codec = avcodec_find_decoder_by_name("wmv3_vdpau");
     refframes = 16;

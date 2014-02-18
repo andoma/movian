@@ -1150,7 +1150,7 @@ dummy_h264_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 {
   return 1;
 
-  if(mc->codec_id != CODEC_ID_H264)
+  if(mc->codec_id != AV_CODEC_ID_H264)
     return 1;
 
   h264_parser_t *hp = calloc(1, sizeof(h264_parser_t));

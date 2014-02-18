@@ -285,7 +285,7 @@ get_packet_v(rtmp_t *r, uint8_t *data, int size, int64_t dts,
 {
   uint8_t flags;
   uint8_t type = 0;
-  enum CodecID id;
+  enum AVCodecID id;
   int d = 0;
   event_t *e;
 
@@ -303,7 +303,7 @@ get_packet_v(rtmp_t *r, uint8_t *data, int size, int64_t dts,
   case 7:
     type = *data++;
     size--;
-    id = CODEC_ID_H264;
+    id = AV_CODEC_ID_H264;
 
     if(size < 3)
       return NULL;
@@ -316,7 +316,7 @@ get_packet_v(rtmp_t *r, uint8_t *data, int size, int64_t dts,
   case 4:
     type = *data++;
     size--;
-    id = CODEC_ID_VP6F;
+    id = AV_CODEC_ID_VP6F;
     break;
   default:
     return NULL;
@@ -326,7 +326,7 @@ get_packet_v(rtmp_t *r, uint8_t *data, int size, int64_t dts,
     media_codec_params_t mcp = {0};
 
     switch(id) {
-    case CODEC_ID_H264:
+    case AV_CODEC_ID_H264:
       if(type != 0 || size < 0)
 	return NULL;
 
@@ -334,7 +334,7 @@ get_packet_v(rtmp_t *r, uint8_t *data, int size, int64_t dts,
       mcp.extradata_size = size;
       break;
 
-    case CODEC_ID_VP6F:
+    case AV_CODEC_ID_VP6F:
       if(size < 1)
 	return NULL;
       mcp.extradata      = data;
@@ -383,7 +383,7 @@ get_packet_a(rtmp_t *r, uint8_t *data, int size, int64_t dts,
 {
   uint8_t flags;
   uint8_t type = 0;
-  enum CodecID id;
+  enum AVCodecID id;
 
   if(r->r->m_read.flags & RTMP_READ_SEEKING)
     return NULL; 
@@ -395,13 +395,13 @@ get_packet_a(rtmp_t *r, uint8_t *data, int size, int64_t dts,
   size--;
 
   switch(flags & 0xf0) {
-  case 0xa0:   id = CODEC_ID_AAC;
+  case 0xa0:   id = AV_CODEC_ID_AAC;
     type = *data++;
     size--;
     break;
 
   case 0x20:
-    id = CODEC_ID_MP3;
+    id = AV_CODEC_ID_MP3;
     break;
 
   default: 
@@ -415,7 +415,7 @@ get_packet_a(rtmp_t *r, uint8_t *data, int size, int64_t dts,
 
     switch(id) {
       
-    case CODEC_ID_AAC:
+    case AV_CODEC_ID_AAC:
       if(type != 0 || size < 0)
 	return NULL;
 	
@@ -424,7 +424,7 @@ get_packet_a(rtmp_t *r, uint8_t *data, int size, int64_t dts,
       fmt = "AAC";
       break;
 
-    case CODEC_ID_MP3:
+    case AV_CODEC_ID_MP3:
       parse = 1;
       fmt = "MP3";
       break;

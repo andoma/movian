@@ -743,7 +743,7 @@ video_ps3_vdec_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 
 
   switch(mc->codec_id) {
-  case CODEC_ID_MPEG2VIDEO:
+  case AV_CODEC_ID_MPEG2VIDEO:
     if(!vdec_mpeg2_loaded)
       return no_lib(mp, "MPEG-2");
 
@@ -752,7 +752,7 @@ video_ps3_vdec_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
     spu_threads = 1;
     break;
 
-  case CODEC_ID_H264:
+  case AV_CODEC_ID_H264:
     if(mcp != NULL && mcp->profile == FF_PROFILE_H264_CONSTRAINED_BASELINE)
       return 1; // can't play this
 
@@ -795,7 +795,7 @@ video_ps3_vdec_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   vdd->mem = (void *)(uint64_t)taddr;
 
   TRACE(TRACE_DEBUG, "VDEC", "Opening codec %s level %d using %d bytes of RAM",
-	mc->codec_id == CODEC_ID_H264 ? "h264" : "MPEG2",
+	mc->codec_id == AV_CODEC_ID_H264 ? "h264" : "MPEG2",
 	dec_type.profile_level,
 	dec_attr.mem_size);
 
@@ -824,7 +824,7 @@ video_ps3_vdec_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
     vdd->level_minor = mcp->level % 10;
   }
 
-  if(mc->codec_id == CODEC_ID_H264 && mcp != NULL && mcp->extradata_size)
+  if(mc->codec_id == AV_CODEC_ID_H264 && mcp != NULL && mcp->extradata_size)
     h264_to_annexb_init(&vdd->annexb, mcp->extradata, mcp->extradata_size);
 
   vdd->max_order = -1;

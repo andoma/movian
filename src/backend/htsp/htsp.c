@@ -1983,32 +1983,32 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
       lang = htsmsg_get_str(sub, "language");
 
       if(!strcmp(type, "AC3")) {
-	codec_id = CODEC_ID_AC3;
+	codec_id = AV_CODEC_ID_AC3;
 	media_type = MEDIA_TYPE_AUDIO;
 	nicename = "AC3";
       } else if(!strcmp(type, "EAC3")) {
-	codec_id = CODEC_ID_EAC3;
+	codec_id = AV_CODEC_ID_EAC3;
 	media_type = MEDIA_TYPE_AUDIO;
 	nicename = "EAC3";
       } else if(!strcmp(type, "AAC")) {
-	codec_id = CODEC_ID_AAC;
+	codec_id = AV_CODEC_ID_AAC;
 	media_type = MEDIA_TYPE_AUDIO;
 	nicename = "AAC";
       } else if(!strcmp(type, "MPEG2AUDIO")) {
-	codec_id = CODEC_ID_MP2;
+	codec_id = AV_CODEC_ID_MP2;
 	media_type = MEDIA_TYPE_AUDIO;
 	nicename = "MPEG";
       } else if(!strcmp(type, "MPEG2VIDEO")) {
-	codec_id = CODEC_ID_MPEG2VIDEO;
+	codec_id = AV_CODEC_ID_MPEG2VIDEO;
 	media_type = MEDIA_TYPE_VIDEO;
 	nicename = "MPEG-2";
       } else if(!strcmp(type, "H264")) {
-	codec_id = CODEC_ID_H264;
+	codec_id = AV_CODEC_ID_H264;
 	media_type = MEDIA_TYPE_VIDEO;
 	nicename = "H264";
 	mcp.cheat_for_speed = 1;
       } else if(!strcmp(type, "DVBSUB")) {
-	codec_id = CODEC_ID_DVB_SUBTITLE;
+	codec_id = AV_CODEC_ID_DVB_SUBTITLE;
 	media_type = MEDIA_TYPE_SUBTITLE;
 	nicename = "Bitmap";
 

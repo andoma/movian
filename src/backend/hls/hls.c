@@ -686,12 +686,12 @@ segment_open(hls_t *h, hls_segment_t *hs, int fast_fail)
 
     switch(ctx->codec_type) {
     case AVMEDIA_TYPE_VIDEO:
-      if(hs->hs_vstream == -1 && ctx->codec_id == CODEC_ID_H264)
+      if(hs->hs_vstream == -1 && ctx->codec_id == AV_CODEC_ID_H264)
 	hs->hs_vstream = j;
       break;
 
     case AVMEDIA_TYPE_AUDIO:
-      if(hs->hs_astream == -1 && ctx->codec_id == CODEC_ID_AAC)
+      if(hs->hs_astream == -1 && ctx->codec_id == AV_CODEC_ID_AAC)
 	hs->hs_astream = j;
       break;
 	
@@ -1469,8 +1469,8 @@ hls_play_extm3u(char *buf, const char *url, media_pipe_t *mp,
   h.h_mp = mp;
   h.h_baseurl = url;
   h.h_fmt = av_find_input_format("mpegts");
-  h.h_codec_h264 = media_codec_create(CODEC_ID_H264, 0, NULL, NULL, NULL, mp);
-  h.h_codec_aac  = media_codec_create(CODEC_ID_AAC,  0, NULL, NULL, NULL, mp);
+  h.h_codec_h264 = media_codec_create(AV_CODEC_ID_H264, 0, NULL, NULL, NULL, mp);
+  h.h_codec_aac  = media_codec_create(AV_CODEC_ID_AAC,  0, NULL, NULL, NULL, mp);
   h.h_debug = gconf.enable_hls_debug;
 
   hls_variant_t *hv = NULL;

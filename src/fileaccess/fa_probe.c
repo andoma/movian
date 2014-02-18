@@ -59,21 +59,21 @@
  *
  */
 static const char *
-codecname(enum CodecID id)
+codecname(enum AVCodecID id)
 {
   AVCodec *c;
 
   switch(id) {
-  case CODEC_ID_AC3:
+  case AV_CODEC_ID_AC3:
     return "AC3";
-  case CODEC_ID_EAC3:
+  case AV_CODEC_ID_EAC3:
     return "EAC3";
-  case CODEC_ID_DTS:
+  case AV_CODEC_ID_DTS:
     return "DTS";
-  case CODEC_ID_TEXT:
-  case CODEC_ID_MOV_TEXT:
+  case AV_CODEC_ID_TEXT:
+  case AV_CODEC_ID_MOV_TEXT:
     return "Text";
-  case CODEC_ID_SSA:
+  case AV_CODEC_ID_SSA:
     return "SSA";
 
   default:

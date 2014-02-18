@@ -344,7 +344,7 @@ dvd_pes(dvd_player_t *dp, uint32_t sc, uint8_t *buf, int len)
   int track;
   media_codec_t *cw, **cwp;
   AVCodecContext *ctx;
-  enum CodecID codec_id;
+  enum AVCodecID codec_id;
   event_t *e;
   media_codec_params_t mcp = {0};
 
@@ -403,7 +403,7 @@ dvd_pes(dvd_player_t *dp, uint32_t sc, uint8_t *buf, int len)
 
 
   if(sc >= 0x1e0 && sc <= 0x1ef) {
-    codec_id  = CODEC_ID_MPEG2VIDEO;
+    codec_id  = AV_CODEC_ID_MPEG2VIDEO;
     data_type = MB_VIDEO;
     cwp = &dp->dp_video;
     mq = &mp->mp_video;
@@ -426,11 +426,11 @@ dvd_pes(dvd_player_t *dp, uint32_t sc, uint8_t *buf, int len)
 
     switch(sc) {
     case 0x80 ... 0x87:
-      codec_id = CODEC_ID_AC3;
+      codec_id = AV_CODEC_ID_AC3;
       break;
 	    
     case 0x88 ... 0x9f:
-      codec_id = CODEC_ID_DTS;
+      codec_id = AV_CODEC_ID_DTS;
       break;
 
     case 0xa0 ... 0xaf:
@@ -438,7 +438,7 @@ dvd_pes(dvd_player_t *dp, uint32_t sc, uint8_t *buf, int len)
 
 
     case 0x1c0 ... 0x1df:
-      codec_id = CODEC_ID_MP2;
+      codec_id = AV_CODEC_ID_MP2;
       break;
 
 
@@ -459,7 +459,7 @@ dvd_pes(dvd_player_t *dp, uint32_t sc, uint8_t *buf, int len)
     if((sc & 31) != track)
       return NULL;
 
-    codec_id  = CODEC_ID_DVD_SUBTITLE;
+    codec_id  = AV_CODEC_ID_DVD_SUBTITLE;
     data_type = MB_DVD_SPU;
 
     cwp = &dp->dp_spu;

@@ -534,7 +534,7 @@ h264_annexb_to_avc(media_codec_t *mc, media_pipe_t *mp,
 {
   h264_annexb_to_avc_t *hata = calloc(1, sizeof(h264_annexb_to_avc_t));
 
-  assert(mc->codec_id == CODEC_ID_H264);
+  assert(mc->codec_id == AV_CODEC_ID_H264);
 
   hata->hata_create_decoder = create;
   hata->hata_mp = mp;

@@ -82,7 +82,7 @@ rpi_codec_decode(struct media_codec *mc, struct video_decoder *vd,
   const void *data = mb->mb_data;
   size_t len       = mb->mb_size;
 
-  if(mc->codec_id == CODEC_ID_MPEG4) {
+  if(mc->codec_id == AV_CODEC_ID_MPEG4) {
 
     if(mb->mb_size <= 7)
       return;
@@ -207,45 +207,45 @@ rpi_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 
   switch(mc->codec_id) {
 
-  case CODEC_ID_H263:
+  case AV_CODEC_ID_H263:
     fmt = OMX_VIDEO_CodingH263;
     name = "h263";
     break;
 
-  case CODEC_ID_MPEG4:
+  case AV_CODEC_ID_MPEG4:
     fmt = OMX_VIDEO_CodingMPEG4;
     name = "MPEG-4";
     break;
 
-  case CODEC_ID_H264:
+  case AV_CODEC_ID_H264:
     fmt = OMX_VIDEO_CodingAVC;
     name = "h264";
     break;
 
-  case CODEC_ID_MPEG2VIDEO:
+  case AV_CODEC_ID_MPEG2VIDEO:
     if(!omx_enable_mpg2)
       return 1;
     fmt = OMX_VIDEO_CodingMPEG2;
     name = "MPEG2";
     break;
 
-  case CODEC_ID_VP8:
+  case AV_CODEC_ID_VP8:
     if(!omx_enable_vp8)
       return 1;
     fmt = OMX_VIDEO_CodingVP8;
     name = "VP8";
     break;
 
-  case CODEC_ID_VP6F:
-  case CODEC_ID_VP6A:
+  case AV_CODEC_ID_VP6F:
+  case AV_CODEC_ID_VP6A:
     if(!omx_enable_vp6)
       return 1;
     fmt = OMX_VIDEO_CodingVP6;
     name = "VP6";
     break;
 
-  case CODEC_ID_MJPEG:
-  case CODEC_ID_MJPEGB:
+  case AV_CODEC_ID_MJPEG:
+  case AV_CODEC_ID_MJPEGB:
     if(!omx_enable_mjpeg)
       return 1;
     fmt = OMX_VIDEO_CodingMJPEG;
@@ -253,8 +253,8 @@ rpi_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
     break;
 
 #if 0
-  case CODEC_ID_VC1:
-  case CODEC_ID_WMV3:
+  case AV_CODEC_ID_VC1:
+  case AV_CODEC_ID_WMV3:
     if(mcp->extradata_size == 0)
       return 1;
 

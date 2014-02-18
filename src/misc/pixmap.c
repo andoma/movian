@@ -1416,7 +1416,7 @@ pixmap_decode(pixmap_t *pm, const image_meta_t *im,
   case PIXMAP_SVG:
     return svg_decode(pm, im, errbuf, errlen);
   case PIXMAP_PNG:
-    codec = avcodec_find_decoder(CODEC_ID_PNG);
+    codec = avcodec_find_decoder(AV_CODEC_ID_PNG);
     break;
   case PIXMAP_JPEG:
 
@@ -1439,10 +1439,10 @@ pixmap_decode(pixmap_t *pm, const image_meta_t *im,
     else if(ji.ji_width > 4096 || ji.ji_height > 4096)
       lowres = 1; // swscale have problems with dimensions > 4096
 
-    codec = avcodec_find_decoder(CODEC_ID_MJPEG);
+    codec = avcodec_find_decoder(AV_CODEC_ID_MJPEG);
     break;
   case PIXMAP_GIF:
-    codec = avcodec_find_decoder(CODEC_ID_GIF);
+    codec = avcodec_find_decoder(AV_CODEC_ID_GIF);
     break;
   default:
     codec = NULL;

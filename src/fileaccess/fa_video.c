@@ -797,7 +797,7 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
     case AVMEDIA_TYPE_AUDIO:
       if(va.flags & BACKEND_VIDEO_NO_AUDIO)
 	continue;
-      if(ctx->codec_id == CODEC_ID_DTS)
+      if(ctx->codec_id == AV_CODEC_ID_DTS)
 	ctx->channels = 0;
       break;
 

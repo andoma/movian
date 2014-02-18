@@ -71,7 +71,7 @@ fa_imageloader_init(void)
 #if ENABLE_LIBAV
   hts_mutex_init(&image_from_video_mutex[0]);
   hts_mutex_init(&image_from_video_mutex[1]);
-  thumbcodec = avcodec_find_encoder(CODEC_ID_MJPEG);
+  thumbcodec = avcodec_find_encoder(AV_CODEC_ID_MJPEG);
 #endif
 }
 

@@ -70,7 +70,7 @@ glw_rec_init(const char *filename, int width, int height, int fps)
 
   gr->v_ctx = gr->v_st->codec;
   gr->v_ctx->codec_type = AVMEDIA_TYPE_VIDEO;
-  gr->v_ctx->codec_id = CODEC_ID_FFVHUFF;
+  gr->v_ctx->codec_id = AV_CODEC_ID_FFVHUFF;
 
   gr->v_ctx->width = width;
   gr->v_ctx->height = height;

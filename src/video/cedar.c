@@ -346,7 +346,7 @@ cedar_codec_open(media_codec_t *mc, const const media_codec_params_t *mcp,
   default:
     return 1;
 
-  case CODEC_ID_H264:
+  case AV_CODEC_ID_H264:
     si.format = STREAM_FORMAT_H264;
 #ifdef CEDAR_USE_HATA
     if(mcp == NULL || mcp->extradata == NULL || mcp->extradata_size == 0 ||
@@ -360,7 +360,7 @@ cedar_codec_open(media_codec_t *mc, const const media_codec_params_t *mcp,
     }
     break;
 
-  case CODEC_ID_MPEG2VIDEO:
+  case AV_CODEC_ID_MPEG2VIDEO:
     return 1;
     si.format = STREAM_FORMAT_MPEG2;
     si.sub_format = MPEG2_SUB_FORMAT_MPEG2;
@@ -368,7 +368,7 @@ cedar_codec_open(media_codec_t *mc, const const media_codec_params_t *mcp,
 
 #if 0
 
-  case CODEC_ID_MPEG4:
+  case AV_CODEC_ID_MPEG4:
     return 1;
     si.format = STREAM_FORMAT_MPEG4;
 
@@ -399,7 +399,7 @@ cedar_codec_open(media_codec_t *mc, const const media_codec_params_t *mcp,
     break;
 #endif
 
-  case CODEC_ID_H263:
+  case AV_CODEC_ID_H263:
     return 1;
     si.format = STREAM_FORMAT_MPEG4;
     si.sub_format = MPEG4_SUB_FORMAT_H263;
