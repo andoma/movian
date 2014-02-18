@@ -178,21 +178,10 @@ media_buf_from_avpkt_unlocked(media_pipe_t *mp, AVPacket *pkt)
 
   mb->mb_dtor = media_buf_dtor_freedata;
 
-  if(pkt->destruct == av_destruct_packet) {
-    /* Move the data pointers from libav's packet */
-    mb->mb_data = pkt->data;
-    pkt->data = NULL;
-    
-    mb->mb_size = pkt->size;
-    pkt->size = 0;
-    
-  } else {
-    
-    mb->mb_data = malloc(pkt->size +   FF_INPUT_BUFFER_PADDING_SIZE);
-    memset(mb->mb_data + pkt->size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
-    memcpy(mb->mb_data, pkt->data, pkt->size);
-    mb->mb_size = pkt->size;
-  }
+  mb->mb_data = malloc(pkt->size +   FF_INPUT_BUFFER_PADDING_SIZE);
+  memset(mb->mb_data + pkt->size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
+  memcpy(mb->mb_data, pkt->data, pkt->size);
+  mb->mb_size = pkt->size;
 
   av_free_packet(pkt);
   return mb;

@@ -21,6 +21,8 @@
 
 #include <assert.h>
 
+#include <libavutil/pixdesc.h>
+
 #include "showtime.h"
 #include "media.h"
 #include "video/video_playback.h"
@@ -1154,8 +1156,8 @@ video_deliver_lavc(const frame_info_t *fi, glw_video_t *gv)
   case PIX_FMT_YUVJ422P:
   case PIX_FMT_YUVJ444P:
   case PIX_FMT_YUVJ440P:
-    avcodec_get_chroma_sub_sample(nfi.fi_pix_fmt, &nfi.fi_hshift,
-				  &nfi.fi_vshift);
+    av_pix_fmt_get_chroma_sub_sample(nfi.fi_pix_fmt, &nfi.fi_hshift,
+                                     &nfi.fi_vshift);
     
     nfi.fi_type = 'YUVP';
     break;

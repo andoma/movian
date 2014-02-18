@@ -361,7 +361,7 @@ write_thumb(const AVCodecContext *src, const AVFrame *sframe,
     thumbctx = ctx;
 
     if(oframe == NULL) {
-      oframe = avcodec_alloc_frame();
+      oframe = av_frame_alloc();
       memset(oframe, 0, sizeof(AVFrame));
     }
   }
@@ -389,7 +389,7 @@ write_thumb(const AVCodecContext *src, const AVFrame *sframe,
   } else {
     assert(out.data == NULL);
   }
-  avpicture_free((AVPicture *)oframe);
+  av_frame_free(&oframe);
 }
 
 
@@ -462,7 +462,7 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
   }
 
   AVPacket pkt;
-  AVFrame *frame = avcodec_alloc_frame();
+  AVFrame *frame = av_frame_alloc();
   int got_pic;
 
 
@@ -570,7 +570,7 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
     break;
   }
 
-  av_free(frame);
+  av_frame_free(&frame);
   if(pm == NULL)
     snprintf(errbuf, errlen, "Frame not found (scanned %d)", 
 	     MAX_FRAME_SCAN - cnt);

@@ -248,7 +248,6 @@ typedef struct media_buf {
   media_codec_t *mb_cw;
   void (*mb_dtor)(struct media_buf *mb);
 
-  int mb_size;
 
   union {
     int32_t mb_data32;
@@ -258,6 +257,7 @@ typedef struct media_buf {
     prop_t *mb_prop;
   };
 
+  int mb_size;
 
   uint8_t mb_stream;
 

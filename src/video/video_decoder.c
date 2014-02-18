@@ -83,13 +83,8 @@ video_deliver_frame_avctx(video_decoder_t *vd,
   switch(mbm->mbm_aspect_override) {
   case 0:
 
-    if(frame->pan_scan != NULL && frame->pan_scan->width != 0) {
-      fi.fi_dar_num = frame->pan_scan->width;
-      fi.fi_dar_den = frame->pan_scan->height;
-    } else {
-      fi.fi_dar_num = frame->width;
-      fi.fi_dar_den = frame->height;
-    }
+    fi.fi_dar_num = frame->width;
+    fi.fi_dar_den = frame->height;
 
     if(frame->sample_aspect_ratio.num) {
       fi.fi_dar_num *= frame->sample_aspect_ratio.num;
@@ -279,7 +274,7 @@ vd_thread(void *aux)
 
   const media_buf_meta_t *mbm = NULL;
 
-  vd->vd_frame = avcodec_alloc_frame();
+  vd->vd_frame = av_frame_alloc();
 
   hts_mutex_lock(&mp->mp_mutex);
 
@@ -489,8 +484,7 @@ vd_thread(void *aux)
   if(vd->vd_ext_subtitles != NULL)
     subtitles_destroy(vd->vd_ext_subtitles);
 
-  /* Free ffmpeg frame */
-  av_free(vd->vd_frame);
+  av_frame_free(&vd->vd_frame);
   return NULL;
 }
 

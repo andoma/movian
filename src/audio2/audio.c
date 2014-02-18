@@ -153,7 +153,7 @@ audio_decoder_create(struct media_pipe *mp)
   ad->ad_ac = ac;
 
   ad->ad_tile_size = 1024;
-  ad->ad_frame = avcodec_alloc_frame();
+  ad->ad_frame = av_frame_alloc();
   ad->ad_pts = AV_NOPTS_VALUE;
   ad->ad_epoch = 0;
   ad->ad_vol_scale = 1.0f;
@@ -192,7 +192,7 @@ audio_decoder_destroy(struct audio_decoder *ad)
   mp_send_cmd(ad->ad_mp, &ad->ad_mp->mp_audio, MB_CTRL_EXIT);
   hts_thread_join(&ad->ad_tid);
   mq_flush(ad->ad_mp, &ad->ad_mp->mp_audio, 1);
-  avcodec_free_frame(&ad->ad_frame);
+  av_frame_free(&ad->ad_frame);
 
   if(ad->ad_avr != NULL) {
     avresample_close(ad->ad_avr);
@@ -367,7 +367,7 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 	ctx = mc->ctx = avcodec_alloc_context3(codec);
 
 	if(ad->ad_stereo_downmix)
-	  ctx->request_channels = 2;
+          ctx->request_channel_layout = AV_CH_LAYOUT_STEREO;
 
 	if(avcodec_open2(mc->ctx, codec, NULL) < 0) {
 	  av_freep(&mc->ctx);

@@ -1456,7 +1456,6 @@ pixmap_decode(pixmap_t *pm, const image_meta_t *im,
   }
 
   ctx = avcodec_alloc_context3(codec);
-  ctx->lowres = lowres;
 
   if(avcodec_open2(ctx, codec, NULL) < 0) {
     av_free(ctx);
@@ -1465,7 +1464,7 @@ pixmap_decode(pixmap_t *pm, const image_meta_t *im,
     return NULL;
   }
   
-  frame = avcodec_alloc_frame();
+  frame = av_frame_alloc();
 
   AVPacket avpkt;
   av_init_packet(&avpkt);
@@ -1477,7 +1476,7 @@ pixmap_decode(pixmap_t *pm, const image_meta_t *im,
     pixmap_release(pm);
     avcodec_close(ctx);
     av_free(ctx);
-    av_free(frame);
+    av_frame_free(&frame);
     snprintf(errbuf, errlen, "Unable to decode image of size (%d x %d)",
              ctx->width, ctx->height);
     return NULL;
@@ -1510,7 +1509,7 @@ pixmap_decode(pixmap_t *pm, const image_meta_t *im,
   } else {
     snprintf(errbuf, errlen, "Out of memory");
   }
-  av_free(frame);
+  av_frame_free(&frame);
 
   avcodec_close(ctx);
   av_free(ctx);
