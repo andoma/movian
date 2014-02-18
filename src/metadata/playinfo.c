@@ -51,7 +51,7 @@ playinfo_register_play(const char *url, int inc)
   kv_url_opt_set(url, KVSTORE_DOMAIN_SYS, "playcount",
                  KVSTORE_SET_INT, cur + inc);
 
-  kv_url_opt_set(url, KVSTORE_DOMAIN_SYS, "lastplay",
+  kv_url_opt_set(url, KVSTORE_DOMAIN_SYS, "lastplayed",
                  KVSTORE_SET_INT, (int)(time(NULL)));
 
   update_by_url(url, 1);
