@@ -379,19 +379,26 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 	if(frame->sample_rate == 0 && mb->mb_cw->fmt_ctx)
 	  frame->sample_rate = mb->mb_cw->fmt_ctx->sample_rate;
 
-	if(frame->sample_rate == 0)
+	if(frame->sample_rate == 0) {
+
+          if(!ad->ad_sample_rate_fail) {
+            ad->ad_sample_rate_fail = 1;
+            TRACE(TRACE_ERROR, "Audio",
+                  "Unable to determine sample rate");
+          }
 	  return;
+        }
       }
 
       if(frame->channel_layout == 0) {
-	switch(ctx->channels) {
-	case 1:
-	  frame->channel_layout = AV_CH_LAYOUT_MONO;
-	  break;
-	case 2:
-	  frame->channel_layout = AV_CH_LAYOUT_STEREO;
-	  break;
-	default:
+        frame->channel_layout = av_get_default_channel_layout(ctx->channels);
+        if(frame->channel_layout == 0) {
+
+          if(!ad->ad_channel_layout_fail) {
+            ad->ad_channel_layout_fail = 1;
+              TRACE(TRACE_ERROR, "Audio",
+                    "Unable to map %d channels to channel layout");
+          }
 	  return;
 	}
       }
@@ -603,6 +610,10 @@ audio_decode_thread(void *aux)
 	break;
 
       case MB_CTRL_FLUSH:
+        // Reset some error reporting filters
+        ad->ad_channel_layout_fail = 0;
+        ad->ad_sample_rate_fail = 0;
+
 	if(ac->ac_flush)
 	  ac->ac_flush(ad);
 	ad->ad_pts = AV_NOPTS_VALUE;

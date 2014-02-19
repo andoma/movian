@@ -63,6 +63,9 @@ typedef struct audio_decoder {
   int ad_tile_size;   // Number of samples to be delivered per round
   int ad_delay;       // Audio output delay in us
 
+  char ad_sample_rate_fail;
+  char ad_channel_layout_fail;
+
   int ad_paused;
 
   int ad_in_codec_id;
