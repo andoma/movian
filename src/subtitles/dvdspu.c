@@ -111,9 +111,15 @@ dvdspu_decode(dvdspu_t *d, int64_t pts)
   int pos, cmd, x1, y1, x2, y2, offset1, offset2, next_cmd_pos;
 
 
-  if(d->d_cmdpos == -1)
-    return TAILQ_NEXT(d, d_link) != NULL ? -1 : 0;
-  
+  if(d->d_cmdpos == -1) {
+    d = TAILQ_NEXT(d, d_link);
+    if(d == NULL)
+      return 0;
+    if(d->d_pts <= pts)
+      return -1;
+    return 0;
+  }
+
   while(d->d_cmdpos + 4 < d->d_size) {
     date = getbe16(buf + d->d_cmdpos);
     picts = d->d_pts + ((date << 10) / 90) * 1000;
