@@ -66,7 +66,7 @@ libav_decode_video(struct media_codec *mc, struct video_decoder *vd,
   if(got_pic == 0 || mbm->mbm_skip == 1)
     return;
 
-  video_deliver_frame_avctx(vd, mp, mq, ctx, frame, mbm, t);
+  video_deliver_frame_avctx(vd, mp, mq, ctx, frame, mbm, t, mc);
 }
 
 

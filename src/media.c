@@ -1717,6 +1717,11 @@ media_codec_create(int codec_id, int parser,
   }
 #endif
 
+  if(mcp != NULL) {
+    mc->sar_num = mcp->sar_num;
+    mc->sar_den = mcp->sar_den;
+  }
+
   LIST_FOREACH(cd, &registeredcodecs, link)
     if(!cd->open(mc, mcp, mp))
       break;

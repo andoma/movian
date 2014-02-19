@@ -72,7 +72,8 @@ void
 video_deliver_frame_avctx(video_decoder_t *vd,
 			  media_pipe_t *mp, media_queue_t *mq,
 			  AVCodecContext *ctx, AVFrame *frame,
-			  const media_buf_meta_t *mbm, int decode_time)
+			  const media_buf_meta_t *mbm, int decode_time,
+                          const media_codec_t *mc)
 {
   frame_info_t fi;
 #if 0
@@ -89,8 +90,11 @@ video_deliver_frame_avctx(video_decoder_t *vd,
     if(frame->sample_aspect_ratio.num) {
       fi.fi_dar_num *= frame->sample_aspect_ratio.num;
       fi.fi_dar_den *= frame->sample_aspect_ratio.den;
+    } else if(mc->sar_num) {
+      fi.fi_dar_num *= mc->sar_num;
+      fi.fi_dar_den *= mc->sar_den;
     }
-      
+
     break;
   case 1:
     fi.fi_dar_num = 4;

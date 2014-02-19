@@ -160,6 +160,9 @@ typedef struct media_codec {
   void (*reinit)(struct media_codec *mc);
   void (*reconfigure)(struct media_codec *mc);
 
+  unsigned int sar_num;
+  unsigned int sar_den;
+
 } media_codec_t;
 
 /**
@@ -540,6 +543,8 @@ typedef struct media_codec_params {
   int cheat_for_speed;
   const void *extradata;
   size_t extradata_size;
+  unsigned int sar_num;
+  unsigned int sar_den;
 } media_codec_params_t;
 
 

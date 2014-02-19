@@ -793,6 +793,8 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
       mcp.height = ctx->height;
       mcp.profile = ctx->profile;
       mcp.level = ctx->level;
+      mcp.sar_num = st->sample_aspect_ratio.num;
+      mcp.sar_den = st->sample_aspect_ratio.den;
       break;
 
     case AVMEDIA_TYPE_AUDIO:
