@@ -1084,18 +1084,19 @@ mp_enqueue_event_locked(media_pipe_t *mp, event_t *e)
   event_select_track_t *est = (event_select_track_t *)e;
   event_int3_t *ei3;
   int64_t d;
+  int dedup_event = 0;
 
   switch(e->e_type_x) {
   case EVENT_SELECT_AUDIO_TRACK:
     mtm_select_track(&mp->mp_audio_track_mgr, est);
-
-    //    mp->mp_audio_track_mgr.mtm_user_set |= est->manual;
+    dedup_event = 1;
     break;
+
   case EVENT_SELECT_SUBTITLE_TRACK:
     mtm_select_track(&mp->mp_subtitle_track_mgr, est);
-
-    //    mp->mp_subtitle_track_mgr.mtm_user_set |= est->manual;
+    dedup_event = 1;
     break;
+
   case EVENT_DELTA_SEEK_REL:
     // We want to seek thru the entire feature in 3 seconds
 
@@ -1112,8 +1113,25 @@ mp_enqueue_event_locked(media_pipe_t *mp, event_t *e)
 
     mp_direct_seek(mp, mp->mp_seek_base += d*sign);
     return;
+
+  case EVENT_PLAYQUEUE_JUMP:
+    dedup_event = 1;
+    break;
+
   default:
     break;
+  }
+
+  if(dedup_event) {
+    event_t *e2;
+    TAILQ_FOREACH(e2, &mp->mp_eq, e_link)
+      if(e2->e_type_x == e->e_type_x)
+        break;
+
+    if(e2 != NULL) {
+      TAILQ_REMOVE(&mp->mp_eq, e2, e_link);
+      event_release(e2);
+    }
   }
 
   if(event_is_action(e, ACTION_PLAYPAUSE ) ||
@@ -2248,6 +2266,8 @@ mtm_rethink(media_track_mgr_t *mtm)
 					     mt->mt_url)) {
 
       mtm->mtm_user_set = 1;
+      TRACE(TRACE_DEBUG, "media", "Selecting track %s (preferred by user)",
+            mt->mt_url);
       event_t *e = event_create_select_track(mt->mt_url,
 					     mtm_event_type(mtm), 0);
       mp_enqueue_event_locked(mtm->mtm_mp, e);
@@ -2276,6 +2296,9 @@ mtm_rethink(media_track_mgr_t *mtm)
 
 
   if(best != NULL) {
+
+    TRACE(TRACE_DEBUG, "media", "Selecting track %s, best score %d",
+          best->mt_url, best_score);
 
     event_t *e = event_create_select_track(best->mt_url,
 					   mtm_event_type(mtm), 0);
@@ -2584,6 +2607,8 @@ track_mgr_next_track(media_track_mgr_t *mtm)
     mt = TAILQ_FIRST(&mtm->mtm_tracks);
 
   if(mt != mtm->mtm_current) {
+    TRACE(TRACE_DEBUG, "media", "Selecting next track %s (cycle)",
+          mt->mt_url);
     event_t *e = event_create_select_track(mt->mt_url, mtm_event_type(mtm), 1);
     mp_enqueue_event_locked(mtm->mtm_mp, e);
     event_release(e);
