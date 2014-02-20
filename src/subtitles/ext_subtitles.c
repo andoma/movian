@@ -586,7 +586,8 @@ load_tmp_line(ext_subtitles_t *es, const char *src, int len,
   if(delay < 2)
     delay = 2;
   *dst = 0;
-  es_insert_text(es, txt, start * 1000000LL, (start + delay) * 1000000LL, 0);
+  es_insert_text(es, txt, start * 1000000LL, (start + delay) * 1000000LL,
+                 TEXT_PARSE_SLASH_PREFIX);
 }
 
 
