@@ -1473,7 +1473,7 @@ redirect(http_file_t *hf, int *redircount, char *errbuf, size_t errlen,
   }
 
   if(hf->hf_location == NULL) {
-    snprintf(errbuf, errlen, "Redirect respons without location");
+    snprintf(errbuf, errlen, "Redirect response without location");
     return -1;
   }
 
