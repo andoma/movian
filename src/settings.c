@@ -1096,10 +1096,9 @@ setting_set(setting_t *s, int type, ...)
 void
 setting_reset(setting_t *s)
 {
-  if(s->s_parent == NULL) {
-    TRACE(TRACE_ERROR, "Settings", "Unable to reset setting without ancestor");
+  if(s->s_parent == NULL)
     return;
-  }
+
   s->s_value_set = 0;
 
   if(s->s_store) {
@@ -1136,19 +1135,12 @@ setting_push_to_ancestor(setting_t *s, const char *ancestor)
 {
   setting_t *a;
 
-  printf("Pushing to %s\n", ancestor);
-
   for(a = s; a != NULL; a = a->s_parent) {
-    printf("Checking %p (%s)\n", a, a->s_origin);
     if(!strcmp(ancestor, a->s_origin))
       break;
   }
-  if(a == NULL) {
-    TRACE(TRACE_ERROR, "Settings", "Unable to find setting anscestor %s",
-          ancestor);
-    return;
-  }
-  prop_copy(a->s_val, s->s_val);
+  if(a != NULL)
+    prop_copy(a->s_val, s->s_val);
 }
 
 
