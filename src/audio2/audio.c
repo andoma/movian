@@ -336,6 +336,7 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 	TRACE(TRACE_DEBUG, "audio", "Codec changed to %s",
 	      codec ? codec->name : "???");
 	ad->ad_in_codec_id = mc->codec_id;
+	ad->ad_in_sample_rate = 0;
 
 	audio_cleanup_spdif_muxer(ad);
   
