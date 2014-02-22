@@ -537,7 +537,7 @@ scanner_notification(void *opaque, fa_notify_op_t op, const char *filename,
 #endif
 
 /**
- * Very simple and O^2 diff
+ *
  */
 static int
 rescan(scanner_t *s)
@@ -545,9 +545,11 @@ rescan(scanner_t *s)
   fa_dir_t *fd;
   fa_dir_entry_t *a, *b, *n;
   int changed = 0;
-
-  if((fd = fa_scandir(s->s_url, NULL, 0)) == NULL)
+  char errbuf[512];
+  if((fd = fa_scandir(s->s_url, errbuf, sizeof(errbuf))) == NULL) {
+    SCAN_TRACE("%s: Rescanning failed: %s", s->s_url, errbuf);
     return -1; 
+  }
 
   if(s->s_fd->fd_count != fd->fd_count) {
     SCAN_TRACE("%s: Rescanning found %d items, previously %d",
