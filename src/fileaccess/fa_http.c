@@ -1158,7 +1158,7 @@ http_read_content(http_file_t *hf)
 
       if(csize > 0) {
 	buf = myreallocf(buf, s + csize + 1);
-        if(buf == NULL);
+        if(buf == NULL)
           return NULL;
 
 	if(tcp_read_data(hc->hc_tc, buf + s, csize, NULL, 0))
