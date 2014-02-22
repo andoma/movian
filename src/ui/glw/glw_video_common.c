@@ -402,7 +402,7 @@ glw_video_newframe_blend(glw_video_t *gv, video_decoder_t *vd, int flags,
 	  return pts;
 	}
 
-	if(code == AVDIFF_CATCH_UP) {
+	if(code == AVDIFF_CATCH_UP && sb != NULL) {
 	  gv->gv_sa = NULL;
 	  release(gv, sa, &gv->gv_decoded_queue);
 	  kalman_init(&gv->gv_avfilter);
