@@ -25,10 +25,12 @@
 #include "showtime.h"
 #include "audio.h"
 #include "media.h"
+#include "notifications.h"
 
 static pa_threaded_mainloop *mainloop;
 static pa_mainloop_api *api;
 static pa_context *ctx;
+static prop_t *user_errmsg;
 
 typedef struct decoder {
   audio_decoder_t ad;
@@ -106,13 +108,35 @@ static const struct {
 /**
  *
  */
+static void
+pulseaudio_error(const char *str)
+{
+  if(user_errmsg == NULL) {
+    user_errmsg =
+      notify_add(NULL, NOTIFY_ERROR, NULL, 0,
+		 _("Unable to initialize audio system %s -- %s"),
+		 "Pulseaudio", str);
+  }
+}
+
+/**
+ *
+ */
 static int
 pulseaudio_make_context_ready(void)
 {
   while(1) {
     switch(pa_context_get_state(ctx)) {
     case PA_CONTEXT_UNCONNECTED:
-      // do reconnect?
+      /* Connect the context */
+      if(pa_context_connect(ctx, NULL, 0, NULL) < 0) {
+	pulseaudio_error(pa_strerror(pa_context_errno(ctx)));
+	pa_threaded_mainloop_unlock(mainloop);
+	return -1;
+      }
+      pa_threaded_mainloop_wait(mainloop);
+      continue;
+      
     case PA_CONTEXT_CONNECTING:
     case PA_CONTEXT_AUTHORIZING:
     case PA_CONTEXT_SETTING_NAME:
@@ -127,6 +151,11 @@ pulseaudio_make_context_ready(void)
       break;
     }
     break;
+  }
+  if(user_errmsg != NULL) {
+    prop_destroy(user_errmsg);
+    prop_ref_dec(user_errmsg);
+    user_errmsg = NULL;
   }
   return 0;
 }
@@ -564,8 +593,7 @@ context_state_callback(pa_context *c, void *userdata)
     break;
 
   case PA_CONTEXT_FAILED:
-    TRACE(TRACE_ERROR, "PA",
-	  "Connection failure: %s", pa_strerror(pa_context_errno(c)));
+    pulseaudio_error(pa_strerror(pa_context_errno(c)));
     pa_threaded_mainloop_signal(mainloop, 0);
     break;
   }
@@ -601,14 +629,6 @@ audio_driver_init(void)
 #endif
 
   pa_context_set_state_callback(ctx, context_state_callback, NULL);
-
-  /* Connect the context */
-  if(pa_context_connect(ctx, NULL, 0, NULL) < 0) {
-    TRACE(TRACE_ERROR, "PA", "pa_context_connect() failed: %s",
-	  pa_strerror(pa_context_errno(ctx)));
-    pa_threaded_mainloop_unlock(mainloop);
-    return NULL;
-  }
 
   pa_threaded_mainloop_unlock(mainloop);
 

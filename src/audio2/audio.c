@@ -476,7 +476,7 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 	      av_get_sample_fmt_name(ad->ad_out_sample_format));
 
 	if(avresample_open(ad->ad_avr)) {
-	  TRACE(TRACE_ERROR, "AudioQueue", "Unable to open resampler");
+	  TRACE(TRACE_ERROR, "Audio", "Unable to open resampler");
 	  avresample_free(&ad->ad_avr);
 	}
 
@@ -489,6 +489,10 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 	avresample_convert(ad->ad_avr, NULL, 0, 0,
 			   frame->data, frame->linesize[0],
 			   frame->nb_samples);
+      else {
+	int delay = 1000000LL * frame->nb_samples / frame->sample_rate;
+	usleep(delay);
+      }
     }
   }
 }
