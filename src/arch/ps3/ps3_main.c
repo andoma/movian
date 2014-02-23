@@ -77,6 +77,7 @@ static prop_t *tempprop;
 #define LOW_MEM_LOW_WATER  5 * 1024 * 1024
 #define LOW_MEM_HIGH_WATER 15 * 1024 * 1024
 
+extern void vm_stat_log(void);
 
 static void
 memlogger_fn(callout_t *co, void *aux)
@@ -102,7 +103,10 @@ memlogger_fn(callout_t *co, void *aux)
   prop_set_int(prop_create(memprop, "activeMem"), mi.uordblks / 1024);
   prop_set_int(prop_create(memprop, "inactiveMem"), mi.fordblks / 1024);
 
+
   if(gconf.enable_mem_debug) {
+    vm_stat_log();
+
     TRACE(TRACE_DEBUG, "MEM",
           "SysTotal: %d kB, "
           "SysFree: %d kB, "
