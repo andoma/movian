@@ -39,6 +39,7 @@
 #include <libavutil/mathematics.h>
 #endif
 #include "misc/pixmap.h"
+#include "misc/callout.h"
 #include "misc/jpeg.h"
 #include "backend/backend.h"
 #include "blobcache.h"
@@ -54,6 +55,7 @@ static const uint8_t svgsig2[4] = {'<', 's', 'v', 'g'};
 static hts_mutex_t image_from_video_mutex[2];
 static AVCodecContext *thumbctx;
 static AVCodec *thumbcodec;
+static callout_t thumb_flush_callout;
 
 static pixmap_t *fa_image_from_video(const char *url, const image_meta_t *im,
 				     char *errbuf, size_t errlen,
@@ -307,6 +309,20 @@ ifv_close(void)
   }
 }
 
+/**
+ *
+ */
+static void
+ifv_autoclose(callout_t *c, void *aux)
+{
+  if(hts_mutex_trylock(&image_from_video_mutex[1])) {
+    callout_arm(&thumb_flush_callout, ifv_autoclose, NULL, 5);
+  } else {
+    TRACE(TRACE_DEBUG, "Thumb", "Closing movie for thumb sources"); 
+    ifv_close();
+    hts_mutex_unlock(&image_from_video_mutex[1]);
+  }
+}
 
 /**
  *
@@ -558,6 +574,9 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
   if(pm == NULL)
     snprintf(errbuf, errlen, "Frame not found (scanned %d)", 
 	     MAX_FRAME_SCAN - cnt);
+
+  avcodec_flush_buffers(ifv_ctx);
+  callout_arm(&thumb_flush_callout, ifv_autoclose, NULL, 5);
   return pm;
 }
 
