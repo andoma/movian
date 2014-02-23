@@ -1218,7 +1218,7 @@ metadb_metadata_writex(void *db, const char *url, time_t mtime,
 
     char *x = strrchr(sql, ',');
     if(x != NULL) {
-      *x = 0;
+      *x = ' ';
       rc = db_prepare(db, &stmt, sql);
 
       if(rc != SQLITE_OK)
