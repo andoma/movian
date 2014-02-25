@@ -487,7 +487,7 @@ ass_handle_override(ass_dialoge_t *ad, const char *src, int len)
       // Alignment
       ad->ad_alignment = atoi(str+2);
     } else {
-      TRACE(TRACE_DEBUG, "ASS", "Can't handle override: %s", str);
+      //      TRACE(TRACE_DEBUG, "ASS", "Can't handle override: %s", str);
     }
   }
 }
