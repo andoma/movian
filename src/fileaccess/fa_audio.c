@@ -265,9 +265,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 	continue;
       }
 
-
-
-      mb = media_buf_alloc_unlocked(mp, pkt.size);
+      mb = media_buf_from_avpkt_unlocked(mp, &pkt);
       mb->mb_data_type = MB_AUDIO;
 
       mb->mb_pts      = rescale(fctx, pkt.pts,      si);
@@ -275,12 +273,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
       mb->mb_duration = rescale(fctx, pkt.duration, si);
 
       mb->mb_cw = media_codec_ref(cw);
-
-      /* Move the data pointers from ffmpeg's packet */
-
       mb->mb_stream = pkt.stream_index;
-
-      memcpy(mb->mb_data, pkt.data, pkt.size);
 
       if(mb->mb_pts != AV_NOPTS_VALUE) {
         if(fctx->start_time != AV_NOPTS_VALUE)
