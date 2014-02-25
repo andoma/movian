@@ -335,7 +335,6 @@ write_thumb(const AVCodecContext *src, const AVFrame *sframe,
     return;
 
   AVCodecContext *ctx = thumbctx;
-  static AVFrame *oframe;
 
   if(ctx == NULL || ctx->width  != width || ctx->height != height) {
     
@@ -359,12 +358,9 @@ write_thumb(const AVCodecContext *src, const AVFrame *sframe,
       return;
     }
     thumbctx = ctx;
-
-    if(oframe == NULL) {
-      oframe = av_frame_alloc();
-      memset(oframe, 0, sizeof(AVFrame));
-    }
   }
+
+  AVFrame *oframe = av_frame_alloc();
 
   avpicture_alloc((AVPicture *)oframe, ctx->pix_fmt, width, height);
       
