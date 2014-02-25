@@ -174,7 +174,7 @@ __assert_func(const char *file, int line,
 }
 
 
-static void
+void
 resolve_syms(void **ptr, const char **symvec, int *symoffset, int frames)
 {
   char *s = symbuf;

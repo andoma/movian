@@ -388,14 +388,6 @@ ps3_early_init(int argc, char **argv)
   LIST_INSERT_HEAD(&threads, ti, link);
   hts_mutex_unlock(&thread_info_mutex);
 
-  sys_ppu_thread_t tid;
-  s32 r = sys_ppu_thread_create(&tid, (void *)thread_reaper, 0,
-				2, 16384, 0, (char *)"reaper");
-  if(r) {
-    my_trace("Failed to create reaper thread: %x", r);
-    exit(0);
-  }
-
 #ifdef EMERGENCY_EXIT_THREAD
   r = sys_ppu_thread_create(&tid, (void *)emergency_thread, 0,
 				2, 16384, 0, (char *)"emergency");
@@ -517,6 +509,32 @@ arch_exit(void)
 }
 
 
+static  sys_event_queue_t crash_event_queue;
+
+static void *
+exec_catcher(void *aux)
+{
+  sys_event_t event;
+
+  while(1) {
+    int ret = sys_event_queue_receive(crash_event_queue, &event,
+				      100 * 1000 * 1000);
+    if(ret)
+      continue;
+
+    extern void thread_check(void);
+    thread_check();
+    exit(0);
+  }
+  return NULL;
+}
+
+typedef struct sys_event_queue_attr {
+  uint32_t attr_protocol;
+  int type;
+  char name[8];
+} sys_event_queue_attribute_t;
+
 /**
  *
  */
@@ -545,6 +563,24 @@ main(int argc, char **argv)
   TRACE(TRACE_DEBUG, "SPU", "Initializing SPUs");
   lv2SpuInitialize(6, 0);
 #endif
+
+  sys_event_queue_attribute_t attr = {
+    .attr_protocol = 2,
+    .type = 1,
+  };
+  
+  int r;
+  r = Lv2Syscall4(128, (intptr_t)&crash_event_queue,(intptr_t)&attr, 0, 64);
+
+  TRACE(TRACE_INFO, "TRAPHANDLER", "createqueue=%d", r);
+
+  r = Lv2Syscall1(944, crash_event_queue);
+
+  TRACE(TRACE_INFO, "TRAPHANDLER", "init=%d", r);
+  sys_ppu_thread_t tid;
+
+  r = sys_ppu_thread_create(&tid, (void *)exec_catcher, 0,
+			    2, 16384, 0, (char *)"execcatcher");
 
   preload_fonts();
 

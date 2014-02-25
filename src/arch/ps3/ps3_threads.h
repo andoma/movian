@@ -177,6 +177,7 @@ typedef struct thread_info {
   void *aux;
   void *(*fn)(void *);
   sys_ppu_thread_t id;
+  uint64_t pad;
   char name[64];
 } thread_info_t;
 

@@ -33,29 +33,131 @@
 struct thread_info_list threads;
 hts_mutex_t thread_info_mutex;
 
-
 /**
  *
  */
+void thread_check(void);
+
+static uint64_t tmpbuf[1024];
+//static uint64_t tmpbuf2[1024];
+//static uint64_t tmpbuf3[1024];
+
+//static uint32_t tmpbuf32[1024];
+
+#define PPU_THREAD_STATUS_IDLE     0
+#define PPU_THREAD_STATUS_RUNNABLE 1
+#define PPU_THREAD_STATUS_ONPROC   2
+#define PPU_THREAD_STATUS_SLEEP    3
+#define PPU_THREAD_STATUS_STOP     4
+#define PPU_THREAD_STATUS_ZOMBIE   5
+#define PPU_THREAD_STATUS_DELETED  6
+
+
+typedef struct lv2_thread_info {
+  uint32_t prio;
+  uint32_t status;
+  uint32_t stack_addr;
+  uint32_t stack_size;
+  uint32_t pid;
+  uint32_t unknown;
+  uint32_t prio_again;
+  uint32_t unknown2;
+  uint32_t pad[8];
+} lv2_thread_info_t;
+
+const char *lv2_ti_status_str[] = {
+  [PPU_THREAD_STATUS_IDLE     ] = "IDLE",
+  [PPU_THREAD_STATUS_RUNNABLE ] = "RUNNABLE",
+  [PPU_THREAD_STATUS_ONPROC   ] = "ONPROC",
+  [PPU_THREAD_STATUS_SLEEP    ] = "SLEEP",
+  [PPU_THREAD_STATUS_STOP     ] = "STOP",
+  [PPU_THREAD_STATUS_ZOMBIE   ] = "ZOMBIE",
+  [PPU_THREAD_STATUS_DELETED  ] = "DELETED",
+};
+
+static lv2_thread_info_t lti;
+
+
+
+static uint64_t
+get_reg(void *threadid, int reg)
+{
+  uint64_t ret[2];
+  int r;
+  r = Lv2Syscall3(906, (intptr_t)threadid, (intptr_t)&reg, (intptr_t)&ret);
+  if(r)
+    return 0;
+  return ret[0];
+}
+
+
 void
-thread_reaper(void *aux)
+thread_check(void)
 {
   thread_info_t *ti;
-  sys_ppu_thread_icontext_t ctx;
+  int pid = Lv2Syscall0(1);
+  int r;
+  extern uint32_t heap_base;
 
-  while(1) {
-    sleep(1);
+  TRACE(TRACE_EMERG, "THREAD", "Crashdump. PID=0x%x Heap=0x%08x", pid,
+	heap_base);
 
-    hts_mutex_lock(&thread_info_mutex);
+  uint64_t ids_num = 512;
+  uint64_t all_ids_num;
 
-    LIST_FOREACH(ti, &threads, link) {
-      int r = sys_ppu_thread_get_page_fault_context(ti->id, &ctx);
-      if(r != -2147418110)
-	panic("Thread %s (0x%lx) crashed (r=0x%x)", ti->name, ti->id, r);
-    }
-    hts_mutex_unlock(&thread_info_mutex);
+  r = Lv2Syscall4(909, pid,
+		  (intptr_t)&tmpbuf,
+		  (intptr_t)&ids_num,
+		  (intptr_t)&all_ids_num);
+  if(r) {
+    TRACE(TRACE_EMERG, "THREADLIST", "Unable to list threads: 0x%x", r);
+    return;
   }
+
+  TRACE(TRACE_EMERG, "THREAD", "%d threads", ids_num);
+
+  hts_mutex_lock(&thread_info_mutex);
+
+  for(int i = 0; i < ids_num; i++) {
+    uint64_t tid = tmpbuf[i * 2 + 1];
+
+    LIST_FOREACH(ti, &threads, link)
+      if(ti->id == tid)
+	break;
+
+    r = Lv2Syscall3(910, (intptr_t)(tmpbuf + i * 2), (intptr_t)&lti, tid);
+    if(r) {
+      TRACE(TRACE_EMERG, "THREAD",
+	    "Unable to figure status for thread %x", tid);
+      continue;
+    }
+
+    TRACE(TRACE_EMERG, "THREAD",
+	  "Thread 0x%08x [%-20s] %-10s stack: 0x%08x +0x%08x prio:%d",
+	  (int)tid, ti ? ti->name : "???",
+	  lv2_ti_status_str[lti.status],
+	  lti.stack_addr, lti.stack_size,
+	  lti.prio);
+
+    if(lti.status == PPU_THREAD_STATUS_DELETED) {
+
+      const char *syms[2];
+      void *addr[2];
+      int symoffset[2];
+
+      addr[0] = (void *)get_reg(tmpbuf + i * 2, 0x9);
+      addr[1] = (void *)get_reg(tmpbuf + i * 2, 0x1);
+
+      TRACE(TRACE_EMERG, "THREAD", "  PC: %p  LR: %p", addr[1], addr[0]);
+      resolve_syms(addr, syms, symoffset, 2);
+
+      TRACE(TRACE_EMERG, "THREAD", "  PC=%s+0x%x", syms[0], symoffset[0]);
+      TRACE(TRACE_EMERG, "THREAD", "  LR=%s+0x%x", syms[1], symoffset[1]);
+    }
+  }
+  hts_mutex_unlock(&thread_info_mutex);
 }
+
 
 
 static __thread int my_thread_id;

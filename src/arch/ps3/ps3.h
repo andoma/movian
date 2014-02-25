@@ -21,6 +21,6 @@
 
 void my_trace(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 
-void thread_reaper(void *aux);
-
 void load_syms(void);
+
+void resolve_syms(void **ptr, const char **symvec, int *symoffset, int frames);

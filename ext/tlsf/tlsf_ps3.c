@@ -20,7 +20,7 @@ static int memstats(http_connection_t *hc, const char *remain, void *opaque,
 
 static hts_mutex_t mutex;
 static tlsf_pool gpool;
-static uint32_t taddr;
+uint32_t heap_base;
 
 static void __attribute__((constructor)) mallocsetup(void)
 {
@@ -35,12 +35,12 @@ static void __attribute__((constructor)) mallocsetup(void)
   int size = MB(256);
   int psize = MB(96);
 
-  Lv2Syscall6(300, size, psize, 0xFFFFFFFFU, 0x200ULL, 1UL, (u64)&taddr);
+  Lv2Syscall6(300, size, psize, 0xFFFFFFFFU, 0x200ULL, 1UL, (u64)&heap_base);
 
 #endif
 
   total_avail = size;
-  gpool = tlsf_create((void *)(intptr_t)taddr, size);
+  gpool = tlsf_create((void *)(intptr_t)heap_base, size);
 
   // Malloc is initialized now so we can safely do this
 
@@ -63,7 +63,7 @@ void vm_stat_log(void)
 {
   vm_statistics vs;
 
-  Lv2Syscall2(312, taddr, (uint64_t)&vs);
+  Lv2Syscall2(312, heap_base, (uint64_t)&vs);
   TRACE(TRACE_DEBUG, "VM",
 	"pfppu=%"PRId64" pfspu=%"PRId64" pin=%"PRId64" pout=%"PRId64" "
 	"pmem=%d kB/%d kB",
