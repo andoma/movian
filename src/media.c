@@ -123,15 +123,17 @@ media_init(void)
 
 }
 
+#if ENABLE_LIBAV
+
+
 
 /**
  *
  */
 static void
-media_buf_dtor_freedata(media_buf_t *mb)
+media_buf_dtor_avpacket(media_buf_t *mb)
 {
-  if(mb->mb_data != NULL)
-    free(mb->mb_data);
+  av_packet_unref(&mb->mb_pkt);
 }
 
 #define BUF_PAD 32
@@ -141,13 +143,8 @@ media_buf_alloc_locked(media_pipe_t *mp, size_t size)
 {
   hts_mutex_assert(&mp->mp_mutex);
   media_buf_t *mb = pool_get(mp->mp_mb_pool);
-  mb->mb_dtor = media_buf_dtor_freedata;
-  mb->mb_size = size;
-  if(size > 0) {
-    mb->mb_data = malloc(size + BUF_PAD);
-    memset(mb->mb_data + size, 0, BUF_PAD);
-  }
-
+  av_new_packet(&mb->mb_pkt, size);
+  mb->mb_dtor = media_buf_dtor_avpacket;
   return mb;
 }
 
@@ -162,17 +159,6 @@ media_buf_alloc_unlocked(media_pipe_t *mp, size_t size)
   return mb;
 }
 
-
-#if ENABLE_LIBAV
-
-/**
- *
- */
-static void
-media_buf_dtor_avpacket(media_buf_t *mb)
-{
-  av_packet_unref(&mb->mb_pkt);
-}
 
 /**
  *
@@ -2683,8 +2669,11 @@ mp_load_ext_sub(media_pipe_t *mp, const char *url, AVRational *framerate)
   media_buf_t *mb = media_buf_alloc_unlocked(mp, 0);
   mb->mb_data_type = MB_CTRL_EXT_SUBTITLE;
 
-  if(url != NULL)
+  if(url != NULL) {
     mb->mb_data = (void *)subtitles_load(mp, url, framerate);
+  } else {
+    mb->mb_data = NULL;
+  }
 
   mb->mb_dtor = ext_sub_dtor;
   hts_mutex_lock(&mp->mp_mutex);
