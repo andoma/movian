@@ -519,11 +519,11 @@ exec_catcher(void *aux)
   while(1) {
     int ret = sys_event_queue_receive(crash_event_queue, &event,
 				      100 * 1000 * 1000);
+
     if(ret)
       continue;
+    thread_dump();
 
-    extern void thread_check(void);
-    thread_check();
     exit(0);
   }
   return NULL;

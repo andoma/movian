@@ -175,7 +175,8 @@ __assert_func(const char *file, int line,
 
 
 void
-resolve_syms(void **ptr, const char **symvec, int *symoffset, int frames)
+resolve_syms(void **ptr, const char **symvec, int *symoffset, 
+	     int *symlen, int frames)
 {
   char *s = symbuf;
 
@@ -194,16 +195,18 @@ resolve_syms(void **ptr, const char **symvec, int *symoffset, int frames)
       for(i = 0; i < frames; i++) {
 	int64_t a0 = (intptr_t)ptr[i];
 	if(a0 >= addr) {
-	  symvec[i] = s + 17;
+	  symvec[i] = s + 18;
 	  symoffset[i] = a0 - addr;
+	  symlen[i] = strcspn(symvec[i], "\n");
 	}
       }
     }
 
-    s = strchr(s, '\n');
-    if(s == NULL)
+    char *s2 = strchr(s, '\n');
+    if(s2 == NULL) {
       return;
-    *s++ = 0;
+    }
+    s = s2 + 1;
   }
 }
 
@@ -214,6 +217,7 @@ panic(const char *fmt, ...)
   void *vec[64];
   const char *sym[64];
   int symoffset[64];
+  int symlen[64];
 
   va_start(ap, fmt);
   tracev(0, TRACE_EMERG, "PANIC", fmt, ap);
@@ -221,10 +225,11 @@ panic(const char *fmt, ...)
 
   int frames = backtrace(vec);
   int i;
-  resolve_syms(vec, sym, symoffset, frames);
+  resolve_syms(vec, sym, symoffset, symlen, frames);
   for(i = 0; i < frames; i++) 
     if(sym[i])
-      TRACE(TRACE_EMERG, "BACKTRACE", "%p: %s+0x%x", vec[i], sym[i], symoffset[i]);
+      TRACE(TRACE_EMERG, "BACKTRACE", "%p: %.*s+0x%x", vec[i],
+	    symlen[i], sym[i], symoffset[i]);
     else
       TRACE(TRACE_EMERG, "BACKTRACE", "%p", vec[i]);
 

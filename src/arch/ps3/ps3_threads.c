@@ -36,13 +36,8 @@ hts_mutex_t thread_info_mutex;
 /**
  *
  */
-void thread_check(void);
 
 static uint64_t tmpbuf[1024];
-//static uint64_t tmpbuf2[1024];
-//static uint64_t tmpbuf3[1024];
-
-//static uint32_t tmpbuf32[1024];
 
 #define PPU_THREAD_STATUS_IDLE     0
 #define PPU_THREAD_STATUS_RUNNABLE 1
@@ -80,11 +75,15 @@ static lv2_thread_info_t lti;
 
 
 static uint64_t
-get_reg(void *threadid, int reg)
+get_reg2(void *threadid, int bank, int kx)
 {
+  uint32_t x0[2];
+  x0[0] = bank;
+  x0[1] = kx;
+
   uint64_t ret[2];
   int r;
-  r = Lv2Syscall3(906, (intptr_t)threadid, (intptr_t)&reg, (intptr_t)&ret);
+  r = Lv2Syscall3(906, (intptr_t)threadid, (intptr_t)x0, (intptr_t)&ret);
   if(r)
     return 0;
   return ret[0];
@@ -92,9 +91,8 @@ get_reg(void *threadid, int reg)
 
 
 void
-thread_check(void)
+thread_dump(void)
 {
-  thread_info_t *ti;
   int pid = Lv2Syscall0(1);
   int r;
   extern uint32_t heap_base;
@@ -116,14 +114,9 @@ thread_check(void)
 
   TRACE(TRACE_EMERG, "THREAD", "%d threads", ids_num);
 
-  hts_mutex_lock(&thread_info_mutex);
 
   for(int i = 0; i < ids_num; i++) {
     uint64_t tid = tmpbuf[i * 2 + 1];
-
-    LIST_FOREACH(ti, &threads, link)
-      if(ti->id == tid)
-	break;
 
     r = Lv2Syscall3(910, (intptr_t)(tmpbuf + i * 2), (intptr_t)&lti, tid);
     if(r) {
@@ -132,30 +125,96 @@ thread_check(void)
       continue;
     }
 
-    TRACE(TRACE_EMERG, "THREAD",
-	  "Thread 0x%08x [%-20s] %-10s stack: 0x%08x +0x%08x prio:%d",
-	  (int)tid, ti ? ti->name : "???",
-	  lv2_ti_status_str[lti.status],
-	  lti.stack_addr, lti.stack_size,
-	  lti.prio);
+    hts_mutex_lock(&thread_info_mutex);
+
+    {
+      thread_info_t *ti;
+      LIST_FOREACH(ti, &threads, link)
+	if(ti->id == tid)
+	  break;
+
+
+      TRACE(TRACE_EMERG, "THREAD",
+	    "Thread 0x%08x [%-20s] %-10s stack: 0x%08x +0x%08x prio:%d",
+	    (int)tid, ti ? ti->name : "???",
+	    lv2_ti_status_str[lti.status],
+	    lti.stack_addr, lti.stack_size,
+	    lti.prio);
+    }
+    hts_mutex_unlock(&thread_info_mutex);
+
 
     if(lti.status == PPU_THREAD_STATUS_DELETED) {
+      
+      void *tidp = tmpbuf + i * 2;
 
-      const char *syms[2];
-      void *addr[2];
-      int symoffset[2];
 
-      addr[0] = (void *)get_reg(tmpbuf + i * 2, 0x9);
-      addr[1] = (void *)get_reg(tmpbuf + i * 2, 0x1);
+      for(int r = 0; r < 32; r++) {
+	TRACE(TRACE_EMERG, "THREAD", " r%-2d: 0x%016llx", r,
+	    get_reg2(tidp, 0x3, r));
+      }
 
-      TRACE(TRACE_EMERG, "THREAD", "  PC: %p  LR: %p", addr[1], addr[0]);
-      resolve_syms(addr, syms, symoffset, 2);
+      TRACE(TRACE_EMERG, "THREAD", " CTR: 0x%016llx", get_reg2(tidp, 2, 0));
 
-      TRACE(TRACE_EMERG, "THREAD", "  PC=%s+0x%x", syms[0], symoffset[0]);
-      TRACE(TRACE_EMERG, "THREAD", "  LR=%s+0x%x", syms[1], symoffset[1]);
+#if 0
+      for(int j = 0; j < 16; j++) {
+	uint64_t ret[4] = {0};
+	uint32_t reg = j;
+	int r;
+	r = Lv2Syscall3(906, (intptr_t)(tmpbuf + i * 2),
+			(intptr_t)&reg, (intptr_t)&ret);
+	if(!r)
+	  TRACE(TRACE_EMERG, "THREAD",
+		"0x%08x: %016llx %016llx %016llx %016llx",
+		j, ret[0], ret[1], ret[2], ret[3]);
+      }
+#endif
+
+
+      const char *syms[64];
+      void *addr[64];
+      int symoffset[64];
+      int symlen[64];
+
+      addr[0] = (void *)get_reg2(tidp, 9, 0);
+      addr[1] = (void *)get_reg2(tidp, 1, 0) - 4;
+
+      resolve_syms(addr, syms, symoffset, symlen, 2);
+
+      TRACE(TRACE_EMERG, "THREAD", "  PC: %p %.*s+0x%x",
+	    addr[0], symlen[0], syms[0], symoffset[0]);
+      TRACE(TRACE_EMERG, "THREAD", "  LR: %p %.*s+0x%x",
+	    addr[1], symlen[1], syms[1], symoffset[1]);
+
+
+      int64_t *sp       = (void *)get_reg2(tidp, 3, 1);
+      int64_t *sp_start = (void *)(intptr_t)lti.stack_addr;
+      int64_t *sp_end   = (void *)(intptr_t)(lti.stack_addr + lti.stack_size);
+
+      TRACE(TRACE_EMERG, "THREAD", " Stack dump from SP=%p", sp);
+      int frame = 0;
+      while(frame < 64) {
+
+	if(sp < sp_start || sp >= sp_end) {
+	  break;
+	}
+
+	addr[frame] = (void *)sp[2] - 4;
+	sp = (void *)sp[0];
+	frame++;
+      }
+      
+      resolve_syms(addr, syms, symoffset, symlen, frame);
+
+      for(int i = 1; i < frame; i++) {
+	if(syms[i])
+	  TRACE(TRACE_EMERG, "THREAD", "      %p %.*s+0x%x",
+		addr[i], symlen[i], syms[i], symoffset[i]);
+	else
+	  TRACE(TRACE_EMERG, "THREAD", "      %p", addr[i]);
+      }
     }
   }
-  hts_mutex_unlock(&thread_info_mutex);
 }
 
 
