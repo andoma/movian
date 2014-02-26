@@ -116,7 +116,6 @@ h264_parser_decode_sps(h264_parser_t *hp, bitstream_t *bs, h264_sps_t *sps)
       bs->read_golomb_se(bs);
 
   } else if(sps->poc_type != 2) {
-    printf("Illegal poc\n");
     return -1;
   }
 
@@ -176,21 +175,10 @@ h264_parser_decode_pps(h264_parser_t *hp, bitstream_t *bs)
 
   pps->chroma_qp_index_offset[1] = pps->chroma_qp_index_offset[0];
 
-  int bits_left = bs->len - bs->offset;
+  int bits_left = bs->bits_left(bs);
   if(bits_left <= 7)
     return;
   pps->transform_8x8_mode                   = bs->read_bits1(bs);
-}
-
-
-static void
-dummy_output_frame(void *oapque, h264_frame_t *frame)
-{
-}
-
-static void
-dummy_picture_release(void *picture)
-{
 }
 
 
@@ -198,20 +186,11 @@ dummy_picture_release(void *picture)
  *
  */
 int
-h264_parser_init(h264_parser_t *hp,
-		 void *opaque,
-		 h264_parser_output_frame_t *output_frame,
-		 h264_parser_picture_release_t *picture_release,
-		 const uint8_t *data,
-		 int len)
+h264_parser_init(h264_parser_t *hp, const uint8_t *data, int len)
 {
   bitstream_t bs;
   int n, s, i;
   memset(hp, 0, sizeof(h264_parser_t));
-
-  hp->hp_opaque = hp;
-  hp->hp_output_frame    = output_frame    ?: dummy_output_frame;
-  hp->hp_picture_release = picture_release ?: dummy_picture_release;
 
   if(data == NULL)
     return 0;
@@ -232,7 +211,7 @@ h264_parser_init(h264_parser_t *hp,
     if(len < s)
       break;
 
-    init_rbits(&bs, data+3, s-3);
+    init_rbits(&bs, data+3, s-3, 0);
     h264_parser_decode_sps(hp, &bs, NULL);
     data += s;
     len -= s;
@@ -250,7 +229,7 @@ h264_parser_init(h264_parser_t *hp,
     if(len < s)
       break;
 
-    init_rbits(&bs, data+3, s-3);
+    init_rbits(&bs, data+3, s-3, 0);
     h264_parser_decode_pps(hp, &bs);
     data += s;
     len -= s;
@@ -258,59 +237,6 @@ h264_parser_init(h264_parser_t *hp,
   return 0;
 }
 
-
-
-/**
- *
- */
-static void
-pred_weight_table(h264_parser_t *hp, bitstream_t *bs, const h264_sps_t *sps)
-{
-  int i, j;
-
-  hp->luma_log2_weight_denom = bs->read_golomb_ue(bs);
-  if(sps->chroma_format)
-    hp->chroma_log2_weight_denom = bs->read_golomb_ue(bs);
-
-  for(i = 0; i < 32; i++) {
-    hp->luma_weight_l0[i]      = (1 << hp->luma_log2_weight_denom);
-    hp->luma_weight_l1[i]      = (1 << hp->luma_log2_weight_denom);
-    hp->chroma_weight_l0[i][0] = (1 << hp->chroma_log2_weight_denom);
-    hp->chroma_weight_l1[i][0] = (1 << hp->chroma_log2_weight_denom);
-    hp->chroma_weight_l0[i][1] = (1 << hp->chroma_log2_weight_denom);
-    hp->chroma_weight_l1[i][1] = (1 << hp->chroma_log2_weight_denom);
-  }
-
-  for(i = 0; i <= hp->num_ref_idx_l0_active_minus1; i++) {
-    if(bs->read_bits1(bs)) {
-      hp->luma_weight_l0[i] = bs->read_golomb_se(bs);
-      hp->luma_offset_l0[i] = bs->read_golomb_se(bs);
-    }
-
-    if(sps->chroma_format && bs->read_bits1(bs)) {
-      for(j = 0; j < 2; j++) {
-        hp->chroma_weight_l0[i][j] = bs->read_golomb_se(bs);
-        hp->chroma_offset_l0[i][j] = bs->read_golomb_se(bs);
-      }
-    }
-  }
-
-  if(hp->slice_type_nos == SLICE_TYPE_B) {
-    for(i = 0; i <= hp->num_ref_idx_l1_active_minus1; i++) {
-      if(bs->read_bits1(bs)) {
-        hp->luma_weight_l1[i] = bs->read_golomb_se(bs);
-        hp->luma_offset_l1[i] = bs->read_golomb_se(bs);
-      }
-
-      if(sps->chroma_format && bs->read_bits1(bs)) {
-        for (j = 0; j < 2; j++) {
-          hp->chroma_weight_l1[i][j] = bs->read_golomb_se(bs);
-          hp->chroma_offset_l1[i][j] = bs->read_golomb_se(bs);
-        }
-      }
-    }
-  }
-}
 
 
 /**
@@ -349,488 +275,9 @@ calc_poc(h264_parser_t *hp, const h264_sps_t *sps)
       poc--;
 
   } else {
-    printf("can't deal with poc type %d\n", sps->poc_type);
-    exit(0);
+
   }
   return poc;
-}
-
-
-/**
- *
- */
-static void
-prep_frame(h264_parser_t *hp, h264_frame_t *frame)
-{
-  hp->prev_frame_num = hp->frame_num;
-
-  frame->output_needed = 1;
-  frame->is_long_term = 0;
-  frame->frame_idx = hp->frame_num;
-
-  if(!hp->nal_ref_idc) {
-    frame->is_reference = 0;
-  } else if(hp->nal_unit_type == 5) {
-    frame->is_reference = 1;
-    if(hp->long_term_reference_flag) {
-      frame->is_long_term = 1;
-      frame->frame_idx = 0;
-    }
-  } else {
-    frame->is_reference = 1;
-
-    if(hp->adaptive_ref_pic_marking_mode_flag) {
-      int i;
-      for (i = 0; i < hp->mmco_size; i++) {
-        if(hp->mmco[i].opcode == 6) {
-          frame->is_long_term = 1;
-          frame->frame_idx = hp->mmco[i].long_term_frame_idx;
-          break;
-        }
-      }
-    }
-  }
-}
-
-
-/**
- *
- */
-static void
-dpb_remove(h264_parser_t *hp, int idx)
-{
-  int i;
-  hp->dpb_num_frames--;
-
-  assert(hp->frames[idx].output_needed == 0);
-  assert(hp->frames[idx].is_reference  == 0);
-
-  hp->hp_picture_release(hp->frames[idx].picture);
-
-  for(i = idx; i < hp->dpb_num_frames; i++)
-    hp->frames[i] = hp->frames[i + 1];
-}
-
-
-/**
- *
- */
-static void
-dpb_mark_sliding(h264_parser_t *hp)
-{
-  int mark_idx = -1;
-  int i;
-
-  if(hp->dpb_num_frames != hp->dpb_max_frames)
-    return;
-
-  for (i = 0; i < hp->dpb_num_frames; i++) {
-    if(hp->frames[i].is_reference && !hp->frames[i].is_long_term) {
-      mark_idx = i;
-      break;
-    }
-  }
-
-  if(mark_idx != -1) {
-    for(i = mark_idx; i < hp->dpb_num_frames; i++) {
-      if(hp->frames[i].is_reference && !hp->frames[i].is_long_term &&
-         hp->frames[i].frame_idx < hp->frames[mark_idx].frame_idx)
-        mark_idx = i;
-    }
-
-    hp->frames[mark_idx].is_reference = 0;
-    if(!hp->frames[mark_idx].output_needed)
-      dpb_remove(hp, mark_idx);
-  }
-}
-
-
-static void
-outframe(h264_parser_t *hp, h264_frame_t *frame)
-{
-  printf("Callint out frame %p\n", hp->hp_output_frame);
-  hp->hp_output_frame(hp->hp_opaque, frame);
-  printf("Callint out frame done\n");
-}
-
-
-/**
- *
- */
-static void
-dpb_output(h264_parser_t *hp, int idx)
-{
-  h264_frame_t *frame = &hp->frames[idx];
-
-  assert(frame->output_needed);
-
-  outframe(hp, frame);
-  frame->output_needed = 0;
-  if(!frame->is_reference)
-    dpb_remove(hp, idx);
-}
-
-
-/**
- *
- */
-static int
-dpb_bump(h264_parser_t *hp, int poc)
-{
-  int bump_idx = -1;
-  int i;
-  for(i = 0; i < hp->dpb_num_frames; i++) {
-    if(hp->frames[i].output_needed) {
-      bump_idx = i;
-      break;
-    }
-  }
-
-  if(bump_idx != -1) {
-    for(i = bump_idx + 1; i < hp->dpb_num_frames; i++) {
-      if(hp->frames[i].output_needed &&
-         hp->frames[i].poc < hp->frames[bump_idx].poc)
-        bump_idx = i;
-    }
-
-    if(hp->frames[bump_idx].poc < poc) {
-      dpb_output(hp, bump_idx);
-      return 1;
-    }
-  }
-  return 0;
-}
-
-/**
- *
- */
-static void
-dpb_add(h264_parser_t *hp, h264_frame_t *frame)
-{
-  if(frame->is_reference && frame->is_long_term &&
-     (frame->frame_idx > hp->dpb_max_longterm_frame_idx))
-    frame->is_reference = 0;
-
-  if(frame->is_reference) {
-    while(hp->dpb_num_frames == hp->dpb_max_frames)
-      if(!dpb_bump(hp, INT32_MAX)) {
-        printf("DPB full (%d / %d)\n", hp->dpb_num_frames, hp->dpb_max_frames);
-        return;
-      }
-    hp->frames[hp->dpb_num_frames++] = *frame;
-  } else {
-    while(dpb_bump(hp, frame->poc)) {}
-
-    outframe(hp, frame);
-  }
-}
-
-
-/**
- *
- */
-static void
-dpb_flush(h264_parser_t *hp, int output)
-{
-  printf("IDR %d frames in DPB\n", hp->dpb_num_frames);
-
-  if(output)
-    while(dpb_bump(hp, INT32_MAX));
-
-  printf("IDR Flushing %d frames\n",  hp->dpb_num_frames);
-
-  int i;
-  for(i = 0; i < hp->dpb_num_frames; i++)
-    hp->hp_picture_release(hp->frames[i].picture);
-
-  hp->dpb_num_frames = 0;
-}
-
-
-/**
- *
- */
-static void
-dec_ref_pic_marking(h264_parser_t *hp, bitstream_t *bs)
-{
-  hp->adaptive_ref_pic_marking_mode_flag = 0;
-  if(hp->nal_unit_type == 5) {
-
-    hp->no_output_of_prior_pics_flags = bs->read_bits1(bs);
-    hp->long_term_reference_flag      = bs->read_bits1(bs);
-
-  } else if(bs->read_bits(bs, 1)) {
-    hp->adaptive_ref_pic_marking_mode_flag = 1;
-    int i;
-    for(i= 0; i < H264_MMCO_SIZE; i++) {
-      int opcode = bs->read_golomb_ue(bs);
-      printf("opcode:%d\n", opcode);
-      hp->mmco[i].opcode = opcode;
-
-      if(opcode == 0)
-        break;
-
-      if(opcode == H264_MMCO_SHORT2UNUSED || opcode == H264_MMCO_SHORT2LONG)
-        hp->mmco[i].difference_of_pic_nums_minus1 = bs->read_golomb_ue(bs);
-
-      if(opcode == H264_MMCO_LONG2UNUSED)
-        hp->mmco[i].long_term_pic_num             = bs->read_golomb_ue(bs);
-
-      if(opcode == H264_MMCO_SHORT2LONG   || opcode == H264_MMCO_LONG)
-        hp->mmco[i].long_term_frame_idx           = bs->read_golomb_ue(bs);
-
-      if(opcode == H264_MMCO_SET_MAX_LONG)
-        hp->mmco[i].max_long_term_frame_idx_plus1 = bs->read_golomb_ue(bs);
-    }
-    hp->mmco_size = i;
-  }
-}
-
-
-/**
- *
- */
-static void
-mark_short_term_unused(h264_parser_t *hp, int pic_num)
-{
-  int i;
-
-  for(i = 0; i < hp->dpb_num_frames; i++) {
-    if(hp->frames[i].is_reference && !hp->frames[i].is_long_term &&
-       hp->frames[i].frame_idx == pic_num) {
-
-      hp->frames[i].is_reference = 0;
-      if(!hp->frames[i].output_needed)
-        dpb_remove(hp, i);
-      return;
-    }
-  }
-  printf("Didn't manage to flush frame %d\n", pic_num);
-}
-
-
-/**
- *
- */
-static void
-mark_long_term_unused(h264_parser_t *hp, int pic_num)
-{
-  printf("long term unused %d\n", pic_num);
-  exit(1);
-}
-
-/**
- *
- */
-static void
-mark_long_term_used(h264_parser_t *hp, int pic_num, int frame_index)
-{
-  printf("long term used %d -> %d\n", pic_num, frame_index);
-  exit(1);
-}
-
-
-/**
- *
- */
-static void
-mark_all_unused(h264_parser_t *hp)
-{
-  printf("mark all unused\n");
-  exit(1);
-}
-
-
-/**
- *
- */
-void
-h264_parser_update_dpb(h264_parser_t *hp)
-{
-  int i;
-  int pic_num;
-
-  h264_frame_t *frame = &hp->current_frame;
-
-  prep_frame(hp, frame);
-
-  if(hp->nal_ref_idc && hp->nal_unit_type != 5) {
-    if(hp->adaptive_ref_pic_marking_mode_flag) {
-
-      for(i = 0; i < hp->mmco_size; i++) {
-        switch(hp->mmco[i].opcode) {
-        case H264_MMCO_SHORT2UNUSED:
-          pic_num = hp->frame_num -
-                 (hp->mmco[i].difference_of_pic_nums_minus1 + 1);
-          pic_num = pic_num & (hp->max_frame_num - 1);
-#if 0
-          printf("Flushing %d - %d - 1 = %d\n",
-                 hp->frame_num,
-                 hp->mmco[i].difference_of_pic_nums_minus1,
-                 pic_num);
-#endif
-
-          mark_short_term_unused(hp, pic_num);
-          break;
-
-        case H264_MMCO_LONG2UNUSED:
-          mark_long_term_unused(hp, hp->mmco[i].long_term_pic_num);
-          break;
-
-        case H264_MMCO_SHORT2LONG:
-          pic_num = hp->frame_num -
-            (hp->mmco[i].difference_of_pic_nums_minus1 + 1);
-          mark_long_term_used(hp, pic_num, hp->mmco[i].long_term_frame_idx);
-          break;
-
-        default:
-          printf("MMCO %d not implemented\n", hp->mmco[i].opcode);
-          exit(1);
-          break;
-
-        case H264_MMCO_RESET:
-          mark_all_unused(hp);
-          break;
-        }
-      }
-    } else {
-      dpb_mark_sliding(hp);
-    }
-  }
-  dpb_add(hp, frame);
-  memset(frame, 0, sizeof(h264_frame_t));
-}
-
-
-/**
- *
- */
-static void
-ref_pic_list_modification(h264_parser_t *hp, bitstream_t *bs,
-                          const h264_sps_t *sps)
-{
-  int max_frame_num = 1 << sps->max_frame_num_bits;
-  int max_pic_num = max_frame_num + (hp->field_pic_flag ? max_frame_num : 0);
-
-  if(hp->slice_type_nos != SLICE_TYPE_I) {
-    if(bs->read_bits1(bs)) {
-      printf("REF PIC LIST MODIFICATION IN PLACE!!!!!!!!!!!!!!!!\n");
-      unsigned int modification_of_pic_nums_idc;
-      int refIdxL0 = 0;
-      unsigned int picNumL0 = hp->frame_num;
-      do {
-        modification_of_pic_nums_idc = bs->read_golomb_ue(bs);
-        if (modification_of_pic_nums_idc == 0 ||
-            modification_of_pic_nums_idc == 1) {
-          unsigned int abs_diff_pic_num_minus1 = bs->read_golomb_ue(bs);
-
-          if (modification_of_pic_nums_idc == 0)
-            picNumL0 -= (abs_diff_pic_num_minus1 + 1);
-          else
-            picNumL0 += (abs_diff_pic_num_minus1 + 1);
-
-          picNumL0 &= (max_pic_num - 1);
-
-          int i, j;
-          for (i = 0; i < hp->ref_count; i++) {
-            if(hp->frames[i].frame_idx == picNumL0)
-              break;
-          }
-
-          for(j = hp->num_ref_idx_l0_active_minus1 + 1; j > refIdxL0; j--)
-            hp->RefPicList0[j] = hp->RefPicList0[j - 1];
-          hp->RefPicList0[refIdxL0++] = &hp->frames[i];
-          i = refIdxL0;
-          for (j = refIdxL0; j <= hp->num_ref_idx_l0_active_minus1 + 1; j++)
-            if (hp->RefPicList0[j] && hp->RefPicList0[j]->frame_idx != picNumL0)
-              hp->RefPicList0[i++] = hp->RefPicList0[j];
-        }
-        else if(modification_of_pic_nums_idc == 2) {
-          fprintf(stderr, "NOT IMPLEMENTED: modification_of_pic_nums_idc == 2\n");
-          /* unsigned int long_term_pic_num = */ bs->read_golomb_ue(bs);
-        }
-      } while (modification_of_pic_nums_idc != 3);
-    }
-  }
-
-  if(hp->slice_type_nos == SLICE_TYPE_B) {
-    if(bs->read_bits1(bs)) {
-      fprintf(stderr, "Unsupported stuff B\n");
-      exit(0);
-#if 0
-      fprintf(stderr, "NOT IMPLEMENTED: ref_pic_list_modification_flag_l1 == 1\n");
-      unsigned int modification_of_pic_nums_idc;
-      do {
-        modification_of_pic_nums_idc = get_ue(c->regs);
-        if (modification_of_pic_nums_idc == 0 ||
-            modification_of_pic_nums_idc == 1) {
-          /* unsigned int abs_diff_pic_num_minus1 = */ get_ue(c->regs);
-        } else if (modification_of_pic_nums_idc == 2) {
-          /* unsigned int long_term_pic_num = */ get_ue(c->regs);
-        }
-      } while (modification_of_pic_nums_idc != 3);
-#endif
-    }
-  }
-
-}
-
-
-
-
-static int
-poccmp(const void *A, const void *B)
-{
-  const h264_frame_t *a = *(const h264_frame_t **)A;
-  const h264_frame_t *b = *(const h264_frame_t **)B;
-
-  return a->poc - b->poc;
-}
-
- 
-
-
-/**
- *
- */
-static void
-build_refpiclist(h264_parser_t *hp)
-{
-  h264_frame_t *tmp[hp->dpb_num_frames];
-
-  int i;
-  for(i = 0; i < hp->dpb_num_frames; i++)
-    tmp[i] = &hp->frames[i];
-  
-  qsort(tmp, hp->dpb_num_frames, sizeof(h264_frame_t *), poccmp);
-
-#ifdef REFLIST_DEBUG
-  printf("reflist [%d items]\n", hp->dpb_num_frames);
-  for(i = 0; i < hp->dpb_num_frames; i++)
-    printf("  [%2d] POC:%d\n", i, tmp[i]->poc);
-#endif
-
-  int ptr0 = 0;
-  int ptr1 = 0;
-  for(i = 0; i < hp->dpb_num_frames; i++) {
-    if(tmp[hp->dpb_num_frames - 1 - i]->poc < hp->current_frame.poc)
-      hp->RefPicList0[ptr0++] = tmp[hp->dpb_num_frames - 1 - i];
-    
-    if(tmp[i]->poc >= hp->current_frame.poc)
-      hp->RefPicList1[ptr1++] = tmp[i];
-  }
-
-#ifdef REFLIST_DEBUG
-  printf("refpiclist0 (%d items)\n", ptr0);
-  for(i = 0; i < ptr0; i++)
-    printf("  [%2d] POC:%d\n", i, hp->RefPicList0[i]->poc);
-
-  printf("refpiclist1 (%d items)\n", ptr1);
-  for(i = 0; i < ptr1; i++)
-    printf("  [%2d] POC:%d\n", i, hp->RefPicList1[i]->poc);
- 
-  printf("\n");
-#endif
 }
 
 
@@ -858,8 +305,6 @@ h264_parser_decode_slice_header(h264_parser_t *hp, bitstream_t *bs)
 
   hp->sps = sps;
   hp->pps = pps;
-
-  hp->dpb_max_frames = sps->num_ref_frames; // might need to flush
 
   hp->frame_num = bs->read_bits(bs, sps->max_frame_num_bits);
   hp->max_frame_num = 1 << sps->max_frame_num_bits;
@@ -908,52 +353,12 @@ h264_parser_decode_slice_header(h264_parser_t *hp, bitstream_t *bs)
   }
 
   hp->current_frame.poc = calc_poc(hp, sps);
-#if 1
+#if 0
   printf("Slicetype:%d PPS:%d frame:%d first_mb_in_slice:%d POC:%d\n",
          hp->slice_type, pps_id,
          hp->frame_num, hp->first_mb_in_slice,
          hp->current_frame.poc);
 #endif
-
-  build_refpiclist(hp);
-
-  ref_pic_list_modification(hp, bs, sps);
-
-  if((pps->weighted_pred_flag   && hp->slice_type_nos == SLICE_TYPE_P) ||
-     (pps->weighted_bipred_idc == 1 && hp->slice_type_nos == SLICE_TYPE_B)) {
-    pred_weight_table(hp, bs, sps);
-  } else if(pps->weighted_bipred_idc == 2 &&
-	    hp->slice_type_nos == SLICE_TYPE_B) {
-    pred_weight_table(hp, bs, sps);
-  } else {
-    hp->luma_log2_weight_denom = 0;
-    hp->chroma_log2_weight_denom = 0;
-  }
-
-
-
-
-  if(hp->nal_ref_idc)
-    dec_ref_pic_marking(hp, bs);
-
-  if(pps->cabac && hp->slice_type_nos != SLICE_TYPE_I)
-    hp->cabac_init_idc = bs->read_golomb_ue(bs);
-
-  hp->slice_qp_delta = bs->read_golomb_se(bs);
-
-  if(hp->slice_type == SLICE_TYPE_SP || hp->slice_type == SLICE_TYPE_SI) {
-    if(hp->slice_type == SLICE_TYPE_SP)
-      hp->sp_for_switch_flag = bs->read_bits(bs, 1);
-    hp->slice_qs_delta = bs->read_golomb_se(bs);
-  }
-
-  if(pps->deblocking_filter_parameters_present) {
-    hp->disable_deblocking_filter_idc = bs->read_golomb_ue(bs);
-    if(hp->disable_deblocking_filter_idc != 1) {
-      hp->slice_alpha_c0_offset_div2 = bs->read_golomb_se(bs);
-      hp->slice_beta_offset_div2     = bs->read_golomb_se(bs);
-    }
-  }
 }
 
 
@@ -963,8 +368,6 @@ h264_parser_decode_slice_header(h264_parser_t *hp, bitstream_t *bs)
 static void
 idr(h264_parser_t *hp)
 {
-  printf("========= IDR =============================================\n");
-  dpb_flush(hp, 1);
   hp->prev_poc_lsb = 0;
   hp->frame_num_offset = 0;
   hp->prev_frame_num = 0;
@@ -1007,49 +410,10 @@ h264_parser_decode_nal(h264_parser_t *hp, const uint8_t *data, int len)
   data++;
   len--;
 
-  if(len > hp->escbuf_size) {
-    hp->escbuf_size = len;
-    hp->escbuf = realloc(hp->escbuf, len);
-  }
-
-  int rbsp_size = 0;
-  int i;
-  uint8_t *d = hp->escbuf;
-  for(i = 0; i < len; i++) {
-    if(i + 2 < len && data[i] == 0 && data[i + 1] == 0 && data[i + 2] == 3) {
-      d[rbsp_size++] = 0;
-      d[rbsp_size++] = 0;
-      i += 2;
-    } else {
-      d[rbsp_size++] = data[i];
-    }
-  }
-
-#if 0
-  printf("NAL %d bytes  type:%d, ref_idc:%d rbsp_size:%d\n",
-         len, hp->nal_unit_type,
-         hp->nal_ref_idc, rbsp_size);
-#endif
 
   bitstream_t bs;
-  init_rbits(&bs, hp->escbuf, rbsp_size);
+  init_rbits(&bs, data, len, 1);
   h264_parser_decode_nal_from_bs(hp, &bs);
-}
-
-
-/**
- *
- */
-void
-h264_parser_dpb_dump(h264_parser_t *hp)
-{
-  int i;
-  printf("Decoded Picture Buffer\n");
-  for(i = 0; i < hp->dpb_num_frames; i++) {
-    printf("%d fn:%d poc:%d PIC:%p\n",
-	   i, hp->frames[i].frame_idx, hp->frames[i].poc,
-	   hp->frames[i].picture);
-  }
 }
 
 
@@ -1059,28 +423,15 @@ h264_parser_dpb_dump(h264_parser_t *hp)
 void
 h264_parser_fini(h264_parser_t *hp)
 {
-  dpb_flush(hp, 0);
-  free(hp->escbuf);
 }
 
 
 /**
- * Dummy decoder
+ *
  */
-static void
-dummy_decode(struct media_codec *mc, struct video_decoder *vd,
-             struct media_queue *mq, struct media_buf *mb, int reqsize)
+void
+h264_parser_decode_data(h264_parser_t *hp, const uint8_t *d, int len)
 {
-  h264_parser_t *hp = mc->opaque;
-  int len = mb->mb_size;
-  const uint8_t *d = mb->mb_data;
-
-  printf("-----------------------------------------\n");
-
-  //  if(1)dpb_dump(hp);
-
-  hp->mmco_size = 0;
-
   if(hp->lensize == 0) {
 
     const uint8_t *p = NULL;
@@ -1119,53 +470,4 @@ dummy_decode(struct media_codec *mc, struct video_decoder *vd,
       len -= nal_len;
     }
   }
-  h264_parser_update_dpb(hp);
-  printf("-----------------------------------------\n");
-  usleep(20000);
 }
-
-
-static void
-dummy_flush(struct media_codec *mc, struct video_decoder *vd)
-{
-
-}
-
-
-/**
- *
- */
-static void
-dummy_close(struct media_codec *mc)
-{
-  free(mc->opaque);
-}
-
-/**
- *
- */
-static int
-dummy_h264_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
-                        media_pipe_t *mp)
-{
-  return 1;
-
-  if(mc->codec_id != AV_CODEC_ID_H264)
-    return 1;
-
-  h264_parser_t *hp = calloc(1, sizeof(h264_parser_t));
-  hp->dpb_max_longterm_frame_idx = -1;
-
-  if(mcp != NULL && mcp->extradata_size != 0)
-    h264_parser_init(hp, NULL, NULL, NULL, mcp->extradata, mcp->extradata_size);
-
-  mc->opaque = hp;
-  mc->decode = dummy_decode;
-  mc->flush  = dummy_flush;
-  mc->close  = dummy_close;
-
-  return 0;
-}
-
-
-REGISTER_CODEC(NULL, dummy_h264_codec_create, 30);

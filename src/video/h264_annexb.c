@@ -234,7 +234,7 @@ hata_sps(h264_annexb_to_avc_t *hata, const uint8_t *data, int len)
 
   bitstream_t bs;
   h264_sps_t sps;
-  init_rbits(&bs, data + 1, len - 1);
+  init_rbits(&bs, data + 1, len - 1, 0);
 
   int sps_id = h264_parser_decode_sps(NULL, &bs, &sps);
   if(sps_id < 0 || sps_id >= 8)
@@ -269,7 +269,7 @@ hata_pps(h264_annexb_to_avc_t *hata, const uint8_t *data, int len)
 
   assert(len < 4000);
 
-  init_rbits(&bs, data + 1, len - 1);
+  init_rbits(&bs, data + 1, len - 1, 0);
   int pps_id = bs.read_golomb_ue(&bs);
   if(pps_id >= 32)
     return;

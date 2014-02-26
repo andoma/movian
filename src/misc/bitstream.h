@@ -42,16 +42,20 @@ typedef struct bitstream {
     const uint8_t *rdata;
     void *opaque;
   };
-  int offset;
-  int len;
 
   void (*skip_bits)(struct bitstream *bs, int num);
   unsigned int (*read_bits)(struct bitstream *bs, int num);
   unsigned int (*read_bits1)(struct bitstream *bs);
   unsigned int (*read_golomb_ue)(struct bitstream *bs);
   signed int (*read_golomb_se)(struct bitstream *bs);
+  int (*bits_left)(struct bitstream *bs);
 
+  int bytes_length;
+  int bytes_offset;
+  int remain;
+  uint8_t tmp;
+  uint8_t rbsp;
 } bitstream_t;
 
-void init_rbits(bitstream_t *bs, const uint8_t *data, int size);
+void init_rbits(bitstream_t *bs, const uint8_t *data, int size, int rbsp);
 

@@ -146,11 +146,6 @@ typedef struct h264_parser {
 
   int lensize;  // Size of NAL length
 
-  uint8_t *escbuf;
-  int escbuf_size;
-
-  //
-
   int ref_count;
 
   int nal_ref_idc;
@@ -188,64 +183,16 @@ typedef struct h264_parser {
   int num_ref_idx_l0_active_minus1;
   int num_ref_idx_l1_active_minus1;
 
-  uint8_t luma_log2_weight_denom;
-  uint8_t chroma_log2_weight_denom;
-  int8_t luma_weight_l0[32];
-  int8_t luma_offset_l0[32];
-  int8_t chroma_weight_l0[32][2];
-  int8_t chroma_offset_l0[32][2];
-  int8_t luma_weight_l1[32];
-  int8_t luma_offset_l1[32];
-  int8_t chroma_weight_l1[32][2];
-  int8_t chroma_offset_l1[32][2];
-
-  int cabac_init_idc;
-  int slice_qp_delta;
-  int sp_for_switch_flag;
-  int slice_qs_delta;
-  int disable_deblocking_filter_idc;
-  int slice_alpha_c0_offset_div2;
-  int slice_beta_offset_div2;
-
-  struct {
-    int opcode;
-    int difference_of_pic_nums_minus1;
-    int long_term_pic_num;
-    int long_term_frame_idx;
-    int max_long_term_frame_idx_plus1;
-  } mmco[H264_MMCO_SIZE];
-
-  int mmco_size;
-  int no_output_of_prior_pics_flags;
-  int adaptive_ref_pic_marking_mode_flag;
-  int long_term_reference_flag;
-
-  h264_frame_t frames[17];
-
-  int dpb_num_frames;
-  int dpb_max_frames;
-  int dpb_max_longterm_frame_idx;
-
-
-  h264_frame_t *RefPicList0[32];
-  h264_frame_t *RefPicList1[32];
-
   int prev_poc_lsb;
   int poc_msb;
 
   int max_frame_num;
 
-  h264_parser_output_frame_t *hp_output_frame;
-  h264_parser_picture_release_t *hp_picture_release;
-  void *hp_opaque;
   
 } h264_parser_t;
 
 
 int h264_parser_init(h264_parser_t *hp,
-		     void *opaque,
-		     h264_parser_output_frame_t *hp_output_frame,
-		     h264_parser_picture_release_t *hp_picture_release,
 		     const uint8_t *extradata,
                      int extradata_size);
 
@@ -261,6 +208,4 @@ void h264_parser_decode_nal(h264_parser_t *hp, const uint8_t *data, int len);
 
 void h264_parser_decode_nal_from_bs(h264_parser_t *hp, bitstream_t *bs);
 
-void h264_parser_update_dpb(h264_parser_t *hp);
-
-void h264_parser_dpb_dump(h264_parser_t *hp);
+void h264_parser_decode_data(h264_parser_t *hp, const uint8_t *d, int len);
