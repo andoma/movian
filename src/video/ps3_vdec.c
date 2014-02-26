@@ -117,6 +117,7 @@ typedef struct vdec_decoder {
   int64_t flush_to;
   
   int poc_ext;
+  int seen_b_frames;
 
   pktmeta_t pktmeta[64];
   int pktmeta_cur;
@@ -460,9 +461,18 @@ picture_out(vdec_decoder_t *vdd)
       order = vdd->order_base + om;
     }
 
-    if(pts == AV_NOPTS_VALUE && dts != AV_NOPTS_VALUE &&
-       h264->picture_type[0] == 2)
-      pts = dts;
+    if(pts == AV_NOPTS_VALUE && dts != AV_NOPTS_VALUE) {
+      if(h264->picture_type[0] == 2) {
+	vdd->seen_b_frames = 100;
+	pts = dts;
+      }
+
+      if(vdd->seen_b_frames)
+	vdd->seen_b_frames--;
+
+      if(!vdd->seen_b_frames)
+	pts = dts;
+    }
 
 #if VDEC_DETAILED_DEBUG
     TRACE(TRACE_DEBUG, "VDEC DEC", "POC=%3d:%-3d IDR=%d PS=%d LD=%d %x 0x%llx %ld %d",
