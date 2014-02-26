@@ -21,6 +21,8 @@
  */
 #pragma once
 
+#include "video/h264_parser.h"
+
 /**
  *
  */
@@ -30,5 +32,8 @@ typedef struct rpi_video_codec {
   int rvc_last_epoch;
   const char *rvc_name;
   int rvc_b_frames;
+
+  h264_parser_t rvc_h264_parser;
+
 } rpi_video_codec_t;
 
