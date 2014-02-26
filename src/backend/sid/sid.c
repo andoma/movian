@@ -112,7 +112,7 @@ be_sid2player_play(const char *url0, media_pipe_t *mp,
 
       sample += CHUNK_SIZE;
 
-      int16_t *samples = mb->mb_data;
+      int16_t *samples = (void *)mb->mb_data;
 
       sidcxx_play(player, samples,
 		  CHUNK_SIZE * sizeof(int16_t) * mb->mb_channels);

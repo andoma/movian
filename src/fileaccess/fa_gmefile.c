@@ -218,7 +218,7 @@ fa_gme_playfile_internal(media_pipe_t *mp, const void *buf, size_t size,
 	  playinfo_register_play(url, 1);
 	}
 
-	gme_play(emu, CHUNK_SIZE * mb->mb_channels, mb->mb_data);
+	gme_play(emu, CHUNK_SIZE * mb->mb_channels, (void *)mb->mb_data);
       }
     }
 
