@@ -277,24 +277,23 @@ glw_bloom_ctor(glw_t *w)
 /**
  *
  */
-static void 
-glw_bloom_set(glw_t *w, va_list ap)
+static int
+glw_bloom_set_float(glw_t *w, glw_attribute_t attrib, float value)
 {
   glw_bloom_t *b = (void *)w;
-  glw_attribute_t attrib;
 
-  do {
-    attrib = va_arg(ap, int);
-    switch(attrib) {
-    case GLW_ATTRIB_VALUE:
-      b->b_glow = va_arg(ap, double);
-      break;
+  switch(attrib) {
+  case GLW_ATTRIB_VALUE:
+    if(b->b_glow == value)
+      return 0;
 
-    default:
-      GLW_ATTRIB_CHEW(attrib, ap);
-      break;
-    }
-  } while(attrib);
+    b->b_glow = value;
+    break;
+
+  default:
+    return -1;
+  }
+  return 1;
 }
 
 
@@ -305,7 +304,7 @@ static glw_class_t glw_bloom = {
   .gc_name = "bloom",
   .gc_instance_size = sizeof(glw_bloom_t),
   .gc_ctor = glw_bloom_ctor,
-  .gc_set = glw_bloom_set,
+  .gc_set_float = glw_bloom_set_float,
   .gc_render = glw_bloom_render,
   .gc_dtor = glw_bloom_dtor,
   .gc_signal_handler = glw_bloom_callback,

@@ -374,22 +374,6 @@ glw_create(glw_root_t *gr, const glw_class_t *class,
 /**
  *
  */
-void
-glw_set(glw_t *w, ...)
-{
-  va_list ap;
-
-  va_start(ap, w);
-
-  if(w->glw_class->gc_set != NULL)
-    w->glw_class->gc_set(w, ap);
-  va_end(ap);
-}
-
-
-/**
- *
- */
 static void
 glw_signal_handler_clean(glw_t *w)
 {
@@ -643,7 +627,7 @@ glw_destroy(glw_t *w)
     glw_remove_from_parent(w, p);
   }
 
-  free((void *)w->glw_id);
+  rstr_release(w->glw_id_rstr);
 
   TAILQ_INSERT_TAIL(&gr->gr_destroyer_queue, w, glw_parent_link);
 
@@ -2111,8 +2095,8 @@ glw_get_a_name(glw_t *w)
   if(w == NULL)
     return "<null>";
 
-  if(w->glw_id != NULL)
-    return w->glw_id;
+  if(w->glw_id_rstr != NULL)
+    return rstr_get(w->glw_id_rstr);
 
   static char buf[1024];
   buf[0] = 0;

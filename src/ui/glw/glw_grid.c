@@ -140,24 +140,22 @@ glw_grid_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 /**
  *
  */
-static void
-glw_grid_set(glw_t *w, va_list ap)
+static int
+glw_grid_set_float(glw_t *w, glw_attribute_t attrib, float value)
 {
   glw_grid_t *gg = (glw_grid_t *)w;
-  glw_attribute_t attrib;
 
-  do {
-    attrib = va_arg(ap, int);
-    switch(attrib) {
-    case GLW_ATTRIB_CHILD_SCALE:
-      gg->child_scale = va_arg(ap, double);
-      break;
+  switch(attrib) {
+  case GLW_ATTRIB_CHILD_SCALE:
+    if(gg->child_scale == value)
+      return 0;
+    gg->child_scale = value;
+    break;
 
-    default:
-      GLW_ATTRIB_CHEW(attrib, ap);
-      break;
-    }
-  } while(attrib);
+  default:
+    return -1;
+  }
+  return 1;
 }
 
 
@@ -179,7 +177,7 @@ glw_class_t glw_grid = {
   .gc_instance_size = sizeof(glw_grid_t),
   .gc_nav_descend_mode = GLW_NAV_DESCEND_FOCUSED,
   .gc_render = glw_grid_render,
-  .gc_set = glw_grid_set,
+  .gc_set_float = glw_grid_set_float,
   .gc_signal_handler = glw_grid_callback,
   .gc_child_orientation = GLW_ORIENTATION_VERTICAL,
   .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION,

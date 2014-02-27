@@ -248,55 +248,92 @@ set_alt(glw_t *w, rstr_t *url)
 /**
  *
  */
-static void 
-glw_view_loader_set(glw_t *w, va_list ap)
+static int
+glw_view_loader_set_int(glw_t *w, glw_attribute_t attrib, int value)
 {
-  glw_view_loader_t *a = (void *)w;
+  glw_view_loader_t *vl = (void *)w;
 
-  glw_attribute_t attrib;
+  switch(attrib) {
+  case GLW_ATTRIB_TRANSITION_EFFECT:
+    if(vl->efx_conf == value)
+      return 0;
+    vl->efx_conf = value;
+    break;
 
-  do {
-    attrib = va_arg(ap, int);
-    switch(attrib) {
-    case GLW_ATTRIB_TRANSITION_EFFECT:
-      a->efx_conf = va_arg(ap, int);
-      break;
-
-    case GLW_ATTRIB_TIME:
-      a->time = va_arg(ap, double);
-      a->time = GLW_MAX(a->time, 0.00001);
-      break;
-
-    case GLW_ATTRIB_PROPROOTS3:
-      a->prop = va_arg(ap, void *);
-      a->prop_parent = va_arg(ap, void *);
-      a->prop_clone = va_arg(ap, void *);
-      /* REFcount ?? */
-      break;
-
-    case GLW_ATTRIB_ARGS:
-      prop_link_ex(va_arg(ap, prop_t *), a->args, NULL,
-		   PROP_LINK_XREFED_IF_ORPHANED, 0);
-      break;
-
-    case GLW_ATTRIB_PROP_PARENT:
-      prop_ref_dec(a->prop_parent_override);
-
-      a->prop_parent_override = prop_ref_inc(va_arg(ap, prop_t *));
-      break;
-
-    case GLW_ATTRIB_PROP_SELF:
-      prop_ref_dec(a->prop_self_override);
-
-      a->prop_self_override = prop_ref_inc(va_arg(ap, prop_t *));
-      break;
-
-    default:
-      GLW_ATTRIB_CHEW(attrib, ap);
-      break;
-    }
-  } while(attrib);
+  default:
+    return -1;
+  }
+  return 1;
 }
+
+
+/**
+ *
+ */
+static int
+glw_view_loader_set_float(glw_t *w, glw_attribute_t attrib, float value)
+{
+  glw_view_loader_t *vl = (void *)w;
+
+  switch(attrib) {
+  case GLW_ATTRIB_TIME:
+    value = GLW_MAX(value, 0.00001);
+    if(vl->time == value)
+      return 0;
+    vl->time = value;
+    break;
+
+  default:
+    return -1;
+  }
+  return 1;
+}
+
+
+/**
+ *
+ */
+static void
+glw_view_loader_set_roots(glw_t *w, prop_t *self, prop_t *parent, prop_t *clone)
+{
+  glw_view_loader_t *vl = (void *)w;
+
+  vl->prop        = self;
+  vl->prop_parent = parent;
+  vl->prop_clone  = clone;
+}
+
+
+
+/**
+ *
+ */
+static int
+glw_view_loader_set_prop(glw_t *w, glw_attribute_t attrib, prop_t *p)
+{
+  glw_view_loader_t *vl = (void *)w;
+
+  switch(attrib) {
+  case GLW_ATTRIB_ARGS:
+    prop_link_ex(p, vl->args, NULL, PROP_LINK_XREFED_IF_ORPHANED, 0);
+    return 0;
+
+  case GLW_ATTRIB_PROP_PARENT:
+    prop_ref_dec(vl->prop_parent_override);
+    vl->prop_parent_override = prop_ref_inc(p);
+    return 0;
+
+  case GLW_ATTRIB_PROP_SELF:
+    prop_ref_dec(vl->prop_self_override);
+    vl->prop_self_override = prop_ref_inc(p);
+    return 0;
+
+  default:
+    return -1;
+  }
+  return 1;
+}
+
 
 /**
  *
@@ -318,7 +355,10 @@ static glw_class_t glw_view_loader = {
   .gc_instance_size = sizeof(glw_view_loader_t),
   .gc_ctor = glw_view_loader_ctor,
   .gc_dtor = glw_view_loader_dtor,
-  .gc_set = glw_view_loader_set,
+  .gc_set_int = glw_view_loader_set_int,
+  .gc_set_float = glw_view_loader_set_float,
+  .gc_set_prop = glw_view_loader_set_prop,
+  .gc_set_roots = glw_view_loader_set_roots,
   .gc_render = glw_view_loader_render,
   .gc_retire_child = glw_view_loader_retire_child,
   .gc_signal_handler = glw_view_loader_callback,

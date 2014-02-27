@@ -242,33 +242,55 @@ ctor(glw_t *w)
 /**
  *
  */
-static void 
-glw_clist_set(glw_t *w, va_list ap)
+static int
+glw_clist_set_int(glw_t *w, glw_attribute_t attrib, int value)
 {
-  glw_attribute_t attrib;
   glw_clist_t *l = (glw_clist_t *)w;
 
-  do {
-    attrib = va_arg(ap, int);
-    switch(attrib) {
+  switch(attrib) {
 
-    case GLW_ATTRIB_SPACING:
-      l->spacing = va_arg(ap, int);
-      break;
+  case GLW_ATTRIB_SPACING:
+    if(l->spacing == value)
+      return 0;
 
-    case GLW_ATTRIB_CENTER:
-      l->center = va_arg(ap, double);
-      break;
+    l->spacing = value;
+    break;
 
-    case GLW_ATTRIB_CHILD_HEIGHT:
-      l->child_height = va_arg(ap, int);
-      break;
+  case GLW_ATTRIB_CHILD_HEIGHT:
+    if(l->child_height == value)
+      return 0;
 
-    default:
-      GLW_ATTRIB_CHEW(attrib, ap);
-      break;
-    }
-  } while(attrib);
+    l->child_height = value;
+    break;
+
+  default:
+    return -1;
+  }
+  return 1;
+}
+
+
+/**
+ *
+ */
+static int
+glw_clist_set_float(glw_t *w, glw_attribute_t attrib, float value)
+{
+  glw_clist_t *l = (glw_clist_t *)w;
+
+  switch(attrib) {
+
+  case GLW_ATTRIB_CENTER:
+    if(l->center == value)
+      return 0;
+
+    l->center = value;
+    break;
+
+  default:
+    return -1;
+  }
+  return 1;
 }
 
 
@@ -285,7 +307,8 @@ static glw_class_t glw_clist = {
   .gc_ctor = ctor,
   .gc_signal_handler = signal_handler,
   .gc_escape_score = 100,
-  .gc_set = glw_clist_set,
+  .gc_set_int = glw_clist_set_int,
+  .gc_set_float = glw_clist_set_float,
 };
 
 GLW_REGISTER_CLASS(glw_clist);

@@ -584,52 +584,94 @@ glw_array_ctor(glw_t *w)
 /**
  *
  */
-static void 
-glw_array_set(glw_t *w, va_list ap)
+static int
+glw_array_set_int(glw_t *w, glw_attribute_t attrib, int value)
 {
   glw_array_t *a = (glw_array_t *)w;
-  glw_attribute_t attrib;
 
-  do {
-    attrib = va_arg(ap, int);
-    switch(attrib) {
-    case GLW_ATTRIB_CHILD_HEIGHT:
-      a->child_height_fixed = va_arg(ap, int);
-      break;
-    case GLW_ATTRIB_CHILD_WIDTH:
-      a->child_width_fixed  = va_arg(ap, int);
-      break;
-    case GLW_ATTRIB_CHILD_TILES_X:
-      a->child_tiles_x = va_arg(ap, int);
-      break;
-    case GLW_ATTRIB_CHILD_TILES_Y:
-      a->child_tiles_y = va_arg(ap, int);
-      break;
-    case GLW_ATTRIB_X_SPACING:
-      a->xspacing = va_arg(ap, int);
-      break;
-    case GLW_ATTRIB_Y_SPACING:
-      a->yspacing = va_arg(ap, int);
-      break;
-    case GLW_ATTRIB_ALPHA_FALLOFF:
-      a->alpha_falloff = va_arg(ap, double);
-      a->noclip = 1;
-      break;
+  switch(attrib) {
 
-    case GLW_ATTRIB_BLUR_FALLOFF:
-      a->blur_falloff = va_arg(ap, double);
-      a->noclip = 1;
-      break;
+  case GLW_ATTRIB_CHILD_HEIGHT:
+    if(a->child_height_fixed == value)
+      return 0;
+    a->child_height_fixed = value;
+    break;
 
-    case GLW_ATTRIB_SCROLL_THRESHOLD:
-      a->scroll_threshold = va_arg(ap, int);
-      break;
+  case GLW_ATTRIB_CHILD_WIDTH:
+    if(a->child_width_fixed == value)
+      return 0;
+    a->child_width_fixed  = value;
+    break;
 
-    default:
-      GLW_ATTRIB_CHEW(attrib, ap);
-      break;
-    }
-  } while(attrib);
+  case GLW_ATTRIB_CHILD_TILES_X:
+    if(a->child_tiles_x == value)
+      return 0;
+    a->child_tiles_x = value;
+    break;
+
+  case GLW_ATTRIB_CHILD_TILES_Y:
+    if(a->child_tiles_y == value)
+      return 0;
+
+    a->child_tiles_y = value;
+    break;
+
+  case GLW_ATTRIB_X_SPACING:
+    if(a->xspacing == value)
+      return 0;
+    a->xspacing = value;
+    break;
+
+  case GLW_ATTRIB_Y_SPACING:
+    if(a->yspacing == value)
+      return 0;
+
+    a->yspacing = value;
+    break;
+
+  case GLW_ATTRIB_SCROLL_THRESHOLD:
+    if(a->scroll_threshold == value)
+      return 0;
+    a->scroll_threshold = value;
+    break;
+
+  default:
+    return -1;
+  }
+
+  return 1;
+}
+
+
+/**
+ *
+ */
+static int
+glw_array_set_float(glw_t *w, glw_attribute_t attrib, float value)
+{
+  glw_array_t *a = (glw_array_t *)w;
+
+  switch(attrib) {
+
+  case GLW_ATTRIB_ALPHA_FALLOFF:
+    if(a->alpha_falloff == value)
+      return 0;
+
+    a->alpha_falloff = value;
+    a->noclip = 1;
+    break;
+
+  case GLW_ATTRIB_BLUR_FALLOFF:
+    if(a->blur_falloff == value)
+      return 0;
+
+    a->noclip = 1;
+    break;
+
+  default:
+    return -1;
+  }
+  return 1;
 }
 
 /**
@@ -697,7 +739,8 @@ static glw_class_t glw_array = {
   .gc_nav_search_mode = GLW_NAV_SEARCH_ARRAY,
   .gc_render = glw_array_render,
   .gc_ctor = glw_array_ctor,
-  .gc_set = glw_array_set,
+  .gc_set_int = glw_array_set_int,
+  .gc_set_float = glw_array_set_float,
   .gc_signal_handler = glw_array_callback,
   .gc_get_next_row = glw_array_get_next_row,
   .gc_set_margin = set_margin,

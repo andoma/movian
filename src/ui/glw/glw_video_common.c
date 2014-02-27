@@ -461,7 +461,7 @@ glw_video_play(glw_video_t *gv)
 			   gv->gv_model,
 			   gv->gv_how,
 			   gv->gv_origin,
-                           gv->gv_parent_url);
+                           rstr_get(gv->gv_parent_url_x));
   mp_enqueue_event(gv->gv_mp, e);
   event_release(e);
 }
@@ -490,7 +490,7 @@ glw_video_dtor(glw_t *w)
   free(gv->gv_current_url);
   free(gv->gv_pending_url);
   free(gv->gv_how);
-  free(gv->gv_parent_url);
+  rstr_release(gv->gv_parent_url_x);
 
   glw_video_overlay_deinit(gv);
   
@@ -715,15 +715,6 @@ set_how(glw_t *w, const char *how)
 }
 
 
-/**
- *
- */
-static void
-set_parent_url(glw_video_t *gv, const char *parent_url)
-{
-  mystrset(&gv->gv_parent_url, parent_url);
-}
-
 
 /**
  *
@@ -785,64 +776,102 @@ set_audio_volume(glw_video_t *gv, float v)
 /**
  *
  */
-static void
-glw_video_set(glw_t *w, va_list ap)
+static int
+glw_video_set_float(glw_t *w, glw_attribute_t attrib, float value)
 {
   glw_video_t *gv = (glw_video_t *)w;
-  glw_attribute_t attrib;
-  prop_t *p, *p2;
+
+  switch(attrib) {
+  case GLW_ATTRIB_AUDIO_VOLUME:
+    set_audio_volume(gv, value);
+    return 0; // Setting audio volume does not need to repaint UI
+  default:
+    return -1;
+  }
+  return 1;
+}
+
+
+/**
+ *
+ */
+static int
+glw_video_set_int(glw_t *w, glw_attribute_t attrib, int value)
+{
+  glw_video_t *gv = (glw_video_t *)w;
   event_t *e;
 
-  do {
-    attrib = va_arg(ap, int);
-    switch(attrib) {
+  switch(attrib) {
+  case GLW_ATTRIB_PRIORITY:
+    gv->gv_priority = value;
 
-    case GLW_ATTRIB_PROPROOTS3:
-      p = va_arg(ap, void *);
-      assert(p != NULL);
-      p2 = prop_create(p, "media");
-      
-      prop_link(gv->gv_mp->mp_prop_root, p2);
-      
-      (void)va_arg(ap, void *); // Parent, just throw it away
-      (void)va_arg(ap, void *); // Clone, just throw it away
-      break;
+    e = event_create_int(EVENT_PLAYBACK_PRIORITY, value);
+    mp_enqueue_event(gv->gv_mp, e);
+    event_release(e);
+    return 0;
 
-    case GLW_ATTRIB_PRIORITY:
-      gv->gv_priority = va_arg(ap, int);
+  default:
+    return -1;
+  }
+  return 1;
+}
 
-      e = event_create_int(EVENT_PLAYBACK_PRIORITY, gv->gv_priority);
-      mp_enqueue_event(gv->gv_mp, e);
-      event_release(e);
-      break;
 
-    case GLW_ATTRIB_PROP_MODEL:
-      if(gv->gv_model)
-	prop_ref_dec(gv->gv_model);
+/**
+ *
+ */
+static void
+glw_video_set_roots(glw_t *w, prop_t *self, prop_t *parent, prop_t *clone)
+{
+  glw_video_t *gv = (glw_video_t *)w;
+  prop_link(gv->gv_mp->mp_prop_root, prop_create(self, "media"));
+}
 
-      gv->gv_model = prop_ref_inc(va_arg(ap, prop_t *));
-      break;
 
-    case GLW_ATTRIB_PROP_ORIGIN:
-      if(gv->gv_origin)
-	prop_ref_dec(gv->gv_origin);
 
-      gv->gv_origin = prop_ref_inc(va_arg(ap, prop_t *));
-      break;
+/**
+ *
+ */
+static int
+glw_video_set_prop(glw_t *w, glw_attribute_t attrib, prop_t *p)
+{
+  glw_video_t *gv = (glw_video_t *)w;
 
-    case GLW_ATTRIB_PARENT_URL:
-      set_parent_url(gv, va_arg(ap, const char *));
-      break;
+  switch(attrib) {
+  case GLW_ATTRIB_PROP_MODEL:
+    prop_ref_dec(gv->gv_model);
+    gv->gv_model = prop_ref_inc(p);
+    return 0;
 
-    case GLW_ATTRIB_AUDIO_VOLUME:
-      set_audio_volume(gv, va_arg(ap, double));
-      break;
+  case GLW_ATTRIB_PROP_ORIGIN:
+    prop_ref_dec(gv->gv_origin);
+    gv->gv_origin = prop_ref_inc(p);
+    return 0;
 
-    default:
-      GLW_ATTRIB_CHEW(attrib, ap);
-      break;
-    }
-  } while(attrib);
+  default:
+    return -1;
+  }
+  return 1;
+}
+
+
+/**
+ *
+ */
+static int
+glw_video_set_rstr(glw_t *w, glw_attribute_t attrib, rstr_t *rstr)
+{
+  glw_video_t *gv = (glw_video_t *)w;
+
+  switch(attrib) {
+  case GLW_ATTRIB_PARENT_URL:
+    rstr_set(&gv->gv_parent_url_x, rstr);
+    return 0;
+
+  default:
+    return -1;
+  }
+  return 1;
 }
 
 
@@ -907,7 +936,11 @@ glw_video_render(glw_t *w, const glw_rctx_t *rc)
 static glw_class_t glw_video = {
   .gc_name = "video",
   .gc_instance_size = sizeof(glw_video_t),
-  .gc_set = glw_video_set,
+  .gc_set_int = glw_video_set_int,
+  .gc_set_float = glw_video_set_float,
+  .gc_set_roots = glw_video_set_roots,
+  .gc_set_prop = glw_video_set_prop,
+  .gc_set_rstr = glw_video_set_rstr,
   .gc_ctor = glw_video_ctor,
   .gc_dtor = glw_video_dtor,
   .gc_render = glw_video_render,

@@ -138,7 +138,7 @@ glw_expander_render(glw_t *w, const glw_rctx_t *rc)
 /**
  *
  */
-static void 
+static void
 glw_expander_ctor(glw_t *w)
 {
   glw_expander_t *exp = (glw_expander_t *)w;
@@ -149,25 +149,24 @@ glw_expander_ctor(glw_t *w)
 /**
  *
  */
-static void 
-glw_expander_set(glw_t *w, va_list ap)
+static int
+glw_expander_set_float(glw_t *w, glw_attribute_t attrib, float value)
 {
   glw_expander_t *exp = (glw_expander_t *)w;
-  glw_attribute_t attrib;
 
-  do {
-    attrib = va_arg(ap, int);
-    switch(attrib) {
-    case GLW_ATTRIB_EXPANSION:
-      exp->expansion = va_arg(ap, double);
-      update_constraints(exp);
-      break;
+  switch(attrib) {
+  case GLW_ATTRIB_EXPANSION:
+    if(exp->expansion == value)
+      return 0;
 
-    default:
-      GLW_ATTRIB_CHEW(attrib, ap);
-      break;
-    }
-  } while(attrib);
+    exp->expansion = value;
+    update_constraints(exp);
+    break;
+
+  default:
+    return -1;
+  }
+  return 1;
 }
 
 
@@ -176,7 +175,7 @@ static glw_class_t glw_expander_x = {
   .gc_name = "expander_x",
   .gc_instance_size = sizeof(glw_expander_t),
   .gc_render = glw_expander_render,
-  .gc_set = glw_expander_set,
+  .gc_set_float = glw_expander_set_float,
   .gc_ctor = glw_expander_ctor,
   .gc_signal_handler = glw_expander_callback,
 };
@@ -185,8 +184,9 @@ static glw_class_t glw_expander_y = {
   .gc_name = "expander_y",
   .gc_instance_size = sizeof(glw_expander_t),
   .gc_render = glw_expander_render,
-  .gc_set = glw_expander_set,
+  .gc_set_float = glw_expander_set_float,
   .gc_signal_handler = glw_expander_callback,
+  .gc_ctor = glw_expander_ctor,
 };
 
 GLW_REGISTER_CLASS(glw_expander_x);

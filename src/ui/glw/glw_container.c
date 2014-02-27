@@ -682,25 +682,24 @@ glw_container_z_callback(glw_t *w, void *opaque, glw_signal_t signal,
 /**
  *
  */
-static void
-glw_container_set(glw_t *w, va_list ap)
+static int
+glw_container_set_int(glw_t *w, glw_attribute_t attrib, int value)
 {
-  glw_attribute_t attrib;
   glw_container_t *co = (glw_container_t *)w;
 
-  do {
-    attrib = va_arg(ap, int);
-    switch(attrib) {
+  switch(attrib) {
 
-    case GLW_ATTRIB_SPACING:
-      co->co_spacing = va_arg(ap, int);
-      break;
+  case GLW_ATTRIB_SPACING:
+    if(co->co_spacing == value)
+      return 0;
 
-    default:
-      GLW_ATTRIB_CHEW(attrib, ap);
-      break;
-    }
-  } while(attrib);
+    co->co_spacing = value;
+    break;
+
+  default:
+    return -1;
+  }
+  return 1;
 }
 
 
@@ -740,7 +739,7 @@ static glw_class_t glw_container_x = {
   .gc_name = "container_x",
   .gc_instance_size = sizeof(glw_container_t),
   .gc_flags = GLW_CAN_HIDE_CHILDS,
-  .gc_set = glw_container_set,
+  .gc_set_int = glw_container_set_int,
   .gc_render = glw_container_x_render,
   .gc_signal_handler = glw_container_x_callback,
   .gc_child_orientation = GLW_ORIENTATION_HORIZONTAL,
@@ -753,7 +752,7 @@ static glw_class_t glw_container_y = {
   .gc_name = "container_y",
   .gc_instance_size = sizeof(glw_container_t),
   .gc_flags = GLW_CAN_HIDE_CHILDS,
-  .gc_set = glw_container_set,
+  .gc_set_int = glw_container_set_int,
   .gc_render = glw_container_y_render,
   .gc_signal_handler = glw_container_y_callback,
   .gc_child_orientation = GLW_ORIENTATION_VERTICAL,
@@ -767,7 +766,7 @@ static glw_class_t glw_container_z = {
   .gc_name = "container_z",
   .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_instance_size = sizeof(glw_container_t),
-  .gc_set = glw_container_set,
+  .gc_set_int = glw_container_set_int,
   .gc_render = glw_container_z_render,
   .gc_signal_handler = glw_container_z_callback,
 };

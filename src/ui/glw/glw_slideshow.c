@@ -249,41 +249,44 @@ glw_slideshow_ctor(glw_t *w)
 /**
  *
  */
-static void
-glw_slideshow_set(glw_t *w, va_list ap)
+static int
+glw_slideshow_set_float(glw_t *w, glw_attribute_t attrib, float value)
 {
   glw_slideshow_t *s = (glw_slideshow_t *)w;
-  glw_attribute_t attrib;
-  prop_t *p;
 
-  do {
-    attrib = va_arg(ap, int);
-    switch(attrib) {
+  switch(attrib) {
 
-    case GLW_ATTRIB_TIME:
-      s->time = va_arg(ap, double);
-      break;
+  case GLW_ATTRIB_TIME:
+    if(s->time == value)
+      return 0;
 
-    case GLW_ATTRIB_TRANSITION_TIME:
-      s->transition_time = va_arg(ap, double);
-      break;
+    s->time = value;
+    break;
 
-    case GLW_ATTRIB_PROPROOTS3:
-      p = va_arg(ap, void *);
-      s->playstatus = prop_create(prop_create(p, "slideshow"), "playstatus");
+  case GLW_ATTRIB_TRANSITION_TIME:
+    if(s->transition_time == value)
+      return 0;
 
-      (void)va_arg(ap, void *); // Parent, just throw it away
-      (void)va_arg(ap, void *); // Clone, just throw it away
-      glw_slideshow_update_playstatus(s);
-      break;
+    s->transition_time = value;
+    break;
 
-    default:
-      GLW_ATTRIB_CHEW(attrib, ap);
-      break;
-    }
-  } while(attrib);
+  default:
+    return -1;
+  }
+  return 1;
 }
 
+
+/**
+ *
+ */
+static void
+glw_slideshow_set_roots(glw_t *w, prop_t *self, prop_t *parent, prop_t *clone)
+{
+  glw_slideshow_t *s = (glw_slideshow_t *)w;
+
+  s->playstatus = prop_create(prop_create(self, "slideshow"), "playstatus");
+}
 
 
 /**
@@ -294,7 +297,8 @@ static glw_class_t glw_slideshow = {
   .gc_instance_size = sizeof(glw_slideshow_t),
   .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_ctor = glw_slideshow_ctor,
-  .gc_set = glw_slideshow_set,
+  .gc_set_float = glw_slideshow_set_float,
+  .gc_set_roots = glw_slideshow_set_roots,
   .gc_render = glw_slideshow_render,
   .gc_signal_handler = glw_slideshow_callback,
 };

@@ -215,29 +215,31 @@ glw_fade_callback(glw_t *w, void *opaque, glw_signal_t signal,
 /**
  *
  */
-static void 
-fader_set(glw_t *w, va_list ap)
+static int
+fader_set_float(glw_t *w, glw_attribute_t attrib, float value)
 {
-  glw_attribute_t attrib;
   glw_fade_t *gf = (glw_fade_t *)w;
 
-  do {
-    attrib = va_arg(ap, int);
-    switch(attrib) {
+  switch(attrib) {
 
-    case GLW_ATTRIB_ALPHA_FALLOFF:
-      gf->gf_alpha_falloff = va_arg(ap, double);
-      break;
+  case GLW_ATTRIB_ALPHA_FALLOFF:
+    if(gf->gf_alpha_falloff == value)
+      return 0;
 
-    case GLW_ATTRIB_BLUR_FALLOFF:
-      gf->gf_blur_falloff = va_arg(ap, double);
-      break;
+    gf->gf_alpha_falloff = value;
+    break;
 
-    default:
-      GLW_ATTRIB_CHEW(attrib, ap);
-      break;
-    }
-  } while(attrib);
+  case GLW_ATTRIB_BLUR_FALLOFF:
+    if(gf->gf_blur_falloff == value)
+      return 0;
+
+    gf->gf_blur_falloff = value;
+    break;
+
+  default:
+    return -1;
+  }
+  return 1;
 }
 
 
@@ -249,7 +251,7 @@ static glw_class_t glw_fader = {
   .gc_render = glw_fade_render,
   .gc_signal_handler = glw_fade_callback,
   .gc_set_plane = set_plane,
-  .gc_set = fader_set,
+  .gc_set_float = fader_set_float,
 };
 
 

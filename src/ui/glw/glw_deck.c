@@ -91,12 +91,12 @@ setprev(glw_deck_t *gd, glw_t *c)
 /**
  *
  */
-static void
+static int
 deck_select_child(glw_t *w, glw_t *c, prop_t *origin)
 {
   glw_deck_t *gd = (glw_deck_t *)w;
   if(w->glw_selected == c)
-    return;
+    return 0;
 
   setprev(gd, c);
   w->glw_selected = c;
@@ -112,6 +112,7 @@ deck_select_child(glw_t *w, glw_t *c, prop_t *origin)
     gd->v = 0;
 
   glw_signal0(w, GLW_SIGNAL_RESELECT_CHANGED, NULL);
+  return 1;
 }
 
 
@@ -237,7 +238,7 @@ glw_deck_render(glw_t *w, const glw_rctx_t *rc)
 /**
  *
  */
-static void
+static int
 set_page(glw_deck_t *gd, int n)
 {
   glw_t *c;
@@ -245,22 +246,23 @@ set_page(glw_deck_t *gd, int n)
     if(!n--)
       break;
   }
-  deck_select_child(&gd->w, c, NULL);
+  return deck_select_child(&gd->w, c, NULL);
 }
 
 /**
  *
  */
-static void
-set_page_by_id(glw_deck_t *gd, const char *str)
+static int
+glw_deck_set_page_by_id(glw_t *w, const char *str)
 {
+  glw_deck_t *gd = (glw_deck_t *)w;
   glw_t *c;
   if(str == NULL)
-    return;
+    return 1;
   TAILQ_FOREACH(c, &gd->w.glw_childs, glw_parent_link)
-    if(c->glw_id != NULL && !strcmp(c->glw_id, str))
+    if(c->glw_id_rstr != NULL && !strcmp(rstr_get(c->glw_id_rstr), str))
       break;
-  deck_select_child(&gd->w, c, NULL);
+  return deck_select_child(&gd->w, c, NULL);
 }
 
 
@@ -291,33 +293,47 @@ glw_deck_ctor(glw_t *w)
 /**
  *
  */
-static void 
-glw_deck_set(glw_t *w, va_list ap)
+static int
+glw_deck_set_int(glw_t *w, glw_attribute_t attrib, int value)
 {
   glw_deck_t *gd = (glw_deck_t *)w;
-  glw_attribute_t attrib;
 
-  do {
-    attrib = va_arg(ap, int);
-    switch(attrib) {
-    case GLW_ATTRIB_TRANSITION_EFFECT:
-      gd->efx_conf = va_arg(ap, int);
-      break;
-    case GLW_ATTRIB_TIME:
-      gd->time = va_arg(ap, double);
-      break;
-    case GLW_ATTRIB_PAGE:
-      set_page(gd, va_arg(ap, int));
-      break;
-    case GLW_ATTRIB_PAGE_BY_ID:
-      set_page_by_id(gd, va_arg(ap, char *));
-      break;
-    default:
-      GLW_ATTRIB_CHEW(attrib, ap);
-      break;
-    }
-  } while(attrib);
- }
+  switch(attrib) {
+  case GLW_ATTRIB_TRANSITION_EFFECT:
+    if(gd->efx_conf == value)
+      return 0;
+    gd->efx_conf = value;
+    break;
+  case GLW_ATTRIB_PAGE:
+    return set_page(gd, value);
+    break;
+  default:
+    return -1;
+  }
+  return 1;
+}
+
+
+/**
+ *
+ */
+static int
+glw_deck_set_float(glw_t *w, glw_attribute_t attrib, float value)
+{
+  glw_deck_t *gd = (glw_deck_t *)w;
+
+  switch(attrib) {
+  case GLW_ATTRIB_TIME:
+    if(gd->time == value)
+      return 0;
+    gd->time = value;
+    break;
+  default:
+    return -1;
+  }
+  return 1;
+}
+
 
 /**
  *
@@ -328,7 +344,9 @@ static glw_class_t glw_deck = {
   .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_nav_descend_mode = GLW_NAV_DESCEND_SELECTED,
   .gc_render = glw_deck_render,
-  .gc_set = glw_deck_set,
+  .gc_set_int = glw_deck_set_int,
+  .gc_set_float = glw_deck_set_float,
+  .gc_set_page_id = glw_deck_set_page_by_id,
   .gc_ctor = glw_deck_ctor,
   .gc_signal_handler = glw_deck_callback,
   .gc_select_child = deck_select_child,

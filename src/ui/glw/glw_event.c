@@ -407,7 +407,7 @@ glw_event_find_target2(glw_t *w, glw_t *forbidden, const char *id)
 {
   glw_t *c, *r;
 
-  if(w->glw_id != NULL && !strcmp(w->glw_id, id))
+  if(w->glw_id_rstr != NULL && !strcmp(rstr_get(w->glw_id_rstr), id))
     return w;
 
   if(w->glw_class->gc_flags & GLW_NAVIGATION_SEARCH_BOUNDARY)

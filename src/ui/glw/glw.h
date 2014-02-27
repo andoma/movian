@@ -114,10 +114,8 @@ typedef enum {
   GLW_ATTRIB_INT_STEP,
   GLW_ATTRIB_INT_MIN,
   GLW_ATTRIB_INT_MAX,
-  GLW_ATTRIB_PROPROOTS3,
   GLW_ATTRIB_TRANSITION_EFFECT,
   GLW_ATTRIB_EXPANSION,
-  GLW_ATTRIB_BIND_TO_ID,
   GLW_ATTRIB_CHILD_ASPECT,
   GLW_ATTRIB_CHILD_HEIGHT,
   GLW_ATTRIB_CHILD_WIDTH,
@@ -389,7 +387,21 @@ typedef struct glw_class {
   /**
    * Set attributes GLW_ATTRIB_... for the widget.
    */
-  void (*gc_set)(struct glw *w, va_list ap);
+  int (*gc_set_int)(struct glw *w, glw_attribute_t a, int value);
+
+  int (*gc_set_float)(struct glw *w, glw_attribute_t a, float value);
+
+  int (*gc_set_rstr)(struct glw *w, glw_attribute_t a, rstr_t *value);
+
+  int (*gc_set_prop)(struct glw *w, glw_attribute_t a, prop_t *p);
+
+  void (*gc_set_roots)(struct glw *w, prop_t *self, prop_t *parent,
+                       prop_t *clone);
+
+  int (*gc_bind_to_id)(struct glw *w, const char *id);
+
+  int (*gc_set_page_id)(struct glw *w, const char *id);
+
 
   /**
    * Ask widget to render itself in the current render context
@@ -460,8 +472,10 @@ typedef struct glw_class {
 
   /**
    * Select a child
+   *
+   * Return 1 if something was changed, otherwise return 0
    */
-  void (*gc_select_child)(struct glw *w, struct glw *c, struct prop *origin);
+  int (*gc_select_child)(struct glw *w, struct glw *c, struct prop *origin);
 
   /**
    * detachable widget control
@@ -1060,9 +1074,9 @@ typedef struct glw {
 
   uint8_t glw_alignment;
 
-  char *glw_id;
+  rstr_t *glw_id_rstr;
 
-  struct glw_event_map_list glw_event_maps;		  
+  struct glw_event_map_list glw_event_maps;
 
   struct glw_prop_sub_list glw_prop_subscriptions;
 
@@ -1223,66 +1237,6 @@ typedef enum {
 } glw_transition_type_t;
 
 
-/**
- *
- */
-#define GLW_ATTRIB_CHEW(attrib, ap)		\
-do {						\
-  switch((unsigned int)attrib) {		\
-  case GLW_ATTRIB_END:				\
-    break;					\
-  case GLW_ATTRIB_num ... UINT32_MAX:           \
-    abort();                                    \
-  case GLW_ATTRIB_PROPROOTS3:         		\
-    (void)va_arg(ap, void *);			\
-    (void)va_arg(ap, void *);			\
-  case GLW_ATTRIB_ARGS:				\
-  case GLW_ATTRIB_PROP_PARENT:			\
-  case GLW_ATTRIB_PROP_SELF:			\
-  case GLW_ATTRIB_PROP_MODEL:			\
-  case GLW_ATTRIB_PROP_ORIGIN:			\
-  case GLW_ATTRIB_BIND_TO_ID: 			\
-  case GLW_ATTRIB_PAGE_BY_ID:			\
-  case GLW_ATTRIB_PARENT_URL:			\
-    (void)va_arg(ap, void *);			\
-    break;					\
-  case GLW_ATTRIB_MODE:                         \
-  case GLW_ATTRIB_TRANSITION_EFFECT:            \
-  case GLW_ATTRIB_CHILD_TILES_X:                \
-  case GLW_ATTRIB_CHILD_TILES_Y:                \
-  case GLW_ATTRIB_CHILD_HEIGHT:                 \
-  case GLW_ATTRIB_CHILD_WIDTH:                  \
-  case GLW_ATTRIB_PAGE:                         \
-  case GLW_ATTRIB_ALPHA_EDGES:                  \
-  case GLW_ATTRIB_PRIORITY:                     \
-  case GLW_ATTRIB_SPACING:                      \
-  case GLW_ATTRIB_X_SPACING:                    \
-  case GLW_ATTRIB_Y_SPACING:                    \
-  case GLW_ATTRIB_SCROLL_THRESHOLD:             \
-  case GLW_ATTRIB_RADIUS:			\
-    (void)va_arg(ap, int);			\
-    break;					\
-  case GLW_ATTRIB_ANGLE:			\
-  case GLW_ATTRIB_TIME:                         \
-  case GLW_ATTRIB_TRANSITION_TIME:              \
-  case GLW_ATTRIB_EXPANSION:                    \
-  case GLW_ATTRIB_VALUE:                        \
-  case GLW_ATTRIB_INT_STEP:                     \
-  case GLW_ATTRIB_INT_MIN:                      \
-  case GLW_ATTRIB_INT_MAX:                      \
-  case GLW_ATTRIB_CHILD_ASPECT:                 \
-  case GLW_ATTRIB_FILL:                         \
-  case GLW_ATTRIB_SATURATION:                   \
-  case GLW_ATTRIB_CENTER:                       \
-  case GLW_ATTRIB_ALPHA_FALLOFF:                \
-  case GLW_ATTRIB_BLUR_FALLOFF:                 \
-  case GLW_ATTRIB_AUDIO_VOLUME:                 \
-  case GLW_ATTRIB_ASPECT:                       \
-  case GLW_ATTRIB_CHILD_SCALE:                  \
-    (void)va_arg(ap, double);			\
-    break;					\
-  }						\
-} while(0)
 
 const char *glw_get_a_name(glw_t *w);
 
@@ -1299,8 +1253,6 @@ glw_t *glw_create(glw_root_t *gr, const glw_class_t *class,
 #define glw_lock_assert() glw_lock_check(__FILE__, __LINE__)
 
 void glw_lock_check(const char *file, const int line);
-
-void glw_set(glw_t *w, ...) __attribute__((__sentinel__(0)));
 
 void glw_destroy(glw_t *w);
 

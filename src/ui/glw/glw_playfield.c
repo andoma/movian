@@ -138,7 +138,7 @@ detach(glw_t *s, glw_t *d)
 /**
  *
  */
-static void
+static int
 playfield_select_child(glw_t *w, glw_t *c, prop_t *origin)
 {
   glw_playfield_t *p = (glw_playfield_t *)w;
@@ -153,7 +153,7 @@ playfield_select_child(glw_t *w, glw_t *c, prop_t *origin)
       speed = 0.025;
     }
   }
-  
+
   if(c != NULL) {
     if(w->glw_selected == NULL && w->glw_flags2 & GLW2_NO_INITIAL_TRANS) 
       c->glw_parent_amount = 1;
@@ -171,7 +171,7 @@ playfield_select_child(glw_t *w, glw_t *c, prop_t *origin)
   } else {
     clear_constraints(w);
   }
-
+  return 1;
 }
 
 

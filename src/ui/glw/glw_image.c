@@ -1380,56 +1380,74 @@ set_default_size(glw_t *w, int px)
 /**
  *
  */
-static void 
-glw_image_set(glw_t *w, va_list ap)
+static int
+glw_image_set_float(glw_t *w, glw_attribute_t attrib, float value)
 {
   glw_image_t *gi = (glw_image_t *)w;
-  glw_attribute_t attrib;
-  int r;
-  float f;
-  do {
-    attrib = va_arg(ap, int);
-    switch(attrib) {
-    case GLW_ATTRIB_ANGLE:
-      gi->gi_angle = va_arg(ap, double);
-      break;
 
-    case GLW_ATTRIB_SATURATION:
-      gi->gi_saturation = va_arg(ap, double);
-      compute_colors(gi);
-      break;
-      
-    case GLW_ATTRIB_ALPHA_EDGES:
-      gi->gi_alpha_edge = va_arg(ap, int);
-      gi->gi_mode = GI_MODE_ALPHA_EDGES;
-      break;
+  switch(attrib) {
+  case GLW_ATTRIB_ANGLE:
+    if(gi->gi_angle == value)
+      return 0;
+    gi->gi_angle = value;
+    break;
 
-    case GLW_ATTRIB_ASPECT:
-      f = va_arg(ap, double);
-      if(gi->gi_aspect != f) {
-        gi->gi_aspect = f;
-        gi->gi_update = 1;
-      }
-      break;
+  case GLW_ATTRIB_SATURATION:
+    if(gi->gi_saturation == value)
+      return 0;
+    compute_colors(gi);
+    break;
 
-    case GLW_ATTRIB_CHILD_ASPECT:
-      gi->gi_child_aspect = va_arg(ap, double);
-      break;
+  case GLW_ATTRIB_ASPECT:
+    if(gi->gi_aspect == value)
+      return 0;
+    gi->gi_aspect = value;
+    gi->gi_update = 1;
+    break;
 
-    case GLW_ATTRIB_RADIUS:
-      r = va_arg(ap, int);
-      if(gi->gi_radius != r) {
-	gi->gi_radius = r;
-	gi->gi_update = 1;
-      }
-      break;
+  case GLW_ATTRIB_CHILD_ASPECT:
+    if(gi->gi_child_aspect == value)
+      return 0;
+    gi->gi_child_aspect = value;
+    break;
 
-    default:
-      GLW_ATTRIB_CHEW(attrib, ap);
-      break;
-    }
-  } while(attrib);
+  default:
+    return -1;
+  }
+  return 1;
+}
 
+
+/**
+ *
+ */
+static int
+glw_image_set_int(glw_t *w, glw_attribute_t attrib, int value)
+{
+  glw_image_t *gi = (glw_image_t *)w;
+
+  switch(attrib) {
+
+  case GLW_ATTRIB_ALPHA_EDGES:
+    if(gi->gi_alpha_edge == value)
+      return 0;
+
+    gi->gi_alpha_edge = value;
+    gi->gi_mode = GI_MODE_ALPHA_EDGES;
+    break;
+
+  case GLW_ATTRIB_RADIUS:
+    if(gi->gi_radius == value)
+      return 0;
+
+    gi->gi_radius = value;
+    gi->gi_update = 1;
+    break;
+
+  default:
+    return -1;
+  }
+  return 1;
 }
 
 
@@ -1504,7 +1522,8 @@ static glw_class_t glw_image = {
   .gc_render = glw_image_render,
   .gc_dtor = glw_image_dtor,
   .gc_ctor = glw_image_ctor,
-  .gc_set = glw_image_set,
+  .gc_set_float = glw_image_set_float,
+  .gc_set_int = glw_image_set_int,
   .gc_signal_handler = glw_image_callback,
   .gc_default_alignment = LAYOUT_ALIGN_CENTER,
   .gc_ready = glw_image_ready,
@@ -1531,7 +1550,8 @@ static glw_class_t glw_icon = {
   .gc_render = glw_image_render,
   .gc_ctor = glw_icon_ctor,
   .gc_dtor = glw_icon_dtor,
-  .gc_set = glw_image_set,
+  .gc_set_float = glw_image_set_float,
+  .gc_set_int = glw_image_set_int,
   .gc_signal_handler = glw_image_callback,
   .gc_default_alignment = LAYOUT_ALIGN_CENTER,
   .gc_set_rgb = glw_image_set_rgb,
@@ -1559,7 +1579,8 @@ static glw_class_t glw_backdrop = {
   .gc_render = glw_image_render,
   .gc_ctor = glw_image_ctor,
   .gc_dtor = glw_image_dtor,
-  .gc_set = glw_image_set,
+  .gc_set_float = glw_image_set_float,
+  .gc_set_int = glw_image_set_int,
   .gc_signal_handler = glw_image_callback,
   .gc_default_alignment = LAYOUT_ALIGN_CENTER,
   .gc_set_rgb = glw_image_set_rgb,
@@ -1588,7 +1609,8 @@ static glw_class_t glw_frontdrop = {
   .gc_render = glw_image_render,
   .gc_ctor = glw_image_ctor,
   .gc_dtor = glw_image_dtor,
-  .gc_set = glw_image_set,
+  .gc_set_float = glw_image_set_float,
+  .gc_set_int = glw_image_set_int,
   .gc_signal_handler = glw_image_callback,
   .gc_default_alignment = LAYOUT_ALIGN_CENTER,
   .gc_set_rgb = glw_image_set_rgb,
@@ -1617,7 +1639,8 @@ static glw_class_t glw_repeatedimage = {
   .gc_render = glw_image_render,
   .gc_ctor = glw_image_ctor,
   .gc_dtor = glw_image_dtor,
-  .gc_set = glw_image_set,
+  .gc_set_float = glw_image_set_float,
+  .gc_set_int = glw_image_set_int,
   .gc_signal_handler = glw_image_callback,
   .gc_default_alignment = LAYOUT_ALIGN_CENTER,
   .gc_set_rgb = glw_image_set_rgb,

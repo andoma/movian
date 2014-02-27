@@ -1286,9 +1286,11 @@ cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
   c->c_w = glw_create(gr, sc->sc_cloner_class, parent, b, p);
   c->c_w->glw_clone = c;
 
-  glw_set(c->c_w,
-	  GLW_ATTRIB_PROPROOTS3, p, sc->sc_originating_prop, c->c_clone_root,
-	  NULL);
+  if(c->c_w->glw_class->gc_set_roots != NULL) {
+    c->c_w->glw_class->gc_set_roots(c->c_w,
+                                    p, sc->sc_originating_prop,
+                                    c->c_clone_root);
+  }
 
   prop_tag_set(p, sc, c);
 
@@ -2648,9 +2650,9 @@ glwf_widget(glw_view_eval_context_t *ec, struct token *self,
   if(c->gc_freeze != NULL)
     c->gc_freeze(n.w);
 
-  glw_set(n.w,
-	  GLW_ATTRIB_PROPROOTS3, ec->prop, ec->prop_parent, ec->prop_clone,
-	  NULL);
+  if(n.w->glw_class->gc_set_roots != NULL)
+    n.w->glw_class->gc_set_roots(n.w,
+                                 ec->prop, ec->prop_parent, ec->prop_clone);
 
   n.sublist = &n.w->glw_prop_subscriptions;
 
@@ -4462,7 +4464,7 @@ glwf_bind(glw_view_eval_context_t *ec, struct token *self,
 					    ec->prop_clone);
 
   } else if(a != NULL && a->type == TOKEN_RSTRING) {
-    glw_set(ec->w, GLW_ATTRIB_BIND_TO_ID, rstr_get(a->t_rstring), NULL);
+    ec->w->glw_class->gc_bind_to_id(ec->w, rstr_get(a->t_rstring));
 
   } else {
     if(ec->w->glw_class->gc_bind_to_property != NULL)

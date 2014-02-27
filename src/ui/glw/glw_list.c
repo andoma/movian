@@ -687,43 +687,69 @@ glw_list_callback_x(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 /**
  *
  */
-static void 
-glw_list_set(glw_t *w, va_list ap)
+static int
+glw_list_set_float(glw_t *w, glw_attribute_t attrib, float value)
 {
-  glw_attribute_t attrib;
-  glw_list_t *l = (void *)w;
+  glw_list_t *l = (glw_list_t *)w;
+  switch(attrib) {
 
-  do {
-    attrib = va_arg(ap, int);
-    switch(attrib) {
+  case GLW_ATTRIB_CHILD_ASPECT:
+    if(l->child_aspect == value)
+      return 0;
 
-    case GLW_ATTRIB_CHILD_ASPECT:
-      l->child_aspect = va_arg(ap, double);
-      break;
+    l->child_aspect = value;
+    break;
 
-    case GLW_ATTRIB_SPACING:
-      l->spacing = va_arg(ap, int);
-      break;
+  case GLW_ATTRIB_ALPHA_FALLOFF:
+    if(l->alpha_falloff == value)
+      return 0;
 
-    case GLW_ATTRIB_ALPHA_FALLOFF:
-      l->alpha_falloff = va_arg(ap, double);
-      l->noclip = 1;
-      break;
+    l->alpha_falloff = value;
+    l->noclip = 1;
+    break;
 
-    case GLW_ATTRIB_BLUR_FALLOFF:
-      l->blur_falloff = va_arg(ap, double);
-      l->noclip = 1;
-      break;
+  case GLW_ATTRIB_BLUR_FALLOFF:
+    if(l->blur_falloff == value)
+      return 0;
 
-    case GLW_ATTRIB_SCROLL_THRESHOLD:
-      l->scroll_threshold = va_arg(ap, int);
-      break;
+    l->blur_falloff = value;
+    l->noclip = 1;
+    break;
 
-    default:
-      GLW_ATTRIB_CHEW(attrib, ap);
-      break;
-    }
-  } while(attrib);
+  default:
+    return -1;
+  }
+  return 1;
+}
+
+
+/**
+ *
+ */
+static int
+glw_list_set_int(glw_t *w, glw_attribute_t attrib, int value)
+{
+  glw_list_t *l = (glw_list_t *)w;
+
+  switch(attrib) {
+
+  case GLW_ATTRIB_SPACING:
+    if(l->spacing == value)
+      return 0;
+
+    l->spacing = value;
+    break;
+
+  case GLW_ATTRIB_SCROLL_THRESHOLD:
+    if(l->scroll_threshold == value)
+      return 0;
+    l->scroll_threshold = value;
+    break;
+
+  default:
+    return -1;
+  }
+  return 1;
 }
 
 /**
@@ -801,7 +827,8 @@ static glw_class_t glw_list_y = {
   .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION_WITH_PAGING,
 
   .gc_render = glw_list_render_y,
-  .gc_set = glw_list_set,
+  .gc_set_int = glw_list_set_int,
+  .gc_set_float = glw_list_set_float,
   .gc_ctor = glw_list_y_ctor,
   .gc_signal_handler = glw_list_callback_y,
   .gc_escape_score = 100,
@@ -822,7 +849,8 @@ static glw_class_t glw_list_x = {
   .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION_WITH_PAGING,
 
   .gc_render = glw_list_render_x,
-  .gc_set = glw_list_set,
+  .gc_set_int = glw_list_set_int,
+  .gc_set_float = glw_list_set_float,
   .gc_ctor = glw_list_x_ctor,
   .gc_signal_handler = glw_list_callback_x,
   .gc_escape_score = 100,
