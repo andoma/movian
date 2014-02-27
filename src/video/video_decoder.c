@@ -62,6 +62,28 @@ vd_init_timings(video_decoder_t *vd)
 }
 
 
+/**
+ *
+ */
+int64_t 
+video_decoder_infer_pts(const media_buf_meta_t *mbm,
+			video_decoder_t *vd,
+			int is_bframe)
+{
+  if(is_bframe)
+    vd->vd_seen_bframe = 100;
+
+  if(vd->vd_seen_bframe)
+    vd->vd_seen_bframe--;
+    
+  if(mbm->mbm_pts == PTS_UNSET && mbm->mbm_dts != PTS_UNSET &&
+     (!vd->vd_seen_bframe || is_bframe))
+    return mbm->mbm_dts;
+
+  return mbm->mbm_pts;
+}
+
+
 #define vd_valid_duration(t) ((t) > 10000ULL && (t) < 1000000ULL)
 
 
@@ -106,13 +128,8 @@ video_deliver_frame_avctx(video_decoder_t *vd,
     break;
   }
 
-  int64_t pts = mbm->mbm_pts;
-
-  /* Compute duration and PTS of frame */
-  if(pts == AV_NOPTS_VALUE && mbm->mbm_dts != AV_NOPTS_VALUE &&
-     (ctx->has_b_frames == 0 || frame->pict_type == AV_PICTURE_TYPE_B)) {
-    pts = mbm->mbm_dts;
-  }
+  int64_t pts = video_decoder_infer_pts(mbm, vd,
+					frame->pict_type == AV_PICTURE_TYPE_B);
 
   int duration = mbm->mbm_duration;
 
