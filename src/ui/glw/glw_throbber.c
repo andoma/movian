@@ -74,7 +74,7 @@ glw_throbber3d_layout(glw_t *w, const glw_rctx_t *rc)
     return;
 
   gt->angle += 2;
-  gr_schedule_refresh(w->glw_root);
+  gr_schedule_refresh(w->glw_root, 0);
 }
 
 
@@ -172,7 +172,7 @@ glw_throbber_layout(glw_t *w, const glw_rctx_t *rc)
   if(w->glw_alpha < 0.01)
     return;
 
-  gr_schedule_refresh(w->glw_root);
+  gr_schedule_refresh(w->glw_root, 0);
   gt->angle += 0.5;
   gt->o++;
 }
@@ -247,13 +247,17 @@ glw_throbber_ctor(glw_t *w)
 /**
  *
  */
-static void 
-glw_throbber_set_rgb(glw_t *w, const float *rgb)
+static int
+glw_throbber_set_float3(glw_t *w, glw_attribute_t attrib, const float *rgb)
 {
-  glw_throbber_t *gt = (void *)w;
-  gt->color.r = rgb[0];
-  gt->color.g = rgb[1];
-  gt->color.b = rgb[2];
+  glw_throbber_t *gt = (glw_throbber_t *)w;
+
+  switch(attrib) {
+  case GLW_ATTRIB_RGB:
+    return glw_attrib_set_rgb(&gt->color, rgb);
+  default:
+    return -1;
+  }
 }
 
 
@@ -267,7 +271,7 @@ static glw_class_t glw_throbber = {
   .gc_layout = glw_throbber_layout,
   .gc_ctor = glw_throbber_ctor,
   .gc_dtor = glw_throbber_dtor,
-  .gc_set_rgb = glw_throbber_set_rgb,
+  .gc_set_float3 = glw_throbber_set_float3,
 };
 
 GLW_REGISTER_CLASS(glw_throbber);

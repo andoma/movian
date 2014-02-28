@@ -221,7 +221,6 @@ static int
 glw_playfield_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   glw_playfield_t *p = (glw_playfield_t *)w;
-  glw_t *c;
 
   switch(signal) {
   default:
@@ -238,7 +237,6 @@ glw_playfield_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     return 1;
 
   case GLW_SIGNAL_CHILD_DESTROYED:
-    c = extra;
     if(w->glw_selected == extra)
       clear_constraints(w);
     break;

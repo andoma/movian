@@ -490,14 +490,17 @@ glw_prepare_frame(glw_root_t *gr, int flags)
   LIST_FOREACH(w, &gr->gr_every_frame_list, glw_every_frame_link)
     w->glw_class->gc_newframe(w, flags);
 
-  while((w = LIST_FIRST(&gr->gr_active_flush_list)) != NULL) {
-    LIST_REMOVE(w, glw_active_link);
-    LIST_INSERT_HEAD(&gr->gr_active_dummy_list, w, glw_active_link);
-    w->glw_flags &= ~GLW_ACTIVE;
-    glw_signal0(w, GLW_SIGNAL_INACTIVE, NULL);
-  }
+  if(gr->gr_need_refresh) {
 
-  glw_reap(gr);
+    while((w = LIST_FIRST(&gr->gr_active_flush_list)) != NULL) {
+      LIST_REMOVE(w, glw_active_link);
+      LIST_INSERT_HEAD(&gr->gr_active_dummy_list, w, glw_active_link);
+      w->glw_flags &= ~GLW_ACTIVE;
+      glw_signal0(w, GLW_SIGNAL_INACTIVE, NULL);
+    }
+
+    glw_reap(gr);
+  }
 
   if(gr->gr_mouse_valid) {
     glw_pointer_event_t gpe;
@@ -513,6 +516,9 @@ glw_prepare_frame(glw_root_t *gr, int flags)
       glw_focus_leave(gr->gr_current_focus);
     }
   }
+
+  if(!gconf.enable_conditional_rendering)
+    gr->gr_need_refresh = GLW_REFRESH_FLAG_LAYOUT | GLW_REFRESH_FLAG_RENDER;
 }
 
 
@@ -2513,60 +2519,9 @@ glw_project(glw_rect_t *r, const glw_rctx_t *rc, const glw_root_t *gr)
 }
 
 
-#if 0
-void
-glw_lp(float *v, const glw_root_t *gr, float t, float alpha)
-{
-  union {
-    float flt;
-    uint32_t i32;
-  } tmp;
-
-  union {
-    float flt;
-    uint32_t i32;
-  } tmp2;
-
-  union {
-    float flt;
-    uint32_t i32;
-  } al;
-
-  tmp.flt = *v;
-  tmp2.flt = t;
-  al.flt = alpha;
-
-  uint32_t x = tmp.i32;
-  tmp.flt = tmp.flt + alpha * (t - tmp.flt);
-
-  int mdiff = (x &0x7fffff) - (tmp.i32 & 0x7fffff);
-  int ediff = ((x >> 23)  & 0x7f) - ((tmp.i32 >> 23) & 0x7f);
-
-  if(mdiff || ediff) {
-    printf("before: %08x %e\n"
-           "target: %08x %e\n"
-           " alpha: %08x %e\n"
-           " after: %08x %e\n"
-           "  diff: m = %d  e = %d\n",
-           x, *v,
-           tmp2.i32, tmp2.flt,
-           al.i32, al.flt,
-           tmp.i32, tmp.flt,
-           mdiff, ediff);
-
-    if(ediff == 0 && abs(mdiff) < 100000) {
-      printf("Terminated\n");
-      *v = t;
-      return;
-    }
-
-  }
-
-  *v = tmp.flt;
-}
-#endif
-
-
+/**
+ *
+ */
 void
 glw_lp(float *v, glw_root_t *gr, float target, float alpha)
 {
@@ -2581,19 +2536,65 @@ glw_lp(float *v, glw_root_t *gr, float target, float alpha)
     return;
   }
   *v = out;
-  gr_schedule_refresh(gr);
+  gr_schedule_refresh(gr, 0);
 }
 
 
 /**
  *
  */
-void
-gr_schedule_refresh0(glw_root_t *gr, const char *file, int line)
+int
+glw_attrib_set_float3_clamped(float *dst, const float *src)
 {
-  if(gr->gr_need_refresh)
+  float v[3];
+  for(int i = 0; i < 3; i++)
+    v[i] = GLW_CLAMP(src[i], 0.0f, 1.0f);
+  return glw_attrib_set_float3(dst, v);
+}
+
+int
+glw_attrib_set_float3(float *dst, const float *src)
+{
+  if(!memcmp(dst, src, sizeof(float) * 3))
+    return 0;
+  memcpy(dst, src, sizeof(float) * 3);
+  return 1;
+}
+
+int
+glw_attrib_set_float4(float *dst, const float *src)
+{
+  if(!memcmp(dst, src, sizeof(float) * 4))
+    return 0;
+  memcpy(dst, src, sizeof(float) * 4);
+  return 1;
+}
+
+int
+glw_attrib_set_rgb(glw_rgb_t *rgb, const float *src)
+{
+  return glw_attrib_set_float3((float *)rgb, src);
+}
+
+/**
+ *
+ */
+#ifdef GLW_TRACK_REFRESH
+void
+gr_schedule_refresh0(glw_root_t *gr, int how, const char *file, int line)
+{
+  int flags = GLW_REFRESH_FLAG_LAYOUT;
+
+  if(how != GLW_REFRESH_LAYOUT_ONLY)
+    flags |= GLW_REFRESH_FLAG_RENDER;
+
+  if((gr->gr_need_refresh & flags) == flags)
     return;
 
-  gr->gr_need_refresh = 1;
-  printf("Refresh requested by %s:%d\n", file, line);
+  gr->gr_need_refresh |= flags;
+  printf("%s%srefresh requested by %s:%d\n",
+         flags & GLW_REFRESH_FLAG_LAYOUT ? "layout " : "",
+         flags & GLW_REFRESH_FLAG_RENDER ? "render " : "",
+         file, line);
 }
+#endif

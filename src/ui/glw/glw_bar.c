@@ -32,7 +32,8 @@ typedef struct glw_bar {
 
   float gb_fill;
 
-  int gb_update;
+  char gb_update;
+  char gb_is_active;
 
 } glw_bar_t;
 
@@ -75,10 +76,13 @@ glw_bar_render(glw_t *w, const glw_rctx_t *rc)
  *
  */
 static void
-glw_bar_layout(glw_t *W, const glw_rctx_t *rc)
+glw_bar_layout(glw_t *w, const glw_rctx_t *rc)
 {
-  glw_bar_t *gb = (void *)W;
+  glw_bar_t *gb = (void *)w;
   float r, g, b, x;
+
+  if(w->glw_alpha < 0.01)
+    return;
 
   if(!glw_renderer_initialized(&gb->gb_gr)) {
     glw_renderer_init_quad(&gb->gb_gr);
@@ -115,6 +119,7 @@ glw_bar_layout(glw_t *W, const glw_rctx_t *rc)
 			 gb->gb_col1[2],
 			 1.0);
 
+    gr_schedule_refresh(w->glw_root, 0);
   }
 }
 
@@ -135,7 +140,7 @@ glw_bar_set_float(glw_t *w, glw_attribute_t attrib, float value)
 
     gb->gb_fill = value;
     gb->gb_update = 1;
-    break;
+    return w->glw_flags & GLW_ACTIVE ? GLW_REFRESH_LAYOUT_ONLY : 0;
 
   default:
     return -1;
@@ -143,34 +148,30 @@ glw_bar_set_float(glw_t *w, glw_attribute_t attrib, float value)
   return 1;
 }
 
-
 /**
  *
  */
-static void
-set_color1(glw_t *w, const float *rgb)
+static int
+glw_bar_set_float3(glw_t *w, glw_attribute_t attrib, const float *vector)
 {
   glw_bar_t *gb = (glw_bar_t *)w;
-  gb->gb_col1[0] = GLW_CLAMP(rgb[0], 0, 1);
-  gb->gb_col1[1] = GLW_CLAMP(rgb[1], 0, 1);
-  gb->gb_col1[2] = GLW_CLAMP(rgb[2], 0, 1);
+
+  switch(attrib) {
+  case GLW_ATTRIB_COLOR1:
+    if(!glw_attrib_set_float3_clamped(gb->gb_col1, vector))
+      return 0;
+    break;
+
+  case GLW_ATTRIB_COLOR2:
+    if(!glw_attrib_set_float3_clamped(gb->gb_col2, vector))
+      return 0;
+    break;
+  default:
+    return -1;
+  }
   gb->gb_update = 1;
+  return 1;
 }
-
-
-/**
- *
- */
-static void
-set_color2(glw_t *w, const float *rgb)
-{
-  glw_bar_t *gb = (glw_bar_t *)w;
-  gb->gb_col2[0] = GLW_CLAMP(rgb[0], 0, 1);
-  gb->gb_col2[1] = GLW_CLAMP(rgb[1], 0, 1);
-  gb->gb_col2[2] = GLW_CLAMP(rgb[2], 0, 1);
-  gb->gb_update = 1;
-}
-
 
 
 /**
@@ -182,8 +183,7 @@ static glw_class_t glw_bar = {
   .gc_render = glw_bar_render,
   .gc_set_float = glw_bar_set_float,
   .gc_dtor = glw_bar_dtor,
-  .gc_set_color1 = set_color1,
-  .gc_set_color2 = set_color2,
+  .gc_set_float3 = glw_bar_set_float3,
   .gc_layout = glw_bar_layout,
 };
 

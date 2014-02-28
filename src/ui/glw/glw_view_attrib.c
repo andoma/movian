@@ -250,9 +250,13 @@ static void
 set_weight(glw_t *w, float v)
 {
   glw_conf_constraints(w, 0, 0, v, GLW_CONSTRAINT_CONF_W);
-  gr_schedule_refresh(w->glw_root);
+  gr_schedule_refresh(w->glw_root, 0);
 }
 
+
+/**
+ *
+ */
 static void
 set_alpha(glw_t *w, float v)
 {
@@ -260,9 +264,13 @@ set_alpha(glw_t *w, float v)
     return;
 
   w->glw_alpha = v;
-  gr_schedule_refresh(w->glw_root);
+  gr_schedule_refresh(w->glw_root, 0);
 }
 
+
+/**
+ *
+ */
 static void
 set_blur(glw_t *w, float v)
 {
@@ -271,19 +279,7 @@ set_blur(glw_t *w, float v)
   if(w->glw_sharpness == v)
     return;
   w->glw_sharpness = v;
-  gr_schedule_refresh(w->glw_root);
-}
-
-/**
- *
- */
-static void
-set_alpha_self(glw_t *w, float v)
-{
-  if(w->glw_class->gc_set_alpha_self != NULL) {
-    w->glw_class->gc_set_alpha_self(w, v);
-    gr_schedule_refresh(w->glw_root);
-  }
+  gr_schedule_refresh(w->glw_root, 0);
 }
 
 
@@ -291,46 +287,34 @@ set_alpha_self(glw_t *w, float v)
  *
  */
 static void
-set_size_scale(glw_t *w, float v)
+attr_schedule_refresh(glw_root_t *gr, const token_t *t,
+                      const token_attrib_t *a, int how)
 {
-  if(w->glw_class->gc_set_size_scale != NULL) {
-    w->glw_class->gc_set_size_scale(w, v);
-    gr_schedule_refresh(w->glw_root);
-  }
-}
 
+  int flags = GLW_REFRESH_FLAG_LAYOUT;
+
+  if(how != GLW_REFRESH_LAYOUT_ONLY)
+    flags |= GLW_REFRESH_FLAG_RENDER;
+
+  if((gr->gr_need_refresh & flags) == flags)
+    return;
+
+  gr->gr_need_refresh |= flags;
+
+
+#ifdef GLW_TRACK_REFRESH
+  printf("%s%s refresh requested by %s:%d attribute %s\n",
+         flags & GLW_REFRESH_FLAG_LAYOUT ? "Layout " : "",
+         flags & GLW_REFRESH_FLAG_RENDER ? "Render " : "",
+         rstr_get(t->file), t->line, a->name);
+#endif
+}
 
 
 /**
  *
  */
 static void
-set_size(glw_t *w, float v)
-{
-  if(w->glw_class->gc_set_default_size != NULL) {
-    w->glw_class->gc_set_default_size(w, v);
-    gr_schedule_refresh(w->glw_root);
-  }
-}
-
-
-/**
- *
- */
-static void
-set_min_size(glw_t *w, float v)
-{
-  if(w->glw_class->gc_set_min_size != NULL) {
-    w->glw_class->gc_set_min_size(w, v);
-    gr_schedule_refresh(w->glw_root);
-  }
-}
-
-
-/**
- *
- */
-static int
 set_number_int(glw_t *w, const token_attrib_t *a, const token_t *t, int v)
 {
   const glw_class_t *gc = w->glw_class;
@@ -343,22 +327,20 @@ set_number_int(glw_t *w, const token_attrib_t *a, const token_t *t, int v)
 
   if(r == -1) {
     TRACE(TRACE_ERROR, "GLW",
-          "Widget %s at %s:%d does not repond to attribute %s",
+          "Widget %s at %s:%d does not respond to attribute %s",
           gc->gc_name, rstr_get(t->file), t->line, a->name);
-    return 0;
+    return;
   }
 
   if(r)
-    gr_schedule_refresh(w->glw_root);
-
-  return r;
+    attr_schedule_refresh(w->glw_root, t, a, r);
 }
 
 
 /**
  *
  */
-static int
+static void
 set_number_float(glw_t *w, const token_attrib_t *a, const token_t *t, float v)
 {
   const glw_class_t *gc = w->glw_class;
@@ -371,16 +353,15 @@ set_number_float(glw_t *w, const token_attrib_t *a, const token_t *t, float v)
 
   if(r == -1) {
     TRACE(TRACE_ERROR, "GLW",
-          "Widget %s at %s:%d does not repond to attribute %s",
+          "Widget %s at %s:%d does not respond to attribute %s",
           gc->gc_name, rstr_get(t->file), t->line, a->name);
-    return 0;
+    return;
   }
 
   if(r)
-    gr_schedule_refresh(w->glw_root);
-
-  return r;
+    attr_schedule_refresh(w->glw_root, t, a, r);
 }
+
 
 /**
  *
@@ -465,7 +446,6 @@ set_int(glw_view_eval_context_t *ec, const token_attrib_t *a,
   void (*fn)(struct glw *w, int v) = a->fn;
   assert(fn != NULL);
   fn(ec->w, v);
-  gr_schedule_refresh(ec->w->glw_root);
   return 0;
 }
 
@@ -477,7 +457,7 @@ static void
 set_width(glw_t *w, int v)
 {
   glw_conf_constraints(w, v, 0, 0, GLW_CONSTRAINT_CONF_X);
-  gr_schedule_refresh(w->glw_root);
+  gr_schedule_refresh(w->glw_root, 0);
 }
 
 
@@ -488,7 +468,7 @@ static void
 set_height(glw_t *w, int v)
 {
   glw_conf_constraints(w, 0, v, 0, GLW_CONSTRAINT_CONF_Y);
-  gr_schedule_refresh(w->glw_root);
+  gr_schedule_refresh(w->glw_root, 0);
 }
 
 
@@ -499,20 +479,7 @@ static void
 set_divider(glw_t *w, int v)
 {
   glw_conf_constraints(w, 0, 0, 0, GLW_CONSTRAINT_CONF_D);
-  gr_schedule_refresh(w->glw_root);
-}
-
-
-/**
- *
- */
-static void
-set_maxlines(glw_t *w, int v)
-{
-  if(w->glw_class->gc_set_max_lines != NULL) {
-    w->glw_class->gc_set_max_lines(w, v);
-    gr_schedule_refresh(w->glw_root);
-  }
+  gr_schedule_refresh(w->glw_root, 0);
 }
 
 
@@ -561,74 +528,22 @@ set_float3(glw_view_eval_context_t *ec, const token_attrib_t *a,
 			   a->name, token2name(t));
   }
 
+  glw_t *w = ec->w;
+  const glw_class_t *gc = w->glw_class;
 
-  void (*fn)(struct glw *w, const float *v3) = a->fn;
-  fn(ec->w, vec3);
+  int r = gc->gc_set_float3 ? gc->gc_set_float3(w, a->attrib, vec3) : -1;
+
+  if(r == -1) {
+    TRACE(TRACE_ERROR, "GLW",
+          "Widget %s at %s:%d does not respond to attribute %s",
+          gc->gc_name, rstr_get(t->file), t->line, a->name);
+    return 0;
+  }
+  if(r)
+    attr_schedule_refresh(w->glw_root, t, a, r);
+
   return 0;
 }
-
-
-/**
- *
- */
-static void
-set_rgb(glw_t *w, const float *rgb)
-{
-  if(w->glw_class->gc_set_rgb != NULL) {
-    w->glw_class->gc_set_rgb(w, rgb);
-    gr_schedule_refresh(w->glw_root);
-  }
-}
-
-/**
- *
- */
-static void
-set_color1(glw_t *w, const float *rgb)
-{
-  if(w->glw_class->gc_set_color1 != NULL) {
-    w->glw_class->gc_set_color1(w, rgb);
-    gr_schedule_refresh(w->glw_root);
-  }
-}
-
-/**
- *
- */
-static void
-set_color2(glw_t *w, const float *rgb)
-{
-  if(w->glw_class->gc_set_color2 != NULL) {
-    w->glw_class->gc_set_color2(w, rgb);
-    gr_schedule_refresh(w->glw_root);
-  }
-}
-
-/**
- *
- */
-static void
-set_scaling(glw_t *w, const float *xyz)
-{
-  if(w->glw_class->gc_set_scaling != NULL) {
-    w->glw_class->gc_set_scaling(w, xyz);
-    gr_schedule_refresh(w->glw_root);
-  }
-}
-
-
-/**
- *
- */
-static void
-set_translation(glw_t *w, const float *xyz)
-{
-  if(w->glw_class->gc_set_translation != NULL) {
-    w->glw_class->gc_set_translation(w, xyz);
-    gr_schedule_refresh(w->glw_root);
-  }
-}
-
 
 
 /**
@@ -679,8 +594,20 @@ set_float4(glw_view_eval_context_t *ec, const token_attrib_t *a,
 			   a->name, token2name(t));
   }
 
-  void (*fn)(struct glw *w, const float *v4) = a->fn;
-  fn(ec->w, vec4);
+  glw_t *w = ec->w;
+  const glw_class_t *gc = w->glw_class;
+
+  int r = gc->gc_set_float4 ? gc->gc_set_float4(w, a->attrib, vec4) : -1;
+
+  if(r == -1) {
+    TRACE(TRACE_ERROR, "GLW",
+          "Widget %s at %s:%d does not respond to attribute %s",
+          gc->gc_name, rstr_get(t->file), t->line, a->name);
+    return 0;
+  }
+  if(r)
+    attr_schedule_refresh(w->glw_root, t, a, r);
+
   return 0;
 }
 
@@ -752,7 +679,7 @@ set_padding(glw_t *w, const int16_t *vec4)
 {
   if(w->glw_class->gc_set_padding != NULL) {
     w->glw_class->gc_set_padding(w, vec4);
-    gr_schedule_refresh(w->glw_root);
+    gr_schedule_refresh(w->glw_root, 0);
   }
 }
 
@@ -765,7 +692,7 @@ set_border(glw_t *w, const int16_t *vec4)
 {
   if(w->glw_class->gc_set_border != NULL) {
     w->glw_class->gc_set_border(w, vec4);
-    gr_schedule_refresh(w->glw_root);
+    gr_schedule_refresh(w->glw_root, 0);
   }
 }
 
@@ -778,46 +705,7 @@ set_margin(glw_t *w, const int16_t *vec4)
 {
   if(w->glw_class->gc_set_margin != NULL) {
     w->glw_class->gc_set_margin(w, vec4);
-    gr_schedule_refresh(w->glw_root);
-  }
-}
-
-
-/**
- *
- */
-static void
-set_rotation(glw_t *w, const float *xyz)
-{
-  if(w->glw_class->gc_set_rotation != NULL) {
-    w->glw_class->gc_set_rotation(w, xyz);
-    gr_schedule_refresh(w->glw_root);
-  }
-}
-
-
-/**
- *
- */
-static void
-set_clipping(glw_t *w, const float *xyzw)
-{
-  if(w->glw_class->gc_set_clipping != NULL) {
-    w->glw_class->gc_set_clipping(w, xyzw);
-    gr_schedule_refresh(w->glw_root);
-  }
-}
-
-
-/**
- *
- */
-static void
-set_plane(glw_t *w, const float *xyzw)
-{
-  if(w->glw_class->gc_set_plane != NULL) {
-    w->glw_class->gc_set_plane(w, xyzw);
-    gr_schedule_refresh(w->glw_root);
+    gr_schedule_refresh(w->glw_root, 0);
   }
 }
 
@@ -849,7 +737,7 @@ set_align(glw_view_eval_context_t *ec, const token_attrib_t *a,
     return glw_view_seterr(ec->ei, t, "Invalid assignment for attribute %s",
 			    a->name);
   ec->w->glw_alignment = v;
-  gr_schedule_refresh(ec->w->glw_root);
+  gr_schedule_refresh(ec->w->glw_root, 0);
   return 0;
 }
 
@@ -879,7 +767,7 @@ set_transition_effect(glw_view_eval_context_t *ec, const token_attrib_t *a,
 
   if(ec->w->glw_class->gc_set_int != NULL)
     ec->w->glw_class->gc_set_int(ec->w, GLW_ATTRIB_TRANSITION_EFFECT, v);
-  gr_schedule_refresh(ec->w->glw_root);
+  gr_schedule_refresh(ec->w->glw_root, 0);
   return 0;
 }
 
@@ -932,11 +820,19 @@ mod_hidden(glw_view_eval_context_t *ec, const token_attrib_t *a,
     return glw_view_seterr(ec->ei, t, "Invalid assignment for attribute %s",
 			    a->name);
 
-  if(v)
-    glw_hide(ec->w);
-  else
-    glw_unhide(ec->w);
-  gr_schedule_refresh(ec->w->glw_root);
+  glw_t *w = ec->w;
+
+  if(v) {
+    if(w->glw_flags & GLW_HIDDEN)
+      return 0;
+
+    glw_hide(w);
+  } else {
+    if(!(w->glw_flags & GLW_HIDDEN))
+      return 0;
+    glw_unhide(w);
+  }
+  gr_schedule_refresh(w->glw_root, 0);
   return 0;
 }
 
@@ -955,7 +851,7 @@ mod_flags2(glw_t *w, int set, int clr)
 
   if((set | clr) && w->glw_class->gc_mod_flags2 != NULL)
     w->glw_class->gc_mod_flags2(w, set, clr);
-  gr_schedule_refresh(w->glw_root);
+  gr_schedule_refresh(w->glw_root, 0);
 }
 
 
@@ -967,7 +863,7 @@ mod_text_flags(glw_t *w, int set, int clr)
 {
   if(w->glw_class->gc_mod_text_flags != NULL)
     w->glw_class->gc_mod_text_flags(w, set, clr);
-  gr_schedule_refresh(w->glw_root);
+  gr_schedule_refresh(w->glw_root, 0);
 }
 
 
@@ -979,7 +875,7 @@ mod_img_flags(glw_t *w, int set, int clr)
 {
   if(w->glw_class->gc_mod_image_flags != NULL)
     w->glw_class->gc_mod_image_flags(w, set, clr);
-  gr_schedule_refresh(w->glw_root);
+  gr_schedule_refresh(w->glw_root, 0);
 }
 
 
@@ -991,7 +887,7 @@ mod_video_flags(glw_t *w, int set, int clr)
 {
   if(w->glw_class->gc_mod_video_flags != NULL)
     w->glw_class->gc_mod_video_flags(w, set, clr);
-  gr_schedule_refresh(w->glw_root);
+  gr_schedule_refresh(w->glw_root, 0);
 }
 
 
@@ -1091,7 +987,7 @@ set_source(glw_view_eval_context_t *ec, const token_attrib_t *a,
   if(w->glw_class->gc_set_source != NULL)
     w->glw_class->gc_set_source(w, r);
 
-  gr_schedule_refresh(w->glw_root);
+  gr_schedule_refresh(w->glw_root, 0);
   rstr_release(r);
   return 0;
 }
@@ -1243,18 +1139,18 @@ static const token_attrib_t attribtab[] = {
 
   {"alpha",           set_float,  0, set_alpha},
   {"blur",            set_float,  0, set_blur},
-  {"alphaSelf",       set_float,  0, set_alpha_self},
   {"weight",          set_float,  0, set_weight},
-  {"sizeScale",       set_float,  0, set_size_scale},
-  {"size",            set_float,  0, set_size},
-  {"minSize",         set_float,  0, set_min_size},
   {"focusable",       set_float,  0, glw_set_focus_weight},
 
   {"height",          set_int,  0, set_height},
   {"width",           set_int,  0, set_width},
-  {"maxlines",        set_int,  0, set_maxlines},
   {"divider",         set_int,  0, set_divider},
 
+  {"maxlines",        set_number, GLW_ATTRIB_MAX_LINES},
+  {"sizeScale",       set_number, GLW_ATTRIB_SIZE_SCALE},
+  {"size",            set_number, GLW_ATTRIB_DEFAULT_SIZE},
+  {"minSize",         set_number, GLW_ATTRIB_MIN_SIZE},
+  {"alphaSelf",       set_number, GLW_ATTRIB_ALPHA_SELF},
   {"saturation",      set_number, GLW_ATTRIB_SATURATION},
   {"time",            set_number, GLW_ATTRIB_TIME},
   {"transitionTime",  set_number, GLW_ATTRIB_TRANSITION_TIME},
@@ -1290,20 +1186,19 @@ static const token_attrib_t attribtab[] = {
   {"page",            set_page,   0},
 
 
-  {"color",           set_float3, 0, set_rgb},
-  {"translation",     set_float3, 0, set_translation},
-  {"scaling",         set_float3, 0, set_scaling},
-  {"color1",          set_float3, 0, set_color1},
-  {"color2",          set_float3, 0, set_color2},
+  {"color",           set_float3, GLW_ATTRIB_RGB},
+  {"translation",     set_float3, GLW_ATTRIB_TRANSLATION},
+  {"scaling",         set_float3, GLW_ATTRIB_SCALING},
+  {"color1",          set_float3, GLW_ATTRIB_COLOR1},
+  {"color2",          set_float3, GLW_ATTRIB_COLOR2},
+
+  {"rotation",        set_float4, GLW_ATTRIB_ROTATION},
+  {"clipping",        set_float4, GLW_ATTRIB_CLIPPING},
+  {"plane",           set_float4, GLW_ATTRIB_PLANE},
 
   {"padding",         set_int16_4, 0, set_padding},
   {"border",          set_int16_4, 0, set_border},
   {"margin",          set_int16_4, 0, set_margin},
-  {"rotation",        set_float4, 0, set_rotation},
-  {"clipping",        set_float4, 0, set_clipping},
-  {"plane",           set_float4, 0, set_plane},
-  
-
 
   {"align",           set_align,  0},
   {"effect",          set_transition_effect,  0},

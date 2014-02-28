@@ -68,7 +68,9 @@ widget(container_z, {
 	    widget(loader, {
 	      hidden: !$clone.pageMenu;
 	      noInitialTransform: true;
-	      source: $clone.menu ?? "skin://cmdmenu/cmdmenu_dir.view";
+	      source: select($clone.pageMenu,
+			     $clone.menu ?? "skin://cmdmenu/cmdmenu_dir.view",
+			     "");
 	    });
 	  });
 	});

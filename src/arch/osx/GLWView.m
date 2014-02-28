@@ -350,26 +350,37 @@ newframe(CVDisplayLinkRef displayLink, const CVTimeStamp *now,
 
   glw_lock(gr);
 
-  glViewport(0, 0, gr->gr_width, gr->gr_height);
-  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-  
   glw_prepare_frame(gr, GLW_NO_FRAMERATE_UPDATE);
-  
+
   if(!minimized && gr->gr_width > 1 && gr->gr_height > 1 && gr->gr_universe) {
 
-    glw_rctx_t rc;
-    glw_rctx_init(&rc, gr->gr_width, gr->gr_height, 1);
-    glw_layout0(gr->gr_universe, &rc);
-    glw_render0(gr->gr_universe, &rc);
+    if(gr->gr_need_refresh) {
+      glw_rctx_t rc;
+      gr->gr_need_refresh &= ~GLW_REFRESH_FLAG_LAYOUT;
+      glw_rctx_init(&rc, gr->gr_width, gr->gr_height, 1);
+      glw_layout0(gr->gr_universe, &rc);
+
+      if(gr->gr_need_refresh & GLW_REFRESH_FLAG_RENDER) {
+        glViewport(0, 0, gr->gr_width, gr->gr_height);
+        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+        glw_render0(gr->gr_universe, &rc);
+      }
+    }
 
     glw_unlock(gr);
-    glw_post_scene(gr);
+    if(gr->gr_need_refresh & GLW_REFRESH_FLAG_RENDER) {
+      glw_post_scene(gr);
+    }
 
   } else {
     glw_unlock(gr);
   }
-  [currentContext flushBuffer];
-    
+  if(gr->gr_need_refresh & GLW_REFRESH_FLAG_RENDER) {
+    [currentContext flushBuffer];
+    gr->gr_need_refresh &= ~GLW_REFRESH_FLAG_RENDER;
+  }
+
+
   CGLUnlockContext((CGLContextObj)[currentContext CGLContextObj]);
 }
 

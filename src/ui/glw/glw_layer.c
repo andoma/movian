@@ -26,6 +26,10 @@
 #define glw_parent_z     glw_parent_val[1].f
 #define glw_parent_layer glw_parent_val[2].i32
 
+
+/**
+ *
+ */
 static void
 glw_layer_select_child(glw_t *w)
 {

@@ -347,9 +347,13 @@ glw_text_bitmap_layout(glw_t *w, const glw_rctx_t *rc)
     gtb->gtb_update_cursor = 0;
   }
 
-  gtb->gtb_paint_cursor = 
+  gtb->gtb_paint_cursor =
     gtb->gtb_flags & GTB_PERMANENT_CURSOR ||
     (w->glw_class == &glw_text && glw_is_focused(w));
+
+  if(gtb->gtb_paint_cursor && rc->rc_alpha > 0.01)
+    gr_schedule_refresh(gr, 0);
+
   gtb->gtb_need_layout = 0;
 
   if(gtb->gtb_state == GTB_VALID && gtb->gtb_deferred_realize) {
@@ -794,14 +798,17 @@ glw_text_bitmap_ctor(glw_t *w)
 /**
  *
  */
-static void 
-glw_text_bitmap_set_rgb(glw_t *w, const float *rgb)
+static int
+glw_text_bitmap_set_float3(glw_t *w, glw_attribute_t attrib, const float *rgb)
 {
-  glw_text_bitmap_t *gtb = (void *)w;
+  glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
 
-  gtb->gtb_color.r = rgb[0];
-  gtb->gtb_color.g = rgb[1];
-  gtb->gtb_color.b = rgb[2];
+  switch(attrib) {
+  case GLW_ATTRIB_RGB:
+    return glw_attrib_set_rgb(&gtb->gtb_color, rgb);
+  default:
+    return -1;
+  }
 }
 
 
@@ -929,61 +936,63 @@ thaw(glw_t *w)
 /**
  *
  */
-static void
-set_size_scale(glw_t *w, float v)
+static int
+gtb_set_float(glw_t *w, glw_attribute_t a, float v)
 {
   glw_text_bitmap_t *gtb = (void *)w;
 
-  if(gtb->gtb_size_scale == v)
-    return;
+  switch(a) {
 
-  gtb->gtb_size_scale = v;
+  case GLW_ATTRIB_SIZE_SCALE:
+    if(gtb->gtb_size_scale == v)
+      return 0;
+
+    gtb->gtb_size_scale = v;
+    break;
+  default:
+    return -1;
+  }
   gtb_update_epilogue(gtb, GTB_UPDATE_REALIZE);
+  return 1;
 }
 
 
 /**
  *
  */
-static void
-set_default_size(glw_t *w, int px)
+static int
+gtb_set_int(glw_t *w, glw_attribute_t a, int v)
 {
   glw_text_bitmap_t *gtb = (void *)w;
 
-  if(gtb->gtb_default_size == px)
-    return;
+  switch(a) {
+  case GLW_ATTRIB_DEFAULT_SIZE:
+    if(gtb->gtb_default_size == v)
+      return 0;
 
-  gtb->gtb_default_size = px;
+    gtb->gtb_default_size = v;
+    gtb_update_epilogue(gtb, GTB_UPDATE_REALIZE);
+    break;
+
+  case GLW_ATTRIB_MIN_SIZE:
+    if(gtb->gtb_min_size == v)
+      return 0;
+
+    gtb->gtb_min_size = v;
+    break;
+
+  case GLW_ATTRIB_MAX_LINES:
+    if(gtb->gtb_maxlines == v)
+      return 0;
+
+    gtb->gtb_maxlines = v;
+    break;
+
+  default:
+    return -1;
+  }
   gtb_update_epilogue(gtb, GTB_UPDATE_REALIZE);
-}
-
-
-/**
- *
- */
-static void
-set_min_size(glw_t *w, int px)
-{
-  glw_text_bitmap_t *gtb = (void *)w;
-
-  if(gtb->gtb_min_size == px)
-    return;
-
-  gtb->gtb_min_size = px;
-  gtb_update_epilogue(gtb, GTB_UPDATE_REALIZE);
-}
-
-
-/**
- *
- */
-static void
-set_maxlines(glw_t *w, int v)
-{
-  glw_text_bitmap_t *gtb = (void *)w;
-
-  gtb->gtb_maxlines = v;
-  gtb_update_epilogue(gtb, GTB_UPDATE_REALIZE);
+  return 1;
 }
 
 
@@ -1125,7 +1134,7 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
 
   glw_unref(&gtb->w);
 
-  gr_schedule_refresh(gr);
+  gr_schedule_refresh(gr, 0);
 
   if(gtb->gtb_state == GTB_RENDERING) {
     gtb->gtb_state = GTB_VALID;
@@ -1350,7 +1359,7 @@ static glw_class_t glw_label = {
   .gc_signal_handler = glw_text_bitmap_callback,
   .gc_get_text = glw_text_bitmap_get_text,
   .gc_default_alignment = LAYOUT_ALIGN_LEFT,
-  .gc_set_rgb = glw_text_bitmap_set_rgb,
+  .gc_set_float3 = glw_text_bitmap_set_float3,
   .gc_set_padding = set_padding,
   .gc_mod_text_flags = mod_text_flags,
   .gc_set_caption = set_caption,
@@ -1359,10 +1368,8 @@ static glw_class_t glw_label = {
   .gc_mod_flags2 = mod_flags2,
   .gc_freeze = freeze,
   .gc_thaw = thaw,
-  .gc_set_size_scale = set_size_scale,
-  .gc_set_default_size = set_default_size,
-  .gc_set_min_size = set_min_size,
-  .gc_set_max_lines = set_maxlines,
+  .gc_set_float = gtb_set_float,
+  .gc_set_int   = gtb_set_int,
 };
 
 GLW_REGISTER_CLASS(glw_label);
@@ -1381,7 +1388,7 @@ static glw_class_t glw_text = {
   .gc_signal_handler = glw_text_bitmap_callback,
   .gc_get_text = glw_text_bitmap_get_text,
   .gc_default_alignment = LAYOUT_ALIGN_LEFT,
-  .gc_set_rgb = glw_text_bitmap_set_rgb,
+  .gc_set_float3 = glw_text_bitmap_set_float3,
   .gc_set_padding = set_padding,
   .gc_mod_text_flags = mod_text_flags,
   .gc_set_caption = set_caption,
@@ -1389,10 +1396,10 @@ static glw_class_t glw_text = {
   .gc_bind_to_property = bind_to_property,
   .gc_freeze = freeze,
   .gc_thaw = thaw,
-  .gc_set_size_scale = set_size_scale,
-  .gc_set_default_size = set_default_size,
-  .gc_set_min_size = set_min_size,
-  .gc_set_max_lines = set_maxlines,
+
+  .gc_set_float = gtb_set_float,
+  .gc_set_int   = gtb_set_int,
+
   .gc_update_text = update_text,
   .gc_set_desc = set_description,
 

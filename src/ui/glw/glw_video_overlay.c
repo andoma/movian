@@ -151,6 +151,7 @@ gvo_set_pts(glw_video_t *gv, int64_t pts)
     next = LIST_NEXT(gvo, gvo_link);
 
     if(gvo->gvo_stop != PTS_UNSET && gvo->gvo_stop <= pts) {
+      gr_schedule_refresh(gv->w.glw_root, 0);
       gvo_destroy(gv, gvo);
       continue;
     }
@@ -168,7 +169,13 @@ gvo_set_pts(glw_video_t *gv, int64_t pts)
     } else {
       a = 1;
     }
-    gvo->gvo_alpha = GLW_CLAMP(a, 0.0, 1.0);
+
+    a = GLW_CLAMP(a, 0.0f, 1.0f);
+    if(a != gvo->gvo_alpha) {
+      gvo->gvo_alpha = a;
+      gr_schedule_refresh(gv->w.glw_root, 0);
+    }
+
   }
 }
 
@@ -228,8 +235,8 @@ glw_video_overlay_layout(glw_video_t *gv,
     if(gv->gv_vo_scaling > 0)
       scaling = scaling * gv->gv_vo_scaling / 100.0;
 
-    gc->gc_set_size_scale(w, scaling);
-    
+    gc->gc_set_float(w, GLW_ATTRIB_SIZE_SCALE, scaling);
+
     f[0] = scaling * gvo->gvo_padding_left;
     f[1] = 0;
     f[2] = scaling * gvo->gvo_padding_right;
@@ -595,6 +602,7 @@ spu_repaint(glw_video_t *gv, dvdspu_t *d)
 static void
 glw_video_overlay_spu_layout(glw_video_t *gv, int64_t pts)
 {
+  glw_root_t *gr = gv->w.glw_root;
   media_pipe_t *mp = gv->gv_mp;
   video_decoder_t *vd = gv->gv_vd;
   dvdspu_t *d;
@@ -609,6 +617,8 @@ glw_video_overlay_spu_layout(glw_video_t *gv, int64_t pts)
     hts_mutex_unlock(&mp->mp_overlay_mutex);
     return;
   }
+
+  gr_schedule_refresh(gr, 0);
 
   if(d->d_destroyme == 1)
     goto destroy;
@@ -761,7 +771,8 @@ gvo_create_from_vo_text(glw_video_t *gv, video_overlay_t *vo)
   w->glw_alignment = vo->vo_alignment ?: LAYOUT_ALIGN_BOTTOM;
   gvo->gvo_alignment = w->glw_alignment;
 
-  gc->gc_set_default_size(w, gv->w.glw_root->gr_current_size * 1.5);
+  gc->gc_set_int(w, GLW_ATTRIB_DEFAULT_SIZE,
+		 gv->w.glw_root->gr_current_size * 1.5);
 
   if(vo->vo_padding_left == -1) {
     int default_pad = gv->w.glw_root->gr_current_size;
@@ -778,7 +789,7 @@ gvo_create_from_vo_text(glw_video_t *gv, video_overlay_t *vo)
 
   LIST_INSERT_SORTED(&gv->gv_overlays, gvo, gvo_link, gvo_padding_cmp);
 
-  gc->gc_set_max_lines(w, 10);
+  gc->gc_set_int(w, GLW_ATTRIB_MAX_LINES, 10);
 
   glw_gtb_set_caption_raw(w, vo->vo_text, vo->vo_text_length);
   vo->vo_text = NULL; // Steal it
@@ -793,6 +804,7 @@ gvo_create_from_vo_text(glw_video_t *gv, video_overlay_t *vo)
 static void
 glw_video_overlay_sub_set_pts(glw_video_t *gv, int64_t pts)
 {
+  glw_root_t *gr = gv->w.glw_root;
   media_pipe_t *mp = gv->gv_mp;
   video_overlay_t *vo;
 
@@ -805,6 +817,7 @@ glw_video_overlay_sub_set_pts(glw_video_t *gv, int64_t pts)
 	break;
       // FALLTHRU
     case VO_FLUSH:
+      gr_schedule_refresh(gr, 0);
       gvo_flush_all(gv);
       video_overlay_dequeue_destroy(mp, vo);
       continue;
@@ -812,6 +825,7 @@ glw_video_overlay_sub_set_pts(glw_video_t *gv, int64_t pts)
     case VO_BITMAP:
       if(vo->vo_start > pts)
 	break;
+      gr_schedule_refresh(gr, 0);
       gvo_flush_infinite(gv);
       if(vo->vo_pixmap != NULL)
         gvo_create_from_vo_bitmap(gv, vo);
@@ -821,6 +835,7 @@ glw_video_overlay_sub_set_pts(glw_video_t *gv, int64_t pts)
     case VO_TEXT:
       if(vo->vo_start > pts)
         break;
+      gr_schedule_refresh(gr, 0);
       gvo_flush_infinite(gv);
       gvo_create_from_vo_text(gv, vo);
       video_overlay_dequeue_destroy(mp, vo);

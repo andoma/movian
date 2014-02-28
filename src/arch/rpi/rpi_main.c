@@ -549,24 +549,36 @@ ui_run(glw_root_t *gr, EGLDisplay dpy)
 
     glw_lock(gr);
 
-    glViewport(0, 0, gr->gr_width, gr->gr_height);
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-
-    gr->gr_can_externalize = 1;
-    gr->gr_externalize_cnt = 0;
-
     glw_prepare_frame(gr, 0);
 
-    glw_rctx_t rc;
-    glw_rctx_init(&rc, gr->gr_width, gr->gr_height, 1);
-    glw_layout0(gr->gr_universe, &rc);
-    glw_render0(gr->gr_universe, &rc);
+    if(gr->gr_need_refresh) {
 
-    pick_backdrop(gr);
+      glw_rctx_t rc;
+
+      gr->gr_can_externalize = 1;
+      gr->gr_externalize_cnt = 0;
+
+      gr->gr_need_refresh &= ~GLW_REFRESH_FLAG_LAYOUT;
+      glw_rctx_init(&rc, gr->gr_width, gr->gr_height, 1);
+      glw_layout0(gr->gr_universe, &rc);
+
+      if(gr->gr_need_refresh & GLW_REFRESH_FLAG_RENDER) {
+	glViewport(0, 0, gr->gr_width, gr->gr_height);
+	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+	glw_render0(gr->gr_universe, &rc);
+      }
+
+      pick_backdrop(gr);
+    }
 
     glw_unlock(gr);
-    glw_post_scene(gr);
-    eglSwapBuffers(dpy, surface);
+    if(gr->gr_need_refresh & GLW_REFRESH_FLAG_RENDER) {
+      glw_post_scene(gr);
+      eglSwapBuffers(dpy, surface);
+      gr->gr_need_refresh &= ~GLW_REFRESH_FLAG_RENDER;
+    } else {
+      usleep(16666);
+    }
   }
   glw_reap(gr);
   glw_reap(gr);

@@ -38,6 +38,7 @@
 #include "showtime.h"
 #include "settings.h"
 
+// #define GLW_TRACK_REFRESH
 
 // Beware: If you bump these over 16 remember to fix bitmasks too
 #define NUM_CLIPPLANES 6
@@ -139,6 +140,19 @@ typedef enum {
   GLW_ATTRIB_ASPECT,
   GLW_ATTRIB_CHILD_SCALE,
   GLW_ATTRIB_PARENT_URL,
+  GLW_ATTRIB_ALPHA_SELF,
+  GLW_ATTRIB_SIZE_SCALE,
+  GLW_ATTRIB_DEFAULT_SIZE,
+  GLW_ATTRIB_MIN_SIZE,
+  GLW_ATTRIB_MAX_LINES,
+  GLW_ATTRIB_RGB,
+  GLW_ATTRIB_COLOR1,
+  GLW_ATTRIB_COLOR2,
+  GLW_ATTRIB_SCALING,
+  GLW_ATTRIB_TRANSLATION,
+  GLW_ATTRIB_ROTATION,
+  GLW_ATTRIB_CLIPPING,
+  GLW_ATTRIB_PLANE,
   GLW_ATTRIB_num,
 } glw_attribute_t;
 
@@ -402,6 +416,10 @@ typedef struct glw_class {
 
   int (*gc_set_page_id)(struct glw *w, const char *id);
 
+  int (*gc_set_float3)(struct glw *w, glw_attribute_t a, const float *vector);
+
+  int (*gc_set_float4)(struct glw *w, glw_attribute_t a, const float *vector);
+
 
   /**
    * Ask widget to render itself in the current render context
@@ -500,33 +518,7 @@ typedef struct glw_class {
   /**
    *
    */
-  void (*gc_set_rgb)(struct glw *w, const float *rgb);
-
-  /**
-   *
-   */
-  void (*gc_set_color1)(struct glw *w, const float *rgb);
-
-  /**
-   *
-   */
-  void (*gc_set_color2)(struct glw *w, const float *rgb);
-
-  /**
-   *
-   */
-  void (*gc_set_translation)(struct glw *w, const float *xyz);
-
-  /**
-   *
-   */
-  void (*gc_set_scaling)(struct glw *w, const float *xyz);
-
-  /**
-   *
-   */
   void (*gc_set_border)(struct glw *w, const int16_t *v);
-
 
   /**
    *
@@ -537,21 +529,6 @@ typedef struct glw_class {
    *
    */
   void (*gc_set_margin)(struct glw *w, const int16_t *v);
-
-  /**
-   *
-   */
-  void (*gc_set_clipping)(struct glw *w, const float *v);
-
-  /**
-   *
-   */
-  void (*gc_set_plane)(struct glw *w, const float *v);
-
-  /**
-   *
-   */
-  void (*gc_set_rotation)(struct glw *w, const float *v);
 
   /**
    *
@@ -631,37 +608,12 @@ typedef struct glw_class {
   /**
    *
    */
-  void (*gc_set_alpha_self)(struct glw *w, float a);
-
-  /**
-   *
-   */
   void (*gc_freeze)(struct glw *w);
 
   /**
    *
    */
   void (*gc_thaw)(struct glw *w);
-
-  /**
-   *
-   */
-  void (*gc_set_size_scale)(struct glw *w, const float v);
-
-  /**
-   *
-   */
-  void (*gc_set_default_size)(struct glw *w, int px);
-
-  /**
-   *
-   */
-  void (*gc_set_min_size)(struct glw *w, int px);
-
-  /**
-   *
-   */
-  void (*gc_set_max_lines)(struct glw *w, int lines);
 
   /**
    *
@@ -1366,6 +1318,14 @@ void glw_hide(glw_t *w);
 
 void glw_unhide(glw_t *w);
 
+int glw_attrib_set_float3_clamped(float *dst, const float *src);
+
+int glw_attrib_set_float3(float *dst, const float *src);
+
+int glw_attrib_set_rgb(glw_rgb_t *rgb, const float *src);
+
+int glw_attrib_set_float4(float *dst, const float *src);
+
 
 /**
  *
@@ -1400,10 +1360,31 @@ int glw_image_get_details(glw_t *w, char *path, size_t pathlen, float *alpha);
 
 void glw_project(glw_rect_t *r, const glw_rctx_t *rc, const glw_root_t *gr);
 
-#define gr_schedule_refresh(gr) gr_schedule_refresh0(gr, __FILE__, __LINE__)
+#define GLW_REFRESH_FLAG_LAYOUT 0x1
+#define GLW_REFRESH_FLAG_RENDER 0x2
 
-void gr_schedule_refresh0(glw_root_t *gr, const char *file, int line);
+#define GLW_REFRESH_LAYOUT_ONLY 2
 
+#ifdef GLW_TRACK_REFRESH
+
+#define gr_schedule_refresh(gr, how) \
+  gr_schedule_refresh0(gr, how, __FILE__, __LINE__)
+
+void gr_schedule_refresh0(glw_root_t *gr, int how, const char *file, int line);
+
+#else
+
+static inline void
+gr_schedule_refresh(glw_root_t *gr, int how)
+{
+  int flags = GLW_REFRESH_FLAG_LAYOUT;
+
+  if(how != GLW_REFRESH_LAYOUT_ONLY)
+    flags |= GLW_REFRESH_FLAG_RENDER;
+  gr->gr_need_refresh |= flags;
+}
+
+#endif
 
 #endif /* GLW_H */
 

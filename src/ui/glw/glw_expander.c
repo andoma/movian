@@ -29,7 +29,7 @@ static glw_class_t glw_expander_x;
 typedef struct glw_expander {
   glw_t w;
   float expansion;
-  float last;
+  int last;
 } glw_expander_t;
 
 
@@ -76,6 +76,9 @@ glw_expander_layout(glw_t *w, const glw_rctx_t *rc)
   glw_t *c;
   glw_rctx_t rc0;
 
+  if(exp->expansion < 0.01)
+    return;
+
   if((c = TAILQ_FIRST(&w->glw_childs)) == NULL)
     return;
   rc0 = *rc;
@@ -96,6 +99,7 @@ glw_expander_layout(glw_t *w, const glw_rctx_t *rc)
     else
       exp->last = rc0.rc_height;
   }
+
   glw_layout0(c, &rc0);
 }
 
@@ -128,13 +132,22 @@ glw_expander_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 static void
 glw_expander_render(glw_t *w, const glw_rctx_t *rc)
 {
+  glw_expander_t *exp = (glw_expander_t *)w;
   glw_rctx_t rc0;
   glw_t *c = TAILQ_FIRST(&w->glw_childs);
   if(c == NULL)
     return;
 
+  if(exp->expansion < 0.01)
+    return;
+
   rc0 = *rc;
   rc0.rc_alpha *= w->glw_alpha;
+
+  /**
+   * Trick childs into rendering themselfs as if the widget is
+   * fully expanded
+   */
 
   if(w->glw_class == &glw_expander_x)
     rc0.rc_width = c->glw_req_size_x;

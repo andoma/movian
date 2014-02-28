@@ -343,6 +343,8 @@ video_opengl_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
     surface_init(gv, gvs);
   }
 
+  gr_schedule_refresh(gv->w.glw_root, 0);
+
   gv_color_matrix_update(gv);
   return glw_video_newframe_blend(gv, vd, flags, &gv_surface_pixmap_release);
 }
