@@ -158,7 +158,7 @@ typedef struct media_codec {
 
   void (*close)(struct media_codec *mc);
   void (*reinit)(struct media_codec *mc);
-  void (*reconfigure)(struct media_codec *mc);
+  void (*reconfigure)(struct media_codec *mc, int width, int height);
 
   unsigned int sar_num;
   unsigned int sar_den;
@@ -170,7 +170,7 @@ typedef struct media_codec {
  */
 typedef void (video_frame_deliver_t)(const frame_info_t *info, void *opaque);
 typedef int (set_video_codec_t)(uint32_t type, struct media_codec *mc,
-				void *opaque);
+				void *opaque, const frame_info_t *info);
 
 
 
@@ -290,6 +290,11 @@ typedef struct media_buf {
     float mb_float;
     prop_t *mb_prop;
     uint16_t mb_font_context;
+    struct {
+      // Used with MB_CTRL_RECONFIGURE
+      uint16_t mb_width;
+      uint16_t mb_height;
+    };
   };
 
   uint8_t mb_stream;

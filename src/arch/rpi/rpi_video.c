@@ -65,6 +65,8 @@ rpi_video_port_settings_changed(omx_component_t *oc)
   hts_mutex_lock(&mp->mp_mutex);
   media_buf_t *mb = media_buf_alloc_locked(mp, 0);
   mb->mb_data_type = MB_CTRL_RECONFIGURE;
+  mb->mb_width  = port_image.format.video.nFrameWidth;
+  mb->mb_height = port_image.format.video.nFrameHeight;
   mb->mb_cw = media_codec_ref(mc);
   mb_enq(mp, &mp->mp_video, mb);
   hts_mutex_unlock(&mp->mp_mutex);
@@ -198,10 +200,14 @@ rpi_codec_close(struct media_codec *mc)
  *
  */
 static void
-rpi_codec_reconfigure(struct media_codec *mc)
+rpi_codec_reconfigure(struct media_codec *mc, int width, int height)
 {
   media_pipe_t *mp = mc->mp;
-  mp->mp_set_video_codec('omx', mc, mp->mp_video_frame_opaque);
+  frame_info_t fi;
+  memset(&fi, 0, sizeof(fi));
+  fi.fi_width  = width;
+  fi.fi_height = height;
+  mp->mp_set_video_codec('omx', mc, mp->mp_video_frame_opaque, &fi);
 }
 
 

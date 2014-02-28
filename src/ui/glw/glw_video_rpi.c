@@ -208,7 +208,8 @@ rvd_blackout(glw_video_t *gv)
 }
 
 
-static int rvd_set_codec(media_codec_t *mc, glw_video_t *gv);
+static int rvd_set_codec(media_codec_t *mc, glw_video_t *gv,
+			 const frame_info_t *fi);
 
 /**
  * Tunneled OMX
@@ -229,11 +230,14 @@ GLW_REGISTER_GVE(glw_video_rvd);
  *
  */
 static int
-rvd_set_codec(media_codec_t *mc, glw_video_t *gv)
+rvd_set_codec(media_codec_t *mc, glw_video_t *gv, const frame_info_t *fi)
 {
   media_pipe_t *mp = gv->gv_mp;
 
   glw_video_configure(gv, &glw_video_rvd);
+
+  gv->gv_width = fi->fi_width;
+  gv->gv_height = fi->fi_height;
 
   rpi_video_display_t *rvd = gv->gv_aux;
   rpi_video_codec_t *rvc = mc->opaque;

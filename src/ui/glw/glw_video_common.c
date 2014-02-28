@@ -35,7 +35,8 @@
 #include "glw_texture.h"
 
 static void glw_video_input(const frame_info_t *info, void *opaque);
-static int glw_set_video_codec(uint32_t type, media_codec_t *mc, void *opaque);
+static int glw_set_video_codec(uint32_t type, media_codec_t *mc, void *opaque,
+			       const frame_info_t *fi);
 
 
 /**
@@ -1076,7 +1077,8 @@ glw_video_input(const frame_info_t *fi, void *opaque)
  *
  */
 static int
-glw_set_video_codec(uint32_t type, media_codec_t *mc, void *opaque)
+glw_set_video_codec(uint32_t type, media_codec_t *mc, void *opaque,
+		    const frame_info_t *fi)
 {
   glw_video_t *gv = opaque;
   glw_video_engine_t *gve;
@@ -1085,7 +1087,7 @@ glw_set_video_codec(uint32_t type, media_codec_t *mc, void *opaque)
   
   LIST_FOREACH(gve, &engines, gve_link) {
     if(gve->gve_type == type) {
-      r = gve->gve_set_codec(mc, gv);
+      r = gve->gve_set_codec(mc, gv, fi);
       break;
     }
   }

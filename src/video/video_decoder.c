@@ -421,7 +421,7 @@ vd_thread(void *aux)
       break;
 
     case MB_CTRL_RECONFIGURE:
-      mb->mb_cw->reconfigure(mc);
+      mb->mb_cw->reconfigure(mc, mb->mb_width, mb->mb_height);
       break;
 
 #if ENABLE_DVD
