@@ -36,6 +36,9 @@ typedef struct glw_quad {
 
 
 
+/**
+ *
+ */
 static void
 glw_quad_render(glw_t *w, const glw_rctx_t *rc)
 {
@@ -60,6 +63,15 @@ glw_quad_render(glw_t *w, const glw_rctx_t *rc)
 		    NULL,
 		    &q->color, NULL, rc->rc_alpha * w->glw_alpha, 0,
 		    q->prog);
+}
+
+
+/**
+ *
+ */
+static void
+glw_quad_layout(glw_t *w, const glw_rctx_t *rc)
+{
 }
 
 
@@ -130,6 +142,7 @@ static glw_class_t glw_quad = {
   .gc_name = "quad",
   .gc_instance_size = sizeof(glw_quad_t),
   .gc_ctor = glw_quad_init,
+  .gc_layout = glw_quad_layout,
   .gc_render = glw_quad_render,
   .gc_signal_handler = glw_quad_callback,
   .gc_set_rgb = glw_quad_set_rgb,

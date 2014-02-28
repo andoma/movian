@@ -29,25 +29,16 @@ typedef struct glw_rotator {
 /**
  *
  */
-static int
-glw_rotator_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
+static void
+glw_rotator_layout(glw_t *w, const glw_rctx_t *rc)
 {
   glw_rotator_t *gr = (glw_rotator_t *)w;
   glw_t *c;
-  glw_rctx_t *rc;
 
-  switch(signal) {
-  default:
-    break;
-  case GLW_SIGNAL_LAYOUT:
-    rc = extra;
-    gr->theta -= 5;
-    c = TAILQ_FIRST(&w->glw_childs);
-    if(c != NULL)
-      glw_layout0(c, rc);
-    break;
-  }
-  return 0;
+  gr->theta -= 5;
+  c = TAILQ_FIRST(&w->glw_childs);
+  if(c != NULL)
+    glw_layout0(c, rc);
 }
 
 /**
@@ -80,8 +71,8 @@ glw_rotator_render(glw_t *w, const glw_rctx_t *rc)
 static glw_class_t glw_rotator = {
   .gc_name = "rotator",
   .gc_instance_size = sizeof(glw_rotator_t),
+  .gc_layout = glw_rotator_layout,
   .gc_render = glw_rotator_render,
-  .gc_signal_handler = glw_rotator_callback,
 };
 
 GLW_REGISTER_CLASS(glw_rotator);

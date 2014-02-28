@@ -128,9 +128,10 @@ glw_array_update_metrics(glw_array_t *a)
  *
  */
 static void
-glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
+glw_array_layout(glw_t *w, const glw_rctx_t *rc)
 {
-  glw_t *c, *w = &a->w, *prev = NULL;
+  glw_array_t *a = (glw_array_t *)w;
+  glw_t *c, *prev = NULL;
   glw_rctx_t rc0 = *rc;
   int column = 0;
   int topedge = 1;
@@ -514,7 +515,6 @@ scroll_to_me(glw_array_t *a, glw_t *c)
 static int
 glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
-  glw_rctx_t *rc = extra;
   glw_array_t *a = (glw_array_t *)w;
   glw_pointer_event_t *gpe;
   glw_t *c;
@@ -522,9 +522,6 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   switch(signal) {
   default:
     break;
-  case GLW_SIGNAL_LAYOUT:
-    glw_array_layout(a, rc);
-    return 0;
 
   case GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE:
     scroll_to_me(a, extra);
@@ -745,6 +742,7 @@ static glw_class_t glw_array = {
   .gc_get_next_row = glw_array_get_next_row,
   .gc_set_margin = set_margin,
   .gc_set_border = set_border,
+  .gc_layout = glw_array_layout,
 };
 
 GLW_REGISTER_CLASS(glw_array);

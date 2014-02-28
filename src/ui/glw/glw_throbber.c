@@ -66,16 +66,17 @@ static uint16_t surfaces[] = {
 /**
  *
  */
-static int
-glw_throbber3d_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
+static void
+glw_throbber3d_layout(glw_t *w, const glw_rctx_t *rc)
 {
   glw_throbber3d_t *gt = (glw_throbber3d_t *)w;
+  if(w->glw_alpha < 0.01)
+    return;
 
-  if(signal == GLW_SIGNAL_LAYOUT)
-    gt->angle += 2;
-
-  return 0;
+  gt->angle += 2;
+  gr_schedule_refresh(w->glw_root);
 }
+
 
 /**
  *
@@ -140,7 +141,7 @@ static glw_class_t glw_throbber3d = {
   .gc_name = "throbber3d",
   .gc_instance_size = sizeof(glw_throbber3d_t),
   .gc_render = glw_throbber3d_render,
-  .gc_signal_handler = glw_throbber3d_callback,
+  .gc_layout = glw_throbber3d_layout,
   .gc_dtor = glw_throbber3d_dtor,
 };
 
@@ -164,18 +165,18 @@ typedef struct glw_throbber {
 /**
  *
  */
-static int
-glw_throbber_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
+static void
+glw_throbber_layout(glw_t *w, const glw_rctx_t *rc)
 {
   glw_throbber_t *gt = (glw_throbber_t *)w;
+  if(w->glw_alpha < 0.01)
+    return;
 
-  if(signal == GLW_SIGNAL_LAYOUT) {
-    gt->angle += 0.5;
-    gt->o++;
-  }
-
-  return 0;
+  gr_schedule_refresh(w->glw_root);
+  gt->angle += 0.5;
+  gt->o++;
 }
+
 
 /**
  *
@@ -263,7 +264,7 @@ static glw_class_t glw_throbber = {
   .gc_name = "throbber",
   .gc_instance_size = sizeof(glw_throbber_t),
   .gc_render = glw_throbber_render,
-  .gc_signal_handler = glw_throbber_callback,
+  .gc_layout = glw_throbber_layout,
   .gc_ctor = glw_throbber_ctor,
   .gc_dtor = glw_throbber_dtor,
   .gc_set_rgb = glw_throbber_set_rgb,

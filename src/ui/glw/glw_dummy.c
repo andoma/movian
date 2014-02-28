@@ -36,6 +36,7 @@ glw_dummy_render(glw_t *w, const glw_rctx_t *rc)
 static glw_class_t glw_dummy = {
   .gc_name = "dummy",
   .gc_instance_size = sizeof(glw_t),
+  .gc_layout = glw_dummy_render,
   .gc_render = glw_dummy_render,
 };
 

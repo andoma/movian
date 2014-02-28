@@ -30,9 +30,9 @@
  *
  */
 static void
-glw_grid_layout(glw_grid_t *gg, glw_rctx_t *rc)
+glw_grid_layout(glw_t *w, const glw_rctx_t *rc)
 {
-  glw_t *w = &gg->w;
+  glw_grid_t *gg = (glw_grid_t *)w;
   glw_t *c;
   glw_rctx_t rc0 = *rc;
   const float scale = gg->child_scale;
@@ -105,7 +105,6 @@ scroll_to_me(glw_grid_t *gg, glw_t *c)
 static int
 glw_grid_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
-  glw_rctx_t *rc = extra;
   glw_grid_t *gg = (glw_grid_t *)w;
   glw_t *c;
 
@@ -118,10 +117,6 @@ glw_grid_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     c = extra;
     if(c == TAILQ_FIRST(&w->glw_childs) && !TAILQ_NEXT(c, glw_parent_link))
       gg->scroll_to_me = c;
-    break;
-
-  case GLW_SIGNAL_LAYOUT:
-    glw_grid_layout(gg, rc);
     break;
 
   case GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE:
@@ -176,6 +171,7 @@ glw_class_t glw_grid = {
   .gc_name = "grid",
   .gc_instance_size = sizeof(glw_grid_t),
   .gc_nav_descend_mode = GLW_NAV_DESCEND_FOCUSED,
+  .gc_layout = glw_grid_layout,
   .gc_render = glw_grid_render,
   .gc_set_float = glw_grid_set_float,
   .gc_signal_handler = glw_grid_callback,

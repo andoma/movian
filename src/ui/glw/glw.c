@@ -308,7 +308,7 @@ update_in_path(glw_t *w)
  *
  */
 void
-glw_layout0(glw_t *w, glw_rctx_t *rc)
+glw_layout0(glw_t *w, const glw_rctx_t *rc)
 {
   glw_root_t *gr = w->glw_root;
   LIST_REMOVE(w, glw_active_link);
@@ -317,7 +317,10 @@ glw_layout0(glw_t *w, glw_rctx_t *rc)
     w->glw_flags |= GLW_ACTIVE;
     glw_signal0(w, GLW_SIGNAL_ACTIVE, NULL);
   }
-  glw_signal0(w, GLW_SIGNAL_LAYOUT, rc);
+
+  w->glw_class->gc_layout(w, rc);
+
+  glw_signal0(w, GLW_SIGNAL_LAYOUTED, (void *)rc);
 }
 
 
@@ -2052,6 +2055,7 @@ glw_class_find_by_name(const char *name)
 void
 glw_register_class(glw_class_t *gc)
 {
+  assert(gc->gc_layout != NULL);
   LIST_INSERT_HEAD(&glw_classes, gc, gc_link);
 }
 
@@ -2506,4 +2510,90 @@ glw_project(glw_rect_t *r, const glw_rctx_t *rc, const glw_root_t *gr)
 
   r->x2 = roundf((1.0 + (glw_vec4_extract(V1, 0) / w)) * gr->gr_width  / 2.0);
   r->y2 = roundf((1.0 - (glw_vec4_extract(V1, 1) / w)) * gr->gr_height / 2.0);
+}
+
+
+#if 0
+void
+glw_lp(float *v, const glw_root_t *gr, float t, float alpha)
+{
+  union {
+    float flt;
+    uint32_t i32;
+  } tmp;
+
+  union {
+    float flt;
+    uint32_t i32;
+  } tmp2;
+
+  union {
+    float flt;
+    uint32_t i32;
+  } al;
+
+  tmp.flt = *v;
+  tmp2.flt = t;
+  al.flt = alpha;
+
+  uint32_t x = tmp.i32;
+  tmp.flt = tmp.flt + alpha * (t - tmp.flt);
+
+  int mdiff = (x &0x7fffff) - (tmp.i32 & 0x7fffff);
+  int ediff = ((x >> 23)  & 0x7f) - ((tmp.i32 >> 23) & 0x7f);
+
+  if(mdiff || ediff) {
+    printf("before: %08x %e\n"
+           "target: %08x %e\n"
+           " alpha: %08x %e\n"
+           " after: %08x %e\n"
+           "  diff: m = %d  e = %d\n",
+           x, *v,
+           tmp2.i32, tmp2.flt,
+           al.i32, al.flt,
+           tmp.i32, tmp.flt,
+           mdiff, ediff);
+
+    if(ediff == 0 && abs(mdiff) < 100000) {
+      printf("Terminated\n");
+      *v = t;
+      return;
+    }
+
+  }
+
+  *v = tmp.flt;
+}
+#endif
+
+
+void
+glw_lp(float *v, glw_root_t *gr, float target, float alpha)
+{
+  const float in = *v;
+
+  const int x = in * 1000.0f;
+  const float out = in + alpha * (target - in);
+  const int y = out * 1000.0f;
+
+  if(x == y) {
+    *v = target;
+    return;
+  }
+  *v = out;
+  gr_schedule_refresh(gr);
+}
+
+
+/**
+ *
+ */
+void
+gr_schedule_refresh0(glw_root_t *gr, const char *file, int line)
+{
+  if(gr->gr_need_refresh)
+    return;
+
+  gr->gr_need_refresh = 1;
+  printf("Refresh requested by %s:%d\n", file, line);
 }

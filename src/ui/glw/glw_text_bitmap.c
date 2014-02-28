@@ -126,7 +126,7 @@ static glw_class_t glw_text, glw_label;
  *
  */
 static void
-glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
+glw_text_bitmap_layout(glw_t *w, const glw_rctx_t *rc)
 {
   glw_text_bitmap_t *gtb = (void *)w;
   glw_root_t *gr = w->glw_root;
@@ -568,9 +568,6 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
     break;
   case GLW_SIGNAL_DESTROY:
     gtb_unbind(gtb);
-    break;
-  case GLW_SIGNAL_LAYOUT:
-    glw_text_bitmap_layout(w, extra);
     break;
   case GLW_SIGNAL_INACTIVE:
     gtb_inactive(gtb);
@@ -1128,6 +1125,8 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
 
   glw_unref(&gtb->w);
 
+  gr_schedule_refresh(gr);
+
   if(gtb->gtb_state == GTB_RENDERING) {
     gtb->gtb_state = GTB_VALID;
     image_release(gtb->gtb_image);
@@ -1344,6 +1343,7 @@ set_description(glw_t *w, const char *str)
 static glw_class_t glw_label = {
   .gc_name = "label",
   .gc_instance_size = sizeof(glw_text_bitmap_t),
+  .gc_layout = glw_text_bitmap_layout,
   .gc_render = glw_text_bitmap_render,
   .gc_ctor = glw_text_bitmap_ctor,
   .gc_dtor = glw_text_bitmap_dtor,
@@ -1374,6 +1374,7 @@ GLW_REGISTER_CLASS(glw_label);
 static glw_class_t glw_text = {
   .gc_name = "text",
   .gc_instance_size = sizeof(glw_text_bitmap_t),
+  .gc_layout = glw_text_bitmap_layout,
   .gc_render = glw_text_bitmap_render,
   .gc_ctor = glw_text_bitmap_ctor,
   .gc_dtor = glw_text_bitmap_dtor,

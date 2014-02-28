@@ -24,14 +24,14 @@
 /**
  *
  */
-static int
-layout(glw_t *w, glw_rctx_t *rc)
+static void
+layout(glw_t *w, const glw_rctx_t *rc)
 {
   glw_t *c;
   glw_rctx_t rc0 = *rc;
 
   if(w->glw_alpha < 0.01f)
-    return 0;
+    return;
 
   if(rc0.rc_overscanning) {
     rc0.rc_width  = rc->rc_width  - 2 * (w->glw_root->gr_underscan_h);
@@ -44,8 +44,8 @@ layout(glw_t *w, glw_rctx_t *rc)
       continue;
     glw_layout0(c, &rc0);
   }
-  return 0;
 }
+
 
 /**
  *
@@ -84,8 +84,6 @@ signal_handler(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   glw_t *c;
 
   switch(signal) {
-  case GLW_SIGNAL_LAYOUT:
-    return layout(w, extra);
   case GLW_SIGNAL_EVENT:
     TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
       if(glw_signal0(c, GLW_SIGNAL_EVENT, extra))
@@ -100,6 +98,7 @@ signal_handler(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 static glw_class_t glw_underscan = {
   .gc_name = "underscan",
   .gc_instance_size = sizeof(glw_t),
+  .gc_layout = layout,
   .gc_render = render,
   .gc_signal_handler = signal_handler,
 };

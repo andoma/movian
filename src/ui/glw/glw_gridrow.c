@@ -30,13 +30,13 @@
  *
  */
 static void
-glw_gridrow_layout(glw_gridrow_t *ggr, glw_rctx_t *rc)
+glw_gridrow_layout(glw_t *w, const glw_rctx_t *rc)
 {
+  glw_gridrow_t *ggr = (glw_gridrow_t *)w;
   glw_grid_t *gg = (glw_grid_t *)ggr->w.glw_parent;
   if(gg->w.glw_class != &glw_grid)
     return;
 
-  glw_t *w = &ggr->w;
   glw_t *c;
   glw_rctx_t rc0 = *rc;
   const float scale = ggr->child_scale;
@@ -109,7 +109,6 @@ scroll_to_me(glw_gridrow_t *ggr, glw_t *c)
 static int
 glw_gridrow_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
-  glw_rctx_t *rc = extra;
   glw_gridrow_t *ggr = (glw_gridrow_t *)w;
   glw_t *c;
 
@@ -122,10 +121,6 @@ glw_gridrow_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     c = extra;
     if(c == TAILQ_FIRST(&w->glw_childs) && !TAILQ_NEXT(c, glw_parent_link))
       scroll_to_me(ggr, c);
-    break;
-
-  case GLW_SIGNAL_LAYOUT:
-    glw_gridrow_layout(ggr, rc);
     break;
 
   case GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE:
@@ -183,6 +178,7 @@ static glw_class_t glw_gridrow = {
   .gc_name = "gridrow",
   .gc_instance_size = sizeof(glw_gridrow_t),
   .gc_nav_descend_mode = GLW_NAV_DESCEND_ALL,
+  .gc_layout = glw_gridrow_layout,
   .gc_render = glw_gridrow_render,
   .gc_set_float = glw_gridrow_set_float,
   .gc_signal_handler = glw_gridrow_callback,

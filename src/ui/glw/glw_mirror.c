@@ -21,14 +21,25 @@
 
 #include "glw.h"
 
+
+/**
+ *
+ */
+static void
+glw_mirror_layout(glw_t *w, const glw_rctx_t *rc)
+{
+  glw_t *c = TAILQ_FIRST(&w->glw_childs);
+  if(c != NULL)
+    glw_layout0(c, rc);
+}
+
+
 /**
  *
  */
 static int
 glw_mirror_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
-  glw_t *c;
-
   switch(signal) {
   default:
     break;
@@ -36,11 +47,6 @@ glw_mirror_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   case GLW_SIGNAL_CHILD_CREATED:
     glw_copy_constraints(w, extra);
     return 1;
-  case GLW_SIGNAL_LAYOUT:
-    c = TAILQ_FIRST(&w->glw_childs);
-    if(c != NULL)
-      glw_layout0(c, extra);
-    break;
   }
   return 0;
 }
@@ -87,6 +93,7 @@ glw_mirror_render(glw_t *w, const glw_rctx_t *rc)
 static glw_class_t glw_mirror = {
   .gc_name = "mirror",
   .gc_instance_size = sizeof(glw_t),
+  .gc_layout = glw_mirror_layout,
   .gc_render = glw_mirror_render,
   .gc_signal_handler = glw_mirror_callback,
 };

@@ -178,46 +178,53 @@ playfield_select_child(glw_t *w, glw_t *c, prop_t *origin)
 /**
  *
  */
-static int
-glw_playfield_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
+static void
+glw_playfield_layout(glw_t *w, const glw_rctx_t *rc)
 {
   glw_playfield_t *p = (glw_playfield_t *)w;
-  glw_rctx_t *rc = extra;
   glw_t *c;
   int v = 0;
   float s;
 
+  if(w->glw_alpha < 0.01)
+    return;
+
+  TAILQ_FOREACH_REVERSE(c, &w->glw_childs, glw_queue, glw_parent_link) {
+
+    if(w->glw_selected == c)
+      v = 1;
+    else if(v == 1)
+      v = 2;
+
+    s = p->speed;
+
+    if(c->glw_parent_amount < v) {
+      c->glw_parent_amount = GLW_MIN(v, c->glw_parent_amount + s);
+    } else if(c->glw_parent_amount > v) {
+      c->glw_parent_amount = GLW_MAX(v, c->glw_parent_amount - s);
+    }
+
+    if((c->glw_parent_amount > 0 && c->glw_parent_amount < 2) ||
+       !w->glw_root->gr_reduce_cpu)
+      glw_layout0(c, rc);
+
+    if(c->glw_parent_amount <= 1 && c->glw_parent_detached)
+      detach(c, NULL);
+  }
+}
+
+
+/**
+ *
+ */
+static int
+glw_playfield_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
+{
+  glw_playfield_t *p = (glw_playfield_t *)w;
+  glw_t *c;
+
   switch(signal) {
   default:
-    break;
-
-  case GLW_SIGNAL_LAYOUT:
-    if(w->glw_alpha < 0.01)
-      break;
-
-    TAILQ_FOREACH_REVERSE(c, &w->glw_childs, glw_queue, glw_parent_link) {
-
-      if(w->glw_selected == c) 
-	v = 1;
-      else if(v == 1)
-	v = 2;
-
-      s = p->speed;
-
-      if(c->glw_parent_amount < v) {
-	c->glw_parent_amount = GLW_MIN(v, c->glw_parent_amount + s);
-      } else if(c->glw_parent_amount > v) {
-	c->glw_parent_amount = GLW_MAX(v, c->glw_parent_amount - s);
-      }
-
-      if((c->glw_parent_amount > 0 && c->glw_parent_amount < 2) ||
-	 !w->glw_root->gr_reduce_cpu)
-	glw_layout0(c, rc);
-
-      if(c->glw_parent_amount <= 1 && c->glw_parent_detached)
-	detach(c, NULL);
-
-    }
     break;
 
   case GLW_SIGNAL_EVENT:
@@ -299,6 +306,7 @@ static glw_class_t glw_playfield = {
   .gc_instance_size = sizeof(glw_playfield_t),
   .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_nav_descend_mode = GLW_NAV_DESCEND_SELECTED,
+  .gc_layout = glw_playfield_layout,
   .gc_render = glw_playfield_render,
   .gc_ctor = clear_constraints,
   .gc_signal_handler = glw_playfield_callback,

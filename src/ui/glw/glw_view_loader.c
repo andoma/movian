@@ -46,40 +46,55 @@ typedef struct glw_view_loader {
 #define glw_parent_vl_cur glw_parent_val[0].f
 #define glw_parent_vl_tgt glw_parent_val[1].f
 
+
+/**
+ *
+ */
+static void
+glw_loader_layout(glw_t *w, const glw_rctx_t *rc)
+{
+  glw_view_loader_t *a = (void *)w;
+  glw_root_t *gr = w->glw_root;
+  glw_t *c, *n;
+
+  a->delta = 1 / (a->time * (1000000 / w->glw_root->gr_frameduration));
+
+  for(c = TAILQ_FIRST(&w->glw_childs); c != NULL; c = n) {
+    n = TAILQ_NEXT(c, glw_parent_link);
+
+    float n =
+      GLW_MIN(c->glw_parent_vl_cur + a->delta, c->glw_parent_vl_tgt);
+
+    if(n != c->glw_parent_vl_cur)
+      gr_schedule_refresh(gr);
+
+    c->glw_parent_vl_cur = n;
+
+    if(c->glw_parent_vl_cur == 1) {
+      glw_destroy(c);
+
+      if((c = TAILQ_FIRST(&w->glw_childs)) != NULL) {
+        glw_copy_constraints(w, c);
+      }
+    } else {
+      glw_layout0(c, rc);
+    }
+  }
+}
+
+
 /**
  *
  */
 static int
-glw_view_loader_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
+glw_loader_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   glw_t *c, *n;
   glw_view_loader_t *a = (void *)w;
-  glw_rctx_t *rc = extra;
 
   switch(signal) {
   default:
     break;
-
-  case GLW_SIGNAL_LAYOUT:
-    a->delta = 1 / (a->time * (1000000 / w->glw_root->gr_frameduration));
-
-    for(c = TAILQ_FIRST(&w->glw_childs); c != NULL; c = n) {
-      n = TAILQ_NEXT(c, glw_parent_link);
-
-      c->glw_parent_vl_cur = 
-	GLW_MIN(c->glw_parent_vl_cur + a->delta, c->glw_parent_vl_tgt);
-      
-      if(c->glw_parent_vl_cur == 1) {
-	glw_destroy(c);
-
-	if((c = TAILQ_FIRST(&w->glw_childs)) != NULL) {
-	  glw_copy_constraints(w, c);
-	}
-      } else {
-	glw_layout0(c, rc);
-      }
-    }
-    return 0;
 
   case GLW_SIGNAL_CHILD_CREATED:
     c = extra;
@@ -359,9 +374,10 @@ static glw_class_t glw_view_loader = {
   .gc_set_float = glw_view_loader_set_float,
   .gc_set_prop = glw_view_loader_set_prop,
   .gc_set_roots = glw_view_loader_set_roots,
+  .gc_layout = glw_loader_layout,
   .gc_render = glw_view_loader_render,
   .gc_retire_child = glw_view_loader_retire_child,
-  .gc_signal_handler = glw_view_loader_callback,
+  .gc_signal_handler = glw_loader_callback,
   .gc_set_source = set_source,
   .gc_get_identity = get_identity,
   .gc_set_alt = set_alt,

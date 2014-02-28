@@ -548,23 +548,31 @@ glw_video_newframe(glw_t *w, int flags)
 /**
  *
  */
+static void
+glw_video_layout(glw_t *w, const glw_rctx_t *rc)
+{
+  glw_video_t *gv = (glw_video_t *)w;
+  glw_rctx_t rc0;
+
+  w->glw_root->gr_can_externalize = 0;
+
+  rc0 = *rc;
+  glw_video_rctx_adjust(&rc0, gv);
+  glw_video_overlay_layout(gv, rc, &rc0);
+}
+
+
+/**
+ *
+ */
 static int 
 glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, 
 			  void *extra)
 {
   glw_video_t *gv = (glw_video_t *)w;
   video_decoder_t *vd = gv->gv_vd;
-  glw_rctx_t *rc, rc0;
 
   switch(signal) {
-  case GLW_SIGNAL_LAYOUT:
-    w->glw_root->gr_can_externalize = 0;
-
-    rc = extra;
-    rc0 = *rc;
-    glw_video_rctx_adjust(&rc0, gv);
-    glw_video_overlay_layout(gv, rc, &rc0);
-    return 0;
 
   case GLW_SIGNAL_EVENT:
     return glw_video_widget_event(extra, gv);
@@ -943,6 +951,7 @@ static glw_class_t glw_video = {
   .gc_set_rstr = glw_video_set_rstr,
   .gc_ctor = glw_video_ctor,
   .gc_dtor = glw_video_dtor,
+  .gc_layout = glw_video_layout,
   .gc_render = glw_video_render,
   .gc_newframe = glw_video_newframe,
   .gc_signal_handler = glw_video_widget_callback,

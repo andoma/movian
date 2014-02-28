@@ -250,18 +250,28 @@ static void
 set_weight(glw_t *w, float v)
 {
   glw_conf_constraints(w, 0, 0, v, GLW_CONSTRAINT_CONF_W);
+  gr_schedule_refresh(w->glw_root);
 }
 
 static void
 set_alpha(glw_t *w, float v)
 {
+  if(w->glw_alpha == v)
+    return;
+
   w->glw_alpha = v;
+  gr_schedule_refresh(w->glw_root);
 }
 
 static void
 set_blur(glw_t *w, float v)
 {
-  w->glw_sharpness = GLW_CLAMP(1 - v, 0, 1);
+  v = GLW_CLAMP(1 - v, 0, 1);
+
+  if(w->glw_sharpness == v)
+    return;
+  w->glw_sharpness = v;
+  gr_schedule_refresh(w->glw_root);
 }
 
 /**
@@ -270,8 +280,10 @@ set_blur(glw_t *w, float v)
 static void
 set_alpha_self(glw_t *w, float v)
 {
-  if(w->glw_class->gc_set_alpha_self != NULL)
+  if(w->glw_class->gc_set_alpha_self != NULL) {
     w->glw_class->gc_set_alpha_self(w, v);
+    gr_schedule_refresh(w->glw_root);
+  }
 }
 
 
@@ -281,8 +293,10 @@ set_alpha_self(glw_t *w, float v)
 static void
 set_size_scale(glw_t *w, float v)
 {
-  if(w->glw_class->gc_set_size_scale != NULL)
+  if(w->glw_class->gc_set_size_scale != NULL) {
     w->glw_class->gc_set_size_scale(w, v);
+    gr_schedule_refresh(w->glw_root);
+  }
 }
 
 
@@ -293,8 +307,10 @@ set_size_scale(glw_t *w, float v)
 static void
 set_size(glw_t *w, float v)
 {
-  if(w->glw_class->gc_set_default_size != NULL)
+  if(w->glw_class->gc_set_default_size != NULL) {
     w->glw_class->gc_set_default_size(w, v);
+    gr_schedule_refresh(w->glw_root);
+  }
 }
 
 
@@ -304,8 +320,10 @@ set_size(glw_t *w, float v)
 static void
 set_min_size(glw_t *w, float v)
 {
-  if(w->glw_class->gc_set_min_size != NULL)
+  if(w->glw_class->gc_set_min_size != NULL) {
     w->glw_class->gc_set_min_size(w, v);
+    gr_schedule_refresh(w->glw_root);
+  }
 }
 
 
@@ -330,11 +348,8 @@ set_number_int(glw_t *w, const token_attrib_t *a, const token_t *t, int v)
     return 0;
   }
 
-  if(r == 0) {
-    TRACE(TRACE_ERROR, "GLW",
-          "Widget %s at %s:%d pointless assignment to attribute %s",
-          gc->gc_name, rstr_get(t->file), t->line, a->name);
-  }
+  if(r)
+    gr_schedule_refresh(w->glw_root);
 
   return r;
 }
@@ -361,11 +376,9 @@ set_number_float(glw_t *w, const token_attrib_t *a, const token_t *t, float v)
     return 0;
   }
 
-  if(r == 0) {
-    TRACE(TRACE_ERROR, "GLW",
-          "Widget %s at %s:%d pointless assignment to attribute %s",
-          gc->gc_name, rstr_get(t->file), t->line, a->name);
-  }
+  if(r)
+    gr_schedule_refresh(w->glw_root);
+
   return r;
 }
 
@@ -452,6 +465,7 @@ set_int(glw_view_eval_context_t *ec, const token_attrib_t *a,
   void (*fn)(struct glw *w, int v) = a->fn;
   assert(fn != NULL);
   fn(ec->w, v);
+  gr_schedule_refresh(ec->w->glw_root);
   return 0;
 }
 
@@ -463,6 +477,7 @@ static void
 set_width(glw_t *w, int v)
 {
   glw_conf_constraints(w, v, 0, 0, GLW_CONSTRAINT_CONF_X);
+  gr_schedule_refresh(w->glw_root);
 }
 
 
@@ -473,6 +488,7 @@ static void
 set_height(glw_t *w, int v)
 {
   glw_conf_constraints(w, 0, v, 0, GLW_CONSTRAINT_CONF_Y);
+  gr_schedule_refresh(w->glw_root);
 }
 
 
@@ -483,6 +499,7 @@ static void
 set_divider(glw_t *w, int v)
 {
   glw_conf_constraints(w, 0, 0, 0, GLW_CONSTRAINT_CONF_D);
+  gr_schedule_refresh(w->glw_root);
 }
 
 
@@ -492,8 +509,10 @@ set_divider(glw_t *w, int v)
 static void
 set_maxlines(glw_t *w, int v)
 {
-  if(w->glw_class->gc_set_max_lines != NULL)
+  if(w->glw_class->gc_set_max_lines != NULL) {
     w->glw_class->gc_set_max_lines(w, v);
+    gr_schedule_refresh(w->glw_root);
+  }
 }
 
 
@@ -555,8 +574,10 @@ set_float3(glw_view_eval_context_t *ec, const token_attrib_t *a,
 static void
 set_rgb(glw_t *w, const float *rgb)
 {
-  if(w->glw_class->gc_set_rgb != NULL)
+  if(w->glw_class->gc_set_rgb != NULL) {
     w->glw_class->gc_set_rgb(w, rgb);
+    gr_schedule_refresh(w->glw_root);
+  }
 }
 
 /**
@@ -565,8 +586,10 @@ set_rgb(glw_t *w, const float *rgb)
 static void
 set_color1(glw_t *w, const float *rgb)
 {
-  if(w->glw_class->gc_set_color1 != NULL)
+  if(w->glw_class->gc_set_color1 != NULL) {
     w->glw_class->gc_set_color1(w, rgb);
+    gr_schedule_refresh(w->glw_root);
+  }
 }
 
 /**
@@ -575,8 +598,10 @@ set_color1(glw_t *w, const float *rgb)
 static void
 set_color2(glw_t *w, const float *rgb)
 {
-  if(w->glw_class->gc_set_color2 != NULL)
+  if(w->glw_class->gc_set_color2 != NULL) {
     w->glw_class->gc_set_color2(w, rgb);
+    gr_schedule_refresh(w->glw_root);
+  }
 }
 
 /**
@@ -585,8 +610,10 @@ set_color2(glw_t *w, const float *rgb)
 static void
 set_scaling(glw_t *w, const float *xyz)
 {
-  if(w->glw_class->gc_set_scaling != NULL)
+  if(w->glw_class->gc_set_scaling != NULL) {
     w->glw_class->gc_set_scaling(w, xyz);
+    gr_schedule_refresh(w->glw_root);
+  }
 }
 
 
@@ -596,8 +623,10 @@ set_scaling(glw_t *w, const float *xyz)
 static void
 set_translation(glw_t *w, const float *xyz)
 {
-  if(w->glw_class->gc_set_translation != NULL)
+  if(w->glw_class->gc_set_translation != NULL) {
     w->glw_class->gc_set_translation(w, xyz);
+    gr_schedule_refresh(w->glw_root);
+  }
 }
 
 
@@ -721,8 +750,10 @@ set_int16_4(glw_view_eval_context_t *ec, const token_attrib_t *a,
 static void
 set_padding(glw_t *w, const int16_t *vec4)
 {
-  if(w->glw_class->gc_set_padding != NULL)
+  if(w->glw_class->gc_set_padding != NULL) {
     w->glw_class->gc_set_padding(w, vec4);
+    gr_schedule_refresh(w->glw_root);
+  }
 }
 
 
@@ -732,8 +763,10 @@ set_padding(glw_t *w, const int16_t *vec4)
 static void
 set_border(glw_t *w, const int16_t *vec4)
 {
-  if(w->glw_class->gc_set_border != NULL)
+  if(w->glw_class->gc_set_border != NULL) {
     w->glw_class->gc_set_border(w, vec4);
+    gr_schedule_refresh(w->glw_root);
+  }
 }
 
 
@@ -743,8 +776,10 @@ set_border(glw_t *w, const int16_t *vec4)
 static void
 set_margin(glw_t *w, const int16_t *vec4)
 {
-  if(w->glw_class->gc_set_margin != NULL)
+  if(w->glw_class->gc_set_margin != NULL) {
     w->glw_class->gc_set_margin(w, vec4);
+    gr_schedule_refresh(w->glw_root);
+  }
 }
 
 
@@ -754,8 +789,10 @@ set_margin(glw_t *w, const int16_t *vec4)
 static void
 set_rotation(glw_t *w, const float *xyz)
 {
-  if(w->glw_class->gc_set_rotation != NULL)
+  if(w->glw_class->gc_set_rotation != NULL) {
     w->glw_class->gc_set_rotation(w, xyz);
+    gr_schedule_refresh(w->glw_root);
+  }
 }
 
 
@@ -765,8 +802,10 @@ set_rotation(glw_t *w, const float *xyz)
 static void
 set_clipping(glw_t *w, const float *xyzw)
 {
-  if(w->glw_class->gc_set_clipping != NULL)
+  if(w->glw_class->gc_set_clipping != NULL) {
     w->glw_class->gc_set_clipping(w, xyzw);
+    gr_schedule_refresh(w->glw_root);
+  }
 }
 
 
@@ -776,8 +815,10 @@ set_clipping(glw_t *w, const float *xyzw)
 static void
 set_plane(glw_t *w, const float *xyzw)
 {
-  if(w->glw_class->gc_set_plane != NULL)
+  if(w->glw_class->gc_set_plane != NULL) {
     w->glw_class->gc_set_plane(w, xyzw);
+    gr_schedule_refresh(w->glw_root);
+  }
 }
 
 
@@ -808,6 +849,7 @@ set_align(glw_view_eval_context_t *ec, const token_attrib_t *a,
     return glw_view_seterr(ec->ei, t, "Invalid assignment for attribute %s",
 			    a->name);
   ec->w->glw_alignment = v;
+  gr_schedule_refresh(ec->w->glw_root);
   return 0;
 }
 
@@ -837,6 +879,7 @@ set_transition_effect(glw_view_eval_context_t *ec, const token_attrib_t *a,
 
   if(ec->w->glw_class->gc_set_int != NULL)
     ec->w->glw_class->gc_set_int(ec->w, GLW_ATTRIB_TRANSITION_EFFECT, v);
+  gr_schedule_refresh(ec->w->glw_root);
   return 0;
 }
 
@@ -893,6 +936,7 @@ mod_hidden(glw_view_eval_context_t *ec, const token_attrib_t *a,
     glw_hide(ec->w);
   else
     glw_unhide(ec->w);
+  gr_schedule_refresh(ec->w->glw_root);
   return 0;
 }
 
@@ -911,6 +955,7 @@ mod_flags2(glw_t *w, int set, int clr)
 
   if((set | clr) && w->glw_class->gc_mod_flags2 != NULL)
     w->glw_class->gc_mod_flags2(w, set, clr);
+  gr_schedule_refresh(w->glw_root);
 }
 
 
@@ -922,6 +967,7 @@ mod_text_flags(glw_t *w, int set, int clr)
 {
   if(w->glw_class->gc_mod_text_flags != NULL)
     w->glw_class->gc_mod_text_flags(w, set, clr);
+  gr_schedule_refresh(w->glw_root);
 }
 
 
@@ -933,6 +979,7 @@ mod_img_flags(glw_t *w, int set, int clr)
 {
   if(w->glw_class->gc_mod_image_flags != NULL)
     w->glw_class->gc_mod_image_flags(w, set, clr);
+  gr_schedule_refresh(w->glw_root);
 }
 
 
@@ -944,6 +991,7 @@ mod_video_flags(glw_t *w, int set, int clr)
 {
   if(w->glw_class->gc_mod_video_flags != NULL)
     w->glw_class->gc_mod_video_flags(w, set, clr);
+  gr_schedule_refresh(w->glw_root);
 }
 
 
@@ -1042,6 +1090,8 @@ set_source(glw_view_eval_context_t *ec, const token_attrib_t *a,
 
   if(w->glw_class->gc_set_source != NULL)
     w->glw_class->gc_set_source(w, r);
+
+  gr_schedule_refresh(w->glw_root);
   rstr_release(r);
   return 0;
 }

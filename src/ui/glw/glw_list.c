@@ -114,10 +114,11 @@ glw_list_update_metrics(glw_list_t *l)
 /**
  *
  */
-static int
-glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
+static void
+glw_list_layout_y(glw_t *w, const glw_rctx_t *rc)
 {
-  glw_t *c, *w = &l->w;
+  glw_list_t *l = (glw_list_t *)w;
+  glw_t *c;
   const int bd = l->scroll_threshold;
   int ypos = bd;
   glw_rctx_t rc0 = *rc;
@@ -207,8 +208,6 @@ glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
 
   if(l->w.glw_flags & GLW_UPDATE_METRICS)
     glw_list_update_metrics(l);
-
-  return 0;
 }
 
 
@@ -216,10 +215,11 @@ glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
 /**
  *
  */
-static int
-glw_list_layout_x(glw_list_t *l, glw_rctx_t *rc)
+static void
+glw_list_layout_x(glw_t *w, const glw_rctx_t *rc)
 {
-  glw_t *c, *w = &l->w;
+  glw_list_t *l = (glw_list_t *)w;
+  glw_t *c;
   const int bd = l->scroll_threshold;
   int xpos = bd;
   glw_rctx_t rc0 = *rc;
@@ -295,8 +295,6 @@ glw_list_layout_x(glw_list_t *l, glw_rctx_t *rc)
 
   if(l->w.glw_flags & GLW_UPDATE_METRICS)
     glw_list_update_metrics(l);
-
-  return 0;
 }
 
 
@@ -659,30 +657,6 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   return 0;
 }
 
-/**
- *
- */
-static int
-glw_list_callback_y(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
-{
-  if(signal == GLW_SIGNAL_LAYOUT)
-    return glw_list_layout_y((glw_list_t *)w, extra);
-  else
-    return glw_list_callback(w, opaque, signal, extra);
-}
-
-
-/**
- *
- */
-static int
-glw_list_callback_x(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
-{
-  if(signal == GLW_SIGNAL_LAYOUT)
-    return glw_list_layout_x((glw_list_t *)w, extra);
-  else
-    return glw_list_callback(w, opaque, signal, extra);
-}
 
 /**
  *
@@ -826,11 +800,12 @@ static glw_class_t glw_list_y = {
   .gc_nav_descend_mode = GLW_NAV_DESCEND_FOCUSED,
   .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION_WITH_PAGING,
 
+  .gc_layout = glw_list_layout_y,
   .gc_render = glw_list_render_y,
   .gc_set_int = glw_list_set_int,
   .gc_set_float = glw_list_set_float,
   .gc_ctor = glw_list_y_ctor,
-  .gc_signal_handler = glw_list_callback_y,
+  .gc_signal_handler = glw_list_callback,
   .gc_escape_score = 100,
   .gc_suggest_focus = glw_list_suggest_focus,
   .gc_set_padding = set_padding,
@@ -848,11 +823,12 @@ static glw_class_t glw_list_x = {
   .gc_nav_descend_mode = GLW_NAV_DESCEND_FOCUSED,
   .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION_WITH_PAGING,
 
+  .gc_layout = glw_list_layout_x,
   .gc_render = glw_list_render_x,
   .gc_set_int = glw_list_set_int,
   .gc_set_float = glw_list_set_float,
   .gc_ctor = glw_list_x_ctor,
-  .gc_signal_handler = glw_list_callback_x,
+  .gc_signal_handler = glw_list_callback,
   .gc_escape_score = 100,
   .gc_suggest_focus = glw_list_suggest_focus,
   .gc_set_padding = set_padding,

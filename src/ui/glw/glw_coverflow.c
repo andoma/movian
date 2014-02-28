@@ -45,8 +45,9 @@ typedef struct {
  *
  */
 static void
-glw_coverflow_layout(glw_coverflow_t *gc, glw_rctx_t *rc)
+glw_coverflow_layout(glw_t *w, const glw_rctx_t *rc)
 {
+  glw_coverflow_t *gc = (glw_coverflow_t *)w;
   float n = 0, nv;
   glw_t *c, *rstart = NULL;
   glw_rctx_t rc0;
@@ -69,7 +70,7 @@ glw_coverflow_layout(glw_coverflow_t *gc, glw_rctx_t *rc)
 
     nv = c->glw_parent_pos * gc->xs;
     if(nv > -2 && nv < 2)
-      glw_signal0(c, GLW_SIGNAL_LAYOUT, &rc0);
+      glw_layout0(c, &rc0);
 
     if(gc->scroll_to_me == c) {
       gc->pos_target = n;
@@ -197,15 +198,11 @@ glw_coverflow_ctor(glw_t *w)
 static int
 glw_coverflow_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
-  glw_rctx_t *rc = extra;
   glw_coverflow_t *gc = (glw_coverflow_t *)w;
 
   switch(signal) {
   default:
     break;
-  case GLW_SIGNAL_LAYOUT:
-    glw_coverflow_layout(gc, rc);
-    return 0;
 
   case GLW_SIGNAL_EVENT_BUBBLE:
     w->glw_flags &= ~GLW_FLOATING_FOCUS;
@@ -286,6 +283,7 @@ static glw_class_t glw_coverflow = {
   .gc_child_orientation = GLW_ORIENTATION_HORIZONTAL,
   .gc_nav_descend_mode = GLW_NAV_DESCEND_FOCUSED,
   .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION_WITH_PAGING,
+  .gc_layout = glw_coverflow_layout,
   .gc_render = glw_coverflow_render,
   .gc_signal_handler = glw_coverflow_callback,
   .gc_gpe_iterator = glw_coverflow_gpe_iterator,

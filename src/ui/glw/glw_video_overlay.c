@@ -186,12 +186,13 @@ typedef struct layer {
  *
  */
 void
-glw_video_overlay_layout(glw_video_t *gv, glw_rctx_t *frc, glw_rctx_t *vrc)
+glw_video_overlay_layout(glw_video_t *gv,
+                         const glw_rctx_t *frc, const glw_rctx_t *vrc)
 {
   glw_video_overlay_t *gvo;
   const glw_class_t *gc;
   glw_t *w;
-  glw_rctx_t *rc;
+  const glw_rctx_t *rc;
   int16_t f[4];
   layer_t *l;
 

@@ -43,20 +43,19 @@ set_clipping(glw_t *w, const float *v)
 /**
  *
  */
-static int
-glw_clip_layout(glw_t *w, glw_rctx_t *rc)
+static void
+glw_clip_layout(glw_t *w, const glw_rctx_t *rc)
 {
   glw_t *c;
 
   if(w->glw_alpha < 0.01)
-    return 0;
+    return;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
     glw_layout0(c, rc);
   }
-  return 0;
 }
 
 
@@ -95,8 +94,6 @@ glw_clip_callback(glw_t *w, void *opaque, glw_signal_t signal,
 		  void *extra)
 {
   switch(signal) {
-  case GLW_SIGNAL_LAYOUT:
-    return glw_clip_layout(w, extra);
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
   case GLW_SIGNAL_CHILD_CREATED:
     glw_copy_constraints(w, extra);
@@ -111,6 +108,7 @@ glw_clip_callback(glw_t *w, void *opaque, glw_signal_t signal,
 static glw_class_t glw_clip = {
   .gc_name = "clip",
   .gc_instance_size = sizeof(glw_clip_t),
+  .gc_layout = glw_clip_layout,
   .gc_render = glw_clip_render,
   .gc_signal_handler = glw_clip_callback,
   .gc_set_clipping = set_clipping,
@@ -156,20 +154,19 @@ set_plane(glw_t *w, const float *v)
 /**
  *
  */
-static int
-glw_fade_layout(glw_t *w, glw_rctx_t *rc)
+static void
+glw_fade_layout(glw_t *w, const glw_rctx_t *rc)
 {
   glw_t *c;
 
   if(w->glw_alpha < 0.01)
-    return 0;
+    return;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
     glw_layout0(c, rc);
   }
-  return 0;
 }
 
 
@@ -200,8 +197,6 @@ glw_fade_callback(glw_t *w, void *opaque, glw_signal_t signal,
 		  void *extra)
 {
   switch(signal) {
-  case GLW_SIGNAL_LAYOUT:
-    return glw_fade_layout(w, extra);
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
   case GLW_SIGNAL_CHILD_CREATED:
     glw_copy_constraints(w, extra);
@@ -248,6 +243,7 @@ fader_set_float(glw_t *w, glw_attribute_t attrib, float value)
 static glw_class_t glw_fader = {
   .gc_name = "fader",
   .gc_instance_size = sizeof(glw_fade_t),
+  .gc_layout = glw_fade_layout,
   .gc_render = glw_fade_render,
   .gc_signal_handler = glw_fade_callback,
   .gc_set_plane = set_plane,
@@ -283,27 +279,25 @@ typedef struct glw_stencil {
 /**
  *
  */
-static int
-glw_stencil_layout(glw_t *w, glw_rctx_t *rc)
+static void
+glw_stencil_layout(glw_t *w, const glw_rctx_t *rc)
 {
   glw_t *c;
   glw_stencil_t *gs = (glw_stencil_t *)w;
   glw_loadable_texture_t *glt = gs->gs_tex;
 
   if(w->glw_alpha < 0.01)
-    return 0;
+    return;
 
   if(glt == NULL)
-    return 0;
+    return;
 
   glw_tex_layout(w->glw_root, glt);
-  
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
     glw_layout0(c, rc);
   }
-  return 0;
 }
 
 
@@ -356,8 +350,6 @@ glw_stencil_callback(glw_t *w, void *opaque, glw_signal_t signal,
 		  void *extra)
 {
   switch(signal) {
-  case GLW_SIGNAL_LAYOUT:
-    return glw_stencil_layout(w, extra);
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
   case GLW_SIGNAL_CHILD_CREATED:
     glw_copy_constraints(w, extra);
@@ -444,6 +436,7 @@ glw_stencil_ctor(glw_t *w)
 static glw_class_t glw_stencil = {
   .gc_name = "stencil",
   .gc_instance_size = sizeof(glw_stencil_t),
+  .gc_layout = glw_stencil_layout,
   .gc_render = glw_stencil_render,
   .gc_signal_handler = glw_stencil_callback,
   .gc_ctor = glw_stencil_ctor,

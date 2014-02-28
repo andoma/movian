@@ -228,7 +228,7 @@ typedef enum {
   GLW_SIGNAL_DESTROY,
   GLW_SIGNAL_ACTIVE,
   GLW_SIGNAL_INACTIVE,
-  GLW_SIGNAL_LAYOUT,
+  GLW_SIGNAL_LAYOUTED,
 
   GLW_SIGNAL_CHILD_CREATED,
   GLW_SIGNAL_CHILD_DESTROYED,
@@ -407,6 +407,11 @@ typedef struct glw_class {
    * Ask widget to render itself in the current render context
    */
   void (*gc_render)(struct glw *w, const struct glw_rctx *rc);
+
+  /**
+   * Ask widget to layout itself in current render context
+   */
+  void (*gc_layout)(struct glw *w, const struct glw_rctx *rc);
 
   /**
    * Ask widget to retire the given child
@@ -738,6 +743,8 @@ typedef struct glw_root {
 
   uint64_t gr_time_usec;
   float gr_time_sec;
+
+  int gr_need_refresh;
 
   /**
    * Screensaver
@@ -1206,13 +1213,7 @@ void glw_stencil_enable(glw_root_t *gr, const glw_rctx_t *rc,
 
 void glw_stencil_disable(glw_root_t *gr);
 
-
-static inline void
-glw_lp(float *v, const glw_root_t *gr, float t, float alpha)
-{
-  *v = *v + alpha * (t - *v);
-}
-
+void glw_lp(float *v, glw_root_t *gr, float t, float alpha);
 
 
 /**
@@ -1297,7 +1298,7 @@ int glw_signal0(glw_t *w, glw_signal_t sig, void *extra);
 
 #define glw_render0(w, rc) ((w)->glw_class->gc_render(w, rc))
 
-void glw_layout0(glw_t *w, glw_rctx_t *rc);
+void glw_layout0(glw_t *w, const glw_rctx_t *rc);
 
 void glw_rctx_init(glw_rctx_t *rc, int width, int height, int overscan);
 
@@ -1399,4 +1400,11 @@ int glw_image_get_details(glw_t *w, char *path, size_t pathlen, float *alpha);
 
 void glw_project(glw_rect_t *r, const glw_rctx_t *rc, const glw_root_t *gr);
 
+#define gr_schedule_refresh(gr) gr_schedule_refresh0(gr, __FILE__, __LINE__)
+
+void gr_schedule_refresh0(glw_root_t *gr, const char *file, int line);
+
+
 #endif /* GLW_H */
+
+

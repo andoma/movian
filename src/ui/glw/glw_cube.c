@@ -30,23 +30,15 @@ typedef struct glw_cube {
 /*
  *
  */
-static int
-glw_cube_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
+static void
+glw_cube_layout(glw_t *w, const glw_rctx_t *rc)
 {
   glw_cube_t *gc = (glw_cube_t *)w;
-  glw_t *c;
 
-  switch(signal) {
-  default:
-    break;
-  case GLW_SIGNAL_LAYOUT:
-    gc->theta -= 1;
-    c = TAILQ_FIRST(&gc->w.glw_childs);
-    if(c != NULL)
-      glw_layout0(c, extra);
-    break;
-  }
-  return 0;
+  gc->theta -= 1;
+  glw_t *c = TAILQ_FIRST(&gc->w.glw_childs);
+  if(c != NULL)
+    glw_layout0(c, rc);
 }
 
 
@@ -111,8 +103,8 @@ glw_cube_render(glw_t *w, const glw_rctx_t *rc)
 static glw_class_t glw_cube = {
   .gc_name = "cube",
   .gc_instance_size = sizeof(glw_cube_t),
+  .gc_layout = glw_cube_layout,
   .gc_render = glw_cube_render,
-  .gc_signal_handler = glw_cube_callback,
 };
 
 GLW_REGISTER_CLASS(glw_cube);

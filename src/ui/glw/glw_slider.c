@@ -98,7 +98,7 @@ update_value(glw_slider_t *s, float v, int how)
  *
  */
 static void
-glw_slider_layout(glw_t *w, glw_rctx_t *rc)
+glw_slider_layout(glw_t *w, const glw_rctx_t *rc)
 {
   glw_slider_t *s = (glw_slider_t *)w;
   glw_t *c;
@@ -379,10 +379,6 @@ glw_slider_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   glw_t *c;
 
   switch(signal) {
-  case GLW_SIGNAL_LAYOUT:
-    glw_slider_layout(w, extra);
-    break;
-
   case GLW_SIGNAL_EVENT:
     if(w->glw_class == &glw_slider_x)
       return glw_slider_event_x(w, extra);
@@ -594,6 +590,7 @@ glw_slider_bind_id(glw_t *w, const char *id)
 static glw_class_t glw_slider_x = {
   .gc_name = "slider_x",
   .gc_instance_size = sizeof(glw_slider_t),
+  .gc_layout = glw_slider_layout,
   .gc_render = glw_slider_render_x,
   .gc_set_float = glw_slider_set_float,
   .gc_bind_to_id = glw_slider_bind_id,
@@ -605,6 +602,7 @@ static glw_class_t glw_slider_x = {
 static glw_class_t glw_slider_y = {
   .gc_name = "slider_y",
   .gc_instance_size = sizeof(glw_slider_t),
+  .gc_layout = glw_slider_layout,
   .gc_render = glw_slider_render_y,
   .gc_set_float = glw_slider_set_float,
   .gc_bind_to_id = glw_slider_bind_id,

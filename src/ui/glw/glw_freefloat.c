@@ -132,9 +132,9 @@ zsort(const void *A, const void *B)
  *
  */
 static void
-glw_freefloat_layout(glw_freefloat_t *ff, glw_rctx_t *rc)
+glw_freefloat_layout(glw_t *w, const glw_rctx_t *rc)
 {
-  glw_t *w = &ff->w;
+  glw_freefloat_t *ff = (glw_freefloat_t *)w;
   glw_t *c;
   int i, candpos = -1;
 
@@ -224,9 +224,6 @@ glw_freefloat_callback(glw_t *w, void *opaque, glw_signal_t signal,
   glw_t *c = extra;
 
   switch(signal) {
-  case GLW_SIGNAL_LAYOUT:
-    glw_freefloat_layout(ff, extra);
-    return 0;
 
   case GLW_SIGNAL_CHILD_DESTROYED:
     assert(!is_visible(ff, c));
@@ -261,6 +258,7 @@ static glw_class_t glw_freefloat = {
   .gc_instance_size = sizeof(glw_freefloat_t),
   .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_ctor = glw_freefloat_ctor,
+  .gc_layout = glw_freefloat_layout,
   .gc_render = glw_freefloat_render,
   .gc_retire_child = glw_freefloat_retire_child,
   .gc_signal_handler = glw_freefloat_callback,

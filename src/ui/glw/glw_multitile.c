@@ -434,9 +434,9 @@ dotransmode(glw_multitile_t *sf)
  *
  */
 static void
-glw_multitile_layout(glw_multitile_t *sf, glw_rctx_t *rc)
+glw_multitile_layout(glw_t *w, const glw_rctx_t *rc)
 {
-  glw_t *w = &sf->w;
+  glw_multitile_t *sf = (glw_multitile_t *)w;
   glw_t *c;
   glw_rctx_t rc0;
 
@@ -523,28 +523,6 @@ glw_multitile_layout(glw_multitile_t *sf, glw_rctx_t *rc)
 /**
  *
  */
-static int
-glw_multitile_callback(glw_t *w, void *opaque, glw_signal_t signal,
-		       void *extra)
-{
-  glw_multitile_t *sf = (glw_multitile_t *)w;
-
-  switch(signal) {
-  case GLW_SIGNAL_LAYOUT:
-    glw_multitile_layout(sf, extra);
-    break;
-
-  default:
-    break;
-  }
-  return 0;
-}
-
-
-
-/**
- *
- */
 static void 
 glw_multitile_ctor(glw_t *w)
 {
@@ -561,8 +539,8 @@ static glw_class_t glw_multitile = {
   .gc_name = "multitile",
   .gc_instance_size = sizeof(glw_multitile_t),
   .gc_flags = GLW_CAN_HIDE_CHILDS,
+  .gc_layout = glw_multitile_layout,
   .gc_render = glw_multitile_render,
-  .gc_signal_handler = glw_multitile_callback,
   .gc_ctor = glw_multitile_ctor,
 };
 

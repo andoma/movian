@@ -72,8 +72,8 @@ glw_flicker_render(glw_t *w, const glw_rctx_t *rc)
 /**
  *
  */
-static void 
-glw_flicker_layout(glw_t *W, glw_rctx_t *rc)
+static void
+glw_flicker_layout(glw_t *W, const glw_rctx_t *rc)
 {
   glw_flicker_t *gf = (void *)W;
   int i;
@@ -96,30 +96,12 @@ glw_flicker_layout(glw_t *W, glw_rctx_t *rc)
 /**
  *
  */
-static int
-glw_flicker_callback(glw_t *w, void *opaque, glw_signal_t signal,
-		      void *extra)
-{
-  switch(signal) {
-  default:
-    break;
-  case GLW_SIGNAL_LAYOUT:
-    glw_flicker_layout(w, extra);
-    break;
-  }
-  return 0;
-}
-
-
-/**
- *
- */
 static glw_class_t glw_flicker = {
   .gc_name = "flicker",
   .gc_instance_size = sizeof(glw_flicker_t),
+  .gc_layout = glw_flicker_layout,
   .gc_render = glw_flicker_render,
   .gc_dtor = glw_flicker_dtor,
-  .gc_signal_handler = glw_flicker_callback,
 };
 
 GLW_REGISTER_CLASS(glw_flicker);

@@ -126,9 +126,10 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
 /**
  *
  */
-static int
-glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
+static void
+glw_container_x_layout(glw_t *w, const glw_rctx_t *rc)
 {
+  glw_container_t *co = (glw_container_t *)w;
   glw_t *c;
   glw_rctx_t rc0 = *rc;
   int width = co->width;
@@ -139,7 +140,7 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
                     // Used if the available width < sum of requested width
 
   if(co->w.glw_alpha < 0.01f)
-    return 0;
+    return;
 
   rc0.rc_height = rc->rc_height - co->co_padding_top - co->co_padding_bottom;
 
@@ -219,9 +220,7 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
     glw_layout0(c, &rc0);
     left = right + co->co_spacing;
     pos += co->co_spacing;
-
   }
-  return 0;
 }
 
 /**
@@ -291,9 +290,10 @@ glw_container_y_constraints(glw_container_t *co, glw_t *skip)
 }
 
 
-static int
-glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
+static void
+glw_container_y_layout(glw_t *w, const glw_rctx_t *rc)
 {
+  glw_container_t *co = (glw_container_t *)w;
   glw_t *c, *n;
   glw_rctx_t rc0 = *rc;
   int height = co->height;
@@ -304,7 +304,7 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
                     // Used if the available height < sum of requested height
   
   if(co->w.glw_alpha < 0.01f)
-    return 0;
+    return;
 
   rc0.rc_width = rc->rc_width - co->co_padding_left - co->co_padding_right;
 
@@ -420,7 +420,6 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
     pos += co->co_spacing;
 
   }
-  return 0;
 }
 
 
@@ -455,20 +454,19 @@ glw_container_z_constraints(glw_t *w, glw_t *skip)
 /**
  *
  */
-static int
-glw_container_z_layout(glw_t *w, glw_rctx_t *rc)
+static void
+glw_container_z_layout(glw_t *w, const glw_rctx_t *rc)
 {
   glw_t *c;
 
   if(w->glw_alpha < 0.01f)
-    return 0;
+    return;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
     glw_layout0(c, rc);
   }
-  return 0;
 }
 
 
@@ -628,8 +626,6 @@ glw_container_x_callback(glw_t *w, void *opaque, glw_signal_t signal,
 			  void *extra)
 {
   switch(signal) {
-  case GLW_SIGNAL_LAYOUT:
-    return glw_container_x_layout((glw_container_t *)w, extra);
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
   case GLW_SIGNAL_CHILD_CREATED:
   case GLW_SIGNAL_CHILD_HIDDEN:
@@ -647,8 +643,6 @@ glw_container_y_callback(glw_t *w, void *opaque, glw_signal_t signal,
 			  void *extra)
 {
   switch(signal) {
-  case GLW_SIGNAL_LAYOUT:
-    return glw_container_y_layout((glw_container_t *)w, extra);
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
   case GLW_SIGNAL_CHILD_CREATED:
   case GLW_SIGNAL_CHILD_HIDDEN:
@@ -666,8 +660,6 @@ glw_container_z_callback(glw_t *w, void *opaque, glw_signal_t signal,
 			 void *extra)
 {
   switch(signal) {
-  case GLW_SIGNAL_LAYOUT:
-    return glw_container_z_layout(w, extra);
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
   case GLW_SIGNAL_CHILD_CREATED:
     return glw_container_z_constraints(w, NULL);
@@ -740,6 +732,7 @@ static glw_class_t glw_container_x = {
   .gc_instance_size = sizeof(glw_container_t),
   .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_set_int = glw_container_set_int,
+  .gc_layout = glw_container_x_layout,
   .gc_render = glw_container_x_render,
   .gc_signal_handler = glw_container_x_callback,
   .gc_child_orientation = GLW_ORIENTATION_HORIZONTAL,
@@ -753,6 +746,7 @@ static glw_class_t glw_container_y = {
   .gc_instance_size = sizeof(glw_container_t),
   .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_set_int = glw_container_set_int,
+  .gc_layout = glw_container_y_layout,
   .gc_render = glw_container_y_render,
   .gc_signal_handler = glw_container_y_callback,
   .gc_child_orientation = GLW_ORIENTATION_VERTICAL,
@@ -767,6 +761,7 @@ static glw_class_t glw_container_z = {
   .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_instance_size = sizeof(glw_container_t),
   .gc_set_int = glw_container_set_int,
+  .gc_layout = glw_container_z_layout,
   .gc_render = glw_container_z_render,
   .gc_signal_handler = glw_container_z_callback,
 };

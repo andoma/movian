@@ -40,13 +40,24 @@ typedef struct glw_view {
 /**
  *
  */
+static void
+glw_view_layout(glw_t *w, const glw_rctx_t *rc)
+{
+  glw_t *c = TAILQ_FIRST(&w->glw_childs);
+  if(c != NULL)
+    return glw_layout0(c, rc);
+}
+
+
+/**
+ *
+ */
 static int
 glw_view_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   glw_t *c = TAILQ_FIRST(&w->glw_childs);
 
   switch(signal) {
-  case GLW_SIGNAL_LAYOUT:
   case GLW_SIGNAL_EVENT:
     if(c != NULL)
       return glw_signal0(c, signal, extra);
@@ -92,6 +103,7 @@ glw_view_render(glw_t *w, const glw_rctx_t *rc)
 static glw_class_t glw_view = {
   .gc_name = "view",
   .gc_instance_size = sizeof(glw_view_t),
+  .gc_layout = glw_view_layout,
   .gc_render = glw_view_render,
   .gc_dtor = glw_view_dtor,
   .gc_signal_handler = glw_view_callback,

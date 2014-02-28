@@ -69,13 +69,45 @@ update_constraints(glw_expander_t *exp)
 /**
  *
  */
+static void
+glw_expander_layout(glw_t *w, const glw_rctx_t *rc)
+{
+  glw_expander_t *exp = (glw_expander_t *)w;
+  glw_t *c;
+  glw_rctx_t rc0;
+
+  if((c = TAILQ_FIRST(&w->glw_childs)) == NULL)
+    return;
+  rc0 = *rc;
+
+  if(exp->w.glw_class == &glw_expander_x) {
+    rc0.rc_width = c->glw_req_size_x;
+
+    if(rc0.rc_width == 0)
+      rc0.rc_width = exp->last;
+    else
+      exp->last = rc0.rc_width;
+
+  } else {
+    rc0.rc_height = c->glw_req_size_y;
+
+    if(rc0.rc_height == 0)
+      rc0.rc_height = exp->last;
+    else
+      exp->last = rc0.rc_height;
+  }
+  glw_layout0(c, &rc0);
+}
+
+
+
+/**
+ *
+ */
 static int
 glw_expander_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   glw_expander_t *exp = (glw_expander_t *)w;
-  glw_rctx_t *rc = extra;
-  glw_t *c;
-  glw_rctx_t rc0;
 
   switch(signal) {
   default:
@@ -85,29 +117,6 @@ glw_expander_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     update_constraints(exp);
     return 1;
 
-  case GLW_SIGNAL_LAYOUT:
-    if((c = TAILQ_FIRST(&w->glw_childs)) == NULL)
-      break;
-    rc0 = *rc;
-
-    if(exp->w.glw_class == &glw_expander_x) {
-      rc0.rc_width = c->glw_req_size_x;
-
-      if(rc0.rc_width == 0)
-	rc0.rc_width = exp->last;
-      else
-	exp->last = rc0.rc_width;
-
-    } else {
-      rc0.rc_height = c->glw_req_size_y;
-
-      if(rc0.rc_height == 0)
-	rc0.rc_height = exp->last;
-      else
-	exp->last = rc0.rc_height;
-    }
-    glw_layout0(c, &rc0);
-    break;
   }
   return 0;
 }
@@ -174,6 +183,7 @@ glw_expander_set_float(glw_t *w, glw_attribute_t attrib, float value)
 static glw_class_t glw_expander_x = {
   .gc_name = "expander_x",
   .gc_instance_size = sizeof(glw_expander_t),
+  .gc_layout = glw_expander_layout,
   .gc_render = glw_expander_render,
   .gc_set_float = glw_expander_set_float,
   .gc_ctor = glw_expander_ctor,
@@ -183,6 +193,7 @@ static glw_class_t glw_expander_x = {
 static glw_class_t glw_expander_y = {
   .gc_name = "expander_y",
   .gc_instance_size = sizeof(glw_expander_t),
+  .gc_layout = glw_expander_layout,
   .gc_render = glw_expander_render,
   .gc_set_float = glw_expander_set_float,
   .gc_signal_handler = glw_expander_callback,

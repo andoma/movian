@@ -85,10 +85,13 @@ glw_slideshow_render(glw_t *w, const glw_rctx_t *rc)
  *
  */
 static void
-glw_slideshow_layout(glw_slideshow_t *s, glw_rctx_t *rc)
+glw_slideshow_layout(glw_t *w, const glw_rctx_t *rc)
 {
+  glw_slideshow_t *s = (glw_slideshow_t *)w;
   glw_t *c, *p, *n;
   float delta;
+
+  glw_reset_screensaver(w->glw_root);
 
   delta = s->w.glw_root->gr_frameduration / (1000000.0 * s->transition_time);
   if(s->time == 0) {
@@ -204,6 +207,7 @@ glw_slideshow_event(glw_slideshow_t *s, event_t *e)
 }
 
 
+
 /**
  *
  */
@@ -214,11 +218,6 @@ glw_slideshow_callback(glw_t *w, void *opaque, glw_signal_t signal,
   glw_slideshow_t *s = (glw_slideshow_t *)w;
 
   switch(signal) {
-  case GLW_SIGNAL_LAYOUT:
-    glw_reset_screensaver(w->glw_root);
-    glw_slideshow_layout(s, extra);
-    return 0;
-
   case GLW_SIGNAL_EVENT_BUBBLE:
     return glw_slideshow_event(s, extra);
 
@@ -299,6 +298,7 @@ static glw_class_t glw_slideshow = {
   .gc_ctor = glw_slideshow_ctor,
   .gc_set_float = glw_slideshow_set_float,
   .gc_set_roots = glw_slideshow_set_roots,
+  .gc_layout = glw_slideshow_layout,
   .gc_render = glw_slideshow_render,
   .gc_signal_handler = glw_slideshow_callback,
 };

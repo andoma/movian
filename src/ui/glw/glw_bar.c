@@ -74,8 +74,8 @@ glw_bar_render(glw_t *w, const glw_rctx_t *rc)
 /**
  *
  */
-static void 
-glw_bar_layout(glw_t *W, glw_rctx_t *rc)
+static void
+glw_bar_layout(glw_t *W, const glw_rctx_t *rc)
 {
   glw_bar_t *gb = (void *)W;
   float r, g, b, x;
@@ -123,27 +123,9 @@ glw_bar_layout(glw_t *W, glw_rctx_t *rc)
  *
  */
 static int
-glw_bar_callback(glw_t *w, void *opaque, glw_signal_t signal,
-		      void *extra)
-{
-  switch(signal) {
-  default:
-    break;
-  case GLW_SIGNAL_LAYOUT:
-    glw_bar_layout(w, extra);
-    break;
-  }
-  return 0;
-}
-
-/**
- *
- */
-static int
 glw_bar_set_float(glw_t *w, glw_attribute_t attrib, float value)
 {
   glw_bar_t *gb = (glw_bar_t *)w;
-
 
   switch(attrib) {
   case GLW_ATTRIB_FILL:
@@ -200,9 +182,9 @@ static glw_class_t glw_bar = {
   .gc_render = glw_bar_render,
   .gc_set_float = glw_bar_set_float,
   .gc_dtor = glw_bar_dtor,
-  .gc_signal_handler = glw_bar_callback,
   .gc_set_color1 = set_color1,
   .gc_set_color2 = set_color2,
+  .gc_layout = glw_bar_layout,
 };
 
 GLW_REGISTER_CLASS(glw_bar);

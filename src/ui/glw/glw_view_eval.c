@@ -978,7 +978,7 @@ static int
 eval_dynamic_every_frame_sig(glw_t *w, void *opaque, 
 			     glw_signal_t signal, void *extra)
 {
-  if(signal == GLW_SIGNAL_LAYOUT)
+  if(signal == GLW_SIGNAL_LAYOUTED)
     eval_dynamic(w, opaque, extra, NULL, NULL, NULL);
   return 0;
 }

@@ -48,6 +48,30 @@ typedef struct {
 } glw_displacement_t;
 
 
+/**
+ *
+ */
+static void
+glw_displacement_layout(glw_t *w, const glw_rctx_t *rc)
+{
+  glw_displacement_t *gd = (glw_displacement_t *)w;
+  glw_rctx_t rc0;
+  glw_t *c;
+
+  if((c = TAILQ_FIRST(&w->glw_childs)) == NULL)
+    return;
+
+  int width  = rc->rc_width - gd->gd_padding_left - gd->gd_padding_right;
+  int height = rc->rc_height - gd->gd_padding_top - gd->gd_padding_bottom;
+
+  rc0 = *rc;
+  rc0.rc_width  = width;
+  rc0.rc_height = height;
+
+  glw_layout0(c, &rc0);
+}
+
+
 
 /**
  *
@@ -56,34 +80,15 @@ static int
 glw_displacement_callback(glw_t *w, void *opaque, 
 			  glw_signal_t signal, void *extra)
 {
-  glw_displacement_t *gd = (glw_displacement_t *)w;
-  glw_t *c;
-  glw_rctx_t *rc, rc0;
-
   switch(signal) {
   default:
-    break;
-
-  case GLW_SIGNAL_LAYOUT:
-    if((c = TAILQ_FIRST(&w->glw_childs)) == NULL)
-      break;
-
-    rc = extra;
-    int width  = rc->rc_width - gd->gd_padding_left - gd->gd_padding_right;
-    int height = rc->rc_height - gd->gd_padding_top - gd->gd_padding_bottom;
-
-    rc0 = *rc;
-    rc0.rc_width  = width;
-    rc0.rc_height = height;
-    
-    glw_layout0(c, &rc0);
     break;
 
  case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
     glw_copy_constraints(w, extra);
     return 1;
-
   }
+
   return 0;
 }
 
@@ -213,6 +218,7 @@ static glw_class_t glw_displacement = {
   .gc_name = "displacement",
   .gc_instance_size = sizeof(glw_displacement_t),
   .gc_ctor = glw_displacement_ctor,
+  .gc_layout = glw_displacement_layout,
   .gc_render = glw_displacement_render,
   .gc_signal_handler = glw_displacement_callback,
   .gc_set_translation = set_translation,

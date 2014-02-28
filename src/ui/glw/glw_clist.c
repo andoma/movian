@@ -59,10 +59,11 @@ typedef struct glw_clist {
 /**
  *
  */
-static int
-layout(glw_clist_t *l, glw_rctx_t *rc)
+static void
+glw_clist_layout(glw_t *w, const glw_rctx_t *rc)
 {
-  glw_t *c, *w = &l->w, *n;
+  glw_clist_t *l = (glw_clist_t *)w;
+  glw_t *c, *n;
   int ypos = 0;
   glw_rctx_t rc0 = *rc;
   float IH = 1.0f / rc->rc_height;
@@ -123,8 +124,6 @@ layout(glw_clist_t *l, glw_rctx_t *rc)
 
     glw_layout0(c, &rc0);
   }
-
-  return 0;
 }
 
 
@@ -214,10 +213,6 @@ signal_handler(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   case GLW_SIGNAL_POINTER_EVENT:
     break;
 
-  case GLW_SIGNAL_LAYOUT:
-    layout((glw_clist_t *)w, extra);
-    break;
-
   case GLW_SIGNAL_EVENT_BUBBLE:
     w->glw_flags &= ~GLW_FLOATING_FOCUS;
     break;
@@ -302,7 +297,7 @@ static glw_class_t glw_clist = {
   .gc_child_orientation = GLW_ORIENTATION_VERTICAL,
   .gc_nav_descend_mode = GLW_NAV_DESCEND_FOCUSED,
   .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION_WITH_PAGING,
-
+  .gc_layout = glw_clist_layout,
   .gc_render = render,
   .gc_ctor = ctor,
   .gc_signal_handler = signal_handler,

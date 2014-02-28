@@ -119,34 +119,41 @@ deck_select_child(glw_t *w, glw_t *c, prop_t *origin)
 /**
  *
  */
+static void
+glw_deck_layout(glw_t *w, const glw_rctx_t *rc)
+{
+  glw_deck_t *gd = (glw_deck_t *)w;
+  glw_t *c;
+
+  gd->delta = 1 / (gd->time * (1000000 / w->glw_root->gr_frameduration));
+
+  if(w->glw_alpha < 0.01)
+    return;
+
+  gd->v = GLW_MIN(gd->v + gd->delta, 1.0);
+  if(gd->v == 1)
+    gd->prev = NULL;
+
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+    if(c == w->glw_selected || c == gd->prev || 
+       c->glw_flags2 & GLW2_ALWAYS_LAYOUT)
+      glw_layout0(c, rc);
+  }
+}
+
+
+/**
+ *
+ */
 static int
 glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   glw_deck_t *gd = (glw_deck_t *)w;
-  glw_rctx_t *rc = extra;
   glw_t *c, *n;
   event_t *e;
 
   switch(signal) {
   default:
-    break;
-
-  case GLW_SIGNAL_LAYOUT:
-    gd->delta = 1 / (gd->time * (1000000 / w->glw_root->gr_frameduration));
-
-
-    if(w->glw_alpha < 0.01)
-      break;
-
-    gd->v = GLW_MIN(gd->v + gd->delta, 1.0);
-    if(gd->v == 1)
-      gd->prev = NULL;
-
-    TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
-      if(c == w->glw_selected || c == gd->prev || 
-	 c->glw_flags2 & GLW2_ALWAYS_LAYOUT)
-	glw_layout0(c, rc);
-    }
     break;
 
   case GLW_SIGNAL_EVENT:
@@ -343,6 +350,7 @@ static glw_class_t glw_deck = {
   .gc_instance_size = sizeof(glw_deck_t),
   .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_nav_descend_mode = GLW_NAV_DESCEND_SELECTED,
+  .gc_layout = glw_deck_layout,
   .gc_render = glw_deck_render,
   .gc_set_int = glw_deck_set_int,
   .gc_set_float = glw_deck_set_float,

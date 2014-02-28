@@ -146,10 +146,10 @@ glw_fx_texrot_render_internal(glw_root_t *gr, glw_rctx_t *rc,
 /**
  *
  */
-static void 
-glw_fx_texrot_layout(glw_t *w, glw_rctx_t *rc)
+static void
+glw_fx_texrot_layout(glw_t *w, const glw_rctx_t *rc)
 {
-  glw_fx_texrot_t *fx = (void *)w;
+  glw_fx_texrot_t *fx = (glw_fx_texrot_t *)w;
   glw_loadable_texture_t *glt = fx->fx_tex;
   glw_root_t *gr = w->glw_root;
   glw_rctx_t rc0;
@@ -225,22 +225,6 @@ glw_fx_texrot_layout(glw_t *w, glw_rctx_t *rc)
   glw_rtt_restore(gr, &fx->fx_rtt);
 }
 
-/**
- *
- */
-static int
-glw_fx_texrot_callback(glw_t *w, void *opaque, glw_signal_t signal,
-		    void *extra)
-{
-  switch(signal) {
-  default:
-    break;
-  case GLW_SIGNAL_LAYOUT:
-    glw_fx_texrot_layout(w, extra);
-    break;
-  }
-  return 0;
-}
 
 
 /**
@@ -296,9 +280,9 @@ static glw_class_t glw_fx_texrot = {
   .gc_name = "fx_texrot",
   .gc_instance_size = sizeof(glw_fx_texrot_t),
   .gc_ctor = glw_fx_texrot_ctor,
+  .gc_layout = glw_fx_texrot_layout,
   .gc_render = glw_fx_texrot_render,
   .gc_dtor = glw_fx_texrot_dtor,
-  .gc_signal_handler = glw_fx_texrot_callback,
   .gc_set_source = set_source,
 };
 

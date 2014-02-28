@@ -28,31 +28,34 @@ typedef struct glw_detachable {
 
 } glw_detachable_t;
 
+
+/**
+ *
+ */
+static void
+glw_detachable_layout(glw_t *w, const glw_rctx_t *rc)
+{
+  glw_t *c = TAILQ_FIRST(&w->glw_childs);
+  if(c != NULL)
+    glw_layout0(c, rc);
+}
+
+
 /**
  *
  */
 static int
 glw_detachable_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
-  glw_t *c;
-  glw_rctx_t *rc;
-
   switch(signal) {
   default:
-    break;
-
-  case GLW_SIGNAL_LAYOUT:
-    rc = extra;
-    c = TAILQ_FIRST(&w->glw_childs);
-    if(c != NULL)
-      glw_layout0(c, rc);
     break;
 
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
     glw_copy_constraints(w, extra);
     return 1;
-
   }
+
   return 0;
 }
 
@@ -110,6 +113,7 @@ glw_detach_get_rctx(glw_t *w, struct glw_rctx *rc)
 static glw_class_t glw_detachable = {
   .gc_name = "detachable",
   .gc_instance_size = sizeof(glw_detachable_t),
+  .gc_layout = glw_detachable_layout,
   .gc_render = glw_detachable_render,
   .gc_signal_handler = glw_detachable_callback,
   .gc_detach_control = glw_detach_control,

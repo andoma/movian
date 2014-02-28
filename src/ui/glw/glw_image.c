@@ -355,8 +355,8 @@ glw_image_render(glw_t *w, const glw_rctx_t *rc)
  *
  */
 static void
-glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi, 
-			    glw_loadable_texture_t *glt)
+glw_image_layout_tesselated(glw_root_t *gr, const glw_rctx_t *rc,
+                            glw_image_t *gi, glw_loadable_texture_t *glt)
 {
   float tex[4][2];
   float vex[4][2];
@@ -527,9 +527,9 @@ settexcoord(glw_renderer_t *gr, int c, float s0, float t0,
  *
  */
 static void
-glw_image_layout_alpha_edges(glw_root_t *gr, glw_rctx_t *rc, 
-			     glw_image_t *gi, 
-			     const glw_loadable_texture_t *glt)
+glw_image_layout_alpha_edges(glw_root_t *gr, const glw_rctx_t *rc,
+			     glw_image_t *gi,
+                             const glw_loadable_texture_t *glt)
 {
   float tex[4][2];
   float vex[4][2];
@@ -571,7 +571,7 @@ glw_image_layout_alpha_edges(glw_root_t *gr, glw_rctx_t *rc,
  *
  */
 static void
-glw_image_layout_normal(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi, 
+glw_image_layout_normal(glw_root_t *gr, const glw_rctx_t *rc, glw_image_t *gi,
 			glw_loadable_texture_t *glt)
 {
   int m = glt->glt_margin;
@@ -599,8 +599,8 @@ glw_image_layout_normal(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
  *
  */
 static void
-glw_image_layout_repeated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi, 
-			  glw_loadable_texture_t *glt)
+glw_image_layout_repeated(glw_root_t *gr, const glw_rctx_t *rc,
+                          glw_image_t *gi, glw_loadable_texture_t *glt)
 {
   float xs = gr->gr_normalized_texture_coords ? glt->glt_s : glt->glt_xs;
   float ys = gr->gr_normalized_texture_coords ? glt->glt_t : glt->glt_ys;
@@ -760,8 +760,8 @@ glw_image_tex_load(glw_image_t *gi, rstr_t *url, int width, int height)
 /**
  *
  */
-static void 
-glw_image_layout(glw_t *w, glw_rctx_t *rc)
+static void
+glw_image_layout(glw_t *w, const glw_rctx_t *rc)
 {
   glw_image_t *gi = (void *)w;
   glw_root_t *gr = w->glw_root;
@@ -1022,9 +1022,6 @@ glw_image_callback(glw_t *w, void *opaque, glw_signal_t signal,
   glw_t *c;
   switch(signal) {
   default:
-    break;
-  case GLW_SIGNAL_LAYOUT:
-    glw_image_layout(w, extra);
     break;
   case GLW_SIGNAL_EVENT:
     TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
@@ -1519,6 +1516,7 @@ glw_image_get_details(glw_t *w, char *path, size_t pathlen, float *alpha)
 static glw_class_t glw_image = {
   .gc_name = "image",
   .gc_instance_size = sizeof(glw_image_t),
+  .gc_layout = glw_image_layout,
   .gc_render = glw_image_render,
   .gc_dtor = glw_image_dtor,
   .gc_ctor = glw_image_ctor,
@@ -1547,6 +1545,7 @@ GLW_REGISTER_CLASS(glw_image);
 static glw_class_t glw_icon = {
   .gc_name = "icon",
   .gc_instance_size = sizeof(glw_image_t),
+  .gc_layout = glw_image_layout,
   .gc_render = glw_image_render,
   .gc_ctor = glw_icon_ctor,
   .gc_dtor = glw_icon_dtor,
@@ -1576,6 +1575,7 @@ GLW_REGISTER_CLASS(glw_icon);
 static glw_class_t glw_backdrop = {
   .gc_name = "backdrop",
   .gc_instance_size = sizeof(glw_image_t),
+  .gc_layout = glw_image_layout,
   .gc_render = glw_image_render,
   .gc_ctor = glw_image_ctor,
   .gc_dtor = glw_image_dtor,
@@ -1606,6 +1606,7 @@ GLW_REGISTER_CLASS(glw_backdrop);
 static glw_class_t glw_frontdrop = {
   .gc_name = "frontdrop",
   .gc_instance_size = sizeof(glw_image_t),
+  .gc_layout = glw_image_layout,
   .gc_render = glw_image_render,
   .gc_ctor = glw_image_ctor,
   .gc_dtor = glw_image_dtor,
@@ -1636,6 +1637,7 @@ GLW_REGISTER_CLASS(glw_frontdrop);
 static glw_class_t glw_repeatedimage = {
   .gc_name = "repeatedimage",
   .gc_instance_size = sizeof(glw_image_t),
+  .gc_layout = glw_image_layout,
   .gc_render = glw_image_render,
   .gc_ctor = glw_image_ctor,
   .gc_dtor = glw_image_dtor,
