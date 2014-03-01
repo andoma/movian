@@ -121,7 +121,7 @@ kvstore_init(void)
 
   //  unlink(buf);
 
-  kvstore_pool = db_pool_create(buf, 2);
+  kvstore_pool = db_pool_create(buf, 4);
   db = kvstore_get();
   if(db == NULL)
     return;
