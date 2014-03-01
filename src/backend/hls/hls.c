@@ -1216,6 +1216,8 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
       }
 
       mb->mb_keyframe = !!(pkt.flags & AV_PKT_FLAG_KEY);
+      av_free_packet(&pkt);
+
     }
 
     if(mb == MB_NYA || mb == NULL) {
