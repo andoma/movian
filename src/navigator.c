@@ -617,6 +617,43 @@ nav_page_setup_prop(nav_page_t *np, const char *view, const char *how)
 }
 
 
+
+typedef struct nav_open_backend_aux {
+  prop_t *p;
+  char *url;
+} nav_open_backend_aux_t;
+
+/**
+ *
+ */
+static void *
+nav_open_thread(void *aux)
+{
+  nav_open_backend_aux_t *noba = aux;
+
+  if(backend_open(noba->p, noba->url, 0))
+    nav_open_errorf(noba->p, _("No handler for URL"));
+
+  free(noba->url);
+  prop_ref_dec(noba->p);
+  free(noba);
+  return NULL;
+}
+
+/**
+ *
+ */
+static void
+nav_open_backend(nav_page_t *np)
+{
+  nav_open_backend_aux_t *noba = malloc(sizeof(nav_open_backend_aux_t));
+  noba->p = prop_ref_inc(np->np_prop_root);
+  noba->url = strdup(np->np_url);
+
+  hts_thread_create_detached("navopen", nav_open_thread, noba,
+			     THREAD_PRIO_MODEL);
+}
+
 /**
  *
  */
@@ -638,9 +675,8 @@ nav_open0(navigator_t *nav, const char *url, const char *view, prop_t *origin,
   nav_page_setup_prop(np, view, how);
 
   nav_insert_page(nav, np, origin);
+  nav_open_backend(np);
 
-  if(backend_open(np->np_prop_root, url, 0))
-    nav_open_errorf(np->np_prop_root, _("No handler for URL"));
 }
 
 
@@ -715,8 +751,7 @@ nav_reload_current(navigator_t *nav)
 
   nav_select(nav, np, NULL);
     
-  if(backend_open(np->np_prop_root, np->np_url, 0))
-    nav_open_errorf(np->np_prop_root, _("No handler for URL"));
+  nav_open_backend(np);
 }
 
 
@@ -747,8 +782,7 @@ page_redirect(nav_page_t *np, const char *url)
     nav_select(nav, np, NULL);
   prop_destroy(p);
 
-  if(backend_open(np->np_prop_root, url, 0))
-    nav_open_errorf(np->np_prop_root, _("No handler for URL"));
+  nav_open_backend(np);
 }
 
 

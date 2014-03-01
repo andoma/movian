@@ -237,51 +237,22 @@ file_open_file(prop_t *page, const char *url, fa_stat_t *fs)
 }
 
 
-typedef struct fa_open_aux {
-  prop_t *page;
-  char *url;
-} fa_open_aux_t;
-
-/**
- *
- */
-static void *
-fa_open_thread(void *aux)
-{
-  fa_open_aux_t * foa = aux;
-  struct fa_stat fs;
-  char errbuf[200];
-
-  if(fa_stat(foa->url, &fs, errbuf, sizeof(errbuf))) {
-    nav_open_error(foa->page, errbuf);
-  } else if(fs.fs_type == CONTENT_DIR) {
-    file_open_dir(foa->page, foa->url, fs.fs_mtime);
-  } else {
-    file_open_file(foa->page, foa->url, &fs);
-  }
-
-  prop_ref_dec(foa->page);
-  free(foa->url);
-  free(foa);
-  return 0;
-}
-
-
 /**
  *
  */
 static int
 be_file_open(prop_t *page, const char *url, int sync)
 {
-  fa_open_aux_t *foa = malloc(sizeof(fa_open_aux_t));
-  foa->page = prop_ref_inc(page);
-  foa->url = strdup(url);
+  struct fa_stat fs;
+  char errbuf[200];
 
-  prop_t *m = prop_create(page, "model");
-  prop_set(m, "loading", PROP_SET_INT, 1);
-
-  hts_thread_create_detached("fa_open", fa_open_thread, foa,
-			     THREAD_PRIO_MODEL);
+  if(fa_stat(url, &fs, errbuf, sizeof(errbuf))) {
+    nav_open_error(page, errbuf);
+  } else if(fs.fs_type == CONTENT_DIR) {
+    file_open_dir(page, url, fs.fs_mtime);
+  } else {
+    file_open_file(page, url, &fs);
+  }
   return 0;
 }
 

@@ -820,21 +820,21 @@ init_model_props(js_model_t *jm, prop_t *model)
 {
   struct prop_nf *pnf;
 
-  jm->jm_nodes   = prop_ref_inc(prop_create(model, "items"));
-  jm->jm_actions = prop_ref_inc(prop_create(model, "actions"));
-  jm->jm_type    = prop_ref_inc(prop_create(model, "type"));
-  jm->jm_error   = prop_ref_inc(prop_create(model, "error"));
-  jm->jm_contents= prop_ref_inc(prop_create(model, "contents"));
-  jm->jm_entries = prop_ref_inc(prop_create(model, "entries"));
-  jm->jm_metadata= prop_ref_inc(prop_create(model, "metadata"));
-  jm->jm_options = prop_ref_inc(prop_create(model, "options"));
+  jm->jm_nodes   = prop_create_r(model, "items");
+  jm->jm_actions = prop_create_r(model, "actions");
+  jm->jm_type    = prop_create_r(model, "type");
+  jm->jm_error   = prop_create_r(model, "error");
+  jm->jm_contents= prop_create_r(model, "contents");
+  jm->jm_entries = prop_create_r(model, "entries");
+  jm->jm_metadata= prop_create_r(model, "metadata");
+  jm->jm_options = prop_create_r(model, "options");
 
   pnf = prop_nf_create(prop_create(model, "nodes"),
 		       jm->jm_nodes,
 		       prop_create(model, "filter"),
 		       PROP_NF_AUTODESTROY);
 
-  prop_set_int(prop_create(model, "canFilter"), 1);
+  prop_set(model, "canFilter", PROP_SET_INT, 1);
 
   prop_nf_release(pnf);
 }
@@ -1537,22 +1537,24 @@ js_backend_open(prop_t *page, const char *url, int sync)
       strvec_addpn(&jm->jm_args, url + matches[i].rm_so, 
 		   matches[i].rm_eo - matches[i].rm_so);
   
-  model = prop_create(page, "model");
+  model = prop_create_r(page, "model");
 
   init_model_props(jm, model);
 
-  jm->jm_source    = prop_ref_inc(prop_create(page, "source"));
-  jm->jm_eventsink = prop_ref_inc(prop_create(page, "eventSink"));
-  jm->jm_loading   = prop_ref_inc(prop_create(model, "loading"));
+  jm->jm_source    = prop_create_r(page, "source");
+  jm->jm_eventsink = prop_create_r(page, "eventSink");
+  jm->jm_loading   = prop_create_r(model, "loading");
   jm->jm_root      = prop_ref_inc(page);
   jm->jm_url       = strdup(url);
 
+  prop_ref_dec(model);
+
   hts_mutex_unlock(&js_page_mutex);
-  if(sync) {
-    js_open(jm);
-  } else {
-    model_launch(jm);
+  if(!sync) {
+    jm->jm_pc = prop_courier_create_waitable();
+    prop_set_int(jm->jm_loading, 1);
   }
+  js_open(jm);
   return 0;
 }
 
