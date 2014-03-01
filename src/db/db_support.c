@@ -677,7 +677,7 @@ db_init(void)
 
   sqlite3_initialize();
 #ifdef PS3
-  sqlite3_soft_heap_limit(2000000);
+  sqlite3_soft_heap_limit(10000000);
 #endif
 #if 0
   callout_arm(&memlogger, memlogger_fn, NULL, 1);
