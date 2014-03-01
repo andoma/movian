@@ -122,10 +122,3 @@ if enabled release; then
 fi
 
 finalize
-
-echo
-echo "NOTE: Support for Raspberry Pi is still experimental"
-echo "NOTE: Audio/Video playback does not work yet"
-echo "NOTE: A lot of other things are probably broken as well"
-echo "NOTE: You have been warned"
-echo
