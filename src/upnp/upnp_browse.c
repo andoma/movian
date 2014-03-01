@@ -222,9 +222,10 @@ add_item(htsmsg_t *item, prop_t *root, const char *trackid, prop_t **trackptr,
     return;
 
   url = htsmsg_get_str_multi(item, "res", "cdata", NULL);
+  if(url == NULL)
+    return;
 
   prop_t *c = prop_create_root(NULL);
-		  
 
   prop_t *m = prop_create(c, "metadata");
   item_set_duration(m, item);
