@@ -357,7 +357,7 @@ open_stream(icecast_play_context_t *ipc)
   const char *ct = http_header_get(&ipc->ipc_response_headers, "content-type");
 
   if((fctx = fa_libav_open_format(avio, url, errbuf, sizeof(errbuf), ct,
-                                  4096, 0)) == NULL) {
+                                  4096, 0, -1)) == NULL) {
     TRACE(TRACE_ERROR, "Radio", "Unable to open %s -- %s",
           ipc->ipc_url, errbuf);
     fa_libav_close(avio);

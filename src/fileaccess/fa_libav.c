@@ -117,7 +117,8 @@ static const struct {
 AVFormatContext *
 fa_libav_open_format(AVIOContext *avio, const char *url,
 		     char *errbuf, size_t errlen, const char *mimetype,
-                     int probe_size, int max_analyze_duration)
+                     int probe_size, int max_analyze_duration,
+		     int fps_probe_frames)
 {
   AVInputFormat *fmt = NULL;
   AVFormatContext *fctx;
@@ -160,11 +161,14 @@ fa_libav_open_format(AVIOContext *avio, const char *url,
             "Unable to open using mimetype %s, retrying with probe",
             mimetype);
       return fa_libav_open_format(avio, url, errbuf, errlen, NULL, probe_size,
-                                  max_analyze_duration);
+                                  max_analyze_duration, fps_probe_frames);
     }
     return fa_libav_open_error(errbuf, errlen,
 			       "Unable to open file as input format", err);
   }
+
+  if(fps_probe_frames != -1)
+    fctx->fps_probe_size = fps_probe_frames;
 
   if(avformat_find_stream_info(fctx, NULL) < 0) {
     avformat_close_input(&fctx);
@@ -173,7 +177,7 @@ fa_libav_open_format(AVIOContext *avio, const char *url,
             "Unable to find stream info using mimetype %s, retrying with probe",
             mimetype);
       return fa_libav_open_format(avio, url, errbuf, errlen, NULL, probe_size,
-                                  max_analyze_duration);
+                                  max_analyze_duration, fps_probe_frames);
     }
     return fa_libav_open_error(errbuf, errlen,
 			       "Unable to handle file contents", err);
