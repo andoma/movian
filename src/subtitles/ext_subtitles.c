@@ -736,8 +736,8 @@ subtitles_create(const char *path, buf_t *buf, AVRational *fr)
       s = load_tmp(path, b0, len);
       trim_stop = 1;
     }
+    buf_release(buf);
   }
-  buf_release(buf);
 
   if(s)
     es_sort(s, trim_stop);
