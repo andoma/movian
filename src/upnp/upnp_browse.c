@@ -1002,30 +1002,6 @@ browse_self(upnp_browse_t *ub, int sync)
   htsmsg_destroy(out);
 }
 
-
-
-/**
- *
- */
-static void *
-upnp_browse_thread(void *aux)
-{
-  upnp_browse_t *ub = aux;
-
-  if(upnp_browse_resolve(ub)) {
-    ub_destroy(ub);
-    return NULL;
-  }
-
-  // Check what we are browsing
-  browse_self(ub, 0);
-
-
-  ub_destroy(ub);
-  return NULL;
-}
-
-
 /**
  *
  */
@@ -1058,15 +1034,9 @@ be_upnp_browse(prop_t *page, const char *url, int sync)
 
   ub->ub_title = prop_create_r(metadata, "title");
 
-  if(sync) {
-
-    if(!upnp_browse_resolve(ub))
-      browse_self(ub, 1);
-    ub_destroy(ub);
-
-  } else {
-    hts_thread_create_detached("upnpbrowse", upnp_browse_thread, ub,
-                               THREAD_PRIO_MODEL);
-  }
+  if(!upnp_browse_resolve(ub))
+    browse_self(ub, sync);
+  
+  ub_destroy(ub);
   return 0;
 }
