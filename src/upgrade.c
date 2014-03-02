@@ -105,6 +105,108 @@ static htsmsg_t *stos_artifacts;
 
 
 /**
+ * 
+ */
+static buf_t *
+patched_config_file(buf_t *upd, char *upd_begin, char *upd_end,
+		    const char *fname)
+{
+  char *cur_data = NULL;
+  int   cur_len = 0;
+
+  // Load currently installed file
+
+  int fd = open(fname, O_RDONLY);
+  if(fd == -1) {
+    TRACE(TRACE_DEBUG, "upgrade",
+	  "Partial update ignored, unable to open %s -- %s",
+	  fname, strerror(errno));
+    return upd;
+  }
+  struct stat st;
+  if(fstat(fd, &st)) {
+    close(fd);
+    return upd;
+  }
+
+  cur_len  = st.st_size;
+  cur_data = malloc(cur_len);
+
+  if(read(fd, cur_data, cur_len) != cur_len) {
+    TRACE(TRACE_DEBUG, "upgrade",
+	  "Partial update ignored, read failed from %s -- %s",
+	  fname, strerror(errno));
+    free(cur_data);
+    close(fd);
+    return upd;
+  }
+  close(fd);
+
+
+  // Search for markers in currently installed file
+
+  char *cur_begin =
+    find_str(cur_data, cur_len, "# BEGIN SHOWTIME CONFIG\n");
+
+  if(cur_begin == NULL) {
+    TRACE(TRACE_DEBUG, "upgrade",
+	  "Partial update ignored, no BEGIN marker");
+    goto fail;
+  }
+
+  char *cur_end =
+    find_str(cur_data, cur_len, "# END SHOWTIME CONFIG\n");
+
+  if(cur_end == NULL) {
+    TRACE(TRACE_DEBUG, "upgrade",
+	  "Partial update ignored, no END marker");
+    goto fail;
+  }
+
+ 
+  if(cur_end < cur_begin) {
+    TRACE(TRACE_DEBUG, "upgrade",
+	  "Partial update ignored, END marker before BEGIN marker");
+    goto fail;
+  }
+
+  char *cur_eof = cur_data + cur_len;
+
+  /**
+   * Ok, so new file will consist of
+   *   seg1 cur_data  -> cur_begin
+   *   seg2 upd_begin -> upd_end
+   *   seg3 cur_end   -> cur_eof
+   */
+
+  const int seg1 = (cur_begin - cur_data);
+  const int seg2 = (upd_end   - upd_begin);
+  const int seg3 = (cur_eof   - cur_end);
+
+  assert(seg1 >= 0);
+  assert(seg2 >= 0);
+  assert(seg3 >= 0);
+
+  int new_size = seg1 + seg2 + seg3;
+  buf_t *n = buf_create(new_size);
+
+  char *out = buf_str(n);
+  memcpy(out,               cur_data,  seg1);
+  memcpy(out + seg1,        upd_begin, seg2);
+  memcpy(out + seg1 + seg2, cur_end,   seg3);
+  
+  free(cur_data);
+
+  buf_release(upd);
+  return n;
+
+ fail:
+  free(cur_data);
+  return upd;
+}
+
+
+/**
  *
  */
 static void
@@ -141,7 +243,8 @@ download_callback(void *opaque, int loaded, int total)
  */
 static int
 upgrade_file(int accept_patch, const char *fname, const char *url,
-	     int size, const uint8_t *expected_digest, const char *task)
+	     int size, const uint8_t *expected_digest, const char *task,
+	     int check_partial_update)
 {
   uint8_t digest[20];
   char digeststr[41];
@@ -285,6 +388,21 @@ upgrade_file(int accept_patch, const char *fname, const char *url,
 
   prop_set(upgrade_root, "size", PROP_SET_INT, b->b_size);
   prop_set_float(upgrade_progress, 0);
+
+  if(check_partial_update) {
+    char *new_begin =
+      find_str(buf_str(b), buf_len(b), "# BEGIN SHOWTIME CONFIG\n");
+
+    char *new_end =
+      find_str(buf_str(b), buf_len(b), "# END SHOWTIME CONFIG\n");
+
+    if(new_begin && new_end > new_begin) {
+      TRACE(TRACE_DEBUG, "upgrade",
+	    "Attempting partial rewrite of %s", fname);
+      b = patched_config_file(b, new_begin, new_end, fname);
+    }
+  }
+
 
   const char *instpath;
 
@@ -702,7 +820,10 @@ stos_perform_upgrade(int accept_patch)
     TRACE(TRACE_DEBUG, "STOS", "Downloading %s (%s) to %s",
 	  dlurl, name, localfile);
 
-    if(upgrade_file(accept_patch, localfile, dlurl, dlsize, digest, n)) {
+    int check_partial_update = !strcmp(type, "txt");
+
+    if(upgrade_file(accept_patch, localfile, dlurl, dlsize, digest, n,
+		    check_partial_update)) {
       rval = 1;
       break;
     }
@@ -735,7 +856,7 @@ attempt_upgrade(int accept_patch)
 		  showtime_download_url,
 		  showtime_download_size,
 		  showtime_download_digest,
-		  "Showtime"))
+		  "Showtime", 0))
     return 1;
 
   TRACE(TRACE_INFO, "upgrade", "All done, restarting");
