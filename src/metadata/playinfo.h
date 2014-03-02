@@ -27,7 +27,8 @@ struct prop;
 
 void playinfo_register_play(const char *url, int inc);
 
-void playinfo_set_restartpos(const char *url, int64_t pos_ms);
+void playinfo_set_restartpos(const char *url, int64_t pos_ms,
+			     int unimportant);
 
 int64_t playinfo_get_restartpos(const char *url);
 

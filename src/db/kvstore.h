@@ -50,6 +50,8 @@ int64_t kv_url_opt_get_int64(const char *url, int domain,
 #define KVSTORE_SET_VOID   3
 #define KVSTORE_SET_INT64  4
 
+#define KVSTORE_UNIMPORTANT 0x100
+
 void kv_url_opt_set(const char *url, int domain, const char *key,
 		    int type, ...);
 

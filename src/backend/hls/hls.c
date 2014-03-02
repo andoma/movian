@@ -1252,7 +1252,7 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 	if(!h->h_live &&
            (sec < restartpos_last || sec >= restartpos_last + 5)) {
 	  restartpos_last = sec;
-	  playinfo_set_restartpos(canonical_url, ets->ts / 1000);
+	  playinfo_set_restartpos(canonical_url, ets->ts / 1000, 1);
 	}
       }
 
@@ -1296,13 +1296,14 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
     int spp = mp->mp_duration ? mp->mp_seek_base * 100 / mp->mp_duration : 0;
 
     if(spp >= video_settings.played_threshold || event_is_type(e, EVENT_EOF)) {
-      playinfo_set_restartpos(canonical_url, -1);
+      playinfo_set_restartpos(canonical_url, -1, 0);
       playinfo_register_play(canonical_url, 1);
       TRACE(TRACE_DEBUG, "Video",
 	    "Playback reached %d%%, counting as played (%s)",
 	    spp, canonical_url);
     } else if(last_timestamp_presented != PTS_UNSET) {
-      playinfo_set_restartpos(canonical_url, last_timestamp_presented / 1000);
+      playinfo_set_restartpos(canonical_url, last_timestamp_presented / 1000,
+			      0);
     }
   }
   // Shutdown

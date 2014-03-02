@@ -211,7 +211,7 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
 
     if(sec != r->restartpos_last && r->can_seek) {
       r->restartpos_last = sec;
-      playinfo_set_restartpos(r->canonical_url, mp->mp_seek_base / 1000);
+      playinfo_set_restartpos(r->canonical_url, mp->mp_seek_base / 1000, 1);
     }
 
   } else if(r->can_seek && event_is_type(e, EVENT_SEEK)) {
@@ -750,7 +750,9 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
       TRACE(TRACE_DEBUG, "RTMP", "Playback reached %d%%, counting as played",
 	    p);
       playinfo_register_play(va.canonical_url, 1);
-      playinfo_set_restartpos(va.canonical_url, -1);
+      playinfo_set_restartpos(va.canonical_url, -1, 0);
+    } else {
+      playinfo_set_restartpos(va.canonical_url, mp->mp_seek_base / 1000, 0);
     }
   }
 

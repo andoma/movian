@@ -63,10 +63,12 @@ playinfo_register_play(const char *url, int inc)
  *
  */
 void
-playinfo_set_restartpos(const char *url, int64_t pos_ms)
+playinfo_set_restartpos(const char *url, int64_t pos_ms, int unimportant)
 {
+  int f = unimportant ? KVSTORE_UNIMPORTANT : 0;
   kv_url_opt_set(url, KVSTORE_DOMAIN_SYS, "restartposition",
-                 pos_ms <= 0 ? KVSTORE_SET_VOID : KVSTORE_SET_INT64, pos_ms);
+                 f | (pos_ms <= 0 ? KVSTORE_SET_VOID : KVSTORE_SET_INT64),
+		 pos_ms);
   update_by_url(url, 1);
 }
 

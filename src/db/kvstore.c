@@ -51,6 +51,7 @@ typedef struct kvstore_write {
   char *kw_key;
 
   int kw_type;
+  int kw_unimportant;
   union {
     char *kw_string;
     int kw_int;
@@ -789,11 +790,12 @@ kv_url_opt_set(const char *url, int domain, const char *key,
   kw.kw_url    = (char *)url;
   kw.kw_domain = domain;
   kw.kw_key    = (char *)key;
-  kw.kw_type   = type;
+  kw.kw_type   = type & 0xff;
+  kw.kw_unimportant = type & KVSTORE_UNIMPORTANT;
 
   va_start(ap, type);
 
-  switch(type) {
+  switch(kw.kw_type) {
   case KVSTORE_SET_INT:
     kw.kw_int = va_arg(ap, int);
     break;
@@ -817,6 +819,11 @@ kv_url_opt_set(const char *url, int domain, const char *key,
     if(!kv_write_xattr(&kw))
       return;
   }
+
+#ifdef STOS
+  if(kw.kw_unimportant)
+    return;
+#endif
 
   db = kvstore_get();
   if(db == NULL)
@@ -880,6 +887,11 @@ kvstore_deferred_flush(void)
       if(!kv_write_xattr(kw))
         continue;
     }
+
+#ifdef STOS
+    if(kw->kw_unimportant)
+      continue;
+#endif
 
     if(current_url == NULL || strcmp(kw->kw_url, current_url)) {
 
@@ -969,10 +981,11 @@ kv_url_opt_set_deferred(const char *url, int domain, const char *key,
       free(kw->kw_string);
   }
 
+  
+  kw->kw_type = type & 0xff;
+  kw->kw_unimportant = type & KVSTORE_UNIMPORTANT;
 
-  kw->kw_type = type;
-
-  switch(type) {
+  switch(kw->kw_type) {
   case KVSTORE_SET_INT:
     kw->kw_int = va_arg(ap, int);
     break;
