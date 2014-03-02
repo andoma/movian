@@ -126,4 +126,6 @@ char *lp_get(char **lp);
 
 #define LINEPARSE(out, src) for(char *lp = src, *out; (out = lp_get(&lp)) != NULL; )
 
+char *find_str(char *s, int len, const char *needle);
+
 #endif

@@ -592,33 +592,6 @@ nls_lang_metadata(const char *path, char *errbuf, size_t errlen,
 /**
  *
  */
-static char *
-find_str(char *s, int len, const char *needle)
-{
-  int nlen = strlen(needle);
-  if(len < nlen)
-    return NULL;
-
-  len -= nlen;
-  for(int i = 0; i < len; i++) {
-    int j;
-    for(j = 0; j < nlen; j++) {
-      if(s[i+j] != needle[j]) {
-        break;
-      }
-    }
-    if(j == nlen)
-      return s + i;
-  }
-  return NULL;
-}
-
-
-
-
-/**
- *
- */
 static htsmsg_t *
 decode_multipart(char *s, int len, const char *boundary0)
 {
