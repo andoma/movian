@@ -126,6 +126,8 @@ buf_t *bspatch(const u_char *old, ssize_t oldsize,
 	if((new=malloc(newsize+1))==NULL)
 		return NULL;
 
+	new[newsize] = 0;
+
 	oldpos=0;newpos=0;
 	while(newpos<newsize) {
 		/* Read control data */
