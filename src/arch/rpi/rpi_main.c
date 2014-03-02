@@ -644,6 +644,21 @@ stos_stop_splash(void)
 }
 
 
+/**
+ *
+ */
+static void
+kill_framebuffer(void)
+{
+  struct stat st;
+  if(stat("/dev/fb0", &st))
+    return; // No frame buffer
+
+  // Turning off TV output seems to kill framebuffer
+  vc_tv_power_off();
+  vc_tv_hdmi_power_on_preferred();
+}
+
 
 
 /**
@@ -665,9 +680,7 @@ main(int argc, char **argv)
 
   bcm_host_init();
 
-  vc_tv_power_off();
-  vc_tv_hdmi_power_on_preferred();
-
+  kill_framebuffer();
 
   omx_init();
 
