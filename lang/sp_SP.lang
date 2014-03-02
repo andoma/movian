@@ -161,7 +161,7 @@ msg: Registro de Sistema
 # ./glwskins/default/pages/directory.view
 #
 id: Album
-msg: Albúm
+msg: Álbum
 
 id: Artist
 msg: Artista
@@ -230,7 +230,7 @@ id: Installed version:
 msg: Versión instalada:
 
 id: Showtime %s or newer is required
-msg: Showtime %s o mas reciente es requerida
+msg: Showtime %s o más reciente es requerida
 
 #
 # ./glwskins/default/pages/iteminfo/video.view
@@ -242,7 +242,7 @@ id: File date:
 msg: Fecha de Archivo:
 
 id: Genre:
-msg: Genero:
+msg: Género:
 
 id: Metadata from
 msg: Metadatos desde 
@@ -363,7 +363,7 @@ id: Retry...
 msg: Reintentado...
 
 id: Showtime is up to date
-msg: Showtime esta actualizado
+msg: Showtime está actualizado
 
 id: Stable
 msg: Estable
@@ -432,15 +432,13 @@ id: CPU Temp
 msg: Temp CPU
 
 id: Fragmentation
-# Missing translation
-msg: 
+msg: Fragmentación
 
 id: GPU Temp
 msg: Temp GPU
 
 id: Inactive mem
-# Missing translation
-msg: 
+msg: Memoria inactiva
 
 id: Memory usage
 msg: Memoria usada
@@ -488,7 +486,7 @@ msg: Gracias por su apoyo!
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
-msg: Languaje (Codigo ISO 639-1)
+msg: Idioma (Código ISO 639-1)
 
 id: Use original title
 msg: Usar título original
@@ -701,12 +699,10 @@ id: Enable file deletion from item menu
 msg: Habilitar borrar archivos desde menú
 
 id: File browsing
-# Missing translation
-msg: 
+msg: Exploración de archivos
 
 id: Show filename extensions
-# Missing translation
-msg: 
+msg: Mostrar extensiones de archivos 
 
 id: %d archive parts
 msg[0]: %d parte de archivo
@@ -889,10 +885,10 @@ id: None
 msg: Ninguno
 
 id: Providers for Music
-msg: Proveedores de Música
+msg: Proveedores para Música
 
 id: Providers for Video
-msg: Proveedores de Video
+msg: Proveedores para Video
 
 id: Refresh metadata
 msg: Refrescar Metadatos
@@ -1090,7 +1086,7 @@ id: Unable to load plugin.json: Malformed JSON
 msg: No se pudo cargar plugin.json: JSON Malformado
 
 id: Uncategorized
-msg: Sin categoria
+msg: Sin categoría
 
 id: Up to date
 msg: Actualizado a la fecha
