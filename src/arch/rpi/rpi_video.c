@@ -322,6 +322,22 @@ rpi_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   omxchk(OMX_SetParameter(d->oc_handle,
 			  OMX_IndexParamVideoPortFormat, &format));
 
+
+  OMX_PARAM_PORTDEFINITIONTYPE portParam;
+  OMX_INIT_STRUCTURE(portParam);
+  portParam.nPortIndex = 130;
+
+  if(OMX_GetParameter(d->oc_handle, OMX_IndexParamPortDefinition,
+		      &portParam) == OMX_ErrorNone) {
+
+    portParam.format.video.nFrameWidth  = mcp->width;
+    portParam.format.video.nFrameHeight = mcp->height;
+
+    OMX_SetParameter(d->oc_handle, OMX_IndexParamPortDefinition, &portParam);
+  }
+
+
+
   OMX_PARAM_BRCMVIDEODECODEERRORCONCEALMENTTYPE ec;
   OMX_INIT_STRUCTURE(ec);
   ec.bStartWithValidFrame = OMX_FALSE;
