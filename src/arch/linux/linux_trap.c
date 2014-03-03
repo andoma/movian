@@ -38,6 +38,7 @@
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/prctl.h>
 #include <fcntl.h>
 
 #include "showtime.h"
@@ -272,7 +273,11 @@ traphandler(int sig, siginfo_t *si, void *UC)
   int nframes = backtrace(frames, MAXFRAMES);
   const char *reason = NULL;
 
-  TRAPMSG("Signal: %d in %s ", sig, line1);
+  char prname[17] = {0};
+
+  prctl(PR_GET_NAME, prname, 0, 0, 0);
+
+  TRAPMSG("Signal: %d in thread %s - %s ", sig, prname, line1);
 
   switch(sig) {
   case SIGSEGV:
