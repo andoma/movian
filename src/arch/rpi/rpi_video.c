@@ -33,6 +33,7 @@ static char omx_enable_mpg2;
 static char omx_enable_vp8;
 static char omx_enable_vp6;
 static char omx_enable_mjpeg;
+static char omx_enable_wvc1;
 
 
 
@@ -268,15 +269,17 @@ rpi_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
     name = "MJPEG";
     break;
 
-#if 0
   case AV_CODEC_ID_VC1:
   case AV_CODEC_ID_WMV3:
+    if(!omx_enable_wvc1)
+      return 1;
+
     if(mcp->extradata_size == 0)
       return 1;
 
-    mc->decode = vc1_pt_decode;
-    return 0;
-#endif
+    fmt = OMX_VIDEO_CodingWMV;
+    name = "VC1";
+    break;
 
   default:
     return 1;
@@ -388,6 +391,10 @@ rpi_codec_init(void)
   vc_gencmd(buf, sizeof(buf), "codec_enabled MJPG");
   TRACE(TRACE_INFO, "VideoCore", "%s", buf);
   omx_enable_mjpeg = !strcmp(buf, "MJPG=enabled");
+
+  vc_gencmd(buf, sizeof(buf), "codec_enabled WVC1");
+  TRACE(TRACE_INFO, "VideoCore", "%s", buf);
+  omx_enable_wvc1 = !strcmp(buf, "WVC1=enabled");
 
 
 }
