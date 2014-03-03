@@ -711,18 +711,18 @@ cec_thread(void *aux)
   vc_cec_register_callback(((CECSERVICE_CALLBACK_T) cec_callback), NULL);
   vc_cec_register_all();
 
+  physical_address = 0xffff;
+
  restart:
   while(1) {
-    if(!vc_cec_get_physical_address(&physical_address) &&
+    if(vc_cec_get_physical_address(&physical_address) ||
        physical_address == 0xffff) {
     } else {
       CEC_DEBUG("Got physical address 0x%04x\n", physical_address);
       break;
     }
-    
     sleep(1);
   }
-
 
   if(!fixed_la) {
     const int addresses = 
