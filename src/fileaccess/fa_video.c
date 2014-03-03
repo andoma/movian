@@ -796,6 +796,14 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
       mcp.level = ctx->level;
       mcp.sar_num = st->sample_aspect_ratio.num;
       mcp.sar_den = st->sample_aspect_ratio.den;
+
+      mcp.frame_rate_num = st->avg_frame_rate.num;
+      mcp.frame_rate_den = st->avg_frame_rate.den;
+
+      if(!mcp.frame_rate_num  || !mcp.frame_rate_num) {
+	mcp.frame_rate_num = ctx->time_base.num;
+	mcp.frame_rate_den = ctx->time_base.den;
+      }
       break;
 
     case AVMEDIA_TYPE_AUDIO:

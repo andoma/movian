@@ -306,6 +306,14 @@ rpi_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   OMX_INIT_STRUCTURE(format);
   format.nPortIndex = 130; 
   format.eCompressionFormat = fmt;
+
+  format.xFramerate = 25 * (1<<16);
+  if(mcp->frame_rate_num && mcp->frame_rate_den)
+    format.xFramerate =(65536ULL * mcp->frame_rate_den) / mcp->frame_rate_num;
+
+  TRACE(TRACE_DEBUG, "OMX", "Frame rate set to %2.3f",
+	format.xFramerate / 65536.0f);
+
   omxchk(OMX_SetParameter(d->oc_handle,
 			  OMX_IndexParamVideoPortFormat, &format));
 

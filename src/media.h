@@ -550,6 +550,10 @@ typedef struct media_codec_params {
   size_t extradata_size;
   unsigned int sar_num;
   unsigned int sar_den;
+
+  unsigned int frame_rate_num;
+  unsigned int frame_rate_den;
+
 } media_codec_params_t;
 
 
