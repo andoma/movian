@@ -801,8 +801,8 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
       mcp.frame_rate_den = st->avg_frame_rate.den;
 
       if(!mcp.frame_rate_num  || !mcp.frame_rate_num) {
-	mcp.frame_rate_num = ctx->time_base.num;
-	mcp.frame_rate_den = ctx->time_base.den;
+	mcp.frame_rate_num = ctx->time_base.den;
+	mcp.frame_rate_den = ctx->time_base.num;
       }
       break;
 
