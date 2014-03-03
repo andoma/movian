@@ -38,6 +38,7 @@
 #include "misc/str.h"
 #include "settings.h"
 #include "notifications.h"
+#include "backend/backend.h"
 
 #if CONFIG_BSPATCH
 #include "ext/bspatch/bspatch.h"
@@ -742,7 +743,7 @@ check_upgrade(int set_news)
     rstr_t *s = _("Open download page");
     char buf[128];
     snprintf(buf, sizeof(buf), rstr_get(r), ver);
-    news_ref = add_news(buf, buf, "page:upgrade", rstr_get(s));
+    news_ref = add_news(buf, buf, "showtime:upgrade", rstr_get(s));
     rstr_release(r);
     rstr_release(s);
   }
@@ -1038,7 +1039,7 @@ upgrade_init(void)
   prop_link(_p("Check for updates now"),
 	    prop_create(prop_create(p, "metadata"), "title"));
   prop_set_string(prop_create(p, "type"), "load");
-  prop_set_string(prop_create(p, "url"), "page:upgrade");
+  prop_set_string(prop_create(p, "url"), "showtime:upgrade");
 
   if(prop_set_parent(p, prop_create(gconf.settings_general, "nodes")))
      abort();
@@ -1060,3 +1061,41 @@ upgrade_refresh(void)
 {
   return check_upgrade(notify_upgrades);
 }
+
+
+/**
+ *
+ */
+static int
+upgrade_canhandle(const char *url)
+{
+  return !strcmp(url, "showtime:upgrade");
+}
+
+
+/**
+ *
+ */
+static int
+upgrade_open_url(prop_t *page, const char *url, int sync)
+{
+  if(!strcmp(url, "showtime:upgrade")) {
+    backend_page_open(page, "page:upgrade", sync);
+    upgrade_refresh();
+    prop_set(page, "directClose", PROP_SET_INT, 1);
+  } else {
+    nav_open_error(page, "Invalid URI");
+  }
+  return 0;
+}
+
+
+/**
+ *
+ */
+static backend_t be_upgrade = {
+  .be_canhandle = upgrade_canhandle,
+  .be_open = upgrade_open_url,
+};
+
+BE_REGISTER(upgrade);

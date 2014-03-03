@@ -179,6 +179,8 @@ rstr_t *backend_normalize(rstr_t *url);
 
 void backend_search(prop_t *model, const char *url);
 
+int backend_page_open(prop_t *root, const char *url0, int sync);
+
 #define BE_REGISTER(name) \
   static void  __attribute__((constructor)) backend_init_ ## name(void) {\
   static int cnt;							\

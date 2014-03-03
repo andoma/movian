@@ -134,8 +134,8 @@ be_page_canhandle(const char *url)
 /**
  *
  */
-static int
-be_page_open(prop_t *root, const char *url0, int sync)
+int
+backend_page_open(prop_t *root, const char *url0, int sync)
 {
   prop_t *src = prop_create(root, "model");
   prop_t *metadata = prop_create(src, "metadata");
@@ -153,7 +153,7 @@ be_page_open(prop_t *root, const char *url0, int sync)
  */
 static backend_t be_page = {
   .be_canhandle = be_page_canhandle,
-  .be_open = be_page_open,
+  .be_open = backend_page_open,
 };
 
 BE_REGISTER(page);
