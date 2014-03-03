@@ -133,7 +133,7 @@ rpi_codec_decode(struct media_codec *mc, struct video_decoder *vd,
     }
 
     if(rvc->rvc_last_epoch != mbm->mbm_epoch) {
-      buf->nFlags |= OMX_BUFFERFLAG_DISCONTINUITY;
+      buf->nFlags |= OMX_BUFFERFLAG_STARTTIME | OMX_BUFFERFLAG_DISCONTINUITY;
       rvc->rvc_last_epoch = mbm->mbm_epoch;
     }
 

@@ -2093,6 +2093,10 @@ mp_configure(media_pipe_t *mp, int caps, int buffer_size, int64_t duration,
 
   prop_set_int(mp->mp_prop_buffer_limit, mp->mp_buffer_limit);
   mp_set_duration(mp, duration);
+
+  if(mp->mp_clock_setup != NULL)
+    mp->mp_clock_setup(mp, mp->mp_audio.mq_stream != -1);
+
   hts_mutex_unlock(&mp->mp_mutex);
 }
 

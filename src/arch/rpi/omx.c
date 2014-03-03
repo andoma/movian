@@ -467,12 +467,14 @@ typedef struct omx_clk_cmd {
   TAILQ_ENTRY(omx_clk_cmd) link;
   enum {
     OMX_CLK_QUIT,
+    OMX_CLK_INIT,
     OMX_CLK_PAUSE,
     OMX_CLK_PLAY,
     OMX_CLK_BEGIN_SEEK,
     OMX_CLK_SEEK_AUDIO_DONE,
     OMX_CLK_SEEK_VIDEO_DONE,
   } cmd;
+  int arg;
 } omx_clk_cmd_t;
 
 
@@ -483,6 +485,7 @@ typedef struct omx_clk {
   hts_cond_t cond;
   media_pipe_t *mp;
   int seek_in_progress;
+  int has_audio;
 } omx_clk_t;
 
 
@@ -536,10 +539,48 @@ omx_clk_seek_done(omx_clk_t *clk)
   OMX_TIME_CONFIG_CLOCKSTATETYPE cstate;
   OMX_INIT_STRUCTURE(cstate);
   cstate.eState = OMX_TIME_ClockStateWaitingForStartTime;
-  cstate.nWaitMask = 1;
+  cstate.nWaitMask = clk->has_audio ? 1 : 2;
   omxchk(OMX_SetParameter(c->oc_handle, OMX_IndexConfigTimeClockState, &cstate));
 }
 
+
+/**
+ *
+ */
+static void
+omx_clk_init(omx_clk_t *clk, int has_audio)
+{
+  OMX_TIME_CONFIG_CLOCKSTATETYPE cstate;
+
+  clk->has_audio = has_audio;
+
+  OMX_INIT_STRUCTURE(cstate);
+  cstate.eState = OMX_TIME_ClockStateStopped;
+  omxchk(OMX_SetParameter(clk->c->oc_handle,
+			  OMX_IndexConfigTimeClockState, &cstate));
+
+  omx_set_state(clk->c, OMX_StateIdle);
+
+
+
+  OMX_INIT_STRUCTURE(cstate);
+
+  cstate.eState = OMX_TIME_ClockStateWaitingForStartTime;
+  cstate.nWaitMask = has_audio ? 1 : 2;
+
+  omxchk(OMX_SetParameter(clk->c->oc_handle,
+			  OMX_IndexConfigTimeClockState, &cstate));
+
+  OMX_TIME_CONFIG_ACTIVEREFCLOCKTYPE refClock;
+  OMX_INIT_STRUCTURE(refClock);
+  refClock.eClock = has_audio ? OMX_TIME_RefClockAudio : OMX_TIME_RefClockVideo;
+
+  omxchk(OMX_SetConfig(clk->c->oc_handle,
+		       OMX_IndexConfigTimeActiveRefClock, &refClock));
+
+  omx_set_state(clk->c, OMX_StateExecuting);
+
+}
 
 /**
  *
@@ -574,6 +615,10 @@ omx_clk_thread(void *aux)
     switch(cmd->cmd) {
     case OMX_CLK_QUIT:
       run = 0;
+      break;
+
+    case OMX_CLK_INIT:
+      omx_clk_init(clk, cmd->arg);
       break;
 
     case OMX_CLK_PAUSE:
@@ -612,10 +657,11 @@ omx_clk_thread(void *aux)
  *
  */
 static void
-omx_clk_do(omx_clk_t *clk, int op)
+omx_clk_do(omx_clk_t *clk, int op, int arg)
 {
   omx_clk_cmd_t *cmd = malloc(sizeof(omx_clk_cmd_t));
   cmd->cmd = op;
+  cmd->arg = arg;
   TAILQ_INSERT_TAIL(&clk->q, cmd, link);
   hts_cond_signal(&clk->cond);
 }
@@ -628,7 +674,7 @@ omx_clk_do(omx_clk_t *clk, int op)
 static void
 omx_mp_begin_seek(media_pipe_t *mp)
 {
-  omx_clk_do(mp->mp_extra, OMX_CLK_BEGIN_SEEK);
+  omx_clk_do(mp->mp_extra, OMX_CLK_BEGIN_SEEK, 0);
 }
 
 
@@ -639,7 +685,7 @@ static void
 omx_mp_seek_audio_done(media_pipe_t *mp)
 {
   hts_mutex_lock(&mp->mp_mutex);
-  omx_clk_do(mp->mp_extra, OMX_CLK_SEEK_AUDIO_DONE);
+  omx_clk_do(mp->mp_extra, OMX_CLK_SEEK_AUDIO_DONE, 0);
   hts_mutex_unlock(&mp->mp_mutex);
 }
 
@@ -651,7 +697,7 @@ static void
 omx_mp_seek_video_done(media_pipe_t *mp)
 {
   hts_mutex_lock(&mp->mp_mutex);
-  omx_clk_do(mp->mp_extra, OMX_CLK_SEEK_VIDEO_DONE);
+  omx_clk_do(mp->mp_extra, OMX_CLK_SEEK_VIDEO_DONE, 0);
   hts_mutex_unlock(&mp->mp_mutex);
 }
 
@@ -662,7 +708,17 @@ omx_mp_seek_video_done(media_pipe_t *mp)
 static void
 omx_mp_hold_changed(media_pipe_t *mp)
 {
-  omx_clk_do(mp->mp_extra, mp->mp_hold ? OMX_CLK_PAUSE : OMX_CLK_PLAY);
+  omx_clk_do(mp->mp_extra, mp->mp_hold ? OMX_CLK_PAUSE : OMX_CLK_PLAY, 0);
+}
+
+
+/**
+ *
+ */
+static void
+omx_mp_clock_setup(media_pipe_t *mp, int has_audio)
+{
+  omx_clk_do(mp->mp_extra, OMX_CLK_INIT, has_audio);
 }
 
 
@@ -679,6 +735,7 @@ omx_mp_init(media_pipe_t *mp)
   mp->mp_seek_audio_done = omx_mp_seek_audio_done;
   mp->mp_seek_video_done = omx_mp_seek_video_done;
   mp->mp_hold_changed    = omx_mp_hold_changed;
+  mp->mp_clock_setup     = omx_mp_clock_setup;
 
 
   omx_clk_t *clk = calloc(1, sizeof(omx_clk_t));
@@ -690,28 +747,7 @@ omx_mp_init(media_pipe_t *mp)
 
   omx_set_state(clk->c, OMX_StateIdle);
 
-  OMX_TIME_CONFIG_CLOCKSTATETYPE cstate;
-  OMX_INIT_STRUCTURE(cstate);
-
-#if 1
-  cstate.eState = OMX_TIME_ClockStateWaitingForStartTime;
-  cstate.nWaitMask = 1;
-
-#else
-  cstate.eState = OMX_TIME_ClockStateRunning;
-#endif
-
-  omxchk(OMX_SetParameter(clk->c->oc_handle,
-			  OMX_IndexConfigTimeClockState, &cstate));
-
-  OMX_TIME_CONFIG_ACTIVEREFCLOCKTYPE refClock;
-  OMX_INIT_STRUCTURE(refClock);
-  refClock.eClock = OMX_TIME_RefClockAudio;
-
-  omxchk(OMX_SetConfig(clk->c->oc_handle,
-		       OMX_IndexConfigTimeActiveRefClock, &refClock));
-
-  omx_set_state(clk->c, OMX_StateExecuting);
+  omx_clk_do(clk, OMX_CLK_INIT, 1);
 
   hts_thread_create_joinable("omxclkctrl", &clk->tid, omx_clk_thread, clk,
 			     THREAD_PRIO_DEMUXER);
@@ -730,7 +766,7 @@ omx_mp_fini(media_pipe_t *mp)
   omx_clk_t *clk = mp->mp_extra;
 
   hts_mutex_lock(&mp->mp_mutex);
-  omx_clk_do(clk, OMX_CLK_QUIT);
+  omx_clk_do(clk, OMX_CLK_QUIT, 0);
   hts_mutex_unlock(&mp->mp_mutex);
   hts_thread_join(&clk->tid);
   omx_component_destroy(clk->c);
