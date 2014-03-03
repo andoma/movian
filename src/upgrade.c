@@ -794,7 +794,7 @@ stos_perform_upgrade(int accept_patch)
       continue;
 
     const char *type = htsmsg_get_str(a, "type");
-    if(strcmp(type, "sqfs") && strcmp(type, "bin"))
+    if(strcmp(type, "sqfs") && strcmp(type, "bin") && strcmp(type, "txt"))
       continue;
 
     const char *dlurl = htsmsg_get_str(a, "url");
