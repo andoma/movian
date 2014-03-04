@@ -274,7 +274,7 @@ rpi_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
     if(!omx_enable_wvc1)
       return 1;
 
-    if(mcp->extradata_size == 0)
+    if(mcp == NULL || mcp->extradata_size == 0)
       return 1;
 
     fmt = OMX_VIDEO_CodingWMV;
@@ -311,13 +311,11 @@ rpi_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   format.eCompressionFormat = fmt;
 
   format.xFramerate = 25 * (1<<16);
-  if(mcp->frame_rate_num && mcp->frame_rate_den)
+  if(mcp != NULL && mcp->frame_rate_num && mcp->frame_rate_den)
     format.xFramerate =(65536ULL * mcp->frame_rate_num) / mcp->frame_rate_den;
 
-  TRACE(TRACE_DEBUG, "OMX", "Frame rate set to %2.3f (%d/%d)",
-	format.xFramerate / 65536.0f,
-	mcp->frame_rate_num,
-	mcp->frame_rate_den);
+  TRACE(TRACE_DEBUG, "OMX", "Frame rate set to %2.3f",
+	format.xFramerate / 65536.0f);
 
   omxchk(OMX_SetParameter(d->oc_handle,
 			  OMX_IndexParamVideoPortFormat, &format));
@@ -330,8 +328,10 @@ rpi_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   if(OMX_GetParameter(d->oc_handle, OMX_IndexParamPortDefinition,
 		      &portParam) == OMX_ErrorNone) {
 
-    portParam.format.video.nFrameWidth  = mcp->width;
-    portParam.format.video.nFrameHeight = mcp->height;
+    if(mcp != NULL) {
+      portParam.format.video.nFrameWidth  = mcp->width;
+      portParam.format.video.nFrameHeight = mcp->height;
+    }
 
     OMX_SetParameter(d->oc_handle, OMX_IndexParamPortDefinition, &portParam);
   }
