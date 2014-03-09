@@ -127,6 +127,10 @@ audio_init(void)
 
   audio_mastervol_init();
   audio_class = audio_driver_init();
+
+#if CONFIG_AUDIOTEST
+  audio_test_init(asettings);
+#endif
 }
 
 

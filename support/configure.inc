@@ -90,6 +90,7 @@ CONFIG_LIST="
  libntfs
  miner
  cedar
+ audiotest
 "
 
 cleanup() {
@@ -314,7 +315,7 @@ EOF
 
 enable libav
 enable xmp
-
+enable audiotest
 
 update_ext_submodule() {
     status=`git submodule status ext/$1 | cut -b 1`
@@ -334,7 +335,7 @@ libav_setup() {
 
     mkdir -p "${LIBAV_BUILD_DIR}"
 
-    LIBAV_COMMON_FLAGS="--disable-encoders --disable-bsfs --disable-filters --disable-muxers --disable-devices --disable-demuxer=rtp --disable-protocol=rtp --disable-bzlib --disable-decoder=twinvq --disable-decoder=snow --disable-decoder=cavs --enable-encoder=mjpeg --disable-avconv --disable-avprobe --disable-avfilter --enable-muxer=spdif"
+    LIBAV_COMMON_FLAGS="--disable-encoders --disable-bsfs --disable-filters --disable-muxers --disable-devices --disable-demuxer=rtp --disable-protocol=rtp --disable-bzlib --disable-decoder=twinvq --disable-decoder=snow --disable-decoder=cavs --enable-encoder=mjpeg --disable-avconv --disable-avprobe --disable-avfilter --enable-muxer=spdif --enable-encoder=ac3 --enable-encoder=eac3"
 
     (cd ${LIBAV_BUILD_DIR} && ${TOPDIR}/ext/libav/configure ${LIBAV_ARCH_FLAGS} ${LIBAV_COMMON_FLAGS} --prefix=${EXT_INSTALL_DIR} --extra-cflags="${LIBAV_CFLAGS} ${EXTRA_CFLAGS}" --extra-ldflags="${LIBAV_LDFLAGS} ${EXTRA_LDFLAGS}" --cc="${CC}") || die
 
@@ -523,6 +524,11 @@ EOF
 
     # Static web resources
     echo >>${CONFIG_MAK} "BUNDLES+=resources/static"
+
+    # Test signal audio samples
+    if enabled audiotest; then
+	echo >>${CONFIG_MAK} "BUNDLES+=resources/speaker_positions"
+    fi
 
     # sqlite
     if enabled sqlite_vfs; then

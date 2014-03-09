@@ -95,4 +95,5 @@ typedef struct audio_decoder {
 
 audio_class_t *audio_driver_init(void);
 
+void audio_test_init(struct prop *asettings);
 
