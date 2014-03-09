@@ -281,6 +281,11 @@ rpi_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
     name = "VC1";
     break;
 
+  case AV_CODEC_ID_THEORA:
+    fmt = OMX_VIDEO_CodingTheora;
+    name = "Theora";
+    break;
+
   default:
     return 1;
   }
