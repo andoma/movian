@@ -1460,10 +1460,12 @@ get_tree_no_create(const char *hostname, int port, const char *share)
     if(!strcmp(ct->ct_share, share))
       break;
   
-  if(ct != NULL)
+  if(ct != NULL) {
+    assert(ct->ct_cc == cc);
     ct->ct_refcount++;
-  else
+  } else {
     hts_mutex_unlock(&smb_global_mutex);
+  }
   return ct;
 }
 
@@ -1907,6 +1909,7 @@ cifs_resolve(const char *url, char *filename, size_t filenamesize,
     ct = smb_tree_connect_andX(cc, p, errbuf, errlen, non_interactive);
     if(!(cc->cc_security_mode & SECURITY_USER_LEVEL) || ct != NULL) {
       *p_ct = ct;
+      assert(ct->ct_cc == cc);
       return CIFS_RESOLVE_TREE;
     }
   }
@@ -1924,6 +1927,7 @@ cifs_resolve(const char *url, char *filename, size_t filenamesize,
     return CIFS_RESOLVE_ERROR;
   
   *p_ct = ct;
+  assert(ct->ct_cc == cc);
   return CIFS_RESOLVE_TREE;
 }
 
