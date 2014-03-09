@@ -342,20 +342,42 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 
 	audio_cleanup_spdif_muxer(ad);
 
-	if(ac->ac_check_passthru != NULL && codec != NULL &&
-	   ac->ac_check_passthru(ad, mc->codec_id)) {
+	ad->ad_mode = ac->ac_get_mode != NULL ?
+	  ac->ac_get_mode(ad, mc->codec_id) : AUDIO_MODE_PCM;
 
+	if(ad->ad_mode == AUDIO_MODE_SPDIF) {
 	  audio_setup_spdif_muxer(ad, codec, mq);
+	} else if(ad->ad_mode == AUDIO_MODE_CODED) {
+	  
+	  hts_mutex_unlock(&mp->mp_mutex);
+	  
+	  ac->ac_deliver_coded_locked(ad, mb->mb_data, mb->mb_size,
+				      mb->mb_pts, mb->mb_epoch);
+	  hts_mutex_lock(&mp->mp_mutex);
+	  return;
 	}
       }
 
       if(ad->ad_spdif_muxer != NULL) {
-	av_write_frame(ad->ad_spdif_muxer, &mb->mb_pkt);
-	avio_flush(ad->ad_spdif_muxer->pb);
+	mb->mb_pkt.stream_index = 0;
 	ad->ad_pts = mb->mb_pts;
 	ad->ad_epoch = mb->mb_epoch;
+
+	mb->mb_pts = AV_NOPTS_VALUE;
+	mb->mb_dts = AV_NOPTS_VALUE;
+	av_write_frame(ad->ad_spdif_muxer, &mb->mb_pkt);
+	avio_flush(ad->ad_spdif_muxer->pb);
 	return;
       }
+
+
+      if(ad->ad_mode == AUDIO_MODE_CODED) {
+	ad->ad_pts = mb->mb_pts;
+	ad->ad_epoch = mb->mb_epoch;
+	
+
+      }
+
 
       if(ctx == NULL) {
 
@@ -491,11 +513,11 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 	  ac->ac_set_volume(ad, ad->ad_vol_scale);
 	}
       }
-      if(ad->ad_avr != NULL)
+      if(ad->ad_avr != NULL) {
 	avresample_convert(ad->ad_avr, NULL, 0, 0,
 			   frame->data, frame->linesize[0],
 			   frame->nb_samples);
-      else {
+      } else {
 	int delay = 1000000LL * frame->nb_samples / frame->sample_rate;
 	usleep(delay);
       }
@@ -582,6 +604,13 @@ audio_decode_thread(void *aux)
     if(mb->mb_data_type == MB_CTRL_UNBLOCK) {
       assert(blocked);
       blocked = 0;
+    } else if(ad->ad_mode == AUDIO_MODE_CODED && 
+	      ac->ac_deliver_coded_locked != NULL &&
+	      mb->mb_data_type == MB_AUDIO) {
+
+      ac->ac_deliver_coded_locked(ad, mb->mb_data, mb->mb_size,
+				  mb->mb_pts, mb->mb_epoch);
+
     } else {
 
       hts_mutex_unlock(&mp->mp_mutex);

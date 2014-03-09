@@ -27,7 +27,6 @@
 #include "arch/threads.h"
 #include "media.h"
 
-struct media_pipe;
 struct audio_decoder;
 
 typedef struct audio_class {
@@ -44,8 +43,18 @@ typedef struct audio_class {
   void (*ac_pause)(struct audio_decoder *ad);
   void (*ac_play)(struct audio_decoder *ad);
   void (*ac_flush)(struct audio_decoder *ad);
-  int (*ac_check_passthru)(struct audio_decoder *ad, int codec);
+  int (*ac_get_mode)(struct audio_decoder *ad, int codec);
+
+#define AUDIO_MODE_PCM    0
+#define AUDIO_MODE_SPDIF  1
+#define AUDIO_MODE_CODED  2
+
   void (*ac_set_volume)(struct audio_decoder *ad, float scale);
+
+  void (*ac_deliver_coded_locked)(struct audio_decoder *ad,
+				  const void *data, size_t len,
+				  int64_t pts, int epoch);
+
 } audio_class_t;
 
 
@@ -53,6 +62,8 @@ typedef struct audio_decoder {
   const audio_class_t *ad_ac;
   struct media_pipe *ad_mp;
   hts_thread_t ad_tid;
+
+  int ad_mode;
 
   struct AVFrame *ad_frame;
   int64_t ad_pts;

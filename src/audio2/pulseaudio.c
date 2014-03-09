@@ -165,7 +165,7 @@ pulseaudio_make_context_ready(void)
  *
  */
 static int
-pulseaudio_check_passthru(audio_decoder_t *ad, int codec_id)
+pulseaudio_get_mode(audio_decoder_t *ad, int codec_id)
 {
   decoder_t *d = (decoder_t *)ad;
 
@@ -234,7 +234,7 @@ pulseaudio_check_passthru(audio_decoder_t *ad, int codec_id)
       pa_threaded_mainloop_unlock(mainloop);
       ad->ad_tile_size = 512;
       d->ss = *pa_stream_get_sample_spec(d->s);
-      return 1;
+      return AUDIO_MODE_SPDIF;
 
     case PA_STREAM_TERMINATED:
     case PA_STREAM_FAILED:
@@ -554,8 +554,8 @@ static audio_class_t pulseaudio_audio_class = {
   .ac_flush        = pulseaudio_audio_flush,
   .ac_reconfig     = pulseaudio_audio_reconfig,
   .ac_deliver_unlocked = pulseaudio_audio_deliver,
-  .ac_check_passthru = pulseaudio_check_passthru,
-  .ac_set_volume     = pulseaudio_set_volume,
+  .ac_get_mode     = pulseaudio_get_mode,
+  .ac_set_volume   = pulseaudio_set_volume,
 };
 
 
