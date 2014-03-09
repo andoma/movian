@@ -631,26 +631,6 @@ cec_callback(void *callback_data, uint32_t param0, uint32_t param1,
  *
  */
 static void
-tv_service_callback(void *callback_data, uint32_t reason,
-		    uint32_t param1, uint32_t param2)
-{
-  TRACE(TRACE_DEBUG, "TV", "State change 0x%08x 0x%08x 0x%08x",
-	reason, param1, param2);
-
-  if(reason & 1) {
-    display_status = DISPLAY_STATUS_OFF;
-    TRACE(TRACE_INFO, "TV", "Display status = off");
-  } else {
-    display_status = DISPLAY_STATUS_ON;
-    TRACE(TRACE_INFO, "TV", "Display status = on");
-  }
-}
-
-
-/**
- *
- */
-static void
 set_logical_address(void *opaque, const char *str)
 {
   fixed_la = str ? atoi(str) & 0xf : 0;
@@ -663,8 +643,6 @@ set_logical_address(void *opaque, const char *str)
 static void *
 cec_thread(void *aux)
 {
-  TV_DISPLAY_STATE_T state;
-
   htsmsg_t *s = htsmsg_store_load("cec") ?: htsmsg_create_map();
 
   prop_t *set;
@@ -702,9 +680,6 @@ cec_thread(void *aux)
 		 SETTING_CALLBACK(set_logical_address, NULL),
 		 SETTING_HTSMSG("logicaladdress", s, "cec"),
 		 NULL);
-
-  vc_tv_register_callback(tv_service_callback, NULL);
-  vc_tv_get_display_state(&state);
 
   vc_cec_set_passive(1);
 
