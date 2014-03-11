@@ -112,7 +112,57 @@ prop_get_name(prop_t *p)
 }
 
 
+/**
+ *
+ */
+__attribute__((unused)) static const char *
+prop_get_DN(prop_t *p, int compact)
+{
+  static __thread int idx;
+  static __thread char buf[4][256];
+  
+  const int maxlen = 256;
+  prop_t *revvec[32];
+  char *s = buf[idx];
+  int len = 0;
+  int pfx = 0;
 
+
+  int d;
+  for(d = 0; d < 32; d++) {
+    if(p == NULL)
+      break;
+    revvec[d] = p;
+    p = p->hp_parent;
+  }
+
+
+  *s = 0;
+  d--;
+  for(;d >= 0;d--) {
+    p = revvec[d];
+#ifdef PROP_DEBUG
+    assert(p->hp_magic == PROP_MAGIC);
+#endif
+    if(compact) {
+      len += snprintf(s + len, maxlen - len, "%s%s", 
+		      pfx ? "." : "", p->hp_name ?: "(NULL)");
+
+      if(d == 0)
+	len += snprintf(s + len, maxlen - len, "<%p>", p);
+
+    } else {
+      len += snprintf(s + len, maxlen - len, "%s%s<%p>%s%s", 
+		      pfx ? ", " : "", p->hp_name ?: "(NULL)", p,
+		      LIST_FIRST(&p->hp_canonical_subscriptions) ? "Cs" : "",
+		      LIST_FIRST(&p->hp_value_subscriptions) ? "Vs" : "");
+    }
+    pfx = 1;
+  }
+
+  idx = (idx + 1) & 3;
+  return s;
+}
 
 
 /**
@@ -1427,6 +1477,25 @@ prop_send_ext_event(prop_t *p, event_t *e)
  *
  */
 static int
+prop_check_canonical_subs_descending(prop_t *p)
+{
+  prop_t *c;
+  if(LIST_FIRST(&p->hp_canonical_subscriptions))
+    return 1;
+
+  TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link) {
+    if(c->hp_type == PROP_DIR)
+      if(prop_check_canonical_subs_descending(c))
+	return 1;
+  }
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
 prop_clean(prop_t *p)
 {
   if(p->hp_flags & PROP_CLIPPED_VALUE) {
@@ -1434,6 +1503,12 @@ prop_clean(prop_t *p)
   }
   switch(p->hp_type) {
   case PROP_DIR:
+    if(prop_check_canonical_subs_descending(p)) {
+      trace(TRACE_NO_PROP, TRACE_ERROR, "prop",
+            "Refusing to clean prop %s because a decendant have "
+            "canonical subs", prop_get_DN(p, 1));
+      return 1;
+    }
     prop_destroy_childs0(p);
     break;
 
@@ -2172,57 +2247,6 @@ prop_req_move(prop_t *p, prop_t *before)
   prop_req_move0(p, before, NULL);
   hts_mutex_unlock(&prop_mutex);
 }
-
-
-
-/**
- *
- */
-__attribute__((unused)) static const char *
-prop_get_DN(prop_t *p, int compact)
-{
-  static __thread int idx;
-  static __thread char buf[4][256];
-  
-  const int maxlen = 256;
-  prop_t *revvec[32];
-  char *s = buf[idx];
-  int len = 0;
-  int pfx = 0;
-
-
-  int d;
-  for(d = 0; d < 32; d++) {
-    if(p == NULL)
-      break;
-    revvec[d] = p;
-    p = p->hp_parent;
-  }
-
-
-  *s = 0;
-  d--;
-  for(;d >= 0;d--) {
-    p = revvec[d];
-#ifdef PROP_DEBUG
-    assert(p->hp_magic == PROP_MAGIC);
-#endif
-    if(compact) {
-      len += snprintf(s + len, maxlen - len, "%s%s", 
-		      pfx ? "." : "", p->hp_name ?: "(NULL)");
-    } else {
-      len += snprintf(s + len, maxlen - len, "%s%s<%p>%s%s", 
-		      pfx ? ", " : "", p->hp_name ?: "?", p,
-		      LIST_FIRST(&p->hp_canonical_subscriptions) ? "Cs" : "",
-		      LIST_FIRST(&p->hp_value_subscriptions) ? "Vs" : "");
-    }
-    pfx = 1;
-  }
-
-  idx = (idx + 1) & 3;
-  return s;
-}
-
 
 
 /**
@@ -3634,42 +3658,73 @@ retarget_subscription(prop_t *p, prop_sub_t *s, prop_sub_t *skipme,
     prop_build_notify_child(s, c, PROP_ADD_CHILD, 0, gen_add_flags(c, p));
 }
 
+
+/**
+ * Prepend a new origin (where we divert search due to a symlink)
+ */
+static void
+prepend_origin(prop_sub_t *s, prop_t *prepend)
+{
+  if(s->hps_origin == NULL) {
+    s->hps_origin = prop_ref_inc(prepend);
+    return;
+  }
+
+  prop_originator_tracking_t *pot;
+  if(!s->hps_multiple_origins) {
+
+    assert(prepend != s->hps_origin);
+
+    pot = pool_get(pot_pool);
+    pot->pot_p = s->hps_origin;
+    pot->pot_next = NULL;
+    s->hps_pots = pot;
+    s->hps_multiple_origins = 1;
+
+  } else {
+
+    for(pot = s->hps_pots; pot != NULL; pot = pot->pot_next) {
+      assert(pot->pot_p != prepend);
+    }
+  }
+
+  pot = pool_get(pot_pool);
+  pot->pot_p = prop_ref_inc(prepend);
+  pot->pot_next = s->hps_pots;
+  s->hps_pots = pot;
+}
+
+
+
 /**
  *
  */
 static void
 relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme,
-		     const char *origin, prop_t *prepend)
+		     const char *origin, prop_t **prependvec,
+		     int prependveclen)
 {
   prop_sub_t *s;
 
-  /* Follow any symlinks should we bump into 'em */
-  while(src->hp_originator != NULL)
-    src = src->hp_originator;
+  if(src->hp_originator != NULL) {
+
+    prop_t **newpv = alloca((prependveclen + 1) * sizeof(prop_t *));
+    memcpy(newpv, prependvec, prependveclen * sizeof(prop_t *));
+    newpv[prependveclen] = src;
+
+    relink_subscriptions(src->hp_originator, dst, skipme,
+			 origin, newpv, prependveclen + 1);
+    return;
+  }
 
   assert(src != dst);
 
   while((s = LIST_FIRST(&dst->hp_value_subscriptions)) != NULL) {
     LIST_REMOVE(s, hps_value_prop_link);
-
     retarget_subscription(src, s, skipme, origin, NULL);
-
-    if(s->hps_origin == NULL) {
-      s->hps_origin = prop_ref_inc(prepend);
-    } else {
-      prop_originator_tracking_t *pot;
-      if(!s->hps_multiple_origins) {
-	pot = pool_get(pot_pool);
-	pot->pot_p = s->hps_origin;
-	pot->pot_next = NULL;
-	s->hps_pots = pot;
-	s->hps_multiple_origins = 1;
-      }
-      pot = pool_get(pot_pool);
-      pot->pot_p = prop_ref_inc(prepend);
-      pot->pot_next = s->hps_pots;
-      s->hps_pots = pot;
-    }
+    
+    for(int i = 0; i < prependveclen; i++)
+      prepend_origin(s, prependvec[i]);
   }
 
   if(dst->hp_type != PROP_DIR)
@@ -3704,7 +3759,7 @@ relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme,
     if(c->hp_type == PROP_DIR)
       prop_make_dir(z, skipme, origin);
 
-    relink_subscriptions(z, c, skipme, origin, prepend);
+    relink_subscriptions(z, c, skipme, origin, prependvec, prependveclen);
   }
 }
 
@@ -3722,19 +3777,15 @@ search_for_linkage(prop_t *src, prop_t *link)
       continue;
 
     if(!s->hps_multiple_origins) {
-      if(s->hps_origin != link)
-	continue;
+      if(s->hps_origin == link)
+	return 1;
     } else {
       prop_originator_tracking_t *pot;
 
       for(pot = s->hps_pots; pot != NULL; pot = pot->pot_next)
         if(pot->pot_p == link)
-          break;
-
-      if(pot == NULL)
-        continue;
+	  return 1;
     }
-    return 1;
   }
 
   if(src->hp_type != PROP_DIR)
@@ -3926,7 +3977,7 @@ prop_link0(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard, int debug)
   dst->hp_originator = src;
   LIST_INSERT_HEAD(&src->hp_targets, dst, hp_originator_link);
 
-  relink_subscriptions(src, dst, skipme, "relink_tree()", dst);
+  relink_subscriptions(src, dst, skipme, "relink_tree()", &dst, 1);
 
   while((n = TAILQ_FIRST(&pnq)) != NULL) {
     TAILQ_REMOVE(&pnq, n, hpn_link);
