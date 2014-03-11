@@ -328,13 +328,13 @@ rpi_audio_config_pcm(decoder_t *d)
     bps = 32;
     ad->ad_out_sample_format = AV_SAMPLE_FMT_FLTP;
     break;
-
+#if 0
   case AV_SAMPLE_FMT_S32:
     wfe.Format.wFormatTag = WAVE_FORMAT_PCM;
     bps = 32;
     ad->ad_out_sample_format = AV_SAMPLE_FMT_S32;
     break;
-
+#endif
   default:
     wfe.Format.wFormatTag = WAVE_FORMAT_PCM;
     bps = 16;
@@ -402,11 +402,11 @@ rpi_audio_config_pcm(decoder_t *d)
   omx_alloc_buffers(d->d_decoder, 120);
   omx_set_state(d->d_decoder, OMX_StateExecuting);
 
-  int bytes_per_sec =  ad->ad_in_sample_rate * (16 >> 3) * channels;
+  int bytes_per_sec =  ad->ad_in_sample_rate * (bps >> 3) * channels;
 
   wfe.Samples.wSamplesPerBlock    = 0;
   wfe.Format.nChannels            = channels;
-  wfe.Format.nBlockAlign          = channels * (32 >> 3);
+  wfe.Format.nBlockAlign          = channels * (bps >> 3);
   wfe.Format.nSamplesPerSec       = ad->ad_in_sample_rate;
   wfe.Format.nAvgBytesPerSec      = bytes_per_sec;
   wfe.Format.wBitsPerSample       = bps;
