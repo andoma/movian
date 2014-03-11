@@ -56,7 +56,15 @@ typedef struct video_decoder {
   int vd_estimated_duration;
 
   struct AVFrame *vd_frame;
-   
+
+  // Temporary picture
+
+  struct SwsContext *vd_sws;
+  AVPicture vd_convert;
+  int vd_convert_width;
+  int vd_convert_height;
+  int vd_convert_pixfmt;
+
   /* stats */
 
   avgtime_t vd_decode_time;
@@ -119,7 +127,7 @@ void video_deliver_frame_avctx(video_decoder_t *vd,
 			       const media_buf_meta_t *mbm, int decode_time,
                                const media_codec_t *mc);
 
-void video_deliver_frame(video_decoder_t *vd, const frame_info_t *info);
+int video_deliver_frame(video_decoder_t *vd, const frame_info_t *info);
 
 int64_t  video_decoder_infer_pts(const media_buf_meta_t *mbm,
 				 video_decoder_t *vd,

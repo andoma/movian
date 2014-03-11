@@ -763,8 +763,14 @@ video_ps3_vdec_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
     break;
 
   case AV_CODEC_ID_H264:
-    if(mcp != NULL && mcp->profile == FF_PROFILE_H264_CONSTRAINED_BASELINE)
-      return 1; // can't play this
+    if(mcp != NULL) {
+
+      if(mcp->profile == FF_PROFILE_H264_CONSTRAINED_BASELINE)
+	return 1; // can't play this
+
+      if(mcp->profile >= FF_PROFILE_H264_HIGH_10)
+	return 1; // No 10bit support
+    }
 
     if(!vdec_h264_loaded) 
       return no_lib(mp, "h264");

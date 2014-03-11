@@ -415,29 +415,11 @@ vdpau_blackout(glw_video_t *gv)
 }
 
 
-static void vdpau_deliver(const frame_info_t *fi, glw_video_t *gv);
-
 /**
  *
  */
-static glw_video_engine_t glw_video_vdpau = {
-  .gve_type = 'VDPA',
-  .gve_newframe = vdpau_newframe,
-  .gve_render = vdpau_render,
-  .gve_reset = vdpau_reset,
-  .gve_init = vdpau_init,
-  .gve_deliver = vdpau_deliver,
-  .gve_init_on_ui_thread = 1,
-  .gve_blackout = vdpau_blackout,
-};
-
-GLW_REGISTER_GVE(glw_video_vdpau);
-
-/**
- *
- */
-static void
-vdpau_deliver(const frame_info_t *fi, glw_video_t *gv)
+static int
+vdpau_deliver(const frame_info_t *fi, glw_video_t *gv, glw_video_engine_t *gve)
 {
   struct vdpau_render_state *rs = (struct vdpau_render_state *)fi->fi_data[0];
   vdpau_dev_t *vd = gv->w.glw_root->gr_be.gbr_vdpau_dev;
@@ -455,8 +437,8 @@ vdpau_deliver(const frame_info_t *fi, glw_video_t *gv)
 		       fi->fi_height };
 #endif
 
-  if(glw_video_configure(gv, &glw_video_vdpau))
-    return;
+  if(glw_video_configure(gv, gve))
+    return -1;
 
   gv->gv_cmatrix_tgt[0] = 1.0f;
 
@@ -471,12 +453,12 @@ vdpau_deliver(const frame_info_t *fi, glw_video_t *gv)
     st = vdpau_mixer_create(vd, &gv->gv_vm, fi->fi_width, fi->fi_height);
     if(st != VDP_STATUS_OK) {
       TRACE(TRACE_ERROR, "VDPAU", "Unable to create video mixer");
-      return;
+      return -1;
     }
   }
 
   if((s = glw_video_get_surface(gv, NULL, NULL)) == NULL)
-    return;
+    return -1;
 
   s->gvs_width[0]  = fi->fi_width;
   s->gvs_height[0] = fi->fi_height;
@@ -511,7 +493,7 @@ vdpau_deliver(const frame_info_t *fi, glw_video_t *gv)
 			  fi->fi_epoch, duration, 0, 0);
 
     if((s = glw_video_get_surface(gv, NULL, NULL)) == NULL)
-      return;
+      return -1;
 
     s->gvs_width[0] = fi->fi_width;
     s->gvs_height[0] = fi->fi_height;
@@ -535,5 +517,24 @@ vdpau_deliver(const frame_info_t *fi, glw_video_t *gv)
   }
 
   glw_video_put_surface(gv, s, fi->fi_pts, fi->fi_epoch, fi->fi_duration, 0, 0);
+  return 0;
 }
+
+
+/**
+ *
+ */
+static glw_video_engine_t glw_video_vdpau = {
+  .gve_type = 'VDPA',
+  .gve_newframe = vdpau_newframe,
+  .gve_render = vdpau_render,
+  .gve_reset = vdpau_reset,
+  .gve_init = vdpau_init,
+  .gve_deliver = vdpau_deliver,
+  .gve_init_on_ui_thread = 1,
+  .gve_blackout = vdpau_blackout,
+};
+
+GLW_REGISTER_GVE(glw_video_vdpau);
+
 #endif

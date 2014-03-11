@@ -196,7 +196,7 @@ vo_set_source(void *opaque, const char *url)
 /**
  *
  */
-static void xv_video_frame_deliver(const frame_info_t *fi, void *opaque);
+static int xv_video_frame_deliver(const frame_info_t *fi, void *opaque);
 
 /**
  *
@@ -236,7 +236,7 @@ init_with_xv(video_output_t *vo)
 /**
  *
  */
-static void xi_video_frame_deliver(const frame_info_t *fi, void *opaque);
+static int xi_video_frame_deliver(const frame_info_t *fi, void *opaque);
 
 /**
  *
@@ -456,7 +456,7 @@ compute_output_dimensions(video_output_t *vo, int dar_num, int dar_den,
 /**
  *
  */
-static void 
+static int
 xv_video_frame_deliver(const frame_info_t *fi, void *opaque)
 {
   video_output_t *vo = opaque;
@@ -464,10 +464,10 @@ xv_video_frame_deliver(const frame_info_t *fi, void *opaque)
   int outw, outh;
 
   if(fi->fi_type != 'YUVP')
-    return;
+    return 1;
 
   if(vo->vo_w < 1 || vo->vo_h < 1 || fi == NULL)
-    return;
+    return 0;
 
   if(vo->vo_xv_image == NULL) {
     //    uint32_t xv_format = 0x32595559; // YV12
@@ -536,6 +536,7 @@ xv_video_frame_deliver(const frame_info_t *fi, void *opaque)
 
   if(!syncok)
     usleep(fi->fi_duration);
+  return 0;
 }
 #endif
 
@@ -572,7 +573,7 @@ get_pix_fmt(video_output_t *vo)
 /**
  *
  */
-static void
+static int
 xi_video_frame_deliver(const frame_info_t *fi, void *opaque)
 {
   video_output_t *vo = opaque;
@@ -582,10 +583,10 @@ xi_video_frame_deliver(const frame_info_t *fi, void *opaque)
   int outw, outh;
 
   if(fi->fi_type != 'YUVP')
-    return;
+    return 1;
 
   if(vo->vo_w < 1 || vo->vo_h < 1)
-    return;
+    return 0;
 
   if(fi->fi_prescaled) {
     outw = fi->fi_width;
@@ -613,7 +614,7 @@ xi_video_frame_deliver(const frame_info_t *fi, void *opaque)
 				    &vo->vo_shm, outw, outh);
 
     if(vo->vo_ximage == NULL)
-      return;
+      return 0;
 
     vo->vo_shm.shmid = shmget(IPC_PRIVATE, 
 			      vo->vo_ximage->bytes_per_line * 
@@ -647,7 +648,7 @@ xi_video_frame_deliver(const frame_info_t *fi, void *opaque)
   }
 
   if(vo->vo_pix_fmt == -1)
-    return;
+    return 0;
 
   if(vo->vo_ximage->width          == fi->fi_width &&
      vo->vo_ximage->height         == fi->fi_height &&
@@ -691,4 +692,6 @@ xi_video_frame_deliver(const frame_info_t *fi, void *opaque)
 
   if(!syncok)
     usleep(fi->fi_duration);
+
+  return 0;
 }

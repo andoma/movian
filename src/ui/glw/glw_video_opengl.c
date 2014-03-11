@@ -554,30 +554,11 @@ yuvp_blackout(glw_video_t *gv)
 }
 
 
-
-static void yuvp_deliver(const frame_info_t *fi, glw_video_t *gv);
-
 /**
  *
  */
-static glw_video_engine_t glw_video_opengl = {
-  .gve_type = 'YUVP',
-  .gve_newframe = video_opengl_newframe,
-  .gve_render   = video_opengl_render,
-  .gve_reset    = video_opengl_reset,
-  .gve_init     = yuvp_init,
-  .gve_deliver  = yuvp_deliver,
-  .gve_blackout = yuvp_blackout,
-};
-
-GLW_REGISTER_GVE(glw_video_opengl);
-
-
-/**
- *
- */
-static void
-yuvp_deliver(const frame_info_t *fi, glw_video_t *gv)
+static int
+yuvp_deliver(const frame_info_t *fi, glw_video_t *gv, glw_video_engine_t *gve)
 {
   int hvec[3], wvec[3];
   int i, h, w;
@@ -596,12 +577,12 @@ yuvp_deliver(const frame_info_t *fi, glw_video_t *gv)
   hvec[1] = fi->fi_height >> (vshift + fi->fi_interlaced);
   hvec[2] = fi->fi_height >> (vshift + fi->fi_interlaced);
 
-  glw_video_configure(gv, &glw_video_opengl);
+  glw_video_configure(gv, gve);
 
   gv_color_matrix_set(gv, fi);
 
   if((s = glw_video_get_surface(gv, wvec, hvec)) == NULL)
-    return;
+    return -1;
 
   if(!fi->fi_interlaced) {
 
@@ -645,7 +626,7 @@ yuvp_deliver(const frame_info_t *fi, glw_video_t *gv)
     glw_video_put_surface(gv, s, pts, fi->fi_epoch, duration, 1, !tff);
 
     if((s = glw_video_get_surface(gv, wvec, hvec)) == NULL)
-      return;
+      return -1;
 
     for(i = 0; i < 3; i++) {
       w = wvec[i];
@@ -660,18 +641,31 @@ yuvp_deliver(const frame_info_t *fi, glw_video_t *gv)
 	src += fi->fi_pitch[i] * 2;
       }
     }
-    
+
     if(pts != PTS_UNSET)
       pts += duration;
 
     glw_video_put_surface(gv, s, pts, fi->fi_epoch, duration, 1, tff);
   }
+  return 0;
 }
 
 
+/**
+ *
+ */
+static glw_video_engine_t glw_video_opengl = {
+  .gve_type = 'YUVP',
+  .gve_newframe = video_opengl_newframe,
+  .gve_render   = video_opengl_render,
+  .gve_reset    = video_opengl_reset,
+  .gve_init     = yuvp_init,
+  .gve_deliver  = yuvp_deliver,
+  .gve_blackout = yuvp_blackout,
+};
 
+GLW_REGISTER_GVE(glw_video_opengl);
 
-static void bgr_deliver(const frame_info_t *fi, glw_video_t *gv);
 
 /**
  *
@@ -690,6 +684,41 @@ bgr_init(glw_video_t *gv)
   return 0;
 }
 
+
+/**
+ *
+ */
+static int
+bgr_deliver(const frame_info_t *fi, glw_video_t *gv, glw_video_engine_t *gve)
+{
+  glw_video_surface_t *s;
+  int64_t pts = fi->fi_pts;
+  int wvec[3] = {0};
+  int hvec[3] = {0};
+
+  wvec[0] = fi->fi_width;
+  hvec[0] = fi->fi_height;
+
+  glw_video_configure(gv, gve);
+
+  if((s = glw_video_get_surface(gv, wvec, hvec)) == NULL)
+    return -1;
+
+  int linesize = LINESIZE(fi->fi_width, 3);
+
+  const uint8_t *src = fi->fi_data[0];
+  uint8_t *dst = s->gvs_data[0];
+  for(int y = 0; y < fi->fi_height; y++) {
+    memcpy(dst, src, linesize);
+    src += fi->fi_pitch[0];
+    dst += linesize;
+  }
+
+  glw_video_put_surface(gv, s, pts, fi->fi_epoch, fi->fi_duration, 0, 0);
+  return 0;
+}
+
+
 /**
  *
  */
@@ -703,37 +732,4 @@ static glw_video_engine_t glw_video_BGR = {
 };
 
 GLW_REGISTER_GVE(glw_video_BGR);
-
-
-/**
- *
- */
-static void
-bgr_deliver(const frame_info_t *fi, glw_video_t *gv)
-{
-  glw_video_surface_t *s;
-  int64_t pts = fi->fi_pts;
-  int wvec[3] = {0};
-  int hvec[3] = {0};
-
-  wvec[0] = fi->fi_width;
-  hvec[0] = fi->fi_height;
-
-  glw_video_configure(gv, &glw_video_BGR);
-
-  if((s = glw_video_get_surface(gv, wvec, hvec)) == NULL)
-    return;
-
-  int linesize = LINESIZE(fi->fi_width, 3);
-
-  const uint8_t *src = fi->fi_data[0];
-  uint8_t *dst = s->gvs_data[0];
-  for(int y = 0; y < fi->fi_height; y++) {
-    memcpy(dst, src, linesize);
-    src += fi->fi_pitch[0];
-    dst += linesize;
-  }
-
-  glw_video_put_surface(gv, s, pts, fi->fi_epoch, fi->fi_duration, 0, 0);
-}
 

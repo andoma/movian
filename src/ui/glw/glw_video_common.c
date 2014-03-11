@@ -34,7 +34,7 @@
 #include "glw_renderer.h"
 #include "glw_texture.h"
 
-static void glw_video_input(const frame_info_t *info, void *opaque);
+static int glw_video_input(const frame_info_t *info, void *opaque);
 static int glw_set_video_codec(uint32_t type, media_codec_t *mc, void *opaque,
 			       const frame_info_t *fi);
 
@@ -1045,31 +1045,40 @@ glw_register_video_engine(glw_video_engine_t *gve)
 /**
  * Frame delivery from video decoder
  */
-static void 
+static int
 glw_video_input(const frame_info_t *fi, void *opaque)
 {
   glw_video_t *gv = opaque;
   glw_video_engine_t *gve;
+  int rval;
 
   hts_mutex_lock(&gv->gv_surface_mutex);
 
   if(fi == NULL) {
+
+    rval = 0;
 
     if(gv->gv_engine != NULL && gv->gv_engine->gve_blackout != NULL)
       gv->gv_engine->gve_blackout(gv);
 
   } else {
 
+    rval = 1;
+
     gv->gv_dar_num = fi->fi_dar_num;
     gv->gv_dar_den = fi->fi_dar_den;
     gv->gv_vheight = fi->fi_height;
-  
-    LIST_FOREACH(gve, &engines, gve_link)
-      if(gve->gve_type == fi->fi_type)
-	gve->gve_deliver(fi, gv);
+
+    LIST_FOREACH(gve, &engines, gve_link) {
+      if(gve->gve_type == fi->fi_type) {
+	rval = gve->gve_deliver(fi, gv, gve);
+        break;
+      }
+    }
   }
 
   hts_mutex_unlock(&gv->gv_surface_mutex);
+  return rval;
 }
 
 
@@ -1142,8 +1151,9 @@ glw_video_reset(glw_root_t *gr)
 #if ENABLE_LIBAV
 
 
-static void
-video_deliver_lavc(const frame_info_t *fi, glw_video_t *gv)
+static int
+video_deliver_lavc(const frame_info_t *fi, glw_video_t *gv,
+                   glw_video_engine_t *e)
 {
   frame_info_t nfi = *fi;
 
@@ -1182,18 +1192,15 @@ video_deliver_lavc(const frame_info_t *fi, glw_video_t *gv)
     break;
 
   default:
-    if(gv->gv_logged_pixfmt != fi->fi_pix_fmt) {
-      TRACE(TRACE_ERROR, "VIDEO", "Unable to display pixel format %s (0x%x)",
-            av_get_pix_fmt_name(fi->fi_pix_fmt), fi->fi_pix_fmt);
-      gv->gv_logged_pixfmt = fi->fi_pix_fmt;
-    }
-    return;
+    return 1;
   }
   glw_video_engine_t *gve;
 
   LIST_FOREACH(gve, &engines, gve_link)
     if(gve->gve_type == nfi.fi_type)
-      gve->gve_deliver(&nfi, gv);
+      return gve->gve_deliver(&nfi, gv, gve);
+
+  return 1;
 }
 
 

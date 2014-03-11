@@ -31,6 +31,8 @@
 #include <math.h>
 
 #include <libavutil/mem.h>
+#include <libavutil/pixdesc.h>
+#include <libswscale/swscale.h>
 
 #include "showtime.h"
 #include "video_decoder.h"
@@ -205,16 +207,72 @@ video_deliver_frame_avctx(video_decoder_t *vd,
     ctx->colorspace < ARRAYSIZE(libav_colorspace_tbl) ? 
     libav_colorspace_tbl[ctx->colorspace] : 0;
 
-  fi.fi_data[0] = frame->data[0];
-  fi.fi_data[1] = frame->data[1];
-  fi.fi_data[2] = frame->data[2];
+  fi.fi_type = 'LAVC';
 
-  fi.fi_pitch[0] = frame->linesize[0];
-  fi.fi_pitch[1] = frame->linesize[1];
-  fi.fi_pitch[2] = frame->linesize[2];
+  // Check if we should skip directly to convert code
+  if(vd->vd_convert_width  != frame->width ||
+     vd->vd_convert_height != frame->height ||
+     vd->vd_convert_pixfmt != frame->format) {
+
+    fi.fi_data[0] = frame->data[0];
+    fi.fi_data[1] = frame->data[1];
+    fi.fi_data[2] = frame->data[2];
+
+    fi.fi_pitch[0] = frame->linesize[0];
+    fi.fi_pitch[1] = frame->linesize[1];
+    fi.fi_pitch[2] = frame->linesize[2];
+
+    fi.fi_pix_fmt = frame->format;
+  
+    int r = video_deliver_frame(vd, &fi);
+
+    if(r != 1)
+      return;
+  }
+
+  vd->vd_sws =
+    sws_getCachedContext(vd->vd_sws,
+                         frame->width, frame->height, frame->format,
+                         frame->width, frame->height, PIX_FMT_YUV420P,
+                         0, NULL, NULL, NULL);
+
+  if(vd->vd_convert_width  != frame->width  ||
+     vd->vd_convert_height != frame->height ||
+     vd->vd_convert_pixfmt != frame->format) {
+    avpicture_free(&vd->vd_convert);
+
+    vd->vd_convert_width  = frame->width;
+    vd->vd_convert_height = frame->height;
+    vd->vd_convert_pixfmt = frame->format;
+
+    avpicture_alloc(&vd->vd_convert, PIX_FMT_YUV420P, frame->width,
+                    frame->height);
+
+    TRACE(TRACE_DEBUG, "Video", "Converting from %s to %s",
+	  av_get_pix_fmt_name(frame->format),
+	  av_get_pix_fmt_name(PIX_FMT_YUV420P));
+  }
+
+  int64_t ts = showtime_get_ts();
+
+  sws_scale(vd->vd_sws, (void *)frame->data, frame->linesize, 0,
+            frame->height, vd->vd_convert.data, vd->vd_convert.linesize);
+
+  ts = showtime_get_ts() - ts;
+
+  TRACE(TRACE_DEBUG, "VIDEO", "Decode %d  convert %d",
+	decode_time, (int)ts);
+
+  fi.fi_data[0] = vd->vd_convert.data[0];
+  fi.fi_data[1] = vd->vd_convert.data[1];
+  fi.fi_data[2] = vd->vd_convert.data[2];
+
+  fi.fi_pitch[0] = vd->vd_convert.linesize[0];
+  fi.fi_pitch[1] = vd->vd_convert.linesize[1];
+  fi.fi_pitch[2] = vd->vd_convert.linesize[2];
 
   fi.fi_type = 'LAVC';
-  fi.fi_pix_fmt = frame->format;
+  fi.fi_pix_fmt = PIX_FMT_YUV420P;
   video_deliver_frame(vd, &fi);
 }
 
@@ -241,15 +299,18 @@ video_decoder_set_current_time(video_decoder_t *vd, int64_t ts,
 /**
  *
  */
-void
+int
 video_deliver_frame(video_decoder_t *vd, const frame_info_t *info)
 {
-  vd->vd_mp->mp_video_frame_deliver(info, vd->vd_mp->mp_video_frame_opaque);
+  int r = vd->vd_mp->mp_video_frame_deliver(info,
+                                            vd->vd_mp->mp_video_frame_opaque);
 
 
-  if(info->fi_drive_clock)
+  if(info->fi_drive_clock && !r)
     video_decoder_set_current_time(vd, info->fi_pts, info->fi_epoch,
 				   info->fi_delta);
+
+  return r;
 }
 
 
@@ -552,5 +613,7 @@ video_decoder_stop(video_decoder_t *vd)
 void
 video_decoder_destroy(video_decoder_t *vd)
 {
+  sws_freeContext(vd->vd_sws);
+  avpicture_free(&vd->vd_convert);
   free(vd);
 }

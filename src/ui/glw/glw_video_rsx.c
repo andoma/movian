@@ -452,29 +452,11 @@ yuvp_blackout(glw_video_t *gv)
 }
 
 
-static void yuvp_deliver(const frame_info_t *fi, glw_video_t *gv);
-
 /**
  *
  */
-static glw_video_engine_t glw_video_yuvp = {
-  .gve_type = 'YUVP',
-  .gve_newframe = yuvp_newframe,
-  .gve_render = yuvp_render,
-  .gve_reset = yuvp_reset,
-  .gve_init = yuvp_init,
-  .gve_deliver = yuvp_deliver,
-  .gve_surface_init = surface_init,
-  .gve_blackout = yuvp_blackout,
-};
-
-GLW_REGISTER_GVE(glw_video_yuvp);
-
-/**
- *
- */
-static void
-yuvp_deliver(const frame_info_t *fi, glw_video_t *gv)
+static int
+yuvp_deliver(const frame_info_t *fi, glw_video_t *gv, glw_video_engine_t *gve)
 {
   int hvec[3], wvec[3];
   int i, h, w;
@@ -492,12 +474,12 @@ yuvp_deliver(const frame_info_t *fi, glw_video_t *gv)
   hvec[1] = fi->fi_height >> (vshift + fi->fi_interlaced);
   hvec[2] = fi->fi_height >> (vshift + fi->fi_interlaced);
 
-  glw_video_configure(gv, &glw_video_yuvp);
+  glw_video_configure(gv, gve);
   
   gv_color_matrix_set(gv, fi);
 
   if((s = glw_video_get_surface(gv, wvec, hvec)) == NULL)
-    return;
+    return -1;
 
   if(!fi->fi_interlaced) {
 
@@ -540,7 +522,7 @@ yuvp_deliver(const frame_info_t *fi, glw_video_t *gv)
     glw_video_put_surface(gv, s, fi->fi_pts, fi->fi_epoch, duration, 1, !tff);
 
     if((s = glw_video_get_surface(gv, wvec, hvec)) == NULL)
-      return;
+      return -1;
 
     for(i = 0; i < 3; i++) {
       w = wvec[i];
@@ -559,31 +541,31 @@ yuvp_deliver(const frame_info_t *fi, glw_video_t *gv)
     glw_video_put_surface(gv, s, fi->fi_pts + duration,
 			  fi->fi_epoch, duration, 1, tff);
   }
+  return 0;
 }
-
-
-static void rsx_deliver(const frame_info_t *fi, glw_video_t *gv);
 
 /**
  *
  */
-static glw_video_engine_t glw_video_rsxmem = {
-  .gve_type = 'RSX',
+static glw_video_engine_t glw_video_yuvp = {
+  .gve_type = 'YUVP',
   .gve_newframe = yuvp_newframe,
   .gve_render = yuvp_render,
   .gve_reset = yuvp_reset,
   .gve_init = yuvp_init,
-  .gve_deliver = rsx_deliver,
+  .gve_deliver = yuvp_deliver,
+  .gve_surface_init = surface_init,
   .gve_blackout = yuvp_blackout,
 };
 
-GLW_REGISTER_GVE(glw_video_rsxmem);
+GLW_REGISTER_GVE(glw_video_yuvp);
+
 
 /**
  *
  */
-static void
-rsx_deliver(const frame_info_t *fi, glw_video_t *gv)
+static int
+rsx_deliver(const frame_info_t *fi, glw_video_t *gv, glw_video_engine_t *gve)
 {
   int hvec[3], wvec[3];
   int i;
@@ -599,12 +581,12 @@ rsx_deliver(const frame_info_t *fi, glw_video_t *gv)
   hvec[2] = fi->fi_height >> (vshift + fi->fi_interlaced);
 
 
-  glw_video_configure(gv, &glw_video_rsxmem);
+  glw_video_configure(gv, gve);
   
   gv_color_matrix_set(gv, fi);
 
   if((gvs = glw_video_get_surface(gv, NULL, NULL)) == NULL)
-    return;
+    return -1;
 
   surface_reset(gv, gvs);
 
@@ -637,7 +619,7 @@ rsx_deliver(const frame_info_t *fi, glw_video_t *gv)
 			  fi->fi_duration/2, 1, !fi->fi_tff);
 
     if((gvs = glw_video_get_surface(gv, NULL, NULL)) == NULL)
-      return;
+      return -1;
   
     surface_reset(gv, gvs);
 
@@ -688,5 +670,20 @@ rsx_deliver(const frame_info_t *fi, glw_video_t *gv)
     glw_video_put_surface(gv, gvs, fi->fi_pts, fi->fi_epoch,
 			  fi->fi_duration, 0, 0);
   }
+  return 0;
 }
 
+/**
+ *
+ */
+static glw_video_engine_t glw_video_rsxmem = {
+  .gve_type = 'RSX',
+  .gve_newframe = yuvp_newframe,
+  .gve_render = yuvp_render,
+  .gve_reset = yuvp_reset,
+  .gve_init = yuvp_init,
+  .gve_deliver = rsx_deliver,
+  .gve_blackout = yuvp_blackout,
+};
+
+GLW_REGISTER_GVE(glw_video_rsxmem);
