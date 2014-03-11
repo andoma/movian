@@ -1483,11 +1483,13 @@ prop_check_canonical_subs_descending(prop_t *p)
   if(LIST_FIRST(&p->hp_canonical_subscriptions))
     return 1;
 
-  TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link) {
-    if(c->hp_type == PROP_DIR)
-      if(prop_check_canonical_subs_descending(c))
-	return 1;
-  }
+  if(p->hp_type != PROP_DIR)
+    return 0;
+
+  TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link)
+    if(prop_check_canonical_subs_descending(c))
+      return 1;
+
   return 0;
 }
 
