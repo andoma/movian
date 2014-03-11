@@ -67,6 +67,7 @@ libav_decode_video(struct media_codec *mc, struct video_decoder *vd,
     return;
 
   video_deliver_frame_avctx(vd, mp, mq, ctx, frame, mbm, t, mc);
+  av_frame_unref(frame);
 }
 
 
@@ -124,6 +125,9 @@ media_codec_create_lavc(media_codec_t *cw, const media_codec_params_t *mcp,
     if(mcp && mcp->cheat_for_speed)
       cw->ctx->flags2 |= CODEC_FLAG2_FAST;
   }
+
+  if(codec->type == AVMEDIA_TYPE_VIDEO)
+    cw->ctx->refcounted_frames = 1;
 
   if(avcodec_open2(cw->ctx, codec, NULL) < 0) {
     TRACE(TRACE_INFO, "libav", "Unable to open codec %s",

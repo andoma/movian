@@ -1172,8 +1172,21 @@ video_deliver_lavc(const frame_info_t *fi, glw_video_t *gv)
   case PIX_FMT_VDPAU_MPEG4:
     nfi.fi_type = 'VDPA';
     break;
-    
+
+  case AV_PIX_FMT_BGR24:
+    nfi.fi_type = 'BGR';
+    break;
+
+  case AV_PIX_FMT_YUV420P10LE:
+    nfi.fi_type = 'YUVp';
+    break;
+
   default:
+    if(gv->gv_logged_pixfmt != fi->fi_pix_fmt) {
+      TRACE(TRACE_ERROR, "VIDEO", "Unable to display pixel format %s (0x%x)",
+            av_get_pix_fmt_name(fi->fi_pix_fmt), fi->fi_pix_fmt);
+      gv->gv_logged_pixfmt = fi->fi_pix_fmt;
+    }
     return;
   }
   glw_video_engine_t *gve;

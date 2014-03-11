@@ -144,8 +144,14 @@ typedef struct glw_video {
 
   struct glw_video_overlay_list gv_overlays;
 
+
   float gv_cmatrix_cur[16];
   float gv_cmatrix_tgt[16];
+  int gv_planes;
+  int gv_tex_internal_format;
+  int gv_tex_format;
+  int gv_tex_type;
+  int gv_tex_bytes_per_pixel;
 
   hts_mutex_t gv_surface_mutex;
 
@@ -231,6 +237,10 @@ typedef struct glw_video {
   glw_rect_t gv_rect;
 
   int gv_invisible;
+
+
+  // Log supression
+  int gv_logged_pixfmt;
 
 } glw_video_t;
 

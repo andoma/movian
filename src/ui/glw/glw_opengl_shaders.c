@@ -692,7 +692,7 @@ glw_opengl_shaders_init(glw_root_t *gr, int delayed)
   //    gbr->gbr_renderer_draw = glw_renderer_shader;
 
 
-  // Video renderer
+  // yuv2rgb Video renderer
 
   SHADERPATH("yuv2rgb_v.glsl");
   vs = glw_compile_shader(path, GL_VERTEX_SHADER, gr);
@@ -707,7 +707,23 @@ glw_opengl_shaders_init(glw_root_t *gr, int delayed)
   fs = glw_compile_shader(path, GL_FRAGMENT_SHADER, gr);
   gbr->gbr_yuv2rgb_2f = glw_link_program(gbr, "yuv2rgb_2f_norm", vs, fs);
   glDeleteShader(fs);
+  glDeleteShader(vs);
 
+  // rgb2rgb Video renderer
+
+  SHADERPATH("rgb2rgb_v.glsl");
+  vs = glw_compile_shader(path, GL_VERTEX_SHADER, gr);
+
+
+  SHADERPATH("rgb2rgb_1f_norm.glsl");
+  fs = glw_compile_shader(path, GL_FRAGMENT_SHADER, gr);
+  gbr->gbr_rgb2rgb_1f = glw_link_program(gbr, "rgb2rgb_1f_norm", vs, fs);
+  glDeleteShader(fs);
+
+  SHADERPATH("rgb2rgb_2f_norm.glsl");
+  fs = glw_compile_shader(path, GL_FRAGMENT_SHADER, gr);
+  gbr->gbr_rgb2rgb_2f = glw_link_program(gbr, "rgb2rgb_2f_norm", vs, fs);
+  glDeleteShader(fs);
   glDeleteShader(vs);
 
   if(!delayed) {
