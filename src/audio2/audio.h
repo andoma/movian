@@ -43,7 +43,8 @@ typedef struct audio_class {
   void (*ac_pause)(struct audio_decoder *ad);
   void (*ac_play)(struct audio_decoder *ad);
   void (*ac_flush)(struct audio_decoder *ad);
-  int (*ac_get_mode)(struct audio_decoder *ad, int codec);
+  int (*ac_get_mode)(struct audio_decoder *ad, int codec,
+		     const void *extradata, size_t extradata_size);
 
 #define AUDIO_MODE_PCM    0
 #define AUDIO_MODE_SPDIF  1

@@ -27,8 +27,12 @@
 #include "audio2/audio.h"
 #include "omx.h"
 #include "media.h"
+#include "rpi.h"
 
 //#include <interface/vmcs_host/vc_tvservice.h>
+
+static char omx_enable_vorbis;
+static char omx_enable_flac;
 
 
 typedef struct decoder {
@@ -575,12 +579,25 @@ rpi_set_volume(audio_decoder_t *ad, float scale)
  *
  */
 static int
-rpi_get_mode(audio_decoder_t *ad, int codec)
+rpi_get_mode(audio_decoder_t *ad, int codec,
+	     const void *extradata, size_t extradata_size)
 {
   decoder_t *d = (decoder_t *)ad;
-  int encoding = OMX_AUDIO_CodingDTS;
+  int encoding;
 
   switch(codec) {
+  case AV_CODEC_ID_FLAC:
+    if(!omx_enable_flac)
+      return 1;
+    encoding = OMX_AUDIO_CodingFLAC;
+    break;
+
+  case AV_CODEC_ID_VORBIS:
+    if(!omx_enable_vorbis)
+      return 1;
+    encoding = OMX_AUDIO_CodingVORBIS;
+    break;
+
   default:
     return AUDIO_MODE_PCM;
   }
@@ -589,7 +606,7 @@ rpi_get_mode(audio_decoder_t *ad, int codec)
 
   OMX_CONFIG_BOOLEANTYPE boolType;
   OMX_INIT_STRUCTURE(boolType);
-  boolType.bEnabled = OMX_TRUE;
+  boolType.bEnabled = OMX_FALSE;
 
   omxchk(OMX_SetParameter(d->d_decoder->oc_handle, 
 			  OMX_IndexParamBrcmDecoderPassThrough, &boolType));
@@ -631,6 +648,20 @@ rpi_get_mode(audio_decoder_t *ad, int codec)
   omx_set_state(d->d_decoder, OMX_StateIdle);
   omx_alloc_buffers(d->d_decoder, 120);
   omx_set_state(d->d_decoder, OMX_StateExecuting);
+
+
+  if(extradata != NULL && extradata_size > 0) {
+
+    OMX_BUFFERHEADERTYPE *buf = omx_get_buffer(d->d_decoder);
+    buf->nOffset = 0;
+    buf->nFilledLen = extradata_size;
+    memset(buf->pBuffer, 0,  buf->nAllocLen);
+    assert(buf->nFilledLen <= buf->nAllocLen);
+    memcpy(buf->pBuffer, extradata, buf->nFilledLen);
+    buf->nFlags = OMX_BUFFERFLAG_CODECCONFIG | OMX_BUFFERFLAG_ENDOFFRAME;
+    omxchk(OMX_EmptyThisBuffer(d->d_decoder->oc_handle, buf));
+  }
+
 
   d->d_decoder->oc_port_settings_changed_cb = rpi_audio_port_settings_changed;
   d->d_decoder->oc_opaque = d;
@@ -688,7 +719,6 @@ rpi_audio_deliver_coded(audio_decoder_t *ad, const void *data, size_t size,
 
   buf->nFlags |= OMX_BUFFERFLAG_ENDOFFRAME;
 
-
   omxchk(OMX_EmptyThisBuffer(oc->oc_handle, buf));
   hts_mutex_lock(&ad->ad_mp->mp_mutex);
 }
@@ -734,6 +764,10 @@ set_mastermute(void *opaque, int value)
 audio_class_t *
 audio_driver_init(void)
 {
+#if 0
+  omx_enable_flac   = rpi_is_codec_enabled("FLAC");
+  omx_enable_vorbis = rpi_is_codec_enabled("VORB");
+#endif
   prop_subscribe(0,
 		 PROP_TAG_CALLBACK_FLOAT, set_mastervol, NULL,
 		 PROP_TAG_NAME("global", "audio", "mastervolume"),

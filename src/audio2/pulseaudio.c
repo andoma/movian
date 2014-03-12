@@ -165,7 +165,8 @@ pulseaudio_make_context_ready(void)
  *
  */
 static int
-pulseaudio_get_mode(audio_decoder_t *ad, int codec_id)
+pulseaudio_get_mode(audio_decoder_t *ad, int codec_id,
+		    const void *extradata, size_t extradata_size)
 {
   decoder_t *d = (decoder_t *)ad;
 

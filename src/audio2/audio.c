@@ -335,25 +335,26 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 
       if(mc->codec_id != ad->ad_in_codec_id) {
 	AVCodec *codec = avcodec_find_decoder(mc->codec_id);
-	TRACE(TRACE_DEBUG, "audio", "Codec changed to %s",
-	      codec ? codec->name : "???");
+	TRACE(TRACE_DEBUG, "audio", "Codec changed to %s (0x%x)",
+	      codec ? codec->name : "???", mc->codec_id);
 	ad->ad_in_codec_id = mc->codec_id;
 	ad->ad_in_sample_rate = 0;
 
 	audio_cleanup_spdif_muxer(ad);
 
 	ad->ad_mode = ac->ac_get_mode != NULL ?
-	  ac->ac_get_mode(ad, mc->codec_id) : AUDIO_MODE_PCM;
+	  ac->ac_get_mode(ad, mc->codec_id, ctx->extradata,
+			  ctx->extradata_size) : AUDIO_MODE_PCM;
 
 	if(ad->ad_mode == AUDIO_MODE_SPDIF) {
 	  audio_setup_spdif_muxer(ad, codec, mq);
 	} else if(ad->ad_mode == AUDIO_MODE_CODED) {
 	  
-	  hts_mutex_unlock(&mp->mp_mutex);
+	  hts_mutex_lock(&mp->mp_mutex);
 	  
 	  ac->ac_deliver_coded_locked(ad, mb->mb_data, mb->mb_size,
 				      mb->mb_pts, mb->mb_epoch);
-	  hts_mutex_lock(&mp->mp_mutex);
+	  hts_mutex_unlock(&mp->mp_mutex);
 	  return;
 	}
       }
