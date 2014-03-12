@@ -329,7 +329,7 @@ widget(container_y, {
     widget(slider_y, {
       bind("list");
       width: 4;
-      focusable: canScroll();
+      focusable: canScroll() * 0.01;
       alpha: iir(canScroll(), 16);
       
       widget(quad, {
