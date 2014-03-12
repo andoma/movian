@@ -817,3 +817,17 @@ arch_stop_req(void)
   return 0;
 }
 
+
+/**
+ *
+ */
+int
+rpi_is_codec_enabled(const char *id)
+{
+  char query[64];
+  char buf[64];
+  snprintf(query, sizeof(query), "codec_enabled %s", id);
+  vc_gencmd(buf, sizeof(buf), query);
+  TRACE(TRACE_INFO, "VideoCore", "%s", buf);
+  return !!strstr(buf, "=enabled");
+}

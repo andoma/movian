@@ -28,12 +28,17 @@
 #include "video/video_decoder.h"
 #include "omx.h"
 #include "rpi_video.h"
+#include "rpi.h"
 
 static char omx_enable_mpg2;
 static char omx_enable_vp8;
 static char omx_enable_vp6;
 static char omx_enable_mjpeg;
 static char omx_enable_wvc1;
+static char omx_enable_h263;
+static char omx_enable_h264;
+static char omx_enable_theora;
+static char omx_enable_mpeg4;
 
 
 
@@ -225,16 +230,22 @@ rpi_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   switch(mc->codec_id) {
 
   case AV_CODEC_ID_H263:
+    if(!omx_enable_h263)
+      return 1;
     fmt = OMX_VIDEO_CodingH263;
     name = "h263";
     break;
 
   case AV_CODEC_ID_MPEG4:
+    if(!omx_enable_mpeg4)
+      return 1;
     fmt = OMX_VIDEO_CodingMPEG4;
     name = "MPEG-4";
     break;
 
   case AV_CODEC_ID_H264:
+    if(!omx_enable_h264)
+      return 1;
     fmt = OMX_VIDEO_CodingAVC;
     name = "h264";
     break;
@@ -282,6 +293,9 @@ rpi_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
     break;
 
   case AV_CODEC_ID_THEORA:
+    if(!omx_enable_theora)
+      return 1;
+
     fmt = OMX_VIDEO_CodingTheora;
     name = "Theora";
     break;
@@ -396,28 +410,15 @@ rpi_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 static void
 rpi_codec_init(void)
 {
-  char buf[64];
-  vc_gencmd(buf, sizeof(buf), "codec_enabled MPG2");
-  TRACE(TRACE_INFO, "VideoCore", "%s", buf);
-  omx_enable_mpg2 = !strcmp(buf, "MPG2=enabled");
-
-  vc_gencmd(buf, sizeof(buf), "codec_enabled VP8");
-  TRACE(TRACE_INFO, "VideoCore", "%s", buf);
-  omx_enable_vp8 = !strcmp(buf, "VP8=enabled");
-
-  vc_gencmd(buf, sizeof(buf), "codec_enabled VP6");
-  TRACE(TRACE_INFO, "VideoCore", "%s", buf);
-  omx_enable_vp6 = !strcmp(buf, "VP6=enabled");
-
-  vc_gencmd(buf, sizeof(buf), "codec_enabled MJPG");
-  TRACE(TRACE_INFO, "VideoCore", "%s", buf);
-  omx_enable_mjpeg = !strcmp(buf, "MJPG=enabled");
-
-  vc_gencmd(buf, sizeof(buf), "codec_enabled WVC1");
-  TRACE(TRACE_INFO, "VideoCore", "%s", buf);
-  omx_enable_wvc1 = !strcmp(buf, "WVC1=enabled");
-
-
+  omx_enable_mpg2   = rpi_is_codec_enabled("MPG2");
+  omx_enable_vp6    = rpi_is_codec_enabled("VP6");
+  omx_enable_vp8    = rpi_is_codec_enabled("VP8");
+  omx_enable_mjpeg  = rpi_is_codec_enabled("MJPG");
+  omx_enable_wvc1   = rpi_is_codec_enabled("WVC1");
+  omx_enable_h263   = rpi_is_codec_enabled("H263");
+  omx_enable_h264   = rpi_is_codec_enabled("H264");
+  omx_enable_theora = rpi_is_codec_enabled("THRA");
+  omx_enable_mpeg4  = rpi_is_codec_enabled("MPG4");
 }
 
 

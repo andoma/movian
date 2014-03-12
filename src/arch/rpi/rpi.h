@@ -33,3 +33,5 @@ extern int display_status;
 extern int cec_we_are_not_active;
 
 void rpi_cec_init(void);
+
+int rpi_is_codec_enabled(const char *id);
