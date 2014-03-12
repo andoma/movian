@@ -1,0 +1,3 @@
+Fix a bug causing stuttering DVDSUB/VOBSUB subtitles
+
+Fixes #1735
