@@ -253,15 +253,8 @@ video_deliver_frame_avctx(video_decoder_t *vd,
 	  av_get_pix_fmt_name(PIX_FMT_YUV420P));
   }
 
-  int64_t ts = showtime_get_ts();
-
   sws_scale(vd->vd_sws, (void *)frame->data, frame->linesize, 0,
             frame->height, vd->vd_convert.data, vd->vd_convert.linesize);
-
-  ts = showtime_get_ts() - ts;
-
-  TRACE(TRACE_DEBUG, "VIDEO", "Decode %d  convert %d",
-	decode_time, (int)ts);
 
   fi.fi_data[0] = vd->vd_convert.data[0];
   fi.fi_data[1] = vd->vd_convert.data[1];
