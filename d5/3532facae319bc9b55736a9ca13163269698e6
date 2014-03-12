@@ -1,0 +1,3 @@
+Fix black screen if video decodes too slow
+
+Fixes #1792
