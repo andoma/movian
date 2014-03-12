@@ -165,7 +165,7 @@ yuvp_init(glw_video_t *gv)
 {
   gv->gv_planes = 3;
 
-  gv->gv_tex_internal_format = GL_RED;
+  gv->gv_tex_internal_format = 1;
   gv->gv_tex_format = GL_LUMINANCE;
   gv->gv_tex_type = GL_UNSIGNED_BYTE;
   gv->gv_tex_bytes_per_pixel = 1;
