@@ -1,0 +1,4 @@
+Fix problem with [Download and install...] button on focus page not
+being focused.
+
+Work around: Press left button on D-pad a few times
