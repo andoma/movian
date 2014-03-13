@@ -300,7 +300,7 @@ static audio_class_t android_audio_class = {
  *
  */
 audio_class_t *
-audio_driver_init(void)
+audio_driver_init(struct prop *asettings, struct htsmsg *store)
 {
   return &android_audio_class;
 }

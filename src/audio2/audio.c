@@ -126,7 +126,7 @@ audio_init(void)
                    NULL);
 
   audio_mastervol_init();
-  audio_class = audio_driver_init();
+  audio_class = audio_driver_init(asettings, store);
 
 #if CONFIG_AUDIOTEST
   audio_test_init(asettings);
@@ -463,8 +463,10 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 
       if(frame->sample_rate    != ad->ad_in_sample_rate ||
 	 frame->format         != ad->ad_in_sample_format ||
-	 frame->channel_layout != ad->ad_in_channel_layout) {
+	 frame->channel_layout != ad->ad_in_channel_layout ||
+	 ad->ad_want_reconfig) {
 
+	ad->ad_want_reconfig = 0;
 	ad->ad_in_sample_rate    = frame->sample_rate;
 	ad->ad_in_sample_format  = frame->format;
 	ad->ad_in_channel_layout = frame->channel_layout;

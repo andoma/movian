@@ -351,7 +351,7 @@ static audio_class_t mac_audio_class = {
 };
 
 audio_class_t *
-audio_driver_init(void)
+audio_driver_init(struct prop *asettings, struct htsmsg *store)
 {
   hts_thread_create_detached("audioloop", audio_thread, NULL, 0);
   while(1) {

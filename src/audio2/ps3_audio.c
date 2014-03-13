@@ -358,7 +358,7 @@ set_mastervol(void *opaque, float value)
  *
  */
 audio_class_t *
-audio_driver_init(void)
+audio_driver_init(struct prop *asettings, struct htsmsg *store)
 {
 
   max_pcm = audioOutGetSoundAvailability(AUDIO_OUT_PRIMARY,

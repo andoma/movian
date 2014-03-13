@@ -605,7 +605,7 @@ context_state_callback(pa_context *c, void *userdata)
  *
  */
 audio_class_t *
-audio_driver_init(void)
+audio_driver_init(struct prop *asettings, struct htsmsg *store)
 {
   TRACE(TRACE_DEBUG, "PA", "Headerversion: %s, library: %s",
 	pa_get_headers_version(), pa_get_library_version());

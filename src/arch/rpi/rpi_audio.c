@@ -55,7 +55,9 @@ typedef struct decoder {
   float d_master_volume;
   float d_master_mute;
 
-  char d_can_8ch_pcm;
+  char d_hdmi_8ch_pcm;
+
+  char d_local_output;
 
   double d_matrix[8][8];
 
@@ -102,6 +104,7 @@ static const GUID KSDATAFORMAT_SUBTYPE_PCM = {
 
 static float master_volume = 1.0;
 static int master_mute;
+static int local_output;
 
 /**
  *
@@ -116,13 +119,15 @@ rpi_audio_init(audio_decoder_t *ad)
 
   int x;
 
+  d->d_local_output = local_output;
+
   x = vc_tv_hdmi_audio_supported(EDID_AudioFormat_ePCM, 8,
 				 EDID_AudioSampleRate_e48KHz,
 				 EDID_AudioSampleSize_16bit);
   
-  d->d_can_8ch_pcm = !x;
+  d->d_hdmi_8ch_pcm = !x;
 
-  if(!d->d_can_8ch_pcm)
+  if(!d->d_hdmi_8ch_pcm)
     ad->ad_stereo_downmix = 1;
   return 0;
 }
@@ -293,7 +298,11 @@ decoder_init(decoder_t *d, int with_mixer)
 				      &ad->ad_mp->mp_audio.mq_avail);
   }
 
-  const char *device = "hdmi";
+  d->d_local_output = local_output;
+
+  const char *device = d->d_local_output ? "local" : "hdmi";
+
+  TRACE(TRACE_DEBUG, "RPI", "Opening audio output %s", device);
 
   OMX_CONFIG_BRCMAUDIODESTINATIONTYPE audioDest;
   OMX_INIT_STRUCTURE(audioDest);
@@ -338,7 +347,7 @@ get_out_channel_layout(const decoder_t *d)
   switch(d->ad.ad_in_channel_layout) {
 
   default:
-    if(d->d_can_8ch_pcm) {
+    if(d->d_hdmi_8ch_pcm && !d->d_local_output) {
       TRACE(TRACE_DEBUG, "RPI", "8 Channel PCM support detected");
       return AV_CH_LAYOUT_7POINT1;
     }
@@ -465,8 +474,10 @@ rpi_audio_reconfig(audio_decoder_t *ad)
   if(d->d_decoder != NULL) {
     int fmt = get_out_sample_format(d);
     int l   = get_out_channel_layout(d);
-
-    if(fmt == ad->ad_out_sample_format && l == ad->ad_out_channel_layout) {
+ 
+    if(fmt == ad->ad_out_sample_format &&
+       l == ad->ad_out_channel_layout &&
+       d->d_local_output == local_output) {
       return 0;
     }
   }
@@ -542,6 +553,10 @@ rpi_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
 
   omxchk(OMX_EmptyThisBuffer(oc->oc_handle, buf));
   hts_mutex_lock(&ad->ad_mp->mp_mutex);
+
+  if(d->d_local_output != local_output)
+    d->ad.ad_want_reconfig = 1;
+
   return 0;
 }
 
@@ -618,13 +633,13 @@ rpi_get_mode(audio_decoder_t *ad, int codec,
   switch(codec) {
   case AV_CODEC_ID_FLAC:
     if(!omx_enable_flac)
-      return 1;
+      return AUDIO_MODE_PCM;
     encoding = OMX_AUDIO_CodingFLAC;
     break;
 
   case AV_CODEC_ID_VORBIS:
     if(!omx_enable_vorbis)
-      return 1;
+      return AUDIO_MODE_PCM;
     encoding = OMX_AUDIO_CodingVORBIS;
     break;
 
@@ -792,12 +807,21 @@ set_mastermute(void *opaque, int value)
 
 
 audio_class_t *
-audio_driver_init(void)
+audio_driver_init(struct prop *asettings, struct htsmsg *store)
 {
 #if 0
   omx_enable_flac   = rpi_is_codec_enabled("FLAC");
   omx_enable_vorbis = rpi_is_codec_enabled("VORB");
 #endif
+
+  setting_create(SETTING_MULTIOPT, asettings, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Audio output port")),
+                 SETTING_HTSMSG("outputport", store, "audio2"),
+                 SETTING_WRITE_INT(&local_output),
+                 SETTING_OPTION("0", _p("HDMI")),
+                 SETTING_OPTION("1", _p("Analog")),
+                 NULL);
+
   prop_subscribe(0,
 		 PROP_TAG_CALLBACK_FLOAT, set_mastervol, NULL,
 		 PROP_TAG_NAME("global", "audio", "mastervolume"),

@@ -103,9 +103,11 @@ typedef struct audio_decoder {
   int ad_spdif_frame_alloc;
 
   float ad_vol_scale;
+  int ad_want_reconfig;
+
 } audio_decoder_t;
 
-audio_class_t *audio_driver_init(void);
+audio_class_t *audio_driver_init(struct prop *asettings, struct htsmsg *store);
 
 void audio_test_init(struct prop *asettings);
 
