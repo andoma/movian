@@ -451,6 +451,7 @@ vd_thread(void *aux)
 	  media_codec_deref(mc_current);
 
 	mc_current = media_codec_ref(mc);
+	prop_set_int(mq->mq_prop_too_slow, 0);
       }
 
       if(reinit) {
