@@ -43,6 +43,10 @@ LIST_HEAD(backend_list, backend);
 
 static struct backend_list backends;
 
+static hts_mutex_t imageloader_mutex;
+static hts_cond_t imageloader_cond;
+
+
 /**
  *
  */
@@ -60,6 +64,9 @@ void
 backend_init(void)
 {
   backend_t *be;
+
+  hts_mutex_init(&imageloader_mutex);
+  hts_cond_init(&imageloader_cond, &imageloader_mutex);
 
   LIST_FOREACH(be, &backends, be_global_link)
     if(be->be_init != NULL)
@@ -158,19 +165,9 @@ static backend_t be_page = {
 
 BE_REGISTER(page);
 
+#define LOAD_SLOT_SIZE 1024
 
-
-
-typedef struct cached_image {
-  LIST_ENTRY(cached_image) ci_link;
-  
-  rstr_t *ci_url;
-  pixmap_t *ci_pixmap;
-
-} cached_image_t;
-
-
-
+static uint8_t load_slots[LOAD_SLOT_SIZE / 8];
 
 /**
  *
@@ -261,35 +258,58 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im0,
   pixmap_t *pm = NULL;
   if(nb == NULL || nb->be_imageloader == NULL) {
     snprintf(errbuf, errlen, "No backend for URL");
-  } else {
-    pm = nb->be_imageloader(url, &im, vpaths, errbuf, errlen, cache_control, c);
+    goto out;
+  }
 
-    if(pm != NULL && pm != NOT_MODIFIED && !im.im_no_decoding) {
+  const uint32_t hash = mystrhash(url) & (LOAD_SLOT_SIZE - 1);
 
-      if(c != NULL && c->cancelled) {
-	snprintf(errbuf, errlen, "Cancelled");
-	pixmap_release(pm);
-	return NULL;
-      }
+  const int h_byte = hash >> 3;
+  const int h_bit = hash & 7;
+
+  hts_mutex_lock(&imageloader_mutex);
+
+  while(load_slots[h_byte] & h_bit)
+    hts_cond_wait(&imageloader_cond, &imageloader_mutex);
+
+  load_slots[h_byte] |= h_bit;
+
+  hts_mutex_unlock(&imageloader_mutex);
+
+  pm = nb->be_imageloader(url, &im, vpaths, errbuf, errlen, cache_control, c);
+
+  if(pm != NULL && pm != NOT_MODIFIED && !im.im_no_decoding) {
+
+    if(c != NULL && c->cancelled) {
+      snprintf(errbuf, errlen, "Cancelled");
+      pixmap_release(pm);
+      pm = NULL;
+    } else {
 
       uint8_t original_type = pm->pm_original_type ?: pm->pm_type;
 
       pm = pixmap_decode(pm, &im, errbuf, errlen);
 
       if(pm != NULL && pm->pm_type == PIXMAP_VECTOR)
-        pm = pixmap_rasterize_ft(pm);
+	pm = pixmap_rasterize_ft(pm);
 
       if(pm != NULL && im.im_shadow)
-        pixmap_drop_shadow(pm, im.im_shadow, im.im_shadow);
+	pixmap_drop_shadow(pm, im.im_shadow, im.im_shadow);
 
       if(pm != NULL && im.im_corner_radius)
 	pm = pixmap_rounded_corners(pm, im.im_corner_radius,
 				    im.im_corner_selection);
 
       if(pm != NULL)
-        pm->pm_original_type = original_type;
+	pm->pm_original_type = original_type;
     }
   }
+       
+  hts_mutex_lock(&imageloader_mutex);
+  load_slots[h_byte] &= ~h_bit;
+  hts_cond_broadcast(&imageloader_cond);
+  hts_mutex_unlock(&imageloader_mutex);
+
+ out:
   if(m)
     htsmsg_destroy(m);
   return pm;

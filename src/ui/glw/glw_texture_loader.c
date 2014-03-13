@@ -243,8 +243,7 @@ loader_thread(void *aux)
 	cache_control = 0;
 	ccptr = &cache_control;
 	
-      } else if(glt->glt_q == &gr->gr_tex_load_queue[LQ_OTHER] ||
-		glt->glt_q == &gr->gr_tex_load_queue[LQ_REFRESH]) {
+      } else if(glt->glt_q == &gr->gr_tex_load_queue[LQ_REFRESH]) {
 	ccptr = BYPASS_CACHE;
       } else {
 	ccptr = NULL;
