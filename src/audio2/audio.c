@@ -343,8 +343,9 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 	audio_cleanup_spdif_muxer(ad);
 
 	ad->ad_mode = ac->ac_get_mode != NULL ?
-	  ac->ac_get_mode(ad, mc->codec_id, ctx->extradata,
-			  ctx->extradata_size) : AUDIO_MODE_PCM;
+	  ac->ac_get_mode(ad, mc->codec_id,
+			  ctx ? ctx->extradata : NULL,
+			  ctx ? ctx->extradata_size : 0) : AUDIO_MODE_PCM;
 
 	if(ad->ad_mode == AUDIO_MODE_SPDIF) {
 	  audio_setup_spdif_muxer(ad, codec, mq);
