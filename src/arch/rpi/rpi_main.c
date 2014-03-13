@@ -47,6 +47,7 @@
 #include "omx.h"
 #include "backend/backend.h"
 #include "notifications.h"
+#include "misc/callout.h"
 
 #if ENABLE_CONNMAN
 #include <gio/gio.h>
@@ -831,3 +832,39 @@ rpi_is_codec_enabled(const char *id)
   TRACE(TRACE_INFO, "VideoCore", "%s", buf);
   return !!strstr(buf, "=enabled");
 }
+
+
+static callout_t timer;
+
+/**
+ *
+ */
+static void
+rpi_monitor_timercb(callout_t *c, void *aux)
+{
+  callout_arm(&timer, rpi_monitor_timercb, aux, 10);
+
+  prop_t *tempprop = prop_create(aux, "temp");
+
+  char buf[64];
+
+  buf[0] = 0;
+  vc_gencmd(buf, sizeof(buf), "measure_temp");
+  const char *x = mystrbegins(buf, "temp=");
+  if(x != NULL)
+    prop_set(tempprop, "cpu", PROP_SET_INT, atoi(x));
+}
+
+
+
+/**
+ *
+ */
+static void
+rpi_monitor_init(void)
+{
+  prop_t *p = prop_create(prop_get_global(), "system");
+  rpi_monitor_timercb(NULL, p);
+}
+
+INITME(INIT_GROUP_API, rpi_monitor_init);
