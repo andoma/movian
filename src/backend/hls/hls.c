@@ -1090,6 +1090,8 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
   sub_scanner_t *ss = NULL;
   int sub_scanning_done = 0;
 
+  int enqueued_something = 0;
+
   h->h_playback_priority = va->priority;
 
   mp->mp_video.mq_stream = 0;
@@ -1237,6 +1239,11 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
     } else if((e = mb_enqueue_with_events_ex(mp, mq, mb,
 					     &h->h_blocked)) == NULL) {
       mb = NULL; /* Enqueue succeeded */
+
+      if(!enqueued_something) {
+	prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 0);
+	enqueued_something = 1;
+      }
       continue;
     }
 
@@ -1466,6 +1473,8 @@ hls_play_extm3u(char *buf, const char *url, media_pipe_t *mp,
     return NULL;
   }
 
+  prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 1);
+
   hls_t h;
   memset(&h, 0, sizeof(h));
   hls_demuxer_init(&h.h_primary);
@@ -1519,6 +1528,9 @@ hls_playvideo(const char *url, media_pipe_t *mp,
               const video_args_t *va0)
 {
   buf_t *buf;
+
+  prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 1);
+
   url += strlen("hls:");
   if(!strcmp(url, "test"))
     url = TESTURL;

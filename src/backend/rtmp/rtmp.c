@@ -669,6 +669,7 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
   char *url = mystrdupa(url0);
 
   prop_set(mp->mp_prop_metadata, "format", PROP_SET_STRING, "RTMP");
+  prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 1);
 
   va.flags |= BACKEND_VIDEO_NO_FS_SCAN;
 
@@ -740,6 +741,7 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
   sub_scanner_t *ss =
     sub_scanner_create(url, mp->mp_prop_subtitle_tracks, &va, 0);
 
+  prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 0);
   e = rtmp_loop(&r, mp, url, errbuf, errlen);
 
   sub_scanner_destroy(ss);

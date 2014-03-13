@@ -578,6 +578,9 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 {
   rstr_t *title = NULL;
   video_args_t va = *va0;
+
+  prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 1);
+
   if(va.mimetype == NULL) {
     struct fa_stat fs;
 
@@ -631,6 +634,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     if(fa_probe_iso(NULL, fh) == 0) {
       fa_close(fh);
     isdvd:
+      prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 0);
 #if ENABLE_DVD
       return dvd_play(url, mp, errbuf, errlen, 1);
 #else
@@ -874,6 +878,7 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
   seek_index_t *ci = build_chapters(mp, fctx, url);
 
   playinfo_register_play(va.canonical_url, 0);
+  prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 0);
 
   event_t *e;
   e = video_player_loop(fctx, cwvec, mp, va.flags, errbuf, errlen,

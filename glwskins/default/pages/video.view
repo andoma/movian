@@ -23,6 +23,8 @@ $self.directClose = 1;
 // If playstatus is set to stop, close the page
 $self.close = $self.media.playstatus == "stop";
 
+$self.model.loading = $self.media.loading;
+
 $view.statsAlpha = iir($self.media.stats, 8);
 
 delta($ui.fullwindow, isVisible());
