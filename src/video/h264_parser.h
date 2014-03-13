@@ -86,6 +86,8 @@ typedef struct h264_sps {
   int poc_cycle_length;
   int direct_8x8_inference_flag;
 
+  char present;
+
 } h264_sps_t;
 
 

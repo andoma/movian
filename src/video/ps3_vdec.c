@@ -33,6 +33,7 @@
 #include "arch/halloc.h"
 #include "notifications.h"
 #include "h264_annexb.h"
+#include "h264_parser.h"
 
 static int vdec_mpeg2_loaded;
 static int vdec_h264_loaded;
@@ -770,6 +771,40 @@ video_ps3_vdec_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 
       if(mcp->profile >= FF_PROFILE_H264_HIGH_10)
 	return 1; // No 10bit support
+
+      if(mcp->extradata != NULL) {
+	h264_parser_t hp;
+	if(h264_parser_init(&hp, mcp->extradata, mcp->extradata_size)) {
+	  notify_add(mp->mp_prop_notifications, NOTIFY_WARNING, NULL, 10,
+		     _("Cell-h264: Broken headers, Disabling acceleration"));
+	  return -1;
+	}
+
+	TRACE(TRACE_DEBUG, "VDEC", "Dumping SPS");
+	int too_big_refframes = 0;
+	for(int i = 0; i < H264_PARSER_NUM_SPS; i++) {
+	  const h264_sps_t *s = &hp.sps_array[i];
+	  if(!s->present)
+	    continue;
+	  TRACE(TRACE_DEBUG, "VDEC",
+		"SPS[%d]: %d x %d profile:%d level:%d.%d ref-frames:%d",
+		i, s->mb_width * 16, s->mb_height * 16,
+		s->profile,
+		s->level / 10,
+		s->level % 10,
+		s->num_ref_frames);
+
+	  if(s->mb_height >= 68 && s->num_ref_frames > 4)
+	    too_big_refframes = s->num_ref_frames;
+	}
+	h264_parser_fini(&hp);
+
+	if(too_big_refframes) {
+	  notify_add(mp->mp_prop_notifications, NOTIFY_WARNING, NULL, 10,
+		     _("Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration"), too_big_refframes);
+	  return -1;
+	}
+      }
     }
 
     if(!vdec_h264_loaded) 

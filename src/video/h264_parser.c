@@ -68,6 +68,7 @@ h264_parser_decode_sps(h264_parser_t *hp, bitstream_t *bs, h264_sps_t *sps)
     sps = &hp->sps_array[sps_id];
   }
 
+  sps->present = 1;
   sps->profile = profile;
   sps->level   = level;
 
