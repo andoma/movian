@@ -153,10 +153,10 @@ rpi_audio_fini(audio_decoder_t *ad)
     omx_tunnel_destroy(d->d_clock_tun);
     d->d_clock_tun = NULL;
   }
-  omx_wait_buffers(d->d_decoder);
-  omx_set_state(d->d_decoder, OMX_StateIdle);
-  omx_release_buffers(d->d_decoder, 120);
 
+  omx_set_state(d->d_decoder, OMX_StateIdle);
+  omx_wait_buffers(d->d_decoder);
+  omx_release_buffers(d->d_decoder, 120);
   omx_set_state(d->d_decoder, OMX_StateLoaded);
   omx_component_destroy(d->d_decoder);
 
@@ -310,7 +310,45 @@ decoder_init(decoder_t *d, int with_mixer)
   d->d_decoder = omx_component_create("OMX.broadcom.audio_decode",
 				     &ad->ad_mp->mp_mutex,
 				     &ad->ad_mp->mp_audio.mq_avail);
+}
 
+/**
+ *
+ */
+static int
+get_out_sample_format(const decoder_t *d)
+{
+  switch(d->ad.ad_in_sample_format) {
+  case AV_SAMPLE_FMT_FLTP:
+  case AV_SAMPLE_FMT_FLT:
+    return AV_SAMPLE_FMT_FLTP;
+
+  default:
+    return AV_SAMPLE_FMT_S16;
+  }
+}
+
+
+/**
+ *
+ */
+static int
+get_out_channel_layout(const decoder_t *d)
+{
+  switch(d->ad.ad_in_channel_layout) {
+
+  default:
+    if(d->d_can_8ch_pcm) {
+      TRACE(TRACE_DEBUG, "RPI", "8 Channel PCM support detected");
+      return AV_CH_LAYOUT_7POINT1;
+    }
+
+    // FALLTHRU
+
+  case AV_CH_LAYOUT_MONO:
+  case AV_CH_LAYOUT_STEREO:
+    return AV_CH_LAYOUT_STEREO;
+  }
 }
 
 
@@ -323,57 +361,39 @@ rpi_audio_config_pcm(decoder_t *d)
   WAVEFORMATEXTENSIBLE wfe = {};
   audio_decoder_t *ad = &d->ad;
   int bps;
-  int channels;
 
-  switch(ad->ad_in_sample_format) {
+  ad->ad_out_sample_format = get_out_sample_format(d);
+
+  switch(ad->ad_out_sample_format) {
   case AV_SAMPLE_FMT_FLTP:
-  case AV_SAMPLE_FMT_FLT:
     wfe.Format.wFormatTag = 0x8000;
     bps = 32;
-    ad->ad_out_sample_format = AV_SAMPLE_FMT_FLTP;
     break;
-#if 0
-  case AV_SAMPLE_FMT_S32:
-    wfe.Format.wFormatTag = WAVE_FORMAT_PCM;
-    bps = 32;
-    ad->ad_out_sample_format = AV_SAMPLE_FMT_S32;
-    break;
-#endif
-  default:
+
+  case AV_SAMPLE_FMT_S16:
     wfe.Format.wFormatTag = WAVE_FORMAT_PCM;
     bps = 16;
-    ad->ad_out_sample_format = AV_SAMPLE_FMT_S16;
     break;
-  }
-
-  switch(ad->ad_in_channel_layout) {
 
   default:
-    if(d->d_can_8ch_pcm) {
-      TRACE(TRACE_DEBUG, "RPI", "8 Channel PCM support detected");
-      ad->ad_out_channel_layout = AV_CH_LAYOUT_7POINT1;
-      channels = 8;
-      break;
-    }
-
-    // FALLTHRU
-
-  case AV_CH_LAYOUT_MONO:
-  case AV_CH_LAYOUT_STEREO:
-    TRACE(TRACE_DEBUG, "RPI", "2 Channel PCM support detected");
-    ad->ad_out_channel_layout = AV_CH_LAYOUT_STEREO;
-    channels = 2;
-    break;
-
+    abort();
   }
 
-  d->d_channels = channels;
+  ad->ad_out_channel_layout = get_out_channel_layout(d);
+  switch(ad->ad_out_channel_layout) {
+  case AV_CH_LAYOUT_STEREO:
+    d->d_channels = 2;
+    break;
+  case AV_CH_LAYOUT_7POINT1:
+    d->d_channels = 8;
+    break;
+  }
 
   /**
    * Configure input port
    */
   ad->ad_tile_size = 1024;
-  d->d_bpf = channels * (bps >> 3);
+  d->d_bpf = d->d_channels * (bps >> 3);
  
   OMX_PARAM_PORTDEFINITIONTYPE portParam;
   OMX_INIT_STRUCTURE(portParam);
@@ -406,11 +426,11 @@ rpi_audio_config_pcm(decoder_t *d)
   omx_alloc_buffers(d->d_decoder, 120);
   omx_set_state(d->d_decoder, OMX_StateExecuting);
 
-  int bytes_per_sec =  ad->ad_in_sample_rate * (bps >> 3) * channels;
+  int bytes_per_sec =  ad->ad_in_sample_rate * (bps >> 3) * d->d_channels;
 
   wfe.Samples.wSamplesPerBlock    = 0;
-  wfe.Format.nChannels            = channels;
-  wfe.Format.nBlockAlign          = channels * (bps >> 3);
+  wfe.Format.nChannels            = d->d_channels;
+  wfe.Format.nBlockAlign          = d->d_channels * (bps >> 3);
   wfe.Format.nSamplesPerSec       = ad->ad_in_sample_rate;
   wfe.Format.nAvgBytesPerSec      = bytes_per_sec;
   wfe.Format.wBitsPerSample       = bps;
@@ -441,6 +461,16 @@ static int
 rpi_audio_reconfig(audio_decoder_t *ad)
 {
   decoder_t *d = (decoder_t *)ad;
+
+  if(d->d_decoder != NULL) {
+    int fmt = get_out_sample_format(d);
+    int l   = get_out_channel_layout(d);
+
+    if(fmt == ad->ad_out_sample_format && l == ad->ad_out_channel_layout) {
+      return 0;
+    }
+  }
+
   decoder_init(d, 1);
   return rpi_audio_config_pcm(d);
 }
