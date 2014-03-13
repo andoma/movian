@@ -774,6 +774,9 @@ video_ps3_vdec_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 
       if(mcp->extradata != NULL) {
 	h264_parser_t hp;
+
+	hexdump("extradata", mcp->extradata, mcp->extradata_size);
+
 	if(h264_parser_init(&hp, mcp->extradata, mcp->extradata_size)) {
 	  notify_add(mp->mp_prop_notifications, NOTIFY_WARNING, NULL, 10,
 		     _("Cell-h264: Broken headers, Disabling acceleration"));

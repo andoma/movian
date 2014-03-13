@@ -196,8 +196,13 @@ h264_parser_init(h264_parser_t *hp, const uint8_t *data, int len)
   if(data == NULL)
     return 0;
 
-  if(len < 7 || data[0] != 1)
+  if(len < 7)
     return -1;
+
+  if(data[0] != 1) {
+    h264_parser_decode_data(hp, data, len);
+    return 0;
+  }
 
   hp->lensize = (data[4] & 0x3) + 1;
 
