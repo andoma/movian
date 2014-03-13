@@ -936,7 +936,15 @@ glw_video_configure(glw_video_t *gv, const glw_video_engine_t *engine)
     if(gv->gv_engine != NULL)
       gv->gv_engine->gve_reset(gv);
     
+    TAILQ_INIT(&gv->gv_avail_queue);
+    TAILQ_INIT(&gv->gv_parked_queue);
+    TAILQ_INIT(&gv->gv_displaying_queue);
+    TAILQ_INIT(&gv->gv_decoded_queue);
+
     gv->gv_engine = engine;
+
+    if(engine == NULL)
+      return 0;
 
     if(engine->gve_init_on_ui_thread) {
       gv->gv_need_init = 1;
