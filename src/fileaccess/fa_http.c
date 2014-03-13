@@ -3524,7 +3524,9 @@ http_req(const char *url, ...)
 
   default:
     snprintf(errbuf, errlen, "HTTP error: %d", code);
-    http_drain_content(hf);
+
+    if(!no_content && http_drain_content(hf))
+      hf->hf_connection_mode = CONNECTION_MODE_CLOSE;
     goto cleanup;
   }
 
