@@ -165,9 +165,18 @@ static backend_t be_page = {
 
 BE_REGISTER(page);
 
-#define LOAD_SLOT_SIZE 1024
 
-static uint8_t load_slots[LOAD_SLOT_SIZE / 8];
+typedef struct loading_image {
+  LIST_ENTRY(loading_image) li_link;
+  int li_refcount;
+  int li_done;
+  char li_url[0];
+} loading_image_t;
+
+
+LIST_HEAD(loading_image_list, loading_image);
+
+static struct loading_image_list loading_images;
 
 /**
  *
@@ -261,17 +270,27 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im0,
     goto out;
   }
 
-  const uint32_t hash = mystrhash(url) & (LOAD_SLOT_SIZE - 1);
-
-  const int h_byte = hash >> 3;
-  const int h_bit = hash & 7;
-
   hts_mutex_lock(&imageloader_mutex);
 
-  while(load_slots[h_byte] & h_bit)
-    hts_cond_wait(&imageloader_cond, &imageloader_mutex);
+  loading_image_t *li;
+  LIST_FOREACH(li, &loading_images, li_link)
+    if(!strcmp(li->li_url, url))
+      break;
 
-  load_slots[h_byte] |= h_bit;
+  if(li == NULL) {
+    li = malloc(sizeof(loading_image_t) + strlen(url) + 1);
+    LIST_INSERT_HEAD(&loading_images, li, li_link);
+    li->li_done = 0;
+    li->li_refcount = 1;
+    strcpy(li->li_url, url);
+  } else {
+    li->li_refcount++;
+
+    while(li->li_done == 0)
+      hts_cond_wait(&imageloader_cond, &imageloader_mutex);
+
+    li->li_done = 0;
+  }
 
   hts_mutex_unlock(&imageloader_mutex);
 
@@ -303,10 +322,18 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im0,
 	pm->pm_original_type = original_type;
     }
   }
-       
+
   hts_mutex_lock(&imageloader_mutex);
-  load_slots[h_byte] &= ~h_bit;
-  hts_cond_broadcast(&imageloader_cond);
+  li->li_refcount--;
+
+  if(li->li_refcount == 0) {
+    LIST_REMOVE(li, li_link);
+    free(li);
+  } else {
+    li->li_done = 1;
+    hts_cond_broadcast(&imageloader_cond);
+  }
+
   hts_mutex_unlock(&imageloader_mutex);
 
  out:
