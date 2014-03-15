@@ -43,7 +43,8 @@
 #include "subtitles/subtitles.h"
 
 
-extern hts_mutex_t metadata_mutex;
+
+hts_mutex_t metadata_sources_mutex;
 
 struct metadata_source_queue metadata_sources[METADATA_TYPE_num];
 static prop_t *metadata_sources_settings[METADATA_TYPE_num];
@@ -187,11 +188,11 @@ metadata_add_source(const char *name, const char *description,
 
   prop_tag_set(ms->ms_settings, &tagkey, ms);
 
-  hts_mutex_lock(&metadata_mutex);
+  hts_mutex_lock(&metadata_sources_mutex);
 
   setting_create(SETTING_BOOL, ms->ms_settings, 0,
                  SETTING_TITLE(_p("Enabled")),
-                 SETTING_MUTEX(&metadata_mutex),
+                 SETTING_MUTEX(&metadata_sources_mutex),
                  SETTING_CALLBACK(ms_set_enable, ms),
                  SETTING_VALUE(ms->ms_enabled),
                  NULL);
@@ -203,7 +204,7 @@ metadata_add_source(const char *name, const char *description,
   metadata_source_t *n = TAILQ_NEXT(ms, ms_link);
   prop_move(ms->ms_settings, n ? n->ms_settings : NULL);
 
-  hts_mutex_unlock(&metadata_mutex);
+  hts_mutex_unlock(&metadata_sources_mutex);
 
   return ms;
 
@@ -309,7 +310,7 @@ add_provider_class(prop_concat_t *pc,
 
   prop_subscribe(0,
                  PROP_TAG_CALLBACK, provider_class_node_sub, NULL,
-                 PROP_TAG_MUTEX, &metadata_mutex,
+                 PROP_TAG_MUTEX, &metadata_sources_mutex,
                  PROP_TAG_ROOT, n,
                  NULL);
 }
@@ -322,9 +323,15 @@ const metadata_source_t *
 metadata_source_get(metadata_type_t type, int id)
 {
   const metadata_source_t *ms;
+  hts_mutex_lock(&metadata_sources_mutex);
   TAILQ_FOREACH(ms, &metadata_sources[type], ms_link)
     if(ms->ms_enabled && ms->ms_id == id)
       break;
+  hts_mutex_unlock(&metadata_sources_mutex);
+
+  // This must be fixed when we can delete metadata_sources
+  // We need to retain a reference or something like that
+
   return ms;
 }
 
@@ -338,6 +345,7 @@ metadata_sources_init(void)
   prop_t *s;
   prop_concat_t *pc;
 
+  hts_mutex_init(&metadata_sources_mutex);
 
   s = settings_add_dir(NULL, _p("Metadata"), "settings", NULL,
 		       _p("Metadata configuration and provider settings"),

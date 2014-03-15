@@ -47,9 +47,6 @@
 #include "settings.h"
 #include "subtitles/subtitles.h"
 
-extern hts_mutex_t metadata_mutex;
-extern prop_courier_t *metadata_courier;
-
 
 /**
  *
@@ -329,11 +326,6 @@ metadata_to_proptree(const metadata_t *md, prop_t *proproot,
 void
 metadata_init(void)
 {
-  hts_mutex_init(&metadata_mutex);
-
-  metadata_courier = prop_courier_create_waitable();
-
-
   mlp_init();
   metadata_sources_init();
 }
