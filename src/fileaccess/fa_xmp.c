@@ -77,6 +77,10 @@ fa_xmp_playfile(media_pipe_t *mp, FILE *f, char *errbuf, size_t errlen,
             break;
           }
           xmp_get_frame_info(ctx, &fi);
+          if(fi.loop_count > 0) {
+            e = event_create_type(EVENT_EOF);
+            break;
+          }
 
           mb = media_buf_alloc_unlocked(mp, fi.buffer_size);
           mb->mb_data_type = MB_AUDIO;
