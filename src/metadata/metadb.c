@@ -37,6 +37,7 @@
 #include "htsmsg/htsmsg_json.h"
 #include "settings.h"
 #include "notifications.h"
+#include "metadata_sources.h"
 
 // If not set to true by metadb_init() no metadb actions will occur
 static db_pool_t *metadb_pool;
@@ -1884,7 +1885,7 @@ metadb_get_videoitem(void *db, const char *url)
  */
 int
 metadb_get_videoinfo(void *db, const char *url,
-		     struct metadata_source_queue *sources,
+                     metadata_source_query_info_t *msqi, int num_msqi,
 		     int *fixed_ds, metadata_t **mdp,
                      int only_preferred)
 {
@@ -1958,19 +1959,21 @@ metadb_get_videoinfo(void *db, const char *url,
     if(!dsenabled)
       continue;
 
-    if(sources != NULL) {
-      metadata_source_t *ms;
+    if(num_msqi) {
+      int i;
+      for(i = 0; i < num_msqi; i++) {
+        const struct metadata_source *ms = msqi[i].msqi_ms;
+        if(ms->ms_id == dsid && ms->ms_cfgid == cfgid)
+          break;
+      }
 
-      TAILQ_FOREACH(ms, sources, ms_link)
-	if(ms->ms_id == dsid && cfgid == ms->ms_cfgid) {
-	  ms->ms_mark = 1;
-	  ms->ms_qtype = qtype;
-	  ms->ms_status = status;
-	  break;
-	}
-
-      if(ms == NULL)
-	continue;
+      if(i != num_msqi) {
+        msqi[i].msqi_mark = 1;
+        msqi[i].msqi_qtype = qtype;
+        msqi[i].msqi_status = status;
+      } else {
+        continue;
+      }
     }
 
     if(status == METAITEM_STATUS_ABSENT)
@@ -2387,7 +2390,7 @@ metadata_get_video_data(const char *url)
   void *db = metadb_get();
   metadata_t *md;
 
-  int r = metadb_get_videoinfo(db, url, NULL, NULL, &md, 0);
+  int r = metadb_get_videoinfo(db, url, NULL, 0, NULL, &md, 0);
   metadb_close(db);
   if(r)
     return NULL;

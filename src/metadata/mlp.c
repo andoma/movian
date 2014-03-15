@@ -37,7 +37,7 @@
 
 #include "metadata.h"
 #include "metadata_str.h"
-#include "fileaccess/fileaccess.h"
+#include "metadata_sources.h"
 
 #include "db/db_support.h"
 #include "db/kvstore.h"
@@ -448,20 +448,6 @@ mlv_unbind(metadata_lazy_video_t *mlv, int cleanup)
 /**
  *
  */
-static metadata_source_t *
-get_ms(metadata_type_t type, int id)
-{
-  metadata_source_t *ms;
-  TAILQ_FOREACH(ms, &metadata_sources[type], ms_link)
-    if(ms->ms_enabled && ms->ms_id == id)
-      break;
-  return ms;
-}
-
-
-/**
- *
- */
 static void 
 build_info_text(metadata_lazy_video_t *mlv, const metadata_t *md)
 {
@@ -503,7 +489,8 @@ build_info_text(metadata_lazy_video_t *mlv, const metadata_t *md)
 
     rstr_t *fmt = _("Metadata loaded from '%s' using %s");
 
-    metadata_source_t *ms = get_ms(mlv->mlv_type, md->md_dsid);
+    const metadata_source_t *ms =
+      metadata_source_get(mlv->mlv_type, md->md_dsid);
 
     snprintf(tmp, sizeof(tmp), rstr_get(fmt), 
 	     ms ? ms->ms_description : "???",
@@ -696,8 +683,7 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
   rstr_t *title = NULL;
   metadata_t *md = NULL;
   int64_t rval;
-  metadata_source_t *ms;
-  struct metadata_source_queue *msl = &metadata_sources[mlv->mlv_type];
+  const metadata_source_t *ms;
   int r;
   int fixed_ds;
   const char *sq = rstr_get(mlv->mlv_custom_query);
@@ -717,8 +703,24 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
     goto bad;
   }
 
+  metadata_source_query_info_t *msqivec;
+
+  int num_msqi = 0;
   TAILQ_FOREACH(ms, &metadata_sources[mlv->mlv_type], ms_link)
-    ms->ms_mark = 0;
+    num_msqi++;
+
+  msqivec = alloca(num_msqi * sizeof(metadata_source_query_info_t));
+
+  int i = 0;
+  TAILQ_FOREACH(ms, &metadata_sources[mlv->mlv_type], ms_link) {
+    msqivec[i].msqi_ms = ms;
+
+    msqivec[i].msqi_mark = 0;
+    msqivec[i].msqi_qtype = 0;
+    msqivec[i].msqi_status = 0;
+
+    i++;
+  }
 
  redo:
   if(md != NULL) {
@@ -727,7 +729,8 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
   }
 
   if(!refresh) {
-    r = metadb_get_videoinfo(db, rstr_get(mlv->mlv_url), msl, &fixed_ds, &md,
+    r = metadb_get_videoinfo(db, rstr_get(mlv->mlv_url),
+                             msqivec, num_msqi, &fixed_ds, &md,
                              mlv->mlv_manual);
     if(r) {
       return r;
@@ -742,7 +745,10 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
 
   if(!mlv->mlv_manual && (md == NULL || !md->md_preferred)) {
 
-    TAILQ_FOREACH(ms, &metadata_sources[mlv->mlv_type], ms_link) {
+    for(i = 0; i < num_msqi; i++) {
+
+      metadata_source_query_info_t *msqi = msqivec + i;
+      ms = msqi->msqi_ms;
 
       /* Skip disabled datasources */
       if(!ms->ms_enabled)
@@ -807,15 +813,15 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
        * thus continue
        */
        
-      if(ms->ms_mark && is_qtype_compat(qtype, ms->ms_qtype)) {
+      if(msqi->msqi_mark && is_qtype_compat(qtype, msqi->msqi_qtype)) {
 
 	/**
 	 * This weirdness is to be able to requery if we discover
 	 * that a movie is lonely in its folder
 	 * (To query using directory name)
 	 */
-	if(ms->ms_status == METAITEM_STATUS_ABSENT &&
-	   ms->ms_qtype == METADATA_QTYPE_FILENAME &&
+	if(msqi->msqi_status == METAITEM_STATUS_ABSENT &&
+	   msqi->msqi_qtype == METADATA_QTYPE_FILENAME &&
 	   mlv->mlv_lonely) {
 
 	} else {
@@ -905,7 +911,7 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
   if(md != NULL &&
      md->md_metaitem_status == METAITEM_STATUS_PARTIAL &&
      md->md_ext_id != NULL &&
-     (ms = get_ms(mlv->mlv_type, md->md_dsid)) != NULL &&
+     (ms = metadata_source_get(mlv->mlv_type, md->md_dsid)) != NULL &&
      ms->ms_funcs->query_by_id != NULL &&
      (mlv->mlv_mlp.mlp_req_items & ms->ms_complete_props)) {
     
@@ -931,8 +937,8 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
       TRACE(TRACE_DEBUG, "METADATA", "Permanent error for %s",
 	    rstr_get(mlv->mlv_url));
 
-    r = metadb_get_videoinfo(db, rstr_get(mlv->mlv_url), msl, &fixed_ds, &md,
-                             0);
+    r = metadb_get_videoinfo(db, rstr_get(mlv->mlv_url), msqivec, num_msqi,
+                             &fixed_ds, &md, 0);
     if(r) {
       prop_set(mlv->mlv_m, "loading", PROP_SET_INT, 0);
       return r;
@@ -944,7 +950,7 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
 
     if(md != NULL) {
       mlv->mlv_dsid = md->md_dsid;
-      ms = get_ms(mlv->mlv_type, md->md_dsid);
+      ms = metadata_source_get(mlv->mlv_type, md->md_dsid);
       if(ms != NULL)
         prop_set(mlv->mlv_m, "source", PROP_SET_STRING, ms->ms_description);
 
@@ -953,8 +959,6 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
       prop_set(mlv->mlv_m, "description", PROP_SET_RSTRING, md->md_description);
       prop_set(mlv->mlv_m, "backdrop",    PROP_SET_RSTRING, md->md_backdrop);
       prop_set(mlv->mlv_m, "genre",       PROP_SET_RSTRING, md->md_genre);
-
-      prop_print_tree(mlv->mlv_m, 1);
 
       prop_set(mlv->mlv_m, "year",
                md->md_year ? PROP_SET_INT : PROP_SET_VOID,
@@ -1043,9 +1047,6 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
   }
 
   rstr_release(title);
-  TAILQ_FOREACH(ms, &metadata_sources[mlv->mlv_type], ms_link)
-    ms->ms_mark = 0;
-
   return 0;
 }
 
@@ -1130,7 +1131,7 @@ mlv_sub_alternative(void *opaque, prop_event_t event, ...)
 static void
 load_sources(metadata_lazy_video_t *mlv)
 {
-  metadata_source_t *ms;
+  const metadata_source_t *ms;
   prop_t *active = NULL;
   prop_vec_t *pv = prop_vec_create(10);
   prop_t *c, *p = prop_create_r(mlv->mlv_source_opt, "options");

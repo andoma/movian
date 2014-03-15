@@ -31,6 +31,7 @@
 #include "fileaccess/fileaccess.h"
 #include "blobcache.h"
 #include "db/db_support.h"
+#include "metadata/metadata_sources.h"
 
 #define LASTFM_APIKEY "e8fb67200bce49da092a9de1eb1c649c"
 

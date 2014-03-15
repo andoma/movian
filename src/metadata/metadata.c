@@ -35,6 +35,8 @@
 #include "api/lastfm.h"
 
 #include "metadata.h"
+#include "metadata_sources.h"
+
 #include "fileaccess/fileaccess.h"
 
 #include "db/db_support.h"

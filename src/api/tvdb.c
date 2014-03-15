@@ -29,6 +29,7 @@
 #include "fileaccess/fileaccess.h"
 #include "misc/dbl.h"
 #include "settings.h"
+#include "metadata/metadata_sources.h"
 
 static metadata_source_t *tvdb;
 static char tvdb_language[3];

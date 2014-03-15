@@ -265,40 +265,6 @@ typedef enum {
   METADATA_PROP_ALBUM_ART,
 } metadata_prop_t;
 
-/**
- *
- */
-typedef struct metadata_source {
-  TAILQ_ENTRY(metadata_source) ms_link;
-  char *ms_name;
-  char *ms_description;
-  int ms_prio;
-  int ms_id;
-  int ms_enabled;
-  int ms_type;
-
-  const metadata_source_funcs_t *ms_funcs;
-  struct prop *ms_settings;
-
-  int ms_mark;
-  int ms_qtype;
-  int ms_status;
-  int64_t ms_cfgid;
-
-  uint64_t ms_partial_props;
-  uint64_t ms_complete_props;
-} metadata_source_t;
-
-extern struct metadata_source_queue metadata_sources[METADATA_TYPE_num];
-
-void metadata_sources_init(void);
-
-metadata_source_t *metadata_add_source(const char *name,
-				       const char *description,
-				       int default_prio, metadata_type_t type,
-				       const metadata_source_funcs_t *funcs,
-				       uint64_t partials,
-				       uint64_t complete);
 
 metadata_t *metadata_create(void);
 
@@ -320,6 +286,16 @@ metadata_t *metadata_get_video_data(const char *url);
 //-----------------------------------------------------------------------
 //-----------------------------------------------------------------------
 //-----------------------------------------------------------------------
+
+
+typedef struct metadata_source_query_info {
+  const struct metadata_source *msqi_ms;
+
+  int msqi_mark;
+  int msqi_qtype;
+  int msqi_status;
+} metadata_source_query_info_t;
+
 
 void metadb_init(void);
 
@@ -406,7 +382,7 @@ int64_t metadb_insert_videoitem(void *db, const char *url, int ds_id,
 				int64_t cfgid);
 
 int metadb_get_videoinfo(void *db, const char *url,
-			 struct metadata_source_queue *sources,
+                         metadata_source_query_info_t *msqi, int num_msqi,
 			 int *fixed_ds, metadata_t **mdp,
                          int only_preferred);
 

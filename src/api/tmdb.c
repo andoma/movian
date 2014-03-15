@@ -31,6 +31,7 @@
 #include "backend/backend.h"
 #include "db/db_support.h"
 #include "settings.h"
+#include "metadata/metadata_sources.h"
 
 // http://help.themoviedb.org/kb/api/about-3
 

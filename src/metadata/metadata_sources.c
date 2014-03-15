@@ -32,26 +32,22 @@
 #include "media.h"
 #include "htsmsg/htsmsg_json.h"
 #include "misc/str.h"
-#include "api/lastfm.h"
 
 #include "metadata.h"
-#include "fileaccess/fileaccess.h"
+#include "metadata_sources.h"
 
 #include "db/db_support.h"
 #include "db/kvstore.h"
-
-#include "video/video_settings.h"
 
 #include "settings.h"
 #include "subtitles/subtitles.h"
 
 
 extern hts_mutex_t metadata_mutex;
-extern prop_courier_t *metadata_courier;
 
 struct metadata_source_queue metadata_sources[METADATA_TYPE_num];
 static prop_t *metadata_sources_settings[METADATA_TYPE_num];
-
+static int tagkey;
 
 /**
  *
@@ -189,13 +185,13 @@ metadata_add_source(const char *name, const char *description,
     settings_add_dir_cstr(metadata_sources_settings[type],
 			  ms->ms_description, NULL, NULL, NULL, NULL);
 
-  prop_tag_set(ms->ms_settings, metadata_courier, ms);
+  prop_tag_set(ms->ms_settings, &tagkey, ms);
 
   hts_mutex_lock(&metadata_mutex);
 
   setting_create(SETTING_BOOL, ms->ms_settings, 0,
                  SETTING_TITLE(_p("Enabled")),
-                 SETTING_COURIER(metadata_courier),
+                 SETTING_MUTEX(&metadata_mutex),
                  SETTING_CALLBACK(ms_set_enable, ms),
                  SETTING_VALUE(ms->ms_enabled),
                  NULL);
@@ -278,8 +274,8 @@ provider_class_node_sub(void *opaque, prop_event_t event, ...)
   case PROP_REQ_MOVE_CHILD:
     p1 = va_arg(ap, prop_t *);
     p2 = va_arg(ap, prop_t *);
-    class_handle_move(prop_tag_get(p1, metadata_courier),
-                      p2 ? prop_tag_get(p2, metadata_courier) : NULL);
+    class_handle_move(prop_tag_get(p1, &tagkey),
+                      p2 ? prop_tag_get(p2, &tagkey) : NULL);
     prop_move(p1, p2);
     break;
 
@@ -313,13 +309,24 @@ add_provider_class(prop_concat_t *pc,
 
   prop_subscribe(0,
                  PROP_TAG_CALLBACK, provider_class_node_sub, NULL,
-                 PROP_TAG_COURIER, metadata_courier,
+                 PROP_TAG_MUTEX, &metadata_mutex,
                  PROP_TAG_ROOT, n,
                  NULL);
 }
 
 
-
+/**
+ *
+ */
+const metadata_source_t *
+metadata_source_get(metadata_type_t type, int id)
+{
+  const metadata_source_t *ms;
+  TAILQ_FOREACH(ms, &metadata_sources[type], ms_link)
+    if(ms->ms_enabled && ms->ms_id == id)
+      break;
+  return ms;
+}
 
 
 /**
