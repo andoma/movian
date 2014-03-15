@@ -30,6 +30,7 @@
 #include "navigator.h"
 #include "fileaccess/fileaccess.h"
 #include "fileaccess/fa_indexer.h"
+#include "metadata_str.h"
 
 /**
  *

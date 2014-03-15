@@ -36,6 +36,7 @@
 #include "event.h"
 #include "metadata/playinfo.h"
 #include "metadata/metadata.h"
+#include "metadata/metadata_str.h"
 #include "htsmsg/htsmsg_json.h"
 
 TAILQ_HEAD(js_item_queue, js_item);

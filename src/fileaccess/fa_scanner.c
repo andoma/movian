@@ -41,6 +41,7 @@
 #include "fa_indexer.h"
 #include "notifications.h"
 #include "metadata/playinfo.h"
+#include "metadata/metadata_str.h"
 
 #define SCAN_TRACE(x...) do {			\
     if(gconf.enable_fa_scanner_debug)           \

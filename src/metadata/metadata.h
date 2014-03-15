@@ -289,6 +289,9 @@ typedef struct metadata_source {
   uint64_t ms_complete_props;
 } metadata_source_t;
 
+extern struct metadata_source_queue metadata_sources[METADATA_TYPE_num];
+
+void metadata_sources_init(void);
 
 metadata_source_t *metadata_add_source(const char *name,
 				       const char *description,
@@ -431,6 +434,8 @@ deco_browse_t *decorated_browse_create(struct prop *model, struct prop_nf *pnf,
 // Use if DECO_FLAGS_NO_AUTO_DESTROY
 void decorated_browse_destroy(deco_browse_t *db);
 
+void mlp_init(void);
+
 void metadata_init(void);
 
 void metadata_bind_artistpics(struct prop *prop, rstr_t *artist);
@@ -458,11 +463,6 @@ void mlv_set_lonely(metadata_lazy_video_t *mlv, int lonely);
 int mlv_direct_query(void *db, rstr_t *url, rstr_t *filename,
                      const char *imdb_id, float duration, const char *folder,
                      int lonely);
-
-rstr_t *metadata_remove_postfix_rstr(rstr_t *in);
-
-rstr_t *metadata_remove_postfix(const char *in);
-
 
 /**
  * Browse library

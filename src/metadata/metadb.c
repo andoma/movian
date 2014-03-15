@@ -2378,3 +2378,21 @@ metadb_parent_item(void *db, const char *url, const char *parent_url)
 
 
 
+/**
+ *
+ */
+metadata_t *
+metadata_get_video_data(const char *url)
+{
+  void *db = metadb_get();
+  metadata_t *md;
+
+  int r = metadb_get_videoinfo(db, url, NULL, NULL, &md, 0);
+  metadb_close(db);
+  if(r)
+    return NULL;
+  return md;
+}
+
+
+

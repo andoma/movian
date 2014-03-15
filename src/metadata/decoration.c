@@ -24,6 +24,7 @@
 
 #include "showtime.h"
 #include "metadata.h"
+#include "metadata_str.h"
 #include "prop/prop.h"
 #include "playinfo.h"
 #include "prop/prop_nodefilter.h"
