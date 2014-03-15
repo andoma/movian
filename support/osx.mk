@@ -11,6 +11,8 @@ SRCS += src/arch/osx/osx_app.m \
 	src/networking/asyncio_posix.c \
 	src/networking/net_ifaddr.c \
 	src/fileaccess/fa_funopen.c \
+	src/ui/glw/glw_video_vda.c \
+
 
 SRCS-$(CONFIG_WEBPOPUP) += src/arch/osx/osx_webpopup.m
 

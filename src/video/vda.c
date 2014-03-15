@@ -65,6 +65,8 @@ typedef struct vda_decoder {
   int vdad_width;
   int vdad_height;
 
+  int vdad_zero_copy;
+
 } vda_decoder_t;
 
 
@@ -88,33 +90,17 @@ vf_cmp(const vda_frame_t *a, const vda_frame_t *b)
 static void
 emit_frame(vda_decoder_t *vdad, vda_frame_t *vf, media_queue_t *mq)
 {
-  int i;
   CGSize siz;
 
   frame_info_t fi;
   memset(&fi, 0, sizeof(fi));
 
-  CVPixelBufferLockBaseAddress(vf->vf_buf, 0);
-
-  for(i = 0; i < 3; i++ ) {
-    fi.fi_data[i] = CVPixelBufferGetBaseAddressOfPlane(vf->vf_buf, i);
-    fi.fi_pitch[i] = CVPixelBufferGetBytesPerRowOfPlane(vf->vf_buf, i);
-  }
-  
   if(vdad->vdad_last_pts != PTS_UNSET && vf->vf_pts != PTS_UNSET) {
     int64_t d = vf->vf_pts - vdad->vdad_last_pts;
 
     if(d > 1000 && d < 1000000)
       vdad->vdad_estimated_duration = d;
   }
-
-
-  siz = CVImageBufferGetEncodedSize(vf->vf_buf);
-  fi.fi_type = 'YUVP';
-  fi.fi_width = siz.width;
-  fi.fi_height = siz.height;
-
-  fi.fi_duration = vf->vf_duration > 10000 ? vf->vf_duration : vdad->vdad_estimated_duration;
 
   siz = CVImageBufferGetDisplaySize(vf->vf_buf);
   fi.fi_dar_num = siz.width;
@@ -126,22 +112,49 @@ emit_frame(vda_decoder_t *vdad, vda_frame_t *vf, media_queue_t *mq)
   fi.fi_drive_clock = 1;
   fi.fi_vshift = 1;
   fi.fi_hshift = 1;
+  fi.fi_duration = vf->vf_duration > 10000 ? vf->vf_duration : vdad->vdad_estimated_duration;
+
+  siz = CVImageBufferGetEncodedSize(vf->vf_buf);
+  fi.fi_width = siz.width;
+  fi.fi_height = siz.height;
+
 
   video_decoder_t *vd = vdad->vdad_vd;
-
   vd->vd_estimated_duration = fi.fi_duration; // For bitrate calculations
 
-  if(fi.fi_duration > 0)
-    video_deliver_frame(vd, &fi);
+  if(vdad->vdad_zero_copy) {
 
-  CVPixelBufferUnlockBaseAddress(vf->vf_buf, 0);
+    fi.fi_type = 'VDA';
+    fi.fi_data[0] = (void *)vf->vf_buf;
+    if(fi.fi_duration > 0)
+      video_deliver_frame(vd, &fi);
+
+  } else {
+
+    fi.fi_type = 'YUVP';
+
+    CVPixelBufferLockBaseAddress(vf->vf_buf, 0);
+
+    for(int i = 0; i < 3; i++ ) {
+      fi.fi_data[i] = CVPixelBufferGetBaseAddressOfPlane(vf->vf_buf, i);
+      fi.fi_pitch[i] = CVPixelBufferGetBytesPerRowOfPlane(vf->vf_buf, i);
+    }
+
+
+    if(fi.fi_duration > 0)
+      video_deliver_frame(vd, &fi);
+
+    CVPixelBufferUnlockBaseAddress(vf->vf_buf, 0);
+
+  }
+
   vdad->vdad_last_pts = vf->vf_pts;
 
   char fmt[64];
   snprintf(fmt, sizeof(fmt), "h264 (VDA) %d x %d", fi.fi_width, fi.fi_height);
   prop_set_string(mq->mq_prop_codec, fmt);
-
 }
+
 
 /**
  *
@@ -337,6 +350,7 @@ video_vda_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   CFMutableDictionaryRef ba;
   CFMutableDictionaryRef isp;
   CFNumberRef cv_pix_fmt;
+  int zero_copy = 1;
 
   if(mc->codec_id != AV_CODEC_ID_H264 || !video_settings.vda)
     return 1;
@@ -345,9 +359,10 @@ video_vda_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
      ((const uint8_t *)mcp->extradata)[0] != 1)
     return h264_annexb_to_avc(mc, mp, &video_vda_codec_create);
 
+  const int pixfmt = zero_copy ?
+    kCVPixelFormatType_422YpCbCr8 :
+    kCVPixelFormatType_420YpCbCr8Planar;
 
-
-  const int pixfmt = kCVPixelFormatType_420YpCbCr8Planar;
   const int avc1 = 'avc1';
 
   ci = CFDictionaryCreateMutable(kCFAllocatorDefault,
@@ -381,7 +396,7 @@ video_vda_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   CFDictionarySetValue(ba, kCVPixelBufferIOSurfacePropertiesKey, isp);
   
   vda_decoder_t *vdad = calloc(1, sizeof(vda_decoder_t));
-
+  vdad->vdad_zero_copy = zero_copy;
   status = VDADecoderCreate(ci, ba, (void *)vda_callback,
 			    vdad, &vdad->vdad_decoder);
 

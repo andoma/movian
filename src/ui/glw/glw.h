@@ -892,6 +892,8 @@ typedef struct glw_root {
   int gr_externalize_cnt;
   struct glw *gr_externalized[GLW_MAX_EXTERNALIZED];
 
+  void *gr_private;
+
 } glw_root_t;
 
 

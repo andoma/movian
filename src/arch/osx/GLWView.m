@@ -24,6 +24,7 @@
 
 #include "showtime.h"
 #include "osx.h"
+#include "osx_c.h"
 #include "src/ui/glw/glw.h"
 
 
@@ -455,12 +456,16 @@ newframe(CVDisplayLinkRef displayLink, const CVTimeStamp *now,
   
   CVDisplayLinkCreateWithActiveCGDisplays(&m_displayLink);
   CVDisplayLinkSetOutputCallback(m_displayLink, newframe, self);
-  CGLContextObj cglc = (CGLContextObj)[[self openGLContext] CGLContextObj];
-  CGLPixelFormatObj pf = 
+  m_cgl_context = (CGLContextObj)[[self openGLContext] CGLContextObj];
+  m_cgl_pixel_format =
     (CGLPixelFormatObj)[[self pixelFormat] CGLPixelFormatObj];
-  CVDisplayLinkSetCurrentCGDisplayFromOpenGLContext(m_displayLink, cglc, pf);
+
+  CVDisplayLinkSetCurrentCGDisplayFromOpenGLContext(m_displayLink,
+                                                    m_cgl_context,
+                                                    m_cgl_pixel_format);
 
   NSSize s = [self bounds].size;
+  gr->gr_private = self;
   gr->gr_width = s.width;
   gr->gr_height = s.height;
 
@@ -472,5 +477,36 @@ newframe(CVDisplayLinkRef displayLink, const CVTimeStamp *now,
 }
 
 
+/**
+ *
+ */
+- (CGLContextObj)getCglContext {
+  return m_cgl_context;
+}
+
+
+/**
+ *
+ */
+- (CGLPixelFormatObj)getCglPixelFormat {
+  return m_cgl_pixel_format;
+}
+
+
+
 @end
 
+
+CGLContextObj
+osx_get_cgl_context(glw_root_t *gr)
+{
+  GLWView *v = gr->gr_private;
+  return [v getCglContext];
+}
+
+CGLPixelFormatObj
+osx_get_cgl_pixel_format(glw_root_t *gr)
+{
+  GLWView *v = gr->gr_private;
+  return [v getCglPixelFormat];
+}
