@@ -446,33 +446,11 @@ gtb_set_constraints(glw_root_t *gr, glw_text_bitmap_t *gtb,
 {
   int flags = GLW_CONSTRAINT_Y;
 
-#if 0
-  int lines = pm && pm->pm_lines ? pm->pm_lines : 1;
-  int ys = gtb->gtb_padding_top + gtb->gtb_padding_bottom;
-  int xs = gtb->gtb_padding_left + gtb->gtb_padding_right;
-
-  int lh = (gtb->gtb_default_size ?: gr->gr_fontsize) * gtb->gtb_size_scale;
-  int height = lh * lines;
-  
-  height = MAX(pm ? pm->pm_height - pm->pm_margin*2: 0, height);
-  ys += height;
-
-  if(pm != NULL)
-    xs += pm->pm_width - pm->pm_margin*2;
-
-  if(xs > 0 && gtb->gtb_maxlines == 1)
-    flags |= GLW_CONSTRAINT_X;
-
-#else
-
-
   int xs = pm->pm_width - pm->pm_margin*2 + gtb->gtb_padding_left + gtb->gtb_padding_right;
   int ys = pm->pm_height - pm->pm_margin*2 + gtb->gtb_padding_top + gtb->gtb_padding_bottom;
 
   if(gtb->gtb_maxlines == 1 && !(gtb->gtb_flags & GTB_ELLIPSIZE))
     flags |= GLW_CONSTRAINT_X;
-
-#endif
 
   if(gtb->w.glw_flags2 & GLW2_DEBUG)
     printf("Constraints %c%c %d,%d\n",
@@ -648,32 +626,6 @@ gtb_realize(glw_text_bitmap_t *gtb)
 {
   glw_root_t *gr = gtb->w.glw_root;
   int direct = gtb->gtb_maxlines > 1;
-
-
-#if 0
-
-
-  switch(gtb->gtb_state) {
-  case GTB_QUEUED_FOR_RENDERING:
-    if(direct)
-      return;
-    TAILQ_REMOVE(&gr->gr_gtb_render_queue, gtb, gtb_workq_link);
-    break;
-
-  case GTB_QUEUED_FOR_DIMENSIONING:
-    if(!direct)
-      return;
-    TAILQ_REMOVE(&gr->gr_gtb_dim_queue, gtb, gtb_workq_link);
-    break;
-
-  case GTB_IDLE:
-  case GTB_DIMENSIONING:
-  case GTB_NEED_RENDER:
-  case GTB_RENDERING:
-  case GTB_VALID:
-    break;
-  }
-#endif
 
   if(gtb->gtb_state != GTB_IDLE && gtb->gtb_state != GTB_VALID) {
     gtb->gtb_deferred_realize = 1;
