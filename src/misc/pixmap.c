@@ -1087,6 +1087,42 @@ pixmap_drop_shadow(pixmap_t *pm, int boxw, int boxh)
 
 #if ENABLE_LIBAV
 
+static pixmap_t *pixmap_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
+                                        int src_w, int src_h,
+                                        int dst_w, int dst_h,
+                                        int with_alpha, int margin);
+
+/**
+ *
+ */
+static pixmap_t *
+fulhack(const AVPicture *pict, int src_w, int src_h,
+        int dst_w, int dst_h, int with_alpha, int margin)
+{
+  pixmap_t *pm = pixmap_create(src_w, src_h, PIXMAP_RGB24, 0);
+  for(int y = 0; y < src_h; y++) {
+    uint8_t *dst = pm_pixel(pm, 0,y);
+    uint8_t *src0 = pict->data[0] + pict->linesize[0] * y;
+    uint8_t *src1 = pict->data[1] + pict->linesize[1] * y;
+    uint8_t *src2 = pict->data[2] + pict->linesize[2] * y;
+
+    for(int x = 0; x < src_w; x++) {
+      *dst++ = *src0++;
+      *dst++ = *src1++;
+      *dst++ = *src2++;
+    }
+  }
+
+  AVPicture pict2 = {};
+  pict2.data[0] = pm_pixel(pm, 0, 0);
+  pict2.linesize[0] = pm->pm_linesize;
+  pixmap_t *pm2 = pixmap_rescale_swscale(&pict2, PIX_FMT_RGB24,
+                                         src_w, src_h, dst_w, dst_h,
+                                         with_alpha, margin);
+  pixmap_release(pm);
+  return pm2;
+
+}
 
 /**
  * Rescaling with FFmpeg's swscaler
@@ -1115,6 +1151,9 @@ pixmap_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
 #endif
     dst_pix_fmt = PIX_FMT_BGR32;
     break;
+
+  case AV_PIX_FMT_YUVA444P:
+    return fulhack(pict, src_w, src_h, dst_w, dst_h, with_alpha, margin);
 
   default:
     if(with_alpha)
