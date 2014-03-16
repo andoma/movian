@@ -23,7 +23,7 @@
 #include "showtime.h"
 #include "video_overlay.h"
 #include "text/text.h"
-#include "misc/pixmap.h"
+#include "image/pixmap.h"
 #include "misc/str.h"
 #include "sub.h"
 #include "video/video_settings.h"

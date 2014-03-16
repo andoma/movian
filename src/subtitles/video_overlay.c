@@ -22,7 +22,7 @@
 #include "showtime.h"
 #include "media.h"
 #include "text/text.h"
-#include "misc/pixmap.h"
+#include "image/pixmap.h"
 #include "misc/str.h"
 #include "video_overlay.h"
 #include "dvdspu.h"

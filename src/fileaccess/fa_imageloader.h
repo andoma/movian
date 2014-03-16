@@ -22,15 +22,13 @@
 #ifndef FA_IMAGELOADER_H
 #define FA_IMAGELOADER_H
 
-#include "misc/pixmap.h"
-struct backend;
 struct image_meta;
 
 void fa_imageloader_init(void);
 
-pixmap_t *fa_imageloader(const char *url, const struct image_meta *im,
-			 const char **vpaths, char *errbuf, size_t errlen,
-			 int *cache_control, cancellable_t *c);
+struct pixmap *fa_imageloader(const char *url, const struct image_meta *im,
+                              const char **vpaths, char *errbuf, size_t errlen,
+                              int *cache_control, cancellable_t *c);
 
 
 #endif /* FA_IMAGELOADER_H */

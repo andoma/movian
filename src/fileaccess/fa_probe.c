@@ -44,7 +44,7 @@
 #include "media.h"
 #include "misc/str.h"
 #include "misc/isolang.h"
-#include "misc/jpeg.h"
+#include "image/jpeg.h"
 #include "htsmsg/htsmsg_json.h"
 
 #if ENABLE_LIBAV

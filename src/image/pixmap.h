@@ -32,7 +32,7 @@
 
 
 #include <inttypes.h>
-#include "layout.h"
+#include "misc/layout.h"
 
 typedef enum {
   PIXMAP_none,

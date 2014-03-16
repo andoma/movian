@@ -98,7 +98,11 @@ SRCS-$(CONFIG_WEBPOPUP) += src/ui/webpopup.c
 ##############################################################
 # Images
 ##############################################################
-SRCS +=	src/image/image.c
+SRCS +=	src/image/image.c \
+	src/image/pixmap.c \
+	src/image/svg.c \
+	src/image/rasterizer_ft.c \
+	src/image/jpeg.c \
 
 ##############################################################
 # Misc support
@@ -106,10 +110,6 @@ SRCS +=	src/image/image.c
 SRCS +=	src/misc/ptrvec.c \
 	src/misc/callout.c \
 	src/misc/rstr.c \
-	src/misc/pixmap.c \
-	src/misc/svg.c \
-	src/misc/rasterizer_ft.c \
-	src/misc/jpeg.c \
 	src/misc/gz.c \
 	src/misc/str.c \
 	src/misc/time.c \

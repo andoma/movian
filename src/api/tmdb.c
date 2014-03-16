@@ -27,7 +27,7 @@
 #include "htsmsg/htsmsg_json.h"
 #include "htsmsg/htsmsg_store.h"
 #include "fileaccess/fileaccess.h"
-#include "misc/pixmap.h"
+#include "image/pixmap.h"
 #include "backend/backend.h"
 #include "db/db_support.h"
 #include "settings.h"

@@ -32,7 +32,7 @@
 #include "navigator.h"
 #include "event.h"
 #include "notifications.h"
-#include "misc/pixmap.h"
+#include "image/pixmap.h"
 #include "htsmsg/htsmsg_json.h"
 #include "media.h"
 

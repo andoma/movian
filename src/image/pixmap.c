@@ -28,7 +28,7 @@
 #include "arch/atomic.h"
 #include "pixmap.h"
 #include "misc/minmax.h"
-#include "misc/jpeg.h"
+#include "image/jpeg.h"
 #include "backend/backend.h"
 
 #if ENABLE_LIBAV

@@ -26,7 +26,7 @@
 #include "misc/minmax.h"
 #include "arch/atomic.h"
 #include "pixmap.h"
-#include "dbl.h"
+#include "misc/dbl.h"
 #include "htsmsg/htsmsg_xml.h"
 #include "misc/str.h"
 #include "showtime.h"

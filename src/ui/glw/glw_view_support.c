@@ -32,9 +32,6 @@
 #include "glw_view.h"
 #include "glw_event.h"
 
-#include "misc/pixmap.h"
-
-
 token_t *
 glw_view_token_alloc(glw_root_t *gr)
 {

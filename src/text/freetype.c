@@ -24,7 +24,7 @@
 
 #include "showtime.h"
 #include "misc/queue.h"
-#include "misc/pixmap.h"
+#include "image/pixmap.h"
 #include "image/image.h"
 #include "text.h"
 #include "arch/arch.h"

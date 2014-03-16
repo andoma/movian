@@ -21,8 +21,9 @@
 
 #include "image.h"
 #include "arch/atomic.h"
-#include "misc/pixmap.h"
 #include "showtime.h"
+
+#include "pixmap.h"
 
 /**
  *

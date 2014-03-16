@@ -30,7 +30,6 @@
 #include "glw.h"
 #include "glw_event.h"
 #include "backend/backend.h"
-#include "misc/pixmap.h"
 #include "settings.h"
 #include "prop/prop_grouper.h"
 #include "prop/prop_nodefilter.h"

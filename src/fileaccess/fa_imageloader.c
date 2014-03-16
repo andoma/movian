@@ -38,9 +38,9 @@
 #include <libavformat/avformat.h>
 #include <libavutil/mathematics.h>
 #endif
-#include "misc/pixmap.h"
 #include "misc/callout.h"
-#include "misc/jpeg.h"
+#include "image/pixmap.h"
+#include "image/jpeg.h"
 #include "backend/backend.h"
 #include "blobcache.h"
 

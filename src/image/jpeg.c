@@ -36,7 +36,7 @@
 
 #include "jpeg.h"
 #include "pixmap.h"
-#include "rstr.h"
+#include "misc/rstr.h"
 
 /**
  *

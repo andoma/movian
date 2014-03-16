@@ -22,7 +22,7 @@
 #ifndef GLW_TEXTURE_H
 #define GLW_TEXTURE_H
 
-#include "misc/pixmap.h"
+#include "image/pixmap.h"
 #include "misc/cancellable.h"
 
 #define GLW_TEX_CORNER_TOPLEFT        GLW_IMAGE_CORNER_TOPLEFT

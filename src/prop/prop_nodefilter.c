@@ -32,7 +32,6 @@
 #include "showtime.h"
 #include "prop_i.h"
 #include "prop_nodefilter.h"
-#include "misc/pixmap.h"
 #include "misc/str.h"
 #include "misc/redblack.h"
 

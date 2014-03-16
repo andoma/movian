@@ -45,7 +45,7 @@
 #include "keyring.h"
 #include "misc/ptrvec.h"
 #include "service.h"
-#include "misc/pixmap.h"
+#include "image/pixmap.h"
 #include "settings.h"
 #include "htsmsg/htsbuf.h"
 #include "htsmsg/htsmsg_json.h"

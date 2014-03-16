@@ -48,7 +48,7 @@
 #include "blobcache.h"
 #include "i18n.h"
 #include "misc/str.h"
-#include "misc/pixmap.h"
+#include "image/pixmap.h"
 #include "text/text.h"
 #include "video/video_settings.h"
 #include "metadata/metadata.h"
