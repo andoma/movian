@@ -25,6 +25,7 @@
 #include "showtime.h"
 #include "misc/queue.h"
 #include "misc/pixmap.h"
+#include "image/image.h"
 #include "text.h"
 #include "arch/arch.h"
 
@@ -677,7 +678,8 @@ static const float legacy_size_mult[16] = {
 static void
 draw_glyphs(pixmap_t *pm, struct line_queue *lq, int target_height,
 	    int siz_x, item_t *items, int start_x, int start_y,
-	    int origin_y, int margin, int pass)
+	    int origin_y, int margin, int pass,
+            image_component_text_info_t *ti)
 {
   FT_Vector pen;
   line_t *li;
@@ -832,21 +834,21 @@ draw_glyphs(pixmap_t *pm, struct line_queue *lq, int target_height,
 		   &bmp->bitmap, 
 		   items[i].color);
 
-	if(pm->pm_charpos != NULL) {
-	  pm->pm_charpos[i * 2 + 0] = bmp->left + pen.x;
-	  pm->pm_charpos[i * 2 + 1] = bmp->left + bmp->bitmap.width + pen.x;
+	if(ti != NULL && ti->ti_charpos != NULL) {
+	  ti->ti_charpos[i * 2 + 0] = bmp->left + pen.x;
+	  ti->ti_charpos[i * 2 + 1] = bmp->left + bmp->bitmap.width + pen.x;
 	}
       }
 
-      if(pm->pm_charpos != NULL && items[i].code == ' ')
-	pm->pm_charpos[2 * i + 0] = pen_x / 64;
+      if(ti != NULL && ti->ti_charpos != NULL && items[i].code == ' ')
+	ti->ti_charpos[2 * i + 0] = pen_x / 64;
 
       pen_x += items[i].adv_x;
       if(items[i].code == ' ')
 	pen_x += li->xspace;
 
-      if(pm->pm_charpos != NULL && items[i].code == ' ')
-	pm->pm_charpos[2 * i + 1] = pen_x / 64;
+      if(ti != NULL && ti->ti_charpos != NULL && items[i].code == ' ')
+	ti->ti_charpos[2 * i + 1] = pen_x / 64;
     }
   }
 }
@@ -854,14 +856,13 @@ draw_glyphs(pixmap_t *pm, struct line_queue *lq, int target_height,
 /**
  *
  */
-static struct pixmap *
+static struct image *
 text_render0(const uint32_t *uc, const int len,
 	     int flags, int default_size, float scale,
 	     int global_alignment, int max_width, int max_lines,
 	     const char *default_font, int default_domain,
 	     int min_size, const char **vpaths)
 {
-  pixmap_t *pm;
   FT_UInt prev = 0;
   FT_BBox bbox;
   FT_Vector delta;
@@ -875,7 +876,7 @@ text_render0(const uint32_t *uc, const int len,
   struct line_queue lq;
   item_t *items;
 
-  int pmflags = 0;
+  int ti_flags = 0;
   uint8_t style;
   int color_output = 0;
 
@@ -1186,7 +1187,7 @@ text_render0(const uint32_t *uc, const int len,
 	  lix->alignment = global_alignment;
 	  TAILQ_INSERT_AFTER(&lq, li, lix, link);
 	  next= lix;
-	  pmflags |= PIXMAP_TEXT_WRAPPED;
+	  ti_flags |= IMAGE_TEXT_WRAPPED;
 	  k--;
 	  w2 -= items[li->start + k].adv_x + 
 	    (k > 0 ? items[li->start + k].kerning : 0);
@@ -1214,7 +1215,7 @@ text_render0(const uint32_t *uc, const int len,
 	    
 	    items[li->start + j].g = eg;
 	    items[li->start + j].kerning = 0;
-	    pmflags |= PIXMAP_TEXT_TRUNCATED;
+	    ti_flags |= IMAGE_TEXT_TRUNCATED;
 	    
 	    w += eg->adv_x;
 	    li->count = j + 1;
@@ -1223,7 +1224,7 @@ text_render0(const uint32_t *uc, const int len,
 	} else {
 
 	  if(w > max_width) {
-	    pmflags |= PIXMAP_TEXT_TRUNCATED;
+	    ti_flags |= IMAGE_TEXT_TRUNCATED;
 	    li->count = j;
 	    break;
 	  }
@@ -1312,73 +1313,86 @@ text_render0(const uint32_t *uc, const int len,
 
   margin = (margin + 63) / 64;
 
-  // --- allocate and init pixmap
+  // --- allocate and init image
 
-  pm = pixmap_create(target_width, target_height,
-		     flags & TR_RENDER_NO_OUTPUT ? PIXMAP_NULL :
-		     color_output ? PIXMAP_BGR32 : PIXMAP_IA, margin);
+  image_t *img = image_alloc(flags & TR_RENDER_NO_OUTPUT ? 1 : 2);
+
+  img->im_width  = target_width;
+  img->im_height = target_height;
+  img->im_margin = margin;
+
+  pixmap_t *pm = NULL;
+
+  if(!(flags & TR_RENDER_NO_OUTPUT)) {
+    pm = pixmap_create(target_width, target_height,
+                       color_output ? PIXMAP_BGR32 : PIXMAP_IA, margin);
+
+    img->im_components[1].type = IMAGE_PIXMAP;
+    img->im_components[1].pm = pm;
+  }
+  image_component_text_info_t *ti = &img->im_components[0].text_info;
+  img->im_components[0].type = IMAGE_TEXT_INFO;
+
+  ti->ti_lines = lines;
+  ti->ti_flags = ti_flags;
+
+
+  if(flags & TR_RENDER_CHARACTER_POS) {
+    ti->ti_charposlen = len;
+    ti->ti_charpos = malloc(2 * len * sizeof(int));
+  }
 
   if(pm != NULL) {
-    pm->pm_lines = lines;
-    pm->pm_flags = pmflags;
 
-    if(pm->pm_data != NULL) {
-  
-      if(flags & TR_RENDER_DEBUG) {
-	uint8_t *data = pm->pm_pixels;
-	for(i = 0; i < pm->pm_height; i+=3)
-	  memset(data + i * pm->pm_linesize, 0xc0, pm->pm_linesize);
+    if(flags & TR_RENDER_DEBUG) {
+      uint8_t *data = pm->pm_pixels;
+      for(i = 0; i < pm->pm_height; i+=3)
+        memset(data + i * pm->pm_linesize, 0xc0, pm->pm_linesize);
 
-	int y;
-	int l = color_output ? 4 : 2;
-	for(i = 0; i < pm->pm_width; i+=3)
-	  for(y = 0; y < pm->pm_height; y++)
-	    memset(data + y * pm->pm_linesize + i * l, 0xc0, l);
-      }
-
-      if(flags & TR_RENDER_CHARACTER_POS) {
-	pm->pm_charposlen = len;
-	pm->pm_charpos = malloc(2 * pm->pm_charposlen * sizeof(int));
-      }
-
-      if(need_shadow_pass) {
-	draw_glyphs(pm, &lq, target_height, siz_x, items, start_x, start_y,
-		    origin_y, margin, 0);
-	pixmap_box_blur(pm, 4, 4);
-      }
-
-      if(need_outline_pass)
-	draw_glyphs(pm, &lq, target_height, siz_x, items, start_x, start_y,
-		    origin_y, margin, 1);
-
-
-      draw_glyphs(pm, &lq, target_height, siz_x, items, start_x, start_y,
-		  origin_y, margin, 2);
+      int y;
+      int l = color_output ? 4 : 2;
+      for(i = 0; i < pm->pm_width; i+=3)
+        for(y = 0; y < pm->pm_height; y++)
+          memset(data + y * pm->pm_linesize + i * l, 0xc0, l);
     }
+
+    if(need_shadow_pass) {
+      draw_glyphs(pm, &lq, target_height, siz_x, items, start_x, start_y,
+                  origin_y, margin, 0, NULL);
+      pixmap_box_blur(pm, 4, 4);
+    }
+
+    if(need_outline_pass)
+      draw_glyphs(pm, &lq, target_height, siz_x, items, start_x, start_y,
+                  origin_y, margin, 1, NULL);
+
+
+    draw_glyphs(pm, &lq, target_height, siz_x, items, start_x, start_y,
+                origin_y, margin, 2, ti);
   }
   free(items);
 
   if(stroker != NULL)
     FT_Stroker_Done(stroker);
 
-  return pm;
+  return img;
 }
 
 
 /**
  *
  */
-struct pixmap *
+struct image *
 text_render(const uint32_t *uc, const int len, int flags, int default_size,
 	    float scale, int alignment, int max_width, int max_lines,
 	    const char *family, int context, int min_size,
 	    const char **vpaths)
 {
-  struct pixmap *pm;
+  struct image *im;
 
   hts_mutex_lock(&text_mutex);
 
-  pm = text_render0(uc, len, flags, default_size, scale, alignment, 
+  im = text_render0(uc, len, flags, default_size, scale, alignment, 
 		    max_width, max_lines, family, context, min_size,
 		    vpaths);
   while(num_glyphs > 512)
@@ -1388,7 +1402,7 @@ text_render(const uint32_t *uc, const int len, int flags, int default_size,
 
   hts_mutex_unlock(&text_mutex);
 
-  return pm;
+  return im;
 }
 
 /**

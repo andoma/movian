@@ -83,7 +83,7 @@ struct prop;
 #define TR_ALIGN_RIGHT     3
 #define TR_ALIGN_JUSTIFIED 4
 
-struct pixmap *
+struct image *
 text_render(const uint32_t *uc, int len, int flags, int default_size,
 	    float scale, int alignment,
 	    int max_width, int max_lines, const char *font_family,

@@ -84,7 +84,6 @@ typedef struct pixmap {
 
   uint16_t pm_width;
   uint16_t pm_height;
-  uint16_t pm_lines;   // Lines of text
   uint16_t pm_margin;
 
   float pm_aspect;
@@ -93,8 +92,6 @@ typedef struct pixmap {
 
 
 #define PIXMAP_THUMBNAIL 0x1       // This is a thumbnail
-#define PIXMAP_TEXT_WRAPPED 0x2    // Contains wrapped text
-#define PIXMAP_TEXT_TRUNCATED 0x4 // Contains truncated text
 #define PIXMAP_COLORIZED      0x8
   pixmap_type_t pm_type;
 
@@ -106,13 +103,9 @@ typedef struct pixmap {
     int32_t *pm_int;
   };
 
-  union {
-    struct {
-      int *charpos;
-      int linesize;
-      int charposlen;
-    } raw;
+  int pm_linesize;
 
+  union {
     struct {
       size_t size;
     } codec;
@@ -126,10 +119,6 @@ typedef struct pixmap {
 } pixmap_t;
 
 #define pm_size codec.size
-
-#define pm_linesize   raw.linesize
-#define pm_charpos    raw.charpos
-#define pm_charposlen raw.charposlen
 
 #define pm_capacity   vector.capacity
 #define pm_used       vector.used

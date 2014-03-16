@@ -38,7 +38,7 @@
 #include "misc/str.h"
 #include "text/text.h"
 #include "event.h"
-
+#include "image/image.h"
 
 /**
  *
@@ -62,7 +62,7 @@ typedef struct glw_text_bitmap {
   TAILQ_ENTRY(glw_text_bitmap) gtb_workq_link;
   LIST_ENTRY(glw_text_bitmap) gtb_global_link;
 
-  pixmap_t *gtb_pixmap;
+  image_t *gtb_image;
 
    enum {
      GTB_IDLE,
@@ -97,6 +97,8 @@ typedef struct glw_text_bitmap {
   int16_t gtb_default_size;
   int16_t gtb_min_size;
 
+  int16_t gtb_margin;
+
   uint32_t *gtb_uc_buffer; /* unicode buffer */
   float gtb_cursor_alpha;
 
@@ -128,7 +130,6 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 {
   glw_text_bitmap_t *gtb = (void *)w;
   glw_root_t *gr = w->glw_root;
-  pixmap_t *pm = gtb->gtb_pixmap;
 
   gr->gr_can_externalize = 0;
 
@@ -144,39 +145,46 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 
   // Upload texture
 
-  if(pm != NULL && pm->pm_pixels != NULL) {
-    glw_tex_upload(gr, &gtb->gtb_texture, pm, 0);
-
-    free(pm->pm_pixels);
-    pm->pm_pixels = NULL;
+  image_component_t *ic = image_find_component(gtb->gtb_image, IMAGE_PIXMAP);
+  if(ic != NULL) {
+    glw_tex_upload(gr, &gtb->gtb_texture, ic->pm, 0);
+    gtb->gtb_margin = ic->pm->pm_margin;
+    image_clear_component(ic);
     gtb->gtb_need_layout = 1;
   }
 
+  const int tex_width  = glw_tex_width(&gtb->gtb_texture);
+  const int tex_height = glw_tex_height(&gtb->gtb_texture);
+
+  ic = image_find_component(gtb->gtb_image, IMAGE_TEXT_INFO);
+  image_component_text_info_t *ti = ic ? &ic->text_info : NULL;
+
   // Check if we need to repaint
 
-  if((gtb->gtb_saved_width  != rc->rc_width || 
+  if((gtb->gtb_saved_width  != rc->rc_width ||
       gtb->gtb_saved_height != rc->rc_height)) {
 
-    if(pm != NULL && gtb->gtb_state == GTB_VALID) {
-      if(pm->pm_flags & PIXMAP_TEXT_WRAPPED)
+    if(ti != NULL && gtb->gtb_state == GTB_VALID) {
+
+      if(ti->ti_flags & IMAGE_TEXT_WRAPPED)
 	gtb->gtb_state = GTB_NEED_RENDER;
 
-      if(rc->rc_width > gtb->gtb_saved_width && 
-	 pm->pm_flags & PIXMAP_TEXT_TRUNCATED)
+      if(rc->rc_width > gtb->gtb_saved_width &&
+	 ti->ti_flags & IMAGE_TEXT_TRUNCATED)
 	gtb->gtb_state = GTB_NEED_RENDER;
 
       if(gtb->gtb_flags & GTB_ELLIPSIZE) {
-	
-	if(pm->pm_flags & PIXMAP_TEXT_TRUNCATED) {
+
+	if(ti->ti_flags & IMAGE_TEXT_TRUNCATED) {
 	  gtb->gtb_state = GTB_NEED_RENDER;
 	} else {
 
 	  if(rc->rc_width - gtb->gtb_padding_right - gtb->gtb_padding_left <
-	     pm->pm_width - pm->pm_margin * 2)
+	     tex_width - gtb->gtb_margin * 2)
 	    gtb->gtb_state = GTB_NEED_RENDER;
 
 	  if(rc->rc_height - gtb->gtb_padding_top - gtb->gtb_padding_bottom <
-	     pm->pm_height - pm->pm_margin * 2)
+	     tex_height - gtb->gtb_margin * 2)
 	    gtb->gtb_state = GTB_NEED_RENDER;
 	}
       }
@@ -191,20 +199,22 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 
   }
 
-  if(pm != NULL && gtb->gtb_need_layout) {
+  if(ti != NULL && gtb->gtb_need_layout) {
 
-    int left   =                 gtb->gtb_padding_left   - pm->pm_margin;
-    int top    = rc->rc_height - gtb->gtb_padding_top    + pm->pm_margin;
-    int right  = rc->rc_width  - gtb->gtb_padding_right  + pm->pm_margin;
-    int bottom =                 gtb->gtb_padding_bottom - pm->pm_margin;
-    
-    int text_width  = pm->pm_width;
-    int text_height = pm->pm_height;
-    
+    const int margin = gtb->gtb_margin;
+
+    int left   =                 gtb->gtb_padding_left   - margin;
+    int top    = rc->rc_height - gtb->gtb_padding_top    + margin;
+    int right  = rc->rc_width  - gtb->gtb_padding_right  + margin;
+    int bottom =                 gtb->gtb_padding_bottom - margin;
+
+    int text_width  = tex_width;
+    int text_height = tex_height;
+
     float x1, y1, x2, y2;
 
     // Horizontal 
-    if(text_width > right - left || pm->pm_flags & PIXMAP_TEXT_TRUNCATED) {
+    if(text_width > right - left || ti->ti_flags & IMAGE_TEXT_TRUNCATED) {
       // Oversized, must cut
       text_width = right - left;
 
@@ -231,13 +241,13 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
       case LAYOUT_ALIGN_LEFT:
       case LAYOUT_ALIGN_TOP_LEFT:
       case LAYOUT_ALIGN_BOTTOM_LEFT:
-	right = left + pm->pm_width;
+	right = left + tex_width;
 	break;
 
       case LAYOUT_ALIGN_RIGHT:
       case LAYOUT_ALIGN_TOP_RIGHT:
       case LAYOUT_ALIGN_BOTTOM_RIGHT:
-	left = right - pm->pm_width;
+	left = right - tex_width;
 	break;
       }
     }
@@ -259,13 +269,13 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
       case LAYOUT_ALIGN_TOP_RIGHT:
       case LAYOUT_ALIGN_TOP:
       case LAYOUT_ALIGN_JUSTIFIED:
-	bottom = top - pm->pm_height;
+	bottom = top - tex_height;
 	break;
 
       case LAYOUT_ALIGN_BOTTOM:
       case LAYOUT_ALIGN_BOTTOM_LEFT:
       case LAYOUT_ALIGN_BOTTOM_RIGHT:
-	top = bottom + pm->pm_height;
+	top = bottom + tex_height;
 	break;
       }
     }
@@ -278,8 +288,8 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
     float s, t;
 
     if(gr->gr_normalized_texture_coords) {
-      s = text_width  / (float)pm->pm_width;
-      t = text_height / (float)pm->pm_height;
+      s = text_width  / (float)tex_width;
+      t = text_height / (float)tex_height;
     } else {
       s = text_width;
       t = text_height;
@@ -305,13 +315,13 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
     int left, right;
     float x1, y1, x2, y2;
 
-    if(pm != NULL && pm->pm_charpos != NULL) {
-	
-      if(i < pm->pm_charposlen) {
-	left  = pm->pm_charpos[i*2  ];
-	right = pm->pm_charpos[i*2+1];
+    if(ti != NULL && ti->ti_charpos != NULL) {
+
+      if(i < ti->ti_charposlen) {
+	left  = ti->ti_charpos[i*2  ];
+	right = ti->ti_charpos[i*2+1];
       } else {
-	left  = pm->pm_charpos[2*pm->pm_charposlen - 1];
+	left  = ti->ti_charpos[2 * ti->ti_charposlen - 1];
 	right = left + 10;
       }
 
@@ -364,7 +374,6 @@ static void
 glw_text_bitmap_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
-  pixmap_t *pm = gtb->gtb_pixmap;
   float alpha;
   float blur = 1 - (rc->rc_sharpness * w->glw_sharpness);
 
@@ -379,8 +388,8 @@ glw_text_bitmap_render(glw_t *w, const glw_rctx_t *rc)
   if(w->glw_flags2 & GLW2_DEBUG)
     glw_wirebox(w->glw_root, rc);
 
-  if(glw_is_tex_inited(&gtb->gtb_texture) && pm != NULL) {
-    glw_renderer_draw(&gtb->gtb_text_renderer, w->glw_root, rc, 
+  if(glw_is_tex_inited(&gtb->gtb_texture)) {
+    glw_renderer_draw(&gtb->gtb_text_renderer, w->glw_root, rc,
 		      &gtb->gtb_texture,
 		      &gtb->gtb_color, NULL, alpha, blur, NULL);
   }
@@ -408,8 +417,7 @@ glw_text_bitmap_dtor(glw_t *w)
   free(gtb->gtb_uc_buffer);
   rstr_release(gtb->gtb_font);
 
-  if(gtb->gtb_pixmap != NULL)
-    pixmap_release(gtb->gtb_pixmap);
+  image_release(gtb->gtb_image);
 
   LIST_REMOVE(gtb, gtb_global_link);
 
@@ -442,12 +450,15 @@ glw_text_bitmap_dtor(glw_t *w)
  */
 static void
 gtb_set_constraints(glw_root_t *gr, glw_text_bitmap_t *gtb,
-		    const pixmap_t *pm)
+		    const image_t *im)
 {
   int flags = GLW_CONSTRAINT_Y;
 
-  int xs = pm->pm_width - pm->pm_margin*2 + gtb->gtb_padding_left + gtb->gtb_padding_right;
-  int ys = pm->pm_height - pm->pm_margin*2 + gtb->gtb_padding_top + gtb->gtb_padding_bottom;
+  const int xs = im->im_width - im->im_margin * 2 +
+    gtb->gtb_padding_left + gtb->gtb_padding_right;
+
+  const int ys = im->im_height - im->im_margin * 2 +
+    gtb->gtb_padding_top + gtb->gtb_padding_bottom;
 
   if(gtb->gtb_maxlines == 1 && !(gtb->gtb_flags & GTB_ELLIPSIZE))
     flags |= GLW_CONSTRAINT_X;
@@ -987,7 +998,7 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
 {
   int i;
   uint32_t *uc, len;
-  pixmap_t *pm;
+  image_t *im;
   int max_width, max_lines, flags, default_size, tr_align, min_size;
   float scale;
   rstr_t *font;
@@ -1096,11 +1107,11 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
   glw_unlock(gr);
 
   if(uc != NULL && uc[0] != 0) {
-    pm = text_render(uc, len, flags, default_size, scale,
+    im = text_render(uc, len, flags, default_size, scale,
 		     tr_align, max_width, max_lines, rstr_get(font),
 		     gr->gr_font_domain, min_size, gr->gr_vpaths);
   } else {
-    pm = NULL;
+    im = NULL;
   }
     
   rstr_release(font);
@@ -1111,31 +1122,26 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
   if(gtb->w.glw_flags & GLW_DESTROYING) {
     /* widget got destroyed while we were away, throw away the results */
     glw_unref(&gtb->w);
-    if(pm != NULL)
-      pixmap_release(pm);
+    image_release(im);
     return;
   }
 
   glw_unref(&gtb->w);
 
-  if(gtb->w.glw_flags2 & GLW2_DEBUG && pm != NULL)
-    printf("   pm = %d x %d (m=%d)\n", pm->pm_width, pm->pm_height, pm->pm_margin);
-
   if(gtb->gtb_state == GTB_RENDERING) {
     gtb->gtb_state = GTB_VALID;
-    if(gtb->gtb_pixmap != NULL)
-      pixmap_release(gtb->gtb_pixmap);
-    gtb->gtb_pixmap = pm;
-    if(pm != NULL && gtb->gtb_maxlines > 1) {
-      gtb_set_constraints(gr, gtb, pm);
+    image_release(gtb->gtb_image);
+    gtb->gtb_image = im;
+    if(im != NULL && gtb->gtb_maxlines > 1) {
+      gtb_set_constraints(gr, gtb, im);
     }
   }
 
   if(gtb->gtb_state == GTB_DIMENSIONING) {
     gtb->gtb_state = GTB_NEED_RENDER;
-    if(pm != NULL) {
-      gtb_set_constraints(gr, gtb, pm);
-      pixmap_release(pm);
+    if(im != NULL) {
+      gtb_set_constraints(gr, gtb, im);
+      image_release(im);
     } else {
       int lh = (gtb->gtb_default_size ?: gr->gr_current_size) *
 	gtb->gtb_size_scale;

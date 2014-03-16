@@ -261,7 +261,6 @@ pixmap_release(pixmap_t *pm)
 
   if(!pixmap_is_coded(pm)) {
     free(pm->pm_pixels);
-    free(pm->pm_charpos);
   } else {
     free(pm->pm_data);
   }
