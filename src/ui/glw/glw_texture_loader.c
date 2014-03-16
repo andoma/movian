@@ -86,7 +86,7 @@ glw_tex_stash(glw_root_t *gr, glw_loadable_texture_t *glt, int unreferenced)
 
   glt->glt_state = GLT_STATE_STASHED;
 
-  int stash = glt->glt_original_type == PIXMAP_JPEG;
+  int stash = glt->glt_origin_type == IMAGE_JPEG;
 
   glt->glt_stash = stash;
   glt->glt_q = &gr->gr_tex_stash[stash].q;
@@ -213,7 +213,7 @@ loader_thread(void *aux)
   loaderaux_t *la = aux;
   glw_root_t *gr = la->la_gr;
   glw_loadable_texture_t *glt;
-  pixmap_t *pm;
+  image_t *img;
   char errbuf[128];
   image_meta_t im = {0};
   int cache_control = 0;
@@ -252,8 +252,8 @@ loader_thread(void *aux)
       cancellable_reset(&glt->glt_cancellable);
 
       glw_unlock(gr);
-      pm = backend_imageloader(url, &im, gr->gr_vpaths, errbuf, sizeof(errbuf),
-			       ccptr, &glt->glt_cancellable);
+      img = backend_imageloader(url, &im, gr->gr_vpaths, errbuf, sizeof(errbuf),
+                                ccptr, &glt->glt_cancellable);
 
       glw_lock(gr);
 
@@ -271,11 +271,11 @@ loader_thread(void *aux)
 #endif
 
       if(glt->glt_state == GLT_STATE_LOAD_ABORT) {
-	if(pm != NULL && pm != NOT_MODIFIED)
-	  pixmap_release(pm);
+	if(img != NULL && img != NOT_MODIFIED)
+	  image_release(img);
 	TRACE(TRACE_DEBUG, "GLW", "Load of %s was aborted", rstr_get(url));
 	glt->glt_state = GLT_STATE_INACTIVE;
-      } else if(pm == NULL) {
+      } else if(img == NULL) {
 
 	if(glt->glt_q == &gr->gr_tex_load_queue[LQ_TENTATIVE]) {
 	  glt_enqueue(gr, glt, LQ_OTHER);
@@ -308,24 +308,30 @@ loader_thread(void *aux)
 	    glt->glt_state = GLT_STATE_VALID;
 	  }
 
-	  if(pm != NOT_MODIFIED) {
+	  if(img != NOT_MODIFIED) {
 
             // Actually upload the texture to the render backend
 
-	    assert(!pixmap_is_coded(pm));
-	    glt->glt_orientation   = pm->pm_orientation;
+            image_component_t *ic = image_find_component(img, IMAGE_PIXMAP);
+
+            assert(ic != NULL);
+
+            pixmap_t *pm = ic->pm;
+
 	    glt->glt_aspect        = pm->pm_aspect;
 	    glt->glt_margin        = pm->pm_margin;
-            glt->glt_original_type = pm->pm_original_type;
             glt->glt_xs            = pm->pm_width;
             glt->glt_ys            = pm->pm_height;
+
+            glt->glt_origin_type   = img->im_origin_coded_type;
+	    glt->glt_orientation   = img->im_orientation;
 
 	    glt->glt_size          = glw_tex_backend_load(gr, glt, pm);
 	  }
 	}
 
-	if(pm != NOT_MODIFIED)
-	  pixmap_release(pm);
+	if(img != NOT_MODIFIED)
+	  image_release(img);
       }
       rstr_release(url);
     }

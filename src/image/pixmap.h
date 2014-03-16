@@ -19,10 +19,7 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 
-// This file should be renamed as it's not really all about pixmaps anymore
-
-#ifndef PIXMAP_H__
-#define PIXMAP_H__
+#pragma once
 
 #ifdef __PPC__
 #define PIXMAP_ROW_ALIGN 16
@@ -33,15 +30,10 @@
 
 #include <inttypes.h>
 #include "misc/layout.h"
+#include "image.h"
 
 typedef enum {
   PIXMAP_none,
-  PIXMAP_PNG,
-  PIXMAP_JPEG,
-  PIXMAP_GIF,
-  PIXMAP_SVG,
-  PIXMAP_VECTOR,
-  PIXMAP_coded,
   PIXMAP_NULL,
   PIXMAP_BGR32,
   PIXMAP_RGB24,
@@ -49,29 +41,6 @@ typedef enum {
   PIXMAP_I,
 } pixmap_type_t;
 
-#define pixmap_type_is_coded(t) ((t) < PIXMAP_coded)
-#define pixmap_is_coded(pm) pixmap_type_is_coded((pm)->pm_type)
-
-
-/**
- *
- */
-typedef struct image_meta {
-  float im_req_aspect;
-  int im_req_width;
-  int im_req_height;
-  int im_max_width;
-  int im_max_height;
-  char im_can_mono:1;
-  char im_no_decoding:1;
-  char im_32bit_swizzle:1; // can do full 32bit swizzle in hardware
-  char im_no_rgb24:1;
-  char im_want_thumb:1;
-  uint8_t im_corner_selection;
-  uint16_t im_corner_radius;
-  uint16_t im_shadow;
-  uint16_t im_margin;
-} image_meta_t;
 
 /**
  * Internal struct for passing images
@@ -79,55 +48,24 @@ typedef struct image_meta {
 typedef struct pixmap {
   int pm_refcount;
 
-  uint8_t pm_orientation;   // LAYOUT_ORIENTATION_ from layout.h
-  uint8_t pm_original_type;
-
   uint16_t pm_width;
   uint16_t pm_height;
   uint16_t pm_margin;
 
   float pm_aspect;
 
-  int pm_flags;
-
-
-#define PIXMAP_THUMBNAIL 0x1       // This is a thumbnail
-#define PIXMAP_COLORIZED      0x8
   pixmap_type_t pm_type;
-
-
-  union {
-    uint8_t *pm_pixels;
-    void *pm_data;
-    float *pm_flt;
-    int32_t *pm_int;
-  };
-
+  uint8_t *pm_data;
   int pm_linesize;
-
-  union {
-    struct {
-      size_t size;
-    } codec;
-
-    struct {
-      int capacity;
-      int used;
-    } vector;
-  };
 
 } pixmap_t;
 
-#define pm_size codec.size
-
-#define pm_capacity   vector.capacity
-#define pm_used       vector.used
 
 
+#if 0
 pixmap_t *pixmap_alloc_coded(const void *data, size_t size,
 			     pixmap_type_t type);
-
-pixmap_t *pixmap_create_vector(int width, int height);
+#endif
 
 pixmap_t *pixmap_dup(pixmap_t *pm);
 
@@ -143,14 +81,6 @@ void pixmap_box_blur(pixmap_t *pm, int boxw, int boxh);
 
 pixmap_t *pixmap_decode(pixmap_t *pm, const image_meta_t *im,
 			char *errbuf, size_t errlen);
-
-extern pixmap_t *(*accel_pixmap_decode)(pixmap_t *pm, const image_meta_t *im,
-					char *errbuf, size_t errlen);
-
-pixmap_t *svg_decode(pixmap_t *pm, const image_meta_t *im,
-		     char *errbuf, size_t errlen);
-
-void svg_init(void);
 
 int color_is_not_gray(uint32_t rgb);
 
@@ -208,30 +138,3 @@ pm_pixel(pixmap_t *pm, unsigned int x, unsigned int y)
   return pm->pm_data + (y + pm->pm_margin) * pm->pm_linesize +
     (x + pm->pm_margin) * bytes_per_pixel(pm->pm_type);
 }
-
-/**
- * Vector graphics
- */
-typedef enum {
-  VC_SET_FILL_ENABLE,
-  VC_SET_FILL_COLOR,
-  VC_SET_STROKE_WIDTH,
-  VC_SET_STROKE_COLOR,
-  VC_BEGIN,
-  VC_END,
-  VC_MOVE_TO,
-  VC_LINE_TO,
-  VC_CUBIC_TO,
-  VC_CLOSE,
-} vec_cmd_t;
-
-void vec_emit_0(pixmap_t *pm, vec_cmd_t cmd);
-void vec_emit_i1(pixmap_t *pm, vec_cmd_t cmd, int arg);
-void vec_emit_f1(pixmap_t *pm, vec_cmd_t cmd, const float *a);
-void vec_emit_f3(pixmap_t *pm, vec_cmd_t cmd, const float *a, const float *b, const float *c);
-
-pixmap_t *pixmap_rasterize_ft(pixmap_t *pm);
-
-void rasterizer_ft_init(void);
-
-#endif

@@ -611,7 +611,7 @@ draw_glyph(pixmap_t *pm, int left, int top, FT_Bitmap *bmp, int color)
 {
   pixmap_t src;
   src.pm_type = PIXMAP_I;
-  src.pm_pixels = bmp->buffer;
+  src.pm_data = bmp->buffer;
   src.pm_width = bmp->width;
   src.pm_height = bmp->rows;
   src.pm_linesize = bmp->width;
@@ -703,12 +703,12 @@ draw_glyphs(pixmap_t *pm, struct line_queue *lq, int target_height,
       switch(pm->pm_type) {
       case PIXMAP_BGR32: 
 	{
-	  uint32_t *yptr = (uint32_t *)(pm->pm_pixels + ypos * pm->pm_linesize);
+	  uint32_t *yptr = (uint32_t *)(pm->pm_data + ypos * pm->pm_linesize);
 	  int i;
 	  for(i = 0; i < pm->pm_width; i++)
 	    *yptr++ = li->color;
 
-	  yptr = (uint32_t *)(pm->pm_pixels + (ypos + 1) * pm->pm_linesize);
+	  yptr = (uint32_t *)(pm->pm_data + (ypos + 1) * pm->pm_linesize);
 	  uint32_t color;
 
 	  uint8_t r = li->color;
@@ -726,7 +726,7 @@ draw_glyphs(pixmap_t *pm, struct line_queue *lq, int target_height,
 	
       case PIXMAP_IA:
 	{
-	  uint8_t *yptr = pm->pm_pixels + ypos * pm->pm_linesize;
+	  uint8_t *yptr = pm->pm_data + ypos * pm->pm_linesize;
 	  int i;
 	  uint8_t r = li->color;
 	  uint8_t a = li->color >> 24;
@@ -735,7 +735,7 @@ draw_glyphs(pixmap_t *pm, struct line_queue *lq, int target_height,
 	    *yptr++ = li->color >> 24;
 	  }
 
-	  yptr = pm->pm_pixels + (ypos + 1) * pm->pm_linesize;
+	  yptr = pm->pm_data + (ypos + 1) * pm->pm_linesize;
 
 	  r = li->color >> 1;
 	  
@@ -1317,8 +1317,8 @@ text_render0(const uint32_t *uc, const int len,
 
   image_t *img = image_alloc(flags & TR_RENDER_NO_OUTPUT ? 1 : 2);
 
-  img->im_width  = target_width;
-  img->im_height = target_height;
+  img->im_width  = target_width  + margin * 2;
+  img->im_height = target_height + margin * 2;
   img->im_margin = margin;
 
   pixmap_t *pm = NULL;
@@ -1345,7 +1345,7 @@ text_render0(const uint32_t *uc, const int len,
   if(pm != NULL) {
 
     if(flags & TR_RENDER_DEBUG) {
-      uint8_t *data = pm->pm_pixels;
+      uint8_t *data = pm->pm_data;
       for(i = 0; i < pm->pm_height; i+=3)
         memset(data + i * pm->pm_linesize, 0xc0, pm->pm_linesize);
 
@@ -1440,7 +1440,7 @@ freetype_set_default_font(const char *url)
 /**
  *
  */
-int
+static void
 freetype_init(void)
 {
   int error;
@@ -1448,8 +1448,8 @@ freetype_init(void)
 
   error = FT_Init_FreeType(&text_library);
   if(error) {
-    TRACE(TRACE_ERROR, "Freetype", "Freetype init error\n");
-    return -1;
+    TRACE(TRACE_ERROR, "Freetype", "Freetype init error %d", error);
+    exit(1);
   }
   FT_Stroker_New(text_library, &text_stroker);
   TAILQ_INIT(&faces);
@@ -1462,9 +1462,9 @@ freetype_init(void)
 	   showtime_dataroot());
 
   freetype_set_default_font(url);
-
-  return 0;
 }
+
+INITME(INIT_GROUP_GRAPHICS, freetype_init);
 
 
 /**

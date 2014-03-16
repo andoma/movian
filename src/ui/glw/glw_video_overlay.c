@@ -516,7 +516,7 @@ spu_repaint(glw_video_t *gv, dvdspu_t *d)
   /* XXX: this can be optimized in many ways */
 
   for(y = 0; y < height; y++) {
-    uint32_t *tmp = pm->pm_data + y * pm->pm_linesize;
+    uint32_t *tmp = (uint32_t *)(pm->pm_data + y * pm->pm_linesize);
     for(x = 0; x < width; x++) {
       i = buf[0];
 

@@ -48,8 +48,7 @@
 #include "blobcache.h"
 #include "i18n.h"
 #include "misc/str.h"
-#include "image/pixmap.h"
-#include "text/text.h"
+#include "image/image.h"
 #include "video/video_settings.h"
 #include "metadata/metadata.h"
 #include "subtitles/subtitles.h"
@@ -319,17 +318,11 @@ showtime_init(void)
   TRACE(TRACE_INFO, "libav", LIBAVFORMAT_IDENT", "LIBAVCODEC_IDENT", "LIBAVUTIL_IDENT);
 #endif
 
-  /* Freetype */
-#if ENABLE_LIBFREETYPE
-  freetype_init();
-  rasterizer_ft_init();
-#endif
+  init_group(INIT_GROUP_GRAPHICS);
 
 #if ENABLE_GLW
   glw_settings_init();
 #endif
-
-  fontstash_init();
 
   /* Global keymapper */
   keymapper_init();

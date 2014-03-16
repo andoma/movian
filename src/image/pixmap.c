@@ -23,6 +23,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
+
 
 #include "showtime.h"
 #include "arch/atomic.h"
@@ -31,19 +33,7 @@
 #include "image/jpeg.h"
 #include "backend/backend.h"
 
-#if ENABLE_LIBAV
-#include <libavcodec/avcodec.h>
-#include <libswscale/swscale.h>
-#include <libavutil/mem.h>
-#include <libavutil/common.h>
-#include <libavutil/pixdesc.h>
-#endif
 
-pixmap_t *(*accel_pixmap_decode)(pixmap_t *pm, const image_meta_t *im,
-				 char *errbuf, size_t errlen);
-
-//#define DIV255(x) ((x) / 255)
-//#define DIV255(x) ((x) >> 8)
 #define DIV255(x) (((((x)+255)>>8)+(x))>>8)
 
 /**
@@ -68,35 +58,6 @@ pixmap_t *
 pixmap_dup(pixmap_t *pm)
 {
   atomic_add(&pm->pm_refcount, 1);
-  return pm;
-}
-
-
-/**
- *
- */
-pixmap_t *
-pixmap_alloc_coded(const void *data, size_t size, pixmap_type_t type)
-{
-  int pad = 32;
-  pixmap_t *pm = calloc(1, sizeof(pixmap_t));
-  pm->pm_refcount = 1;
-  pm->pm_size = size;
-
-  pm->pm_width = -1;
-  pm->pm_height = -1;
-
-  pm->pm_data = malloc(size + pad);
-  if(pm->pm_data == NULL) {
-    free(pm);
-    return NULL;
-  }
-  if(data != NULL)
-    memcpy(pm->pm_data, data, size);
-
-  memset(pm->pm_data + size, 0, pad);
-
-  pm->pm_type = type;
   return pm;
 }
 
@@ -139,131 +100,13 @@ pixmap_create(int width, int height, pixmap_type_t type, int margin)
 /**
  *
  */
-pixmap_t *
-pixmap_create_vector(int width, int height)
-{
-  pixmap_t *pm = calloc(1, sizeof(pixmap_t));
-  pm->pm_refcount = 1;
-  pm->pm_capacity = 256;
-  pm->pm_width = width;
-  pm->pm_height = height;
-  pm->pm_data = malloc(pm->pm_capacity * sizeof(int32_t));
-  if(pm->pm_data == NULL) {
-    free(pm);
-    return NULL;
-  }
-  pm->pm_type = PIXMAP_VECTOR;
-  return pm;
-}
-
-
-/**
- *
- */
-static const char vec_cmd_len[] = {
-  [VC_SET_FILL_ENABLE] = 1,
-  [VC_SET_FILL_COLOR] = 1,
-  [VC_SET_STROKE_WIDTH] = 1,
-  [VC_SET_STROKE_COLOR] = 1,
-  [VC_MOVE_TO] = 2,
-  [VC_LINE_TO] = 2,
-  [VC_CUBIC_TO] = 6,
-};
-
-
-/**
- *
- */
-static void
-vec_resize(pixmap_t *pm, vec_cmd_t cmd)
-{
-  int len = vec_cmd_len[cmd] + 1;
-  if(pm->pm_used + len > pm->pm_capacity) {
-    pm->pm_capacity = 2 * pm->pm_capacity + len + 16;
-    pm->pm_data = realloc(pm->pm_data, pm->pm_capacity * sizeof(float));
-  }
-}
-
-
-/**
- *
- */
-void
-vec_emit_0(pixmap_t *pm, vec_cmd_t cmd)
-{
-  vec_resize(pm, cmd);
-  pm->pm_int[pm->pm_used++] = cmd;
-}
-
-
-/**
- *
- */
-void
-vec_emit_i1(pixmap_t *pm, vec_cmd_t cmd, int32_t i)
-{
-  vec_resize(pm, cmd);
-
-  switch(cmd) {
-  case VC_SET_FILL_COLOR:
-  case VC_SET_STROKE_COLOR:
-    pm->pm_flags |= PIXMAP_COLORIZED;
-    break;
-  default:
-    break;
-  }
-
-  pm->pm_int[pm->pm_used++] = cmd;
-  pm->pm_int[pm->pm_used++] = i;
-}
-
-
-/**
- *
- */
-void
-vec_emit_f1(pixmap_t *pm, vec_cmd_t cmd, const float *a)
-{
-  vec_resize(pm, cmd);
-  pm->pm_int[pm->pm_used++] = cmd;
-  pm->pm_flt[pm->pm_used++] = a[0];
-  pm->pm_flt[pm->pm_used++] = a[1];
-}
-
-
-/**
- *
- */
-void
-vec_emit_f3(pixmap_t *pm, vec_cmd_t cmd, const float *a, const float *b, const float *c)
-{
-  vec_resize(pm, cmd);
-  int ptr = pm->pm_used;
-  pm->pm_int[ptr+0] = cmd;
-  pm->pm_flt[ptr+1] = a[0];
-  pm->pm_flt[ptr+2] = a[1];
-  pm->pm_flt[ptr+3] = b[0];
-  pm->pm_flt[ptr+4] = b[1];
-  pm->pm_flt[ptr+5] = c[0];
-  pm->pm_flt[ptr+6] = c[1];
-  pm->pm_used = ptr + 7;
-}
-
-
-/**
- *
- */
 void
 pixmap_release(pixmap_t *pm)
 {
   if(atomic_add(&pm->pm_refcount, -1) > 1)
     return;
 
-  if(!pixmap_is_coded(pm)) {
-    free(pm->pm_pixels);
-  } else {
-    free(pm->pm_data);
-  }
+  free(pm->pm_data);
   free(pm);
 }
 
@@ -374,8 +217,8 @@ rgb24_to_bgr32(pixmap_t *src)
   int y;
   
   for(y = 0; y < src->pm_height; y++) {
-    const uint8_t *s = src->pm_pixels + y * src->pm_linesize;
-    uint32_t *d = (uint32_t *)(dst->pm_pixels + y * dst->pm_linesize);
+    const uint8_t *s = src->pm_data + y * src->pm_linesize;
+    uint32_t *d = (uint32_t *)(dst->pm_data + y * dst->pm_linesize);
     int x;
     for(x = 0; x < src->pm_width; x++) {
       *d++ = 0xff000000 | s[2] << 16 | s[1] << 8 | s[0]; 
@@ -651,8 +494,8 @@ pixmap_composite(pixmap_t *dst, const pixmap_t *src,
   readstep  = bytes_per_pixel(src->pm_type);
   writestep = bytes_per_pixel(dst->pm_type);
 
-  s0 = src->pm_pixels;
-  d0 = dst->pm_pixels;
+  s0 = src->pm_data;
+  d0 = dst->pm_data;
 
   int xx = src->pm_width;
 
@@ -1084,466 +927,6 @@ pixmap_drop_shadow(pixmap_t *pm, int boxw, int boxh)
 
 
 
-#if ENABLE_LIBAV
-
-static pixmap_t *pixmap_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
-                                        int src_w, int src_h,
-                                        int dst_w, int dst_h,
-                                        int with_alpha, int margin);
-
-/**
- *
- */
-static pixmap_t *
-fulhack(const AVPicture *pict, int src_w, int src_h,
-        int dst_w, int dst_h, int with_alpha, int margin)
-{
-  pixmap_t *pm = pixmap_create(src_w, src_h, PIXMAP_RGB24, 0);
-  for(int y = 0; y < src_h; y++) {
-    uint8_t *dst = pm_pixel(pm, 0,y);
-    uint8_t *src0 = pict->data[0] + pict->linesize[0] * y;
-    uint8_t *src1 = pict->data[1] + pict->linesize[1] * y;
-    uint8_t *src2 = pict->data[2] + pict->linesize[2] * y;
-
-    for(int x = 0; x < src_w; x++) {
-      *dst++ = *src0++;
-      *dst++ = *src1++;
-      *dst++ = *src2++;
-    }
-  }
-
-  AVPicture pict2 = {};
-  pict2.data[0] = pm_pixel(pm, 0, 0);
-  pict2.linesize[0] = pm->pm_linesize;
-  pixmap_t *pm2 = pixmap_rescale_swscale(&pict2, PIX_FMT_RGB24,
-                                         src_w, src_h, dst_w, dst_h,
-                                         with_alpha, margin);
-  pixmap_release(pm);
-  return pm2;
-
-}
-
-/**
- * Rescaling with FFmpeg's swscaler
- */
-static pixmap_t *
-pixmap_rescale_swscale(const AVPicture *pict, int src_pix_fmt, 
-		       int src_w, int src_h,
-		       int dst_w, int dst_h,
-		       int with_alpha, int margin)
-{
-  AVPicture pic;
-  int dst_pix_fmt;
-  struct SwsContext *sws;
-  const uint8_t *ptr[4];
-  int strides[4];
-  pixmap_t *pm;
-
-  switch(src_pix_fmt) {
-  case PIX_FMT_Y400A:
-  case PIX_FMT_BGRA:
-  case PIX_FMT_RGBA:
-  case PIX_FMT_ABGR:
-  case PIX_FMT_ARGB:
-#ifdef __PPC__
-    return NULL;
-#endif
-    dst_pix_fmt = PIX_FMT_BGR32;
-    break;
-
-  case AV_PIX_FMT_YUVA444P:
-    return fulhack(pict, src_w, src_h, dst_w, dst_h, with_alpha, margin);
-
-  default:
-    if(with_alpha)
-      dst_pix_fmt = PIX_FMT_BGR32;
-    else
-      dst_pix_fmt = PIX_FMT_RGB24;
-    break;
-  }
-
-  const int swscale_debug = 0;
-
-  if(swscale_debug)
-    TRACE(TRACE_DEBUG, "info", "Converting %d x %d [%s] to %d x %d [%s]",
-	  src_w, src_h, av_get_pix_fmt_name(src_pix_fmt),
-	  dst_w, dst_h, av_get_pix_fmt_name(dst_pix_fmt));
-  
-  sws = sws_getContext(src_w, src_h, src_pix_fmt, 
-		       dst_w, dst_h, dst_pix_fmt,
-		       SWS_LANCZOS | 
-		       (swscale_debug ? SWS_PRINT_INFO : 0), NULL, NULL, NULL);
-  if(sws == NULL)
-    return NULL;
-
-  ptr[0] = pict->data[0];
-  ptr[1] = pict->data[1];
-  ptr[2] = pict->data[2];
-  ptr[3] = pict->data[3];
-
-  strides[0] = pict->linesize[0];
-  strides[1] = pict->linesize[1];
-  strides[2] = pict->linesize[2];
-  strides[3] = pict->linesize[3];
-
-  switch(dst_pix_fmt) {
-  case PIX_FMT_RGB24:
-    pm = pixmap_create(dst_w, dst_h, PIXMAP_RGB24, margin);
-    break;
-
-  default:
-    pm = pixmap_create(dst_w, dst_h, PIXMAP_BGR32, margin);
-    break;
-  }
-
-  if(pm == NULL) {
-    sws_freeContext(sws);
-    return NULL;
-  }
-
-  // Set scale destination with respect to margin
-  pic.data[0] = pm_pixel(pm, 0, 0);
-  pic.linesize[0] = pm->pm_linesize;
-  pic.linesize[1] = 0;
-  pic.linesize[2] = 0;
-  pic.linesize[3] = 0;
-  sws_scale(sws, ptr, strides, 0, src_h, pic.data, pic.linesize);
-#if 0  
-  if(pm->pm_type == PIXMAP_BGR32) {
-    uint32_t *dst = pm->pm_data;
-    int i;
-
-    for(i = 0; i < pm->pm_linesize * pm->pm_height; i+= 4) {
-      *dst |= 0xff000000;
-      dst++;
-    }
-
-  }
-#endif
-
-  sws_freeContext(sws);
-  return pm;
-}
-
-
-static void   __attribute__((unused))
-
-swizzle_xwzy(uint32_t *dst, const uint32_t *src, int len)
-{
-  int i;
-  uint32_t u32;
-  for(i = 0; i < len; i++) {
-    u32 = *src++;
-    *dst++ = (u32 & 0xff00ff00) | (u32 & 0xff) << 16 | (u32 & 0xff0000) >> 16;
-  }
-}
-
-static pixmap_t *
-pixmap_32bit_swizzle(AVPicture *pict, int pix_fmt, int w, int h, int m)
-{
-#if defined(__BIG_ENDIAN__)
-  void (*fn)(uint32_t *dst, const uint32_t *src, int len);
-  // go to BGR32 which is ABGR on big endian.
-  switch(pix_fmt) {
-  case PIX_FMT_ARGB:
-    fn = swizzle_xwzy;
-    break;
-  default:
-    return NULL;
-  }
-
-  int y;
-  pixmap_t *pm = pixmap_create(w, h, PIXMAP_BGR32, m);
-  if(pm == NULL)
-    return NULL;
-
-  for(y = 0; y < h; y++) {
-    fn(pm_pixel(pm, 0, y),
-       (uint32_t *)(pict->data[0] + y * pict->linesize[0]),
-       w);
-  }
-  return pm;
-#else
-  return NULL;
-#endif
-}
-
-
-
-/**
- *
- */
-static pixmap_t *
-pixmap_from_avpic(AVPicture *pict, int pix_fmt, 
-		  int src_w, int src_h,
-		  int req_w0, int req_h0,
-		  const image_meta_t *im)
-{
-  int i;
-  int need_format_conv = 0;
-  int want_rescale = 0; // Want rescaling cause it looks better
-  uint32_t *palette;
-  pixmap_type_t fmt = 0;
-  pixmap_t *pm;
-
-  assert(pix_fmt != -1);
-
-  switch(pix_fmt) {
-  default:
-    need_format_conv = 1;
-    break;
-
-  case PIX_FMT_RGB24:
-    if(im->im_no_rgb24 || im->im_corner_radius)
-      need_format_conv = 1;
-    else
-      fmt = PIXMAP_RGB24;
-    break;
-
-  case PIX_FMT_BGR32:
-    fmt = PIXMAP_BGR32;
-    break;
-    
-  case PIX_FMT_Y400A:
-    if(!im->im_can_mono) {
-      need_format_conv = 1;
-      break;
-    }
-
-    fmt = PIXMAP_IA;
-    break;
-
-  case PIX_FMT_GRAY8:
-    if(!im->im_can_mono) {
-      need_format_conv = 1;
-      break;
-    }
-
-    fmt = PIXMAP_I;
-    break;
-
-  case PIX_FMT_PAL8:
-    palette = (uint32_t *)pict->data[1];
-
-    for(i = 0; i < 256; i++) {
-      if((palette[i] >> 24) == 0)
-	palette[i] = 0;
-    }
-
-    need_format_conv = 1;
-    break;
-  }
-
-  int req_w = req_w0, req_h = req_h0;
-
-  want_rescale = req_w != src_w || req_h != src_h;
-
-  if(want_rescale || need_format_conv) {
-    int want_alpha = im->im_no_rgb24 || im->im_corner_radius;
-
-    pm = pixmap_rescale_swscale(pict, pix_fmt, src_w, src_h, req_w, req_h,
-				want_alpha, im->im_margin);
-    if(pm != NULL)
-      return pm;
-
-    if(need_format_conv) {
-      pm = pixmap_rescale_swscale(pict, pix_fmt, src_w, src_h, src_w, src_h,
-				  want_alpha, im->im_margin);
-      if(pm != NULL)
-	return pm;
-
-      return pixmap_32bit_swizzle(pict, pix_fmt, src_w, src_h, im->im_margin);
-    }
-  }
-
-  pm = pixmap_create(src_w, src_h, fmt, im->im_margin);
-  if(pm == NULL)
-    return NULL;
-
-  uint8_t *dst = pm_pixel(pm, 0,0);
-  uint8_t *src = pict->data[0];
-  int h = src_h;
-
-  if(pict->linesize[0] != pm->pm_linesize) {
-    while(h--) {
-      memcpy(dst, src, pm->pm_linesize);
-      src += pict->linesize[0];
-      dst +=  pm->pm_linesize;
-    }
-  } else {
-    memcpy(dst, src, pm->pm_linesize * src_h);
-  }
-  return pm;
-}
-
-
-/**
- *
- */
-void
-pixmap_compute_rescale_dim(const image_meta_t *im,
-			   int src_width, int src_height,
-			   int *dst_width, int *dst_height)
-{
-  int w;
-  int h;
-  if(im->im_want_thumb) {
-    w = 160;
-    h = 160 * src_height / src_width;
-  } else {
-    w = src_width;
-    h = src_height;
-  }
-
-  if(im->im_req_width != -1 && im->im_req_height != -1) {
-    w = im->im_req_width;
-    h = im->im_req_height;
-
-  } else if(im->im_req_width != -1) {
-    w = im->im_req_width;
-    h = im->im_req_width * src_height / src_width;
-
-  } else if(im->im_req_height != -1) {
-    w = im->im_req_height * src_width / src_height;
-    h = im->im_req_height;
-
-  } else if(w > 64 && h > 64) {
-
-    if(im->im_max_width && w > im->im_max_width) {
-      h = h * im->im_max_width / w;
-      w = im->im_max_width;
-    }
-
-    if(im->im_max_height && h > im->im_max_height) {
-      w = w * im->im_max_height / h;
-      h = im->im_max_height;
-    }
-  }
-  *dst_width  = w;
-  *dst_height = h;
-}
-
-/**
- *
- */
-pixmap_t *
-pixmap_decode(pixmap_t *pm, const image_meta_t *im,
-	      char *errbuf, size_t errlen)
-{
-  AVCodecContext *ctx;
-  AVCodec *codec;
-  AVFrame *frame;
-  int got_pic, w, h;
-  int orientation = pm->pm_orientation;
-  jpeg_meminfo_t mi;
-  jpeginfo_t ji = {0};
-
-  if(!pixmap_is_coded(pm)) {
-    pm->pm_aspect = (float)pm->pm_width / (float)pm->pm_height;
-    return pm;
-  }
-
-  if(accel_pixmap_decode != NULL) {
-    pixmap_t *r = accel_pixmap_decode(pm, im, errbuf, errlen);
-    if(r != NULL) 
-      return r;
-  }
-
-  switch(pm->pm_type) {
-  case PIXMAP_SVG:
-    return svg_decode(pm, im, errbuf, errlen);
-  case PIXMAP_PNG:
-    codec = avcodec_find_decoder(AV_CODEC_ID_PNG);
-    break;
-  case PIXMAP_JPEG:
-
-    mi.data = pm->pm_data;
-    mi.size = pm->pm_size;
-    
-    if(jpeg_info(&ji, jpeginfo_mem_reader, &mi, 
-		 JPEG_INFO_DIMENSIONS,
-		 pm->pm_data, pm->pm_size, errbuf, errlen)) {
-      pixmap_release(pm);
-      return NULL;
-    }
-    codec = avcodec_find_decoder(AV_CODEC_ID_MJPEG);
-    break;
-  case PIXMAP_GIF:
-    codec = avcodec_find_decoder(AV_CODEC_ID_GIF);
-    break;
-  default:
-    codec = NULL;
-    break;
-  }
-
-  if(codec == NULL) {
-    pixmap_release(pm);
-    snprintf(errbuf, errlen, "No codec for image format");
-    return NULL;
-  }
-
-  ctx = avcodec_alloc_context3(codec);
-
-  if(avcodec_open2(ctx, codec, NULL) < 0) {
-    av_free(ctx);
-    pixmap_release(pm);
-    snprintf(errbuf, errlen, "Unable to open codec");
-    return NULL;
-  }
-  
-  frame = av_frame_alloc();
-
-  AVPacket avpkt;
-  av_init_packet(&avpkt);
-  avpkt.data = pm->pm_data;
-  avpkt.size = pm->pm_size;
-  int r = avcodec_decode_video2(ctx, frame, &got_pic, &avpkt);
-
-  if(r < 0 || ctx->width == 0 || ctx->height == 0) {
-    pixmap_release(pm);
-    avcodec_close(ctx);
-    av_free(ctx);
-    av_frame_free(&frame);
-    snprintf(errbuf, errlen, "Unable to decode image of size (%d x %d)",
-             ctx->width, ctx->height);
-    return NULL;
-  }
-
-#if 0
-  printf("%d x %d => %d x %d (lowres=%d) req = %d x %d%s%s\n",
-	 ji.ji_width, ji.ji_height,
-	 ctx->width, ctx->height, lowres,
-	 im->im_req_width, im->im_req_height,
-	 im->im_want_thumb ? ", want thumb" : "",
-	 pm->pm_flags & PIXMAP_THUMBNAIL ? ", is thumb" : "");
-#endif
-
-  pixmap_compute_rescale_dim(im, ctx->width, ctx->height, &w, &h);
-
-  pixmap_release(pm);
-
-  pm = pixmap_from_avpic((AVPicture *)frame, 
-			 ctx->pix_fmt, ctx->width, ctx->height, w, h, im);
-
-  if(pm != NULL) {
-    pm->pm_orientation = orientation;
-    // Compute correct aspect ratio based on orientation
-    if(pm->pm_orientation < LAYOUT_ORIENTATION_TRANSPOSE) {
-      pm->pm_aspect = (float)w / (float)h;
-    } else {
-      pm->pm_aspect = (float)h / (float)w;
-    }
-  } else {
-    snprintf(errbuf, errlen, "Out of memory");
-  }
-  av_frame_free(&frame);
-
-  avcodec_close(ctx);
-  av_free(ctx);
-  return pm;
-}
-
-#endif // LIBAV_ENABLE
 
 // gcc -O3 src/misc/pixmap.c -o /tmp/pixmap -Isrc -DLOCAL_MAIN
 
@@ -1578,12 +961,12 @@ main(int argc, char **argv)
 /**
  *
  */
-static pixmap_t *
+static image_t *
 be_showtime_pixmap_loader(const char *url, const image_meta_t *im,
 			  const char **vpaths, char *errbuf, size_t errlen,
 			  int *cache_control, cancellable_t *c)
 {
-  pixmap_t *pm;
+  image_t *img;
   int w = im->im_req_width, h = im->im_req_height;
   const char *s;
   if((s = mystrbegins(url, "showtime:pixmap:gradient:")) != NULL) {
@@ -1599,13 +982,16 @@ be_showtime_pixmap_loader(const char *url, const image_meta_t *im,
       return NULL;
     }
 
-    pm = pixmap_create(w, h, PIXMAP_BGR32, im->im_margin);
+    pixmap_t *pm = pixmap_create(w, h, PIXMAP_BGR32, im->im_margin);
     pixmap_horizontal_gradient(pm, t, b);
+    img = image_create_from_pixmap(pm);
+    pixmap_release(pm);
+
   } else {
     snprintf(errbuf, errlen, "Invalid URL");
     return NULL;
   }
-  return pm;
+  return img;
 }
 
 

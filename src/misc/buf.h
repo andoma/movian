@@ -34,6 +34,8 @@ typedef struct buf {
   uint8_t b_content[0];
 } buf_t;
 
+#define buf_data(buf) ((const void *)(buf)->b_ptr)
+
 #define buf_cstr(buf) ((const char *)(buf)->b_ptr)
 
 static inline char *
@@ -43,7 +45,9 @@ buf_str(buf_t *b)
   return (char *)b->b_ptr;
 }
 
-#define buf_len(buf) ((buf)->b_size)
+#define buf_len(buf)  ((buf)->b_size)
+#define buf_size(buf) ((buf)->b_size)
+
 
 #define buf_c8(buf) ((const uint8_t *)(buf)->b_ptr)
 

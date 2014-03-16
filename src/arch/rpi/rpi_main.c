@@ -146,15 +146,23 @@ set_bg_image(rstr_t *url, const char **vpaths, glw_root_t *gr)
   im.im_req_width  = w;
   im.im_req_height = h;
 
-  pixmap_t *pm;
-  pm = backend_imageloader(url, &im, vpaths, errbuf, sizeof(errbuf),
+  image_t *img;
+  img = backend_imageloader(url, &im, vpaths, errbuf, sizeof(errbuf),
 			   NULL, NULL);
   glw_lock(gr);
 
-  if(pm == NULL) {
+  if(img == NULL) {
     TRACE(TRACE_ERROR, "BG", "Unable to load %s -- %s", rstr_get(url), errbuf);
     return;
   }
+
+  image_component_t *ic = image_find_component(img, IMAGE_PIXMAP);
+  if(ic == NULL) {
+    image_release(img);
+    return;
+  }
+
+  const pixmap_t *pm = ic->pm;
 
   uint32_t ip;
   VC_IMAGE_TYPE_T it;
@@ -168,7 +176,7 @@ set_bg_image(rstr_t *url, const char **vpaths, glw_root_t *gr)
     break;
   default:
     TRACE(TRACE_ERROR, "BG", "Can't handle format %d", pm->pm_type);
-    pixmap_release(pm);
+    image_release(img);
     return;
   }
 
@@ -186,9 +194,9 @@ set_bg_image(rstr_t *url, const char **vpaths, glw_root_t *gr)
 		       pm->pm_width, pm->pm_height);
 
   vc_dispmanx_resource_write_data(bg_resource, it, pm->pm_linesize,
-				  pm->pm_pixels, &bg_dst_rect);
+				  pm->pm_data, &bg_dst_rect);
 
-  pixmap_release(pm);
+  image_release(img);
 
   bg_refresh_element(1);
 }

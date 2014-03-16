@@ -331,7 +331,7 @@ reset_subs(void *opaque, prop_event_t event, ...)
 /**
  *
  */
-void
+static void
 fontstash_init(void)
 {
   prop_concat_t *pc;
@@ -419,6 +419,7 @@ fontstash_init(void)
   fa_dir_free(fd);
 }
 
+INITME(INIT_GROUP_GRAPHICS, fontstash_init);
 
 
 /**

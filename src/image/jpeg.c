@@ -35,7 +35,7 @@
 #include <stdlib.h>
 
 #include "jpeg.h"
-#include "pixmap.h"
+#include "image.h"
 #include "misc/rstr.h"
 
 /**
@@ -241,11 +241,11 @@ parse_app1(jpeginfo_t *ji, const uint8_t *buf, size_t len, int flags)
      thumbnail_jpeg_offset + thumbnail_jpeg_size <= len) {
 
     //    printf("  Thumbnail @ %d, %d bytes\n", thumbnail_jpeg_offset, thumbnail_jpeg_size);
-    ji->ji_thumbnail = pixmap_alloc_coded(buf + thumbnail_jpeg_offset,
-					  thumbnail_jpeg_size,
-					  PIXMAP_JPEG);
-    ji->ji_thumbnail->pm_flags |= PIXMAP_THUMBNAIL;
-    ji->ji_thumbnail->pm_orientation = ji->ji_orientation;
+    ji->ji_thumbnail = image_coded_create_from_data(buf + thumbnail_jpeg_offset,
+                                                    thumbnail_jpeg_size,
+                                                    IMAGE_JPEG);
+    ji->ji_thumbnail->im_flags |= IMAGE_THUMBNAIL;
+    ji->ji_thumbnail->im_orientation = ji->ji_orientation;
   }
   return 0;
 }
@@ -388,7 +388,7 @@ void
 jpeg_info_clear(jpeginfo_t *ji)
 {
   if(ji->ji_thumbnail != NULL)
-    pixmap_release(ji->ji_thumbnail);
+    image_release(ji->ji_thumbnail);
   rstr_release(ji->ji_manufacturer);
   rstr_release(ji->ji_equipment);
 }

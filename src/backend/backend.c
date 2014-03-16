@@ -32,6 +32,7 @@
 #include "navigator.h"
 #include "event.h"
 #include "notifications.h"
+#include "image/image.h"
 #include "image/pixmap.h"
 #include "htsmsg/htsmsg_json.h"
 #include "media.h"
@@ -181,7 +182,7 @@ static struct loading_image_list loading_images;
 /**
  *
  */
-struct pixmap *
+image_t *
 backend_imageloader(rstr_t *url0, const image_meta_t *im0,
 		    const char **vpaths, char *errbuf, size_t errlen,
 		    int *cache_control, cancellable_t *c)
@@ -262,9 +263,10 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im0,
   }
 
 
+  image_t *img = NULL;
+
   im.im_margin = MAX(im.im_shadow * 2, im.im_margin);
   backend_t *nb = backend_canhandle(url);
-  pixmap_t *pm = NULL;
   if(nb == NULL || nb->be_imageloader == NULL) {
     snprintf(errbuf, errlen, "No backend for URL");
     goto out;
@@ -294,32 +296,18 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im0,
 
   hts_mutex_unlock(&imageloader_mutex);
 
-  pm = nb->be_imageloader(url, &im, vpaths, errbuf, errlen, cache_control, c);
+  img = nb->be_imageloader(url, &im, vpaths, errbuf, errlen, cache_control, c);
 
-  if(pm != NULL && pm != NOT_MODIFIED && !im.im_no_decoding) {
+  if(img != NULL && img != NOT_MODIFIED && !im.im_no_decoding) {
 
     if(c != NULL && c->cancelled) {
       snprintf(errbuf, errlen, "Cancelled");
-      pixmap_release(pm);
-      pm = NULL;
+      image_release(img);
+      img = NULL;
     } else {
 
-      uint8_t original_type = pm->pm_original_type ?: pm->pm_type;
+      img = image_decode(img, &im, errbuf, errlen);
 
-      pm = pixmap_decode(pm, &im, errbuf, errlen);
-
-      if(pm != NULL && pm->pm_type == PIXMAP_VECTOR)
-	pm = pixmap_rasterize_ft(pm);
-
-      if(pm != NULL && im.im_shadow)
-	pixmap_drop_shadow(pm, im.im_shadow, im.im_shadow);
-
-      if(pm != NULL && im.im_corner_radius)
-	pm = pixmap_rounded_corners(pm, im.im_corner_radius,
-				    im.im_corner_selection);
-
-      if(pm != NULL)
-	pm->pm_original_type = original_type;
     }
   }
 
@@ -339,7 +327,7 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im0,
  out:
   if(m)
     htsmsg_destroy(m);
-  return pm;
+  return img;
 }
 
 

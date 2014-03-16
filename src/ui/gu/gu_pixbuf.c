@@ -23,7 +23,8 @@
 #include "backend/backend.h"
 #include "gu.h"
 #include "showtime.h"
-#include "misc/pixmap.h"
+#include "image/image.h"
+#include "image/pixmap.h"
 
 extern hts_mutex_t gdk_mutex;
 static hts_cond_t async_loader_cond;
@@ -89,10 +90,18 @@ gu_pixbuf_get_internal(rstr_t *url, int *sizep,
   im.im_req_width  = req_width;
   im.im_req_height = req_height;
   
-  pixmap_t *pm = backend_imageloader(url, &im, NULL, NULL, 0, NULL, NULL);
+  image_t *img = backend_imageloader(url, &im, NULL, NULL, 0, NULL, NULL);
 
-  if(pm == NULL)
+  if(img == NULL)
     return NULL;
+
+  image_component_t *ic = image_find_component(img, IMAGE_PIXMAP);
+  if(ic == NULL) {
+    image_release(img);
+    return NULL;
+  }
+  pixmap_t *pm = pixmap_dup(ic->pm);
+  image_release(img);
 
   if(relock)
     hts_mutex_lock(&gdk_mutex);

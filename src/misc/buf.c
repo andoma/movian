@@ -22,6 +22,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "showtime.h"
 #include "buf.h"
 #include "arch/atomic.h"
 
@@ -54,7 +56,8 @@ buf_t *
 buf_create_and_copy(size_t size, const void *data)
 {
   buf_t *b = buf_create(size);
-  memcpy(b->b_ptr, data, b->b_size);
+  if(b != NULL)
+    memcpy(b->b_ptr, data, b->b_size);
   return b;
 }
 
@@ -62,7 +65,9 @@ buf_create_and_copy(size_t size, const void *data)
 buf_t *
 buf_create(size_t size)
 {
-  buf_t *b = malloc(sizeof(buf_t) + size + 1);
+  buf_t *b = mymalloc(sizeof(buf_t) + size + 1);
+  if(b == NULL)
+    return NULL;
   b->b_refcount = 1;
   b->b_size = size;
   b->b_ptr = b->b_content;

@@ -26,6 +26,8 @@
 #include "misc/minmax.h"
 #include "pixmap.h"
 #include "showtime.h"
+#include "image.h"
+#include "vector.h"
 
 #include <ft2build.h>  
 #include FT_FREETYPE_H
@@ -35,7 +37,7 @@
 #include FT_STROKER_H
 
 static FT_Library ft_lib;
-static hts_mutex_t ft_mutex;
+static HTS_MUTEX_DECL(ft_mutex);
 
 typedef struct state {
   FT_Stroker stroker;
@@ -375,13 +377,10 @@ rasterize(state_t *s, pixmap_t *pm)
 /**
  *
  */
-pixmap_t *
-pixmap_rasterize_ft(pixmap_t *src)
+void
+image_rasterize_ft(image_component_t *ic, int width, int height, int margin)
 {
-  int i;
-  pixmap_t *dst;
-  if(src->pm_type != PIXMAP_VECTOR)
-    return src;
+  const image_component_vector_t *icv = &ic->vector;
 
   state_t s;
   memset(&s, 0, sizeof(state_t));
@@ -389,18 +388,20 @@ pixmap_rasterize_ft(pixmap_t *src)
   s.stroke_color = 0xffffffff;
   s.fill_color = 0xffffffff;
 
-  dst = pixmap_create(src->pm_width, src->pm_height,
-                      src->pm_flags & PIXMAP_COLORIZED ? PIXMAP_BGR32 : PIXMAP_IA,
-                      src->pm_margin);
+
+  pixmap_t *pm = pixmap_create(width, height,
+                               icv->icv_colorized ? PIXMAP_BGR32 : PIXMAP_IA,
+                               margin);
+
 
   hts_mutex_lock(&ft_mutex);
 
   FT_Stroker_New(ft_lib, &s.stroker);
 
-  const int32_t *i32 = src->pm_int;
-  const float *flt   = src->pm_flt;
+  const int32_t *i32 = icv->icv_int;
+  const float *flt   = icv->icv_flt;
 
-  for(i = 0; i < src->pm_used;) {
+  for(int i = 0; i < icv->icv_used;) {
     switch(i32[i++]) {
     default:
       abort();
@@ -440,26 +441,34 @@ pixmap_rasterize_ft(pixmap_t *src)
       break;
     case VC_END:
       cmd_close(&s);
-      rasterize(&s, dst);
+      rasterize(&s, pm);
       break;
     case VC_CLOSE:
       cmd_close(&s);
       break;
     }
   }
+
   FT_Stroker_Done(s.stroker);
   hts_mutex_unlock(&ft_mutex);
-  pixmap_release(src);
-  return dst;
+
+  image_clear_component(ic);
+  ic->type = IMAGE_PIXMAP;
+  ic->pm = pm;
 }
 
 
 /**
  *
  */
-void
+static void
 rasterizer_ft_init(void)
 {
-  FT_Init_FreeType(&ft_lib);
-  hts_mutex_init(&ft_mutex);
+  int error = FT_Init_FreeType(&ft_lib);
+  if(error) {
+    TRACE(TRACE_ERROR, "Freetype", "Freetype init error %d", error);
+    exit(1);
+  }
 }
+
+INITME(INIT_GROUP_GRAPHICS, rasterizer_ft_init);

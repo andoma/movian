@@ -94,8 +94,6 @@ text_render(const uint32_t *uc, int len, int flags, int default_size,
 
 struct fa_handle;
 
-int freetype_init(void);
-
 void * freetype_load_font_from_fh(struct fa_handle *fh, int font_domain,
 				  char *errbuf, size_t errlen);
 
@@ -112,8 +110,6 @@ struct rstr *freetype_get_family(void *handle);
 struct rstr *freetype_get_identifier(void *handle);
 
 #endif
-
-void fontstash_init(void);
 
 void fontstash_props_from_title(struct prop *p, const char *url,
 				const char *title);

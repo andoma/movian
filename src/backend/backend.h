@@ -25,11 +25,11 @@
 #include "prop/prop.h"
 #include "misc/cancellable.h"
 
-struct pixmap;
+struct image;
+struct image_meta;
 struct media_pipe;
 struct navigator;
 struct event;
-struct image_meta;
 struct vsource_list;
 typedef struct video_queue video_queue_t;
 
@@ -111,11 +111,11 @@ typedef struct backend {
 				 char *errbuf, size_t errlen, int paused,
 				 const char *mimetype);
 
-  struct pixmap *(*be_imageloader)(const char *url, const struct image_meta *im,
-				   const char **vpaths,
-				   char *errbuf, size_t errlen,
-				   int *cache_control,
-                                   cancellable_t *c);
+  struct image *(*be_imageloader)(const char *url, const struct image_meta *im,
+                                  const char **vpaths,
+                                  char *errbuf, size_t errlen,
+                                  int *cache_control,
+                                  cancellable_t *c);
 
   int (*be_normalize)(const char *url, char *dst, size_t dstlen);
 
@@ -153,11 +153,11 @@ struct event *backend_play_audio(const char *url, struct media_pipe *mp,
   __attribute__ ((warn_unused_result));
 
 
-struct pixmap *backend_imageloader(rstr_t *url, const struct image_meta *im,
-				   const char **vpaths,
-				   char *errbuf, size_t errlen,
-				   int *cache_control,
-                                   cancellable_t *c)
+struct image *backend_imageloader(rstr_t *url, const struct image_meta *im,
+                                  const char **vpaths,
+                                  char *errbuf, size_t errlen,
+                                  int *cache_control,
+                                  cancellable_t *c)
      __attribute__ ((warn_unused_result));
 
 backend_t *backend_canhandle(const char *url)

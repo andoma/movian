@@ -93,7 +93,7 @@ video_subtitles_lavc(media_pipe_t *mp, media_buf_t *mb,
 	const uint32_t *clut = (uint32_t *)r->pict.data[1];
       
 	for(y = 0; y < r->h; y++) {
-	  uint32_t *dst = (uint32_t *)(vo->vo_pixmap->pm_pixels + 
+	  uint32_t *dst = (uint32_t *)(vo->vo_pixmap->pm_data +
 				       y * vo->vo_pixmap->pm_linesize);
 	  for(x = 0; x < r->w; x++)
 	    *dst++ = clut[src[x]];

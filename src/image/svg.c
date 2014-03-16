@@ -25,7 +25,8 @@
 
 #include "misc/minmax.h"
 #include "arch/atomic.h"
-#include "pixmap.h"
+#include "image.h"
+#include "vector.h"
 #include "misc/dbl.h"
 #include "htsmsg/htsmsg_xml.h"
 #include "misc/str.h"
@@ -34,7 +35,7 @@
 typedef struct svg_state {
   float cur[2];
   float ctm[9];
-  pixmap_t *pm;
+  image_component_vector_t *icv;
   float scaling;
 } svg_state_t;
 
@@ -181,7 +182,7 @@ cmd_move(svg_state_t *state)
   float pt[2];
   svg_mtx_vec_mul(pt, state->ctm, state->cur);
 
-  vec_emit_f1(state->pm, VC_MOVE_TO, pt);
+  vec_emit_f1(state->icv, VC_MOVE_TO, pt);
 }
 
 
@@ -209,7 +210,7 @@ static void
 cmd_curve(svg_state_t *state, const float *s, const float *c,
 	  const float *d, const float *e)
 {
-  vec_emit_f3(state->pm, VC_CUBIC_TO, c, d, e);
+  vec_emit_f3(state->icv, VC_CUBIC_TO, c, d, e);
 }
 
 static void
@@ -280,7 +281,7 @@ cmd_lineto(svg_state_t *state)
 {
   float pt[2];
   svg_mtx_vec_mul(pt, state->ctm, state->cur);
-  vec_emit_f1(state->pm, VC_LINE_TO, pt);
+  vec_emit_f1(state->icv, VC_LINE_TO, pt);
 }
 
 
@@ -311,7 +312,7 @@ cmd_lineto_abs(svg_state_t *state, const float *p)
 static void
 cmd_close(svg_state_t *state)
 {
-  vec_emit_0(state->pm, VC_CLOSE);
+  vec_emit_0(state->icv, VC_CLOSE);
 }
 
 
@@ -512,7 +513,7 @@ svg_parse_element(const svg_state_t *s0, htsmsg_t *element,
     free(style);
   }
 
-  if(s.pm == NULL)
+  if(s.icv == NULL)
     return;
 
   const char *transform = htsmsg_get_str(a, "transform");
@@ -520,16 +521,16 @@ svg_parse_element(const svg_state_t *s0, htsmsg_t *element,
     svg_parse_transform(&s, transform);
 
 
-  vec_emit_0(s.pm, VC_BEGIN);
+  vec_emit_0(s.icv, VC_BEGIN);
 
   if(fill_color) {
-    vec_emit_i1(s.pm, VC_SET_FILL_ENABLE, 1);
-    vec_emit_i1(s.pm, VC_SET_FILL_COLOR, fill_color);
+    vec_emit_i1(s.icv, VC_SET_FILL_ENABLE, 1);
+    vec_emit_i1(s.icv, VC_SET_FILL_COLOR, fill_color);
   }
 
   if(stroke_width) {
-    vec_emit_i1(s.pm, VC_SET_STROKE_WIDTH, stroke_width);
-    vec_emit_i1(s.pm, VC_SET_STROKE_COLOR, stroke_color);
+    vec_emit_i1(s.icv, VC_SET_STROKE_WIDTH, stroke_width);
+    vec_emit_i1(s.icv, VC_SET_STROKE_COLOR, stroke_color);
   }
 
   s.cur[0] = 0;
@@ -539,7 +540,7 @@ svg_parse_element(const svg_state_t *s0, htsmsg_t *element,
     return;
 
   cmd_close(&s);
-  vec_emit_0(s.pm, VC_END);
+  vec_emit_0(s.icv, VC_END);
 }
 
 
@@ -585,7 +586,7 @@ svg_parse_g(svg_state_t *s0, htsmsg_t *c)
 /**
  *
  */
-static pixmap_t *
+static image_t *
 svg_decode1(htsmsg_t *doc, const image_meta_t *im,
 	    char *errbuf, size_t errlen)
 {
@@ -629,29 +630,25 @@ svg_decode1(htsmsg_t *doc, const image_meta_t *im,
   svg_mtx_identity(state.ctm);
   svg_mtx_scale(state.ctm, (float)w / orig_width, (float)h / orig_height);
 
-  state.pm = pixmap_create_vector(w, h);
-  state.pm->pm_margin = im->im_margin;
+  image_t *img = image_create_vector(w, h, im->im_margin);
+  state.icv = &img->im_components[0].vector;
   svg_parse_root(&state, tags);
-  return state.pm;
+  return img;
 }
 
 
-
-pixmap_t *
-svg_decode(pixmap_t *pm, const image_meta_t *im,
+/**
+ *
+ */
+image_t *
+svg_decode(buf_t *buf, const image_meta_t *im,
 	   char *errbuf, size_t errlen)
 {
-  pixmap_t *res;
-
-  htsmsg_t *doc = htsmsg_xml_deserialize(pm->pm_data, errbuf, errlen);
-  pm->pm_data = NULL;
-  if(doc == NULL) {
-    pixmap_release(pm);
+  htsmsg_t *doc = htsmsg_xml_deserialize_buf2(buf, errbuf, errlen);
+  if(doc == NULL)
     return NULL;
-  }
 
-  res = svg_decode1(doc, im, errbuf, errlen);
-  pixmap_release(pm);
+  image_t *img = svg_decode1(doc, im, errbuf, errlen);
   htsmsg_destroy(doc);
-  return res;
+  return img;
 }

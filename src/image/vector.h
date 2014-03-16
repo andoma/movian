@@ -1,6 +1,6 @@
 /*
  *  Showtime Mediacenter
- *  Copyright (C) 2007-2013 Lonelycoder AB
+ *  Copyright (C) 2007-2014 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,16 +19,33 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 
-#ifndef FA_IMAGELOADER_H
-#define FA_IMAGELOADER_H
+#pragma once
 
-struct image_meta;
+#include "image.h"
 
-void fa_imageloader_init(void);
+/**
+ * Vector graphics
+ */
+typedef enum {
+  VC_SET_FILL_ENABLE,
+  VC_SET_FILL_COLOR,
+  VC_SET_STROKE_WIDTH,
+  VC_SET_STROKE_COLOR,
+  VC_BEGIN,
+  VC_END,
+  VC_MOVE_TO,
+  VC_LINE_TO,
+  VC_CUBIC_TO,
+  VC_CLOSE,
+} vec_cmd_t;
 
-struct image *fa_imageloader(const char *url, const struct image_meta *im,
-                             const char **vpaths, char *errbuf, size_t errlen,
-                             int *cache_control, cancellable_t *c);
+void vec_emit_0(image_component_vector_t *icv, vec_cmd_t cmd);
 
+void vec_emit_i1(image_component_vector_t *icv, vec_cmd_t cmd, int arg);
 
-#endif /* FA_IMAGELOADER_H */
+void vec_emit_f1(image_component_vector_t *icv, vec_cmd_t cmd,
+                 const float *a);
+
+void vec_emit_f3(image_component_vector_t *icv, vec_cmd_t cmd,
+                 const float *a, const float *b, const float *c);
+

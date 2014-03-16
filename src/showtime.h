@@ -304,6 +304,7 @@ typedef struct inithelper {
     INIT_GROUP_IPC,
     INIT_GROUP_STATIC_APPS,
     INIT_GROUP_ASYNCIO,
+    INIT_GROUP_GRAPHICS,
   } group;
   void (*fn)(void);
 } inithelper_t;

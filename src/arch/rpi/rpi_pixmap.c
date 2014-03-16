@@ -22,7 +22,8 @@
 #include "showtime.h"
 #include "rpi_pixmap.h"
 #include "omx.h"
-#include "misc/pixmap.h"
+#include "image/pixmap.h"
+#include "misc/buf.h"
 
 // #define NOCOPY
 
@@ -181,11 +182,11 @@ setup_tunnel(rpi_pixmap_decoder_t *rpd)
  *
  */
 static pixmap_t *
-rpi_pixmap_decode(pixmap_t *pm, const image_meta_t *im,
+rpi_pixmap_decode(image_coded_type_t type,
+		  buf_t *buf, const image_meta_t *im,
 		  char *errbuf, size_t errlen)
 {
-
-  if(pm->pm_type != PIXMAP_JPEG)
+  if(type != IMAGE_JPEG)
     return NULL;
 
 #ifdef TIMING
@@ -250,10 +251,8 @@ rpi_pixmap_decode(pixmap_t *pm, const image_meta_t *im,
 
 #else
 
-  const void *data = pm->pm_data;
-  size_t len = pm->pm_size;
-
-
+  const void *data = buf_data(buf);
+  size_t len       = buf_size(buf);
 
   hts_mutex_lock(&rpd->rpd_mtx);
 
@@ -355,11 +354,8 @@ rpi_pixmap_decode(pixmap_t *pm, const image_meta_t *im,
   hts_mutex_destroy(&rpd->rpd_mtx);
 
   pixmap_t *out = rpd->rpd_pm;
-  if(out) {
-    pixmap_release(pm);
-  } else {
+  if(out == NULL)
     snprintf(errbuf, errlen, "Load error");
-  }
 
   free(rpd);
   CHECKPOINT("All done");
@@ -373,5 +369,5 @@ rpi_pixmap_decode(pixmap_t *pm, const image_meta_t *im,
 void
 rpi_pixmap_init(void)
 {
-  accel_pixmap_decode = rpi_pixmap_decode;
+  accel_image_decode = rpi_pixmap_decode;
 }

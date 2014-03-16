@@ -45,7 +45,7 @@
 #include "keyring.h"
 #include "misc/ptrvec.h"
 #include "service.h"
-#include "image/pixmap.h"
+#include "image/image.h"
 #include "settings.h"
 #include "htsmsg/htsbuf.h"
 #include "htsmsg/htsmsg_json.h"
@@ -315,7 +315,7 @@ typedef struct spotify_msg {
 typedef struct spotify_image {
   const char *si_url;
   int si_errcode;
-  pixmap_t *si_pixmap;
+  image_t *si_image;
 } spotify_image_t;
 
 static hts_cond_t spotify_cond_image;
@@ -3513,12 +3513,12 @@ spotify_got_image(sp_image *image, void *userdata)
 {
   spotify_image_t *si = userdata;
   size_t size;
-  const void *pixels = f_sp_image_data(image, &size);
+  const void *data = f_sp_image_data(image, &size);
 
-  si->si_pixmap = pixmap_alloc_coded(pixels, size, PIXMAP_JPEG);
+  si->si_image = image_coded_create_from_data(data, size, IMAGE_JPEG);
 
   hts_mutex_lock(&spotify_mutex);
-  si->si_errcode = !si->si_pixmap;
+  si->si_errcode = !si->si_image;
   hts_cond_broadcast(&spotify_cond_image);
   hts_mutex_unlock(&spotify_mutex);
   f_sp_image_release(image);
@@ -4280,7 +4280,7 @@ be_spotify_play(const char *url, media_pipe_t *mp,
 /**
  *
  */
-static pixmap_t *
+static image_t *
 be_spotify_imageloader(const char *url, const image_meta_t *im,
 		       const char **vpaths, char *errbuf, size_t errlen,
 		       int *cache_control, cancellable_t *c)
@@ -4308,7 +4308,7 @@ be_spotify_imageloader(const char *url, const image_meta_t *im,
   hts_mutex_unlock(&spotify_mutex);
 
   if(si.si_errcode == 0)
-    return si.si_pixmap;
+    return si.si_image;
 
   snprintf(errbuf, errlen, "Unable to load image");
   return NULL;

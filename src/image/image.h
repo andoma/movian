@@ -24,11 +24,34 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+struct buf;
+
+/**
+ * Control struct for loading images
+ */
+typedef struct image_meta {
+  float im_req_aspect;
+  int im_req_width;
+  int im_req_height;
+  int im_max_width;
+  int im_max_height;
+  char im_can_mono:1;
+  char im_no_decoding:1;
+  char im_32bit_swizzle:1; // can do full 32bit swizzle in hardware
+  char im_no_rgb24:1;
+  char im_want_thumb:1;
+  uint8_t im_corner_selection;
+  uint16_t im_corner_radius;
+  uint16_t im_shadow;
+  uint16_t im_margin;
+} image_meta_t;
+
+
 /**
  *
  */
 typedef enum image_component_type {
-  IMAGE_none,
+  IMAGE_component_none,
   IMAGE_PIXMAP,
   IMAGE_CODED,
   IMAGE_VECTOR,
@@ -39,9 +62,21 @@ typedef enum image_component_type {
 /**
  *
  */
+typedef enum image_coded_type {
+  IMAGE_coded_none,
+  IMAGE_PNG,
+  IMAGE_JPEG,
+  IMAGE_GIF,
+  IMAGE_SVG,
+} image_coded_type_t;
+
+
+/**
+ *
+ */
 typedef struct image_component_coded {
-  void *data;
-  size_t size;
+  struct buf *icc_buf;
+  image_coded_type_t icc_type;
 } image_component_coded_t;
 
 
@@ -49,8 +84,14 @@ typedef struct image_component_coded {
  *
  */
 typedef struct image_component_vector {
-  int32_t *commands;
-  int count;
+  union {
+    int32_t *icv_int;
+    float *icv_flt;
+    void *icv_data;
+  };
+  int icv_used;
+  int icv_capacity;
+  int icv_colorized : 1;
 } image_component_vector_t;
 
 
@@ -94,6 +135,12 @@ typedef struct image {
   uint16_t im_margin;
   uint16_t im_num_components;
 
+  uint16_t im_flags;
+#define IMAGE_THUMBNAIL 0x1
+
+  uint8_t im_origin_coded_type;
+  uint8_t im_orientation;
+
   image_component_t im_components[0];
 
 } image_t;
@@ -111,6 +158,45 @@ void image_release(image_t *img);
 void image_clear_component(image_component_t *ic);
 
 void image_dump(const image_t *im, const char *prefix);
+
+image_t *image_create_from_pixmap(struct pixmap *pm);
+
+image_t *image_create_vector(int width, int height, int margin);
+
+image_t *image_decode(image_t *img, const image_meta_t *im,
+                      char *errbuf, size_t errlen);
+
+void image_rasterize_ft(image_component_t *ic,
+                        int with, int height, int margin);
+
+/***************************************************************************
+ * Coded images (JPEG, PNG, etc)
+ */
+
+image_t *image_coded_create_from_data(const void *data, size_t size,
+                                      image_coded_type_t type);
+
+image_t *image_coded_create_from_buf(struct buf *buf, image_coded_type_t type);
+
+image_t *image_coded_alloc(void **datap, size_t size, image_coded_type_t type);
+
+struct pixmap *image_decode_libav(image_coded_type_t type,
+                                  struct buf *buf, const image_meta_t *im,
+                                  char *errbuf, size_t errlen);
+
+extern struct pixmap *(*accel_image_decode)(image_coded_type_t type,
+					    struct buf *buf,
+					    const image_meta_t *im,
+					    char *errbuf, size_t errlen);
+
+
+/***************************************************************************
+ * SVG Parser
+ */
+image_t *svg_decode(struct buf *buf, const image_meta_t *im,
+                    char *errbuf, size_t errlen);
+
+
 
 /**
  *

@@ -601,7 +601,7 @@ be_tmdb_canhandle(const char *url)
 /**
  *
  */
-static pixmap_t *
+static image_t *
 be_tmdb_imageloader(const char *url, const image_meta_t *im,
 		    const char **vpaths, char *errbuf, size_t errlen,
 		    int *cache_control, cancellable_t *c)
@@ -642,10 +642,10 @@ be_tmdb_imageloader(const char *url, const image_meta_t *im,
 
   rstr_t *rstr = htsmsg_json_serialize_to_rstr(m, "imageset:");
   htsmsg_destroy(m);
-  pixmap_t *pm = backend_imageloader(rstr, im, vpaths, errbuf, errlen,
+  image_t *img = backend_imageloader(rstr, im, vpaths, errbuf, errlen,
 				     cache_control, c);
   rstr_release(rstr);
-  return pm;
+  return img;
   
 
 }

@@ -20,10 +20,18 @@
  */
 
 #include "image.h"
-#include "arch/atomic.h"
-#include "showtime.h"
 
+#include "showtime.h"
+#include "arch/atomic.h"
+#include "misc/buf.h"
 #include "pixmap.h"
+
+struct pixmap *(*accel_image_decode)(image_coded_type_t type,
+				     struct buf *buf,
+				     const image_meta_t *im,
+				     char *errbuf, size_t errlen);
+
+
 
 /**
  *
@@ -57,7 +65,7 @@ void
 image_clear_component(image_component_t *ic)
 {
   switch(ic->type) {
-  case IMAGE_none:
+  case IMAGE_component_none:
     break;
 
   case IMAGE_PIXMAP:
@@ -65,18 +73,18 @@ image_clear_component(image_component_t *ic)
     break;
 
   case IMAGE_CODED:
-    free(ic->coded.data);
+    buf_release(ic->coded.icc_buf);
     break;
 
   case IMAGE_VECTOR:
-    free(ic->vector.commands);
+    free(ic->vector.icv_data);
     break;
 
   case IMAGE_TEXT_INFO:
     free(ic->text_info.ti_charpos);
     break;
   }
-  ic->type = IMAGE_none;
+  ic->type = IMAGE_component_none;
 }
 
 
@@ -117,7 +125,7 @@ image_dump(const image_t *im, const char *prefix)
     const pixmap_t *pm;
     const image_component_text_info_t *ti;
     switch(ic->type) {
-    case IMAGE_none:
+    case IMAGE_component_none:
 
       trace(TRACE_NO_PROP, TRACE_DEBUG, prefix,
             "[%d]: Empty", i);
@@ -137,7 +145,7 @@ image_dump(const image_t *im, const char *prefix)
 
   case IMAGE_VECTOR:
       trace(TRACE_NO_PROP, TRACE_DEBUG, prefix,
-            "[%d]: Vector %d ops", i, ic->vector.count);
+            "[%d]: Vector %d ops", i, ic->vector.icv_used);
     break;
 
     case IMAGE_TEXT_INFO:
@@ -151,3 +159,206 @@ image_dump(const image_t *im, const char *prefix)
     }
   }
 }
+
+
+/**
+ *
+ */
+image_t *
+image_coded_alloc(void **datap, size_t size, image_coded_type_t type)
+{
+  buf_t *b = buf_create(size);
+  if(b == NULL)
+    return NULL;
+
+  image_t *img = image_alloc(1);
+
+  img->im_components[0].type = IMAGE_CODED;
+  image_component_coded_t *icc = &img->im_components[0].coded;
+
+  icc->icc_buf = b;
+  icc->icc_type = type;
+  *datap = buf_str(b);
+  return img;
+}
+
+
+/**
+ *
+ */
+image_t *
+image_coded_create_from_data(const void *data, size_t size,
+                             image_coded_type_t type)
+{
+  void *mem;
+  image_t *img = image_coded_alloc(&mem, size, type);
+  if(img != NULL)
+    memcpy(mem, data, size);
+  return img;
+}
+
+
+/**
+ *
+ */
+image_t *
+image_coded_create_from_buf(struct buf *buf, image_coded_type_t type)
+{
+  image_t *img = image_alloc(1);
+
+  img->im_components[0].type = IMAGE_CODED;
+  image_component_coded_t *icc = &img->im_components[0].coded;
+
+  icc->icc_buf = buf_retain(buf);
+  icc->icc_type = type;
+  return img;
+}
+
+
+/**
+ *
+ */
+image_t *
+image_create_from_pixmap(pixmap_t *pm)
+{
+  image_t *img = image_alloc(1);
+
+  img->im_components[0].type = IMAGE_PIXMAP;
+  img->im_components[0].pm = pixmap_dup(pm);
+
+  img->im_width  = pm->pm_width;
+  img->im_height = pm->pm_height;
+  img->im_margin = pm->pm_margin;
+  return img;
+}
+
+
+/**
+ *
+ */
+static image_t *
+image_decode_coded(image_t *im, const image_meta_t *meta,
+                   char *errbuf, size_t errlen)
+{
+  image_component_t *ic = &im->im_components[0];
+  image_component_coded_t *icc = &ic->coded;
+  image_t *r;
+
+  if(icc->icc_type == IMAGE_SVG) {
+    r = svg_decode(icc->icc_buf, meta, errbuf, errlen);
+    /*
+     * svg_decode() is a bit weird in the sense that it will take ownership
+     * of buf, so we need to forget about it
+     */
+    icc->icc_buf = NULL;
+    image_release(im);
+    return r;
+  }
+
+  im->im_origin_coded_type = icc->icc_type;
+
+  pixmap_t *pm = NULL;
+
+  if(accel_image_decode != NULL)
+    pm = accel_image_decode(icc->icc_type, icc->icc_buf, meta, errbuf, errlen);
+
+  if(pm == NULL)
+    pm = image_decode_libav(icc->icc_type, icc->icc_buf, meta, errbuf, errlen);
+
+  if(pm == NULL) {
+    image_release(im);
+    return NULL;
+  }
+
+  image_clear_component(ic);
+  ic->type = IMAGE_PIXMAP;
+  ic->pm = pm;
+
+  /*
+   * Invert aspect ratio for orientations that rotate image 90/270 deg, etc
+   * Might seem strange, but it does the right thing
+   */
+
+  if(im->im_orientation >= LAYOUT_ORIENTATION_TRANSPOSE)
+    pm->pm_aspect = 1.0f / pm->pm_aspect;
+
+  return im;
+}
+
+
+/**
+ *
+ */
+static image_t *
+image_postprocess_pixmap(image_t *img, const image_meta_t *im)
+{
+  image_component_t *ic = &img->im_components[0];
+
+  if(im->im_shadow)
+    pixmap_drop_shadow(ic->pm, im->im_shadow, im->im_shadow);
+
+  if(im->im_corner_radius)
+    ic->pm = pixmap_rounded_corners(ic->pm, im->im_corner_radius,
+				    im->im_corner_selection);
+
+  return img;
+}
+
+
+/**
+ *
+ */
+image_t *
+image_decode(image_t *im, const image_meta_t *meta,
+             char *errbuf, size_t errlen)
+{
+  image_t *r;
+  image_component_t *ic = &im->im_components[0];
+
+  assert(im->im_num_components == 1); // We can only deal with one for now
+
+  switch(ic->type) {
+  case IMAGE_component_none:
+    return im;
+
+  case IMAGE_PIXMAP:
+    return image_postprocess_pixmap(im, meta);
+
+  case IMAGE_CODED:
+    r = image_decode_coded(im, meta, errbuf, errlen);
+    if(r == NULL) {
+      image_release(im);
+      return NULL;
+    }
+    return image_decode(r, meta, errbuf, errlen);
+
+  case IMAGE_VECTOR:
+    image_rasterize_ft(ic, im->im_width, im->im_height, im->im_margin);
+    return image_decode(im, meta, errbuf, errlen);
+
+  case IMAGE_TEXT_INFO:
+    abort();
+  }
+  abort();
+}
+
+
+/**
+ *
+ */
+image_t *
+image_create_vector(int width, int height, int margin)
+{
+  image_t *img = image_alloc(1);
+
+  img->im_components[0].type = IMAGE_VECTOR;
+  image_component_vector_t *icv = &img->im_components[0].vector;
+  img->im_width  = width;
+  img->im_height = height;
+  img->im_margin = margin;
+
+  icv->icv_capacity = 256;
+  icv->icv_data = malloc(icv->icv_capacity * sizeof(uint32_t));
+  return img;
+}
+
