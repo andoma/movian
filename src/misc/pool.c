@@ -258,7 +258,7 @@ pool_put(pool_t *p, void *ptr)
 
 #if defined(MADV_FREE)
   madvise(ptr, p->p_item_size_req, MADV_FREE);
-#elif defined(MADV_DONT_NEED)
+#elif defined(MADV_DONTNEED)
   madvise(ptr, p->p_item_size_req, MADV_DONTNEED);
 #endif
   mprotect(ptr, p->p_item_size_req, PROT_NONE);
