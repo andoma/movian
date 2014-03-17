@@ -23,6 +23,10 @@
     fireEvent(event(ReloadData));
   });
 
+  ITEM(select($ui.sysinfo, _("Hide system info"), _("Show system info")), {
+    $ui.sysinfo = !$ui.sysinfo;
+  });
+
   SEP(_("System"));
 
   ITEM(_("Exit Showtime"), event(Quit),
