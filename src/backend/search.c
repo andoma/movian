@@ -46,14 +46,12 @@ search_class_create(prop_t *parent, prop_t **nodesp, prop_t **entriesp,
   prop_t *m = prop_create(p, "metadata");
   prop_t *n, *e;
   
-  rstr_t *url = backend_prop_make(p, NULL);
-  prop_set_rstring(prop_create(p, "url"), url);
-  rstr_release(url);
+  prop_set(p, "url", PROP_ADOPT_RSTRING, backend_prop_make(p, NULL));
 
-  prop_set_string(prop_create(m, "title"), title);
+  prop_set(m, "title", PROP_SET_STRING, title);
   if(icon != NULL)
-    prop_set_string(prop_create(m, "icon"), icon);
-  prop_set_string(prop_create(p, "type"), "directory");
+    prop_set(m, "icon", PROP_SET_STRING, icon);
+  prop_set(p, "type", PROP_SET_STRING, "directory");
       
   n = prop_create(p, "nodes");
   e = prop_create(p, "entries");
@@ -111,22 +109,22 @@ search_open(prop_t *page, const char *url0, int sync)
   if(!backend_open(page, url, sync))
     return 0;
   
-  model = prop_create(page, "model");
-  prop_set_string(prop_create(model, "type"), "directory");
+  model = prop_create_r(page, "model");
+  prop_set(model, "type", PROP_SET_STRING, "directory");
   
-  meta = prop_create(model, "metadata");
+  meta = prop_create_r(model, "metadata");
   rstr_t *fmt = _("Search result for: %s");
   snprintf(title, sizeof(title), rstr_get(fmt), url);
   rstr_release(fmt);
-  prop_set_string(prop_create(meta, "title"), title);
+  prop_set(meta, "title", PROP_SET_STRING, title);
 
 
-  source = prop_create(page, "source");
-
+  source = prop_create_r(page, "source");
+  prop_t *model_nodes  = prop_create_r(model, "nodes");
+  prop_t *source_nodes = prop_create_r(source, "nodes");
   struct prop_nf *pnf;
 
-  pnf = prop_nf_create(prop_create(model, "nodes"),
-		       prop_create(source, "nodes"),
+  pnf = prop_nf_create(model_nodes, source_nodes,
 		       NULL, PROP_NF_AUTODESTROY);
 
   prop_nf_sort(pnf, "node.metadata.title", 0, 2, NULL, 1);
@@ -138,6 +136,12 @@ search_open(prop_t *page, const char *url0, int sync)
   prop_nf_release(pnf);
 
   backend_search(source, url);
+
+  prop_ref_dec(model);
+  prop_ref_dec(meta);
+  prop_ref_dec(source);
+  prop_ref_dec(model_nodes);
+  prop_ref_dec(source_nodes);
   return 0;
 }
 

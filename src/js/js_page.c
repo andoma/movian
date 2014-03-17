@@ -1567,7 +1567,7 @@ void
 js_backend_search(struct prop *model, const char *query)
 {
   js_searcher_t *jss;
-  prop_t *parent = prop_create(model, "nodes");
+  prop_t *parent = prop_create_r(model, "nodes");
   js_model_t *jm;
 
   JSContext *cx = js_newctx(NULL);
@@ -1590,6 +1590,7 @@ js_backend_search(struct prop *model, const char *query)
   hts_mutex_unlock(&js_page_mutex);
   JS_EndRequest(cx);
   JS_DestroyContext(cx);
+  prop_ref_dec(parent);
 }
 
 
