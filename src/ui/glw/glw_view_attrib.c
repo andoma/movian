@@ -326,7 +326,7 @@ set_number_int(glw_t *w, const token_attrib_t *a, const token_t *t, int v)
     r = gc->gc_set_float ? gc->gc_set_float(w, a->attrib, v) : -1;
 
   if(r == -1) {
-    TRACE(TRACE_ERROR, "GLW",
+    TRACE(TRACE_DEBUG, "GLW",
           "Widget %s at %s:%d does not respond to attribute %s",
           gc->gc_name, rstr_get(t->file), t->line, a->name);
     return;
@@ -352,7 +352,7 @@ set_number_float(glw_t *w, const token_attrib_t *a, const token_t *t, float v)
     r = gc->gc_set_int ? gc->gc_set_int(w, a->attrib, v) : -1;
 
   if(r == -1) {
-    TRACE(TRACE_ERROR, "GLW",
+    TRACE(TRACE_DEBUG, "GLW",
           "Widget %s at %s:%d does not respond to attribute %s",
           gc->gc_name, rstr_get(t->file), t->line, a->name);
     return;
@@ -534,7 +534,7 @@ set_float3(glw_view_eval_context_t *ec, const token_attrib_t *a,
   int r = gc->gc_set_float3 ? gc->gc_set_float3(w, a->attrib, vec3) : -1;
 
   if(r == -1) {
-    TRACE(TRACE_ERROR, "GLW",
+    TRACE(TRACE_DEBUG, "GLW",
           "Widget %s at %s:%d does not respond to attribute %s",
           gc->gc_name, rstr_get(t->file), t->line, a->name);
     return 0;
@@ -600,7 +600,7 @@ set_float4(glw_view_eval_context_t *ec, const token_attrib_t *a,
   int r = gc->gc_set_float4 ? gc->gc_set_float4(w, a->attrib, vec4) : -1;
 
   if(r == -1) {
-    TRACE(TRACE_ERROR, "GLW",
+    TRACE(TRACE_DEBUG, "GLW",
           "Widget %s at %s:%d does not respond to attribute %s",
           gc->gc_name, rstr_get(t->file), t->line, a->name);
     return 0;
