@@ -692,8 +692,8 @@ playqueue_enqueue(prop_t *track)
 	       prop_create(pqe->pqe_node, "metadata"),
 	       NULL, PROP_LINK_XREFED, 0);
 
-  prop_set_rstring(prop_create(pqe->pqe_node, "url"), url);
-  prop_set_string(prop_create(pqe->pqe_node, "type"), "audio");
+  prop_set(pqe->pqe_node, "url", PROP_SET_RSTRING, url);
+  prop_set(pqe->pqe_node, "type", PROP_SET_STRING, "audio");
 
   doplay = pqe_current == NULL;
 
@@ -757,8 +757,8 @@ playqueue_play(const char *url, prop_t *metadata, int paused)
   if(prop_set_parent(metadata, pqe->pqe_node))
     abort();
 
-  prop_set_string(prop_create(pqe->pqe_node, "url"), url);
-  prop_set_string(prop_create(pqe->pqe_node, "type"), "audio");
+  prop_set(pqe->pqe_node, "url", PROP_SET_STRING, url);
+  prop_set(pqe->pqe_node, "type", PROP_SET_STRING, "audio");
 
   /* Clear out the current playqueue */
   playqueue_clear();
@@ -885,20 +885,28 @@ playqueue_fini(void)
 }
 
 
+/**
+ *
+ */
 int
 playqueue_open(prop_t *page)
 {
-  prop_t *src, *metadata;
+  prop_t *model;
 
-  src = prop_create(page, "model");
-  prop_set_string(prop_create(src, "type"), "playqueue");
+  model = prop_create_r(page, "model");
 
-  metadata = prop_create(src, "metadata");
-  prop_set_string(prop_create(metadata, "title"), "Playqueue");
+  prop_set(model, "type", PROP_SET_STRING, "playqueue");
+  prop_setv(model, "metadata", "title", NULL, PROP_SET_STRING, "playqueue");
 
-  prop_link(playqueue_nodes, prop_create(src, "nodes"));
+  prop_t *nodes = prop_create_r(model, "nodes");
+
+  prop_link(playqueue_nodes, nodes);
+
+  prop_ref_dec(nodes);
+  prop_ref_dec(model);
   return 0;
 }
+
 
 /**
  *
@@ -997,12 +1005,11 @@ update_pq_meta(void)
   prop_set_int(mp->mp_prop_canSkipForward,  can_skip_next);
   prop_set_int(mp->mp_prop_canSkipBackward, can_skip_prev);
 
-  prop_set_int(prop_create(mp->mp_prop_root, "totalTracks"), playqueue_length);
-  prop_t *p = prop_create(mp->mp_prop_root, "currentTrack");
+  prop_set(mp->mp_prop_root, "totalTracks", PROP_SET_INT, playqueue_length);
   if(pqe != NULL)
-    prop_set_int(p, pqe->pqe_index);
+    prop_set(mp->mp_prop_root, "currentTrack", PROP_SET_INT, pqe->pqe_index);
   else
-    prop_set_void(p);
+    prop_set(mp->mp_prop_root, "currentTrack", PROP_SET_VOID);
 }
 
 
