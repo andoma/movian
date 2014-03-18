@@ -67,13 +67,12 @@ title_from_url(const char *url)
  *
  */
 static void
-file_open_browse(prop_t *page, const char *url, time_t mtime)
+file_open_browse(prop_t *page, const char *url, time_t mtime,
+		 prop_t *model)
 {
-  prop_t *model;
   char parent[URL_MAX];
 
-  model = prop_create(page, "model");
-  prop_set_string(prop_create(model, "type"), "directory");
+  prop_set(model, "type", PROP_SET_STRING, "directory");
   
   /* Find a meaningful page title (last component of URL) */
 
@@ -83,18 +82,21 @@ file_open_browse(prop_t *page, const char *url, time_t mtime)
   
   // Set parent
   if(!fa_parent(parent, sizeof(parent), url))
-    prop_set_string(prop_create(page, "parent"), parent);
+    prop_set(page, "parent", PROP_SET_STRING, parent);
   
-  fa_scanner_page(url, mtime, model, NULL, prop_create(page, "directClose"),
-                  title);
+  prop_t *dc = prop_create_r(page, "directClose");
+
+  fa_scanner_page(url, mtime, model, NULL, dc,title);
   rstr_release(title);
+  prop_ref_dec(dc);
 }
 
 /**
  *
  */
 static void
-file_open_dir(prop_t *page, const char *url, time_t mtime)
+file_open_dir(prop_t *page, const char *url, time_t mtime,
+	      prop_t *model)
 {
   fa_handle_t *ref = fa_reference(url);
   metadata_t *md = fa_probe_dir(url);
@@ -106,7 +108,7 @@ file_open_dir(prop_t *page, const char *url, time_t mtime)
     
   case CONTENT_DIR:
   case CONTENT_ARCHIVE:
-    file_open_browse(page, url, mtime);
+    file_open_browse(page, url, mtime, model);
     break;
 
   default:
@@ -123,14 +125,12 @@ file_open_dir(prop_t *page, const char *url, time_t mtime)
  *
  */
 static int
-file_open_image(prop_t *page, prop_t *meta)
+file_open_image(prop_t *model, prop_t *meta)
 {
-  prop_t *model = prop_create(page, "model");
-
-  prop_set_string(prop_create(model, "type"), "image");
+  prop_set(model, "type", PROP_SET_STRING, "image");
 
   if(prop_set_parent(meta, model))
-    abort();
+    prop_destroy(meta);
   return 0;
 }
 
@@ -139,12 +139,11 @@ file_open_image(prop_t *page, prop_t *meta)
  * Try to open the given URL with a playqueue context
  */
 static int
-file_open_audio(prop_t *page, const char *url)
+file_open_audio(prop_t *page, const char *url, prop_t *model)
 {
   char parent[URL_MAX];
   char parent2[URL_MAX];
   struct fa_stat fs;
-  prop_t *model;
 
   if(fa_parent(parent, sizeof(parent), url))
     return 1;
@@ -152,8 +151,7 @@ file_open_audio(prop_t *page, const char *url)
   if(fa_stat(parent, &fs, NULL, 0))
     return 1;
   
-  model = prop_create(page, "model");
-  prop_set_string(prop_create(model, "type"), "directory");
+  prop_set(model, "type", PROP_SET_STRING, "directory");
 
   /* Find a meaningful page title (last component of URL) */
   rstr_t *title = title_from_url(parent);
@@ -161,11 +159,13 @@ file_open_audio(prop_t *page, const char *url)
 
   // Set parent
   if(!fa_parent(parent2, sizeof(parent2), parent))
-    prop_set_string(prop_create(page, "parent"), parent2);
+    prop_set(page, "parent", PROP_SET_STRING, parent2);
 
-  fa_scanner_page(parent, fs.fs_mtime, model, url,
-                  prop_create(page, "directClose"), title);
+  prop_t *dc = prop_create_r(page, "directClose");
+
+  fa_scanner_page(parent, fs.fs_mtime, model, url, dc, title);
   rstr_release(title);
+  prop_ref_dec(dc);
   return 0;
 }
 
@@ -174,7 +174,8 @@ file_open_audio(prop_t *page, const char *url)
  *
  */
 static void
-file_open_file(prop_t *page, const char *url, fa_stat_t *fs)
+file_open_file(prop_t *page, const char *url, fa_stat_t *fs,
+	       prop_t *model, prop_t *loading)
 {
   char errbuf[200];
   metadata_t *md;
@@ -201,11 +202,11 @@ file_open_file(prop_t *page, const char *url, fa_stat_t *fs)
   switch(md->md_contenttype) {
   case CONTENT_ARCHIVE:
   case CONTENT_ALBUM:
-    file_open_browse(page, url, fs->fs_mtime);
+    file_open_browse(page, url, fs->fs_mtime, model);
     break;
 
   case CONTENT_AUDIO:
-    if(!file_open_audio(page, url)) {
+    if(!file_open_audio(page, url, model)) {
       break;
     }
     playqueue_play(url, meta, 0);
@@ -219,11 +220,13 @@ file_open_file(prop_t *page, const char *url, fa_stat_t *fs)
     break;
 
   case CONTENT_IMAGE:
-    file_open_image(page, meta);
+    file_open_image(model, meta);
+    prop_set_int(loading, 0);
     meta = NULL;
     break;
 
   case CONTENT_PLUGIN:
+    prop_set_int(loading, 0);
     plugin_open_file(page, url);
     break;
 
@@ -246,13 +249,20 @@ be_file_open(prop_t *page, const char *url, int sync)
   struct fa_stat fs;
   char errbuf[200];
 
+  prop_t *model = prop_create_r(page, "model");
+  prop_t *loading = prop_create_r(model, "loading");
+  prop_set_int(loading, 1);
+
   if(fa_stat(url, &fs, errbuf, sizeof(errbuf))) {
     nav_open_error(page, errbuf);
   } else if(fs.fs_type == CONTENT_DIR) {
-    file_open_dir(page, url, fs.fs_mtime);
+    file_open_dir(page, url, fs.fs_mtime, model);
   } else {
-    file_open_file(page, url, &fs);
+    file_open_file(page, url, &fs, model, loading);
   }
+
+  prop_ref_dec(model);
+  prop_ref_dec(loading);
   return 0;
 }
 
