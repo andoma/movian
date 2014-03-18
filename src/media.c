@@ -126,6 +126,14 @@ media_init(void)
 #if ENABLE_LIBAV
 
 
+/**
+ *
+ */
+void
+media_buf_dtor_frame_info(media_buf_t *mb)
+{
+  free(mb->mb_frame_info);
+}
 
 /**
  *

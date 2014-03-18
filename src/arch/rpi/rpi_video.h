@@ -35,5 +35,8 @@ typedef struct rpi_video_codec {
 
   h264_parser_t rvc_h264_parser;
 
+  unsigned int rvc_sar_num;
+  unsigned int rvc_sar_den;
+
 } rpi_video_codec_t;
 

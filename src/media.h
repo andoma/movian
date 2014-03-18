@@ -158,7 +158,7 @@ typedef struct media_codec {
 
   void (*close)(struct media_codec *mc);
   void (*reinit)(struct media_codec *mc);
-  void (*reconfigure)(struct media_codec *mc, int width, int height);
+  void (*reconfigure)(struct media_codec *mc, const frame_info_t *fi);
 
   unsigned int sar_num;
   unsigned int sar_den;
@@ -232,6 +232,7 @@ typedef struct media_buf {
 #define mb_duration   mb_pkt.duration
 #define mb_data       mb_pkt.data
 #define mb_size       mb_pkt.size
+#define mb_stream     mb_pkt.stream_index
 
   int64_t mb_delta;
 
@@ -290,14 +291,9 @@ typedef struct media_buf {
     float mb_float;
     prop_t *mb_prop;
     uint16_t mb_font_context;
-    struct {
-      // Used with MB_CTRL_RECONFIGURE
-      uint16_t mb_width;
-      uint16_t mb_height;
-    };
+    frame_info_t *mb_frame_info;
   };
 
-  uint8_t mb_stream;
   uint8_t mb_channels;
 
   int mb_codecid;
@@ -624,6 +620,8 @@ void mb_enq(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb);
 media_buf_t *media_buf_alloc_locked(media_pipe_t *mp, size_t payloadsize);
 media_buf_t *media_buf_alloc_unlocked(media_pipe_t *mp, size_t payloadsize);
 media_buf_t *media_buf_from_avpkt_unlocked(media_pipe_t *mp, struct AVPacket *pkt);
+
+void media_buf_dtor_frame_info(media_buf_t *mb);
 
 media_pipe_t *mp_create(const char *name, int flags);
 

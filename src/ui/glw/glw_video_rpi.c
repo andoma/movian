@@ -56,6 +56,8 @@ typedef struct rpi_video_display {
 
   media_codec_t *rvd_mc; // Current media codec
 
+  glw_rect_t rvd_pos;
+
 } rpi_video_display_t;
 
 
@@ -192,7 +194,33 @@ rvd_reset(glw_video_t *gv)
 static void
 rvd_render(glw_video_t *gv, glw_rctx_t *rc)
 {
+  rpi_video_display_t *rvd = gv->gv_aux;
+  if(!memcmp(&rvd->rvd_pos, &gv->gv_rect, sizeof(glw_rect_t)))
+    return;
+
+  rvd->rvd_pos = gv->gv_rect;
+
+  OMX_CONFIG_DISPLAYREGIONTYPE conf;
+  OMX_INIT_STRUCTURE(conf);
+  conf.nPortIndex = 90;
+
+  conf.fullscreen = OMX_FALSE;
+  conf.noaspect   = OMX_TRUE;
+
+  conf.set =
+    OMX_DISPLAY_SET_DEST_RECT |
+    OMX_DISPLAY_SET_FULLSCREEN |
+    OMX_DISPLAY_SET_NOASPECT;
+
+  conf.dest_rect.x_offset = rvd->rvd_pos.x1;
+  conf.dest_rect.y_offset = rvd->rvd_pos.y1;
+  conf.dest_rect.width    = rvd->rvd_pos.x2 - rvd->rvd_pos.x1;
+  conf.dest_rect.height   = rvd->rvd_pos.y2 - rvd->rvd_pos.y1;
+
+  omxchk(OMX_SetConfig(rvd->rvd_vrender->oc_handle,
+		       OMX_IndexConfigDisplayRegion, &conf));
 }
+
 
 
 /**

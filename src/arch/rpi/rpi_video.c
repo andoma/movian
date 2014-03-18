@@ -51,6 +51,22 @@ rpi_video_port_settings_changed(omx_component_t *oc)
   media_codec_t *mc = oc->oc_opaque;
   const rpi_video_codec_t *rvc = mc->opaque;
   media_pipe_t *mp = mc->mp;
+  frame_info_t *fi = calloc(1, sizeof(frame_info_t));
+
+  OMX_CONFIG_POINTTYPE pixel_aspect;
+
+  if(rvc->rvc_sar_num && rvc->rvc_sar_den) {
+
+    pixel_aspect.nX = rvc->rvc_sar_num;
+    pixel_aspect.nY = rvc->rvc_sar_den;
+
+  } else {
+
+    OMX_INIT_STRUCTURE(pixel_aspect);
+    pixel_aspect.nPortIndex = 131;
+    OMX_GetParameter(oc->oc_handle, OMX_IndexParamBrcmPixelAspectRatio,
+		     &pixel_aspect);
+  }
 
   OMX_PARAM_PORTDEFINITIONTYPE port_image;
   OMX_INIT_STRUCTURE(port_image);
@@ -65,14 +81,22 @@ rpi_video_port_settings_changed(omx_component_t *oc)
 	     port_image.format.video.nFrameHeight);
     prop_set_string(mp->mp_video.mq_prop_codec, codec_info);
     TRACE(TRACE_DEBUG, "VideoCore",
-	  "Video decoder output port settings changed to %s", codec_info);
+	  "Video decoder output port settings changed to %s (%d%:d)",
+	  codec_info, pixel_aspect.nX, pixel_aspect.nY);
+
+    fi->fi_width   = port_image.format.video.nFrameWidth;
+    fi->fi_height  = port_image.format.video.nFrameHeight;
   }
+  fi->fi_dar_num = pixel_aspect.nX * fi->fi_width;
+  fi->fi_dar_den = pixel_aspect.nY * fi->fi_height;
+
 
   hts_mutex_lock(&mp->mp_mutex);
   media_buf_t *mb = media_buf_alloc_locked(mp, 0);
   mb->mb_data_type = MB_CTRL_RECONFIGURE;
-  mb->mb_width  = port_image.format.video.nFrameWidth;
-  mb->mb_height = port_image.format.video.nFrameHeight;
+  mb->mb_frame_info = fi;
+  mb->mb_dtor = media_buf_dtor_frame_info;
+
   mb->mb_cw = media_codec_ref(mc);
   mb_enq(mp, &mp->mp_video, mb);
   hts_mutex_unlock(&mp->mp_mutex);
@@ -206,14 +230,10 @@ rpi_codec_close(struct media_codec *mc)
  *
  */
 static void
-rpi_codec_reconfigure(struct media_codec *mc, int width, int height)
+rpi_codec_reconfigure(struct media_codec *mc, const frame_info_t *fi)
 {
   media_pipe_t *mp = mc->mp;
-  frame_info_t fi;
-  memset(&fi, 0, sizeof(fi));
-  fi.fi_width  = width;
-  fi.fi_height = height;
-  mp->mp_set_video_codec('omx', mc, mp->mp_video_frame_opaque, &fi);
+  mp->mp_set_video_codec('omx', mc, mp->mp_video_frame_opaque, fi);
 }
 
 
@@ -318,6 +338,11 @@ rpi_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
     return 1;
   }
 
+  if(mcp != NULL) {
+    rvc->rvc_sar_num = mcp->sar_num;
+    rvc->rvc_sar_den = mcp->sar_den;
+  }
+
   rvc->rvc_decoder = d;
   d->oc_port_settings_changed_cb = rpi_video_port_settings_changed;
   d->oc_opaque = mc;
@@ -356,6 +381,12 @@ rpi_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   }
 
 
+  OMX_CONFIG_REQUESTCALLBACKTYPE notification;
+  OMX_INIT_STRUCTURE(notification);
+  notification.nPortIndex = 131;
+  notification.nIndex = OMX_IndexParamBrcmPixelAspectRatio;
+  notification.bEnable = OMX_TRUE;
+  OMX_SetParameter(d->oc_handle, OMX_IndexParamPortDefinition, &notification);
 
   OMX_PARAM_BRCMVIDEODECODEERRORCONCEALMENTTYPE ec;
   OMX_INIT_STRUCTURE(ec);
