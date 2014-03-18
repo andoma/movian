@@ -161,8 +161,8 @@ glw_text_bitmap_layout(glw_t *w, const glw_rctx_t *rc)
 
   // Check if we need to repaint
 
-  if((gtb->gtb_saved_width  != rc->rc_width ||
-      gtb->gtb_saved_height != rc->rc_height)) {
+  if(gtb->gtb_saved_width  != rc->rc_width ||
+     gtb->gtb_saved_height != rc->rc_height) {
 
     if(ti != NULL && gtb->gtb_state == GTB_VALID) {
 
@@ -392,7 +392,7 @@ glw_text_bitmap_render(glw_t *w, const glw_rctx_t *rc)
   if(w->glw_flags2 & GLW2_DEBUG)
     glw_wirebox(w->glw_root, rc);
 
-  if(glw_is_tex_inited(&gtb->gtb_texture)) {
+  if(glw_is_tex_inited(&gtb->gtb_texture) && gtb->gtb_image != NULL) {
     glw_renderer_draw(&gtb->gtb_text_renderer, w->glw_root, rc,
 		      &gtb->gtb_texture,
 		      &gtb->gtb_color, NULL, alpha, blur, NULL);
