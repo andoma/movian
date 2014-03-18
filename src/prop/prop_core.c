@@ -1497,7 +1497,7 @@ prop_check_canonical_subs_descending(prop_t *p)
 /**
  *
  */
-static int
+static int  __attribute__ ((warn_unused_result))
 prop_clean(prop_t *p)
 {
   if(p->hp_flags & PROP_CLIPPED_VALUE) {
@@ -1506,9 +1506,11 @@ prop_clean(prop_t *p)
   switch(p->hp_type) {
   case PROP_DIR:
     if(prop_check_canonical_subs_descending(p)) {
+#ifdef PROP_DEBUG
       trace(TRACE_NO_PROP, TRACE_ERROR, "prop",
             "Refusing to clean prop %s because a decendant have "
             "canonical subs", prop_get_DN(p, 1));
+#endif
       return 1;
     }
     prop_destroy_childs0(p);
