@@ -47,7 +47,6 @@ widget(container_z, {
 	alpha: iir(1 - $ui.screensaverActive, 8);
 
 	widget(playfield, {
-	  time: 0.1;
 	  effect: blend;
 	  noInitialTransform: true;
     
