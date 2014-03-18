@@ -166,15 +166,33 @@ const static action_type_t *stop_meta_actions[256] = {
 };
 
 
+const static action_type_t *play_meta_actions[256] = {
+  [CEC_User_Control_Select]      = AVEC(ACTION_PLAYQUEUE),
+
+  [CEC_User_Control_Pause]       = AVEC(ACTION_VOLUME_MUTE_TOGGLE),
+  [CEC_User_Control_Up]          = AVEC(ACTION_VOLUME_UP),
+  [CEC_User_Control_Down]        = AVEC(ACTION_VOLUME_DOWN),
+
+  [CEC_User_Control_Stop]        = AVEC(ACTION_SWITCH_VIEW),
+
+  [CEC_User_Control_Play]        = AVEC(ACTION_SYSINFO),
+
+  [CEC_User_Control_Left]        = AVEC(ACTION_NAV_BACK),
+  [CEC_User_Control_Right]       = AVEC(ACTION_NAV_FWD),
+};
+
+
 #define CEC_DEBUG(fmt...) do {			\
   if(gconf.enable_cec_debug)			\
     TRACE(TRACE_DEBUG, "CEC", fmt);		\
   } while(0)
 
 
-static int stop_is_meta_key = 0;
+static int stop_is_meta_key;
+static int play_is_meta_key;
 
 static int64_t stop_key_timeout;
+static int64_t play_key_timeout;
 
 /**
  *
@@ -182,17 +200,31 @@ static int64_t stop_key_timeout;
 static void
 cec_emit_key_down(int code)
 {
-  if(code == CEC_User_Control_Stop && stop_is_meta_key &&
-     stop_key_timeout < showtime_get_ts()) {
-    CEC_DEBUG("Stop key intercepted as modifier");
-    stop_key_timeout = showtime_get_ts() + 1000000;
-    return;
+  int64_t now = showtime_get_ts();
+
+  if(stop_key_timeout < now && play_key_timeout < now) {
+    if(code == CEC_User_Control_Stop && stop_is_meta_key) {
+      CEC_DEBUG("Stop key intercepted as modifier");
+      stop_key_timeout = showtime_get_ts() + 1000000;
+      return;
+    }
+
+    if(code == CEC_User_Control_Play && play_is_meta_key) {
+      CEC_DEBUG("Play key intercepted as modifier");
+      play_key_timeout = showtime_get_ts() + 1000000;
+      return;
+    }
   }
 
   const action_type_t *avec;
-  if(stop_key_timeout > showtime_get_ts()) {
+  if(stop_key_timeout > now) {
     avec = stop_meta_actions[code];
-    CEC_DEBUG("Selecting from alt key mapping: code:%d -> avec=%p", code, avec);
+    CEC_DEBUG("Selecting from stop key mapping: code:%d -> avec=%p",
+	      code, avec);
+  } else if(play_key_timeout > now) {
+    avec = play_meta_actions[code];
+    CEC_DEBUG("Selecting from play key mapping: code:%d -> avec=%p",
+	      code, avec);
   } else {
     avec = btn_to_action[code];
   }
@@ -537,7 +569,8 @@ cec_callback(void *callback_data, uint32_t param0, uint32_t param1,
   default:
     break;
   case VC_CEC_BUTTON_PRESSED:
-    CEC_DEBUG("Key down: %x (%d)", msg.payload[1], stop_is_meta_key);
+    CEC_DEBUG("Key down: %x (%d,%d)", msg.payload[1],
+	      stop_is_meta_key, play_is_meta_key);
     cec_emit_key_down(msg.payload[1]);
     break;
 
@@ -672,6 +705,13 @@ cec_thread(void *aux)
 		 SETTING_TITLE_CSTR("Use Stop button to send other remote codes"),
 		 SETTING_WRITE_BOOL(&stop_is_meta_key),
 		 SETTING_HTSMSG("stop_is_meta_key", s, "cec"),
+		 NULL);
+
+  setting_create(SETTING_BOOL, set,
+		 SETTINGS_INITIAL_UPDATE,
+		 SETTING_TITLE_CSTR("Use Play button to send other remote codes"),
+		 SETTING_WRITE_BOOL(&play_is_meta_key),
+		 SETTING_HTSMSG("play_is_meta_key", s, "cec"),
 		 NULL);
 
   setting_create(SETTING_STRING, set,
