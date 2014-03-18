@@ -49,6 +49,7 @@ typedef struct video_overlay {
   char vo_stop_estimated;
   char vo_alignment;  // LAYOUT_ALIGN_ from layout.h
   char vo_layer;
+  char vo_abspos;     // Absolute positioned using vo_x and vo_y
 
   int16_t vo_x;
   int16_t vo_y;

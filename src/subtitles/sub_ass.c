@@ -262,9 +262,11 @@ ass_parse_v4style(ass_decoder_ctx_t *adc, const char *str)
 
     if(!strcasecmp(key, "name"))
       mystrset(&as->as_name, val);
-    else if(!strcasecmp(key, "alignment"))
+    else if(!strcasecmp(key, "alignment")) {
       as->as_alignment = atoi(val);
-    else if(!strcasecmp(key, "marginl"))
+      if(as->as_alignment < 1 || as->as_alignment > 9)
+	as->as_alignment = 1;
+    } else if(!strcasecmp(key, "marginl"))
       as->as_margin_left = atoi(val);
     else if(!strcasecmp(key, "marginr"))
       as->as_margin_right = atoi(val);
@@ -429,8 +431,12 @@ typedef struct ass_dialogue {
 
   int ad_fadein;
   int ad_fadeout;
+  
+  int16_t ad_x;
+  int16_t ad_y;
 
-  int ad_alignment;
+  int8_t ad_alignment;
+  int8_t ad_absolute_pos;
 
 } ass_dialoge_t;
 
@@ -466,6 +472,13 @@ ass_handle_override(ass_dialoge_t *ad, const char *src, int len)
     } else if(sscanf(str, "fad(%d,%d)", &v1, &v2) == 2) {
       ad->ad_fadein = v1 * 1000;
       ad->ad_fadeout = v2 * 1000;
+    } else if(sscanf(str, "pos(%d,%d)", &v1, &v2) == 2) {
+      ad->ad_x = v1;
+      ad->ad_y = v2;
+      ad->ad_absolute_pos = 1;
+    } else if(sscanf(str, "fs(%d)", &v1) == 1) {
+      ad_txt_append(ad, TR_CODE_SIZE_PX + (v1 & 0xff));
+
     } else if(str[0] == 'c') {
       str++;
       int code = TR_CODE_COLOR;
@@ -629,6 +642,11 @@ ad_dialogue_decode(const ass_decoder_ctx_t *adc, const char *line,
   vo->vo_stop = end;
   vo->vo_fadein = ad.ad_fadein;
   vo->vo_fadeout = ad.ad_fadeout;
+
+  vo->vo_x = ad.ad_x;
+  vo->vo_y = ad.ad_y;
+  vo->vo_abspos = ad.ad_absolute_pos;
+
   vo->vo_alignment = ad.ad_alignment ?: as->as_alignment;
 
   vo->vo_padding_left  =  as->as_margin_left;

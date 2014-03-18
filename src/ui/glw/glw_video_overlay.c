@@ -75,6 +75,10 @@ typedef struct glw_video_overlay {
 			       video frame */
   int gvo_layer;
 
+  int gvo_x;
+  int gvo_y;
+  int gvo_abspos;
+
 } glw_video_overlay_t;
 
 
@@ -237,32 +241,40 @@ glw_video_overlay_layout(glw_video_t *gv,
 
     gc->gc_set_float(w, GLW_ATTRIB_SIZE_SCALE, scaling);
 
-    f[0] = scaling * gvo->gvo_padding_left;
-    f[1] = 0;
-    f[2] = scaling * gvo->gvo_padding_right;
-    f[3] = 0;
 
-    switch(gvo->gvo_alignment) {
-    case LAYOUT_ALIGN_TOP:
-    case LAYOUT_ALIGN_TOP_LEFT:
-    case LAYOUT_ALIGN_TOP_RIGHT:
-      f[1] = MAX(scaling * gvo->gvo_padding_top,
-		 l->used_height[gvo->gvo_alignment]);
-      l->used_height[gvo->gvo_alignment] = f[1];
-      break;
+    if(gvo->gvo_abspos) {
 
-    case LAYOUT_ALIGN_BOTTOM:
-    case LAYOUT_ALIGN_BOTTOM_LEFT:
-    case LAYOUT_ALIGN_BOTTOM_RIGHT:
-      f[3] = MAX(scaling * gvo->gvo_padding_bottom,
-		 l->used_height[gvo->gvo_alignment]);
-      l->used_height[gvo->gvo_alignment] = f[3];
-      break;
+      glw_layout0(w, rc);
+
+    } else {
+
+      f[0] = scaling * gvo->gvo_padding_left;
+      f[1] = 0;
+      f[2] = scaling * gvo->gvo_padding_right;
+      f[3] = 0;
+
+      switch(gvo->gvo_alignment) {
+      case LAYOUT_ALIGN_TOP:
+      case LAYOUT_ALIGN_TOP_LEFT:
+      case LAYOUT_ALIGN_TOP_RIGHT:
+	f[1] = MAX(scaling * gvo->gvo_padding_top,
+		   l->used_height[gvo->gvo_alignment]);
+	l->used_height[gvo->gvo_alignment] = f[1];
+	break;
+
+      case LAYOUT_ALIGN_BOTTOM:
+      case LAYOUT_ALIGN_BOTTOM_LEFT:
+      case LAYOUT_ALIGN_BOTTOM_RIGHT:
+	f[3] = MAX(scaling * gvo->gvo_padding_bottom,
+		   l->used_height[gvo->gvo_alignment]);
+	l->used_height[gvo->gvo_alignment] = f[3];
+	break;
+      }
+
+      gc->gc_set_padding(w, f);
+      glw_layout0(w, rc);
+      l->used_height[gvo->gvo_alignment] += w->glw_req_size_y;
     }
-
-    gc->gc_set_padding(w, f);
-    glw_layout0(w, rc);
-    l->used_height[gvo->gvo_alignment] += w->glw_req_size_y;
   }
 }
 
@@ -399,7 +411,25 @@ glw_video_overlay_render(glw_video_t *gv, const glw_rctx_t *frc,
 
     case GVO_TEXT:
       rc0.rc_alpha *= gvo->gvo_alpha;
-      glw_render0(gvo->gvo_widget, &rc0);
+
+      if(gvo->gvo_abspos) {
+
+	int x = gvo->gvo_x * rc0.rc_width  / gvo->gvo_canvas_width;
+	int y = gvo->gvo_y * rc0.rc_height / gvo->gvo_canvas_height;
+
+	glw_reposition(&rc0,
+		       x,
+		       rc0.rc_height - y,
+		       rc0.rc_width + x,
+		       0 - y);
+
+	glw_render0(gvo->gvo_widget, &rc0);
+
+      } else {
+
+	glw_render0(gvo->gvo_widget, &rc0);
+      }
+
       break;
     }
   }
@@ -761,6 +791,9 @@ gvo_create_from_vo_text(glw_video_t *gv, video_overlay_t *vo)
   gvo->gvo_canvas_width   = vo->vo_canvas_width;
   gvo->gvo_canvas_height  = vo->vo_canvas_height;
   gvo->gvo_layer          = vo->vo_layer;
+  gvo->gvo_x              = vo->vo_x;
+  gvo->gvo_y              = vo->vo_y;
+  gvo->gvo_abspos         = vo->vo_abspos;
 
   glw_t *w = glw_create(gv->w.glw_root, gc, NULL, NULL, NULL);
 
@@ -768,26 +801,35 @@ gvo_create_from_vo_text(glw_video_t *gv, video_overlay_t *vo)
 
   gc->gc_freeze(w);
 
-  w->glw_alignment = vo->vo_alignment ?: LAYOUT_ALIGN_BOTTOM;
-  gvo->gvo_alignment = w->glw_alignment;
-
   gc->gc_set_int(w, GLW_ATTRIB_DEFAULT_SIZE,
 		 gv->w.glw_root->gr_current_size * 1.5);
 
-  if(vo->vo_padding_left == -1) {
-    int default_pad = gv->w.glw_root->gr_current_size;
-    gvo->gvo_padding_left     = default_pad;
-    gvo->gvo_padding_top      = default_pad;
-    gvo->gvo_padding_right    = default_pad;
-    gvo->gvo_padding_bottom   = default_pad;
-  } else {
-    gvo->gvo_padding_left   = vo->vo_padding_left;
-    gvo->gvo_padding_top    = vo->vo_padding_top;
-    gvo->gvo_padding_right  = vo->vo_padding_right;
-    gvo->gvo_padding_bottom = vo->vo_padding_bottom;
-  }
+  if(gvo->gvo_abspos) {
 
-  LIST_INSERT_SORTED(&gv->gv_overlays, gvo, gvo_link, gvo_padding_cmp);
+    gvo->gvo_videoframe_align = 1;
+    w->glw_alignment = LAYOUT_ALIGN_TOP_LEFT;
+
+    LIST_INSERT_HEAD(&gv->gv_overlays, gvo, gvo_link);
+    
+  } else {
+
+    w->glw_alignment = vo->vo_alignment ?: LAYOUT_ALIGN_BOTTOM;
+    gvo->gvo_alignment = w->glw_alignment;
+
+    if(vo->vo_padding_left == -1) {
+      int default_pad = gv->w.glw_root->gr_current_size;
+      gvo->gvo_padding_left     = default_pad;
+      gvo->gvo_padding_top      = default_pad;
+      gvo->gvo_padding_right    = default_pad;
+      gvo->gvo_padding_bottom   = default_pad;
+    } else {
+      gvo->gvo_padding_left   = vo->vo_padding_left;
+      gvo->gvo_padding_top    = vo->vo_padding_top;
+      gvo->gvo_padding_right  = vo->vo_padding_right;
+      gvo->gvo_padding_bottom = vo->vo_padding_bottom;
+    }
+    LIST_INSERT_SORTED(&gv->gv_overlays, gvo, gvo_link, gvo_padding_cmp);
+  }
 
   gc->gc_set_int(w, GLW_ATTRIB_MAX_LINES, 10);
 
