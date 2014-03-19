@@ -1858,170 +1858,6 @@ http_destroy(http_file_t *hf)
   free(hf);
 }
 
-/* inspired by http://xbmc.org/trac/browser/trunk/XBMC/xbmc/FileSystem/HTTPDirectory.cpp */
-
-static int
-http_strip_last(char *s, char c)
-{
-  int len = strlen(s);
-  
-  if(s[len - 1 ] == c) {
-    s[len - 1] = '\0';
-    return 1;
-  }
-  
-  return 0;
-}
-
-static int
-http_index_parse(http_file_t *hf, fa_dir_t *fd, char *buf)
-{
-  char *p, *n;
-  char *url = malloc(URL_MAX);
-  int skip = 1;
-  
-  p = buf;
-  /* n + 1 to skip '\0' */
-  for(;(n = strchr(p, '\n')); p = n + 1) {
-    char *s, *href, *name;
-    int isdir;
-    
-    /* terminate line */
-    *n = '\0';
-    
-    if(!(href = strstr(p, "<a href=\"")))
-      continue;
-    href += 9;
-    
-    if(!(s = strstr(href, "\">")))
-      continue;
-    *s++ = '\0'; /* skip " and terminate */
-    s++; /* skip > */
-    
-    name = s;
-    if(!(s = strstr(name, "</a>")))
-      continue;
-    *s = '\0';
-
-    /* skip first entry "Name" */
-    if(skip > 0)  {
-      skip--;
-      continue;
-    }
-
-    /* skip absolute paths "Parent directroy" */
-    if(href[0] == '/')
-      continue;
-    
-    isdir = http_strip_last(name, '/');
-    
-    html_entities_decode(href);
-    html_entities_decode(name);
-    
-    snprintf(url, URL_MAX, "http://%s:%d%s%s",
-	     hf->hf_connection->hc_hostname, 
-	     hf->hf_connection->hc_port, hf->hf_path,
-	     href);
-      
-    fa_dir_add(fd, url, name, isdir ? CONTENT_DIR : CONTENT_FILE);
-  }
-  
-  free(url);
-
-  return 0;
-}
-
-
-/**
- *
- */
-static int
-http_index_fetch(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen)
-{
-  int code, retval;
-  htsbuf_queue_t q;
-  char *buf;
-  int redircount = 0;
-  struct http_header_list headers, cookies;
-
-reconnect:
-  if(http_connect(hf, errbuf, errlen))
-    return -1;
-
-  htsbuf_queue_init(&q, 0);
-  
-again:
-
-  http_send_verb(&q, hf, "GET");
-
-  http_headers_init(&headers, hf);
-  LIST_INIT(&cookies);
-
-  if(http_headers_auth(&headers, &cookies, hf, "GET", NULL, errbuf, errlen))
-    return -1;
-  http_cookie_append(hf->hf_connection->hc_hostname, hf->hf_path, &headers,
-		     &cookies);
-  http_headers_free(&cookies);
-  http_headers_send(&q, &headers, hf->hf_user_request_headers, NULL);
-
-  tcp_write_queue(hf->hf_connection->hc_tc, &q);
-  code = http_read_response(hf, hf->hf_user_response_headers);
-  if(code == -1 && hf->hf_connection->hc_reused) {
-    http_detach(hf, 0, "Read error on reused connection");
-    goto reconnect;
-  }
-  
-  switch(code) {
-      
-    case 200: /* 200 OK */
-      if((buf = http_read_content(hf)) == NULL) {
-        snprintf(errbuf, errlen, "Connection lost");
-        return -1;
-      }
-      
-      retval = http_index_parse(hf, fd, buf);
-      free(buf);
-
-      if(hf->hf_connection_mode == CONNECTION_MODE_CLOSE)
-	http_detach(hf, 0, "Connection-mode = close");
-
-      return retval;
-      
-    case 301:
-    case 302:
-    case 303:
-    case 307:
-      if(redirect(hf, &redircount, errbuf, errlen, code, 1))
-        return -1;
-      goto reconnect;
-      
-    case 401:
-      if(authenticate(hf, errbuf, errlen, NULL, 1))
-        return -1;
-      goto again;
-      
-    default:
-      snprintf(errbuf, errlen, "Unhandled HTTP response %d", code);
-      return -1;
-  }
-}
-
-/**
- *
- */
-static int
-http_scandir(fa_protocol_t *fap, fa_dir_t *fd, const char *url,
-             char *errbuf, size_t errlen)
-{
-  int retval;
-  http_file_t *hf = calloc(1, sizeof(http_file_t));
-  hf->hf_version = 1;
-  hf->hf_url = strdup(url);
-  
-  retval = http_index_fetch(hf, fd, errbuf, errlen);
-  http_destroy(hf);
-  return retval;
-}
 
 /**
  * Open file
@@ -2611,7 +2447,6 @@ static fa_protocol_t fa_protocol_http = {
   .fap_init  = http_init,
   .fap_flags = FAP_INCLUDE_PROTO_IN_URL | FAP_ALLOW_CACHE,
   .fap_name  = "http",
-  .fap_scan  = http_scandir,
   .fap_open  = http_open,
   .fap_close = http_close,
   .fap_read  = http_read,
@@ -2633,7 +2468,6 @@ FAP_REGISTER(http);
 static fa_protocol_t fa_protocol_https = {
   .fap_flags = FAP_INCLUDE_PROTO_IN_URL | FAP_ALLOW_CACHE,
   .fap_name  = "https",
-  .fap_scan  = http_scandir,
   .fap_open  = http_open,
   .fap_close = http_close,
   .fap_read  = http_read,
