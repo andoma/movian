@@ -53,19 +53,25 @@ rpi_video_port_settings_changed(omx_component_t *oc)
   media_pipe_t *mp = mc->mp;
   frame_info_t *fi = calloc(1, sizeof(frame_info_t));
 
-  OMX_CONFIG_POINTTYPE pixel_aspect;
+
+  int sar_num = 1;
+  int sar_den = 1;
 
   if(rvc->rvc_sar_num && rvc->rvc_sar_den) {
 
-    pixel_aspect.nX = rvc->rvc_sar_num;
-    pixel_aspect.nY = rvc->rvc_sar_den;
+    sar_num = rvc->rvc_sar_num;
+    sar_den = rvc->rvc_sar_den;
 
   } else {
 
+    OMX_CONFIG_POINTTYPE pixel_aspect;
     OMX_INIT_STRUCTURE(pixel_aspect);
     pixel_aspect.nPortIndex = 131;
-    OMX_GetParameter(oc->oc_handle, OMX_IndexParamBrcmPixelAspectRatio,
-		     &pixel_aspect);
+    if(OMX_GetParameter(oc->oc_handle, OMX_IndexParamBrcmPixelAspectRatio,
+			&pixel_aspect) == OMX_ErrorNone) {
+      sar_num = pixel_aspect.nX ?: sar_num;
+      sar_den = pixel_aspect.nY ?: sar_den;
+    }
   }
 
   OMX_PARAM_PORTDEFINITIONTYPE port_image;
@@ -81,14 +87,14 @@ rpi_video_port_settings_changed(omx_component_t *oc)
 	     port_image.format.video.nFrameHeight);
     prop_set_string(mp->mp_video.mq_prop_codec, codec_info);
     TRACE(TRACE_DEBUG, "VideoCore",
-	  "Video decoder output port settings changed to %s (%d%:d)",
-	  codec_info, pixel_aspect.nX, pixel_aspect.nY);
+	  "Video decoder output port settings changed to %s (SAR: %d:%d)",
+	  codec_info, sar_num, sar_den);
 
     fi->fi_width   = port_image.format.video.nFrameWidth;
     fi->fi_height  = port_image.format.video.nFrameHeight;
   }
-  fi->fi_dar_num = pixel_aspect.nX * fi->fi_width;
-  fi->fi_dar_den = pixel_aspect.nY * fi->fi_height;
+  fi->fi_dar_num = sar_num * fi->fi_width;
+  fi->fi_dar_den = sar_den * fi->fi_height;
 
 
   hts_mutex_lock(&mp->mp_mutex);
