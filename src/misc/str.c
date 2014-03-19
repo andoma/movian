@@ -1652,3 +1652,17 @@ find_str(char *s, int len, const char *needle)
   }
   return NULL;
 }
+
+
+
+/**
+ *
+ */
+void
+mystrlower(char *s)
+{
+  for(;*s; s++) {
+    if(*s >= 'A' && *s <= 'Z')
+      *s = *s + 32;
+  }
+}

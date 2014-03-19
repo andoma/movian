@@ -24,6 +24,7 @@
 
 #include "showtime.h"
 #include "misc/queue.h"
+#include "misc/str.h"
 #include "image/pixmap.h"
 #include "image/image.h"
 #include "text.h"
@@ -56,7 +57,7 @@ static int font_domain_tally = 10;
 #define GLYPH_HASH_MASK (GLYPH_HASH_SIZE-1)
 TAILQ_HEAD(glyph_queue, glyph);
 LIST_HEAD(glyph_list, glyph);
-TAILQ_HEAD(face_queue, face);
+LIST_HEAD(face_list, face);
 LIST_HEAD(idmap_list, idmap);
 
 //----------------- generica name <-> id map --------------
@@ -74,7 +75,7 @@ static struct  idmap_list idmaps;
 //------------------------- Faces -----------------------
 
 typedef struct face {
-  TAILQ_ENTRY(face) link;
+  LIST_ENTRY(face) link;
 
   FT_Face face;
   char *url;
@@ -82,14 +83,20 @@ typedef struct face {
   char *family;
   char *fullname;
   uint8_t style;
-  int persistent;
   int font_domain;
   struct glyph_list glyphs;
+  int prio;
+  int refcount;
+
+  // For glyph caching
+
+  char *lookup_name;
+  int lookup_font_domain;
+
 } face_t;
 
-static struct face_queue faces;
-static face_t *default_font;
-
+static struct face_list static_faces;
+static struct face_list dynamic_faces;
 
 //------------------------- Glyph cache -----------------------
 
@@ -184,11 +191,12 @@ face_destroy(face_t *f)
     glyph_destroy(g);
 
   TRACE(TRACE_DEBUG, "Freetype", "Unloading '%s' [%s] originally from %s",
-	f->face->family_name, f->face->style_name, f->url ?: "memory");
-  TAILQ_REMOVE(&faces, f, link);
+	f->face->family_name, f->face->style_name, f->url);
+  LIST_REMOVE(f, link);
   free(f->url);
   free(f->family);
   free(f->fullname);
+  free(f->lookup_name);
   FT_Done_Face(f->face);
   free(f);
 }
@@ -201,13 +209,32 @@ static void
 faces_purge(void)
 {
   face_t *f, *n;
-  for(f = TAILQ_FIRST(&faces); f != NULL; f = n) {
-    n = TAILQ_NEXT(f, link);
+  for(f = LIST_FIRST(&dynamic_faces); f != NULL; f = n) {
+    n = LIST_NEXT(f, link);
 
-    if(LIST_FIRST(&f->glyphs) == NULL && f->persistent == 0)
+    if(f->refcount == 0 && LIST_FIRST(&f->glyphs) == NULL)
       face_destroy(f);
   }
 }
+
+
+/**
+ *
+ */
+static void
+faces_flush_lookup(void)
+{
+  face_t *f;
+  LIST_FOREACH(f, &dynamic_faces, link) {
+    mystrset(&f->lookup_name, NULL);
+    f->lookup_font_domain = -1;
+  }
+  LIST_FOREACH(f, &static_faces, link) {
+    mystrset(&f->lookup_name, NULL);
+    f->lookup_font_domain = -1;
+  }
+}
+
 
 
 /**
@@ -236,15 +263,22 @@ face_close(FT_Stream stream)
 /**
  *
  */
+static int
+face_cmp(const face_t *a, const face_t *b)
+{
+  return a->prio - b->prio;
+}
+
+/**
+ *
+ */
 static face_t *
-face_create_epilogue(face_t *face, int font_domain)
+face_create_epilogue(face_t *face, const char *url,
+		     struct face_list *faces, int prio, int font_domain)
 {
   const char *family = face->face->family_name;
   const char *style = face->face->style_name;
   char buf[256];
-
-  TRACE(TRACE_DEBUG, "Freetype", "Loaded '%s' [%s] domain:%d",
-	family, style, font_domain);
 
   if(style != NULL) {
     char *f = mystrdupa(style), *tmp = NULL;
@@ -257,14 +291,34 @@ face_create_epilogue(face_t *face, int font_domain)
 	face->style = TR_STYLE_ITALIC;
     }
   }
-  face->font_domain = font_domain;
+  face->url = strdup(url);
   face->family = strdup(family);
   snprintf(buf, sizeof(buf), "%s %s", family, style);
   face->fullname = strdup(buf);
 
+  mystrlower(face->family);
+  mystrlower(face->fullname);
+
+  TRACE(TRACE_DEBUG, "Freetype", 
+	"Loaded font family='%s' fullname='%s' style='%s' from %s domain:%d",
+	face->family, face->fullname, style, face->url, font_domain);
+
+
+
   FT_Select_Charmap(face->face, FT_ENCODING_UNICODE);
 
-  TAILQ_INSERT_TAIL(&faces, face, link);
+  // Flush any lookup caches
+  faces_flush_lookup();
+
+  face->font_domain = font_domain;
+  face->prio = prio;
+  if(prio == 0)
+    LIST_INSERT_HEAD(faces, face, link);
+  else
+    LIST_INSERT_SORTED(faces, face, link, face_cmp);
+
+  face->lookup_font_domain = -1;
+
   return face;
 }
 
@@ -273,8 +327,9 @@ face_create_epilogue(face_t *face, int font_domain)
  *
  */
 static face_t *
-face_create_from_fh(fa_handle_t *fh, int font_domain, 
-		    char *errbuf, size_t errlen)
+face_create_from_fh(fa_handle_t *fh, const char *url,
+		    char *errbuf, size_t errlen,
+		    struct face_list *faces, int prio, int font_domain)
 {
   FT_Open_Args oa = {0};
   FT_Error err;
@@ -306,7 +361,7 @@ face_create_from_fh(fa_handle_t *fh, int font_domain,
     return NULL;
   }
 
-  return face_create_epilogue(face, font_domain);
+  return face_create_epilogue(face, url, faces, prio, font_domain);
 }
 
 
@@ -314,15 +369,18 @@ face_create_from_fh(fa_handle_t *fh, int font_domain,
  *
  */
 static face_t *
-face_create_from_uri(const char *path, int font_domain, const char **vpaths)
+face_create_from_uri(const char *path, const char **vpaths,
+		     struct face_list *faces, int prio, int font_domain)
 {
   char errbuf[256];
   face_t *face;
 
-  TAILQ_FOREACH(face, &faces, link)
-    if(face->url != NULL && !strcmp(face->url, path) &&
-       face->font_domain == font_domain)
+  LIST_FOREACH(face, faces, link) {
+    if(!strcmp(face->url, path) && face->font_domain == font_domain) {
       return face;
+    }
+  }
+
   fa_handle_t *fh = fa_open_vpaths(path, vpaths, errbuf, sizeof(errbuf), 0,
                                    NULL);
   if(fh == NULL) {
@@ -331,13 +389,13 @@ face_create_from_uri(const char *path, int font_domain, const char **vpaths)
     return NULL;
   }
 
-  face = face_create_from_fh(fh, font_domain, errbuf, sizeof(errbuf));
+  face = face_create_from_fh(fh, path, errbuf, sizeof(errbuf),
+			     faces, prio, font_domain);
   if(face == NULL) {
     TRACE(TRACE_ERROR, "Freetype", "Unable to load font: %s -- %s",
 	  path, errbuf);
     return NULL;
   }
-  face->url = strdup(path);
   return face;
 }
 
@@ -345,123 +403,106 @@ face_create_from_uri(const char *path, int font_domain, const char **vpaths)
 /**
  *
  */
-static void
-striptrail(char *x2)
-{
-  char *x = strrchr(x2, ' ');
-  if(!x || x == x2)
-    return;
-  x++;
-  if(!strcasecmp(x, "thin") ||
-     !strcasecmp(x, "light") ||
-     !strcasecmp(x, "bold") ||
-     !strcasecmp(x, "heavy"))
-    x[-1] = 0;
-}
-
-/**
- *
- */
-static int
-face_is_family(face_t *f, const char *family, int domain, int fuzzyness)
-{
-  char *a, *b;
-  if(domain != f->font_domain)
-    return 0;
-
-  switch(fuzzyness) {
-  case 0:
-    return !strcasecmp(family, f->fullname);
-  case 1:
-    return !strcasecmp(family, f->family);
-  case 2:
-    a = mystrdupa(family);
-    b = mystrdupa(f->family);
-    striptrail(a);
-    striptrail(b);
-    return !strcasecmp(a, b);
-  default:
-    return 0;
-  }
-}
-
-/**
- *
- */
 static face_t *
-face_resolve(int uc, uint8_t style, const char *font, int font_domain,
+face_resolve(int uc, uint8_t style, const char *name, int font_domain,
 	     const char **vpaths)
 {
-  face_t *f = NULL;
-  if(font != NULL) {
-    int i;
-    // Try already loaded faces
-    for(i = 0; i < 3; i++) {
-      TAILQ_FOREACH(f, &faces, link)
-	if(face_is_family(f, font, font_domain, i) &&
-	   f->style == style &&
-	   FT_Get_Char_Index(f->face, uc))
-	  return f;
+  face_t *f;
+  if(name != NULL) {
+
+    if(fa_can_handle(name, NULL, 0)) {
+      f = face_create_from_uri(name, vpaths, &dynamic_faces, 0, font_domain);
+      if(f != NULL && FT_Get_Char_Index(f->face, uc))
+	return f;
     }
 
-    for(i = 0; i < 3; i++) {
-      TAILQ_FOREACH(f, &faces, link)
-	if(face_is_family(f, font, font_domain, i) &&
-	   f->style == 0 &&
-	   FT_Get_Char_Index(f->face, uc))
-	  return f;
+    face_t *best = NULL;
+    int best_score = 0; // Higher is better
+    
+    // Try to find best matching font amongst our loaded faces
+
+    char *lcname = mystrdupa(name);
+    mystrlower(lcname);
+
+    LIST_FOREACH(f, &dynamic_faces, link) {
+      /*
+       * Always want to match font domain here
+       */
+      if(f->font_domain != font_domain)
+	continue;
+
+      if(!strcmp(f->url, name))
+	return f;
+
+      /*
+       * If we want no style and face have style, ignore it since we can
+       * create italic and bold glyphs from normal faces but not the
+       * other way around
+       */
+      if(f->style && style == 0)
+	continue;
+
+      /*
+       * Faces that can't render our glyph is not so good either :)
+       */ 
+      if(!FT_Get_Char_Index(f->face, uc))
+	continue;
+
+      int score = 0;
+
+      // Correct style give some extra points
+      if(f->style == style)
+	score += 4;
+      
+      if(!strcmp(f->fullname, lcname)) {
+	score += 100;
+      } else if(!strcmp(f->family, lcname)) {
+	score += 90;
+      } else if(strstr(lcname, f->fullname)) {
+	score += 80;
+      } else if(strstr(lcname, f->family)) {
+	score += 70;
+      } else if(strstr(f->fullname, lcname)) {
+	score += 60;
+      } else if(strstr(f->family, lcname)) {
+	score += 50;
+      }
+
+      if(score > best_score && score > 10) {
+	best_score = score;
+	best = f;
+      }
     }
 
-    if(fa_can_handle(font, NULL, 0)) {
-      f = face_create_from_uri(font, font_domain, vpaths);
-      if(f == NULL || !FT_Get_Char_Index(f->face, uc))
-	f = NULL;
-    }
+    if(best)
+      return best;
   }
-#if 0
-  // Try anything from the exact domain
-  if(f == NULL) {
-    TAILQ_FOREACH(f, &faces, link) {
-      if(f->font_domain == font_domain &&
-         f->style == style &&
-         FT_Get_Char_Index(f->face, uc))
+
+
+  LIST_FOREACH(f, &static_faces, link) {
+    if(f->style == style && FT_Get_Char_Index(f->face, uc))
       return f;
-    }
-    TAILQ_FOREACH(f, &faces, link) {
-      if(f->font_domain == font_domain &&
-         FT_Get_Char_Index(f->face, uc))
-      return f;
-    }
   }
-#endif
 
-
-  // Try default font
-  if(f == NULL && default_font != NULL)
-    if(FT_Get_Char_Index(default_font->face, uc))
-      f = default_font;
-
-  if(f == NULL)
-    TAILQ_FOREACH(f, &faces, link)
-      if(f->font_domain == FONT_DOMAIN_FALLBACK &&
-	 FT_Get_Char_Index(f->face, uc))
-	break;
+  LIST_FOREACH(f, &static_faces, link) {
+    if(f->style == 0 && FT_Get_Char_Index(f->face, uc))
+      return f;
+  }
 
 #if ENABLE_LIBFONTCONFIG
-  if(f == NULL) {
-    char url[URL_MAX];
-    if(!fontconfig_resolve(uc, style, font, url, sizeof(url)))
-      f = face_create_from_uri(url, FONT_DOMAIN_FALLBACK, NULL);
+  char url[URL_MAX];
+  if(!fontconfig_resolve(uc, style, name, url, sizeof(url))) {
+    f = face_create_from_uri(url, NULL, &dynamic_faces, 0, font_domain);
+    if(f != NULL)
+      return f;
   }
 #endif
-
   
   // Last resort, anything that has the glyph
-  if(f == NULL)
-    TAILQ_FOREACH(f, &faces, link)
-      if(FT_Get_Char_Index(f->face, uc))
-	break;
-  return f;
+  LIST_FOREACH(f, &dynamic_faces, link)
+    if(FT_Get_Char_Index(f->face, uc))
+      return f;
+  return NULL;
 }
 
 
@@ -469,16 +510,22 @@ face_resolve(int uc, uint8_t style, const char *font, int font_domain,
  *
  */
 static face_t *
-face_find(int uc, uint8_t style, const char *family, int font_domain,
+face_find(int uc, uint8_t style, const char *name, int font_domain,
 	  const char **vpaths)
 {
-  face_t *f = face_resolve(uc, style, family, font_domain, vpaths);
-
+  face_t *f = face_resolve(uc, style, name, font_domain, vpaths);
 #if 0
   printf("Resolv %c (0x%x) [style=0x%x, font: %s] -> %s\n",
-	 uc, uc, style, family ?: "<unset>",
-	 f ? (f->url ? f->url : "<memory>") : "<none>");
+	 uc, uc, style, name ?: "<unset>",
+	 f ? f->url : "<none>");
 #endif
+  if(f == NULL)
+    return NULL;
+
+  f->lookup_font_domain = font_domain;
+  if(strcmp(name ?: "", f->lookup_name ?: "")) 
+    mystrset(&f->lookup_name, name);
+
   return f;
 }
 
@@ -517,18 +564,9 @@ glyph_get(int uc, int size, uint8_t style, const char *font,
   LIST_FOREACH(g, &glyph_hash[hash], hash_link) {
     if(g->uc != uc || g->size != size || g->style != style)
       continue;
-    
-    if(font == NULL) {
-      if(g->face->font_domain <= FONT_DOMAIN_DEFAULT)
-	break;
-      else
-	continue;
-    }
 
-    if(!strcmp(g->face->family, font) && g->face->font_domain == font_domain)
-      break;
-
-    if(g->face->url && !strcmp(g->face->url, font))
+    if(!strcmp(g->face->lookup_name ?: "", font ?: "") &&
+       g->face->lookup_font_domain == font_domain)
       break;
   }
 
@@ -1405,34 +1443,15 @@ text_render(const uint32_t *uc, const int len, int flags, int default_size,
   return im;
 }
 
-/**
- *
- */
-static void
-freetype_set_fontptr(face_t **ptr, const char *url)
-{
-  if(*ptr) {
-    if(--(*ptr)->persistent == 0)
-      face_destroy(*ptr);
-    *ptr = NULL;
-  }
-
-  if(url) {
-    *ptr = face_create_from_uri(url, FONT_DOMAIN_DEFAULT, NULL);
-    if(*ptr != NULL)
-      (*ptr)->persistent++;
-  }
-}
-
 
 /**
  *
  */
-static void
-freetype_set_default_font(const char *url)
+void
+freetype_load_default_font(const char *url, int prio)
 {
   hts_mutex_lock(&text_mutex);
-  freetype_set_fontptr(&default_font, url);
+  face_create_from_uri(url, NULL, &static_faces, prio, 0);
   hts_mutex_unlock(&text_mutex);
 }
 
@@ -1452,16 +1471,18 @@ freetype_init(void)
     exit(1);
   }
   FT_Stroker_New(text_library, &text_stroker);
-  TAILQ_INIT(&faces);
   TAILQ_INIT(&allglyphs);
   hts_mutex_init(&text_mutex);
-  //  arch_preload_fonts();
 
   snprintf(url, sizeof(url),
 	   "%s/resources/fonts/liberation/LiberationSans-Regular.ttf",
 	   showtime_dataroot());
 
-  freetype_set_default_font(url);
+  freetype_load_default_font(url, 0);
+
+#ifdef __APPLE__
+  freetype_load_default_font("file:///Library/Fonts/Arial Unicode.ttf", 1);
+#endif
 }
 
 INITME(INIT_GROUP_GRAPHICS, freetype_init);
@@ -1471,33 +1492,15 @@ INITME(INIT_GROUP_GRAPHICS, freetype_init);
  *
  */
 void *
-freetype_load_font(const char *url, int context, const char **vpaths)
+freetype_load_dynamic_font_fh(fa_handle_t *fh, const char *url, int font_domain,
+			      char *errbuf, size_t errlen)
 {
-  face_t *f;
-  hts_mutex_lock(&text_mutex);
-  
-  f = face_create_from_uri(url, context, vpaths);
-  if(f != NULL)
-    f->persistent++;
-  
-  hts_mutex_unlock(&text_mutex);
-  return f;
-}
-
-
-/**
- *
- */
-void *
-freetype_load_font_from_fh(fa_handle_t *fh, int font_domain,
-			   char *errbuf, size_t errlen)
-{
-  face_t *f;
   hts_mutex_lock(&text_mutex);
 
-  f = face_create_from_fh(fh, font_domain, errbuf, errlen);
+  face_t *f = face_create_from_fh(fh, url, errbuf, errlen,
+				  &dynamic_faces, 0, font_domain);
   if(f != NULL)
-    f->persistent++;
+    f->refcount++;
 
   hts_mutex_unlock(&text_mutex);
   return f;
@@ -1512,7 +1515,7 @@ freetype_unload_font(void *ref)
 {
   face_t *f = ref;
   hts_mutex_lock(&text_mutex);
-  if(--f->persistent == 0)
+  if(--f->refcount == 0)
     face_destroy(f);
   hts_mutex_unlock(&text_mutex);
 }

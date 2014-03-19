@@ -947,7 +947,7 @@ attachment_load(struct attachment_list *alist, const char *url, int64_t offset,
 
   fh = fa_slice_open(fh, offset, size);
 
-  void *h = freetype_load_font_from_fh(fh, font_domain, NULL, 0);
+  void *h = freetype_load_dynamic_font_fh(fh, url, font_domain, NULL, 0);
   if(h != NULL)
      attachment_add_dtor(alist, freetype_unload_font, h);
 }

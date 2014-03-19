@@ -452,7 +452,8 @@ ad_txt_append(ass_dialoge_t *ad, int v)
  *
  */
 static void
-ass_handle_override(ass_dialoge_t *ad, const char *src, int len)
+ass_handle_override(ass_dialoge_t *ad, const char *src, int len,
+		    int fontdomain)
 {
   char *str, *cmd;
   int v1, v2;
@@ -464,6 +465,7 @@ ass_handle_override(ass_dialoge_t *ad, const char *src, int len)
   str[len] = 0;
   
   while((cmd = strchr(str, '\\')) != NULL) {
+  next:
     str = ++cmd;
     if(str[0] == 'i') {
       ad_txt_append(ad, str[1] == '1' ? TR_CODE_ITALIC_ON : TR_CODE_ITALIC_OFF);
@@ -479,23 +481,26 @@ ass_handle_override(ass_dialoge_t *ad, const char *src, int len)
     } else if(sscanf(str, "fs(%d)", &v1) == 1) {
       ad_txt_append(ad, TR_CODE_SIZE_PX + (v1 & 0xff));
 
-    } else if(str[0] == 'c') {
-      str++;
-      int code = TR_CODE_COLOR;
-      if(*str != '&') {
-        switch(*str) {
-        default:  code = TR_CODE_COLOR;         break;
-        case '2': /* Not supported by us */     break;
-        case '3': code = TR_CODE_OUTLINE_COLOR; break;
-        case '4': code = TR_CODE_SHADOW_COLOR;  break;
-        }
-        str++;
-      }
-      uint32_t col = ass_parse_color(str);
-      ad_txt_append(ad, code | col);
-      break;
+    } else if(str[0] == 'c' || (str[0] == '1' && str[1] == 'c')) {
+       ad_txt_append(ad, TR_CODE_COLOR | ass_parse_color(str+2));
+    } else if((str[0] == '3' && str[1] == 'c')) {
+       ad_txt_append(ad, TR_CODE_OUTLINE_COLOR | ass_parse_color(str+2));
+    } else if((str[0] == '4' && str[1] == 'c')) {
+       ad_txt_append(ad, TR_CODE_SHADOW_COLOR | ass_parse_color(str+2));
+    } else if(str[0] == 'f' && str[1] == 'n') {
+      str += 2;
+      cmd = strchr(str, '\\');
+      if(cmd != NULL)
+	*cmd = 0;
 
-      // Alignment
+      ad_txt_append(ad, TR_CODE_FONT_FAMILY |
+		    freetype_family_id(str, fontdomain));
+
+      if(cmd == NULL)
+	break;
+
+      goto next;
+
     } else if(str[0] == 'a' && str[1] == 'n') {
       // Alignment
       ad->ad_alignment = atoi(str+2);
@@ -619,7 +624,7 @@ ad_dialogue_decode(const ass_decoder_ctx_t *adc, const char *line,
       if(end == NULL)
 	break;
 
-      ass_handle_override(&ad, str, end - str);
+      ass_handle_override(&ad, str, end - str, fontdomain);
 
       str = end + 1;
       continue;

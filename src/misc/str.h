@@ -128,4 +128,6 @@ char *lp_get(char **lp);
 
 char *find_str(char *s, int len, const char *needle);
 
+void mystrlower(char *s);
+
 #endif

@@ -94,10 +94,14 @@ text_render(const uint32_t *uc, int len, int flags, int default_size,
 
 struct fa_handle;
 
-void * freetype_load_font_from_fh(struct fa_handle *fh, int font_domain,
-				  char *errbuf, size_t errlen);
+void *freetype_load_dynamic_font_fh(struct fa_handle *fh, const char *url,
+				    int font_domain,
+				    char *errbuf, size_t errlen);
 
-void *freetype_load_font(const char *url, int context, const char **vpaths);
+void *freetype_load_dynamic_font(const char *url, int font_domain,
+				 char *errbuf, size_t errlen);
+
+void freetype_load_default_font(const char *url, int prio);
 
 void freetype_unload_font(void *ref);
 
