@@ -349,9 +349,7 @@ fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh,
   }
 #endif
 
-  if(l > 16 &&
-     ((buf[6] == 'J' && buf[7] == 'F' && buf[8] == 'I' && buf[9] == 'F') ||
-      (buf[6] == 'E' && buf[7] == 'x' && buf[8] == 'i' && buf[9] == 'f'))) {
+  if(l > 16 && buf[0] == 0xff && buf[1] == 0xd8 && buf[2] == 0xff) {
     /* JPEG image */
     md->md_contenttype = CONTENT_IMAGE;
     fa_probe_exif(md, url, buf, fh, l); // Try to get more info

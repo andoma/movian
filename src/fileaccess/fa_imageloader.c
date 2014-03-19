@@ -108,8 +108,7 @@ fa_imageloader2(const char *url, const char **vpaths,
 
   /* Probe format */
 
-  if((p[6] == 'J' && p[7] == 'F' && p[8] == 'I' && p[9] == 'F') ||
-     (p[6] == 'E' && p[7] == 'x' && p[8] == 'i' && p[9] == 'f')) {
+  if(p[0] == 0xff && p[1] == 0xd8 && p[2] == 0xff) {
 
     jpeginfo_t ji;
 
@@ -212,8 +211,7 @@ fa_imageloader(const char *url, const struct image_meta *im,
 
   /* Probe format */
 
-  if((p[6] == 'J' && p[7] == 'F' && p[8] == 'I' && p[9] == 'F') ||
-     (p[6] == 'E' && p[7] == 'x' && p[8] == 'i' && p[9] == 'f')) {
+  if(p[0] == 0xff && p[1] == 0xd8 && p[2] == 0xff) {
       
     jpeginfo_t ji;
     
