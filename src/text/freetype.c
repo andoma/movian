@@ -762,7 +762,7 @@ draw_glyphs(pixmap_t *pm, struct line_queue *lq, int target_height,
       pen_x += (siz_x - li->width) / 2;
       break;
     case TR_ALIGN_RIGHT:
-      pen_x += li->width - siz_x;
+      pen_x += siz_x - li->width;
       break;
     }
 
