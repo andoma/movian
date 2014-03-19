@@ -177,8 +177,8 @@ const static action_type_t *play_meta_actions[256] = {
 
   [CEC_User_Control_Play]        = AVEC(ACTION_SYSINFO),
 
-  [CEC_User_Control_Left]        = AVEC(ACTION_NAV_BACK),
-  [CEC_User_Control_Right]       = AVEC(ACTION_NAV_FWD),
+  [CEC_User_Control_Left]        = AVEC(ACTION_SEEK_BACKWARD),
+  [CEC_User_Control_Right]       = AVEC(ACTION_SEEK_FORWARD),
 };
 
 
