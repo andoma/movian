@@ -31,7 +31,8 @@ void glw_video_overlay_render(glw_video_t *gv, const glw_rctx_t *rc,
 			      const glw_rctx_t *vrc);
 
 int glw_video_overlay_pointer_event(video_decoder_t *vd, int width, int height,
-				    glw_pointer_event_t *gpe, media_pipe_t *mp);
+				    const glw_pointer_event_t *gpe,
+				    media_pipe_t *mp);
 
 void glw_video_overlay_set_pts(glw_video_t *gv, int64_t pts);
 

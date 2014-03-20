@@ -519,41 +519,18 @@ glw_list_scroll(glw_list_t *l, glw_scroll_t *gs)
 
 
 
-static void
-handle_pointer_event(glw_list_t *l, glw_pointer_event_t *gpe)
+static int
+handle_pointer_event(glw_t *w, const glw_pointer_event_t *gpe)
 {
-  int y;
+  glw_list_t *l = (glw_list_t *)w;
 
   switch(gpe->type) {
   case GLW_POINTER_SCROLL:
     l->current_pos += l->page_size * gpe->delta_y;
     l->w.glw_flags |= GLW_UPDATE_METRICS;
-    break;
-
-  case GLW_POINTER_TOUCH_PRESS:
-    y = (0.5 - gpe->y * 0.5) *  l->page_size;
-    l->touch_pos = l->current_pos + y;
-    l->touched = 1;
-    l->velocity = 0;
-    break;
-
-  case GLW_POINTER_TOUCH_RELEASE:
-    l->touched = 0;
-    gpe->vel_y = 3;
-    l->velocity = (0.5 - gpe->vel_y * 0.5) *  l->page_size;
-    break;
-
-  case GLW_POINTER_TOUCH_MOTION:
-    if(!l->touched)
-      return;
-    
-    y = (0.5 - gpe->y * 0.5) *  l->page_size;
-    l->current_pos = l->touch_pos - y;
-    l->w.glw_flags |= GLW_UPDATE_METRICS;
-    break;
-
+    return 1;
   default:
-    break;
+    return 0;
   }
 }
 
@@ -619,10 +596,6 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
       w->glw_flags |= GLW_FLOATING_FOCUS;
       l->suggest_cnt = 1;
     }
-    break;
-
-  case GLW_SIGNAL_POINTER_EVENT:
-    handle_pointer_event(l, extra);
     break;
 
   case GLW_SIGNAL_SCROLL:
@@ -810,6 +783,7 @@ static glw_class_t glw_list_y = {
   .gc_escape_score = 100,
   .gc_suggest_focus = glw_list_suggest_focus,
   .gc_set_int16_4 = glw_list_set_int16_4,
+  .gc_pointer_event = handle_pointer_event,
 };
 
 GLW_REGISTER_CLASS(glw_list_y);
@@ -833,6 +807,7 @@ static glw_class_t glw_list_x = {
   .gc_escape_score = 100,
   .gc_suggest_focus = glw_list_suggest_focus,
   .gc_set_int16_4 = glw_list_set_int16_4,
+  .gc_pointer_event = handle_pointer_event,
 };
 
 GLW_REGISTER_CLASS(glw_list_x);

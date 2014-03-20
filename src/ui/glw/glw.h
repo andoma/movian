@@ -222,9 +222,6 @@ typedef enum {
   GLW_POINTER_FOCUS_MOTION,
   GLW_POINTER_SCROLL,
   GLW_POINTER_GONE,
-  GLW_POINTER_TOUCH_PRESS,
-  GLW_POINTER_TOUCH_RELEASE,
-  GLW_POINTER_TOUCH_MOTION,
 } glw_pointer_event_type_t;
 
 typedef struct glw_pointer_event {
@@ -259,11 +256,6 @@ typedef enum {
    */
   GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE,
   GLW_SIGNAL_FOCUS_CHILD_AUTOMATIC,
-
-  /**
-   *
-   */
-  GLW_SIGNAL_POINTER_EVENT,
 
   /**
    *
@@ -464,6 +456,11 @@ typedef struct glw_class {
    *
    */
   int (*gc_send_event)(struct glw *w, struct event *e);
+
+  /**
+   *
+   */
+  int (*gc_pointer_event)(struct glw *w, const glw_pointer_event_t *gpe);
 
 
   /**
@@ -1248,6 +1245,13 @@ glw_send_event(glw_t *w, event_t *e)
 {
   const glw_class_t *gc = w->glw_class;
   return gc->gc_send_event != NULL && gc->gc_send_event(w, e);
+}
+
+static inline int
+glw_send_pointer_event(glw_t *w, const glw_pointer_event_t *gpe)
+{
+  const glw_class_t *gc = w->glw_class;
+  return gc->gc_pointer_event != NULL && gc->gc_pointer_event(w, gpe);
 }
 
 int glw_event_distribute_to_childs(glw_t *w, event_t *e);

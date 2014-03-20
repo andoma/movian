@@ -566,6 +566,19 @@ glw_video_layout(glw_t *w, const glw_rctx_t *rc)
 /**
  *
  */
+static int
+glw_video_pointer_event(glw_t *w, const glw_pointer_event_t *gpe)
+{
+  glw_video_t *gv = (glw_video_t *)w;
+  video_decoder_t *vd = gv->gv_vd;
+  return glw_video_overlay_pointer_event(vd, gv->gv_width, gv->gv_height,
+					 gpe, gv->gv_mp);
+
+}
+
+/**
+ *
+ */
 static int 
 glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal, 
 			  void *extra)
@@ -583,10 +596,6 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
     video_playback_destroy(gv->gv_mp);
     video_decoder_stop(vd);
     return 0;
-
-  case GLW_SIGNAL_POINTER_EVENT:
-    return glw_video_overlay_pointer_event(vd, gv->gv_width, gv->gv_height,
-					   extra, gv->gv_mp);
 
   default:
     return 0;
@@ -959,6 +968,7 @@ static glw_class_t glw_video = {
   .gc_freeze = freeze,
   .gc_thaw = thaw,
   .gc_send_event = glw_video_widget_event,
+  .gc_pointer_event = glw_video_pointer_event,
 };
 
 GLW_REGISTER_CLASS(glw_video);

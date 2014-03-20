@@ -210,9 +210,6 @@ signal_handler(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   case GLW_SIGNAL_CHILD_DESTROYED:
     break;
 
-  case GLW_SIGNAL_POINTER_EVENT:
-    break;
-
   case GLW_SIGNAL_EVENT_BUBBLE:
     w->glw_flags &= ~GLW_FLOATING_FOCUS;
     break;

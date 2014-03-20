@@ -1497,7 +1497,7 @@ glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
       if(glw_is_focusable(w) && *hp == NULL)
 	*hp = w;
 
-      if(glw_signal0(w, GLW_SIGNAL_POINTER_EVENT, &gpe0))
+      if(glw_send_pointer_event(w, &gpe0))
 	return 1;
 
       if(glw_is_focusable(w)) {
@@ -1591,7 +1591,7 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
 	gpe0.x = x;
 	gpe0.y = y;
       
-	glw_signal0(w, GLW_SIGNAL_POINTER_EVENT, &gpe0);
+	glw_send_pointer_event(w, &gpe0);
       }
 
       if((w = gr->gr_pointer_press) != NULL && w->glw_matrix != NULL) {
@@ -1612,7 +1612,7 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
     gpe0.x = x;
     gpe0.y = y;
 
-    glw_signal0(w, GLW_SIGNAL_POINTER_EVENT, &gpe0);
+    glw_send_pointer_event(w, &gpe0);
     gr->gr_pointer_grab = NULL;
     return;
   }

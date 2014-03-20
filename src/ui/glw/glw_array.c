@@ -510,7 +510,6 @@ static int
 glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   glw_array_t *a = (glw_array_t *)w;
-  glw_pointer_event_t *gpe;
   glw_t *c;
 
   switch(signal) {
@@ -537,15 +536,6 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     a->num_visible_childs--;
     break;
 
-  case GLW_SIGNAL_POINTER_EVENT:
-    gpe = extra;
-
-    if(gpe->type == GLW_POINTER_SCROLL) {
-      a->current_pos += a->page_size * gpe->delta_y;
-      a->w.glw_flags |= GLW_UPDATE_METRICS;
-    }
-    break;
-
   case GLW_SIGNAL_SCROLL:
     glw_array_scroll(a, extra);
     break;
@@ -562,6 +552,22 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   return 0;
 }
 
+
+/**
+ *
+ */
+static int
+glw_array_pointer_event(glw_t *w, const glw_pointer_event_t *gpe)
+{
+  glw_array_t *a = (glw_array_t *)w;
+
+  if(gpe->type == GLW_POINTER_SCROLL) {
+    a->current_pos += a->page_size * gpe->delta_y;
+    a->w.glw_flags |= GLW_UPDATE_METRICS;
+    return 1;
+  }
+  return 0;
+}
 
 /**
  *
@@ -726,6 +732,7 @@ static glw_class_t glw_array = {
   .gc_get_next_row = glw_array_get_next_row,
   .gc_set_int16_4 = glw_array_set_int16_4,
   .gc_layout = glw_array_layout,
+  .gc_pointer_event = glw_array_pointer_event,
 };
 
 GLW_REGISTER_CLASS(glw_array);

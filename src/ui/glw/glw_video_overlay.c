@@ -441,7 +441,8 @@ glw_video_overlay_render(glw_video_t *gv, const glw_rctx_t *frc,
  */
 int
 glw_video_overlay_pointer_event(video_decoder_t *vd, int width, int height,
-				glw_pointer_event_t *gpe, media_pipe_t *mp)
+				const glw_pointer_event_t *gpe,
+				media_pipe_t *mp)
 {
 #if ENABLE_DVD
   pci_t *pci;
