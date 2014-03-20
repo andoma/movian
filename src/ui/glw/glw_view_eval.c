@@ -4933,7 +4933,7 @@ glwf_sinewave(glw_view_eval_context_t *ec, struct token *self,
   int v = v64 & 0xfff;
 
   r = eval_alloc(self, ec, TOKEN_FLOAT);
-  r->t_float = sin(v * 0.00153398f);
+  r->t_float = sin(v * M_PI * 2.0 / 4096.0);
   eval_push(ec, r);
   ec->dynamic_eval |= GLW_VIEW_DYNAMIC_EVAL_EVERY_FRAME;
   return 0;
