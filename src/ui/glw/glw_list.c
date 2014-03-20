@@ -616,10 +616,6 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     }
     break;
 
-  case GLW_SIGNAL_EVENT_BUBBLE:
-    w->glw_flags &= ~GLW_FLOATING_FOCUS;
-    break;
-
   case GLW_SIGNAL_FHP_PATH_CHANGED:
     if(!glw_is_focused(w)) 
       l->suggest_cnt = 1;

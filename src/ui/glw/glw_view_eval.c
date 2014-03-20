@@ -1218,7 +1218,8 @@ clone_sig_handler(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_WRAP_CHECK:
-    return sc->sc_have_more == 1;
+    *(int *)extra = sc->sc_have_more;
+    return 0;
 
   default:
     break;

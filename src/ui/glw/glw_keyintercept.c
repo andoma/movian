@@ -36,6 +36,7 @@ typedef struct glw_keyintercept {
 
 } glw_keyintercept_t;
 
+#if 0
 
 /**
  *
@@ -86,6 +87,7 @@ ki_handle_event(glw_keyintercept_t *ki, event_t *e)
   }
   return 0;
 }
+#endif
 
 /**
  *
@@ -134,11 +136,13 @@ glw_keyintercept_callback(glw_t *w, void *opaque,
     glw_copy_constraints(w, extra);
     return 1;
 
+#if 0
   case GLW_SIGNAL_EVENT_BUBBLE:
     if(w->glw_flags2 & GLW2_ENABLED)
       return ki_handle_event((glw_keyintercept_t *)w, extra);
     else
       return 0;
+#endif
   }
   return 0;
 }

@@ -248,8 +248,6 @@ typedef enum {
   GLW_SIGNAL_CHILD_DESTROYED,
   GLW_SIGNAL_CHILD_MOVED,
 
-  GLW_SIGNAL_EVENT_BUBBLE,
-
   /**
    * Sent to widget when its focused child is changed.
    * Argument is newly focused child.
@@ -456,6 +454,11 @@ typedef struct glw_class {
    *
    */
   int (*gc_send_event)(struct glw *w, struct event *e);
+
+  /**
+   *
+   */
+  int (*gc_bubble_event)(struct glw *w, struct event *e);
 
   /**
    *
@@ -1213,6 +1216,8 @@ glw_t *glw_get_next_n(glw_t *c, int count);
 
 int glw_event(glw_root_t *gr, struct event *e);
 
+int glw_root_event_handler(glw_root_t *gr, event_t *e);
+
 int glw_event_to_widget(glw_t *w, struct event *e, int local);
 
 void glw_inject_event(glw_root_t *gr, event_t *e);
@@ -1238,7 +1243,7 @@ void glw_signal_handler_unregister(glw_t *w, glw_callback_t *func,
 #define glw_signal_handler_int(w, func) \
  glw_signal_handler_register(w, func, NULL, GLW_SIGNAL_PRI_INTERNAL)
 
-int glw_signal0(glw_t *w, glw_signal_t sig, void *extra);
+void glw_signal0(glw_t *w, glw_signal_t sig, void *extra);
 
 static inline int
 glw_send_event(glw_t *w, event_t *e)
@@ -1252,6 +1257,13 @@ glw_send_pointer_event(glw_t *w, const glw_pointer_event_t *gpe)
 {
   const glw_class_t *gc = w->glw_class;
   return gc->gc_pointer_event != NULL && gc->gc_pointer_event(w, gpe);
+}
+
+static inline int
+glw_bubble_event(glw_t *w, event_t *e)
+{
+  const glw_class_t *gc = w->glw_class;
+  return gc->gc_bubble_event != NULL && gc->gc_bubble_event(w, e);
 }
 
 int glw_event_distribute_to_childs(glw_t *w, event_t *e);

@@ -161,8 +161,9 @@ glw_slideshow_update_playstatus(glw_slideshow_t *s)
  *
  */
 static int
-glw_slideshow_event(glw_slideshow_t *s, event_t *e)
+glw_slideshow_event(glw_t *w, event_t *e)
 {
+  glw_slideshow_t *s = (glw_slideshow_t *)w;
   glw_t *c;
   event_int_t *eu = (event_int_t *)e;
 
@@ -215,12 +216,7 @@ static int
 glw_slideshow_callback(glw_t *w, void *opaque, glw_signal_t signal,
 		       void *extra)
 {
-  glw_slideshow_t *s = (glw_slideshow_t *)w;
-
   switch(signal) {
-  case GLW_SIGNAL_EVENT_BUBBLE:
-    return glw_slideshow_event(s, extra);
-
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
     if(w->glw_focused == extra)
       glw_copy_constraints(w, extra);
@@ -301,6 +297,7 @@ static glw_class_t glw_slideshow = {
   .gc_layout = glw_slideshow_layout,
   .gc_render = glw_slideshow_render,
   .gc_signal_handler = glw_slideshow_callback,
+  .gc_bubble_event = glw_slideshow_event,
 };
 
 GLW_REGISTER_CLASS(glw_slideshow);

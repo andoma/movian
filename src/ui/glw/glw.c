@@ -66,44 +66,6 @@ glw_cond_wait(glw_root_t *gr, hts_cond_t *c)
 /**
  *
  */
-static int
-top_event_handler(glw_t *w, void *opaque, glw_signal_t sig, void *extra)
-{
-  event_t *e = extra;
-  glw_root_t *gr = opaque;
-
-  if(sig != GLW_SIGNAL_EVENT_BUBBLE)
-    return 0;
-
-  if(e->e_type_x == EVENT_KEYDESC)
-    return 0;
-
-  if(event_is_action(e, ACTION_ENABLE_SCREENSAVER)) {
-    gr->gr_screensaver_force_enable = 1;
-
-  } else if(event_is_action(e, ACTION_NAV_BACK) ||
-	    event_is_action(e, ACTION_NAV_FWD) ||
-	    event_is_action(e, ACTION_HOME) ||
-	    event_is_action(e, ACTION_PLAYQUEUE) ||
-	    event_is_action(e, ACTION_RELOAD_DATA) ||
-	    event_is_type(e, EVENT_OPENURL)) {
-
-    prop_t *p = prop_get_by_name(PNVEC("nav", "eventsink"), 0,
-                                 PROP_TAG_ROOT, gr->gr_prop_nav,
-                                 NULL);
-    prop_send_ext_event(p, e);
-    prop_ref_dec(p);
-  } else {
-    event_addref(e);
-    event_dispatch(e);
-  }
-
-  return 1;
-}
-
-/**
- *
- */
 static void
 glw_update_sizes(glw_root_t *gr)
 {
@@ -281,8 +243,6 @@ glw_load_universe(glw_root_t *gr)
 				    NULL, NULL, NULL, 0, 1);
 
   rstr_release(universe);
-
-  glw_signal_handler_register(gr->gr_universe, top_event_handler, gr, 1000);
 }
 
 /**
@@ -707,7 +667,7 @@ glw_signal_handler_unregister(glw_t *w, glw_callback_t *func, void *opaque)
 /**
  *
  */
-int
+void
 glw_signal0(glw_t *w, glw_signal_t sig, void *extra)
 {
   glw_signal_handler_t *x, *gsh = LIST_FIRST(&w->glw_signal_handlers);
@@ -731,11 +691,10 @@ glw_signal0(glw_t *w, glw_signal_t sig, void *extra)
       }
 
       if(r)
-	return 1;
+	return;
     }
     gsh = LIST_NEXT(gsh, gsh_link);
   }
-  return 0;
 }
 
 
@@ -1445,6 +1404,41 @@ glw_event_to_widget(glw_t *w, event_t *e, int local)
   return glw_navigate(w, e, local);
 }
 
+
+
+/**
+ *
+ */
+int
+glw_root_event_handler(glw_root_t *gr, event_t *e)
+{
+  if(e->e_type_x == EVENT_KEYDESC)
+    return 0;
+
+  if(event_is_action(e, ACTION_ENABLE_SCREENSAVER)) {
+    gr->gr_screensaver_force_enable = 1;
+
+  } else if(event_is_action(e, ACTION_NAV_BACK) ||
+	    event_is_action(e, ACTION_NAV_FWD) ||
+	    event_is_action(e, ACTION_HOME) ||
+	    event_is_action(e, ACTION_PLAYQUEUE) ||
+	    event_is_action(e, ACTION_RELOAD_DATA) ||
+	    event_is_type(e, EVENT_OPENURL)) {
+
+    prop_t *p = prop_get_by_name(PNVEC("nav", "eventsink"), 0,
+                                 PROP_TAG_ROOT, gr->gr_prop_nav,
+                                 NULL);
+    prop_send_ext_event(p, e);
+    prop_ref_dec(p);
+  } else {
+    event_addref(e);
+    event_dispatch(e);
+  }
+  return 1;
+}
+
+
+
 /**
  *
  */
@@ -1460,13 +1454,15 @@ glw_event(glw_root_t *gr, event_t *e)
     while((w = w->glw_parent) != NULL) {
       if(glw_event_map_intercept(w, e))
 	return 1;
-      if(glw_signal0(w, GLW_SIGNAL_EVENT_BUBBLE, e))
+      w->glw_flags &= ~GLW_FLOATING_FOCUS;
+      if(glw_bubble_event(w, e))
 	return 1;
     }
   }
   if(glw_event_map_intercept(gr->gr_universe, e))
     return 1;
-  return 0;
+
+  return glw_root_event_handler(gr, e);
 }
 
 

@@ -255,8 +255,9 @@ glw_move_item(glw_t *w, action_type_t how)
 	continue;
       }
     }
-    if(mop.steps && glw_signal0(w, GLW_SIGNAL_MOVE, &mop))
-      return 1;
+    if(mop.steps)
+       glw_signal0(w, GLW_SIGNAL_MOVE, &mop);
+    return 1;
   }
   return 0;
 }
@@ -271,8 +272,9 @@ dowrap(glw_t *w)
   if(!glw_settings.gs_wrap)
     return 0;
 
-  int r = !glw_signal0(w, GLW_SIGNAL_WRAP_CHECK, NULL);
-  return r;
+  int x = 0;
+  glw_signal0(w, GLW_SIGNAL_WRAP_CHECK, &x);
+  return x;
 }
 
 

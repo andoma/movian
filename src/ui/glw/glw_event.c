@@ -25,20 +25,26 @@
 #include "glw.h"
 #include "glw_event.h"
 
+
 /**
  *
  */
 static void
 event_bubble(glw_t *w, event_t *e)
 {
+  glw_root_t *gr = w->glw_root;
   if(e->e_nav == NULL)
     e->e_nav = prop_ref_inc(w->glw_root->gr_prop_nav);
 
   while(w != NULL) {
-    if(glw_signal0(w, GLW_SIGNAL_EVENT_BUBBLE, e))
+    w->glw_flags &= ~GLW_FLOATING_FOCUS;
+    if(glw_bubble_event(w, e))
       return;
     w = w->glw_parent;
   }
+
+  if(!glw_root_event_handler(gr, e))
+    event_release(e);
 }
 
 

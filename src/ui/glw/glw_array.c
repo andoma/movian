@@ -540,10 +540,6 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     glw_array_scroll(a, extra);
     break;
 
-  case GLW_SIGNAL_EVENT_BUBBLE:
-    w->glw_flags &= ~GLW_FLOATING_FOCUS;
-    break;
-
   case GLW_SIGNAL_CHILD_MOVED:
     scroll_to_me(a, w->glw_focused);
     break;

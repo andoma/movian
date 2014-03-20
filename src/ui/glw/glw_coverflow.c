@@ -204,10 +204,6 @@ glw_coverflow_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   default:
     break;
 
-  case GLW_SIGNAL_EVENT_BUBBLE:
-    w->glw_flags &= ~GLW_FLOATING_FOCUS;
-    break;
-
   case GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE:
     gc->scroll_to_me = extra;
     w->glw_flags &= ~GLW_FLOATING_FOCUS;
