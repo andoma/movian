@@ -481,7 +481,7 @@ slider_bind_by_id(glw_slider_t *s, const char *name)
     return;
 
   s->bound_widget = t;
-  glw_signal_handler_register(t, slider_bound_callback, s, 1000);
+  glw_signal_handler_register(t, slider_bound_callback, s);
   t->glw_flags |= GLW_UPDATE_METRICS;
 }
 

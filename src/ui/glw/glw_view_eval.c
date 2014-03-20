@@ -1051,24 +1051,24 @@ eval_dynamic(glw_t *w, token_t *rpn, struct glw_rctx *rc,
   glw_view_free_chain(ec.gr, ec.alloc);
 
   if(ec.dynamic_eval & GLW_VIEW_DYNAMIC_EVAL_EVERY_FRAME)
-    glw_signal_handler_register(w, eval_dynamic_every_frame_sig, rpn, 1000);
+    glw_signal_handler_register(w, eval_dynamic_every_frame_sig, rpn);
   else
     glw_signal_handler_unregister(w, eval_dynamic_every_frame_sig, rpn);
 
   if(ec.dynamic_eval & GLW_VIEW_DYNAMIC_EVAL_FOCUSED_CHILD_CHANGE)
     glw_signal_handler_register(w, eval_dynamic_focused_child_change_sig,
-				rpn, 1000);
+				rpn);
   else
     glw_signal_handler_unregister(w, eval_dynamic_focused_child_change_sig,
 				  rpn);
 
   if(ec.dynamic_eval & GLW_VIEW_DYNAMIC_EVAL_FHP_CHANGE)
-    glw_signal_handler_register(w, eval_dynamic_fhp_change_sig, rpn, 1000);
+    glw_signal_handler_register(w, eval_dynamic_fhp_change_sig, rpn);
   else
     glw_signal_handler_unregister(w, eval_dynamic_fhp_change_sig, rpn);
 
   if(ec.dynamic_eval & GLW_VIEW_DYNAMIC_EVAL_WIDGET_META)
-    glw_signal_handler_register(w, eval_dynamic_widget_meta_sig, rpn, 1000);
+    glw_signal_handler_register(w, eval_dynamic_widget_meta_sig, rpn);
   else
     glw_signal_handler_unregister(w, eval_dynamic_widget_meta_sig, rpn);
 }
@@ -1295,7 +1295,7 @@ cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
 
   prop_tag_set(p, sc, c);
 
-  glw_signal_handler_register(c->c_w, clone_sig_handler, c, 1000);
+  glw_signal_handler_register(c->c_w, clone_sig_handler, c);
 
   if(flags & PROP_ADD_SELECTED && parent->glw_class->gc_select_child != NULL)
     parent->glw_class->gc_select_child(parent, c->c_w, NULL);
@@ -2576,17 +2576,17 @@ glw_view_eval_block(token_t *t, glw_view_eval_context_t *ec)
       w->glw_dynamic_expressions = t;
 
       if(copy & GLW_VIEW_DYNAMIC_EVAL_EVERY_FRAME)
-	glw_signal_handler_register(w, eval_dynamic_every_frame_sig, t, 1000);
+	glw_signal_handler_register(w, eval_dynamic_every_frame_sig, t);
 
       if(copy & GLW_VIEW_DYNAMIC_EVAL_FOCUSED_CHILD_CHANGE)
 	glw_signal_handler_register(w, eval_dynamic_focused_child_change_sig,
-				    t, 1000);
+				    t);
 
       if(copy & GLW_VIEW_DYNAMIC_EVAL_FHP_CHANGE)
-	glw_signal_handler_register(w, eval_dynamic_fhp_change_sig, t, 1000);
+	glw_signal_handler_register(w, eval_dynamic_fhp_change_sig, t);
 
       if(copy & GLW_VIEW_DYNAMIC_EVAL_WIDGET_META)
-	glw_signal_handler_register(w, eval_dynamic_widget_meta_sig, t, 1000);
+	glw_signal_handler_register(w, eval_dynamic_widget_meta_sig, t);
 
       continue;
       

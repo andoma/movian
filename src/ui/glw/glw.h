@@ -901,7 +901,6 @@ typedef struct glw_signal_handler {
   LIST_ENTRY(glw_signal_handler) gsh_link;
   glw_callback_t *gsh_func;
   void *gsh_opaque;
-  int16_t gsh_pri;
   int16_t gsh_defer_remove;
 } glw_signal_handler_t;
 
@@ -1232,16 +1231,10 @@ int glw_navigate(glw_t *w, struct event *e, int local);
 
 glw_t *glw_find_neighbour(glw_t *w, const char *id);
 
-#define GLW_SIGNAL_PRI_INTERNAL 100
-
-void glw_signal_handler_register(glw_t *w, glw_callback_t *func, void *opaque, 
-				 int pri);
+void glw_signal_handler_register(glw_t *w, glw_callback_t *func, void *opaque);
 
 void glw_signal_handler_unregister(glw_t *w, glw_callback_t *func,
 				   void *opaque);
-
-#define glw_signal_handler_int(w, func) \
- glw_signal_handler_register(w, func, NULL, GLW_SIGNAL_PRI_INTERNAL)
 
 void glw_signal0(glw_t *w, glw_signal_t sig, void *extra);
 

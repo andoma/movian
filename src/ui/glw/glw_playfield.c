@@ -130,7 +130,7 @@ detach(glw_t *s, glw_t *d)
   s->glw_parent_detached = d;
   if(d != NULL) {
     d->glw_class->gc_detach_control(d, 1);
-    glw_signal_handler_register(d, destroy_detached_callback, s, 1000);
+    glw_signal_handler_register(d, destroy_detached_callback, s);
   }
 }
 

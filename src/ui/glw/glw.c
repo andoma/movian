@@ -327,9 +327,6 @@ glw_create(glw_root_t *gr, const glw_class_t *class,
   if(class->gc_ctor != NULL)
     class->gc_ctor(w);
 
-  if(class->gc_signal_handler != NULL)
-    glw_signal_handler_int(w, class->gc_signal_handler);
-
    return w;
 }
 
@@ -613,30 +610,22 @@ glw_destroy(glw_t *w)
  *
  */
 void
-glw_signal_handler_register(glw_t *w, glw_callback_t *func, void *opaque, 
-			    int pri)
+glw_signal_handler_register(glw_t *w, glw_callback_t *func, void *opaque)
 {
-  glw_signal_handler_t *gsh, *p = NULL;
+  glw_signal_handler_t *gsh;
 
   LIST_FOREACH(gsh, &w->glw_signal_handlers, gsh_link) {
     if(gsh->gsh_func == func && gsh->gsh_opaque == opaque)
       return;
 
-    if(gsh->gsh_pri < pri)
-      p = gsh;
   } 
 
   gsh = malloc(sizeof(glw_signal_handler_t));
   gsh->gsh_func   = func;
   gsh->gsh_opaque = opaque;
-  gsh->gsh_pri    = pri;
   gsh->gsh_defer_remove = 0;
 
-  if(p == NULL) {
-    LIST_INSERT_HEAD(&w->glw_signal_handlers, gsh, gsh_link);
-  } else {
-    LIST_INSERT_AFTER(p, gsh, gsh_link);
-  }
+  LIST_INSERT_HEAD(&w->glw_signal_handlers, gsh, gsh_link);
 }
 
 /*
@@ -672,6 +661,9 @@ glw_signal0(glw_t *w, glw_signal_t sig, void *extra)
 {
   glw_signal_handler_t *x, *gsh = LIST_FIRST(&w->glw_signal_handlers);
   int r;
+
+  if(w->glw_class->gc_signal_handler != NULL)
+    w->glw_class->gc_signal_handler(w, NULL, sig, extra);
 
   while(gsh != NULL) {
     if(gsh->gsh_func != NULL) {
