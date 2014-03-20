@@ -74,7 +74,7 @@ glw_throbber3d_layout(glw_t *w, const glw_rctx_t *rc)
     return;
 
   gt->angle += 2;
-  gr_schedule_refresh(w->glw_root, 0);
+  glw_need_refresh(w->glw_root, 0);
 }
 
 
@@ -172,7 +172,7 @@ glw_throbber_layout(glw_t *w, const glw_rctx_t *rc)
   if(w->glw_alpha < 0.01)
     return;
 
-  gr_schedule_refresh(w->glw_root, 0);
+  glw_need_refresh(w->glw_root, 0);
   gt->angle += 0.5;
   gt->o++;
 }

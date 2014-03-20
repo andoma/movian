@@ -66,7 +66,7 @@ glw_loader_layout(glw_t *w, const glw_rctx_t *rc)
       GLW_MIN(c->glw_parent_vl_cur + a->delta, c->glw_parent_vl_tgt);
 
     if(n != c->glw_parent_vl_cur)
-      gr_schedule_refresh(gr, 0);
+      glw_need_refresh(gr, 0);
 
     c->glw_parent_vl_cur = n;
 

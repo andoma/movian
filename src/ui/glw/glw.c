@@ -2536,7 +2536,7 @@ glw_lp(float *v, glw_root_t *gr, float target, float alpha)
     return;
   }
   *v = out;
-  gr_schedule_refresh(gr, 0);
+  glw_need_refresh(gr, 0);
 }
 
 
@@ -2581,7 +2581,7 @@ glw_attrib_set_rgb(glw_rgb_t *rgb, const float *src)
  */
 #ifdef GLW_TRACK_REFRESH
 void
-gr_schedule_refresh0(glw_root_t *gr, int how, const char *file, int line)
+glw_need_refresh0(glw_root_t *gr, int how, const char *file, int line)
 {
   int flags = GLW_REFRESH_FLAG_LAYOUT;
 

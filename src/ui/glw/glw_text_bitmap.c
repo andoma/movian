@@ -352,7 +352,7 @@ glw_text_bitmap_layout(glw_t *w, const glw_rctx_t *rc)
     (w->glw_class == &glw_text && glw_is_focused(w));
 
   if(gtb->gtb_paint_cursor && rc->rc_alpha > 0.01)
-    gr_schedule_refresh(gr, 0);
+    glw_need_refresh(gr, 0);
 
   gtb->gtb_need_layout = 0;
 
@@ -1134,7 +1134,7 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
 
   glw_unref(&gtb->w);
 
-  gr_schedule_refresh(gr, 0);
+  glw_need_refresh(gr, 0);
 
   if(gtb->gtb_state == GTB_RENDERING) {
     gtb->gtb_state = GTB_VALID;

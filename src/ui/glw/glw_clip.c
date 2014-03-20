@@ -67,7 +67,7 @@ glw_clip_layout(glw_t *w, const glw_rctx_t *rc)
 
   if(gc->gc_clip_change) {
     glw_root_t *gr = w->glw_root;
-    gr_schedule_refresh(gr, 0);
+    glw_need_refresh(gr, 0);
     gc->gc_clip_change = 0;
   }
 

@@ -119,7 +119,7 @@ glw_bar_layout(glw_t *w, const glw_rctx_t *rc)
 			 gb->gb_col1[2],
 			 1.0);
 
-    gr_schedule_refresh(w->glw_root, 0);
+    glw_need_refresh(w->glw_root, 0);
   }
 }
 

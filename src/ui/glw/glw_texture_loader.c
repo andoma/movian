@@ -327,7 +327,7 @@ loader_thread(void *aux)
 	    glt->glt_orientation   = img->im_orientation;
 
 	    glt->glt_size          = glw_tex_backend_load(gr, glt, pm);
-	    gr_schedule_refresh(gr, 0);
+	    glw_need_refresh(gr, 0);
 	  }
 	}
 

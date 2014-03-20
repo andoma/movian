@@ -70,7 +70,7 @@ update_value_delta(glw_slider_t *s, float d)
       gs.value = s->value;
       glw_signal0(s->bound_widget, GLW_SIGNAL_SCROLL, &gs);
     }
-    gr_schedule_refresh(s->w.glw_root, 0);
+    glw_need_refresh(s->w.glw_root, 0);
   }
 }
 

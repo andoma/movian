@@ -133,7 +133,7 @@ glw_deck_layout(glw_t *w, const glw_rctx_t *rc)
   float v = GLW_MIN(gd->v + gd->delta, 1.0);
   if(v != gd->v) {
     gd->v = v;
-    gr_schedule_refresh(w->glw_root, 0);
+    glw_need_refresh(w->glw_root, 0);
   }
 
   if(gd->v == 1)

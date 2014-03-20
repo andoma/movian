@@ -1367,15 +1367,15 @@ void glw_project(glw_rect_t *r, const glw_rctx_t *rc, const glw_root_t *gr);
 
 #ifdef GLW_TRACK_REFRESH
 
-#define gr_schedule_refresh(gr, how) \
-  gr_schedule_refresh0(gr, how, __FILE__, __LINE__)
+#define glw_need_refresh(gr, how) \
+  glw_need_refresh0(gr, how, __FILE__, __LINE__)
 
-void gr_schedule_refresh0(glw_root_t *gr, int how, const char *file, int line);
+void glw_need_refresh0(glw_root_t *gr, int how, const char *file, int line);
 
 #else
 
 static inline void
-gr_schedule_refresh(glw_root_t *gr, int how)
+glw_need_refresh(glw_root_t *gr, int how)
 {
   int flags = GLW_REFRESH_FLAG_LAYOUT;
 

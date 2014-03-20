@@ -250,7 +250,7 @@ static void
 set_weight(glw_t *w, float v)
 {
   glw_conf_constraints(w, 0, 0, v, GLW_CONSTRAINT_CONF_W);
-  gr_schedule_refresh(w->glw_root, 0);
+  glw_need_refresh(w->glw_root, 0);
 }
 
 
@@ -264,7 +264,7 @@ set_alpha(glw_t *w, float v)
     return;
 
   w->glw_alpha = v;
-  gr_schedule_refresh(w->glw_root, 0);
+  glw_need_refresh(w->glw_root, 0);
 }
 
 
@@ -279,7 +279,7 @@ set_blur(glw_t *w, float v)
   if(w->glw_sharpness == v)
     return;
   w->glw_sharpness = v;
-  gr_schedule_refresh(w->glw_root, 0);
+  glw_need_refresh(w->glw_root, 0);
 }
 
 
@@ -287,7 +287,7 @@ set_blur(glw_t *w, float v)
  *
  */
 static void
-attr_schedule_refresh(glw_root_t *gr, const token_t *t,
+attr_need_refresh(glw_root_t *gr, const token_t *t,
                       const token_attrib_t *a, int how)
 {
 
@@ -333,7 +333,7 @@ set_number_int(glw_t *w, const token_attrib_t *a, const token_t *t, int v)
   }
 
   if(r)
-    attr_schedule_refresh(w->glw_root, t, a, r);
+    attr_need_refresh(w->glw_root, t, a, r);
 }
 
 
@@ -359,7 +359,7 @@ set_number_float(glw_t *w, const token_attrib_t *a, const token_t *t, float v)
   }
 
   if(r)
-    attr_schedule_refresh(w->glw_root, t, a, r);
+    attr_need_refresh(w->glw_root, t, a, r);
 }
 
 
@@ -457,7 +457,7 @@ static void
 set_width(glw_t *w, int v)
 {
   glw_conf_constraints(w, v, 0, 0, GLW_CONSTRAINT_CONF_X);
-  gr_schedule_refresh(w->glw_root, 0);
+  glw_need_refresh(w->glw_root, 0);
 }
 
 
@@ -468,7 +468,7 @@ static void
 set_height(glw_t *w, int v)
 {
   glw_conf_constraints(w, 0, v, 0, GLW_CONSTRAINT_CONF_Y);
-  gr_schedule_refresh(w->glw_root, 0);
+  glw_need_refresh(w->glw_root, 0);
 }
 
 
@@ -479,7 +479,7 @@ static void
 set_divider(glw_t *w, int v)
 {
   glw_conf_constraints(w, 0, 0, 0, GLW_CONSTRAINT_CONF_D);
-  gr_schedule_refresh(w->glw_root, 0);
+  glw_need_refresh(w->glw_root, 0);
 }
 
 
@@ -540,7 +540,7 @@ set_float3(glw_view_eval_context_t *ec, const token_attrib_t *a,
     return 0;
   }
   if(r)
-    attr_schedule_refresh(w->glw_root, t, a, r);
+    attr_need_refresh(w->glw_root, t, a, r);
 
   return 0;
 }
@@ -606,7 +606,7 @@ set_float4(glw_view_eval_context_t *ec, const token_attrib_t *a,
     return 0;
   }
   if(r)
-    attr_schedule_refresh(w->glw_root, t, a, r);
+    attr_need_refresh(w->glw_root, t, a, r);
 
   return 0;
 }
@@ -679,7 +679,7 @@ set_padding(glw_t *w, const int16_t *vec4)
 {
   if(w->glw_class->gc_set_padding != NULL) {
     w->glw_class->gc_set_padding(w, vec4);
-    gr_schedule_refresh(w->glw_root, 0);
+    glw_need_refresh(w->glw_root, 0);
   }
 }
 
@@ -692,7 +692,7 @@ set_border(glw_t *w, const int16_t *vec4)
 {
   if(w->glw_class->gc_set_border != NULL) {
     w->glw_class->gc_set_border(w, vec4);
-    gr_schedule_refresh(w->glw_root, 0);
+    glw_need_refresh(w->glw_root, 0);
   }
 }
 
@@ -705,7 +705,7 @@ set_margin(glw_t *w, const int16_t *vec4)
 {
   if(w->glw_class->gc_set_margin != NULL) {
     w->glw_class->gc_set_margin(w, vec4);
-    gr_schedule_refresh(w->glw_root, 0);
+    glw_need_refresh(w->glw_root, 0);
   }
 }
 
@@ -737,7 +737,7 @@ set_align(glw_view_eval_context_t *ec, const token_attrib_t *a,
     return glw_view_seterr(ec->ei, t, "Invalid assignment for attribute %s",
 			    a->name);
   ec->w->glw_alignment = v;
-  gr_schedule_refresh(ec->w->glw_root, 0);
+  glw_need_refresh(ec->w->glw_root, 0);
   return 0;
 }
 
@@ -767,7 +767,7 @@ set_transition_effect(glw_view_eval_context_t *ec, const token_attrib_t *a,
 
   if(ec->w->glw_class->gc_set_int != NULL)
     ec->w->glw_class->gc_set_int(ec->w, GLW_ATTRIB_TRANSITION_EFFECT, v);
-  gr_schedule_refresh(ec->w->glw_root, 0);
+  glw_need_refresh(ec->w->glw_root, 0);
   return 0;
 }
 
@@ -832,7 +832,7 @@ mod_hidden(glw_view_eval_context_t *ec, const token_attrib_t *a,
       return 0;
     glw_unhide(w);
   }
-  gr_schedule_refresh(w->glw_root, 0);
+  glw_need_refresh(w->glw_root, 0);
   return 0;
 }
 
@@ -851,7 +851,7 @@ mod_flags2(glw_t *w, int set, int clr)
 
   if((set | clr) && w->glw_class->gc_mod_flags2 != NULL)
     w->glw_class->gc_mod_flags2(w, set, clr);
-  gr_schedule_refresh(w->glw_root, 0);
+  glw_need_refresh(w->glw_root, 0);
 }
 
 
@@ -863,7 +863,7 @@ mod_text_flags(glw_t *w, int set, int clr)
 {
   if(w->glw_class->gc_mod_text_flags != NULL)
     w->glw_class->gc_mod_text_flags(w, set, clr);
-  gr_schedule_refresh(w->glw_root, 0);
+  glw_need_refresh(w->glw_root, 0);
 }
 
 
@@ -875,7 +875,7 @@ mod_img_flags(glw_t *w, int set, int clr)
 {
   if(w->glw_class->gc_mod_image_flags != NULL)
     w->glw_class->gc_mod_image_flags(w, set, clr);
-  gr_schedule_refresh(w->glw_root, 0);
+  glw_need_refresh(w->glw_root, 0);
 }
 
 
@@ -887,7 +887,7 @@ mod_video_flags(glw_t *w, int set, int clr)
 {
   if(w->glw_class->gc_mod_video_flags != NULL)
     w->glw_class->gc_mod_video_flags(w, set, clr);
-  gr_schedule_refresh(w->glw_root, 0);
+  glw_need_refresh(w->glw_root, 0);
 }
 
 
@@ -987,7 +987,7 @@ set_source(glw_view_eval_context_t *ec, const token_attrib_t *a,
   if(w->glw_class->gc_set_source != NULL)
     w->glw_class->gc_set_source(w, r);
 
-  gr_schedule_refresh(w->glw_root, 0);
+  glw_need_refresh(w->glw_root, 0);
   rstr_release(r);
   return 0;
 }
