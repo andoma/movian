@@ -31,6 +31,8 @@
 #include "subtitles.h"
 #include "misc/charset_detector.h"
 
+// #define ASS_DEBUG
+
 /**
  *
  */
@@ -399,7 +401,9 @@ ass_decode_lines(ass_decoder_ctx_t *adc, char *s)
 
   for(; l = strcspn(s, "\r\n"), *s; s += l+1+strspn(s+l+1, "\r\n")) {
     s[l] = 0;
-    //    printf("%s\n", s);
+#ifdef ASS_DEBUG
+    printf("ass/line: %s\n", s);
+#endif
     if(ass_decode_line(adc, s))
       break;
   }
@@ -516,7 +520,9 @@ ass_handle_override(ass_dialoge_t *ad, const char *src, int len,
       // Alignment
       ad->ad_alignment = atoi(str+2);
     } else {
-      //      TRACE(TRACE_DEBUG, "ASS", "Can't handle override: %s", str);
+#ifdef ASS_DEBUG
+      printf("ass: Can't handle override: %s\n", str);
+#endif
     }
   }
 }
@@ -544,6 +550,10 @@ ad_dialogue_decode(const ass_decoder_ctx_t *adc, const char *line,
 
   if(fmt == NULL)
     return NULL;
+
+#ifdef ASS_DEBUG
+  printf("ass/dialogue: %s\n", line);
+#endif
 
   while(*fmt && *line && *line != '\n' && *line != '\r') {
     gettoken(key, sizeof(key), &fmt);
