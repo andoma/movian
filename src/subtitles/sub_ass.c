@@ -448,6 +448,11 @@ ad_txt_append(ass_dialoge_t *ad, int v)
 }
 
 
+static inline int isd(char c)
+{
+  return c >= '0' && c <= '9';
+}
+
 /**
  *
  */
@@ -467,9 +472,9 @@ ass_handle_override(ass_dialoge_t *ad, const char *src, int len,
   while((cmd = strchr(str, '\\')) != NULL) {
   next:
     str = ++cmd;
-    if(str[0] == 'i') {
+    if(str[0] == 'i' && isd(str[1])) {
       ad_txt_append(ad, str[1] == '1' ? TR_CODE_ITALIC_ON : TR_CODE_ITALIC_OFF);
-    } else if(str[0] == 'b') {
+    } else if(str[0] == 'b' && isd(str[1])) {
       ad_txt_append(ad, str[1] == '1' ? TR_CODE_BOLD_ON : TR_CODE_BOLD_OFF);
     } else if(sscanf(str, "fad(%d,%d)", &v1, &v2) == 2) {
       ad->ad_fadein = v1 * 1000;
@@ -478,8 +483,14 @@ ass_handle_override(ass_dialoge_t *ad, const char *src, int len,
       ad->ad_x = v1;
       ad->ad_y = v2;
       ad->ad_absolute_pos = 1;
-    } else if(sscanf(str, "fs(%d)", &v1) == 1) {
-      ad_txt_append(ad, TR_CODE_SIZE_PX + (v1 & 0xff));
+    } else if(!memcmp(str, "fscx", 4)) {
+      v1 = atoi(str + 4);
+      if(v1 > 0)
+	ad_txt_append(ad, TR_CODE_SIZE_PX + (v1 & 0xff));
+    } else if(str[0] == 'f' && str[1] == 's' && isd(str[2])) {
+      v1 = atoi(str + 2);
+      if(v1 > 3)
+	ad_txt_append(ad, TR_CODE_SIZE_PX + (v1 & 0xff));
 
     } else if(str[0] == 'c' || (str[0] == '1' && str[1] == 'c')) {
        ad_txt_append(ad, TR_CODE_COLOR | ass_parse_color(str+2));
