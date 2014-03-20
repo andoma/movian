@@ -380,11 +380,6 @@ glw_slider_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   glw_t *c;
 
   switch(signal) {
-  case GLW_SIGNAL_EVENT:
-    if(w->glw_class == &glw_slider_x)
-      return glw_slider_event_x(w, extra);
-    else
-      return glw_slider_event_y(w, extra);
 
   case GLW_SIGNAL_POINTER_EVENT:
     return pointer_event(w, extra);
@@ -598,6 +593,7 @@ static glw_class_t glw_slider_x = {
   .gc_ctor = glw_slider_ctor,
   .gc_signal_handler = glw_slider_callback,
   .gc_bind_to_property = bind_to_property,
+  .gc_send_event = glw_slider_event_x,
 };
 
 static glw_class_t glw_slider_y = {
@@ -610,6 +606,7 @@ static glw_class_t glw_slider_y = {
   .gc_ctor = glw_slider_ctor,
   .gc_signal_handler = glw_slider_callback,
   .gc_bind_to_property = bind_to_property,
+  .gc_send_event = glw_slider_event_y,
 };
 
 GLW_REGISTER_CLASS(glw_slider_x);

@@ -1439,7 +1439,7 @@ glw_event_to_widget(glw_t *w, event_t *e, int local)
   if(glw_event_map_intercept(w, e))
     return 1;
 
-  if(glw_signal0(w, GLW_SIGNAL_EVENT, e))
+  if(glw_send_event(w, e))
     return 1;
 
   return glw_navigate(w, e, local);

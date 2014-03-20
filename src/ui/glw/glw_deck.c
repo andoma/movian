@@ -154,40 +154,9 @@ static int
 glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   glw_deck_t *gd = (glw_deck_t *)w;
-  glw_t *c, *n;
-  event_t *e;
 
   switch(signal) {
   default:
-    break;
-
-  case GLW_SIGNAL_EVENT:
-    /* Respond to some events ourselfs */
-    e = extra;
-    c = w->glw_selected;
-
-    if(c != NULL && event_is_action(e, ACTION_INCR)) {
-      n = glw_get_next_n(c, 1);
-    } else if(c != NULL && event_is_action(e, ACTION_DECR)) {
-      n = glw_get_prev_n(c, 1);
-    } else {
-      if(w->glw_selected != NULL) {
-	if(glw_signal0(w->glw_selected, GLW_SIGNAL_EVENT, extra))
-	  return 1;
-      }
-      n = NULL;
-    }
-
-    if(n != c && n != NULL) {
-
-      if(n->glw_originating_prop) {
-	// This will bounce back via .gc_select_child
-	prop_select(n->glw_originating_prop);
-      } else {
-	deck_select_child(&gd->w, n, NULL);
-      }
-      return 1;
-    }
     break;
 
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
@@ -196,7 +165,6 @@ glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     return 1;
 
   case GLW_SIGNAL_CHILD_DESTROYED:
-    c = extra;
     if(w->glw_selected == extra)
       clear_constraints(w);
 
@@ -208,6 +176,43 @@ glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
   return 0;
 }
+
+/**
+ *
+ */
+static int
+glw_deck_event(glw_t *w, event_t *e)
+{
+  glw_t *c = w->glw_selected;
+  glw_t *n;
+
+  if(c != NULL && event_is_action(e, ACTION_INCR)) {
+    n = glw_get_next_n(c, 1);
+  } else if(c != NULL && event_is_action(e, ACTION_DECR)) {
+    n = glw_get_prev_n(c, 1);
+  } else {
+    if(w->glw_selected != NULL) {
+      if(glw_send_event(w->glw_selected, e))
+	return 1;
+    }
+    n = NULL;
+  }
+
+  if(n != c && n != NULL) {
+
+    if(n->glw_originating_prop) {
+      // This will bounce back via .gc_select_child
+      prop_select(n->glw_originating_prop);
+    } else {
+      deck_select_child(w, n, NULL);
+    }
+    return 1;
+  }
+  return 0;
+}
+
+
+
 
 /**
  *
@@ -364,6 +369,7 @@ static glw_class_t glw_deck = {
   .gc_signal_handler = glw_deck_callback,
   .gc_select_child = deck_select_child,
   .gc_can_select_child = deck_can_select_child,
+  .gc_send_event = glw_deck_event,
 };
 
 GLW_REGISTER_CLASS(glw_deck);

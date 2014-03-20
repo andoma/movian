@@ -253,8 +253,6 @@ typedef enum {
 
   GLW_SIGNAL_EVENT_BUBBLE,
 
-  GLW_SIGNAL_EVENT,
-
   /**
    * Sent to widget when its focused child is changed.
    * Argument is newly focused child.
@@ -461,6 +459,12 @@ typedef struct glw_class {
    *
    */
   void (*gc_suggest_focus)(struct glw *w, struct glw *c);
+
+  /**
+   *
+   */
+  int (*gc_send_event)(struct glw *w, struct event *e);
+
 
   /**
    * Send a GLW_SIGNAL_... to all listeners
@@ -1238,6 +1242,23 @@ void glw_signal_handler_unregister(glw_t *w, glw_callback_t *func,
  glw_signal_handler_register(w, func, NULL, GLW_SIGNAL_PRI_INTERNAL)
 
 int glw_signal0(glw_t *w, glw_signal_t sig, void *extra);
+
+static inline int
+glw_send_event(glw_t *w, event_t *e)
+{
+  const glw_class_t *gc = w->glw_class;
+  return gc->gc_send_event != NULL && gc->gc_send_event(w, e);
+}
+
+int glw_event_distribute_to_childs(glw_t *w, event_t *e);
+
+int glw_event_to_selected_child(glw_t *w, event_t *e);
+
+
+
+
+
+
 
 #define glw_render0(w, rc) ((w)->glw_class->gc_render(w, rc))
 

@@ -595,29 +595,6 @@ glw_container_z_render(glw_t *w, const glw_rctx_t *rc)
 }
 
 
-/**
- *
- */
-static int
-glw_container_callback(glw_t *w, void *opaque, glw_signal_t signal,
-		       void *extra)
-{
-  glw_t *c;
-
-  switch(signal) {
-  case GLW_SIGNAL_EVENT:
-    TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
-      if(glw_signal0(c, GLW_SIGNAL_EVENT, extra))
-	return 1;
-    break;
-
-  default:
-    break;
-  }
-  return 0;
-}
-
-
 static int
 glw_container_x_callback(glw_t *w, void *opaque, glw_signal_t signal,
 			  void *extra)
@@ -631,7 +608,7 @@ glw_container_x_callback(glw_t *w, void *opaque, glw_signal_t signal,
   case GLW_SIGNAL_CHILD_DESTROYED:
     return glw_container_x_constraints((glw_container_t *)w, extra);
   default:
-    return glw_container_callback(w, opaque, signal, extra);
+    return 0;
   }
 }
 
@@ -648,7 +625,7 @@ glw_container_y_callback(glw_t *w, void *opaque, glw_signal_t signal,
   case GLW_SIGNAL_CHILD_DESTROYED:
     return glw_container_y_constraints((glw_container_t *)w, extra);
   default:
-    return glw_container_callback(w, opaque, signal, extra);
+    return 0;
   }
 }
 
@@ -663,7 +640,7 @@ glw_container_z_callback(glw_t *w, void *opaque, glw_signal_t signal,
   case GLW_SIGNAL_CHILD_DESTROYED:
     return glw_container_z_constraints(w, extra);
   default:
-    return glw_container_callback(w, opaque, signal, extra);
+    return 0;
   }
 }
 
@@ -741,6 +718,7 @@ static glw_class_t glw_container_x = {
   .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION,
   .gc_default_alignment = LAYOUT_ALIGN_LEFT,
   .gc_set_int16_4 = container_set_int16_4,
+  .gc_send_event = glw_event_distribute_to_childs,
 };
 
 static glw_class_t glw_container_y = {
@@ -756,6 +734,7 @@ static glw_class_t glw_container_y = {
   .gc_default_alignment = LAYOUT_ALIGN_TOP,
   .gc_set_int16_4 = container_set_int16_4,
   .gc_retire_child = retire_child,
+  .gc_send_event = glw_event_distribute_to_childs,
 };
 
 static glw_class_t glw_container_z = {
@@ -766,6 +745,7 @@ static glw_class_t glw_container_z = {
   .gc_layout = glw_container_z_layout,
   .gc_render = glw_container_z_render,
   .gc_signal_handler = glw_container_z_callback,
+  .gc_send_event = glw_event_distribute_to_childs,
 };
 
 

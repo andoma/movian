@@ -499,7 +499,7 @@ glw_event_map_internal_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
     if((t = glw_event_find_target(w, g->target)) == NULL) {
       TRACE(TRACE_ERROR, "GLW", "Targeted widget %s not found", g->target);
     } else {
-      glw_signal0(t, GLW_SIGNAL_EVENT, e);
+      glw_send_event(t, e);
     }
   } else {
     event_bubble(w, e);
@@ -548,4 +548,29 @@ glw_event_map_intercept(glw_t *w, event_t *e)
     }
   }
   return 0;
+}
+
+
+/**
+ *
+ */
+int
+glw_event_distribute_to_childs(glw_t *w, event_t *e)
+{
+  glw_t *c;
+
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
+    if(glw_send_event(c, e))
+      return 1;
+  return 0;
+}
+
+
+/**
+ *
+ */
+int
+glw_event_to_selected_child(glw_t *w, event_t *e)
+{
+  return w->glw_selected != NULL && glw_send_event(w->glw_selected, e);
 }

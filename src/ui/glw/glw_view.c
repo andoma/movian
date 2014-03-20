@@ -55,13 +55,7 @@ glw_view_layout(glw_t *w, const glw_rctx_t *rc)
 static int
 glw_view_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
-  glw_t *c = TAILQ_FIRST(&w->glw_childs);
-
   switch(signal) {
-  case GLW_SIGNAL_EVENT:
-    if(c != NULL)
-      return glw_signal0(c, signal, extra);
-    return 0;
 
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
     glw_copy_constraints(w, extra);
@@ -107,6 +101,7 @@ static glw_class_t glw_view = {
   .gc_render = glw_view_render,
   .gc_dtor = glw_view_dtor,
   .gc_signal_handler = glw_view_callback,
+  .gc_send_event = glw_event_distribute_to_childs,
 };
 
 

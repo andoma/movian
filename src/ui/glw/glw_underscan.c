@@ -78,29 +78,12 @@ render(glw_t *w, const glw_rctx_t *rc)
 }
 
 
-static int
-signal_handler(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
-{
-  glw_t *c;
-
-  switch(signal) {
-  case GLW_SIGNAL_EVENT:
-    TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
-      if(glw_signal0(c, GLW_SIGNAL_EVENT, extra))
-	return 1;
-    break;
-  default:
-    break;
-  }
-  return 0;
-}
-
 static glw_class_t glw_underscan = {
   .gc_name = "underscan",
   .gc_instance_size = sizeof(glw_t),
   .gc_layout = layout,
   .gc_render = render,
-  .gc_signal_handler = signal_handler,
+  .gc_send_event = glw_event_distribute_to_childs,
 };
 
 GLW_REGISTER_CLASS(glw_underscan);

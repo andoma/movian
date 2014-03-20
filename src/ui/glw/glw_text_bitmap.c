@@ -560,9 +560,7 @@ static int
 glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
 			 void *extra)
 {
-  glw_text_bitmap_t *gtb = (void *)w;
-  event_t *e;
-  event_int_t *eu;
+  glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
 
   switch(signal) {
   default:
@@ -573,59 +571,63 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
   case GLW_SIGNAL_INACTIVE:
     gtb_inactive(gtb);
     break;
-  case GLW_SIGNAL_EVENT:
-    if(w->glw_class == &glw_label)
-      return 0;
-
-    e = extra;
-
-    if(event_is_action(e, ACTION_BS)) {
-
-      del_char(gtb);
-      gtb_notify(gtb);
-      return 1;
-      
-    } else if(event_is_type(e, EVENT_UNICODE)) {
-
-      eu = extra;
-
-      if(insert_char(gtb, eu->val))
-	gtb_notify(gtb);
-      return 1;
-
-    } else if(event_is_action(e, ACTION_LEFT)) {
-
-      if(gtb->gtb_edit_ptr > 0) {
-	gtb->gtb_edit_ptr--;
-	gtb->gtb_update_cursor = 1;
-	return 1;
-      }
-      return 0;
-
-    } else if(event_is_action(e, ACTION_RIGHT)) {
-
-      if(gtb->gtb_edit_ptr < gtb->gtb_uc_len) {
-	gtb->gtb_edit_ptr++;
-	gtb->gtb_update_cursor = 1;
-	return 1;
-      }
-      return 0;
-
-    } else if(event_is_action(e, ACTION_ACTIVATE)) {
-      if(w->glw_root->gr_open_osk != NULL) {
-
-	gtb_caption_refresh(gtb);
-	w->glw_root->gr_open_osk(w->glw_root, gtb->gtb_description,
-				 gtb->gtb_caption, w,
-				 gtb->gtb_flags & GTB_PASSWORD);
-	return 1;
-      }
-    }
-    return 0;
   }
   return 0;
 }
 
+
+/**
+ *
+ */
+static int
+glw_text_bitmap_event(glw_t *w, event_t *e)
+{
+  glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
+
+  if(event_is_action(e, ACTION_BS)) {
+
+    del_char(gtb);
+    gtb_notify(gtb);
+    return 1;
+      
+  } else if(event_is_type(e, EVENT_UNICODE)) {
+
+    event_int_t *eu = (event_int_t *)e;
+
+    if(insert_char(gtb, eu->val))
+      gtb_notify(gtb);
+    return 1;
+
+  } else if(event_is_action(e, ACTION_LEFT)) {
+
+    if(gtb->gtb_edit_ptr > 0) {
+      gtb->gtb_edit_ptr--;
+      gtb->gtb_update_cursor = 1;
+      return 1;
+    }
+    return 0;
+
+  } else if(event_is_action(e, ACTION_RIGHT)) {
+
+    if(gtb->gtb_edit_ptr < gtb->gtb_uc_len) {
+      gtb->gtb_edit_ptr++;
+      gtb->gtb_update_cursor = 1;
+      return 1;
+    }
+    return 0;
+
+  } else if(event_is_action(e, ACTION_ACTIVATE)) {
+    if(w->glw_root->gr_open_osk != NULL) {
+
+      gtb_caption_refresh(gtb);
+      w->glw_root->gr_open_osk(w->glw_root, gtb->gtb_description,
+			       gtb->gtb_caption, w,
+			       gtb->gtb_flags & GTB_PASSWORD);
+      return 1;
+    }
+  }
+  return 0;
+}
 
 /**
  *
@@ -1397,6 +1399,7 @@ static glw_class_t glw_text = {
 
   .gc_update_text = update_text,
   .gc_set_desc = set_description,
+  .gc_send_event = glw_text_bitmap_event,
 
 };
 

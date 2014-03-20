@@ -110,13 +110,6 @@ glw_layer_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   default:
     break;
 
-  case GLW_SIGNAL_EVENT:
-    if(w->glw_selected != NULL) {
-      if(glw_signal0(w->glw_selected, GLW_SIGNAL_EVENT, extra))
-	return 1;
-    }
-    break;
-
   case GLW_SIGNAL_CHILD_CREATED:
     c->glw_parent_z = 1.0f;
 
@@ -175,6 +168,7 @@ static glw_class_t glw_layer = {
   .gc_render = glw_layer_render,
   .gc_retire_child = glw_layer_retire_child,
   .gc_signal_handler = glw_layer_callback,
+  .gc_send_event = glw_event_to_selected_child,
 };
 
 GLW_REGISTER_CLASS(glw_layer);
