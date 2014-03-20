@@ -574,6 +574,11 @@ cec_callback(void *callback_data, uint32_t param0, uint32_t param1,
     cec_emit_key_down(msg.payload[1]);
     break;
 
+  case VC_CEC_BUTTON_RELEASE:
+    CEC_DEBUG("Key up  : %x (%d,%d)", msg.payload[1],
+	      stop_is_meta_key, play_is_meta_key);
+    break;
+
 
   case VC_CEC_RX:
 
