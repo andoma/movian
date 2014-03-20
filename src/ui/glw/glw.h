@@ -697,6 +697,7 @@ typedef struct glw_root {
   float gr_time_sec;
 
   int gr_need_refresh;
+  int64_t gr_scheduled_refresh;
 
   /**
    * Screensaver
@@ -1385,6 +1386,13 @@ glw_need_refresh(glw_root_t *gr, int how)
 }
 
 #endif
+
+static inline void
+glw_schedule_refresh(glw_root_t *gr, int64_t when)
+{
+  gr->gr_scheduled_refresh = MIN(gr->gr_scheduled_refresh, when);
+}
+
 
 #endif /* GLW_H */
 

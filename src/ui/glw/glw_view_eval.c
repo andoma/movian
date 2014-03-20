@@ -3372,7 +3372,7 @@ glwf_changed(glw_view_eval_context_t *ec, struct token *self,
 	     token_t **argv, unsigned int argc)
 
 {
-  const glw_root_t *gr = ec->w->glw_root;
+  glw_root_t *gr = ec->w->glw_root;
   token_t *a, *b, *c, *r;
   glwf_changed_extra_t *e = self->t_extra;
   int change = 0;
@@ -3498,7 +3498,9 @@ glwf_changed(glw_view_eval_context_t *ec, struct token *self,
   if(e->deadline > gr->gr_frame_start) {
     r->t_float = 1;
     ec->dynamic_eval |= GLW_VIEW_DYNAMIC_EVAL_EVERY_FRAME;
+    glw_schedule_refresh(gr, e->deadline);
   }
+
 
   eval_push(ec, r);
   return 0;
@@ -3614,7 +3616,7 @@ static int
 glwf_scurve(glw_view_eval_context_t *ec, struct token *self,
 	    token_t **argv, unsigned int argc)
 {
-  const glw_root_t *gr = ec->w->glw_root;
+  glw_root_t *gr = ec->w->glw_root;
   token_t *a, *b, *c;
   token_t *r;
   float f, v, tup, tdown;
@@ -3661,6 +3663,7 @@ glwf_scurve(glw_view_eval_context_t *ec, struct token *self,
     v = GLW_S(x);
     s->current = GLW_LERP(v, s->startval, s->target);
     ec->dynamic_eval |= GLW_VIEW_DYNAMIC_EVAL_EVERY_FRAME;
+    glw_schedule_refresh(gr, s->deadline);
   } else {
     s->current = s->target;
   }
@@ -5019,6 +5022,7 @@ glwf_delay(glw_view_eval_context_t *ec, struct token *self,
   if(e->deadline > gr->gr_frame_start) {
     f = e->oldval;
     ec->dynamic_eval |= GLW_VIEW_DYNAMIC_EVAL_EVERY_FRAME;
+    glw_schedule_refresh(gr, e->deadline);
   } else {
     eval_push(ec, a);
     return 0;
