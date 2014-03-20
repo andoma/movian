@@ -971,61 +971,6 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
   return r;
 }
 
-/**
- *
- */
-static int
-eval_dynamic_every_frame_sig(glw_t *w, void *opaque, 
-			     glw_signal_t signal, void *extra)
-{
-  if(signal == GLW_SIGNAL_LAYOUTED)
-    eval_dynamic(w, opaque, extra, NULL, NULL, NULL);
-  return 0;
-}
-
-/**
- *
- */
-static int
-eval_dynamic_focused_child_change_sig(glw_t *w, void *opaque, 
-				      glw_signal_t signal, void *extra)
-{
-  if(signal == GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE ||
-     signal == GLW_SIGNAL_FOCUS_CHILD_AUTOMATIC)
-    eval_dynamic(w, opaque, NULL, NULL, NULL, NULL);
-  return 0;
-}
-
-
-/**
- *
- */
-static int
-eval_dynamic_fhp_change_sig(glw_t *w, void *opaque, 
-			    glw_signal_t signal, void *extra)
-{
-  if(signal == GLW_SIGNAL_FHP_PATH_CHANGED)
-    eval_dynamic(w, opaque, NULL, NULL, NULL, NULL);
-  return 0;
-}
-
-
-/**
- *
- */
-static int
-eval_dynamic_widget_meta_sig(glw_t *w, void *opaque, 
-			     glw_signal_t signal, void *extra)
-{
-  if(signal == GLW_SIGNAL_ACTIVE ||
-     signal == GLW_SIGNAL_INACTIVE ||
-     signal == GLW_SIGNAL_CAN_SCROLL_CHANGED ||
-     signal == GLW_SIGNAL_FULLWINDOW_CONSTRAINT_CHANGED ||
-     signal == GLW_SIGNAL_READINESS ||
-     signal == GLW_SIGNAL_RESELECT_CHANGED)
-    eval_dynamic(w, opaque, NULL, NULL, NULL, NULL);
-  return 0;
-}
 
 /**
  *
@@ -1047,37 +992,63 @@ eval_dynamic(glw_t *w, token_t *rpn, struct glw_rctx *rc,
   ec.sublist = &w->glw_prop_subscriptions;
 
   glw_view_eval_rpn0(rpn, &ec);
+  rpn->t_dynamic_eval = ec.dynamic_eval;
 
   glw_view_free_chain(ec.gr, ec.alloc);
+}
 
-  if(ec.dynamic_eval & GLW_VIEW_DYNAMIC_EVAL_EVERY_FRAME)
-    glw_signal_handler_register(w, eval_dynamic_every_frame_sig, rpn);
-  else
-    glw_signal_handler_unregister(w, eval_dynamic_every_frame_sig, rpn);
 
-  if(ec.dynamic_eval & GLW_VIEW_DYNAMIC_EVAL_FOCUSED_CHILD_CHANGE)
-    glw_signal_handler_register(w, eval_dynamic_focused_child_change_sig,
-				rpn);
-  else
-    glw_signal_handler_unregister(w, eval_dynamic_focused_child_change_sig,
-				  rpn);
+/**
+ *
+ */
+static uint8_t signal_to_eval_mask[GLW_SIGNAL_num] = {
+  [GLW_SIGNAL_LAYOUTED]                = GLW_VIEW_DYNAMIC_EVAL_EVERY_FRAME,
+  [GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE] = GLW_VIEW_DYNAMIC_EVAL_FOCUSED_CHILD_CHANGE,
+  [GLW_SIGNAL_FOCUS_CHILD_AUTOMATIC]   = GLW_VIEW_DYNAMIC_EVAL_FOCUSED_CHILD_CHANGE,
+  [GLW_SIGNAL_FHP_PATH_CHANGED] = GLW_VIEW_DYNAMIC_EVAL_FHP_CHANGE,
+  
+  [GLW_SIGNAL_ACTIVE] = GLW_VIEW_DYNAMIC_EVAL_WIDGET_META,
+  [GLW_SIGNAL_INACTIVE] = GLW_VIEW_DYNAMIC_EVAL_WIDGET_META,
+  [GLW_SIGNAL_CAN_SCROLL_CHANGED] = GLW_VIEW_DYNAMIC_EVAL_WIDGET_META,
+  [GLW_SIGNAL_FULLWINDOW_CONSTRAINT_CHANGED] = GLW_VIEW_DYNAMIC_EVAL_WIDGET_META,
+  [GLW_SIGNAL_READINESS] = GLW_VIEW_DYNAMIC_EVAL_WIDGET_META,
+  [GLW_SIGNAL_RESELECT_CHANGED] = GLW_VIEW_DYNAMIC_EVAL_WIDGET_META,
+};
 
-  if(ec.dynamic_eval & GLW_VIEW_DYNAMIC_EVAL_FHP_CHANGE)
-    glw_signal_handler_register(w, eval_dynamic_fhp_change_sig, rpn);
-  else
-    glw_signal_handler_unregister(w, eval_dynamic_fhp_change_sig, rpn);
+/**
+ *
+ */
+void
+glw_view_eval_signal(glw_t *w, glw_signal_t sig, glw_rctx_t *rc)
+{
+  int mask = signal_to_eval_mask[sig];
+  if(mask == 0)
+    return;
 
-  if(ec.dynamic_eval & GLW_VIEW_DYNAMIC_EVAL_WIDGET_META)
-    glw_signal_handler_register(w, eval_dynamic_widget_meta_sig, rpn);
-  else
-    glw_signal_handler_unregister(w, eval_dynamic_widget_meta_sig, rpn);
+  token_t *t = w->glw_dynamic_expressions;
+  glw_view_eval_context_t ec;
+
+  while(t != NULL) {
+    if(t->t_dynamic_eval & mask) {
+
+      memset(&ec, 0, sizeof(ec));
+      ec.w = w;
+      ec.gr = w->glw_root;
+      ec.rc = rc;
+      ec.sublist = &w->glw_prop_subscriptions;
+
+      glw_view_eval_rpn0(t, &ec);
+      t->t_dynamic_eval = ec.dynamic_eval;
+      glw_view_free_chain(ec.gr, ec.alloc);
+    }
+    t = t->next;
+  }
 }
 
 
 
+
 static void cloner_resequence(sub_cloner_t *sc);
-
-
 
 /**
  *
@@ -2575,19 +2546,7 @@ glw_view_eval_block(token_t *t, glw_view_eval_context_t *ec)
       t->next =  w->glw_dynamic_expressions;
       w->glw_dynamic_expressions = t;
 
-      if(copy & GLW_VIEW_DYNAMIC_EVAL_EVERY_FRAME)
-	glw_signal_handler_register(w, eval_dynamic_every_frame_sig, t);
-
-      if(copy & GLW_VIEW_DYNAMIC_EVAL_FOCUSED_CHILD_CHANGE)
-	glw_signal_handler_register(w, eval_dynamic_focused_child_change_sig,
-				    t);
-
-      if(copy & GLW_VIEW_DYNAMIC_EVAL_FHP_CHANGE)
-	glw_signal_handler_register(w, eval_dynamic_fhp_change_sig, t);
-
-      if(copy & GLW_VIEW_DYNAMIC_EVAL_WIDGET_META)
-	glw_signal_handler_register(w, eval_dynamic_widget_meta_sig, t);
-
+      t->t_dynamic_eval = copy;
       continue;
       
     case TOKEN_FLOAT:

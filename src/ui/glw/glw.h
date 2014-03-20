@@ -315,6 +315,8 @@ typedef enum {
    */
   GLW_SIGNAL_WRAP_CHECK,
 
+  GLW_SIGNAL_num,
+
 } glw_signal_t;
 
 
@@ -1169,6 +1171,8 @@ glw_t *glw_view_create(glw_root_t *gr, rstr_t *url,
 		       glw_t *parent, struct prop *prop,
 		       struct prop *prop_parent, prop_t *args,
 		       struct prop *prop_clone, int cache, int nofail);
+
+void glw_view_eval_signal(glw_t *w, glw_signal_t sig, glw_rctx_t *rc);
 
 /**
  * Transitions

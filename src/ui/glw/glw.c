@@ -665,6 +665,8 @@ glw_signal0(glw_t *w, glw_signal_t sig, void *extra)
   if(w->glw_class->gc_signal_handler != NULL)
     w->glw_class->gc_signal_handler(w, NULL, sig, extra);
 
+  glw_view_eval_signal(w, sig, sig == GLW_SIGNAL_LAYOUTED ? extra : NULL);
+
   while(gsh != NULL) {
     if(gsh->gsh_func != NULL) {
       gsh->gsh_defer_remove = 1;
