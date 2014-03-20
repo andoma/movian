@@ -271,7 +271,7 @@ glw_video_overlay_layout(glw_video_t *gv,
 	break;
       }
 
-      gc->gc_set_padding(w, f);
+      gc->gc_set_int16_4(w, GLW_ATTRIB_PADDING, f);
       glw_layout0(w, rc);
       l->used_height[gvo->gvo_alignment] += w->glw_req_size_y;
     }

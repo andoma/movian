@@ -48,10 +48,8 @@ typedef struct glw_list {
   int16_t saved_width;
   int16_t spacing;
   int16_t scroll_threshold;
-  int16_t padding_left;
-  int16_t padding_right;
-  int16_t padding_top;
-  int16_t padding_bottom;
+
+  int16_t padding[4];
 
   float alpha_falloff;
   float blur_falloff;
@@ -123,8 +121,8 @@ glw_list_layout_y(glw_t *w, const glw_rctx_t *rc)
   int ypos = bd;
   glw_rctx_t rc0 = *rc;
 
-  glw_reposition(&rc0, l->padding_left, rc->rc_height - l->padding_top,
-		 rc->rc_width  - l->padding_right, l->padding_bottom);
+  glw_reposition(&rc0, l->padding[0], rc->rc_height - l->padding[1],
+		 rc->rc_width - l->padding[2], l->padding[3]);
   int height0 = rc0.rc_height - bd * 2;
 
   float IH = 1.0f / rc0.rc_height;
@@ -224,8 +222,8 @@ glw_list_layout_x(glw_t *w, const glw_rctx_t *rc)
   int xpos = bd;
   glw_rctx_t rc0 = *rc;
 
-  glw_reposition(&rc0, l->padding_left, rc->rc_height - l->padding_top,
-		 rc->rc_width  - l->padding_right, l->padding_bottom);
+  glw_reposition(&rc0, l->padding[0], rc->rc_height - l->padding[1],
+		 rc->rc_width - l->padding[2], l->padding[3]);
   int width0 = rc0.rc_width - bd * 2;
 
   float IW = 1.0f / rc0.rc_width;
@@ -375,8 +373,8 @@ glw_list_render_y(glw_t *w, const glw_rctx_t *rc)
   if(l->noclip)
     glw_store_matrix(w, &rc0);
 
-  glw_reposition(&rc0, l->padding_left, rc->rc_height - l->padding_top,
-		 rc->rc_width  - l->padding_right, l->padding_bottom);
+  glw_reposition(&rc0, l->padding[0], rc->rc_height - l->padding[1],
+		 rc->rc_width  - l->padding[2], l->padding[3]);
 
   if(!l->noclip)
     glw_store_matrix(w, &rc0);
@@ -418,8 +416,8 @@ glw_list_render_x(glw_t *w, const glw_rctx_t *rc)
     glw_store_matrix(w, rc);
 
   rc0 = *rc;
-  glw_reposition(&rc0, l->padding_left, rc->rc_height - l->padding_top,
-		 rc->rc_width  - l->padding_right, l->padding_bottom);
+  glw_reposition(&rc0, l->padding[0], rc->rc_height - l->padding[1],
+		 rc->rc_width  - l->padding[2], l->padding[3]);
   height = rc0.rc_height;
   width = rc0.rc_width;
 
@@ -780,14 +778,17 @@ glw_list_suggest_focus(glw_t *w, glw_t *c)
 /**
  *
  */
-static void
-set_padding(glw_t *w, const int16_t *v)
+static int
+glw_list_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v)
 {
   glw_list_t *l = (glw_list_t *)w;
-  l->padding_left   = v[0];
-  l->padding_top    = v[1];
-  l->padding_right  = v[2];
-  l->padding_bottom = v[3];
+
+  switch(attrib) {
+  case GLW_ATTRIB_PADDING:
+    return glw_attrib_set_int16_4(l->padding, v);
+  default:
+    return -1;
+  }
 }
 
 
@@ -808,7 +809,7 @@ static glw_class_t glw_list_y = {
   .gc_signal_handler = glw_list_callback,
   .gc_escape_score = 100,
   .gc_suggest_focus = glw_list_suggest_focus,
-  .gc_set_padding = set_padding,
+  .gc_set_int16_4 = glw_list_set_int16_4,
 };
 
 GLW_REGISTER_CLASS(glw_list_y);
@@ -831,7 +832,7 @@ static glw_class_t glw_list_x = {
   .gc_signal_handler = glw_list_callback,
   .gc_escape_score = 100,
   .gc_suggest_focus = glw_list_suggest_focus,
-  .gc_set_padding = set_padding,
+  .gc_set_int16_4 = glw_list_set_int16_4,
 };
 
 GLW_REGISTER_CLASS(glw_list_x);

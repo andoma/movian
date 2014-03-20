@@ -29,10 +29,7 @@ typedef struct glw_container {
 
   int16_t width;
   int16_t height;
-  int16_t co_padding_left;
-  int16_t co_padding_right;
-  int16_t co_padding_top;
-  int16_t co_padding_bottom;
+  int16_t co_padding[4];
   int16_t co_spacing;
   int16_t co_biggest;
   char co_using_aspect;
@@ -52,7 +49,7 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
 {
   glw_t *c;
   int height = 0;
-  int width = co->co_padding_left + co->co_padding_right;
+  int width = co->co_padding[0] + co->co_padding[2];
   float weight = 0;
   int cflags = 0, f;
   int elements = 0;
@@ -116,7 +113,7 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
   co->width = width;
   co->cflags = cflags;
 
-  height += co->co_padding_bottom + co->co_padding_top;
+  height += co->co_padding[3] + co->co_padding[1];
 
   glw_set_constraints(&co->w, width, height, 0, cflags);
   return 1;
@@ -142,7 +139,7 @@ glw_container_x_layout(glw_t *w, const glw_rctx_t *rc)
   if(co->w.glw_alpha < 0.01f)
     return;
 
-  rc0.rc_height = rc->rc_height - co->co_padding_top - co->co_padding_bottom;
+  rc0.rc_height = rc->rc_height - co->co_padding[1] - co->co_padding[3];
 
   if(co->co_using_aspect) {
     // If any of our childs wants a fixed aspect we need to compute
@@ -159,13 +156,13 @@ glw_container_x_layout(glw_t *w, const glw_rctx_t *rc)
     // Requested pixel size > available width, must scale
     weightavail = 0;
     fixscale = (float)rc->rc_width / width;
-    pos = co->co_padding_left * fixscale;
+    pos = co->co_padding[0] * fixscale;
   } else {
     fixscale = 1;
 
     weightavail = rc->rc_width - width;  // Pixels available for weighted childs
 
-    pos = co->co_padding_left;
+    pos = co->co_padding[0];
 
     if(co->weight_sum == 0) {
 
@@ -231,7 +228,7 @@ glw_container_y_constraints(glw_container_t *co, glw_t *skip)
 {
   glw_t *c;
   int width = 0;
-  int height = co->co_padding_bottom + co->co_padding_top;
+  int height = co->co_padding[3] + co->co_padding[1];
   float weight = 0;
   int cflags = 0, f;
   int elements = 0;
@@ -284,7 +281,7 @@ glw_container_y_constraints(glw_container_t *co, glw_t *skip)
   if(weight)
     cflags &= ~GLW_CONSTRAINT_Y;
 
-  width += co->co_padding_left + co->co_padding_right;
+  width += co->co_padding[0] + co->co_padding[2];
   glw_set_constraints(&co->w, width, height, 0, cflags);
   return 1;
 }
@@ -306,7 +303,7 @@ glw_container_y_layout(glw_t *w, const glw_rctx_t *rc)
   if(co->w.glw_alpha < 0.01f)
     return;
 
-  rc0.rc_width = rc->rc_width - co->co_padding_left - co->co_padding_right;
+  rc0.rc_width = rc->rc_width - co->co_padding[0] - co->co_padding[2];
 
   if(co->co_using_aspect) {
     // If any of our childs wants a fixed aspect we need to compute
@@ -323,14 +320,14 @@ glw_container_y_layout(glw_t *w, const glw_rctx_t *rc)
     // Requested pixel size > available height, must scale
     weightavail = 0;
     fixscale = (float)rc->rc_height / height;
-    pos = co->co_padding_top * fixscale;
+    pos = co->co_padding[1] * fixscale;
   } else {
     fixscale = 1;
 
     // Pixels available for weighted childs
     weightavail = rc->rc_height - height;
 
-    pos = co->co_padding_top;
+    pos = co->co_padding[1];
 
     if(co->weight_sum == 0) {
 
@@ -489,12 +486,12 @@ glw_container_y_render(glw_t *w, const glw_rctx_t *rc)
   if(glw_is_focusable(w))
     glw_store_matrix(w, rc);
 
-  if(co->co_padding_left || co->co_padding_right) {
+  if(co->co_padding[0] || co->co_padding[2]) {
     glw_rctx_t rc1 = *rc;
     glw_reposition(&rc1,
-		   co->co_padding_left,
+		   co->co_padding[0],
 		   rc->rc_height,
-		   rc->rc_width - co->co_padding_right,
+		   rc->rc_width - co->co_padding[2],
 		   0);
     rc = &rc1;
   }
@@ -540,13 +537,13 @@ glw_container_x_render(glw_t *w, const glw_rctx_t *rc)
   if(glw_is_focusable(w))
     glw_store_matrix(w, rc);
 
-  if(co->co_padding_top || co->co_padding_bottom) {
+  if(co->co_padding[1] || co->co_padding[3]) {
     glw_rctx_t rc1 = *rc;
     glw_reposition(&rc1,
 		   0,
-		   rc->rc_height - co->co_padding_top,
+		   rc->rc_height - co->co_padding[1],
 		   rc->rc_width,
-		   co->co_padding_bottom);
+		   co->co_padding[3]);
     rc = &rc1;
   }
 
@@ -698,15 +695,20 @@ glw_container_set_int(glw_t *w, glw_attribute_t attrib, int value)
 /**
  *
  */
-static void
-set_padding(glw_t *w, const int16_t *v)
+static int
+container_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v)
 {
   glw_container_t *co = (glw_container_t *)w;
-  co->co_padding_left   = v[0];
-  co->co_padding_top    = v[1];
-  co->co_padding_right  = v[2];
-  co->co_padding_bottom = v[3];
-  glw_signal0(w, GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED, NULL);
+
+  switch(attrib) {
+  case GLW_ATTRIB_PADDING:
+    if(!glw_attrib_set_int16_4(co->co_padding, v))
+      return 0;
+    glw_signal0(w, GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED, NULL);
+    return 1;
+  default:
+    return -1;
+  }
 }
 
 
@@ -738,7 +740,7 @@ static glw_class_t glw_container_x = {
   .gc_child_orientation = GLW_ORIENTATION_HORIZONTAL,
   .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION,
   .gc_default_alignment = LAYOUT_ALIGN_LEFT,
-  .gc_set_padding = set_padding,
+  .gc_set_int16_4 = container_set_int16_4,
 };
 
 static glw_class_t glw_container_y = {
@@ -752,7 +754,7 @@ static glw_class_t glw_container_y = {
   .gc_child_orientation = GLW_ORIENTATION_VERTICAL,
   .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION,
   .gc_default_alignment = LAYOUT_ALIGN_TOP,
-  .gc_set_padding = set_padding,
+  .gc_set_int16_4 = container_set_int16_4,
   .gc_retire_child = retire_child,
 };
 

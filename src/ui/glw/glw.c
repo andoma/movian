@@ -2581,6 +2581,18 @@ glw_attrib_set_rgb(glw_rgb_t *rgb, const float *src)
   return glw_attrib_set_float3((float *)rgb, src);
 }
 
+int
+glw_attrib_set_int16_4(int16_t *dst, const int16_t *src)
+{
+  if(!memcmp(dst, src, sizeof(int16_t) * 4))
+    return 0;
+  memcpy(dst, src, sizeof(int16_t) * 4);
+  return 1;
+}
+
+
+
+
 /**
  *
  */

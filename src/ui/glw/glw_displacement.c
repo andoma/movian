@@ -26,15 +26,10 @@
  */
 typedef struct {
   glw_t w;
-
-  float gd_padding_left;
-  float gd_padding_right;
-  float gd_padding_top;
-  float gd_padding_bottom;
-
   float gd_scale[3];
   float gd_translate[3];
   float gd_rotate[4];
+  int16_t gd_padding[4];
 } glw_displacement_t;
 
 
@@ -51,8 +46,8 @@ glw_displacement_layout(glw_t *w, const glw_rctx_t *rc)
   if((c = TAILQ_FIRST(&w->glw_childs)) == NULL)
     return;
 
-  int width  = rc->rc_width - gd->gd_padding_left - gd->gd_padding_right;
-  int height = rc->rc_height - gd->gd_padding_top - gd->gd_padding_bottom;
+  int width  = rc->rc_width  - gd->gd_padding[0] - gd->gd_padding[2];
+  int height = rc->rc_height - gd->gd_padding[1] - gd->gd_padding[3];
 
   rc0 = *rc;
   rc0.rc_width  = width;
@@ -118,10 +113,10 @@ glw_displacement_render(glw_t *w, const glw_rctx_t *rc)
 		gd->gd_rotate[3]);
 
   glw_repositionf(&rc0,
-		  gd->gd_padding_left,
-		  rc->rc_height - gd->gd_padding_top,
-		  rc->rc_width  - gd->gd_padding_right,
-		  gd->gd_padding_bottom);
+		  gd->gd_padding[0],
+		  rc->rc_height - gd->gd_padding[1],
+		  rc->rc_width  - gd->gd_padding[2],
+		  gd->gd_padding[3]);
 
   if(glw_is_focusable(w))
     glw_store_matrix(w, &rc0);
@@ -163,18 +158,21 @@ set_float3(glw_t *w, glw_attribute_t attrib, const float *vector)
 }
 
 
+
 /**
  *
  */
-static void
-set_padding(glw_t *w, const int16_t *v)
+static int
+displacement_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v)
 {
   glw_displacement_t *gd = (glw_displacement_t *)w;
-  
-  gd->gd_padding_left   = v[0];
-  gd->gd_padding_top    = v[1];
-  gd->gd_padding_right  = v[2];
-  gd->gd_padding_bottom = v[3];
+
+  switch(attrib) {
+  case GLW_ATTRIB_PADDING:
+    return glw_attrib_set_int16_4(gd->gd_padding, v);
+  default:
+    return -1;
+  }
 }
 
 
@@ -207,8 +205,8 @@ static glw_class_t glw_displacement = {
   .gc_render = glw_displacement_render,
   .gc_signal_handler = glw_displacement_callback,
   .gc_set_float3 = set_float3,
-  .gc_set_padding = set_padding,
   .gc_set_float4 = set_float4,
+  .gc_set_int16_4 = displacement_set_int16_4,
 };
 
 GLW_REGISTER_CLASS(glw_displacement);

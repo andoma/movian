@@ -153,6 +153,9 @@ typedef enum {
   GLW_ATTRIB_ROTATION,
   GLW_ATTRIB_CLIPPING,
   GLW_ATTRIB_PLANE,
+  GLW_ATTRIB_MARGIN,
+  GLW_ATTRIB_BORDER,
+  GLW_ATTRIB_PADDING,
   GLW_ATTRIB_num,
 } glw_attribute_t;
 
@@ -420,6 +423,8 @@ typedef struct glw_class {
 
   int (*gc_set_float4)(struct glw *w, glw_attribute_t a, const float *vector);
 
+  int (*gc_set_int16_4)(struct glw *w, glw_attribute_t a, const int16_t *v);
+
 
   /**
    * Ask widget to render itself in the current render context
@@ -514,21 +519,6 @@ typedef struct glw_class {
    *
    */
   void (*gc_get_rctx)(struct glw *w, struct glw_rctx *rc);
-
-  /**
-   *
-   */
-  void (*gc_set_border)(struct glw *w, const int16_t *v);
-
-  /**
-   *
-   */
-  void (*gc_set_padding)(struct glw *w, const int16_t *v);
-
-  /**
-   *
-   */
-  void (*gc_set_margin)(struct glw *w, const int16_t *v);
 
   /**
    *
@@ -1326,6 +1316,8 @@ int glw_attrib_set_float3(float *dst, const float *src);
 int glw_attrib_set_rgb(glw_rgb_t *rgb, const float *src);
 
 int glw_attrib_set_float4(float *dst, const float *src);
+
+int glw_attrib_set_int16_4(int16_t *dst, const int16_t *src);
 
 
 /**

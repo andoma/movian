@@ -400,12 +400,17 @@ stencil_set_source(glw_t *w, rstr_t *filename)
 /**
  *
  */
-static void
-set_border(glw_t *w, const int16_t *v)
+static int
+stencil_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v)
 {
   glw_stencil_t *gs = (glw_stencil_t *)w;
 
-  memcpy(gs->gs_border, v, sizeof(int16_t) * 4);
+  switch(attrib) {
+  case GLW_ATTRIB_BORDER:
+    return glw_attrib_set_int16_4(gs->gs_border, v);
+  default:
+    return -1;
+  }
 }
 
 
@@ -469,7 +474,7 @@ static glw_class_t glw_stencil = {
   .gc_signal_handler = glw_stencil_callback,
   .gc_ctor = glw_stencil_ctor,
   .gc_set_source = stencil_set_source,
-  .gc_set_border = set_border,
+  .gc_set_int16_4 = stencil_set_int16_4,
   .gc_set_float4 = set_float4,
   .gc_set_float3 = set_float3,
 };

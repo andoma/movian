@@ -86,10 +86,7 @@ typedef struct glw_text_bitmap {
 
   int16_t gtb_edit_ptr;
 
-  int16_t gtb_padding_left;
-  int16_t gtb_padding_right;
-  int16_t gtb_padding_top;
-  int16_t gtb_padding_bottom;
+  int16_t gtb_padding[4];
 
   int16_t gtb_uc_len;
   int16_t gtb_uc_size;
@@ -179,11 +176,11 @@ glw_text_bitmap_layout(glw_t *w, const glw_rctx_t *rc)
 	  gtb->gtb_state = GTB_NEED_RENDER;
 	} else {
 
-	  if(rc->rc_width - gtb->gtb_padding_right - gtb->gtb_padding_left <
+	  if(rc->rc_width - gtb->gtb_padding[2] - gtb->gtb_padding[0] <
 	     tex_width - gtb->gtb_margin * 2)
 	    gtb->gtb_state = GTB_NEED_RENDER;
 
-	  if(rc->rc_height - gtb->gtb_padding_top - gtb->gtb_padding_bottom <
+	  if(rc->rc_height - gtb->gtb_padding[1] - gtb->gtb_padding[3] <
 	     tex_height - gtb->gtb_margin * 2)
 	    gtb->gtb_state = GTB_NEED_RENDER;
 	}
@@ -203,10 +200,10 @@ glw_text_bitmap_layout(glw_t *w, const glw_rctx_t *rc)
 
     const int margin = gtb->gtb_margin;
 
-    int left   =                 gtb->gtb_padding_left   - margin;
-    int top    = rc->rc_height - gtb->gtb_padding_top    + margin;
-    int right  = rc->rc_width  - gtb->gtb_padding_right  + margin;
-    int bottom =                 gtb->gtb_padding_bottom - margin;
+    int left   =                 gtb->gtb_padding[0] - margin;
+    int top    = rc->rc_height - gtb->gtb_padding[1] + margin;
+    int right  = rc->rc_width  - gtb->gtb_padding[2] + margin;
+    int bottom =                 gtb->gtb_padding[3] - margin;
 
     int text_width  = tex_width;
     int text_height = tex_height;
@@ -325,8 +322,8 @@ glw_text_bitmap_layout(glw_t *w, const glw_rctx_t *rc)
 	right = left + 10;
       }
 
-      left  += gtb->gtb_padding_left;
-      right += gtb->gtb_padding_left;
+      left  += gtb->gtb_padding[0];
+      right += gtb->gtb_padding[2];
 
     } else {
 
@@ -459,10 +456,10 @@ gtb_set_constraints(glw_root_t *gr, glw_text_bitmap_t *gtb,
   int flags = GLW_CONSTRAINT_Y;
 
   const int xs = im->im_width - im->im_margin * 2 +
-    gtb->gtb_padding_left + gtb->gtb_padding_right;
+    gtb->gtb_padding[0] + gtb->gtb_padding[2];
 
   const int ys = im->im_height - im->im_margin * 2 +
-    gtb->gtb_padding_top + gtb->gtb_padding_bottom;
+    gtb->gtb_padding[1] + gtb->gtb_padding[3];
 
   if(gtb->gtb_maxlines == 1 && !(gtb->gtb_flags & GTB_ELLIPSIZE))
     flags |= GLW_CONSTRAINT_X;
@@ -815,22 +812,20 @@ glw_text_bitmap_set_float3(glw_t *w, glw_attribute_t attrib, const float *rgb)
 /**
  *
  */
-static void
-set_padding(glw_t *w, const int16_t *v)
+static int
+gtb_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v)
 {
-  glw_text_bitmap_t *gtb = (void *)w;
+  glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
 
-  if(gtb->gtb_padding_left   == v[0] &&
-     gtb->gtb_padding_top    == v[1] &&
-     gtb->gtb_padding_right  == v[2] &&
-     gtb->gtb_padding_bottom == v[3])
-    return;
-
-  gtb->gtb_padding_left   = v[0];
-  gtb->gtb_padding_top    = v[1];
-  gtb->gtb_padding_right  = v[2];
-  gtb->gtb_padding_bottom = v[3];
-  gtb->gtb_need_layout = 1;
+  switch(attrib) {
+  case GLW_ATTRIB_PADDING:
+    if(!glw_attrib_set_int16_4(gtb->gtb_padding, v))
+      return 0;
+    gtb->gtb_need_layout = 1;
+    return 1;
+  default:
+    return -1;
+  }
 }
 
 /**
@@ -922,7 +917,7 @@ thaw(glw_t *w)
   if(!(gtb->w.glw_flags & GLW_CONSTRAINT_Y)) {
     int lh = (gtb->gtb_default_size ?: w->glw_root->gr_current_size) *
       gtb->gtb_size_scale;
-    int ys = gtb->gtb_padding_top + gtb->gtb_padding_bottom + lh;
+    int ys = gtb->gtb_padding[1] + gtb->gtb_padding[3] + lh;
     glw_set_constraints(&gtb->w, 0, ys, 0, GLW_CONSTRAINT_Y);
   }
 
@@ -1047,7 +1042,7 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
     flags |= TR_RENDER_NO_OUTPUT;
   } else {
     max_width =
-      gtb->gtb_saved_width - gtb->gtb_padding_left - gtb->gtb_padding_right;
+      gtb->gtb_saved_width - gtb->gtb_padding[0] - gtb->gtb_padding[2];
   }
   if(gtb->w.glw_flags2 & GLW2_DEBUG)
     printf("   max_width=%d\n", max_width);
@@ -1360,7 +1355,7 @@ static glw_class_t glw_label = {
   .gc_get_text = glw_text_bitmap_get_text,
   .gc_default_alignment = LAYOUT_ALIGN_LEFT,
   .gc_set_float3 = glw_text_bitmap_set_float3,
-  .gc_set_padding = set_padding,
+  .gc_set_int16_4 = gtb_set_int16_4,
   .gc_mod_text_flags = mod_text_flags,
   .gc_set_caption = set_caption,
   .gc_set_font = set_font,
@@ -1389,7 +1384,7 @@ static glw_class_t glw_text = {
   .gc_get_text = glw_text_bitmap_get_text,
   .gc_default_alignment = LAYOUT_ALIGN_LEFT,
   .gc_set_float3 = glw_text_bitmap_set_float3,
-  .gc_set_padding = set_padding,
+  .gc_set_int16_4 = gtb_set_int16_4,
   .gc_mod_text_flags = mod_text_flags,
   .gc_set_caption = set_caption,
   .gc_set_font = set_font,

@@ -664,50 +664,25 @@ set_int16_4(glw_view_eval_context_t *ec, const token_attrib_t *a,
 			   a->name, token2name(t));
   }
 
-  void (*fn)(struct glw *w, const int16_t *v4) = a->fn;
-  fn(ec->w, v);
+
+  glw_t *w = ec->w;
+  const glw_class_t *gc = w->glw_class;
+
+  int r = gc->gc_set_int16_4 ? gc->gc_set_int16_4(w, a->attrib, v) : -1;
+
+  if(r == -1) {
+    TRACE(TRACE_DEBUG, "GLW",
+          "Widget %s at %s:%d does not respond to attribute %s",
+          gc->gc_name, rstr_get(t->file), t->line, a->name);
+    return 0;
+  }
+  if(r)
+    attr_need_refresh(w->glw_root, t, a, r);
+
   return 0;
 }
 
 
-
-/**
- *
- */
-static void
-set_padding(glw_t *w, const int16_t *vec4)
-{
-  if(w->glw_class->gc_set_padding != NULL) {
-    w->glw_class->gc_set_padding(w, vec4);
-    glw_need_refresh(w->glw_root, 0);
-  }
-}
-
-
-/**
- *
- */
-static void
-set_border(glw_t *w, const int16_t *vec4)
-{
-  if(w->glw_class->gc_set_border != NULL) {
-    w->glw_class->gc_set_border(w, vec4);
-    glw_need_refresh(w->glw_root, 0);
-  }
-}
-
-
-/**
- *
- */
-static void
-set_margin(glw_t *w, const int16_t *vec4)
-{
-  if(w->glw_class->gc_set_margin != NULL) {
-    w->glw_class->gc_set_margin(w, vec4);
-    glw_need_refresh(w->glw_root, 0);
-  }
-}
 
 
 static struct strtab aligntab[] = {
@@ -1196,9 +1171,9 @@ static const token_attrib_t attribtab[] = {
   {"clipping",        set_float4, GLW_ATTRIB_CLIPPING},
   {"plane",           set_float4, GLW_ATTRIB_PLANE},
 
-  {"padding",         set_int16_4, 0, set_padding},
-  {"border",          set_int16_4, 0, set_border},
-  {"margin",          set_int16_4, 0, set_margin},
+  {"padding",         set_int16_4, GLW_ATTRIB_PADDING},
+  {"border",          set_int16_4, GLW_ATTRIB_BORDER},
+  {"margin",          set_int16_4, GLW_ATTRIB_MARGIN},
 
   {"align",           set_align,  0},
   {"effect",          set_transition_effect,  0},
