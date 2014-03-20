@@ -78,7 +78,10 @@ widget(container_z, {
 	  source: "popups/" + $self.type + ".view";
 	});
 
-        #import "log.view"
+	widget(loader, {
+          hidden: !$ui.logwindow;
+	  source: select($ui.logwindow, "log.view", "");
+	});
 
 	widget(loader, {
 	  hidden: !$ui.osk.show;
