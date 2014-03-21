@@ -171,6 +171,11 @@ glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     if(gd->prev == extra)
       gd->prev = NULL;
 
+  case GLW_SIGNAL_CHILD_CREATED:
+  case GLW_SIGNAL_CHILD_MOVED:
+  case GLW_SIGNAL_CHILD_HIDDEN:
+  case GLW_SIGNAL_CHILD_UNHIDDEN:
+    glw_signal0(w, GLW_SIGNAL_RESELECT_CHANGED, NULL);
     return 0;
   }
 
