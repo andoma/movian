@@ -251,7 +251,6 @@ image_decode_coded(image_t *im, const image_meta_t *meta,
      * of buf, so we need to forget about it
      */
     icc->icc_buf = NULL;
-    image_release(im);
     return r;
   }
 
@@ -266,7 +265,6 @@ image_decode_coded(image_t *im, const image_meta_t *meta,
     pm = image_decode_libav(icc->icc_type, icc->icc_buf, meta, errbuf, errlen);
 
   if(pm == NULL) {
-    image_release(im);
     return NULL;
   }
 
