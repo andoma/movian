@@ -4938,7 +4938,6 @@ glwf_sinewave(glw_view_eval_context_t *ec, struct token *self,
     // flip lowest bit so we never output same value twice as that might
     // cause conditional layout to think that we don't need to refresh
     u.u32 ^= 1;
-    printf("flip\n");
   }
 
   self->t_extra_int = u.u32;
