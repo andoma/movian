@@ -57,11 +57,11 @@ widget(container_y, {
 	});
 	ACTION("←", targetedEvent("input", Left));
 	ACTION("→", targetedEvent("input", Right));
-	ACTION("Clear", {
+	ACTION(_("Clear"), {
 	  $ui.osk.text = void;
 	}, 1.5);
-	ACTION("Cancel", deliverEvent($ui.osk.eventSink, "Cancel"), 1.5);
-	ACTION("OK", deliverEvent($ui.osk.eventSink, "Ok"), 1.5);
+	ACTION(_("Cancel"), deliverEvent($ui.osk.eventSink, "Cancel"), 1.5);
+	ACTION(_("OK"), deliverEvent($ui.osk.eventSink, "Ok"), 1.5);
       });
 
       widget(loader, {
