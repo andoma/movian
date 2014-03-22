@@ -273,14 +273,18 @@ glw_layout0(glw_t *w, const glw_rctx_t *rc)
   glw_root_t *gr = w->glw_root;
   LIST_REMOVE(w, glw_active_link);
   LIST_INSERT_HEAD(&gr->gr_active_list, w, glw_active_link);
-  if(!(w->glw_flags & GLW_ACTIVE)) {
+  int mask = GLW_VIEW_EVAL_LAYOUT;
+
+  if(unlikely(!(w->glw_flags & GLW_ACTIVE))) {
     w->glw_flags |= GLW_ACTIVE;
+    mask |= GLW_VIEW_EVAL_ACTIVE;
     glw_signal0(w, GLW_SIGNAL_ACTIVE, NULL);
   }
 
-  w->glw_class->gc_layout(w, rc);
+  if(unlikely(w->glw_dynamic_eval & mask))
+    glw_view_eval_layout(w, rc, mask);
 
-  glw_signal0(w, GLW_SIGNAL_LAYOUTED, (void *)rc);
+  w->glw_class->gc_layout(w, rc);
 }
 
 
@@ -665,7 +669,7 @@ glw_signal0(glw_t *w, glw_signal_t sig, void *extra)
   if(w->glw_class->gc_signal_handler != NULL)
     w->glw_class->gc_signal_handler(w, NULL, sig, extra);
 
-  glw_view_eval_signal(w, sig, sig == GLW_SIGNAL_LAYOUTED ? extra : NULL);
+  glw_view_eval_signal(w, sig);
 
   while(gsh != NULL) {
     if(gsh->gsh_func != NULL) {

@@ -54,6 +54,14 @@ LIST_HEAD(glw_loadable_texture_list, glw_loadable_texture);
 TAILQ_HEAD(glw_loadable_texture_queue, glw_loadable_texture);
 LIST_HEAD(glw_video_list, glw_video);
 
+#ifndef likely
+#define likely(x)       __builtin_expect((x),1)
+#endif
+
+#ifndef unlikely
+#define unlikely(x)     __builtin_expect((x),0)
+#endif
+
 // ------------------- Backends -----------------
 
 #if CONFIG_GLW_BACKEND_OPENGL || CONFIG_GLW_BACKEND_OPENGL_ES
@@ -99,6 +107,16 @@ typedef float Vec2[2];
 #define GLW_SWAP(a, b) do { typeof(a) c = (b); (b) = (a); (a) = (c); } while(0)
 #define GLW_CLAMP(x, min, max) GLW_MIN(GLW_MAX((x), (min)), (max))
 
+// -- Flags for dynamic evaluation of view statements --
+
+#define GLW_VIEW_EVAL_LAYOUT     0x1
+#define GLW_VIEW_EVAL_ACTIVE     0x2
+#define GLW_VIEW_EVAL_FHP_CHANGE 0x4
+#define GLW_VIEW_EVAL_OTHER      0x8
+#define GLW_VIEW_EVAL_PROP       0x100
+#define GLW_VIEW_EVAL_KEEP       0x200
+
+// ----------------- Attributes ------------------------
 
 typedef enum {
   GLW_ATTRIB_END = 0,
@@ -242,7 +260,6 @@ typedef enum {
   GLW_SIGNAL_DESTROY,
   GLW_SIGNAL_ACTIVE,
   GLW_SIGNAL_INACTIVE,
-  GLW_SIGNAL_LAYOUTED,
 
   GLW_SIGNAL_CHILD_CREATED,
   GLW_SIGNAL_CHILD_DESTROYED,
@@ -1029,6 +1046,8 @@ typedef struct glw {
 
   uint8_t glw_alignment;
 
+  uint8_t glw_dynamic_eval;   // GLW_VIEW_EVAL_ -flags
+
   rstr_t *glw_id_rstr;
 
   struct glw_event_map_list glw_event_maps;
@@ -1172,7 +1191,9 @@ glw_t *glw_view_create(glw_root_t *gr, rstr_t *url,
 		       struct prop *prop_parent, prop_t *args,
 		       struct prop *prop_clone, int cache, int nofail);
 
-void glw_view_eval_signal(glw_t *w, glw_signal_t sig, glw_rctx_t *rc);
+void glw_view_eval_signal(glw_t *w, glw_signal_t sig);
+
+void glw_view_eval_layout(glw_t *w, const glw_rctx_t *rc, int mask);
 
 /**
  * Transitions
