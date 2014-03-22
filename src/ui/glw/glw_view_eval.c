@@ -4926,7 +4926,23 @@ glwf_sinewave(glw_view_eval_context_t *ec, struct token *self,
   int v = v64 & 0xfff;
 
   r = eval_alloc(self, ec, TOKEN_FLOAT);
-  r->t_float = sin(v * M_PI * 2.0 / 4096.0);
+
+  union {
+    float f;
+    uint32_t u32;
+  } u;
+
+  u.f = sin(v * M_PI * 2.0 / 4096.0);
+
+  if(u.u32 == self->t_extra_int) {
+    // flip lowest bit so we never output same value twice as that might
+    // cause conditional layout to think that we don't need to refresh
+    u.u32 ^= 1;
+    printf("flip\n");
+  }
+
+  self->t_extra_int = u.u32;
+  r->t_float = u.f;
   eval_push(ec, r);
   ec->dynamic_eval |= GLW_VIEW_EVAL_LAYOUT;
   return 0;
