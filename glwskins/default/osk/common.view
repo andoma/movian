@@ -1,0 +1,55 @@
+#define KEY_(CH, ACTION, W=1, FW=0.5) {
+  widget(backdrop, {
+    weight: W;
+    filterConstraintX: true;
+    filterConstraintY: true;
+    source: select(isFocused(),
+		   "showtime:pixmap:gradient:180,200,255:80,90,100",
+		   "showtime:pixmap:gradient:255,255,255:180,180,180");
+	   
+    focusable: FW;
+    cornerRadius: 4;
+    onEvent(activate, {
+      fireEvent(targetedEvent("input", ACTION));
+      $ui.osk.shift = 0;
+    });
+    widget(label, {
+      align: center;
+      caption: CH;
+      bold: true;
+      color: select(isFocused(), 1, 0);
+      shadow: select(isFocused(), 1, 0);
+    });
+  });
+}
+
+
+#define KEY(CH, SCH, W=1, FW=0.5) {
+  KEY_(select($ui.osk.shifted, SCH, CH),
+       select($ui.osk.shifted, SCH, CH), W, FW);
+}
+
+
+#define ACTION(CH, EV, W=1, LIT=false, ENABLED=true) {
+  widget(backdrop, {
+    weight: W;
+    alpha: iir(select(ENABLED, 1.0, 0.3), 10);
+    filterConstraintX: true;
+    filterConstraintY: true;
+    source: select(LIT, "showtime:pixmap:gradient:200,255,200:150,200,150",
+		   select(isFocused(),
+			  "showtime:pixmap:gradient:180,200,255:80,90,100",
+			  "showtime:pixmap:gradient:255,255,255:180,180,180"));
+	   
+    focusable: select(ENABLED, 0.5, 0);
+    cornerRadius: 4;
+    onEvent(activate, EV);
+    widget(label, {
+      align: center;
+      caption: CH;
+      bold: true;
+      color: select(isFocused(), 1, 0);
+      shadow: select(isFocused(), 1, 0);
+    });
+  });
+}

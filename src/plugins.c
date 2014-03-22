@@ -1471,6 +1471,7 @@ plugins_view_settings_init(void)
   add_view_type(s, p, "standard", "loading",     _p("Loading screen"));
   add_view_type(s, p, "standard", "screensaver", _p("Screen saver"));
   add_view_type(s, p, "standard", "home",        _p("Home page"));
+  add_view_type(s, p, "standard", "osk",         _p("On Screen Keyboards"));
 
   settings_create_separator(p, _p("Browsing"));
 

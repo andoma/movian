@@ -25,6 +25,7 @@
 #include "glw.h"
 #include "glw_settings.h"
 #include "htsmsg/htsmsg_store.h"
+#include "db/kvstore.h"
 
 glw_settings_t glw_settings;
 
@@ -103,6 +104,10 @@ glw_settings_init(void)
                    SETTING_WRITE_BOOL(&glw_settings.gs_wrap),
                    SETTING_HTSMSG("wrap", store, "glw"),
                    NULL);
+
+  prop_t *p = prop_create(prop_get_global(), "glw");
+  p = prop_create(p, "osk");
+  kv_prop_bind_create(p, "showtime:glw:osk");
 }
 
 
