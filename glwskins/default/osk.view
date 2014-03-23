@@ -7,8 +7,6 @@ $ui.osk.caps = 0;
 
 $ui.osk.shifted = $ui.osk.shift ^^ $ui.osk.caps;
 
-trace("CURRENT KEYBOAD", $ui.osk.userKeyboard);
-
 multiopt($view.path,
          $view.selopt,
          void,
