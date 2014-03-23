@@ -22,6 +22,7 @@
 #include "glw.h"
 #include "glw_view.h"
 #include "fileaccess/fileaccess.h"
+#include "misc/str.h"
 
 /**
  *
@@ -61,6 +62,9 @@ lexer_add_token_string(glw_root_t *gr,
 {
   token_t *t = glw_view_token_alloc(gr);
   t->t_rstring = rstr_allocl(start, end - start);
+
+  deescape_cstyle(rstr_data(t->t_rstring));
+
   lexer_link_token(prev, f, line, t, type);
   return t;
 }
@@ -308,7 +312,7 @@ lexer(glw_root_t *gr,
       src++;
       start++;
 
-      while((*src != stop || src[-1] == '\\') && *src != 0) {
+      while((*src != stop || (src[-1] == '\\' && src[-2] != '\\')) && *src != 0) {
 	if(*src == '\n')
 	  line++;
 	src++;
