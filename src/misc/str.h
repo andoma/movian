@@ -30,6 +30,8 @@ uint32_t html_makecolor(const char *str);
 
 void url_deescape(char *s);
 
+void deescape_cstyle(char *s);
+
 #define URL_ESCAPE_PATH   1
 #define URL_ESCAPE_PARAM  2
 

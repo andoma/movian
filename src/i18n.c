@@ -400,29 +400,6 @@ nls_clear(void)
  *
  */
 static void
-deescape_cstyle(char *src)
-{
-  char *dst = src;
-  while(*src) {
-    if(*src == '\\') {
-      src++;
-      if(*src == 0)
-	break;
-      if(*src == 'n')
-	*dst++ = '\n';
-      src++;
-    } else {
-      *dst++ = *src++;
-    }
-  }
-  *dst = 0;
-}
-
-
-/**
- *
- */
-static void
 nls_load_from_data(char *s)
 {
   const char *s2;

@@ -1626,3 +1626,28 @@ mystrlower(char *s)
       *s = *s + 32;
   }
 }
+
+
+/**
+ *
+ */
+void
+deescape_cstyle(char *src)
+{
+  char *dst = src;
+  while(*src) {
+    if(*src == '\\') {
+      src++;
+      if(*src == 0)
+	break;
+      if(*src == 'n')
+	*dst++ = '\n';
+      if(*src == '\\')
+	*dst++ = '\\';
+      src++;
+    } else {
+      *dst++ = *src++;
+    }
+  }
+  *dst = 0;
+}
