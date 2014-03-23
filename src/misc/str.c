@@ -34,6 +34,8 @@
 #include "charset_detector.h"
 #include "big5.h"
 
+#include <libavformat/avformat.h> // for av_url_split()
+
 const static charset_t charsets[];
 
 
@@ -537,9 +539,9 @@ html_enteties_escape(const char *src, char *dst)
 
 
 /**
- * based on url_split form ffmpeg, renamed to 
+ *
  */
-void 
+void
 url_split(char *proto, int proto_size,
 	  char *authorization, int authorization_size,
 	  char *hostname, int hostname_size,
@@ -547,54 +549,12 @@ url_split(char *proto, int proto_size,
 	  char *path, int path_size,
 	  const char *url)
 {
-  const char *p, *ls, *at, *col, *brk;
-
-  if (port_ptr)               *port_ptr = -1;
-  if (proto_size > 0)         proto[0] = 0;
-  if (authorization_size > 0) authorization[0] = 0;
-  if (hostname_size > 0)      hostname[0] = 0;
-  if (path_size > 0)          path[0] = 0;
-
-  /* parse protocol */
-  if ((p = strchr(url, ':'))) {
-    snprintf(proto, MIN(proto_size, p + 1 - url), "%s", url);
-    p++; /* skip ':' */
-    if (*p == '/') p++;
-    if (*p == '/') p++;
-  } else {
-    /* no protocol means plain filename */
-    snprintf(path, path_size, "%s", url);
-    return;
-  }
-
-  /* separate path from hostname */
-  ls = strchr(p, '/');
-  if(!ls)
-    ls = strchr(p, '?');
-  if(ls)
-    snprintf(path, path_size, "%s", ls);
-  else
-    ls = &p[strlen(p)]; // XXX
-
-  /* the rest is hostname, use that to parse auth/port */
-  if (ls != p) {
-    /* authorization (user[:pass]@hostname) */
-    if ((at = strchr(p, '@')) && at < ls) {
-      snprintf(authorization, MIN(authorization_size, at + 1 - p), "%s", p);
-      p = at + 1; /* skip '@' */
-    }
-
-    if (*p == '[' && (brk = strchr(p, ']')) && brk < ls) {
-      /* [host]:port */
-      snprintf(hostname, MIN(hostname_size, brk - p), "%s", p + 1);
-      if (brk[1] == ':' && port_ptr)
-	*port_ptr = atoi(brk + 2);
-    } else if ((col = strchr(p, ':')) && col < ls) {
-      snprintf(hostname, MIN(col + 1 - p, hostname_size), "%s", p);
-      if (port_ptr) *port_ptr = atoi(col + 1);
-    } else
-      snprintf(hostname, MIN(ls + 1 - p, hostname_size), "%s", p);
-  }
+  return av_url_split(proto, proto_size,
+                      authorization, authorization_size,
+                      hostname, hostname_size,
+                      port_ptr,
+                      path, path_size,
+                      url);
 }
 
 
