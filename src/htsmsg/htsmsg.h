@@ -83,6 +83,9 @@ htsmsg_get_map_by_field(htsmsg_field_t *f)
   return f->hmf_childs;
 }
 
+#define htsmsg_get_list_by_field(f) \
+ ((f)->hmf_type == HMF_LIST ? &(f)->hmf_msg : NULL)
+
 #define HTSMSG_FOREACH(f, msg) TAILQ_FOREACH(f, &(msg)->hm_fields, hmf_link)
 
 #define HTSMSG_INDEX(i) ((const char *)(intptr_t)(-(i+1)))

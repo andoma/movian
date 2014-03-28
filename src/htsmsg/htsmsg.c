@@ -428,10 +428,16 @@ htsmsg_get_bin(htsmsg_t *msg, const char *name, const void **binp,
 	       size_t *lenp)
 {
   htsmsg_field_t *f;
-  
+
   if((f = htsmsg_field_find(msg, name)) == NULL)
     return HTSMSG_ERR_FIELD_NOT_FOUND;
-  
+
+  if(f->hmf_type == HMF_STR) {
+    *binp = f->hmf_str;
+    *lenp = strlen(f->hmf_str);
+    return 0;
+  }
+
   if(f->hmf_type != HMF_BIN)
     return HTSMSG_ERR_CONVERSION_IMPOSSIBLE;
 
