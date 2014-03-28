@@ -24,6 +24,8 @@
 #include "net.h"
 #include "misc/redblack.h"
 
+extern int64_t async_now;
+
 typedef struct asyncio_timer {
   LIST_ENTRY(asyncio_timer) at_link;
   int64_t at_expire;
@@ -105,6 +107,8 @@ void asyncio_send(asyncio_fd_t *af, const void *buf, size_t len, int cork);
 void asyncio_sendq(asyncio_fd_t *af, htsbuf_queue_t *q, int cork);
 
 int asyncio_get_port(asyncio_fd_t *af);
+
+void asyncio_set_timeout(asyncio_fd_t *af, int64_t timeout);
 
 /*************************************************************************
  * UDP
