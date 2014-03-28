@@ -153,6 +153,47 @@ tracker_create(const char *url)
 }
 
 
+
+
+/**
+ *
+ */
+static void
+torrent_tracker_announce(torrent_tracker_t *tt, int event)
+{
+  uint8_t out[98];
+
+  tracker_t *tr = tt->tt_tracker;
+  const torrent_t *to = tt->tt_torrent;
+
+  wr64_be(out + 0, tr->tr_conn_id);
+  wr32_be(out + 8, 1); // Announce
+  wr32_be(out + 12, tt->tt_txid);
+  memcpy(out + 16, to->to_info_hash, 20);
+  memcpy(out + 36, btc.btc_peer_id, 20);
+
+  wr64_be(out + 56, to->to_downloaded_bytes);
+  wr64_be(out + 64, to->to_remaining_bytes);
+  wr64_be(out + 72, to->to_uploaded_bytes);
+  wr32_be(out + 80, event);
+
+  wr32_be(out + 92, -1);
+  wr16_be(out + 96, 43213);
+  asyncio_udp_send(tracker_udp_fd, out, 98, &tr->t_addr);
+}
+
+
+static void
+torrent_tracker_periodic(void *aux)
+{
+  torrent_tracker_t *tt = aux;
+  hts_mutex_lock(&bittorrent_mutex);
+  torrent_tracker_announce(tt, 0);
+  asyncio_timer_arm(&tt->tt_timer, async_now + tt->tt_interval * 1000000LL);
+  hts_mutex_unlock(&bittorrent_mutex);
+}
+
+
 /**
  *
  */
@@ -160,11 +201,13 @@ void
 tracker_add_torrent(tracker_t *tr, torrent_t *to)
 {
   torrent_tracker_t *tt = calloc(1, sizeof(torrent_tracker_t));
+  tt->tt_interval = 60;
   tt->tt_tracker = tr;
   tt->tt_torrent = to;
   LIST_INSERT_HEAD(&to->to_trackers, tt, tt_torrent_link);
   LIST_INSERT_HEAD(&tr->t_torrents, tt, tt_tracker_link);
   tt->tt_txid = ++txid_gen;
+  asyncio_timer_init(&tt->tt_timer, torrent_tracker_periodic, tt);
 }
 
 
@@ -175,19 +218,22 @@ static void
 tracker_announce_all(tracker_t *tr)
 {
   torrent_tracker_t *tt;
-  uint8_t out[98];
 
-  LIST_FOREACH(tt, &tr->t_torrents, tt_tracker_link) {
-    torrent_t *to = tt->tt_torrent;
-    wr64_be(out + 0, tr->tr_conn_id);
-    wr32_be(out + 8, 1); // Announce
-    wr32_be(out + 12, tt->tt_txid);
-    memcpy(out + 16, to->to_info_hash, 20);
-    memcpy(out + 36, btc.btc_peer_id, 20);
-    wr32_be(out + 92, -1);
-    wr16_be(out + 96, 43213);
-    asyncio_udp_send(tracker_udp_fd, out, 98, &tr->t_addr);
-  }
+  LIST_FOREACH(tt, &tr->t_torrents, tt_tracker_link)
+    torrent_tracker_announce(tt, 0);
+}
+
+
+/**
+ *
+ */
+void
+torrent_announce_all(torrent_t *to, int event)
+{
+  torrent_tracker_t *tt;
+
+  LIST_FOREACH(tt, &to->to_trackers, tt_torrent_link)
+    torrent_tracker_announce(tt, event);
 }
 
 
@@ -222,9 +268,6 @@ tracker_udp_handle_announce_reply(tracker_t *tr, const uint8_t *data, int size)
     return;
 
   uint32_t txid     = rd32_be(data + 4);
-  //  uint32_t interval = rd32_be(data + 8);
-  //  uint32_t leechers = rd32_be(data + 12);
-  //  uint32_t seeders  = rd32_be(data + 16);
 
   torrent_tracker_t *tt;
   LIST_FOREACH(tt, &tr->t_torrents, tt_tracker_link)
@@ -235,6 +278,10 @@ tracker_udp_handle_announce_reply(tracker_t *tr, const uint8_t *data, int size)
     TRACE(TRACE_DEBUG, "BT", "Got announce reply for unknown torrent");
     return;
   }
+
+  tt->tt_interval = rd32_be(data + 8);
+  tt->tt_leechers = rd32_be(data + 12);
+  tt->tt_seeders  = rd32_be(data + 16);
 
   size -= 20;
   data += 20;
@@ -250,6 +297,7 @@ tracker_udp_handle_announce_reply(tracker_t *tr, const uint8_t *data, int size)
     data += 6;
     size -= 6;
   }
+  asyncio_timer_arm(&tt->tt_timer, async_now + tt->tt_interval * 1000000LL);
 }
 
 
@@ -263,7 +311,7 @@ tracker_udp_handle_input(const uint8_t *data, int size,
   tracker_t *tr;
   const int cmd = rd32_be(data);
 
-  LIST_FOREACH(tr, &trackers, t_link) 
+  LIST_FOREACH(tr, &trackers, t_link)
     if(!net_addr_cmp(&tr->t_addr, remote_addr))
       break;
   if(tr == NULL)
@@ -298,15 +346,13 @@ tracker_udp_input(void *opaque, const void *data, int size,
   hts_mutex_unlock(&bittorrent_mutex);
 }
 
+
 /**
  *
  */
 static void
 trackers_init(void)
 {
-  btc.btc_max_peers_global = 100;
-  btc.btc_max_peers_torrent = 20;
-
   uint32_t x = showtime_get_ts();
   for(int i = 0; i < 20; i++) {
     x = x * 1664525 + 1013904223;

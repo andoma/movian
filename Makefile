@@ -319,9 +319,12 @@ SRCS-$(CONFIG_CDDA)      += src/backend/dvd/cdda.c
 # Bittorrent
 ##############################################################
 SRCS                     += \
-	src/backend/bittorrent/magnet.c \
+	src/backend/bittorrent/bt_backend.c \
+	src/backend/bittorrent/fa_torrent.c \
 	src/backend/bittorrent/torrent.c \
+	src/backend/bittorrent/torrent_stats.c \
 	src/backend/bittorrent/tracker.c \
+	src/backend/bittorrent/bencode.c \
 
 
 ##############################################################

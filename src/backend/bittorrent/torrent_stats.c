@@ -1,0 +1,189 @@
+/*
+ *  Copyright (C) 2013 Andreas Öman
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "showtime.h"
+#include "navigator.h"
+#include "backend/backend.h"
+#include "misc/str.h"
+#include "networking/http_server.h"
+#include "htsmsg/htsmsg.h"
+#include "bittorrent.h"
+
+/**
+ *
+ */
+static void
+torrent_dump_files(const struct torrent_file_queue *q,
+                   htsbuf_queue_t *out, int indent)
+{
+  const torrent_file_t *tf;
+  TAILQ_FOREACH(tf, q, tf_parent_link) {
+
+    if(tf->tf_size) {
+      htsbuf_qprintf(out, "%*.s%s  [%"PRIu64" bytes @ %"PRIu64"]\n", indent, "",
+             tf->tf_name, tf->tf_size, tf->tf_offset);
+    } else {
+      htsbuf_qprintf(out, "%*.s%s/\n", indent, "", tf->tf_name);
+      torrent_dump_files(&tf->tf_files, out, indent + 2);
+    }
+  }
+}
+
+
+/**
+ *
+ */
+static void
+torrent_dump(const torrent_t *to, htsbuf_queue_t *q)
+{
+  char str[41];
+  bin2hex(str, sizeof(str), to->to_info_hash, 20);
+
+  htsbuf_qprintf(q, "infohash: %s  %d pieces\n", str,
+                 to->to_num_pieces);
+  torrent_dump_files(&to->to_root, q, 4);
+
+  const torrent_file_t *tf;
+  TAILQ_FOREACH(tf, &to->to_files, tf_torrent_link) {
+    htsbuf_qprintf(q, "%s\n", tf->tf_fullpath);
+  }
+
+  htsbuf_qprintf(q, "%d active peers\n",
+          to->to_active_peers);
+
+  htsbuf_qprintf(q, "%-30s %-15s %-6s Flags Q   %-10s Delay Requests Cancels Waste\n",
+                 "Remote", "Status", "Pieces", "Recv (kB)");
+
+  const peer_t *p;
+  LIST_FOREACH(p, &to->to_peers, p_link) {
+    if(p->p_state == PEER_STATE_INACTIVE ||
+       p->p_state == PEER_STATE_CONNECT_FAIL)
+      continue;
+
+    if(p->p_peer_choking || p->p_state != PEER_STATE_RUNNING)
+      continue;
+
+    int num_have = 0;
+    if(p->p_piece_flags != NULL) {
+      for(int i = 0; i < to->to_num_pieces; i++) {
+        if(p->p_piece_flags[i] & PIECE_HAVE)
+          num_have++;
+      }
+    }
+
+    htsbuf_qprintf(q, "%-30s %-15s %-6d %c%c%c%c  %-3d %-10d %-5d %-8d %-7d %-6d\n",
+                   p->p_name, peer_state_txt(p->p_state), num_have,
+                   p->p_peer_choking    ? 'c' : ' ',
+                   p->p_peer_interested ? 'i' : ' ',
+                   p->p_am_choking      ? 'C' : ' ',
+                   p->p_am_interested   ? 'I' : ' ',
+                   p->p_active_requests,
+                   p->p_bytes_received / 1000,
+                   p->p_block_delay / 1000,
+                   p->p_num_requests,
+                   p->p_num_cancels,
+                   p->p_num_waste);
+
+#if 0
+    htsbuf_qprintf(q, "               delays: %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d\n",
+                   p->p_bd[0] / 1000,
+                   p->p_bd[1] / 1000,
+                   p->p_bd[2] / 1000,
+                   p->p_bd[3] / 1000,
+                   p->p_bd[4] / 1000,
+                   p->p_bd[5] / 1000,
+                   p->p_bd[6] / 1000,
+                   p->p_bd[7] / 1000,
+                   p->p_bd[8] / 1000,
+                   p->p_bd[9] / 1000);
+#endif
+
+    const torrent_request_t *tr;
+    LIST_FOREACH(tr, &p->p_requests, tr_peer_link) {
+      htsbuf_qprintf(q, "  piece:%-5d offset:%-8d length:%-5d age:%2.2fs ETA:%-6d %s %s\n",
+                     tr->tr_piece, tr->tr_begin, tr->tr_length,
+                     (int)(async_now - tr->tr_send_time) / 1000000.0f,
+                     (int)((tr->tr_send_time + tr->tr_est_delay) - async_now) / 1000,
+                     tr->tr_dup ? "DUP " : "",
+                     tr->tr_block == NULL ? "ORPHANED " : "");
+    }
+  }
+
+  int waiting_blocks = 0;
+  int sent_blocks = 0;
+
+  const torrent_piece_t *tp;
+  LIST_FOREACH(tp, &to->to_active_pieces, tp_link) {
+    const torrent_block_t *tb;
+    LIST_FOREACH(tb, &tp->tp_waiting_blocks, tb_piece_link)
+      waiting_blocks++;
+
+    LIST_FOREACH(tb, &tp->tp_sent_blocks, tb_piece_link) {
+      sent_blocks++;
+#if 0
+      htsbuf_qprintf(q, "Piece:%-5d offset:%-8d length:%-5d\n",
+                     tb->tb_piece->tp_index, tb->tb_begin, tb->tb_length);
+      const torrent_request_t *tr;
+      LIST_FOREACH(tr, &tb->tb_requests, tr_block_link) {
+        htsbuf_qprintf(q, "  Requested at %-30s age:%2.2fs est_delay:%d\n",
+                       tr->tr_peer ? tr->tr_peer->p_name : "???",
+                       (int)(async_now - tr->tr_send_time) / 1000000.0f,
+                       tr->tr_est_delay);
+      }
+#endif
+    }
+  }
+
+  htsbuf_qprintf(q, "%d request queued, %d in-flight\n",
+                 waiting_blocks, sent_blocks);
+
+
+}
+
+static int
+torrent_dump_http(http_connection_t *hc, const char *remain, void *opaque,
+                  http_cmd_t method)
+{
+  htsbuf_queue_t out;
+  htsbuf_queue_init(&out, 0);
+
+  const torrent_t *to;
+
+  hts_mutex_lock(&bittorrent_mutex);
+
+  LIST_FOREACH(to, &torrents, to_link)
+    torrent_dump(to, &out);
+
+  hts_mutex_unlock(&bittorrent_mutex);
+
+  return http_send_reply(hc, 0,
+                         "text/ascii; charset=utf-8", NULL, NULL, 0, &out);
+}
+
+/**
+ *
+ */
+static void
+torrent_stats_init(void)
+{
+  http_path_add("/showtime/torrents", NULL, torrent_dump_http, 1);
+}
+
+INITME(INIT_GROUP_API, torrent_stats_init);

@@ -26,6 +26,8 @@
 
 #include "bittorrent.h"
 
+// http://www.bittorrent.org/beps/bep_0009.html
+
 /**
  *
  */
