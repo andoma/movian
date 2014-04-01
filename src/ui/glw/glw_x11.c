@@ -362,8 +362,8 @@ window_open(glw_x11_t *gx11, int fullscreen)
   }
 
 #if ENABLE_VDPAU
-  if(gx11->gr.gr_be.gbr_glVDPAUInitNV != NULL) {
-    vdpau_dev_t *vd = gx11->gr.gr_be.gbr_vdpau_dev;
+  vdpau_dev_t *vd = gx11->gr.gr_be.gbr_vdpau_dev;
+  if(vd != NULL) {
     gx11->gr.gr_be.gbr_glVDPAUInitNV((const GLvoid *)(uintptr_t)vd->vd_dev,
                                      vd->vd_getproc);
   }
