@@ -300,7 +300,7 @@ deep_probe(fa_dir_entry_t *fde, scanner_t *s)
         fde->fde_md = fa_probe_dir(rstr_get(fde->fde_url));
       else {
 	fde->fde_md = fa_probe_metadata(rstr_get(fde->fde_url), NULL, 0,
-					rstr_get(fde->fde_filename));
+					rstr_get(fde->fde_filename), NULL);
         is = INDEX_STATUS_FILE_ANALYZED;
       }
     }

@@ -176,7 +176,8 @@ file_open_audio(prop_t *page, const char *url, prop_t *model)
  */
 static void
 file_open_file(prop_t *page, const char *url, fa_stat_t *fs,
-	       prop_t *model, prop_t *loading)
+	       prop_t *model, prop_t *loading, prop_t *io,
+	       prop_t *loading_status)
 {
   char errbuf[200];
   metadata_t *md;
@@ -185,8 +186,11 @@ file_open_file(prop_t *page, const char *url, fa_stat_t *fs,
   md = metadb_metadata_get(db, url, fs->fs_mtime);
   metadb_close(db);
 
-  if(md == NULL)
-    md = fa_probe_metadata(url, errbuf, sizeof(errbuf), NULL);
+  if(md == NULL) {
+    prop_link(_p("Checking file contents"), loading_status);
+    md = fa_probe_metadata(url, errbuf, sizeof(errbuf), NULL, io);
+    prop_unlink(loading_status);
+  }
 
   if(md == NULL) {
     nav_open_errorf(page, _("Unable to open file: %s"), errbuf);
@@ -252,6 +256,8 @@ be_file_open(prop_t *page, const char *url, int sync)
 
   prop_t *model = prop_create_r(page, "model");
   prop_t *loading = prop_create_r(model, "loading");
+  prop_t *loading_status = prop_create_r(model, "loadingStatus");
+  prop_t *io = prop_create_r(model, "io");
   prop_set_int(loading, 1);
 
   if(fa_stat(url, &fs, errbuf, sizeof(errbuf))) {
@@ -261,11 +267,13 @@ be_file_open(prop_t *page, const char *url, int sync)
     file_open_dir(page, url, fs.fs_mtime, model);
   } else {
     usage_inc_counter("fa_open_file", 1);
-    file_open_file(page, url, &fs, model, loading);
+    file_open_file(page, url, &fs, model, loading, io, loading_status);
   }
 
   prop_ref_dec(model);
   prop_ref_dec(loading);
+  prop_ref_dec(loading_status);
+  prop_ref_dec(io);
   return 0;
 }
 

@@ -35,6 +35,6 @@ int fa_probe_iso(struct metadata *md, fa_handle_t *fh);
 metadata_t *fa_metadata_from_fctx(struct AVFormatContext *fctx);
 
 metadata_t *fa_probe_metadata(const char *url, char *errbuf, size_t errsize,
-			      const char *filename);
+			      const char *filename, prop_t *io);
 
 #endif /* FA_PROBE_H */

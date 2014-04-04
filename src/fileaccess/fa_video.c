@@ -230,7 +230,8 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 		  int freetype_context,
 		  seek_index_t *sidx, // Minute for minute thumbs
 		  seek_index_t *cidx, // Chapters
-		  int cwvec_size)
+		  int cwvec_size,
+		  fa_handle_t *fh)
 {
   media_buf_t *mb = NULL;
   media_queue_t *mq = NULL;
@@ -876,7 +877,7 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
   event_t *e;
   e = video_player_loop(fctx, cwvec, mp, va.flags, errbuf, errlen,
 			va.canonical_url, freetype_context, si, ci,
-			cwvec_size);
+			cwvec_size, fh);
 
   seek_index_destroy(si);
   seek_index_destroy(ci);

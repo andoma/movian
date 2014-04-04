@@ -28,8 +28,9 @@ widget(container_z, {
   });
 
   widget(loader, {
-    source: selectedElement(vectorize($global.glw.views.standard.loading))
-      ?? "loading.view";
+    source: select($nav.currentpage.model.loading,
+		   selectedElement(vectorize($global.glw.views.standard.loading))
+		   ?? "loading.view", "");
     effect: blend;
     time: 0.3;
   });

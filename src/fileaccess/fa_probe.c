@@ -671,11 +671,15 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx,
  */
 metadata_t *
 fa_probe_metadata(const char *url, char *errbuf, size_t errsize,
-		  const char *filename)
+		  const char *filename, prop_t *stats)
 {
   AVFormatContext *fctx;
 
-  fa_handle_t *fh = fa_open_ex(url, errbuf, errsize, FA_BUFFERED_SMALL, NULL);
+  fa_open_extra_t foe = {
+    .foe_stats = stats
+  };
+
+  fa_handle_t *fh = fa_open_ex(url, errbuf, errsize, FA_BUFFERED_SMALL, &foe);
 
   if(fh == NULL) 
     return NULL;

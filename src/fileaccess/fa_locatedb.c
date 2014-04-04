@@ -281,7 +281,7 @@ fa_locate_searcher (fa_search_t *fas)
       ctype = CONTENT_DIR;
       prop_set_string(prop_create(metadata, "title"), basename(buf));
     } else {
-      metadata_t *md = fa_probe_metadata(url, NULL, 0, NULL);
+      metadata_t *md = fa_probe_metadata(url, NULL, 0, NULL, NULL);
       if(md != NULL) {
 	ctype = md->md_contenttype;
 	metadata_destroy(md);
