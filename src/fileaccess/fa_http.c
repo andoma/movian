@@ -2261,11 +2261,7 @@ http_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
   memset(fs, 0, sizeof(struct fa_stat));
   hf = (http_file_t *)handle;
   
-  /* if content_type == text/html, assume "index of" page */
-  if(hf->hf_content_type && strstr(hf->hf_content_type, "text/html"))
-    fs->fs_type = CONTENT_DIR;
-  else
-    fs->fs_type = CONTENT_FILE;
+  fs->fs_type = CONTENT_FILE;
   fs->fs_size = hf->hf_filesize;
   
   http_destroy(hf);
