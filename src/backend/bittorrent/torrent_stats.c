@@ -56,8 +56,8 @@ torrent_dump(const torrent_t *to, htsbuf_queue_t *q)
   char str[41];
   bin2hex(str, sizeof(str), to->to_info_hash, 20);
 
-  htsbuf_qprintf(q, "infohash: %s  %d pieces\n", str,
-                 to->to_num_pieces);
+  htsbuf_qprintf(q, "infohash: %s  %d pieces (%d in RAM)\n", str,
+                 to->to_num_pieces, to->to_num_active_pieces);
   torrent_dump_files(&to->to_root, q, 4);
 
   const torrent_file_t *tf;
@@ -65,19 +65,19 @@ torrent_dump(const torrent_t *to, htsbuf_queue_t *q)
     htsbuf_qprintf(q, "%s\n", tf->tf_fullpath);
   }
 
-  htsbuf_qprintf(q, "%d active peers\n",
-          to->to_active_peers);
+  htsbuf_qprintf(q, "%d active peers out of %d known peers\n",
+		 to->to_active_peers, to->to_num_peers);
 
-  htsbuf_qprintf(q, "%-30s %-15s %-6s Flags Q   %-10s Delay Requests Cancels Waste\n",
+  htsbuf_qprintf(q, "%-30s %-15s %-6s Flags Queue %-10s Delay Requests Cancels Waste ConFail Discon\n",
                  "Remote", "Status", "Pieces", "Recv (kB)");
 
   const peer_t *p;
   LIST_FOREACH(p, &to->to_peers, p_link) {
-    if(p->p_state == PEER_STATE_INACTIVE ||
-       p->p_state == PEER_STATE_CONNECT_FAIL)
+
+    if(p->p_state != PEER_STATE_RUNNING)
       continue;
 
-    if(p->p_peer_choking || p->p_state != PEER_STATE_RUNNING)
+    if(p->p_peer_choking)
       continue;
 
     int num_have = 0;
@@ -88,18 +88,21 @@ torrent_dump(const torrent_t *to, htsbuf_queue_t *q)
       }
     }
 
-    htsbuf_qprintf(q, "%-30s %-15s %-6d %c%c%c%c  %-3d %-10d %-5d %-8d %-7d %-6d\n",
+    htsbuf_qprintf(q, "%-30s %-15s %-6d %c%c%c%c  %2d/%-2d %-10d %-5d %-8d %-7d %-6d %-7d %-6d\n",
                    p->p_name, peer_state_txt(p->p_state), num_have,
                    p->p_peer_choking    ? 'c' : ' ',
                    p->p_peer_interested ? 'i' : ' ',
                    p->p_am_choking      ? 'C' : ' ',
                    p->p_am_interested   ? 'I' : ' ',
                    p->p_active_requests,
+		   p->p_maxq,
                    p->p_bytes_received / 1000,
                    p->p_block_delay / 1000,
                    p->p_num_requests,
                    p->p_num_cancels,
-                   p->p_num_waste);
+                   p->p_num_waste,
+		   p->p_connect_fail,
+		   p->p_disconnected);
 
 #if 0
     htsbuf_qprintf(q, "               delays: %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d\n",
@@ -117,12 +120,13 @@ torrent_dump(const torrent_t *to, htsbuf_queue_t *q)
 
     const torrent_request_t *tr;
     LIST_FOREACH(tr, &p->p_requests, tr_peer_link) {
-      htsbuf_qprintf(q, "  piece:%-5d offset:%-8d length:%-5d age:%2.2fs ETA:%-6d %s %s\n",
+      htsbuf_qprintf(q, "  piece:%-4d offset:0x%-8x length:0x%-5x age:%2.2fs ETA:%-6d req:%d %s  piece deadline:%ld\n",
                      tr->tr_piece, tr->tr_begin, tr->tr_length,
                      (int)(async_now - tr->tr_send_time) / 1000000.0f,
-                     (int)((tr->tr_send_time + tr->tr_est_delay) - async_now) / 1000,
-                     tr->tr_dup ? "DUP " : "",
-                     tr->tr_block == NULL ? "ORPHANED " : "");
+                     (int)((tr->tr_send_time + p->p_block_delay) - async_now) / 1000,
+                     tr->tr_req_num,
+                     tr->tr_block == NULL ? "ORPHANED " : "",
+		     tr->tr_block ? tr->tr_block->tb_piece->tp_deadline - async_now : -2LL);
     }
   }
 
@@ -130,7 +134,7 @@ torrent_dump(const torrent_t *to, htsbuf_queue_t *q)
   int sent_blocks = 0;
 
   const torrent_piece_t *tp;
-  LIST_FOREACH(tp, &to->to_active_pieces, tp_link) {
+  TAILQ_FOREACH(tp, &to->to_active_pieces, tp_link) {
     const torrent_block_t *tb;
     LIST_FOREACH(tb, &tp->tp_waiting_blocks, tb_piece_link)
       waiting_blocks++;
@@ -153,6 +157,10 @@ torrent_dump(const torrent_t *to, htsbuf_queue_t *q)
 
   htsbuf_qprintf(q, "%d request queued, %d in-flight\n",
                  waiting_blocks, sent_blocks);
+
+  htsbuf_qprintf(q, "%"PRId64" bytes downloaded, %"PRId64" bytes wasted\n",
+		 to->to_downloaded_bytes,
+		 to->to_wasted_bytes);
 
 
 }

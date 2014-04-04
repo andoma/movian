@@ -187,10 +187,8 @@ static void
 torrent_tracker_periodic(void *aux)
 {
   torrent_tracker_t *tt = aux;
-  hts_mutex_lock(&bittorrent_mutex);
   torrent_tracker_announce(tt, 0);
   asyncio_timer_arm(&tt->tt_timer, async_now + tt->tt_interval * 1000000LL);
-  hts_mutex_unlock(&bittorrent_mutex);
 }
 
 

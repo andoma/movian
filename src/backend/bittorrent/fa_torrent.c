@@ -6,15 +6,6 @@
 #include "misc/str.h"
 
 
-
-typedef struct torrent_fh {
-  fa_handle_t h;
-  LIST_ENTRY(torrent_fh) tfh_link;
-  uint64_t tfh_fpos;
-  torrent_file_t *tfh_file;
-
-} torrent_fh_t;
-
 /**
  *
  */
@@ -73,8 +64,15 @@ torrent_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
 
   torrent_fh_t *tfh = calloc(1, sizeof(torrent_fh_t));
 
+  if(foe != NULL) {
+    tfh->tfh_fa_stats = prop_ref_inc(foe->foe_stats);
+    prop_set(tfh->tfh_fa_stats, "bitrateValid", PROP_SET_INT, 1);
+    prop_set(tfh->tfh_fa_stats, "infoValid", PROP_SET_INT, 1);
+  }
   tfh->tfh_file = tf;
-  LIST_INSERT_HEAD(&tf->tf_fhs, tfh, tfh_link);
+  torrent_t *to = tf->tf_torrent;
+  LIST_INSERT_HEAD(&tf->tf_fhs, tfh, tfh_torrent_file_link);
+  LIST_INSERT_HEAD(&to->to_fhs, tfh, tfh_torrent_link);
   hts_mutex_unlock(&bittorrent_mutex);
   tfh->h.fh_proto = fap;
   return &tfh->h;
@@ -108,7 +106,8 @@ torrent_read(fa_handle_t *fh, void *buf, size_t size)
   }
 
   int r = torrent_load(tf->tf_torrent, buf,
-                       tf->tf_offset + tfh->tfh_fpos, size);
+                       tf->tf_offset + tfh->tfh_fpos, size,
+		       tfh);
 
   hts_mutex_unlock(&bittorrent_mutex);
   tfh->tfh_fpos += r;
@@ -159,9 +158,12 @@ torrent_close(fa_handle_t *fh)
   torrent_fh_t *tfh = (torrent_fh_t *)fh;
   hts_mutex_lock(&bittorrent_mutex);
 
-  LIST_REMOVE(tfh, tfh_link);
+  LIST_REMOVE(tfh, tfh_torrent_file_link);
+  LIST_REMOVE(tfh, tfh_torrent_link);
 
   hts_mutex_unlock(&bittorrent_mutex);
+
+  prop_ref_dec(tfh->tfh_fa_stats);
   free(tfh);
 }
 
@@ -204,6 +206,16 @@ torrent_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
 }
 
 
+/**
+ *
+ */
+static void
+torrent_deadline(fa_handle_t *fh, int deadline)
+{
+  torrent_fh_t *tfh = (torrent_fh_t *)fh;
+  tfh->tfh_deadline = showtime_get_ts() + deadline;
+}
+
 
 /**
  *
@@ -217,5 +229,6 @@ static fa_protocol_t fa_protocol_torrent = {
   .fap_seek        = torrent_seek,
   .fap_fsize       = torrent_fsize,
   .fap_stat        = torrent_stat,
+  .fap_deadline    = torrent_deadline,
 };
 FAP_REGISTER(torrent);

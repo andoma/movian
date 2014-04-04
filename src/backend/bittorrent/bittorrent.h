@@ -1,7 +1,8 @@
 #pragma once
 
+#include "fileaccess/fileaccess.h"
 #include "networking/asyncio.h"
-
+#include "misc/average.h"
 
 #define PIECE_HAVE 0x1
 
@@ -20,8 +21,9 @@ TAILQ_HEAD(torrent_file_queue, torrent_file);
 LIST_HEAD(torrent_fh_list, torrent_fh);
 LIST_HEAD(torrent_request_list, torrent_request);
 TAILQ_HEAD(torrent_request_queue, torrent_request);
-LIST_HEAD(torrent_piece_list, torrent_piece);
+TAILQ_HEAD(torrent_piece_queue, torrent_piece);
 LIST_HEAD(torrent_block_list, torrent_block);
+LIST_HEAD(torrent_piece_list, torrent_piece);
 
 #define TRACKER_PROTO_UDP 1
 
@@ -33,6 +35,8 @@ typedef struct bt_config {
 } bt_config_t;
 
 extern bt_config_t btc;
+
+
 
 /**
  *
@@ -81,6 +85,10 @@ typedef struct peer {
   
   asyncio_fd_t *p_connection;
 
+  int p_connect_fail;
+  int p_disconnected;
+  uint64_t p_fail_time;
+
   TAILQ_ENTRY(peer) p_queue_link; // Depends on state
 
   enum {
@@ -89,6 +97,7 @@ typedef struct peer {
     PEER_STATE_CONNECT_FAIL,
     PEER_STATE_WAIT_HANDSHAKE,
     PEER_STATE_RUNNING,
+    PEER_STATE_DISCONNECTED,
     PEER_STATE_DESTROYED,
     PEER_STATE_num,
   } p_state;
@@ -107,6 +116,8 @@ typedef struct peer {
 
   int p_active_requests;
 
+  uint64_t p_last_send;
+
   uint64_t p_bytes_received;
 
   int p_block_delay;
@@ -121,6 +132,8 @@ typedef struct peer {
   int p_num_requests;
   int p_num_cancels;
   int p_num_waste;
+
+  average_t p_download_rate;
 
 } peer_t;
 
@@ -157,16 +170,31 @@ typedef struct torrent_file {
  */
 
 typedef struct torrent_piece {
-  LIST_ENTRY(torrent_piece) tp_link;
-
-  int tp_access;
-
-  int tp_index;
+  TAILQ_ENTRY(torrent_piece) tp_link;
+  LIST_ENTRY(torrent_piece) tp_serve_link;
 
   struct torrent_block_list tp_waiting_blocks;
   struct torrent_block_list tp_sent_blocks;
 
   uint8_t *tp_data;
+
+  int tp_piece_length;
+  int tp_refcount;
+  int tp_index;
+
+  uint8_t tp_complete      : 1;
+  uint8_t tp_hash_computed : 1;
+  uint8_t tp_hash_ok       : 1;
+  uint8_t tp_on_disk       : 1;
+  uint8_t tp_disk_fail     : 1;
+
+  struct torrent_fh_list tp_active_fh;
+
+  int64_t tp_deadline;
+
+  average_t tp_download_rate;
+
+  int tp_downloaded_bytes;
 
 } torrent_piece_t;
 
@@ -183,6 +211,7 @@ typedef struct torrent_block {
 
   uint32_t tb_begin;
   uint32_t tb_length;
+  uint8_t tb_req_tally;
 
 } torrent_block_t;
 
@@ -204,9 +233,7 @@ typedef struct torrent_request {
   uint32_t tr_begin;
   uint32_t tr_length;
 
-  int tr_est_delay;
-
-  uint8_t tr_dup;
+  uint8_t tr_req_num;
   uint8_t tr_qdepth;
 
 } torrent_request_t;
@@ -227,6 +254,7 @@ typedef struct torrent {
   uint64_t to_downloaded_bytes;
   uint64_t to_remaining_bytes;
   uint64_t to_uploaded_bytes;
+  uint64_t to_wasted_bytes;
   uint64_t to_total_length;
 
   struct torrent_tracker_list to_trackers;
@@ -234,10 +262,11 @@ typedef struct torrent {
   struct peer_list to_unchoked_peers;
 
   int to_active_peers;
+  int to_num_peers;
 
   struct peer_queue to_inactive_peers;
-
-  struct peer_queue to_failed_peers;
+  struct peer_queue to_disconnected_peers;
+  struct peer_queue to_connect_failed_peers;
 
 
   int to_piece_length;
@@ -250,14 +279,39 @@ typedef struct torrent {
 
   struct torrent_file_queue to_root;
 
-  struct torrent_piece_list to_active_pieces;
+  unsigned int to_num_active_pieces;
+
+  struct torrent_piece_queue to_active_pieces;
+  struct torrent_piece_list to_serve_order;
 
   asyncio_timer_t to_io_reschedule;
 
+  struct torrent_fh_list to_fhs;
+
   char to_errbuf[256];
+
+  average_t to_download_rate;
 
 } torrent_t;
 
+
+
+/**
+ *
+ */
+typedef struct torrent_fh {
+  fa_handle_t h;
+  LIST_ENTRY(torrent_fh) tfh_torrent_file_link;
+  LIST_ENTRY(torrent_fh) tfh_torrent_link;
+  LIST_ENTRY(torrent_fh) tfh_piece_link; /* Linked during access to
+					    an active piece */
+  uint64_t tfh_fpos;
+  torrent_file_t *tfh_file;
+  prop_t *tfh_fa_stats;
+
+  int64_t tfh_deadline;
+
+} torrent_fh_t;
 
 
 /**
@@ -303,6 +357,7 @@ void torrent_add_peer(torrent_t *to, const net_addr_t *na);
 
 const char *peer_state_txt(unsigned int state);
 
-int torrent_load(torrent_t *to, void *buf, uint64_t offset, size_t size);
+int torrent_load(torrent_t *to, void *buf, uint64_t offset, size_t size,
+		 torrent_fh_t *tfh);
 
 void torrent_announce_all(torrent_t *to, int event);
