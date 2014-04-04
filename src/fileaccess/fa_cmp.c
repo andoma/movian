@@ -137,7 +137,7 @@ cmp_read(fa_handle_t *handle, void *buf, size_t size)
       exit(1);
     }
   }
-
+  free(tmp);
   return r1;
 }
 
