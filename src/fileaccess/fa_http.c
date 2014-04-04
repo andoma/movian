@@ -39,6 +39,7 @@
 #include "misc/str.h"
 #include "misc/sha.h"
 #include "misc/callout.h"
+#include "misc/average.h"
 
 #if ENABLE_SPIDERMONKEY
 #include "js/js.h"
@@ -192,10 +193,10 @@ typedef struct http_file {
 
   cancellable_t *hf_c;
 
-#define STAT_VEC_SIZE 20
-  int hf_stats[STAT_VEC_SIZE];
-  int hf_stats_ptr;
-  int hf_num_stats;
+  uint64_t hf_bytes_downloaded;
+
+  average_t hf_download_rate;
+
   char hf_line[4096];
 
 } http_file_t;
@@ -1763,7 +1764,7 @@ http_open_ex(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
   hf->hf_no_retries = !!(flags & FA_NO_RETRIES);
   if(foe != NULL) {
     if(foe->foe_stats != NULL) {
-      hf->hf_stats_speed = prop_ref_inc(prop_create(foe->foe_stats, "bitrate"));
+      hf->hf_stats_speed = prop_create_r(foe->foe_stats, "bitrate");
       prop_set(foe->foe_stats, "bitrateValid", PROP_SET_INT, 1);
     }
     hf->hf_user_request_headers  = foe->foe_request_headers;
@@ -2033,28 +2034,14 @@ http_read(fa_handle_t *handle, void *buf, const size_t size)
   if(hf->hf_stats_speed == NULL)
     return http_read_i(hf, buf, size);
 
-  int64_t ts = showtime_get_ts();
   int r = http_read_i(hf, buf, size);
-  ts = showtime_get_ts() - ts;
-  if(r <= 0)
-    return r;
+  hf->hf_bytes_downloaded += r;
 
+  time_t now = time(NULL);
+  average_fill(&hf->hf_download_rate, now, hf->hf_bytes_downloaded);
 
-  int64_t bps = r * 1000000LL / ts;
-  hf->hf_stats[hf->hf_stats_ptr] = bps;
-  hf->hf_stats_ptr++;
-  if(hf->hf_stats_ptr == STAT_VEC_SIZE)
-    hf->hf_stats_ptr = 0;
-
-  if(hf->hf_num_stats < STAT_VEC_SIZE)
-    hf->hf_num_stats++;
-
-  int i, sum = 0;
-  
-  for(i = 0; i < hf->hf_num_stats; i++)
-    sum += hf->hf_stats[i];
-
-  prop_set_int(hf->hf_stats_speed, sum / hf->hf_num_stats);
+  int rate = average_read(&hf->hf_download_rate, now) / 125;
+  prop_set_int(hf->hf_stats_speed, rate);
   return r;
 }
 

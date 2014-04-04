@@ -401,6 +401,7 @@ typedef struct media_pipe {
 
 
   unsigned int mp_buffer_current; // Bytes current queued (total for all queues)
+  int mp_buffer_delay;            // Current delay of buffer in µs
   unsigned int mp_buffer_limit;   // Max buffer size
   unsigned int mp_max_realtime_delay; // Max delay in a queue (real time)
   int mp_satisfied;        /* If true, means we are satisfied with buffer
@@ -474,6 +475,7 @@ typedef struct media_pipe {
 
   prop_t *mp_prop_buffer_current;
   prop_t *mp_prop_buffer_limit;
+  prop_t *mp_prop_buffer_delay;
 
   prop_courier_t *mp_pc;
   prop_sub_t *mp_sub_currenttime;

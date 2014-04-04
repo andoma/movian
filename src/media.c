@@ -375,6 +375,9 @@ mp_create(const char *name, int flags)
   mp->mp_prop_buffer_limit = prop_create(p, "limit");
   prop_set_int(mp->mp_prop_buffer_limit, mp->mp_buffer_limit);
 
+  mp->mp_prop_buffer_delay = prop_create(p, "delay");
+
+
 
   // 
 
@@ -1014,7 +1017,6 @@ mp_ref_dec(media_pipe_t *mp)
 }
 
 
-
 /**
  *
  */
@@ -1034,23 +1036,22 @@ mp_direct_seek(media_pipe_t *mp, int64_t ts)
 
   mp->mp_seek_base = ts;
 
-  if(mp->mp_seek_initiate != NULL)
-    mp->mp_seek_initiate(mp);
-
   if(!mp_seek_in_queues(mp, ts + mp->mp_start_time)) {
     prop_set(mp->mp_prop_root, "seektime", PROP_SET_FLOAT, ts / 1000000.0);
     return;
-  } else {
+  }
 
-    /* If there already is a seek event enqueued, update it */
-    TAILQ_FOREACH(e, &mp->mp_eq, e_link) {
-      if(!event_is_type(e, EVENT_SEEK))
-	continue;
+  if(mp->mp_seek_initiate != NULL)
+    mp->mp_seek_initiate(mp);
 
-      ets = (event_ts_t *)e;
-      ets->ts = ts;
-      return;
-    }
+  /* If there already is a seek event enqueued, update it */
+  TAILQ_FOREACH(e, &mp->mp_eq, e_link) {
+    if(!event_is_type(e, EVENT_SEEK))
+      continue;
+
+    ets = (event_ts_t *)e;
+    ets->ts = ts;
+    return;
   }
 
   ets = event_create(EVENT_SEEK, sizeof(event_ts_t));
@@ -1318,6 +1319,37 @@ mp_dequeue_event_deadline(media_pipe_t *mp, int timeout)
 }
 
 
+static int
+mq_get_buffer_delay(media_queue_t *mq)
+{
+  media_buf_t *f, *l;
+
+  if(mq->mq_stream == -1)
+    return INT32_MAX;
+
+  f = TAILQ_FIRST(&mq->mq_q_data);
+  l = TAILQ_LAST(&mq->mq_q_data, media_buf_queue);
+
+  if(f != NULL && f->mb_epoch == l->mb_epoch)
+    return l->mb_pts - f->mb_pts;
+
+  return INT32_MAX;
+}
+
+
+/**
+ *
+ */
+static void
+mp_update_buffer_delay(media_pipe_t *mp)
+{
+  int vd = mq_get_buffer_delay(&mp->mp_video);
+  int ad = mq_get_buffer_delay(&mp->mp_audio);
+
+  mp->mp_buffer_delay = MIN(vd, ad);
+}
+
+
 /**
  *
  */
@@ -1362,45 +1394,17 @@ mq_update_stats(media_pipe_t *mp, media_queue_t *mq)
     }
   }
 
+  mp_update_buffer_delay(mp);
 
   if(mp->mp_stats) {
     prop_set_int(mq->mq_prop_qlen_cur, mq->mq_packets_current);
     prop_set_int(mp->mp_prop_buffer_current, mp->mp_buffer_current);
+    if(mp->mp_buffer_delay == INT32_MAX)
+      prop_set_void(mp->mp_prop_buffer_delay);
+    else
+      prop_set_float(mp->mp_prop_buffer_delay,
+		     mp->mp_buffer_delay / 1000000.0);
   }
-}
-
-
-/**
- *
- */
-static int64_t
-mq_realtime_delay_locked(media_queue_t *mq)
-{
-  media_buf_t *f, *l;
-
-  f = TAILQ_FIRST(&mq->mq_q_data);
-  l = TAILQ_LAST(&mq->mq_q_data, media_buf_queue);
-
-  if(f != NULL) {
-    if(f->mb_epoch == l->mb_epoch) {
-      int64_t d = l->mb_pts - f->mb_pts;
-      return d;
-    }
-  }
-  return 0;
-}
-
-
-/**
- *
- */
-int64_t
-mq_realtime_delay(media_queue_t *mq)
-{
-  hts_mutex_lock(&mq->mq_mp->mp_mutex);
-  int64_t r = mq_realtime_delay_locked(mq);
-  hts_mutex_unlock(&mq->mq_mp->mp_mutex);
-  return r;
 }
 
 
@@ -1419,13 +1423,35 @@ mb_enqueue_with_events_ex(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
 	 mq->mq_packets_current, mq->mq_packets_threshold,
 	 mp->mp_buffer_current,  mp->mp_buffer_limit);
 #endif
+  
+  const int vminpkt = mp->mp_video.mq_stream != -1 ? 5 : 0;
+  const int aminpkt = mp->mp_audio.mq_stream != -1 ? 5 : 0;
+
+  mp_update_buffer_delay(mp);
 	 
-  while((e = TAILQ_FIRST(&mp->mp_eq)) == NULL &&
-	mp->mp_video.mq_packets_current >= (mp->mp_video.mq_stream != -1 ? 5 : 0) &&
-	mp->mp_audio.mq_packets_current >= (mp->mp_audio.mq_stream != -1 ? 5 : 0) &&
-	(mp->mp_buffer_current + mb->mb_size > mp->mp_buffer_limit ||
-	 (mp->mp_max_realtime_delay != 0 && 
-	  mq_realtime_delay_locked(mq) > mp->mp_max_realtime_delay))) {
+  while(1) {
+
+    e = TAILQ_FIRST(&mp->mp_eq);
+    if(e != NULL)
+      break;
+
+    // Check if we are inside the realtime delay bounds
+    if(mp->mp_buffer_delay < mp->mp_max_realtime_delay) {
+
+      // Check if buffer is full
+      if(mp->mp_buffer_current + mb->mb_size < mp->mp_buffer_limit)
+	break;
+    }
+
+    // These two safeguards so we don't run out of packets in any
+    // of the queues
+
+    if(mp->mp_video.mq_packets_current < vminpkt)
+      break;
+
+    if(mp->mp_audio.mq_packets_current < aminpkt)
+      break;
+
     if(blocked != NULL)
       *blocked = *blocked + 1;
     hts_cond_wait(&mp->mp_backpressure, &mp->mp_mutex);
@@ -2170,7 +2196,7 @@ mp_configure(media_pipe_t *mp, int flags, int buffer_size, int64_t duration,
              const char *type)
 {
   hts_mutex_lock(&mp->mp_mutex);
-  mp->mp_max_realtime_delay = 0;
+  mp->mp_max_realtime_delay = INT32_MAX;
 
   mp_set_clr_flags_locked(mp, flags,
                           MP_FLUSH_ON_HOLD |
