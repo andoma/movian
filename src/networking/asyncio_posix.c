@@ -786,7 +786,6 @@ asyncio_connect(const char *name, const net_addr_t *addr,
   af->af_fd = fd;
   af->af_error_callback = error_cb;
   af->af_read_callback  = read_cb;
-  af->af_name = strdup(name);
   af->af_timeout = showtime_get_ts() + timeout * 1000;
 
   int r = connect(fd, (struct sockaddr *)&si, sizeof(struct sockaddr_in));
