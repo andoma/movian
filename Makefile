@@ -111,6 +111,7 @@ SRCS +=	src/image/image.c \
 # Misc support
 ##############################################################
 SRCS +=	src/misc/ptrvec.c \
+	src/misc/average.c \
 	src/misc/callout.c \
 	src/misc/rstr.c \
 	src/misc/gz.c \
