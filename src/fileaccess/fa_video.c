@@ -266,6 +266,10 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
     if(mb == NULL) {
 
       mp->mp_eof = 0;
+
+      fa_deadline(fh, mp->mp_buffer_delay != INT32_MAX ? 
+		  mp->mp_buffer_delay / 3 : 0);
+
       r = av_read_frame(fctx, &pkt);
 
       if(r == AVERROR(EAGAIN))

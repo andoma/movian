@@ -200,6 +200,7 @@ void *fa_open_vpaths(const char *url, const char **vpaths,
                      struct fa_open_extra *foe);
 void fa_close(void *fh);
 int fa_read(void *fh, void *buf, size_t size);
+void fa_deadline(void *fh_, int deadline);
 int fa_write(void *fh, const void *buf, size_t size);
 int64_t fa_seek(void *fh, int64_t pos, int whence);
 int64_t fa_fsize(void *fh);

@@ -332,6 +332,18 @@ fa_read(void *fh_, void *buf, size_t size)
   return r;
 }
 
+/**
+ *
+ */
+void
+fa_deadline(void *fh_, int deadline)
+{
+  fa_handle_t *fh = fh_;
+
+  if(fh->fh_proto->fap_deadline != NULL)
+    fh->fh_proto->fap_deadline(fh, deadline);
+}
+
 
 /**
  *

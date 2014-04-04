@@ -217,7 +217,15 @@ typedef struct fa_protocol {
                                  const char *name,
                                  void **datap, size_t *lenp);
 
+  /**
+   * Set a deadline for when we expect the next read to complete
+   *
+   * deadline is delta time un µs
+   */
+  void (*fap_deadline)(fa_handle_t *fh, int deadline);
+
 } fa_protocol_t;
+
 
 
 
