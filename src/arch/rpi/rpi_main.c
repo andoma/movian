@@ -750,6 +750,25 @@ tv_init(void)
 
 
 /**
+ *
+ */
+static void
+my_vcos_log(const VCOS_LOG_CAT_T *cat, VCOS_LOG_LEVEL_T _level,
+	    const char *fmt, va_list args)
+{
+  int stlevel;
+  switch(_level) {
+  case  VCOS_LOG_ERROR:   stlevel = TRACE_ERROR; break;
+  case VCOS_LOG_WARN:     stlevel = TRACE_ERROR; break;
+  default:
+    stlevel = TRACE_DEBUG; break;
+  }
+  tracev(0, stlevel, cat->name, fmt, args);
+}
+
+
+
+/**
  * Linux main
  */
 int
@@ -767,6 +786,10 @@ main(int argc, char **argv)
   sigprocmask(SIG_BLOCK, &set, NULL);
 
   bcm_host_init();
+
+
+
+  vcos_set_vlog_impl(my_vcos_log);
 
   kill_framebuffer();
 
