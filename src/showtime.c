@@ -206,9 +206,12 @@ swthread(void *aux)
 
     int timeout = 0;
 
-    while(gconf.swrefresh == 0)
+    while(gconf.swrefresh == 0) {
       timeout = hts_cond_wait_timeout(&gconf.state_cond, &gconf.state_mutex,
-				      86400000);
+				      12 * 3600 * 1000);
+      if(timeout)
+	break;
+    }
     
     gconf.swrefresh = 0;
     hts_mutex_unlock(&gconf.state_mutex);
