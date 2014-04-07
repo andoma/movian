@@ -726,12 +726,16 @@ cec_thread(void *aux)
 		 SETTING_HTSMSG("logicaladdress", s, "cec"),
 		 NULL);
 
+  vcos_log_set_level(CECHOST_LOG_CATEGORY, 
+		     gconf.enable_cec_debug ? VCOS_LOG_TRACE : VCOS_LOG_NEVER);
+
   vc_cec_set_passive(1);
 
   vc_cec_register_callback(((CECSERVICE_CALLBACK_T) cec_callback), NULL);
   vc_cec_register_all();
 
   physical_address = 0xffff;
+
 
  restart:
   while(1) {
@@ -768,10 +772,14 @@ cec_thread(void *aux)
     logical_address = fixed_la;
   }
 
+  CEC_DEBUG("Got logical address 0x%x\n", logical_address);
+
   vc_cec_set_logical_address(logical_address, CEC_DeviceType_Tuner, myVendorId);
 
   while(1) {
     sleep(1);
+    vcos_log_set_level(CECHOST_LOG_CATEGORY, 
+		       gconf.enable_cec_debug ? VCOS_LOG_TRACE : VCOS_LOG_NEVER);
   }
 
   return NULL;
