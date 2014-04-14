@@ -140,7 +140,6 @@ hts_thread_create_detached(const char *title, void *(*func)(void *), void *aux,
   pthread_attr_t attr;
   pthread_attr_init(&attr);
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-  pthread_attr_setstacksize(&attr, 128 * 1024);
   pthread_create(&id, &attr, thread_trampoline,
 		 make_trampoline(title, func, aux, prio));
   pthread_attr_destroy(&attr);
@@ -154,9 +153,6 @@ hts_thread_create_joinable(const char *title, hts_thread_t *p,
 {
   pthread_attr_t attr;
   pthread_attr_init(&attr);
-  if(prio)
-    pthread_attr_setstacksize(&attr, 128 * 1024);
-
 
 #if defined(linux)
   if(prio <= -10 && posix_set_thread_priorities) {
