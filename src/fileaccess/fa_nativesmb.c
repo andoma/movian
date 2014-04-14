@@ -1906,10 +1906,11 @@ cifs_resolve(const char *url, char *filename, size_t filenamesize,
     assert(cc != SAMBA_NEED_AUTH); /* Should not happen if we just try to
 				      login as guest */
 
+    int security_mode = cc->cc_security_mode;
+
     ct = smb_tree_connect_andX(cc, p, errbuf, errlen, non_interactive);
-    if(!(cc->cc_security_mode & SECURITY_USER_LEVEL) || ct != NULL) {
+    if(!(security_mode & SECURITY_USER_LEVEL) || ct != NULL) {
       *p_ct = ct;
-      assert(ct->ct_cc == cc);
       return CIFS_RESOLVE_TREE;
     }
   }
