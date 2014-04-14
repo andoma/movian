@@ -84,7 +84,10 @@ typedef struct glw_video_surface {
 #endif
 
 #if ENABLE_VDPAU
-  VdpVideoSurface gvs_vdpau_surface;
+  GLuint gvs_texture;
+  int gvs_mapped;
+  VdpOutputSurface gvs_vdpau_surface;
+  GLvdpauSurfaceNV gvs_gl_surface;
 #endif
 
 } glw_video_surface_t;
@@ -190,21 +193,6 @@ typedef struct glw_video {
 
   void *gv_aux;
 
-  /**
-   * VDPAU specifics
-   */
-#if ENABLE_VDPAU
-  int gv_vdpau_initialized;
-  int gv_vdpau_running;
-  Pixmap gv_xpixmap;
-  GLXPixmap gv_glx_pixmap;
-  VdpPresentationQueue gv_vdpau_pq;
-  VdpPresentationQueueTarget gv_vdpau_pqt;
-  GLuint gv_vdpau_texture;
-  int64_t gv_vdpau_clockdiff;
-
-  vdpau_mixer_t gv_vm;
-#endif
 
   // 
   prop_sub_t *gv_vo_scaling_sub;

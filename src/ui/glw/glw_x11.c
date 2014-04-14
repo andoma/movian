@@ -361,8 +361,16 @@ window_open(glw_x11_t *gx11, int fullscreen)
 	  "capabilities. Using soft timers");
   }
 
+#if ENABLE_VDPAU
+  if(gx11->gr.gr_be.gbr_glVDPAUInitNV != NULL) {
+    vdpau_dev_t *vd = gx11->gr.gr_be.gbr_vdpau_dev;
+    gx11->gr.gr_be.gbr_glVDPAUInitNV((const GLvoid *)(uintptr_t)vd->vd_dev,
+                                     vd->vd_getproc);
+  }
+#endif
+
   hide_cursor(gx11);
-  
+
   /* X Input method init */
   if(gx11->im != NULL) {
     gx11->ic = XCreateIC(gx11->im,
@@ -582,14 +590,14 @@ glw_x11_init(glw_x11_t *gx11)
 
   if((gx11->display = XOpenDisplay(gx11->displayname_real)) == NULL) {
     TRACE(TRACE_ERROR, "GLW", "Unable to open X display \"%s\"\n",
-	    gx11->displayname_real);
+          gx11->displayname_real);
     return 1;
   }
 
   if(!glXQueryExtension(gx11->display, NULL, NULL)) {
     TRACE(TRACE_ERROR, "GLW", 
 	  "OpenGL GLX extension not supported by display \"%s\"\n",
-	    gx11->displayname_real);
+          gx11->displayname_real);
     return 1;
   }
 
@@ -613,7 +621,7 @@ glw_x11_init(glw_x11_t *gx11)
 
   if(gx11->xvi == NULL) {
     TRACE(TRACE_ERROR, "GLW", "Unable to find an adequate Visual on \"%s\"\n",
-	    gx11->displayname_real);
+          gx11->displayname_real);
     return 1;
   }
   
@@ -633,20 +641,32 @@ glw_x11_init(glw_x11_t *gx11)
     XInternAtom(gx11->display, "WM_DELETE_WINDOW", 0);
 
 #if ENABLE_VDPAU
-  if(GLXExtensionSupported(gx11->display, "GLX_EXT_texture_from_pixmap")) {
 
-    gx11->gr.gr_be.gbr_bind_tex_image = (PFNGLXBINDTEXIMAGEEXTPROC)
-      glXGetProcAddress((const GLubyte*)"glXBindTexImageEXT");
+  gx11->gr.gr_be.gbr_glVDPAUInitNV =
+    (PFNGLVDPAUINITNVPROC)
+    glXGetProcAddress((const GLubyte*)"glVDPAUInitNV");
 
-    gx11->gr.gr_be.gbr_release_tex_image = (PFNGLXRELEASETEXIMAGEEXTPROC)
-      glXGetProcAddress((const GLubyte*)"glXReleaseTexImageEXT");
+  if(gx11->gr.gr_be.gbr_glVDPAUInitNV != NULL) {
 
-    gx11->gr.gr_be.gbr_vdpau_dev = vdpau_init_x11(gx11->display, gx11->screen,
-						  vdpau_preempted, gx11);
+    vdpau_dev_t *vd;
+    vd = vdpau_init_x11(gx11->display, gx11->screen, vdpau_preempted, gx11);
+    gx11->gr.gr_be.gbr_vdpau_dev = vd;
 
-  } else {
-    TRACE(TRACE_DEBUG, "VDPAU", 
-	  "GLX_EXT_texture_from_pixmap extension not present, disabling VDPAU");
+    gx11->gr.gr_be.gbr_glVDPAUUnregisterSurfaceNV =
+      (PFNGLVDPAUUNREGISTERSURFACENVPROC)
+      glXGetProcAddress((const GLubyte*)"glVDPAUUnregisterSurfaceNV");
+
+    gx11->gr.gr_be.gbr_glVDPAUUnmapSurfacesNV =
+      (PFNGLVDPAUUNMAPSURFACESNVPROC)
+      glXGetProcAddress((const GLubyte*)"glVDPAUUnmapSurfacesNV");
+
+    gx11->gr.gr_be.gbr_glVDPAURegisterOutputSurfaceNV =
+      (PFNGLVDPAUREGISTEROUTPUTSURFACENVPROC)
+      glXGetProcAddress((const GLubyte*)"glVDPAURegisterOutputSurfaceNV");
+
+    gx11->gr.gr_be.gbr_glVDPAUMapSurfacesNV =
+      (PFNGLVDPAUMAPSURFACESNVPROC)
+      glXGetProcAddress((const GLubyte*)"glVDPAUMapSurfacesNV");
   }
 #endif
 

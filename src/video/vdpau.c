@@ -27,6 +27,32 @@
 #include "video/video_decoder.h"
 #include "libav.h"
 
+/**
+ *
+ */
+typedef struct vdpau_codec {
+  int vc_refcount;
+
+  vdpau_dev_t *vc_vd;
+
+  int vc_width;
+  int vc_height;
+  //  int vc_refframes;
+
+  VdpDecoderProfile vc_profile;
+
+#define VC_SURFACE_CACHE_SIZE 16
+  VdpVideoSurface vc_surface_cache[VC_SURFACE_CACHE_SIZE];
+  int vc_surface_cache_depth;
+
+  hts_mutex_t vc_surface_cache_mutex;
+
+} vdpau_codec_t;
+
+
+
+
+
 static VdpStatus mixer_setup(vdpau_dev_t *vd, vdpau_mixer_t *vm);
 
 #define vproc(id, ptr) do { \
@@ -44,6 +70,7 @@ resolve_funcs(vdpau_dev_t *vd, VdpGetProcAddress *gp)
 {
   vproc(VDP_FUNC_ID_GET_ERROR_STRING,
 	vdp_get_error_string);
+
   vproc(VDP_FUNC_ID_PREEMPTION_CALLBACK_REGISTER,
        vdp_preemption_callback_register);
 
@@ -215,15 +242,15 @@ static VdpStatus
 vdpau_setup_x11(vdpau_dev_t *vd)
 {
   VdpStatus r;
-  VdpGetProcAddress *getproc;
 
-  r = vdp_device_create_x11(vd->vd_dpy, vd->vd_screen, &vd->vd_dev, &getproc);
+  r = vdp_device_create_x11(vd->vd_dpy, vd->vd_screen, &vd->vd_dev,
+                            &vd->vd_getproc);
   if(r != VDP_STATUS_OK) {
     TRACE(TRACE_DEBUG, "VDPAU", "Unable to create VDPAU device");
     return r;
   }
 
-  if((r = resolve_funcs(vd, getproc)) != VDP_STATUS_OK)
+  if((r = resolve_funcs(vd, vd->vd_getproc)) != VDP_STATUS_OK)
     return r;
 
   vd->vdp_preemption_callback_register(vd->vd_dev, preempt, vd);
@@ -268,167 +295,32 @@ vdpau_reinit_x11(vdpau_dev_t *vd)
 }
 
 
-/**
- *
- */
-int
-vdpau_get_buffer(struct AVCodecContext *ctx, AVFrame *pic)
-{
-  media_codec_t *mc = ctx->opaque;
-  vdpau_codec_t *vc = mc->opaque;
-  vdpau_video_surface_t *vvs;
-  media_buf_t *mb = vc->vc_mb;
-
-  if((vvs = TAILQ_FIRST(&vc->vc_vvs_free)) == NULL)
-    return -1;
-
-  TAILQ_REMOVE(&vc->vc_vvs_free, vvs, vvs_link);
-  TAILQ_INSERT_TAIL(&vc->vc_vvs_alloc, vvs, vvs_link);
-
-  pic->data[0] = (uint8_t *)&vvs->vvs_rs;
-  pic->data[1] =  pic->data[2] = NULL;
-  pic->linesize[0] = pic->linesize[1] =  pic->linesize[2] = 0;
-  pic->opaque = vvs;
-  pic->type = FF_BUFFER_TYPE_USER;
-
-  copy_mbm_from_mb(&vvs->vvs_mbm, mb);
-  return 0;
-}
-
 
 /**
  *
  */
-static VdpStatus
-vdpau_create_buffers(vdpau_codec_t *vc, int width, int height, int buffers)
+static void
+vdpau_release_surfaces(vdpau_dev_t *vd, vdpau_codec_t *vc)
 {
-  int i;
-  vdpau_video_surface_t *vvs;
-  vdpau_dev_t *vd = vc->vc_vd;
-  VdpStatus r;
-
-  for(i = 0; i < buffers; i++) {
-    vvs = calloc(1, sizeof(vdpau_video_surface_t));
-    r = vd->vdp_video_surface_create(vd->vd_dev, VDP_CHROMA_TYPE_420,
-				     width, height, &vvs->vvs_surface);
-    if(r != VDP_STATUS_OK) {
-      free(vvs);
-      return r;
-    }
-    vvs->vvs_idx = i;
-    vvs->vvs_rs.surface = vvs->vvs_surface;
-    TAILQ_INSERT_TAIL(&vc->vc_vvs_free, vvs, vvs_link);
-  }
-  return VDP_STATUS_OK;
+  for(int i = 0; i < vc->vc_surface_cache_depth; i++)
+    vd->vdp_video_surface_destroy(vc->vc_surface_cache[i]);
+  vc->vc_surface_cache_depth = 0;
 }
 
-
-/**
- *
- */
-void
-vdpau_release_buffer(struct AVCodecContext *ctx, AVFrame *pic)
-{
-  vdpau_video_surface_t *vvs = (vdpau_video_surface_t *)pic->opaque;
-  media_codec_t *mc = ctx->opaque;
-  vdpau_codec_t *vc = mc->opaque;
-
-  vvs->vvs_rs.state &= ~FF_VDPAU_STATE_USED_FOR_REFERENCE;
-  TAILQ_REMOVE(&vc->vc_vvs_alloc, vvs, vvs_link);
-  TAILQ_INSERT_TAIL(&vc->vc_vvs_free, vvs, vvs_link);
-  pic->data[0] = NULL;
-  pic->opaque = NULL;
-}
-
-
-/**
- *
- */
-void
-vdpau_draw_horiz_band(struct AVCodecContext *ctx, 
-		      const AVFrame *frame, 
-		      int offset[4], int y, int type, int h)
-{
-  media_codec_t *mc = ctx->opaque;
-  vdpau_codec_t *vc = mc->opaque;
-  vdpau_dev_t *vd = vc->vc_vd;
-  struct vdpau_render_state *rs = (struct vdpau_render_state *)frame->data[0];
-
-  vd->vdp_decoder_render(vc->vc_decoder, rs->surface, 
-			 (VdpPictureInfo const *)&rs->info,
-			 rs->bitstream_buffers_used, rs->bitstream_buffers);
-}
 
 
 /**
  *
  */
 static void
-vdpau_decode(struct media_codec *mc, struct video_decoder *vd,
-	     struct media_queue *mq, struct media_buf *mb, int reqsize)
+vdpau_codec_release(vdpau_codec_t *vc)
 {
-  media_codec_t *cw = mb->mb_cw;
-  AVCodecContext *ctx = cw->ctx;
-  vdpau_codec_t *vc = mc->opaque;
-  media_pipe_t *mp = vd->vd_mp;
-  vdpau_video_surface_t *vvs;
-  int got_pic = 0;
-  AVFrame *frame = vd->vd_frame;
-  
-  ctx->skip_frame = mb->mb_skip == 1 ? AVDISCARD_NONREF : AVDISCARD_NONE;
-
-  vc->vc_mb = mb;
-
-  AVPacket avpkt;
-  av_init_packet(&avpkt);
-  avpkt.data = mb->mb_data;
-  avpkt.size = mb->mb_size;
-
-  avcodec_decode_video2(ctx, frame, &got_pic, &avpkt);
-
-  if(mp->mp_stats)
-    mp_set_mq_meta(mq, cw->ctx->codec, cw->ctx);
-
-  if(!got_pic || mb->mb_skip == 1)
+  if(atomic_add(&vc->vc_refcount, -1) != 1)
     return;
 
-  vvs = frame->opaque;
-  video_deliver_frame_avctx(vd, vd->vd_mp, mq, ctx, frame, &vvs->vvs_mbm, 0,
-			    mc);
-}
-
-
-
-/**
- *
- */
-static void
-vc_cleanup(vdpau_codec_t *vc)
-{
-  vdpau_dev_t *vd = vc->vc_vd;
-  vdpau_video_surface_t *vvs;
-
-  if(vc->vc_decoder != VDP_INVALID_HANDLE) {
-    vd->vdp_decoder_destroy(vc->vc_decoder);
-    vc->vc_decoder = VDP_INVALID_HANDLE;
-  }
-
-  while((vvs = TAILQ_FIRST(&vc->vc_vvs_free)) != NULL) {
-    TAILQ_REMOVE(&vc->vc_vvs_free, vvs, vvs_link);
-    vd->vdp_video_surface_destroy(vvs->vvs_surface);
-    free(vvs);
-  }
-}
-
-
-/**
- *
- */
-static void
-vc_destroy(vdpau_codec_t *vc)
-{
-  vc_cleanup(vc);
-  assert(TAILQ_FIRST(&vc->vc_vvs_alloc) == NULL);
+  vdpau_release_surfaces(vc->vc_vd, vc);
+  hts_mutex_destroy(&vc->vc_surface_cache_mutex);
+  printf("VC free'd\n");
   free(vc);
 }
 
@@ -437,54 +329,22 @@ vc_destroy(vdpau_codec_t *vc)
  *
  */
 static void
-vdpau_codec_close(struct media_codec *mc)
+vdpau_release_buffer(void *opaque, uint8_t *data)
 {
-  vdpau_codec_t *vc = mc->opaque;
-  vc_destroy(vc);
-}
+  VdpVideoSurface surface = (uintptr_t)(void *)data;
+  vdpau_codec_t *vc = opaque;
 
+  hts_mutex_lock(&vc->vc_surface_cache_mutex);
 
-/**
- *
- */
-static enum PixelFormat 
-vdpau_get_pixfmt(struct AVCodecContext *s, const enum PixelFormat *fmt)
-{
-  return fmt[0];
-}
-
-
-/**
- *
- */
-static void
-vdpau_codec_reinit(media_codec_t *mc)
-{
-  vdpau_codec_t *vc = mc->opaque;
-  vdpau_dev_t *vd = vc->vc_vd;
-  vdpau_video_surface_t *vvs;
-  VdpStatus r;
-
-  r = vd->vdp_decoder_create(vd->vd_dev, vc->vc_profile, 
-			     vc->vc_width, vc->vc_height,
-			     vc->vc_refframes, &vc->vc_decoder);
-
-  if(r != VDP_STATUS_OK) {
-    TRACE(TRACE_INFO, "VDPAU", "Unable to reinit decoder: %s",
-	  vdpau_errstr(vd, r));
-    return;
+  if(vc->vc_surface_cache_depth < VC_SURFACE_CACHE_SIZE) {
+    vc->vc_surface_cache[vc->vc_surface_cache_depth++] = surface;
+  } else {
+    vc->vc_vd->vdp_video_surface_destroy(surface);
   }
 
-  TAILQ_FOREACH(vvs, &vc->vc_vvs_free, vvs_link)
-    vd->vdp_video_surface_create(vd->vd_dev, VDP_CHROMA_TYPE_420,
-				 vc->vc_width, vc->vc_height,
-				 &vvs->vvs_surface);
-  
-  TAILQ_FOREACH(vvs, &vc->vc_vvs_alloc, vvs_link)
-    vd->vdp_video_surface_create(vd->vd_dev, VDP_CHROMA_TYPE_420,
-				 vc->vc_width, vc->vc_height,
-				 &vvs->vvs_surface);
-  
+  hts_mutex_unlock(&vc->vc_surface_cache_mutex);
+
+  vdpau_codec_release(vc);
 }
 
 
@@ -492,125 +352,137 @@ vdpau_codec_reinit(media_codec_t *mc)
  *
  */
 static int
-vdpau_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
-		   media_pipe_t *mp)
+vdpau_get_buffer(struct AVCodecContext *ctx, AVFrame *frame, int flags)
 {
-  VdpDecoderProfile profile;
-  vdpau_dev_t *vd = mp->mp_vdpau_dev;
+  media_codec_t *mc = ctx->opaque;
+  vdpau_codec_t *vc = mc->opaque;
+  vdpau_dev_t *vd = vc->vc_vd;
+
   VdpStatus r;
-  int refframes;
-  AVCodec *codec;
+
+  VdpVideoSurface surface;
+
+  hts_mutex_lock(&vc->vc_surface_cache_mutex);
+
+  if(vc->vc_surface_cache_depth > 0) {
+
+    surface = vc->vc_surface_cache[--vc->vc_surface_cache_depth];
+
+  } else {
+
+    r = vd->vdp_video_surface_create(vd->vd_dev,
+                                     VDP_CHROMA_TYPE_420,
+                                     vc->vc_width, vc->vc_height, &surface);
+
+    if(r != VDP_STATUS_OK) {
+      TRACE(TRACE_INFO, "VDPAU", "Unable to create surface: %s",
+            vdpau_errstr(vd, r));
+      return -1;
+    }
+  }
+
+  hts_mutex_unlock(&vc->vc_surface_cache_mutex);
+
+  atomic_add(&vc->vc_refcount, 1);
+
+  frame->data[3] = frame->data[0] = (void *)(uintptr_t)surface;
+  frame->buf[0] = av_buffer_create(frame->data[0], 0, vdpau_release_buffer,
+                                   vc, 0);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static void
+vdpau_codec_hw_close(struct media_codec *mc)
+{
+  vdpau_codec_t *vc = mc->opaque;
+  vdpau_dev_t *vd = vc->vc_vd;
+  AVCodecContext *ctx = mc->ctx;
+  AVVDPAUContext *vctx = ctx->hwaccel_context;
+
+  hts_mutex_lock(&vc->vc_surface_cache_mutex);
+  vdpau_release_surfaces(vd, vc);
+  hts_mutex_unlock(&vc->vc_surface_cache_mutex);
+
+  vd->vdp_decoder_destroy(vctx->decoder);
+
+  av_freep(&ctx->hwaccel_context);
+
+  vdpau_codec_release(vc);
+
+  mc->opaque = NULL;
+}
+
+
+/**
+ *
+ */
+int
+vdpau_init_libav_decode(media_codec_t *mc, AVCodecContext *ctx)
+{
+  media_pipe_t *mp = mc->mp;
+  vdpau_dev_t *vd = mp->mp_vdpau_dev;
 
   if(vd == NULL)
-    return 1;
+    return 1;  // VDPAU not initialized
 
-  if(mcp == NULL || mcp->width == 0 || mcp->height == 0)
-    return 1;
+  VdpDecoderProfile vdp_profile;
+  int refframes = 2;
 
-  switch(mc->codec_id) {
-
-  case AV_CODEC_ID_MPEG1VIDEO:
-    profile = VDP_DECODER_PROFILE_MPEG1; 
-    codec = avcodec_find_decoder_by_name("mpegvideo_vdpau");
-    refframes = 2;
-    break;
-
-  case AV_CODEC_ID_MPEG2VIDEO:
-    profile = VDP_DECODER_PROFILE_MPEG2_MAIN; 
-    codec = avcodec_find_decoder_by_name("mpegvideo_vdpau");
-    refframes = 2;
-    break;
-
-  case AV_CODEC_ID_H264:
-    profile = VDP_DECODER_PROFILE_H264_HIGH; 
-    codec = avcodec_find_decoder_by_name("h264_vdpau");
-    refframes = 16;
-    break;
-#if 0 // Seems broken
-  case AV_CODEC_ID_VC1:
-    profile = VDP_DECODER_PROFILE_VC1_ADVANCED; 
-    mc->codec = avcodec_find_decoder_by_name("vc1_vdpau");
-    refframes = 16;
-    break;
-
-  case AV_CODEC_ID_WMV3:
-    profile = VDP_DECODER_PROFILE_VC1_MAIN;
-    mc->codec = avcodec_find_decoder_by_name("wmv3_vdpau");
-    refframes = 16;
-    break;
-#endif
-  default:
+  if(av_vdpau_get_profile(ctx, &vdp_profile)) {
+    TRACE(TRACE_DEBUG, "VDPAU", "Can't decode %s profile %d",
+          ctx->codec->name, ctx->profile);
     return 1;
   }
 
-  if(codec == NULL)
-    return -1;
+  if(ctx->codec_id == AV_CODEC_ID_H264)
+    refframes = 16;
+
+  int width  = (ctx->coded_width  + 1) & ~1;
+  int height = (ctx->coded_height + 3) & ~3;
+
+  if(height == 1088)
+    height = 1080;
+
+  VdpStatus r;
+
+  AVVDPAUContext *vctx = av_vdpau_alloc_context();
+  vctx->decoder = VDP_INVALID_HANDLE;
+  vctx->render = vd->vdp_decoder_render;
+
+  r = vd->vdp_decoder_create(vd->vd_dev, vdp_profile, width, height,
+                             refframes, &vctx->decoder);
+  if(r) {
+    TRACE(TRACE_DEBUG, "VDPAU", "Unable to create decoder: %s",
+          vdpau_errstr(vd, r));
+    av_freep(&vctx);
+    return 1;
+  }
+
+  ctx->hwaccel_context = vctx;
 
   vdpau_codec_t *vc = calloc(1, sizeof(vdpau_codec_t));
-  TAILQ_INIT(&vc->vc_vvs_alloc);
-  TAILQ_INIT(&vc->vc_vvs_free);
+  vc->vc_refcount = 1;
+  hts_mutex_init(&vc->vc_surface_cache_mutex);
   vc->vc_vd = vd;
-  vc->vc_width = mcp->width;
+  vc->vc_width = width;
+  vc->vc_height = height;
+  vc->vc_profile = vdp_profile;
 
-  if(mcp->height == 1088)
-    vc->vc_height = 1080;
-  else
-    vc->vc_height = mcp->height;
+  assert(mc->opaque == NULL);
 
-  vc->vc_profile = profile;
-  vc->vc_refframes = refframes;
-
-  r = vd->vdp_decoder_create(vd->vd_dev, vc->vc_profile, 
-			     vc->vc_width, vc->vc_height,
-			     vc->vc_refframes, &vc->vc_decoder);
-
-  if(r != VDP_STATUS_OK) {
-    TRACE(TRACE_INFO, "VDPAU", "Unable to create decoder: %s",
-	  vdpau_errstr(vd, r));
-    vc_destroy(vc);
-    return -1;
-  }
-
-  
-  r = vdpau_create_buffers(vc, vc->vc_width, vc->vc_height,
-			   vc->vc_refframes + 5);
-
-  if(r != VDP_STATUS_OK) {
-    TRACE(TRACE_INFO, "VDPAU", "Unable to allocate decoding buffers");
-    vc_destroy(vc);
-    return -1;
-  }
-
-  TRACE(TRACE_DEBUG, "VDPAU", "Decoder initialized");
-	  
-  mc->ctx = avcodec_alloc_context3(codec);
-
-  if(mcp->extradata != NULL) {
-    mc->ctx->extradata = calloc(1, mcp->extradata_size +
-				FF_INPUT_BUFFER_PADDING_SIZE);
-    memcpy(mc->ctx->extradata, mcp->extradata, mcp->extradata_size);
-    mc->ctx->extradata_size = mcp->extradata_size;
-  }
-
-  if(avcodec_open2(mc->ctx, codec, NULL) < 0) {
-    free(mc->ctx);
-    vc_destroy(vc);
-    return -1;
-  }
-
-  mc->ctx->get_buffer      = vdpau_get_buffer;
-  mc->ctx->release_buffer  = vdpau_release_buffer;
-  mc->ctx->draw_horiz_band = vdpau_draw_horiz_band;
-  mc->ctx->get_format      = vdpau_get_pixfmt;
-
-  mc->ctx->slice_flags = SLICE_FLAG_CODED_ORDER | SLICE_FLAG_ALLOW_FIELD;
-
-  mc->ctx->opaque = mc;
   mc->opaque = vc;
-  mc->decode = vdpau_decode;
-  mc->flush  = libav_video_flush;
-  mc->close  = vdpau_codec_close;
-  mc->reinit = vdpau_codec_reinit;
+  mc->close = vdpau_codec_hw_close;
+
+  mc->get_buffer2 = vdpau_get_buffer;
+
+  TRACE(TRACE_DEBUG, "VDPAU",
+        "Created accelerated decoder for %s %d x %d profile:%d",
+        ctx->codec->name, width, height, ctx->profile);
+
   return 0;
 }
 
@@ -647,10 +519,9 @@ static VdpStatus
 mixer_setup(vdpau_dev_t *vd, vdpau_mixer_t *vm)
 {
   VdpStatus st;
-  int i;
 
-  for(i = 0; i < 4; i++)
-    vm->vm_surface_win[i] = VDP_INVALID_HANDLE;
+  for(int i = 0; i < 4; i++)
+    vm->vm_surfaces[i] = NULL;
 
   void const *mixer_values[] = {&vm->vm_width, &vm->vm_height};
 
@@ -713,6 +584,13 @@ vdpau_mixer_deinit(vdpau_mixer_t *vm)
 {
   if(vm->vm_mixer != VDP_INVALID_HANDLE)
     vm->vm_vd->vdp_video_mixer_destroy(vm->vm_mixer);
+
+  for(int i = 0; i < 4; i++) {
+    if(vm->vm_surfaces[i] != NULL) {
+      av_frame_unref(vm->vm_surfaces[i]);
+      vm->vm_surfaces[i] = NULL;
+    }
+  }
 }
 
 
@@ -812,4 +690,3 @@ vdpau_mixer_set_color_matrix(vdpau_mixer_t *vm, const struct frame_info *fi)
 						  attributes, values);
 }
 
-REGISTER_CODEC(NULL, vdpau_codec_create, 100);

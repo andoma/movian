@@ -46,6 +46,8 @@ typedef struct vdpau_dev {
   void (*vd_preempted)(void *opaque);
   void *vd_opaque;
 
+  VdpGetProcAddress *vd_getproc;
+
   hts_mutex_t vd_mutex;
 
   PFNGLXBINDTEXIMAGEEXTPROC vd_glXBindTexImage;
@@ -83,48 +85,8 @@ typedef struct vdpau_dev {
   VdpVideoMixerQueryFeatureSupport *vdp_video_mixer_query_feature_support;
   VdpGenerateCSCMatrix *vdp_generate_csc_matrix;
 
-
-
 } vdpau_dev_t;
 
-
-/**
- *
- */
-typedef struct vdpau_video_surface {
-  TAILQ_ENTRY(vdpau_video_surface) vvs_link;
-
-  struct vdpau_render_state vvs_rs;
-  VdpVideoSurface vvs_surface;
-
-  int vvs_idx;
-  struct media_buf_meta vvs_mbm;
-} vdpau_video_surface_t;
-
-
-/**
- *
- */
-typedef struct vdpau_codec {
-  vdpau_dev_t *vc_vd;
-
-  VdpDecoder vc_decoder;
-
-  struct vdpau_video_surface_queue vc_vvs_alloc;
-  struct vdpau_video_surface_queue vc_vvs_free;
-
-  struct media_buf *vc_mb;
-
-  int vc_b_age;
-  int vc_age[2];
-
-  int vc_width;
-  int vc_height;
-  int vc_refframes;
-
-  VdpDecoderProfile vc_profile;
-
-} vdpau_codec_t;
 
 /**
  *
@@ -133,7 +95,7 @@ typedef struct vdpau_mixer {
   vdpau_dev_t *vm_vd;
 
   VdpVideoMixer vm_mixer;
-  VdpVideoSurface vm_surface_win[4];
+  AVFrame *vm_surfaces[4];
 
   int vm_width;
   int vm_height;
@@ -153,14 +115,6 @@ vdpau_dev_t *vdpau_init_x11(Display *dpy, int screen,
 
 VdpStatus vdpau_reinit_x11(vdpau_dev_t *vd);
 
-int vdpau_get_buffer(struct AVCodecContext *c, AVFrame *pic);
-
-void vdpau_release_buffer(struct AVCodecContext *c, AVFrame *pic);
-
-void vdpau_draw_horiz_band(struct AVCodecContext *context, 
-			   const AVFrame *frame, 
-			   int offset[4], int y, int type, int h);
-
 const char *vdpau_errstr(vdpau_dev_t *vd, VdpStatus st);
 
 int vdpau_mixer_feat(vdpau_dev_t *vd, VdpVideoMixerFeature f);
@@ -175,5 +129,8 @@ void vdpau_mixer_set_deinterlacer(vdpau_mixer_t *vm, int mode);
 
 void vdpau_mixer_set_color_matrix(vdpau_mixer_t *vm, 
 				  const struct frame_info *fi);
+
+
+int vdpau_init_libav_decode(media_codec_t *mc, AVCodecContext *ctx);
 
 #endif // VDPAU_H__

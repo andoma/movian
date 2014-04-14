@@ -1237,13 +1237,8 @@ video_deliver_lavc(const frame_info_t *fi, glw_video_t *gv,
     
     nfi.fi_type = 'YUVP';
     break;
-    
-  case PIX_FMT_VDPAU_H264:
-  case PIX_FMT_VDPAU_MPEG1:
-  case PIX_FMT_VDPAU_MPEG2:
-  case PIX_FMT_VDPAU_WMV3:
-  case PIX_FMT_VDPAU_VC1:
-  case PIX_FMT_VDPAU_MPEG4:
+
+  case AV_PIX_FMT_VDPAU:
     nfi.fi_type = 'VDPA';
     break;
 

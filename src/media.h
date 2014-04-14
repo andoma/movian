@@ -95,9 +95,9 @@ TAILQ_HEAD(dvdspu_queue, dvdspu);
  *
  */
 typedef struct frame_info {
-  uint8_t *fi_data[4];
+  struct AVFrame *fi_avframe;
 
-  void (*fi_refop)(void *data, int delta); // Depends (A LOT) on fi_type
+  uint8_t *fi_data[4];
 
   int fi_pitch[4];
 
@@ -162,6 +162,8 @@ typedef struct media_codec {
 
   unsigned int sar_num;
   unsigned int sar_den;
+
+  int (*get_buffer2)(struct AVCodecContext *s, AVFrame *frame, int flags);
 
 } media_codec_t;
 

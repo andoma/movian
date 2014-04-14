@@ -100,10 +100,7 @@ video_deliver_frame_avctx(video_decoder_t *vd,
                           const media_codec_t *mc)
 {
   frame_info_t fi;
-#if 0
-  if(mb->mb_time != AV_NOPTS_VALUE)
-    mp_set_current_time(mp, mb->mb_time);
-#endif
+
   /* Compute aspect ratio */
   switch(mbm->mbm_aspect_override) {
   case 0:
@@ -214,6 +211,8 @@ video_deliver_frame_avctx(video_decoder_t *vd,
      vd->vd_convert_height != frame->height ||
      vd->vd_convert_pixfmt != frame->format) {
 
+    // Nope, go ahead and deliver frame as-is
+
     fi.fi_data[0] = frame->data[0];
     fi.fi_data[1] = frame->data[1];
     fi.fi_data[2] = frame->data[2];
@@ -223,12 +222,21 @@ video_deliver_frame_avctx(video_decoder_t *vd,
     fi.fi_pitch[2] = frame->linesize[2];
 
     fi.fi_pix_fmt = frame->format;
-  
+    fi.fi_avframe = frame;
+
     int r = video_deliver_frame(vd, &fi);
+
+    /* return value
+     * 0  = OK
+     * 1  = Need convert to YUV420P
+     * -1 = Fail
+     */
 
     if(r != 1)
       return;
   }
+
+  // Need to convert frame
 
   vd->vd_sws =
     sws_getCachedContext(vd->vd_sws,
@@ -266,6 +274,7 @@ video_deliver_frame_avctx(video_decoder_t *vd,
 
   fi.fi_type = 'LAVC';
   fi.fi_pix_fmt = PIX_FMT_YUV420P;
+  fi.fi_avframe = NULL;
   video_deliver_frame(vd, &fi);
 }
 
