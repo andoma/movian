@@ -195,7 +195,7 @@ gvv_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
     surface_init(gv, gvs);
   }
 
-  return glw_video_newframe_blend(gv, vd, flags, &surface_release);
+  return glw_video_newframe_blend(gv, vd, flags, &surface_release, 0);
 }
 
 

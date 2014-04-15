@@ -260,7 +260,7 @@ static int64_t
 yuvp_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
 {
   gv_color_matrix_update(gv);
-  return glw_video_newframe_blend(gv, vd, flags, &gv_surface_pixmap_release);
+  return glw_video_newframe_blend(gv, vd, flags, &gv_surface_pixmap_release, 1);
 }
 
 /**
