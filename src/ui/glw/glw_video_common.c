@@ -306,13 +306,36 @@ glw_video_compute_avdiff(glw_root_t *gr, media_pipe_t *mp,
  */
 static int64_t
 glw_video_compute_blend(glw_video_t *gv, glw_video_surface_t *sa,
-			glw_video_surface_t *sb, int output_duration)
+			glw_video_surface_t *sb, int output_duration,
+                        int interpolation)
 {
   int64_t pts;
-  int x;
 
-  if(sa->gvs_duration >= output_duration) {
-  
+  if(!interpolation) {
+
+    sa->gvs_duration -= output_duration;
+    if(sa->gvs_pts != PTS_UNSET)
+      sa->gvs_pts += output_duration;
+
+    if(sa->gvs_duration < 0 && sb != NULL) {
+
+      int spill = -sa->gvs_duration;
+      sa->gvs_duration = 0;
+
+      sb->gvs_duration -= spill;
+      if(sb->gvs_pts != PTS_UNSET)
+        sb->gvs_pts += spill;
+
+      sa = sb;
+    }
+
+    gv->gv_sa = sa;
+    gv->gv_sb = NULL;
+
+    pts = sa->gvs_pts;
+
+  } else if(sa->gvs_duration >= output_duration ) {
+
     gv->gv_sa = sa;
     gv->gv_sb = NULL;
 
@@ -328,15 +351,13 @@ glw_video_compute_blend(glw_video_t *gv, glw_video_surface_t *sa,
     gv->gv_sb = sb;
     gv->gv_blend = (float) sa->gvs_duration / (float)output_duration;
 
-    if(sa->gvs_duration + 
-       sb->gvs_duration < output_duration) {
+    if(sa->gvs_duration + sb->gvs_duration < output_duration) {
 
-      sa->gvs_duration = 0;
       pts = sb->gvs_pts;
 
     } else {
       pts = sa->gvs_pts;
-      x = output_duration - sa->gvs_duration;
+      const int x = output_duration - sa->gvs_duration;
       sb->gvs_duration -= x;
       if(sb->gvs_pts != PTS_UNSET)
 	sb->gvs_pts += x;
@@ -359,19 +380,20 @@ glw_video_compute_blend(glw_video_t *gv, glw_video_surface_t *sa,
 /**
  *
  */
-int64_t 
+int64_t
 glw_video_newframe_blend(glw_video_t *gv, video_decoder_t *vd, int flags,
-			 gv_surface_pixmap_release_t *release)
+			 gv_surface_pixmap_release_t *release,
+                         int interpolation)
 {
   glw_root_t *gr = gv->w.glw_root;
   glw_video_surface_t *sa, *sb, *s;
   media_pipe_t *mp = gv->gv_mp;
-  int output_duration;
   int64_t pts = PTS_UNSET;
   int frame_duration = gv->w.glw_root->gr_frameduration;
 
-  output_duration = glw_video_compute_output_duration(gv, frame_duration);
-  
+  interpolation &= gv->gv_vinterpolate;
+
+
   /* Find new surface to display */
   hts_mutex_assert(&gv->gv_surface_mutex);
  again:
@@ -389,19 +411,17 @@ glw_video_newframe_blend(glw_video_t *gv, video_decoder_t *vd, int flags,
     }
 
   } else {
-      
 
-    int epoch = sa->gvs_epoch;
-
-
-    /* */
     sb = TAILQ_NEXT(sa, gvs_link);
 
     if(!vd->vd_hold) {
-      pts = glw_video_compute_blend(gv, sa, sb, output_duration);
+      int output_duration;
+      output_duration = glw_video_compute_output_duration(gv, frame_duration);
+
+      pts = glw_video_compute_blend(gv, sa, sb, output_duration, interpolation);
       if(pts != PTS_UNSET) {
 	pts -= frame_duration * 2;
-	int code = glw_video_compute_avdiff(gr, mp, pts, epoch, gv);
+	int code = glw_video_compute_avdiff(gr, mp, pts, sa->gvs_epoch, gv);
 
 	if(code == AVDIFF_HOLD) {
 	  kalman_init(&gv->gv_avfilter);
@@ -487,6 +507,7 @@ glw_video_dtor(glw_t *w)
   prop_unsubscribe(gv->gv_hstretch_sub);
   prop_unsubscribe(gv->gv_fstretch_sub);
   prop_unsubscribe(gv->gv_vo_on_video_sub);
+  prop_unsubscribe(gv->gv_vinterpolate_sub);
 
   free(gv->gv_current_url);
   free(gv->gv_pending_url);
@@ -699,6 +720,14 @@ glw_video_ctor(glw_t *w)
 		   PROP_TAG_COURIER, w->glw_root->gr_courier,
 		   PROP_TAG_ROOT, c,
                    PROP_TAG_NAME("ctrl", "subalign"),
+		   NULL);
+
+  gv->gv_vinterpolate_sub =
+    prop_subscribe(0,
+		   PROP_TAG_SET_INT, &gv->gv_vinterpolate,
+		   PROP_TAG_COURIER, w->glw_root->gr_courier,
+		   PROP_TAG_ROOT, c,
+                   PROP_TAG_NAME("ctrl", "vinterpolate"),
 		   NULL);
 }
 

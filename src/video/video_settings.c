@@ -104,6 +104,16 @@ video_settings_init(void)
                    SETTING_VALUE_ORIGIN("global"),
                    NULL);
 
+#if !(defined(RPISTOS) || defined(__APPLE__))
+  video_settings.vinterpolate_setting =
+    setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
+                   SETTING_TITLE(_p("Video frame interpolation")),
+                   SETTING_HTSMSG("vinterpolate", store, "videoplayback"),
+                   SETTING_VALUE_ORIGIN("global"),
+                   SETTING_VALUE(1),
+                   NULL);
+#endif
+
   setting_create(SETTING_MULTIOPT, s, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Resume video playback")),
                  SETTING_WRITE_INT(&video_settings.resume_mode),

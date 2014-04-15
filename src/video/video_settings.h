@@ -29,6 +29,7 @@ struct video_settings {
   struct setting *vzoom_setting;
   struct setting *stretch_horizontal_setting;
   struct setting *stretch_fullscreen_setting;
+  struct setting *vinterpolate_setting;
 
   enum {
     VIDEO_RESUME_NO = 0,

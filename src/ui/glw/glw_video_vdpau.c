@@ -43,7 +43,11 @@ typedef struct glw_video_vdpau {
   vdpau_mixer_t gvv_vm;
 } glw_video_vdpau_t;
 
-
+/**
+ * GL_NV_vdpau_interop is documented here:
+ *
+ * ftp://download.nvidia.com/XFree86/vdpau/GL_NV_vdpau_interop.txt
+ */
 
 
 
@@ -166,14 +170,15 @@ gvv_newframe(glw_video_t *gv, video_decoder_t *vd0, int flags)
     return AV_NOPTS_VALUE;
   }
 
- glw_video_surface_t *gvs;
+  glw_video_surface_t *gvs;
+
   while((gvs = TAILQ_FIRST(&gv->gv_parked_queue)) != NULL) {
     TAILQ_REMOVE(&gv->gv_parked_queue, gvs, gvs_link);
     surface_init(gv, gvs);
   }
 
   glw_need_refresh(gv->w.glw_root, 0);
-  return glw_video_newframe_blend(gv, vd, flags, &gv_surface_pixmap_release);
+  return glw_video_newframe_blend(gv, vd, flags, &gv_surface_pixmap_release, 1);
 }
 
 
@@ -186,44 +191,6 @@ static const float projection[16] = {
 };
 
 
-
-/**
- *  Video widget render
- */
-static void
-render_video_quad(glw_video_t *gv, glw_video_surface_t *gvs, glw_rctx_t *rc)
-{
-  glw_backend_root_t *gbr = &gv->w.glw_root->gr_be;
-
-  glEnable(GL_TEXTURE_2D);
-  glBindTexture(GL_TEXTURE_2D, gvs->gvs_texture);
-
-  glw_load_program(gbr, NULL);
-
-  glMatrixMode(GL_PROJECTION);
-  glLoadMatrixf(projection);
-  glMatrixMode(GL_MODELVIEW);
-  glLoadMatrixf(glw_mtx_get(rc->rc_mtx));
-
-  glBegin(GL_QUADS);
-  glTexCoord2i(0, 1);
-  glVertex3i(-1, -1, 0);
-
-  glTexCoord2i(1, 1);
-  glVertex3i(1, -1, 0);
-
-  glTexCoord2i(1, 0);
-  glVertex3i(1, 1, 0);
-
-  glTexCoord2i(0, 0);
-  glVertex3i(-1, 1, 0);
-
-  glEnd();
-
-  glDisable(GL_TEXTURE_2D);
-}
-
-
 /**
  *
  */
@@ -231,7 +198,7 @@ static void
 gvv_render(glw_video_t *gv, glw_rctx_t *rc)
 {
   glw_video_surface_t *sa = gv->gv_sa;
-  glw_video_surface_t *sb = gv->gv_sb;
+  glw_video_surface_t *sb = gv->gv_sa;
 
   if(sa == NULL)
     return;
@@ -240,18 +207,28 @@ gvv_render(glw_video_t *gv, glw_rctx_t *rc)
   gv->gv_height = sa->gvs_height[0];
 
   upload_texture(gv, sa);
+  if(sb != NULL)
+    upload_texture(gv, sb);
 
   if(rc->rc_alpha > 0.98f)
     glDisable(GL_BLEND);
   else
     glEnable(GL_BLEND);
 
-  if(sb != NULL && sa->gvs_duration < sb->gvs_duration) {
-    upload_texture(gv, sb);
-    render_video_quad(gv, sb, rc);
+  glw_backend_root_t *gbr = &gv->w.glw_root->gr_be;
+  glw_program_t *gp;
+
+  if(sb != NULL) {
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, sb->gvs_texture);
+    glActiveTexture(GL_TEXTURE0);
+    gp = gbr->gbr_rgb2rgb_2f;
   } else {
-    render_video_quad(gv, sa, rc);
+    gp = gbr->gbr_rgb2rgb_1f;
   }
+
+  glw_render_video_quad(0, 0, sa->gvs_width[0], sa->gvs_height[0],
+                        0, 0, gbr, gp, gv, rc);
 
   glEnable(GL_BLEND);
 }

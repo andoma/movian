@@ -346,18 +346,18 @@ video_opengl_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
   glw_need_refresh(gv->w.glw_root, 0);
 
   gv_color_matrix_update(gv);
-  return glw_video_newframe_blend(gv, vd, flags, &gv_surface_pixmap_release);
+  return glw_video_newframe_blend(gv, vd, flags, &gv_surface_pixmap_release, 1);
 }
 
 
 /**
  *  Video widget render
  */
-static void
-render_video_quad(int interlace, int rectmode, int width, int height,
-		  int bob1, int bob2,
-		  glw_backend_root_t *gbr, glw_program_t *gp,
-		  const glw_video_t *gv, glw_rctx_t *rc)
+void
+glw_render_video_quad(int interlace, int rectmode, int width, int height,
+                      int bob1, int bob2,
+                      glw_backend_root_t *gbr, glw_program_t *gp,
+                      const glw_video_t *gv, glw_rctx_t *rc)
 {
   float x1, x2, y1, y2;
   float b1 = 0, b2 = 0;
@@ -452,9 +452,9 @@ render_video_1f(const glw_video_t *gv, glw_video_surface_t *s,
     return;
   }
 
-  render_video_quad(s->gvs_interlaced, rectmode,
-		    s->gvs_width[0], s->gvs_height[0],
-		    s->gvs_yshift, 0, gbr, gp, gv, rc);
+  glw_render_video_quad(s->gvs_interlaced, rectmode,
+                        s->gvs_width[0], s->gvs_height[0],
+                        s->gvs_yshift, 0, gbr, gp, gv, rc);
 }
 
 
@@ -507,10 +507,10 @@ render_video_2f(const glw_video_t *gv,
     return;
   }
 
-  render_video_quad(sa->gvs_interlaced || sb->gvs_interlaced, rectmode, 
-		    sa->gvs_width[0], sa->gvs_height[0],
-		    sa->gvs_yshift, sb->gvs_yshift,
-		    gbr, gp, gv, rc);
+  glw_render_video_quad(sa->gvs_interlaced || sb->gvs_interlaced, rectmode,
+                        sa->gvs_width[0], sa->gvs_height[0],
+                        sa->gvs_yshift, sb->gvs_yshift,
+                        gbr, gp, gv, rc);
 }
 
 
@@ -531,18 +531,18 @@ video_opengl_render(glw_video_t *gv, glw_rctx_t *rc)
   gv->gv_width  = sa->gvs_width[0];
   gv->gv_height = sa->gvs_height[0];
 
-  if(rc->rc_alpha > 0.98f) 
-    glDisable(GL_BLEND); 
+  if(rc->rc_alpha > 0.98f)
+    glDisable(GL_BLEND);
   else
-    glEnable(GL_BLEND); 
-  
+    glEnable(GL_BLEND);
+
   if(sb != NULL) {
     render_video_2f(gv, sa, sb, textype, rectmode, rc);
   } else {
     render_video_1f(gv, sa, textype, rectmode, rc);
   }
 
-  glEnable(GL_BLEND); 
+  glEnable(GL_BLEND);
 }
 
 

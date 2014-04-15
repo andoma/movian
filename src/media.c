@@ -646,6 +646,22 @@ mp_settings_init(media_pipe_t *mp, const char *url, const char *dir_url,
                  SETTING_INHERIT(p),
                  NULL);
 
+  if(video_settings.vinterpolate_setting != NULL) {
+    p = make_dir_setting(SETTING_BOOL, "vinterpolate",
+                         &mp->mp_settings_video_dir,
+                         dir_url, video_settings.vinterpolate_setting, mp);
+
+    setting_create(SETTING_BOOL, mp->mp_setting_video_root,
+                   SETTINGS_INITIAL_UPDATE,
+                   SETTING_COURIER(mp->mp_pc),
+                   SETTING_TITLE(_p("Video frame interpolation")),
+                   SETTING_WRITE_PROP(prop_create(c, "vinterpolate")),
+                   SETTING_KVSTORE(url, "vinterpolate"),
+                   SETTING_GROUP(&mp->mp_settings_video),
+                   SETTING_INHERIT(p),
+                   NULL);
+  }
+
   settings_create_separator(mp->mp_setting_video_root, NULL);
 
   setting_create(SETTING_ACTION, mp->mp_setting_video_root, 0,
