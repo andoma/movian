@@ -300,7 +300,7 @@ devevent_thread(void *aux)
 
   while(1) {
     n = poll(de->de_fds, de->de_nfds, 1000);
-    if(n == -1) {
+    if(n == 0) {
       rescan(de);
       continue;
     }
