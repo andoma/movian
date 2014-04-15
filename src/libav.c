@@ -215,7 +215,7 @@ media_format_deref(media_format_t *fw)
 
 
 /**
- * 
+ *
  */
 void
 metadata_from_libav(char *dst, size_t dstlen,
@@ -249,13 +249,13 @@ metadata_from_libav(char *dst, size_t dstlen,
 		      ", %s (Level %d.%d)",
 		      p, avctx->level / 10, avctx->level % 10);
   }
-    
+
   if(avctx->codec_type == AVMEDIA_TYPE_AUDIO) {
     char buf[64];
 
     av_get_channel_layout_string(buf, sizeof(buf), avctx->channels,
                                  avctx->channel_layout);
-					    
+
     off += snprintf(dst + off, dstlen - off, ", %d Hz, %s",
 		    avctx->sample_rate, buf);
   }
@@ -263,7 +263,7 @@ metadata_from_libav(char *dst, size_t dstlen,
   if(avctx->width)
     off += snprintf(dst + off, dstlen - off,
 		    ", %dx%d", avctx->width, avctx->height);
-  
+
   if(avctx->codec_type == AVMEDIA_TYPE_AUDIO && avctx->bit_rate)
     off += snprintf(dst + off, dstlen - off,
 		    ", %d kb/s", avctx->bit_rate / 1000);
@@ -271,10 +271,10 @@ metadata_from_libav(char *dst, size_t dstlen,
 }
 
 /**
- * 
+ *
  */
 void
-mp_set_mq_meta(media_queue_t *mq, const AVCodec *codec, 
+mp_set_mq_meta(media_queue_t *mq, const AVCodec *codec,
 	       const AVCodecContext *avctx)
 {
   char buf[128];
