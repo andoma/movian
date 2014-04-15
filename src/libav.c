@@ -268,6 +268,9 @@ metadata_from_libav(char *dst, size_t dstlen,
     off += snprintf(dst + off, dstlen - off,
 		    ", %d kb/s", avctx->bit_rate / 1000);
 
+  if(avctx->hwaccel != NULL)
+    off += snprintf(dst + off, dstlen - off, " (%s)",
+                    avctx->hwaccel->name);
 }
 
 /**
