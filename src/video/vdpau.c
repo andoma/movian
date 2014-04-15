@@ -320,7 +320,6 @@ vdpau_codec_release(vdpau_codec_t *vc)
 
   vdpau_release_surfaces(vc->vc_vd, vc);
   hts_mutex_destroy(&vc->vc_surface_cache_mutex);
-  printf("VC free'd\n");
   free(vc);
 }
 
