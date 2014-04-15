@@ -226,6 +226,7 @@ gvv_render(glw_video_t *gv, glw_rctx_t *rc)
   } else {
     gp = gbr->gbr_rgb2rgb_1f;
   }
+  glBindTexture(GL_TEXTURE_2D, sa->gvs_texture);
 
   glw_render_video_quad(0, 0, sa->gvs_width[0], sa->gvs_height[0],
                         0, 0, gbr, gp, gv, rc);
