@@ -98,7 +98,6 @@ typedef struct nav_page {
 
   TAILQ_ENTRY(nav_page) np_global_link;
   TAILQ_ENTRY(nav_page) np_history_link;
-  int np_inhistory;
 
   prop_t *np_prop_root;
   char *np_url;
@@ -307,17 +306,6 @@ nav_update_cango(navigator_t *nav)
  *
  */
 static void
-nav_remove_from_history(navigator_t *nav, nav_page_t *np)
-{
-  np->np_inhistory = 0;
-  TAILQ_REMOVE(&nav->nav_history, np, np_history_link);
-}
-
-
-/**
- *
- */
-static void
 page_unsub(nav_page_t *np)
 {
   prop_unsubscribe(np->np_close_sub);
@@ -342,9 +330,7 @@ nav_close(nav_page_t *np, int with_prop)
   if(nav->nav_page_current == np)
     nav->nav_page_current = NULL;
 
-  if(np->np_inhistory)
-    nav_remove_from_history(nav, np);
-
+  TAILQ_REMOVE(&nav->nav_history, np, np_history_link);
   TAILQ_REMOVE(&nav->nav_pages, np, np_global_link);
 
   if(with_prop) {
@@ -417,22 +403,32 @@ nav_insert_page(navigator_t *nav, nav_page_t *np, prop_t *origin)
     abort();
   }
 
-  if(np->np_inhistory == 0) {
-    if(nav->nav_page_current != NULL) {
-      
-      /* Destroy any previous "future" histories,
-       * this happens if we back a few times and then jumps away
-       * in another "direction"
-       */
-      
-      while((np2 = TAILQ_NEXT(nav->nav_page_current, np_history_link)) != NULL)
-	nav_close(np2, 1);
-    }
+  if(nav->nav_page_current != NULL) {
 
-    TAILQ_INSERT_TAIL(&nav->nav_history, np, np_history_link);
-    np->np_inhistory = 1;
+    /* Destroy any previous "future" histories,
+     * this happens if we back a few times and then jumps away
+     * in another "direction"
+     */
+
+    while((np2 = TAILQ_NEXT(nav->nav_page_current, np_history_link)) != NULL)
+      nav_close(np2, 1);
   }
+
+  TAILQ_INSERT_TAIL(&nav->nav_history, np, np_history_link);
+
   nav_select(nav, np, origin);
+
+  /*
+   * Kill off pages that's just previous to this page in history
+   * with the same URI. This makes sure the user don't end up with
+   * tons of duplicates if holding down some key
+   */
+
+  while((np2 = TAILQ_PREV(np, nav_page_queue, np_history_link)) != NULL &&
+        !strcmp(np2->np_url, np->np_url)) {
+    nav_close(np2, 1);
+  }
+
 }
 
 
