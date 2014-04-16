@@ -120,13 +120,6 @@ void video_decoder_stop(video_decoder_t *vd);
 
 void video_decoder_destroy(video_decoder_t *vd);
 
-void video_deliver_frame_avctx(video_decoder_t *vd,
-			       media_pipe_t *mp, media_queue_t *mq,
-			       struct AVCodecContext *ctx,
-                               struct AVFrame *frame,
-			       const media_buf_meta_t *mbm, int decode_time,
-                               const media_codec_t *mc);
-
 int video_deliver_frame(video_decoder_t *vd, const frame_info_t *info);
 
 int64_t  video_decoder_infer_pts(const media_buf_meta_t *mbm,

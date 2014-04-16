@@ -22,6 +22,8 @@
 #include <ctype.h>
 #include <libavformat/avformat.h>
 #include <libavutil/audioconvert.h>
+#include <libswscale/swscale.h>
+#include <libavutil/pixdesc.h>
 
 #include "showtime.h"
 #include "media.h"
@@ -32,6 +34,210 @@
 #if ENABLE_VDPAU
 #include "video/vdpau.h"
 #endif
+
+
+
+
+static const int libav_colorspace_tbl[] = {
+  [AVCOL_SPC_BT709]     = COLOR_SPACE_BT_709,
+  [AVCOL_SPC_BT470BG]   = COLOR_SPACE_BT_601,
+  [AVCOL_SPC_SMPTE170M] = COLOR_SPACE_BT_601,
+  [AVCOL_SPC_SMPTE240M] = COLOR_SPACE_SMPTE_240M,
+};
+
+
+#define vd_valid_duration(t) ((t) > 10000ULL && (t) < 1000000ULL)
+
+
+/**
+ *
+ */
+static void
+libav_deliver_frame(video_decoder_t *vd,
+                    media_pipe_t *mp, media_queue_t *mq,
+                    AVCodecContext *ctx, AVFrame *frame,
+                    const media_buf_meta_t *mbm, int decode_time,
+                    const media_codec_t *mc)
+{
+  frame_info_t fi;
+
+  /* Compute aspect ratio */
+  switch(mbm->mbm_aspect_override) {
+  case 0:
+
+    fi.fi_dar_num = frame->width;
+    fi.fi_dar_den = frame->height;
+
+    if(frame->sample_aspect_ratio.num) {
+      fi.fi_dar_num *= frame->sample_aspect_ratio.num;
+      fi.fi_dar_den *= frame->sample_aspect_ratio.den;
+    } else if(mc->sar_num) {
+      fi.fi_dar_num *= mc->sar_num;
+      fi.fi_dar_den *= mc->sar_den;
+    }
+
+    break;
+  case 1:
+    fi.fi_dar_num = 4;
+    fi.fi_dar_den = 3;
+    break;
+  case 2:
+    fi.fi_dar_num = 16;
+    fi.fi_dar_den = 9;
+    break;
+  }
+
+  int64_t pts = video_decoder_infer_pts(mbm, vd,
+					frame->pict_type == AV_PICTURE_TYPE_B);
+
+  int duration = mbm->mbm_duration;
+
+  if(!vd_valid_duration(duration)) {
+    /* duration is zero or very invalid, use duration from last output */
+    duration = vd->vd_estimated_duration;
+  }
+
+  if(pts == AV_NOPTS_VALUE && vd->vd_nextpts != AV_NOPTS_VALUE)
+    pts = vd->vd_nextpts; /* no pts set, use estimated pts */
+
+  if(pts != AV_NOPTS_VALUE && vd->vd_prevpts != AV_NOPTS_VALUE) {
+    /* we know PTS of a prior frame */
+    int64_t t = (pts - vd->vd_prevpts) / vd->vd_prevpts_cnt;
+
+    if(vd_valid_duration(t)) {
+      /* inter frame duration seems valid, store it */
+      vd->vd_estimated_duration = t;
+      if(duration == 0)
+	duration = t;
+
+    }
+  }
+  
+  duration += frame->repeat_pict * duration / 2;
+ 
+  if(pts != AV_NOPTS_VALUE) {
+    vd->vd_prevpts = pts;
+    vd->vd_prevpts_cnt = 0;
+  }
+  vd->vd_prevpts_cnt++;
+
+  if(duration == 0) {
+    TRACE(TRACE_DEBUG, "Video", "Dropping frame with duration = 0");
+    return;
+  }
+
+  prop_set_int(mq->mq_prop_too_slow, decode_time > duration);
+
+  if(pts != AV_NOPTS_VALUE) {
+    vd->vd_nextpts = pts + duration;
+  } else {
+    vd->vd_nextpts = AV_NOPTS_VALUE;
+  }
+#if 0
+  static int64_t lastpts = AV_NOPTS_VALUE;
+  if(lastpts != AV_NOPTS_VALUE) {
+    printf("DEC: %20"PRId64" : %-20"PRId64" %d %"PRId64" %d\n", pts, pts - lastpts, mbm->mbm_drive_clock,
+           mbm->mbm_delta, duration);
+    if(pts - lastpts > 1000000) {
+      abort();
+    }
+  }
+  lastpts = pts;
+#endif
+
+  vd->vd_interlaced |=
+    frame->interlaced_frame && !mbm->mbm_disable_deinterlacer;
+
+  fi.fi_width = frame->width;
+  fi.fi_height = frame->height;
+  fi.fi_pts = pts;
+  fi.fi_epoch = mbm->mbm_epoch;
+  fi.fi_delta = mbm->mbm_delta;
+  fi.fi_duration = duration;
+  fi.fi_drive_clock = mbm->mbm_drive_clock;
+
+  fi.fi_interlaced = !!vd->vd_interlaced;
+  fi.fi_tff = !!frame->top_field_first;
+  fi.fi_prescaled = 0;
+
+  fi.fi_color_space = 
+    ctx->colorspace < ARRAYSIZE(libav_colorspace_tbl) ? 
+    libav_colorspace_tbl[ctx->colorspace] : 0;
+
+  fi.fi_type = 'LAVC';
+
+  // Check if we should skip directly to convert code
+  if(vd->vd_convert_width  != frame->width ||
+     vd->vd_convert_height != frame->height ||
+     vd->vd_convert_pixfmt != frame->format) {
+
+    // Nope, go ahead and deliver frame as-is
+
+    fi.fi_data[0] = frame->data[0];
+    fi.fi_data[1] = frame->data[1];
+    fi.fi_data[2] = frame->data[2];
+
+    fi.fi_pitch[0] = frame->linesize[0];
+    fi.fi_pitch[1] = frame->linesize[1];
+    fi.fi_pitch[2] = frame->linesize[2];
+
+    fi.fi_pix_fmt = frame->format;
+    fi.fi_avframe = frame;
+
+    int r = video_deliver_frame(vd, &fi);
+
+    /* return value
+     * 0  = OK
+     * 1  = Need convert to YUV420P
+     * -1 = Fail
+     */
+
+    if(r != 1)
+      return;
+  }
+
+  // Need to convert frame
+
+  vd->vd_sws =
+    sws_getCachedContext(vd->vd_sws,
+                         frame->width, frame->height, frame->format,
+                         frame->width, frame->height, PIX_FMT_YUV420P,
+                         0, NULL, NULL, NULL);
+
+  if(vd->vd_convert_width  != frame->width  ||
+     vd->vd_convert_height != frame->height ||
+     vd->vd_convert_pixfmt != frame->format) {
+    avpicture_free(&vd->vd_convert);
+
+    vd->vd_convert_width  = frame->width;
+    vd->vd_convert_height = frame->height;
+    vd->vd_convert_pixfmt = frame->format;
+
+    avpicture_alloc(&vd->vd_convert, PIX_FMT_YUV420P, frame->width,
+                    frame->height);
+
+    TRACE(TRACE_DEBUG, "Video", "Converting from %s to %s",
+	  av_get_pix_fmt_name(frame->format),
+	  av_get_pix_fmt_name(PIX_FMT_YUV420P));
+  }
+
+  sws_scale(vd->vd_sws, (void *)frame->data, frame->linesize, 0,
+            frame->height, vd->vd_convert.data, vd->vd_convert.linesize);
+
+  fi.fi_data[0] = vd->vd_convert.data[0];
+  fi.fi_data[1] = vd->vd_convert.data[1];
+  fi.fi_data[2] = vd->vd_convert.data[2];
+
+  fi.fi_pitch[0] = vd->vd_convert.linesize[0];
+  fi.fi_pitch[1] = vd->vd_convert.linesize[1];
+  fi.fi_pitch[2] = vd->vd_convert.linesize[2];
+
+  fi.fi_type = 'LAVC';
+  fi.fi_pix_fmt = PIX_FMT_YUV420P;
+  fi.fi_avframe = NULL;
+  video_deliver_frame(vd, &fi);
+}
+
 
 /**
  *
@@ -69,7 +275,7 @@ libav_decode_video(struct media_codec *mc, struct video_decoder *vd,
   if(got_pic == 0 || mbm->mbm_skip == 1)
     return;
 
-  video_deliver_frame_avctx(vd, mp, mq, ctx, frame, mbm, t, mc);
+  libav_deliver_frame(vd, mp, mq, ctx, frame, mbm, t, mc);
   av_frame_unref(frame);
 }
 
