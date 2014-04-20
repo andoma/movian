@@ -415,10 +415,14 @@ struct prop_sub {
 #endif
 };
 
+void prop_ref_dec_locked(prop_t *p);
+
 prop_t *prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme, 
 		     int flags);
 
 prop_t *prop_make(const char *name, int noalloc, prop_t *parent);
+
+void prop_make_dir(prop_t *p, prop_sub_t *skipme, const char *origin);
 
 void prop_move0(prop_t *p, prop_t *before, prop_sub_t *skipme);
 

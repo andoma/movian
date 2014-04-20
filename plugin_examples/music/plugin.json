@@ -1,5 +1,5 @@
 {
-  "type": "javascript",
+  "type": "ecmascript",
   "id": "example_music",
   "file": "example_music.js"
 }

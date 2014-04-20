@@ -347,7 +347,7 @@ prop_ref_dec(prop_t *p)
 /**
  *
  */
-static void
+void
 prop_ref_dec_locked(prop_t *p)
 {
   if(p == NULL || atomic_add(&p->hp_refcount, -1) > 1)
@@ -1540,7 +1540,7 @@ prop_clean(prop_t *p)
 /**
  *
  */
-static void
+void
 prop_make_dir(prop_t *p, prop_sub_t *skipme, const char *origin)
 {
   if(p->hp_type == PROP_DIR)
@@ -5035,8 +5035,8 @@ prop_print_tree0(prop_t *p, int indent, int flags)
 {
   prop_t *c;
 
-  fprintf(stderr, "%*.s%s[%p %d %c%c]: ", indent, "", 
-	  p->hp_name, p, p->hp_xref,
+  fprintf(stderr, "%*.s%s[%p %d %d %c%c]: ", indent, "", 
+	  p->hp_name, p, p->hp_refcount, p->hp_xref,
 	  p->hp_flags & PROP_MULTI_SUB ? 'M' : ' ',
 	  p->hp_flags & PROP_MULTI_NOTIFY ? 'N' : ' ');
 

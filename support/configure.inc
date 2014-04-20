@@ -525,6 +525,9 @@ EOF
     # Static web resources
     echo >>${CONFIG_MAK} "BUNDLES+=resources/static"
 
+    # Static ecmascript resources
+    echo >>${CONFIG_MAK} "BUNDLES+=resources/ecmascript"
+
     # Test signal audio samples
     if enabled audiotest; then
 	echo >>${CONFIG_MAK} "BUNDLES+=resources/speaker_positions"

@@ -45,6 +45,8 @@
 #include "js/js.h"
 #endif
 
+#include "ecmascript/ecmascript.h"
+
 typedef enum {
   PLUGIN_CAT_TV,
   PLUGIN_CAT_VIDEO,
@@ -447,6 +449,16 @@ js_unload(plugin_t *pl)
 #endif
 
 
+/**
+ *
+ */
+static void
+plugin_unload_ecmascript(plugin_t *pl)
+{
+  ecmascript_plugin_unload(pl->pl_id);
+}
+
+
 
 /**
  *
@@ -517,7 +529,11 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
     int r;
     char fullpath[URL_MAX];
 
-    if(!strcmp(type, "javascript")) {
+    if(!strcmp(type, "views")) {
+      // No special tricks here, we always loads 'glwviews' from all plugins
+      r = 0;
+
+    } else if(!strcmp(type, "ecmascript")) {
 
       const char *file = htsmsg_get_str(ctrl, "file");
       if(file == NULL) {
@@ -528,21 +544,32 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
       }
       snprintf(fullpath, sizeof(fullpath), "%s/%s", url, file);
 
+      hts_mutex_unlock(&plugin_mutex);
+      r = ecmascript_plugin_load(id, fullpath, errbuf, errlen);
+      hts_mutex_lock(&plugin_mutex);
+      if(!r)
+	pl->pl_unload = plugin_unload_ecmascript;
+
+
 #if ENABLE_SPIDERMONKEY
+    } else if(!strcmp(type, "javascript")) {
+
+      const char *file = htsmsg_get_str(ctrl, "file");
+      if(file == NULL) {
+	snprintf(errbuf, errlen, "Missing \"file\" element in control file %s",
+		 ctrlfile);
+	htsmsg_release(ctrl);
+	return -1;
+      }
+      snprintf(fullpath, sizeof(fullpath), "%s/%s", url, file);
+
       hts_mutex_unlock(&plugin_mutex);
       r = js_plugin_load(id, fullpath, errbuf, errlen);
       hts_mutex_lock(&plugin_mutex);
       if(!r)
 	pl->pl_unload = js_unload;
-#else
-      snprintf(errbuf, errlen,
-	       "Unable to load %s -- Javscript not enabled", fullpath);
-      r = -1;
-#endif
 
-    } else if(!strcmp(type, "views")) {
-      // No special tricks here, we always loads 'glwviews' from all plugins
-      r = 0;
+#endif
     } else {
       snprintf(errbuf, errlen, "Unknown type \"%s\" in control file %s",
 	       type, ctrlfile);
