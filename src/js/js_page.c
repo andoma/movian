@@ -46,11 +46,17 @@ LIST_HEAD(js_model_list, js_model);
 static HTS_MUTEX_DECL(js_page_mutex); // protects global lists
 static HTS_MUTEX_DECL(js_model_mutex); // protects global model lists
 
+static hts_cond_t js_search_cond;
+
 static struct js_route_list js_routes;
 static struct js_searcher_list js_searchers;
 static struct js_model_list js_models;
 
 static JSFunctionSpec item_proto_functions[];
+
+#define LOCK_ARRAY_SIZE 101
+
+static char lockarray[LOCK_ARRAY_SIZE];
 
 /**
  *
@@ -140,6 +146,8 @@ typedef struct js_model {
 
   cancellable_t jm_cancellable;
 
+  int jm_lock_index;
+
 } js_model_t;
 
 
@@ -156,6 +164,7 @@ static js_model_t *
 js_model_create(JSContext *cx, jsval openfunc, int sync)
 {
   js_model_t *jm = calloc(1, sizeof(js_model_t));
+  jm->jm_lock_index = -1;
   jm->jm_refcount = 1;
   jm->jm_openfunc = openfunc;
   jm->jm_sync = sync;
@@ -1455,6 +1464,13 @@ js_open(js_model_t *jm)
 
   jm->jm_cx = cx;
 
+  if(jm->jm_lock_index != -1) {
+    hts_mutex_lock(&js_page_mutex);
+    lockarray[jm->jm_lock_index] = 0;
+    hts_cond_signal(&js_search_cond);
+    hts_mutex_unlock(&js_page_mutex);
+  }
+
   while(jm->jm_subs) {
     struct prop_notify_queue q;
     jsrefcount s = JS_SuspendRequest(cx);
@@ -1571,7 +1587,6 @@ js_backend_search(struct prop *model, const char *query)
   js_model_t *jm;
 
   JSContext *cx = js_newctx(NULL);
-  JS_BeginRequest(cx);
 
   hts_mutex_lock(&js_page_mutex);
 
@@ -1579,16 +1594,28 @@ js_backend_search(struct prop *model, const char *query)
     if(!jss->jss_jsp->jsp_enable_search)
       continue;
 
+    js_plugin_t *jsp = jss->jss_jsp;
+
+    int hash = mystrhash(jsp->jsp_id) % LOCK_ARRAY_SIZE;
+
+    while(lockarray[hash])
+      hts_cond_wait(&js_search_cond, &js_page_mutex);
+
+    lockarray[hash] = 1;
+
+    JS_BeginRequest(cx);
     jm = js_model_create(cx, jss->jss_openfunc, 0);
+    JS_EndRequest(cx);
     strvec_addp(&jm->jm_args, query);
 
     search_class_create(parent, &jm->jm_nodes, &jm->jm_entries, 
 			jss->jss_title, jss->jss_icon);
 
+    jm->jm_lock_index = hash;
+
     model_launch(jm);
   }
   hts_mutex_unlock(&js_page_mutex);
-  JS_EndRequest(cx);
   JS_DestroyContext(cx);
   prop_ref_dec(parent);
 }
@@ -1775,4 +1802,14 @@ js_wait_for_models_to_terminate(void)
   }
   hts_mutex_unlock(&js_model_mutex);
   return i == 100;
+}
+
+
+/**
+ *
+ */
+void
+js_page_init(void)
+{
+  hts_cond_init(&js_search_cond, &js_page_mutex);
 }

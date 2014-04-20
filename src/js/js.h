@@ -267,4 +267,7 @@ JSBool js_addfaprovider(JSContext *cx, JSObject *obj, uintN argc,
 JSBool js_addItemHook(JSContext *cx, JSObject *obj, uintN argc,
                       jsval *argv, jsval *rval);
 
+
+void js_page_init(void);
+
 #endif // JS_H__
