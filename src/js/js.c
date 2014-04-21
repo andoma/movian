@@ -480,7 +480,7 @@ js_prop_set_from_jsval(JSContext *cx, prop_t *p, jsval value)
     js_prop_from_str(cx, p, value);
   } else if(JSVAL_IS_OBJECT(value)) {
     JSObject *obj = JSVAL_TO_OBJECT(value);
-    JSClass *c = JS_GetClass(cx, obj);
+    JSClass *c = JS_GET_CLASS(cx, obj);
 
     if(!strcmp(c->name, "XML"))   // Treat some classes special
       js_prop_from_str(cx, p, value);

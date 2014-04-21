@@ -423,7 +423,7 @@ js_db_txn(JSContext *cx, JSObject *obj, uintN argc,
         return JS_FALSE;
       }
       if(JSVAL_IS_OBJECT(exn)) {
-        JSClass *c = JS_GetClass(cx, JSVAL_TO_OBJECT(exn));
+        JSClass *c = JS_GET_CLASS(cx, JSVAL_TO_OBJECT(exn));
         if(c == &db_deadlock_exn) {
           if(jd->jd_debug)
             TRACE(TRACE_DEBUG, "JS", "Catched deadlock exception, retrying");

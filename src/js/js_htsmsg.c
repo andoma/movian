@@ -63,7 +63,7 @@ js_htsmsg_emit_jsval(JSContext *cx, jsval value, htsmsg_t *msg,
     js_htsmsg_emit_str(cx, value, msg, fieldname);
   } else if(JSVAL_IS_OBJECT(value)) {
     JSObject *obj = JSVAL_TO_OBJECT(value);
-    JSClass *c = JS_GetClass(cx, obj);
+    JSClass *c = JS_GET_CLASS(cx, obj);
 
     if(!strcmp(c->name, "XML"))   // Treat some classes special
       js_htsmsg_emit_str(cx, value, msg, fieldname);
@@ -136,7 +136,7 @@ js_htsmsg_from_object(JSContext *cx, JSObject *obj)
   JS_DestroyIdArray(cx, ida);
 
   if(msg == NULL) {
-    if(!strcmp(JS_GetClass(cx, obj)->name, "Array"))
+    if(!strcmp(JS_GET_CLASS(cx, obj)->name, "Array"))
       return htsmsg_create_list();
     else
       return htsmsg_create_map();

@@ -68,7 +68,7 @@ js_json_emit_jsval(JSContext *cx, jsval value, htsbuf_queue_t *out)
     js_json_emit_str(cx, value, out);
   } else if(JSVAL_IS_OBJECT(value)) {
     JSObject *obj = JSVAL_TO_OBJECT(value);
-    JSClass *c = JS_GetClass(cx, obj);
+    JSClass *c = JS_GET_CLASS(cx, obj);
 
     if(!strcmp(c->name, "XML"))   // Treat some classes special
       js_json_emit_str(cx, value, out);

@@ -441,7 +441,7 @@ js_item_moveBefore(JSContext *cx, JSObject *obj,
 
   if(argc >= 1 && JSVAL_IS_OBJECT(argv[0]) &&
      !JSVAL_IS_NULL(argv[0]) && 
-     JS_GetClass(cx, JSVAL_TO_OBJECT(argv[0])) == &item_class) {
+     JS_GET_CLASS(cx, JSVAL_TO_OBJECT(argv[0])) == &item_class) {
     before = JS_GetPrivate(cx, JSVAL_TO_OBJECT(argv[0]));
   } else {
     before = NULL;
