@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <stdio.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 
 
@@ -26,7 +27,9 @@ main(void)
   }
 
   while(1) {
-    int len = read(fd, buf, 2000);
+    struct sockaddr_in sin;
+    socklen_t slen = sizeof(struct sockaddr_in);
+    int len = recvfrom(fd, buf, 2000, 0, (struct sockaddr *)&sin, &slen);
     if(len < 1)
       break;
 
@@ -64,6 +67,12 @@ main(void)
 
     if(off == len)
       continue;
+
+    const char *addr = inet_ntoa(sin.sin_addr);
+
+    write(1, addr, strlen(addr));
+    write(1, ": ", 2);
+
 
     write(1, pfx, strlen(pfx));
 
