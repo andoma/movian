@@ -484,7 +484,14 @@ set_device_id(void)
 
   md5_decl(ctx);
   md5_init(ctx);
+
   md5_update(ctx, buf, 16);
+
+  union net_ctl_info info;
+
+  if(!netCtlGetInfo(NET_CTL_INFO_ETHER_ADDR, &info))
+    md5_update(ctx, info.ether_addr.data, 6);
+
   md5_final(ctx, digest);
   bin2hex(gconf.device_id, sizeof(gconf.device_id), digest, sizeof(digest));
 }

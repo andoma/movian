@@ -456,15 +456,6 @@ net_get_interfaces(void)
 
 
 /**
- * Called from code in arch/
- */
-void
-net_initialize(void)
-{
-}
-
-
-/**
  *
  */
 void
