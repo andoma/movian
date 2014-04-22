@@ -369,6 +369,8 @@ media_codec_create_lavc(media_codec_t *cw, const media_codec_params_t *mcp,
 
   if(codec->type == AVMEDIA_TYPE_VIDEO) {
 
+    cw->get_buffer2 = &avcodec_default_get_buffer2;
+
     cw->ctx->opaque = cw;
     cw->ctx->refcounted_frames = 1;
     cw->ctx->get_format = &libav_get_format;
