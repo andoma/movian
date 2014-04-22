@@ -57,6 +57,7 @@
 #include "js/js.h"
 #include "db/kvstore.h"
 #include "upgrade.h"
+#include "usage.h"
 #if ENABLE_GLW
 #include "src/ui/glw/glw_settings.h"
 #endif
@@ -199,6 +200,8 @@ swthread(void *aux)
           "Failed to check for app upgrade, retrying in %d seconds", i + 1);
   }
 
+  usage_report();
+
   hts_mutex_lock(&gconf.state_mutex);
   gconf.swrefresh = 0;
 
@@ -218,6 +221,7 @@ swthread(void *aux)
     if(!timeout)
       plugins_upgrade_check();
     upgrade_refresh();
+    usage_report();
     hts_mutex_lock(&gconf.state_mutex);
   }
   return NULL;
@@ -339,6 +343,8 @@ showtime_init(void)
   /* Initialize backend content handlers */
   backend_init();
 
+  usage_init();
+
   /* Initialize navigator */
   nav_init();
 
@@ -374,6 +380,8 @@ showtime_init(void)
   asyncio_init();
 
   runcontrol_init();
+
+  TRACE(TRACE_DEBUG, "SYSTEM", "Hashed device ID: %s", gconf.device_id);
 }
 
 
@@ -657,6 +665,8 @@ showtime_fini(void)
   TRACE(TRACE_DEBUG, "core", "Metadb finished");
   kvstore_fini();
   notifications_fini();
+  usage_fini();
+  htsmsg_store_flush();
   TRACE(TRACE_DEBUG, "core", "Showtime terminated normally");
   trace_fini();
 }

@@ -68,6 +68,7 @@ SRCS += src/showtime.c \
 	src/keymapper.c \
 	src/plugins.c \
 	src/upgrade.c \
+	src/usage.c \
 	src/blobcache_file.c \
 	src/i18n.c \
 	src/prop/prop_core.c \

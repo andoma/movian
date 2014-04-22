@@ -34,6 +34,7 @@
 #include "htsmsg/htsmsg_json.h"
 #include "fileaccess/fileaccess.h"
 #include "misc/str.h"
+#include "usage.h"
 
 static hts_mutex_t video_queue_mutex;
 
@@ -751,6 +752,9 @@ video_player_idle(void *aux)
 
     if(play_url != NULL) {
       prop_set_void(errprop);
+
+      usage_inc_counter("playvideo", 1);
+
       e = play_video(rstr_get(play_url), mp,
 		     play_flags, play_priority,
 		     errbuf, sizeof(errbuf), vq,

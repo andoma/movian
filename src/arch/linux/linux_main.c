@@ -161,9 +161,7 @@ main(int argc, char **argv)
 
   parse_opts(argc, argv);
 
-  gconf.concurrency = get_system_concurrency();
-
-  trap_init();
+  linux_init();
 
   showtime_init();
 

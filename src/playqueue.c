@@ -34,7 +34,7 @@
 #include "playqueue.h"
 #include "media.h"
 #include "event.h"
-
+#include "usage.h"
 
 /**
  *
@@ -1136,6 +1136,8 @@ player_thread(void *aux)
     prop_set_int(p, 1);
 
     mp_set_playstatus_by_hold(mp, startpaused, NULL);
+
+    usage_inc_counter("playaudio", 1);
 
     e = backend_play_audio(pqe->pqe_url, mp, errbuf, sizeof(errbuf),
 			   startpaused, NULL);

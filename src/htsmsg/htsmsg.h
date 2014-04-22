@@ -124,6 +124,11 @@ void htsmsg_add_u32(htsmsg_t *msg, const char *name, uint32_t u32);
 void htsmsg_add_s32(htsmsg_t *msg, const char *name,  int32_t s32);
 
 /**
+ * Increase an integer field where source is signed 32 bit.
+ */
+void htsmsg_s32_inc(htsmsg_t *msg, const char *name,  int32_t s32);
+
+/**
  * Add an integer field where source is signed 64 bit.
  */
 void htsmsg_add_s64(htsmsg_t *msg, const char *name,  int64_t s64);

@@ -220,6 +220,26 @@ htsmsg_add_s32(htsmsg_t *msg, const char *name, int32_t s32)
 }
 
 
+/**
+ *
+ */
+void
+htsmsg_s32_inc(htsmsg_t *msg, const char *name, int32_t s32)
+{
+  htsmsg_field_t *f = htsmsg_field_find(msg, name);
+  if(f != NULL && f->hmf_type != HMF_S64) {
+    htsmsg_field_destroy(msg, f);
+    f = NULL;
+  }
+
+  if(f == NULL) {
+    htsmsg_add_s32(msg, name, s32);
+  } else {
+    f->hmf_s64 += s32;
+  }
+}
+
+
 /*
  *
  */

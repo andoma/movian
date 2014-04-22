@@ -801,9 +801,7 @@ main(int argc, char **argv)
 
   parse_opts(argc, argv);
 
-  gconf.concurrency = 1;
-
-  trap_init();
+  linux_init();
 
   showtime_init();
 

@@ -40,3 +40,6 @@ void plugin_add_static(const char *id, const char *category,
 		       void (*cb)(int enabled));
 
 void plugin_select_view(const char *plugin_id, const char *filename);
+
+struct htsmsg;
+struct htsmsg *plugins_get_installed_list(void);

@@ -47,6 +47,8 @@
 #include "showtime.h"
 #include "service.h"
 #include "misc/callout.h"
+#include "misc/md5.h"
+#include "misc/str.h"
 #include "text/text.h"
 #include "notifications.h"
 #include "fileaccess/fileaccess.h"
@@ -469,6 +471,28 @@ hfree(void *ptr, size_t size)
 }
 
 
+/**
+ *
+ */
+static void
+set_device_id(void)
+{
+  uint8_t buf[16];
+  uint8_t digest[16];
+
+  Lv2Syscall1(870, (uint64_t)&buf[0]);
+
+  md5_decl(ctx);
+  md5_init(ctx);
+  md5_update(ctx, buf, 16);
+  md5_final(ctx, digest);
+  bin2hex(gconf.device_id, sizeof(gconf.device_id), digest, sizeof(digest));
+}
+
+
+/**
+ *
+ */
 void
 my_localtime(const time_t *now, struct tm *tm)
 {
@@ -547,7 +571,7 @@ main(int argc, char **argv)
   load_syms();
 
   my_trace("The binary is: %s\n", gconf.binary);
-
+  set_device_id();
   showtime_init();
 
   sysprop = prop_create(prop_get_global(), "system");

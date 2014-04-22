@@ -42,6 +42,8 @@
 
 #include "showtime.h"
 #include "misc/callout.h"
+#include "misc/md5.h"
+#include "misc/str.h"
 #include "prop/prop.h"
 
 #include "arch/posix/posix.h"
@@ -70,7 +72,7 @@ showtime_get_system_type(void)
 /**
  *
  */
-int
+static int
 get_system_concurrency(void)
 {
   cpu_set_t mask;
@@ -122,3 +124,43 @@ arch_sync_path(const char *path)
   syscall(SYS_syncfs, fd);
   close(fd);
 }
+
+
+/**
+ *
+ */
+static void
+get_device_id(void)
+{
+  uint8_t digest[16];
+  uint8_t buf[64];
+
+  int fd = open("/sys/class/net/eth0/address", O_RDONLY);
+
+  if(fd == -1)
+    return;
+
+  int r = read(fd, buf, sizeof(buf));
+  close(fd);
+  if(r < 1)
+    return;
+
+  md5_decl(ctx);
+  md5_init(ctx);
+  md5_update(ctx, buf, r);
+  md5_final(ctx, digest);
+  bin2hex(gconf.device_id, sizeof(gconf.device_id), digest, sizeof(digest));
+}
+
+
+/**
+ *
+ */
+void
+linux_init(void)
+{
+  get_device_id();
+  linux_trap_init();
+  gconf.concurrency = get_system_concurrency();
+}
+

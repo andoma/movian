@@ -355,7 +355,7 @@ callback(struct dl_phdr_info *info, size_t size, void *data)
  *
  */
 void
-trap_init(void)
+linux_trap_init(void)
 {
   struct sigaction sa, old;
   char path[256];
