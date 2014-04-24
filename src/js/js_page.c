@@ -38,6 +38,7 @@
 #include "metadata/metadata.h"
 #include "metadata/metadata_str.h"
 #include "htsmsg/htsmsg_json.h"
+#include "usage.h"
 
 TAILQ_HEAD(js_item_queue, js_item);
 
@@ -1542,6 +1543,8 @@ js_backend_open(prop_t *page, const char *url, int sync)
     hts_mutex_unlock(&js_page_mutex);
     return 1;
   }
+
+  usage_inc_plugin_counter(jsr->jsr_jsp->jsp_id, "openuri", 1);
 
   JSContext *cx = js_newctx(NULL);
   JS_BeginRequest(cx);

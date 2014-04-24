@@ -33,6 +33,7 @@
 #include "htsmsg/htsmsg_json.h"
 #include "subtitles/subtitles.h"
 #include "media.h"
+#include "usage.h"
 
 typedef struct js_subprovider {
   subtitle_provider_t super;
@@ -42,6 +43,8 @@ typedef struct js_subprovider {
   jsval sp_func;
 
   prop_t *sp_title;
+
+  js_plugin_t *sp_jsp;
 
 } js_subprovider_t;
 
@@ -107,6 +110,8 @@ js_addsubprovider(JSContext *cx, JSObject *obj, uintN argc,
   subtitle_provider_register(&sp->super,
                              jsp->jsp_id, sp->sp_title,
                              0, "plugin", 1, 1);
+
+  sp->sp_jsp = jsp;
   LIST_INSERT_HEAD(&jsp->jsp_subproviders, sp, sp_plugin_link);
 
   sp->sp_func = argv[0];
@@ -129,6 +134,7 @@ js_subprovider_flush_from_plugin(JSContext *cx, js_plugin_t *jsp)
 
   while((sp = LIST_FIRST(&jsp->jsp_subproviders)) != NULL) {
     LIST_REMOVE(sp, sp_plugin_link);
+    sp->sp_jsp = NULL;
     subtitle_provider_unregister(&sp->super);
     js_subprovider_release(cx, sp);
   }
@@ -210,6 +216,9 @@ js_sub_query(subtitle_provider_t *SP, sub_scanner_t *ss, int score,
     JSObject *obj = JS_NewObject(cx, &subreq_class, NULL, NULL);
 
     JS_AddNamedRoot(cx, &obj, "subscanner");
+
+    if(sp->sp_jsp != NULL)
+      usage_inc_plugin_counter(sp->sp_jsp->jsp_id, "subsearch", 1);
 
     js_sub_job_t *jsj = malloc(sizeof(js_sub_job_t));
     jsj->jsj_ss = ss;

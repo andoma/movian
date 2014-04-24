@@ -10,6 +10,7 @@
 
 static hts_mutex_t usage_mutex;
 static htsmsg_t *usage_counters;
+static htsmsg_t *plugin_counters;
 static int usage_time_base;
 
 
@@ -21,7 +22,8 @@ usage_init(void)
 {
   hts_mutex_init(&usage_mutex);
   usage_time_base = showtime_get_ts() / 1000000LL;
-  usage_counters = htsmsg_store_load("usagecounters") ?: htsmsg_create_map();
+  usage_counters  = htsmsg_store_load("usagecounters")  ?: htsmsg_create_map();
+  plugin_counters = htsmsg_store_load("plugincounters") ?: htsmsg_create_map();
 }
 
 
@@ -37,6 +39,7 @@ usage_fini(void)
   htsmsg_s32_inc(usage_counters, "runtime", runtime);
 
   htsmsg_store_save(usage_counters, "usagecounters");
+  htsmsg_store_save(plugin_counters, "plugincounters");
   hts_mutex_unlock(&usage_mutex);
 }
 
@@ -93,8 +96,11 @@ usage_report(void)
 
   htsmsg_add_msg(out, "counters", usage_counters);
   usage_counters = htsmsg_create_map();
-
   htsmsg_store_remove("usagecounters");
+
+  htsmsg_add_msg(out, "plugincounters", plugin_counters);
+  plugin_counters = htsmsg_create_map();
+  htsmsg_store_remove("plugincounters");
 
   hts_mutex_unlock(&usage_mutex);
   hts_thread_create_detached("report", send_report, out, THREAD_PRIO_BGTASK);
@@ -109,5 +115,24 @@ usage_inc_counter(const char *id, int value)
 {
   hts_mutex_lock(&usage_mutex);
   htsmsg_s32_inc(usage_counters, id, value);
+  hts_mutex_unlock(&usage_mutex);
+}
+
+/**
+ *
+ */
+void
+usage_inc_plugin_counter(const char *plugin, const char *id, int value)
+{
+  hts_mutex_lock(&usage_mutex);
+  htsmsg_t *m = htsmsg_get_map(plugin_counters, plugin);
+  if(m == NULL) {
+    m = htsmsg_create_map();
+    htsmsg_add_msg(plugin_counters, plugin, m);
+    m = htsmsg_get_map(plugin_counters, plugin);
+    assert(m != NULL);
+  }
+
+  htsmsg_s32_inc(m, id, value);
   hts_mutex_unlock(&usage_mutex);
 }
