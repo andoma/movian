@@ -137,23 +137,6 @@ vsource_dup(const vsource_t *src)
  *
  */
 static void
-vsource_remove(struct vsource_list *list, const char *url)
-{
-  vsource_t *vs;
-  LIST_FOREACH(vs, list, vs_link) {
-    if(!strcmp(vs->vs_url, url)) {
-      LIST_REMOVE(vs, vs_link);
-      vsource_free(vs);
-      return;
-    }
-  }
-}
-
-
-/**
- *
- */
-static void
 vsource_cleanup(struct vsource_list *list)
 {
   vsource_t *vs;
@@ -163,78 +146,6 @@ vsource_cleanup(struct vsource_list *list)
     free(vs->vs_mimetype);
     free(vs);
   }
-}
-
-
-/**
- *
- */
-static void
-vsource_parse_hls(struct vsource_list *list, char *s, const char *base)
-{
-  int bandwidth = -1;
-  int l;
-
-  for(; l = strcspn(s, "\r\n"), *s; s += l+1+strspn(s+l+1, "\r\n")) {
-    s[l] = 0;
-    if(l == 0)
-      continue;
-    const char *s2, *s3;
-    if((s2 = mystrbegins(s, "#EXT-X-STREAM-INF:")) != NULL) {
-      s3 = strstr(s2, "BANDWIDTH=");
-      if(s3 != NULL)
-        bandwidth = atoi(s3 + strlen("BANDWIDTH="));
-    } else if(*s == '#') {
-      continue;
-    } else if(bandwidth != -1) {
-      char *playlist = url_resolve_relative_from_base(base, s);
-      vsource_insert(list, playlist, "application/x-mpegURL", bandwidth,
-		     BACKEND_VIDEO_NO_FS_SCAN);
-      free(playlist);
-      bandwidth = -1;
-    }
-  }
-}
-
-
-
-
-/**
- *
- */
-static void
-vsource_load_hls(struct vsource_list *list, const char *url)
-{
-  buf_t *b;
-  char errbuf[256];
-
-  b = fa_load(url,
-               FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
-               NULL);
-
-  if(b == NULL) {
-    TRACE(TRACE_INFO, "HLS", "Unable to open %s -- %s", url, errbuf);
-    return;
-  }
-
-  if(mystrbegins(buf_cstr(b), "#EXTM3U")) {
-    b = buf_make_writable(b);
-    vsource_parse_hls(list, buf_str(b), url);
-  } else {
-    TRACE(TRACE_INFO, "HLS", "%s is not an EXTM3U file", url);
-  }
-  buf_release(b);
-}
-
-
-/**
- *
- */
-void
-vsource_add_hls(struct vsource_list *vsl, char *hls, const char *url)
-{
-  vsource_remove(vsl, url);
-  vsource_parse_hls(vsl, hls, url);
 }
 
 
@@ -331,13 +242,6 @@ play_video(const char *url, struct media_pipe *mp,
 
       if(url == NULL)
         continue;
-
-      if(mimetype != NULL && 
-         (!strcmp(mimetype, "application/vnd.apple.mpegurl") ||
-          !strcmp(mimetype, "audio/mpegurl"))) {
-        vsource_load_hls(&vsources, url);
-        continue;
-      }
 
       vsource_insert(&vsources, url, mimetype, bitrate,
 		     BACKEND_VIDEO_NO_FS_SCAN);

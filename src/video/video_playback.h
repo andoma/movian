@@ -37,6 +37,4 @@ struct prop *video_queue_find_next(struct video_queue *vq,
 				   struct prop *current, int reverse,
 				   int wrap);
 
-void vsource_add_hls(struct vsource_list *vsl, char *hlslist, const char *url);
-
 #endif /* PLAY_VIDEO_H */
