@@ -267,7 +267,8 @@ window_open(glw_x11_t *gx11, int fullscreen)
 
   winAttr.event_mask = KeyPressMask | KeyReleaseMask | StructureNotifyMask |
     ButtonPressMask | ButtonReleaseMask |
-    PointerMotionMask | ButtonMotionMask | EnterWindowMask | LeaveWindowMask;
+    PointerMotionMask | ButtonMotionMask | EnterWindowMask | LeaveWindowMask |
+    ExposureMask;
 
   winAttr.background_pixmap = None;
   winAttr.background_pixel  = 0;
@@ -1022,6 +1023,12 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	continue;
       
       switch(event.type) {
+      case Expose:
+	glw_lock(&gx11->gr);
+        glw_need_refresh(&gx11->gr, 0);
+	glw_unlock(&gx11->gr);
+	break;
+
       case EnterNotify:
 	break;
 
