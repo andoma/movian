@@ -98,6 +98,8 @@ deck_select_child(glw_t *w, glw_t *c, prop_t *origin)
   if(w->glw_selected == c)
     return 0;
 
+  glw_need_refresh(w->glw_root, 0);
+
   setprev(gd, c);
   w->glw_selected = c;
   if(w->glw_selected != NULL) {

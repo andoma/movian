@@ -645,6 +645,7 @@ gtb_realize(glw_text_bitmap_t *gtb)
 
   if(direct) {
     gtb->gtb_state = GTB_NEED_RENDER;
+    glw_need_refresh(gr, 0);
   } else {
     TAILQ_INSERT_TAIL(&gr->gr_gtb_dim_queue, gtb, gtb_workq_link);
     gtb->gtb_state = GTB_QUEUED_FOR_DIMENSIONING;
