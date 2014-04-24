@@ -277,6 +277,9 @@ showtime_init(void)
   /* Initialize settings */
   settings_init();
 
+  /* Usage counters */
+  usage_init();
+
   TRACE(TRACE_DEBUG, "core", "Loading resources from %s", showtime_dataroot());
 
   /* Try to create cache path */
@@ -342,8 +345,6 @@ showtime_init(void)
 
   /* Initialize backend content handlers */
   backend_init();
-
-  usage_init();
 
   /* Initialize navigator */
   nav_init();

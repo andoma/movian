@@ -30,6 +30,7 @@
 #include "misc/dbl.h"
 #include "settings.h"
 #include "metadata/metadata_sources.h"
+#include "usage.h"
 
 static metadata_source_t *tvdb;
 static char tvdb_language[3];
@@ -370,6 +371,8 @@ tvdb_query_by_episode(void *db, const char *item_url,
   buf_t *result;
   char errbuf[256];
   
+  usage_inc_counter("tvdb_query_by_episode", 1);
+
   result = fa_load("http://www.thetvdb.com/api/GetSeries.php",
                    FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
                    FA_LOAD_QUERY_ARG("seriesname", title),

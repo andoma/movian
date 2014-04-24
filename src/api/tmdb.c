@@ -32,6 +32,7 @@
 #include "db/db_support.h"
 #include "settings.h"
 #include "metadata/metadata_sources.h"
+#include "usage.h"
 
 // http://help.themoviedb.org/kb/api/about-3
 
@@ -406,6 +407,8 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
   if(tmdb == NULL)
     return METADATA_TEMPORARY_ERROR;
 
+  usage_inc_counter("tmdb_query_by_title", 1);
+
   if(year)
     snprintf(yeartxt, sizeof(yeartxt), "%d", year);
   else
@@ -490,6 +493,8 @@ tmdb_query_by_imdb_id(void *db, const char *item_url, const char *imdb_id,
   if(tmdb == NULL)
     return METADATA_TEMPORARY_ERROR;
 
+  usage_inc_counter("tmdb_query_by_imdb_id", 1);
+
   return tmdb_load_movie_info(db, item_url, imdb_id, qtype);
 }
 
@@ -501,6 +506,8 @@ tmdb_query_by_id(void *db, const char *item_url, const char *imdb_id)
 {
   if(tmdb == NULL)
     return METADATA_TEMPORARY_ERROR;
+
+  usage_inc_counter("tmdb_query_by_id", 1);
 
   return tmdb_load_movie_info(db, item_url, imdb_id, 0);
 }

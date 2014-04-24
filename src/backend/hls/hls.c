@@ -41,6 +41,7 @@
 #include "fileaccess/fa_libav.h"
 #include "hls.h"
 #include "subtitles/subtitles.h"
+#include "usage.h"
 
 /**
  * Relevant docs:
@@ -1472,6 +1473,8 @@ hls_play_extm3u(char *buf, const char *url, media_pipe_t *mp,
     snprintf(errbuf, errlen, "Not an m3u file");
     return NULL;
   }
+
+  usage_inc_counter("playvideohls", 1);
 
   prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 1);
 

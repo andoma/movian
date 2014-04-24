@@ -38,6 +38,7 @@
 #include "fileaccess/fileaccess.h"
 #include "fileaccess/fa_proto.h"
 #include "htsmsg/htsmsg_store.h"
+#include "usage.h"
 
 static asyncio_fd_t *ftp_server_fd;
 
@@ -932,6 +933,9 @@ ftp_accept(void *opaque, int fd, const net_addr_t *local_addr,
   fc->fc_accept_socket = -1;
   set_wd(fc, "/");
   set_type(fc, 'A');
+
+  usage_inc_counter("ftpserverconnect", 1);
+
   hts_thread_create_detached("FTP-session", ftp_session, fc,
 			     THREAD_PRIO_MODEL);
 

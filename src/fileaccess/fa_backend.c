@@ -38,6 +38,7 @@
 #include "playqueue.h"
 #include "fileaccess.h"
 #include "plugins.h"
+#include "usage.h"
 
 
 /**
@@ -256,8 +257,10 @@ be_file_open(prop_t *page, const char *url, int sync)
   if(fa_stat(url, &fs, errbuf, sizeof(errbuf))) {
     nav_open_error(page, errbuf);
   } else if(fs.fs_type == CONTENT_DIR) {
+    usage_inc_counter("fa_open_dir", 1);
     file_open_dir(page, url, fs.fs_mtime, model);
   } else {
+    usage_inc_counter("fa_open_file", 1);
     file_open_file(page, url, &fs, model, loading);
   }
 

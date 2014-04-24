@@ -34,6 +34,7 @@
 #include "fileaccess.h"
 #include "fa_zlib.h"
 #include "showtime.h"
+#include "usage.h"
 
 
 static hts_mutex_t zip_global_mutex;
@@ -263,6 +264,8 @@ zip_archive_load(zip_archive_t *za)
 
   if((fh = fa_open(za->za_url, NULL, 0)) == NULL)
     return -1;
+
+  usage_inc_counter("ziploadarchive", 1);
 
   scan_off = asize - TRAILER_SCAN_SIZE;
   if(scan_off < 0) {

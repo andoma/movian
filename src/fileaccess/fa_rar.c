@@ -35,6 +35,7 @@
 #include "showtime.h"
 #include "fileaccess.h"
 #include "fa_proto.h"
+#include "usage.h"
 
 
 #define RAR_HEADER_MAIN   0x73
@@ -280,6 +281,8 @@ rar_archive_load(rar_archive_t *ra)
   rar_file_t *rf;
   rar_segment_t *rs;
   struct fa_stat fs;
+
+  usage_inc_counter("rarloadarchive", 1);
 
   ra->ra_root = calloc(1, sizeof(rar_file_t));
   ra->ra_root->rf_type = CONTENT_DIR;

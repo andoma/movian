@@ -36,6 +36,7 @@
 
 #include "fileaccess/svfs.h"
 #include "dvdnav/dvdnav.h"
+#include "usage.h"
 
 static char *make_nice_title(const char *t);
 
@@ -769,6 +770,8 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
   pci_t *pci;
   event_t *e = NULL;
   const char *title;
+
+  usage_inc_counter("playvideodvd", 1);
 
   TRACE(TRACE_DEBUG, "DVD", "Starting playback of %s", url);
 

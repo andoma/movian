@@ -36,6 +36,7 @@
 #include "video/video_settings.h"
 #include "subtitles/subtitles.h"
 #include "metadata/playinfo.h"
+#include "usage.h"
 
 typedef struct {
 
@@ -667,6 +668,8 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
   rtmp_t r = {0};
   event_t *e;
   char *url = mystrdupa(url0);
+
+  usage_inc_counter("playvideortmp", 1);
 
   prop_set(mp->mp_prop_metadata, "format", PROP_SET_STRING, "RTMP");
   prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 1);

@@ -41,6 +41,7 @@
 #include "networking/net.h"
 #include "misc/str.h"
 #include "misc/callout.h"
+#include "usage.h"
 
 #define SAMBA_NEED_AUTH ((void *)-1)
 
@@ -1255,6 +1256,8 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
     retry_reason = "Login attempt failed";
     goto again;
   }
+
+  usage_inc_counter("smbconnect", 1);
 
   return 0;
 }

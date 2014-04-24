@@ -33,6 +33,7 @@
 #include "fileaccess/fileaccess.h"
 #include "db/kvstore.h"
 #include "metadata/playinfo.h"
+#include "usage.h"
 
 /**
  * UPNP browse request
@@ -914,8 +915,10 @@ browse_item(upnp_browse_t *ub, htsmsg_t *item)
   if(!strncmp(cls, "object.item.videoItem",
 	      strlen("object.item.videoItem"))) {
     browse_video_item(ub, item);
+    usage_inc_counter("upnpbrowsevideo", 1);
   } else {
     browse_fail(ub, "Don't know how to browse %s", cls);
+    usage_inc_counter("upnpbrowsefail", 1);
   }
 }
 
@@ -942,6 +945,9 @@ browse_container(upnp_browse_t *ub, htsmsg_t *container)
     prop_set_string(ub->ub_contents, "albumTracks");
 
   browse_directory(ub, name);
+
+  usage_inc_counter("upnpbrowsedir", 1);
+
 }
 
 

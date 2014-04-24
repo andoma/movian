@@ -42,6 +42,7 @@
 #include "fileaccess/fileaccess.h"
 #include "fileaccess/fa_proto.h"
 #include "fileaccess/fa_video.h"
+#include "usage.h"
 
 #define EPG_TAIL 20          // How many EPG entries to keep per channel
 
@@ -1782,6 +1783,8 @@ be_htsp_playvideo(const char *url, media_pipe_t *mp,
   event_t *e;
   int primary = !!(va->flags & BACKEND_VIDEO_PRIMARY);
   const char *r;
+
+  usage_inc_counter("playvideohtsp", 1);
 
   TRACE(TRACE_DEBUG, "HTSP",
 	"Starting video playback %s primary=%s, priority=%d",

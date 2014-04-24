@@ -33,6 +33,7 @@
 #include "misc/time.h"
 
 #include "ftpparse.h"
+#include "usage.h"
 
 LIST_HEAD(ftp_connection_list, ftp_connection);
 
@@ -279,6 +280,8 @@ fc_connect(const char *hostname, int port,
   else
     snprintf(buf1, sizeof(buf1), "ftp://%s", hostname);
   fc->fc_url = strdup(buf1);
+
+  usage_inc_counter("ftpconnect", 1);
 
   return fc;
 
