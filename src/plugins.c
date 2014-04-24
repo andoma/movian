@@ -1240,7 +1240,11 @@ plugin_install(plugin_t *pl, const char *package)
   prop_link(_p("Downloading"), status);
   prop_set(pl->pl_status, "canInstall", PROP_SET_INT, 0);
 
+  hts_mutex_unlock(&plugin_mutex);
+
   buf_t *b = fa_load(package, FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)), NULL);
+
+  hts_mutex_lock(&plugin_mutex);
 
   if(b == NULL) {
     prop_unlink(status);
