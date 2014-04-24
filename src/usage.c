@@ -20,7 +20,7 @@ void
 usage_init(void)
 {
   hts_mutex_init(&usage_mutex);
-  usage_time_base = time(NULL);
+  usage_time_base = showtime_get_ts() / 1000000LL;
   usage_counters = htsmsg_store_load("usagecounters") ?: htsmsg_create_map();
 }
 
@@ -33,7 +33,7 @@ usage_fini(void)
 {
   hts_mutex_lock(&usage_mutex);
 
-  int runtime = time(NULL) - usage_time_base;
+  int runtime = showtime_get_ts() / 1000000LL - usage_time_base;
   htsmsg_s32_inc(usage_counters, "runtime", runtime);
 
   htsmsg_store_save(usage_counters, "usagecounters");
@@ -85,7 +85,7 @@ usage_report(void)
 
   hts_mutex_lock(&usage_mutex);
 
-  time_t now = time(NULL);
+  time_t now = showtime_get_ts() / 1000000LL;
 
   int runtime = now - usage_time_base;
   htsmsg_s32_inc(usage_counters, "runtime", runtime);
