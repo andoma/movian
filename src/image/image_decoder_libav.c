@@ -363,7 +363,9 @@ pixmap_compute_rescale_dim(const image_meta_t *im,
     w = im->im_req_height * src_width / src_height;
     h = im->im_req_height;
 
-  } else if(w > 64 && h > 64) {
+  }
+
+  if(w > 64 && h > 64) {
 
     if(im->im_max_width && w > im->im_max_width) {
       h = h * im->im_max_width / w;
