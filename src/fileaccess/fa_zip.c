@@ -265,8 +265,6 @@ zip_archive_load(zip_archive_t *za)
   if((fh = fa_open(za->za_url, NULL, 0)) == NULL)
     return -1;
 
-  usage_inc_counter("ziploadarchive", 1);
-
   scan_off = asize - TRAILER_SCAN_SIZE;
   if(scan_off < 0) {
     scan_size = asize;
