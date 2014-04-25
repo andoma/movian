@@ -187,9 +187,16 @@ setup_tunnel(rpi_pixmap_decoder_t *rpd)
 static pixmap_t *
 rpi_pixmap_decode(image_coded_type_t type,
 		  buf_t *buf, const image_meta_t *im,
-		  char *errbuf, size_t errlen)
+		  char *errbuf, size_t errlen,
+                  const image_t *img)
 {
   if(type != IMAGE_JPEG)
+    return NULL;
+
+  if(img->im_flags & IMAGE_PROGRESSIVE)
+    return NULL;
+
+  if(img->im_color_planes != 3)
     return NULL;
 
 #ifdef TIMING

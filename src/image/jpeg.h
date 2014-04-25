@@ -27,7 +27,9 @@ typedef int (jpegreader_t)(void *handle, void *buf, off_t offset, size_t size);
 typedef struct jpeginfo {
   int ji_width;
   int ji_height;
-  int ji_orientation;  // See orientation in pixmap.h
+  char ji_orientation;  // See orientation in pixmap.h
+  char ji_progressive;
+  char ji_components;
   struct image *ji_thumbnail;
   time_t ji_time;
   struct rstr *ji_manufacturer;

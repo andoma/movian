@@ -88,7 +88,7 @@ fa_imageloader2(const char *url, const char **vpaths,
   buf_t *buf;
   jpeg_meminfo_t mi;
   image_coded_type_t fmt;
-  int width = -1, height = -1, orientation = 0;
+  int width = -1, height = -1, orientation = 0, progressive = 0, planes = 0;
 
   buf = fa_load(url,
                  FA_LOAD_VPATHS(vpaths),
@@ -121,10 +121,11 @@ fa_imageloader2(const char *url, const char **vpaths,
 
     fmt = IMAGE_JPEG;
 
-    width = ji.ji_width;
-    height = ji.ji_height;
+    width       = ji.ji_width;
+    height      = ji.ji_height;
     orientation = ji.ji_orientation;
-
+    progressive = ji.ji_progressive;
+    planes      = ji.ji_components;
     jpeg_info_clear(&ji);
 
   } else if(!memcmp(pngsig, p, 8)) {
@@ -147,6 +148,9 @@ fa_imageloader2(const char *url, const char **vpaths,
     img->im_width = width;
     img->im_height = height;
     img->im_orientation = orientation;
+    img->im_color_planes = planes;
+    if(progressive)
+      img->im_flags |= IMAGE_PROGRESSIVE;
   } else {
     snprintf(errbuf, errlen, "Out of memory");
   }

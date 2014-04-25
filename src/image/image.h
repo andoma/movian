@@ -136,8 +136,10 @@ typedef struct image {
   uint16_t im_num_components;
 
   uint16_t im_flags;
-#define IMAGE_THUMBNAIL 0x1
+#define IMAGE_THUMBNAIL   0x1
+#define IMAGE_PROGRESSIVE 0x2
 
+  uint8_t im_color_planes;
   uint8_t im_origin_coded_type;
   uint8_t im_orientation;
 
@@ -187,7 +189,8 @@ struct pixmap *image_decode_libav(image_coded_type_t type,
 extern struct pixmap *(*accel_image_decode)(image_coded_type_t type,
 					    struct buf *buf,
 					    const image_meta_t *im,
-					    char *errbuf, size_t errlen);
+					    char *errbuf, size_t errlen,
+                                            const image_t *img);
 
 
 /***************************************************************************

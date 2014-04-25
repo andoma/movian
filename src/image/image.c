@@ -29,7 +29,8 @@
 struct pixmap *(*accel_image_decode)(image_coded_type_t type,
 				     struct buf *buf,
 				     const image_meta_t *im,
-				     char *errbuf, size_t errlen);
+				     char *errbuf, size_t errlen,
+                                     const image_t *img);
 
 
 
@@ -259,7 +260,8 @@ image_decode_coded(image_t *im, const image_meta_t *meta,
   pixmap_t *pm = NULL;
 
   if(accel_image_decode != NULL)
-    pm = accel_image_decode(icc->icc_type, icc->icc_buf, meta, errbuf, errlen);
+    pm = accel_image_decode(icc->icc_type, icc->icc_buf, meta, errbuf, errlen,
+                            im);
 
   if(pm == NULL)
     pm = image_decode_libav(icc->icc_type, icc->icc_buf, meta, errbuf, errlen);

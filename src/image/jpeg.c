@@ -69,6 +69,8 @@ parse_sof(jpeginfo_t *ji, const uint8_t *buf, size_t len, int flags)
 
   ji->ji_height = buf[1] << 8 | buf[2];
   ji->ji_width  = buf[3] << 8 | buf[4];
+  if(len >= 5)
+    ji->ji_components = buf[5];
   return 0;
 }
 
@@ -326,9 +328,16 @@ jpeg_info(jpeginfo_t *ji, jpegreader_t *reader, void *handle, int flags,
       free(jp.jp_readbuf);
       return 0;
 
+    case 0xffc2: // SOF2
+    case 0xffc6: // SOF6
+    case 0xffca: // SOF10
+    case 0xffce: // SOF14
+      ji->ji_progressive = 1;
+
+      // FALLTHRU
+
     case 0xffc0: // SOF0
     case 0xffc1: // SOF1
-    case 0xffc2: // SOF2
     case 0xffc3: // SOF3
       if(flags & JPEG_INFO_DIMENSIONS)
 	jip = parse_sof;
