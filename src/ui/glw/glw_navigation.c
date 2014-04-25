@@ -272,7 +272,7 @@ dowrap(glw_t *w)
   if(!glw_settings.gs_wrap)
     return 0;
 
-  int x = 0;
+  int x = 1;
   glw_signal0(w, GLW_SIGNAL_WRAP_CHECK, &x);
   return x;
 }
