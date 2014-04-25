@@ -110,6 +110,9 @@ setup_tunnel(rpi_pixmap_decoder_t *rpd)
   portdef.nPortIndex = rpd->rpd_decoder->oc_outport;
   omxchk(OMX_GetParameter(rpd->rpd_decoder->oc_handle,
 			  OMX_IndexParamPortDefinition, &portdef));
+  portdef.format.image.nSliceHeight = 16;
+  omxchk(OMX_SetParameter(rpd->rpd_decoder->oc_handle,
+			  OMX_IndexParamPortDefinition, &portdef));
 
   pixmap_compute_rescale_dim(rpd->rpd_im,
 			     portdef.format.image.nFrameWidth,
