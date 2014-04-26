@@ -477,6 +477,8 @@ glw_array_scroll(glw_array_t *a, glw_scroll_t *gs)
 static void
 scroll_to_me(glw_array_t *a, glw_t *c)
 {
+  glw_schedule_refresh(a->w.glw_root, 0);
+
   while(c != NULL && c->glw_parent_col != 0)
     c = TAILQ_PREV(c, glw_queue, glw_parent_link);
 
@@ -499,7 +501,6 @@ scroll_to_me(glw_array_t *a, glw_t *c)
     e = d;
   }
   a->scroll_to_me = c;
-  glw_schedule_refresh(a->w.glw_root, 0);
 }
 
 
