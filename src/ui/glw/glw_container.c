@@ -697,6 +697,7 @@ retire_child(glw_t *w, glw_t *c)
 {
   if(w->glw_flags2 & GLW2_AUTOFADE) {
     c->glw_flags |= GLW_RETIRED;
+    glw_need_refresh(w->glw_root, 0);
     glw_suspend_subscriptions(c);
   } else {
     glw_destroy(c);
