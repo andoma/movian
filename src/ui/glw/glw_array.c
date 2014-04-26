@@ -499,6 +499,7 @@ scroll_to_me(glw_array_t *a, glw_t *c)
     e = d;
   }
   a->scroll_to_me = c;
+  glw_schedule_refresh(a->w.glw_root, 0);
 }
 
 

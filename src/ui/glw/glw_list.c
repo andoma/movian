@@ -559,6 +559,7 @@ scroll_to_me(glw_list_t *l, glw_t *c)
     e = d;
   }
   l->scroll_to_me = c;
+  glw_schedule_refresh(l->w.glw_root, 0);
 }
 
 
