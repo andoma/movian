@@ -348,6 +348,7 @@ typedef struct {
 
 typedef struct {
   int steps;
+  int did_move;
 } glw_move_op_t;
 
 

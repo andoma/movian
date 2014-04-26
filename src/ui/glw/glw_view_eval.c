@@ -1139,7 +1139,7 @@ cloner_pagination_check(sub_cloner_t *sc)
  *
  */
 static void
-clone_req_move(sub_cloner_t *sc, glw_t *w, const glw_move_op_t *mop)
+clone_req_move(sub_cloner_t *sc, glw_t *w, glw_move_op_t *mop)
 {
   glw_t *b;
   int steps = mop->steps;
@@ -1168,6 +1168,7 @@ clone_req_move(sub_cloner_t *sc, glw_t *w, const glw_move_op_t *mop)
 
   glw_clone_t *d = b ? b->glw_clone : NULL;
   prop_req_move(w->glw_clone->c_prop, d ? d->c_prop : NULL);
+  mop->did_move = 1;
 }
 
 

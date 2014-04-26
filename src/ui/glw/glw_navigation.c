@@ -213,9 +213,8 @@ find_candidate(glw_t *w, query_t *query, float d_mul)
 static int
 glw_move_item(glw_t *w, action_type_t how) 
 {
-  glw_move_op_t mop;
+  glw_move_op_t mop = {0};
   int items;
-  mop.steps = 0;
 
   for(;w->glw_parent != NULL; w = w->glw_parent) {
 
@@ -255,9 +254,12 @@ glw_move_item(glw_t *w, action_type_t how)
 	continue;
       }
     }
-    if(mop.steps)
+    if(mop.steps) {
        glw_signal0(w, GLW_SIGNAL_MOVE, &mop);
-    return 1;
+       if(mop.did_move) {
+         return 1;
+       }
+    }
   }
   return 0;
 }
