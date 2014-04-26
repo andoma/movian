@@ -150,8 +150,8 @@ const static action_type_t *stop_meta_actions[256] = {
   [CEC_User_Control_Select]      = AVEC(ACTION_LOGWINDOW),
 
   [CEC_User_Control_Pause]       = AVEC(ACTION_NAV_BACK),
-  [CEC_User_Control_Play]        = AVEC(ACTION_SHOW_MEDIA_STATS),
   [CEC_User_Control_Stop]        = AVEC(ACTION_STOP),
+  [CEC_User_Control_Play]        = AVEC(ACTION_SYSINFO),
 
   [CEC_User_Control_Rewind]      = AVEC(ACTION_ITEMMENU),
   [CEC_User_Control_FastForward] = AVEC(ACTION_MENU),
@@ -175,7 +175,7 @@ const static action_type_t *play_meta_actions[256] = {
 
   [CEC_User_Control_Stop]        = AVEC(ACTION_SWITCH_VIEW),
 
-  [CEC_User_Control_Play]        = AVEC(ACTION_SYSINFO),
+  [CEC_User_Control_Play]        = AVEC(ACTION_SHOW_MEDIA_STATS),
 
   [CEC_User_Control_Left]        = AVEC(ACTION_SEEK_BACKWARD),
   [CEC_User_Control_Right]       = AVEC(ACTION_SEEK_FORWARD),
