@@ -1048,18 +1048,22 @@ mp_direct_seek(media_pipe_t *mp, int64_t ts)
 void
 mb_enq(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 {
+  int do_signal = 1;
+
   if(mb->mb_data_type == MB_SUBTITLE) {
     TAILQ_INSERT_TAIL(&mq->mq_q_aux, mb, mb_link);
   } else if(mb->mb_data_type > MB_CTRL) {
     TAILQ_INSERT_TAIL(&mq->mq_q_ctrl, mb, mb_link);
   } else {
     TAILQ_INSERT_TAIL(&mq->mq_q_data, mb, mb_link);
+    do_signal = !mq->mq_no_data_interest;
   }
   mq->mq_packets_current++;
   mb->mb_epoch = mp->mp_epoch;
   mp->mp_buffer_current += mb->mb_size;
   mq_update_stats(mp, mq);
-  hts_cond_signal(&mq->mq_avail);
+  if(do_signal)
+    hts_cond_signal(&mq->mq_avail);
 }
 
 /**

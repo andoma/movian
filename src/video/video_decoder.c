@@ -148,6 +148,7 @@ vd_thread(void *aux)
   media_pipe_t *mp = vd->vd_mp;
   media_queue_t *mq = &mp->mp_video;
   media_buf_t *mb;
+  media_buf_t *cur = NULL;
   media_codec_t *mc, *mc_current = NULL;
   int run = 1;
   int reqsize = -1;
@@ -192,6 +193,15 @@ vd_thread(void *aux)
       TAILQ_REMOVE(&mq->mq_q_aux, aux, mb_link);
       mb = aux;
 
+    } else if(cur != NULL) {
+
+      if(vd->vd_hold) {
+	hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
+	continue;
+      }
+
+      mb = cur;
+      goto retry_current;
     } else if(data != NULL) {
 
       if(vd->vd_hold) {
@@ -213,9 +223,38 @@ vd_thread(void *aux)
     mq_update_stats(mp, mq);
 
     hts_cond_signal(&mp->mp_backpressure);
+
+  retry_current:
+    mc = mb->mb_cw;
+
+    if(mb->mb_data_type == MB_VIDEO && mc->decode_locked != NULL) {
+
+      if(mc != mc_current) {
+	if(mc_current != NULL)
+	  media_codec_deref(mc_current);
+
+	mc_current = media_codec_ref(mc);
+	prop_set_int(mq->mq_prop_too_slow, 0);
+      }
+
+      size = mb->mb_size;
+
+      mq->mq_no_data_interest = 1;
+      if(mc->decode_locked(mc, vd, mq, mb)) {
+        cur = mb;
+ 	hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
+        continue;
+      }
+      mq->mq_no_data_interest = 0;
+      cur = NULL;
+
+      update_vbitrate(mp, mq, size, vd);
+      media_buf_free_locked(mp, mb);
+      continue;
+    }
+
     hts_mutex_unlock(&mp->mp_mutex);
 
-    mc = mb->mb_cw;
 
     switch(mb->mb_data_type) {
     case MB_CTRL_EXIT:
@@ -231,6 +270,11 @@ vd_thread(void *aux)
       break;
 
     case MB_CTRL_FLUSH:
+      if(cur != NULL) {
+        media_buf_free_unlocked(mp, cur);
+        mq->mq_no_data_interest = 0;
+        cur = NULL;
+      }
       vd_init_timings(vd);
       vd->vd_interlaced = 0;
 
@@ -358,6 +402,11 @@ vd_thread(void *aux)
     hts_mutex_lock(&mp->mp_mutex);
     media_buf_free_locked(mp, mb);
   }
+
+  if(cur != NULL)
+    media_buf_free_locked(mp, cur);
+
+  mq->mq_no_data_interest = 0;
 
   hts_mutex_unlock(&mp->mp_mutex);
 

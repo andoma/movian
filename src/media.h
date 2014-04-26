@@ -154,6 +154,9 @@ typedef struct media_codec {
   void (*decode)(struct media_codec *mc, struct video_decoder *vd,
 		 struct media_queue *mq, struct media_buf *mb, int reqsize);
 
+  int (*decode_locked)(struct media_codec *mc, struct video_decoder *vd,
+                       struct media_queue *mq, struct media_buf *mb);
+
   void (*flush)(struct media_codec *mc, struct video_decoder *vd);
 
   void (*close)(struct media_codec *mc);
@@ -317,6 +320,7 @@ typedef struct media_queue {
 
   int mq_stream;             /* Stream id, or -1 if queue is inactive */
   int mq_stream2;            /* Complementary stream */
+  int mq_no_data_interest;   // Don't wakeup if adding new DATA packet
   hts_cond_t mq_avail;
 
   int64_t mq_seektarget;

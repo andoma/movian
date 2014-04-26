@@ -58,6 +58,8 @@ typedef struct rpi_video_display {
 
   glw_rect_t rvd_pos;
 
+  hts_mutex_t rvd_mutex;
+
 } rpi_video_display_t;
 
 
@@ -71,6 +73,7 @@ rvd_init(glw_video_t *gv)
   rvd->rvd_pts = PTS_UNSET;
   rvd->rvd_gv = gv;
   gv->gv_aux = rvd;
+  hts_mutex_init(&rvd->rvd_mutex);
   return 0;
 }
 
@@ -184,6 +187,7 @@ rvd_reset(glw_video_t *gv)
   if(rvd->rvd_mc != NULL)
     media_codec_deref(rvd->rvd_mc);
 
+  hts_mutex_destroy(&rvd->rvd_mutex);
   free(rvd);
 }
 
@@ -274,9 +278,9 @@ rvd_set_codec(media_codec_t *mc, glw_video_t *gv, const frame_info_t *fi)
   if(rvd->rvd_vrender == NULL) {
 
     rvd->rvd_vrender = omx_component_create("OMX.broadcom.video_render",
-					    NULL, NULL);
+					    &rvd->rvd_mutex, NULL);
     rvd->rvd_vsched  = omx_component_create("OMX.broadcom.video_scheduler",
-					    NULL, NULL);
+                                            &rvd->rvd_mutex, NULL);
 
     rvd->rvd_vsched->oc_opaque = rvd;
     rvd->rvd_vrender->oc_opaque = rvd;

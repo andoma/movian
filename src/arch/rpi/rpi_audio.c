@@ -508,6 +508,7 @@ rpi_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
 
   oc->oc_avail = buf->pAppPrivate;
   oc->oc_inflight_buffers++;
+  oc->oc_avail_bytes -= buf->nAllocLen;
 
   assert(samples == ad->ad_tile_size);
 
@@ -737,6 +738,7 @@ rpi_audio_deliver_coded(audio_decoder_t *ad, const void *data, size_t size,
 
   oc->oc_avail = buf->pAppPrivate;
   oc->oc_inflight_buffers++;
+  oc->oc_avail_bytes -= buf->nAllocLen;
 
   hts_mutex_unlock(&ad->ad_mp->mp_mutex);
 

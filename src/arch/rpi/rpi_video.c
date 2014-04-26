@@ -112,22 +112,28 @@ rpi_video_port_settings_changed(omx_component_t *oc)
 /**
  *
  */
-static void
-rpi_codec_decode(struct media_codec *mc, struct video_decoder *vd,
-		 struct media_queue *mq, struct media_buf *mb, int reqsize)
+static int
+rpi_codec_decode_locked(struct media_codec *mc, struct video_decoder *vd,
+                        struct media_queue *mq, struct media_buf *mb)
 {
   rpi_video_codec_t *rvc = mc->opaque;
   const void *data = mb->mb_data;
   size_t len       = mb->mb_size;
-
   int is_bframe = 0;
+
+  omx_component_t *oc = rvc->rvc_decoder;
+
+  if(oc->oc_avail_bytes < len) {
+    oc->oc_need_bytes = len;
+    return 1;
+  }
 
   switch(mc->codec_id) {
 
   case AV_CODEC_ID_MPEG4:
 
     if(mb->mb_size <= 7)
-      return;
+      return 0;
 
     int frame_type = 0;
     const uint8_t *d = data;
@@ -153,10 +159,16 @@ rpi_codec_decode(struct media_codec *mc, struct video_decoder *vd,
 
   int domark = 1;
 
+  OMX_BUFFERHEADERTYPE *q = NULL, **pq = &q, *buf;
+
   while(len > 0) {
-    OMX_BUFFERHEADERTYPE *buf = omx_get_buffer(rvc->rvc_decoder);
-    if(buf == NULL)
-      return;
+    buf = oc->oc_avail;
+    assert(buf != NULL);
+
+    oc->oc_inflight_buffers++;
+    oc->oc_avail_bytes -= buf->nAllocLen;
+    oc->oc_avail = buf->pAppPrivate;
+
     buf->nOffset = 0;
     buf->nFilledLen = MIN(len, buf->nAllocLen);
     memcpy(buf->pBuffer, data, buf->nFilledLen);
@@ -189,8 +201,24 @@ rpi_codec_decode(struct media_codec *mc, struct video_decoder *vd,
     if(mbm->mbm_skip)
       buf->nFlags |= OMX_BUFFERFLAG_DECODEONLY;
 
+    // Enqueue on temporary stack queue
+
+    buf->pAppPrivate = *pq;
+    *pq = buf;
+    pq = (OMX_BUFFERHEADERTYPE **)&buf->pAppPrivate;
+  }
+
+  hts_mutex_unlock(&vd->vd_mp->mp_mutex);
+
+  while(q != NULL) {
+    buf = q;
+    q = q->pAppPrivate;
     omxchk(OMX_EmptyThisBuffer(rvc->rvc_decoder->oc_handle, buf));
   }
+
+  hts_mutex_lock(&vd->vd_mp->mp_mutex);
+
+  return 0;
 }
 
 
@@ -225,7 +253,6 @@ rpi_codec_close(struct media_codec *mc)
   omx_set_state(rvc->rvc_decoder, OMX_StateLoaded);
 
   omx_component_destroy(rvc->rvc_decoder);
-  hts_cond_destroy(&rvc->rvc_avail_cond);
 
   h264_parser_fini(&rvc->rvc_h264_parser);
   free(rvc);
@@ -332,14 +359,11 @@ rpi_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 
   rpi_video_codec_t *rvc = calloc(1, sizeof(rpi_video_codec_t));
 
-  hts_cond_init(&rvc->rvc_avail_cond, &mp->mp_mutex);
-
   omx_component_t *d = omx_component_create("OMX.broadcom.video_decode",
 					    &mp->mp_mutex,
-					    &rvc->rvc_avail_cond);
+					    &mp->mp_video.mq_avail);
 
   if(d == NULL) {
-    hts_cond_destroy(&rvc->rvc_avail_cond);
     free(rvc);
     return 1;
   }
@@ -433,7 +457,7 @@ rpi_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 
   mc->opaque = rvc;
   mc->close  = rpi_codec_close;
-  mc->decode = rpi_codec_decode;
+  mc->decode_locked = rpi_codec_decode_locked;
   mc->flush  = rpi_codec_flush;
   mc->reconfigure = rpi_codec_reconfigure;
   rvc->rvc_name = name;

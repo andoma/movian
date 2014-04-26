@@ -43,10 +43,10 @@ oc_event_handler(OMX_HANDLETYPE component, OMX_PTR opaque, OMX_EVENTTYPE event,
   case OMX_EventCmdComplete:
   complete:
 
-    hts_mutex_lock(&oc->oc_event_mtx);
+    hts_mutex_lock(oc->oc_mtx);
     oc->oc_cmd_done = 1;
     hts_cond_broadcast(&oc->oc_event_cond);
-    hts_mutex_unlock(&oc->oc_event_mtx);
+    hts_mutex_unlock(oc->oc_mtx);
     break;
 
   case OMX_EventError:
@@ -60,10 +60,10 @@ oc_event_handler(OMX_HANDLETYPE component, OMX_PTR opaque, OMX_EVENTTYPE event,
 
     case OMX_ErrorStreamCorrupt:
       TRACE(TRACE_INFO, "OMX", "%s: Corrupt stream", oc->oc_name);
-      hts_mutex_lock(oc->oc_avail_mtx);
+      hts_mutex_lock(oc->oc_mtx);
       oc->oc_stream_corrupt = 1;
       hts_cond_signal(oc->oc_avail_cond);
-      hts_mutex_unlock(oc->oc_avail_mtx);
+      hts_mutex_unlock(oc->oc_mtx);
       break;
 
       
@@ -99,12 +99,14 @@ oc_empty_buffer_done(OMX_HANDLETYPE hComponent,
                      OMX_BUFFERHEADERTYPE* buf)
 {
   omx_component_t *oc = opaque;
-  hts_mutex_lock(oc->oc_avail_mtx);
+  hts_mutex_lock(oc->oc_mtx);
   oc->oc_inflight_buffers--;
   buf->pAppPrivate = oc->oc_avail;
   oc->oc_avail = buf;
-  hts_cond_signal(oc->oc_avail_cond);
-  hts_mutex_unlock(oc->oc_avail_mtx);
+  oc->oc_avail_bytes += buf->nAllocLen;
+  if(oc->oc_avail_bytes >= oc->oc_need_bytes)
+    hts_cond_signal(oc->oc_avail_cond);
+  hts_mutex_unlock(oc->oc_mtx);
   return 0;
 }
 
@@ -120,10 +122,10 @@ oc_fill_buffer_done(OMX_HANDLETYPE hComponent,
 {
   omx_component_t *oc = opaque;
 
-  hts_mutex_lock(oc->oc_avail_mtx);
+  hts_mutex_lock(oc->oc_mtx);
   oc->oc_filled = buf;
   hts_cond_signal(oc->oc_avail_cond);
-  hts_mutex_unlock(oc->oc_avail_mtx);
+  hts_mutex_unlock(oc->oc_mtx);
   return 0;
 }
 
@@ -135,11 +137,11 @@ oc_fill_buffer_done(OMX_HANDLETYPE hComponent,
 void
 omx_wait_command(omx_component_t *oc)
 {
-  hts_mutex_lock(&oc->oc_event_mtx);
+  hts_mutex_lock(oc->oc_mtx);
   while(!oc->oc_cmd_done)
-    if(hts_cond_wait_timeout(&oc->oc_event_cond, &oc->oc_event_mtx, 250))
+    if(hts_cond_wait_timeout(&oc->oc_event_cond, oc->oc_mtx, 250))
       break;
-  hts_mutex_unlock(&oc->oc_event_mtx);
+  hts_mutex_unlock(oc->oc_mtx);
 }
 
 
@@ -165,7 +167,8 @@ omx_send_command(omx_component_t *oc, OMX_COMMANDTYPE cmd, int v, void *p,
  *
  */
 omx_component_t *
-omx_component_create(const char *name, hts_mutex_t *mtx, hts_cond_t *avail)
+omx_component_create(const char *name, hts_mutex_t *mtx,
+                     hts_cond_t *avail_cond)
 {
   omx_component_t *oc = calloc(1, sizeof(omx_component_t));
   OMX_CALLBACKTYPE cb;
@@ -174,10 +177,12 @@ omx_component_create(const char *name, hts_mutex_t *mtx, hts_cond_t *avail)
                                  OMX_IndexParamImageInit,
                                  OMX_IndexParamOtherInit};
 
-  oc->oc_avail_mtx = mtx;
-  oc->oc_avail_cond = avail;
-  hts_mutex_init(&oc->oc_event_mtx);
-  hts_cond_init(&oc->oc_event_cond, &oc->oc_event_mtx);
+  assert(mtx != NULL);
+  oc->oc_mtx = mtx;
+
+  oc->oc_avail_cond = avail_cond;
+
+  hts_cond_init(&oc->oc_event_cond, oc->oc_mtx);
 
   oc->oc_name = strdup(name);
 
@@ -271,11 +276,11 @@ omx_alloc_buffers(omx_component_t *oc, int port)
     omxdbg("buf=%p\n", buf);
     buf->pAppPrivate = oc->oc_avail;
     oc->oc_avail = buf;
+    oc->oc_avail_bytes += buf->nAllocLen;
   }
   omx_wait_command(oc); // Waits for the OMX_CommandPortEnable command
 
 }
-
 
 /**
  *
@@ -285,12 +290,14 @@ omx_get_buffer_locked(omx_component_t *oc)
 {
   OMX_BUFFERHEADERTYPE *buf;
 
-  while((buf = oc->oc_avail) == NULL)
-    if(hts_cond_wait_timeout(oc->oc_avail_cond, oc->oc_avail_mtx, 3000)) {
+  while((buf = oc->oc_avail) == NULL) {
+    if(hts_cond_wait_timeout(oc->oc_avail_cond, oc->oc_mtx, 3000)) {
       TRACE(TRACE_ERROR, "OMX", "Timeout while waiting for buffer");
       return NULL;
     }
+  }
   oc->oc_avail = buf->pAppPrivate;
+  oc->oc_avail_bytes -= buf->nAllocLen;
   oc->oc_inflight_buffers++;
   return buf;
 }
@@ -301,9 +308,9 @@ omx_get_buffer_locked(omx_component_t *oc)
 OMX_BUFFERHEADERTYPE *
 omx_get_buffer(omx_component_t *oc)
 {
-  hts_mutex_lock(oc->oc_avail_mtx);
+  hts_mutex_lock(oc->oc_mtx);
   OMX_BUFFERHEADERTYPE *buf  = omx_get_buffer_locked(oc);
-  hts_mutex_unlock(oc->oc_avail_mtx);
+  hts_mutex_unlock(oc->oc_mtx);
   return buf;
 }
 
@@ -315,10 +322,10 @@ omx_get_buffer(omx_component_t *oc)
 void
 omx_wait_buffers(omx_component_t *oc)
 {
-  hts_mutex_lock(oc->oc_avail_mtx);
+  hts_mutex_lock(oc->oc_mtx);
   while(oc->oc_inflight_buffers)
-    hts_cond_wait(oc->oc_avail_cond, oc->oc_avail_mtx);
-  hts_mutex_unlock(oc->oc_avail_mtx);
+    hts_cond_wait(oc->oc_avail_cond, oc->oc_mtx);
+  hts_mutex_unlock(oc->oc_mtx);
 }
 
 
@@ -339,6 +346,8 @@ omx_release_buffers(omx_component_t *oc, int port)
       exit(1);
     }
   }
+  oc->oc_avail_bytes = 0;
+  oc->oc_need_bytes = 0;
 }
 
 
@@ -408,10 +417,10 @@ omx_tunnel_destroy(omx_tunnel_t *ot)
 int
 omx_wait_fill_buffer(omx_component_t *oc, OMX_BUFFERHEADERTYPE *buf)
 {
-  hts_mutex_lock(oc->oc_avail_mtx);
+  hts_mutex_lock(oc->oc_mtx);
   while(oc->oc_filled == NULL)
-    hts_cond_wait(oc->oc_avail_cond, oc->oc_avail_mtx);
-  hts_mutex_unlock(oc->oc_avail_mtx);
+    hts_cond_wait(oc->oc_avail_cond, oc->oc_mtx);
+  hts_mutex_unlock(oc->oc_mtx);
   return 0;
 }
 

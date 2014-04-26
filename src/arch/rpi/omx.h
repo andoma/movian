@@ -36,13 +36,19 @@
 typedef struct omx_component {
   OMX_HANDLETYPE oc_handle;
   char *oc_name;
-  hts_mutex_t *oc_avail_mtx;
-  hts_cond_t *oc_avail_cond;
+  hts_mutex_t *oc_mtx;
 
-  hts_mutex_t oc_event_mtx;
+  hts_cond_t *oc_avail_cond;
   hts_cond_t oc_event_cond;
 
   OMX_BUFFERHEADERTYPE *oc_avail;
+
+  int oc_avail_bytes; // Sum of all bytes in oc_avail buffers
+
+  int oc_need_bytes; /* Only wakeup oc_avail_cond if oc_avail_bytes >=
+                      * this value
+                      */
+
   OMX_BUFFERHEADERTYPE *oc_filled;
   int oc_inflight_buffers;
   int oc_cmd_done;

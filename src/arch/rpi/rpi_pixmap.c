@@ -280,14 +280,16 @@ rpi_pixmap_decode(image_coded_type_t type,
       continue;
     }
 
-    if(rpd->rpd_decoder->oc_avail == NULL) {
+    buf = rpd->rpd_decoder->oc_avail;
+
+    if(buf == NULL) {
       hts_cond_wait(&rpd->rpd_cond, &rpd->rpd_mtx);
       continue;
     }
 
-    buf = rpd->rpd_decoder->oc_avail;
     rpd->rpd_decoder->oc_avail = buf->pAppPrivate;
     rpd->rpd_decoder->oc_inflight_buffers++;
+    rpd->rpd_decoder->oc_avail_bytes -= buf->nAllocLen;
 
     hts_mutex_unlock(&rpd->rpd_mtx);
 
