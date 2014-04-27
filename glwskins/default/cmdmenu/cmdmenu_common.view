@@ -6,17 +6,17 @@
   ITEM(_("Playqueue"), {
     $clone.pageMenu = false;
     fireEvent(navOpen("playqueue:"));
-  });
+  }, void, $nav.currentpage.url != "playqueue:");
 
   ITEM(_("Go to Home screen"), {
     $clone.pageMenu = false;
     fireEvent(navOpen("page:home"));
-  });
+  }, void, $nav.currentpage.url != "page:home");
 
   ITEM(_("Open Settings"), {
     $clone.pageMenu = false;
     fireEvent(navOpen("settings:"));
-  });
+  }, void, $nav.currentpage.url != "settings:");
   
   ITEM(_("Reload current page"), {
     $clone.pageMenu = false;

@@ -7,7 +7,7 @@ commandMenuChrome(
 	     fmt(_("Remove '%s' from home screen"), $nav.currentpage.model.metadata.title),
 	     $nav.currentpage.bookmarked,
 	     { $nav.currentpage.bookmarked = !$nav.currentpage.bookmarked;},
-	     true
+	     $nav.currentpage.url != "page:home"
 	    );
   
   
