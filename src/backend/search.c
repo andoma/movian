@@ -122,6 +122,7 @@ search_open(prop_t *page, const char *url0, int sync)
   source = prop_create_r(page, "source");
   prop_t *model_nodes  = prop_create_r(model, "nodes");
   prop_t *source_nodes = prop_create_r(source, "nodes");
+  prop_t *loading      = prop_create_r(model, "loading");
   struct prop_nf *pnf;
 
   pnf = prop_nf_create(model_nodes, source_nodes,
@@ -135,13 +136,14 @@ search_open(prop_t *page, const char *url0, int sync)
 
   prop_nf_release(pnf);
 
-  backend_search(source, url);
+  backend_search(source, url, loading);
 
   prop_ref_dec(model);
   prop_ref_dec(meta);
   prop_ref_dec(source);
   prop_ref_dec(model_nodes);
   prop_ref_dec(source_nodes);
+  prop_ref_dec(loading);
   return 0;
 }
 

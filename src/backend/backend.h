@@ -121,7 +121,7 @@ typedef struct backend {
 
   int (*be_probe)(const char *url, char *errbuf, size_t errlen);
 
-  void (*be_search)(struct prop *model, const char *query);
+  void (*be_search)(struct prop *model, const char *query, prop_t *loading);
 
   int (*be_resolve_item)(const char *url, prop_t *item);
 
@@ -177,7 +177,7 @@ int backend_resolve_item(const char *url, prop_t *item)
 
 rstr_t *backend_normalize(rstr_t *url);
 
-void backend_search(prop_t *model, const char *url);
+void backend_search(prop_t *model, const char *url, prop_t *loading);
 
 int backend_page_open(prop_t *root, const char *url0, int sync);
 

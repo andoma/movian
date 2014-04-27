@@ -101,6 +101,7 @@ typedef struct js_model {
   prop_t *jm_root;
 
   prop_t *jm_loading;
+  prop_t *jm_loading_auto;
   prop_t *jm_type;
   prop_t *jm_error;
   prop_t *jm_contents;
@@ -1456,6 +1457,13 @@ js_open(js_model_t *jm)
 
   jm->jm_cx = cx;
 
+
+  if(jm->jm_loading_auto != NULL) {
+    prop_add_int(jm->jm_loading_auto, -1);
+    prop_ref_dec(jm->jm_loading_auto);
+    jm->jm_loading_auto = NULL;
+  }
+
   while(jm->jm_subs) {
     struct prop_notify_queue q;
     jsrefcount s = JS_SuspendRequest(cx);
@@ -1567,7 +1575,7 @@ js_backend_open(prop_t *page, const char *url, int sync)
  *
  */
 void
-js_backend_search(struct prop *model, const char *query)
+js_backend_search(struct prop *model, const char *query, prop_t *loading)
 {
   js_searcher_t *jss;
   prop_t *parent = prop_create_r(model, "nodes");
@@ -1584,6 +1592,9 @@ js_backend_search(struct prop *model, const char *query)
 
     jm = js_model_create(cx, jss->jss_openfunc, 0);
     strvec_addp(&jm->jm_args, query);
+
+    prop_add_int(loading, 1);
+    jm->jm_loading_auto = prop_ref_inc(loading);
 
     search_class_create(parent, &jm->jm_nodes, &jm->jm_entries, 
 			jss->jss_title, jss->jss_icon);

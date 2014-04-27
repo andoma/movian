@@ -4657,7 +4657,7 @@ spotify_shutdown_late(void *opaque, int exitcode)
  *
  */
 static void
-be_spotify_search(prop_t *source, const char *query)
+be_spotify_search(prop_t *source, const char *query, prop_t *loading)
 {
   if(spotify_start(NULL, 0, 1))
     return;

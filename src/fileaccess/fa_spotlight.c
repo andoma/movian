@@ -262,7 +262,7 @@ spotlight_searcher(void *aux)
 }
 
 static void
-spotlight_search(prop_t *model, const char *query)
+spotlight_search(prop_t *model, const char *query, prop_t *loading)
 {
   if(!spotlight_enabled)
     return;

@@ -151,7 +151,8 @@ struct backend;
 
 int js_backend_open(prop_t *page, const char *url, int sync);
 
-void js_backend_search(struct prop *model, const char *query);
+void js_backend_search(struct prop *model, const char *query,
+                       prop_t *loading);
 
 int js_plugin_load(const char *id, const char *url,
 		   char *errbuf, size_t errlen);

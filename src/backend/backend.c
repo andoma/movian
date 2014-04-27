@@ -480,12 +480,12 @@ backend_resolve_item(const char *url, prop_t *item)
  *
  */
 void
-backend_search(prop_t *model, const char *url)
+backend_search(prop_t *model, const char *url, prop_t *loading)
 {
   backend_t *be;
 
   LIST_FOREACH(be, &backends, be_global_link)
     if(be->be_search != NULL)
-      be->be_search(model, url);
+      be->be_search(model, url, loading);
 }
 
