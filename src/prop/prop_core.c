@@ -3912,7 +3912,7 @@ prop_unlink0(prop_t *dst, prop_sub_t *skipme, const char *origin,
     src = src->hp_originator;
 
   if(search_for_linkage(src, dst))
-    restore_and_descend(dst, o, skipme, origin, pnq, dst);
+    restore_and_descend(dst, src, skipme, origin, pnq, dst);
 
   if(dst->hp_flags & PROP_XREFED_ORIGINATOR) {
     prop_destroy0(o);
