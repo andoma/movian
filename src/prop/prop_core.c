@@ -5018,8 +5018,9 @@ prop_print_tree0(prop_t *p, int indent, int flags)
 #ifdef PROP_SUB_RECORD_SOURCE
       fprintf(stderr, "%s:%d ", s->hps_file, s->hps_line);
 #endif
-      fprintf(stderr, "[%s] @ %p p=%p\033[0m\n",
-        prop_get_DN(s->hps_canonical_prop, 1), s, s->hps_canonical_prop);
+      fprintf(stderr, "[%s] @ %p p=%p value=%s\033[0m\n",
+              prop_get_DN(s->hps_canonical_prop, 1), s, s->hps_canonical_prop,
+              prop_get_DN(s->hps_value_prop, 1));
     }
   }
 }
