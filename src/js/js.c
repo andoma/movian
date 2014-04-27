@@ -1441,9 +1441,7 @@ js_init(void)
   jsval val;
   JSFunction *fn;
 
-  js_page_init();
-
- JS_SetCStringsAreUTF8();
+  JS_SetCStringsAreUTF8();
 
   runtime = JS_NewRuntime(0x1000000);
 
