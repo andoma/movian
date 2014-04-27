@@ -3819,12 +3819,6 @@ restore_and_descend(prop_t *dst, prop_t *src, prop_sub_t *skipme,
 {
   prop_sub_t *s, *next;
 
-  while(src->hp_originator != NULL)
-    src = src->hp_originator;
-
-  if(!search_for_linkage(src, broken_link))
-    return;
-
   for(s = LIST_FIRST(&src->hp_value_subscriptions); s != NULL; s = next) {
     next = LIST_NEXT(s, hps_value_prop_link);
 
@@ -3882,13 +3876,21 @@ restore_and_descend(prop_t *dst, prop_t *src, prop_sub_t *skipme,
     if(c->hp_name == NULL)
       continue;
 
+    prop_t *s = c;
+
+    while(s->hp_originator != NULL)
+      s = s->hp_originator;
+
+    if(!search_for_linkage(s, broken_link))
+      continue;
+
     prop_t *z = prop_create0(dst, c->hp_name, NULL,
                              c->hp_flags & PROP_NAME_NOT_ALLOCATED);
 
     if(c->hp_type == PROP_DIR)
       prop_make_dir(z, skipme, origin);
 
-    restore_and_descend(z, c, skipme, origin, pnq, broken_link);
+    restore_and_descend(z, s, skipme, origin, pnq, broken_link);
   }
 }
 
@@ -3905,7 +3907,13 @@ prop_unlink0(prop_t *dst, prop_sub_t *skipme, const char *origin,
   dst->hp_originator = NULL;
   LIST_REMOVE(dst, hp_originator_link);
 
-  restore_and_descend(dst, o, skipme, origin, pnq, dst);
+  prop_t *src = o;
+
+  while(src->hp_originator != NULL)
+    src = src->hp_originator;
+
+  if(search_for_linkage(src, dst))
+    restore_and_descend(dst, o, skipme, origin, pnq, dst);
 
   if(dst->hp_flags & PROP_XREFED_ORIGINATOR) {
     prop_destroy0(o);
