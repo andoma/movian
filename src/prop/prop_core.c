@@ -127,6 +127,8 @@ prop_get_DN(prop_t *p, int compact)
   int len = 0;
   int pfx = 0;
 
+  if(p == NULL)
+    return "(null)";
 
   int d;
   for(d = 0; d < 32; d++) {
@@ -1013,38 +1015,35 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
   prop_notify_t *n;
 
   if(s->hps_flags & PROP_SUB_DEBUG) {
+
+    char trail[64];
+    snprintf(trail, sizeof(trail), "%s%s",
+             s->hps_flags & PROP_SUB_EXPEDITE ? " (exp)" : "",
+             pnq ? " (deferred)" : "");
+
     switch(p->hp_type) {
     case PROP_RSTRING:
-      PROPTRACE("rstr(%s) by %s%s", 
-		rstr_get(p->hp_rstring), origin,
-		s->hps_flags & PROP_SUB_EXPEDITE ? " (exp)" : "");
+      PROPTRACE("rstr(%s) by %s%s", rstr_get(p->hp_rstring), origin, trail);
       break;
     case PROP_CSTRING:
-      PROPTRACE("cstr(%s) by %s%s", 
-		p->hp_cstring, origin,
-		s->hps_flags & PROP_SUB_EXPEDITE ? " (exp)" : "");
+      PROPTRACE("cstr(%s) by %s%s", p->hp_cstring, origin, trail);
       break;
     case PROP_LINK:
-      PROPTRACE("link(%s,%s) by %s%s", 
-	    rstr_get(p->hp_link_rtitle), rstr_get(p->hp_link_rurl), origin,
-	    s->hps_flags & PROP_SUB_EXPEDITE ? " (exp)" : "");
+      PROPTRACE("link(%s,%s) by %s%s",
+                rstr_get(p->hp_link_rtitle), rstr_get(p->hp_link_rurl), origin,
+                trail);
       break;
     case PROP_FLOAT:
-      PROPTRACE("float(%f) by %s %s <%d>", p->hp_float, origin,
-		s->hps_flags & PROP_SUB_EXPEDITE ? " (exp)" : "",
-		how);
+      PROPTRACE("float(%f) by %s%s <%d>", p->hp_float, origin, trail, how);
       break;
     case PROP_INT:
-      PROPTRACE("int(%d) by %s%s", p->hp_int, origin,
-	    s->hps_flags & PROP_SUB_EXPEDITE ? " (exp)" : "");
+      PROPTRACE("int(%d) by %s%s", p->hp_int, origin, trail);
       break;
     case PROP_DIR:
-      PROPTRACE("dir by %s%s", origin,
-	    s->hps_flags & PROP_SUB_EXPEDITE ? " (exp)" : "");
+      PROPTRACE("dir by %s%s", origin, trail);
       break;
     case PROP_VOID:
-      PROPTRACE("void by %s%s", origin,
-	    s->hps_flags & PROP_SUB_EXPEDITE ? " (exp)" : "");
+      PROPTRACE("void by %s%s", origin, trail);
       break;
     case PROP_ZOMBIE:
       break;
@@ -3954,12 +3953,12 @@ prop_link0(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard, int debug)
 
     if(debug) {
       printf("--- Destination [%s] before unlink ---\n", prop_get_DN(dst, 1));
-      prop_print_tree0(dst, 0, 3);
+      prop_print_tree0(dst, 0, 7);
       printf("\n\n\n");
 
       printf("--- Previous origin [%s] before unlink ---\n",
              prop_get_DN(dst->hp_originator, 1));
-      prop_print_tree0(dst->hp_originator, 0, 3);
+      prop_print_tree0(dst->hp_originator, 0, 7);
       printf("\n\n\n");
     }
 
@@ -3971,11 +3970,11 @@ prop_link0(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard, int debug)
 
   if(debug) {
     printf("--- Destination [%s] before link ---\n", prop_get_DN(dst, 1));
-    prop_print_tree0(dst, 0, 3);
+    prop_print_tree0(dst, 0, 7);
     printf("\n\n\n");
 
     printf("--- Source [%s] before link ---\n", prop_get_DN(src, 1));
-    prop_print_tree0(src, 0, 3);
+    prop_print_tree0(src, 0, 7);
     printf("\n\n\n");
   }
 
@@ -4014,11 +4013,11 @@ prop_link0(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard, int debug)
 
   if(debug) {
     printf("--- Destination [%s] after link ---\n", prop_get_DN(dst, 1));
-    prop_print_tree0(dst, 0, 3);
+    prop_print_tree0(dst, 0, 7);
     printf("\n\n\n");
 
     printf("--- Source [%s] after link ---\n", prop_get_DN(src, 1));
-    prop_print_tree0(src, 0, 3);
+    prop_print_tree0(src, 0, 7);
     printf("\n\n\n");
   }
 
@@ -5004,7 +5003,18 @@ prop_print_tree0(prop_t *p, int indent, int flags)
   if(flags & 2) {
     prop_sub_t *s;
     LIST_FOREACH(s, &p->hp_value_subscriptions, hps_value_prop_link) {
-      fprintf(stderr, "%*.s \033[1mSubscriber: ", indent, "");
+      fprintf(stderr, "%*.s \033[1mV-Subscriber: ", indent, "");
+#ifdef PROP_SUB_RECORD_SOURCE
+      fprintf(stderr, "%s:%d ", s->hps_file, s->hps_line);
+#endif
+      fprintf(stderr, "[%s] @ %p p=%p\033[0m\n",
+        prop_get_DN(s->hps_canonical_prop, 1), s, s->hps_canonical_prop);
+    }
+  }
+  if(flags & 4) {
+    prop_sub_t *s;
+    LIST_FOREACH(s, &p->hp_canonical_subscriptions, hps_canonical_prop_link) {
+      fprintf(stderr, "%*.s \033[1mC-Subscriber: ", indent, "");
 #ifdef PROP_SUB_RECORD_SOURCE
       fprintf(stderr, "%s:%d ", s->hps_file, s->hps_line);
 #endif
