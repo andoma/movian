@@ -1211,8 +1211,10 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
       }
 
       if(mb->mb_data_type == MB_VIDEO) {
-	if(hd->hd_delta_ts == PTS_UNSET && mb->mb_pts != PTS_UNSET)
+	if(hd->hd_delta_ts == PTS_UNSET && mb->mb_pts != PTS_UNSET) {
 	  hd->hd_delta_ts = mb->mb_pts - hs->hs_time_offset;
+          mp->mp_start_time = hd->hd_delta_ts;
+        }
 
 	mb->mb_drive_clock = 1;
 	mb->mb_delta = hd->hd_delta_ts;
