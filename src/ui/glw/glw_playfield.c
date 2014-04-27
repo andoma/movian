@@ -144,6 +144,8 @@ playfield_select_child(glw_t *w, glw_t *c, prop_t *origin)
   glw_playfield_t *p = (glw_playfield_t *)w;
   float speed = 0.1;
 
+  glw_need_refresh(w->glw_root, 0);
+
   if(origin && w->glw_selected != NULL &&
      TAILQ_NEXT(w->glw_selected, glw_parent_link) == c) {
     glw_t *x = find_by_prop(w->glw_selected, origin);
