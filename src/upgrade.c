@@ -462,7 +462,10 @@ upgrade_file(int accept_patch, const char *fname, const char *url,
     int to_write = MIN(len, 65536);
     r = write(fd, ptr, to_write);
     if(r != to_write) {
-      install_error(strerror(errno), url);
+      char err[256];
+      snprintf(err, sizeof(err), "Write(%d) failed (%d): %s",
+               to_write, r, strerror(errno));
+      install_error(err, url);
       close(fd);
       unlink(instpath);
       buf_release(b);
@@ -478,7 +481,9 @@ upgrade_file(int accept_patch, const char *fname, const char *url,
   buf_release(b);
 
   if(close(fd)) {
-    install_error(strerror(errno), url);
+    char err[256];
+    snprintf(err, sizeof(err), "Close failed: %s", strerror(errno));
+    install_error(err, url);
     unlink(instpath);
     return -1;
   }
@@ -486,7 +491,9 @@ upgrade_file(int accept_patch, const char *fname, const char *url,
   if(!overwrite) {
     TRACE(TRACE_INFO, "upgrade", "Renaming %s -> %s", instpath, fname);
     if(rename(instpath, fname)) {
-      install_error(strerror(errno), url);
+      char err[256];
+      snprintf(err, sizeof(err), "Rename failed: %s", strerror(errno));
+      install_error(err, url);
       unlink(instpath);
       return -1;
     }
