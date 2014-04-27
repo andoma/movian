@@ -1018,6 +1018,7 @@ mp_direct_seek(media_pipe_t *mp, int64_t ts)
 
   if(!mp_seek_in_queues(mp, ts + mp->mp_start_time)) {
     prop_set(mp->mp_prop_root, "seektime", PROP_SET_FLOAT, ts / 1000000.0);
+    return;
   } else {
 
     /* If there already is a seek event enqueued, update it */
