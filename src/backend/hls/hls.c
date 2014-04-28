@@ -1501,7 +1501,12 @@ hls_play_extm3u(char *buf, const char *url, media_pipe_t *mp,
       else if((v = mystrbegins(s, "#EXT-X-STREAM-INF:")) != NULL)
         hls_ext_x_stream_inf(&h, v, &hv);
       else if(s[0] != '#') {
-        hls_add_variant(&h, s, &hv, &h.h_primary);
+
+#if RPISTOS
+        if(hv->hv_width == 426 && hv->hv_height == 240)
+          continue;
+#endif
+          hls_add_variant(&h, s, &hv, &h.h_primary);
       }
     }
   } else {
