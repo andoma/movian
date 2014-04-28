@@ -1695,7 +1695,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
     tcp_huge_buffer(hf->hf_connection->hc_tc);
   } else if(nohead) {
     http_send_verb(&q, hf, "GET");
-    htsbuf_qprintf(&q, "Range: bytes=0-1\r\n");
+    htsbuf_qprintf(&q, "Range: bytes=0-4095\r\n");
     if(http_headers_auth(&headers, &cookies, hf, "GET", NULL, errbuf, errlen))
       return -1;
   } else {
@@ -1724,18 +1724,12 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
   switch(code) {
   case 200:
-    if(hf->hf_streaming) {
+    if(hf->hf_streaming || nohead) {
       if(hf->hf_filesize == -1)
         hf->hf_rsize = INT64_MAX;
 
       HF_TRACE(hf, "Opened in streaming mode");
       return 0;
-    }
-
-    if(nohead) {
-      http_detach(hf, 0, "Range request not understood");
-      hf->hf_streaming = 1;
-      goto reconnect;
     }
 
     if(hf->hf_filesize < 0) {
@@ -1763,15 +1757,10 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
       http_detach(hf, 0, "Head request");
 
     return 0;
-    
+
   case 206:
-    if(http_drain_content(hf)) {
-      snprintf(errbuf, errlen, "Connection lost");
-      return -1;
-    }
     if(hf->hf_filesize == -1)
       HF_TRACE(hf, "%s: No known filesize, seeking may be slower", hf->hf_url);
-
     return 0;
 
   case 301:
@@ -1954,6 +1943,9 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
       hc = hf->hf_connection;
     }
 
+    if(hf->hf_filesize != -1 && hf->hf_pos >= hf->hf_filesize)
+      return totsize; // Reading outside known filesize
+
     if(hf->hf_rsize > 0) {
       /*
        * We have pending data input on the socket,
@@ -1967,9 +1959,6 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
       read_size = size - totsize;
 
       /* Must send a new request */
-
-      if(hf->hf_filesize != -1 && hf->hf_pos >= hf->hf_filesize)
-	return 0; // Reading outside known filesize
 
       htsbuf_queue_init(&q, 0);
 
@@ -2127,7 +2116,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
       return totsize;
     }
 
-    if(totsize != size && hf->hf_chunked_transfer) {
+    if(totsize != size) {
       i--;
       continue;
     }
