@@ -1458,6 +1458,8 @@ js_init(void)
   val = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, htsversion));
   JS_SetProperty(cx, showtimeobj, "currentVersionString", &val);
 
+  val = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, gconf.device_id));
+  JS_SetProperty(cx, showtimeobj, "deviceId", &val);
 
   fn = JS_DefineFunction(cx, showtimeobj, "RichText", js_RichText, 1, 0);
   RichText = JS_GetFunctionObject(fn);
