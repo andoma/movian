@@ -739,6 +739,18 @@ icymeta_parse(icecast_play_context_t *ipc, const char *buf)
 
       TRACE(TRACE_DEBUG, "Radio", "Title decoded as '%s' to '%s'",
             how, rstr_get(t));
+
+      const char *title_tag = strstr(rstr_get(t), "<mus_sng_title>");
+      if(title_tag != NULL) {
+        title_tag += strlen("<mus_sng_title>");
+        const char *title_tag_end = strstr(title_tag, "</mus_sng_title>");
+        if(title_tag_end != NULL) {
+          rstr_t *n = rstr_allocl(title_tag, title_tag_end - title_tag);
+          rstr_release(t);
+          t = n;
+        }
+      }
+
       if(!ipc->ipc_streaminfo_set) {
         prop_set_rstring(ipc->ipc_radio_info, t);
         ipc->ipc_streaminfo_set = 1;
