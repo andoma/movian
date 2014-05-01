@@ -461,6 +461,10 @@ upgrade_file(const char *fname, const char *url,
     int to_write = MIN(len, 65536);
     r = write(fd, ptr, to_write);
     if(r == -1) {
+
+      if(errno == EAGAIN || errno == EINTR || errno == EINPROGRESS)
+        continue;
+
       char err[256];
       snprintf(err, sizeof(err), "Write(%d) failed (%d): %s (%d)",
                to_write, r, strerror(errno), errno);
