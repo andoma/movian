@@ -34,6 +34,7 @@
 #include "misc/cancellable.h"
 #include "htsmsg/htsmsg_xml.h"
 #include "networking/http.h"
+#include "usage.h"
 
 TAILQ_HEAD(icecast_source_queue, icecast_source);
 
@@ -445,6 +446,8 @@ stream_radio(icecast_play_context_t *ipc, char *errbuf, size_t errlen)
   event_t *e;
   media_pipe_t *mp = ipc->ipc_mp;
   mq = &mp->mp_audio;
+
+  usage_inc_counter("icecast", 1);
 
   ipc->ipc_radio_info = prop_create(mp->mp_prop_root, "radioinfo");
 
