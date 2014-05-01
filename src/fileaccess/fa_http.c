@@ -2110,11 +2110,9 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
 
     if(read_size == 0)
       return totsize;
-      
-    if(hf->hf_rsize == 0 && hf->hf_connection_mode == CONNECTION_MODE_CLOSE) {
+
+    if(hf->hf_rsize == 0 && hf->hf_connection_mode == CONNECTION_MODE_CLOSE)
       http_detach(hf, 0, "Connection-mode = close");
-      return totsize;
-    }
 
     if(totsize != size) {
       i--;
