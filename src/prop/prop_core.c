@@ -1892,6 +1892,21 @@ prop_destroy_child(prop_t *p, prop_t *c)
 }
 
 
+
+/**
+ *
+ */
+static void
+recursive_unlink(prop_t *p)
+{
+  prop_t *c;
+  while((c = LIST_FIRST(&p->hp_targets)) != NULL) {
+    recursive_unlink(c);
+    prop_unlink0(c, NULL, "prop_destroy0", NULL);
+  }
+}
+
+
 /**
  *
  */
@@ -1922,8 +1937,7 @@ prop_destroy0(prop_t *p)
   if(p->hp_xref)
     return 0;
 
-  while((c = LIST_FIRST(&p->hp_targets)) != NULL)
-    prop_unlink0(c, NULL, "prop_destroy0", NULL);
+  recursive_unlink(p);
 
   switch(p->hp_type) {
   case PROP_ZOMBIE:
@@ -1964,6 +1978,13 @@ prop_destroy0(prop_t *p)
   }
 
   while((s = LIST_FIRST(&p->hp_value_subscriptions)) != NULL) {
+
+#ifdef PROP_SUB_RECORD_SOURCE
+    if(s->hps_flags & PROP_SUB_DEBUG) {
+      PROPTRACE("Sub %s:%d lost value prop",
+                s->hps_file, s->hps_line);
+    }
+#endif
     prop_notify_void(s);
 
     LIST_REMOVE(s, hps_value_prop_link);
@@ -3676,7 +3697,8 @@ prepend_origin(prop_sub_t *s, prop_t *prepend)
   prop_originator_tracking_t *pot;
   if(!s->hps_multiple_origins) {
 
-    assert(prepend != s->hps_origin);
+    if(prepend == s->hps_origin)
+      return;
 
     pot = pool_get(pot_pool);
     pot->pot_p = s->hps_origin;
@@ -3687,7 +3709,8 @@ prepend_origin(prop_sub_t *s, prop_t *prepend)
   } else {
 
     for(pot = s->hps_pots; pot != NULL; pot = pot->pot_next) {
-      assert(pot->pot_p != prepend);
+      if(pot->pot_p == prepend)
+        return;
     }
   }
 
@@ -3697,6 +3720,16 @@ prepend_origin(prop_sub_t *s, prop_t *prepend)
   s->hps_pots = pot;
 }
 
+
+/**
+ *
+ */
+static void
+prepend_origins(prop_sub_t *s, prop_t **prependvec, int prependveclen)
+{
+  for(int i = 0; i < prependveclen; i++)
+    prepend_origin(s, prependvec[i]);
+}
 
 
 /**
@@ -3725,9 +3758,7 @@ relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme,
   while((s = LIST_FIRST(&dst->hp_value_subscriptions)) != NULL) {
     LIST_REMOVE(s, hps_value_prop_link);
     retarget_subscription(src, s, skipme, origin, NULL);
-    
-    for(int i = 0; i < prependveclen; i++)
-      prepend_origin(s, prependvec[i]);
+    prepend_origins(s, prependvec, prependveclen);
   }
 
   if(dst->hp_type != PROP_DIR)
@@ -3814,7 +3845,8 @@ search_for_linkage(prop_t *src, prop_t *link)
 static void
 restore_and_descend(prop_t *dst, prop_t *src, prop_sub_t *skipme,
 		    const char *origin, struct prop_notify_queue *pnq,
-		    prop_t *broken_link)
+		    prop_t *broken_link,
+                    prop_t **prependvec, int prependveclen)
 {
   prop_sub_t *s, *next;
 
@@ -3864,8 +3896,9 @@ restore_and_descend(prop_t *dst, prop_t *src, prop_sub_t *skipme,
       }
     }
     retarget_subscription(dst, s, skipme, origin, pnq);
+    prepend_origins(s, prependvec, prependveclen);
   }
-    
+
   if(src->hp_type != PROP_DIR)
     return;
 
@@ -3889,8 +3922,34 @@ restore_and_descend(prop_t *dst, prop_t *src, prop_sub_t *skipme,
     if(c->hp_type == PROP_DIR)
       prop_make_dir(z, skipme, origin);
 
-    restore_and_descend(z, s, skipme, origin, pnq, broken_link);
+    restore_and_descend(z, s, skipme, origin, pnq, broken_link,
+                        prependvec, prependveclen);
   }
+}
+
+
+/**
+ *
+ */
+static void
+prop_follow_and_unlink(prop_t *dst, prop_t *src, prop_sub_t *skipme,
+                       const char *origin, struct prop_notify_queue *pnq,
+                       prop_t **prependvec, int prependveclen)
+{
+  if(src->hp_originator != NULL) {
+
+    prop_t **newpv = alloca((prependveclen + 1) * sizeof(prop_t *));
+    memcpy(newpv, prependvec, prependveclen * sizeof(prop_t *));
+    newpv[prependveclen] = src;
+
+    prop_follow_and_unlink(dst, src->hp_originator, skipme, origin, pnq,
+                           newpv, prependveclen + 1);
+    return;
+  }
+
+  if(search_for_linkage(src, dst))
+    restore_and_descend(dst, src, skipme, origin, pnq, dst, prependvec,
+                        prependveclen);
 }
 
 
@@ -3901,21 +3960,15 @@ static void
 prop_unlink0(prop_t *dst, prop_sub_t *skipme, const char *origin,
 	     struct prop_notify_queue *pnq)
 {
-  prop_t *o = dst->hp_originator;
+  prop_t *src = dst->hp_originator;
 
   dst->hp_originator = NULL;
   LIST_REMOVE(dst, hp_originator_link);
 
-  prop_t *src = o;
-
-  while(src->hp_originator != NULL)
-    src = src->hp_originator;
-
-  if(search_for_linkage(src, dst))
-    restore_and_descend(dst, src, skipme, origin, pnq, dst);
+  prop_follow_and_unlink(dst, src, skipme, origin, pnq, NULL, 0);
 
   if(dst->hp_flags & PROP_XREFED_ORIGINATOR) {
-    prop_destroy0(o);
+    prop_destroy0(src);
     dst->hp_flags &= ~PROP_XREFED_ORIGINATOR;
   }
 }
@@ -4952,6 +5005,13 @@ prop_print_tree0(prop_t *p, int indent, int flags)
 	  p->hp_name, p, p->hp_xref,
 	  p->hp_flags & PROP_MULTI_SUB ? 'M' : ' ',
 	  p->hp_flags & PROP_MULTI_NOTIFY ? 'N' : ' ');
+
+  int targets = 0;
+  LIST_FOREACH(c, &p->hp_targets, hp_originator_link)
+    targets++;
+  if(targets)
+    fprintf(stderr, "(%d targets) ", targets);
+
 
   if(p->hp_originator != NULL) {
     if(flags & 1) {
