@@ -26,6 +26,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <limits.h>
+#include <dirent.h>
 
 #include "showtime.h"
 #include "upgrade.h"
@@ -120,8 +121,8 @@ patched_config_file(buf_t *upd, char *upd_begin, char *upd_end,
   int fd = open(fname, O_RDONLY);
   if(fd == -1) {
     TRACE(TRACE_DEBUG, "upgrade",
-	  "Partial update ignored, unable to open %s -- %s",
-	  fname, strerror(errno));
+	  "Partial update ignored, unable to open %s -- %s (%d)",
+	  fname, strerror(errno), errno);
     return upd;
   }
   struct stat st;
@@ -135,8 +136,8 @@ patched_config_file(buf_t *upd, char *upd_begin, char *upd_end,
 
   if(read(fd, cur_data, cur_len) != cur_len) {
     TRACE(TRACE_DEBUG, "upgrade",
-	  "Partial update ignored, read failed from %s -- %s",
-	  fname, strerror(errno));
+	  "Partial update ignored, read failed from %s -- %s (%d)",
+	  fname, strerror(errno), errno);
     free(cur_data);
     close(fd);
     return upd;
@@ -243,9 +244,10 @@ download_callback(void *opaque, int loaded, int total)
  *
  */
 static int
-upgrade_file(int accept_patch, const char *fname, const char *url,
+upgrade_file(const char *fname, const char *url,
 	     int size, const uint8_t *expected_digest, const char *task,
-	     int check_partial_update)
+	     int check_partial_update, int overwrite,
+             const char *patch_from)
 {
   uint8_t digest[20];
   char digeststr[41];
@@ -272,11 +274,11 @@ upgrade_file(int accept_patch, const char *fname, const char *url,
 #if CONFIG_BSPATCH
   char ae[128];
   ae[0] = 0;
-  if(accept_patch) {
+  if(patch_from) {
 
     // Figure out SHA-1 of currently running binary
 
-    fd = open(fname, O_RDONLY);
+    fd = open(patch_from, O_RDONLY);
     if(fd != -1) {
 
       struct stat st;
@@ -305,7 +307,7 @@ upgrade_file(int accept_patch, const char *fname, const char *url,
       snprintf(ae, sizeof(ae), "bspatch-from-%s", digeststr);
       http_header_add(&req_headers, "Accept-Encoding", ae, 0);
       TRACE(TRACE_DEBUG, "upgrade", "Asking for patch for %s (%s)",
-	    fname, digeststr);
+	    patch_from, digeststr);
     }
   }
 #endif
@@ -399,29 +401,26 @@ upgrade_file(int accept_patch, const char *fname, const char *url,
 
     if(new_begin && new_end > new_begin) {
       TRACE(TRACE_DEBUG, "upgrade",
-	    "Attempting partial rewrite of %s", fname);
-      b = patched_config_file(b, new_begin, new_end, fname);
+	    "Attempting partial rewrite of %s", patch_from);
+      b = patched_config_file(b, new_begin, new_end, patch_from);
     }
   }
 
 
   const char *instpath;
 
-  int overwrite = 1;
-#ifdef STOS
-  overwrite = 0;
-#endif
-
   if(overwrite) {
 
-    if(unlink(fname)) {
-      if(gconf.upgrade_path == NULL) {
-	install_error("Unlink failed", url);
-	buf_release(b);
-	return -1;
+    if(overwrite != 2) {
+      if(unlink(fname)) {
+        if(gconf.upgrade_path == NULL) {
+          install_error("Unlink failed", url);
+          buf_release(b);
+          return -1;
+        }
+      } else {
+        TRACE(TRACE_DEBUG, "upgrade", "Executable removed, rewriting");
       }
-    } else {
-      TRACE(TRACE_DEBUG, "upgrade", "Executable removed, rewriting");
     }
 
     instpath = fname;
@@ -461,10 +460,10 @@ upgrade_file(int accept_patch, const char *fname, const char *url,
   while(len > 0) {
     int to_write = MIN(len, 65536);
     r = write(fd, ptr, to_write);
-    if(r != to_write) {
+    if(r == -1) {
       char err[256];
-      snprintf(err, sizeof(err), "Write(%d) failed (%d): %s",
-               to_write, r, strerror(errno));
+      snprintf(err, sizeof(err), "Write(%d) failed (%d): %s (%d)",
+               to_write, r, strerror(errno), errno);
       install_error(err, url);
       close(fd);
       unlink(instpath);
@@ -472,8 +471,8 @@ upgrade_file(int accept_patch, const char *fname, const char *url,
       return -1;
     }
 
-    len -= to_write;
-    ptr += to_write;
+    len -= r;
+    ptr += r;
     prop_set_float(upgrade_progress,
 		   (float)(b->b_size - len) / (float)b->b_size);
   }
@@ -482,7 +481,7 @@ upgrade_file(int accept_patch, const char *fname, const char *url,
 
   if(close(fd)) {
     char err[256];
-    snprintf(err, sizeof(err), "Close failed: %s", strerror(errno));
+    snprintf(err, sizeof(err), "Close failed: %s (%d)", strerror(errno), errno);
     install_error(err, url);
     unlink(instpath);
     return -1;
@@ -785,17 +784,68 @@ check_upgrade(int set_news)
 }
 
 #if STOS
+
+static void
+clean_dl_dir(void)
+{
+  char fullpath[PATH_MAX];
+  const char *path = "/boot/dl";
+  struct dirent **namelist;
+  int n;
+
+  n = scandir(path, &namelist, 0, alphasort);
+  if(n < 0) {
+    TRACE(TRACE_ERROR, "Unable to scan directory %s -- %s (%d)",
+          path, strerror(errno), errno);
+    return;
+  }
+
+  while(n--) {
+    const char *f = namelist[n]->d_name;
+    if(strcmp(f, ".") && strcmp(f, "..")) {
+      snprintf(fullpath, sizeof(fullpath), "%s/%s", path, namelist[n]->d_name);
+      if(unlink(fullpath)) {
+        TRACE(TRACE_ERROR, "Unable to delete %s -- %s (%d)",
+              fullpath, strerror(errno), errno);
+      }
+    }
+    free(namelist[n]);
+  }
+  free(namelist);
+}
+
+/**
+ *
+ */
 static int
 stos_perform_upgrade(int accept_patch)
 {
-  char localfile[256];
-  int rval = 0;
+  int rval;
   if(mount("/dev/mmcblk0p1", "/boot", "vfat", MS_REMOUNT, NULL)) {
     install_error("Unable to remount /boot to read-write", NULL);
     return 2;
   }
 
+  rval = mkdir("/boot/dl", 0770);
+  if(rval == -1 && errno != EEXIST) {
+    install_error("Unable to create temp directory /boot/dl", NULL);
+    return 2;
+  }
+
+
+  clean_dl_dir();
+
   htsmsg_field_t *f;
+
+  int x = 0;
+  int num_artifacts = 0;
+  htsmsg_t **alist;
+
+  HTSMSG_FOREACH(f, stos_artifacts)
+    x++;
+
+  alist = alloca(x * sizeof(htsmsg_t *));
+
   HTSMSG_FOREACH(f, stos_artifacts) {
     htsmsg_t *a;
     if((a = htsmsg_get_map_by_field(f)) == NULL)
@@ -804,16 +854,39 @@ stos_perform_upgrade(int accept_patch)
     const char *type = htsmsg_get_str(a, "type");
     if(strcmp(type, "sqfs") && strcmp(type, "bin") && strcmp(type, "txt"))
       continue;
+    alist[num_artifacts++] = a;
+  }
+
+  const char **dlpaths;
+  const char **finalpaths;
+
+  dlpaths    = alloca(num_artifacts * sizeof(const char *));
+  finalpaths = alloca(num_artifacts * sizeof(const char *));
+  int rename_ops = 0;
+
+
+  rval = 0;
+  for(int i = 0; i < num_artifacts; i++) {
+
+    htsmsg_t *a = alist[i];
 
     const char *dlurl = htsmsg_get_str(a, "url");
     const char *sha1  = htsmsg_get_str(a, "sha1");
     int dlsize        = htsmsg_get_u32_or_default(a, "size", 0);
     const char *name  = htsmsg_get_str(a, "name");
+    const char *type  = htsmsg_get_str(a, "type");
 
     uint8_t digest[20];
     hex2bin(digest, sizeof(digest), sha1);
-    char *n = mystrdupa(name);
 
+    /**
+     * Construct local filename
+     *
+     * We need to convert from  foobar-1.2.3.img to foobar.img
+     *
+     */
+
+    char *n = mystrdupa(name);
     char *postfix = strrchr(n, '.');
     if(postfix == NULL)
       continue;
@@ -822,23 +895,55 @@ stos_perform_upgrade(int accept_patch)
       continue;
 
     *dash = 0;
-    
-    snprintf(localfile, sizeof(localfile), "/boot/%s%s", n, postfix);
+
+    char dlpath[256];
+    char finalpath[256];
+
+    snprintf(dlpath,    sizeof(dlpath),    "/boot/dl/%s%s", n, postfix);
+    snprintf(finalpath, sizeof(finalpath), "/boot/%s%s",    n, postfix);
 
     TRACE(TRACE_DEBUG, "STOS", "Downloading %s (%s) to %s",
-	  dlurl, name, localfile);
+	  dlurl, name, dlpath);
+
+    dlpaths[rename_ops]    = mystrdupa(dlpath);
+    finalpaths[rename_ops] = mystrdupa(finalpath);
+
+    rename_ops++;
 
     int check_partial_update = !strcmp(type, "txt");
 
-    if(upgrade_file(accept_patch, localfile, dlurl, dlsize, digest, n,
-		    check_partial_update)) {
+    if(upgrade_file(dlpath, dlurl, dlsize, digest, n,
+		    check_partial_update, 2,
+                    accept_patch ? finalpath : NULL)) {
       rval = 1;
       break;
     }
   }
+
   TRACE(TRACE_DEBUG, "STOS", "Syncing filesystems");
   sync();
   TRACE(TRACE_DEBUG, "STOS", "Syncing filesystems done");
+
+  if(rval)
+    return rval;
+
+  TRACE(TRACE_DEBUG, "STOS", "Moving files into place");
+
+  for(int i = 0; i < rename_ops; i++) {
+
+    TRACE(TRACE_DEBUG, "STOS", "Moving %s -> %s", dlpaths[i], finalpaths[i]);
+
+    int r = rename(dlpaths[i], finalpaths[i]);
+    if(r) {
+      TRACE(TRACE_ERROR, "STOS", "Rename of %s -> %s failed -- %s (%d)",
+            dlpaths[i], finalpaths[i], strerror(errno), errno);
+    }
+  }
+
+  TRACE(TRACE_DEBUG, "STOS", "Syncing filesystems");
+  sync();
+  TRACE(TRACE_DEBUG, "STOS", "Syncing filesystems done");
+
   return rval;
 }
 
@@ -860,11 +965,17 @@ attempt_upgrade(int accept_patch)
 #endif
   const char *fname = gconf.upgrade_path ?: gconf.binary;
 
-  if(upgrade_file(accept_patch, fname,
+  int overwrite = 1;
+#ifdef STOS
+  overwrite = 0;
+#endif
+
+  if(upgrade_file(fname,
 		  showtime_download_url,
 		  showtime_download_size,
 		  showtime_download_digest,
-		  "Showtime", 0))
+		  "Showtime", 0, overwrite,
+                  accept_patch ? fname : NULL))
     return 1;
 
   TRACE(TRACE_INFO, "upgrade", "All done, restarting");
