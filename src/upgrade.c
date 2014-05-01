@@ -653,7 +653,7 @@ check_upgrade(int set_news)
   }
 
 #if STOS
-  stos_upgrade_needed = 0;
+  stos_upgrade_needed = gconf.enable_omnigrade;
   htsmsg_t *manifest = htsmsg_get_map(json, "manifest");
   if(manifest != NULL) {
 
