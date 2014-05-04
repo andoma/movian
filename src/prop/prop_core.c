@@ -1683,6 +1683,35 @@ prop_create_root_ex(const char *name, int noalloc)
  *
  */
 prop_t *
+prop_create_multi(prop_t *p, ...)
+{
+  va_list ap;
+  const char *name;
+  va_start(ap, p);
+
+  if(p == NULL)
+    return NULL;
+
+  hts_mutex_lock(&prop_mutex);
+
+  if(p->hp_type != PROP_ZOMBIE) {
+    hts_mutex_unlock(&prop_mutex);
+    return p;
+  }
+
+  while((name = va_arg(ap, const char *)) != NULL)
+    p = prop_create0(p, name, NULL, 0);
+
+  p = prop_ref_inc(p);
+  hts_mutex_unlock(&prop_mutex);
+  return p;
+}
+
+
+/**
+ *
+ */
+prop_t *
 prop_create_after(prop_t *parent, const char *name, prop_t *after,
 		  prop_sub_t *skipme)
 {

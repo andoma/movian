@@ -212,6 +212,8 @@ prop_t *prop_create_root_ex(const char *name, int noalloc)
 prop_t *prop_create_after(prop_t *parent, const char *name, prop_t *after,
 			  prop_sub_t *skipme);
 
+prop_t *prop_create_multi(prop_t *p, ...)  __attribute__((__sentinel__(0)));
+
 void prop_destroy(prop_t *p);
 
 void prop_destroy_by_name(prop_t *parent, const char *name);
