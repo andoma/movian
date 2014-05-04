@@ -376,12 +376,12 @@ vdpau_get_buffer(struct AVCodecContext *ctx, AVFrame *frame, int flags)
     if(r != VDP_STATUS_OK) {
       TRACE(TRACE_INFO, "VDPAU", "Unable to create surface: %s",
             vdpau_errstr(vd, r));
+      hts_mutex_unlock(&vc->vc_surface_cache_mutex);
       return -1;
     }
   }
 
   hts_mutex_unlock(&vc->vc_surface_cache_mutex);
-
   atomic_add(&vc->vc_refcount, 1);
 
   frame->data[3] = frame->data[0] = (void *)(uintptr_t)surface;
@@ -440,11 +440,8 @@ vdpau_init_libav_decode(media_codec_t *mc, AVCodecContext *ctx)
   if(ctx->codec_id == AV_CODEC_ID_H264)
     refframes = 16;
 
-  int width  = (ctx->coded_width  + 1) & ~1;
-  int height = (ctx->coded_height + 3) & ~3;
-
-  if(height == 1088)
-    height = 1080;
+  int width  = ctx->width;
+  int height = ctx->height;
 
   VdpStatus r;
 
