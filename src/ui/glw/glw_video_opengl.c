@@ -362,7 +362,7 @@ glw_render_video_quad(int interlace, int rectmode, int width, int height,
   float x1, x2, y1, y2;
   float b1 = 0, b2 = 0;
 
-  static const float vertices[12] = {-1, -1, 1, -1, 1, 1, -1, 1};
+  static const float vertices[8] = {-1, -1, 1, -1, 1, 1, -1, 1};
   const uint8_t elements[6] = {0,1,2,0,2,3};
   float tc[12];
 
