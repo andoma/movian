@@ -1501,7 +1501,7 @@ hls_play_extm3u(char *buf, const char *url, media_pipe_t *mp,
       else if((v = mystrbegins(s, "#EXT-X-STREAM-INF:")) != NULL)
         hls_ext_x_stream_inf(&h, v, &hv);
       else if(s[0] != '#') {
-#if RPISTOS
+#if 1
         if(hv->hv_width && hv->hv_height &&
            (hv->hv_width <= 128 || hv->hv_height <= 72)) {
           free(hv);
