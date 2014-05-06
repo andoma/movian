@@ -39,7 +39,7 @@ static inline uint64_t rd64_be(const uint8_t *ptr)
 }
 
 
-static inline uint64_t rd32_be(const uint8_t *ptr)
+static inline uint32_t rd32_be(const uint8_t *ptr)
 {
   uint32_t val;
   memcpy(&val, ptr, 4);
@@ -51,7 +51,7 @@ static inline uint64_t rd32_be(const uint8_t *ptr)
 
 
 
-static inline uint64_t rd16_be(const uint8_t *ptr)
+static inline uint16_t rd16_be(const uint8_t *ptr)
 {
   uint16_t val;
   memcpy(&val, ptr, 2);
