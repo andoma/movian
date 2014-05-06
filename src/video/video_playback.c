@@ -128,7 +128,7 @@ vsource_dup(const vsource_t *src)
   vsource_t *dst = malloc(sizeof(vsource_t));
   *dst = *src;
   dst->vs_url = strdup(dst->vs_url);
-  dst->vs_mimetype = dst->vs_mimetype ? strdup(src->vs_url) : NULL;
+  dst->vs_mimetype = dst->vs_mimetype ? strdup(src->vs_mimetype) : NULL;
   return dst;
 }
 
