@@ -1934,6 +1934,10 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
   for(i = 0; i < 5; i++) {
     /* If not connected, try to (re-)connect */
   retry:
+
+    if(hf->hf_filesize != -1 && hf->hf_pos >= hf->hf_filesize)
+      return totsize; // Reading outside known filesize
+
     if((hc = hf->hf_connection) == NULL) {
       if(hf->hf_no_retries)
         return -1;
@@ -1942,9 +1946,6 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
 	return -1;
       hc = hf->hf_connection;
     }
-
-    if(hf->hf_filesize != -1 && hf->hf_pos >= hf->hf_filesize)
-      return totsize; // Reading outside known filesize
 
     if(hf->hf_rsize > 0) {
       /*
