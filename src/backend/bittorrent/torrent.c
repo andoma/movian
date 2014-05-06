@@ -24,6 +24,7 @@
 #include "backend/backend.h"
 #include "misc/str.h"
 #include "misc/sha.h"
+#include "misc/bytestream.h"
 #include "networking/http.h"
 #include "htsmsg/htsmsg.h"
 #include "bittorrent.h"
@@ -284,8 +285,6 @@ send_cancel(peer_t *p, const torrent_request_t *tr)
 }
 
 
-
-#if 0
 /**
  *
  */
@@ -301,7 +300,6 @@ send_have(peer_t *p, uint32_t piece)
   asyncio_send(p->p_connection, buf, sizeof(buf), 0);
   peer_arm_ka_timer(p);
 }
-#endif
 
 
 /**
@@ -316,21 +314,6 @@ send_keepalive(void *aux)
   peer_arm_ka_timer(p);
 }
 
-#if 0
-/**
- *
- */
-static void
-torrent_send_have(torrent_t *to, int piece)
-{
-  peer_t *p;
-
-  LIST_FOREACH(p, &to->to_peers, p_link) {
-    if(p->p_state == PEER_STATE_RUNNING)
-      send_have(p, piece);
-  }
-}
-#endif
 
 /**
  *
@@ -387,12 +370,16 @@ peer_error_cb(void *opaque, const char *error)
     send_handshake(p);
     asyncio_set_timeout(p->p_connection, async_now + 15 * 1000000);
     p->p_state = PEER_STATE_WAIT_HANDSHAKE;
+#if 0
     peer_trace(p, "%s: Connected", p->p_name);
+#endif
     return;
   }
 
+#if 0
   peer_trace(p, "%s: %s in state %s",
              p->p_name, error, peer_state_txt(p->p_state));
+#endif
 
   peer_shutdown(p, p->p_state == PEER_STATE_RUNNING ? 
 		PEER_STATE_DISCONNECTED :
@@ -422,6 +409,8 @@ peer_shutdown(peer_t *p, int next_state)
   asyncio_timer_disarm(&p->p_ka_send_timer);
   asyncio_timer_disarm(&p->p_data_recv_timer);
 
+  free(p->p_piece_flags);
+  p->p_piece_flags = NULL;
 
   // Do stuff depending on current (old) state
 
@@ -486,7 +475,6 @@ peer_shutdown(peer_t *p, int next_state)
   destroy:
     LIST_REMOVE(p, p_link);
     free(p->p_name);
-    free(p->p_piece_flags);
     to->to_num_peers--;
     free(p);
     break;
@@ -542,6 +530,17 @@ recv_handshake(peer_t *p, htsbuf_queue_t *q)
   return 0;
 }
 
+/**
+ *
+ */
+static void
+peer_have_piece(peer_t *p, uint32_t pid)
+{
+  if(p->p_piece_flags[pid] & PIECE_HAVE)
+    return;
+  p->p_piece_flags[pid] |= PIECE_HAVE;
+  p->p_num_pieces_have++;
+}
 
 /**
  *
@@ -565,9 +564,7 @@ recv_bitfield(peer_t *p, const uint8_t *data, unsigned int len)
 
   for(int i = 0; i < to->to_num_pieces; i++) {
     if(data[i / 8] & (0x80 >> (i & 0x7)))
-      p->p_piece_flags[i] |= PIECE_HAVE;
-    else
-      p->p_piece_flags[i] &= ~PIECE_HAVE;
+      peer_have_piece(p, i);
   }
   peer_update_interest(to, p);
   if(p->p_peer_choking == 0)
@@ -600,7 +597,8 @@ recv_have(peer_t *p, const uint8_t *data, unsigned int len)
   if(p->p_piece_flags == NULL)
     p->p_piece_flags = calloc(1, to->to_num_pieces);
 
-  p->p_piece_flags[pid] |= PIECE_HAVE;
+  peer_have_piece(p, pid);
+
   peer_update_interest(to, p);
   if(p->p_peer_choking == 0)
     torrent_io_do_requests(to);
@@ -782,6 +780,55 @@ recv_piece(peer_t *p, const uint8_t *buf, size_t len)
  *
  */
 static int
+recv_request(peer_t *p, const uint8_t *buf, size_t len)
+{
+  if(len != 12) {
+    peer_disconnect(p, "Bad request packet length");
+    return 1;
+  }
+
+  uint32_t piece  = rd32_be(buf);
+  uint32_t offset = rd32_be(buf + 4);
+  uint32_t length = rd32_be(buf + 8);
+  printf("Got request for piece %d 0x%x +0x%x from %s\n",
+         piece, offset, length, p->p_name);
+  torrent_piece_t *tp;
+  torrent_t *to = p->p_torrent;
+
+  TAILQ_FOREACH(tp, &to->to_active_pieces, tp_link)
+    if(tp->tp_index == piece)
+      break;
+
+  if(tp == NULL)
+    return 0;
+
+  if(!tp->tp_hash_ok)
+    return 0;
+
+  if(offset + length > tp->tp_piece_length) {
+    peer_disconnect(p, "Request piece %d 0x%x+0x%x out of range",
+                    piece, offset, length);
+    return 1;
+  }
+
+  uint8_t out[13];
+
+  wr32_be(out, 13 + length);
+  out[4] = BT_MSGID_PIECE;
+  wr32_be(out + 5, piece);
+  wr32_be(out + 9, offset);
+
+  asyncio_send(p->p_connection, out, sizeof(out), 1);
+  asyncio_send(p->p_connection, tp->tp_data + offset, length, 0);
+  printf("Sent stuff to %s\n", p->p_name);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
 recv_message(peer_t *p, htsbuf_queue_t *q)
 {
   uint32_t len;
@@ -857,6 +904,20 @@ recv_message(peer_t *p, htsbuf_queue_t *q)
 
   case BT_MSGID_PIECE:
     recv_piece(p, data, len);
+    break;
+
+  case BT_MSGID_INTERESTED:
+    peer_trace(p, "%s: Is interested", p->p_name);
+    p->p_peer_interested = 1;
+    break;
+
+  case BT_MSGID_NOT_INTERESTED:
+    peer_trace(p, "%s: Is not interested", p->p_name);
+    p->p_peer_interested = 0;
+    break;
+
+  case BT_MSGID_REQUEST:
+    r = recv_request(p, data, len);
     break;
 
   default:
@@ -943,7 +1004,7 @@ torrent_add_peer(torrent_t *to, const net_addr_t *na)
 
   to->to_num_peers++;
   p = calloc(1, sizeof(peer_t));
-  //p->p_trace = 1;
+  p->p_trace = 1;
   p->p_addr = *na;
   p->p_torrent = to;
   p->p_name = strdup(net_addr_str(na));
@@ -1275,10 +1336,12 @@ torrent_load(torrent_t *to, void *buf, uint64_t offset, size_t size,
 
     piece_update_deadline(to, tp);
 
-    asyncio_wakeup_worker(torrent_io_signal);
+    if(!tp->tp_hash_computed) {
+      asyncio_wakeup_worker(torrent_io_signal);
 
-    while(!tp->tp_hash_computed)
-      hts_cond_wait(&torrent_piece_hash_cond, &bittorrent_mutex);
+      while(!tp->tp_hash_computed)
+        hts_cond_wait(&torrent_piece_hash_cond, &bittorrent_mutex);
+    }
 
     LIST_REMOVE(tfh, tfh_piece_link);
 
@@ -1639,11 +1702,74 @@ flush_active_pieces(torrent_t *to)
     if(LIST_FIRST(&tp->tp_sent_blocks) != NULL)
       break;
 
-    printf("Flushed piece %d\n", tp->tp_index);
     torrent_piece_destroy(to, tp);
   }
 }
 
+
+/**
+ *
+ */
+static void
+torrent_send_have(torrent_t *to)
+{
+  torrent_piece_t *tp;
+
+  TAILQ_FOREACH(tp, &to->to_active_pieces, tp_link) {
+    if(!tp->tp_hash_ok)
+      continue;
+
+    peer_t *p;
+
+    const int pid = tp->tp_index;
+
+    LIST_FOREACH(p, &to->to_peers, p_link) {
+
+      if(p->p_state != PEER_STATE_RUNNING)
+        continue;
+
+      if(p->p_piece_flags == NULL)
+        p->p_piece_flags = calloc(1, to->to_num_pieces);
+
+      if(p->p_piece_flags[pid] & PIECE_HAVE)
+        continue;
+
+      if(p->p_piece_flags[pid] & PIECE_NOTIFIED)
+        continue;
+      send_have(p, pid);
+      printf("Sending have for index %d to %s\n", pid, p->p_name);
+      p->p_piece_flags[pid] |= PIECE_NOTIFIED;
+    }
+  }
+}
+
+
+/**
+ *
+ */
+static void
+torrent_unchoke_peers(torrent_t *to)
+{
+  peer_t *p;
+  LIST_FOREACH(p, &to->to_peers, p_link) {
+    if(p->p_state != PEER_STATE_RUNNING)
+      continue;
+
+    int choke = 1;
+
+    if(p->p_num_pieces_have != to->to_num_pieces &&
+       p->p_peer_interested)
+      choke = 0;
+
+    if(p->p_am_choking != choke) {
+      p->p_am_choking = choke;
+
+      peer_trace(p, "%s: Sending %s",
+               p->p_name, choke ? "choke" : "unchoke");
+      send_msgid(p, choke ? BT_MSGID_CHOKE : BT_MSGID_UNCHOKE);
+    }
+  }
+}
 
 
 /**
@@ -1662,7 +1788,6 @@ torrent_io_do_requests(torrent_t *to)
   }
   printf("----------------------------------------\n");
 #endif
-
 
   LIST_FOREACH(tp, &to->to_serve_order, tp_serve_link) {
     if(tp->tp_deadline == INT64_MAX)
@@ -1690,6 +1815,11 @@ torrent_io_do_requests(torrent_t *to)
   flush_active_pieces(to);
 
   asyncio_timer_arm(&to->to_io_reschedule, async_now + 1000000);
+
+  if(to->to_last_unchoke_check + 5 < second) {
+    to->to_last_unchoke_check = second;
+    torrent_unchoke_peers(to);
+  }
 }
 
 
@@ -1703,6 +1833,12 @@ torrent_io_check_pendings(void)
 
   torrent_t *to;
   LIST_FOREACH(to, &torrents, to_link) {
+
+    if(to->to_new_valid_piece) {
+      to->to_new_valid_piece = 0;
+      torrent_send_have(to);
+    }
+
     torrent_io_do_requests(to);
   }
 
@@ -1710,6 +1846,9 @@ torrent_io_check_pendings(void)
 }
 
 
+/**
+ *
+ */
 static void
 torrent_io_reschedule(void *aux)
 {
@@ -1719,7 +1858,9 @@ torrent_io_reschedule(void *aux)
 }
 
 
-
+/**
+ *
+ */
 static void
 torrent_piece_verify_hash(torrent_t *to, torrent_piece_t *tp)
 {
@@ -1743,9 +1884,14 @@ torrent_piece_verify_hash(torrent_t *to, torrent_piece_t *tp)
   const uint8_t *piecehash = to->to_piece_hashes + tp->tp_index * 20;
   tp->tp_hash_ok = !memcmp(piecehash, digest, 20);
   tp->tp_refcount--;
-  if(!tp->tp_hash_ok)
+  if(!tp->tp_hash_ok) {
     TRACE(TRACE_ERROR, "BITTORRENT", "Received corrupt piece %d",
 	  tp->tp_index);
+  } else {
+    to->to_new_valid_piece = 1;
+    asyncio_wakeup_worker(torrent_io_signal);
+  }
+
   hts_cond_broadcast(&torrent_piece_hash_cond);
 
   //  bt_wakeup_write_thread();

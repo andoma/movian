@@ -77,16 +77,10 @@ torrent_dump(const torrent_t *to, htsbuf_queue_t *q)
     if(p->p_state != PEER_STATE_RUNNING)
       continue;
 
-    if(p->p_peer_choking)
+    if(p->p_peer_choking && 0)
       continue;
 
-    int num_have = 0;
-    if(p->p_piece_flags != NULL) {
-      for(int i = 0; i < to->to_num_pieces; i++) {
-        if(p->p_piece_flags[i] & PIECE_HAVE)
-          num_have++;
-      }
-    }
+    int num_have = p->p_num_pieces_have;
 
     htsbuf_qprintf(q, "%-30s %-15s %-6d %c%c%c%c  %2d/%-2d %-10d %-5d %-8d %-7d %-6d %-7d %-6d\n",
                    p->p_name, peer_state_txt(p->p_state), num_have,

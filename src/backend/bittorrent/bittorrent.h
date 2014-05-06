@@ -4,8 +4,8 @@
 #include "networking/asyncio.h"
 #include "misc/average.h"
 
-#define PIECE_HAVE 0x1
-
+#define PIECE_HAVE     0x1
+#define PIECE_NOTIFIED 0x2
 
 struct htsmsg;
 
@@ -110,6 +110,8 @@ typedef struct peer {
 
   char p_id[21];
 
+
+  int p_num_pieces_have;
   uint8_t *p_piece_flags;
 
   struct torrent_request_list p_requests;
@@ -268,7 +270,7 @@ typedef struct torrent {
   struct peer_queue to_disconnected_peers;
   struct peer_queue to_connect_failed_peers;
 
-
+  int to_last_unchoke_check;
   int to_piece_length;
   int to_num_pieces;
 
@@ -287,6 +289,8 @@ typedef struct torrent {
   asyncio_timer_t to_io_reschedule;
 
   struct torrent_fh_list to_fhs;
+
+  char to_new_valid_piece;
 
   char to_errbuf[256];
 
