@@ -273,26 +273,36 @@ loader_thread(void *aux)
       if(glt->glt_state == GLT_STATE_LOAD_ABORT) {
 	if(img != NULL && img != NOT_MODIFIED)
 	  image_release(img);
-	TRACE(TRACE_DEBUG, "GLW", "Load of %s was aborted", rstr_get(url));
+
+        if(gconf.enable_image_debug)
+          TRACE(TRACE_DEBUG, "GLW", "Load of %s was aborted", rstr_get(url));
+
 	glt->glt_state = GLT_STATE_INACTIVE;
       } else if(img == NULL) {
 
 	if(glt->glt_q == &gr->gr_tex_load_queue[LQ_TENTATIVE]) {
 	  glt_enqueue(gr, glt, LQ_OTHER);
 	} else if(glt->glt_q == &gr->gr_tex_load_queue[LQ_REFRESH]) {
-	  TRACE(TRACE_INFO, "GLW",
-		"Unable to load image %s -- %s -- using cached copy", 
-		rstr_get(url), errbuf);
+
+          if(gconf.enable_image_debug)
+            TRACE(TRACE_DEBUG, "GLW",
+                  "Unable to load image %s -- %s -- using cached copy",
+                  rstr_get(url), errbuf);
+
 	  glt->glt_state = GLT_STATE_VALID;
 	} else {
 	  // if glt->glt_url is NULL we have aborted so don't ERR log
-	  if(glt->glt_url != NULL)
-	    TRACE(TRACE_ERROR, "GLW", "Unable to load image %s -- %s", 
-		  rstr_get(url), errbuf);
-	  else
-	    TRACE(TRACE_DEBUG, "GLW", "Aborted load of %s", 
-		  rstr_get(url));
-	  
+
+          if(gconf.enable_image_debug) {
+
+            if(glt->glt_url != NULL)
+              TRACE(TRACE_ERROR, "GLW", "Unable to load image %s -- %s",
+                    rstr_get(url), errbuf);
+            else
+              TRACE(TRACE_DEBUG, "GLW", "Aborted load of %s",
+                    rstr_get(url));
+          }
+
 	  glt->glt_state = GLT_STATE_ERROR;
 	  LIST_REMOVE(glt, glt_flush_link);
 	}

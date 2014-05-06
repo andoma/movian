@@ -1444,4 +1444,7 @@ init_dev_settings(void)
   add_dev_bool(s, "Debug icecast streaming",
 	       "icecastdebug", &gconf.enable_icecast_debug);
 
+  add_dev_bool(s, "Debug image loading and decoding",
+	       "imagedebug", &gconf.enable_image_debug);
+
 }
