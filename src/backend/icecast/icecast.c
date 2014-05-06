@@ -726,7 +726,8 @@ icymeta_fsize(fa_handle_t *handle)
 static void
 icymeta_parse(icecast_play_context_t *ipc, const char *buf)
 {
-  hexdump("icymeta", buf, strlen(buf));
+  if(gconf.enable_icecast_debug)
+    hexdump("icymeta", buf, strlen(buf));
 
   const char *title = mystrstr(buf, "StreamTitle='");
   if(title != NULL) {
@@ -737,8 +738,9 @@ icymeta_parse(icecast_play_context_t *ipc, const char *buf)
       int tlen = end - title;
       rstr_t *t = rstr_from_bytes_len(title, tlen, how, sizeof(how));
 
-      TRACE(TRACE_DEBUG, "Radio", "Title decoded as '%s' to '%s'",
-            how, rstr_get(t));
+      if(gconf.enable_icecast_debug)
+        TRACE(TRACE_DEBUG, "Radio", "Title decoded as '%s' to '%s'",
+              how, rstr_get(t));
 
       const char *title_tag = strstr(rstr_get(t), "<mus_sng_title>");
       if(title_tag != NULL) {

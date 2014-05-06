@@ -249,6 +249,7 @@ typedef struct gconf {
   int enable_mem_debug;
   int enable_nav_always_close;
   int enable_kvstore_debug;
+  int enable_icecast_debug;
   int enable_conditional_rendering;
 
   const char *devplugin;
