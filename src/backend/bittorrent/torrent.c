@@ -1731,9 +1731,6 @@ torrent_send_have(torrent_t *to)
       if(p->p_piece_flags == NULL)
         p->p_piece_flags = calloc(1, to->to_num_pieces);
 
-      if(p->p_piece_flags[pid] & PIECE_HAVE)
-        continue;
-
       if(p->p_piece_flags[pid] & PIECE_NOTIFIED)
         continue;
       send_have(p, pid);
