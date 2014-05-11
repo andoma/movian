@@ -45,7 +45,7 @@
 #define BT_MSGID_REJECT         0x10
 #define BT_MSGID_ALLOWED_FAST   0x11
 
-static void peer_shutdown(peer_t *p, int next_state);
+static void peer_shutdown(peer_t *p, int next_state, int resched);
 
 static void peer_cancel_orphaned_requests(peer_t *p, torrent_request_t *skip);
 
@@ -61,7 +61,7 @@ static void peer_send_cancel(peer_t *p, const torrent_request_t *tr);
 #define PEER_DBG_DOWNLOAD 0x2
 #define PEER_DBG_UPLOAD   0x4
 
-static int peer_debug_flags = -1; //PEER_DBG_UPLOAD;
+static int peer_debug_flags;
 
 static void
 peer_trace(const peer_t *p, int type, const char *msg, ...)
@@ -214,7 +214,7 @@ peer_error_cb(void *opaque, const char *error)
 
   peer_shutdown(p, p->p_state == PEER_STATE_RUNNING ? 
 		PEER_STATE_DISCONNECTED :
-		PEER_STATE_CONNECT_FAIL);
+		PEER_STATE_CONNECT_FAIL, 1);
 }
 
 
@@ -222,14 +222,15 @@ peer_error_cb(void *opaque, const char *error)
  *
  */
 static void
-peer_shutdown(peer_t *p, int next_state)
+peer_shutdown(peer_t *p, int next_state, int resched)
 {
   torrent_t *to = p->p_torrent;
 
   if(p->p_state != PEER_STATE_INACTIVE) {
     to->to_active_peers--;
     btg.btg_active_peers--;
-    torrent_attempt_more_peers(to);
+    if(resched)
+      torrent_attempt_more_peers(to);
   }
 
   if(p->p_connection != NULL) {
@@ -311,7 +312,8 @@ peer_shutdown(peer_t *p, int next_state)
     free(p);
     break;
   }
-  torrent_io_do_requests(to);
+  if(resched)
+    torrent_io_do_requests(to);
 }
 
 /**
@@ -329,7 +331,7 @@ peer_disconnect(peer_t *p, const char *fmt, ...)
   va_end(ap);
 
   peer_trace(p, PEER_DBG_CONN, "Disconnected by us: %s", buf);
-  peer_shutdown(p, PEER_STATE_DESTROYED);
+  peer_shutdown(p, PEER_STATE_DESTROYED, 1);
 }
 
 
@@ -720,12 +722,6 @@ recv_allowed_fast(peer_t *p, const uint8_t *buf, size_t len)
     return 1;
   }
 
-  uint32_t piece  = rd32_be(buf);
-
-  
-
-
-  printf("Allowed fast from %s for piece %d\n", p->p_name, piece);
   return 0;
 }
 
@@ -1134,3 +1130,13 @@ peer_add(torrent_t *to, const net_addr_t *na)
   peer_connect(p);
 }
 
+/**
+ *
+ */
+void
+peer_shutdown_all(torrent_t *to)
+{
+  peer_t *p;
+  while((p = LIST_FIRST(&to->to_peers)) != NULL)
+    peer_shutdown(p, PEER_STATE_DESTROYED, 0);
+}

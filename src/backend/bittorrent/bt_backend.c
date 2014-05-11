@@ -32,6 +32,29 @@
 
 // http://www.bittorrent.org/beps/bep_0009.htm
 
+
+static void
+do_torrent_release(void *opaque, prop_sub_t *s)
+{
+  torrent_release(opaque);
+  prop_unsubscribe(s);
+}
+
+
+/**
+ *
+ */
+static void
+torrent_release_on_prop_destroy(prop_t *p, torrent_t *to)
+{
+  prop_subscribe(PROP_SUB_TRACK_DESTROY,
+                 PROP_TAG_ROOT, p,
+                 PROP_TAG_CALLBACK_DESTROYED, do_torrent_release, to,
+                 PROP_TAG_MUTEX, &bittorrent_mutex,
+                 NULL);
+}
+
+
 /**
  *
  */
@@ -137,6 +160,7 @@ magnet_open2(prop_t *page, struct http_header_list *list, int sync)
   hts_mutex_lock(&bittorrent_mutex);
   torrent_t *to = torrent_create(infohash, dn, trackers, NULL);
   torrent_browse(page, to, NULL);
+  torrent_release_on_prop_destroy(page, to);
   hts_mutex_unlock(&bittorrent_mutex);
 
   return 0;
@@ -210,6 +234,7 @@ torrent_open(prop_t *page, const char *url0, int sync)
   hts_mutex_lock(&bittorrent_mutex);
   torrent_t *to = torrent_create(infohash, NULL, NULL, doc);
   torrent_browse(page, to, NULL);
+  torrent_release_on_prop_destroy(page, to);
   hts_mutex_unlock(&bittorrent_mutex);
 
   htsmsg_destroy(doc);
@@ -246,6 +271,7 @@ infohash_open(prop_t *page, const char *url, int sync)
   hts_mutex_lock(&bittorrent_mutex);
   torrent_t *to = torrent_create(infohash, NULL, NULL, NULL);
   torrent_browse(page, to, path);
+  torrent_release_on_prop_destroy(page, to);
   hts_mutex_unlock(&bittorrent_mutex);
 
   return 0;

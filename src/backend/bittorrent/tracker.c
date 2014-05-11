@@ -54,6 +54,39 @@ tracker_trace(const tracker_t *t, const char *msg, ...)
 }
 
 
+/**
+ *
+ */
+static void
+tracker_destroy(tracker_t *t)
+{
+  tracker_trace(t, "Destroyed");
+  asyncio_timer_disarm(&t->t_timer);
+  LIST_REMOVE(t, t_link);
+  free(t->t_url);
+  free(t);
+}
+
+
+/**
+ *
+ */
+static void
+torrent_tracker_destroy(torrent_tracker_t *tt)
+{
+  asyncio_timer_disarm(&tt->tt_timer);
+
+  if(tt->tt_torrent != NULL)
+    LIST_REMOVE(tt, tt_torrent_link);
+
+  LIST_REMOVE(tt, tt_tracker_link);
+  tracker_t *t = tt->tt_tracker;
+  if(LIST_FIRST(&t->t_torrents) == NULL)
+    tracker_destroy(t);
+
+  free(tt);
+}
+
 
 /**
  *
@@ -66,23 +99,22 @@ tracker_send_connect(tracker_t *t)
 
   idgen++;
   idgen ^= (showtime_get_ts() & 0xfffff000);
-  t->tr_conn_txid = idgen | 0x80000000;
+  t->t_conn_txid = idgen | 0x80000000;
 
   t->t_state = TRACKER_STATE_CONNECTING;
   uint8_t hello[16];
   wr64_be(hello, 0x41727101980ULL);
   wr32_be(hello + 8, 0); // connect
-  wr32_be(hello + 12, t->tr_conn_txid);
+  wr32_be(hello + 12, t->t_conn_txid);
 
   asyncio_udp_send(tracker_udp_fd, hello, 16, &t->t_addr);
 
-
-  int timeout = 15 * (1 << t->tr_conn_attempt);
+  int timeout = 15 * (1 << t->t_conn_attempt);
   asyncio_timer_arm(&t->t_timer, showtime_get_ts() + timeout * 1000000LL);
-  t->tr_conn_attempt++;
+  t->t_conn_attempt++;
   tracker_trace(t,
                 "Sending connect to %s (attempt:%d txid:0x%08x timeout: %ds)",
-                t->t_url, t->tr_conn_attempt, t->tr_conn_txid, timeout);
+                t->t_url, t->t_conn_attempt, t->t_conn_txid, timeout);
 }
 
 
@@ -185,22 +217,20 @@ tracker_create(const char *url)
  *
  */
 static void
-torrent_tracker_announce(torrent_tracker_t *tt)
+torrent_tracker_announce(torrent_tracker_t *tt, int event)
 {
-  uint8_t out[98];
+  uint8_t out[98] = {0};
 
-  tracker_t *tr = tt->tt_tracker;
+  tracker_t *t = tt->tt_tracker;
   const torrent_t *to = tt->tt_torrent;
-
-  const int event = 2; // downloading
 
   tt->tt_txid = ++txid_gen;
 
-  tracker_trace(tr, "Sending annouce for \"%s\" event:%d txid:0x%x",
+  tracker_trace(t, "Sending annouce for \"%s\" event:%d txid:0x%x",
                 to->to_title,
                 event, tt->tt_txid);
 
-  wr64_be(out + 0, tr->tr_conn_id);
+  wr64_be(out + 0, t->t_conn_id);
   wr32_be(out + 8, 1); // Announce
   wr32_be(out + 12, tt->tt_txid);
   memcpy(out + 16, to->to_info_hash, 20);
@@ -213,15 +243,30 @@ torrent_tracker_announce(torrent_tracker_t *tt)
 
   wr32_be(out + 92, -1);
   wr16_be(out + 96, 43213);
-  asyncio_udp_send(tracker_udp_fd, out, 98, &tr->t_addr);
+  asyncio_udp_send(tracker_udp_fd, out, 98, &t->t_addr);
 }
 
 
+/**
+ *
+ */
 static void
 torrent_tracker_periodic(void *aux)
 {
   torrent_tracker_t *tt = aux;
-  torrent_tracker_announce(tt);
+
+  if(tt->tt_torrent == NULL) {
+    tt->tt_attempt++;
+    if(tt->tt_attempt == 5) {
+      torrent_tracker_destroy(tt);
+    } else {
+      // Resend stop request
+      asyncio_timer_arm(&tt->tt_timer, async_now + 5000000LL);
+    }
+    return;
+  }
+
+  torrent_tracker_announce(tt, 2);
   asyncio_timer_arm(&tt->tt_timer, async_now + tt->tt_interval * 1000000LL);
 }
 
@@ -245,26 +290,14 @@ tracker_add_torrent(tracker_t *tr, torrent_t *to)
 /**
  *
  */
-static void
-tracker_announce_all(tracker_t *tr)
-{
-  torrent_tracker_t *tt;
-
-  LIST_FOREACH(tt, &tr->t_torrents, tt_tracker_link)
-    torrent_tracker_announce(tt);
-}
-
-
-/**
- *
- */
 void
 torrent_announce_all(torrent_t *to)
 {
   torrent_tracker_t *tt;
 
   LIST_FOREACH(tt, &to->to_trackers, tt_torrent_link)
-    torrent_tracker_announce(tt);
+    if(tt->tt_tracker->t_state == TRACKER_STATE_CONNECTED)
+      torrent_tracker_announce(tt, 2);
 }
 
 
@@ -272,22 +305,28 @@ torrent_announce_all(torrent_t *to)
  *
  */
 static void
-tracker_udp_handle_connect_reply(tracker_t *tr, const uint8_t *data, int size)
+tracker_udp_handle_connect_reply(tracker_t *t, const uint8_t *data, int size)
 {
   if(size < 16)
     return;
 
   uint32_t txid = rd32_be(data + 4);
 
-  if(tr->tr_conn_txid != txid)
+  if(t->t_conn_txid != txid)
     return;
 
-  tr->tr_conn_attempt = 0;
-  tr->tr_conn_id = rd64_be(data + 8);
-  tracker_trace(tr, "Connected to tracker");
-  asyncio_timer_disarm(&tr->t_timer);
-  tr->t_state = TRACKER_STATE_CONNECTED;
-  tracker_announce_all(tr);
+  t->t_conn_attempt = 0;
+  t->t_conn_id = rd64_be(data + 8);
+  tracker_trace(t, "Connected to tracker");
+  asyncio_timer_disarm(&t->t_timer);
+  t->t_state = TRACKER_STATE_CONNECTED;
+
+  torrent_tracker_t *tt;
+
+  LIST_FOREACH(tt, &t->t_torrents, tt_tracker_link) {
+    if(tt->tt_torrent != NULL)
+      torrent_tracker_announce(tt, 2);
+  }
 }
 
 /**
@@ -316,6 +355,12 @@ tracker_udp_handle_announce_reply(tracker_t *tr, const uint8_t *data, int size)
   tt->tt_seeders  = rd32_be(data + 16);
 
   torrent_t *to = tt->tt_torrent;
+
+  if(to == NULL) {
+    // We have successfully stopped our announcement, this is the end
+    torrent_tracker_destroy(tt);
+    return;
+  }
 
   tracker_trace(tr, "Got announce reply for \"%s\" (leechers:%d seeders:%d), "
                 "refresh in %d seconds",
@@ -362,6 +407,11 @@ tracker_udp_handle_error(tracker_t *tr, const uint8_t *data, int size)
     return; // Error does not respond to our request
 
   const torrent_t *to = tt->tt_torrent;
+  if(to == NULL) {
+    torrent_tracker_destroy(tt);
+    return;
+  }
+
   size -= 8;
   data += 8;
   rstr_t *errmsg = rstr_allocl((const char *)data, size);
@@ -401,6 +451,7 @@ tracker_udp_handle_input(const uint8_t *data, int size,
     break;
 
   case 3:
+  case 0x3000000: // Some trackers forgot to htonl() this command
     tracker_udp_handle_error(tr, data, size);
     break;
   }
@@ -419,6 +470,27 @@ tracker_udp_input(void *opaque, const void *data, int size,
   hts_mutex_lock(&bittorrent_mutex);
   tracker_udp_handle_input(data, size, remote_addr);
   hts_mutex_unlock(&bittorrent_mutex);
+}
+
+
+/**
+ *
+ */
+void
+tracker_remove_torrent(torrent_t *to)
+{
+  torrent_tracker_t *tt;
+
+  while((tt = LIST_FIRST(&to->to_trackers)) != NULL) {
+
+    if(tt->tt_tracker->t_state == TRACKER_STATE_CONNECTED) {
+      torrent_tracker_announce(tt, 3);
+      LIST_REMOVE(tt, tt_torrent_link);
+      tt->tt_torrent = NULL;
+    } else {
+      torrent_tracker_destroy(tt);
+    }
+  }
 }
 
 

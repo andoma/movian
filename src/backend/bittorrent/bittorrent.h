@@ -64,11 +64,11 @@ typedef struct tracker {
   net_addr_t t_addr;
 
   struct torrent_tracker_list t_torrents;
-  uint32_t tr_conn_txid;
+  uint32_t t_conn_txid;
 
-  int tr_conn_attempt;
+  int t_conn_attempt;
 
-  uint64_t tr_conn_id;
+  uint64_t t_conn_id;
 
 } tracker_t;
 
@@ -299,11 +299,10 @@ typedef struct torrent {
   struct torrent_piece_queue to_active_pieces;
   struct torrent_piece_list to_serve_order;
 
-  asyncio_timer_t to_io_reschedule;
-
   struct torrent_fh_list to_fhs;
 
   char to_new_valid_piece;
+  char to_need_updated_interest;
 
   char to_errbuf[256];
 
@@ -336,26 +335,19 @@ typedef struct torrent_fh {
  */
 typedef struct torrent_tracker {
 
-  enum  {
-    TT_STATE_CREATED,
-    TT_STATE_ANNOUNCING,
-    TT_STATE_ANNOUNCED,
-    TT_STATE_ERROR,
-
-  } tt_state;
-
   LIST_ENTRY(torrent_tracker) tt_tracker_link;
   LIST_ENTRY(torrent_tracker) tt_torrent_link;
   tracker_t *tt_tracker;
   torrent_t *tt_torrent;
-  
+
+  struct asyncio_timer tt_timer;
+
   uint32_t tt_txid;
 
   uint32_t tt_interval;
   uint32_t tt_leechers;
   uint32_t tt_seeders;
-
-  struct asyncio_timer tt_timer;
+  uint32_t tt_attempt;
 
 } torrent_tracker_t;
 
@@ -404,3 +396,17 @@ void peer_send_have(peer_t *p, uint32_t piece);
 void peer_choke(peer_t *p, int choke);
 
 void peer_update_interest(torrent_t *to, peer_t *p);
+
+void peer_shutdown_all(torrent_t *to);
+
+/**
+ * Disk IO
+ */
+
+void bt_wakeup_write_thread(void);
+
+/**
+ * Tracker
+ */
+
+void tracker_remove_torrent(torrent_t *to);

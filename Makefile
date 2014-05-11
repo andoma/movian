@@ -324,6 +324,7 @@ SRCS                     += \
 	src/backend/bittorrent/fa_torrent.c \
 	src/backend/bittorrent/torrent.c \
 	src/backend/bittorrent/peer.c \
+	src/backend/bittorrent/diskio.c \
 	src/backend/bittorrent/torrent_stats.c \
 	src/backend/bittorrent/tracker.c \
 	src/backend/bittorrent/bencode.c \

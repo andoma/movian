@@ -30,6 +30,7 @@ torrent_resolve_file(const char *url)
     if(!strcmp(url + 41, tf->tf_fullpath))
       return tf;
   }
+  torrent_release(to);
   return NULL;
 }
 
@@ -161,6 +162,8 @@ torrent_close(fa_handle_t *fh)
   LIST_REMOVE(tfh, tfh_torrent_file_link);
   LIST_REMOVE(tfh, tfh_torrent_link);
 
+  torrent_release(tfh->tfh_file->tf_torrent);
+
   hts_mutex_unlock(&bittorrent_mutex);
 
   prop_ref_dec(tfh->tfh_fa_stats);
@@ -199,6 +202,8 @@ torrent_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
   fs->fs_size = tf->tf_size;
   fs->fs_mtime = 0;
   fs->fs_type = tf->tf_size ? CONTENT_FILE : CONTENT_DIR;
+
+  torrent_release(tf->tf_torrent);
 
   hts_mutex_unlock(&bittorrent_mutex);
 
