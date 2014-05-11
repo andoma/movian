@@ -43,6 +43,8 @@ LIST_HEAD(asyncio_worker_list, asyncio_worker);
 LIST_HEAD(asyncio_timer_list, asyncio_timer);
 TAILQ_HEAD(asyncio_dns_req_queue, asyncio_dns_req);
 
+static hts_thread_t asyncio_thread_id;
+
 static struct asyncio_timer_list asyncio_timers;
 
 static hts_mutex_t asyncio_worker_mutex;
@@ -64,6 +66,10 @@ static struct asyncio_dns_req_queue asyncio_dns_completed;
 static void adr_deliver_cb(void);
 
 int64_t async_now;
+
+static inline void asyncio_verify_thread(void) {
+  assert(hts_thread_current() == asyncio_thread_id);
+}
 
 /**
  *
@@ -180,6 +186,7 @@ at_compar(const asyncio_timer_t *a, const asyncio_timer_t *b)
 void
 asyncio_timer_arm(asyncio_timer_t *at, int64_t expire)
 {
+  asyncio_verify_thread();
   if(at->at_expire)
     LIST_REMOVE(at, at_link);
 
@@ -194,6 +201,7 @@ asyncio_timer_arm(asyncio_timer_t *at, int64_t expire)
 void
 asyncio_timer_disarm(asyncio_timer_t *at)
 {
+  asyncio_verify_thread();
   if(at->at_expire) {
     LIST_REMOVE(at, at_link);
     at->at_expire = 0;
@@ -207,6 +215,7 @@ asyncio_timer_disarm(asyncio_timer_t *at)
 static void
 af_release(asyncio_fd_t *af)
 {
+  asyncio_verify_thread();
   af->af_refcount--;
   if(af->af_refcount > 0)
     return;
@@ -236,7 +245,7 @@ asyncio_dopoll(void)
   asyncio_fd_t **afds  = alloca(asyncio_num_fds * sizeof(asyncio_fd_t *));
   int n = 0;
 
-  int timeout = -1;
+  int timeout = INT32_MAX;
 
   LIST_FOREACH(af, &asyncio_fds, af_link) {
     if(af->af_pending_errno) {
@@ -266,6 +275,9 @@ asyncio_dopoll(void)
 
   if((at = LIST_FIRST(&asyncio_timers)) != NULL)
     timeout = MIN(timeout, (at->at_expire - async_now + 999) / 1000);
+
+  if(timeout == INT32_MAX)
+    timeout = -1;
 
   poll(fds, n, timeout);
 
@@ -311,6 +323,7 @@ asyncio_dopoll(void)
 void
 asyncio_set_events(asyncio_fd_t *af, int events)
 {
+  asyncio_verify_thread();
   af->af_ext_events = events;
 
   af->af_poll_events =
@@ -347,6 +360,7 @@ asyncio_fd_t *
 asyncio_add_fd(int fd, int events, asyncio_fd_callback_t *cb, void *opaque,
 	       const char *name)
 {
+  asyncio_verify_thread();
   asyncio_fd_t *af = calloc(1, sizeof(asyncio_fd_t));
   htsbuf_queue_init(&af->af_recvq, INT32_MAX);
   htsbuf_queue_init(&af->af_sendq, INT32_MAX);
@@ -371,6 +385,7 @@ asyncio_add_fd(int fd, int events, asyncio_fd_callback_t *cb, void *opaque,
 void
 asyncio_del_fd(asyncio_fd_t *af)
 {
+  asyncio_verify_thread();
   if(af->af_fd != -1)
     close(af->af_fd);
   af->af_fd = -1;
@@ -479,8 +494,8 @@ asyncio_thread(void *aux)
 void
 asyncio_init(void)
 {
-  hts_thread_create_detached("asyncio", asyncio_thread, NULL,
-			     THREAD_PRIO_MODEL);
+  hts_thread_create_joinable("asyncio", &asyncio_thread_id, asyncio_thread,
+                             NULL, THREAD_PRIO_MODEL);
 }
 
 
@@ -735,6 +750,7 @@ asyncio_tcp_connected(asyncio_fd_t *af, void *opaque, int events, int error)
 void
 asyncio_send(asyncio_fd_t *af, const void *buf, size_t len, int cork)
 {
+  asyncio_verify_thread();
   htsbuf_append(&af->af_sendq, buf, len);
   if(af->af_fd != -1 && !cork)
     do_write(af);
@@ -747,6 +763,7 @@ asyncio_send(asyncio_fd_t *af, const void *buf, size_t len, int cork)
 void
 asyncio_sendq(asyncio_fd_t *af, htsbuf_queue_t *q, int cork)
 {
+  asyncio_verify_thread();
   htsbuf_appendq(&af->af_sendq, q);
   if(af->af_fd != -1 && !cork)
     do_write(af);
@@ -1097,7 +1114,6 @@ asyncio_udp_bind(const char *name,
   asyncio_fd_t *af = asyncio_add_fd(fd, ASYNCIO_READ,
                                     asyncio_udp_event, opaque, name);
   af->af_udp_callback = cb;
-  af->af_name = strdup(name);
   af->af_port = port;
   return af;
 }

@@ -134,6 +134,11 @@ void asyncio_timer_arm(asyncio_timer_t *at, int64_t expire);
 
 void asyncio_timer_disarm(asyncio_timer_t *at);
 
+static inline int asyncio_timer_is_armed(const asyncio_timer_t *at)
+{
+  return at->at_expire != 0;
+}
+
 /*************************************************************************
  * DNS
  *************************************************************************/
