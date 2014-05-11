@@ -6,6 +6,7 @@
 
 #define PIECE_HAVE     0x1
 #define PIECE_NOTIFIED 0x2
+#define PIECE_REJECTED 0x4
 
 struct htsmsg;
 
@@ -27,14 +28,16 @@ LIST_HEAD(torrent_piece_list, torrent_piece);
 
 #define TRACKER_PROTO_UDP 1
 
-typedef struct bt_config {
-  int btc_max_peers_global;
-  int btc_max_peers_torrent;
-  int btc_in_flight_requests;
-  uint8_t btc_peer_id[21];
-} bt_config_t;
+typedef struct bt_global {
+  int btg_max_peers_global;
+  int btg_max_peers_torrent;
+  int btg_in_flight_requests;
+  int btg_active_peers;
+  uint8_t btg_peer_id[21];
 
-extern bt_config_t btc;
+} bt_global_t;
+
+extern bt_global_t btg;
 
 
 
@@ -63,11 +66,18 @@ typedef struct tracker {
   struct torrent_tracker_list t_torrents;
   uint32_t tr_conn_txid;
 
-  int t_conn_attempt;
+  int tr_conn_attempt;
 
   uint64_t tr_conn_id;
 
 } tracker_t;
+
+
+/**
+ *
+ */
+
+
 
 /**
  *
@@ -76,6 +86,7 @@ typedef struct peer {
   struct torrent *p_torrent;
 
   LIST_ENTRY(peer) p_link;
+  LIST_ENTRY(peer) p_running_link;
   LIST_ENTRY(peer) p_unchoked_link;
 
   char *p_name;
@@ -102,11 +113,12 @@ typedef struct peer {
     PEER_STATE_num,
   } p_state;
 
-  char p_am_choking;
-  char p_am_interested;
-  char p_peer_choking;
-  char p_peer_interested;
-  char p_trace;
+  char p_am_choking : 1;
+  char p_am_interested : 1;
+  char p_peer_choking : 1;
+  char p_peer_interested : 1;
+  char p_trace : 1;
+  char p_fast_ext : 1;
 
   char p_id[21];
 
@@ -261,6 +273,7 @@ typedef struct torrent {
 
   struct torrent_tracker_list to_trackers;
   struct peer_list to_peers;
+  struct peer_list to_running_peers;
   struct peer_list to_unchoked_peers;
 
   int to_active_peers;
@@ -347,6 +360,9 @@ typedef struct torrent_tracker {
 } torrent_tracker_t;
 
 
+/**
+ * Protocol definitions
+ */
 
 torrent_t *torrent_create(const uint8_t *info_hash, const char *title,
 			  const char **trackers, struct htsmsg *metainfo);
@@ -357,11 +373,34 @@ tracker_t *tracker_create(const char *url);
 
 void tracker_add_torrent(tracker_t *tr, torrent_t *t);
 
-void torrent_add_peer(torrent_t *to, const net_addr_t *na);
-
-const char *peer_state_txt(unsigned int state);
-
 int torrent_load(torrent_t *to, void *buf, uint64_t offset, size_t size,
 		 torrent_fh_t *tfh);
 
-void torrent_announce_all(torrent_t *to, int event);
+void torrent_announce_all(torrent_t *to);
+
+void torrent_attempt_more_peers(torrent_t *to);
+
+void torrent_io_do_requests(torrent_t *to);
+
+void torrent_receive_block(torrent_block_t *tb, const void *buf,
+                           int begin, int len, torrent_t *to);
+
+/**
+ * Peer functions
+ */
+
+void peer_add(torrent_t *to, const net_addr_t *na);
+
+void peer_connect(peer_t *p);
+
+const char *peer_state_txt(unsigned int state);
+
+void peer_cancel_request(torrent_request_t *tr);
+
+void peer_send_request(peer_t *p, const torrent_block_t *tb);
+
+void peer_send_have(peer_t *p, uint32_t piece);
+
+void peer_choke(peer_t *p, int choke);
+
+void peer_update_interest(torrent_t *to, peer_t *p);

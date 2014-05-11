@@ -27,10 +27,31 @@
 
 #include "bittorrent.h"
 
+static int tracker_debug = 1;
+
 static int txid_gen;
 static struct tracker_list trackers;
 static asyncio_fd_t *tracker_udp_fd;
 
+
+static void
+tracker_trace(const tracker_t *t, const char *msg, ...)
+ __attribute__((format(printf, 2, 3)));
+
+static void
+tracker_trace(const tracker_t *t, const char *msg, ...)
+{
+  if(!tracker_debug)
+    return;
+
+  va_list ap;
+  char buf[256];
+  va_start(ap, msg);
+  vsnprintf(buf, sizeof(buf), msg, ap);
+  va_end(ap);
+
+  TRACE(TRACE_DEBUG, "TRACKER", "%s: %s", t->t_url, buf);
+}
 
 
 
@@ -41,6 +62,7 @@ static void
 tracker_send_connect(tracker_t *t)
 {
   static uint32_t idgen;
+
 
   idgen++;
   idgen ^= (showtime_get_ts() & 0xfffff000);
@@ -54,9 +76,13 @@ tracker_send_connect(tracker_t *t)
 
   asyncio_udp_send(tracker_udp_fd, hello, 16, &t->t_addr);
 
-  int timeout = 15 * (1 << t->t_conn_attempt);
+
+  int timeout = 15 * (1 << t->tr_conn_attempt);
   asyncio_timer_arm(&t->t_timer, showtime_get_ts() + timeout * 1000000LL);
-  t->t_conn_attempt++;
+  t->tr_conn_attempt++;
+  tracker_trace(t,
+                "Sending connect to %s (attempt:%d txid:0x%08x timeout: %ds)",
+                t->t_url, t->tr_conn_attempt, t->tr_conn_txid, timeout);
 }
 
 
@@ -74,19 +100,19 @@ tracker_got_dns(void *opaque, int status, const void *data)
   case ASYNCIO_DNS_STATUS_COMPLETED:
     t->t_addr = *(const net_addr_t *)data;
     t->t_addr.na_port = t->t_port;
+    tracker_trace(t, "DNS resolved to %s", net_addr_str(&t->t_addr));
     tracker_send_connect(t);
     break;
 
   case ASYNCIO_DNS_STATUS_FAILED:
-    TRACE(TRACE_DEBUG, "BT", "Unable to resolve %s -- %s",
-	  t->t_url, data);
+    tracker_trace(t, "Unable to resolve DNS: %s", (const char *)data);
     t->t_state = TRACKER_STATE_ERROR;
     break;
 
   default:
     abort();
   }
-  
+
   hts_mutex_unlock(&bittorrent_mutex);
 }
 
@@ -129,7 +155,6 @@ tracker_create(const char *url)
   int port = -1;
   int proto;
 
-  TRACE(TRACE_DEBUG, "BT", "Adding new tracker %s", url);
   url_split(protostr, sizeof(protostr), NULL, 0,
 	    hostname, sizeof(hostname),
 	    &port, NULL, 0, url);
@@ -137,7 +162,7 @@ tracker_create(const char *url)
   if(!strcmp(protostr, "udp")) {
     proto = TRACKER_PROTO_UDP;
     if(port == -1)
-      port = 80;
+      port = 6969;
   } else {
     return NULL;
   }
@@ -149,6 +174,7 @@ tracker_create(const char *url)
   t->t_proto = proto;
   LIST_INSERT_HEAD(&trackers, t, t_link);
   asyncio_dns_lookup_host(hostname, tracker_got_dns, t);
+  tracker_trace(t, "New tracker added");
   return t;
 }
 
@@ -159,18 +185,26 @@ tracker_create(const char *url)
  *
  */
 static void
-torrent_tracker_announce(torrent_tracker_t *tt, int event)
+torrent_tracker_announce(torrent_tracker_t *tt)
 {
   uint8_t out[98];
 
   tracker_t *tr = tt->tt_tracker;
   const torrent_t *to = tt->tt_torrent;
 
+  const int event = 2; // downloading
+
+  tt->tt_txid = ++txid_gen;
+
+  tracker_trace(tr, "Sending annouce for \"%s\" event:%d txid:0x%x",
+                to->to_title,
+                event, tt->tt_txid);
+
   wr64_be(out + 0, tr->tr_conn_id);
   wr32_be(out + 8, 1); // Announce
   wr32_be(out + 12, tt->tt_txid);
   memcpy(out + 16, to->to_info_hash, 20);
-  memcpy(out + 36, btc.btc_peer_id, 20);
+  memcpy(out + 36, btg.btg_peer_id, 20);
 
   wr64_be(out + 56, to->to_downloaded_bytes);
   wr64_be(out + 64, to->to_remaining_bytes);
@@ -187,7 +221,7 @@ static void
 torrent_tracker_periodic(void *aux)
 {
   torrent_tracker_t *tt = aux;
-  torrent_tracker_announce(tt, 0);
+  torrent_tracker_announce(tt);
   asyncio_timer_arm(&tt->tt_timer, async_now + tt->tt_interval * 1000000LL);
 }
 
@@ -204,7 +238,6 @@ tracker_add_torrent(tracker_t *tr, torrent_t *to)
   tt->tt_torrent = to;
   LIST_INSERT_HEAD(&to->to_trackers, tt, tt_torrent_link);
   LIST_INSERT_HEAD(&tr->t_torrents, tt, tt_tracker_link);
-  tt->tt_txid = ++txid_gen;
   asyncio_timer_init(&tt->tt_timer, torrent_tracker_periodic, tt);
 }
 
@@ -218,7 +251,7 @@ tracker_announce_all(tracker_t *tr)
   torrent_tracker_t *tt;
 
   LIST_FOREACH(tt, &tr->t_torrents, tt_tracker_link)
-    torrent_tracker_announce(tt, 0);
+    torrent_tracker_announce(tt);
 }
 
 
@@ -226,12 +259,12 @@ tracker_announce_all(tracker_t *tr)
  *
  */
 void
-torrent_announce_all(torrent_t *to, int event)
+torrent_announce_all(torrent_t *to)
 {
   torrent_tracker_t *tt;
 
   LIST_FOREACH(tt, &to->to_trackers, tt_torrent_link)
-    torrent_tracker_announce(tt, event);
+    torrent_tracker_announce(tt);
 }
 
 
@@ -248,9 +281,10 @@ tracker_udp_handle_connect_reply(tracker_t *tr, const uint8_t *data, int size)
 
   if(tr->tr_conn_txid != txid)
     return;
-    
+
+  tr->tr_conn_attempt = 0;
   tr->tr_conn_id = rd64_be(data + 8);
-  TRACE(TRACE_DEBUG, "BT", "Connected to tracker %s", tr->t_url);
+  tracker_trace(tr, "Connected to tracker");
   asyncio_timer_disarm(&tr->t_timer);
   tr->t_state = TRACKER_STATE_CONNECTED;
   tracker_announce_all(tr);
@@ -265,7 +299,7 @@ tracker_udp_handle_announce_reply(tracker_t *tr, const uint8_t *data, int size)
   if(size < 20)
     return;
 
-  uint32_t txid     = rd32_be(data + 4);
+  uint32_t txid = rd32_be(data + 4);
 
   torrent_tracker_t *tt;
   LIST_FOREACH(tt, &tr->t_torrents, tt_tracker_link)
@@ -273,13 +307,22 @@ tracker_udp_handle_announce_reply(tracker_t *tr, const uint8_t *data, int size)
       break;
 
   if(tt == NULL) {
-    TRACE(TRACE_DEBUG, "BT", "Got announce reply for unknown torrent");
+    tracker_trace(tr, "Got announce reply for unknown torrent, ignoring");
     return;
   }
 
   tt->tt_interval = rd32_be(data + 8);
   tt->tt_leechers = rd32_be(data + 12);
   tt->tt_seeders  = rd32_be(data + 16);
+
+  torrent_t *to = tt->tt_torrent;
+
+  tracker_trace(tr, "Got announce reply for \"%s\" (leechers:%d seeders:%d), "
+                "refresh in %d seconds",
+                to->to_title,
+                tt->tt_leechers,
+                tt->tt_seeders,
+                tt->tt_interval);
 
   size -= 20;
   data += 20;
@@ -291,11 +334,43 @@ tracker_udp_handle_announce_reply(tracker_t *tr, const uint8_t *data, int size)
     memcpy(na.na_addr, data, 4);
     na.na_port = rd16_be(data + 4);
     if(na.na_port > 0)
-      torrent_add_peer(tt->tt_torrent, &na);
+      peer_add(to, &na);
     data += 6;
     size -= 6;
   }
   asyncio_timer_arm(&tt->tt_timer, async_now + tt->tt_interval * 1000000LL);
+}
+
+
+/**
+ * Error, we need to reconnect
+ */
+static void
+tracker_udp_handle_error(tracker_t *tr, const uint8_t *data, int size)
+{
+  if(size < 8)
+    return;
+
+  uint32_t txid = rd32_be(data + 4);
+
+  torrent_tracker_t *tt;
+  LIST_FOREACH(tt, &tr->t_torrents, tt_tracker_link)
+    if(tt->tt_txid == txid)
+      break;
+
+  if(tt == NULL)
+    return; // Error does not respond to our request
+
+  const torrent_t *to = tt->tt_torrent;
+  size -= 8;
+  data += 8;
+  rstr_t *errmsg = rstr_allocl((const char *)data, size);
+  tracker_trace(tr, "Got error for \"%s\" (%s) reconnecting",
+                to->to_title,
+                rstr_get(errmsg));
+  rstr_release(errmsg);
+
+  tracker_send_connect(tr);
 }
 
 
@@ -314,8 +389,7 @@ tracker_udp_handle_input(const uint8_t *data, int size,
       break;
   if(tr == NULL)
     return;
-
-  TRACE(TRACE_DEBUG, "BT", "Got packet from %s", tr->t_url);
+  tracker_trace(tr, "Got packet (command 0x%x)", cmd);
 
   switch(cmd) {
   case 0:
@@ -326,6 +400,9 @@ tracker_udp_handle_input(const uint8_t *data, int size,
     tracker_udp_handle_announce_reply(tr, data, size);
     break;
 
+  case 3:
+    tracker_udp_handle_error(tr, data, size);
+    break;
   }
 }
 
@@ -354,7 +431,7 @@ trackers_init(void)
   uint32_t x = showtime_get_ts();
   for(int i = 0; i < 20; i++) {
     x = x * 1664525 + 1013904223;
-    btc.btc_peer_id[i] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_."[x & 0x3f];
+    btg.btg_peer_id[i] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_."[x & 0x3f];
   }
 
   tracker_udp_fd = asyncio_udp_bind("bittorrent udp tracker",
