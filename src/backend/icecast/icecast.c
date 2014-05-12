@@ -221,6 +221,10 @@ open_stream(icecast_play_context_t *ipc)
     fh = fa_open_ex(ipc->ipc_url, errbuf, sizeof(errbuf), flags, &foe);
 
     if(fh == NULL) {
+
+      if(cancellable_is_cancelled(&ipc->ipc_cancellable))
+        return -1;
+
       TRACE(TRACE_ERROR, "Radio", "Unable to open %s -- %s",
             ipc->ipc_url, errbuf);
       return -1;
@@ -359,8 +363,12 @@ open_stream(icecast_play_context_t *ipc)
 
   if((fctx = fa_libav_open_format(avio, url, errbuf, sizeof(errbuf), ct,
                                   4096, 0, -1)) == NULL) {
-    TRACE(TRACE_ERROR, "Radio", "Unable to open %s -- %s",
-          ipc->ipc_url, errbuf);
+
+    if(!cancellable_is_cancelled(&ipc->ipc_cancellable)) {
+      TRACE(TRACE_ERROR, "Radio", "Unable to open %s -- %s",
+            ipc->ipc_url, errbuf);
+    }
+
     fa_libav_close(avio);
     return -1;
   }
