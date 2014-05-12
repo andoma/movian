@@ -108,6 +108,8 @@ static const struct {
   { "audio/x-mpeg", "mp3" },
   { "audio/mpeg", "mp3" },
   { "application/ogg", "ogg" },
+  { "audio/aac", "aac" },
+  { "audio/aacp", "aac" },
 };
 
 
