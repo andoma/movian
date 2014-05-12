@@ -22,8 +22,41 @@ usage_init(void)
 {
   hts_mutex_init(&usage_mutex);
   usage_time_base = showtime_get_ts() / 1000000LL;
-  usage_counters  = htsmsg_store_load("usagecounters")  ?: htsmsg_create_map();
-  plugin_counters = htsmsg_store_load("plugincounters") ?: htsmsg_create_map();
+
+  usage_counters  = htsmsg_create_map();
+  plugin_counters = htsmsg_create_map();
+}
+
+
+/**
+ *
+ */
+static htsmsg_t *
+make_usage_report(void)
+{
+  extern const char *htsversion_full;
+
+  htsmsg_t *out = htsmsg_create_map();
+
+  htsmsg_add_str(out, "deviceid", gconf.device_id);
+  htsmsg_add_str(out, "version", htsversion_full);
+  htsmsg_add_str(out, "arch", showtime_get_system_type());
+  htsmsg_add_u32(out, "verint", showtime_get_version_int());
+  htsmsg_add_u32(out, "generated", time(NULL));
+
+  time_t now = showtime_get_ts() / 1000000LL;
+
+  int runtime = now - usage_time_base;
+  htsmsg_s32_inc(usage_counters, "runtime", runtime);
+  usage_time_base = now;
+
+  htsmsg_add_msg(out, "counters", usage_counters);
+  usage_counters = htsmsg_create_map();
+
+  htsmsg_add_msg(out, "plugincounters", plugin_counters);
+  plugin_counters = htsmsg_create_map();
+
+  return out;
 }
 
 
@@ -33,14 +66,19 @@ usage_init(void)
 void
 usage_fini(void)
 {
+  if(gconf.device_id[0] == 0)
+    return;
+
   hts_mutex_lock(&usage_mutex);
 
   int runtime = showtime_get_ts() / 1000000LL - usage_time_base;
   htsmsg_s32_inc(usage_counters, "runtime", runtime);
 
-  htsmsg_store_save(usage_counters, "usagecounters");
-  htsmsg_store_save(plugin_counters, "plugincounters");
+  htsmsg_t *r = make_usage_report();
+
   hts_mutex_unlock(&usage_mutex);
+
+  htsmsg_store_save(r, "usage");
 }
 
 
@@ -70,42 +108,36 @@ send_report(void *aux)
 }
 
 
+
 /**
  *
  */
 void
-usage_report(void)
+usage_report_send(int stored)
 {
-  extern const char *htsversion_full;
-
   if(gconf.device_id[0] == 0)
     return;
 
-  htsmsg_t *out = htsmsg_create_map();
+  htsmsg_t *m;
+  if(stored) {
+    m = htsmsg_store_load("usage");
+    if(m == NULL)
+      return;
 
-  htsmsg_add_str(out, "deviceid", gconf.device_id);
-  htsmsg_add_str(out, "version", htsversion_full);
-  htsmsg_add_str(out, "arch", showtime_get_system_type());
-  htsmsg_add_u32(out, "verint", showtime_get_version_int());
+    htsmsg_store_remove("usage");
 
-  hts_mutex_lock(&usage_mutex);
+    // Legacy cleanup, remove some day
+    htsmsg_store_remove("usagecounters");
+    htsmsg_store_remove("plugincounters");
 
-  time_t now = showtime_get_ts() / 1000000LL;
+  } else {
 
-  int runtime = now - usage_time_base;
-  htsmsg_s32_inc(usage_counters, "runtime", runtime);
-  usage_time_base = now;
+    hts_mutex_lock(&usage_mutex);
+    m = make_usage_report();
+    hts_mutex_unlock(&usage_mutex);
+  }
 
-  htsmsg_add_msg(out, "counters", usage_counters);
-  usage_counters = htsmsg_create_map();
-  htsmsg_store_remove("usagecounters");
-
-  htsmsg_add_msg(out, "plugincounters", plugin_counters);
-  plugin_counters = htsmsg_create_map();
-  htsmsg_store_remove("plugincounters");
-
-  hts_mutex_unlock(&usage_mutex);
-  hts_thread_create_detached("report", send_report, out, THREAD_PRIO_BGTASK);
+  hts_thread_create_detached("report", send_report, m, THREAD_PRIO_BGTASK);
 }
 
 

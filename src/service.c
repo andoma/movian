@@ -341,7 +341,6 @@ service_create_managed(const char *id0,
   service_t *s = service_create0(id, NULL, NULL, url, NULL,
 				 icon, probe, enabled, origin);
 
-  s->s_url = strdup(url);
   s->s_title = strdup(title);
   
   char tmp[100];

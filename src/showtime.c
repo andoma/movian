@@ -200,7 +200,7 @@ swthread(void *aux)
           "Failed to check for app upgrade, retrying in %d seconds", i + 1);
   }
 
-  usage_report();
+  usage_report_send(1);
 
   hts_mutex_lock(&gconf.state_mutex);
   gconf.swrefresh = 0;
@@ -221,7 +221,7 @@ swthread(void *aux)
     if(!timeout)
       plugins_upgrade_check();
     upgrade_refresh();
-    usage_report();
+    usage_report_send(0);
     hts_mutex_lock(&gconf.state_mutex);
   }
   return NULL;

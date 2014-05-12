@@ -252,6 +252,7 @@ image_decode_coded(image_t *im, const image_meta_t *meta,
      * of buf, so we need to forget about it
      */
     icc->icc_buf = NULL;
+    image_release(im);
     return r;
   }
 
