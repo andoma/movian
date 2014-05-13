@@ -134,7 +134,7 @@ fa_libav_open_format(AVIOContext *avio, const char *url,
     int i;
 
     for(i = 0; i < sizeof(mimetype2fmt) / sizeof(mimetype2fmt[0]); i++) {
-      if(!strcmp(mimetype, mimetype2fmt[i].mimetype)) {
+      if(!strcasecmp(mimetype, mimetype2fmt[i].mimetype)) {
 	fmt = av_find_input_format(mimetype2fmt[i].fmt);
 	break;
       }
