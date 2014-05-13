@@ -1,0 +1,1 @@
+linux: Improve VDPAU decoder. Can now use VDPAU even for adaptive bitstreams where resolution changes mid-stream
