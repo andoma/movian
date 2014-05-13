@@ -131,10 +131,23 @@ http_response_toString(JSContext *cx, JSObject *obj, uintN argc,
               char *e = strchr(charset, '"');
               if(e != NULL) {
                 *e = 0;
-                cs = charset_get(charset);
+
                 TRACE(TRACE_DEBUG, "JS",
                       "%s: Found meta tag claiming charset %s",
                       jhr->url, charset);
+
+                if(!strcasecmp(charset, "utf-8")) {
+                  tmpbuf = utf8_cleanup(r);
+                  if(tmpbuf != NULL) {
+                    TRACE(TRACE_DEBUG, "JS", "%s: Repairing broken UTF-8",
+                          jhr->url, charset);
+                    r = tmpbuf;
+                  }
+                  goto done;
+                } else {
+
+                  cs = charset_get(charset);
+                }
               }
             }
           }
@@ -154,7 +167,7 @@ http_response_toString(JSContext *cx, JSObject *obj, uintN argc,
     buf = utf8_from_bytes(buf_cstr(jhr->buf), jhr->buf->b_size, cs, NULL, 0);
     r = buf_cstr(buf);
   }
-
+ done:
   if(isxml && 
      (r2 = strstr(r, "<?xml ")) != NULL &&
      (r2 = strstr(r2, "?>")) != NULL) {
