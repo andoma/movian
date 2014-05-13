@@ -169,6 +169,8 @@ typedef struct hls_demuxer {
 
   int64_t hd_delta_ts;
 
+  media_codec_t *hd_audio_codec;
+
 } hls_demuxer_t;
 
 /**
@@ -182,7 +184,6 @@ typedef struct hls {
   media_pipe_t *h_mp;
 
   media_codec_t *h_codec_h264;
-  media_codec_t *h_codec_aac;
 
   AVInputFormat *h_fmt;
 
@@ -608,7 +609,7 @@ typedef enum {
  *
  */
 static segment_open_result_t
-segment_open(hls_t *h, hls_segment_t *hs, int fast_fail)
+segment_open(hls_t *h, hls_demuxer_t *hd, hls_segment_t *hs, int fast_fail)
 {
   int err, j;
   fa_handle_t *fh;
@@ -696,10 +697,23 @@ segment_open(hls_t *h, hls_segment_t *hs, int fast_fail)
       break;
 
     case AVMEDIA_TYPE_AUDIO:
-      if(hs->hs_astream == -1 && ctx->codec_id == AV_CODEC_ID_AAC)
-	hs->hs_astream = j;
+      if(hs->hs_astream != -1)
+        break;
+
+      hs->hs_astream = j;
+
+      if(hd->hd_audio_codec != NULL &&
+         hd->hd_audio_codec->codec_id == ctx->codec_id)
+        break;
+
+
+      if(hd->hd_audio_codec != NULL)
+        media_codec_deref(hd->hd_audio_codec);
+
+      hd->hd_audio_codec = media_codec_create(ctx->codec_id,
+                                              0, NULL, NULL, NULL, h->h_mp);
       break;
-	
+
     default:
       break;
     }
@@ -821,7 +835,7 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
     // If we're not playing from the seek segment (ie. our "fallback" segment)
     // we ask for fast fail so we can retry with another segment
 
-    segment_open_result_t rcode = segment_open(h, hs, hv != hd->hd_seek);
+    segment_open_result_t rcode = segment_open(h, hd, hs, hv != hd->hd_seek);
 
     switch(rcode) {
     case SEGMENT_OPEN_OK:
@@ -1129,7 +1143,7 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
         mb->mb_data_type = MB_AUDIO;
         mq = &mp->mp_audio;
 
-        mb->mb_cw = media_codec_ref(h->h_codec_aac);
+        mb->mb_cw = media_codec_ref(hd->hd_audio_codec);
         mb->mb_stream = 1;
 
       } else {
@@ -1409,6 +1423,17 @@ hls_demuxer_init(hls_demuxer_t *hd)
 /**
  *
  */
+static void
+hls_demuxer_close(hls_demuxer_t *hd)
+{
+  variants_destroy(&hd->hd_variants);
+  if(hd->hd_audio_codec != NULL)
+    media_codec_deref(hd->hd_audio_codec);
+}
+
+/**
+ *
+ */
 event_t *
 hls_play_extm3u(char *buf, const char *url, media_pipe_t *mp,
 		char *errbuf, size_t errlen,
@@ -1431,7 +1456,6 @@ hls_play_extm3u(char *buf, const char *url, media_pipe_t *mp,
   h.h_baseurl = url;
   h.h_fmt = av_find_input_format("mpegts");
   h.h_codec_h264 = media_codec_create(AV_CODEC_ID_H264, 0, NULL, NULL, NULL, mp);
-  h.h_codec_aac  = media_codec_create(AV_CODEC_ID_AAC,  0, NULL, NULL, NULL, mp);
   h.h_debug = gconf.enable_hls_debug;
 
   hls_variant_t *hv = NULL;
@@ -1466,10 +1490,9 @@ hls_play_extm3u(char *buf, const char *url, media_pipe_t *mp,
 
   event_t *e = hls_play(&h, mp, errbuf, errlen, va0);
 
-  variants_destroy(&h.h_primary.hd_variants);
+  hls_demuxer_close(&h.h_primary);
 
   media_codec_deref(h.h_codec_h264);
-  media_codec_deref(h.h_codec_aac);
 
   HLS_TRACE(&h, "HLS player done");
 
