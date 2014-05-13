@@ -48,6 +48,11 @@ typedef struct pending_store {
   char *ps_path;
 } pending_store_t;
 
+#define SETTINGS_TRACE(fmt...) do { \
+  if(gconf.enable_settings_debug) \
+    TRACE(TRACE_DEBUG, "Settings", fmt); \
+} while(0)
+
 
 static int rename_cant_overwrite;
 static struct pending_store_list pending_stores;
@@ -95,14 +100,14 @@ pending_store_write(pending_store_t *ps)
       fullpath[x] = 0;
 
       if(stat(fullpath, &st)) {
-        TRACE(TRACE_DEBUG, "Settings", "Dir %s does not exist", fullpath);
+        SETTINGS_TRACE("Dir %s does not exist", fullpath);
 
         if(mkdir(fullpath, 0700)) {
           TRACE(TRACE_ERROR, "Settings", "Unable to create dir \"%s\": %s",
                 fullpath, strerror(errno));
           return;
         } else {
-          TRACE(TRACE_DEBUG, "Settings", "Created dir %s", fullpath);
+          SETTINGS_TRACE("Created dir %s", fullpath);
         }
       }
       fullpath[x] = '/';
@@ -148,7 +153,7 @@ pending_store_write(pending_store_t *ps)
   if(!rename_cant_overwrite && rename(fullpath, fullpath2)) {
 
     if(errno == EEXIST) {
-      TRACE(TRACE_DEBUG, "Settings", 
+      SETTINGS_TRACE(
 	    "Seems like rename() can not overwrite, retrying");
       rename_cant_overwrite = 1;
       goto retry;
@@ -157,7 +162,7 @@ pending_store_write(pending_store_t *ps)
     TRACE(TRACE_ERROR, "Settings", "Failed to rename \"%s\" -> \"%s\" - %s",
 	  fullpath, fullpath2, strerror(errno));
   } else {
-    TRACE(TRACE_DEBUG, "Settings", "Wrote %d bytes to \"%s\"",
+    SETTINGS_TRACE("Wrote %d bytes to \"%s\"",
 	  bytes, fullpath2);
   }
 }
@@ -310,7 +315,7 @@ htsmsg_store_load_one(const char *filename)
       return htsmsg_copy(ps->ps_msg);
 
   if(stat(filename, &st) < 0) {
-    TRACE(TRACE_DEBUG, "Settings", 
+    SETTINGS_TRACE(
 	  "Trying to load %s -- %s", filename, strerror(errno));
     return NULL;
   }
@@ -331,7 +336,7 @@ htsmsg_store_load_one(const char *filename)
   else
     r = NULL;
 
-  TRACE(TRACE_DEBUG, "Settings", 
+  SETTINGS_TRACE(
 	"Read %s -- %d bytes. File %s", filename, n, r ? "OK" : "corrupted");
 
   free(mem);

@@ -104,7 +104,8 @@ thread_trampoline(void *aux)
 #if ENABLE_EMU_THREAD_SPECIFICS
   hts_thread_exit_specific();
 #endif
-  TRACE(TRACE_DEBUG, "thread", "Thread %s exited", t->title);
+  if(gconf.enable_thread_debug)
+    TRACE(TRACE_DEBUG, "thread", "Thread %s exited", t->title);
 
   (*JVM)->DetachCurrentThread(JVM);
 
@@ -129,7 +130,8 @@ hts_thread_create_detached(const char *title, void *(*func)(void *), void *aux,
   pthread_create(&id, &attr, thread_trampoline,
 		 make_trampoline(title, func, aux, prio));
   pthread_attr_destroy(&attr);
-  TRACE(TRACE_DEBUG, "thread", "Created detached thread: %s", title);
+  if(gconf.enable_thread_debug)
+    TRACE(TRACE_DEBUG, "thread", "Created detached thread: %s", title);
 
 }
 
@@ -144,5 +146,6 @@ hts_thread_create_joinable(const char *title, hts_thread_t *p,
 		 make_trampoline(title, func, aux, prio));
   pthread_attr_destroy(&attr);
 
-  TRACE(TRACE_DEBUG, "thread", "Created thread: %s", title);
+  if(gconf.enable_thread_debug)
+    TRACE(TRACE_DEBUG, "thread", "Created thread: %s", title);
 }

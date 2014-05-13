@@ -238,8 +238,9 @@ thread_trampoline(void *aux)
 
   void *r = ti->fn(ti->aux);
 
-  TRACE(TRACE_DEBUG, "THREADS", "Thread 0x%x (%s) exiting",
-	my_thread_id, ti->name);
+  if(gconf.enable_thread_debug)
+    TRACE(TRACE_DEBUG, "THREADS", "Thread 0x%x (%s) exiting",
+          my_thread_id, ti->name);
 
   hts_mutex_lock(&thread_info_mutex);
   LIST_REMOVE(ti, link);
@@ -276,7 +277,8 @@ start_thread(const char *name, hts_thread_t *p,
     exit(0);
   }
   
-  TRACE(TRACE_DEBUG, "THREADS", "Created thread %s (0x%x)", name, *p);
+  if(gconf.enable_thread_debug)
+    TRACE(TRACE_DEBUG, "THREADS", "Created thread %s (0x%x)", name, *p);
 
 }
 
@@ -303,9 +305,11 @@ hts_thread_create_joinable(const char *name, hts_thread_t *p,
 void
 hts_thread_join(hts_thread_t *id)
 {
-  TRACE(TRACE_DEBUG, "THREADS", "Waiting for thread 0x%x", *id);
+  if(gconf.enable_thread_debug)
+    TRACE(TRACE_DEBUG, "THREADS", "Waiting for thread 0x%x", *id);
   sys_ppu_thread_join(*id, NULL);
-  TRACE(TRACE_DEBUG, "THREADS", "Thread 0x%x joined", *id);
+  if(gconf.enable_thread_debug)
+    TRACE(TRACE_DEBUG, "THREADS", "Thread 0x%x joined", *id);
 }
 
 
