@@ -138,8 +138,8 @@ fa_libav_open_format(AVIOContext *avio, const char *url,
       }
     }
     if(fmt == NULL)
-      TRACE(TRACE_DEBUG, "probe", "Don't know mimetype %s, probing instead",
-	    mimetype);
+      TRACE(TRACE_DEBUG, "probe", "%s: Don't know mimetype %s, probing instead",
+	    url, mimetype);
   }
 
   if(fmt == NULL) {
@@ -151,6 +151,7 @@ fa_libav_open_format(AVIOContext *avio, const char *url,
       snprintf(errbuf, errlen, "Unknown file format");
       return NULL;
     }
+    TRACE(TRACE_DEBUG, "probe", "%s: Probed as %s", url, fmt->name);
   }
 
   fctx = avformat_alloc_context();
