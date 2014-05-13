@@ -44,8 +44,7 @@ id: Go to Home screen
 msg: Ir a Pantalla Principal
 
 id: Hide system info
-# Missing translation
-msg: 
+msg: Ocultar información del sistema
 
 id: Navigation
 msg: Navegación
@@ -63,8 +62,7 @@ id: Reload current page
 msg: Recargar Página actual
 
 id: Show system info
-# Missing translation
-msg: 
+msg: Ver información del sistema
 
 id: Suspend
 msg: Suspender
@@ -172,15 +170,13 @@ id: Cancel
 msg: Cancelar
 
 id: Clear
-# Missing translation
-msg: 
+msg: Borrar
 
 id: Default
 msg: Por defecto
 
 id: Keyboard layout:
-# Missing translation
-msg: 
+msg: Teclado:
 
 id: OK
 msg: OK
@@ -352,7 +348,7 @@ id: Available version:
 msg: Versión disponible:
 
 id: Changelog for %s releases
-msg: Registro de cambios para las versiones %s
+msg: Registro de cambios para las versiones del repositorio '%s'
 
 id: Check for updates now
 msg: Buscar actualizaciones ahora
@@ -418,8 +414,7 @@ msg: Estatus de reproducción
 # ./glwskins/default/pages/wideinfo/video.view
 #
 id: Seen:
-# Missing translation
-msg: 
+msg: Visto:
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -527,16 +522,13 @@ msg: Sistema con baja memoria (%d kB RAM disponible)
 # ./src/arch/rpi/rpi_audio.c
 #
 id: Analog
-# Missing translation
-msg: 
+msg: Análogo
 
 id: Audio output port
-# Missing translation
-msg: 
+msg: Puerto de salida de audio
 
 id: HDMI
-# Missing translation
-msg: 
+msg: HDMI
 
 #
 # ./src/arch/rpi/rpi_cec.c
@@ -554,81 +546,64 @@ id: Audio delay
 msg: Retraso de audio
 
 id: Audio gain adjustment during video playback
-# Missing translation
-msg: 
+msg: Incremento en el volumen durante la reproducción del video
 
 id: Audio settings during video playback
-# Missing translation
-msg: 
+msg: Ajustes del audio durante la reproducción del video
 
 id: Setup audio output
-# Missing translation
-msg: 
+msg: Ajustar la salida de audio
 
 #
 # ./src/audio2/audio_test.c
 #
 id: 440Hz sinewave -12dB
-# Missing translation
-msg: 
+msg: Sonido de onda sinusoidal de 440Hz -12dB
 
 id: Audio test
-# Missing translation
-msg: 
+msg: Probar audio
 
 id: Center
-msg: Centrado
+msg: Centro
 
 id: Front Left
-# Missing translation
-msg: 
+msg: Frontal Izquierdo
 
 id: Front Right
-# Missing translation
-msg: 
+msg: Frontal Derecho
 
 id: LFE
-# Missing translation
-msg: 
+msg: Efectos de baja frecuencia (LFE)
 
 id: Pink noise
-# Missing translation
-msg: 
+msg: Ruido rosa
 
 id: Play test signal
-# Missing translation
-msg: 
+msg: Reproducir señal de prueba
 
 id: Rear Left
-# Missing translation
-msg: 
+msg: Trasero Izquierdo
 
 id: Rear Right
-# Missing translation
-msg: 
+msg: Trasero Derecho
 
 id: Speaker position
-# Missing translation
-msg: 
+msg: Posición de altavoces
 
 id: Surround Left
-# Missing translation
-msg: 
+msg: Sonido envolvente Izquierdo
 
 id: Surround Right
-# Missing translation
-msg: 
+msg: Sonido envolvente Derecho
 
 id: Test signal type
-# Missing translation
-msg: 
+msg: Tipo de señal de prueba
 
 #
 # ./src/audio2/pulseaudio.c
 #
 id: Unable to initialize audio system %s -- %s
-# Missing translation
-msg: 
+msg: No se pudo inicializar el sistema de audio %s -- %s
 
 #
 # ./src/backend/dvd/cdda.c
@@ -829,8 +804,7 @@ id: Show filename extensions
 msg: Mostrar extensiones de archivos 
 
 id: Store per-file settings in filesystem
-# Missing translation
-msg: 
+msg: Guardar ajustes de cada archivo en el sistema
 
 id: %d archive parts
 msg[0]: %d parte de archivo
@@ -920,16 +894,13 @@ id: Go to standby after video ends
 msg: Apagar equipo al finalizar el video
 
 id: Reset defaults for folder '%s'
-# Missing translation
-msg: 
+msg: Restaurar ajustes predeterminados para la carpeta '%s'
 
 id: Save as defaults for folder '%s'
-# Missing translation
-msg: 
+msg: Guardar como ajustes predeterminados para la carpeta '%s'
 
 id: Save as global default
-# Missing translation
-msg: 
+msg: Guardar como ajustes predeterminados globales
 
 id: Stretch video to fullscreen
 msg: Estirar video a pantalla completa
@@ -950,8 +921,7 @@ id: Subtitle vertical displacement
 msg: Desplazamiento vertical del subtítulo
 
 id: Video frame interpolation
-# Missing translation
-msg: 
+msg: Interpolar fotogramas de video
 
 id: Video zoom
 msg: Zoom de Video
@@ -999,7 +969,7 @@ id: Metadata
 msg: Metadatos
 
 id: Metadata configuration and provider settings
-msg: configurar Metadatos y ajustes de proveedor
+msg: Configurar Metadatos y ajustes de proveedor
 
 id: Providers for Music
 msg: Proveedores para Música
@@ -1206,8 +1176,7 @@ id: Not upgradable
 msg: No actualizable
 
 id: On Screen Keyboards
-# Missing translation
-msg: 
+msg: Teclados de pantalla
 
 id: Online TV
 msg: TV en línea
@@ -1300,7 +1269,7 @@ id: Applications and installed plugins
 msg: Aplicaciones y plugins instalados
 
 id: Developer settings
-msg: Ajustes de desarrolladores
+msg: Ajustes para desarrolladores
 
 id: Discovered media sources
 msg: Medios Encontrados
@@ -1447,7 +1416,7 @@ id: Seek using L2 and R2 button
 msg: Buscar usando botones L2 y R2
 
 id: Yes with Select button
-msg: Sí con botón Select
+msg: Sí con botón SELECT
 
 #
 # ./src/ui/glw/glw_settings.c
@@ -1525,12 +1494,10 @@ msg: Servicio no encontrado
 # ./src/video/ps3_vdec.c
 #
 id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
-# Missing translation
-msg: 
+msg: Cell-h264: %d Ref-frames para contenido 1080 es incompatible con el decodificador PS3. Inactivando aceleración
 
 id: Cell-h264: Broken headers, Disabling acceleration
-# Missing translation
-msg: 
+msg: Cell-h264: Cabeceras dañadas. Inactivando aceleración
 
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
 msg: Cell-h264: Forzando nivel 4.2 para contenido en nivel %d.%d. Puede impedir reproducir el video.
