@@ -109,9 +109,16 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
   if(elements > 0)
     width += (elements - 1) * co->co_spacing;
 
-  co->weight_sum = weight;
-  co->width = width;
-  co->cflags = cflags;
+  if(co->weight_sum != weight ||
+     co->width      != width  ||
+     co->cflags     != cflags) {
+
+    co->weight_sum = weight;
+    co->width = width;
+    co->cflags = cflags;
+    glw_need_refresh(co->w.glw_root, 0);
+  }
+
 
   height += co->co_padding[3] + co->co_padding[1];
 
@@ -274,9 +281,15 @@ glw_container_y_constraints(glw_container_t *co, glw_t *skip)
   if(elements > 0)
     height += (elements - 1) * co->co_spacing;
 
-  co->height = height;
-  co->weight_sum = weight;
-  co->cflags = cflags;
+  if(co->height     != height ||
+     co->weight_sum != weight ||
+     co->cflags     != cflags) {
+
+    co->height     = height;
+    co->weight_sum = weight;
+    co->cflags     = cflags;
+    glw_need_refresh(co->w.glw_root, 0);
+  }
 
   if(weight)
     cflags &= ~GLW_CONSTRAINT_Y;

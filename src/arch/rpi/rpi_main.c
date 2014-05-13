@@ -551,18 +551,19 @@ ui_run(glw_root_t *gr, EGLDisplay dpy)
 
     glw_prepare_frame(gr, 0);
 
-    if(gr->gr_need_refresh) {
+    int refresh = gr->gr_need_refresh;
+    gr->gr_need_refresh = 0;
+    if(refresh) {
 
       glw_rctx_t rc;
 
       gr->gr_can_externalize = 1;
       gr->gr_externalize_cnt = 0;
 
-      gr->gr_need_refresh &= ~GLW_REFRESH_FLAG_LAYOUT;
       glw_rctx_init(&rc, gr->gr_width, gr->gr_height, 1);
       glw_layout0(gr->gr_universe, &rc);
 
-      if(gr->gr_need_refresh & GLW_REFRESH_FLAG_RENDER) {
+      if(refresh & GLW_REFRESH_FLAG_RENDER) {
 	glViewport(0, 0, gr->gr_width, gr->gr_height);
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 	glw_render0(gr->gr_universe, &rc);
@@ -572,10 +573,9 @@ ui_run(glw_root_t *gr, EGLDisplay dpy)
     }
 
     glw_unlock(gr);
-    if(gr->gr_need_refresh & GLW_REFRESH_FLAG_RENDER) {
+    if(refresh & GLW_REFRESH_FLAG_RENDER) {
       glw_post_scene(gr);
       eglSwapBuffers(dpy, surface);
-      gr->gr_need_refresh &= ~GLW_REFRESH_FLAG_RENDER;
     } else {
       usleep(16666);
     }
