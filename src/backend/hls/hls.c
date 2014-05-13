@@ -60,6 +60,10 @@
 
 
 
+#define MB_EOF ((void *)-1)
+#define MB_NYA ((void *)-2)
+
+
 TAILQ_HEAD(hls_variant_queue, hls_variant);
 TAILQ_HEAD(hls_segment_queue, hls_segment);
 
@@ -893,16 +897,25 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
  *
  */
 static void
-hls_seek(hls_t *h, int64_t pts, int64_t ts, int initial)
+hls_seek(hls_t *h, int64_t pts, int64_t ts, int initial, media_buf_t **mbp)
 {
   hls_demuxer_t *hd = &h->h_primary;
-  mp_flush(h->h_mp, 0);
+  media_pipe_t *mp = h->h_mp;
+  mp_flush(mp, 0);
 
-  h->h_mp->mp_video.mq_seektarget = pts;
-  h->h_mp->mp_audio.mq_seektarget = pts;
+  mp->mp_video.mq_seektarget = pts;
+  mp->mp_audio.mq_seektarget = pts;
   hd->hd_seek_to = ts;
   hd->hd_seek_initial = initial;
-  prop_set(h->h_mp->mp_prop_root, "seektime", PROP_SET_FLOAT, ts / 1000000.0);
+  prop_set(mp->mp_prop_root, "seektime", PROP_SET_FLOAT, ts / 1000000.0);
+
+  if(mbp != NULL) {
+    media_buf_t *mb = *mbp;
+    if(mb != NULL && mb != MB_EOF && mb != MB_NYA)
+      media_buf_free_unlocked(mp, mb);
+
+    *mbp = NULL;
+  }
 }
 
 
@@ -1045,10 +1058,6 @@ demuxer_select_variant(hls_t *h, hls_demuxer_t *hd)
 }
 
 
-#define MB_EOF ((void *)-1)
-#define MB_NYA ((void *)-2)
-
-
 
 /**
  *
@@ -1120,7 +1129,7 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
     int64_t start = playinfo_get_restartpos(canonical_url) * 1000;
     if(start) {
       mp->mp_seek_base = start;
-      hls_seek(h, start, start, 1);
+      hls_seek(h, start, start, 1, NULL);
     }
   }
 
@@ -1272,14 +1281,8 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 
     } else if(event_is_type(e, EVENT_SEEK)) {
 
-      if(mb != NULL && mb != MB_EOF && mb != MB_NYA)
-	media_buf_free_unlocked(mp, mb);
-
-      mb = NULL;
-
       event_ts_t *ets = (event_ts_t *)e;
-
-      hls_seek(h, ets->ts + hd->hd_delta_ts, ets->ts, 0);
+      hls_seek(h, ets->ts + hd->hd_delta_ts, ets->ts, 0, &mb);
 
     } else if(event_is_action(e, ACTION_STOP)) {
       mp_set_playstatus_stop(mp);
@@ -1287,6 +1290,14 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
     } else if(event_is_type(e, EVENT_SELECT_SUBTITLE_TRACK)) {
       event_select_track_t *est = (event_select_track_t *)e;
       select_subtitle_track(mp, est->id);
+
+    } else if(event_is_action(e, ACTION_SKIP_FORWARD)) {
+      break;
+    } else if(event_is_action(e, ACTION_SKIP_BACKWARD)) {
+
+      if(mp->mp_seek_base < MP_SKIP_LIMIT)
+	break;
+      hls_seek(h, hd->hd_delta_ts, 0, 0, &mb);
 
     } else if(event_is_type(e, EVENT_EXIT) ||
 	      event_is_type(e, EVENT_PLAY_URL)) {
