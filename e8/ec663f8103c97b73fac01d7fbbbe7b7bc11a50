@@ -1,0 +1,3 @@
+On Linux, RPI and Mac: Only redraw UI when needed.
+
+This reduces CPU and GPU usage a lot if the application is idle
