@@ -105,6 +105,7 @@ static const struct {
   { "video/vnd.dlna.mpeg-tts,", "mpegts" },
   { "video/avi", "avi" },
   { "video/nsv", "nsv" },
+  { "video/webm", "webm" },
   { "audio/x-mpeg", "mp3" },
   { "audio/mpeg", "mp3" },
   { "application/ogg", "ogg" },
