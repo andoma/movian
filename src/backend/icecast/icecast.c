@@ -400,6 +400,7 @@ open_stream(icecast_play_context_t *ipc)
 
   if(ipc->ipc_mc == NULL) {
     media_format_deref(ipc->ipc_mf);
+    ipc->ipc_mf = NULL;
     TRACE(TRACE_ERROR, "Radio", "Unable to open %s -- No audio stream", url);
     return -1;
   }
