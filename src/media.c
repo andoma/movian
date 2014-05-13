@@ -1034,7 +1034,6 @@ mp_direct_seek(media_pipe_t *mp, int64_t ts)
 
   ets = event_create(EVENT_SEEK, sizeof(event_ts_t));
   ets->ts = ts;
-  mp->mp_epoch++;
 
   e = &ets->h;
   TAILQ_INSERT_TAIL(&mp->mp_eq, e, e_link);
@@ -1513,7 +1512,6 @@ mp_seek_in_queues(media_pipe_t *mp, int64_t pos)
 	mb = TAILQ_NEXT(mb, mb_link);
 	vskip++;
       }
-      mb->mb_skip = 2;
       rval = 0;
 
       mp->mp_epoch++;
@@ -1549,6 +1547,8 @@ mp_flush_locked(media_pipe_t *mp)
 
   mq_flush_locked(mp, a, 0);
   mq_flush_locked(mp, v, 0);
+
+  mp->mp_epoch++;
 
   if(v->mq_stream >= 0) {
     mb = media_buf_alloc_locked(mp, 0);

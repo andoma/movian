@@ -1141,14 +1141,13 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
       mb->mb_pts = rescale(hs->hs_fctx, pkt.pts, si);
       mb->mb_dts = rescale(hs->hs_fctx, pkt.dts, si);
 
-      if(mq->mq_seektarget != AV_NOPTS_VALUE &&
-         mb->mb_data_type != MB_SUBTITLE) {
+      if(mq->mq_seektarget != AV_NOPTS_VALUE) {
         int64_t ts;
         ts = mb->mb_pts != AV_NOPTS_VALUE ? mb->mb_pts : mb->mb_dts;
+
         if(ts < mq->mq_seektarget) {
           mb->mb_skip = 1;
         } else {
-          mb->mb_skip = 2;
           mq->mq_seektarget = AV_NOPTS_VALUE;
         }
       }

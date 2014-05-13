@@ -187,7 +187,7 @@ typedef union media_buf_flags {
 
   struct {
     uint32_t aspect_override      : 2;
-    uint32_t skip                 : 2;
+    uint32_t skip                 : 1;
     uint32_t keyframe             : 1;
     uint32_t flush                : 1;
     uint32_t nopts                : 1;

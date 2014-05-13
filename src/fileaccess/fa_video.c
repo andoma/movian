@@ -332,7 +332,6 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 	if(ts < mq->mq_seektarget) {
 	  mb->mb_skip = 1;
 	} else {
-	  mb->mb_skip = 2;
 	  mq->mq_seektarget = AV_NOPTS_VALUE;
 	}
       }
