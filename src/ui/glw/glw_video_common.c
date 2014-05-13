@@ -967,8 +967,12 @@ glw_video_render(glw_t *w, const glw_rctx_t *rc)
     event_release(e);
   }
 
+  hts_mutex_lock(&gv->gv_surface_mutex);
+
   if(gv->gv_engine != NULL)
     gv->gv_engine->gve_render(gv, &rc1);
+
+  hts_mutex_unlock(&gv->gv_surface_mutex);
 
   glw_video_overlay_render(gv, rc, &rc0);
 }
