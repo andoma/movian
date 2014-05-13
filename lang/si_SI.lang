@@ -50,6 +50,10 @@ msg:
 id: Go to Home screen
 msg: Začetna stran
 
+id: Hide system info
+# Missing translation
+msg: 
+
 id: Navigation
 msg: Navigiranje
 
@@ -65,6 +69,10 @@ msg:
 
 id: Reload current page
 msg: Osveži trenutno stran
+
+id: Show system info
+# Missing translation
+msg: 
 
 id: Suspend
 # Missing translation
@@ -169,6 +177,27 @@ msg: Nastavitve Videa
 #
 id: System log
 msg: Sistemski dnevnik
+
+#
+# ./glwskins/default/osk.view
+#
+id: Cancel
+msg: Prekliči
+
+id: Clear
+# Missing translation
+msg: 
+
+id: Default
+# Missing translation
+msg: 
+
+id: Keyboard layout:
+# Missing translation
+msg: 
+
+id: OK
+msg: OK
 
 #
 # ./glwskins/default/pages/directory.view
@@ -418,6 +447,13 @@ id: Playback status
 msg: Status predvajanja
 
 #
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+# Missing translation
+msg: 
+
+#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -440,15 +476,6 @@ msg: Zapomni si
 
 id: Username
 msg: Uporabniško ime
-
-#
-# ./glwskins/default/popups/common.view
-#
-id: Cancel
-msg: Prekliči
-
-id: OK
-msg: OK
 
 #
 # ./glwskins/default/screensaver.view
@@ -545,6 +572,21 @@ id: System is low on memory (%d kB RAM available)
 msg: Pomnilnik je skoraj poln (%d kb RAM na voljo)
 
 #
+# ./src/arch/rpi/rpi_audio.c
+#
+id: Analog
+# Missing translation
+msg: 
+
+id: Audio output port
+# Missing translation
+msg: 
+
+id: HDMI
+# Missing translation
+msg: 
+
+#
 # ./src/arch/rpi/rpi_cec.c
 #
 id: Configure how Showtime communicates with your TV
@@ -552,6 +594,89 @@ id: Configure how Showtime communicates with your TV
 msg: 
 
 id: Consumer Electronics Control
+# Missing translation
+msg: 
+
+#
+# ./src/audio2/audio.c
+#
+id: Audio delay
+msg: Zamik zvoka
+
+id: Audio gain adjustment during video playback
+# Missing translation
+msg: 
+
+id: Audio settings during video playback
+# Missing translation
+msg: 
+
+id: Setup audio output
+# Missing translation
+msg: 
+
+#
+# ./src/audio2/audio_test.c
+#
+id: 440Hz sinewave -12dB
+# Missing translation
+msg: 
+
+id: Audio test
+# Missing translation
+msg: 
+
+id: Center
+msg: Sredina
+
+id: Front Left
+# Missing translation
+msg: 
+
+id: Front Right
+# Missing translation
+msg: 
+
+id: LFE
+# Missing translation
+msg: 
+
+id: Pink noise
+# Missing translation
+msg: 
+
+id: Play test signal
+# Missing translation
+msg: 
+
+id: Rear Left
+# Missing translation
+msg: 
+
+id: Rear Right
+# Missing translation
+msg: 
+
+id: Speaker position
+# Missing translation
+msg: 
+
+id: Surround Left
+# Missing translation
+msg: 
+
+id: Surround Right
+# Missing translation
+msg: 
+
+id: Test signal type
+# Missing translation
+msg: 
+
+#
+# ./src/audio2/pulseaudio.c
+#
+id: Unable to initialize audio system %s -- %s
 # Missing translation
 msg: 
 
@@ -766,6 +891,10 @@ id: Show filename extensions
 # Missing translation
 msg: 
 
+id: Store per-file settings in filesystem
+# Missing translation
+msg: 
+
 id: %d archive parts
 msg[0]: 
 msg[1]: 
@@ -849,14 +978,23 @@ msg: Shrani izbrisano geslo
 id: Align subtitles on video frame
 msg: Poravnava podnapisov z sliko
 
-id: Audio delay
-msg: Zamik zvoka
-
 id: Audio volume
 # Missing translation
 msg: 
 
 id: Go to standby after video ends
+# Missing translation
+msg: 
+
+id: Reset defaults for folder '%s'
+# Missing translation
+msg: 
+
+id: Save as defaults for folder '%s'
+# Missing translation
+msg: 
+
+id: Save as global default
 # Missing translation
 msg: 
 
@@ -877,6 +1015,10 @@ id: Subtitle scaling
 msg: Velikost podnapisov
 
 id: Subtitle vertical displacement
+# Missing translation
+msg: 
+
+id: Video frame interpolation
 # Missing translation
 msg: 
 
@@ -915,6 +1057,49 @@ msg:
 #
 # ./src/metadata/metadata.c
 #
+id: Embedded in file
+msg: Vgrajeni v datotki
+
+id: Track %d
+msg: Track %d
+
+#
+# ./src/metadata/metadata_sources.c
+#
+id: Enabled
+msg: Omogočeno
+
+id: Metadata
+msg: Metadata
+
+id: Metadata configuration and provider settings
+msg: Metadata konfiguracija in nastavitve ponudnika
+
+id: Providers for Music
+msg: Ponudniki za Glasbo
+
+id: Providers for Video
+# Missing translation
+msg: 
+
+#
+# ./src/metadata/metadb.c
+#
+id: %d items deleted
+# Missing translation
+msg: 
+
+id: Clear all metadata
+# Missing translation
+msg: 
+
+id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
+# Missing translation
+msg: 
+
+#
+# ./src/metadata/mlp.c
+#
 id: Custom search query
 msg: Uporabniško iskanje
 
@@ -922,20 +1107,8 @@ id: Custom title
 # Missing translation
 msg: 
 
-id: Embedded in file
-msg: Vgrajeni v datotki
-
-id: Enabled
-msg: Omogočeno
-
 id: IMDb ID
 msg: IMDb ID
-
-id: Metadata
-msg: Metadata
-
-id: Metadata configuration and provider settings
-msg: Metadata konfiguracija in nastavitve ponudnika
 
 id: Metadata loaded from '%s' using %s
 msg: Metadata naložen iz '%s' ki uporablja %s
@@ -959,22 +1132,12 @@ msg: Datotek ni na voljo
 id: None
 msg: Nič
 
-id: Providers for Music
-msg: Ponudniki za Glasbo
-
-id: Providers for Video
-# Missing translation
-msg: 
-
 id: Refresh metadata
 msg: Osveži metadata
 
 id: Title, Season, Episode
 # Missing translation
 msg: 
-
-id: Track %d
-msg: Track %d
 
 id: custom IMDb ID
 msg: IMDb ID po meri
@@ -991,21 +1154,6 @@ msg:
 
 id: folder name
 msg: ime mape
-
-#
-# ./src/metadata/metadb.c
-#
-id: %d items deleted
-# Missing translation
-msg: 
-
-id: Clear all metadata
-# Missing translation
-msg: 
-
-id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
-# Missing translation
-msg: 
 
 #
 # ./src/navigator.c
@@ -1110,10 +1258,6 @@ msg:
 id: Corrupt plugin bundle
 msg: Napaka pri obdelavi vtičnika
 
-id: Default
-# Missing translation
-msg: 
-
 id: Disk write error
 msg: Napaka zapisa diska
 
@@ -1162,6 +1306,10 @@ msg: Ni naložen
 
 id: Not upgradable
 msg: Ni posodobljiv
+
+id: On Screen Keyboards
+# Missing translation
+msg: 
 
 id: Online TV
 # Missing translation
@@ -1320,9 +1468,6 @@ msg: Avto
 id: Automatically select from this source
 # Missing translation
 msg: 
-
-id: Center
-msg: Sredina
 
 id: Central subtitle folder
 # Missing translation
@@ -1522,6 +1667,14 @@ msg: Storitev ni najdena
 #
 # ./src/video/ps3_vdec.c
 #
+id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
+# Missing translation
+msg: 
+
+id: Cell-h264: Broken headers, Disabling acceleration
+# Missing translation
+msg: 
+
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
 msg: Cell-h264: Prisiljen nivo 4.2 za nivo %d.%d vsebine. To lahko onemogoči predvajanje videa.
 

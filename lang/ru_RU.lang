@@ -3,6 +3,7 @@ native: Русский
 maintainer: pvc1 <pvc1@yandex.ru> 
 #
 # ./ext/miner/miner.c
+#
 id: Do you like Showtime? You can donate money to the project by mining Litecoins on your PS3
 msg: Нравится Showtime? Вы можете пожертвовать деньги на проект через майнинг Litecoins на вашей PS3
 
@@ -42,6 +43,10 @@ msg: Выйти из Showtime
 id: Go to Home screen
 msg: Перейти на главный экран
 
+id: Hide system info
+# Missing translation
+msg: 
+
 id: Navigation
 msg: Навигация
 
@@ -56,6 +61,10 @@ msg: Отключить систему
 
 id: Reload current page
 msg: Перезагрузить текущую страницу
+
+id: Show system info
+# Missing translation
+msg: 
 
 id: Suspend
 msg: Отключить систему
@@ -155,6 +164,26 @@ msg: Настройки видео
 #
 id: System log
 msg: Системный лог
+
+#
+# ./glwskins/default/osk.view
+#
+id: Cancel
+msg: Отмена
+
+id: Clear
+# Missing translation
+msg: 
+
+id: Default
+msg: По умолчанию 
+
+id: Keyboard layout:
+# Missing translation
+msg: 
+
+id: OK
+msg: OK
 
 #
 # ./glwskins/default/pages/directory.view
@@ -386,6 +415,13 @@ id: Playback status
 msg: Статус воспроизведения
 
 #
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+# Missing translation
+msg: 
+
+#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -408,15 +444,6 @@ msg: Запомнить меня
 
 id: Username
 msg: Имя пользователя
-
-#
-# ./glwskins/default/popups/common.view
-#
-id: Cancel
-msg: Отмена
-
-id: OK
-msg: OK
 
 #
 # ./glwskins/default/screensaver.view
@@ -497,6 +524,21 @@ id: System is low on memory (%d kB RAM available)
 msg: Мало памяти (доступно %d Кб RAM)
 
 #
+# ./src/arch/rpi/rpi_audio.c
+#
+id: Analog
+# Missing translation
+msg: 
+
+id: Audio output port
+# Missing translation
+msg: 
+
+id: HDMI
+# Missing translation
+msg: 
+
+#
 # ./src/arch/rpi/rpi_cec.c
 #
 id: Configure how Showtime communicates with your TV
@@ -504,6 +546,89 @@ msg: Настройка соединения Showtime с вашим ТВ
 
 id: Consumer Electronics Control
 msg: Управление бытовой электроникой
+
+#
+# ./src/audio2/audio.c
+#
+id: Audio delay
+msg: Задержка аудио
+
+id: Audio gain adjustment during video playback
+# Missing translation
+msg: 
+
+id: Audio settings during video playback
+# Missing translation
+msg: 
+
+id: Setup audio output
+# Missing translation
+msg: 
+
+#
+# ./src/audio2/audio_test.c
+#
+id: 440Hz sinewave -12dB
+# Missing translation
+msg: 
+
+id: Audio test
+# Missing translation
+msg: 
+
+id: Center
+msg: Центр
+
+id: Front Left
+# Missing translation
+msg: 
+
+id: Front Right
+# Missing translation
+msg: 
+
+id: LFE
+# Missing translation
+msg: 
+
+id: Pink noise
+# Missing translation
+msg: 
+
+id: Play test signal
+# Missing translation
+msg: 
+
+id: Rear Left
+# Missing translation
+msg: 
+
+id: Rear Right
+# Missing translation
+msg: 
+
+id: Speaker position
+# Missing translation
+msg: 
+
+id: Surround Left
+# Missing translation
+msg: 
+
+id: Surround Right
+# Missing translation
+msg: 
+
+id: Test signal type
+# Missing translation
+msg: 
+
+#
+# ./src/audio2/pulseaudio.c
+#
+id: Unable to initialize audio system %s -- %s
+# Missing translation
+msg: 
 
 #
 # ./src/backend/dvd/cdda.c
@@ -703,6 +828,10 @@ msg: Просмотр файлов
 id: Show filename extensions
 msg: Отображать расширения у файлов
 
+id: Store per-file settings in filesystem
+# Missing translation
+msg: 
+
 id: %d archive parts
 msg[0]: частей архива: %d
 msg[1]: частей архива: %d
@@ -784,14 +913,23 @@ msg: Сохранённые пароли удалены
 id: Align subtitles on video frame
 msg: Выравнивание субтитров в кадре
 
-id: Audio delay
-msg: Задержка аудио
-
 id: Audio volume
 msg: Громкость
 
 id: Go to standby after video ends
 msg: Отключить систему по окончании видео
+
+id: Reset defaults for folder '%s'
+# Missing translation
+msg: 
+
+id: Save as defaults for folder '%s'
+# Missing translation
+msg: 
+
+id: Save as global default
+# Missing translation
+msg: 
 
 id: Stretch video to fullscreen
 msg: Растянуть видео во весь экран
@@ -810,6 +948,10 @@ msg: Масштаб субтитров
 
 id: Subtitle vertical displacement
 msg: Вертикальное смещение субтитров
+
+id: Video frame interpolation
+# Missing translation
+msg: 
 
 id: Video zoom
 msg: Масштаб видео
@@ -841,26 +983,53 @@ msg: Режим получения метаданных
 #
 # ./src/metadata/metadata.c
 #
-id: Custom search query
-msg: Пользовательский поисковый запрос
-
-id: Custom title
-msg: Ввести название 
-
 id: Embedded in file
 msg: Встроен в файл
 
+id: Track %d
+msg: Трек %d
+
+#
+# ./src/metadata/metadata_sources.c
+#
 id: Enabled
 msg: Включено
-
-id: IMDb ID
-msg: IMDb ID
 
 id: Metadata
 msg: Метаданные
 
 id: Metadata configuration and provider settings
 msg: Конфигурация метаданных и настройки поставщика
+
+id: Providers for Music
+msg: Поставщики для музыки
+
+id: Providers for Video
+msg: Поставщики для видео
+
+#
+# ./src/metadata/metadb.c
+#
+id: %d items deleted
+msg: Удалено записей: %d
+
+id: Clear all metadata
+msg: Удалить все метаданные
+
+id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
+msg: При удалении метаданных будет удалена <b>вся</b> информация:\n\nТрек/видео/фильм был воспроизведен\nКол-во раз, которые Трек/видео/фильм был воспроизведен\nПозиция для продолжения воспроизведения\n\nТак же все метаданные, сохраненные из внешних источников, таких как themoviedb.org и т.п.\n\nВы действительно хотите продолжить?
+
+#
+# ./src/metadata/mlp.c
+#
+id: Custom search query
+msg: Пользовательский поисковый запрос
+
+id: Custom title
+msg: Ввести название 
+
+id: IMDb ID
+msg: IMDb ID
 
 id: Metadata loaded from '%s' using %s
 msg: Метаданные загружаются из '%s' с использованием %s
@@ -883,20 +1052,11 @@ msg: Данные не найдены
 id: None
 msg: Нет
 
-id: Providers for Music
-msg: Поставщики для музыки
-
-id: Providers for Video
-msg: Поставщики для видео
-
 id: Refresh metadata
 msg: Обновить метаданные
 
 id: Title, Season, Episode
 msg: Название, сезон, эпизод
-
-id: Track %d
-msg: Трек %d
 
 id: custom IMDb ID
 msg: пользовательские IMDb ID
@@ -912,18 +1072,6 @@ msg: имя файла как TV-эпизод
 
 id: folder name
 msg: имя папки
-
-#
-# ./src/metadata/metadb.c
-#
-id: %d items deleted
-msg: Удалено записей: %d
-
-id: Clear all metadata
-msg: Удалить все метаданные
-
-id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
-msg: При удалении метаданных будет удалена <b>вся</b> информация:\n\nТрек/видео/фильм был воспроизведен\nКол-во раз, которые Трек/видео/фильм был воспроизведен\nПозиция для продолжения воспроизведения\n\nТак же все метаданные, сохраненные из внешних источников, таких как themoviedb.org и т.п.\n\nВы действительно хотите продолжить?
 
 #
 # ./src/navigator.c
@@ -1015,9 +1163,6 @@ msg: Облачные сервисы
 id: Corrupt plugin bundle
 msg: Поврежденный пакет плагина
 
-id: Default
-msg: По умолчанию 
-
 id: Disk write error
 msg: Ошибка записи на диск
 
@@ -1059,6 +1204,10 @@ msg: Не установлен
 
 id: Not upgradable
 msg: Не обновляемый
+
+id: On Screen Keyboards
+# Missing translation
+msg: 
 
 id: Online TV
 msg: Онлайн-ТВ
@@ -1197,9 +1346,6 @@ msg: Авто
 
 id: Automatically select from this source
 msg: Автоматически выбирать из этого источника
-
-id: Center
-msg: Центр
 
 id: Central subtitle folder
 msg: Основная папка субтитров
@@ -1378,6 +1524,14 @@ msg: Сервис не найден
 #
 # ./src/video/ps3_vdec.c
 #
+id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
+# Missing translation
+msg: 
+
+id: Cell-h264: Broken headers, Disabling acceleration
+# Missing translation
+msg: 
+
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
 msg: Cell-h264: Принудительный уровень 4.2 для контента уровня %d.%d. Это может нарушить воспроизведение видео.
 

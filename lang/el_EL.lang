@@ -43,6 +43,10 @@ msg: Έξοδος από το  Showtime
 id: Go to Home screen
 msg: Μετάβαση στην αρχική σελίδα
 
+id: Hide system info
+# Missing translation
+msg: 
+
 id: Navigation
 msg: Πλοήγηση 
 
@@ -57,6 +61,10 @@ msg: Τερματισμός
 
 id: Reload current page
 msg: Ανανέωση τρέχουσας σελίδας
+
+id: Show system info
+# Missing translation
+msg: 
 
 id: Suspend
 msg: Αναστολή λειτουργείας
@@ -156,6 +164,26 @@ msg: Ρυθμίσεις Βίντεο
 #
 id: System log
 msg: Καταγραφή Συστήματος 
+
+#
+# ./glwskins/default/osk.view
+#
+id: Cancel
+msg: Ακύρωση
+
+id: Clear
+# Missing translation
+msg: 
+
+id: Default
+msg: Προεπιλογή
+
+id: Keyboard layout:
+# Missing translation
+msg: 
+
+id: OK
+msg: OK
 
 #
 # ./glwskins/default/pages/directory.view
@@ -387,6 +415,13 @@ id: Playback status
 msg: Κατάσταση Αναπαραγωγής
 
 #
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+# Missing translation
+msg: 
+
+#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -409,15 +444,6 @@ msg: Απομνημόνευση
 
 id: Username
 msg: Όνομα Χρήστη
-
-#
-# ./glwskins/default/popups/common.view
-#
-id: Cancel
-msg: Ακύρωση
-
-id: OK
-msg: OK
 
 #
 # ./glwskins/default/screensaver.view
@@ -498,6 +524,21 @@ id: System is low on memory (%d kB RAM available)
 msg: Το σύστημα είναι χαμηλό σε μνήμη (%d kB RAM διαθέσιμα)
 
 #
+# ./src/arch/rpi/rpi_audio.c
+#
+id: Analog
+# Missing translation
+msg: 
+
+id: Audio output port
+# Missing translation
+msg: 
+
+id: HDMI
+# Missing translation
+msg: 
+
+#
 # ./src/arch/rpi/rpi_cec.c
 #
 id: Configure how Showtime communicates with your TV
@@ -505,6 +546,89 @@ msg: Επιβεβαιώστε την επικοινωνία του Showtime με
 
 id: Consumer Electronics Control
 msg: Ηλεκτρονικά Συστήματα Ελέγχου Καταναλωτών (CEC)
+
+#
+# ./src/audio2/audio.c
+#
+id: Audio delay
+msg: Καθυστέρηση ήχου
+
+id: Audio gain adjustment during video playback
+# Missing translation
+msg: 
+
+id: Audio settings during video playback
+# Missing translation
+msg: 
+
+id: Setup audio output
+# Missing translation
+msg: 
+
+#
+# ./src/audio2/audio_test.c
+#
+id: 440Hz sinewave -12dB
+# Missing translation
+msg: 
+
+id: Audio test
+# Missing translation
+msg: 
+
+id: Center
+msg: Κεντρικά
+
+id: Front Left
+# Missing translation
+msg: 
+
+id: Front Right
+# Missing translation
+msg: 
+
+id: LFE
+# Missing translation
+msg: 
+
+id: Pink noise
+# Missing translation
+msg: 
+
+id: Play test signal
+# Missing translation
+msg: 
+
+id: Rear Left
+# Missing translation
+msg: 
+
+id: Rear Right
+# Missing translation
+msg: 
+
+id: Speaker position
+# Missing translation
+msg: 
+
+id: Surround Left
+# Missing translation
+msg: 
+
+id: Surround Right
+# Missing translation
+msg: 
+
+id: Test signal type
+# Missing translation
+msg: 
+
+#
+# ./src/audio2/pulseaudio.c
+#
+id: Unable to initialize audio system %s -- %s
+# Missing translation
+msg: 
 
 #
 # ./src/backend/dvd/cdda.c
@@ -704,6 +828,10 @@ msg: Εξερεύνηση Αρχείων
 id: Show filename extensions
 msg: Εμφάνιση επεκτάσεων αρχείων
 
+id: Store per-file settings in filesystem
+# Missing translation
+msg: 
+
 id: %d archive parts
 msg[0]: %d κομμάτια αρχείου
 
@@ -784,14 +912,23 @@ msg: Οι αποθηκεμένοι κωδικοί σβήστηκαν
 id: Align subtitles on video frame
 msg: Συγχρονισμός υποτίτλων στο βίντεο
 
-id: Audio delay
-msg: Καθυστέρηση ήχου
-
 id: Audio volume
 msg: Ένταση ήχου
 
 id: Go to standby after video ends
 msg: Τερματισμός λειτουργίας όταν τελειώσει το βίντεο
+
+id: Reset defaults for folder '%s'
+# Missing translation
+msg: 
+
+id: Save as defaults for folder '%s'
+# Missing translation
+msg: 
+
+id: Save as global default
+# Missing translation
+msg: 
 
 id: Stretch video to fullscreen
 msg: Αναπαραγωγή βίντεο σε  πλήρη οθόνη
@@ -810,6 +947,10 @@ msg: Κλιμάκωση υποτίτλων
 
 id: Subtitle vertical displacement
 msg: Κάθετη μετατόπιση υποτίτλων
+
+id: Video frame interpolation
+# Missing translation
+msg: 
 
 id: Video zoom
 msg: Μεγέθυνση βίντεο
@@ -841,26 +982,53 @@ msg: Λειτουργία- Metadata
 #
 # ./src/metadata/metadata.c
 #
-id: Custom search query
-msg: Ερώτημα προσαρμοσμένης αναζήτησης
-
-id: Custom title
-msg: Τροποποιημένος τίτλος
-
 id: Embedded in file
 msg: Ενσωματωμένο στο αρχείο
 
+id: Track %d
+msg: Τίτλος %d
+
+#
+# ./src/metadata/metadata_sources.c
+#
 id: Enabled
 msg: Ενεργοποιημένο
-
-id: IMDb ID
-msg: IMDb ID
 
 id: Metadata
 msg: Metadata
 
 id: Metadata configuration and provider settings
 msg: Διαμόρφωση Metadata και ρυθμίσεις παρόχου
+
+id: Providers for Music
+msg: Πάροχοι Μουσικής
+
+id: Providers for Video
+msg: Πάροχοι Βίντεο
+
+#
+# ./src/metadata/metadb.c
+#
+id: %d items deleted
+msg: %d αρχεία διαγράφηκαν
+
+id: Clear all metadata
+msg: Καθαρισμός όλον των αρχείων metadata
+
+id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
+msg: Καθάρισμα όλον των αρχείων metadata σημαίνει απώλεια όλων των πληροφοριών για ένα αρχείο/ταινία που έχεις δει. Επιπλέον ο αριθμός των φορών που έχει παιχτεί ένα αρχείο/ταινία και η θέση για την συνέχιση μιας αναπαραγωγής,  θα διαγράφουν επίσης τα αρχεία cache των metadata από τις εξωτερικές πηγές όπως του themoviedb.org. Είσαι σίγουρος ότι θέλεις να προχωρήσεις;
+
+#
+# ./src/metadata/mlp.c
+#
+id: Custom search query
+msg: Ερώτημα προσαρμοσμένης αναζήτησης
+
+id: Custom title
+msg: Τροποποιημένος τίτλος
+
+id: IMDb ID
+msg: IMDb ID
 
 id: Metadata loaded from '%s' using %s
 msg: Τα Metadata φορτώθηκαν από '%s', σε χρήση %s
@@ -883,20 +1051,11 @@ msg: Δεν βρέθηκαν δεδομένα
 id: None
 msg: Κανένα
 
-id: Providers for Music
-msg: Πάροχοι Μουσικής
-
-id: Providers for Video
-msg: Πάροχοι Βίντεο
-
 id: Refresh metadata
 msg: Ανανέωση Metadata
 
 id: Title, Season, Episode
 msg: Τίτλος, Σεζόν, Επεισόδιο
-
-id: Track %d
-msg: Τίτλος %d
 
 id: custom IMDb ID
 msg: Τροποποίηση  IMDb ID
@@ -912,18 +1071,6 @@ msg: Όνομα αρχείου ως επεισόδιο TV
 
 id: folder name
 msg: Όνομα φακέλου
-
-#
-# ./src/metadata/metadb.c
-#
-id: %d items deleted
-msg: %d αρχεία διαγράφηκαν
-
-id: Clear all metadata
-msg: Καθαρισμός όλον των αρχείων metadata
-
-id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
-msg: Καθάρισμα όλον των αρχείων metadata σημαίνει απώλεια όλων των πληροφοριών για ένα αρχείο/ταινία που έχεις δει. Επιπλέον ο αριθμός των φορών που έχει παιχτεί ένα αρχείο/ταινία και η θέση για την συνέχιση μιας αναπαραγωγής,  θα διαγράφουν επίσης τα αρχεία cache των metadata από τις εξωτερικές πηγές όπως του themoviedb.org. Είσαι σίγουρος ότι θέλεις να προχωρήσεις;
 
 #
 # ./src/navigator.c
@@ -1015,9 +1162,6 @@ msg: Υπηρεσίες Cloud
 id: Corrupt plugin bundle
 msg: Κατεστραμμένο πακέτο πρόσθετου
 
-id: Default
-msg: Προεπιλογή
-
 id: Disk write error
 msg: Σφάλμα εγγραφής δίσκου!
 
@@ -1059,6 +1203,10 @@ msg: Δεν εγκαταστάθηκε
 
 id: Not upgradable
 msg: Δεν μπορεί να αναβαθμιστεί
+
+id: On Screen Keyboards
+# Missing translation
+msg: 
 
 id: Online TV
 msg: Διαδικτυακή TV
@@ -1197,9 +1345,6 @@ msg: Αυτόματο
 
 id: Automatically select from this source
 msg: Αυτόματη επιλογή από αυτήν την πηγή
-
-id: Center
-msg: Κεντρικά
 
 id: Central subtitle folder
 msg: Κεντρικός φάκελος υποτίτλων
@@ -1378,6 +1523,14 @@ msg: Η υπηρεσία δεν βρέθηκε
 #
 # ./src/video/ps3_vdec.c
 #
+id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
+# Missing translation
+msg: 
+
+id: Cell-h264: Broken headers, Disabling acceleration
+# Missing translation
+msg: 
+
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
 msg: Cell-h264: Εξαναγκασμός του επιπέδου 4.2 να χωρέσει στο επίπεδο %d.%d. Η αναπαραγωγή μπορεί να διακοπεί.
 

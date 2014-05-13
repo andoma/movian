@@ -47,6 +47,10 @@ msg: Avsluta Showtime
 id: Go to Home screen
 msg: Gå till hemsidan
 
+id: Hide system info
+# Missing translation
+msg: 
+
 id: Navigation
 msg: Navigering
 
@@ -61,6 +65,10 @@ msg: Stäng av
 
 id: Reload current page
 msg: Ladda om nuvarande sida
+
+id: Show system info
+# Missing translation
+msg: 
 
 id: Suspend
 msg: Viloläge
@@ -160,6 +168,26 @@ msg: Videoinställningar
 #
 id: System log
 msg: Systemlog
+
+#
+# ./glwskins/default/osk.view
+#
+id: Cancel
+msg: Avbryt
+
+id: Clear
+# Missing translation
+msg: 
+
+id: Default
+msg: Standard
+
+id: Keyboard layout:
+# Missing translation
+msg: 
+
+id: OK
+msg: OK
 
 #
 # ./glwskins/default/pages/directory.view
@@ -391,6 +419,13 @@ id: Playback status
 msg: Uppspelningsstatus
 
 #
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+# Missing translation
+msg: 
+
+#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -413,15 +448,6 @@ msg: Kom ihåg mig
 
 id: Username
 msg: Användarnamn
-
-#
-# ./glwskins/default/popups/common.view
-#
-id: Cancel
-msg: Avbryt
-
-id: OK
-msg: OK
 
 #
 # ./glwskins/default/screensaver.view
@@ -511,6 +537,21 @@ id: System is low on memory (%d kB RAM available)
 msg: System har lite ledigt minne (%d kB RAM tillgängligt)
 
 #
+# ./src/arch/rpi/rpi_audio.c
+#
+id: Analog
+# Missing translation
+msg: 
+
+id: Audio output port
+# Missing translation
+msg: 
+
+id: HDMI
+# Missing translation
+msg: 
+
+#
 # ./src/arch/rpi/rpi_cec.c
 #
 id: Configure how Showtime communicates with your TV
@@ -518,6 +559,89 @@ msg: Konfigurerar hur Showtime kommunicerar med din TV
 
 id: Consumer Electronics Control
 msg: Consumer Electronics Control
+
+#
+# ./src/audio2/audio.c
+#
+id: Audio delay
+msg: Ljuddelay
+
+id: Audio gain adjustment during video playback
+# Missing translation
+msg: 
+
+id: Audio settings during video playback
+# Missing translation
+msg: 
+
+id: Setup audio output
+# Missing translation
+msg: 
+
+#
+# ./src/audio2/audio_test.c
+#
+id: 440Hz sinewave -12dB
+# Missing translation
+msg: 
+
+id: Audio test
+# Missing translation
+msg: 
+
+id: Center
+msg: Centrerad
+
+id: Front Left
+# Missing translation
+msg: 
+
+id: Front Right
+# Missing translation
+msg: 
+
+id: LFE
+# Missing translation
+msg: 
+
+id: Pink noise
+# Missing translation
+msg: 
+
+id: Play test signal
+# Missing translation
+msg: 
+
+id: Rear Left
+# Missing translation
+msg: 
+
+id: Rear Right
+# Missing translation
+msg: 
+
+id: Speaker position
+# Missing translation
+msg: 
+
+id: Surround Left
+# Missing translation
+msg: 
+
+id: Surround Right
+# Missing translation
+msg: 
+
+id: Test signal type
+# Missing translation
+msg: 
+
+#
+# ./src/audio2/pulseaudio.c
+#
+id: Unable to initialize audio system %s -- %s
+# Missing translation
+msg: 
 
 #
 # ./src/backend/dvd/cdda.c
@@ -719,6 +843,10 @@ id: Show filename extensions
 # Missing translation
 msg: 
 
+id: Store per-file settings in filesystem
+# Missing translation
+msg: 
+
 id: %d archive parts
 msg[0]: 
 msg[1]: 
@@ -800,14 +928,23 @@ msg: Ihågkommna lösenord bortglömda
 id: Align subtitles on video frame
 msg: Justera undertexter till videons storlek
 
-id: Audio delay
-msg: Ljuddelay
-
 id: Audio volume
 msg: Volym
 
 id: Go to standby after video ends
 msg: Gå till standby efter videon är slut
+
+id: Reset defaults for folder '%s'
+# Missing translation
+msg: 
+
+id: Save as defaults for folder '%s'
+# Missing translation
+msg: 
+
+id: Save as global default
+# Missing translation
+msg: 
 
 id: Stretch video to fullscreen
 msg: Sträck ut videon över hela skärmen
@@ -826,6 +963,10 @@ msg: Storlek på undertexter
 
 id: Subtitle vertical displacement
 msg: Vertikal positiono för undertexter
+
+id: Video frame interpolation
+# Missing translation
+msg: 
 
 id: Video zoom
 msg: Video zoom
@@ -857,26 +998,53 @@ msg: Läge för metadata
 #
 # ./src/metadata/metadata.c
 #
-id: Custom search query
-msg: Speciell sökfråga
-
-id: Custom title
-msg: Egen titel
-
 id: Embedded in file
 msg: Inbäddad i fil
 
+id: Track %d
+msg: Spår %d
+
+#
+# ./src/metadata/metadata_sources.c
+#
 id: Enabled
 msg: Påslagen
-
-id: IMDb ID
-msg: IMDb ID
 
 id: Metadata
 msg: Metadata
 
 id: Metadata configuration and provider settings
 msg: Metadata konfiguration och leverantörsinställningar
+
+id: Providers for Music
+msg: Leverantörer för music
+
+id: Providers for Video
+msg: Videotjänster
+
+#
+# ./src/metadata/metadb.c
+#
+id: %d items deleted
+msg: %d objekt borttagna
+
+id: Clear all metadata
+msg: Ta bort all metadata
+
+id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
+msg: Att ta bort all mteadata betyder att du förlorar <b>all</b> information om:\n\nOm ett spår/film blivit spelat\nAntal gånger ett spår/film har blivit spelat\nÅterstartsposition\n\nÄr du säker?
+
+#
+# ./src/metadata/mlp.c
+#
+id: Custom search query
+msg: Speciell sökfråga
+
+id: Custom title
+msg: Egen titel
+
+id: IMDb ID
+msg: IMDb ID
 
 id: Metadata loaded from '%s' using %s
 msg: Metadata laddat från '%s', använde %s
@@ -899,20 +1067,11 @@ msg: Ingen data funnet
 id: None
 msg: Inget
 
-id: Providers for Music
-msg: Leverantörer för music
-
-id: Providers for Video
-msg: Videotjänster
-
 id: Refresh metadata
 msg: Ladda om metadata
 
 id: Title, Season, Episode
 msg: Titel, Säsong, Episod
-
-id: Track %d
-msg: Spår %d
 
 id: custom IMDb ID
 msg: special IMDb ID
@@ -928,18 +1087,6 @@ msg: filnamn som TV-episod
 
 id: folder name
 msg: katalognamn
-
-#
-# ./src/metadata/metadb.c
-#
-id: %d items deleted
-msg: %d objekt borttagna
-
-id: Clear all metadata
-msg: Ta bort all metadata
-
-id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
-msg: Att ta bort all mteadata betyder att du förlorar <b>all</b> information om:\n\nOm ett spår/film blivit spelat\nAntal gånger ett spår/film har blivit spelat\nÅterstartsposition\n\nÄr du säker?
 
 #
 # ./src/navigator.c
@@ -1031,9 +1178,6 @@ msg: Molntjänster
 id: Corrupt plugin bundle
 msg: Pluginfilen är korrupt
 
-id: Default
-msg: Standard
-
 id: Disk write error
 msg: Kunde ej skriva till disk
 
@@ -1075,6 +1219,10 @@ msg: Inte installerad
 
 id: Not upgradable
 msg: Inte uppgraderingsbar
+
+id: On Screen Keyboards
+# Missing translation
+msg: 
 
 id: Online TV
 msg: OnlineTV
@@ -1213,9 +1361,6 @@ msg: Auto
 
 id: Automatically select from this source
 msg: Välj automatiskt från den här källan
-
-id: Center
-msg: Centrerad
 
 id: Central subtitle folder
 msg: Central katalog för undertexter
@@ -1394,6 +1539,14 @@ msg: Kan ej hitta tjänsten
 #
 # ./src/video/ps3_vdec.c
 #
+id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
+# Missing translation
+msg: 
+
+id: Cell-h264: Broken headers, Disabling acceleration
+# Missing translation
+msg: 
+
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
 msg: Cell-h264: Tvingar level 4.2 för media i  level %d.%d. Detta kan förstöra video uppspelningen.
 

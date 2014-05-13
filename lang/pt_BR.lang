@@ -49,6 +49,10 @@ msg: Sair do Showtime
 id: Go to Home screen
 msg: Ir para página inicial
 
+id: Hide system info
+# Missing translation
+msg: 
+
 id: Navigation
 msg: Navegação
 
@@ -63,6 +67,10 @@ msg: Desligar
 
 id: Reload current page
 msg: Recarregar página atual
+
+id: Show system info
+# Missing translation
+msg: 
 
 id: Suspend
 msg: Suspender
@@ -164,6 +172,26 @@ msg: Configurações de vídeo
 #
 id: System log
 msg: Log do sistema
+
+#
+# ./glwskins/default/osk.view
+#
+id: Cancel
+msg: Cancelar
+
+id: Clear
+# Missing translation
+msg: 
+
+id: Default
+msg: Padrão
+
+id: Keyboard layout:
+# Missing translation
+msg: 
+
+id: OK
+msg: OK
 
 #
 # ./glwskins/default/pages/directory.view
@@ -401,6 +429,13 @@ id: Playback status
 msg: Estado da reprodução
 
 #
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+# Missing translation
+msg: 
+
+#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -423,15 +458,6 @@ msg: Lembrar
 
 id: Username
 msg: Nome do usuário
-
-#
-# ./glwskins/default/popups/common.view
-#
-id: Cancel
-msg: Cancelar
-
-id: OK
-msg: OK
 
 #
 # ./glwskins/default/screensaver.view
@@ -526,6 +552,21 @@ id: System is low on memory (%d kB RAM available)
 msg: Memória do sistema baixa (%d kb disponíveis)
 
 #
+# ./src/arch/rpi/rpi_audio.c
+#
+id: Analog
+# Missing translation
+msg: 
+
+id: Audio output port
+# Missing translation
+msg: 
+
+id: HDMI
+# Missing translation
+msg: 
+
+#
 # ./src/arch/rpi/rpi_cec.c
 #
 id: Configure how Showtime communicates with your TV
@@ -533,6 +574,89 @@ id: Configure how Showtime communicates with your TV
 msg: 
 
 id: Consumer Electronics Control
+# Missing translation
+msg: 
+
+#
+# ./src/audio2/audio.c
+#
+id: Audio delay
+msg: Atraso de áudio
+
+id: Audio gain adjustment during video playback
+# Missing translation
+msg: 
+
+id: Audio settings during video playback
+# Missing translation
+msg: 
+
+id: Setup audio output
+# Missing translation
+msg: 
+
+#
+# ./src/audio2/audio_test.c
+#
+id: 440Hz sinewave -12dB
+# Missing translation
+msg: 
+
+id: Audio test
+# Missing translation
+msg: 
+
+id: Center
+msg: Centralizado
+
+id: Front Left
+# Missing translation
+msg: 
+
+id: Front Right
+# Missing translation
+msg: 
+
+id: LFE
+# Missing translation
+msg: 
+
+id: Pink noise
+# Missing translation
+msg: 
+
+id: Play test signal
+# Missing translation
+msg: 
+
+id: Rear Left
+# Missing translation
+msg: 
+
+id: Rear Right
+# Missing translation
+msg: 
+
+id: Speaker position
+# Missing translation
+msg: 
+
+id: Surround Left
+# Missing translation
+msg: 
+
+id: Surround Right
+# Missing translation
+msg: 
+
+id: Test signal type
+# Missing translation
+msg: 
+
+#
+# ./src/audio2/pulseaudio.c
+#
+id: Unable to initialize audio system %s -- %s
 # Missing translation
 msg: 
 
@@ -742,6 +866,10 @@ id: Show filename extensions
 # Missing translation
 msg: 
 
+id: Store per-file settings in filesystem
+# Missing translation
+msg: 
+
 id: %d archive parts
 msg[0]: 
 msg[1]: 
@@ -825,14 +953,23 @@ msg: Senhas apagadas
 id: Align subtitles on video frame
 msg: Alinhar as legendas no quadro de vídeo
 
-id: Audio delay
-msg: Atraso de áudio
-
 id: Audio volume
 # Missing translation
 msg: 
 
 id: Go to standby after video ends
+# Missing translation
+msg: 
+
+id: Reset defaults for folder '%s'
+# Missing translation
+msg: 
+
+id: Save as defaults for folder '%s'
+# Missing translation
+msg: 
+
+id: Save as global default
 # Missing translation
 msg: 
 
@@ -853,6 +990,10 @@ id: Subtitle scaling
 msg: Redimensionamento de legendas
 
 id: Subtitle vertical displacement
+# Missing translation
+msg: 
+
+id: Video frame interpolation
 # Missing translation
 msg: 
 
@@ -890,26 +1031,53 @@ msg:
 #
 # ./src/metadata/metadata.c
 #
-id: Custom search query
-msg: Busca personalizada
-
-id: Custom title
-msg: Título personalizado
-
 id: Embedded in file
 msg: Embutido no arquivo
 
+id: Track %d
+msg: Trilha %d
+
+#
+# ./src/metadata/metadata_sources.c
+#
 id: Enabled
 msg: Ativo
-
-id: IMDb ID
-msg: Identificação IMDb
 
 id: Metadata
 msg: Metadados
 
 id: Metadata configuration and provider settings
 msg: Definições de configuração e provedor de metadados
+
+id: Providers for Music
+msg: Provedores para Música
+
+id: Providers for Video
+msg: Provedores do vídeo
+
+#
+# ./src/metadata/metadb.c
+#
+id: %d items deleted
+msg: %d itens removidos
+
+id: Clear all metadata
+msg: Apagar metadados
+
+id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
+msg: Apagar metadados significa perder <b>toda</b> informação sobre:\n\nSe uma música/filme foi vista\nNúmero de vezes que uma música/filme foi executada\nPosição de resumo de playback\nTambém irá apagar os dados armazenados de fontes externas como themoviedb.org, etc\n\nDeseja continuar?
+
+#
+# ./src/metadata/mlp.c
+#
+id: Custom search query
+msg: Busca personalizada
+
+id: Custom title
+msg: Título personalizado
+
+id: IMDb ID
+msg: Identificação IMDb
 
 id: Metadata loaded from '%s' using %s
 msg: Metadados carregados de '%s' usando %s
@@ -932,20 +1100,11 @@ msg: Dados não encontrados
 id: None
 msg: Nada
 
-id: Providers for Music
-msg: Provedores para Música
-
-id: Providers for Video
-msg: Provedores do vídeo
-
 id: Refresh metadata
 msg: Atualizar metadados
 
 id: Title, Season, Episode
 msg: Título, Temporada, Episódio
-
-id: Track %d
-msg: Trilha %d
 
 id: custom IMDb ID
 msg: Identificação personalizada para IMDb
@@ -961,18 +1120,6 @@ msg: nome do arquivo como episódio da TV
 
 id: folder name
 msg: nome da pasta
-
-#
-# ./src/metadata/metadb.c
-#
-id: %d items deleted
-msg: %d itens removidos
-
-id: Clear all metadata
-msg: Apagar metadados
-
-id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
-msg: Apagar metadados significa perder <b>toda</b> informação sobre:\n\nSe uma música/filme foi vista\nNúmero de vezes que uma música/filme foi executada\nPosição de resumo de playback\nTambém irá apagar os dados armazenados de fontes externas como themoviedb.org, etc\n\nDeseja continuar?
 
 #
 # ./src/navigator.c
@@ -1072,9 +1219,6 @@ msg: Serviços na nuvem
 id: Corrupt plugin bundle
 msg: Plugin defeituoso
 
-id: Default
-msg: Padrão
-
 id: Disk write error
 msg: Erro ao gravar no disco
 
@@ -1117,6 +1261,10 @@ msg: Não foi instalado
 
 id: Not upgradable
 msg: Não é atualizável
+
+id: On Screen Keyboards
+# Missing translation
+msg: 
 
 id: Online TV
 msg: TV online
@@ -1265,9 +1413,6 @@ msg: Automático
 id: Automatically select from this source
 # Missing translation
 msg: 
-
-id: Center
-msg: Centralizado
 
 id: Central subtitle folder
 # Missing translation
@@ -1458,6 +1603,14 @@ msg: O serviço não foi encontrado
 #
 # ./src/video/ps3_vdec.c
 #
+id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
+# Missing translation
+msg: 
+
+id: Cell-h264: Broken headers, Disabling acceleration
+# Missing translation
+msg: 
+
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
 msg: Cell-h264: Forçando nível 4.2 para conteúdo em nível %d.%d. Isso pode impedir a execução do vídeo.
 

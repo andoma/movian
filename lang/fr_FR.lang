@@ -43,6 +43,10 @@ msg: Sortie Showtime
 id: Go to Home screen
 msg: Retour à la page d'accueil
 
+id: Hide system info
+# Missing translation
+msg: 
+
 id: Navigation
 msg: Navigation
 
@@ -57,6 +61,10 @@ msg: Éteindre
 
 id: Reload current page
 msg: Rafraichir
+
+id: Show system info
+# Missing translation
+msg: 
 
 id: Suspend
 msg: Suspendre
@@ -156,6 +164,26 @@ msg: Paramètres vidéo
 #
 id: System log
 msg: Fichier d'évènements systèmes
+
+#
+# ./glwskins/default/osk.view
+#
+id: Cancel
+msg: Annuler
+
+id: Clear
+# Missing translation
+msg: 
+
+id: Default
+msg: Défaut
+
+id: Keyboard layout:
+# Missing translation
+msg: 
+
+id: OK
+msg: OK
 
 #
 # ./glwskins/default/pages/directory.view
@@ -387,6 +415,13 @@ id: Playback status
 msg: Status de la lecture
 
 #
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+# Missing translation
+msg: 
+
+#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -409,15 +444,6 @@ msg: Se souvenir de moi
 
 id: Username
 msg: Nom d'utilisateur
-
-#
-# ./glwskins/default/popups/common.view
-#
-id: Cancel
-msg: Annuler
-
-id: OK
-msg: OK
 
 #
 # ./glwskins/default/screensaver.view
@@ -500,6 +526,21 @@ id: System is low on memory (%d kB RAM available)
 msg: Mémoire système faible (%d kB de RAM restant)
 
 #
+# ./src/arch/rpi/rpi_audio.c
+#
+id: Analog
+# Missing translation
+msg: 
+
+id: Audio output port
+# Missing translation
+msg: 
+
+id: HDMI
+# Missing translation
+msg: 
+
+#
 # ./src/arch/rpi/rpi_cec.c
 #
 id: Configure how Showtime communicates with your TV
@@ -507,6 +548,89 @@ msg: Configurer comment Showtime communique avec votre TV
 
 id: Consumer Electronics Control
 msg: Consumer Electronics Control (CEC)
+
+#
+# ./src/audio2/audio.c
+#
+id: Audio delay
+msg: Délai audio
+
+id: Audio gain adjustment during video playback
+# Missing translation
+msg: 
+
+id: Audio settings during video playback
+# Missing translation
+msg: 
+
+id: Setup audio output
+# Missing translation
+msg: 
+
+#
+# ./src/audio2/audio_test.c
+#
+id: 440Hz sinewave -12dB
+# Missing translation
+msg: 
+
+id: Audio test
+# Missing translation
+msg: 
+
+id: Center
+msg: Centrer
+
+id: Front Left
+# Missing translation
+msg: 
+
+id: Front Right
+# Missing translation
+msg: 
+
+id: LFE
+# Missing translation
+msg: 
+
+id: Pink noise
+# Missing translation
+msg: 
+
+id: Play test signal
+# Missing translation
+msg: 
+
+id: Rear Left
+# Missing translation
+msg: 
+
+id: Rear Right
+# Missing translation
+msg: 
+
+id: Speaker position
+# Missing translation
+msg: 
+
+id: Surround Left
+# Missing translation
+msg: 
+
+id: Surround Right
+# Missing translation
+msg: 
+
+id: Test signal type
+# Missing translation
+msg: 
+
+#
+# ./src/audio2/pulseaudio.c
+#
+id: Unable to initialize audio system %s -- %s
+# Missing translation
+msg: 
 
 #
 # ./src/backend/dvd/cdda.c
@@ -708,6 +832,10 @@ id: Show filename extensions
 # Missing translation
 msg: 
 
+id: Store per-file settings in filesystem
+# Missing translation
+msg: 
+
 id: %d archive parts
 msg[0]: %d fichiers d'archive
 msg[1]: %d fichiers d'archive
@@ -789,14 +917,23 @@ msg: Mots de passe effacés
 id: Align subtitles on video frame
 msg: Faire correspondre les sous-titres avec l'image vidéo
 
-id: Audio delay
-msg: Délai audio
-
 id: Audio volume
 msg: Volume Audio
 
 id: Go to standby after video ends
 msg: Mettre en veille à la fin de la vidéo
+
+id: Reset defaults for folder '%s'
+# Missing translation
+msg: 
+
+id: Save as defaults for folder '%s'
+# Missing translation
+msg: 
+
+id: Save as global default
+# Missing translation
+msg: 
 
 id: Stretch video to fullscreen
 msg: Étirer la vidéo en plein écran
@@ -815,6 +952,10 @@ msg: Échelle des sous-titres
 
 id: Subtitle vertical displacement
 msg: Déplacement vertical des sous titres
+
+id: Video frame interpolation
+# Missing translation
+msg: 
 
 id: Video zoom
 msg: Zoom vidéo
@@ -846,26 +987,53 @@ msg: Metadata mode
 #
 # ./src/metadata/metadata.c
 #
-id: Custom search query
-msg: Recherche personnalisée
-
-id: Custom title
-msg: Titre personnalisé
-
 id: Embedded in file
 msg: Incorporé dans le fichier
 
+id: Track %d
+msg: Piste %d
+
+#
+# ./src/metadata/metadata_sources.c
+#
 id: Enabled
 msg: Activé
-
-id: IMDb ID
-msg: IMDb ID
 
 id: Metadata
 msg: Métadonnées
 
 id: Metadata configuration and provider settings
 msg: Paramétrage des fournisseurs de métadonnées
+
+id: Providers for Music
+msg: Moteur de recherche pour la musique
+
+id: Providers for Video
+msg: Fournisseurs pour la vidéo
+
+#
+# ./src/metadata/metadb.c
+#
+id: %d items deleted
+msg: %d éléments supprimés
+
+id: Clear all metadata
+msg: Effacer toutes les métadonnées
+
+id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
+msg: Effacer toutes les métadonnées veut dire perdre <b>TOUTES</B> les informations à propos de:\n\nSi le film/piste a été vue\nNombre de fois que le film/piste a été vue\nPosition de la lecture actuelle\n\nCela effacera également toutes les métadonnées stockées provenant, par exemple de themoviedb.org, etc\n\nEtes-vous sur de vouloir continuer?
+
+#
+# ./src/metadata/mlp.c
+#
+id: Custom search query
+msg: Recherche personnalisée
+
+id: Custom title
+msg: Titre personnalisé
+
+id: IMDb ID
+msg: IMDb ID
 
 id: Metadata loaded from '%s' using %s
 msg: Métadonnées téléchargées depuis '%s' en utilisant %s
@@ -888,20 +1056,11 @@ msg: Pas de données trouvés
 id: None
 msg: Aucun
 
-id: Providers for Music
-msg: Moteur de recherche pour la musique
-
-id: Providers for Video
-msg: Fournisseurs pour la vidéo
-
 id: Refresh metadata
 msg: Mise à jour des métadonnées
 
 id: Title, Season, Episode
 msg: Titre, Saison, Episode
-
-id: Track %d
-msg: Piste %d
 
 id: custom IMDb ID
 msg: Id IMDb personnalisé
@@ -917,18 +1076,6 @@ msg: Nom de fichier comme Episode TV
 
 id: folder name
 msg: Nom du répertoire
-
-#
-# ./src/metadata/metadb.c
-#
-id: %d items deleted
-msg: %d éléments supprimés
-
-id: Clear all metadata
-msg: Effacer toutes les métadonnées
-
-id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
-msg: Effacer toutes les métadonnées veut dire perdre <b>TOUTES</B> les informations à propos de:\n\nSi le film/piste a été vue\nNombre de fois que le film/piste a été vue\nPosition de la lecture actuelle\n\nCela effacera également toutes les métadonnées stockées provenant, par exemple de themoviedb.org, etc\n\nEtes-vous sur de vouloir continuer?
 
 #
 # ./src/navigator.c
@@ -1020,9 +1167,6 @@ msg: Services de cloud
 id: Corrupt plugin bundle
 msg: Package d'extension corrompue
 
-id: Default
-msg: Défaut
-
 id: Disk write error
 msg: Erreur d'écriture
 
@@ -1064,6 +1208,10 @@ msg: Non installé
 
 id: Not upgradable
 msg: Mise à jour impossible
+
+id: On Screen Keyboards
+# Missing translation
+msg: 
 
 id: Online TV
 msg: TV en ligne
@@ -1202,9 +1350,6 @@ msg: Auto
 
 id: Automatically select from this source
 msg: Sélectionner automatiquement depuis cette source
-
-id: Center
-msg: Centrer
 
 id: Central subtitle folder
 msg: Dossier principal des sous-titres
@@ -1383,6 +1528,14 @@ msg: Service non trouvé
 #
 # ./src/video/ps3_vdec.c
 #
+id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
+# Missing translation
+msg: 
+
+id: Cell-h264: Broken headers, Disabling acceleration
+# Missing translation
+msg: 
+
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
 msg: Cell-h264: Force le niveau 4.2 pour le contenu de niveau %d.%d. Ceci peut mettre fin à la lecture.
 
@@ -1436,3 +1589,4 @@ msg: Accélération vidéo et comportement de l'affichage
 
 id: Video playback
 msg: Lecture vidéo
+

@@ -49,6 +49,10 @@ msg: Showtime afsluiten
 id: Go to Home screen
 msg: Naar het thuisscherm gaan
 
+id: Hide system info
+# Missing translation
+msg: 
+
 id: Navigation
 msg: Navigatie
 
@@ -63,6 +67,10 @@ msg: Uitschakelen
 
 id: Reload current page
 msg: Huidige pagina herladen
+
+id: Show system info
+# Missing translation
+msg: 
 
 id: Suspend
 msg: Slaapstand
@@ -164,6 +172,26 @@ msg: Video-instellingen
 #
 id: System log
 msg: Systeemlogboek
+
+#
+# ./glwskins/default/osk.view
+#
+id: Cancel
+msg: Annuleren
+
+id: Clear
+# Missing translation
+msg: 
+
+id: Default
+msg: Standaard
+
+id: Keyboard layout:
+# Missing translation
+msg: 
+
+id: OK
+msg: Oke
 
 #
 # ./glwskins/default/pages/directory.view
@@ -406,6 +434,13 @@ id: Playback status
 msg: Afspeelstatus
 
 #
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+# Missing translation
+msg: 
+
+#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -428,15 +463,6 @@ msg: Onthoud mij
 
 id: Username
 msg: Gebruikersnaam
-
-#
-# ./glwskins/default/popups/common.view
-#
-id: Cancel
-msg: Annuleren
-
-id: OK
-msg: Oke
 
 #
 # ./glwskins/default/screensaver.view
@@ -531,6 +557,21 @@ id: System is low on memory (%d kB RAM available)
 msg: Het systeem heeft weinig geheugen over (%d kB RAM beschikbaar)
 
 #
+# ./src/arch/rpi/rpi_audio.c
+#
+id: Analog
+# Missing translation
+msg: 
+
+id: Audio output port
+# Missing translation
+msg: 
+
+id: HDMI
+# Missing translation
+msg: 
+
+#
 # ./src/arch/rpi/rpi_cec.c
 #
 id: Configure how Showtime communicates with your TV
@@ -538,6 +579,89 @@ id: Configure how Showtime communicates with your TV
 msg: 
 
 id: Consumer Electronics Control
+# Missing translation
+msg: 
+
+#
+# ./src/audio2/audio.c
+#
+id: Audio delay
+msg: Geluidsvertaging
+
+id: Audio gain adjustment during video playback
+# Missing translation
+msg: 
+
+id: Audio settings during video playback
+# Missing translation
+msg: 
+
+id: Setup audio output
+# Missing translation
+msg: 
+
+#
+# ./src/audio2/audio_test.c
+#
+id: 440Hz sinewave -12dB
+# Missing translation
+msg: 
+
+id: Audio test
+# Missing translation
+msg: 
+
+id: Center
+msg: Centreren
+
+id: Front Left
+# Missing translation
+msg: 
+
+id: Front Right
+# Missing translation
+msg: 
+
+id: LFE
+# Missing translation
+msg: 
+
+id: Pink noise
+# Missing translation
+msg: 
+
+id: Play test signal
+# Missing translation
+msg: 
+
+id: Rear Left
+# Missing translation
+msg: 
+
+id: Rear Right
+# Missing translation
+msg: 
+
+id: Speaker position
+# Missing translation
+msg: 
+
+id: Surround Left
+# Missing translation
+msg: 
+
+id: Surround Right
+# Missing translation
+msg: 
+
+id: Test signal type
+# Missing translation
+msg: 
+
+#
+# ./src/audio2/pulseaudio.c
+#
+id: Unable to initialize audio system %s -- %s
 # Missing translation
 msg: 
 
@@ -745,6 +869,10 @@ id: Show filename extensions
 # Missing translation
 msg: 
 
+id: Store per-file settings in filesystem
+# Missing translation
+msg: 
+
 id: %d archive parts
 msg[0]: 
 msg[1]: 
@@ -828,14 +956,23 @@ msg: Onthouden wachtwoorden verwijderd
 id: Align subtitles on video frame
 msg: Ondertiteling op videoframe aanpassen
 
-id: Audio delay
-msg: Geluidsvertaging
-
 id: Audio volume
 # Missing translation
 msg: 
 
 id: Go to standby after video ends
+# Missing translation
+msg: 
+
+id: Reset defaults for folder '%s'
+# Missing translation
+msg: 
+
+id: Save as defaults for folder '%s'
+# Missing translation
+msg: 
+
+id: Save as global default
 # Missing translation
 msg: 
 
@@ -856,6 +993,10 @@ id: Subtitle scaling
 msg: Ondertitelingsgrootte
 
 id: Subtitle vertical displacement
+# Missing translation
+msg: 
+
+id: Video frame interpolation
 # Missing translation
 msg: 
 
@@ -893,26 +1034,53 @@ msg:
 #
 # ./src/metadata/metadata.c
 #
-id: Custom search query
-msg: Aangepaste zoekopdracht
-
-id: Custom title
-msg: Aangepaste titel
-
 id: Embedded in file
 msg: Ingesloten in bestand
 
+id: Track %d
+msg: Nummer %d
+
+#
+# ./src/metadata/metadata_sources.c
+#
 id: Enabled
 msg: Ingeschakeld
-
-id: IMDb ID
-msg: IMDb-ID
 
 id: Metadata
 msg: Metadata
 
 id: Metadata configuration and provider settings
 msg: Metadataconfiguratie en aanbiedersinstellingen
+
+id: Providers for Music
+msg: Muziekaanbieders
+
+id: Providers for Video
+msg: Videoaanbieders
+
+#
+# ./src/metadata/metadb.c
+#
+id: %d items deleted
+msg: %d items verwijderd
+
+id: Clear all metadata
+msg: Alle metadata legen
+
+id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
+msg: Door alle metadata te verwijderen verliest u <b>alle</b> informatie over:\n\nAls een nummer/film bekeken is\nHet aantal keer dat een nummer/film is afgespeeld\nDe hervatpositie voor het afspelen van bestanden\n\nDit zal ook het cachegeheugen van de metadata voor externe bronnen zoals themoviedb.org, etc. verwijderen\n\nWeet u zeker dat u door wilt gaan?
+
+#
+# ./src/metadata/mlp.c
+#
+id: Custom search query
+msg: Aangepaste zoekopdracht
+
+id: Custom title
+msg: Aangepaste titel
+
+id: IMDb ID
+msg: IMDb-ID
 
 id: Metadata loaded from '%s' using %s
 msg: Metadata geladen van '%s' via %s
@@ -935,20 +1103,11 @@ msg: Geen data gevonden
 id: None
 msg: Geen
 
-id: Providers for Music
-msg: Muziekaanbieders
-
-id: Providers for Video
-msg: Videoaanbieders
-
 id: Refresh metadata
 msg: Metadata vernieuwen
 
 id: Title, Season, Episode
 msg: Titel, Seizoen, Aflevering
-
-id: Track %d
-msg: Nummer %d
 
 id: custom IMDb ID
 msg: aangepaste IMDb-ID
@@ -964,18 +1123,6 @@ msg: bestandsnaam als tv-aflevering
 
 id: folder name
 msg: mapnaam
-
-#
-# ./src/metadata/metadb.c
-#
-id: %d items deleted
-msg: %d items verwijderd
-
-id: Clear all metadata
-msg: Alle metadata legen
-
-id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
-msg: Door alle metadata te verwijderen verliest u <b>alle</b> informatie over:\n\nAls een nummer/film bekeken is\nHet aantal keer dat een nummer/film is afgespeeld\nDe hervatpositie voor het afspelen van bestanden\n\nDit zal ook het cachegeheugen van de metadata voor externe bronnen zoals themoviedb.org, etc. verwijderen\n\nWeet u zeker dat u door wilt gaan?
 
 #
 # ./src/navigator.c
@@ -1075,9 +1222,6 @@ msg: Cloudservices
 id: Corrupt plugin bundle
 msg: Beschadigde pluginbundel
 
-id: Default
-msg: Standaard
-
 id: Disk write error
 msg: Schrijffout
 
@@ -1120,6 +1264,10 @@ msg: Niet geïnstalleerd
 
 id: Not upgradable
 msg: Niet bij te werken
+
+id: On Screen Keyboards
+# Missing translation
+msg: 
 
 id: Online TV
 msg: Online tv
@@ -1268,9 +1416,6 @@ msg: Automatisch
 id: Automatically select from this source
 # Missing translation
 msg: 
-
-id: Center
-msg: Centreren
 
 id: Central subtitle folder
 # Missing translation
@@ -1461,6 +1606,14 @@ msg: Service niet gevonden
 #
 # ./src/video/ps3_vdec.c
 #
+id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
+# Missing translation
+msg: 
+
+id: Cell-h264: Broken headers, Disabling acceleration
+# Missing translation
+msg: 
+
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
 msg: Cell-h264: Niveau 4.2 voor inhoud in niveau %d.%d forceren. De video wordt mogelijk niet goed afgespeeld.
 

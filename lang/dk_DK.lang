@@ -49,6 +49,10 @@ msg: Afslut Showtime
 id: Go to Home screen
 msg: Gå til Startsiden
 
+id: Hide system info
+# Missing translation
+msg: 
+
 id: Navigation
 msg: Navigation
 
@@ -63,6 +67,10 @@ msg: Sluk
 
 id: Reload current page
 msg: Genstart aktuel side
+
+id: Show system info
+# Missing translation
+msg: 
 
 id: Suspend
 msg: Suspendere
@@ -164,6 +172,26 @@ msg: Videoindstillinger
 #
 id: System log
 msg: Systemlog
+
+#
+# ./glwskins/default/osk.view
+#
+id: Cancel
+msg: Afbryd
+
+id: Clear
+# Missing translation
+msg: 
+
+id: Default
+msg: Standard
+
+id: Keyboard layout:
+# Missing translation
+msg: 
+
+id: OK
+msg: OK
 
 #
 # ./glwskins/default/pages/directory.view
@@ -402,6 +430,13 @@ id: Playback status
 msg: Afspilningsstatus
 
 #
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+# Missing translation
+msg: 
+
+#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -424,15 +459,6 @@ msg: Husk mig
 
 id: Username
 msg: Brugernavn
-
-#
-# ./glwskins/default/popups/common.view
-#
-id: Cancel
-msg: Afbryd
-
-id: OK
-msg: OK
 
 #
 # ./glwskins/default/screensaver.view
@@ -527,6 +553,21 @@ id: System is low on memory (%d kB RAM available)
 msg: Systemet mangler hukommelse (%d Kb RAM tilgængelig)
 
 #
+# ./src/arch/rpi/rpi_audio.c
+#
+id: Analog
+# Missing translation
+msg: 
+
+id: Audio output port
+# Missing translation
+msg: 
+
+id: HDMI
+# Missing translation
+msg: 
+
+#
 # ./src/arch/rpi/rpi_cec.c
 #
 id: Configure how Showtime communicates with your TV
@@ -534,6 +575,89 @@ id: Configure how Showtime communicates with your TV
 msg: 
 
 id: Consumer Electronics Control
+# Missing translation
+msg: 
+
+#
+# ./src/audio2/audio.c
+#
+id: Audio delay
+msg: Lyd forsinkelse
+
+id: Audio gain adjustment during video playback
+# Missing translation
+msg: 
+
+id: Audio settings during video playback
+# Missing translation
+msg: 
+
+id: Setup audio output
+# Missing translation
+msg: 
+
+#
+# ./src/audio2/audio_test.c
+#
+id: 440Hz sinewave -12dB
+# Missing translation
+msg: 
+
+id: Audio test
+# Missing translation
+msg: 
+
+id: Center
+msg: Centreret
+
+id: Front Left
+# Missing translation
+msg: 
+
+id: Front Right
+# Missing translation
+msg: 
+
+id: LFE
+# Missing translation
+msg: 
+
+id: Pink noise
+# Missing translation
+msg: 
+
+id: Play test signal
+# Missing translation
+msg: 
+
+id: Rear Left
+# Missing translation
+msg: 
+
+id: Rear Right
+# Missing translation
+msg: 
+
+id: Speaker position
+# Missing translation
+msg: 
+
+id: Surround Left
+# Missing translation
+msg: 
+
+id: Surround Right
+# Missing translation
+msg: 
+
+id: Test signal type
+# Missing translation
+msg: 
+
+#
+# ./src/audio2/pulseaudio.c
+#
+id: Unable to initialize audio system %s -- %s
 # Missing translation
 msg: 
 
@@ -741,6 +865,10 @@ id: Show filename extensions
 # Missing translation
 msg: 
 
+id: Store per-file settings in filesystem
+# Missing translation
+msg: 
+
 id: %d archive parts
 msg[0]: 
 msg[1]: 
@@ -824,14 +952,23 @@ msg: Gemte kodeord er slettet
 id: Align subtitles on video frame
 msg: Juster undertekster efter videobillede
 
-id: Audio delay
-msg: Lyd forsinkelse
-
 id: Audio volume
 # Missing translation
 msg: 
 
 id: Go to standby after video ends
+# Missing translation
+msg: 
+
+id: Reset defaults for folder '%s'
+# Missing translation
+msg: 
+
+id: Save as defaults for folder '%s'
+# Missing translation
+msg: 
+
+id: Save as global default
 # Missing translation
 msg: 
 
@@ -852,6 +989,10 @@ id: Subtitle scaling
 msg: Skalering af undertekster
 
 id: Subtitle vertical displacement
+# Missing translation
+msg: 
+
+id: Video frame interpolation
 # Missing translation
 msg: 
 
@@ -889,26 +1030,53 @@ msg:
 #
 # ./src/metadata/metadata.c
 #
-id: Custom search query
-msg: Brugerdefinerede søgning
-
-id: Custom title
-msg: Egen titel
-
 id: Embedded in file
 msg: Indlejret i fil
 
+id: Track %d
+msg: Spor %d
+
+#
+# ./src/metadata/metadata_sources.c
+#
 id: Enabled
 msg: Aktiveret
-
-id: IMDb ID
-msg: IMDb ID
 
 id: Metadata
 msg: Metadata
 
 id: Metadata configuration and provider settings
 msg: Metadata konfiguration og providerindstillinger
+
+id: Providers for Music
+msg: Udbydere af musik
+
+id: Providers for Video
+msg: Videotjenester
+
+#
+# ./src/metadata/metadb.c
+#
+id: %d items deleted
+msg: %d objekter slettet
+
+id: Clear all metadata
+msg: Fjern alle metadata
+
+id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
+msg: At fjerne alle metadata betyder at du mister <b>alle</b> informationer om:\n\nHvis et spor/film er blevet set\nAntal gange et spor/film er blevet afspillet\nFortsæt afspilling\n\nEr du sikker?
+
+#
+# ./src/metadata/mlp.c
+#
+id: Custom search query
+msg: Brugerdefinerede søgning
+
+id: Custom title
+msg: Egen titel
+
+id: IMDb ID
+msg: IMDb ID
 
 id: Metadata loaded from '%s' using %s
 msg: Metadata hentet fra '%s' ved hjælp af %s
@@ -931,20 +1099,11 @@ msg: Ingen data fundet
 id: None
 msg: Ingen
 
-id: Providers for Music
-msg: Udbydere af musik
-
-id: Providers for Video
-msg: Videotjenester
-
 id: Refresh metadata
 msg: Opdater metadata
 
 id: Title, Season, Episode
 msg: Titel, Årstid, Episode
-
-id: Track %d
-msg: Spor %d
 
 id: custom IMDb ID
 msg: brugerdefinerede IMDb ID
@@ -960,18 +1119,6 @@ msg: filnavn som TV episode
 
 id: folder name
 msg: mappenavn
-
-#
-# ./src/metadata/metadb.c
-#
-id: %d items deleted
-msg: %d objekter slettet
-
-id: Clear all metadata
-msg: Fjern alle metadata
-
-id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
-msg: At fjerne alle metadata betyder at du mister <b>alle</b> informationer om:\n\nHvis et spor/film er blevet set\nAntal gange et spor/film er blevet afspillet\nFortsæt afspilling\n\nEr du sikker?
 
 #
 # ./src/navigator.c
@@ -1071,9 +1218,6 @@ msg: Cloudtjenester
 id: Corrupt plugin bundle
 msg: Korrupt plugin bundt
 
-id: Default
-msg: Standard
-
 id: Disk write error
 msg: Kunne ikke skrive til disken
 
@@ -1116,6 +1260,10 @@ msg: Ikke installeret
 
 id: Not upgradable
 msg: Ikke opdaterbare
+
+id: On Screen Keyboards
+# Missing translation
+msg: 
 
 id: Online TV
 msg: Online TV
@@ -1264,9 +1412,6 @@ msg: Auto
 id: Automatically select from this source
 # Missing translation
 msg: 
-
-id: Center
-msg: Centreret
 
 id: Central subtitle folder
 # Missing translation
@@ -1457,6 +1602,14 @@ msg: Tjenesten findes ikke
 #
 # ./src/video/ps3_vdec.c
 #
+id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
+# Missing translation
+msg: 
+
+id: Cell-h264: Broken headers, Disabling acceleration
+# Missing translation
+msg: 
+
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
 msg: Cell-h264:  Tving level 4.2 til indhold i level %d.%d. Dette vil nok stoppe videoafspilning.
 
