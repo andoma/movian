@@ -5,20 +5,16 @@ maintainer: Andreas Öman <andreas@lonelycoder.com>
 # ./ext/miner/miner.c
 #
 id: Do you like Showtime? You can donate money to the project by mining Litecoins on your PS3
-# Missing translation
-msg: 
+msg: Gillar du Showtime? Du kan donera pengar till projektet genom att skapa Litecoiints på din PS3a
 
 id: Donate money to the Showtime project by mining litecoints
-# Missing translation
-msg: 
+msg: Donera pengar till Showtime genom att skapa litecoints.
 
 id: Donations
-# Missing translation
-msg: 
+msg: Donationer
 
 id: Show me more
-# Missing translation
-msg: 
+msg: Berätta mer
 
 #
 # ./glwskins/default/cmdmenu.view
@@ -48,8 +44,7 @@ id: Go to Home screen
 msg: Gå till hemsidan
 
 id: Hide system info
-# Missing translation
-msg: 
+msg: Dölj systeminformation
 
 id: Navigation
 msg: Navigering
@@ -67,8 +62,7 @@ id: Reload current page
 msg: Ladda om nuvarande sida
 
 id: Show system info
-# Missing translation
-msg: 
+msg: Visa systeminformation
 
 id: Suspend
 msg: Viloläge
@@ -176,15 +170,13 @@ id: Cancel
 msg: Avbryt
 
 id: Clear
-# Missing translation
-msg: 
+msg: Töm
 
 id: Default
 msg: Standard
 
 id: Keyboard layout:
-# Missing translation
-msg: 
+msg: Tangentbordsvariant
 
 id: OK
 msg: OK
@@ -422,8 +414,7 @@ msg: Uppspelningsstatus
 # ./glwskins/default/pages/wideinfo/video.view
 #
 id: Seen:
-# Missing translation
-msg: 
+msg: Sedd:
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -462,15 +453,13 @@ id: CPU Temp
 msg: CPU Temp
 
 id: Fragmentation
-# Missing translation
-msg: 
+msg: Fragmentering
 
 id: GPU Temp
 msg: GPU Temp
 
 id: Inactive mem
-# Missing translation
-msg: 
+msg: Inaktivt minne
 
 id: Memory usage
 msg: Minnesanvändning
@@ -494,32 +483,25 @@ msg: Huvudvolym: %d dB
 # ./resources/spuminer/settings.view
 #
 id: Apart from enabling this option you do not need to do anything else to make your donations for the project.
-# Missing translation
-msg: 
+msg: Förutom att slå på den här optionen behöver du inte göra någonting för att donera pengar till projektet
 
 id: Enable mining
-# Missing translation
-msg: 
+msg: Slå på 'mining'
 
 id: For more information about Litecoin, please visit http://litecoin.org
-# Missing translation
-msg: 
+msg: För mer information om Litecoin, besök http://litecoin.org
 
 id: If you like Showtime you can donate money to the project by letting your Playstation 3 mine Litecoins while Showtime is running.
-# Missing translation
-msg: 
+msg: Om du gillar Showtime kan du donera pengar till projektet genom att låta din Playstation 3 skapa Litecoins medan Showtime körs.
 
 id: Mining will not interfere with video playback performance as it only uses the leftover capacity of the SPU processors.
-# Missing translation
-msg: 
+msg: Att skapa Litecoints stör inte videouppspelning eftersom den endast använder överbliven SPU kapacitet
 
 id: Please consider enabling this option. / %s
-# Missing translation
-msg: 
+msg: Överväg gärna att slå på denna option. / %s
 
 id: Thanks for your support!
-# Missing translation
-msg: 
+msg: Tack för din support!
 
 #
 # ./src/api/tmdb.c
@@ -540,16 +522,13 @@ msg: System har lite ledigt minne (%d kB RAM tillgängligt)
 # ./src/arch/rpi/rpi_audio.c
 #
 id: Analog
-# Missing translation
-msg: 
+msg: Analog
 
 id: Audio output port
-# Missing translation
-msg: 
+msg: Ljudutgång
 
 id: HDMI
-# Missing translation
-msg: 
+msg: HDMI
 
 #
 # ./src/arch/rpi/rpi_cec.c
@@ -567,81 +546,64 @@ id: Audio delay
 msg: Ljuddelay
 
 id: Audio gain adjustment during video playback
-# Missing translation
-msg: 
+msg: Volym justering vid videouppspelning
 
 id: Audio settings during video playback
-# Missing translation
-msg: 
+msg: Ljudinställningar för videouppspelning
 
 id: Setup audio output
-# Missing translation
-msg: 
+msg: Ställ in ljudutgång
 
 #
 # ./src/audio2/audio_test.c
 #
 id: 440Hz sinewave -12dB
-# Missing translation
-msg: 
+msg: 440Hz sinuskurva -12dB
 
 id: Audio test
-# Missing translation
-msg: 
+msg: Ljudtest
 
 id: Center
 msg: Centrerad
 
 id: Front Left
-# Missing translation
-msg: 
+msg: Vänster fram
 
 id: Front Right
-# Missing translation
-msg: 
+msg: Höger frame
 
 id: LFE
-# Missing translation
-msg: 
+msg: Subbas
 
 id: Pink noise
-# Missing translation
-msg: 
+msg: Rosa brus
 
 id: Play test signal
-# Missing translation
-msg: 
+msg: Spela test signal
 
 id: Rear Left
-# Missing translation
-msg: 
+msg: Bak vänster
 
 id: Rear Right
-# Missing translation
-msg: 
+msg: Bak höger
 
 id: Speaker position
-# Missing translation
-msg: 
+msg: Högtalarposition
 
 id: Surround Left
-# Missing translation
-msg: 
+msg: Surround vänster
 
 id: Surround Right
-# Missing translation
-msg: 
+msg: Surround höger
 
 id: Test signal type
-# Missing translation
-msg: 
+msg: Typ av testsignal
 
 #
 # ./src/audio2/pulseaudio.c
 #
 id: Unable to initialize audio system %s -- %s
-# Missing translation
-msg: 
+msg: Kan inte starta ljudsystem %s -- %s
 
 #
 # ./src/backend/dvd/cdda.c
@@ -836,20 +798,17 @@ id: Enable file deletion from item menu
 msg: Tillåt borttagning av filer från menyn
 
 id: File browsing
-# Missing translation
-msg: 
+msg: Filutforskare
 
 id: Show filename extensions
-# Missing translation
-msg: 
+msg: Visa filändelser
 
 id: Store per-file settings in filesystem
-# Missing translation
-msg: 
+msg: Spara extra information om filer i filsystemet
 
 id: %d archive parts
-msg[0]: 
-msg[1]: 
+msg[0]: %d arkivdelar
+msg[1]: %d arkivdel
 
 id: %d directories
 msg[0]: %d kataloger
@@ -935,16 +894,13 @@ id: Go to standby after video ends
 msg: Gå till standby efter videon är slut
 
 id: Reset defaults for folder '%s'
-# Missing translation
-msg: 
+msg: Återställ standardinställnigar för katalog '%s'
 
 id: Save as defaults for folder '%s'
-# Missing translation
-msg: 
+msg: Spara som standardinställningar för katalog '%s'
 
 id: Save as global default
-# Missing translation
-msg: 
+msg: Spara som globala standardinstallningar
 
 id: Stretch video to fullscreen
 msg: Sträck ut videon över hela skärmen
@@ -965,8 +921,7 @@ id: Subtitle vertical displacement
 msg: Vertikal positiono för undertexter
 
 id: Video frame interpolation
-# Missing translation
-msg: 
+msg: Interpolera videobilder
 
 id: Video zoom
 msg: Video zoom
@@ -1221,8 +1176,7 @@ id: Not upgradable
 msg: Inte uppgraderingsbar
 
 id: On Screen Keyboards
-# Missing translation
-msg: 
+msg: Skärmtangentbord
 
 id: Online TV
 msg: OnlineTV
@@ -1540,12 +1494,10 @@ msg: Kan ej hitta tjänsten
 # ./src/video/ps3_vdec.c
 #
 id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
-# Missing translation
-msg: 
+msg: %d referensbilder för 1080 material är inte kompatibelt med PS3 hårdvaruavkodning. Slår av acceleration.
 
 id: Cell-h264: Broken headers, Disabling acceleration
-# Missing translation
-msg: 
+msg: Trasig videoinformation. Slår av acceleration.
 
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
 msg: Cell-h264: Tvingar level 4.2 för media i  level %d.%d. Detta kan förstöra video uppspelningen.
