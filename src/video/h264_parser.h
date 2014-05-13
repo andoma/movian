@@ -105,7 +105,7 @@ typedef struct h264_pps {
   char constrained_intra_pred;
   char redundant_pic_cnt_present;
   char transform_8x8_mode;
-
+  char present;
 
   int init_qp;
   int init_qs;
@@ -211,3 +211,5 @@ void h264_parser_decode_nal(h264_parser_t *hp, const uint8_t *data, int len);
 void h264_parser_decode_nal_from_bs(h264_parser_t *hp, bitstream_t *bs);
 
 void h264_parser_decode_data(h264_parser_t *hp, const uint8_t *d, int len);
+
+void h264_dump_extradata(const void *data, size_t size);

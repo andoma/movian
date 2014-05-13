@@ -158,6 +158,8 @@ h264_parser_decode_pps(h264_parser_t *hp, bitstream_t *bs)
 
   h264_pps_t *pps = &hp->pps_array[pps_id];
 
+  pps->present = 1;
+
   pps->sps_id = sps_id;
   pps->cabac                                = bs->read_bits1(bs);
   pps->pic_order_present                    = bs->read_bits1(bs);
@@ -476,4 +478,55 @@ h264_parser_decode_data(h264_parser_t *hp, const uint8_t *d, int len)
       len -= nal_len;
     }
   }
+}
+
+
+/**
+ *
+ */
+void
+h264_dump_extradata(const void *data, size_t size)
+{
+  h264_parser_t hp;
+
+  hexdump("h264", data, size);
+
+  if(h264_parser_init(&hp, data, size)) {
+    TRACE(TRACE_DEBUG, "h264", "Corrupt extradata");
+    return;
+  }
+
+  for(int i = 0; i < H264_PARSER_NUM_SPS; i++) {
+    const h264_sps_t *s = &hp.sps_array[i];
+    if(!s->present)
+      continue;
+    TRACE(TRACE_DEBUG, "h264",
+          "SPS[%d]: %d x %d profile:%d level:%d.%d ref-frames:%d",
+          i, s->mb_width * 16, s->mb_height * 16,
+          s->profile,
+          s->level / 10,
+          s->level % 10,
+          s->num_ref_frames);
+    TRACE(TRACE_DEBUG, "h264",
+          "        chromaformat:%d lumabits:%d chromabits:%d",
+          s->chroma_format,
+          s->bit_depth_luma,
+          s->bit_depth_chroma);
+  }
+
+  for(int i = 0; i < H264_PARSER_NUM_PPS; i++) {
+    const h264_pps_t *p = &hp.pps_array[i];
+    if(!p->present)
+      continue;
+    TRACE(TRACE_DEBUG, "h264",
+          "PPS[%d]: %s pop:%d wpred:%d wbipred:%d deblock:%d",
+          i, p->cabac ? "CABAC" : "CAVLC",
+          p->pic_order_present,
+          p->weighted_pred_flag,
+          p->weighted_bipred_idc,
+          p->deblocking_filter_parameters_present);
+  }
+
+
+  h264_parser_fini(&hp);
 }
