@@ -78,7 +78,7 @@ typedef struct video_args {
   uint8_t subdbhash[16]; // md5sum of first 64k + last 64k
   const char *parent_url;
   const char *parent_title;
-
+  prop_t *origin;
 } video_args_t;
 
 

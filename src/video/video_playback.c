@@ -157,7 +157,8 @@ play_video(const char *url, struct media_pipe *mp,
 	   int flags, int priority,
 	   char *errbuf, size_t errlen,
 	   video_queue_t *vq,
-           const char *parent_url, const char *parent_title)
+           const char *parent_url, const char *parent_title,
+           prop_t *origin)
 {
   htsmsg_t *subs, *sources;
   const char *str;
@@ -174,7 +175,7 @@ play_video(const char *url, struct media_pipe *mp,
   memset(&va, 0, sizeof(va));
   va.episode = -1;
   va.season = -1;
-
+  va.origin = origin;
   va.priority = priority;
 
   LIST_INIT(&vsources);
@@ -197,7 +198,8 @@ play_video(const char *url, struct media_pipe *mp,
 	TRACE(TRACE_DEBUG, "vp", "Page %s redirects to video source %s\n",
 	      url, rstr_get(r));
 	event_t *e = play_video(rstr_get(r), mp, flags, priority,
-				errbuf, errlen, vq, parent_title, parent_url);
+				errbuf, errlen, vq, parent_title, parent_url,
+                                origin);
 	rstr_release(r);
 	return e;
       }
@@ -662,7 +664,8 @@ video_player_idle(void *aux)
       e = play_video(rstr_get(play_url), mp,
 		     play_flags, play_priority,
 		     errbuf, sizeof(errbuf), vq,
-                     rstr_get(parent_url), rstr_get(parent_title));
+                     rstr_get(parent_url), rstr_get(parent_title),
+                     origin);
       mp_bump_epoch(mp);
       prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 0);
       if(e == NULL)

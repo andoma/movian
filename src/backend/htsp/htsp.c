@@ -152,8 +152,10 @@ typedef struct htsp_subscription {
 
   uint32_t hs_sid;
   media_pipe_t *hs_mp;
-  
+
   struct htsp_subscription_stream_list hs_streams;
+
+  prop_t *hs_origin;
 
 } htsp_subscription_t;
 
@@ -1303,20 +1305,28 @@ set_channel(htsp_connection_t *hc, htsp_subscription_t *hs, int chid,
 static int
 zap_channel(htsp_connection_t *hc, htsp_subscription_t *hs,
 	    char *errbuf, size_t errlen, int reverse,
-	    char **name, video_queue_t *vq, rstr_t **url)
+	    char **name, video_queue_t *vq)
 {
   htsmsg_t *m;
   const char *err;
 
-  //  rstr_t *tmp = video_queue_find_next(vq, rstr_get(*url), reverse, 1);
-  rstr_t *tmp = NULL;
-  if(tmp == NULL)
-    return 0;
-  const char *q = strstr(rstr_get(tmp), "/channel/");
-  if(q == NULL)
+  if(hs->hs_origin == NULL)
     return 0;
 
+  prop_t *next = video_queue_find_next(vq, hs->hs_origin, reverse, 1);
+  if(next == NULL)
+    return 0;
+
+  rstr_t *next_url = prop_get_string(next, "url", NULL);
+  const char *q = strstr(rstr_get(next_url), "/channel/");
+  if(q == NULL) {
+    prop_ref_dec(next);
+    rstr_release(next_url);
+    return 0;
+  }
+
   int newch = atoi(q + strlen("/channel/"));
+  rstr_release(next_url);
 
   // Stop current
 
@@ -1345,16 +1355,19 @@ zap_channel(htsp_connection_t *hc, htsp_subscription_t *hs,
 
   if((m = htsp_reqreply(hc, m)) == NULL) {
     snprintf(errbuf, errlen, "Connection with server lost");
+    prop_ref_dec(next);
     return -1;
   }
 
   if((err = htsmsg_get_str(m, "error")) != NULL) {
     snprintf(errbuf, errlen, "From server: %s", err);
     htsmsg_destroy(m);
+    prop_ref_dec(next);
     return -1;
   }
 
-  rstr_set(url, tmp);
+  prop_ref_dec(hs->hs_origin);
+  hs->hs_origin = next;
 
   htsmsg_destroy(m);
   set_channel(hc, hs, newch, name);
@@ -1437,8 +1450,6 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
 
   set_channel(hc, hs, chid, &name);
 
-  rstr_t *rurl = rstr_alloc(url);
-
   while(1) {
     e = mp_dequeue_event(mp);
     
@@ -1456,14 +1467,12 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
 
       if((m = htsp_reqreply(hc, m)) == NULL) {
 	snprintf(errbuf, errlen, "Connection with server lost");
-	rstr_release(rurl);
 	return NULL;
       }
       
       if((err = htsmsg_get_str(m, "error")) != NULL) {
 	snprintf(errbuf, errlen, "From server: %s", err);
 	htsmsg_destroy(m);
-	rstr_release(rurl);
 	return NULL;
       }
       
@@ -1485,14 +1494,12 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
 
       if((m = htsp_reqreply(hc, m)) == NULL) {
 	snprintf(errbuf, errlen, "Connection with server lost");
-	rstr_release(rurl);
 	return NULL;
       }
       
       if((err = htsmsg_get_str(m, "error")) != NULL) {
 	snprintf(errbuf, errlen, "From server: %s", err);
 	htsmsg_destroy(m);
-	rstr_release(rurl);
 	return NULL;
       }
       
@@ -1524,14 +1531,12 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
 
       if((m = htsp_reqreply(hc, m)) == NULL) {
 	snprintf(errbuf, errlen, "Connection with server lost");
-	rstr_release(rurl);
 	return NULL;
       }
       
       if((err = htsmsg_get_str(m, "error")) != NULL) {
 	snprintf(errbuf, errlen, "From server: %s", err);
 	htsmsg_destroy(m);
-	rstr_release(rurl);
 	return NULL;
       }
       
@@ -1540,16 +1545,14 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
     } else if(event_is_action(e, ACTION_PREV_CHANNEL) ||
 	      event_is_action(e, ACTION_SKIP_BACKWARD)) {
 
-      if(zap_channel(hc, hs, errbuf, errlen, 1, &name, vq, &rurl)) {
-	rstr_release(rurl);
+      if(zap_channel(hc, hs, errbuf, errlen, 1, &name, vq)) {
 	return NULL;
       }
 
     } else if(event_is_action(e, ACTION_NEXT_CHANNEL) ||
 	      event_is_action(e, ACTION_SKIP_FORWARD)) {
 
-      if(zap_channel(hc, hs, errbuf, errlen, 0, &name, vq, &rurl)) {
-	rstr_release(rurl);
+      if(zap_channel(hc, hs, errbuf, errlen, 0, &name, vq)) {
 	return NULL;
       }
 
@@ -1559,8 +1562,6 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
 
     event_release(e);
   }
-
-  rstr_release(rurl);
 
   prop_set_string(mp->mp_prop_playstatus, "stop");
   
@@ -1804,6 +1805,7 @@ be_htsp_playvideo(const char *url, media_pipe_t *mp,
 
   hs->hs_sid = atomic_add(&hc->hc_sid_generator, 1);
   hs->hs_mp = mp;
+  hs->hs_origin = prop_ref_inc(va->origin);
 
   hts_mutex_lock(&hc->hc_subscription_mutex);
   LIST_INSERT_HEAD(&hc->hc_subscriptions, hs, hs_link);
@@ -1819,6 +1821,7 @@ be_htsp_playvideo(const char *url, media_pipe_t *mp,
   hts_mutex_unlock(&hc->hc_subscription_mutex);
 
   htsp_free_streams(hs);
+  prop_ref_dec(hs->hs_origin);
   free(hs);
   return e;
 }
