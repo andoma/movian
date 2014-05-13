@@ -253,7 +253,6 @@ typedef struct gconf {
   int enable_image_debug;
   int enable_settings_debug;
   int enable_thread_debug;
-  int enable_conditional_rendering;
 
   const char *devplugin;
   const char *plugin_repo;

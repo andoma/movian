@@ -478,9 +478,6 @@ glw_prepare_frame(glw_root_t *gr, int flags)
     }
   }
 
-  if(!gconf.enable_conditional_rendering)
-    gr->gr_need_refresh = GLW_REFRESH_FLAG_LAYOUT | GLW_REFRESH_FLAG_RENDER;
-
   if(gr->gr_scheduled_refresh <= gr->gr_frame_start) {
     gr->gr_need_refresh = GLW_REFRESH_FLAG_LAYOUT | GLW_REFRESH_FLAG_RENDER;
     gr->gr_scheduled_refresh = INT64_MAX;

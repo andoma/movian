@@ -1402,9 +1402,6 @@ init_dev_settings(void)
   add_dev_bool(s, "Log memory usage",
 	       "memdebug", &gconf.enable_mem_debug);
 #endif
-  add_dev_bool(s, "Enable conditional UI rendering",
-	       "conduirender", &gconf.enable_conditional_rendering);
-
 
   setting_create(SETTING_STRING, gconf.settings_dev, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE_CSTR("Network log destination"),
