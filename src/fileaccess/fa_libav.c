@@ -102,7 +102,7 @@ static const struct {
   { "video/quicktime", "mov" },
   { "video/mp4", "mp4" },
   { "video/x-msvideo", "avi" },
-  { "video/vnd.dlna.mpeg-tts,", "mpegts" },
+  { "video/vnd.dlna.mpeg-tts", "mpegts" },
   { "video/avi", "avi" },
   { "video/nsv", "nsv" },
   { "video/webm", "webm" },
