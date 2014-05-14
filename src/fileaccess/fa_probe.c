@@ -647,7 +647,7 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx,
 			  tmp1,
 			  lang ? lang->value : NULL,
 			  stream->disposition,
-			  tn);
+			  tn, avctx->channels);
     }
   
     md->md_contenttype = CONTENT_FILE;

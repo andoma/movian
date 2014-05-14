@@ -135,7 +135,7 @@ void
 metadata_add_stream(metadata_t *md, const char *codec, int type,
 		    int streamindex,
 		    const char *title, const char *info, const char *isolang,
-		    int disposition, int tracknum)
+		    int disposition, int tracknum, int channels)
 {
   metadata_stream_t *ms = malloc(sizeof(metadata_stream_t));
   ms->ms_title = rstr_alloc(title);
@@ -146,6 +146,7 @@ metadata_add_stream(metadata_t *md, const char *codec, int type,
   ms->ms_disposition = disposition;
   ms->ms_streamindex = streamindex;
   ms->ms_tracknum = tracknum;
+  ms->ms_channels = channels;
   TAILQ_INSERT_TAIL(&md->md_streams, ms, ms_link);
 }
 
@@ -209,6 +210,10 @@ metadata_stream_make_prop(const metadata_stream_t *ms, prop_t *parent,
   else
     score += 5;
 
+  if(ms->ms_channels > 2)
+    score++;
+  if(ms->ms_channels > 0)
+    score++;
 
   if(ms->ms_title != NULL) {
     title = rstr_dup(ms->ms_title);
