@@ -390,6 +390,7 @@ typedef struct media_pipe {
 #define MP_VIDEO         0x4
 #define MP_FLUSH_ON_HOLD 0x8
 #define MP_ALWAYS_SATISFIED 0x10
+#define MP_CAN_SEEK      0x20
 
   int mp_eof;   // End of file: We don't expect to need to read more data
   int mp_hold;  // Paused

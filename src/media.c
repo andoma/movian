@@ -1198,9 +1198,11 @@ mp_enqueue_event_locked(media_pipe_t *mp, event_t *e)
     track_mgr_next_track(&mp->mp_subtitle_track_mgr);
   } else {
 
-    if(event_is_type(e, EVENT_PLAYQUEUE_JUMP) || 
+    if(event_is_type(e, EVENT_PLAYQUEUE_JUMP) ||
        event_is_action(e, ACTION_STOP) ||
-       event_is_action(e, ACTION_SKIP_FORWARD)) {
+       event_is_action(e, ACTION_SKIP_FORWARD) ||
+       (event_is_action(e, ACTION_SKIP_BACKWARD)
+        && !(mp->mp_flags & MP_CAN_SEEK))) {
       if(mp->mp_cancellable != NULL)
         cancellable_cancel(mp->mp_cancellable);
     }
@@ -2103,6 +2105,12 @@ mp_configure(media_pipe_t *mp, int caps, int buffer_size, int64_t duration,
     mp->mp_flags |= MP_ALWAYS_SATISFIED;
   } else {
     mp->mp_flags &= ~MP_ALWAYS_SATISFIED;
+  }
+
+  if(caps & MP_PLAY_CAPS_SEEK) {
+    mp->mp_flags |= MP_CAN_SEEK;
+  } else {
+    mp->mp_flags &= ~MP_CAN_SEEK;;
   }
 
   prop_set_int(mp->mp_prop_canSeek,  caps & MP_PLAY_CAPS_SEEK  ? 1 : 0);
