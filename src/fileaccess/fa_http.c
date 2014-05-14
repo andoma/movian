@@ -89,57 +89,6 @@ static int http_tokenize(char *buf, char **vec, int vecsize, int delimiter);
       TRACE(TRACE_DEBUG, "HTTP", x);		\
   } while(0)
 
-
-
-
-/**
- * Server quirks
- */
-LIST_HEAD(http_server_quirk_list, http_server_quirk);
-
-static struct http_server_quirk_list http_server_quirks;
-static hts_mutex_t http_server_quirk_mutex;
-
-#define HTTP_SERVER_QUIRK_NO_HEAD 0x1 // Can't do proper HEAD requests
-
-typedef struct http_server_quirk {
-  LIST_ENTRY(http_server_quirk) hsq_link;
-  char *hsq_hostname;
-  int hsq_quirks;
-} http_server_quirk_t;
-
-/**
- *
- */
-static int
-http_server_quirk_set_get(const char *hostname, int quirk)
-{
-  http_server_quirk_t *hsq;
-  int r;
-
-  hts_mutex_lock(&http_server_quirk_mutex);
-
-  LIST_FOREACH(hsq, &http_server_quirks, hsq_link) {
-    if(!strcmp(hsq->hsq_hostname, hostname))
-      break;
-  }
-  
-  if(quirk) {
-    if(hsq == NULL) {
-      hsq = malloc(sizeof(http_server_quirk_t));
-      hsq->hsq_hostname = strdup(hostname);
-    } else {
-      LIST_REMOVE(hsq, hsq_link);
-    }
-    hsq->hsq_quirks = quirk;
-    LIST_INSERT_HEAD(&http_server_quirks, hsq, hsq_link);
-  }
-  r = hsq ? hsq->hsq_quirks : 0;
-  hts_mutex_unlock(&http_server_quirk_mutex);
-  return r;
-}
-
-
 /**
  * Connection parking
  */
@@ -1660,7 +1609,6 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
   int code;
   htsbuf_queue_t q;
   int redircount = 0;
-  int nohead; // Set if server can't handle HEAD method
   struct http_header_list headers;
   struct http_header_list cookies;
 
@@ -1676,13 +1624,6 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
   htsbuf_queue_init(&q, 0);
 
-  nohead = !!(http_server_quirk_set_get(hf->hf_connection->hc_hostname, 0) &
-	      HTTP_SERVER_QUIRK_NO_HEAD);
-  
-  nohead = 1; // We're gonna test without HEAD requests for a while
-              // There seems to be a lot of issues with it, in particular
-              // for servers serving HLS
-
  again:
 
   http_headers_init(&headers, hf);
@@ -1693,14 +1634,10 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
     if(http_headers_auth(&headers, &cookies, hf, "GET", NULL, errbuf, errlen))
       return -1;
     tcp_huge_buffer(hf->hf_connection->hc_tc);
-  } else if(nohead) {
+  } else {
     http_send_verb(&q, hf, "GET");
     htsbuf_qprintf(&q, "Range: bytes=0-4095\r\n");
     if(http_headers_auth(&headers, &cookies, hf, "GET", NULL, errbuf, errlen))
-      return -1;
-  } else {
-    http_send_verb(&q, hf, "HEAD");
-    if(http_headers_auth(&headers, &cookies, hf, "HEAD", NULL, errbuf, errlen))
       return -1;
   }
 
@@ -1724,41 +1661,12 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
   switch(code) {
   case 200:
-    if(hf->hf_streaming || nohead) {
-      if(hf->hf_filesize == -1)
-        hf->hf_rsize = INT64_MAX;
+    if(hf->hf_filesize == -1)
+      hf->hf_rsize = INT64_MAX;
 
-      if(nohead)
-        hf->hf_no_ranges = 1;
+    hf->hf_no_ranges = 1;
 
-      HF_TRACE(hf, "Opened in streaming mode");
-      return 0;
-    }
-
-    if(hf->hf_filesize < 0) {
-      
-      if(!hf->hf_want_close && hf->hf_chunked_transfer) {
-	// Some servers seems incapable of sending content-length when
-	// in persistent connection mode (because they switch to using
-	// chunked transfer instead).
-	// Retry with HTTP/1.0 and closing connections
-
-	hf->hf_version = 0;
-	hf->hf_want_close = 1;
-	HF_TRACE(hf, "%s: No content-length, retrying with connection: close",
-		 hf->hf_url);
-	goto again;
-      }
-
-      HF_TRACE(hf, "%s: No known filesize, seeking may be slower", hf->hf_url);
-    }
-
-    // This was just a HEAD request, we don't actually get any data
-    hf->hf_rsize = 0;
-
-    if(hf->hf_connection_mode == CONNECTION_MODE_CLOSE)
-      http_detach(hf, 0, "Head request");
-
+    HF_TRACE(hf, "Opened in streaming mode");
     return 0;
 
   case 206:
@@ -1770,8 +1678,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
   case 302:
   case 303:
   case 307:
-    if(redirect(hf, &redircount, errbuf, errlen, code,
-		hf->hf_streaming || nohead))
+    if(redirect(hf, &redircount, errbuf, errlen, code, 1))
       return -1;
 
     if(hf->hf_connection_mode == CONNECTION_MODE_CLOSE)
@@ -1781,8 +1688,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
 
   case 401:
-    if(authenticate(hf, errbuf, errlen, non_interactive,
-		    hf->hf_streaming || nohead))
+    if(authenticate(hf, errbuf, errlen, non_interactive, 1))
       return -1;
 
     if(hf->hf_connection_mode == CONNECTION_MODE_CLOSE) {
@@ -1793,36 +1699,10 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
     goto again;
 
   case 405:
-    if(!nohead) {
-
-      // This server does not support HEAD, remember that
-      http_server_quirk_set_get(hf->hf_connection->hc_hostname, 
-				HTTP_SERVER_QUIRK_NO_HEAD);
-
-      // It's a bit unclear if we receive a body when we
-      // get a "405 Method Not Supported" as a result
-      // of a HEAD request (it seems to be differerent
-      // between different servers), so just disconnect
-      // and retry without HEAD
-
-      http_detach(hf, 0, "HEAD not supported");
-      nohead = 1;
-      goto reconnect;
-    }
     snprintf(errbuf, errlen, "Unsupported method");
     return -1;
 
   case -1:
-    if(!hf->hf_streaming && !nohead) {
-      // Server might choke on HEAD request
-
-      http_server_quirk_set_get(hf->hf_connection->hc_hostname, 
-				HTTP_SERVER_QUIRK_NO_HEAD);
-
-      http_detach(hf, 0, "Disconnect during HEAD request");
-      nohead = 1;
-      goto reconnect;
-    }
     snprintf(errbuf, errlen, "Server reset connection");
     return -1;
 
@@ -2424,7 +2304,6 @@ http_init(void)
   hts_mutex_init(&http_connections_mutex);
   hts_mutex_init(&http_redirects_mutex);
   hts_mutex_init(&http_cookies_mutex);
-  hts_mutex_init(&http_server_quirk_mutex);
   hts_mutex_init(&http_auth_caches_mutex);
   load_cookies();
 }
