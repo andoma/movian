@@ -44,8 +44,7 @@ id: Go to Home screen
 msg: Перейти на главный экран
 
 id: Hide system info
-# Missing translation
-msg: 
+msg: Скрыть системную информацию
 
 id: Navigation
 msg: Навигация
@@ -63,8 +62,7 @@ id: Reload current page
 msg: Перезагрузить текущую страницу
 
 id: Show system info
-# Missing translation
-msg: 
+msg: Показать системную информацию
 
 id: Suspend
 msg: Отключить систему
@@ -172,15 +170,13 @@ id: Cancel
 msg: Отмена
 
 id: Clear
-# Missing translation
-msg: 
+msg: Очистить
 
 id: Default
 msg: По умолчанию 
 
 id: Keyboard layout:
-# Missing translation
-msg: 
+msg: Раскладка клавиатуры:
 
 id: OK
 msg: OK
@@ -418,8 +414,7 @@ msg: Статус воспроизведения
 # ./glwskins/default/pages/wideinfo/video.view
 #
 id: Seen:
-# Missing translation
-msg: 
+msg: Воспроизведено:
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -527,16 +522,13 @@ msg: Мало памяти (доступно %d Кб RAM)
 # ./src/arch/rpi/rpi_audio.c
 #
 id: Analog
-# Missing translation
-msg: 
+msg: Аналог
 
 id: Audio output port
-# Missing translation
-msg: 
+msg: Аудиовыход
 
 id: HDMI
-# Missing translation
-msg: 
+msg: HDMI
 
 #
 # ./src/arch/rpi/rpi_cec.c
@@ -551,84 +543,67 @@ msg: Управление бытовой электроникой
 # ./src/audio2/audio.c
 #
 id: Audio delay
-msg: Задержка аудио
+msg: Задержка звука
 
 id: Audio gain adjustment during video playback
-# Missing translation
-msg: 
+msg: Регулировка усиления звука во время воспроизведения видео
 
 id: Audio settings during video playback
-# Missing translation
-msg: 
+msg: Настройки звука во время воспроизведения видео
 
 id: Setup audio output
-# Missing translation
-msg: 
+msg: Настройка аудиовыхода
 
 #
 # ./src/audio2/audio_test.c
 #
 id: 440Hz sinewave -12dB
-# Missing translation
-msg: 
+msg: 440 Гц синусоидальный-12дб
 
 id: Audio test
-# Missing translation
-msg: 
+msg: Звуковой тест
 
 id: Center
 msg: Центр
 
 id: Front Left
-# Missing translation
-msg: 
+msg: Спереди слева
 
 id: Front Right
-# Missing translation
-msg: 
+msg: Спереди справа
 
 id: LFE
-# Missing translation
-msg: 
+msg: LFE
 
 id: Pink noise
-# Missing translation
-msg: 
+msg: Розовый шум
 
 id: Play test signal
-# Missing translation
-msg: 
+msg: Воспроизвести тестовый сигнал
 
 id: Rear Left
-# Missing translation
-msg: 
+msg: Сзади слева
 
 id: Rear Right
-# Missing translation
-msg: 
+msg: Сзади справа
 
 id: Speaker position
-# Missing translation
-msg: 
+msg: Расположение динамиков
 
 id: Surround Left
-# Missing translation
-msg: 
+msg: Объемный слева
 
 id: Surround Right
-# Missing translation
-msg: 
+msg: Объемный справа
 
 id: Test signal type
-# Missing translation
-msg: 
+msg: Тип тестового сигнала
 
 #
 # ./src/audio2/pulseaudio.c
 #
 id: Unable to initialize audio system %s -- %s
-# Missing translation
-msg: 
+msg: Невозможна инициализация аудио системы %s -- %s
 
 #
 # ./src/backend/dvd/cdda.c
@@ -829,8 +804,7 @@ id: Show filename extensions
 msg: Отображать расширения у файлов
 
 id: Store per-file settings in filesystem
-# Missing translation
-msg: 
+msg: Хранение настроек per-file в файловой системе
 
 id: %d archive parts
 msg[0]: частей архива: %d
@@ -920,16 +894,13 @@ id: Go to standby after video ends
 msg: Отключить систему по окончании видео
 
 id: Reset defaults for folder '%s'
-# Missing translation
-msg: 
+msg: Сброс настроек по умолчанию для папки '%s'
 
 id: Save as defaults for folder '%s'
-# Missing translation
-msg: 
+msg: Сохранить как настройки по умолчанию для папки '%s'
 
 id: Save as global default
-# Missing translation
-msg: 
+msg: Сохранить как главные настройки по умолчанию 
 
 id: Stretch video to fullscreen
 msg: Растянуть видео во весь экран
@@ -950,8 +921,7 @@ id: Subtitle vertical displacement
 msg: Вертикальное смещение субтитров
 
 id: Video frame interpolation
-# Missing translation
-msg: 
+msg: Интерполяция видео кадра
 
 id: Video zoom
 msg: Масштаб видео
@@ -1206,8 +1176,7 @@ id: Not upgradable
 msg: Не обновляемый
 
 id: On Screen Keyboards
-# Missing translation
-msg: 
+msg: Экранная клавиатура
 
 id: Online TV
 msg: Онлайн-ТВ
@@ -1525,12 +1494,10 @@ msg: Сервис не найден
 # ./src/video/ps3_vdec.c
 #
 id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
-# Missing translation
-msg: 
+msg: Cell-h264: %d Ref-frames для контента 1080 является несовместимым с PS3 HW декодером. Ускорение отключено
 
 id: Cell-h264: Broken headers, Disabling acceleration
-# Missing translation
-msg: 
+msg: Поврежденные заголовки, ускорение отключено
 
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
 msg: Cell-h264: Принудительный уровень 4.2 для контента уровня %d.%d. Это может нарушить воспроизведение видео.
