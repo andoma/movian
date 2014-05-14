@@ -705,10 +705,7 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
     fa_libav_close(avio);
     return NULL;
   }
-#if 0
-  if(!strcmp(fctx->iformat->name, "avi"))
-    fctx->flags |= AVFMT_FLAG_GENPTS;
-#endif
+
   TRACE(TRACE_DEBUG, "Video", "Starting playback of %s (%s)",
 	url, fctx->iformat->name);
 
