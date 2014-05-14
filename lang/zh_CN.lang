@@ -44,8 +44,7 @@ id: Go to Home screen
 msg: 转至首页
 
 id: Hide system info
-# Missing translation
-msg: 
+msg: 隐藏系统信息
 
 id: Navigation
 msg: 导航
@@ -63,8 +62,7 @@ id: Reload current page
 msg: 刷新
 
 id: Show system info
-# Missing translation
-msg: 
+msg: 显示系统信息
 
 id: Suspend
 msg: 关机
@@ -172,15 +170,13 @@ id: Cancel
 msg: 取消
 
 id: Clear
-# Missing translation
-msg: 
+msg: 清除
 
 id: Default
 msg: 默认
 
 id: Keyboard layout:
-# Missing translation
-msg: 
+msg: 键盘布局：
 
 id: OK
 msg: 确定
@@ -418,8 +414,7 @@ msg: 播放信息
 # ./glwskins/default/pages/wideinfo/video.view
 #
 id: Seen:
-# Missing translation
-msg: 
+msg: 看过：
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -527,16 +522,13 @@ msg: 系统内存偏少(%d kB RAM可用)
 # ./src/arch/rpi/rpi_audio.c
 #
 id: Analog
-# Missing translation
-msg: 
+msg: 模拟
 
 id: Audio output port
-# Missing translation
-msg: 
+msg: 音频输出端口
 
 id: HDMI
-# Missing translation
-msg: 
+msg: HDMI
 
 #
 # ./src/arch/rpi/rpi_cec.c
@@ -554,81 +546,64 @@ id: Audio delay
 msg: 音频延迟
 
 id: Audio gain adjustment during video playback
-# Missing translation
-msg: 
+msg: 视频播放时的音频增益调节
 
 id: Audio settings during video playback
-# Missing translation
-msg: 
+msg: 视频播放时的音频设置
 
 id: Setup audio output
-# Missing translation
-msg: 
+msg: 设置音频输出
 
 #
 # ./src/audio2/audio_test.c
 #
 id: 440Hz sinewave -12dB
-# Missing translation
-msg: 
+msg: 440Hz正弦波 -12dB
 
 id: Audio test
-# Missing translation
-msg: 
+msg: 音频测试
 
 id: Center
 msg: 居中
 
 id: Front Left
-# Missing translation
-msg: 
+msg: 左前
 
 id: Front Right
-# Missing translation
-msg: 
+msg: 右前
 
 id: LFE
-# Missing translation
-msg: 
+msg: 低音炮
 
 id: Pink noise
-# Missing translation
-msg: 
+msg: 粉红噪声
 
 id: Play test signal
-# Missing translation
-msg: 
+msg: 播放测试信号
 
 id: Rear Left
-# Missing translation
-msg: 
+msg: 左后环绕
 
 id: Rear Right
-# Missing translation
-msg: 
+msg: 右后环绕
 
 id: Speaker position
-# Missing translation
-msg: 
+msg: 音箱位置
 
 id: Surround Left
-# Missing translation
-msg: 
+msg: 左环绕
 
 id: Surround Right
-# Missing translation
-msg: 
+msg: 右环绕
 
 id: Test signal type
-# Missing translation
-msg: 
+msg: 测试信号类型
 
 #
 # ./src/audio2/pulseaudio.c
 #
 id: Unable to initialize audio system %s -- %s
-# Missing translation
-msg: 
+msg: 无法初始化音频系统%s -- %s
 
 #
 # ./src/backend/dvd/cdda.c
@@ -829,8 +804,7 @@ id: Show filename extensions
 msg: 显示文件扩展名
 
 id: Store per-file settings in filesystem
-# Missing translation
-msg: 
+msg: 保存单文件设置到文件系统
 
 id: %d archive parts
 msg[0]: %d个分卷
@@ -920,16 +894,13 @@ id: Go to standby after video ends
 msg: 视频播放结束后自动关机
 
 id: Reset defaults for folder '%s'
-# Missing translation
-msg: 
+msg: 恢复文件夹'%s'的默认设置
 
 id: Save as defaults for folder '%s'
-# Missing translation
-msg: 
+msg: 保存为文件夹'%s'的默认设置
 
 id: Save as global default
-# Missing translation
-msg: 
+msg: 保存为全局默认设置
 
 id: Stretch video to fullscreen
 msg: 拉升视频至全屏
@@ -950,8 +921,7 @@ id: Subtitle vertical displacement
 msg: 字幕垂直移位
 
 id: Video frame interpolation
-# Missing translation
-msg: 
+msg: 视频帧插值
 
 id: Video zoom
 msg: 视频缩放
@@ -1206,8 +1176,7 @@ id: Not upgradable
 msg: 不可升级
 
 id: On Screen Keyboards
-# Missing translation
-msg: 
+msg: 屏幕（软）键盘
 
 id: Online TV
 msg: 在线电视
@@ -1525,12 +1494,10 @@ msg: 未发现服务
 # ./src/video/ps3_vdec.c
 #
 id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
-# Missing translation
-msg: 
+msg: Cell-h264: PS3硬件不兼容1080p内容的%d帧引用，将禁用硬件加速。
 
 id: Cell-h264: Broken headers, Disabling acceleration
-# Missing translation
-msg: 
+msg: 头信息破损，将禁用硬件加速。
 
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
 msg: Cell-h264: 强制级别%d.%d的内容为级别4.2。可能会影响播放。
