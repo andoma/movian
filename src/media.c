@@ -2068,6 +2068,11 @@ mp_set_url(media_pipe_t *mp, const char *url, const char *parent_url,
 void
 mp_set_duration(media_pipe_t *mp, int64_t duration)
 {
+  if(duration == AV_NOPTS_VALUE) {
+    mp->mp_duration = 0;
+    prop_set(mp->mp_prop_metadata, "duration", PROP_SET_VOID);
+    return;
+  }
   mp->mp_duration = duration;
 
   float d = mp->mp_duration / 1000000.0;
