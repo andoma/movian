@@ -5,20 +5,16 @@ maintainer: Red Squirrel <iam@redsquirrel87.com>
 # ./ext/miner/miner.c
 #
 id: Do you like Showtime? You can donate money to the project by mining Litecoins on your PS3
-# Missing translation
-msg: 
+msg: Ti piace Showtime? Puoi donare soldi al progetto attraverso Litecoin dalla tua PS3
 
 id: Donate money to the Showtime project by mining litecoints
-# Missing translation
-msg: 
+msg: Dona soldi al progetto Showtime attraverso Litecoin
 
 id: Donations
-# Missing translation
-msg: 
+msg: Donazioni
 
 id: Show me more
-# Missing translation
-msg: 
+msg: Mostrami di più
 
 #
 # ./glwskins/default/cmdmenu.view
@@ -48,8 +44,7 @@ id: Go to Home screen
 msg: Vai alla Home
 
 id: Hide system info
-# Missing translation
-msg: 
+msg: Nascondi info di sistema
 
 id: Navigation
 msg: Navigazione
@@ -67,8 +62,7 @@ id: Reload current page
 msg: Ricarica pagina attuale
 
 id: Show system info
-# Missing translation
-msg: 
+msg: Mostra info di sistema
 
 id: Suspend
 msg: Sospendi
@@ -176,15 +170,13 @@ id: Cancel
 msg: Annulla
 
 id: Clear
-# Missing translation
-msg: 
+msg: Pulisci
 
 id: Default
 msg: Default
 
 id: Keyboard layout:
-# Missing translation
-msg: 
+msg: Layout tastiera:
 
 id: OK
 msg: OK
@@ -422,8 +414,7 @@ msg: Stato di riproduzione
 # ./glwskins/default/pages/wideinfo/video.view
 #
 id: Seen:
-# Missing translation
-msg: 
+msg: Visto:
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -462,15 +453,13 @@ id: CPU Temp
 msg: Temperatura CPU
 
 id: Fragmentation
-# Missing translation
-msg: 
+msg: Frammentazione
 
 id: GPU Temp
 msg: Temperatura GPU
 
 id: Inactive mem
-# Missing translation
-msg: 
+msg: Memoria inattiva
 
 id: Memory usage
 msg: Memoria utilizzata
@@ -494,32 +483,25 @@ msg: Volume principale: %d dB
 # ./resources/spuminer/settings.view
 #
 id: Apart from enabling this option you do not need to do anything else to make your donations for the project.
-# Missing translation
-msg: 
+msg: Apparte attivare questa opzione non devi fare altro per donare al progetto.
 
 id: Enable mining
-# Missing translation
-msg: 
+msg: Attiva Litecoin
 
 id: For more information about Litecoin, please visit http://litecoin.org
-# Missing translation
-msg: 
+msg: Per maggiori informazioni su Litecoin, visita http://litecoin.org
 
 id: If you like Showtime you can donate money to the project by letting your Playstation 3 mine Litecoins while Showtime is running.
-# Missing translation
-msg: 
+msg: Se ti piace Showtime puoi donare soldi al progetto lasciando la tua Playstation 3 ad usare Litecoin mentre Showtime è in esecuzione.
 
 id: Mining will not interfere with video playback performance as it only uses the leftover capacity of the SPU processors.
-# Missing translation
-msg: 
+msg: Usare Litecoin non interferirà con le prestazioni di riproduzione video poiché utilizza la capacità inutilizzate dei processori SPU.
 
 id: Please consider enabling this option. / %s
-# Missing translation
-msg: 
+msg: Per favore considera seriamente di attivare questa opzione. / %s
 
 id: Thanks for your support!
-# Missing translation
-msg: 
+msg: Grazie per il tuo supporto!
 
 #
 # ./src/api/tmdb.c
@@ -540,16 +522,13 @@ msg: Memoria in esaurimento (%d kB di RAM disponibile)
 # ./src/arch/rpi/rpi_audio.c
 #
 id: Analog
-# Missing translation
-msg: 
+msg: Analogico
 
 id: Audio output port
-# Missing translation
-msg: 
+msg: Porta d'uscita Audio
 
 id: HDMI
-# Missing translation
-msg: 
+msg: HDMI
 
 #
 # ./src/arch/rpi/rpi_cec.c
@@ -567,81 +546,64 @@ id: Audio delay
 msg: Ritardo audio
 
 id: Audio gain adjustment during video playback
-# Missing translation
-msg: 
+msg: Regolazione del guadagno audio durante la riproduzione video
 
 id: Audio settings during video playback
-# Missing translation
-msg: 
+msg: Impostazioni audio durante la riproduzione video
 
 id: Setup audio output
-# Missing translation
-msg: 
+msg: Imposta uscita audio
 
 #
 # ./src/audio2/audio_test.c
 #
 id: 440Hz sinewave -12dB
-# Missing translation
-msg: 
+msg: 440Hz sinewave -12dB 
 
 id: Audio test
-# Missing translation
-msg: 
+msg: Test audio
 
 id: Center
 msg: Al centro
 
 id: Front Left
-# Missing translation
-msg: 
+msg: Anteriore sinistro
 
 id: Front Right
-# Missing translation
-msg: 
+msg: Anteriore destro
 
 id: LFE
-# Missing translation
-msg: 
+msg: LFE
 
 id: Pink noise
-# Missing translation
-msg: 
+msg: Rumore rosa
 
 id: Play test signal
-# Missing translation
-msg: 
+msg: Test segnale di riproduzione
 
 id: Rear Left
-# Missing translation
-msg: 
+msg: Posteriore sinistro
 
 id: Rear Right
-# Missing translation
-msg: 
+msg: Posteriore destro
 
 id: Speaker position
-# Missing translation
-msg: 
+msg: Posizione altoparlante
 
 id: Surround Left
-# Missing translation
-msg: 
+msg: Surround sinistro 
 
 id: Surround Right
-# Missing translation
-msg: 
+msg:  Surround destro
 
 id: Test signal type
-# Missing translation
-msg: 
+msg: Test tipo di segnale
 
 #
 # ./src/audio2/pulseaudio.c
 #
 id: Unable to initialize audio system %s -- %s
-# Missing translation
-msg: 
+msg: Impossibile inizializzare il sistema audio %s -- %s
 
 #
 # ./src/backend/dvd/cdda.c
@@ -836,16 +798,13 @@ id: Enable file deletion from item menu
 msg: Attiva eliminazione file dal menu
 
 id: File browsing
-# Missing translation
-msg: 
+msg: Gestione file
 
 id: Show filename extensions
-# Missing translation
-msg: 
+msg: Mostra estensioni nel nome del file
 
 id: Store per-file settings in filesystem
-# Missing translation
-msg: 
+msg: Memorizza nel filesystem impostazioni separate per ogni file
 
 id: %d archive parts
 msg[0]: 
@@ -935,16 +894,13 @@ id: Go to standby after video ends
 msg: Vai in standby dopo la fine del video
 
 id: Reset defaults for folder '%s'
-# Missing translation
-msg: 
+msg: Ripristina impostazioni di default per la cartella '%s' 
 
 id: Save as defaults for folder '%s'
-# Missing translation
-msg: 
+msg: Salva impostazioni come di default per la cartella '%s' 
 
 id: Save as global default
-# Missing translation
-msg: 
+msg: Salva impostazioni come di default per tutto
 
 id: Stretch video to fullscreen
 msg: Adatta video a Schermo Pieno
@@ -965,8 +921,7 @@ id: Subtitle vertical displacement
 msg: Spostamento verticale dei sottotitoli
 
 id: Video frame interpolation
-# Missing translation
-msg: 
+msg: Interpolazione dei frame video
 
 id: Video zoom
 msg: Zoom video
@@ -1221,8 +1176,7 @@ id: Not upgradable
 msg: Non aggiornabile
 
 id: On Screen Keyboards
-# Missing translation
-msg: 
+msg: Tastiera a schermo
 
 id: Online TV
 msg: TV online
@@ -1540,12 +1494,10 @@ msg: Servizio non trovato
 # ./src/video/ps3_vdec.c
 #
 id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
-# Missing translation
-msg: 
+msg: Cell-h264: %d frame di riferimento per il contenuto 1080p incompatibile con il decoder HW di PS3. Disattivazione accelerazione
 
 id: Cell-h264: Broken headers, Disabling acceleration
-# Missing translation
-msg: 
+msg: Cell-h264: header non valido. Disattivazione accelerazione
 
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
 msg: Cell-h264: Forzando il livello 4.2 per contenuto al livello %d.%d. Questo potrebbe inibire la riproduzione del video.
