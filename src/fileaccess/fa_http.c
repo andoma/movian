@@ -1728,6 +1728,9 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
       if(hf->hf_filesize == -1)
         hf->hf_rsize = INT64_MAX;
 
+      if(nohead)
+        hf->hf_no_ranges = 1;
+
       HF_TRACE(hf, "Opened in streaming mode");
       return 0;
     }
