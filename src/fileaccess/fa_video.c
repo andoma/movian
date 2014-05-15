@@ -413,7 +413,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
     } else if(event_is_action(e, ACTION_SKIP_BACKWARD)) {
 
       // TODO: chapter support
-      if(mp->mp_seek_base < MP_SKIP_LIMIT)
+      if(mp->mp_seek_base < MP_SKIP_LIMIT || !(mp->mp_flags & MP_CAN_SEEK))
 	break;
       video_seek(fctx, mp, &mb, 0, "skip back");
     } else if(event_is_type(e, EVENT_EXIT) ||

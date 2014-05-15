@@ -199,7 +199,7 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
     return e;
   
   if(event_is_action(e, ACTION_SKIP_BACKWARD)) {
-    if(mp->mp_seek_base < MP_SKIP_LIMIT) {
+    if(mp->mp_seek_base < MP_SKIP_LIMIT || !r->can_seek) {
       return e;
     }
     video_seek(r, mp, mbp, 0, "direct");

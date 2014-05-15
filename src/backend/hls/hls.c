@@ -1242,7 +1242,7 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
       break;
     } else if(event_is_action(e, ACTION_SKIP_BACKWARD)) {
 
-      if(mp->mp_seek_base < MP_SKIP_LIMIT)
+      if(mp->mp_seek_base < MP_SKIP_LIMIT || h->h_live)
 	break;
       hls_seek(h, hd->hd_delta_ts, 0, 0, &mb);
 
