@@ -4207,7 +4207,9 @@ glwf_value2size(glw_view_eval_context_t *ec, struct token *self,
       } else if(s > 1000 * 1000) {
 	snprintf(tmp, sizeof(tmp), "%.1f MB", s / 1000000.0);
       } else if(s > 1000) {
-	snprintf(tmp, sizeof(tmp), "%.1f MB", s / 1000.0);
+	snprintf(tmp, sizeof(tmp), "%.1f kB", s / 1000.0);
+      } else {
+	snprintf(tmp, sizeof(tmp), "%d B", (int)s);
       }
       str = tmp;
     }
