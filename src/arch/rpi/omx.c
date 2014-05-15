@@ -560,9 +560,8 @@ static void
 omx_clk_init(omx_clk_t *clk, int has_audio)
 {
   OMX_TIME_CONFIG_CLOCKSTATETYPE cstate;
-
   clk->has_audio = has_audio;
-
+  clk->seek_in_progress = 0;
   OMX_INIT_STRUCTURE(cstate);
   cstate.eState = OMX_TIME_ClockStateStopped;
   omxchk(OMX_SetParameter(clk->c->oc_handle,
