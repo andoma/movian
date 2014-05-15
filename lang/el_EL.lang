@@ -5,7 +5,7 @@ maintainer: ananias47 & panos kosmo ananias47@hotmail.com
 # ./ext/miner/miner.c
 #
 id: Do you like Showtime? You can donate money to the project by mining Litecoins on your PS3
-msg: Σου αρέσει το Showtime? Μπορείς να βοηθήσεις το project χρησιμοποιώντας Litecoins στο PS3
+msg: Σου αρέσει το Showtime? Μπορείς να προσφέρεις χρήματα στο project χρησιμοποιώντας  Litecoins στο PS3
 
 id: Donate money to the Showtime project by mining litecoints
 msg: Κάνε μια δωρεά στο Showtime χρησιμοποιώντας τα  litecoints
@@ -23,7 +23,7 @@ id: Add current page to bookmarks
 msg: Προσθήκη της τρέχουσας σελίδας στους σελιδοδείκτες 
 
 id: Open settings
-msg: Άνοιγμα Ρυθμίσεων 
+msg: ’νοιγμα Ρυθμίσεων 
 
 id: Remove current page from bookmarks
 msg: Αφαίρεση της τρέχουσας σελίδας από τους σελιδοδείκτες
@@ -43,15 +43,11 @@ msg: Έξοδος από το  Showtime
 id: Go to Home screen
 msg: Μετάβαση στην αρχική σελίδα
 
-id: Hide system info
-# Missing translation
-msg: 
-
 id: Navigation
 msg: Πλοήγηση 
 
 id: Open Settings
-msg: Άνοιγμα Ρυθμίσεων
+msg: ’νοιγμα Ρυθμίσεων
 
 id: Playqueue
 msg: Αναπαραγωγή Λίστας
@@ -61,10 +57,6 @@ msg: Τερματισμός
 
 id: Reload current page
 msg: Ανανέωση τρέχουσας σελίδας
-
-id: Show system info
-# Missing translation
-msg: 
 
 id: Suspend
 msg: Αναστολή λειτουργείας
@@ -166,30 +158,10 @@ id: System log
 msg: Καταγραφή Συστήματος 
 
 #
-# ./glwskins/default/osk.view
-#
-id: Cancel
-msg: Ακύρωση
-
-id: Clear
-# Missing translation
-msg: 
-
-id: Default
-msg: Προεπιλογή
-
-id: Keyboard layout:
-# Missing translation
-msg: 
-
-id: OK
-msg: OK
-
-#
 # ./glwskins/default/pages/directory.view
 #
 id: Album
-msg: Άλμπουμ
+msg: ’λμπουμ
 
 id: Artist
 msg: Καλλιτέχνης
@@ -234,7 +206,7 @@ id: Dismiss
 msg: Ματαίωση
 
 id: Search / Open URL
-msg: Αναζήτηση/Άνοιγμα URL
+msg: Αναζήτηση/’νοιγμα URL
 
 #
 # ./glwskins/default/pages/iteminfo/image.view
@@ -282,8 +254,9 @@ id: Year:
 msg: Έτος:
 
 id: Seen %d times
-msg[0]: Προβλήθηκε %d φορές
-msg[1]: Προβλήθηκε %d φορά
+# Missing plural translation for 'Seen %d times' and 'Seen %d time'
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwskins/default/pages/listitems/add.view
@@ -385,7 +358,7 @@ id: Patching %s
 msg: Patching %s
 
 id: Restarting Showtime in %d seconds...
-msg: Επανεκκίνηση του Showtime σε %d δευτερόλεπτα….
+msg: Επανεκκίνηση του Showtime σε %d δευτερόλεπτα.
 
 id: Retry...
 msg: Επανάληψη...
@@ -415,13 +388,6 @@ id: Playback status
 msg: Κατάσταση Αναπαραγωγής
 
 #
-# ./glwskins/default/pages/wideinfo/video.view
-#
-id: Seen:
-# Missing translation
-msg: 
-
-#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -446,6 +412,15 @@ id: Username
 msg: Όνομα Χρήστη
 
 #
+# ./glwskins/default/popups/common.view
+#
+id: Cancel
+msg: Ακύρωση
+
+id: OK
+msg: OK
+
+#
 # ./glwskins/default/screensaver.view
 #
 id: No media loaded
@@ -458,16 +433,18 @@ id: CPU Temp
 msg: Θερμ. CPU
 
 id: Fragmentation
-msg: Θρυμματισμός   
+# Missing translation
+msg: 
 
 id: GPU Temp
 msg: Θερμ. GPU
 
 id: Inactive mem
-msg: Ανενεργή Μνήμη
+# Missing translation
+msg: 
 
 id: Memory usage
-msg: Χρήση Μνήμης
+msg: Χρήση μνήμης
 
 id: System Free
 msg: Διαθέσιμη
@@ -524,21 +501,6 @@ id: System is low on memory (%d kB RAM available)
 msg: Το σύστημα είναι χαμηλό σε μνήμη (%d kB RAM διαθέσιμα)
 
 #
-# ./src/arch/rpi/rpi_audio.c
-#
-id: Analog
-# Missing translation
-msg: 
-
-id: Audio output port
-# Missing translation
-msg: 
-
-id: HDMI
-# Missing translation
-msg: 
-
-#
 # ./src/arch/rpi/rpi_cec.c
 #
 id: Configure how Showtime communicates with your TV
@@ -546,89 +508,6 @@ msg: Επιβεβαιώστε την επικοινωνία του Showtime με
 
 id: Consumer Electronics Control
 msg: Ηλεκτρονικά Συστήματα Ελέγχου Καταναλωτών (CEC)
-
-#
-# ./src/audio2/audio.c
-#
-id: Audio delay
-msg: Καθυστέρηση ήχου
-
-id: Audio gain adjustment during video playback
-# Missing translation
-msg: 
-
-id: Audio settings during video playback
-# Missing translation
-msg: 
-
-id: Setup audio output
-# Missing translation
-msg: 
-
-#
-# ./src/audio2/audio_test.c
-#
-id: 440Hz sinewave -12dB
-# Missing translation
-msg: 
-
-id: Audio test
-# Missing translation
-msg: 
-
-id: Center
-msg: Κεντρικά
-
-id: Front Left
-# Missing translation
-msg: 
-
-id: Front Right
-# Missing translation
-msg: 
-
-id: LFE
-# Missing translation
-msg: 
-
-id: Pink noise
-# Missing translation
-msg: 
-
-id: Play test signal
-# Missing translation
-msg: 
-
-id: Rear Left
-# Missing translation
-msg: 
-
-id: Rear Right
-# Missing translation
-msg: 
-
-id: Speaker position
-# Missing translation
-msg: 
-
-id: Surround Left
-# Missing translation
-msg: 
-
-id: Surround Right
-# Missing translation
-msg: 
-
-id: Test signal type
-# Missing translation
-msg: 
-
-#
-# ./src/audio2/pulseaudio.c
-#
-id: Unable to initialize audio system %s -- %s
-# Missing translation
-msg: 
 
 #
 # ./src/backend/dvd/cdda.c
@@ -670,7 +549,7 @@ msg: Αποτελέσματα αναζήτησης για: %s
 # ./src/backend/spotify/spotify.c
 #
 id: Albums
-msg: Άλμπουμ
+msg: ’λμπουμ
 
 id: Automatic login when Showtime starts
 msg: Αυτόματη είσοδο όταν ξεκινάει το Showtime
@@ -823,12 +702,10 @@ id: Enable file deletion from item menu
 msg: Ενεργοποίηση διαγραφής αρχείων από το  μενού εργαλείων
 
 id: File browsing
-msg: Εξερεύνηση Αρχείων
+# Missing translation
+msg: 
 
 id: Show filename extensions
-msg: Εμφάνιση επεκτάσεων αρχείων
-
-id: Store per-file settings in filesystem
 # Missing translation
 msg: 
 
@@ -836,12 +713,14 @@ id: %d archive parts
 msg[0]: %d κομμάτια αρχείου
 
 id: %d directories
-msg[0]: %d Κατάλογοι
-msg[1]: %d Κατάλογος
+# Missing plural translation for '%d directories' and '%d directory'
+msg[0]: 
+msg[1]: 
 
 id: %d files
-msg[0]: %d αρχεία
-msg[1]: %d αρχείο
+# Missing plural translation for '%d files' and '%d file'
+msg[0]: 
+msg[1]: 
 
 #
 # ./src/i18n.c
@@ -912,23 +791,14 @@ msg: Οι αποθηκεμένοι κωδικοί σβήστηκαν
 id: Align subtitles on video frame
 msg: Συγχρονισμός υποτίτλων στο βίντεο
 
+id: Audio delay
+msg: Καθυστέρηση ήχου
+
 id: Audio volume
 msg: Ένταση ήχου
 
 id: Go to standby after video ends
 msg: Τερματισμός λειτουργίας όταν τελειώσει το βίντεο
-
-id: Reset defaults for folder '%s'
-# Missing translation
-msg: 
-
-id: Save as defaults for folder '%s'
-# Missing translation
-msg: 
-
-id: Save as global default
-# Missing translation
-msg: 
 
 id: Stretch video to fullscreen
 msg: Αναπαραγωγή βίντεο σε  πλήρη οθόνη
@@ -947,10 +817,6 @@ msg: Κλιμάκωση υποτίτλων
 
 id: Subtitle vertical displacement
 msg: Κάθετη μετατόπιση υποτίτλων
-
-id: Video frame interpolation
-# Missing translation
-msg: 
 
 id: Video zoom
 msg: Μεγέθυνση βίντεο
@@ -982,53 +848,26 @@ msg: Λειτουργία- Metadata
 #
 # ./src/metadata/metadata.c
 #
-id: Embedded in file
-msg: Ενσωματωμένο στο αρχείο
-
-id: Track %d
-msg: Τίτλος %d
-
-#
-# ./src/metadata/metadata_sources.c
-#
-id: Enabled
-msg: Ενεργοποιημένο
-
-id: Metadata
-msg: Metadata
-
-id: Metadata configuration and provider settings
-msg: Διαμόρφωση Metadata και ρυθμίσεις παρόχου
-
-id: Providers for Music
-msg: Πάροχοι Μουσικής
-
-id: Providers for Video
-msg: Πάροχοι Βίντεο
-
-#
-# ./src/metadata/metadb.c
-#
-id: %d items deleted
-msg: %d αρχεία διαγράφηκαν
-
-id: Clear all metadata
-msg: Καθαρισμός όλον των αρχείων metadata
-
-id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
-msg: Καθάρισμα όλον των αρχείων metadata σημαίνει απώλεια όλων των πληροφοριών για ένα αρχείο/ταινία που έχεις δει. Επιπλέον ο αριθμός των φορών που έχει παιχτεί ένα αρχείο/ταινία και η θέση για την συνέχιση μιας αναπαραγωγής,  θα διαγράφουν επίσης τα αρχεία cache των metadata από τις εξωτερικές πηγές όπως του themoviedb.org. Είσαι σίγουρος ότι θέλεις να προχωρήσεις;
-
-#
-# ./src/metadata/mlp.c
-#
 id: Custom search query
 msg: Ερώτημα προσαρμοσμένης αναζήτησης
 
 id: Custom title
 msg: Τροποποιημένος τίτλος
 
+id: Embedded in file
+msg: Ενσωματωμένο στο αρχείο
+
+id: Enabled
+msg: Ενεργοποιημένο
+
 id: IMDb ID
 msg: IMDb ID
+
+id: Metadata
+msg: Metadata
+
+id: Metadata configuration and provider settings
+msg: Διαμόρφωση Metadata και ρυθμίσεις παρόχου
 
 id: Metadata loaded from '%s' using %s
 msg: Τα Metadata φορτώθηκαν από '%s', σε χρήση %s
@@ -1051,11 +890,20 @@ msg: Δεν βρέθηκαν δεδομένα
 id: None
 msg: Κανένα
 
+id: Providers for Music
+msg: Πάροχοι Μουσικής
+
+id: Providers for Video
+msg: Πάροχοι Βίντεο
+
 id: Refresh metadata
 msg: Ανανέωση Metadata
 
 id: Title, Season, Episode
 msg: Τίτλος, Σεζόν, Επεισόδιο
+
+id: Track %d
+msg: Τίτλος %d
 
 id: custom IMDb ID
 msg: Τροποποίηση  IMDb ID
@@ -1073,6 +921,18 @@ id: folder name
 msg: Όνομα φακέλου
 
 #
+# ./src/metadata/metadb.c
+#
+id: %d items deleted
+msg: %d αρχεία διαγράφηκαν
+
+id: Clear all metadata
+msg: Καθαρισμός όλον των αρχείων metadata
+
+id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
+msg: Καθάρισμα όλον των αρχείων metadata σημαίνει απώλεια όλων των πληροφοριών για ένα αρχείο/ταινία που έχεις δει. Επιπλέον ο αριθμός των φορών που έχει παιχτεί ένα αρχείο/ταινία και η θέση για την συνέχιση μιας αναπαραγωγής,  θα διαγράφουν επίσης τα αρχεία cache των metadata από τις εξωτερικές πηγές όπως του themoviedb.org. Είσαι σίγουρος ότι θέλεις να προχωρήσεις;
+
+#
 # ./src/navigator.c
 #
 id: Add and remove items on homepage
@@ -1088,7 +948,7 @@ id: Music
 msg: Μουσική
 
 id: Other
-msg: Άλλα
+msg: ’λλα
 
 id: Photos
 msg: Φωτογραφίες
@@ -1162,6 +1022,9 @@ msg: Υπηρεσίες Cloud
 id: Corrupt plugin bundle
 msg: Κατεστραμμένο πακέτο πρόσθετου
 
+id: Default
+msg: Προεπιλογή
+
 id: Disk write error
 msg: Σφάλμα εγγραφής δίσκου!
 
@@ -1184,7 +1047,7 @@ id: Installing
 msg: Εγκατάσταση
 
 id: List of albums
-msg: Λίστες Άλμπουμ
+msg: Λίστες ’λμπουμ
 
 id: Loading screen
 msg: Οθόνη Φόρτισης
@@ -1203,10 +1066,6 @@ msg: Δεν εγκαταστάθηκε
 
 id: Not upgradable
 msg: Δεν μπορεί να αναβαθμιστεί
-
-id: On Screen Keyboards
-# Missing translation
-msg: 
 
 id: Online TV
 msg: Διαδικτυακή TV
@@ -1263,7 +1122,7 @@ id: Logout
 msg: Αποσύνδεση
 
 id: Open shell
-msg: Άνοιγμα Shell 
+msg: ’νοιγμα Shell 
 
 id: Power off system
 msg: Τερματισμός Συστήματος 
@@ -1345,6 +1204,9 @@ msg: Αυτόματο
 
 id: Automatically select from this source
 msg: Αυτόματη επιλογή από αυτήν την πηγή
+
+id: Center
+msg: Κεντρικά
 
 id: Central subtitle folder
 msg: Κεντρικός φάκελος υποτίτλων
@@ -1446,7 +1308,7 @@ id: Seek using L2 and R2 button
 msg: Μετάβαση με την χρήση των L2 και R2 κουμπιών
 
 id: Yes with Select button
-msg: Επιλογή “ναι” με την χρήση του κουμπιού select
+msg: Επιλογή ναι με την χρήση του κουμπιού select
 
 #
 # ./src/ui/glw/glw_settings.c
@@ -1494,7 +1356,7 @@ id: Notify about upgrades
 msg: Ενημέρωση για αναβαθμίσεις
 
 id: Open download page
-msg: Άνοιγμα σελίδας λήψης
+msg: ’νοιγμα σελίδας λήψης
 
 id: Showtime version %s is available
 msg: Η έκδοση %s του Showtime είναι διαθέσιμη
@@ -1512,10 +1374,10 @@ id: Device not found
 msg: Η συσκευή δεν βρέθηκε
 
 id: Malformed URI after device
-msg: Άκυρη URI από την συσκευή
+msg: ’κυρη URI από την συσκευή
 
 id: Malformed URI after service
-msg: Άκυρη URI από την υπηρεσία
+msg: ’κυρη URI από την υπηρεσία
 
 id: Service not found
 msg: Η υπηρεσία δεν βρέθηκε
@@ -1523,14 +1385,6 @@ msg: Η υπηρεσία δεν βρέθηκε
 #
 # ./src/video/ps3_vdec.c
 #
-id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
-# Missing translation
-msg: 
-
-id: Cell-h264: Broken headers, Disabling acceleration
-# Missing translation
-msg: 
-
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
 msg: Cell-h264: Εξαναγκασμός του επιπέδου 4.2 να χωρέσει στο επίπεδο %d.%d. Η αναπαραγωγή μπορεί να διακοπεί.
 
