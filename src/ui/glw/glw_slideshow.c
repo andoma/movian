@@ -26,15 +26,11 @@
 typedef struct glw_slideshow {
   glw_t w;
 
+  int64_t deadline;
+
   int hold;
-
-  int timer;
-
-  float time;
-  float transition_time;
-
-  int displaytime;
-
+  int display_time;
+  int transition_time;
   prop_t *playstatus;
 
 } glw_slideshow_t;
@@ -84,47 +80,57 @@ glw_slideshow_render(glw_t *w, const glw_rctx_t *rc)
 /**
  *
  */
+static int
+update_parent_alpha(glw_t *w, float v)
+{
+  if(w->glw_parent_alpha == v)
+    return 0;
+  w->glw_parent_alpha = v;
+  return 1;
+}
+
+
+/**
+ *
+ */
 static void
 glw_slideshow_layout(glw_t *w, const glw_rctx_t *rc)
 {
+  glw_root_t *gr = w->glw_root;
   glw_slideshow_t *s = (glw_slideshow_t *)w;
   glw_t *c, *p, *n;
   float delta;
+  int r = 0;
 
   glw_reset_screensaver(w->glw_root);
 
-  delta = s->w.glw_root->gr_frameduration / (1000000.0 * s->transition_time);
-  if(s->time == 0) {
-    s->displaytime = INT32_MAX;
-  } else {
-    s->displaytime = 1000000 * s->time / s->w.glw_root->gr_frameduration;
-  }
+  delta = s->w.glw_root->gr_frameduration / (float)s->transition_time;
 
-    
   if((c = s->w.glw_focused) == NULL) {
     c = s->w.glw_focused = glw_first_widget(&s->w);
     if(c)
       glw_copy_constraints(&s->w, c);
   }
+
   if(c == NULL)
     return;
 
-  if(s->timer >= s->displaytime) {
+  glw_schedule_refresh(gr, s->deadline);
+
+  if(s->deadline <= gr->gr_frame_start) {
+    s->deadline = gr->gr_frame_start + s->display_time;
+
     c = glw_next_widget(c);
     if(c == NULL)
       c = glw_first_widget(&s->w);
-    s->timer = 0;
     if(c != NULL) {
       glw_focus_open_path_close_all_other(c);
       glw_copy_constraints(&s->w, c);
     }
   }
-  
-  if(!s->hold)
-    s->timer++;
 
   glw_layout0(c, rc);
-  c->glw_parent_alpha = GLW_MIN(c->glw_parent_alpha + delta, 1.0f);
+  r |= update_parent_alpha(c, GLW_MIN(c->glw_parent_alpha + delta, 1.0f));
 
   /**
    * Keep previous and next images 'hot' (ie, loaded into texture memory)
@@ -133,7 +139,7 @@ glw_slideshow_layout(glw_t *w, const glw_rctx_t *rc)
   if(p == NULL)
     p = glw_last_widget(&s->w);
   if(p != NULL && p != c) {
-    p->glw_parent_alpha = GLW_MAX(p->glw_parent_alpha - delta, 0.0f);
+    r |= update_parent_alpha(p, GLW_MAX(p->glw_parent_alpha - delta, 0.0f));
     glw_layout0(p, rc);
   }
 
@@ -141,9 +147,12 @@ glw_slideshow_layout(glw_t *w, const glw_rctx_t *rc)
   if(n == NULL)
     n = glw_first_widget(&s->w);
   if(n != NULL && n != c) {
-    n->glw_parent_alpha = GLW_MAX(n->glw_parent_alpha - delta, 0.0f);
+    r |= update_parent_alpha(n, GLW_MAX(n->glw_parent_alpha - delta, 0.0f));
     glw_layout0(n, rc);
   }
+
+  if(r)
+    glw_need_refresh(w->glw_root, 0);
 }
 
 
@@ -153,6 +162,9 @@ glw_slideshow_layout(glw_t *w, const glw_rctx_t *rc)
 static void
 glw_slideshow_update_playstatus(glw_slideshow_t *s)
 {
+  s->deadline = s->hold ? INT64_MAX : 0;
+  glw_need_refresh(s->w.glw_root, 0);
+
   prop_set_string(s->playstatus, s->hold ? "pause" : "play");
 }
 
@@ -163,32 +175,34 @@ glw_slideshow_update_playstatus(glw_slideshow_t *s)
 static int
 glw_slideshow_event(glw_t *w, event_t *e)
 {
+  glw_root_t *gr = w->glw_root;
   glw_slideshow_t *s = (glw_slideshow_t *)w;
   glw_t *c;
   event_int_t *eu = (event_int_t *)e;
 
   if(event_is_action(e, ACTION_SKIP_FORWARD) ||
      event_is_action(e, ACTION_RIGHT)) {
-    c = s->w.glw_focused ? glw_next_widget(s->w.glw_focused) : NULL;
+    c = w->glw_focused ? glw_next_widget(w->glw_focused) : NULL;
     if(c == NULL)
-      c = glw_first_widget(&s->w);
-    s->w.glw_focused = c;
-    s->timer = 0;
+      c = glw_first_widget(w);
+    w->glw_focused = c;
+    s->deadline = 0;
+    glw_need_refresh(gr, 0);
 
   } else if(event_is_action(e, ACTION_SKIP_BACKWARD) ||
 	    event_is_action(e, ACTION_LEFT)) {
 
-    c = s->w.glw_focused ? glw_prev_widget(s->w.glw_focused) : NULL;
+    c = w->glw_focused ? glw_prev_widget(w->glw_focused) : NULL;
     if(c == NULL)
-      c = glw_last_widget(&s->w);
-    s->w.glw_focused = c;
-    s->timer = 0;
+      c = glw_last_widget(w);
+    w->glw_focused = c;
+    s->deadline = 0;
+    glw_need_refresh(gr, 0);
 
   } else if(event_is_type(e, EVENT_UNICODE) && eu->val == 32) {
 
     s->hold = !s->hold;
     glw_slideshow_update_playstatus(s);
-    
 
   } else if(event_is_action(e, ACTION_PLAYPAUSE) ||
 	    event_is_action(e, ACTION_PLAY) ||
@@ -236,8 +250,8 @@ static void
 glw_slideshow_ctor(glw_t *w)
 {
   glw_slideshow_t *s = (glw_slideshow_t *)w;
-  s->time = 5.0;
-  s->transition_time = 0.5;
+  s->display_time = 5000000;
+  s->transition_time = 500000;
 }
 
 
@@ -248,21 +262,22 @@ static int
 glw_slideshow_set_float(glw_t *w, glw_attribute_t attrib, float value)
 {
   glw_slideshow_t *s = (glw_slideshow_t *)w;
+  const int v = value * 1000000;
 
   switch(attrib) {
 
   case GLW_ATTRIB_TIME:
-    if(s->time == value)
+    if(s->display_time == v)
       return 0;
 
-    s->time = value;
+    s->display_time = v;
     break;
 
   case GLW_ATTRIB_TRANSITION_TIME:
-    if(s->transition_time == value)
+    if(s->transition_time == v)
       return 0;
 
-    s->transition_time = value;
+    s->transition_time = v;
     break;
 
   default:
