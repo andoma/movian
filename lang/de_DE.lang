@@ -6,19 +6,19 @@ maintainer: Maximilian Jänsch <showtime@jaensch-koloska.de>
 #
 id: Do you like Showtime? You can donate money to the project by mining Litecoins on your PS3
 # Missing translation
-msg: 
+msg: Gefällt Dir Showtime? Spende, indem Du Litecoins auf deiner PS3 förderst
 
 id: Donate money to the Showtime project by mining litecoints
 # Missing translation
-msg: 
+msg: Spende Geld durch fördern von Litecoins
 
 id: Donations
 # Missing translation
-msg: 
+msg: Spenden
 
 id: Show me more
 # Missing translation
-msg: 
+msg: Zeig mir mehr
 
 #
 # ./glwskins/default/cmdmenu.view
@@ -49,7 +49,7 @@ msg: Zum Hauptmenü
 
 id: Hide system info
 # Missing translation
-msg: 
+msg: Systeminfo verbergen
 
 id: Navigation
 msg: Navigation
@@ -68,7 +68,7 @@ msg: Aktuelle Seite neuladen
 
 id: Show system info
 # Missing translation
-msg: 
+msg: Systeminfo anzeigen
 
 id: Suspend
 msg: System ausschalten 
@@ -177,14 +177,14 @@ msg: Abbrechen
 
 id: Clear
 # Missing translation
-msg: 
+msg: Leeren
 
 id: Default
 msg: Standard
 
 id: Keyboard layout:
 # Missing translation
-msg: 
+msg: Tastenanordnung
 
 id: OK
 msg: OK
@@ -423,7 +423,7 @@ msg: Wiedergabestatus
 #
 id: Seen:
 # Missing translation
-msg: 
+msg: Gesehen:
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -463,14 +463,14 @@ msg: CPU Temperatur
 
 id: Fragmentation
 # Missing translation
-msg: 
+msg: Fragmentierung
 
 id: GPU Temp
 msg: GPU Temperatur
 
 id: Inactive mem
 # Missing translation
-msg: 
+msg: Inaktiver Speicher
 
 id: Memory usage
 msg: Speicher-Nutzung
@@ -495,31 +495,31 @@ msg: Lautstärke: %d dB
 #
 id: Apart from enabling this option you do not need to do anything else to make your donations for the project.
 # Missing translation
-msg: 
+msg: Außer diese Option zu aktivieren, brauchst Du nichts zu tun um zu Spenden.
 
 id: Enable mining
 # Missing translation
-msg: 
+msg: Fördern aktivieren
 
 id: For more information about Litecoin, please visit http://litecoin.org
 # Missing translation
-msg: 
+msg: Für mehr Informationen über Litecoin schau auf http://litecoin.org
 
 id: If you like Showtime you can donate money to the project by letting your Playstation 3 mine Litecoins while Showtime is running.
 # Missing translation
-msg: 
+msg: Wenn du Showtime magst, kannst Du spenden. Lass Deine PS3 Litecoins fördern während Showtime läuft.
 
 id: Mining will not interfere with video playback performance as it only uses the leftover capacity of the SPU processors.
 # Missing translation
-msg: 
+msg: Das Fördern wird die Videowiedergabe nicht beeinträchtigen. Es werden nur ungenutzte Kapazitäten der SPU genutzt.
 
 id: Please consider enabling this option. / %s
 # Missing translation
-msg: 
+msg: Bitte überleg Dir diese Möglichkeit zu nutzen. / %s
 
 id: Thanks for your support!
 # Missing translation
-msg: 
+msg: Danke für Deine Unterstützung!
 
 #
 # ./src/api/tmdb.c
@@ -541,15 +541,15 @@ msg: Speicher ist knapp (%d kb RAM verfügbar)
 #
 id: Analog
 # Missing translation
-msg: 
+msg: Analog
 
 id: Audio output port
 # Missing translation
-msg: 
+msg: Audioausgang
 
 id: HDMI
 # Missing translation
-msg: 
+msg: HDMI
 
 #
 # ./src/arch/rpi/rpi_cec.c
@@ -568,80 +568,80 @@ msg: Audioverzögerung
 
 id: Audio gain adjustment during video playback
 # Missing translation
-msg: 
+msg: Lautstärke anpassen während der Videowiedergabe
 
 id: Audio settings during video playback
 # Missing translation
-msg: 
+msg: Toneinstellungen während Videowiedergabe
 
 id: Setup audio output
 # Missing translation
-msg: 
+msg: Audioausgang einstellen
 
 #
 # ./src/audio2/audio_test.c
 #
 id: 440Hz sinewave -12dB
 # Missing translation
-msg: 
+msg: 440Hz Sinuwelle -12dB
 
 id: Audio test
 # Missing translation
-msg: 
+msg: Ton Test
 
 id: Center
 msg: Zentriert
 
 id: Front Left
 # Missing translation
-msg: 
+msg: Vorne Links
 
 id: Front Right
 # Missing translation
-msg: 
+msg: Vorne Rechts
 
 id: LFE
 # Missing translation
-msg: 
+msg: LFE
 
 id: Pink noise
 # Missing translation
-msg: 
+msg: Rosarauschen
 
 id: Play test signal
 # Missing translation
-msg: 
+msg: Testsignal abspielen
 
 id: Rear Left
 # Missing translation
-msg: 
+msg: Hinten Links
 
 id: Rear Right
 # Missing translation
-msg: 
+msg: Hinten Rechts
 
 id: Speaker position
 # Missing translation
-msg: 
+msg: Lautsprecher Position
 
 id: Surround Left
 # Missing translation
-msg: 
+msg: Surround Links
 
 id: Surround Right
 # Missing translation
-msg: 
+msg: Surround Right
 
 id: Test signal type
 # Missing translation
-msg: 
+msg: Test Signal Typ
 
 #
 # ./src/audio2/pulseaudio.c
 #
 id: Unable to initialize audio system %s -- %s
 # Missing translation
-msg: 
+msg: Kann Audiosystem %s -- %s nicht initialisieren
 
 #
 # ./src/backend/dvd/cdda.c
@@ -837,15 +837,15 @@ msg: Aktiviere Löschmöglichkeit im Menü
 
 id: File browsing
 # Missing translation
-msg: 
+msg: Dateien durchsuchen
 
 id: Show filename extensions
 # Missing translation
-msg: 
+msg: Dateierweiterungen anzeigen
 
 id: Store per-file settings in filesystem
 # Missing translation
-msg: 
+msg: Dateieinstellungen im Dateisystem speichern
 
 id: %d archive parts
 msg[0]: %d Archivteil 
@@ -936,15 +936,15 @@ msg: Nach Filmende in Standby gehen
 
 id: Reset defaults for folder '%s'
 # Missing translation
-msg: 
+msg: Standards für Ordner '%s' wieder herstellen
 
 id: Save as defaults for folder '%s'
 # Missing translation
-msg: 
+msg: Als Standard für Ordner '%s' festlegen
 
 id: Save as global default
 # Missing translation
-msg: 
+msg: Als globalen Standard speichern
 
 id: Stretch video to fullscreen
 msg: Video auf Vollbild strecken
@@ -966,7 +966,7 @@ msg: Vertikale Untertitelverschiebung
 
 id: Video frame interpolation
 # Missing translation
-msg: 
+msg: Bildraten Interpolation 
 
 id: Video zoom
 msg: Videozoom
@@ -1222,7 +1222,7 @@ msg: nicht updatebar
 
 id: On Screen Keyboards
 # Missing translation
-msg: 
+msg: Bildschirmtastatur
 
 id: Online TV
 msg: Online TV
@@ -1541,11 +1541,11 @@ msg: Service nicht gefunden
 #
 id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
 # Missing translation
-msg: 
+msg: Cell-h264: %d Ref-Bilder für 1080 Inhalte ist nicht kompatibel mit dem PS3-Dekoder, Beschleunigung deaktiviert.
 
 id: Cell-h264: Broken headers, Disabling acceleration
 # Missing translation
-msg: 
+msg: Cell-h264: Kaputter Header, Beschleunigung deaktiviert.
 
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
 msg: Cell-h264: Erzwinge Level 4.2 für Level %d.%d Inhalt, \nkann zu Wiedergabeproblemen führen.
