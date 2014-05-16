@@ -60,7 +60,7 @@ notifications_fini(void)
 {
   hts_mutex_lock(&news_mutex);
   htsmsg_store_save(dismissed_news_out, "dismissed_news");
-  htsmsg_destroy(dismissed_news_out);
+  htsmsg_release(dismissed_news_out);
   dismissed_news_out = NULL;
   hts_mutex_unlock(&news_mutex);
 }

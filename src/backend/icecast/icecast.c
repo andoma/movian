@@ -142,7 +142,8 @@ static void
 parse_xspf(icecast_play_context_t *ipc, buf_t *b)
 {
   char errbuf[512];
-  htsmsg_t *m = htsmsg_xml_deserialize_buf2(b, errbuf, sizeof(errbuf));
+  htsmsg_t *m = htsmsg_xml_deserialize_buf(b, errbuf, sizeof(errbuf));
+  buf_release(b);
   if(m == NULL) {
     TRACE(TRACE_ERROR, "Radio", "Unable to parse XSPF -- %s", errbuf);
     return;
@@ -166,7 +167,7 @@ parse_xspf(icecast_play_context_t *ipc, buf_t *b)
         add_source(ipc, loc);
     }
   }
-  htsmsg_destroy(m);
+  htsmsg_release(m);
 }
 
 

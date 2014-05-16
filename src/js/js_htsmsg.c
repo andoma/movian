@@ -166,10 +166,10 @@ js_object_from_htsmsg0(JSContext *cx, const htsmsg_t *msg)
     jsval v;
     switch(f->hmf_type) {
     case HMF_MAP:
-      v = js_object_from_htsmsg0(cx, &f->hmf_msg);
+      v = js_object_from_htsmsg0(cx, f->hmf_childs);
       break;
     case HMF_LIST:
-      v = js_object_from_htsmsg0(cx, &f->hmf_msg);
+      v = js_object_from_htsmsg0(cx, f->hmf_childs);
       break;
     case HMF_STR:
       if((s = JS_NewStringCopyZ(cx, f->hmf_str)) == NULL)

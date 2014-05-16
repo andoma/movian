@@ -416,7 +416,7 @@ plugin_props_from_file(prop_t *prop, const char *zipfile)
     update_state(pl);
     hts_mutex_unlock(&plugin_mutex);
   }
-  htsmsg_destroy(pm);
+  htsmsg_release(pm);
 
 }
 
@@ -491,7 +491,7 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
     if(type == NULL) {
       snprintf(errbuf, errlen, "Missing \"type\" element in control file %s",
 	    ctrlfile);
-      htsmsg_destroy(ctrl);
+      htsmsg_release(ctrl);
       return -1;
     }
 
@@ -499,7 +499,7 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
     if(id == NULL) {
       snprintf(errbuf, errlen, "Missing \"id\" element in control file %s",
 	    ctrlfile);
-      htsmsg_destroy(ctrl);
+      htsmsg_release(ctrl);
       return -1;
     }
 
@@ -508,7 +508,7 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
     if(!force && pl->pl_loaded) {
       snprintf(errbuf, errlen, "Plugin \"%s\" already loaded",
 	       id);
-      htsmsg_destroy(ctrl);
+      htsmsg_release(ctrl);
       return -1;
     }
 
@@ -523,7 +523,7 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
       if(file == NULL) {
 	snprintf(errbuf, errlen, "Missing \"file\" element in control file %s",
 		 ctrlfile);
-	htsmsg_destroy(ctrl);
+	htsmsg_release(ctrl);
 	return -1;
       }
       snprintf(fullpath, sizeof(fullpath), "%s/%s", url, file);
@@ -590,7 +590,7 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
 
       pl->pl_loaded = 1;
     }
-    htsmsg_destroy(ctrl);
+    htsmsg_release(ctrl);
     update_state(pl);
     return r;
 
@@ -681,14 +681,14 @@ repo_get(const char *repo, char *errbuf, size_t errlen)
 
   if(ver != 1) {
     snprintf(errbuf, errlen, "Unsupported repository version %d", ver);
-    htsmsg_destroy(json);
+    htsmsg_release(json);
     return NULL;
   }
 
   const char *msg = htsmsg_get_str(json, "message");
   if(msg != NULL) {
     snprintf(errbuf, errlen, "%s", msg);
-    htsmsg_destroy(json);
+    htsmsg_release(json);
     return NULL;
   }
   
@@ -778,7 +778,7 @@ plugin_load_repo(void)
       }
     }
   }
-  htsmsg_destroy(msg);
+  htsmsg_release(msg);
   return 0;
 }
 
@@ -1386,7 +1386,7 @@ plugin_open_file(prop_t *page, const char *url)
   } else {
     nav_open_errorf(page, _("Field \"id\" not found in plugin.json"));
   }
-  htsmsg_destroy(pm);
+  htsmsg_release(pm);
 }
 
 /**

@@ -755,7 +755,7 @@ js_appendItem(JSContext *cx, JSObject *obj, uintN argc,
 	if((sources = htsmsg_get_list(m, "sources")) == NULL) {
 	  htsmsg_field_t *f;
 	  HTSMSG_FOREACH(f, sources) {
-	    htsmsg_t *src = &f->hmf_msg;
+	    htsmsg_t *src = f->hmf_childs;
 	    canonical_url = htsmsg_get_str(src, "url");
 	    if(canonical_url != NULL)
 	      break;
@@ -768,7 +768,7 @@ js_appendItem(JSContext *cx, JSObject *obj, uintN argc,
   }
   r = js_appendItem0(cx, model, model->jm_nodes, url, type, metaobj, NULL,
 		     rval, 1, canonical_url);
-  htsmsg_destroy(m);
+  htsmsg_release(m);
   return r;
 }
 

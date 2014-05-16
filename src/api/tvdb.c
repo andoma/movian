@@ -74,7 +74,8 @@ loadxml(const char *fmt, ...)
     return NULL;
   }
   
-  htsmsg_t *m = htsmsg_xml_deserialize_buf2(result, errbuf, sizeof(errbuf));
+  htsmsg_t *m = htsmsg_xml_deserialize_buf(result, errbuf, sizeof(errbuf));
+  buf_release(result);
   if(m == NULL)
     TRACE(TRACE_INFO, "TVDB", "Unable to parse XML from %s -- %s", url, errbuf);
   return m;
@@ -196,7 +197,7 @@ tvdb_load_actors(void *db, const char *seriesid, int64_t series_vid,
 
     }
   }
-  htsmsg_destroy(doc);
+  htsmsg_release(doc);
   return rval;
 }
 
@@ -295,7 +296,7 @@ tvdb_load_banners(void *db, const char *seriesid, int64_t series_vid,
     }
   }
  out:
-  htsmsg_destroy(doc);
+  htsmsg_release(doc);
   return rval;
 }
 
@@ -351,7 +352,7 @@ tvdb_find_series(void *db, const char *id, int qtype,
 				       METAITEM_STATUS_COMPLETE, 0,
 				       qtype, tvdb->ms_cfgid);
   metadata_destroy(md);
-  htsmsg_destroy(ser);
+  htsmsg_release(ser);
 
   tvdb_load_banners(db, id, series_vid, seasons, qtype);
   tvdb_load_actors(db, id, series_vid, seasons, qtype);
@@ -384,7 +385,8 @@ tvdb_query_by_episode(void *db, const char *item_url,
     return METADATA_TEMPORARY_ERROR;
   }
   
-  htsmsg_t *gs = htsmsg_xml_deserialize_buf2(result, errbuf, sizeof(errbuf));
+  htsmsg_t *gs = htsmsg_xml_deserialize_buf(result, errbuf, sizeof(errbuf));
+  buf_release(result);
   if(gs == NULL) {
     TRACE(TRACE_INFO, "TVDB", "Unable to parse XML -- %s", errbuf);
     return METADATA_TEMPORARY_ERROR;
@@ -400,12 +402,12 @@ tvdb_query_by_episode(void *db, const char *item_url,
 
   if(series_id == NULL) {
     TRACE(TRACE_INFO, "TVDB", "No series id in response");
-    htsmsg_destroy(gs);
+    htsmsg_release(gs);
     return METADATA_TEMPORARY_ERROR;
   }
 
   series_id = mystrdupa(series_id); // Make a copy of the ID
-  htsmsg_destroy(gs);               // .. cause we destroyed the XML doc
+  htsmsg_release(gs);               // .. cause we destroyed the XML doc
 
   // --------------------------------------------------------------------
   // Get episode
@@ -493,7 +495,7 @@ tvdb_query_by_episode(void *db, const char *item_url,
  out:
   // cleanup
   metadata_destroy(md);
-  htsmsg_destroy(epi);
+  htsmsg_release(epi);
   flush_seasons(&seasons);
   return itemid;
 }

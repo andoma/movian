@@ -105,7 +105,8 @@ soap_exec(const char *uri, const char *service, int version, const char *method,
   if(r)
     return -1;
 
-  out = htsmsg_xml_deserialize_buf2(result, errbuf, errlen);
+  out = htsmsg_xml_deserialize_buf(result, errbuf, errlen);
+  buf_release(result);
   if(out == NULL)
     return -1;
 
@@ -140,6 +141,6 @@ soap_exec(const char *uri, const char *service, int version, const char *method,
   } else {
     *outp = NULL;
   }
-  htsmsg_destroy(out);
+  htsmsg_release(out);
   return 0;
 }

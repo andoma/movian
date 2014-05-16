@@ -71,7 +71,7 @@ si_destroy(service_instance_t *si)
 
   prop_destroy(si->si_settings);
   free(si->si_settings_path);
-  htsmsg_destroy(si->si_settings_store);
+  htsmsg_release(si->si_settings_store);
 
   LIST_REMOVE(si, si_link);
 

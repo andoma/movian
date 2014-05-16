@@ -665,7 +665,7 @@ metadb_construct_imageset(sqlite3_stmt *sel, int urlcol, int wcol, int hcol)
   }
 
   rstr_t *rstr = htsmsg_json_serialize_to_rstr(m, "imageset:");
-  htsmsg_destroy(m);
+  htsmsg_release(m);
   return rstr;
 }
 

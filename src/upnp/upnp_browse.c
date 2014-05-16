@@ -349,7 +349,7 @@ upnp_browse_children(const char *uri, const char *id, prop_t *nodes,
   htsmsg_add_str(in, "SortCriteria", "");
   r = soap_exec(uri, "ContentDirectory", 1, "Browse", in, &out,
 		errbuf, sizeof(errbuf));
-  htsmsg_destroy(in);
+  htsmsg_release(in);
   if(r) {
     TRACE(TRACE_ERROR, "UPNP", 
 	  "Browse %s via %s -- %s", id, uri, errbuf);
@@ -365,21 +365,21 @@ upnp_browse_children(const char *uri, const char *id, prop_t *nodes,
   if((result = htsmsg_get_str(out, "Result")) == NULL) {
     TRACE(TRACE_ERROR, "UPNP", 
 	  "Browse %s via %s -- No returned result", uri, id);
-    htsmsg_destroy(out);
+    htsmsg_release(out);
     return -1;
   }
 
-  meta = htsmsg_xml_deserialize(strdup(result), errbuf, sizeof(errbuf));
+  meta = htsmsg_xml_deserialize_cstr(result, errbuf, sizeof(errbuf));
   if(meta == NULL) {
     TRACE(TRACE_ERROR, "UPNP", 
 	  "Browse %s via %s -- XML error %s", uri, id, errbuf);
-    htsmsg_destroy(out);
+    htsmsg_release(out);
     return -1;
   }
 
   nodes_from_meta(meta, nodes, trackid, trackptr, NULL, NULL);
-  htsmsg_destroy(meta);
-  htsmsg_destroy(out);
+  htsmsg_release(meta);
+  htsmsg_release(out);
   return 0;
 }
 
@@ -425,7 +425,7 @@ browse_items(upnp_browse_t *ub)
 
   r = soap_exec(ub->ub_control_url, "ContentDirectory", 1, "Browse", in, &out,
 		errbuf, sizeof(errbuf));
-  htsmsg_destroy(in);
+  htsmsg_release(in);
 
   if(r)
     return browse_fail(ub, "%s", errbuf);
@@ -450,7 +450,7 @@ browse_items(upnp_browse_t *ub)
   if((result = htsmsg_get_str(out, "Result")) == NULL)
     return browse_fail(ub, "No SOAP result");
 
-  meta = htsmsg_xml_deserialize(strdup(result), errbuf, sizeof(errbuf));
+  meta = htsmsg_xml_deserialize_cstr(result, errbuf, sizeof(errbuf));
   if(meta == NULL)
     return browse_fail(ub, "Malformed XML: %s", errbuf);
 
@@ -460,10 +460,10 @@ browse_items(upnp_browse_t *ub)
   TRACE(TRACE_DEBUG, "UPNP", "Browsed %d of %d items",
 	ub->ub_loaded_entries, ub->ub_total_entries);
 
-  htsmsg_destroy(meta);
+  htsmsg_release(meta);
   prop_have_more_childs(ub->ub_items,
                         ub->ub_loaded_entries < ub->ub_total_entries);
-  htsmsg_destroy(out);
+  htsmsg_release(out);
 }
 
 
@@ -972,7 +972,7 @@ browse_self(upnp_browse_t *ub, int sync)
 
   r = soap_exec(ub->ub_control_url, "ContentDirectory", 1, "Browse", in, &out,
 		errbuf, sizeof(errbuf));
-  htsmsg_destroy(in);
+  htsmsg_release(in);
 
   if(r)
     return browse_fail(ub, "%s", errbuf);
@@ -981,12 +981,12 @@ browse_self(upnp_browse_t *ub, int sync)
     return browse_fail(ub, "Malformed SOAP response, no returned variabled");
 
   if((result = htsmsg_get_str(out, "Result")) == NULL) {
-    htsmsg_destroy(out);
+    htsmsg_release(out);
     return browse_fail(ub, "No SOAP result");
   }
-  meta = htsmsg_xml_deserialize(strdup(result), errbuf, sizeof(errbuf));
+  meta = htsmsg_xml_deserialize_cstr(result, errbuf, sizeof(errbuf));
   if(meta == NULL) {
-    htsmsg_destroy(out);
+    htsmsg_release(out);
     return browse_fail(ub, "Malformed XML: %s", errbuf);
   }
 
@@ -1004,8 +1004,8 @@ browse_self(upnp_browse_t *ub, int sync)
   } else {
     browse_fail(ub, "Browsing something that is neither item nor container");
   }
-  htsmsg_destroy(meta);
-  htsmsg_destroy(out);
+  htsmsg_release(meta);
+  htsmsg_release(out);
 }
 
 /**

@@ -96,7 +96,7 @@ xmlrpc_parse_value(htsmsg_t *dst, htsmsg_field_t *g, const char *name,
     
     sub = htsmsg_create_map();
     if(xmlrpc_parse_struct(sub, c, errbuf, errlen)) {
-      htsmsg_destroy(sub);
+      htsmsg_release(sub);
       return -1;
     }
     htsmsg_add_msg(dst, name, sub);
@@ -108,7 +108,7 @@ xmlrpc_parse_value(htsmsg_t *dst, htsmsg_field_t *g, const char *name,
     
     sub = htsmsg_create_list();
     if(xmlrpc_parse_array(sub, c, errbuf, errlen)) {
-      htsmsg_destroy(sub);
+      htsmsg_release(sub);
       return -1;
     }
     htsmsg_add_msg(dst, name, sub);
@@ -237,7 +237,7 @@ xmlrpc_convert_response(htsmsg_t *xml, char *errbuf, size_t errlen)
       continue;
 
     if(xmlrpc_parse_value(dst, g, NULL, errbuf, errlen)) {
-      htsmsg_destroy(dst);
+      htsmsg_release(dst);
       return NULL;
     }
   }
@@ -273,13 +273,13 @@ xmlrpc_write_field(htsbuf_queue_t *q, htsmsg_field_t *f,
 
   case HMF_LIST:
     htsbuf_qprintf(q, "%s<value><array><data>", pre);
-    xmlrpc_write_list(q, &f->hmf_msg, "", "");
+    xmlrpc_write_list(q, f->hmf_childs, "", "");
     htsbuf_qprintf(q, "</data></array></value>%s\n", post);
     break;
 
   case HMF_MAP:
     htsbuf_qprintf(q, "%s<value><struct>", pre);
-    xmlrpc_write_map(q, &f->hmf_msg);
+    xmlrpc_write_map(q, f->hmf_childs);
     htsbuf_qprintf(q, "</struct></value>%s\n", post);
     break;
   }
@@ -333,7 +333,7 @@ xmlrpc_request(const char *url, const char *method, htsmsg_t *params,
 		 "<params>\n", method);
 
   xmlrpc_write_list(&q, params, "<param>", "</param>");
-  htsmsg_destroy(params);
+  htsmsg_release(params);
   htsbuf_qprintf(&q, "</params></methodCall>\n");
 
   int n = http_req(url,
@@ -346,12 +346,13 @@ xmlrpc_request(const char *url, const char *method, htsmsg_t *params,
 
   if(n)
     return NULL;
-  xml = htsmsg_xml_deserialize_buf2(result, errbuf, errlen);
+  xml = htsmsg_xml_deserialize_buf(result, errbuf, errlen);
+  buf_release(result);
   if(xml == NULL)
     return NULL;
 
   r = xmlrpc_convert_response(xml, errbuf, errlen);
-  htsmsg_destroy(xml);
+  htsmsg_release(xml);
   return r;
 }
 

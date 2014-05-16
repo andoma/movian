@@ -978,7 +978,7 @@ set_image_uri(prop_t *p, link_fn_t *link_fn, void *entity)
   }
 
   rstr_t *rstr = htsmsg_json_serialize_to_rstr(m, "imageset:");
-  htsmsg_destroy(m);
+  htsmsg_release(m);
   prop_set_rstring(p, rstr);
   rstr_release(rstr);
 }

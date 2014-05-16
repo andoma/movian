@@ -61,9 +61,12 @@ buf_t *buf_create_and_copy(size_t size, const void *data);
 
 buf_t *buf_create_and_adopt(size_t size, void *data, void (*freefn)(void *));
 
+buf_t *buf_create_from_malloced(size_t size, void *data);
+
 static inline buf_t *  __attribute__ ((warn_unused_result))
 buf_retain(buf_t *b)
 {
   atomic_add(&b->b_refcount, 1);
   return b;
 }
+

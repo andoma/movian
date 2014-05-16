@@ -58,11 +58,11 @@ htsmsg_json_write(htsmsg_t *msg, htsbuf_queue_t *hq, int isarray,
 
     switch(f->hmf_type) {
     case HMF_MAP:
-      htsmsg_json_write(&f->hmf_msg, hq, 0, indent + 1, pretty);
+      htsmsg_json_write(f->hmf_childs, hq, 0, indent + 1, pretty);
       break;
 
     case HMF_LIST:
-      htsmsg_json_write(&f->hmf_msg, hq, 1, indent + 1, pretty);
+      htsmsg_json_write(f->hmf_childs, hq, 1, indent + 1, pretty);
       break;
 
     case HMF_STR:
@@ -160,7 +160,7 @@ create_list(void *opaque)
 static void
 destroy_obj(void *opaque, void *obj)
 {
-  return htsmsg_destroy(obj);
+  return htsmsg_release(obj);
 }
 
 static void

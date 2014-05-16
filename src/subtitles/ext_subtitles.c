@@ -318,7 +318,8 @@ static ext_subtitles_t *
 load_ttml(const char *url, buf_t *buf)
 {
   char errbuf[256];
-  htsmsg_t *xml = htsmsg_xml_deserialize_buf2(buf, errbuf, sizeof(errbuf));
+  htsmsg_t *xml = htsmsg_xml_deserialize_buf(buf, errbuf, sizeof(errbuf));
+  buf_release(buf);
   htsmsg_t *subs;
   htsmsg_field_t *f;
 
@@ -334,7 +335,7 @@ load_ttml(const char *url, buf_t *buf)
 			      NULL);
 
   if(subs == NULL) {
-    htsmsg_destroy(xml);
+    htsmsg_release(xml);
     return NULL;
   }
 
@@ -343,7 +344,7 @@ load_ttml(const char *url, buf_t *buf)
 
   HTSMSG_FOREACH(f, subs) {
     if(f->hmf_type == HMF_MAP) {
-      htsmsg_t *n = &f->hmf_msg;
+      htsmsg_t *n = f->hmf_childs;
       const char *str, *txt;
       int64_t start, end;
 

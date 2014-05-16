@@ -570,9 +570,11 @@ nls_lang_metadata(const char *path, char *errbuf, size_t errlen,
  *
  */
 static htsmsg_t *
-decode_multipart(char *s, int len, const char *boundary0)
+decode_multipart(buf_t *b, const char *boundary0)
 {
-  char *s0 = s;
+  char *s0 = buf_str(b);
+  char *s = s0;
+  int len = buf_len(b);
 
   int blen = strlen(boundary0);
   char *boundary = alloca(blen + 3);
@@ -597,9 +599,7 @@ decode_multipart(char *s, int len, const char *boundary0)
   }
 
   htsmsg_t *parts = htsmsg_create_map();
-
-  parts->hm_free_opaque = &free;
-  parts->hm_opaque = s;
+  parts->hm_backing_store = buf_retain(b);
 
   while(line != NULL) {
     while(*line && *line < 32)
@@ -694,7 +694,10 @@ upload_translation(http_connection_t *hc, const char *remain, void *opaque,
         return 400;
       }
       b += strlen("boundary=");
-      htsmsg_t *m = decode_multipart(data, len, b);
+
+      buf_t *buf = buf_create_from_malloced(len, data);
+      htsmsg_t *m = decode_multipart(buf, b);
+      buf_release(buf);
 
       if(m == NULL)
         return 400;
@@ -706,7 +709,7 @@ upload_translation(http_connection_t *hc, const char *remain, void *opaque,
         htsbuf_qprintf(&out, "<p>Language updated</p>");
       }
 
-      htsmsg_destroy(m);
+      htsmsg_release(m);
 
     } else {
       nls_clear();

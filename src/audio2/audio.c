@@ -53,7 +53,7 @@ save_matervol(void *opaque, float value)
 
   htsmsg_add_s32(m, "master-volume", value * 1000);
   htsmsg_store_save(m, "audiomixer");
-  htsmsg_destroy(m);
+  htsmsg_release(m);
 }
 
 
@@ -78,7 +78,7 @@ audio_mastervol_init(void)
 
   prop_set_int(mm, 0);
   
-  htsmsg_destroy(m);
+  htsmsg_release(m);
 
   prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
 		 PROP_TAG_CALLBACK_FLOAT, save_matervol, NULL,

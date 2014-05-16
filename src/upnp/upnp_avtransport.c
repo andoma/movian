@@ -249,7 +249,7 @@ avt_SetAVTransportURI(http_connection_t *hc, htsmsg_t *args,
     return NULL;
   }
 
-  meta = htsmsg_xml_deserialize(strdup(metaxml), errbuf, sizeof(errbuf));
+  meta = htsmsg_xml_deserialize_cstr(metaxml, errbuf, sizeof(errbuf));
   if(meta == NULL) {
     TRACE(TRACE_ERROR, "UPNP", 
 	  "SetAVTransportURI: Unable to parse metadata -- %s", errbuf);
@@ -261,7 +261,7 @@ avt_SetAVTransportURI(http_connection_t *hc, htsmsg_t *args,
     // TODO: Fix metadata here
     playqueue_play(uri, prop_create_root(NULL), 1);
   }
-  htsmsg_destroy(meta);
+  htsmsg_release(meta);
   return NULL;
 }
 

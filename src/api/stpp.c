@@ -455,7 +455,7 @@ stpp_input(http_connection_t *hc, int opcode,
   htsmsg_t *m = htsmsg_json_deserialize((const char *)data);
   if(m != NULL) {
     stpp_json(stpp, m);
-    htsmsg_destroy(m);
+    htsmsg_release(m);
   }
   return 0;
 }

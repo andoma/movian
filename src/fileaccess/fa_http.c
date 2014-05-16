@@ -467,7 +467,7 @@ cookie_persist(struct callout *c, void *aux)
   }
   hts_mutex_unlock(&http_cookies_mutex);
   htsmsg_store_save(m, "httpcookies", NULL);
-  htsmsg_destroy(m);
+  htsmsg_release(m);
 }
 
 
@@ -506,7 +506,7 @@ load_cookies(void)
     hc->hc_value  = strdup(value);
     hc->hc_expire = expire;
   }
-  htsmsg_destroy(m);
+  htsmsg_release(m);
 }
 
 
@@ -1089,7 +1089,7 @@ trace_request(htsbuf_queue_t *hq)
 /**
  *
  */
-static void *
+static buf_t *
 http_read_content(http_file_t *hf)
 {
   int s, csize;
@@ -1124,7 +1124,7 @@ http_read_content(http_file_t *hf)
 
       if(csize == 0) {
 	hf->hf_rsize = 0;
-	return buf;
+	return buf_create_from_malloced(s, buf);
       }
     }
     free(buf);
@@ -1143,7 +1143,7 @@ http_read_content(http_file_t *hf)
     return NULL;
   }
   hf->hf_rsize = 0;
-  return buf;
+  return buf_create_from_malloced(s, buf);
 }
 
 
@@ -1153,7 +1153,7 @@ http_read_content(http_file_t *hf)
 static int
 http_drain_content(http_file_t *hf)
 {
-  char *buf;
+  buf_t *buf;
 
   if(hf->hf_chunked_transfer == 0 && hf->hf_rsize < 0) {
     hf->hf_rsize = 0;
@@ -1163,7 +1163,7 @@ http_drain_content(http_file_t *hf)
   if((buf = http_read_content(hf)) == NULL)
     return -1;
 
-  free(buf);
+  buf_release(buf);
 
   if(hf->hf_connection_mode == CONNECTION_MODE_CLOSE)
     http_detach(hf, 0, "Connection-mode = close");
@@ -2530,7 +2530,7 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
 {
   int code, retval;
   htsbuf_queue_t q;
-  char *buf;
+  buf_t *buf;
   htsmsg_t *xml;
   int redircount = 0;
   char err0[128];
@@ -2582,14 +2582,15 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
 	return -1;
       }
 
-      /* XML parser consumes 'buf' */
-      if((xml = htsmsg_xml_deserialize(buf, err0, sizeof(err0))) == NULL) {
+      xml = htsmsg_xml_deserialize_buf(buf, err0, sizeof(err0));
+      buf_release(buf);
+      if(xml == NULL) {
 	snprintf(errbuf, errlen,
 		 "WEBDAV/PROPFIND: XML parsing failed:\n%s", err0);
 	return -1;
       }
       retval = parse_propfind(hf, xml, fd, errbuf, errlen);
-      htsmsg_destroy(xml);
+      htsmsg_release(xml);
       return retval;
 
     case 301:

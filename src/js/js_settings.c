@@ -142,7 +142,7 @@ jsg_release(js_setting_group_t *jsg)
       prop_destroy(jsg->jsg_root);
 
   if(jsg->jsg_store != NULL)
-    htsmsg_destroy(jsg->jsg_store);
+    htsmsg_release(jsg->jsg_store);
   
   free(jsg->jsg_spath);
   prop_ref_dec(jsg->jsg_root);

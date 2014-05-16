@@ -39,8 +39,8 @@ static void
 keyring_clear(void *opaque, prop_event_t event, ...)
 {
   hts_mutex_lock(&keyring_mutex);
-  htsmsg_destroy(persistent_keyring);
-  htsmsg_destroy(temporary_keyring);
+  htsmsg_release(persistent_keyring);
+  htsmsg_release(temporary_keyring);
 
   persistent_keyring = htsmsg_create_map();
   temporary_keyring = htsmsg_create_map();

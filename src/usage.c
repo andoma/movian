@@ -103,7 +103,7 @@ send_report(void *aux)
 
   htsbuf_queue_flush(&hq);
 
-  htsmsg_destroy(m);
+  htsmsg_release(m);
   return NULL;
 }
 

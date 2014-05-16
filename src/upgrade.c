@@ -541,7 +541,7 @@ stos_check_upgrade(void)
 
   const char *version = htsmsg_get_str(doc, "version");
   if(version == NULL) {
-    htsmsg_destroy(doc);
+    htsmsg_release(doc);
     return -1;
   }
 
@@ -550,17 +550,17 @@ stos_check_upgrade(void)
 	version, stos_avail_version);
   
 
-  htsmsg_destroy(stos_artifacts);
+  htsmsg_release(stos_artifacts);
   stos_artifacts = NULL;
 
   htsmsg_field_t *f = htsmsg_field_find(doc, "artifacts");
 
   if(f == NULL) {
-    htsmsg_destroy(doc);
+    htsmsg_release(doc);
     return -1;
   }
   stos_artifacts = htsmsg_detach_submsg(f);
-  htsmsg_destroy(doc);
+  htsmsg_release(doc);
 
   if(stos_artifacts == NULL)
     return -1;
@@ -589,7 +589,7 @@ stos_check_upgrade(void)
   return 0;
 
  bad_artifacts:
-  htsmsg_destroy(stos_artifacts);
+  htsmsg_release(stos_artifacts);
   stos_artifacts = NULL;
   return 1;
 }
@@ -779,11 +779,11 @@ check_upgrade(int set_news)
 	abort();
     }
   }
-  htsmsg_destroy(json);
+  htsmsg_release(json);
   return 0;
  err:
   prop_set_string(upgrade_status, "checkError");
-  htsmsg_destroy(json);
+  htsmsg_release(json);
   return 0;
 }
 

@@ -329,10 +329,10 @@ fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh,
 	   htsmsg_get_str(json, "type") != NULL) {
 	  md->md_title = rstr_alloc(title);
 	  md->md_contenttype = CONTENT_PLUGIN;
-	  htsmsg_destroy(json);
+	  htsmsg_release(json);
 	  return 1;
 	}
-	htsmsg_destroy(json);
+	htsmsg_release(json);
       }
     }
     metdata_set_redirect(md, "zip://%s", url);

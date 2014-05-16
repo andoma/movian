@@ -165,7 +165,7 @@ service_destroy(service_t *s)
   free(s->s_settings_path);
 
   if(s->s_settings_store != NULL)
-    htsmsg_destroy(s->s_settings_store);
+    htsmsg_release(s->s_settings_store);
 
   if(s->s_setting_enabled != NULL)
     setting_destroy(s->s_setting_enabled);

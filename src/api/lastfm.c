@@ -142,9 +142,12 @@ lastfm_load_artistinfo(void *db, const char *artist,
           "artist.getinfo query to lastfm failed: %s",  errbuf);
     return;
   }
-  
-  /* XML parser consumes 'buf' */
-  if((info = htsmsg_xml_deserialize_buf2(result, errbuf, sizeof(errbuf))) == NULL) {
+
+
+  info = htsmsg_xml_deserialize_buf(result, errbuf, sizeof(errbuf));
+  buf_release(result);
+
+  if(info == NULL) {
     TRACE(TRACE_DEBUG, "lastfm", "lastfm xml parse failed: %s",  errbuf);
     return;
   }
@@ -157,7 +160,7 @@ lastfm_load_artistinfo(void *db, const char *artist,
 
   if(mbid == NULL) {
     TRACE(TRACE_DEBUG, "lastfm", "No MBID for '%s', skipping", artist);
-    htsmsg_destroy(info);
+    htsmsg_release(info);
     return;
   }
 
@@ -165,7 +168,7 @@ lastfm_load_artistinfo(void *db, const char *artist,
     metadb_artist_get_by_title(db, artist, lastfm->ms_id, mbid);
 
   if(artist_id < 0) {
-    htsmsg_destroy(info);
+    htsmsg_release(info);
     return;
   }
 
@@ -188,21 +191,24 @@ lastfm_load_artistinfo(void *db, const char *artist,
       break;
     }
 
-    if((xml = htsmsg_xml_deserialize_buf2(result, errbuf, sizeof(errbuf))) == NULL) {
+
+    xml = htsmsg_xml_deserialize_buf(result, errbuf, sizeof(errbuf));
+    buf_release(result);
+    if(xml == NULL) {
       TRACE(TRACE_DEBUG, "lastfm", "lastfm xml parse failed: %s",  errbuf);
       break;
     }
 
     lastfm_parse_artist_images(db, artist_id, xml, &totalpages, cb, opaque);
 
-    htsmsg_destroy(xml);
-    
+    htsmsg_release(xml);
+
     if(page == 5 || page == totalpages)
       break;
 
     page++;
   }
-  htsmsg_destroy(info);
+  htsmsg_release(info);
 }
 
 
@@ -331,14 +337,17 @@ lastfm_load_albuminfo(void *db, const char *album, const char *artist)
     TRACE(TRACE_DEBUG, "lastfm", "HTTP query to lastfm failed: %s",  errbuf);
    return;
   }
-  /* XML parser consumes 'buf' */
-  if((xml = htsmsg_xml_deserialize_buf2(result, errbuf, sizeof(errbuf))) == NULL) {
+
+  xml = htsmsg_xml_deserialize_buf(result, errbuf, sizeof(errbuf));
+  buf_release(result);
+
+  if(xml == NULL) {
     TRACE(TRACE_DEBUG, "lastfm", "lastfm xml parse failed: %s",  errbuf);
     return;
   }
 
   lastfm_parse_albuminfo(db, xml, artist, album);
-  htsmsg_destroy(xml);
+  htsmsg_release(xml);
   return;
 }
 

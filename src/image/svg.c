@@ -644,11 +644,12 @@ image_t *
 svg_decode(buf_t *buf, const image_meta_t *im,
 	   char *errbuf, size_t errlen)
 {
-  htsmsg_t *doc = htsmsg_xml_deserialize_buf2(buf, errbuf, errlen);
+  htsmsg_t *doc = htsmsg_xml_deserialize_buf(buf, errbuf, errlen);
+  buf_release(buf);
   if(doc == NULL)
     return NULL;
 
   image_t *img = svg_decode1(doc, im, errbuf, errlen);
-  htsmsg_destroy(doc);
+  htsmsg_release(doc);
   return img;
 }

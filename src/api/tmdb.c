@@ -191,7 +191,7 @@ tmdb_configure(void)
     }
     
     tmdb_parse_config(doc);
-    htsmsg_destroy(doc);
+    htsmsg_release(doc);
     tmdb_configured = 1;
   }
  done:
@@ -385,9 +385,9 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id,
       if(cast != NULL)
 	tmdb_insert_movie_cast(db, itemid, cast);
     }
-    htsmsg_destroy(cast);
+    htsmsg_release(cast);
   }
-  htsmsg_destroy(doc);
+  htsmsg_release(doc);
   metadata_destroy(md);
   return itemid;
 }
@@ -467,7 +467,7 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
 			      pop * 1000, qtype, tmdb->ms_cfgid);
     metadata_destroy(md);
     if(itemid < 0) {
-      htsmsg_destroy(doc);
+      htsmsg_release(doc);
       return itemid;
     }
 
@@ -478,7 +478,7 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
       insert_videoart(db, itemid, METADATA_IMAGE_BACKDROP, s, "backdrop");
     rval = 0;
   }
-  htsmsg_destroy(doc);
+  htsmsg_release(doc);
   return rval;
 }
 
@@ -648,7 +648,7 @@ be_tmdb_imageloader(const char *url, const image_meta_t *im,
   }
 
   rstr_t *rstr = htsmsg_json_serialize_to_rstr(m, "imageset:");
-  htsmsg_destroy(m);
+  htsmsg_release(m);
   image_t *img = backend_imageloader(rstr, im, vpaths, errbuf, errlen,
 				     cache_control, c);
   rstr_release(rstr);

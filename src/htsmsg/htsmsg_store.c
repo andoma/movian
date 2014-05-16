@@ -66,7 +66,7 @@ static char *showtime_settings_path;
 static void
 pending_store_destroy(pending_store_t *ps)
 {
-  htsmsg_destroy(ps->ps_msg);
+  htsmsg_release(ps->ps_msg);
   free(ps->ps_path);
   free(ps);
 }
@@ -288,7 +288,7 @@ htsmsg_store_save(htsmsg_t *record, const char *pathfmt, ...)
     ps->ps_path = strdup(path);
     LIST_INSERT_HEAD(&pending_stores, ps, ps_link);
   } else {
-    htsmsg_destroy(ps->ps_msg);
+    htsmsg_release(ps->ps_msg);
   }
 
   ps->ps_msg = htsmsg_copy(record);

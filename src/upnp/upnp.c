@@ -80,7 +80,7 @@ us_destroy(upnp_service_t *us)
   service_destroy(us->us_service);
 
   free(us->us_settings_path);
-  htsmsg_destroy(us->us_settings_store);
+  htsmsg_release(us->us_settings_store);
   free(us);
 }
 
@@ -269,7 +269,7 @@ upnp_init(void)
     htsmsg_store_save(conf, "upnp");
   }
 
-  htsmsg_destroy(conf);
+  htsmsg_release(conf);
 
   upnp_avtransport_init();
 
@@ -605,7 +605,8 @@ introspect_device(upnp_device_t *ud)
     return;
   }
 
-  m = htsmsg_xml_deserialize_buf2(b, errbuf, sizeof(errbuf));
+  m = htsmsg_xml_deserialize_buf(b, errbuf, sizeof(errbuf));
+  buf_release(b);
   if(m == NULL) {
     TRACE(TRACE_INFO, "UPNP", "Unable to introspect %s XML -- %s",
 	  ud->ud_url, errbuf);
@@ -614,14 +615,14 @@ introspect_device(upnp_device_t *ud)
 
   dev = htsmsg_get_map_multi(m, "tags", "root", "tags", "device", NULL);
   if(dev == NULL) {
-    htsmsg_destroy(m);
+    htsmsg_release(m);
     return;
   }
 
   uuid = htsmsg_get_str_multi(dev, "tags", "UDN", "cdata", NULL);
 
   if(uuid == NULL) {
-    htsmsg_destroy(m);
+    htsmsg_release(m);
     return;
   }
 
@@ -662,7 +663,7 @@ introspect_device(upnp_device_t *ud)
     }
   }
 
-  htsmsg_destroy(m);
+  htsmsg_release(m);
 }
     
 

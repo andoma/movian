@@ -89,3 +89,10 @@ buf_create_and_adopt(size_t size, void *data, void (*freefn)(void *))
   b->b_content_type = NULL;
   return b;
 }
+
+
+buf_t *
+buf_create_from_malloced(size_t size, void *data)
+{
+  return buf_create_and_adopt(size, data, &free);
+}

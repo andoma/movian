@@ -237,7 +237,7 @@ play_video(const char *url, struct media_pipe *mp,
     }
 
     HTSMSG_FOREACH(f, sources) {
-      htsmsg_t *src = &f->hmf_msg;
+      htsmsg_t *src = f->hmf_childs;
       const char *url      = htsmsg_get_str(src, "url");
       const char *mimetype = htsmsg_get_str(src, "mimetype");
       int bitrate          = htsmsg_get_u32_or_default(src, "bitrate", -1);
@@ -288,7 +288,7 @@ play_video(const char *url, struct media_pipe *mp,
 
     if((subs = htsmsg_get_list(m, "subtitles")) != NULL) {
       HTSMSG_FOREACH(f, subs) {
-        htsmsg_t *sub = &f->hmf_msg;
+        htsmsg_t *sub = f->hmf_childs;
         const char *title = htsmsg_get_str(sub, "title");
         const char *url = htsmsg_get_str(sub, "url");
         const char *lang = htsmsg_get_str(sub, "language");
@@ -353,7 +353,7 @@ play_video(const char *url, struct media_pipe *mp,
 
   vsource_cleanup(&vsources);
   if(m)
-    htsmsg_destroy(m);
+    htsmsg_release(m);
   return e;
 }
 

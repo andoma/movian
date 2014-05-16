@@ -71,7 +71,7 @@ upnp_event_generate_one(upnp_local_service_t *uls,
       soap_encode_arg(&set->out, f);
       htsbuf_qprintf(&set->out, "</e:property>");
     }
-    htsmsg_destroy(p);
+    htsmsg_release(p);
   }
   htsbuf_qprintf(&set->out, "</e:propertyset>");
     

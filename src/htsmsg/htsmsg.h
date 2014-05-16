@@ -33,21 +33,10 @@
 TAILQ_HEAD(htsmsg_field_queue, htsmsg_field);
 
 typedef struct htsmsg {
-  /**
-   * fields 
-   */
   struct htsmsg_field_queue hm_fields;
-
-  /**
-   * Set if this message is a list, otherwise it is a map.
-   */
-  int hm_islist;
-
-  /**
-   * 
-   */
-  void (*hm_free_opaque)(void *);
-  void *hm_opaque;
+  buf_t *hm_backing_store;
+  uint8_t hm_islist;
+  int hm_refcount;
 } htsmsg_t;
 
 
@@ -60,7 +49,7 @@ typedef struct htsmsg {
 
 typedef struct htsmsg_field {
   TAILQ_ENTRY(htsmsg_field) hmf_link;
-  const char *hmf_name;
+  char *hmf_name;
   uint8_t hmf_type;
   uint8_t hmf_flags;
 
@@ -69,25 +58,28 @@ typedef struct htsmsg_field {
 
   union {
     int64_t  s64;
-    const char *str;
+    char *str;
     struct {
-      const char *data;
+      void *data;
       size_t len;
     } bin;
-    htsmsg_t msg;
     double dbl;
   } u;
+
+  htsmsg_t *hmf_childs;
 } htsmsg_field_t;
 
 #define hmf_s64     u.s64
-#define hmf_msg     u.msg
 #define hmf_str     u.str
 #define hmf_bin     u.bin.data
 #define hmf_binsize u.bin.len
 #define hmf_dbl     u.dbl
 
-#define htsmsg_get_map_by_field(f) \
- ((f)->hmf_type == HMF_MAP ? &(f)->hmf_msg : NULL)
+static inline htsmsg_t *
+htsmsg_get_map_by_field(htsmsg_field_t *f)
+{
+  return f->hmf_childs;
+}
 
 #define HTSMSG_FOREACH(f, msg) TAILQ_FOREACH(f, &(msg)->hm_fields, hmf_link)
 
@@ -107,11 +99,6 @@ htsmsg_t *htsmsg_create_list(void);
  * Remove a given field from a msg
  */
 void htsmsg_field_destroy(htsmsg_t *msg, htsmsg_field_t *f);
-
-/**
- * Destroys a message (map or list)
- */
-void htsmsg_destroy(htsmsg_t *msg);
 
 /**
  * Add an integer field where source is unsigned 32 bit.
@@ -167,7 +154,7 @@ void htsmsg_add_bin(htsmsg_t *msg, const char *name, const void *bin,
  * is responsible for keeping the data valid for as long as the message
  * is around.
  */
-void htsmsg_add_binptr(htsmsg_t *msg, const char *name, const void *bin,
+void htsmsg_add_binptr(htsmsg_t *msg, const char *name, void *bin,
 		       size_t len);
 
 /**
@@ -316,6 +303,14 @@ htsmsg_t *htsmsg_copy(htsmsg_t *src);
 
 #define HTSMSG_FOREACH(f, msg) TAILQ_FOREACH(f, &(msg)->hm_fields, hmf_link)
 
+
+/**
+ * Refcounting
+ */
+
+void htsmsg_release(htsmsg_t *m);
+
+htsmsg_t *htsmsg_retain(htsmsg_t *m)  __attribute__ ((warn_unused_result));
 
 /**
  * Misc

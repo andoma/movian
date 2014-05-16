@@ -66,7 +66,7 @@ save_order(prop_reorder_t *pr)
   htsmsg_store_save(out, pr->pr_store);
 
   if(pr->pr_order)
-    htsmsg_destroy(pr->pr_order);
+    htsmsg_release(pr->pr_order);
   pr->pr_order = out;
 }
 

@@ -102,7 +102,7 @@ km_save(keymap_t *km)
   }
 
   htsmsg_store_save(m, "keymaps2/%s", km->km_name);
-  htsmsg_destroy(m);
+  htsmsg_release(m);
 }
 
 
@@ -250,7 +250,7 @@ keymapper_create_entries(keymap_t *km)
     }
     keymapper_entry_add(km, kc1, kc2, eventname, e);
   }
-  htsmsg_destroy(m);
+  htsmsg_release(m);
 }
 
 

@@ -123,5 +123,5 @@ glw_settings_fini(void)
   setting_destroy(glw_settings.gs_setting_size);
   setting_destroy(glw_settings.gs_setting_wrap);
   prop_destroy(glw_settings.gs_settings);
-  htsmsg_destroy(glw_settings.gs_settings_store);
+  htsmsg_release(glw_settings.gs_settings_store);
 }

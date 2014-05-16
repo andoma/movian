@@ -59,7 +59,7 @@ control_dispatch_method(upnp_local_service_t *uls, upnp_service_method_t *usm,
 
   htsmsg_t *out = usm->usm_fn(hc, in, http_get_my_host(hc),
 			      http_get_my_port(hc));
-  htsmsg_destroy(in);
+  htsmsg_release(in);
 
   htsbuf_queue_init(&xml, 0);
   
@@ -83,7 +83,7 @@ control_dispatch_method(upnp_local_service_t *uls, upnp_service_method_t *usm,
     
     if(out != NULL) {
       soap_encode_args(&xml, out);
-      htsmsg_destroy(out);
+      htsmsg_release(out);
     }
 
     htsbuf_qprintf(&xml,
@@ -180,11 +180,14 @@ upnp_control(http_connection_t *hc, const char *remain, void *opaque,
   if(xml == NULL)
     return http_error(hc, HTTP_STATUS_BAD_REQUEST, "Missing POST data");
 
-  inenv = htsmsg_xml_deserialize(xml, errbuf, sizeof(errbuf));
+  buf_t *buf = buf_create_from_malloced(strlen(xml), xml);
+
+  inenv = htsmsg_xml_deserialize_buf(buf, errbuf, sizeof(errbuf));
+  buf_release(buf);
   if(inenv == NULL)
     return http_error(hc, HTTP_STATUS_BAD_REQUEST, errbuf);
   
   r = control_parse_soap(uls, hc, inenv);
-  htsmsg_destroy(inenv);
+  htsmsg_release(inenv);
   return r;
 }

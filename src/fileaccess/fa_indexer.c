@@ -214,7 +214,7 @@ save_state(void)
 
   htsmsg_add_msg(m, "roots", r);
   htsmsg_store_save(m, "indexer");
-  htsmsg_destroy(m);
+  htsmsg_release(m);
 }
 
 
@@ -327,7 +327,7 @@ fa_indexer_init(void)
           addroot(url);
       }
     }
-    htsmsg_destroy(m);
+    htsmsg_release(m);
   }
 
   hts_thread_create_detached("indexer", indexer_thread, NULL,

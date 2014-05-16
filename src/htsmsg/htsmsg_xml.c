@@ -345,7 +345,7 @@ htsmsg_xml_parse_tag(xmlparser_t *xp, htsmsg_t *parent, char *src)
       src++;
 
     if(*src == 0) {
-      htsmsg_destroy(attrs);
+      htsmsg_release(attrs);
       xmlerr(xp, "Unexpected end of file in tag");
       return NULL;
     }
@@ -362,7 +362,7 @@ htsmsg_xml_parse_tag(xmlparser_t *xp, htsmsg_t *parent, char *src)
     }
 
     if((src = htsmsg_xml_parse_attrib(xp, attrs, src, &nslist)) == NULL) {
-      htsmsg_destroy(attrs);
+      htsmsg_release(attrs);
       return NULL;
     }
   }
@@ -372,7 +372,7 @@ htsmsg_xml_parse_tag(xmlparser_t *xp, htsmsg_t *parent, char *src)
   if(TAILQ_FIRST(&attrs->hm_fields) != NULL) {
     htsmsg_add_msg_extname(m, "attrib", attrs);
   } else {
-    htsmsg_destroy(attrs);
+    htsmsg_release(attrs);
   }
 
   if(!empty)
@@ -453,7 +453,7 @@ htsmsg_xml_parse_pi(xmlparser_t *xp, htsmsg_t *parent, char *src)
       src++;
 
     if(*src == 0) {
-      htsmsg_destroy(attrs);
+      htsmsg_release(attrs);
       xmlerr(xp, "Unexpected end of file during parsing of "
 	     "Processing instructions");
       return NULL;
@@ -465,7 +465,7 @@ htsmsg_xml_parse_pi(xmlparser_t *xp, htsmsg_t *parent, char *src)
     }
 
     if((src = htsmsg_xml_parse_attrib(xp, attrs, src, NULL)) == NULL) {
-      htsmsg_destroy(attrs);
+      htsmsg_release(attrs);
       return NULL;
     }
   }
@@ -474,7 +474,7 @@ htsmsg_xml_parse_pi(xmlparser_t *xp, htsmsg_t *parent, char *src)
   if(TAILQ_FIRST(&attrs->hm_fields) != NULL && parent != NULL) {
     htsmsg_add_msg(parent, piname, attrs);
   } else {
-    htsmsg_destroy(attrs);
+    htsmsg_release(attrs);
   }
   return src;
 }
@@ -739,14 +739,14 @@ htsmsg_xml_parse_cd(xmlparser_t *xp, htsmsg_t *parent, char *src)
 
 
   if(src == NULL) {
-    htsmsg_destroy(tags);
+    htsmsg_release(tags);
     return NULL;
   }
 
   if(TAILQ_FIRST(&tags->hm_fields) != NULL) {
     htsmsg_add_msg_extname(parent, "tags", tags);
   } else {
-    htsmsg_destroy(tags);
+    htsmsg_release(tags);
   }
 
   return src;
@@ -806,70 +806,17 @@ htsmsg_parse_prolog(xmlparser_t *xp, char *src)
     }
   }
 
-  htsmsg_destroy(pis);
+  htsmsg_release(pis);
 
   return src;
 }
 
 
-
 /**
  *
  */
 htsmsg_t *
-htsmsg_xml_deserialize(char *src, char *errbuf, size_t errbufsize)
-{
-  htsmsg_t *m;
-  xmlparser_t xp;
-  char *src0 = src;
-  int i;
-
-  xp.xp_errmsg[0] = 0;
-  xp.xp_encoding = XML_ENCODING_UTF8;
-  LIST_INIT(&xp.xp_namespaces);
-
-  if((src = htsmsg_parse_prolog(&xp, src)) == NULL)
-    goto err;
-
-  m = htsmsg_create_map();
-
-  if(htsmsg_xml_parse_cd(&xp, m, src) == NULL) {
-    htsmsg_destroy(m);
-    goto err;
-  }
-
-  if(xp.xp_srcdataused) {
-    m->hm_opaque = src0;
-    m->hm_free_opaque = &free;
-  } else {
-    free(src0);
-  }
-
-  return m;
-
- err:
-  free(src);
-  snprintf(errbuf, errbufsize, "%s", xp.xp_errmsg);
-  
-  /* Remove any odd chars inside of errmsg */
-  for(i = 0; i < errbufsize; i++) {
-    if(errbuf[i] < 32) {
-      errbuf[i] = 0;
-      break;
-    }
-  }
-
-  return NULL;
-}
-
-
-
-
-/**
- *
- */
-htsmsg_t *
-htsmsg_xml_deserialize_buf2(buf_t *buf, char *errbuf, size_t errbufsize)
+htsmsg_xml_deserialize_buf(buf_t *buf, char *errbuf, size_t errbufsize)
 {
   htsmsg_t *m;
   xmlparser_t xp;
@@ -889,16 +836,13 @@ htsmsg_xml_deserialize_buf2(buf_t *buf, char *errbuf, size_t errbufsize)
   m = htsmsg_create_map();
 
   if(htsmsg_xml_parse_cd(&xp, m, src) == NULL) {
-    htsmsg_destroy(m);
+    htsmsg_release(m);
     goto err;
   }
 
-  if(xp.xp_srcdataused) {
-    m->hm_opaque = buf;
-    m->hm_free_opaque = (void *)&buf_release;
-  } else {
-    buf_release(buf);
-  }
+  if(xp.xp_srcdataused)
+    m->hm_backing_store = buf_retain(buf);
+
   return m;
 
  err:
@@ -912,6 +856,20 @@ htsmsg_xml_deserialize_buf2(buf_t *buf, char *errbuf, size_t errbufsize)
     }
   }
 
-  buf_release(buf);
   return NULL;
 }
+
+
+/**
+ *
+ */
+htsmsg_t *
+htsmsg_xml_deserialize_cstr(const char *str, char *errbuf, size_t errbufsize)
+{
+  int len = strlen(str);
+  buf_t *b = buf_create_and_copy(len, str);
+  htsmsg_t *m = htsmsg_xml_deserialize_buf(b, errbuf, errbufsize);
+  buf_release(b);
+  return m;
+}
+

@@ -974,7 +974,7 @@ js_xmlrpc(JSContext *cx, JSObject *obj,
   }
 
   js_object_from_htsmsg(cx, reply, rval);
-  htsmsg_destroy(reply);
+  htsmsg_release(reply);
 
   return JS_TRUE;
 }

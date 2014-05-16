@@ -190,26 +190,31 @@ static htsmsg_t *htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m);
 static htsmsg_t *
 htsp_recv(htsp_connection_t *hc)
 {
-  void *buf;
   tcpcon_t *tc = hc->hc_tc;
   uint8_t len[4];
   uint32_t l;
 
   if(tcp_read_data(tc, len, 4, NULL, NULL) < 0)
     return NULL;
-  
+
   l = (len[0] << 24) | (len[1] << 16) | (len[2] << 8) | len[3];
   if(l > 16 * 1024 * 1024)
     return NULL;
 
-  buf = mymalloc(l);
+  buf_t *buf = buf_create(l);
 
-  if(buf == NULL || tcp_read_data(tc, buf, l, NULL, NULL) < 0) {
-    free(buf);
+  if(buf == NULL)
     return NULL;
+
+  htsmsg_t *m;
+  if(tcp_read_data(tc, buf_str(buf), l, NULL, NULL) < 0) {
+    m = NULL;
+  } else {
+    m = htsmsg_binary_deserialize(buf);
   }
-  
-  return htsmsg_binary_deserialize(buf, l, buf); /* consumes 'buf' */
+
+  buf_release(buf);
+  return m;
 }
 
 
@@ -276,7 +281,7 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m)
   }
 
   if(htsmsg_binary_serialize(m, &buf, &len, -1) < 0) {
-    htsmsg_destroy(m);
+    htsmsg_release(m);
     return NULL;
   }
 
@@ -294,7 +299,7 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m)
 
   if(tcp_write_data(tc, buf, len)) {
     free(buf);
-    htsmsg_destroy(m);
+    htsmsg_release(m);
     
     if(hm != NULL) {
       hts_mutex_lock(&hc->hc_rpc_mutex);
@@ -316,7 +321,7 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m)
 	hts_mutex_unlock(&hc->hc_rpc_mutex);
 	free(hm);
 
-	htsmsg_destroy(m);
+	htsmsg_release(m);
 	return NULL;
       }
 
@@ -334,7 +339,7 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m)
   } else {
 
     if((reply = htsp_recv(hc)) == NULL) {
-      htsmsg_destroy(m);
+      htsmsg_release(m);
       return NULL;
     }
   }
@@ -345,7 +350,7 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m)
     goto again;
   }
 
-  htsmsg_destroy(m); /* Destroy original message */
+  htsmsg_release(m); /* Destroy original message */
   return reply;
 }
 
@@ -370,12 +375,12 @@ htsp_login(htsp_connection_t *hc)
   }
 
   if(htsmsg_get_bin(m, "challenge", &ch, &chlen) || chlen != 32) {
-    htsmsg_destroy(m);
+    htsmsg_release(m);
     return -1;
   }
   memcpy(hc->hc_challenge, ch, 32);
 
-  htsmsg_destroy(m);
+  htsmsg_release(m);
 
 
   m = htsmsg_create_map();
@@ -386,7 +391,7 @@ htsp_login(htsp_connection_t *hc)
     return -1;
   }
 
-  htsmsg_destroy(m);
+  htsmsg_release(m);
 
   return 0;
 }
@@ -882,7 +887,7 @@ htsp_worker_thread(void *aux)
 		method);
     }
 
-    htsmsg_destroy(m);
+    htsmsg_release(m);
   }
   return NULL;
 }
@@ -930,7 +935,7 @@ htsp_msg_dispatch(htsp_connection_t *hc, htsmsg_t *m)
   if((method = htsmsg_get_str(m, "method")) != NULL &&
      !strcmp(method, "muxpkt")) {
     htsp_mux_input(hc, m);
-    htsmsg_destroy(m);
+    htsmsg_release(m);
     return 0;
   }
 
@@ -948,12 +953,12 @@ htsp_msg_dispatch(htsp_connection_t *hc, htsmsg_t *m)
       m = NULL;
     } else {
       hts_mutex_unlock(&hc->hc_rpc_mutex);
-      htsmsg_destroy(m);
+      htsmsg_release(m);
       return -1;
     }
 
     if(m != NULL)
-      htsmsg_destroy(m);
+      htsmsg_release(m);
     hts_mutex_unlock(&hc->hc_rpc_mutex);
 
     return 0;
@@ -992,7 +997,7 @@ htsp_thread(void *aux)
     if(m == NULL) {
       return NULL;
     }
-    htsmsg_destroy(m);
+    htsmsg_release(m);
 
     hc->hc_is_async = 1;
 
@@ -1339,7 +1344,7 @@ zap_channel(htsp_connection_t *hc, htsp_subscription_t *hs,
     snprintf(errbuf, errlen, "Connection with server lost");
     return -1;
   }
-  htsmsg_destroy(m);
+  htsmsg_release(m);
 
   hts_mutex_lock(&hc->hc_subscription_mutex);
   hs->hs_sid = atomic_add(&hc->hc_sid_generator, 1);
@@ -1361,7 +1366,7 @@ zap_channel(htsp_connection_t *hc, htsp_subscription_t *hs,
 
   if((err = htsmsg_get_str(m, "error")) != NULL) {
     snprintf(errbuf, errlen, "From server: %s", err);
-    htsmsg_destroy(m);
+    htsmsg_release(m);
     prop_ref_dec(next);
     return -1;
   }
@@ -1369,7 +1374,7 @@ zap_channel(htsp_connection_t *hc, htsp_subscription_t *hs,
   prop_ref_dec(hs->hs_origin);
   hs->hs_origin = next;
 
-  htsmsg_destroy(m);
+  htsmsg_release(m);
   set_channel(hc, hs, newch, name);
   return 0;
 }
@@ -1430,14 +1435,14 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
 
   if((err = htsmsg_get_str(m, "error")) != NULL) {
     snprintf(errbuf, errlen, "From server: %s", err);
-    htsmsg_destroy(m);
+    htsmsg_release(m);
     return NULL;
   }
 
   if(htsmsg_get_u32_or_default(m, "timeshiftPeriod", 0))
     mp_flags |= MP_PLAY_CAPS_PAUSE;
 
-  htsmsg_destroy(m);
+  htsmsg_release(m);
 
   prop_set_string(mp->mp_prop_playstatus, "play");
 
@@ -1472,11 +1477,11 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
       
       if((err = htsmsg_get_str(m, "error")) != NULL) {
 	snprintf(errbuf, errlen, "From server: %s", err);
-	htsmsg_destroy(m);
+	htsmsg_release(m);
 	return NULL;
       }
       
-      htsmsg_destroy(m);      
+      htsmsg_release(m);      
 
 
     } else if(mp_flags & MP_PLAY_CAPS_PAUSE && event_is_type(e, EVENT_HOLD)) {
@@ -1499,11 +1504,11 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
       
       if((err = htsmsg_get_str(m, "error")) != NULL) {
 	snprintf(errbuf, errlen, "From server: %s", err);
-	htsmsg_destroy(m);
+	htsmsg_release(m);
 	return NULL;
       }
       
-      htsmsg_destroy(m);      
+      htsmsg_release(m);      
 
     } else if(event_is_type(e, EVENT_SELECT_SUBTITLE_TRACK)) {
       event_select_track_t *est = (event_select_track_t *)e;
@@ -1536,11 +1541,11 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
       
       if((err = htsmsg_get_str(m, "error")) != NULL) {
 	snprintf(errbuf, errlen, "From server: %s", err);
-	htsmsg_destroy(m);
+	htsmsg_release(m);
 	return NULL;
       }
       
-      htsmsg_destroy(m);
+      htsmsg_release(m);
 
     } else if(event_is_action(e, ACTION_PREV_CHANNEL) ||
 	      event_is_action(e, ACTION_SKIP_BACKWARD)) {
@@ -1571,7 +1576,7 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
   htsmsg_add_u32(m, "subscriptionId", hs->hs_sid);
 
   if((m = htsp_reqreply(hc, m)) != NULL)
-    htsmsg_destroy(m);
+    htsmsg_release(m);
 
   return e;
 }
@@ -1619,7 +1624,7 @@ htsp_file_update_meta(htsp_file_t *hf)
   htsmsg_get_s64(m, "size", &hf->hf_file_size);
   htsmsg_get_s32(m, "mtime", &hf->hf_mtime);
 
-  htsmsg_destroy(m);
+  htsmsg_release(m);
 }
 
 
@@ -1696,7 +1701,7 @@ htsp_file_read(fa_handle_t *handle, void *buf, size_t size)
   int r = MIN(datalen, size); // Be sure
   hf->hf_pos += r;
   memcpy(buf, data, r);
-  htsmsg_destroy(m);
+  htsmsg_release(m);
   return r;
 }
 
@@ -1716,7 +1721,7 @@ htsp_file_close(fa_handle_t *fh)
   if((m = htsp_reqreply(hf->hf_hc, m)) == NULL)
     return;
 
-  htsmsg_destroy(m);
+  htsmsg_release(m);
 
   // hf->hf_hc->refcount-- or something
 
@@ -1978,9 +1983,9 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
    */
   if((streams = htsmsg_get_list(m, "streams")) != NULL) {
     HTSMSG_FOREACH(f, streams) {
-      if(f->hmf_type != HMF_MAP)
-	continue;
-      sub = &f->hmf_msg;
+      sub = htsmsg_get_map_by_field(f);
+      if(sub == NULL)
+        continue;
 
       if((type = htsmsg_get_str(sub, "type")) == NULL)
 	continue;
