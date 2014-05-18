@@ -106,36 +106,21 @@ soap_exec(const char *uri, const char *service, int version, const char *method,
     return -1;
 
   out = htsmsg_xml_deserialize_buf(result, errbuf, errlen);
-  buf_release(result);
   if(out == NULL)
     return -1;
 
-  snprintf(tmp, sizeof(tmp), "urn:schemas-upnp-org:service:%s:%d%sResponse",
-	   service, version, method);
+  snprintf(tmp, sizeof(tmp), "%sResponse", method);
 
-  htsmsg_t *outargs = 
-    htsmsg_get_map_multi(out,
-			 "tags",
-			 "http://schemas.xmlsoap.org/soap/envelope/Envelope",
-			 "tags",
-			 "http://schemas.xmlsoap.org/soap/envelope/Body",
-			 "tags",
-			 tmp,
-			 "tags",
-			 NULL);
+
+  htsmsg_t *outargs = htsmsg_get_map_multi(out, "Envelope", "Body", tmp, NULL);
 
   if(outargs != NULL) {
     htsmsg_field_t *f;
     htsmsg_t *out2 = htsmsg_create_map();
     // Convert args from XML style to more compact style
     HTSMSG_FOREACH(f, outargs) {
-      htsmsg_t *a;
-      const char *s;
-
-      if((a = htsmsg_get_map_by_field(f)) == NULL)
-	continue;
-      if((s = htsmsg_get_str(a, "cdata")) != NULL)
-	htsmsg_add_str(out2, f->hmf_name, s);
+      if(f->hmf_type == HMF_STR)
+        htsmsg_add_str(out2, f->hmf_name, f->hmf_str);
     }
     *outp = out2;
   } else {

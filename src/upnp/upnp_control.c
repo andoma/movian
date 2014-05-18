@@ -183,10 +183,9 @@ upnp_control(http_connection_t *hc, const char *remain, void *opaque,
   buf_t *buf = buf_create_from_malloced(strlen(xml), xml);
 
   inenv = htsmsg_xml_deserialize_buf(buf, errbuf, sizeof(errbuf));
-  buf_release(buf);
   if(inenv == NULL)
     return http_error(hc, HTTP_STATUS_BAD_REQUEST, errbuf);
-  
+
   r = control_parse_soap(uls, hc, inenv);
   htsmsg_release(inenv);
   return r;

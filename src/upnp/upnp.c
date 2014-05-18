@@ -486,15 +486,15 @@ introspect_service(upnp_device_t *ud, htsmsg_t *svc)
   char path[256];
   int port;
 
-  id = htsmsg_get_str_multi(svc, "serviceId", "cdata", NULL);
-  typestr = htsmsg_get_str_multi(svc, "serviceType", "cdata", NULL);
-  e_url = htsmsg_get_str_multi(svc, "eventSubURL", "cdata", NULL);
-  c_url = htsmsg_get_str_multi(svc, "controlURL", "cdata", NULL);
+  id      = htsmsg_get_str(svc, "serviceId");
+  typestr = htsmsg_get_str(svc, "serviceType");
+  e_url   = htsmsg_get_str(svc, "eventSubURL");
+  c_url   = htsmsg_get_str(svc, "controlURL");
 
   if(id == NULL || typestr == NULL || e_url == NULL || c_url == NULL ||
      (type = upnp_svcstr_to_type(typestr)) == -1)
     return;
-  
+
   if((us = service_find(ud, id)) == NULL) {
     us = calloc(1, sizeof(upnp_service_t));
     us->us_device = ud;
@@ -538,9 +538,7 @@ device_get_icon(htsmsg_t *dev)
   const char *best = NULL;
   int bestscore = 0;
 
-  htsmsg_t *iconlist = htsmsg_get_map_multi(dev,
-					    "tags", "iconList",
-					    "tags", NULL);
+  htsmsg_t *iconlist = htsmsg_get_map(dev, "iconList");
 
   if(iconlist == NULL)
     return NULL;
@@ -552,12 +550,11 @@ device_get_icon(htsmsg_t *dev)
     int score;
 
     if(strcmp(f->hmf_name, "icon") ||
-       (icon = htsmsg_get_map_by_field(f)) == NULL ||
-       (icon = htsmsg_get_map(icon, "tags")) == NULL)
-	continue;
+       (icon = htsmsg_get_map_by_field(f)) == NULL)
+      continue;
 
-    mimetype = htsmsg_get_str_multi(icon, "mimetype", "cdata", NULL);
-    url = htsmsg_get_str_multi(icon, "url", "cdata", NULL);
+    mimetype = htsmsg_get_str(icon, "mimetype");
+    url      = htsmsg_get_str(icon, "url");
 
     if(mimetype == NULL || url == NULL)
       continue;
@@ -569,8 +566,8 @@ device_get_icon(htsmsg_t *dev)
     else
       continue;
 
-    width  = atoi(htsmsg_get_str_multi(icon, "width",  "cdata", NULL) ?: "0");
-    height = atoi(htsmsg_get_str_multi(icon, "height", "cdata", NULL) ?: "0");
+    width  = atoi(htsmsg_get_str(icon, "width")  ?: "0");
+    height = atoi(htsmsg_get_str(icon, "height") ?: "0");
     score += width * height;
 
     if(score > bestscore) {
@@ -606,20 +603,19 @@ introspect_device(upnp_device_t *ud)
   }
 
   m = htsmsg_xml_deserialize_buf(b, errbuf, sizeof(errbuf));
-  buf_release(b);
   if(m == NULL) {
     TRACE(TRACE_INFO, "UPNP", "Unable to introspect %s XML -- %s",
 	  ud->ud_url, errbuf);
     return;
   }
 
-  dev = htsmsg_get_map_multi(m, "tags", "root", "tags", "device", NULL);
+  dev = htsmsg_get_map_multi(m, "root", "device", NULL);
   if(dev == NULL) {
     htsmsg_release(m);
     return;
   }
 
-  uuid = htsmsg_get_str_multi(dev, "tags", "UDN", "cdata", NULL);
+  uuid = htsmsg_get_str(dev, "UDN");
 
   if(uuid == NULL) {
     htsmsg_release(m);
@@ -629,23 +625,14 @@ introspect_device(upnp_device_t *ud)
   mystrset(&ud->ud_uuid, uuid);
 
 
-  mystrset(&ud->ud_friendlyName, 
-	   htsmsg_get_str_multi(dev, "tags", "friendlyName", "cdata", NULL));
-
-  mystrset(&ud->ud_manufacturer, 
-	   htsmsg_get_str_multi(dev, "tags", "manufacturer", "cdata", NULL));
-
-  mystrset(&ud->ud_modelDescription, 
-	   htsmsg_get_str_multi(dev, "tags", "modelDescription", "cdata", NULL));
-
-  mystrset(&ud->ud_modelNumber, 
-	   htsmsg_get_str_multi(dev, "tags", "modelNumber", "cdata", NULL));
+  mystrset(&ud->ud_friendlyName,     htsmsg_get_str(dev, "friendlyName"));
+  mystrset(&ud->ud_manufacturer,     htsmsg_get_str(dev, "manufacturer"));
+  mystrset(&ud->ud_modelDescription, htsmsg_get_str(dev, "modelDescription"));
+  mystrset(&ud->ud_modelNumber,      htsmsg_get_str(dev, "modelNumber"));
 
   mystrset(&ud->ud_icon, device_get_icon(dev));
 
-  svclist = htsmsg_get_map_multi(dev,
-				 "tags", "serviceList",
-				 "tags", NULL);
+  svclist = htsmsg_get_map(dev, "serviceList");
   if(svclist == NULL) {
     TRACE(TRACE_INFO, "UPNP", "Unable to introspect %s -- No services",
 	  ud->ud_url);
@@ -656,16 +643,14 @@ introspect_device(upnp_device_t *ud)
     HTSMSG_FOREACH(f, svclist) {
       htsmsg_t *svc;
       if(strcmp(f->hmf_name, "service") ||
-	 (svc = htsmsg_get_map_by_field(f)) == NULL ||
-	 (svc = htsmsg_get_map(svc, "tags")) == NULL)
+	 (svc = htsmsg_get_map_by_field(f)) == NULL)
 	continue;
       introspect_service(ud, svc);
     }
   }
-
   htsmsg_release(m);
 }
-    
+
 
 /**
  *

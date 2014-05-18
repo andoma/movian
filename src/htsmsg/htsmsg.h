@@ -53,8 +53,9 @@ typedef struct htsmsg_field {
   uint8_t hmf_type;
   uint8_t hmf_flags;
 
-#define HMF_ALLOCED 0x1
-#define HMF_NAME_ALLOCED 0x2
+#define HMF_ALLOCED       0x1
+#define HMF_NAME_ALLOCED  0x2
+#define HMF_XML_ATTRIBUTE 0x4 // XML attribute
 
   union {
     int64_t  s64;
@@ -67,6 +68,7 @@ typedef struct htsmsg_field {
   } u;
 
   htsmsg_t *hmf_childs;
+  struct rstr *hmf_namespace;
 } htsmsg_field_t;
 
 #define hmf_s64     u.s64
@@ -319,8 +321,17 @@ htsmsg_t *htsmsg_get_map_in_list(htsmsg_t *m, int num);
 
 htsmsg_t *htsmsg_get_map_by_field_if_name(htsmsg_field_t *f, const char *name);
 
-const char *htsmsg_get_cdata(htsmsg_t *m, const char *field);
-
 int htsmsg_get_children(htsmsg_t *msg);
+
+
+static inline void
+htsmsg_set_backing_store(htsmsg_t *m, buf_t *b)
+{
+  if(m->hm_backing_store == NULL) {
+    m->hm_backing_store = buf_retain(b);
+  } else {
+    assert(m->hm_backing_store == b);
+  }
+}
 
 #endif /* HTSMSG_H_ */

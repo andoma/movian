@@ -474,7 +474,7 @@ svg_parse_element(const svg_state_t *s0, htsmsg_t *element,
   int stroke_color = 0xffffffff;
   int stroke_width = 0;
 
-  htsmsg_t *a = htsmsg_get_map(element, "attrib");
+  htsmsg_t *a = element;
   if(a == NULL)
     return;
 
@@ -573,13 +573,11 @@ static void
 svg_parse_g(svg_state_t *s0, htsmsg_t *c)
 {
   svg_state_t s = *s0;
-  const char *transform = htsmsg_get_str_multi(c, "attrib", "transform", NULL);
+  const char *transform = htsmsg_get_str(c, "transform");
   if(transform != NULL)
     svg_parse_transform(&s, transform);
 
-  htsmsg_t *tags = htsmsg_get_map(c, "tags");
-  if(tags != NULL)
-    svg_parse_root(&s, tags);
+  svg_parse_root(&s, c);
 }
 
 
@@ -591,14 +589,14 @@ svg_decode1(htsmsg_t *doc, const image_meta_t *im,
 	    char *errbuf, size_t errlen)
 {
   svg_state_t state;
-  htsmsg_t *attrs = htsmsg_get_map_multi(doc, "tags", "svg", "attrib", NULL);
-  if(attrs == NULL) {
-    snprintf(errbuf, errlen, "Missing SVG attributes");
+  htsmsg_t *svg = htsmsg_get_map(doc, "svg");
+  if(svg == NULL) {
+    snprintf(errbuf, errlen, "Missing SVG tag");
     return NULL;
   }
 
-  int orig_width  = htsmsg_get_u32_or_default(attrs, "width", 0);
-  int orig_height = htsmsg_get_u32_or_default(attrs, "height", 0);
+  int orig_width  = htsmsg_get_u32_or_default(svg, "width", 0);
+  int orig_height = htsmsg_get_u32_or_default(svg, "height", 0);
   if(orig_width < 1 || orig_height < 1) {
     snprintf(errbuf, errlen, "Invalid SVG dimensions (%d x %d)", 
 	     orig_width, orig_height);
@@ -620,19 +618,13 @@ svg_decode1(htsmsg_t *doc, const image_meta_t *im,
     h = orig_height;
   }
 
-  htsmsg_t *tags = htsmsg_get_map_multi(doc, "tags", "svg", "tags", NULL);
-  if(tags == NULL) {
-    snprintf(errbuf, errlen, "No relevant tags in SVG");
-    return NULL;
-  }
-
   state.scaling = (float)w / orig_width;
   svg_mtx_identity(state.ctm);
   svg_mtx_scale(state.ctm, (float)w / orig_width, (float)h / orig_height);
 
   image_t *img = image_create_vector(w, h, im->im_margin);
   state.icv = &img->im_components[0].vector;
-  svg_parse_root(&state, tags);
+  svg_parse_root(&state, svg);
   return img;
 }
 
@@ -642,7 +634,7 @@ svg_decode1(htsmsg_t *doc, const image_meta_t *im,
  */
 image_t *
 svg_decode(buf_t *buf, const image_meta_t *im,
-	   char *errbuf, size_t errlen)
+           char *errbuf, size_t errlen)
 {
   htsmsg_t *doc = htsmsg_xml_deserialize_buf(buf, errbuf, errlen);
   if(doc == NULL)

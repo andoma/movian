@@ -29,7 +29,7 @@
 int html_entity_lookup(const char *name);
 
 htsmsg_t *htsmsg_xml_deserialize_cstr(const char *str,
-                                      char *errbuf, size_t errsize);
+                                       char *errbuf, size_t errsize);
 
 htsmsg_t *htsmsg_xml_deserialize_buf(buf_t *b, char *errbuf, size_t errsize);
 

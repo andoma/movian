@@ -172,26 +172,20 @@ play_with_context(const char *uri, htsmsg_t *meta)
   const char *parentid, *id;
   upnp_service_t *us;
 
-  parentid = 
+  parentid =
     htsmsg_get_str_multi(meta,
-			 "tags",
 			 "DIDL-Lite",
-			 "tags",
-			 "urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/item",
-			 "attrib",
+			 "item",
 			 "parentID",
 			 NULL);
 
   if(parentid == NULL)
     return 1;
 
-  id = 
+  id =
     htsmsg_get_str_multi(meta,
-			 "tags",
 			 "DIDL-Lite",
-			 "tags",
-			 "urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/item",
-			 "attrib",
+			 "item",
 			 "id",
 			 NULL);
 

@@ -73,9 +73,7 @@ loadxml(const char *fmt, ...)
     TRACE(TRACE_INFO, "TVDB", "Unable to query for %s -- %s", url, errbuf);
     return NULL;
   }
-  
   htsmsg_t *m = htsmsg_xml_deserialize_buf(result, errbuf, sizeof(errbuf));
-  buf_release(result);
   if(m == NULL)
     TRACE(TRACE_INFO, "TVDB", "Unable to parse XML from %s -- %s", url, errbuf);
   return m;
@@ -173,18 +171,16 @@ tvdb_load_actors(void *db, const char *seriesid, int64_t series_vid,
   
   metadb_delete_videocast(db, series_vid);
 
-  htsmsg_t *list = htsmsg_get_map_multi(doc, "tags", "Actors", "tags", NULL);
+  htsmsg_t *list = htsmsg_get_map(doc, "Actors");
   if(list != NULL) {
     HTSMSG_FOREACH(f, list) {
       if((b = htsmsg_get_map_by_field_if_name(f, "Actor")) == NULL)
 	continue;
-      if((b = htsmsg_get_map(b, "tags")) == NULL)
-	continue;
-      const char *na = htsmsg_get_cdata(b, "Name");
-      const char *ro = htsmsg_get_cdata(b, "Role");
-      const char *im = htsmsg_get_cdata(b, "Image");
-      const char *so = htsmsg_get_cdata(b, "SortOrder");
-      const char *id = htsmsg_get_cdata(b, "id");
+      const char *na = htsmsg_get_str(b, "Name");
+      const char *ro = htsmsg_get_str(b, "Role");
+      const char *im = htsmsg_get_str(b, "Image");
+      const char *so = htsmsg_get_str(b, "SortOrder");
+      const char *id = htsmsg_get_str(b, "id");
 
       if(na == NULL || ro == NULL || id == NULL)
 	continue;
@@ -220,19 +216,17 @@ tvdb_load_banners(void *db, const char *seriesid, int64_t series_vid,
   
   metadb_delete_videoart(db, series_vid);
 
-  htsmsg_t *list = htsmsg_get_map_multi(doc, "tags", "Banners", "tags", NULL);
+  htsmsg_t *list = htsmsg_get_map(doc, "Banners");
   if(list != NULL) {
     HTSMSG_FOREACH(f, list) {
       if((b = htsmsg_get_map_by_field_if_name(f, "Banner")) == NULL)
 	continue;
-      if((b = htsmsg_get_map(b, "tags")) == NULL)
-	continue;
-      const char *bp = htsmsg_get_cdata(b, "BannerPath");
-      const char *t1 = htsmsg_get_cdata(b, "BannerType");
-      const char *t2 = htsmsg_get_cdata(b, "BannerType2");
-      const char *se = htsmsg_get_cdata(b, "Season");
-      const char *ra = htsmsg_get_cdata(b, "Rating");
-      const char *la = htsmsg_get_cdata(b, "Language");
+      const char *bp = htsmsg_get_str(b, "BannerPath");
+      const char *t1 = htsmsg_get_str(b, "BannerType");
+      const char *t2 = htsmsg_get_str(b, "BannerType2");
+      const char *se = htsmsg_get_str(b, "Season");
+      const char *ra = htsmsg_get_str(b, "Rating");
+      const char *la = htsmsg_get_str(b, "Language");
 
       if(bp == NULL || t1 == NULL || t2 == NULL)
 	continue;
@@ -323,27 +317,24 @@ tvdb_find_series(void *db, const char *id, int qtype,
   if(ser == NULL)
     return METADATA_TEMPORARY_ERROR;
 
-  htsmsg_t *tags = htsmsg_get_map_multi(ser,
-					"tags", "Data",
-					"tags", "Series",
-					"tags", NULL);
+  htsmsg_t *tags = htsmsg_get_map_multi(ser, "Data", "Series", NULL);
 
   metadata_t *md = metadata_create();
   md->md_type = METADATA_TYPE_SERIES;
     
-  md->md_title = rstr_alloc(htsmsg_get_cdata(tags, "SeriesName"));
-  md->md_description = rstr_alloc(htsmsg_get_cdata(tags, "Overview"));
+  md->md_title = rstr_alloc(htsmsg_get_str(tags, "SeriesName"));
+  md->md_description = rstr_alloc(htsmsg_get_str(tags, "Overview"));
 
   const char *s;
 
-  if((s = htsmsg_get_cdata(tags, "Rating")) != NULL)
+  if((s = htsmsg_get_str(tags, "Rating")) != NULL)
     md->md_rating = 10 * my_str2double(s, NULL);
 
-  if((s = htsmsg_get_cdata(tags, "RatingCount")) != NULL)
+  if((s = htsmsg_get_str(tags, "RatingCount")) != NULL)
     md->md_rating_count = atoi(s);
   
 
-  md->md_imdb_id = rstr_alloc(htsmsg_get_cdata(tags, "IMDB_ID"));
+  md->md_imdb_id = rstr_alloc(htsmsg_get_str(tags, "IMDB_ID"));
 
   char extid[64];
   snprintf(extid, sizeof(extid), "s%s", id);
@@ -386,18 +377,13 @@ tvdb_query_by_episode(void *db, const char *item_url,
   }
   
   htsmsg_t *gs = htsmsg_xml_deserialize_buf(result, errbuf, sizeof(errbuf));
-  buf_release(result);
   if(gs == NULL) {
     TRACE(TRACE_INFO, "TVDB", "Unable to parse XML -- %s", errbuf);
     return METADATA_TEMPORARY_ERROR;
   }
 
-  const char *series_id = 
-    htsmsg_get_str_multi(gs,
-			 "tags", "Data",
-			 "tags", "Series",
-			 "tags", "seriesid",
-			 "cdata", NULL);
+  const char *series_id =
+    htsmsg_get_str_multi(gs, "Data", "Series", "seriesid", NULL);
 
 
   if(series_id == NULL) {
@@ -422,11 +408,7 @@ tvdb_query_by_episode(void *db, const char *item_url,
   metadata_t *md = metadata_create();
   md->md_type = METADATA_TYPE_VIDEO;
 
-  htsmsg_t *tags = htsmsg_get_map_multi(epi,
-					"tags", "Data",
-					"tags", "Episode",
-					"tags", NULL);
-
+  htsmsg_t *tags = htsmsg_get_map_multi(epi, "Data", "Episode", NULL);
 
   struct season_list seasons;
   LIST_INIT(&seasons);
@@ -437,7 +419,7 @@ tvdb_query_by_episode(void *db, const char *item_url,
 
   if(tags != NULL) {
 
-    const char *se = htsmsg_get_cdata(tags, "SeasonNumber");
+    const char *se = htsmsg_get_str(tags, "SeasonNumber");
 
     if(se == NULL)
       goto out;
@@ -458,20 +440,20 @@ tvdb_query_by_episode(void *db, const char *item_url,
     md->md_type = METADATA_TYPE_VIDEO;
     md->md_parent_id = ses->videoitem_id;
 
-    md->md_title = rstr_alloc(htsmsg_get_cdata(tags, "EpisodeName"));
-    md->md_description = rstr_alloc(htsmsg_get_cdata(tags, "Overview"));
+    md->md_title = rstr_alloc(htsmsg_get_str(tags, "EpisodeName"));
+    md->md_description = rstr_alloc(htsmsg_get_str(tags, "Overview"));
     md->md_idx = episode;
 
     const char *s;
-    if((s = htsmsg_get_cdata(tags, "Rating")) != NULL)
+    if((s = htsmsg_get_str(tags, "Rating")) != NULL)
       md->md_rating = 10 * my_str2double(s, NULL);
 
-    if((s = htsmsg_get_cdata(tags, "RatingCount")) != NULL)
+    if((s = htsmsg_get_str(tags, "RatingCount")) != NULL)
       md->md_rating_count = atoi(s);
 
-    md->md_imdb_id = rstr_alloc(htsmsg_get_cdata(tags, "IMDB_ID"));
+    md->md_imdb_id = rstr_alloc(htsmsg_get_str(tags, "IMDB_ID"));
 
-    const char *extid = htsmsg_get_cdata(tags, "id");
+    const char *extid = htsmsg_get_str(tags, "id");
 
     itemid = metadb_insert_videoitem(db, item_url, tvdb->ms_id, extid, md,
 				     METAITEM_STATUS_COMPLETE, 0,
@@ -480,7 +462,7 @@ tvdb_query_by_episode(void *db, const char *item_url,
     if(itemid != -1) {
       metadb_delete_videoart(db, itemid);
 
-      const char *thumb = htsmsg_get_cdata(tags, "filename");
+      const char *thumb = htsmsg_get_str(tags, "filename");
       if(thumb) {
 	char url[256];
 	snprintf(url, sizeof(url), "http://www.thetvdb.com/banners/%s", thumb);

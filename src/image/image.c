@@ -243,17 +243,11 @@ image_decode_coded(image_t *im, const image_meta_t *meta,
 {
   image_component_t *ic = &im->im_components[0];
   image_component_coded_t *icc = &ic->coded;
-  image_t *r;
 
   if(icc->icc_type == IMAGE_SVG) {
-    r = svg_decode(icc->icc_buf, meta, errbuf, errlen);
-    /*
-     * svg_decode() is a bit weird in the sense that it will take ownership
-     * of buf, so we need to forget about it
-     */
+    buf_t *b = icc->icc_buf;
     icc->icc_buf = NULL;
-    image_release(im);
-    return r;
+    return svg_decode(b, meta, errbuf, errlen);
   }
 
   im->im_origin_coded_type = icc->icc_type;

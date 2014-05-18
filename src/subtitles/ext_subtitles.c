@@ -318,21 +318,16 @@ static ext_subtitles_t *
 load_ttml(const char *url, buf_t *buf)
 {
   char errbuf[256];
-  htsmsg_t *xml = htsmsg_xml_deserialize_buf(buf, errbuf, sizeof(errbuf));
-  buf_release(buf);
   htsmsg_t *subs;
   htsmsg_field_t *f;
+  htsmsg_t *xml = htsmsg_xml_deserialize_buf(buf, errbuf, sizeof(errbuf));
 
   if(xml == NULL) {
     TRACE(TRACE_INFO, "Subtitles", "Unable to load TTML: %s", errbuf);
     return NULL;
   }
-
-  subs = htsmsg_get_map_multi(xml, "tags",
-			      "tt", "tags",
-			      "body", "tags",
-			      "div", "tags",
-			      NULL);
+  htsmsg_print(xml);
+  subs = htsmsg_get_map_multi(xml, "tt", "body", "div", NULL);
 
   if(subs == NULL) {
     htsmsg_release(xml);
@@ -343,20 +338,19 @@ load_ttml(const char *url, buf_t *buf)
   TAILQ_INIT(&es->es_entries);
 
   HTSMSG_FOREACH(f, subs) {
-    if(f->hmf_type == HMF_MAP) {
+    if(f->hmf_type == HMF_STR && f->hmf_childs != NULL) {
       htsmsg_t *n = f->hmf_childs;
       const char *str, *txt;
       int64_t start, end;
 
-      if((txt = htsmsg_get_str(n, "cdata")) == NULL)
-	continue;
+      txt = f->hmf_str;
 
-      if((str = htsmsg_get_str_multi(n, "attrib", "begin", NULL)) == NULL)
+      if((str = htsmsg_get_str(n, "begin")) == NULL)
 	continue;
       if((start = ttml_time_expression(str)) == -1)
 	continue;
 
-      if((str = htsmsg_get_str_multi(n, "attrib", "end", NULL)) == NULL)
+      if((str = htsmsg_get_str(n, "end")) == NULL)
 	continue;
       if((end = ttml_time_expression(str)) == -1)
 	continue;

@@ -145,7 +145,6 @@ lastfm_load_artistinfo(void *db, const char *artist,
 
 
   info = htsmsg_xml_deserialize_buf(result, errbuf, sizeof(errbuf));
-  buf_release(result);
 
   if(info == NULL) {
     TRACE(TRACE_DEBUG, "lastfm", "lastfm xml parse failed: %s",  errbuf);
@@ -193,7 +192,6 @@ lastfm_load_artistinfo(void *db, const char *artist,
 
 
     xml = htsmsg_xml_deserialize_buf(result, errbuf, sizeof(errbuf));
-    buf_release(result);
     if(xml == NULL) {
       TRACE(TRACE_DEBUG, "lastfm", "lastfm xml parse failed: %s",  errbuf);
       break;
@@ -339,7 +337,6 @@ lastfm_load_albuminfo(void *db, const char *album, const char *artist)
   }
 
   xml = htsmsg_xml_deserialize_buf(result, errbuf, sizeof(errbuf));
-  buf_release(result);
 
   if(xml == NULL) {
     TRACE(TRACE_DEBUG, "lastfm", "lastfm xml parse failed: %s",  errbuf);

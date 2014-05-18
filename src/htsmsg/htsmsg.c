@@ -52,6 +52,7 @@ htsmsg_field_destroy(htsmsg_t *msg, htsmsg_field_t *f)
   }
   if(f->hmf_flags & HMF_NAME_ALLOCED)
     free(f->hmf_name);
+  rstr_release(f->hmf_namespace);
   free(f);
 }
 
@@ -63,6 +64,7 @@ htsmsg_field_add(htsmsg_t *msg, const char *name, int type, int flags)
 {
   htsmsg_field_t *f = malloc(sizeof(htsmsg_field_t));
   f->hmf_childs = NULL;
+  f->hmf_namespace = NULL;
   TAILQ_INSERT_TAIL(&msg->hm_fields, f, hmf_link);
 
   if(msg->hm_islist) {
@@ -563,44 +565,52 @@ htsmsg_print0(htsmsg_t *msg, int indent)
   TAILQ_FOREACH(f, &msg->hm_fields, hmf_link) {
 
     for(i = 0; i < indent; i++) printf("\t");
-    
-    printf("%s (", f->hmf_name ?: "");
-    
+
+    printf("%s %s%s%s%s(", f->hmf_name ?: "",
+           f->hmf_namespace ? "[in " : "",
+           rstr_get(f->hmf_namespace) ?: "",
+           f->hmf_namespace ? "] " : "",
+           f->hmf_flags & HMF_XML_ATTRIBUTE ? "[XML-Attribute] " : "");
+
     switch(f->hmf_type) {
 
     case HMF_MAP:
-      printf("MAP) = {\n");
-      htsmsg_print0(f->hmf_childs, indent + 1);
-      for(i = 0; i < indent; i++) printf("\t"); printf("}\n");
+      printf("MAP) = ");
       break;
 
     case HMF_LIST:
-      printf("LIST) = {\n");
-      htsmsg_print0(f->hmf_childs, indent + 1);
-      for(i = 0; i < indent; i++) printf("\t"); printf("}\n");
+      printf("LIST) = ");
       break;
-      
+
     case HMF_STR:
-      printf("STR) = \"%s\"\n", f->hmf_str);
+      printf("STR) = \"%s\"", f->hmf_str);
       break;
 
     case HMF_BIN:
       printf("BIN) = [");
       for(i = 0; i < f->hmf_binsize - 1; i++)
 	printf("%02x.", ((uint8_t *)f->hmf_bin)[i]);
-      printf("%02x]\n", ((uint8_t *)f->hmf_bin)[i]);
+      printf("%02x]", ((uint8_t *)f->hmf_bin)[i]);
       break;
 
     case HMF_S64:
-      printf("S64) = %" PRId64 "\n", f->hmf_s64);
+      printf("S64) = %" PRId64, f->hmf_s64);
       break;
 
     case HMF_DBL:
-      printf("DBL) = %f\n", f->hmf_dbl);
+      printf("DBL) = %f", f->hmf_dbl);
       break;
     }
+
+    if(f->hmf_childs != NULL) {
+      printf(" {\n");
+      htsmsg_print0(f->hmf_childs, indent + 1);
+      for(i = 0; i < indent; i++) printf("\t"); printf("}\n");
+    } else {
+      printf("\n");
+    }
   }
-} 
+}
 
 /*
  *
@@ -678,17 +688,9 @@ htsmsg_get_map_in_list(htsmsg_t *m, int num)
 htsmsg_t *
 htsmsg_get_map_by_field_if_name(htsmsg_field_t *f, const char *name)
 {
-  if(f->hmf_type != HMF_MAP)
-    return NULL;
-  if(strcmp(f->hmf_name, name))
+  if(f->hmf_name == NULL || strcmp(f->hmf_name, name))
     return NULL;
   return f->hmf_childs;
-}
-
-const char *
-htsmsg_get_cdata(htsmsg_t *m, const char *field)
-{
-  return htsmsg_get_str_multi(m, field, "cdata", NULL);
 }
 
 

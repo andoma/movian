@@ -23,49 +23,10 @@
 #include <stdio.h>
 
 #include "htsmsg/htsmsg_xml.h"
-
+#include "misc/dbl.h"
 #include "fileaccess/fileaccess.h" // HTTP client lives here
 
 #include "xmlrpc.h"
-
-#include <math.h>
-static double
-my_str2double(const char *str)
-{
-  double sign = 1.0f, ret;
-  int64_t n;
-  int m = 0;
-  char s;
-
-  if(*str == '-') {
-    str++;
-    sign = -1.0;
-  }
-
-  n = 0;
-  while((s = *str++)) {
-    if(s < '0' || s > '9')
-      break;
-    n = n * 10 + s - '0';
-  }
-
-  if(s != '.')
-    return sign * n;
-
-  ret = n;
-
-  n = 0;
-  while((s = *str)) {
-    if(s < '0' || s > '9')
-      break;
-    n = n * 10 + s - '0';
-    m++;
-    str++;
-  }
-
-  ret += pow(10, -m) * n;
-  return ret * sign;
-}
 
 
 /**
@@ -90,10 +51,9 @@ xmlrpc_parse_value(htsmsg_t *dst, htsmsg_field_t *g, const char *name,
   htsmsg_t *c;
   htsmsg_t *sub;
 
-  if(!strcmp(g->hmf_name, "struct") && 
-     (c = htsmsg_get_map_by_field(g)) != NULL &&
-     (c = htsmsg_get_map(c, "tags")) != NULL) {
-    
+  if(!strcmp(g->hmf_name, "struct") &&
+     (c = htsmsg_get_map_by_field(g)) != NULL) {
+
     sub = htsmsg_create_map();
     if(xmlrpc_parse_struct(sub, c, errbuf, errlen)) {
       htsmsg_release(sub);
@@ -102,10 +62,9 @@ xmlrpc_parse_value(htsmsg_t *dst, htsmsg_field_t *g, const char *name,
     htsmsg_add_msg(dst, name, sub);
     return 0;
 
-  } else if(!strcmp(g->hmf_name, "array") && 
-	    (c = htsmsg_get_map_by_field(g)) != NULL &&
-	    (c = htsmsg_get_map(c, "tags")) != NULL) {
-    
+  } else if(!strcmp(g->hmf_name, "array") &&
+	    (c = htsmsg_get_map_by_field(g)) != NULL) {
+
     sub = htsmsg_create_list();
     if(xmlrpc_parse_array(sub, c, errbuf, errlen)) {
       htsmsg_release(sub);
@@ -115,17 +74,20 @@ xmlrpc_parse_value(htsmsg_t *dst, htsmsg_field_t *g, const char *name,
     return 0;
   }
 
-  cdata = htsmsg_get_str(htsmsg_get_map_by_field(g), "cdata");
+  cdata = g->hmf_type == HMF_STR ? g->hmf_str : NULL;
 
   if(!strcmp(g->hmf_name, "string")) {
     if(cdata != NULL)
       htsmsg_add_str(dst, name, cdata);
+
   } else if(!strcmp(g->hmf_name, "boolean")) {
     if(cdata != NULL)
       htsmsg_add_u32(dst, name, atoi(cdata));
-  } else if(!strcmp(g->hmf_name, "double") && cdata != NULL) {
+
+  } else if(!strcmp(g->hmf_name, "double")) {
     if(cdata != NULL)
-      htsmsg_add_dbl(dst, name, my_str2double(cdata));
+      htsmsg_add_dbl(dst, name, my_str2double(cdata, NULL));
+
   } else {
     snprintf(errbuf, errlen, "Unknown field type \"%s\"", g->hmf_name);
     return -1;
@@ -138,7 +100,7 @@ xmlrpc_parse_value(htsmsg_t *dst, htsmsg_field_t *g, const char *name,
  *
  */
 static int
-xmlrpc_parse_struct(htsmsg_t *dst, htsmsg_t *params, 
+xmlrpc_parse_struct(htsmsg_t *dst, htsmsg_t *params,
 		    char *errbuf, size_t errlen)
 {
   htsmsg_field_t *f, *g;
@@ -147,20 +109,17 @@ xmlrpc_parse_struct(htsmsg_t *dst, htsmsg_t *params,
 
   HTSMSG_FOREACH(f, params) {
     if(strcmp(f->hmf_name, "member") ||
-       (c = htsmsg_get_map_by_field(f)) == NULL ||
-       (c = htsmsg_get_map(c, "tags")) == NULL)
+       (c = htsmsg_get_map_by_field(f)) == NULL)
       continue;
 
-    if((c2 = htsmsg_get_map(c, "name")) == NULL)
-      continue;
-    if((name = htsmsg_get_str(c2, "cdata")) == NULL)
+    if((name = htsmsg_get_str(c, "name")) == NULL)
       continue;
 
-    if((c2 = htsmsg_get_map_multi(c, "value", "tags", NULL)) == NULL)
+    if((c2 = htsmsg_get_map(c, "value")) == NULL)
       continue;
 
     g = TAILQ_FIRST(&c2->hm_fields);
-    if(g == NULL || g->hmf_type != HMF_MAP)
+    if(g == NULL)
       continue;
 
     if(xmlrpc_parse_value(dst, g, name, errbuf, errlen))
@@ -181,16 +140,13 @@ xmlrpc_parse_array(htsmsg_t *dst, htsmsg_t *m,
   htsmsg_t *c;
   htsmsg_field_t *f, *g;
 
-  if((m = htsmsg_get_map_multi(m, "data", "tags", NULL)) == NULL) {
+  if((m = htsmsg_get_map(m, "data")) == NULL) {
     snprintf(errbuf, errlen, "Missing data tags in array\n");
     return -1;
   }
 
   HTSMSG_FOREACH(f, m) {
     if(strcmp(f->hmf_name, "value") || (c = htsmsg_get_map_by_field(f)) == NULL)
-      continue;
-  
-    if((c = htsmsg_get_map(c, "tags")) == NULL)
       continue;
 
     g = TAILQ_FIRST(&c->hm_fields);
@@ -215,13 +171,13 @@ xmlrpc_convert_response(htsmsg_t *xml, char *errbuf, size_t errlen)
   htsmsg_field_t *f, *g;
   htsmsg_t *c;
 
-  if((params = htsmsg_get_map_multi(xml, 
-				    "tags", "methodResponse", 
-				    "tags", "params", "tags",
+
+  if((params = htsmsg_get_map_multi(xml, "methodResponse",  "params",
 				    NULL)) == NULL) {
     snprintf(errbuf, errlen, "No params in reply found");
     return NULL;
   }
+
 
   dst = htsmsg_create_list();
 
@@ -229,7 +185,7 @@ xmlrpc_convert_response(htsmsg_t *xml, char *errbuf, size_t errlen)
     if(strcmp(f->hmf_name, "param") || (c = htsmsg_get_map_by_field(f)) == NULL)
       continue;
 
-    if((c = htsmsg_get_map_multi(c, "tags", "value", "tags", NULL)) == NULL)
+    if((c = htsmsg_get_map(c, "value")) == NULL)
       continue;
 
     g = TAILQ_FIRST(&c->hm_fields);
@@ -347,7 +303,6 @@ xmlrpc_request(const char *url, const char *method, htsmsg_t *params,
   if(n)
     return NULL;
   xml = htsmsg_xml_deserialize_buf(result, errbuf, errlen);
-  buf_release(result);
   if(xml == NULL)
     return NULL;
 
