@@ -1574,11 +1574,10 @@ cifs_get_connection(const char *hostname, int port, char *errbuf, size_t errlen,
  */
 static nbt_req_t *
 nbt_async_req(cifs_connection_t *cc, void *request, int request_len,
-              int is_trans2)
+              int is_trans2, const char *info)
 {
   SMB_t *h = request + 4;
   nbt_req_t *nr = calloc(1, sizeof(nbt_req_t));
-
   nr->nr_result = -1;
   nr->nr_mid = cc->cc_mid_generator++;
   nr->nr_is_trans2 = is_trans2;
@@ -1587,6 +1586,8 @@ nbt_async_req(cifs_connection_t *cc, void *request, int request_len,
   nbt_write(cc, request, request_len);
 
   LIST_INSERT_HEAD(&cc->cc_pending_nbt_requests, nr, nr_link);
+  SMBTRACE("%s:%d %s sent mid=%d on thread %lx", cc->cc_hostname, cc->cc_port,
+           info, nr->nr_mid, hts_thread_current());
   return nr;
 }
 
@@ -1595,12 +1596,12 @@ nbt_async_req(cifs_connection_t *cc, void *request, int request_len,
  *
  */
 static int
-nbt_async_req_reply(cifs_connection_t *cc,
-		    void *request, int request_len,
-		    void **responsep, int *response_lenp,
-                    int is_trans2)
+nbt_async_req_reply_ex(cifs_connection_t *cc,
+                       void *request, int request_len,
+                       void **responsep, int *response_lenp,
+                       int is_trans2, const char *info)
 {
-  nbt_req_t *nr = nbt_async_req(cc, request, request_len, is_trans2);
+  nbt_req_t *nr = nbt_async_req(cc, request, request_len, is_trans2, info);
 
   while(nr->nr_result == -1) {
     if(hts_cond_wait_timeout(&cc->cc_cond, &smb_global_mutex, NBT_TIMEOUT)) {
@@ -1624,7 +1625,8 @@ nbt_async_req_reply(cifs_connection_t *cc,
   return r;
 }
 
-
+#define nbt_async_req_reply(a, b, c, d, e, f) \
+  nbt_async_req_reply_ex(a, b, c, d, e, f, __FUNCTION__)
 
 
 /**
@@ -1900,8 +1902,15 @@ cifs_resolve(const char *url, char *filename, size_t filenamesize,
   ct = get_tree_no_create(hostname, port, p);
 
   if(ct != NULL) {
-    *p_ct = ct;
-    return CIFS_RESOLVE_TREE;
+
+    while(ct->ct_status == CT_CONNECTING)
+      hts_cond_wait(&ct->ct_cond, &smb_global_mutex);
+
+    if(ct->ct_status == CT_RUNNING) {
+      *p_ct = ct;
+      return CIFS_RESOLVE_TREE;
+    }
+    cifs_release_tree(ct, 0);
   }
 
   if((cc = cifs_get_connection(hostname, port, errbuf, errlen,
@@ -2521,7 +2530,8 @@ smb_read(fa_handle_t *fh, void *buf, size_t size)
     req->wordcount = 12;
     req->andx_command = 0xff;
 
-    nr = nbt_async_req(ct->ct_cc, req, sizeof(SMB_READ_ANDX_req_t), 0);
+    nr = nbt_async_req(ct->ct_cc, req, sizeof(SMB_READ_ANDX_req_t), 0,
+                       "read");
     LIST_INSERT_HEAD(&reqs, nr, nr_multi_link);
 
     nr->nr_offset = total;
