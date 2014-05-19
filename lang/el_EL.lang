@@ -254,9 +254,8 @@ id: Year:
 msg: Έτος:
 
 id: Seen %d times
-# Missing plural translation for 'Seen %d times' and 'Seen %d time'
-msg[0]: 
-msg[1]: 
+msg[0]:Έχει προβληθεί %d φορές 
+msg[1]:Έχει προβληθεί %d φορά
 
 #
 # ./glwskins/default/pages/listitems/add.view
@@ -433,15 +432,13 @@ id: CPU Temp
 msg: Θερμ. CPU
 
 id: Fragmentation
-# Missing translation
-msg: 
+msg: Θρυμματισμός   
 
 id: GPU Temp
 msg: Θερμ. GPU
 
 id: Inactive mem
-# Missing translation
-msg: 
+msg: Αδρανής Μνήμη
 
 id: Memory usage
 msg: Χρήση μνήμης
@@ -702,25 +699,21 @@ id: Enable file deletion from item menu
 msg: Ενεργοποίηση διαγραφής αρχείων από το  μενού εργαλείων
 
 id: File browsing
-# Missing translation
-msg: 
+msg: Εξερεύνηση Αρχείων
 
 id: Show filename extensions
-# Missing translation
-msg: 
+msg: Εμφάνιση επεκτάσεων αρχείων
 
 id: %d archive parts
 msg[0]: %d κομμάτια αρχείου
 
 id: %d directories
-# Missing plural translation for '%d directories' and '%d directory'
-msg[0]: 
-msg[1]: 
+msg[0]: %d κατάλογοι
+msg[1]: %d κατάλογος
 
 id: %d files
-# Missing plural translation for '%d files' and '%d file'
-msg[0]: 
-msg[1]: 
+msg[0]: %d αρχεία
+msg[1]: %d αρχείο
 
 #
 # ./src/i18n.c
