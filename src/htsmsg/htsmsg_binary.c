@@ -56,7 +56,7 @@ htsmsg_binary_des0(htsmsg_t *msg, const uint8_t *buf, size_t len, buf_t *src)
     if(len < namelen + datalen)
       return -1;
 
-    f = malloc(sizeof(htsmsg_field_t));
+    f = calloc(1, sizeof(htsmsg_field_t));
     f->hmf_type  = type;
 
     if(namelen > 0) {
