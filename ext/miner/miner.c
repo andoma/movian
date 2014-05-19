@@ -93,7 +93,7 @@ simple_send(miner_t *m, htsmsg_t *msg)
     tcp_write_data(m->m_tc, mem, len);
   hts_mutex_unlock(&m->m_sock_mutex);
   free(mem);
-  htsmsg_destroy(msg);
+  htsmsg_release(msg);
 }
 
 
@@ -371,13 +371,16 @@ miner_main_thread(void *aux)
 	TRACE(TRACE_ERROR, "SPUMINER", "Invalid packet size %d", len);
 	break;
       }
-      char *mem = malloc(len);
-      if(tcp_read_data(m->m_tc, mem, len, NULL, NULL)) {
+
+      buf_t *buf = buf_create(len);
+
+      if(tcp_read_data(m->m_tc, buf_str(buf), buf_len(buf), NULL, NULL)) {
 	TRACE(TRACE_ERROR, "SPUMINER", "Read error (payload)");
+        buf_release(buf);
 	break;
       }
-      htsmsg_t *hm = htsmsg_binary_deserialize(mem, len, mem);
-
+      htsmsg_t *hm = htsmsg_binary_deserialize(buf);
+      buf_release(buf);
       if(hm == NULL) {
 	TRACE(TRACE_ERROR, "SPUMINER", "Protocol error (encoding)");
 	break;
@@ -394,7 +397,7 @@ miner_main_thread(void *aux)
 	TRACE(TRACE_ERROR, "SPUMINER", "Protocol error (command %d)", cmd);
 	break;
       }
-      htsmsg_destroy(hm);
+      htsmsg_release(hm);
     }
 
 
