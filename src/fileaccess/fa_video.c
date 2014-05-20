@@ -249,7 +249,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
   mp->mp_audio.mq_seektarget = AV_NOPTS_VALUE;
   mp_set_playstatus_by_hold(mp, 0, NULL);
 
-  if(flags & BACKEND_VIDEO_RESUME) {
+  if(flags & BACKEND_VIDEO_RESUME && mp->mp_flags & MP_CAN_SEEK) {
     int64_t start = playinfo_get_restartpos(canonical_url) * 1000;
     if(start) {
       TRACE(TRACE_DEBUG, "VIDEO", "Attempting to resume from %.2f seconds",
@@ -373,7 +373,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 
       ets = (event_ts_t *)e;
 
-      if(ets->epoch == mp->mp_epoch) {
+      if(ets->epoch == mp->mp_epoch && mp->mp_flags & MP_CAN_SEEK) {
 	int sec = ets->ts / 1000000;
 	last_timestamp_presented = ets->ts;
 
