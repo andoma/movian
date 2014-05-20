@@ -587,7 +587,7 @@ mp_settings_init(media_pipe_t *mp, const char *url, const char *dir_url,
 
   TRACE(TRACE_DEBUG, "media",
         "Settings initialized for URL %s in folder: %s [%s]",
-        url, parent_title, dir_url);
+        url, parent_title ?: "<unset>", dir_url ?: "<unset>");
 
   if(dir_url != NULL) {
     rstr_t *fmt;
@@ -673,19 +673,21 @@ mp_settings_init(media_pipe_t *mp, const char *url, const char *dir_url,
                  SETTING_GROUP(&mp->mp_settings_video),
                  NULL);
 
-  setting_create(SETTING_ACTION, mp->mp_setting_video_root, 0,
-                 SETTING_TITLE_CSTR(set_directory_title),
-                 SETTING_COURIER(mp->mp_pc),
-                 SETTING_CALLBACK(set_video_directory_defaults, mp),
-                 SETTING_GROUP(&mp->mp_settings_video),
-                 NULL);
+  if(dir_url != NULL) {
+    setting_create(SETTING_ACTION, mp->mp_setting_video_root, 0,
+                   SETTING_TITLE_CSTR(set_directory_title),
+                   SETTING_COURIER(mp->mp_pc),
+                   SETTING_CALLBACK(set_video_directory_defaults, mp),
+                   SETTING_GROUP(&mp->mp_settings_video),
+                   NULL);
 
-  setting_create(SETTING_ACTION, mp->mp_setting_video_root, 0,
-                 SETTING_TITLE_CSTR(clr_directory_title),
-                 SETTING_COURIER(mp->mp_pc),
-                 SETTING_CALLBACK(clr_video_directory_defaults, mp),
-                 SETTING_GROUP(&mp->mp_settings_video),
-                 NULL);
+    setting_create(SETTING_ACTION, mp->mp_setting_video_root, 0,
+                   SETTING_TITLE_CSTR(clr_directory_title),
+                   SETTING_COURIER(mp->mp_pc),
+                   SETTING_CALLBACK(clr_video_directory_defaults, mp),
+                   SETTING_GROUP(&mp->mp_settings_video),
+                   NULL);
+  }
 
   // --- Audio ---------------------------------------------
 
@@ -735,19 +737,21 @@ mp_settings_init(media_pipe_t *mp, const char *url, const char *dir_url,
                  SETTING_GROUP(&mp->mp_settings_audio),
                  NULL);
 
-  setting_create(SETTING_ACTION, mp->mp_setting_audio_root, 0,
-                 SETTING_TITLE_CSTR(set_directory_title),
-                 SETTING_COURIER(mp->mp_pc),
-                 SETTING_CALLBACK(set_audio_directory_defaults, mp),
-                 SETTING_GROUP(&mp->mp_settings_audio),
-                 NULL);
+  if(dir_url != NULL) {
+    setting_create(SETTING_ACTION, mp->mp_setting_audio_root, 0,
+                   SETTING_TITLE_CSTR(set_directory_title),
+                   SETTING_COURIER(mp->mp_pc),
+                   SETTING_CALLBACK(set_audio_directory_defaults, mp),
+                   SETTING_GROUP(&mp->mp_settings_audio),
+                   NULL);
 
-  setting_create(SETTING_ACTION, mp->mp_setting_audio_root, 0,
-                 SETTING_TITLE_CSTR(clr_directory_title),
-                 SETTING_COURIER(mp->mp_pc),
-                 SETTING_CALLBACK(clr_audio_directory_defaults, mp),
-                 SETTING_GROUP(&mp->mp_settings_audio),
-                 NULL);
+    setting_create(SETTING_ACTION, mp->mp_setting_audio_root, 0,
+                   SETTING_TITLE_CSTR(clr_directory_title),
+                   SETTING_COURIER(mp->mp_pc),
+                   SETTING_CALLBACK(clr_audio_directory_defaults, mp),
+                   SETTING_GROUP(&mp->mp_settings_audio),
+                   NULL);
+  }
 
 
   // --- Subtitle ------------------------------------------
@@ -842,19 +846,21 @@ mp_settings_init(media_pipe_t *mp, const char *url, const char *dir_url,
                  SETTING_GROUP(&mp->mp_settings_subtitle),
                  NULL);
 
-  setting_create(SETTING_ACTION, mp->mp_setting_subtitle_root, 0,
-                 SETTING_TITLE_CSTR(set_directory_title),
-                 SETTING_COURIER(mp->mp_pc),
-                 SETTING_CALLBACK(set_subtitle_directory_defaults, mp),
-                 SETTING_GROUP(&mp->mp_settings_subtitle),
-                 NULL);
+  if(dir_url != NULL) {
+    setting_create(SETTING_ACTION, mp->mp_setting_subtitle_root, 0,
+                   SETTING_TITLE_CSTR(set_directory_title),
+                   SETTING_COURIER(mp->mp_pc),
+                   SETTING_CALLBACK(set_subtitle_directory_defaults, mp),
+                   SETTING_GROUP(&mp->mp_settings_subtitle),
+                   NULL);
 
-  setting_create(SETTING_ACTION, mp->mp_setting_subtitle_root, 0,
-                 SETTING_TITLE_CSTR(clr_directory_title),
-                 SETTING_COURIER(mp->mp_pc),
-                 SETTING_CALLBACK(clr_subtitle_directory_defaults, mp),
-                 SETTING_GROUP(&mp->mp_settings_subtitle),
-                 NULL);
+    setting_create(SETTING_ACTION, mp->mp_setting_subtitle_root, 0,
+                   SETTING_TITLE_CSTR(clr_directory_title),
+                   SETTING_COURIER(mp->mp_pc),
+                   SETTING_CALLBACK(clr_subtitle_directory_defaults, mp),
+                   SETTING_GROUP(&mp->mp_settings_subtitle),
+                   NULL);
+  }
 
   // ----------------------------------------------------------------
 

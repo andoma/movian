@@ -171,6 +171,8 @@ play_video(const char *url, struct media_pipe *mp,
 
   video_args_t va;
 
+  if(parent_url != NULL && parent_url[0] == 0)
+    parent_url = NULL;
 
   memset(&va, 0, sizeof(va));
   va.episode = -1;
