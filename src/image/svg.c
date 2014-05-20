@@ -565,8 +565,18 @@ svg_parse_element(const svg_state_t *s0, htsmsg_t *element,
     free(style);
   }
 
+  const char *fill = htsmsg_get_str(a, "fill");
+
+  if(fill != NULL) {
+    if(!strcmp(fill, "none"))
+      fill_color = 0;
+    else
+      fill_color = (fill_color & 0xff000000) | html_makecolor(fill);
+  }
+
   if(s.icv == NULL)
     return;
+
 
   const char *transform = htsmsg_get_str(a, "transform");
   if(transform != NULL)
