@@ -680,6 +680,9 @@ setting_create(int type, prop_t *model, int flags, ...)
     s->s_val = prop_create_r(s->s_root, "action");
     break;
 
+  case SETTING_SEPARATOR:
+    break;
+
   default:
     abort();
   }
@@ -851,6 +854,7 @@ setting_create(int type, prop_t *model, int flags, ...)
                [SETTING_STRING]   = "string",
                [SETTING_MULTIOPT] = "multiopt",
                [SETTING_ACTION]   = "action",
+               [SETTING_SEPARATOR]= "separator",
                }[type]);
 
   switch(type) {
@@ -1019,7 +1023,11 @@ setting_create(int type, prop_t *model, int flags, ...)
                      PROP_TAG_MUTEX, mtx,
                      NULL);
     break;
+
+  case SETTING_SEPARATOR:
+    break;
   }
+
 
   if(enabled != NULL) {
     prop_set_int(enabled, 1);
