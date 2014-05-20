@@ -514,11 +514,12 @@ htsmsg_get_str_multi(htsmsg_t *msg, ...)
   va_start(ap, msg);
 
   while((n = va_arg(ap, char *)) != NULL) {
+    assert(msg != NULL);
     if((f = htsmsg_field_find(msg, n)) == NULL)
       return NULL;
     else if(f->hmf_type == HMF_STR)
       return f->hmf_str;
-    else if(f->hmf_type == HMF_MAP)
+    else if(f->hmf_childs != NULL)
       msg = f->hmf_childs;
     else
       return NULL;
