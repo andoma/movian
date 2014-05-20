@@ -318,7 +318,7 @@ construct_path(char *dst, size_t dstlen,
 
     if(at_root) {
       ftp_write(fc, 550, "%s: Can't go further up", path);
-      return 0;
+      return 1;
     }
 
     snprintf(dst, dstlen, "%s", fc->fc_wd);
@@ -337,12 +337,12 @@ construct_path(char *dst, size_t dstlen,
     if(path[r]) {
       ftp_write(fc, 550, "%s: Path contains invalid character: '%c'",
                 path, path[r]);
-      return 0;
+      return 1;
     }
 
     if(strstr(path, "/..")) {
       ftp_write(fc, 550, "%s: Path contains invalid component: '/..'", path);
-      return 0;
+      return 1;
     }
 
     if(*path == '/') {
