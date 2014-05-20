@@ -1071,9 +1071,7 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
   mp->mp_audio.mq_seektarget = AV_NOPTS_VALUE;
   mp->mp_seek_base = 0;
 
-  if(va->flags & BACKEND_VIDEO_RESUME ||
-     (video_settings.resume_mode == VIDEO_RESUME_YES &&
-      !(va->flags & BACKEND_VIDEO_START_FROM_BEGINNING))) {
+  if(va->flags & BACKEND_VIDEO_RESUME) {
     int64_t start = playinfo_get_restartpos(canonical_url) * 1000;
     if(start) {
       mp->mp_seek_base = start;

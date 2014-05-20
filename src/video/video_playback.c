@@ -648,13 +648,19 @@ video_player_idle(void *aux)
   char errbuf[256];
   prop_t *errprop = prop_ref_inc(prop_create(mp->mp_prop_root, "error"));
   video_queue_t *vq = NULL;
-  int play_flags = 0;
+  int play_flags_permanent = 0;
   int play_priority = 0;
   rstr_t *play_url = NULL;
   int force_continuous = 0;
   prop_t *origin = NULL;
   rstr_t *parent_url = NULL;
   rstr_t *parent_title = NULL;
+
+  enum {
+    RESUME_NO,
+    RESUME_AS_GLOBAL_SETTING,
+    RESUME_YES,
+  } resume_mode = RESUME_NO;
 
 
   while(run) {
@@ -663,6 +669,30 @@ video_player_idle(void *aux)
       prop_set_void(errprop);
 
       usage_inc_counter("playvideo", 1);
+
+      int play_flags = play_flags_permanent;
+
+      switch(resume_mode) {
+      case RESUME_NO:
+        break;
+
+      case RESUME_AS_GLOBAL_SETTING:
+        if(video_settings.resume_mode == VIDEO_RESUME_YES)
+          play_flags |= BACKEND_VIDEO_RESUME;
+        break;
+
+      case RESUME_YES:
+        play_flags |= BACKEND_VIDEO_RESUME;
+        break;
+      }
+
+      resume_mode = RESUME_NO; // For next item during continuous play
+
+      TRACE(TRACE_DEBUG, "vp", "Playing '%s'%s%s%s",
+            rstr_get(play_url),
+            play_flags & BACKEND_VIDEO_PRIMARY  ? ", primary" : "",
+            play_flags & BACKEND_VIDEO_NO_AUDIO ? ", no-audio" : "",
+            play_flags & BACKEND_VIDEO_RESUME   ? ", attempt-resume" : "");
 
       e = play_video(rstr_get(play_url), mp,
 		     play_flags, play_priority,
@@ -694,15 +724,12 @@ video_player_idle(void *aux)
       force_continuous = 0;
       prop_set_void(errprop);
       event_playurl_t *ep = (event_playurl_t *)e;
-      play_flags = 0;
+      play_flags_permanent = 0;
       if(ep->primary)
-	play_flags |= BACKEND_VIDEO_PRIMARY;
+	play_flags_permanent |= BACKEND_VIDEO_PRIMARY;
       if(ep->no_audio)
-	play_flags |= BACKEND_VIDEO_NO_AUDIO;
+	play_flags_permanent |= BACKEND_VIDEO_NO_AUDIO;
       play_priority = ep->priority;
-
-      TRACE(TRACE_DEBUG, "vp", "Playing %s flags:0x%x", ep->url,
-	    play_flags);
 
       prop_ref_dec(origin);
       if(vq != NULL) {
@@ -730,37 +757,40 @@ video_player_idle(void *aux)
       rstr_release(play_url);
       play_url = rstr_alloc(ep->url);
 
+      resume_mode = RESUME_AS_GLOBAL_SETTING;
+
       if(ep->how) {
 	if(!strcmp(ep->how, "beginning"))
-	  play_flags |= BACKEND_VIDEO_START_FROM_BEGINNING;
-	if(!strcmp(ep->how, "resume"))
-	  play_flags |= BACKEND_VIDEO_RESUME;
-	if(!strcmp(ep->how, "continuous"))
+          resume_mode = RESUME_NO;
+	else if(!strcmp(ep->how, "resume"))
+          resume_mode = RESUME_YES;
+	else if(!strcmp(ep->how, "continuous"))
 	  force_continuous = 1;
       }
 
     } else if(event_is_type(e, EVENT_EXIT)) {
       event_release(e);
       break;
-    } else if(event_is_type(e, EVENT_EOF) || 
-	      event_is_action(e, ACTION_SKIP_FORWARD) || 
-	      event_is_action(e, ACTION_SKIP_BACKWARD)) {
+
+    } else if(event_is_type(e, EVENT_EOF) ||
+              event_is_action(e, ACTION_SKIP_FORWARD) ||
+              event_is_action(e, ACTION_SKIP_BACKWARD)) {
 
       // Try to figure out which track to play next
 
       prop_t *next = NULL;
-      int skp = event_is_action(e, ACTION_SKIP_FORWARD) ||
+
+      int skp =
+        event_is_action(e, ACTION_SKIP_FORWARD) ||
 	event_is_action(e, ACTION_SKIP_BACKWARD);
+
       if(vq && (video_settings.continuous_playback || force_continuous || skp))
 	next = video_queue_find_next(vq, origin,
-				     event_is_action(e, ACTION_SKIP_BACKWARD), 
+				     event_is_action(e, ACTION_SKIP_BACKWARD),
 				     0);
-      
+
       prop_ref_dec(origin);
       origin = NULL;
-
-      if(skp)
-	play_flags |= BACKEND_VIDEO_START_FROM_BEGINNING;
 
       rstr_release(play_url);
 
@@ -776,7 +806,7 @@ video_player_idle(void *aux)
       if(play_url == NULL)
 	mp_set_playstatus_stop(mp);
     }
-    
+
     event_release(e);
     e = NULL;
   }

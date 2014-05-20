@@ -684,9 +684,7 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
 
   int64_t start = 0;
 
-  if(va.flags & BACKEND_VIDEO_RESUME ||
-     (video_settings.resume_mode == VIDEO_RESUME_YES &&
-      !(va.flags & BACKEND_VIDEO_START_FROM_BEGINNING)))
+  if(va.flags & BACKEND_VIDEO_RESUME)
     start = playinfo_get_restartpos(va.canonical_url);
 
   if(!RTMP_SetupURL(r.r, url)) {
