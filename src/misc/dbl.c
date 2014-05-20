@@ -35,6 +35,9 @@ my_str2double(const char *str, const char **endp)
   double ret = 1.0f;
   int n = 0, m = 0, o = 0, e = 0;
 
+  while(*str && *str < 33)
+    str++;
+
   if(*str == '-') {
     ret = -1.0f;
     str++;
