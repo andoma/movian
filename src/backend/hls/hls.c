@@ -193,8 +193,6 @@ typedef struct hls {
 
   int h_playback_priority;
 
-  int h_live;
-
 } hls_t;
 
 #define HLS_TRACE(h, x...) do {			\
@@ -728,7 +726,14 @@ segment_open(hls_t *h, hls_demuxer_t *hd, hls_segment_t *hs, int fast_fail)
 static void
 variant_update_metadata(hls_t *h, hls_variant_t *hv, int availbw)
 {
-  mp_set_duration(h->h_mp, hv->hv_duration);
+  media_pipe_t *mp = h->h_mp;
+  mp_set_duration(mp, hv->hv_frozen ? hv->hv_duration :  AV_NOPTS_VALUE);
+  if(hv->hv_frozen) {
+    mp_set_clr_flags(mp, MP_CAN_SEEK, 0);
+  } else {
+    mp_set_clr_flags(mp, 0, MP_CAN_SEEK);
+  }
+
   char buf[256];
   snprintf(buf, sizeof(buf),
 	   "HLS %d kbps (Avail: %d kbps)", 
@@ -812,8 +817,6 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
     variant_close_current_seg(hv);
 
     hls_segment_t *hs;
-
-    h->h_live = !hv->hv_frozen;
 
     // Initial seek on live streams make no sense, void that
     if(!hv->hv_frozen && hd->hd_seek_to != PTS_UNSET && hd->hd_seek_initial)
@@ -1060,8 +1063,7 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 
   mp_set_playstatus_by_hold(mp, 0, NULL);
 
-  mp_configure(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE, MP_BUFFER_DEEP, 0,
-               "video");
+  mp_configure(mp, MP_CAN_PAUSE, MP_BUFFER_DEEP, 0, "video");
 
   hls_demuxer_t *hd = &h->h_primary;
 
@@ -1213,7 +1215,7 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 	last_timestamp_presented = ets->ts;
 
 	// Update restartpos every 5 seconds
-	if(!h->h_live &&
+	if(mp->mp_flags & MP_CAN_SEEK &&
            (sec < restartpos_last || sec >= restartpos_last + 5)) {
 	  restartpos_last = sec;
 	  playinfo_set_restartpos(canonical_url, ets->ts / 1000, 1);
@@ -1224,7 +1226,7 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
       event_int_t *ei = (event_int_t *)e;
       h->h_playback_priority = ei->val;
 
-    } else if(event_is_type(e, EVENT_SEEK)) {
+    } else if(event_is_type(e, EVENT_SEEK) && mp->mp_flags & MP_CAN_SEEK) {
 
       event_ts_t *ets = (event_ts_t *)e;
       hls_seek(h, ets->ts + hd->hd_delta_ts, ets->ts, 0, &mb);
@@ -1239,10 +1241,7 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
     } else if(event_is_action(e, ACTION_SKIP_FORWARD)) {
       break;
     } else if(event_is_action(e, ACTION_SKIP_BACKWARD)) {
-
-      if(mp->mp_seek_base < MP_SKIP_LIMIT || h->h_live)
-	break;
-      hls_seek(h, hd->hd_delta_ts, 0, 0, &mb);
+      break;
 
     } else if(event_is_type(e, EVENT_EXIT) ||
 	      event_is_type(e, EVENT_PLAY_URL)) {
@@ -1255,7 +1254,7 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
   if(mb != NULL && mb != MB_EOF && mb != MB_NYA)
     media_buf_free_unlocked(mp, mb);
 
-  if(!h->h_live) {
+  if(mp->mp_flags & MP_CAN_SEEK) {
 
     // Compute stop position (in percentage of video length)
 

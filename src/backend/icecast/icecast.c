@@ -371,8 +371,7 @@ open_stream(icecast_play_context_t *ipc)
   TRACE(TRACE_DEBUG, "Radio", "Starting playback of %s", url);
 
   mp_configure(ipc->ipc_mp,
-               MP_PLAY_CAPS_PAUSE | MP_PLAY_CAPS_FLUSH_ON_HOLD |
-               MP_PLAY_CAPS_ALWAYS_SATISFIED,
+               MP_CAN_PAUSE | MP_FLUSH_ON_HOLD | MP_ALWAYS_SATISFIED,
                MP_BUFFER_SHALLOW, 0, "radio");
 
   ipc->ipc_mp->mp_audio.mq_stream = -1;

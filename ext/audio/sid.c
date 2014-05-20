@@ -1264,7 +1264,7 @@ be_sidplayer_play(const char *url0, media_pipe_t *mp,
   cpuJSR(init_addr, subSong);     /* Start the song initialize */
 
   mp->mp_audio.mq_stream = 0;
-  mp_configure(mp, MP_PLAY_CAPS_PAUSE, MP_BUFFER_NONE, 0, "tracks");
+  mp_configure(mp, MP_CAN_PAUSE, MP_BUFFER_NONE, 0, "tracks");
   mp_become_primary(mp);
 
 

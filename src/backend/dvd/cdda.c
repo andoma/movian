@@ -408,8 +408,8 @@ playaudio(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
  
   TRACE(TRACE_DEBUG, "AudioCD", "Starting playback of track %d", track);
 
-  mp_configure(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE | 
-	       MP_PLAY_CAPS_EJECT, MP_BUFFER_NONE, 0, "tracks");
+  mp_configure(mp, MP_CAN_SEEK | MP_CAN_PAUSE | MP_CAN_EJECT,
+               MP_BUFFER_NONE, 0, "tracks");
   mp_become_primary(mp);
   mq = &mp->mp_audio;
 

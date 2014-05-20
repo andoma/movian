@@ -57,8 +57,6 @@ typedef struct {
   int64_t seekpos_video;
   int64_t seekpos_audio;
 
-  int can_seek;
-
   int restartpos_last;
 
   const char *canonical_url;
@@ -108,14 +106,15 @@ handle_metadata0(rtmp_t *r, AMFObject *obj,
      prop.p_type == AMF_NUMBER && prop.p_vu.p_number > 0) {
     prop_set_float(prop_create(m, "duration"), prop.p_vu.p_number);
     r->total_duration = prop.p_vu.p_number * 1000;
-    mp->mp_duration = r->total_duration;
-    r->can_seek = 1;
+    mp_set_duration(mp, r->total_duration);
+    mp_set_clr_flags(mp, MP_CAN_SEEK, 0);
+
   } else {
-    r->can_seek = 0;
-    mp->mp_duration = 0;
+
     r->total_duration = 0;
+    mp_set_duration(mp, AV_NOPTS_VALUE);
+    mp_set_clr_flags(mp, 0, MP_CAN_SEEK);
   }
-  prop_set_int(mp->mp_prop_canSeek, r->can_seek);
 
   if((RTMP_FindFirstMatchingProperty(obj, &av_videoframerate, &prop) &&
       RTMP_FindFirstMatchingProperty(obj, &av_framerate, &prop))
@@ -195,27 +194,20 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
 
   if(event_is_type(e, EVENT_EXIT) ||
      event_is_type(e, EVENT_PLAY_URL) ||
-     event_is_action(e, ACTION_SKIP_FORWARD))
+     event_is_action(e, ACTION_SKIP_FORWARD) ||
+     event_is_action(e, ACTION_SKIP_BACKWARD))
     return e;
-  
-  if(event_is_action(e, ACTION_SKIP_BACKWARD)) {
-    if(mp->mp_seek_base < MP_SKIP_LIMIT || !r->can_seek) {
-      return e;
-    }
-    video_seek(r, mp, mbp, 0, "direct");
-  }
-  
+
   if(event_is_type(e, EVENT_CURRENT_TIME)) {
     event_ts_t *ets = (event_ts_t *)e;
-    
     int sec = ets->ts / 1000000;
 
-    if(sec != r->restartpos_last && r->can_seek) {
+    if(sec != r->restartpos_last && mp->mp_flags & MP_CAN_SEEK) {
       r->restartpos_last = sec;
       playinfo_set_restartpos(r->canonical_url, mp->mp_seek_base / 1000, 1);
     }
 
-  } else if(r->can_seek && event_is_type(e, EVENT_SEEK)) {
+  } else if(mp->mp_flags & MP_CAN_SEEK && event_is_type(e, EVENT_SEEK)) {
     event_ts_t *ets = (event_ts_t *)e;
 
     video_seek(r, mp, mbp, ets->ts, "direct");
@@ -563,7 +555,7 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
 	  return NULL;
 	}
 
-	if(r->can_seek)
+	if(mp->mp_flags & MP_CAN_SEEK)
 	  RTMP_SendSeek(r->r, restartpos / 1000);
 	continue;
       }
@@ -729,7 +721,7 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
     r.seekpos_video = AV_NOPTS_VALUE;
   }
 
-  mp_configure(mp, MP_PLAY_CAPS_PAUSE, MP_BUFFER_DEEP, 0, "video");
+  mp_configure(mp, MP_CAN_PAUSE, MP_BUFFER_DEEP, 0, "video");
   mp->mp_max_realtime_delay = (r.r->Link.timeout - 1) * 1000000;
 
   mp_become_primary(mp);

@@ -191,7 +191,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 
   TRACE(TRACE_DEBUG, "Audio", "Starting playback of %s", url);
 
-  mp_configure(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE,
+  mp_configure(mp, MP_CAN_SEEK | MP_CAN_PAUSE,
 	       MP_BUFFER_SHALLOW, fctx->duration, "tracks");
 
   mp->mp_audio.mq_stream = -1;
