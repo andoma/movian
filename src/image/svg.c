@@ -306,6 +306,38 @@ cmd_lineto_abs(svg_state_t *state, const float *p)
 }
 
 
+static void
+cmd_horizontal_rel(svg_state_t *state, const float *p)
+{
+  state->cur[0] += p[0];
+  cmd_lineto(state);
+}
+
+
+static void
+cmd_horizontal_abs(svg_state_t *state, const float *p)
+{
+  state->cur[0] = p[0];
+  cmd_lineto(state);
+}
+
+
+static void
+cmd_vertical_rel(svg_state_t *state, const float *p)
+{
+  state->cur[1] += p[0];
+  cmd_lineto(state);
+}
+
+
+static void
+cmd_vertical_abs(svg_state_t *state, const float *p)
+{
+  state->cur[1] = p[0];
+  cmd_lineto(state);
+}
+
+
 /**
  *
  */
@@ -393,6 +425,26 @@ stroke_path(svg_state_t *state, const char *str)
     case 'L':
       next_cmd = cur_cmd = cmd_lineto_abs;
       num_params = 2;
+      break;
+
+    case 'v':
+      next_cmd = cur_cmd = cmd_vertical_rel;
+      num_params = 1;
+      break;
+
+    case 'V':
+      next_cmd = cur_cmd = cmd_vertical_abs;
+      num_params = 1;
+      break;
+
+    case 'h':
+      next_cmd = cur_cmd = cmd_horizontal_rel;
+      num_params = 1;
+      break;
+
+    case 'H':
+      next_cmd = cur_cmd = cmd_horizontal_abs;
+      num_params = 1;
       break;
 
     case 'z':
