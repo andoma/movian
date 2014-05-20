@@ -2238,11 +2238,12 @@ glw_first_widget(glw_t *w)
  *
  */
 glw_t *
-glw_last_widget(glw_t *w)
+glw_last_widget(glw_t *w, int focusable)
 {
   w = TAILQ_LAST(&w->glw_childs, glw_queue);
 
-  while(w != NULL && w->glw_flags & GLW_HIDDEN)
+  while(w != NULL && ((w->glw_flags & GLW_HIDDEN) ||
+                      (focusable && !(w->glw_flags2 & GLW2_NAV_FOCUSABLE))))
     w = TAILQ_PREV(w, glw_queue, glw_parent_link);
 
   return w;

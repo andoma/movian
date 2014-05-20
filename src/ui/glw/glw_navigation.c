@@ -447,7 +447,7 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
 	  } else if(pagemode == 2) {
 
-	    c = glw_last_widget(p);
+	    c = glw_last_widget(p, 1);
 	    loop = 0;
 
 	  } else {
@@ -495,7 +495,7 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
 	  } else {
             if(dowrap(c)) {
-              wrap = glw_last_widget(c->glw_parent);
+              wrap = glw_last_widget(c->glw_parent, 1);
               while(wrap != NULL && !glw_is_child_focusable(wrap))
                 wrap = glw_prev_widget(wrap);
               if(wrap == c || wrap == w)
