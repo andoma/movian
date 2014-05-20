@@ -434,6 +434,8 @@ void prop_unparent0(prop_t *p, prop_sub_t *skipme);
 
 int prop_destroy0(prop_t *p);
 
+void prop_suggest_focus0(prop_t *p);
+
 void prop_unsubscribe0(prop_sub_t *s);
 
 void prop_notify_child2(prop_t *child, prop_t *parent, prop_t *sibling,

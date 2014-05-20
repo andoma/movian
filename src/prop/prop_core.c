@@ -4247,6 +4247,24 @@ prop_select_by_value_ex(prop_t *p, const char *name, prop_sub_t *skipme)
 }
 
 
+/**
+ *
+ */
+void
+prop_suggest_focus0(prop_t *p)
+{
+  prop_t *parent;
+
+  if(p->hp_type == PROP_ZOMBIE)
+    return;
+
+  parent = p->hp_parent;
+
+  if(parent != NULL) {
+    assert(parent->hp_type == PROP_DIR);
+    prop_notify_child(p, parent, PROP_SUGGEST_FOCUS, NULL, 0);
+  }
+}
 
 
 /**
@@ -4255,24 +4273,11 @@ prop_select_by_value_ex(prop_t *p, const char *name, prop_sub_t *skipme)
 void
 prop_suggest_focus(prop_t *p)
 {
-  prop_t *parent;
-
   hts_mutex_lock(&prop_mutex);
-
-  if(p->hp_type == PROP_ZOMBIE) {
-    hts_mutex_unlock(&prop_mutex);
-    return;
-  }
-
-  parent = p->hp_parent;
-
-  if(parent != NULL) {
-    assert(parent->hp_type == PROP_DIR);
-    prop_notify_child(p, parent, PROP_SUGGEST_FOCUS, NULL, 0);
-  }
-
+  prop_suggest_focus0(p);
   hts_mutex_unlock(&prop_mutex);
 }
+
 
 /**
  *

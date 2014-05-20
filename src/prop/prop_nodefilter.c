@@ -940,6 +940,18 @@ prop_nf_release0(struct prop_nf *pnf)
  *
  */
 static void
+nf_suggest_focus(prop_nf_t *nf, nfnode_t *nfn)
+{
+  if(nfn->out != NULL)
+    prop_suggest_focus0(nfn->out);
+}
+
+
+
+/**
+ *
+ */
+static void
 prop_nf_src_cb(void *opaque, prop_event_t event, ...)
 {
   prop_nf_t *nf = opaque;
@@ -1008,6 +1020,10 @@ prop_nf_src_cb(void *opaque, prop_event_t event, ...)
   case PROP_WANT_MORE_CHILDS:
   case PROP_REQ_MOVE_CHILD:
   case PROP_SELECT_CHILD:
+    break;
+
+  case PROP_SUGGEST_FOCUS:
+    nf_suggest_focus(nf, nf_find_node(nf, va_arg(ap, prop_t *)));
     break;
 
   default:
