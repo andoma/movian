@@ -368,6 +368,12 @@ fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh,
     return 1;
   }
 
+  if(!memcmp(buf, "<?xml", 5) && find_str((char *)buf, l, "<svg")) {
+    /* SVG */
+    md->md_contenttype = CONTENT_IMAGE;
+    return 1;
+  }
+
   if(buf[0] == '%' && buf[1] == 'P' && buf[2] == 'D' && buf[3] == 'F') {
     md->md_contenttype = CONTENT_UNKNOWN;
     return 1;
