@@ -1374,6 +1374,8 @@ zap_channel(htsp_connection_t *hc, htsp_subscription_t *hs,
   prop_ref_dec(hs->hs_origin);
   hs->hs_origin = next;
 
+  prop_suggest_focus(hs->hs_origin);
+
   htsmsg_release(m);
   set_channel(hc, hs, newch, name);
   return 0;
