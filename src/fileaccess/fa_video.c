@@ -252,6 +252,8 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
   if(flags & BACKEND_VIDEO_RESUME) {
     int64_t start = playinfo_get_restartpos(canonical_url) * 1000;
     if(start) {
+      TRACE(TRACE_DEBUG, "VIDEO", "Attempting to resume from %.2f seconds",
+            start / 1000000.0f);
       mp->mp_seek_base = start;
       video_seek(fctx, mp, &mb, start, "restart position");
     }

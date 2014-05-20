@@ -1076,6 +1076,8 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
   if(va->flags & BACKEND_VIDEO_RESUME) {
     int64_t start = playinfo_get_restartpos(canonical_url) * 1000;
     if(start) {
+      TRACE(TRACE_DEBUG, "HLS", "Attempting to resume from %.2f seconds",
+            start / 1000000.0f);
       mp->mp_seek_base = start;
       hls_seek(h, start, start, 1, NULL);
     }
