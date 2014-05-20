@@ -662,7 +662,9 @@ mp_settings_init(media_pipe_t *mp, const char *url, const char *dir_url,
                    NULL);
   }
 
-  settings_create_separator(mp->mp_setting_video_root, NULL);
+  setting_create(SETTING_SEPARATOR, mp->mp_setting_video_root, 0,
+                 SETTING_GROUP(&mp->mp_settings_video),
+                 NULL);
 
   setting_create(SETTING_ACTION, mp->mp_setting_video_root, 0,
                  SETTING_TITLE(_p("Save as global default")),
@@ -722,7 +724,9 @@ mp_settings_init(media_pipe_t *mp, const char *url, const char *dir_url,
                  SETTING_INHERIT(p),
                  NULL);
 
-  settings_create_separator(mp->mp_setting_audio_root, NULL);
+  setting_create(SETTING_SEPARATOR, mp->mp_setting_audio_root, 0,
+                 SETTING_GROUP(&mp->mp_settings_audio),
+                 NULL);
 
   setting_create(SETTING_ACTION, mp->mp_setting_audio_root, 0,
                  SETTING_TITLE(_p("Save as global default")),
@@ -827,7 +831,9 @@ mp_settings_init(media_pipe_t *mp, const char *url, const char *dir_url,
                  SETTING_INHERIT(p),
                  NULL);
 
-  settings_create_separator(mp->mp_setting_subtitle_root, NULL);
+  setting_create(SETTING_SEPARATOR, mp->mp_setting_subtitle_root, 0,
+                 SETTING_GROUP(&mp->mp_settings_subtitle),
+                 NULL);
 
   setting_create(SETTING_ACTION, mp->mp_setting_subtitle_root, 0,
                  SETTING_TITLE(_p("Save as global default")),
