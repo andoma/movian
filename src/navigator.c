@@ -760,6 +760,10 @@ page_redirect(nav_page_t *np, const char *url)
   navigator_t *nav = np->np_nav;
 
   TRACE(TRACE_DEBUG, "navigator", "Following redirect to %s", url);
+
+  if(nav->nav_page_current == np)
+    prop_unlink(nav->nav_prop_curpage);
+
   prop_t *p = np->np_prop_root;
 
   page_unsub(np);
