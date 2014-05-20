@@ -210,11 +210,6 @@ gvv_render(glw_video_t *gv, glw_rctx_t *rc)
   if(sb != NULL)
     upload_texture(gv, sb);
 
-  if(rc->rc_alpha > 0.98f)
-    glDisable(GL_BLEND);
-  else
-    glEnable(GL_BLEND);
-
   glw_backend_root_t *gbr = &gv->w.glw_root->gr_be;
   glw_program_t *gp;
 
@@ -228,8 +223,16 @@ gvv_render(glw_video_t *gv, glw_rctx_t *rc)
   }
   glBindTexture(GL_TEXTURE_2D, sa->gvs_texture);
 
+  glw_rctx_t rc0 = *rc;
+  rc0.rc_alpha *= gv->gv_cmatrix_cur[0];
+
+  if(rc0.rc_alpha > 0.98f)
+    glDisable(GL_BLEND);
+  else
+    glEnable(GL_BLEND);
+
   glw_render_video_quad(0, 0, sa->gvs_width[0], sa->gvs_height[0],
-                        0, 0, gbr, gp, gv, rc);
+                        0, 0, gbr, gp, gv, &rc0);
 
   glEnable(GL_BLEND);
 }

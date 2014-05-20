@@ -49,7 +49,15 @@ widget(container_z, {
 	spacing: 4;
 	padding: 20;
 	align: top;
-	  
+
+	widget(container_x, {
+	  hidden: select($self.media.error, false, true);
+	  widget(label, {
+	    OSD();
+	    caption: $self.media.metadata.title;
+	  });
+	});
+
 	widget(container_x, {
 	  hidden: select($self.media.error, false, true);
 	  widget(icon, {
