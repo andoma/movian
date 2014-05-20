@@ -17,6 +17,7 @@
 $ui.showplaydeck = $self.media.stats || changed($self.media.seektime, 5, true);
 
 $clone.menu = "skin://cmdmenu/cmdmenu_video.view";
+$clone.menuPage = 0;
 
 $self.directClose = 1;
 

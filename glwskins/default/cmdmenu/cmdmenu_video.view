@@ -1,13 +1,11 @@
 #import "cmdmenu_common.view"
 
-
-$view.page = 0;
-
-onEvent(back,   { $view.page = 0; }, $view.page);
-onEvent(cancel, { $view.page = 0; }, $view.page);
+onEvent(back,   { $clone.menuPage = 0; }, $clone.menuPage);
+onEvent(cancel, { $clone.menuPage = 0; }, $clone.menuPage);
 
 widget(deck, {
 
+  noInitialTransform: true;
   effect: slideHorizontal;
   time: 0.25;
 
@@ -16,35 +14,35 @@ widget(deck, {
     SEP(_("Video menu"));
 
     ITEM(_("Audio tracks"), {
-      $view.page = 1;
+      $clone.menuPage = 1;
     }, "dataroot://resources/svg/Music.svg");
     
     ITEM(_("Subtitle tracks"), {
-      $view.page = 2;
+      $clone.menuPage = 2;
     }, "dataroot://resources/svg/Script.svg");
 
     ITEM(_("Seek by time"), {
-      $view.page = 6;
+      $clone.menuPage = 6;
     }, "dataroot://resources/svg/SeekByFrame.svg",
 	 $global.media.current.seekindex.available);
 
     ITEM(_("Chapters"), {
-      $view.page = 7;
+      $clone.menuPage = 7;
     }, "dataroot://resources/svg/Book.svg",
 	 $global.media.current.chapterindex.available);
 
     SEP(_("Settings"));
 
     ITEM(_("Audio"), {
-      $view.page = 3;
+      $clone.menuPage = 3;
     }, "dataroot://resources/svg/Music.svg");
 
     ITEM(_("Subtitles"), {
-      $view.page = 4;
+      $clone.menuPage = 4;
     }, "dataroot://resources/svg/Script.svg");
 
     ITEM(_("Video"), {
-      $view.page = 5;
+      $clone.menuPage = 5;
     }, "dataroot://resources/svg/Movie.svg");
 
     cloner($self.media.settings.nodes, loader, {
@@ -356,7 +354,7 @@ widget(deck, {
     });
   );
 
-  page: $view.page;
+  page: $clone.menuPage;
 });
 
 
