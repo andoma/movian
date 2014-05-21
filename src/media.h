@@ -509,6 +509,8 @@ typedef struct media_pipe {
 
   struct setting_list mp_settings_other;
 
+  struct setting *mp_vol_setting;
+
   /**
    * Extra (created by media_pipe_init_extra)
    */

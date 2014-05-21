@@ -168,13 +168,15 @@ glw_video_widget_event(glw_t *w, event_t *e)
 
     if(event_is_action(e, ACTION_UP)) {
       e = event_create_action(ACTION_VOLUME_UP);
-      event_dispatch(e);
+      mp_enqueue_event(mp, e);
+      event_release(e);
       return 1;
     }
 
     if(event_is_action(e, ACTION_DOWN)) {
       e = event_create_action(ACTION_VOLUME_DOWN);
-      event_dispatch(e);
+      mp_enqueue_event(mp, e);
+      event_release(e);
       return 1;
     }
   }

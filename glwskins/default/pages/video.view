@@ -120,6 +120,17 @@ widget(container_z, {
 	});
 
 	widget(container_x, {
+	  hidden: !changed($self.media.ctrl.audiovolume, 2, true) || !$self.media.ctrl.audiovolume;
+	  widget(label, {
+            padding: [10 + $ui.size,0,0,0];
+	    OSD();
+            caption: fmt(_("Audio volume adjustment: %d dB"),
+                         $self.media.ctrl.audiovolume);
+	  });
+	});
+
+
+	widget(container_x, {
 	  spacing: 10;
 	  hidden: !changed($self.media.subtitle.current, 5);
 	  widget(icon, {

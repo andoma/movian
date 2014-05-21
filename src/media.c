@@ -455,6 +455,7 @@ mp_create(const char *name, int flags)
 static void
 mp_settings_clear(media_pipe_t *mp)
 {
+  mp->mp_vol_setting = NULL;
   setting_group_destroy(&mp->mp_settings_video);
   setting_group_destroy(&mp->mp_settings_audio);
   setting_group_destroy(&mp->mp_settings_subtitle);
@@ -699,6 +700,7 @@ mp_settings_init(media_pipe_t *mp, const char *url, const char *dir_url,
   p = make_dir_setting(SETTING_INT, "audiovolume", &mp->mp_settings_audio_dir,
                        dir_url, gconf.setting_av_volume, mp);
 
+  mp->mp_vol_setting =
   setting_create(SETTING_INT, mp->mp_setting_audio_root,
                  SETTINGS_INITIAL_UPDATE,
                  SETTING_COURIER(mp->mp_pc),
@@ -1212,6 +1214,22 @@ mp_enqueue_event_locked(media_pipe_t *mp, event_t *e)
     track_mgr_next_track(&mp->mp_audio_track_mgr);
   } else if(event_is_action(e, ACTION_CYCLE_SUBTITLE)) {
     track_mgr_next_track(&mp->mp_subtitle_track_mgr);
+  } else if(event_is_action(e, ACTION_VOLUME_UP) ||
+            event_is_action(e, ACTION_VOLUME_DOWN)) {
+
+    switch(video_settings.dpad_up_down_mode) {
+    case VIDEO_DPAD_MASTER_VOLUME:
+      atomic_add(&e->e_refcount, 1);
+      event_dispatch(e);
+      break;
+    case VIDEO_DPAD_PER_FILE_VOLUME:
+      if(mp->mp_vol_setting == NULL)
+        break;
+      settings_add_int(mp->mp_vol_setting,
+                       event_is_action(e, ACTION_VOLUME_UP) ? 1 : -1);
+      break;
+    }
+
   } else {
 
     // Forward event to player
