@@ -21,6 +21,11 @@
 #include <unistd.h>
 #include <pulse/pulseaudio.h>
 #include <assert.h>
+#include <math.h>
+
+#if defined(__x86_64)
+#include <xmmintrin.h>
+#endif
 
 #include "showtime.h"
 #include "audio.h"
@@ -272,28 +277,10 @@ pulseaudio_audio_reconfig(audio_decoder_t *ad)
 
   ad->ad_out_sample_rate = ad->ad_in_sample_rate;
   d->ss.rate = ad->ad_in_sample_rate;
-  
-  switch(ad->ad_in_sample_format) {
-  case AV_SAMPLE_FMT_S32:
-  case AV_SAMPLE_FMT_S32P:
-    ad->ad_out_sample_format = AV_SAMPLE_FMT_S32;
-    d->ss.format = PA_SAMPLE_S32NE;
-    d->framesize = sizeof(int32_t);
-    break;
 
-  case AV_SAMPLE_FMT_S16:
-  case AV_SAMPLE_FMT_S16P:
-    ad->ad_out_sample_format = AV_SAMPLE_FMT_S16;
-    d->ss.format = PA_SAMPLE_S16NE;
-    d->framesize = sizeof(int16_t);
-    break;
-
-  default:
-    ad->ad_out_sample_format = AV_SAMPLE_FMT_FLT;
-    d->ss.format = PA_SAMPLE_FLOAT32NE;
-    d->framesize = sizeof(float);
-    break;
-  }
+  ad->ad_out_sample_format = AV_SAMPLE_FMT_FLT;
+  d->ss.format = PA_SAMPLE_FLOAT32NE;
+  d->framesize = sizeof(float);
 
   switch(ad->ad_in_channel_layout) {
   case AV_CH_LAYOUT_MONO:
@@ -469,6 +456,22 @@ pulseaudio_audio_deliver(audio_decoder_t *ad, int samples,
     data[0] = (uint8_t *)buf;
     assert(rsamples <= samples);
     avresample_read(ad->ad_avr, data, rsamples);
+
+    float *x = (float *)buf;
+    int i = 0;
+    float s = audio_master_mute ? 0 : audio_master_volume * ad->ad_vol_scale;
+    int floats = samples * d->ss.channels;
+
+#if defined(__x86_64)
+    const __m128 scalar = _mm_set1_ps(s);
+    __m128 *v = (__m128 *)buf;
+    int vecs = floats / 4;
+    for(; i < vecs; i++)
+      v[i] = _mm_mul_ps(v[i], scalar);
+    i *= 4;
+#endif
+    for(; i < floats; i++)
+      x[i] *= s;
   }
 
   if(pts != AV_NOPTS_VALUE) {
@@ -521,32 +524,6 @@ pulseaudio_fini(audio_decoder_t *ad)
 /**
  *
  */
-static void
-pulseaudio_set_volume(struct audio_decoder *ad, float scale)
-{
-  decoder_t *d = (decoder_t *)ad;
-  pa_threaded_mainloop_lock(mainloop);
-  if(d->s) {
-    pa_operation *o;
-    pa_cvolume cv;
-
-    memset(&cv, 0, sizeof(cv));
-    pa_cvolume_set(&cv, d->ss.channels, pa_sw_volume_from_linear(scale));
-
-    o = pa_context_set_sink_input_volume(ctx,
-					 pa_stream_get_index(d->s),
-					 &cv, NULL, NULL);
-    if(o != NULL)
-      pa_operation_unref(o);
-  }
-  pa_threaded_mainloop_unlock(mainloop);
-}
-
-
-
-/**
- *
- */
 static audio_class_t pulseaudio_audio_class = {
   .ac_alloc_size   = sizeof(decoder_t),
   .ac_fini         = pulseaudio_fini,
@@ -556,7 +533,6 @@ static audio_class_t pulseaudio_audio_class = {
   .ac_reconfig     = pulseaudio_audio_reconfig,
   .ac_deliver_unlocked = pulseaudio_audio_deliver,
   .ac_get_mode     = pulseaudio_get_mode,
-  .ac_set_volume   = pulseaudio_set_volume,
 };
 
 

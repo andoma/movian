@@ -41,7 +41,6 @@
 static int max_pcm;
 static int max_dts;
 static int max_ac3;
-static float master_volume = 1.0;
 
 /**
  *
@@ -255,7 +254,7 @@ ps3_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
     float *dst = buf + d->channels * AUDIO_BLOCK_SAMPLES * bi;
     uint8_t *planes[8] = {0};
 
-    vector float m = vec_splats(master_volume * ad->ad_vol_scale);
+    vector float m = vec_splats(audio_master_volume * ad->ad_vol_scale);
     vector float z = vec_splats(0.0f);
 
     switch(ad->ad_out_channel_layout) {
@@ -321,38 +320,17 @@ ps3_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
 }
 
 
-
-/**
- *
- */
-static void
-ps3_set_volume(audio_decoder_t *ad, float scale)
-{
-}
-
-
 /**
  *
  */
 static audio_class_t ps3_audio_class = {
   .ac_alloc_size = sizeof(decoder_t),
-  
   .ac_init = ps3_audio_init,
   .ac_fini = ps3_audio_fini,
   .ac_reconfig = ps3_audio_reconfig,
   .ac_deliver_unlocked = ps3_audio_deliver,
-  .ac_set_volume     = ps3_set_volume,
 };
 
-
-/**
- *
- */
-static void
-set_mastervol(void *opaque, float value)
-{
-  master_volume = pow(10, (value / 20));
-}
 
 /**
  *
@@ -379,11 +357,6 @@ audio_driver_init(struct prop *asettings, struct htsmsg *store)
   audioInit();
 
   audioOutSetCopyControl(AUDIO_OUT_PRIMARY, AUDIO_OUT_COPY_CONTROL_FREE);
-
-  prop_subscribe(0,
-		 PROP_TAG_CALLBACK_FLOAT, set_mastervol, NULL,
-		 PROP_TAG_NAME("global", "audio", "mastervolume"),
-		 NULL);
 
   return &ps3_audio_class;
 }

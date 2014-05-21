@@ -39,6 +39,9 @@
 
 static audio_class_t *audio_class;
 
+float audio_master_volume = 1.0;
+int   audio_master_mute = 0;
+
 static void *audio_decode_thread(void *aux);
 
 
@@ -48,6 +51,8 @@ static void *audio_decode_thread(void *aux);
 static void
 save_matervol(void *opaque, float value)
 {
+  audio_master_volume = pow(10, (value / 20));
+
   htsmsg_t *m = htsmsg_create_map();
   TRACE(TRACE_DEBUG, "audio", "Master volume set to %f dB", value);
 
@@ -83,6 +88,11 @@ audio_mastervol_init(void)
   prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
 		 PROP_TAG_CALLBACK_FLOAT, save_matervol, NULL,
 		 PROP_TAG_ROOT, mv,
+		 NULL);
+
+  prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+		 PROP_TAG_SET_INT, &audio_master_mute,
+		 PROP_TAG_ROOT, mm,
 		 NULL);
 }
 
@@ -514,10 +524,11 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 	  avresample_free(&ad->ad_avr);
 	}
 
-	if(ac->ac_set_volume != NULL) {
-	  prop_set(mp->mp_prop_ctrl, "canAdjustVolume", PROP_SET_INT, 1);
+        prop_set(mp->mp_prop_ctrl, "canAdjustVolume", PROP_SET_INT, 1);
+
+	if(ac->ac_set_volume != NULL)
 	  ac->ac_set_volume(ad, ad->ad_vol_scale);
-	}
+
       }
       if(ad->ad_avr != NULL) {
 	avresample_convert(ad->ad_avr, NULL, 0, 0,

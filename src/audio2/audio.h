@@ -27,6 +27,10 @@
 #include "arch/threads.h"
 #include "media.h"
 
+extern float audio_master_volume;
+extern int   audio_master_mute;
+
+
 struct audio_decoder;
 
 typedef struct audio_class {
