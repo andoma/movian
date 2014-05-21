@@ -1154,6 +1154,23 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
         continue;
       }
 
+
+#if 0
+      printf("%s: PTS=%-16lld DTS=%-16lld %16lld\n",
+             mb->mb_data_type == MB_VIDEO ? "VIDEO" : "AUDIO",
+             pkt.pts, pkt.dts, pkt.pts - pkt.dts);
+#endif
+
+      /**
+       * Some HLS live servers (FlashCom/3.5.5) can send broken PTS
+       * timestamps.  Try to detect those and filter them out. Code
+       * downstream will repair them.
+       */
+
+      if(pkt.pts != AV_NOPTS_VALUE && pkt.dts != AV_NOPTS_VALUE &&
+         (pkt.pts - pkt.dts > 900000 || pkt.pts < pkt.dts))
+        pkt.pts = AV_NOPTS_VALUE;
+
       mb->mb_pts = rescale(hs->hs_fctx, pkt.pts, si);
       mb->mb_dts = rescale(hs->hs_fctx, pkt.dts, si);
 
