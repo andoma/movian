@@ -5,7 +5,7 @@ maintainer: Niconico27
 # ./ext/miner/miner.c
 #
 id: Do you like Showtime? You can donate money to the project by mining Litecoins on your PS3
-msg: Aimez-vous Showtime ? Vous pouvez faire un don en minant des Litecoins depuis votre PS3
+msg: Vous appréciez Showtime ? Vous pouvez faire un don en minant des Litecoins depuis votre PS3
 
 id: Donate money to the Showtime project by mining litecoints
 msg: Faire un don au projet Showtime en minant des litecoins
@@ -44,8 +44,7 @@ id: Go to Home screen
 msg: Retour à la page d'accueil
 
 id: Hide system info
-# Missing translation
-msg: 
+msg: Cacher les informations système
 
 id: Navigation
 msg: Navigation
@@ -63,8 +62,7 @@ id: Reload current page
 msg: Rafraichir
 
 id: Show system info
-# Missing translation
-msg: 
+msg: Afficher les informations système
 
 id: Suspend
 msg: Suspendre
@@ -172,15 +170,13 @@ id: Cancel
 msg: Annuler
 
 id: Clear
-# Missing translation
-msg: 
+msg: Effacer
 
 id: Default
 msg: Défaut
 
 id: Keyboard layout:
-# Missing translation
-msg: 
+msg: Configuration du clavier:
 
 id: OK
 msg: OK
@@ -418,8 +414,7 @@ msg: Status de la lecture
 # ./glwskins/default/pages/wideinfo/video.view
 #
 id: Seen:
-# Missing translation
-msg: 
+msg: Vu:
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -458,15 +453,13 @@ id: CPU Temp
 msg: Température du CPU
 
 id: Fragmentation
-# Missing translation
-msg: 
+msg: Fragmentation
 
 id: GPU Temp
 msg: Température du GPU
 
 id: Inactive mem
-# Missing translation
-msg: 
+msg: Mémoire libre
 
 id: Memory usage
 msg: Mémoire utilisée
@@ -529,16 +522,13 @@ msg: Mémoire système faible (%d kB de RAM restant)
 # ./src/arch/rpi/rpi_audio.c
 #
 id: Analog
-# Missing translation
-msg: 
+msg: Analogique
 
 id: Audio output port
-# Missing translation
-msg: 
+msg: Sortie audio
 
 id: HDMI
-# Missing translation
-msg: 
+msg: HDMI
 
 #
 # ./src/arch/rpi/rpi_cec.c
@@ -556,81 +546,64 @@ id: Audio delay
 msg: Délai audio
 
 id: Audio gain adjustment during video playback
-# Missing translation
-msg: 
+msg: Réglage du gain audio pendant la lecture
 
 id: Audio settings during video playback
-# Missing translation
-msg: 
+msg: Paramétrage audio pendant la lecture
 
 id: Setup audio output
-# Missing translation
-msg: 
+msg: Paramétrage de la sortie audio
 
 #
 # ./src/audio2/audio_test.c
 #
 id: 440Hz sinewave -12dB
-# Missing translation
-msg: 
+msg: Sinusoïde de 440Hz à -12dB
 
 id: Audio test
-# Missing translation
-msg: 
+msg: Test audio
 
 id: Center
-msg: Centrer
+msg: Enceinte Centrale
 
 id: Front Left
-# Missing translation
-msg: 
+msg: Avant Gauche
 
 id: Front Right
-# Missing translation
-msg: 
+msg: Avant Droite
 
 id: LFE
-# Missing translation
-msg: 
+msg: Caisson de basses
 
 id: Pink noise
-# Missing translation
-msg: 
+msg: Bruit rose
 
 id: Play test signal
-# Missing translation
-msg: 
+msg: Jouer le signal de test
 
 id: Rear Left
-# Missing translation
-msg: 
+msg: Arrière Gauche
 
 id: Rear Right
-# Missing translation
-msg: 
+msg: Arrière Droite
 
 id: Speaker position
-# Missing translation
-msg: 
+msg: Position des enceintes
 
 id: Surround Left
-# Missing translation
-msg: 
+msg: Surround Gauche
 
 id: Surround Right
-# Missing translation
-msg: 
+msg: Surround Droite
 
 id: Test signal type
-# Missing translation
-msg: 
+msg: Type de signal test
 
 #
 # ./src/audio2/pulseaudio.c
 #
 id: Unable to initialize audio system %s -- %s
-# Missing translation
-msg: 
+msg: Impossible d'initialiser le système audio %s -- %s
 
 #
 # ./src/backend/dvd/cdda.c
@@ -825,16 +798,13 @@ id: Enable file deletion from item menu
 msg: Activer l'option Supprimer depuis le menu du fichier
 
 id: File browsing
-# Missing translation
-msg: 
+msg: Parcourir
 
 id: Show filename extensions
-# Missing translation
-msg: 
+msg: Afficher les extensions des fichiers
 
 id: Store per-file settings in filesystem
-# Missing translation
-msg: 
+msg: Mémorisation des paramètres de chaques fichiers dans le système
 
 id: %d archive parts
 msg[0]: %d fichiers d'archive
@@ -924,16 +894,13 @@ id: Go to standby after video ends
 msg: Mettre en veille à la fin de la vidéo
 
 id: Reset defaults for folder '%s'
-# Missing translation
-msg: 
+msg: Réinitialiser les paramètres par défaut du répertoire '%s'
 
 id: Save as defaults for folder '%s'
-# Missing translation
-msg: 
+msg: Sauvegarder les paramètres par défaut du répertoire '%s'
 
 id: Save as global default
-# Missing translation
-msg: 
+msg: Sauvegarder comme paramètres par défaut
 
 id: Stretch video to fullscreen
 msg: Étirer la vidéo en plein écran
@@ -954,8 +921,7 @@ id: Subtitle vertical displacement
 msg: Déplacement vertical des sous titres
 
 id: Video frame interpolation
-# Missing translation
-msg: 
+msg: Interpolation de trames vidéo
 
 id: Video zoom
 msg: Zoom vidéo
@@ -1210,8 +1176,7 @@ id: Not upgradable
 msg: Mise à jour impossible
 
 id: On Screen Keyboards
-# Missing translation
-msg: 
+msg: Affichage du clavier
 
 id: Online TV
 msg: TV en ligne
@@ -1277,7 +1242,7 @@ id: SSH server
 msg: Serveur SSH
 
 id: Standby
-msg: Veille
+msg: Eteindre
 
 id: Starting and stopping Showtime
 msg: Démarrer et Arrêter Showtime
@@ -1529,12 +1494,10 @@ msg: Service non trouvé
 # ./src/video/ps3_vdec.c
 #
 id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
-# Missing translation
-msg: 
+msg: Cell-h264: Le nombre de Ref-frames (%d) pour une video en 1080 est incompatible avec le decodeur HW de la PS3. L'accélération vidéo est désactivée.
 
 id: Cell-h264: Broken headers, Disabling acceleration
-# Missing translation
-msg: 
+msg: En-têtes du fichier malformés. L'accélération vidéo est désactivée.
 
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
 msg: Cell-h264: Force le niveau 4.2 pour le contenu de niveau %d.%d. Ceci peut mettre fin à la lecture.
@@ -1546,7 +1509,7 @@ id: Unable to open Cell codec. Error 0x%x
 msg: Impossible d'ouvrir le codec Cell. Error 0x%x
 
 id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
-msg: Impossible d'ouvrir le codec Cell. Impossible d'allouer %d octects de RAM
+msg: Impossible d'ouvrir le codec Cell. Impossible d'allouer %d octets de RAM
 
 id: Unable to query Cell codec. Error 0x%x
 msg: Impossible d'avoir le codec Cell. Error 0x%x
