@@ -1,5 +1,8 @@
 #import "common.view"
 
+onEvent(cancel, deliverEvent($self.eventSink));
+onEvent(back,   deliverEvent($self.eventSink, "cancel"));
+
 widget(container_x, {
   space(0.2);
 
@@ -23,7 +26,6 @@ widget(container_x, {
 	  align: center;
 	  spacing: 20;
 	  homogenous: true;
-	  onEvent(cancel, deliverEvent($self.eventSink));
 
 	  cloner($self.buttons, container_z, {
 	    popupButton(deliverEvent($parent.eventSink, $self.action),

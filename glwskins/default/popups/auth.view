@@ -1,5 +1,8 @@
 #import "common.view"
 
+onEvent(cancel, deliverEvent($self.eventSink));
+onEvent(back,   deliverEvent($self.eventSink, "cancel"));
+
 widget(container_x, {
   space(0.2);
 
@@ -45,7 +48,6 @@ widget(container_x, {
 
 	    onEvent(enter, deliverEvent($self.eventSink, "Ok"),
 		   $self.username);
-	    onEvent(cancel, deliverEvent($self.eventSink));
 	  });
 	);
 
@@ -64,7 +66,6 @@ widget(container_x, {
 	    bind($self.password);
 	    onEvent(enter, deliverEvent($self.eventSink, "Ok"),
 		   $self.username);
-	    onEvent(cancel, deliverEvent($self.eventSink));
 	  });
 	);
 
@@ -84,7 +85,6 @@ widget(container_x, {
 	    onEvent(enter, deliverEvent($self.eventSink, "Ok"),
 		    $self.domain);
 
-	    onEvent(cancel, deliverEvent($self.eventSink));
 	  });
 	);
 
