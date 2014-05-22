@@ -1024,6 +1024,9 @@ mp_direct_seek(media_pipe_t *mp, int64_t ts)
   event_t *e;
   event_ts_t *ets;
 
+  if(!(mp->mp_flags & MP_CAN_SEEK))
+    return;
+
   ts = MAX(ts, 0);
 
   prop_set_float_ex(mp->mp_prop_currenttime, mp->mp_sub_currenttime,
