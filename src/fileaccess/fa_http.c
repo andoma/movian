@@ -1243,6 +1243,26 @@ http_tokenize(char *buf, char **vec, int vecsize, int delimiter)
   return n;
 }
 
+
+/**
+ * Work around broken HTTP servers that send Location: without
+ * proper URL escaping. We only catch spaces atm.
+ */
+static void
+hf_set_location(http_file_t *hf, const char *str)
+{
+  free(hf->hf_location);
+
+  if(strchr(str, ' ') == NULL) {
+    hf->hf_location = strdup(str);
+  } else {
+    size_t len = url_escape(NULL, 0, str, URL_ESCAPE_PATH);
+    char *r = malloc(len);
+    url_escape(r, len, str, URL_ESCAPE_PATH);
+    hf->hf_location = r;
+  }
+}
+
 /**
  *
  */
@@ -1328,8 +1348,7 @@ http_read_response(http_file_t *hf, struct http_header_list *headers)
 
 
     if(!strcasecmp(argv[0], "Location")) {
-      free(hf->hf_location);
-      hf->hf_location = strdup(argv[1]);
+      hf_set_location(hf, argv[1]);
       continue;
     }
 
