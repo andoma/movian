@@ -26,6 +26,7 @@
 #include "ecmascript.h"
 
 
+static int es_num_contexts;
 static struct es_context_list es_contexts;
 static HTS_MUTEX_DECL(es_context_mutex);
 
@@ -462,6 +463,7 @@ ecmascript_plugin_load(const char *id, const char *url,
   atomic_add(&ec->ec_refcount, 1);
 
   hts_mutex_lock(&es_context_mutex);
+  es_num_contexts++;
   LIST_INSERT_HEAD(&es_contexts, ec, ec_link);
   hts_mutex_unlock(&es_context_mutex);
 
@@ -474,6 +476,39 @@ ecmascript_plugin_load(const char *id, const char *url,
   return 0;
 }
 
+/**
+ *
+ */
+es_context_t **
+ecmascript_get_all_contexts(void)
+{
+  es_context_t **v = malloc(sizeof(es_context_t *) * (es_num_contexts + 1));
+  es_context_t *ec;
+  int i = 0;
+  hts_mutex_lock(&es_context_mutex);
+  LIST_FOREACH(ec, &es_contexts, ec_link)
+    v[i++] = es_context_retain(ec);
+  hts_mutex_unlock(&es_context_mutex);
+  v[i] = NULL;
+  return v;
+}
+
+
+/**
+ *
+ */
+void
+ecmascript_release_context_vector(es_context_t **v)
+{
+  es_context_t **x = v;
+  while(*x) {
+    es_context_release(*x);
+    x++;
+  }
+  free(v);
+}
+
+
 
 /**
  *
@@ -485,9 +520,13 @@ ecmascript_plugin_unload(const char *id)
   es_resource_t *er;
 
   hts_mutex_lock(&es_context_mutex);
-  LIST_FOREACH(ec, &es_contexts, ec_link)
-    if(!strcmp(id, ec->ec_id))
+  LIST_FOREACH(ec, &es_contexts, ec_link) {
+    if(!strcmp(id, ec->ec_id)) {
+      es_num_contexts--;
+      LIST_REMOVE(ec, ec_link);
       break;
+    }
+  }
   hts_mutex_unlock(&es_context_mutex);
 
   if(ec == NULL)

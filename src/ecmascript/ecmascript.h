@@ -103,6 +103,9 @@ void es_context_begin(es_context_t *ec);
 
 void es_context_end(es_context_t *ec);
 
+es_context_t **ecmascript_get_all_contexts(void);
+
+void ecmascript_release_context_vector(es_context_t **v);
 
 /**
  * Plugin interface
