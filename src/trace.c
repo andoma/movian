@@ -335,6 +335,9 @@ trace_init(void)
   trace_initialized = 1;
   extern const char *htsversion_full;
 
-  TRACE(TRACE_INFO, "SYSTEM", "Showtime %s starting. %d CPU cores",
-        htsversion_full, gconf.concurrency);
+  TRACE(TRACE_INFO, "SYSTEM",
+        "Showtime %s starting. %d CPU cores. Systemtype:%s OS:%s",
+        htsversion_full, gconf.concurrency,
+        showtime_get_system_type(),
+        gconf.os_info[0] ? gconf.os_info : "<unknown>");
 }

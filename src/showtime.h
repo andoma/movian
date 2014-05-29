@@ -294,6 +294,8 @@ typedef struct gconf {
 
   char device_id[64];
 
+  char os_info[128];
+
 } gconf_t;
 
 extern gconf_t gconf;

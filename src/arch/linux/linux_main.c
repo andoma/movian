@@ -37,6 +37,7 @@ hts_mutex_t gdk_mutex;
 prop_courier_t *glibcourier;
 
 static void add_xdg_paths(void);
+static void log_lsb(void);
 
 /**
  *
@@ -180,6 +181,8 @@ main(int argc, char **argv)
   linux_webpopup_init();
 #endif
 
+  log_lsb();
+
   add_xdg_paths();
 
   mainloop();
@@ -198,6 +201,28 @@ arch_exit(void)
 {
   exit(gconf.exit_code);
 }
+
+/**
+ *
+ */
+static void
+log_lsb(void)
+{
+  char buf[1024] = {0};
+  FILE *fp = popen("lsb_release -d", "r");
+  if(fp == NULL)
+    return;
+
+  while(1) {
+    int r = fread(buf, 1, sizeof(buf) - 1, fp);
+    if(r == 0)
+      break;
+    TRACE(TRACE_DEBUG, "LSB", "%s", buf);
+  }
+
+  fclose(fp);
+}
+
 
 /**
  *

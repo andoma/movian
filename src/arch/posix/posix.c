@@ -62,6 +62,8 @@ get_system_concurrency(void)
 
 #include "posix.h"
 
+#include <sys/utsname.h>
+
 static int decorate_trace;
 
 /**
@@ -70,6 +72,18 @@ static int decorate_trace;
 void
 posix_init(void)
 {
+  struct utsname uts;
+
+  if(!uname(&uts)) {
+    snprintf(gconf.os_info, sizeof(gconf.os_info),
+             "'%s' '%s' '%s' '%s' '%s'",
+             uts.sysname,
+             uts.nodename,
+             uts.release,
+             uts.version,
+             uts.machine);
+  }
+
   struct timeval tv;
   gettimeofday(&tv, NULL);
   srand(tv.tv_usec);
