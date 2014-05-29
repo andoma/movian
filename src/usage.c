@@ -43,6 +43,8 @@ make_usage_report(void)
   htsmsg_add_str(out, "arch", showtime_get_system_type());
   htsmsg_add_u32(out, "verint", showtime_get_version_int());
   htsmsg_add_u32(out, "generated", time(NULL));
+  if(gconf.os_info[0])
+    htsmsg_add_str(out, "os" , gconf.os_info);
 
   time_t now = showtime_get_ts() / 1000000LL;
 
