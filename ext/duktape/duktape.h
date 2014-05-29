@@ -5,7 +5,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 629e68bf266f5098348948b51d25d901e57415f5 (v0.10.0-319-g629e68b).
+ *  Git commit 41366e70e1b2c85782ff611fe6ab5bf0f61685b6 (v0.10.0-328-g41366e7).
  *
  *  See Duktape AUTHORS.txt and LICENSE.txt for copyright and
  *  licensing information.
@@ -1487,6 +1487,32 @@ typedef FILE duk_file;
 
 #define DUK_MEMZERO(p,n) \
 	DUK_MEMSET((p), 0, (n))
+
+/*
+ *  Vararg macro wrappers.  We need va_copy() which is defined in C99 / C++11,
+ *  so an awkward replacement is needed for pre-C99 / pre-C++11 environments.
+ *  This will quite likely need portability hacks for some non-C99 environments.
+ */
+
+#if defined(DUK_F_C99) || defined(DUK_F_CPP11)
+/* C99 / C++11 and above: rely on va_copy() which is required.
+ * Omit parenthesis on macro right side on purpose to minimize differences
+ * to direct use.
+ */
+#define DUK_VA_COPY(dest,src) va_copy(dest,src)
+#elif defined(DUK_F_GCC) || defined(DUK_F_CLANG)
+/* GCC: assume we have __va_copy() in non-C99 mode, which should be correct
+ * for even quite old GCC versions.  Clang matches GCC behavior.
+ */
+#define DUK_VA_COPY(dest,src) __va_copy(dest,src)
+#else
+/* Pre-C99: va_list type is implementation dependent.  This replacement
+ * assumes it is a plain value so that a simple assignment will work.
+ * This is not the case on all platforms (it may be a single-array element,
+ * for instance).
+ */
+#define DUK_VA_COPY(dest,src) do { (dest) = (src); } while (0)
+#endif
 
 /*
  *  Miscellaneous ANSI C or other platform wrappers.
