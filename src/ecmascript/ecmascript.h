@@ -126,6 +126,7 @@ int es_prop_to_int(duk_context *ctx, int obj_idx, const char *id, int def);
 
 struct rstr *es_prop_to_rstr(duk_context *ctx, int obj_idx, const char *id);
 
+struct prop *es_stprop_get(duk_context *ctx, int val_index);
 
 /**
  * Function definitions

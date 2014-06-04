@@ -96,12 +96,46 @@ HttpResponse.prototype.toString = function() {
   return Showtime.utf8FromBytes(this.bytes, "latin-1");
 }
 
+// -------------------------------------------------------------------------
+// Subscription object
+// -------------------------------------------------------------------------
+
+var subscriptions = {};
+var subtally = 0;
+
+function Subscription(prop, cb) {
+  this.cb = cb;
+  subtally++;
+  this.id = subtally;
+  subscriptions[this.id] = this;
+  this.sub = Showtime.propSubscribe(prop, this.id);
+  Object.freeze(this);
+}
+
+Duktape.fin(Subscription.prototype, function(x) {
+  if(x.sub) {
+    Showtime.propUnsubscribe(x.sub);
+    delete subscriptions[x.id];
+  }
+});
+
+Subscription.prototype.unsubscribe = function() {
+  if(x.sub) {
+    Showtime.propUnsubscribe(x.sub);
+    delete subscriptions[this.id];
+  }
+  x.sub = null;
+}
+
+function subscriptionInvoke(id, op, value) {
+  var sub = subscriptions[id];
+  sub.cb(op, value);
+}
 
 
 // -------------------------------------------------------------------------
 // Prop object
 // -------------------------------------------------------------------------
-
 
 function PropRef(ptr) {
   this.ptr = ptr;
@@ -112,16 +146,17 @@ Duktape.fin(PropRef.prototype, function(x) {
   Showtime.propRelease(x.ptr);
 });
 
-
 var propHandler = {
   get: function(obj, name) {
-    if(name == '_ref') {
+    if(name == '__rawptr__')
       return obj.ptr;
-    }
+
     var v = Showtime.propGet(obj.ptr, name);
     return (typeof v === 'pointer') ? makeProp(v) : v;
   },
   set: function(obj, name, value) {
+    if(name == '__rawptr__')
+      throw "Assignment to __rawptr__ is not allowed";
 
     if(typeof value == 'object') {
 
@@ -151,7 +186,7 @@ function makePropRoot() {
 }
 
 function printProp(p) {
-  Showtime.propPrint(p._ref);
+  Showtime.propPrint(p);
 }
 
 
@@ -249,7 +284,7 @@ Duktape.fin(Item.prototype, function(x) {
 Item.prototype.bindVideoMetadata = function(obj) {
   if(this.mlv)
     Showtime.videoMetadataUnbind(this.mlv);
-  this.mlv = Showtime.videoMetadataBind(this.root._ref, this.root.url, obj);
+  this.mlv = Showtime.videoMetadataBind(this.root, this.root.url, obj);
 }
 
 Item.prototype.dump = function(obj) {
@@ -276,9 +311,16 @@ function Page(root) {
     metadata: {
       get: function()  { return this.root.model.metadata; }
     },
-  });
 
-  Object.seal(this);
+  });
+  this.isa = 'page';
+
+  this._nodesub = new Subscription(this.root.model.nodes, function(op, value) {
+    if(op == 'wantmorechilds') {
+      var have_more = typeof this.paginator == 'function' && this.paginator();
+      Showtime.propHaveMore(this.root.model.nodes, have_more);
+    }
+  }.bind(this));
 }
 
 
@@ -288,7 +330,7 @@ Page.prototype.appendItem = function(url, type, metadata) {
   root.url = url;
   root.type = type;
   root.metadata = metadata;
-  Showtime.propSetParent(root._ref, this.root.model.nodes._ref);
+  Showtime.propSetParent(root, this.root.model.nodes);
   return item;
 }
 
@@ -355,15 +397,9 @@ var plugin = {
 };
 
 
-function invokator(fun, obj, args)
-{
-  var t = new Duktape.Thread(function() {
-    fun.apply(obj, args);
-  });
-  return Duktape.Thread.resume(t);
-}
-
-
+// -------------------------------------------------------------------------
+// Task
+// -------------------------------------------------------------------------
 
 function routeInvoke(route, pageptr, args)
 {
@@ -371,10 +407,9 @@ function routeInvoke(route, pageptr, args)
 
   for(var i = 0; i < routes.length; i++) {
     if(routes[i].id == route) {
-      return invokator(routes[i].cb, plugin, args);
+      return routes[i].cb.apply(plugin, args);
     }
   }
 }
-
 
 v.entry.call(plugin);

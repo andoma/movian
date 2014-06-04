@@ -355,25 +355,6 @@ es_dump_err(duk_context *ctx)
 }
 
 
-#if 0
-/**
- *
- */
-static int
-es_coroutine_call(duk_context_t *ctx, int nargs)
-{
-  int rc;
-
-  rc = duk_pcall(ctx, 0);
-  if(rc != 0) {
-    es_dump_err(ctx);
-    return -1;
-  }
-
-
-}
-#endif
-
 /**
  *
  */

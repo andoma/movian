@@ -10,15 +10,9 @@
 static int
 es_video_metadata_bind_duk(duk_context *ctx)
 {
-  es_dumpstack(ctx);
-
-  printf("hej\n");
-  struct prop *root  = duk_require_pointer(ctx, 0);
-  printf("root=%p\n", root);
-  prop_print_tree(root, 1);
+  prop_t *root = es_stprop_get(ctx, 0);
   const char *urlstr = duk_safe_to_string(ctx, 1);
 
-  printf("%p %s\n", root, urlstr);
   rstr_t *url = rstr_alloc(urlstr);
   rstr_t *title;
   rstr_t *filename = es_prop_to_rstr(ctx, 2, "filename");
@@ -41,7 +35,6 @@ es_video_metadata_bind_duk(duk_context *ctx)
   metadata_lazy_video_t *mlv =
     metadata_bind_video_info(url, title, imdb, duration, root, NULL, 0, 0,
                              year, season, episode, 0);
-
   rstr_release(title);
   rstr_release(url);
   duk_push_pointer(ctx, mlv);
