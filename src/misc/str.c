@@ -148,6 +148,26 @@ static const char url_escape_path[256] = {
   0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,   // 0xf0
 };
 
+
+static const char url_escape_space_only[256] = {
+  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,   // 0x00
+  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,   // 0x10
+  0,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,   // 0x20
+  1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,   // 0x30
+  1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,   // 0x40
+  1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,   // 0x50
+  1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,   // 0x60
+  1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,   // 0x70
+  1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,   // 0x80
+  1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,   // 0x90
+  1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,   // 0xa0
+  1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,   // 0xb0
+  1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,   // 0xc0
+  1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,   // 0xd0
+  1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,   // 0xe0
+  1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,   // 0xf0
+};
+
 /**
  *
  */
@@ -158,10 +178,19 @@ url_escape(char *dst, const int size, const char *src, int how)
   int r = 0;
   const char *table;
 
-  if(how == URL_ESCAPE_PATH)
+  switch(how) {
+  case URL_ESCAPE_PATH:
     table = url_escape_path;
-  else
+    break;
+  case URL_ESCAPE_PARAM:
     table = url_escape_param;
+    break;
+  case URL_ESCAPE_SPACE_ONLY:
+    table = url_escape_space_only;
+    break;
+  default:
+    abort();
+  }
 
   while((s = *src++) != 0) {
     switch(table[s]) {

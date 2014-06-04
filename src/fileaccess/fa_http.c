@@ -1253,14 +1253,10 @@ hf_set_location(http_file_t *hf, const char *str)
 {
   free(hf->hf_location);
 
-  if(strchr(str, ' ') == NULL) {
-    hf->hf_location = strdup(str);
-  } else {
-    size_t len = url_escape(NULL, 0, str, URL_ESCAPE_PATH);
-    char *r = malloc(len);
-    url_escape(r, len, str, URL_ESCAPE_PATH);
-    hf->hf_location = r;
-  }
+  size_t len = url_escape(NULL, 0, str, URL_ESCAPE_SPACE_ONLY);
+  char *r = malloc(len);
+  url_escape(r, len, str, URL_ESCAPE_SPACE_ONLY);
+  hf->hf_location = r;
 }
 
 /**
