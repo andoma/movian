@@ -23,11 +23,20 @@ script.globalobject.showtime = {
     for(var p in ctrl)
       c[p] = ctrl[p];
 
-    var res = Showtime.httpReq(url, c);
-    return new HttpResponse(res.buffer, res.responseheaders);
+    return script.globalobject.showtime.httpReq(url, c);
   },
 
   httpReq: function(url, ctrl) {
+
+    if(ctrl.args instanceof Array) {
+      var a0 = {};
+      for(var i in ctrl.args) {
+        for(var k in ctrl.args[i]) {
+          a0[k] = ctrl.args[i][k];
+        }
+      }
+      ctrl.args = a0;
+    }
     var res = Showtime.httpReq(url, ctrl || {});
     return new HttpResponse(res.buffer, res.responseheaders);
   },
