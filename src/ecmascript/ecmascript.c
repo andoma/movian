@@ -319,6 +319,8 @@ es_context_terminate(es_context_t *ec)
 void
 es_context_end(es_context_t *ec)
 {
+  duk_gc(ec->ec_duk, 0);
+
   if(LIST_FIRST(&ec->ec_resources) == NULL)
     es_context_terminate(ec);
 

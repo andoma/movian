@@ -17,6 +17,7 @@ typedef struct es_route {
 } es_route_t;
 
 static struct es_route_list routes;
+
 static HTS_MUTEX_DECL(route_mutex);
 
 
@@ -57,6 +58,7 @@ er_cmp(const es_route_t *a, const es_route_t *b)
 {
   return b->er_prio - a->er_prio;
 }
+
 
 /**
  *
@@ -111,7 +113,6 @@ es_route_create(duk_context *ctx)
   duk_push_pointer(ctx, er);
   return 1;
 }
-
 
 
 /**
@@ -172,12 +173,48 @@ ecmascript_openuri(prop_t *page, const char *url, int sync)
     if(rc)
       es_dump_err(ctx);
 
-    duk_gc(ctx, 0);
+    duk_pop(ctx);
   }
+  duk_pop(ctx);
   es_context_end(ec);
   return 0;
 }
 
+
+/**
+ *
+ */
+static void
+ecmascript_search(struct prop *model, const char *query, prop_t *loading)
+{
+  es_context_t **ctxs = ecmascript_get_all_contexts();
+
+  for(int i = 0; ctxs[i] != NULL; i++) {
+    es_context_t *ec = ctxs[i];
+    es_context_begin(ec);
+
+    duk_context *ctx = ec->ec_duk;
+    duk_push_global_object(ctx);
+    duk_get_prop_string(ctx, -1, "searchInvoke");
+
+    if(duk_is_function(ctx, -1)) {
+      duk_push_pointer(ctx, prop_ref_inc(model));
+      duk_push_string(ctx, query);
+      duk_push_pointer(ctx, prop_ref_inc(loading));
+
+      int rc = duk_pcall(ctx, 3);
+      if(rc)
+        es_dump_err(ctx);
+
+      duk_pop(ctx);
+    }
+    duk_pop(ctx);
+
+    es_context_end(ec);
+  }
+
+  ecmascript_release_context_vector(ctxs);
+}
 
 
 /**
@@ -186,7 +223,7 @@ ecmascript_openuri(prop_t *page, const char *url, int sync)
 static backend_t be_ecmascript = {
   .be_flags  = BACKEND_OPEN_CHECKS_URI,
   .be_open   = ecmascript_openuri,
-  //  .be_search = ecmascript_search,
+  .be_search = ecmascript_search,
 };
 
 BE_REGISTER(ecmascript);
@@ -196,6 +233,6 @@ BE_REGISTER(ecmascript);
  * Showtime object exposed functions
  */
 const duk_function_list_entry fnlist_Showtime_page[] = {
-  { "routeCreate",             es_route_create,      2 },
+  { "routeCreate",             es_route_create,      1 },
   { NULL, NULL, 0}
 };

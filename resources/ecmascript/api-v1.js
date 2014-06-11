@@ -1,8 +1,13 @@
-var v = Showtime.load(Plugin.url);
+var script = Showtime.load(Plugin.url);
+
+var searchers = [];
+
+var routes = [];
+
 
 // Setup the showtime object
 
-v.globalobject.showtime = {
+script.globalobject.showtime = {
   print: print,
 
   JSONDecode: JSON.parse,
@@ -138,6 +143,9 @@ function subscriptionInvoke(id, op, value) {
 // -------------------------------------------------------------------------
 
 function PropRef(ptr) {
+  if(typeof ptr != 'pointer') {
+    throw "Invalid type '" + typeof ptr + "' for PropRef";
+  }
   this.ptr = ptr;
   Object.freeze(this);
 }
@@ -150,6 +158,10 @@ var propHandler = {
   get: function(obj, name) {
     if(name == '__rawptr__')
       return obj.ptr;
+    if(name == 'toString')
+      return undefined;
+    if(name == 'valueOf')
+      return undefined;
 
     var v = Showtime.propGet(obj.ptr, name);
     return (typeof v === 'pointer') ? makeProp(v) : v;
@@ -224,8 +236,6 @@ Service.prototype.destroy = function() {
 // Route
 // ---------------------------------------------------------------
 
-var routes = [];
-
 function Route(id, cb) {
   Object.defineProperties(this, {
     id: {
@@ -240,6 +250,7 @@ function Route(id, cb) {
 Duktape.fin(Route.prototype, function(x) {
   Showtime.resourceRelease(x.id);
 });
+
 
 
 // ---------------------------------------------------------------
@@ -296,23 +307,26 @@ Item.prototype.dump = function(obj) {
 // The Page object
 // ---------------------------------------------------------------
 
-function Page(root) {
+function Page(root, flat) {
+
+  this.root = typeof root == 'pointer' ? makeProp(root) : root;
+  this.model = flat ? this.root : this.root.model;
+  this.root.entries = 0;
+
   Object.defineProperties(this, {
 
-    root: {
-      value: makeProp(root)
-    },
-
     type: {
-      get: function()  { return this.root.model.type; },
-      set: function(v) { this.root.model.type = v; }
+      get: function()  { return this.model.type; },
+      set: function(v) { this.model.type = v; }
     },
 
     metadata: {
-      get: function()  { return this.root.model.metadata; }
+      get: function()  { return this.model.metadata; }
     },
 
   });
+
+
   this.isa = 'page';
 
   this._nodesub = new Subscription(this.root.model.nodes, function(op, value) {
@@ -325,12 +339,14 @@ function Page(root) {
 
 
 Page.prototype.appendItem = function(url, type, metadata) {
+  this.root.entries++;
+
   var item = new Item();
   var root = item.root;
   root.url = url;
   root.type = type;
   root.metadata = metadata;
-  Showtime.propSetParent(root, this.root.model.nodes);
+  Showtime.propSetParent(root, this.model.nodes);
   return item;
 }
 
@@ -384,7 +400,13 @@ var plugin = {
   addURI: function(re, cb) {
     var r = new Route(Showtime.routeCreate(re), cb);
     routes.push(r);
-    return r;
+  },
+
+  addSearcher: function(title, icon, cb) {
+    searchers.push({
+      title: title,
+      icon: icon,
+      cb: cb});
   },
 
   addSubtitleProvider: function(cb) {
@@ -412,4 +434,26 @@ function routeInvoke(route, pageptr, args)
   }
 }
 
-v.entry.call(plugin);
+function searchInvoke(model_, query, loading_)
+{
+  var model = makeProp(model_);
+  var loading = makeProp(loading_);
+
+  for(var i = 0; i < searchers.length; i++) {
+    var s = searchers[i];
+
+    var root = makePropRoot();
+    root.metadata.title = s.title;
+    root.metadata.icon = s.icon;
+    root.type = 'directory';
+    Showtime.propSetParent(root, model.nodes);
+
+    var page = new Page(root, true);
+    page.type = 'directory';
+    root.url = Showtime.propMakeUrl(page.root);
+    s.cb(page, query);
+  }
+}
+
+
+script.entry.call(plugin);

@@ -2,6 +2,7 @@
 
 #include "prop/prop_i.h"
 #include "ecmascript.h"
+#include "backend/backend_prop.h"
 
 /**
  *
@@ -12,11 +13,11 @@ es_stprop_get(duk_context *ctx, int val_index)
   if(!duk_is_pointer(ctx, val_index)) {
 
     if(!duk_is_object(ctx, val_index))
-      duk_error(ctx, DUK_ERR_ERROR, "Invalid type for property");
+      duk_error(ctx, DUK_ERR_ERROR, "Invalid type for property (%d)", val_index);
 
     duk_get_prop_string(ctx, val_index, "__rawptr__");
     if(!duk_is_pointer(ctx, -1))
-      duk_error(ctx, DUK_ERR_ERROR, "toPropPointer does not return a pointer");
+      duk_error(ctx, DUK_ERR_ERROR, "__rawptr__ is not a pointer");
 
     duk_replace(ctx, val_index);
   }
@@ -313,6 +314,20 @@ es_prop_have_more(duk_context *ctx)
 
 
 /**
+ *
+ */
+static int
+es_prop_make_url(duk_context *ctx)
+{
+  prop_t *p = es_stprop_get(ctx, 0);
+  rstr_t *r = backend_prop_make(p, NULL);
+  duk_push_string(ctx, rstr_get(r));
+  rstr_release(r);
+  return 1;
+}
+
+
+/**
  * Showtime object exposed functions
  */
 const duk_function_list_entry fnlist_Showtime_prop[] = {
@@ -326,6 +341,7 @@ const duk_function_list_entry fnlist_Showtime_prop[] = {
   { "propSubscribe",           es_prop_subscribe,             2 },
   { "propUnsubscribe",         es_prop_unsubscribe,           1 },
   { "propHaveMore",            es_prop_have_more,             2 },
+  { "propMakeUrl",             es_prop_make_url,              1 },
 
   { NULL, NULL, 0}
 };
