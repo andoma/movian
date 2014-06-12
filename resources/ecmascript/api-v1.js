@@ -28,7 +28,7 @@ script.globalobject.showtime = {
 
   httpReq: function(url, ctrl) {
 
-    if(ctrl.args instanceof Array) {
+    if(ctrl && ctrl.args instanceof Array) {
       var a0 = {};
       for(var i in ctrl.args) {
         for(var k in ctrl.args[i]) {
