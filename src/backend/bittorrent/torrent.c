@@ -960,9 +960,13 @@ torrent_piece_destroy(torrent_t *to, torrent_piece_t *tp)
 static void
 flush_active_pieces(torrent_t *to)
 {
-  while(to->to_num_active_pieces > 20) {
-    torrent_piece_t *tp = TAILQ_FIRST(&to->to_active_pieces);
-    assert(tp != NULL);
+  torrent_piece_t *tp, *next;
+
+  for(tp = TAILQ_FIRST(&to->to_active_pieces); tp != NULL; tp = next) {
+    next = TAILQ_NEXT(tp, tp_link);
+
+    if(to->to_num_active_pieces <= 20)
+      break;
 
     if(LIST_FIRST(&tp->tp_active_fh) != NULL)
       continue;
