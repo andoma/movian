@@ -44,7 +44,7 @@ typedef void (net_read_cb_t)(void *opaque, int bytes_done);
 
 typedef struct tcpcon tcpcon_t;
 
-void net_initialize(void);
+void net_init(void);
 
 tcpcon_t *tcp_connect(const char *hostname, int port, char *errbuf,
 		      size_t errbufsize, int timeout, int ssl,
@@ -82,7 +82,13 @@ void tcp_shutdown(tcpcon_t *tc);
 
 void tcp_set_read_timeout(tcpcon_t *tc, int ms);
 
+
+
+int net_resolve(const char *hostname, net_addr_t *addr, const char **errmsg);
+
 void net_change_nonblocking(int fd, int on);
+
+void net_change_ndelay(int fd, int on);
 
 typedef struct netif {
   uint32_t ipv4;

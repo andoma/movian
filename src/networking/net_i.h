@@ -62,3 +62,14 @@ struct tcpcon {
 
 void tcp_cancel(void *aux);
 
+tcpcon_t *tcp_connect_arch(const char *hostname, int port, char *errbuf,
+                           size_t errbufsize, int timeout,
+                           struct cancellable *c);
+
+void tcp_close_arch(tcpcon_t *tc);
+
+int tcp_ssl_open(tcpcon_t *tc, char *errbuf, size_t errlen);
+
+void tcp_ssl_close(tcpcon_t *tc);
+
+void net_ssl_init(void);

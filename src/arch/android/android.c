@@ -229,8 +229,6 @@ Java_com_showtimemediacenter_showtime_STCore_coreInit(JNIEnv *env, jobject obj, 
 
   signal(SIGPIPE, SIG_IGN);
 
-  net_initialize();
-
   showtime_init();
 
   jclass c = (*env)->FindClass(env, "com/showtimemediacenter/showtime/STCore");

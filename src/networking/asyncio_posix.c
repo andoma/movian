@@ -28,8 +28,6 @@
 #include <poll.h>
 #include <errno.h>
 #include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <netdb.h>
 
 #include "showtime.h"
 #include "arch/arch.h"
@@ -299,7 +297,6 @@ asyncio_dopoll(void)
       socklen_t errlen = sizeof(int);
     
       getsockopt(af->af_fd, SOL_SOCKET, SO_ERROR, (void *)&err, &errlen);
-      printf("POLLERR: error=%d\n", err);
       af->af_callback(af, af->af_opaque, ASYNCIO_ERROR, err);
       continue;
     }
@@ -789,8 +786,7 @@ asyncio_connect(const char *name, const net_addr_t *addr,
 
   net_change_nonblocking(fd, 1);
 
-  int val = 1;
-  setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &val, sizeof(val));
+  net_change_ndelay(fd, 1);
 
   si.sin_family = AF_INET;
   si.sin_port = htons(addr->na_port);
@@ -855,88 +851,9 @@ static int adr_resolver_running;
 static int
 adr_resolve(asyncio_dns_req_t *adr)
 {
-  struct hostent *hp;
-  char *tmphstbuf;
-  int herr;
-#if !defined(__APPLE__)
-  struct hostent hostbuf;
-  size_t hstbuflen;
-  int res;
-#endif
-
-  const char *hostname = adr->adr_hostname;
-
-#if defined(__APPLE__)
-  herr = 0;
-  tmphstbuf = NULL; /* free NULL is a nop */
-  /* TODO: AF_INET6 */
-  hp = gethostbyname(hostname);
-  if(hp == NULL)
-    herr = h_errno;
-#else
-  hstbuflen = 1024;
-  tmphstbuf = malloc(hstbuflen);
-
-  while((res = gethostbyname_r(hostname, &hostbuf, tmphstbuf, hstbuflen,
-			       &hp, &herr)) == ERANGE) {
-    hstbuflen *= 2;
-    tmphstbuf = realloc(tmphstbuf, hstbuflen);
-  }
-#endif
-  if(herr != 0) {
-    switch(herr) {
-    case HOST_NOT_FOUND:
-      adr->adr_errmsg = "Unknown host";
-      break;
-
-    case NO_ADDRESS:
-      adr->adr_errmsg = 
-	"The requested name is valid but does not have an IP address";
-      break;
-      
-    case NO_RECOVERY:
-      adr->adr_errmsg = "A non-recoverable name server error occurred";
-      break;
-      
-    case TRY_AGAIN:
-      adr->adr_errmsg =
-	"A temporary error occurred on an authoritative name server";
-      break;
-      
-    default:
-      adr->adr_errmsg = "Unknown error";
-      break;
-    }
-
-    free(tmphstbuf);
-    return -1;
-
-  } else if(hp == NULL) {
-    adr->adr_errmsg = "Resolver internal error";
-    free(tmphstbuf);
-    return -1;
-  }
-
-  switch(hp->h_addrtype) {
-  case AF_INET:
-    adr->adr_addr.na_family = 4;
-    memcpy(&adr->adr_addr.na_addr, hp->h_addr_list[0], sizeof(struct in_addr));
-    break;
-
-  case AF_INET6:
-    adr->adr_addr.na_family = 6;
-    memcpy(&adr->adr_addr.na_addr, hp->h_addr_list[0], sizeof(struct in6_addr));
-    break;
-
-  default:
-    adr->adr_errmsg = "Resolver internal error";
-    free(tmphstbuf);
-    return -1;
-  }
-
-  free(tmphstbuf);
-  return 0;
+  return net_resolve(adr->adr_hostname, &adr->adr_addr, &adr->adr_errmsg);
 }
+
 
 /**
  *
@@ -1127,6 +1044,7 @@ asyncio_udp_send(asyncio_fd_t *af, const void *data, int size,
 		 const net_addr_t *remote_addr)
 {
   struct sockaddr_in sin;
+  memset(&sin, 0, sizeof(sin));
 
   sin.sin_family = AF_INET;
   sin.sin_port = htons(remote_addr->na_port);

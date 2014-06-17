@@ -248,6 +248,9 @@ SRCS += src/networking/net_common.c \
 	src/networking/http.c \
 	src/networking/ftp_server.c \
 
+SRCS-$(CONFIG_POLARSSL) += src/networking/net_polarssl.c
+SRCS-$(CONFIG_OPENSSL)  += src/networking/net_openssl.c
+
 SRCS-$(CONFIG_HTTPSERVER) += src/networking/http_server.c
 SRCS-$(CONFIG_HTTPSERVER) += src/networking/ssdp.c
 SRCS-$(CONFIG_HTTPSERVER) += \

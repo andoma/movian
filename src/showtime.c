@@ -255,6 +255,8 @@ showtime_init(void)
 
   gconf.exit_code = 1;
 
+  net_init();
+
   unicode_init();
 
   /* Initialize property tree */

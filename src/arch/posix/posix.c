@@ -176,8 +176,6 @@ posix_init(void)
   } while(0);
 #endif
 
-  net_initialize();
-
   if(gconf.trace_to_syslog)
     openlog("showtime", 0, LOG_USER);
 }

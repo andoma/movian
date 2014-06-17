@@ -370,3 +370,55 @@ tcp_set_cancellable(tcpcon_t *tc, struct cancellable *c)
   if(tc->c != NULL)
     cancellable_bind(tc->c, tcp_cancel, tc);
 }
+
+
+/**
+ *
+ */
+tcpcon_t *
+tcp_connect(const char *hostname, int port,
+            char *errbuf, size_t errlen,
+            int timeout, int ssl, cancellable_t *c)
+{
+  tcpcon_t *tc;
+
+  tc = tcp_connect_arch(hostname, port, errbuf, errlen, timeout, c);
+  if(tc == NULL)
+    return NULL;
+
+  if(!ssl)
+    return tc;
+
+  if(tcp_ssl_open(tc, errbuf, errlen)) {
+    tcp_close(tc);
+    return NULL;
+  }
+  return tc;
+}
+
+/**
+ *
+ */
+void
+tcp_close(tcpcon_t *tc)
+{
+  if(tc->ssl != NULL)
+    tcp_ssl_close(tc);
+
+  cancellable_unbind(tc->c);
+  htsbuf_queue_flush(&tc->spill);
+
+  tcp_close_arch(tc);
+
+  free(tc);
+}
+
+
+/**
+ *
+ */
+void
+net_init(void)
+{
+  net_ssl_init();
+}

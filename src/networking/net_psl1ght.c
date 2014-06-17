@@ -38,50 +38,6 @@
 #include "net_i.h"
 
 
-#if ENABLE_HTTPSERVER
-#include "http_server.h"
-#include "ssdp.h"
-#endif
-
-
-#if ENABLE_POLARSSL
-/**
- *
- */
-static int
-polarssl_read(tcpcon_t *tc, void *buf, size_t len, int all,
-	      net_read_cb_t *cb, void *opaque)
-{
-  int ret, tot = 0;
-  if(!all) {
-    ret = ssl_read(tc->ssl, buf, len);
-    return ret > 0 ? ret : -1;
-  }
-
-  while(tot != len) {
-    ret = ssl_read(tc->ssl, buf + tot, len - tot);
-    if(ret < 0) 
-      return -1;
-    tot += ret;
-    if(cb != NULL)
-      cb(opaque, tot);
-  }
-  return tot;
-}
-
-
-/**
- *
- */
-static int
-polarssl_write(tcpcon_t *tc, const void *data, size_t len)
-{
-  return ssl_write(tc->ssl, data, len) != len ? ECONNRESET : 0;
-}
-
-
-#endif
-
 /**
  *
  */
@@ -139,7 +95,7 @@ getstreamsocket(int family, char *errbuf, size_t errbufsize)
   if(fd < 0) {
     snprintf(errbuf, errbufsize, "Unable to create socket: %s",
 	     strerror(net_errno));
-    return -1;  
+    return -1;
   }
 
   /**
@@ -162,17 +118,76 @@ getstreamsocket(int family, char *errbuf, size_t errbufsize)
 }
 
 
+
+/**
+ *
+ */
+int
+net_resolve(const char *hostname, net_addr_t *addr, const char **err)
+{
+  struct net_hostent *hp;
+  int herr;
+
+  herr = 0;
+  hp = netGetHostByName(hostname);
+  if(hp == NULL)
+    herr = h_errno;
+
+  if(herr != 0) {
+    switch(herr) {
+    case HOST_NOT_FOUND:
+      *err = "Unknown host";
+      return -1;
+
+    case NO_ADDRESS:
+      *err = "The requested name is valid but does not have an IP address";
+      return -1;
+
+    case NO_RECOVERY:
+      *err = "A non-recoverable name server error occurred";
+      return -1;
+
+    case TRY_AGAIN:
+      *err = "A temporary error occurred on an authoritative name server";
+      return -1;
+
+    default:
+      *err = "Unknown error";
+      return -1;
+    }
+
+  } else if(hp == NULL) {
+    *err = "Resolver internal error";
+    return -1;
+  }
+
+  memset(addr, 0, sizeof(net_addr_t));
+
+  switch(hp->h_addrtype) {
+  case AF_INET:
+    addr->na_family = 4;
+    lv2_void* netaddrlist = (lv2_void*)(u64)hp->h_addr_list;
+    memcpy(&addr->na_addr[0], (char*)(u64)netaddrlist[0],
+           sizeof(struct in_addr));
+    return 0;
+
+  default:
+    *err = "Invalid protocol family";
+    return -1;
+  }
+}
+
+
+
 /**
  *
  */
 tcpcon_t *
-tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
-	    int timeout, int ssl, cancellable_t *c)
+tcp_connect_arch(const char *hostname, int port,
+                 char *errbuf, size_t errbufsize,
+                 int timeout, cancellable_t *c)
 {
-  struct net_hostent *hp;
-  char *tmphstbuf;
-  int fd, r, err, herr, optval;
-  const char *errtxt;
+  int fd, r, err, optval;
   struct sockaddr_in in;
   socklen_t errlen = sizeof(int);
 
@@ -186,68 +201,33 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
     in.sin_port = htons(port);
     in.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
     r = netConnect(fd, (struct sockaddr *)&in, sizeof(struct sockaddr_in));
+
   } else {
 
-    herr = 0;
-    tmphstbuf = NULL; /* free NULL is a nop */
-    hp = netGetHostByName(hostname);
-    if(hp == NULL)
-      herr = h_errno;
+    net_addr_t addr;
+    const char *errmsg;
 
-    if(herr != 0) {
-      switch(herr) {
-      case HOST_NOT_FOUND:
-	errtxt = "Unknown host";
-	break;
-
-      case NO_ADDRESS:
-	errtxt = "The requested name is valid but does not have an IP address";
-	break;
-      
-      case NO_RECOVERY:
-	errtxt = "A non-recoverable name server error occurred";
-	break;
-      
-      case TRY_AGAIN:
-	errtxt = "A temporary error occurred on an authoritative name server";
-	break;
-      
-      default:
-	errtxt = "Unknown error";
-	break;
-      }
-
-      snprintf(errbuf, errbufsize, "%s", errtxt);
-      free(tmphstbuf);
-      return NULL;
-    } else if(hp == NULL) {
-      snprintf(errbuf, errbufsize, "Resolver internal error");
-      free(tmphstbuf);
+    if(net_resolve(hostname, &addr, &errmsg)) {
+      snprintf(errbuf, errbufsize, "%s", errmsg);
       return NULL;
     }
 
-    if((fd = getstreamsocket(hp->h_addrtype, errbuf, errbufsize)) == -1) {
-      free(tmphstbuf);
-      return NULL;
-    }
+    switch(addr.na_family) {
+    case 4:
+      if((fd = getstreamsocket(AF_INET, errbuf, errbufsize)) == -1)
+        return NULL;
 
-    switch(hp->h_addrtype) {
-    case AF_INET:
       memset(&in, 0, sizeof(in));
       in.sin_family = AF_INET;
       in.sin_port = htons(port);
-      lv2_void* netaddrlist = (lv2_void*)(u64)hp->h_addr_list;
-      memcpy(&in.sin_addr, (char*)(u64)netaddrlist[0], sizeof(struct in_addr));
+      memcpy(&in.sin_addr, addr.na_addr, 4);
       r = netConnect(fd, (struct sockaddr *)&in, sizeof(struct sockaddr_in));
       break;
 
     default:
       snprintf(errbuf, errbufsize, "Invalid protocol family");
-      free(tmphstbuf);
       return NULL;
     }
-
-    free(tmphstbuf);
   }
 
 
@@ -314,46 +294,8 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
     return NULL;
   }
 
-  if(ssl) {
-#if ENABLE_POLARSSL
-    if(1) {
-      tc->ssl = malloc(sizeof(ssl_context));
-      if(ssl_init(tc->ssl)) {
-	snprintf(errbuf, errlen, "SSL failed to initialize");
-        tcp_close(tc);
-	return NULL;
-      }
-
-      tc->ssn = malloc(sizeof(ssl_session));
-      tc->hs = malloc(sizeof(havege_state));
-
-      havege_init(tc->hs);
-      memset(tc->ssn, 0, sizeof(ssl_session));
-
-
-      ssl_set_endpoint(tc->ssl, SSL_IS_CLIENT );
-      ssl_set_authmode(tc->ssl, SSL_VERIFY_NONE );
-
-      ssl_set_rng(tc->ssl, havege_random, tc->hs );
-      ssl_set_bio(tc->ssl, net_recv, &tc->fd, net_send, &tc->fd);
-      ssl_set_ciphersuites(tc->ssl, ssl_default_ciphersuites );
-      ssl_set_session(tc->ssl, tc->ssn );
-      
-      tc->read = polarssl_read;
-      tc->write = polarssl_write;
-      
-    } else
-#endif
-    {
-
-      snprintf(errbuf, errlen, "SSL not supported");
-      tcp_close(tc);
-      return NULL;
-    }
-  } else {
-    tc->read = tcp_read;
-    tc->write = tcp_write;
-  }
+  tc->read = tcp_read;
+  tc->write = tcp_write;
 
   return tc;
 }
@@ -387,29 +329,11 @@ tcp_set_read_timeout(tcpcon_t *tc, int ms)
 }
 
 
-
-/**
- *
- */
 void
-tcp_close(tcpcon_t *tc)
+tcp_close_arch(tcpcon_t *tc)
 {
-#if ENABLE_POLARSSL
-  if(tc->ssl != NULL) {
-    ssl_close_notify(tc->ssl);
-    ssl_free(tc->ssl);
-
-    free(tc->ssl);
-    free(tc->ssn);
-    free(tc->hs);
-  }
-#endif
-  cancellable_unbind(tc->c);
-  htsbuf_queue_flush(&tc->spill);
   netClose(tc->fd);
-  free(tc);
 }
-
 
 
 void
@@ -462,5 +386,20 @@ void
 net_change_nonblocking(int fd, int on)
 {
   int optval = on;
-  netSetSockOpt(fd, SOL_SOCKET, SO_NBIO, &optval, sizeof(optval));
+  if(setsockopt(fd, SOL_SOCKET, SO_NBIO, &optval, sizeof(optval)))
+    TRACE(TRACE_INFO, "TCP", "Unable to set nonblock to %d", on);
+}
+
+
+
+/**
+ *
+ */
+void
+net_change_ndelay(int fd, int on)
+{
+  int optval = on;
+
+  if(setsockopt(fd, 6, 1, &optval, sizeof(optval)) < 0)
+    TRACE(TRACE_INFO, "TCP", "Unable to turn on TCP_NODELAY");
 }
