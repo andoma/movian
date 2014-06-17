@@ -604,6 +604,18 @@ showtime_flush_caches(void)
   htsmsg_store_flush();
 }
 
+/**
+ * To avoid hang on exit we launch a special thread that will force
+ * exit after 5 seconds
+ */
+static void *
+shutdown_eject(void *aux)
+{
+  sleep(5);
+  arch_exit();
+  return NULL;
+}
+
 
 /**
  *
@@ -618,6 +630,8 @@ showtime_shutdown(int retcode)
     gconf.exit_code = retcode;
     arch_exit();
   }
+
+  hts_thread_create_detached("eject", shutdown_eject, NULL, THREAD_PRIO_BGTASK);
 
   event_dispatch(event_create_action(ACTION_STOP));
   prop_destroy_by_name(prop_get_global(), "popups");
