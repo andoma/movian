@@ -203,7 +203,7 @@ get_info_hash(void *opaque, const char *name, const void *data, size_t len)
   sha1_final(shactx, opaque);
 }
 
-
+#if 0
 /**
  *
  */
@@ -237,9 +237,81 @@ torrent_open(prop_t *page, const char *url0, int sync)
   torrent_release_on_prop_destroy(page, to);
   hts_mutex_unlock(&bittorrent_mutex);
 
-  htsmsg_destroy(doc);
+  htsmsg_release(doc);
   return 0;
 }
+
+#endif
+
+/**
+ *
+ */
+static int
+torrent_movie_open(prop_t *page, const char *url0, int sync)
+{
+  char errbuf[512];
+  buf_t *b = fa_load(url0,
+                     FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
+                     NULL);
+
+  if(b == NULL)
+    return nav_open_errorf(page, _("Unable to open torrent: %s"), errbuf);
+
+  uint8_t infohash[20] = {0};
+
+  htsmsg_t *doc = bencode_deserialize(buf_cstr(b), buf_cstr(b) + buf_size(b),
+                                      errbuf, sizeof(errbuf),
+                                      get_info_hash, infohash);
+
+  if(doc == NULL) {
+    buf_release(b);
+    return nav_open_errorf(page, _("Unable to open torrent: %s"), errbuf);
+  }
+
+  buf_release(b);
+
+  hts_mutex_lock(&bittorrent_mutex);
+  torrent_t *to = torrent_create(infohash, NULL, NULL, doc);
+  htsmsg_release(doc);
+
+  if(to == NULL) {
+    hts_mutex_unlock(&bittorrent_mutex);
+    return nav_open_errorf(page, _("Unable to parse torrent"));
+  }
+
+  // Find biggest file and redirect to that
+
+  torrent_file_t *tf, *best = NULL;
+  TAILQ_FOREACH(tf, &to->to_files, tf_torrent_link)
+    if(best == NULL || best->tf_size < tf->tf_size)
+      best = tf;
+
+  if(best == NULL) {
+    hts_mutex_unlock(&bittorrent_mutex);
+    return nav_open_errorf(page, _("No files in torrent"));
+  }
+
+  char url[1024];
+  char hashstr[41];
+  bin2hex(hashstr, sizeof(hashstr), to->to_info_hash, 20);
+  hashstr[40] = 0;
+
+  snprintf(url, sizeof(url), "torrentfile://%s/%s",
+           hashstr, best->tf_fullpath);
+
+  prop_t *eventsink = prop_create_r(page, "eventSink");
+  event_t *e = event_create_str(EVENT_REDIRECT, url);
+  prop_send_ext_event(eventsink, e);
+  event_release(e);
+  prop_ref_dec(eventsink);
+
+
+  torrent_release_on_prop_destroy(page, to);
+  hts_mutex_unlock(&bittorrent_mutex);
+
+  return 0;
+}
+
 
 
 /**
@@ -288,9 +360,9 @@ bt_open(prop_t *page, const char *url, int sync)
 
   if((u = mystrbegins(url, "magnet:")) != NULL) {
     return magnet_open(page, u, sync);
-  } else if((u = mystrbegins(url, "torrent:")) != NULL) {
-    return torrent_open(page, u, sync);
-  } else if((u = mystrbegins(url, "infohash:")) != NULL) {
+  } else if((u = mystrbegins(url, "torrent:movie:")) != NULL) {
+    return torrent_movie_open(page, u, sync);
+  } else if((u = mystrbegins(url, "torrent:browse:")) != NULL) {
     return infohash_open(page, u, sync);
   }
 
@@ -304,10 +376,7 @@ bt_open(prop_t *page, const char *url, int sync)
 static int
 bt_canhandle(const char *url)
 {
-  return
-    !strncmp(url, "magnet:",   strlen("magnet:")) ||
-    !strncmp(url, "infohash:", strlen("infohash:")) ||
-    !strncmp(url, "torrent:",  strlen("torrent:"));
+  return mystrbegins(url, "magnet:") || mystrbegins(url, "torrent:");
 }
 
 

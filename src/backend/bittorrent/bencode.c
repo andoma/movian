@@ -132,12 +132,12 @@ bencode_parse_map(const char *s, const char *stop,
       if(name == NOT_THIS_TYPE) {
 	*failmsg = "Expected string";
 	*failp = s;
-        htsmsg_destroy(r);
+        htsmsg_release(r);
 	return NULL;
       }
 
       if(name == NULL) {
-        htsmsg_destroy(r);
+        htsmsg_release(r);
 	return NULL;
       }
 
@@ -146,7 +146,7 @@ bencode_parse_map(const char *s, const char *stop,
       s2 = bencode_parse_value(s, stop, r, name, failp, failmsg);
 
       if(s2 == NULL) {
-        htsmsg_destroy(r);
+        htsmsg_release(r);
         free(name);
 	return NULL;
       }
@@ -192,7 +192,7 @@ bencode_parse_list(const char *s, const char *stop, const char **endp,
       s2 = bencode_parse_value(s, stop, r, NULL, failp, failmsg);
 
       if(s2 == NULL) {
-        htsmsg_destroy(r);
+        htsmsg_release(r);
 	return NULL;
       }
 

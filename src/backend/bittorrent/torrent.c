@@ -118,7 +118,6 @@ torrent_create(const uint8_t *info_hash, const char *title,
   if(to == NULL) {
 
     if(LIST_FIRST(&torrents) == NULL) {
-      printf("wat\n");
       asyncio_wakeup_worker(torrent_boot_periodic_signal);
     }
     to = calloc(1, sizeof(torrent_t));
@@ -374,7 +373,7 @@ torrent_parse_metainfo(torrent_t *to, htsmsg_t *metainfo,
   if(al != NULL) {
     htsmsg_field_t *f;
     HTSMSG_FOREACH(f, al) {
-      htsmsg_t *l = htsmsg_get_list_by_field(f);
+      htsmsg_t *l = f->hmf_childs;
       if(l == NULL)
         continue;
       htsmsg_field_t *ff;
