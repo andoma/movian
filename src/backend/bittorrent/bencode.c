@@ -347,3 +347,97 @@ bencode_deserialize(const char *src, const char *stop,
 }
 
 
+/**
+ *
+ */
+static int
+serialize_bytes(void *data, int len, char *ptr)
+{
+  char buf[32];
+  int l = snprintf(buf, sizeof(buf), "%d:", len);
+  if(ptr != NULL) {
+    memcpy(ptr, buf, l);
+    memcpy(ptr + l, data, len);
+  }
+  return l + len;
+}
+
+
+/**
+ *
+ */
+static int
+bencode_serialize_r(htsmsg_t *msg, char *ptr)
+{
+  char buf[32];
+  int len = 0;
+  int sublen;
+  htsmsg_field_t *f;
+  const int isarray = msg->hm_islist;
+
+  if(ptr != NULL)
+    *ptr++ = isarray ? 'l' : 'd';
+  len++;
+
+  TAILQ_FOREACH(f, &msg->hm_fields, hmf_link) {
+
+    if(!isarray) {
+      sublen = serialize_bytes(f->hmf_name, strlen(f->hmf_name), ptr);
+      if(ptr)
+        ptr += sublen;
+      len += sublen;
+    }
+
+    switch(f->hmf_type) {
+    case HMF_LIST:
+    case HMF_MAP:
+      sublen = bencode_serialize_r(f->hmf_childs, ptr);
+      break;
+
+    case HMF_STR:
+      sublen = serialize_bytes(f->hmf_str, strlen(f->hmf_str), ptr);
+      break;
+
+    case HMF_BIN:
+      sublen = serialize_bytes(f->hmf_bin, f->hmf_binsize, ptr);
+      break;
+
+    case HMF_DBL:
+      // questionable
+      snprintf(buf, sizeof(buf), "i%" PRId64"e", (int64_t)f->hmf_dbl);
+      sublen = serialize_bytes(buf, strlen(buf), ptr);
+      break;
+
+    case HMF_S64:
+      snprintf(buf, sizeof(buf), "i%" PRId64"e", f->hmf_s64);
+      sublen = serialize_bytes(buf, strlen(buf), ptr);
+      break;
+    default:
+      abort();
+    }
+
+    if(ptr)
+      ptr += sublen;
+    len += sublen;
+  }
+
+  if(ptr != NULL)
+    *ptr++ = 'e';
+  len++;
+  return len;
+}
+
+
+
+/**
+ *
+ */
+buf_t *
+bencode_serialize(htsmsg_t *src)
+{
+  // get size first
+  int len = bencode_serialize_r(src, NULL);
+  buf_t *b = buf_create(len);
+  bencode_serialize_r(src, buf_str(b));
+  return b;
+}
