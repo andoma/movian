@@ -23,7 +23,11 @@ torrent_resolve_file(const char *url)
   if(hex2bin(infohash, sizeof(infohash), buf) != 20)
     return NULL;
 
-  torrent_t *to = torrent_create(infohash, NULL, NULL, NULL);
+  torrent_t *to = torrent_find_by_hash(infohash);
+  if(to == NULL)
+    return NULL;
+
+  to->to_refcount++;
 
   torrent_file_t *tf;
   TAILQ_FOREACH(tf, &to->to_files, tf_torrent_link) {

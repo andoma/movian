@@ -28,6 +28,8 @@
 #include "networking/http.h"
 #include "htsmsg/htsmsg.h"
 #include "bittorrent.h"
+#include "bencode.h"
+
 
 #define TORRENT_REQ_SIZE 16384
 
@@ -39,10 +41,12 @@ HTS_MUTEX_DECL(bittorrent_mutex);
 struct torrent_list torrents;
 static int torrent_pendings_signal;
 static int torrent_boot_periodic_signal;
-static hts_cond_t torrent_piece_completed_cond;
-hts_cond_t torrent_piece_hashed_cond;
 static int torrent_hash_thread_running;
 static int torrent_debug = 1;
+
+hts_cond_t torrent_piece_hash_needed_cond;
+hts_cond_t torrent_piece_io_needed_cond;
+hts_cond_t torrent_piece_verified_cond;
 
 //----------------------------------------------------------------
 
@@ -50,8 +54,6 @@ static int torrent_parse_metainfo(torrent_t *to, htsmsg_t *metainfo,
                                   char *errbuf, size_t errlen);
 
 static void update_interest(torrent_t *to);
-
-static void bt_wakeup_hash_thread(void);
 
 static void torrent_piece_destroy(torrent_t *to, torrent_piece_t *tp);
 
@@ -99,27 +101,65 @@ torrent_add_tracker(torrent_t *to, const char *url)
 }
 
 
+
+/**
+ *
+ */
+void
+torrent_extract_info_hash(void *opaque, const char *name,
+                          const void *data, size_t len)
+{
+  if(strcmp(name, "info"))
+    return;
+
+  sha1_decl(shactx);
+  sha1_init(shactx);
+  sha1_update(shactx, data, len);
+  sha1_final(shactx, opaque);
+}
+
+
 /**
  *
  */
 torrent_t *
-torrent_create(const uint8_t *info_hash, const char *title,
-	       const char **trackers, htsmsg_t *metainfo)
+torrent_find_by_hash(const uint8_t *info_hash)
 {
   torrent_t *to;
 
-  hts_mutex_assert(&bittorrent_mutex);
+  LIST_FOREACH(to, &torrents, to_link)
+    if(!memcmp(to->to_info_hash, info_hash, 20))
+      return to;
 
-  LIST_FOREACH(to, &torrents, to_link) {
+  return NULL;
+}
+
+
+/**
+ *
+ */
+torrent_t *
+torrent_create(buf_t *b, char *errbuf, size_t errlen)
+{
+  torrent_t *to;
+  uint8_t info_hash[20] = {0};
+
+  htsmsg_t *doc = bencode_deserialize(buf_cstr(b), buf_cstr(b) + buf_size(b),
+                                      errbuf, errlen,
+                                      torrent_extract_info_hash, info_hash);
+
+  if(doc == NULL)
+    return NULL;
+
+  LIST_FOREACH(to, &torrents, to_link)
     if(!memcmp(to->to_info_hash, info_hash, 20))
       break;
-  }
 
   if(to == NULL) {
 
-    if(LIST_FIRST(&torrents) == NULL) {
+    if(LIST_FIRST(&torrents) == NULL)
       asyncio_wakeup_worker(torrent_boot_periodic_signal);
-    }
+
     to = calloc(1, sizeof(torrent_t));
     memcpy(to->to_info_hash, info_hash, 20);
     LIST_INSERT_HEAD(&torrents, to, to_link);
@@ -133,24 +173,20 @@ torrent_create(const uint8_t *info_hash, const char *title,
     to->to_title = malloc(41);
     bin2hex(to->to_title, 40, info_hash, 20);
     to->to_title[40] = 0;
+
+    if(torrent_parse_metainfo(to, doc, errbuf, errlen)) {
+      htsmsg_release(doc);
+      return NULL; // Torrent will be garbage collected later
+    }
+
+    to->to_metainfo = buf_retain(b);
+
+    torrent_diskio_open(to);
+
   }
+  htsmsg_release(doc);
 
   to->to_refcount++;
-
-  if(metainfo != NULL) {
-    if(torrent_parse_metainfo(to, metainfo,
-                              to->to_errbuf, sizeof(to->to_errbuf))) {
-      TRACE(TRACE_ERROR, "BT", "Unable to parse torrent: %s",
-            to->to_errbuf);
-    }
-  }
-
-  if(trackers != NULL) {
-    for(;*trackers; trackers++) {
-      torrent_add_tracker(to, *trackers);
-    }
-  }
-
   return to;
 }
 
@@ -245,11 +281,17 @@ torrent_destroy(torrent_t *to)
 
   tracker_remove_torrent(to);
 
+  // Close file
+
+  torrent_diskio_close(to);
+
   // Final cleanup
 
   LIST_REMOVE(to, to_link);
 
-  free(to->to_piece_flags);
+  buf_release(to->to_metainfo);
+  free(to->to_cachefile_piece_map);
+  free(to->to_cachefile_piece_map_inv);
   free(to->to_piece_hashes);
   free(to->to_title);
   free(to);
@@ -307,9 +349,7 @@ torrent_receive_block(torrent_block_t *tb, const void *buf,
     // Piece complete
 
     tp->tp_complete = 1;
-    hts_cond_broadcast(&torrent_piece_completed_cond);
-
-    bt_wakeup_hash_thread();
+    torrent_hash_wakeup();
   }
   torrent_io_do_requests(to);
 }
@@ -512,7 +552,11 @@ torrent_parse_metainfo(torrent_t *to, htsmsg_t *metainfo,
   }
 
   to->to_num_pieces = pieces_size / 20;
-  to->to_piece_flags = calloc(1, to->to_num_pieces);
+  const int mapsize = to->to_num_pieces * sizeof(uint32_t);
+  to->to_cachefile_piece_map = malloc(mapsize);
+  to->to_cachefile_piece_map_inv = malloc(mapsize);
+  memset(to->to_cachefile_piece_map, 0xff, mapsize);
+  memset(to->to_cachefile_piece_map_inv, 0xff, mapsize);
 
   to->to_piece_hashes = malloc(pieces_size);
   memcpy(to->to_piece_hashes, pieces_data, pieces_size);
@@ -548,6 +592,7 @@ torrent_piece_find(torrent_t *to, int piece_index)
     }
   }
 
+
   to->to_num_active_pieces++;
   tp = calloc(1, sizeof(torrent_piece_t));
   tp->tp_refcount = 1;
@@ -557,15 +602,22 @@ torrent_piece_find(torrent_t *to, int piece_index)
   LIST_INSERT_SORTED(&to->to_serve_order, tp, tp_serve_link, tp_deadline_cmp);
 
   tp->tp_data = malloc(to->to_piece_length);
-
-  // Create and enqueue requests
-
   tp->tp_piece_length = to->to_piece_length;
 
   if(piece_index == to->to_num_pieces - 1) {
     // Last piece, truncate piece length
     tp->tp_piece_length = to->to_total_length % to->to_piece_length;
   }
+
+  if(to->to_cachefile_piece_map[piece_index] != -1) {
+    // We have this piece on disk, signal that we want to load it
+    tp->tp_load_req = 1;
+    // and wakeup diskio thread
+    torrent_diskio_wakeup();
+    return tp;
+  }
+
+  // Create and enqueue requests
 
   for(int i = 0; i < tp->tp_piece_length; i += TORRENT_REQ_SIZE) {
     torrent_block_t *tb = calloc(1, sizeof(torrent_block_t));
@@ -633,7 +685,7 @@ torrent_load(torrent_t *to, void *buf, uint64_t offset, size_t size,
       asyncio_wakeup_worker(torrent_pendings_signal);
 
       while(!tp->tp_hash_computed)
-        hts_cond_wait(&torrent_piece_hashed_cond, &bittorrent_mutex);
+        hts_cond_wait(&torrent_piece_verified_cond, &bittorrent_mutex);
     }
 
     LIST_REMOVE(tfh, tfh_piece_link);
@@ -924,7 +976,7 @@ check_active_requests(torrent_t *to, torrent_piece_t *tp,
 /**
  *
  */
-static void
+void
 torrent_piece_release(torrent_piece_t *tp)
 {
   tp->tp_refcount--;
@@ -967,6 +1019,9 @@ flush_active_pieces(torrent_t *to)
 
     if(to->to_num_active_pieces <= 20)
       break;
+
+    if(tp->tp_load_req)
+      continue;
 
     if(LIST_FIRST(&tp->tp_active_fh) != NULL)
       continue;
@@ -1200,9 +1255,10 @@ torrent_piece_verify_hash(torrent_t *to, torrent_piece_t *tp)
   torrent_piece_release(tp);
   torrent_release(to);
 
-  hts_cond_broadcast(&torrent_piece_hashed_cond);
+  hts_cond_broadcast(&torrent_piece_verified_cond);
 
-  // bt_wakeup_write_thread();
+  if(to->to_cachefile != NULL)
+    torrent_diskio_wakeup();
 }
 
 
@@ -1234,7 +1290,7 @@ bt_hash_thread(void *aux)
       }
     }
 
-    if(hts_cond_wait_timeout(&torrent_piece_completed_cond,
+    if(hts_cond_wait_timeout(&torrent_piece_hash_needed_cond,
 			     &bittorrent_mutex, 60000))
       break;
   }
@@ -1248,14 +1304,15 @@ bt_hash_thread(void *aux)
 /**
  *
  */
-static void
-bt_wakeup_hash_thread(void)
+void
+torrent_hash_wakeup(void)
 {
   if(!torrent_hash_thread_running) {
     torrent_hash_thread_running = 1;
     hts_thread_create_detached("bthasher", bt_hash_thread, NULL,
 			       THREAD_PRIO_BGTASK);
   }
+  hts_cond_signal(&torrent_piece_hash_needed_cond);
 }
 
 
@@ -1273,8 +1330,13 @@ torrent_io_init(void)
   torrent_pendings_signal = asyncio_add_worker(torrent_check_pendings);
   torrent_boot_periodic_signal = asyncio_add_worker(torrent_boot_periodic);
 
-  hts_cond_init(&torrent_piece_completed_cond, &bittorrent_mutex);
-  hts_cond_init(&torrent_piece_hashed_cond, &bittorrent_mutex);
+  hts_cond_init(&torrent_piece_hash_needed_cond, &bittorrent_mutex);
+  hts_cond_init(&torrent_piece_io_needed_cond, &bittorrent_mutex);
+  hts_cond_init(&torrent_piece_verified_cond, &bittorrent_mutex);
+
+  hts_mutex_lock(&bittorrent_mutex);
+  torrent_settings_init();
+  hts_mutex_unlock(&bittorrent_mutex);
 
 }
 

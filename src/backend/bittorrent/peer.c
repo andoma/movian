@@ -343,11 +343,8 @@ send_initial_set(peer_t *p)
 {
   torrent_t *to = p->p_torrent;
 
-  if(TAILQ_FIRST(&to->to_active_pieces) == NULL)
-    return;
-
   int bitfield_len = (to->to_num_pieces + 7) / 8;
-
+  int something = 0;
   uint8_t *bitfield = calloc(1, bitfield_len);
 
   torrent_piece_t *tp;
@@ -359,12 +356,23 @@ send_initial_set(peer_t *p)
     int i = tp->tp_index;
 
     bitfield[i / 8] |= 0x80 >> (i & 0x7);
+    something = 1;
   }
 
-  uint8_t buf[5] = {0,0,0,0,BT_MSGID_BITFIELD};
-  wr32_be(buf, bitfield_len + 1);
-  asyncio_send(p->p_connection, buf, sizeof(buf), 1);
-  asyncio_send(p->p_connection, bitfield, bitfield_len, 0);
+  for(int i = 0; i < to->to_num_pieces; i++) {
+    if(to->to_cachefile_piece_map[i] != -1) {
+      bitfield[i / 8] |= 0x80 >> (i & 0x7);
+      something = 1;
+    }
+  }
+
+  if(something) {
+    uint8_t buf[5] = {0,0,0,0,BT_MSGID_BITFIELD};
+    wr32_be(buf, bitfield_len + 1);
+    asyncio_send(p->p_connection, buf, sizeof(buf), 1);
+    asyncio_send(p->p_connection, bitfield, bitfield_len, 0);
+  }
+
   free(bitfield);
 }
 
@@ -684,8 +692,12 @@ recv_request(peer_t *p, const uint8_t *buf, size_t len)
     if(tp->tp_index == piece)
       break;
 
-  if(tp == NULL)
+  if(tp == NULL) {
+    peer_trace(p, PEER_DBG_UPLOAD,
+               "Got request for piece %d:0x%x+0x%x WE DONT HAVE IT LOADED",
+               piece, offset, length);
     return 0;
+  }
 
   if(!tp->tp_hash_ok)
     return 0;

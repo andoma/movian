@@ -24,7 +24,6 @@
 #include "misc/str.h"
 #include "networking/http.h"
 
-#include "bencode.h"
 #include "fileaccess/fileaccess.h"
 
 #include "bittorrent.h"
@@ -54,6 +53,7 @@ torrent_release_on_prop_destroy(prop_t *p, torrent_t *to)
                  NULL);
 }
 
+#if 0
 
 /**
  *
@@ -121,8 +121,10 @@ torrent_browse(prop_t *page, torrent_t *to, const char *path)
   prop_ref_dec(nodes);
   prop_ref_dec(metadata);
 }
+#endif
 
 
+#if 0
 /**
  *
  */
@@ -203,7 +205,7 @@ get_info_hash(void *opaque, const char *name, const void *data, size_t len)
   sha1_final(shactx, opaque);
 }
 
-#if 0
+
 /**
  *
  */
@@ -255,28 +257,15 @@ torrent_movie_open(prop_t *page, const char *url0, int sync)
                      NULL);
 
   if(b == NULL)
-    return nav_open_errorf(page, _("Unable to open torrent: %s"), errbuf);
-
-  uint8_t infohash[20] = {0};
-
-  htsmsg_t *doc = bencode_deserialize(buf_cstr(b), buf_cstr(b) + buf_size(b),
-                                      errbuf, sizeof(errbuf),
-                                      get_info_hash, infohash);
-
-  if(doc == NULL) {
-    buf_release(b);
-    return nav_open_errorf(page, _("Unable to open torrent: %s"), errbuf);
-  }
-
-  buf_release(b);
+    return nav_open_errorf(page, _("Unable to load torrent: %s"), errbuf);
 
   hts_mutex_lock(&bittorrent_mutex);
-  torrent_t *to = torrent_create(infohash, NULL, NULL, doc);
-  htsmsg_release(doc);
+  torrent_t *to = torrent_create(b, errbuf, sizeof(errbuf));
+  buf_release(b);
 
   if(to == NULL) {
     hts_mutex_unlock(&bittorrent_mutex);
-    return nav_open_errorf(page, _("Unable to parse torrent"));
+    return nav_open_errorf(page, _("Unable to parse torrent: %s"), errbuf);
   }
 
   // Find biggest file and redirect to that
@@ -313,7 +302,7 @@ torrent_movie_open(prop_t *page, const char *url0, int sync)
 }
 
 
-
+#if 0
 /**
  *
  */
@@ -349,6 +338,7 @@ infohash_open(prop_t *page, const char *url, int sync)
   return 0;
 }
 
+#endif
 
 /**
  *
@@ -358,12 +348,8 @@ bt_open(prop_t *page, const char *url, int sync)
 {
   const char *u;
 
-  if((u = mystrbegins(url, "magnet:")) != NULL) {
-    return magnet_open(page, u, sync);
-  } else if((u = mystrbegins(url, "torrent:movie:")) != NULL) {
+  if((u = mystrbegins(url, "torrent:movie:")) != NULL) {
     return torrent_movie_open(page, u, sync);
-  } else if((u = mystrbegins(url, "torrent:browse:")) != NULL) {
-    return infohash_open(page, u, sync);
   }
 
   return 0;

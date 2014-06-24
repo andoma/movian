@@ -12,6 +12,9 @@ struct htsmsg;
 
 extern hts_mutex_t bittorrent_mutex; // Protects most of these data structures
 extern struct torrent_list torrents;
+extern hts_cond_t torrent_piece_hash_needed_cond;
+extern hts_cond_t torrent_piece_io_needed_cond;
+extern hts_cond_t torrent_piece_verified_cond;
 
 LIST_HEAD(torrent_tracker_list, torrent_tracker);
 LIST_HEAD(torrent_list, torrent);
@@ -34,6 +37,20 @@ typedef struct bt_global {
   int btg_in_flight_requests;
   int btg_active_peers;
   uint8_t btg_peer_id[21];
+
+  int btg_enabled;
+
+  rstr_t *btg_cache_path;
+  prop_t *btg_torrent_status;
+  prop_t *btg_disk_status;
+
+  int btg_free_space_percentage;
+
+  uint64_t btg_total_bytes_inactive;
+  uint64_t btg_total_bytes_active;
+  uint64_t btg_cache_limit;
+
+  uint64_t btg_disk_avail;
 
 } bt_global_t;
 
@@ -201,6 +218,7 @@ typedef struct torrent_piece {
   uint8_t tp_hash_ok       : 1;
   uint8_t tp_on_disk       : 1;
   uint8_t tp_disk_fail     : 1;
+  uint8_t tp_load_req      : 1;
 
   struct torrent_fh_list tp_active_fh;
 
@@ -287,7 +305,6 @@ typedef struct torrent {
   int to_piece_length;
   int to_num_pieces;
 
-  uint8_t *to_piece_flags;
   uint8_t *to_piece_hashes;
 
   struct torrent_file_queue to_files;
@@ -307,6 +324,19 @@ typedef struct torrent {
   char to_errbuf[256];
 
   average_t to_download_rate;
+
+  buf_t *to_metainfo;
+
+  fa_handle_t *to_cachefile;
+
+  int to_cachefile_map_offset;
+  int to_cachefile_store_offset;
+
+  int32_t *to_cachefile_piece_map;
+  int32_t *to_cachefile_piece_map_inv;
+  int to_next_disk_block;
+  int to_total_disk_blocks;
+
 
 } torrent_t;
 
@@ -356,14 +386,13 @@ typedef struct torrent_tracker {
  * Protocol definitions
  */
 
-torrent_t *torrent_create(const uint8_t *info_hash, const char *title,
-			  const char **trackers, struct htsmsg *metainfo);
+torrent_t *torrent_create(buf_t *metainfo, char *errbuf, size_t errlen);
+
+torrent_t *torrent_find_by_hash(const uint8_t *infohash);
 
 void torrent_release(torrent_t *t);
 
-tracker_t *tracker_create(const char *url);
-
-void tracker_add_torrent(tracker_t *tr, torrent_t *t);
+void torrent_piece_release(torrent_piece_t *tp);
 
 int torrent_load(torrent_t *to, void *buf, uint64_t offset, size_t size,
 		 torrent_fh_t *tfh);
@@ -376,6 +405,8 @@ void torrent_io_do_requests(torrent_t *to);
 
 void torrent_receive_block(torrent_block_t *tb, const void *buf,
                            int begin, int len, torrent_t *to);
+
+void torrent_hash_wakeup(void);
 
 /**
  * Peer functions
@@ -403,10 +434,29 @@ void peer_shutdown_all(torrent_t *to);
  * Disk IO
  */
 
-void bt_wakeup_write_thread(void);
+void torrent_diskio_wakeup(void);
+
+void torrent_diskio_open(torrent_t *to);
+
+void torrent_diskio_close(torrent_t *to);
+
+int torrent_diskio_scan(void);
 
 /**
  * Tracker
  */
 
 void tracker_remove_torrent(torrent_t *to);
+
+tracker_t *tracker_create(const char *url);
+
+void tracker_add_torrent(tracker_t *tr, torrent_t *t);
+
+/**
+ * Misc helpers
+ */
+
+void torrent_extract_info_hash(void *opaque, const char *name,
+                               const void *data, size_t len);
+
+void torrent_settings_init(void);

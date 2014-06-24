@@ -387,6 +387,19 @@ fa_fsize(void *fh_)
 /**
  *
  */
+int
+fa_ftruncate(void *fh_, uint64_t newsize)
+{
+  fa_handle_t *fh = fh_;
+  if(fh->fh_proto->fap_ftruncate == NULL)
+    return FAP_NOT_SUPPORTED;
+  return fh->fh_proto->fap_ftruncate(fh, newsize);
+}
+
+
+/**
+ *
+ */
 void
 fa_set_read_timeout(void *fh_, int ms)
 {
@@ -1278,6 +1291,30 @@ fa_get_xattr(const char *url, const char *name, void **datap, size_t *lenp)
 /**
  *
  */
+fa_err_code_t
+fa_fsinfo(const char *url, fa_fsinfo_t *ffi)
+{
+  fa_protocol_t *fap;
+  char *filename;
+  int r;
+
+  if((filename = fa_resolve_proto(url, &fap, NULL, NULL, 0)) == NULL)
+    return FAP_NOT_SUPPORTED;
+
+  if(fap->fap_fsinfo == NULL) {
+    r = FAP_NOT_SUPPORTED;
+  } else {
+    r = fap->fap_fsinfo(fap, url, ffi);
+  }
+  fap_release(fap);
+  free(filename);
+  return r;
+}
+
+
+/**
+ *
+ */
 void
 fileaccess_register_entry(fa_protocol_t *fap)
 {
@@ -1355,6 +1392,9 @@ fileaccess_init(void)
                  SETTING_HTSMSG("filenameextensions", store, "faconf"),
                  NULL);
 
+  gconf.settings_bittorrent =
+    settings_add_dir(gconf.settings_general, _p("BitTorrent"),
+                     NULL, NULL, NULL, "settings:bittorrent");
   return 0;
 }
 

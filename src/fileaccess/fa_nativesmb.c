@@ -43,6 +43,8 @@
 #include "misc/callout.h"
 #include "usage.h"
 
+// http://msdn.microsoft.com/en-us/library/ee442092.aspx
+
 #define SAMBA_NEED_AUTH ((void *)-1)
 
 #define SMB_ECHO_INTERVAL 30

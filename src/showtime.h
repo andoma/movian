@@ -271,6 +271,7 @@ typedef struct gconf {
   struct prop *settings_dev;
   struct prop *settings_network;
   struct prop_concat *settings_look_and_feel;
+  struct prop *settings_bittorrent;
 
   struct setting *setting_av_volume; // Maybe move to audio.h
   struct setting *setting_av_sync;   // Maybe move to audio.h

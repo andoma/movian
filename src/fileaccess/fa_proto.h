@@ -89,6 +89,11 @@ typedef struct fa_protocol {
   int64_t (*fap_fsize)(fa_handle_t *fh);
 
   /**
+   * Truncate file
+   */
+  fa_err_code_t (*fap_ftruncate)(fa_handle_t *fh, uint64_t newsize);
+
+  /**
    * stat(2) file
    *
    * If non_interactive is set, this is probe request and it must not
@@ -223,6 +228,12 @@ typedef struct fa_protocol {
    * deadline is delta time un µs
    */
   void (*fap_deadline)(fa_handle_t *fh, int deadline);
+
+  /**
+   * Return file system info
+   */
+  fa_err_code_t (*fap_fsinfo)(struct fa_protocol *fap, const char *url,
+                              fa_fsinfo_t *ffi);
 
 } fa_protocol_t;
 
