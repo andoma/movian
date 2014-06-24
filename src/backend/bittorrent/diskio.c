@@ -175,6 +175,14 @@ torrent_write_to_disk(torrent_t *to, torrent_piece_t *tp)
       to->to_cachefile_piece_map[old_piece] = -1;
     }
 
+    const int old_pos = to->to_cachefile_piece_map[tp->tp_index];
+    if(old_pos != -1) {
+      // Piece was already written to another location.
+      // We are writing again, probably due to hash corruption.
+      // Clear out inverse table info
+      to->to_cachefile_piece_map_inv[old_pos] = -1;
+    }
+
     to->to_cachefile_piece_map[tp->tp_index] = location;
     to->to_cachefile_piece_map_inv[location] = tp->tp_index;
 
@@ -255,6 +263,7 @@ torrent_read_from_disk(torrent_t *to, torrent_piece_t *tp)
 
   tp->tp_load_req = 0;
   tp->tp_complete = 1;
+  tp->tp_on_disk = 1;
 
   torrent_hash_wakeup();
 

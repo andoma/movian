@@ -222,6 +222,17 @@ peer_error_cb(void *opaque, const char *error)
  *
  */
 static void
+peer_free_pieces(peer_t *p)
+{
+  piece_peer_t *pp;
+  while((pp = LIST_FIRST(&p->p_pieces)) != NULL)
+    torrent_piece_peer_destroy(pp);
+}
+
+/**
+ *
+ */
+static void
 peer_shutdown(peer_t *p, int next_state, int resched)
 {
   torrent_t *to = p->p_torrent;
@@ -309,6 +320,7 @@ peer_shutdown(peer_t *p, int next_state, int resched)
     LIST_REMOVE(p, p_link);
     free(p->p_name);
     to->to_num_peers--;
+    peer_free_pieces(p);
     free(p);
     break;
   }
@@ -585,7 +597,7 @@ recv_piece(peer_t *p, const uint8_t *buf, size_t len)
 
   if(tr->tr_block != NULL) {
     LIST_REMOVE(tr, tr_block_link);
-    torrent_receive_block(tr->tr_block, buf, begin, len, to);
+    torrent_receive_block(tr->tr_block, buf, begin, len, to, p);
   }
 
   assert(p->p_active_requests > 0);
@@ -1124,7 +1136,7 @@ peer_add(torrent_t *to, const net_addr_t *na)
 
   to->to_num_peers++;
   p = calloc(1, sizeof(peer_t));
-  p->p_trace = 1;
+
   p->p_addr = *na;
   p->p_torrent = to;
   p->p_name = strdup(net_addr_str(na));

@@ -28,6 +28,7 @@ TAILQ_HEAD(torrent_request_queue, torrent_request);
 TAILQ_HEAD(torrent_piece_queue, torrent_piece);
 LIST_HEAD(torrent_block_list, torrent_block);
 LIST_HEAD(torrent_piece_list, torrent_piece);
+LIST_HEAD(piece_peer_list, piece_peer);
 
 #define TRACKER_PROTO_UDP 1
 
@@ -93,8 +94,16 @@ typedef struct tracker {
 /**
  *
  */
+typedef struct piece_peer {
+  LIST_ENTRY(piece_peer) pp_piece_link;
+  struct torrent_piece *pp_tp;
 
+  LIST_ENTRY(piece_peer) pp_peer_link;
+  struct peer *pp_peer;
 
+  int pp_bad;
+
+} piece_peer_t;
 
 /**
  *
@@ -134,7 +143,6 @@ typedef struct peer {
   char p_am_interested : 1;
   char p_peer_choking : 1;
   char p_peer_interested : 1;
-  char p_trace : 1;
   char p_fast_ext : 1;
 
   char p_id[21];
@@ -165,6 +173,8 @@ typedef struct peer {
   int p_num_waste;
 
   average_t p_download_rate;
+
+  struct piece_peer_list p_pieces;
 
 } peer_t;
 
@@ -208,6 +218,8 @@ typedef struct torrent_piece {
   struct torrent_block_list tp_sent_blocks;
 
   uint8_t *tp_data;
+
+  struct piece_peer_list tp_peers; // Peers that have contributed
 
   int tp_piece_length;
   int tp_refcount;
@@ -320,6 +332,7 @@ typedef struct torrent {
 
   char to_new_valid_piece;
   char to_need_updated_interest;
+  char to_corrupt_piece;
 
   char to_errbuf[256];
 
@@ -404,7 +417,7 @@ void torrent_attempt_more_peers(torrent_t *to);
 void torrent_io_do_requests(torrent_t *to);
 
 void torrent_receive_block(torrent_block_t *tb, const void *buf,
-                           int begin, int len, torrent_t *to);
+                           int begin, int len, torrent_t *to, peer_t *p);
 
 void torrent_hash_wakeup(void);
 
@@ -460,3 +473,5 @@ void torrent_extract_info_hash(void *opaque, const char *name,
                                const void *data, size_t len);
 
 void torrent_settings_init(void);
+
+void torrent_piece_peer_destroy(piece_peer_t *pp);

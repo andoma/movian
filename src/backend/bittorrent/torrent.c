@@ -320,6 +320,61 @@ block_cancel_requests(torrent_block_t *tb)
   }
 }
 
+/**
+ *
+ */
+static void
+add_contributor(torrent_piece_t *tp, peer_t *p)
+{
+  piece_peer_t *pp;
+  LIST_FOREACH(pp, &tp->tp_peers, pp_piece_link)
+    if(pp->pp_peer == p)
+      return;
+
+  pp = malloc(sizeof(piece_peer_t));
+  pp->pp_bad = 0;
+  pp->pp_tp = tp;
+  pp->pp_peer = p;
+  LIST_INSERT_HEAD(&tp->tp_peers, pp, pp_piece_link);
+  LIST_INSERT_HEAD(&p->p_pieces, pp, pp_peer_link);
+}
+
+
+/**
+ *
+ */
+void
+torrent_piece_peer_destroy(piece_peer_t *pp)
+{
+  LIST_REMOVE(pp, pp_piece_link);
+  LIST_REMOVE(pp, pp_peer_link);
+  free(pp);
+}
+
+
+/**
+ *
+ */
+static void
+torrent_piece_remove_contributors(torrent_piece_t *tp, int hash_ok)
+{
+  piece_peer_t *pp;
+  while((pp = LIST_FIRST(&tp->tp_peers)) != NULL)
+    torrent_piece_peer_destroy(pp);
+}
+
+
+/**
+ *
+ */
+static void
+torrent_piece_mark_contributors(torrent_piece_t *tp)
+{
+  piece_peer_t *pp;
+  LIST_FOREACH(pp, &tp->tp_peers, pp_piece_link)
+    pp->pp_bad = 1;
+}
+
 
 
 
@@ -328,7 +383,7 @@ block_cancel_requests(torrent_block_t *tb)
  */
 void
 torrent_receive_block(torrent_block_t *tb, const void *buf,
-                      int begin, int len, torrent_t *to)
+                      int begin, int len, torrent_t *to, peer_t *p)
 {
   int second = async_now / 1000000;
 
@@ -338,6 +393,8 @@ torrent_receive_block(torrent_block_t *tb, const void *buf,
   average_fill(&tp->tp_download_rate, second, tp->tp_downloaded_bytes);
 
   memcpy(tp->tp_data + begin, buf, len);
+
+  add_contributor(tp, p);
 
   // If there are any other requests for this block, cancel them
   block_cancel_requests(tb);
@@ -577,6 +634,29 @@ tp_deadline_cmp(const torrent_piece_t *a, const torrent_piece_t *b)
   return a->tp_deadline >= b->tp_deadline;
 }
 
+
+/**
+ *
+ */
+static void
+torrent_piece_enqueue_requests(torrent_t *to, torrent_piece_t *tp)
+{
+  assert(LIST_FIRST(&tp->tp_waiting_blocks) == NULL);
+  assert(LIST_FIRST(&tp->tp_sent_blocks) == NULL);
+
+  for(int i = 0; i < tp->tp_piece_length; i += TORRENT_REQ_SIZE) {
+    torrent_block_t *tb = calloc(1, sizeof(torrent_block_t));
+    tb->tb_piece = tp;
+    LIST_INSERT_HEAD(&tp->tp_waiting_blocks, tb, tb_piece_link);
+    tb->tb_begin = i;
+    tb->tb_length = MIN(TORRENT_REQ_SIZE, tp->tp_piece_length - i);
+  }
+
+  to->to_need_updated_interest = 1;
+  asyncio_wakeup_worker(torrent_pendings_signal);
+}
+
+
 /**
  *
  */
@@ -617,18 +697,7 @@ torrent_piece_find(torrent_t *to, int piece_index)
     return tp;
   }
 
-  // Create and enqueue requests
-
-  for(int i = 0; i < tp->tp_piece_length; i += TORRENT_REQ_SIZE) {
-    torrent_block_t *tb = calloc(1, sizeof(torrent_block_t));
-    tb->tb_piece = tp;
-    LIST_INSERT_HEAD(&tp->tp_waiting_blocks, tb, tb_piece_link);
-    tb->tb_begin = i;
-    tb->tb_length = MIN(TORRENT_REQ_SIZE, tp->tp_piece_length - i);
-  }
-
-  to->to_need_updated_interest = 1;
-  asyncio_wakeup_worker(torrent_pendings_signal);
+  torrent_piece_enqueue_requests(to, tp);
 
   return tp;
 }
@@ -684,7 +753,7 @@ torrent_load(torrent_t *to, void *buf, uint64_t offset, size_t size,
     if(!tp->tp_hash_computed) {
       asyncio_wakeup_worker(torrent_pendings_signal);
 
-      while(!tp->tp_hash_computed)
+      while(!tp->tp_hash_ok)
         hts_cond_wait(&torrent_piece_verified_cond, &bittorrent_mutex);
     }
 
@@ -760,6 +829,21 @@ add_request(torrent_block_t *tb, peer_t *p)
 /**
  *
  */
+static int
+check_peer_bad(const torrent_piece_t *tp, const peer_t *p)
+{
+  const piece_peer_t *pp;
+  LIST_FOREACH(pp, &tp->tp_peers, pp_piece_link)
+    if(pp->pp_bad && pp->pp_peer == p)
+      return 1;
+  return 0;
+}
+
+
+
+/**
+ *
+ */
 static peer_t *
 find_optimal_peer(torrent_t *to, const torrent_piece_t *tp)
 {
@@ -771,6 +855,9 @@ find_optimal_peer(torrent_t *to, const torrent_piece_t *tp)
 
     if(p->p_piece_flags == NULL ||
        !(p->p_piece_flags[tp->tp_index] & PIECE_HAVE))
+      continue;
+
+    if(check_peer_bad(tp, p))
       continue;
 
     int score;
@@ -810,6 +897,9 @@ find_any_peer(torrent_t *to, const torrent_piece_t *tp)
 
     if(p->p_piece_flags == NULL ||
        !(p->p_piece_flags[tp->tp_index] & PIECE_HAVE))
+      continue;
+
+    if(check_peer_bad(tp, p))
       continue;
 
     if(p->p_active_requests < p->p_maxq / 2)
@@ -983,6 +1073,8 @@ torrent_piece_release(torrent_piece_t *tp)
   if(tp->tp_refcount > 0)
     return;
 
+  torrent_piece_remove_contributors(tp, 0);
+
   free(tp->tp_data);
   free(tp);
 }
@@ -1127,6 +1219,41 @@ torrent_io_do_requests(torrent_t *to)
  *
  */
 static void
+torrent_reload_corrupt_pieces(torrent_t *to)
+{
+  torrent_piece_t *tp;
+
+  TAILQ_FOREACH(tp, &to->to_active_pieces, tp_link) {
+    if(tp->tp_hash_computed && !tp->tp_hash_ok) {
+
+      /**
+       * Setting hash_computed to 0 again basically means that
+       * the piece is not verified so noone will annouce it, etc
+       */
+      tp->tp_hash_computed = 0;
+
+      if(tp->tp_on_disk) {
+        tp->tp_on_disk = 0;
+        /**
+         * This is pretty easy, we just create and enqueue the requests
+         * (we never did this in the first place if we figured we
+         * had the piece on disk
+         */
+
+        torrent_trace(to, "Got corrupt piece %d from disk", tp->tp_index);
+      } else {
+        torrent_trace(to, "Got corrupt piece %d from network", tp->tp_index);
+      }
+      torrent_piece_enqueue_requests(to, tp);
+    }
+  }
+}
+
+
+/**
+ *
+ */
+static void
 torrent_check_pendings(void)
 {
   hts_mutex_lock(&bittorrent_mutex);
@@ -1142,6 +1269,11 @@ torrent_check_pendings(void)
     if(to->to_need_updated_interest) {
       to->to_need_updated_interest = 0;
       update_interest(to);
+    }
+
+    if(to->to_corrupt_piece) {
+      to->to_corrupt_piece = 0;
+      torrent_reload_corrupt_pieces(to);
     }
 
     torrent_io_do_requests(to);
@@ -1249,15 +1381,21 @@ torrent_piece_verify_hash(torrent_t *to, torrent_piece_t *tp)
 
   if(tp->tp_hash_ok) {
     to->to_new_valid_piece = 1;
-    asyncio_wakeup_worker(torrent_pendings_signal);
+    torrent_piece_remove_contributors(tp, 1);
+  } else {
+    torrent_piece_mark_contributors(tp);
+    to->to_corrupt_piece = 1;
+    tp->tp_complete = 0;
   }
+
+  asyncio_wakeup_worker(torrent_pendings_signal);
 
   torrent_piece_release(tp);
   torrent_release(to);
 
   hts_cond_broadcast(&torrent_piece_verified_cond);
 
-  if(to->to_cachefile != NULL)
+  if(tp->tp_hash_ok && to->to_cachefile != NULL)
     torrent_diskio_wakeup();
 }
 
