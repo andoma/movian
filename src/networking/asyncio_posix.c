@@ -305,7 +305,18 @@ asyncio_dopoll(void)
                     af->af_opaque,
                     (fds[i].revents & POLLIN  ? ASYNCIO_READ  : 0) |
                     (fds[i].revents & POLLOUT ? ASYNCIO_WRITE : 0), 0);
+
+    if(1) {
+      int64_t now = showtime_get_ts();
+
+      if(now - async_now > 10000) {
+        TRACE(TRACE_ERROR, "ASYNCIO", "Long callback on socktet %s (%d µs)",
+              af->af_name, (int) (now - async_now));
+      }
+      async_now = now;
+    }
   }
+
 
  release:
 
