@@ -71,7 +71,7 @@ deps()
 		echo "Build dependencies must be installed as root"
 		exit 1
 	    fi
-	    apt-get install git-core build-essential autoconf bison flex libelf-dev libtool pkg-config texinfo libncurses5-dev libz-dev python-dev libssl-dev libgmp3-dev ccache zip
+	    apt-get --yes --force-yes install git-core build-essential autoconf bison flex libelf-dev libtool pkg-config texinfo libncurses5-dev libz-dev python-dev libssl-dev libgmp3-dev ccache zip
 	    ;;
 	*)
 	    echo "Don't know how to install deps on ${DISTID}"
