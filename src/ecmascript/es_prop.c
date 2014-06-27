@@ -13,12 +13,13 @@ es_stprop_get(duk_context *ctx, int val_index)
   if(!duk_is_pointer(ctx, val_index)) {
 
     if(!duk_is_object(ctx, val_index))
-      duk_error(ctx, DUK_ERR_ERROR, "Invalid type for property (%d)", val_index);
+      return NULL;
 
     duk_get_prop_string(ctx, val_index, "__rawptr__");
-    if(!duk_is_pointer(ctx, -1))
-      duk_error(ctx, DUK_ERR_ERROR, "__rawptr__ is not a pointer");
-
+    if(!duk_is_pointer(ctx, -1)) {
+      duk_pop(ctx);
+      return NULL;
+    }
     duk_replace(ctx, val_index);
   }
   return duk_to_pointer(ctx, val_index);
@@ -153,7 +154,8 @@ es_prop_set_parent_duk(duk_context *ctx)
   prop_t *parent = es_stprop_get(ctx, 1);
 
   if(prop_set_parent(p, parent))
-    duk_error(ctx, DUK_ERR_ERROR, "Parent is not a directory");
+    prop_destroy(p);
+
   return 0;
 }
 
@@ -175,8 +177,10 @@ es_sub_cb(void *opaque, prop_event_t event, ...)
   duk_push_global_object(ctx);
   duk_get_prop_string(ctx, -1, "subscriptionInvoke");
 
-  if(!duk_is_function(ctx, -1))
+  if(!duk_is_function(ctx, -1)) {
+    duk_pop_2(ctx);
     return;
+  }
 
   va_start(ap, event);
 
@@ -251,6 +255,13 @@ es_sub_cb(void *opaque, prop_event_t event, ...)
     nargs = 2;
     break;
 
+  case PROP_DESTROYED:
+    (void)va_arg(ap, prop_sub_t *);
+    duk_push_int(ctx, va_arg(ap, int));
+    duk_push_string(ctx, "destroyed");
+    nargs = 2;
+    break;
+
   default:
     nargs = 0;
     break;
@@ -262,7 +273,9 @@ es_sub_cb(void *opaque, prop_event_t event, ...)
     int rc = duk_pcall(ctx, nargs);
     if(rc)
       es_dump_err(ctx);
+    duk_pop(ctx);
   }
+  duk_pop(ctx);
 }
 
 
@@ -277,7 +290,7 @@ es_prop_subscribe(duk_context *ctx)
   int idx = duk_get_number(ctx, 1);
 
   prop_sub_t *s =
-    prop_subscribe(0,
+    prop_subscribe(PROP_SUB_TRACK_DESTROY,
                    PROP_TAG_ROOT, p,
                    PROP_TAG_MUTEX, &ec->ec_mutex,
                    PROP_TAG_CALLBACK_USER_INT, es_sub_cb, ec, idx,

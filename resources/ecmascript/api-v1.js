@@ -144,6 +144,9 @@ Subscription.prototype.unsubscribe = function() {
 function subscriptionInvoke(id, op, value) {
   var sub = subscriptions[id];
   sub.cb(op, value);
+
+  if(op == 'destroyed')
+    delete subscriptions[id];
 }
 
 
@@ -168,7 +171,7 @@ var propHandler = {
     if(name == '__rawptr__')
       return obj.ptr;
     if(name == 'toString')
-      return undefined;
+      return '[prop]';
     if(name == 'valueOf')
       return undefined;
 
@@ -332,16 +335,14 @@ function Page(root, flat) {
     metadata: {
       get: function()  { return this.model.metadata; }
     },
-
   });
 
 
-  this.isa = 'page';
-
-  this._nodesub = new Subscription(this.root.model.nodes, function(op, value) {
+  new Subscription(this.root.model.nodes, function(op, value) {
     if(op == 'wantmorechilds') {
-      var have_more = typeof this.paginator == 'function' && this.paginator();
-      Showtime.propHaveMore(this.root.model.nodes, have_more);
+      var nodes = this.root.model.nodes;
+      var have_more = typeof this.paginator == 'function' && !!this.paginator();
+      Showtime.propHaveMore(nodes, have_more);
     }
   }.bind(this));
 }
