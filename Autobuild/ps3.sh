@@ -62,7 +62,7 @@ build()
     artifact build.${TARGET}/showtime_geohot.pkg pkg application/octect-stream showtime-gh.pkg
 }
 
-BUILD_DEPS="git-core build-essential autoconf bison flex libelf-dev libtool pkg-config texinfo libncurses5-dev libz-dev python-dev libssl-dev libgmp3-dev ccache zip curl"
+BUILD_DEPS="git-core build-essential autoconf bison flex libelf-dev libtool pkg-config texinfo libncurses5-dev libz-dev python-dev libssl-dev libgmp3-dev ccache zip curl wget"
 
 deps()
 {
