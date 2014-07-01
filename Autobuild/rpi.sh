@@ -88,6 +88,8 @@ build()
 
 }
 
+BUILD_DEPS="apt-get install git-core build-essential autoconf bison flex libelf-dev libtool pkg-config texinfo libncurses5-dev libz-dev python-dev libssl-dev libgmp3-dev ccache zip curl wget"
+
 deps()
 {
     DISTID=`lsb_release -si`
@@ -97,7 +99,7 @@ deps()
 		echo "Build dependencies must be installed as root"
 		exit 1
 	    fi
-#	    apt-get install git-core build-essential autoconf bison flex libelf-dev libtool pkg-config texinfo libncurses5-dev libz-dev python-dev libssl-dev libgmp3-dev ccache zip
+	    apt-get --yes --force-yes install ${BUILD_DEPS}
 	    ;;
 	*)
 	    echo "Don't know how to install deps on ${DISTID}"
@@ -106,5 +108,9 @@ deps()
     esac
 }
 
+buildenv()
+{
+    echo ${BUILD_DEPS} | sha1sum | awk '{print $1}'
+}
 
 eval $OP

@@ -62,7 +62,7 @@ deps()
 
 buildenv() 
 {
-    echo $BUILD_DEPS | shasum | awk '{print $1}'
+    echo $BUILD_DEPS | sha1sum | awk '{print $1}'
 }
 
 eval $OP
