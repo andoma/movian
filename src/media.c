@@ -93,7 +93,7 @@ static void track_mgr_destroy(media_track_mgr_t *mtm);
 
 static void track_mgr_next_track(media_track_mgr_t *mtm);
 
-static void mtm_select_track(media_track_mgr_t *mtm, event_select_track_t *est);
+static int mtm_select_track(media_track_mgr_t *mtm, event_select_track_t *est);
 
 static void mp_set_playstatus_by_hold_locked(media_pipe_t *mp, const char *msg);
 
@@ -213,7 +213,8 @@ copy_mbm_from_mb(media_buf_meta_t *mbm, const media_buf_t *mb)
 void
 media_buf_free_locked(media_pipe_t *mp, media_buf_t *mb)
 {
-  mb->mb_dtor(mb);
+  if(mb->mb_dtor != NULL)
+    mb->mb_dtor(mb);
 
   if(mb->mb_cw != NULL)
     media_codec_deref(mb->mb_cw);
@@ -1106,7 +1107,7 @@ mp_bump_epoch(media_pipe_t *mp)
 static void
 mp_send_cmd_locked(media_pipe_t *mp, media_queue_t *mq, int cmd)
 {
-  media_buf_t *mb = media_buf_alloc_locked(mp, 0);
+  media_buf_t *mb = pool_get(mp->mp_mb_pool);
   mb->mb_data_type = cmd;
   mb_enq(mp, mq, mb);
 }
@@ -1143,12 +1144,14 @@ mp_enqueue_event_locked(media_pipe_t *mp, event_t *e)
 
   switch(e->e_type_x) {
   case EVENT_SELECT_AUDIO_TRACK:
-    mtm_select_track(&mp->mp_audio_track_mgr, est);
+    if(mtm_select_track(&mp->mp_audio_track_mgr, est))
+      return;
     dedup_event = 1;
     break;
 
   case EVENT_SELECT_SUBTITLE_TRACK:
-    mtm_select_track(&mp->mp_subtitle_track_mgr, est);
+    if(mtm_select_track(&mp->mp_subtitle_track_mgr, est))
+      return;
     dedup_event = 1;
     break;
 
@@ -2196,6 +2199,12 @@ mp_configure(media_pipe_t *mp, int flags, int buffer_size, int64_t duration,
              const char *type)
 {
   hts_mutex_lock(&mp->mp_mutex);
+
+  mystrset(&mp->mp_subtitle_loader_url, NULL);
+
+  mp->mp_framerate.num = 0;
+  mp->mp_framerate.den = 1;
+
   mp->mp_max_realtime_delay = INT32_MAX;
 
   mp_set_clr_flags_locked(mp, flags,
@@ -2764,20 +2773,67 @@ track_mgr_next_track(media_track_mgr_t *mtm)
 /**
  *
  */
-static void
+static int
 mtm_select_track(media_track_mgr_t *mtm, event_select_track_t *est)
 {
+  const int is_audio = mtm->mtm_type == MEDIA_TRACK_MANAGER_AUDIO;
+  int rval = 0;
+  const char *id = est->id;
+  media_pipe_t *mp = mtm->mtm_mp;
+
+  if(is_audio) {
+
+    TRACE(TRACE_DEBUG, "Media", "Selecting audio track %s", id);
+
+      mp->mp_audio.mq_stream = -1;
+
+    if(!strcmp(id, "audio:off")) {
+
+    } else if(!strncmp(id, "libav:", strlen("libav:"))) {
+
+      mp->mp_audio.mq_stream =  atoi(id + strlen("libav:"));
+      rval = 1;
+    }
+
+    prop_set_string(mp->mp_prop_audio_track_current, id);
+
+  } else {
+
+    TRACE(TRACE_INFO, "Media", "Selecting subtitle track %s", id);
+
+    // Sending an empty MB_CTRL_EXT_SUBTITLE will cause unload
+    mp_send_cmd_locked(mp, &mp->mp_video, MB_CTRL_EXT_SUBTITLE);
+
+    // Make the subtitle loader not inject new sub even if running
+    mystrset(&mp->mp_subtitle_loader_url, NULL);
+
+    prop_set_string(mp->mp_prop_subtitle_track_current, id);
+    mp->mp_video.mq_stream2 = -1;
+
+    if(mystrbegins(id, "sub:")) {
+
+    } else if(!strncmp(id, "libav:", strlen("libav:"))) {
+
+      mp->mp_video.mq_stream2 = atoi(id + strlen("libav:"));
+      rval = 1;
+
+    } else {
+
+      mp_load_ext_sub(mp, id);
+    }
+  }
+
   if(!est->manual)
-    return;
+    return rval;
 
   mtm->mtm_user_set = 1;
   if(!mtm->mtm_canonical_url)
-    return;
+    return rval;
 
   kv_url_opt_set(mtm->mtm_canonical_url, KVSTORE_DOMAIN_SYS,
-		 mtm->mtm_type == MEDIA_TRACK_MANAGER_AUDIO ?
-		 "audioTrack" : "subtitleTrack",
-		 KVSTORE_SET_STRING, est->id);
+                 is_audio ? "audioTrack" : "subtitleTrack",
+		 KVSTORE_SET_STRING, id);
+  return rval;
 }
 
 
@@ -2797,22 +2853,66 @@ ext_sub_dtor(media_buf_t *mb)
 /**
  *
  */
-void
-mp_load_ext_sub(media_pipe_t *mp, const char *url, AVRational *framerate)
+static void *
+subtitle_loader_thread(void *aux)
 {
-  media_buf_t *mb = media_buf_alloc_unlocked(mp, 0);
-  mb->mb_data_type = MB_CTRL_EXT_SUBTITLE;
+  media_pipe_t *mp = aux;
 
-  if(url != NULL) {
-    mb->mb_data = (void *)subtitles_load(mp, url, framerate);
-  } else {
-    mb->mb_data = NULL;
-  }
-
-  mb->mb_dtor = ext_sub_dtor;
   hts_mutex_lock(&mp->mp_mutex);
-  mb_enq(mp, &mp->mp_video, mb);
+  while(1) {
+
+    if(mp->mp_subtitle_loader_url == NULL)
+      break;
+
+    char *url = strdup(mp->mp_subtitle_loader_url);
+
+    hts_mutex_unlock(&mp->mp_mutex);
+    ext_subtitles_t *es = subtitles_load(mp, url);
+    hts_mutex_lock(&mp->mp_mutex);
+
+    if(mp->mp_subtitle_loader_url == NULL ||
+       strcmp(mp->mp_subtitle_loader_url, url)) {
+      // What we loaded is no longer relevant, destroy it
+      free(url);
+      if(es != NULL)
+        subtitles_destroy(es);
+      continue;
+    }
+    free(url);
+
+    if(es != NULL) {
+
+      // If we failed to load, don't do anything special
+
+      media_buf_t *mb = media_buf_alloc_locked(mp, 0);
+      mb->mb_data_type = MB_CTRL_EXT_SUBTITLE;
+      mb->mb_data = (void *)es;
+      mb->mb_dtor = ext_sub_dtor;
+      mb_enq(mp, &mp->mp_video, mb);
+    }
+
+    mystrset(&mp->mp_subtitle_loader_url, NULL);
+  }
+  mp->mp_subtitle_loader_thread = 0;
   hts_mutex_unlock(&mp->mp_mutex);
+  mp_ref_dec(mp);
+  return NULL;
+}
+
+
+
+/**
+ *
+ */
+void
+mp_load_ext_sub(media_pipe_t *mp, const char *url)
+{
+  if(!mp->mp_subtitle_loader_thread) {
+    mp_ref_inc(mp);
+    hts_thread_create_detached("subtitleloader",
+                               subtitle_loader_thread, mp, THREAD_PRIO_BGTASK);
+  }
+  mystrset(&mp->mp_subtitle_loader_url, url);
 }
 
 

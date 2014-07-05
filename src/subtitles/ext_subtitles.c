@@ -811,7 +811,7 @@ subtitles_pick(ext_subtitles_t *es, int64_t pts, media_pipe_t *mp)
 
 
 static ext_subtitles_t *
-subtitles_from_zipfile(media_pipe_t *mp, buf_t *b, AVRational *fr)
+subtitles_from_zipfile(media_pipe_t *mp, buf_t *b)
 {
   ext_subtitles_t *ret = NULL;
   char errbuf[256];
@@ -824,7 +824,7 @@ subtitles_from_zipfile(media_pipe_t *mp, buf_t *b, AVRational *fr)
     fa_dir_entry_t *fde;
     RB_FOREACH(fde, &fd->fd_entries, fde_link) {
       TRACE(TRACE_DEBUG, "Subtitles", "  Probing %s", rstr_get(fde->fde_url));
-      ret = subtitles_load(mp, rstr_get(fde->fde_url), fr);
+      ret = subtitles_load(mp, rstr_get(fde->fde_url));
       if(ret != NULL)
 	break;
     }
@@ -843,7 +843,7 @@ subtitles_from_zipfile(media_pipe_t *mp, buf_t *b, AVRational *fr)
  *
  */
 ext_subtitles_t *
-subtitles_load(media_pipe_t *mp, const char *url, AVRational *fr)
+subtitles_load(media_pipe_t *mp, const char *url)
 {
   ext_subtitles_t *sub;
   char errbuf[256];
@@ -871,7 +871,7 @@ subtitles_load(media_pipe_t *mp, const char *url, AVRational *fr)
 
   if(b->b_size > 4 && !memcmp(buf_cstr(b), "PK\003\004", 4)) {
     TRACE(TRACE_DEBUG, "Subtitles", "%s is a ZIP archive, scanning...", url);
-    return subtitles_from_zipfile(mp, b, fr);
+    return subtitles_from_zipfile(mp, b);
   }
   
   if(gz_check(b)) {
@@ -888,7 +888,7 @@ subtitles_load(media_pipe_t *mp, const char *url, AVRational *fr)
   uint8_t header[64];
   memcpy(header, b->b_ptr, MIN(b->b_size, 64));
 
-  sub = subtitles_create(url, b, fr);
+  sub = subtitles_create(url, b, &mp->mp_framerate);
   if(sub == NULL) {
     TRACE(TRACE_ERROR, "Subtitles",
 	  "Unable to load %s -- Unknown format (%d bytes), dump of first 64 bytes follows",

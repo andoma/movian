@@ -118,9 +118,11 @@ handle_metadata0(rtmp_t *r, AMFObject *obj,
 
   if((RTMP_FindFirstMatchingProperty(obj, &av_videoframerate, &prop) &&
       RTMP_FindFirstMatchingProperty(obj, &av_framerate, &prop))
-     && prop.p_type == AMF_NUMBER)
+     && prop.p_type == AMF_NUMBER) {
     r->vframeduration = 1000000.0 / prop.p_vu.p_number;
-
+    mp->mp_framerate.num = 1000000;
+    mp->mp_framerate.den = r->vframeduration;
+  }
   r->width = r->height = 0;
   if(RTMP_FindFirstMatchingProperty(obj, &av_width, &prop) &&
      prop.p_type == AMF_NUMBER)
@@ -214,16 +216,6 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
 
   } else if(event_is_action(e, ACTION_STOP)) {
     mp_set_playstatus_stop(mp);
-  } else if(event_is_type(e, EVENT_SELECT_SUBTITLE_TRACK)) {
-    event_select_track_t *est = (event_select_track_t *)e;
-    prop_set_string(mp->mp_prop_subtitle_track_current, est->id);
-    if(!strcmp(est->id, "sub:off")) {
-      mp_load_ext_sub(mp, NULL, NULL);
-      } else {
-      AVRational framerate = {1000000, r->vframeduration};
-      mp_load_ext_sub(mp, est->id, &framerate);
-    }
-
   }
   event_release(e);
   return NULL;

@@ -391,8 +391,7 @@ typedef struct media_pipe {
 #define MP_CAN_PAUSE        0x40
 #define MP_CAN_EJECT        0x80
 
-
-
+  AVRational mp_framerate;
 
   int mp_eof;   // End of file: We don't expect to need to read more data
   int mp_hold;  // Paused
@@ -536,6 +535,15 @@ typedef struct media_pipe {
    * Cancellable must be accessed under mp_mutex protection
    */
   struct cancellable *mp_cancellable;
+
+  /**
+   * Subtitle loader
+   */
+
+  hts_thread_t mp_subtitle_loader_thread;
+  char *mp_subtitle_loader_url;
+  int mp_subtitle_loader_status;
+
 
 } media_pipe_t;
 
@@ -722,7 +730,7 @@ void mp_set_cancellable(media_pipe_t *mp, struct cancellable *c);
 
 int64_t mq_realtime_delay(media_queue_t *mq);
 
-void mp_load_ext_sub(media_pipe_t *mp, const char *url, AVRational *framerate);
+void mp_load_ext_sub(media_pipe_t *mp, const char *url);
 
 void mq_update_stats(media_pipe_t *mp, media_queue_t *mq);
 
