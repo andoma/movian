@@ -803,7 +803,7 @@ video_player_idle(void *aux)
 	play_url = NULL;
       }
       if(play_url == NULL)
-	mp_set_playstatus_stop(mp);
+        prop_set_string(mp->mp_prop_playstatus, "stop");
     }
 
     event_release(e);

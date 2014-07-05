@@ -708,8 +708,6 @@ extern media_pipe_t *media_primary;
 
 void mp_set_playstatus_by_hold(media_pipe_t *mp, int hold, const char *msg);
 
-void mp_set_playstatus_stop(media_pipe_t *mp);
-
 void mp_set_url(media_pipe_t *mp, const char *url, const char *parent_url,
                 const char *parent_title);
 

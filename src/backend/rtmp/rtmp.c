@@ -214,8 +214,6 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
 
     video_seek(r, mp, mbp, ets->ts, "direct");
 
-  } else if(event_is_action(e, ACTION_STOP)) {
-    mp_set_playstatus_stop(mp);
   }
   event_release(e);
   return NULL;

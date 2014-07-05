@@ -1224,9 +1224,6 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
       event_ts_t *ets = (event_ts_t *)e;
       hls_seek(h, ets->ts + hd->hd_delta_ts, ets->ts, 0, &mb);
 
-    } else if(event_is_action(e, ACTION_STOP)) {
-      mp_set_playstatus_stop(mp);
-
     } else if(event_is_action(e, ACTION_SKIP_FORWARD)) {
       break;
     } else if(event_is_action(e, ACTION_SKIP_BACKWARD)) {

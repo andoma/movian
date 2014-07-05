@@ -565,7 +565,7 @@ const static int action_from_fkey[13][2] = {
   { ACTION_RELOAD_UI,        ACTION_RELOAD_DATA },
   { ACTION_SYSINFO, 0 },
   { 0,                        ACTION_SEEK_BACKWARD },
-  { 0,                        ACTION_PLAYPAUSE },
+  { ACTION_STOP,              ACTION_PLAYPAUSE },
 
   { ACTION_SWITCH_VIEW,       ACTION_SEEK_FORWARD },
   { 0,                        ACTION_VOLUME_MUTE_TOGGLE },

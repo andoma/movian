@@ -339,9 +339,6 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
       ets = (event_ts_t *)e;
       video_seek(fctx, mp, &mb, ets->ts, "direct");
 
-    } else if(event_is_action(e, ACTION_STOP)) {
-      mp_set_playstatus_stop(mp);
-
     } else if(event_is_action(e, ACTION_SKIP_FORWARD) ||
               event_is_action(e, ACTION_SKIP_BACKWARD) ||
               event_is_type(e, EVENT_EXIT) ||

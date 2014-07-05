@@ -1253,13 +1253,17 @@ mp_enqueue_event_locked(media_pipe_t *mp, event_t *e)
       return;
     }
 
+    if(event_is_action(e, ACTION_STOP) ||
+       event_is_action(e, ACTION_EJECT)) {
+      prop_set_string(mp->mp_prop_playstatus, "stop");
+    }
+
     if(event_is_type(e, EVENT_PLAYQUEUE_JUMP) ||
        event_is_action(e, ACTION_STOP) ||
        event_is_action(e, ACTION_SKIP_FORWARD) ||
        event_is_action(e, ACTION_SKIP_BACKWARD)) {
 
       if(mp->mp_cancellable != NULL) {
-        printf("cancelling\n");
         cancellable_cancel(mp->mp_cancellable);
       }
     }
@@ -2121,15 +2125,6 @@ mp_set_playstatus_by_hold(media_pipe_t *mp, int hold, const char *msg)
   hts_mutex_unlock(&mp->mp_mutex);
 }
 
-
-/**
- *
- */
-void
-mp_set_playstatus_stop(media_pipe_t *mp)
-{
-  prop_set_string(mp->mp_prop_playstatus, "stop");
-}
 
 /**
  *

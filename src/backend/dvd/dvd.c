@@ -1020,13 +1020,9 @@ dvd_process_event(dvd_player_t *dp, event_t *e)
     mp_flush(mp, 1);
     dvdnav_next_pg_search(dp->dp_dvdnav);
 
-  } else if(event_is_action(e, ACTION_STOP)) {
-    mp_set_playstatus_stop(mp);
-
   } else if(event_is_action(e, ACTION_EJECT)) {
-    mp_set_playstatus_stop(mp);
     return e;
-  } 
+  }
 
   event_release(e);
   return NULL;
