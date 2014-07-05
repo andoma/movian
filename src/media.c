@@ -1245,8 +1245,6 @@ mp_enqueue_event_locked(media_pipe_t *mp, event_t *e)
        mp->mp_seek_base >= MP_SKIP_LIMIT &&
        mp->mp_flags & MP_CAN_SEEK) {
 
-      printf("skip backward becomes seek\n");
-
       // Convert skip previous to track restart
 
       mp_direct_seek(mp, 0);
@@ -1259,6 +1257,7 @@ mp_enqueue_event_locked(media_pipe_t *mp, event_t *e)
     }
 
     if(event_is_type(e, EVENT_PLAYQUEUE_JUMP) ||
+       event_is_type(e, EVENT_EXIT) ||
        event_is_action(e, ACTION_STOP) ||
        event_is_action(e, ACTION_SKIP_FORWARD) ||
        event_is_action(e, ACTION_SKIP_BACKWARD)) {
