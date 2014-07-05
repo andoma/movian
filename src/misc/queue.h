@@ -112,6 +112,11 @@
 		(var) = (*(((struct headname *)((var)->field.tqe_prev))->tqh_last)))
 #endif
 
+#ifndef TAILQ_HEAD_INITIALIZER
+#define TAILQ_HEAD_INITIALIZER(head)					\
+	{ NULL, &(head).tqh_first }
+#endif
+
 /*
  * Some extra functions for LIST manipulation
  */

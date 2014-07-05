@@ -52,6 +52,7 @@ LDFLAGS += ${PGFLAGS}
 ##############################################################
 SRCS += src/showtime.c \
 	src/trace.c \
+	src/task.c \
 	src/runcontrol.c \
 	src/version.c \
 	src/navigator.c \
