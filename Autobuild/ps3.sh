@@ -7,7 +7,8 @@ build()
     
     cleanup() {
 	echo "Cleaning up"
-	rm -rf ${TOOLCHAIN}
+	rm -rf ${TOOLCHAIN}.broken
+	mv ${TOOLCHAIN} ${TOOLCHAIN}.broken
 	exit 1
     }
     
