@@ -813,8 +813,7 @@ recv_message(peer_t *p, htsbuf_queue_t *q)
       return 1;
     }
 
-    int n = htsbuf_read(q, data, len);
-    assert(n == len);
+    htsbuf_read(q, data, len);
   }
 
   int r = 0;
