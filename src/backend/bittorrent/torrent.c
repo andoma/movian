@@ -42,7 +42,7 @@ struct torrent_list torrents;
 static int torrent_pendings_signal;
 static int torrent_boot_periodic_signal;
 static int torrent_hash_thread_running;
-static int torrent_debug = 1;
+static int torrent_debug = 0;
 
 hts_cond_t torrent_piece_hash_needed_cond;
 hts_cond_t torrent_piece_io_needed_cond;
@@ -909,7 +909,7 @@ find_any_peer(torrent_t *to, const torrent_piece_t *tp)
 }
 
 
-#if 1
+#if 0
 static const char *
 block_name(const torrent_block_t *tb)
 {
@@ -1047,11 +1047,13 @@ check_active_requests(torrent_t *to, torrent_piece_t *tp,
     if(p == NULL)
       continue;
 
+#if 0
     if(0)
     printf("Block %s: Added dup request on peer %s bd:%d "
 	   "computed ETA:%ld delay:%ld\n",
 	   block_name(tb), p->p_name, p->p_block_delay,
 	   eta - async_now, delay);
+#endif
 
     add_request(tb, p);
 

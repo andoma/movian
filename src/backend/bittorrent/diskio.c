@@ -18,6 +18,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <netinet/in.h>
+#include <limits.h>
 
 #include "showtime.h"
 #include "navigator.h"
@@ -30,7 +31,7 @@
 #include "bencode.h"
 
 static int torrent_write_thread_running;
-static int diskio_debug = 1;
+static int diskio_debug = 0;
 
 
 static void

@@ -306,7 +306,7 @@ asyncio_dopoll(void)
                     (fds[i].revents & POLLIN  ? ASYNCIO_READ  : 0) |
                     (fds[i].revents & POLLOUT ? ASYNCIO_WRITE : 0), 0);
 
-    if(1) {
+    if(0) {
       int64_t now = showtime_get_ts();
 
       if(now - async_now > 10000) {
