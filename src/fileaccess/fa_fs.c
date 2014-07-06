@@ -778,6 +778,31 @@ fs_fsinfo(struct fa_protocol *fap, const char *url, fa_fsinfo_t *ffi)
   return 0;
 }
 
+#elif defined(__PPU__)
+
+#include <psl1ght/lv2.h>
+
+static fa_err_code_t
+fs_fsinfo(struct fa_protocol *fap, const char *url, fa_fsinfo_t *ffi)
+{
+  const char *path = "/dev_hdd0/game/HTSS00003/";
+
+  if(mystrbegins(url, "/dev_hdd0/game/HTSS00003/") == NULL)
+    return FAP_NOT_SUPPORTED;
+
+  int r = Lv2Syscall3(840,
+                      (uint64_t)path,
+                      (uint64_t)&ffi->ffi_size,
+                      (uint64_t)&ffi->ffi_avail);
+
+  return r ? FAP_ERROR : 0;
+}
+
+
+#else
+#error Not sure how to do fs_fsinfo()
+#endif
+
 
 static int
 fs_ftruncate(fa_handle_t *fh0, uint64_t newsize)
@@ -788,7 +813,6 @@ fs_ftruncate(fa_handle_t *fh0, uint64_t newsize)
   return FAP_ERROR;
 }
 
-#endif
 
 fa_protocol_t fa_protocol_fs = {
   .fap_name = "file",
@@ -820,10 +844,8 @@ fa_protocol_t fa_protocol_fs = {
   .fap_get_xattr = fs_get_xattr,
 #endif
 
-#if defined(__APPLE__) || defined(__linux__)
   .fap_fsinfo = fs_fsinfo,
   .fap_ftruncate = fs_ftruncate,
-#endif
 
 };
 
