@@ -288,7 +288,7 @@ torrent_movie_open(prop_t *page, const char *url0, int sync)
   // Create videoparams message
 
   htsmsg_t *vp = htsmsg_create_map();
-  snprintf(url, sizeof(url), "torrent:movie:%s", hashstr);
+  snprintf(url, sizeof(url), "torrent:video:%s", hashstr);
   htsmsg_add_str(vp, "canonicalUrl", url);
 
   htsmsg_add_str(vp, "title", to->to_title);
@@ -368,7 +368,7 @@ bt_open(prop_t *page, const char *url, int sync)
 {
   const char *u;
 
-  if((u = mystrbegins(url, "torrent:movie:")) != NULL) {
+  if((u = mystrbegins(url, "torrent:video:")) != NULL) {
     return torrent_movie_open(page, u, sync);
   }
 
