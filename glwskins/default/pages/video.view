@@ -25,6 +25,7 @@ $self.directClose = 1;
 $self.close = $self.media.playstatus == "stop";
 
 $self.model.loading = $self.media.loading;
+$self.model.io = $self.media.io;
 
 $view.statsAlpha = iir($self.media.stats, 8);
 

@@ -23,7 +23,7 @@
 #include "backend/backend.h"
 #include "misc/str.h"
 #include "networking/http.h"
-
+#include "htsmsg/htsmsg_json.h"
 #include "fileaccess/fileaccess.h"
 
 #include "bittorrent.h"
@@ -268,7 +268,7 @@ torrent_movie_open(prop_t *page, const char *url0, int sync)
     return nav_open_errorf(page, _("Unable to parse torrent: %s"), errbuf);
   }
 
-  // Find biggest file and redirect to that
+  // Find biggest file and use that as movie source
 
   torrent_file_t *tf, *best = NULL;
   TAILQ_FOREACH(tf, &to->to_files, tf_torrent_link)
@@ -285,15 +285,35 @@ torrent_movie_open(prop_t *page, const char *url0, int sync)
   bin2hex(hashstr, sizeof(hashstr), to->to_info_hash, 20);
   hashstr[40] = 0;
 
+  // Create videoparams message
+
+  htsmsg_t *vp = htsmsg_create_map();
+  snprintf(url, sizeof(url), "torrent:movie:%s", hashstr);
+  htsmsg_add_str(vp, "canonicalUrl", url);
+
+  htsmsg_add_str(vp, "title", to->to_title);
+
+
   snprintf(url, sizeof(url), "torrentfile://%s/%s",
            hashstr, best->tf_fullpath);
 
-  prop_t *eventsink = prop_create_r(page, "eventSink");
-  event_t *e = event_create_str(EVENT_REDIRECT, url);
-  prop_send_ext_event(eventsink, e);
-  event_release(e);
-  prop_ref_dec(eventsink);
+  htsmsg_t *src = htsmsg_create_map();
+  htsmsg_add_str(src, "url", url);
 
+
+  htsmsg_t *sources = htsmsg_create_list();
+  htsmsg_add_msg(sources, NULL, src);
+  htsmsg_add_msg(vp, "sources", sources);
+
+
+  prop_set(page, "directClose", PROP_SET_INT, 1);
+
+  rstr_t *rstr = htsmsg_json_serialize_to_rstr(vp, "videoparams:");
+  prop_set(page, "source", PROP_ADOPT_RSTRING, rstr);
+
+  prop_t *m = prop_create_r(page, "model");
+  prop_set(m, "type", PROP_SET_STRING, "video");
+  prop_ref_dec(m);
 
   torrent_release_on_prop_destroy(page, to);
   hts_mutex_unlock(&bittorrent_mutex);
