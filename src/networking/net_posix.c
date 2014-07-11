@@ -241,6 +241,7 @@ tcp_connect_arch(const char *hostname, int port,
   struct sockaddr_in *in;
   struct sockaddr_in6 *in6;
   socklen_t errlen = sizeof(int);
+  socklen_t slen;
 
   memset(&ss, 0, sizeof(struct sockaddr_storage));
 
@@ -251,7 +252,7 @@ tcp_connect_arch(const char *hostname, int port,
     in->sin_family = AF_INET;
     in->sin_port = htons(port);
     in->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-
+    slen = sizeof(struct sockaddr_in);
   } else {
 
     net_addr_t addr;
@@ -268,6 +269,7 @@ tcp_connect_arch(const char *hostname, int port,
       in->sin_family = AF_INET;
       in->sin_port = htons(port);
       memcpy(&in->sin_addr, addr.na_addr, sizeof(struct in_addr));
+      slen = sizeof(struct sockaddr_in);
       break;
 
     case AF_INET6:
@@ -275,6 +277,7 @@ tcp_connect_arch(const char *hostname, int port,
       in6->sin6_family = AF_INET6;
       in6->sin6_port = htons(port);
       memcpy(&in6->sin6_addr, addr.na_addr, sizeof(struct in6_addr));
+      slen = sizeof(struct sockaddr_in6);
       break;
 
     default:
@@ -286,8 +289,7 @@ tcp_connect_arch(const char *hostname, int port,
   if((fd = getstreamsocket(ss.ss_family, errbuf, errbufsize)) == -1)
     return NULL;
 
-  r = connect(fd, (struct sockaddr *)&ss, sizeof(struct sockaddr_storage));
-
+  r = connect(fd, (struct sockaddr *)&ss, slen);
 
   tcpcon_t *tc = calloc(1, sizeof(tcpcon_t));
   tc->fd = fd;
