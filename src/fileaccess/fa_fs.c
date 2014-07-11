@@ -764,7 +764,12 @@ fs_get_xattr(struct fa_protocol *fap, const char *url,
 
 #if defined(__APPLE__) || defined(__linux__)
 
+#if defined(__APPLE__)
+#include <sys/param.h>
+#include <sys/mount.h>
+#else
 #include <sys/vfs.h>
+#endif
 
 static fa_err_code_t
 fs_fsinfo(struct fa_protocol *fap, const char *url, fa_fsinfo_t *ffi)
