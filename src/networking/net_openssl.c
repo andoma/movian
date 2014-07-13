@@ -73,21 +73,18 @@ tcp_ssl_open(tcpcon_t *tc, char *errbuf, size_t errlen)
   if((tc->ssl = SSL_new(showtime_ssl_ctx)) == NULL) {
     ERR_error_string(ERR_get_error(), errmsg);
     snprintf(errbuf, errlen, "SSL: %s", errmsg);
-    tcp_close(tc);
     return -1;
   }
 
   if(SSL_set_fd(tc->ssl, tc->fd) == 0) {
     ERR_error_string(ERR_get_error(), errmsg);
     snprintf(errbuf, errlen, "SSL fd: %s", errmsg);
-    tcp_close(tc);
     return -1;
   }
 
   if(SSL_connect(tc->ssl) <= 0) {
     ERR_error_string(ERR_get_error(), errmsg);
     snprintf(errbuf, errlen, "SSL connect: %s", errmsg);
-    tcp_close(tc);
     return -1;
   }
 
