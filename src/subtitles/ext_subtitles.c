@@ -326,7 +326,7 @@ load_ttml(const char *url, buf_t *buf)
     TRACE(TRACE_INFO, "Subtitles", "Unable to load TTML: %s", errbuf);
     return NULL;
   }
-  htsmsg_print(xml);
+
   subs = htsmsg_get_map_multi(xml, "tt", "body", "div", NULL);
 
   if(subs == NULL) {
