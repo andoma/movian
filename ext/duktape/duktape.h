@@ -1,14 +1,93 @@
 /*
- *  Duktape public API for Duktape 0.10.99.
+ *  Duktape public API for Duktape 0.11.99.
  *  See the API reference for documentation on call semantics.
  *  The exposed API is inside the DUK_API_PUBLIC_H_INCLUDED
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 41366e70e1b2c85782ff611fe6ab5bf0f61685b6 (v0.10.0-328-g41366e7).
+ *  Git commit 4411a3984875f95f94da999d5ac059b650b0dfb8 (v0.11.0-23-g4411a39).
  *
  *  See Duktape AUTHORS.txt and LICENSE.txt for copyright and
  *  licensing information.
+ */
+
+/* LICENSE.txt */
+/*
+ *  ===============
+ *  Duktape license
+ *  ===============
+ *  
+ *  (http://opensource.org/licenses/MIT)
+ *  
+ *  Copyright (c) 2013-2014 by Duktape authors (see AUTHORS.txt)
+ *  
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *  THE SOFTWARE.
+ *  
+ */
+
+/* AUTHORS.txt */
+/*
+ *  ===============
+ *  Duktape authors
+ *  ===============
+ *  
+ *  Copyright
+ *  =========
+ *  
+ *  Duktape copyrights are held by its authors.  Each author has a copyright
+ *  to their contribution, and agrees to irrevocably license the contribution
+ *  under the Duktape ``LICENSE.txt``.
+ *  
+ *  Authors
+ *  =======
+ *  
+ *  Please include an e-mail address, a link to your GitHub profile, or something
+ *  similar to allow your contribution to be identified accurately.
+ *  
+ *  The following people have contributed code and agreed to irrevocably license
+ *  their contributions under the Duktape ``LICENSE.txt`` (in order of appearance):
+ *  
+ *  * Sami Vaarala <sami.vaarala@iki.fi>
+ *  * Niki Dobrev
+ *  * Andreas \u00d6man <andreas@lonelycoder.com>
+ *  
+ *  Other contributions
+ *  ===================
+ *  
+ *  The following people have contributed something other than code (e.g. reported
+ *  bugs, provided ideas, etc; in order of appearance):
+ *  
+ *  * Greg Burns
+ *  * Anthony Rabine
+ *  * Carlos Costa
+ *  * Aur\u00e9lien Bouilland
+ *  * Preet Desai (Pris Matic)
+ *  * judofyr (http://www.reddit.com/user/judofyr)
+ *  * Jason Woofenden
+ *  * Micha\u0142 Przyby\u015b
+ *  * Anthony Howe
+ *  * Conrad Pankoff
+ *  * Jim Schimpf
+ *  * Rajaran Gaunker (https://github.com/zimbabao)
+ *  * Andreas \u00d6man
+ *  * Doug Sanden
+ *  * Remo Eichenberger (https://github.com/remoe)
  */
 
 #ifndef DUKTAPE_H_INCLUDED
@@ -40,8 +119,8 @@
  *    - Duktape Date provider settings
  *    - Final sanity checks
  *
- *  DUK_F_XXX are internal feature detection macros which should not
- *  be used outside this header.
+ *  DUK_F_XXX are internal feature detection macros which should not be
+ *  used outside this header.
  *
  *  Useful resources:
  *
@@ -78,7 +157,8 @@
 #endif
 
 /*
- *  Provides the duk_rdtsc() inline function (if available)
+ *  Provides the duk_rdtsc() inline function (if available), limited to
+ *  GCC C99.
  *
  *  See: http://www.mcs.anl.gov/~kazutomo/rdtsc.html
  */
@@ -86,7 +166,7 @@
 /* XXX: more accurate detection of what gcc versions work; more inline
  * asm versions for other compilers.
  */
-#if defined(__GNUC__) && defined(__i386__) && \
+#if defined(__GNUC__) && defined(__i386__) && defined(DUK_F_C99) && \
     !defined(__cplusplus) /* unsigned long long not standard */
 static __inline__ unsigned long long duk_rdtsc(void) {
 	unsigned long long int x;
@@ -94,7 +174,7 @@ static __inline__ unsigned long long duk_rdtsc(void) {
 	return x;
 }
 #define DUK_RDTSC_AVAILABLE 1
-#elif defined(__GNUC__) && defined(__x86_64__) && \
+#elif defined(__GNUC__) && defined(__x86_64__) && defined(DUK_F_C99) && \
     !defined(__cplusplus) /* unsigned long long not standard */
 static __inline__ unsigned long long duk_rdtsc(void) {
 	unsigned hi, lo;
@@ -252,6 +332,10 @@ static __inline__ unsigned long long duk_rdtsc(void) {
 
 /* MSVC */
 #if defined(_MSC_VER)
+/* MSVC preprocessor defines: http://msdn.microsoft.com/en-us/library/b0084kay.aspx
+ * _MSC_FULL_VER includes the build number, but it has at least two formats, see e.g.
+ * BOOST_MSVC_FULL_VER in http://www.boost.org/doc/libs/1_52_0/boost/config/compiler/visualc.hpp
+ */
 #define DUK_F_MSVC
 #endif
 
@@ -269,11 +353,14 @@ static __inline__ unsigned long long duk_rdtsc(void) {
 #define DUK_F_VBCC
 #endif
 
-#if defined(DUK_F_BCC)
-/* Preprocessor does not understand ULL constants (12345ULL) so we can't
- * evaluate any expressions with them (e.g. BCC).
+#if (defined(DUK_F_C99) || defined(DUK_F_CPP11)) && \
+    !defined(DUK_F_BCC)
+/* ULL / LL preprocessor constants should be avoided because they're not
+ * always available.  With suitable options, some compilers will support
+ * 64-bit integer types but won't support ULL / LL preprocessor constants.
+ * Assume C99/C++11 environments have these.  However, BCC is nominally
+ * C99 but doesn't support these constants.
  */
-#else
 #define DUK_F_ULL_CONSTS
 #endif
 
@@ -311,7 +398,11 @@ static __inline__ unsigned long long duk_rdtsc(void) {
  *  (rather than muck with Duktape internals).
  */
 
-#if defined(DUK_F_LINUX) && defined(DUK_COMPILING_DUKTAPE)
+#if defined(DUK_COMPILING_DUKTAPE) && \
+ (defined(DUK_F_LINUX) || defined(DUK_F_EMSCRIPTEN))
+/* A more recent Emscripten (2014-05) seems to lack "linux" environment
+ * defines, so check for Emscripten explicitly.
+ */
 #ifndef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE  200809L
 #endif
@@ -327,6 +418,35 @@ static __inline__ unsigned long long duk_rdtsc(void) {
 /* See: /opt/qnx650/target/qnx6/usr/include/sys/platform.h */
 #define _XOPEN_SOURCE    600
 #define _POSIX_C_SOURCE  200112L
+#endif
+
+#undef DUK_F_MSVC_CRT_SECURE
+#if defined(DUK_F_WINDOWS) && defined(_MSC_VER)
+/* http://msdn.microsoft.com/en-us/library/8ef0s5kh.aspx
+ * http://msdn.microsoft.com/en-us/library/wd3wzwts.aspx
+ * Seem to be available since VS2005.
+ */
+#if (_MSC_VER >= 1400)
+/* VS2005+, secure CRT functions are preferred.  Windows Store applications
+ * (and probably others) should use these.
+ */
+#define DUK_F_MSVC_CRT_SECURE
+#endif
+#if (_MSC_VER < 1700)
+/* VS2012+ has stdint.h, < VS2012 does not (but it's available for download). */
+#define DUK_F_NO_STDINT_H
+#endif
+/* Initial fix: disable secure CRT related warnings when compiling Duktape
+ * itself (must be defined before including Windows headers).  Don't define
+ * for user code including duktape.h.
+ */
+#if defined(DUK_COMPILING_DUKTAPE) && !defined(_CRT_SECURE_NO_WARNINGS)
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+#endif  /* DUK_F_WINDOWS && _MSC_VER */
+
+#if defined(DUK_F_TOS) || defined(DUK_F_BCC)
+#define DUK_F_NO_STDINT_H
 #endif
 
 #if defined(__APPLE__)
@@ -479,7 +599,7 @@ static __inline__ unsigned long long duk_rdtsc(void) {
 #include <stdarg.h>  /* varargs */
 #include <setjmp.h>
 #include <stddef.h>  /* e.g. ptrdiff_t */
-#if defined(DUK_F_TOS) || defined(DUK_F_BCC)
+#if defined(DUK_F_NO_STDINT_H)
 /* stdint.h not available */
 #else
 /* technically C99 (C++11) but found in many systems */
@@ -488,8 +608,8 @@ static __inline__ unsigned long long duk_rdtsc(void) {
 #include <math.h>
 
 /*
- *  Detection for specific libc variants (like uclibc), depends on the
- *  #includes above.
+ *  Detection for specific libc variants (like uclibc) and other libc specific
+ *  features.  Potentially depends on the #includes above.
  */
 
 #if defined(__UCLIBC__)
@@ -501,18 +621,20 @@ static __inline__ unsigned long long duk_rdtsc(void) {
  *
  *  C99 typedefs are quite good but not always available, and we want to avoid
  *  forcibly redefining the C99 typedefs.  So, there are Duktape wrappers for
- *  all C99 typedefs and Duktape code should only use these typedefs.  The
- *  Duktape public API is problematic from type detection perspective and must
- *  be taken into account here.
- *
- *  Type detection when C99 is not supported is best effort and may end up
- *  detecting some types incorrectly.
+ *  all C99 typedefs and Duktape code should only use these typedefs.  Type
+ *  detection when C99 is not supported is best effort and may end up detecting
+ *  some types incorrectly.
  *
  *  Pointer sizes are a portability problem: pointers to different types may
  *  have a different size and function pointers are very difficult to manage
  *  portably.
  *
  *  http://en.wikipedia.org/wiki/C_data_types#Fixed-width_integer_types
+ *
+ *  Note: there's an interesting corner case when trying to define minimum
+ *  signed integer value constants which leads to the current workaround of
+ *  defining e.g. -0x80000000 as (-0x7fffffffL - 1L).  See doc/code-issues.txt
+ *  for a longer discussion.
  *
  *  Note: avoid typecasts and computations in macro integer constants as they
  *  can then no longer be used in macro relational expressions (such as
@@ -522,15 +644,7 @@ static __inline__ unsigned long long duk_rdtsc(void) {
 
 /* FIXME: add feature options to force basic types from outside? */
 
-/* FIXME: this assumption must be in place until no 'int' variables are
- * used anywhere, including the public Duktape API.  Also all printf()
- * format characters need to be changed.
- */
-#if defined(INT_MAX)
-#if INT_MAX < 2147483647L
-#error INT_MAX too small, expected int to be 32 bits at least
-#endif
-#else
+#if !defined(INT_MAX)
 #error INT_MAX not defined
 #endif
 
@@ -655,14 +769,17 @@ typedef intmax_t duk_intmax_t;
 #define DUK_UINT_FAST64_MAX   UINT_FAST64_MAX
 #define DUK_INT_FAST64_MIN    INT_FAST64_MIN
 #define DUK_INT_FAST64_MAX    INT_FAST64_MAX
+
 #define DUK_UINTPTR_MIN       0
 #define DUK_UINTPTR_MAX       UINTPTR_MAX
 #define DUK_INTPTR_MIN        INTPTR_MIN
 #define DUK_INTPTR_MAX        INTPTR_MAX
+
 #define DUK_UINTMAX_MIN       0
 #define DUK_UINTMAX_MAX       UINTMAX_MAX
 #define DUK_INTMAX_MIN        INTMAX_MIN
 #define DUK_INTMAX_MAX        INTMAX_MAX
+
 #define DUK_SIZE_MIN          0
 #define DUK_SIZE_MAX          SIZE_MAX
 
@@ -709,31 +826,58 @@ typedef signed long duk_int32_t;
 #error cannot detect 32-bit type
 #endif
 
+/* 64-bit type detection is a bit tricky.
+ *
+ * ULLONG_MAX is a standard define.  __LONG_LONG_MAX__ and __ULONG_LONG_MAX__
+ * are used by at least GCC (even if system headers don't provide ULLONG_MAX).
+ * Some GCC variants may provide __LONG_LONG_MAX__ but not __ULONG_LONG_MAX__.
+ *
+ * ULL / LL constants are rejected / warned about by some compilers, even if
+ * the compiler has a 64-bit type and the compiler/system headers provide an
+ * unsupported constant (ULL/LL)!  Try to avoid using ULL / LL constants.
+ * As a side effect we can only check that e.g. ULONG_MAX is larger than 32
+ * bits but can't be sure it is exactly 64 bits.  Self tests will catch such
+ * cases.
+ */
 #undef DUK_F_HAVE_64BIT
-#if defined(DUK_F_ULL_CONSTS)
-#if defined(ULONG_MAX) && (ULONG_MAX == 18446744073709551615ULL)
+#if !defined(DUK_F_HAVE_64BIT) && defined(ULONG_MAX)
+#if (ULONG_MAX > 4294967295UL)
 #define DUK_F_HAVE_64BIT
 typedef unsigned long duk_uint64_t;
 typedef signed long duk_int64_t;
-#elif defined(ULLONG_MAX) && (ULLONG_MAX == 18446744073709551615ULL) || \
-      defined(__ULONG_LONG_MAX__) && (__ULONG_LONG_MAX__ == 18446744073709551615ULL) || \
-      defined(__LONG_LONG_MAX__) && (__LONG_LONG_MAX__ == 9223372036854775807LL)
-/* ULLONG_MAX is a standard define.  __LONG_LONG_MAX__ and __ULONG_LONG_MAX__
- * are used by at least GCC (even if system headers don't provide ULLONG_MAX).
- * Some GCC variants may provide __LONG_LONG_MAX__ but not __ULONG_LONG_MAX__.
- */
+#endif
+#endif
+#if !defined(DUK_F_HAVE_64BIT) && defined(ULLONG_MAX)
+#if (ULLONG_MAX > 4294967295UL)
 #define DUK_F_HAVE_64BIT
 typedef unsigned long long duk_uint64_t;
 typedef signed long long duk_int64_t;
-#elif defined(DUK_F_MINGW) || defined(DUK_F_MSVC)
+#endif
+#endif
+#if !defined(DUK_F_HAVE_64BIT) && defined(__ULONG_LONG_MAX__)
+#if (__ULONG_LONG_MAX__ > 4294967295UL)
+#define DUK_F_HAVE_64BIT
+typedef unsigned long long duk_uint64_t;
+typedef signed long long duk_int64_t;
+#endif
+#endif
+#if !defined(DUK_F_HAVE_64BIT) && defined(__LONG_LONG_MAX__)
+#if (__LONG_LONG_MAX__ > 2147483647L)
+#define DUK_F_HAVE_64BIT
+typedef unsigned long long duk_uint64_t;
+typedef signed long long duk_int64_t;
+#endif
+#endif
+#if !defined(DUK_F_HAVE_64BIT) && \
+    (defined(DUK_F_MINGW) || defined(DUK_F_MSVC))
 /* Both MinGW and MSVC have a 64-bit type. */
 #define DUK_F_HAVE_64BIT
 typedef unsigned long duk_uint64_t;
 typedef signed long duk_int64_t;
-#else
+#endif
+#if !defined(DUK_F_HAVE64BIT)
 /* cannot detect 64-bit type, not always needed so don't error */
 #endif
-#endif  /* DUK_F_ULL_CONSTS */
 
 typedef duk_uint8_t duk_uint_least8_t;
 typedef duk_int8_t duk_int_least8_t;
@@ -748,24 +892,23 @@ typedef duk_int16_t duk_int_fast16_t;
 typedef duk_uint32_t duk_uint_fast32_t;
 typedef duk_int32_t duk_int_fast32_t;
 #if defined(DUK_F_HAVE_64BIT)
-typedef duk_int64_t duk_intmax_t;
+typedef duk_uint64_t duk_uint_least64_t;
+typedef duk_int64_t duk_int_least64_t;
+typedef duk_uint64_t duk_uint_fast64_t;
+typedef duk_int64_t duk_int_fast64_t;
+#endif
+#if defined(DUK_F_HAVE_64BIT)
 typedef duk_uint64_t duk_uintmax_t;
+typedef duk_int64_t duk_intmax_t;
 #else
-typedef duk_int32_t duk_intmax_t;
 typedef duk_uint32_t duk_uintmax_t;
+typedef duk_int32_t duk_intmax_t;
 #endif
 
-/* This detection is not very reliable. */
-#if defined(DUK_F_32BIT_PTRS)
-typedef duk_int32_t duk_intptr_t;
-typedef duk_uint32_t duk_uintptr_t;
-#elif defined(DUK_F_64BIT_PTRS) && defined(DUK_F_HAVE_64BIT)
-typedef duk_int64_t duk_intptr_t;
-typedef duk_uint64_t duk_uintptr_t;
-#else
-#error cannot determine intptr type
-#endif
-
+/* Note: the funny looking computations for signed minimum 16-bit, 32-bit, and
+ * 64-bit values are intentional as the obvious forms (e.g. -0x80000000L) are
+ * -not- portable.  See code-issues.txt for a detailed discussion.
+ */
 #define DUK_UINT8_MIN         0UL
 #define DUK_UINT8_MAX         0xffUL
 #define DUK_INT8_MIN          (-0x80L)
@@ -780,50 +923,98 @@ typedef duk_uint64_t duk_uintptr_t;
 #define DUK_INT_FAST8_MAX     0x7fL
 #define DUK_UINT16_MIN        0UL
 #define DUK_UINT16_MAX        0xffffUL
-#define DUK_INT16_MIN         (-0x8000L)
+#define DUK_INT16_MIN         (-0x7fffL - 1L)
 #define DUK_INT16_MAX         0x7fffL
 #define DUK_UINT_LEAST16_MIN  0UL
 #define DUK_UINT_LEAST16_MAX  0xffffUL
-#define DUK_INT_LEAST16_MIN   (-0x8000L)
+#define DUK_INT_LEAST16_MIN   (-0x7fffL - 1L)
 #define DUK_INT_LEAST16_MAX   0x7fffL
 #define DUK_UINT_FAST16_MIN   0UL
 #define DUK_UINT_FAST16_MAX   0xffffUL
-#define DUK_INT_FAST16_MIN    (-0x8000L)
+#define DUK_INT_FAST16_MIN    (-0x7fffL - 1L)
 #define DUK_INT_FAST16_MAX    0x7fffL
 #define DUK_UINT32_MIN        0UL
 #define DUK_UINT32_MAX        0xffffffffUL
-#define DUK_INT32_MIN         (-0x80000000L)
+#define DUK_INT32_MIN         (-0x7fffffffL - 1L)
 #define DUK_INT32_MAX         0x7fffffffL
 #define DUK_UINT_LEAST32_MIN  0UL
 #define DUK_UINT_LEAST32_MAX  0xffffffffUL
-#define DUK_INT_LEAST32_MIN   (-0x80000000L)
+#define DUK_INT_LEAST32_MIN   (-0x7fffffffL - 1L)
 #define DUK_INT_LEAST32_MAX   0x7fffffffL
 #define DUK_UINT_FAST32_MIN   0UL
 #define DUK_UINT_FAST32_MAX   0xffffffffUL
-#define DUK_INT_FAST32_MIN    (-0x80000000L)
+#define DUK_INT_FAST32_MIN    (-0x7fffffffL - 1L)
 #define DUK_INT_FAST32_MAX    0x7fffffffL
+
+/* 64-bit constants.  Since LL / ULL constants are not always available,
+ * use computed values.  These values can't be used in preprocessor
+ * comparisons; flag them as such.
+ */
 #if defined(DUK_F_HAVE_64BIT)
-#define DUK_UINT64_MIN        0ULL
-#define DUK_UINT64_MAX        0xffffffffffffffffULL
-#define DUK_INT64_MIN         (-0x8000000000000000LL)
-#define DUK_INT64_MAX         0x7fffffffffffffffULL
-#define DUK_UINT_LEAST64_MIN  0ULL
-#define DUK_UINT_LEAST64_MAX  0xffffffffffffffffULL
-#define DUK_INT_LEAST64_MIN   (-0x8000000000000000LL)
-#define DUK_INT_LEAST64_MAX   0x7fffffffffffffffULL
-#define DUK_UINT_FAST64_MIN   0ULL
-#define DUK_UINT_FAST64_MAX   0xffffffffffffffffULL
-#define DUK_INT_FAST64_MIN    (-0x8000000000000000LL)
-#define DUK_INT_FAST64_MAX    0x7fffffffffffffffULL
+#define DUK_UINT64_MIN        ((duk_uint64_t) 0)
+#define DUK_UINT64_MAX        ((duk_uint64_t) -1)
+#define DUK_INT64_MIN         ((duk_int64_t) (~(DUK_UINT64_MAX >> 1)))
+#define DUK_INT64_MAX         ((duk_int64_t) (DUK_UINT64_MAX >> 1))
+#define DUK_UINT_LEAST64_MIN  DUK_UINT64_MIN
+#define DUK_UINT_LEAST64_MAX  DUK_UINT64_MAX
+#define DUK_INT_LEAST64_MIN   DUK_INT64_MIN
+#define DUK_INT_LEAST64_MAX   DUK_INT64_MAX
+#define DUK_UINT_FAST64_MIN   DUK_UINT64_MIN
+#define DUK_UINT_FAST64_MAX   DUK_UINT64_MAX
+#define DUK_INT_FAST64_MIN    DUK_INT64_MIN
+#define DUK_INT_FAST64_MAX    DUK_INT64_MAX
+#define DUK_UINT64_MIN_COMPUTED
+#define DUK_UINT64_MAX_COMPUTED
+#define DUK_INT64_MIN_COMPUTED
+#define DUK_INT64_MAX_COMPUTED
+#define DUK_UINT_LEAST64_MIN_COMPUTED
+#define DUK_UINT_LEAST64_MAX_COMPUTED
+#define DUK_INT_LEAST64_MIN_COMPUTED
+#define DUK_INT_LEAST64_MAX_COMPUTED
+#define DUK_UINT_FAST64_MIN_COMPUTED
+#define DUK_UINT_FAST64_MAX_COMPUTED
+#define DUK_INT_FAST64_MIN_COMPUTED
+#define DUK_INT_FAST64_MAX_COMPUTED
 #endif
-#define DUK_UINTPTR_MIN       0UL
-#define DUK_UINTPTR_MAX       0xffffffffUL
-#define DUK_INTPTR_MIN        (-0x80000000L)
-#define DUK_INTPTR_MAX        0x7fffffffL
+
+#if defined(DUK_F_HAVE_64BIT)
+#define DUK_UINTMAX_MIN       DUK_UINT64_MIN
+#define DUK_UINTMAX_MAX       DUK_UINT64_MAX
+#define DUK_INTMAX_MIN        DUK_INT64_MIN
+#define DUK_INTMAX_MAX        DUK_INT64_MAX
+#define DUK_UINTMAX_MIN_COMPUTED
+#define DUK_UINTMAX_MAX_COMPUTED
+#define DUK_INTMAX_MIN_COMPUTED
+#define DUK_INTMAX_MAX_COMPUTED
+#else
 #define DUK_UINTMAX_MIN       0UL
 #define DUK_UINTMAX_MAX       0xffffffffUL
-#define DUK_INTMAX_MIN        (-0x80000000L)
+#define DUK_INTMAX_MIN        (-0x7fffffffL - 1L)
 #define DUK_INTMAX_MAX        0x7fffffffL
+#endif
+
+/* This detection is not very reliable. */
+#if defined(DUK_F_32BIT_PTRS)
+typedef duk_int32_t duk_intptr_t;
+typedef duk_uint32_t duk_uintptr_t;
+#define DUK_UINTPTR_MIN       DUK_UINT32_MIN
+#define DUK_UINTPTR_MAX       DUK_UINT32_MAX
+#define DUK_INTPTR_MIN        DUK_INT32_MIN
+#define DUK_INTPTR_MAX        DUK_INT32_MAX
+#elif defined(DUK_F_64BIT_PTRS) && defined(DUK_F_HAVE_64BIT)
+typedef duk_int64_t duk_intptr_t;
+typedef duk_uint64_t duk_uintptr_t;
+#define DUK_UINTPTR_MIN       DUK_UINT64_MIN
+#define DUK_UINTPTR_MAX       DUK_UINT64_MAX
+#define DUK_INTPTR_MIN        DUK_INT64_MIN
+#define DUK_INTPTR_MAX        DUK_INT64_MAX
+#define DUK_UINTPTR_MIN_COMPUTED
+#define DUK_UINTPTR_MAX_COMPUTED
+#define DUK_INTPTR_MIN_COMPUTED
+#define DUK_INTPTR_MAX_COMPUTED
+#else
+#error cannot determine intptr type
+#endif
 
 /* SIZE_MAX may be missing so use an approximate value for it. */
 #undef DUK_SIZE_MAX_COMPUTED
@@ -836,18 +1027,40 @@ typedef duk_uint64_t duk_uintptr_t;
 
 #endif  /* C99 types */
 
-/* size_t is assumed to always exist. */
+/* A few types are assumed to always exist. */
 typedef size_t duk_size_t;
+typedef ptrdiff_t duk_ptrdiff_t;
 
 /* The best type for an "all around int" in Duktape internals is "at least
- * 32 bit signed integer" which is fastest.  Same for unsigned type.
+ * 32 bit signed integer" which is most convenient.  Same for unsigned type.
+ * Prefer 'int' when large enough, as it is almost always a convenient type.
  */
+#if defined(UINT_MAX) && (UINT_MAX >= 0xffffffffUL)
+typedef int duk_int_t;
+typedef unsigned int duk_uint_t;
+#define DUK_INT_MIN           INT_MIN
+#define DUK_INT_MAX           INT_MAX
+#define DUK_UINT_MIN          0
+#define DUK_UINT_MAX          UINT_MAX
+#else
 typedef duk_int_fast32_t duk_int_t;
 typedef duk_uint_fast32_t duk_uint_t;
 #define DUK_INT_MIN           DUK_INT_FAST32_MIN
 #define DUK_INT_MAX           DUK_INT_FAST32_MAX
 #define DUK_UINT_MIN          DUK_UINT_FAST32_MIN
 #define DUK_UINT_MAX          DUK_UINT_FAST32_MAX
+#endif
+
+/* Same as 'duk_int_t' but guaranteed to be a 'fast' variant if this
+ * distinction matters for the CPU.  These types are used mainly in the
+ * executor where it might really matter.
+ */
+typedef duk_int_fast32_t duk_int_fast_t;
+typedef duk_uint_fast32_t duk_uint_fast_t;
+#define DUK_INT_FAST_MIN      DUK_INT_FAST32_MIN
+#define DUK_INT_FAST_MAX      DUK_INT_FAST32_MAX
+#define DUK_UINT_FAST_MIN     DUK_UINT_FAST32_MIN
+#define DUK_UINT_FAST_MAX     DUK_UINT_FAST32_MAX
 
 /* Small integers (16 bits or more) can fall back to the 'int' type, but
  * have a typedef so they are marked "small" explicitly.
@@ -859,11 +1072,47 @@ typedef unsigned int duk_small_uint_t;
 #define DUK_SMALL_UINT_MIN    0
 #define DUK_SMALL_UINT_MAX    UINT_MAX
 
+/* Fast variants of small integers, again for really fast paths like the
+ * executor.
+ */
+typedef duk_int_fast16_t duk_small_int_fast_t;
+typedef duk_uint_fast16_t duk_small_uint_fast_t;
+#define DUK_SMALL_INT_FAST_MIN    DUK_INT_FAST16_MIN
+#define DUK_SMALL_INT_FAST_MAX    DUK_INT_FAST16_MAX
+#define DUK_SMALL_UINT_FAST_MIN   DUK_UINT_FAST16_MIN
+#define DUK_SMALL_UINT_FAST_MAX   DUK_UINT_FAST16_MAX
+
 /* Boolean values are represented with the platform 'int'. */
 typedef duk_small_int_t duk_bool_t;
+#define DUK_BOOL_MIN              DUK_SMALL_INT_MIN
+#define DUK_BOOL_MAX              DUK_SMALL_INT_MAX
 
-/* Error codes are represented with platform int. */
-typedef duk_small_int_t duk_errcode_t;
+/* Index values must have at least 32-bit signed range. */
+typedef duk_int_t duk_idx_t;
+#define DUK_IDX_MIN               DUK_INT_MIN
+#define DUK_IDX_MAX               DUK_INT_MAX
+
+/* Array index values, could be exact 32 bits.
+ * Currently no need for signed duk_arridx_t.
+ */
+typedef duk_uint_t duk_uarridx_t;
+#define DUK_UARRIDX_MIN           DUK_UINT_MIN
+#define DUK_UARRIDX_MAX           DUK_UINT_MAX
+
+/* Duktape/C function return value, platform int is enough for now to
+ * represent 0, 1, or negative error code.  Must be compatible with
+ * assigning truth values (e.g. duk_ret_t rc = (foo == bar);).
+ */
+typedef duk_small_int_t duk_ret_t;
+#define DUK_RET_MIN               DUK_SMALL_INT_MIN
+#define DUK_RET_MAX               DUK_SMALL_INT_MAX
+
+/* Error codes are represented with platform int.  High bits are used
+ * for flags and such, so 32 bits are needed.
+ */
+typedef duk_int_t duk_errcode_t;
+#define DUK_ERRCODE_MIN           DUK_INT_MIN
+#define DUK_ERRCODE_MAX           DUK_INT_MAX
 
 /* Codepoint type.  Must be 32 bits or more because it is used also for
  * internal codepoints.  The type is signed because negative codepoints
@@ -872,8 +1121,12 @@ typedef duk_small_int_t duk_errcode_t;
  * ensure duk_uint32_t casts back and forth nicely.  Almost everything
  * else uses the signed one.
  */
-typedef duk_int32_t duk_codepoint_t;
-typedef duk_uint32_t duk_ucodepoint_t;
+typedef duk_int_t duk_codepoint_t;
+typedef duk_uint_t duk_ucodepoint_t;
+#define DUK_CODEPOINT_MIN         DUK_INT_MIN
+#define DUK_CODEPOINT_MAX         DUK_INT_MAX
+#define DUK_UCODEPOINT_MIN        DUK_UINT_MIN
+#define DUK_UCODEPOINT_MAX        DUK_UINT_MAX
 
 /* IEEE double typedef. */
 typedef double duk_double_t;
@@ -898,9 +1151,12 @@ typedef double duk_double_t;
  * footprint optimization target, and this define allows e.g. struct sizes
  * to be organized for compactness.
  */
+
 #undef DUK_USE_32BIT_PTRS
+#if defined(DUK_UINTPTR_MAX) && !defined(DUK_UINTPTR_MAX_COMPUTED)
 #if DUK_UINTPTR_MAX <= 0xffffffffUL
 #define DUK_USE_32BIT_PTRS
+#endif
 #endif
 
 /*
@@ -1209,26 +1465,50 @@ typedef double duk_double_t;
  *  Check whether or not a packed duk_tval representation is possible.
  *  What's basically required is that pointers are 32-bit values
  *  (sizeof(void *) == 4).  Best effort check, not always accurate.
+ *  If guess goes wrong, crashes may result; self tests also verify
+ *  the guess.
  */
 
 #undef DUK_USE_PACKED_TVAL_POSSIBLE
-#if defined(UINTPTR_MAX) && (UINTPTR_MAX <= 0xffffffffUL)
-/* strict C99 check */
+
+/* Strict C99 case: DUK_UINTPTR_MAX (= UINTPTR_MAX) should be very reliable */
+#if !defined(DUK_USE_PACKED_TVAL_POSSIBLE) && defined(DUK_F_HAVE_INTTYPES) && defined(DUK_UINTPTR_MAX)
+#if (DUK_UINTPTR_MAX <= 0xffffffffUL)
 #define DUK_USE_PACKED_TVAL_POSSIBLE
 #endif
+#endif
 
+/* Non-C99 case, still relying on DUK_UINTPTR_MAX, as long as it is not a computed value */
+#if !defined(DUK_USE_PACKED_TVAL_POSSIBLE) && defined(DUK_UINTPTR_MAX) && !defined(DUK_UINTPTR_MAX_COMPUTED)
+#if (DUK_UINTPTR_MAX <= 0xffffffffUL)
+#define DUK_USE_PACKED_TVAL_POSSIBLE
+#endif
+#endif
+
+/* DUK_SIZE_MAX (= SIZE_MAX) is often reliable */
 #if !defined(DUK_USE_PACKED_TVAL_POSSIBLE) && defined(DUK_SIZE_MAX) && !defined(DUK_SIZE_MAX_COMPUTED)
 #if DUK_SIZE_MAX <= 0xffffffffUL
 #define DUK_USE_PACKED_TVAL_POSSIBLE
 #endif
 #endif
 
+/* M68K: packed always possible */
 #if !defined(DUK_USE_PACKED_TVAL_POSSIBLE) && defined(DUK_F_M68K)
 #define DUK_USE_PACKED_TVAL_POSSIBLE
 #endif
 
-/* With Emscripten, force unpacked duk_tval just to be safe. */
-#if defined(DUK_F_EMSCRIPTEN) && defined(DUK_USE_PACKED_TVAL_POSSIBLE)
+/* With Emscripten, force unpacked duk_tval just to be safe, as it seems to
+ * break at least on Firefox (probably IEEE double arithmetic is not 100%
+ * supported, especially for NaNs).
+ */
+#if defined(DUK_USE_PACKED_TVAL_POSSIBLE) && defined(DUK_F_EMSCRIPTEN)
+#undef DUK_USE_PACKED_TVAL_POSSIBLE
+#endif
+
+/* Microsoft Visual Studio 2010 on x64 fails the above rules and tries to
+ * use a packed type.  Force unpacked on x64 in general.
+ */
+#if defined(DUK_USE_PACKED_TVAL_POSSIBLE) && defined(DUK_F_X64)
 #undef DUK_USE_PACKED_TVAL_POSSIBLE
 #endif
 
@@ -1429,6 +1709,29 @@ extern double duk_computed_nan;
  *  For instance, some platforms don't support zero-size memcpy correctly,
  *  some arcane uclibc versions have a buggy memcpy (but working memmove)
  *  and so on.  Such broken platforms can be dealt with here.
+ *
+ *  NOTE: ANSI C (various versions) and some implementations require that the
+ *  pointer arguments to memset(), memcpy(), and memmove() be valid values
+ *  even when byte size is 0 (even a NULL pointer is considered invalid in
+ *  this context).  Zero-size operations as such are allowed, as long as their
+ *  pointer arguments point to a valid memory area.  The DUK_MEMSET(),
+ *  DUK_MEMCPY(), and DUK_MEMMOVE() macros require this same behavior, i.e.:
+ *  (1) pointers must be valid and non-NULL, (2) zero size must otherwise be
+ *  allowed.  If these are not fulfilled, a macro wrapper is needed.
+ *
+ *    http://stackoverflow.com/questions/5243012/is-it-guaranteed-to-be-safe-to-perform-memcpy0-0-0
+ *    http://lists.cs.uiuc.edu/pipermail/llvmdev/2007-October/011065.html
+ *
+ *  Not sure what's the required behavior when a pointer points just past the
+ *  end of a buffer, which often happens in practice (e.g. zero size memmoves).
+ *  For example, if allocation size is 3, the following pointer would not
+ *  technically point to a valid memory byte:
+ *
+ *    <-- alloc -->
+ *    | 0 | 1 | 2 | .....
+ *                  ^-- p=3, points after last valid byte (2)
+ *
+ *  If this is a practical issue, wrappers are again needed.
  */
 
 typedef FILE duk_file;
@@ -1463,6 +1766,7 @@ typedef FILE duk_file;
 #define DUK_PRINTF       printf
 #define DUK_FPRINTF      fprintf
 #define DUK_SPRINTF      sprintf
+
 #if defined(DUK_F_MSVC)
 /* _snprintf() does NOT NUL terminate on truncation, but Duktape code never
  * assumes that.
@@ -1472,8 +1776,20 @@ typedef FILE duk_file;
 #else
 #define DUK_SNPRINTF     snprintf
 #endif
+
 #define DUK_VSPRINTF     vsprintf
+
+#if defined(DUK_F_MSVC)
+#if (_MSC_VER < 1600)
+/* Older MSVC version are missing vsnprintf() but have _vsnprintf(). */
+#define DUK_VSNPRINTF    _vsnprintf
+#else
 #define DUK_VSNPRINTF    vsnprintf
+#endif
+#else
+#define DUK_VSNPRINTF    vsnprintf
+#endif  /* DUK_F_MSVC */
+
 #define DUK_SSCANF       sscanf
 #define DUK_VSSCANF      vsscanf
 #define DUK_FOPEN        fopen
@@ -1487,6 +1803,19 @@ typedef FILE duk_file;
 
 #define DUK_MEMZERO(p,n) \
 	DUK_MEMSET((p), 0, (n))
+
+/*
+ *  Avoiding platform function pointers.
+ *
+ *  On some platforms built-in functions may be implemented as macros or
+ *  inline functions, so they can't be necessarily addressed by function
+ *  pointers.  This is certainly the case with some platform "polyfills"
+ *  which provide missing C99/C++11 functions through macros, and may be
+ *  the case with VS2013 (see GH-17).
+ */
+
+/* This is now the default: the cost in footprint is negligible. */
+#define DUK_USE_AVOID_PLATFORM_FUNCPTRS
 
 /*
  *  Vararg macro wrappers.  We need va_copy() which is defined in C99 / C++11,
@@ -1540,7 +1869,7 @@ typedef FILE duk_file;
  */
 
 #define DUK_CAUSE_SEGFAULT()  do { \
-		*((uint32_t *) NULL) = (uint32_t) 0xdeadbeefUL; \
+		*((duk_uint32_t *) NULL) = (duk_uint32_t) 0xdeadbeefUL; \
 	} while (0)
 
 /*
@@ -1799,6 +2128,16 @@ typedef FILE duk_file;
 #undef DUK_USE_INTERRUPT_COUNTER
 #endif
 
+/* For opcodes with indirect indices, check final index against stack size.
+ * This should not be necessary because the compiler is trusted, and we don't
+ * bound check non-indirect indices either.
+ */
+#undef DUK_USE_EXEC_INDIRECT_BOUND_CHECK
+#if defined(DUK_OPT_DEBUG) || defined(DUK_OPT_ASSERTIONS)
+/* Enabled with debug/assertions just so that any issues can be caught. */
+#define DUK_USE_EXEC_INDIRECT_BOUND_CHECK
+#endif
+
 /*
  *  Debug printing and assertion options
  */
@@ -1850,7 +2189,7 @@ typedef FILE duk_file;
 #if defined(DUK_OPT_DEBUG_BUFSIZE)
 #define DUK_USE_DEBUG_BUFSIZE  DUK_OPT_DEBUG_BUFSIZE
 #else
-#define DUK_USE_DEBUG_BUFSIZE  65536
+#define DUK_USE_DEBUG_BUFSIZE  65536L
 #endif
 
 /*
@@ -1893,6 +2232,9 @@ typedef FILE duk_file;
 #if defined(DUK_OPT_NO_SECTION_B)
 #undef DUK_USE_SECTION_B
 #endif
+
+/* Non-standard regexp parsing features. */
+#define DUK_USE_NONSTD_REGEXP_DOLLAR_ESCAPE
 
 /* Treat function statements (function declarations outside top level of
  * Program or FunctionBody) same as normal function declarations.  This is
@@ -1953,6 +2295,23 @@ typedef FILE duk_file;
 #define DUK_USE_NONSTD_FUNC_SOURCE_PROPERTY
 #endif
 
+/* CommonJS modules */
+#define DUK_USE_COMMONJS_MODULES
+#if defined(DUK_OPT_NO_COMMONJS_MODULES)
+#undef DUK_USE_COMMONJS_MODULES
+#endif
+
+/* Additional key argument to setter/getter calls when triggered by property
+ * accesses.
+ */
+
+#define DUK_USE_NONSTD_GETTER_KEY_ARGUMENT
+#define DUK_USE_NONSTD_SETTER_KEY_ARGUMENT
+#if defined(DUK_OPT_NO_NONSTD_ACCESSOR_KEY_ARGUMENT)
+#undef DUK_USE_NONSTD_GETTER_KEY_ARGUMENT
+#undef DUK_USE_NONSTD_SETTER_KEY_ARGUMENT
+#endif
+
 /*
  *  Tailcalls
  */
@@ -1979,6 +2338,20 @@ typedef FILE duk_file;
 #else
 #undef DUK_USE_DEEP_C_STACK
 #endif
+
+/*
+ *  Ecmascript compiler
+ */
+
+/* Ensure final bytecode never exceeds a certain byte size and never uses
+ * line numbers above a certain limit.  This ensures that there is no need
+ * to deal with unbounded ranges in e.g. pc2line data structures.  For now,
+ * limits are set so that signed 32-bit values can represent line number
+ * and byte offset with room to spare.
+ */
+#define DUK_USE_ESBC_LIMITS
+#define DUK_USE_ESBC_MAX_LINENUMBER  0x7fff0000L
+#define DUK_USE_ESBC_MAX_BYTES       0x7fff0000L
 
 /*
  *  User panic handler, panic exit behavior for default panic handler
@@ -2019,6 +2392,15 @@ typedef FILE duk_file;
 #undef DUK_USE_SELF_TESTS
 #if defined(DUK_OPT_SELF_TESTS)
 #define DUK_USE_SELF_TESTS
+#endif
+
+/* Double aliasing testcase fails when Emscripten-generated code is run
+ * on Firefox.  This is not fatal because it only affects packed duk_tval
+ * which we avoid with Emscripten.
+ */
+#undef DUK_USE_NO_DOUBLE_ALIASING_SELFTEST
+#if defined(DUK_F_EMSCRIPTEN)
+#define DUK_USE_NO_DOUBLE_ALIASING_SELFTEST
 #endif
 
 /*
@@ -2168,14 +2550,6 @@ extern "C" {
  *  in Duktape web documentation.
  */
 
-/* Index values must have at least 32-bit range. */
-typedef duk_int_t duk_idx_t;
-
-/* Duktape/C function return value, platform int is enough for now to
- * represent 0, 1, or negative error code.
- */
-typedef int duk_ret_t;
-
 struct duk_memory_functions;
 struct duk_function_list_entry;
 struct duk_number_list_entry;
@@ -2222,7 +2596,7 @@ struct duk_number_list_entry {
  * have 99 for patch level (e.g. 0.10.99 would be a development version
  * after 0.10.0 but before the next official release).
  */
-#define DUK_VERSION                       1099L
+#define DUK_VERSION                       1199L
 
 /* Used to represent invalid index; if caller uses this without checking,
  * this index will map to a non-existent stack entry.  Also used in some
@@ -2284,6 +2658,8 @@ struct duk_number_list_entry {
 #define DUK_COMPILE_STRICT                (1 << 2)    /* use strict (outer) context for program, eval, or function */
 #define DUK_COMPILE_SAFE                  (1 << 3)    /* (internal) catch compilation errors */
 #define DUK_COMPILE_NORESULT              (1 << 4)    /* (internal) omit eval result */
+#define DUK_COMPILE_NOSOURCE              (1 << 5)    /* (internal) no source string on stack */
+#define DUK_COMPILE_STRLEN                (1 << 6)    /* (internal) take strlen() of src_buffer (avoids double evaluation in macro) */
 
 /* Flags for duk_push_thread_raw() */
 #define DUK_THREAD_NEW_GLOBAL_ENV         (1 << 0)    /* create a new global environment */
@@ -2371,7 +2747,7 @@ void *duk_alloc(duk_context *ctx, duk_size_t size);
 void duk_free(duk_context *ctx, void *ptr);
 void *duk_realloc(duk_context *ctx, void *ptr, duk_size_t size);
 void duk_get_memory_functions(duk_context *ctx, duk_memory_functions *out_funcs);
-void duk_gc(duk_context *ctx, int flags);
+void duk_gc(duk_context *ctx, duk_uint_t flags);
 
 /*
  *  Error handling
@@ -2379,59 +2755,68 @@ void duk_gc(duk_context *ctx, int flags);
 
 DUK_API_NORETURN(void duk_throw(duk_context *ctx));
 
-DUK_API_NORETURN(void duk_error_raw(duk_context *ctx, int err_code, const char *filename, int line, const char *fmt, ...));
+DUK_API_NORETURN(void duk_error_raw(duk_context *ctx, duk_errcode_t err_code, const char *filename, duk_int_t line, const char *fmt, ...));
 #ifdef DUK_API_VARIADIC_MACROS
 #define duk_error(ctx,err_code,...)  \
-	duk_error_raw((ctx),(err_code),__FILE__,__LINE__,__VA_ARGS__)
+	duk_error_raw((ctx), (duk_errcode_t) (err_code), __FILE__, (duk_int_t) __LINE__, __VA_ARGS__)
 #else
-DUK_API_NORETURN(void duk_error_stash(duk_context *ctx, int err_code, const char *fmt, ...));
+DUK_API_NORETURN(void duk_error_stash(duk_context *ctx, duk_errcode_t err_code, const char *fmt, ...));
 #define duk_error  \
 	duk_api_global_filename = __FILE__, \
-	duk_api_global_line = __LINE__, \
+	duk_api_global_line = (duk_int_t) __LINE__, \
 	duk_error_stash  /* arguments follow */
 #endif
 
-DUK_API_NORETURN(void duk_fatal(duk_context *ctx, int err_code, const char *err_msg));
+DUK_API_NORETURN(void duk_fatal(duk_context *ctx, duk_errcode_t err_code, const char *err_msg));
 
 /*
  *  Other state related functions
  */
 
-int duk_is_strict_call(duk_context *ctx);
-int duk_is_constructor_call(duk_context *ctx);
-int duk_get_magic(duk_context *ctx);
+duk_bool_t duk_is_strict_call(duk_context *ctx);
+duk_bool_t duk_is_constructor_call(duk_context *ctx);
+duk_int_t duk_get_magic(duk_context *ctx);
 
 /*
  *  Stack management
  */
 
-int duk_normalize_index(duk_context *ctx, int index);
-int duk_require_normalize_index(duk_context *ctx, int index);
-int duk_is_valid_index(duk_context *ctx, int index);
-void duk_require_valid_index(duk_context *ctx, int index);
+duk_idx_t duk_normalize_index(duk_context *ctx, duk_idx_t index);
+duk_idx_t duk_require_normalize_index(duk_context *ctx, duk_idx_t index);
+duk_bool_t duk_is_valid_index(duk_context *ctx, duk_idx_t index);
+void duk_require_valid_index(duk_context *ctx, duk_idx_t index);
 
-int duk_get_top(duk_context *ctx);
-void duk_set_top(duk_context *ctx, int index);
-int duk_get_top_index(duk_context *ctx);
-int duk_require_top_index(duk_context *ctx);
+duk_idx_t duk_get_top(duk_context *ctx);
+void duk_set_top(duk_context *ctx, duk_idx_t index);
+duk_idx_t duk_get_top_index(duk_context *ctx);
+duk_idx_t duk_require_top_index(duk_context *ctx);
 
-int duk_check_stack(duk_context *ctx, unsigned int extra);
-void duk_require_stack(duk_context *ctx, unsigned int extra);
-int duk_check_stack_top(duk_context *ctx, unsigned int top);
-void duk_require_stack_top(duk_context *ctx, unsigned int top);
+/* Although extra/top could be an unsigned type here, using a signed type
+ * makes the API more robust to calling code calculation errors or corner
+ * cases (where caller might occasionally come up with negative values).
+ * Negative values are treated as zero, which is better than casting them
+ * to a large unsigned number.  (This principle is used elsewhere in the
+ * API too.)
+ */
+duk_bool_t duk_check_stack(duk_context *ctx, duk_idx_t extra);
+void duk_require_stack(duk_context *ctx, duk_idx_t extra);
+duk_bool_t duk_check_stack_top(duk_context *ctx, duk_idx_t top);
+void duk_require_stack_top(duk_context *ctx, duk_idx_t top);
 
 /*
  *  Stack manipulation (other than push/pop)
  */
 
-void duk_swap(duk_context *ctx, int index1, int index2);
-void duk_swap_top(duk_context *ctx, int index);
-void duk_dup(duk_context *ctx, int from_index);
+void duk_swap(duk_context *ctx, duk_idx_t index1, duk_idx_t index2);
+void duk_swap_top(duk_context *ctx, duk_idx_t index);
+void duk_dup(duk_context *ctx, duk_idx_t from_index);
 void duk_dup_top(duk_context *ctx);
-void duk_insert(duk_context *ctx, int to_index);
-void duk_replace(duk_context *ctx, int to_index);
-void duk_remove(duk_context *ctx, int index);
-void duk_xmove(duk_context *from_ctx, duk_context *to_ctx, unsigned int count);  /* FIXME: undocumented */
+void duk_insert(duk_context *ctx, duk_idx_t to_index);
+void duk_replace(duk_context *ctx, duk_idx_t to_index);
+void duk_copy(duk_context *ctx, duk_idx_t from_index, duk_idx_t to_index);
+void duk_remove(duk_context *ctx, duk_idx_t index);
+/* FIXME: undocumented */
+void duk_xmove(duk_context *from_ctx, duk_context *to_ctx, duk_idx_t count);
 
 /*
  *  Push operations
@@ -2444,12 +2829,13 @@ void duk_xmove(duk_context *from_ctx, duk_context *to_ctx, unsigned int count); 
 
 void duk_push_undefined(duk_context *ctx);
 void duk_push_null(duk_context *ctx);
-void duk_push_boolean(duk_context *ctx, int val);
+void duk_push_boolean(duk_context *ctx, duk_bool_t val);
 void duk_push_true(duk_context *ctx);
 void duk_push_false(duk_context *ctx);
-void duk_push_number(duk_context *ctx, double val);
+void duk_push_number(duk_context *ctx, duk_double_t val);
 void duk_push_nan(duk_context *ctx);
-void duk_push_int(duk_context *ctx, int val);
+void duk_push_int(duk_context *ctx, duk_int_t val);
+void duk_push_uint(duk_context *ctx, duk_uint_t val);
 const char *duk_push_string(duk_context *ctx, const char *str);
 const char *duk_push_string_file(duk_context *ctx, const char *path);
 const char *duk_push_lstring(duk_context *ctx, const char *str, duk_size_t len);
@@ -2465,10 +2851,10 @@ void duk_push_heap_stash(duk_context *ctx);
 void duk_push_global_stash(duk_context *ctx);
 void duk_push_thread_stash(duk_context *ctx, duk_context *target_ctx);
 
-int duk_push_object(duk_context *ctx);
-int duk_push_array(duk_context *ctx);
-int duk_push_c_function(duk_context *ctx, duk_c_function func, int nargs);
-int duk_push_thread_raw(duk_context *ctx, int flags);
+duk_idx_t duk_push_object(duk_context *ctx);
+duk_idx_t duk_push_array(duk_context *ctx);
+duk_idx_t duk_push_c_function(duk_context *ctx, duk_c_function func, duk_idx_t nargs);
+duk_idx_t duk_push_thread_raw(duk_context *ctx, duk_uint_t flags);
 
 #define duk_push_thread(ctx) \
 	duk_push_thread_raw((ctx), 0 /*flags*/)
@@ -2476,19 +2862,19 @@ int duk_push_thread_raw(duk_context *ctx, int flags);
 #define duk_push_thread_new_globalenv(ctx) \
 	duk_push_thread_raw((ctx), DUK_THREAD_NEW_GLOBAL_ENV /*flags*/)
 
-int duk_push_error_object_raw(duk_context *ctx, int err_code, const char *filename, int line, const char *fmt, ...);
+duk_idx_t duk_push_error_object_raw(duk_context *ctx, duk_errcode_t err_code, const char *filename, duk_int_t line, const char *fmt, ...);
 #ifdef DUK_API_VARIADIC_MACROS
 #define duk_push_error_object(ctx,err_code,...)  \
 	duk_push_error_object_raw((ctx),(err_code),__FILE__,__LINE__,__VA_ARGS__)
 #else
-int duk_push_error_object_stash(duk_context *ctx, int err_code, const char *fmt, ...);
+duk_idx_t duk_push_error_object_stash(duk_context *ctx, duk_errcode_t err_code, const char *fmt, ...);
 #define duk_push_error_object  \
 	duk_api_global_filename = __FILE__, \
 	duk_api_global_line = __LINE__, \
 	duk_push_error_object_stash  /* arguments follow */
 #endif
 
-void *duk_push_buffer(duk_context *ctx, duk_size_t size, int dynamic);
+void *duk_push_buffer(duk_context *ctx, duk_size_t size, duk_bool_t dynamic);
 void *duk_push_fixed_buffer(duk_context *ctx, duk_size_t size);
 void *duk_push_dynamic_buffer(duk_context *ctx, duk_size_t size);
 
@@ -2497,7 +2883,7 @@ void *duk_push_dynamic_buffer(duk_context *ctx, duk_size_t size);
  */
 
 void duk_pop(duk_context *ctx);
-void duk_pop_n(duk_context *ctx, unsigned int count);
+void duk_pop_n(duk_context *ctx, duk_idx_t count);
 void duk_pop_2(duk_context *ctx);
 void duk_pop_3(duk_context *ctx);
 
@@ -2508,34 +2894,35 @@ void duk_pop_3(duk_context *ctx);
  *  is not needed; duk_is_valid_index() gives the same information.
  */
 
-int duk_get_type(duk_context *ctx, int index);
-int duk_check_type(duk_context *ctx, int index, int type);
-int duk_get_type_mask(duk_context *ctx, int index);
-int duk_check_type_mask(duk_context *ctx, int index, int mask);
+/* FIXME: a duk_small_int_t suffices to represent type and type mask (at least now). */
+duk_int_t duk_get_type(duk_context *ctx, duk_idx_t index);
+duk_bool_t duk_check_type(duk_context *ctx, duk_idx_t index, duk_int_t type);
+duk_uint_t duk_get_type_mask(duk_context *ctx, duk_idx_t index);
+duk_bool_t duk_check_type_mask(duk_context *ctx, duk_idx_t index, duk_uint_t mask);
 
-int duk_is_undefined(duk_context *ctx, int index);
-int duk_is_null(duk_context *ctx, int index);
-int duk_is_null_or_undefined(duk_context *ctx, int index);
-int duk_is_boolean(duk_context *ctx, int index);
-int duk_is_number(duk_context *ctx, int index);
-int duk_is_nan(duk_context *ctx, int index);
-int duk_is_string(duk_context *ctx, int index);
-int duk_is_object(duk_context *ctx, int index);
-int duk_is_buffer(duk_context *ctx, int index);
-int duk_is_pointer(duk_context *ctx, int index);
+duk_bool_t duk_is_undefined(duk_context *ctx, duk_idx_t index);
+duk_bool_t duk_is_null(duk_context *ctx, duk_idx_t index);
+duk_bool_t duk_is_null_or_undefined(duk_context *ctx, duk_idx_t index);
+duk_bool_t duk_is_boolean(duk_context *ctx, duk_idx_t index);
+duk_bool_t duk_is_number(duk_context *ctx, duk_idx_t index);
+duk_bool_t duk_is_nan(duk_context *ctx, duk_idx_t index);
+duk_bool_t duk_is_string(duk_context *ctx, duk_idx_t index);
+duk_bool_t duk_is_object(duk_context *ctx, duk_idx_t index);
+duk_bool_t duk_is_buffer(duk_context *ctx, duk_idx_t index);
+duk_bool_t duk_is_pointer(duk_context *ctx, duk_idx_t index);
 
-int duk_is_array(duk_context *ctx, int index);
-int duk_is_function(duk_context *ctx, int index);
-int duk_is_c_function(duk_context *ctx, int index);
-int duk_is_ecmascript_function(duk_context *ctx, int index);
-int duk_is_bound_function(duk_context *ctx, int index);
-int duk_is_thread(duk_context *ctx, int index);
+duk_bool_t duk_is_array(duk_context *ctx, duk_idx_t index);
+duk_bool_t duk_is_function(duk_context *ctx, duk_idx_t index);
+duk_bool_t duk_is_c_function(duk_context *ctx, duk_idx_t index);
+duk_bool_t duk_is_ecmascript_function(duk_context *ctx, duk_idx_t index);
+duk_bool_t duk_is_bound_function(duk_context *ctx, duk_idx_t index);
+duk_bool_t duk_is_thread(duk_context *ctx, duk_idx_t index);
 
-int duk_is_callable(duk_context *ctx, int index);
-int duk_is_dynamic(duk_context *ctx, int index);
-int duk_is_fixed(duk_context *ctx, int index);
+duk_bool_t duk_is_callable(duk_context *ctx, duk_idx_t index);
+duk_bool_t duk_is_dynamic(duk_context *ctx, duk_idx_t index);
+duk_bool_t duk_is_fixed(duk_context *ctx, duk_idx_t index);
 
-int duk_is_primitive(duk_context *ctx, int index);
+duk_bool_t duk_is_primitive(duk_context *ctx, duk_idx_t index);
 #define duk_is_object_coercible(ctx,index) \
 	duk_check_type_mask((ctx), (index), DUK_TYPE_MASK_BOOLEAN | \
 	                                    DUK_TYPE_MASK_NUMBER | \
@@ -2552,16 +2939,17 @@ int duk_is_primitive(duk_context *ctx, int index);
  *  are not included.
  */
 
-int duk_get_boolean(duk_context *ctx, int index);
-double duk_get_number(duk_context *ctx, int index);
-int duk_get_int(duk_context *ctx, int index);
-const char *duk_get_string(duk_context *ctx, int index);
-const char *duk_get_lstring(duk_context *ctx, int index, duk_size_t *out_len);
-void *duk_get_buffer(duk_context *ctx, int index, duk_size_t *out_size);
-void *duk_get_pointer(duk_context *ctx, int index);
-duk_c_function duk_get_c_function(duk_context *ctx, int index);
-duk_context *duk_get_context(duk_context *ctx, int index);
-duk_size_t duk_get_length(duk_context *ctx, int index);
+duk_bool_t duk_get_boolean(duk_context *ctx, duk_idx_t index);
+duk_double_t duk_get_number(duk_context *ctx, duk_idx_t index);
+duk_int_t duk_get_int(duk_context *ctx, duk_idx_t index);
+duk_uint_t duk_get_uint(duk_context *ctx, duk_idx_t index);
+const char *duk_get_string(duk_context *ctx, duk_idx_t index);
+const char *duk_get_lstring(duk_context *ctx, duk_idx_t index, duk_size_t *out_len);
+void *duk_get_buffer(duk_context *ctx, duk_idx_t index, duk_size_t *out_size);
+void *duk_get_pointer(duk_context *ctx, duk_idx_t index);
+duk_c_function duk_get_c_function(duk_context *ctx, duk_idx_t index);
+duk_context *duk_get_context(duk_context *ctx, duk_idx_t index);
+duk_size_t duk_get_length(duk_context *ctx, duk_idx_t index);
 
 /*
  *  Require operations: no coercion, throw error if index or type
@@ -2571,17 +2959,18 @@ duk_size_t duk_get_length(duk_context *ctx, int index);
 #define duk_require_type_mask(ctx,index,mask) \
 	((void) duk_check_type_mask((ctx), (index), (mask) | DUK_TYPE_MASK_THROW))
 
-void duk_require_undefined(duk_context *ctx, int index);
-void duk_require_null(duk_context *ctx, int index);
-int duk_require_boolean(duk_context *ctx, int index);
-double duk_require_number(duk_context *ctx, int index);
-int duk_require_int(duk_context *ctx, int index);
-const char *duk_require_string(duk_context *ctx, int index);
-const char *duk_require_lstring(duk_context *ctx, int index, duk_size_t *out_len);
-void *duk_require_buffer(duk_context *ctx, int index, duk_size_t *out_size);
-void *duk_require_pointer(duk_context *ctx, int index);
-duk_c_function duk_require_c_function(duk_context *ctx, int index);
-duk_context *duk_require_context(duk_context *ctx, int index);
+void duk_require_undefined(duk_context *ctx, duk_idx_t index);
+void duk_require_null(duk_context *ctx, duk_idx_t index);
+duk_bool_t duk_require_boolean(duk_context *ctx, duk_idx_t index);
+duk_double_t duk_require_number(duk_context *ctx, duk_idx_t index);
+duk_int_t duk_require_int(duk_context *ctx, duk_idx_t index);
+duk_uint_t duk_require_uint(duk_context *ctx, duk_idx_t index);
+const char *duk_require_string(duk_context *ctx, duk_idx_t index);
+const char *duk_require_lstring(duk_context *ctx, duk_idx_t index, duk_size_t *out_len);
+void *duk_require_buffer(duk_context *ctx, duk_idx_t index, duk_size_t *out_size);
+void *duk_require_pointer(duk_context *ctx, duk_idx_t index);
+duk_c_function duk_require_c_function(duk_context *ctx, duk_idx_t index);
+duk_context *duk_require_context(duk_context *ctx, duk_idx_t index);
 
 #define duk_require_object_coercible(ctx,index) \
 	((void) duk_check_type_mask((ctx), (index), DUK_TYPE_MASK_BOOLEAN | \
@@ -2599,24 +2988,27 @@ duk_context *duk_require_context(duk_context *ctx, int index);
  *  or an internal error (e.g. from out of memory).
  */
 
-void duk_to_undefined(duk_context *ctx, int index);
-void duk_to_null(duk_context *ctx, int index);
-int duk_to_boolean(duk_context *ctx, int index);
-double duk_to_number(duk_context *ctx, int index);
-int duk_to_int(duk_context *ctx, int index);
-int duk_to_int32(duk_context *ctx, int index);
-unsigned int duk_to_uint32(duk_context *ctx, int index);
-unsigned int duk_to_uint16(duk_context *ctx, int index);
-const char *duk_to_string(duk_context *ctx, int index);
-const char *duk_to_lstring(duk_context *ctx, int index, duk_size_t *out_len);
-void *duk_to_buffer(duk_context *ctx, int index, duk_size_t *out_size);
-void *duk_to_pointer(duk_context *ctx, int index);
-void duk_to_object(duk_context *ctx, int index);
-void duk_to_defaultvalue(duk_context *ctx, int index, int hint);
-void duk_to_primitive(duk_context *ctx, int index, int hint);
+void duk_to_undefined(duk_context *ctx, duk_idx_t index);
+void duk_to_null(duk_context *ctx, duk_idx_t index);
+duk_bool_t duk_to_boolean(duk_context *ctx, duk_idx_t index);
+duk_double_t duk_to_number(duk_context *ctx, duk_idx_t index);
+duk_int_t duk_to_int(duk_context *ctx, duk_idx_t index);
+duk_uint_t duk_to_uint(duk_context *ctx, duk_idx_t index);
+duk_int32_t duk_to_int32(duk_context *ctx, duk_idx_t index);
+duk_uint32_t duk_to_uint32(duk_context *ctx, duk_idx_t index);
+duk_uint16_t duk_to_uint16(duk_context *ctx, duk_idx_t index);
+const char *duk_to_string(duk_context *ctx, duk_idx_t index);
+const char *duk_to_lstring(duk_context *ctx, duk_idx_t index, duk_size_t *out_len);
+void *duk_to_buffer(duk_context *ctx, duk_idx_t index, duk_size_t *out_size);
+void *duk_to_fixed_buffer(duk_context *ctx, duk_idx_t index, duk_size_t *out_size);
+void *duk_to_dynamic_buffer(duk_context *ctx, duk_idx_t index, duk_size_t *out_size);
+void *duk_to_pointer(duk_context *ctx, duk_idx_t index);
+void duk_to_object(duk_context *ctx, duk_idx_t index);
+void duk_to_defaultvalue(duk_context *ctx, duk_idx_t index, duk_int_t hint);  /* FIXME: small int? */
+void duk_to_primitive(duk_context *ctx, duk_idx_t index, duk_int_t hint);  /* FIXME: small int? */
 
 /* safe variants of a few coercion operations */
-const char *duk_safe_to_lstring(duk_context *ctx, int index, duk_size_t *out_len);
+const char *duk_safe_to_lstring(duk_context *ctx, duk_idx_t index, duk_size_t *out_len);
 #define duk_safe_to_string(ctx,index) \
 	duk_safe_to_lstring((ctx), (index), NULL)
 
@@ -2624,19 +3016,18 @@ const char *duk_safe_to_lstring(duk_context *ctx, int index, duk_size_t *out_len
  *  Misc conversion
  */
 
-const char *duk_base64_encode(duk_context *ctx, int index);
-void duk_base64_decode(duk_context *ctx, int index);
-const char *duk_hex_encode(duk_context *ctx, int index);
-void duk_hex_decode(duk_context *ctx, int index);
-const char *duk_json_encode(duk_context *ctx, int index);
-void duk_json_decode(duk_context *ctx, int index);
+const char *duk_base64_encode(duk_context *ctx, duk_idx_t index);
+void duk_base64_decode(duk_context *ctx, duk_idx_t index);
+const char *duk_hex_encode(duk_context *ctx, duk_idx_t index);
+void duk_hex_decode(duk_context *ctx, duk_idx_t index);
+const char *duk_json_encode(duk_context *ctx, duk_idx_t index);
+void duk_json_decode(duk_context *ctx, duk_idx_t index);
 
 /*
  *  Buffer
  */
 
 void *duk_resize_buffer(duk_context *ctx, duk_idx_t index, duk_size_t new_size);
-void duk_to_fixed_buffer(duk_context *ctx, duk_idx_t index);
 
 /*
  *  Property access
@@ -2646,25 +3037,27 @@ void duk_to_fixed_buffer(duk_context *ctx, duk_idx_t index);
  *  index as a property name (e.g. 123 is equivalent to the key "123").
  */
 
-int duk_get_prop(duk_context *ctx, int obj_index);
-int duk_get_prop_string(duk_context *ctx, int obj_index, const char *key);
-int duk_get_prop_index(duk_context *ctx, int obj_index, unsigned int arr_index);
-int duk_put_prop(duk_context *ctx, int obj_index);
-int duk_put_prop_string(duk_context *ctx, int obj_index, const char *key);
-int duk_put_prop_index(duk_context *ctx, int obj_index, unsigned int arr_index);
-int duk_del_prop(duk_context *ctx, int obj_index);
-int duk_del_prop_string(duk_context *ctx, int obj_index, const char *key);
-int duk_del_prop_index(duk_context *ctx, int obj_index, unsigned int arr_index);
-int duk_has_prop(duk_context *ctx, int obj_index);
-int duk_has_prop_string(duk_context *ctx, int obj_index, const char *key);
-int duk_has_prop_index(duk_context *ctx, int obj_index, unsigned int arr_index);
+duk_bool_t duk_get_prop(duk_context *ctx, duk_idx_t obj_index);
+duk_bool_t duk_get_prop_string(duk_context *ctx, duk_idx_t obj_index, const char *key);
+duk_bool_t duk_get_prop_index(duk_context *ctx, duk_idx_t obj_index, duk_uarridx_t arr_index);
+duk_bool_t duk_put_prop(duk_context *ctx, duk_idx_t obj_index);
+duk_bool_t duk_put_prop_string(duk_context *ctx, duk_idx_t obj_index, const char *key);
+duk_bool_t duk_put_prop_index(duk_context *ctx, duk_idx_t obj_index, duk_uarridx_t arr_index);
+duk_bool_t duk_del_prop(duk_context *ctx, duk_idx_t obj_index);
+duk_bool_t duk_del_prop_string(duk_context *ctx, duk_idx_t obj_index, const char *key);
+duk_bool_t duk_del_prop_index(duk_context *ctx, duk_idx_t obj_index, duk_uarridx_t arr_index);
+duk_bool_t duk_has_prop(duk_context *ctx, duk_idx_t obj_index);
+duk_bool_t duk_has_prop_string(duk_context *ctx, duk_idx_t obj_index, const char *key);
+duk_bool_t duk_has_prop_index(duk_context *ctx, duk_idx_t obj_index, duk_uarridx_t arr_index);
+
+duk_bool_t duk_get_global_string(duk_context *ctx, const char *key);
 
 /*
  *  Module helpers: put multiple function or constant properties
  */
 
-void duk_put_function_list(duk_context *ctx, int obj_index, const duk_function_list_entry *funcs);
-void duk_put_number_list(duk_context *ctx, int obj_index, const duk_number_list_entry *numbers);
+void duk_put_function_list(duk_context *ctx, duk_idx_t obj_index, const duk_function_list_entry *funcs);
+void duk_put_number_list(duk_context *ctx, duk_idx_t obj_index, const duk_number_list_entry *numbers);
 
 /*
  *  Variable access
@@ -2680,41 +3073,41 @@ duk_bool_t duk_has_var(duk_context *ctx);
  *  Object operations
  */
 
-void duk_compact(duk_context *ctx, int obj_index);
-void duk_enum(duk_context *ctx, int obj_index, int enum_flags);
-int duk_next(duk_context *ctx, int enum_index, int get_value);
+void duk_compact(duk_context *ctx, duk_idx_t obj_index);
+void duk_enum(duk_context *ctx, duk_idx_t obj_index, duk_uint_t enum_flags);
+duk_bool_t duk_next(duk_context *ctx, duk_idx_t enum_index, duk_bool_t get_value);
 
 /*
  *  String manipulation
  */
 
-void duk_concat(duk_context *ctx, unsigned int count);
-void duk_join(duk_context *ctx, unsigned int count);
-void duk_decode_string(duk_context *ctx, int index, duk_decode_char_function callback, void *udata);
-void duk_map_string(duk_context *ctx, int index, duk_map_char_function callback, void *udata);
-void duk_substring(duk_context *ctx, int index, duk_size_t start_offset, duk_size_t end_offset);
-void duk_trim(duk_context *ctx, int index);
-int duk_char_code_at(duk_context *ctx, int index, duk_size_t char_offset);
+void duk_concat(duk_context *ctx, duk_idx_t count);
+void duk_join(duk_context *ctx, duk_idx_t count);
+void duk_decode_string(duk_context *ctx, duk_idx_t index, duk_decode_char_function callback, void *udata);
+void duk_map_string(duk_context *ctx, duk_idx_t index, duk_map_char_function callback, void *udata);
+void duk_substring(duk_context *ctx, duk_idx_t index, duk_size_t start_char_offset, duk_size_t end_char_offset);
+void duk_trim(duk_context *ctx, duk_idx_t index);
+duk_codepoint_t duk_char_code_at(duk_context *ctx, duk_idx_t index, duk_size_t char_offset);
 
 /*
  *  Ecmascript operators
  */
 
-int duk_equals(duk_context *ctx, int index1, int index2);
-int duk_strict_equals(duk_context *ctx, int index1, int index2);
+duk_bool_t duk_equals(duk_context *ctx, duk_idx_t index1, duk_idx_t index2);
+duk_bool_t duk_strict_equals(duk_context *ctx, duk_idx_t index1, duk_idx_t index2);
 
 /*
  *  Function (method) calls
  */
 
-void duk_call(duk_context *ctx, int nargs);
-void duk_call_method(duk_context *ctx, int nargs);
-void duk_call_prop(duk_context *ctx, int obj_index, int nargs);
-int duk_pcall(duk_context *ctx, int nargs);
-int duk_pcall_method(duk_context *ctx, int nargs);
-int duk_pcall_prop(duk_context *ctx, int obj_index, int nargs);
-void duk_new(duk_context *ctx, int nargs);
-int duk_safe_call(duk_context *ctx, duk_safe_call_function func, int nargs, int nrets);
+void duk_call(duk_context *ctx, duk_idx_t nargs);
+void duk_call_method(duk_context *ctx, duk_idx_t nargs);
+void duk_call_prop(duk_context *ctx, duk_idx_t obj_index, duk_idx_t nargs);
+duk_int_t duk_pcall(duk_context *ctx, duk_idx_t nargs);
+duk_int_t duk_pcall_method(duk_context *ctx, duk_idx_t nargs);
+duk_int_t duk_pcall_prop(duk_context *ctx, duk_idx_t obj_index, duk_idx_t nargs);
+void duk_new(duk_context *ctx, duk_idx_t nargs);
+duk_int_t duk_safe_call(duk_context *ctx, duk_safe_call_function func, duk_idx_t nargs, duk_idx_t nrets);
 
 /*
  *  Thread management
@@ -2728,96 +3121,131 @@ int duk_safe_call(duk_context *ctx, duk_safe_call_function func, int nargs, int 
  *  Compilation and evaluation
  */
 
-int duk_eval_raw(duk_context *ctx, int flags);
-int duk_compile_raw(duk_context *ctx, int flags);
+duk_int_t duk_eval_raw(duk_context *ctx, const char *src_buffer, duk_size_t src_length, duk_uint_t flags);
+duk_int_t duk_compile_raw(duk_context *ctx, const char *src_buffer, duk_size_t src_length, duk_uint_t flags);
 
+/* plain */
 #define duk_eval(ctx)  \
 	((void) duk_push_string((ctx), __FILE__), \
-	 (void) duk_eval_raw((ctx), DUK_COMPILE_EVAL))
+	 (void) duk_eval_raw((ctx), NULL, 0, DUK_COMPILE_EVAL))
 
 #define duk_eval_noresult(ctx)  \
 	((void) duk_push_string((ctx), __FILE__), \
-	 (void) duk_eval_raw((ctx), DUK_COMPILE_EVAL | DUK_COMPILE_NORESULT))
+	 (void) duk_eval_raw((ctx), NULL, 0, DUK_COMPILE_EVAL | DUK_COMPILE_NORESULT))
 
 #define duk_peval(ctx)  \
 	((void) duk_push_string((ctx), __FILE__), \
-	 duk_eval_raw((ctx), DUK_COMPILE_EVAL | DUK_COMPILE_SAFE))
+	 duk_eval_raw((ctx), NULL, 0, DUK_COMPILE_EVAL | DUK_COMPILE_SAFE))
 
 #define duk_peval_noresult(ctx)  \
 	((void) duk_push_string((ctx), __FILE__), \
-	 duk_eval_raw((ctx), DUK_COMPILE_EVAL | DUK_COMPILE_SAFE | DUK_COMPILE_NORESULT))
+	 duk_eval_raw((ctx), NULL, 0, DUK_COMPILE_EVAL | DUK_COMPILE_SAFE | DUK_COMPILE_NORESULT))
 
 #define duk_compile(ctx,flags)  \
-	((void) duk_compile_raw((ctx), (flags)))
+	((void) duk_compile_raw((ctx), NULL, 0, (flags)))
 
 #define duk_pcompile(ctx,flags)  \
-	(duk_compile_raw((ctx), (flags) | DUK_COMPILE_SAFE))
+	(duk_compile_raw((ctx), NULL, 0, (flags) | DUK_COMPILE_SAFE))
 
+/* string */
 #define duk_eval_string(ctx,src)  \
-	((void) duk_push_string((ctx), (src)), \
-	 (void) duk_push_string((ctx), __FILE__), \
-	 (void) duk_eval_raw((ctx), DUK_COMPILE_EVAL))
+	((void) duk_push_string((ctx), __FILE__), \
+	 (void) duk_eval_raw((ctx), (src), 0, DUK_COMPILE_EVAL | DUK_COMPILE_NOSOURCE | DUK_COMPILE_STRLEN))
 
 #define duk_eval_string_noresult(ctx,src)  \
-	((void) duk_push_string((ctx), (src)), \
-	 (void) duk_push_string((ctx), __FILE__), \
-	 (void) duk_eval_raw((ctx), DUK_COMPILE_EVAL | DUK_COMPILE_NORESULT))
+	((void) duk_push_string((ctx), __FILE__), \
+	 (void) duk_eval_raw((ctx), (src), 0, DUK_COMPILE_EVAL | DUK_COMPILE_NOSOURCE | DUK_COMPILE_STRLEN | DUK_COMPILE_NORESULT))
 
 #define duk_peval_string(ctx,src)  \
-	((void) duk_push_string((ctx), (src)), \
-	 (void) duk_push_string((ctx), __FILE__), \
-	 duk_eval_raw((ctx), DUK_COMPILE_EVAL | DUK_COMPILE_SAFE))
+	((void) duk_push_string((ctx), __FILE__), \
+	 duk_eval_raw((ctx), (src), 0, DUK_COMPILE_EVAL | DUK_COMPILE_SAFE | DUK_COMPILE_NOSOURCE | DUK_COMPILE_STRLEN))
 
 #define duk_peval_string_noresult(ctx,src)  \
-	((void) duk_push_string((ctx), (src)), \
-	 (void) duk_push_string((ctx), __FILE__), \
-	 duk_eval_raw((ctx), DUK_COMPILE_EVAL | DUK_COMPILE_SAFE | DUK_COMPILE_NORESULT))
+	((void) duk_push_string((ctx), __FILE__), \
+	 duk_eval_raw((ctx), (src), 0, DUK_COMPILE_EVAL | DUK_COMPILE_SAFE | DUK_COMPILE_NOSOURCE | DUK_COMPILE_STRLEN | DUK_COMPILE_NORESULT))
 
 #define duk_compile_string(ctx,flags,src)  \
-	((void) duk_push_string((ctx), (src)), \
-	 (void) duk_push_string((ctx), __FILE__), \
-	 (void) duk_compile_raw((ctx), (flags)))
+	((void) duk_push_string((ctx), __FILE__), \
+	 (void) duk_compile_raw((ctx), (src), 0, (flags) | DUK_COMPILE_NOSOURCE | DUK_COMPILE_STRLEN))
+
+#define duk_compile_string_filename(ctx,flags,src)  \
+	((void) duk_compile_raw((ctx), (src), 0, (flags) | DUK_COMPILE_NOSOURCE | DUK_COMPILE_STRLEN))
 
 #define duk_pcompile_string(ctx,flags,src)  \
-	((void) duk_push_string((ctx), (src)), \
-	 (void) duk_push_string((ctx), __FILE__), \
-	 duk_compile_raw((ctx), (flags) | DUK_COMPILE_SAFE))
+	((void) duk_push_string((ctx), __FILE__), \
+	 duk_compile_raw((ctx), (src), 0, (flags) | DUK_COMPILE_SAFE | DUK_COMPILE_NOSOURCE | DUK_COMPILE_STRLEN))
 
+#define duk_pcompile_string_filename(ctx,flags,src)  \
+	(duk_compile_raw((ctx), (src), 0, (flags) | DUK_COMPILE_SAFE | DUK_COMPILE_NOSOURCE | DUK_COMPILE_STRLEN))
+
+/* lstring */
+#define duk_eval_lstring(ctx,buf,len)  \
+	((void) duk_push_string((ctx), __FILE__), \
+	 (void) duk_eval_raw((ctx), buf, len, DUK_COMPILE_EVAL | DUK_COMPILE_NOSOURCE))
+
+#define duk_eval_lstring_noresult(ctx,buf,len)  \
+	((void) duk_push_string((ctx), __FILE__), \
+	 (void) duk_eval_raw((ctx), buf, len, DUK_COMPILE_EVAL | DUK_COMPILE_NOSOURCE | DUK_COMPILE_NORESULT))
+
+#define duk_peval_lstring(ctx,buf,len)  \
+	((void) duk_push_string((ctx), __FILE__), \
+	 duk_eval_raw((ctx), buf, len, DUK_COMPILE_EVAL | DUK_COMPILE_NOSOURCE | DUK_COMPILE_SAFE))
+
+#define duk_peval_lstring_noresult(ctx,buf,len)  \
+	((void) duk_push_string((ctx), __FILE__), \
+	 duk_eval_raw((ctx), buf, len, DUK_COMPILE_EVAL | DUK_COMPILE_SAFE | DUK_COMPILE_NOSOURCE | DUK_COMPILE_NORESULT))
+
+#define duk_compile_lstring(ctx,flags,buf,len)  \
+	((void) duk_push_string((ctx), __FILE__), \
+	 (void) duk_compile_raw((ctx), buf, len, (flags) | DUK_COMPILE_NOSOURCE))
+
+#define duk_compile_lstring_filename(ctx,flags,buf,len)  \
+	((void) duk_compile_raw((ctx), buf, len, (flags) | DUK_COMPILE_NOSOURCE))
+
+#define duk_pcompile_lstring(ctx,flags,buf,len)  \
+	((void) duk_push_string((ctx), __FILE__), \
+	 duk_compile_raw((ctx), buf, len, (flags) | DUK_COMPILE_SAFE | DUK_COMPILE_NOSOURCE))
+
+#define duk_pcompile_lstring_filename(ctx,flags,buf,len)  \
+	(duk_compile_raw((ctx), buf, len, (flags) | DUK_COMPILE_SAFE | DUK_COMPILE_NOSOURCE))
+
+/* file */
 #define duk_eval_file(ctx,path)  \
 	((void) duk_push_string_file((ctx), (path)), \
 	 (void) duk_push_string((ctx), (path)), \
-	 (void) duk_eval_raw((ctx), DUK_COMPILE_EVAL))
+	 (void) duk_eval_raw((ctx), NULL, 0, DUK_COMPILE_EVAL))
 
 #define duk_eval_file_noresult(ctx,path)  \
 	((void) duk_push_string_file((ctx), (path)), \
 	 (void) duk_push_string((ctx), (path)), \
-	 (void) duk_eval_raw((ctx), DUK_COMPILE_EVAL | DUK_COMPILE_NORESULT))
+	 (void) duk_eval_raw((ctx), NULL, 0, DUK_COMPILE_EVAL | DUK_COMPILE_NORESULT))
 
 #define duk_peval_file(ctx,path)  \
 	((void) duk_push_string_file((ctx), (path)), \
 	 (void) duk_push_string((ctx), (path)), \
-	 duk_eval_raw((ctx), DUK_COMPILE_EVAL | DUK_COMPILE_SAFE))
+	 duk_eval_raw((ctx), NULL, 0, DUK_COMPILE_EVAL | DUK_COMPILE_SAFE))
 
 #define duk_peval_file_noresult(ctx,path)  \
 	((void) duk_push_string_file((ctx), (path)), \
 	 (void) duk_push_string((ctx), (path)), \
-	 duk_eval_raw((ctx), DUK_COMPILE_EVAL | DUK_COMPILE_SAFE | DUK_COMPILE_NORESULT))
+	 duk_eval_raw((ctx), NULL, 0, DUK_COMPILE_EVAL | DUK_COMPILE_SAFE | DUK_COMPILE_NORESULT))
 
 #define duk_compile_file(ctx,flags,path)  \
 	((void) duk_push_string_file((ctx), (path)), \
 	 (void) duk_push_string((ctx), (path)), \
-	 (void) duk_compile_raw((ctx), (flags)))
+	 (void) duk_compile_raw((ctx), NULL, 0, (flags)))
 
 #define duk_pcompile_file(ctx,flags,path)  \
 	((void) duk_push_string_file((ctx), (path)), \
 	 (void) duk_push_string((ctx), (path)), \
-	 duk_compile_raw((ctx), (flags) | DUK_COMPILE_SAFE))
+	 duk_compile_raw((ctx), NULL, 0, (flags) | DUK_COMPILE_SAFE))
 
 /*
  *  Logging
  */
 
-void duk_log(duk_context *ctx, int level, const char *fmt, ...);
+/* FIXME: here a small integer type would be proper */
+void duk_log(duk_context *ctx, duk_int_t level, const char *fmt, ...);
 
 /*
  *  Debugging
