@@ -826,6 +826,7 @@ glw_image_layout(glw_t *w, const glw_rctx_t *rc)
 		rstr_get(gi->gi_pending_url),
 		xs, ys);
 
+        assert(gi->gi_pending == NULL);
 	gi->gi_pending = glw_image_tex_load(gi, gi->gi_pending_url, xs, ys);
 
 	rstr_release(gi->gi_pending_url);
@@ -961,6 +962,7 @@ glw_image_layout(glw_t *w, const glw_rctx_t *rc)
           gi->gi_rescale_hold++;
         } else {
           gi->gi_rescale_hold = 0;
+          assert(gi->gi_pending == NULL);
           gi->gi_pending = glw_image_tex_load(gi, glt->glt_url, xs, ys);
           gi->gi_need_reload = 0;
         }
