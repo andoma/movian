@@ -49,9 +49,12 @@
 
 
 static hts_mutex_t metadata_mutex;
-static hts_cond_t metadata_queue_cond;
 static hts_cond_t metadata_loading_cond;
 static prop_courier_t *metadata_courier;
+
+static int metadata_num_threads;
+
+static void metadata_threads_start(void);
 
 TAILQ_HEAD(metadata_lazy_prop_queue, metadata_lazy_prop);
 static struct metadata_lazy_prop_queue mlpqueue;
@@ -107,7 +110,7 @@ mlp_enqueue(metadata_lazy_prop_t *mlp)
     return;
   TAILQ_INSERT_TAIL(&mlpqueue, mlp, mlp_link);
   mlp->mlp_queued = 1;
-  hts_cond_signal(&metadata_queue_cond);
+  metadata_threads_start();
 }
 
 
@@ -1904,19 +1907,17 @@ mlv_direct_query(void *db, rstr_t *url, rstr_t *filename,
 static void *
 metadata_thread(void *aux)
 {
-  hts_mutex_lock(&metadata_mutex);
   void *db = NULL;
-  metadata_lazy_prop_t *mlp;
+
+  hts_mutex_lock(&metadata_mutex);
 
   while(1) {
 
-    while((mlp = TAILQ_FIRST(&mlpqueue)) == NULL) {
-      if(db != NULL) {
-        metadb_close(db);
-        db = NULL;
-      }
-      hts_cond_wait(&metadata_queue_cond, &metadata_mutex);
-    }
+    metadata_lazy_prop_t *mlp;
+
+    mlp = TAILQ_FIRST(&mlpqueue);
+    if(mlp == NULL)
+      break;
 
     if(db == NULL)
       db = metadb_get();
@@ -1926,9 +1927,30 @@ metadata_thread(void *aux)
     if(!mlp->mlp_zombie)
       mlp->mlp_class->mlc_load(db, mlp);
   }
+
+  metadata_num_threads--;
+
+  hts_mutex_unlock(&metadata_mutex);
+
+  if(db != NULL)
+    metadb_close(db);
+
   return NULL;
 }
 
+
+/**
+ *
+ */
+static void
+metadata_threads_start(void)
+{
+  if(metadata_num_threads >= 4)
+    return;
+  metadata_num_threads++;
+  hts_thread_create_detached("metadata", metadata_thread, NULL,
+                             THREAD_PRIO_METADATA);
+}
 
 
 /**
@@ -1939,11 +1961,8 @@ mlp_init(void)
 {
   TAILQ_INIT(&mlpqueue);
   hts_mutex_init(&metadata_mutex);
-  hts_cond_init(&metadata_queue_cond, &metadata_mutex);
   hts_cond_init(&metadata_loading_cond, &metadata_mutex);
 
   metadata_courier = prop_courier_create_thread(&metadata_mutex, "mlp", 0);
 
-  hts_thread_create_detached("metadata", metadata_thread, NULL,
-			     THREAD_PRIO_METADATA);
 }
