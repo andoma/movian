@@ -61,7 +61,7 @@ typedef struct {
 
   const char *canonical_url;
 
-  int total_duration;
+  int total_duration;  // in ms
 } rtmp_t;
 
 
@@ -106,7 +106,7 @@ handle_metadata0(rtmp_t *r, AMFObject *obj,
      prop.p_type == AMF_NUMBER && prop.p_vu.p_number > 0) {
     prop_set_float(prop_create(m, "duration"), prop.p_vu.p_number);
     r->total_duration = prop.p_vu.p_number * 1000;
-    mp_set_duration(mp, r->total_duration);
+    mp_set_duration(mp, r->total_duration * 1000LL);
     mp_set_clr_flags(mp, MP_CAN_SEEK, 0);
 
   } else {
