@@ -121,7 +121,7 @@ handle_metadata0(rtmp_t *r, AMFObject *obj,
      && prop.p_type == AMF_NUMBER) {
     r->vframeduration = 1000000.0 / prop.p_vu.p_number;
     mp->mp_framerate.num = 1000000;
-    mp->mp_framerate.den = r->vframeduration;
+    mp->mp_framerate.den = prop.p_vu.p_number;
   }
   r->width = r->height = 0;
   if(RTMP_FindFirstMatchingProperty(obj, &av_width, &prop) &&
