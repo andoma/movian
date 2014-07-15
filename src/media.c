@@ -2781,9 +2781,10 @@ mtm_select_track(media_track_mgr_t *mtm, event_select_track_t *est)
 
     TRACE(TRACE_DEBUG, "Media", "Selecting audio track %s", id);
 
-      mp->mp_audio.mq_stream = -1;
 
     if(!strcmp(id, "audio:off")) {
+
+      mp->mp_audio.mq_stream = -1;
 
     } else if(!strncmp(id, "libav:", strlen("libav:"))) {
 
