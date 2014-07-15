@@ -322,6 +322,8 @@ typedef struct media_queue {
 
   int64_t mq_seektarget;
 
+  int64_t mq_buffer_delay;
+
   prop_t *mq_prop_qlen_cur;
   prop_t *mq_prop_qlen_max;
 

@@ -1336,10 +1336,23 @@ mq_get_buffer_delay(media_queue_t *mq)
   f = TAILQ_FIRST(&mq->mq_q_data);
   l = TAILQ_LAST(&mq->mq_q_data, media_buf_queue);
 
-  if(f != NULL && f->mb_epoch == l->mb_epoch)
-    return l->mb_pts - f->mb_pts;
+  int cnt = 5;
 
-  return INT32_MAX;
+  while(f && f->mb_pts == AV_NOPTS_VALUE && cnt > 0) {
+    f = TAILQ_NEXT(f, mb_link);
+    cnt--;
+  }
+
+  cnt = 5;
+  while(l && l->mb_pts == AV_NOPTS_VALUE && cnt > 0) {
+    l = TAILQ_PREV(l, media_buf_queue, mb_link);
+    cnt--;
+  }
+
+  if(f != NULL && l != NULL && f->mb_epoch == l->mb_epoch)
+    mq->mq_buffer_delay = l->mb_pts - f->mb_pts;
+
+  return mq->mq_buffer_delay;
 }
 
 
