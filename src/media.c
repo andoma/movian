@@ -1425,9 +1425,11 @@ mb_enqueue_with_events_ex(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
   
   hts_mutex_lock(&mp->mp_mutex);
 #if 0
-  printf("ENQ %s %d/%d %d/%d\n", mq == &mp->mp_video ? "video" : "audio",
-	 mq->mq_packets_current, mq->mq_packets_threshold,
-	 mp->mp_buffer_current,  mp->mp_buffer_limit);
+  printf("ENQ %s %d %d/%d %d/%d\n",
+         mq == &mp->mp_video ? "video" : "audio",
+	 mq->mq_packets_current,
+	 mp->mp_buffer_current,  mp->mp_buffer_limit,
+         (int)mp->mp_buffer_delay, (int)mp->mp_max_realtime_delay);
 #endif
   
   const int vminpkt = mp->mp_video.mq_stream != -1 ? 5 : 0;
