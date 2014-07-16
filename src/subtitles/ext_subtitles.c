@@ -887,13 +887,14 @@ subtitles_load(media_pipe_t *mp, const char *url)
 
   uint8_t header[64];
   memcpy(header, b->b_ptr, MIN(b->b_size, 64));
+  int size = b->b_size;
 
   sub = subtitles_create(url, b, &mp->mp_framerate);
   if(sub == NULL) {
     TRACE(TRACE_ERROR, "Subtitles",
 	  "Unable to load %s -- Unknown format (%d bytes), dump of first 64 bytes follows",
-	  url, (int)b->b_size);
-    hexdump("Subtitles", header, MIN(b->b_size, 64));
+	  url, size);
+    hexdump("Subtitles", header, MIN(size, 64));
   } else {
     TRACE(TRACE_DEBUG, "Subtitles", "Loaded %s OK", url);
   }
