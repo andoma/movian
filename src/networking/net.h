@@ -46,8 +46,11 @@ typedef struct tcpcon tcpcon_t;
 
 void net_init(void);
 
+#define TCP_SSL   0x1
+#define TCP_DEBUG 0x2
+
 tcpcon_t *tcp_connect(const char *hostname, int port, char *errbuf,
-		      size_t errbufsize, int timeout, int ssl,
+		      size_t errbufsize, int timeout, int flags,
                       struct cancellable *c);
 
 void tcp_set_cancellable(tcpcon_t *tc, struct cancellable *c);

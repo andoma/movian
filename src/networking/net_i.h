@@ -64,7 +64,7 @@ void tcp_cancel(void *aux);
 
 tcpcon_t *tcp_connect_arch(const char *hostname, int port, char *errbuf,
                            size_t errbufsize, int timeout,
-                           struct cancellable *c);
+                           struct cancellable *c, int dbg);
 
 void tcp_close_arch(tcpcon_t *tc);
 

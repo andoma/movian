@@ -259,9 +259,22 @@ http_connection_get(const char *hostname, int port, int ssl,
   id = ++http_connection_tally;
   hts_mutex_unlock(&http_connections_mutex);
 
+  if(errbuf == NULL || errlen == 0) {
+    char xerrbuf[256];
+    errbuf = xerrbuf;
+    errlen = sizeof(xerrbuf);
+  }
+
+
+  int tcp_connect_flags = 0;
+  if(dbg)
+    tcp_connect_flags |= TCP_DEBUG;
+  if(ssl)
+    tcp_connect_flags |= TCP_SSL;
+
   if((tc = tcp_connect(hostname, port, errbuf, errlen,
-                       timeout, ssl, c)) == NULL) {
-    HTTP_TRACE(dbg, "Connection to %s:%d failed", hostname, port);
+                        timeout, tcp_connect_flags, c)) == NULL) {
+    HTTP_TRACE(dbg, "Connection to %s:%d failed -- %s", hostname, port, errbuf);
     return NULL;
   }
   HTTP_TRACE(dbg, "Connected to %s:%d (id=%d)", hostname, port, id);

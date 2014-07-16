@@ -185,7 +185,7 @@ net_resolve(const char *hostname, net_addr_t *addr, const char **err)
 tcpcon_t *
 tcp_connect_arch(const char *hostname, int port,
                  char *errbuf, size_t errbufsize,
-                 int timeout, cancellable_t *c)
+                 int timeout, cancellable_t *c, int dbg)
 {
   int fd, r, err, optval;
   struct sockaddr_in in;
@@ -222,6 +222,11 @@ tcp_connect_arch(const char *hostname, int port,
       in.sin_port = htons(port);
       memcpy(&in.sin_addr, addr.na_addr, 4);
       r = netConnect(fd, (struct sockaddr *)&in, sizeof(struct sockaddr_in));
+      if(dbg) {
+        TRACE(TRACE_DEBUG, "NET", "Connecting fd 0x%x = 0x%x errno=%d",
+              fd, r, net_errno);
+        hexdump("netConnect", (struct sockaddr *)&in, sizeof(struct sockaddr_in));
+      }
       break;
 
     default:
@@ -240,7 +245,7 @@ tcp_connect_arch(const char *hostname, int port,
   if(c != NULL)
     cancellable_bind(c, tcp_cancel, tc);
 
-
+  const char *errtype = "";
 
   if(r < 0) {
     if(net_errno == NET_EINPROGRESS) {
@@ -274,13 +279,14 @@ tcp_connect_arch(const char *hostname, int port,
       netGetSockOpt(fd, SOL_SOCKET, SO_ERROR, (void *)&err, &errlen);
     } else {
       err = net_errno;
+      errtype = ", direct";
     }
   } else {
     err = 0;
   }
 
   if(err != 0) {
-    snprintf(errbuf, errbufsize, "%s", strerror(err));
+    snprintf(errbuf, errbufsize, "%s%s", strerror(err), errtype);
     tcp_close(tc);
     return NULL;
   }

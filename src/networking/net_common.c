@@ -378,20 +378,22 @@ tcp_set_cancellable(tcpcon_t *tc, struct cancellable *c)
 tcpcon_t *
 tcp_connect(const char *hostname, int port,
             char *errbuf, size_t errlen,
-            int timeout, int ssl, cancellable_t *c)
+            int timeout, int flags, cancellable_t *c)
 {
   tcpcon_t *tc;
+  const int dbg = !!(flags & TCP_DEBUG);
 
-  tc = tcp_connect_arch(hostname, port, errbuf, errlen, timeout, c);
+  tc = tcp_connect_arch(hostname, port, errbuf, errlen, timeout, c, dbg);
   if(tc == NULL)
     return NULL;
 
-  if(!ssl)
-    return tc;
+  if(flags & TCP_SSL) {
 
-  if(tcp_ssl_open(tc, errbuf, errlen)) {
-    tcp_close(tc);
-    return NULL;
+    if(tcp_ssl_open(tc, errbuf, errlen)) {
+      tcp_close(tc);
+      return NULL;
+    }
+
   }
   return tc;
 }

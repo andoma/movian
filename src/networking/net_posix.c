@@ -234,7 +234,7 @@ net_resolve(const char *hostname, net_addr_t *addr, const char **err)
 tcpcon_t *
 tcp_connect_arch(const char *hostname, int port,
                  char *errbuf, size_t errbufsize,
-                 int timeout, cancellable_t *c)
+                 int timeout, cancellable_t *c, int dbg)
 {
   int fd, r, err;
   struct sockaddr_storage ss;
