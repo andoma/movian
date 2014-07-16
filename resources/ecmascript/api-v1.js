@@ -335,6 +335,11 @@ function Page(root, flat) {
     metadata: {
       get: function()  { return this.model.metadata; }
     },
+
+    loading: {
+      get: function()  { return this.model.loading; },
+      set: function(v) { this.model.loading = v; }
+    }
   });
 
 
