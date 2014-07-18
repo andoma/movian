@@ -815,7 +815,7 @@ video_ps3_vdec_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 
     dec_type.codec_type = VDEC_CODEC_TYPE_H264;
     if(mcp != NULL && mcp->level > 42) {
-      notify_add(mp->mp_prop_notifications, NOTIFY_WARNING, NULL, 10,
+      notify_add(mp->mp_prop_notifications, NOTIFY_WARNING, NULL, 5,
 		 _("Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback."), mcp->level / 10, mcp->level % 10);
     }
     dec_type.profile_level = 42;
