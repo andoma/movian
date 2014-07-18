@@ -639,9 +639,8 @@ handle_method_call(GDBusConnection *connection, const gchar *sender,
     notify_add(NULL, NOTIFY_ERROR, NULL, 3,
 	       rstr_alloc("%s\n%s"), cs ? cs->cs_name : "Unknown network", msg);
     g_dbus_method_invocation_return_value(inv, NULL);
-  }
 
-  if(!strcmp(method_name, "RequestInput")) {
+  } else if(!strcmp(method_name, "RequestInput")) {
     connman_service_t *cs = connman_service_from_params(param);
 
     if(cs == NULL) {
