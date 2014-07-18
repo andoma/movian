@@ -272,7 +272,6 @@ input_req_event(void *opaque, event_t *e)
     g_dbus_method_invocation_return_value(cs->cs_input_req_inv, result);
 
     g_variant_builder_unref(builder);
-    g_variant_unref(result);
     rstr_release(username);
     rstr_release(password);
     connman_stop_input_request(cs);
