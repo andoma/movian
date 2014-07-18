@@ -161,8 +161,17 @@ connman_connect_cb(GObject *source_object,
 static void
 connman_service_connect(connman_service_t *cs)
 {
+  GError *err = NULL;
+  GVariant *v = g_dbus_proxy_call_sync(cs->cs_proxy, "Disconnect", NULL,
+                                       G_DBUS_CALL_FLAGS_NONE, -1, NULL, &err);
+  if(v == NULL) {
+    g_error_free(err);
+  } else {
+    g_variant_unref(v);
+  }
+
   TRACE(TRACE_DEBUG, "CONNMAN", "User request connect to %s", cs->cs_path);
-  
+
   g_dbus_proxy_call(cs->cs_proxy, "Connect", NULL,
 		    G_DBUS_CALL_FLAGS_NONE, -1, NULL,
 		    connman_connect_cb, cs);
