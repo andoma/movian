@@ -587,7 +587,7 @@ glw_x11_init(glw_x11_t *gx11)
   int attribs[10];
   int na = 0;
   
-  int use_locales = XSupportsLocale() && XSetLocaleModifiers("") != NULL;
+  int use_locales = XSupportsLocale() && XSetLocaleModifiers("@im=none") != NULL;
 
   if((gx11->display = XOpenDisplay(gx11->displayname_real)) == NULL) {
     TRACE(TRACE_ERROR, "GLW", "Unable to open X display \"%s\"\n",
