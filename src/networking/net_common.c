@@ -26,6 +26,8 @@
 #include "misc/minmax.h"
 #include "net_i.h"
 
+#include "showtime.h"
+
 /**
  *
  */
@@ -328,7 +330,7 @@ net_addr_cmp(const net_addr_t *a, const net_addr_t *b)
  *
  */
 int
-tcp_write_data(tcpcon_t *tc, const char *buf, const size_t bufsize)
+tcp_write_data(tcpcon_t *tc, const void *buf, const size_t bufsize)
 {
   return tc->write(tc, buf, bufsize);
 }
@@ -375,6 +377,104 @@ tcp_set_cancellable(tcpcon_t *tc, struct cancellable *c)
 /**
  *
  */
+static int
+socks_session_setup(tcpcon_t *tc, const char *hostname, int port,
+                    char *errbuf, size_t errlen)
+{
+  uint8_t buf[300];
+  int hostnamelen = strlen(hostname);
+  if(hostnamelen >= 255) {
+    snprintf(errbuf, errlen, "SOCK5 too long hostname");
+    return -1;
+  }
+
+  const uint8_t hello[3] = {5,1,0};
+  tcp_write_data(tc, hello, 3);
+
+  if(tcp_read_data(tc, buf, 2, NULL, NULL)) {
+    snprintf(errbuf, errlen, "SOCK5 Read error");
+    return -1;
+  }
+
+  if(buf[0] != 5 || buf[1] != 0) {
+    snprintf(errbuf, errlen, "SOCK5 Protocol error");
+    return -1;
+  }
+
+  buf[0] = 5;
+  buf[1] = 1; // Connect
+  buf[2] = 0;
+  buf[3] = 3; // Domainname
+
+  buf[4] = hostnamelen;
+  memcpy(buf + 5, hostname, hostnamelen);
+  buf[5 + hostnamelen + 0] = port >> 8;
+  buf[5 + hostnamelen + 1] = port;
+
+  tcp_write_data(tc, buf, 5 + hostnamelen + 2);
+
+  if(tcp_read_data(tc, buf, 5, NULL, NULL)) {
+    snprintf(errbuf, errlen, "SOCK5 Read error");
+    return -1;
+  }
+
+  if(buf[0] != 5 || buf[2] != 0) {
+    snprintf(errbuf, errlen, "SOCK5 protocol error");
+    return -1;
+  }
+
+  if(buf[1]) {
+    // Error
+    const char *errmsgs[9] = {
+      [1] = "General SOCKS server failure",
+      [2] = "Connection not allowed by ruleset",
+      [3] = "Network unreachable",
+      [4] = "Host unreachable",
+      [5] = "Connection refused",
+      [6] = "TTL expired",
+      [7] = "Command not supported",
+      [8] = "Address type not supported",
+    };
+
+    if(buf[1] > 8) {
+      snprintf(errbuf, errlen, "SOCK5 reserved error 0x%x", buf[1]);
+    } else {
+      snprintf(errbuf, errlen, "SOCK5 error: %s", errmsgs[(int)buf[1]]);
+    }
+    return -1;
+  }
+
+  int alen; // Remaining bytes of address - 1
+  switch(buf[3]) {
+  case 1:
+    alen = 3;
+    break;
+  case 3:
+    alen = buf[4];
+    break;
+  case 4:
+    alen = 15;
+    break;
+  default:
+    snprintf(errbuf, errlen, "SOCK5 unrecognized address type 0x%x", buf[3]);
+    return -1;
+  }
+
+  // Throw away bound address and port
+
+  if(tcp_read_data(tc, NULL, alen + 2, NULL, NULL)) {
+    snprintf(errbuf, errlen, "SOCK5 Read error");
+    return -1;
+  }
+  return 0;
+}
+
+
+
+
+/**
+ *
+ */
 tcpcon_t *
 tcp_connect(const char *hostname, int port,
             char *errbuf, size_t errlen,
@@ -382,11 +482,64 @@ tcp_connect(const char *hostname, int port,
 {
   tcpcon_t *tc;
   const int dbg = !!(flags & TCP_DEBUG);
+  const char *errmsg;
+  net_addr_t addr = {0};
 
-  tc = tcp_connect_arch(hostname, port, errbuf, errlen, timeout, c, dbg);
+
+  if(!strcmp(hostname, "localhost")) {
+    addr.na_family = 4;
+    addr.na_addr[0] = 127;
+    addr.na_addr[3] = 1;
+
+  } else if(gconf.proxy_host[0] && !(flags & TCP_NO_PROXY)) {
+
+    if(!net_resolve_numeric(hostname, &addr) && addr.na_family == 4) {
+
+      netif_t *ni = net_get_interfaces();
+      uint32_t v4addr;
+
+      memcpy(&v4addr, addr.na_addr, 4);
+      v4addr = ntohl(v4addr);
+      if(ni != NULL) {
+        for(int i = 0; ni[i].ipv4; i++) {
+          printf("%x %x %x\n", v4addr, ni[i].maskv4, ni[i].ipv4);
+          if((v4addr & ni[i].maskv4) == (ni[i].ipv4 & ni[i].maskv4)) {
+            printf("%s is local\n", hostname);
+            goto connect;
+          }
+        }
+        free(ni);
+      }
+    }
+
+    tc = tcp_connect(gconf.proxy_host, gconf.proxy_port,
+                     errbuf, errlen, timeout,
+                     (flags & TCP_DEBUG) | TCP_NO_PROXY, c);
+    if(tc == NULL)
+      return NULL;
+
+    if(socks_session_setup(tc, hostname, port, errbuf, errlen)) {
+      tcp_close(tc);
+      return NULL;
+    }
+
+    goto connected;
+
+  } else {
+    if(net_resolve(hostname, &addr, &errmsg)) {
+      snprintf(errbuf, errlen, "%s", errmsg);
+      return NULL;
+    }
+  }
+
+ connect:
+
+  addr.na_port = port;
+  tc = tcp_connect_arch(&addr, errbuf, errlen, timeout, c, dbg);
   if(tc == NULL)
     return NULL;
 
+ connected:
   if(flags & TCP_SSL) {
 
     if(tcp_ssl_open(tc, errbuf, errlen)) {

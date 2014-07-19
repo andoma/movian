@@ -539,6 +539,19 @@ parse_opts(int argc, char **argv)
     } else if (!strcmp(argv[0], "--showtime-shell-fd") && argc > 1) {
       gconf.showtime_shell_fd = atoi(argv[1]);
       argc -= 2; argv += 2;
+    } else if (!strcmp(argv[0], "--proxy") && argc > 1) {
+      char *x = mystrdupa(argv[1]);
+      char *pstr = strchr(x, ':');
+
+      if(pstr != NULL) {
+        *pstr++ = 0;
+        gconf.proxy_port = atoi(pstr);
+      } else {
+        gconf.proxy_port = 1080;
+      }
+      snprintf(gconf.proxy_host, sizeof(gconf.proxy_host), "%s", x);
+      printf("Proxy set to %s:%d\n", gconf.proxy_host, gconf.proxy_port);
+      argc -= 2; argv += 2;
 #ifdef __APPLE__
     /* ignore -psn argument, process serial number */
     } else if(!strncmp(argv[0], "-psn", 4)) {

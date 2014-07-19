@@ -59,6 +59,7 @@ net_get_interfaces(void)
     n->ipv4 = ntohl(((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr);
     if(n->ipv4 == 0)
       continue;
+    n->maskv4 = ntohl(((struct sockaddr_in *)ifa->ifa_netmask)->sin_addr.s_addr);
 
     snprintf(n->ifname, sizeof(n->ifname), "%s", ifa->ifa_name);
     n++;

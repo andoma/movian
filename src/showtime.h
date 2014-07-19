@@ -291,6 +291,9 @@ typedef struct gconf {
 
   int showtime_shell_fd;
 
+  char proxy_host[64];
+  uint16_t proxy_port;
+
   char system_name[64];
 
   char device_id[64];

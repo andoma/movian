@@ -62,7 +62,7 @@ struct tcpcon {
 
 void tcp_cancel(void *aux);
 
-tcpcon_t *tcp_connect_arch(const char *hostname, int port, char *errbuf,
+tcpcon_t *tcp_connect_arch(const net_addr_t *addr, char *errbuf,
                            size_t errbufsize, int timeout,
                            struct cancellable *c, int dbg);
 

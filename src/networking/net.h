@@ -46,8 +46,9 @@ typedef struct tcpcon tcpcon_t;
 
 void net_init(void);
 
-#define TCP_SSL   0x1
-#define TCP_DEBUG 0x2
+#define TCP_SSL      0x1
+#define TCP_DEBUG    0x2
+#define TCP_NO_PROXY 0x4
 
 tcpcon_t *tcp_connect(const char *hostname, int port, char *errbuf,
 		      size_t errbufsize, int timeout, int flags,
@@ -67,7 +68,7 @@ void tcp_printf(tcpcon_t *tc, const char *fmt, ...);
 
 int tcp_read_line(tcpcon_t *nc, char *buf, const size_t bufsize);
 
-int tcp_write_data(tcpcon_t *nc, const char *buf, const size_t bufsize);
+int tcp_write_data(tcpcon_t *nc, const void *buf, const size_t bufsize);
 
 int tcp_read_to_eof(tcpcon_t *tc, void *buf, size_t bufsize,
                     net_read_cb_t *cb, void *opaque);
@@ -89,12 +90,15 @@ void tcp_set_read_timeout(tcpcon_t *tc, int ms);
 
 int net_resolve(const char *hostname, net_addr_t *addr, const char **errmsg);
 
+int net_resolve_numeric(const char *hostname, net_addr_t *addr);
+
 void net_change_nonblocking(int fd, int on);
 
 void net_change_ndelay(int fd, int on);
 
 typedef struct netif {
   uint32_t ipv4;
+  uint32_t maskv4;
   char ifname[16];
 } netif_t;
 

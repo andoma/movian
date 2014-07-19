@@ -232,7 +232,7 @@ net_resolve(const char *hostname, net_addr_t *addr, const char **err)
  *
  */
 tcpcon_t *
-tcp_connect_arch(const char *hostname, int port,
+tcp_connect_arch(const net_addr_t *addr,
                  char *errbuf, size_t errbufsize,
                  int timeout, cancellable_t *c, int dbg)
 {
@@ -245,45 +245,27 @@ tcp_connect_arch(const char *hostname, int port,
 
   memset(&ss, 0, sizeof(struct sockaddr_storage));
 
-  if(!strcmp(hostname, "localhost")) {
 
+  switch(addr->na_family) {
+  case 4:
     in = (struct sockaddr_in *)&ss;
-
     in->sin_family = AF_INET;
-    in->sin_port = htons(port);
-    in->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    in->sin_port = htons(addr->na_port);
+    memcpy(&in->sin_addr, addr->na_addr, sizeof(struct in_addr));
     slen = sizeof(struct sockaddr_in);
-  } else {
+    break;
 
-    net_addr_t addr;
-    const char *errmsg;
+  case AF_INET6:
+    in6 = (struct sockaddr_in6 *)&ss;
+    in6->sin6_family = AF_INET6;
+    in6->sin6_port = htons(addr->na_port);
+    memcpy(&in6->sin6_addr, addr->na_addr, sizeof(struct in6_addr));
+    slen = sizeof(struct sockaddr_in6);
+    break;
 
-    if(net_resolve(hostname, &addr, &errmsg)) {
-      snprintf(errbuf, errbufsize, "%s", errmsg);
-      return NULL;
-    }
-
-    switch(addr.na_family) {
-    case 4:
-      in = (struct sockaddr_in *)&ss;
-      in->sin_family = AF_INET;
-      in->sin_port = htons(port);
-      memcpy(&in->sin_addr, addr.na_addr, sizeof(struct in_addr));
-      slen = sizeof(struct sockaddr_in);
-      break;
-
-    case AF_INET6:
-      in6 = (struct sockaddr_in6 *)&ss;
-      in6->sin6_family = AF_INET6;
-      in6->sin6_port = htons(port);
-      memcpy(&in6->sin6_addr, addr.na_addr, sizeof(struct in6_addr));
-      slen = sizeof(struct sockaddr_in6);
-      break;
-
-    default:
-      snprintf(errbuf, errbufsize, "Invalid protocol family");
-      return NULL;
-    }
+  default:
+    snprintf(errbuf, errbufsize, "Invalid protocol family");
+    return NULL;
   }
 
   if((fd = getstreamsocket(ss.ss_family, errbuf, errbufsize)) == -1)
@@ -414,4 +396,21 @@ net_change_ndelay(int fd, int on)
 {
   int val = on;
   setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &val, sizeof(val));
+}
+
+
+/**
+ *
+ */
+int
+net_resolve_numeric(const char *str, net_addr_t *addr)
+{
+  in_addr_t ia = inet_addr(str);
+  if(ia == INADDR_NONE)
+    return 1;
+
+  memset(addr, 0, sizeof(net_addr_t));
+  addr->na_family = 4;
+  memcpy(&addr->na_addr, &ia, 4);
+  return 0;
 }

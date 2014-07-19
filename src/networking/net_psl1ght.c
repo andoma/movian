@@ -183,7 +183,7 @@ net_resolve(const char *hostname, net_addr_t *addr, const char **err)
  *
  */
 tcpcon_t *
-tcp_connect_arch(const char *hostname, int port,
+tcp_connect_arch(const net_addr_t *addr,
                  char *errbuf, size_t errbufsize,
                  int timeout, cancellable_t *c, int dbg)
 {
@@ -191,51 +191,27 @@ tcp_connect_arch(const char *hostname, int port,
   struct sockaddr_in in;
   socklen_t errlen = sizeof(int);
 
-
-  if(!strcmp(hostname, "localhost")) {
+  switch(addr->na_family) {
+  case 4:
     if((fd = getstreamsocket(AF_INET, errbuf, errbufsize)) == -1)
       return NULL;
 
     memset(&in, 0, sizeof(in));
     in.sin_family = AF_INET;
-    in.sin_port = htons(port);
-    in.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    in.sin_port = addr->na_port;
+    memcpy(&in.sin_addr, addr->na_addr, 4);
     r = netConnect(fd, (struct sockaddr *)&in, sizeof(struct sockaddr_in));
-
-  } else {
-
-    net_addr_t addr;
-    const char *errmsg;
-
-    if(net_resolve(hostname, &addr, &errmsg)) {
-      snprintf(errbuf, errbufsize, "%s", errmsg);
-      return NULL;
+    if(dbg) {
+      TRACE(TRACE_DEBUG, "NET", "Connecting fd 0x%x = 0x%x errno=%d",
+            fd, r, net_errno);
+      hexdump("netConnect", (struct sockaddr *)&in, sizeof(struct sockaddr_in));
     }
+    break;
 
-    switch(addr.na_family) {
-    case 4:
-      if((fd = getstreamsocket(AF_INET, errbuf, errbufsize)) == -1)
-        return NULL;
-
-      memset(&in, 0, sizeof(in));
-      in.sin_family = AF_INET;
-      in.sin_port = htons(port);
-      memcpy(&in.sin_addr, addr.na_addr, 4);
-      r = netConnect(fd, (struct sockaddr *)&in, sizeof(struct sockaddr_in));
-      if(dbg) {
-        TRACE(TRACE_DEBUG, "NET", "Connecting fd 0x%x = 0x%x errno=%d",
-              fd, r, net_errno);
-        hexdump("netConnect", (struct sockaddr *)&in, sizeof(struct sockaddr_in));
-      }
-      break;
-
-    default:
-      snprintf(errbuf, errbufsize, "Invalid protocol family");
-      return NULL;
-    }
+  default:
+    snprintf(errbuf, errbufsize, "Invalid protocol family");
+    return NULL;
   }
-
-
 
   tcpcon_t *tc = calloc(1, sizeof(tcpcon_t));
   tc->fd = fd;
@@ -381,6 +357,7 @@ net_get_interfaces(void)
 
   snprintf(ni[0].ifname, sizeof(ni[0].ifname), "eth");
   ni[0].ipv4 = inet_addr(info.ip_address);
+  ni[0].maskv4 = inet_addr(info.netmask);
   return ni;
 }
 
@@ -408,4 +385,21 @@ net_change_ndelay(int fd, int on)
 
   if(setsockopt(fd, 6, 1, &optval, sizeof(optval)) < 0)
     TRACE(TRACE_INFO, "TCP", "Unable to turn on TCP_NODELAY");
+}
+
+
+/**
+ *
+ */
+int
+net_resolve_numeric(const char *str, net_addr_t *addr)
+{
+  in_addr_t ia = inet_addr(str);
+  if(ia == INADDR_NONE)
+    return 1;
+
+  memset(addr, 0, sizeof(net_addr_t));
+  addr->na_family = 4;
+  memcpy(&addr->na_addr, &ia, 4);
+  return 0;
 }
