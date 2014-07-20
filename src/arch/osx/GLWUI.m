@@ -90,35 +90,39 @@
   fullscreen = asfullscreen;
 
   if(fullscreen) {
-    
+
     frame = [[NSScreen mainScreen] frame];
     window = [[GLWWindow alloc] initWithContentRect: frame
 					    styleMask:NSBorderlessWindowMask
 					      backing:NSBackingStoreBuffered
 						defer:NO];
-    
+
     [window setLevel:NSMainMenuWindowLevel+1];
     [window setOpaque:YES];
     [window setHidesOnDeactivate:YES];
-    
+
   } else {
-    
+
     frame = NSMakeRect( 100., 100., 1280./1.5, 720./1.5 );
-    
+
     window = [[GLWWindow alloc]
 			 initWithContentRect:frame
 				   styleMask:NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask
 				     backing:NSBackingStoreBuffered
 				       defer:NO];
-    
+
      [window setTitle:@"Showtime"];
+     [window setFrameAutosaveName:@"main"];
   }
-  
+
   view = [[GLWView alloc] initWithFrame:frame:gr:fullscreen];
   [window setContentView:view];
   [window setDelegate:self];
   [window makeKeyAndOrderFront:nil];
   [window setAcceptsMouseMovedEvents:YES];
+
+  [NSApp activateIgnoringOtherApps:YES];
+
 }
 
 
