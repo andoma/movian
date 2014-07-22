@@ -400,6 +400,7 @@ SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
 			src/ui/glw/glw_view_loader.c \
 			src/ui/glw/glw_dummy.c \
 			src/ui/glw/glw_container.c \
+			src/ui/glw/glw_cursor.c \
 			src/ui/glw/glw_list.c \
 			src/ui/glw/glw_clist.c \
 			src/ui/glw/glw_array.c \
