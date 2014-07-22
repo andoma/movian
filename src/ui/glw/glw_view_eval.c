@@ -809,47 +809,6 @@ resolve_property_name2(glw_view_eval_context_t *ec, token_t *t)
   return t;
 }
 
-/**
- *
- */
-static int
-set_prop_from_token(prop_t *p, token_t *t)
-{
-  switch(t->type) {
-  case TOKEN_VOID:
-    prop_set_void(p);
-    break;
-
-  case TOKEN_RSTRING:
-    prop_set_rstring(p, t->t_rstring);
-    break;
-
-  case TOKEN_CSTRING:
-    prop_set_cstring(p, t->t_cstring);
-    break;
-
-  case TOKEN_URI:
-    prop_set_uri(p, rstr_get(t->t_uri_title), rstr_get(t->t_uri));
-    break;
-
-  case TOKEN_INT:
-    prop_set_int(p, t->t_int);
-    break;
-
-  case TOKEN_FLOAT:
-    prop_set_float(p, t->t_float);
-    break;
-
-  case TOKEN_PROPERTY_REF:
-    prop_link(t->t_prop, p);
-    break;
-
-  default:
-    return -1;
-  }
-  return 0;
-}
-
 
 /**
  *
@@ -918,23 +877,25 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
   }
 
   switch(a->type) {
-  case TOKEN_IDENTIFIER:
-    if(ec->tgtprop == NULL)
-      return glw_view_seterr(ec->ei, self, "Invalid assignment outside block");
 
-    if(set_prop_from_token(prop_create(ec->tgtprop, 
-				       rstr_get(a->t_rstring)), b))
-      return glw_view_seterr(ec->ei, self, 
-			     "Unable to assign %s to block property",
-			     token2name(b));
-    break;
 
   case TOKEN_OBJECT_ATTRIBUTE:
     r = a->t_attrib->set(ec, a->t_attrib, b);
     break;
 
+  case TOKEN_IDENTIFIER:
+    if(ec->tgtprop == NULL)
+      return glw_view_seterr(ec->ei, self, "Invalid assignment outside block");
+
+    prop_t *p = prop_create_r(ec->tgtprop, rstr_get(a->t_rstring));
+
+    rstr_release(a->t_rstring);
+    a->t_rstring = NULL;
+    a->type = TOKEN_PROPERTY_REF;
+    a->t_prop = p;
+    // FALLTHRU
+
    case TOKEN_PROPERTY_REF:
-    
     switch(b->type) {
     case TOKEN_RSTRING:
       prop_set_rstring(a->t_prop, b->t_rstring);
