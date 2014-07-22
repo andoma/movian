@@ -1010,33 +1010,32 @@ typedef struct glw {
 
   int glw_flags2;
 
-#define GLW2_CONSTRAINT_IGNORE_X        GLW_CONSTRAINT_X
-#define GLW2_CONSTRAINT_IGNORE_Y        GLW_CONSTRAINT_Y
-#define GLW2_CONSTRAINT_IGNORE_W        GLW_CONSTRAINT_W
-#define GLW2_CONSTRAINT_IGNORE_D        GLW_CONSTRAINT_D
-
-#define GLW2_ENABLED                    0x10
-#define GLW2_ALWAYS_LAYOUT              0x20
-#define GLW2_ALWAYS_GRAB_KNOB           0x40
-#define GLW2_AUTOHIDE                   0x80
-#define GLW2_SHADOW                     0x100
-#define GLW2_AUTOFADE                   0x200
-#define GLW2_EXPEDITE_SUBSCRIPTIONS     0x400
-#define GLW2_AUTOMARGIN                 0x800
-#define GLW2_REVERSE_RENDER             0x1000
-#define GLW2_NO_INITIAL_TRANS           0x2000
-#define GLW2_FOCUS_ON_CLICK             0x4000
-#define GLW2_AUTOREFOCUSABLE            0x8000
-#define GLW2_NAV_FOCUSABLE              0x10000    /* Widget is focusable when navigating
-                                                      with keyboard input */
-#define GLW2_HOMOGENOUS                 0x20000
-#define GLW2_DEBUG                      0x40000     /* Debug this object */
-
-
-#define GLW2_LEFT_EDGE            0x10000000
-#define GLW2_TOP_EDGE             0x20000000
-#define GLW2_RIGHT_EDGE           0x40000000
-#define GLW2_BOTTOM_EDGE          0x80000000
+#define GLW2_CONSTRAINT_IGNORE_X    GLW_CONSTRAINT_X
+#define GLW2_CONSTRAINT_IGNORE_Y    GLW_CONSTRAINT_Y
+#define GLW2_CONSTRAINT_IGNORE_W    GLW_CONSTRAINT_W
+#define GLW2_CONSTRAINT_IGNORE_D    GLW_CONSTRAINT_D
+#define GLW2_ENABLED                0x10
+#define GLW2_ALWAYS_LAYOUT          0x20
+#define GLW2_ALWAYS_GRAB_KNOB       0x40
+#define GLW2_AUTOHIDE               0x80
+#define GLW2_SHADOW                 0x100
+#define GLW2_AUTOFADE               0x200
+#define GLW2_EXPEDITE_SUBSCRIPTIONS 0x400
+#define GLW2_AUTOMARGIN             0x800
+#define GLW2_REVERSE_RENDER         0x1000
+#define GLW2_NO_INITIAL_TRANS       0x2000
+#define GLW2_FOCUS_ON_CLICK         0x4000
+#define GLW2_AUTOREFOCUSABLE        0x8000
+#define GLW2_NAV_FOCUSABLE          0x10000 /* Widget is focusable when
+                                               navigating with keyboard input */
+#define GLW2_HOMOGENOUS             0x20000
+#define GLW2_DEBUG                  0x40000     /* Debug this object */
+#define GLW2_LAYOUTFIXED_X          0x80000
+#define GLW2_LAYOUTFIXED_Y          0x100000
+#define GLW2_LEFT_EDGE              0x10000000
+#define GLW2_TOP_EDGE               0x20000000
+#define GLW2_RIGHT_EDGE             0x40000000
+#define GLW2_BOTTOM_EDGE            0x80000000
 
 
   float glw_norm_weight;             /* Relative weight (normalized) */
