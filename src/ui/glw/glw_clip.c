@@ -88,9 +88,6 @@ glw_clip_render(glw_t *w, const glw_rctx_t *rc)
   glw_t *c;
   glw_clip_t *gc = (glw_clip_t *)w;
 
-  if(w->glw_flags2 & GLW2_DEBUG)
-    glw_wirebox(w->glw_root, rc);
-
   int l = gc->gc_clipping[0] >= 0 ? 
     glw_clip_enable(w->glw_root, rc, GLW_CLIP_LEFT, gc->gc_clipping[0]) : -1;
   int t = gc->gc_clipping[1] >= 0 ? 
@@ -205,8 +202,6 @@ glw_fade_render(glw_t *w, const glw_rctx_t *rc)
   glw_t *c;
   glw_fade_t *gf = (glw_fade_t *)w;
   int fader = -1;
-  if(w->glw_flags2 & GLW2_DEBUG)
-    glw_wirebox(w->glw_root, rc);
 
   if(gf->gf_run)
     fader = glw_fader_enable(w->glw_root, rc, gf->gf_plane,

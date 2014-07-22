@@ -386,9 +386,6 @@ glw_text_bitmap_render(glw_t *w, const glw_rctx_t *rc)
   if(alpha < 0.01f)
     return;
 
-  if(w->glw_flags2 & GLW2_DEBUG)
-    glw_wirebox(w->glw_root, rc);
-
   if(glw_is_tex_inited(&gtb->gtb_texture) && gtb->gtb_image != NULL) {
     glw_renderer_draw(&gtb->gtb_text_renderer, w->glw_root, rc,
 		      &gtb->gtb_texture,

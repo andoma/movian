@@ -1288,14 +1288,6 @@ int glw_event_distribute_to_childs(glw_t *w, event_t *e);
 
 int glw_event_to_selected_child(glw_t *w, event_t *e);
 
-
-
-
-
-
-
-#define glw_render0(w, rc) ((w)->glw_class->gc_render(w, rc))
-
 void glw_layout0(glw_t *w, const glw_rctx_t *rc);
 
 void glw_rctx_init(glw_rctx_t *rc, int width, int height, int overscan);
@@ -1316,6 +1308,13 @@ void glw_align_2(glw_rctx_t *rc, int a);
 void glw_wirebox(glw_root_t *gr, const glw_rctx_t *rc);
 
 void glw_wirecube(glw_root_t *gr, const glw_rctx_t *rc);
+
+static inline void glw_render0(glw_t *w, const glw_rctx_t *rc)
+{
+  if(unlikely(w->glw_flags2 & GLW2_DEBUG))
+    glw_wirebox(w->glw_root, rc);
+  w->glw_class->gc_render(w, rc);
+}
 
 /**
  * Global flush interface 
