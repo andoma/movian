@@ -1189,28 +1189,10 @@ mod_image_flags(glw_t *w, int set, int clr)
 /**
  *
  */
-static void
-mod_flags2(glw_t *w, int set, int clr)
-{
-  glw_image_t *gi = (void *)w;
-  if((set | clr) & GLW2_SHADOW) {
-    if(set & GLW2_SHADOW)
-      gi->gi_shadow = 4;
-    else
-      gi->gi_shadow = 0;
-    
-    gi->gi_update = 1;
-  }
-}
-
-
-/**
- *
- */
-static const rstr_t *
+static rstr_t *
 get_curname(glw_image_t *gi)
 {
-  const rstr_t *curname;
+  rstr_t *curname;
 
   if(gi->gi_pending_url != NULL)
     curname = gi->gi_pending_url;
@@ -1235,6 +1217,27 @@ set_pending(glw_image_t *gi, rstr_t *filename)
   gi->gi_pending_url = filename ? rstr_dup(filename) : rstr_alloc("");
 
 }
+
+
+/**
+ *
+ */
+static void
+mod_flags2(glw_t *w, int set, int clr)
+{
+  glw_image_t *gi = (void *)w;
+  if((set | clr) & GLW2_SHADOW) {
+    if(set & GLW2_SHADOW)
+      gi->gi_shadow = 4;
+    else
+      gi->gi_shadow = 0;
+
+    rstr_t *curname = get_curname(gi);
+    if(curname != NULL)
+      set_pending(gi, curname);
+  }
+}
+
 
 /**
  *
