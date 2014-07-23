@@ -932,6 +932,31 @@ thaw(glw_t *w)
  *
  */
 static int
+gtb_set_em(glw_t *w, glw_attribute_t a, float v)
+{
+  glw_text_bitmap_t *gtb = (void *)w;
+
+  switch(a) {
+
+  case GLW_ATTRIB_SIZE:
+    if(gtb->gtb_size_scale == v)
+      return 0;
+
+    gtb->gtb_size_scale = v;
+    break;
+
+  default:
+    return -1;
+  }
+  gtb_update_epilogue(gtb, GTB_UPDATE_REALIZE);
+  return 1;
+}
+
+
+/**
+ *
+ */
+static int
 gtb_set_float(glw_t *w, glw_attribute_t a, float v)
 {
   glw_text_bitmap_t *gtb = (void *)w;
@@ -939,11 +964,8 @@ gtb_set_float(glw_t *w, glw_attribute_t a, float v)
   switch(a) {
 
   case GLW_ATTRIB_SIZE_SCALE:
-    if(gtb->gtb_size_scale == v)
-      return 0;
+    return gtb_set_em(w, GLW_ATTRIB_SIZE, v);
 
-    gtb->gtb_size_scale = v;
-    break;
   default:
     return -1;
   }
@@ -961,12 +983,11 @@ gtb_set_int(glw_t *w, glw_attribute_t a, int v)
   glw_text_bitmap_t *gtb = (void *)w;
 
   switch(a) {
-  case GLW_ATTRIB_DEFAULT_SIZE:
+  case GLW_ATTRIB_SIZE:
     if(gtb->gtb_default_size == v)
       return 0;
 
     gtb->gtb_default_size = v;
-    gtb_update_epilogue(gtb, GTB_UPDATE_REALIZE);
     break;
 
   case GLW_ATTRIB_MIN_SIZE:
@@ -1364,6 +1385,7 @@ static glw_class_t glw_label = {
   .gc_freeze = freeze,
   .gc_thaw = thaw,
   .gc_set_float = gtb_set_float,
+  .gc_set_em    = gtb_set_em,
   .gc_set_int   = gtb_set_int,
 };
 
@@ -1393,6 +1415,7 @@ static glw_class_t glw_text = {
   .gc_thaw = thaw,
 
   .gc_set_float = gtb_set_float,
+  .gc_set_em    = gtb_set_em,
   .gc_set_int   = gtb_set_int,
 
   .gc_update_text = update_text,

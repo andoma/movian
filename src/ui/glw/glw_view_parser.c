@@ -139,6 +139,7 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei, glw_root_t *gr)
     case TOKEN_RSTRING:
     case TOKEN_CSTRING:
     case TOKEN_FLOAT:
+    case TOKEN_EM:
     case TOKEN_INT:
     case TOKEN_IDENTIFIER:
     case TOKEN_OBJECT_ATTRIBUTE:
@@ -385,6 +386,26 @@ parse_prep_expression(token_t *expr, errorinfo_t *ei, glw_root_t *gr)
         }
 	t = t0->next;
       }
+      continue;
+    }
+
+
+    /**
+     * Transform int/float "em" into TOKEN_EM
+     */
+
+    if((t->type == TOKEN_FLOAT || t->type == TOKEN_INT) &&
+       t1 != NULL && t1->type == TOKEN_IDENTIFIER &&
+       !strcmp(rstr_get(t1->t_rstring), "em")) {
+
+      if(t->type == TOKEN_INT)
+        t->t_float = t->t_int;
+
+      t->type = TOKEN_EM;
+
+      t->next = t1->next;
+      t = t1->next;
+      glw_view_token_free(gr, t1);
       continue;
     }
 

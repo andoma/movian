@@ -114,6 +114,8 @@ typedef float Vec2[2];
 #define GLW_VIEW_EVAL_ACTIVE     0x2
 #define GLW_VIEW_EVAL_FHP_CHANGE 0x4
 #define GLW_VIEW_EVAL_OTHER      0x8
+#define GLW_VIEW_EVAL_EM         0x10
+
 #define GLW_VIEW_EVAL_PROP       0x100
 #define GLW_VIEW_EVAL_KEEP       0x200
 
@@ -161,7 +163,7 @@ typedef enum {
   GLW_ATTRIB_PARENT_URL,
   GLW_ATTRIB_ALPHA_SELF,
   GLW_ATTRIB_SIZE_SCALE,
-  GLW_ATTRIB_DEFAULT_SIZE,
+  GLW_ATTRIB_SIZE,
   GLW_ATTRIB_MIN_SIZE,
   GLW_ATTRIB_MAX_LINES,
   GLW_ATTRIB_RGB,
@@ -416,6 +418,8 @@ typedef struct glw_class {
   int (*gc_set_int)(struct glw *w, glw_attribute_t a, int value);
 
   int (*gc_set_float)(struct glw *w, glw_attribute_t a, float value);
+
+  int (*gc_set_em)(struct glw *w, glw_attribute_t a, float value);
 
   int (*gc_set_rstr)(struct glw *w, glw_attribute_t a, rstr_t *value);
 
@@ -1194,6 +1198,8 @@ glw_t *glw_view_create(glw_root_t *gr, rstr_t *url,
 void glw_view_eval_signal(glw_t *w, glw_signal_t sig);
 
 void glw_view_eval_layout(glw_t *w, const glw_rctx_t *rc, int mask);
+
+void glw_view_eval_em(glw_t *w);
 
 /**
  * Transitions

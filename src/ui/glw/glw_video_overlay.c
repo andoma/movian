@@ -802,7 +802,7 @@ gvo_create_from_vo_text(glw_video_t *gv, video_overlay_t *vo)
 
   gc->gc_freeze(w);
 
-  gc->gc_set_int(w, GLW_ATTRIB_DEFAULT_SIZE,
+  gc->gc_set_int(w, GLW_ATTRIB_SIZE,
 		 gv->w.glw_root->gr_current_size * 1.5);
 
   if(gvo->gvo_abspos) {

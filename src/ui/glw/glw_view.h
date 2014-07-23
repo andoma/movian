@@ -69,6 +69,7 @@ typedef enum {
   TOKEN_RSTRING,               // A ref allocated string
   TOKEN_CSTRING,               // A compile time constant string
   TOKEN_FLOAT,
+  TOKEN_EM,                    // Element (1em == $ui.size)
   TOKEN_INT,
   TOKEN_IDENTIFIER,
   TOKEN_FUNCTION,              //

@@ -1314,6 +1314,35 @@ set_sources(glw_t *w, rstr_t **filenames)
  *
  */
 static int
+glw_image_set_em(glw_t *w, glw_attribute_t attrib, float value)
+{
+  glw_image_t *gi = (glw_image_t *)w;
+
+  switch(attrib) {
+  case GLW_ATTRIB_SIZE:
+    if(w->glw_class != &glw_icon)
+      return -1;
+
+    if(gi->gi_size_scale == value)
+      return 0;
+
+    gi->gi_size_scale = value;
+
+    float siz = gi->gi_size_scale * w->glw_root->gr_current_size;
+    glw_set_constraints(w, siz, siz, 0, GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y);
+    break;
+
+  default:
+    return -1;
+  }
+  return 1;
+}
+
+
+/**
+ *
+ */
+static int
 glw_image_set_float(glw_t *w, glw_attribute_t attrib, float value)
 {
   glw_image_t *gi = (glw_image_t *)w;
@@ -1352,17 +1381,7 @@ glw_image_set_float(glw_t *w, glw_attribute_t attrib, float value)
     break;
 
   case GLW_ATTRIB_SIZE_SCALE:
-    if(w->glw_class != &glw_icon)
-      return -1;
-
-    if(gi->gi_size_scale == value)
-      return 0;
-
-    gi->gi_size_scale = value;
-
-    float siz = gi->gi_size_scale * w->glw_root->gr_current_size;
-    glw_set_constraints(w, siz, siz, 0, GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y);
-    break;
+    return glw_image_set_em(w, GLW_ATTRIB_SIZE, value);
 
   default:
     return -1;
@@ -1397,7 +1416,7 @@ glw_image_set_int(glw_t *w, glw_attribute_t attrib, int value)
     gi->gi_update = 1;
     break;
 
-  case GLW_ATTRIB_DEFAULT_SIZE:
+  case GLW_ATTRIB_SIZE:
     if(w->glw_class != &glw_icon)
       return -1;
 
@@ -1518,6 +1537,7 @@ static glw_class_t glw_icon = {
   .gc_ctor = glw_icon_ctor,
   .gc_dtor = glw_icon_dtor,
   .gc_set_float = glw_image_set_float,
+  .gc_set_em = glw_image_set_em,
   .gc_set_int = glw_image_set_int,
   .gc_signal_handler = glw_image_callback,
   .gc_default_alignment = LAYOUT_ALIGN_CENTER,

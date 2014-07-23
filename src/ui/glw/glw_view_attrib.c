@@ -39,6 +39,7 @@ set_rstring(glw_view_eval_context_t *ec, const token_attrib_t *a,
   rstr_t *rstr;
   char buf[30];
   void (*fn)(struct glw *w, rstr_t *str) = a->fn;
+  glw_t *w = ec->w;
 
   switch(t->type) {
   case TOKEN_VOID:
@@ -47,13 +48,13 @@ set_rstring(glw_view_eval_context_t *ec, const token_attrib_t *a,
 
   case TOKEN_CSTRING:
     rstr = rstr_alloc(t->t_cstring);
-    fn(ec->w, rstr);
+    fn(w, rstr);
     rstr_release(rstr);
     return 0;
 
   case TOKEN_RSTRING:
   case TOKEN_URI:
-    fn(ec->w, t->t_rstring);
+    fn(w, t->t_rstring);
     return 0;
 
   case TOKEN_INT:
@@ -64,6 +65,12 @@ set_rstring(glw_view_eval_context_t *ec, const token_attrib_t *a,
     snprintf(buf, sizeof(buf), "%f", t->t_float);
     break;
 
+  case TOKEN_EM:
+    ec->dynamic_eval |= GLW_VIEW_EVAL_EM;
+    snprintf(buf, sizeof(buf), "%f", t->t_float *
+             w->glw_root->gr_current_size);
+    break;
+
   default:
     return glw_view_seterr(ec->ei, t, 
 			   "Attribute '%s' expects a string or scalar, got %s",
@@ -71,7 +78,7 @@ set_rstring(glw_view_eval_context_t *ec, const token_attrib_t *a,
   }
 
   rstr = rstr_alloc(buf);
-  fn(ec->w, rstr);
+  fn(w, rstr);
   rstr_release(rstr);
   return 0;
 }
@@ -115,6 +122,7 @@ set_caption(glw_view_eval_context_t *ec, const token_attrib_t *a,
   char buf[30];
   const char *str;
   prop_str_type_t type = 0;
+  glw_t *w = ec->w;
 
   switch(t->type) {
   case TOKEN_VOID:
@@ -142,14 +150,21 @@ set_caption(glw_view_eval_context_t *ec, const token_attrib_t *a,
     str = buf;
     break;
 
+  case TOKEN_EM:
+    ec->dynamic_eval |= GLW_VIEW_EVAL_EM;
+    snprintf(buf, sizeof(buf), "%f",
+             t->t_float * w->glw_root->gr_current_size);
+    str = buf;
+    break;
+
   default:
     return glw_view_seterr(ec->ei, t, 
 			   "Attribute '%s' expects a string or scalar, got %s",
 			   a->name, token2name(t));
   }
 
-  if(ec->w->glw_class->gc_set_caption != NULL)
-    ec->w->glw_class->gc_set_caption(ec->w, str, type);
+  if(w->glw_class->gc_set_caption != NULL)
+    w->glw_class->gc_set_caption(ec->w, str, type);
   return 0;
 }
 
@@ -209,6 +224,7 @@ set_float(glw_view_eval_context_t *ec, const token_attrib_t *a,
           struct token *t)
 {
   float v;
+  glw_t *w = ec->w;
 
   switch(t->type) {
   case TOKEN_CSTRING:
@@ -222,6 +238,11 @@ set_float(glw_view_eval_context_t *ec, const token_attrib_t *a,
 
   case TOKEN_FLOAT:
     v = t->t_float;
+    break;
+
+  case TOKEN_EM:
+    ec->dynamic_eval |= GLW_VIEW_EVAL_EM;
+    v = t->t_float * w->glw_root->gr_current_size;
     break;
 
   case TOKEN_INT:
@@ -238,7 +259,7 @@ set_float(glw_view_eval_context_t *ec, const token_attrib_t *a,
 
   void (*fn)(struct glw *w, float v) = a->fn;
   assert(fn != NULL);
-  fn(ec->w, v);
+  fn(w, v);
   return 0;
 }
 
@@ -366,34 +387,77 @@ set_number_float(glw_t *w, const token_attrib_t *a, const token_t *t, float v)
 /**
  *
  */
+static void
+set_number_em(glw_t *w, const token_attrib_t *a, const token_t *t,
+              glw_view_eval_context_t *ec)
+{
+  const glw_class_t *gc = w->glw_class;
+  int r;
+  float v = t->t_float;
+  glw_root_t *gr = w->glw_root;
+
+  r = gc->gc_set_em ? gc->gc_set_em(w, a->attrib, v) : -1;
+
+  if(r == -1) {
+
+    v *= gr->gr_current_size;
+
+    ec->dynamic_eval |= GLW_VIEW_EVAL_EM;
+
+    r = gc->gc_set_float ? gc->gc_set_float(w, a->attrib, v) : -1;
+
+    if(r == -1)
+      r = gc->gc_set_int ? gc->gc_set_int(w, a->attrib, v) : -1;
+  }
+
+  if(r == -1) {
+    TRACE(TRACE_DEBUG, "GLW",
+          "Widget %s at %s:%d does not respond to attribute %s",
+          gc->gc_name, rstr_get(t->file), t->line, a->name);
+    return;
+  }
+
+  if(r)
+    attr_need_refresh(gr, t, a, r);
+}
+
+
+/**
+ *
+ */
 static int
 set_number(glw_view_eval_context_t *ec, const token_attrib_t *a,
            struct token *t)
 {
   int v;
+  glw_t *w = ec->w;
 
   switch(t->type) {
   case TOKEN_CSTRING:
     v = atoi(t->t_cstring);
-    set_number_int(ec->w, a, t, v);
+    set_number_int(w, a, t, v);
     break;
 
   case TOKEN_RSTRING:
   case TOKEN_URI:
     v = atoi(rstr_get(t->t_rstring));
-    set_number_int(ec->w, a, t, v);
+    set_number_int(w, a, t, v);
     break;
 
   case TOKEN_FLOAT:
-    set_number_float(ec->w, a, t, t->t_float);
+    set_number_float(w, a, t, t->t_float);
+    break;
+
+  case TOKEN_EM:
+    set_number_em(w, a, t, ec);
     break;
 
   case TOKEN_INT:
-    set_number_int(ec->w, a, t, t->t_int);
+    set_number_int(w, a, t, t->t_int);
     break;
 
   case TOKEN_VOID:
-    set_number_int(ec->w, a, t, 0);
+    set_number_int(w, a, t, 0);
     break;
 
   default:
@@ -416,6 +480,7 @@ set_int(glw_view_eval_context_t *ec, const token_attrib_t *a,
 	  struct token *t)
 {
   int v;
+  glw_t *w = ec->w;
 
   switch(t->type) {
   case TOKEN_CSTRING:
@@ -429,6 +494,11 @@ set_int(glw_view_eval_context_t *ec, const token_attrib_t *a,
 
   case TOKEN_FLOAT:
     v = t->t_float;
+    break;
+
+  case TOKEN_EM:
+    ec->dynamic_eval |= GLW_VIEW_EVAL_EM;
+    v = t->t_float * w->glw_root->gr_current_size;
     break;
 
   case TOKEN_INT:
@@ -445,7 +515,7 @@ set_int(glw_view_eval_context_t *ec, const token_attrib_t *a,
 
   void (*fn)(struct glw *w, int v) = a->fn;
   assert(fn != NULL);
-  fn(ec->w, v);
+  fn(w, v);
   return 0;
 }
 
@@ -492,6 +562,7 @@ set_float3(glw_view_eval_context_t *ec, const token_attrib_t *a,
 {
   const float *vec3;
   float v[3];
+  glw_t *w = ec->w;
 
   switch(t->type) {
   case TOKEN_VECTOR_FLOAT:
@@ -514,6 +585,12 @@ set_float3(glw_view_eval_context_t *ec, const token_attrib_t *a,
     vec3 = v;
     break;
 
+  case TOKEN_EM:
+    ec->dynamic_eval |= GLW_VIEW_EVAL_EM;
+    v[0] = v[1] = v[2] = t->t_float * w->glw_root->gr_current_size;
+    vec3 = v;
+    break;
+
   case TOKEN_INT:
     v[0] = v[1] = v[2] = t->t_int;
     vec3 = v;
@@ -528,7 +605,6 @@ set_float3(glw_view_eval_context_t *ec, const token_attrib_t *a,
 			   a->name, token2name(t));
   }
 
-  glw_t *w = ec->w;
   const glw_class_t *gc = w->glw_class;
 
   int r = gc->gc_set_float3 ? gc->gc_set_float3(w, a->attrib, vec3) : -1;
@@ -554,6 +630,7 @@ set_float4(glw_view_eval_context_t *ec, const token_attrib_t *a,
 	   struct token *t)
 {
   const float *vec4;
+  glw_t *w = ec->w;
   float v[4];
 
   switch(t->type) {
@@ -585,6 +662,12 @@ set_float4(glw_view_eval_context_t *ec, const token_attrib_t *a,
     vec4 = v;
     break;
 
+  case TOKEN_EM:
+    ec->dynamic_eval |= GLW_VIEW_EVAL_EM;
+    v[0] = v[1] = v[2] = v[3] = t->t_float * w->glw_root->gr_current_size;
+    vec4 = v;
+    break;
+
   case TOKEN_INT:
     v[0] = v[1] = v[2] = v[3] = t->t_int;
     vec4 = v;
@@ -594,7 +677,6 @@ set_float4(glw_view_eval_context_t *ec, const token_attrib_t *a,
 			   a->name, token2name(t));
   }
 
-  glw_t *w = ec->w;
   const glw_class_t *gc = w->glw_class;
 
   int r = gc->gc_set_float4 ? gc->gc_set_float4(w, a->attrib, vec4) : -1;
@@ -620,6 +702,7 @@ set_int16_4(glw_view_eval_context_t *ec, const token_attrib_t *a,
 	   struct token *t)
 {
   int16_t v[4];
+  glw_t *w = ec->w;
 
   switch(t->type) {
   case TOKEN_VECTOR_FLOAT:
@@ -647,6 +730,11 @@ set_int16_4(glw_view_eval_context_t *ec, const token_attrib_t *a,
     }
     break;
 
+  case TOKEN_EM:
+    ec->dynamic_eval |= GLW_VIEW_EVAL_EM;
+    v[0] = v[1] = v[2] = v[3] = t->t_float * w->glw_root->gr_current_size;
+    break;
+
   case TOKEN_FLOAT:
     v[0] = v[1] = v[2] = v[3] = t->t_float;
     break;
@@ -665,7 +753,6 @@ set_int16_4(glw_view_eval_context_t *ec, const token_attrib_t *a,
   }
 
 
-  glw_t *w = ec->w;
   const glw_class_t *gc = w->glw_class;
 
   int r = gc->gc_set_int16_4 ? gc->gc_set_int16_4(w, a->attrib, v) : -1;
@@ -1126,7 +1213,7 @@ static const token_attrib_t attribtab[] = {
 
   {"maxlines",        set_number, GLW_ATTRIB_MAX_LINES},
   {"sizeScale",       set_number, GLW_ATTRIB_SIZE_SCALE},
-  {"size",            set_number, GLW_ATTRIB_DEFAULT_SIZE},
+  {"size",            set_number, GLW_ATTRIB_SIZE},
   {"minSize",         set_number, GLW_ATTRIB_MIN_SIZE},
   {"alphaSelf",       set_number, GLW_ATTRIB_ALPHA_SELF},
   {"saturation",      set_number, GLW_ATTRIB_SATURATION},

@@ -373,6 +373,99 @@ token_as_string(const token_t *t)
  *
  */
 static int
+token2int(glw_view_eval_context_t *ec, token_t *t)
+{
+  switch(t->type) {
+  case TOKEN_INT:
+    return t->t_int;
+  case TOKEN_EM:
+    ec->dynamic_eval |= GLW_VIEW_EVAL_EM;
+    return ec->w->glw_root->gr_current_size * t->t_float;
+  case TOKEN_FLOAT:
+    return t->t_float;
+  default:
+    return 0;
+  }
+}
+
+
+/**
+ *
+ */
+static float
+token2float(glw_view_eval_context_t *ec, token_t *t)
+{
+  switch(t->type) {
+  case TOKEN_INT:
+    return t->t_int;
+  case TOKEN_EM:
+    ec->dynamic_eval |= GLW_VIEW_EVAL_EM;
+    return ec->w->glw_root->gr_current_size * t->t_float;
+  case TOKEN_FLOAT:
+    return t->t_float;
+  default:
+    return 0;
+  }
+}
+
+
+/**
+ *
+ */
+static int
+token_floatish(const token_t *t)
+{
+  return
+    t->type == TOKEN_FLOAT ||
+    t->type == TOKEN_INT ||
+    t->type == TOKEN_EM;
+}
+
+
+/**
+ *
+ */
+static int
+token2bool(token_t *t)
+{
+  switch(t->type) {
+  case TOKEN_VOID:
+    return 0;
+  case TOKEN_RSTRING:
+    return !!rstr_get(t->t_rstring)[0];
+  case TOKEN_CSTRING:
+    return !!t->t_cstring[0];
+  case TOKEN_INT:
+    return !!t->t_int;
+  case TOKEN_FLOAT:
+    return !!t->t_float;
+  case TOKEN_IDENTIFIER:
+    return !strcmp(rstr_get(t->t_rstring), "true");
+  default:
+    return 1;
+  }
+}
+
+
+/**
+ *
+ */
+static rstr_t *
+token2rstr(token_t *t)
+{
+  if(t->type == TOKEN_RSTRING || t->type == TOKEN_URI)
+    return rstr_dup(t->t_rstring);
+  if(t->type == TOKEN_CSTRING)
+    return rstr_alloc(t->t_cstring);
+  return NULL;
+}
+
+
+
+/**
+ *
+ */
+static int
 eval_op(glw_view_eval_context_t *ec, struct token *self)
 {
   token_t *b = eval_pop(ec), *a = eval_pop(ec), *r;
@@ -460,17 +553,9 @@ eval_op(glw_view_eval_context_t *ec, struct token *self)
       r->t_int = i_fn(a->t_int, b->t_int);
     }
 
-  } else if(a->type == TOKEN_FLOAT && b->type == TOKEN_FLOAT) {
+  } else if(token_floatish(a) && token_floatish(b)) {
     r = eval_alloc(self, ec, TOKEN_FLOAT);
-    r->t_float = f_fn(a->t_float, b->t_float);
-
-  } else if(a->type == TOKEN_INT && b->type == TOKEN_FLOAT) {
-    r = eval_alloc(self, ec, TOKEN_FLOAT);
-    r->t_float = f_fn(a->t_int, b->t_float);
-
-  } else if(a->type == TOKEN_FLOAT && b->type == TOKEN_INT) {
-    r = eval_alloc(self, ec, TOKEN_FLOAT);
-    r->t_float = f_fn(a->t_float, b->t_int);
+    r->t_float = f_fn(token2float(ec, a), token2float(ec, b));
 
   } else if(a->type == TOKEN_VECTOR_FLOAT && b->type == TOKEN_VECTOR_FLOAT) {
     if(a->t_elements != b->t_elements)
@@ -485,21 +570,25 @@ eval_op(glw_view_eval_context_t *ec, struct token *self)
       r->t_float_vector_int[i] = f_fn(a->t_float_vector_int[i],
 				      b->t_float_vector_int[i]);
 
-  } else if(a->type == TOKEN_VECTOR_FLOAT && b->type == TOKEN_FLOAT) {
+  } else if(a->type == TOKEN_VECTOR_FLOAT && token_floatish(b)) {
+
+    float v = token2float(ec, b);
 
     r = eval_alloc(self, ec, TOKEN_VECTOR_FLOAT);
 
     r->t_elements = a->t_elements;
     for(i = 0; i < a->t_elements; i++)
-      r->t_float_vector_int[i] = f_fn(a->t_float_vector_int[i], b->t_float);
+      r->t_float_vector_int[i] = f_fn(a->t_float_vector_int[i], v);
 
-  } else if(a->type == TOKEN_FLOAT && b->type == TOKEN_VECTOR_FLOAT) {
+  } else if(token_floatish(a) && b->type == TOKEN_VECTOR_FLOAT) {
+
+    float v = token2float(ec, a);
 
     r = eval_alloc(self, ec, TOKEN_VECTOR_FLOAT);
 
     r->t_elements = b->t_elements;
     for(i = 0; i < b->t_elements; i++)
-      r->t_float_vector_int[i] = f_fn(a->t_float, b->t_float_vector_int[i]);
+      r->t_float_vector_int[i] = f_fn(v, b->t_float_vector_int[i]);
   } else {
     r = eval_alloc(self, ec, TOKEN_VOID);
   }
@@ -507,79 +596,6 @@ eval_op(glw_view_eval_context_t *ec, struct token *self)
   eval_push(ec, r);
   return 0;
 }
-
-/**
- *
- */
-static int
-token2int(token_t *t)
-{
-  switch(t->type) {
-  case TOKEN_INT:
-    return t->t_int;
-  case TOKEN_FLOAT:
-    return t->t_float;
-  default:
-    return 0;
-  }
-}
-
-
-/**
- *
- */
-static float
-token2float(token_t *t)
-{
-  switch(t->type) {
-  case TOKEN_INT:
-    return t->t_int;
-  case TOKEN_FLOAT:
-    return t->t_float;
-  default:
-    return 0;
-  }
-}
-
-
-/**
- *
- */
-static int
-token2bool(token_t *t)
-{
-  switch(t->type) {
-  case TOKEN_VOID:
-    return 0;
-  case TOKEN_RSTRING:
-    return !!rstr_get(t->t_rstring)[0];
-  case TOKEN_CSTRING:
-    return !!t->t_cstring[0];
-  case TOKEN_INT:
-    return !!t->t_int;
-  case TOKEN_FLOAT:
-    return !!t->t_float;
-  case TOKEN_IDENTIFIER:
-    return !strcmp(rstr_get(t->t_rstring), "true");
-  default:
-    return 1;
-  }
-}
-
-
-/**
- *
- */
-static rstr_t *
-token2rstr(token_t *t)
-{
-  if(t->type == TOKEN_RSTRING || t->type == TOKEN_URI)
-    return rstr_dup(t->t_rstring);
-  if(t->type == TOKEN_CSTRING)
-    return rstr_alloc(t->t_cstring);
-  return NULL;
-}
-
 
 
 static int eval_op_xor(int a, int b) { return a ^ b; }
@@ -703,9 +719,9 @@ eval_lt(glw_view_eval_context_t *ec, struct token *self, int gt)
     return -1;
 
   if(gt)
-    rr = token2float(a) > token2float(b);
+    rr = token2float(ec, a) > token2float(ec, b);
   else
-    rr = token2float(a) < token2float(b);
+    rr = token2float(ec, a) < token2float(ec, b);
 
   r = eval_alloc(self, ec, TOKEN_INT);
   r->t_int = rr;
@@ -913,6 +929,10 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
     case TOKEN_FLOAT:
       prop_set_float(a->t_prop, b->t_float);
       break;
+    case TOKEN_EM:
+      prop_set_float(a->t_prop, b->t_float * ec->w->glw_root->gr_current_size);
+      ec->dynamic_eval |= GLW_VIEW_EVAL_EM;
+      break;
     case TOKEN_PROPERTY_REF:
       if(b->t_prop != a->t_prop)
 	prop_link_ex(b->t_prop, a->t_prop, NULL, PROP_LINK_NORMAL, how == 2);
@@ -1037,6 +1057,19 @@ glw_view_eval_layout(glw_t *w, const glw_rctx_t *rc, int mask)
   memset(&ec, 0, sizeof(ec));
   ec.rc = rc;
   run_dynamics(w, &ec, mask);
+}
+
+
+/**
+ *
+ */
+void
+glw_view_eval_em(glw_t *w)
+{
+  glw_view_eval_context_t ec;
+
+  memset(&ec, 0, sizeof(ec));
+  run_dynamics(w, &ec, GLW_VIEW_EVAL_EM);
 }
 
 
@@ -2365,7 +2398,7 @@ make_vector(glw_view_eval_context_t *ec, token_t *t)
   for(i = t->t_num_args - 1; i >= 0; i--) {
     if((a = token_resolve(ec, eval_pop(ec))) == NULL)
       return -1;
-    r->t_float_vector_int[i] = token2float(a);
+    r->t_float_vector_int[i] = token2float(ec, a);
   }
   eval_push(ec, r);
   return 0;
@@ -2388,6 +2421,7 @@ glw_view_eval_rpn0(token_t *t0, glw_view_eval_context_t *ec)
     case TOKEN_CSTRING:
     case TOKEN_URI:
     case TOKEN_FLOAT:
+    case TOKEN_EM:
     case TOKEN_INT:
     case TOKEN_IDENTIFIER:
     case TOKEN_OBJECT_ATTRIBUTE:
@@ -2764,7 +2798,7 @@ glwf_space(glw_view_eval_context_t *ec, struct token *self,
     dummy = glw_class_find_by_name("dummy");
 
   glw_t *w = glw_create(ec->gr, dummy, ec->w, NULL, NULL);
-  glw_conf_constraints(w, 0, 0, token2float(a), GLW_CONSTRAINT_CONF_W);
+  glw_conf_constraints(w, 0, 0, token2float(ec, a), GLW_CONSTRAINT_CONF_W);
   return 0;
 }
 
@@ -3593,9 +3627,9 @@ glwf_scurve(glw_view_eval_context_t *ec, struct token *self,
     c = NULL;
   }
 
-  f = token2float(a);
-  tup = token2float(b);
-  tdown = token2float(c?:b);
+  f = token2float(ec, a);
+  tup = token2float(ec, b);
+  tdown = token2float(ec, c?:b);
 
   if(s->target != f || s->time_up != tup || s->time_down != tdown) {
     s->startval = s->target;
@@ -3995,7 +4029,7 @@ glwf_strftime(glw_view_eval_context_t *ec, struct token *self,
     return glw_view_seterr(ec->ei, self, 
 			    "Invalid second operand to strftime()");
 
-  t = token2int(a);
+  t = token2int(ec, a);
   if(t != 0) {
     arch_localtime(&t, &tm);
     strftime(buf, sizeof(buf), rstr_get(b->t_rstring), &tm);
@@ -4885,7 +4919,7 @@ glwf_sinewave(glw_view_eval_context_t *ec, struct token *self,
   if((a = token_resolve(ec, a)) == NULL)
     return -1;
 
-  float p = token2float(a);
+  float p = token2float(ec, a);
   int64_t v64 = (double)gr->gr_time_sec / p * 4096.0;
 
   int v = v64 & 0xfff;
@@ -4983,11 +5017,12 @@ glwf_delay(glw_view_eval_context_t *ec, struct token *self,
   if((c = token_resolve(ec, argv[2])) == NULL)
     return -1;
 
-  f = token2float(a);
+  f = token2float(ec, a);
   if(f != e->curval) {
     // trig
     e->oldval = e->curval;
-    e->deadline = (int64_t)(token2float(f >= e->curval ? b : c) * 1000000.0) +
+    e->deadline = (int64_t)
+      (token2float(ec, f >= e->curval ? b : c) * 1000000.0) +
       gr->gr_frame_start;
     e->curval = f;
   }
@@ -5245,7 +5280,8 @@ glwf_propSorter(glw_view_eval_context_t *ec, struct token *self,
       if(val != NULL) {
 	prop_nf_pred_str_add(self->t_extra, path, cf, val, NULL, mode);
       } else {
-	prop_nf_pred_int_add(self->t_extra, path, cf, token2int(b), NULL, mode);
+	prop_nf_pred_int_add(self->t_extra, path, cf, token2int(ec, b),
+                             NULL, mode);
       }
       
     } else if(!strcmp(cmd, "sort") && sortidx < 4) {
@@ -5470,7 +5506,7 @@ glwf_int(glw_view_eval_context_t *ec, struct token *self,
     return -1;
   
   r = eval_alloc(self, ec, TOKEN_INT);
-  r->t_int = token2int(a);
+  r->t_int = token2int(ec, a);
   eval_push(ec, r);
   return 0;
 }
@@ -5499,11 +5535,11 @@ glwf_clamp(glw_view_eval_context_t *ec, struct token *self,
   switch(a->type) {
   case TOKEN_INT:
     r = eval_alloc(self, ec, TOKEN_INT);
-    r->t_int = GLW_CLAMP(a->t_int, token2int(b), token2int(c));
+    r->t_int = GLW_CLAMP(a->t_int, token2int(ec, b), token2int(ec, c));
     break;
   case TOKEN_FLOAT:
     r = eval_alloc(self, ec, TOKEN_FLOAT);
-    r->t_float = GLW_CLAMP(a->t_float, token2float(b), token2float(c));
+    r->t_float = GLW_CLAMP(a->t_float, token2float(ec, b), token2float(ec, c));
     break;
   default:
     r = eval_alloc(self, ec, TOKEN_VOID);
@@ -5622,7 +5658,7 @@ glwf_pluralise(glw_view_eval_context_t *ec, struct token *self,
 
   token_t *r = eval_alloc(self, ec, TOKEN_RSTRING);
   r->t_rstring = nls_get_rstringp(rstr_get(a->t_rstring),
-				  rstr_get(b->t_rstring), token2int(c));
+				  rstr_get(b->t_rstring), token2int(ec, c));
   eval_push(ec, r);
   return 0;
 }

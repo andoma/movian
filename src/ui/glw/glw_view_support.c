@@ -63,6 +63,7 @@ glw_view_token_free(glw_root_t *gr, token_t *t)
     break;
 
   case TOKEN_FLOAT:
+  case TOKEN_EM:
   case TOKEN_INT:
   case TOKEN_VECTOR_FLOAT:
   case TOKEN_OBJECT_ATTRIBUTE:
@@ -157,6 +158,7 @@ glw_view_token_copy(glw_root_t *gr, token_t *src)
 
   switch(src->type) {
   case TOKEN_FLOAT:
+  case TOKEN_EM:
     dst->t_float = src->t_float;
     break;
 
@@ -382,6 +384,10 @@ token2name(token_t *t)
 
   case TOKEN_FLOAT:
     snprintf(buf, sizeof(buf), "%ff", t->t_float);
+    return buf;
+
+  case TOKEN_EM:
+    snprintf(buf, sizeof(buf), "%fem", t->t_float);
     return buf;
 
   case TOKEN_INT:
