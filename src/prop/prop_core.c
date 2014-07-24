@@ -3835,6 +3835,9 @@ search_for_linkage(prop_t *src, prop_t *link)
 {
   prop_sub_t *s;
 
+  while(src->hp_originator != NULL)
+    src = src->hp_originator;
+
   LIST_FOREACH(s, &src->hp_value_subscriptions, hps_value_prop_link) {
     if(s->hps_origin == NULL)
       continue;
