@@ -1232,9 +1232,11 @@ mod_flags2(glw_t *w, int set, int clr)
     else
       gi->gi_shadow = 0;
 
-    rstr_t *curname = get_curname(gi);
-    if(curname != NULL)
-      set_pending(gi, curname);
+    if(gi->gi_current || gi->gi_pending) {
+      rstr_t *curname = get_curname(gi);
+      if(curname != NULL)
+        set_pending(gi, curname);
+    }
   }
 }
 
