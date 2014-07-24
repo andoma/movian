@@ -78,6 +78,7 @@ SRCS += src/showtime.c \
 	src/prop/prop_grouper.c \
 	src/prop/prop_concat.c \
 	src/prop/prop_reorder.c \
+	src/prop/prop_linkselected.c \
 	src/metadata/playinfo.c \
 	src/db/kvstore.c \
 

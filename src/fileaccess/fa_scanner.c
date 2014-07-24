@@ -35,6 +35,7 @@
 #include "playqueue.h"
 #include "misc/strtab.h"
 #include "prop/prop_nodefilter.h"
+#include "prop/prop_linkselected.h"
 #include "plugins.h"
 #include "text/text.h"
 #include "db/kvstore.h"
@@ -914,6 +915,9 @@ add_indexed_option(scanner_t *s, prop_t *model)
   }
   rstr_release(cur);
   atomic_inc(&s->s_refcount);
+
+  prop_linkselected_create(options, n, "current", "value");
+
   prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_TRACK_DESTROY,
                  PROP_TAG_CALLBACK, set_indexed_mode, s,
                  PROP_TAG_ROOT, options,
@@ -1010,6 +1014,9 @@ add_sort_option_type(scanner_t *s, prop_t *model)
     prop_select(on_title);
     prop_nf_sort(s->s_pnf, "node.metadata.title", 0, 3, NULL, 1);
   }
+
+  prop_linkselected_create(options, n, "current", "value");
+
   rstr_release(cur);
   atomic_inc(&s->s_refcount);
   prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_TRACK_DESTROY,

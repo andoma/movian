@@ -34,6 +34,7 @@
 #include "backend/backend_prop.h"
 #include "prop/prop_nodefilter.h"
 #include "prop/prop_concat.h"
+#include "prop/prop_linkselected.h"
 #include "htsmsg/htsmsg_store.h"
 #include "db/kvstore.h"
 #include "misc/minmax.h"
@@ -1003,8 +1004,10 @@ setting_create(int type, prop_t *model, int flags, ...)
         settings_string_callback_ng(s, name);
         rstr_release(name);
       }
-      prop_ref_dec(o);
+      s->s_current_value = o;
     }
+
+    prop_linkselected_create(s->s_val, s->s_root, "current", "value");
 
     s->s_sub =
       prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
