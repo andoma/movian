@@ -5342,8 +5342,9 @@ prop_print_tree0(prop_t *p, int indent, int flags)
       fprintf(stderr, "%s:%d ", s->hps_file, s->hps_line);
       printorigins(s);
 #endif
-      fprintf(stderr, "[%s] @ %p p=%p\033[0m\n",
-        prop_get_DN(s->hps_canonical_prop, 1), s, s->hps_canonical_prop);
+      fprintf(stderr, "[%s] @ %p p=%p value=%s\033[0m\n",
+              prop_get_DN(s->hps_canonical_prop, 1), s, s->hps_canonical_prop,
+              prop_get_DN(s->hps_value_prop, 1));
     }
   }
   if(flags & 4) {
