@@ -6181,6 +6181,48 @@ glwf_abs(glw_view_eval_context_t *ec, struct token *self,
 /**
  *
  */
+static int
+glwf_propName(glw_view_eval_context_t *ec, struct token *self,
+              token_t **argv, unsigned int argc)
+{
+  token_t *a, *r;
+
+  if((a = resolve_property_name2(ec, argv[0])) == NULL)
+    return -1;
+
+  if(a->type == TOKEN_PROPERTY_REF) {
+    r = eval_alloc(self, ec, TOKEN_RSTRING);
+    r->t_rstring = prop_get_name(a->t_prop);
+  } else {
+    r = eval_alloc(self, ec, TOKEN_VOID);
+  }
+  eval_push(ec, r);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+glwf_propSelect(glw_view_eval_context_t *ec, struct token *self,
+                token_t **argv, unsigned int argc)
+{
+  token_t *a;
+
+  if((a = resolve_property_name2(ec, argv[0])) == NULL)
+    return -1;
+
+  if(a->type == TOKEN_PROPERTY_REF)
+    prop_select(a->t_prop);
+
+  return 0;
+}
+
+
+/**
+ *
+ */
 static const token_func_t funcvec[] = {
   {"widget", 1, glwf_widget, NULL, NULL, glwf_resolve_widget_class},
   {"cloner", 3, glwf_cloner},
@@ -6251,6 +6293,8 @@ static const token_func_t funcvec[] = {
   {"set", 2, glwf_set, glwf_null_ctor, glwf_set_dtor},
   {"cloneIndex", 0, glwf_cloneIndex},
   {"abs", 1, glwf_abs},
+  {"propName", 1, glwf_propName},
+  {"propSelect", 1, glwf_propSelect},
 };
 
 
