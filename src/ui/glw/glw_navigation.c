@@ -143,7 +143,7 @@ find_candidate(glw_t *w, query_t *query, float d_mul)
 
   if(w->glw_flags & (GLW_HIDDEN | GLW_FOCUS_BLOCKED))
     return;
-  
+
   if(glw_is_focusable(w) && w->glw_flags2 & GLW2_NAV_FOCUSABLE) {
 
     x1 = compute_position(w, GLW_ORIENTATION_HORIZONTAL, 0);
@@ -194,10 +194,18 @@ find_candidate(glw_t *w, query_t *query, float d_mul)
   case GLW_NAV_DESCEND_FOCUSED:
     if(w->glw_focused) {
       c = w->glw_focused;
-    } else if(query->direction) {
-      c = TAILQ_FIRST(&w->glw_childs);
     } else {
-      c = TAILQ_LAST(&w->glw_childs, glw_queue);
+
+      if(query->orientation == w->glw_class->gc_child_orientation) {
+
+        if(query->direction) {
+          c = glw_first_widget(w);
+        } else {
+          c = glw_last_widget(w, 0);
+        }
+      } else {
+        c = glw_first_widget(w);
+      }
     }
 
     if(c != NULL)
