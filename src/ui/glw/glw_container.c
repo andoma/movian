@@ -70,7 +70,7 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
     cflags |= f & (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y);
 
     if(co->w.glw_flags2 & GLW2_DEBUG)
-      printf("%c%c%c %d %d %f\n",
+      printf("%c%c%c %-4d %-4d %f\n",
 	     f & GLW_CONSTRAINT_X ? 'X' : ' ',
 	     f & GLW_CONSTRAINT_Y ? 'Y' : ' ',
 	     f & GLW_CONSTRAINT_W ? 'W' : ' ',
