@@ -26,6 +26,8 @@
 #include "glw_event.h"
 #include "glw_settings.h"
 
+// #define NAV_TRACE
+
 typedef struct query {
   float x1, y1, x2, y2, xc, yc;
 
@@ -141,7 +143,14 @@ find_candidate(glw_t *w, query_t *query, float d_mul)
   glw_t *c;
   float x1, y1, x2, y2, d, d0, d1, dc;
 
-  if(w->glw_flags & (GLW_HIDDEN | GLW_FOCUS_BLOCKED))
+  const int blocked = w->glw_flags & (GLW_HIDDEN | GLW_FOCUS_BLOCKED);
+
+#ifdef NAV_TRACE
+  printf("Nav searching %s: %s\n",
+         glw_get_path(w), blocked ? "blocked" : "open");
+#endif
+
+  if(blocked)
     return;
 
   if(glw_is_focusable(w) && w->glw_flags2 & GLW2_NAV_FOCUSABLE) {
