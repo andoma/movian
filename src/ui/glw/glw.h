@@ -1036,6 +1036,8 @@ typedef struct glw {
 #define GLW2_DEBUG                  0x40000     /* Debug this object */
 #define GLW2_LAYOUTFIXED_X          0x80000
 #define GLW2_LAYOUTFIXED_Y          0x100000
+#define GLW2_NO_FOCUS_BLOCKING      0x200000
+
 #define GLW2_LEFT_EDGE              0x10000000
 #define GLW2_TOP_EDGE               0x20000000
 #define GLW2_RIGHT_EDGE             0x40000000

@@ -1171,6 +1171,7 @@ static const token_attrib_t attribtab[] = {
   {"reverseRender",         mod_flag, GLW2_REVERSE_RENDER,         mod_flags2},
   {"layoutFixedWidth",      mod_flag, GLW2_LAYOUTFIXED_X,          mod_flags2},
   {"layoutFixedHeight",     mod_flag, GLW2_LAYOUTFIXED_Y,          mod_flags2},
+  {"noFocusBlocking",       mod_flag, GLW2_NO_FOCUS_BLOCKING,      mod_flags2},
 
 
   {"fixedSize",       mod_flag, GLW_IMAGE_FIXED_SIZE,   mod_img_flags},

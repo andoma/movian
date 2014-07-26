@@ -54,10 +54,12 @@ update_constraints(glw_expander_t *exp)
     f &= GLW_CONSTRAINT_X;
   }
 
-  if(e == 0)
-    glw_focus_close_path(&exp->w);
-  else if(exp->w.glw_flags & GLW_FOCUS_BLOCKED)
-    glw_focus_open_path(&exp->w);
+  if(!(exp->w.glw_flags2 & GLW2_NO_FOCUS_BLOCKING)) {
+    if(e == 0)
+      glw_focus_close_path(&exp->w);
+    else if(exp->w.glw_flags & GLW_FOCUS_BLOCKED)
+      glw_focus_open_path(&exp->w);
+  }
 
   if(exp->w.glw_class == &glw_expander_x)
     glw_set_constraints(&exp->w, e, o, 0, GLW_CONSTRAINT_X | f);
