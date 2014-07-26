@@ -27,6 +27,8 @@
 #include "posix/posix_threads.h"
 #elif PS3
 #include "ps3/ps3_threads.h"
+#elif defined(_MSC_VER)
+#include "win32/win32_threads.h"
 #else
 #error No threading support
 #endif

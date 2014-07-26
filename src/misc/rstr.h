@@ -25,6 +25,7 @@
 #include <string.h>
 #include "config.h"
 #include "arch/atomic.h"
+#include "compiler.h"
 
 #if !ENABLE_BUGHUNT
 #define USE_RSTR_REFCOUNTING
@@ -48,23 +49,22 @@ typedef struct rstr {
   char str[0];
 } rstr_t;
 
-rstr_t *rstr_alloc(const char *in) __attribute__ ((malloc));
+rstr_t *rstr_alloc(const char *in) attribute_malloc;
 
-rstr_t *rstr_allocl(const char *in, size_t len) __attribute__ ((malloc));
+rstr_t *rstr_allocl(const char *in, size_t len) attribute_malloc;
 
-static inline const char *rstr_get(const rstr_t *rs)
+static __inline const char *rstr_get(const rstr_t *rs)
 {
   return rs ? rs->str : NULL;
 }
 
 
-static inline char *rstr_data(rstr_t *rs)
+static __inline char *rstr_data(rstr_t *rs)
 {
   return rs->str;
 }
 
-static inline rstr_t *
- __attribute__ ((warn_unused_result))
+static __inline rstr_t * attribute_unused_result
 rstr_dup(rstr_t *rs)
 {
 #ifdef USE_RSTR_REFCOUNTING
@@ -79,7 +79,7 @@ rstr_dup(rstr_t *rs)
 #endif
 }
 
-static inline void rstr_release(rstr_t *rs)
+static __inline void rstr_release(rstr_t *rs)
 {
 #ifdef USE_RSTR_REFCOUNTING
 #ifdef RSTR_STATS
@@ -96,7 +96,7 @@ static inline void rstr_release(rstr_t *rs)
 #endif
 }
 
-static inline void rstr_set(rstr_t **p, rstr_t *r)
+static __inline void rstr_set(rstr_t **p, rstr_t *r)
 {
   rstr_release(*p);
   *p = r ? rstr_dup(r) : NULL;
@@ -104,7 +104,7 @@ static inline void rstr_set(rstr_t **p, rstr_t *r)
 
 rstr_t *rstr_spn(rstr_t *s, const char *set, int offset);
 
-static inline int rstr_eq(const rstr_t *a, const rstr_t *b)
+static __inline int rstr_eq(const rstr_t *a, const rstr_t *b)
 {
   if(a == NULL && b == NULL)
     return 1;

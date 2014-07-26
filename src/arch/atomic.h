@@ -108,6 +108,15 @@ atomic_add(volatile int *ptr, int val)
   return a;
 }
 
+#elif defined(_MSC_VER)
+
+static __inline int
+atomic_add(volatile int *ptr, int val)
+{
+	int v = InterlockedIncrement(ptr);
+	return v - val;
+}
+
 #else
 #error Missing atomic ops
 #endif

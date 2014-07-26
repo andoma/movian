@@ -1,7 +1,6 @@
 #include <stdio.h>
-#include <sys/param.h>
 #include "average.h"
-
+#include "compiler.h"
 
 /**
  *

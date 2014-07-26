@@ -25,6 +25,7 @@
 #include <stdlib.h>
 
 #include "config.h"
+#include "compiler.h"
 #include "event.h"
 #include "arch/threads.h"
 #include "misc/queue.h"
@@ -195,7 +196,7 @@ void prop_sub_reemit(prop_sub_t *s);
 
 prop_t *prop_create_ex(prop_t *parent, const char *name,
 		       prop_sub_t *skipme, int noalloc, int incref)
-     __attribute__ ((malloc));
+     attribute_malloc;
 
 #define prop_create(parent, name) \
   prop_create_ex(parent, name, NULL, __builtin_constant_p(name), 0)
@@ -204,7 +205,7 @@ prop_t *prop_create_ex(prop_t *parent, const char *name,
   prop_create_ex(parent, name, NULL, __builtin_constant_p(name), 1)
 
 prop_t *prop_create_root_ex(const char *name, int noalloc)
-  __attribute__ ((malloc));
+  attribute_malloc;
 
 #define prop_create_root(name) \
   prop_create_root_ex(name, __builtin_constant_p(name))
@@ -212,7 +213,7 @@ prop_t *prop_create_root_ex(const char *name, int noalloc)
 prop_t *prop_create_after(prop_t *parent, const char *name, prop_t *after,
 			  prop_sub_t *skipme);
 
-prop_t *prop_create_multi(prop_t *p, ...)  __attribute__((__sentinel__(0)));
+prop_t *prop_create_multi(prop_t *p, ...) attribute_null_sentinel;
 
 void prop_destroy(prop_t *p);
 
@@ -438,11 +439,9 @@ void prop_send_ext_event(prop_t *p, event_t *e);
 /**
  * Property vectors
  */
-prop_vec_t *prop_vec_create(int capacity) 
-  __attribute__ ((malloc));
+prop_vec_t *prop_vec_create(int capacity) attribute_malloc;
 
-prop_vec_t *prop_vec_append(prop_vec_t *pv, prop_t *p)
-  __attribute__ ((warn_unused_result));
+prop_vec_t *prop_vec_append(prop_vec_t *pv, prop_t *p) attribute_unused_result;
 
 prop_vec_t *prop_vec_addref(prop_vec_t *pv);
 

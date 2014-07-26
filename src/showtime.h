@@ -26,11 +26,11 @@
 #include <inttypes.h>
 #include <stdarg.h>
 #include <string.h>
-#include <sys/time.h>
-#include <time.h>
 
 #include "arch/threads.h"
 #include "misc/rstr.h"
+
+#include "compiler.h"
 
 #if __GNUC__ >= 4 && __GNUC_MINOR__ >=6
 #define static_assert(x, y) _Static_assert(x, y)
@@ -46,7 +46,7 @@ void showtime_fini(void);
 
 void showtime_swrefresh(void);
 
-extern void panic(const char *fmt, ...) __attribute__((noreturn, format(printf, 1, 2)));
+extern void panic(const char *fmt, ...) attribute_printf(1,2);
 
 extern const char *showtime_dataroot(void);
 
@@ -57,7 +57,9 @@ extern const char *showtime_dataroot(void);
 #define DISABLE_CACHE ((int *)-2)
 #define NOT_MODIFIED ((void *)-1)
 
+#ifndef _MSC_VER
 #define ARRAYSIZE(x) (sizeof(x) / sizeof(x[0]))
+#endif
 
 #define ONLY_CACHED(p) ((p) != BYPASS_CACHE && (p) != NULL)
 
@@ -124,7 +126,7 @@ void tracev(int flags, int level, const char *subsys, const char *fmt, va_list a
 
 void trace_arch(int level, const char *prefix, const char *buf);
 
-#define TRACE(level, subsys, fmt...) trace(0, level, subsys, fmt)
+#define TRACE(level, subsys, fmt, ...) trace(0, level, subsys, fmt, __VA_ARGS__ )
 
 void hexdump(const char *pfx, const void *data, int len);
 
@@ -139,7 +141,7 @@ void hexdump(const char *pfx, const void *data, int len);
 })
 
 
-static inline unsigned int mystrhash(const char *s)
+static __inline unsigned int mystrhash(const char *s)
 {
   unsigned int v = 5381;
   while(*s)
@@ -147,14 +149,14 @@ static inline unsigned int mystrhash(const char *s)
   return v;
 }
 
-static inline void mystrset(char **p, const char *s)
+static __inline void mystrset(char **p, const char *s)
 {
   free(*p);
-  *p = s ? strdup(s) : NULL;
+  *p = s ? _strdup(s) : NULL;
 }
 
 
-static inline const char *mystrbegins(const char *s1, const char *s2)
+static __inline const char *mystrbegins(const char *s1, const char *s2)
 {
   while(*s2)
     if(*s1++ != *s2++)
@@ -175,7 +177,7 @@ void *mymalloc(size_t size);
 
 void *myrealloc(void *ptr, size_t size);
 
-static inline void *myreallocf(void *ptr, size_t size)
+static __inline void *myreallocf(void *ptr, size_t size)
 {
   void *r = myrealloc(ptr, size);
   if(ptr != NULL && size > 0 && r == NULL)
