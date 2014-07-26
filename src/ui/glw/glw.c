@@ -1448,7 +1448,11 @@ glw_event(glw_root_t *gr, event_t *e)
   glw_t *w;
 
   if((w = gr->gr_current_focus) != NULL) {
-    if(glw_event_to_widget(w, e, 0))
+
+    if(glw_event_map_intercept(w, e))
+      return 1;
+
+    if(glw_send_event(w, e))
       return 1;
 
     while((w = w->glw_parent) != NULL) {
@@ -1458,6 +1462,9 @@ glw_event(glw_root_t *gr, event_t *e)
       if(glw_bubble_event(w, e))
 	return 1;
     }
+
+    if(glw_navigate(gr->gr_current_focus, e, 0))
+      return 1;
   }
   if(glw_event_map_intercept(gr->gr_universe, e))
     return 1;
