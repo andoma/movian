@@ -6223,6 +6223,28 @@ glwf_propSelect(glw_view_eval_context_t *ec, struct token *self,
 /**
  *
  */
+static int
+glwf_focus(glw_view_eval_context_t *ec, struct token *self,
+           token_t **argv, unsigned int argc)
+{
+  token_t *a;
+
+  if((a = token_resolve(ec, argv[0])) == NULL)
+    return -1;
+
+  if(a->type == TOKEN_RSTRING) {
+    glw_t *w = glw_find_neighbour(ec->w, rstr_get(a->t_rstring));
+    if(w != NULL) {
+      glw_focus_set(w->glw_root, w, GLW_FOCUS_SET_INTERACTIVE);
+    }
+  }
+  return 0;
+}
+
+
+/**
+ *
+ */
 static const token_func_t funcvec[] = {
   {"widget", 1, glwf_widget, NULL, NULL, glwf_resolve_widget_class},
   {"cloner", 3, glwf_cloner},
@@ -6295,6 +6317,7 @@ static const token_func_t funcvec[] = {
   {"abs", 1, glwf_abs},
   {"propName", 1, glwf_propName},
   {"propSelect", 1, glwf_propSelect},
+  {"focus", 1, glwf_focus},
 };
 
 
