@@ -937,7 +937,6 @@ LIST_HEAD(glw_signal_handler_list, glw_signal_handler);
 typedef struct glw {
   const glw_class_t *glw_class;
   glw_root_t *glw_root;
-  int glw_refcnt;
   prop_t *glw_originating_prop;  /* Source prop we spawned from */
 
   LIST_ENTRY(glw) glw_active_link;
@@ -950,23 +949,37 @@ typedef struct glw {
   struct glw_queue glw_childs;
 
   TAILQ_ENTRY(glw) glw_render_link;
-		   
+
   struct glw *glw_selected;
   struct glw *glw_focused;
 
-  /** 
+  rstr_t *glw_id_rstr;
+
+  struct glw_event_map_list glw_event_maps;
+
+  struct glw_prop_sub_list glw_prop_subscriptions;
+
+  struct token *glw_dynamic_expressions;
+
+  Mtx *glw_matrix;
+
+  struct glw_clone *glw_clone;
+
+  /**
    * All the glw_parent stuff is operated by this widgets
    * parents. That is, a widget should never touch these themselfs
    * TODO: Allocate these dynamically based on parent class
    *
    * glw_array current has the most items here now
    */
-  union { 
+  union {
     int i32;
     float f;
     void *ptr;
   } glw_parent_val[7];
 
+
+  int glw_refcnt;
 
   /**
    * Layout contraints
@@ -1053,18 +1066,6 @@ typedef struct glw {
   uint8_t glw_alignment;
 
   uint8_t glw_dynamic_eval;   // GLW_VIEW_EVAL_ -flags
-
-  rstr_t *glw_id_rstr;
-
-  struct glw_event_map_list glw_event_maps;
-
-  struct glw_prop_sub_list glw_prop_subscriptions;
-
-  struct token *glw_dynamic_expressions;
-
-  Mtx *glw_matrix;
-
-  struct glw_clone *glw_clone;
 
 } glw_t;
 
