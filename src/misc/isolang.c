@@ -20,7 +20,6 @@
  */
 #include <stddef.h>
 #include <string.h>
-#include <strings.h>
 #include "isolang.h"
 
 static const struct {
