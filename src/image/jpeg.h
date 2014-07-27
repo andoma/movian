@@ -22,7 +22,8 @@
 #ifndef JPEG_H__
 #define JPEG_H__
 
-typedef int (jpegreader_t)(void *handle, void *buf, off_t offset, size_t size);
+typedef int (jpegreader_t)(void *handle, void *buf,
+                           int64_t offset, size_t size);
 
 typedef struct jpeginfo {
   int ji_width;
@@ -56,6 +57,6 @@ typedef struct jpeg_meminfo {
 } jpeg_meminfo_t;
 
 
-int jpeginfo_mem_reader(void *handle, void *buf, off_t offset, size_t size);
+int jpeginfo_mem_reader(void *handle, void *buf, int64_t offset, size_t size);
 
 #endif /* JPEG_H__ */

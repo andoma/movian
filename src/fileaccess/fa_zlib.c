@@ -182,7 +182,7 @@ static int64_t
 inflate_seek(fa_handle_t *handle, int64_t pos, int whence)
 {
   fa_inflator_t *fi = (fa_inflator_t *)handle;
-  off_t np;
+  int64_t np;
 
   switch(whence) {
   case SEEK_SET:

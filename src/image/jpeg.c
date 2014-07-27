@@ -256,7 +256,7 @@ parse_app1(jpeginfo_t *ji, const uint8_t *buf, size_t len, int flags)
  * Buffered reader
  */
 static int
-jpeg_read(jpegpriv_t *jp, void *buf, off_t offset, int size)
+jpeg_read(jpegpriv_t *jp, void *buf, int64_t offset, int size)
 {
   int r;
 
@@ -366,7 +366,7 @@ jpeg_info(jpeginfo_t *ji, jpegreader_t *reader, void *handle, int flags,
 	break;
       }
       // Continue with bytes after section
-      buf = (char *)loadbuf + mlen;
+      buf = (uint8_t *)loadbuf + mlen;
       len = 4;
       offset += mlen;
 
@@ -408,7 +408,7 @@ jpeg_info_clear(jpeginfo_t *ji)
  *
  */
 int
-jpeginfo_mem_reader(void *handle, void *buf, off_t offset, size_t size)
+jpeginfo_mem_reader(void *handle, void *buf, int64_t offset, size_t size)
 {
   jpeg_meminfo_t *mi = handle;
 
@@ -430,7 +430,7 @@ jpeginfo_mem_reader(void *handle, void *buf, off_t offset, size_t size)
  *
  */
 static int
-reader(void *handle, void *buf, off_t offset, size_t size)
+reader(void *handle, void *buf, int64_t offset, size_t size)
 {
   int fd = (int)handle;
 

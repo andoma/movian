@@ -2066,7 +2066,7 @@ http_seek(fa_handle_t *handle, int64_t pos, int whence)
 {
   http_file_t *hf = (http_file_t *)handle;
   http_connection_t *hc = hf->hf_connection;
-  off_t np;
+  int64_t np;
 
   switch(whence) {
   case SEEK_SET:

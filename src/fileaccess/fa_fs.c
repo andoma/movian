@@ -43,13 +43,13 @@
 
 typedef struct part {
   int fd;
-  off_t size;
+  int64_t size;
 } part_t;
 
 typedef struct fs_handle {
   fa_handle_t h;
   int part_count;
-  off_t total_size; // Only valid if part_count != 1
+  int64_t total_size; // Only valid if part_count != 1
   int64_t read_pos;
   part_t parts[0];
 } fs_handle_t;
@@ -262,7 +262,7 @@ static int
 get_current_read_piece_num(fs_handle_t *fh)
 {
   int i = 0;
-  off_t size = fh->parts[0].size;
+  int64_t size = fh->parts[0].size;
   for(i = 0; i < fh->part_count; i++) {
     if(fh->read_pos <= size)
       break;

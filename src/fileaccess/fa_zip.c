@@ -145,9 +145,9 @@ typedef struct zip_file {
   int zf_type;
   int zf_method;
 
-  off_t zf_uncompressed_size;
-  off_t zf_compressed_size;
-  off_t zf_lhpos;
+  int64_t zf_uncompressed_size;
+  int64_t zf_compressed_size;
+  int64_t zf_lhpos;
 
   LIST_ENTRY(zip_file) zf_link;
 } zip_file_t;
@@ -245,10 +245,10 @@ zip_archive_load(zip_archive_t *za)
   zip_hdr_file_header_t *fhdr;
   char *buf, *ptr;
   size_t scan_size;
-  off_t scan_off, asize;
+  int64_t scan_off, asize;
   int i, l;
 
-  off_t cds_off;
+  int64_t cds_off;
   size_t cds_size;
   char *fname;
   struct fa_stat fs;
@@ -312,14 +312,14 @@ zip_archive_load(zip_archive_t *za)
      fa_read(fh, buf, cds_size) != cds_size)
     memset(buf, 0, cds_off);
 
-  off_t displacement = 0;
+  int64_t displacement = 0;
 
   ptr = buf;
   fhdr = (zip_hdr_file_header_t *)ptr;
   if(fhdr->magic[0] != 'P' || fhdr->magic[1] != 'K' ||
      fhdr->magic[2] != 1   || fhdr->magic[3] != 2) {
 
-    off_t o2 = fs.fs_size - (cds_size + (TRAILER_SCAN_SIZE - i));
+    int64_t o2 = fs.fs_size - (cds_size + (TRAILER_SCAN_SIZE - i));
     
     fa_seek(fh, o2, SEEK_SET);
     if(fa_read(fh, buf, cds_size) != cds_size) {
@@ -651,7 +651,7 @@ zip_file_seek(fa_handle_t *handle, int64_t pos, int whence)
 {
   zip_fh_t *zfh = (zip_fh_t *)handle;
   zip_file_t *zf = zfh->zfh_file;
-  off_t np;
+  int64_t np;
 
   switch(whence) {
   case SEEK_SET:

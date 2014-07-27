@@ -238,7 +238,7 @@ metdata_set_redirect(metadata_t *md, const char *fmt, ...)
  *
  */
 static int
-jpeginfo_reader(void *handle, void *buf, off_t offset, size_t size)
+jpeginfo_reader(void *handle, void *buf, int64_t offset, size_t size)
 {
   if(fa_seek(handle, offset, SEEK_SET) != offset)
     return -1;
