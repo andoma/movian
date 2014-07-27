@@ -85,7 +85,7 @@ atomic_add_and_fetch(atomic_t *a, int v)
 static __inline int
 atomic_dec(atomic_t *a)
 {
-  InterlockedDecrement(&a->v);
+  return InterlockedDecrement(&a->v);
 }
 
 static __inline int
