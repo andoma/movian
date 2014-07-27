@@ -191,7 +191,7 @@ my_double2str(char *buf, size_t bufsize, double realvalue)
   exp = 0;
 
   if(isnan(realvalue)) {
-    strcpy(buf, "NaN");
+    snprintf(buf, bufsize, "NaN");
     return 0;
   }
 
@@ -203,9 +203,9 @@ my_double2str(char *buf, size_t bufsize, double realvalue)
     while( realvalue<1.0 ){ realvalue *= 10.0; exp--; }
     if( exp>350 ){
       if( prefix=='-' ){
-	strcpy(buf, "-Inf");
+	snprintf(buf, bufsize, "-Inf");
       }else{
-	strcpy(buf, "Inf");
+	snprintf(buf, bufsize, "Inf");
       }
       return 0;
     }

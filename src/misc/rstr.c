@@ -19,8 +19,11 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 
+#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+#include <stddef.h>
+
 #include "rstr.h"
 
 #ifdef RSTR_STATS
@@ -33,9 +36,11 @@ int rstr_frees;
 rstr_t *
 rstr_alloc(const char *in)
 {
+  size_t l;
   if(in == NULL)
-    return NULL;
-  size_t l = strlen(in);
+    return NULL; 
+
+  l = strlen(in);
   rstr_t *rs = malloc(sizeof(rstr_t) + l + 1);
 #ifdef USE_RSTR_REFCOUNTING
   atomic_set(&rs->refcnt, 1);
@@ -68,9 +73,10 @@ rstr_t *
 rstr_spn(rstr_t *s, const char *set, int offset)
 {
   size_t len = strlen(rstr_get(s));
+  size_t l;
   if(offset >= len)
     return rstr_dup(s);
-  size_t l = strcspn(rstr_get(s) + offset, set) + offset;
+  l = strcspn(rstr_get(s) + offset, set) + offset;
   if(l == len)
     return rstr_dup(s);
   return rstr_allocl(rstr_get(s), l);

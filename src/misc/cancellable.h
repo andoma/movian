@@ -27,7 +27,7 @@ typedef struct cancellable {
 } cancellable_t;
 
 
-static inline int cancellable_is_cancelled(const cancellable_t *c)
+static __inline int cancellable_is_cancelled(const cancellable_t *c)
 {
   return c != NULL && c->cancelled;
 }
@@ -39,7 +39,7 @@ void cancellable_unbind(cancellable_t *c);
 
 void cancellable_cancel(cancellable_t *c);
 
-static inline void cancellable_reset(cancellable_t *c)
+static __inline void cancellable_reset(cancellable_t *c)
 {
   c->cancelled = 0;
   c->cancel = NULL;

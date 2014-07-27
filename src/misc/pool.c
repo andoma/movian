@@ -64,7 +64,7 @@ typedef struct pool_item {
  */
 typedef struct pool_segment {
   LIST_ENTRY(pool_segment) ps_link;
-  void *ps_addr;
+  char *ps_addr;
   size_t ps_alloc_size;
   size_t ps_avail_size;
 
@@ -84,23 +84,24 @@ static void attribute_unused
 pool_segment_create(pool_t *p)
 {
   size_t i;
-  pool_item_t *pi, *prev = NULL;
+  pool_item_t *pi = NULL, *prev = NULL;
 
   size_t size = 65536;
   void *addr = halloc(size);
   size_t topsiz =  ROUND_UP(sizeof(pool_segment_t), sizeof(void *));
 
-  pool_segment_t *ps = addr + size - topsiz;
+  pool_segment_t *ps = (pool_segment_t *)((char *)addr + size - topsiz);
   ps->ps_addr = addr;
   ps->ps_alloc_size = size;
   ps->ps_avail_size = ps->ps_alloc_size - topsiz;
 
   for(i = 0; i <= ps->ps_avail_size - p->p_item_size; i += p->p_item_size) {
-    pi = ps->ps_addr + i;
+    pi = (pool_item_t *)(ps->ps_addr + i);
     pi->link = prev;
     prev = pi;
   }
   LIST_INSERT_HEAD(&p->p_segments, ps, ps_link);
+  assert(pi != NULL);
   p->p_item = pi;
 }
 

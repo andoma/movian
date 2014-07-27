@@ -41,10 +41,11 @@ buf_release(buf_t *b)
 buf_t *
 buf_make_writable(buf_t *b)
 {
+  buf_t *b2;
   if(atomic_get(&b->b_refcount) == 1)
     return b;
 
-  buf_t *b2 = buf_create_and_copy(b->b_size, b->b_ptr);
+  b2 = buf_create_and_copy(b->b_size, b->b_ptr);
   
   b2->b_content_type = rstr_dup(b->b_content_type);
   buf_release(b);
