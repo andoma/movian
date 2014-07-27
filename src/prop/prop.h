@@ -128,8 +128,7 @@ void prop_init_late(void);
 /**
  * Use with PROP_TAG_NAME_VECTOR
  */
-#define PNVEC(name...) (const char *[]){name, NULL}
-
+#define PNVEC(name, ...) (const char *[]){name, ##__VA_ARGS__, NULL}
 
 /**
  * Prop flags
@@ -175,8 +174,8 @@ enum {
 #endif
 };
 
-#define PROP_TAG_NAME(name...) \
- PROP_TAG_NAME_VECTOR, (const char *[]){name, NULL}
+#define PROP_TAG_NAME(name, ...) \
+  PROP_TAG_NAME_VECTOR, (const char *[]){ name, ##__VA_ARGS__, NULL }
 
 #ifdef PROP_SUB_RECORD_SOURCE
 
@@ -232,14 +231,14 @@ void prop_req_move(prop_t *p, prop_t *before);
 
 void prop_setv_ex(prop_sub_t *skipme, prop_t *p, ...);
 
-#define prop_setv(p...) prop_setv_ex(NULL, p)
+#define prop_setv(p, ...) prop_setv_ex(NULL, p, ##__VA_ARGS__)
 
 void prop_set_ex(prop_t *p, const char *name, int noalloc, ...);
 
 void prop_setdn(prop_sub_t *skipme, prop_t *p, const char *str, ...);
 
-#define prop_set(p, name, type...) \
-  prop_set_ex(p, name, __builtin_constant_p(name), type)
+#define prop_set(p, name, type, ...) \
+  prop_set_ex(p, name, __builtin_constant_p(name), type, ##__VA_ARGS__)
 
 void prop_set_string_ex(prop_t *p, prop_sub_t *skipme, const char *str,
 			prop_str_type_t type);
@@ -280,7 +279,7 @@ void prop_set_link_ex(prop_t *p, prop_sub_t *skipme, const char *title,
     prop_set_string_ex(p, NULL, str, 0);	\
   } while(0)
 
-#define prop_set_stringf(p, fmt...) prop_set_stringf_ex(p, NULL, fmt)
+#define prop_set_stringf(p, fmt, ...) prop_set_stringf_ex(p, NULL, fmt, ##__VA_ARGS__)
 
 #define prop_set_float(p, v) prop_set_float_ex(p, NULL, v, 0)
 
