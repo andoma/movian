@@ -2947,5 +2947,5 @@ codec_def_cmp(const codec_def_t *a, const codec_def_t *b)
 void
 media_register_codec(codec_def_t *cd)
 {
-  LIST_INSERT_SORTED(&registeredcodecs, cd, link, codec_def_cmp);
+  LIST_INSERT_SORTED(&registeredcodecs, cd, link, codec_def_cmp, codec_def_t);
 }

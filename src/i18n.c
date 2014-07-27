@@ -800,7 +800,7 @@ nls_init(prop_t *parent, htsmsg_t *store)
     l->id = mystrdupa(buf);
     snprintf(buf2, sizeof(buf2), "%s (%s)", native, language);
     l->str = mystrdupa(buf2);
-    LIST_INSERT_SORTED(&list, l, link, langcmp);
+    LIST_INSERT_SORTED(&list, l, link, langcmp, lang_t);
     num++;
   }
 

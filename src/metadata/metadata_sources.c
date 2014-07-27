@@ -199,7 +199,8 @@ metadata_add_source(const char *name, const char *description,
 
   ms_set_enable(ms, enabled);
 
-  TAILQ_INSERT_SORTED(&metadata_sources[type], ms, ms_link, ms_prio_cmp);
+  TAILQ_INSERT_SORTED(&metadata_sources[type], ms, ms_link, ms_prio_cmp,
+                      metadata_source_t);
 
   metadata_source_t *n = TAILQ_NEXT(ms, ms_link);
   prop_move(ms->ms_settings, n ? n->ms_settings : NULL);

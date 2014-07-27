@@ -103,7 +103,7 @@ vsource_insert(struct vsource_list *list,
   vs->vs_url = strdup(url);
   vs->vs_mimetype = mimetype ? strdup(mimetype) : NULL;
   vs->vs_flags = flags;
-  LIST_INSERT_SORTED(list, vs, vs_link, vs_cmp);
+  LIST_INSERT_SORTED(list, vs, vs_link, vs_cmp, vsource_t);
 }
 
 

@@ -517,7 +517,7 @@ picture_out(vdec_decoder_t *vdd)
 
   hts_mutex_lock(&vdd->mtx);
 
-  LIST_INSERT_SORTED(&vdd->pictures, vp, link, vp_cmp);
+  LIST_INSERT_SORTED(&vdd->pictures, vp, link, vp_cmp, vdec_pic_t);
 
   if(vdd->max_order != -1) {
     if(vp->order > vdd->max_order) {

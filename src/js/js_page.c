@@ -1666,7 +1666,7 @@ js_addURI(JSContext *cx, JSObject *obj, uintN argc,
 
 
   hts_mutex_lock(&js_page_mutex);
-  LIST_INSERT_SORTED(&js_routes, jsr, jsr_global_link, jsr_cmp);
+  LIST_INSERT_SORTED(&js_routes, jsr, jsr_global_link, jsr_cmp, js_route_t);
   LIST_INSERT_HEAD(&jsp->jsp_routes, jsr, jsr_plugin_link);
   jsr->jsr_openfunc = argv[1];
   JS_AddNamedRoot(cx, &jsr->jsr_openfunc, "routeduri");

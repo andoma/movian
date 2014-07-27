@@ -102,7 +102,7 @@ es_route_create(duk_context *ctx)
   er->er_pattern = strdup(str);
   er->er_prio = strcspn(str, "()[].*?+$") ?: INT32_MAX;
 
-  LIST_INSERT_SORTED(&routes, er, er_link, er_cmp);
+  LIST_INSERT_SORTED(&routes, er, er_link, er_cmp, es_route_t);
 
   es_resource_init(&er->super, ec);
 

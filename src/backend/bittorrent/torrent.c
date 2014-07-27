@@ -680,7 +680,8 @@ torrent_piece_find(torrent_t *to, int piece_index)
   tp->tp_index = piece_index;
   TAILQ_INSERT_TAIL(&to->to_active_pieces, tp, tp_link);
   tp->tp_deadline = INT64_MAX;
-  LIST_INSERT_SORTED(&to->to_serve_order, tp, tp_serve_link, tp_deadline_cmp);
+  LIST_INSERT_SORTED(&to->to_serve_order, tp, tp_serve_link, tp_deadline_cmp,
+                     torrent_piece_t);
 
   tp->tp_data = malloc(to->to_piece_length);
   tp->tp_piece_length = to->to_piece_length;
@@ -720,7 +721,8 @@ piece_update_deadline(torrent_t *to, torrent_piece_t *tp)
   tp->tp_deadline = deadline;
 
   LIST_REMOVE(tp, tp_serve_link);
-  LIST_INSERT_SORTED(&to->to_serve_order, tp, tp_serve_link, tp_deadline_cmp);
+  LIST_INSERT_SORTED(&to->to_serve_order, tp, tp_serve_link, tp_deadline_cmp,
+                     torrent_piece_t);
 }
 
 

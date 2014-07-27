@@ -315,7 +315,7 @@ face_create_epilogue(face_t *face, const char *url,
   if(prio == 0)
     LIST_INSERT_HEAD(faces, face, link);
   else
-    LIST_INSERT_SORTED(faces, face, link, face_cmp);
+    LIST_INSERT_SORTED(faces, face, link, face_cmp, face_t);
 
   face->lookup_font_domain = -1;
 

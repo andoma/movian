@@ -668,7 +668,7 @@ htsp_tagAddUpdate(htsp_connection_t *hc, htsmsg_t *m, int create)
     ht->ht_id = strdup(id);
     ht->ht_title = strdup(title ?: "");
 
-    LIST_INSERT_SORTED(&hc->hc_tags, ht, ht_link, tag_compar);
+    LIST_INSERT_SORTED(&hc->hc_tags, ht, ht_link, tag_compar, htsp_tag_t);
     n = LIST_NEXT(ht, ht_link);
 
     ht->ht_root = prop_create_root(id);
@@ -700,7 +700,7 @@ htsp_tagAddUpdate(htsp_connection_t *hc, htsmsg_t *m, int create)
       mystrset(&ht->ht_title, title);
       LIST_REMOVE(ht, ht_link);
 
-      LIST_INSERT_SORTED(&hc->hc_tags, ht, ht_link, tag_compar);
+      LIST_INSERT_SORTED(&hc->hc_tags, ht, ht_link, tag_compar, htsp_tag_t);
       n = LIST_NEXT(ht, ht_link);
       prop_move(ht->ht_root, n ? n->ht_root : NULL);
 

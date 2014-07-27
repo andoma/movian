@@ -597,7 +597,7 @@ torrent_diskio_scan(void)
       sf->sf_size  = fde->fde_stat.fs_size;
       sf->sf_mtime = fde->fde_stat.fs_mtime;
       sf->sf_url = rstr_dup(fde->fde_url);
-      LIST_INSERT_SORTED(&sfl, sf, sf_link, sf_cmp);
+      LIST_INSERT_SORTED(&sfl, sf, sf_link, sf_cmp, scanned_file_t);
     }
 
     fa_dir_free(fd);

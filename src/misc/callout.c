@@ -64,7 +64,7 @@ callout_arm_abs(callout_t *d, callout_callback_t *callback, void *opaque,
   d->c_armed_by_file = file;
   d->c_armed_by_line = line;
 
-  LIST_INSERT_SORTED(&callouts, d, c_link, calloutcmp);
+  LIST_INSERT_SORTED(&callouts, d, c_link, calloutcmp, callout_t);
   hts_cond_signal(&callout_cond);
   hts_mutex_unlock(&callout_mutex);
 }

@@ -190,7 +190,7 @@ asyncio_timer_arm(asyncio_timer_t *at, int64_t expire)
     LIST_REMOVE(at, at_link);
 
   at->at_expire = expire;
-  LIST_INSERT_SORTED(&asyncio_timers, at, at_link, at_compar);
+  LIST_INSERT_SORTED(&asyncio_timers, at, at_link, at_compar, asyncio_timer_t);
 }
 
 

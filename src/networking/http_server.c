@@ -178,7 +178,7 @@ http_path_add(const char *path, void *opaque, http_callback_t *callback,
   hp->hp_opaque = opaque;
   hp->hp_callback = callback;
   hp->hp_leaf = leaf;
-  LIST_INSERT_SORTED(&http_paths, hp, hp_link, hp_cmp);
+  LIST_INSERT_SORTED(&http_paths, hp, hp_link, hp_cmp, http_path_t);
   return hp;
 }
 

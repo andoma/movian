@@ -1297,7 +1297,8 @@ hls_add_variant(hls_t *h, const char *url, hls_variant_t **hvp,
   hls_variant_t *hv = *hvp;
 
   hv->hv_url = url_resolve_relative_from_base(h->h_baseurl, url);
-  TAILQ_INSERT_SORTED(&hd->hd_variants, hv, hv_link, variant_cmp);
+  TAILQ_INSERT_SORTED(&hd->hd_variants, hv, hv_link, variant_cmp,
+                      hls_variant_t);
   *hvp = NULL;
 }
 

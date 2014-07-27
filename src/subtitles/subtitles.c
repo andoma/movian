@@ -176,7 +176,8 @@ subtitle_provider_register(subtitle_provider_t *sp, const char *id,
                    NULL);
 
   num_subtitle_providers++;
-  TAILQ_INSERT_SORTED(&subtitle_providers, sp, sp_link, sp_prio_cmp);
+  TAILQ_INSERT_SORTED(&subtitle_providers, sp, sp_link, sp_prio_cmp,
+                      subtitle_provider_t);
 
   subtitle_provider_t *n = TAILQ_NEXT(sp, sp_link);
   prop_move(sp->sp_settings, n ? n->sp_settings : NULL);

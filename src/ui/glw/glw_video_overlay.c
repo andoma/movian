@@ -829,7 +829,8 @@ gvo_create_from_vo_text(glw_video_t *gv, video_overlay_t *vo)
       gvo->gvo_padding_right  = vo->vo_padding_right;
       gvo->gvo_padding_bottom = vo->vo_padding_bottom;
     }
-    LIST_INSERT_SORTED(&gv->gv_overlays, gvo, gvo_link, gvo_padding_cmp);
+    LIST_INSERT_SORTED(&gv->gv_overlays, gvo, gvo_link, gvo_padding_cmp,
+                       glw_video_overlay_t);
   }
 
   gc->gc_set_int(w, GLW_ATTRIB_MAX_LINES, 10);

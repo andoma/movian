@@ -79,7 +79,7 @@ vfs_add_mapping(const char *vdir, const char *prefix)
     vm->vm_vdir    = strdup(vdir);
     vm->vm_vdirlen = strlen(vdir);
     vm->vm_id      = ++vfs_mapping_tally;
-    LIST_INSERT_SORTED(&vfs_mappings, vm, vm_link, vm_compar);
+    LIST_INSERT_SORTED(&vfs_mappings, vm, vm_link, vm_compar, vfs_mapping_t);
   }
   mystrset(&vm->vm_prefix, prefix);
   int id = vm->vm_id;
