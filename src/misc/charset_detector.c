@@ -708,7 +708,7 @@ parse_ngram(const int32_t *n, const uint8_t *map, const char *str, int len)
 const char *
 charset_detector(const char *str, int len, const char **lp)
 {
-  int histogram[256] = {};
+  int histogram[256] = {0};
   if(lp)
     *lp = NULL;
 
