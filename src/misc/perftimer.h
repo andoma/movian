@@ -30,12 +30,12 @@ typedef struct perftimer {
   int logsec;
 } perftimer_t;
 
-static inline void perftimer_start(perftimer_t *pt)
+static __inline void perftimer_start(perftimer_t *pt)
 {
   pt->start = showtime_get_ts();
 }
 
-static inline void perftimer_stop(perftimer_t *pt, const char *str)
+static __inline void perftimer_stop(perftimer_t *pt, const char *str)
 {
   int64_t now = showtime_get_ts();
   int d = now - pt->start;

@@ -207,7 +207,7 @@ image_t *svg_decode(struct buf *buf, const image_meta_t *im,
 /**
  *
  */
-static inline image_component_t *
+static __inline image_component_t *
 image_find_component(image_t *img, image_component_type_t type)
 {
   if(img == NULL)

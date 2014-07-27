@@ -61,7 +61,7 @@ void es_dump_err(duk_context *ctx);
 /**
  * Resources
  */
-static inline void es_resource_retain(es_resource_t *er)
+static __inline void es_resource_retain(es_resource_t *er)
 {
   atomic_inc(&er->er_refcount);
 }
@@ -70,7 +70,7 @@ void es_resource_release(es_resource_t *er);
 
 void es_resource_unlink(es_resource_t *er);
 
-static inline void es_resource_destroy(es_resource_t *er)
+static __inline void es_resource_destroy(es_resource_t *er)
 {
   er->er_class->erc_destroy(er);
 }
@@ -79,8 +79,8 @@ void *es_resource_alloc(const es_resource_class_t *erc);
 
 void es_resource_init(es_resource_t *er, es_context_t *ec);
 
-static inline void *es_resource_create(es_context_t *ec,
-                                       const es_resource_class_t *erc)
+static __inline void *es_resource_create(es_context_t *ec,
+                                         const es_resource_class_t *erc)
 {
   void *r = es_resource_alloc(erc);
   es_resource_init(r, ec);
@@ -91,7 +91,7 @@ static inline void *es_resource_create(es_context_t *ec,
 /**
  * Contexts
  */
-static inline es_context_t * attribute_unused_result
+static __inline es_context_t * attribute_unused_result
 es_context_retain(es_context_t *ec)
 {
   atomic_inc(&ec->ec_refcount);

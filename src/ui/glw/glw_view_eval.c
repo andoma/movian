@@ -1019,7 +1019,7 @@ static uint8_t signal_to_eval_mask[GLW_SIGNAL_num] = {
 /**
  *
  */
-static inline void
+static __inline void
 run_dynamics(glw_t *w, glw_view_eval_context_t *ec, int mask)
 {
   ec->w = w;

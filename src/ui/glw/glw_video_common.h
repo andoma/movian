@@ -288,7 +288,7 @@ void glw_video_reset(glw_root_t *gr);
 /**
  *
  */
-static inline void
+static __inline void
 glw_video_enqueue_for_display(glw_video_t *gv, glw_video_surface_t *gvs,
 			      struct glw_video_surface_queue *fromqueue)
 {

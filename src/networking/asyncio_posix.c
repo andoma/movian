@@ -66,7 +66,7 @@ static void adr_deliver_cb(void);
 
 int64_t async_now;
 
-static inline void asyncio_verify_thread(void) {
+static __inline void asyncio_verify_thread(void) {
   assert(hts_thread_current() == asyncio_thread_id);
 }
 

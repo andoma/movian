@@ -77,7 +77,7 @@ typedef struct htsmsg_field {
 #define hmf_binsize u.bin.len
 #define hmf_dbl     u.dbl
 
-static inline htsmsg_t *
+static __inline htsmsg_t *
 htsmsg_get_map_by_field(htsmsg_field_t *f)
 {
   return f->hmf_childs;
@@ -327,7 +327,7 @@ htsmsg_t *htsmsg_get_map_by_field_if_name(htsmsg_field_t *f, const char *name);
 int htsmsg_get_children(htsmsg_t *msg);
 
 
-static inline void
+static __inline void
 htsmsg_set_backing_store(htsmsg_t *m, buf_t *b)
 {
   if(m->hm_backing_store == NULL) {

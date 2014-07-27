@@ -18,7 +18,7 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
-static inline void
+static __inline void
 glw_Translatef(glw_rctx_t *rc, float x, float y, float z)
 {
   __m128 vec = (__m128){x, y, z, 0};
@@ -36,7 +36,7 @@ glw_Translatef(glw_rctx_t *rc, float x, float y, float z)
 
 
 
-static inline void
+static __inline void
 glw_Scalef(glw_rctx_t *rc, float x, float y, float z)
 {
   __m128 vec = (__m128){x, y, z, 0};
@@ -52,14 +52,14 @@ glw_Scalef(glw_rctx_t *rc, float x, float y, float z)
 void glw_Rotatef(glw_rctx_t *rc, float a, float x, float y, float z);
 void glw_LoadIdentity(glw_rctx_t *rc);
 
-static inline void 
+static __inline void 
 glw_LoadMatrixf(glw_rctx_t *rc, float *src)
 {
   memcpy(rc->rc_mtx, src, sizeof(float) * 16);
 }
 
 
-static inline void
+static __inline void
 glw_LerpMatrix(Mtx out, float v, const Mtx a, const Mtx b)
 {
   __m128 vv = _mm_set1_ps(v);
@@ -70,7 +70,7 @@ glw_LerpMatrix(Mtx out, float v, const Mtx a, const Mtx b)
 }
 
 
-static inline void
+static __inline void
 glw_vec4_store(float *p, const Vec4 v)
 {
   _mm_storeu_ps(p, v);
@@ -140,7 +140,7 @@ typedef Mtx PMtx;
   } while(0)
 
 
-static inline float glw_vec3_dot(const Vec3 a, const Vec3 b)
+static __inline float glw_vec3_dot(const Vec3 a, const Vec3 b)
 {
   __v4sf n = _mm_mul_ps(a,b);
   return 
@@ -149,7 +149,7 @@ static inline float glw_vec3_dot(const Vec3 a, const Vec3 b)
     __builtin_ia32_vec_ext_v4sf(n, 2);
 }
 
-static inline float glw_vec34_dot(const Vec3 a, const Vec4 b)
+static __inline float glw_vec34_dot(const Vec3 a, const Vec4 b)
 {
   __v4sf n = _mm_mul_ps(a,b);
   return 
@@ -159,7 +159,7 @@ static inline float glw_vec34_dot(const Vec3 a, const Vec4 b)
     __builtin_ia32_vec_ext_v4sf(b, 3);
 }
 
-static inline void
+static __inline void
 glw_mtx_copy(Mtx dst, const Mtx src)
 {
   dst[0] = src[0];
@@ -179,13 +179,13 @@ extern int glw_mtx_invert(Mtx dst, const Mtx src);
   } while(0)
 
 
-const static inline float *
+const static __inline float *
 glw_mtx_get(const Mtx src)
 {
   return (const float *)&src[0];
 }
 
-static inline Vec2 glw_vec4_get(const float *p)
+static __inline Vec2 glw_vec4_get(const float *p)
 {
   return _mm_loadu_ps(p);
 }

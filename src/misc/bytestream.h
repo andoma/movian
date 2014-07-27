@@ -1,6 +1,6 @@
 #pragma once
 
-static inline void wr64_be(uint8_t *ptr, uint64_t val)
+static __inline void wr64_be(uint8_t *ptr, uint64_t val)
 {
 #if !defined(__BIG_ENDIAN__)
   val = __builtin_bswap64(val);
@@ -9,7 +9,7 @@ static inline void wr64_be(uint8_t *ptr, uint64_t val)
 }
 
 
-static inline void wr32_be(uint8_t *ptr, uint32_t val)
+static __inline void wr32_be(uint8_t *ptr, uint32_t val)
 {
 #if !defined(__BIG_ENDIAN__)
   val = __builtin_bswap32(val);
@@ -18,7 +18,7 @@ static inline void wr32_be(uint8_t *ptr, uint32_t val)
 }
 
 
-static inline void wr16_be(uint8_t *ptr, uint16_t val)
+static __inline void wr16_be(uint8_t *ptr, uint16_t val)
 {
 #if !defined(__BIG_ENDIAN__)
   val = ((val >> 8) & 0xff) | ((val << 8) & 0xff00);
@@ -28,7 +28,7 @@ static inline void wr16_be(uint8_t *ptr, uint16_t val)
 
 
 
-static inline uint64_t rd64_be(const uint8_t *ptr)
+static __inline uint64_t rd64_be(const uint8_t *ptr)
 {
   uint64_t val;
   memcpy(&val, ptr, 8);
@@ -39,7 +39,7 @@ static inline uint64_t rd64_be(const uint8_t *ptr)
 }
 
 
-static inline uint32_t rd32_be(const uint8_t *ptr)
+static __inline uint32_t rd32_be(const uint8_t *ptr)
 {
   uint32_t val;
   memcpy(&val, ptr, 4);
@@ -51,7 +51,7 @@ static inline uint32_t rd32_be(const uint8_t *ptr)
 
 
 
-static inline uint16_t rd16_be(const uint8_t *ptr)
+static __inline uint16_t rd16_be(const uint8_t *ptr)
 {
   uint16_t val;
   memcpy(&val, ptr, 2);

@@ -73,7 +73,7 @@ rstr_t *db_rstr(sqlite3_stmt *stmt, int col);
 
 int db_posint(sqlite3_stmt *stmt, int col);
 
-static inline void db_bind_rstr(sqlite3_stmt *stmt, int col, rstr_t *rstr)
+static __inline void db_bind_rstr(sqlite3_stmt *stmt, int col, rstr_t *rstr)
 {
   sqlite3_bind_text(stmt, col, (void *)rstr_get(rstr), -1, SQLITE_STATIC);
 

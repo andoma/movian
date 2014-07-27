@@ -18,7 +18,7 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
-static inline void
+static __inline void
 glw_Translatef(glw_rctx_t *rc, float x, float y, float z)
 {
   float *m = rc->rc_mtx;
@@ -29,7 +29,7 @@ glw_Translatef(glw_rctx_t *rc, float x, float y, float z)
 }
 
 
-static inline void
+static __inline void
 glw_Scalef(glw_rctx_t *rc, float x, float y, float z)
 {
   float *m = rc->rc_mtx;
@@ -51,14 +51,14 @@ void glw_Rotatef(glw_rctx_t *rc, float a, float x, float y, float z);
 
 void glw_LoadIdentity(glw_rctx_t *rc);
 
-static inline void 
+static __inline void 
 glw_LoadMatrixf(glw_rctx_t *rc, float *src)
 {
   memcpy(rc->rc_mtx, src, sizeof(float) * 16);
 }
 
 
-static inline void
+static __inline void
 glw_LerpMatrix(Mtx out, float v, const Mtx a, const Mtx b)
 {
   int i;
@@ -71,7 +71,7 @@ typedef const float *PMtx;
 
 #define glw_pmtx_mul_prepare(dst, src) dst = &src[0]
 
-static inline void
+static __inline void
 glw_pmtx_mul_vec3(Vec3 dst, const float *mt, const Vec3 a)
 {
   dst[0] = mt[0] * a[0] + mt[4] * a[1] + mt[ 8] * a[2] + mt[12];
@@ -80,7 +80,7 @@ glw_pmtx_mul_vec3(Vec3 dst, const float *mt, const Vec3 a)
 }
 
 
-static inline void
+static __inline void
 glw_pmtx_mul_vec4_i(Vec4 dst, const float *mt, const Vec4 a)
 {
   dst[0] = mt[0] * a[0] + mt[4] * a[1] + mt[ 8] * a[2] + mt[12];
@@ -90,7 +90,7 @@ glw_pmtx_mul_vec4_i(Vec4 dst, const float *mt, const Vec4 a)
 }
 
 
-static inline void
+static __inline void
 glw_pmtx_mul_vec4(Vec4 dst, const float *mt, const Vec4 a)
 {
   dst[0] = mt[0] * a[0] + mt[4] * a[1] + mt[ 8] * a[2] + mt[12] * a[3];
@@ -100,20 +100,20 @@ glw_pmtx_mul_vec4(Vec4 dst, const float *mt, const Vec4 a)
 }
 
 
-static inline float
+static __inline float
 glw_vec34_dot(const Vec3 A, const Vec4 B)
 {
   return A[0] * B[0] + A[1] * B[1] + A[2] * B[2] + B[3];
 }
 
-static inline void
+static __inline void
 glw_vec2_lerp(Vec2 dst, float s, const Vec2 a, const Vec2 b)
 {
   dst[0] = a[0] + s * (b[0] - a[0]);
   dst[1] = a[1] + s * (b[1] - a[1]);
 }
 
-static inline void
+static __inline void
 glw_vec3_lerp(Vec3 dst, float s, const Vec3 a, const Vec3 b)
 {
   dst[0] = a[0] + s * (b[0] - a[0]);
@@ -121,7 +121,7 @@ glw_vec3_lerp(Vec3 dst, float s, const Vec3 a, const Vec3 b)
   dst[2] = a[2] + s * (b[2] - a[2]);
 }
 
-static inline void
+static __inline void
 glw_vec4_lerp(Vec4 dst, float s, const Vec4 a, const Vec4 b)
 {
   dst[0] = a[0] + s * (b[0] - a[0]);
@@ -130,7 +130,7 @@ glw_vec4_lerp(Vec4 dst, float s, const Vec4 a, const Vec4 b)
   dst[3] = a[3] + s * (b[3] - a[3]);
 }
 
-static inline void
+static __inline void
 glw_vec4_store(float *p, const Vec4 v)
 {
   p[0] = v[0];
@@ -146,7 +146,7 @@ glw_vec4_store(float *p, const Vec4 v)
 #define glw_vec4_make(x,y,z,w) ((const float[4]){x,y,z,w})
 
     
-static inline void
+static __inline void
 glw_vec3_copy(Vec3 dst, const Vec3 src)
 {
   dst[0] = src[0];
@@ -154,7 +154,7 @@ glw_vec3_copy(Vec3 dst, const Vec3 src)
   dst[2] = src[2];
 }
 
-static inline void
+static __inline void
 glw_vec4_copy(Vec4 dst, const Vec4 src)
 {
   dst[0] = src[0];
@@ -163,7 +163,7 @@ glw_vec4_copy(Vec4 dst, const Vec4 src)
   dst[3] = src[3];
 }
 
-static inline void
+static __inline void
 glw_vec3_addmul(Vec3 dst, const Vec3 a, const Vec3 b, float s)
 {
   dst[0] = a[0] + b[0] * s;
@@ -171,7 +171,7 @@ glw_vec3_addmul(Vec3 dst, const Vec3 a, const Vec3 b, float s)
   dst[2] = a[2] + b[2] * s;
 }
 
-static inline void
+static __inline void
 glw_vec3_sub(Vec3 dst, const Vec3 a, const Vec3 b)
 {
   dst[0] = a[0] - b[0];
@@ -179,7 +179,7 @@ glw_vec3_sub(Vec3 dst, const Vec3 a, const Vec3 b)
   dst[2] = a[2] - b[2];
 }
 
-static inline void
+static __inline void
 glw_vec3_cross(Vec3 dst, const Vec3 a, const Vec3 b)
 {
   dst[0] = (a[1] * b[2]) - (a[2] * b[1]);
@@ -187,13 +187,13 @@ glw_vec3_cross(Vec3 dst, const Vec3 a, const Vec3 b)
   dst[2] = (a[0] * b[1]) - (a[1] * b[0]);
 }
 
-static inline float
+static __inline float
 glw_vec3_dot(const Vec3 a, const Vec3 b)
 {
   return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
 
-static inline void
+static __inline void
 glw_mtx_trans_mul_vec4(Vec4 dst, const Mtx mt, const Vec4 v)
 {
   dst[0] = mt[ 0] * v[0] + mt[ 1] * v[1] + mt[ 2] * v[2] + mt[ 3] * v[3];
@@ -217,7 +217,7 @@ extern int glw_mtx_invert(Mtx dst, const Mtx src);
 
 #define glw_mtx_get(m) (m)
 
-static inline void
+static __inline void
 glw_mtx_copy(Mtx dst, const Mtx src)
 {
   memcpy(dst, src, sizeof(Mtx));

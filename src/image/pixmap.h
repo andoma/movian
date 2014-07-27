@@ -112,7 +112,7 @@ void pixmap_compute_rescale_dim(const image_meta_t *im,
 /**
  *
  */
-static inline int 
+static __inline int 
 bytes_per_pixel(pixmap_type_t fmt)
 {
   switch(fmt) {
@@ -133,7 +133,7 @@ bytes_per_pixel(pixmap_type_t fmt)
   }
 }
 
-static inline void *
+static __inline void *
 pm_pixel(pixmap_t *pm, unsigned int x, unsigned int y)
 {
   return pm->pm_data + (y + pm->pm_margin) * pm->pm_linesize +

@@ -29,7 +29,7 @@
 /**
  *
  */
-static inline uint16_t
+static __inline uint16_t
 getbe16(const uint8_t *p)
 {
   return (p[0] << 8) | p[1];

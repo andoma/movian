@@ -39,7 +39,7 @@ void h264_to_annexb_init(h264_annexb_ctx_t *ctx,
 
 int h264_to_annexb(h264_annexb_ctx_t *ctx, uint8_t **datap, size_t *sizep);
 
-static inline void h264_to_annexb_cleanup(h264_annexb_ctx_t *ctx)
+static __inline void h264_to_annexb_cleanup(h264_annexb_ctx_t *ctx)
 {
   free(ctx->tmpbuf);
   free(ctx->extradata);

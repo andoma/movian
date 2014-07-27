@@ -37,14 +37,14 @@ typedef struct {
 
 #define REG_EXTENDED 0
 
-static inline int hts_regcomp(hts_regex_t *r, const char *pat)
+static __inline int hts_regcomp(hts_regex_t *r, const char *pat)
 {
   const char *err;
   return !(r->r = trex_compile(pat, &err));
 }
 
-static inline int hts_regexec(hts_regex_t *r, const char *text,
-			      int nmatches, hts_regmatch_t *matches, int v)
+static __inline int hts_regexec(hts_regex_t *r, const char *text,
+                                int nmatches, hts_regmatch_t *matches, int v)
 {
   int i;
   TRexMatch m;
@@ -63,7 +63,7 @@ static inline int hts_regexec(hts_regex_t *r, const char *text,
   return 0;
 }
 
-static inline void hts_regfree(hts_regex_t *r)
+static __inline void hts_regfree(hts_regex_t *r)
 {
   trex_free(r->r);
 }

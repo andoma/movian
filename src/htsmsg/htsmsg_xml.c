@@ -192,7 +192,7 @@ decode_character_reference(char **src)
 /**
  *
  */
-static inline int
+static __inline int
 is_xmlws(char c)
 {
   return c > 0 && c <= 32;

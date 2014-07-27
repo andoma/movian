@@ -453,7 +453,7 @@ ad_txt_append(ass_dialoge_t *ad, int v)
 }
 
 
-static inline int isd(char c)
+static __inline int isd(char c)
 {
   return c >= '0' && c <= '9';
 }

@@ -34,7 +34,7 @@ typedef struct {
 /**
  *
  */
-static inline void
+static __inline void
 kalman_init(kalman_t *k)
 {
   k->P = 1.0;
@@ -47,7 +47,7 @@ kalman_init(kalman_t *k)
 /**
  *
  */
-static inline double
+static __inline double
 kalman_update(kalman_t *k, double z)
 {
   double x, P_next;
