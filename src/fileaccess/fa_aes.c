@@ -33,6 +33,7 @@
 #include "showtime.h"
 #include "fileaccess.h"
 #include "fa_proto.h"
+#include "misc/minmax.h"
 
 #define MAX_BUFFER_BLOCKS 150
 #define BLOCKSIZE 16

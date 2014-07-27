@@ -40,6 +40,8 @@
 #include "settings.h"
 #include "notifications.h"
 #include "backend/backend.h"
+#include "misc/minmax.h"
+
 
 #if CONFIG_BSPATCH
 #include "ext/bspatch/bspatch.h"

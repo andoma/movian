@@ -246,8 +246,8 @@ void fileaccess_unregister_dynamic(fa_protocol_t *fap);
 
 void fileaccess_register_entry(fa_protocol_t *fap);
 
-#define FAP_REGISTER(name) \
-  static void  __attribute__((constructor)) fap_register_ ## name(void) { \
+#define FAP_REGISTER(name)                                              \
+  INITIALIZER(fap_register_ ## name) {                                  \
     fileaccess_register_entry(&fa_protocol_ ## name);			\
   }
 

@@ -29,6 +29,7 @@
 #include "htsmsg/htsmsg.h"
 #include "bittorrent.h"
 #include "bencode.h"
+#include "misc/minmax.h"
 
 
 #define TORRENT_REQ_SIZE 16384
@@ -61,7 +62,7 @@ static void torrent_piece_destroy(torrent_t *to, torrent_piece_t *tp);
 
 static void
 torrent_trace(const torrent_t *t, const char *msg, ...)
- __attribute__((format(printf, 2, 3)));
+  attribute_printf(2, 3);
 
 static void
 torrent_trace(const torrent_t *t, const char *msg, ...)

@@ -29,6 +29,7 @@
 #include "libav.h"
 #include "htsmsg/htsmsg_store.h"
 #include "settings.h"
+#include "misc/minmax.h"
 
 #include <libavutil/avutil.h>
 #include <libavcodec/avcodec.h>

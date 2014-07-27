@@ -23,6 +23,7 @@
 #define STRTAB_H_
 
 #include <string.h>
+#include "compiler.h"
 
 struct strtab {
   const char *str;
@@ -46,7 +47,7 @@ str2val0(const char *str, struct strtab tab[], int l)
 #define str2val(str, tab) str2val0(str, tab, sizeof(tab) / sizeof(tab[0]))
 
 static const char * val2str0(int val, struct strtab tab[], int l)
-     __attribute__((unused));
+  attribute_unused;
 
 static const char *
 val2str0(int val, struct strtab tab[], int l)

@@ -33,6 +33,7 @@
 #include "jpeg.h"
 #include "pixmap.h"
 #include "image.h"
+#include "compiler.h"
 
 #include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
@@ -182,8 +183,7 @@ pixmap_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
 }
 
 
-static void   __attribute__((unused))
-
+static void attribute_unused
 swizzle_xwzy(uint32_t *dst, const uint32_t *src, int len)
 {
   int i;

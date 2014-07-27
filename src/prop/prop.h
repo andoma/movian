@@ -30,6 +30,7 @@
 #include "arch/threads.h"
 #include "misc/queue.h"
 #include "misc/rstr.h"
+#include "compiler.h"
 
 #if ENABLE_BUGHUNT
 #define PROP_DEBUG
@@ -180,13 +181,13 @@ enum {
 #ifdef PROP_SUB_RECORD_SOURCE
 
 prop_sub_t *prop_subscribe_ex(const char *file, int line, int flags,
-                              ...) __attribute__((__sentinel__(0)));
+                              attribute_null_sentinel;
 
 #define prop_subscribe(flags...) prop_subscribe_ex(__FILE__, __LINE__, flags)
 
 #else
 
-prop_sub_t *prop_subscribe(int flags, ...) __attribute__((__sentinel__(0)));
+prop_sub_t *prop_subscribe(int flags, ...) attribute_null_sentinel;
 
 #endif
 
@@ -303,9 +304,9 @@ void prop_copy_ex(prop_t *dst, prop_sub_t *skipme, prop_t *src);
 
 #define prop_copy(dst, src) prop_copy_ex(dst, NULL, src)
 
-rstr_t *prop_get_string(prop_t *p, ...) __attribute__((__sentinel__(0)));
+rstr_t *prop_get_string(prop_t *p, ...) attribute_null_sentinel;
 
-int prop_get_int(prop_t *p, ...) __attribute__((__sentinel__(0)));
+int prop_get_int(prop_t *p, ...) attribute_null_sentinel;
 
 char **prop_get_name_of_childs(prop_t *p);
 
@@ -331,16 +332,16 @@ void prop_print_trace(prop_t *p);
 
 void prop_ref_dec(prop_t *p);
 
-prop_t *prop_ref_inc(prop_t *p) __attribute__ ((warn_unused_result));
+prop_t *prop_ref_inc(prop_t *p) attribute_unused_result;
 
 #endif
 
-prop_t *prop_xref_addref(prop_t *p) __attribute__ ((warn_unused_result));
+prop_t *prop_xref_addref(prop_t *p) attribute_unused_result;
 
 int prop_set_parent_ex(prop_t *p, prop_t *parent, prop_t *before, 
 		       prop_sub_t *skipme)
-     __attribute__ ((warn_unused_result));
-     
+     attribute_unused_result;
+
 #define prop_set_parent(p, parent) prop_set_parent_ex(p, parent, NULL, NULL)
 
 void prop_set_parent_vector(prop_vec_t *pv, prop_t *parent,
@@ -384,7 +385,7 @@ void prop_destroy_childs(prop_t *parent);
 void prop_void_childs(prop_t *parent);
 
 prop_t *prop_get_by_name(const char **name, int follow_symlinks, ...)
-     __attribute__((__sentinel__(0)));
+                              attribute_null_sentinel;
 
 void prop_request_new_child(prop_t *p);
 
@@ -429,7 +430,7 @@ void prop_notify_dispatch(struct prop_notify_queue *q, const char *tracename);
 
 void prop_courier_stop(prop_courier_t *pc);
 
-prop_t *prop_find(prop_t *parent, ...)  __attribute__((__sentinel__(0)));
+prop_t *prop_find(prop_t *parent, ...) attribute_null_sentinel;
 
 prop_t *prop_first_child(prop_t *p);
 

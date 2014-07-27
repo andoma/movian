@@ -24,11 +24,11 @@
 
 #include <bcm_host.h>
 
-#include "showtime.h"
 #include "video/video_decoder.h"
 #include "omx.h"
 #include "rpi_video.h"
 #include "rpi.h"
+#include "misc/minmax.h"
 
 static char omx_enable_mpg2;
 static char omx_enable_vp8;

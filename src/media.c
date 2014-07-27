@@ -42,6 +42,7 @@
 #include "subtitles/subtitles.h"
 #include "settings.h"
 #include "db/kvstore.h"
+#include "misc/minmax.h"
 
 #define MAX_USER_AUDIO_GAIN 12 // dB
 

@@ -25,6 +25,7 @@
 
 #include "showtime.h"
 #include "fileaccess/fileaccess.h"
+#include "misc/minmax.h"
 
 #include "db_support.h"
 

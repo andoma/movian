@@ -33,6 +33,7 @@
 #include "showtime.h"
 #include "fileaccess.h"
 #include "misc/fs.h"
+#include "misc/minmax.h"
 
 #include "fa_proto.h"
 

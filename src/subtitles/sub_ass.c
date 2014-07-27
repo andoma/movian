@@ -30,6 +30,7 @@
 #include "ext_subtitles.h"
 #include "subtitles.h"
 #include "misc/charset_detector.h"
+#include "misc/minmax.h"
 
 // #define ASS_DEBUG
 

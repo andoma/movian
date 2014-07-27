@@ -22,9 +22,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "showtime.h"
 #include "misc/str.h"
 #include "misc/unicode_composition.h"
+#include "misc/minmax.h"
 
 #include "text.h"
 

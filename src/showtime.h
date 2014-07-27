@@ -46,20 +46,15 @@ void showtime_fini(void);
 
 void showtime_swrefresh(void);
 
-extern void panic(const char *fmt, ...) attribute_printf(1,2);
+extern void panic(const char *fmt, ...)
+  attribute_printf(1,2) attribute_noreturn;
 
 extern const char *showtime_dataroot(void);
-
-#define HTS_GLUE(a, b) a ## b
-#define HTS_JOIN(a, b) HTS_GLUE(a, b)
 
 #define BYPASS_CACHE  ((int *)-1)
 #define DISABLE_CACHE ((int *)-2)
 #define NOT_MODIFIED ((void *)-1)
 
-#ifndef _MSC_VER
-#define ARRAYSIZE(x) (sizeof(x) / sizeof(x[0]))
-#endif
 
 #define ONLY_CACHED(p) ((p) != BYPASS_CACHE && (p) != NULL)
 
@@ -76,13 +71,6 @@ struct prop;
 struct prop *nls_get_prop(const char *string);
 
 rstr_t *nls_get_rstringp(const char *string, const char *singularis, int val);
-
-#ifndef MIN
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#endif
-#ifndef MAX
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#endif
 
 #define URL_MAX 2048
 #define HOSTNAME_MAX 256 /* FQDN is max 255 bytes including ending dot */
@@ -126,7 +114,12 @@ void tracev(int flags, int level, const char *subsys, const char *fmt, va_list a
 
 void trace_arch(int level, const char *prefix, const char *buf);
 
+#ifdef _MSC_VER
 #define TRACE(level, subsys, fmt, ...) trace(0, level, subsys, fmt, __VA_ARGS__ )
+#else
+#define TRACE(level, subsys, fmt...) trace(0, level, subsys, fmt)
+
+#endif
 
 void hexdump(const char *pfx, const void *data, int len);
 
@@ -152,7 +145,7 @@ static __inline unsigned int mystrhash(const char *s)
 static __inline void mystrset(char **p, const char *s)
 {
   free(*p);
-  *p = s ? _strdup(s) : NULL;
+  *p = s ? strdup(s) : NULL;
 }
 
 
@@ -164,7 +157,6 @@ static __inline const char *mystrbegins(const char *s1, const char *s2)
   return s1;
 }
 
-void my_localtime(const time_t *timep, struct tm *tm);
 
 /*
  * Memory allocation wrappers
@@ -330,8 +322,7 @@ extern inithelper_t *inithelpers;
     .group = group_,						   \
     .fn = func_							   \
   };								   \
-  static void  __attribute__((constructor))			   \
-  HTS_JOIN(inithelperctor, __LINE__)(void)			   \
+  INITIALIZER(HTS_JOIN(inithelperctor, __LINE__))                  \
   {								   \
     inithelper_t *ih = &HTS_JOIN(inithelper, __LINE__);		   \
     ih->next = inithelpers;					   \

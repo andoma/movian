@@ -80,7 +80,7 @@ typedef struct pool_segment {
 /**
  *
  */
-static void  __attribute__((unused))
+static void attribute_unused
 pool_segment_create(pool_t *p)
 {
   size_t i;

@@ -141,7 +141,7 @@ enum {
 };
 
 setting_t *setting_create(int type, prop_t *parent, int flags, ...)
-  __attribute__((__sentinel__(0)));
+  attribute_null_sentinel;
 
 prop_t *setting_add_option(setting_t *s, const char *id,
                            const char *title, int sel);

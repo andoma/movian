@@ -130,7 +130,7 @@ svg_state_translate(svg_state_t *state, const float *p)
   state->ctm[7] += state->ctm[1]*p[0] + state->ctm[4]*p[1];
 }
 
-static void __attribute__((unused))
+static void  attribute_unused
 printmtx(const float *m)
 {
   printf("%f\t%f\t%f\n", m[0], m[1], m[2]);

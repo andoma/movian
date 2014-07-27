@@ -31,6 +31,7 @@
 #include "fileaccess/fileaccess.h"
 #include "fileaccess/fa_indexer.h"
 #include "metadata_str.h"
+#include "misc/minmax.h"
 
 /**
  *

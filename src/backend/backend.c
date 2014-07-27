@@ -36,6 +36,8 @@
 #include "image/pixmap.h"
 #include "htsmsg/htsmsg_json.h"
 #include "media.h"
+#include "misc/minmax.h"
+
 
 prop_t *global_sources; // Move someplace else
 

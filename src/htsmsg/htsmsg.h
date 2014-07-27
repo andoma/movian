@@ -231,13 +231,13 @@ htsmsg_t *htsmsg_get_map(htsmsg_t *msg, const char *name);
  * Traverse a hierarchy of htsmsg's to find a specific child.
  */
 htsmsg_t *htsmsg_get_map_multi(htsmsg_t *msg, ...)
-  __attribute__((__sentinel__(0)));
+  attribute_null_sentinel;
 
 /**
  * Traverse a hierarchy of htsmsg's to find a specific child.
  */
 const char *htsmsg_get_str_multi(htsmsg_t *msg, ...)
-  __attribute__((__sentinel__(0)));
+  attribute_null_sentinel;
 
 /**
  * Get a field of type 'double'.
@@ -315,7 +315,7 @@ htsmsg_t *htsmsg_copy(htsmsg_t *src);
 
 void htsmsg_release(htsmsg_t *m);
 
-htsmsg_t *htsmsg_retain(htsmsg_t *m)  __attribute__ ((warn_unused_result));
+htsmsg_t *htsmsg_retain(htsmsg_t *m) attribute_unused_result;
 
 /**
  * Misc

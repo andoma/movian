@@ -51,6 +51,8 @@
 #include "fa_indexer.h"
 #include "settings.h"
 #include "notifications.h"
+#include "misc/minmax.h"
+
 
 static struct fa_protocol_list fileaccess_all_protocols;
 static HTS_MUTEX_DECL(fap_mutex);

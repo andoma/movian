@@ -54,6 +54,7 @@ get_system_concurrency(void)
 #include <limits.h>
 #include <syslog.h>
 #include <sys/statvfs.h>
+#include <sys/time.h>
 #include <signal.h>
 #include "text/text.h"
 #include "showtime.h"
@@ -283,7 +284,7 @@ hfree(void *ptr, size_t size)
 
 
 void
-my_localtime(const time_t *now, struct tm *tm)
+arch_localtime(const time_t *now, struct tm *tm)
 {
   localtime_r(now, tm);
 }

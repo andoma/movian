@@ -38,6 +38,7 @@
 #include "fa_libav.h"
 #include "notifications.h"
 #include "metadata/playinfo.h"
+#include "misc/minmax.h"
 
 #if ENABLE_LIBGME
 #include <gme/gme.h>

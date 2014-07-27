@@ -136,20 +136,20 @@ void backend_init(void);
 void backend_fini(void);
 
 int backend_open(struct prop *page, const char *url, int sync)
-     __attribute__ ((warn_unused_result));
+     attribute_unused_result;
 
 struct event *backend_play_video(const char *url, struct media_pipe *mp,
 				 char *errbuf, size_t errlen,
 				 video_queue_t *vq,
                                  struct vsource_list *vsl,
 				 const video_args_t *va)
-  __attribute__ ((warn_unused_result));
+     attribute_unused_result;
 
 
 struct event *backend_play_audio(const char *url, struct media_pipe *mp,
 				 char *errbuf, size_t errlen, int paused,
 				 const char *mimetype)
-  __attribute__ ((warn_unused_result));
+     attribute_unused_result;
 
 
 struct image *backend_imageloader(rstr_t *url, const struct image_meta *im,
@@ -157,22 +157,22 @@ struct image *backend_imageloader(rstr_t *url, const struct image_meta *im,
                                   char *errbuf, size_t errlen,
                                   int *cache_control,
                                   cancellable_t *c)
-     __attribute__ ((warn_unused_result));
+     attribute_unused_result;
 
 backend_t *backend_canhandle(const char *url)
-     __attribute__ ((warn_unused_result));
+     attribute_unused_result;
 
 
 backend_probe_result_t backend_probe(const char *url,
 				     char *errbuf, size_t errlen)
-     __attribute__ ((warn_unused_result));
+     attribute_unused_result;
 
 void backend_register(backend_t *be);
 
 int backend_open_video(prop_t *page, const char *url, int sync);
 
 int backend_resolve_item(const char *url, prop_t *item)
-     __attribute__ ((warn_unused_result));
+     attribute_unused_result;
 
 rstr_t *backend_normalize(rstr_t *url);
 
@@ -180,12 +180,9 @@ void backend_search(prop_t *model, const char *url, prop_t *loading);
 
 int backend_page_open(prop_t *root, const char *url0, int sync);
 
-#define BE_REGISTER(name) \
-  static void  __attribute__((constructor)) backend_init_ ## name(void) {\
-  static int cnt;							\
-  if(cnt == 0)								\
-    backend_register(&be_ ## name);					\
-  cnt++;								\
+#define BE_REGISTER(name)                                              \
+  INITIALIZER(backend_init_ ## name) {                                 \
+    backend_register(&be_ ## name);                                    \
   }
 
 

@@ -496,7 +496,7 @@ extern void my_malloc_stats(void (*fn)(const char *fmt, ...));
 char hugebuf[1024 * 1024];
 int hugeptr;
 
-static void __attribute__((unused))memdumpf(const char *fmt, ...)
+static void memdumpf(const char *fmt, ...)
 {
   va_list ap;
   va_start(ap, fmt);

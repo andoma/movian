@@ -23,8 +23,9 @@
 
 #include <stdint.h>
 #include <time.h>
+#include "compiler.h"
 
-void arch_exit(void) __attribute__((noreturn));
+void arch_exit(void) attribute_noreturn;
 
 int64_t arch_cache_avail_bytes(void);
 
@@ -40,3 +41,6 @@ void arch_sync_path(const char *path);
 // semi-standby state.
 
 int arch_stop_req(void);
+
+void arch_localtime(const time_t *timep, struct tm *tm);
+

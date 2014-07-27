@@ -20,6 +20,7 @@
 #include "settings.h"
 #include "backend/backend.h"
 #include "notifications.h"
+#include "misc/minmax.h"
 
 #include <psl1ght/lv2/spu.h>
 #include <lv2/spu.h>

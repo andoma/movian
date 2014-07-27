@@ -25,6 +25,7 @@
 #include "prop/prop.h"
 #include "fileaccess/fileaccess.h"
 #include "fileaccess/fa_libav.h"
+#include "misc/minmax.h"
 
 #include <libavformat/avformat.h>
 

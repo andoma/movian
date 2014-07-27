@@ -7,7 +7,7 @@ static int initialized;
 static char buf[256];
 static hts_mutex_t mtx;
 
-static void __attribute__((constructor)) showtime_dataroot_init(void)
+INITIALZIER(showtime_dataroot_init) {
 {
   hts_mutex_init(&mtx);
 }

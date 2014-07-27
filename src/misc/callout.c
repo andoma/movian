@@ -173,7 +173,7 @@ set_global_clock(struct callout *c, void *aux)
 	
   prop_set_int(prop_unixtime, now);
 
-  my_localtime(&now, &tm);
+  arch_localtime(&now, &tm);
 
   prop_set_int(prop_hour, tm.tm_hour);
   prop_set_int(prop_minute, tm.tm_min);

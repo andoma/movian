@@ -29,6 +29,7 @@
 #include "htsbuf.h"
 #include "showtime.h"
 #include "misc/rstr.h"
+#include "misc/minmax.h"
 
 /**
  *

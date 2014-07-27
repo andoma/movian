@@ -278,7 +278,7 @@ typedef struct token_attrib {
 } token_attrib_t;
 
 
-token_t *glw_view_token_alloc(glw_root_t *gr)  __attribute__ ((malloc));
+token_t *glw_view_token_alloc(glw_root_t *gr) attribute_malloc;
 
 void glw_view_token_free(glw_root_t *gr, token_t *t);
 

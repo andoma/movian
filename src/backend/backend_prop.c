@@ -32,7 +32,7 @@ LIST_HEAD(proppage_list, proppage);
 LIST_HEAD(openpage_list, openpage);
 
 static struct proppage_list proppages;
-static hts_mutex_t pp_mutex;
+static HTS_MUTEX_DECL(pp_mutex);
 static int pp_tally;
 
 
@@ -184,15 +184,6 @@ be_prop_open(prop_t *page, const char *url, int sync)
   return 0;
 }
 
-
-/**
- *
- */
-static void __attribute__((constructor))
-doinit(void)
-{
-  hts_mutex_init(&pp_mutex);
-}
 
 
 /**

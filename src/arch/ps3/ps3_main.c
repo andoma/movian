@@ -501,7 +501,7 @@ set_device_id(void)
  *
  */
 void
-my_localtime(const time_t *now, struct tm *tm)
+arch_localtime(const time_t *now, struct tm *tm)
 {
   rtc_datetime dt;
   rtc_tick utc, local;

@@ -27,6 +27,7 @@
 #include "fileaccess.h"
 #include "fa_zlib.h"
 #include "showtime.h"
+#include "misc/minmax.h"
 
 
 typedef struct fa_inflator {

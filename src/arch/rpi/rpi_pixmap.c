@@ -24,6 +24,7 @@
 #include "omx.h"
 #include "image/pixmap.h"
 #include "misc/buf.h"
+#include "misc/minmax.h"
 
 // #define NOCOPY
 

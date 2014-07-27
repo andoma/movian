@@ -43,6 +43,7 @@
 #include "fileaccess/fa_proto.h"
 #include "fileaccess/fa_video.h"
 #include "usage.h"
+#include "misc/minmax.h"
 
 #define EPG_TAIL 20          // How many EPG entries to keep per channel
 

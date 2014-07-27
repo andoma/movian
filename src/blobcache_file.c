@@ -41,6 +41,7 @@
 #include "arch/atomic.h"
 #include "settings.h"
 #include "notifications.h"
+#include "misc/minmax.h"
 
 // Flags
 

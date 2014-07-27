@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "average.h"
 #include "compiler.h"
+#include "misc/minmax.h"
 
 /**
  *

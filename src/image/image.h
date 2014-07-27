@@ -24,6 +24,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "compiler.h"
+
 struct buf;
 
 /**
@@ -151,9 +153,9 @@ typedef struct image {
 /**
  *
  */
-image_t *image_alloc(int num_components) __attribute__ ((malloc));
+image_t *image_alloc(int num_components) attribute_malloc;
 
-image_t *image_retain(image_t *img)  __attribute__ ((warn_unused_result));
+image_t *image_retain(image_t *img) attribute_unused_result;
 
 void image_release(image_t *img);
 

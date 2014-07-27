@@ -115,7 +115,7 @@ prop_get_name(prop_t *p)
 /**
  *
  */
-__attribute__((unused)) static const char *
+attribute_unused static const char *
 prop_get_DN(prop_t *p, int compact)
 {
   static __thread int idx;
@@ -1496,7 +1496,7 @@ prop_check_canonical_subs_descending(prop_t *p)
 /**
  *
  */
-static int  __attribute__ ((warn_unused_result))
+static int attribute_unused_result
 prop_clean(prop_t *p)
 {
   if(p->hp_flags & PROP_CLIPPED_VALUE) {

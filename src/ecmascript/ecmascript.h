@@ -4,6 +4,7 @@
 #include "misc/queue.h"
 #include "arch/threads.h"
 #include "arch/atomic.h"
+#include "compiler.h"
 
 struct es_resource;
 struct rstr;
@@ -90,7 +91,7 @@ static inline void *es_resource_create(es_context_t *ec,
 /**
  * Contexts
  */
-static inline es_context_t * __attribute__ ((warn_unused_result))
+static inline es_context_t * attribute_unused_result
 es_context_retain(es_context_t *ec)
 {
   atomic_add(&ec->ec_refcount, 1);

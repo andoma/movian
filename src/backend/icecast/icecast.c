@@ -35,6 +35,7 @@
 #include "htsmsg/htsmsg_xml.h"
 #include "networking/http.h"
 #include "usage.h"
+#include "misc/minmax.h"
 
 TAILQ_HEAD(icecast_source_queue, icecast_source);
 

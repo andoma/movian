@@ -4035,7 +4035,7 @@ glwf_strftime(glw_view_eval_context_t *ec, struct token *self,
 
   t = token2int(a);
   if(t != 0) {
-    my_localtime(&t, &tm);
+    arch_localtime(&t, &tm);
     strftime(buf, sizeof(buf), rstr_get(b->t_rstring), &tm);
   } else {
     buf[0] = 0;

@@ -36,7 +36,7 @@ static asyncio_fd_t *tracker_udp_fd;
 
 static void
 tracker_trace(const tracker_t *t, const char *msg, ...)
- __attribute__((format(printf, 2, 3)));
+  attribute_printf(2, 3);
 
 static void
 tracker_trace(const tracker_t *t, const char *msg, ...)

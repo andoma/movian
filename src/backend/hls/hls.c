@@ -42,6 +42,7 @@
 #include "hls.h"
 #include "subtitles/subtitles.h"
 #include "usage.h"
+#include "misc/minmax.h"
 
 /**
  * Relevant docs:

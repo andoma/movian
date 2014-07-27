@@ -37,7 +37,7 @@
 #include "usage.h"
 
 
-static hts_mutex_t zip_global_mutex;
+static HTS_MUTEX_DECL(zip_global_mutex);
 
 
 LIST_HEAD(zip_file_list, zip_file);
@@ -871,17 +871,6 @@ zip_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
 
   zip_file_unref(zf);
   return 0;
-}
-
-
-
-/**
- *
- */
-static void __attribute__((constructor))
-zipinit(void)
-{
-  hts_mutex_init(&zip_global_mutex);
 }
 
 

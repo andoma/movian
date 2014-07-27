@@ -35,6 +35,7 @@
 #include "asyncio.h"
 #include "misc/queue.h"
 #include "prop/prop.h"
+#include "misc/minmax.h"
 
 LIST_HEAD(asyncio_fd_list, asyncio_fd);
 LIST_HEAD(asyncio_worker_list, asyncio_worker);

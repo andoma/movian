@@ -29,6 +29,8 @@
 #include "htsmsg/htsmsg.h"
 #include "bittorrent.h"
 #include "bencode.h"
+#include "misc/minmax.h"
+
 
 static int torrent_write_thread_running;
 static int diskio_debug = 0;
@@ -36,7 +38,7 @@ static int diskio_debug = 0;
 
 static void
 diskio_trace(const torrent_t *t, const char *msg, ...)
- __attribute__((format(printf, 2, 3)));
+  attribute_printf(2, 3);
 
 static void
 diskio_trace(const torrent_t *t, const char *msg, ...)

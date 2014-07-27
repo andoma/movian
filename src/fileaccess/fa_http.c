@@ -40,6 +40,7 @@
 #include "misc/sha.h"
 #include "misc/callout.h"
 #include "misc/average.h"
+#include "misc/minmax.h"
 
 #if ENABLE_SPIDERMONKEY
 #include "js/js.h"
@@ -1034,8 +1035,7 @@ http_headers_send(htsbuf_queue_t *q, struct http_header_list *def,
 /**
  *
  */
-static int
-  __attribute__ ((warn_unused_result))
+static int attribute_unused_result
 http_headers_auth(struct http_header_list *headers,
 		  struct http_header_list *cookies,
 		  http_file_t *hf,

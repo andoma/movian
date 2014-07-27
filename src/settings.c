@@ -36,6 +36,7 @@
 #include "prop/prop_concat.h"
 #include "htsmsg/htsmsg_store.h"
 #include "db/kvstore.h"
+#include "misc/minmax.h"
 
 #include <netinet/in.h>
 #include <arpa/inet.h>

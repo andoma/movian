@@ -114,8 +114,7 @@ task_run(task_fn_t *fn, void *opaque)
 /**
  *
  */
-static void __attribute__((constructor))
-doinit(void)
+INITIALIZER(taskinit)
 {
   hts_mutex_init(&task_mutex);
   hts_cond_init(&task_cond, &task_mutex);

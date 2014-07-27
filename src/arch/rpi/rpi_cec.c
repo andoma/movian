@@ -23,7 +23,7 @@
 
 #include "event.h"
 #include "misc/str.h"
-#include "misc/callout.h"
+#include "misc/minmax.h"
 #include "htsmsg/htsmsg_store.h"
 #include "settings.h"
 

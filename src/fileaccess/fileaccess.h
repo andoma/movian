@@ -314,12 +314,12 @@ enum {
 #define FA_LOAD_REQUEST_HEADERS(a)      FA_LOAD_TAG_REQUEST_HEADERS, a
 #define FA_LOAD_RESPONSE_HEADERS(a)     FA_LOAD_TAG_RESPONSE_HEADERS, a
 
-buf_t *fa_load(const char *url, ...)  __attribute__((__sentinel__(0)));
+buf_t *fa_load(const char *url, ...) attribute_null_sentinel;
 
 buf_t *fa_load_and_close(fa_handle_t *fh);
 
 int fa_parent(char *dst, size_t dstlen, const char *url)
-  __attribute__ ((warn_unused_result));
+  attribute_unused_result;
 
 int fa_normalize(const char *url, char *dst, size_t dstlen);
 
@@ -411,7 +411,7 @@ enum {
 #define HTTP_CONNECT_TIMEOUT(a)            HTTP_TAG_CONNECT_TIMEOUT, a
 #define HTTP_READ_TIMEOUT(a)               HTTP_TAG_READ_TIMEOUT, a
 
-int http_req(const char *url, ...)  __attribute__((__sentinel__(0)));
+int http_req(const char *url, ...) attribute_null_sentinel;
 
 int http_client_oauth(struct http_auth_req *har,
 		      const char *consumer_key,

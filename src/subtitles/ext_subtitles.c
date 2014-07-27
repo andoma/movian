@@ -37,6 +37,8 @@
 #include "vobsub.h"
 #include "text/text.h"
 #include "subtitles.h"
+#include "misc/minmax.h"
+
 
 /**
  *

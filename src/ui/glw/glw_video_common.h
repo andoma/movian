@@ -269,9 +269,8 @@ typedef struct glw_video_engine {
 
 void glw_register_video_engine(glw_video_engine_t *gve);
 
-#define GLW_REGISTER_GVE(n) \
-static void  __attribute__((constructor)) gveinit ## n(void) \
-{ glw_register_video_engine(&n);}
+#define GLW_REGISTER_GVE(n) INITIALIZER(gveinit ## n) { \
+ glw_register_video_engine(&n);}
 
 
 typedef void (gv_surface_pixmap_release_t)(glw_video_t *gv,

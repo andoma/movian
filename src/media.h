@@ -598,8 +598,7 @@ void media_register_codec(codec_def_t *cd);
     .open = open_,						   \
     .prio = prio_						   \
   };								   \
-  static void  __attribute__((constructor))			   \
-  HTS_JOIN(registercodecdef, __LINE__)(void)			   \
+  INITIALIZER(HTS_JOIN(registercodecdef, __LINE__))                \
   { media_register_codec(&HTS_JOIN(codecdef, __LINE__)); }
 
 

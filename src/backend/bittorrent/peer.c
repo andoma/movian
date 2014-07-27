@@ -28,6 +28,7 @@
 #include "networking/http.h"
 #include "htsmsg/htsmsg.h"
 #include "bittorrent.h"
+#include "misc/minmax.h"
 
 
 #define BT_MSGID_CHOKE          0x0
@@ -65,7 +66,7 @@ static int peer_debug_flags;
 
 static void
 peer_trace(const peer_t *p, int type, const char *msg, ...)
- __attribute__((format(printf, 3, 4)));
+  attribute_printf(3, 4);
 
 static void
 peer_trace(const peer_t *p, int type, const char *msg, ...)

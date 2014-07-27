@@ -37,6 +37,7 @@
 #include "prop/prop.h"
 #include "showtime.h"
 #include "settings.h"
+#include "misc/minmax.h"
 
 // #define GLW_TRACK_REFRESH
 
@@ -643,9 +644,8 @@ typedef struct glw_class {
 
 void glw_register_class(glw_class_t *gc);
 
-#define GLW_REGISTER_CLASS(n) \
-static void  __attribute__((constructor)) widgetclassinit ## n(void) \
-{ static int cnt; if(!cnt) glw_register_class(&n); cnt++; }
+#define GLW_REGISTER_CLASS(n) INITIALIZER(glw_init_ ## n) { \
+    glw_register_class(&n); }
 
 const glw_class_t *glw_class_find_by_name(const char *name);
 

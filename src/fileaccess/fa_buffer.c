@@ -30,6 +30,7 @@
 #include "showtime.h"
 #include "fileaccess.h"
 #include "fa_proto.h"
+#include "misc/minmax.h"
 
 #define FILE_PARKING 1
 
@@ -38,18 +39,7 @@
 #define BF_ZONES 8
 #define BF_MASK (BF_ZONES - 1)
 
-static hts_mutex_t buffered_global_mutex;
-
-/**
- *
- */
-static void __attribute__((constructor))
-fa_buffer_init(void)
-{
-  hts_mutex_init(&buffered_global_mutex);
-}
-
-
+static HTS_MUTEX_DECL(buffered_global_mutex);
 
 typedef struct buffered_zone {
   int64_t bz_fpos;
@@ -137,7 +127,7 @@ erase_zone(buffered_file_t *bf, int mpos, int size)
 
 
 
-static void __attribute__((unused))
+static void attribute_unused
 dump_zones(const char *prefix, buffered_file_t *bf)
 {
   int i;

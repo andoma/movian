@@ -55,13 +55,13 @@ void pool_init(pool_t *pool, const char *name, size_t item_size, int flags);
 #ifdef POOL_DEBUG
 
 void *pool_get_ex(pool_t *p, const char *file, int line)
-  __attribute__ ((malloc));
+  attribute_malloc;
 
 #define pool_get(p) pool_get_ex(p, __FILE__, __LINE__)
 
 #else
 
-void *pool_get(pool_t *p) __attribute__ ((malloc));
+void *pool_get(pool_t *p) attribute_malloc;
 
 #endif
 

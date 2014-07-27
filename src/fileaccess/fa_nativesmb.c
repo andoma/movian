@@ -42,6 +42,7 @@
 #include "misc/str.h"
 #include "misc/callout.h"
 #include "usage.h"
+#include "misc/minmax.h"
 
 // http://msdn.microsoft.com/en-us/library/ee442092.aspx
 

@@ -19,7 +19,9 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 
-void my_trace(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
+#include "compiler.h"
+
+void my_trace(const char *fmt, ...) attribute_printf(1, 2);
 
 void load_syms(void);
 
