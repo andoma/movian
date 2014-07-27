@@ -36,6 +36,8 @@
 
 #ifdef _MSC_VER
 #define strdup _strdup
+#define __builtin_constant_p(x) 0
+#define snprintf sprintf_s
 #endif
 
 
