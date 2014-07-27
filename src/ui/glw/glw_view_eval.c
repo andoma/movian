@@ -870,7 +870,8 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
     if(ec->event == NULL || ec->event->e_type_x != EVENT_KEYDESC)
       return 0;
     b = eval_alloc(self, ec, TOKEN_RSTRING);
-    b->t_rstring = rstr_alloc(ec->event->e_payload);
+    const event_payload_t *ep = (const event_payload_t *)ec->event;
+    b->t_rstring = rstr_alloc(ep->payload);
   } else if(b->type == TOKEN_BLOCK) {
     glw_view_eval_context_t n;
 

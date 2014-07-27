@@ -210,9 +210,9 @@ event_t *
 event_create_str(event_type_t et, const char *str)
 {
   int l = strlen(str) + 1;
-  event_t *e = event_create(et, sizeof(event_t) + l);
-  memcpy(e->e_payload, str, l);
-  return e;
+  event_payload_t *ep = event_create(et, sizeof(event_t) + l);
+  memcpy(ep->payload, str, l);
+  return &ep->h;
 }
 
 

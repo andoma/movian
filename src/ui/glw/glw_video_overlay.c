@@ -448,7 +448,7 @@ glw_video_overlay_pointer_event(video_decoder_t *vd, int width, int height,
   pci_t *pci;
   int x, y;
   int32_t button, best, dist, d, mx, my, dx, dy;
-  event_t *e;
+  event_payload_t *ep;
 
   pci = &vd->vd_pci;
   if(!pci->hli.hl_gi.hli_ss)
@@ -485,23 +485,23 @@ glw_video_overlay_pointer_event(video_decoder_t *vd, int width, int height,
 
   switch(gpe->type) {
   case GLW_POINTER_LEFT_PRESS:
-    e = event_create(EVENT_DVD_ACTIVATE_BUTTON, sizeof(event_t) + 1);
+    ep = event_create(EVENT_DVD_ACTIVATE_BUTTON, sizeof(event_t) + 1);
     break;
 
   case GLW_POINTER_MOTION_UPDATE:
     if(vd->vd_spu_curbut == best)
       return 1;
 
-    e = event_create(EVENT_DVD_SELECT_BUTTON, sizeof(event_t) + 1);
+    ep = event_create(EVENT_DVD_SELECT_BUTTON, sizeof(event_t) + 1);
     break;
 
   default:
     return 1;
   }
 
-  e->e_payload[0] = best;
-  mp_enqueue_event(mp, e);
-  event_release(e);
+  ep->payload[0] = best;
+  mp_enqueue_event(mp, &ep->h);
+  event_release(&ep->h);
 #endif
   return 1;
 }

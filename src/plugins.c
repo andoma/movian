@@ -307,14 +307,15 @@ plugin_event(void *opaque, prop_event_t event, ...)
     p = va_arg(ap, prop_t *);
 
     if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
-      if(!strcmp(e->e_payload, "install")) {
+      const event_payload_t *ep = (const event_payload_t *)e;
+      if(!strcmp(ep->payload, "install")) {
 	rstr_t *package = prop_get_string(p, "package", NULL);
 	plugin_install(pl, rstr_get(package));
 	rstr_release(package);
       }
-      else if(!strcmp(e->e_payload, "upgrade"))
+      else if(!strcmp(ep->payload, "upgrade"))
 	plugin_install(pl, NULL);
-      else if(!strcmp(e->e_payload, "uninstall"))
+      else if(!strcmp(ep->payload, "uninstall"))
 	plugin_remove(pl);
     }
     break;
@@ -1033,10 +1034,11 @@ plugin_static_event(void *opaque, prop_event_t event, ...)
     e = va_arg(ap, event_t *);
 
     if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
-      if(!strcmp(e->e_payload, "install")) {
+      const event_payload_t *ep = (const event_payload_t *)e;
+      if(!strcmp(ep->payload, "install")) {
 	pl->pl_installed = 1;
 	install_static(pl);
-      } else if(!strcmp(e->e_payload, "uninstall")) {
+      } else if(!strcmp(ep->payload, "uninstall")) {
 	pl->pl_installed = 0;
       } else {
 	break;

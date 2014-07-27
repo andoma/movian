@@ -516,7 +516,8 @@ page_eventsink(void *opaque, event_t *e)
 {
   nav_page_t *np = opaque;
   if(event_is_type(e, EVENT_REDIRECT)) {
-    page_redirect(np, e->e_payload);
+    const event_payload_t *ep = (const event_payload_t *)e;
+    page_redirect(np, ep->payload);
   }
 }
 

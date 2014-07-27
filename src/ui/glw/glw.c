@@ -1733,7 +1733,8 @@ glw_dispatch_event(glw_root_t *gr, event_t *e)
     if(glw_event(gr, e))
       return; // Was consumed
 
-    e2 = keymapper_resolve(e->e_payload);
+    const event_payload_t *ep = (const event_payload_t *)e;
+    e2 = keymapper_resolve(ep->payload);
 
     if(e2 != NULL)
       glw_inject_event(gr, e2);

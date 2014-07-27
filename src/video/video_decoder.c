@@ -346,10 +346,11 @@ vd_thread(void *aux)
     case MB_DVD_PCI:
       memcpy(&vd->vd_pci, mb->mb_data, sizeof(pci_t));
       vd->vd_spu_repaint = 1;
-      event_t *e = event_create(EVENT_DVD_PCI, sizeof(event_t) + sizeof(pci_t));
-      memcpy(e->e_payload, mb->mb_data, sizeof(pci_t));
-      mp_enqueue_event(mp, e);
-      event_release(e);
+      event_payload_t *ep =
+        event_create(EVENT_DVD_PCI, sizeof(event_t) + sizeof(pci_t));
+      memcpy(ep->payload, mb->mb_data, sizeof(pci_t));
+      mp_enqueue_event(mp, &ep->h);
+      event_release(&ep->h);
       break;
 
     case MB_DVD_CLUT:

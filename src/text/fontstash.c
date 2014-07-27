@@ -226,7 +226,8 @@ font_event(void *opaque, prop_event_t event, ...)
     p = va_arg(ap, prop_t *);
 
     if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
-      if(!strcmp(e->e_payload, "use")) {
+      const event_payload_t *ep = (const event_payload_t *)e;
+      if(!strcmp(ep->payload, "use")) {
 	rstr_t *package = prop_get_string(p, "url", NULL);
 	use_font(f, rstr_get(package));
 	rstr_release(package);

@@ -962,6 +962,7 @@ dvd_process_event(dvd_player_t *dp, event_t *e)
 {
   pci_t *pci = &dp->dp_pci;
   media_pipe_t *mp = dp->dp_mp;
+  const event_payload_t *ep = (event_payload_t *)e;
 
   if(event_is_type(e, EVENT_EXIT) ||
      event_is_type(e, EVENT_PLAY_URL))
@@ -1001,15 +1002,15 @@ dvd_process_event(dvd_player_t *dp, event_t *e)
 
   } else if(event_is_type(e, EVENT_DVD_PCI)) {
 
-    memcpy(&dp->dp_pci, e->e_payload, sizeof(pci_t));
+    memcpy(&dp->dp_pci, ep->payload, sizeof(pci_t));
 
   } else if(event_is_type(e, EVENT_DVD_SELECT_BUTTON)) {
 
-    dvdnav_button_select(dp->dp_dvdnav, pci, e->e_payload[0]);
+    dvdnav_button_select(dp->dp_dvdnav, pci, ep->payload[0]);
 
   } else if(event_is_type(e, EVENT_DVD_ACTIVATE_BUTTON)) {
 
-    dvdnav_button_select_and_activate(dp->dp_dvdnav, pci, e->e_payload[0]);
+    dvdnav_button_select_and_activate(dp->dp_dvdnav, pci, ep->payload[0]);
 
   } else if(event_is_action(e, ACTION_SKIP_BACKWARD)) {
     

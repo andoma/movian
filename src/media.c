@@ -1206,7 +1206,8 @@ mp_enqueue_event_locked(media_pipe_t *mp, event_t *e)
 
     mp->mp_hold = 1;
 
-    mp_set_playstatus_by_hold_locked(mp, e->e_payload);
+    const event_payload_t *ep = (const event_payload_t *)e;
+    mp_set_playstatus_by_hold_locked(mp, ep->payload);
     send_hold(mp);
 
   } else if(event_is_action(e, ACTION_SEEK_BACKWARD)) {

@@ -1043,9 +1043,10 @@ upgrade_cb(void *opaque, prop_event_t event, ...)
   case PROP_EXT_EVENT:
     e = va_arg(ap, event_t *);
     if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
-      if(!strcmp(e->e_payload, "checkUpdates")) 
+      const event_payload_t *ep = (const event_payload_t *)e;
+      if(!strcmp(ep->payload, "checkUpdates")) 
 	check_upgrade(0);
-      if(!strcmp(e->e_payload, "install")) 
+      if(!strcmp(ep->payload, "install")) 
 	install();
     }
     break;

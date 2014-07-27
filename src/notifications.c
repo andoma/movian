@@ -247,14 +247,16 @@ message_popup(const char *message, int flags, const char **extra)
   event_t *e = popup_display(p);
   prop_destroy(p);
   prop_ref_dec(p);
-  
+
+  const event_payload_t *ep = (const event_payload_t *)e;
+
   if(event_is_action(e, ACTION_OK))
     rval = MESSAGE_POPUP_OK;
   else if(event_is_action(e, ACTION_CANCEL))
     rval = MESSAGE_POPUP_CANCEL;
   else if(event_is_type(e, EVENT_DYNAMIC_ACTION) &&
-	  !strncmp(e->e_payload, "btn", 3))
-    rval = atoi(e->e_payload + 3);
+	  !strncmp(ep->payload, "btn", 3))
+    rval = atoi(ep->payload + 3);
   else
     rval = 0;
 
@@ -339,7 +341,8 @@ news_sink(void *opaque, prop_event_t event, ...)
   case PROP_EXT_EVENT:
     e = va_arg(ap, event_t *);
     if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
-      if(!strcmp(e->e_payload, "dismiss")) {
+      const event_payload_t *ep = (const event_payload_t *)e;
+      if(!strcmp(ep->payload, "dismiss")) {
 	rstr_t *id = prop_get_string(p, "id", NULL);
 	dismis_news(rstr_get(id));
 	rstr_release(id);

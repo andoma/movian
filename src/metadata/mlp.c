@@ -1387,7 +1387,8 @@ mlv_sub_actions(void *opaque, prop_event_t event, ...)
 
     e = va_arg(ap, event_t *);
     if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
-      if(!strcmp(e->e_payload, "refreshMetadata")) {
+      const event_payload_t *ep = (const event_payload_t *)e;
+      if(!strcmp(ep->payload, "refreshMetadata")) {
 	mlv_refresh_video_info(mlv);
 	load_alternatives(mlv);
 	const char *s;

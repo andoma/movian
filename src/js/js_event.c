@@ -111,7 +111,8 @@ js_event_dispatch(JSContext *cx, struct js_event_handler_list *list,
       js_event_dispatch_action(cx, list,
                                action_code2str(eav->actions[i]), this);
   } else if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
-    js_event_dispatch_action(cx, list, e->e_payload, this);
+    const event_payload_t *ep = (const event_payload_t *)e;
+    js_event_dispatch_action(cx, list, ep->payload, this);
   }
 }
 

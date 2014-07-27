@@ -1055,7 +1055,8 @@ track_action_handler(void *opaque, prop_event_t event, ...)
 	dispatch_action(tac, action_code2str(eav->actions[i]));
     
     } else if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
-      dispatch_action(tac, e->e_payload);
+      const event_payload_t *ep = (const event_payload_t *)e;
+      dispatch_action(tac, ep->payload);
     }
     break;
 
@@ -4467,7 +4468,8 @@ spotify_control(void *opaque, prop_event_t event, ...)
       spotify_dispatch_action(action_code2str(eav->actions[i]));
     
   } else if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
-    spotify_dispatch_action(e->e_payload);
+    const event_payload_t *ep = (const event_payload_t *)e;
+    spotify_dispatch_action(ep->payload);
   }
 }
 
