@@ -196,9 +196,9 @@ typedef struct hls {
 
 } hls_t;
 
-#define HLS_TRACE(h, x...) do {			\
-  if((h)->h_debug)				\
-    TRACE(TRACE_DEBUG, "HLS", x);		\
+#define HLS_TRACE(h, x, ...) do {                               \
+    if((h)->h_debug)                                            \
+      TRACE(TRACE_DEBUG, "HLS", x, ##__VA_ARGS__);		\
   } while(0)
 
 

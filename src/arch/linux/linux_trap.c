@@ -45,7 +45,7 @@
 
 int (*extra_traphandler)(int sig, siginfo_t *si, void *UC);
 
-#define TRAPMSG(fmt...) TRACE(TRACE_EMERG, "CRASH", fmt)
+#define TRAPMSG(fmt, ...) TRACE(TRACE_EMERG, "CRASH", fmt, ##__VA_ARGS__)
 
 #define MAXFRAMES 100
 

@@ -86,8 +86,8 @@ typedef struct xmlparser {
 
 } xmlparser_t;
 
-#define xmlerr(xp, fmt...) \
- snprintf((xp)->xp_errmsg, sizeof((xp)->xp_errmsg), fmt)
+#define xmlerr(xp, fmt, ...)                                            \
+  snprintf((xp)->xp_errmsg, sizeof((xp)->xp_errmsg), fmt, ##__VA_ARGS__)
 
 
 typedef struct cdata_content {

@@ -114,12 +114,9 @@ void tracev(int flags, int level, const char *subsys, const char *fmt, va_list a
 
 void trace_arch(int level, const char *prefix, const char *buf);
 
-#ifdef _MSC_VER
-#define TRACE(level, subsys, fmt, ...) trace(0, level, subsys, fmt, __VA_ARGS__ )
-#else
-#define TRACE(level, subsys, fmt...) trace(0, level, subsys, fmt)
+#define TRACE(level, subsys, fmt, ...) \
+  trace(0, level, subsys, fmt, ##__VA_ARGS__)
 
-#endif
 
 void hexdump(const char *pfx, const void *data, int len);
 

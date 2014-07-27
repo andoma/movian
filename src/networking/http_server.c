@@ -29,7 +29,7 @@
 
 #include <libavutil/base64.h>
 
-#define hsprintf(fmt...) // printf(fmt)
+#define hsprintf(fmt, ...) // printf(fmt, ##__VA_ARGS__)
 
 #if ENABLE_POSIX_NETWORKING
 #include <netinet/tcp.h>  // for TCP_ defines

@@ -43,9 +43,9 @@
 #include "metadata/playinfo.h"
 #include "metadata/metadata_str.h"
 
-#define SCAN_TRACE(x...) do {			\
-    if(gconf.enable_fa_scanner_debug)           \
-      TRACE(TRACE_DEBUG, "FA", x);              \
+#define SCAN_TRACE(x, ...) do {                                \
+    if(gconf.enable_fa_scanner_debug)                          \
+      TRACE(TRACE_DEBUG, "FA", x, ##__VA_ARGS__);              \
   } while(0)
 
 

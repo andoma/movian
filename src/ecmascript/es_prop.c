@@ -113,7 +113,7 @@ es_prop_get_value_duk(duk_context *ctx)
 }
 
 //#define SETPRINTF(fmt...) printf(fmt);
-#define SETPRINTF(fmt...)
+#define SETPRINTF(fmt, ...)
 
 /**
  *

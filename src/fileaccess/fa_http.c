@@ -81,14 +81,14 @@ static uint8_t nonce[20];
 static int http_tokenize(char *buf, char **vec, int vecsize, int delimiter);
 
 
-#define HTTP_TRACE(dbg, x...) do { \
-  if(dbg)			   \
-    TRACE(TRACE_DEBUG, "HTTP", x); \
+#define HTTP_TRACE(dbg, x, ...) do {                    \
+    if(dbg)                                             \
+      TRACE(TRACE_DEBUG, "HTTP", x, ##__VA_ARGS__);     \
   } while(0)
 
-#define HF_TRACE(hf, x...) do {			\
-    if((hf)->hf_debug)				\
-      TRACE(TRACE_DEBUG, "HTTP", x);		\
+#define HF_TRACE(hf, x, ...) do {                               \
+    if((hf)->hf_debug)                                          \
+      TRACE(TRACE_DEBUG, "HTTP", x, ##__VA_ARGS__);		\
   } while(0)
 
 /**

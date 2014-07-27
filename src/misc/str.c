@@ -1273,7 +1273,7 @@ extern const uint16_t CP1256[];
 extern const uint16_t CP1257[];
 extern const uint16_t CP1258[];
 
-#define ALIAS(x...) (const char *[]){x, NULL}
+#define ALIAS(x, ...) (const char *[]){x, ##__VA_ARGS__, NULL}
 
 const static charset_t charsets[] = {
    // ISO-8869-1 must be first

@@ -48,9 +48,9 @@ typedef struct pending_store {
   char *ps_path;
 } pending_store_t;
 
-#define SETTINGS_TRACE(fmt...) do { \
+#define SETTINGS_TRACE(fmt, ...) do {            \
   if(gconf.enable_settings_debug) \
-    TRACE(TRACE_DEBUG, "Settings", fmt); \
+    TRACE(TRACE_DEBUG, "Settings", fmt, ##__VA_ARGS__); \
 } while(0)
 
 

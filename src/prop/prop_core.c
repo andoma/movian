@@ -55,7 +55,8 @@ static void prop_flood_flag(prop_t *p, int set, int clr);
 
 static void prop_destroy_childs0(prop_t *p);
 
-#define PROPTRACE(fmt...) trace(TRACE_NO_PROP, TRACE_DEBUG, "prop", fmt)
+#define PROPTRACE(fmt, ...) \
+  trace(TRACE_NO_PROP, TRACE_DEBUG, "prop", fmt, ##__VA_ARGS__)
 
 #ifdef PROP_SUB_STATS
 static LIST_HEAD(, prop_sub) all_subs;
