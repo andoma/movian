@@ -265,23 +265,6 @@ htsbuf_appendq(htsbuf_queue_t *hq, htsbuf_queue_t *src)
 
 
 void
-htsbuf_dump_raw_stderr(htsbuf_queue_t *hq)
-{
-  htsbuf_data_t *hd;
-  char n = '\n';
-
-  TAILQ_FOREACH(hd, &hq->hq_q, hd_link) {
-    if(write(2, hd->hd_data + hd->hd_data_off,
-	     hd->hd_data_len - hd->hd_data_off)
-       != hd->hd_data_len - hd->hd_data_off)
-      break;
-  }
-  if(write(2, &n, 1) != 1)
-    return;
-}
-
-
-void
 htsbuf_hexdump(htsbuf_queue_t *hq, const char *prefix)
 {
   char *r = malloc(hq->hq_size);
