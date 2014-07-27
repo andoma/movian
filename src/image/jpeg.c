@@ -367,7 +367,7 @@ jpeg_info(jpeginfo_t *ji, jpegreader_t *reader, void *handle, int flags,
 	break;
       }
       // Continue with bytes after section
-      buf = loadbuf + mlen;
+      buf = (char *)loadbuf + mlen;
       len = 4;
       offset += mlen;
 

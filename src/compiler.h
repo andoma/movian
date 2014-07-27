@@ -36,8 +36,12 @@
 
 #ifdef _MSC_VER
 #define strdup _strdup
+#define alloca _alloca
+
 #define __builtin_constant_p(x) 0
+
 #define snprintf sprintf_s
+#define strtok_r strtok_s
 #endif
 
 

@@ -27,6 +27,7 @@
 #include <stdio.h>
 
 #include "dbl.h"
+#include "compiler.h"
 
 
 double

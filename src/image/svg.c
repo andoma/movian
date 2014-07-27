@@ -529,6 +529,8 @@ svg_parse_element(const svg_state_t *s0, htsmsg_t *element,
   //  FT_Outline ol;
   //  FT_UInt points;
   //  FT_UInt contours;
+  const char *st;
+  const char *transform;
 
   int fill_color = 0xffffffff;
   int stroke_color = 0xffffffff;
@@ -538,7 +540,7 @@ svg_parse_element(const svg_state_t *s0, htsmsg_t *element,
   if(a == NULL)
     return;
 
-  const char *st = htsmsg_get_str(a, "style");
+  st = htsmsg_get_str(a, "style");
   if(st != NULL) {
     char *style, *tmp = NULL, *n, *attr;
     n = style = strdup(st);
@@ -586,7 +588,7 @@ svg_parse_element(const svg_state_t *s0, htsmsg_t *element,
     return;
 
 
-  const char *transform = htsmsg_get_str(a, "transform");
+  transform = htsmsg_get_str(a, "transform");
   if(transform != NULL)
     svg_parse_transform(&s, transform);
 
@@ -726,11 +728,12 @@ image_t *
 svg_decode(buf_t *buf, const image_meta_t *im,
            char *errbuf, size_t errlen)
 {
+  image_t *img;
   htsmsg_t *doc = htsmsg_xml_deserialize_buf(buf, errbuf, errlen);
   if(doc == NULL)
     return NULL;
 
-  image_t *img = svg_decode1(doc, im, errbuf, errlen);
+  img = svg_decode1(doc, im, errbuf, errlen);
   htsmsg_release(doc);
   return img;
 }

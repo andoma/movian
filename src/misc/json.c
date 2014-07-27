@@ -27,6 +27,7 @@
 #include "json.h"
 #include "str.h"
 #include "dbl.h"
+#include "compiler.h"
 
 #define NOT_THIS_TYPE ((void *)-1)
 

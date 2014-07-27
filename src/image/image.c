@@ -168,11 +168,12 @@ image_dump(const image_t *im, const char *prefix)
 image_t *
 image_coded_alloc(void **datap, size_t size, image_coded_type_t type)
 {
+  image_t *img;
   buf_t *b = buf_create(size);
   if(b == NULL)
     return NULL;
 
-  image_t *img = image_alloc(1);
+  img = image_alloc(1);
 
   img->im_components[0].type = IMAGE_CODED;
   image_component_coded_t *icc = &img->im_components[0].coded;

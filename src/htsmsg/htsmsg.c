@@ -157,14 +157,15 @@ htsmsg_create_list(void)
 void
 htsmsg_release(htsmsg_t *msg)
 {
-  if(msg == NULL)
+  htsmsg_field_t *f;
+
+  if (msg == NULL)
     return;
 
   msg->hm_refcount--;
   if(msg->hm_refcount > 0)
     return;
 
-  htsmsg_field_t *f;
 
   while((f = TAILQ_FIRST(&msg->hm_fields)) != NULL)
     htsmsg_field_destroy(msg, f);
@@ -576,7 +577,7 @@ htsmsg_print0(htsmsg_t *msg, int indent)
 
     for(i = 0; i < indent; i++) printf("\t");
 
-    printf("%s %s%s%s%s(", f->hmf_name ?: "",
+    printf("%s %s%s%s%s(", f->hmf_name ? f->hmf_name : "",
            f->hmf_namespace ? "[in " : "",
            rstr_get(f->hmf_namespace) ?: "",
            f->hmf_namespace ? "] " : "",

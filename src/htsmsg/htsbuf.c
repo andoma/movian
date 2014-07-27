@@ -86,7 +86,7 @@ htsbuf_append(htsbuf_queue_t *hq, const void *buf, size_t len)
     c = MIN(hd->hd_data_size - hd->hd_data_len, len);
     memcpy(hd->hd_data + hd->hd_data_len, buf, c);
     hd->hd_data_len += c;
-    buf += c;
+    buf = (const char *)buf + c;
     len -= c;
   }
   if(len == 0)
@@ -143,7 +143,7 @@ htsbuf_read(htsbuf_queue_t *hq, void *buf, size_t len)
     memcpy(buf, hd->hd_data + hd->hd_data_off, c);
 
     r += c;
-    buf += c;
+    buf = (char *)buf + c;
     len -= c;
     hd->hd_data_off += c;
     hq->hq_size -= c;
@@ -191,7 +191,7 @@ htsbuf_peek(htsbuf_queue_t *hq, void *buf, size_t len)
     memcpy(buf, hd->hd_data + hd->hd_data_off, c);
 
     r += c;
-    buf += c;
+    buf = (char *)buf + c;
     len -= c;
 
     hd = TAILQ_NEXT(hd, hd_link);
