@@ -61,6 +61,44 @@ atomic_set(atomic_t *a, int v)
   return a->v = v;
 }
 
+#elif defined(_MSC_VER)
+
+#include <Windows.h>
+
+typedef struct atomic {
+  long v;
+} atomic_t;
+
+
+static __inline void
+atomic_inc(atomic_t *a)
+{
+  InterlockedIncrement(&a->v);
+}
+
+static __inline int
+atomic_add_and_fetch(atomic_t *a, int v)
+{
+  return InterlockedAdd(&a->v, v);
+}
+
+static __inline int
+atomic_dec(atomic_t *a)
+{
+  InterlockedDecrement(&a->v);
+}
+
+static __inline int
+atomic_get(const atomic_t *a)
+{
+  return (*(volatile int *)&(a)->v);
+}
+
+static __inline int
+atomic_set(atomic_t *a, int v)
+{
+  return a->v = v;
+}
 
 #else
 #error Missing atomic ops
