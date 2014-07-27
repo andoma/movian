@@ -29,13 +29,13 @@
 PRInt32
 PR_AtomicIncrement(PRInt32 *val)
 {
-  return atomic_add(val, 1) + 1;
+  return __sync_add_and_fetch(val, 1);
 }
 
 PRInt32
 PR_AtomicDecrement(PRInt32 *val)
 {
-  return atomic_add(val, -1) - 1;
+  return __sync_sub_and_fetch(val, 1);
 }
 
 PRLock *

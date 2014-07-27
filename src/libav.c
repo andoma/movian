@@ -403,7 +403,7 @@ media_format_t *
 media_format_create(AVFormatContext *fctx)
 {
   media_format_t *fw = malloc(sizeof(media_format_t));
-  fw->refcount = 1;
+  atomic_set(&fw->refcount, 1);
   fw->fctx = fctx;
   return fw;
 }
@@ -415,7 +415,7 @@ media_format_create(AVFormatContext *fctx)
 void
 media_format_deref(media_format_t *fw)
 {
-  if(atomic_add(&fw->refcount, -1) > 1)
+  if(atomic_dec(&fw->refcount))
     return;
   fa_libav_close_format(fw->fctx);
   free(fw);

@@ -26,7 +26,7 @@
  *
  */
 typedef struct sub_scanner {
-  int ss_refcount;
+  atomic_t ss_refcount;
 
   int ss_beflags;
 

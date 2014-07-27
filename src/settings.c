@@ -81,7 +81,7 @@ struct setting {
 
   char s_origin[10];
 
-  int s_refcount;
+  atomic_t s_refcount;
 
   int s_flags;
   char s_type;
@@ -251,7 +251,7 @@ setting_create_leaf(prop_t *parent, prop_t *title, const char *type,
 		    const char *valuename, int flags)
 {
   setting_t *s = calloc(1, sizeof(setting_t));
-  s->s_refcount = 1;
+  atomic_set(&s->s_refcount, 1);
   s->s_root = prop_ref_inc(setting_add(parent, title, type, flags));
   s->s_val = prop_create_r(s->s_root, valuename);
   return s;
@@ -339,7 +339,7 @@ setting_detach(setting_t *s)
 static void
 setting_release(setting_t *s)
 {
-  if(atomic_add(&s->s_refcount, -1) > 1)
+  if(atomic_dec(&s->s_refcount))
     return;
 
   if(s->s_parent != NULL)
@@ -649,7 +649,7 @@ setting_create(int type, prop_t *model, int flags, ...)
   int i32;
   struct setting_list *list;
 
-  s->s_refcount = 1;
+  atomic_set(&s->s_refcount, 1);
   s->s_type = type;
   s->s_flags = flags;
   strcpy(s->s_origin, "local");
@@ -834,7 +834,7 @@ setting_create(int type, prop_t *model, int flags, ...)
 
     case SETTING_TAG_INHERIT:
       s->s_parent = va_arg(ap, setting_t *);
-      atomic_add(&s->s_parent->s_refcount, 1);
+      atomic_inc(&s->s_parent->s_refcount);
       initial_int = INT32_MIN;
       break;
 

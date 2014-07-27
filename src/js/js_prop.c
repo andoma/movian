@@ -355,7 +355,7 @@ typedef struct js_subscription {
   LIST_ENTRY(js_subscription) jss_link;
   prop_sub_t *jss_sub;
   jsval jss_fn;
-  int jss_refcount;
+  atomic_t jss_refcount;
   JSContext *jss_cx;
   int (*jss_dtor)(void *aux);
   void *jss_aux;
@@ -369,7 +369,7 @@ typedef struct js_subscription {
 static void
 jss_release(js_subscription_t *jss)
 {
-  if(atomic_add(&jss->jss_refcount, -1) > 1)
+  if(atomic_dec(&jss->jss_refcount))
     return;
   free(jss);
 }
@@ -510,7 +510,7 @@ js_subscribe(JSContext *cx, uintN argc,
     return JS_FALSE;
 
   js_subscription_t *jss = calloc(1, sizeof(js_subscription_t));
-  jss->jss_refcount = 2;
+  atomic_set(&jss->jss_refcount, 2);
   jss->jss_fn = OBJECT_TO_JSVAL(func);
   JS_AddNamedRoot(cx, &jss->jss_fn, "subscription");
 

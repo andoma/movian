@@ -330,7 +330,7 @@ prop_print_trace(prop_t *p)
 void
 prop_ref_dec(prop_t *p)
 {
-  if(p == NULL || atomic_add(&p->hp_refcount, -1) > 1)
+  if(p == NULL || atomic_dec(&p->hp_refcount))
     return;
   assert(p->hp_type == PROP_ZOMBIE);
   assert(p->hp_tags == NULL);
@@ -350,7 +350,7 @@ prop_ref_dec(prop_t *p)
 void
 prop_ref_dec_locked(prop_t *p)
 {
-  if(p == NULL || atomic_add(&p->hp_refcount, -1) > 1)
+  if(p == NULL || atomic_dec(&p->hp_refcount))
     return;
   assert(p->hp_type == PROP_ZOMBIE);
   assert(p->hp_tags == NULL);
@@ -368,7 +368,7 @@ prop_t *
 prop_ref_inc(prop_t *p)
 {
   if(p != NULL)
-    atomic_add(&p->hp_refcount, 1);
+    atomic_inc(&p->hp_refcount);
   return p;
 }
 
@@ -399,7 +399,7 @@ prop_xref_addref(prop_t *p)
 void
 prop_sub_ref_dec_locked(prop_sub_t *s)
 {
-  if(atomic_add(&s->hps_refcount, -1) > 1)
+  if(atomic_dec(&s->hps_refcount))
     return;
   pool_put(sub_pool, s);
 }
@@ -998,7 +998,7 @@ static prop_notify_t *
 get_notify(prop_sub_t *s)
 {
   prop_notify_t *n = pool_get(notify_pool);
-  atomic_add(&s->hps_refcount, 1);
+  atomic_inc(&s->hps_refcount);
   n->hpn_sub = s;
   return n;
 }
@@ -1272,7 +1272,7 @@ prop_build_notify_child(prop_sub_t *s, prop_t *p, prop_event_t event,
   n = get_notify(s);
 
   if(p != NULL)
-    atomic_add(&p->hp_refcount, 1);
+    atomic_inc(&p->hp_refcount);
   n->hpn_flags = flags;
   n->hpn_prop = p;
   n->hpn_event = event;
@@ -1319,9 +1319,9 @@ prop_build_notify_child2(prop_sub_t *s, prop_t *p, prop_t *extra,
 
   n = get_notify(s);
 
-  atomic_add(&p->hp_refcount, 1);
+  atomic_inc(&p->hp_refcount);
   if(extra != NULL)
-    atomic_add(&extra->hp_refcount, 1);
+    atomic_inc(&extra->hp_refcount);
 
   n->hpn_prop = p;
   n->hpn_prop2 = extra;
@@ -1407,7 +1407,7 @@ prop_send_ext_event0(prop_t *p, event_t *e)
 
     n->hpn_event = PROP_EXT_EVENT;
     n->hpn_prop2 = prop_ref_inc(p);
-    atomic_add(&e->e_refcount, 1);
+    atomic_inc(&e->e_refcount);
     n->hpn_ext_event = e;
     courier_enqueue(s, n);
   }
@@ -1587,7 +1587,7 @@ prop_make(const char *name, int noalloc, prop_t *parent)
 #endif
   hp->hp_flags = noalloc ? PROP_NAME_NOT_ALLOCATED : 0;
   hp->hp_originator = NULL;
-  hp->hp_refcount = 1;
+  atomic_set(&hp->hp_refcount, 1);
   hp->hp_xref = 1;
   hp->hp_type = PROP_VOID;
   if(noalloc)
@@ -2725,7 +2725,7 @@ prop_subscribe(int flags, ...)
   s->hps_trampoline = trampoline;
   s->hps_callback = cb;
   s->hps_opaque = opaque;
-  s->hps_refcount = 1;
+  atomic_set(&s->hps_refcount, 1);
   s->hps_user_int = user_int;
 
   if(origin_chain[0] != NULL) {
@@ -5036,7 +5036,7 @@ prop_print_tree0(prop_t *p, int indent, int flags)
   prop_t *c;
 
   fprintf(stderr, "%*.s%s[%p %d %d %c%c]: ", indent, "", 
-	  p->hp_name, p, p->hp_refcount, p->hp_xref,
+	  p->hp_name, p, atomic_get(&p->hp_refcount), p->hp_xref,
 	  p->hp_flags & PROP_MULTI_SUB ? 'M' : ' ',
 	  p->hp_flags & PROP_MULTI_NOTIFY ? 'N' : ' ');
 
@@ -5090,7 +5090,7 @@ prop_print_tree0(prop_t *p, int indent, int flags)
     break;
     
   case PROP_ZOMBIE:
-    fprintf(stderr, "<zombie, ref=%d>\n", p->hp_refcount);
+    fprintf(stderr, "<zombie, ref=%d>\n", atomic_get(&p->hp_refcount));
     break;
   }
 

@@ -157,7 +157,7 @@ struct prop {
    * Note: hp_xref which is another refcount protecting contents of the
    * entire property
    */
-  int hp_refcount;
+  atomic_t hp_refcount;
 
   /**
    * Property name. Protected by mutex
@@ -381,7 +381,7 @@ struct prop_sub {
    * Refcount. Not protected by mutex. Modification needs to be issued
    * using atomic ops.
    */
-  int hps_refcount;
+  atomic_t hps_refcount;
 
 
   /**

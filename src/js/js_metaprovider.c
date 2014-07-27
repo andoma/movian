@@ -38,7 +38,7 @@
 typedef struct js_subprovider {
   subtitle_provider_t super;
 
-  int sp_refcnt;
+  atomic_t sp_refcnt;
   LIST_ENTRY(js_subprovider) sp_plugin_link;
   jsval sp_func;
 
@@ -66,7 +66,7 @@ static void
 js_sub_retain(subtitle_provider_t *SP)
 {
   js_subprovider_t *sp = (js_subprovider_t *)SP;
-  atomic_add(&sp->sp_refcnt, 1);
+  atomic_inc(&sp->sp_refcnt);
 }
 
 
@@ -76,7 +76,7 @@ js_sub_retain(subtitle_provider_t *SP)
 static void
 js_subprovider_release(JSContext *cx, js_subprovider_t *sp)
 {
-  if(atomic_add(&sp->sp_refcnt, -1) != 1)
+  if(atomic_dec(&sp->sp_refcnt))
     return;
   JS_RemoveRoot(cx, &sp->sp_func);
   prop_destroy(sp->sp_title);
@@ -115,7 +115,7 @@ js_addsubprovider(JSContext *cx, JSObject *obj, uintN argc,
   LIST_INSERT_HEAD(&jsp->jsp_subproviders, sp, sp_plugin_link);
 
   sp->sp_func = argv[0];
-  sp->sp_refcnt = 1;
+  atomic_set(&sp->sp_refcnt, 1);
   JS_AddNamedRoot(cx, &sp->sp_func, "subprovider");
 
   *rval = JSVAL_VOID;

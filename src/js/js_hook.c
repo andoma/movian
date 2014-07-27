@@ -35,7 +35,7 @@
 
 typedef struct js_hook {
 
-  int jh_refcnt;
+  atomic_t jh_refcnt;
 
   LIST_ENTRY(js_hook) jh_global_link;
   LIST_ENTRY(js_hook) jh_plugin_link;
@@ -59,7 +59,7 @@ static struct js_hook_list js_hooks;
 static void
 js_hook_release(JSContext *cx, js_hook_t *jh)
 {
-  if(atomic_add(&jh->jh_refcnt, -1) != 1)
+  if(atomic_dec(&jh->jh_refcnt))
     return;
   JS_RemoveRoot(cx, &jh->jh_func);
   free(jh);
@@ -160,7 +160,7 @@ js_addItemHook(JSContext *cx, JSObject *obj, uintN argc,
   jh->jh_prop_root = p;
 
   jh->jh_func = fn;
-  jh->jh_refcnt = 2;
+  atomic_set(&jh->jh_refcnt, 2);
   JS_AddNamedRoot(cx, &jh->jh_func, "hook");
 
   hts_mutex_lock(&hook_mutex);

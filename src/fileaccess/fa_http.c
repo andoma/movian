@@ -3008,7 +3008,7 @@ http_req(const char *url, ...)
       hra.decoded_data = append_buf;
       hra.decoded_cleanup = cleanup_buf;
       buf_t *b = hra.decoded_opaque;
-      b->b_refcount = 1;
+      atomic_set(&b->b_refcount, 1);
       b->b_free = &free;
       want_result = 1;
       break;

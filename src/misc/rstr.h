@@ -44,7 +44,7 @@ extern int rstr_frees;
 
 typedef struct rstr {
 #ifdef USE_RSTR_REFCOUNTING
-  int32_t refcnt;
+  atomic_t refcnt;
 #endif
   char str[0];
 } rstr_t;
@@ -69,7 +69,7 @@ rstr_dup(rstr_t *rs)
 {
 #ifdef USE_RSTR_REFCOUNTING
   if(rs != NULL)
-    atomic_add(&rs->refcnt, 1);
+    atomic_inc(&rs->refcnt);
 #ifdef RSTR_STATS
   atomic_add(&rstr_dups, 1);
 #endif
@@ -85,7 +85,7 @@ static __inline void rstr_release(rstr_t *rs)
 #ifdef RSTR_STATS
   atomic_add(&rstr_releases, 1);
 #endif
-  if(rs != NULL && atomic_add(&rs->refcnt, -1) == 1) {
+  if(rs != NULL && !atomic_dec(&rs->refcnt)) {
 #ifdef RSTR_STATS
     atomic_add(&rstr_frees, 1);
 #endif

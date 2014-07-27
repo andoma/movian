@@ -135,7 +135,7 @@ typedef struct frame_info {
  *
  */
 typedef struct media_codec {
-  int refcount;
+  atomic_t refcount;
   struct media_format *fw;
   int codec_id;
 
@@ -378,7 +378,7 @@ typedef struct media_track_mgr {
  * Media pipe
  */
 typedef struct media_pipe {
-  int mp_refcount;
+  atomic_t mp_refcount;
 
   const char *mp_name;
 
@@ -606,7 +606,7 @@ void media_register_codec(codec_def_t *cd);
  *
  */
 typedef struct media_format {
-  int refcount;
+  atomic_t refcount;
   struct AVFormatContext *fctx;
 } media_format_t;
 
@@ -649,7 +649,7 @@ media_pipe_t *mp_create(const char *name, int flags);
 
 void mp_reinit_streams(media_pipe_t *mp);
 
-#define mp_ref_inc(mp) atomic_add(&(mp)->mp_refcount, 1)
+#define mp_ref_inc(mp) atomic_inc(&(mp)->mp_refcount)
 void mp_ref_dec(media_pipe_t *mp);
 
 int mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,

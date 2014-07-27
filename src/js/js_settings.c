@@ -45,7 +45,7 @@ typedef struct js_setting_group {
   int jsg_settings_flags;
 
   jsval jsg_val;
-  int jsg_refcount;
+  atomic_t jsg_refcount;
   LIST_ENTRY(js_setting_group) jsg_link;
 
   struct js_setting_list jsg_settings;
@@ -60,7 +60,7 @@ typedef struct js_setting_group {
  *
  */
 typedef struct js_setting {
-  int jss_refcount;
+  atomic_t jss_refcount;
 
   setting_t *jss_s;
   js_setting_group_t *jss_jsg;
@@ -85,7 +85,7 @@ static void jsg_release(js_setting_group_t *jsg);
 static void
 jss_release(js_setting_t *jss)
 {
-  if(atomic_add(&jss->jss_refcount, -1) > 1)
+  if(atomic_dec(&jss->jss_refcount))
     return;
   jsg_release(jss->jss_jsg);
   setting_destroy(jss->jss_s);
@@ -134,7 +134,7 @@ static JSClass setting_class = {
 static void
 jsg_release(js_setting_group_t *jsg)
 {
-  if(atomic_add(&jsg->jsg_refcount, -1) > 1)
+  if(atomic_dec(&jsg->jsg_refcount))
     return;
 
   if(jsg->jsg_root_owner)
@@ -348,11 +348,11 @@ jss_create(JSContext *cx, JSObject *obj, const char *id, jsval *rval,
 
   js_setting_t *jss = calloc(1, sizeof(js_setting_t));
   jss->jss_cx = cx;
-  jss->jss_refcount = 1;
+  atomic_set(&jss->jss_refcount, 1);
   jss->jss_jsg = jsg;
   jss->jss_key = persistent && jsg->jsg_kv_url ? strdup(id) : NULL;
   LIST_INSERT_HEAD(&jsg->jsg_settings, jss, jss_link);
-  atomic_add(&jsg->jsg_refcount, 1);
+  atomic_inc(&jsg->jsg_refcount);
   JS_AddNamedRoot(cx, &jss->jss_obj, "jss");
   jss->jss_obj = OBJECT_TO_JSVAL(JS_DefineObject(cx, obj, id,
 						 &setting_class, NULL, 0));
@@ -857,7 +857,7 @@ js_createSettings(JSContext *cx, JSObject *obj, uintN argc,
 
   js_setting_group_t *jsg = calloc(1, sizeof(js_setting_group_t));
   JSObject *robj;
-  jsg->jsg_refcount = 2;
+  atomic_set(&jsg->jsg_refcount, 2);
   LIST_INSERT_HEAD(&jsp->jsp_setting_groups, jsg, jsg_link);
 
   jsg->jsg_frozen = 1;
@@ -901,7 +901,7 @@ js_createStore(JSContext *cx, JSObject *obj, uintN argc,
 
   js_setting_group_t *jsg = calloc(1, sizeof(js_setting_group_t));
   JSObject *robj;
-  jsg->jsg_refcount = 1;
+  atomic_set(&jsg->jsg_refcount, 1);
   jsg->jsg_frozen = 1;
   jsg->jsg_spath = strdup(spath);
   jsg->jsg_store = htsmsg_store_load(spath) ?: htsmsg_create_map();
@@ -934,7 +934,7 @@ js_createPageOptions(JSContext *cx, JSObject *page, const char *url,
 {
   js_setting_group_t *jsg = calloc(1, sizeof(js_setting_group_t));
   JSObject *robj;
-  jsg->jsg_refcount = 2;
+  atomic_set(&jsg->jsg_refcount, 2);
   LIST_INSERT_HEAD(list, jsg, jsg_link);
   jsg->jsg_frozen = 1;
   jsg->jsg_kv_url = strdup(url);

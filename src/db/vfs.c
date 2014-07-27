@@ -185,7 +185,7 @@ static int
 vfs_open(sqlite3_vfs *pVfs, const char *zName, sqlite3_file *id, int flags,
 	 int *pOutFlags)
 {
-  static int tmpfiletally;
+  static atomic_t tmpfiletally;
   char tmpfile[256];
   int v;
 
@@ -206,7 +206,7 @@ vfs_open(sqlite3_vfs *pVfs, const char *zName, sqlite3_file *id, int flags,
 
 
   if(zName == NULL) {
-    v = atomic_add(&tmpfiletally, 1);
+    v = atomic_add_and_fetch(&tmpfiletally, 1);
     snprintf(tmpfile, sizeof(tmpfile), "%s/sqlite.tmp.%d",
 	     gconf.cache_path, v);
     zName = tmpfile;

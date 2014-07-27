@@ -57,7 +57,7 @@ color_is_not_gray(uint32_t rgb)
 pixmap_t *
 pixmap_dup(pixmap_t *pm)
 {
-  atomic_add(&pm->pm_refcount, 1);
+  atomic_inc(&pm->pm_refcount);
   return pm;
 }
 
@@ -72,7 +72,7 @@ pixmap_create(int width, int height, pixmap_type_t type, int margin)
   const int rowalign = PIXMAP_ROW_ALIGN - 1;
 
   pixmap_t *pm = calloc(1, sizeof(pixmap_t));
-  pm->pm_refcount = 1;
+  atomic_set(&pm->pm_refcount, 1);
   pm->pm_width = width + margin*2;
   pm->pm_height = height + margin*2;
   pm->pm_linesize = ((pm->pm_width * bpp) + rowalign) & ~rowalign;
@@ -103,7 +103,7 @@ pixmap_create(int width, int height, pixmap_type_t type, int margin)
 void
 pixmap_release(pixmap_t *pm)
 {
-  if(atomic_add(&pm->pm_refcount, -1) > 1)
+  if(atomic_dec(&pm->pm_refcount))
     return;
 
   free(pm->pm_data);

@@ -163,7 +163,7 @@ eventsink(void *opaque, prop_event_t event, ...)
     if(*ep)
       event_release(*ep);
     e = va_arg(ap, event_t *);
-    atomic_add(&e->e_refcount, 1);
+    atomic_inc(&e->e_refcount);
     *ep = e;
     break;
 

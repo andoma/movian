@@ -155,7 +155,7 @@ setup_tunnel(rpi_pixmap_decoder_t *rpd)
   omx_port_enable(rpd->rpd_resizer, rpd->rpd_resizer->oc_outport);
 
   pixmap_t *pm = rpd->rpd_pm = calloc(1, sizeof(pixmap_t));
-  pm->pm_refcount = 1;
+  atomic_set(&pm->pm_refcount, 1);
   pm->pm_width    = portdef.format.image.nFrameWidth;
   pm->pm_height   = portdef.format.image.nFrameHeight;
   pm->pm_linesize = portdef.format.image.nStride;

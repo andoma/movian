@@ -31,7 +31,7 @@
  *
  */
 typedef struct vdpau_codec {
-  int vc_refcount;
+  atomic_t vc_refcount;
 
   vdpau_dev_t *vc_vd;
 
@@ -315,7 +315,7 @@ vdpau_release_surfaces(vdpau_dev_t *vd, vdpau_codec_t *vc)
 static void
 vdpau_codec_release(vdpau_codec_t *vc)
 {
-  if(atomic_add(&vc->vc_refcount, -1) != 1)
+  if(atomic_dec(&vc->vc_refcount))
     return;
 
   vdpau_release_surfaces(vc->vc_vd, vc);
@@ -382,7 +382,7 @@ vdpau_get_buffer(struct AVCodecContext *ctx, AVFrame *frame, int flags)
   }
 
   hts_mutex_unlock(&vc->vc_surface_cache_mutex);
-  atomic_add(&vc->vc_refcount, 1);
+  atomic_inc(&vc->vc_refcount);
 
   frame->data[3] = frame->data[0] = (void *)(uintptr_t)surface;
   frame->buf[0] = av_buffer_create(frame->data[0], 0, vdpau_release_buffer,
@@ -461,7 +461,7 @@ vdpau_init_libav_decode(media_codec_t *mc, AVCodecContext *ctx)
   ctx->hwaccel_context = vctx;
 
   vdpau_codec_t *vc = calloc(1, sizeof(vdpau_codec_t));
-  vc->vc_refcount = 1;
+  atomic_set(&vc->vc_refcount, 1);
   hts_mutex_init(&vc->vc_surface_cache_mutex);
   vc->vc_vd = vd;
   vc->vc_width = width;

@@ -36,7 +36,7 @@ prop_vec_create(int capacity)
   pv = malloc(sizeof(prop_vec_t) + sizeof(prop_t *) * capacity);
   pv->pv_capacity = capacity;
   pv->pv_length = 0;
-  pv->pv_refcount = 1;
+  atomic_set(&pv->pv_refcount, 1);
   return pv;
 }
 
@@ -46,7 +46,7 @@ prop_vec_create(int capacity)
  */
 prop_vec_t *prop_vec_append(prop_vec_t *pv, prop_t *p)
 {
-  assert(pv->pv_refcount == 1);
+  assert(atomic_get(&pv->pv_refcount) == 1);
 
   if(pv->pv_length == pv->pv_capacity) {
     pv->pv_capacity++;
@@ -65,7 +65,7 @@ prop_vec_t *prop_vec_append(prop_vec_t *pv, prop_t *p)
 prop_vec_t *
 prop_vec_addref(prop_vec_t *pv)
 {
-  atomic_add(&pv->pv_refcount, 1);
+  atomic_inc(&pv->pv_refcount);
   return pv;
 }
 
@@ -78,7 +78,7 @@ prop_vec_release(prop_vec_t *pv)
 {
   int i;
 
-  if(atomic_add(&pv->pv_refcount, -1) > 1)
+  if(atomic_dec(&pv->pv_refcount))
     return;
 
   for(i = 0; i < pv->pv_length; i++)

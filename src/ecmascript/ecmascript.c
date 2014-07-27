@@ -111,7 +111,7 @@ void *
 es_resource_alloc(const es_resource_class_t *erc)
 {
   es_resource_t *er = calloc(1, erc->erc_size);
-  er->er_refcount = 1;
+  atomic_set(&er->er_refcount, 1);
   er->er_class = erc;
   return er;
 }
@@ -134,8 +134,7 @@ es_resource_init(es_resource_t *er, es_context_t *ec)
 void
 es_resource_release(es_resource_t *er)
 {
-  er->er_refcount--;
-  if(er->er_refcount > 0)
+  if(atomic_dec(&er->er_refcount))
     return;
 
   es_context_release(er->er_ctx);
@@ -267,7 +266,7 @@ es_context_create(void)
 {
   es_context_t *ec = calloc(1, sizeof(es_context_t));
   hts_mutex_init(&ec->ec_mutex);
-  ec->ec_refcount = 1;
+  atomic_set(&ec->ec_refcount, 1);
 
   ec->ec_duk = duk_create_heap_default();
   es_create_env(ec);
@@ -282,7 +281,7 @@ es_context_create(void)
 void
 es_context_release(es_context_t *ec)
 {
-  if(atomic_add(&ec->ec_refcount, -1) != 1)
+  if(atomic_dec(&ec->ec_refcount))
     return;
 
   hts_mutex_destroy(&ec->ec_mutex);
@@ -443,7 +442,7 @@ ecmascript_plugin_load(const char *id, const char *url,
   duk_pop(ctx);
 
   ec->ec_id = strdup(id);
-  atomic_add(&ec->ec_refcount, 1);
+  atomic_inc(&ec->ec_refcount);
 
   hts_mutex_lock(&es_context_mutex);
   es_num_contexts++;

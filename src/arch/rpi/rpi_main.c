@@ -226,7 +226,7 @@ typedef struct backdrop {
   rstr_t *url;
   float alpha;
   int mark;
-  int refcount;
+  atomic_t refcount;
 } backdrop_t;
 
 static backdrop_t *backdrop_current;
@@ -238,7 +238,7 @@ static backdrop_t *backdrop_pending;
 static void
 backdrop_release(backdrop_t *b)
 {
-  if(atomic_add(&b->refcount, -1) > 1)
+  if(atomic_dec(&b->refcount))
     return;
 
   rstr_release(b->url);
@@ -307,7 +307,7 @@ pick_backdrop(glw_root_t *gr)
       b = calloc(1, sizeof(backdrop_t));
       b->url = rstr_alloc(path);
       LIST_INSERT_HEAD(&backdrops, b, link);
-      b->refcount = 1;
+      atomic_set(&b->refcount, 1);
     }
 
     b->mark = 1;
@@ -345,7 +345,7 @@ pick_backdrop(glw_root_t *gr)
     backdrop_release(backdrop_pending);
 
   backdrop_pending = best;
-  atomic_add(&best->refcount, 1);
+  atomic_inc(&best->refcount);
   hts_cond_signal(&backdrop_loader_cond);
 }
 

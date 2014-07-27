@@ -35,7 +35,7 @@ typedef struct fa_protocol {
 #define FAP_ALLOW_CACHE          0x2
 #define FAP_NO_PARKING           0x4
 
-  int fap_refcount;
+  atomic_t fap_refcount;
 
   void (*fap_init)(void);
 

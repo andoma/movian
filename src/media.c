@@ -56,10 +56,10 @@ static LIST_HEAD(, codec_def) registeredcodecs;
 
 // -------------------------------
 
-int media_buffer_hungry; /* Set if we try to fill media buffers
-			    Code can check this and avoid doing IO
-			    intensive tasks
-			 */
+atomic_t media_buffer_hungry; /* Set if we try to fill media buffers
+                                 Code can check this and avoid doing IO
+                                 intensive tasks
+                              */
 
 static hts_mutex_t media_mutex;
 
@@ -301,7 +301,7 @@ mp_create(const char *name, int flags)
 
   TAILQ_INIT(&mp->mp_eq);
 
-  mp->mp_refcount = 1;
+  atomic_set(&mp->mp_refcount, 1);
 
   mp->mp_buffer_limit = 1 * 1024 * 1024; 
 
@@ -1002,7 +1002,7 @@ mp_destroy(media_pipe_t *mp)
   pool_destroy(mp->mp_mb_pool);
 
   if(mp->mp_satisfied == 0)
-    atomic_add(&media_buffer_hungry, -1);
+    atomic_dec(&media_buffer_hungry);
 
   free(mp);
 }
@@ -1014,8 +1014,9 @@ mp_destroy(media_pipe_t *mp)
 void
 mp_ref_dec(media_pipe_t *mp)
 {
-  if(atomic_add(&mp->mp_refcount, -1) == 1)
-    mp_destroy(mp);
+  if(atomic_dec(&mp->mp_refcount))
+    return;
+  mp_destroy(mp);
 }
 
 
@@ -1227,7 +1228,7 @@ mp_enqueue_event_locked(media_pipe_t *mp, event_t *e)
 
     switch(video_settings.dpad_up_down_mode) {
     case VIDEO_DPAD_MASTER_VOLUME:
-      atomic_add(&e->e_refcount, 1);
+      atomic_inc(&e->e_refcount);
       event_dispatch(e);
       break;
     case VIDEO_DPAD_PER_FILE_VOLUME:
@@ -1268,7 +1269,7 @@ mp_enqueue_event_locked(media_pipe_t *mp, event_t *e)
       }
     }
 
-    atomic_add(&e->e_refcount, 1);
+    atomic_inc(&e->e_refcount);
     TAILQ_INSERT_TAIL(&mp->mp_eq, e, e_link);
     hts_cond_signal(&mp->mp_backpressure);
   }
@@ -1406,12 +1407,12 @@ mq_update_stats(media_pipe_t *mp, media_queue_t *mq)
 
   if(satisfied) {
     if(mp->mp_satisfied == 0) {
-      atomic_add(&media_buffer_hungry, -1);
+      atomic_dec(&media_buffer_hungry);
       mp->mp_satisfied = 1;
     }
   } else {
     if(mp->mp_satisfied != 0) {
-      atomic_add(&media_buffer_hungry, 1);
+      atomic_inc(&media_buffer_hungry);
       mp->mp_satisfied = 0;
     }
   }
@@ -1667,7 +1668,7 @@ mp_flush_locked(media_pipe_t *mp)
   }
 
   if(mp->mp_satisfied == 0) {
-    atomic_add(&media_buffer_hungry, -1);
+    atomic_dec(&media_buffer_hungry);
     mp->mp_satisfied = 1;
   }
 }
@@ -1772,7 +1773,7 @@ mp_send_prop_set_string(media_pipe_t *mp, media_queue_t *mq,
 media_codec_t *
 media_codec_ref(media_codec_t *cw)
 {
-  atomic_add(&cw->refcount, 1);
+  atomic_inc(&cw->refcount);
   return cw;
 }
 
@@ -1782,7 +1783,7 @@ media_codec_ref(media_codec_t *cw)
 void
 media_codec_deref(media_codec_t *cw)
 {
-  if(atomic_add(&cw->refcount, -1) > 1)
+  if(atomic_dec(&cw->refcount))
     return;
 #if ENABLE_LIBAV
   if(cw->ctx != NULL && cw->ctx->codec != NULL)
@@ -1861,12 +1862,12 @@ media_codec_create(int codec_id, int parser,
   }
 #endif
 
-  mc->refcount = 1;
+  atomic_set(&mc->refcount, 1);
   mc->fw = fw;
 
   if(fw != NULL) {
     assert(!parser);
-    atomic_add(&fw->refcount, 1);
+    atomic_inc(&fw->refcount);
   }
 
   return mc;

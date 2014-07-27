@@ -237,9 +237,10 @@ nav_create(prop_t *prop)
 
   hts_mutex_unlock(&nav_mutex);
 
-  static int initial_opened = 0;
+  static atomic_t initial_opened;
 
-  if(atomic_add(&initial_opened, 1) == 0 && gconf.initial_url != NULL) {
+  if(atomic_add_and_fetch(&initial_opened, 1) == 1 &&
+     gconf.initial_url != NULL) {
 
     hts_mutex_lock(&gconf.state_mutex);
     while(gconf.state_plugins_loaded == 0)

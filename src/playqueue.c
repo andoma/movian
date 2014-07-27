@@ -41,7 +41,7 @@
  */
 typedef struct playqueue_entry {
 
-  int pqe_refcount;
+  atomic_t pqe_refcount;
 
   /**
    * Read only members
@@ -171,7 +171,7 @@ static void update_pq_meta(void);
 static void
 pqe_unref(playqueue_entry_t *pqe)
 {
-  if(atomic_add(&pqe->pqe_refcount, -1) != 1)
+  if(atomic_dec(&pqe->pqe_refcount))
     return;
 
   assert(pqe->pqe_linked == 0);
@@ -194,7 +194,7 @@ pqe_unref(playqueue_entry_t *pqe)
 static void
 pqe_ref(playqueue_entry_t *pqe)
 {
-  atomic_add(&pqe->pqe_refcount, 1);
+  atomic_inc(&pqe->pqe_refcount);
 }
 
 /**
@@ -442,7 +442,7 @@ add_from_source(prop_t *p, playqueue_entry_t *before)
   playqueue_entry_t *pqe;
 
   pqe = calloc(1, sizeof(playqueue_entry_t));
-  pqe->pqe_refcount = 1;
+  atomic_set(&pqe->pqe_refcount, 1);
   pqe->pqe_originator = prop_ref_inc(p);
 
   if(playqueue_startme != NULL) {
@@ -684,7 +684,7 @@ playqueue_enqueue(prop_t *track)
 
   pqe->pqe_node = prop_create_root(NULL);
   pqe->pqe_enq = 1;
-  pqe->pqe_refcount = 1;
+  atomic_set(&pqe->pqe_refcount, 1);
   pqe->pqe_linked = 1;
   pqe->pqe_playable = 1;
 
@@ -751,7 +751,7 @@ playqueue_play(const char *url, prop_t *metadata, int paused)
   pqe->pqe_url = strdup(url);
 
   pqe->pqe_node = prop_create_root(NULL);
-  pqe->pqe_refcount = 1;
+  atomic_set(&pqe->pqe_refcount, 1);
   pqe->pqe_linked = 1;
   pqe->pqe_playable = 1;
   if(prop_set_parent(metadata, pqe->pqe_node))

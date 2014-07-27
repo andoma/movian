@@ -66,7 +66,7 @@ fap_release(fa_protocol_t *fap)
   if(fap->fap_fini == NULL)
     return;
 
-  if(atomic_add(&fap->fap_refcount, -1) > 1)
+  if(atomic_dec(&fap->fap_refcount))
     return;
 
   fap->fap_fini(fap);
@@ -79,7 +79,7 @@ fap_release(fa_protocol_t *fap)
 static void
 fap_retain(fa_protocol_t *fap)
 {
-  atomic_add(&fap->fap_refcount, 1);
+  atomic_inc(&fap->fap_refcount);
 }
 
 /**
@@ -1330,7 +1330,7 @@ fileaccess_register_entry(fa_protocol_t *fap)
 void
 fileaccess_register_dynamic(fa_protocol_t *fap)
 {
-  fap->fap_refcount = 1;
+  atomic_set(&fap->fap_refcount, 1);
   hts_mutex_lock(&fap_mutex);
   LIST_INSERT_HEAD(&fileaccess_all_protocols, fap, fap_link);
   hts_mutex_unlock(&fap_mutex);

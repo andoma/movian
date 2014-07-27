@@ -30,7 +30,7 @@
 void
 buf_release(buf_t *b)
 {
-  if(b != NULL && atomic_add(&b->b_refcount, -1) == 1) {
+  if(b != NULL && !atomic_dec(&b->b_refcount)) {
     if(b->b_free != NULL)
       b->b_free(b->b_ptr);
     rstr_release(b->b_content_type);
@@ -41,7 +41,7 @@ buf_release(buf_t *b)
 buf_t *
 buf_make_writable(buf_t *b)
 {
-  if(b->b_refcount == 1)
+  if(atomic_get(&b->b_refcount) == 1)
     return b;
 
   buf_t *b2 = buf_create_and_copy(b->b_size, b->b_ptr);
@@ -68,7 +68,7 @@ buf_create(size_t size)
   buf_t *b = mymalloc(sizeof(buf_t) + size + 1);
   if(b == NULL)
     return NULL;
-  b->b_refcount = 1;
+  atomic_set(&b->b_refcount, 1);
   b->b_size = size;
   b->b_ptr = b->b_content;
   b->b_free = NULL;
@@ -82,7 +82,7 @@ buf_t *
 buf_create_and_adopt(size_t size, void *data, void (*freefn)(void *))
 {
   buf_t *b = malloc(sizeof(buf_t));
-  b->b_refcount = 1;
+  atomic_set(&b->b_refcount, 1);
   b->b_size = size;
   b->b_ptr = data;
   b->b_free = freefn;

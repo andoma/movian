@@ -38,7 +38,7 @@ rstr_alloc(const char *in)
   size_t l = strlen(in);
   rstr_t *rs = malloc(sizeof(rstr_t) + l + 1);
 #ifdef USE_RSTR_REFCOUNTING
-  rs->refcnt = 1;
+  atomic_set(&rs->refcnt, 1);
 #endif
   memcpy(rs->str, in, l + 1);
 
@@ -53,7 +53,7 @@ rstr_allocl(const char *in, size_t len)
 {
   rstr_t *rs = malloc(sizeof(rstr_t) + len + 1);
 #ifdef USE_RSTR_REFCOUNTING
-  rs->refcnt = 1;
+  atomic_set(&rs->refcnt, 1);
 #endif
   if(in != NULL)
     memcpy(rs->str, in, len);

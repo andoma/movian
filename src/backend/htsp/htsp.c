@@ -106,8 +106,8 @@ typedef struct htsp_connection {
   char *hc_hostname;
   int hc_port;
 
-  int hc_seq_generator;
-  int hc_sid_generator; /* Subscription ID */
+  atomic_t hc_seq_generator;
+  atomic_t hc_sid_generator; /* Subscription ID */
 
   prop_t *hc_channels_model;
   prop_t *hc_channels_nodes;
@@ -244,7 +244,7 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m)
     return NULL;
 
   /* Generate a sequence number for our message */
-  seq = atomic_add(&hc->hc_seq_generator, 1);
+  seq = atomic_add_and_fetch(&hc->hc_seq_generator, 1);
   htsmsg_add_u32(m, "seq", seq);
 
  again:
@@ -1123,8 +1123,8 @@ htsp_connection_find(const char *url, char *path, size_t pathlen,
   LIST_INIT(&hc->hc_channels);
 
   hc->hc_tc = tc;
-  hc->hc_seq_generator = 1;
-  hc->hc_sid_generator = 1;
+  atomic_set(&hc->hc_seq_generator, 1);
+  atomic_set(&hc->hc_sid_generator, 1);
   hc->hc_hostname = strdup(hostname);
   hc->hc_port = port;
 
@@ -1348,7 +1348,7 @@ zap_channel(htsp_connection_t *hc, htsp_subscription_t *hs,
   htsmsg_release(m);
 
   hts_mutex_lock(&hc->hc_subscription_mutex);
-  hs->hs_sid = atomic_add(&hc->hc_sid_generator, 1);
+  hs->hs_sid = atomic_add_and_fetch(&hc->hc_sid_generator, 1);
 
   mp_flush(hs->hs_mp, 1);
   hts_mutex_unlock(&hc->hc_subscription_mutex);
@@ -1811,7 +1811,7 @@ be_htsp_playvideo(const char *url, media_pipe_t *mp,
 
   hs = calloc(1, sizeof(htsp_subscription_t));
 
-  hs->hs_sid = atomic_add(&hc->hc_sid_generator, 1);
+  hs->hs_sid = atomic_add_and_fetch(&hc->hc_sid_generator, 1);
   hs->hs_mp = mp;
   hs->hs_origin = prop_ref_inc(va->origin);
 

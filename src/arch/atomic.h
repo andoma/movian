@@ -19,106 +19,50 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 
-#ifndef HTSATOMIC_H__
-#define HTSATOMIC_H__
+#pragma once
 
-/**
- * Atomically add 'incr' to *ptr and return the previous value
- */
+#include "compiler.h"
 
 
+#if __GNUC__ >= 4 && __GNUC_MINOR__ >=3
 
-#if defined(linux) && __GNUC__ >= 4 && __GNUC_MINOR__ >=3 
+typedef struct atomic {
+  int v;
+} atomic_t;
+
+
+static inline void
+atomic_inc(atomic_t *a)
+{
+  __sync_add_and_fetch(&a->v, 1);
+}
+
+static inline int __attribute__((warn_unused_result))
+atomic_add_and_fetch(atomic_t *a, int v)
+{
+  return __sync_add_and_fetch(&a->v, 1);
+}
 
 static inline int
-atomic_add(volatile int *ptr, int incr)
+atomic_dec(atomic_t *a)
 {
-  return __sync_fetch_and_add(ptr, incr);
+  return __sync_add_and_fetch(&a->v, -1);
 }
-
-#elif defined(__i386__) || defined(__x86_64__)
-static inline int
-atomic_add(volatile int *ptr, int incr)
-{
-  int r;
-  asm volatile("lock; xaddl %0, %1" :
-	       "=r"(r), "=m"(*ptr) : "0" (incr), "m" (*ptr) : "memory");
-  return r;
-}
-#elif defined(WII)
-
-#include <ogc/machine/processor.h>
 
 static inline int
-atomic_add(volatile int *ptr, int incr)
+atomic_get(const atomic_t *a)
 {
-  int r, level;
-
-  /*
-   * Last time i checked libogc's context switcher did not do the
-   * necessary operations to clear locks held by lwarx/stwcx.
-   * Thus we need to resort to other means
-   */
-
-  _CPU_ISR_Disable(level);
-
-  r = *ptr;
-  *ptr = *ptr + incr;
-
-  _CPU_ISR_Restore(level);
-
-  return r;
+  return (*(volatile int *)&(a)->v);
 }
-#elif defined(__ppc__) || defined(__PPC__)
 
-/* somewhat based on code from darwin gcc  */
 static inline int
-atomic_add (volatile int *ptr, int incr)
+atomic_set(atomic_t *a, int v)
 {
-  int tmp, res;
-  asm volatile("0:\n"
-               "lwarx  %1,0,%2\n"
-               "add%I3 %0,%1,%3\n"
-               "stwcx. %0,0,%2\n"
-               "bne-   0b\n"
-               : "=&r"(tmp), "=&b"(res)
-               : "r" (ptr), "Ir"(incr)
-               : "cr0", "memory");
-  
-  return res;
+  return a->v = v;
 }
 
-#elif defined(__arm__) 
-
-static inline int 
-atomic_add(volatile int *ptr, int val)
-{
-  int a, b, c;
-
-  asm volatile(  "0:\n\t"
-		 "ldr %0, [%3]\n\t"
-		 "add %1, %0, %4\n\t"
-		 "swp %2, %1, [%3]\n\t"
-		 "cmp %0, %2\n\t"
-		 "swpne %1, %2, [%3]\n\t"
-		 "bne 0b"
-		 : "=&r" (a), "=&r" (b), "=&r" (c)
-		 : "r" (ptr), "r" (val)
-		 : "cc", "memory");
-  return a;
-}
-
-#elif defined(_MSC_VER)
-
-static __inline int
-atomic_add(volatile int *ptr, int val)
-{
-	int v = InterlockedIncrement(ptr);
-	return v - val;
-}
 
 #else
 #error Missing atomic ops
 #endif
 
-#endif /* HTSATOMIC_H__ */

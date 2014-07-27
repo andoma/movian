@@ -42,7 +42,7 @@ event_create(event_type_t type, size_t size)
   event_t *e = malloc(size);
   e->e_nav = NULL;
   e->e_dtor = NULL;
-  e->e_refcount = 1;
+  atomic_set(&e->e_refcount, 1);
   e->e_mapped = 0;
   assert(type > EVENT_OFFSET);
   e->e_type_x = type;
@@ -81,7 +81,7 @@ event_create_int3(event_type_t type, int v1, int v2, int v3)
 void
 event_addref(event_t *e)
 {
-  atomic_add(&e->e_refcount, 1);
+  atomic_inc(&e->e_refcount);
 }
 
 
@@ -91,12 +91,12 @@ event_addref(event_t *e)
 void
 event_release(event_t *e)
 {
-  if(atomic_add(&e->e_refcount, -1) == 1) {
-    if(e->e_dtor != NULL)
-      e->e_dtor(e);
-    prop_ref_dec(e->e_nav);
-    free(e);
-  }
+  if(atomic_dec(&e->e_refcount))
+    return;
+  if(e->e_dtor != NULL)
+    e->e_dtor(e);
+  prop_ref_dec(e->e_nav);
+  free(e);
 }
 
 

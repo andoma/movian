@@ -24,6 +24,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "arch/atomic.h"
 #include "compiler.h"
 
 struct buf;
@@ -130,7 +131,7 @@ typedef struct image_component {
  *
  */
 typedef struct image {
-  int im_refcount;
+  atomic_t im_refcount;
 
   uint16_t im_width;
   uint16_t im_height;

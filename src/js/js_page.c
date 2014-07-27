@@ -90,7 +90,7 @@ typedef struct js_model {
 
   LIST_ENTRY(js_model) jm_link;
 
-  int jm_refcount;
+  atomic_t jm_refcount;
 
   char **jm_args;
 
@@ -158,7 +158,7 @@ static js_model_t *
 js_model_create(JSContext *cx, jsval openfunc, int sync)
 {
   js_model_t *jm = calloc(1, sizeof(js_model_t));
-  jm->jm_refcount = 1;
+  atomic_set(&jm->jm_refcount, 1);
   jm->jm_openfunc = openfunc;
   jm->jm_sync = sync;
   jm->jm_ctxpriv.jcp_c = &jm->jm_cancellable;
@@ -213,8 +213,9 @@ js_model_destroy(js_model_t *jm)
 static void
 js_model_release(js_model_t *jm)
 {
-  if(atomic_add(&jm->jm_refcount, -1) == 1)
-    js_model_destroy(jm);
+  if(atomic_dec(&jm->jm_refcount))
+    return;
+  js_model_destroy(jm);
 }
 
 
@@ -703,7 +704,7 @@ js_appendItem0(JSContext *cx, js_model_t *model, prop_t *parent,
 
     *rval =  OBJECT_TO_JSVAL(robj);
     js_item_t *ji = calloc(1, sizeof(js_item_t));
-    atomic_add(&model->jm_refcount, 1);
+    atomic_inc(&model->jm_refcount);
     ji->ji_url = rstr_dup(rurl);
     ji->ji_model = model;
     ji->ji_root =  p;
@@ -1315,7 +1316,7 @@ make_model_object(JSContext *cx, js_model_t *jm, jsval *root)
   *root = OBJECT_TO_JSVAL(obj);
 
   JS_SetPrivate(cx, obj, jm);
-  atomic_add(&jm->jm_refcount, 1);
+  atomic_inc(&jm->jm_refcount);
 
   if(jm->jm_pc != NULL)
     JS_DefineFunctions(cx, obj, model_functions);

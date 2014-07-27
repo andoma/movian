@@ -401,7 +401,7 @@ fs_sub_scan_dir(sub_scanner_t *ss, const char *url, const char *video,
 void
 sub_scanner_release(sub_scanner_t *ss)
 {
-  if(atomic_add(&ss->ss_refcount, -1) > 1)
+  if(atomic_dec(&ss->ss_refcount))
     return;
 
   rstr_release(ss->ss_title);
@@ -418,7 +418,7 @@ sub_scanner_release(sub_scanner_t *ss)
 void
 sub_scanner_retain(sub_scanner_t *ss)
 {
-  atomic_add(&ss->ss_refcount, 1);
+  atomic_inc(&ss->ss_refcount);
 }
 
 
@@ -519,7 +519,7 @@ sub_scanner_create(const char *url, prop_t *proproot,
 
   sub_scanner_t *ss = calloc(1, sizeof(sub_scanner_t));
   hts_mutex_init(&ss->ss_mutex);
-  ss->ss_refcount = 2; // one for thread, one for caller
+  atomic_set(&ss->ss_refcount, 2); // one for thread, one for caller
   ss->ss_url = url ? strdup(url) : NULL;
   ss->ss_beflags = va->flags;
   ss->ss_title = rstr_alloc(va->title);

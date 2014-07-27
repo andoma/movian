@@ -46,17 +46,18 @@ typedef enum {
  * Internal struct for passing images
  */
 typedef struct pixmap {
-  int pm_refcount;
+  uint8_t *pm_data;
 
-  uint16_t pm_width;
-  uint16_t pm_height;
-  uint16_t pm_margin;
+  atomic_t pm_refcount;
 
   float pm_aspect;
 
   pixmap_type_t pm_type;
-  uint8_t *pm_data;
   int pm_linesize;
+
+  uint16_t pm_width;
+  uint16_t pm_height;
+  uint16_t pm_margin;
 
 } pixmap_t;
 

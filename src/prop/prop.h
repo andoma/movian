@@ -48,7 +48,7 @@ TAILQ_HEAD(prop_notify_queue, prop_notify);
  *
  */
 typedef struct prop_vec {
-  int pv_refcount;
+  atomic_t pv_refcount;
   int pv_capacity;
   int pv_length;
   struct prop *pv_vec[0];

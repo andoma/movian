@@ -195,7 +195,7 @@ typedef struct event_queue {
  *
  */
 typedef struct event {
-  int     e_refcount;
+  atomic_t e_refcount;
   int     e_mapped;
   struct prop *e_nav;
   event_type_t e_type_x;
