@@ -150,21 +150,17 @@ decode_character_reference(char **src)
     /* decimal */
     while(1) {
       c = **src;
-      switch(c) {
-      case '0' ... '9':
+      if (c >= '0' && c <= '9')
 	v = v * 0x10 + c - '0';
-	break;
-      case 'a' ... 'f':
-	v = v * 0x10 + c - 'a' + 10;
-	break;
-      case 'A' ... 'F':
-	v = v * 0x10 + c - 'A' + 10;
-	break;
-      case ';':
-	(*src)++;
-	return v;
-      default:
-	return 0;
+      else if (c >= 'a' && c <= 'f')
+        v = v * 0x10 + c - 'a' + 10;
+      else if (c >= 'A' && c <= 'F')
+        v = v * 0x10 + c - 'A' + 10;
+      else if (c == ';') {
+        (*src)++;
+        return v;
+      } else {
+        return 0;
       }
       (*src)++;
     }
@@ -174,17 +170,15 @@ decode_character_reference(char **src)
     /* decimal */
     while(1) {
       c = **src;
-      switch(c) {
-      case '0' ... '9':
+      if (c >= '0' && c <= '9')
 	v = v * 10 + c - '0';
-	(*src)++;
-	break;
-      case ';':
-	(*src)++;
-	return v;
-      default:
+      else if (c == ';') {
+        (*src)++;
+        return v;
+      } else {
 	return 0;
       }
+    (*src)++;
     }
   }
 }
