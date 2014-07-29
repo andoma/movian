@@ -928,6 +928,19 @@ LIST_HEAD(glw_signal_handler_list, glw_signal_handler);
 
 
 /**
+ * Style binding
+ */
+typedef struct glw_style_binding {
+  LIST_ENTRY(glw_style_binding) gsb_widget_link;
+  LIST_ENTRY(glw_style_binding) gsb_style_link;
+  struct glw *gsb_widget;
+  struct glw_style *gsb_style;
+} glw_style_binding_t;
+
+LIST_HEAD(glw_style_binding_list, glw_style_binding);
+
+
+/**
  * GL widget
  */
 typedef struct glw {
@@ -954,6 +967,8 @@ typedef struct glw {
   struct glw_event_map_list glw_event_maps;
 
   struct glw_prop_sub_list glw_prop_subscriptions;
+
+  struct glw_style_binding_list glw_style_bindings;
 
   struct token *glw_dynamic_expressions;
 
