@@ -1,3 +1,5 @@
+#pragma once
+
 #ifdef _MSC_VER
 #define attribute_printf(a, b)
 #else
