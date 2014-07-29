@@ -177,6 +177,7 @@ typedef enum {
   GLW_ATTRIB_MARGIN,
   GLW_ATTRIB_BORDER,
   GLW_ATTRIB_PADDING,
+  GLW_ATTRIB_FONT,
   GLW_ATTRIB_num,
 } glw_attribute_t;
 
@@ -578,11 +579,6 @@ typedef struct glw_class {
    *
    */
   void (*gc_update_text)(struct glw *w, const char *str);
-
-  /**
-   *
-   */
-  void (*gc_set_font)(struct glw *w, rstr_t *str);
 
   /**
    *

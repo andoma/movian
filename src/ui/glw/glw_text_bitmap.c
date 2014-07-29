@@ -857,12 +857,23 @@ set_caption(glw_t *w, const char *caption, int type)
 /**
  *
  */
-static void
-set_font(glw_t *w, rstr_t *font)
+static int
+gtb_set_rstr(glw_t *w, glw_attribute_t a, rstr_t *str)
 {
   glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
-  rstr_set(&gtb->gtb_font, font);
+  switch(a) {
+  case GLW_ATTRIB_FONT:
+    if(rstr_eq(gtb->gtb_font, str))
+      return 0;
+
+    rstr_set(&gtb->gtb_font, str);
+    break;
+  default:
+    return -1;
+  }
+
   gtb_update_epilogue(gtb, GTB_UPDATE_REALIZE);
+  return 1;
 }
 
 
@@ -1379,7 +1390,7 @@ static glw_class_t glw_label = {
   .gc_set_int16_4 = gtb_set_int16_4,
   .gc_mod_text_flags = mod_text_flags,
   .gc_set_caption = set_caption,
-  .gc_set_font = set_font,
+  .gc_set_rstr = gtb_set_rstr,
   .gc_bind_to_property = bind_to_property,
   .gc_mod_flags2 = mod_flags2,
   .gc_freeze = freeze,
@@ -1409,7 +1420,7 @@ static glw_class_t glw_text = {
   .gc_set_int16_4 = gtb_set_int16_4,
   .gc_mod_text_flags = mod_text_flags,
   .gc_set_caption = set_caption,
-  .gc_set_font = set_font,
+  .gc_set_rstr = gtb_set_rstr,
   .gc_bind_to_property = bind_to_property,
   .gc_freeze = freeze,
   .gc_thaw = thaw,
