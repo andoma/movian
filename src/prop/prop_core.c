@@ -210,14 +210,14 @@ prop_ref_dec_traced(prop_t *p, const char *file, int line)
     struct prop_ref_trace *prt = malloc(sizeof(struct prop_ref_trace));
     prt->file = file;
     prt->line = line;
-    prt->value = p->hp_refcount - 1;
+    prt->value = atomic_get(&p->hp_refcount) - 1;
     prt->which = 0;
     hts_mutex_lock(&prop_ref_mutex);
     SIMPLEQ_INSERT_TAIL(&p->hp_ref_trace, prt, link);
     hts_mutex_unlock(&prop_ref_mutex);
   }
   
-  if(atomic_add(&p->hp_refcount, -1) > 1)
+  if(atomic_dec(&p->hp_refcount))
     return;
   if(p->hp_flags & PROP_REF_TRACED) 
     printf("Prop %p was finalized by %s:%d\n", p, file, line);
@@ -237,7 +237,7 @@ prop_ref_dec_traced(prop_t *p, const char *file, int line)
 /**
  *
  */
-static void
+void
 prop_ref_dec_traced_locked(prop_t *p, const char *file, int line)
 {
   if(p == NULL)
@@ -249,14 +249,14 @@ prop_ref_dec_traced_locked(prop_t *p, const char *file, int line)
     struct prop_ref_trace *prt = malloc(sizeof(struct prop_ref_trace));
     prt->file = file;
     prt->line = line;
-    prt->value = p->hp_refcount - 1;
+    prt->value = atomic_get(&p->hp_refcount) - 1;
     prt->which = 0;
     hts_mutex_lock(&prop_ref_mutex);
     SIMPLEQ_INSERT_TAIL(&p->hp_ref_trace, prt, link);
     hts_mutex_unlock(&prop_ref_mutex);
   }
   
-  if(atomic_add(&p->hp_refcount, -1) > 1)
+  if(atomic_dec(&p->hp_refcount))
     return;
   if(p->hp_flags & PROP_REF_TRACED) 
     printf("Prop %p was finalized by %s:%d\n", p, file, line);
@@ -270,7 +270,6 @@ prop_ref_dec_traced_locked(prop_t *p, const char *file, int line)
   pool_put(prop_pool, p);
 }
 
-#define prop_ref_dec_locked(p) prop_ref_dec_traced_locked(p, __FILE__, __LINE__)
 
 
 /**
@@ -282,12 +281,12 @@ prop_ref_inc_traced(prop_t *p, const char *file, int line)
   if(p == NULL)
     return NULL;
 
-  atomic_add(&p->hp_refcount, 1);
+  atomic_inc(&p->hp_refcount);
   if(p->hp_flags & PROP_REF_TRACED) {
     struct prop_ref_trace *prt = malloc(sizeof(struct prop_ref_trace));
     prt->file = file;
     prt->line = line;
-    prt->value = p->hp_refcount;
+    prt->value = atomic_get(&p->hp_refcount);
     prt->which = 1;
     hts_mutex_lock(&prop_ref_mutex);
     SIMPLEQ_INSERT_TAIL(&p->hp_ref_trace, prt, link);
@@ -1955,7 +1954,7 @@ prop_destroy0(prop_t *p)
       psubs++;
 
     printf("Entering prop_destroy0(%s) [type=%d, refcnt=%d, xref=%d, csubs=%d, psubs=%d]\n",
-	   propname(p), p->hp_type, p->hp_refcount, p->hp_xref,
+	   propname(p), p->hp_type, atomic_get(&p->hp_refcount), p->hp_xref,
 	   csubs, psubs);
   }
 #endif

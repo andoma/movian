@@ -179,8 +179,8 @@ enum {
 
 #ifdef PROP_SUB_RECORD_SOURCE
 
-prop_sub_t *prop_subscribe_ex(const char *file, int line, int flags,
-                              attribute_null_sentinel;
+prop_sub_t *prop_subscribe_ex(const char *file, int line,
+                              int flags, ...) attribute_null_sentinel;
 
 #define prop_subscribe(flags...) prop_subscribe_ex(__FILE__, __LINE__, flags)
 
@@ -326,6 +326,7 @@ prop_t *prop_ref_inc_traced(prop_t *p, const char *file, int line);
 void prop_enable_trace(prop_t *p);
 
 void prop_print_trace(prop_t *p);
+
 
 #else
 
