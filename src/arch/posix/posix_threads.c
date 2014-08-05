@@ -25,6 +25,8 @@
 #include <unistd.h>
 #endif
 
+#include <sys/time.h>
+
 #include "showtime.h"
 #include "posix_threads.h"
 
