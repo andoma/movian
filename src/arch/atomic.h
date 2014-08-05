@@ -24,7 +24,7 @@
 #include "compiler.h"
 
 
-#if __GNUC__ >= 4 && __GNUC_MINOR__ >=3
+#if (__GNUC__ >= 4 && __GNUC_MINOR__ >=3) || defined(__APPLE__)
 
 typedef struct atomic {
   int v;
