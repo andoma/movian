@@ -218,7 +218,7 @@ vda_callback(void *aux, CFDictionaryRef frame_info, OSStatus status,
 
   hts_mutex_lock(&vdad->vdad_mutex);
 
-  LIST_INSERT_SORTED(&vdad->vdad_frames, vf, vf_link, vf_cmp);
+  LIST_INSERT_SORTED(&vdad->vdad_frames, vf, vf_link, vf_cmp, vda_frame_t);
 
   if(vdad->vdad_max_ts != PTS_UNSET) {
     if(vf->vf_pts > vdad->vdad_max_ts) {
