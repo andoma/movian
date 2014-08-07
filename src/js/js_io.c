@@ -274,6 +274,7 @@ js_http_request(JSContext *cx, jsval *rval,
   int headreq = 0;
   int cache = 0;
   int min_expire = 0;
+  htsbuf_queue_t hq;
 
   LIST_INIT(&request_headers);
 
@@ -298,7 +299,6 @@ js_http_request(JSContext *cx, jsval *rval,
     js_http_add_args(&httpargs, cx, argobj);
 
   if(postval != NULL) {
-    htsbuf_queue_t hq;
     JSIdArray *ida;
     const char *str;
     const char *prefix = NULL;
