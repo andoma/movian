@@ -1096,18 +1096,20 @@ strappend(char **strp, const char *src)
  *
  */
 int
-hex2bin(uint8_t *buf, size_t buflen, const char *str)
+hex2binl(uint8_t *buf, size_t buflen, const char *str, int maxlen)
 {
   int hi, lo;
   size_t bl = buflen;
   while(*str) {
+    if(maxlen < 2)
+      break;
     if(buflen == 0)
       return -1;
     if((hi = hexnibble(*str++)) == -1)
       return -1;
     if((lo = hexnibble(*str++)) == -1)
       return -1;
-
+    maxlen -= 2;
     *buf++ = hi << 4 | lo;
     buflen--;
   }
