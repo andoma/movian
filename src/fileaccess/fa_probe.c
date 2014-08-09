@@ -296,6 +296,12 @@ fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh,
     return 1;
   }
 
+  if(l >= 256 && (!memcmp(buf, "d8:announce", 11))) {
+    md->md_contenttype = CONTENT_ARCHIVE;
+    metdata_set_redirect(md, "torrentfile://%s/", url);
+    return 1;
+  }
+
   if(l >= 16 && 
      buf[0] == 'R'  && buf[1] == 'a'  && buf[2] == 'r' && buf[3] == '!' &&
      buf[4] == 0x1a && buf[5] == 0x07 && buf[6] == 0x0 && buf[9] == 0x73) {

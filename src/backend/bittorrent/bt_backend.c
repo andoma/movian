@@ -31,7 +31,55 @@
 
 // http://www.bittorrent.org/beps/bep_0009.htm
 
+/**
+ *
+ */
+torrent_t *
+torrent_open_url(const char **urlp, char *errbuf, size_t errlen)
+{
+  uint8_t infohash[20];
+  torrent_t *to;
+  const char *url = *urlp;
 
+  if(hex2binl(infohash, 20, url, 40) == 20 && url[40] == '/') {
+    hts_mutex_lock(&bittorrent_mutex);
+    to = torrent_find_by_hash(infohash);
+    if(to == NULL) {
+      snprintf(errbuf, errlen, "Torrent not found");
+    } else {
+      to->to_refcount++;
+      *urlp = url + 41;
+    }
+  } else {
+
+    *urlp = NULL;
+
+    char *u = mystrdupa(url);
+
+    int n = strlen(u);
+    while(n > 0 && u[n - 1] == '/')
+      u[--n] = 0;
+
+    buf_t *b = fa_load(u,
+                       FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
+                       NULL);
+
+    hts_mutex_lock(&bittorrent_mutex);
+
+    if(b == NULL)
+      return NULL;
+
+
+    to = torrent_create(b, errbuf, sizeof(errbuf));
+    buf_release(b);
+  }
+  return to;
+}
+
+
+/**
+ *
+ */
 static void
 do_torrent_release(void *opaque, prop_sub_t *s)
 {
@@ -53,7 +101,6 @@ torrent_release_on_prop_destroy(prop_t *p, torrent_t *to)
                  NULL);
 }
 
-#if 0
 
 /**
  *
@@ -99,11 +146,8 @@ torrent_browse(prop_t *page, torrent_t *to, const char *path)
     char url[1024];
 
 
-    if(tf->tf_size)
-      snprintf(url, sizeof(url), "torrentfile://%s/%s",
-               hashstr, tf->tf_fullpath);
-    else
-      snprintf(url, sizeof(url), "infohash:%s/%s", hashstr, tf->tf_fullpath);
+    snprintf(url, sizeof(url), "torrentfile://%s/%s",
+             hashstr, tf->tf_fullpath);
 
     prop_set(item, "url", PROP_SET_STRING, url);
     prop_set(item, "type", PROP_SET_STRING, tf->tf_size ? "file" : "directory");
@@ -121,129 +165,30 @@ torrent_browse(prop_t *page, torrent_t *to, const char *path)
   prop_ref_dec(nodes);
   prop_ref_dec(metadata);
 }
-#endif
-
-
-#if 0
-/**
- *
- */
-static int
-magnet_open2(prop_t *page, struct http_header_list *list, int sync)
-{
-  const char *dn = http_header_get(list, "dn");
-
-  const char *xt = http_header_get(list, "xt");
-  if(xt == NULL)
-    return nav_open_errorf(page, _("No 'xt' in magnet link"));
-
-  const char *hash = mystrbegins(xt, "urn:btih:");
-  if(hash == NULL)
-    return nav_open_errorf(page, _("Unknown hash scheme: %s"), xt);
-
-  uint8_t infohash[20];
-
-  if(hex2bin(infohash, sizeof(infohash), hash) != sizeof(infohash))
-    return nav_open_errorf(page, _("Invalid SHA-1 hash: %s"), hash);
-
-  TRACE(TRACE_DEBUG, "MAGNET", "Opening magnet for hash %s -- %s",
-	hash, dn ?: "<unknown name>");
-
-  const char *trackers[20];
-  int num_trackers = 0;
-  http_header_t *hh;
-
-  LIST_FOREACH(hh, list, hh_link) {
-    if(num_trackers < 19 && !strcmp(hh->hh_key, "tr"))
-      trackers[num_trackers++] = hh->hh_value;
-  }
-  trackers[num_trackers] = NULL;
-
-  hts_mutex_lock(&bittorrent_mutex);
-  torrent_t *to = torrent_create(infohash, dn, trackers, NULL);
-  torrent_browse(page, to, NULL);
-  torrent_release_on_prop_destroy(page, to);
-  hts_mutex_unlock(&bittorrent_mutex);
-
-  return 0;
-}
 
 
 /**
  *
  */
 static int
-magnet_open(prop_t *page, const char *url0, int sync)
-{
-  if(*url0 == '?')
-    url0++;
-
-  char *url = mystrdupa(url0);
-
-  struct http_header_list list = {};
-
-  http_parse_uri_args(&list, url, 1);
-
-  int r = magnet_open2(page, &list, sync);
-  http_headers_free(&list);
-  return r;
-}
-
-
-/**
- *
- */
-static void
-get_info_hash(void *opaque, const char *name, const void *data, size_t len)
-{
-  if(strcmp(name, "info"))
-    return;
-
-  sha1_decl(shactx);
-  sha1_init(shactx);
-  sha1_update(shactx, data, len);
-  sha1_final(shactx, opaque);
-}
-
-
-/**
- *
- */
-static int
-torrent_open(prop_t *page, const char *url0, int sync)
+torrent_browse_open(prop_t *page, const char *url, int sync)
 {
   char errbuf[512];
-  buf_t *b = fa_load(url0,
-                     FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
-                     NULL);
+  torrent_t *to;
 
-  if(b == NULL)
-    return nav_open_errorf(page, _("Unable to open torrent: %s"), errbuf);
-
-  uint8_t infohash[20] = {0};
-
-  htsmsg_t *doc = bencode_deserialize(buf_cstr(b), buf_cstr(b) + buf_size(b),
-                                      errbuf, sizeof(errbuf),
-                                      get_info_hash, infohash);
-
-  if(doc == NULL) {
-    buf_release(b);
+  to = torrent_open_url(&url, errbuf, sizeof(errbuf));
+  if(to == NULL) {
+    hts_mutex_unlock(&bittorrent_mutex);
     return nav_open_errorf(page, _("Unable to open torrent: %s"), errbuf);
   }
+  torrent_browse(page, to, url);
 
-  buf_release(b);
-
-  hts_mutex_lock(&bittorrent_mutex);
-  torrent_t *to = torrent_create(infohash, NULL, NULL, doc);
-  torrent_browse(page, to, NULL);
   torrent_release_on_prop_destroy(page, to);
   hts_mutex_unlock(&bittorrent_mutex);
-
-  htsmsg_release(doc);
   return 0;
 }
 
-#endif
+
 
 /**
  *
@@ -322,44 +267,6 @@ torrent_movie_open(prop_t *page, const char *url0, int sync)
 }
 
 
-#if 0
-/**
- *
- */
-static int
-infohash_open(prop_t *page, const char *url, int sync)
-{
-  uint8_t infohash[20] = {0};
-
-  if(strlen(url) < 40)
-    return nav_open_error(page, "Short hash");
-
-  const char *path = NULL;
-
-  char *x = mystrdupa(url);
-
-  if(x[40] != 0) {
-    path = x + 40;
-    if(*path != '/')
-      path = NULL;
-    path++;
-    x[40] = 0;
-  }
-
-  if(hex2bin(infohash, sizeof(infohash), x) != 20)
-    return nav_open_error(page, "Invalid hash");
-
-  hts_mutex_lock(&bittorrent_mutex);
-  torrent_t *to = torrent_create(infohash, NULL, NULL, NULL);
-  torrent_browse(page, to, path);
-  torrent_release_on_prop_destroy(page, to);
-  hts_mutex_unlock(&bittorrent_mutex);
-
-  return 0;
-}
-
-#endif
-
 /**
  *
  */
@@ -370,6 +277,8 @@ bt_open(prop_t *page, const char *url, int sync)
 
   if((u = mystrbegins(url, "torrent:video:")) != NULL) {
     return torrent_movie_open(page, u, sync);
+  } else if((u = mystrbegins(url, "torrent:browse:")) != NULL) {
+    return torrent_browse_open(page, u, sync);
   }
 
   return 0;

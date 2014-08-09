@@ -107,3 +107,74 @@ static backend_t be_magnet = {
 };
 
 BE_REGISTER(magnet);
+
+
+
+
+#if 0
+/**
+ *
+ */
+static int
+magnet_open2(prop_t *page, struct http_header_list *list, int sync)
+{
+  const char *dn = http_header_get(list, "dn");
+
+  const char *xt = http_header_get(list, "xt");
+  if(xt == NULL)
+    return nav_open_errorf(page, _("No 'xt' in magnet link"));
+
+  const char *hash = mystrbegins(xt, "urn:btih:");
+  if(hash == NULL)
+    return nav_open_errorf(page, _("Unknown hash scheme: %s"), xt);
+
+  uint8_t infohash[20];
+
+  if(hex2bin(infohash, sizeof(infohash), hash) != sizeof(infohash))
+    return nav_open_errorf(page, _("Invalid SHA-1 hash: %s"), hash);
+
+  TRACE(TRACE_DEBUG, "MAGNET", "Opening magnet for hash %s -- %s",
+	hash, dn ?: "<unknown name>");
+
+  const char *trackers[20];
+  int num_trackers = 0;
+  http_header_t *hh;
+
+  LIST_FOREACH(hh, list, hh_link) {
+    if(num_trackers < 19 && !strcmp(hh->hh_key, "tr"))
+      trackers[num_trackers++] = hh->hh_value;
+  }
+  trackers[num_trackers] = NULL;
+
+  hts_mutex_lock(&bittorrent_mutex);
+  torrent_t *to = torrent_create(infohash, dn, trackers, NULL);
+  torrent_browse(page, to, NULL);
+  torrent_release_on_prop_destroy(page, to);
+  hts_mutex_unlock(&bittorrent_mutex);
+
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+magnet_open(prop_t *page, const char *url0, int sync)
+{
+  if(*url0 == '?')
+    url0++;
+
+  char *url = mystrdupa(url0);
+
+  struct http_header_list list = {};
+
+  http_parse_uri_args(&list, url, 1);
+
+  int r = magnet_open2(page, &list, sync);
+  http_headers_free(&list);
+  return r;
+}
+
+
+#endif

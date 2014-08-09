@@ -475,3 +475,5 @@ void torrent_extract_info_hash(void *opaque, const char *name,
 void torrent_settings_init(void);
 
 void torrent_piece_peer_destroy(piece_peer_t *pp);
+
+torrent_t *torrent_open_url(const char **urlp, char *errbuf, size_t errlen);
