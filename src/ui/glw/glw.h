@@ -366,6 +366,7 @@ typedef enum {
   GLW_ORIENTATION_VERTICAL,
 } glw_orientation_t;
 
+#define glw_parent_data(c, type) ((type *)((char *)c + (c)->glw_class->gc_instance_size))
 
 /**
  * GLW class definitions
@@ -374,6 +375,8 @@ typedef struct glw_class {
 
   const char *gc_name;
   size_t gc_instance_size;
+  size_t gc_parent_data_size;
+
   int gc_flags;
 #define GLW_NAVIGATION_SEARCH_BOUNDARY 0x1
 #define GLW_CAN_HIDE_CHILDS            0x2
@@ -975,20 +978,6 @@ typedef struct glw {
   Mtx *glw_matrix;
 
   struct glw_clone *glw_clone;
-
-  /**
-   * All the glw_parent stuff is operated by this widgets
-   * parents. That is, a widget should never touch these themselfs
-   * TODO: Allocate these dynamically based on parent class
-   *
-   * glw_array current has the most items here now
-   */
-  union {
-    int i32;
-    float f;
-    void *ptr;
-  } glw_parent_val[7];
-
 
   int glw_refcnt;
 

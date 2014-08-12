@@ -22,9 +22,12 @@
 #include "glw.h"
 #include "glw_transitions.h"
 
-#define glw_parent_alpha glw_parent_val[0].f
-#define glw_parent_z     glw_parent_val[1].f
-#define glw_parent_layer glw_parent_val[2].i32
+
+typedef struct glw_layer_item {
+  float alpha;
+  float z;
+  int layer;
+} glw_layer_item_t;
 
 
 /**
@@ -67,12 +70,14 @@ glw_layer_layout(glw_t *w, const glw_rctx_t *rc)
     z = 1.0;
     a = 1.0;
 
-    c->glw_parent_layer = layer;
+    glw_layer_item_t *cd = glw_parent_data(c, glw_layer_item_t);
+
+    cd->layer = layer;
 
     if(c->glw_flags & GLW_RETIRED) {
       a = 0;
 
-      if(c->glw_parent_z > 0.99) {
+      if(cd->z > 0.99) {
         glw_destroy(c);
         continue;
       }
@@ -87,12 +92,12 @@ glw_layer_layout(glw_t *w, const glw_rctx_t *rc)
     }
 
 
-    glw_lp(&c->glw_parent_z,     w->glw_root, z, 0.25);
-    glw_lp(&c->glw_parent_alpha, w->glw_root, a, 0.25);
+    glw_lp(&cd->z,     w->glw_root, z, 0.25);
+    glw_lp(&cd->alpha, w->glw_root, a, 0.25);
 
-    rc0.rc_layer = c->glw_parent_layer + rc->rc_layer;
+    rc0.rc_layer = cd->layer + rc->rc_layer;
 
-    if(c->glw_parent_alpha > 0.01)
+    if(cd->alpha > 0.01)
       glw_layout0(c, &rc0);
   }
 }
@@ -111,7 +116,7 @@ glw_layer_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_CHILD_CREATED:
-    c->glw_parent_z = 1.0f;
+    glw_parent_data(c, glw_layer_item_t)->z = 1.0f;
 
     glw_layer_select_child(w);
     break;
@@ -146,12 +151,14 @@ glw_layer_render(glw_t *w, const glw_rctx_t *rc)
   glw_t *c;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+    glw_layer_item_t *cd = glw_parent_data(c, glw_layer_item_t);
+
     rc0 = *rc;
-    rc0.rc_alpha *= c->glw_parent_alpha * w->glw_alpha;
+    rc0.rc_alpha *= cd->alpha * w->glw_alpha;
     if(rc0.rc_alpha < 0.01)
       continue;
-    rc0.rc_layer = c->glw_parent_layer + rc->rc_layer;
-    glw_Translatef(&rc0, 0, 0, 0.1*c->glw_parent_z);
+    rc0.rc_layer = cd->layer + rc->rc_layer;
+    glw_Translatef(&rc0, 0, 0, 0.1*cd->z);
     glw_render0(c, &rc0);
   }
 }
@@ -164,6 +171,7 @@ static glw_class_t glw_layer = {
   .gc_name = "layer",
   .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_instance_size = sizeof(glw_t),
+  .gc_parent_data_size = sizeof(glw_layer_item_t),
   .gc_layout = glw_layer_layout,
   .gc_render = glw_layer_render,
   .gc_retire_child = glw_layer_retire_child,

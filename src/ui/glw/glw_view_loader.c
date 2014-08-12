@@ -25,7 +25,7 @@
 
 typedef struct glw_view_loader {
   glw_t w;
-  
+
   struct prop *prop;
   struct prop *prop_parent;
   struct prop *prop_clone;
@@ -43,8 +43,12 @@ typedef struct glw_view_loader {
 } glw_view_loader_t;
 
 
-#define glw_parent_vl_cur glw_parent_val[0].f
-#define glw_parent_vl_tgt glw_parent_val[1].f
+typedef struct glw_loader_item {
+  float vl_cur;
+  float vl_tgt;
+} glw_loader_item_t;
+
+#define itemdata(w) glw_parent_data(w, glw_loader_item_t)
 
 
 /**
@@ -63,14 +67,14 @@ glw_loader_layout(glw_t *w, const glw_rctx_t *rc)
     n = TAILQ_NEXT(c, glw_parent_link);
 
     float n =
-      GLW_MIN(c->glw_parent_vl_cur + a->delta, c->glw_parent_vl_tgt);
+      GLW_MIN(itemdata(c)->vl_cur + a->delta, itemdata(c)->vl_tgt);
 
-    if(n != c->glw_parent_vl_cur)
+    if(n != itemdata(c)->vl_cur)
       glw_need_refresh(gr, 0);
 
-    c->glw_parent_vl_cur = n;
+    itemdata(c)->vl_cur = n;
 
-    if(c->glw_parent_vl_cur == 1) {
+    if(itemdata(c)->vl_cur == 1) {
       glw_destroy(c);
 
       if((c = TAILQ_FIRST(&w->glw_childs)) != NULL) {
@@ -102,19 +106,19 @@ glw_loader_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     if(TAILQ_FIRST(&w->glw_childs) == c &&
        TAILQ_NEXT(c, glw_parent_link) == NULL &&
        w->glw_flags2 & GLW2_NO_INITIAL_TRANS) {
-      c->glw_parent_vl_cur = 0;
+      itemdata(c)->vl_cur = 0;
     } else {
-      c->glw_parent_vl_cur = -1;
+      itemdata(c)->vl_cur = -1;
     }
 
-    c->glw_parent_vl_tgt = 0;
-    
+    itemdata(c)->vl_tgt = 0;
+
     glw_focus_open_path_close_all_other(c);
 
     TAILQ_FOREACH(n, &w->glw_childs, glw_parent_link) {
       if(c == n)
 	continue;
-      n->glw_parent_vl_tgt = 1;
+      itemdata(n)->vl_tgt = 1;
     }
 
     if(c == TAILQ_FIRST(&w->glw_childs)) {
@@ -153,16 +157,16 @@ glw_view_loader_render(glw_t *w, const glw_rctx_t *rc)
   glw_rctx_t rc0;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
-    
+
     rc0 = *rc;
-    if(c->glw_parent_vl_cur == 0) {
+    if(itemdata(c)->vl_cur == 0) {
       rc0.rc_alpha = alpha;
       rc0.rc_sharpness = sharpness;
       glw_render0(c, &rc0);
       continue;
     }
-    
-    glw_transition_render(a->efx_conf, c->glw_parent_vl_cur, alpha, &rc0);
+
+    glw_transition_render(a->efx_conf, itemdata(c)->vl_cur, alpha, &rc0);
     glw_render0(c, &rc0);
   }
 }
@@ -175,7 +179,7 @@ static void
 glw_view_loader_retire_child(glw_t *w, glw_t *c)
 {
   glw_suspend_subscriptions(c);
-  c->glw_parent_vl_tgt = 1;
+  itemdata(c)->vl_tgt = 1;
 }
 
 
@@ -245,7 +249,7 @@ set_source(glw_t *w, rstr_t *url)
   }
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
-    c->glw_parent_vl_tgt = 1;
+    itemdata(c)->vl_tgt = 1;
 }
 
 
@@ -368,6 +372,7 @@ get_identity(glw_t *w)
 static glw_class_t glw_view_loader = {
   .gc_name = "loader",
   .gc_instance_size = sizeof(glw_view_loader_t),
+  .gc_parent_data_size = sizeof(glw_loader_item_t),
   .gc_ctor = glw_view_loader_ctor,
   .gc_dtor = glw_view_loader_dtor,
   .gc_set_int = glw_view_loader_set_int,

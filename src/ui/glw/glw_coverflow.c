@@ -39,7 +39,11 @@ typedef struct {
 
 } glw_coverflow_t;
 
-#define glw_parent_pos glw_parent_val[0].f
+
+typedef struct glw_coverflow_item {
+  float pos;
+} glw_coverflow_item_t;
+
 
 /**
  *
@@ -61,14 +65,16 @@ glw_coverflow_layout(glw_t *w, const glw_rctx_t *rc)
   TAILQ_FOREACH(c, &gc->w.glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
-    
-    c->glw_parent_pos = n - gc->pos;
+
+    glw_coverflow_item_t *cd = glw_parent_data(c, glw_coverflow_item_t);
+
+    cd->pos = n - gc->pos;
 
     if(rstart == NULL ||
-       fabs(rstart->glw_parent_pos) > fabs(c->glw_parent_pos))
+       fabs(glw_parent_data(rstart, glw_coverflow_item_t)->pos) > fabs(cd->pos))
       rstart = c;
 
-    nv = c->glw_parent_pos * gc->xs;
+    nv = cd->pos * gc->xs;
     if(nv > -2 && nv < 2)
       glw_layout0(c, &rc0);
 
@@ -93,7 +99,8 @@ renderone(glw_rctx_t *rc, glw_t *c, glw_coverflow_t *gc)
   if(c->glw_flags & GLW_HIDDEN)
     return;
  
-  v = c->glw_parent_pos;
+  glw_coverflow_item_t *cd = glw_parent_data(c, glw_coverflow_item_t);
+  v = cd->pos;
 
   nv = v * gc->xs;
 
@@ -261,8 +268,9 @@ static float
 glw_coverflow_get_child_pos(glw_t *p, glw_t *c)
 {
   glw_coverflow_t *gc = (glw_coverflow_t *)p;
- 
-  float nv = c->glw_parent_pos * gc->xs;
+
+  glw_coverflow_item_t *cd = glw_parent_data(c, glw_coverflow_item_t);
+  float nv = cd->pos * gc->xs;
   nv = GLW_CLAMP(nv, -1, 1);
   return nv * 0.5 + 0.5;
 }
@@ -274,6 +282,7 @@ glw_coverflow_get_child_pos(glw_t *p, glw_t *c)
 static glw_class_t glw_coverflow = {
   .gc_name = "coverflow",
   .gc_instance_size = sizeof(glw_coverflow_t),
+  .gc_parent_data_size = sizeof(glw_coverflow_item_t),
   .gc_ctor = glw_coverflow_ctor,
   .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY | GLW_CAN_HIDE_CHILDS,
   .gc_child_orientation = GLW_ORIENTATION_HORIZONTAL,

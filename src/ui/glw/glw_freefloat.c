@@ -34,12 +34,14 @@ typedef struct glw_freefloat {
 } glw_freefloat_t;
 
 
-#define glw_parent_v  glw_parent_val[0].f
-#define glw_parent_s  glw_parent_val[1].f
-#define glw_parent_s2 glw_parent_val[2].f
-#define glw_parent_a  glw_parent_val[3].f
-#define glw_parent_x  glw_parent_val[4].f
-#define glw_parent_y  glw_parent_val[5].f 
+typedef struct glw_freefloat_item {
+  float v;
+  float s;
+  float s2;
+  float a;
+  float x;
+  float y;
+} glw_freefloat_item_t;
 
 /**
  *
@@ -70,20 +72,22 @@ glw_freefloat_render(glw_t *w, const glw_rctx_t *rc)
     if((c = ff->visible[i]) == NULL)
       continue;
 
+    glw_freefloat_item_t *cd = glw_parent_data(c, glw_freefloat_item_t);
+
     rc0 = *rc;
-    a = (1 - fabs(-1 + (GLW_MAX(0, -0.1 + c->glw_parent_v * 2.1))));
+    a = (1 - fabs(-1 + (GLW_MAX(0, -0.1 + cd->v * 2.1))));
 
     rc0.rc_alpha *= a;
 
     glw_Translatef(&rc0, 
-		   c->glw_parent_x,
-		   c->glw_parent_y,
-		   -5 + c->glw_parent_v * 5);
+		   cd->x,
+		   cd->y,
+		   -5 + cd->v * 5);
 
     glw_Rotatef(&rc0, 
-		-30 + c->glw_parent_v * 60,
-		fabsf(sin(c->glw_parent_a)),
-		fabsf(cos(c->glw_parent_a)),
+		-30 + cd->v * 60,
+		fabsf(sin(cd->a)),
+		fabsf(cos(cd->a)),
 		0.0);
 
     glw_render0(c, &rc0);
@@ -98,17 +102,18 @@ static void
 setup_floater(glw_freefloat_t *ff, glw_t *c)
 {
   ff->xpos++;
-  c->glw_parent_v = 0;
-  c->glw_parent_s = 0.001;
-  c->glw_parent_s2 = 0;
+  glw_freefloat_item_t *cd = glw_parent_data(c, glw_freefloat_item_t);
+  cd->v = 0;
+  cd->s = 0.001;
+  cd->s2 = 0;
 
-  c->glw_parent_a = showtime_get_ts();
-  c->glw_parent_x = -1.0 + (ff->xpos % ff->num_visible) * 2 /
+  cd->a = showtime_get_ts();
+  cd->x = -1.0 + (ff->xpos % ff->num_visible) * 2 /
     ((float)ff->num_visible - 1);
 
   ff->rand = ff->rand * 1664525 + 1013904223;
 
-  c->glw_parent_y = (ff->rand & 0xffff) / 32768.0 - 1.0;
+  cd->y = (ff->rand & 0xffff) / 32768.0 - 1.0;
 }
 
 static int
@@ -117,8 +122,11 @@ zsort(const void *A, const void *B)
   glw_t *a = *(glw_t **)A;
   glw_t *b = *(glw_t **)B;
 
-  float az = a ? a->glw_parent_v : -100;
-  float bz = b ? b->glw_parent_v : -100;
+  glw_freefloat_item_t *ad = glw_parent_data(a, glw_freefloat_item_t);
+  glw_freefloat_item_t *bd = glw_parent_data(b, glw_freefloat_item_t);
+
+  float az = a ? ad->v : -100;
+  float bz = b ? bd->v : -100;
 
   if(az > bz)
     return 1;
@@ -144,7 +152,9 @@ glw_freefloat_layout(glw_t *w, const glw_rctx_t *rc)
     if(ff->visible[i] == NULL) {
       candpos = i;
     } else {
-      vmin = GLW_MIN(ff->visible[i]->glw_parent_v, vmin);
+      glw_freefloat_item_t *cd =
+        glw_parent_data(ff->visible[i], glw_freefloat_item_t);
+      vmin = GLW_MIN(cd->v, vmin);
     }
   }
 
@@ -167,15 +177,17 @@ glw_freefloat_layout(glw_t *w, const glw_rctx_t *rc)
     if((c = ff->visible[i]) == NULL)
       continue;
 
-    if(c->glw_parent_v >= 1) {
+    glw_freefloat_item_t *cd = glw_parent_data(c, glw_freefloat_item_t);
+
+    if(cd->v >= 1) {
       ff->visible[i] = NULL;
     } else {
       glw_layout0(c, rc);
     }
 
     if(c->glw_class->gc_ready ? c->glw_class->gc_ready(c) : 1)
-      c->glw_parent_v += c->glw_parent_s;
-    c->glw_parent_s += c->glw_parent_s2;
+      cd->v += cd->s;
+    cd->s += cd->s2;
   }
 
   qsort(ff->visible, ff->num_visible, sizeof(void *), zsort);
@@ -200,8 +212,10 @@ glw_freefloat_retire_child(glw_t *w, glw_t *c)
   glw_freefloat_t *ff = (glw_freefloat_t *)w;
   if(is_visible(ff, c)) {
     // This one is visible, keep it for a while
-    
-    c->glw_parent_s2 = 0.001;
+
+    glw_freefloat_item_t *cd = glw_parent_data(c, glw_freefloat_item_t);
+
+    cd->s2 = 0.001;
 
     if(c == ff->pick)
       ff->pick = TAILQ_NEXT(ff->pick, glw_parent_link);
@@ -256,6 +270,7 @@ glw_freefloat_ctor(glw_t *w)
 static glw_class_t glw_freefloat = {
   .gc_name = "freefloat",
   .gc_instance_size = sizeof(glw_freefloat_t),
+  .gc_parent_data_size = sizeof(glw_freefloat_item_t),
   .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_ctor = glw_freefloat_ctor,
   .gc_layout = glw_freefloat_layout,

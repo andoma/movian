@@ -51,10 +51,12 @@ typedef struct glw_clist {
 } glw_clist_t;
 
 
-#define glw_parent_height glw_parent_val[0].i32
-#define glw_parent_pos    glw_parent_val[1].f
-#define glw_parent_height2 glw_parent_val[2].i32
-#define glw_parent_inited  glw_parent_val[3].i32
+typedef struct glw_clist_item {
+  float pos;
+  int16_t height;
+  int16_t height2;
+  uint8_t inited;
+} glw_clist_item_t;
 
 /**
  *
@@ -74,15 +76,15 @@ glw_clist_layout(glw_t *w, const glw_rctx_t *rc)
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
-    
+    glw_clist_item_t *cd = glw_parent_data(c, glw_clist_item_t);
     const int tpos = ypos - l->current_pos + rc->rc_height * l->center;
     
-    if(c->glw_parent_inited) {
-      glw_lp(&c->glw_parent_pos, w->glw_root, tpos, 0.25);
+    if(cd->inited) {
+      glw_lp(&cd->pos, w->glw_root, tpos, 0.25);
       lptrail = 1;
     } else {
-      c->glw_parent_pos = tpos;
-      c->glw_parent_inited = 1;
+      cd->pos = tpos;
+      cd->inited = 1;
       lptrail = 0;
     }
 
@@ -93,7 +95,7 @@ glw_clist_layout(glw_t *w, const glw_rctx_t *rc)
     } else {
       itemh = itemh0;
     }
-    c->glw_parent_height2 = itemh;
+    cd->height2 = itemh;
     ypos += itemh;
     if(c == w->glw_focused) {
       l->current_pos = ypos - itemh / 2;
@@ -112,15 +114,18 @@ glw_clist_layout(glw_t *w, const glw_rctx_t *rc)
     if(c->glw_flags & GLW_HIDDEN)
       continue;
 
+    glw_clist_item_t *cd = glw_parent_data(c, glw_clist_item_t);
+
     n = glw_next_widget(c);
 
-    rc0.rc_height = (n ? n->glw_parent_pos : l->trail) - c->glw_parent_pos - l->spacing;
+    rc0.rc_height = (n ? glw_parent_data(c, glw_clist_item_t)->pos :
+                     l->trail) - cd->pos - l->spacing;
 
-    c->glw_parent_height = rc0.rc_height;
-    if(c->glw_parent_height < 1)
+    cd->height = rc0.rc_height;
+    if(cd->height < 1)
       continue;
     c->glw_norm_weight = rc0.rc_height * IH;
-    rc0.rc_height = c->glw_parent_height2;
+    rc0.rc_height = cd->height2;
 
     glw_layout0(c, &rc0);
   }
@@ -149,11 +154,12 @@ render(glw_t *w, const glw_rctx_t *rc)
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
-   if(c->glw_parent_height < 1)
+    glw_clist_item_t *cd = glw_parent_data(c, glw_clist_item_t);
+   if(cd->height < 1)
       continue;
  
-    y = c->glw_parent_pos;
-    if(y + c->glw_parent_height < 0 || y > rc->rc_height) {
+    y = cd->pos;
+    if(y + cd->height < 0 || y > rc->rc_height) {
       c->glw_flags |= GLW_CLIPPED;
       continue;
     } else {
@@ -165,20 +171,20 @@ render(glw_t *w, const glw_rctx_t *rc)
     else
       t = -1;
 
-    if(y + c->glw_parent_height > rc->rc_height)
+    if(y + cd->height > rc->rc_height)
       b = glw_clip_enable(w->glw_root, rc, GLW_CLIP_BOTTOM, 0);
     else
       b = -1;
 
     rc1 = rc0;
 
-    int adj = (c->glw_parent_height2 - c->glw_parent_height) / 2;
+    int adj = (cd->height2 - cd->height) / 2;
 
     glw_reposition(&rc1, 
 		   0,
-		   rc->rc_height - c->glw_parent_pos + adj,
+		   rc->rc_height - cd->pos + adj,
 		   rc->rc_width,
-		   rc->rc_height - c->glw_parent_pos - c->glw_parent_height2 + adj);
+		   rc->rc_height - cd->pos - cd->height2 + adj);
 
     glw_render0(c, &rc1);
 
@@ -284,6 +290,7 @@ glw_clist_set_float(glw_t *w, glw_attribute_t attrib, float value)
 static glw_class_t glw_clist = {
   .gc_name = "clist",
   .gc_instance_size = sizeof(glw_clist_t),
+  .gc_parent_data_size = sizeof(glw_clist_item_t),
   .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY | GLW_CAN_HIDE_CHILDS | 
   GLW_TRANSFORM_LR_TO_UD,
   .gc_child_orientation = GLW_ORIENTATION_VERTICAL,

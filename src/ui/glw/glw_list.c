@@ -56,11 +56,13 @@ typedef struct glw_list {
 
 } glw_list_t;
 
-#define glw_parent_height glw_parent_val[0].i32
-#define glw_parent_width  glw_parent_val[1].i32
-#define glw_parent_pos    glw_parent_val[2].f
-#define glw_parent_inst   glw_parent_val[3].i32
 
+typedef struct glw_list_item {
+  float pos;
+  int16_t height;
+  int16_t width;
+  char inst;
+} glw_list_item_t;
 
 const static float top_plane[4] = {0,-1,0,1};
 const static float bottom_plane[4] = {0,1,0,1};
@@ -168,14 +170,16 @@ glw_list_layout_y(glw_t *w, const glw_rctx_t *rc)
       rc0.rc_height = rc0.rc_width / 10;
     }
 
-    if(c->glw_parent_inst) {
-      c->glw_parent_pos = ypos;
-      c->glw_parent_inst = 0;
+    glw_list_item_t *cd = glw_parent_data(c, glw_list_item_t);
+
+    if(cd->inst) {
+      cd->pos = ypos;
+      cd->inst = 0;
     } else {
-      glw_lp(&c->glw_parent_pos, w->glw_root, ypos, 0.25);
+      glw_lp(&cd->pos, w->glw_root, ypos, 0.25);
     }
 
-    c->glw_parent_height = rc0.rc_height;
+    cd->height = rc0.rc_height;
     c->glw_norm_weight = rc0.rc_height * IH;
     
 
@@ -259,8 +263,10 @@ glw_list_layout_x(glw_t *w, const glw_rctx_t *rc)
       rc0.rc_width = rc0.rc_height;
     }
 
-    c->glw_parent_pos = xpos;
-    c->glw_parent_width = rc0.rc_width;
+    glw_list_item_t *cd = glw_parent_data(c, glw_list_item_t);
+
+    cd->pos = xpos;
+    cd->width = rc0.rc_width;
     c->glw_norm_weight = rc0.rc_width * IW;
     
 
@@ -303,13 +309,15 @@ static void
 glw_list_y_render_one(glw_list_t *l, glw_t *c, int width, int height,
                       const glw_rctx_t *rc0, const glw_rctx_t *rc1)
 {
+  glw_list_item_t *cd = glw_parent_data(c, glw_list_item_t);
+
   int ct, cb;
   int ft, fb;
   glw_root_t *gr = l->w.glw_root;
-  float y = c->glw_parent_pos - l->filtered_pos;
+  float y = cd->pos - l->filtered_pos;
   glw_rctx_t rc2;
 
-  if(!l->noclip && (y + c->glw_parent_height < 0 || y > height)) {
+  if(!l->noclip && (y + cd->height < 0 || y > height)) {
     c->glw_flags |= GLW_CLIPPED;
     return;
   } else {
@@ -323,7 +331,7 @@ glw_list_y_render_one(glw_list_t *l, glw_t *c, int width, int height,
       ft = glw_fader_enable(gr, rc0, top_plane,
                             l->alpha_falloff, l->blur_falloff);
 
-    if(y + c->glw_parent_height > height)
+    if(y + cd->height > height)
       ft = glw_fader_enable(gr, rc0, bottom_plane,
                             l->alpha_falloff, l->blur_falloff);
 	
@@ -331,16 +339,16 @@ glw_list_y_render_one(glw_list_t *l, glw_t *c, int width, int height,
     if(y < 0)
       ct = glw_clip_enable(gr, rc0, GLW_CLIP_TOP, 0);
       
-    if(y + c->glw_parent_height > height)
+    if(y + cd->height > height)
       cb = glw_clip_enable(gr, rc0, GLW_CLIP_BOTTOM, 0);
   }
 
   rc2 = *rc1;
   glw_reposition(&rc2,
                  0,
-                 height - c->glw_parent_pos,
+                 height - cd->pos,
                  width,
-                 height - c->glw_parent_pos - c->glw_parent_height);
+                 height - cd->pos - cd->height);
 
   glw_render0(c, &rc2);
 
@@ -436,8 +444,10 @@ glw_list_render_x(glw_t *w, const glw_rctx_t *rc)
     if(c->glw_flags & GLW_HIDDEN)
       continue;
 
-    x = c->glw_parent_pos - l->filtered_pos;
-    if(!l->noclip && (x + c->glw_parent_width < 0 || x > width)) {
+    glw_list_item_t *cd = glw_parent_data(c, glw_list_item_t);
+
+    x = cd->pos - l->filtered_pos;
+    if(!l->noclip && (x + cd->width < 0 || x > width)) {
       c->glw_flags |= GLW_CLIPPED;
       continue;
     } else {
@@ -451,7 +461,7 @@ glw_list_render_x(glw_t *w, const glw_rctx_t *rc)
 	lf = glw_fader_enable(w->glw_root, &rc0, left_plane,
 			      l->alpha_falloff, l->blur_falloff);
       }
-      if(x + c->glw_parent_width > width)
+      if(x + cd->width > width)
 	rf = glw_fader_enable(w->glw_root, &rc0, right_plane,
 			      l->alpha_falloff, l->blur_falloff);
 
@@ -459,15 +469,15 @@ glw_list_render_x(glw_t *w, const glw_rctx_t *rc)
       if(x < 0)
 	lc = glw_clip_enable(w->glw_root, &rc0, GLW_CLIP_LEFT, 0);
 
-      if(x + c->glw_parent_width > width)
+      if(x + cd->width > width)
 	rclip = glw_clip_enable(w->glw_root, &rc0, GLW_CLIP_RIGHT, 0);
     }
 
     rc2 = rc1;
     glw_reposition(&rc2,
-		   c->glw_parent_pos,
+		   cd->pos,
 		   height,
-		   c->glw_parent_pos + c->glw_parent_width,
+		   cd->pos + cd->width,
 		   0);
     
     glw_render0(c, &rc2);
@@ -502,17 +512,19 @@ glw_list_scroll(glw_list_t *l, glw_scroll_t *gs)
     return;
 
 
-  if(c->glw_parent_pos < top) {
+  glw_list_item_t *cd = glw_parent_data(c, glw_list_item_t);
 
-    while(c != NULL && c->glw_parent_pos < top) {
+  if(cd->pos < top) {
+
+    while(c != NULL && cd->pos < top) {
       c = glw_next_widget(c);
     }
 
     if(c != NULL)
       l->w.glw_focused = c;
-  } else if(c->glw_parent_pos > bottom) {
+  } else if(cd->pos > bottom) {
 
-    while(c != NULL && c->glw_parent_pos > bottom) {
+    while(c != NULL && cd->pos > bottom) {
       c = glw_prev_widget(c);
     }
 
@@ -611,7 +623,7 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   case GLW_SIGNAL_CHILD_CREATED:
   case GLW_SIGNAL_CHILD_UNHIDDEN:
     c = extra;
-    c->glw_parent_inst = 1;
+    glw_parent_data(c, glw_list_item_t)->inst = 1;
   case GLW_SIGNAL_CHILD_MOVED:
     scroll_to_me(l, w->glw_focused);
     break;
@@ -770,6 +782,7 @@ glw_list_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v)
 static glw_class_t glw_list_y = {
   .gc_name = "list_y",
   .gc_instance_size = sizeof(glw_list_t),
+  .gc_parent_data_size = sizeof(glw_list_item_t),
   .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY | GLW_CAN_HIDE_CHILDS | 
   GLW_TRANSFORM_LR_TO_UD,
   .gc_child_orientation = GLW_ORIENTATION_VERTICAL,
@@ -795,6 +808,7 @@ GLW_REGISTER_CLASS(glw_list_y);
 static glw_class_t glw_list_x = {
   .gc_name = "list_x",
   .gc_instance_size = sizeof(glw_list_t),
+  .gc_parent_data_size = sizeof(glw_list_item_t),
   .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY | GLW_CAN_HIDE_CHILDS,
   .gc_child_orientation = GLW_ORIENTATION_HORIZONTAL,
   .gc_nav_descend_mode = GLW_NAV_DESCEND_FOCUSED,

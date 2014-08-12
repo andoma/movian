@@ -35,7 +35,12 @@ typedef struct glw_slideshow {
 
 } glw_slideshow_t;
 
-#define glw_parent_alpha glw_parent_val[0].f
+
+typedef struct glw_slideshow_item {
+  float alpha;
+} glw_slideshow_item_t;
+
+#define itemdata(w) glw_parent_data(w, glw_slideshow_item_t)
 
 /**
  *
@@ -53,24 +58,26 @@ glw_slideshow_render(glw_t *w, const glw_rctx_t *rc)
   if(p == NULL)
     p = glw_last_widget(w, 0);
   if(p != NULL && p != c) {
-    if(p->glw_parent_alpha > 0.01) {
+    float a = glw_parent_data(p, glw_slideshow_item_t)->alpha;
+    if(a > 0.01) {
       rc0 = *rc;
-      rc0.rc_alpha *= p->glw_parent_alpha;
+      rc0.rc_alpha *= a;
       glw_render0(p, &rc0);
     }
   }
 
   rc0 = *rc;
-  rc0.rc_alpha *= c->glw_parent_alpha;
+  rc0.rc_alpha *= glw_parent_data(c, glw_slideshow_item_t)->alpha;
   glw_render0(c, &rc0);
 
   n = glw_next_widget(c);
   if(n == NULL)
     n = glw_first_widget(w);
   if(n != NULL && n != c) {
-    if(n->glw_parent_alpha > 0.01) {
+    float a = glw_parent_data(n, glw_slideshow_item_t)->alpha;
+    if(a > 0.01) {
       rc0 = *rc;
-      rc0.rc_alpha *= n->glw_parent_alpha;
+      rc0.rc_alpha *= a;
       glw_render0(n, &rc0);
     }
   }
@@ -83,9 +90,9 @@ glw_slideshow_render(glw_t *w, const glw_rctx_t *rc)
 static int
 update_parent_alpha(glw_t *w, float v)
 {
-  if(w->glw_parent_alpha == v)
+  if(itemdata(w)->alpha == v)
     return 0;
-  w->glw_parent_alpha = v;
+  itemdata(w)->alpha = v;
   return 1;
 }
 
@@ -99,7 +106,7 @@ glw_slideshow_layout(glw_t *w, const glw_rctx_t *rc)
   glw_root_t *gr = w->glw_root;
   glw_slideshow_t *s = (glw_slideshow_t *)w;
   glw_t *c, *p, *n;
-  float delta;
+  float delta, a;
   int r = 0;
 
   glw_reset_screensaver(w->glw_root);
@@ -130,7 +137,8 @@ glw_slideshow_layout(glw_t *w, const glw_rctx_t *rc)
   }
 
   glw_layout0(c, rc);
-  r |= update_parent_alpha(c, GLW_MIN(c->glw_parent_alpha + delta, 1.0f));
+  a = itemdata(c)->alpha;
+  r |= update_parent_alpha(c, GLW_MIN(a + delta, 1.0f));
 
   /**
    * Keep previous and next images 'hot' (ie, loaded into texture memory)
@@ -139,7 +147,8 @@ glw_slideshow_layout(glw_t *w, const glw_rctx_t *rc)
   if(p == NULL)
     p = glw_last_widget(&s->w, 0);
   if(p != NULL && p != c) {
-    r |= update_parent_alpha(p, GLW_MAX(p->glw_parent_alpha - delta, 0.0f));
+    a = itemdata(p)->alpha;
+    r |= update_parent_alpha(p, GLW_MAX(a - delta, 0.0f));
     glw_layout0(p, rc);
   }
 
@@ -147,7 +156,8 @@ glw_slideshow_layout(glw_t *w, const glw_rctx_t *rc)
   if(n == NULL)
     n = glw_first_widget(&s->w);
   if(n != NULL && n != c) {
-    r |= update_parent_alpha(n, GLW_MAX(n->glw_parent_alpha - delta, 0.0f));
+    a = itemdata(n)->alpha;
+    r |= update_parent_alpha(n, GLW_MAX(a - delta, 0.0f));
     glw_layout0(n, rc);
   }
 
@@ -305,6 +315,7 @@ glw_slideshow_set_roots(glw_t *w, prop_t *self, prop_t *parent, prop_t *clone)
 static glw_class_t glw_slideshow = {
   .gc_name = "slideshow",
   .gc_instance_size = sizeof(glw_slideshow_t),
+  .gc_parent_data_size = sizeof(glw_slideshow_item_t),
   .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_ctor = glw_slideshow_ctor,
   .gc_set_float = glw_slideshow_set_float,

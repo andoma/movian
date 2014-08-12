@@ -28,7 +28,7 @@
 /**
  *
  */
-typedef struct {
+typedef struct glw_playfield {
   glw_t w;
   char fsmode;
 
@@ -36,8 +36,13 @@ typedef struct {
 
 } glw_playfield_t;
 
-#define glw_parent_detached    glw_parent_val[0].ptr
-#define glw_parent_amount      glw_parent_val[1].f
+
+
+typedef struct glw_playfield_item {
+  glw_t *detached;
+  float amount;
+} glw_playfield_item_t;
+
 
 /**
  *
@@ -108,8 +113,10 @@ destroy_detached_callback(glw_t *w, void *opaque,
 {
   glw_t *s = opaque;
   if(signal == GLW_SIGNAL_DESTROY) {
-    assert(s->glw_parent_detached == w);
-    s->glw_parent_detached = NULL;
+
+    glw_playfield_item_t *cd = glw_parent_data(s, glw_playfield_item_t);
+    assert(cd->detached == w);
+    cd->detached = NULL;
   }
   return 0;
 }
@@ -121,13 +128,15 @@ destroy_detached_callback(glw_t *w, void *opaque,
 static void
 detach(glw_t *s, glw_t *d)
 {
-  if(s->glw_parent_detached != NULL) {
-    glw_t *p = s->glw_parent_detached;
+  glw_playfield_item_t *cd = glw_parent_data(s, glw_playfield_item_t);
+
+  if(cd->detached != NULL) {
+    glw_t *p = cd->detached;
     p->glw_class->gc_detach_control(p, 0);
     glw_signal_handler_unregister(p, destroy_detached_callback, s);
   }
 
-  s->glw_parent_detached = d;
+  cd->detached = d;
   if(d != NULL) {
     d->glw_class->gc_detach_control(d, 1);
     glw_signal_handler_register(d, destroy_detached_callback, s);
@@ -157,10 +166,13 @@ playfield_select_child(glw_t *w, glw_t *c, prop_t *origin)
   }
 
   if(c != NULL) {
-    if(w->glw_selected == NULL && w->glw_flags2 & GLW2_NO_INITIAL_TRANS) 
-      c->glw_parent_amount = 1;
 
-    if(c->glw_parent_detached)
+    glw_playfield_item_t *cd = glw_parent_data(c, glw_playfield_item_t);
+
+    if(w->glw_selected == NULL && w->glw_flags2 & GLW2_NO_INITIAL_TRANS) 
+      cd->amount = 1;
+
+    if(cd->detached)
       speed = 0.025;
   }
 
@@ -200,24 +212,26 @@ glw_playfield_layout(glw_t *w, const glw_rctx_t *rc)
 
     s = p->speed;
 
-    float n = c->glw_parent_amount;
+    glw_playfield_item_t *cd = glw_parent_data(c, glw_playfield_item_t);
 
-    if(c->glw_parent_amount < v) {
-      n = GLW_MIN(v, c->glw_parent_amount + s);
-    } else if(c->glw_parent_amount > v) {
-      n = GLW_MAX(v, c->glw_parent_amount - s);
+    float n = cd->amount;
+
+    if(cd->amount < v) {
+      n = GLW_MIN(v, cd->amount + s);
+    } else if(cd->amount > v) {
+      n = GLW_MAX(v, cd->amount - s);
     }
 
-    if(c->glw_parent_amount != n) {
-      c->glw_parent_amount = n;
+    if(cd->amount != n) {
+      cd->amount = n;
       glw_need_refresh(w->glw_root, 0);
     }
 
-    if((c->glw_parent_amount > 0 && c->glw_parent_amount < 2) ||
+    if((cd->amount > 0 && cd->amount < 2) ||
        !w->glw_root->gr_reduce_cpu)
       glw_layout0(c, rc);
 
-    if(c->glw_parent_amount <= 1 && c->glw_parent_detached)
+    if(cd->amount <= 1 && cd->detached)
       detach(c, NULL);
   }
 }
@@ -266,18 +280,20 @@ glw_playfield_render(glw_t *w, const glw_rctx_t *rc)
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
 
-    if(c->glw_parent_amount > 0 && c->glw_parent_amount < 2) {
+    glw_playfield_item_t *cd = glw_parent_data(c, glw_playfield_item_t);
+
+    if(cd->amount > 0 && cd->amount < 2) {
       rc1 = rc0;
-      rc1.rc_alpha *= 1 - fabs(c->glw_parent_amount - 1);
+      rc1.rc_alpha *= 1 - fabs(cd->amount - 1);
       glw_render0(c, &rc1);
     }
 
-    if((d = c->glw_parent_detached) != NULL) {
+    if((d = cd->detached) != NULL) {
       glw_t *dd;
       glw_rctx_t rc2, rc3;
-      float a = GLW_MIN(c->glw_parent_amount, 1);
+      float a = GLW_MIN(cd->amount, 1);
       if(a > 0) {
-	float v = GLW_MAX(c->glw_parent_amount - 1, 0);
+	float v = GLW_MAX(cd->amount - 1, 0);
       
 	v = GLW_S(v);
       
@@ -306,6 +322,7 @@ glw_playfield_render(glw_t *w, const glw_rctx_t *rc)
 static glw_class_t glw_playfield = {
   .gc_name = "playfield",
   .gc_instance_size = sizeof(glw_playfield_t),
+  .gc_parent_data_size = sizeof(glw_playfield_item_t),
   .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_nav_descend_mode = GLW_NAV_DESCEND_SELECTED,
   .gc_layout = glw_playfield_layout,

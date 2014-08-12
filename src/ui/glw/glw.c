@@ -301,7 +301,8 @@ glw_create(glw_root_t *gr, const glw_class_t *class,
   glw_t *w; 
  
    /* Common initializers */
-  w = calloc(1, class->gc_instance_size);
+  w = calloc(1, class->gc_instance_size +
+             (parent ? parent->glw_class->gc_parent_data_size : 0));
   w->glw_root = gr;
   w->glw_class = class;
   w->glw_alpha = 1.0f;
