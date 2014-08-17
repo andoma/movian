@@ -29,6 +29,7 @@
 #include "glw_view.h"
 #include "glw.h"
 #include "glw_event.h"
+#include "glw_style.h"
 #include "backend/backend.h"
 #include "settings.h"
 #include "prop/prop_grouper.h"
@@ -2333,7 +2334,6 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
   }
 
   gps->gps_sub = s;
-
   LIST_INSERT_HEAD(ec->sublist, gps, gps_link);
 
   gps->gps_rpn = ec->passive_subscriptions ? NULL : ec->rpn;
@@ -2773,6 +2773,56 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
   }
 
   return 0;
+}
+
+
+/**
+ *
+ */
+static int
+glwf_style(glw_view_eval_context_t *ec, struct token *self,
+           token_t **argv, unsigned int argc)
+{
+  int r;
+  glw_view_eval_context_t n;
+  token_t *a = argv[0];
+  token_t *b = argv[1];
+
+  if(a->type != TOKEN_IDENTIFIER)
+    return glw_view_seterr(ec->ei, a,
+                           "style: Invalid second argument, "
+                           "expected identifier");
+
+  if(b->type != TOKEN_BLOCK)
+    return glw_view_seterr(ec->ei, b,
+                           "style: Invalid second argument, "
+                           "expected block");
+
+  memset(&n, 0, sizeof(n));
+  n.prop = ec->prop;
+  n.prop_parent = ec->prop_parent;
+  n.prop_viewx = ec->prop_viewx;
+  n.prop_clone = ec->prop_clone;
+  n.prop_args = ec->prop_args;
+  n.ei = ec->ei;
+  n.gr = ec->gr;
+
+  glw_style_t *gs = glw_style_create(ec->w->glw_root, a->t_rstring);
+  n.w = (glw_t *)gs;
+
+  n.sublist = &n.w->glw_prop_subscriptions;
+
+  r = glw_view_eval_block(b, &n);
+
+  if(!r) {
+    // Attach new style to our parent
+    glw_style_set_t *gss = glw_style_set_add(ec->w->glw_styles, gs);
+    glw_style_set_release(ec->w->glw_styles);
+    ec->w->glw_styles = gss;
+  }
+
+
+  return r ? -1 : 0;
 }
 
 
@@ -6248,6 +6298,7 @@ glwf_focus(glw_view_eval_context_t *ec, struct token *self,
 static const token_func_t funcvec[] = {
   {"widget", 1, glwf_widget, NULL, NULL, glwf_resolve_widget_class},
   {"cloner", 3, glwf_cloner},
+  {"style", 2, glwf_style},
   {"space", 1, glwf_space},
   {"onEvent", -1, glwf_onEvent},
   {"navOpen", -1, glwf_navOpen},

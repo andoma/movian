@@ -47,6 +47,8 @@
 
 struct event;
 
+typedef struct glw_style glw_style_t;
+
 TAILQ_HEAD(glw_queue, glw);
 LIST_HEAD(glw_head, glw);
 LIST_HEAD(glw_event_map_list, glw_event_map);
@@ -576,6 +578,11 @@ typedef struct glw_class {
   /**
    *
    */
+  void (*gc_mod_flags2_always)(struct glw *w, int set, int clr);
+
+  /**
+   *
+   */
   void (*gc_set_caption)(struct glw *w, const char *str, int type);
 
   /**
@@ -930,18 +937,11 @@ typedef struct glw_signal_handler {
 LIST_HEAD(glw_signal_handler_list, glw_signal_handler);
 
 
-/**
- * Style binding
- */
-typedef struct glw_style_binding {
-  LIST_ENTRY(glw_style_binding) gsb_widget_link;
-  LIST_ENTRY(glw_style_binding) gsb_style_link;
-  struct glw *gsb_widget;
-  struct glw_style *gsb_style;
-} glw_style_binding_t;
-
-LIST_HEAD(glw_style_binding_list, glw_style_binding);
-
+typedef struct glw_style_set {
+  unsigned int gss_refcount;
+  int gss_numstyles;
+  struct glw_style *gss_styles[0];
+} glw_style_set_t;
 
 /**
  * GL widget
@@ -971,13 +971,20 @@ typedef struct glw {
 
   struct glw_prop_sub_list glw_prop_subscriptions;
 
-  struct glw_style_binding_list glw_style_bindings;
-
   struct token *glw_dynamic_expressions;
 
   Mtx *glw_matrix;
 
   struct glw_clone *glw_clone;
+
+  /**
+   * Styling
+   */
+
+  glw_style_set_t *glw_styles; // List of available styles
+  LIST_ENTRY(glw) glw_style_link;
+  struct glw_style *glw_style; // Current style
+
 
   int glw_refcnt;
 
@@ -1447,7 +1454,6 @@ glw_schedule_refresh(glw_root_t *gr, int64_t when)
 {
   gr->gr_scheduled_refresh = MIN(gr->gr_scheduled_refresh, when);
 }
-
 
 #endif /* GLW_H */
 

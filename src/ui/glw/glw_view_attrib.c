@@ -27,6 +27,9 @@
 #include "misc/strtab.h"
 #include "glw_view.h"
 #include "glw.h"
+#include "glw_event.h"
+#include "glw_style.h"
+
 #include "fileaccess/fileaccess.h" // for relative path resolving
 
 /**
@@ -907,14 +910,19 @@ mod_hidden(glw_view_eval_context_t *ec, const token_attrib_t *a,
 static void
 mod_flags2(glw_t *w, int set, int clr)
 {
+  const glw_class_t *gc = w->glw_class;
+
+  if(gc->gc_mod_flags2_always != NULL)
+    gc->gc_mod_flags2_always(w, set, clr);
+
   set &= ~w->glw_flags2;
   w->glw_flags2 |= set;
 
   clr &= w->glw_flags2;
   w->glw_flags2 &= ~clr;
 
-  if((set | clr) && w->glw_class->gc_mod_flags2 != NULL)
-    w->glw_class->gc_mod_flags2(w, set, clr);
+  if((set | clr) && gc->gc_mod_flags2 != NULL)
+    gc->gc_mod_flags2(w, set, clr);
   glw_need_refresh(w->glw_root, 0);
 }
 
@@ -1141,7 +1149,40 @@ set_page(glw_view_eval_context_t *ec, const token_attrib_t *a,
 /**
  *
  */
+static int
+set_style(glw_view_eval_context_t *ec, const token_attrib_t *a,
+          struct token *t)
+{
+  const char *str;
+
+  switch(t->type) {
+  default:
+    str = NULL;
+    break;
+
+  case TOKEN_CSTRING:
+    str = t->t_cstring;
+    break;
+
+  case TOKEN_RSTRING:
+  case TOKEN_LINK:
+    str = rstr_get(t->t_rstring);
+    break;
+  }
+
+  int r = glw_style_set_for_widget(ec->w, str);
+  if(r)
+    attr_need_refresh(ec->w->glw_root, t, a, r);
+  return 0;
+}
+
+
+/**
+ *
+ */
 static const token_attrib_t attribtab[] = {
+  {"style",           set_style},
+
   {"id",              set_rstring, 0, set_id_rstr},
   {"how",             set_rstring, 0, set_how_rstr},
   {"description",     set_rstring, 0, set_description_rstr},

@@ -36,6 +36,7 @@
 #include "glw_texture.h"
 #include "glw_view.h"
 #include "glw_event.h"
+#include "glw_style.h"
 
 static void glw_focus_init_widget(glw_t *w, float weight);
 static void glw_focus_leave(glw_t *w);
@@ -310,6 +311,9 @@ glw_create(glw_root_t *gr, const glw_class_t *class,
   w->glw_refcnt = 1;
   w->glw_alignment = class->gc_default_alignment;
   w->glw_flags2 = GLW2_ENABLED | GLW2_NAV_FOCUSABLE;
+
+  if(likely(parent != NULL))
+    w->glw_styles = glw_style_set_retain(parent->glw_styles);
 
   LIST_INSERT_HEAD(&gr->gr_active_dummy_list, w, glw_active_link);
 
@@ -602,6 +606,9 @@ glw_destroy(glw_t *w)
 
     glw_remove_from_parent(w, p);
   }
+
+  glw_style_bind(w, NULL);
+  glw_style_set_release(w->glw_styles);
 
   rstr_release(w->glw_id_rstr);
 
@@ -2270,6 +2277,10 @@ glw_hide(glw_t *w)
   if(w->glw_flags & GLW_HIDDEN)
     return;
   w->glw_flags |= GLW_HIDDEN;
+
+  if(unlikely(w->glw_parent == NULL))
+     return; // For style widgets
+
   glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_HIDDEN, w);
 
   if(glw_is_focused(w))
@@ -2283,6 +2294,10 @@ glw_unhide(glw_t *w)
   if(!(w->glw_flags & GLW_HIDDEN))
     return;
   w->glw_flags &= ~GLW_HIDDEN;
+
+  if(unlikely(w->glw_parent == NULL))
+     return; // For style widgets
+
   glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_UNHIDDEN, w);
 }
 

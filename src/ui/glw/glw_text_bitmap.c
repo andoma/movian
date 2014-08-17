@@ -1329,7 +1329,7 @@ glw_text_bitmap_get_text(glw_t *w)
 /**
  *
  */
-static void 
+static void
 mod_flags2(glw_t *w, int set, int clr)
 {
   glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
