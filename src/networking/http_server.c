@@ -1210,4 +1210,16 @@ http_server_init(void)
   }
 }
 
+/**
+ *
+ */
+void
+http_req_args_fill_htsmsg(http_connection_t *hc, htsmsg_t *msg)
+{
+  http_header_t *hh;
+
+  LIST_FOREACH(hh, &hc->hc_req_args, hh_link)
+    htsmsg_add_str(msg, hh->hh_key, hh->hh_value);
+}
+
 INITME(INIT_GROUP_ASYNCIO, http_server_init);

@@ -24,6 +24,7 @@
 
 #include "showtime.h"
 #include "htsmsg/htsbuf.h"
+#include "htsmsg/htsmsg.h"
 #include "misc/strtab.h"
 #include "http.h"
 #include "asyncio.h"
@@ -85,6 +86,7 @@ void *http_get_post_data(http_connection_t *hc, size_t *sizep, int steal);
 void http_set_response_hdr(http_connection_t *hc, const char *name,
 			   const char *value);
 
+void http_req_args_fill_htsmsg(http_connection_t* hc, htsmsg_t* msg);
 
 extern int http_server_port; // XXX
 
