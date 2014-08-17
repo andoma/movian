@@ -471,6 +471,25 @@ gtb_set_constraints(glw_root_t *gr, glw_text_bitmap_t *gtb,
 }
 
 
+static void
+gtb_recompute_constraints_after_padding_change(glw_text_bitmap_t *gtb,
+                                               const int16_t oldpad[4])
+{
+  glw_t *w = &gtb->w;
+  int flags = w->glw_flags & (GLW_CONSTRAINT_Y | GLW_CONSTRAINT_X);
+  if(flags == 0)
+    return;
+
+  const int xs = w->glw_req_size_x - oldpad[0] - oldpad[2] +
+    gtb->gtb_padding[0] + gtb->gtb_padding[2];
+
+  const int ys = w->glw_req_size_y - oldpad[1] - oldpad[3] +
+    gtb->gtb_padding[1] + gtb->gtb_padding[3];
+
+  glw_set_constraints(w, xs, ys, 0, flags);
+}
+
+
 /**
  *
  */
@@ -816,11 +835,14 @@ static int
 gtb_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v)
 {
   glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
-
+  int16_t oldpad[4];
   switch(attrib) {
   case GLW_ATTRIB_PADDING:
+    memcpy(oldpad, gtb->gtb_padding, 4 * sizeof(int16_t));
     if(!glw_attrib_set_int16_4(gtb->gtb_padding, v))
       return 0;
+
+    gtb_recompute_constraints_after_padding_change(gtb, oldpad);
     gtb->gtb_need_layout = 1;
     return 1;
   default:
