@@ -31,6 +31,8 @@
 #include "backend/backend.h"
 #include "notifications.h"
 #include "fileaccess/fileaccess.h"
+#include "htsmsg/htsmsg.h"
+#include "htsmsg/htsmsg_json.h"
 
 #define STRINGIFY(A)  #A
 
@@ -702,6 +704,25 @@ hc_static(http_connection_t *hc, const char *remain, void *opaque,
   return hc_serve_file(hc, path, NULL);
 }
 
+/**
+ *
+ */
+int plugin_open(http_connection_t* hc, const char* remain, void *opaque, http_cmd_t method);
+
+int plugin_open(http_connection_t* hc, const char* remain, void *opaque, http_cmd_t method)
+{
+    htsmsg_t *msg = htsmsg_create_map();
+    http_req_args_fill_htsmsg(hc, msg);
+    
+    htsbuf_queue_t buf;
+    htsbuf_queue_init(&buf, 0);
+    
+    htsbuf_qprintf(&buf, "%s:%s", remain, htsmsg_json_serialize_to_str(msg, 0));
+    event_dispatch(event_create_openurl(htsbuf_to_string(&buf), NULL, NULL, NULL, NULL, NULL));
+    htsbuf_queue_flush(&buf);
+    htsmsg_release(msg);
+    return http_redirect(hc, "/");
+}
 
 /**
  *
@@ -725,6 +746,7 @@ httpcontrol_init(void)
   http_path_add("/", NULL, hc_root, 1);
   http_path_add("/favicon.ico", NULL, hc_favicon, 1);
   http_path_add("/showtime/static", NULL, hc_static, 0);
+  http_path_add("/plugin/open", NULL, plugin_open, 0);
 }
 
 INITME(INIT_GROUP_API, httpcontrol_init);
