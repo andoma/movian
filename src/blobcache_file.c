@@ -42,6 +42,7 @@
 #include "settings.h"
 #include "notifications.h"
 #include "misc/minmax.h"
+#include "fileaccess/fileaccess.h"
 
 // Flags
 
@@ -112,8 +113,8 @@ static hts_thread_t bcthread;
 static int bcrun = 1;
 static int index_dirty;
 
-#define BLOB_CACHE_MINSIZE  (10 * 1000 * 1000)
-#define BLOB_CACHE_MAXSIZE (500 * 1000 * 1000)
+#define BLOB_CACHE_MINSIZE   (10 * 1000 * 1000)
+#define BLOB_CACHE_MAXSIZE (1000 * 1000 * 1000)
 
 static uint64_t current_cache_size;
 
@@ -124,9 +125,16 @@ static uint64_t current_cache_size;
 static uint64_t
 blobcache_compute_maxsize(void)
 {
-  uint64_t avail = arch_cache_avail_bytes() + current_cache_size;
-  avail = MAX(BLOB_CACHE_MINSIZE, MIN(avail / 10, BLOB_CACHE_MAXSIZE));
-  return avail;
+  char path[PATH_MAX];
+  fa_fsinfo_t ffi;
+
+  snprintf(path, sizeof(path), "file://%s", gconf.cache_path);
+  if(!fa_fsinfo(path, &ffi)) {
+    uint64_t avail = ffi.ffi_avail + current_cache_size;
+    avail = MAX(BLOB_CACHE_MINSIZE, MIN(avail / 10, BLOB_CACHE_MAXSIZE));
+    return avail;
+  }
+  return BLOB_CACHE_MINSIZE;
 }
 
 
@@ -729,13 +737,10 @@ accesstimecmp(const void *A, const void *B)
  *
  */
 static void
-prune_to_size(void)
+prune_to_size(uint64_t maxsize)
 {
   int i, tot = 0, j = 0;
   blobcache_item_t *p, **sv;
-
-  uint64_t maxsize = blobcache_compute_maxsize();
-
 
   for(i = 0; i < ITEM_HASH_SIZE; i++)
     for(p = hashvector[i]; p != NULL; p = p->bi_link)
@@ -898,8 +903,10 @@ flushthread(void *aux)
     buf_release(bf->bf_buf);
     pool_put(item_pool, bf);
 
-    if(blobcache_compute_maxsize() < current_cache_size)
-      prune_to_size();
+    uint64_t maxsize = blobcache_compute_maxsize();
+
+    if(maxsize < current_cache_size)
+      prune_to_size(maxsize);
   }
   save_index();
   hts_mutex_unlock(&cache_lock);
@@ -929,12 +936,18 @@ blobcache_init(void)
   hts_cond_init(&cache_cond, &cache_lock);
   item_pool = pool_create("blobcacheitems", sizeof(blobcache_item_t), 0);
 
+
   load_index();
   prune_stale();
-  prune_to_size();
+
+  uint64_t maxsize = blobcache_compute_maxsize();
+  prune_to_size(maxsize);
+
   TRACE(TRACE_INFO, "blobcache",
-	"Initialized: %d items consuming %"PRId64" bytes on disk in %s",
-	pool_num(item_pool), current_cache_size, buf);
+	"Initialized: %d items consuming %.2f MB "
+        "(out of maximum %.2f MB) on disk in %s",
+	pool_num(item_pool), current_cache_size / 1000000.0,
+        maxsize / 1000000.0, buf);
 
   settings_create_action(gconf.settings_general, _p("Clear cached files"),
 			 cache_clear, NULL, 0, NULL);

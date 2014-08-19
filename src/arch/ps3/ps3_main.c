@@ -403,12 +403,6 @@ ps3_early_init(int argc, char **argv)
 }
 
 
-int64_t
-arch_cache_avail_bytes(void)
-{
-  return 1024 * 1024 * 1024;
-}
-
 /**
  *
  */

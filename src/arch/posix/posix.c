@@ -230,19 +230,6 @@ showtime_get_ts(void)
 #endif
 }
 
-/**
- *
- */
-int64_t
-arch_cache_avail_bytes(void)
-{
-  struct statvfs buf;
-
-  if(gconf.cache_path == NULL || statvfs(gconf.cache_path, &buf))
-    return 0;
-
-  return buf.f_bfree * buf.f_bsize;
-}
 
 /**
  *
