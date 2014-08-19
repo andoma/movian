@@ -47,7 +47,7 @@ webpopup_finalize_result(webpopup_result_t *wr)
       *k++ = 0;
       
       char *v = strchr(k, '=');
-      int kl, vl;
+      int kl, vl = 0;
 
       char *n = strchr(k, '&');
 
