@@ -69,6 +69,7 @@ torrent_scandir(fa_protocol_t *fap, fa_dir_t *fd, const char *url,
     fa_dir_add(fd, buf, tf->tf_name,
                tf->tf_size ? CONTENT_FILE : CONTENT_DIR);
   }
+  torrent_release(to);
   hts_mutex_unlock(&bittorrent_mutex);
   return 0;
 }
@@ -243,6 +244,9 @@ torrent_deadline(fa_handle_t *fh, int deadline)
 }
 
 
+/**
+ *
+ */
 typedef struct torrent_fh_ref {
   fa_handle_t h;
   torrent_t *to;
@@ -264,7 +268,6 @@ torrent_reference(fa_protocol_t *fap, const char *url)
   torrent_fh_ref_t *tfr = malloc(sizeof(torrent_fh_ref_t));
   tfr->h.fh_proto = fap;
   tfr->to = to;
-  to->to_refcount++;
   hts_mutex_unlock(&bittorrent_mutex);
   return &tfr->h;
 }
