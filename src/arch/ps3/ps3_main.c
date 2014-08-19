@@ -75,6 +75,7 @@ mftb(void)
 static prop_t *sysprop;
 static prop_t *memprop;
 static prop_t *tempprop;
+static prop_t *hddprop;
 
 #define LOW_MEM_LOW_WATER  5 * 1024 * 1024
 #define LOW_MEM_HIGH_WATER 15 * 1024 * 1024
@@ -137,6 +138,19 @@ memlogger_fn(callout_t *co, void *aux)
   prop_set(tempprop, "cpu", PROP_SET_INT, temp >> 24);
   Lv2Syscall2(383, 1, (uint64_t)&temp); // RSX temp
   prop_set(tempprop, "gpu", PROP_SET_INT, temp >> 24);
+
+  uint64_t size, avail;
+
+  int r = Lv2Syscall3(840,
+                      (uint64_t)"/dev_hdd0/game/HTSS00003/",
+                      (uint64_t)&size,
+                      (uint64_t)&avail);
+
+  if(!r) {
+    prop_set(hddprop, "avail", PROP_SET_FLOAT, avail / 1000000000.0);
+    prop_set(hddprop, "size", PROP_SET_FLOAT,   size / 1000000000.0);
+  }
+
 }
 
 
@@ -578,6 +592,7 @@ main(int argc, char **argv)
   sysprop = prop_create(prop_get_global(), "system");
   memprop = prop_create(sysprop, "mem");
   tempprop = prop_create(sysprop, "temp");
+  hddprop = prop_create(sysprop, "hdd");
   callout_arm(&memlogger, memlogger_fn, NULL, 1);
 
 #if ENABLE_PS3_VDEC

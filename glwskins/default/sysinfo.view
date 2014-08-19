@@ -97,7 +97,10 @@ widget(container_y, {
           InfoLine(_("GPU Temp"),
                    fmt("%d°C", $global.system.temp.gpu),
 		   isVoid($global.system.temp.gpu));
-	  
+          InfoLine(_("HDD Avail"),
+                   fmt("%.1f / %.1f GB", $global.system.hdd.avail,
+                       $global.system.hdd.size),
+		   isVoid($global.system.hdd.avail));
           cloner($global.system.cpuinfo.cpus, container_z, {
             InfoBar($self.name, $self.load)
           });
