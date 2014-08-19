@@ -138,9 +138,6 @@ es_http_req(duk_context *ctx)
     if(httpargs)
       strvec_free(httpargs);
 
-    if(postdata != NULL)
-      htsbuf_queue_flush(postdata);
-
     if(n)
       duk_error(ctx, DUK_ERR_ERROR, "HTTP request failed %s -- %s",
                 url, errbuf);

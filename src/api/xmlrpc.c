@@ -298,8 +298,6 @@ xmlrpc_request(const char *url, const char *method, htsmsg_t *params,
                    HTTP_POSTDATA(&q, "text/xml"),
                    NULL);
 
-  htsbuf_queue_flush(&q);
-
   if(n)
     return NULL;
   xml = htsmsg_xml_deserialize_buf(result, errbuf, errlen);

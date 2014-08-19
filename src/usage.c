@@ -103,8 +103,6 @@ send_report(void *aux)
            HTTP_POSTDATA(&hq, "application/json"),
            NULL);
 
-  htsbuf_queue_flush(&hq);
-
   htsmsg_release(m);
   return NULL;
 }

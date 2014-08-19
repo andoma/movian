@@ -100,8 +100,6 @@ soap_exec(const char *uri, const char *service, int version, const char *method,
                HTTP_REQUEST_HEADER("SOAPACTION", tmp),
                NULL);
 
-  htsbuf_queue_flush(&post);
-
   if(r)
     return -1;
 

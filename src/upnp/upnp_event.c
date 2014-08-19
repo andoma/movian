@@ -104,7 +104,6 @@ upnp_event_send_and_free(send_event_t *set)
            HTTP_CONNECT_TIMEOUT(700),
            NULL);
   http_headers_free(&set->hdrs);
-  htsbuf_queue_flush(&set->out);
   free(set->url);
   free(set);
 }

@@ -446,9 +446,6 @@ js_http_request(JSContext *cx, jsval *rval,
     if(httpargs != NULL)
       strvec_free(httpargs);
 
-    if(postdata != NULL)
-      htsbuf_queue_flush(postdata);
-
     if(n) {
       JS_ReportError(cx, errbuf);
       http_headers_free(&request_headers);
