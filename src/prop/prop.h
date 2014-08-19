@@ -498,6 +498,8 @@ void prop_test(void);
 
 #ifdef PROP_DEBUG
 extern int prop_trace;
+void prop_track_sub(prop_sub_t *s);
 #endif
+
 
 #endif /* PROP_H__ */

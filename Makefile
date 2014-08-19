@@ -73,6 +73,7 @@ SRCS += src/showtime.c \
 	src/blobcache_file.c \
 	src/i18n.c \
 	src/prop/prop_core.c \
+	src/prop/prop_test.c \
 	src/prop/prop_nodefilter.c \
 	src/prop/prop_tags.c \
 	src/prop/prop_vector.c \

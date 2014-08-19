@@ -35,6 +35,7 @@
 #include "event.h"
 #ifdef PROP_DEBUG
 int prop_trace;
+static prop_sub_t *track_sub;
 #endif
 
 hts_mutex_t prop_mutex;
@@ -3672,6 +3673,15 @@ retarget_subscription(prop_t *p, prop_sub_t *s, prop_sub_t *skipme,
 {
   int equal;
 
+
+#ifdef PROP_DEBUG
+  if(s == track_sub) {
+    printf("Tracked sub %p got attached to %s previously at %s\n",
+           s, prop_get_DN(p, 7), prop_get_DN(s->hps_value_prop, 7));
+  }
+
+#endif
+
   if(s->hps_value_prop != NULL) {
 
     if(s->hps_value_prop == p)
@@ -5030,6 +5040,27 @@ prop_destroy_marked_childs(prop_t *p)
 }
 
 
+#ifdef PROP_SUB_RECORD_SOURCE
+
+static void
+printorigins(prop_sub_t *s)
+{
+  if(!s->hps_origin)
+    return;
+  fprintf(stderr, "{");
+  if(!s->hps_multiple_origins) {
+    fprintf(stderr, "%p", s->hps_origin);
+  } else {
+    prop_originator_tracking_t *pot;
+
+    for(pot = s->hps_pots; pot != NULL; pot = pot->pot_next)
+      fprintf(stderr, "%p%s", pot->pot_p, pot->pot_next ? " " : "");
+  }
+  fprintf(stderr, "} ");
+}
+#endif
+
+
 /**
  *
  */
@@ -5103,6 +5134,7 @@ prop_print_tree0(prop_t *p, int indent, int flags)
       fprintf(stderr, "%*.s \033[1mV-Subscriber: ", indent, "");
 #ifdef PROP_SUB_RECORD_SOURCE
       fprintf(stderr, "%s:%d ", s->hps_file, s->hps_line);
+      printorigins(s);
 #endif
       fprintf(stderr, "[%s] @ %p p=%p\033[0m\n",
         prop_get_DN(s->hps_canonical_prop, 1), s, s->hps_canonical_prop);
@@ -5181,52 +5213,27 @@ prop_report_stats(callout_t *c, void *aux)
 
 #endif
 
+extern void prop_test(void);
+
 void
 prop_init_late(void)
 {
 #ifdef PROP_SUB_STATS
   callout_arm(&prop_stats_callout, prop_report_stats, NULL, 1);
 #endif
+
+#if 0
+  prop_test();
+  exit(0);
+#endif
 }
 
 
-
-/**
- *
- */
-static void 
-prop_test_subscriber(prop_sub_t *s, prop_event_t event, ...)
-{
-}
-
-
-
-#define TEST_COURIERS 100
-
+#ifdef PROP_DEBUG
 void
-prop_test(void)
+prop_track_sub(prop_sub_t *s)
 {
-  int i;
-
-  prop_courier_t *couriers[TEST_COURIERS];
-  hts_mutex_t mtx[TEST_COURIERS];
-
-  prop_t *p = prop_create_root(NULL);
-
-  for(i = 0; i < TEST_COURIERS; i++) {
-    hts_mutex_init(&mtx[i]);
-    couriers[i] = prop_courier_create_thread(&mtx[i], "test", 0);
-
-    prop_subscribe(0,
-		   PROP_TAG_CALLBACK, prop_test_subscriber, NULL,
-		   PROP_TAG_COURIER, couriers[i],
-		   PROP_TAG_ROOT, p,
-		   NULL);
-  }
-
-  while(1) {
-    prop_set_int(p, i++);
-    usleep(1);
-  }
-  sleep(10000);
+  track_sub = s;
 }
+
+#endif

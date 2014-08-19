@@ -703,6 +703,22 @@ hc_static(http_connection_t *hc, const char *remain, void *opaque,
 }
 
 
+#ifdef PROP_DEBUG
+/**
+ *
+ */
+static int
+hc_subtrack(http_connection_t *hc, const char *remain, void *opaque,
+	   http_cmd_t method)
+{
+  if(remain == NULL)
+    return 404;
+  void *ptr = (void *)(intptr_t)strtol(remain, NULL, 16);
+  prop_track_sub(ptr);
+  return 200;
+}
+#endif
+
 /**
  *
  */
@@ -725,6 +741,10 @@ httpcontrol_init(void)
   http_path_add("/", NULL, hc_root, 1);
   http_path_add("/favicon.ico", NULL, hc_favicon, 1);
   http_path_add("/showtime/static", NULL, hc_static, 0);
+
+#ifdef PROP_DEBUG
+  http_path_add("/subtrack", NULL, hc_subtrack, 0);
+#endif
 }
 
 INITME(INIT_GROUP_API, httpcontrol_init);
