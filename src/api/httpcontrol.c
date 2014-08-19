@@ -707,9 +707,7 @@ hc_static(http_connection_t *hc, const char *remain, void *opaque,
 /**
  *
  */
-int plugin_open(http_connection_t* hc, const char* remain, void *opaque, http_cmd_t method);
-
-int plugin_open(http_connection_t* hc, const char* remain, void *opaque, http_cmd_t method)
+static int plugin_open(http_connection_t* hc, const char* remain, void *opaque, http_cmd_t method)
 {
     htsmsg_t *msg = htsmsg_create_map();
     http_req_args_fill_htsmsg(hc, msg);
@@ -718,7 +716,9 @@ int plugin_open(http_connection_t* hc, const char* remain, void *opaque, http_cm
     htsbuf_queue_init(&buf, 0);
     
     htsbuf_qprintf(&buf, "%s:%s", remain, htsmsg_json_serialize_to_str(msg, 0));
-    event_dispatch(event_create_openurl(htsbuf_to_string(&buf), NULL, NULL, NULL, NULL, NULL));
+    char* s = htsbuf_to_string(&buf);
+    event_dispatch(event_create_openurl(s, NULL, NULL, NULL, NULL, NULL));
+    free(s);
     htsbuf_queue_flush(&buf);
     htsmsg_release(msg);
     return http_redirect(hc, "/");
@@ -746,7 +746,7 @@ httpcontrol_init(void)
   http_path_add("/", NULL, hc_root, 1);
   http_path_add("/favicon.ico", NULL, hc_favicon, 1);
   http_path_add("/showtime/static", NULL, hc_static, 0);
-  http_path_add("/plugin/open", NULL, plugin_open, 0);
+  http_path_add("/showtime/plugin", NULL, plugin_open, 0);
 }
 
 INITME(INIT_GROUP_API, httpcontrol_init);
