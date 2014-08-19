@@ -1306,7 +1306,7 @@ fa_fsinfo(const char *url, fa_fsinfo_t *ffi)
   if(fap->fap_fsinfo == NULL) {
     r = FAP_NOT_SUPPORTED;
   } else {
-    r = fap->fap_fsinfo(fap, url, ffi);
+    r = fap->fap_fsinfo(fap, filename, ffi);
   }
   fap_release(fap);
   free(filename);
