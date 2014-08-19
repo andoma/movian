@@ -699,9 +699,14 @@ nav_back(navigator_t *nav)
   if(np != NULL &&
      (prev = TAILQ_PREV(np, nav_page_queue, np_history_link)) != NULL) {
 
+    const int doclose = np->np_direct_close || gconf.enable_nav_always_close;
+
+    if(doclose)
+      prop_unlink(prop_create(np->np_prop_root, "origin"));
+
     nav_select(nav, prev, NULL);
 
-    if(np->np_direct_close || gconf.enable_nav_always_close)
+    if(doclose)
       nav_close(np, 1);
   }
 }

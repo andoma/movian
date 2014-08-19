@@ -179,6 +179,8 @@ be_prop_open(prop_t *page, const char *url, int sync)
 		   PROP_TAG_ROOT, page,
 		   NULL);
 
+  prop_set(page, "directClose", PROP_SET_INT, 1);
+
   prop_link(pp->pp_model, prop_create(page, "model"));
   hts_mutex_unlock(&pp_mutex);
   return 0;
