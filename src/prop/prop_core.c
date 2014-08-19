@@ -3908,7 +3908,7 @@ restore_and_descend(prop_t *dst, prop_t *src, prop_sub_t *skipme,
 
     } else {
 
-      prop_originator_tracking_t *pot, **prev = &s->hps_pots, *pot2;
+      prop_originator_tracking_t *pot, **prev = &s->hps_pots;
 
       while((pot = *prev) != NULL) {
 	if(pot->pot_p == broken_link)
@@ -3918,19 +3918,16 @@ restore_and_descend(prop_t *dst, prop_t *src, prop_sub_t *skipme,
 
       if(pot == NULL)
 	continue;
-      
-      *prev = NULL;
 
-      do {
-	pot2 = pot->pot_next;
-	prop_ref_dec_locked(pot->pot_p);
-	pool_put(pot_pool, pot);
-	pot = pot2;
-      } while(pot != NULL);
+      // Delete pot
 
-      if(s->hps_pots == NULL) {
-	s->hps_multiple_origins = 0;
-      } else if(s->hps_pots->pot_next == NULL) {
+      *prev = pot->pot_next;
+      prop_ref_dec_locked(pot->pot_p);
+      pool_put(pot_pool, pot);
+
+      // If only one pot remains, transform into single ref
+
+      if(s->hps_pots->pot_next == NULL) {
 	pot = s->hps_pots;
 	s->hps_multiple_origins = 0;
 	s->hps_origin = pot->pot_p;
