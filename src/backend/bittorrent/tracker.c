@@ -27,11 +27,12 @@
 
 #include "bittorrent.h"
 
-static int tracker_debug = 0;
+static int tracker_debug = 1;
 
 static int txid_gen;
 static struct tracker_list trackers;
 static asyncio_fd_t *tracker_udp_fd;
+static int tracker_new_torrent_signal;
 
 
 static void
@@ -224,6 +225,8 @@ torrent_tracker_announce(torrent_tracker_t *tt, int event)
   tracker_t *t = tt->tt_tracker;
   const torrent_t *to = tt->tt_torrent;
 
+  tt->tt_tentative = 0;
+
   tt->tt_txid = ++txid_gen;
 
   tracker_trace(t, "Sending annouce for \"%s\" event:%d txid:0x%x",
@@ -244,6 +247,7 @@ torrent_tracker_announce(torrent_tracker_t *tt, int event)
   wr32_be(out + 92, -1);
   wr16_be(out + 96, 43213);
   asyncio_udp_send(tracker_udp_fd, out, 98, &t->t_addr);
+  asyncio_timer_arm(&tt->tt_timer, async_now + tt->tt_interval * 1000000LL);
 }
 
 
@@ -267,7 +271,6 @@ torrent_tracker_periodic(void *aux)
   }
 
   torrent_tracker_announce(tt, 2);
-  asyncio_timer_arm(&tt->tt_timer, async_now + tt->tt_interval * 1000000LL);
 }
 
 
@@ -278,12 +281,14 @@ void
 tracker_add_torrent(tracker_t *tr, torrent_t *to)
 {
   torrent_tracker_t *tt = calloc(1, sizeof(torrent_tracker_t));
-  tt->tt_interval = 60;
+  tt->tt_interval = 15;
   tt->tt_tracker = tr;
   tt->tt_torrent = to;
+  tt->tt_tentative = 1;
   LIST_INSERT_HEAD(&to->to_trackers, tt, tt_torrent_link);
   LIST_INSERT_HEAD(&tr->t_torrents, tt, tt_tracker_link);
   asyncio_timer_init(&tt->tt_timer, torrent_tracker_periodic, tt);
+  asyncio_wakeup_worker(tracker_new_torrent_signal);
 }
 
 
@@ -299,6 +304,20 @@ torrent_announce_all(torrent_t *to)
     if(tt->tt_tracker->t_state == TRACKER_STATE_CONNECTED)
       torrent_tracker_announce(tt, 2);
 }
+/**
+ *
+ */
+static void
+tracker_announce_all(tracker_t *t)
+{
+  torrent_tracker_t *tt;
+
+  LIST_FOREACH(tt, &t->t_torrents, tt_tracker_link)
+    if(tt->tt_torrent != NULL)
+      torrent_tracker_announce(tt, 2);
+}
+
+
 
 
 /**
@@ -320,13 +339,7 @@ tracker_udp_handle_connect_reply(tracker_t *t, const uint8_t *data, int size)
   tracker_trace(t, "Connected to tracker");
   asyncio_timer_disarm(&t->t_timer);
   t->t_state = TRACKER_STATE_CONNECTED;
-
-  torrent_tracker_t *tt;
-
-  LIST_FOREACH(tt, &t->t_torrents, tt_tracker_link) {
-    if(tt->tt_torrent != NULL)
-      torrent_tracker_announce(tt, 2);
-  }
+  tracker_announce_all(t);
 }
 
 /**
@@ -494,6 +507,19 @@ tracker_remove_torrent(torrent_t *to)
 }
 
 
+static void
+tracker_new_torrent(void)
+{
+  tracker_t *t;
+  torrent_tracker_t *tt;
+
+  LIST_FOREACH(t, &trackers, t_link)
+    LIST_FOREACH(tt, &t->t_torrents, tt_tracker_link)
+      if(tt->tt_tentative)
+        torrent_tracker_announce(tt, 2);
+}
+
+
 /**
  *
  */
@@ -508,6 +534,7 @@ trackers_init(void)
 
   tracker_udp_fd = asyncio_udp_bind("bittorrent udp tracker",
 				    0, tracker_udp_input, NULL, 0);
+  tracker_new_torrent_signal = asyncio_add_worker(tracker_new_torrent);
 }
 
 INITME(INIT_GROUP_ASYNCIO, trackers_init);

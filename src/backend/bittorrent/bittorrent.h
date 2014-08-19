@@ -390,7 +390,8 @@ typedef struct torrent_tracker {
   uint32_t tt_interval;
   uint32_t tt_leechers;
   uint32_t tt_seeders;
-  uint32_t tt_attempt;
+  uint8_t tt_attempt;
+  uint8_t tt_tentative;
 
 } torrent_tracker_t;
 
