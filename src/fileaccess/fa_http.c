@@ -29,11 +29,13 @@
 #include <assert.h>
 #include <zlib.h>
 
+#include "showtime.h"
+
 #include "keyring.h"
 #include "fileaccess.h"
 #include "networking/net.h"
 #include "fa_proto.h"
-#include "showtime.h"
+#include "task.h"
 #include "htsmsg/htsmsg_xml.h"
 #include "htsmsg/htsmsg_store.h"
 #include "misc/str.h"
@@ -2748,6 +2750,9 @@ typedef struct http_req_aux {
 
   struct http_header_list *headers_out;
 
+  void (*async_callback)(void *opaque, int error);
+  void *async_opaque;
+
 } http_req_aux_t;
 
 /**
@@ -3186,8 +3191,22 @@ hra_free(http_req_aux_t *hra)
 /**
  *
  */
+static void
+http_req_async(void *opaque)
+{
+  http_req_aux_t *hra = opaque;
+  int r = http_req_do(hra);
+  hra->async_callback(hra->async_opaque, r);
+  hra_free(hra);
+}
+
+/**
+ *
+ */
 int
-http_req(const char *url, ...)
+http_reqv(const char *url, va_list ap,
+          void (*async_callback)(void *opaque, int error),
+          void *async_opaque)
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   http_req_aux_t *hra = calloc(1, sizeof(http_req_aux_t));
@@ -3200,9 +3219,6 @@ http_req(const char *url, ...)
   int i32;
 
   TAILQ_INIT(&hra->query_args);
-
-  va_list ap;
-  va_start(ap, url);
 
   hra->decoded_data = append_waste;
   htsbuf_queue_init(&hra->postdata, 0);
@@ -3321,10 +3337,15 @@ http_req(const char *url, ...)
       hf->hf_read_timeout = va_arg(ap, int);
       break;
 
+      break;
+
     default:
       abort();
     }
   }
+
+  hra->async_callback = async_callback;
+  hra->async_opaque   = async_opaque;
 
   if(hra->headers_out != NULL)
     LIST_INIT(hra->headers_out);
@@ -3334,7 +3355,30 @@ http_req(const char *url, ...)
   hf->hf_url = strdup(url);
 
   hra->hf = hf;
+
+  if(hra->async_callback != NULL) {
+    task_run(http_req_async, hra);
+    return 0;
+  }
+
   int r = http_req_do(hra);
   hra_free(hra);
   return r;
 }
+
+
+
+/**
+ *
+ */
+int
+http_req(const char *url, ...)
+{
+  va_list ap;
+  va_start(ap, url);
+  int r = http_reqv(url, ap, NULL, NULL);
+  va_end(ap);
+  return r;
+}
+
+

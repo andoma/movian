@@ -413,6 +413,10 @@ enum {
 
 int http_req(const char *url, ...) attribute_null_sentinel;
 
+int http_reqv(const char *url, va_list ap,
+              void (*async_callback)(void *opaque, int error),
+              void *async_opaque);
+
 int http_client_oauth(struct http_auth_req *har,
 		      const char *consumer_key,
 		      const char *consumer_secret,
