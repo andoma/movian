@@ -321,6 +321,14 @@ bencode_deserialize(const char *src, const char *stop,
   const char *errmsg;
   const char *errp;
 
+
+  if(src == stop) {
+    snprintf(errbuf, errlen, "zero size bencode");
+    return NULL;
+  }
+
+  assert(stop > src);
+
   c = bencode_parse_map(src, stop, &end, &errp, &errmsg, cb, opaque);
   if(c == NOT_THIS_TYPE)
     c = bencode_parse_list(src, stop, &end, &errp, &errmsg);
