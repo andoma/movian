@@ -412,6 +412,8 @@ torrent_t *torrent_find_by_hash(const uint8_t *infohash);
 
 void torrent_release(torrent_t *t);
 
+void torrent_retain(torrent_t *t);
+
 void torrent_piece_release(torrent_piece_t *tp);
 
 int torrent_load(torrent_t *to, void *buf, uint64_t offset, size_t size,

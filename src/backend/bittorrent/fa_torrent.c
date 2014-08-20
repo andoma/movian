@@ -21,7 +21,6 @@ torrent_resolve_file(const char *url, char *errbuf, size_t errlen)
     if(!strcmp(url, tf->tf_fullpath))
       return tf;
   }
-  torrent_release(to);
   return NULL;
 }
 
@@ -69,7 +68,6 @@ torrent_scandir(fa_protocol_t *fap, fa_dir_t *fd, const char *url,
     fa_dir_add(fd, buf, tf->tf_name,
                tf->tf_size ? CONTENT_FILE : CONTENT_DIR);
   }
-  torrent_release(to);
   hts_mutex_unlock(&bittorrent_mutex);
   return 0;
 }
@@ -99,6 +97,7 @@ torrent_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
   torrent_t *to = tf->tf_torrent;
   LIST_INSERT_HEAD(&tf->tf_fhs, tfh, tfh_torrent_file_link);
   LIST_INSERT_HEAD(&to->to_fhs, tfh, tfh_torrent_link);
+  torrent_retain(to);
   hts_mutex_unlock(&bittorrent_mutex);
   tfh->h.fh_proto = fap;
   return &tfh->h;
@@ -225,10 +224,7 @@ torrent_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
   fs->fs_mtime = 0;
   fs->fs_type = tf->tf_size ? CONTENT_FILE : CONTENT_DIR;
 
-  torrent_release(tf->tf_torrent);
-
   hts_mutex_unlock(&bittorrent_mutex);
-
   return 0;
 }
 
@@ -268,6 +264,7 @@ torrent_reference(fa_protocol_t *fap, const char *url)
   torrent_fh_ref_t *tfr = malloc(sizeof(torrent_fh_ref_t));
   tfr->h.fh_proto = fap;
   tfr->to = to;
+  torrent_retain(to);
   hts_mutex_unlock(&bittorrent_mutex);
   return &tfr->h;
 }

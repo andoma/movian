@@ -47,7 +47,6 @@ torrent_open_url(const char **urlp, char *errbuf, size_t errlen)
     if(to == NULL) {
       snprintf(errbuf, errlen, "Torrent not found");
     } else {
-      to->to_refcount++;
       *urlp = url + 41;
     }
   } else {
@@ -94,6 +93,7 @@ do_torrent_release(void *opaque, prop_sub_t *s)
 static void
 torrent_release_on_prop_destroy(prop_t *p, torrent_t *to)
 {
+  torrent_retain(to);
   prop_subscribe(PROP_SUB_TRACK_DESTROY,
                  PROP_TAG_ROOT, p,
                  PROP_TAG_CALLBACK_DESTROYED, do_torrent_release, to,
@@ -182,7 +182,6 @@ torrent_browse_open(prop_t *page, const char *url, int sync)
     return nav_open_errorf(page, _("Unable to open torrent: %s"), errbuf);
   }
   torrent_browse(page, to, url);
-
   torrent_release_on_prop_destroy(page, to);
   hts_mutex_unlock(&bittorrent_mutex);
   return 0;

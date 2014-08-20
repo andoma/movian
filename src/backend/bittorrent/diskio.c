@@ -130,7 +130,7 @@ update_disk_usage(void)
 static void
 torrent_write_to_disk(torrent_t *to, torrent_piece_t *tp)
 {
-  to->to_refcount++;
+  torrent_retain(to);
   tp->tp_refcount++;
 
   uint8_t mapdata[4];
@@ -244,7 +244,7 @@ torrent_write_to_disk(torrent_t *to, torrent_piece_t *tp)
 static void
 torrent_read_from_disk(torrent_t *to, torrent_piece_t *tp)
 {
-  to->to_refcount++;
+  torrent_retain(to);
   tp->tp_refcount++;
 
   int idx = to->to_cachefile_piece_map[tp->tp_index];
