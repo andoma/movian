@@ -334,6 +334,7 @@ SRCS                     += \
 	src/backend/bittorrent/torrent_settings.c \
 	src/backend/bittorrent/tracker.c \
 	src/backend/bittorrent/tracker_udp.c \
+	src/backend/bittorrent/tracker_http.c \
 	src/backend/bittorrent/bencode.c \
 
 

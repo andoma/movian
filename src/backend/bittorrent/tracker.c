@@ -69,6 +69,9 @@ tracker_destroy(tracker_t *t)
 void
 tracker_torrent_destroy(tracker_torrent_t *tt)
 {
+  if(tt->tt_tracker->t_destroy != NULL)
+    tt->tt_tracker->t_destroy(tt);
+
   asyncio_timer_disarm(&tt->tt_timer);
 
   if(tt->tt_torrent != NULL)
@@ -133,12 +136,16 @@ tracker_create(const char *url)
       port = 6969;
 
     t = tracker_udp_create(hostname, port);
+  } else if(!strcmp(protostr, "http") || !strcmp(protostr, "https")) {
+    t = tracker_http_create();
+
   } else {
     return NULL;
   }
 
   t->t_url = strdup(url);
   LIST_INSERT_HEAD(&trackers, t, t_link);
+  tracker_trace(t, "New tracker added");
   return t;
 }
 

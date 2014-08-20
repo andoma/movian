@@ -338,7 +338,6 @@ tracker_udp_create(const char *hostname, int port)
   asyncio_timer_init(&t->t_timer, tracker_udp_timer_cb, t);
   t->t_port = port;
   asyncio_dns_lookup_host(hostname, tracker_udp_got_dns, t);
-  tracker_trace(t, "New UDP tracker added");
   t->t_announce = &tracker_udp_torrent_announce;
   return t;
 }

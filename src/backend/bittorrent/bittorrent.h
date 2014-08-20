@@ -88,6 +88,8 @@ typedef struct tracker {
 
   void (*t_announce)(struct tracker_torrent *tt, int event);
 
+  void (*t_destroy)(struct tracker_torrent *tt);
+
 } tracker_t;
 
 
@@ -393,6 +395,10 @@ typedef struct tracker_torrent {
   uint8_t tt_attempt;
   uint8_t tt_tentative;
 
+
+  char *tt_trackerid;
+  struct asyncio_http_req *tt_http_req;
+
 } tracker_torrent_t;
 
 
@@ -472,6 +478,8 @@ void tracker_trace(const tracker_t *t, const char *msg, ...)
   attribute_printf(2, 3);
 
 tracker_t *tracker_udp_create(const char *hostname, int port);
+
+tracker_t *tracker_http_create(void);
 
 /**
  * Misc helpers
