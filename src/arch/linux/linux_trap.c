@@ -42,6 +42,7 @@
 #include <fcntl.h>
 
 #include "showtime.h"
+#include "arch/arch.h"
 
 int (*extra_traphandler)(int sig, siginfo_t *si, void *UC);
 
@@ -233,17 +234,16 @@ addr2text(char *out, size_t outlen, void *ptr)
  *
  */
 static void
-dumpstack(void *frames[], int nframes)
+dumpstack(void *frames[], int nframes, const char *fac, int level)
 {
   const char *sym[nframes];
   int symoffset[nframes];
   char buf[256];
   int i;
 
-  TRAPMSG("STACKTRACE (%d frames)", nframes);
+  TRACE(level, fac, "STACKTRACE (%d frames)", nframes);
 
   resolve_syms(frames, sym, symoffset, nframes);
-  
 
   for(i = 0; i < nframes; i++) {
     if(sym[i] == NULL) {
@@ -251,7 +251,7 @@ dumpstack(void *frames[], int nframes)
     } else {
       snprintf(buf, sizeof(buf), "%s+0x%x", sym[i], symoffset[i]);
     }
-    TRAPMSG("%s", buf);
+    TRACE(level, fac, "%s", buf);
   }
 }
 
@@ -337,7 +337,7 @@ traphandler(int sig, siginfo_t *si, void *UC)
   TRAPMSG("%s", tmpbuf);
 #endif
 
-  dumpstack(frames, nframes);
+  dumpstack(frames, nframes, "CRASH", TRACE_EMERG);
   _exit(8);
 }
 
@@ -417,11 +417,26 @@ panic(const char *fmt, ...)
   tracev(0, TRACE_EMERG, "PANIC", fmt, ap);
   va_end(ap);
 
-  dumpstack(frames, nframes);
+  dumpstack(frames, nframes, "PANIC", TRACE_EMERG);
   exit(1);
 }
 
+void
+stackdump(const char *fac)
+{
+  static void *frames[MAXFRAMES];
+  int nframes = backtrace(frames, MAXFRAMES);
+  dumpstack(frames, nframes, fac, TRACE_DEBUG);
+}
+
+
 #else
+
+void
+stackdump(const char *fac)
+{
+}
+
 
 void
 trap_init(void)

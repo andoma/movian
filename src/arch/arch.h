@@ -42,3 +42,4 @@ int arch_stop_req(void);
 
 void arch_localtime(const time_t *timep, struct tm *tm);
 
+void stackdump(const char *logprefix);
