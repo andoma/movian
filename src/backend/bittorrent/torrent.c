@@ -87,7 +87,7 @@ torrent_trace(const torrent_t *t, const char *msg, ...)
 static void
 torrent_add_tracker(torrent_t *to, const char *url)
 {
-  torrent_tracker_t *tt;
+  tracker_torrent_t *tt;
 
   LIST_FOREACH(tt, &to->to_trackers, tt_torrent_link) {
     if(!strcmp(tt->tt_tracker->t_url, url))

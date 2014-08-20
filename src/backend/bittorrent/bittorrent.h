@@ -15,8 +15,9 @@ extern struct torrent_list torrents;
 extern hts_cond_t torrent_piece_hash_needed_cond;
 extern hts_cond_t torrent_piece_io_needed_cond;
 extern hts_cond_t torrent_piece_verified_cond;
+extern struct tracker_list trackers;
 
-LIST_HEAD(torrent_tracker_list, torrent_tracker);
+LIST_HEAD(tracker_torrent_list, tracker_torrent);
 LIST_HEAD(torrent_list, torrent);
 LIST_HEAD(tracker_list, tracker);
 LIST_HEAD(peer_list, peer);
@@ -29,8 +30,6 @@ TAILQ_HEAD(torrent_piece_queue, torrent_piece);
 LIST_HEAD(torrent_block_list, torrent_block);
 LIST_HEAD(torrent_piece_list, torrent_piece);
 LIST_HEAD(piece_peer_list, piece_peer);
-
-#define TRACKER_PROTO_UDP 1
 
 typedef struct bt_global {
   int btg_max_peers_global;
@@ -77,16 +76,17 @@ typedef struct tracker {
 
   char *t_url;
   uint16_t t_port;
-  uint8_t t_proto;
-  
+
   net_addr_t t_addr;
 
-  struct torrent_tracker_list t_torrents;
+  struct tracker_torrent_list t_torrents;
   uint32_t t_conn_txid;
 
   int t_conn_attempt;
 
   uint64_t t_conn_id;
+
+  void (*t_announce)(struct tracker_torrent *tt, int event);
 
 } tracker_t;
 
@@ -301,7 +301,7 @@ typedef struct torrent {
   uint64_t to_wasted_bytes;
   uint64_t to_total_length;
 
-  struct torrent_tracker_list to_trackers;
+  struct tracker_torrent_list to_trackers;
   struct peer_list to_peers;
   struct peer_list to_running_peers;
   struct peer_list to_unchoked_peers;
@@ -376,10 +376,10 @@ typedef struct torrent_fh {
 /**
  *
  */
-typedef struct torrent_tracker {
+typedef struct tracker_torrent {
 
-  LIST_ENTRY(torrent_tracker) tt_tracker_link;
-  LIST_ENTRY(torrent_tracker) tt_torrent_link;
+  LIST_ENTRY(tracker_torrent) tt_tracker_link;
+  LIST_ENTRY(tracker_torrent) tt_torrent_link;
   tracker_t *tt_tracker;
   torrent_t *tt_torrent;
 
@@ -393,7 +393,7 @@ typedef struct torrent_tracker {
   uint8_t tt_attempt;
   uint8_t tt_tentative;
 
-} torrent_tracker_t;
+} tracker_torrent_t;
 
 
 /**
@@ -465,6 +465,13 @@ void tracker_remove_torrent(torrent_t *to);
 tracker_t *tracker_create(const char *url);
 
 void tracker_add_torrent(tracker_t *tr, torrent_t *t);
+
+void tracker_torrent_destroy(tracker_torrent_t *tt);
+
+void tracker_trace(const tracker_t *t, const char *msg, ...)
+  attribute_printf(2, 3);
+
+tracker_t *tracker_udp_create(const char *hostname, int port);
 
 /**
  * Misc helpers
