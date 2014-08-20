@@ -312,11 +312,10 @@ htsbuf_append_and_escape_xml(htsbuf_queue_t *hq, const char *s)
 /**
  *
  */
-void
-htsbuf_append_and_escape_url(htsbuf_queue_t *hq, const char *s)
+static void
+htsbuf_append_and_escape_url0(htsbuf_queue_t *hq, const char *s, const char *e)
 {
   const char *c = s;
-  const char *e = s + strlen(s);
   char C;
   if(e == s)
     return;
@@ -354,6 +353,26 @@ htsbuf_append_and_escape_url(htsbuf_queue_t *hq, const char *s)
       break;
     }
   }
+}
+
+
+/**
+ *
+ */
+void
+htsbuf_append_and_escape_url(htsbuf_queue_t *hq, const char *s)
+{
+  htsbuf_append_and_escape_url0(hq, s, s + strlen(s));
+}
+
+
+/**
+ *
+ */
+void
+htsbuf_append_and_escape_url_len(htsbuf_queue_t *hq, const char *s, size_t len)
+{
+  htsbuf_append_and_escape_url0(hq, s, s + len);
 }
 
 

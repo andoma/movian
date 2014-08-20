@@ -379,6 +379,8 @@ fa_handle_t *fa_cmp_open(fa_handle_t *fa, const char *locafile);
 enum {
   HTTP_TAG_ARG = 1,
   HTTP_TAG_ARGINT,
+  HTTP_TAG_ARGINT64,
+  HTTP_TAG_ARGBIN,
   HTTP_TAG_ARGLIST,
   HTTP_TAG_RESULT_PTR,
   HTTP_TAG_ERRBUF,
@@ -397,6 +399,8 @@ enum {
 
 #define HTTP_ARG(a, b)                     HTTP_TAG_ARG, a, b
 #define HTTP_ARGINT(a, b)                  HTTP_TAG_ARGINT, a, b
+#define HTTP_ARGINT64(a, b)                HTTP_TAG_ARGINT64, a, b
+#define HTTP_ARGBIN(a, b, c)               HTTP_TAG_ARGBIN, a, b, c
 #define HTTP_ARGLIST(a)                    HTTP_TAG_ARGLIST, a
 #define HTTP_RESULT_PTR(a)                 HTTP_TAG_RESULT_PTR, a
 #define HTTP_ERRBUF(a, b)                  HTTP_TAG_ERRBUF, a, b

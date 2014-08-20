@@ -74,6 +74,9 @@ void htsbuf_append_and_escape_xml(htsbuf_queue_t *hq, const char *str);
 
 void htsbuf_append_and_escape_url(htsbuf_queue_t *hq, const char *s);
 
+void htsbuf_append_and_escape_url_len(htsbuf_queue_t *hq, const char *s,
+                                      size_t len);
+
 void htsbuf_append_and_escape_jsonstr(htsbuf_queue_t *hq, const char *s);
 
 char *htsbuf_to_string(htsbuf_queue_t *hq);

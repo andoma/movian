@@ -2713,6 +2713,7 @@ typedef struct http_query_arg {
   TAILQ_ENTRY(http_query_arg) link;
   char *key;
   char *val;
+  size_t val_len;
 } http_query_arg_t;
 
 typedef struct http_req_aux {
@@ -3233,6 +3234,7 @@ http_reqv(const char *url, va_list ap,
         http_query_arg_t *hqa = malloc(sizeof(http_query_arg_t));
         hqa->key = strdup(key);
         hqa->val = strdup(val);
+        hqa->val_len = strlen(val);
         TAILQ_INSERT_TAIL(&hra->query_args, hqa, link);
       }
       break;
@@ -3245,6 +3247,35 @@ http_reqv(const char *url, va_list ap,
         hqa->key = strdup(key);
         snprintf(tmpbuf, sizeof(tmpbuf), "%d", i32);
         hqa->val = strdup(tmpbuf);
+        hqa->val_len = strlen(tmpbuf);
+        TAILQ_INSERT_TAIL(&hra->query_args, hqa, link);
+      }
+      break;
+
+    case HTTP_TAG_ARGINT64:
+      key = va_arg(ap, const char *);
+      i64 = va_arg(ap, int64_t);
+      if(key != NULL) {
+        http_query_arg_t *hqa = malloc(sizeof(http_query_arg_t));
+        hqa->key = strdup(key);
+        snprintf(tmpbuf, sizeof(tmpbuf), "%"PRId64, i64);
+        hqa->val = strdup(tmpbuf);
+        hqa->val_len = strlen(tmpbuf);
+        TAILQ_INSERT_TAIL(&hra->query_args, hqa, link);
+      }
+      break;
+
+
+    case HTTP_TAG_ARGBIN:
+      key = va_arg(ap, const char *);
+      val = va_arg(ap, const char *);
+      len = va_arg(ap, int);
+      if(key != NULL) {
+        http_query_arg_t *hqa = malloc(sizeof(http_query_arg_t));
+        hqa->key = strdup(key);
+        hqa->val = malloc(len);
+        memcpy(hqa->val, val, len);
+        hqa->val_len = len;
         TAILQ_INSERT_TAIL(&hra->query_args, hqa, link);
       }
       break;
