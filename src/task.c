@@ -64,6 +64,7 @@ task_thread(void *aux)
       num_task_threads_avail--;
       continue;
     }
+    TAILQ_REMOVE(&tasks, t, t_link);
 
     hts_mutex_unlock(&task_mutex);
     t->t_fn(t->t_opaque);
