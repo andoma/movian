@@ -156,3 +156,18 @@ asyncio_dns_req_t *asyncio_dns_lookup_host(const char *hostname,
 						      const void *data),
 					   void *opaque);
 
+
+/*************************************************************************
+ * HTTP(S)
+ *************************************************************************/
+
+typedef struct asyncio_http_req asyncio_http_req_t;
+struct http_req_aux;
+
+asyncio_http_req_t *asyncio_http_req(const char *url,
+                                     void (*cb)(struct http_req_aux *req,
+                                                void *opaque),
+                                     void *opaque,
+                                     ...);
+
+void asyncio_http_cancel(asyncio_http_req_t *req);

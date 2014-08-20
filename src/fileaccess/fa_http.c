@@ -2716,7 +2716,9 @@ typedef struct http_query_arg {
   size_t val_len;
 } http_query_arg_t;
 
-typedef struct http_req_aux {
+struct http_req_aux {
+  atomic_t refcount;
+
   size_t total;
   int64_t bytes_completed;
   fa_load_cb_t *cb;
@@ -2751,10 +2753,12 @@ typedef struct http_req_aux {
 
   struct http_header_list *headers_out;
 
-  void (*async_callback)(void *opaque, int error);
+  void (*async_callback)(http_req_aux_t *har, void *opaque, int error);
   void *async_opaque;
 
-} http_req_aux_t;
+  buf_t *result;
+
+};
 
 /**
  *
@@ -3004,7 +3008,7 @@ http_req_do(http_req_aux_t *hra)
     htsbuf_append(&q, &prefix, 1);
     htsbuf_append_and_escape_url(&q, hqa->key);
     htsbuf_append(&q, "=", 1);
-    htsbuf_append_and_escape_url(&q, hqa->val);
+    htsbuf_append_and_escape_url_len(&q, hqa->val, hqa->val_len);
     prefix = '&';
   }
 
@@ -3166,10 +3170,13 @@ http_req_do(http_req_aux_t *hra)
 /**
  *
  */
-static void
-hra_free(http_req_aux_t *hra)
+void
+http_req_release(http_req_aux_t *hra)
 {
   http_query_arg_t *hqa, *next;
+
+  if(atomic_dec(&hra->refcount))
+    return;
 
   http_headers_free(&hra->headers_in);
   free(hra->method);
@@ -3184,8 +3191,19 @@ hra_free(http_req_aux_t *hra)
   }
 
   htsbuf_queue_flush(&hra->postdata);
-
+  buf_release(hra->result);
   free(hra);
+}
+
+
+/**
+ *
+ */
+http_req_aux_t *
+http_req_retain(http_req_aux_t *hra)
+{
+  atomic_inc(&hra->refcount);
+  return hra;
 }
 
 
@@ -3197,8 +3215,11 @@ http_req_async(void *opaque)
 {
   http_req_aux_t *hra = opaque;
   int r = http_req_do(hra);
-  hra->async_callback(hra->async_opaque, r);
-  hra_free(hra);
+  if(r)
+    hra->result = NULL;
+
+  hra->async_callback(hra, hra->async_opaque, r);
+  http_req_release(hra);
 }
 
 /**
@@ -3206,7 +3227,7 @@ http_req_async(void *opaque)
  */
 int
 http_reqv(const char *url, va_list ap,
-          void (*async_callback)(void *opaque, int error),
+          void (*async_callback)(http_req_aux_t *hra, void *opaque, int error),
           void *async_opaque)
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
@@ -3214,10 +3235,14 @@ http_reqv(const char *url, va_list ap,
   int tag;
   int i, j;
   const char *key, *val;
+  int len;
   char tmpbuf[32];
   const char **arguments;
   htsbuf_queue_t *hq;
   int i32;
+  int64_t i64;
+
+  atomic_set(&hra->refcount, 1);
 
   TAILQ_INIT(&hra->query_args);
 
@@ -3301,6 +3326,9 @@ http_reqv(const char *url, va_list ap,
       buf_t **ptr = va_arg(ap, buf_t **);
       if(ptr == NULL)
 	break;
+
+      if(ptr == HTTP_BUFFER_INTERNALLY)
+        ptr = &hra->result;
 
       hra->decoded_opaque = calloc(1, sizeof(buf_t));
       *ptr = hra->decoded_opaque;
@@ -3393,7 +3421,7 @@ http_reqv(const char *url, va_list ap,
   }
 
   int r = http_req_do(hra);
-  hra_free(hra);
+  http_req_release(hra);
   return r;
 }
 
@@ -3413,3 +3441,12 @@ http_req(const char *url, ...)
 }
 
 
+
+/**
+ *
+ */
+buf_t *
+http_req_get_result(http_req_aux_t *hra)
+{
+  return hra->result;
+}

@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <stdarg.h>
 
 #include "misc/queue.h"
 #include "networking/http.h"
@@ -415,11 +416,22 @@ enum {
 #define HTTP_CONNECT_TIMEOUT(a)            HTTP_TAG_CONNECT_TIMEOUT, a
 #define HTTP_READ_TIMEOUT(a)               HTTP_TAG_READ_TIMEOUT, a
 
+#define HTTP_BUFFER_INTERNALLY             ((void *)-1)
+
+typedef struct http_req_aux http_req_aux_t;
+
 int http_req(const char *url, ...) attribute_null_sentinel;
 
 int http_reqv(const char *url, va_list ap,
-              void (*async_callback)(void *opaque, int error),
+              void (*async_callback)(http_req_aux_t *hra, void *opaque,
+                                     int error),
               void *async_opaque);
+
+buf_t *http_req_get_result(http_req_aux_t *hra);
+
+void http_req_release(http_req_aux_t *hra);
+
+http_req_aux_t *http_req_retain(http_req_aux_t *hra) attribute_unused_result;
 
 int http_client_oauth(struct http_auth_req *har,
 		      const char *consumer_key,
