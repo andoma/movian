@@ -56,16 +56,19 @@ torrent_dump(const torrent_t *to, htsbuf_queue_t *q)
   char str[41];
   bin2hex(str, sizeof(str), to->to_info_hash, 20);
 
-  htsbuf_qprintf(q, "infohash: %s  %d pieces (%d in RAM)\n", str,
-                 to->to_num_pieces, to->to_num_active_pieces);
-  torrent_dump_files(&to->to_root, q, 4);
+  htsbuf_qprintf(q, "Infohash: %s  %d pieces (%d in RAM) refcount:%d\n", str,
+                 to->to_num_pieces, to->to_num_active_pieces, to->to_refcount);
+  htsbuf_qprintf(q, "\nOpen files\n");
 
-  const torrent_file_t *tf;
-  TAILQ_FOREACH(tf, &to->to_files, tf_torrent_link) {
-    htsbuf_qprintf(q, "%s\n", tf->tf_fullpath);
+  torrent_fh_t *tfh;
+  LIST_FOREACH(tfh, &to->to_fhs, tfh_torrent_link) {
+    htsbuf_qprintf(q, "%s\n", tfh->tfh_file->tf_fullpath);
   }
 
-  htsbuf_qprintf(q, "%d active peers out of %d known peers\n",
+  htsbuf_qprintf(q, "\nFiles in torrent\n");
+  torrent_dump_files(&to->to_root, q, 4);
+
+  htsbuf_qprintf(q, "\n%d active peers out of %d known peers\n",
 		 to->to_active_peers, to->to_num_peers);
 
   htsbuf_qprintf(q, "%-30s %-15s %-6s Flags Queue %-10s Delay Requests Cancels Waste ConFail Discon\n",
