@@ -317,6 +317,9 @@ htsbuf_append_and_escape_url0(htsbuf_queue_t *hq, const char *s, const char *e)
 {
   const char *c = s;
   char C;
+  char buf[4];
+  static const char hexchars[16] = "0123456789ABCDEF";
+
   if(e == s)
     return;
 
@@ -333,8 +336,6 @@ htsbuf_append_and_escape_url0(htsbuf_queue_t *hq, const char *s, const char *e)
        C == '-') {
       esc = NULL;
     } else {
-      static const char hexchars[16] = "0123456789ABCDEF";
-      char buf[4];
       buf[0] = '%';
       buf[1] = hexchars[(C >> 4) & 0xf];
       buf[2] = hexchars[C & 0xf];;
