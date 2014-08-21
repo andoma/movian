@@ -125,7 +125,6 @@ tracker_http_torrent_announce(tracker_torrent_t *tt, int event)
 
   tt->tt_http_req =
     asyncio_http_req(t->t_url, http_callback, tt,
-                     HTTP_FLAGS(FA_DEBUG),
                      HTTP_ARGBIN("info_hash", to->to_info_hash, 20),
                      HTTP_ARGBIN("peer_id", btg.btg_peer_id, 20),
                      HTTP_ARGINT("port", 7898),
