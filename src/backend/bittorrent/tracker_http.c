@@ -65,6 +65,12 @@ http_callback(http_req_aux_t *req, void *opaque)
                               errbuf, sizeof(errbuf), NULL, NULL);
     if(msg != NULL) {
 
+      const char *err = htsmsg_get_str(msg, "failure reason");
+      if(err != NULL) {
+        tracker_trace(tt->tt_tracker, "%s for %s", err, to->to_title);
+        goto done;
+      }
+
       const char *trackerid = htsmsg_get_str(msg, "trackerid");
 
       if(trackerid != NULL)
@@ -76,27 +82,29 @@ http_callback(http_req_aux_t *req, void *opaque)
                                                             "interval", 1800));
 
       htsmsg_t *peers = htsmsg_get_list(msg, "peers");
-      htsmsg_field_t *f;
-      HTSMSG_FOREACH(f, peers) {
-        htsmsg_t *sub = htsmsg_get_map_by_field(f);
-        if(sub == NULL)
-          continue;
-        const char *ip = htsmsg_get_str(sub, "ip");
-        if(ip == NULL)
-          continue;
+      if(peers != NULL) {
+        htsmsg_field_t *f;
+        HTSMSG_FOREACH(f, peers) {
+          htsmsg_t *sub = htsmsg_get_map_by_field(f);
+          if(sub == NULL)
+            continue;
+          const char *ip = htsmsg_get_str(sub, "ip");
+          if(ip == NULL)
+            continue;
 
-        if(net_resolve_numeric(ip, &na))
-          continue;
+          if(net_resolve_numeric(ip, &na))
+            continue;
 
-        na.na_port = htsmsg_get_u32_or_default(sub, "port", 0);
-        if(na.na_port == 0)
-          continue;
-        peer_add(to, &na);
+          na.na_port = htsmsg_get_u32_or_default(sub, "port", 0);
+          if(na.na_port == 0)
+            continue;
+          peer_add(to, &na);
+        }
       }
-
       htsmsg_release(msg);
     }
   }
+ done:
   asyncio_timer_arm(&tt->tt_timer, async_now + tt->tt_interval * 1000000LL);
 }
 
