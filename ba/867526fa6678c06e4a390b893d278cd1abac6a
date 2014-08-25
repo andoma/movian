@@ -1,0 +1,4 @@
+Make it possible to use up/down keys during video playback to adjust per-file
+volume instead of adjusting global volume.
+
+This setting can be enabled in Settings -> Video playback
