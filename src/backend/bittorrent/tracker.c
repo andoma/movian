@@ -27,7 +27,7 @@
 
 #include "bittorrent.h"
 
-static int tracker_debug = 1;
+static int tracker_debug = 0;
 
 static int tracker_new_torrent_signal;
 
