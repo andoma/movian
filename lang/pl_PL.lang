@@ -44,8 +44,7 @@ id: Go to Home screen
 msg: Przejdź do ekranu głównego
 
 id: Hide system info
-# Missing translation
-msg: 
+msg: Ukryj informacje o systemie
 
 id: Navigation
 msg: Nawigacja
@@ -63,8 +62,7 @@ id: Reload current page
 msg: Odśwież
 
 id: Show system info
-# Missing translation
-msg: 
+msg: Pokaż informacje o systemie
 
 id: Suspend
 msg: Wyłącz system
@@ -172,15 +170,13 @@ id: Cancel
 msg: Anuluj
 
 id: Clear
-# Missing translation
-msg: 
+msg: Wyczyść
 
 id: Default
 msg: Domyślne
 
 id: Keyboard layout:
-# Missing translation
-msg: 
+msg: Układ klawiatury:
 
 id: OK
 msg: OK
@@ -418,8 +414,7 @@ msg: Status odtwarzania
 # ./glwskins/default/pages/wideinfo/video.view
 #
 id: Seen:
-# Missing translation
-msg: 
+msg: Widziano:
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -527,16 +522,13 @@ msg: Mała ilość dostępnej pamięci (dostępne %d kB RAM)
 # ./src/arch/rpi/rpi_audio.c
 #
 id: Analog
-# Missing translation
-msg: 
+msg: Analogowe
 
 id: Audio output port
-# Missing translation
-msg: 
+msg: Port wyjścia audio
 
 id: HDMI
-# Missing translation
-msg: 
+msg: HDMI
 
 #
 # ./src/arch/rpi/rpi_cec.c
@@ -554,81 +546,64 @@ id: Audio delay
 msg: Opóźnienie audio
 
 id: Audio gain adjustment during video playback
-# Missing translation
-msg: 
+msg: Automatyczna kontrola dźwięku w czasie odtwarzania
 
 id: Audio settings during video playback
-# Missing translation
-msg: 
+msg: Ustawienia audio w czasie odtwarzania
 
 id: Setup audio output
-# Missing translation
-msg: 
+msg: Ustawienia wyjścia audio
 
 #
 # ./src/audio2/audio_test.c
 #
 id: 440Hz sinewave -12dB
-# Missing translation
-msg: 
+msg: 440Hz sinusoida -12dB
 
 id: Audio test
-# Missing translation
-msg: 
+msg: Test audio
 
 id: Center
 msg: Środek
 
 id: Front Left
-# Missing translation
-msg: 
+msg: Lewy przód
 
 id: Front Right
-# Missing translation
-msg: 
+msg: Prawy przód
 
 id: LFE
-# Missing translation
-msg: 
+msg: LFE
 
 id: Pink noise
-# Missing translation
-msg: 
+msg: Różowy szum
 
 id: Play test signal
-# Missing translation
-msg: 
+msg: Odtwórz sygnał testowy
 
 id: Rear Left
-# Missing translation
-msg: 
+msg: Lewy tył
 
 id: Rear Right
-# Missing translation
-msg: 
+msg: Prawy tył
 
 id: Speaker position
-# Missing translation
-msg: 
+msg: Rozmieszczenie głośników
 
 id: Surround Left
-# Missing translation
-msg: 
+msg: Lewy Surround
 
 id: Surround Right
-# Missing translation
-msg: 
+msg: Prawy Surround
 
 id: Test signal type
-# Missing translation
-msg: 
+msg: Typ sygnału testowego
 
 #
 # ./src/audio2/pulseaudio.c
 #
 id: Unable to initialize audio system %s -- %s
-# Missing translation
-msg: 
+msg: Nie można zainicjować systemu audio %s -- %s
 
 #
 # ./src/backend/dvd/cdda.c
@@ -829,8 +804,7 @@ id: Show filename extensions
 msg: Pokaż razszerzenia plików
 
 id: Store per-file settings in filesystem
-# Missing translation
-msg: 
+msg: Zapisz osobne ustawienia dla każdego pliku
 
 id: %d archive parts
 msg[0]: %d części archiwum
@@ -920,16 +894,13 @@ id: Go to standby after video ends
 msg: Przejdź w stan czuwania po zakończonym video
 
 id: Reset defaults for folder '%s'
-# Missing translation
-msg: 
+msg: Przywróć ustawienia domyslne dla folderu '%s'
 
 id: Save as defaults for folder '%s'
-# Missing translation
-msg: 
+msg: Zapisz jako ustawienia domyślne dla folderu '%s'
 
 id: Save as global default
-# Missing translation
-msg: 
+msg: Zapisz jako domyślne ustawienia globalne
 
 id: Stretch video to fullscreen
 msg: Rozciągnij obraz do pełnego ekranu
@@ -950,8 +921,7 @@ id: Subtitle vertical displacement
 msg: Przesunięcie napisów w pionie
 
 id: Video frame interpolation
-# Missing translation
-msg: 
+msg: Interpolacja klatek Video
 
 id: Video zoom
 msg: Zbliżenie
@@ -1206,8 +1176,7 @@ id: Not upgradable
 msg: Bez możliwości aktualizacji
 
 id: On Screen Keyboards
-# Missing translation
-msg: 
+msg: Klawiatura ekranowa
 
 id: Online TV
 msg: Internet TV
@@ -1525,12 +1494,10 @@ msg: Nie znaleziono usługi
 # ./src/video/ps3_vdec.c
 #
 id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
-# Missing translation
-msg: 
+msg: Cell-h264: %d klatki referencyjne dla video 1080 są niekompatybilne ze sprzętowym dekoderem PS3. Wyłączam wspomaganie
 
 id: Cell-h264: Broken headers, Disabling acceleration
-# Missing translation
-msg: 
+msg: Cell-h264: Uszkodzony nagłówek, wyłączam wspomaganie
 
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
 msg: Cell-h264: Wymuszenie poziomu 4.2 dla poziomu %d.%d. Możliwe problemy z odtworzeniem Video
