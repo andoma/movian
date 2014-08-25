@@ -711,6 +711,9 @@ static int
 hc_open_parameterized(http_connection_t *hc, const char *remain,
                       void *opaque, http_cmd_t method)
 {
+  if(remain == NULL)
+    return 404;
+
   htsmsg_t *msg = htsmsg_create_map();
   http_req_args_fill_htsmsg(hc, msg);
 
