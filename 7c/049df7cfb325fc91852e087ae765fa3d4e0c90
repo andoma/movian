@@ -1,0 +1,3 @@
+linux: Fix broken keyboard input on newer (2013+) Linux dists
+
+Fixes #1787
