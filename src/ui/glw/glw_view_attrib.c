@@ -272,9 +272,14 @@ set_float(glw_view_eval_context_t *ec, const token_attrib_t *a,
 /**
  *
  */
-static void
-set_weight(glw_t *w, float v)
+void
+glw_set_weight(glw_t *w, float v)
 {
+  if(w->glw_class->gc_set_weight != NULL) {
+    w->glw_class->gc_set_weight(w, v);
+    return;
+  }
+
   glw_conf_constraints(w, 0, 0, v, GLW_CONSTRAINT_CONF_W);
   glw_need_refresh(w->glw_root, 0);
 }
@@ -283,9 +288,14 @@ set_weight(glw_t *w, float v)
 /**
  *
  */
-static void
-set_alpha(glw_t *w, float v)
+void
+glw_set_alpha(glw_t *w, float v)
 {
+  if(w->glw_class->gc_set_alpha != NULL) {
+    w->glw_class->gc_set_alpha(w, v);
+    return;
+  }
+
   if(w->glw_alpha == v)
     return;
 
@@ -297,9 +307,14 @@ set_alpha(glw_t *w, float v)
 /**
  *
  */
-static void
-set_blur(glw_t *w, float v)
+void
+glw_set_blur(glw_t *w, float v)
 {
+  if(w->glw_class->gc_set_blur != NULL) {
+    w->glw_class->gc_set_blur(w, v);
+    return;
+  }
+
   v = GLW_CLAMP(1 - v, 0, 1);
 
   if(w->glw_sharpness == v)
@@ -528,9 +543,14 @@ set_int(glw_view_eval_context_t *ec, const token_attrib_t *a,
 /**
  *
  */
-static void
-set_width(glw_t *w, int v)
+void
+glw_set_width(glw_t *w, int v)
 {
+  if(w->glw_class->gc_set_width != NULL) {
+    w->glw_class->gc_set_width(w, v);
+    return;
+  }
+
   glw_conf_constraints(w, v, 0, 0, GLW_CONSTRAINT_CONF_X);
   glw_need_refresh(w->glw_root, 0);
 }
@@ -539,9 +559,14 @@ set_width(glw_t *w, int v)
 /**
  *
  */
-static void
-set_height(glw_t *w, int v)
+void
+glw_set_height(glw_t *w, int v)
 {
+  if(w->glw_class->gc_set_height != NULL) {
+    w->glw_class->gc_set_height(w, v);
+    return;
+  }
+
   glw_conf_constraints(w, 0, v, 0, GLW_CONSTRAINT_CONF_Y);
   glw_need_refresh(w->glw_root, 0);
 }
@@ -550,8 +575,8 @@ set_height(glw_t *w, int v)
 /**
  *
  */
-static void
-set_divider(glw_t *w, int v)
+void
+glw_set_divider(glw_t *w, int v)
 {
   glw_conf_constraints(w, 0, 0, 0, GLW_CONSTRAINT_CONF_D);
   glw_need_refresh(w->glw_root, 0);
@@ -1246,14 +1271,13 @@ static const token_attrib_t attribtab[] = {
   {"noAudio",         mod_flag, GLW_VIDEO_NO_AUDIO, mod_video_flags},
   {"dpadSeek",        mod_flag, GLW_VIDEO_DPAD_SEEK, mod_video_flags},
 
-  {"alpha",           set_float,  0, set_alpha},
-  {"blur",            set_float,  0, set_blur},
-  {"weight",          set_float,  0, set_weight},
+  {"alpha",           set_float,  0, glw_set_alpha},
+  {"blur",            set_float,  0, glw_set_blur},
+  {"weight",          set_float,  0, glw_set_weight},
   {"focusable",       set_float,  0, glw_set_focus_weight},
-
-  {"height",          set_int,  0, set_height},
-  {"width",           set_int,  0, set_width},
-  {"divider",         set_int,  0, set_divider},
+  {"height",          set_int,    0, glw_set_height},
+  {"width",           set_int,    0, glw_set_width},
+  {"divider",         set_int,    0, glw_set_divider},
 
   {"maxlines",        set_number, GLW_ATTRIB_MAX_LINES},
   {"sizeScale",       set_number, GLW_ATTRIB_SIZE_SCALE},

@@ -73,6 +73,19 @@ struct glw_style {
   uint32_t gs_image_flags_clr;
   uint32_t gs_text_flags_set;
   uint32_t gs_text_flags_clr;
+
+  uint32_t gs_flags;
+#define GS_SET_FOCUS_WEIGHT 0x1
+#define GS_SET_ALPHA        0x2
+#define GS_SET_BLUR         0x4
+#define GS_SET_WEIGHT       0x8
+#define GS_SET_WIDTH        0x10
+#define GS_SET_HEIGHT       0x20
+
+
+
+
+
 };
 
 
@@ -82,9 +95,12 @@ struct glw_style {
 static int
 set_float_on_widget(glw_t *w, glw_style_attribute_t *gsa)
 {
-  int x = w->glw_class->gc_set_float(w, gsa->gsa_attribute, gsa->f);
+  const glw_class_t *gc = w->glw_class;
+  int x;
+
+  x = gc->gc_set_float ? gc->gc_set_float(w, gsa->gsa_attribute, gsa->f) : -1;
   if(x == -1)
-    x = w->glw_class->gc_set_int(w, gsa->gsa_attribute, gsa->f);
+    x = gc->gc_set_int ? gc->gc_set_int(w, gsa->gsa_attribute, gsa->f) : -1;
   return x;
 }
 
@@ -95,9 +111,12 @@ set_float_on_widget(glw_t *w, glw_style_attribute_t *gsa)
 static int
 set_int_on_widget(glw_t *w, glw_style_attribute_t *gsa)
 {
-  int x = w->glw_class->gc_set_int(w, gsa->gsa_attribute, gsa->i32);
+  const glw_class_t *gc = w->glw_class;
+  int x;
+
+  x = gc->gc_set_int ? gc->gc_set_int(w, gsa->gsa_attribute, gsa->i32) : -1;
   if(x == -1)
-    x = w->glw_class->gc_set_float(w, gsa->gsa_attribute, gsa->i32);
+    x = gc->gc_set_float ? gc->gc_set_float(w, gsa->gsa_attribute, gsa->i32):-1;
   return x;
 }
 
@@ -439,6 +458,108 @@ gs_mod_image_flags(struct glw *w, int set, int clr)
 /**
  *
  */
+static void
+gs_set_focus_weight(struct glw *w, float v)
+{
+  glw_style_t *gs = (glw_style_t *)w;
+
+  gs->gs_flags |= GS_SET_FOCUS_WEIGHT;
+
+  w->glw_focus_weight = v;
+
+  LIST_FOREACH(w, &gs->gs_widgets, glw_style_link)
+    glw_set_focus_weight(w, v);
+}
+
+
+/**
+ *
+ */
+static void
+gs_set_alpha(struct glw *w, float v)
+{
+  glw_style_t *gs = (glw_style_t *)w;
+
+  gs->gs_flags |= GS_SET_ALPHA;
+
+  w->glw_alpha = v;
+
+  LIST_FOREACH(w, &gs->gs_widgets, glw_style_link)
+    glw_set_alpha(w, v);
+}
+
+
+/**
+ *
+ */
+static void
+gs_set_blur(struct glw *w, float v)
+{
+  glw_style_t *gs = (glw_style_t *)w;
+
+  gs->gs_flags |= GS_SET_BLUR;
+
+  w->glw_sharpness = v; // We borrow this even though it's not sharpness
+
+  LIST_FOREACH(w, &gs->gs_widgets, glw_style_link)
+    glw_set_blur(w, v);
+}
+
+
+/**
+ *
+ */
+static void
+gs_set_weight(struct glw *w, float v)
+{
+  glw_style_t *gs = (glw_style_t *)w;
+
+  gs->gs_flags |= GS_SET_WEIGHT;
+
+  w->glw_req_weight = v;
+
+  LIST_FOREACH(w, &gs->gs_widgets, glw_style_link)
+    glw_set_weight(w, v);
+}
+
+
+/**
+ *
+ */
+static void
+gs_set_width(struct glw *w, int v)
+{
+  glw_style_t *gs = (glw_style_t *)w;
+
+  gs->gs_flags |= GS_SET_WIDTH;
+
+  w->glw_req_size_x = v;
+
+  LIST_FOREACH(w, &gs->gs_widgets, glw_style_link)
+    glw_set_width(w, v);
+}
+
+
+/**
+ *
+ */
+static void
+gs_set_height(struct glw *w, int v)
+{
+  glw_style_t *gs = (glw_style_t *)w;
+
+  gs->gs_flags |= GS_SET_HEIGHT;
+
+  w->glw_req_size_y = v;
+
+  LIST_FOREACH(w, &gs->gs_widgets, glw_style_link)
+    glw_set_height(w, v);
+}
+
+
+/**
+ *
+ */
 static glw_class_t glw_style = {
   .gc_name              = "style",
   .gc_set_float3        = gs_set_float3,
@@ -450,6 +571,13 @@ static glw_class_t glw_style = {
   .gc_mod_flags2_always = gs_mod_flags2,
   .gc_mod_text_flags    = gs_mod_text_flags,
   .gc_mod_image_flags   = gs_mod_image_flags,
+
+  .gc_set_focus_weight  = gs_set_focus_weight,
+  .gc_set_alpha         = gs_set_alpha,
+  .gc_set_blur          = gs_set_blur,
+  .gc_set_weight        = gs_set_weight,
+  .gc_set_width         = gs_set_width,
+  .gc_set_height        = gs_set_height,
 };
 
 
@@ -586,6 +714,24 @@ glw_style_bind(glw_t *w, glw_style_t *gs)
      (gs->gs_text_flags_set || gs->gs_text_flags_clr))
     w->glw_class->gc_mod_text_flags(w, gs->gs_text_flags_set,
                                     gs->gs_text_flags_clr);
+
+  if(gs->gs_flags & GS_SET_FOCUS_WEIGHT)
+    glw_set_focus_weight(w, gs->w.glw_focus_weight);
+
+  if(gs->gs_flags & GS_SET_ALPHA)
+    glw_set_alpha(w, gs->w.glw_alpha);
+
+  if(gs->gs_flags & GS_SET_BLUR)
+    glw_set_blur(w, gs->w.glw_sharpness);
+
+  if(gs->gs_flags & GS_SET_WEIGHT)
+    glw_set_weight(w, gs->w.glw_req_weight);
+
+  if(gs->gs_flags & GS_SET_WIDTH)
+    glw_set_width(w, gs->w.glw_req_size_x);
+
+  if(gs->gs_flags & GS_SET_HEIGHT)
+    glw_set_height(w, gs->w.glw_req_size_y);
 
   return r;
 }

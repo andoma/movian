@@ -633,6 +633,36 @@ typedef struct glw_class {
   /**
    *
    */
+  void (*gc_set_focus_weight)(struct glw *w, float f);
+
+  /**
+   *
+   */
+  void (*gc_set_alpha)(struct glw *w, float f);
+
+  /**
+   *
+   */
+  void (*gc_set_blur)(struct glw *w, float f);
+
+  /**
+   *
+   */
+  void (*gc_set_weight)(struct glw *w, float f);
+
+  /**
+   *
+   */
+  void (*gc_set_width)(struct glw *w, int v);
+
+  /**
+   *
+   */
+  void (*gc_set_height)(struct glw *w, int v);
+
+  /**
+   *
+   */
   void (*gc_freeze)(struct glw *w);
 
   /**
@@ -1127,6 +1157,19 @@ void glw_remove_from_parent(glw_t *w, glw_t *p);
 #define glw_lock(gr) hts_mutex_lock(&(gr)->gr_mutex);
 
 #define glw_unlock(gr) hts_mutex_unlock(&(gr)->gr_mutex);
+
+void glw_set_weight(glw_t *w, float v);
+
+void glw_set_alpha(glw_t *w, float v);
+
+void glw_set_blur(glw_t *w, float v);
+
+void glw_set_width(glw_t *w, int v);
+
+void glw_set_height(glw_t *w, int v);
+
+void glw_set_divider(glw_t *w, int v);
+
 
 
 /**

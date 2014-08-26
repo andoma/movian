@@ -920,6 +920,11 @@ glw_root_set_hover(glw_root_t *gr, glw_t *w)
 void
 glw_set_focus_weight(glw_t *w, float f)
 {
+  if(w->glw_class->gc_set_focus_weight != NULL) {
+    w->glw_class->gc_set_focus_weight(w, f);
+    return;
+  }
+
   if(f == w->glw_focus_weight)
     return;
 
