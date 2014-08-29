@@ -919,6 +919,7 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
         ts_seg_search = 0;
 
         hd->hd_seq = next->hs_seq;
+        hv->hv_current_seg = hs;
         mp_bump_epoch(h->h_mp);
         goto again;
       }
