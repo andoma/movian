@@ -538,6 +538,30 @@ hls_dump(const hls_t *h)
 }
 
 
+/**
+ *
+ */
+static void
+check_audio_only(hls_t *h)
+{
+  hls_variant_t *hv;
+  int streams = 0;
+  int audio_only = 0;
+  TAILQ_FOREACH(hv, &h->h_primary.hd_variants, hv_link) {
+    streams++;
+    if(hv->hv_audio_only)
+      audio_only++;
+  }
+
+  if(streams == audio_only) {
+    // Most likely not _all_ variants are audio only, so we clear the flag
+    TAILQ_FOREACH(hv, &h->h_primary.hd_variants, hv_link) {
+      hv->hv_audio_only = 0;
+    }
+  }
+}
+
+
 
 /**
  *
@@ -1548,6 +1572,8 @@ hls_play_extm3u(char *buf, const char *url, media_pipe_t *mp,
   }
 
   free(hv);
+
+  check_audio_only(&h);
 
   hls_dump(&h);
 
