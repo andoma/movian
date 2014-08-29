@@ -172,8 +172,11 @@ typedef struct hls_demuxer {
 
   media_codec_t *hd_audio_codec;
 
-} hls_demuxer_t;
+  int64_t hd_last_video_pts;
+  int64_t hd_last_audio_pts;
 
+
+} hls_demuxer_t;
 /**
  *
  */
@@ -608,7 +611,8 @@ typedef enum {
  *
  */
 static segment_open_result_t
-segment_open(hls_t *h, hls_demuxer_t *hd, hls_segment_t *hs, int fast_fail)
+segment_open(hls_t *h, hls_demuxer_t *hd, hls_segment_t *hs, int fast_fail,
+             int find_stream_info)
 {
   int err, j;
   fa_handle_t *fh;
@@ -680,6 +684,15 @@ segment_open(hls_t *h, hls_demuxer_t *hd, hls_segment_t *hs, int fast_fail)
 
     fa_libav_close(avio);
     return SEGMENT_OPEN_CORRUPT;
+  }
+
+  if(find_stream_info) {
+
+    if(avformat_find_stream_info(hs->hs_fctx, NULL) < 0) {
+      fa_libav_close_format(hs->hs_fctx);
+      hs->hs_fctx = NULL;
+      return SEGMENT_OPEN_CORRUPT;
+    }
   }
 
   hs->hs_fctx->flags |= AVFMT_FLAG_NOFILLIN;
@@ -763,6 +776,32 @@ hls_select_seek_variant(const hls_t *h, hls_demuxer_t *hd)
 }
 
 
+/**
+ *
+ */
+static hls_segment_t *
+find_segment_by_pts(hls_variant_t *hv, AVFormatContext *fctx,
+                    int64_t base, int64_t last, int si)
+{
+  hls_segment_t *hs;
+
+  if(base == AV_NOPTS_VALUE || last == AV_NOPTS_VALUE)
+    return NULL;
+
+  base = rescale(fctx, base, si);
+  last = rescale(fctx, last, si);
+
+  TAILQ_FOREACH(hs, &hv->hv_segments, hs_link) {
+
+    if(base > last)
+      return hs;
+
+    base += hs->hs_duration;
+  }
+  return NULL;
+}
+
+
 #define HLS_SEGMENT_EOF ((hls_segment_t *)-1)
 #define HLS_SEGMENT_NYA ((hls_segment_t *)-2) // Not yet available
 #define HLS_SEGMENT_ERR ((hls_segment_t *)-3) // Stream broken
@@ -774,6 +813,7 @@ static hls_segment_t *
 demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
 {
   int retry = 0;
+  int ts_seg_search = 0;
 
  again:
   // If no variant is requested we switch to the seek (low bw) variant
@@ -830,19 +870,59 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
     }
 
     if(hs == NULL) {
-      if(hv->hv_frozen)
+      if(hv->hv_frozen) {
 	return HLS_SEGMENT_EOF;
-      else
-	return HLS_SEGMENT_NYA;
+      } else {
+
+        // Segment is not available yet
+
+        hls_segment_t *first = TAILQ_FIRST(&hv->hv_segments);
+        hls_segment_t *last  = TAILQ_LAST(&hv->hv_segments, hls_segment_queue);
+
+        if(first == NULL)
+          return HLS_SEGMENT_NYA;
+
+
+        if(hd->hd_seq < first->hs_seq || hd->hd_seq > last->hs_seq + 10) {
+          // It's way off, try to search using timestamps
+          hs = first;
+          ts_seg_search = 1;
+
+        } else {
+          return HLS_SEGMENT_NYA;
+        }
+      }
     }
 
     // If we're not playing from the seek segment (ie. our "fallback" segment)
     // we ask for fast fail so we can retry with another segment
 
-    segment_open_result_t rcode = segment_open(h, hd, hs, hv != hd->hd_seek);
+    segment_open_result_t rcode = segment_open(h, hd, hs, hv != hd->hd_seek,
+                                               ts_seg_search);
 
     switch(rcode) {
     case SEGMENT_OPEN_OK:
+
+
+      if(ts_seg_search) {
+        AVFormatContext *fctx = hs->hs_fctx;
+        int64_t base, last;
+        hls_segment_t *next;
+
+        base = fctx->streams[hs->hs_astream]->start_time;
+        last = hd->hd_last_audio_pts;
+
+        next = find_segment_by_pts(hv, fctx, base, last, hs->hs_astream);
+        if(next == NULL)
+          return HLS_SEGMENT_NYA;
+
+        ts_seg_search = 0;
+
+        hd->hd_seq = next->hs_seq;
+        mp_bump_epoch(h->h_mp);
+        goto again;
+      }
+
       break;
 
     case SEGMENT_OPEN_NOT_FOUND:
@@ -856,7 +936,7 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
       if(hv == hd->hd_seek)
 	return HLS_SEGMENT_NYA;
 
-      /* 
+      /*
        * Variants are sorted in bitrate descending order, so just
        * step down one
        */
@@ -1114,6 +1194,9 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
         mb->mb_cw = media_codec_ref(h->h_codec_h264);
         mb->mb_stream = 0;
 
+        if(pkt.pts != AV_NOPTS_VALUE)
+          hd->hd_last_video_pts = pkt.pts;
+
       } else if(si == hs->hs_astream) {
 
         mb = media_buf_from_avpkt_unlocked(mp, &pkt);
@@ -1123,6 +1206,9 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
         mb->mb_cw = media_codec_ref(hd->hd_audio_codec);
         mb->mb_stream = 1;
 
+        if(pkt.pts != AV_NOPTS_VALUE)
+          hd->hd_last_audio_pts = pkt.pts;
+
       } else {
         /* Check event queue ? */
         av_free_packet(&pkt);
@@ -1131,9 +1217,9 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 
 
 #if 0
-      printf("%s: PTS=%-16lld DTS=%-16lld %16lld\n",
+      printf("%s: PTS=%-16ld DTS=%-16ld %-16ld ep:%d\n",
              mb->mb_data_type == MB_VIDEO ? "VIDEO" : "AUDIO",
-             pkt.pts, pkt.dts, pkt.pts - pkt.dts);
+             pkt.pts, pkt.dts, pkt.pts - pkt.dts, mp->mp_epoch);
 #endif
 
       /**
