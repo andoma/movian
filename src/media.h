@@ -561,13 +561,15 @@ struct media_format;
  *
  */
 typedef struct media_codec_params {
+  const void *extradata;
+  size_t extradata_size;
+
   unsigned int width;
   unsigned int height;
   unsigned int profile;
   unsigned int level;
-  int cheat_for_speed;
-  const void *extradata;
-  size_t extradata_size;
+  int cheat_for_speed : 1;
+  int broken_aud_placement : 1;
   unsigned int sar_num;
   unsigned int sar_den;
 

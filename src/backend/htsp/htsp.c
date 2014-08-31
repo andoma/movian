@@ -2025,6 +2025,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 	media_type = MEDIA_TYPE_VIDEO;
 	nicename = "H264";
 	mcp.cheat_for_speed = 1;
+        mcp.broken_aud_placement = 1;
       } else if(!strcmp(type, "DVBSUB")) {
 	codec_id = AV_CODEC_ID_DVB_SUBTITLE;
 	media_type = MEDIA_TYPE_SUBTITLE;

@@ -100,8 +100,10 @@ typedef struct vdec_decoder {
   hts_cond_t audone;
   hts_cond_t seqdone;
 
-  int sequence_done;
-
+  char sequence_done;
+  char filter_aud;
+  char submitted_au;
+  char pending_flush;
 
   struct vdec_pic_list pictures;
 
@@ -109,9 +111,6 @@ typedef struct vdec_decoder {
   uint8_t level_major;
   uint8_t level_minor;
 
-  int pending_blackout;
-  int submitted_au;
-  int pending_flush;
 
   int64_t max_order;
   int64_t order_base;
@@ -282,8 +281,10 @@ emit_frame(video_decoder_t *vd, vdec_pic_t *vp)
 
 #if VDEC_DETAILED_DEBUG
   static int64_t lastpts;
-  TRACE(TRACE_DEBUG, "VDEC DPY", "Displaying 0x%llx (%lld) d:%lld dur=%d", vp->order,
-	vp->fi.fi_pts, vp->fi.fi_pts - lastpts, vp->fi.fi_duration);
+  TRACE(TRACE_DEBUG, "VDEC DPY", 
+        "Displaying 0x%llx (%lld) d:%lld dur=%d %d x %d", vp->order,
+	vp->fi.fi_pts, vp->fi.fi_pts - lastpts, vp->fi.fi_duration,
+        vp->fi.fi_width, vp->fi.fi_height);
   lastpts = vp->fi.fi_pts;
 #endif
 
@@ -492,7 +493,7 @@ picture_out(vdec_decoder_t *vdd)
     }
 
 #if VDEC_DETAILED_DEBUG
-    TRACE(TRACE_DEBUG, "VDEC DEC", "POC=%3d:%-3d IDR=%d PS=%d LD=%d %x 0x%llx %ld %d",
+    TRACE(TRACE_DEBUG, "VDEC DEC", "POC=%3d:%-3d IDR=%d PS=%d LD=%d %x 0x%llx %ld %d %d",
 	  (uint16_t)h264->pic_order_count[0],
 	  (uint16_t)h264->pic_order_count[1],
 	  h264->idr_picture_flag,
@@ -501,7 +502,8 @@ picture_out(vdec_decoder_t *vdd)
 	  h264->nalUnitPresentFlags,
 	  order,
 	  pts,
-	  h264->picture_type[0]);
+	  h264->picture_type[0],
+          h264->frame_mbs_only_flag);
 #endif
 
     if(vdd->level_major)
@@ -589,6 +591,57 @@ decoder_callback(uint32_t handle, uint32_t msg_type, int32_t err_code,
 
 
 /**
+ *
+ */
+static int
+filter_aud_nal(uint8_t *dst, uint8_t *src, int len)
+{
+  int nal_unit_type = src[0] & 0x1f;
+
+  if(nal_unit_type == 9)
+    return 0;
+
+  dst[0] = 0;
+  dst[1] = 0;
+  dst[2] = 1;
+  memmove(dst + 3, src, len);
+  return len + 3;
+}
+
+/**
+ *
+ */
+static int
+filter_aud(uint8_t *d, int len)
+{
+  uint8_t *p;
+  uint8_t *dst = d;
+  int outlen = 0;
+
+  while(len > 3) {
+    if(!(d[0] == 0 && d[1] == 0 && d[2] == 1)) {
+      d++;
+      len--;
+      continue;
+    }
+
+    if(p != NULL)
+      outlen += filter_aud_nal(dst + outlen, p, d - p);
+
+    d += 3;
+    len -= 3;
+    p = d;
+  }
+  d += len;
+
+
+  if(p != NULL)
+    outlen += filter_aud_nal(dst + outlen, p, d - p);
+  return outlen;
+}
+
+
+/**
  * Return 0 if ownership of 'data' has been transfered from caller
  */
 static void
@@ -596,6 +649,9 @@ submit_au(vdec_decoder_t *vdd, struct vdec_au *au, void *data, size_t len,
 	  int drop_non_ref, video_decoder_t *vd)
 {
   vdec_pic_t *vp;
+
+  if(data != NULL && vdd->filter_aud)
+    len = filter_aud(data, len);
 
   au->packet_addr = (intptr_t)data;
   au->packet_size = len;
@@ -892,6 +948,7 @@ video_ps3_vdec_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   if(mcp != NULL) {
     vdd->level_major = mcp->level / 10;
     vdd->level_minor = mcp->level % 10;
+    vdd->filter_aud = mcp->broken_aud_placement;
   }
 
   if(mc->codec_id == AV_CODEC_ID_H264 && mcp != NULL && mcp->extradata_size)
