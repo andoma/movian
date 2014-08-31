@@ -444,8 +444,8 @@ h264_parser_decode_data(h264_parser_t *hp, const uint8_t *d, int len)
 
     const uint8_t *p = NULL;
 
-    while(len > 4) {
-      if(!(d[0] == 0 && d[1] == 0 && d[2] == 0 && d[3] == 1)) {
+    while(len > 3) {
+      if(!(d[0] == 0 && d[1] == 0 && d[2] == 1)) {
         d++;
         len--;
         continue;
@@ -454,8 +454,8 @@ h264_parser_decode_data(h264_parser_t *hp, const uint8_t *d, int len)
       if(p != NULL)
         h264_parser_decode_nal(hp, p, d - p);
 
-      d += 4;
-      len -= 4;
+      d += 3;
+      len -= 3;
       p = d;
     }
     d += len;
