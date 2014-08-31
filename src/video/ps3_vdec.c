@@ -424,8 +424,24 @@ picture_out(vdec_decoder_t *vdd)
     vp->fi.fi_height = h264->height;
     vp->fi.fi_duration = h264->frame_rate <= 7 ? 
       mpeg_durations[h264->frame_rate + 1] : 40000;
-    vp->fi.fi_interlaced = 0;
-    vp->fi.fi_tff = 0;
+
+
+    switch(h264->pic_struct) {
+    default:
+    case 0:
+      vp->fi.fi_interlaced = 0;
+      vp->fi.fi_tff = 0;
+      break;
+    case 3: // top field + bottom field
+      vp->fi.fi_interlaced = 1;
+      vp->fi.fi_tff = 1;
+      break;
+    case 4: // bottom field + top field
+      vp->fi.fi_interlaced = 1;
+      vp->fi.fi_tff = 0;
+      break;
+    }
+
     if(h264->color_description_present_flag)
       vp->fi.fi_color_space = h264->matrix_coefficients;
 
