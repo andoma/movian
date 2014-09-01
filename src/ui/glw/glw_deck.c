@@ -156,7 +156,7 @@ static int
 glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   glw_deck_t *gd = (glw_deck_t *)w;
-
+  glw_t *c;
   switch(signal) {
   default:
     break;
@@ -174,6 +174,10 @@ glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
       gd->prev = NULL;
 
   case GLW_SIGNAL_CHILD_CREATED:
+    // Initially all pages are blocked from focus
+    c = extra;
+    c->glw_flags |= GLW_FOCUS_BLOCKED;
+
   case GLW_SIGNAL_CHILD_MOVED:
   case GLW_SIGNAL_CHILD_HIDDEN:
   case GLW_SIGNAL_CHILD_UNHIDDEN:
