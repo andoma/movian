@@ -1182,10 +1182,8 @@ static void
 glw_focus_init_widget(glw_t *w, float weight)
 {
   w->glw_focus_weight = weight;
-  if(weight >= 0.1) {
-    int v = w->glw_flags2 & GLW2_AUTOREFOCUSABLE && was_interactive(w);
-    glw_focus_set(w->glw_root, w, v);
-  }
+  int v = w->glw_flags2 & GLW2_AUTOREFOCUSABLE && was_interactive(w);
+  glw_focus_set(w->glw_root, w, v);
 }
 
 
