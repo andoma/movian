@@ -564,6 +564,9 @@ glw_destroy(glw_t *w)
   glw_root_t *gr = w->glw_root;
   glw_event_map_t *gem;
 
+  if(gr->gr_last_focus == w)
+    gr->gr_last_focus = NULL;
+
   w->glw_flags |= GLW_DESTROYING;
 
   if(w->glw_originating_prop != NULL)
@@ -983,6 +986,47 @@ get_originating_prop(glw_t *w)
 /**
  *
  */
+static int
+check_autofocus_limit(glw_t *n, glw_t *o)
+{
+  int limit = 0;
+  glw_t *w, *x;
+
+  // Mark new tree
+  for(w = n; w != NULL; w = w->glw_parent)
+    w->glw_flags |= GLW_MARK;
+
+  // Scan old tree and try to find fork point
+  for(x = o; x != NULL; x = x->glw_parent) {
+    if(x->glw_flags & GLW_MARK)
+      break;
+
+    if(x->glw_flags2 & GLW2_AUTO_FOCUS_LIMIT) {
+      // Found limit in old tree, we're done
+      limit = 1;
+      break;
+    }
+  }
+
+  // Scan new tree up to intersection point
+  for(w = n; w != NULL && w != x; w = w->glw_parent) {
+    if(w->glw_flags2 & GLW2_AUTO_FOCUS_LIMIT) {
+      limit = 1;
+      break;
+    }
+  }
+
+  // Unmark
+  for(w = n; w != NULL; w = w->glw_parent)
+    w->glw_flags &= ~GLW_MARK;
+
+  return limit;
+}
+
+
+/**
+ *
+ */
 void
 glw_focus_set(glw_root_t *gr, glw_t *w, int how)
 {
@@ -1004,9 +1048,17 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how)
 
   if(w != NULL) {
 
+
+    if(how != GLW_FOCUS_SET_INTERACTIVE) {
+      if(check_autofocus_limit(w, gr->gr_last_focus)) {
+	gr->gr_focus_work = 0;
+	return;
+      }
+    }
+
     for(x = w; x->glw_parent != NULL; x = x->glw_parent) {
 
-      if(how != GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE &&
+      if(sig != GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE &&
 	 (x->glw_flags & GLW_FOCUS_BLOCKED || 
 	  x->glw_flags & GLW_HIDDEN)) {
 	gr->gr_focus_work = 0;
@@ -1079,6 +1131,7 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how)
 #endif
 
   if(w != NULL) {
+    gr->gr_last_focus = w;
 
     glw_path_modify(w, GLW_IN_FOCUS_PATH, 0, com);
 

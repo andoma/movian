@@ -815,6 +815,7 @@ typedef struct glw_root {
   struct glw *gr_pointer_hover;
   struct glw *gr_pointer_press;
   struct glw *gr_current_focus;
+  struct glw *gr_last_focus;
   int gr_delayed_focus_leave;
   prop_t *gr_last_focused_interactive;
   prop_t *gr_pointer_visible;
@@ -1048,8 +1049,7 @@ typedef struct glw {
 #define GLW_HIDDEN               0x1000
 #define GLW_RETIRED              0x2000
 #define GLW_CAN_SCROLL           0x4000
-
-
+#define GLW_MARK                 0x8000
 
 #define GLW_CLIPPED              0x1000000
 
@@ -1087,6 +1087,8 @@ typedef struct glw {
 #define GLW2_LAYOUTFIXED_X          0x80000
 #define GLW2_LAYOUTFIXED_Y          0x100000
 #define GLW2_NO_FOCUS_BLOCKING      0x200000
+#define GLW2_AUTO_FOCUS_LIMIT       0x400000
+
 
 #define GLW2_LEFT_EDGE              0x10000000
 #define GLW2_TOP_EDGE               0x20000000
