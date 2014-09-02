@@ -2203,6 +2203,9 @@ glw_get_path_r(char *buf, size_t buflen, glw_t *w)
   const char *ident = w->glw_class->gc_get_identity ? 
     w->glw_class->gc_get_identity(w) : NULL;
 
+  if(ident == NULL)
+    ident = rstr_get(w->glw_id_rstr);
+
   snprintf(buf + strlen(buf), buflen - strlen(buf), "%s%s%s%s%s%s%s%s",
 	   strlen(buf) ? "." : "", w->glw_class->gc_name,
 	   w->glw_flags & GLW_FOCUS_BLOCKED ? "<B>" : "",
