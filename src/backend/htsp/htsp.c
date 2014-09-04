@@ -110,6 +110,7 @@ typedef struct htsp_connection {
   atomic_t hc_sid_generator; /* Subscription ID */
 
   prop_t *hc_channels_model;
+  prop_t *hc_channels_sorted;
   prop_t *hc_channels_nodes;
 
   prop_t *hc_tags_model;
@@ -544,7 +545,7 @@ htsp_channelAddUpdate(htsp_connection_t *hc, htsmsg_t *m, int create)
 
   title = htsmsg_get_str(m, "channelName");
   icon  = htsmsg_get_str(m, "channelIcon");
-  chnum = htsmsg_get_s32_or_default(m, "channelNumber", -1);
+  chnum = htsmsg_get_s32_or_default(m, "channelNumber", 0);
   snprintf(txt, sizeof(txt), "%d", id);
 
   hts_mutex_lock(&hc->hc_meta_mutex);
@@ -573,9 +574,11 @@ htsp_channelAddUpdate(htsp_connection_t *hc, htsmsg_t *m, int create)
     mystrset(&ch->ch_title, title);
     prop_set_string(ch->ch_prop_title, title);
   }
-  if(chnum != -1)
-    prop_set_int(ch->ch_prop_channelNumber, chnum);
 
+  if(chnum > 0)
+    prop_set_int(ch->ch_prop_channelNumber, chnum);
+  else
+    prop_set_void(ch->ch_prop_channelNumber);
 
   if(htsmsg_get_u32(m, "eventId", &id))
     id = 0;
@@ -1094,12 +1097,23 @@ htsp_connection_find(const char *url, char *path, size_t pathlen,
   meta = prop_create(hc->hc_tags_model, "metadata");
   prop_set_string(prop_create(meta, "title"), "Channel groups");
 
-  
+  hc->hc_channels_nodes = prop_create_root(NULL);
+
   nodes = prop_create(hc->hc_tags_model, "nodes");
 
-
   hc->hc_channels_model = prop_create(nodes, NULL);
-  hc->hc_channels_nodes  = prop_create(hc->hc_channels_model, "nodes");
+  hc->hc_channels_sorted = prop_create(hc->hc_channels_model, "nodes");
+
+  struct prop_nf *nf =
+    prop_nf_create(hc->hc_channels_sorted,
+                   hc->hc_channels_nodes,
+                   NULL,
+                   PROP_NF_AUTODESTROY);
+
+  prop_nf_sort(nf, "node.metadata.channelNumber", 0, 0, NULL, 0);
+  prop_nf_release(nf);
+
+
   prop_set_string(prop_create(hc->hc_channels_model, "type"), "directory");
   meta = prop_create(hc->hc_channels_model, "metadata");
   prop_set_string(prop_create(meta, "title"), "All channels");
@@ -1221,7 +1235,7 @@ be_htsp_open(prop_t *page, const char *url, int sync)
 
   if(!strcmp(path, "/channels")) {
     
-    make_model(page, "Channels", hc->hc_channels_nodes, "tvchannels");
+    make_model(page, "Channels", hc->hc_channels_sorted, "tvchannels");
 
   } else if(!strncmp(path, "/tag/", strlen("/tag/"))) {
     prop_t *model;
