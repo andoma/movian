@@ -37,8 +37,7 @@ widget(container_y, {
 	
 	&self.focused = focusedChild();
 	
-        cloner(propSorter($page.model.nodes,
-                          sort, "node.metadata.channelNumber", false, false), container_z, {
+	cloner($page.model.nodes, container_z, {
 	  autoRefocusable: true;
 	  focusable: true;
 	  width: $ui.size * 12;
