@@ -67,9 +67,9 @@ typedef struct htsp_tag {
   LIST_ENTRY(htsp_tag) ht_link;
   char *ht_id;
   char *ht_title;
-  unsigned int ht_num_channels;
-  int32_t *ht_channels;
   prop_t *ht_root;
+  prop_t *ht_nodes;     // sorted output nodes
+  prop_t *ht_channels;  // source nodes
 } htsp_tag_t;
 
 
@@ -653,9 +653,8 @@ htsp_tagAddUpdate(htsp_connection_t *hc, htsmsg_t *m, int create)
   const char *id;
   htsmsg_t *members;
   htsmsg_field_t *f;
-  prop_t *metadata, *before, *nodes;
+  prop_t *metadata;
   char txt[200];
-  int num = 0, i;
   htsp_tag_t *ht, *n;
   const char *title;
   if((id = htsmsg_get_str(m, "tagId")) == NULL)
@@ -679,8 +678,22 @@ htsp_tagAddUpdate(htsp_connection_t *hc, htsmsg_t *m, int create)
     snprintf(txt, sizeof(txt), "htsp://%s:%d/tag/%s",
 	     hc->hc_hostname, hc->hc_port, id);
 
-    prop_set_string(prop_create(ht->ht_root, "url"), txt);
-    prop_set_string(prop_create(ht->ht_root, "type"), "directory");
+    prop_set(ht->ht_root, "url", PROP_SET_STRING, txt);
+    prop_set(ht->ht_root, "type", PROP_SET_STRING, "directory");
+
+    ht->ht_channels = prop_create(ht->ht_root, "channels");
+    ht->ht_nodes = prop_create(ht->ht_root, "nodes");
+
+    struct prop_nf *nf =
+      prop_nf_create(ht->ht_nodes,
+                     ht->ht_channels,
+                     NULL,
+                     PROP_NF_AUTODESTROY);
+
+    prop_nf_sort(nf, "node.metadata.channelNumber", 0, 0, NULL, 0);
+    prop_nf_release(nf);
+
+
 
     if(prop_set_parent_ex(ht->ht_root, hc->hc_tags_nodes,
 			  n ? n->ht_root : NULL, NULL))
@@ -714,60 +727,42 @@ htsp_tagAddUpdate(htsp_connection_t *hc, htsmsg_t *m, int create)
 
   metadata = prop_create(ht->ht_root, "metadata");
 
-  prop_set_string(prop_create(metadata, "title"), htsmsg_get_str(m, "tagName"));
-  prop_set_string(prop_create(metadata, "icon"), htsmsg_get_str(m, "tagIcon"));
-  prop_set_int(prop_create(metadata, "titledIcon"),
-	       htsmsg_get_u32_or_default(m, "tagTitledIcon", 0));
+  prop_set(metadata, "title", PROP_SET_STRING, htsmsg_get_str(m, "tagName"));
+  prop_set(metadata, "icon",  PROP_SET_STRING, htsmsg_get_str(m, "tagIcon"));
+  prop_set(metadata, "titledIcon", PROP_SET_INT,
+           htsmsg_get_u32_or_default(m, "tagTitledIcon", 0));
 
-  // Create ordered list of channels in this tag
-  nodes = prop_create(ht->ht_root, "nodes");
+
+
   if((members = htsmsg_get_list(m, "members")) == NULL) {
     hts_mutex_unlock(&hc->hc_meta_mutex);
     return;
   }
 
-  before = NULL;
+  prop_mark_childs(ht->ht_channels);
 
-  TAILQ_FOREACH_REVERSE(f, &members->hm_fields, htsmsg_field_queue, hmf_link) {
+  HTSMSG_FOREACH(f, members) {
+    char url[512];
     if(f->hmf_type != HMF_S64)
       continue;
 
     snprintf(txt, sizeof(txt), "%" PRId64, f->hmf_s64);
-    prop_t *ch = prop_create(nodes, txt);
-    prop_move(ch, before);
+    prop_t *ch = prop_create(ht->ht_channels, txt);
 
-    prop_set_string(prop_create(ch, "type"), "tvchannel");
-    prop_set_stringf(prop_create(ch, "url"),
-		     "htsp://%s:%d/channel/%" PRId64,
-		     hc->hc_hostname, hc->hc_port, f->hmf_s64);
+    prop_unmark(ch);
+
+    snprintf(url, sizeof(url), "htsp://%s:%d/channel/%" PRId64,
+             hc->hc_hostname, hc->hc_port, f->hmf_s64);
+
+    prop_set(ch, "type", PROP_SET_STRING, "tvchannel");
+    prop_set(ch, "url", PROP_SET_STRING, url);
 
     prop_t *orig = prop_create(hc->hc_channels_nodes, txt);
 
     prop_link(prop_create(orig, "metadata"), prop_create(ch, "metadata"));
-    before = ch;
-    num++;
   }
 
-  LIST_FOREACH(ht, &hc->hc_tags, ht_link) {
-    if(!strcmp(ht->ht_id, id))
-      break;
-  }
-
-  if(ht == NULL) {
-    ht = calloc(1, sizeof(htsp_tag_t));
-    LIST_INSERT_HEAD(&hc->hc_tags, ht, ht_link);
-    ht->ht_id = strdup(id);
-  }
-
-  ht->ht_num_channels = num;
-  ht->ht_channels = realloc(ht->ht_channels, num * sizeof(int));
-
-  i = 0;
-  TAILQ_FOREACH(f, &members->hm_fields, hmf_link) {
-    if(f->hmf_type != HMF_S64)
-      continue;
-    ht->ht_channels[i++] = f->hmf_s64;
-  }
+  prop_destroy_marked_childs(ht->ht_channels);
 
   hts_mutex_unlock(&hc->hc_meta_mutex);
 }
@@ -782,7 +777,6 @@ tag_destroy(htsp_tag_t *ht)
   LIST_REMOVE(ht, ht_link);
   free(ht->ht_id);
   free(ht->ht_title);
-  free(ht->ht_channels);
   prop_destroy(ht->ht_root);
   free(ht);
 }
