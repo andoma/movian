@@ -56,6 +56,7 @@ LIST_HEAD(glw_prop_sub_list, glw_prop_sub);
 LIST_HEAD(glw_loadable_texture_list, glw_loadable_texture);
 TAILQ_HEAD(glw_loadable_texture_queue, glw_loadable_texture);
 LIST_HEAD(glw_video_list, glw_video);
+LIST_HEAD(glw_style_list, glw_style);
 
 #ifndef likely
 #define likely(x)       __builtin_expect((x),1)
@@ -719,6 +720,8 @@ typedef struct glw_root {
   hts_thread_t gr_thread;
   hts_mutex_t gr_mutex;
   prop_courier_t *gr_courier;
+
+  struct glw_style_list gr_all_styles;
 
   struct glw_queue gr_destroyer_queue;
 

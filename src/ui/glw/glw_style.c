@@ -61,10 +61,13 @@ typedef struct glw_style_attribute {
  */
 struct glw_style {
   glw_t w;
-  int gs_refcount;
   rstr_t *gs_name;
   struct glw_head gs_widgets;
   struct glw_style_attribute_list gs_attributes;
+
+  LIST_ENTRY(glw_style) gs_link;
+
+  int gs_refcount;
 
   uint32_t gs_flags2_set;
   uint32_t gs_flags2_clr;
@@ -81,11 +84,6 @@ struct glw_style {
 #define GS_SET_WEIGHT       0x8
 #define GS_SET_WIDTH        0x10
 #define GS_SET_HEIGHT       0x20
-
-
-
-
-
 };
 
 
@@ -199,6 +197,8 @@ glw_style_release(glw_style_t *gs)
   gs->gs_refcount--;
   if(gs->gs_refcount)
     return;
+
+  LIST_REMOVE(gs, gs_link);
 
   assert(LIST_FIRST(&gs->gs_widgets) == NULL);
   glw_prop_subscription_destroy_list(w->glw_root, &w->glw_prop_subscriptions);
@@ -588,6 +588,7 @@ glw_style_t *
 glw_style_create(glw_root_t *gr, rstr_t *name)
 {
   glw_style_t *gs = calloc(1, sizeof(glw_style_t));
+  LIST_INSERT_HEAD(&gr->gr_all_styles, gs, gs_link);
   gs->w.glw_class = &glw_style;
   gs->w.glw_root = gr;
   gs->gs_name = rstr_dup(name);
@@ -755,4 +756,19 @@ glw_style_set_for_widget(glw_t *w, const char *name)
   }
 
   return glw_style_bind(w, NULL);
+}
+
+
+/**
+ *
+ */
+void
+glw_style_update_em(glw_root_t *gr)
+{
+  glw_style_t *gs;
+  LIST_FOREACH(gs, &gr->gr_all_styles, gs_link)
+    if(gs->w.glw_dynamic_eval & GLW_VIEW_EVAL_EM)
+      glw_view_eval_em(&gs->w);
+
+
 }

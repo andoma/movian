@@ -42,3 +42,5 @@ glw_style_t *glw_style_create(glw_root_t *gr, rstr_t *name);
 int glw_style_set_for_widget(glw_t *w, const char *name);
 
 int glw_style_bind(glw_t *w, glw_style_t *gs);
+
+void glw_style_update_em(glw_root_t *gr);

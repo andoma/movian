@@ -42,7 +42,7 @@ static void glw_focus_init_widget(glw_t *w, float weight);
 static void glw_focus_leave(glw_t *w);
 static void glw_root_set_hover(glw_root_t *gr, glw_t *w);
 static void glw_eventsink(void *opaque, prop_event_t event, ...);
-static void glw_update_em(glw_t *w);
+static void glw_update_em(glw_root_t *gr);
 
 const float glw_identitymtx[16] = {
   1,0,0,0,
@@ -77,15 +77,14 @@ glw_update_sizes(glw_root_t *gr)
 
   int base_size = MIN(bs1, bs2);
 
-  val = GLW_CLAMP(base_size + glw_settings.gs_size, 14, 40);
+  val = GLW_CLAMP(base_size + glw_settings.gs_size, 8, 40);
   
   if(gr->gr_current_size != val) {
     gr->gr_current_size = val;
     prop_set(gr->gr_prop_ui, "size", PROP_SET_INT, val);
     glw_text_flush(gr);
     glw_icon_flush(gr);
-    if(gr->gr_universe != NULL)
-      glw_update_em(gr->gr_universe);
+    glw_update_em(gr);
     TRACE(TRACE_DEBUG, "GLW", "UI size scale changed to %d", val);
   }
 
@@ -2698,13 +2697,23 @@ glw_need_refresh0(glw_root_t *gr, int how, const char *file, int line)
 
 
 static void
-glw_update_em(glw_t *w)
+glw_update_em_r(glw_t *w)
 {
   glw_t *c;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
-    glw_update_em(c);
+    glw_update_em_r(c);
 
   if(w->glw_dynamic_eval & GLW_VIEW_EVAL_EM)
     glw_view_eval_em(w);
+}
+
+
+static void
+glw_update_em(glw_root_t *gr)
+{
+  if(gr->gr_universe != NULL)
+    glw_update_em_r(gr->gr_universe);
+
+  glw_style_update_em(gr);
 }
