@@ -465,8 +465,20 @@ glw_container_z_constraints(glw_t *w, glw_t *skip)
     if(c->glw_flags & GLW_HIDDEN || c == skip)
       continue;
 
-    if(!(c->glw_class->gc_flags & GLW_UNCONSTRAINED))
+    if(c->glw_flags & GLW_CONSTRAINT_FLAGS)
       break;
+  }
+
+  if(c == NULL) {
+
+    TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+
+      if(c->glw_flags & GLW_HIDDEN || c == skip)
+        continue;
+
+      if(!(c->glw_class->gc_flags & GLW_UNCONSTRAINED))
+        break;
+    }
   }
 
   if(c != NULL)
