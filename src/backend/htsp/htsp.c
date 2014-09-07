@@ -577,8 +577,6 @@ htsp_channelAddUpdate(htsp_connection_t *hc, htsmsg_t *m, int create)
 
   if(chnum > 0)
     prop_set_int(ch->ch_prop_channelNumber, chnum);
-  else
-    prop_set_void(ch->ch_prop_channelNumber);
 
   if(htsmsg_get_u32(m, "eventId", &id))
     id = 0;
