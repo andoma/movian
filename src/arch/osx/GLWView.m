@@ -82,6 +82,7 @@ static const struct {
   
   /* only used for fullscreen, in windowed mode we dont get events with
    * NSCommandKeyMask set */
+  { '0',                      NSCommandKeyMask, ACTION_ZOOM_UI_RESET },
   { '+',                      NSCommandKeyMask, ACTION_ZOOM_UI_INCR },
   { '-',                      NSCommandKeyMask, ACTION_ZOOM_UI_DECR },
   { 'f',                      NSCommandKeyMask, ACTION_FULLSCREEN_TOGGLE },

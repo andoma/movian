@@ -35,7 +35,10 @@ glw_settings_t glw_settings;
 void
 glw_settings_adj_size(int delta)
 {
-  settings_add_int(glw_settings.gs_setting_size, delta); 
+  if(delta == 0)
+    setting_set(glw_settings.gs_setting_size, SETTING_INT, 0);
+  else
+    settings_add_int(glw_settings.gs_setting_size, delta);
 }
 
 

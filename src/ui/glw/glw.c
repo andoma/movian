@@ -1859,6 +1859,11 @@ glw_dispatch_event(glw_root_t *gr, event_t *e)
     glw_settings_adj_size(-1);
     return;
 
+  } else if(event_is_action(e, ACTION_ZOOM_UI_RESET)) {
+
+    glw_settings_adj_size(0);
+    return;
+
   }
 
   r = glw_event(gr, e);
