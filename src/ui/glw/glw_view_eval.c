@@ -5747,6 +5747,8 @@ typedef struct glwf_multiopt_extra {
 
   rstr_t *userval;
 
+  prop_t *current_title;
+
 } glwf_multiopt_extra_t;
 
 
@@ -5765,19 +5767,21 @@ multiopt_item_cycle(glwf_multiopt_extra_t *x)
   if(x->cur->mi_item) {
     prop_select(x->cur->mi_item);
     prop_set_rstring(x->storage, x->cur->mi_value);
+    prop_set_rstring(x->current_title, x->cur->mi_title);
   }
 }
 
 /**
  *
  */
-static void 
+static void
 multiopt_item_cb(void *opaque, prop_event_t event, ...)
 {
   glwf_multiopt_extra_t *x = opaque;
   rstr_t *name;
   prop_t *c;
   va_list ap;
+  multiopt_item_t *mi;
 
   va_start(ap, event);
 
@@ -5786,9 +5790,17 @@ multiopt_item_cb(void *opaque, prop_event_t event, ...)
   case PROP_SELECT_CHILD:
     c = va_arg(ap, prop_t *);
     name = c ? prop_get_name(c) : NULL;
-    prop_set_rstring(x->value, name);
-    prop_set_rstring(x->storage, name);
+
+    TAILQ_FOREACH(mi, &x->q, mi_link)
+      if(rstr_eq(name, mi->mi_value))
+        break;
     rstr_release(name);
+
+    if(mi == NULL)
+      break;
+    prop_set_rstring(x->value, mi->mi_value);
+    prop_set_rstring(x->storage, mi->mi_value);
+    prop_set_rstring(x->current_title, mi->mi_title);
     break;
 
   case PROP_EXT_EVENT:
@@ -5813,7 +5825,6 @@ glwf_multiopt_ctor(struct token *self)
   glwf_multiopt_extra_t *x;
   x = self->t_extra = calloc(1, sizeof(glwf_multiopt_extra_t));
   TAILQ_INIT(&x->q);
-  x->value = prop_create_root(NULL);
 
 }
 
@@ -5857,12 +5868,15 @@ glwf_multiopt_dtor(glw_root_t *gr, struct token *self)
   prop_ref_dec(x->settings);
   prop_ref_dec(x->opts);
   prop_ref_dec(x->title);
-  prop_destroy(x->value);
+  prop_ref_dec(x->value);
   prop_unsubscribe(x->setting_sub);
 
   prop_ref_dec(x->storage);
   prop_unsubscribe(x->storage_sub);
   rstr_release(x->userval);
+
+  prop_ref_dec(x->current_title);
+
   free(x);
 }
 
@@ -5972,8 +5986,13 @@ glwf_multiopt(glw_view_eval_context_t *ec, struct token *self,
       prop_ref_dec(x->settings);
       prop_ref_dec(x->opts);
       prop_ref_dec(x->title);
+      prop_ref_dec(x->current_title);
+      prop_ref_dec(x->value);
+      x->settings = NULL;
       x->opts = NULL;
       x->title = NULL;
+      x->current_title = NULL;
+      x->value = NULL;
     }
 
     prop_unsubscribe(x->setting_sub);
@@ -5985,8 +6004,13 @@ glwf_multiopt(glw_view_eval_context_t *ec, struct token *self,
 
       x->title = prop_create_r(prop_create(x->settings, "metadata"), "title");
       prop_set(x->settings, "type", PROP_SET_STRING, "multiopt");
-      
+
       x->opts = prop_create_r(x->settings, "options");
+
+      x->current_title =
+        prop_create_r(prop_create(x->settings, "current"), "title");
+
+      x->value = prop_create_r(x->settings, "value");
 
       x->setting_sub =
 	prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
@@ -6086,9 +6110,9 @@ glwf_multiopt(glw_view_eval_context_t *ec, struct token *self,
   x->cur = u ?: TAILQ_FIRST(&x->q);
   if(x->cur != NULL) {
     prop_set_rstring(x->value, x->cur->mi_value);
+    prop_set_rstring(x->current_title, x->cur->mi_title);
     prop_select_ex(x->cur->mi_item, NULL, x->setting_sub);
   }
-
   prop_link(x->value, dst->t_prop);
   ec->dynamic_eval |= GLW_VIEW_EVAL_KEEP;
   return 0;
