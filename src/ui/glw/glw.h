@@ -809,8 +809,6 @@ typedef struct glw_root {
 
   struct glw_loadable_texture_list gr_tex_list;
 
-  int gr_normalized_texture_coords;
-
   /**
    * Root focus leader
    */

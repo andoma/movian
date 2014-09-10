@@ -430,30 +430,15 @@ glw_image_layout_tesselated(glw_root_t *gr, const glw_rctx_t *rc,
     update_box(gi);
   }
 
-  if(gr->gr_normalized_texture_coords) {
+  tex[1][0] = 0.0f + (float)gi->gi_border[0]  / glt->glt_xs;
+  tex[2][0] = glt->glt_s - (float)gi->gi_border[2] / glt->glt_xs;
+  tex[0][0] = gi->gi_bitmap_flags & GLW_IMAGE_BORDER_LEFT ? 0.0f : tex[1][0];
+  tex[3][0] = gi->gi_bitmap_flags & GLW_IMAGE_BORDER_RIGHT ? glt->glt_s : tex[2][0];
 
-    tex[1][0] = 0.0f + (float)gi->gi_border[0]  / glt->glt_xs;
-    tex[2][0] = glt->glt_s - (float)gi->gi_border[2] / glt->glt_xs;
-    tex[0][0] = gi->gi_bitmap_flags & GLW_IMAGE_BORDER_LEFT ? 0.0f : tex[1][0];
-    tex[3][0] = gi->gi_bitmap_flags & GLW_IMAGE_BORDER_RIGHT ? glt->glt_s : tex[2][0];
-
-    tex[0][1] = 0.0f;
-    tex[1][1] = 0.0f + (float)gi->gi_border[1]    / glt->glt_ys;
-    tex[2][1] = glt->glt_t - (float)gi->gi_border[3] / glt->glt_ys;
-    tex[3][1] = glt->glt_t;
-
-  } else {
-
-    tex[1][0] = gi->gi_border[0];
-    tex[2][0] = glt->glt_xs - gi->gi_border[2];
-    tex[0][0] = gi->gi_bitmap_flags & GLW_IMAGE_BORDER_LEFT  ? 0.0f : tex[1][0];
-    tex[3][0] = gi->gi_bitmap_flags & GLW_IMAGE_BORDER_RIGHT ? glt->glt_xs : tex[2][0];
-
-    tex[0][1] = 0.0f;
-    tex[1][1] = gi->gi_border[1];
-    tex[2][1] = glt->glt_ys - gi->gi_border[3];
-    tex[3][1] = glt->glt_ys;
-  }
+  tex[0][1] = 0.0f;
+  tex[1][1] = 0.0f + (float)gi->gi_border[1]    / glt->glt_ys;
+  tex[2][1] = glt->glt_t - (float)gi->gi_border[3] / glt->glt_ys;
+  tex[3][1] = glt->glt_t;
 
   BL = gi->gi_border[0];
   BR = gi->gi_border[2];
@@ -501,13 +486,9 @@ settexcoord(glw_renderer_t *gr, int c, float s0, float t0,
   float s = s0 * m[0] + t0 * m[1];
   float t = s0 * m[2] + t0 * m[3];
 
-  if(root->gr_normalized_texture_coords) {
-    s = (s + 1.0) * 0.5;
-    t = (t + 1.0) * 0.5;
-  } else {
-    s = (s + 1.0) * 0.5 * glt->glt_xs;
-    t = (t + 1.0) * 0.5 * glt->glt_ys;
-  }
+  s = (s + 1.0) * 0.5;
+  t = (t + 1.0) * 0.5;
+
   glw_renderer_vtx_st(gr, c, s, t);
 }
 
@@ -591,8 +572,8 @@ static void
 glw_image_layout_repeated(glw_root_t *gr, const glw_rctx_t *rc,
                           glw_image_t *gi, glw_loadable_texture_t *glt)
 {
-  float xs = gr->gr_normalized_texture_coords ? glt->glt_s : glt->glt_xs;
-  float ys = gr->gr_normalized_texture_coords ? glt->glt_t : glt->glt_ys;
+  float xs = glt->glt_s;
+  float ys = glt->glt_t;
 
   glw_renderer_vtx_pos(&gi->gi_gr, 0, -1.0, -1.0, 0.0);
   glw_renderer_vtx_st (&gi->gi_gr, 0, 0, ys);

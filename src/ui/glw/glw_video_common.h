@@ -316,7 +316,7 @@ void *glw_video_add_reap_task(glw_video_t *gv, size_t s, void *fn);
 /**
  *
  */
-void glw_render_video_quad(int interlace, int rectmode, int width, int height,
+void glw_render_video_quad(int interlace, int width, int height,
                            int bob1, int bob2,
                            glw_backend_root_t *gbr, glw_program_t *gp,
                            const glw_video_t *gv, glw_rctx_t *rc);

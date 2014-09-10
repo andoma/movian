@@ -409,7 +409,6 @@ glw_rsx_init_context(glw_root_t *gr)
 {
   glw_backend_root_t *be = &gr->gr_be;
 
-  gr->gr_normalized_texture_coords = 1;
   gr->gr_render = rsx_render;
   
   be->be_vp_1          = load_vp("v1.vp");

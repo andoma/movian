@@ -61,7 +61,7 @@ void
 glw_tex_backend_layout(glw_root_t *gr, glw_loadable_texture_t *glt)
 {
   void *p;
-  int m = gr->gr_be.gbr_primary_texture_mode;
+  int m = GL_TEXTURE_2D;
 
   if(glt->glt_texture.tex != 0)
     return;
@@ -171,7 +171,7 @@ glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex,
 	       const pixmap_t *pm, int flags)
 {
   int format;
-  int m = gr->gr_be.gbr_primary_texture_mode;
+  int m = GL_TEXTURE_2D;
 
   if(tex->tex == 0) {
     glGenTextures(1, &tex->tex);

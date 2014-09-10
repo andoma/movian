@@ -183,8 +183,6 @@ glw_bloom_layout(glw_t *w, const glw_rctx_t *rc)
 
   // Initialize output texture
   if(!b->b_render_initialized) {
-    float xs = gr->gr_normalized_texture_coords ? 1.0 : b->b_width;
-    float ys = gr->gr_normalized_texture_coords ? 1.0 : b->b_height;
 
     glw_renderer_init_quad(&b->b_render);
 
@@ -192,13 +190,13 @@ glw_bloom_layout(glw_t *w, const glw_rctx_t *rc)
     glw_renderer_vtx_st (&b->b_render, 0,  0.0,  0);
 
     glw_renderer_vtx_pos(&b->b_render, 1,  1.0, -1.0, 0.0);
-    glw_renderer_vtx_st (&b->b_render, 1,  xs,   0);
+    glw_renderer_vtx_st (&b->b_render, 1,  1.0,   0);
 
     glw_renderer_vtx_pos(&b->b_render, 2,  1.0,  1.0, 0.0);
-    glw_renderer_vtx_st (&b->b_render, 2,  xs,   ys);
+    glw_renderer_vtx_st (&b->b_render, 2,  1.0,  1.0);
 
     glw_renderer_vtx_pos(&b->b_render, 3, -1.0,  1.0, 0.0);
-    glw_renderer_vtx_st (&b->b_render, 3,  0.0,  ys);
+    glw_renderer_vtx_st (&b->b_render, 3,  0.0,  1.0);
   }
 
   memset(&rc0, 0, sizeof(glw_rctx_t));

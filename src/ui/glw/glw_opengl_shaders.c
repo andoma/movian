@@ -81,7 +81,7 @@ get_program(const glw_backend_root_t *gbr,
 
   if(up != NULL) {
     if(t0 != NULL)
-      glBindTexture(gbr->gbr_primary_texture_mode, t0->tex);
+      glBindTexture(GL_TEXTURE_2D, t0->tex);
     return up;
   }
 
@@ -89,7 +89,7 @@ get_program(const glw_backend_root_t *gbr,
 
     if(t1 != NULL) {
       gp = gbr->gbr_renderer_flat_stencil;
-      glBindTexture(gbr->gbr_primary_texture_mode, t1->tex);
+      glBindTexture(GL_TEXTURE_2D, t1->tex);
 
     } else {
       gp = gbr->gbr_renderer_flat;
@@ -106,7 +106,7 @@ get_program(const glw_backend_root_t *gbr,
 	gbr->gbr_renderer_tex_stencil;
 
       glActiveTexture(GL_TEXTURE1);
-      glBindTexture(gbr->gbr_primary_texture_mode, t1->tex);
+      glBindTexture(GL_TEXTURE_2D, t1->tex);
       glActiveTexture(GL_TEXTURE0);
 
     } else if(doblur) {
@@ -118,7 +118,7 @@ get_program(const glw_backend_root_t *gbr,
       gp = gbr->gbr_renderer_tex;
     }
 
-    glBindTexture(gbr->gbr_primary_texture_mode, t0->tex);
+    glBindTexture(GL_TEXTURE_2D, t0->tex);
   }
   return gp;
 }

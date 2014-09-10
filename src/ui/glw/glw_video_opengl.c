@@ -354,7 +354,7 @@ video_opengl_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
  *  Video widget render
  */
 void
-glw_render_video_quad(int interlace, int rectmode, int width, int height,
+glw_render_video_quad(int interlace, int width, int height,
                       int bob1, int bob2,
                       glw_backend_root_t *gbr, glw_program_t *gp,
                       const glw_video_t *gv, glw_rctx_t *rc)
@@ -369,21 +369,13 @@ glw_render_video_quad(int interlace, int rectmode, int width, int height,
   x1 = 0;
   y1 = 0;
 
-  if(rectmode) {
+  x2 = 1;
+  y2 = 1;
 
-    x2 = width;
-    y2 = height;
+  if(interlace) {
 
-  } else {
-
-    x2 = 1;
-    y2 = 1;
-
-    if(interlace) {
-
-      b1 = (0.5 * bob1) / (float)height;
-      b2 = (0.5 * bob2) / (float)height;
-    }
+    b1 = (0.5 * bob1) / (float)height;
+    b2 = (0.5 * bob2) / (float)height;
   }
 
   tc[0] = x1;
@@ -423,7 +415,7 @@ glw_render_video_quad(int interlace, int rectmode, int width, int height,
  */
 static void
 render_video_1f(const glw_video_t *gv, glw_video_surface_t *s,
-		int textype, int rectmode, glw_rctx_t *rc)
+		int textype, glw_rctx_t *rc)
 {
   glw_backend_root_t *gbr = &gv->w.glw_root->gr_be;
   glw_program_t *gp;
@@ -452,7 +444,7 @@ render_video_1f(const glw_video_t *gv, glw_video_surface_t *s,
     return;
   }
 
-  glw_render_video_quad(s->gvs_interlaced, rectmode,
+  glw_render_video_quad(s->gvs_interlaced,
                         s->gvs_width[0], s->gvs_height[0],
                         s->gvs_yshift, 0, gbr, gp, gv, rc);
 }
@@ -464,7 +456,7 @@ render_video_1f(const glw_video_t *gv, glw_video_surface_t *s,
 static void
 render_video_2f(const glw_video_t *gv, 
 		glw_video_surface_t *sa, glw_video_surface_t *sb,
-		int textype, int rectmode, glw_rctx_t *rc)
+		int textype, glw_rctx_t *rc)
 {
   glw_backend_root_t *gbr = &gv->w.glw_root->gr_be;
   glw_program_t *gp;
@@ -507,7 +499,7 @@ render_video_2f(const glw_video_t *gv,
     return;
   }
 
-  glw_render_video_quad(sa->gvs_interlaced || sb->gvs_interlaced, rectmode,
+  glw_render_video_quad(sa->gvs_interlaced || sb->gvs_interlaced,
                         sa->gvs_width[0], sa->gvs_height[0],
                         sa->gvs_yshift, sb->gvs_yshift,
                         gbr, gp, gv, rc);
@@ -520,9 +512,7 @@ render_video_2f(const glw_video_t *gv,
 static void
 video_opengl_render(glw_video_t *gv, glw_rctx_t *rc)
 {
-  glw_root_t *gr = gv->w.glw_root;
-  int textype = gr->gr_be.gbr_primary_texture_mode;
-  int rectmode = !gr->gr_normalized_texture_coords;
+  int textype = GL_TEXTURE_2D;
   glw_video_surface_t *sa = gv->gv_sa, *sb = gv->gv_sb;
 
   if(sa == NULL)
@@ -537,9 +527,9 @@ video_opengl_render(glw_video_t *gv, glw_rctx_t *rc)
     glEnable(GL_BLEND);
 
   if(sb != NULL) {
-    render_video_2f(gv, sa, sb, textype, rectmode, rc);
+    render_video_2f(gv, sa, sb, textype, rc);
   } else {
-    render_video_1f(gv, sa, textype, rectmode, rc);
+    render_video_1f(gv, sa, textype, rc);
   }
 
   glEnable(GL_BLEND);

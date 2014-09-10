@@ -573,8 +573,6 @@ glw_wii_start(ui_t *ui, int argc, char *argv[], int primary)
       break;
   }
 
-  gwii->gr.gr_normalized_texture_coords = 1;
-
   glw_root_t *gr = &gwii->gr;
 
   if(glw_init(gr, skin_path, ui, primary, "wii", NULL)) {

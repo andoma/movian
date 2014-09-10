@@ -92,17 +92,8 @@ struct glw_program {
 
 typedef struct glw_backend_root {
 
-  enum {
-    GLW_OPENGL_TEXTURE_SIMPLE,
-    GLW_OPENGL_TEXTURE_RECTANGLE,
-    GLW_OPENGL_TEXTURE_NPOT
-  } gbr_texmode;
-
-  int gbr_primary_texture_mode; // GL_TEXTURE_2D or GL_TEXTURE_RECTANGLE_EXT
-
   struct glw_program *gbr_current;
 
-  
   /**
    * Video renderer
    */

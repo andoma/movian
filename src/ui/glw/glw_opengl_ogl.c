@@ -28,25 +28,6 @@ const static float projection[16] = {
   0.000000,0.000000,2.033898,0.000000
 };
 
-/**
- * return 1 if the extension is found, otherwise 0
- */
-static int
-check_gl_ext(const uint8_t *s, const char *func)
-{
-  int l = strlen(func);
-  char *v;
-  int x;
-
-  v = strstr((const char *)s, func);
-  x = v != NULL && v[l] < 33;
-
-  TRACE(TRACE_DEBUG, "OpenGL", "Feature \"%s\" %savailable",
-	func, x ? "" : "not ");
-  return x;
-}
-
-
 
 /**
  *
@@ -144,14 +125,14 @@ void
 glw_rtt_init(glw_root_t *gr, glw_rtt_t *grtt, int width, int height,
 	     int alpha)
 {
-  int m = gr->gr_be.gbr_primary_texture_mode;
+  const int m = GL_TEXTURE_2D;
   int mode;
 
   grtt->grtt_width  = width;
   grtt->grtt_height = height;
 
   glGenTextures(1, &grtt->grtt_texture.tex);
-    
+
   glBindTexture(m, grtt->grtt_texture.tex);
   glTexParameteri(m, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(m, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -181,12 +162,10 @@ glw_rtt_init(glw_root_t *gr, glw_rtt_t *grtt, int width, int height,
 void
 glw_rtt_enter(glw_root_t *gr, glw_rtt_t *grtt, glw_rctx_t *rc)
 {
-  int m = gr->gr_be.gbr_primary_texture_mode;
-
   /* Save viewport */
   glGetIntegerv(GL_VIEWPORT, grtt->grtt_viewport);
 
-  glBindTexture(m, 0);
+  glBindTexture(GL_TEXTURE_2D, 0);
   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, grtt->grtt_framebuffer);
   
   glViewport(0, 0, grtt->grtt_width, grtt->grtt_height);
@@ -246,25 +225,7 @@ glw_opengl_init_context(glw_root_t *gr)
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, PIXMAP_ROW_ALIGN);
 
-  if(check_gl_ext(s, "GL_ARB_texture_non_power_of_two")) {
-    gbr->gbr_texmode = GLW_OPENGL_TEXTURE_NPOT;
-    gbr->gbr_primary_texture_mode = GL_TEXTURE_2D;
-    gr->gr_normalized_texture_coords = 1;
-
-#ifdef GL_TEXTURE_RECTANGLE_ARB
-  } else if(check_gl_ext(s, "GL_ARB_texture_rectangle")) {
-    gbr->gbr_texmode = GLW_OPENGL_TEXTURE_RECTANGLE;
-    gbr->gbr_primary_texture_mode = GL_TEXTURE_RECTANGLE_ARB;
-#endif
-
-  } else {
-    gbr->gbr_texmode = GLW_OPENGL_TEXTURE_SIMPLE;
-    gbr->gbr_primary_texture_mode = GL_TEXTURE_2D;
-    gr->gr_normalized_texture_coords = 1;
-    
-  }
-
-  glEnable(gbr->gbr_primary_texture_mode);
+  glEnable(GL_TEXTURE_2D);
 
   glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &tu);
   if(tu < 6) {

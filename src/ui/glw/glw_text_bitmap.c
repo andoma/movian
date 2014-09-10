@@ -282,15 +282,9 @@ glw_text_bitmap_layout(glw_t *w, const glw_rctx_t *rc)
     x2 = -1.0f + 2.0f * right  / (float)rc->rc_width;
     y2 = -1.0f + 2.0f * top    / (float)rc->rc_height;
 
-    float s, t;
 
-    if(gr->gr_normalized_texture_coords) {
-      s = text_width  / (float)tex_width;
-      t = text_height / (float)tex_height;
-    } else {
-      s = text_width;
-      t = text_height;
-    }
+    const float s = text_width  / (float)tex_width;
+    const float t = text_height / (float)tex_height;
 
     glw_renderer_vtx_pos(&gtb->gtb_text_renderer, 0, x1, y1, 0.0);
     glw_renderer_vtx_st (&gtb->gtb_text_renderer, 0, 0, t);

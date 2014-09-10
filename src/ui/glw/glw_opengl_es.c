@@ -63,7 +63,6 @@ glw_opengl_init_context(glw_root_t *gr)
 
   gbr->gbr_texmode = GLW_OPENGL_TEXTURE_NPOT;
   gbr->gbr_primary_texture_mode = GL_TEXTURE_2D;
-  gr->gr_normalized_texture_coords = 1;
 
   glEnable(gbr->gbr_primary_texture_mode);
 
