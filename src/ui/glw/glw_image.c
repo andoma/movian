@@ -102,7 +102,8 @@ typedef struct glw_image {
   int gi_switch_cnt;
   int gi_switch_tgt;
 
-  glw_program_t *gi_prog;
+  glw_program_args_t gi_gpa;
+
   rstr_t *gi_fs;
 
 } glw_image_t;
@@ -162,7 +163,7 @@ glw_image_dtor(glw_t *w)
     glw_tex_deref(w->glw_root, gi->gi_pending);
   glw_renderer_free(&gi->gi_gr);
   rstr_release(gi->gi_fs);
-  glw_destroy_program(w->glw_root, gi->gi_prog);
+  glw_destroy_program(w->glw_root, gi->gi_gpa.gpa_prog);
 }
 
 
@@ -262,8 +263,9 @@ glw_image_render(glw_t *w, const glw_rctx_t *rc)
   glw_rctx_t rc0;
   
   if(gi->gi_recompile) {
-    glw_destroy_program(w->glw_root, gi->gi_prog);
-    gi->gi_prog = glw_make_program(w->glw_root, NULL, rstr_get(gi->gi_fs));
+    glw_destroy_program(w->glw_root, gi->gi_gpa.gpa_prog);
+    gi->gi_gpa.gpa_prog =
+      glw_make_program(w->glw_root, NULL, rstr_get(gi->gi_fs));
     gi->gi_recompile = 0;
   }
 
@@ -303,9 +305,9 @@ glw_image_render(glw_t *w, const glw_rctx_t *rc)
 	glw_blendmode(w->glw_root, GLW_BLEND_ADDITIVE);
 
       glw_renderer_draw(&gi->gi_gr, w->glw_root, &rc0,
-			&glt->glt_texture,
+			&glt->glt_texture, NULL,
 			&gi->gi_col_mul, rgb_off, alpha_self, blur,
-			gi->gi_prog);
+			gi->gi_gpa.gpa_prog ? &gi->gi_gpa : NULL);
 
       if(gi->gi_bitmap_flags & GLW_IMAGE_ADDITIVE)
 	glw_blendmode(w->glw_root, GLW_BLEND_NORMAL);
@@ -328,9 +330,9 @@ glw_image_render(glw_t *w, const glw_rctx_t *rc)
 	glw_blendmode(w->glw_root, GLW_BLEND_ADDITIVE);
 
       glw_renderer_draw(&gi->gi_gr, w->glw_root, rc,
-			&glt->glt_texture,
+			&glt->glt_texture, NULL,
 			&gi->gi_col_mul, rgb_off, alpha_self, blur,
-			gi->gi_prog);
+			gi->gi_gpa.gpa_prog ? &gi->gi_gpa : NULL);
 
       if(gi->gi_bitmap_flags & GLW_IMAGE_ADDITIVE)
 	glw_blendmode(w->glw_root, GLW_BLEND_NORMAL);

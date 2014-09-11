@@ -49,6 +49,8 @@ struct event;
 
 typedef struct glw_style glw_style_t;
 
+typedef struct glw_program_args glw_program_args_t;
+
 TAILQ_HEAD(glw_queue, glw);
 LIST_HEAD(glw_head, glw);
 LIST_HEAD(glw_event_map_list, glw_event_map);
@@ -882,7 +884,7 @@ typedef struct glw_root {
 		    const uint16_t *indices,
 		    int num_triangles,
 		    int flags,
-		    glw_program_t *p,
+		    struct glw_program_args *gpa,
 		    const struct glw_rctx *rc);
 
 #define GLW_RENDER_COLOR_ATTRIBUTES 0x1 /* set if the color attributes

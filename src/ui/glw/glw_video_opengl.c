@@ -91,9 +91,9 @@ surface_reset(glw_video_t *gv, glw_video_surface_t *gvs)
 
   for(int i = 0; i < gv->gv_planes; i++) {
     t->pbo[i] = gvs->gvs_pbo[i];
-    t->tex[i] = gvs->gvs_textures[i];
+    t->tex[i] = gvs->gvs_texture.textures[i];
     gvs->gvs_pbo[i] = 0;
-    gvs->gvs_textures[i] = 0;
+    gvs->gvs_texture.textures[i] = 0;
     gvs->gvs_data[i] = NULL;
   }
 }
@@ -123,8 +123,8 @@ surface_init(glw_video_t *gv, glw_video_surface_t *gvs)
 
   glGenBuffers(gv->gv_planes, gvs->gvs_pbo);
 
-  if(!gvs->gvs_textures[0])
-    glGenTextures(gv->gv_planes, gvs->gvs_textures);
+  if(!gvs->gvs_texture.textures[0])
+    glGenTextures(gv->gv_planes, gvs->gvs_texture.textures);
 
   gvs->gvs_uploaded = 0;
   for(i = 0; i < gv->gv_planes; i++) {
@@ -160,9 +160,58 @@ make_surfaces_available(glw_video_t *gv)
 /**
  *
  */
+static void
+load_uniforms(glw_root_t *gr, glw_program_t *gp, void *args)
+{
+  glw_video_t *gv = args;
+
+  if(gp->gp_uniform_blend != -1)
+    glUniform1f(gp->gp_uniform_blend, gv->gv_blend);
+
+  if(gp->gp_uniform_colormtx != -1)
+    glUniformMatrix4fv(gp->gp_uniform_colormtx, 1, GL_FALSE,
+                       gv->gv_cmatrix_cur);
+}
+
+
+/**
+ *
+ */
+static void
+load_texture_yuv(glw_root_t *gr, glw_program_t *gp, void *args,
+                 const glw_backend_texture_t *t, int num)
+{
+  if(num == 1) {
+
+    glActiveTexture(GL_TEXTURE5);
+    glBindTexture(GL_TEXTURE_2D, t->textures[2]);
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_2D, t->textures[1]);
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, t->textures[0]);
+    glActiveTexture(GL_TEXTURE0); // We must exit with unit 0 active
+
+  } else {
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, t->textures[2]);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, t->textures[1]);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, t->textures[0]);
+  }
+}
+
+
+/**
+ *
+ */
 static int
 yuvp_init(glw_video_t *gv)
 {
+  gv->gv_gpa.gpa_aux = gv;
+  gv->gv_gpa.gpa_load_uniforms = load_uniforms;
+  gv->gv_gpa.gpa_load_texture = load_texture_yuv;
+
   gv->gv_planes = 3;
 
   gv->gv_tex_internal_format = 1;
@@ -180,12 +229,12 @@ yuvp_init(glw_video_t *gv)
  *  Texture loader
  */
 static void
-gv_set_tex_meta(int textype)
+gv_set_tex_meta(void)
 {
-  glTexParameteri(textype, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(textype, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(textype, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(textype, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 }
 
 
@@ -195,7 +244,7 @@ gv_set_tex_meta(int textype)
 static GLuint 
 gv_tex_get(glw_video_surface_t *gvs, int plane)
 {
-  return gvs->gvs_textures[plane];
+  return gvs->gvs_texture.textures[plane];
 }
 
 
@@ -203,7 +252,7 @@ gv_tex_get(glw_video_surface_t *gvs, int plane)
  *
  */
 static void
-gv_surface_pixmap_upload(glw_video_surface_t *gvs, int textype,
+gv_surface_pixmap_upload(glw_video_surface_t *gvs,
                          const glw_video_t *gv)
 {
   if(gvs->gvs_uploaded || gvs->gvs_pbo[0] == 0)
@@ -214,9 +263,9 @@ gv_surface_pixmap_upload(glw_video_surface_t *gvs, int textype,
   for(int i = 0; i < gv->gv_planes; i++) {
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, gvs->gvs_pbo[i]);
     glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-    glBindTexture(textype, gv_tex_get(gvs, i));
-    gv_set_tex_meta(textype);
-    glTexImage2D(textype, 0, gv->gv_tex_internal_format,
+    glBindTexture(GL_TEXTURE_2D, gv_tex_get(gvs, i));
+    gv_set_tex_meta();
+    glTexImage2D(GL_TEXTURE_2D, 0, gv->gv_tex_internal_format,
                  gvs->gvs_width[i], gvs->gvs_height[i],
                  0, gv->gv_tex_format, gv->gv_tex_type, NULL);
     gvs->gvs_data[i] = NULL;
@@ -351,169 +400,15 @@ video_opengl_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
 
 
 /**
- *  Video widget render
- */
-void
-glw_render_video_quad(int interlace, int width, int height,
-                      int bob1, int bob2,
-                      glw_backend_root_t *gbr, glw_program_t *gp,
-                      const glw_video_t *gv, glw_rctx_t *rc)
-{
-  float x1, x2, y1, y2;
-  float b1 = 0, b2 = 0;
-
-  static const float vertices[8] = {-1, -1, 1, -1, 1, 1, -1, 1};
-  const uint8_t elements[6] = {0,1,2,0,2,3};
-  float tc[12];
-
-  x1 = 0;
-  y1 = 0;
-
-  x2 = 1;
-  y2 = 1;
-
-  if(interlace) {
-
-    b1 = (0.5 * bob1) / (float)height;
-    b2 = (0.5 * bob2) / (float)height;
-  }
-
-  tc[0] = x1;
-  tc[1] = y2 - b1;
-  tc[2] = y2 - b2;
-
-  tc[3] = x2;
-  tc[4] = y2 - b1;
-  tc[5] = y2 - b2;
-
-  tc[6] = x2;
-  tc[7] = y1 - b1;
-  tc[8] = y1 - b2;
-
-  tc[9] = x1;
-  tc[10] = y1 - b1;
-  tc[11] = y1 - b2;
-
-  glw_load_program(gbr, gp);
-  glw_program_set_uniform_color(gbr, 1, 1, 1, rc->rc_alpha);
-  glw_program_set_modelview(gbr, rc);
-  if(gp->gp_uniform_blend != -1)
-    glUniform1f(gp->gp_uniform_blend, gv->gv_blend);
-
-  if(gp->gp_uniform_colormtx != -1)
-    glUniformMatrix4fv(gp->gp_uniform_colormtx, 1, GL_FALSE,
-                       gv->gv_cmatrix_cur);
-
-  glVertexAttribPointer(gp->gp_attribute_texcoord, 3, GL_FLOAT, 0, 0, tc);
-  glVertexAttribPointer(gp->gp_attribute_position, 2, GL_FLOAT, 0, 0, vertices);
-  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, elements);
-}
-
-
-/**
- *
- */
-static void
-render_video_1f(const glw_video_t *gv, glw_video_surface_t *s,
-		int textype, glw_rctx_t *rc)
-{
-  glw_backend_root_t *gbr = &gv->w.glw_root->gr_be;
-  glw_program_t *gp;
-
-  gv_surface_pixmap_upload(s, textype, gv);
-
-  switch(gv->gv_planes) {
-  case 3:
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(textype, gv_tex_get(s, GVF_TEX_Cb));
-
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(textype, gv_tex_get(s, GVF_TEX_Cr));
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(textype, gv_tex_get(s, GVF_TEX_L));
-    gp = gbr->gbr_yuv2rgb_1f;
-    break;
-
-  case 1:
-    glBindTexture(textype, gv_tex_get(s, 0));
-    gp = gbr->gbr_rgb2rgb_1f;
-    break;
-
-  default:
-    return;
-  }
-
-  glw_render_video_quad(s->gvs_interlaced,
-                        s->gvs_width[0], s->gvs_height[0],
-                        s->gvs_yshift, 0, gbr, gp, gv, rc);
-}
-
-
-/**
- *
- */
-static void
-render_video_2f(const glw_video_t *gv, 
-		glw_video_surface_t *sa, glw_video_surface_t *sb,
-		int textype, glw_rctx_t *rc)
-{
-  glw_backend_root_t *gbr = &gv->w.glw_root->gr_be;
-  glw_program_t *gp;
-
-  gv_surface_pixmap_upload(sa, textype, gv);
-  gv_surface_pixmap_upload(sb, textype, gv);
-
-  switch(gv->gv_planes) {
-  case 3:
-    glActiveTexture(GL_TEXTURE5);
-    glBindTexture(textype, gv_tex_get(sb, GVF_TEX_Cb));
-
-    glActiveTexture(GL_TEXTURE4);
-    glBindTexture(textype, gv_tex_get(sb, GVF_TEX_Cr));
-
-    glActiveTexture(GL_TEXTURE3);
-    glBindTexture(textype, gv_tex_get(sb, GVF_TEX_L));
-
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(textype, gv_tex_get(sa, GVF_TEX_Cb));
-
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(textype, gv_tex_get(sa, GVF_TEX_Cr));
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(textype, gv_tex_get(sa, GVF_TEX_L));
-    gp = gbr->gbr_yuv2rgb_2f;
-    break;
-
-  case 1:
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(textype, gv_tex_get(sb, 0));
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(textype, gv_tex_get(sa, 0));
-    gp = gbr->gbr_rgb2rgb_2f;
-    break;
-
-  default:
-    return;
-  }
-
-  glw_render_video_quad(sa->gvs_interlaced || sb->gvs_interlaced,
-                        sa->gvs_width[0], sa->gvs_height[0],
-                        sa->gvs_yshift, sb->gvs_yshift,
-                        gbr, gp, gv, rc);
-}
-
-
-/**
  *
  */
 static void
 video_opengl_render(glw_video_t *gv, glw_rctx_t *rc)
 {
-  int textype = GL_TEXTURE_2D;
+  glw_root_t *gr = gv->w.glw_root;
   glw_video_surface_t *sa = gv->gv_sa, *sb = gv->gv_sb;
+  glw_program_t *gp;
+  glw_backend_root_t *gbr = &gr->gr_be;
 
   if(sa == NULL)
     return;
@@ -521,18 +416,50 @@ video_opengl_render(glw_video_t *gv, glw_rctx_t *rc)
   gv->gv_width  = sa->gvs_width[0];
   gv->gv_height = sa->gvs_height[0];
 
-  if(rc->rc_alpha > 0.98f)
-    glDisable(GL_BLEND);
-  else
-    glEnable(GL_BLEND);
+  // Upload textures
+
+  gv_surface_pixmap_upload(sa, gv);
+
+  const float yshift_a = (-0.5 * sa->gvs_yshift) / (float)sa->gvs_height[0];
+
+  glw_renderer_vtx_st(&gv->gv_quad,  0, 0, 1 + yshift_a);
+  glw_renderer_vtx_st(&gv->gv_quad,  1, 1, 1 + yshift_a);
+  glw_renderer_vtx_st(&gv->gv_quad,  2, 1, 0 + yshift_a);
+  glw_renderer_vtx_st(&gv->gv_quad,  3, 0, 0 + yshift_a);
 
   if(sb != NULL) {
-    render_video_2f(gv, sa, sb, textype, rc);
+    // Two pictures that should be mixed
+    gv_surface_pixmap_upload(sb, gv);
+
+    if(gv->gv_planes == 3)
+      gp = gbr->gbr_yuv2rgb_2f;
+    else
+      gp = gbr->gbr_rgb2rgb_2f;
+
+    const float yshift_b = (-0.5 * sb->gvs_yshift) / (float)sb->gvs_height[0];
+
+    glw_renderer_vtx_st2(&gv->gv_quad, 0, 0, 1 + yshift_b);
+    glw_renderer_vtx_st2(&gv->gv_quad, 1, 1, 1 + yshift_b);
+    glw_renderer_vtx_st2(&gv->gv_quad, 2, 1, 0 + yshift_b);
+    glw_renderer_vtx_st2(&gv->gv_quad, 3, 0, 0 + yshift_b);
+
   } else {
-    render_video_1f(gv, sa, textype, rc);
+
+    // One picture
+
+    if(gv->gv_planes == 3)
+      gp = gbr->gbr_yuv2rgb_1f;
+    else
+      gp = gbr->gbr_rgb2rgb_1f;
   }
 
-  glEnable(GL_BLEND);
+  gv->gv_gpa.gpa_prog = gp;
+
+  glw_renderer_draw(&gv->gv_quad, gr, rc,
+                    &sa->gvs_texture,
+                    sb != NULL ? &sb->gvs_texture : NULL,
+                    NULL, NULL,
+                    rc->rc_alpha * gv->w.glw_alpha, 0, &gv->gv_gpa);
 }
 
 
@@ -665,6 +592,9 @@ GLW_REGISTER_GVE(glw_video_opengl);
 static int
 bgr_init(glw_video_t *gv)
 {
+  gv->gv_gpa.gpa_aux = gv;
+  gv->gv_gpa.gpa_load_uniforms = load_uniforms;
+
   gv->gv_planes = 1;
 
   gv->gv_tex_internal_format = GL_RGBA8;

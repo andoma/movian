@@ -21,13 +21,14 @@
 
 #include "glw.h"
 
+#if 0
 const static float projection[16] = {
   2.414213,0.000000,0.000000,0.000000,
   0.000000,2.414213,0.000000,0.000000,
   0.000000,0.000000,1.033898,-1.000000,
   0.000000,0.000000,2.033898,0.000000
 };
-
+#endif
 
 /**
  *
@@ -35,6 +36,7 @@ const static float projection[16] = {
 void
 glw_wirebox(glw_root_t *gr, const glw_rctx_t *rc)
 {
+#if 0
   glw_backend_root_t *gbr = &gr->gr_be;
   if(gbr->gbr_delayed_rendering)
     return;
@@ -56,6 +58,7 @@ glw_wirebox(glw_root_t *gr, const glw_rctx_t *rc)
   glVertex3f(-1.0,  1.0, 0.0);
   glEnd();
   glEnable(GL_TEXTURE_2D);
+#endif
 }
 
 
@@ -65,6 +68,7 @@ glw_wirebox(glw_root_t *gr, const glw_rctx_t *rc)
 void
 glw_wirecube(glw_root_t *gr, const glw_rctx_t *rc)
 {
+#if 0
   glw_backend_root_t *gbr = &gr->gr_be;
   if(gbr->gbr_delayed_rendering)
     return;
@@ -114,7 +118,9 @@ glw_wirecube(glw_root_t *gr, const glw_rctx_t *rc)
   glVertex3f(-1.0,  1.0, -1.0);
   glVertex3f(-1.0,  1.0,  1.0);
   glEnd();
+#endif
 }
+
 
 
 
@@ -131,9 +137,9 @@ glw_rtt_init(glw_root_t *gr, glw_rtt_t *grtt, int width, int height,
   grtt->grtt_width  = width;
   grtt->grtt_height = height;
 
-  glGenTextures(1, &grtt->grtt_texture.tex);
+  glGenTextures(1, grtt->grtt_texture.textures);
 
-  glBindTexture(m, grtt->grtt_texture.tex);
+  glBindTexture(m, grtt->grtt_texture.textures[0]);
   glTexParameteri(m, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(m, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(m, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -150,7 +156,7 @@ glw_rtt_init(glw_root_t *gr, glw_rtt_t *grtt, int width, int height,
   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, grtt->grtt_framebuffer);
   glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,
 			    GL_COLOR_ATTACHMENT0_EXT,
-			    m, grtt->grtt_texture.tex, 0);
+			    m, grtt->grtt_texture.textures[0], 0);
 
   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 }
@@ -198,7 +204,7 @@ glw_rtt_restore(glw_root_t *gr, glw_rtt_t *grtt)
 void
 glw_rtt_destroy(glw_root_t *gr, glw_rtt_t *grtt)
 {
-  glDeleteTextures(1, &grtt->grtt_texture.tex);
+  glDeleteTextures(1, grtt->grtt_texture.textures);
   glDeleteFramebuffersEXT(1, &grtt->grtt_framebuffer);
 }
 
@@ -224,8 +230,6 @@ glw_opengl_init_context(glw_root_t *gr)
   gbr->gbr_frontface = GLW_CCW;
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, PIXMAP_ROW_ALIGN);
-
-  glEnable(GL_TEXTURE_2D);
 
   glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &tu);
   if(tu < 6) {

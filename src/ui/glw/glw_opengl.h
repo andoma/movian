@@ -71,7 +71,7 @@ struct glw_program {
   GLint  gp_attribute_position;
   GLint  gp_attribute_texcoord;
   GLint  gp_attribute_color;
- 
+
   // Uniforms
   GLint  gp_uniform_modelview;
   GLint  gp_uniform_color;
@@ -82,9 +82,7 @@ struct glw_program {
   GLint  gp_uniform_time;
   GLint  gp_uniform_resolution;
 
-
   GLint  gp_uniform_t[6];
-
 };
 
 
@@ -117,7 +115,6 @@ typedef struct glw_backend_root {
 
   int gbr_blendmode;
   int gbr_frontface;
-  int gbr_delayed_rendering;
 
   /**
    * Delayed rendering (For rendering without holding glw_mutex)
@@ -152,20 +149,16 @@ typedef struct glw_backend_root {
  *
  */
 typedef struct glw_backend_texture {
-  GLuint tex;
+  GLuint textures[3];
   uint16_t width;
   uint16_t height;
-  char type;
-#define GLW_TEXTURE_TYPE_NORMAL   0
-#define GLW_TEXTURE_TYPE_NO_ALPHA 1
+  int gltype;
 } glw_backend_texture_t;
 
 #define glw_tex_width(gbt) ((gbt)->width)
 #define glw_tex_height(gbt) ((gbt)->height)
 
-#define glw_can_tnpo2(gr) (gr->gr_be.gbr_texmode != GLW_OPENGL_TEXTURE_SIMPLE)
-
-#define glw_is_tex_inited(n) ((n)->tex != 0)
+#define glw_is_tex_inited(n) ((n)->textures[0] != 0)
 
 int glw_opengl_init_context(struct glw_root *gr);
 

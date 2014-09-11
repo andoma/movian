@@ -74,7 +74,7 @@ typedef struct glw_video_surface {
   GLuint gvs_pbo[3];
   int gvs_size[3];
   int gvs_uploaded;
-  GLuint gvs_textures[3];
+  glw_backend_texture_t gvs_texture;
 #endif
 
 #if CONFIG_GLW_BACKEND_RSX
@@ -101,6 +101,9 @@ typedef struct glw_video_surface {
 typedef struct glw_video {
 
   glw_t w;
+
+  glw_renderer_t gv_quad;
+  glw_program_args_t gv_gpa;
 
   int gv_width;
   int gv_height;

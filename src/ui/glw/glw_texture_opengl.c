@@ -34,9 +34,9 @@ void
 glw_tex_backend_free_render_resources(glw_root_t *gr, 
 				      glw_loadable_texture_t *glt)
 {
-  if(glt->glt_texture.tex != 0) {
-    glDeleteTextures(1, &glt->glt_texture.tex);
-    glt->glt_texture.tex = 0;
+  if(glt->glt_texture.textures[0] != 0) {
+    glDeleteTextures(1, glt->glt_texture.textures);
+    glt->glt_texture.textures[0] = 0;
   }
 }
 
@@ -63,24 +63,13 @@ glw_tex_backend_layout(glw_root_t *gr, glw_loadable_texture_t *glt)
   void *p;
   int m = GL_TEXTURE_2D;
 
-  if(glt->glt_texture.tex != 0)
+  if(glt->glt_texture.textures[0] != 0)
     return;
 
   p = glt->glt_pixmap->pm_data;
 
-  glGenTextures(1, &glt->glt_texture.tex);
-  glBindTexture(m, glt->glt_texture.tex);
-
-
-  switch(glt->glt_format) {
-  case GL_RGB:
-    glt->glt_texture.type = GLW_TEXTURE_TYPE_NO_ALPHA;
-    break;
-
-  default:
-    glt->glt_texture.type = GLW_TEXTURE_TYPE_NORMAL;
-    break;
-  }
+  glGenTextures(1, glt->glt_texture.textures);
+  glBindTexture(m, glt->glt_texture.textures[0]);
 
   glt->glt_texture.width  = glt->glt_xs;
   glt->glt_texture.height = glt->glt_ys;
@@ -173,9 +162,9 @@ glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex,
   int format;
   int m = GL_TEXTURE_2D;
 
-  if(tex->tex == 0) {
-    glGenTextures(1, &tex->tex);
-    glBindTexture(m, tex->tex);
+  if(tex->textures[0] == 0) {
+    glGenTextures(1, tex->textures);
+    glBindTexture(m, tex->textures[0]);
     glTexParameteri(m, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(m, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
@@ -183,23 +172,20 @@ glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex,
     glTexParameteri(m, GL_TEXTURE_WRAP_S, m2);
     glTexParameteri(m, GL_TEXTURE_WRAP_T, m2);
   } else {
-    glBindTexture(m, tex->tex);
+    glBindTexture(m, tex->textures[0]);
   }
   
   switch(pm->pm_type) {
   case PIXMAP_BGR32:
     format     = GL_RGBA;
-    tex->type  = GLW_TEXTURE_TYPE_NORMAL;
     break;
 
   case PIXMAP_RGB24:
     format     = GL_RGB;
-    tex->type  = GLW_TEXTURE_TYPE_NO_ALPHA;
     break;
 
   case PIXMAP_IA:
     format     = GL_LUMINANCE_ALPHA;
-    tex->type  = GLW_TEXTURE_TYPE_NORMAL;
     break;
 
   default:
@@ -220,8 +206,8 @@ glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex,
 void
 glw_tex_destroy(glw_root_t *gr, glw_backend_texture_t *tex)
 {
-  if(tex->tex != 0) {
-    glDeleteTextures(1, &tex->tex);
-    tex->tex = 0;
+  if(tex->textures[0] != 0) {
+    glDeleteTextures(1, tex->textures);
+    tex->textures[0] = 0;
   }
 }

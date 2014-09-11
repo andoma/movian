@@ -88,7 +88,7 @@ static void
 surface_reset(glw_video_t *gv, glw_video_surface_t *gvs)
 {
   reap_task_t *t = glw_video_add_reap_task(gv, sizeof(reap_task_t), do_reap);
-  t->tex = gvs->gvs_textures[0];
+  t->tex = gvs->gvs_texture.textures[0];
   surface_release_buffers(gvs);
 }
 
@@ -156,6 +156,16 @@ surface_release(glw_video_t *gv, glw_video_surface_t *gvs,
 }
 
 
+static void
+load_texture(glw_root_t *gr, glw_program_t *gp, void *aux,
+             const glw_backend_texture_t *b, int num)
+
+{
+  glEnable(b->gltype);
+  glBindTexture(b->gltype, b->textures[0]);
+}
+
+
 /**
  *
  */
@@ -166,6 +176,9 @@ gvv_init(glw_video_t *gv)
 
   gvv_aux_t *gvv = calloc(1, sizeof(gvv_aux_t));
   gv->gv_aux = gvv;
+
+  gv->gv_gpa.gpa_aux = gv;
+  gv->gv_gpa.gpa_load_texture = load_texture;
 
   CVOpenGLTextureCacheCreate(NULL, NULL,
                              osx_get_cgl_context(gr),
@@ -195,55 +208,11 @@ gvv_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
     surface_init(gv, gvs);
   }
 
+  glw_need_refresh(gv->w.glw_root, 0);
+
   return glw_video_newframe_blend(gv, vd, flags, &surface_release, 0);
 }
 
-
-const static float projection[16] = {
-  2.414213,0.000000,0.000000,0.000000,
-  0.000000,2.414213,0.000000,0.000000,
-  0.000000,0.000000,1.033898,-1.000000,
-  0.000000,0.000000,2.033898,0.000000
-};
-
-
-
-/**
- *  Video widget render
- */
-static void
-render_video_quad(glw_video_t *gv, glw_video_surface_t *gvs, glw_rctx_t *rc)
-{
-  glw_backend_root_t *gbr = &gv->w.glw_root->gr_be;
-  int type = CVOpenGLTextureGetTarget(gvs->gvs_data[1]);
-
-  glEnable(type);
-  glBindTexture(type, CVOpenGLTextureGetName(gvs->gvs_data[1]));
-
-  glw_load_program(gbr, NULL);
-
-  glMatrixMode(GL_PROJECTION);
-  glLoadMatrixf(projection);
-  glMatrixMode(GL_MODELVIEW);
-  glLoadMatrixf(glw_mtx_get(rc->rc_mtx));
-
-  glBegin(GL_QUADS);
-  glTexCoord2i(0, gvs->gvs_height[0]);
-  glVertex3i(-1, -1, 0);
-
-  glTexCoord2i(gvs->gvs_width[0], gvs->gvs_height[0]);
-  glVertex3i(1, -1, 0);
-
-  glTexCoord2i(gvs->gvs_width[0], 0);
-  glVertex3i(1, 1, 0);
-
-  glTexCoord2i(0, 0);
-  glVertex3i(-1, 1, 0);
-
-  glEnd();
-
-  glDisable(type);
-}
 
 /**
  *
@@ -275,6 +244,10 @@ upload_texture(glw_video_t *gv, glw_video_surface_t *gvs)
   CVOpenGLTextureRelease(gvs->gvs_data[0]);
   gvs->gvs_data[0] = NULL;
 
+  gvs->gvs_texture.gltype      = CVOpenGLTextureGetTarget(gvs->gvs_data[1]);
+  gvs->gvs_texture.textures[0] = CVOpenGLTextureGetName(gvs->gvs_data[1]);
+  gvs->gvs_texture.width = gvs->gvs_width[0];
+  gvs->gvs_texture.height = gvs->gvs_height[0];
 }
 
 
@@ -292,17 +265,19 @@ gvv_render(glw_video_t *gv, glw_rctx_t *rc)
   gv->gv_width  = sa->gvs_width[0];
   gv->gv_height = sa->gvs_height[0];
 
-
   upload_texture(gv, sa);
 
-  if(rc->rc_alpha > 0.98f)
-    glDisable(GL_BLEND);
-  else
-    glEnable(GL_BLEND);
+  glw_renderer_vtx_st(&gv->gv_quad,  0, 0,            gv->gv_height);
+  glw_renderer_vtx_st(&gv->gv_quad,  1, gv->gv_width, gv->gv_height);
+  glw_renderer_vtx_st(&gv->gv_quad,  2, gv->gv_width, 0);
+  glw_renderer_vtx_st(&gv->gv_quad,  3, 0,            0);
 
-  render_video_quad(gv, sa, rc);
+  glw_renderer_draw(&gv->gv_quad, gv->w.glw_root, rc,
+                    &sa->gvs_texture,
+                    NULL, NULL, NULL,
+                    rc->rc_alpha * gv->w.glw_alpha, 0, &gv->gv_gpa);
 
-  glEnable(GL_BLEND);
+  //  render_video_quad(gv, sa, rc);
 }
 
 /**

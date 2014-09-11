@@ -104,7 +104,7 @@ video_settings_init(void)
                    SETTING_VALUE_ORIGIN("global"),
                    NULL);
 
-#if !(defined(RPISTOS) || defined(__APPLE__))
+#if !(defined(RPISTOS))
   video_settings.vinterpolate_setting =
     setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
                    SETTING_TITLE(_p("Video frame interpolation")),

@@ -87,9 +87,17 @@ typedef struct glw_renderer {
 #define GLW_RENDERER_CACHES 4
 
   glw_renderer_cache_t *gr_cache[GLW_RENDERER_CACHES];
-  
+
 } glw_renderer_t;
 
+
+struct glw_program_args {
+  glw_program_t *gpa_prog;
+  void *gpa_aux;
+  void (*gpa_load_uniforms)(glw_root_t *gr, glw_program_t *prog, void *aux);
+  void (*gpa_load_texture)(glw_root_t *gr, glw_program_t *prog, void *aux,
+                           const struct glw_backend_texture *t, int num);
+};
 
 
 /**
@@ -124,9 +132,10 @@ void glw_renderer_vtx_col_reset(glw_renderer_t *gr);
 void glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
 		       const glw_rctx_t *rc,
 		       const struct glw_backend_texture *tex,
+		       const struct glw_backend_texture *tex2,
 		       const struct glw_rgb *rgb_mul,
 		       const struct glw_rgb *rgb_off,
 		       float alpha, float blur,
-		       glw_program_t *p);
+		       glw_program_args_t *gpa);
 
 void glw_vtmp_resize(glw_root_t *gr, int num_float);

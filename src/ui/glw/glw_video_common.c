@@ -502,6 +502,8 @@ glw_video_dtor(glw_t *w)
   glw_video_t *gv = (glw_video_t *)w;
   video_decoder_t *vd = gv->gv_vd;
 
+  glw_renderer_free(&gv->gv_quad);
+
   prop_ref_dec(gv->gv_model);
   prop_ref_dec(gv->gv_origin);
   prop_unsubscribe(gv->gv_vo_scaling_sub);
@@ -969,6 +971,15 @@ glw_video_render(glw_t *w, const glw_rctx_t *rc)
     event_t *e = event_create_int(EVENT_VIDEO_VISIBILITY, !gv->gv_invisible);
     mp_enqueue_event(gv->gv_mp, e);
     event_release(e);
+  }
+
+  if(!glw_renderer_initialized(&gv->gv_quad)) {
+    glw_renderer_init_quad(&gv->gv_quad);
+
+    glw_renderer_vtx_pos(&gv->gv_quad, 0, -1, -1, 0);
+    glw_renderer_vtx_pos(&gv->gv_quad, 1,  1, -1, 0);
+    glw_renderer_vtx_pos(&gv->gv_quad, 2,  1,  1, 0);
+    glw_renderer_vtx_pos(&gv->gv_quad, 3, -1,  1, 0);
   }
 
   hts_mutex_lock(&gv->gv_surface_mutex);

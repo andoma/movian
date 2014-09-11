@@ -922,21 +922,22 @@ void
 glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
 		  const glw_rctx_t *rc,
 		  const struct glw_backend_texture *tex,
+		  const struct glw_backend_texture *tex2,
 		  const struct glw_rgb *rgb_mul,
 		  const struct glw_rgb *rgb_off,
 		  float alpha, float blur,
-		  glw_program_t *p)
+		  glw_program_args_t *gpa)
 {
   rgb_mul = rgb_mul ?: &white;
 
-  int flags = 
+  int flags =
     gr->gr_color_attributes ? GLW_RENDER_COLOR_ATTRIBUTES : 0;
 
   if(root->gr_need_sw_clip || root->gr_active_faders ||
      root->gr_stencil_width) {
     glw_renderer_cache_t *grc = glw_renderer_get_cache(root, gr);
 
-    if(gr->gr_dirty || 
+    if(gr->gr_dirty ||
        memcmp(grc->grc_mtx, rc->rc_mtx, sizeof(Mtx)) ||
        glw_renderer_clippers_cmp(grc, root) ||
        glw_renderer_stencilers_cmp(grc, root) ||
@@ -950,15 +951,18 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
     if(grc->grc_colored)
       flags |= GLW_RENDER_COLOR_ATTRIBUTES;
 
-    root->gr_render(root, NULL, tex, root->gr_stencil_texture,
+    if(root->gr_stencil_width)
+      tex2 = root->gr_stencil_texture;
+
+    root->gr_render(root, NULL, tex, tex2,
 		    rgb_mul, rgb_off, alpha, blur,
 		    grc->grc_vertices, grc->grc_num_vertices,
-		    NULL, 0, flags, p, rc);
+		    NULL, 0, flags, gpa, rc);
   } else {
-    root->gr_render(root, rc->rc_mtx, tex, NULL, rgb_mul, rgb_off, alpha, blur,
+    root->gr_render(root, rc->rc_mtx, tex, tex2, rgb_mul, rgb_off, alpha, blur,
 		    gr->gr_vertices, gr->gr_num_vertices,
 		    gr->gr_indices,  gr->gr_num_triangles,
-		    flags, p, rc);
+		    flags, gpa, rc);
   }
   gr->gr_dirty = 0;
 }
