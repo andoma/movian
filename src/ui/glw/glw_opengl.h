@@ -113,20 +113,6 @@ typedef struct glw_backend_root {
   struct glw_program *gbr_renderer_flat;
   struct glw_program *gbr_renderer_flat_stencil;
 
-  int gbr_blendmode;
-  int gbr_frontface;
-
-  /**
-   * Delayed rendering (For rendering without holding glw_mutex)
-   */
-  int gbr_num_render_jobs;
-  int gbr_render_jobs_capacity;
-  struct render_job *gbr_render_jobs;
-
-  float *gbr_vertex_buffer;
-  int gbr_vertex_buffer_capacity;
-  int gbr_vertex_offset;
-
   GLuint gbr_vbo;
 
 #if ENABLE_VDPAU

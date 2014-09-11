@@ -37,43 +37,6 @@ const static float projection[16] = {
 /**
  *
  */
-typedef struct render_job {
-  Mtx m;
-  const struct glw_backend_texture *t0;
-  const struct glw_backend_texture *t1;
-  struct glw_program_args *gpa;
-  struct glw_rgb rgb_mul;
-  struct glw_rgb rgb_off;
-  float alpha;
-  float blur;
-  int vertex_offset;
-  int16_t num_vertices;
-  int16_t width;
-  int16_t height;
-  char blendmode;
-  char frontface;
-  char eyespace;
-  char flags;
-} render_job_t;
-
-
-/**
- *
- */
-static void
-prepare_delayed(glw_root_t *gr)
-{
-  glw_backend_root_t *gbr = &gr->gr_be;
-
-  gbr->gbr_num_render_jobs = 0;
-  gbr->gbr_vertex_offset = 0;
-}
-
-
-
-/**
- *
- */
 static void
 use_program(glw_backend_root_t *gbr, glw_program_t *gp)
 {
@@ -176,7 +139,7 @@ render_unlocked(glw_root_t *gr)
 {
   glw_backend_root_t *gbr = &gr->gr_be;
   int i;
-  struct render_job *rj = gbr->gbr_render_jobs;
+  struct glw_render_job *rj = gr->gr_render_jobs;
 
   int64_t ts = showtime_get_ts();
 
@@ -184,11 +147,11 @@ render_unlocked(glw_root_t *gr)
   glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA,
 		      GL_ONE, GL_ONE);
 
-  const float *vertices = gbr->gbr_vertex_buffer;
+  const float *vertices = gr->gr_vertex_buffer;
 
   glBindBuffer(GL_ARRAY_BUFFER, gbr->gbr_vbo);
   glBufferData(GL_ARRAY_BUFFER,
-	       sizeof(float) * VERTEX_SIZE * gbr->gbr_vertex_offset,
+	       sizeof(float) * VERTEX_SIZE * gr->gr_vertex_offset,
 	       vertices, GL_STATIC_DRAW);
 
   vertices = NULL;
@@ -201,7 +164,7 @@ render_unlocked(glw_root_t *gr)
   glVertexAttribPointer(2, 4, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
 			vertices + 8);
 
-  for(i = 0; i < gbr->gbr_num_render_jobs; i++, rj++) {
+  for(i = 0; i < gr->gr_num_render_jobs; i++, rj++) {
 
     const struct glw_backend_texture *t0 = rj->t0;
     glw_program_t *gp =
@@ -296,110 +259,6 @@ render_unlocked(glw_root_t *gr)
   cnt++;
 
   // printf("%16d (%d) %d switches\n", (int)ts, (int)(tssum/cnt), program_switches);
-}
-
-
-/**
- *
- */
-static void
-shader_render_delayed(struct glw_root *root, 
-		      const Mtx m,
-		      const struct glw_backend_texture *t0,
-		      const struct glw_backend_texture *t1,
-		      const struct glw_rgb *rgb_mul,
-		      const struct glw_rgb *rgb_off,
-		      float alpha, float blur,
-		      const float *vertices,
-		      int num_vertices,
-		      const uint16_t *indices,
-		      int num_triangles,
-		      int flags,
-		      glw_program_args_t *gpa,
-		      const glw_rctx_t *rc)
-{
-  glw_backend_root_t *gbr = &root->gr_be;
-
-  if(gbr->gbr_num_render_jobs >= gbr->gbr_render_jobs_capacity) {
-    // Need more space
-    gbr->gbr_render_jobs_capacity = 100 + gbr->gbr_render_jobs_capacity * 2; 
-    gbr->gbr_render_jobs = realloc(gbr->gbr_render_jobs, 
-				   sizeof(render_job_t) *
-				   gbr->gbr_render_jobs_capacity);
-  }
-
-  struct render_job *rj = gbr->gbr_render_jobs + gbr->gbr_num_render_jobs;
-  
-  if(m == NULL) {
-    rj->eyespace = 1;
-  } else {
-    rj->eyespace = 0;
-    glw_mtx_copy(rj->m, m);
-  }
-
-  rj->width  = rc->rc_width;
-  rj->height = rc->rc_height;
-
-  rj->gpa = gpa;
-  rj->t0 = t0;
-  rj->t1 = t1;
-
-  switch(gbr->gbr_blendmode) {
-  case GLW_BLEND_NORMAL:
-    rj->rgb_mul = *rgb_mul;
-    rj->alpha = alpha;
-    break;
-
-  case GLW_BLEND_ADDITIVE:
-    rj->rgb_mul.r = rgb_mul->r * alpha;
-    rj->rgb_mul.g = rgb_mul->g * alpha;
-    rj->rgb_mul.b = rgb_mul->b * alpha;
-    rj->alpha = 1;
-    break;
-  }
-
-  if(rgb_off != NULL) {
-    rj->rgb_off = *rgb_off;
-    flags |= GLW_RENDER_COLOR_OFFSET;
-  } else {
-    rj->rgb_off.r = 0;
-    rj->rgb_off.g = 0;
-    rj->rgb_off.b = 0;
-  }
-
-  rj->blur = blur;
-  rj->blendmode = gbr->gbr_blendmode;
-  rj->frontface = gbr->gbr_frontface;
-
-  int vnum = indices ? num_triangles * 3 : num_vertices;
-
-  if(gbr->gbr_vertex_offset + vnum > gbr->gbr_vertex_buffer_capacity) {
-    gbr->gbr_vertex_buffer_capacity = 100 + vnum +
-      gbr->gbr_vertex_buffer_capacity * 2;
-
-    gbr->gbr_vertex_buffer = realloc(gbr->gbr_vertex_buffer,
-				     sizeof(float) * VERTEX_SIZE * 
-				     gbr->gbr_vertex_buffer_capacity);
-  }
-
-  float *vdst = gbr->gbr_vertex_buffer + gbr->gbr_vertex_offset * VERTEX_SIZE;
-
-  if(indices != NULL) {
-    int i;
-    for(i = 0; i < num_triangles * 3; i++) {
-      const float *v = &vertices[indices[i] * VERTEX_SIZE];
-      memcpy(vdst, v, VERTEX_SIZE * sizeof(float));
-      vdst += VERTEX_SIZE;
-    }
-  } else {
-    memcpy(vdst, vertices, num_vertices * VERTEX_SIZE * sizeof(float));
-  }
-
-  rj->flags = flags;
-  rj->vertex_offset = gbr->gbr_vertex_offset;
-  rj->num_vertices = vnum;
-  gbr->gbr_vertex_offset += vnum;
-  gbr->gbr_num_render_jobs++;
 }
 
 
@@ -687,8 +546,6 @@ glw_opengl_shaders_init(glw_root_t *gr, int delayed)
   glDeleteShader(fs);
   glDeleteShader(vs);
 
-  gr->gr_render = shader_render_delayed;
-  gr->gr_be_prepare = prepare_delayed;
   gr->gr_be_render_unlocked = render_unlocked;
   glGenBuffers(1, &gbr->gbr_vbo);
 

@@ -439,9 +439,7 @@ SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
 SRCS-$(CONFIG_GLW_FRONTEND_X11)	  += src/ui/glw/glw_x11.c \
 				     src/ui/linux/x11_common.c
 
-SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_opengl_common.c \
-                                     src/ui/glw/glw_opengl_shaders.c \
-                                     src/ui/glw/glw_opengl_ff.c \
+SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_opengl_shaders.c \
                                      src/ui/glw/glw_opengl_ogl.c \
                                      src/ui/glw/glw_texture_opengl.c \
                                      src/ui/glw/glw_video_opengl.c \

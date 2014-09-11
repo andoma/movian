@@ -217,7 +217,6 @@ int
 glw_opengl_init_context(glw_root_t *gr)
 {
   GLint tu = 0;
-  glw_backend_root_t *gbr = &gr->gr_be;
   const	GLubyte	*s;
   /* Check OpenGL extensions we would like to have */
 
@@ -227,7 +226,7 @@ glw_opengl_init_context(glw_root_t *gr)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_CULL_FACE);
 
-  gbr->gbr_frontface = GLW_CCW;
+  gr->gr_frontface = GLW_CCW;
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, PIXMAP_ROW_ALIGN);
 

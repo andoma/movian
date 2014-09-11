@@ -101,6 +101,29 @@ struct glw_program_args {
 
 
 /**
+ * Render job
+ */
+typedef struct glw_render_job {
+  Mtx m;
+  const struct glw_backend_texture *t0;
+  const struct glw_backend_texture *t1;
+  struct glw_program_args *gpa;
+  struct glw_rgb rgb_mul;
+  struct glw_rgb rgb_off;
+  float alpha;
+  float blur;
+  int vertex_offset;
+  int16_t num_vertices;
+  int16_t width;
+  int16_t height;
+  char blendmode;
+  char frontface;
+  char eyespace;
+  char flags;
+} glw_render_job_t;
+
+
+/**
  * Public render interface abstraction
  */
 void glw_renderer_init(glw_renderer_t *gr, int vertices, int triangles,

@@ -444,8 +444,8 @@ glw_prepare_frame(glw_root_t *gr, int flags)
   }
   gr->gr_frames++;
 
-  if(gr->gr_be_prepare != NULL)
-    gr->gr_be_prepare(gr);
+  gr->gr_num_render_jobs = 0;
+  gr->gr_vertex_offset = 0;
 
   prop_set_int(gr->gr_screensaver_active, glw_screensaver_is_active(gr));
   prop_set_int(gr->gr_prop_width, gr->gr_width);

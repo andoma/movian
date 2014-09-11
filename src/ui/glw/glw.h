@@ -826,9 +826,8 @@ typedef struct glw_root {
 
   /**
    * Backend specifics
-   */ 
+   */
   glw_backend_root_t gr_be;
-  void (*gr_be_prepare)(struct glw_root *gr);
   void (*gr_be_render_unlocked)(struct glw_root *gr);
 
   /**
@@ -872,20 +871,19 @@ typedef struct glw_root {
   void (*gr_set_hw_clipper)(const struct glw_rctx *rc, int which,
 			    const Vec4 vec);
   void (*gr_clr_hw_clipper)(int which);
-  void (*gr_render)(struct glw_root *gr,
-		    const Mtx m,
-		    const struct glw_backend_texture *t0,
-		    const struct glw_backend_texture *t1,
-		    const struct glw_rgb *rgb_mul,
-		    const struct glw_rgb *rgb_off,
-		    float alpha, float blur,
-		    const float *vertices,
-		    int num_vertices,
-		    const uint16_t *indices,
-		    int num_triangles,
-		    int flags,
-		    struct glw_program_args *gpa,
-		    const struct glw_rctx *rc);
+
+
+
+  int gr_num_render_jobs;
+  int gr_render_jobs_capacity;
+  struct glw_render_job *gr_render_jobs;
+
+  float *gr_vertex_buffer;
+  int gr_vertex_buffer_capacity;
+  int gr_vertex_offset;
+
+  int gr_blendmode;
+  int gr_frontface;
 
 #define GLW_RENDER_COLOR_ATTRIBUTES 0x1 /* set if the color attributes
 					   are != [1,1,1,1] */
