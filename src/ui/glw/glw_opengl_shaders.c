@@ -239,7 +239,7 @@ render_unlocked(glw_root_t *gr)
       }
     }
 
-    glDrawArrays(GL_TRIANGLES, rj->vertex_offset, rj->num_vertices);
+    glDrawArrays(rj->primitive_type, rj->vertex_offset, rj->num_vertices);
   }
   if(current_blendmode != GLW_BLEND_NORMAL) {
     glBlendFuncSeparate(GL_SRC_COLOR, GL_ONE,

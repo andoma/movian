@@ -130,6 +130,8 @@ typedef struct glw_backend_root {
 
 } glw_backend_root_t;
 
+#define GLW_DRAW_TRIANGLES GL_TRIANGLES
+#define GLW_DRAW_LINE_LOOP GL_LINE_LOOP
 
 /**
  *

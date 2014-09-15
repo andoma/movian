@@ -932,7 +932,8 @@ add_job(glw_root_t *gr,
         int num_triangles,
         int flags,
         glw_program_args_t *gpa,
-        const glw_rctx_t *rc)
+        const glw_rctx_t *rc,
+        int16_t primitive_type)
 {
 
   if(gr->gr_num_render_jobs >= gr->gr_render_jobs_capacity) {
@@ -958,6 +959,7 @@ add_job(glw_root_t *gr,
   rj->gpa = gpa;
   rj->t0 = t0;
   rj->t1 = t1;
+  rj->primitive_type = primitive_type;
 
   switch(gr->gr_blendmode) {
   case GLW_BLEND_NORMAL:
@@ -1060,17 +1062,35 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
     add_job(root, NULL, tex, tex2,
             rgb_mul, rgb_off, alpha, blur,
             grc->grc_vertices, grc->grc_num_vertices,
-            NULL, 0, flags, gpa, rc);
+            NULL, 0, flags, gpa, rc, GLW_DRAW_TRIANGLES);
   } else {
     add_job(root, rc->rc_mtx, tex, tex2, rgb_mul, rgb_off, alpha, blur,
             gr->gr_vertices, gr->gr_num_vertices,
             gr->gr_indices,  gr->gr_num_triangles,
-            flags, gpa, rc);
+            flags, gpa, rc, GLW_DRAW_TRIANGLES);
   }
   gr->gr_dirty = 0;
 }
 
 
+const static float box_vertices[4][12] = {
+  { -1,-1, 0, 0, 1, 1, 1, 1},
+  {  1,-1, 0, 0, 1, 1, 1, 1},
+  {  1, 1, 0, 0, 1, 1, 1, 1},
+  { -1, 1, 0, 0, 1, 1, 1, 1},
+};
+
+/**
+ *
+ */
+void
+glw_wirebox(glw_root_t *root, const glw_rctx_t *rc)
+{
+  add_job(root, rc->rc_mtx, NULL, NULL, &white, NULL, 1, 0,
+          &box_vertices[0][0], 4,
+          NULL, 0,
+          0, NULL, rc, GLW_DRAW_LINE_LOOP);
+}
 
 
 /**

@@ -116,6 +116,7 @@ typedef struct glw_render_job {
   int16_t num_vertices;
   int16_t width;
   int16_t height;
+  int16_t primitive_type;
   char blendmode;
   char frontface;
   char eyespace;

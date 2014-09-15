@@ -1369,13 +1369,11 @@ void glw_align_2(glw_rctx_t *rc, int a);
 
 void glw_wirebox(glw_root_t *gr, const glw_rctx_t *rc);
 
-void glw_wirecube(glw_root_t *gr, const glw_rctx_t *rc);
-
 static inline void glw_render0(glw_t *w, const glw_rctx_t *rc)
 {
+  w->glw_class->gc_render(w, rc);
   if(unlikely(w->glw_flags2 & GLW2_DEBUG))
     glw_wirebox(w->glw_root, rc);
-  w->glw_class->gc_render(w, rc);
 }
 
 /**
