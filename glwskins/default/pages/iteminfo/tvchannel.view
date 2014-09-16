@@ -1,4 +1,6 @@
 
+#import "skin://common.view"
+
 widget(container_y, {
   .spacing = 4;
   widget(label, {
@@ -34,6 +36,18 @@ widget(container_y, {
 	outline: true;
       });
 
+    });
+  });
+  VerticalSeparator();
+
+  widget(container_x, {
+    padding: [5, 5];
+
+    widget(label, {
+      sizeScale: 0.8;
+      caption: $view.focused.description;
+      maxlines: 10;
+      ellipsize: true;
     });
   });
 });
