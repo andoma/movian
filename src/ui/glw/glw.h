@@ -385,36 +385,7 @@ typedef struct glw_class {
   int gc_flags;
 #define GLW_NAVIGATION_SEARCH_BOUNDARY 0x1
 #define GLW_CAN_HIDE_CHILDS            0x2
-#define GLW_TRANSFORM_LR_TO_UD         0x8
-#define GLW_UNCONSTRAINED              0x10
-
-  /**
-   * If the widget arranges its childer in horizontal or vertical order
-   * it should be defined here
-   */
-  glw_orientation_t gc_child_orientation;
-
-  /**
-   * Controls how navigation will filter a widget's children
-   * when searching for focus
-   */
-  enum {
-    GLW_NAV_DESCEND_ALL,
-    GLW_NAV_DESCEND_SELECTED,
-    GLW_NAV_DESCEND_FOCUSED,
-  } gc_nav_descend_mode;
-
-  /**
-   * Controls how navigation will search among a widget's children 
-   * when searching for focus
-   */
-  enum {
-    GLW_NAV_SEARCH_NONE,
-    GLW_NAV_SEARCH_BY_ORIENTATION,
-    GLW_NAV_SEARCH_BY_ORIENTATION_WITH_PAGING,
-    GLW_NAV_SEARCH_ARRAY,  // Special for array, not very elegant
-  } gc_nav_search_mode;
-
+#define GLW_UNCONSTRAINED              0x4
 
   /**
    * Constructor
@@ -520,21 +491,9 @@ typedef struct glw_class {
   const char *(*gc_get_text)(struct glw *w);
 
   /**
-   *
-   */
-  float (*gc_get_child_pos)(struct glw *w, struct glw *c);
-
-  float gc_escape_score;
-
-  /**
    * How to initialize glw_alignment when creating an instance
    */
   int gc_default_alignment;
-
-  /**
-   * Given child c, return how many items to steps in order to move one column
-   */
-  int (*gc_get_next_row)(struct glw *w, struct glw *c, int rev);
 
   /**
    * Select a child
@@ -1087,9 +1046,8 @@ typedef struct glw {
 #define GLW2_DEBUG                  0x40000     /* Debug this object */
 #define GLW2_LAYOUTFIXED_X          0x80000
 #define GLW2_LAYOUTFIXED_Y          0x100000
-#define GLW2_NO_FOCUS_BLOCKING      0x200000
+#define GLW2_NAV_WRAP               0x200000
 #define GLW2_AUTO_FOCUS_LIMIT       0x400000
-
 
 #define GLW2_LEFT_EDGE              0x10000000
 #define GLW2_TOP_EDGE               0x20000000
@@ -1097,7 +1055,6 @@ typedef struct glw {
 #define GLW2_BOTTOM_EDGE            0x80000000
 
 
-  float glw_norm_weight;             /* Relative weight (normalized) */
   float glw_alpha;                   /* Alpha set by user */
   float glw_sharpness;               /* 1-Blur set by user */
 
@@ -1213,6 +1170,10 @@ void glw_set_focus_weight(glw_t *w, float f);
 
 int glw_is_child_focusable(glw_t *w);
 
+glw_t *glw_get_focusable_child(glw_t *w);
+
+int glw_focus_child(glw_t *w);
+
 
 /**
  * Clipping
@@ -1304,7 +1265,7 @@ int glw_event(glw_root_t *gr, struct event *e);
 
 int glw_root_event_handler(glw_root_t *gr, event_t *e);
 
-int glw_event_to_widget(glw_t *w, struct event *e, int local);
+int glw_event_to_widget(glw_t *w, struct event *e);
 
 void glw_inject_event(glw_root_t *gr, event_t *e);
 
@@ -1313,8 +1274,6 @@ void glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe);
 int glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe, 
 		       glw_t **hp, Vec3 p, Vec3 dir);
 
-
-int glw_navigate(glw_t *w, struct event *e, int local);
 
 glw_t *glw_find_neighbour(glw_t *w, const char *id);
 
@@ -1326,7 +1285,7 @@ void glw_signal_handler_unregister(glw_t *w, glw_callback_t *func,
 void glw_signal0(glw_t *w, glw_signal_t sig, void *extra);
 
 static __inline int
-glw_send_event(glw_t *w, event_t *e)
+glw_send_event2(glw_t *w, event_t *e)
 {
   const glw_class_t *gc = w->glw_class;
   return gc->gc_send_event != NULL && gc->gc_send_event(w, e);
@@ -1340,15 +1299,11 @@ glw_send_pointer_event(glw_t *w, const glw_pointer_event_t *gpe)
 }
 
 static __inline int
-glw_bubble_event(glw_t *w, event_t *e)
+glw_bubble_event2(glw_t *w, event_t *e)
 {
   const glw_class_t *gc = w->glw_class;
   return gc->gc_bubble_event != NULL && gc->gc_bubble_event(w, e);
 }
-
-int glw_event_distribute_to_childs(glw_t *w, event_t *e);
-
-int glw_event_to_selected_child(glw_t *w, event_t *e);
 
 void glw_layout0(glw_t *w, const glw_rctx_t *rc);
 

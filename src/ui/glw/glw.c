@@ -1410,7 +1410,7 @@ glw_focus_step(glw_t *w, int forward)
   while(w->glw_focused != NULL) {
     w = w->glw_focused;
     if(glw_is_focusable(w)) {
-      if(glw_event_to_widget(w, e, 1))
+      if(glw_event_to_widget(w, e))
 	break;
     }
   }
@@ -1451,22 +1451,41 @@ glw_is_child_focusable(glw_t *w)
 }
 
 
+/**
+ * Find a focusable child given a widget
+ *
+ * Initially we try to follow the current focus path otherwise
+ * we try to locate any focusable widget that's a child
+ *
+ */
+glw_t *
+glw_get_focusable_child(glw_t *w)
+{
+  if(w == NULL)
+    return NULL;
+
+  glw_t *c = glw_focus_by_path(w);
+
+  if(c == NULL)
+    c = glw_focus_crawl1(w, 1);
+
+  return c;
+}
+
 
 /**
  *
  */
 int
-glw_event_to_widget(glw_t *w, event_t *e, int local)
+glw_focus_child(glw_t *w)
 {
-  if(glw_event_map_intercept(w, e))
-    return 1;
+  glw_t *c = glw_get_focusable_child(w);
+  if(c == NULL)
+    return 0;
 
-  if(glw_send_event(w, e))
-    return 1;
-
-  return glw_navigate(w, e, local);
+  glw_focus_set(w->glw_root, c, GLW_FOCUS_SET_INTERACTIVE);
+  return 1;
 }
-
 
 
 /**
@@ -1506,33 +1525,53 @@ glw_root_event_handler(glw_root_t *gr, event_t *e)
  *
  */
 int
-glw_event(glw_root_t *gr, event_t *e)
+glw_event_to_widget(glw_t *w, event_t *e)
 {
-  glw_t *w;
+  glw_root_t *gr = w->glw_root;
 
-  if((w = gr->gr_current_focus) != NULL) {
+  // First, descend in the view hierarchy
+
+  while(1) {
+    if(!glw_path_in_focus(w))
+      break;
+
+    if(glw_send_event2(w, e))
+      return 1;
+
+    if(w->glw_focused == NULL)
+      break;
+    w = w->glw_focused;
+  }
+
+  // Then ascend all the way up to root
+
+  while(w != NULL) {
+
+    w->glw_flags &= ~GLW_FLOATING_FOCUS; // Correct ??
 
     if(glw_event_map_intercept(w, e))
       return 1;
 
-    if(glw_send_event(w, e))
+    if(glw_bubble_event2(w, e))
       return 1;
 
-    while((w = w->glw_parent) != NULL) {
-      if(glw_event_map_intercept(w, e))
-	return 1;
-      w->glw_flags &= ~GLW_FLOATING_FOCUS;
-      if(glw_bubble_event(w, e))
-	return 1;
-    }
-
-    if(glw_navigate(gr->gr_current_focus, e, 0))
-      return 1;
+    w = w->glw_parent;
   }
-  if(glw_event_map_intercept(gr->gr_universe, e))
-    return 1;
+
+  // Nothing grabbed the event, default it
 
   return glw_root_event_handler(gr, e);
+}
+
+
+/**
+ *
+ */
+int
+glw_event(glw_root_t *gr, event_t *e)
+{
+  glw_t *w = gr->gr_universe;
+  return glw_event_to_widget(w, e);
 }
 
 
@@ -1585,7 +1624,7 @@ glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
 
 	    glw_path_modify(w, 0, GLW_IN_PRESSED_PATH, NULL);
 	    e = event_create_action(ACTION_ACTIVATE);
-	    glw_event_to_widget(w, e, 0);
+	    glw_event_to_widget(w, e);
 	    event_release(e);
 
 	  }
@@ -2468,7 +2507,7 @@ glw_osk_done(glw_root_t *gr, int submit)
   if(w != NULL) {
     if(submit) {
       event_t *e = event_create_action(ACTION_SUBMIT);
-      glw_event_to_widget(w, e, 0);
+      glw_event_to_widget(w, e);
       event_release(e);
     } else {
       glw_t *w = gr->gr_osk_widget;

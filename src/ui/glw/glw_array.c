@@ -679,31 +679,6 @@ glw_array_set_float(glw_t *w, glw_attribute_t attrib, float value)
   return 1;
 }
 
-/**
- *
- */
-static int
-glw_array_get_next_row(glw_t *w, glw_t *c, int reverse)
-{
-  int current_col = glw_parent_data(c, glw_array_item_t)->col;
-  int cnt = 0;
-  if(reverse) {
-    while((c = glw_get_prev_n(c, 1)) != NULL) {
-      cnt++;
-      if(glw_parent_data(c, glw_array_item_t)->col == current_col)
-	return cnt;
-    }
-  } else {
-    while((c = glw_get_next_n(c, 1)) != NULL) {
-      cnt++;
-      if(glw_parent_data(c, glw_array_item_t)->col == current_col)
-	return cnt;
-    }
-  }
-
-  return 0;
-}
-
 
 /**
  *
@@ -726,22 +701,74 @@ glw_array_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v)
 /**
  *
  */
+static glw_t *
+glw_array_get_next_row(glw_t *c, int reverse)
+{
+  int current_col = glw_parent_data(c, glw_array_item_t)->col;
+  if(reverse) {
+    while((c = glw_get_prev_n(c, 1)) != NULL) {
+      if(glw_parent_data(c, glw_array_item_t)->col == current_col &&
+         glw_get_focusable_child(c))
+	return c;
+    }
+  } else {
+    while((c = glw_get_next_n(c, 1)) != NULL) {
+      if(glw_parent_data(c, glw_array_item_t)->col == current_col &&
+         glw_get_focusable_child(c))
+	return c;
+    }
+  }
+
+  return NULL;
+}
+
+
+/**
+ *
+ */
+static int
+glw_array_bubble_event(struct glw *w, struct event *e)
+{
+  glw_t *c = w->glw_focused;
+
+  if(c == NULL)
+    return 0;
+
+  if(event_is_action(e, ACTION_RIGHT)) {
+    return glw_focus_child(glw_next_widget(c));
+
+  } else if(event_is_action(e, ACTION_LEFT)) {
+    return glw_focus_child(glw_prev_widget(c));
+
+  } else if(event_is_action(e, ACTION_UP)) {
+    return glw_focus_child(glw_array_get_next_row(c, 1));
+
+  } else if(event_is_action(e, ACTION_DOWN)) {
+    return glw_focus_child(glw_array_get_next_row(c, 0));
+
+  }
+
+  return 0;
+}
+
+
+/**
+ *
+ */
 static glw_class_t glw_array = {
   .gc_name = "array",
   .gc_instance_size = sizeof(glw_array_t),
   .gc_parent_data_size = sizeof(glw_array_item_t),
   .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY | GLW_CAN_HIDE_CHILDS,
-  .gc_nav_descend_mode = GLW_NAV_DESCEND_FOCUSED,
-  .gc_nav_search_mode = GLW_NAV_SEARCH_ARRAY,
   .gc_render = glw_array_render,
   .gc_ctor = glw_array_ctor,
   .gc_set_int = glw_array_set_int,
   .gc_set_float = glw_array_set_float,
   .gc_signal_handler = glw_array_callback,
-  .gc_get_next_row = glw_array_get_next_row,
   .gc_set_int16_4 = glw_array_set_int16_4,
   .gc_layout = glw_array_layout,
   .gc_pointer_event = glw_array_pointer_event,
+  .gc_bubble_event = glw_array_bubble_event,
 };
 
 GLW_REGISTER_CLASS(glw_array);

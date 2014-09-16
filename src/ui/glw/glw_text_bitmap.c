@@ -1447,7 +1447,7 @@ static glw_class_t glw_text = {
 
   .gc_update_text = update_text,
   .gc_set_desc = set_description,
-  .gc_send_event = glw_text_bitmap_event,
+  .gc_bubble_event = glw_text_bitmap_event,
 
 };
 

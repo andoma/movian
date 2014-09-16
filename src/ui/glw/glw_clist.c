@@ -68,7 +68,6 @@ glw_clist_layout(glw_t *w, const glw_rctx_t *rc)
   glw_t *c, *n;
   int ypos = 0;
   glw_rctx_t rc0 = *rc;
-  float IH = 1.0f / rc->rc_height;
   int itemh0 = l->child_height ?: rc->rc_height * 0.1;
   int itemh;
   int lptrail = 1;
@@ -124,7 +123,6 @@ glw_clist_layout(glw_t *w, const glw_rctx_t *rc)
     cd->height = rc0.rc_height;
     if(cd->height < 1)
       continue;
-    c->glw_norm_weight = rc0.rc_height * IH;
     rc0.rc_height = cd->height2;
 
     glw_layout0(c, &rc0);
@@ -291,16 +289,11 @@ static glw_class_t glw_clist = {
   .gc_name = "clist",
   .gc_instance_size = sizeof(glw_clist_t),
   .gc_parent_data_size = sizeof(glw_clist_item_t),
-  .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY | GLW_CAN_HIDE_CHILDS | 
-  GLW_TRANSFORM_LR_TO_UD,
-  .gc_child_orientation = GLW_ORIENTATION_VERTICAL,
-  .gc_nav_descend_mode = GLW_NAV_DESCEND_FOCUSED,
-  .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION_WITH_PAGING,
+  .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY | GLW_CAN_HIDE_CHILDS,
   .gc_layout = glw_clist_layout,
   .gc_render = render,
   .gc_ctor = ctor,
   .gc_signal_handler = signal_handler,
-  .gc_escape_score = 100,
   .gc_set_int = glw_clist_set_int,
   .gc_set_float = glw_clist_set_float,
 };

@@ -83,7 +83,6 @@ static glw_class_t glw_underscan = {
   .gc_instance_size = sizeof(glw_t),
   .gc_layout = layout,
   .gc_render = render,
-  .gc_send_event = glw_event_distribute_to_childs,
 };
 
 GLW_REGISTER_CLASS(glw_underscan);

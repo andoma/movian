@@ -202,10 +202,6 @@ glw_deck_event(glw_t *w, event_t *e)
   } else if(c != NULL && event_is_action(e, ACTION_DECR)) {
     n = glw_get_prev_n(c, 1);
   } else {
-    if(w->glw_selected != NULL) {
-      if(glw_send_event(w->glw_selected, e))
-	return 1;
-    }
     n = NULL;
   }
 
@@ -370,7 +366,6 @@ static glw_class_t glw_deck = {
   .gc_name = "deck",
   .gc_instance_size = sizeof(glw_deck_t),
   .gc_flags = GLW_CAN_HIDE_CHILDS,
-  .gc_nav_descend_mode = GLW_NAV_DESCEND_SELECTED,
   .gc_layout = glw_deck_layout,
   .gc_render = glw_deck_render,
   .gc_set_int = glw_deck_set_int,

@@ -20,6 +20,7 @@
  */
 
 #include "glw.h"
+#include "glw_navigation.h"
 
 typedef struct glw_list {
   glw_t w;
@@ -127,8 +128,6 @@ glw_list_layout_y(glw_t *w, const glw_rctx_t *rc)
 		 rc->rc_width - l->padding[2], l->padding[3]);
   int height0 = rc0.rc_height - bd * 2;
 
-  float IH = 1.0f / rc0.rc_height;
-
   if(l->saved_height != rc0.rc_height) {
     l->saved_height = rc0.rc_height;
     l->page_size = rc0.rc_height;
@@ -180,8 +179,6 @@ glw_list_layout_y(glw_t *w, const glw_rctx_t *rc)
     }
 
     cd->height = rc0.rc_height;
-    c->glw_norm_weight = rc0.rc_height * IH;
-    
 
     if(ypos - l->filtered_pos > -height0 &&
        ypos - l->filtered_pos <  height0 * 2)
@@ -230,8 +227,6 @@ glw_list_layout_x(glw_t *w, const glw_rctx_t *rc)
 		 rc->rc_width - l->padding[2], l->padding[3]);
   int width0 = rc0.rc_width - bd * 2;
 
-  float IW = 1.0f / rc0.rc_width;
-
   if(l->saved_width != rc0.rc_width) {
     l->saved_width = rc0.rc_width;
     l->page_size = rc0.rc_width;
@@ -267,8 +262,6 @@ glw_list_layout_x(glw_t *w, const glw_rctx_t *rc)
 
     cd->pos = xpos;
     cd->width = rc0.rc_width;
-    c->glw_norm_weight = rc0.rc_width * IW;
-    
 
     if(xpos - l->filtered_pos > -width0 &&
        xpos - l->filtered_pos <  width0 * 2) {
@@ -783,22 +776,17 @@ static glw_class_t glw_list_y = {
   .gc_name = "list_y",
   .gc_instance_size = sizeof(glw_list_t),
   .gc_parent_data_size = sizeof(glw_list_item_t),
-  .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY | GLW_CAN_HIDE_CHILDS | 
-  GLW_TRANSFORM_LR_TO_UD,
-  .gc_child_orientation = GLW_ORIENTATION_VERTICAL,
-  .gc_nav_descend_mode = GLW_NAV_DESCEND_FOCUSED,
-  .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION_WITH_PAGING,
-
+  .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY | GLW_CAN_HIDE_CHILDS,
   .gc_layout = glw_list_layout_y,
   .gc_render = glw_list_render_y,
   .gc_set_int = glw_list_set_int,
   .gc_set_float = glw_list_set_float,
   .gc_ctor = glw_list_y_ctor,
   .gc_signal_handler = glw_list_callback,
-  .gc_escape_score = 100,
   .gc_suggest_focus = glw_list_suggest_focus,
   .gc_set_int16_4 = glw_list_set_int16_4,
   .gc_pointer_event = handle_pointer_event,
+  .gc_bubble_event = glw_navigate_vertical,
 };
 
 GLW_REGISTER_CLASS(glw_list_y);
@@ -810,9 +798,6 @@ static glw_class_t glw_list_x = {
   .gc_instance_size = sizeof(glw_list_t),
   .gc_parent_data_size = sizeof(glw_list_item_t),
   .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY | GLW_CAN_HIDE_CHILDS,
-  .gc_child_orientation = GLW_ORIENTATION_HORIZONTAL,
-  .gc_nav_descend_mode = GLW_NAV_DESCEND_FOCUSED,
-  .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION_WITH_PAGING,
 
   .gc_layout = glw_list_layout_x,
   .gc_render = glw_list_render_x,
@@ -820,10 +805,10 @@ static glw_class_t glw_list_x = {
   .gc_set_float = glw_list_set_float,
   .gc_ctor = glw_list_x_ctor,
   .gc_signal_handler = glw_list_callback,
-  .gc_escape_score = 100,
   .gc_suggest_focus = glw_list_suggest_focus,
   .gc_set_int16_4 = glw_list_set_int16_4,
   .gc_pointer_event = handle_pointer_event,
+  .gc_bubble_event = glw_navigate_horizontal,
 };
 
 GLW_REGISTER_CLASS(glw_list_x);

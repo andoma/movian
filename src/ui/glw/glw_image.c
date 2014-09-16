@@ -1505,7 +1505,6 @@ static glw_class_t glw_image = {
   .gc_set_fs = glw_image_set_fs,
   .gc_mod_flags2 = mod_flags2,
   .gc_set_int16_4 = image_set_int16_4,
-  .gc_send_event = glw_event_distribute_to_childs,
 };
 
 GLW_REGISTER_CLASS(glw_image);
@@ -1534,7 +1533,6 @@ static glw_class_t glw_icon = {
   .gc_set_fs = glw_image_set_fs,
   .gc_mod_flags2 = mod_flags2,
   .gc_set_int16_4 = image_set_int16_4,
-  .gc_send_event = glw_event_distribute_to_childs,
 };
 
 GLW_REGISTER_CLASS(glw_icon);
@@ -1562,7 +1560,6 @@ static glw_class_t glw_backdrop = {
   .gc_get_identity = get_identity,
   .gc_set_fs = glw_image_set_fs,
   .gc_mod_flags2 = mod_flags2,
-  .gc_send_event = glw_event_distribute_to_childs,
 };
 
 GLW_REGISTER_CLASS(glw_backdrop);
@@ -1591,7 +1588,6 @@ static glw_class_t glw_frontdrop = {
   .gc_get_identity = get_identity,
   .gc_set_fs = glw_image_set_fs,
   .gc_mod_flags2 = mod_flags2,
-  .gc_send_event = glw_event_distribute_to_childs,
 };
 
 GLW_REGISTER_CLASS(glw_frontdrop);
@@ -1619,7 +1615,6 @@ static glw_class_t glw_repeatedimage = {
   .gc_set_fs = glw_image_set_fs,
   .gc_mod_flags2 = mod_flags2,
   .gc_set_int16_4 = image_set_int16_4,
-  .gc_send_event = glw_event_distribute_to_childs,
 };
 
 GLW_REGISTER_CLASS(glw_repeatedimage);

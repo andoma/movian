@@ -176,7 +176,6 @@ static glw_class_t glw_layer = {
   .gc_render = glw_layer_render,
   .gc_retire_child = glw_layer_retire_child,
   .gc_signal_handler = glw_layer_callback,
-  .gc_send_event = glw_event_to_selected_child,
 };
 
 GLW_REGISTER_CLASS(glw_layer);

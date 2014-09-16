@@ -20,6 +20,7 @@
  */
 
 #include "glw.h"
+#include "glw_navigation.h"
 
 typedef struct glw_container {
   glw_t w;
@@ -233,8 +234,6 @@ glw_container_x_layout(glw_t *w, const glw_rctx_t *rc)
     cd->pos = -1.0f + (right + left) * IW;
     cd->scale = rc0.rc_width * IW;
       
-    c->glw_norm_weight = cd->scale;
-
     cd->size = right - left;
     glw_layout0(c, &rc0);
     left = right + co->co_spacing;
@@ -439,8 +438,6 @@ glw_container_y_layout(glw_t *w, const glw_rctx_t *rc)
       cd->size = rc0.rc_height;
 
     }
-
-    c->glw_norm_weight = cd->scale;
 
     glw_layout0(c, &rc0);
     top = bottom + co->co_spacing;
@@ -762,6 +759,8 @@ retire_child(glw_t *w, glw_t *c)
   }
 }
 
+
+
 /**
  *
  */
@@ -774,11 +773,9 @@ static glw_class_t glw_container_x = {
   .gc_layout = glw_container_x_layout,
   .gc_render = glw_container_x_render,
   .gc_signal_handler = glw_container_x_callback,
-  .gc_child_orientation = GLW_ORIENTATION_HORIZONTAL,
-  .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION,
   .gc_default_alignment = LAYOUT_ALIGN_LEFT,
   .gc_set_int16_4 = container_set_int16_4,
-  .gc_send_event = glw_event_distribute_to_childs,
+  .gc_bubble_event = glw_navigate_horizontal,
 };
 
 static glw_class_t glw_container_y = {
@@ -790,12 +787,10 @@ static glw_class_t glw_container_y = {
   .gc_layout = glw_container_y_layout,
   .gc_render = glw_container_y_render,
   .gc_signal_handler = glw_container_y_callback,
-  .gc_child_orientation = GLW_ORIENTATION_VERTICAL,
-  .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION,
   .gc_default_alignment = LAYOUT_ALIGN_TOP,
   .gc_set_int16_4 = container_set_int16_4,
   .gc_retire_child = retire_child,
-  .gc_send_event = glw_event_distribute_to_childs,
+  .gc_bubble_event = glw_navigate_vertical,
 };
 
 static glw_class_t glw_container_z = {
@@ -806,7 +801,6 @@ static glw_class_t glw_container_z = {
   .gc_layout = glw_container_z_layout,
   .gc_render = glw_container_z_render,
   .gc_signal_handler = glw_container_z_callback,
-  .gc_send_event = glw_event_distribute_to_childs,
 };
 
 

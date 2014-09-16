@@ -324,13 +324,11 @@ static glw_class_t glw_playfield = {
   .gc_instance_size = sizeof(glw_playfield_t),
   .gc_parent_data_size = sizeof(glw_playfield_item_t),
   .gc_flags = GLW_CAN_HIDE_CHILDS,
-  .gc_nav_descend_mode = GLW_NAV_DESCEND_SELECTED,
   .gc_layout = glw_playfield_layout,
   .gc_render = glw_playfield_render,
   .gc_ctor = clear_constraints,
   .gc_signal_handler = glw_playfield_callback,
   .gc_select_child = playfield_select_child,
-  .gc_send_event = glw_event_to_selected_child,
 };
 
 GLW_REGISTER_CLASS(glw_playfield);

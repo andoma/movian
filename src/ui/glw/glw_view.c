@@ -101,7 +101,6 @@ static glw_class_t glw_view = {
   .gc_render = glw_view_render,
   .gc_dtor = glw_view_dtor,
   .gc_signal_handler = glw_view_callback,
-  .gc_send_event = glw_event_distribute_to_childs,
 };
 
 

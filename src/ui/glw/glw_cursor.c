@@ -29,10 +29,7 @@
 
 typedef struct glw_cursor {
   glw_t h;
-
-
   glw_rctx_t gc_cursor_rctx;
-
 } glw_cursor_t;
 
 

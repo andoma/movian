@@ -29,28 +29,6 @@
 /**
  *
  */
-static void
-event_bubble(glw_t *w, event_t *e)
-{
-  glw_root_t *gr = w->glw_root;
-  if(e->e_nav == NULL)
-    e->e_nav = prop_ref_inc(w->glw_root->gr_prop_nav);
-
-  while(w != NULL) {
-    w->glw_flags &= ~GLW_FLOATING_FOCUS;
-    if(glw_bubble_event(w, e))
-      return;
-    w = w->glw_parent;
-  }
-
-  if(!glw_root_event_handler(gr, e))
-    event_release(e);
-}
-
-
-/**
- *
- */
 typedef struct glw_event_navOpen {
   glw_event_map_t map;
 
@@ -96,7 +74,7 @@ glw_event_map_navOpen_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
 				    no->model, no->how, no->parent_url);
   
   e->e_mapped = 1;
-  event_bubble(w, e);
+  glw_event_to_widget(w, e);
   event_release(e);
 }
 
@@ -162,7 +140,7 @@ glw_event_map_playTrack_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
   event_t *e = event_create_playtrack(g->track, g->source, g->mode);
   
   e->e_mapped = 1;
-  event_bubble(w, e);
+  glw_event_to_widget(w, e);
   event_release(e);
 }
 
@@ -221,11 +199,11 @@ glw_event_map_propref_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
   if(g->target != NULL) {
     e->e_nav = prop_ref_inc(w->glw_root->gr_prop_nav);
     prop_send_ext_event(g->target, e);
-    event_release(e);
   } else {
     e->e_mapped = 1;
-    event_bubble(w, e);
+    glw_event_to_widget(w, e);
   }
+  event_release(e);
 }
 
 
@@ -282,7 +260,8 @@ glw_event_map_selectTrack_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
   event_t *e = event_create_select_track(st->id, st->type, 1);
   
   e->e_mapped = 1;
-  event_bubble(w, e);
+  glw_event_to_widget(w, e);
+  event_release(e);
 }
 
 
@@ -505,10 +484,10 @@ glw_event_map_internal_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
     if((t = glw_event_find_target(w, g->target)) == NULL) {
       TRACE(TRACE_ERROR, "GLW", "Targeted widget %s not found", g->target);
     } else {
-      glw_send_event(t, e);
+      glw_send_event2(t, e);
     }
   } else {
-    event_bubble(w, e);
+    glw_event_to_widget(w, e);
   }
   event_release(e);
 }
@@ -554,29 +533,4 @@ glw_event_map_intercept(glw_t *w, event_t *e)
     }
   }
   return 0;
-}
-
-
-/**
- *
- */
-int
-glw_event_distribute_to_childs(glw_t *w, event_t *e)
-{
-  glw_t *c;
-
-  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
-    if(glw_send_event(c, e))
-      return 1;
-  return 0;
-}
-
-
-/**
- *
- */
-int
-glw_event_to_selected_child(glw_t *w, event_t *e)
-{
-  return w->glw_selected != NULL && glw_send_event(w->glw_selected, e);
 }
