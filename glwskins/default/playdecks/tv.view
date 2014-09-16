@@ -26,7 +26,7 @@ widget(container_z, {
           aspectConstraint: true;
           source: $global.media.current.metadata.icon ??
             "dataroot://resources/svg/Display.svg";
-	  hidden: select($global.media.current.metadata.icon, false, true);;
+          hidden: select($global.media.current.metadata.icon, false, true);
 	});
 
 	widget(label, {
@@ -34,7 +34,7 @@ widget(container_z, {
           caption: $global.media.current.metadata.title;
           shadow: true;
           outline: true;
-	  hidden: select($global.media.current.metadata.icon, true, false);;
+          hidden: select($global.media.current.metadata.icon, true, false);
           sizeScale: 0.8;
           maxlines: 2;
 	});
@@ -72,7 +72,7 @@ widget(container_z, {
                 strftime($global.media.current.metadata.events.next.stop, "%H:%M");
               shadow: true;
               outline: true;
-	      align: right;
+              align: right;
             });
 
             widget(label, {
@@ -81,7 +81,7 @@ widget(container_z, {
                 strftime($global.media.current.metadata.events.current.stop, "%H:%M");
               shadow: true;
               outline: true;
-	      align: right;
+              align: right;
             });
           });
         });
