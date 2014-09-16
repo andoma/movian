@@ -91,6 +91,7 @@ typedef struct hls_segment {
   int hs_astream;
 
   uint8_t hs_crypto;
+  uint8_t hs_open_error;
 
   rstr_t *hs_key_url;
   uint8_t hs_iv[16];
@@ -147,8 +148,6 @@ typedef struct hls_variant {
   rstr_t *hv_key_url;
   buf_t *hv_key;
 
-  uint8_t hv_is_corrupt;
-
 } hls_variant_t;
 
 
@@ -163,7 +162,6 @@ typedef struct hls_demuxer {
   int hd_seq;
 
   hls_variant_t *hd_current;
-  hls_variant_t *hd_seek;
   hls_variant_t *hd_req;
 
   int hd_bw;
@@ -392,6 +390,8 @@ hv_parse_key(hls_variant_parser_t *hvp, const char *baseurl, const char *V)
   }
 }
 
+#define VARIANT_UNLOADABLE 1
+#define VARIANT_EMPTY      2
 
 /**
  *
@@ -418,7 +418,7 @@ variant_update(hls_variant_t *hv, hls_t *h)
 
   if(b == NULL) {
     TRACE(TRACE_ERROR, "HLS", "Unable to open %s -- %s", hv->hv_url, errbuf);
-    return 1;
+    return VARIANT_UNLOADABLE;
   }
 
   hv->hv_loaded = now;
@@ -429,7 +429,9 @@ variant_update(hls_variant_t *hv, hls_t *h)
   int byte_offset = -1;
   int byte_size = -1;
   int seq = 1;
+  int items = 0;
   hls_variant_parser_t hvp;
+
 
   memset(&hvp, 0, sizeof(hvp));
 
@@ -452,6 +454,8 @@ variant_update(hls_variant_t *hv, hls_t *h)
         byte_offset = atoi(o+1);
 
     } else if(s[0] != '#') {
+
+      items++;
 
       if(seq > hv->hv_last_seq) {
 
@@ -495,6 +499,9 @@ variant_update(hls_variant_t *hv, hls_t *h)
 
   buf_release(b);
   rstr_release(hvp.hvp_key_url);
+
+  if(items == 0)
+    return VARIANT_EMPTY;
   return 0;
 }
 
@@ -782,21 +789,21 @@ variant_update_metadata(hls_t *h, hls_variant_t *hv, int availbw)
 
 
 /**
- * Select which variant to use for seeking
+ * Select a low bitrate variant that we hope works ok
  */
-static void
-hls_select_seek_variant(const hls_t *h, hls_demuxer_t *hd)
+static hls_variant_t *
+hls_select_default_variant(const hls_t *h, hls_demuxer_t *hd)
 {
   hls_variant_t *hv;
+  hls_variant_t *best = NULL;
   TAILQ_FOREACH_REVERSE(hv, &hd->hd_variants, hls_variant_queue, hv_link) {
     if(hv->hv_audio_only)
       continue;
-    if(hv->hv_corrupt_counter >= HV_CORRUPT_LIMIT)
-      continue;
-    hd->hd_seek = hv;
-    HLS_TRACE(h, "Variant %d selected for seeking", hv->hv_bitrate);
-    return;
+
+    if(best == NULL || best->hv_corrupt_counter > hv->hv_corrupt_counter)
+      best = hv;
   }
+  return best;
 }
 
 
@@ -826,6 +833,17 @@ find_segment_by_pts(hls_variant_t *hv, AVFormatContext *fctx,
 }
 
 
+/**
+ *
+ */
+static void
+variant_problem(const hls_t *h, hls_variant_t *hv, const char *str)
+{
+  hv->hv_corrupt_counter++;
+  HLS_TRACE(h, "Variant %d have problem: %s", hv->hv_bitrate, str);
+}
+
+
 #define HLS_SEGMENT_EOF ((hls_segment_t *)-1)
 #define HLS_SEGMENT_NYA ((hls_segment_t *)-2) // Not yet available
 #define HLS_SEGMENT_ERR ((hls_segment_t *)-3) // Stream broken
@@ -842,12 +860,16 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
  again:
   // If no variant is requested we switch to the seek (low bw) variant
   // also swtich to seek variant if we want to seek (gasp!)
-  if(hd->hd_req == NULL || hd->hd_seek_to != PTS_UNSET)
-    hd->hd_req = hd->hd_seek;
+  if(hd->hd_req == NULL || hd->hd_seek_to != PTS_UNSET) {
+    hd->hd_req = hls_select_default_variant(h, hd);
+    if(hd->hd_req == NULL) {
+      return HLS_SEGMENT_ERR;
+    }
+  }
 
   // Need to switch variant? Need to close current segment if so
   if(hd->hd_req != hd->hd_current) {
-    
+
     if(hd->hd_current != NULL)
       variant_close_current_seg(hd->hd_current);
 
@@ -860,7 +882,15 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
      hv->hv_current_seg->hs_seq != hd->hd_seq ||
      hd->hd_seek_to != AV_NOPTS_VALUE) {
 
-    if(variant_update(hv, h)) {
+    int err = variant_update(hv, h);
+
+    if(err == VARIANT_EMPTY) {
+      variant_problem(h, hv, "No items in variant");
+      hd->hd_req = NULL;
+      goto again;
+    }
+
+    if(err == VARIANT_UNLOADABLE) {
 
       if(retry)
        	return HLS_SEGMENT_NYA;
@@ -921,7 +951,7 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
     // If we're not playing from the seek segment (ie. our "fallback" segment)
     // we ask for fast fail so we can retry with another segment
 
-    segment_open_result_t rcode = segment_open(h, hd, hs, hv != hd->hd_seek,
+    segment_open_result_t rcode = segment_open(h, hd, hs, 1,
                                                ts_seg_search);
 
     switch(rcode) {
@@ -954,48 +984,27 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
 
       /*
        * Segment can not be found (but since it's listed in the playlist
-       * it *should* be there, retry with something directly else unless we're
-       * at our seek variant in which case we wait a short while (by
-       * returning the special Not-Yet-Available segment)
+       * it *should* be there. Retry a few times, otherwise switch variant
+       *
        */
-      if(hv == hd->hd_seek)
-	return HLS_SEGMENT_NYA;
 
-      /*
-       * Variants are sorted in bitrate descending order, so just
-       * step down one
-       */
-      hd->hd_req = TAILQ_NEXT(hv, hv_link);
+      if(!hs->hs_open_error < 3) {
+        hs->hs_open_error++;
+        return HLS_SEGMENT_NYA;
+      }
+      variant_problem(h, hv, "Stream not found on server");
+      hd->hd_req = NULL;
       goto again;
 
     case SEGMENT_OPEN_CORRUPT:
+
       /*
        * File is there, but we are not able to parse it correctly
        * (broken key?, not a TS file, whatever)
-       * Mark it as broken and try something else
        */
-      hv->hv_is_corrupt = 1;
-      hv->hv_corrupt_counter++;
 
-      if(hv->hv_corrupt_counter >= HV_CORRUPT_LIMIT) {
-	HLS_TRACE(h, "Variant %d does not seem to work at all, ignoring",
-		  hv->hv_bitrate);
-
-	if(hv == hd->hd_seek)
-	  hls_select_seek_variant(h, hd);
-      }
-
-
-      TAILQ_FOREACH(hv, &hd->hd_variants, hv_link) {
-	if(!hv->hv_is_corrupt)
-	  break;
-      }
-
-      if(hv == NULL) {
-	// Nothing works, give up
-	return HLS_SEGMENT_ERR;
-      }
-      hd->hd_req = hv;
+      variant_problem(h, hv, "Stream corrupt");
+      hd->hd_req = NULL;
       goto again;
     }
 
@@ -1008,10 +1017,8 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
 
   hls_segment_t *hs = hv->hv_current_seg;
 
-  // All is fine now, unmark corruption
-  TAILQ_FOREACH(hv, &hd->hd_variants, hv_link)
-    hv->hv_is_corrupt = 0;
-
+  if(hv->hv_corrupt_counter > 0)
+    hv->hv_corrupt_counter--;
   return hs;
 }
 
@@ -1058,9 +1065,7 @@ demuxer_select_variant_simple(hls_t *h, hls_demuxer_t *hd)
     if(hv->hv_bitrate < hd->hd_bw)
       break;
   }
-  if(hv == NULL || h->h_playback_priority)
-    hv = hd->hd_seek;
-  
+
   hd->hd_req = hv;
 }
 
@@ -1096,9 +1101,7 @@ demuxer_select_variant_random(hls_t *h, hls_demuxer_t *hd)
     cnt++;
   }
 
-  if(hv == NULL)
-    hv = hd->hd_seek;
-  HLS_TRACE(h, "Randomly selected bitrate %d", hv->hv_bitrate);
+  HLS_TRACE(h, "Randomly selected bitrate %d", hv ? hv->hv_bitrate : 0);
   hd->hd_req = hv;
 }
 
@@ -1147,8 +1150,6 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 
   hls_demuxer_t *hd = &h->h_primary;
 
-  hls_select_seek_variant(h, hd);
-
   mp->mp_video.mq_seektarget = AV_NOPTS_VALUE;
   mp->mp_audio.mq_seektarget = AV_NOPTS_VALUE;
   mp->mp_seek_base = 0;
@@ -1162,9 +1163,6 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
       hls_seek(h, start, start, 1, NULL);
     }
   }
-
-
-  hd->hd_current = hd->hd_seek;
 
   while(1) {
 
