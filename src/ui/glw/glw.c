@@ -309,7 +309,7 @@ glw_create(glw_root_t *gr, const glw_class_t *class,
   w->glw_sharpness = 1.0f;
   w->glw_refcnt = 1;
   w->glw_alignment = class->gc_default_alignment;
-  w->glw_flags2 = GLW2_ENABLED | GLW2_NAV_FOCUSABLE;
+  w->glw_flags2 = GLW2_ENABLED | GLW2_NAV_FOCUSABLE | GLW2_CURSOR;
 
   if(likely(parent != NULL))
     w->glw_styles = glw_style_set_retain(parent->glw_styles);

@@ -1241,6 +1241,7 @@ static const token_attrib_t attribtab[] = {
   {"layoutFixedHeight",     mod_flag, GLW2_LAYOUTFIXED_Y,          mod_flags2},
   {"navWrap",               mod_flag, GLW2_NAV_WRAP,               mod_flags2},
   {"autoFocusLimit",        mod_flag, GLW2_AUTO_FOCUS_LIMIT,       mod_flags2},
+  {"cursor",                mod_flag, GLW2_CURSOR,                 mod_flags2},
 
 
   {"fixedSize",       mod_flag, GLW_IMAGE_FIXED_SIZE,   mod_img_flags},

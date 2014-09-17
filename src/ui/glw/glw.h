@@ -1048,6 +1048,7 @@ typedef struct glw {
 #define GLW2_LAYOUTFIXED_Y          0x100000
 #define GLW2_NAV_WRAP               0x200000
 #define GLW2_AUTO_FOCUS_LIMIT       0x400000
+#define GLW2_CURSOR                 0x800000
 
 #define GLW2_LEFT_EDGE              0x10000000
 #define GLW2_TOP_EDGE               0x20000000

@@ -30,6 +30,7 @@
 typedef struct glw_cursor {
   glw_t h;
   glw_rctx_t gc_cursor_rctx;
+  float alpha;
 } glw_cursor_t;
 
 
@@ -57,8 +58,15 @@ glw_cursor_layout(glw_t *w, const glw_rctx_t *rc)
 
   glw_root_t *gr = w->glw_root;
 
-  if(w->glw_flags & GLW_IN_FOCUS_PATH) {
-    glw_t *f = gr->gr_current_focus;
+  glw_t *f = gr->gr_current_focus;
+
+  float cursor_alpha = 0;
+
+  if(f == NULL)
+    return;
+
+  if(f->glw_flags & GLW_IN_FOCUS_PATH &&
+     w->glw_flags & GLW_IN_FOCUS_PATH) {
 
     if(f->glw_matrix != NULL) {
       Mtx *x = f->glw_matrix;
@@ -68,6 +76,9 @@ glw_cursor_layout(glw_t *w, const glw_rctx_t *rc)
         //        printf("%2.3f%c", gc->gc_matrix[i], (i+1) & 3 ? '\t' : '\n');
       }
     }
+
+    if(f->glw_flags2 & GLW2_CURSOR)
+      cursor_alpha = 1;
   }
 
   glw_rect_t cursor_rect;
@@ -83,8 +94,11 @@ glw_cursor_layout(glw_t *w, const glw_rctx_t *rc)
   if(gc->gc_cursor_rctx.rc_height <= 0)
     return;
 
-  gc->gc_cursor_rctx.rc_alpha = 1.0f;
+  glw_lp(&gc->alpha, w->glw_root, cursor_alpha, 0.5);
+
+  gc->gc_cursor_rctx.rc_alpha = rc->rc_alpha * w->glw_alpha * gc->alpha;
   gc->gc_cursor_rctx.rc_sharpness = 1.0f;
+
 
   glw_layout0(c, &gc->gc_cursor_rctx);
 }
