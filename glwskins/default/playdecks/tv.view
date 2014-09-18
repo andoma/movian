@@ -1,10 +1,13 @@
+#import "skin://common.view"
 
 widget(container_z, {
-  height: $ui.size * 2;
+  height: $ui.size * 5;
+
   widget(quad, {
     color: 0;
     alpha: 0.95;
   });
+
   widget(frontdrop, {
     source: "thickbar.png";
     additive: true;
@@ -12,32 +15,88 @@ widget(container_z, {
     border: [1,2,1,1];
 
     widget(container_x, {
-
-      padding: [$ui.size,0];
+      padding: [$ui.size,5];
       spacing: $ui.size / 2;
+      
+      widget(container_y, {
+	width: $ui.size * 3;
+	align: center;
+	
+	widget(image, {
+          aspectConstraint: true;
+          source: $global.media.current.metadata.icon ??
+            "dataroot://resources/svg/Display.svg";
+          hidden: select($global.media.current.metadata.icon, false, true);
+	});
 
-      widget(image, {
-	size: $ui.size * 2 - 10;
-	aspectConstraint: true;
-	source: $global.media.current.metadata.icon ??
-	  "dataroot://resources/svg/Display.svg";
+	widget(label, {
+          filterConstraintX: true;
+          caption: $global.media.current.metadata.title;
+          shadow: true;
+          outline: true;
+          hidden: select($global.media.current.metadata.icon, true, false);
+          sizeScale: 0.8;
+          maxlines: 2;
+	});
       });
 
-      widget(label, {
-	filterConstraintX: true;
-	caption: $global.media.current.metadata.title;
-	shadow: true;
-	outline: true;
+      widget(container_y, {
+        width: $ui.size * 20;
+        filterConstraintX: true;
+        padding: 5;
+        spacing: 0;
+
+        widget(container_x, {
+
+          widget(container_y, {
+            widget(label, {
+              filterConstraintX: true;
+              caption: $global.media.current.metadata.events.current.title;
+              shadow: true;
+              outline: true;
+            });
+
+            widget(label, {
+              filterConstraintX: true;
+              caption: $global.media.current.metadata.events.next.title;
+              shadow: true;
+              outline: true;
+            });
+          });
+
+          widget(container_y, {
+
+            widget(label, {
+              filterConstraintX: true;
+              caption: strftime($global.media.current.metadata.events.next.start, "%H:%M") + " - " +
+                strftime($global.media.current.metadata.events.next.stop, "%H:%M");
+              shadow: true;
+              outline: true;
+              align: right;
+            });
+
+            widget(label, {
+              filterConstraintX: true;
+              caption: strftime($global.media.current.metadata.events.current.start, "%H:%M") + " - " +
+                strftime($global.media.current.metadata.events.current.stop, "%H:%M");
+              shadow: true;
+              outline: true;
+              align: right;
+            });
+          });
+        });
+
+        VerticalSeparator();
+
+        widget(label, {
+          filterConstraintX: true;
+          caption: $global.media.current.metadata.events.current.description;
+          shadow: true;
+          outline: true;
+          sizeScale: 0.8;
+          maxlines: 2;
+        });
       });
-
-      widget(label, {
-	filterConstraintX: true;
-	caption: $global.media.current.metadata.events.current.title;
-	shadow: true;
-	outline: true;
-      });
-
-
       #import "bar.view"
     });
   });
