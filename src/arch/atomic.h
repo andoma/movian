@@ -55,10 +55,10 @@ atomic_get(const atomic_t *a)
   return (*(volatile int *)&(a)->v);
 }
 
-static inline int
+static inline void
 atomic_set(atomic_t *a, int v)
 {
-  return a->v = v;
+  a->v = v;
 }
 
 #elif defined(_MSC_VER)
@@ -94,10 +94,10 @@ atomic_get(const atomic_t *a)
   return (*(volatile int *)&(a)->v);
 }
 
-static __inline int
+static __inline void
 atomic_set(atomic_t *a, int v)
 {
-  return a->v = v;
+  a->v = v;
 }
 
 #else
