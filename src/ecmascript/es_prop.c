@@ -4,27 +4,63 @@
 #include "ecmascript.h"
 #include "backend/backend_prop.h"
 
+
+/**
+ *
+ */
+typedef struct es_prop_sub {
+  es_resource_t eps_super;
+  prop_sub_t *eps_sub;
+  char eps_autodestry;
+} es_prop_sub_t;
+
+
+
+/**
+ *
+ */
+static void
+es_prop_sub_destroy(es_resource_t *eres)
+{
+  es_prop_sub_t *eps = (es_prop_sub_t *)eres;
+  if(eps->eps_sub == NULL)
+    return;
+
+  es_callback_unregister(eres->er_ctx->ec_duk, eps);
+  prop_unsubscribe(eps->eps_sub);
+  eps->eps_sub = NULL;
+  es_resource_unlink(eres);
+}
+
+
+/**
+ *
+ */
+static const es_resource_class_t es_resource_prop_sub = {
+  .erc_name = "propsub",
+  .erc_size = sizeof(es_prop_sub_t),
+  .erc_destroy = es_prop_sub_destroy,
+};
+
+
 /**
  *
  */
 prop_t *
 es_stprop_get(duk_context *ctx, int val_index)
 {
-  if(!duk_is_pointer(ctx, val_index)) {
-
-    if(!duk_is_object(ctx, val_index))
-      return NULL;
-
-    duk_get_prop_string(ctx, val_index, "__rawptr__");
-    if(!duk_is_pointer(ctx, -1)) {
-      duk_pop(ctx);
-      return NULL;
-    }
-    duk_replace(ctx, val_index);
-  }
-  return duk_to_pointer(ctx, val_index);
+  return es_get_native_obj(ctx, val_index, ES_NATIVE_PROP);
 }
 
+
+/**
+ *
+ */
+void
+es_stprop_push(duk_context *ctx, prop_t *p)
+{
+  es_push_native_obj(ctx, ES_NATIVE_PROP, prop_ref_inc(p));
+}
 
 /**
  *
@@ -64,8 +100,18 @@ es_prop_print_duk(duk_context *ctx)
 static int
 es_prop_create_duk(duk_context *ctx)
 {
-  prop_t *p =  prop_create_root(NULL);
-  duk_push_pointer(ctx, prop_ref_inc(p));
+  es_stprop_push(ctx, prop_create_root(NULL));
+  return 1;
+}
+
+
+/**
+ *
+ */
+static int
+es_prop_get_global(duk_context *ctx)
+{
+  es_stprop_push(ctx, prop_get_global());
   return 1;
 }
 
@@ -77,16 +123,13 @@ static int
 es_prop_get_value_duk(duk_context *ctx)
 {
   prop_t *p = es_stprop_get(ctx, 0);
-  const char *str = duk_require_string(ctx, 1);
-
+  char tmp[64];
   hts_mutex_lock(&prop_mutex);
 
   if(p->hp_type == PROP_ZOMBIE) {
     hts_mutex_unlock(&prop_mutex);
     return 0;
   }
-
-  p = prop_create0(p, str, NULL, 0);
 
   switch(p->hp_type) {
   case PROP_CSTRING:
@@ -104,10 +147,37 @@ es_prop_get_value_duk(duk_context *ctx)
   case PROP_INT:
     duk_push_int(ctx, p->hp_int);
     break;
+  case PROP_VOID:
+    duk_push_null(ctx);
+    break;
   default:
-    duk_push_pointer(ctx, prop_ref_inc(p));
+    snprintf(tmp, sizeof(tmp), "[prop internal type %d]", p->hp_type);
+    duk_push_string(ctx, tmp);
     break;
   }
+  hts_mutex_unlock(&prop_mutex);
+  return 1;
+}
+
+
+/**
+ *
+ */
+static int
+es_prop_get_child_duk(duk_context *ctx)
+{
+  prop_t *p = es_stprop_get(ctx, 0);
+  const char *str = duk_require_string(ctx, 1);
+
+  hts_mutex_lock(&prop_mutex);
+
+  if(p->hp_type == PROP_ZOMBIE) {
+    hts_mutex_unlock(&prop_mutex);
+    return 0;
+  }
+
+  p = prop_create0(p, str, NULL, 0);
+  es_push_native_obj(ctx, ES_NATIVE_PROP, prop_ref_inc(p));
   hts_mutex_unlock(&prop_mutex);
   return 1;
 }
@@ -166,21 +236,18 @@ es_prop_set_parent_duk(duk_context *ctx)
 static void
 es_sub_cb(void *opaque, prop_event_t event, ...)
 {
-  es_context_t *ec = opaque;
-  duk_context *ctx = ec->ec_duk;
+  es_prop_sub_t *eps = opaque;
+  es_context_t *ec = eps->eps_super.er_ctx;
   va_list ap;
   const rstr_t *r, *r2;
   const char *c;
   double d;
   int i;
+  int destroy = 0;
 
-  duk_push_global_object(ctx);
-  duk_get_prop_string(ctx, -1, "subscriptionInvoke");
+  duk_context *ctx = ec->ec_duk;
 
-  if(!duk_is_function(ctx, -1)) {
-    duk_pop_2(ctx);
-    return;
-  }
+  es_push_callback(ctx, eps);
 
   va_start(ap, event);
 
@@ -189,77 +256,70 @@ es_sub_cb(void *opaque, prop_event_t event, ...)
   switch(event) {
   case PROP_SET_DIR:
     (void)va_arg(ap, prop_t *);
-    duk_push_int(ctx, va_arg(ap, int));
     duk_push_string(ctx, "dir");
-    nargs = 2;
+    nargs = 1;
     break;
 
   case PROP_SET_VOID:
     (void)va_arg(ap, prop_t *);
-    duk_push_int(ctx, va_arg(ap, int));
     duk_push_string(ctx, "set");
     duk_push_null(ctx);
-    nargs = 3;
+    nargs = 2;
     break;
 
   case PROP_SET_RSTRING:
     r = va_arg(ap, const rstr_t *);
     (void)va_arg(ap, prop_t *);
-    duk_push_int(ctx, va_arg(ap, int));
     duk_push_string(ctx, "set");
     duk_push_string(ctx, rstr_get(r));
-    nargs = 3;
+    nargs = 2;
     break;
 
   case PROP_SET_CSTRING:
     c = va_arg(ap, const char *);
     (void)va_arg(ap, prop_t *);
-    duk_push_int(ctx, va_arg(ap, int));
     duk_push_string(ctx, "set");
     duk_push_string(ctx, c);
-    nargs = 3;
+    nargs = 2;
     break;
 
   case PROP_SET_RLINK:
     r = va_arg(ap, const rstr_t *);
     r2 = va_arg(ap, const rstr_t *);
     (void)va_arg(ap, prop_t *);
-    duk_push_int(ctx, va_arg(ap, int));
     duk_push_string(ctx, "link");
     duk_push_string(ctx, rstr_get(r));
     duk_push_string(ctx, rstr_get(r2));
-    nargs = 4;
+    nargs = 3;
     break;
 
   case PROP_SET_INT:
     i = va_arg(ap, int);
     (void)va_arg(ap, prop_t *);
-    duk_push_int(ctx, va_arg(ap, int));
     duk_push_string(ctx, "set");
     duk_push_int(ctx, i);
-    nargs = 3;
+    nargs = 2;
     break;
 
   case PROP_SET_FLOAT:
     d = va_arg(ap, double);
     (void)va_arg(ap, prop_t *);
-    duk_push_int(ctx, va_arg(ap, int));
     duk_push_string(ctx, "set");
     duk_push_number(ctx, d);
-    nargs = 3;
+    nargs = 2;
     break;
 
   case PROP_WANT_MORE_CHILDS:
-    duk_push_int(ctx, va_arg(ap, int));
     duk_push_string(ctx, "wantmorechilds");
-    nargs = 2;
+    nargs = 1;
     break;
 
   case PROP_DESTROYED:
     (void)va_arg(ap, prop_sub_t *);
-    duk_push_int(ctx, va_arg(ap, int));
     duk_push_string(ctx, "destroyed");
-    nargs = 2;
+    nargs = 1;
+    if(eps->eps_autodestry)
+      destroy = 1;
     break;
 
   default:
@@ -273,9 +333,11 @@ es_sub_cb(void *opaque, prop_event_t event, ...)
     int rc = duk_pcall(ctx, nargs);
     if(rc)
       es_dump_err(ctx);
-    duk_pop(ctx);
   }
   duk_pop(ctx);
+
+  if(destroy)
+    es_resource_destroy(&eps->eps_super);
 }
 
 
@@ -287,29 +349,21 @@ es_prop_subscribe(duk_context *ctx)
 {
   es_context_t *ec = es_get(ctx);
   prop_t *p = es_stprop_get(ctx, 0);
-  int idx = duk_get_number(ctx, 1);
+  es_prop_sub_t *eps = es_resource_create(ec, &es_resource_prop_sub);
 
-  prop_sub_t *s =
+  es_callback_register(ctx, 1, eps);
+
+  eps->eps_autodestry = es_prop_is_true(ctx, 2, "autoDestroy");
+
+  eps->eps_sub =
     prop_subscribe(PROP_SUB_TRACK_DESTROY,
                    PROP_TAG_ROOT, p,
                    PROP_TAG_MUTEX, &ec->ec_mutex,
-                   PROP_TAG_CALLBACK_USER_INT, es_sub_cb, ec, idx,
+                   PROP_TAG_CALLBACK, es_sub_cb, eps,
                    NULL);
 
-  duk_push_pointer(ctx, s);
+  es_resource_push(ctx, &eps->eps_super);
   return 1;
-}
-
-
-/**
- *
- */
-static int
-es_prop_unsubscribe(duk_context *ctx)
-{
-  prop_sub_t *s = duk_require_pointer(ctx, 0);
-  prop_unsubscribe(s);
-  return 0;
 }
 
 
@@ -348,13 +402,14 @@ const duk_function_list_entry fnlist_Showtime_prop[] = {
   { "propPrint",               es_prop_print_duk,             1 },
   { "propRelease",             es_prop_release_duk,           1 },
   { "propCreate",              es_prop_create_duk,            0 },
-  { "propGet",                 es_prop_get_value_duk,         2 },
+  { "propGetValue",            es_prop_get_value_duk,         2 },
+  { "propGetChild",            es_prop_get_child_duk,         2 },
   { "propSet",                 es_prop_set_value_duk,         3 },
   { "propSetParent",           es_prop_set_parent_duk,        2 },
-  { "propSubscribe",           es_prop_subscribe,             2 },
-  { "propUnsubscribe",         es_prop_unsubscribe,           1 },
+  { "propSubscribe",           es_prop_subscribe,             3 },
   { "propHaveMore",            es_prop_have_more,             2 },
   { "propMakeUrl",             es_prop_make_url,              1 },
+  { "propGlobal",              es_prop_get_global,            0 },
 
   { NULL, NULL, 0}
 };

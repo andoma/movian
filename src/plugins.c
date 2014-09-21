@@ -545,8 +545,10 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
       }
       snprintf(fullpath, sizeof(fullpath), "%s/%s", url, file);
 
+      int version = htsmsg_get_u32_or_default(ctrl, "apiversion", 1);
+
       hts_mutex_unlock(&plugin_mutex);
-      r = ecmascript_plugin_load(id, fullpath, errbuf, errlen);
+      r = ecmascript_plugin_load(id, fullpath, errbuf, errlen, version);
       hts_mutex_lock(&plugin_mutex);
       if(!r)
 	pl->pl_unload = plugin_unload_ecmascript;

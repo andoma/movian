@@ -7,11 +7,48 @@
 #include "metadata/metadata_str.h"
 #include "prop/prop.h"
 
+
+typedef struct es_mlv {
+  es_resource_t super;
+  metadata_lazy_video_t *mlv;
+} es_mlv_t;
+
+
+
+
+/**
+ *
+ */
+static void
+es_mlv_destroy(es_resource_t *eres)
+{
+  es_mlv_t *em = (es_mlv_t *)eres;
+  mlv_unbind(em->mlv, 0);
+  printf("mlv destroyed\n");
+}
+
+
+
+/**
+ *
+ */
+static const es_resource_class_t es_resource_mlv = {
+  .erc_name = "mlv",
+  .erc_size = sizeof(es_mlv_t),
+  .erc_destroy = es_mlv_destroy,
+};
+
+
+/**
+ *
+ */
 static int
 es_video_metadata_bind_duk(duk_context *ctx)
 {
   prop_t *root = es_stprop_get(ctx, 0);
   const char *urlstr = duk_safe_to_string(ctx, 1);
+  es_context_t *ec = es_get(ctx);
+  es_mlv_t *em = es_resource_create(ec, &es_resource_mlv);
 
   rstr_t *url = rstr_alloc(urlstr);
   rstr_t *title;
@@ -32,24 +69,14 @@ es_video_metadata_bind_duk(duk_context *ctx)
   rstr_t *imdb  = es_prop_to_rstr(ctx, 2, "imdb");
   int duration  = es_prop_to_int(ctx,  2, "duration", 0);
 
-  metadata_lazy_video_t *mlv =
+  em->mlv =
     metadata_bind_video_info(url, title, imdb, duration, root, NULL, 0, 0,
                              year, season, episode, 0);
   rstr_release(title);
   rstr_release(url);
-  duk_push_pointer(ctx, mlv);
+  printf("mlv created\n");
+  es_resource_push(ctx, &em->super);
   return 1;
-}
-
-
-/**
- *
- */
-static int
-es_video_metadata_unbind_duk(duk_context *ctx)
-{
-  mlv_unbind(duk_require_pointer(ctx, 0), 0);
-  return 0;
 }
 
 
@@ -58,6 +85,5 @@ es_video_metadata_unbind_duk(duk_context *ctx)
  */
 const duk_function_list_entry fnlist_Showtime_metadata[] = {
   { "videoMetadataBind",     es_video_metadata_bind_duk,       3 },
-  { "videoMetadataUnbind",   es_video_metadata_unbind_duk,     1 },
   { NULL, NULL, 0}
 };

@@ -708,17 +708,20 @@ SRCS-${CONFIG_MINER} += ext/miner/miner.c \
 SRCS += ext/duktape/duktape.c \
 	src/ecmascript/ecmascript.c \
 	src/ecmascript/es_service.c \
-	src/ecmascript/es_page.c \
+	src/ecmascript/es_stats.c \
+	src/ecmascript/es_route.c \
+	src/ecmascript/es_searcher.c \
 	src/ecmascript/es_prop.c \
 	src/ecmascript/es_io.c \
 	src/ecmascript/es_string.c \
 	src/ecmascript/es_htsmsg.c \
 	src/ecmascript/es_metadata.c \
-
-#	src/ecmascript/es_hook.c \
+	src/ecmascript/es_native_obj.c \
+	src/ecmascript/es_callback.c \
+	src/ecmascript/es_hook.c \
 
 ${BUILDDIR}/ext/duktape/%.o : CFLAGS = -Wall ${OPTFLAGS} \
- -fstrict-aliasing -std=c99  -DDUK_OPT_ASSERTIONS
+ -fstrict-aliasing -std=c99  -DDUK_OPT_ASSERTIONS #-DDUK_OPT_DEBUG -DDUK_OPT_DPRINT -DDUK_OPT_DDPRINT -DDUK_OPT_DDDPRINT
 
 include support/${OS}.mk
 

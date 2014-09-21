@@ -5,7 +5,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 4411a3984875f95f94da999d5ac059b650b0dfb8 (v0.11.0-23-g4411a39).
+ *  Git commit 5b149e3cd400e2ca47034f3d4a1345ef276d4e81 (v0.11.0-386-g5b149e3).
  *
  *  See Duktape AUTHORS.txt and LICENSE.txt for copyright and
  *  licensing information.
@@ -230,7 +230,7 @@ static __inline__ unsigned long long duk_rdtsc(void) {
 #endif
 
 /* MIPS */
-/* FIXME: 32-bit vs. 64-bit MIPS */
+/* XXX: 32-bit vs. 64-bit MIPS */
 #if defined(__mips__) || defined(mips) || defined(_MIPS_ISA) || \
     defined(_R3000) || defined(_R4000) || defined(_R5900) || \
     defined(_MIPS_ISA_MIPS1) || defined(_MIPS_ISA_MIPS2) || \
@@ -393,7 +393,7 @@ static __inline__ unsigned long long duk_rdtsc(void) {
  *  #ifdefs, but it would then be more difficult to make fixes which
  *  affect only a specific platform.
  *
- *  FIXME: add a way to provide custom functions to provide the critical
+ *  XXX: add a way to provide custom functions to provide the critical
  *  primitives; this would be convenient when porting to unknown platforms
  *  (rather than muck with Duktape internals).
  */
@@ -642,7 +642,7 @@ static __inline__ unsigned long long duk_rdtsc(void) {
  *  being able to compare DUK_SIZE_MAX against a limit.
  */
 
-/* FIXME: add feature options to force basic types from outside? */
+/* XXX: add feature options to force basic types from outside? */
 
 #if !defined(INT_MAX)
 #error INT_MAX not defined
@@ -2029,7 +2029,7 @@ typedef FILE duk_file;
 #define DUK_USE_ARCH_STRING "unknown"
 #endif
 
-/* 
+/*
  *  Tagged type representation (duk_tval)
  */
 
@@ -2123,10 +2123,15 @@ typedef FILE duk_file;
  *  Execution and debugger options
  */
 
+/* Executor interrupt disabled for 1.0 release: there is no API to use it */
+#if 0
 #define DUK_USE_INTERRUPT_COUNTER
 #if defined(DUK_OPT_NO_INTERRUPT_COUNTER)
 #undef DUK_USE_INTERRUPT_COUNTER
 #endif
+#endif
+
+#undef DUK_USE_INTERRUPT_COUNTER
 
 /* For opcodes with indirect indices, check final index against stack size.
  * This should not be necessary because the compiler is trusted, and we don't
@@ -2239,7 +2244,7 @@ typedef FILE duk_file;
 /* Treat function statements (function declarations outside top level of
  * Program or FunctionBody) same as normal function declarations.  This is
  * also V8 behavior.  See test-dev-func-decl-outside-top.js.
- */ 
+ */
 #define DUK_USE_NONSTD_FUNC_STMT
 #if defined(DUK_OPT_NO_NONSTD_FUNC_STMT)
 #undef DUK_USE_NONSTD_FUNC_STMT
@@ -2251,6 +2256,22 @@ typedef FILE duk_file;
 #define DUK_USE_NONSTD_ARRAY_SPLICE_DELCOUNT
 #if defined(DUK_OPT_NO_NONSTD_ARRAY_SPLICE_DELCOUNT)
 #undef DUK_USE_NONSTD_ARRAY_SPLICE_DELCOUNT
+#endif
+
+/* Array.prototype.concat() non-standard but real world compatible behavior
+ * for non-existent trailing elements.
+ */
+#define DUK_USE_NONSTD_ARRAY_CONCAT_TRAILER
+#if defined(DUK_OPT_NO_NONSTD_ARRAY_CONCAT_TRAILER)
+#undef DUK_USE_NONSTD_ARRAY_CONCAT_TRAILER
+#endif
+
+/* Array.prototype.map() non-standard but real world compatible behavior
+ * for non-existent trailing elements.
+ */
+#define DUK_USE_NONSTD_ARRAY_MAP_TRAILER
+#if defined(DUK_OPT_NO_NONSTD_ARRAY_MAP_TRAILER)
+#undef DUK_USE_NONSTD_ARRAY_MAP_TRAILER
 #endif
 
 /* Non-standard 'caller' property for function instances, see
@@ -2455,7 +2476,7 @@ typedef FILE duk_file;
 /*
  *  Variable size array initialization.
  *
- *  Variable size array at the end of a structure is nonportable. 
+ *  Variable size array at the end of a structure is nonportable.
  *  There are three alternatives:
  *
  *    1) C99 (flexible array member): char buf[]
@@ -2602,7 +2623,7 @@ struct duk_number_list_entry {
  * this index will map to a non-existent stack entry.  Also used in some
  * API calls as a marker to denote "no value".
  */
-#define DUK_INVALID_INDEX                 INT_MIN 
+#define DUK_INVALID_INDEX                 INT_MIN
 
 /* Indicates that a native function does not have a fixed number of args,
  * and the argument stack should not be capped/extended at all.
@@ -2775,7 +2796,6 @@ DUK_API_NORETURN(void duk_fatal(duk_context *ctx, duk_errcode_t err_code, const 
 
 duk_bool_t duk_is_strict_call(duk_context *ctx);
 duk_bool_t duk_is_constructor_call(duk_context *ctx);
-duk_int_t duk_get_magic(duk_context *ctx);
 
 /*
  *  Stack management
@@ -2815,8 +2835,11 @@ void duk_insert(duk_context *ctx, duk_idx_t to_index);
 void duk_replace(duk_context *ctx, duk_idx_t to_index);
 void duk_copy(duk_context *ctx, duk_idx_t from_index, duk_idx_t to_index);
 void duk_remove(duk_context *ctx, duk_idx_t index);
-/* FIXME: undocumented */
-void duk_xmove(duk_context *from_ctx, duk_context *to_ctx, duk_idx_t count);
+void duk_xcopymove_raw(duk_context *to_ctx, duk_context *from_ctx, duk_idx_t count, duk_bool_t is_copy);
+#define duk_xmove_top(to_ctx,from_ctx,count) \
+	duk_xcopymove_raw((to_ctx), (from_ctx), (count), 0 /*is_copy*/)
+#define duk_xcopy_top(to_ctx,from_ctx,count) \
+	duk_xcopymove_raw((to_ctx), (from_ctx), (count), 1 /*is_copy*/)
 
 /*
  *  Push operations
@@ -2894,7 +2917,6 @@ void duk_pop_3(duk_context *ctx);
  *  is not needed; duk_is_valid_index() gives the same information.
  */
 
-/* FIXME: a duk_small_int_t suffices to represent type and type mask (at least now). */
 duk_int_t duk_get_type(duk_context *ctx, duk_idx_t index);
 duk_bool_t duk_check_type(duk_context *ctx, duk_idx_t index, duk_int_t type);
 duk_uint_t duk_get_type_mask(duk_context *ctx, duk_idx_t index);
@@ -3004,8 +3026,8 @@ void *duk_to_fixed_buffer(duk_context *ctx, duk_idx_t index, duk_size_t *out_siz
 void *duk_to_dynamic_buffer(duk_context *ctx, duk_idx_t index, duk_size_t *out_size);
 void *duk_to_pointer(duk_context *ctx, duk_idx_t index);
 void duk_to_object(duk_context *ctx, duk_idx_t index);
-void duk_to_defaultvalue(duk_context *ctx, duk_idx_t index, duk_int_t hint);  /* FIXME: small int? */
-void duk_to_primitive(duk_context *ctx, duk_idx_t index, duk_int_t hint);  /* FIXME: small int? */
+void duk_to_defaultvalue(duk_context *ctx, duk_idx_t index, duk_int_t hint);
+void duk_to_primitive(duk_context *ctx, duk_idx_t index, duk_int_t hint);
 
 /* safe variants of a few coercion operations */
 const char *duk_safe_to_lstring(duk_context *ctx, duk_idx_t index, duk_size_t *out_len);
@@ -3053,6 +3075,34 @@ duk_bool_t duk_has_prop_index(duk_context *ctx, duk_idx_t obj_index, duk_uarridx
 duk_bool_t duk_get_global_string(duk_context *ctx, const char *key);
 
 /*
+ *  Object prototype
+ */
+
+void duk_get_prototype(duk_context *ctx, duk_idx_t index);
+void duk_set_prototype(duk_context *ctx, duk_idx_t index);
+
+/*
+ *  Object finalizer
+ */
+
+void duk_get_finalizer(duk_context *ctx, duk_idx_t index);
+void duk_set_finalizer(duk_context *ctx, duk_idx_t index);
+
+/*
+ *  Global object
+ */
+
+void duk_set_global_object(duk_context *ctx);
+
+/*
+ *  Duktape/C function magic value
+ */
+
+duk_int_t duk_get_magic(duk_context *ctx, duk_idx_t index);
+void duk_set_magic(duk_context *ctx, duk_idx_t index, duk_int_t magic);
+duk_int_t duk_get_current_magic(duk_context *ctx);
+
+/*
  *  Module helpers: put multiple function or constant properties
  */
 
@@ -3063,7 +3113,9 @@ void duk_put_number_list(duk_context *ctx, duk_idx_t obj_index, const duk_number
  *  Variable access
  */
 
-/* FIXME: incomplete, not usable now */
+/* XXX: These calls are incomplete and not usable now.  They are not (yet)
+ * part of the public API.
+ */
 void duk_get_var(duk_context *ctx);
 void duk_put_var(duk_context *ctx);
 duk_bool_t duk_del_var(duk_context *ctx);
@@ -3244,7 +3296,6 @@ duk_int_t duk_compile_raw(duk_context *ctx, const char *src_buffer, duk_size_t s
  *  Logging
  */
 
-/* FIXME: here a small integer type would be proper */
 void duk_log(duk_context *ctx, duk_int_t level, const char *fmt, ...);
 
 /*
@@ -3402,7 +3453,7 @@ void duk_push_context_dump(duk_context *ctx);
  *  Indexes of various types (8-bit, 16-bit, 32-bit) in memory relative to
  *  the logical (big endian) order:
  *
- *  byte order      duk_uint8_t    duk_uint16_t     duk_uint32_t    
+ *  byte order      duk_uint8_t    duk_uint16_t     duk_uint32_t
  *    BE             01234567         0123               01
  *    LE             76543210         3210               10
  *    ME (ARM)       32107654         1032               01

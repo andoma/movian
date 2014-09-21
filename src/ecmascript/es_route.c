@@ -4,7 +4,6 @@
 #include "service.h"
 #include "arch/threads.h"
 #include "misc/regex.h"
-#include "backend/backend.h"
 
 LIST_HEAD(es_route_list, es_route);
 
@@ -15,6 +14,7 @@ typedef struct es_route {
   hts_regex_t er_regex;
   int er_prio;
 } es_route_t;
+
 
 static struct es_route_list routes;
 
@@ -28,6 +28,8 @@ static void
 es_route_destroy(es_resource_t *eres)
 {
   es_route_t *er = (es_route_t *)eres;
+
+  es_callback_unregister(eres->er_ctx->ec_duk, eres);
 
   hts_mutex_lock(&route_mutex);
   LIST_REMOVE(er, er_link);
@@ -43,10 +45,22 @@ es_route_destroy(es_resource_t *eres)
 /**
  *
  */
+static void
+es_route_info(es_resource_t *eres, char *dst, size_t dstsize)
+{
+  es_route_t *er = (es_route_t *)eres;
+  snprintf(dst, dstsize, "%s (prio:%d)", er->er_pattern, er->er_prio);
+}
+
+
+/**
+ *
+ */
 static const es_resource_class_t es_resource_route = {
   .erc_name = "route",
   .erc_size = sizeof(es_route_t),
   .erc_destroy = es_route_destroy,
+  .erc_info = es_route_info,
 };
 
 
@@ -104,13 +118,13 @@ es_route_create(duk_context *ctx)
 
   LIST_INSERT_SORTED(&routes, er, er_link, er_cmp, es_route_t);
 
-  es_resource_init(&er->super, ec);
-
-  es_resource_retain(&er->super);
+  es_resource_link(&er->super, ec);
 
   hts_mutex_unlock(&route_mutex);
 
-  duk_push_pointer(ctx, er);
+  es_callback_register(ctx, 1, er);
+
+  es_resource_push(ctx, &er->super);
   return 1;
 }
 
@@ -118,7 +132,7 @@ es_route_create(duk_context *ctx)
 /**
  *
  */
-static int
+int
 ecmascript_openuri(prop_t *page, const char *url, int sync)
 {
   hts_regmatch_t matches[8];
@@ -144,95 +158,44 @@ ecmascript_openuri(prop_t *page, const char *url, int sync)
 
   es_context_begin(ec);
 
-  es_resource_release(&er->super);
 
   duk_context *ctx = ec->ec_duk;
 
 
-  duk_push_global_object(ctx);
+  es_push_callback(ctx, er);
 
-  duk_get_prop_string(ctx, -1, "routeInvoke");
+  es_stprop_push(ctx, page);
 
-  if(duk_is_function(ctx, -1)) {
-    duk_push_pointer(ctx, er);
-    duk_push_pointer(ctx, prop_ref_inc(page));
+  int array_idx = duk_push_array(ctx);
 
-    int array_idx = duk_push_array(ctx);
+  for(int i = 1; i < 8; i++) {
+    if(matches[i].rm_so == -1)
+      break;
 
-    for(int i = 1; i < 8; i++) {
-      if(matches[i].rm_so == -1)
-        break;
-
-      duk_push_lstring(ctx,
-                       url + matches[i].rm_so,
-                       matches[i].rm_eo - matches[i].rm_so);
-      duk_put_prop_index(ctx, array_idx, i-1);
-    }
-
-    int rc = duk_pcall(ctx, 3);
-    if(rc)
-      es_dump_err(ctx);
-
-    duk_pop(ctx);
+    duk_push_lstring(ctx,
+                     url + matches[i].rm_so,
+                     matches[i].rm_eo - matches[i].rm_so);
+    duk_put_prop_index(ctx, array_idx, i-1);
   }
+
+  int rc = duk_pcall(ctx, 2);
+  if(rc)
+    es_dump_err(ctx);
+
   duk_pop(ctx);
+
   es_context_end(ec);
+
+  es_resource_release(&er->super);
+
   return 0;
 }
 
 
 /**
- *
- */
-static void
-ecmascript_search(struct prop *model, const char *query, prop_t *loading)
-{
-  es_context_t **ctxs = ecmascript_get_all_contexts();
-
-  for(int i = 0; ctxs[i] != NULL; i++) {
-    es_context_t *ec = ctxs[i];
-    es_context_begin(ec);
-
-    duk_context *ctx = ec->ec_duk;
-    duk_push_global_object(ctx);
-    duk_get_prop_string(ctx, -1, "searchInvoke");
-
-    if(duk_is_function(ctx, -1)) {
-      duk_push_pointer(ctx, prop_ref_inc(model));
-      duk_push_string(ctx, query);
-      duk_push_pointer(ctx, prop_ref_inc(loading));
-
-      int rc = duk_pcall(ctx, 3);
-      if(rc)
-        es_dump_err(ctx);
-
-      duk_pop(ctx);
-    }
-    duk_pop(ctx);
-
-    es_context_end(ec);
-  }
-
-  ecmascript_release_context_vector(ctxs);
-}
-
-
-/**
- *
- */
-static backend_t be_ecmascript = {
-  .be_flags  = BACKEND_OPEN_CHECKS_URI,
-  .be_open   = ecmascript_openuri,
-  .be_search = ecmascript_search,
-};
-
-BE_REGISTER(ecmascript);
-
-
-/**
  * Showtime object exposed functions
  */
-const duk_function_list_entry fnlist_Showtime_page[] = {
-  { "routeCreate",             es_route_create,      1 },
+const duk_function_list_entry fnlist_Showtime_route[] = {
+  { "routeCreate",             es_route_create,      2 },
   { NULL, NULL, 0}
 };

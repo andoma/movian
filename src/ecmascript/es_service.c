@@ -8,6 +8,8 @@ typedef struct es_service {
   es_resource_t super;
 
   service_t *s;
+  char *title;
+  char *url;
   int enabled;
 } es_service_t;
 
@@ -24,7 +26,21 @@ es_service_destroy(es_resource_t *er)
 
   service_destroy(es->s);
   es->s = NULL;
+  free(es->title);
+  free(es->url);
   es_resource_unlink(er);
+}
+
+/**
+ *
+ */
+static void
+es_service_info(es_resource_t *eres, char *dst, size_t dstsize)
+{
+  es_service_t *es = (es_service_t *)eres;
+
+  snprintf(dst, dstsize, "'%s' => '%s' (enabled:%s)",
+           es->title, es->url, es->enabled ? "Yes" : "No");
 }
 
 
@@ -35,6 +51,7 @@ static const es_resource_class_t es_resource_service = {
   .erc_name = "service",
   .erc_size = sizeof(es_service_t),
   .erc_destroy = es_service_destroy,
+  .erc_info = es_service_info,
 };
 
 
@@ -56,12 +73,16 @@ es_service_create(duk_context *ctx)
   const char *type   = duk_safe_to_string(ctx, 3);
   int enabled        = duk_to_boolean    (ctx, 4);
   const char *icon   = duk_is_string(ctx, 5) ? duk_to_string(ctx, 5) : NULL;
+
+  es->title = strdup(title);
+  es->url   = strdup(url);
+
   es->s = service_create(svcid,
                          title, url, type, icon, 0, enabled,
                          SVC_ORIGIN_APP);
   es->enabled = enabled;
-  es_resource_retain(&es->super);
-  duk_push_pointer(ctx, es);
+
+  es_resource_push(ctx, &es->super);
   return 1;
 }
 
@@ -72,8 +93,7 @@ es_service_create(duk_context *ctx)
 static int
 es_service_enable(duk_context *ctx)
 {
-  es_service_t *es = duk_require_pointer(ctx, 0);
-  assert(es->super.er_class == &es_resource_service);
+  es_service_t *es = es_resource_get(ctx, 0, &es_resource_service);
 
   if(es->s == NULL)
     return 0;
