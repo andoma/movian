@@ -19,8 +19,6 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 
-#include <malloc.h>
-
 #include "showtime.h"
 #include "fileaccess/fileaccess.h"
 #include "backend/backend.h"
@@ -355,6 +353,8 @@ es_create_env(es_context_t *ec)
 
 
 #ifdef ES_MEMORY_TRACKING
+
+#include <malloc.h>
 
 /**
  *
