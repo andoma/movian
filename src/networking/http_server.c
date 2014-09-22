@@ -1205,8 +1205,12 @@ http_server_init(void)
 
   if(http_server_fd != NULL) {
     http_server_port = asyncio_get_port(http_server_fd);
+
+#if ENABLE_UPNP
     if(!gconf.disable_upnp)
       upnp_init();
+#endif
+
   }
 }
 

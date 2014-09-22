@@ -35,11 +35,14 @@
 #include "config.h"
 #include "showtime.h"
 #include "prop/prop.h"
-#include "db/db_support.h"
 #include "kvstore.h"
 #include "misc/callout.h"
 
 #include "fileaccess/fileaccess.h"
+
+#if CONFIG_KVSTORE
+
+#include "db/db_support.h"
 
 LIST_HEAD(kvstore_write_list, kvstore_write);
 
@@ -88,7 +91,7 @@ kvstore_fini(void)
 /**
  *
  */
-void *
+static void *
 kvstore_get(void)
 {
   return db_pool_get(kvstore_pool);
@@ -98,7 +101,7 @@ kvstore_get(void)
 /**
  *
  */
-void 
+static void
 kvstore_close(void *db)
 {
   db_pool_put(kvstore_pool, db);
@@ -1012,3 +1015,61 @@ kv_url_opt_set_deferred(const char *url, int domain, const char *key,
   callout_arm(&deferred_callout, deferred_callout_fire, NULL, 5);
   va_end(ap);
 }
+
+#else
+
+
+void
+kvstore_init(void)
+{
+}
+
+void
+kvstore_fini(void)
+{
+}
+
+void
+kv_prop_bind_create(prop_t *p, const char *url)
+{
+}
+
+rstr_t *
+kv_url_opt_get_rstr(const char *url, int domain, const char *key)
+{
+  return NULL;
+}
+
+int
+kv_url_opt_get_int(const char *url, int domain, const char *key, int def)
+{
+  return def;
+}
+
+int64_t
+kv_url_opt_get_int64(const char *url, int domain,
+                     const char *key, int64_t def)
+{
+  return def;
+}
+
+void
+kv_url_opt_set(const char *url, int domain, const char *key,
+               int type, ...)
+{
+}
+
+
+void
+kv_url_opt_set_deferred(const char *url, int domain, const char *key,
+                        int type, ...)
+{
+}
+
+void
+kvstore_deferred_flush(void)
+{
+}
+
+#endif
+

@@ -2106,11 +2106,15 @@ media_eventsink(void *opaque, prop_event_t event, ...)
   e = va_arg(ap, event_t *);
 
   if(event_is_type(e, EVENT_PLAYTRACK)) {
+#if ENABLE_PLAYQUEUE
     playqueue_event_handler(e);
+#endif
   } else if(media_primary != NULL) {
     mp_enqueue_event(media_primary, e);
   } else {
+#if ENABLE_PLAYQUEUE
     playqueue_event_handler(e);
+#endif
   }
 }
 

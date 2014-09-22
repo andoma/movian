@@ -95,7 +95,9 @@ typedef struct fa_dir_entry {
   char fde_bound_to_metadb;
   struct fa_stat fde_stat;
 
+#if ENABLE_METADATA
   struct metadata *fde_md;
+#endif
 
 } fa_dir_entry_t;
 

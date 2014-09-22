@@ -35,14 +35,12 @@
 #include "fa_video.h"
 #include "event.h"
 #include "media.h"
-#include "fa_probe.h"
 #include "fileaccess.h"
 #include "fa_libav.h"
 #include "backend/dvd/dvd.h"
 #include "notifications.h"
 #include "htsmsg/htsmsg_xml.h"
 #include "backend/backend.h"
-#include "backend/hls/hls.h"
 #include "misc/isolang.h"
 #include "text/text.h"
 #include "video/video_settings.h"
@@ -52,6 +50,14 @@
 #include "misc/str.h"
 #include "i18n.h"
 #include "metadata/playinfo.h"
+
+#if ENABLE_METADATA
+#include "fa_probe.h"
+#endif
+
+#if ENABLE_HLS
+#include "backend/hls/hls.h"
+#endif
 
 typedef struct seek_item {
   prop_t *si_prop;
@@ -505,12 +511,13 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
   prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 1);
 
+#if ENABLE_DVD && ENABLE_METADATA
   if(va.mimetype == NULL) {
     struct fa_stat fs;
 
     if(fa_stat(url, &fs, errbuf, errlen))
       return NULL;
-  
+
     /**
      * Is it a DVD ?
      */
@@ -525,6 +532,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
       return NULL;
     }
   }
+#endif
 
   /**
    * Check file type
@@ -552,8 +560,9 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     prop_set(mp->mp_prop_metadata, "title", PROP_SET_RSTRING, title);
   }
 
-  const int seek_is_fast = fa_seek_is_fast(fh);
 
+#if ENABLE_METADATA
+  const int seek_is_fast = fa_seek_is_fast(fh);
   if(seek_is_fast && va.mimetype == NULL) {
     if(fa_probe_iso(NULL, fh) == 0) {
       fa_close(fh);
@@ -567,8 +576,10 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 #endif
     }
   }
+#endif
 
 
+#if ENABLE_HLS
   // See if this is an HLS playlist
 
   if(fa_seek(fh, 0, SEEK_SET) == 0) {
@@ -597,6 +608,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
       }
     }
   }
+#endif
 
   event_t *e = be_file_playvideo_fh(url, mp,  errbuf, errlen, vq, fh, &va);
   rstr_release(title);
@@ -634,6 +646,7 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
   TRACE(TRACE_DEBUG, "Video", "Starting playback of %s (%s)",
 	url, fctx->iformat->name);
 
+#if ENABLE_METADATA
   /**
    * Update property metadata
    */
@@ -672,6 +685,7 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
 	va.imdb = rstr_get(md->md_imdb_id);
     }
   }
+#endif
 
   /**
    * Create subtitle scanner
@@ -826,8 +840,10 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
 
   sub_scanner_destroy(ss);
 
+#if ENABLE_METADATA
   if(md != NULL)
     metadata_destroy(md);
+#endif
 
   return e;
 }

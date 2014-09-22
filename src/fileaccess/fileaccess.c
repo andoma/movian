@@ -48,11 +48,13 @@
 #include "blobcache.h"
 #include "htsmsg/htsbuf.h"
 #include "htsmsg/htsmsg_store.h"
-#include "fa_indexer.h"
 #include "settings.h"
 #include "notifications.h"
 #include "misc/minmax.h"
 
+#if ENABLE_METADATA
+#include "fa_indexer.h"
+#endif
 
 static struct fa_protocol_list fileaccess_all_protocols;
 static HTS_MUTEX_DECL(fap_mutex);
@@ -640,8 +642,10 @@ fa_dir_entry_free(fa_dir_t *fd, fa_dir_entry_t *fde)
   if(fde->fde_metadata != NULL)
     prop_destroy(fde->fde_metadata);
 
+#if ENABLE_METADATA
   if(fde->fde_md != NULL)
     metadata_destroy(fde->fde_md);
+#endif
 
   if(fd != NULL) {
     fd->fd_count--;
@@ -1367,7 +1371,9 @@ fileaccess_init(void)
   fa_cache_init();
 #endif
 
+#if ENABLE_METADATA
   fa_indexer_init();
+#endif
 
   htsmsg_t *store;
 

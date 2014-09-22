@@ -50,6 +50,7 @@ be_file_canhandle(const char *url)
   return fa_can_handle(url, NULL, 0);
 }
 
+#if ENABLE_METADATA
 
 /**
  *
@@ -180,7 +181,7 @@ file_open_file(prop_t *page, const char *url, fa_stat_t *fs,
 	       prop_t *loading_status)
 {
   char errbuf[200];
-  metadata_t *md;
+  metadata_t *md = NULL;
 
   void *db = metadb_get();
   md = metadb_metadata_get(db, url, fs->fs_mtime);
@@ -277,6 +278,16 @@ be_file_open(prop_t *page, const char *url, int sync)
   return 0;
 }
 
+#else
+
+static int
+be_file_open(prop_t *page, const char *url, int sync)
+{
+  nav_open_error(page, "Browsing not available");
+  return 0;
+}
+
+#endif
 
 /**
  *
@@ -284,12 +295,15 @@ be_file_open(prop_t *page, const char *url, int sync)
 backend_t be_file = {
   .be_init = fileaccess_init,
   .be_canhandle = be_file_canhandle,
+  .be_imageloader = fa_imageloader,
   .be_open = be_file_open,
+  .be_normalize = fa_normalize,
+
+#if ENABLE_METADATA
   .be_play_video = be_file_playvideo,
   .be_play_audio = be_file_playaudio,
-  .be_imageloader = fa_imageloader,
-  .be_normalize = fa_normalize,
   .be_probe = fa_check_url,
+#endif
 };
 
 BE_REGISTER(file);

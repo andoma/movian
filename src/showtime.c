@@ -293,7 +293,9 @@ showtime_init(void)
   }
 
   /* Initialize sqlite3 */
+#if ENABLE_SQLITE
   db_init();
+#endif
 
   /* Initializte blob cache */
   blobcache_init();
@@ -311,12 +313,13 @@ showtime_init(void)
   kvstore_init();
 
   /* Metadata init */
+#if ENABLE_METADATA
   metadata_init();
   metadb_init();
-  subtitles_init();
-
-  /* Metadata decoration init */
   decoration_init();
+#endif
+
+  subtitles_init();
 
   /* Initialize keyring */
   keyring_init();
@@ -366,8 +369,10 @@ showtime_init(void)
   /* Video settings */
   video_settings_init();
 
+#if ENABLE_SPIDERMONKEY
   if(gconf.load_jsfile)
     js_load(gconf.load_jsfile);
+#endif
 
   /* Various interprocess communication stuff (D-Bus on Linux, etc) */
   init_group(INIT_GROUP_IPC);
@@ -679,8 +684,10 @@ void
 showtime_fini(void)
 {
   prop_destroy_by_name(prop_get_global(), "popups");
+#if ENABLE_PLAYQUEUE
   playqueue_fini();
   TRACE(TRACE_DEBUG, "core", "Playqueue finished");
+#endif
   audio_fini();
   TRACE(TRACE_DEBUG, "core", "Audio finihsed");
   nav_fini();
@@ -691,8 +698,10 @@ showtime_fini(void)
   TRACE(TRACE_DEBUG, "core", "Slow shutdown hooks finished");
   blobcache_fini();
   TRACE(TRACE_DEBUG, "core", "Blobcache finished");
+#if ENABLE_METADATA
   metadb_fini();
   TRACE(TRACE_DEBUG, "core", "Metadb finished");
+#endif
   kvstore_fini();
   notifications_fini();
   usage_fini();
