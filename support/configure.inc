@@ -105,6 +105,7 @@ CONFIG_LIST="
  rar
  playqueue
  sid
+ htsp
 "
 
 
@@ -604,3 +605,4 @@ enable nativesmb
 enable rar
 enable playqueue
 enable sid
+enable htsp
