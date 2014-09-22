@@ -87,7 +87,7 @@ typedef enum {
   TOKEN_NOP,
   TOKEN_VECTOR_FLOAT,
   TOKEN_EVENT,
-  TOKEN_LINK,                  // A link with title and url
+  TOKEN_URI,                   // A link with title and url
   TOKEN_VECTOR,                // List of tokens
   TOKEN_MOD_FLAGS,
   TOKEN_num,
@@ -158,9 +158,9 @@ typedef struct token {
     struct prop *prop;
 
     struct {
-      rstr_t *rtitle;
-      rstr_t *rurl;
-    } link;
+      rstr_t *title;
+      rstr_t *uri;
+    } uri;
 
     struct {
       rstr_t *rstr;
@@ -190,9 +190,8 @@ typedef struct token {
 #define t_func_arg        u.farg
 #define t_gem             u.gem
 #define t_prop            u.prop
-#define t_pixmap          u.pixmap
-#define t_link_rtitle     u.link.rtitle
-#define t_link_rurl       u.link.rurl
+#define t_uri_title       u.uri.title
+#define t_uri             u.uri.uri
 
 } token_t;
 

@@ -125,9 +125,9 @@ glw_view_token_free(glw_root_t *gr, token_t *t)
     t->t_gem->gem_dtor(gr, t->t_gem);
     break;
 
-  case TOKEN_LINK:
-    rstr_release(t->t_link_rtitle);
-    rstr_release(t->t_link_rurl);
+  case TOKEN_URI:
+    rstr_release(t->t_uri_title);
+    rstr_release(t->t_uri);
     break;
 
   case TOKEN_num:
@@ -246,9 +246,9 @@ glw_view_token_copy(glw_root_t *gr, token_t *src)
   case TOKEN_COLON:
     break;
 
-  case TOKEN_LINK:
-    dst->t_link_rtitle = rstr_dup(src->t_link_rtitle);
-    dst->t_link_rurl   = rstr_dup(src->t_link_rurl);
+  case TOKEN_URI:
+    dst->t_uri_title = rstr_dup(src->t_uri_title);
+    dst->t_uri   = rstr_dup(src->t_uri);
     break;
 
   case TOKEN_VECTOR_FLOAT:
@@ -407,9 +407,9 @@ token2name(token_t *t)
   case TOKEN_RIGHT_BRACKET:  return "]";
   case TOKEN_DIRECTORY:  return "<directory>";
 
-  case TOKEN_LINK:
+  case TOKEN_URI:
     snprintf(buf, sizeof(buf), "Link<%s, %s>",
-	     rstr_get(t->t_link_rtitle), rstr_get(t->t_link_rurl));
+	     rstr_get(t->t_uri_title), rstr_get(t->t_uri));
     return buf;
 
   case TOKEN_VECTOR:

@@ -361,7 +361,7 @@ static int eval_op_imod(int a, int b) { return a % b; }
 static const char *
 token_as_string(const token_t *t)
 {
-  if(t->type == TOKEN_RSTRING || t->type == TOKEN_LINK)
+  if(t->type == TOKEN_RSTRING || t->type == TOKEN_URI)
     return rstr_get(t->t_rstring);
   if(t->type == TOKEN_CSTRING)
     return t->t_cstring;
@@ -573,7 +573,7 @@ token2bool(token_t *t)
 static rstr_t *
 token2rstr(token_t *t)
 {
-  if(t->type == TOKEN_RSTRING || t->type == TOKEN_LINK)
+  if(t->type == TOKEN_RSTRING || t->type == TOKEN_URI)
     return rstr_dup(t->t_rstring);
   if(t->type == TOKEN_CSTRING)
     return rstr_alloc(t->t_cstring);
@@ -828,8 +828,8 @@ set_prop_from_token(prop_t *p, token_t *t)
     prop_set_cstring(p, t->t_cstring);
     break;
 
-  case TOKEN_LINK:
-    prop_set_uri(p, rstr_get(t->t_link_rtitle), rstr_get(t->t_link_rurl));
+  case TOKEN_URI:
+    prop_set_uri(p, rstr_get(t->t_uri_title), rstr_get(t->t_uri));
     break;
 
   case TOKEN_INT:
@@ -942,9 +942,9 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
     case TOKEN_CSTRING:
       prop_set_cstring(a->t_prop, b->t_cstring);
       break;
-    case TOKEN_LINK:
-      prop_set_uri(a->t_prop, rstr_get(b->t_link_rtitle),
-                   rstr_get(b->t_link_rurl));
+    case TOKEN_URI:
+      prop_set_uri(a->t_prop, rstr_get(b->t_uri_title),
+                   rstr_get(b->t_uri));
       break;
     case TOKEN_INT:
       prop_set_int(a->t_prop, b->t_int);
@@ -1578,10 +1578,10 @@ prop_callback_cloner(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_SET_URI:
-    t = prop_callback_alloc_token(gr, gps, TOKEN_LINK);
+    t = prop_callback_alloc_token(gr, gps, TOKEN_URI);
     t->t_propsubr = gps;
-    t->t_link_rtitle = rstr_dup(va_arg(ap, rstr_t *));
-    t->t_link_rurl   = rstr_dup(va_arg(ap, rstr_t *));
+    t->t_uri_title = rstr_dup(va_arg(ap, rstr_t *));
+    t->t_uri   = rstr_dup(va_arg(ap, rstr_t *));
     rpn = gps->gps_rpn;
     break;
 
@@ -1677,10 +1677,10 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_SET_URI:
-    t = prop_callback_alloc_token(gr, gps, TOKEN_LINK);
+    t = prop_callback_alloc_token(gr, gps, TOKEN_URI);
     t->t_propsubr = gps;
-    t->t_link_rtitle = rstr_dup(va_arg(ap, rstr_t *));
-    t->t_link_rurl   = rstr_dup(va_arg(ap, rstr_t *));
+    t->t_uri_title = rstr_dup(va_arg(ap, rstr_t *));
+    t->t_uri   = rstr_dup(va_arg(ap, rstr_t *));
     rpn = gps->gps_rpn;
     break;
 
@@ -1855,9 +1855,9 @@ ve_cb(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_SET_URI:
-    t = prop_callback_alloc_token(gr, gps, TOKEN_LINK);
-    t->t_link_rtitle = rstr_dup(va_arg(ap, rstr_t *));
-    t->t_link_rurl   = rstr_dup(va_arg(ap, rstr_t *));
+    t = prop_callback_alloc_token(gr, gps, TOKEN_URI);
+    t->t_uri_title = rstr_dup(va_arg(ap, rstr_t *));
+    t->t_uri   = rstr_dup(va_arg(ap, rstr_t *));
     rpn = gps->gps_rpn;
     break;
 
@@ -2131,10 +2131,10 @@ prop_callback_vectorizer(void *opaque, prop_event_t event, ...)
 
   case PROP_SET_URI:
     vectorizer_clean(gr, sv);
-    t = prop_callback_alloc_token(gr, gps, TOKEN_LINK);
+    t = prop_callback_alloc_token(gr, gps, TOKEN_URI);
     t->t_propsubr = gps;
-    t->t_link_rtitle = rstr_dup(va_arg(ap, rstr_t *));
-    t->t_link_rurl   = rstr_dup(va_arg(ap, rstr_t *));
+    t->t_uri_title = rstr_dup(va_arg(ap, rstr_t *));
+    t->t_uri   = rstr_dup(va_arg(ap, rstr_t *));
     rpn = gps->gps_rpn;
     break;
 
@@ -2425,7 +2425,7 @@ glw_view_eval_rpn0(token_t *t0, glw_view_eval_context_t *ec)
     case TOKEN_BLOCK:
     case TOKEN_RSTRING:
     case TOKEN_CSTRING:
-    case TOKEN_LINK:
+    case TOKEN_URI:
     case TOKEN_FLOAT:
     case TOKEN_INT:
     case TOKEN_IDENTIFIER:
@@ -3010,8 +3010,8 @@ glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
     url = rstr_get(a->t_rstring);
   else if(a->type == TOKEN_CSTRING)
     url = a->t_cstring;
-  else if(a->type == TOKEN_LINK)
-    url = rstr_get(a->t_link_rurl);
+  else if(a->type == TOKEN_URI)
+    url = rstr_get(a->t_uri);
   else
     return glw_view_seterr(ec->ei, a, "navOpen(): "
 			    "First argument is not a string, link or (void)");
@@ -3139,7 +3139,7 @@ glwf_deliverEvent(glw_view_eval_context_t *ec, struct token *self,
 
     switch(b->type) {
     case TOKEN_RSTRING:
-    case TOKEN_LINK:
+    case TOKEN_URI:
       action = rstr_dup(b->t_rstring);
       break;
     case TOKEN_CSTRING:
@@ -3878,8 +3878,8 @@ dofmt(char *out, const char *fmt, token_t **argv, unsigned int argc)
 	case TOKEN_CSTRING:
 	  len = fmt_add_string(out, len, arg->t_cstring);
 	  break;
-	case TOKEN_LINK:
-	  len = fmt_add_string(out, len, rstr_get(arg->t_link_rtitle));
+	case TOKEN_URI:
+	  len = fmt_add_string(out, len, rstr_get(arg->t_uri_title));
 	  break;
 	default:
 	  break;
@@ -4068,7 +4068,7 @@ glwf_isset(glw_view_eval_context_t *ec, struct token *self,
     break;
 
   case TOKEN_RSTRING:
-  case TOKEN_LINK:
+  case TOKEN_URI:
     rv = rstr_get(a->t_rstring)[0] != 0;
     break;
   case TOKEN_FLOAT:
@@ -4512,8 +4512,8 @@ glwf_delta(glw_view_eval_context_t *ec, struct token *self,
   case TOKEN_RSTRING:
     f = strlen(rstr_get(b->t_rstring)) > 0;
     break;
-  case TOKEN_LINK:
-    f = strlen(rstr_get(b->t_link_rtitle)) > 0;
+  case TOKEN_URI:
+    f = strlen(rstr_get(b->t_uri_title)) > 0;
     break;
   default:
     f = 0;
@@ -4602,8 +4602,8 @@ glwf_set(glw_view_eval_context_t *ec, struct token *self,
   case TOKEN_RSTRING:
     prop_set_rstring(p, b->t_rstring);
     break;
-  case TOKEN_LINK:
-    prop_set_uri(p, rstr_get(b->t_link_rtitle), rstr_get(b->t_link_rurl));
+  case TOKEN_URI:
+    prop_set_uri(p, rstr_get(b->t_uri_title), rstr_get(b->t_uri));
     break;
   default:
     prop_set_void(p);
@@ -4713,7 +4713,7 @@ glwf_trace(glw_view_eval_context_t *ec, struct token *self,
     return 0;
 
   switch(b->type) {
-  case TOKEN_LINK:
+  case TOKEN_URI:
   case TOKEN_RSTRING:
   case TOKEN_IDENTIFIER:
     TRACE(TRACE_DEBUG, "GLW", "%s: %s", rstr_get(a->t_rstring), 
@@ -4793,8 +4793,8 @@ glwf_browse(glw_view_eval_context_t *ec, struct token *self,
     url = a->t_rstring;
     break;
 
-  case TOKEN_LINK:
-    url = a->t_link_rurl;
+  case TOKEN_URI:
+    url = a->t_uri;
     break;
 
   default:
@@ -4859,7 +4859,7 @@ glwf_isLink(glw_view_eval_context_t *ec, struct token *self,
     return -1;
   
   r = eval_alloc(self, ec, TOKEN_INT);
-  r->t_int = a->type == TOKEN_LINK;
+  r->t_int = a->type == TOKEN_URI;
   eval_push(ec, r);
   return 0;
 }
@@ -4881,9 +4881,9 @@ glwf_link(glw_view_eval_context_t *ec, struct token *self,
   if(a->type != TOKEN_RSTRING || b->type != TOKEN_RSTRING) {
     r = eval_alloc(self, ec, TOKEN_VOID);
   } else {
-    r = eval_alloc(self, ec, TOKEN_LINK);
-    r->t_link_rtitle = rstr_dup(a->t_rstring);
-    r->t_link_rurl = rstr_dup(b->t_rstring);
+    r = eval_alloc(self, ec, TOKEN_URI);
+    r->t_uri_title = rstr_dup(a->t_rstring);
+    r->t_uri = rstr_dup(b->t_rstring);
   }
   eval_push(ec, r);
   return 0;
@@ -5586,7 +5586,7 @@ glwf_join(glw_view_eval_context_t *ec, struct token *self,
       parts[nparts] = rstr_get(t->t_rstring);
       rich[nparts] = t->t_rstrtype == PROP_STR_RICH;
       nriches += t->t_rstrtype == PROP_STR_RICH;
-    } else if(t->type == TOKEN_LINK) {
+    } else if(t->type == TOKEN_URI) {
       parts[nparts] = rstr_get(t->t_rstring);
     } else if(t->type == TOKEN_CSTRING) {
       parts[nparts] = t->t_cstring;
@@ -5840,12 +5840,12 @@ multiopt_add_link(glwf_multiopt_extra_t *x, token_t *d,
 {
   multiopt_item_t *mi;
   TAILQ_FOREACH(mi, &x->q, mi_link)
-    if(!strcmp(rstr_get(d->t_link_rurl), rstr_get(mi->mi_value)))
+    if(!strcmp(rstr_get(d->t_uri), rstr_get(mi->mi_value)))
       break;
     
   if(mi == NULL) {
     mi = calloc(1, sizeof(multiopt_item_t));
-    mi->mi_value = rstr_dup(d->t_link_rurl);
+    mi->mi_value = rstr_dup(d->t_uri);
   } else {
     TAILQ_REMOVE(&x->q, mi, mi_link);
     mi->mi_mark = 0;
@@ -5854,7 +5854,7 @@ multiopt_add_link(glwf_multiopt_extra_t *x, token_t *d,
   if(x->userval != NULL && !strcmp(rstr_get(x->userval), 
 				   rstr_get(mi->mi_value)))
     *up = mi;
-  rstr_set(&mi->mi_title, d->t_link_rtitle);
+  rstr_set(&mi->mi_title, d->t_uri_title);
   TAILQ_INSERT_TAIL(&x->q, mi, mi_link);
 }
 
@@ -5871,16 +5871,16 @@ multiopt_add_vector(glwf_multiopt_extra_t *x, token_t *t0,
   if(chk) {
     // If the selected item is not a link, skip entire vector
     for(t = t0->child; t != NULL; t = t->next)
-      if(t->t_flags & TOKEN_F_SELECTED && t->type != TOKEN_LINK)
+      if(t->t_flags & TOKEN_F_SELECTED && t->type != TOKEN_URI)
 	return 1;
 
     for(t = t0->child; t != NULL; t = t->next)
-      if(t->t_flags & TOKEN_F_SELECTED && t->type == TOKEN_LINK)
+      if(t->t_flags & TOKEN_F_SELECTED && t->type == TOKEN_URI)
 	multiopt_add_link(x, t, up);
   }
 
   for(t = t0->child; t != NULL; t = t->next)
-    if(t->type == TOKEN_LINK && !(t->t_flags & TOKEN_F_SELECTED))
+    if(t->type == TOKEN_URI && !(t->t_flags & TOKEN_F_SELECTED))
       multiopt_add_link(x, t, up);
   return 0;
 }
@@ -5992,7 +5992,7 @@ glwf_multiopt(glw_view_eval_context_t *ec, struct token *self,
       return -1;
 
     switch(d->type) {
-    case TOKEN_LINK:
+    case TOKEN_URI:
       multiopt_add_link(x, d, &u);
       break;
     case TOKEN_VECTOR:

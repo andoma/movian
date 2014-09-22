@@ -52,7 +52,7 @@ set_rstring(glw_view_eval_context_t *ec, const token_attrib_t *a,
     return 0;
 
   case TOKEN_RSTRING:
-  case TOKEN_LINK:
+  case TOKEN_URI:
     fn(ec->w, t->t_rstring);
     return 0;
 
@@ -128,7 +128,7 @@ set_caption(glw_view_eval_context_t *ec, const token_attrib_t *a,
   case TOKEN_RSTRING:
     type = t->t_rstrtype;
     /* FALLTHRU */
-  case TOKEN_LINK:
+  case TOKEN_URI:
     str = rstr_get(t->t_rstring);
     break;
 
@@ -216,7 +216,7 @@ set_float(glw_view_eval_context_t *ec, const token_attrib_t *a,
     break;
 
   case TOKEN_RSTRING:
-  case TOKEN_LINK:
+  case TOKEN_URI:
     v = strtod(rstr_get(t->t_rstring), NULL);
     break;
 
@@ -379,7 +379,7 @@ set_number(glw_view_eval_context_t *ec, const token_attrib_t *a,
     break;
 
   case TOKEN_RSTRING:
-  case TOKEN_LINK:
+  case TOKEN_URI:
     v = atoi(rstr_get(t->t_rstring));
     set_number_int(ec->w, a, t, v);
     break;
@@ -423,7 +423,7 @@ set_int(glw_view_eval_context_t *ec, const token_attrib_t *a,
     break;
     
   case TOKEN_RSTRING:
-  case TOKEN_LINK:
+  case TOKEN_URI:
     v = atoi(rstr_get(t->t_rstring));
     break;
 
@@ -878,14 +878,14 @@ build_rstr_vector(struct token *t0)
   rstr_t **rv;
 
   for(t = t0->child; t != NULL; t = t->next)
-    if(t->type == TOKEN_RSTRING || t->type == TOKEN_LINK)
+    if(t->type == TOKEN_RSTRING || t->type == TOKEN_URI)
       cnt++;
   
   rv = malloc(sizeof(rstr_t *) * cnt);
   cnt = 0;
 
   for(t = t0->child; t != NULL; t = t->next)
-    if(t->type == TOKEN_RSTRING || t->type == TOKEN_LINK)
+    if(t->type == TOKEN_RSTRING || t->type == TOKEN_URI)
       rv[cnt++] = rstr_dup(t->t_rstring);
   rv[cnt++] = NULL;
   return rv;
@@ -913,8 +913,8 @@ set_alt(glw_view_eval_context_t *ec, const token_attrib_t *a,
   case TOKEN_RSTRING:
     r = t->t_rstring;
     break;
-  case TOKEN_LINK:
-    r = t->t_link_rurl;
+  case TOKEN_URI:
+    r = t->t_uri;
     break;
   }
 
@@ -952,8 +952,8 @@ set_source(glw_view_eval_context_t *ec, const token_attrib_t *a,
   case TOKEN_RSTRING:
     r = t->t_rstring;
     break;
-  case TOKEN_LINK:
-    r = t->t_link_rurl;
+  case TOKEN_URI:
+    r = t->t_uri;
     break;
   }
 
@@ -1029,7 +1029,7 @@ set_page(glw_view_eval_context_t *ec, const token_attrib_t *a,
     break;
 
   case TOKEN_RSTRING:
-  case TOKEN_LINK:
+  case TOKEN_URI:
     str = rstr_get(t->t_rstring);
     if(c->gc_set_page_id)
       c->gc_set_page_id(ec->w, str);
