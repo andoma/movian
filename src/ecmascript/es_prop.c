@@ -244,7 +244,7 @@ es_sub_cb(void *opaque, prop_event_t event, ...)
   double d;
   int i;
   int destroy = 0;
-
+  const  event_t *e;
   duk_context *ctx = ec->ec_duk;
 
   es_push_callback(ctx, eps);
@@ -320,6 +320,32 @@ es_sub_cb(void *opaque, prop_event_t event, ...)
     nargs = 1;
     if(eps->eps_autodestry)
       destroy = 1;
+    break;
+
+  case PROP_EXT_EVENT:
+    nargs = 2;
+    duk_push_string(ctx, "event");
+    e = va_arg(ap, const event_t *);
+
+    if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
+      const event_payload_t *ep = (const event_payload_t *)e;
+      duk_push_string(ctx, ep->payload);
+
+    } else if(e->e_type_x == EVENT_ACTION_VECTOR) {
+      const event_action_vector_t *eav = (const event_action_vector_t *)e;
+      assert(eav->num > 0);
+      duk_push_string(ctx, action_code2str(eav->actions[0]));
+
+    } else if(e->e_type_x == EVENT_UNICODE) {
+      const event_int_t *eu = (const event_int_t *)e;
+      char tmp[8];
+      snprintf(tmp, sizeof(tmp), "%C", eu->val);
+      duk_push_string(ctx, tmp);
+
+    } else {
+      duk_pop(ctx);
+      nargs = 0;
+    }
     break;
 
   default:
