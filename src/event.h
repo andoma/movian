@@ -181,15 +181,6 @@ typedef enum {
 
 TAILQ_HEAD(event_q, event);
 
-/**
- *
- */
-typedef struct event_queue {
-  struct event_q eq_q;
-  hts_cond_t eq_cond;
-  hts_mutex_t eq_mutex;
-} event_queue_t;
-
 
 /**
  *

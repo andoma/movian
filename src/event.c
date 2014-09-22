@@ -485,7 +485,7 @@ event_dispatch(event_t *e)
     event_release(e);
     e = event_create_action(ACTION_PLAYPAUSE);
   }
-
+  
   event_to_prop(prop_get_by_name(PNVEC("global", "eventsink"),
 				 1, NULL), e);
   
