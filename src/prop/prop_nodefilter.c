@@ -266,8 +266,8 @@ nf_filtercheck(prop_t *p, const char *q)
   case PROP_CSTRING:
     return filterstr(p->hp_cstring, q);
 
-  case PROP_LINK:
-    return filterstr(rstr_get(p->hp_link_rtitle), q);
+  case PROP_URI:
+    return filterstr(rstr_get(p->hp_uri_title), q);
 
   case PROP_DIR:
     TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link)
@@ -580,7 +580,7 @@ nf_set_sortkey_x(int x, nfnode_t *nfn, prop_event_t event, va_list ap)
 
   switch(event) {
   case PROP_SET_RSTRING:
-  case PROP_SET_RLINK:
+  case PROP_SET_URI:
     r = va_arg(ap, rstr_t *);
     const sortmap_t *map = nfn->nf->sortmap[x];
     if(map != NULL) {

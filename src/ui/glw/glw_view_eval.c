@@ -1577,7 +1577,7 @@ prop_callback_cloner(void *opaque, prop_event_t event, ...)
     cloner_suggest_focus(sc, p, gps->gps_widget);
     break;
 
-  case PROP_SET_RLINK:
+  case PROP_SET_URI:
     t = prop_callback_alloc_token(gr, gps, TOKEN_LINK);
     t->t_propsubr = gps;
     t->t_link_rtitle = rstr_dup(va_arg(ap, rstr_t *));
@@ -1676,7 +1676,7 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
     rpn = gps->gps_rpn;
     break;
 
-  case PROP_SET_RLINK:
+  case PROP_SET_URI:
     t = prop_callback_alloc_token(gr, gps, TOKEN_LINK);
     t->t_propsubr = gps;
     t->t_link_rtitle = rstr_dup(va_arg(ap, rstr_t *));
@@ -1751,7 +1751,7 @@ prop_callback_counter(void *opaque, prop_event_t event, ...)
   case PROP_SET_INT:
   case PROP_SET_FLOAT:
   case PROP_SET_DIR:
-  case PROP_SET_RLINK:
+  case PROP_SET_URI:
     sc->sc_entries = 0;
     break;
 
@@ -1854,7 +1854,7 @@ ve_cb(void *opaque, prop_event_t event, ...)
     rpn = gps->gps_rpn;
     break;
 
-  case PROP_SET_RLINK:
+  case PROP_SET_URI:
     t = prop_callback_alloc_token(gr, gps, TOKEN_LINK);
     t->t_link_rtitle = rstr_dup(va_arg(ap, rstr_t *));
     t->t_link_rurl   = rstr_dup(va_arg(ap, rstr_t *));
@@ -2129,7 +2129,7 @@ prop_callback_vectorizer(void *opaque, prop_event_t event, ...)
     rpn = gps->gps_rpn;
     break;
 
-  case PROP_SET_RLINK:
+  case PROP_SET_URI:
     vectorizer_clean(gr, sv);
     t = prop_callback_alloc_token(gr, gps, TOKEN_LINK);
     t->t_propsubr = gps;

@@ -99,9 +99,9 @@ typedef struct prop_notify {
     } rstr;
     struct event *e;
     struct {
-      rstr_t *rtitle;
-      rstr_t *rurl;
-    } link;
+      rstr_t *title;
+      rstr_t *uri;
+    } uri;
     const char *str;
 
   } u;
@@ -115,8 +115,8 @@ typedef struct prop_notify {
 #define hpn_rstrtype u.rstr.type
 #define hpn_cstring u.str
 #define hpn_ext_event  u.e
-#define hpn_link_rtitle u.link.rtitle
-#define hpn_link_rurl   u.link.rurl
+#define hpn_uri_title u.uri.title
+#define hpn_uri       u.uri.uri
 
   prop_t *hpn_prop2;
   int hpn_flags;
@@ -135,8 +135,7 @@ typedef enum {
   PROP_CSTRING,
   PROP_FLOAT,
   PROP_INT,
-  PROP_PIXMAP,
-  PROP_LINK,
+  PROP_URI,
   PROP_ZOMBIE, /* Destroyed can never be changed again */
 } prop_type_t;
 
@@ -286,9 +285,9 @@ struct prop {
     } c;
     struct pixmap *pixmap;
     struct {
-      rstr_t *rtitle;
-      rstr_t *rurl;
-    } link;
+      rstr_t *title;
+      rstr_t *uri;
+    } uri;
   } u;
 
 #define hp_cstring   u.cstr
@@ -299,8 +298,8 @@ struct prop {
 #define hp_childs   u.c.childs
 #define hp_selected u.c.selected
 #define hp_pixmap   u.pixmap
-#define hp_link_rtitle u.link.rtitle
-#define hp_link_rurl   u.link.rurl
+#define hp_uri_title u.uri.title
+#define hp_uri       u.uri.uri
 
 #ifdef PROP_DEBUG
   SIMPLEQ_HEAD(, prop_ref_trace) hp_ref_trace;

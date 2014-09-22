@@ -138,8 +138,8 @@ es_prop_get_value_duk(duk_context *ctx)
   case PROP_RSTRING:
     duk_push_string(ctx, rstr_get(p->hp_rstring));
     break;
-  case PROP_LINK:
-    duk_push_string(ctx, rstr_get(p->hp_link_rtitle));
+  case PROP_URI:
+    duk_push_string(ctx, rstr_get(p->hp_uri_title));
     break;
   case PROP_FLOAT:
     duk_push_number(ctx, p->hp_float);
@@ -283,11 +283,11 @@ es_sub_cb(void *opaque, prop_event_t event, ...)
     nargs = 2;
     break;
 
-  case PROP_SET_RLINK:
+  case PROP_SET_URI:
     r = va_arg(ap, const rstr_t *);
     r2 = va_arg(ap, const rstr_t *);
     (void)va_arg(ap, prop_t *);
-    duk_push_string(ctx, "link");
+    duk_push_string(ctx, "uri");
     duk_push_string(ctx, rstr_get(r));
     duk_push_string(ctx, rstr_get(r2));
     nargs = 3;

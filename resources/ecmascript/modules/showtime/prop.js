@@ -62,7 +62,7 @@ function makeValue(type, v1, v2) {
   switch(type) {
   case 'set':
     return [v1];
-  case 'link':
+  case 'uri':
     return [v1, v2];
   default:
     return [null];

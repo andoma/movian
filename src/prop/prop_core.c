@@ -443,9 +443,9 @@ prop_notify_free_payload(prop_notify_t *n)
     prop_ref_dec_locked(n->hpn_prop2);
     break;
 
-  case PROP_SET_RLINK:
-    rstr_release(n->hpn_link_rtitle);
-    rstr_release(n->hpn_link_rurl);
+  case PROP_SET_URI:
+    rstr_release(n->hpn_uri_title);
+    rstr_release(n->hpn_uri);
     prop_ref_dec_locked(n->hpn_prop2);
     break;
 
@@ -607,7 +607,7 @@ trampoline_string(prop_sub_t *s, prop_event_t event, ...)
     cb(s->hps_opaque, rstr_get(va_arg(ap, const rstr_t *)));
   } else if(event == PROP_SET_CSTRING) {
     cb(s->hps_opaque, va_arg(ap, const char *));
-  } else if(event == PROP_SET_RLINK) {
+  } else if(event == PROP_SET_URI) {
     cb(s->hps_opaque, rstr_get(va_arg(ap, const rstr_t *)));
   } else if(!(s->hps_flags & PROP_SUB_IGNORE_VOID)) {
     cb(s->hps_opaque, NULL);
@@ -633,7 +633,7 @@ trampoline_rstr(prop_sub_t *s, prop_event_t event, ...)
     rstr_t *t = rstr_alloc(str);
     cb(s->hps_opaque, t);
     rstr_release(t);
-  } else if(event == PROP_SET_RLINK) {
+  } else if(event == PROP_SET_URI) {
     cb(s->hps_opaque, va_arg(ap, rstr_t *));
   } else if(!(s->hps_flags & PROP_SUB_IGNORE_VOID)) {
     cb(s->hps_opaque, NULL);
@@ -711,14 +711,14 @@ notify_invoke(prop_sub_t *s, prop_notify_t *n)
     prop_ref_dec(n->hpn_prop2);
     break;
 
-  case PROP_SET_RLINK:
+  case PROP_SET_URI:
     if(pt != NULL)
-      pt(s, n->hpn_event, n->hpn_link_rtitle, n->hpn_link_rurl, n->hpn_prop2);
+      pt(s, n->hpn_event, n->hpn_uri_title, n->hpn_uri, n->hpn_prop2);
     else
-      cb(s->hps_opaque, n->hpn_event, n->hpn_link_rtitle, n->hpn_link_rurl,
+      cb(s->hps_opaque, n->hpn_event, n->hpn_uri_title, n->hpn_uri,
 	 n->hpn_prop2, s->hps_user_int);
-    rstr_release(n->hpn_link_rtitle);
-    rstr_release(n->hpn_link_rurl);
+    rstr_release(n->hpn_uri_title);
+    rstr_release(n->hpn_uri);
     prop_ref_dec(n->hpn_prop2);
     break;
 
@@ -1029,9 +1029,9 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
     case PROP_CSTRING:
       PROPTRACE("cstr(%s) by %s%s", p->hp_cstring, origin, trail);
       break;
-    case PROP_LINK:
-      PROPTRACE("link(%s,%s) by %s%s",
-                rstr_get(p->hp_link_rtitle), rstr_get(p->hp_link_rurl), origin,
+    case PROP_URI:
+      PROPTRACE("uri(%s,%s) by %s%s",
+                rstr_get(p->hp_uri_title), rstr_get(p->hp_uri), origin,
                 trail);
       break;
     case PROP_FLOAT:
@@ -1074,13 +1074,12 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
 	cb(s->hps_opaque, PROP_SET_CSTRING, p->hp_cstring, p, s->hps_user_int);
       break;
 
-    case PROP_LINK:
+    case PROP_URI:
       if(pt != NULL)
-	pt(s, PROP_SET_RLINK, p->hp_link_rtitle,
-	   p->hp_link_rurl, p, s->hps_user_int);
+	pt(s, PROP_SET_URI, p->hp_uri_title, p->hp_uri, p, s->hps_user_int);
       else
-	cb(s->hps_opaque, PROP_SET_RLINK, 
-	   p->hp_link_rtitle, p->hp_link_rurl, p, s->hps_user_int);
+	cb(s->hps_opaque, PROP_SET_URI,
+	   p->hp_uri_title, p->hp_uri, p, s->hps_user_int);
       break;
 
     case PROP_FLOAT:
@@ -1135,10 +1134,10 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
     n->hpn_event = PROP_SET_CSTRING;
     break;
 
-  case PROP_LINK:
-    n->hpn_link_rtitle = rstr_dup(p->hp_link_rtitle);
-    n->hpn_link_rurl   = rstr_dup(p->hp_link_rurl);
-    n->hpn_event = PROP_SET_RLINK;
+  case PROP_URI:
+    n->hpn_uri_title = rstr_dup(p->hp_uri_title);
+    n->hpn_uri       = rstr_dup(p->hp_uri);
+    n->hpn_event = PROP_SET_URI;
     break;
 
   case PROP_FLOAT:
@@ -1529,9 +1528,9 @@ prop_clean(prop_t *p)
     rstr_release(p->hp_rstring);
     break;
 
-  case PROP_LINK:
-    rstr_release(p->hp_link_rtitle);
-    rstr_release(p->hp_link_rurl);
+  case PROP_URI:
+    rstr_release(p->hp_uri_title);
+    rstr_release(p->hp_uri);
     break;
   }
   return 0;
@@ -1984,9 +1983,9 @@ prop_destroy0(prop_t *p)
     rstr_release(p->hp_rstring);
     break;
 
-  case PROP_LINK:
-    rstr_release(p->hp_link_rtitle);
-    rstr_release(p->hp_link_rurl);
+  case PROP_URI:
+    rstr_release(p->hp_uri_title);
+    rstr_release(p->hp_uri);
     break;
 
   case PROP_FLOAT:
@@ -3164,25 +3163,25 @@ prop_set_link_ex(prop_t *p, prop_sub_t *skipme, const char *title,
     return;
   }
 
-  if(p->hp_type != PROP_LINK) {
+  if(p->hp_type != PROP_URI) {
 
     if(prop_clean(p)) {
       hts_mutex_unlock(&prop_mutex);
       return;
     }
 
-  } else if(!strcmp(rstr_get(p->hp_link_rtitle) ?: "", title ?: "") &&
-	    !strcmp(rstr_get(p->hp_link_rurl)   ?: "", url   ?: "")) {
+  } else if(!strcmp(rstr_get(p->hp_uri_title) ?: "", title ?: "") &&
+	    !strcmp(rstr_get(p->hp_uri)   ?: "", url   ?: "")) {
     hts_mutex_unlock(&prop_mutex);
     return;
   } else {
-    rstr_release(p->hp_link_rtitle);
-    rstr_release(p->hp_link_rurl);
+    rstr_release(p->hp_uri_title);
+    rstr_release(p->hp_uri);
   }
 
-  p->hp_link_rtitle = rstr_alloc(title);
-  p->hp_link_rurl   = rstr_alloc(url);
-  p->hp_type = PROP_LINK;
+  p->hp_uri_title = rstr_alloc(title);
+  p->hp_uri   = rstr_alloc(url);
+  p->hp_type = PROP_URI;
 
   prop_set_epilogue(skipme, p, "prop_set_link()");
 }
@@ -3643,9 +3642,9 @@ prop_value_compare(prop_t *a, prop_t *b)
   case PROP_CSTRING:
     return !strcmp(a->hp_cstring, b->hp_cstring);
 
-  case PROP_LINK:
-    return !strcmp(rstr_get(a->hp_link_rtitle), rstr_get(b->hp_link_rtitle)) &&
-      !strcmp(rstr_get(a->hp_link_rurl), rstr_get(b->hp_link_rurl));
+  case PROP_URI:
+    return !strcmp(rstr_get(a->hp_uri_title), rstr_get(b->hp_uri_title)) &&
+      !strcmp(rstr_get(a->hp_uri), rstr_get(b->hp_uri));
 
   case PROP_FLOAT:
     return a->hp_float == b->hp_float;
@@ -4670,8 +4669,8 @@ prop_get_string(prop_t *p, ...)
     case PROP_CSTRING:
       r = rstr_alloc(p->hp_cstring);
       break;
-    case PROP_LINK:
-      r = rstr_dup(p->hp_link_rtitle);
+    case PROP_URI:
+      r = rstr_dup(p->hp_uri_title);
       break;
     case PROP_FLOAT:
       snprintf(buf, sizeof(buf), "%f", p->hp_float);
@@ -4714,8 +4713,8 @@ prop_get_int(prop_t *p, ...)
     case PROP_CSTRING:
       r = atoi(p->hp_cstring);
       break;
-    case PROP_LINK:
-      r = atoi(rstr_get(p->hp_link_rtitle));
+    case PROP_URI:
+      r = atoi(rstr_get(p->hp_uri_title));
       break;
     case PROP_FLOAT:
       r = p->hp_float;
@@ -5097,9 +5096,9 @@ prop_print_tree0(prop_t *p, int indent, int flags)
     fprintf(stderr, "\"%s\"\n", p->hp_cstring);
     break;
 
-  case PROP_LINK:
-    fprintf(stderr, "\"%s\" <%s>\n", rstr_get(p->hpn_link_rtitle),
-	    rstr_get(p->hpn_link_rurl));
+  case PROP_URI:
+    fprintf(stderr, "\"%s\" <%s>\n", rstr_get(p->hpn_uri_title),
+	    rstr_get(p->hpn_uri));
     break;
 
   case PROP_FLOAT:

@@ -175,7 +175,7 @@ node_set_group(void *opaque, prop_event_t event, ...)
 
   switch(event) {
   case PROP_SET_RSTRING:
-  case PROP_SET_RLINK:
+  case PROP_SET_URI:
     group = rstr_get(va_arg(ap, rstr_t *));
     break;
 

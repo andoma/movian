@@ -404,7 +404,7 @@ gu_dir_store_get_value(GtkTreeModel   *tree_model,
   else if(coltypes[column] == G_TYPE_STRING && c->type == PROP_SET_CSTRING) {
     g_value_set_string(value, c->cstr);
   }
-  else if(coltypes[column] == G_TYPE_STRING && c->type == PROP_SET_RLINK) {
+  else if(coltypes[column] == G_TYPE_STRING && c->type == PROP_SET_URI) {
     g_value_set_string(value, rstr_get(c->rlink.title));
   }
   else if(coltypes[column] == G_TYPE_INT && c->type == PROP_SET_INT) {
@@ -495,7 +495,7 @@ gds_cell_free_payload(gds_cell_t *c)
   case PROP_SET_RSTRING:
     rstr_release(c->rstr);
     break;
-  case PROP_SET_RLINK:
+  case PROP_SET_URI:
     rstr_release(c->rlink.title);
     rstr_release(c->rlink.url);
     break;
@@ -525,7 +525,7 @@ gds_cell_set(void *opaque, prop_event_t event, ...)
   c->type = event;
 
   switch(event) {
-  case PROP_SET_RLINK:
+  case PROP_SET_URI:
     c->rlink.title = rstr_dup(va_arg(ap, rstr_t *));
     c->rlink.url   = rstr_dup(va_arg(ap, rstr_t *));
     break;
@@ -835,7 +835,7 @@ gu_dir_store_new(gtk_ui_t *gu, prop_t *source)
 const char *
 gu_dir_store_url_from_cell(gds_cell_t *c)
 {
-  return c->type == PROP_SET_RLINK ? rstr_get(c->rlink.url) : NULL;
+  return c->type == PROP_SET_URI ? rstr_get(c->rlink.url) : NULL;
 }
 
 

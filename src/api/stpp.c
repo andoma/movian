@@ -275,11 +275,11 @@ stpp_sub_json(void *opaque, prop_event_t event, ...)
     ss_clear_props(ss);
     break;
 
-  case PROP_SET_RLINK:
+  case PROP_SET_URI:
     str = rstr_get(va_arg(ap, rstr_t *));
     str2 = rstr_get(va_arg(ap, rstr_t *));
     htsbuf_queue_init(&hq, 0);
-    htsbuf_qprintf(&hq, "[4,%u,[\"link\",", ss->ss_id);
+    htsbuf_qprintf(&hq, "[4,%u,[\"uri\",", ss->ss_id);
     htsbuf_append_and_escape_jsonstr(&hq, str);
     htsbuf_append(&hq, ",", 1);
     htsbuf_append_and_escape_jsonstr(&hq, str2);

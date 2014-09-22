@@ -114,8 +114,8 @@ pb_getProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
     case PROP_RSTRING:
       *vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, rstr_get(c->hp_rstring)));
       break;
-    case PROP_LINK:
-      *vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, rstr_get(c->hp_link_rtitle)));
+    case PROP_URI:
+      *vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, rstr_get(c->hp_uri_title)));
       break;
 
     case PROP_FLOAT:
