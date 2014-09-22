@@ -213,6 +213,8 @@ glw_fini(glw_root_t *gr)
   prop_courier_destroy(gr->gr_courier);
   hts_mutex_destroy(&gr->gr_mutex);
   free(gr->gr_vtmp_buffer);
+  free(gr->gr_render_jobs);
+  free(gr->gr_render_order);
 }
 
 
@@ -288,6 +290,20 @@ glw_layout0(glw_t *w, const glw_rctx_t *rc)
     glw_view_eval_layout(w, rc, mask);
 
   w->glw_class->gc_layout(w, rc);
+}
+
+
+/**
+ *
+ */
+void
+glw_render_zoffset(glw_t *w, const glw_rctx_t *rc)
+{
+  glw_rctx_t rc0 = *rc;
+  int zmax = 0;
+  rc0.rc_zmax = &zmax;
+  rc0.rc_zindex = w->glw_zoffset;
+  w->glw_class->gc_render(w, &rc0);
 }
 
 
@@ -2426,7 +2442,7 @@ glw_store_matrix(glw_t *w, const glw_rctx_t *rc)
  *
  */
 void
-glw_rctx_init(glw_rctx_t *rc, int width, int height, int overscan)
+glw_rctx_init(glw_rctx_t *rc, int width, int height, int overscan, int *zmax)
 {
   memset(rc, 0, sizeof(glw_rctx_t));
   rc->rc_width  = width;
@@ -2434,7 +2450,7 @@ glw_rctx_init(glw_rctx_t *rc, int width, int height, int overscan)
   rc->rc_alpha = 1.0f;
   rc->rc_sharpness  = 1.0f;
   rc->rc_overscanning = overscan;
-
+  rc->rc_zmax = zmax;
   glw_LoadIdentity(rc);
   glw_Translatef(rc, 0, 0, -1 / tan(45 * M_PI / 360));
 }

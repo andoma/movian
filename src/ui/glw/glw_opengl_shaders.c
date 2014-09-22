@@ -33,6 +33,12 @@ const static float projection[16] = {
   0.000000,0.000000,2.033898,0.000000
 };
 
+typedef struct render_state {
+  const struct glw_backend_texture *t0;
+  const struct glw_backend_texture *t1;
+  int texload_skips;
+} render_state_t;
+
 
 /**
  *
@@ -56,12 +62,16 @@ load_program(glw_root_t *gr,
              const struct glw_backend_texture *t0,
              const struct glw_backend_texture *t1,
              float blur, int flags,
-             glw_program_args_t *gpa)
+             glw_program_args_t *gpa,
+             render_state_t *rs)
 {
   glw_program_t *gp;
   glw_backend_root_t *gbr = &gr->gr_be;
 
   if(unlikely(gpa != NULL)) {
+
+    rs->t0 = NULL;
+    rs->t1 = NULL;
 
     if(unlikely(t1 != NULL)) {
 
@@ -97,7 +107,13 @@ load_program(glw_root_t *gr,
 
     if(t1 != NULL) {
       gp = gbr->gbr_renderer_flat_stencil;
-      glBindTexture(GL_TEXTURE_2D, t1->textures[0]);
+
+      if(rs->t0 != t1) {
+        glBindTexture(GL_TEXTURE_2D, t1->textures[0]);
+        rs->t0 = t1;
+      } else {
+        rs->texload_skips++;
+      }
 
     } else {
       gp = gbr->gbr_renderer_flat;
@@ -112,9 +128,14 @@ load_program(glw_root_t *gr,
       gp = doblur ? gbr->gbr_renderer_tex_stencil_blur :
 	gbr->gbr_renderer_tex_stencil;
 
-      glActiveTexture(GL_TEXTURE1);
-      glBindTexture(GL_TEXTURE_2D, t1->textures[0]);
-      glActiveTexture(GL_TEXTURE0);
+      if(rs->t1 != t1) {
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, t1->textures[0]);
+        glActiveTexture(GL_TEXTURE0);
+        rs->t1 = t1;
+      } else {
+        rs->texload_skips++;
+      }
 
     } else if(doblur) {
       gp = gbr->gbr_renderer_tex_blur;
@@ -125,11 +146,53 @@ load_program(glw_root_t *gr,
       gp = gbr->gbr_renderer_tex;
     }
 
-    glBindTexture(GL_TEXTURE_2D, t0->textures[0]);
+    if(rs->t0 != t0) {
+      glBindTexture(GL_TEXTURE_2D, t0->textures[0]);
+      rs->t0 = t0;
+    } else {
+      rs->texload_skips++;
+    }
   }
   use_program(gbr, gp);
   return gp;
 }
+
+
+/**
+ *
+ */
+static int
+render_order_cmp(const void *A, const void *B)
+{
+  const glw_render_order_t *a = A;
+  const glw_render_order_t *b = B;
+  if(a->zindex != b->zindex)
+    return a->zindex - b->zindex;
+
+  const glw_render_job_t *aj = a->job;
+  const glw_render_job_t *bj = b->job;
+
+  if(aj->t0 < bj->t0)
+    return -1;
+
+  if(aj->t0 > bj->t0)
+    return 1;
+
+  return 0;
+
+}
+
+
+/**
+ *
+ */
+static void
+sort_jobs(glw_root_t *gr)
+{
+  qsort(gr->gr_render_order, gr->gr_num_render_jobs,
+        sizeof(glw_render_order_t), render_order_cmp);
+}
+
 
 /**
  *
@@ -138,8 +201,7 @@ static void
 render_unlocked(glw_root_t *gr)
 {
   glw_backend_root_t *gbr = &gr->gr_be;
-  int i;
-  struct glw_render_job *rj = gr->gr_render_jobs;
+  render_state_t rs = {0};
 
   int64_t ts = showtime_get_ts();
 
@@ -164,11 +226,17 @@ render_unlocked(glw_root_t *gr)
   glVertexAttribPointer(2, 4, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
 			vertices + 8);
 
-  for(i = 0; i < gr->gr_num_render_jobs; i++, rj++) {
+  sort_jobs(gr);
 
+  for(int j = 0; j < gr->gr_num_render_jobs; j++) {
+    const glw_render_order_t *ro = gr->gr_render_order + j;
+    const glw_render_job_t *rj = ro->job;
     const struct glw_backend_texture *t0 = rj->t0;
+
+    //    printf("%4d %2d %p\n", j, ro->zindex, t0);
+
     glw_program_t *gp =
-      load_program(gr, t0, rj->t1, rj->blur, rj->flags, rj->gpa);
+      load_program(gr, t0, rj->t1, rj->blur, rj->flags, rj->gpa, &rs);
 
     if(unlikely(gp == NULL)) {
 
@@ -205,8 +273,8 @@ render_unlocked(glw_root_t *gr)
       glUniform4f(gp->gp_uniform_color_offset,
                   rj->rgb_off.r, rj->rgb_off.g, rj->rgb_off.b, 0);
 
-      glw_program_set_uniform_color(gbr, rj->rgb_mul.r, rj->rgb_mul.g,
-                                    rj->rgb_mul.b, rj->alpha);
+      glUniform4f(gbr->gbr_current->gp_uniform_color,
+                  rj->rgb_mul.r, rj->rgb_mul.g, rj->rgb_mul.b, rj->alpha);
 
       if(gp->gp_uniform_time != -1)
         glUniform1f(gp->gp_uniform_time, gr->gr_time_sec);
@@ -251,14 +319,16 @@ render_unlocked(glw_root_t *gr)
   hold++;
   if(hold < 20)
     return;
-
+#if 0
   static int cnt;
   static int64_t tssum;
 
   tssum += ts;
   cnt++;
 
-  // printf("%16d (%d) %d switches\n", (int)ts, (int)(tssum/cnt), program_switches);
+  printf("%16d (%d) %d saved texloads\n", (int)ts, (int)(tssum/cnt),
+         rs.texload_skips);
+#endif
 }
 
 

@@ -112,6 +112,8 @@ glw_cursor_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_cursor_t *gc = (glw_cursor_t *)w;
   glw_t *c, *d;
+  glw_rctx_t rc0;
+  int zmax = 0;
 
   if(w->glw_alpha < 0.01)
     return;
@@ -120,16 +122,21 @@ glw_cursor_render(glw_t *w, const glw_rctx_t *rc)
   if(c == NULL)
     return;
 
+  rc0 = *rc;
+  rc0.rc_zmax = &zmax;
+
+  glw_render0(c, &rc0);
+  glw_zinc(&rc0);
+
   d = TAILQ_NEXT(c, glw_parent_link);
-
-  if(!(w->glw_flags2 & GLW2_REVERSE_RENDER))
-    glw_render0(c, rc);
-
-  if(d != NULL)
+  if(d != NULL) {
+    rc0.rc_zindex = MAX(zmax, rc->rc_zindex);
+    gc->gc_cursor_rctx.rc_zmax = rc0.rc_zmax;
+    gc->gc_cursor_rctx.rc_zindex = rc0.rc_zindex;
     glw_render0(d, &gc->gc_cursor_rctx);
+  }
 
-  if(w->glw_flags2 & GLW2_REVERSE_RENDER)
-    glw_render0(c, rc);
+  *rc->rc_zmax = MAX(*rc->rc_zmax, zmax);
 }
 
 

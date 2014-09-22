@@ -933,18 +933,37 @@ add_job(glw_root_t *gr,
         int flags,
         glw_program_args_t *gpa,
         const glw_rctx_t *rc,
-        int16_t primitive_type)
+        int16_t primitive_type,
+        int zoffset)
 {
 
   if(gr->gr_num_render_jobs >= gr->gr_render_jobs_capacity) {
     // Need more space
-    gr->gr_render_jobs_capacity = 100 + gr->gr_render_jobs_capacity * 2; 
-    gr->gr_render_jobs = realloc(gr->gr_render_jobs, 
-				   sizeof(glw_render_job_t) *
-				   gr->gr_render_jobs_capacity);
+    glw_render_job_t *old_jobs = gr->gr_render_jobs;
+    int old_capacity = gr->gr_render_jobs_capacity;
+
+    gr->gr_render_jobs_capacity = 100 + gr->gr_render_jobs_capacity * 2;
+
+
+    gr->gr_render_jobs = realloc(gr->gr_render_jobs,
+                                 sizeof(glw_render_job_t) *
+                                 gr->gr_render_jobs_capacity);
+
+    // Adjust pointers since we might have relocated job array
+    for(int i = 0; i < old_capacity; i++) {
+      gr->gr_render_order[i].job =
+        gr->gr_render_order[i].job - old_jobs + gr->gr_render_jobs;
+    }
+
+    gr->gr_render_order = realloc(gr->gr_render_order,
+                                  sizeof(glw_render_order_t) *
+                                  gr->gr_render_jobs_capacity);
+
+
   }
 
-  struct glw_render_job *rj = gr->gr_render_jobs + gr->gr_num_render_jobs;
+  struct glw_render_job   *rj = gr->gr_render_jobs  + gr->gr_num_render_jobs;
+  struct glw_render_order *ro = gr->gr_render_order + gr->gr_num_render_jobs;
 
   if(m == NULL) {
     rj->eyespace = 1;
@@ -960,6 +979,8 @@ add_job(glw_root_t *gr,
   rj->t0 = t0;
   rj->t1 = t1;
   rj->primitive_type = primitive_type;
+  ro->zindex = GLW_CLAMP(rc->rc_zindex + zoffset, INT16_MIN, INT16_MAX);
+  ro->job = rj;
 
   switch(gr->gr_blendmode) {
   case GLW_BLEND_NORMAL:
@@ -1062,12 +1083,12 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
     add_job(root, NULL, tex, tex2,
             rgb_mul, rgb_off, alpha, blur,
             grc->grc_vertices, grc->grc_num_vertices,
-            NULL, 0, flags, gpa, rc, GLW_DRAW_TRIANGLES);
+            NULL, 0, flags, gpa, rc, GLW_DRAW_TRIANGLES, rc->rc_zindex);
   } else {
     add_job(root, rc->rc_mtx, tex, tex2, rgb_mul, rgb_off, alpha, blur,
             gr->gr_vertices, gr->gr_num_vertices,
             gr->gr_indices,  gr->gr_num_triangles,
-            flags, gpa, rc, GLW_DRAW_TRIANGLES);
+            flags, gpa, rc, GLW_DRAW_TRIANGLES, rc->rc_zindex);
   }
   gr->gr_dirty = 0;
 }
@@ -1089,7 +1110,7 @@ glw_wirebox(glw_root_t *root, const glw_rctx_t *rc)
   add_job(root, rc->rc_mtx, NULL, NULL, &white, NULL, 1, 0,
           &box_vertices[0][0], 4,
           NULL, 0,
-          0, NULL, rc, GLW_DRAW_LINE_LOOP);
+          0, NULL, rc, GLW_DRAW_LINE_LOOP, INT16_MAX);
 }
 
 

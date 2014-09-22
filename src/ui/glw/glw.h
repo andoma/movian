@@ -836,6 +836,7 @@ typedef struct glw_root {
   int gr_num_render_jobs;
   int gr_render_jobs_capacity;
   struct glw_render_job *gr_render_jobs;
+  struct glw_render_order *gr_render_order;
 
   float *gr_vertex_buffer;
   int gr_vertex_buffer_capacity;
@@ -859,6 +860,8 @@ typedef struct glw_root {
   int gr_vtmp_capacity;
 
   int gr_random;
+
+  int gr_zmax;
 
   // On Screen Keyboard
 
@@ -890,6 +893,9 @@ typedef struct glw_root {
  * Render context
  */
 typedef struct glw_rctx {
+
+  int *rc_zmax;
+
   // Current ModelView Matrix
   Mtx rc_mtx;
 
@@ -899,10 +905,17 @@ typedef struct glw_rctx {
   int16_t rc_width;
   int16_t rc_height;
 
-  uint8_t rc_inhibit_shadows; // Used when rendering low res passes in bloom filter
-  uint8_t rc_inhibit_matrix_store; // Avoid storing matrix in mirrored view, etc
+  int16_t rc_zindex; // higher number is infront lower numbers (just as HTML)
+
   uint8_t rc_layer;
-  uint8_t rc_overscanning;
+
+  // Used when rendering low res passes in bloom filter
+  uint8_t rc_inhibit_shadows : 1;
+
+  // Avoid storing matrix in mirrored view, etc
+  uint8_t rc_inhibit_matrix_store : 1;
+
+  uint8_t rc_overscanning : 1;
 
 } glw_rctx_t;
 
@@ -1060,6 +1073,8 @@ typedef struct glw {
   float glw_sharpness;               /* 1-Blur set by user */
 
   float glw_focus_weight;
+
+  int16_t glw_zoffset;
 
   uint8_t glw_alignment;
 
@@ -1308,7 +1323,8 @@ glw_bubble_event2(glw_t *w, event_t *e)
 
 void glw_layout0(glw_t *w, const glw_rctx_t *rc);
 
-void glw_rctx_init(glw_rctx_t *rc, int width, int height, int overscan);
+void glw_rctx_init(glw_rctx_t *rc, int width, int height, int overscan,
+                   int *zmax);
 
 int glw_check_system_features(glw_root_t *gr);
 
@@ -1325,12 +1341,27 @@ void glw_align_2(glw_rctx_t *rc, int a);
 
 void glw_wirebox(glw_root_t *gr, const glw_rctx_t *rc);
 
+void glw_render_zoffset(glw_t *w, const glw_rctx_t *rc);
+
 static inline void glw_render0(glw_t *w, const glw_rctx_t *rc)
 {
-  w->glw_class->gc_render(w, rc);
+  if(unlikely(w->glw_zoffset != 0)) {
+    glw_render_zoffset(w, rc);
+  } else {
+    w->glw_class->gc_render(w, rc);
+  }
+
   if(unlikely(w->glw_flags2 & GLW2_DEBUG))
     glw_wirebox(w->glw_root, rc);
 }
+
+static inline void glw_zinc(glw_rctx_t *rc)
+{
+  rc->rc_zindex++;
+  *rc->rc_zmax = MAX(*rc->rc_zmax, rc->rc_zindex);
+}
+
+
 
 /**
  * Global flush interface 

@@ -67,6 +67,7 @@ glw_freefloat_render(glw_t *w, const glw_rctx_t *rc)
   int i;
   float a;
   glw_rctx_t rc0;
+  int zmax = 0;
 
   for(i = 0; i < ff->num_visible; i++) {
     if((c = ff->visible[i]) == NULL)
@@ -75,6 +76,8 @@ glw_freefloat_render(glw_t *w, const glw_rctx_t *rc)
     glw_freefloat_item_t *cd = glw_parent_data(c, glw_freefloat_item_t);
 
     rc0 = *rc;
+    rc0.rc_zmax = &zmax;
+
     a = (1 - fabs(-1 + (GLW_MAX(0, -0.1 + cd->v * 2.1))));
 
     rc0.rc_alpha *= a;
@@ -90,8 +93,11 @@ glw_freefloat_render(glw_t *w, const glw_rctx_t *rc)
 		fabsf(cos(cd->a)),
 		0.0);
 
+    rc0.rc_zindex = MAX(zmax, rc->rc_zindex);
     glw_render0(c, &rc0);
+    zmax = MAX(zmax, rc0.rc_zindex + 1);
   }
+  *rc->rc_zmax = MAX(*rc->rc_zmax, zmax);
 }
 
 

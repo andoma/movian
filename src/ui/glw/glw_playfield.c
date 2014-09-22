@@ -270,6 +270,7 @@ glw_playfield_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 static void 
 glw_playfield_render(glw_t *w, const glw_rctx_t *rc)
 {
+  int zmax = 0;
   glw_t *c, *d;
   glw_rctx_t rc0, rc1;
 
@@ -277,10 +278,13 @@ glw_playfield_render(glw_t *w, const glw_rctx_t *rc)
     return;
 
   rc0 = *rc;
+  rc0.rc_zmax = &zmax;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
 
     glw_playfield_item_t *cd = glw_parent_data(c, glw_playfield_item_t);
+
+    rc0.rc_zindex = MAX(zmax, rc->rc_zindex);
 
     if(cd->amount > 0 && cd->amount < 2) {
       rc1 = rc0;
@@ -312,7 +316,9 @@ glw_playfield_render(glw_t *w, const glw_rctx_t *rc)
 	}
       }
     }
+    zmax = MAX(zmax, rc0.rc_zindex + 1);
   }
+  *rc->rc_zmax = MAX(*rc->rc_zmax, zmax);
 }
 
 

@@ -389,7 +389,11 @@ glw_text_bitmap_render(glw_t *w, const glw_rctx_t *rc)
   if(gtb->gtb_paint_cursor) {
     glw_root_t *gr = w->glw_root;
     float a = cos((gr->gr_frames & 2047) * (360.0f / 2048.0f)) * 0.5f + 0.5f;
-    glw_renderer_draw(&gtb->gtb_cursor_renderer, w->glw_root, rc,
+
+    glw_rctx_t rc0 = *rc;
+    glw_zinc(&rc0);
+
+    glw_renderer_draw(&gtb->gtb_cursor_renderer, w->glw_root, &rc0,
 		      NULL, NULL, NULL, NULL, alpha * a, blur, NULL);
   }
 }

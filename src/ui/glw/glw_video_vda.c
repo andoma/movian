@@ -276,8 +276,6 @@ gvv_render(glw_video_t *gv, glw_rctx_t *rc)
                     &sa->gvs_texture,
                     NULL, NULL, NULL,
                     rc->rc_alpha * gv->w.glw_alpha, 0, &gv->gv_gpa);
-
-  //  render_video_quad(gv, sa, rc);
 }
 
 /**

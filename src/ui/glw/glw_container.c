@@ -629,24 +629,29 @@ glw_container_z_render(glw_t *w, const glw_rctx_t *rc)
   glw_t *c;
   float alpha = rc->rc_alpha * w->glw_alpha;
   float sharpness  = rc->rc_sharpness  * w->glw_sharpness;
-
+  int zmax = 0;
   glw_rctx_t rc0;
 
   if(alpha < 0.01f)
     return;
-  
+
   if(glw_is_focusable(w))
     glw_store_matrix(w, rc);
 
   rc0 = *rc;
   rc0.rc_alpha = alpha;
   rc0.rc_sharpness = sharpness;
+  rc0.rc_zmax = &zmax;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
+
+    rc0.rc_zindex = MAX(zmax, rc->rc_zindex);
     glw_render0(c, &rc0);
+    glw_zinc(&rc0);
   }
+  *rc->rc_zmax = MAX(*rc->rc_zmax, zmax);
 }
 
 

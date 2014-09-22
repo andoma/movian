@@ -124,6 +124,12 @@ typedef struct glw_render_job {
 } glw_render_job_t;
 
 
+typedef struct glw_render_order {
+  glw_render_job_t *job;
+  int16_t zindex;
+
+} glw_render_order_t;
+
 /**
  * Public render interface abstraction
  */

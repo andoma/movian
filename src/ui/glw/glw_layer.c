@@ -147,20 +147,26 @@ glw_layer_retire_child(glw_t *w, glw_t *c)
 static void
 glw_layer_render(glw_t *w, const glw_rctx_t *rc)
 {
-  glw_rctx_t rc0;
+  int zmax = 0;
   glw_t *c;
+  glw_rctx_t rc0 = *rc;
+
+  rc0.rc_zmax = &zmax;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     glw_layer_item_t *cd = glw_parent_data(c, glw_layer_item_t);
 
-    rc0 = *rc;
-    rc0.rc_alpha *= cd->alpha * w->glw_alpha;
+    rc0.rc_alpha = rc->rc_alpha * cd->alpha * w->glw_alpha;
     if(rc0.rc_alpha < 0.01)
       continue;
     rc0.rc_layer = cd->layer + rc->rc_layer;
     glw_Translatef(&rc0, 0, 0, 0.1*cd->z);
+
+    rc0.rc_zindex = MAX(zmax, rc->rc_zindex);
     glw_render0(c, &rc0);
+    glw_zinc(&rc0);
   }
+  *rc->rc_zmax = MAX(*rc->rc_zmax, zmax);
 }
 
 

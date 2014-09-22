@@ -586,6 +586,24 @@ glw_set_divider(glw_t *w, int v)
 /**
  *
  */
+static void
+glw_set_zoffset(glw_t *w, int v)
+{
+  /*
+    XXX: FIXME
+  if(w->glw_class->gc_set_width != NULL) {
+    w->glw_class->gc_set_width(w, v);
+    return;
+  }
+  */
+  w->glw_zoffset = v;
+  glw_need_refresh(w->glw_root, 0);
+}
+
+
+/**
+ *
+ */
 static int
 set_float3(glw_view_eval_context_t *ec, const token_attrib_t *a, 
 	   struct token *t)
@@ -1280,6 +1298,7 @@ static const token_attrib_t attribtab[] = {
   {"height",          set_int,    0, glw_set_height},
   {"width",           set_int,    0, glw_set_width},
   {"divider",         set_int,    0, glw_set_divider},
+  {"zoffset",         set_int,    0, glw_set_zoffset},
 
   {"maxlines",        set_number, GLW_ATTRIB_MAX_LINES},
   {"sizeScale",       set_number, GLW_ATTRIB_SIZE_SCALE},
