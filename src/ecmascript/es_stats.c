@@ -44,10 +44,8 @@ dump_context(htsbuf_queue_t *out, es_context_t *ec)
 
   htsbuf_qprintf(out, "  Loaded from %s\n", ec->ec_path);
 
-#ifdef ES_MEMORY_TRACKING
-  htsbuf_qprintf(out, "  Memory currently used: %zd bytes\n", ec->ec_mem_active);
-
-#endif
+  htsbuf_qprintf(out, "  Memory usage, current: %zd bytes, max: %zd\n",
+                 ec->ec_mem_active, ec->ec_mem_peak);
 
   htsbuf_qprintf(out, "  Attached resources:\n");
 

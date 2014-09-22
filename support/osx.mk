@@ -2,6 +2,7 @@
 # Source modification and extra flags
 #
 SRCS += src/arch/osx/osx_app.m \
+	src/arch/osx/osx_misc.c \
 	src/arch/osx/GLWUI.m \
 	src/arch/osx/GLWView.m \
 	src/arch/darwin.c \

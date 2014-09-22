@@ -5,6 +5,7 @@
 #include <limits.h>
 #include <errno.h>
 
+#include "arch/arch.h"
 #include "arch/threads.h"
 #include "showtime.h"
 #include "ext/tlsf/tlsf.h"
@@ -454,3 +455,11 @@ void myfree(void *ptr)
   tlsf_free(gpool, ptr);
   hts_mutex_unlock(&mutex);
 }
+
+
+size_t
+arch_malloc_size(void *ptr)
+{
+  return tlsf_block_size(ptr);
+}
+

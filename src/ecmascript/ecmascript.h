@@ -6,10 +6,6 @@
 #include "arch/atomic.h"
 #include "compiler.h"
 
-#ifdef linux
-#define ES_MEMORY_TRACKING
-#endif
-
 struct es_resource;
 struct rstr;
 struct prop;
@@ -41,9 +37,8 @@ typedef struct es_context {
   duk_context *ec_duk;
   struct es_resource_list ec_resources;
 
-#ifdef ES_MEMORY_TRACKING
   size_t ec_mem_active;
-#endif
+  size_t ec_mem_peak;
 
 } es_context_t;
 

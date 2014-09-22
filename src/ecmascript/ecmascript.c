@@ -20,6 +20,7 @@
  */
 
 #include "showtime.h"
+#include "arch/arch.h"
 #include "fileaccess/fileaccess.h"
 #include "backend/backend.h"
 
@@ -354,10 +355,6 @@ es_create_env(es_context_t *ec)
 }
 
 
-#ifdef ES_MEMORY_TRACKING
-
-#include <malloc.h>
-
 /**
  *
  */
@@ -367,9 +364,10 @@ es_mem_alloc(void *udata, duk_size_t size)
   es_context_t *ec = udata;
   void *p = malloc(size);
 
-  if(p != NULL)
-    ec->ec_mem_active += malloc_usable_size(p);
-
+  if(p != NULL) {
+    ec->ec_mem_active += arch_malloc_size(p);
+    ec->ec_mem_peak = MAX(ec->ec_mem_peak, ec->ec_mem_active);
+  }
   return p;
 }
 
@@ -384,12 +382,13 @@ es_mem_realloc(void *udata, void *ptr, duk_size_t size)
   size_t prev = 0;
 
   if(udata != NULL)
-    prev = malloc_usable_size(ptr);
+    prev = arch_malloc_size(ptr);
 
   ptr = realloc(ptr, size);
   if(ptr != NULL) {
     ec->ec_mem_active -= prev;
-    ec->ec_mem_active += malloc_usable_size(ptr);
+    ec->ec_mem_active += arch_malloc_size(ptr);
+    ec->ec_mem_peak = MAX(ec->ec_mem_peak, ec->ec_mem_active);
   }
   return ptr;
 }
@@ -404,17 +403,9 @@ es_mem_free(void *udata, void *ptr)
   es_context_t *ec = udata;
   if(ptr == NULL)
     return;
-  ec->ec_mem_active -= malloc_usable_size(ptr);
+  ec->ec_mem_active -= arch_malloc_size(ptr);
   free(ptr);
 }
-
-
-#endif
-
-
-
-
-
 
 
 /**
@@ -427,12 +418,9 @@ es_context_create(void)
   hts_mutex_init(&ec->ec_mutex);
   atomic_set(&ec->ec_refcount, 1);
 
-#ifdef ES_MEMORY_TRACKING
   ec->ec_duk = duk_create_heap(es_mem_alloc, es_mem_realloc, es_mem_free,
                                ec, NULL);
-#else
-  ec->ec_duk = duk_create_heap_default();
-#endif
+
   es_create_env(ec);
 
   return ec;

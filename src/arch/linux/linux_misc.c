@@ -164,3 +164,13 @@ linux_init(void)
   gconf.concurrency = get_system_concurrency();
 }
 
+
+/**
+ *
+ */
+size_t
+arch_malloc_size(void *ptr)
+{
+  return malloc_usable_size(ptr);
+}
+x
