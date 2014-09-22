@@ -1099,7 +1099,7 @@ spotify_metadata_update_track(spotify_metadata_t *m)
 
     if(album != NULL) {
       spotify_make_link(f_sp_link_create_from_album(album), url, sizeof(url));
-      prop_set_link(m->m_album, f_sp_album_name(album), url);
+      prop_set_uri(m->m_album, f_sp_album_name(album), url);
       set_image_uri(m->m_album_art, f_sp_link_create_from_album_cover, album);
       prop_set_int(m->m_album_year, f_sp_album_year(album));
     }
@@ -1108,7 +1108,7 @@ spotify_metadata_update_track(spotify_metadata_t *m)
 
     if(artist != NULL) {
       spotify_make_link(f_sp_link_create_from_artist(artist), url, sizeof(url));
-      prop_set_link(m->m_artist, f_sp_artist_name(artist), url);
+      prop_set_uri(m->m_artist, f_sp_artist_name(artist), url);
     }
 
     nartists = f_sp_track_num_artists(track);
@@ -1117,7 +1117,7 @@ spotify_metadata_update_track(spotify_metadata_t *m)
 	artist = f_sp_track_artist(track, i);
 	spotify_make_link(f_sp_link_create_from_artist(artist), url, sizeof(url));
 	prop_t *p = prop_create(m->m_additional_artists, url);
-	prop_set_link(prop_create(p, "artist"),
+	prop_set_uri(prop_create(p, "artist"),
 		      f_sp_artist_name(artist), url);
       }
     }
@@ -1497,8 +1497,8 @@ spotify_add_album(sp_album *album, sp_artist *artist, prop_t *parent,
     prop_set_int(prop_create(metadata, "album_year"), year);
   
   spotify_make_link(f_sp_link_create_from_artist(artist), link, sizeof(link));
-  prop_set_link(prop_create(metadata, "artist"),
-		f_sp_artist_name(artist), link);
+  prop_set_uri(prop_create(metadata, "artist"),
+               f_sp_artist_name(artist), link);
   
   set_image_uri(prop_create(metadata, "album_art"),
                 f_sp_link_create_from_album_cover, album);
@@ -1772,7 +1772,7 @@ try_resolve_track_item(spotify_page_t *sp)
   album = f_sp_track_album(sp->sp_track);
   if(album != NULL) {
     spotify_make_link(f_sp_link_create_from_album(album), url, sizeof(url));
-    prop_set_link(sp->sp_album_name, f_sp_album_name(album), url);
+    prop_set_uri(sp->sp_album_name, f_sp_album_name(album), url);
     set_image_uri(sp->sp_album_art, f_sp_link_create_from_album_cover, album);
     prop_set_int(sp->sp_album_year, f_sp_album_year(album));
   }
@@ -2034,7 +2034,7 @@ update_userdata(spotify_user_t *su)
   if(su->su_prop_url != NULL)
     prop_set_string(su->su_prop_url, url);
 
-  prop_set_link(su->su_prop_name, name, url);
+  prop_set_uri(su->su_prop_name, name, url);
   f_sp_link_release(l);
 
 #if SPOTIFY_WITH_SOCIAL
@@ -3610,8 +3610,8 @@ ss_fill_albums(sp_search *result, spotify_search_request_t *ssr)
     prop_set_string(prop_create(metadata, "title"), f_sp_album_name(album));
 
     spotify_make_link(f_sp_link_create_from_artist(artist), link, sizeof(link));
-    prop_set_link(prop_create(metadata, "artist"),
-		  f_sp_artist_name(artist), link);
+    prop_set_uri(prop_create(metadata, "artist"),
+                 f_sp_artist_name(artist), link);
 
     set_image_uri(prop_create(metadata, "icon"),
                   f_sp_link_create_from_album_cover, album);

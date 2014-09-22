@@ -269,8 +269,8 @@ void prop_set_int_clipping_range(prop_t *p, int min, int max);
 
 void prop_set_void_ex(prop_t *p, prop_sub_t *skipme);
 
-void prop_set_link_ex(prop_t *p, prop_sub_t *skipme, const char *title,
-		      const char *url);
+void prop_set_uri_ex(prop_t *p, prop_sub_t *skipme, const char *title,
+                     const char *url);
 
 #define prop_set_string(p, str) do {		\
   if(__builtin_constant_p(str))			\
@@ -293,7 +293,7 @@ void prop_set_link_ex(prop_t *p, prop_sub_t *skipme, const char *title,
 
 #define prop_set_void(p) prop_set_void_ex(p, NULL)
 
-#define prop_set_link(p, title, link) prop_set_link_ex(p, NULL, title, link)
+#define prop_set_uri(p, title, uri) prop_set_uri_ex(p, NULL, title, uri)
 
 #define prop_set_rstring(p, rstr) prop_set_rstring_ex(p, NULL, rstr)
 

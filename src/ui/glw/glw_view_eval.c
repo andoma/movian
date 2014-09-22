@@ -829,7 +829,7 @@ set_prop_from_token(prop_t *p, token_t *t)
     break;
 
   case TOKEN_LINK:
-    prop_set_link(p, rstr_get(t->t_link_rtitle), rstr_get(t->t_link_rurl));
+    prop_set_uri(p, rstr_get(t->t_link_rtitle), rstr_get(t->t_link_rurl));
     break;
 
   case TOKEN_INT:
@@ -943,8 +943,8 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
       prop_set_cstring(a->t_prop, b->t_cstring);
       break;
     case TOKEN_LINK:
-      prop_set_link(a->t_prop, rstr_get(b->t_link_rtitle),
-		    rstr_get(b->t_link_rurl));
+      prop_set_uri(a->t_prop, rstr_get(b->t_link_rtitle),
+                   rstr_get(b->t_link_rurl));
       break;
     case TOKEN_INT:
       prop_set_int(a->t_prop, b->t_int);
@@ -4603,7 +4603,7 @@ glwf_set(glw_view_eval_context_t *ec, struct token *self,
     prop_set_rstring(p, b->t_rstring);
     break;
   case TOKEN_LINK:
-    prop_set_link(p, rstr_get(b->t_link_rtitle), rstr_get(b->t_link_rurl));
+    prop_set_uri(p, rstr_get(b->t_link_rtitle), rstr_get(b->t_link_rurl));
     break;
   default:
     prop_set_void(p);

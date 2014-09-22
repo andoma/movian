@@ -3145,8 +3145,8 @@ prop_set_cstring_ex(prop_t *p, prop_sub_t *skipme, const char *cstr)
  *
  */
 void
-prop_set_link_ex(prop_t *p, prop_sub_t *skipme, const char *title, 
-		 const char *url)
+prop_set_uri_ex(prop_t *p, prop_sub_t *skipme, const char *title,
+                const char *url)
 {
   if(p == NULL)
     return;

@@ -1552,7 +1552,7 @@ plugins_view_add(plugin_t *pl,
 
   plugin_view_entry_t *pve = calloc(1, sizeof(plugin_view_entry_t));
   pve->pve_type_prop = prop_create_r(r, path);
-  prop_set_link(pve->pve_type_prop, title, path);
+  prop_set_uri(pve->pve_type_prop, title, path);
 
   LIST_INSERT_HEAD(&pl->pl_views, pve, pve_plugin_link);
   pve->pve_key = strdup(path);

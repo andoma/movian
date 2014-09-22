@@ -472,9 +472,9 @@ js_prop_set_from_jsval(JSContext *cx, prop_t *p, jsval value)
       return;
     }
 
-    prop_set_link(p,
-		  JS_GetStringBytes(JS_ValueToString(cx, v1)),
-		  JS_GetStringBytes(JS_ValueToString(cx, v2)));
+    prop_set_uri(p,
+                 JS_GetStringBytes(JS_ValueToString(cx, v1)),
+                 JS_GetStringBytes(JS_ValueToString(cx, v2)));
     JS_LeaveLocalRootScope(cx);
   } else if(JSVAL_IS_STRING(value)) {
     js_prop_from_str(cx, p, value);
