@@ -26,7 +26,7 @@ es_prop_sub_destroy(es_resource_t *eres)
   if(eps->eps_sub == NULL)
     return;
 
-  es_callback_unregister(eres->er_ctx->ec_duk, eps);
+  es_root_unregister(eres->er_ctx->ec_duk, eps);
   prop_unsubscribe(eps->eps_sub);
   eps->eps_sub = NULL;
   es_resource_unlink(eres);
@@ -247,7 +247,7 @@ es_sub_cb(void *opaque, prop_event_t event, ...)
   const  event_t *e;
   duk_context *ctx = ec->ec_duk;
 
-  es_push_callback(ctx, eps);
+  es_push_root(ctx, eps);
 
   va_start(ap, event);
 
@@ -377,7 +377,7 @@ es_prop_subscribe(duk_context *ctx)
   prop_t *p = es_stprop_get(ctx, 0);
   es_prop_sub_t *eps = es_resource_create(ec, &es_resource_prop_sub);
 
-  es_callback_register(ctx, 1, eps);
+  es_root_register(ctx, 1, eps);
 
   eps->eps_autodestry = es_prop_is_true(ctx, 2, "autoDestroy");
 

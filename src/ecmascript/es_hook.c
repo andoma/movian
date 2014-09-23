@@ -48,7 +48,7 @@ es_hook_destroy(es_resource_t *eres)
 {
   es_hook_t *eh = (es_hook_t *)eres;
 
-  es_callback_unregister(eres->er_ctx->ec_duk, eres);
+  es_root_unregister(eres->er_ctx->ec_duk, eres);
 
   hts_mutex_lock(&hook_mutex);
   LIST_REMOVE(eh, eh_link);
@@ -114,7 +114,7 @@ es_hook_invoke(const char *type,
 
     duk_context *ctx = ec->ec_duk;
 
-    es_push_callback(ctx, eh);
+    es_push_root(ctx, eh);
     int r = push_args(ctx, opaque);
     int rc = duk_pcall(ctx, r);
     if(rc)
@@ -147,7 +147,7 @@ es_hook_register(duk_context *ctx)
   num_hooks++;
   hts_mutex_unlock(&hook_mutex);
 
-  es_callback_register(ctx, 1, eh);
+  es_root_register(ctx, 1, eh);
 
   es_resource_push(ctx, &eh->super);
   return 1;

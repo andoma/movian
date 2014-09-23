@@ -29,7 +29,7 @@ es_route_destroy(es_resource_t *eres)
 {
   es_route_t *er = (es_route_t *)eres;
 
-  es_callback_unregister(eres->er_ctx->ec_duk, eres);
+  es_root_unregister(eres->er_ctx->ec_duk, eres);
 
   hts_mutex_lock(&route_mutex);
   LIST_REMOVE(er, er_link);
@@ -122,7 +122,7 @@ es_route_create(duk_context *ctx)
 
   hts_mutex_unlock(&route_mutex);
 
-  es_callback_register(ctx, 1, er);
+  es_root_register(ctx, 1, er);
 
   es_resource_push(ctx, &er->super);
   return 1;
@@ -162,7 +162,7 @@ ecmascript_openuri(prop_t *page, const char *url, int sync)
   duk_context *ctx = ec->ec_duk;
 
 
-  es_push_callback(ctx, er);
+  es_push_root(ctx, er);
 
   es_stprop_push(ctx, page);
 

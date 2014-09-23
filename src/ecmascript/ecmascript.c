@@ -316,7 +316,7 @@ es_create_env(es_context_t *ec)
   duk_put_prop_string(ctx, -2, "esctx");
 
   duk_push_object(ctx);
-  duk_put_prop_string(ctx, -2, "callbacks");
+  duk_put_prop_string(ctx, -2, "roots");
 
   duk_pop(ctx); // global_stash
 

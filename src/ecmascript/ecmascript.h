@@ -161,13 +161,17 @@ struct prop *es_stprop_get(duk_context *ctx, int val_index);
 
 
 /**
- * Callbacks
+ * Rooted objects
+ *
+ * A root points to a value that we want to retain and also lookup
+ * based on a pointer. They are saved in the global stash to avoid
+ * being collected by GC.
  */
-void es_callback_register(duk_context *ctx, int obj_idx, void *ptr);
+void es_root_register(duk_context *ctx, int obj_idx, void *ptr);
 
-void es_callback_unregister(duk_context *duk, void *ptr);
+void es_root_unregister(duk_context *duk, void *ptr);
 
-void es_push_callback(duk_context *duk, void *ptr);
+void es_push_root(duk_context *duk, void *ptr);
 
 
 /**
