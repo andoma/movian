@@ -686,6 +686,34 @@ ecmascript_plugin_unload(const char *id)
 /**
  *
  */
+static void
+ecmascript_init(void)
+{
+  if(gconf.load_ecmascript == NULL)
+    return;
+
+  es_context_t *ec = es_context_create();
+  es_context_begin(ec);
+
+  ec->ec_id = strdup("cmdline");
+
+  hts_mutex_lock(&es_context_mutex);
+  es_num_contexts++;
+  LIST_INSERT_HEAD(&es_contexts, ec, ec_link);
+  hts_mutex_unlock(&es_context_mutex);
+
+  es_exec(ec, gconf.load_ecmascript);
+
+  es_context_end(ec);
+  es_context_release(ec);
+}
+
+
+INITME(INIT_GROUP_API, ecmascript_init);
+
+/**
+ *
+ */
 static backend_t be_ecmascript = {
   .be_flags  = BACKEND_OPEN_CHECKS_URI,
   .be_open   = ecmascript_openuri,

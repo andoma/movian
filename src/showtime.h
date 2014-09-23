@@ -248,6 +248,7 @@ typedef struct gconf {
   const char *devplugin;
   const char *plugin_repo;
   const char *load_jsfile;
+  const char *load_ecmascript;
 
   const char *initial_url;
   const char *initial_view;
