@@ -202,3 +202,4 @@ extern const duk_function_list_entry fnlist_Showtime_io[];
 extern const duk_function_list_entry fnlist_Showtime_string[];
 extern const duk_function_list_entry fnlist_Showtime_htsmsg[];
 extern const duk_function_list_entry fnlist_Showtime_metadata[];
+extern const duk_function_list_entry fnlist_Showtime_timer[];

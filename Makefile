@@ -730,6 +730,7 @@ SRCS += ext/duktape/duktape.c \
 	src/ecmascript/es_native_obj.c \
 	src/ecmascript/es_root.c \
 	src/ecmascript/es_hook.c \
+	src/ecmascript/es_timer.c \
 
 SRCS-$(CONFIG_METADATA) += src/ecmascript/es_metadata.c
 
