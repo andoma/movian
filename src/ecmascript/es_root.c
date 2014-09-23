@@ -69,7 +69,7 @@ void
 es_push_root(duk_context *ctx, void *ptr)
 {
   duk_push_global_stash(ctx);
-  duk_get_prop_string(ctx, -1, "root");
+  duk_get_prop_string(ctx, -1, "roots");
 
   char name[64];
   snprintf(name, sizeof(name), "%p", ptr);
