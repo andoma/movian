@@ -366,6 +366,34 @@ es_sub_cb(void *opaque, prop_event_t event, ...)
     es_resource_destroy(&eps->eps_super);
 }
 
+/**
+ *
+ */
+static int
+es_prop_lockmgr(void *ptr, int op)
+{
+  es_context_t *ec = ptr;
+
+  switch(op) {
+  case PROP_LOCK_UNLOCK:
+    hts_mutex_unlock(&ec->ec_mutex);
+    return 0;
+  case PROP_LOCK_LOCK:
+    hts_mutex_lock(&ec->ec_mutex);
+    return 0;
+  case PROP_LOCK_TRY:
+    return hts_mutex_trylock(&ec->ec_mutex);
+
+  case PROP_LOCK_RETAIN:
+    atomic_inc(&ec->ec_refcount);
+    return 0;
+
+  case PROP_LOCK_RELEASE:
+    es_context_release(ec);
+    return 0;
+  }
+  abort();
+}
 
 /**
  *
@@ -384,7 +412,8 @@ es_prop_subscribe(duk_context *ctx)
   eps->eps_sub =
     prop_subscribe(PROP_SUB_TRACK_DESTROY,
                    PROP_TAG_ROOT, p,
-                   PROP_TAG_MUTEX, &ec->ec_mutex,
+                   PROP_TAG_LOCKMGR, es_prop_lockmgr,
+                   PROP_TAG_MUTEX, ec,
                    PROP_TAG_CALLBACK, es_sub_cb, eps,
                    NULL);
 

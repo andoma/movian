@@ -1388,12 +1388,21 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
  * Prop lockmanager for locking JS global context
  */
 static int
-js_lockmgr(void *ptr, int lock)
+js_lockmgr(void *ptr, prop_lock_op_t op)
 {
-  if(lock)
+  switch(op) {
+  case PROP_LOCK_LOCK:
+  case PROP_LOCK_TRY:
     JS_BeginRequest(ptr);
-  else
+    break;
+  case PROP_LOCK_UNLOCK:
     JS_EndRequest(ptr);
+    break;
+  case PROP_LOCK_RELEASE:
+  case PROP_LOCK_RETAIN:
+    break;
+  }
+
   return 0;
 }
 

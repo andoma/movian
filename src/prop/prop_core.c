@@ -188,16 +188,23 @@ prop_get_DN(prop_t *p, int compact)
  * Default lockmanager for normal mutexes
  */
 static int
-proplockmgr(void *ptr, int lock)
+proplockmgr(void *ptr, prop_lock_op_t op)
 {
   hts_mutex_t *mtx = (hts_mutex_t *)ptr;
 
-  if(lock == PROP_LOCK_TRY) {
-    return hts_mutex_trylock(mtx);
-  } else if(lock == PROP_LOCK_ACQUIRE)
-    hts_mutex_lock(mtx);
-  else
+  switch(op) {
+  case PROP_LOCK_UNLOCK:
     hts_mutex_unlock(mtx);
+    break;
+  case PROP_LOCK_LOCK:
+    hts_mutex_lock(mtx);
+    break;
+  case PROP_LOCK_TRY:
+    return hts_mutex_trylock(mtx);
+  case PROP_LOCK_RETAIN:
+  case PROP_LOCK_RELEASE:
+    break;
+  }
   return 0;
 }
 
@@ -420,6 +427,7 @@ prop_sub_ref_dec_locked(prop_sub_t *s)
 {
   if(atomic_dec(&s->hps_refcount))
     return;
+  s->hps_lockmgr(s->hps_lock, PROP_LOCK_RELEASE);
   pool_put(sub_pool, s);
 }
 
@@ -899,7 +907,7 @@ prop_notify_dispatch(struct prop_notify_queue *q, const char *trace_name)
       snprintf(info, sizeof(info), "%p", n->hpn_sub);
 #endif
       int64_t ts = showtime_get_ts();
-      prop_dispatch_one(n, PROP_LOCK_ACQUIRE);
+      prop_dispatch_one(n, PROP_LOCK_LOCK);
       ts = showtime_get_ts() - ts;
       if(ts > 10000) {
         TRACE(ts > 100000 ? TRACE_INFO : TRACE_DEBUG,
@@ -910,7 +918,7 @@ prop_notify_dispatch(struct prop_notify_queue *q, const char *trace_name)
 
   } else {
     TAILQ_FOREACH(n, q, hpn_link)
-      prop_dispatch_one(n, PROP_LOCK_ACQUIRE);
+      prop_dispatch_one(n, PROP_LOCK_LOCK);
   }
 
   hts_mutex_lock(&prop_mutex);
@@ -1050,7 +1058,7 @@ prop_global_dispatch_thread(void *aux)
         TAILQ_INSERT_TAIL(&prop_global_dispatch_dispatching_queue, psd,
                           psd_link);
         hts_mutex_unlock(&prop_mutex);
-        prop_dispatch_one(n, PROP_LOCK_ACQUIRE);
+        prop_dispatch_one(n, PROP_LOCK_LOCK);
         hts_mutex_lock(&prop_mutex);
         TAILQ_REMOVE(&prop_global_dispatch_dispatching_queue, psd, psd_link);
 
@@ -2803,6 +2811,10 @@ prop_subscribe(int flags, ...)
       lock = va_arg(ap, void *);
       break;
 
+    case PROP_TAG_LOCKMGR:
+      lockmgr = va_arg(ap, prop_lockmgr_t *);
+      break;
+
 #ifdef PROP_SUB_RECORD_SOURCE
     case PROP_TAG_SOURCE:
       file = va_arg(ap, const char *);
@@ -2928,6 +2940,8 @@ prop_subscribe(int flags, ...)
     s->hps_lock = lock;
     s->hps_lockmgr = lockmgr;
   }
+
+  s->hps_lockmgr(s->hps_lock, PROP_LOCK_RETAIN);
 
   s->hps_canonical_prop = canonical;
   if(canonical != NULL) {
@@ -4818,7 +4832,7 @@ prop_courier_poll_timed(prop_courier_t *pc, int maxtime)
   int64_t ts = showtime_get_ts();
 
   while((n = TAILQ_FIRST(&pc->pc_dispatch_queue)) != NULL) {
-    prop_dispatch_one(n, PROP_LOCK_ACQUIRE);
+    prop_dispatch_one(n, PROP_LOCK_LOCK);
     TAILQ_REMOVE(&pc->pc_dispatch_queue, n, hpn_link);
     TAILQ_INSERT_TAIL(&pc->pc_free_queue, n, hpn_link);
     if(showtime_get_ts() > ts + maxtime)
