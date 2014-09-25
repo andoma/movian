@@ -150,6 +150,10 @@ es_prop_get_value_duk(duk_context *ctx)
   case PROP_VOID:
     duk_push_null(ctx);
     break;
+  case PROP_DIR:
+    snprintf(tmp, sizeof(tmp), "[prop directory '%s']", p->hp_name);
+    duk_push_string(ctx, tmp);
+    break;
   default:
     snprintf(tmp, sizeof(tmp), "[prop internal type %d]", p->hp_type);
     duk_push_string(ctx, tmp);
