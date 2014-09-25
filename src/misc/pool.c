@@ -64,7 +64,7 @@ typedef struct pool_item {
  */
 typedef struct pool_segment {
   LIST_ENTRY(pool_segment) ps_link;
-  char *ps_addr;
+  void *ps_addr;
   size_t ps_alloc_size;
   size_t ps_avail_size;
 
@@ -139,6 +139,44 @@ pool_create(const char *name, size_t item_size, int flags)
 }
 
 
+#ifdef POOL_DEBUG
+/**
+ *
+ */
+static void
+mark_segments(pool_t *p)
+{
+  pool_item_t *pi;
+  pool_segment_t *ps;
+
+  LIST_FOREACH(ps, &p->p_segments, ps_link) {
+    ps->ps_mark = malloc(ps->ps_avail_size / p->p_item_size);
+    memset(ps->ps_mark, 0xff, ps->ps_avail_size / p->p_item_size);
+  }
+
+  for(pi = p->p_item; pi != NULL; pi = pi->link) {
+    LIST_FOREACH(ps, &p->p_segments, ps_link) {
+      if((intptr_t)pi >= (intptr_t)ps->ps_addr &&
+         (intptr_t)pi < (intptr_t)ps->ps_addr + ps->ps_avail_size) {
+        size_t off = ((void *)pi - ps->ps_addr) / p->p_item_size;
+        ps->ps_mark[off] = 0;
+      }
+    }
+  }
+}
+
+static void
+unmark_segments(pool_t *p)
+{
+  pool_segment_t *ps;
+
+  LIST_FOREACH(ps, &p->p_segments, ps_link) {
+    free(ps->ps_mark);
+    ps->ps_mark = NULL;
+  }
+}
+#endif
+
 /**
  *
  */
@@ -149,23 +187,9 @@ pool_destroy(pool_t *p)
 
 #ifdef POOL_DEBUG
   if(1) {
-    pool_item_t *pi;
 
-    LIST_FOREACH(ps, &p->p_segments, ps_link) {
-      ps->ps_mark = malloc(ps->ps_avail_size / p->p_item_size);
-      memset(ps->ps_mark, 0xff, ps->ps_avail_size / p->p_item_size);
-    }
+    mark_segments(p);
 
-    for(pi = p->p_item; pi != NULL; pi = pi->link) {
-      LIST_FOREACH(ps, &p->p_segments, ps_link) {
-	if((intptr_t)pi >= (intptr_t)ps->ps_addr && 
-	   (intptr_t)pi < (intptr_t)ps->ps_addr + ps->ps_avail_size) {
-	  size_t off = ((void *)pi - ps->ps_addr) / p->p_item_size;
-	  ps->ps_mark[off] = 0;
-	}
-      }
-    }
-   
     LIST_FOREACH(ps, &p->p_segments, ps_link) {
       int items = ps->ps_avail_size / p->p_item_size;
       int i;
@@ -187,10 +211,10 @@ pool_destroy(pool_t *p)
 
   while((ps = LIST_FIRST(&p->p_segments)) != NULL) {
     LIST_REMOVE(ps, ps_link);
-    hfree(ps->ps_addr, ps->ps_alloc_size);
 #ifdef POOL_DEBUG
     free(ps->ps_mark);
 #endif
+    hfree(ps->ps_addr, ps->ps_alloc_size);
   }
     
   if(p->p_num_out)
@@ -300,3 +324,29 @@ pool_num(pool_t *p)
 {
   return p->p_num_out;
 }
+
+
+#ifdef POOL_DEBUG
+/**
+ *
+ */
+void
+pool_foreach(pool_t *p, void (*fn)(void *ptr, void *opaque), void *opaque)
+{
+  pool_segment_t *ps;
+
+  mark_segments(p);
+
+  LIST_FOREACH(ps, &p->p_segments, ps_link) {
+    int items = ps->ps_avail_size / p->p_item_size;
+    int i;
+    for(i = 0; i < items; i++) {
+      if(ps->ps_mark[i]) {
+        fn(ps->ps_addr + i * p->p_item_size + sizeof(pool_item_dbg_t), opaque);
+      }
+    }
+  }
+
+  unmark_segments(p);
+}
+#endif

@@ -70,3 +70,7 @@ void pool_put(pool_t *p, void *ptr);
 void pool_destroy(pool_t *p);
 
 int pool_num(pool_t *p);
+
+#ifdef POOL_DEBUG
+void pool_foreach(pool_t *p, void (*fn)(void *ptr, void *opaque), void *opaque);
+#endif
