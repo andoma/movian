@@ -65,7 +65,7 @@ HttpResponse.prototype.toString = function() {
 /**
  *
  */ 
-exports.request = function(url, ctrl) {
+exports.request = function(url, ctrl, callback) {
 
   // If ctrl.args is an array we assume it's an array of objects
   // so we merge all those objects into one
@@ -80,6 +80,8 @@ exports.request = function(url, ctrl) {
     ctrl.args = a0;
   }
 
-  var res = Showtime.httpReq(url, ctrl || {});
+  var res = Showtime.httpReq(url, ctrl || {}, callback);
+  if(callback)
+    return undefined;
   return new HttpResponse(res.buffer, res.responseheaders);
 }
