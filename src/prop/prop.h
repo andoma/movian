@@ -112,7 +112,11 @@ typedef void (prop_callback_destroyed_t)(void *opaque, struct prop_sub *s);
 
 typedef void (prop_trampoline_t)(struct prop_sub *s, prop_event_t event, ...);
 
-typedef void (prop_lockmgr_t)(void *ptr, int lock);
+#define PROP_LOCK_RELEASE 0
+#define PROP_LOCK_ACQUIRE 1
+#define PROP_LOCK_TRY     2
+
+typedef int (prop_lockmgr_t)(void *ptr, int lock);
 
 
 /**
@@ -167,7 +171,6 @@ enum {
   PROP_TAG_ROOT,
   PROP_TAG_NAMED_ROOT,
   PROP_TAG_MUTEX,
-  PROP_TAG_EXTERNAL_LOCK,
   PROP_TAG_NAMESTR,
 #ifdef PROP_SUB_RECORD_SOURCE
   PROP_TAG_SOURCE,

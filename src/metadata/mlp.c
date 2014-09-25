@@ -50,7 +50,6 @@
 
 static hts_mutex_t metadata_mutex;
 static hts_cond_t metadata_loading_cond;
-static prop_courier_t *metadata_courier;
 
 static int metadata_num_threads;
 
@@ -291,7 +290,7 @@ metadata_bind_artistpics(prop_t *prop, rstr_t *artist)
     prop_subscribe(PROP_SUB_TRACK_DESTROY_EXP | PROP_SUB_SUBSCRIPTION_MONITOR,
 		   PROP_TAG_CALLBACK_USER_INT, mlp_sub_cb, mla,
 		   METADATA_PROP_ARTIST_PICTURES,
-		   PROP_TAG_COURIER, metadata_courier,
+		   PROP_TAG_MUTEX, &metadata_mutex,
 		   PROP_TAG_ROOT, prop,
 		   NULL);
 }
@@ -377,7 +376,7 @@ metadata_bind_albumart(prop_t *prop, rstr_t *artist, rstr_t *album)
     prop_subscribe(PROP_SUB_TRACK_DESTROY_EXP | PROP_SUB_SUBSCRIPTION_MONITOR,
 		   PROP_TAG_CALLBACK_USER_INT, mlp_sub_cb, mla,
 		   METADATA_PROP_ALBUM_ART,
-		   PROP_TAG_COURIER, metadata_courier,
+		   PROP_TAG_MUTEX, &metadata_mutex,
 		   PROP_TAG_ROOT, prop,
 		   NULL);
 }
@@ -1570,7 +1569,7 @@ mlv_sub(metadata_lazy_video_t *mlv, prop_t *m,
   prop_sub_t *s = 
     prop_subscribe(PROP_SUB_TRACK_DESTROY_EXP | PROP_SUB_SUBSCRIPTION_MONITOR,
 		   PROP_TAG_CALLBACK_USER_INT, mlp_sub_cb, mlv, id,
-		   PROP_TAG_COURIER, metadata_courier,
+		   PROP_TAG_MUTEX, &metadata_mutex,
 		   PROP_TAG_NAMED_ROOT, m, "metadata",
 		   PROP_TAG_NAME_VECTOR, vec,
 		   NULL);
@@ -1624,7 +1623,7 @@ mlv_add_options(metadata_lazy_video_t *mlv)
   mlv->mlv_source_opt_sub = 
     prop_subscribe(PROP_SUB_SUBSCRIPTION_MONITOR | PROP_SUB_TRACK_DESTROY,
 		   PROP_TAG_CALLBACK, mlv_sub_source, mlv,
-		   PROP_TAG_COURIER, metadata_courier,
+		   PROP_TAG_MUTEX, &metadata_mutex,
 		   PROP_TAG_ROOT, prop_create(p, "options"),
 		   NULL);
   mlv->mlv_mlp.mlp_refcount++;
@@ -1645,7 +1644,7 @@ mlv_add_options(metadata_lazy_video_t *mlv)
   mlv->mlv_alt_opt_sub = 
     prop_subscribe(PROP_SUB_SUBSCRIPTION_MONITOR | PROP_SUB_TRACK_DESTROY,
 		   PROP_TAG_CALLBACK, mlv_sub_alternative, mlv,
-		   PROP_TAG_COURIER, metadata_courier,
+		   PROP_TAG_MUTEX, &metadata_mutex,
 		   PROP_TAG_ROOT, prop_create(p, "options"),
 		   NULL);
   mlv->mlv_mlp.mlp_refcount++;
@@ -1672,7 +1671,7 @@ mlv_add_options(metadata_lazy_video_t *mlv)
     prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_NO_INITIAL_UPDATE,
 		   PROP_TAG_NAME("option", "value"),
 		   PROP_TAG_CALLBACK, mlv_custom_query_cb, mlv,
-		   PROP_TAG_COURIER, metadata_courier,
+		   PROP_TAG_MUTEX, &metadata_mutex,
 		   PROP_TAG_NAMED_ROOT, p, "option",
 		   NULL);
   mlv->mlv_mlp.mlp_refcount++;
@@ -1694,7 +1693,7 @@ mlv_add_options(metadata_lazy_video_t *mlv)
   mlv->mlv_refresh_sub = 
     prop_subscribe(PROP_SUB_TRACK_DESTROY,
 		   PROP_TAG_CALLBACK, mlv_sub_actions, mlv,
-		   PROP_TAG_COURIER, metadata_courier,
+		   PROP_TAG_MUTEX, &metadata_mutex,
 		   PROP_TAG_ROOT, mlv->mlv_root,
 		   NULL);
   mlv->mlv_mlp.mlp_refcount++;
@@ -1718,7 +1717,7 @@ mlv_add_options(metadata_lazy_video_t *mlv)
     prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_NO_INITIAL_UPDATE,
 		   PROP_TAG_NAME("option", "value"),
 		   PROP_TAG_CALLBACK, mlv_custom_title_cb, mlv,
-		   PROP_TAG_COURIER, metadata_courier,
+		   PROP_TAG_MUTEX, &metadata_mutex,
 		   PROP_TAG_NAMED_ROOT, p, "option",
 		   NULL);
 
@@ -1821,7 +1820,7 @@ metadata_bind_video_info(rstr_t *url, rstr_t *filename,
     prop_subscribe(PROP_SUB_SUBSCRIPTION_MONITOR | PROP_SUB_TRACK_DESTROY,
 		   PROP_TAG_NAME("node", "options"),
 		   PROP_TAG_CALLBACK, mlv_options_cb, mlv,
-		   PROP_TAG_COURIER, metadata_courier,
+		   PROP_TAG_MUTEX, &metadata_mutex,
 		   PROP_TAG_NAMED_ROOT, root, "node",
 		   NULL);
 
@@ -1963,7 +1962,4 @@ mlp_init(void)
   TAILQ_INIT(&mlpqueue);
   hts_mutex_init(&metadata_mutex);
   hts_cond_init(&metadata_loading_cond, &metadata_mutex);
-
-  metadata_courier = prop_courier_create_thread(&metadata_mutex, "mlp", 0);
-
 }

@@ -42,13 +42,28 @@ hts_mutex_t prop_mutex;
 hts_mutex_t prop_tag_mutex;
 static prop_t *prop_global;
 
-static prop_courier_t *global_courier;
 
 pool_t *prop_pool;
 pool_t *notify_pool;
 pool_t *sub_pool;
 pool_t *pot_pool;
+pool_t *psd_pool;
 
+
+// Global dispatch
+
+
+#define PROP_GLOBAL_DISPATCH_IDLE_THREADS 4
+#define PROP_GLOBAL_DISPATCH_MAX_THREADS  8
+
+static hts_cond_t prop_global_dispatch_cond;
+static struct prop_sub_dispatch_queue prop_global_dispatch_queue;
+static struct prop_sub_dispatch_queue prop_global_dispatch_dispatching_queue;
+static int prop_global_dispatch_running;
+static int prop_global_dispatch_avail;
+
+
+// Some forward decl.
 static void prop_unlink0(prop_t *p, prop_sub_t *skipme, const char *origin,
 			 struct prop_notify_queue *pnq);
 
@@ -172,15 +187,18 @@ prop_get_DN(prop_t *p, int compact)
 /**
  * Default lockmanager for normal mutexes
  */
-static void
+static int
 proplockmgr(void *ptr, int lock)
 {
   hts_mutex_t *mtx = (hts_mutex_t *)ptr;
 
-  if(lock)
+  if(lock == PROP_LOCK_TRY) {
+    return hts_mutex_trylock(mtx);
+  } else if(lock == PROP_LOCK_ACQUIRE)
     hts_mutex_lock(mtx);
   else
     hts_mutex_unlock(mtx);
+  return 0;
 }
 
 #ifdef PROP_DEBUG
@@ -831,29 +849,36 @@ notify_invoke(prop_sub_t *s, prop_notify_t *n)
 /**
  *
  */
-void
-prop_dispatch_one(prop_notify_t *n)
+int
+prop_dispatch_one(prop_notify_t *n, int lockmode)
 {
+  assert(lockmode != 0);
   prop_sub_t *s = n->hpn_sub;
 
   assert((s->hps_flags & PROP_SUB_INTERNAL) == 0);
 
-  if(s->hps_lock != NULL)
-    s->hps_lockmgr(s->hps_lock, 1);
-    
+  if(s->hps_lock != NULL) {
+    if(s->hps_lockmgr(s->hps_lock, lockmode)) {
+      assert(lockmode == PROP_LOCK_TRY);
+      return 1;
+    }
+  }
+
   if(s->hps_zombie) {
 
     if(s->hps_lock != NULL)
       s->hps_lockmgr(s->hps_lock, 0);
 
     prop_notify_free_payload(n);
-    return;
+    return 0;
   }
 
   notify_invoke(s, n);
 
   if(s->hps_lock != NULL)
     s->hps_lockmgr(s->hps_lock, 0);
+
+  return 0;
 }
 
 /**
@@ -874,7 +899,7 @@ prop_notify_dispatch(struct prop_notify_queue *q, const char *trace_name)
       snprintf(info, sizeof(info), "%p", n->hpn_sub);
 #endif
       int64_t ts = showtime_get_ts();
-      prop_dispatch_one(n);
+      prop_dispatch_one(n, PROP_LOCK_ACQUIRE);
       ts = showtime_get_ts() - ts;
       if(ts > 10000) {
         TRACE(ts > 100000 ? TRACE_INFO : TRACE_DEBUG,
@@ -885,7 +910,7 @@ prop_notify_dispatch(struct prop_notify_queue *q, const char *trace_name)
 
   } else {
     TAILQ_FOREACH(n, q, hpn_link)
-      prop_dispatch_one(n);
+      prop_dispatch_one(n, PROP_LOCK_ACQUIRE);
   }
 
   hts_mutex_lock(&prop_mutex);
@@ -965,6 +990,124 @@ prop_courier(void *aux)
 /**
  *
  */
+static void *
+prop_global_dispatch_thread(void *aux)
+{
+  prop_sub_dispatch_t *psd, *s;
+  prop_notify_t *n;
+
+  hts_mutex_lock(&prop_mutex);
+  while(1) {
+    psd = TAILQ_FIRST(&prop_global_dispatch_queue);
+    if(psd == NULL) {
+      if(prop_global_dispatch_avail == PROP_GLOBAL_DISPATCH_IDLE_THREADS)
+        break;
+
+      prop_global_dispatch_avail++;
+      hts_cond_wait(&prop_global_dispatch_cond, &prop_mutex);
+      prop_global_dispatch_avail--;
+      continue;
+    }
+
+    TAILQ_REMOVE(&prop_global_dispatch_queue, psd, psd_link);
+
+    TAILQ_INSERT_TAIL(&prop_global_dispatch_dispatching_queue, psd, psd_link);
+
+    n = TAILQ_FIRST(&psd->psd_notifications);
+    assert(n != NULL);
+
+    hts_mutex_unlock(&prop_mutex);
+    int r = prop_dispatch_one(n, PROP_LOCK_TRY);
+    hts_mutex_lock(&prop_mutex);
+
+    TAILQ_REMOVE(&prop_global_dispatch_dispatching_queue, psd, psd_link);
+
+
+    if(r) {
+      // Failed to acquire lock
+      // Check if any other 'psd' is holding the lock
+
+      TAILQ_FOREACH(s, &prop_global_dispatch_dispatching_queue, psd_link) {
+        assert(s != psd); // We should not find ourself in here
+
+        prop_notify_t *n2 = TAILQ_FIRST(&s->psd_notifications);
+        assert(n2 != NULL);
+
+        if(n2->hpn_sub->hps_zombie == 0 && n->hpn_sub->hps_zombie == 0 &&
+           n2->hpn_sub->hps_lockmgr == n->hpn_sub->hps_lockmgr &&
+           n2->hpn_sub->hps_lock    == n->hpn_sub->hps_lock) {
+          // Found another subscription, piggy back to that
+          TAILQ_INSERT_TAIL(&s->psd_wait_queue, psd, psd_link);
+          break;
+        }
+      }
+
+      if(s == NULL) {
+
+        // Didn't find a contending psd, something else must be locking it.
+        // Wait
+
+        TAILQ_INSERT_TAIL(&prop_global_dispatch_dispatching_queue, psd,
+                          psd_link);
+        hts_mutex_unlock(&prop_mutex);
+        prop_dispatch_one(n, PROP_LOCK_ACQUIRE);
+        hts_mutex_lock(&prop_mutex);
+        TAILQ_REMOVE(&prop_global_dispatch_dispatching_queue, psd, psd_link);
+
+      } else {
+        // Ok, we're now tagged onto another psd, find something else to do
+        continue;
+      }
+    }
+
+    TAILQ_REMOVE(&psd->psd_notifications, n, hpn_link);
+
+    s = TAILQ_FIRST(&psd->psd_wait_queue);
+    if(s != NULL) {
+      TAILQ_REMOVE(&psd->psd_wait_queue, s, psd_link);
+      TAILQ_INSERT_TAIL(&prop_global_dispatch_queue, s, psd_link);
+      TAILQ_MOVE(&s->psd_wait_queue, &psd->psd_wait_queue, psd_link);
+    }
+
+    if(TAILQ_FIRST(&psd->psd_notifications) == NULL) {
+      n->hpn_sub->hps_dispatch = NULL;
+      pool_put(psd_pool, psd);
+    } else {
+      // Insert at end of queue to make sure we round robin between
+      // all subscriptions
+      TAILQ_INSERT_TAIL(&prop_global_dispatch_queue, psd, psd_link);
+    }
+
+    prop_sub_ref_dec_locked(n->hpn_sub);
+    pool_put(notify_pool, n);
+  }
+  prop_global_dispatch_running--;
+  hts_mutex_unlock(&prop_mutex);
+  return NULL;
+}
+
+
+/**
+ *
+ */
+static void
+prop_global_dispatch_wakeup(void)
+{
+  if(prop_global_dispatch_avail > 0) {
+    hts_cond_signal(&prop_global_dispatch_cond);
+  } else {
+    if(prop_global_dispatch_running < PROP_GLOBAL_DISPATCH_MAX_THREADS) {
+      prop_global_dispatch_running++;
+      hts_thread_create_detached("propdispatch",
+                                 prop_global_dispatch_thread, NULL,
+                                 THREAD_PRIO_BGTASK);
+    }
+  }
+}
+
+/**
+ *
+ */
 static void
 courier_notify(prop_courier_t *pc)
 {
@@ -979,17 +1122,44 @@ courier_notify(prop_courier_t *pc)
  *
  */
 static void
-courier_enqueue(prop_sub_t *s, prop_notify_t *n)
+courier_enqueue0(prop_sub_t *s, prop_notify_t *n, int expedite)
 {
-  prop_courier_t *pc = s->hps_courier;
-  
-  if(s->hps_flags & PROP_SUB_EXPEDITE)
-    TAILQ_INSERT_TAIL(&pc->pc_queue_exp, n, hpn_link);
-  else
-    TAILQ_INSERT_TAIL(&pc->pc_queue_nor, n, hpn_link);
-  courier_notify(pc);
+  if(s->hps_global_dispatch) {
+
+    prop_sub_dispatch_t *psd = s->hps_dispatch;
+
+    if(psd == NULL) {
+      psd = s->hps_dispatch = pool_get(psd_pool);
+      TAILQ_INIT(&psd->psd_notifications);
+      TAILQ_INIT(&psd->psd_wait_queue);
+      TAILQ_INSERT_TAIL(&prop_global_dispatch_queue, psd, psd_link);
+      prop_global_dispatch_wakeup();
+    }
+
+    TAILQ_INSERT_TAIL(&psd->psd_notifications, n, hpn_link);
+
+  } else {
+
+    prop_courier_t *pc = s->hps_dispatch;
+
+    if(expedite)
+      TAILQ_INSERT_TAIL(&pc->pc_queue_exp, n, hpn_link);
+    else
+      TAILQ_INSERT_TAIL(&pc->pc_queue_nor, n, hpn_link);
+
+    courier_notify(pc);
+  }
 }
 
+
+/**
+ *
+ */
+static void
+courier_enqueue(prop_sub_t *s, prop_notify_t *n)
+{
+  courier_enqueue0(s, n, s->hps_flags & PROP_SUB_EXPEDITE);
+}
 
 
 /**
@@ -1218,12 +1388,8 @@ prop_notify_destroyed(prop_sub_t *s)
 
   n->hpn_event = PROP_DESTROYED;
 
-  prop_courier_t *pc = s->hps_courier;  
-  if(s->hps_flags & (PROP_SUB_EXPEDITE | PROP_SUB_TRACK_DESTROY_EXP))
-    TAILQ_INSERT_TAIL(&pc->pc_queue_exp, n, hpn_link);
-  else
-    TAILQ_INSERT_TAIL(&pc->pc_queue_nor, n, hpn_link);
-  courier_notify(pc);
+  courier_enqueue0(s, n, s->hps_flags & (PROP_SUB_EXPEDITE |
+                                         PROP_SUB_TRACK_DESTROY_EXP));
 }
 
 
@@ -2637,11 +2803,6 @@ prop_subscribe(int flags, ...)
       lock = va_arg(ap, void *);
       break;
 
-    case PROP_TAG_EXTERNAL_LOCK:
-      lock    = va_arg(ap, void *);
-      lockmgr = va_arg(ap, void *);
-      break;
-
 #ifdef PROP_SUB_RECORD_SOURCE
     case PROP_TAG_SOURCE:
       file = va_arg(ap, const char *);
@@ -2756,15 +2917,17 @@ prop_subscribe(int flags, ...)
   }
 
   if(pc != NULL) {
-    s->hps_courier = pc;
+    s->hps_global_dispatch = 0;
+    s->hps_dispatch = pc;
     s->hps_lock = pc->pc_entry_lock;
     s->hps_lockmgr = pc->pc_lockmgr ?: lockmgr;
+    pc->pc_refcount++;
   } else {
-    s->hps_courier = global_courier;
+    s->hps_global_dispatch = 1;
+    s->hps_dispatch = NULL;
     s->hps_lock = lock;
     s->hps_lockmgr = lockmgr;
   }
-  s->hps_courier->pc_refcount++;
 
   s->hps_canonical_prop = canonical;
   if(canonical != NULL) {
@@ -2870,7 +3033,10 @@ prop_unsubscribe0(prop_sub_t *s)
 #endif
 
   s->hps_zombie = 1;
-  s->hps_courier->pc_refcount--;
+  if(!s->hps_global_dispatch) {
+    prop_courier_t *pc = s->hps_dispatch;
+    pc->pc_refcount--;
+  }
 
   if(s->hps_value_prop != NULL) {
     LIST_REMOVE(s, hps_value_prop_link);
@@ -2963,18 +3129,21 @@ prop_init(void)
 {
   hts_mutex_init(&prop_mutex);
   hts_mutex_init(&prop_tag_mutex);
+  hts_cond_init(&prop_global_dispatch_cond, &prop_mutex);
+
+  TAILQ_INIT(&prop_global_dispatch_queue);
+  TAILQ_INIT(&prop_global_dispatch_dispatching_queue);
+
 
   prop_pool   = pool_create("prop", sizeof(prop_t), 0);
   notify_pool = pool_create("notify", sizeof(prop_notify_t), 0);
   sub_pool    = pool_create("subs", sizeof(prop_sub_t), 0);
   pot_pool    = pool_create("pots", sizeof(prop_originator_tracking_t), 0);
-  
+  psd_pool    = pool_create("psds", sizeof(prop_sub_dispatch_t), 0);
+
   hts_mutex_lock(&prop_mutex);
   prop_global = prop_make("global", 1, NULL);
   hts_mutex_unlock(&prop_mutex);
-
-  global_courier = prop_courier_create_thread(NULL, "global", 
-                                              PROP_COURIER_TRACE_TIMES);
 }
 
 
@@ -4538,15 +4707,42 @@ prop_courier_wait_and_dispatch(prop_courier_t *pc)
 }
 
 
+
+#ifdef POOL_DEBUG
+static void
+debug_check_courier(void *ptr, void *pc)
+{
+  prop_sub_t *hps = ptr;
+  if(hps->hps_dispatch == pc) {
+#ifdef PROP_SUB_RECORD_SOURCE
+    trace(TRACE_NO_PROP, TRACE_ERROR, "prop",
+          "Subscription at %s:%d lingering", hps->hps_file, hps->hps_line);
+#else
+    trace(TRACE_NO_PROP, TRACE_ERROR, "prop",
+          "Subscription at %p lingering", hps);
+#endif
+  }
+}
+
+#endif
+
 /**
  *
  */
 void
 prop_courier_destroy(prop_courier_t *pc)
 {
-  if(pc->pc_refcount != 0)
+  if(pc->pc_refcount != 0) {
     trace(TRACE_NO_PROP, TRACE_ERROR, "prop",
-	  "Refcnt is %d on courier destroy", pc->pc_refcount);
+	  "Refcnt is %d on courier '%s' destroy", pc->pc_refcount,
+          pc->pc_name);
+
+#ifdef POOL_DEBUG
+    hts_mutex_lock(&prop_mutex);
+    pool_foreach(sub_pool, debug_check_courier, pc);
+    hts_mutex_unlock(&prop_mutex);
+#endif
+  }
 
   if(pc->pc_run) {
     hts_mutex_lock(&prop_mutex);
@@ -4622,7 +4818,7 @@ prop_courier_poll_timed(prop_courier_t *pc, int maxtime)
   int64_t ts = showtime_get_ts();
 
   while((n = TAILQ_FIRST(&pc->pc_dispatch_queue)) != NULL) {
-    prop_dispatch_one(n);
+    prop_dispatch_one(n, PROP_LOCK_ACQUIRE);
     TAILQ_REMOVE(&pc->pc_dispatch_queue, n, hpn_link);
     TAILQ_INSERT_TAIL(&pc->pc_free_queue, n, hpn_link);
     if(showtime_get_ts() > ts + maxtime)

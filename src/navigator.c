@@ -44,7 +44,6 @@ TAILQ_HEAD(nav_page_queue, nav_page);
 LIST_HEAD(bookmark_list, bookmark);
 LIST_HEAD(navigator_list, navigator);
 
-static prop_courier_t *nav_courier;
 static prop_t *bookmark_root;
 static prop_t *bookmark_nodes;
 
@@ -222,14 +221,14 @@ nav_create(prop_t *prop)
   nav->nav_eventsink =
     prop_subscribe(0,
 		   PROP_TAG_CALLBACK_EVENT, nav_eventsink, nav,
-		   PROP_TAG_COURIER, nav_courier,
+		   PROP_TAG_MUTEX, &nav_mutex,
 		   PROP_TAG_ROOT, eventsink,
 		   NULL);
 
   nav->nav_dtor_tracker =
     prop_subscribe(PROP_SUB_TRACK_DESTROY,
 		   PROP_TAG_CALLBACK, nav_dtor_tracker, nav,
-		   PROP_TAG_COURIER, nav_courier,
+		   PROP_TAG_MUTEX, &nav_mutex,
 		   PROP_TAG_ROOT, nav->nav_prop_root,
 		   NULL);
 
@@ -273,8 +272,6 @@ nav_spawn(void)
 void
 nav_init(void)
 {
-  nav_courier = prop_courier_create_thread(&nav_mutex, "navigator",
-                                           PROP_COURIER_TRACE_TIMES);
   bookmarks_init();
 }
 
@@ -562,7 +559,7 @@ nav_page_setup_prop(nav_page_t *np, const char *view, const char *how)
 		   PROP_TAG_ROOT, np->np_prop_root,
 		   PROP_TAG_NAME("page", "close"),
 		   PROP_TAG_CALLBACK_INT, nav_page_close_set, np,
-		   PROP_TAG_COURIER, nav_courier,
+		   PROP_TAG_MUTEX, &nav_mutex,
 		   NULL);
 
   prop_set_string(prop_create(np->np_prop_root, "url"), np->np_url);
@@ -574,7 +571,7 @@ nav_page_setup_prop(nav_page_t *np, const char *view, const char *how)
 		   PROP_TAG_ROOT, np->np_prop_root,
 		   PROP_TAG_NAME("page", "directClose"),
 		   PROP_TAG_CALLBACK_INT, nav_page_direct_close_set, np,
-		   PROP_TAG_COURIER, nav_courier,
+		   PROP_TAG_MUTEX, &nav_mutex,
 		   NULL);
 
   np->np_eventsink_sub = 
@@ -582,7 +579,7 @@ nav_page_setup_prop(nav_page_t *np, const char *view, const char *how)
 		   PROP_TAG_ROOT, np->np_prop_root,
 		   PROP_TAG_NAME("page", "eventSink"),
 		   PROP_TAG_CALLBACK_EVENT, page_eventsink, np,
-		   PROP_TAG_COURIER, nav_courier,
+		   PROP_TAG_MUTEX, &nav_mutex,
 		   NULL);
 
 
@@ -594,7 +591,7 @@ nav_page_setup_prop(nav_page_t *np, const char *view, const char *how)
     prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_IGNORE_VOID,
 		   PROP_TAG_ROOT, np->np_bookmarked,
 		   PROP_TAG_CALLBACK_INT, nav_page_bookmarked_set, np,
-		   PROP_TAG_COURIER, nav_courier,
+		   PROP_TAG_MUTEX, &nav_mutex,
 		   NULL);
 
   np->np_title_sub =
@@ -602,7 +599,7 @@ nav_page_setup_prop(nav_page_t *np, const char *view, const char *how)
 		   PROP_TAG_NAME("page", "model", "metadata", "title"),
 		   PROP_TAG_ROOT, np->np_prop_root,
 		   PROP_TAG_CALLBACK_RSTR, nav_page_title_set, np,
-		   PROP_TAG_COURIER, nav_courier,
+		   PROP_TAG_MUTEX, &nav_mutex,
 		   NULL);
 
   np->np_icon_sub =
@@ -610,7 +607,7 @@ nav_page_setup_prop(nav_page_t *np, const char *view, const char *how)
 		   PROP_TAG_NAME("page", "model", "metadata", "logo"),
 		   PROP_TAG_ROOT, np->np_prop_root,
 		   PROP_TAG_CALLBACK_RSTR, nav_page_icon_set, np,
-		   PROP_TAG_COURIER, nav_courier,
+		   PROP_TAG_MUTEX, &nav_mutex,
 		   NULL);
 }
 
@@ -1075,7 +1072,7 @@ add_prop(prop_t *parent, const char *name, rstr_t *value,
   return prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
 			PROP_TAG_CALLBACK_RSTR, cb, bm,
 			PROP_TAG_ROOT, p, 
-			PROP_TAG_COURIER, nav_courier,
+                        PROP_TAG_MUTEX, &nav_mutex,
 			NULL);
 }
 
@@ -1140,7 +1137,7 @@ bookmark_add(const char *title, const char *url, const char *type,
   prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_NO_INITIAL_UPDATE,
 		 PROP_TAG_CALLBACK, bookmark_destroyed, bm,
 		 PROP_TAG_ROOT, p,
-		 PROP_TAG_COURIER, nav_courier,
+                 PROP_TAG_MUTEX, &nav_mutex,
 		 NULL);
 
   // Construct the settings page
@@ -1170,7 +1167,7 @@ bookmark_add(const char *title, const char *url, const char *type,
                    SETTING_OPTION("tv",     _p("TV")),
                    SETTING_OPTION("photos", _p("Photos")),
                    SETTING_CALLBACK(change_type, bm),
-                   SETTING_COURIER(nav_courier),
+                   SETTING_MUTEX(&nav_mutex),
                    NULL);
 
   bm->bm_vfs_setting =
@@ -1178,7 +1175,7 @@ bookmark_add(const char *title, const char *url, const char *type,
                    SETTING_TITLE(_p("Published in Virtual File System")),
                    SETTING_VALUE(vfs),
                    SETTING_CALLBACK(bm_set_vfs, bm),
-                   SETTING_COURIER(nav_courier),
+                   SETTING_MUTEX(&nav_mutex),
                    NULL);
 
   prop_link(prop_create(md, "url"), prop_create(md, "shortdesc"));
@@ -1188,7 +1185,12 @@ bookmark_add(const char *title, const char *url, const char *type,
 		       service_get_statustxt_prop(bm->bm_service));
 
   bm->bm_delete =
-    settings_create_action(m, _p("Delete"), bm_delete, bm, 0, nav_courier);
+    setting_create(SETTING_ACTION, m, 0,
+                   SETTING_TITLE(_p("Delete")),
+                   SETTING_CALLBACK(bm_delete, bm),
+                   SETTING_MUTEX(&nav_mutex),
+                   NULL);
+
 
   if(prop_set_parent(p, bookmark_nodes))
     abort();
@@ -1255,9 +1257,9 @@ bookmarks_init(void)
   prop_subscribe(0,
 		 PROP_TAG_CALLBACK, bookmarks_callback, NULL,
 		 PROP_TAG_ROOT, bookmark_nodes,
-		 PROP_TAG_COURIER, nav_courier,
+                 PROP_TAG_MUTEX, &nav_mutex,
 		 NULL);
-  
+
   if((m = htsmsg_store_load("bookmarks")) != NULL) {
     htsmsg_t *n = htsmsg_get_map(m, "nodes");
     if(n != NULL) {
