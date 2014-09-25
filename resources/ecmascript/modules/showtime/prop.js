@@ -43,7 +43,11 @@ var propHandler = {
     } else {
       Showtime.propSet(obj, name, value);
     }
-  }
+  },
+
+  enumerate: Showtime.propEnum,
+  has: Showtime.propHas,
+  deleteProperty: Showtime.propDeleteChild
 }
 
 

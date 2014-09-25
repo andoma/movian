@@ -167,7 +167,13 @@ static int
 es_prop_get_child_duk(duk_context *ctx)
 {
   prop_t *p = es_stprop_get(ctx, 0);
-  const char *str = duk_require_string(ctx, 1);
+  const char *str = NULL;
+  int idx = 0;
+  if(duk_is_number(ctx, 1)) {
+    idx = duk_to_int(ctx, 1);
+  } else {
+    str = duk_require_string(ctx, 1);
+  }
 
   hts_mutex_lock(&prop_mutex);
 
@@ -176,11 +182,100 @@ es_prop_get_child_duk(duk_context *ctx)
     return 0;
   }
 
-  p = prop_create0(p, str, NULL, 0);
-  es_push_native_obj(ctx, ES_NATIVE_PROP, prop_ref_inc(p));
+  if(str != NULL) {
+    p = prop_create0(p, str, NULL, 0);
+  } else {
+    prop_t *c;
+    TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link) {
+      if(idx == 0)
+        break;
+      idx--;
+    }
+
+    p = c;
+  }
+
+  if(p != NULL) {
+    es_push_native_obj(ctx, ES_NATIVE_PROP, prop_ref_inc(p));
+    hts_mutex_unlock(&prop_mutex);
+    return 1;
+  }
   hts_mutex_unlock(&prop_mutex);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+es_prop_enum_duk(duk_context *ctx)
+{
+  prop_t *p = es_stprop_get(ctx, 0);
+
+  duk_push_array(ctx);
+
+  hts_mutex_lock(&prop_mutex);
+
+
+  if(p->hp_type == PROP_DIR) {
+    prop_t *c;
+    int idx = 0;
+    TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link) {
+      if(c->hp_name)
+        duk_push_string(ctx, c->hp_name);
+      else
+        duk_push_int(ctx, idx);
+
+      duk_put_prop_index(ctx, -2, idx++);
+    }
+  }
+  hts_mutex_unlock(&prop_mutex);
+  duk_dump_context_stdout(ctx);
   return 1;
 }
+
+
+/**
+ *
+ */
+static int
+es_prop_has_duk(duk_context *ctx)
+{
+  prop_t *p = es_stprop_get(ctx, 0);
+  const char *name = duk_get_string(ctx, 1);
+  int yes = 0;
+
+  hts_mutex_lock(&prop_mutex);
+
+  if(p->hp_type == PROP_DIR) {
+    prop_t *c;
+    TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link) {
+      if(c->hp_name != NULL && !strcmp(c->hp_name, name)) {
+        yes = 1;
+        break;
+      }
+    }
+  }
+  hts_mutex_unlock(&prop_mutex);
+  duk_push_boolean(ctx, yes);
+  return 1;
+}
+
+
+/**
+ *
+ */
+static int
+es_prop_delete_child_duk(duk_context *ctx)
+{
+  prop_t *p = es_stprop_get(ctx, 0);
+  const char *name = duk_require_string(ctx, 1);
+  prop_destroy_by_name(p, name);
+  duk_push_boolean(ctx, 1);
+  return 1;
+}
+
 
 //#define SETPRINTF(fmt...) printf(fmt);
 #define SETPRINTF(fmt, ...)
@@ -465,6 +560,9 @@ const duk_function_list_entry fnlist_Showtime_prop[] = {
   { "propHaveMore",            es_prop_have_more,             2 },
   { "propMakeUrl",             es_prop_make_url,              1 },
   { "propGlobal",              es_prop_get_global,            0 },
+  { "propEnum",                es_prop_enum_duk,              1 },
+  { "propHas",                 es_prop_has_duk,               2 },
+  { "propDeleteChild",         es_prop_delete_child_duk,      2 },
 
   { NULL, NULL, 0}
 };
