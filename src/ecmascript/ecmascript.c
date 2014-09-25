@@ -441,6 +441,14 @@ es_context_release(es_context_t *ec)
   TRACE(TRACE_DEBUG, "ECMASCRIPT", "%s fully unloaded", ec->ec_id);
   free(ec->ec_id);
   free(ec->ec_path);
+
+  if(ec->ec_linked) {
+    hts_mutex_lock(&es_context_mutex);
+    es_num_contexts--;
+    LIST_REMOVE(ec, ec_link);
+    hts_mutex_unlock(&es_context_mutex);
+  }
+
   free(ec);
 }
 
@@ -602,6 +610,7 @@ ecmascript_plugin_load(const char *id, const char *url,
   hts_mutex_lock(&es_context_mutex);
   es_num_contexts++;
   LIST_INSERT_HEAD(&es_contexts, ec, ec_link);
+  ec->ec_linked = 1;
   hts_mutex_unlock(&es_context_mutex);
 
   if(version == 1) {
@@ -664,8 +673,10 @@ ecmascript_plugin_unload(const char *id)
   hts_mutex_lock(&es_context_mutex);
   LIST_FOREACH(ec, &es_contexts, ec_link) {
     if(!strcmp(id, ec->ec_id)) {
+      assert(ec->ec_linked);
       es_num_contexts--;
       LIST_REMOVE(ec, ec_link);
+      ec->ec_linked = 0;
       break;
     }
   }
@@ -700,6 +711,7 @@ ecmascript_init(void)
 
   hts_mutex_lock(&es_context_mutex);
   es_num_contexts++;
+  ec->ec_linked = 1;
   LIST_INSERT_HEAD(&es_contexts, ec, ec_link);
   hts_mutex_unlock(&es_context_mutex);
 

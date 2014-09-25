@@ -31,6 +31,8 @@ typedef struct es_context {
   char *ec_id;
   char *ec_path;
 
+  int ec_linked;
+
   atomic_t ec_refcount;
 
   hts_mutex_t ec_mutex;
