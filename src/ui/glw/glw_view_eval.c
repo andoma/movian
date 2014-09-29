@@ -896,8 +896,12 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
   switch(a->type) {
 
 
-  case TOKEN_OBJECT_ATTRIBUTE:
+  case TOKEN_RESOLVED_ATTRIBUTE:
     r = a->t_attrib->set(ec, a->t_attrib, b);
+    break;
+
+  case TOKEN_UNRESOLVED_ATTRIBUTE:
+    r = glw_view_unresolved_attribute_set(ec, rstr_get(a->t_rstring), b);
     break;
 
   case TOKEN_IDENTIFIER:
@@ -2424,7 +2428,8 @@ glw_view_eval_rpn0(token_t *t0, glw_view_eval_context_t *ec)
     case TOKEN_EM:
     case TOKEN_INT:
     case TOKEN_IDENTIFIER:
-    case TOKEN_OBJECT_ATTRIBUTE:
+    case TOKEN_RESOLVED_ATTRIBUTE:
+    case TOKEN_UNRESOLVED_ATTRIBUTE:
     case TOKEN_VOID:
     case TOKEN_PROPERTY_REF:
     case TOKEN_PROPERTY_OWNER:

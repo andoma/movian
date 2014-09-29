@@ -78,7 +78,8 @@ typedef enum {
                                // when token is free'd
   TOKEN_PROPERTY_NAME,
   TOKEN_PROPERTY_SUBSCRIPTION,
-  TOKEN_OBJECT_ATTRIBUTE,
+  TOKEN_RESOLVED_ATTRIBUTE,
+  TOKEN_UNRESOLVED_ATTRIBUTE,
   TOKEN_VOID,                 // Void property
   TOKEN_DIRECTORY,            // Directory property
   /* Synthetic tokens (after parser) */
@@ -302,9 +303,13 @@ void glw_view_print_tree(token_t *f, int indent);
 
 token_t *glw_view_function_resolve(glw_root_t *gr, errorinfo_t *ei, token_t *t);
 
-int glw_view_attrib_resolve(token_t *t);
+void glw_view_attrib_resolve(token_t *t);
 
 void glw_view_attrib_optimize(token_t *t, glw_root_t *gr);
+
+int glw_view_unresolved_attribute_set(glw_view_eval_context_t *ec,
+                                      const char *attrib,
+                                      struct token *t);
 
 int glw_view_seterr(errorinfo_t *ei, token_t *b, const char *fmt, ...);
 

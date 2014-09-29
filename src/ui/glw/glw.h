@@ -393,8 +393,32 @@ typedef struct glw_class {
   void (*gc_ctor)(struct glw *w);
 
   /**
-   * Set attributes GLW_ATTRIB_... for the widget.
+   * Set attributes for the widget.
+   *
+   * Return values are a bit special here
+   *
+   *  -1 = Widget does not respond to the attribute assignment using
+   *       the type (The value type is inferred from the function call)
+   *       GLW attribute assignment code may retry with a differnt type
+   *       Typicall GLW tries to assign floats using float callback first
+   *       and if that does not respond it will retry using int. Same goes
+   *       (but vice versa) for int assignment.
+   *
+   *   0 = Widget reponds to attribute but value did not change.
+   *
+   *   1 = Widget responds and a rerender is required. This also implies
+   *       a re-layout.
+   *
+   *   2 = Widget responds but only a layout is required (the layout code
+   *       will figure out if a re-render is required)
+   *
    */
+
+#define GLW_SET_NOT_RESPONING     -1
+#define GLW_SET_NO_CHANGE          0
+#define GLW_SET_RERENDER_REQUIRED  1
+#define GLW_SET_LAYOUT_ONLY        2
+
   int (*gc_set_int)(struct glw *w, glw_attribute_t a, int value);
 
   int (*gc_set_float)(struct glw *w, glw_attribute_t a, float value);
@@ -417,6 +441,20 @@ typedef struct glw_class {
   int (*gc_set_float4)(struct glw *w, glw_attribute_t a, const float *vector);
 
   int (*gc_set_int16_4)(struct glw *w, glw_attribute_t a, const int16_t *v);
+
+  /**
+   * Set attributes for the widget based on (unresolved) name only.
+   *
+   * This lets widgets respond to their own attributes.
+   *
+   * See comment above for return values (GLW_SET_*)
+   */
+  int (*gc_set_int_unresolved)(struct glw *w, const char *a, int value);
+
+  int (*gc_set_float_unresolved)(struct glw *w, const char *a, float value);
+
+  int (*gc_set_str_unresolved)(struct glw *w, const char *a, const char *value);
+
 
 
   /**

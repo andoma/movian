@@ -329,7 +329,7 @@ glw_set_blur(glw_t *w, float v)
  */
 static void
 attr_need_refresh(glw_root_t *gr, const token_t *t,
-                      const token_attrib_t *a, int how)
+                  const char *attribname, int how)
 {
 
   int flags = GLW_REFRESH_FLAG_LAYOUT;
@@ -347,7 +347,7 @@ attr_need_refresh(glw_root_t *gr, const token_t *t,
   printf("%s%s refresh requested by %s:%d attribute %s\n",
          flags & GLW_REFRESH_FLAG_LAYOUT ? "Layout " : "",
          flags & GLW_REFRESH_FLAG_RENDER ? "Render " : "",
-         rstr_get(t->file), t->line, a->name);
+         rstr_get(t->file), t->line, attribname);
 #endif
 }
 
@@ -374,7 +374,7 @@ set_number_int(glw_t *w, const token_attrib_t *a, const token_t *t, int v)
   }
 
   if(r)
-    attr_need_refresh(w->glw_root, t, a, r);
+    attr_need_refresh(w->glw_root, t, a->name, r);
 }
 
 
@@ -400,7 +400,7 @@ set_number_float(glw_t *w, const token_attrib_t *a, const token_t *t, float v)
   }
 
   if(r)
-    attr_need_refresh(w->glw_root, t, a, r);
+    attr_need_refresh(w->glw_root, t, a->name, r);
 }
 
 
@@ -438,7 +438,7 @@ set_number_em(glw_t *w, const token_attrib_t *a, const token_t *t,
   }
 
   if(r)
-    attr_need_refresh(gr, t, a, r);
+    attr_need_refresh(gr, t, a->name, r);
 }
 
 
@@ -664,7 +664,7 @@ set_float3(glw_view_eval_context_t *ec, const token_attrib_t *a,
     return 0;
   }
   if(r)
-    attr_need_refresh(w->glw_root, t, a, r);
+    attr_need_refresh(w->glw_root, t, a->name, r);
 
   return 0;
 }
@@ -736,7 +736,7 @@ set_float4(glw_view_eval_context_t *ec, const token_attrib_t *a,
     return 0;
   }
   if(r)
-    attr_need_refresh(w->glw_root, t, a, r);
+    attr_need_refresh(w->glw_root, t, a->name, r);
 
   return 0;
 }
@@ -812,7 +812,7 @@ set_int16_4(glw_view_eval_context_t *ec, const token_attrib_t *a,
     return 0;
   }
   if(r)
-    attr_need_refresh(w->glw_root, t, a, r);
+    attr_need_refresh(w->glw_root, t, a->name, r);
 
   return 0;
 }
@@ -1215,7 +1215,7 @@ set_style(glw_view_eval_context_t *ec, const token_attrib_t *a,
 
   int r = glw_style_set_for_widget(ec->w, str);
   if(r)
-    attr_need_refresh(ec->w->glw_root, t, a, r);
+    attr_need_refresh(ec->w->glw_root, t, a->name, r);
   return 0;
 }
 
@@ -1365,22 +1365,154 @@ static const token_attrib_t attribtab[] = {
 };
 
 
+
+
 /**
  *
  */
-int 
+static void
+unresolved_set_float(glw_t *w, const char *attrib, const token_t *t,
+                     float val)
+{
+  const glw_class_t *gc = w->glw_class;
+  int r;
+
+  r = gc->gc_set_float_unresolved ?
+    gc->gc_set_float_unresolved(w, attrib, val) : -1;
+
+  if(r == -1)
+    r = gc->gc_set_int_unresolved ?
+      gc->gc_set_int_unresolved(w, attrib, val) : -1;
+
+  if(r == -1) {
+    TRACE(TRACE_DEBUG, "GLW",
+          "Widget %s at %s:%d does not respond to %s=%f assignment",
+          gc->gc_name, rstr_get(t->file), t->line, attrib, val);
+    return;
+  }
+
+  if(r)
+    attr_need_refresh(w->glw_root, t, attrib, r);
+}
+
+
+/**
+ *
+ */
+static void
+unresolved_set_int(glw_t *w, const char *attrib, const token_t *t,
+                   int val)
+{
+  const glw_class_t *gc = w->glw_class;
+  int r;
+
+  r = gc->gc_set_int_unresolved ?
+    gc->gc_set_int_unresolved(w, attrib, val) : -1;
+
+  if(r == -1)
+    r = gc->gc_set_float_unresolved ?
+      gc->gc_set_float_unresolved(w, attrib, val) : -1;
+
+  if(r == -1) {
+    TRACE(TRACE_DEBUG, "GLW",
+          "Widget %s at %s:%d does not respond to %s=%d assignment",
+          gc->gc_name, rstr_get(t->file), t->line, attrib, val);
+    return;
+  }
+
+  if(r)
+    attr_need_refresh(w->glw_root, t, attrib, r);
+}
+
+
+/**
+ *
+ */
+static void
+unresolved_set_str(glw_t *w, const char *attrib, const token_t *t,
+                   const char *val)
+{
+  const glw_class_t *gc = w->glw_class;
+  int r;
+
+  r = gc->gc_set_str_unresolved ?
+    gc->gc_set_str_unresolved(w, attrib, val) : -1;
+
+  if(r == -1) {
+    TRACE(TRACE_DEBUG, "GLW",
+          "Widget %s at %s:%d does not respond to %s=\"%s\" assignment",
+          gc->gc_name, rstr_get(t->file), t->line, attrib, val);
+    return;
+  }
+
+  if(r)
+    attr_need_refresh(w->glw_root, t, attrib, r);
+}
+
+
+/**
+ *
+ */
+int
+glw_view_unresolved_attribute_set(glw_view_eval_context_t *ec,
+                                  const char *attrib,
+                                  struct token *t)
+{
+  glw_t *w = ec->w;
+
+  switch(t->type) {
+  case TOKEN_VOID:
+    break;
+
+  case TOKEN_CSTRING:
+    unresolved_set_str(w, attrib, t, t->t_cstring);
+    break;
+
+  case TOKEN_RSTRING:
+  case TOKEN_URI:
+    unresolved_set_str(w, attrib, t, rstr_get(t->t_rstring));
+    break;
+
+  case TOKEN_INT:
+    unresolved_set_int(w, attrib, t, t->t_int);
+    break;
+
+  case TOKEN_FLOAT:
+    unresolved_set_float(w, attrib, t, t->t_float);
+    break;
+
+  case TOKEN_EM:
+    ec->dynamic_eval |= GLW_VIEW_EVAL_EM;
+    unresolved_set_float(w, attrib, t,
+                         t->t_float * w->glw_root->gr_current_size);
+    break;
+  default:
+    return glw_view_seterr(ec->ei, t,
+			   "Attribute '%s' expects a different type",
+			   attrib, token2name(t));
+  }
+  return 0;
+}
+
+
+/**
+ *
+ */
+void
 glw_view_attrib_resolve(token_t *t)
 {
   int i;
 
-  for(i = 0; i < sizeof(attribtab) / sizeof(attribtab[0]); i++)
+  for(i = 0; i < sizeof(attribtab) / sizeof(attribtab[0]); i++) {
     if(!strcmp(attribtab[i].name, rstr_get(t->t_rstring))) {
       rstr_release(t->t_rstring);
       t->t_attrib = &attribtab[i];
-      t->type = TOKEN_OBJECT_ATTRIBUTE;
-      return 0;
+      t->type = TOKEN_RESOLVED_ATTRIBUTE;
+      return;
     }
-  return -1;
+  }
+
+  t->type = TOKEN_UNRESOLVED_ATTRIBUTE;
 }
 
 
