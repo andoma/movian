@@ -1208,7 +1208,7 @@ set_style(glw_view_eval_context_t *ec, const token_attrib_t *a,
     break;
 
   case TOKEN_RSTRING:
-  case TOKEN_LINK:
+  case TOKEN_URI:
     str = rstr_get(t->t_rstring);
     break;
   }
