@@ -56,7 +56,9 @@ hc_open(http_connection_t *hc, const char *remain, void *opaque,
   const char *url = http_arg_get_req(hc, "url");
 
   if(url != NULL) {
-    event_dispatch(event_create_openurl(url, NULL, NULL, NULL, NULL, NULL));
+
+    event_dispatch(event_create_playurl(url));
+
     return http_redirect(hc, "/showtime/open");
   }
 
@@ -109,7 +111,7 @@ hc_root_old(http_connection_t *hc)
   const char *url = http_arg_get_req(hc, "url");
 
   if(url != NULL) {
-    event_dispatch(event_create_openurl(url, NULL, NULL, NULL, NULL, NULL));
+    event_dispatch(event_create_openurl(url));
     return http_redirect(hc, "/");
   }
 
@@ -722,7 +724,7 @@ hc_open_parameterized(http_connection_t *hc, const char *remain,
 
   htsbuf_qprintf(&buf, "%s:%s", remain, htsmsg_json_serialize_to_str(msg, 0));
   char *s = htsbuf_to_string(&buf);
-  event_dispatch(event_create_openurl(s, NULL, NULL, NULL, NULL, NULL));
+  event_dispatch(event_create_openurl(s));
   free(s);
   htsbuf_queue_flush(&buf);
   htsmsg_release(msg);

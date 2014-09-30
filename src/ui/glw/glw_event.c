@@ -70,8 +70,12 @@ glw_event_map_navOpen_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
   if(no->url == NULL)
     return; // Must have an URL to fire
 
-  event_t *e = event_create_openurl(no->url, no->view, no->origin,
-				    no->model, no->how, no->parent_url);
+  event_t *e = event_create_openurl(.url        = no->url,
+                                    .view       = no->view,
+                                    .origin     = no->origin,
+				    .model      = no->model,
+                                    .how        = no->how,
+                                    .parent_url = no->parent_url);
   
   e->e_mapped = 1;
   glw_event_to_widget(w, e);

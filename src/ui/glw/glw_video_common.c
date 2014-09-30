@@ -479,14 +479,17 @@ glw_video_play(glw_video_t *gv)
 
   mystrset(&gv->gv_current_url, gv->gv_pending_url ?: "");
 
-  e = event_create_playurl(gv->gv_current_url, 
-			   !!(gv->gv_flags & GLW_VIDEO_PRIMARY),
-			   gv->gv_priority,
-			   !!(gv->gv_flags & GLW_VIDEO_NO_AUDIO),
-			   gv->gv_model,
-			   gv->gv_how,
-			   gv->gv_origin,
-                           rstr_get(gv->gv_parent_url_x));
+  e = event_create_playurl(
+      .url        = gv->gv_current_url,
+      .primary    = !!(gv->gv_flags & GLW_VIDEO_PRIMARY),
+      .priority   = gv->gv_priority,
+      .no_audio   = !!(gv->gv_flags & GLW_VIDEO_NO_AUDIO),
+      .model      = gv->gv_model,
+      .how        = gv->gv_how,
+      .origin     = gv->gv_origin,
+      .parent_url = rstr_get(gv->gv_parent_url_x)
+      );
+
   mp_enqueue_event(gv->gv_mp, e);
   event_release(e);
 }

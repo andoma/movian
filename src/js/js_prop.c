@@ -235,7 +235,9 @@ js_openURL(JSContext *cx, JSObject *obj, uintN argc,
   if (!JS_ConvertArguments(cx, argc, argv, "s/ss", &url, &view, &how))
     return JS_FALSE;
 
-  event_t *e = event_create_openurl(url, view, NULL, NULL, how, NULL);
+  event_t *e = event_create_openurl(.url  = url,
+                                    .view = view,
+                                    .how  = how);
   prop_send_ext_event(JS_GetPrivate(cx, obj), e);
   event_release(e);
   return JS_TRUE;

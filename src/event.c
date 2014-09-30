@@ -234,20 +234,19 @@ event_playurl_dtor(event_t *e)
  *
  */
 event_t *
-event_create_playurl(const char *url, int primary, int priority, int no_audio,
-		     prop_t *model, const char *how, prop_t *origin,
-                     const char *parent_url)
+event_create_playurl_args(const event_playurl_args_t *args)
 {
   event_playurl_t *ep = event_create(EVENT_PLAY_URL, sizeof(event_playurl_t));
-  ep->url = strdup(url);
-  ep->how = how ? strdup(how) : NULL;
-  ep->model = prop_xref_addref(model);
-  ep->origin = prop_ref_inc(origin);
-  ep->primary = primary;
-  ep->priority = priority;
-  ep->no_audio = no_audio;
-  ep->parent_url = parent_url ? strdup(parent_url) : NULL;
   ep->h.e_dtor = event_playurl_dtor;
+
+  ep->url        = strdup(args->url);
+  ep->how        = args->how ? strdup(args->how) : NULL;
+  ep->model      = prop_xref_addref(args->model);
+  ep->origin     = prop_ref_inc(args->origin);
+  ep->primary    = args->primary;
+  ep->priority   = args->priority;
+  ep->no_audio   = args->no_audio;
+  ep->parent_url = args->parent_url ? strdup(args->parent_url) : NULL;
   return &ep->h;
 }
 
@@ -272,18 +271,17 @@ event_openurl_dtor(event_t *e)
  *
  */
 event_t *
-event_create_openurl(const char *url, const char *view, prop_t *origin,
-		     prop_t *model, const char *how, const char *parent_url)
+event_create_openurl_args(const event_openurl_args_t *args)
 {
   event_openurl_t *e = event_create(EVENT_OPENURL, sizeof(event_openurl_t));
-
-  e->url      = url    ? strdup(url)          : NULL;
-  e->view     = view   ? strdup(view)         : NULL;
-  e->origin   = prop_ref_inc(origin);
-  e->model    = prop_ref_inc(model);
-  e->how      = how    ? strdup(how)          : NULL;
-  e->parent_url = parent_url ? strdup(parent_url) : NULL;
   e->h.e_dtor = event_openurl_dtor;
+
+  e->url        = args->url    ? strdup(args->url)            : NULL;
+  e->view       = args->view   ? strdup(args->view)           : NULL;
+  e->origin     = prop_ref_inc(args->origin);
+  e->model      = prop_ref_inc(args->model);
+  e->how        = args->how    ? strdup(args->how)            : NULL;
+  e->parent_url = args->parent_url ? strdup(args->parent_url) : NULL;
   return &e->h;
 }
 

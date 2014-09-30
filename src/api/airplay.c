@@ -77,7 +77,7 @@ airplay_play(http_connection_t *hc, const char *remain, void *opaque,
     startpos[strcspn(startpos, "\r\n")] = 0;
   }
 
-  event_dispatch(event_create_openurl(url, NULL, NULL, NULL, NULL));
+  event_dispatch(event_create_openurl(url));
   return 200;
 }
 

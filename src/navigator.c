@@ -246,8 +246,10 @@ nav_create(prop_t *prop)
       hts_cond_wait(&gconf.state_cond, &gconf.state_mutex);
     hts_mutex_unlock(&gconf.state_mutex);
 
-    event_t *e = event_create_openurl(gconf.initial_url, gconf.initial_view,
-                                      NULL, NULL, NULL, NULL);
+    event_t *e = event_create_openurl(
+                                      .url  = gconf.initial_url,
+                                      .view = gconf.initial_view,
+                                      );
     prop_send_ext_event(eventsink, e);
     event_release(e);
   }
@@ -681,7 +683,8 @@ nav_open0(navigator_t *nav, const char *url, const char *view, prop_t *origin,
 void
 nav_open(const char *url, const char *view)
 {
-  event_dispatch(event_create_openurl(url, view, NULL, NULL, NULL, NULL));
+  event_dispatch(event_create_openurl(.url  = url,
+                                      .view = view));
 }
 
 
