@@ -91,7 +91,7 @@ load_program(glw_root_t *gr,
         // Program has specialized code to load textures, run it
         gpa->gpa_load_texture(gr, gpa->gpa_prog, gpa->gpa_aux, t0, 0);
       } else {
-        glBindTexture(GL_TEXTURE_2D, t1->textures[0]);
+        glBindTexture(GL_TEXTURE_2D, t0->textures[0]);
       }
     }
 
