@@ -646,7 +646,7 @@ video_player_idle(void *aux)
   event_t *e = NULL;
   media_pipe_t *mp = aux;
   char errbuf[256];
-  prop_t *errprop = prop_ref_inc(prop_create(mp->mp_prop_root, "error"));
+  prop_t *errprop = prop_create_r(mp->mp_prop_root, "error");
   video_queue_t *vq = NULL;
   int play_flags_permanent = 0;
   int play_priority = 0;
