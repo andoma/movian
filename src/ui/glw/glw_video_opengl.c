@@ -160,8 +160,8 @@ make_surfaces_available(glw_video_t *gv)
 /**
  *
  */
-static void
-load_uniforms(glw_root_t *gr, glw_program_t *gp, void *args)
+void
+glw_video_opengl_load_uniforms(glw_root_t *gr, glw_program_t *gp, void *args)
 {
   glw_video_t *gv = args;
 
@@ -209,7 +209,7 @@ static int
 yuvp_init(glw_video_t *gv)
 {
   gv->gv_gpa.gpa_aux = gv;
-  gv->gv_gpa.gpa_load_uniforms = load_uniforms;
+  gv->gv_gpa.gpa_load_uniforms = glw_video_opengl_load_uniforms;
   gv->gv_gpa.gpa_load_texture = load_texture_yuv;
 
   gv->gv_planes = 3;
@@ -593,7 +593,7 @@ static int
 bgr_init(glw_video_t *gv)
 {
   gv->gv_gpa.gpa_aux = gv;
-  gv->gv_gpa.gpa_load_uniforms = load_uniforms;
+  gv->gv_gpa.gpa_load_uniforms = glw_video_opengl_load_uniforms;
 
   gv->gv_planes = 1;
 

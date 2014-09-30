@@ -84,7 +84,6 @@ typedef struct glw_video_surface {
 #endif
 
 #if ENABLE_VDPAU
-  GLuint gvs_texture;
   int gvs_mapped;
   VdpOutputSurface gvs_vdpau_surface;
   GLvdpauSurfaceNV gvs_gl_surface;
@@ -319,10 +318,8 @@ void *glw_video_add_reap_task(glw_video_t *gv, size_t s, void *fn);
 /**
  *
  */
-void glw_render_video_quad(int interlace, int width, int height,
-                           int bob1, int bob2,
-                           glw_backend_root_t *gbr, glw_program_t *gp,
-                           const glw_video_t *gv, glw_rctx_t *rc);
+void glw_video_opengl_load_uniforms(glw_root_t *gr, glw_program_t *gp,
+                                    void *args);
 
 #endif /* GLW_VIDEO_COMMON_H */
 

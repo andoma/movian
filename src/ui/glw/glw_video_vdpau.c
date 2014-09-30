@@ -127,13 +127,13 @@ surface_init(glw_video_t *gv, glw_video_surface_t *gvs)
   if(r != VDP_STATUS_OK)
     return -1;
 
-  glGenTextures(1, &gvs->gvs_texture);
+  glGenTextures(1, gvs->gvs_texture.textures);
 
   gvs->gvs_gl_surface =
     gbr->gbr_glVDPAURegisterOutputSurfaceNV((void *)(uintptr_t)
                                             gvs->gvs_vdpau_surface,
                                             GL_TEXTURE_2D, 1,
-                                            &gvs->gvs_texture);
+                                            gvs->gvs_texture.textures);
 
   TAILQ_INSERT_TAIL(&gv->gv_avail_queue, gvs, gvs_link);
   hts_cond_signal(&gv->gv_avail_queue_cond);
@@ -199,6 +199,8 @@ gvv_render(glw_video_t *gv, glw_rctx_t *rc)
 {
   glw_video_surface_t *sa = gv->gv_sa;
   glw_video_surface_t *sb = gv->gv_sa;
+  glw_program_t *gp;
+  glw_backend_root_t *gbr = &gv->w.glw_root->gr_be;
 
   if(sa == NULL)
     return;
@@ -207,34 +209,39 @@ gvv_render(glw_video_t *gv, glw_rctx_t *rc)
   gv->gv_height = sa->gvs_height[0];
 
   upload_texture(gv, sa);
-  if(sb != NULL)
-    upload_texture(gv, sb);
 
-  glw_backend_root_t *gbr = &gv->w.glw_root->gr_be;
-  glw_program_t *gp;
+
+  const float yshift_a = (-0.5 * sa->gvs_yshift) / (float)sa->gvs_height[0];
+
+  glw_renderer_vtx_st(&gv->gv_quad,  0, 0, 1 + yshift_a);
+  glw_renderer_vtx_st(&gv->gv_quad,  1, 1, 1 + yshift_a);
+  glw_renderer_vtx_st(&gv->gv_quad,  2, 1, 0 + yshift_a);
+  glw_renderer_vtx_st(&gv->gv_quad,  3, 0, 0 + yshift_a);
 
   if(sb != NULL) {
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, sb->gvs_texture);
-    glActiveTexture(GL_TEXTURE0);
+    // Two pictures that should be mixed
+    upload_texture(gv, sb);
     gp = gbr->gbr_rgb2rgb_2f;
+
+    const float yshift_b = (-0.5 * sb->gvs_yshift) / (float)sb->gvs_height[0];
+
+    glw_renderer_vtx_st2(&gv->gv_quad, 0, 0, 1 + yshift_b);
+    glw_renderer_vtx_st2(&gv->gv_quad, 1, 1, 1 + yshift_b);
+    glw_renderer_vtx_st2(&gv->gv_quad, 2, 1, 0 + yshift_b);
+    glw_renderer_vtx_st2(&gv->gv_quad, 3, 0, 0 + yshift_b);
+
   } else {
+
     gp = gbr->gbr_rgb2rgb_1f;
   }
-  glBindTexture(GL_TEXTURE_2D, sa->gvs_texture);
 
-  glw_rctx_t rc0 = *rc;
-  rc0.rc_alpha *= gv->gv_cmatrix_cur[0];
+  gv->gv_gpa.gpa_prog = gp;
 
-  if(rc0.rc_alpha > 0.98f)
-    glDisable(GL_BLEND);
-  else
-    glEnable(GL_BLEND);
-
-  glw_render_video_quad(0, 0, sa->gvs_width[0], sa->gvs_height[0],
-                        0, 0, gbr, gp, gv, &rc0);
-
-  glEnable(GL_BLEND);
+  glw_renderer_draw(&gv->gv_quad, gv->w.glw_root, rc,
+                    &sa->gvs_texture,
+                    sb != NULL ? &sb->gvs_texture : NULL,
+                    NULL, NULL,
+                    rc->rc_alpha * gv->w.glw_alpha, 0, &gv->gv_gpa);
 }
 
 
@@ -300,6 +307,11 @@ static int
 gvv_init(glw_video_t *gv)
 {
   int i;
+
+  gv->gv_gpa.gpa_aux = gv;
+  gv->gv_gpa.gpa_load_uniforms = glw_video_opengl_load_uniforms;
+
+  gv->gv_planes = 1;
 
   for(i = 0; i < GLW_VIDEO_MAX_SURFACES; i++)
     gv->gv_surfaces[i].gvs_vdpau_surface = VDP_INVALID_HANDLE;
