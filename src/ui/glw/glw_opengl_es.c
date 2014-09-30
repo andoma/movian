@@ -22,49 +22,18 @@
 #include "glw.h"
 
 
-
-/**
- *
- */
-void
-glw_wirebox(glw_root_t *gr, const glw_rctx_t *rc)
-{
-  // NOT IMPLEMENTED
-}
-
-
-/**
- *
- */
-void
-glw_wirecube(glw_root_t *gr, const glw_rctx_t *rc)
-{
-  // NOT IMPLEMENTED
-}
-
-
-
-
 /**
  *
  */
 int
 glw_opengl_init_context(glw_root_t *gr)
 {
-  glw_backend_root_t *gbr = &gr->gr_be;
-
   glEnable(GL_BLEND);
   glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA,
 		      GL_ONE, GL_ONE);
   glEnable(GL_CULL_FACE);
-  gbr->gbr_frontface = GLW_CCW;
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, PIXMAP_ROW_ALIGN);
-
-  gbr->gbr_texmode = GLW_OPENGL_TEXTURE_NPOT;
-  gbr->gbr_primary_texture_mode = GL_TEXTURE_2D;
-
-  glEnable(gbr->gbr_primary_texture_mode);
 
   const char *vendor   = (const char *)glGetString(GL_VENDOR);
   const char *renderer = (const char *)glGetString(GL_RENDERER);

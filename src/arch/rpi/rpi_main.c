@@ -554,13 +554,13 @@ ui_run(glw_root_t *gr, EGLDisplay dpy)
     int refresh = gr->gr_need_refresh;
     gr->gr_need_refresh = 0;
     if(refresh) {
+      int zmax = 0;
 
       glw_rctx_t rc;
 
       gr->gr_can_externalize = 1;
       gr->gr_externalize_cnt = 0;
-
-      glw_rctx_init(&rc, gr->gr_width, gr->gr_height, 1);
+      glw_rctx_init(&rc, gr->gr_width, gr->gr_height, 1, &zmax);
       glw_layout0(gr->gr_universe, &rc);
 
       if(refresh & GLW_REFRESH_FLAG_RENDER) {

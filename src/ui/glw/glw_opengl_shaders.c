@@ -233,13 +233,12 @@ render_unlocked(glw_root_t *gr)
     const glw_render_job_t *rj = ro->job;
     const struct glw_backend_texture *t0 = rj->t0;
 
-    //    printf("%4d %2d %p\n", j, ro->zindex, t0);
-
     glw_program_t *gp =
       load_program(gr, t0, rj->t1, rj->blur, rj->flags, rj->gpa, &rs);
 
     if(unlikely(gp == NULL)) {
 
+#if ENABLE_GLW_BACKEND_OPENGL
       if(rj->eyespace) {
         glLoadMatrixf(glw_identitymtx);
       } else {
@@ -266,6 +265,7 @@ render_unlocked(glw_root_t *gr)
       glEnd();
 
       glDisable(t0->gltype);
+#endif
       continue;
 
     } else {
@@ -626,9 +626,12 @@ glw_opengl_shaders_init(glw_root_t *gr, int delayed)
   prop_set_string(prop_create(gr->gr_prop_ui, "rendermode"),
 		  "OpenGL VP/FP shaders");
 
+
+#if ENABLE_GLW_BACKEND_OPENGL
   glMatrixMode(GL_PROJECTION);
   glLoadMatrixf(projection);
   glMatrixMode(GL_MODELVIEW);
+#endif
 
   return 0;
 }
