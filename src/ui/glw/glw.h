@@ -84,7 +84,7 @@ LIST_HEAD(glw_style_list, glw_style);
 
 // all supported apple devices should support SSE
 #if (defined(__x86_64) || defined(__APPLE__)) && !defined(__llvm__)
-#define ENABLE_GLW_MATH_SSE 1
+#define ENABLE_GLW_MATH_SSE 0
 #else
 #define ENABLE_GLW_MATH_SSE 0
 #endif

@@ -664,7 +664,7 @@ int
 glw_style_bind(glw_t *w, glw_style_t *gs)
 {
   glw_style_attribute_t *gsa;
-  int r;
+  int r = 0;
 
   if(w->glw_style != NULL)
     LIST_REMOVE(w, glw_style_link);

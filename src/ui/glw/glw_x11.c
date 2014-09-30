@@ -1187,7 +1187,8 @@ glw_x11_mainloop(glw_x11_t *gx11)
 
     if(refresh) {
       glw_rctx_t rc;
-      glw_rctx_init(&rc, gr->gr_width, gx11->gr.gr_height, 1);
+      int zmax = 0;
+      glw_rctx_init(&rc, gr->gr_width, gx11->gr.gr_height, 1, &zmax);
 
       glw_layout0(gr->gr_universe, &rc);
 

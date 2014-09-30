@@ -117,10 +117,6 @@ int
 glw_opengl_init_context(glw_root_t *gr)
 {
   GLint tu = 0;
-  const	GLubyte	*s;
-  /* Check OpenGL extensions we would like to have */
-
-  s = glGetString(GL_EXTENSIONS);
 
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
