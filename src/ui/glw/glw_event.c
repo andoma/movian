@@ -29,57 +29,31 @@
 /**
  *
  */
-typedef struct glw_event_navOpen {
+typedef struct glw_event_external {
   glw_event_map_t map;
-
-  char *url;
-  char *view;
-  prop_t *origin;
-  prop_t *model;
-  char *how;
-  char *parent_url;
-} glw_event_navOpen_t;
+  event_t *e;
+} glw_event_external_t;
 
 
 /**
  *
  */
 static void
-glw_event_map_navOpen_dtor(glw_root_t *gr, glw_event_map_t *gem)
+glw_event_map_external_dtor(glw_root_t *gr, glw_event_map_t *gem)
 {
-  glw_event_navOpen_t *no = (glw_event_navOpen_t *)gem;
-
-  prop_ref_dec(no->origin);
-  prop_ref_dec(no->model);
-
-  free(no->url);
-  free(no->view);
-  free(no->how);
-  free(no->parent_url);
-  free(no);
+  glw_event_external_t *gee = (glw_event_external_t *)gem;
+  event_release(gee->e);
+  free(gee);
 }
 
 /**
  *
  */
 static void
-glw_event_map_navOpen_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
+glw_event_map_external_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
 {
-  glw_event_navOpen_t *no = (glw_event_navOpen_t *)gem;
-
-  if(no->url == NULL)
-    return; // Must have an URL to fire
-
-  event_t *e = event_create_openurl(.url        = no->url,
-                                    .view       = no->view,
-                                    .origin     = no->origin,
-				    .model      = no->model,
-                                    .how        = no->how,
-                                    .parent_url = no->parent_url);
-  
-  e->e_mapped = 1;
-  glw_event_to_widget(w, e);
-  event_release(e);
+  glw_event_external_t *gee = (glw_event_external_t *)gem;
+  glw_event_to_widget(w, gee->e);
 }
 
 
@@ -87,83 +61,14 @@ glw_event_map_navOpen_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
  *
  */
 glw_event_map_t *
-glw_event_map_navOpen_create(const char *url, const char *view, prop_t *origin,
-			     prop_t *model, const char *how,
-                             const char *parent_url)
+glw_event_map_external_create(event_t *e)
 {
-  glw_event_navOpen_t *no = malloc(sizeof(glw_event_navOpen_t));
-  
-  no->url      = url    ? strdup(url)    : NULL;
-  no->view     = view   ? strdup(view)   : NULL;
-  no->origin   = prop_ref_inc(origin);
-  no->model    = prop_ref_inc(model);
-  no->how      = how    ? strdup(how)   : NULL;
-  no->parent_url = parent_url ? strdup(parent_url) : NULL;
-
-  no->map.gem_dtor = glw_event_map_navOpen_dtor;
-  no->map.gem_fire = glw_event_map_navOpen_fire;
-  return &no->map;
-}
-
-
-
-/**
- *
- */
-typedef struct glw_event_playTrack {
-  glw_event_map_t map;
-
-  prop_t *track;
-  prop_t *source;
-  int mode;
-
-} glw_event_playTrack_t;
-
-
-/**
- *
- */
-static void
-glw_event_map_playTrack_dtor(glw_root_t *gr, glw_event_map_t *gem)
-{
-  glw_event_playTrack_t *g = (glw_event_playTrack_t *)gem;
-
-  prop_ref_dec(g->track);
-  if(g->source != NULL)
-    prop_ref_dec(g->source);
-  free(g);
-}
-
-/**
- *
- */
-static void
-glw_event_map_playTrack_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
-{
-  glw_event_playTrack_t *g = (glw_event_playTrack_t *)gem;
-  event_t *e = event_create_playtrack(g->track, g->source, g->mode);
-  
+  glw_event_external_t *gee = malloc(sizeof(glw_event_external_t));
   e->e_mapped = 1;
-  glw_event_to_widget(w, e);
-  event_release(e);
-}
-
-
-/**
- *
- */
-glw_event_map_t *
-glw_event_map_playTrack_create(prop_t *track, prop_t *source, int mode)
-{
-  glw_event_playTrack_t *g = malloc(sizeof(glw_event_playTrack_t));
-
-  g->track  = prop_ref_inc(track);
-  g->source = prop_ref_inc(source);
-  g->mode   = mode;
-
-  g->map.gem_dtor = glw_event_map_playTrack_dtor;
-  g->map.gem_fire = glw_event_map_playTrack_fire;
-  return &g->map;
+  gee->e = e;
+  gee->map.gem_dtor = glw_event_map_external_dtor;
+  gee->map.gem_fire = glw_event_map_external_fire;
+  return &gee->map;
 }
 
 
@@ -225,67 +130,6 @@ glw_event_map_propref_create(prop_t *prop, prop_t *target)
   g->map.gem_fire = glw_event_map_propref_fire;
   return &g->map;
 }
-
-
-
-/**
- *
- */
-typedef struct glw_event_selectTrack {
-  glw_event_map_t map;
-  event_type_t type;
-  char *id;
-} glw_event_selectTrack_t;
-
-
-/**
- *
- */
-static void
-glw_event_map_selectTrack_dtor(glw_root_t *gr, glw_event_map_t *gem)
-{
-  glw_event_selectTrack_t *g = (glw_event_selectTrack_t *)gem;
-
-  free(g->id);
-  free(g);
-}
-
-/**
- *
- */
-static void
-glw_event_map_selectTrack_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
-{
-  glw_event_selectTrack_t *st = (glw_event_selectTrack_t *)gem;
-
-  if(st->id == NULL)
-    return; // Must have an ID to fire
-
-  event_t *e = event_create_select_track(st->id, st->type, 1);
-  
-  e->e_mapped = 1;
-  glw_event_to_widget(w, e);
-  event_release(e);
-}
-
-
-/**
- *
- */
-glw_event_map_t *
-glw_event_map_selectTrack_create(const char *id, event_type_t type)
-{
-  glw_event_selectTrack_t *st = malloc(sizeof(glw_event_selectTrack_t));
-  
-  st->id = id ? strdup(id) : NULL;
-  st->type = type;
-
-  st->map.gem_dtor = glw_event_map_selectTrack_dtor;
-  st->map.gem_fire = glw_event_map_selectTrack_fire;
-  return &st->map;
-}
-
-
 
 
 

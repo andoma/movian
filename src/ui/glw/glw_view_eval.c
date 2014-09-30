@@ -3127,7 +3127,15 @@ glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
   }
 
   r = eval_alloc(self, ec, TOKEN_EVENT);
-  r->t_gem = glw_event_map_navOpen_create(url, view, origin, model, how, purl);
+
+  event_t *ev = event_create_openurl(.url = url,
+                                     .view = view,
+                                     .origin = origin,
+                                     .model = model,
+                                     .how = how,
+                                     .parent_url = purl);
+
+  r->t_gem = glw_event_map_external_create(ev);
   eval_push(ec, r);
   return 0;
 }
@@ -3229,7 +3237,8 @@ glwf_playTrackFromSource(glw_view_eval_context_t *ec, struct token *self,
   }
 
   r = eval_alloc(self, ec, TOKEN_EVENT);
-  r->t_gem = glw_event_map_playTrack_create(a->t_prop, b->t_prop, dontskip);
+  event_t *ev = event_create_playtrack(a->t_prop, b->t_prop, dontskip);
+  r->t_gem = glw_event_map_external_create(ev);
   eval_push(ec, r);
   return 0;
 }
@@ -3248,7 +3257,8 @@ glwf_enqueueTrack(glw_view_eval_context_t *ec, struct token *self,
     return -1;
 
   r = eval_alloc(self, ec, TOKEN_EVENT);
-  r->t_gem = glw_event_map_playTrack_create(a->t_prop, NULL, 0);
+  event_t *ev = event_create_playtrack(a->t_prop, NULL, 0);
+  r->t_gem = glw_event_map_external_create(ev);
   eval_push(ec, r);
   return 0;
 }
@@ -3278,7 +3288,8 @@ glwf_selectTrack(glw_view_eval_context_t *ec, struct token *self,
   } else {
     str = NULL;
   }
-  r->t_gem = glw_event_map_selectTrack_create(str, type);
+  event_t *ev = event_create_select_track(str, type, 1);
+  r->t_gem = glw_event_map_external_create(ev);
   eval_push(ec, r);
   return 0;
 }

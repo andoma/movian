@@ -62,26 +62,7 @@ int glw_event_map_intercept(glw_t *w, struct event *e);
 /**
  *
  */
-glw_event_map_t *glw_event_map_navOpen_create(const char *url,
-					      const char *view,
-					      prop_t *origin,
-					      prop_t *model,
-					      const char *how,
-                                              const char *parent_url);
-
-
-/**
- *
- */
-glw_event_map_t *glw_event_map_selectTrack_create(const char *id,
-						  event_type_t type);
-
-
-/**
- *
- */
-glw_event_map_t *glw_event_map_playTrack_create(prop_t *track,
-						prop_t *source, int mode);
+glw_event_map_t *glw_event_map_external_create(event_t *e);
 
 
 /**
