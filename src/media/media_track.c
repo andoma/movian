@@ -312,6 +312,7 @@ static void
 mtm_add_track(media_track_mgr_t *mtm, prop_t *root, media_track_t *before)
 {
   media_track_t *mt = calloc(1, sizeof(media_track_t));
+  media_pipe_t *mp = mtm->mtm_mp;
 
   prop_tag_set(root, mtm, mt);
   mt->mt_mtm = mtm;
@@ -327,11 +328,13 @@ mtm_add_track(media_track_mgr_t *mtm, prop_t *root, media_track_t *before)
     TAILQ_INSERT_TAIL(&mtm->mtm_tracks, mt, mt_link);
   }
 
+
   mt->mt_sub_url =
     prop_subscribe(0,
 		   PROP_TAG_NAME("node", "url"),
 		   PROP_TAG_CALLBACK_STRING, mt_set_url, mt,
-		   PROP_TAG_COURIER, mtm->mtm_mp->mp_pc,
+                   PROP_TAG_LOCKMGR, mp_lockmgr,
+                   PROP_TAG_MUTEX, mp,
 		   PROP_TAG_NAMED_ROOT, root, "node",
 		   NULL);
 
@@ -339,7 +342,8 @@ mtm_add_track(media_track_mgr_t *mtm, prop_t *root, media_track_t *before)
     prop_subscribe(0,
 		   PROP_TAG_NAME("node", "isolang"),
 		   PROP_TAG_CALLBACK_STRING, mt_set_isolang, mt,
-		   PROP_TAG_COURIER, mtm->mtm_mp->mp_pc,
+                   PROP_TAG_LOCKMGR, mp_lockmgr,
+                   PROP_TAG_MUTEX, mp,
 		   PROP_TAG_NAMED_ROOT, root, "node",
 		   NULL);
 
@@ -347,7 +351,8 @@ mtm_add_track(media_track_mgr_t *mtm, prop_t *root, media_track_t *before)
     prop_subscribe(0,
 		   PROP_TAG_NAME("node", "basescore"),
 		   PROP_TAG_CALLBACK_INT, mt_set_basescore, mt,
-		   PROP_TAG_COURIER, mtm->mtm_mp->mp_pc,
+                   PROP_TAG_LOCKMGR, mp_lockmgr,
+                   PROP_TAG_MUTEX, mp,
 		   PROP_TAG_NAMED_ROOT, root, "node",
 		   NULL);
 
@@ -355,7 +360,8 @@ mtm_add_track(media_track_mgr_t *mtm, prop_t *root, media_track_t *before)
     prop_subscribe(0,
 		   PROP_TAG_NAME("node", "autosel"),
 		   PROP_TAG_CALLBACK_INT, mt_set_autosel, mt,
-		   PROP_TAG_COURIER, mtm->mtm_mp->mp_pc,
+                   PROP_TAG_LOCKMGR, mp_lockmgr,
+                   PROP_TAG_MUTEX, mp,
 		   PROP_TAG_NAMED_ROOT, root, "node",
 		   NULL);
 }
@@ -486,23 +492,26 @@ mp_track_mgr_init(media_pipe_t *mp, media_track_mgr_t *mtm, prop_t *root,
   mtm->mtm_type = type;
 
   mtm->mtm_node_sub =
-    prop_subscribe(0,
+    prop_subscribe(PROP_SUB_DEBUG,
 		   PROP_TAG_CALLBACK, mtm_update_tracks, mtm,
-		   PROP_TAG_COURIER, mp->mp_pc,
+                   PROP_TAG_LOCKMGR, mp_lockmgr,
+                   PROP_TAG_MUTEX, mp,
 		   PROP_TAG_ROOT, root,
 		   NULL);
 
   mtm->mtm_current_sub =
     prop_subscribe(0,
 		   PROP_TAG_CALLBACK_STRING, mtm_set_current, mtm,
-		   PROP_TAG_COURIER, mp->mp_pc,
+                   PROP_TAG_LOCKMGR, mp_lockmgr,
+                   PROP_TAG_MUTEX, mp,
 		   PROP_TAG_ROOT, current,
 		   NULL);
 
   mtm->mtm_url_sub =
     prop_subscribe(0,
 		   PROP_TAG_CALLBACK_STRING, mtm_set_url, mtm,
-		   PROP_TAG_COURIER, mp->mp_pc,
+                   PROP_TAG_LOCKMGR, mp_lockmgr,
+                   PROP_TAG_MUTEX, mp,
 		   PROP_TAG_ROOT, mp->mp_prop_url,
 		   NULL);
 }

@@ -477,7 +477,6 @@ typedef struct media_pipe {
   prop_t *mp_prop_buffer_limit;
   prop_t *mp_prop_buffer_delay;
 
-  prop_courier_t *mp_pc;
   prop_sub_t *mp_sub_currenttime;
   prop_sub_t *mp_sub_stats;
 
@@ -651,6 +650,8 @@ media_pipe_t *mp_create(const char *name, int flags);
 void mp_destroy(media_pipe_t *mp);
 
 void mp_reinit_streams(media_pipe_t *mp);
+
+int mp_lockmgr(void *ptr, int op);
 
 
 static __inline media_pipe_t *  attribute_unused_result

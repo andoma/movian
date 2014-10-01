@@ -298,7 +298,6 @@ mp_create(const char *name, int flags)
   TAILQ_INIT(&mp->mp_spu_queue);
 
   hts_cond_init(&mp->mp_backpressure, &mp->mp_mutex);
-  mp->mp_pc = prop_courier_create_thread(&mp->mp_mutex, "mp", 0);
 
   mp->mp_prop_root = prop_create(media_prop_sources, NULL);
   mp->mp_prop_metadata    = prop_create(mp->mp_prop_root, "metadata");
@@ -423,14 +422,16 @@ mp_create(const char *name, int flags)
   mp->mp_sub_currenttime = 
     prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
 		   PROP_TAG_CALLBACK, seek_by_propchange, mp,
-		   PROP_TAG_COURIER, mp->mp_pc,
+                   PROP_TAG_LOCKMGR, mp_lockmgr,
+                   PROP_TAG_MUTEX, mp,
 		   PROP_TAG_ROOT, mp->mp_prop_currenttime,
 		   NULL);
 
   mp->mp_sub_stats =
     prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
 		   PROP_TAG_SET_INT, &mp->mp_stats,
-		   PROP_TAG_COURIER, mp->mp_pc,
+                   PROP_TAG_LOCKMGR, mp_lockmgr,
+                   PROP_TAG_MUTEX, mp,
 		   PROP_TAG_ROOT, mp->mp_prop_stats,
 		   NULL);
 
@@ -567,9 +568,8 @@ mp_release(media_pipe_t *mp)
   mq_destroy(&mp->mp_audio);
   mq_destroy(&mp->mp_video);
 
-  prop_destroy(mp->mp_prop_root);
 
-  prop_courier_destroy(mp->mp_pc);
+  prop_destroy(mp->mp_prop_root);
 
   video_overlay_flush_locked(mp, 0);
   dvdspu_destroy_all(mp);
@@ -1800,4 +1800,35 @@ void
 media_register_codec(codec_def_t *cd)
 {
   LIST_INSERT_SORTED(&registeredcodecs, cd, link, codec_def_cmp, codec_def_t);
+}
+
+
+
+/**
+ *
+ */
+int
+mp_lockmgr(void *ptr, int op)
+{
+  media_pipe_t *mp = ptr;
+
+  switch(op) {
+  case PROP_LOCK_UNLOCK:
+    hts_mutex_unlock(&mp->mp_mutex);
+    return 0;
+  case PROP_LOCK_LOCK:
+    hts_mutex_lock(&mp->mp_mutex);
+    return 0;
+  case PROP_LOCK_TRY:
+    return hts_mutex_trylock(&mp->mp_mutex);
+
+  case PROP_LOCK_RETAIN:
+    atomic_inc(&mp->mp_refcount);
+    return 0;
+
+  case PROP_LOCK_RELEASE:
+    mp_release(mp);
+    return 0;
+  }
+  abort();
 }
