@@ -638,7 +638,8 @@ setting_create(int type, prop_t *model, int flags, ...)
 {
   setting_t *s = calloc(1, sizeof(setting_t));
   prop_courier_t *pc = NULL;
-  hts_mutex_t *mtx = NULL;
+  void *mtx = NULL;
+  void *lockmgr = NULL;
   int tag;
   const char *str;
   int initial_int = 0;
@@ -716,7 +717,11 @@ setting_create(int type, prop_t *model, int flags, ...)
       break;
 
     case SETTING_TAG_MUTEX:
-      mtx = va_arg(ap, hts_mutex_t *);
+      mtx = va_arg(ap, void *);
+      break;
+
+    case SETTING_TAG_LOCKMGR:
+      lockmgr = va_arg(ap, void *);
       break;
 
     case SETTING_TAG_HTSMSG:
@@ -910,6 +915,7 @@ setting_create(int type, prop_t *model, int flags, ...)
                      PROP_TAG_ROOT, s->s_val,
                      PROP_TAG_COURIER, pc,
                      PROP_TAG_MUTEX, mtx,
+                     PROP_TAG_LOCKMGR, lockmgr,
                      NULL);
 
     if(s->s_parent != NULL) {
@@ -919,6 +925,7 @@ setting_create(int type, prop_t *model, int flags, ...)
                        PROP_TAG_ROOT, s->s_parent->s_val,
                        PROP_TAG_COURIER, pc,
                        PROP_TAG_MUTEX, mtx,
+                       PROP_TAG_LOCKMGR, lockmgr,
                        NULL);
 
       s->s_inherited_origin_sub =
@@ -928,6 +935,7 @@ setting_create(int type, prop_t *model, int flags, ...)
                        PROP_TAG_NAME("setting", "origin"),
                        PROP_TAG_COURIER, pc,
                        PROP_TAG_MUTEX, mtx,
+                       PROP_TAG_LOCKMGR, lockmgr,
                        NULL);
     }
     break;
@@ -970,6 +978,7 @@ setting_create(int type, prop_t *model, int flags, ...)
                      PROP_TAG_ROOT, s->s_val,
                      PROP_TAG_COURIER, pc,
                      PROP_TAG_MUTEX, mtx,
+                     PROP_TAG_LOCKMGR, lockmgr,
                      NULL);
     break;
 
@@ -1015,6 +1024,7 @@ setting_create(int type, prop_t *model, int flags, ...)
                      PROP_TAG_ROOT, s->s_val,
                      PROP_TAG_COURIER, pc,
                      PROP_TAG_MUTEX, mtx,
+                     PROP_TAG_LOCKMGR, lockmgr,
                      NULL);
     break;
 
@@ -1025,6 +1035,7 @@ setting_create(int type, prop_t *model, int flags, ...)
                      PROP_TAG_ROOT, s->s_val,
                      PROP_TAG_COURIER, pc,
                      PROP_TAG_MUTEX, mtx,
+                     PROP_TAG_LOCKMGR, lockmgr,
                      NULL);
     break;
 

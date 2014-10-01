@@ -96,6 +96,7 @@ enum {
   SETTING_TAG_WRITE_INT,
   SETTING_TAG_ZERO_TEXT,
   SETTING_TAG_MUTEX,
+  SETTING_TAG_LOCKMGR,
   SETTING_TAG_WRITE_PROP,
   SETTING_TAG_PROP_ENABLER,
   SETTING_TAG_KVSTORE,
@@ -122,6 +123,7 @@ enum {
 #define SETTING_WRITE_INT(a)                    SETTING_TAG_WRITE_INT, a
 #define SETTING_ZERO_TEXT(a)                    SETTING_TAG_ZERO_TEXT, a
 #define SETTING_MUTEX(a)                        SETTING_TAG_MUTEX, a
+#define SETTING_LOCKMGR(a)                      SETTING_TAG_LOCKMGR, a
 #define SETTING_WRITE_PROP(a)                   SETTING_TAG_WRITE_PROP, a
 #define SETTING_KVSTORE(a, b)                   SETTING_TAG_KVSTORE, a, b
 #define SETTING_PROP_ENABLER(a)                 SETTING_TAG_PROP_ENABLER, a
