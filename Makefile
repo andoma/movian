@@ -83,6 +83,7 @@ SRCS += src/showtime.c \
 
 SRCS +=	src/media/media.c \
 	src/media/media_track.c \
+	src/media/media_settings.c \
 
 SRCS-${CONFIG_LIBAV} += src/libav.c
 
