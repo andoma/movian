@@ -385,7 +385,6 @@ typedef struct media_pipe {
   LIST_ENTRY(media_pipe) mp_stack_link;
   int mp_flags;
 #define MP_PRIMABLE         0x1
-#define MP_ON_STACK         0x2
 #define MP_VIDEO            0x4
 #define MP_FLUSH_ON_HOLD    0x8
 #define MP_ALWAYS_SATISFIED 0x10
@@ -651,7 +650,14 @@ media_pipe_t *mp_create(const char *name, int flags);
 
 void mp_reinit_streams(media_pipe_t *mp);
 
-#define mp_retain(mp) atomic_inc(&(mp)->mp_refcount)
+
+static __inline media_pipe_t *  attribute_unused_result
+mp_retain(media_pipe_t *mp)
+{
+  atomic_inc(&(mp)->mp_refcount);
+  return mp;
+}
+
 void mp_release(media_pipe_t *mp);
 
 int mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,

@@ -70,7 +70,6 @@ static prop_t *media_prop_root;
 static prop_t *media_prop_sources;
 static prop_t *media_prop_current;
 
-static struct media_pipe_list media_pipe_stack;
 media_pipe_t *media_primary;
 
 void (*media_pipe_init_extra)(media_pipe_t *mp);
@@ -106,8 +105,6 @@ media_init(void)
       cd->init();
 
   hts_mutex_init(&media_mutex);
-
-  LIST_INIT(&media_pipe_stack);
 
   media_prop_root    = prop_create(prop_get_global(), "media");
   media_prop_sources = prop_create(media_prop_root, "sources");
@@ -963,7 +960,6 @@ mp_release(media_pipe_t *mp)
   /* Make sure a clean shutdown has been made */
   assert(mp->mp_audio_decoder == NULL);
   assert(mp != media_primary);
-  assert(!(mp->mp_flags & MP_ON_STACK));
 
 
   if(media_pipe_fini_extra != NULL)
@@ -1866,22 +1862,9 @@ media_codec_create(int codec_id, int parser,
 
 
 /**
- * 
- */
-static void
-mp_set_primary(media_pipe_t *mp)
-{
-  media_primary = mp;
-  prop_select(mp->mp_prop_root);
-  prop_link(mp->mp_prop_root, media_prop_current);
-  prop_set_int(mp->mp_prop_primary, 1);
-}
-
-
-/**
  *
  */
-void 
+void
 mp_init_audio(struct media_pipe *mp)
 {
   if(mp->mp_audio_decoder == NULL)
@@ -1889,13 +1872,13 @@ mp_init_audio(struct media_pipe *mp)
 }
 
 /**
- * 
+ *
  */
 void
 mp_become_primary(struct media_pipe *mp)
 {
   mp_init_audio(mp);
-    
+
   if(media_primary == mp)
     return;
 
@@ -1906,16 +1889,16 @@ mp_become_primary(struct media_pipe *mp)
   if(media_primary != NULL) {
     prop_set_int(media_primary->mp_prop_primary, 0);
 
-    LIST_INSERT_HEAD(&media_pipe_stack, media_primary, mp_stack_link);
-    media_primary->mp_flags |= MP_ON_STACK;
-
     event_t *e = event_create_action(ACTION_STOP);
     mp_enqueue_event(media_primary, e);
     event_release(e);
   }
 
-  mp_retain(mp);
-  mp_set_primary(mp);
+  media_primary = mp_retain(mp);
+
+  prop_select(mp->mp_prop_root);
+  prop_link(mp->mp_prop_root, media_prop_current);
+  prop_set_int(mp->mp_prop_primary, 1);
 
   hts_mutex_unlock(&media_mutex);
 }
@@ -1938,32 +1921,12 @@ mp_shutdown(struct media_pipe *mp)
 
   if(media_primary == mp) {
     /* We were primary */
-    
     prop_set_int(mp->mp_prop_primary, 0);
     prop_unlink(media_prop_current);
 
     media_primary = NULL;
     mp_release(mp); // mp could be free'd here */
-
-    /* Anyone waiting to regain playback focus? */
-    if((mp = LIST_FIRST(&media_pipe_stack)) != NULL) {
-
-      assert(mp->mp_flags & MP_ON_STACK);
-      LIST_REMOVE(mp, mp_stack_link);
-      mp->mp_flags &= ~MP_ON_STACK;
-      mp_set_primary(mp);
-    } else {
-      prop_unselect(media_prop_sources);
-    }
-
-
-  } else if(mp->mp_flags & MP_ON_STACK) {
-    // We are on the stack
-
-    LIST_REMOVE(mp, mp_stack_link);
-    mp->mp_flags &= ~MP_ON_STACK;
-
-    mp_release(mp); // mp could be free'd here */
+    prop_unselect(media_prop_sources);
   }
   hts_mutex_unlock(&media_mutex);
 }

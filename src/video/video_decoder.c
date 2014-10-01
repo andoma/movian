@@ -429,8 +429,7 @@ video_decoder_create(media_pipe_t *mp)
 {
   video_decoder_t *vd = calloc(1, sizeof(video_decoder_t));
 
-  mp_retain(mp);
-  vd->vd_mp = mp;
+  vd->vd_mp = mp_retain(mp);
 
   vd_init_timings(vd);
 

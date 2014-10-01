@@ -640,8 +640,7 @@ vobsub_load(const char *json, char *errbuf, size_t errlen,
   vs->vs_es.es_dtor = vobsub_dtor;
   vs->vs_es.es_picker = vobsub_picker;
 
-  vs->vs_mp = mp;
-  mp_retain(mp);
+  vs->vs_mp = mp_retain(mp);
 
   TAILQ_INIT(&vs->vs_cmds);
 

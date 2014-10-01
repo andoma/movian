@@ -827,8 +827,8 @@ video_player_idle(void *aux)
 void
 video_playback_create(media_pipe_t *mp)
 {
-  mp_retain(mp);
-  hts_thread_create_detached("video player",  video_player_idle, mp,
+  hts_thread_create_detached("video player",  video_player_idle,
+                             mp_retain(mp),
 			     THREAD_PRIO_DEMUXER);
 }
 

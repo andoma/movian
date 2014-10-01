@@ -687,9 +687,9 @@ void
 mp_load_ext_sub(media_pipe_t *mp, const char *url)
 {
   if(!mp->mp_subtitle_loader_thread) {
-    mp_retain(mp);
     hts_thread_create_detached("subtitleloader",
-                               subtitle_loader_thread, mp, THREAD_PRIO_BGTASK);
+                               subtitle_loader_thread,
+                               mp_retain(mp), THREAD_PRIO_BGTASK);
   }
   mystrset(&mp->mp_subtitle_loader_url, url);
 }
