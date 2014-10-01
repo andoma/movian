@@ -73,8 +73,6 @@ void (*media_pipe_fini_extra)(media_pipe_t *mp);
 
 static int mp_seek_in_queues(media_pipe_t *mp, int64_t pos);
 
-static void mp_flush_locked(media_pipe_t *mp);
-
 static void seek_by_propchange(void *opaque, prop_event_t event, ...);
 
 static void media_eventsink(void *opaque, prop_event_t event, ...);
@@ -216,48 +214,6 @@ media_buf_free_unlocked(media_pipe_t *mp, media_buf_t *mb)
   hts_mutex_lock(&mp->mp_mutex);
   media_buf_free_locked(mp, mb);
   hts_mutex_unlock(&mp->mp_mutex);
-}
-
-
-
-
-/**
- *
- */
-static void
-mq_init(media_queue_t *mq, prop_t *p, hts_mutex_t *mutex, media_pipe_t *mp)
-{
-  mq->mq_mp = mp;
-  TAILQ_INIT(&mq->mq_q_data);
-  TAILQ_INIT(&mq->mq_q_ctrl);
-  TAILQ_INIT(&mq->mq_q_aux);
-
-  mq->mq_packets_current = 0;
-  mq->mq_stream = -1;
-  hts_cond_init(&mq->mq_avail, mutex);
-  mq->mq_prop_qlen_cur = prop_create(p, "dqlen");
-  mq->mq_prop_qlen_max = prop_create(p, "dqmax");
-
-  mq->mq_prop_bitrate = prop_create(p, "bitrate");
-
-  mq->mq_prop_decode_avg  = prop_create(p, "decodetime_avg");
-  mq->mq_prop_decode_peak = prop_create(p, "decodetime_peak");
-
-  mq->mq_prop_upload_avg  = prop_create(p, "uploadtime_avg");
-  mq->mq_prop_upload_peak = prop_create(p, "uploadtime_peak");
-
-  mq->mq_prop_codec       = prop_create(p, "codec");
-  mq->mq_prop_too_slow    = prop_create(p, "too_slow");
-}
-
-
-/**
- *
- */
-static void
-mq_destroy(media_queue_t *mq)
-{
-  hts_cond_destroy(&mq->mq_avail);
 }
 
 
@@ -463,54 +419,6 @@ mp_reinit_streams(media_pipe_t *mp)
 /**
  *
  */
-static void
-mq_flush_q(media_pipe_t *mp, media_queue_t *mq, struct media_buf_queue *q,
-	   int full)
-{
-  media_buf_t *mb, *next;
-
-  for(mb = TAILQ_FIRST(q); mb != NULL; mb = next) {
-    next = TAILQ_NEXT(mb, mb_link);
-
-    if(mb->mb_data_type == MB_CTRL_EXIT)
-      continue;
-    if(mb->mb_data_type == MB_CTRL_UNBLOCK && !full)
-      continue;
-    TAILQ_REMOVE(q, mb, mb_link);
-    mq->mq_packets_current--;
-    mp->mp_buffer_current -= mb->mb_size;
-    media_buf_free_locked(mp, mb);
-  }
-}
-
-/**
- * Must be called with mp locked
- */
-static void
-mq_flush_locked(media_pipe_t *mp, media_queue_t *mq, int full)
-{
-  mq_flush_q(mp, mq, &mq->mq_q_data, full);
-  mq_flush_q(mp, mq, &mq->mq_q_ctrl, full);
-  mq_flush_q(mp, mq, &mq->mq_q_aux, full);
-  mq_update_stats(mp, mq);
-}
-
-
-/**
- * Must be called with mp locked
- */
-void
-mq_flush(media_pipe_t *mp, media_queue_t *mq, int full)
-{
-  hts_mutex_lock(&mp->mp_mutex);
-  mq_flush_locked(mp, mq, full);
-  hts_mutex_unlock(&mp->mp_mutex);
-}
-
-
-/**
- *
- */
 void
 mp_destroy(media_pipe_t *mp)
 {
@@ -562,8 +470,8 @@ mp_release(media_pipe_t *mp)
     event_release(e);
   }
 
-  mq_flush_locked(mp, &mp->mp_audio, 1);
-  mq_flush_locked(mp, &mp->mp_video, 1);
+  mq_flush(mp, &mp->mp_audio, 1);
+  mq_flush(mp, &mp->mp_video, 1);
 
   mq_destroy(&mp->mp_audio);
   mq_destroy(&mp->mp_video);
@@ -896,229 +804,6 @@ mp_dequeue_event_deadline(media_pipe_t *mp, int timeout)
 }
 
 
-static int
-mq_get_buffer_delay(media_queue_t *mq)
-{
-  media_buf_t *f, *l;
-
-  if(mq->mq_stream == -1)
-    return INT32_MAX;
-
-  f = TAILQ_FIRST(&mq->mq_q_data);
-  l = TAILQ_LAST(&mq->mq_q_data, media_buf_queue);
-
-  int cnt = 5;
-
-  while(f && f->mb_pts == AV_NOPTS_VALUE && cnt > 0) {
-    f = TAILQ_NEXT(f, mb_link);
-    cnt--;
-  }
-
-  cnt = 5;
-  while(l && l->mb_pts == AV_NOPTS_VALUE && cnt > 0) {
-    l = TAILQ_PREV(l, media_buf_queue, mb_link);
-    cnt--;
-  }
-
-  if(f != NULL && l != NULL && f->mb_epoch == l->mb_epoch &&
-     l->mb_pts != AV_NOPTS_VALUE && f->mb_pts != AV_NOPTS_VALUE) {
-    mq->mq_buffer_delay = l->mb_pts - f->mb_pts;
-  }
-
-  return mq->mq_buffer_delay;
-}
-
-
-/**
- *
- */
-static void
-mp_update_buffer_delay(media_pipe_t *mp)
-{
-  int vd = mq_get_buffer_delay(&mp->mp_video);
-  int ad = mq_get_buffer_delay(&mp->mp_audio);
-
-  mp->mp_buffer_delay = MIN(vd, ad);
-}
-
-
-/**
- *
- */
-event_t *
-mp_wait_for_empty_queues(media_pipe_t *mp)
-{
-  event_t *e;
-  hts_mutex_lock(&mp->mp_mutex);
-
-  while((e = TAILQ_FIRST(&mp->mp_eq)) == NULL &&
-	(mp->mp_audio.mq_packets_current || mp->mp_video.mq_packets_current))
-    hts_cond_wait(&mp->mp_backpressure, &mp->mp_mutex);
-
-  if(e != NULL)
-    TAILQ_REMOVE(&mp->mp_eq, e, e_link);
-
-  hts_mutex_unlock(&mp->mp_mutex);
-  return e;
-}
-
-
-/**
- *
- */
-void
-mq_update_stats(media_pipe_t *mp, media_queue_t *mq)
-{
-  int satisfied = mp->mp_eof ||
-    mp->mp_buffer_current == 0 ||
-    mp->mp_buffer_current * 8 > mp->mp_buffer_limit * 7 ||
-    mp->mp_flags & MP_ALWAYS_SATISFIED;
-
-  if(satisfied) {
-    if(mp->mp_satisfied == 0) {
-      atomic_dec(&media_buffer_hungry);
-      mp->mp_satisfied = 1;
-    }
-  } else {
-    if(mp->mp_satisfied != 0) {
-      atomic_inc(&media_buffer_hungry);
-      mp->mp_satisfied = 0;
-    }
-  }
-
-  mp_update_buffer_delay(mp);
-
-  if(mp->mp_stats) {
-    prop_set_int(mq->mq_prop_qlen_cur, mq->mq_packets_current);
-    prop_set_int(mp->mp_prop_buffer_current, mp->mp_buffer_current);
-    if(mp->mp_buffer_delay == INT32_MAX)
-      prop_set_void(mp->mp_prop_buffer_delay);
-    else
-      prop_set_float(mp->mp_prop_buffer_delay,
-		     mp->mp_buffer_delay / 1000000.0);
-  }
-}
-
-
-/**
- *
- */
-event_t *
-mb_enqueue_with_events_ex(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
-			  int *blocked)
-{
-  event_t *e = NULL;
-  
-  hts_mutex_lock(&mp->mp_mutex);
-#if 0
-  printf("ENQ %s %d %d/%d %d/%d\n",
-         mq == &mp->mp_video ? "video" : "audio",
-	 mq->mq_packets_current,
-	 mp->mp_buffer_current,  mp->mp_buffer_limit,
-         (int)mp->mp_buffer_delay, (int)mp->mp_max_realtime_delay);
-#endif
-  
-  const int vminpkt = mp->mp_video.mq_stream != -1 ? 5 : 0;
-  const int aminpkt = mp->mp_audio.mq_stream != -1 ? 5 : 0;
-
-  mp_update_buffer_delay(mp);
-	 
-  while(1) {
-
-    e = TAILQ_FIRST(&mp->mp_eq);
-    if(e != NULL)
-      break;
-
-    // Check if we are inside the realtime delay bounds
-    if(mp->mp_buffer_delay < mp->mp_max_realtime_delay) {
-
-      // Check if buffer is full
-      if(mp->mp_buffer_current + mb->mb_size < mp->mp_buffer_limit)
-	break;
-    }
-
-    // These two safeguards so we don't run out of packets in any
-    // of the queues
-
-    if(mp->mp_video.mq_packets_current < vminpkt)
-      break;
-
-    if(mp->mp_audio.mq_packets_current < aminpkt)
-      break;
-
-    if(blocked != NULL)
-      *blocked = *blocked + 1;
-    hts_cond_wait(&mp->mp_backpressure, &mp->mp_mutex);
-  }
-
-  if(e != NULL) {
-    TAILQ_REMOVE(&mp->mp_eq, e, e_link);
-  } else {
-    mb_enq(mp, mq, mb);
-  }
-
-  hts_mutex_unlock(&mp->mp_mutex);
-  return e;
-}
-
-
-
-/**
- * Return -1 if queues are full. return 0 if enqueue succeeded.
- */
-int
-mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
-		    int auxtype)
-{
-  assert(mb->mb_data_type < MB_CTRL);
-
-  hts_mutex_lock(&mp->mp_mutex);
-  
-  if(mp->mp_buffer_current + mb->mb_size > mp->mp_buffer_limit &&
-     mq->mq_packets_current < 5) {
-      hts_mutex_unlock(&mp->mp_mutex);
-    return -1;
-  }
-
-  if(auxtype != -1) {
-    media_buf_t *after;
-    TAILQ_FOREACH_REVERSE(after, &mq->mq_q_aux, media_buf_queue, mb_link) {
-      if(after->mb_data_type == auxtype)
-	break;
-    }
-    
-    if(after == NULL)
-      TAILQ_INSERT_HEAD(&mq->mq_q_aux, mb, mb_link);
-    else
-      TAILQ_INSERT_AFTER(&mq->mq_q_aux, after, mb, mb_link);
-
-  } else {
-    TAILQ_INSERT_TAIL(&mq->mq_q_data, mb, mb_link);
-  }
-
-  mq->mq_packets_current++;
-  mp->mp_buffer_current += mb->mb_size;
-  mb->mb_epoch = mp->mp_epoch;
-  mq_update_stats(mp, mq);
-  hts_cond_signal(&mq->mq_avail);
-
-  hts_mutex_unlock(&mp->mp_mutex);
-  return 0;
-}
-
-
-/**
- *
- */
-void
-mb_enqueue_always(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
-{
-  hts_mutex_lock(&mp->mp_mutex);
-  mb_enq(mp, mq, mb);
-  hts_mutex_unlock(&mp->mp_mutex);
-}
-
-
 /**
  *
  */
@@ -1206,52 +891,6 @@ mp_seek_in_queues(media_pipe_t *mp, int64_t pos)
     }
   }
   return rval;
-}
-
-
-/**
- *
- */
-static void
-mp_flush_locked(media_pipe_t *mp)
-{
-  media_queue_t *v = &mp->mp_video;
-  media_queue_t *a = &mp->mp_audio;
-  media_buf_t *mb;
-
-  mq_flush_locked(mp, a, 0);
-  mq_flush_locked(mp, v, 0);
-
-  mp->mp_epoch++;
-
-  if(v->mq_stream >= 0) {
-    mb = media_buf_alloc_locked(mp, 0);
-    mb->mb_data_type = MB_CTRL_FLUSH;
-    mb_enq(mp, v, mb);
-  }
-
-  if(a->mq_stream >= 0) {
-    mb = media_buf_alloc_locked(mp, 0);
-    mb->mb_data_type = MB_CTRL_FLUSH;
-    mb_enq(mp, a, mb);
-  }
-
-  if(mp->mp_satisfied == 0) {
-    atomic_dec(&media_buffer_hungry);
-    mp->mp_satisfied = 1;
-  }
-}
-
-
-/**
- *
- */
-void
-mp_flush(media_pipe_t *mp, int blank)
-{
-  hts_mutex_lock(&mp->mp_mutex);
-  mp_flush_locked(mp);
-  hts_mutex_unlock(&mp->mp_mutex);
 }
 
 

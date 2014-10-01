@@ -66,6 +66,13 @@ enum codec_id {
 
 #define PTS_UNSET INT64_C(0x8000000000000000)
 
+
+extern atomic_t media_buffer_hungry; /* Set if we try to fill media buffers
+                                        Code can check this and avoid doing IO
+                                        intensive tasks
+                                     */
+
+
 void media_init(void);
 
 struct media_buf;
@@ -690,9 +697,16 @@ void mp_send_cmd_u32(media_pipe_t *mp, media_queue_t *mq, int cmd,
 void mp_send_prop_set_string(media_pipe_t *mp, media_queue_t *mq,
                              prop_t *prop, const char *str);
 
+void mp_flush_locked(media_pipe_t *mp);
+
 void mp_flush(media_pipe_t *mp, int blackout);
 
 void mq_flush(media_pipe_t *mp, media_queue_t *mq, int full);
+
+void mq_init(media_queue_t *mq, prop_t *p, hts_mutex_t *mutex,
+             media_pipe_t *mp);
+
+void mq_destroy(media_queue_t *mq);
 
 void mp_bump_epoch(media_pipe_t *mp);
 

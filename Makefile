@@ -83,6 +83,7 @@ SRCS += src/showtime.c \
 
 SRCS +=	src/media/media.c \
 	src/media/media_track.c \
+	src/media/media_queue.c \
 
 SRCS-${CONFIG_MEDIA_SETTINGS} += src/media/media_settings.c
 
