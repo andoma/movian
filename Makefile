@@ -59,7 +59,6 @@ SRCS += src/showtime.c \
 	src/backend/backend.c \
 	src/backend/backend_prop.c \
 	src/backend/search.c \
-	src/media.c \
 	src/event.c \
 	src/keyring.c \
 	src/settings.c \
@@ -82,6 +81,8 @@ SRCS += src/showtime.c \
 	src/metadata/playinfo.c \
 	src/db/kvstore.c \
 
+SRCS +=	src/media.c \
+	src/media/media_track.c \
 
 SRCS-${CONFIG_LIBAV} += src/libav.c
 

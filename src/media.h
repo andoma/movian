@@ -665,14 +665,15 @@ struct event *mb_enqueue_with_events_ex(media_pipe_t *mp, media_queue_t *mq,
 void mb_enqueue_always(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb);
 
 void mp_enqueue_event(media_pipe_t *mp, struct event *e);
+void mp_enqueue_event_locked(media_pipe_t *mp, event_t *e);
 struct event *mp_dequeue_event(media_pipe_t *mp);
 struct event *mp_dequeue_event_deadline(media_pipe_t *mp, int timeout);
 
 struct event *mp_wait_for_empty_queues(media_pipe_t *mp);
 
 
+void mp_send_cmd_locked(media_pipe_t *mp, media_queue_t *mq, int cmd);
 void mp_send_cmd(media_pipe_t *mp, media_queue_t *mq, int cmd);
-//void mp_send_cmd_head(media_pipe_t *mp, media_queue_t *mq, int cmd);
 void mp_send_cmd_data(media_pipe_t *mp, media_queue_t *mq, int cmd, void *d);
 void mp_send_cmd_u32(media_pipe_t *mp, media_queue_t *mq, int cmd, 
 		     uint32_t u);
