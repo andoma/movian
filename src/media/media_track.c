@@ -674,7 +674,7 @@ subtitle_loader_thread(void *aux)
   }
   mp->mp_subtitle_loader_thread = 0;
   hts_mutex_unlock(&mp->mp_mutex);
-  mp_ref_dec(mp);
+  mp_release(mp);
   return NULL;
 }
 
@@ -687,7 +687,7 @@ void
 mp_load_ext_sub(media_pipe_t *mp, const char *url)
 {
   if(!mp->mp_subtitle_loader_thread) {
-    mp_ref_inc(mp);
+    mp_retain(mp);
     hts_thread_create_detached("subtitleloader",
                                subtitle_loader_thread, mp, THREAD_PRIO_BGTASK);
   }

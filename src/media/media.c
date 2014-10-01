@@ -1011,7 +1011,7 @@ mp_destroy(media_pipe_t *mp)
  *
  */
 void
-mp_ref_dec(media_pipe_t *mp)
+mp_release(media_pipe_t *mp)
 {
   if(atomic_dec(&mp->mp_refcount))
     return;
@@ -1923,7 +1923,7 @@ mp_become_primary(struct media_pipe *mp)
     event_release(e);
   }
 
-  mp_ref_inc(mp);
+  mp_retain(mp);
   mp_set_primary(mp);
 
   hts_mutex_unlock(&media_mutex);
@@ -1952,7 +1952,7 @@ mp_shutdown(struct media_pipe *mp)
     prop_unlink(media_prop_current);
 
     media_primary = NULL;
-    mp_ref_dec(mp); // mp could be free'd here */
+    mp_release(mp); // mp could be free'd here */
 
     /* Anyone waiting to regain playback focus? */
     if((mp = LIST_FIRST(&media_pipe_stack)) != NULL) {
@@ -1972,7 +1972,7 @@ mp_shutdown(struct media_pipe *mp)
     LIST_REMOVE(mp, mp_stack_link);
     mp->mp_flags &= ~MP_ON_STACK;
 
-    mp_ref_dec(mp); // mp could be free'd here */
+    mp_release(mp); // mp could be free'd here */
   }
   hts_mutex_unlock(&media_mutex);
 }

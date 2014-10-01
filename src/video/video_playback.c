@@ -817,7 +817,7 @@ video_player_idle(void *aux)
     video_queue_destroy(vq);
   prop_ref_dec(origin);
   prop_ref_dec(errprop);
-  mp_ref_dec(mp);
+  mp_release(mp);
   return NULL;
 }
 
@@ -827,7 +827,7 @@ video_player_idle(void *aux)
 void
 video_playback_create(media_pipe_t *mp)
 {
-  mp_ref_inc(mp);
+  mp_retain(mp);
   hts_thread_create_detached("video player",  video_player_idle, mp,
 			     THREAD_PRIO_DEMUXER);
 }

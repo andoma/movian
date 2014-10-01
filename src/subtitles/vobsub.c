@@ -528,7 +528,7 @@ vobsub_dtor(ext_subtitles_t *es)
   hts_cond_destroy(&vs->vs_cond);
   hts_mutex_destroy(&vs->vs_mutex);
 
-  mp_ref_dec(vs->vs_mp);
+  mp_release(vs->vs_mp);
 
   av_parser_close(vs->vs_parser);
   av_free(vs->vs_ctx);
@@ -641,7 +641,7 @@ vobsub_load(const char *json, char *errbuf, size_t errlen,
   vs->vs_es.es_picker = vobsub_picker;
 
   vs->vs_mp = mp;
-  mp_ref_inc(mp);
+  mp_retain(mp);
 
   TAILQ_INIT(&vs->vs_cmds);
 

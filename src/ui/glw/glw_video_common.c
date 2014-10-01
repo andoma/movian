@@ -539,7 +539,7 @@ glw_video_dtor(glw_t *w)
   hts_cond_destroy(&gv->gv_init_cond);
   hts_mutex_destroy(&gv->gv_surface_mutex);
 
-  mp_ref_dec(gv->gv_mp);
+  mp_release(gv->gv_mp);
   gv->gv_mp = NULL;
 }
 
