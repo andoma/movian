@@ -20,6 +20,7 @@
  */
 #include <stdio.h>
 
+#include "prop/prop.h"
 #include "networking/http_server.h"
 #include "htsmsg/htsmsg_xml.h"
 #include "event.h"

@@ -18,26 +18,41 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
+#pragma once
 
-#ifndef PLAYQUEUE_H__
-#define PLAYQUEUE_H__
-
-#include "navigator.h"
-struct event;
-
-void playqueue_play(const char *url, prop_t *meta, int paused);
-
-void playqueue_event_handler(struct event *e);
+#include "config.h"
 
 #define PQ_PAUSED 0x1
 #define PQ_NO_SKIP 0x2
 
-void playqueue_load_with_source(prop_t *track, prop_t *source, int flags);
+#if ENABLE_PLAYQUEUE
 
+struct event;
 struct backend;
+struct prop;
 
-int playqueue_open(prop_t *page);
+void playqueue_play(const char *url, struct prop *meta, int paused);
+
+void playqueue_event_handler(struct event *e);
+
+void playqueue_load_with_source(struct prop *track,
+                                struct prop *source, int flags);
+
+
+int playqueue_open(struct prop *page);
 
 void playqueue_fini(void);
 
-#endif /* PLAYQUEUE_H__ */
+#else
+
+#define playqueue_play(url, meta, paused)
+
+#define playqueue_event_handler(event)
+
+#define playqueue_load_with_source(track, source, flags)
+
+#define playqueue_open(page)
+
+#define playqueue_fini()
+
+#endif
