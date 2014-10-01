@@ -81,6 +81,8 @@ static void media_eventsink(void *opaque, prop_event_t event, ...);
 
 static void mp_set_playstatus_by_hold_locked(media_pipe_t *mp, const char *msg);
 
+static void mp_unbecome_primary(media_pipe_t *mp);
+
 uint8_t HTS_JOIN(sp, k0)[321];
 
 /**
@@ -511,16 +513,26 @@ mq_flush(media_pipe_t *mp, media_queue_t *mq, int full)
 void
 mp_destroy(media_pipe_t *mp)
 {
-  mp_shutdown(mp);
+  mp_unbecome_primary(mp);
 
   assert(mp->mp_sub_currenttime != NULL);
+
+  hts_mutex_lock(&mp->mp_mutex);
 
   prop_unsubscribe(mp->mp_sub_currenttime);
   prop_unsubscribe(mp->mp_sub_stats);
 
+#if ENABLE_MEDIA_SETTINGS
   mp_settings_clear(mp);
+#endif
+
+  mp_track_mgr_destroy(&mp->mp_audio_track_mgr);
+  mp_track_mgr_destroy(&mp->mp_subtitle_track_mgr);
+
+  hts_mutex_unlock(&mp->mp_mutex);
 
   mp_release(mp);
+
 }
 
 
@@ -542,9 +554,6 @@ mp_release(media_pipe_t *mp)
 
   if(media_pipe_fini_extra != NULL)
     media_pipe_fini_extra(mp);
-
-  mp_track_mgr_destroy(&mp->mp_audio_track_mgr);
-  mp_track_mgr_destroy(&mp->mp_subtitle_track_mgr);
 
 
   while((e = TAILQ_FIRST(&mp->mp_eq)) != NULL) {
@@ -1480,14 +1489,9 @@ mp_become_primary(struct media_pipe *mp)
 /**
  *
  */
-void
-mp_shutdown(struct media_pipe *mp)
+static void
+mp_unbecome_primary(media_pipe_t *mp)
 {
-  if(mp->mp_audio_decoder != NULL) {
-    audio_decoder_destroy(mp->mp_audio_decoder);
-    mp->mp_audio_decoder = NULL;
-  }
-
   hts_mutex_lock(&media_mutex);
 
   assert(mp->mp_flags & MP_PRIMABLE);
@@ -1502,6 +1506,21 @@ mp_shutdown(struct media_pipe *mp)
     prop_unselect(media_prop_sources);
   }
   hts_mutex_unlock(&media_mutex);
+}
+
+
+/**
+ *
+ */
+void
+mp_shutdown(struct media_pipe *mp)
+{
+  mp_unbecome_primary(mp);
+
+  if(mp->mp_audio_decoder != NULL) {
+    audio_decoder_destroy(mp->mp_audio_decoder);
+    mp->mp_audio_decoder = NULL;
+  }
 }
 
 
@@ -1649,9 +1668,11 @@ mp_set_url(media_pipe_t *mp, const char *url, const char *parent_url,
            const char *parent_title)
 {
   prop_set_string(mp->mp_prop_url, url);
+#if ENABLE_MEDIA_SETTINGS
   hts_mutex_lock(&mp->mp_mutex);
   mp_settings_init(mp, url, parent_url, parent_title);
   hts_mutex_unlock(&mp->mp_mutex);
+#endif
 }
 
 

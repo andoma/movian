@@ -106,6 +106,7 @@ CONFIG_LIST="
  playqueue
  sid
  htsp
+ media_settings
 "
 
 
@@ -606,3 +607,4 @@ enable rar
 enable playqueue
 enable sid
 enable htsp
+enable media_settings
