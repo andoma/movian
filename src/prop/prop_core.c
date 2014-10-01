@@ -1074,7 +1074,7 @@ prop_global_dispatch_thread(void *aux)
     if(s != NULL) {
       TAILQ_REMOVE(&psd->psd_wait_queue, s, psd_link);
       TAILQ_INSERT_TAIL(&prop_global_dispatch_queue, s, psd_link);
-      TAILQ_MOVE(&s->psd_wait_queue, &psd->psd_wait_queue, psd_link);
+      TAILQ_MERGE(&s->psd_wait_queue, &psd->psd_wait_queue, psd_link);
     }
 
     if(TAILQ_FIRST(&psd->psd_notifications) == NULL) {
