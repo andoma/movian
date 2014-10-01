@@ -2669,7 +2669,7 @@ prop_subscribe(int flags, ...)
   void *opaque = NULL;
   prop_courier_t *pc = NULL;
   void *lock = NULL;
-  prop_lockmgr_t *lockmgr = proplockmgr;
+  prop_lockmgr_t *lockmgr = NULL;
   prop_root_t *pr;
   struct prop_root_list proproots;
   void *cb = NULL;
@@ -2927,6 +2927,9 @@ prop_subscribe(int flags, ...)
       s->hps_origin = prop_ref_inc(origin_chain[0]);
     }
   }
+
+  if(lockmgr == NULL)
+    lockmgr = proplockmgr;
 
   if(pc != NULL) {
     s->hps_global_dispatch = 0;
