@@ -619,7 +619,7 @@ icecast_thread(void *aux)
   if(stream_radio(ipc, errbuf, sizeof(errbuf)) == NULL) {
     TRACE(TRACE_ERROR, "Radio", "Error: %s", errbuf);
   }
-  mp_release(ipc->ipc_mp);
+  mp_destroy(ipc->ipc_mp);
 
   free((void *)ipc->ipc_url);
   free(ipc);

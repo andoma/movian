@@ -457,6 +457,9 @@ mp_reinit_streams(media_pipe_t *mp)
 }
 
 
+/**
+ *
+ */
 static void
 mq_flush_q(media_pipe_t *mp, media_queue_t *mq, struct media_buf_queue *q,
 	   int full)
@@ -506,6 +509,25 @@ mq_flush(media_pipe_t *mp, media_queue_t *mq, int full)
  *
  */
 void
+mp_destroy(media_pipe_t *mp)
+{
+  mp_shutdown(mp);
+
+  assert(mp->mp_sub_currenttime != NULL);
+
+  prop_unsubscribe(mp->mp_sub_currenttime);
+  prop_unsubscribe(mp->mp_sub_stats);
+
+  mp_settings_clear(mp);
+
+  mp_release(mp);
+}
+
+
+/**
+ *
+ */
+void
 mp_release(media_pipe_t *mp)
 {
   if(atomic_dec(&mp->mp_refcount))
@@ -520,11 +542,6 @@ mp_release(media_pipe_t *mp)
 
   if(media_pipe_fini_extra != NULL)
     media_pipe_fini_extra(mp);
-
-  mp_settings_clear(mp);
-
-  prop_unsubscribe(mp->mp_sub_currenttime);
-  prop_unsubscribe(mp->mp_sub_stats);
 
   mp_track_mgr_destroy(&mp->mp_audio_track_mgr);
   mp_track_mgr_destroy(&mp->mp_subtitle_track_mgr);

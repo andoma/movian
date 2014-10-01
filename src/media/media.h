@@ -648,6 +648,8 @@ void media_buf_dtor_frame_info(media_buf_t *mb);
 
 media_pipe_t *mp_create(const char *name, int flags);
 
+void mp_destroy(media_pipe_t *mp);
+
 void mp_reinit_streams(media_pipe_t *mp);
 
 

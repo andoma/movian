@@ -360,7 +360,7 @@ enable_test_thread(int on)
     event_release(e);
     hts_thread_join(&generator_tid);
     mp_shutdown(gen_mp);
-    mp_release(gen_mp);
+    mp_destroy(gen_mp);
     gen_mp = NULL;
     generator_tid = 0;
   }
