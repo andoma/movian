@@ -26,7 +26,7 @@
 
 #include "navigator.h"
 #include "backend/backend.h"
-#include "media.h"
+#include "media/media.h"
 #include "fileaccess/fileaccess.h"
 #include "fileaccess/fa_proto.h"
 #include "fileaccess/fa_libav.h"

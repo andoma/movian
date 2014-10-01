@@ -21,7 +21,7 @@
  */
 #pragma once
 
-#include "media.h"
+#include "media/media.h"
 
 struct ext_subtitles;
 

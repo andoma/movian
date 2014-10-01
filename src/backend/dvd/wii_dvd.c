@@ -30,7 +30,7 @@
 #include "misc/callout.h"
 #include "navigator.h"
 #include "backend/backend.h"
-#include "media.h"
+#include "media/media.h"
 #include "dvd.h"
 #include "service.h"
 #include "notifications.h"

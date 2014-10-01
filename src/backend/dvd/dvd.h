@@ -22,7 +22,7 @@
 #ifndef DVD_H
 #define DVD_H
 
-#include "media.h"
+#include "media/media.h"
 
 event_t *dvd_play(const char *url, media_pipe_t *mp,
 		  char *errstr, size_t errlen, int vfs);

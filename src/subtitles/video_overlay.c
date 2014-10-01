@@ -20,7 +20,7 @@
  */
 
 #include "showtime.h"
-#include "media.h"
+#include "media/media.h"
 #include "text/text.h"
 #include "image/pixmap.h"
 #include "misc/str.h"

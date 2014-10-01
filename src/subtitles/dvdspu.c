@@ -22,7 +22,7 @@
 #include <inttypes.h>
 
 #include "showtime.h"
-#include "media.h"
+#include "media/media.h"
 #include "vobsub.h"
 #include "dvdspu.h"
 

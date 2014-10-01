@@ -24,7 +24,7 @@
 
 #include "showtime.h"
 #include "audio.h"
-#include "media.h"
+#include "media/media.h"
 
 #define NUM_BUFS 8
 

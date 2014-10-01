@@ -21,7 +21,7 @@
 #include "config.h"
 
 #include "event.h"
-#include "media.h"
+#include "media/media.h"
 #include "showtime.h"
 #include "navigator.h"
 #include "backend/backend.h"

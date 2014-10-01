@@ -35,7 +35,7 @@
 #include "navigator.h"
 #include "backend/backend.h"
 #include "keyring.h"
-#include "media.h"
+#include "media/media.h"
 #include "misc/str.h"
 #include "misc/sha.h"
 #include "video/video_playback.h"

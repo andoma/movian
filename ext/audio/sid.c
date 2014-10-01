@@ -1196,7 +1196,7 @@ static unsigned short LoadSIDFromMemory(void *pSidData, unsigned short *load_add
 
 
 #include "backend/backend.h"
-#include "media.h"
+#include "media/media.h"
 #include "showtime.h"
 #include "fileaccess/fileaccess.h"
 #include "metadata/playinfo.h"

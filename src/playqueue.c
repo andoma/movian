@@ -32,7 +32,7 @@
 #include "navigator.h"
 #include "backend/backend.h"
 #include "playqueue.h"
-#include "media.h"
+#include "media/media.h"
 #include "event.h"
 #include "usage.h"
 

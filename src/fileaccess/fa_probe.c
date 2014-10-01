@@ -41,7 +41,7 @@
 #include "fileaccess.h"
 #include "fa_probe.h"
 #include "navigator.h"
-#include "media.h"
+#include "media/media.h"
 #include "misc/str.h"
 #include "misc/isolang.h"
 #include "image/jpeg.h"

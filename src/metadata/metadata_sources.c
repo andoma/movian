@@ -29,7 +29,7 @@
 #include "prop/prop_concat.h"
 
 #include "showtime.h"
-#include "media.h"
+#include "media/media.h"
 #include "htsmsg/htsmsg_json.h"
 #include "misc/str.h"
 

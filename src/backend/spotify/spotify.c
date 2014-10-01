@@ -39,7 +39,7 @@
 #include "backend/search.h"
 #include "backend/backend_prop.h"
 #include "playqueue.h"
-#include "media.h"
+#include "media/media.h"
 #include "notifications.h"
 #include "libspotify/api.h"
 #include "keyring.h"

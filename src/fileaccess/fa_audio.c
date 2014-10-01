@@ -33,7 +33,7 @@
 #include "showtime.h"
 #include "fa_audio.h"
 #include "event.h"
-#include "media.h"
+#include "media/media.h"
 #include "fileaccess.h"
 #include "fa_libav.h"
 #include "notifications.h"

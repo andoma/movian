@@ -23,7 +23,7 @@
 
 #include "showtime.h"
 #include "audio.h"
-#include "media.h"
+#include "media/media.h"
 #include "alsa.h"
 
 typedef struct decoder {

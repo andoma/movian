@@ -36,7 +36,7 @@
 #include "showtime.h"
 #include "video_decoder.h"
 #include "event.h"
-#include "media.h"
+#include "media/media.h"
 #include "misc/sha.h"
 #include "libav.h"
 

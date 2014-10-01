@@ -20,7 +20,7 @@
  */
 #pragma once
 
-#include "media.h"
+#include "media/media.h"
 struct backend;
 struct fa_handle;
 

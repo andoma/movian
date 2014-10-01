@@ -22,7 +22,7 @@
 #ifndef VIDEO_PLAYBACK_H
 #define VIDEO_PLAYBACK_H
 
-#include "media.h"
+#include "media/media.h"
 
 struct rstr;
 struct video_queue;

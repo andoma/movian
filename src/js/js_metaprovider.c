@@ -32,7 +32,7 @@
 #include "event.h"
 #include "htsmsg/htsmsg_json.h"
 #include "subtitles/subtitles.h"
-#include "media.h"
+#include "media/media.h"
 #include "usage.h"
 
 typedef struct js_subprovider {

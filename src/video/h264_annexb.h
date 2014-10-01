@@ -23,7 +23,7 @@
 
 #include <stddef.h>
 #include <stdlib.h>
-#include "media.h"
+#include "media/media.h"
 
 typedef struct h264_annexb_ctx {
   int lsize;

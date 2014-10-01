@@ -20,7 +20,7 @@
  */
 
 #include "showtime.h"
-#include "media.h"
+#include "media/media.h"
 #include "misc/isolang.h"
 #include "i18n.h"
 #include "db/kvstore.h"

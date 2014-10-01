@@ -28,7 +28,7 @@
 #include "video_playback.h"
 #include "video_settings.h"
 #include "event.h"
-#include "media.h"
+#include "media/media.h"
 #include "backend/backend.h"
 #include "notifications.h"
 #include "htsmsg/htsmsg_json.h"

@@ -31,7 +31,7 @@
 #include <math.h>
 
 #include "showtime.h"
-#include "media.h"
+#include "media/media.h"
 #include "glw.h"
 #include "misc/perftimer.h"
 

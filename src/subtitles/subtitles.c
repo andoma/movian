@@ -24,7 +24,7 @@
 #include "arch/threads.h"
 #include "fileaccess/fileaccess.h"
 #include "misc/isolang.h"
-#include "media.h"
+#include "media/media.h"
 #include "vobsub.h"
 #include "backend/backend.h"
 #include "js/js.h"

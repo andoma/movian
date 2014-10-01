@@ -25,7 +25,7 @@
 
 #include "misc/bitstream.h"
 #include "showtime.h"
-#include "media.h"
+#include "media/media.h"
 
 #include "h264_parser.h"
 

@@ -31,7 +31,7 @@
 #include "misc/str.h"
 #include "event.h"
 #include "htsmsg/htsmsg_json.h"
-#include "media.h"
+#include "media/media.h"
 
 typedef struct js_hook {
 

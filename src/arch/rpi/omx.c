@@ -21,7 +21,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include "media.h"
+#include "media/media.h"
 #include "omx.h"
 #include "rpi_pixmap.h"
 

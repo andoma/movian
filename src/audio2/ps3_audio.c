@@ -36,7 +36,7 @@
 
 #include "showtime.h"
 #include "audio.h"
-#include "media.h"
+#include "media/media.h"
 
 static int max_pcm;
 static int max_dts;

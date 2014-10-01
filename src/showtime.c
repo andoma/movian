@@ -32,7 +32,7 @@
 #include "arch/arch.h"
 #include "arch/threads.h"
 
-#include "media.h"
+#include "media/media.h"
 #include "audio2/audio_ext.h"
 #include "backend/backend.h"
 #include "navigator.h"

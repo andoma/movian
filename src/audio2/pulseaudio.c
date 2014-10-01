@@ -29,7 +29,7 @@
 
 #include "showtime.h"
 #include "audio.h"
-#include "media.h"
+#include "media/media.h"
 #include "notifications.h"
 
 static pa_threaded_mainloop *mainloop;

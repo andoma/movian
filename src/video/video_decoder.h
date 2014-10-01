@@ -22,7 +22,7 @@
 #ifndef VIDEO_DECODER_H
 #define VIDEO_DECODER_H
 
-#include "media.h"
+#include "media/media.h"
 #include "misc/avgtime.h"
 
 #if ENABLE_DVD

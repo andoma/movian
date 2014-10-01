@@ -27,7 +27,7 @@
 #include "fileaccess/fileaccess.h"
 #include "vobsub.h"
 #include "misc/isolang.h"
-#include "media.h"
+#include "media/media.h"
 #include "htsmsg/htsmsg_json.h"
 #include "ext_subtitles.h"
 

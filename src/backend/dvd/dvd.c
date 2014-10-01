@@ -24,7 +24,7 @@
 #include <ctype.h>
 
 #include "event.h"
-#include "media.h"
+#include "media/media.h"
 #include "fileaccess/fileaccess.h"
 #include "dvd.h"
 #include "notifications.h"

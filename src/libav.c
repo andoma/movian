@@ -26,7 +26,7 @@
 #include <libavutil/pixdesc.h>
 
 #include "showtime.h"
-#include "media.h"
+#include "media/media.h"
 #include "libav.h"
 #include "fileaccess/fa_libav.h"
 #include "video/video_decoder.h"

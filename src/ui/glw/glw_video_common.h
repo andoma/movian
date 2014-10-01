@@ -24,7 +24,7 @@
 
 #include "glw.h"
 #include "glw_renderer.h"
-#include "media.h"
+#include "media/media.h"
 #include "video/video_playback.h"
 #include "video/video_decoder.h"
 #include "misc/kalman.h"

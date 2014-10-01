@@ -34,7 +34,7 @@
 #include "showtime.h"
 #include "fa_video.h"
 #include "event.h"
-#include "media.h"
+#include "media/media.h"
 #include "fileaccess.h"
 #include "fa_libav.h"
 #include "backend/dvd/dvd.h"

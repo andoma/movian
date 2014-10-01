@@ -81,7 +81,7 @@ SRCS += src/showtime.c \
 	src/metadata/playinfo.c \
 	src/db/kvstore.c \
 
-SRCS +=	src/media.c \
+SRCS +=	src/media/media.c \
 	src/media/media_track.c \
 
 SRCS-${CONFIG_LIBAV} += src/libav.c

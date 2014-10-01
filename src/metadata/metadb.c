@@ -30,7 +30,7 @@
 #include "prop/prop.h"
 
 #include "showtime.h"
-#include "media.h"
+#include "media/media.h"
 #include "metadata.h"
 #include "db/db_support.h"
 #include "fileaccess/fileaccess.h"

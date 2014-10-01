@@ -41,7 +41,7 @@
 #include "fa_audio.h"
 #include "fa_libav.h"
 #include "misc/str.h"
-#include "media.h"
+#include "media/media.h"
 #include "metadata/playinfo.h"
 
 /**

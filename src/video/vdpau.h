@@ -30,7 +30,7 @@
 #include <libavcodec/avcodec.h>
 #include <libavcodec/vdpau.h>
 
-#include "media.h"
+#include "media/media.h"
 
 TAILQ_HEAD(vdpau_video_surface_queue, vdpau_video_surface);
 TAILQ_HEAD(vdpau_output_surface_queue, vdpau_output_surface);

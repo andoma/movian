@@ -26,7 +26,7 @@
 
 #include "audio2/audio.h"
 #include "omx.h"
-#include "media.h"
+#include "media/media.h"
 #include "rpi.h"
 
 //#include <interface/vmcs_host/vc_tvservice.h>

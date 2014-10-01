@@ -35,7 +35,7 @@
 #include "image/image.h"
 #include "image/pixmap.h"
 #include "htsmsg/htsmsg_json.h"
-#include "media.h"
+#include "media/media.h"
 #include "misc/minmax.h"
 
 

@@ -25,7 +25,7 @@
 #include <libavresample/avresample.h>
 
 #include "arch/threads.h"
-#include "media.h"
+#include "media/media.h"
 
 extern float audio_master_volume;
 extern int   audio_master_mute;

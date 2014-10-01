@@ -22,7 +22,7 @@
 #ifndef FA_VIDEO_H
 #define FA_VIDEO_H
 
-#include "media.h"
+#include "media/media.h"
 
 struct video_queue;
 struct fa_handle;

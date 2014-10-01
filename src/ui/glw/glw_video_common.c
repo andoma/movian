@@ -24,7 +24,7 @@
 #include <libavutil/pixdesc.h>
 
 #include "showtime.h"
-#include "media.h"
+#include "media/media.h"
 #include "video/video_playback.h"
 #include "video/video_settings.h"
 

@@ -28,7 +28,7 @@
 #include <math.h>
 #include <stdio.h>
 
-#include "media.h"
+#include "media/media.h"
 #include "showtime.h"
 #include "audio2/audio_ext.h"
 #include "event.h"
