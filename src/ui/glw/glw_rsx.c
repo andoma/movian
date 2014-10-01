@@ -222,26 +222,6 @@ load_fp(glw_root_t *gr, const char *filename)
  *
  */
 void
-glw_wirebox(glw_root_t *gr, const glw_rctx_t *rc)
-{
-
-}
-
-
-/**
- *
- */
-void
-glw_wirecube(glw_root_t *gr, const glw_rctx_t *rc)
-{
-
-}
-
-
-/**
- *
- */
-void
 rsx_set_vp(glw_root_t *root, rsx_vp_t *rvp)
 {
   if(root->gr_be.be_vp_current == rvp)
@@ -269,136 +249,155 @@ rsx_set_fp(glw_root_t *root, rsx_fp_t *rfp, int force)
  *
  */
 static void
-rsx_render(struct glw_root *gr,
-	   const Mtx m,
-	   const struct glw_backend_texture *t0,
-	   const struct glw_backend_texture *t1,
-	   const struct glw_rgb *rgb_mul,
-	   const struct glw_rgb *rgb_off,
-	   float alpha, float blur,
-	   const float *vertices,
-	   int num_vertices,
-	   const uint16_t *indices,
-	   int num_triangles,
-	   int flags,
-	   glw_program_t *p,
-	   const glw_rctx_t *rc)
+rsx_render_unlocked(glw_root_t *gr)
 {
   gcmContextData *ctx = gr->gr_be.be_ctx;
   rsx_vp_t *rvp = gr->gr_be.be_vp_1;
-  rsx_fp_t *rfp;
-  float rgba[4];
+  const float *vertices = gr->gr_vertex_buffer;
 
-  if(t0 == NULL) {
+  int current_blendmode = GLW_BLEND_NORMAL;
 
-    if(t1 != NULL) {
-      rfp = gr->gr_be.be_fp_flat_stencil;
+  realityBlendFunc(ctx,
+                   NV30_3D_BLEND_FUNC_SRC_RGB_SRC_ALPHA |
+                   NV30_3D_BLEND_FUNC_SRC_ALPHA_SRC_ALPHA,
+                   NV30_3D_BLEND_FUNC_DST_RGB_ONE_MINUS_SRC_ALPHA |
+                   NV30_3D_BLEND_FUNC_DST_ALPHA_ZERO);
 
-      if(t1->tex.offset == 0 || t1->size == 0)
-	return;
+  int current_frontface = GLW_CCW;
 
-      realitySetTexture(ctx, 0, &t1->tex);
+  realityFrontFace(ctx, REALITY_FRONT_FACE_CCW);
+
+  for(int j = 0; j < gr->gr_num_render_jobs; j++) {
+    const glw_render_order_t *ro = gr->gr_render_order + j;
+    const glw_render_job_t *rj = ro->job;
+    const struct glw_backend_texture *t0 = rj->t0;
+    const struct glw_backend_texture *t1 = rj->t1;
+    rsx_fp_t *rfp;
+    float rgba[4];
+
+    if(t0 == NULL) {
+
+      if(t1 != NULL) {
+        rfp = gr->gr_be.be_fp_flat_stencil;
+
+        if(t1->tex.offset == 0 || t1->size == 0)
+          continue;
+
+        realitySetTexture(ctx, 0, &t1->tex);
+      } else {
+        rfp = gr->gr_be.be_fp_flat;
+
+      }
+
     } else {
-      rfp = gr->gr_be.be_fp_flat;
 
+      if(t0->tex.offset == 0 || t0->size == 0)
+        continue;
+
+      const int doblur = rj->blur > 0.05 ||
+        rj->flags & GLW_RENDER_BLUR_ATTRIBUTE;
+
+      realitySetTexture(ctx, 0, &t0->tex);
+
+      if(t1 != NULL) {
+        rfp = doblur ? gr->gr_be.be_fp_tex_stencil_blur :
+          gr->gr_be.be_fp_tex_stencil;
+
+        if(t1->tex.offset == 0 || t1->size == 0)
+          continue;
+
+        realitySetTexture(ctx, 1, &t1->tex);
+
+      } else {
+        rfp = doblur ? gr->gr_be.be_fp_tex_blur : gr->gr_be.be_fp_tex;
+      }
     }
 
-  } else {
+    rsx_set_vp(gr, rvp);
 
-    if(t0->tex.offset == 0 || t0->size == 0)
-      return;
+    realitySetVertexProgramConstant4fBlock(ctx, rvp->rvp_binary,
+                                           rvp->rvp_u_modelview,
+                                           4,
+                                           rj->eyespace ? identitymtx :
+                                           rj->m);
 
-    const int doblur = blur > 0.05 || flags & GLW_RENDER_BLUR_ATTRIBUTE;
+    const float alpha = rj->alpha;
 
-    realitySetTexture(ctx, 0, &t0->tex);
-
-    if(t1 != NULL) {
-      rfp = doblur ? gr->gr_be.be_fp_tex_stencil_blur :
-	gr->gr_be.be_fp_tex_stencil;
-
-      if(t1->tex.offset == 0 || t1->size == 0)
-	 return;
-
-     realitySetTexture(ctx, 1, &t1->tex);
+    if(likely(rj->blendmode == GLW_BLEND_NORMAL)) {
+      rgba[0] = rj->rgb_mul.r;
+      rgba[1] = rj->rgb_mul.g;
+      rgba[2] = rj->rgb_mul.b;
+      rgba[3] = alpha;
 
     } else {
-      rfp = doblur ? gr->gr_be.be_fp_tex_blur : gr->gr_be.be_fp_tex;
+      rgba[0] = rj->rgb_mul.r * alpha;
+      rgba[1] = rj->rgb_mul.g * alpha;
+      rgba[2] = rj->rgb_mul.b * alpha;
+      rgba[3] = 1;
     }
-  }
 
-  rsx_set_vp(gr, rvp);
+    realitySetVertexProgramConstant4f(ctx, rvp->rvp_u_color, rgba);
 
-  realitySetVertexProgramConstant4fBlock(ctx, rvp->rvp_binary,
-					 rvp->rvp_u_modelview,
-					 4, m ?: identitymtx);
-  
-  switch(gr->gr_be.be_blendmode) {
-  case GLW_BLEND_NORMAL:
-    rgba[0] = rgb_mul->r;
-    rgba[1] = rgb_mul->g;
-    rgba[2] = rgb_mul->b;
-    rgba[3] = alpha;
-    break;
-
-  case GLW_BLEND_ADDITIVE:
-    rgba[0] = rgb_mul->r * alpha;
-    rgba[1] = rgb_mul->g * alpha;
-    rgba[2] = rgb_mul->b * alpha;
-    rgba[3] = 1;
-    break;
-  }
-
-  realitySetVertexProgramConstant4f(ctx, rvp->rvp_u_color, rgba);
-
-  if(rvp->rvp_u_color_offset != -1) {
-
-    if(rgb_off != NULL) {
-      rgba[0] = rgb_off->r;
-      rgba[1] = rgb_off->g;
-      rgba[2] = rgb_off->b;
-    } else {
-      rgba[0] = 0;
-      rgba[1] = 0;
-      rgba[2] = 0;
+    if(unlikely(current_blendmode != rj->blendmode)) {
+      current_blendmode = rj->blendmode;
+      switch(rj->blendmode) {
+      case GLW_BLEND_ADDITIVE:
+        realityBlendFunc(ctx,
+                         NV30_3D_BLEND_FUNC_SRC_RGB_SRC_COLOR,
+                         NV30_3D_BLEND_FUNC_DST_RGB_ONE);
+        break;
+      case GLW_BLEND_NORMAL:
+        realityBlendFunc(ctx,
+                         NV30_3D_BLEND_FUNC_SRC_RGB_SRC_ALPHA |
+                         NV30_3D_BLEND_FUNC_SRC_ALPHA_SRC_ALPHA,
+                         NV30_3D_BLEND_FUNC_DST_RGB_ONE_MINUS_SRC_ALPHA |
+                         NV30_3D_BLEND_FUNC_DST_ALPHA_ZERO);
+        break;
+      }
     }
-    rgba[3] = 0;
-    realitySetVertexProgramConstant4f(ctx, rvp->rvp_u_color_offset, rgba);
-  }
+    if(unlikely(current_frontface != rj->frontface)) {
+      current_frontface = rj->frontface;
+      realityFrontFace(ctx,
+                       current_frontface == GLW_CW ? REALITY_FRONT_FACE_CW :
+                       REALITY_FRONT_FACE_CCW);
+    }
 
-  if(rfp == gr->gr_be.be_fp_tex_blur) {
-    float v[4];
-    v[0] = blur;
-    v[1] = 1.5 / t0->tex.width;
-    v[2] = 1.5 / t0->tex.height;
-    v[3] = 0;
-    realitySetVertexProgramConstant4f(ctx,  rvp->rvp_u_blur, v);
-  }
+    if(rvp->rvp_u_color_offset != -1) {
+      rgba[0] = rj->rgb_off.r;
+      rgba[1] = rj->rgb_off.g;
+      rgba[2] = rj->rgb_off.b;
+      rgba[3] = 0;
+      realitySetVertexProgramConstant4f(ctx, rvp->rvp_u_color_offset, rgba);
+    }
 
-  rsx_set_fp(gr, rfp, 0);
+    if(rfp == gr->gr_be.be_fp_tex_blur) {
+      float v[4];
+      v[0] = rj->blur;
+      v[1] = 1.5 / t0->tex.width;
+      v[2] = 1.5 / t0->tex.height;
+      v[3] = 0;
+      realitySetVertexProgramConstant4f(ctx,  rvp->rvp_u_blur, v);
+    }
 
-  // TODO: Get rid of immediate mode
-  realityVertexBegin(ctx, REALITY_TRIANGLES);
+    rsx_set_fp(gr, rfp, 0);
 
-  int i;
+    // TODO: Get rid of immediate mode
+    realityVertexBegin(ctx, REALITY_TRIANGLES);
 
-  if(indices != NULL) {
-    for(i = 0; i < num_triangles * 3; i++) {
-      const float *v = &vertices[indices[i] * VERTEX_SIZE];
+    const float *v = &vertices[rj->vertex_offset * VERTEX_SIZE];
+
+
+    for(int i = 0; i < rj->num_vertices; i++) {
       realityAttr4f(ctx,  rvp->rvp_a_texcoord,  v[8], v[9], v[10], v[11]);
       realityAttr4f(ctx, rvp->rvp_a_color, v[4], v[5], v[6], v[7]);
       realityVertex4f(ctx, v[0], v[1], v[2], v[3]);
+      v+= VERTEX_SIZE;
     }
-  } else {
-    for(i = 0; i < num_vertices; i++) {
-      const float *v = &vertices[i * VERTEX_SIZE];
-      realityAttr4f(ctx,  rvp->rvp_a_texcoord,  v[8], v[9], v[10], v[11]);
-      realityAttr4f(ctx, rvp->rvp_a_color, v[4], v[5], v[6], v[7]);
-      realityVertex4f(ctx, v[0], v[1], v[2], v[3]);
-    }
+    realityVertexEnd(ctx);
+
   }
-  realityVertexEnd(ctx);
+
 }
-
 
 
 /**
@@ -409,8 +408,8 @@ glw_rsx_init_context(glw_root_t *gr)
 {
   glw_backend_root_t *be = &gr->gr_be;
 
-  gr->gr_render = rsx_render;
-  
+  gr->gr_be_render_unlocked = rsx_render_unlocked;
+
   be->be_vp_1          = load_vp("v1.vp");
   be->be_fp_tex        = load_fp(gr, "f_tex.fp");
   be->be_fp_flat       = load_fp(gr, "f_flat.fp");
@@ -418,7 +417,7 @@ glw_rsx_init_context(glw_root_t *gr)
   be->be_fp_tex_stencil  = load_fp(gr, "f_tex_stencil.fp");
   be->be_fp_flat_stencil = load_fp(gr, "f_flat_stencil.fp");
   be->be_fp_tex_stencil_blur = load_fp(gr, "f_tex_stencil_blur.fp");
-  
+
   be->be_vp_yuv2rgb    = load_vp("yuv2rgb_v.vp");
   be->be_fp_yuv2rgb_1f = load_fp(gr, "yuv2rgb_1f_norm.fp");
   be->be_fp_yuv2rgb_2f = load_fp(gr, "yuv2rgb_2f_norm.fp");
@@ -464,40 +463,6 @@ glw_rtt_destroy(glw_root_t *gr, glw_rtt_t *grtt)
 {
 }
 
-
-/**
- *
- */
-void
-glw_blendmode(struct glw_root *gr, int mode)
-{
-  if(mode == gr->gr_be.be_blendmode)
-    return;
-  gr->gr_be.be_blendmode = mode;
-
-  switch(mode) {
-  case GLW_BLEND_ADDITIVE:
-    realityBlendFunc(gr->gr_be.be_ctx,
-		     NV30_3D_BLEND_FUNC_SRC_RGB_SRC_COLOR,
-		     NV30_3D_BLEND_FUNC_DST_RGB_ONE);
-    break;
-  case GLW_BLEND_NORMAL:
-    realityBlendFunc(gr->gr_be.be_ctx,
-		     NV30_3D_BLEND_FUNC_SRC_RGB_SRC_ALPHA |
-		     NV30_3D_BLEND_FUNC_SRC_ALPHA_SRC_ALPHA,
-		     NV30_3D_BLEND_FUNC_DST_RGB_ONE_MINUS_SRC_ALPHA |
-		     NV30_3D_BLEND_FUNC_DST_ALPHA_ZERO);
-    break;
-  }
-}
-
-
-void glw_frontface(struct glw_root *gr, int how)
-{
-  realityFrontFace(gr->gr_be.be_ctx,
-		   how == GLW_CW ? REALITY_FRONT_FACE_CW :
-		   REALITY_FRONT_FACE_CCW);
-}
 
 /**
  * Not implemented yet

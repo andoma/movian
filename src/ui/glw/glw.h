@@ -1379,6 +1379,8 @@ void glw_align_2(glw_rctx_t *rc, int a);
 
 void glw_wirebox(glw_root_t *gr, const glw_rctx_t *rc);
 
+void glw_renderer_render(glw_root_t *gr);
+
 void glw_render_zoffset(glw_t *w, const glw_rctx_t *rc);
 
 static inline void glw_render0(glw_t *w, const glw_rctx_t *rc)
@@ -1469,7 +1471,8 @@ void glw_blendmode(struct glw_root *gr, int mode);
 
 #define GLW_CW  0
 #define GLW_CCW 1
-void glw_frontface(struct glw_root *gr, int how);
+
+void glw_frontface(struct glw_root *gr, char how);
 
 struct glw_program *glw_make_program(struct glw_root *gr, 
 				     const char *vertex_shader,

@@ -161,42 +161,6 @@ load_program(glw_root_t *gr,
 /**
  *
  */
-static int
-render_order_cmp(const void *A, const void *B)
-{
-  const glw_render_order_t *a = A;
-  const glw_render_order_t *b = B;
-  if(a->zindex != b->zindex)
-    return a->zindex - b->zindex;
-
-  const glw_render_job_t *aj = a->job;
-  const glw_render_job_t *bj = b->job;
-
-  if(aj->t0 < bj->t0)
-    return -1;
-
-  if(aj->t0 > bj->t0)
-    return 1;
-
-  return 0;
-
-}
-
-
-/**
- *
- */
-static void
-sort_jobs(glw_root_t *gr)
-{
-  qsort(gr->gr_render_order, gr->gr_num_render_jobs,
-        sizeof(glw_render_order_t), render_order_cmp);
-}
-
-
-/**
- *
- */
 static void
 render_unlocked(glw_root_t *gr)
 {
@@ -216,6 +180,9 @@ render_unlocked(glw_root_t *gr)
 	       sizeof(float) * VERTEX_SIZE * gr->gr_vertex_offset,
 	       vertices, GL_STATIC_DRAW);
 
+  int current_frontface = GLW_CCW;
+  glFrontFace(GL_CCW);
+
   vertices = NULL;
   glVertexAttribPointer(0, 4, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
 			vertices);
@@ -225,8 +192,6 @@ render_unlocked(glw_root_t *gr)
 
   glVertexAttribPointer(2, 4, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
 			vertices + 8);
-
-  sort_jobs(gr);
 
   for(int j = 0; j < gr->gr_num_render_jobs; j++) {
     const glw_render_order_t *ro = gr->gr_render_order + j;
@@ -292,7 +257,7 @@ render_unlocked(glw_root_t *gr)
         glUniformMatrix4fv(gp->gp_uniform_modelview, 1, 0, glw_mtx_get(rj->m));
       }
     }
-    if(current_blendmode != rj->blendmode) {
+    if(unlikely(current_blendmode != rj->blendmode)) {
       current_blendmode = rj->blendmode;
       switch(current_blendmode) {
       case GLW_BLEND_NORMAL:
@@ -305,6 +270,12 @@ render_unlocked(glw_root_t *gr)
 	glBlendFuncSeparate(GL_SRC_COLOR, GL_ONE, GL_ONE, GL_ONE);
 	break;
       }
+    }
+
+
+    if(unlikely(current_frontface != rj->frontface)) {
+      current_frontface = rj->frontface;
+      glFrontFace(current_frontface == GLW_CW ? GL_CW : GL_CCW);
     }
 
     glDrawArrays(rj->primitive_type, rj->vertex_offset, rj->num_vertices);

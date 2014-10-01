@@ -122,8 +122,6 @@ glw_opengl_init_context(glw_root_t *gr)
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_CULL_FACE);
 
-  gr->gr_frontface = GLW_CCW;
-
   glPixelStorei(GL_UNPACK_ALIGNMENT, PIXMAP_ROW_ALIGN);
 
   glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &tu);

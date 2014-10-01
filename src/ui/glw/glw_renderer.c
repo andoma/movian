@@ -1287,7 +1287,7 @@ glw_fader_disable(glw_root_t *gr, int which)
  *
  */
 void
-glw_frontface(struct glw_root *gr, int how)
+glw_frontface(struct glw_root *gr, char how)
 {
   gr->gr_frontface = how;
 }
@@ -1301,4 +1301,47 @@ void
 glw_blendmode(struct glw_root *gr, int mode)
 {
   gr->gr_blendmode = mode;
+}
+
+
+/**
+ *
+ */
+static int
+render_order_cmp(const void *A, const void *B)
+{
+  const glw_render_order_t *a = A;
+  const glw_render_order_t *b = B;
+  if(a->zindex != b->zindex)
+    return a->zindex - b->zindex;
+
+  const glw_render_job_t *aj = a->job;
+  const glw_render_job_t *bj = b->job;
+
+  if(aj->t0 < bj->t0)
+    return -1;
+
+  if(aj->t0 > bj->t0)
+    return 1;
+
+  return 0;
+
+}
+
+
+/**
+ *
+ */
+void
+glw_renderer_render(glw_root_t *gr)
+{
+  // Sort items to render in order:
+
+  //  Front to back
+  //   Try to minimize texture switchers
+
+  qsort(gr->gr_render_order, gr->gr_num_render_jobs,
+        sizeof(glw_render_order_t), render_order_cmp);
+
+  gr->gr_be_render_unlocked(gr);
 }

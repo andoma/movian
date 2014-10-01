@@ -321,7 +321,7 @@ osk_destroyed(glw_ps3_t *gp)
 
   if(!(w->glw_flags & GLW_DESTROYING)) {
     event_t *e = event_create_action(ACTION_SUBMIT);
-    glw_event_to_widget(w, e, 0);
+    glw_event_to_widget(w, e);
     event_release(e);
   }
   glw_unref(w);
@@ -510,11 +510,13 @@ drawFrame(glw_ps3_t *gp, int buffer, int with_universe)
   gp->gr.gr_height = gp->res.height;
 
   glw_rctx_t rc;
-  glw_rctx_init(&rc, gp->gr.gr_width * gp->scale, gp->gr.gr_height, 1);
+  int zmax = 0;
+  glw_rctx_init(&rc, gp->gr.gr_width * gp->scale, gp->gr.gr_height, 1, &zmax);
   rc.rc_alpha = 1 - gp->gp_stop * 0.1;
   glw_layout0(gp->gr.gr_universe, &rc);
   glw_render0(gp->gr.gr_universe, &rc);
   glw_unlock(&gp->gr);
+  glw_post_scene(&gp->gr);
 }
 
 

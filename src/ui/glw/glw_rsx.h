@@ -95,6 +95,9 @@ typedef struct glw_backend_root {
   
 } glw_backend_root_t;
 
+#define GLW_DRAW_TRIANGLES REALITY_TRIANGLES
+#define GLW_DRAW_LINE_LOOP REALITY_LINE_LOOP
+
 /**
  *
  */

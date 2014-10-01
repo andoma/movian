@@ -180,6 +180,9 @@ glw_init(glw_root_t *gr)
   TAILQ_INIT(&gr->gr_destroyer_queue);
   glw_tex_init(gr);
 
+  gr->gr_frontface = GLW_CCW;
+
+
   gr->gr_framerate = 60;
   gr->gr_frameduration = 1000000 / gr->gr_framerate;
   gr->gr_ui_start = showtime_get_ts();
@@ -514,8 +517,7 @@ glw_prepare_frame(glw_root_t *gr, int flags)
 void
 glw_post_scene(glw_root_t *gr)
 {
-  if(gr->gr_be_render_unlocked != NULL)
-    gr->gr_be_render_unlocked(gr);
+  glw_renderer_render(gr);
 }
 
 /*
