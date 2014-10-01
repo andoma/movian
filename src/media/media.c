@@ -952,9 +952,12 @@ mq_flush(media_pipe_t *mp, media_queue_t *mq, int full)
 /**
  *
  */
-static void
-mp_destroy(media_pipe_t *mp)
+void
+mp_release(media_pipe_t *mp)
 {
+  if(atomic_dec(&mp->mp_refcount))
+    return;
+
   event_t *e;
 
   /* Make sure a clean shutdown has been made */
@@ -1004,18 +1007,6 @@ mp_destroy(media_pipe_t *mp)
     atomic_dec(&media_buffer_hungry);
 
   free(mp);
-}
-
-
-/**
- *
- */
-void
-mp_release(media_pipe_t *mp)
-{
-  if(atomic_dec(&mp->mp_refcount))
-    return;
-  mp_destroy(mp);
 }
 
 
