@@ -509,6 +509,8 @@ glw_video_dtor(glw_t *w)
 
   prop_ref_dec(gv->gv_model);
   prop_ref_dec(gv->gv_origin);
+
+#if ENABLE_MEDIA_SETTINGS
   prop_unsubscribe(gv->gv_vo_scaling_sub);
   prop_unsubscribe(gv->gv_vo_displace_x_sub);
   prop_unsubscribe(gv->gv_vo_displace_y_sub);
@@ -517,6 +519,7 @@ glw_video_dtor(glw_t *w)
   prop_unsubscribe(gv->gv_fstretch_sub);
   prop_unsubscribe(gv->gv_vo_on_video_sub);
   prop_unsubscribe(gv->gv_vinterpolate_sub);
+#endif
 
   free(gv->gv_current_url);
   free(gv->gv_pending_url);
@@ -673,6 +676,9 @@ glw_video_ctor(glw_t *w)
   gv->gv_vd = video_decoder_create(gv->gv_mp);
   video_playback_create(gv->gv_mp);
 
+  gv->gv_vzoom = 100;
+
+#if ENABLE_MEDIA_SETTINGS
   prop_t *c = gv->gv_mp->mp_prop_ctrl;
 
   gv->gv_vo_scaling_sub =
@@ -738,6 +744,7 @@ glw_video_ctor(glw_t *w)
 		   PROP_TAG_ROOT, c,
                    PROP_TAG_NAME("ctrl", "vinterpolate"),
 		   NULL);
+#endif
 }
 
 

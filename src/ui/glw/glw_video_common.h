@@ -196,29 +196,27 @@ typedef struct glw_video {
   void *gv_aux;
 
 
-  // 
+  /**
+   * Settings that originate from media_pipe. However, we subscribe
+   * on them to get updates
+   */
+#if ENABLE_MEDIA_SETTINGS
   prop_sub_t *gv_vo_scaling_sub;
-  float gv_vo_scaling;
-
   prop_sub_t *gv_vo_displace_y_sub;
-  int gv_vo_displace_y;
-
   prop_sub_t *gv_vo_displace_x_sub;
-  int gv_vo_displace_x;
-
   prop_sub_t *gv_vo_on_video_sub;
-  int gv_vo_on_video;
-
   prop_sub_t *gv_vzoom_sub;
-  int gv_vzoom;
-
   prop_sub_t *gv_hstretch_sub;
-  int gv_hstretch;
-
   prop_sub_t *gv_fstretch_sub;
-  int gv_fstretch;
-
   prop_sub_t *gv_vinterpolate_sub;
+#endif
+  float gv_vo_scaling;
+  int gv_vo_displace_y;
+  int gv_vo_displace_x;
+  int gv_vo_on_video;
+  int gv_vzoom;
+  int gv_hstretch;
+  int gv_fstretch;
   int gv_vinterpolate;
 
   // DVD SPU stuff
