@@ -85,12 +85,6 @@ extern atomic_t media_buffer_hungry; /* Set if we try to fill media buffers
                                         intensive tasks
                                      */
 
-
-struct media_buf;
-struct media_queue;
-struct media_pipe;
-struct cancellable;
-
 typedef struct event_ts {
   event_t h;
   int64_t ts;
