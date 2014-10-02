@@ -82,6 +82,7 @@ SRCS += src/showtime.c \
 	src/db/kvstore.c \
 
 SRCS +=	src/media/media.c \
+	src/media/media_buf.c \
 	src/media/media_track.c \
 	src/media/media_queue.c \
 

@@ -25,7 +25,6 @@
 #include <sys/time.h>
 #include <time.h>
 #include <string.h>
-#include <math.h>
 #include <stdio.h>
 
 #include "media/media.h"
@@ -107,113 +106,6 @@ media_init(void)
 		 PROP_TAG_ROOT, media_prop_root,
 		 NULL);
 
-}
-
-#if ENABLE_LIBAV
-
-
-/**
- *
- */
-void
-media_buf_dtor_frame_info(media_buf_t *mb)
-{
-  free(mb->mb_frame_info);
-}
-
-/**
- *
- */
-static void
-media_buf_dtor_avpacket(media_buf_t *mb)
-{
-  av_packet_unref(&mb->mb_pkt);
-}
-
-#define BUF_PAD 32
-
-media_buf_t *
-media_buf_alloc_locked(media_pipe_t *mp, size_t size)
-{
-  hts_mutex_assert(&mp->mp_mutex);
-  media_buf_t *mb = pool_get(mp->mp_mb_pool);
-  av_new_packet(&mb->mb_pkt, size);
-  mb->mb_dtor = media_buf_dtor_avpacket;
-  return mb;
-}
-
-
-media_buf_t *
-media_buf_alloc_unlocked(media_pipe_t *mp, size_t size)
-{
-  media_buf_t *mb;
-  hts_mutex_lock(&mp->mp_mutex);
-  mb = media_buf_alloc_locked(mp, size);
-  hts_mutex_unlock(&mp->mp_mutex);
-  return mb;
-}
-
-
-/**
- *
- */
-media_buf_t *
-media_buf_from_avpkt_unlocked(media_pipe_t *mp, AVPacket *pkt)
-{
-  media_buf_t *mb;
-
-  hts_mutex_lock(&mp->mp_mutex);
-  mb = pool_get(mp->mp_mb_pool);
-  hts_mutex_unlock(&mp->mp_mutex);
-
-  mb->mb_dtor = media_buf_dtor_avpacket;
-
-  av_packet_ref(&mb->mb_pkt, pkt);
-  return mb;
-}
-
-
-/**
- *
- */
-void
-copy_mbm_from_mb(media_buf_meta_t *mbm, const media_buf_t *mb)
-{
-  mbm->mbm_delta     = mb->mb_delta;
-  mbm->mbm_pts       = mb->mb_pts;
-  mbm->mbm_dts       = mb->mb_dts;
-  mbm->mbm_epoch     = mb->mb_epoch;
-  mbm->mbm_duration  = mb->mb_duration;
-  mbm->mbm_flags.u32 = mb->mb_flags.u32;
-}
-
-#endif
-
-/**
- *
- */
-void
-media_buf_free_locked(media_pipe_t *mp, media_buf_t *mb)
-{
-  if(mb->mb_dtor != NULL)
-    mb->mb_dtor(mb);
-
-  if(mb->mb_cw != NULL)
-    media_codec_deref(mb->mb_cw);
-  
-  pool_put(mp->mp_mb_pool, mb);
-}
-
-
-/**
- *
- */
-void
-media_buf_free_unlocked(media_pipe_t *mp, media_buf_t *mb)
-{
-  hts_mutex_lock(&mp->mp_mutex);
-  media_buf_free_locked(mp, mb);
-  hts_mutex_unlock(&mp->mp_mutex);
 }
 
 
@@ -582,18 +474,6 @@ mp_bump_epoch(media_pipe_t *mp)
 /**
  *
  */
-void
-mp_send_cmd_locked(media_pipe_t *mp, media_queue_t *mq, int cmd)
-{
-  media_buf_t *mb = pool_get(mp->mp_mb_pool);
-  mb->mb_data_type = cmd;
-  mb_enq(mp, mq, mb);
-}
-
-
-/**
- *
- */
 static void
 send_hold(media_pipe_t *mp)
 {
@@ -893,88 +773,6 @@ mp_seek_in_queues(media_pipe_t *mp, int64_t pos)
   return rval;
 }
 
-
-/**
- *
- */
-void
-mp_send_cmd(media_pipe_t *mp, media_queue_t *mq, int cmd)
-{
-  hts_mutex_lock(&mp->mp_mutex);
-  mp_send_cmd_locked(mp, mq, cmd);
-  hts_mutex_unlock(&mp->mp_mutex);
-}
-
-/*
- *
- */
-void
-mp_send_cmd_data(media_pipe_t *mp, media_queue_t *mq, int cmd, void *d)
-{
- media_buf_t *mb;
-
-  hts_mutex_lock(&mp->mp_mutex);
-
-  mb = media_buf_alloc_locked(mp, 0);
-  mb->mb_data_type = cmd;
-  mb->mb_data = d;
-  mb_enq(mp, mq, mb);
-  hts_mutex_unlock(&mp->mp_mutex);
-}
-
-
-/*
- *
- */
-
-void
-mp_send_cmd_u32(media_pipe_t *mp, media_queue_t *mq, int cmd, uint32_t u)
-{
-  media_buf_t *mb;
-
-  hts_mutex_lock(&mp->mp_mutex);
-
-  mb = media_buf_alloc_locked(mp, 0);
-  mb->mb_data_type = cmd;
-  mb->mb_data32 = u;
-  mb_enq(mp, mq, mb);
-  hts_mutex_unlock(&mp->mp_mutex);
-}
-
-
-/**
- *
- */
-static void
-mb_prop_dtor(media_buf_t *mb)
-{
-  prop_ref_dec(mb->mb_prop);
-}
-
-
-/**
- *
- */
-void
-mp_send_prop_set_string(media_pipe_t *mp, media_queue_t *mq,
-                        prop_t *prop, const char *str)
-{
-  media_buf_t *mb;
-
-  int datasize = strlen(str) + 1;
-  hts_mutex_lock(&mp->mp_mutex);
-
-  mb = media_buf_alloc_locked(mp, datasize);
-  memcpy(mb->mb_data, str, datasize);
-  mb->mb_data_type = MB_SET_PROP_STRING;
-  mb->mb_prop = prop_ref_inc(prop);
-  mb->mb_dtor = mb_prop_dtor;
-  mb_enq(mp, mq, mb);
-  hts_mutex_unlock(&mp->mp_mutex);
-}
-
-
-
 /**
  *
  */
@@ -1193,21 +991,6 @@ seek_by_propchange(void *opaque, prop_event_t event, ...)
 
   mp_direct_seek(mp, t);
 }
-
-
-/**
- *
- */
-void
-mp_send_volume_update_locked(media_pipe_t *mp)
-{
-  float v = pow(10.0f, mp->mp_vol_user / 20.0f) * mp->mp_vol_ui;
-  media_buf_t *mb = media_buf_alloc_locked(mp, 0);
-  mb->mb_data_type = MB_CTRL_SET_VOLUME_MULTIPLIER;
-  mb->mb_float = v;
-  mb_enq(mp, &mp->mp_audio, mb);
-}
-
 
 
 /**

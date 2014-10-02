@@ -19,6 +19,8 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 
+#include <math.h>
+
 #include "media.h"
 
 #include "misc/minmax.h"
@@ -380,4 +382,112 @@ mp_wait_for_empty_queues(media_pipe_t *mp)
 
   hts_mutex_unlock(&mp->mp_mutex);
   return e;
+}
+
+
+
+/**
+ *
+ */
+void
+mp_send_cmd(media_pipe_t *mp, media_queue_t *mq, int cmd)
+{
+  hts_mutex_lock(&mp->mp_mutex);
+  mp_send_cmd_locked(mp, mq, cmd);
+  hts_mutex_unlock(&mp->mp_mutex);
+}
+
+/*
+ *
+ */
+void
+mp_send_cmd_data(media_pipe_t *mp, media_queue_t *mq, int cmd, void *d)
+{
+ media_buf_t *mb;
+
+  hts_mutex_lock(&mp->mp_mutex);
+
+  mb = media_buf_alloc_locked(mp, 0);
+  mb->mb_data_type = cmd;
+  mb->mb_data = d;
+  mb_enq(mp, mq, mb);
+  hts_mutex_unlock(&mp->mp_mutex);
+}
+
+
+/*
+ *
+ */
+
+void
+mp_send_cmd_u32(media_pipe_t *mp, media_queue_t *mq, int cmd, uint32_t u)
+{
+  media_buf_t *mb;
+
+  hts_mutex_lock(&mp->mp_mutex);
+
+  mb = media_buf_alloc_locked(mp, 0);
+  mb->mb_data_type = cmd;
+  mb->mb_data32 = u;
+  mb_enq(mp, mq, mb);
+  hts_mutex_unlock(&mp->mp_mutex);
+}
+
+
+/**
+ *
+ */
+static void
+mb_prop_dtor(media_buf_t *mb)
+{
+  prop_ref_dec(mb->mb_prop);
+}
+
+
+/**
+ *
+ */
+void
+mp_send_prop_set_string(media_pipe_t *mp, media_queue_t *mq,
+                        prop_t *prop, const char *str)
+{
+  media_buf_t *mb;
+
+  int datasize = strlen(str) + 1;
+  hts_mutex_lock(&mp->mp_mutex);
+
+  mb = media_buf_alloc_locked(mp, datasize);
+  memcpy(mb->mb_data, str, datasize);
+  mb->mb_data_type = MB_SET_PROP_STRING;
+  mb->mb_prop = prop_ref_inc(prop);
+  mb->mb_dtor = mb_prop_dtor;
+  mb_enq(mp, mq, mb);
+  hts_mutex_unlock(&mp->mp_mutex);
+}
+
+
+
+/**
+ *
+ */
+void
+mp_send_cmd_locked(media_pipe_t *mp, media_queue_t *mq, int cmd)
+{
+  media_buf_t *mb = pool_get(mp->mp_mb_pool);
+  mb->mb_data_type = cmd;
+  mb_enq(mp, mq, mb);
+}
+
+
+/**
+ *
+ */
+void
+mp_send_volume_update_locked(media_pipe_t *mp)
+{
+  float v = pow(10.0f, mp->mp_vol_user / 20.0f) * mp->mp_vol_ui;
+  media_buf_t *mb = media_buf_alloc_locked(mp, 0);
+  mb->mb_data_type = MB_CTRL_SET_VOLUME_MULTIPLIER;
+  mb->mb_float = v;
+  mb_enq(mp, &mp->mp_audio, mb);
 }
