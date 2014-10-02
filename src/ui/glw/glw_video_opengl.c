@@ -161,7 +161,8 @@ make_surfaces_available(glw_video_t *gv)
  *
  */
 void
-glw_video_opengl_load_uniforms(glw_root_t *gr, glw_program_t *gp, void *args)
+glw_video_opengl_load_uniforms(glw_root_t *gr, glw_program_t *gp, void *args,
+                               const glw_render_job_t *rj)
 {
   glw_video_t *gv = args;
 

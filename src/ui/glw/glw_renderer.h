@@ -94,7 +94,8 @@ typedef struct glw_renderer {
 struct glw_program_args {
   glw_program_t *gpa_prog;
   void *gpa_aux;
-  void (*gpa_load_uniforms)(glw_root_t *gr, glw_program_t *prog, void *aux);
+  void (*gpa_load_uniforms)(glw_root_t *gr, glw_program_t *prog, void *aux,
+                            const struct glw_render_job *rj);
   void (*gpa_load_texture)(glw_root_t *gr, glw_program_t *prog, void *aux,
                            const struct glw_backend_texture *t, int num);
 };

@@ -32,6 +32,10 @@ struct glw_renderer;
 struct glw_backend_texture;
 
 
+#define GLW_DRAW_TRIANGLES REALITY_TRIANGLES
+#define GLW_DRAW_LINE_LOOP REALITY_LINE_LOOP
+
+
 /**
  *
  */
@@ -71,32 +75,36 @@ typedef struct rsx_fp {
 /**
  *
  */
+struct glw_program {
+
+  rsx_vp_t *gp_vertex_program;
+  rsx_fp_t *gp_fragment_program;
+
+};
+
+/**
+ *
+ */
 typedef struct glw_backend_root {
   gcmContextData *be_ctx;
 
   struct rsx_vp *be_vp_current;
   struct rsx_fp *be_fp_current;
 
-  
   struct rsx_vp *be_vp_1;
   struct rsx_fp *be_fp_tex;
   struct rsx_fp *be_fp_flat;
   struct rsx_fp *be_fp_tex_blur;
 
-  struct rsx_vp *be_vp_yuv2rgb;
-  struct rsx_fp *be_fp_yuv2rgb_1f;
-  struct rsx_fp *be_fp_yuv2rgb_2f;
+  struct glw_program be_yuv2rgb_1f;
+  struct glw_program be_yuv2rgb_2f;
 
   struct rsx_fp *be_fp_tex_stencil;
   struct rsx_fp *be_fp_flat_stencil;
   struct rsx_fp *be_fp_tex_stencil_blur;
 
-  int be_blendmode;
-  
 } glw_backend_root_t;
 
-#define GLW_DRAW_TRIANGLES REALITY_TRIANGLES
-#define GLW_DRAW_LINE_LOOP REALITY_LINE_LOOP
 
 /**
  *
@@ -123,7 +131,7 @@ int glw_rsx_init_context(struct glw_root *gr);
 typedef struct {
 
   glw_backend_texture_t grtt_texture;
-  
+
   int grtt_width;
   int grtt_height;
 
@@ -150,9 +158,3 @@ void rsx_free(int pos, int size);
 extern char *rsx_address;
 
 #define rsx_to_ppu(pos) ((void *)(rsx_address + (pos)))
-
-
-
-void rsx_set_vp(struct glw_root *root, rsx_vp_t *rvp);
-
-void rsx_set_fp(struct glw_root *root, rsx_fp_t *rfp, int force);

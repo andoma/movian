@@ -319,7 +319,7 @@ void *glw_video_add_reap_task(glw_video_t *gv, size_t s, void *fn);
  *
  */
 void glw_video_opengl_load_uniforms(glw_root_t *gr, glw_program_t *gp,
-                                    void *args);
+                                    void *args, const glw_render_job_t *rj);
 
 #endif /* GLW_VIDEO_COMMON_H */
 

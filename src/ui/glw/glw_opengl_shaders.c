@@ -63,7 +63,8 @@ load_program(glw_root_t *gr,
              const struct glw_backend_texture *t1,
              float blur, int flags,
              glw_program_args_t *gpa,
-             render_state_t *rs)
+             render_state_t *rs,
+             const glw_render_job_t *rj)
 {
   glw_program_t *gp;
   glw_backend_root_t *gbr = &gr->gr_be;
@@ -98,7 +99,7 @@ load_program(glw_root_t *gr,
     use_program(gbr, gpa->gpa_prog);
 
     if(gpa->gpa_load_uniforms != NULL)
-      gpa->gpa_load_uniforms(gr, gpa->gpa_prog, gpa->gpa_aux);
+      gpa->gpa_load_uniforms(gr, gpa->gpa_prog, gpa->gpa_aux, rj);
 
     return gpa->gpa_prog;
   }
@@ -199,7 +200,7 @@ render_unlocked(glw_root_t *gr)
     const struct glw_backend_texture *t0 = rj->t0;
 
     glw_program_t *gp =
-      load_program(gr, t0, rj->t1, rj->blur, rj->flags, rj->gpa, &rs);
+      load_program(gr, t0, rj->t1, rj->blur, rj->flags, rj->gpa, &rs, rj);
 
     if(unlikely(gp == NULL)) {
 

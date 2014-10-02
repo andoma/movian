@@ -156,6 +156,79 @@ surface_init(glw_video_t *gv, glw_video_surface_t *gvs)
 }
 
 
+
+/**
+ *
+ */
+static void
+glw_video_rsx_load_uniforms(glw_root_t *gr, glw_program_t *gp, void *args,
+                            const glw_render_job_t *rj)
+{
+  glw_video_t *gv = args;
+  float f4[4];
+
+  glw_backend_root_t *be = &gr->gr_be;
+  gcmContextData *ctx = be->be_ctx;
+  rsx_fp_t *rfp = gp->gp_fragment_program;
+
+  if(rfp->rfp_u_blend != -1) {
+    f4[0] = gv->gv_blend;
+    f4[1] = 0;
+    f4[2] = 0;
+    f4[3] = 0;
+    realitySetFragmentProgramParameter(ctx, rfp->rfp_binary,
+				       rfp->rfp_u_blend, f4,
+				       rfp->rfp_rsx_location);
+  }
+
+
+  if(rfp->rfp_u_color_matrix != -1)
+    realitySetFragmentProgramParameter(ctx, rfp->rfp_binary,
+				       rfp->rfp_u_color_matrix,
+				       gv->gv_cmatrix_cur,
+				       rfp->rfp_rsx_location);
+
+  if(rfp->rfp_u_color != -1) {
+    f4[0] = 0;
+    f4[1] = 0;
+    f4[2] = 0;
+    f4[3] = rj->alpha;
+
+    realitySetFragmentProgramParameter(ctx, rfp->rfp_binary,
+				       rfp->rfp_u_color, f4,
+				       rfp->rfp_rsx_location);
+  }
+}
+
+
+/**
+ *
+ */
+static void
+load_texture_yuv(glw_root_t *gr, glw_program_t *gp, void *args,
+                 const glw_backend_texture_t *t, int num)
+{
+  glw_backend_root_t *be = &gr->gr_be;
+  gcmContextData *ctx = be->be_ctx;
+  rsx_fp_t *rfp = gp->gp_fragment_program;
+  const glw_video_surface_t *s = (const glw_video_surface_t *)t;
+
+  if(num == 1) {
+
+    for(int i = 0; i < 3; i++)
+      if(rfp->rfp_texunit[i+3] != -1)
+        realitySetTexture(ctx, rfp->rfp_texunit[i+3], &s->gvs_tex[i]);
+  } else {
+
+    for(int i = 0; i < 3; i++)
+      if(rfp->rfp_texunit[i] != -1)
+        realitySetTexture(ctx, rfp->rfp_texunit[i], &s->gvs_tex[i]);
+  }
+
+}
+
+
+
 /**
  *
  */
@@ -163,6 +236,10 @@ static int
 yuvp_init(glw_video_t *gv)
 {
   int i;
+
+  gv->gv_gpa.gpa_aux = gv;
+  gv->gv_gpa.gpa_load_uniforms = glw_video_rsx_load_uniforms;
+  gv->gv_gpa.gpa_load_texture = load_texture_yuv;
 
   memset(gv->gv_cmatrix_cur, 0, sizeof(float) * 16);
 
@@ -263,162 +340,6 @@ yuvp_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
   return glw_video_newframe_blend(gv, vd, flags, &gv_surface_pixmap_release, 1);
 }
 
-/**
- *  Video widget render
- */
-static void
-render_video_quad(int interlace, int width, int height,
-		  int bob1, int bob2,
-		  glw_root_t *root, rsx_fp_t *rfp,
-		  const glw_video_t *gv, glw_rctx_t *rc)
-{
-  glw_backend_root_t *be = &root->gr_be;
-  gcmContextData *ctx = be->be_ctx;
-  rsx_vp_t *rvp = be->be_vp_yuv2rgb;
-  float x1, x2, y1, y2;
-  float b1 = 0, b2 = 0;
-  const int bordersize = 0;
-  float rgba[4];
-  float tc[12];
-
-  if(interlace) {
-
-    x1 = 0 + (bordersize / (float)width);
-    y1 = 0 + (bordersize / (float)height);
-    x2 = 1 - (bordersize / (float)width);
-    y2 = 1 - (bordersize / (float)height);
-
-    b1 = (0.5 * bob1) / (float)height;
-    b2 = (0.5 * bob2) / (float)height;
-
-  } else {
-
-    x1 = 0;
-    y1 = 0;
-    x2 = 1;
-    y2 = 1;
-  }
-
-  tc[0] = x1;
-  tc[1] = y2 - b1;
-  tc[2] = y2 - b2;
-
-  tc[3] = x2;
-  tc[4] = y2 - b1;
-  tc[5] = y2 - b2;
-
-  tc[6] = x2;
-  tc[7] = y1 - b1;
-  tc[8] = y1 - b2;
-
-  tc[9] = x1;
-  tc[10] = y1 - b1;
-  tc[11] = y1 - b2;
-
-  rsx_set_vp(root, rvp);
-
-  realitySetVertexProgramConstant4fBlock(ctx, rvp->rvp_binary,
-					 rvp->rvp_u_modelview,
-					 4, rc->rc_mtx);
-
-
-  if(rfp->rfp_u_color != -1) {
-    rgba[0] = 0;
-    rgba[1] = 0;
-    rgba[2] = 0;
-    rgba[3] = rc->rc_alpha;
-
-    realitySetFragmentProgramParameter(ctx, rfp->rfp_binary,
-				       rfp->rfp_u_color, rgba, 
-				       rfp->rfp_rsx_location);
-  }
-
-  if(rfp->rfp_u_blend != -1) {
-    rgba[0] = gv->gv_blend;
-    rgba[1] = 0;
-    rgba[2] = 0;
-    rgba[3] = 0;
-    realitySetFragmentProgramParameter(ctx, rfp->rfp_binary,
-				       rfp->rfp_u_blend, rgba,
-				       rfp->rfp_rsx_location);
-  }
-
-
-  if(rfp->rfp_u_color_matrix != -1) 
-    realitySetFragmentProgramParameter(ctx, rfp->rfp_binary,
-				       rfp->rfp_u_color_matrix,
-				       gv->gv_cmatrix_cur,
-				       rfp->rfp_rsx_location);
-
-  rsx_set_fp(root, rfp, 1);
-
-  realityVertexBegin(ctx, REALITY_QUADS);
-
-  realityAttr4f(ctx, rvp->rvp_a_texcoord, tc[0], tc[1], tc[2], 0);
-  realityVertex4f(ctx, -1, -1, 0, 1);
-
-  realityAttr4f(ctx, rvp->rvp_a_texcoord, tc[3], tc[4], tc[5], 0);
-  realityVertex4f(ctx,  1, -1, 0, 1);
-
-  realityAttr4f(ctx, rvp->rvp_a_texcoord, tc[6], tc[7], tc[8], 0);
-  realityVertex4f(ctx,  1,  1, 0, 1);
-
-  realityAttr4f(ctx, rvp->rvp_a_texcoord, tc[9], tc[10], tc[11], 0);
-  realityVertex4f(ctx, -1,  1, 0, 1);
-
-  realityVertexEnd(ctx);
-}
-
-
-/**
- *
- */
-static void
-render_video_1f(const glw_video_t *gv, glw_video_surface_t *s,
-		glw_rctx_t *rc)
-{
-  glw_backend_root_t *be = &gv->w.glw_root->gr_be;
-  gcmContextData *ctx = be->be_ctx;
-  rsx_fp_t *rfp = be->be_fp_yuv2rgb_1f;
-  int i;
-
-  for(i = 0; i < 3; i++)
-    if(rfp->rfp_texunit[i] != -1)
-      realitySetTexture(ctx, rfp->rfp_texunit[i], &s->gvs_tex[i]);
-
-  render_video_quad(s->gvs_interlaced,
-		    s->gvs_width[0], s->gvs_height[0],
-		    s->gvs_yshift, 0, gv->w.glw_root, rfp, gv, rc);
-}
-
-
-/**
- *
- */
-static void
-render_video_2f(const glw_video_t *gv, 
-		glw_video_surface_t *sa, glw_video_surface_t *sb,
-		glw_rctx_t *rc)
-{
-  glw_backend_root_t *be = &gv->w.glw_root->gr_be;
-  gcmContextData *ctx = be->be_ctx;
-  rsx_fp_t *rfp = be->be_fp_yuv2rgb_2f;
-  int i;
-
-  for(i = 0; i < 3; i++)
-    if(rfp->rfp_texunit[i] != -1)
-      realitySetTexture(ctx, rfp->rfp_texunit[i], &sa->gvs_tex[i]);
-
-  for(i = 0; i < 3; i++)
-    if(rfp->rfp_texunit[i+3] != -1)
-      realitySetTexture(ctx, rfp->rfp_texunit[i+3], &sb->gvs_tex[i]);
-
-  render_video_quad(sa->gvs_interlaced || sb->gvs_interlaced,
-		    sa->gvs_width[0], sa->gvs_height[0],
-		    sa->gvs_yshift, sb->gvs_yshift,
-		    gv->w.glw_root, rfp, gv, rc);
-}
-
 
 /**
  *
@@ -426,7 +347,10 @@ render_video_2f(const glw_video_t *gv,
 static void
 yuvp_render(glw_video_t *gv, glw_rctx_t *rc)
 {
+  glw_root_t *gr = gv->w.glw_root;
   glw_video_surface_t *sa = gv->gv_sa, *sb = gv->gv_sb;
+  glw_program_t *gp;
+  glw_backend_root_t *gbr = &gr->gr_be;
 
   if(sa == NULL)
     return;
@@ -434,11 +358,35 @@ yuvp_render(glw_video_t *gv, glw_rctx_t *rc)
   gv->gv_width  = sa->gvs_width[0];
   gv->gv_height = sa->gvs_height[0];
 
+  const float yshift_a = (-0.5 * sa->gvs_yshift) / (float)sa->gvs_height[0];
+
+  glw_renderer_vtx_st(&gv->gv_quad,  0, 0, 1 + yshift_a);
+  glw_renderer_vtx_st(&gv->gv_quad,  1, 1, 1 + yshift_a);
+  glw_renderer_vtx_st(&gv->gv_quad,  2, 1, 0 + yshift_a);
+  glw_renderer_vtx_st(&gv->gv_quad,  3, 0, 0 + yshift_a);
+
   if(sb != NULL) {
-    render_video_2f(gv, sa, sb, rc);
+
+    gp = &gbr->be_yuv2rgb_2f;
+
+    const float yshift_b = (-0.5 * sb->gvs_yshift) / (float)sb->gvs_height[0];
+
+    glw_renderer_vtx_st2(&gv->gv_quad, 0, 0, 1 + yshift_b);
+    glw_renderer_vtx_st2(&gv->gv_quad, 1, 1, 1 + yshift_b);
+    glw_renderer_vtx_st2(&gv->gv_quad, 2, 1, 0 + yshift_b);
+    glw_renderer_vtx_st2(&gv->gv_quad, 3, 0, 0 + yshift_b);
+
   } else {
-    render_video_1f(gv, sa, rc);
+    gp = &gbr->be_yuv2rgb_1f;
   }
+
+  gv->gv_gpa.gpa_prog = gp;
+
+  glw_renderer_draw(&gv->gv_quad, gr, rc,
+                    (void *)sa, // Ugly
+                    (void *)sb, // Ugly again
+                    NULL, NULL,
+                    rc->rc_alpha * gv->w.glw_alpha, 0, &gv->gv_gpa);
 }
 
 

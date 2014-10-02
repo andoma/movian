@@ -221,7 +221,7 @@ load_fp(glw_root_t *gr, const char *filename)
 /**
  *
  */
-void
+static void
 rsx_set_vp(glw_root_t *root, rsx_vp_t *rvp)
 {
   if(root->gr_be.be_vp_current == rvp)
@@ -234,10 +234,10 @@ rsx_set_vp(glw_root_t *root, rsx_vp_t *rvp)
 /**
  *
  */
-void
-rsx_set_fp(glw_root_t *root, rsx_fp_t *rfp, int force)
+static void
+rsx_set_fp(glw_root_t *root, rsx_fp_t *rfp)
 {
-  if(root->gr_be.be_fp_current == rfp && !force)
+  if(root->gr_be.be_fp_current == rfp)
     return;
   root->gr_be.be_fp_current = rfp;
   realityLoadFragmentProgram(root->gr_be.be_ctx, rfp->rfp_binary,
@@ -252,7 +252,6 @@ static void
 rsx_render_unlocked(glw_root_t *gr)
 {
   gcmContextData *ctx = gr->gr_be.be_ctx;
-  rsx_vp_t *rvp = gr->gr_be.be_vp_1;
   const float *vertices = gr->gr_vertex_buffer;
 
   int current_blendmode = GLW_BLEND_NORMAL;
@@ -272,48 +271,84 @@ rsx_render_unlocked(glw_root_t *gr)
     const glw_render_job_t *rj = ro->job;
     const struct glw_backend_texture *t0 = rj->t0;
     const struct glw_backend_texture *t1 = rj->t1;
+    rsx_vp_t *rvp = gr->gr_be.be_vp_1;
     rsx_fp_t *rfp;
     float rgba[4];
 
-    if(t0 == NULL) {
+
+    if(unlikely(rj->gpa != NULL)) {
+
+      glw_program_args_t *gpa = rj->gpa;
 
       if(t1 != NULL) {
-        rfp = gr->gr_be.be_fp_flat_stencil;
 
-        if(t1->tex.offset == 0 || t1->size == 0)
-          continue;
-
-        realitySetTexture(ctx, 0, &t1->tex);
-      } else {
-        rfp = gr->gr_be.be_fp_flat;
-
+        if(gpa->gpa_load_texture != NULL) {
+          // Program has specialized code to load textures, run it
+          gpa->gpa_load_texture(gr, gpa->gpa_prog, gpa->gpa_aux, t1, 1);
+        } else {
+          // not supported
+        }
       }
+
+      if(t0 != NULL) {
+
+        if(gpa->gpa_load_texture != NULL) {
+          // Program has specialized code to load textures, run it
+          gpa->gpa_load_texture(gr, gpa->gpa_prog, gpa->gpa_aux, t0, 0);
+        } else {
+          // not supported
+        }
+      }
+
+      rfp = gpa->gpa_prog->gp_fragment_program;
+      rvp = gpa->gpa_prog->gp_vertex_program;
+
+      rsx_set_vp(gr, rvp);
+
+      if(gpa->gpa_load_uniforms != NULL)
+        gpa->gpa_load_uniforms(gr, gpa->gpa_prog, gpa->gpa_aux, rj);
 
     } else {
 
-      if(t0->tex.offset == 0 || t0->size == 0)
-        continue;
+      if(t0 == NULL) {
 
-      const int doblur = rj->blur > 0.05 ||
-        rj->flags & GLW_RENDER_BLUR_ATTRIBUTE;
+        if(t1 != NULL) {
+          rfp = gr->gr_be.be_fp_flat_stencil;
 
-      realitySetTexture(ctx, 0, &t0->tex);
+          if(t1->tex.offset == 0 || t1->size == 0)
+            continue;
 
-      if(t1 != NULL) {
-        rfp = doblur ? gr->gr_be.be_fp_tex_stencil_blur :
-          gr->gr_be.be_fp_tex_stencil;
+          realitySetTexture(ctx, 0, &t1->tex);
+        } else {
+          rfp = gr->gr_be.be_fp_flat;
 
-        if(t1->tex.offset == 0 || t1->size == 0)
-          continue;
-
-        realitySetTexture(ctx, 1, &t1->tex);
+        }
 
       } else {
-        rfp = doblur ? gr->gr_be.be_fp_tex_blur : gr->gr_be.be_fp_tex;
-      }
-    }
 
-    rsx_set_vp(gr, rvp);
+        if(t0->tex.offset == 0 || t0->size == 0)
+          continue;
+
+        const int doblur = rj->blur > 0.05 ||
+          rj->flags & GLW_RENDER_BLUR_ATTRIBUTE;
+
+        realitySetTexture(ctx, 0, &t0->tex);
+
+        if(t1 != NULL) {
+          rfp = doblur ? gr->gr_be.be_fp_tex_stencil_blur :
+            gr->gr_be.be_fp_tex_stencil;
+
+          if(t1->tex.offset == 0 || t1->size == 0)
+            continue;
+
+          realitySetTexture(ctx, 1, &t1->tex);
+
+        } else {
+          rfp = doblur ? gr->gr_be.be_fp_tex_blur : gr->gr_be.be_fp_tex;
+        }
+      }
+      rsx_set_vp(gr, rvp);
+    }
 
     realitySetVertexProgramConstant4fBlock(ctx, rvp->rvp_binary,
                                            rvp->rvp_u_modelview,
@@ -336,7 +371,8 @@ rsx_render_unlocked(glw_root_t *gr)
       rgba[3] = 1;
     }
 
-    realitySetVertexProgramConstant4f(ctx, rvp->rvp_u_color, rgba);
+    if(likely(rvp->rvp_u_color != -1))
+      realitySetVertexProgramConstant4f(ctx, rvp->rvp_u_color, rgba);
 
     if(unlikely(current_blendmode != rj->blendmode)) {
       current_blendmode = rj->blendmode;
@@ -355,6 +391,7 @@ rsx_render_unlocked(glw_root_t *gr)
         break;
       }
     }
+
     if(unlikely(current_frontface != rj->frontface)) {
       current_frontface = rj->frontface;
       realityFrontFace(ctx,
@@ -379,22 +416,25 @@ rsx_render_unlocked(glw_root_t *gr)
       realitySetVertexProgramConstant4f(ctx,  rvp->rvp_u_blur, v);
     }
 
-    rsx_set_fp(gr, rfp, 0);
+    rsx_set_fp(gr, rfp);
 
-    // TODO: Get rid of immediate mode
-    realityVertexBegin(ctx, REALITY_TRIANGLES);
+    realityVertexBegin(ctx, rj->primitive_type);
 
     const float *v = &vertices[rj->vertex_offset * VERTEX_SIZE];
 
 
     for(int i = 0; i < rj->num_vertices; i++) {
+
       realityAttr4f(ctx,  rvp->rvp_a_texcoord,  v[8], v[9], v[10], v[11]);
-      realityAttr4f(ctx, rvp->rvp_a_color, v[4], v[5], v[6], v[7]);
+
+      if(unlikely(rvp->rvp_a_color) != -1)
+        realityAttr4f(ctx, rvp->rvp_a_color, v[4], v[5], v[6], v[7]);
+
       realityVertex4f(ctx, v[0], v[1], v[2], v[3]);
+
       v+= VERTEX_SIZE;
     }
     realityVertexEnd(ctx);
-
   }
 
 }
@@ -418,9 +458,11 @@ glw_rsx_init_context(glw_root_t *gr)
   be->be_fp_flat_stencil = load_fp(gr, "f_flat_stencil.fp");
   be->be_fp_tex_stencil_blur = load_fp(gr, "f_tex_stencil_blur.fp");
 
-  be->be_vp_yuv2rgb    = load_vp("yuv2rgb_v.vp");
-  be->be_fp_yuv2rgb_1f = load_fp(gr, "yuv2rgb_1f_norm.fp");
-  be->be_fp_yuv2rgb_2f = load_fp(gr, "yuv2rgb_2f_norm.fp");
+  be->be_yuv2rgb_1f.gp_vertex_program =
+  be->be_yuv2rgb_2f.gp_vertex_program = load_vp("yuv2rgb_v.vp");
+
+  be->be_yuv2rgb_1f.gp_fragment_program = load_fp(gr, "yuv2rgb_1f_norm.fp");
+  be->be_yuv2rgb_2f.gp_fragment_program = load_fp(gr, "yuv2rgb_2f_norm.fp");
 
   return 0;
 }
@@ -468,7 +510,7 @@ glw_rtt_destroy(glw_root_t *gr, glw_rtt_t *grtt)
  * Not implemented yet
  */
 struct glw_program *
-glw_make_program(struct glw_root *gr, 
+glw_make_program(struct glw_root *gr,
 		 const char *vertex_shader,
 		 const char *fragment_shader)
 {

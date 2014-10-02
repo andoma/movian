@@ -106,8 +106,9 @@ waitFlip()
     i++;
     usleep(200);
     if(i == 10000) {
-      TRACE(TRACE_ERROR, "GLW", "Flip never happend");
-      exit(0);
+      TRACE(TRACE_ERROR, "GLW", "Flip never happend, system reboot");
+      Lv2Syscall3(379, 0x1200, 0, 0 );
+      gcmResetFlipStatus();
     }
   }
   gcmResetFlipStatus();
