@@ -345,7 +345,7 @@ x11_vo_destroy(struct video_output *vo)
   
   video_playback_destroy(vo->vo_mp);
   video_decoder_stop(vo->vo_vd);
-  mp_ref_dec(vo->vo_mp);
+  mp_destroy(vo->vo_mp);
   video_decoder_destroy(vo->vo_vd);
 
   if(vo->vo_shm.shmaddr != NULL)

@@ -19,6 +19,8 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 
+#include <stdio.h>
+
 #include "media.h"
 #include "media_settings.h"
 #include "video/video_settings.h"
