@@ -48,7 +48,7 @@
 
 enum codec_id {
   AV_CODEC_ID_AC3 = 1,
-  AV_CODEC_ID_EAC3, 
+  AV_CODEC_ID_EAC3,
   AV_CODEC_ID_AAC,
   AV_CODEC_ID_MP2,
   AV_CODEC_ID_MPEG2VIDEO,
@@ -130,7 +130,7 @@ typedef struct frame_info {
 
   int fi_pix_fmt;
 
-  char fi_interlaced;     // Frame delivered is interlaced 
+  char fi_interlaced;     // Frame delivered is interlaced
   char fi_tff;            // For interlaced frame, top-field-first
   char fi_prescaled;      // Output frame is prescaled to requested size
   char fi_drive_clock;
@@ -213,7 +213,7 @@ typedef struct media_pipe {
   struct audio_decoder *mp_audio_decoder;
 
   struct event_q mp_eq;
-  
+
   /* Props */
 
   prop_t *mp_prop_root;

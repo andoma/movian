@@ -103,7 +103,7 @@ mp_create(const char *name, int flags)
   mp->mp_satisfied = -1;
   mp->mp_epoch = 1;
 
-  mp->mp_mb_pool = pool_create("packet headers", 
+  mp->mp_mb_pool = pool_create("packet headers",
 			       sizeof(media_buf_t),
 			       POOL_ZERO_MEM);
 
@@ -113,7 +113,7 @@ mp_create(const char *name, int flags)
 
   atomic_set(&mp->mp_refcount, 1);
 
-  mp->mp_buffer_limit = 1 * 1024 * 1024; 
+  mp->mp_buffer_limit = 1 * 1024 * 1024;
 
   mp->mp_name = name;
 
@@ -168,7 +168,7 @@ mp_create(const char *name, int flags)
   p = prop_create(mp->mp_prop_root, "subtitle");
   mp->mp_setting_subtitle_root = prop_create(p, "settings");
   mp->mp_prop_subtitle_track_current = prop_create(p, "current");
-  mp->mp_prop_subtitle_tracks = prop_create(mp->mp_prop_metadata, 
+  mp->mp_prop_subtitle_tracks = prop_create(mp->mp_prop_metadata,
 					    "subtitlestreams");
 
   prop_set_string(mp->mp_prop_subtitle_track_current, "sub:off");
@@ -195,7 +195,7 @@ mp_create(const char *name, int flags)
 
 
 
-  // 
+  //
 
   mp->mp_prop_playstatus  = prop_create(mp->mp_prop_root, "playstatus");
   mp->mp_prop_pausereason = prop_create(mp->mp_prop_root, "pausereason");
@@ -219,25 +219,25 @@ mp_create(const char *name, int flags)
   mp->mp_prop_avdiff      = prop_create(mp->mp_prop_root, "avdiff");
   mp->mp_prop_avdiff_error= prop_create(mp->mp_prop_root, "avdiffError");
 
-  mp->mp_prop_canSkipBackward = 
+  mp->mp_prop_canSkipBackward =
     prop_create(mp->mp_prop_root, "canSkipBackward");
 
-  mp->mp_prop_canSkipForward = 
+  mp->mp_prop_canSkipForward =
     prop_create(mp->mp_prop_root, "canSkipForward");
 
-  mp->mp_prop_canSeek = 
+  mp->mp_prop_canSeek =
     prop_create(mp->mp_prop_root, "canSeek");
 
-  mp->mp_prop_canPause = 
+  mp->mp_prop_canPause =
     prop_create(mp->mp_prop_root, "canPause");
 
-  mp->mp_prop_canEject = 
+  mp->mp_prop_canEject =
     prop_create(mp->mp_prop_root, "canEject");
 
-  mp->mp_prop_canShuffle = 
+  mp->mp_prop_canShuffle =
     prop_create(mp->mp_prop_root, "canShuffle");
 
-  mp->mp_prop_canRepeat = 
+  mp->mp_prop_canRepeat =
     prop_create(mp->mp_prop_root, "canRepeat");
 
   prop_set_int(prop_create(mp->mp_prop_root, "canStop"), 1);
@@ -246,7 +246,7 @@ mp_create(const char *name, int flags)
 
   mp->mp_prop_model = prop_create(mp->mp_prop_root, "model");
 
-  mp->mp_sub_currenttime = 
+  mp->mp_sub_currenttime =
     prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
 		   PROP_TAG_CALLBACK, mp_seek_by_propchange, mp,
                    PROP_TAG_LOCKMGR, mp_lockmgr,
@@ -517,7 +517,7 @@ mp_set_current_time(media_pipe_t *mp, int64_t ts, int epoch, int64_t delta)
 
     prop_set_float_ex(mp->mp_prop_currenttime, mp->mp_sub_currenttime,
 		      ts / 1000000.0, 0);
-    
+
     event_ts_t *ets = event_create(EVENT_CURRENT_TIME, sizeof(event_ts_t));
     ets->ts = ts;
     ets->epoch = epoch;
@@ -541,7 +541,7 @@ mp_set_playstatus_by_hold_locked(media_pipe_t *mp, const char *msg)
   mp_send_cmd_locked(mp, &mp->mp_audio, cmd);
 
   prop_set_string(mp->mp_prop_playstatus, mp->mp_hold ? "pause" : "play");
-  prop_set_string(mp->mp_prop_pausereason, 
+  prop_set_string(mp->mp_prop_pausereason,
 		  mp->mp_hold ? (msg ?: "Paused by user") : NULL);
 }
 
