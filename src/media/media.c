@@ -48,10 +48,6 @@
 #define MP_SKIP_LIMIT 3000000 /* µs that must before a skip back is
 				 actually considered a restart */
 
-struct AVCodecContext;
-
-static LIST_HEAD(, codec_def) registeredcodecs;
-
 // -------------------------------
 
 atomic_t media_buffer_hungry; /* Set if we try to fill media buffers
@@ -88,10 +84,7 @@ uint8_t HTS_JOIN(sp, k0)[321];
 void
 media_init(void)
 {
-  codec_def_t *cd;
-  LIST_FOREACH(cd, &registeredcodecs, link)
-    if(cd->init)
-      cd->init();
+  media_codec_init();
 
   hts_mutex_init(&media_mutex);
 
@@ -773,112 +766,6 @@ mp_seek_in_queues(media_pipe_t *mp, int64_t pos)
   return rval;
 }
 
-/**
- *
- */
-media_codec_t *
-media_codec_ref(media_codec_t *cw)
-{
-  atomic_inc(&cw->refcount);
-  return cw;
-}
-
-/**
- *
- */
-void
-media_codec_deref(media_codec_t *cw)
-{
-  if(atomic_dec(&cw->refcount))
-    return;
-#if ENABLE_LIBAV
-  if(cw->ctx != NULL && cw->ctx->codec != NULL)
-    avcodec_close(cw->ctx);
-
-  if(cw->ctx != cw->fmt_ctx && cw->fmt_ctx != NULL &&
-     cw->fmt_ctx->codec != NULL)
-    avcodec_close(cw->fmt_ctx);
-#endif
-
-  if(cw->close != NULL)
-    cw->close(cw);
-
-  if(cw->ctx != cw->fmt_ctx)
-    free(cw->ctx);
-
-  if(cw->fmt_ctx && cw->fw == NULL)
-    free(cw->fmt_ctx);
-
-#if ENABLE_LIBAV
-  if(cw->parser_ctx != NULL)
-    av_parser_close(cw->parser_ctx);
-
-  if(cw->fw != NULL)
-    media_format_deref(cw->fw);
-#endif
-
-  free(cw);
-}
-
-
-/**
- *
- */
-media_codec_t *
-media_codec_create(int codec_id, int parser,
-		   struct media_format *fw, struct AVCodecContext *ctx,
-		   const media_codec_params_t *mcp, media_pipe_t *mp)
-{
-  media_codec_t *mc = calloc(1, sizeof(media_codec_t));
-  codec_def_t *cd;
-
-  mc->mp = mp;
-  mc->fmt_ctx = ctx;
-  mc->codec_id = codec_id;
-  
-#if ENABLE_LIBAV
-  if(ctx != NULL && mcp != NULL) {
-    assert(ctx->extradata      == mcp->extradata);
-    assert(ctx->extradata_size == mcp->extradata_size);
-  }
-#endif
-
-  if(mcp != NULL) {
-    mc->sar_num = mcp->sar_num;
-    mc->sar_den = mcp->sar_den;
-  }
-
-  LIST_FOREACH(cd, &registeredcodecs, link)
-    if(!cd->open(mc, mcp, mp))
-      break;
-
-  if(cd == NULL) {
-    free(mc);
-    return NULL;
-  }
-
-#if ENABLE_LIBAV
-  if(parser) {
-    assert(fw == NULL);
-
-    const AVCodec *codec = avcodec_find_decoder(codec_id);
-    assert(codec != NULL);
-    mc->fmt_ctx = avcodec_alloc_context3(codec);
-    mc->parser_ctx = av_parser_init(codec_id);
-  }
-#endif
-
-  atomic_set(&mc->refcount, 1);
-  mc->fw = fw;
-
-  if(fw != NULL) {
-    assert(!parser);
-    atomic_inc(&fw->refcount);
-  }
-
-  return mc;
-}
-
 
 /**
  *
@@ -1203,27 +1090,6 @@ mp_set_cancellable(media_pipe_t *mp, struct cancellable *c)
   mp->mp_cancellable = c;
   hts_mutex_unlock(&mp->mp_mutex);
 }
-
-
-
-/**
- *
- */
-static int
-codec_def_cmp(const codec_def_t *a, const codec_def_t *b)
-{
-  return a->prio - b->prio;
-}
-
-/**
- *
- */
-void
-media_register_codec(codec_def_t *cd)
-{
-  LIST_INSERT_SORTED(&registeredcodecs, cd, link, codec_def_cmp, codec_def_t);
-}
-
 
 
 /**

@@ -65,6 +65,7 @@ enum codec_id {
 #include "misc/pool.h"
 #include "media_buf.h"
 #include "media_queue.h"
+#include "media_codec.h"
 
 
 #define PTS_UNSET INT64_C(0x8000000000000000)
@@ -81,7 +82,6 @@ void media_init(void);
 struct media_buf;
 struct media_queue;
 struct media_pipe;
-struct video_decoder;
 struct cancellable;
 
 typedef struct event_ts {
@@ -138,43 +138,6 @@ typedef struct frame_info {
 
 } frame_info_t;
 
-
-
-/**
- *
- */
-typedef struct media_codec {
-  atomic_t refcount;
-  struct media_format *fw;
-  int codec_id;
-
-  struct AVCodecContext *fmt_ctx;     // Context owned by AVFormatContext
-  struct AVCodecContext *ctx;         // Context owned by decoder thread
-  
-  struct AVCodecParserContext *parser_ctx;
-
-  void *opaque;
-
-  struct media_pipe *mp;
-
-  void (*decode)(struct media_codec *mc, struct video_decoder *vd,
-		 struct media_queue *mq, struct media_buf *mb, int reqsize);
-
-  int (*decode_locked)(struct media_codec *mc, struct video_decoder *vd,
-                       struct media_queue *mq, struct media_buf *mb);
-
-  void (*flush)(struct media_codec *mc, struct video_decoder *vd);
-
-  void (*close)(struct media_codec *mc);
-  void (*reinit)(struct media_codec *mc);
-  void (*reconfigure)(struct media_codec *mc, const frame_info_t *fi);
-
-  unsigned int sar_num;
-  unsigned int sar_den;
-
-  int (*get_buffer2)(struct AVCodecContext *s, AVFrame *frame, int flags);
-
-} media_codec_t;
 
 /**
  *
@@ -392,85 +355,6 @@ extern void (*media_pipe_init_extra)(media_pipe_t *mp);
 extern void (*media_pipe_fini_extra)(media_pipe_t *mp);
 
 
-struct AVFormatContext;
-struct AVCodecContext;
-struct media_format;
-
-/**
- *
- */
-typedef struct media_codec_params {
-  const void *extradata;
-  size_t extradata_size;
-
-  unsigned int width;
-  unsigned int height;
-  unsigned int profile;
-  unsigned int level;
-  int cheat_for_speed : 1;
-  int broken_aud_placement : 1;
-  unsigned int sar_num;
-  unsigned int sar_den;
-
-  unsigned int frame_rate_num;
-  unsigned int frame_rate_den;
-
-} media_codec_params_t;
-
-
-/**
- *
- */
-typedef struct codec_def {
-  LIST_ENTRY(codec_def) link;
-  void (*init)(void);
-  int (*open)(media_codec_t *mc, const media_codec_params_t *mcp,
-	      media_pipe_t *mp);
-  int prio;
-} codec_def_t;
-
-void media_register_codec(codec_def_t *cd);
-
-// Higher value of prio_ == better preference
-
-#define REGISTER_CODEC(init_, open_, prio_)			   \
-  static codec_def_t HTS_JOIN(codecdef, __LINE__) = {		   \
-    .init = init_,						   \
-    .open = open_,						   \
-    .prio = prio_						   \
-  };								   \
-  INITIALIZER(HTS_JOIN(registercodecdef, __LINE__))                \
-  { media_register_codec(&HTS_JOIN(codecdef, __LINE__)); }
-
-
-/**
- *
- */
-typedef struct media_format {
-  atomic_t refcount;
-  struct AVFormatContext *fctx;
-} media_format_t;
-
-#if ENABLE_LIBAV
-
-media_format_t *media_format_create(struct AVFormatContext *fctx);
-
-void media_format_deref(media_format_t *fw);
-
-#endif
-
-/**
- * Codecs
- */
-void media_codec_deref(media_codec_t *cw);
-
-media_codec_t *media_codec_ref(media_codec_t *cw);
-
-media_codec_t *media_codec_create(int codec_id, int parser,
-				  struct media_format *fw, 
-				  struct AVCodecContext *ctx,
-				  const media_codec_params_t *mcp,
-                                  media_pipe_t *mp);
 
 media_pipe_t *mp_create(const char *name, int flags);
 
