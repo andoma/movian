@@ -77,8 +77,6 @@ extern atomic_t media_buffer_hungry; /* Set if we try to fill media buffers
                                      */
 
 
-void media_init(void);
-
 struct media_buf;
 struct media_queue;
 struct media_pipe;
@@ -325,6 +323,8 @@ extern void (*media_pipe_fini_extra)(media_pipe_t *mp);
 
 
 
+void media_init(void);
+
 media_pipe_t *mp_create(const char *name, int flags);
 
 void mp_destroy(media_pipe_t *mp);
@@ -343,17 +343,13 @@ mp_retain(media_pipe_t *mp)
 
 void mp_release(media_pipe_t *mp);
 
-void mb_enq(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb);
+void mp_become_primary(struct media_pipe *mp);
 
-int mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
-			int auxtype);
-struct event *mb_enqueue_with_events_ex(media_pipe_t *mp, media_queue_t *mq, 
-					media_buf_t *mb, int *blocked);
+void mp_init_audio(struct media_pipe *mp);
 
-#define mb_enqueue_with_events(mp, mq, mb) \
-  mb_enqueue_with_events_ex(mp, mq, mb, NULL)
+void mp_shutdown(struct media_pipe *mp);
 
-void mb_enqueue_always(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb);
+
 
 void mp_enqueue_event(media_pipe_t *mp, struct event *e);
 void mp_enqueue_event_locked(media_pipe_t *mp, event_t *e);
@@ -363,31 +359,10 @@ struct event *mp_dequeue_event_deadline(media_pipe_t *mp, int timeout);
 struct event *mp_wait_for_empty_queues(media_pipe_t *mp);
 
 
-void mp_flush_locked(media_pipe_t *mp);
-
-void mp_flush(media_pipe_t *mp, int blackout);
-
-void mq_flush(media_pipe_t *mp, media_queue_t *mq, int full);
-
-void mq_init(media_queue_t *mq, prop_t *p, hts_mutex_t *mutex,
-             media_pipe_t *mp);
-
-void mq_destroy(media_queue_t *mq);
-
 void mp_bump_epoch(media_pipe_t *mp);
-
-void mp_become_primary(struct media_pipe *mp);
-
-void mp_init_audio(struct media_pipe *mp);
-
-void mp_shutdown(struct media_pipe *mp);
 
 void mp_set_current_time(media_pipe_t *mp, int64_t ts, int epoch,
 			 int64_t delta);
-
-extern media_pipe_t *media_primary;
-
-#define mp_is_primary(mp) ((mp) == media_primary)
 
 void mp_set_playstatus_by_hold(media_pipe_t *mp, int hold, const char *msg);
 
@@ -406,35 +381,5 @@ void mp_set_clr_flags(media_pipe_t *mp, int set, int clr);
 void mp_set_duration(media_pipe_t *mp, int64_t duration);
 
 void mp_set_cancellable(media_pipe_t *mp, struct cancellable *c);
-
-int64_t mq_realtime_delay(media_queue_t *mq);
-
-void mp_load_ext_sub(media_pipe_t *mp, const char *url);
-
-void mq_update_stats(media_pipe_t *mp, media_queue_t *mq);
-
-void mp_add_track(prop_t *parent,
-		  const char *title,
-		  const char *url,
-		  const char *format,
-		  const char *longformat,
-		  const char *isolang,
-		  const char *source,
-		  prop_t *sourcep,
-		  int score,
-                  int autosel);
-
-void mp_add_trackr(prop_t *parent,
-		   rstr_t *title,
-		   const char *url,
-		   rstr_t *format,
-		   rstr_t *longformat,
-		   rstr_t *isolang,
-		   rstr_t *source,
-		   prop_t *sourcep,
-		   int score,
-                   int autosel);
-
-void mp_add_track_off(prop_t *tracks, const char *title);
 
 #endif /* MEDIA_H */

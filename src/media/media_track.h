@@ -61,3 +61,28 @@ void mp_track_mgr_next_track(media_track_mgr_t *mtm);
 
 int mp_track_mgr_select_track(media_track_mgr_t *mtm,
                               event_select_track_t *est);
+
+
+void mp_add_track(prop_t *parent,
+		  const char *title,
+		  const char *url,
+		  const char *format,
+		  const char *longformat,
+		  const char *isolang,
+		  const char *source,
+		  prop_t *sourcep,
+		  int score,
+                  int autosel);
+
+void mp_add_trackr(prop_t *parent,
+		   rstr_t *title,
+		   const char *url,
+		   rstr_t *format,
+		   rstr_t *longformat,
+		   rstr_t *isolang,
+		   rstr_t *source,
+		   prop_t *sourcep,
+		   int score,
+                   int autosel);
+
+void mp_add_track_off(prop_t *tracks, const char *title);

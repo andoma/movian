@@ -82,3 +82,31 @@ void mp_send_cmd_u32(struct media_pipe *mp, media_queue_t *mq,
                      int cmd, uint32_t u);
 
 void mp_send_volume_update_locked(struct media_pipe *mp);
+
+void mb_enq(struct media_pipe *mp, media_queue_t *mq, media_buf_t *mb);
+
+int mb_enqueue_no_block(struct media_pipe *mp, media_queue_t *mq,
+                        media_buf_t *mb, int auxtype);
+
+struct event *mb_enqueue_with_events_ex(struct media_pipe *mp,
+                                        media_queue_t *mq,
+					media_buf_t *mb, int *blocked);
+
+#define mb_enqueue_with_events(mp, mq, mb) \
+  mb_enqueue_with_events_ex(mp, mq, mb, NULL)
+
+void mb_enqueue_always(struct media_pipe *mp, media_queue_t *mq,
+                       media_buf_t *mb);
+
+void mp_flush_locked(struct media_pipe *mp);
+
+void mp_flush(struct media_pipe *mp, int blackout);
+
+void mq_flush(struct media_pipe *mp, media_queue_t *mq, int full);
+
+void mq_init(media_queue_t *mq, prop_t *p, hts_mutex_t *mutex,
+             struct media_pipe *mp);
+
+void mq_destroy(media_queue_t *mq);
+
+void mq_update_stats(struct media_pipe *mp, media_queue_t *mq);

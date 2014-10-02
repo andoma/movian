@@ -31,6 +31,8 @@
 
 #include "media_track.h"
 
+static void mp_load_ext_sub(media_pipe_t *mp, const char *url);
+
 /**
  *
  */
@@ -692,7 +694,7 @@ subtitle_loader_thread(void *aux)
 /**
  *
  */
-void
+static void
 mp_load_ext_sub(media_pipe_t *mp, const char *url)
 {
   if(!mp->mp_subtitle_loader_thread) {
