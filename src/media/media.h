@@ -66,7 +66,7 @@ enum codec_id {
 #include "media_buf.h"
 #include "media_queue.h"
 #include "media_codec.h"
-
+#include "media_track.h"
 
 #define PTS_UNSET INT64_C(0x8000000000000000)
 
@@ -93,7 +93,6 @@ typedef struct event_ts {
 
 TAILQ_HEAD(media_pipe_queue, media_pipe);
 LIST_HEAD(media_pipe_list, media_pipe);
-TAILQ_HEAD(media_track_queue, media_track);
 TAILQ_HEAD(video_overlay_queue, video_overlay);
 TAILQ_HEAD(dvdspu_queue, dvdspu);
 
@@ -146,36 +145,6 @@ typedef int (video_frame_deliver_t)(const frame_info_t *info, void *opaque);
 typedef int (set_video_codec_t)(uint32_t type, struct media_codec *mc,
 				void *opaque, const frame_info_t *info);
 
-
-
-
-
-/**
- * Media pipe
- */
-typedef struct media_track_mgr {
-
-  prop_sub_t *mtm_node_sub;
-  prop_sub_t *mtm_current_sub;
-  prop_sub_t *mtm_url_sub;
-  struct media_track_queue mtm_tracks;
-  struct media_track *mtm_suggested_track;
-  struct media_track *mtm_current;
-  struct media_pipe *mtm_mp;
-
-  enum {
-    MEDIA_TRACK_MANAGER_AUDIO,
-    MEDIA_TRACK_MANAGER_SUBTITLES,
-  } mtm_type;
-
-  int mtm_user_set; /* If set by user, and if so, we should not suggest
-		       anything */
-
-  char *mtm_current_url;
-  char *mtm_canonical_url;
-  rstr_t *mtm_user_pref;  // Configured by user
-
-} media_track_mgr_t;
 
 
 /**
