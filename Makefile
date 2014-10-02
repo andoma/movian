@@ -86,6 +86,7 @@ SRCS +=	src/media/media.c \
 	src/media/media_track.c \
 	src/media/media_queue.c \
 	src/media/media_codec.c \
+	src/media/media_event.c \
 
 SRCS-${CONFIG_MEDIA_SETTINGS} += src/media/media_settings.c
 

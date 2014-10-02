@@ -35,20 +35,12 @@
 #include "backend/backend.h"
 #include "settings.h"
 #include "misc/minmax.h"
-#include "video/video_settings.h"
 
 #include "subtitles/video_overlay.h"
 #include "subtitles/dvdspu.h"
 
 #include "media_track.h"
 #include "media_settings.h"
-
-
-
-#define MP_SKIP_LIMIT 3000000 /* µs that must before a skip back is
-				 actually considered a restart */
-
-// -------------------------------
 
 atomic_t media_buffer_hungry; /* Set if we try to fill media buffers
                                  Code can check this and avoid doing IO
@@ -61,18 +53,12 @@ static prop_t *media_prop_root;
 static prop_t *media_prop_sources;
 static prop_t *media_prop_current;
 
-media_pipe_t *media_primary;
+static media_pipe_t *media_primary;
 
 void (*media_pipe_init_extra)(media_pipe_t *mp);
 void (*media_pipe_fini_extra)(media_pipe_t *mp);
 
-static int mp_seek_in_queues(media_pipe_t *mp, int64_t pos);
-
-static void seek_by_propchange(void *opaque, prop_event_t event, ...);
-
 static void media_eventsink(void *opaque, prop_event_t event, ...);
-
-static void mp_set_playstatus_by_hold_locked(media_pipe_t *mp, const char *msg);
 
 static void mp_unbecome_primary(media_pipe_t *mp);
 
@@ -262,7 +248,7 @@ mp_create(const char *name, int flags)
 
   mp->mp_sub_currenttime = 
     prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
-		   PROP_TAG_CALLBACK, seek_by_propchange, mp,
+		   PROP_TAG_CALLBACK, mp_seek_by_propchange, mp,
                    PROP_TAG_LOCKMGR, mp_lockmgr,
                    PROP_TAG_MUTEX, mp,
 		   PROP_TAG_ROOT, mp->mp_prop_currenttime,
@@ -384,255 +370,11 @@ mp_release(media_pipe_t *mp)
 /**
  *
  */
-static void
-mp_direct_seek(media_pipe_t *mp, int64_t ts)
-{
-  event_t *e;
-  event_ts_t *ets;
-
-  if(!(mp->mp_flags & MP_CAN_SEEK))
-    return;
-
-  ts = MAX(ts, 0);
-
-  prop_set_float_ex(mp->mp_prop_currenttime, mp->mp_sub_currenttime,
-		    ts / 1000000.0, 0);
-
-  mp->mp_seek_base = ts;
-
-  if(!mp_seek_in_queues(mp, ts + mp->mp_start_time)) {
-    prop_set(mp->mp_prop_root, "seektime", PROP_SET_FLOAT, ts / 1000000.0);
-    return;
-  }
-
-  if(mp->mp_seek_initiate != NULL)
-    mp->mp_seek_initiate(mp);
-
-  /* If there already is a seek event enqueued, update it */
-  TAILQ_FOREACH(e, &mp->mp_eq, e_link) {
-    if(!event_is_type(e, EVENT_SEEK))
-      continue;
-
-    ets = (event_ts_t *)e;
-    ets->ts = ts;
-    return;
-  }
-
-  ets = event_create(EVENT_SEEK, sizeof(event_ts_t));
-  ets->ts = ts;
-
-  e = &ets->h;
-  TAILQ_INSERT_TAIL(&mp->mp_eq, e, e_link);
-  hts_cond_signal(&mp->mp_backpressure);
-
-}
-
-
-/**
- *
- */
-void
-mb_enq(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
-{
-  int do_signal = 1;
-
-  if(mb->mb_data_type == MB_SUBTITLE) {
-    TAILQ_INSERT_TAIL(&mq->mq_q_aux, mb, mb_link);
-  } else if(mb->mb_data_type > MB_CTRL) {
-    TAILQ_INSERT_TAIL(&mq->mq_q_ctrl, mb, mb_link);
-  } else {
-    TAILQ_INSERT_TAIL(&mq->mq_q_data, mb, mb_link);
-    do_signal = !mq->mq_no_data_interest;
-  }
-  mq->mq_packets_current++;
-  mb->mb_epoch = mp->mp_epoch;
-  mp->mp_buffer_current += mb->mb_size;
-  mq_update_stats(mp, mq);
-  if(do_signal)
-    hts_cond_signal(&mq->mq_avail);
-}
-
-/**
- *
- */
 void
 mp_bump_epoch(media_pipe_t *mp)
 {
   hts_mutex_lock(&mp->mp_mutex);
   mp->mp_epoch++;
-  hts_mutex_unlock(&mp->mp_mutex);
-}
-
-
-/**
- *
- */
-static void
-send_hold(media_pipe_t *mp)
-{
-  event_t *e = event_create_int(EVENT_HOLD, mp->mp_hold);
-  TAILQ_INSERT_TAIL(&mp->mp_eq, e, e_link);
-  hts_cond_signal(&mp->mp_backpressure);
-
-  if(mp->mp_flags & MP_FLUSH_ON_HOLD)
-    mp_flush_locked(mp);
-
-  if(mp->mp_hold_changed != NULL)
-    mp->mp_hold_changed(mp);
-}
-
-
-/**
- *
- */
-void
-mp_enqueue_event_locked(media_pipe_t *mp, event_t *e)
-{
-  event_select_track_t *est = (event_select_track_t *)e;
-  event_int3_t *ei3;
-  int64_t d;
-  int dedup_event = 0;
-
-  switch(e->e_type_x) {
-  case EVENT_SELECT_AUDIO_TRACK:
-    if(mp_track_mgr_select_track(&mp->mp_audio_track_mgr, est))
-      return;
-    dedup_event = 1;
-    break;
-
-  case EVENT_SELECT_SUBTITLE_TRACK:
-    if(mp_track_mgr_select_track(&mp->mp_subtitle_track_mgr, est))
-      return;
-    dedup_event = 1;
-    break;
-
-  case EVENT_DELTA_SEEK_REL:
-    // We want to seek thru the entire feature in 3 seconds
-
-#define TOTAL_SEEK_TIME_IN_SECONDS 2
-
-    ei3 = (event_int3_t *)e;
-
-    int pre  = ei3->val1;
-    int sign = ei3->val2;
-    int rate = ei3->val3;
-
-    d = pre * pre * mp->mp_duration /
-      (rate*TOTAL_SEEK_TIME_IN_SECONDS*255*255);
-
-    mp_direct_seek(mp, mp->mp_seek_base += d*sign);
-    return;
-
-  case EVENT_PLAYQUEUE_JUMP:
-    dedup_event = 1;
-    break;
-
-  default:
-    break;
-  }
-
-  if(dedup_event) {
-    event_t *e2;
-    TAILQ_FOREACH(e2, &mp->mp_eq, e_link)
-      if(e2->e_type_x == e->e_type_x)
-        break;
-
-    if(e2 != NULL) {
-      TAILQ_REMOVE(&mp->mp_eq, e2, e_link);
-      event_release(e2);
-    }
-  }
-
-  if(event_is_action(e, ACTION_PLAYPAUSE ) ||
-     event_is_action(e, ACTION_PLAY ) ||
-     event_is_action(e, ACTION_PAUSE)) {
-    
-    mp->mp_hold = action_update_hold_by_event(mp->mp_hold, e);
-    mp_set_playstatus_by_hold_locked(mp, NULL);
-    send_hold(mp);
-
-  } else if(event_is_type(e, EVENT_INTERNAL_PAUSE)) {
-
-    mp->mp_hold = 1;
-
-    const event_payload_t *ep = (const event_payload_t *)e;
-    mp_set_playstatus_by_hold_locked(mp, ep->payload);
-    send_hold(mp);
-
-  } else if(event_is_action(e, ACTION_SEEK_BACKWARD)) {
-    mp_direct_seek(mp, mp->mp_seek_base -= 15000000);
-  } else if(event_is_action(e, ACTION_SEEK_FORWARD)) {
-    mp_direct_seek(mp, mp->mp_seek_base += 15000000);
-  } else if(event_is_action(e, ACTION_SHOW_MEDIA_STATS)) {
-    prop_toggle_int(mp->mp_prop_stats);
-  } else if(event_is_action(e, ACTION_SHUFFLE)) {
-    prop_toggle_int(mp->mp_prop_shuffle);
-  } else if(event_is_action(e, ACTION_REPEAT)) {
-    prop_toggle_int(mp->mp_prop_repeat);
-  } else if(event_is_action(e, ACTION_CYCLE_AUDIO)) {
-    mp_track_mgr_next_track(&mp->mp_audio_track_mgr);
-  } else if(event_is_action(e, ACTION_CYCLE_SUBTITLE)) {
-    mp_track_mgr_next_track(&mp->mp_subtitle_track_mgr);
-  } else if(event_is_action(e, ACTION_VOLUME_UP) ||
-            event_is_action(e, ACTION_VOLUME_DOWN)) {
-
-    switch(video_settings.dpad_up_down_mode) {
-    case VIDEO_DPAD_MASTER_VOLUME:
-      atomic_inc(&e->e_refcount);
-      event_dispatch(e);
-      break;
-    case VIDEO_DPAD_PER_FILE_VOLUME:
-      if(mp->mp_vol_setting == NULL)
-        break;
-      settings_add_int(mp->mp_vol_setting,
-                       event_is_action(e, ACTION_VOLUME_UP) ? 1 : -1);
-      break;
-    }
-
-  } else {
-
-    // Forward event to player
-
-    if(event_is_action(e, ACTION_SKIP_BACKWARD) &&
-       mp->mp_seek_base >= MP_SKIP_LIMIT &&
-       mp->mp_flags & MP_CAN_SEEK) {
-
-      // Convert skip previous to track restart
-
-      mp_direct_seek(mp, 0);
-      return;
-    }
-
-    if(event_is_action(e, ACTION_STOP) ||
-       event_is_action(e, ACTION_EJECT)) {
-      prop_set_string(mp->mp_prop_playstatus, "stop");
-    }
-
-    if(event_is_type(e, EVENT_PLAYQUEUE_JUMP) ||
-       event_is_type(e, EVENT_EXIT) ||
-       event_is_action(e, ACTION_STOP) ||
-       event_is_action(e, ACTION_SKIP_FORWARD) ||
-       event_is_action(e, ACTION_SKIP_BACKWARD)) {
-
-      if(mp->mp_cancellable != NULL) {
-        cancellable_cancel(mp->mp_cancellable);
-      }
-    }
-
-    atomic_inc(&e->e_refcount);
-    TAILQ_INSERT_TAIL(&mp->mp_eq, e, e_link);
-    hts_cond_signal(&mp->mp_backpressure);
-  }
-}
-
-/**
- *
- */
-void
-mp_enqueue_event(media_pipe_t *mp, event_t *e)
-{
-  hts_mutex_lock(&mp->mp_mutex);
-  mp_enqueue_event_locked(mp, e);
   hts_mutex_unlock(&mp->mp_mutex);
 }
 
@@ -674,96 +416,6 @@ mp_dequeue_event_deadline(media_pipe_t *mp, int timeout)
 
   hts_mutex_unlock(&mp->mp_mutex);
   return e;
-}
-
-
-/**
- *
- */
-static void
-update_epoch_in_queue(struct media_buf_queue *q, int epoch)
-{
-  media_buf_t *mb;
-  TAILQ_FOREACH(mb, q, mb_link)
-    mb->mb_epoch = epoch;
-}
-
-
-/**
- *
- */
-static int
-mp_seek_in_queues(media_pipe_t *mp, int64_t pos)
-{
-  media_buf_t *abuf, *vbuf, *vk, *mb;
-  int rval = 1;
-
-  TAILQ_FOREACH(abuf, &mp->mp_audio.mq_q_data, mb_link)
-    if(abuf->mb_pts != PTS_UNSET && abuf->mb_pts >= pos)
-      break;
-
-  if(abuf != NULL) {
-    vk = NULL;
-
-    TAILQ_FOREACH(vbuf, &mp->mp_video.mq_q_data, mb_link) {
-      if(vbuf->mb_keyframe)
-	vk = vbuf;
-      if(vbuf->mb_pts != PTS_UNSET && vbuf->mb_pts >= pos)
-	break;
-    }
-    
-    if(vbuf != NULL && vk != NULL) {
-      int adrop = 0, vdrop = 0, vskip = 0;
-      while(1) {
-	mb = TAILQ_FIRST(&mp->mp_audio.mq_q_data);
-	if(mb == abuf)
-	  break;
-	TAILQ_REMOVE(&mp->mp_audio.mq_q_data, mb, mb_link);
-	mp->mp_audio.mq_packets_current--;
-	mp->mp_buffer_current -= mb->mb_size;
-	media_buf_free_locked(mp, mb);
-	adrop++;
-      }
-      mq_update_stats(mp, &mp->mp_audio);
-
-      while(1) {
-	mb = TAILQ_FIRST(&mp->mp_video.mq_q_data);
-	if(mb == vk)
-	  break;
-	TAILQ_REMOVE(&mp->mp_video.mq_q_data, mb, mb_link);
-	mp->mp_video.mq_packets_current--;
-	mp->mp_buffer_current -= mb->mb_size;
-	media_buf_free_locked(mp, mb);
-	vdrop++;
-      }
-      mq_update_stats(mp, &mp->mp_video);
-
-
-      while(mb != vbuf) {
-	mb->mb_skip = 1;
-	mb = TAILQ_NEXT(mb, mb_link);
-	vskip++;
-      }
-      rval = 0;
-
-      mp->mp_epoch++;
-      update_epoch_in_queue(&mp->mp_audio.mq_q_data, mp->mp_epoch);
-      update_epoch_in_queue(&mp->mp_video.mq_q_data, mp->mp_epoch);
-      update_epoch_in_queue(&mp->mp_video.mq_q_aux, mp->mp_epoch);
-
-      mb = media_buf_alloc_locked(mp, 0);
-      mb->mb_data_type = MB_CTRL_FLUSH;
-      mb_enq(mp, &mp->mp_video, mb);
-
-      mb = media_buf_alloc_locked(mp, 0);
-      mb->mb_data_type = MB_CTRL_FLUSH;
-      mb_enq(mp, &mp->mp_audio, mb);
-
-
-      TRACE(TRACE_DEBUG, "Media", "Seeking by dropping %d audio packets and %d+%d video packets from queue", adrop, vdrop, vskip);
-    }
-  }
-  return rval;
 }
 
 
@@ -851,38 +503,6 @@ mp_shutdown(struct media_pipe *mp)
 /**
  *
  */
-static void
-seek_by_propchange(void *opaque, prop_event_t event, ...)
-{
-  media_pipe_t *mp = opaque;
-  int64_t t;
-  int how = 0;
-  va_list ap;
-  va_start(ap, event);
-
-  switch(event) {
-  case PROP_SET_INT:
-    t = va_arg(ap, int) * 1000000LL;
-    break;
-  case PROP_SET_FLOAT:
-    t = va_arg(ap, double) * 1000000.0;
-    (void)va_arg(ap, prop_t *);
-    how = va_arg(ap, int);
-    break;
-  default:
-    return;
-  }
-
-  if(how == PROP_SET_TENTATIVE)
-    return;
-
-  mp_direct_seek(mp, t);
-}
-
-
-/**
- *
- */
 void
 mp_set_current_time(media_pipe_t *mp, int64_t ts, int epoch, int64_t delta)
 {
@@ -912,37 +532,7 @@ mp_set_current_time(media_pipe_t *mp, int64_t ts, int epoch, int64_t delta)
 /**
  *
  */
-static void
-media_eventsink(void *opaque, prop_event_t event, ...)
-{
-  event_t *e;
-
-  va_list ap;
-  va_start(ap, event);
-
-  if(event != PROP_EXT_EVENT)
-    return;
-
-  e = va_arg(ap, event_t *);
-
-  if(event_is_type(e, EVENT_PLAYTRACK)) {
-#if ENABLE_PLAYQUEUE
-    playqueue_event_handler(e);
-#endif
-  } else if(media_primary != NULL) {
-    mp_enqueue_event(media_primary, e);
-  } else {
-#if ENABLE_PLAYQUEUE
-    playqueue_event_handler(e);
-#endif
-  }
-}
-
-
-/**
- *
- */
-static void
+void
 mp_set_playstatus_by_hold_locked(media_pipe_t *mp, const char *msg)
 {
   int cmd = mp->mp_hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY;
@@ -1119,4 +709,34 @@ mp_lockmgr(void *ptr, int op)
     return 0;
   }
   abort();
+}
+
+
+/**
+ * Global eventsink (not tied to a specific media_pipe)
+ */
+static void
+media_eventsink(void *opaque, prop_event_t event, ...)
+{
+  event_t *e;
+
+  va_list ap;
+  va_start(ap, event);
+
+  if(event != PROP_EXT_EVENT)
+    return;
+
+  e = va_arg(ap, event_t *);
+
+  if(event_is_type(e, EVENT_PLAYTRACK)) {
+#if ENABLE_PLAYQUEUE
+    playqueue_event_handler(e);
+#endif
+  } else if(media_primary != NULL) {
+    mp_enqueue_event(media_primary, e);
+  } else {
+#if ENABLE_PLAYQUEUE
+    playqueue_event_handler(e);
+#endif
+  }
 }

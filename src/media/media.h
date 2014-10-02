@@ -27,6 +27,14 @@
 #include "config.h"
 #include "settings.h"
 
+// -------------------------------------------------------------------
+
+#define MP_SKIP_LIMIT 3000000 /* µs that must before a skip back is
+				 actually considered a restart */
+
+
+// -------------------------------------------------------------------
+
 #if ENABLE_LIBAV
 #include <libavcodec/avcodec.h>
 
@@ -67,6 +75,7 @@ enum codec_id {
 #include "media_queue.h"
 #include "media_codec.h"
 #include "media_track.h"
+#include "media_event.h"
 
 #define PTS_UNSET INT64_C(0x8000000000000000)
 
@@ -349,20 +358,12 @@ void mp_init_audio(struct media_pipe *mp);
 
 void mp_shutdown(struct media_pipe *mp);
 
-
-
-void mp_enqueue_event(media_pipe_t *mp, struct event *e);
-void mp_enqueue_event_locked(media_pipe_t *mp, event_t *e);
-struct event *mp_dequeue_event(media_pipe_t *mp);
-struct event *mp_dequeue_event_deadline(media_pipe_t *mp, int timeout);
-
-struct event *mp_wait_for_empty_queues(media_pipe_t *mp);
-
-
 void mp_bump_epoch(media_pipe_t *mp);
 
 void mp_set_current_time(media_pipe_t *mp, int64_t ts, int epoch,
 			 int64_t delta);
+
+void mp_set_playstatus_by_hold_locked(media_pipe_t *mp, const char *msg);
 
 void mp_set_playstatus_by_hold(media_pipe_t *mp, int hold, const char *msg);
 
