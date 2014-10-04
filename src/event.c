@@ -167,6 +167,7 @@ static struct strtab actionnames[] = {
 
   { "ZoomUI+",               ACTION_ZOOM_UI_INCR },
   { "ZoomUI-",               ACTION_ZOOM_UI_DECR },
+  { "ZoomUIReset",           ACTION_ZOOM_UI_RESET },
   { "ReloadUI",              ACTION_RELOAD_UI },
 
   { "Quit",                  ACTION_QUIT },
