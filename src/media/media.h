@@ -18,9 +18,7 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
-
-#ifndef MEDIA_H
-#define MEDIA_H
+#pragma once
 
 #include <stdlib.h>
 
@@ -325,18 +323,43 @@ extern void (*media_pipe_init_extra)(media_pipe_t *mp);
 extern void (*media_pipe_fini_extra)(media_pipe_t *mp);
 
 
-
+/**
+ * Global init of the media system
+ */
 void media_init(void);
 
+
+/**
+ * Create a new media pipe
+ */
 media_pipe_t *mp_create(const char *name, int flags);
 
+/**
+ * Destroy a media pipe. This is supposed to matched to mp_create().
+ *
+ * This will remove the media pipe from the global property tree so it's
+ * no longer visible from the UI, etc
+ *
+ * It will also release the primary media_pipe poointer
+ */
 void mp_destroy(media_pipe_t *mp);
 
+/**
+ * Clear out all streams, needs to be done when reusing the same media_pipe
+ * for a different source
+ */
 void mp_reinit_streams(media_pipe_t *mp);
 
+/**
+ * Lockmgr to be passed to prop framework for prop callbacks into
+ * a specific media_pipe
+ */
 int mp_lockmgr(void *ptr, int op);
 
 
+/**
+ * Retain a reference to a media_pipe. Must be matched with a mp_relese()
+ */
 static __inline media_pipe_t *  attribute_unused_result
 mp_retain(media_pipe_t *mp)
 {
@@ -344,23 +367,56 @@ mp_retain(media_pipe_t *mp)
   return mp;
 }
 
+/**
+ * Release a reference to a media_pipe. See mp_retain()
+ */
 void mp_release(media_pipe_t *mp);
 
+/**
+ * Become the primary media pipe.
+ *
+ * Also calls mp_init_audio()
+ */
 void mp_become_primary(struct media_pipe *mp);
 
+/**
+ * Init audio (without becoming primary)
+ */
 void mp_init_audio(struct media_pipe *mp);
 
+
+/**
+ * Shutdown the audio decoder, should be called from the player thread
+ */
 void mp_shutdown(struct media_pipe *mp);
 
+
+/**
+ * Bump epoch, useful when we detect a discontinuity in the player thread.
+ */
 void mp_bump_epoch(media_pipe_t *mp);
 
+
+/**
+ * Called from video or audio decoing threads to update current time.
+ *
+ * Should only be called if packet has the mb_drive_clock flag set.
+ */
 void mp_set_current_time(media_pipe_t *mp, int64_t ts, int epoch,
 			 int64_t delta);
 
-void mp_set_playstatus_by_hold_locked(media_pipe_t *mp, const char *msg);
-
+/**
+ * Will pause/unpause the playback. (If hold == 1, then it's paused)
+ *
+ * If pausing, an optional message can be passed (reason for the pause)
+ */
 void mp_set_playstatus_by_hold(media_pipe_t *mp, int hold, const char *msg);
 
+/**
+ * Set current URL.
+ *
+ * Will also rebind settings if settings (MEDIA_SETTINGS) is compiled in.
+ */
 void mp_set_url(media_pipe_t *mp, const char *url, const char *parent_url,
                 const char *parent_title);
 
@@ -368,13 +424,29 @@ void mp_set_url(media_pipe_t *mp, const char *url, const char *parent_url,
 #define MP_BUFFER_SHALLOW 2
 #define MP_BUFFER_DEEP    3
 
+
+/**
+ * Configure flags, buffer depth, duration, etc
+ *
+ * Typically called just before playback begins.
+ */
 void mp_configure(media_pipe_t *mp, int flags, int buffer_mode,
 		  int64_t duration, const char *type);
 
+
+/**
+ * Set/clear mp_flags
+ */
 void mp_set_clr_flags(media_pipe_t *mp, int set, int clr);
 
+/**
+ * Update total duration of the currently played object
+ */
 void mp_set_duration(media_pipe_t *mp, int64_t duration);
 
 void mp_set_cancellable(media_pipe_t *mp, struct cancellable *c);
 
-#endif /* MEDIA_H */
+/**
+ * Internal helper
+ */
+void mp_set_playstatus_by_hold_locked(media_pipe_t *mp, const char *msg);
