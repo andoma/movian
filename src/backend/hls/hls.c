@@ -656,10 +656,7 @@ segment_open(hls_t *h, hls_demuxer_t *hd, hls_segment_t *hs, int fast_fail,
 
   hls_variant_t *hv = hs->hs_variant;
 
-  int flags = FA_STREAMING;
-
-  if(hs->hs_byte_size != -1 && hs->hs_byte_offset != -1)
-    flags |= FA_BUFFERED_SMALL;
+  int flags = FA_STREAMING | FA_BUFFERED_SMALL;
 
   hs->hs_opened_at = showtime_get_ts();
   hs->hs_block_cnt = h->h_blocked;
