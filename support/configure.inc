@@ -107,6 +107,7 @@ CONFIG_LIST="
  sid
  htsp
  media_settings
+ glw_settings
 "
 
 
@@ -608,3 +609,4 @@ enable playqueue
 enable sid
 enable htsp
 enable media_settings
+enable glw_settings

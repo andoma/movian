@@ -396,7 +396,6 @@ SRCS-${CONFIG_LIBSIDPLAY2} += \
 ##############################################################
 SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
 			src/ui/glw/glw_style.c \
-			src/ui/glw/glw_settings.c \
 			src/ui/glw/glw_renderer.c \
 			src/ui/glw/glw_event.c \
 			src/ui/glw/glw_view.c \
@@ -442,6 +441,8 @@ SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
 			src/ui/glw/glw_primitives.c \
 			src/ui/glw/glw_math.c \
 			src/ui/glw/glw_underscan.c \
+
+SRCS-$(CONFIG_GLW_SETTINGS) += 	  src/ui/glw/glw_settings.c
 
 SRCS-$(CONFIG_GLW_FRONTEND_X11)	  += src/ui/glw/glw_x11.c \
 				     src/ui/linux/x11_common.c

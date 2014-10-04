@@ -44,6 +44,9 @@ static void glw_root_set_hover(glw_root_t *gr, glw_t *w);
 static void glw_eventsink(void *opaque, prop_event_t event, ...);
 static void glw_update_em(glw_root_t *gr);
 
+glw_settings_t glw_settings;
+
+
 const float glw_identitymtx[16] = {
   1,0,0,0,
   0,1,0,0,

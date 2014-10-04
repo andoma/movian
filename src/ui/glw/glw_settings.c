@@ -27,8 +27,6 @@
 #include "htsmsg/htsmsg_store.h"
 #include "db/kvstore.h"
 
-glw_settings_t glw_settings;
-
 /**
  *
  */

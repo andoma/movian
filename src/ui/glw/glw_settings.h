@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include "config.h"
+
 typedef struct glw_settings {
   int gs_size;
   int gs_underscan_h;
@@ -41,8 +43,20 @@ typedef struct glw_settings {
 
 extern glw_settings_t glw_settings;
 
+#if ENABLE_GLW_SETTINGS
+
 void glw_settings_adj_size(int delta);
 
 void glw_settings_init(void);
 
 void glw_settings_fini(void);
+
+#else
+
+#define glw_settings_adj_size(delta)
+
+#define glw_settings_init()
+
+#define glw_settings_fini()
+
+#endif
