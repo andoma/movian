@@ -210,6 +210,9 @@ static char *
 get_attrib(char *v, const char **keyp, const char **valuep)
 {
   const char *key = v;
+  while(*key == ' ')
+    key++;
+
   char *value = strchr(key, '=');
   if(value == NULL)
     return NULL;
