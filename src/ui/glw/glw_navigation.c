@@ -82,8 +82,8 @@ glw_nav_last(glw_t *parent)
 /**
  *
  */
-static int
-glw_nav_step(glw_t *c, int count, int may_wrap)
+int
+glw_navigate_step(glw_t *c, int count, int may_wrap)
 {
   glw_t *parent = c->glw_parent;
   glw_t *to_focus = NULL;
@@ -135,15 +135,15 @@ glw_navigate_move(glw_t *w, int steps)
 /**
  *
  */
-static int
+int
 glw_navigate_may_wrap(glw_t *w)
 {
-  if(!(w->glw_flags & GLW2_NAV_WRAP))
+  if(!(w->glw_flags2 & GLW2_NAV_WRAP)) {
     return 0;
-
-  if(!glw_settings.gs_wrap)
+  }
+  if(!glw_settings.gs_wrap) {
     return 0;
-
+  }
   int may_wrap = 1;
   glw_signal0(w, GLW_SIGNAL_WRAP_CHECK, &may_wrap);
   return may_wrap;
@@ -165,16 +165,16 @@ glw_navigate_vertical(struct glw *w, struct event *e)
   const int may_wrap = glw_navigate_may_wrap(w);
 
   if(event_is_action(e, ACTION_DOWN)) {
-    return glw_nav_step(c, 1, may_wrap);
+    return glw_navigate_step(c, 1, may_wrap);
 
   } else if(event_is_action(e, ACTION_UP)) {
-    return glw_nav_step(c, -1, may_wrap);
+    return glw_navigate_step(c, -1, may_wrap);
 
   } else if(event_is_action(e, ACTION_PAGE_UP)) {
-    return glw_nav_step(c, -10, 0);
+    return glw_navigate_step(c, -10, 0);
 
   } else if(event_is_action(e, ACTION_PAGE_DOWN)) {
-    return glw_nav_step(c, 10, 0);
+    return glw_navigate_step(c, 10, 0);
 
   } else if(event_is_action(e, ACTION_TOP)) {
     return glw_nav_first(w);
@@ -207,10 +207,10 @@ glw_navigate_horizontal(struct glw *w, struct event *e)
     return 0;
 
   if(event_is_action(e, ACTION_LEFT)) {
-    return glw_nav_step(c, -1, may_wrap);
+    return glw_navigate_step(c, -1, may_wrap);
 
   } else if(event_is_action(e, ACTION_RIGHT)) {
-    return glw_nav_step(c, 1, may_wrap);
+    return glw_navigate_step(c, 1, may_wrap);
 
   } else if(event_is_action(e, ACTION_MOVE_RIGHT)) {
     return glw_navigate_move(c, 1);

@@ -22,6 +22,7 @@ widget(keyintercept, {
 	filterConstraintX: true;
 	spacing: 5;
 	widget(list_y, {
+          navWrap: true;
 	  id: "list";
 	  &clone.focused = focusedChild();
 	  spacing: 3;

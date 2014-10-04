@@ -191,6 +191,7 @@ widget(container_y, {
 
 
 widget(array, {
+  navWrap: true;
   alphaFallOff: 0.1;
   blurFallOff: 0.1;
 

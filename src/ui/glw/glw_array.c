@@ -20,7 +20,7 @@
  */
 
 #include "glw.h"
-
+#include "glw_navigation.h"
 
 typedef struct glw_array {
   glw_t w;
@@ -729,16 +729,18 @@ glw_array_get_next_row(glw_t *c, int reverse)
 static int
 glw_array_bubble_event(struct glw *w, struct event *e)
 {
+  glw_array_t *a = (glw_array_t *)w;
   glw_t *c = w->glw_focused;
+  const int may_wrap = glw_navigate_may_wrap(w);
 
   if(c == NULL)
     return 0;
 
   if(event_is_action(e, ACTION_RIGHT)) {
-    return glw_focus_child(glw_next_widget(c));
+    return glw_navigate_step(c, 1, may_wrap);
 
   } else if(event_is_action(e, ACTION_LEFT)) {
-    return glw_focus_child(glw_prev_widget(c));
+    return glw_navigate_step(c, -1, may_wrap);
 
   } else if(event_is_action(e, ACTION_UP)) {
     return glw_focus_child(glw_array_get_next_row(c, 1));
@@ -746,6 +748,17 @@ glw_array_bubble_event(struct glw *w, struct event *e)
   } else if(event_is_action(e, ACTION_DOWN)) {
     return glw_focus_child(glw_array_get_next_row(c, 0));
 
+  } else if(event_is_action(e, ACTION_MOVE_RIGHT)) {
+    return glw_navigate_move(c, 1);
+
+  } else if(event_is_action(e, ACTION_MOVE_LEFT)) {
+    return glw_navigate_move(c, -1);
+
+  } else if(event_is_action(e, ACTION_MOVE_DOWN)) {
+    return glw_navigate_move(c, a->xentries);
+
+  } else if(event_is_action(e, ACTION_MOVE_UP)) {
+    return glw_navigate_move(c, -a->xentries);
   }
 
   return 0;
