@@ -149,6 +149,7 @@ $view.sizer = $ui.size / 5;
 
 
 widget(list_y, {
+  navWrap: true;
   padding: 40;
   widget(container_x, {
     BUTTON("SeekBack", event(SeekReverse), $global.media.current.canSeek);

@@ -260,6 +260,7 @@ widget(backdrop, {
 	  filterConstraintX: true;
 	  
 	  widget(list_y, {
+            navWrap: true;
 
 	    id: "list";
 	    spacing: 3;
@@ -309,6 +310,7 @@ widget(backdrop, {
 	  filterConstraintX: true;
 	  
 	  widget(list_y, {
+            navWrap: true;
 	    id: "list";
 	    spacing: 3;
 	    BODY;

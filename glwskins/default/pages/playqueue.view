@@ -140,7 +140,7 @@ widget(container_y, {
       
       widget(container_x, {
 	widget(list_y, {
-	  
+          navWrap: true;
 	  id: "list";
 	  spacing: 3;
 	  
