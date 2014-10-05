@@ -128,11 +128,11 @@ zsort(const void *A, const void *B)
   glw_t *a = *(glw_t **)A;
   glw_t *b = *(glw_t **)B;
 
-  glw_freefloat_item_t *ad = glw_parent_data(a, glw_freefloat_item_t);
-  glw_freefloat_item_t *bd = glw_parent_data(b, glw_freefloat_item_t);
+  glw_freefloat_item_t *ad = a ? glw_parent_data(a, glw_freefloat_item_t):NULL;
+  glw_freefloat_item_t *bd = b ? glw_parent_data(b, glw_freefloat_item_t):NULL;
 
-  float az = a ? ad->v : -100;
-  float bz = b ? bd->v : -100;
+  float az = ad ? ad->v : -100;
+  float bz = bd ? bd->v : -100;
 
   if(az > bz)
     return 1;
