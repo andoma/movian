@@ -16,6 +16,8 @@ multiopt($view.path,
          );
 
 widget(container_y, {
+  navPositional: true;
+
   onEvent(cancel, deliverEvent($ui.osk.eventSink, "Cancel"));
   onEvent(back,   deliverEvent($ui.osk.eventSink, "Cancel"));
   padding: [$ui.width / 6, 0];

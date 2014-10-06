@@ -37,6 +37,7 @@
 #include "glw_view.h"
 #include "glw_event.h"
 #include "glw_style.h"
+#include "glw_navigation.h"
 
 static void glw_focus_init_widget(glw_t *w, float weight);
 static void glw_focus_leave(glw_t *w);
@@ -1556,6 +1557,10 @@ glw_event_to_widget(glw_t *w, event_t *e)
     if(!glw_path_in_focus(w))
       break;
 
+    if(w->glw_flags2 & GLW2_POSITIONAL_NAVIGATION)
+      if(glw_navigate_matrix(w, e))
+        return 1;
+
     if(glw_send_event2(w, e))
       return 1;
 
@@ -2636,7 +2641,7 @@ const static float projection[16] = {
  *
  */
 void
-glw_project(glw_rect_t *r, const glw_rctx_t *rc, const glw_root_t *gr)
+glw_project_matrix(glw_rect_t *r, const Mtx m, const glw_root_t *gr)
 {
   Mtx tmp;
 
@@ -2644,7 +2649,7 @@ glw_project(glw_rect_t *r, const glw_rctx_t *rc, const glw_root_t *gr)
   Vec4 T0, T1;
   Vec4 V0, V1;
 
-  glw_pmtx_mul_prepare(tm,  rc->rc_mtx);
+  glw_pmtx_mul_prepare(tm,  m);
   glw_pmtx_mul_vec4(T0, tm, glw_vec4_make(-1,  1, 0, 1));
   glw_pmtx_mul_vec4(T1, tm, glw_vec4_make( 1, -1, 0, 1));
 
@@ -2665,6 +2670,16 @@ glw_project(glw_rect_t *r, const glw_rctx_t *rc, const glw_root_t *gr)
 
   r->x2 = roundf((1.0 + (glw_vec4_extract(V1, 0) / w)) * gr->gr_width  / 2.0);
   r->y2 = roundf((1.0 - (glw_vec4_extract(V1, 1) / w)) * gr->gr_height / 2.0);
+}
+
+
+/**
+ *
+ */
+void
+glw_project(glw_rect_t *r, const glw_rctx_t *rc, const glw_root_t *gr)
+{
+  glw_project_matrix(r, rc->rc_mtx, gr);
 }
 
 

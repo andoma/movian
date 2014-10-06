@@ -1101,6 +1101,8 @@ typedef struct glw {
 #define GLW2_AUTO_FOCUS_LIMIT       0x400000
 #define GLW2_CURSOR                 0x800000
 
+#define GLW2_POSITIONAL_NAVIGATION  0x1000000
+
 #define GLW2_LEFT_EDGE              0x10000000
 #define GLW2_TOP_EDGE               0x20000000
 #define GLW2_RIGHT_EDGE             0x40000000
@@ -1492,6 +1494,8 @@ void glw_icon_flush(glw_root_t *gr);
 void glw_reset_screensaver(glw_root_t *gr);
 
 int glw_image_get_details(glw_t *w, char *path, size_t pathlen, float *alpha);
+
+void glw_project_matrix(glw_rect_t *r, const Mtx m, const glw_root_t *gr);
 
 void glw_project(glw_rect_t *r, const glw_rctx_t *rc, const glw_root_t *gr);
 

@@ -221,3 +221,172 @@ glw_navigate_horizontal(struct glw *w, struct event *e)
   }
   return 0;
 }
+
+
+/**
+ *
+ */
+typedef struct navigate_matrix_aux {
+  int cur_x;
+  int cur_y;
+
+  int direction; // 0,1,2,3 left,up,right,down
+
+  glw_t *best;
+  int distance;
+
+} navigate_matrix_aux_t;
+
+
+/**
+ *
+ */
+static void
+glw_navigate_matrix_search(glw_t *w, navigate_matrix_aux_t *nma)
+{
+  glw_t *c;
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
+    glw_navigate_matrix_search(c, nma);
+
+  if(w->glw_root->gr_current_focus == w)
+    return; // Don't consider ourself
+
+  if(w->glw_matrix == NULL)
+    return;
+
+
+  glw_rect_t rect;
+
+  Mtx m;
+  memcpy(m, w->glw_matrix, sizeof(float) * 16);
+
+  glw_project_matrix(&rect, m, w->glw_root);
+
+
+  // Default current/target cordinates are center of focus
+  int tgt_x = (rect.x2 + rect.x1) / 2;
+  int tgt_y = (rect.y2 + rect.y1) / 2;
+
+
+  // .. but will be adjusted to edge based on how we're moving
+
+  switch(nma->direction) {
+  case 0: // Moving left
+    tgt_x = rect.x2;
+
+    if(tgt_x >= nma->cur_x)
+      return;
+    break;
+
+  case 1: // Moving up
+    tgt_y = rect.y2;
+    if(tgt_y >= nma->cur_y)
+      return;
+    break;
+
+  case 2: // Moving right
+    tgt_x = rect.x1;
+    if(tgt_x <= nma->cur_x)
+      return;
+    break;
+
+  case 3: // Moving down
+    tgt_y = rect.y1;
+    if(tgt_y <= nma->cur_y)
+      return;
+    break;
+  default:
+    abort();
+  }
+
+  const int dx = tgt_x - nma->cur_x;
+  const int dy = tgt_y - nma->cur_y;
+
+  int distance = sqrt(dx * dx + dy * dy);
+  if(distance > nma->distance)
+    return;
+
+  nma->best = w;
+  nma->distance = distance;
+}
+
+
+
+
+/**
+ * This function tries to navigate based on the projected cordinates
+ * of widgets. Basically it tries to find a widget that's a decendant
+ * (in the view tree) of the parameter 'w' and is as close as possible
+ * to the currently focused widget.
+ *
+ * This is called from the main event send/bubble loop in glw.c and only
+ * if a widget has the 'navPositional' attribute set.
+ */
+int
+glw_navigate_matrix(struct glw *w, struct event *e)
+{
+
+  navigate_matrix_aux_t nma = {
+    .distance = INT32_MAX,
+  };
+
+  if(event_is_action(e, ACTION_LEFT)) {
+    nma.direction = 0;
+  } else if(event_is_action(e, ACTION_UP)) {
+    nma.direction = 1;
+  } else if(event_is_action(e, ACTION_RIGHT)) {
+    nma.direction = 2;
+  } else if(event_is_action(e, ACTION_DOWN)) {
+    nma.direction = 3;
+  } else {
+    return 0;
+  }
+
+  glw_root_t *gr = w->glw_root;
+  glw_t *cur = gr->gr_current_focus;
+  if(cur == NULL || cur->glw_matrix == NULL)
+    return 0;
+
+  glw_rect_t rect;
+
+  Mtx m;
+  memcpy(m, cur->glw_matrix, sizeof(float) * 16);
+
+  glw_project_matrix(&rect, m, gr);
+
+  // Default current cordinates are center of focused area
+
+  nma.cur_x = (rect.x2 + rect.x1) / 2;
+  nma.cur_y = (rect.y2 + rect.y1) / 2;
+
+  // Adjust center based on how we're moving
+
+  switch(nma.direction) {
+  case 0: // Moving left
+    nma.cur_x = rect.x1;
+    break;
+
+  case 1: // Moving up
+    nma.cur_y = rect.y1;
+    break;
+
+  case 2: // Moving right
+    nma.cur_x = rect.x2;
+    break;
+
+  case 3: // Moving down
+    nma.cur_y = rect.y2;
+    break;
+  default:
+    abort();
+  }
+
+
+  glw_navigate_matrix_search(w, &nma);
+
+  if(nma.best == NULL)
+    return 0;
+
+  glw_focus_set(gr, nma.best, GLW_FOCUS_SET_INTERACTIVE);
+  return 1;
+}

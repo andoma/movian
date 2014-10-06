@@ -30,3 +30,5 @@ int glw_navigate_move(glw_t *w, int steps);
 int glw_navigate_step(glw_t *c, int count, int may_wrap);
 
 int glw_navigate_may_wrap(glw_t *w);
+
+int glw_navigate_matrix(struct glw *w, struct event *e);
