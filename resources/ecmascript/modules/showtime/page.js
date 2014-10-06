@@ -1,4 +1,3 @@
-
 var prop = require('showtime/prop');
 
 // ---------------------------------------------------------------
@@ -53,6 +52,11 @@ function Page(root, flat) {
     loading: {
       get: function()  { return this.model.loading; },
       set: function(v) { this.model.loading = v; }
+    },
+
+    source: {
+      get: function()  { return this.root.source; },
+      set: function(v) { this.root.source = v; }
     }
   });
 
@@ -81,7 +85,7 @@ Page.prototype.appendItem = function(url, type, metadata) {
 }
 
 Page.prototype.dump = function() {
-  printProp(this.root);
+  Showtime.propPrint(this.root);
 }
 
 // ---------------------------------------------------------------
