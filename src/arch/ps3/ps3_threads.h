@@ -117,6 +117,7 @@ extern void hts_cond_signal(hts_cond_t *c);
 extern void hts_cond_broadcast(hts_cond_t *c);
 #define hts_cond_wait(c, m) hts_cond_wait_timeout(c, m, 0)
 extern int hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delay);
+extern int hts_cond_wait_timeout_abs(hts_cond_t *c, hts_mutex_t *m, int64_t ts);
 
 
 #else // condvar debugging

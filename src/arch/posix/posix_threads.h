@@ -60,12 +60,13 @@ hts_mutex_trylock(pthread_mutex_t *m)
  * Condition variables
  */
 typedef pthread_cond_t hts_cond_t;
-#define hts_cond_init(c, m)            pthread_cond_init((c), NULL)
 #define hts_cond_signal(c)             pthread_cond_signal(c)
 #define hts_cond_broadcast(c)          pthread_cond_broadcast(c)
 #define hts_cond_wait(c, m)            pthread_cond_wait(c, m)
 #define hts_cond_destroy(c)            pthread_cond_destroy(c)
+extern void hts_cond_init(hts_cond_t *c, hts_mutex_t *m);
 extern int hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delta);
+extern int hts_cond_wait_timeout_abs(hts_cond_t *c, hts_mutex_t *m, int64_t ts);
 
 /**
  * Threads
