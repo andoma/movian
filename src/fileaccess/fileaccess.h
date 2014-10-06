@@ -172,6 +172,7 @@ typedef struct fa_open_extra {
   struct prop *foe_stats;
   struct cancellable *foe_c;
   int foe_open_timeout; // In ms
+  int foe_protocol_error; // Protocol error (HTTP can set 404 here, etc)
 } fa_open_extra_t;
 
 

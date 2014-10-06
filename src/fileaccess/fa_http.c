@@ -137,6 +137,8 @@ typedef struct http_file {
   char hf_authurl[128];
   char hf_path[URL_MAX];
 
+  int hf_status_code;
+
   int hf_chunk_size;
 
   int64_t hf_rsize; /* Size of reply, if chunked: don't care about this */
@@ -1686,6 +1688,8 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
     goto reconnect;
   }
 
+  hf->hf_status_code = code;
+
   switch(code) {
   case 200:
     if(hf->hf_filesize == -1)
@@ -1788,6 +1792,8 @@ http_open_ex(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
     hf->h.fh_proto = fap;
     return &hf->h;
   }
+  if(foe != NULL)
+    foe->foe_protocol_error = hf->hf_status_code;
 
   http_destroy(hf);
   return NULL;
