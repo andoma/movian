@@ -1,0 +1,3 @@
+Improve robustness of HLS streamer.
+
+Try to avoid broken segments and variants
