@@ -639,6 +639,7 @@ typedef enum {
   SEGMENT_OPEN_OK,
   SEGMENT_OPEN_NOT_FOUND,
   SEGMENT_OPEN_CORRUPT,
+  SEGMENT_OPEN_BAD_REQUEST,
 } segment_open_result_t;
 
 /**
@@ -656,7 +657,7 @@ segment_open(hls_t *h, hls_demuxer_t *hd, hls_segment_t *hs, int fast_fail,
 
   hls_variant_t *hv = hs->hs_variant;
 
-  int flags = FA_STREAMING | FA_BUFFERED_SMALL;
+  int flags = FA_STREAMING; //  | FA_BUFFERED_SMALL;
 
   hs->hs_opened_at = showtime_get_ts();
   hs->hs_block_cnt = h->h_blocked;
@@ -671,9 +672,14 @@ segment_open(hls_t *h, hls_demuxer_t *hd, hls_segment_t *hs, int fast_fail,
 
   fh = fa_open_ex(hs->hs_url, errbuf, sizeof(errbuf), flags, &foe);
   if(fh == NULL) {
-    TRACE(TRACE_INFO, "HLS", "Unable to open segment %s -- %s",
-	  hs->hs_url, errbuf);
-    return SEGMENT_OPEN_NOT_FOUND;
+    TRACE(TRACE_INFO, "HLS", "Unable to open segment %s -- %s (status:%d)",
+	  hs->hs_url, errbuf, foe.foe_protocol_error);
+
+
+    if(foe.foe_protocol_error == 404)
+      return SEGMENT_OPEN_NOT_FOUND;
+    else
+      return SEGMENT_OPEN_BAD_REQUEST;
   }
   
   if(hs->hs_byte_size != -1 && hs->hs_byte_offset != -1)
@@ -895,6 +901,8 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
       if(retry)
        	return HLS_SEGMENT_NYA;
 
+      hv->hv_corrupt_counter++;
+
       retry = 1;
       hd->hd_req = NULL;
       goto again;
@@ -987,12 +995,17 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
        * it *should* be there. Retry a few times, otherwise switch variant
        *
        */
-
-      if(!hs->hs_open_error < 3) {
+      
+      if(hs->hs_open_error < 3) {
         hs->hs_open_error++;
         return HLS_SEGMENT_NYA;
       }
       variant_problem(h, hv, "Stream not found on server");
+      hd->hd_req = NULL;
+      goto again;
+
+    case SEGMENT_OPEN_BAD_REQUEST:
+      variant_problem(h, hv, "Bad request");
       hd->hd_req = NULL;
       goto again;
 
