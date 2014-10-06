@@ -209,7 +209,7 @@ typedef struct gconf {
   int trace_level;
   int trace_to_syslog;
   int listen_on_stdin;
-  int ffmpeglog;
+  int libavlog;
   int noui;
   int fullscreen;
   int swrefresh;

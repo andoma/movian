@@ -262,7 +262,7 @@ fa_handle_t *fa_notify_start(const char *url, void *opaque,
 
 void fa_notify_stop(fa_handle_t *fh);
 
-void fa_ffmpeg_error_to_txt(int err, char *buf, size_t buflen);
+void fa_libav_error_to_txt(int err, char *buf, size_t buflen);
 
 void fa_scanner_page(const char *url, time_t mtime, 
                      prop_t *model, const char *playme,

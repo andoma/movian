@@ -117,7 +117,7 @@ fflog(void *ptr, int level, const char *fmt, va_list vl)
 {
   static char line[1024];
   AVClass *avc = ptr ? *(AVClass**)ptr : NULL;
-  if(!gconf.ffmpeglog)
+  if(!gconf.libavlog)
     return;
 
   if(level < AV_LOG_WARNING)
@@ -133,7 +133,7 @@ fflog(void *ptr, int level, const char *fmt, va_list vl)
     return;
   line[strlen(line)-1] = 0;
 
-  TRACE(level, avc ? avc->item_name(ptr) : "FFmpeg", "%s", line);
+  TRACE(level, avc ? avc->item_name(ptr) : "libav", "%s", line);
   line[0] = 0;
 }
 #endif
@@ -418,7 +418,7 @@ parse_opts(int argc, char **argv)
 	     "   -d                - Enable debug output.\n"
 	     "   --no-ui           - Start without UI.\n"
 	     "   --fullscreen      - Start in fullscreen mode.\n"
-	     "   --ffmpeglog       - Print ffmpeg log messages.\n"
+	     "   --libav-log       - Print libav log messages.\n"
 	     "   --with-standby    - Enable system standby.\n"
 	     "   --with-poweroff   - Enable system power-off.\n"
 	     "   -s <path>         - Non-default Showtime settings path.\n"
@@ -457,8 +457,8 @@ parse_opts(int argc, char **argv)
       gconf.trace_level = TRACE_DEBUG;
       argc -= 1; argv += 1;
       continue;
-    } else if(!strcmp(argv[0], "--ffmpeglog")) {
-      gconf.ffmpeglog = 1;
+    } else if(!strcmp(argv[0], "--libav-log")) {
+      gconf.libavlog = 1;
       argc -= 1; argv += 1;
       continue;
     } else if(!strcmp(argv[0], "--no-ui")) {

@@ -100,7 +100,7 @@ static const uint8_t otfsig[4] = {'O', 'T', 'T', 'O'};
  *
  */
 static rstr_t *
-ffmpeg_metadata_rstr(AVDictionary *m, const char *key)
+libav_metadata_rstr(AVDictionary *m, const char *key)
 {
   AVDictionaryEntry *tag;
   int len;
@@ -138,7 +138,7 @@ ffmpeg_metadata_rstr(AVDictionary *m, const char *key)
  *
  */
 static int
-ffmpeg_metadata_int(AVDictionary *m, const char *key, int def)
+libav_metadata_int(AVDictionary *m, const char *key, int def)
 {
   AVDictionaryEntry *tag;
 
@@ -570,10 +570,10 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx,
   int has_video = 0;
   int has_audio = 0;
 
-  md->md_artist = ffmpeg_metadata_rstr(fctx->metadata, "artist") ?:
-    ffmpeg_metadata_rstr(fctx->metadata, "author");
+  md->md_artist = libav_metadata_rstr(fctx->metadata, "artist") ?:
+    libav_metadata_rstr(fctx->metadata, "author");
 
-  md->md_album = ffmpeg_metadata_rstr(fctx->metadata, "album");
+  md->md_album = libav_metadata_rstr(fctx->metadata, "album");
 
   md->md_format = rstr_alloc(fctx->iformat->long_name);
 
@@ -595,9 +595,9 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx,
   if(has_audio && !has_video) {
     md->md_contenttype = CONTENT_AUDIO;
 
-    md->md_title = ffmpeg_metadata_rstr(fctx->metadata, "title");
-    md->md_track = ffmpeg_metadata_int(fctx->metadata, "track",
-				       filename ? atoi(filename) : 0);
+    md->md_title = libav_metadata_rstr(fctx->metadata, "title");
+    md->md_track = libav_metadata_int(fctx->metadata, "track",
+                                      filename ? atoi(filename) : 0);
 
     return;
   }

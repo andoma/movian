@@ -492,7 +492,7 @@ stream_radio(icecast_play_context_t *ipc, char *errbuf, size_t errlen)
       if(r != 0) {
         if(r != AVERROR_EOF) {
           char msg[100];
-          fa_ffmpeg_error_to_txt(r, msg, sizeof(msg));
+          fa_libav_error_to_txt(r, msg, sizeof(msg));
           TRACE(TRACE_ERROR, "Radio", "Playback error: %s (%d)", msg, r);
         }
         close_stream(ipc);
@@ -533,7 +533,7 @@ stream_radio(icecast_play_context_t *ipc, char *errbuf, size_t errlen)
 
       mb->mb_cw = media_codec_ref(ipc->ipc_mc);
 
-      /* Move the data pointers from ffmpeg's packet */
+      /* Move the data pointers from libav's packet */
 
       mb->mb_stream = pkt.stream_index;
 

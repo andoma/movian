@@ -221,7 +221,7 @@ fa_libav_close_format(AVFormatContext *fctx)
  *
  */
 void
-fa_ffmpeg_error_to_txt(int err, char *errbuf, size_t errlen)
+fa_libav_error_to_txt(int err, char *errbuf, size_t errlen)
 {
   
 if(av_strerror(err, errbuf, errlen))

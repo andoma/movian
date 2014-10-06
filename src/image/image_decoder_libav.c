@@ -81,7 +81,7 @@ fulhack(const AVPicture *pict, int src_w, int src_h,
 }
 
 /**
- * Rescaling with FFmpeg's swscaler
+ * Rescaling with libswscale
  */
 static pixmap_t *
 pixmap_rescale_swscale(const AVPicture *pict, int src_pix_fmt, 
