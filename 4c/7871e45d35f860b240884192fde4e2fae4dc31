@@ -1,0 +1,3 @@
+hls: Try harder to find a stream that's playable (contains both video and audio)
+
+Fixes #2252
