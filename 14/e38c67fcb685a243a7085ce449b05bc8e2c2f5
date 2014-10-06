@@ -1,0 +1,5 @@
+Improve UI when using Tvheadend
+
+* Added show description and name of next show to TV playdeck
+* If a channel has an icon, display that instead of Display.png in list view.
+* Added tv show description to iteminfo view
