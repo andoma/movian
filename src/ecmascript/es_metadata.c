@@ -24,7 +24,6 @@ es_mlv_destroy(es_resource_t *eres)
 {
   es_mlv_t *em = (es_mlv_t *)eres;
   mlv_unbind(em->mlv, 0);
-  printf("mlv destroyed\n");
 }
 
 
@@ -74,7 +73,6 @@ es_video_metadata_bind_duk(duk_context *ctx)
                              year, season, episode, 0);
   rstr_release(title);
   rstr_release(url);
-  printf("mlv created\n");
   es_resource_push(ctx, &em->super);
   return 1;
 }
