@@ -53,6 +53,8 @@
 
 extern char *showtime_bin;
 
+static HTS_MUTEX_DECL(upgrade_mutex);
+
 static const char *ctrlbase = "https://showtimemediacenter.com/upgrade/1";
 static const char *artifact_type;
 static const char *archname;
@@ -749,6 +751,7 @@ check_upgrade(int set_news)
 
   prop_destroy(news_ref);
   prop_ref_dec(news_ref);
+  news_ref = NULL;
 
   if(set_news && canUpgrade) {
     rstr_t *r = _("Showtime version %s is available");
@@ -1007,16 +1010,20 @@ attempt_upgrade(int accept_patch)
 static void *
 install_thread(void *aux)
 {
-  if(showtime_download_url == NULL)
-    return NULL;
+  hts_mutex_lock(&upgrade_mutex);
+  if(showtime_download_url != NULL) {
 
 #if CONFIG_BSPATCH
-  int r = attempt_upgrade(1);
-  if(r != -1)
-    return NULL;
+    int r = attempt_upgrade(1);
+    if(r != -1) {
+      hts_mutex_unlock(&upgrade_mutex);
+      return NULL;
+    }
 #endif
 
-  attempt_upgrade(0);
+    attempt_upgrade(0);
+  }
+  hts_mutex_unlock(&upgrade_mutex);
   return NULL;
 }
 
@@ -1150,6 +1157,7 @@ upgrade_init(void)
                  SETTING_OPTION("testing", _p("Testing")),
                  SETTING_OPTION_CSTR("master", "Bleeding Edge (Very unstable)"),
                  SETTING_CALLBACK(set_upgrade_track, NULL),
+                 SETTING_MUTEX(&upgrade_mutex),
                  NULL);
 
 
@@ -1158,6 +1166,7 @@ upgrade_init(void)
                  SETTING_VALUE(1),
                  SETTING_HTSMSG("check", store, "upgrade"),
                  SETTING_WRITE_BOOL(&notify_upgrades),
+                 SETTING_MUTEX(&upgrade_mutex),
                  NULL);
 
   prop_t *p = prop_create_root(NULL);
@@ -1172,6 +1181,7 @@ upgrade_init(void)
   inhibit_checks = 0;
 
   prop_subscribe(0,
+                 PROP_TAG_MUTEX, &upgrade_mutex,
 		 PROP_TAG_CALLBACK, upgrade_cb, NULL,
 		 PROP_TAG_NAME("global", "upgrade", "eventSink"),
 		 NULL);
@@ -1184,7 +1194,10 @@ upgrade_init(void)
 int
 upgrade_refresh(void)
 {
-  return check_upgrade(notify_upgrades);
+  hts_mutex_lock(&upgrade_mutex);
+  int r = check_upgrade(notify_upgrades);
+  hts_mutex_unlock(&upgrade_mutex);
+  return r;
 }
 
 

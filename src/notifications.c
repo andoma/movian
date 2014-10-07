@@ -336,6 +336,7 @@ news_sink(void *opaque, prop_event_t event, ...)
   switch(event) {
   case PROP_DESTROYED:
     prop_unsubscribe(va_arg(ap, prop_sub_t *));
+    prop_ref_dec(p);
     break;
 
   case PROP_EXT_EVENT:
