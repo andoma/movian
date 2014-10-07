@@ -235,7 +235,7 @@ clear_timer(duk_context *duk)
 /**
  *
  */
-const duk_function_list_entry fnlist_Showtime_timer[] = {
+const duk_function_list_entry fnlist_Global_timer[] = {
   { "setTimeout",              set_timeout,              2 },
   { "setInterval",             set_interval,             2 },
   { "clearTimeout",            clear_timer,              1 },

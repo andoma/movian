@@ -335,7 +335,6 @@ es_create_env(es_context_t *ec)
   duk_put_function_list(ctx, obj_idx, fnlist_Showtime_io);
   duk_put_function_list(ctx, obj_idx, fnlist_Showtime_string);
   duk_put_function_list(ctx, obj_idx, fnlist_Showtime_htsmsg);
-  duk_put_function_list(ctx, obj_idx, fnlist_Showtime_timer);
 #if ENABLE_METADATA
   duk_put_function_list(ctx, obj_idx, fnlist_Showtime_metadata);
 #endif
@@ -349,6 +348,8 @@ es_create_env(es_context_t *ec)
   duk_push_c_function(ctx, es_modsearch, 4);
   duk_put_prop_string(ctx, -2, "modSearch");
   duk_pop(ctx);
+
+  duk_put_function_list(ctx, -1, fnlist_Global_timer);
 
   // Pop global object
 
