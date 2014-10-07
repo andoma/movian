@@ -63,7 +63,7 @@ int display_status = DISPLAY_STATUS_ON;
 int cec_we_are_not_active;
 extern int auto_ui_shutdown;
 static int runmode;
-
+static int ctrlc;
 
 /**
  *
@@ -364,6 +364,18 @@ the_alarm(int x)
 /**
  *
  */
+static void
+doexit(int x)
+{
+  if(ctrlc)
+    exit(0);
+  ctrlc = 1;
+}
+
+
+/**
+ *
+ */
 static glw_root_t *
 ui_create(void)
 {
@@ -391,6 +403,10 @@ ui_create(void)
   sigset_t set;
   sigemptyset(&set);
   sigaddset(&set, SIGALRM);
+  sigaddset(&set, SIGTERM);
+  sigaddset(&set, SIGINT);
+  signal(SIGTERM, doexit);
+  signal(SIGINT, doexit);
   pthread_sigmask(SIG_UNBLOCK, &set, NULL);
 
   gr->gr_prop_dispatcher = &prop_courier_poll_with_alarm;
@@ -407,6 +423,9 @@ static int
 ui_should_run(void)
 {
   if(runmode != RUNMODE_RUNNING)
+    return 0;
+
+  if(ctrlc)
     return 0;
 
   if(!auto_ui_shutdown)
@@ -621,7 +640,7 @@ rpi_mainloop(void)
 
   runmode = RUNMODE_RUNNING;
 
-  while(runmode != RUNMODE_EXIT) {
+  while(runmode != RUNMODE_EXIT && !ctrlc) {
     if(ui_should_run()) {
       showtime_swrefresh();
       ui_run(gr, dpy);
