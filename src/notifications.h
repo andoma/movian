@@ -23,6 +23,7 @@
 #define NOTIFICATIONS_H__
 
 #include "misc/rstr.h"
+struct prop;
 
 typedef enum {
   NOTIFY_INFO,
@@ -30,8 +31,8 @@ typedef enum {
   NOTIFY_ERROR,
 } notify_type_t;
 
-void *notify_add(prop_t *root, notify_type_t type, const char *icon, int delay,
-		 rstr_t *fmt, ...);
+void *notify_add(struct prop *root, notify_type_t type, const char *icon,
+                 int delay, rstr_t *fmt, ...);
 
 void notify_destroy(void *);
 
@@ -41,7 +42,7 @@ void notifications_fini(void);
 
 // Displays popup defined by proptree 'p' and return event
 struct event;
-struct event *popup_display(prop_t *p);
+struct event *popup_display(struct prop *p);
 
 #define MESSAGE_POPUP_OK        0x1000
 #define MESSAGE_POPUP_CANCEL    0x2000
@@ -51,7 +52,7 @@ int message_popup(const char *message, int flags, const char **extra);
 
 int text_dialog(const char *message, char** string, int flags);
 
-prop_t *add_news(const char *id, const char *message,
-		 const char *location, const char *caption);
+struct prop *add_news(const char *id, const char *message,
+                      const char *location, const char *caption);
  
 #endif // NOTIFICATIONS_H__

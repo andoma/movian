@@ -6,15 +6,16 @@
 SRCS += src/arch/ps3/ps3_main.c \
 	src/arch/ps3/ps3_threads.c \
 	src/arch/ps3/ps3_trap.c \
+	src/arch/ps3/ps3_vdec.c \
+	src/arch/ps3/ps3_audio.c \
+	src/arch/ps3/ps3_tlsf.c \
 	src/networking/net_psl1ght.c \
 	src/networking/asyncio_posix.c \
-	src/audio2/ps3_audio.c \
 	src/fileaccess/fa_funopen.c \
-	ext/tlsf/tlsf_ps3.c \
 
 #
 # Install
-# 
+#
 
 TITLE := Showtime
 VERSION := $(shell support/getver.sh)
@@ -33,30 +34,30 @@ SELF=${BUILDDIR}/showtime.self
 SYMS=${BUILDDIR}/showtime.syms
 ZS=${BUILDDIR}/showtime.zs
 
-${EBOOT}: support/ps3/eboot.c support/ps3.mk
+${EBOOT}: support/ps3/eboot.c src/arch/ps3/ps3.mk
 	$(CC) $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg)  -o $@ $< ${LDFLAGS_EBOOT}
 	${STRIP} $@
 	sprxlinker $@
 
-${ELF}: ${BUILDDIR}/showtime.ziptail support/ps3.mk
+${ELF}: ${BUILDDIR}/showtime.ziptail src/arch/ps3/ps3.mk
 	${STRIP} -o $@ $<
 	sprxlinker $@
 
-${SYMS}: ${BUILDDIR}/showtime.ziptail support/ps3.mk
+${SYMS}: ${BUILDDIR}/showtime.ziptail src/arch/ps3/ps3.mk
 	${OBJDUMP} -t -j .text $< | awk '{print $$1 " " $$NF}'|sort >$@
 
-${ZS}:  ${BUILDDIR}/zipbundles/bundle.zip ${SYMS} support/ps3.mk
+${ZS}:  ${BUILDDIR}/zipbundles/bundle.zip ${SYMS} src/arch/ps3/ps3.mk
 	cp $< $@
 	zip -9j ${ZS} ${SYMS}
 
-${SELF}: ${ELF} ${ZS} support/ps3.mk 
+${SELF}: ${ELF} ${ZS} src/arch/ps3/ps3.mk
 	make_self $< $@
 	cat ${ZS} >>$@
 
-$(BUILDDIR)/pkg/USRDIR/showtime.self: ${SELF}  support/ps3.mk
+$(BUILDDIR)/pkg/USRDIR/showtime.self: ${SELF}  src/arch/ps3/ps3.mk
 	cp $< $@
 
-$(BUILDDIR)/pkg/USRDIR/EBOOT.BIN: ${EBOOT}  support/ps3.mk
+$(BUILDDIR)/pkg/USRDIR/EBOOT.BIN: ${EBOOT}  src/arch/ps3/ps3.mk
 	@mkdir -p $(BUILDDIR)/pkg/USRDIR
 	make_self_npdrm $< $@ $(CONTENTID)
 
@@ -65,7 +66,7 @@ $(BUILDDIR)/showtime.pkg: $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN $(BUILDDIR)/pkg/USRDI
 	$(SFO) --title "$(TITLE)" --appid "$(APPID)" -f $(SFOXML) $(BUILDDIR)/pkg/PARAM.SFO
 	$(PKG) --contentid $(CONTENTID) $(BUILDDIR)/pkg/ $@
 
-$(BUILDDIR)/showtime_geohot.pkg: $(BUILDDIR)/showtime.pkg  support/ps3.mk
+$(BUILDDIR)/showtime_geohot.pkg: $(BUILDDIR)/showtime.pkg  src/arch/ps3/ps3.mk
 	cp $< $@
 	package_finalize $@
 

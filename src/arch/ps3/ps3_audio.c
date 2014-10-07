@@ -35,8 +35,8 @@
 #include <libavutil/avutil.h>
 
 #include "showtime.h"
-#include "audio.h"
 #include "media/media.h"
+#include "audio2/audio.h"
 
 static int max_pcm;
 static int max_dts;

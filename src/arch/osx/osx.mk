@@ -28,11 +28,11 @@ DVDCSS_CFLAGS = -DDARWIN_DVD_IOCTL -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
 
 APPDIR        := ${BUILDDIR}/Showtime.app
 APPPROG       := ${PROG}
-include support/osx-stage.mk
+include src/arch/osx/osx-stage.mk
 
 APPDIR        := ${BUILDDIR}/dist/Showtime.app
 APPPROG       := ${PROG}.osxapp
-include support/osx-stage.mk
+include src/arch/osx/osx-stage.mk
 
 RESOUCES := ${APPDIR}/Contents/Resources
 

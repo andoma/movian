@@ -56,7 +56,6 @@ enable polarssl
 enable librtmp
 enable httpserver
 enable dvd
-enable ps3_vdec
 enable sqlite_vfs
 enable sqlite_locking
 enable tlsf

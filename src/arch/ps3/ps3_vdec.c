@@ -28,12 +28,13 @@
 
 #include "arch/threads.h"
 #include "showtime.h"
-#include "video_decoder.h"
-#include "video_settings.h"
 #include "arch/halloc.h"
 #include "notifications.h"
-#include "h264_annexb.h"
-#include "h264_parser.h"
+
+#include "video/video_decoder.h"
+#include "video/video_settings.h"
+#include "video/h264_annexb.h"
+#include "video/h264_parser.h"
 
 static int vdec_mpeg2_loaded;
 static int vdec_h264_loaded;

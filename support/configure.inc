@@ -70,7 +70,6 @@ CONFIG_LIST="
  realpath
  trex
  emu_thread_specifics
- ps3_vdec
  libfontconfig
  readahead_cache
  sqlite_vfs
