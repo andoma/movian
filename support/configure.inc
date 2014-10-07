@@ -87,7 +87,6 @@ CONFIG_LIST="
  bspatch
  connman
  libntfs
- miner
  cedar
  audiotest
  metadata
