@@ -34,7 +34,7 @@ stripped: ${PROG}.stripped
 SQDIR=${BUILDDIR}/sqfs
 SYMS=${BUILDDIR}/showtime.syms
 
-${SYMS}: ${PROG}.bundle support/rpi.mk
+${SYMS}: ${PROG}.bundle src/arch/rpi/rpi.mk
 	${OBJDUMP} -t -j .text $< | awk '{print $$1 " " $$NF}'|sort >$@
 
 ${BUILDDIR}/showtime.sqfs: ${PROG}.stripped ${SYMS}
