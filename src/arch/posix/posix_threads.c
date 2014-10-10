@@ -60,7 +60,7 @@ hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delta)
   gettimeofday(&tv, NULL);
   TIMEVAL_TO_TIMESPEC(&tv, &ts);
 #else
-  clock_gettime(CLOCK_REALTIME, &ts);
+  clock_gettime(CLOCK_MONOTONIC, &ts);
 #endif
 
   ts.tv_sec  +=  delta / 1000;
