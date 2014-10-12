@@ -45,6 +45,8 @@ ehr_cleanup(es_http_request_t *ehr)
 {
   free(ehr->ehr_url);
   http_headers_free(&ehr->ehr_response_headers);
+  if(ehr->ehr_postdata != NULL)
+    htsbuf_queue_flush(ehr->ehr_postdata);
   free(ehr->ehr_postdata);
   free(ehr->ehr_postcontenttype);
   free(ehr->ehr_method);
@@ -262,7 +264,43 @@ es_http_req(duk_context *ctx)
   ehr->ehr_min_expire = es_prop_to_int(ctx, 1, "cacheTime", 0);
   ehr->ehr_cache = es_prop_is_true(ctx, 1, "caching") || ehr->ehr_min_expire;
 
+  duk_get_prop_string(ctx, 1, "postdata");
 
+  if(duk_is_object(ctx, -1)) {
+    const char *prefix = "";
+
+    ehr->ehr_postdata = malloc(sizeof(htsbuf_queue_t));
+    htsbuf_queue_init(ehr->ehr_postdata, 0);
+
+    duk_enum(ctx, -1, 0);
+
+    while(duk_next(ctx, -1, 1)) {
+      const char *k = duk_safe_to_string(ctx, -2);
+      const char *v = duk_safe_to_string(ctx, -1);
+
+      if(prefix)
+        htsbuf_append(ehr->ehr_postdata, prefix, strlen(prefix));
+      htsbuf_append_and_escape_url(ehr->ehr_postdata, k);
+      htsbuf_append(ehr->ehr_postdata, "=", 1);
+      htsbuf_append_and_escape_url(ehr->ehr_postdata, v);
+      duk_pop_2(ctx);
+    }
+    duk_pop(ctx); // Pop iterator
+
+    ehr->ehr_postcontenttype = strdup("application/x-www-form-urlencoded");
+
+  } else if(duk_is_string(ctx, -1)) {
+    duk_size_t len;
+    const char *str = duk_get_lstring(ctx, -1, &len);
+    ehr->ehr_postdata = malloc(sizeof(htsbuf_queue_t));
+    htsbuf_queue_init(ehr->ehr_postdata, 0);
+    htsbuf_append(ehr->ehr_postdata, str, len);
+    ehr->ehr_postcontenttype =  strdup("text/ascii");
+  } else {
+
+  }
+
+  duk_pop(ctx);
 
   /**
    * Extract args from control object
