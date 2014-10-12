@@ -209,7 +209,6 @@ static void
 ehr_task(void *aux)
 {
   es_http_request_t *ehr = aux;
-  sleep(4);
   es_http_do_request(ehr);
 
 
