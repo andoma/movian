@@ -192,7 +192,8 @@ alloc_picture(vdec_decoder_t *vdd, int lumasize)
   vp->vp_size = lumasize + lumasize / 2;
   vp->vp_offset = rsx_alloc(vp->vp_size, 16);
   if(vp->vp_offset == -1)
-    panic("Cell decoder out of RSX memory");
+    panic("Cell decoder out of RSX memory. Unable to alloc %d bytes",
+          vp->vp_size);
   return vp;
 }
 
@@ -291,7 +292,9 @@ emit_frame(video_decoder_t *vd, vdec_pic_t *vp)
 
   vp->fi.fi_type = 'RSX';
 
-  video_deliver_frame(vd, &vp->fi);
+  if(video_deliver_frame(vd, &vp->fi) == -1)
+    // Frame not accepted, free it
+    rsx_free(vp->vp_offset, vp->vp_size);
 
 #if VDEC_DETAILED_DEBUG
   TRACE(TRACE_DEBUG, "VDEC DPY", "Frame delivered");

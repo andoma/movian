@@ -135,6 +135,15 @@ rsx_alloc(int size, int alignment)
   pos = extent_alloc_aligned(rsx_mempool, (size + 15) >> 4, alignment >> 4);
   if(0)TRACE(TRACE_DEBUG, "RSXMEM", "Alloc %d bytes (%d align) -> 0x%x",
 	size, alignment, pos << 4);
+
+  if(pos == -1) {
+    int total, avail, fragments;
+    extent_stats(rsx_mempool, &total, &avail, &fragments);
+    TRACE(TRACE_ERROR, "RSX",
+          "Low memory condition. Available %d of %d in %d fragments",
+          avail * 16, total * 16, fragments);
+  }
+
   hts_mutex_unlock(&rsx_mempool_lock);
   return pos == -1 ? -1 : pos << 4;
 }

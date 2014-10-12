@@ -47,11 +47,16 @@ static void
 surface_reset(glw_video_t *gv, glw_video_surface_t *gvs)
 {
   int i;
-  
-  for(i = 0; i < GLW_VIDEO_MAX_SURFACES; i++) 
+
+  for(i = 0; i < GLW_VIDEO_MAX_SURFACES; i++) {
     if(gv->gv_surfaces[i].gvs_offset == gvs->gvs_offset &&
-       gvs != &gv->gv_surfaces[i])
-      return;  // Memory is shared
+       gvs != &gv->gv_surfaces[i]) {
+      // Memory is shared
+      gvs->gvs_offset = 0;
+      gvs->gvs_size = 0;
+      return;
+    }
+  }
 
   if(gvs->gvs_offset) {
     rsx_free(gvs->gvs_offset, gvs->gvs_size);
@@ -566,9 +571,13 @@ rsx_deliver(const frame_info_t *fi, glw_video_t *gv, glw_video_engine_t *gve)
     glw_video_put_surface(gv, gvs, fi->fi_pts, fi->fi_epoch,
 			  fi->fi_duration/2, 1, !fi->fi_tff);
 
-    if((gvs = glw_video_get_surface(gv, NULL, NULL)) == NULL)
-      return -1;
-  
+    if((gvs = glw_video_get_surface(gv, NULL, NULL)) == NULL) {
+      /* We have already taken ownership of the RSX memory, so we
+         can only return 0 here. In fact we managed to put one surface
+         out so it's not that much of an error really */
+      return 0;
+    }
+
     surface_reset(gv, gvs);
 
     gvs->gvs_offset = fi->fi_pitch[0];
