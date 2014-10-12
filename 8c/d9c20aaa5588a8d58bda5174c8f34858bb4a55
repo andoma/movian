@@ -1,3 +1,8 @@
-Fix some race conditions in upgrade code
+ps3: Fix RSX memory leaks related to video playback.
 
-Previously Showtime could crash if changing upgrade track setting too frequently
+Those happend during seeks or when playback stopped.
+
+In particular for interlaced content but could also happen
+for progressive video.
+
+Fixes #2272
