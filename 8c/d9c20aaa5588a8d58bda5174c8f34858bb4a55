@@ -1,0 +1,3 @@
+Fix some race conditions in upgrade code
+
+Previously Showtime could crash if changing upgrade track setting too frequently
