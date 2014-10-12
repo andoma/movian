@@ -198,7 +198,7 @@ static void
 gvv_render(glw_video_t *gv, glw_rctx_t *rc)
 {
   glw_video_surface_t *sa = gv->gv_sa;
-  glw_video_surface_t *sb = gv->gv_sa;
+  glw_video_surface_t *sb = gv->gv_sb;
   glw_program_t *gp;
   glw_backend_root_t *gbr = &gv->w.glw_root->gr_be;
 
