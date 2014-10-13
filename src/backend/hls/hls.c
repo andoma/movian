@@ -173,6 +173,9 @@ typedef struct hls_demuxer {
   int64_t hd_last_video_pts;
   int64_t hd_last_audio_pts;
 
+  int64_t hd_keyframe_pts;
+  int hd_keyframe_seen;
+  int hd_frames_before_keyframe;
 
 } hls_demuxer_t;
 /**
@@ -1021,6 +1024,11 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
       goto again;
     }
 
+#if 0  // not yet. Might need a fresher libav
+    hd->hd_keyframe_seen = 0;
+    hd->hd_frames_before_keyframe = 0;
+#endif
+
     hd->hd_seek_to = PTS_UNSET;
 
     hv->hv_current_seg = hs;
@@ -1233,6 +1241,18 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
         if(pkt.pts != AV_NOPTS_VALUE)
           hd->hd_last_video_pts = pkt.pts;
 
+
+        if(hd->hd_keyframe_seen == 0) {
+          if(pkt.flags & AV_PKT_FLAG_KEY) {
+            hd->hd_keyframe_seen = 1;
+            hd->hd_keyframe_pts = pkt.pts;
+          } else {
+            hd->hd_frames_before_keyframe++;
+            av_free_packet(&pkt);
+            continue;
+          }
+        }
+
       } else if(si == hs->hs_astream) {
 
         mb = media_buf_from_avpkt_unlocked(mp, &pkt);
@@ -1244,6 +1264,12 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 
         if(pkt.pts != AV_NOPTS_VALUE)
           hd->hd_last_audio_pts = pkt.pts;
+
+        if(!hd->hd_keyframe_seen) {
+          // If we've not yet seen a video keyframe, drop audio
+          av_free_packet(&pkt);
+          continue;
+        }
 
       } else {
         /* Check event queue ? */
