@@ -175,13 +175,16 @@ typedef struct http_file {
   char hf_version;
 
   char hf_streaming; /* Optimize for streaming from start to end
-		      * rather than random seeking 
+		      * rather than random seeking
 		      */
 
   char hf_no_retries;
 
   char hf_req_compression;
-  
+
+  // Set if the filesize is known to never change
+  char hf_filesize_is_final;
+
   char hf_content_encoding;
 #define HTTP_CE_IDENTITY 0
 #define HTTP_CE_GZIP 1
@@ -1362,6 +1365,14 @@ http_read_response(http_file_t *hf, struct http_header_list *headers)
       continue;
     }
 
+    if(!strcasecmp(argv[0], "Server")) {
+      // CDN network typically never change the size of a file
+      if(!strcasecmp(argv[1], "AkamaiGHost"))
+        hf->hf_filesize_is_final = 1;
+
+      continue;
+    }
+
     if(!strcasecmp(argv[0], "Keep-Alive")) {
       const char *x = strstr(argv[1], "timeout=");
       if(x != NULL)
@@ -2094,6 +2105,9 @@ http_seek(fa_handle_t *handle, int64_t pos, int whence)
   }
 
   if(np < 0)
+    return -1;
+
+  if(hf->hf_filesize_is_final && hf->hf_filesize != -1 && np > hf->hf_filesize)
     return -1;
 
   if(hf->hf_pos != np && hc != NULL) {
