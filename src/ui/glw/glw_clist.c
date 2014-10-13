@@ -20,6 +20,7 @@
  */
 
 #include "glw.h"
+#include "glw_navigation.h"
 
 typedef struct glw_clist {
   glw_t w;
@@ -117,7 +118,7 @@ glw_clist_layout(glw_t *w, const glw_rctx_t *rc)
 
     n = glw_next_widget(c);
 
-    rc0.rc_height = (n ? glw_parent_data(c, glw_clist_item_t)->pos :
+    rc0.rc_height = (n ? glw_parent_data(n, glw_clist_item_t)->pos :
                      l->trail) - cd->pos - l->spacing;
 
     cd->height = rc0.rc_height;
@@ -296,6 +297,7 @@ static glw_class_t glw_clist = {
   .gc_signal_handler = signal_handler,
   .gc_set_int = glw_clist_set_int,
   .gc_set_float = glw_clist_set_float,
+  .gc_bubble_event = glw_navigate_vertical,
 };
 
 GLW_REGISTER_CLASS(glw_clist);
