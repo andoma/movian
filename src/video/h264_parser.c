@@ -127,16 +127,22 @@ h264_parser_decode_sps(h264_parser_t *hp, bitstream_t *bs, h264_sps_t *sps)
   sps->mb_width  = bs->read_golomb_ue(bs) + 1;
   sps->mb_height = bs->read_golomb_ue(bs) + 1;
   sps->mbs_only_flag = bs->read_bits1(bs);
-  if(sps->mbs_only_flag)
+  if(!sps->mbs_only_flag)
     sps->aff = bs->read_bits1(bs);
 
   sps->direct_8x8_inference_flag = bs->read_bits1(bs);
 
   if(bs->read_bits1(bs)) {
-    bs->read_golomb_ue(bs);
-    bs->read_golomb_ue(bs);
-    bs->read_golomb_ue(bs);
-    bs->read_golomb_ue(bs);
+    const int hshift = sps->chroma_format == 1 || sps->chroma_format == 2;
+    const int vshift = sps->chroma_format == 1;
+
+    int hscale = 1 << hshift;
+    int vscale = (2 - sps->mbs_only_flag) << vshift;
+
+    sps->crop_left   = bs->read_golomb_ue(bs) * hscale;
+    sps->crop_right  = bs->read_golomb_ue(bs) * hscale;
+    sps->crop_top    = bs->read_golomb_ue(bs) * vscale;
+    sps->crop_bottom = bs->read_golomb_ue(bs) * vscale;
   }
   return sps_id;
 }

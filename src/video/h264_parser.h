@@ -86,6 +86,11 @@ typedef struct h264_sps {
   int poc_cycle_length;
   int direct_8x8_inference_flag;
 
+  uint16_t crop_left;
+  uint16_t crop_right;
+  uint16_t crop_top;
+  uint16_t crop_bottom;
+
   char present;
 
 } h264_sps_t;
