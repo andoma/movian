@@ -1,0 +1,6 @@
+ps3: Support video sizes that are non multiple of 16.
+
+This removes the "blurring" that could be seen at edges of video
+for those kind of resolutions
+
+Fixes #1766
