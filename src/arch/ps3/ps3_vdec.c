@@ -70,8 +70,8 @@ typedef struct vdec_pic {
   frame_info_t fi;
   int64_t order;
   int send_pts;
-#define vp_offset fi.fi_pitch[0]
-#define vp_size   fi.fi_pitch[1]
+#define vp_offset  fi.fi_u32
+#define vp_size    fi.fi_u32[3]
 } vdec_pic_t;
 
 
@@ -127,6 +127,8 @@ typedef struct vdec_decoder {
 
   int do_flush;
 
+  int crop_right, crop_bottom;
+
 } vdec_decoder_t;
 
 /**
@@ -175,7 +177,7 @@ extern char *rsx_address;
 static void
 release_picture(vdec_pic_t *vp)
 {
-  rsx_free(vp->vp_offset, vp->vp_size);
+  rsx_free(vp->vp_offset[0], vp->vp_size);
   LIST_REMOVE(vp, link);
   free(vp);
 }
@@ -186,14 +188,22 @@ release_picture(vdec_pic_t *vp)
  * yuv420 only
  */
 static vdec_pic_t *
-alloc_picture(vdec_decoder_t *vdd, int lumasize)
+alloc_picture(vdec_decoder_t *vdd, int width, int height)
 {
   vdec_pic_t *vp = malloc(sizeof(vdec_pic_t));
+  int lumasize = width * height;
+  vp->fi.fi_pitch[0] = width;
+  vp->fi.fi_pitch[1] = width / 2;
+  vp->fi.fi_pitch[2] = width / 2;
   vp->vp_size = lumasize + lumasize / 2;
-  vp->vp_offset = rsx_alloc(vp->vp_size, 16);
-  if(vp->vp_offset == -1)
+  vp->vp_offset[0] = rsx_alloc(vp->vp_size, 16);
+  if(vp->vp_offset[0] == -1)
     panic("Cell decoder out of RSX memory. Unable to alloc %d bytes",
           vp->vp_size);
+
+  vp->vp_offset[1] = vp->vp_offset[0] + lumasize;
+  vp->vp_offset[2] = vp->vp_offset[1] + lumasize / 4;
+
   return vp;
 }
 
@@ -294,7 +304,7 @@ emit_frame(video_decoder_t *vd, vdec_pic_t *vp)
 
   if(video_deliver_frame(vd, &vp->fi) == -1)
     // Frame not accepted, free it
-    rsx_free(vp->vp_offset, vp->vp_size);
+    rsx_free(vp->vp_offset[0], vp->vp_size);
 
 #if VDEC_DETAILED_DEBUG
   TRACE(TRACE_DEBUG, "VDEC DPY", "Frame delivered");
@@ -308,7 +318,7 @@ emit_frame(video_decoder_t *vd, vdec_pic_t *vp)
 static void
 picture_out(vdec_decoder_t *vdd)
 {
-  int r, lumasize;
+  int r;
   uint32_t addr;
   vdec_picture_format picfmt;
   vdec_pic_t *vp;
@@ -352,8 +362,7 @@ picture_out(vdec_decoder_t *vdd)
   if(pi->codec_type == VDEC_CODEC_TYPE_MPEG2) {
     vdec_mpeg2_info *mpeg2 = (void *)(intptr_t)pi->codec_specific_addr;
 
-    lumasize = mpeg2->width * mpeg2->height;
-    vp = alloc_picture(vdd, lumasize);
+    vp = alloc_picture(vdd, mpeg2->width, mpeg2->height);
 
     vp->fi.fi_width = mpeg2->width;
     vp->fi.fi_height = mpeg2->height;
@@ -422,11 +431,11 @@ picture_out(vdec_decoder_t *vdd)
   } else {
     vdec_h264_info *h264 = (void *)(intptr_t)pi->codec_specific_addr;
 
-    lumasize = h264->width * h264->height;
-    vp = alloc_picture(vdd, lumasize);
+    vp = alloc_picture(vdd, h264->width, h264->height);
 
-    vp->fi.fi_width = h264->width;
-    vp->fi.fi_height = h264->height;
+    vp->fi.fi_width = h264->width - vdd->crop_right;
+    vp->fi.fi_height = h264->height - vdd->crop_bottom;
+
     vp->fi.fi_duration = h264->frame_rate <= 7 ? 
       mpeg_durations[h264->frame_rate + 1] : 40000;
 
@@ -533,7 +542,7 @@ picture_out(vdec_decoder_t *vdd)
   vp->fi.fi_delta = pm->delta;
   vp->fi.fi_drive_clock = pm->drive_clock;
 
-  vdec_get_picture(vdd->handle, &picfmt, rsx_to_ppu(vp->vp_offset));
+  vdec_get_picture(vdd->handle, &picfmt, rsx_to_ppu(vp->vp_offset[0]));
 
   vp->order = order;
 
@@ -827,7 +836,8 @@ video_ps3_vdec_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   struct vdec_attr dec_attr = {0};
   int spu_threads;
   int r;
-
+  int crop_right = 0;
+  int crop_bottom = 0;
 
   switch(mc->codec_id) {
   case AV_CODEC_ID_MPEG2VIDEO:
@@ -872,6 +882,16 @@ video_ps3_vdec_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 		s->level / 10,
 		s->level % 10,
 		s->num_ref_frames);
+
+	  TRACE(TRACE_DEBUG, "VDEC",
+                "        crop: left:%d right:%d top:%d bottom:%d",
+                s->crop_left,
+                s->crop_right,
+                s->crop_top,
+                s->crop_bottom);
+
+          crop_right  = s->crop_right;
+          crop_bottom = s->crop_bottom;
 
 	  if(s->mb_height >= 68 && s->num_ref_frames > 4)
 	    too_big_refframes = s->num_ref_frames;
@@ -972,6 +992,9 @@ video_ps3_vdec_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   mc->decode = decoder_decode;
   mc->flush  = decoder_flush;
   mc->close  = decoder_close;
+
+  vdd->crop_right = crop_right;
+  vdd->crop_bottom = crop_bottom;
 
 
   vdec_start_sequence(vdd->handle);

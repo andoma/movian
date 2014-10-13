@@ -101,7 +101,14 @@ TAILQ_HEAD(dvdspu_queue, dvdspu);
 typedef struct frame_info {
   struct AVFrame *fi_avframe;
 
-  uint8_t *fi_data[4];
+
+  union {
+    uint8_t *ptr[4];
+    uint32_t u32[4];
+  } u;
+
+#define fi_data   u.ptr
+#define fi_u32    u.u32
 
   int fi_pitch[4];
 

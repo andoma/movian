@@ -543,30 +543,28 @@ rsx_deliver(const frame_info_t *fi, glw_video_t *gv, glw_video_engine_t *gve)
 
   surface_reset(gv, gvs);
 
-  gvs->gvs_offset = fi->fi_pitch[0];
-  gvs->gvs_size   = fi->fi_pitch[1];
+  gvs->gvs_offset = fi->fi_u32[0];
+  gvs->gvs_size   = fi->fi_u32[3];
   gvs->gvs_width[0]  = fi->fi_width;
   gvs->gvs_height[0] = fi->fi_height;
-
-  int offset = gvs->gvs_offset;
 
   if(fi->fi_interlaced) {
     // Interlaced
 
     for(i = 0; i < 3; i++) {
-      int w = wvec[i];
-      int h = hvec[i];
+      const int w = wvec[i];
+      const int h = hvec[i];
+      const int offset = fi->fi_u32[i];
 
       init_tex(&gvs->gvs_tex[i],
-	       offset + !fi->fi_tff * wvec[i],
-	       w, h, w*2,
+	       offset + !fi->fi_tff * fi->fi_pitch[i],
+	       w, h, fi->fi_pitch[i] * 2,
 	       NV30_3D_TEX_FORMAT_FORMAT_I8, 0,
 	       NV30_3D_TEX_SWIZZLE_S0_X_S1 | NV30_3D_TEX_SWIZZLE_S0_Y_S1 |
 	       NV30_3D_TEX_SWIZZLE_S0_Z_S1 | NV30_3D_TEX_SWIZZLE_S0_W_S1 |
 	       NV30_3D_TEX_SWIZZLE_S1_X_X | NV30_3D_TEX_SWIZZLE_S1_Y_Y |
 	       NV30_3D_TEX_SWIZZLE_S1_Z_Z | NV30_3D_TEX_SWIZZLE_S1_W_W
 	       );
-      offset += w * (fi->fi_height >> (i ? vshift : 0));
     }
     glw_video_put_surface(gv, gvs, fi->fi_pts, fi->fi_epoch,
 			  fi->fi_duration/2, 1, !fi->fi_tff);
@@ -580,27 +578,25 @@ rsx_deliver(const frame_info_t *fi, glw_video_t *gv, glw_video_engine_t *gve)
 
     surface_reset(gv, gvs);
 
-    gvs->gvs_offset = fi->fi_pitch[0];
-    gvs->gvs_size   = fi->fi_pitch[1];
+    gvs->gvs_offset = fi->fi_u32[0];
+    gvs->gvs_size   = fi->fi_u32[3];
     gvs->gvs_width[0]  = fi->fi_width;
     gvs->gvs_height[0] = fi->fi_height;
 
-    offset = gvs->gvs_offset;
-
     for(i = 0; i < 3; i++) {
-      int w = wvec[i];
-      int h = hvec[i];
+      const int w = wvec[i];
+      const int h = hvec[i];
+      const int offset = fi->fi_u32[i];
 
       init_tex(&gvs->gvs_tex[i],
-	       offset + !!fi->fi_tff * wvec[i],
-	       w, h, w*2,
+	       offset + !!fi->fi_tff * fi->fi_pitch[i],
+	       w, h, fi->fi_pitch[i] * 2,
 	       NV30_3D_TEX_FORMAT_FORMAT_I8, 0,
 	       NV30_3D_TEX_SWIZZLE_S0_X_S1 | NV30_3D_TEX_SWIZZLE_S0_Y_S1 |
 	       NV30_3D_TEX_SWIZZLE_S0_Z_S1 | NV30_3D_TEX_SWIZZLE_S0_W_S1 |
 	       NV30_3D_TEX_SWIZZLE_S1_X_X | NV30_3D_TEX_SWIZZLE_S1_Y_Y |
 	       NV30_3D_TEX_SWIZZLE_S1_Z_Z | NV30_3D_TEX_SWIZZLE_S1_W_W
 	       );
-      offset += w * (fi->fi_height >> (i ? vshift : 0));
     }
 
     glw_video_put_surface(gv, gvs, fi->fi_pts + fi->fi_duration, fi->fi_epoch,
@@ -610,19 +606,19 @@ rsx_deliver(const frame_info_t *fi, glw_video_t *gv, glw_video_engine_t *gve)
     // Progressive
 
     for(i = 0; i < 3; i++) {
-      int w = wvec[i];
-      int h = hvec[i];
+      const int w = wvec[i];
+      const int h = hvec[i];
+      const int offset = fi->fi_u32[i];
 
       init_tex(&gvs->gvs_tex[i],
 	       offset,
-	       w,h,w,
+	       w, h, fi->fi_pitch[i],
 	       NV30_3D_TEX_FORMAT_FORMAT_I8, 0,
 	       NV30_3D_TEX_SWIZZLE_S0_X_S1 | NV30_3D_TEX_SWIZZLE_S0_Y_S1 |
 	       NV30_3D_TEX_SWIZZLE_S0_Z_S1 | NV30_3D_TEX_SWIZZLE_S0_W_S1 |
 	       NV30_3D_TEX_SWIZZLE_S1_X_X | NV30_3D_TEX_SWIZZLE_S1_Y_Y |
 	       NV30_3D_TEX_SWIZZLE_S1_Z_Z | NV30_3D_TEX_SWIZZLE_S1_W_W
 	       );
-      offset += w * h;
     }
     glw_video_put_surface(gv, gvs, fi->fi_pts, fi->fi_epoch,
 			  fi->fi_duration, 0, 0);
