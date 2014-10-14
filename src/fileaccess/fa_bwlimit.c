@@ -58,10 +58,10 @@ bwlimit_close(fa_handle_t *h)
  *
  */
 static int64_t
-bwlimit_seek(fa_handle_t *handle, int64_t pos, int whence)
+bwlimit_seek(fa_handle_t *handle, int64_t pos, int whence, int lazy)
 {
   bwlimit_t *s = (bwlimit_t *)handle;
-  return fa_seek(s->s_src, pos, whence);
+  return fa_seek4(s->s_src, pos, whence, lazy);
 }
 
 
@@ -103,24 +103,12 @@ bwlimit_read(fa_handle_t *handle, void *buf, size_t size)
 /**
  *
  */
-static int
-bwlimit_seek_is_fast(fa_handle_t *handle)
-{
-  bwlimit_t *s = (bwlimit_t *)handle;
-  return fa_seek_is_fast(s->s_src);
-}
-
-
-/**
- *
- */
 static fa_protocol_t fa_protocol_bwlimit = {
   .fap_name  = "bwlimit",
   .fap_close = bwlimit_close,
   .fap_read  = bwlimit_read,
   .fap_seek  = bwlimit_seek,
   .fap_fsize = bwlimit_fsize,
-  .fap_seek_is_fast = bwlimit_seek_is_fast,
 };
 
 

@@ -144,7 +144,7 @@ torrent_read(fa_handle_t *fh, void *buf, size_t size)
  *
  */
 static int64_t
-torrent_seek(fa_handle_t *fh, int64_t pos, int whence)
+torrent_seek(fa_handle_t *fh, int64_t pos, int whence, int lazy)
 {
   torrent_fh_t *tfh = (torrent_fh_t *)fh;
   int64_t np;

@@ -647,7 +647,7 @@ zip_file_read(fa_handle_t *handle, void *buf, size_t size)
  *
  */
 static int64_t
-zip_file_seek(fa_handle_t *handle, int64_t pos, int whence)
+zip_file_seek(fa_handle_t *handle, int64_t pos, int whence, int lazy)
 {
   zip_fh_t *zfh = (zip_fh_t *)handle;
   zip_file_t *zf = zfh->zfh_file;
@@ -832,10 +832,11 @@ zip_read(fa_handle_t *handle, void *buf, size_t size)
  * Seek in file
  */
 static int64_t
-zip_seek(fa_handle_t *handle, int64_t pos, int whence)
+zip_seek(fa_handle_t *handle, int64_t pos, int whence, int lazy)
 {
   zip_fh_t *zfh = (zip_fh_t *)handle;
-  return zfh->zfh_reader_proto->fap_seek(zfh->zfh_reader_handle, pos, whence);
+  return zfh->zfh_reader_proto->fap_seek(zfh->zfh_reader_handle, pos,
+                                         whence, lazy);
 }
 
 

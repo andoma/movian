@@ -785,7 +785,7 @@ rar_read(fa_handle_t *handle, void *buf, size_t size)
  * Seek in file
  */
 static int64_t
-rar_seek(fa_handle_t *handle, int64_t pos, int whence)
+rar_seek(fa_handle_t *handle, int64_t pos, int whence, int lazy)
 {
   rar_fd_t *rfd = (rar_fd_t *)handle;
   int64_t np;

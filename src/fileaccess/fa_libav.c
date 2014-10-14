@@ -46,7 +46,8 @@ fa_libav_seek(void *opaque, int64_t offset, int whence)
   if(whence == AVSEEK_SIZE)
     return fa_fsize(fh);
 
-  return fa_seek(fh, offset, whence & ~AVSEEK_FORCE);
+  int lazy = !(whence & AVSEEK_FORCE);
+  return fa_seek4(fh, offset, whence & ~AVSEEK_FORCE, lazy);
 }
 
 

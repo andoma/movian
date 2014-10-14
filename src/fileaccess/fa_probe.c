@@ -439,7 +439,7 @@ fa_probe_iso(metadata_t *md, fa_handle_t *fh)
 {
   uint8_t pb[128];
 
-  if(fa_seek(fh, 0x8000, SEEK_SET) != 0x8000)
+  if(fa_seek_lazy(fh, 0x8000, SEEK_SET) != 0x8000)
     return -1;
 
   if(fa_read(fh, pb, sizeof(pb)) != sizeof(pb))

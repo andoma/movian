@@ -118,7 +118,7 @@ inflate_read(fa_handle_t *handle, void *buf, size_t size)
 
       inflateInit2(&fi->fi_zstream, -MAX_WBITS);
 
-      fi->fi_src_fap->fap_seek(fi->fi_src_handle, 0, SEEK_SET);
+      fi->fi_src_fap->fap_seek(fi->fi_src_handle, 0, SEEK_SET, 0);
     }
 
     n = fi->fi_pos - fi->fi_bufstart;  // Offset in decompressed buffer
@@ -179,7 +179,7 @@ inflate_read(fa_handle_t *handle, void *buf, size_t size)
  * Seek in file
  */
 static int64_t
-inflate_seek(fa_handle_t *handle, int64_t pos, int whence)
+inflate_seek(fa_handle_t *handle, int64_t pos, int whence, int lazy)
 {
   fa_inflator_t *fi = (fa_inflator_t *)handle;
   int64_t np;

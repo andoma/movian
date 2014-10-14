@@ -71,7 +71,7 @@ aes_close(fa_handle_t *h)
  *
  */
 static int64_t
-aescbc_seek(fa_handle_t *handle, int64_t pos, int whence)
+aescbc_seek(fa_handle_t *handle, int64_t pos, int whence, int lazy)
 {
   TRACE(TRACE_ERROR, "AES", "Seeking in CBC not possible");
   return -1;
@@ -146,23 +146,12 @@ aescbc_read(fa_handle_t *handle, void *buf, size_t size)
 /**
  *
  */
-static int
-aescbc_seek_is_fast(fa_handle_t *handle)
-{
-  return 0;
-}
-
-
-/**
- *
- */
 static fa_protocol_t fa_protocol_aescbc = {
   .fap_name  = "aescbc",
   .fap_close = aes_close,
   .fap_read  = aescbc_read,
   .fap_seek  = aescbc_seek,
   .fap_fsize = aescbc_fsize,
-  .fap_seek_is_fast = aescbc_seek_is_fast,
 };
 
 

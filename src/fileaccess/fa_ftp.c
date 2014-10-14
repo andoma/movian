@@ -679,7 +679,7 @@ ftp_read(fa_handle_t *fh, void *buf, size_t size0)
  * Seek in file. Same semantics as POSIX lseek(2)
  */
 static int64_t
-ftp_seek(fa_handle_t *fh, int64_t pos, int whence)
+ftp_seek(fa_handle_t *fh, int64_t pos, int whence, int lazy)
 {
   ftp_file_t *ff = (ftp_file_t *)fh;
   int64_t np;

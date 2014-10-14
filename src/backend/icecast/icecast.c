@@ -706,7 +706,7 @@ icymeta_close(fa_handle_t *h)
  *
  */
 static int64_t
-icymeta_seek(fa_handle_t *handle, int64_t pos, int whence)
+icymeta_seek(fa_handle_t *handle, int64_t pos, int whence, int lazy)
 {
   return -1;
 }
@@ -816,23 +816,12 @@ icymeta_read(fa_handle_t *handle, void *buf, size_t size)
 /**
  *
  */
-static int
-icymeta_seek_is_fast(fa_handle_t *handle)
-{
-  return 0;
-}
-
-
-/**
- *
- */
 static fa_protocol_t fa_protocol_icymeta = {
   .fap_name  = "icymeta",
   .fap_close = icymeta_close,
   .fap_read  = icymeta_read,
   .fap_seek  = icymeta_seek,
   .fap_fsize = icymeta_fsize,
-  .fap_seek_is_fast = icymeta_seek_is_fast,
 };
 
 

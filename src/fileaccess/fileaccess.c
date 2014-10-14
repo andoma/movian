@@ -307,18 +307,6 @@ fa_close(void *fh_)
  *
  */
 int
-fa_seek_is_fast(void *fh_)
-{
-  fa_handle_t *fh = fh_;
-  if(fh->fh_proto->fap_seek_is_fast != NULL)
-    return fh->fh_proto->fap_seek_is_fast(fh);
-  return 1;
-}
-
-/**
- *
- */
-int
 fa_read(void *fh_, void *buf, size_t size)
 {
   fa_handle_t *fh = fh_;
@@ -365,7 +353,7 @@ fa_write(void *fh_, const void *buf, size_t size)
  *
  */
 int64_t
-fa_seek(void *fh_, int64_t pos, int whence)
+fa_seek4(void *fh_, int64_t pos, int whence, int lazy)
 {
   fa_handle_t *fh = fh_;
 #ifdef FA_DUMP
@@ -374,7 +362,7 @@ fa_seek(void *fh_, int64_t pos, int whence)
     lseek(fh->fh_dump_fd, pos, whence);
   }
 #endif
-  return fh->fh_proto->fap_seek(fh, pos, whence);
+  return fh->fh_proto->fap_seek(fh, pos, whence, lazy);
 }
 
 /**

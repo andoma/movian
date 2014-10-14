@@ -2608,7 +2608,7 @@ smb_read(fa_handle_t *fh, void *buf, size_t size)
  *
  */
 static int64_t
-smb_seek(fa_handle_t *fh, int64_t pos, int whence)
+smb_seek(fa_handle_t *fh, int64_t pos, int whence, int lazy)
 {
   smb_file_t *sf = (smb_file_t *)fh;
   int64_t np;

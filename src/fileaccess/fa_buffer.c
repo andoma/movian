@@ -285,11 +285,12 @@ fab_close(fa_handle_t *handle)
  *
  */
 static int64_t
-fab_seek(fa_handle_t *handle, int64_t pos, int whence)
+fab_seek(fa_handle_t *handle, int64_t pos, int whence, int lazy)
 {
   buffered_file_t *bf = (buffered_file_t *)handle;
   fa_handle_t *src = bf->bf_src;
   int64_t np;
+
 
   switch(whence) {
   case SEEK_SET:
@@ -301,20 +302,25 @@ fab_seek(fa_handle_t *handle, int64_t pos, int whence)
     break;
 
   case SEEK_END:
-    if(bf->bf_size == -1) {
-      bf->bf_size = src->fh_proto->fap_fsize(src);
-      if(bf->bf_size == -1)
-	return -1;
-    }
-    np = bf->bf_size + pos;
+    np = src->fh_proto->fap_seek(src, pos, whence, lazy);
     break;
 
   default:
     return -1;
   }
 
-  if(np < 0) {
+  if(np < 0)
     return -1;
+
+  int mpos;
+  int cs = resolve_zone(bf, np, 1, &mpos);
+
+  if(cs == -1) {
+    // If seeked to position is not mapped in our buffers, seek in
+    // source to check if it's possible to reach position at all.
+
+    if(src->fh_proto->fap_seek(src, np, SEEK_SET, lazy) != np)
+      return -1;
   }
 
   bf->bf_fpos = np;
@@ -414,7 +420,7 @@ fab_read(fa_handle_t *handle, void *buf, size_t size)
     int rreq = need_to_fill(bf, bf->bf_fpos, size);
     if(rreq >= bf->bf_min_request) {
 
-      if(src->fh_proto->fap_seek(src, bf->bf_fpos, SEEK_SET) != bf->bf_fpos)
+      if(src->fh_proto->fap_seek(src, bf->bf_fpos, SEEK_SET, 0) != bf->bf_fpos)
 	return -1;
 
       int r = src->fh_proto->fap_read(src, buf, rreq);
@@ -437,7 +443,7 @@ fab_read(fa_handle_t *handle, void *buf, size_t size)
     
     erase_zone(bf, bf->bf_mem_ptr, bf->bf_min_request);
 
-    if(src->fh_proto->fap_seek(src, bf->bf_fpos, SEEK_SET) != bf->bf_fpos)
+    if(src->fh_proto->fap_seek(src, bf->bf_fpos, SEEK_SET, 0) != bf->bf_fpos)
       return -1;
 
     int r = src->fh_proto->fap_read(src, bf->bf_mem + bf->bf_mem_ptr,
@@ -513,20 +519,6 @@ fab_read(fa_handle_t *handle, void *buf, size_t size)
 /**
  *
  */
-static int 
-fab_seek_is_fast(fa_handle_t *handle)
-{
-  buffered_file_t *bf = (buffered_file_t *)handle;
-  fa_handle_t *fh = bf->bf_src;
-  if(fh->fh_proto->fap_seek_is_fast != NULL)
-    return fh->fh_proto->fap_seek_is_fast(fh);
-  return 1;
-}
-
-
-/**
- *
- */
 static void
 fab_set_read_timeout(fa_handle_t *handle, int ms)
 {
@@ -546,7 +538,6 @@ static fa_protocol_t fa_protocol_buffered = {
   .fap_read  = fab_read,
   .fap_seek  = fab_seek,
   .fap_fsize = fab_fsize,
-  .fap_seek_is_fast = fab_seek_is_fast,
   .fap_set_read_timeout = fab_set_read_timeout,
 };
 

@@ -214,10 +214,16 @@ void fa_close(void *fh);
 int fa_read(void *fh, void *buf, size_t size);
 void fa_deadline(void *fh_, int deadline);
 int fa_write(void *fh, const void *buf, size_t size);
-int64_t fa_seek(void *fh, int64_t pos, int whence);
+
+int64_t fa_seek4(void *fh, int64_t pos, int whence, int lazy);
+
+#define fa_seek(fh, pos, whence) fa_seek4(fh, pos, whence, 0)
+
+#define fa_seek_lazy(fh, pos, whence) fa_seek4(fh, pos, whence, 1)
+
 int64_t fa_fsize(void *fh);
 int fa_ftruncate(void *fh, uint64_t newsize);
-int fa_seek_is_fast(void *fh);
+
 int fa_stat(const char *url, struct fa_stat *buf, char *errbuf, size_t errsize);
 int fa_findfile(const char *path, const char *file, 
 		char *fullpath, size_t fullpathlen);

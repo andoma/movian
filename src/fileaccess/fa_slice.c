@@ -59,7 +59,7 @@ slice_close(fa_handle_t *h)
  *
  */
 static int64_t
-slice_seek(fa_handle_t *handle, int64_t pos, int whence)
+slice_seek(fa_handle_t *handle, int64_t pos, int whence, int lazy)
 {
   slice_t *s = (slice_t *)handle;
   int64_t np;
@@ -130,27 +130,12 @@ slice_read(fa_handle_t *handle, void *buf, size_t size)
 /**
  *
  */
-static int
-slice_seek_is_fast(fa_handle_t *handle)
-{
-  slice_t *s = (slice_t *)handle;
-  fa_handle_t *fh = s->s_src;
-  if(fh->fh_proto->fap_seek_is_fast != NULL)
-    return fh->fh_proto->fap_seek_is_fast(fh);
-  return 1;
-}
-
-
-/**
- *
- */
 static fa_protocol_t fa_protocol_slice = {
   .fap_name  = "slice",
   .fap_close = slice_close,
   .fap_read  = slice_read,
   .fap_seek  = slice_seek,
   .fap_fsize = slice_fsize,
-  .fap_seek_is_fast = slice_seek_is_fast,
 };
 
 

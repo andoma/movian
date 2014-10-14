@@ -562,8 +562,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
 
 #if ENABLE_METADATA
-  const int seek_is_fast = fa_seek_is_fast(fh);
-  if(seek_is_fast && va.mimetype == NULL) {
+  if(va.mimetype == NULL) {
     if(fa_probe_iso(NULL, fh) == 0) {
       fa_close(fh);
     isdvd:
@@ -625,9 +624,8 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
 		     const video_args_t *va0)
 {
   video_args_t va = *va0;
-  const int seek_is_fast = fa_seek_is_fast(fh);
-  
-  if(seek_is_fast && !(va.flags & BACKEND_VIDEO_NO_FILE_HASH)) {
+
+  if(!(va.flags & BACKEND_VIDEO_NO_FILE_HASH)) {
     compute_hash(fh, &va);
     if(!va.hash_valid)
       TRACE(TRACE_DEBUG, "Video", "Unable to compute opensub hash");
@@ -803,7 +801,7 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
   mp->mp_start_time = fctx->start_time;
 
   // Start it
-  mp_configure(mp, (seek_is_fast ? MP_CAN_SEEK : 0) | MP_CAN_PAUSE,
+  mp_configure(mp, MP_CAN_SEEK | MP_CAN_PAUSE,
 	       MP_BUFFER_DEEP, fctx->duration, "video");
 
   if(!(va.flags & BACKEND_VIDEO_NO_AUDIO))
@@ -951,7 +949,7 @@ compute_hash(fa_handle_t *fh, video_args_t *va)
 #endif
   }
 
-  if(fa_seek(fh, size - 65536, SEEK_SET) == -1 ||
+  if(fa_seek_lazy(fh, -65536, SEEK_END) == -1 ||
      fa_read(fh, mem, 65536) != 65536) {
     free(mem);
     md5_final(md5ctx, va->subdbhash); // need to free()

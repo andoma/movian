@@ -59,10 +59,10 @@ cmp_close(fa_handle_t *h)
  *
  */
 static int64_t
-cmp_seek(fa_handle_t *handle, int64_t pos, int whence)
+cmp_seek(fa_handle_t *handle, int64_t pos, int whence, int lazy)
 {
   cmp_t *s = (cmp_t *)handle;
-  int64_t r1 = fa_seek(s->s_src, pos, whence);
+  int64_t r1 = fa_seek4(s->s_src, pos, whence, lazy);
   int64_t r2 = lseek(s->s_fd, pos, whence);
 
   if(r1 != r2) {
@@ -145,24 +145,12 @@ cmp_read(fa_handle_t *handle, void *buf, size_t size)
 /**
  *
  */
-static int
-cmp_seek_is_fast(fa_handle_t *handle)
-{
-  cmp_t *s = (cmp_t *)handle;
-  return fa_seek_is_fast(s->s_src);
-}
-
-
-/**
- *
- */
 static fa_protocol_t fa_protocol_cmp = {
   .fap_name  = "cmp",
   .fap_close = cmp_close,
   .fap_read  = cmp_read,
   .fap_seek  = cmp_seek,
   .fap_fsize = cmp_fsize,
-  .fap_seek_is_fast = cmp_seek_is_fast,
 };
 
 

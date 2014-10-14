@@ -169,7 +169,7 @@ ntfs_write(fa_handle_t *fh0, const void *buf, size_t size0)
  * Seek in file. Same semantics as POSIX lseek(2)
  */
 static int64_t
-ntfs_seek(fa_handle_t *fh0, int64_t pos, int whence)
+ntfs_seek(fa_handle_t *fh0, int64_t pos, int whence, int lazy)
 {
   fs_handle_t *fh = (fs_handle_t *)fh0;
   return ps3ntfs_seek64(fh->fd, pos, whence);

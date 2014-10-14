@@ -69,7 +69,7 @@ static uint8_t nonce[20];
  * continue to read and drop the data if the seek offset is below a
  * certain limit. SEEK_BY_READ_THRES is this limit.
  */
-#define SEEK_BY_READ_THRES 32768
+#define SEEK_BY_READ_THRES (256*1024)
 
 
 /**
@@ -1830,17 +1830,6 @@ http_close(fa_handle_t *handle)
 
 
 /**
- *
- */
-static int
-http_seek_is_fast(fa_handle_t *handle)
-{
-  http_file_t *hf = (http_file_t *)handle;
-  return !hf->hf_no_ranges;
-}
-
-
-/**
  * Read from file
  */
 static int
@@ -2077,7 +2066,7 @@ http_read(fa_handle_t *handle, void *buf, const size_t size)
  * Seek in file
  */
 static int64_t
-http_seek(fa_handle_t *handle, int64_t pos, int whence)
+http_seek(fa_handle_t *handle, int64_t pos, int whence, int lazy)
 {
   http_file_t *hf = (http_file_t *)handle;
   http_connection_t *hc = hf->hf_connection;
@@ -2118,7 +2107,7 @@ http_seek(fa_handle_t *handle, int64_t pos, int whence)
       int64_t d = np - hf->hf_pos;
       // We allow seek by reading if delta offset is small enough
 
-      if(d > 0 && (d < SEEK_BY_READ_THRES || hf->hf_no_ranges) &&
+      if(d > 0 && (d < SEEK_BY_READ_THRES || (hf->hf_no_ranges && !lazy)) &&
 	 d < hf->hf_rsize) {
 
 	if(!hf_drain_bytes(hf, d)) {
@@ -2126,10 +2115,19 @@ http_seek(fa_handle_t *handle, int64_t pos, int whence)
 	  hf->hf_rsize -= d;
 	  return np;
 	}
+        http_detach(hf, 0, "Disconnected while draining");
+        hf->hf_pos = np;
+        return np;
       }
+
+      if(lazy && hf->hf_no_ranges)
+        return -1;
+
       // Still got stale data on the socket, disconnect
       http_detach(hf, 0, "Seeking during streaming");
     }
+    if(lazy && hf->hf_no_ranges)
+      return -1;
   }
   hf->hf_pos = np;
 
@@ -2356,7 +2354,6 @@ static fa_protocol_t fa_protocol_http = {
   .fap_stat  = http_stat,
   .fap_load = http_load,
   .fap_get_last_component = http_get_last_component,
-  .fap_seek_is_fast = http_seek_is_fast,
   .fap_set_read_timeout = http_set_read_timeout,
 };
 
@@ -2377,7 +2374,6 @@ static fa_protocol_t fa_protocol_https = {
   .fap_stat  = http_stat,
   .fap_load = http_load,
   .fap_get_last_component = http_get_last_component,
-  .fap_seek_is_fast = http_seek_is_fast,
   .fap_set_read_timeout = http_set_read_timeout,
 };
 
@@ -2696,7 +2692,6 @@ static fa_protocol_t fa_protocol_webdav = {
   .fap_stat  = dav_stat,
   .fap_load = http_load,
   .fap_get_last_component = http_get_last_component,
-  .fap_seek_is_fast = http_seek_is_fast,
   .fap_set_read_timeout = http_set_read_timeout,
 };
 FAP_REGISTER(webdav);
@@ -2716,7 +2711,6 @@ static fa_protocol_t fa_protocol_webdavs = {
   .fap_stat  = dav_stat,
   .fap_load = http_load,
   .fap_get_last_component = http_get_last_component,
-  .fap_seek_is_fast = http_seek_is_fast,
   .fap_set_read_timeout = http_set_read_timeout,
 };
 FAP_REGISTER(webdavs);

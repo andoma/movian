@@ -1642,7 +1642,7 @@ htsp_file_update_meta(htsp_file_t *hf)
  *
  */
 static int64_t
-htsp_file_seek(fa_handle_t *fh, int64_t pos, int whence)
+htsp_file_seek(fa_handle_t *fh, int64_t pos, int whence, int lazy)
 {
   htsp_file_t *hf = (htsp_file_t *)fh;
   int64_t np;

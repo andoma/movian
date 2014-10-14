@@ -144,7 +144,7 @@ b_read(fa_handle_t *fh0, void *buf, size_t size)
  * Seek in file
  */
 static int64_t
-b_seek(fa_handle_t *handle, int64_t pos, int whence)
+b_seek(fa_handle_t *handle, int64_t pos, int whence, int lazy)
 {
   fa_bundle_fh_t *fh = (fa_bundle_fh_t *)handle;
   int np;

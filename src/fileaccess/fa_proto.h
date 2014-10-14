@@ -81,7 +81,7 @@ typedef struct fa_protocol {
   /**
    * Seek in file. Same semantics as POSIX lseek(2)
    */
-  int64_t (*fap_seek)(fa_handle_t *fh, int64_t pos, int whence);
+  int64_t (*fap_seek)(fa_handle_t *fh, int64_t pos, int whence, int lazy);
 
   /**
    * Return size of file
@@ -176,11 +176,6 @@ typedef struct fa_protocol {
    */
   void (*fap_get_last_component)(struct fa_protocol *fap, const char *url,
 				 char *dst, size_t dstlen);
-
-  /**
-   * Return true if the given file can seek in a good manner
-   */
-  int (*fap_seek_is_fast)(fa_handle_t *fh);
 
   /**
    * Return all parts that relates to the given URL

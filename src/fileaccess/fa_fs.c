@@ -308,7 +308,7 @@ fs_write(fa_handle_t *fh0, const void *buf, size_t size)
  * Seek in file
  */
 static int64_t
-fs_seek(fa_handle_t *fh0, int64_t pos, int whence)
+fs_seek(fa_handle_t *fh0, int64_t pos, int whence, int lazy)
 {
   fs_handle_t *fh = (fs_handle_t *)fh0;
 
