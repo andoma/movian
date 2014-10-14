@@ -28,7 +28,7 @@
 #endif
 
 #include "showtime.h"
-#include "audio.h"
+#include "audio2/audio.h"
 #include "media/media.h"
 #include "notifications.h"
 
