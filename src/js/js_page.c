@@ -1543,7 +1543,6 @@ js_backend_open(prop_t *page, const char *url, int sync)
   JS_BeginRequest(cx);
   jm = js_model_create(cx, jsr->jsr_openfunc, sync);
   JS_EndRequest(cx);
-  JS_DestroyContext(cx);
 
   for(i = 1; i < 8; i++)
     if(matches[i].rm_so != -1)
@@ -1568,6 +1567,7 @@ js_backend_open(prop_t *page, const char *url, int sync)
     prop_set_int(jm->jm_loading, 1);
   }
   js_open(jm);
+  JS_DestroyContext(cx);
   return 0;
 }
 
