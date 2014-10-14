@@ -876,7 +876,9 @@ htsp_worker_thread(void *aux)
 	htsp_queueStatus(hc, m);
       else if(!strcmp(method, "signalStatus"))
 	htsp_signalStatus(hc, m);
-      else if(!strcmp(method, "initialSyncCompleted")) {
+      else if(!strcmp(method, "timeshiftStatus")) {
+	/* nop for us */
+      } else if(!strcmp(method, "initialSyncCompleted")) {
 	/* nop for us */
       } else
 	TRACE(TRACE_INFO, "HTSP", "Unknown async method '%s' received",
