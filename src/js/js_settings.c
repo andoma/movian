@@ -161,7 +161,9 @@ jsg_destroy(JSContext *cx, js_setting_group_t *jsg)
   while((jss = LIST_FIRST(&jsg->jsg_settings)) != NULL)
     jss_destroy(cx, jss);
 
-  prop_unparent(jsg->jsg_root);
+  if(jsg->jsg_root != NULL)
+    prop_unparent(jsg->jsg_root);
+
   LIST_REMOVE(jsg, jsg_link);
   JS_RemoveRoot(cx, &jsg->jsg_val);
   jsg_release(jsg);

@@ -60,6 +60,7 @@ typedef struct js_route {
   js_plugin_t *jsr_jsp;
   LIST_ENTRY(js_route) jsr_global_link;
   LIST_ENTRY(js_route) jsr_plugin_link;
+  atomic_t jsr_refcount;
   char *jsr_pattern;
   hts_regex_t jsr_regex;
   jsval jsr_openfunc;
@@ -74,6 +75,7 @@ typedef struct js_searcher {
   js_plugin_t *jss_jsp;
   LIST_ENTRY(js_searcher) jss_global_link;
   LIST_ENTRY(js_searcher) jss_plugin_link;
+  atomic_t jss_refcount;
   jsval jss_openfunc;
   char *jss_title;
   char *jss_icon;
@@ -149,6 +151,62 @@ static JSObject *make_model_object(JSContext *cx, js_model_t *jm,
 				   jsval *root);
 
 static void install_nodesub(js_model_t *jm);
+
+
+
+
+/**
+ *
+ */
+static void
+jsr_release(JSContext *cx, js_route_t *jsr)
+{
+  if(atomic_dec(&jsr->jsr_refcount))
+    return;
+
+  printf("%s flushed\n", jsr->jsr_pattern);
+  JS_RemoveRoot(cx, &jsr->jsr_openfunc);
+  hts_regfree(&jsr->jsr_regex);
+  free(jsr->jsr_pattern);
+  free(jsr);
+}
+
+
+/**
+ *
+ */
+static void
+jss_release(JSContext *cx, js_searcher_t *jss)
+{
+  if(atomic_dec(&jss->jss_refcount))
+    return;
+
+  JS_RemoveRoot(cx, &jss->jss_openfunc);
+  printf("%s flushed\n", jss->jss_title);
+  free(jss->jss_title);
+  free(jss->jss_icon);
+  free(jss);
+}
+
+
+/**
+ *
+ */
+static void
+jsr_retain(js_route_t *jsr)
+{
+  atomic_inc(&jsr->jsr_refcount);
+}
+
+
+/**
+ *
+ */
+static void
+jss_retain(js_searcher_t *jss)
+{
+  atomic_inc(&jss->jss_refcount);
+}
 
 
 /**
@@ -1537,18 +1595,24 @@ js_backend_open(prop_t *page, const char *url, int sync)
     return 1;
   }
 
+
+  jsr_retain(jsr);
+  hts_mutex_unlock(&js_page_mutex);
+
   usage_inc_plugin_counter(jsr->jsr_jsp->jsp_id, "openuri", 1);
 
   JSContext *cx = js_newctx(NULL);
   JS_BeginRequest(cx);
   jm = js_model_create(cx, jsr->jsr_openfunc, sync);
+  jsr_release(cx, jsr);
   JS_EndRequest(cx);
+  JS_DestroyContext(cx);
 
   for(i = 1; i < 8; i++)
     if(matches[i].rm_so != -1)
-      strvec_addpn(&jm->jm_args, url + matches[i].rm_so, 
+      strvec_addpn(&jm->jm_args, url + matches[i].rm_so,
 		   matches[i].rm_eo - matches[i].rm_so);
-  
+
   model = prop_create_r(page, "model");
 
   init_model_props(jm, model);
@@ -1561,13 +1625,13 @@ js_backend_open(prop_t *page, const char *url, int sync)
 
   prop_ref_dec(model);
 
-  hts_mutex_unlock(&js_page_mutex);
   if(!sync) {
     jm->jm_pc = prop_courier_create_waitable();
     prop_set_int(jm->jm_loading, 1);
   }
   js_open(jm);
-  JS_DestroyContext(cx);
+
+
   return 0;
 }
 
@@ -1582,14 +1646,31 @@ js_backend_search(struct prop *model, const char *query, prop_t *loading)
   prop_t *parent = prop_create_r(model, "nodes");
   js_model_t *jm;
 
-  JSContext *cx = js_newctx(NULL);
-  JS_BeginRequest(cx);
+  int nsearchers = 0;
+  js_searcher_t **jssvec;
 
   hts_mutex_lock(&js_page_mutex);
 
+  LIST_FOREACH(jss, &js_searchers, jss_global_link)
+    if(jss->jss_jsp->jsp_enable_search)
+      nsearchers++;
+
+  jssvec = alloca(nsearchers * sizeof(js_searcher_t *));
+  int i = 0;
   LIST_FOREACH(jss, &js_searchers, jss_global_link) {
-    if(!jss->jss_jsp->jsp_enable_search)
-      continue;
+    if(jss->jss_jsp->jsp_enable_search) {
+      jssvec[i++] = jss;
+      jss_retain(jss);
+    }
+  }
+
+  hts_mutex_unlock(&js_page_mutex);
+
+  JSContext *cx = js_newctx(NULL);
+  JS_BeginRequest(cx);
+
+  for(int i = 0; i < nsearchers; i++) {
+    jss = jssvec[i];
 
     jm = js_model_create(cx, jss->jss_openfunc, 0);
     strvec_addp(&jm->jm_args, query);
@@ -1601,8 +1682,9 @@ js_backend_search(struct prop *model, const char *query, prop_t *loading)
 			jss->jss_title, jss->jss_icon);
 
     model_launch(jm);
+    jss_release(cx, jss);
   }
-  hts_mutex_unlock(&js_page_mutex);
+
   JS_EndRequest(cx);
   JS_DestroyContext(cx);
   prop_ref_dec(parent);
@@ -1652,6 +1734,7 @@ js_addURI(JSContext *cx, JSObject *obj, uintN argc,
     }
   
   jsr = calloc(1, sizeof(js_route_t));
+  atomic_set(&jsr->jsr_refcount, 1);
   jsr->jsr_jsp = jsp;
   if(hts_regcomp(&jsr->jsr_regex, str)) {
     free(jsr);
@@ -1665,11 +1748,11 @@ js_addURI(JSContext *cx, JSObject *obj, uintN argc,
   jsr->jsr_prio = strcspn(str, "()[].*?+$") ?: INT32_MAX;
 
 
+  jsr->jsr_openfunc = argv[1];
+  JS_AddNamedRoot(cx, &jsr->jsr_openfunc, "routeduri");
   hts_mutex_lock(&js_page_mutex);
   LIST_INSERT_SORTED(&js_routes, jsr, jsr_global_link, jsr_cmp, js_route_t);
   LIST_INSERT_HEAD(&jsp->jsp_routes, jsr, jsr_plugin_link);
-  jsr->jsr_openfunc = argv[1];
-  JS_AddNamedRoot(cx, &jsr->jsr_openfunc, "routeduri");
   hts_mutex_unlock(&js_page_mutex);
 
   *rval = JSVAL_VOID;
@@ -1693,11 +1776,9 @@ js_addSearcher(JSContext *cx, JSObject *obj, uintN argc,
   }
   
   jss = calloc(1, sizeof(js_searcher_t));
+  atomic_set(&jss->jss_refcount, 1);
   jss->jss_jsp = jsp;
 
-  hts_mutex_lock(&js_page_mutex);
-  LIST_INSERT_HEAD(&js_searchers, jss, jss_global_link);
-  LIST_INSERT_HEAD(&jsp->jsp_searchers, jss, jss_plugin_link);
 
   jss->jss_title = strdup(JS_GetStringBytes(JS_ValueToString(cx, argv[0])));
   if(JSVAL_IS_STRING(argv[1]))
@@ -1705,44 +1786,14 @@ js_addSearcher(JSContext *cx, JSObject *obj, uintN argc,
 
   jss->jss_openfunc = argv[2];
   JS_AddNamedRoot(cx, &jss->jss_openfunc, "searcher");
+
+  hts_mutex_lock(&js_page_mutex);
+  LIST_INSERT_HEAD(&js_searchers, jss, jss_global_link);
+  LIST_INSERT_HEAD(&jsp->jsp_searchers, jss, jss_plugin_link);
   hts_mutex_unlock(&js_page_mutex);
 
   *rval = JSVAL_VOID;
   return JS_TRUE;
-}
-
-
-/**
- *
- */
-static void
-js_route_delete(JSContext *cx, js_route_t *jsr)
-{
-  JS_RemoveRoot(cx, &jsr->jsr_openfunc);
-
-  LIST_REMOVE(jsr, jsr_global_link);
-  LIST_REMOVE(jsr, jsr_plugin_link);
-
-  hts_regfree(&jsr->jsr_regex);
-
-  free(jsr->jsr_pattern);
-  free(jsr);
-}
-
-
-/**
- *
- */
-static void
-js_searcher_delete(JSContext *cx, js_searcher_t *jss)
-{
-  JS_RemoveRoot(cx, &jss->jss_openfunc);
-
-  LIST_REMOVE(jss, jss_global_link);
-  LIST_REMOVE(jss, jss_plugin_link);
-  free(jss->jss_title);
-  free(jss->jss_icon);
-  free(jss);
 }
 
 
@@ -1755,15 +1806,42 @@ js_page_flush_from_plugin(JSContext *cx, js_plugin_t *jsp)
   js_route_t *jsr;
   js_searcher_t *jss;
 
+  struct js_route_list tmp_jsr_list;
+  struct js_searcher_list tmp_jss_list;
+
+  LIST_INIT(&tmp_jsr_list);
+  LIST_INIT(&tmp_jss_list);
+
+  // Transfer plugins to local lists, then we can delete them without
+  // having anything locked
+
   hts_mutex_lock(&js_page_mutex);
 
-  while((jsr = LIST_FIRST(&jsp->jsp_routes)) != NULL)
-    js_route_delete(cx, jsr);
+  while((jsr = LIST_FIRST(&jsp->jsp_routes)) != NULL) {
+    LIST_REMOVE(jsr, jsr_global_link);
+    LIST_REMOVE(jsr, jsr_plugin_link);
+    LIST_INSERT_HEAD(&tmp_jsr_list, jsr, jsr_global_link);
+  }
 
-  while((jss = LIST_FIRST(&jsp->jsp_searchers)) != NULL)
-    js_searcher_delete(cx, jss);
-
+  while((jss = LIST_FIRST(&jsp->jsp_searchers)) != NULL) {
+    LIST_REMOVE(jss, jss_global_link);
+    LIST_REMOVE(jss, jss_plugin_link);
+    LIST_INSERT_HEAD(&tmp_jss_list, jss, jss_global_link);
+  }
   hts_mutex_unlock(&js_page_mutex);
+
+
+
+  while((jsr = LIST_FIRST(&tmp_jsr_list)) != NULL) {
+    LIST_REMOVE(jsr, jsr_global_link);
+    jsr_release(cx, jsr);
+  }
+
+
+  while((jss = LIST_FIRST(&tmp_jss_list)) != NULL) {
+    LIST_REMOVE(jss, jss_global_link);
+    jss_release(cx, jss);
+  }
 }
 
 
