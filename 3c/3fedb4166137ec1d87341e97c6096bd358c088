@@ -1,0 +1,5 @@
+If a plugin was opened before all plugins had loaded Showtime could hang
+
+This is now fixed
+
+Fixes #2120
