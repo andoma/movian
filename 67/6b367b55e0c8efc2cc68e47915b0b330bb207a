@@ -1,0 +1,3 @@
+Fix broken AV sync on RPI when streaming from Tvheadend
+
+Fixes #2021
