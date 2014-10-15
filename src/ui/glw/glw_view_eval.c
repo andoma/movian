@@ -3237,8 +3237,7 @@ glwf_playTrackFromSource(glw_view_eval_context_t *ec, struct token *self,
   }
 
   r = eval_alloc(self, ec, TOKEN_EVENT);
-  event_t *ev = event_create_playtrack(a->t_prop, b->t_prop, dontskip);
-  r->t_gem = glw_event_map_external_create(ev);
+  r->t_gem = glw_event_map_playTrack_create(a->t_prop, b->t_prop, dontskip);
   eval_push(ec, r);
   return 0;
 }
@@ -3257,8 +3256,8 @@ glwf_enqueueTrack(glw_view_eval_context_t *ec, struct token *self,
     return -1;
 
   r = eval_alloc(self, ec, TOKEN_EVENT);
-  event_t *ev = event_create_playtrack(a->t_prop, NULL, 0);
-  r->t_gem = glw_event_map_external_create(ev);
+
+  r->t_gem = glw_event_map_playTrack_create(a->t_prop, NULL, 0);
   eval_push(ec, r);
   return 0;
 }

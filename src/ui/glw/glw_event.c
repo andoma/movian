@@ -75,6 +75,65 @@ glw_event_map_external_create(event_t *e)
 /**
  *
  */
+typedef struct glw_event_playTrack {
+  glw_event_map_t map;
+
+  prop_t *track;
+  prop_t *source;
+  int mode;
+
+} glw_event_playTrack_t;
+
+
+/**
+ *
+ */
+static void
+glw_event_map_playTrack_dtor(glw_root_t *gr, glw_event_map_t *gem)
+{
+  glw_event_playTrack_t *g = (glw_event_playTrack_t *)gem;
+
+  prop_ref_dec(g->track);
+  if(g->source != NULL)
+    prop_ref_dec(g->source);
+  free(g);
+}
+
+/**
+ *
+ */
+static void
+glw_event_map_playTrack_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
+{
+  glw_event_playTrack_t *g = (glw_event_playTrack_t *)gem;
+  event_t *e = event_create_playtrack(g->track, g->source, g->mode);
+
+  e->e_mapped = 1;
+  glw_event_to_widget(w, e);
+  event_release(e);
+}
+
+
+/**
+ *
+ */
+glw_event_map_t *
+glw_event_map_playTrack_create(prop_t *track, prop_t *source, int mode)
+{
+  glw_event_playTrack_t *g = malloc(sizeof(glw_event_playTrack_t));
+
+  g->track  = prop_ref_inc(track);
+  g->source = prop_ref_inc(source);
+  g->mode   = mode;
+
+  g->map.gem_dtor = glw_event_map_playTrack_dtor;
+  g->map.gem_fire = glw_event_map_playTrack_fire;
+  return &g->map;
+}
+
+/**
+ *
+ */
 typedef struct glw_event_propref {
   glw_event_map_t map;
   prop_t *prop;

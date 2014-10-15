@@ -19,12 +19,12 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 
-#ifndef GLW_EVENT_H__
-#define GLW_EVENT_H__
+#pragma once
 
 #include "event.h"
 
-/** 
+
+/**
  *
  */
 typedef struct glw_event_map {
@@ -37,52 +37,30 @@ typedef struct glw_event_map {
 
 } glw_event_map_t;
 
+
 /**
  *
  */
 void glw_event_map_remove_by_action(glw_t *w, action_type_t action);
 
 
-/**
- *
- */
 void glw_event_map_add(glw_t *w, glw_event_map_t *gem);
 
-/**
- *
- */
 void glw_event_map_destroy(glw_event_map_t *gem);
 
-/**
- *
- */
 int glw_event_map_intercept(glw_t *w, struct event *e);
 
 
-/**
- *
- */
+glw_event_map_t *glw_event_map_playTrack_create(prop_t *track,
+                                                prop_t *source,
+                                                int mode);
 glw_event_map_t *glw_event_map_external_create(event_t *e);
 
-
-/**
- *
- */
 glw_event_map_t *glw_event_map_internal_create(const char *target,
 					       action_type_t event,
 					       int uc);
 
-
-/**
- *
- */
 glw_event_map_t *glw_event_map_deliverEvent_create(prop_t *target,
 						   rstr_t *action);
 
-
-/**
- *
- */
 glw_event_map_t *glw_event_map_propref_create(prop_t *prop, prop_t *target);
-
-#endif /* GLW_EVENT_H__ */
