@@ -164,7 +164,6 @@ jsr_release(JSContext *cx, js_route_t *jsr)
   if(atomic_dec(&jsr->jsr_refcount))
     return;
 
-  printf("%s flushed\n", jsr->jsr_pattern);
   JS_RemoveRoot(cx, &jsr->jsr_openfunc);
   hts_regfree(&jsr->jsr_regex);
   free(jsr->jsr_pattern);
@@ -182,7 +181,6 @@ jss_release(JSContext *cx, js_searcher_t *jss)
     return;
 
   JS_RemoveRoot(cx, &jss->jss_openfunc);
-  printf("%s flushed\n", jss->jss_title);
   free(jss->jss_title);
   free(jss->jss_icon);
   free(jss);
