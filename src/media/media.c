@@ -55,6 +55,9 @@ static prop_t *media_prop_current;
 
 static media_pipe_t *media_primary;
 
+static struct media_pipe_list media_pipelines;
+static int num_media_pipelines;
+
 void (*media_pipe_init_extra)(media_pipe_t *mp);
 void (*media_pipe_fini_extra)(media_pipe_t *mp);
 
@@ -108,6 +111,12 @@ mp_create(const char *name, int flags)
 			       POOL_ZERO_MEM);
 
   mp->mp_flags = flags;
+
+  hts_mutex_lock(&media_mutex);
+  LIST_INSERT_HEAD(&media_pipelines, mp, mp_global_link);
+  num_media_pipelines++;
+  hts_mutex_unlock(&media_mutex);
+
 
   TAILQ_INIT(&mp->mp_eq);
 
@@ -293,6 +302,11 @@ mp_reinit_streams(media_pipe_t *mp)
 void
 mp_destroy(media_pipe_t *mp)
 {
+  hts_mutex_lock(&media_mutex);
+  LIST_REMOVE(mp, mp_global_link);
+  num_media_pipelines--;
+  hts_mutex_unlock(&media_mutex);
+
   mp_unbecome_primary(mp);
 
   assert(mp->mp_sub_currenttime != NULL);
@@ -537,14 +551,36 @@ mp_set_current_time(media_pipe_t *mp, int64_t ts, int epoch, int64_t delta)
 void
 mp_set_playstatus_by_hold_locked(media_pipe_t *mp, const char *msg)
 {
-  int cmd = mp->mp_hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY;
+  int hold = !!mp->mp_hold_flags;
+
+  if(hold == mp->mp_hold_gate)
+    return;
+
+  mp->mp_hold_gate = hold;
+
+  int cmd = hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY;
+
   if(mp->mp_flags & MP_VIDEO)
     mp_send_cmd_locked(mp, &mp->mp_video, cmd);
+
   mp_send_cmd_locked(mp, &mp->mp_audio, cmd);
 
-  prop_set_string(mp->mp_prop_playstatus, mp->mp_hold ? "pause" : "play");
-  prop_set_string(mp->mp_prop_pausereason,
-		  mp->mp_hold ? (msg ?: "Paused by user") : NULL);
+  if(!hold)
+    prop_set_void(mp->mp_prop_pausereason);
+  else
+    prop_set_string(mp->mp_prop_pausereason, msg ?: "Paused by user");
+
+  prop_set_string(mp->mp_prop_playstatus, hold ? "pause" : "play");
+
+  event_t *e = event_create_int(EVENT_HOLD, hold);
+  TAILQ_INSERT_TAIL(&mp->mp_eq, e, e_link);
+  hts_cond_signal(&mp->mp_backpressure);
+
+  if(mp->mp_flags & MP_FLUSH_ON_HOLD)
+    mp_flush_locked(mp);
+
+  if(mp->mp_hold_changed != NULL)
+    mp->mp_hold_changed(mp);
 }
 
 
@@ -552,11 +588,24 @@ mp_set_playstatus_by_hold_locked(media_pipe_t *mp, const char *msg)
  *
  */
 void
-mp_set_playstatus_by_hold(media_pipe_t *mp, int hold, const char *msg)
+mp_hold(media_pipe_t *mp, int flag, const char *msg)
 {
   hts_mutex_lock(&mp->mp_mutex);
-  mp->mp_hold = hold;
+  mp->mp_hold_flags |= flag;
   mp_set_playstatus_by_hold_locked(mp, msg);
+  hts_mutex_unlock(&mp->mp_mutex);
+}
+
+
+/**
+ *
+ */
+void
+mp_unhold(media_pipe_t *mp, int flag)
+{
+  hts_mutex_lock(&mp->mp_mutex);
+  mp->mp_hold_flags &= ~flag;
+  mp_set_playstatus_by_hold_locked(mp, NULL);
   hts_mutex_unlock(&mp->mp_mutex);
 }
 
@@ -740,5 +789,38 @@ media_eventsink(void *opaque, prop_event_t event, ...)
 #if ENABLE_PLAYQUEUE
     playqueue_event_handler(e);
 #endif
+  }
+}
+
+
+/**
+ *
+ */
+void
+media_global_hold(int on, int flag)
+{
+  int i;
+  int count;
+  media_pipe_t *mp;
+
+  hts_mutex_lock(&media_mutex);
+  count = num_media_pipelines;
+  media_pipe_t **mpv = alloca(count * sizeof(media_pipe_t *));
+
+  i = 0;
+  LIST_FOREACH(mp, &media_pipelines, mp_global_link)
+    mpv[i++] = mp_retain(mp);
+
+  hts_mutex_unlock(&media_mutex);
+
+  for(i = 0; i < count; i++) {
+    mp = mpv[i];
+
+    if(on)
+      mp_hold(mp, flag, NULL);
+    else
+      mp_unhold(mp, flag);
+
+    mp_release(mp);
   }
 }

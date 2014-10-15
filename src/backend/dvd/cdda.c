@@ -413,8 +413,6 @@ playaudio(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
   mp_become_primary(mp);
   mq = &mp->mp_audio;
 
-  mp_set_playstatus_by_hold(mp, hold, NULL);
-
   while(1) {
 
     if(lsn > track_last) {

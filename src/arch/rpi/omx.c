@@ -716,7 +716,7 @@ omx_mp_seek_video_done(media_pipe_t *mp)
 static void
 omx_mp_hold_changed(media_pipe_t *mp)
 {
-  omx_clk_do(mp->mp_extra, mp->mp_hold ? OMX_CLK_PAUSE : OMX_CLK_PLAY, 0);
+  omx_clk_do(mp->mp_extra, mp->mp_hold_gate ? OMX_CLK_PAUSE : OMX_CLK_PLAY, 0);
 }
 
 

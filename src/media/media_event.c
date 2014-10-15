@@ -30,25 +30,6 @@
  *
  */
 static void
-update_hold(media_pipe_t *mp)
-{
-  event_t *e = event_create_int(EVENT_HOLD, mp->mp_hold);
-  TAILQ_INSERT_TAIL(&mp->mp_eq, e, e_link);
-  hts_cond_signal(&mp->mp_backpressure);
-
-  if(mp->mp_flags & MP_FLUSH_ON_HOLD)
-    mp_flush_locked(mp);
-
-  if(mp->mp_hold_changed != NULL)
-    mp->mp_hold_changed(mp);
-}
-
-
-
-/**
- *
- */
-static void
 update_epoch_in_queue(struct media_buf_queue *q, int epoch)
 {
   media_buf_t *mb;
@@ -280,18 +261,22 @@ mp_enqueue_event_locked(media_pipe_t *mp, event_t *e)
   if(event_is_action(e, ACTION_PLAYPAUSE ) ||
      event_is_action(e, ACTION_PLAY ) ||
      event_is_action(e, ACTION_PAUSE)) {
-    
-    mp->mp_hold = action_update_hold_by_event(mp->mp_hold, e);
+
+    if(action_update_hold_by_event(mp->mp_hold_flags & MP_HOLD_PAUSE, e)) {
+      mp->mp_hold_flags |= MP_HOLD_PAUSE;
+    } else {
+      mp->mp_hold_flags &= ~MP_HOLD_PAUSE;
+    }
+
     mp_set_playstatus_by_hold_locked(mp, NULL);
-    update_hold(mp);
 
   } else if(event_is_type(e, EVENT_INTERNAL_PAUSE)) {
 
-    mp->mp_hold = 1;
-
     const event_payload_t *ep = (const event_payload_t *)e;
+
+    mp->mp_hold_flags |= MP_HOLD_PAUSE;
     mp_set_playstatus_by_hold_locked(mp, ep->payload);
-    update_hold(mp);
+
 
   } else if(event_is_action(e, ACTION_SEEK_BACKWARD)) {
     mp_direct_seek(mp, mp->mp_seek_base -= 15000000);

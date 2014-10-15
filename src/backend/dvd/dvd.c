@@ -817,8 +817,6 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
   mp_configure(mp, MP_CAN_PAUSE | MP_CAN_EJECT,
 	       MP_BUFFER_SHALLOW, 0, "dvd");
 
-  mp_set_playstatus_by_hold(mp, dp->dp_hold, NULL);
-
   prop_set_int(mp->mp_prop_canSkipForward,  1);
   prop_set_int(mp->mp_prop_canSkipBackward, 1);
 

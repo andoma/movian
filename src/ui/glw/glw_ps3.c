@@ -409,9 +409,11 @@ eventHandle(u64 status, u64 param, void *userdata)
     break;
   case EVENT_MENU_OPEN:
     TRACE(TRACE_INFO, "XMB", "Opened");
+    media_global_hold(1, MP_HOLD_OS);
     break;
   case EVENT_MENU_CLOSE:
     TRACE(TRACE_INFO, "XMB", "Closed");
+    media_global_hold(0, MP_HOLD_OS);
     break;
   case EVENT_DRAWING_BEGIN:
     break;

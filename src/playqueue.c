@@ -1135,7 +1135,8 @@ player_thread(void *aux)
 
     prop_set_int(p, 1);
 
-    mp_set_playstatus_by_hold(mp, startpaused, NULL);
+    if(startpaused)
+      mp_hold(mp, MP_HOLD_PAUSE, NULL);
 
     usage_inc_counter("playaudio", 1);
 

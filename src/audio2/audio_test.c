@@ -240,7 +240,6 @@ test_generator_thread(void *aux)
   media_codec_t *mc = media_codec_create(AV_CODEC_ID_AC3, 0,
 					 NULL, NULL, NULL, mp);
 
-  mp_set_playstatus_by_hold(mp, 0, NULL);
   mp->mp_audio.mq_stream = 0;
   mp_configure(mp, 0, MP_BUFFER_NONE, 0, "testsignal");
   mp_become_primary(mp);

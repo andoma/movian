@@ -190,7 +190,6 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
   mp->mp_seek_base = 0;
   mp->mp_video.mq_seektarget = AV_NOPTS_VALUE;
   mp->mp_audio.mq_seektarget = AV_NOPTS_VALUE;
-  mp_set_playstatus_by_hold(mp, 0, NULL);
 
   if(flags & BACKEND_VIDEO_RESUME && mp->mp_flags & MP_CAN_SEEK) {
     int64_t start = playinfo_get_restartpos(canonical_url) * 1000;

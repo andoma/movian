@@ -4174,7 +4174,6 @@ be_spotify_play(const char *url, media_pipe_t *mp,
   spotify_uri_t su;
   event_t *e, *eof = NULL;
   event_ts_t *ets;
-  media_queue_t *mq = &mp->mp_audio;
   
   memset(&su, 0, sizeof(su));
 
@@ -4215,8 +4214,6 @@ be_spotify_play(const char *url, media_pipe_t *mp,
 
   mp_configure(mp, MP_CAN_SEEK | MP_CAN_PAUSE,
 	       MP_BUFFER_NONE, 0, "tracks");
-
-  mp_set_playstatus_by_hold(mp, hold, NULL);
 
   /* Playback successfully started, wait for events */
   while(1) {
@@ -4268,12 +4265,6 @@ be_spotify_play(const char *url, media_pipe_t *mp,
 
   if(eof != NULL)
     event_release(eof);
-
-  if(hold) {
-    // If we were paused, release playback again.
-    mp_send_cmd(mp, mq, MB_CTRL_PLAY);
-    mp_set_playstatus_by_hold(mp, 0, NULL);
-  }
 
   spotify_mp = NULL;
   spotify_msg_enq(spotify_msg_build(SPOTIFY_STOP_PLAYBACK, NULL));

@@ -1165,8 +1165,6 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
   if(!(va->flags & BACKEND_VIDEO_NO_AUDIO))
     mp_become_primary(mp);
 
-  mp_set_playstatus_by_hold(mp, 0, NULL);
-
   mp_configure(mp, MP_CAN_PAUSE, MP_BUFFER_DEEP, 0, "video");
 
   hls_demuxer_t *hd = &h->h_primary;

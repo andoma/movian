@@ -159,6 +159,8 @@ typedef int (set_video_codec_t)(uint32_t type, struct media_codec *mc,
 typedef struct media_pipe {
   atomic_t mp_refcount;
 
+  LIST_ENTRY(media_pipe) mp_global_link;
+
   const char *mp_name;
 
   LIST_ENTRY(media_pipe) mp_stack_link;
@@ -174,7 +176,15 @@ typedef struct media_pipe {
   AVRational mp_framerate;
 
   int mp_eof;   // End of file: We don't expect to need to read more data
-  int mp_hold;  // Paused
+  int mp_hold_flags; // Paused
+
+#define MP_HOLD_PAUSE         0x1  // The pause event from UI
+#define MP_HOLD_PRE_BUFFERING 0x2
+#define MP_HOLD_OS            0x4  // Operating system doing other stuff
+#define MP_HOLD_STREAM        0x8  // DVD VM pause, etc
+#define MP_HOLD_DISPLAY       0x10 // Display on/off
+
+  int mp_hold_gate;
 
   pool_t *mp_mb_pool;
 
@@ -413,11 +423,21 @@ void mp_set_current_time(media_pipe_t *mp, int64_t ts, int epoch,
 			 int64_t delta);
 
 /**
- * Will pause/unpause the playback. (If hold == 1, then it's paused)
+ * Will pause the playback
  *
- * If pausing, an optional message can be passed (reason for the pause)
+ * @flag is one of MP_HOLD_xxx flags
+ *
+ * An optional message can be passed (reason for the pause)
  */
-void mp_set_playstatus_by_hold(media_pipe_t *mp, int hold, const char *msg);
+void mp_hold(media_pipe_t *mp, int flag, const char *msg);
+
+
+/**
+ * Will unpause the playback
+ *
+ * @flag is one of MP_HOLD_xxx flags
+ */
+void mp_unhold(media_pipe_t *mp, int flag);
 
 /**
  * Set current URL.
@@ -453,7 +473,14 @@ void mp_set_duration(media_pipe_t *mp, int64_t duration);
 
 void mp_set_cancellable(media_pipe_t *mp, struct cancellable *c);
 
+
+/**
+ * Can be used to pause/unpause all media pipelines using the given flag
+ */
+void media_global_hold(int on, int flag);
+
 /**
  * Internal helper
  */
 void mp_set_playstatus_by_hold_locked(media_pipe_t *mp, const char *msg);
+
