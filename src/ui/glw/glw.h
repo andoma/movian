@@ -60,14 +60,6 @@ TAILQ_HEAD(glw_loadable_texture_queue, glw_loadable_texture);
 LIST_HEAD(glw_video_list, glw_video);
 LIST_HEAD(glw_style_list, glw_style);
 
-#ifndef likely
-#define likely(x)       __builtin_expect((x),1)
-#endif
-
-#ifndef unlikely
-#define unlikely(x)     __builtin_expect((x),0)
-#endif
-
 // ------------------- Backends -----------------
 
 #if CONFIG_GLW_BACKEND_OPENGL || CONFIG_GLW_BACKEND_OPENGL_ES

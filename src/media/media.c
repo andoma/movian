@@ -689,6 +689,7 @@ mp_configure(media_pipe_t *mp, int flags, int buffer_size, int64_t duration,
   mp->mp_max_realtime_delay = INT32_MAX;
 
   mp_set_clr_flags_locked(mp, flags,
+                          MP_PRE_BUFFERING |
                           MP_FLUSH_ON_HOLD |
                           MP_ALWAYS_SATISFIED |
                           MP_CAN_SEEK |
@@ -716,6 +717,9 @@ mp_configure(media_pipe_t *mp, int flags, int buffer_size, int64_t duration,
 
   if(mp->mp_clock_setup != NULL)
     mp->mp_clock_setup(mp, mp->mp_audio.mq_stream != -1);
+
+  if(mp->mp_flags & MP_PRE_BUFFERING)
+    mp_check_underrun(mp);
 
   hts_mutex_unlock(&mp->mp_mutex);
 }
@@ -823,4 +827,15 @@ media_global_hold(int on, int flag)
 
     mp_release(mp);
   }
+}
+
+
+/**
+ *
+ */
+void
+mp_underrun(media_pipe_t *mp)
+{
+  mp->mp_hold_flags |= MP_HOLD_PRE_BUFFERING;
+  mp_set_playstatus_by_hold_locked(mp, NULL);
 }

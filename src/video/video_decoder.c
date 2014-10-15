@@ -210,6 +210,7 @@ vd_thread(void *aux)
       }
 
       TAILQ_REMOVE(&mq->mq_q_data, data, mb_link);
+      mp_check_underrun(mp);
       mb = data;
 
     } else {

@@ -69,6 +69,7 @@ mq_flush(media_pipe_t *mp, media_queue_t *mq, int full)
 {
   hts_mutex_lock(&mp->mp_mutex);
   mq_flush_locked(mp, mq, full);
+  mp_check_underrun(mp);
   hts_mutex_unlock(&mp->mp_mutex);
 }
 
@@ -166,6 +167,19 @@ mp_update_buffer_delay(media_pipe_t *mp)
 }
 
 
+/**
+ * If we're in pre-buffering state and we have enough data, release hold
+ */
+static void
+mp_enqueue_check_pre_buffering(media_pipe_t *mp)
+{
+  if(unlikely(mp->mp_hold_flags & MP_HOLD_PRE_BUFFERING)) {
+    if(mp->mp_buffer_delay > mp->mp_pre_buffer_delay) {
+      mp->mp_hold_flags &= ~MP_HOLD_PRE_BUFFERING;
+      mp_set_playstatus_by_hold_locked(mp, NULL);
+    }
+  }
+}
 
 
 /**
@@ -190,6 +204,7 @@ mb_enqueue_with_events_ex(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
   const int aminpkt = mp->mp_audio.mq_stream != -1 ? 5 : 0;
 
   mp_update_buffer_delay(mp);
+  mp_enqueue_check_pre_buffering(mp);
 
   while(1) {
 
@@ -241,6 +256,9 @@ mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
   assert(mb->mb_data_type < MB_CTRL);
 
   hts_mutex_lock(&mp->mp_mutex);
+
+  mp_update_buffer_delay(mp);
+  mp_enqueue_check_pre_buffering(mp);
 
   if(mp->mp_buffer_current + mb->mb_size > mp->mp_buffer_limit &&
      mq->mq_packets_current < 5) {

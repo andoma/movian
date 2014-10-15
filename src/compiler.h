@@ -69,3 +69,28 @@
 #ifndef _MSC_VER
 #define ARRAYSIZE(x) (sizeof(x) / sizeof(x[0]))
 #endif
+
+
+
+#ifdef __GNUC__
+
+#ifndef likely
+#define likely(x)       __builtin_expect((x),1)
+#endif
+
+#ifndef unlikely
+#define unlikely(x)     __builtin_expect((x),0)
+#endif
+
+#else
+
+#ifndef likely
+#define likely(x)   (x)
+#endif
+
+#ifndef unlikely
+#define unlikely(x) (x)
+#endif
+
+#endif
+

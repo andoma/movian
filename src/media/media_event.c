@@ -108,6 +108,7 @@ mp_seek_in_queues(media_pipe_t *mp, int64_t pos)
       mb->mb_data_type = MB_CTRL_FLUSH;
       mb_enq(mp, &mp->mp_audio, mb);
 
+      mp_check_underrun(mp);
 
       TRACE(TRACE_DEBUG, "Media", "Seeking by dropping %d audio packets and %d+%d video packets from queue", adrop, vdrop, vskip);
     }

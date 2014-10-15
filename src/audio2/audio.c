@@ -608,6 +608,7 @@ audio_decode_thread(void *aux)
       mb = ctrl;
     } else if(data != NULL && avail < ad->ad_tile_size) {
       TAILQ_REMOVE(&mq->mq_q_data, data, mb_link);
+      mp_check_underrun(mp);
       mb = data;
     } else {
       hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);

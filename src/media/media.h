@@ -166,6 +166,7 @@ typedef struct media_pipe {
   LIST_ENTRY(media_pipe) mp_stack_link;
   int mp_flags;
 #define MP_PRIMABLE         0x1
+#define MP_PRE_BUFFERING    0x2   // Enables pre-buffering
 #define MP_VIDEO            0x4
 #define MP_FLUSH_ON_HOLD    0x8
 #define MP_ALWAYS_SATISFIED 0x10
@@ -185,6 +186,19 @@ typedef struct media_pipe {
 #define MP_HOLD_DISPLAY       0x10 // Display on/off
 
   int mp_hold_gate;
+
+  /*
+   * Prebuffer logic
+   *
+   * When the queues are empty (initially, after a flush or due to
+   * underrun) and the MP_PRE_BUFFERING flag is set the media code
+   * will pause the stream (by asserting MP_HOLD_PRE_BUFFERING) until
+   * a certain threshold is reached.
+   *
+   * mp_pre_buffer_delay controls this delay
+   */
+  int mp_pre_buffer_delay; // in µs
+
 
   pool_t *mp_mb_pool;
 
@@ -484,3 +498,21 @@ void media_global_hold(int on, int flag);
  */
 void mp_set_playstatus_by_hold_locked(media_pipe_t *mp, const char *msg);
 
+
+/**
+ * Do underrun processing when in pre-buffering mode
+ */
+void mp_underrun(media_pipe_t *mp);
+
+
+/**
+ * Check if an underrun has happened, must be called with mp_mutex locked
+ */
+static inline void
+mp_check_underrun(media_pipe_t *mp)
+{
+  if(mp->mp_flags & MP_PRE_BUFFERING &&
+     unlikely(TAILQ_FIRST(&mp->mp_video.mq_q_data) == NULL) &&
+     unlikely(TAILQ_FIRST(&mp->mp_audio.mq_q_data) == NULL))
+    mp_underrun(mp);
+}
