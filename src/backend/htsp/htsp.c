@@ -1457,6 +1457,9 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
 
   prop_set_string(mp->mp_prop_playstatus, "play");
 
+  // With a set mq_stream mp_configure things that we don't use
+  // audio at all which might screw up A/V sync on some platforms (rpi)
+  mp->mp_audio.mq_stream = 0;
   mp_configure(mp, mp_flags, MP_BUFFER_DEEP, 0, "tv");
 
   if(primary)
