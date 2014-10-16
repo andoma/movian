@@ -56,9 +56,11 @@ es_timer_destroy(es_resource_t *eres)
 
   es_root_unregister(eres->er_ctx->ec_duk, eres);
 
-  hts_mutex_lock(&timer_mutex);
-  LIST_REMOVE(et, et_link);
-  hts_mutex_unlock(&timer_mutex);
+  if(et->et_expire) {
+    hts_mutex_lock(&timer_mutex);
+    LIST_REMOVE(et, et_link);
+    hts_mutex_unlock(&timer_mutex);
+  }
 
   es_resource_unlink(&et->super);
 }
@@ -130,6 +132,7 @@ timer_thread(void *aux)
       et->et_expire = now + et->et_interval * 1000LL;
       LIST_INSERT_SORTED(&timers, et, et_link, estimercmp, es_timer_t);
     } else {
+      et->et_expire = 0;
       destroy = 1;
     }
 
