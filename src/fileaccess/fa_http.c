@@ -101,7 +101,7 @@ TAILQ_HEAD(http_connection_queue , http_connection);
 static struct http_connection_queue http_connections;
 static int http_parked_connections;
 static hts_mutex_t http_connections_mutex;
-static int http_connection_tally;
+static atomic_t http_connection_tally;
 
 typedef struct http_connection {
   char hc_hostname[HOSTNAME_MAX];
@@ -230,42 +230,45 @@ http_connection_destroy(http_connection_t *hc, int dbg, const char *reason)
 static http_connection_t *
 http_connection_get(const char *hostname, int port, int ssl,
 		    char *errbuf, int errlen, int dbg, int timeout,
-                    cancellable_t *c)
+                    cancellable_t *c, int allow_reuse)
 {
   http_connection_t *hc, *next;
   tcpcon_t *tc;
-  int id;
-  time_t now;
 
-  time(&now);
+  if(allow_reuse) {
 
-  hts_mutex_lock(&http_connections_mutex);
+    time_t now;
 
-  for(hc = TAILQ_FIRST(&http_connections); hc != NULL; hc = next) {
-    next = TAILQ_NEXT(hc, hc_link);
+    time(&now);
 
-    if(now >= hc->hc_reuse_before) {
-      TAILQ_REMOVE(&http_connections, hc, hc_link);
-      http_parked_connections--;
-      http_connection_destroy(hc, dbg, "Keep alive expired");
-      continue;
+    hts_mutex_lock(&http_connections_mutex);
+
+    for(hc = TAILQ_FIRST(&http_connections); hc != NULL; hc = next) {
+      next = TAILQ_NEXT(hc, hc_link);
+
+      if(now >= hc->hc_reuse_before) {
+        TAILQ_REMOVE(&http_connections, hc, hc_link);
+        http_parked_connections--;
+        http_connection_destroy(hc, dbg, "Keep alive expired");
+        continue;
+      }
+
+      if(!strcmp(hc->hc_hostname, hostname) && hc->hc_port == port &&
+         hc->hc_ssl == ssl) {
+        TAILQ_REMOVE(&http_connections, hc, hc_link);
+        http_parked_connections--;
+        hts_mutex_unlock(&http_connections_mutex);
+        HTTP_TRACE(dbg, "Reusing connection to %s:%d (id=%d)",
+                   hc->hc_hostname, hc->hc_port, hc->hc_id);
+        hc->hc_reused = 1;
+        tcp_set_cancellable(hc->hc_tc, c);
+        return hc;
+      }
     }
-
-    if(!strcmp(hc->hc_hostname, hostname) && hc->hc_port == port &&
-       hc->hc_ssl == ssl) {
-      TAILQ_REMOVE(&http_connections, hc, hc_link);
-      http_parked_connections--;
-      hts_mutex_unlock(&http_connections_mutex);
-      HTTP_TRACE(dbg, "Reusing connection to %s:%d (id=%d)",
-		 hc->hc_hostname, hc->hc_port, hc->hc_id);
-      hc->hc_reused = 1;
-      tcp_set_cancellable(hc->hc_tc, c);
-      return hc;
-    }
+    hts_mutex_unlock(&http_connections_mutex);
   }
 
-  id = ++http_connection_tally;
-  hts_mutex_unlock(&http_connections_mutex);
+  const int id = atomic_add_and_fetch(&http_connection_tally, 1);
 
   if(errbuf == NULL || errlen == 0) {
     char xerrbuf[256];
@@ -281,7 +284,7 @@ http_connection_get(const char *hostname, int port, int ssl,
     tcp_connect_flags |= TCP_SSL;
 
   if((tc = tcp_connect(hostname, port, errbuf, errlen,
-                        timeout, tcp_connect_flags, c)) == NULL) {
+                       timeout, tcp_connect_flags, c)) == NULL) {
     HTTP_TRACE(dbg, "Connection to %s:%d failed -- %s", hostname, port, errbuf);
     return NULL;
   }
@@ -1589,7 +1592,7 @@ http_set_read_timeout(fa_handle_t *fh, int ms)
  *
  */
 static int
-http_connect(http_file_t *hf, char *errbuf, int errlen)
+http_connect(http_file_t *hf, char *errbuf, int errlen, int allow_reuse)
 {
   char hostname[HOSTNAME_MAX];
   char proto[16];
@@ -1630,7 +1633,8 @@ http_connect(http_file_t *hf, char *errbuf, int errlen)
   const int timeout = hf->hf_connect_timeout ?: 30000;
 
   hf->hf_connection = http_connection_get(hostname, port, ssl, errbuf, errlen,
-					  hf->hf_debug, timeout, hf->hf_c);
+					  hf->hf_debug, timeout, hf->hf_c,
+                                          allow_reuse);
 
   if(hf->hf_read_timeout != 0 && hf->hf_connection != NULL)
     tcp_set_read_timeout(hf->hf_connection->hc_tc, hf->hf_read_timeout);
@@ -1656,7 +1660,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
   hf->hf_filesize = -1;
 
-  if(http_connect(hf, errbuf, errlen))
+  if(http_connect(hf, errbuf, errlen, 1))
     return -1;
 
   if(!probe && hf->hf_filesize != -1)
@@ -1858,7 +1862,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
       if(hf->hf_no_retries)
         return -1;
 
-      if(http_connect(hf, NULL, 0))
+      if(http_connect(hf, NULL, 0, 1))
 	return -1;
       hc = hf->hf_connection;
     }
@@ -2545,7 +2549,7 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
   for(i = 0; i < 5; i++) {
 
     if(hf->hf_connection == NULL) 
-      if(http_connect(hf, errbuf, errlen))
+      if(http_connect(hf, errbuf, errlen, 1))
 	return -1;
 
     htsbuf_queue_init(&q, 0);
@@ -2986,8 +2990,7 @@ http_req_do(http_req_aux_t *hra)
 
  retry:
 
-
-  http_connect(hf, hra->errbuf, hra->errlen);
+  http_connect(hf, hra->errbuf, hra->errlen, !hra->post);
   if(hf->hf_connection == NULL)
     goto cleanup;
 
