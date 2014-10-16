@@ -681,6 +681,8 @@ mp_configure(media_pipe_t *mp, int flags, int buffer_size, int64_t duration,
 {
   hts_mutex_lock(&mp->mp_mutex);
 
+  prop_set_string(mp->mp_prop_playstatus, "play");
+
   mystrset(&mp->mp_subtitle_loader_url, NULL);
 
   mp->mp_framerate.num = 0;
