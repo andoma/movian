@@ -1201,9 +1201,11 @@ hf_drain_bytes(http_file_t *hf, int64_t bytes)
   char chunkheader[100];
   http_connection_t *hc = hf->hf_connection;
 
-  if(!hf->hf_chunked_transfer)
+  if(!hf->hf_chunked_transfer) {
+    hf->hf_rsize -= bytes;
     return tcp_read_data(hc->hc_tc, NULL, bytes, NULL, NULL);
-  
+  }
+
   while(bytes > 0) {
     if(hf->hf_chunk_size == 0) {
       if(tcp_read_line(hc->hc_tc, chunkheader, sizeof(chunkheader)) < 0) {
@@ -1219,6 +1221,7 @@ hf_drain_bytes(http_file_t *hf, int64_t bytes)
 
     bytes -= read_size;
     hf->hf_chunk_size -= read_size;
+    hf->hf_rsize -= read_size;
 
     if(hf->hf_chunk_size == 0) {
       if(tcp_read_data(hc->hc_tc, chunkheader, 2, NULL, NULL))
@@ -1945,14 +1948,21 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
 	  hf->hf_rsize = INT64_MAX;
 
 	if(hf->hf_pos != 0) {
-	  TRACE(TRACE_DEBUG, "HTTP", 
-		"Skipping by reading %"PRId64" bytes", hf->hf_pos);
+	  TRACE(TRACE_DEBUG, "HTTP",
+		"Skipping by reading %"PRId64" bytes, rsize=%"PRId64,
+                hf->hf_pos, hf->hf_rsize);
 
 	  if(hf_drain_bytes(hf, hf->hf_pos)) {
 	    http_detach(hf, 0, "Read error during drain");
 	    continue;
 	  }
+
+	  TRACE(TRACE_DEBUG, "HTTP",
+		"rsize is now = %"PRId64,
+                hf->hf_rsize);
 	}
+
+
 	break;
 
       case 416:
