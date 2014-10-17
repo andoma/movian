@@ -21,7 +21,7 @@
 
 #include <stdio.h>
 
-#include "fileaccess/fileaccess.h"
+#include "fileaccess/http_client.h"
 #include "htsmsg/htsmsg_xml.h"
 
 #include "soap.h"

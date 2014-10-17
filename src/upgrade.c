@@ -33,6 +33,7 @@
 #include "arch/arch.h"
 #include "arch/halloc.h"
 #include "fileaccess/fileaccess.h"
+#include "fileaccess/http_client.h"
 #include "htsmsg/htsmsg_json.h"
 #include "htsmsg/htsmsg_store.h"
 #include "misc/sha.h"

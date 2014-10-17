@@ -19,7 +19,7 @@
 #include <unistd.h>
 
 #include "showtime.h"
-#include "fileaccess/fileaccess.h"
+#include "fileaccess/http_client.h"
 #include "networking/asyncio.h"
 #include "htsmsg/htsmsg.h"
 #include "misc/minmax.h"

@@ -28,7 +28,7 @@
 
 #include "event.h"
 #include "playqueue.h"
-#include "fileaccess/fileaccess.h"
+#include "fileaccess/http_client.h"
 #include "misc/str.h"
 #include "misc/sha.h"
 

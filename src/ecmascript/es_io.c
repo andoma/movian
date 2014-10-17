@@ -2,6 +2,7 @@
 #include <assert.h>
 
 #include "ecmascript.h"
+#include "fileaccess/http_client.h"
 #include "fileaccess/fileaccess.h"
 #include "misc/str.h"
 #include "htsmsg/htsbuf.h"

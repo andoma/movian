@@ -30,9 +30,11 @@
 #include "api/soap.h"
 #include "prop/prop_nodefilter.h"
 #include "upnp.h"
-#include "fileaccess/fileaccess.h"
+#include "fileaccess/http_client.h"
 #include "db/kvstore.h"
 #include "metadata/playinfo.h"
+#include "metadata/metadata.h"
+#include "navigator.h"
 #include "usage.h"
 
 /**
@@ -142,7 +144,7 @@ make_audioItem(prop_t *c, prop_t *m, htsmsg_t *item)
   album = rstr_alloc(s);
 
   if(!item_set_str(m, item, "album_art", "albumArtURI")) {
-    
+
     if(artist != NULL && album != NULL)
       metadata_bind_albumart(prop_create(m, "album_art"), artist, album);
   }

@@ -31,6 +31,7 @@
 #include "backend/backend.h"
 #include "notifications.h"
 #include "fileaccess/fileaccess.h"
+#include "fileaccess/http_client.h"
 #include "htsmsg/htsmsg.h"
 #include "htsmsg/htsmsg_json.h"
 

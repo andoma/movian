@@ -33,6 +33,7 @@
 
 #include "keyring.h"
 #include "fileaccess.h"
+#include "http_client.h"
 #include "networking/net.h"
 #include "fa_proto.h"
 #include "task.h"
@@ -749,20 +750,6 @@ kvcomp(const void *A, const void *B)
     return r;
   return strcmp(a[1], b[1]);
 }
-
-
-struct http_auth_req {
-  const char *har_method;
-  const char **har_parameters;
-  const http_file_t *har_hf;
-  struct http_header_list *har_headers;
-  struct http_header_list *har_cookies;
-  char *har_errbuf;
-  size_t har_errlen;
-  int har_force_fail;
-
-} http_auth_req_t;
-
 
 /**
  *

@@ -28,7 +28,7 @@
 
 #include "showtime.h"
 #include "lastfm.h"
-#include "fileaccess/fileaccess.h"
+#include "fileaccess/http_client.h"
 #include "blobcache.h"
 #include "db/db_support.h"
 #include "metadata/metadata_sources.h"

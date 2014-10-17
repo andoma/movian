@@ -26,6 +26,7 @@
 #include "ext/spidermonkey/jsxml.h"
 
 #include "fileaccess/fileaccess.h"
+#include "fileaccess/http_client.h"
 #include "htsmsg/htsbuf.h"
 #include "misc/str.h"
 #include "misc/regex.h"

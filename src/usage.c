@@ -2,7 +2,7 @@
 #include "htsmsg/htsmsg.h"
 #include "htsmsg/htsmsg_json.h"
 #include "htsmsg/htsmsg_store.h"
-#include "fileaccess/fileaccess.h"
+#include "fileaccess/http_client.h"
 #include "arch/arch.h"
 #include "misc/str.h"
 #include "usage.h"

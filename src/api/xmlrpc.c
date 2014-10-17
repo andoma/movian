@@ -24,7 +24,7 @@
 
 #include "htsmsg/htsmsg_xml.h"
 #include "misc/dbl.h"
-#include "fileaccess/fileaccess.h" // HTTP client lives here
+#include "fileaccess/http_client.h"
 
 #include "xmlrpc.h"
 

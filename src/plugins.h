@@ -21,17 +21,19 @@
 
 #pragma once
 
+struct prop;
+
 void plugins_init(const char *loadme);
 
 void plugins_init2(void);
 
 int plugins_upgrade_check(void);
 
-void plugin_open_file(prop_t *page, const char *url);
+void plugin_open_file(struct prop *page, const char *url);
 
 void plugins_reload_dev_plugin(void);
 
-void plugin_props_from_file(prop_t *prop, const char *zipfile);
+void plugin_props_from_file(struct prop *prop, const char *zipfile);
 
 void plugin_add_static(const char *id, const char *category,
 		       const char *title, const char *icon,

@@ -23,7 +23,7 @@
 
 #include "showtime.h"
 #include "networking/http_server.h"
-#include "fileaccess/fileaccess.h"
+#include "fileaccess/http_client.h"
 #include "htsmsg/htsmsg_xml.h"
 #include "misc/str.h"
 #include "misc/sha.h"
