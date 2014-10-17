@@ -10,6 +10,8 @@ struct es_resource;
 struct rstr;
 struct prop;
 
+#define ST_ERROR_SQLITE_BASE 0x10000
+
 
 typedef enum {
   ES_NATIVE_PROP = 1,
@@ -204,5 +206,6 @@ extern const duk_function_list_entry fnlist_Showtime_io[];
 extern const duk_function_list_entry fnlist_Showtime_string[];
 extern const duk_function_list_entry fnlist_Showtime_htsmsg[];
 extern const duk_function_list_entry fnlist_Showtime_metadata[];
+extern const duk_function_list_entry fnlist_Showtime_sqlite[];
 
 extern const duk_function_list_entry fnlist_Global_timer[];
