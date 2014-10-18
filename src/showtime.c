@@ -693,9 +693,9 @@ showtime_fini(void)
   TRACE(TRACE_DEBUG, "core", "Playqueue finished");
 #endif
   audio_fini();
-  TRACE(TRACE_DEBUG, "core", "Audio finihsed");
+  TRACE(TRACE_DEBUG, "core", "Audio finished");
   nav_fini();
-  TRACE(TRACE_DEBUG, "core", "Navigator finihsed");
+  TRACE(TRACE_DEBUG, "core", "Navigator finished");
   backend_fini();
   TRACE(TRACE_DEBUG, "core", "Backend finished");
   shutdown_hook_run(0);
