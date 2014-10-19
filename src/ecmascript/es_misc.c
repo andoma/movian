@@ -34,13 +34,14 @@
 static int
 es_webpopup(duk_context *ctx)
 {
-  const char *url   = duk_safe_to_string(ctx, 0);
-  const char *title = duk_safe_to_string(ctx, 1);
-  const char *trap  = duk_safe_to_string(ctx, 2);
 
   duk_push_object(ctx);
 
 #if ENABLE_WEBPOPUP
+  const char *url   = duk_safe_to_string(ctx, 0);
+  const char *title = duk_safe_to_string(ctx, 1);
+  const char *trap  = duk_safe_to_string(ctx, 2);
+
   webpopup_result_t *wr = webpopup_create(url, title, trap);
 
   const char *t;

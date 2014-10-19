@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdarg.h>
 #include "networking/http.h"
 #include "fa_defs.h"
 #include "compiler.h"
