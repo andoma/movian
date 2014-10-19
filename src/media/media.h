@@ -343,7 +343,7 @@ typedef struct media_pipe {
    * Subtitle loader
    */
 
-  hts_thread_t mp_subtitle_loader_thread;
+  int mp_subtitle_loader_running;
   char *mp_subtitle_loader_url;
   int mp_subtitle_loader_status;
 

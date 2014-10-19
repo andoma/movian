@@ -19,6 +19,8 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 
+#include <unistd.h>
+
 #include "showtime.h"
 #include "media/media.h"
 #include "misc/isolang.h"
@@ -648,6 +650,9 @@ subtitle_loader_thread(void *aux)
 {
   media_pipe_t *mp = aux;
 
+  // Delay a short while to make the subtitle list stabilize
+  usleep(100000);
+
   hts_mutex_lock(&mp->mp_mutex);
   while(1) {
 
@@ -683,7 +688,7 @@ subtitle_loader_thread(void *aux)
 
     mystrset(&mp->mp_subtitle_loader_url, NULL);
   }
-  mp->mp_subtitle_loader_thread = 0;
+  mp->mp_subtitle_loader_running = 0;
   hts_mutex_unlock(&mp->mp_mutex);
   mp_release(mp);
   return NULL;
@@ -697,7 +702,8 @@ subtitle_loader_thread(void *aux)
 static void
 mp_load_ext_sub(media_pipe_t *mp, const char *url)
 {
-  if(!mp->mp_subtitle_loader_thread) {
+  if(!mp->mp_subtitle_loader_running) {
+    mp->mp_subtitle_loader_running = 1;
     hts_thread_create_detached("subtitleloader",
                                subtitle_loader_thread,
                                mp_retain(mp), THREAD_PRIO_BGTASK);
