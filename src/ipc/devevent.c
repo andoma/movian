@@ -163,6 +163,7 @@ static int key_to_action[][3] = {
   {KEY_PAGEUP,             ACTION_PAGE_UP},
   {KEY_PAGEDOWN,           ACTION_PAGE_DOWN},
   {KEY_BACK,               ACTION_NAV_BACK},
+  {KEY_ESC,                ACTION_CANCEL},
 
   // These should be configurable
 
