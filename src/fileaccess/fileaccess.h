@@ -42,7 +42,6 @@ typedef void (fa_load_cb_t)(void *opaque, int loaded, int total);
 struct prop;
 struct backend;
 struct htsbuf_queue;
-struct http_auth_req;
 
 int fileaccess_init(void);
 

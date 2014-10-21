@@ -945,8 +945,8 @@ static JSFunctionSpec http_auth_functions[] = {
 /**
  *
  */
-int
-js_http_auth_try(const char *url, struct http_auth_req *har)
+static int
+js_http_inspect(const char *url, http_request_inspection_t *hri)
 {
   js_http_auth_t *jha;
   hts_regmatch_t matches[8];
@@ -973,7 +973,7 @@ js_http_auth_try(const char *url, struct http_auth_req *har)
   pobj = JS_NewObject(cx, &http_auth_class, NULL, NULL);
   JS_AddNamedRoot(cx, &pobj, "plugin");
 
-  JS_SetPrivate(cx, pobj, har);
+  JS_SetPrivate(cx, pobj, hri);
 
   JS_DefineFunctions(cx, pobj, http_auth_functions);
 
@@ -987,7 +987,7 @@ js_http_auth_try(const char *url, struct http_auth_req *har)
   JS_DestroyContext(cx);
 
   if(!ret) {
-    http_client_fail_req(har, "Script error");
+    http_client_fail_req(hri, "Script error");
     return 0;
   }
 
@@ -997,3 +997,6 @@ js_http_auth_try(const char *url, struct http_auth_req *har)
     ret = 1;
   return ret;
 }
+
+REGISTER_HTTP_REQUEST_INSPECTOR(js_http_inspect);
+

@@ -212,9 +212,6 @@ JSBool js_subscribe_global(JSContext *cx, JSObject *obj, uintN argc,
 JSBool js_db_open(JSContext *cx, JSObject *obj, uintN argc,
                   jsval *argv, jsval *rval);
 
-struct http_auth_req;
-int js_http_auth_try(const char *url, struct http_auth_req *har);
-
 void js_event_destroy_handlers(JSContext *cx,
 			       struct js_event_handler_list *list);
 

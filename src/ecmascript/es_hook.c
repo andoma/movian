@@ -122,9 +122,8 @@ es_hook_invoke(const char *type,
 
     duk_pop(ctx);
 
-    es_resource_release(&eh->super);
-
     es_context_end(ec);
+    es_resource_release(&eh->super);
   }
   return 0;
 }

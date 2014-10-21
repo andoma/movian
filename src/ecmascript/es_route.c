@@ -185,7 +185,6 @@ ecmascript_openuri(prop_t *page, const char *url, int sync)
   duk_pop(ctx);
 
   es_context_end(ec);
-
   es_resource_release(&er->super);
 
   return 0;

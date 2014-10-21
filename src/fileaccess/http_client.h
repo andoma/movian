@@ -56,19 +56,17 @@ enum {
 /**
  *
  */
-struct http_auth_req {
-  const char *har_method;
-  const char **har_parameters;
-  const struct http_file *har_hf;
-  struct http_header_list *har_headers;
-  struct http_header_list *har_cookies;
-  char *har_errbuf;
-  size_t har_errlen;
-  int har_force_fail;
+typedef struct http_request_inspection {
+  const char *hri_method;
+  const char **hri_parameters;
+  const struct http_file *hri_hf;
+  struct http_header_list *hri_headers;
+  struct http_header_list *hri_cookies;
+  char *hri_errbuf;
+  size_t hri_errlen;
+  int hri_force_fail;
 
-} http_auth_req_t;
-
-
+} http_request_inspection_t;
 
 
 /**
@@ -93,20 +91,38 @@ void http_req_release(http_req_aux_t *hra);
 
 http_req_aux_t *http_req_retain(http_req_aux_t *hra) attribute_unused_result;
 
-int http_client_oauth(struct http_auth_req *har,
+int http_client_oauth(http_request_inspection_t *hri,
 		      const char *consumer_key,
 		      const char *consumer_secret,
 		      const char *token,
 		      const char *token_secret);
 
-int http_client_rawauth(struct http_auth_req *har, const char *str);
+int http_client_rawauth(http_request_inspection_t *hri, const char *str);
 
-void http_client_set_header(struct http_auth_req *har, const char *key,
+void http_client_set_header(http_request_inspection_t *hri, const char *key,
 			    const char *value);
 
-void http_client_set_cookie(struct http_auth_req *har, const char *key,
+void http_client_set_cookie(http_request_inspection_t *hri, const char *key,
 			    const char *value);
 
-void http_client_fail_req(struct http_auth_req *har, const char *reason);
+void http_client_fail_req(http_request_inspection_t *hri, const char *reason);
 
 
+/**
+ *
+ */
+typedef struct http_request_inspector {
+  LIST_ENTRY(http_request_inspector) link;
+  int (*check)(const char *url, http_request_inspection_t *hri);
+} http_request_inspector_t;
+
+void http_request_inspector_register(http_request_inspector_t *hri);
+
+
+#define REGISTER_HTTP_REQUEST_INSPECTOR(a)			   \
+  static http_request_inspector_t http_request_inspector = {       \
+    .check = a,                                                    \
+  };								   \
+  INITIALIZER(http_request_inspector_initializer)                  \
+  { http_request_inspector_register(&http_request_inspector);      \
+ }

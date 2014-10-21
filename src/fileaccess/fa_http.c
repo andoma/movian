@@ -62,6 +62,9 @@
 
 #include "usage.h"
 
+LIST_HEAD(http_request_inspector_list, http_request_inspector);
+static struct http_request_inspector_list http_request_inspectors;
+
 static uint8_t nonce[20];
 
 /**
@@ -751,11 +754,21 @@ kvcomp(const void *A, const void *B)
   return strcmp(a[1], b[1]);
 }
 
+
+/**
+ *
+ */
+void
+http_request_inspector_register(http_request_inspector_t *hri)
+{
+  LIST_INSERT_HEAD(&http_request_inspectors, hri, link);
+}
+
 /**
  *
  */
 int
-http_client_oauth(struct http_auth_req *har,
+http_client_oauth(http_request_inspection_t *hri,
 		  const char *consumer_key,
 		  const char *consumer_secret,
 		  const char *token,
@@ -764,13 +777,13 @@ http_client_oauth(struct http_auth_req *har,
   char key[512];
   char str[2048];
   char sig[128];
-  const http_file_t *hf = har->har_hf;
+  const http_file_t *hf = hri->hri_hf;
   const http_connection_t *hc = hf->hf_connection;
   int len = 0, i = 0;
   const char **params;
 
-  if(har->har_parameters != NULL)
-    while(har->har_parameters[len])
+  if(hri->hri_parameters != NULL)
+    while(hri->hri_parameters[len])
       len++;
 
   if(len&1)
@@ -830,15 +843,15 @@ http_client_oauth(struct http_auth_req *har,
   params[10] = "oauth_token";
   params[11] = oauth_token;
   int j = 12;
-  if(har->har_parameters != NULL) {
+  if(hri->hri_parameters != NULL) {
     i = 0;
-    while(har->har_parameters[i])
-      params[j++] = har->har_parameters[i++];
+    while(hri->hri_parameters[i])
+      params[j++] = hri->hri_parameters[i++];
   }
 
   qsort(params, len, sizeof(char *) * 2, kvcomp);
 
-  snprintf(str, sizeof(str), "%s&", har->har_method);
+  snprintf(str, sizeof(str), "%s&", hri->hri_method);
 
   if(!hc->hc_ssl && hc->hc_port == 80)
     snprintf(str + strlen(str), sizeof(str) - strlen(str),
@@ -901,7 +914,7 @@ http_client_oauth(struct http_auth_req *har,
 	     URL_ESCAPE_PARAM);
   snprintf(str + strlen(str), sizeof(str) - strlen(str), "\"");
 
-  http_header_add(har->har_headers, "Authorization", str, 0);
+  http_header_add(hri->hri_headers, "Authorization", str, 0);
 
   return 0;
 }
@@ -911,9 +924,9 @@ http_client_oauth(struct http_auth_req *har,
  *
  */
 int
-http_client_rawauth(struct http_auth_req *har, const char *str)
+http_client_rawauth(http_request_inspection_t *hri, const char *str)
 {
-  http_header_add(har->har_headers, "Authorization", str, 0);
+  http_header_add(hri->hri_headers, "Authorization", str, 0);
   return 0;
 }
 
@@ -922,10 +935,10 @@ http_client_rawauth(struct http_auth_req *har, const char *str)
  *
  */
 void
-http_client_set_header(struct http_auth_req *har, const char *key,
+http_client_set_header(http_request_inspection_t *hri, const char *key,
 		       const char *value)
 {
-  http_header_add(har->har_headers, key, value, 0);
+  http_header_add(hri->hri_headers, key, value, 0);
 }
 
 
@@ -933,10 +946,10 @@ http_client_set_header(struct http_auth_req *har, const char *key,
  *
  */
 void
-http_client_set_cookie(struct http_auth_req *har, const char *key,
+http_client_set_cookie(http_request_inspection_t *hri, const char *key,
 		       const char *value)
 {
-  http_header_add(har->har_cookies, key, value, 0);
+  http_header_add(hri->hri_cookies, key, value, 0);
 }
 
 
@@ -944,10 +957,10 @@ http_client_set_cookie(struct http_auth_req *har, const char *key,
  *
  */
 void
-http_client_fail_req(struct http_auth_req *har, const char *reason)
+http_client_fail_req(http_request_inspection_t *hri, const char *reason)
 {
-  snprintf(har->har_errbuf, har->har_errlen, "%s", reason);
-  har->har_force_fail = 1;
+  snprintf(hri->hri_errbuf, hri->hri_errlen, "%s", reason);
+  hri->hri_force_fail = 1;
 }
 
 
@@ -1029,37 +1042,38 @@ http_headers_send(htsbuf_queue_t *q, struct http_header_list *def,
  *
  */
 static int attribute_unused_result
-http_headers_auth(struct http_header_list *headers,
-		  struct http_header_list *cookies,
-		  http_file_t *hf,
-		  const char *method, const char **parameters,
-                  char *errbuf, size_t errlen)
+http_request_inspect(struct http_header_list *headers,
+                     struct http_header_list *cookies,
+                     http_file_t *hf,
+                     const char *method, const char **parameters,
+                     char *errbuf, size_t errlen)
 {
   http_auth_cache_t *hac;
   const char *hostname = hf->hf_connection->hc_hostname;
   int port = hf->hf_connection->hc_port;
 
-#if ENABLE_SPIDERMONKEY
-  struct http_auth_req har;
+  http_request_inspector_t *x;
+  http_request_inspection_t hri;
 
-  har.har_method = method;
-  har.har_parameters = parameters;
-  har.har_headers = headers;
-  har.har_cookies = cookies;
-  har.har_hf = hf;
-  har.har_errbuf = errbuf;
-  har.har_errlen = errlen;
-  har.har_force_fail = 0;
+  hri.hri_method = method;
+  hri.hri_parameters = parameters;
+  hri.hri_headers = headers;
+  hri.hri_cookies = cookies;
+  hri.hri_hf = hf;
+  hri.hri_errbuf = errbuf;
+  hri.hri_errlen = errlen;
+  hri.hri_force_fail = 0;
 
-  if(!js_http_auth_try(hf->hf_url, &har)) {
-    if(har.har_force_fail) {
-      http_headers_free(cookies);
-      return 1;
+  LIST_FOREACH(x, &http_request_inspectors, link) {
+    if(!x->check(hf->hf_url, &hri)) {
+      if(hri.hri_force_fail) {
+        http_headers_free(cookies);
+        return 1;
+      }
+      return 0;
     }
-    return 0;
   }
 
-#endif
 
   if(hf->hf_auth != NULL) {
     http_header_add(headers, "Authorization", hf->hf_auth, 0);
@@ -1665,15 +1679,14 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
   if(hf->hf_streaming) {
     http_send_verb(&q, hf, "GET");
-    if(http_headers_auth(&headers, &cookies, hf, "GET", NULL, errbuf, errlen))
-      return -1;
     tcp_huge_buffer(hf->hf_connection->hc_tc);
   } else {
     http_send_verb(&q, hf, "GET");
     htsbuf_qprintf(&q, "Range: bytes=0-4095\r\n");
-    if(http_headers_auth(&headers, &cookies, hf, "GET", NULL, errbuf, errlen))
-      return -1;
   }
+
+  if(http_request_inspect(&headers, &cookies, hf, "GET", NULL, errbuf, errlen))
+    return -1;
 
   http_cookie_append(hf->hf_connection->hc_hostname, hf->hf_path, &headers,
 		     &cookies);
@@ -1877,8 +1890,8 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
 
       http_headers_init(&headers, hf);
       LIST_INIT(&cookies);
-      if(http_headers_auth(&headers, &cookies, hf, "GET", NULL,
-			   errbuf, sizeof(errbuf))) {
+      if(http_request_inspect(&headers, &cookies, hf, "GET", NULL,
+                              errbuf, sizeof(errbuf))) {
         http_detach(hf, 0, errbuf);
         return -1;
       }
@@ -2560,8 +2573,8 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
 		   hf->hf_version,
 		   fd != NULL ? 1 : 0);
     LIST_INIT(&cookies);
-    if(http_headers_auth(&headers, &cookies, 
-			 hf, "PROPFIND", NULL, errbuf, errlen))
+    if(http_request_inspect(&headers, &cookies, 
+                            hf, "PROPFIND", NULL, errbuf, errlen))
       return -1;
 
     http_cookie_append(hf->hf_connection->hc_hostname, hf->hf_path, &headers,
@@ -3040,9 +3053,9 @@ http_req_do(http_req_aux_t *hra)
   LIST_INIT(&cookies);
 
   if(!(hra->flags & FA_DISABLE_AUTH)) {
-    if(http_headers_auth(&headers, &cookies, hf, m,
-                         (const char **)hra->arguments,
-			 hra->errbuf, hra->errlen)) {
+    if(http_request_inspect(&headers, &cookies, hf, m,
+                            (const char **)hra->arguments,
+                            hra->errbuf, hra->errlen)) {
       htsbuf_queue_flush(&q);
       r = -1;
       goto cleanup;

@@ -5,6 +5,7 @@
 #include "fileaccess/http_client.h"
 #include "fileaccess/fileaccess.h"
 #include "misc/str.h"
+#include "misc/regex.h"
 #include "htsmsg/htsbuf.h"
 #include "task.h"
 
@@ -351,10 +352,261 @@ es_http_req(duk_context *ctx)
 }
 
 
+
+LIST_HEAD(es_http_inspector_list, es_http_inspector);
+
+typedef struct es_http_inspector {
+  es_resource_t super;
+  LIST_ENTRY(es_http_inspector) ehi_link;
+  char *ehi_pattern;
+  hts_regex_t ehi_regex;
+  int ehi_prio;
+} es_http_inspector_t;
+
+static struct es_http_inspector_list http_inspectors;
+
+static HTS_MUTEX_DECL(http_inspector_mutex);
+
+#define HRINAME "\xff""hri"
+
+/**
+ *
+ */
+static void
+es_http_inspector_destroy(es_resource_t *eres)
+{
+  es_http_inspector_t *ehi = (es_http_inspector_t *)eres;
+
+  es_root_unregister(eres->er_ctx->ec_duk, eres);
+
+  hts_mutex_lock(&http_inspector_mutex);
+  LIST_REMOVE(ehi, ehi_link);
+  hts_mutex_unlock(&http_inspector_mutex);
+
+  free(ehi->ehi_pattern);
+  hts_regfree(&ehi->ehi_regex);
+
+  es_resource_unlink(&ehi->super);
+}
+
+
+/**
+ *
+ */
+static void
+es_http_inspector_info(es_resource_t *eres, char *dst, size_t dstsize)
+{
+  es_http_inspector_t *ehi = (es_http_inspector_t *)eres;
+  snprintf(dst, dstsize, "%s (prio:%d)", ehi->ehi_pattern, ehi->ehi_prio);
+}
+
+
+/**
+ *
+ */
+static const es_resource_class_t es_resource_http_inspector = {
+  .erc_name = "http-inspector",
+  .erc_size = sizeof(es_http_inspector_t),
+  .erc_destroy = es_http_inspector_destroy,
+  .erc_info = es_http_inspector_info,
+};
+
+
+/**
+ *
+ */
+static int
+ehi_cmp(const es_http_inspector_t *a, const es_http_inspector_t *b)
+{
+  return b->ehi_prio - a->ehi_prio;
+}
+
+
+/**
+ *
+ */
+static int
+es_http_inspector_create(duk_context *ctx)
+{
+  const char *str = duk_safe_to_string(ctx, 0);
+
+  if(str[0] != '^') {
+    int l = strlen(str);
+    char *s = alloca(l + 2);
+    s[0] = '^';
+    memcpy(s+1, str, l+1);
+    str = s;
+  }
+
+  es_context_t *ec = es_get(ctx);
+
+  hts_mutex_lock(&http_inspector_mutex);
+
+  es_http_inspector_t *ehi;
+
+  ehi = es_resource_alloc(&es_resource_http_inspector);
+  if(hts_regcomp(&ehi->ehi_regex, str)) {
+    hts_mutex_unlock(&http_inspector_mutex);
+    free(ehi);
+    duk_error(ctx, DUK_ERR_ERROR,
+              "Invalid regular expression for http_inspector %s",
+              str);
+  }
+
+  ehi->ehi_pattern = strdup(str);
+  ehi->ehi_prio = strlen(str);
+
+  LIST_INSERT_SORTED(&http_inspectors, ehi, ehi_link, ehi_cmp,
+                     es_http_inspector_t);
+
+  es_resource_link(&ehi->super, ec);
+
+  hts_mutex_unlock(&http_inspector_mutex);
+
+  es_root_register(ctx, 1, ehi);
+
+  es_resource_push(ctx, &ehi->super);
+  return 1;
+}
+
+
+
+/**
+ *
+ */
+static http_request_inspection_t *
+get_hri(duk_context *ctx)
+{
+  duk_push_this(ctx);
+  duk_get_prop_string(ctx, -1, HRINAME);
+  http_request_inspection_t *hri = duk_get_pointer(ctx, -1);
+  duk_pop_2(ctx);
+  return hri;
+}
+
+
+/**
+ *
+ */
+static int
+es_http_inspector_fail(duk_context *ctx)
+{
+  http_client_fail_req(get_hri(ctx), duk_safe_to_string(ctx, 0));
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+es_http_inspector_set_header(duk_context *ctx)
+{
+  http_client_set_header(get_hri(ctx),
+                         duk_safe_to_string(ctx, 0),
+                         duk_safe_to_string(ctx, 1));
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+es_http_inspector_set_cookie(duk_context *ctx)
+{
+  http_client_set_cookie(get_hri(ctx),
+                         duk_safe_to_string(ctx, 0),
+                         duk_safe_to_string(ctx, 1));
+  return 0;
+}
+
+
+/**
+ * Inspector req object exposed functions
+ */
+const static duk_function_list_entry fnlist_inspector[] = {
+  { "fail",              es_http_inspector_fail,        1 },
+  { "setHeader",         es_http_inspector_set_header,  2 },
+  { "setCookie",         es_http_inspector_set_cookie,  2 },
+  { NULL, NULL, 0}
+};
+
+
+/**
+ * Return 1 if we didn't do any processing
+ */
+static int
+es_http_inspect(const char *url, http_request_inspection_t *hri)
+{
+  hts_regmatch_t matches[8];
+  es_http_inspector_t *ehi;
+
+  hts_mutex_lock(&http_inspector_mutex);
+
+  LIST_FOREACH(ehi, &http_inspectors, ehi_link) {
+    if(!hts_regexec(&ehi->ehi_regex, url, 8, matches, 0))
+      break;
+  }
+
+  if(ehi == NULL) {
+    hts_mutex_unlock(&http_inspector_mutex);
+    return 1;
+  }
+
+  es_resource_retain(&ehi->super);
+
+  hts_mutex_unlock(&http_inspector_mutex);
+
+  es_context_t *ec = ehi->super.er_ctx;
+  es_context_begin(ec);
+
+  duk_context *ctx = ec->ec_duk;
+
+
+  // Setup object to pass to callback
+
+  int obj_idx = duk_push_object(ctx);
+
+  duk_put_function_list(ctx, obj_idx, fnlist_inspector);
+
+  duk_push_pointer(ctx, hri);
+  duk_put_prop_string(ctx, obj_idx, HRINAME);
+
+  duk_push_string(ctx, url);
+  duk_put_prop_string(ctx, obj_idx, "url");
+
+
+  // Push callback function
+  es_push_root(ctx, ehi);
+  duk_dup(ctx, obj_idx);
+
+  int rval;
+  int rc = duk_pcall(ctx, 1);
+  if(rc) {
+    es_dump_err(ctx);
+    rval = 1;
+  } else {
+    rval = duk_get_boolean(ctx, -1);
+  }
+
+  duk_del_prop_string(ctx, obj_idx, HRINAME);
+  duk_pop_2(ctx);
+
+  es_context_end(ec);
+  es_resource_release(&ehi->super);
+
+  return rval;
+}
+
+
+REGISTER_HTTP_REQUEST_INSPECTOR(es_http_inspect);
+
 /**
  * Showtime object exposed functions
  */
 const duk_function_list_entry fnlist_Showtime_io[] = {
-  { "httpReq",              es_http_req,      3 },
+  { "httpReq",              es_http_req,              3 },
+  { "httpInspectorCreate",  es_http_inspector_create, 2 },
   { NULL, NULL, 0}
 };
