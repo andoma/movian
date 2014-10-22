@@ -391,8 +391,10 @@ mp_wait_for_empty_queues(media_pipe_t *mp)
   event_t *e;
   hts_mutex_lock(&mp->mp_mutex);
 
+  // Only wait for data queues to drain, aux (subtitles) might be stalled
   while((e = TAILQ_FIRST(&mp->mp_eq)) == NULL &&
-	(mp->mp_audio.mq_packets_current || mp->mp_video.mq_packets_current))
+	(TAILQ_FIRST(&mp->mp_audio.mq_q_data) != NULL ||
+         TAILQ_FIRST(&mp->mp_video.mq_q_data) != NULL))
     hts_cond_wait(&mp->mp_backpressure, &mp->mp_mutex);
 
   if(e != NULL)
