@@ -163,7 +163,6 @@ static int key_to_action[][3] = {
   {KEY_PAGEUP,             ACTION_PAGE_UP},
   {KEY_PAGEDOWN,           ACTION_PAGE_DOWN},
   {KEY_BACK,               ACTION_NAV_BACK},
-  {KEY_ESC,                ACTION_CANCEL},
 
   // These should be configurable
 
@@ -246,12 +245,17 @@ dd_read(de_dev_t *dd)
     e = event_create_action_multi((const action_type_t[]){
 	ACTION_ACTIVATE, ACTION_ENTER}, 2);
     break;
-    
+
   case KEY_BACKSPACE:
     e = event_create_action_multi((const action_type_t[]){
 	ACTION_BS, ACTION_NAV_BACK}, 2);
     break;
-    
+
+  case KEY_ESC:
+    e = event_create_action_multi((const action_type_t[]){
+	ACTION_CANCEL, ACTION_NAV_BACK}, 2);
+    break;
+
   case KEY_F1 ... KEY_F10:
     e = event_from_Fkey(1 + ie.code - KEY_F1, shift);
     break;

@@ -837,7 +837,10 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
       break;
     case 9:          e = event_create_action(ACTION_FOCUS_NEXT);
       break;
-    case 27:         e = event_create_action(ACTION_CANCEL);
+    case 27:
+      e = event_create_action_multi(
+				    (const action_type_t[]){
+				      ACTION_CANCEL, ACTION_NAV_BACK}, 2);
       break;
     case 127:        e = event_create_action(ACTION_DELETE);
       break;
