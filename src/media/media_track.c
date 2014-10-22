@@ -320,7 +320,7 @@ mtm_add_track(media_track_mgr_t *mtm, prop_t *root, media_track_t *before)
 
   prop_tag_set(root, mtm, mt);
   mt->mt_mtm = mtm;
-  mt->mt_root = root;
+  mt->mt_root = prop_ref_inc(root);
 
   mt->mt_isolang_score = -1;
   mt->mt_basescore = -1;
@@ -390,6 +390,7 @@ mt_destroy(media_track_mgr_t *mtm, media_track_t *mt)
   prop_unsubscribe(mt->mt_sub_basescore);
   prop_unsubscribe(mt->mt_sub_autosel);
   free(mt->mt_url);
+  prop_ref_dec(mt->mt_root);
   free(mt);
 }
 
