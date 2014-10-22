@@ -498,7 +498,7 @@ mp_track_mgr_init(media_pipe_t *mp, media_track_mgr_t *mtm, prop_t *root,
   mtm->mtm_type = type;
 
   mtm->mtm_node_sub =
-    prop_subscribe(PROP_SUB_DEBUG,
+    prop_subscribe(0,
 		   PROP_TAG_CALLBACK, mtm_update_tracks, mtm,
                    PROP_TAG_LOCKMGR, mp_lockmgr,
                    PROP_TAG_MUTEX, mp,
