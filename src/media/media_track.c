@@ -448,6 +448,7 @@ mtm_update_tracks(void *opaque, prop_event_t event, ...)
 
   case PROP_SET_VOID:
     mtm_clear(mtm);
+    mtm_rethink(mtm);
     break;
 
   default:

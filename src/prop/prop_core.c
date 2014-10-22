@@ -2244,10 +2244,21 @@ static void
 prop_destroy_childs0(prop_t *p)
 {
   prop_t *c, *next;
-  for(c = TAILQ_FIRST(&p->hp_childs); c != NULL; c = next) {
+
+  struct prop_queue childs;
+  TAILQ_MOVE(&childs, &p->hp_childs, hp_parent_link);
+  TAILQ_INIT(&p->hp_childs);
+
+  p->hp_type = PROP_VOID;
+  p->hp_selected = NULL;
+  prop_notify_value(p, NULL, "prop_destroy_childs0()", 0);
+
+  for(c = TAILQ_FIRST(&childs); c != NULL; c = next) {
     next = TAILQ_NEXT(c, hp_parent_link);
-    prop_destroy_child(p, c);
+    c->hp_parent = NULL;
+    prop_destroy0(c);
   }
+
 }
 
 
