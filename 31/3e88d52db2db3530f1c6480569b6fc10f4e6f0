@@ -1,0 +1,8 @@
+Change how volume controllers work.
+
+Add 'Master Volume' control to popup menus.
+Up/Down during video playback will only adjust per-file volume
+
+Thus it's now possible to adjust Master volume also when playing music.
+
+Fixes #2194
