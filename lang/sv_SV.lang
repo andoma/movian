@@ -146,8 +146,7 @@ msg: Videoinställningar
 # ./glwskins/default/loading.view
 #
 id: Bitrate: %d kb/s
-# Missing translation
-msg: 
+msg: Hastighet: %d kb/s
 
 #
 # ./glwskins/default/log.view
@@ -397,8 +396,7 @@ msg: Verifierar %s
 # ./glwskins/default/pages/video.view
 #
 id: Audio volume adjustment: %d dB
-# Missing translation
-msg: 
+msg: Ljudvolumjustering: %d dB
 
 id: CPU is too slow to decode this video
 msg: CPUn är för långsam för att spela upp videon
@@ -449,8 +447,7 @@ id: GPU Temp
 msg: GPU Temp
 
 id: HDD Avail
-# Missing translation
-msg: 
+msg: Hårddisk tillgängligt
 
 id: Inactive mem
 msg: Inaktivt minne
@@ -603,61 +600,49 @@ msg: Typ av testsignal
 # ./src/backend/bittorrent/bt_backend.c
 #
 id: No files in torrent
-# Missing translation
-msg: 
+msg: Inga filer i svärmen
 
 id: Unable to load torrent: %s
-# Missing translation
-msg: 
+msg: Kan ej ladda svärmen: %s
 
 id: Unable to open torrent: %s
-# Missing translation
-msg: 
+msg: Kan ej öppna svärmen: %s
 
 id: Unable to parse torrent: %s
-# Missing translation
-msg: 
+msg: Kan ej avkoda svärmen: %s
 
 #
 # ./src/backend/bittorrent/diskio.c
 #
 id: Cached torrents use %d MB out of allowed %d MB. Total free space on volume: %d MB
-# Missing translation
-msg: 
+msg: Sparade svärmar använder %d MB av tillåtna %d MB. Totalt fritt utrymme på volymen: %d MB
 
 #
 # ./src/backend/bittorrent/magnet.c
 #
 id: Invalid SHA-1 hash: %s
-# Missing translation
-msg: 
+msg: Felaktig SAH-1 hash: %s
 
 id: No 'xt' in magnet link
-# Missing translation
-msg: 
+msg: Ingen 'xt' i magnet-länk
 
 id: Unknown hash scheme: %s
-# Missing translation
-msg: 
+msg: Okänt hash-schema: %s
 
 #
 # ./src/backend/bittorrent/torrent_settings.c
 #
 id: Enable bittorrent
-# Missing translation
-msg: 
+msg: Använd svärmar
 
 id: Max usage of free space for caching torrents
-# Missing translation
-msg: 
+msg: Maximalt utrymme för att spara svärmar
 
 id: Status
-# Missing translation
-msg: 
+msg: Status
 
 id: Torrent cache path
-# Missing translation
-msg: 
+msg: Sökväg för sparade svärmar
 
 #
 # ./src/backend/dvd/cdda.c
@@ -777,8 +762,7 @@ id: Can't handle content type %d
 msg: Kan inte hantera fil innehåll av typen %d
 
 id: Checking file contents
-# Missing translation
-msg: 
+msg: Kontrollerar filens innehåll
 
 id: Unable to open file: %s
 msg: Kan ej öppna fil: %s
@@ -853,8 +837,7 @@ id: Are you sure you want to delete:
 msg: Är du säker att du vill ta bort:
 
 id: BitTorrent
-# Missing translation
-msg: 
+msg: BitTorrent
 
 id: Enable file deletion from item menu
 msg: Tillåt borttagning av filer från menyn
@@ -1568,8 +1551,7 @@ id: Enable VDPAU
 msg: Aktivera VDPAU
 
 id: Master volume
-# Missing translation
-msg: 
+msg: Huvudvolym
 
 id: Maximum resolution for deinterlacer
 msg: Maximal upplösning för deinterlacing
@@ -1578,8 +1560,7 @@ id: No limit
 msg: Ingen begränsning
 
 id: Per-file volume
-# Missing translation
-msg: 
+msg: Volym per fil
 
 id: Preferred VDPAU deinterlacer method
 msg: Föredragen metod för VDPAU deinterlacing
@@ -1594,8 +1575,7 @@ id: Temporal/Spatial
 msg: Temporär/Spatiell
 
 id: Up / Down during video playback controls
-# Missing translation
-msg: 
+msg: Up / Ner när video spelas
 
 id: Video acceleration and display behaviour
 msg: Videoacceleration och inställningar för videopresentation
