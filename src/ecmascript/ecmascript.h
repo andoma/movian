@@ -205,6 +205,7 @@ extern const duk_function_list_entry fnlist_Showtime_route[];
 extern const duk_function_list_entry fnlist_Showtime_hook[];
 extern const duk_function_list_entry fnlist_Showtime_prop[];
 extern const duk_function_list_entry fnlist_Showtime_io[];
+extern const duk_function_list_entry fnlist_Showtime_fs[];
 extern const duk_function_list_entry fnlist_Showtime_string[];
 extern const duk_function_list_entry fnlist_Showtime_htsmsg[];
 extern const duk_function_list_entry fnlist_Showtime_metadata[];
