@@ -33,6 +33,7 @@ typedef struct es_context {
   LIST_ENTRY(es_context) ec_link;
   char *ec_id;
   char *ec_path;
+  char *ec_storage;
 
   int ec_linked;
 

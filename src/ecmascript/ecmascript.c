@@ -421,7 +421,7 @@ es_mem_free(void *udata, void *ptr)
  *
  */
 static es_context_t *
-es_context_create(void)
+es_context_create(const char *id)
 {
   es_context_t *ec = calloc(1, sizeof(es_context_t));
   hts_mutex_init(&ec->ec_mutex);
@@ -431,6 +431,14 @@ es_context_create(void)
                                ec, NULL);
 
   es_create_env(ec);
+
+  ec->ec_id = strdup(id);
+
+  hts_mutex_lock(&es_context_mutex);
+  es_num_contexts++;
+  ec->ec_linked = 1;
+  LIST_INSERT_HEAD(&es_contexts, ec, ec_link);
+  hts_mutex_unlock(&es_context_mutex);
 
   return ec;
 }
@@ -449,6 +457,7 @@ es_context_release(es_context_t *ec)
   TRACE(TRACE_DEBUG, "ECMASCRIPT", "%s fully unloaded", ec->ec_id);
   free(ec->ec_id);
   free(ec->ec_path);
+  free(ec->ec_storage);
 
   if(ec->ec_linked) {
     hts_mutex_lock(&es_context_mutex);
@@ -586,7 +595,8 @@ ecmascript_plugin_load(const char *id, const char *url,
                        char *errbuf, size_t errlen,
                        int version)
 {
-  es_context_t *ec = es_context_create();
+  char path[PATH_MAX];
+  es_context_t *ec = es_context_create(id);
 
   es_context_begin(ec);
 
@@ -602,24 +612,19 @@ ecmascript_plugin_load(const char *id, const char *url,
   duk_push_string(ctx, url);
   duk_put_prop_string(ctx, plugin_obj_idx, "url");
 
-  char parent[PATH_MAX];
-  if(!fa_parent(parent, sizeof(parent), url)) {
-    duk_push_string(ctx, parent);
+  if(!fa_parent(path, sizeof(path), url)) {
+    duk_push_string(ctx, path);
     duk_put_prop_string(ctx, plugin_obj_idx, "path");
-    ec->ec_path = strdup(parent);
+    ec->ec_path = strdup(path);
   }
+
+  snprintf(path, sizeof(path), "file://%s/plugins/%s",
+           gconf.persistent_path, ec->ec_id);
+  ec->ec_storage = strdup(path);
 
   duk_put_prop_string(ctx, -2, "Plugin");
 
   duk_pop(ctx);
-
-  ec->ec_id = strdup(id);
-
-  hts_mutex_lock(&es_context_mutex);
-  es_num_contexts++;
-  LIST_INSERT_HEAD(&es_contexts, ec, ec_link);
-  ec->ec_linked = 1;
-  hts_mutex_unlock(&es_context_mutex);
 
   if(version == 1) {
     es_exec(ec, "dataroot://resources/ecmascript/legacy/api-v1.js");
@@ -712,16 +717,10 @@ ecmascript_init(void)
   if(gconf.load_ecmascript == NULL)
     return;
 
-  es_context_t *ec = es_context_create();
+  es_context_t *ec = es_context_create("cmdline");
   es_context_begin(ec);
 
-  ec->ec_id = strdup("cmdline");
-
-  hts_mutex_lock(&es_context_mutex);
-  es_num_contexts++;
-  ec->ec_linked = 1;
-  LIST_INSERT_HEAD(&es_contexts, ec, ec_link);
-  hts_mutex_unlock(&es_context_mutex);
+  ec->ec_storage = strdup("/tmp");
 
   es_exec(ec, gconf.load_ecmascript);
 

@@ -75,15 +75,13 @@ es_sqlite_create(duk_context *ctx)
 
   // Create the db-dir for this plugin
 
-  snprintf(path, sizeof(path), "file://%s/plugins/%s/databases",
-           gconf.persistent_path, ec->ec_id);
+  snprintf(path, sizeof(path), "%s/databases", ec->ec_storage);
 
   if(fa_makedirs(path, errbuf, sizeof(errbuf)))
     duk_error(ctx, DUK_ERR_ERROR, "Unable to create directory %s -- %s",
               path, errbuf);
 
-  snprintf(path, sizeof(path), "%s/plugins/%s/databases/%s",
-           gconf.persistent_path, ec->ec_id, name);
+  snprintf(path, sizeof(path), "%s/databases/%s", ec->ec_storage, name);
 
   sqlite3 *db = db_open(path, 0);
   if(db == NULL)
