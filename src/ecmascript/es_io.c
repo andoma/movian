@@ -278,14 +278,17 @@ es_http_req(duk_context *ctx)
     duk_enum(ctx, -1, 0);
 
     while(duk_next(ctx, -1, 1)) {
-      const char *k = duk_safe_to_string(ctx, -2);
-      const char *v = duk_safe_to_string(ctx, -1);
+      if(duk_is_object_coercible(ctx, -1)) {
+        const char *k = duk_safe_to_string(ctx, -2);
+        const char *v = duk_safe_to_string(ctx, -1);
 
-      if(prefix)
-        htsbuf_append(ehr->ehr_postdata, prefix, strlen(prefix));
-      htsbuf_append_and_escape_url(ehr->ehr_postdata, k);
-      htsbuf_append(ehr->ehr_postdata, "=", 1);
-      htsbuf_append_and_escape_url(ehr->ehr_postdata, v);
+        if(prefix)
+          htsbuf_append(ehr->ehr_postdata, prefix, strlen(prefix));
+        htsbuf_append_and_escape_url(ehr->ehr_postdata, k);
+        htsbuf_append(ehr->ehr_postdata, "=", 1);
+        htsbuf_append_and_escape_url(ehr->ehr_postdata, v);
+        prefix="&";
+      }
       duk_pop_2(ctx);
     }
     duk_pop(ctx); // Pop iterator
