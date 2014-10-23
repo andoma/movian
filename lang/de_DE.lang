@@ -2,25 +2,6 @@ language: German
 native: Deutsch
 maintainer: Maximilian Jänsch <showtime@jaensch-koloska.de>
 #
-# ./ext/miner/miner.c
-#
-id: Do you like Showtime? You can donate money to the project by mining Litecoins on your PS3
-# Missing translation
-msg: Gefällt Dir Showtime? Spende, indem Du Litecoins auf deiner PS3 förderst
-
-id: Donate money to the Showtime project by mining litecoints
-# Missing translation
-msg: Spende Geld durch fördern von Litecoins
-
-id: Donations
-# Missing translation
-msg: Spenden
-
-id: Show me more
-# Missing translation
-msg: Zeig mir mehr
-
-#
 # ./glwskins/default/cmdmenu.view
 #
 id: Add current page to bookmarks
@@ -48,7 +29,6 @@ id: Go to Home screen
 msg: Zum Hauptmenü
 
 id: Hide system info
-# Missing translation
 msg: Systeminfo verbergen
 
 id: Navigation
@@ -67,7 +47,6 @@ id: Reload current page
 msg: Aktuelle Seite neuladen
 
 id: Show system info
-# Missing translation
 msg: Systeminfo anzeigen
 
 id: Suspend
@@ -164,6 +143,13 @@ id: Video settings
 msg: Videoeinstellungen
 
 #
+# ./glwskins/default/loading.view
+#
+id: Bitrate: %d kb/s
+# Missing translation
+msg: 
+
+#
 # ./glwskins/default/log.view
 #
 id: System log
@@ -176,14 +162,12 @@ id: Cancel
 msg: Abbrechen
 
 id: Clear
-# Missing translation
 msg: Leeren
 
 id: Default
 msg: Standard
 
 id: Keyboard layout:
-# Missing translation
 msg: Tastenanordnung
 
 id: OK
@@ -412,18 +396,15 @@ msg: Prüfe %s
 #
 # ./glwskins/default/pages/video.view
 #
+id: Audio volume adjustment: %d dB
+# Missing translation
+msg: 
+
 id: CPU is too slow to decode this video
 msg: CPU ist zu langsam um das Video zu dekodieren
 
 id: Playback status
 msg: Wiedergabestatus
-
-#
-# ./glwskins/default/pages/wideinfo/video.view
-#
-id: Seen:
-# Missing translation
-msg: Gesehen:
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -462,14 +443,16 @@ id: CPU Temp
 msg: CPU Temperatur
 
 id: Fragmentation
-# Missing translation
 msg: Fragmentierung
 
 id: GPU Temp
 msg: GPU Temperatur
 
-id: Inactive mem
+id: HDD Avail
 # Missing translation
+msg: 
+
+id: Inactive mem
 msg: Inaktiver Speicher
 
 id: Memory usage
@@ -491,37 +474,6 @@ id: Master volume: %d dB
 msg: Lautstärke: %d dB
 
 #
-# ./resources/spuminer/settings.view
-#
-id: Apart from enabling this option you do not need to do anything else to make your donations for the project.
-# Missing translation
-msg: Außer diese Option zu aktivieren, brauchst Du nichts zu tun um zu Spenden.
-
-id: Enable mining
-# Missing translation
-msg: Fördern aktivieren
-
-id: For more information about Litecoin, please visit http://litecoin.org
-# Missing translation
-msg: Für mehr Informationen über Litecoin schau auf http://litecoin.org
-
-id: If you like Showtime you can donate money to the project by letting your Playstation 3 mine Litecoins while Showtime is running.
-# Missing translation
-msg: Wenn du Showtime magst, kannst Du spenden. Lass Deine PS3 Litecoins fördern während Showtime läuft.
-
-id: Mining will not interfere with video playback performance as it only uses the leftover capacity of the SPU processors.
-# Missing translation
-msg: Das Fördern wird die Videowiedergabe nicht beeinträchtigen. Es werden nur ungenutzte Kapazitäten der SPU genutzt.
-
-id: Please consider enabling this option. / %s
-# Missing translation
-msg: Bitte überleg Dir diese Möglichkeit zu nutzen. / %s
-
-id: Thanks for your support!
-# Missing translation
-msg: Danke für Deine Unterstützung!
-
-#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -531,24 +483,51 @@ id: Use original title
 msg: Originaltitel benutzen
 
 #
+# ./src/arch/linux/pulseaudio.c
+#
+id: Unable to initialize audio system %s -- %s
+msg: Kann Audiosystem %s -- %s nicht initialisieren
+
+#
 # ./src/arch/ps3/ps3_main.c
 #
 id: System is low on memory (%d kB RAM available)
 msg: Speicher ist knapp (%d kb RAM verfügbar)
 
 #
+# ./src/arch/ps3/ps3_vdec.c
+#
+id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
+msg: Cell-h264: %d Ref-Bilder für 1080 Inhalte ist nicht kompatibel mit dem PS3-Dekoder, Beschleunigung deaktiviert.
+
+id: Cell-h264: Broken headers, Disabling acceleration
+msg: Cell-h264: Kaputter Header, Beschleunigung deaktiviert.
+
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+msg: Cell-h264: Erzwinge Level 4.2 für Level %d.%d Inhalt, \nkann zu Wiedergabeproblemen führen.
+
+id: Unable to accelerate %s, library not loaded.
+msg: Kann %s nicht beschleunigen, Bibliothek nicht geladen.
+
+id: Unable to open Cell codec. Error 0x%x
+msg: Kann Cell-Codec nicht öffnen. Fehler 0x%x.
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+msg: Kann Cell-Codec nicht öfffnen. \nKann keine %d Bytes Speicher zuweisen.
+
+id: Unable to query Cell codec. Error 0x%x
+msg: Kann Cell-Codec nicht abfragen. Fehler 0x%x
+
+#
 # ./src/arch/rpi/rpi_audio.c
 #
 id: Analog
-# Missing translation
 msg: Analog
 
 id: Audio output port
-# Missing translation
 msg: Audioausgang
 
 id: HDMI
-# Missing translation
 msg: HDMI
 
 #
@@ -567,81 +546,118 @@ id: Audio delay
 msg: Audioverzögerung
 
 id: Audio gain adjustment during video playback
-# Missing translation
 msg: Lautstärke anpassen während der Videowiedergabe
 
 id: Audio settings during video playback
-# Missing translation
 msg: Toneinstellungen während Videowiedergabe
 
 id: Setup audio output
-# Missing translation
 msg: Audioausgang einstellen
 
 #
 # ./src/audio2/audio_test.c
 #
 id: 440Hz sinewave -12dB
-# Missing translation
 msg: 440Hz Sinuwelle -12dB
 
 id: Audio test
-# Missing translation
 msg: Ton Test
 
 id: Center
 msg: Zentriert
 
 id: Front Left
-# Missing translation
 msg: Vorne Links
 
 id: Front Right
-# Missing translation
 msg: Vorne Rechts
 
 id: LFE
-# Missing translation
 msg: LFE
 
 id: Pink noise
-# Missing translation
 msg: Rosarauschen
 
 id: Play test signal
-# Missing translation
 msg: Testsignal abspielen
 
 id: Rear Left
-# Missing translation
 msg: Hinten Links
 
 id: Rear Right
-# Missing translation
 msg: Hinten Rechts
 
 id: Speaker position
-# Missing translation
 msg: Lautsprecher Position
 
 id: Surround Left
-# Missing translation
 msg: Surround Links
 
 id: Surround Right
-# Missing translation
 msg: Surround Right
 
 id: Test signal type
-# Missing translation
 msg: Test Signal Typ
 
 #
-# ./src/audio2/pulseaudio.c
+# ./src/backend/bittorrent/bt_backend.c
 #
-id: Unable to initialize audio system %s -- %s
+id: No files in torrent
 # Missing translation
-msg: Kann Audiosystem %s -- %s nicht initialisieren
+msg: 
+
+id: Unable to load torrent: %s
+# Missing translation
+msg: 
+
+id: Unable to open torrent: %s
+# Missing translation
+msg: 
+
+id: Unable to parse torrent: %s
+# Missing translation
+msg: 
+
+#
+# ./src/backend/bittorrent/diskio.c
+#
+id: Cached torrents use %d MB out of allowed %d MB. Total free space on volume: %d MB
+# Missing translation
+msg: 
+
+#
+# ./src/backend/bittorrent/magnet.c
+#
+id: Invalid SHA-1 hash: %s
+# Missing translation
+msg: 
+
+id: No 'xt' in magnet link
+# Missing translation
+msg: 
+
+id: Unknown hash scheme: %s
+# Missing translation
+msg: 
+
+#
+# ./src/backend/bittorrent/torrent_settings.c
+#
+id: Enable bittorrent
+# Missing translation
+msg: 
+
+id: Max usage of free space for caching torrents
+# Missing translation
+msg: 
+
+id: Status
+# Missing translation
+msg: 
+
+id: Torrent cache path
+# Missing translation
+msg: 
 
 #
 # ./src/backend/dvd/cdda.c
@@ -760,6 +776,10 @@ msg: Cache leeren
 id: Can't handle content type %d
 msg: Kann Inhalt %D nicht verarbeiten
 
+id: Checking file contents
+# Missing translation
+msg: 
+
 id: Unable to open file: %s
 msg: Kann Datei: %d nicht öffnen
 
@@ -832,19 +852,20 @@ msg: Suchen per Spotlight
 id: Are you sure you want to delete:
 msg: Wirklich löschen:
 
+id: BitTorrent
+# Missing translation
+msg: 
+
 id: Enable file deletion from item menu
 msg: Aktiviere Löschmöglichkeit im Menü
 
 id: File browsing
-# Missing translation
 msg: Dateien durchsuchen
 
 id: Show filename extensions
-# Missing translation
 msg: Dateierweiterungen anzeigen
 
 id: Store per-file settings in filesystem
-# Missing translation
 msg: Dateieinstellungen im Dateisystem speichern
 
 id: %d archive parts
@@ -923,7 +944,7 @@ id: Rembered passwords erased
 msg: Gespeicherte Passwörter gelöscht
 
 #
-# ./src/media.c
+# ./src/media/media_settings.c
 #
 id: Align subtitles on video frame
 msg: Untertitel im Bild anzeigen
@@ -935,15 +956,12 @@ id: Go to standby after video ends
 msg: Nach Filmende in Standby gehen
 
 id: Reset defaults for folder '%s'
-# Missing translation
 msg: Standards für Ordner '%s' wieder herstellen
 
 id: Save as defaults for folder '%s'
-# Missing translation
 msg: Als Standard für Ordner '%s' festlegen
 
 id: Save as global default
-# Missing translation
 msg: Als globalen Standard speichern
 
 id: Stretch video to fullscreen
@@ -965,7 +983,6 @@ id: Subtitle vertical displacement
 msg: Vertikale Untertitelverschiebung
 
 id: Video frame interpolation
-# Missing translation
 msg: Bildraten Interpolation 
 
 id: Video zoom
@@ -1221,7 +1238,6 @@ id: Not upgradable
 msg: nicht updatebar
 
 id: On Screen Keyboards
-# Missing translation
 msg: Bildschirmtastatur
 
 id: Online TV
@@ -1537,32 +1553,6 @@ id: Service not found
 msg: Service nicht gefunden
 
 #
-# ./src/video/ps3_vdec.c
-#
-id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
-# Missing translation
-msg: Cell-h264: %d Ref-Bilder für 1080 Inhalte ist nicht kompatibel mit dem PS3-Dekoder, Beschleunigung deaktiviert.
-
-id: Cell-h264: Broken headers, Disabling acceleration
-# Missing translation
-msg: Cell-h264: Kaputter Header, Beschleunigung deaktiviert.
-
-id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
-msg: Cell-h264: Erzwinge Level 4.2 für Level %d.%d Inhalt, \nkann zu Wiedergabeproblemen führen.
-
-id: Unable to accelerate %s, library not loaded.
-msg: Kann %s nicht beschleunigen, Bibliothek nicht geladen.
-
-id: Unable to open Cell codec. Error 0x%x
-msg: Kann Cell-Codec nicht öffnen. Fehler 0x%x.
-
-id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
-msg: Kann Cell-Codec nicht öfffnen. \nKann keine %d Bytes Speicher zuweisen.
-
-id: Unable to query Cell codec. Error 0x%x
-msg: Kann Cell-Codec nicht abfragen. Fehler 0x%x
-
-#
 # ./src/video/video_settings.c
 #
 id: Automatically play next video in list
@@ -1577,11 +1567,19 @@ msg: VDA aktivieren
 id: Enable VDPAU
 msg: VDPAU aktivieren
 
+id: Master volume
+# Missing translation
+msg: 
+
 id: Maximum resolution for deinterlacer
 msg: Maximale Auflösung für Deinterlacer
 
 id: No limit
 msg: Keine Begrenzung
+
+id: Per-file volume
+# Missing translation
+msg: 
 
 id: Preferred VDPAU deinterlacer method
 msg: Bevorzugte VDPAU Deinterlacer-Methode
@@ -1594,6 +1592,10 @@ msg: Temporal
 
 id: Temporal/Spatial
 msg: Temporal/Spatial
+
+id: Up / Down during video playback controls
+# Missing translation
+msg: 
 
 id: Video acceleration and display behaviour
 msg: Videobeschleunigungs- und Wiedergabeeinstellungen

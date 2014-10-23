@@ -2,21 +2,6 @@ language: Polish
 native: Polski
 maintainer: Cichy <ml.cichy@gmail.com>
 #
-# ./ext/miner/miner.c
-#
-id: Do you like Showtime? You can donate money to the project by mining Litecoins on your PS3
-msg: Lubisz Showtime'a? Wspomóż go poprzez wydobywanie Litecoinów na swoim PS3
-
-id: Donate money to the Showtime project by mining litecoints
-msg: Wspomóż projekt poprzez wydobywanie Litecoinów
-
-id: Donations
-msg: Dotacje
-
-id: Show me more
-msg: Pokaż więcej
-
-#
 # ./glwskins/default/cmdmenu.view
 #
 id: Add current page to bookmarks
@@ -158,6 +143,13 @@ msg: Menu Video
 
 id: Video settings
 msg: Ustawienia Video
+
+#
+# ./glwskins/default/loading.view
+#
+id: Bitrate: %d kb/s
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/log.view
@@ -408,18 +400,15 @@ msg: Weryfikowanie %s
 #
 # ./glwskins/default/pages/video.view
 #
+id: Audio volume adjustment: %d dB
+# Missing translation
+msg: 
+
 id: CPU is too slow to decode this video
 msg: Procesor jest zbyt wolny by dekodować te Video
 
 id: Playback status
 msg: Status odtwarzania
-
-#
-# ./glwskins/default/pages/wideinfo/video.view
-#
-id: Seen:
-# Missing translation
-msg: 
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -463,6 +452,10 @@ msg: Fragmentacja
 id: GPU Temp
 msg: Temp. GPU
 
+id: HDD Avail
+# Missing translation
+msg: 
+
 id: Inactive mem
 msg: Nieaktywna pamięć
 
@@ -485,30 +478,6 @@ id: Master volume: %d dB
 msg: Głośność: %d dB
 
 #
-# ./resources/spuminer/settings.view
-#
-id: Apart from enabling this option you do not need to do anything else to make your donations for the project.
-msg: Nie musisz nic robić po włączeniu tej opcji, aby wspomóc projekt
-
-id: Enable mining
-msg: Włącz wydobywanie
-
-id: For more information about Litecoin, please visit http://litecoin.org
-msg: Więcej informacji o Litecoinie na stronie http://litecoin.org
-
-id: If you like Showtime you can donate money to the project by letting your Playstation 3 mine Litecoins while Showtime is running.
-msg: Jeśli lubisz Showtime'a wspomóż projekt zezwalając na wydobywanie Litecoinów przez Playstation 3 w trakcie używania programu
-
-id: Mining will not interfere with video playback performance as it only uses the leftover capacity of the SPU processors.
-msg: Wydobywanie nie obciąży systemu w trakcie odtwarzania ponieważ używa tylko szczątkowych możliwości SPU
-
-id: Please consider enabling this option. / %s
-msg: Weź pod uwagę włączenie Tej opcji. / %s
-
-id: Thanks for your support!
-msg: Dziękuję za wsparcie!
-
-#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -518,10 +487,43 @@ id: Use original title
 msg: Użyj oryginalnego tytułu
 
 #
+# ./src/arch/linux/pulseaudio.c
+#
+id: Unable to initialize audio system %s -- %s
+# Missing translation
+msg: 
+
+#
 # ./src/arch/ps3/ps3_main.c
 #
 id: System is low on memory (%d kB RAM available)
 msg: Mała ilość dostępnej pamięci (dostępne %d kB RAM)
+
+#
+# ./src/arch/ps3/ps3_vdec.c
+#
+id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
+# Missing translation
+msg: 
+
+id: Cell-h264: Broken headers, Disabling acceleration
+# Missing translation
+msg: 
+
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+msg: Cell-h264: Wymuszenie poziomu 4.2 dla poziomu %d.%d. Możliwe problemy z odtworzeniem Video
+
+id: Unable to accelerate %s, library not loaded.
+msg: Brak przyspieszenia dla %s, biblioteka nie załadowana
+
+id: Unable to open Cell codec. Error 0x%x
+msg: Nie można uruchomić kodeka Cell. Błąd 0x%x
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+msg: Nie można uruchomić kodeka Cell. Nie można przydzielić %d bajtów RAM
+
+id: Unable to query Cell codec. Error 0x%x
+msg: Błąd sprawdzania kodeka Cell. Błąd 0x%x
 
 #
 # ./src/arch/rpi/rpi_audio.c
@@ -624,9 +626,62 @@ id: Test signal type
 msg: 
 
 #
-# ./src/audio2/pulseaudio.c
+# ./src/backend/bittorrent/bt_backend.c
 #
-id: Unable to initialize audio system %s -- %s
+id: No files in torrent
+# Missing translation
+msg: 
+
+id: Unable to load torrent: %s
+# Missing translation
+msg: 
+
+id: Unable to open torrent: %s
+# Missing translation
+msg: 
+
+id: Unable to parse torrent: %s
+# Missing translation
+msg: 
+
+#
+# ./src/backend/bittorrent/diskio.c
+#
+id: Cached torrents use %d MB out of allowed %d MB. Total free space on volume: %d MB
+# Missing translation
+msg: 
+
+#
+# ./src/backend/bittorrent/magnet.c
+#
+id: Invalid SHA-1 hash: %s
+# Missing translation
+msg: 
+
+id: No 'xt' in magnet link
+# Missing translation
+msg: 
+
+id: Unknown hash scheme: %s
+# Missing translation
+msg: 
+
+#
+# ./src/backend/bittorrent/torrent_settings.c
+#
+id: Enable bittorrent
+# Missing translation
+msg: 
+
+id: Max usage of free space for caching torrents
+# Missing translation
+msg: 
+
+id: Status
+# Missing translation
+msg: 
+
+id: Torrent cache path
 # Missing translation
 msg: 
 
@@ -747,6 +802,10 @@ msg: Wyczyść pamięć podręczną
 id: Can't handle content type %d
 msg: Nieobsługiwana zawartość: %d
 
+id: Checking file contents
+# Missing translation
+msg: 
+
 id: Unable to open file: %s
 msg: Nie można otworzyć pliku: %s
 
@@ -818,6 +877,10 @@ msg: Szukaj używając spotlight
 #
 id: Are you sure you want to delete:
 msg: Czy na pewno chcesz usunąć:
+
+id: BitTorrent
+# Missing translation
+msg: 
 
 id: Enable file deletion from item menu
 msg: Włącz opcję usuwania pliku w menu
@@ -908,7 +971,7 @@ id: Rembered passwords erased
 msg: Usunięto zapamiętane hasła
 
 #
-# ./src/media.c
+# ./src/media/media_settings.c
 #
 id: Align subtitles on video frame
 msg: Dopasuj napisy
@@ -1522,32 +1585,6 @@ id: Service not found
 msg: Nie znaleziono usługi
 
 #
-# ./src/video/ps3_vdec.c
-#
-id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
-# Missing translation
-msg: 
-
-id: Cell-h264: Broken headers, Disabling acceleration
-# Missing translation
-msg: 
-
-id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
-msg: Cell-h264: Wymuszenie poziomu 4.2 dla poziomu %d.%d. Możliwe problemy z odtworzeniem Video
-
-id: Unable to accelerate %s, library not loaded.
-msg: Brak przyspieszenia dla %s, biblioteka nie załadowana
-
-id: Unable to open Cell codec. Error 0x%x
-msg: Nie można uruchomić kodeka Cell. Błąd 0x%x
-
-id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
-msg: Nie można uruchomić kodeka Cell. Nie można przydzielić %d bajtów RAM
-
-id: Unable to query Cell codec. Error 0x%x
-msg: Błąd sprawdzania kodeka Cell. Błąd 0x%x
-
-#
 # ./src/video/video_settings.c
 #
 id: Automatically play next video in list
@@ -1562,11 +1599,19 @@ msg: Włącz VDA
 id: Enable VDPAU
 msg: Włącz VDPAU
 
+id: Master volume
+# Missing translation
+msg: 
+
 id: Maximum resolution for deinterlacer
 msg: Maks. rozdzielczość przy usuwaniu przeplotu
 
 id: No limit
 msg: Bez limitu
+
+id: Per-file volume
+# Missing translation
+msg: 
 
 id: Preferred VDPAU deinterlacer method
 msg: Preferowana metoda usuwania przeplotu dla VDPAU
@@ -1579,6 +1624,10 @@ msg: Czasowy
 
 id: Temporal/Spatial
 msg: Czasowy/przestrzenny
+
+id: Up / Down during video playback controls
+# Missing translation
+msg: 
 
 id: Video acceleration and display behaviour
 msg: Akceleracja Video i zachowanie wyświetlacza

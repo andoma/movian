@@ -2,21 +2,6 @@
 native: 简体中文
 maintainer: Rural Hunter<ruralhunter@gmail.com>
 #
-# ./ext/miner/miner.c
-#
-id: Do you like Showtime? You can donate money to the project by mining Litecoins on your PS3
-msg: 您喜欢Showtime吗？可以利用PS3的计算能力挖莱特币来帮助这个项目哦
-
-id: Donate money to the Showtime project by mining litecoints
-msg: 挖莱特币捐献给Showtime
-
-id: Donations
-msg: 捐献
-
-id: Show me more
-msg: 显示更多
-
-#
 # ./glwskins/default/cmdmenu.view
 #
 id: Add current page to bookmarks
@@ -156,6 +141,13 @@ msg: 视频菜单
 
 id: Video settings
 msg: 视频设置
+
+#
+# ./glwskins/default/loading.view
+#
+id: Bitrate: %d kb/s
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/log.view
@@ -404,17 +396,15 @@ msg: 正在验证%s
 #
 # ./glwskins/default/pages/video.view
 #
+id: Audio volume adjustment: %d dB
+# Missing translation
+msg: 
+
 id: CPU is too slow to decode this video
 msg: 当前视频CPU解码过慢
 
 id: Playback status
 msg: 播放信息
-
-#
-# ./glwskins/default/pages/wideinfo/video.view
-#
-id: Seen:
-msg: 看过：
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -458,6 +448,10 @@ msg: 碎片
 id: GPU Temp
 msg: GPU温度
 
+id: HDD Avail
+# Missing translation
+msg: 
+
 id: Inactive mem
 msg: 不活动内存
 
@@ -480,30 +474,6 @@ id: Master volume: %d dB
 msg: 主音量: %d dB
 
 #
-# ./resources/spuminer/settings.view
-#
-id: Apart from enabling this option you do not need to do anything else to make your donations for the project.
-msg: 给这个项目作贡献，除了启用这个选项外你不许要做任何额外操作。
-
-id: Enable mining
-msg: 启用挖矿
-
-id: For more information about Litecoin, please visit http://litecoin.org
-msg: 想了解更多莱特币的相关信息，请访问http://litecoin.org
-
-id: If you like Showtime you can donate money to the project by letting your Playstation 3 mine Litecoins while Showtime is running.
-msg: 如果你喜欢Showtime，你可以让你的PS3在Showtime运行的时候作为莱特币挖矿机挖矿捐献给这个项目
-
-id: Mining will not interfere with video playback performance as it only uses the leftover capacity of the SPU processors.
-msg: 挖矿不会影响视频播放性能，它只会利用PS3空闲的计算能力。
-
-id: Please consider enabling this option. / %s
-msg: 请考虑启用此选项。/ %s
-
-id: Thanks for your support!
-msg: 感谢您的支持！
-
-#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -513,10 +483,40 @@ id: Use original title
 msg: 使用原标题
 
 #
+# ./src/arch/linux/pulseaudio.c
+#
+id: Unable to initialize audio system %s -- %s
+msg: 无法初始化音频系统%s -- %s
+
+#
 # ./src/arch/ps3/ps3_main.c
 #
 id: System is low on memory (%d kB RAM available)
 msg: 系统内存偏少(%d kB RAM可用)
+
+#
+# ./src/arch/ps3/ps3_vdec.c
+#
+id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
+msg: Cell-h264: PS3硬件不兼容1080p内容的%d帧引用，将禁用硬件加速。
+
+id: Cell-h264: Broken headers, Disabling acceleration
+msg: 头信息破损，将禁用硬件加速。
+
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+msg: Cell-h264: 强制级别%d.%d的内容为级别4.2。可能会影响播放。
+
+id: Unable to accelerate %s, library not loaded.
+msg: 无法加速%s，未载入类库。
+
+id: Unable to open Cell codec. Error 0x%x
+msg: 无法启用Cell解码器，错误码0x%x
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+msg: 无法启用Cell解码器，不能分配%d字节的内存。
+
+id: Unable to query Cell codec. Error 0x%x
+msg: 无法查询Cell解码器，错误码0x%x
 
 #
 # ./src/arch/rpi/rpi_audio.c
@@ -600,10 +600,64 @@ id: Test signal type
 msg: 测试信号类型
 
 #
-# ./src/audio2/pulseaudio.c
+# ./src/backend/bittorrent/bt_backend.c
 #
-id: Unable to initialize audio system %s -- %s
-msg: 无法初始化音频系统%s -- %s
+id: No files in torrent
+# Missing translation
+msg: 
+
+id: Unable to load torrent: %s
+# Missing translation
+msg: 
+
+id: Unable to open torrent: %s
+# Missing translation
+msg: 
+
+id: Unable to parse torrent: %s
+# Missing translation
+msg: 
+
+#
+# ./src/backend/bittorrent/diskio.c
+#
+id: Cached torrents use %d MB out of allowed %d MB. Total free space on volume: %d MB
+# Missing translation
+msg: 
+
+#
+# ./src/backend/bittorrent/magnet.c
+#
+id: Invalid SHA-1 hash: %s
+# Missing translation
+msg: 
+
+id: No 'xt' in magnet link
+# Missing translation
+msg: 
+
+id: Unknown hash scheme: %s
+# Missing translation
+msg: 
+
+#
+# ./src/backend/bittorrent/torrent_settings.c
+#
+id: Enable bittorrent
+# Missing translation
+msg: 
+
+id: Max usage of free space for caching torrents
+# Missing translation
+msg: 
+
+id: Status
+# Missing translation
+msg: 
+
+id: Torrent cache path
+# Missing translation
+msg: 
 
 #
 # ./src/backend/dvd/cdda.c
@@ -722,6 +776,10 @@ msg: 清空缓存文件
 id: Can't handle content type %d
 msg: 无法处理内容类型%d
 
+id: Checking file contents
+# Missing translation
+msg: 
+
 id: Unable to open file: %s
 msg: 无法打开文件%s
 
@@ -793,6 +851,10 @@ msg: 使用spotlight搜索
 #
 id: Are you sure you want to delete:
 msg: 是否确定要删除：
+
+id: BitTorrent
+# Missing translation
+msg: 
 
 id: Enable file deletion from item menu
 msg: 启用文件删除功能
@@ -882,7 +944,7 @@ id: Rembered passwords erased
 msg: 记住已删除密码
 
 #
-# ./src/media.c
+# ./src/media/media_settings.c
 #
 id: Align subtitles on video frame
 msg: 字幕显示在视频帧内
@@ -1491,30 +1553,6 @@ id: Service not found
 msg: 未发现服务
 
 #
-# ./src/video/ps3_vdec.c
-#
-id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
-msg: Cell-h264: PS3硬件不兼容1080p内容的%d帧引用，将禁用硬件加速。
-
-id: Cell-h264: Broken headers, Disabling acceleration
-msg: 头信息破损，将禁用硬件加速。
-
-id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
-msg: Cell-h264: 强制级别%d.%d的内容为级别4.2。可能会影响播放。
-
-id: Unable to accelerate %s, library not loaded.
-msg: 无法加速%s，未载入类库。
-
-id: Unable to open Cell codec. Error 0x%x
-msg: 无法启用Cell解码器，错误码0x%x
-
-id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
-msg: 无法启用Cell解码器，不能分配%d字节的内存。
-
-id: Unable to query Cell codec. Error 0x%x
-msg: 无法查询Cell解码器，错误码0x%x
-
-#
 # ./src/video/video_settings.c
 #
 id: Automatically play next video in list
@@ -1529,11 +1567,19 @@ msg: 启用VDA
 id: Enable VDPAU
 msg: 启用VDPAU
 
+id: Master volume
+# Missing translation
+msg: 
+
 id: Maximum resolution for deinterlacer
 msg: 去隔行化使用最大可能的分辨率
 
 id: No limit
 msg: 无限制
+
+id: Per-file volume
+# Missing translation
+msg: 
 
 id: Preferred VDPAU deinterlacer method
 msg: 优先使用VDPAU去隔行化方式
@@ -1546,6 +1592,10 @@ msg: 临时的
 
 id: Temporal/Spatial
 msg: 临时的/固定的
+
+id: Up / Down during video playback controls
+# Missing translation
+msg: 
 
 id: Video acceleration and display behaviour
 msg: 视频加速及显示方式
