@@ -172,7 +172,7 @@ render_unlocked(glw_root_t *gr)
 
   int current_blendmode = GLW_BLEND_NORMAL;
   glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA,
-		      GL_ONE, GL_ONE);
+		      GL_ONE_MINUS_DST_ALPHA, GL_ONE);
 
   const float *vertices = gr->gr_vertex_buffer;
 
@@ -263,12 +263,13 @@ render_unlocked(glw_root_t *gr)
       switch(current_blendmode) {
       case GLW_BLEND_NORMAL:
 	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA,
-			    GL_ONE, GL_ONE);
+			    GL_ONE_MINUS_DST_ALPHA, GL_ONE);
 
 	break;
 
       case GLW_BLEND_ADDITIVE:
-	glBlendFuncSeparate(GL_SRC_COLOR, GL_ONE, GL_ONE, GL_ONE);
+	glBlendFuncSeparate(GL_SRC_COLOR, GL_ONE,
+                            GL_ONE_MINUS_DST_ALPHA, GL_ONE);
 	break;
       }
     }
@@ -283,7 +284,7 @@ render_unlocked(glw_root_t *gr)
   }
   if(current_blendmode != GLW_BLEND_NORMAL) {
     glBlendFuncSeparate(GL_SRC_COLOR, GL_ONE,
-			GL_ONE, GL_ONE);
+			GL_ONE_MINUS_DST_ALPHA, GL_ONE);
   }
   ts = showtime_get_ts() - ts;
   static int hold;
