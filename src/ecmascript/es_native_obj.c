@@ -22,7 +22,7 @@
 #include <assert.h>
 
 #include "prop/prop.h"
-
+#include "htsmsg/htsmsg.h"
 #include "ecmascript.h"
 
 #define PTRNAME "\xff""ptr"
@@ -32,6 +32,7 @@ native_type_to_str(es_native_type_t type)
 {
   switch(type) {
   case ES_NATIVE_PROP:     return "prop";
+  case ES_NATIVE_HTSMSG:   return "htsmsg";
   case ES_NATIVE_RESOURCE: return "resource";
   default: return "???";
   }
@@ -82,6 +83,9 @@ call_finalizer(int type, void *ptr)
     break;
   case ES_NATIVE_RESOURCE:
     es_resource_release(ptr);
+    break;
+  case ES_NATIVE_HTSMSG:
+    htsmsg_release(ptr);
     break;
   default:
     abort();

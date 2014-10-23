@@ -16,6 +16,7 @@ struct prop;
 typedef enum {
   ES_NATIVE_PROP = 1,
   ES_NATIVE_RESOURCE,
+  ES_NATIVE_HTSMSG,
 
 } es_native_type_t;
 

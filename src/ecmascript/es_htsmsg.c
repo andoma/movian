@@ -3,14 +3,14 @@
 #include "htsmsg/htsmsg_xml.h"
 #include "ecmascript.h"
 
+
 /**
  *
  */
 static int
 es_htsmsg_release_duk(duk_context *ctx)
 {
-  htsmsg_t *m = duk_require_pointer(ctx, 0);
-  htsmsg_release(m);
+  htsmsg_release(es_get_native_obj(ctx, 0, ES_NATIVE_HTSMSG));
   return 0;
 }
 
@@ -28,9 +28,10 @@ es_htsmsg_create_from_xml_duk(duk_context *ctx)
   if(m == NULL)
     duk_error(ctx, DUK_ERR_ERROR, "Malformed XML -- %s", errbuf);
 
-  duk_push_pointer(ctx, m);
+  es_push_native_obj(ctx, ES_NATIVE_HTSMSG, m);
   return 1;
 }
+
 
 /**
  *
@@ -60,7 +61,7 @@ push_htsmsg_field(duk_context *ctx, const htsmsg_field_t *f)
 static int
 es_htsmsg_get_value_duk(duk_context *ctx)
 {
-  htsmsg_t *m = duk_require_pointer(ctx, 0);
+  htsmsg_t *m = es_get_native_obj(ctx, 0, ES_NATIVE_HTSMSG);
 
   htsmsg_field_t *f;
 
@@ -85,7 +86,8 @@ es_htsmsg_get_value_duk(duk_context *ctx)
  }
 
  int res_idx = duk_push_object(ctx);
- duk_push_pointer(ctx, f->hmf_childs);
+
+ es_push_native_obj(ctx, ES_NATIVE_HTSMSG, htsmsg_retain(f->hmf_childs));
  duk_put_prop_string(ctx, res_idx, "msg");
 
  push_htsmsg_field(ctx, f);
