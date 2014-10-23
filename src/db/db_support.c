@@ -639,7 +639,7 @@ db_log(void *aux, int code, const char *str)
     return;
 
   TRACE(code == 0 ? TRACE_INFO : TRACE_ERROR,
-        "SQLITE", "%s (code: %d)", str, code);
+        "SQLITE", "%s (code: 0x%x)", str, code);
 }
 
 #if 0
