@@ -79,8 +79,11 @@ audio_mastervol_init(void)
 
   prop_set_float_clipping_range(mv, -75, 12);
 
-  if(m != NULL && !htsmsg_get_s32(m, "master-volume", &i32))
-    prop_set_float(mv, (float)i32 / 1000);
+  if(m != NULL && !htsmsg_get_s32(m, "master-volume", &i32)) {
+    float f = (float)i32 / 1000;
+    prop_set_float(mv, f);
+    audio_master_volume = pow(10, (f / 20));
+  }
 
   prop_set_int(mm, 0);
   
