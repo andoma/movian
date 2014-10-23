@@ -120,6 +120,7 @@ arch_exit(void)
 int
 arch_stop_req(void)
 {
+  [[NSApplication sharedApplication] terminate:nil];
   return 0;
 }
 
