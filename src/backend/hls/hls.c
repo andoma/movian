@@ -978,8 +978,11 @@ demuxer_get_segment(hls_t *h, hls_demuxer_t *hd)
         last = hd->hd_last_audio_pts;
 
         next = find_segment_by_pts(hv, fctx, base, last, hs->hs_astream);
-        if(next == NULL)
-          return HLS_SEGMENT_NYA;
+        if(next == NULL) {
+          hv->hv_current_seg = hs;
+          hd->hd_seq = 0;
+          goto again;
+        }
 
         ts_seg_search = 0;
 
