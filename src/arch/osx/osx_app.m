@@ -52,7 +52,7 @@ showtime_get_avtime(void)
 /**
  *
  */
-@interface Showtime : NSObject
+@interface Showtime : NSObject <NSFileManagerDelegate>
 {
   NSMenu *m_menubar;
 }
