@@ -1184,6 +1184,9 @@ http_drain_content(http_file_t *hf)
   if((buf = http_read_content(hf)) == NULL)
     return -1;
 
+  if(hf->hf_debug)
+    hexdump("drain", buf_cstr(buf), buf_size(buf));
+
   buf_release(buf);
 
   if(hf->hf_connection_mode == CONNECTION_MODE_CLOSE)
