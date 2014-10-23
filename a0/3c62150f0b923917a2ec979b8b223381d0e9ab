@@ -1,0 +1,4 @@
+Fix problem that caused Master Volume to be incorrectly
+set when Showtime started
+
+Fixes #2213
