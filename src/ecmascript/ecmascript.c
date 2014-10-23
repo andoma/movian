@@ -168,7 +168,6 @@ es_resource_release(es_resource_t *er)
 void
 es_resource_destroy(es_resource_t *er)
 {
-  hts_mutex_assert(&er->er_ctx->ec_mutex);
   er->er_class->erc_destroy(er);
 }
 
@@ -179,7 +178,6 @@ es_resource_destroy(es_resource_t *er)
 void
 es_resource_unlink(es_resource_t *er)
 {
-  hts_mutex_assert(&er->er_ctx->ec_mutex);
   LIST_REMOVE(er, er_link);
   es_resource_release(er);
 }
@@ -428,7 +426,7 @@ static es_context_t *
 es_context_create(const char *id)
 {
   es_context_t *ec = calloc(1, sizeof(es_context_t));
-  hts_mutex_init(&ec->ec_mutex);
+  hts_mutex_init_recursive(&ec->ec_mutex);
   atomic_set(&ec->ec_refcount, 1);
 
   ec->ec_duk = duk_create_heap(es_mem_alloc, es_mem_realloc, es_mem_free,
