@@ -620,7 +620,7 @@ ecmascript_plugin_load(const char *id, const char *url,
     ec->ec_path = strdup(path);
   }
 
-  snprintf(path, sizeof(path), "file://%s/plugins/%s",
+  snprintf(path, sizeof(path), "%s/plugins/%s",
            gconf.persistent_path, ec->ec_id);
   ec->ec_storage = strdup(path);
 
