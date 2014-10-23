@@ -1443,6 +1443,22 @@ hls_add_variant(hls_t *h, const char *url, hls_variant_t **hvp,
   if(*hvp == NULL)
     *hvp = variant_create();
 
+  int bitrate = (*hvp)->hv_bitrate;
+
+  if(bitrate) {
+    hls_variant_t *hv;
+
+    TAILQ_FOREACH(hv, &hd->hd_variants, hv_link) {
+      if(hv->hv_bitrate == bitrate) {
+        HLS_TRACE(h, "Skipping duplicate bitrate %d via %s",
+                  bitrate, url);
+        variant_destroy(*hvp);
+        *hvp = NULL;
+        return;
+      }
+    }
+  }
+
   hls_variant_t *hv = *hvp;
 
   hv->hv_url = url_resolve_relative_from_base(h->h_baseurl, url);
