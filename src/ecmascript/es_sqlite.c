@@ -196,10 +196,18 @@ es_sqlite_step(duk_context *ctx)
 
   for(int i = 0; i < cols; i++) {
 
+    int64_t i64;
+
     switch(sqlite3_column_type(es->es_stmt, i)) {
 
     case SQLITE_INTEGER:
-      duk_push_int(ctx, sqlite3_column_int(es->es_stmt, i));
+      i64 = sqlite3_column_int64(es->es_stmt, i);
+      if(i64 >= INT32_MIN && i64 <= INT32_MAX)
+        duk_push_int(ctx, i64);
+      else if(i64 >= 0 && i64 <= UINT32_MAX)
+        duk_push_uint(ctx, i64);
+      else
+        duk_push_number(ctx, i64);
       break;
     case SQLITE_TEXT:
       duk_push_string(ctx, (const char *)sqlite3_column_text(es->es_stmt, i));
@@ -207,6 +215,8 @@ es_sqlite_step(duk_context *ctx)
     case SQLITE_FLOAT:
       duk_push_number(ctx, sqlite3_column_double(es->es_stmt, i));
       break;
+    default:
+      continue;
     }
     duk_put_prop_string(ctx, -2, sqlite3_column_name(es->es_stmt, i));
   }
