@@ -21,6 +21,11 @@ var storeproxy = {
       delete obj.timer;
     }, 1000);
 
+  },
+
+
+  has: function(obj, name) {
+    return name in obj.keys;
   }
 }
 
