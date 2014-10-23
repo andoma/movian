@@ -51,6 +51,10 @@ widget(deck, {
       noInitialTransform: true;
     });
 
+    ITEMSLIDER(_("Master volume"), -75, 12, 1,
+               $global.audio.mastervolume, _("dB"), true);
+
+
 
   );
 

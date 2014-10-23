@@ -53,6 +53,8 @@
   ITEM(_("Power off"), event(PowerOff),
        "dataroot://resources/svg/Power.svg", $global.runcontrol.canPowerOff);
 
+  ITEMSLIDER(_("Master volume"), -75, 12, 1,
+             $global.audio.mastervolume, _("dB"), true);
 }
 
 #define BUTTON(ICON, EVENT, ENABLED, WEIGHT = 0.5) {
