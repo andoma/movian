@@ -36,6 +36,11 @@ struct video_settings {
     VIDEO_RESUME_YES = 1,
   } resume_mode;
 
+  enum {
+    VIDEO_DPAD_MASTER_VOLUME = 0,
+    VIDEO_DPAD_PER_FILE_VOLUME = 1,
+  } dpad_up_down_mode;
+
   int played_threshold;
   int vdpau_deinterlace;
   int vdpau_deinterlace_resolution_limit;

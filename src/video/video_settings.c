@@ -136,4 +136,14 @@ video_settings_init(void)
                  SETTING_HTSMSG("continuous_playback", store, "videoplayback"),
                  SETTING_WRITE_BOOL(&video_settings.continuous_playback),
                  NULL);
+
+  setting_create(SETTING_MULTIOPT, s, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Up / Down during video playback controls")),
+                 SETTING_WRITE_INT(&video_settings.dpad_up_down_mode),
+                 SETTING_HTSMSG("dpad_up_down_mode", store, "videoplayback"),
+                 SETTING_OPTION("0", _p("Master volume")),
+                 SETTING_OPTION("1", _p("Per-file volume")),
+                 NULL);
+
+
 }

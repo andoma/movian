@@ -293,10 +293,21 @@ mp_enqueue_event_locked(media_pipe_t *mp, event_t *e)
     mp_track_mgr_next_track(&mp->mp_audio_track_mgr);
   } else if(event_is_action(e, ACTION_CYCLE_SUBTITLE)) {
     mp_track_mgr_next_track(&mp->mp_subtitle_track_mgr);
-  } else if(event_is_action(e, ACTION_VOLUME_UP) && mp->mp_vol_setting) {
-    settings_add_int(mp->mp_vol_setting, 1);
-  } else if(event_is_action(e, ACTION_VOLUME_DOWN) && mp->mp_vol_setting) {
-    settings_add_int(mp->mp_vol_setting, -1);
+  } else if(event_is_action(e, ACTION_VOLUME_UP) ||
+            event_is_action(e, ACTION_VOLUME_DOWN)) {
+
+    switch(video_settings.dpad_up_down_mode) {
+    case VIDEO_DPAD_MASTER_VOLUME:
+      atomic_inc(&e->e_refcount);
+      event_dispatch(e);
+      break;
+    case VIDEO_DPAD_PER_FILE_VOLUME:
+      if(mp->mp_vol_setting == NULL)
+        break;
+      settings_add_int(mp->mp_vol_setting,
+                       event_is_action(e, ACTION_VOLUME_UP) ? 1 : -1);
+      break;
+    }
 
   } else {
 
