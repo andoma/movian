@@ -1,0 +1,6 @@
+Partially revert the change in 4.7.382
+
+Bring back the setting to change what up/down does during video playback
+and make it default to changing Master Volume.
+
+It's perhaps less confusing for people
