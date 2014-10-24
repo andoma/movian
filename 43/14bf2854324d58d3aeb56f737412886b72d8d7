@@ -1,3 +1,5 @@
 Add support for video panning during playback.
 
 Feature could be found in setting menu next to video zoom
+
+Fixes #2005
