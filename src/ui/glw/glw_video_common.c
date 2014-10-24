@@ -713,6 +713,22 @@ glw_video_ctor(glw_t *w)
                    PROP_TAG_NAME("ctrl", "vzoom"),
 		   NULL);
 
+  gv->gv_pan_horizontal_sub =
+    prop_subscribe(0,
+		   PROP_TAG_SET_INT, &gv->gv_pan_horizontal,
+		   PROP_TAG_COURIER, w->glw_root->gr_courier,
+		   PROP_TAG_ROOT, c,
+                   PROP_TAG_NAME("ctrl", "panhorizontal"),
+		   NULL);
+
+  gv->gv_pan_vertical_sub =
+    prop_subscribe(0,
+		   PROP_TAG_SET_INT, &gv->gv_pan_vertical,
+		   PROP_TAG_COURIER, w->glw_root->gr_courier,
+		   PROP_TAG_ROOT, c,
+                   PROP_TAG_NAME("ctrl", "panvertical"),
+		   NULL);
+
   gv->gv_hstretch_sub =
     prop_subscribe(0,
 		   PROP_TAG_SET_INT, &gv->gv_hstretch,
@@ -963,6 +979,11 @@ glw_video_render(glw_t *w, const glw_rctx_t *rc)
     float zoom = gv->gv_vzoom / 100.0f;
     glw_Scalef(&rc1, zoom, zoom, 1.0);
   }
+
+  glw_Translatef(&rc1,
+                 gv->gv_pan_horizontal / 50.0,
+                 gv->gv_pan_vertical / 50.0,
+                 0);
 
   glw_project(&gv->gv_rect, &rc1, gr);
 

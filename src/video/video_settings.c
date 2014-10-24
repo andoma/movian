@@ -90,6 +90,26 @@ video_settings_init(void)
                    SETTING_VALUE_ORIGIN("global"),
                    NULL);
 
+  video_settings.pan_horizontal_setting =
+    setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,
+                   SETTING_TITLE(_p("Horizontal pan")),
+                   SETTING_UNIT_CSTR("%"),
+                   SETTING_RANGE(-100, 100),
+                   SETTING_VALUE(0),
+                   SETTING_HTSMSG("horizontalpan", store, "videoplayback"),
+                   SETTING_VALUE_ORIGIN("global"),
+                   NULL);
+
+  video_settings.pan_vertical_setting =
+    setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,
+                   SETTING_TITLE(_p("Vertical pan")),
+                   SETTING_UNIT_CSTR("%"),
+                   SETTING_RANGE(-100, 100),
+                   SETTING_VALUE(0),
+                   SETTING_HTSMSG("verticalpan", store, "videoplayback"),
+                   SETTING_VALUE_ORIGIN("global"),
+                   NULL);
+
   video_settings.stretch_horizontal_setting =
     setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
                    SETTING_TITLE(_p("Stretch video to widescreen")),

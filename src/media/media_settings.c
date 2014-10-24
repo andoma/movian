@@ -245,6 +245,38 @@ mp_settings_init(media_pipe_t *mp, const char *url, const char *dir_url,
                  SETTING_INHERIT(p),
                  NULL);
 
+  p = make_dir_setting(SETTING_INT, "panhorizontal", &mp->mp_settings_video_dir,
+                       dir_url, video_settings.pan_horizontal_setting, mp);
+
+  setting_create(SETTING_INT, mp->mp_setting_video_root,
+                 SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Horizontal pan")),
+                 SETTING_RANGE(-100, 100),
+                 SETTING_UNIT_CSTR("%"),
+                 SETTING_MUTEX(mp),
+                 SETTING_LOCKMGR(mp_lockmgr),
+                 SETTING_WRITE_PROP(prop_create(c, "panhorizontal")),
+                 SETTING_KVSTORE(url, "panhorizontal"),
+                 SETTING_GROUP(&mp->mp_settings_video),
+                 SETTING_INHERIT(p),
+                 NULL);
+
+  p = make_dir_setting(SETTING_INT, "panvertical", &mp->mp_settings_video_dir,
+                       dir_url, video_settings.pan_vertical_setting, mp);
+
+  setting_create(SETTING_INT, mp->mp_setting_video_root,
+                 SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Vertical pan")),
+                 SETTING_RANGE(-100, 100),
+                 SETTING_UNIT_CSTR("%"),
+                 SETTING_MUTEX(mp),
+                 SETTING_LOCKMGR(mp_lockmgr),
+                 SETTING_WRITE_PROP(prop_create(c, "panvertical")),
+                 SETTING_KVSTORE(url, "panvertical"),
+                 SETTING_GROUP(&mp->mp_settings_video),
+                 SETTING_INHERIT(p),
+                 NULL);
+
   p = make_dir_setting(SETTING_BOOL, "hstretch", &mp->mp_settings_video_dir,
                        dir_url, video_settings.stretch_horizontal_setting, mp);
 

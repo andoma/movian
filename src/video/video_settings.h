@@ -27,6 +27,8 @@ struct video_settings {
   int vdpau;
 
   struct setting *vzoom_setting;
+  struct setting *pan_horizontal_setting;
+  struct setting *pan_vertical_setting;
   struct setting *stretch_horizontal_setting;
   struct setting *stretch_fullscreen_setting;
   struct setting *vinterpolate_setting;
