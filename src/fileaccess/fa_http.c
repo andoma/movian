@@ -1906,8 +1906,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
 
       } else if(hf->hf_streaming || hf->hf_consecutive_read > STREAMING_LIMIT) {
 	if(!hf->hf_streaming)
-	  TRACE(TRACE_DEBUG, "HTTP", "%s: switching to streaming mode",
-		hf->hf_url);
+	  HF_TRACE(hf, "%s: switching to streaming mode", hf->hf_url);
 	snprintf(range, sizeof(range), "bytes=%"PRId64"-", hf->hf_pos);
 	tcp_huge_buffer(hf->hf_connection->hc_tc);
 
@@ -1951,8 +1950,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
 	  hf->hf_rsize = INT64_MAX;
 
 	if(hf->hf_pos != 0) {
-	  TRACE(TRACE_DEBUG, "HTTP",
-		"Skipping by reading %"PRId64" bytes, rsize=%"PRId64,
+	  HF_TRACE(hf, "Skipping by reading %"PRId64" bytes, rsize=%"PRId64,
                 hf->hf_pos, hf->hf_rsize);
 
 	  if(hf_drain_bytes(hf, hf->hf_pos)) {
@@ -1960,9 +1958,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
 	    continue;
 	  }
 
-	  TRACE(TRACE_DEBUG, "HTTP",
-		"rsize is now = %"PRId64,
-                hf->hf_rsize);
+          HF_TRACE(hf, "rsize is now = %"PRId64, hf->hf_rsize);
 	}
 
 
@@ -1974,9 +1970,8 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
 	continue;
 
       default:
-	TRACE(TRACE_DEBUG, "HTTP", 
-	      "Read error (%d) [%s] filesize %lld -- retrying", code,
-	      range, hf->hf_filesize);
+	HF_TRACE(hf, "Read error (%d) [%s] filesize %lld -- retrying", code,
+                 range, hf->hf_filesize);
 	http_detach(hf, 0, "Read error");
 	continue;
       }
