@@ -28,6 +28,8 @@
 
 #include "bittorrent.h"
 #include "misc/sha.h"
+#include "media/media.h"
+#include "video/video_playback.h"
 
 // http://www.bittorrent.org/beps/bep_0009.htm
 
@@ -188,6 +190,21 @@ torrent_browse_open(prop_t *page, const char *url, int sync)
 }
 
 
+/**
+ *
+ */
+static torrent_file_t *
+find_movie_torrent(torrent_t *to)
+{
+  // Find biggest file and use that as movie source
+
+  torrent_file_t *tf, *best = NULL;
+  TAILQ_FOREACH(tf, &to->to_files, tf_torrent_link)
+    if(best == NULL || best->tf_size < tf->tf_size)
+      best = tf;
+
+  return best;
+}
 
 /**
  *
@@ -212,12 +229,7 @@ torrent_movie_open(prop_t *page, const char *url0, int sync)
     return nav_open_errorf(page, _("Unable to parse torrent: %s"), errbuf);
   }
 
-  // Find biggest file and use that as movie source
-
-  torrent_file_t *tf, *best = NULL;
-  TAILQ_FOREACH(tf, &to->to_files, tf_torrent_link)
-    if(best == NULL || best->tf_size < tf->tf_size)
-      best = tf;
+  torrent_file_t *best = find_movie_torrent(to);
 
   if(best == NULL) {
     hts_mutex_unlock(&bittorrent_mutex);
@@ -294,12 +306,65 @@ bt_canhandle(const char *url)
 }
 
 
+static event_t *
+bt_playvideo(const char *url, media_pipe_t *mp,
+             char *errbuf, size_t errlen,
+             video_queue_t *vq, struct vsource_list *vsl,
+             const video_args_t *va)
+{
+  const char *u;
+
+  if((u = mystrbegins(url, "torrent:video:")) != NULL) {
+
+  } else {
+    snprintf(errbuf, errlen, "Invalid torrent link");
+    return NULL;
+  }
+
+  buf_t *b = fa_load(u, FA_LOAD_ERRBUF(errbuf, errlen), NULL);
+  if(b == NULL)
+    return NULL;
+
+  hts_mutex_lock(&bittorrent_mutex);
+  torrent_t *to = torrent_create(b, errbuf, sizeof(errbuf));
+  buf_release(b);
+
+  torrent_file_t *best = find_movie_torrent(to);
+
+  if(best == NULL) {
+    hts_mutex_unlock(&bittorrent_mutex);
+    snprintf(errbuf, errlen, "No files in torrent");
+    return NULL;
+  }
+
+  char newurl[1024];
+  char hashstr[41];
+  bin2hex(hashstr, sizeof(hashstr), to->to_info_hash, 20);
+  hashstr[40] = 0;
+
+  snprintf(newurl, sizeof(newurl), "torrentfile://%s/%s",
+           hashstr, best->tf_fullpath);
+
+  torrent_retain(to);
+  hts_mutex_unlock(&bittorrent_mutex);
+
+
+  event_t *e = backend_play_video(newurl, mp, errbuf, errlen, vq, vsl, va);
+
+  hts_mutex_lock(&bittorrent_mutex);
+  torrent_release(to);
+  hts_mutex_unlock(&bittorrent_mutex);
+  return e;
+}
+
+
 /**
  *
  */
 static backend_t be_bittorrent = {
   .be_canhandle = bt_canhandle,
   .be_open      = bt_open,
+  .be_play_video = bt_playvideo,
 };
 
 BE_REGISTER(bittorrent);
