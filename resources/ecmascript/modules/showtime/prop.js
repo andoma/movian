@@ -92,11 +92,13 @@ exports.createRoot = function() {
   return makeProp(Showtime.propCreate());
 }
 
-exports.subscribeValue = function(prop, callback) {
+exports.subscribeValue = function(prop, callback, ctrl) {
   return Showtime.propSubscribe(prop, function(type, v1, v2) {
     callback.apply(null, makeValue(type, v1, v2));
-  });
+  }, ctrl);
 }
 
 
 exports.makeProp = makeProp;
+
+exports.makeUrl = Showtime.propMakeUrl;
