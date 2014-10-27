@@ -508,8 +508,16 @@ es_prop_subscribe(duk_context *ctx)
 
   eps->eps_autodestry = es_prop_is_true(ctx, 2, "autoDestroy");
 
+  int flags = PROP_SUB_TRACK_DESTROY;
+
+  if(es_prop_is_true(ctx, 2, "ignoreVoid"))
+    flags |= PROP_SUB_IGNORE_VOID;
+
+  if(es_prop_is_true(ctx, 2, "debug"))
+    flags |= PROP_SUB_DEBUG;
+
   eps->eps_sub =
-    prop_subscribe(PROP_SUB_TRACK_DESTROY,
+      prop_subscribe(flags,
                    PROP_TAG_ROOT, p,
                    PROP_TAG_LOCKMGR, es_prop_lockmgr,
                    PROP_TAG_MUTEX, ec,
