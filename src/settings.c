@@ -44,7 +44,7 @@
 
 
 #define SETTINGS_URL "settings:"
-static prop_t *settings_root;
+static prop_t *settings_model;
 static prop_t *settings_nodes;
 
 
@@ -1198,9 +1198,11 @@ settings_init(void)
   prop_t *n, *d;
   prop_t *s1;
 
-  settings_root = prop_create(prop_get_global(), "settings");
-  prop_set_string(prop_create(settings_root, "type"), "settings");
-  set_title2(settings_root, _p("Global settings"));
+  prop_t *settings_root = prop_create(prop_get_global(), "settings");
+  settings_model = prop_create(settings_root, "model");
+
+  prop_set(settings_model, "type", PROP_SET_STRING, "settings");
+  set_title2(settings_model, _p("Global settings"));
 
   settings_nodes = prop_create_root(NULL);
   s1 = prop_create_root(NULL);
@@ -1210,12 +1212,12 @@ settings_init(void)
   pnf = prop_nf_create(s1, settings_nodes, NULL, PROP_NF_AUTODESTROY);
   prop_nf_sort(pnf, "node.metadata.title", 0, 0, NULL, 1);
 
-  gconf.settings_apps = prop_create_root(NULL);
-  gconf.settings_sd = prop_create_root(NULL);
+  gconf.settings_apps = prop_create(settings_root, "apps");
+  gconf.settings_sd = prop_create(settings_root, "sd");
 
   prop_concat_t *pc;
 
-  pc = prop_concat_create(prop_create(settings_root, "nodes"), 0);
+  pc = prop_concat_create(prop_create(settings_model, "nodes"), 0);
 
   prop_concat_add_source(pc, s1, NULL);
 
@@ -1314,7 +1316,7 @@ be_settings_canhandle(const char *url)
 static int
 be_settings_open(prop_t *page, const char *url0, int sync)
 {
-  prop_link(settings_root, prop_create(page, "model"));
+  prop_link(settings_model, prop_create(page, "model"));
   return 0;
 }
 
