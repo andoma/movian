@@ -88,7 +88,7 @@ es_sqlite_create(duk_context *ctx)
     duk_error(ctx, DUK_ERR_ERROR, "Unable to open database -- check logs");
 
 
-  es_sqlite_t *es = es_resource_create(ec, &es_resource_sqlite);
+  es_sqlite_t *es = es_resource_create(ec, &es_resource_sqlite, 0);
 
   es->es_db = db;
   es->es_name = strdup(name);

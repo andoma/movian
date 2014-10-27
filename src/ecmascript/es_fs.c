@@ -105,7 +105,7 @@ es_file_open(duk_context *ctx)
     duk_error(ctx, DUK_ERR_ERROR, "Unable to open file '%s' -- %s",
               path, errbuf);
 
-  es_fd_t *efd = es_resource_create(ec, &es_resource_fd);
+  es_fd_t *efd = es_resource_create(ec, &es_resource_fd, 0);
   efd->efd_path = strdup(path);
   efd->efd_fh = fh;
 

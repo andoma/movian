@@ -65,7 +65,7 @@ es_service_create(duk_context *ctx)
 {
   es_context_t *ec = es_get(ctx);
 
-  es_service_t *es = es_resource_create(ec, &es_resource_service);
+  es_service_t *es = es_resource_create(ec, &es_resource_service, 1);
 
   const char *svcid  = duk_safe_to_string(ctx, 0);
   const char *title  = duk_safe_to_string(ctx, 1);

@@ -138,7 +138,7 @@ es_hook_register(duk_context *ctx)
   const char *type  = duk_safe_to_string(ctx, 0);
   es_context_t *ec = es_get(ctx);
 
-  es_hook_t *eh = es_resource_create(ec, &es_resource_hook);
+  es_hook_t *eh = es_resource_create(ec, &es_resource_hook, 1);
   eh->eh_type = strdup(type);
 
   hts_mutex_lock(&hook_mutex);

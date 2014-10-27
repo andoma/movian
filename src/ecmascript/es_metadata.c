@@ -47,7 +47,7 @@ es_video_metadata_bind_duk(duk_context *ctx)
   prop_t *root = es_stprop_get(ctx, 0);
   const char *urlstr = duk_safe_to_string(ctx, 1);
   es_context_t *ec = es_get(ctx);
-  es_mlv_t *em = es_resource_create(ec, &es_resource_mlv);
+  es_mlv_t *em = es_resource_create(ec, &es_resource_mlv, 0);
 
   rstr_t *url = rstr_alloc(urlstr);
   rstr_t *title;

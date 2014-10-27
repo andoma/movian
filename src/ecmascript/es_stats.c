@@ -32,12 +32,30 @@
 #include "ecmascript.h"
 
 
+/**
+ *
+ */
+static void
+dump_resource_list(htsbuf_queue_t *out, struct es_resource_list *list)
+{
+  char buf[512];
+  es_resource_t *er;
+  LIST_FOREACH(er, list, er_link) {
+    if(er->er_class->erc_info != NULL) {
+      er->er_class->erc_info(er, buf, sizeof(buf));
+      htsbuf_qprintf(out, "\t%s: %s\n", er->er_class->erc_name, buf);
+    } else {
+      htsbuf_qprintf(out, "\t%s\n", er->er_class->erc_name);
+    }
+  }
+}
+
+/**
+ *
+ */
 static void
 dump_context(htsbuf_queue_t *out, es_context_t *ec)
 {
-  es_resource_t *er;
-  char buf[512];
-
   hts_mutex_lock(&ec->ec_mutex);
 
   htsbuf_qprintf(out, "\n--- %s ------------------------\n", ec->ec_id);
@@ -47,16 +65,9 @@ dump_context(htsbuf_queue_t *out, es_context_t *ec)
   htsbuf_qprintf(out, "  Memory usage, current: %zd bytes, max: %zd\n",
                  ec->ec_mem_active, ec->ec_mem_peak);
 
-  htsbuf_qprintf(out, "  Attached resources:\n");
+  htsbuf_qprintf(out, "  Attached permanent resources:\n");
+  dump_resource_list(out, &ec->ec_resources_permanent);
 
-  LIST_FOREACH(er, &ec->ec_resources, er_link) {
-    if(er->er_class->erc_info != NULL) {
-      er->er_class->erc_info(er, buf, sizeof(buf));
-      htsbuf_qprintf(out, "\t%s: %s\n", er->er_class->erc_name, buf);
-    } else {
-      htsbuf_qprintf(out, "\t%s\n", er->er_class->erc_name);
-    }
-  }
   hts_mutex_unlock(&ec->ec_mutex);
 }
 

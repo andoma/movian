@@ -502,7 +502,7 @@ es_prop_subscribe(duk_context *ctx)
 {
   es_context_t *ec = es_get(ctx);
   prop_t *p = es_stprop_get(ctx, 0);
-  es_prop_sub_t *eps = es_resource_create(ec, &es_resource_prop_sub);
+  es_prop_sub_t *eps = es_resource_create(ec, &es_resource_prop_sub, 1);
 
   es_root_register(ctx, 1, eps);
 

@@ -118,7 +118,7 @@ es_route_create(duk_context *ctx)
 
   LIST_INSERT_SORTED(&routes, er, er_link, er_cmp, es_route_t);
 
-  es_resource_link(&er->super, ec);
+  es_resource_link(&er->super, ec, 1);
 
   hts_mutex_unlock(&route_mutex);
 

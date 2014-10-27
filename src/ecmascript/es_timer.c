@@ -174,7 +174,7 @@ set_timer(duk_context *duk, int repeat)
 {
   es_context_t *ec = es_get(duk);
 
-  es_timer_t *et = es_resource_create(ec, &es_resource_timer);
+  es_timer_t *et = es_resource_create(ec, &es_resource_timer, 1);
   int val = duk_require_int(duk, 1);
 
   es_root_register(duk, 0, et);

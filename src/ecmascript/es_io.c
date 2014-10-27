@@ -337,7 +337,7 @@ es_http_req(duk_context *ctx)
 
   if(duk_is_function(ctx, 2)) {
     // Async mode
-    es_resource_link(&ehr->super, ec);
+    es_resource_link(&ehr->super, ec, 1);
     es_root_register(ctx, 2, ehr);
     task_run(ehr_task, ehr);
     return 0;
@@ -463,7 +463,7 @@ es_http_inspector_create(duk_context *ctx)
   LIST_INSERT_SORTED(&http_inspectors, ehi, ehi_link, ehi_cmp,
                      es_http_inspector_t);
 
-  es_resource_link(&ehi->super, ec);
+  es_resource_link(&ehi->super, ec, 1);
 
   hts_mutex_unlock(&http_inspector_mutex);
 
