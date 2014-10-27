@@ -29,13 +29,12 @@ var storeproxy = {
   }
 }
 
-exports.create = function(name) {
+exports.createFromPath = function(path) {
   var obj = {
-    filename: 'store/' + name,
+    filename: path,
     keys: {}
   };
 
-  Showtime.fs.mkdirs('store');
 
   try {
     obj.keys = JSON.parse(fs.readFileSync(obj.filename));
@@ -43,4 +42,10 @@ exports.create = function(name) {
   }
 
   return new Proxy(obj, storeproxy);
+}
+
+
+exports.create = function(name) {
+  Showtime.fs.mkdirs('store');
+  return exports.createFromPath('store/' + name);
 }
