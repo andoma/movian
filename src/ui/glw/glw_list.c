@@ -39,9 +39,10 @@ typedef struct glw_list {
   int velocity;
 
   glw_t *scroll_to_me;
-
   glw_t *suggested;
+
   int suggest_cnt;
+
 
   glw_slider_metrics_t metrics;
 
@@ -54,6 +55,8 @@ typedef struct glw_list {
 
   float alpha_falloff;
   float blur_falloff;
+
+  int chase_focus;
 
 } glw_list_t;
 
@@ -487,6 +490,54 @@ glw_list_render_x(glw_t *w, const glw_rctx_t *rc)
 }
 
 
+
+/**
+ *
+ */
+static void
+focus_child_when_list_not_focused(glw_list_t *l, glw_t *c)
+{
+  l->w.glw_focused = c;
+  glw_signal0(&l->w, GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE, c);
+}
+
+
+
+/**
+ * Try to find a child widget that's visible. This is used when scrolling
+ * to maintain focus on screen
+ */
+static glw_t *
+find_visible_child(glw_list_t *l)
+{
+  const int top = l->current_pos;
+  const int bottom = l->current_pos + l->page_size;
+  glw_t *c = l->w.glw_focused;
+
+  if(c == NULL)
+    return NULL;
+
+  if(glw_parent_data(c, glw_list_item_t)->pos < top) {
+
+    while(c != NULL && glw_parent_data(c, glw_list_item_t)->pos < top)
+      c = glw_next_widget(c);
+
+    if(c != NULL && glw_get_focusable_child(c) == NULL)
+      c = glw_next_widget(c);
+
+  } else if(glw_parent_data(c, glw_list_item_t)->pos > bottom) {
+
+    while(c != NULL && glw_parent_data(c, glw_list_item_t)->pos > bottom)
+      c = glw_prev_widget(c);
+
+    if(c != NULL && glw_get_focusable_child(c) == NULL)
+      c = glw_prev_widget(c);
+
+  }
+  return c;
+}
+
+
 /**
  *
  */
@@ -494,41 +545,26 @@ static void
 glw_list_scroll(glw_list_t *l, glw_scroll_t *gs)
 {
   int top = GLW_MAX(gs->value * (l->total_size - l->page_size), 0);
-
   l->current_pos = top;
 
-  int bottom = top + l->page_size;
+  if(l->chase_focus == 0)
+    return;
 
-  glw_t *c = l->w.glw_focused;
-
+  glw_t *c = find_visible_child(l);
   if(c == NULL)
     return;
 
-
-  glw_list_item_t *cd = glw_parent_data(c, glw_list_item_t);
-
-  if(cd->pos < top) {
-
-    while(c != NULL && cd->pos < top) {
-      c = glw_next_widget(c);
-    }
-
-    if(c != NULL)
-      l->w.glw_focused = c;
-  } else if(cd->pos > bottom) {
-
-    while(c != NULL && cd->pos > bottom) {
-      c = glw_prev_widget(c);
-    }
-
-    if(c != NULL)
-      l->w.glw_focused = c;
+  if(glw_is_focused(&l->w)) {
+    glw_focus_set(c->glw_root, c, GLW_FOCUS_SET_SUGGESTED);
+  } else {
+    focus_child_when_list_not_focused(l, c);
   }
 }
 
 
-
-
+/**
+ *
+ */
 static int
 handle_pointer_event(glw_t *w, const glw_pointer_event_t *gpe)
 {
@@ -740,7 +776,8 @@ glw_list_suggest_focus(glw_t *w, glw_t *c)
   glw_list_t *l = (glw_list_t *)w;
 
   if(!glw_is_focused(w)) {
-    w->glw_focused = c;
+    focus_child_when_list_not_focused(l, c);
+    l->scroll_to_me = c;
     return;
   }
 
@@ -772,6 +809,22 @@ glw_list_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v)
 }
 
 
+/**
+ *
+ */
+static int
+glw_list_set_int_unresolved(glw_t *w, const char *a, int value)
+{
+  glw_list_t *l = (glw_list_t *)w;
+
+  if(!strcmp(a, "chaseFocus")) {
+    l->chase_focus = value;
+    return GLW_SET_NO_CHANGE;
+  }
+  return GLW_SET_NOT_RESPONDING;
+}
+
+
 static glw_class_t glw_list_y = {
   .gc_name = "list_y",
   .gc_instance_size = sizeof(glw_list_t),
@@ -787,6 +840,7 @@ static glw_class_t glw_list_y = {
   .gc_set_int16_4 = glw_list_set_int16_4,
   .gc_pointer_event = handle_pointer_event,
   .gc_bubble_event = glw_navigate_vertical,
+  .gc_set_int_unresolved = glw_list_set_int_unresolved,
 };
 
 GLW_REGISTER_CLASS(glw_list_y);
@@ -809,6 +863,7 @@ static glw_class_t glw_list_x = {
   .gc_set_int16_4 = glw_list_set_int16_4,
   .gc_pointer_event = handle_pointer_event,
   .gc_bubble_event = glw_navigate_horizontal,
+  .gc_set_int_unresolved = glw_list_set_int_unresolved,
 };
 
 GLW_REGISTER_CLASS(glw_list_x);

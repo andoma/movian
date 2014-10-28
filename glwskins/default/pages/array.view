@@ -46,7 +46,6 @@ widget(container_y, {
       bind("array");
       width: 4;
       focusable: canScroll();
-      navFocusable: true;
       alpha: iir(canScroll(), 16);
       
       widget(quad, {
