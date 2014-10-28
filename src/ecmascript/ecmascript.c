@@ -23,7 +23,7 @@
 #include "arch/arch.h"
 #include "fileaccess/fileaccess.h"
 #include "backend/backend.h"
-
+#include "htsmsg/htsmsg.h"
 #include "ecmascript.h"
 
 
@@ -472,6 +472,7 @@ es_context_release(es_context_t *ec)
     hts_mutex_unlock(&es_context_mutex);
   }
 
+  free(ec->ec_manifest);
   free(ec);
 }
 
@@ -595,10 +596,11 @@ es_get_env(duk_context *ctx)
 int
 ecmascript_plugin_load(const char *id, const char *url,
                        char *errbuf, size_t errlen,
-                       int version)
+                       int version, const char *manifest)
 {
   char path[PATH_MAX];
   es_context_t *ec = es_context_create(id);
+
 
   es_context_begin(ec);
 
@@ -613,6 +615,9 @@ ecmascript_plugin_load(const char *id, const char *url,
 
   duk_push_string(ctx, url);
   duk_put_prop_string(ctx, plugin_obj_idx, "url");
+
+  duk_push_string(ctx, manifest);
+  duk_put_prop_string(ctx, plugin_obj_idx, "manifest");
 
   if(!fa_parent(path, sizeof(path), url)) {
     duk_push_string(ctx, path);

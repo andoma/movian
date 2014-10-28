@@ -50,6 +50,11 @@ var plugin = {
   },
 
   path: Plugin.path,
+
+  getDescriptor: function() {
+    return JSON.parse(Plugin.manifest);
+  }
+
 };
 
 var x = Showtime.compile(Plugin.url);

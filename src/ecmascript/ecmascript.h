@@ -53,6 +53,9 @@ typedef struct es_context {
   size_t ec_mem_active;
   size_t ec_mem_peak;
 
+
+  struct htsmsg *ec_manifest; // plugin.json
+
 } es_context_t;
 
 
@@ -157,7 +160,7 @@ void ecmascript_release_context_vector(es_context_t **v);
  */
 int ecmascript_plugin_load(const char *id, const char *fullpath,
                            char *errbuf, size_t errlen,
-                           int version);
+                           int version, const char *manifest);
 
 void ecmascript_plugin_unload(const char *id);
 

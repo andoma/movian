@@ -495,138 +495,135 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
     return -1;
 
   ctrl = htsmsg_json_deserialize2(buf_cstr(b), errbuf, errlen);
-  buf_release(b);
-  if(ctrl != NULL) {
+  if(ctrl == NULL)
+    goto bad;
 
-    const char *type = htsmsg_get_str(ctrl, "type");
-    const char *id   = htsmsg_get_str(ctrl, "id");
+  const char *type = htsmsg_get_str(ctrl, "type");
+  const char *id   = htsmsg_get_str(ctrl, "id");
 
-    if(type == NULL) {
-      snprintf(errbuf, errlen, "Missing \"type\" element in control file %s",
-	    ctrlfile);
-      htsmsg_release(ctrl);
-      return -1;
+  if(type == NULL) {
+    snprintf(errbuf, errlen, "Missing \"type\" element in control file %s",
+             ctrlfile);
+    goto bad;
+  }
+
+  if(id == NULL) {
+    snprintf(errbuf, errlen, "Missing \"id\" element in control file %s",
+             ctrlfile);
+    goto bad;
+  }
+
+  plugin_t *pl = plugin_find(id);
+
+  if(!force && pl->pl_loaded) {
+    snprintf(errbuf, errlen, "Plugin \"%s\" already loaded", id);
+    goto bad;
+  }
+
+  plugin_unload(pl);
+
+  int r;
+  char fullpath[URL_MAX];
+
+  if(!strcmp(type, "views")) {
+    // No special tricks here, we always loads 'glwviews' from all plugins
+    r = 0;
+
+  } else if(!strcmp(type, "ecmascript")) {
+
+    const char *file = htsmsg_get_str(ctrl, "file");
+    if(file == NULL) {
+      snprintf(errbuf, errlen, "Missing \"file\" element in control file %s",
+               ctrlfile);
+      goto bad;
     }
+    snprintf(fullpath, sizeof(fullpath), "%s/%s", url, file);
 
+    int version = htsmsg_get_u32_or_default(ctrl, "apiversion", 1);
 
-    if(id == NULL) {
-      snprintf(errbuf, errlen, "Missing \"id\" element in control file %s",
-	    ctrlfile);
-      htsmsg_release(ctrl);
-      return -1;
-    }
-
-    plugin_t *pl = plugin_find(id);
-
-    if(!force && pl->pl_loaded) {
-      snprintf(errbuf, errlen, "Plugin \"%s\" already loaded",
-	       id);
-      htsmsg_release(ctrl);
-      return -1;
-    }
-
-    plugin_unload(pl);
-
-    int r;
-    char fullpath[URL_MAX];
-
-    if(!strcmp(type, "views")) {
-      // No special tricks here, we always loads 'glwviews' from all plugins
-      r = 0;
-
-    } else if(!strcmp(type, "ecmascript")) {
-
-      const char *file = htsmsg_get_str(ctrl, "file");
-      if(file == NULL) {
-	snprintf(errbuf, errlen, "Missing \"file\" element in control file %s",
-		 ctrlfile);
-	htsmsg_release(ctrl);
-	return -1;
-      }
-      snprintf(fullpath, sizeof(fullpath), "%s/%s", url, file);
-
-      int version = htsmsg_get_u32_or_default(ctrl, "apiversion", 1);
-
-      hts_mutex_unlock(&plugin_mutex);
-      r = ecmascript_plugin_load(id, fullpath, errbuf, errlen, version);
-      hts_mutex_lock(&plugin_mutex);
-      if(!r)
-	pl->pl_unload = plugin_unload_ecmascript;
+    hts_mutex_unlock(&plugin_mutex);
+    r = ecmascript_plugin_load(id, fullpath, errbuf, errlen, version,
+                               buf_cstr(b));
+    hts_mutex_lock(&plugin_mutex);
+    if(!r)
+      pl->pl_unload = plugin_unload_ecmascript;
 
 
 #if ENABLE_SPIDERMONKEY
     } else if(!strcmp(type, "javascript")) {
 
-      const char *file = htsmsg_get_str(ctrl, "file");
-      if(file == NULL) {
-	snprintf(errbuf, errlen, "Missing \"file\" element in control file %s",
-		 ctrlfile);
-	htsmsg_release(ctrl);
-	return -1;
-      }
-      snprintf(fullpath, sizeof(fullpath), "%s/%s", url, file);
+    const char *file = htsmsg_get_str(ctrl, "file");
+    if(file == NULL) {
+      snprintf(errbuf, errlen, "Missing \"file\" element in control file %s",
+               ctrlfile);
+      return -1;
+    }
+    snprintf(fullpath, sizeof(fullpath), "%s/%s", url, file);
 
-      hts_mutex_unlock(&plugin_mutex);
-      r = js_plugin_load(id, fullpath, errbuf, errlen);
-      hts_mutex_lock(&plugin_mutex);
-      if(!r)
-	pl->pl_unload = js_unload;
+    hts_mutex_unlock(&plugin_mutex);
+    r = js_plugin_load(id, fullpath, errbuf, errlen);
+    hts_mutex_lock(&plugin_mutex);
+    if(!r)
+      pl->pl_unload = js_unload;
 
 #endif
-    } else {
-      snprintf(errbuf, errlen, "Unknown type \"%s\" in control file %s",
-	       type, ctrlfile);
-      r = -1;
-    }
-
-
-    // Load bundled views
-
-    if(!r) {
-
-      htsmsg_t *list = htsmsg_get_list(ctrl, "glwviews");
-
-      if(list != NULL) {
-	htsmsg_field_t *f;
-	HTSMSG_FOREACH(f, list) {
-	  htsmsg_t *o;
-	  if((o = htsmsg_get_map_by_field(f)) == NULL)
-	    continue;
-	  const char *uit   = htsmsg_get_str(o, "uitype") ?: "standard";
-	  const char *class = htsmsg_get_str(o, "class");
-	  const char *title = htsmsg_get_str(o, "title");
-	  const char *file  = htsmsg_get_str(o, "file");
-
-	  if(class == NULL || title == NULL || file == NULL)
-	    continue;
-	  snprintf(fullpath, sizeof(fullpath), "%s/%s", url, file);
-
-          int dosel = htsmsg_get_u32_or_default(o, "select", by_user);
-
-	  plugins_view_add(pl, uit, class, title, fullpath, dosel, file);
-	}
-      }
-    }
-
-    if(!r) {
-
-      if(as_installed) {
-	plugin_prop_setup(ctrl, pl, url);
-	pl->pl_installed = 1;
-        mystrset(&pl->pl_inst_ver, htsmsg_get_str(ctrl, "version"));
-      }
-
-      mystrset(&pl->pl_title, htsmsg_get_str(ctrl, "title") ?: id);
-
-      pl->pl_loaded = 1;
-    }
-    htsmsg_release(ctrl);
-    update_state(pl);
-    return r;
-
   } else {
-    return -1;
+    snprintf(errbuf, errlen, "Unknown type \"%s\" in control file %s",
+             type, ctrlfile);
+    goto bad;
   }
+
+
+  // Load bundled views
+
+  if(!r) {
+
+    htsmsg_t *list = htsmsg_get_list(ctrl, "glwviews");
+
+    if(list != NULL) {
+      htsmsg_field_t *f;
+      HTSMSG_FOREACH(f, list) {
+        htsmsg_t *o;
+        if((o = htsmsg_get_map_by_field(f)) == NULL)
+          continue;
+        const char *uit   = htsmsg_get_str(o, "uitype") ?: "standard";
+        const char *class = htsmsg_get_str(o, "class");
+        const char *title = htsmsg_get_str(o, "title");
+        const char *file  = htsmsg_get_str(o, "file");
+
+        if(class == NULL || title == NULL || file == NULL)
+          continue;
+        snprintf(fullpath, sizeof(fullpath), "%s/%s", url, file);
+
+        int dosel = htsmsg_get_u32_or_default(o, "select", by_user);
+
+        plugins_view_add(pl, uit, class, title, fullpath, dosel, file);
+      }
+    }
+  }
+
+  if(!r) {
+
+    if(as_installed) {
+      plugin_prop_setup(ctrl, pl, url);
+      pl->pl_installed = 1;
+      mystrset(&pl->pl_inst_ver, htsmsg_get_str(ctrl, "version"));
+    }
+
+    mystrset(&pl->pl_title, htsmsg_get_str(ctrl, "title") ?: id);
+
+    pl->pl_loaded = 1;
+  }
+
+  buf_release(b);
+  htsmsg_release(ctrl);
+  update_state(pl);
+  return 0;
+
+ bad:
+  buf_release(b);
+  htsmsg_release(ctrl);
+  return -1;
 }
 
 
