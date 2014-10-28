@@ -23,7 +23,13 @@ showtime = {
     return http.request(url, c);
   },
 
-  httpReq: http.request
+  httpReq: http.request,
+
+  entityDecode: Showtime.entityDecode,
+  queryStringSplit: Showtime.queryStringSplit,
+  pathEscape: Showtime.pathEscape,
+  paramEscape: Showtime.paramEscape
+
 };
 
 

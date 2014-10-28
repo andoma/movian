@@ -28,6 +28,8 @@
 #include "ui/webpopup.h"
 #endif
 
+#include "misc/str.h"
+
 /**
  *
  */
@@ -88,11 +90,107 @@ es_webpopup(duk_context *ctx)
   return 1;
 }
 
+
+/**
+ *
+ */
+static int
+es_entitydecode(duk_context *ctx)
+{
+  char *out = strdup(duk_safe_to_string(ctx, 0));
+  html_entities_decode(out);
+  duk_push_string(ctx, out);
+  free(out);
+  return 1;
+}
+
+
+/**
+ *
+ */
+static int
+es_queryStringSplit(duk_context *ctx)
+{
+  const char *str = duk_safe_to_string(ctx, 0);
+  char *s0, *s;
+  duk_push_object(ctx);
+
+  s0 = s = strdup(str);
+
+  while(s) {
+
+    char *k = s;
+    char *v = strchr(s, '=');
+    if(v == NULL)
+      break;
+
+    *v++ = 0;
+
+    if((s = strchr(v, '&')) != NULL)
+      *s++ = 0;
+
+    k = strdup(k);
+    v = strdup(v);
+
+    url_deescape(k);
+    url_deescape(v);
+
+    duk_push_string(ctx, v);
+    duk_put_prop_string(ctx, -2, k);
+    free(k);
+    free(v);
+  }
+  free(s0);
+  return 1;
+}
+
+
+/**
+ *
+ */
+static int
+es_escape(duk_context *ctx, int how)
+{
+  const char *str = duk_safe_to_string(ctx, 0);
+
+  size_t len = url_escape(NULL, 0, str, how);
+  char *r = malloc(len);
+  url_escape(r, len, str, how);
+
+  duk_push_lstring(ctx, r, len);
+  free(r);
+  return 1;
+}
+
+/**
+ *
+ */
+static int
+es_pathEscape(duk_context *ctx)
+{
+  return es_escape(ctx, URL_ESCAPE_PATH);
+}
+
+
+/**
+ *
+ */
+static int
+es_paramEscape(duk_context *ctx)
+{
+  return es_escape(ctx, URL_ESCAPE_PARAM);
+}
+
+
 /**
  * Showtime object exposed functions
  */
 const duk_function_list_entry fnlist_Showtime_misc[] = {
-  { "webpopup",              es_webpopup,      3 },
+  { "webpopup",              es_webpopup,         3 },
+  { "entityDecode",          es_entitydecode,     1 },
+  { "queryStringSplit",      es_queryStringSplit, 1 },
+  { "pathEscape",            es_pathEscape,       1 },
+  { "paramEscape",           es_paramEscape,      1 },
   { NULL, NULL, 0}
 };
  
