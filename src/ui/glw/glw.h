@@ -406,7 +406,7 @@ typedef struct glw_class {
    *
    */
 
-#define GLW_SET_NOT_RESPONING     -1
+#define GLW_SET_NOT_RESPONDING    -1
 #define GLW_SET_NO_CHANGE          0
 #define GLW_SET_RERENDER_REQUIRED  1
 #define GLW_SET_LAYOUT_ONLY        2
