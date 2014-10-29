@@ -5313,7 +5313,10 @@ prop_print_tree0(prop_t *p, int indent, int flags)
 
   switch(p->hp_type) {
   case PROP_RSTRING:
-    fprintf(stderr, "\"%s\"\n", rstr_get(p->hp_rstring));
+    if(p->hp_rstrtype == PROP_STR_RICH)
+      fprintf(stderr, "'%s'\n", rstr_get(p->hp_rstring));
+    else
+      fprintf(stderr, "\"%s\"\n", rstr_get(p->hp_rstring));
     break;
 
   case PROP_CSTRING:
