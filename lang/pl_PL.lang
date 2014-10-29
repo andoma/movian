@@ -2,6 +2,7 @@ language: Polish
 native: Polski
 maintainer: Cichy <ml.cichy@gmail.com>
 #
+
 # ./glwskins/default/cmdmenu.view
 #
 id: Add current page to bookmarks
@@ -29,8 +30,7 @@ id: Go to Home screen
 msg: Przejdź do ekranu głównego
 
 id: Hide system info
-# Missing translation
-msg: 
+msg: Ukryj informacje o systemie
 
 id: Navigation
 msg: Nawigacja
@@ -48,8 +48,7 @@ id: Reload current page
 msg: Odśwież
 
 id: Show system info
-# Missing translation
-msg: 
+msg: Pokaż informacje o systemie
 
 id: Suspend
 msg: Wyłącz system
@@ -148,8 +147,7 @@ msg: Ustawienia Video
 # ./glwskins/default/loading.view
 #
 id: Bitrate: %d kb/s
-# Missing translation
-msg: 
+msg: Bitrate: %d kb/s
 
 #
 # ./glwskins/default/log.view
@@ -164,15 +162,13 @@ id: Cancel
 msg: Anuluj
 
 id: Clear
-# Missing translation
-msg: 
+msg: Wyczyść
 
 id: Default
 msg: Domyślne
 
 id: Keyboard layout:
-# Missing translation
-msg: 
+msg: Układ klawiatury:
 
 id: OK
 msg: OK
@@ -401,8 +397,7 @@ msg: Weryfikowanie %s
 # ./glwskins/default/pages/video.view
 #
 id: Audio volume adjustment: %d dB
-# Missing translation
-msg: 
+msg: Zwiększenie głośności o: %d dB
 
 id: CPU is too slow to decode this video
 msg: Procesor jest zbyt wolny by dekodować te Video
@@ -453,8 +448,7 @@ id: GPU Temp
 msg: Temp. GPU
 
 id: HDD Avail
-# Missing translation
-msg: 
+msg: Dost HDD
 
 id: Inactive mem
 msg: Nieaktywna pamięć
@@ -490,8 +484,7 @@ msg: Użyj oryginalnego tytułu
 # ./src/arch/linux/pulseaudio.c
 #
 id: Unable to initialize audio system %s -- %s
-# Missing translation
-msg: 
+msg: Nie można zainicjować systemu audio %s -- %s
 
 #
 # ./src/arch/ps3/ps3_main.c
@@ -503,18 +496,16 @@ msg: Mała ilość dostępnej pamięci (dostępne %d kB RAM)
 # ./src/arch/ps3/ps3_vdec.c
 #
 id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
-# Missing translation
-msg: 
+msg: Cell-h264: %d klatek referencyjnych dla jakości 1080 jest niekompatybilna ze sprzętowym dekoderem PS3. Wyłączam akcelerację
 
 id: Cell-h264: Broken headers, Disabling acceleration
-# Missing translation
-msg: 
+msg: Cell-h264: Uszkodzony nagłówek, wyłączanie akceleracji
 
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
 msg: Cell-h264: Wymuszenie poziomu 4.2 dla poziomu %d.%d. Możliwe problemy z odtworzeniem Video
 
 id: Unable to accelerate %s, library not loaded.
-msg: Brak przyspieszenia dla %s, biblioteka nie załadowana
+msg: Brak akceleracji dla %s, biblioteka nie załadowana
 
 id: Unable to open Cell codec. Error 0x%x
 msg: Nie można uruchomić kodeka Cell. Błąd 0x%x
@@ -529,16 +520,13 @@ msg: Błąd sprawdzania kodeka Cell. Błąd 0x%x
 # ./src/arch/rpi/rpi_audio.c
 #
 id: Analog
-# Missing translation
-msg: 
+msg: Analogowe
 
 id: Audio output port
-# Missing translation
-msg: 
+msg: Port wyjścia audio
 
 id: HDMI
-# Missing translation
-msg: 
+msg: HDMI
 
 #
 # ./src/arch/rpi/rpi_cec.c
@@ -556,134 +544,106 @@ id: Audio delay
 msg: Opóźnienie audio
 
 id: Audio gain adjustment during video playback
-# Missing translation
-msg: 
+msg: Automatyczna kontrola dźwięku w czasie odtwarzania
 
 id: Audio settings during video playback
-# Missing translation
-msg: 
+msg: Ustawienia audio w czasie odtwarzania
 
 id: Setup audio output
-# Missing translation
-msg: 
+msg: Ustawienia wyjścia audio
 
 #
 # ./src/audio2/audio_test.c
 #
 id: 440Hz sinewave -12dB
-# Missing translation
-msg: 
+msg: 440Hz sinusoida -12dB
 
 id: Audio test
-# Missing translation
-msg: 
+msg: Test audio
 
 id: Center
 msg: Środek
 
 id: Front Left
-# Missing translation
-msg: 
+msg: Lewy przód
 
 id: Front Right
-# Missing translation
-msg: 
+msg: Prawy przód
 
 id: LFE
-# Missing translation
-msg: 
+msg: LFE
 
 id: Pink noise
-# Missing translation
-msg: 
+msg: Różowy szum
 
 id: Play test signal
-# Missing translation
-msg: 
+msg: Odtwórz sygnał testowy
 
 id: Rear Left
-# Missing translation
-msg: 
+msg: Lewy tył
 
 id: Rear Right
-# Missing translation
-msg: 
+msg: Prawy tył
 
 id: Speaker position
-# Missing translation
-msg: 
+msg: Rozmieszczenie głośników
 
 id: Surround Left
-# Missing translation
-msg: 
+msg: Lewy Surround
 
 id: Surround Right
-# Missing translation
-msg: 
+msg: Prawy Surround
 
 id: Test signal type
-# Missing translation
-msg: 
+msg: Typ sygnału testowego
 
 #
 # ./src/backend/bittorrent/bt_backend.c
 #
 id: No files in torrent
-# Missing translation
-msg: 
+msg: Brak plików w torrencie
 
 id: Unable to load torrent: %s
-# Missing translation
-msg: 
+msg: Nie można załadować torrenta: %s
 
 id: Unable to open torrent: %s
-# Missing translation
-msg: 
+msg: Nie można otworzyć torrenta: %s
 
 id: Unable to parse torrent: %s
-# Missing translation
-msg: 
+msg: Nie można zanalizować torrenta: %s
 
 #
 # ./src/backend/bittorrent/diskio.c
 #
 id: Cached torrents use %d MB out of allowed %d MB. Total free space on volume: %d MB
-# Missing translation
-msg: 
+msg: Zbuforowane torrenty zajmują %d MB z dozwolonych %d MB. Ogół wolnego miejsca na dysku: %d MB
 
 #
 # ./src/backend/bittorrent/magnet.c
 #
 id: Invalid SHA-1 hash: %s
-# Missing translation
-msg: 
+msg: Błędny hash SHA-1: %s
 
 id: No 'xt' in magnet link
-# Missing translation
-msg: 
+msg: Brak 'xt' w linku magnet
 
 id: Unknown hash scheme: %s
-# Missing translation
-msg: 
+msg: Nieznany schemat hash: %s
 
 #
 # ./src/backend/bittorrent/torrent_settings.c
 #
 id: Enable bittorrent
-# Missing translation
-msg: 
+msg: Włącz BitTorrent
 
 id: Max usage of free space for caching torrents
-# Missing translation
-msg: 
+msg: Maks. użycie miejsca dla buforowanych torrentów
 
 id: Status
-# Missing translation
-msg: 
+msg: Status
 
 id: Torrent cache path
-# Missing translation
-msg: 
+msg: Folder buforowania Torrenta
 
 #
 # ./src/backend/dvd/cdda.c
@@ -803,8 +763,7 @@ id: Can't handle content type %d
 msg: Nieobsługiwana zawartość: %d
 
 id: Checking file contents
-# Missing translation
-msg: 
+msg: Sprawdzanie zawartości pliku
 
 id: Unable to open file: %s
 msg: Nie można otworzyć pliku: %s
@@ -879,8 +838,7 @@ id: Are you sure you want to delete:
 msg: Czy na pewno chcesz usunąć:
 
 id: BitTorrent
-# Missing translation
-msg: 
+msg: BitTorrent
 
 id: Enable file deletion from item menu
 msg: Włącz opcję usuwania pliku w menu
@@ -892,8 +850,7 @@ id: Show filename extensions
 msg: Pokaż razszerzenia plików
 
 id: Store per-file settings in filesystem
-# Missing translation
-msg: 
+msg: Zapisz ustawienia do osobnego pliku
 
 id: %d archive parts
 msg[0]: %d części archiwum
@@ -983,16 +940,13 @@ id: Go to standby after video ends
 msg: Przejdź w stan czuwania po zakończonym video
 
 id: Reset defaults for folder '%s'
-# Missing translation
-msg: 
+msg: Przywróć ustawienia domyślne dla folderu '%s'
 
 id: Save as defaults for folder '%s'
-# Missing translation
-msg: 
+msg: Zapisz jako ustawienia domyślne dla folderu '%s'
 
 id: Save as global default
-# Missing translation
-msg: 
+msg: Zapisz jako domyślne ustawienia globalne
 
 id: Stretch video to fullscreen
 msg: Rozciągnij obraz do pełnego ekranu
@@ -1013,8 +967,7 @@ id: Subtitle vertical displacement
 msg: Przesunięcie napisów w pionie
 
 id: Video frame interpolation
-# Missing translation
-msg: 
+msg: Interpolacja klatek Video
 
 id: Video zoom
 msg: Zbliżenie
@@ -1269,8 +1222,7 @@ id: Not upgradable
 msg: Bez możliwości aktualizacji
 
 id: On Screen Keyboards
-# Missing translation
-msg: 
+msg: Klawiatura ekranowa
 
 id: Online TV
 msg: Internet TV
@@ -1600,8 +1552,7 @@ id: Enable VDPAU
 msg: Włącz VDPAU
 
 id: Master volume
-# Missing translation
-msg: 
+msg: Głośność ogólna
 
 id: Maximum resolution for deinterlacer
 msg: Maks. rozdzielczość przy usuwaniu przeplotu
@@ -1610,8 +1561,7 @@ id: No limit
 msg: Bez limitu
 
 id: Per-file volume
-# Missing translation
-msg: 
+msg: Ustawienia głośności na plik
 
 id: Preferred VDPAU deinterlacer method
 msg: Preferowana metoda usuwania przeplotu dla VDPAU
@@ -1626,8 +1576,7 @@ id: Temporal/Spatial
 msg: Czasowy/przestrzenny
 
 id: Up / Down during video playback controls
-# Missing translation
-msg: 
+msg: Góra/Dół w trakcie odtwarzania by kontrolować
 
 id: Video acceleration and display behaviour
 msg: Akceleracja Video i zachowanie wyświetlacza
