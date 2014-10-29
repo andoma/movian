@@ -32,6 +32,12 @@ var propHandler = {
 
     if(typeof value == 'object') {
 
+
+      if('toRichString' in value) {
+        Showtime.propSetRichStr(obj, name, value.toRichString());
+        return;
+      }
+
       var x = Showtime.propGetChild(obj, name);
       if(typeof x !== 'object')
         throw "Assignment to non directory prop";

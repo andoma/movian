@@ -317,6 +317,23 @@ es_prop_set_value_duk(duk_context *ctx)
  *
  */
 static int
+es_prop_set_rich_str_duk(duk_context *ctx)
+{
+  prop_t *p = es_stprop_get(ctx, 0);
+  const char *key = duk_require_string(ctx, 1);
+  const char *richstr = duk_require_string(ctx, 2);
+
+  prop_t *c = prop_create_r(p, key);
+  prop_set_string_ex(c, NULL, richstr, PROP_STR_RICH);
+  prop_ref_dec(c);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
 es_prop_set_parent_duk(duk_context *ctx)
 {
   prop_t *p = es_stprop_get(ctx, 0);
@@ -567,6 +584,7 @@ const duk_function_list_entry fnlist_Showtime_prop[] = {
   { "propGetValue",            es_prop_get_value_duk,         2 },
   { "propGetChild",            es_prop_get_child_duk,         2 },
   { "propSet",                 es_prop_set_value_duk,         3 },
+  { "propSetRichStr",          es_prop_set_rich_str_duk,      3 },
   { "propSetParent",           es_prop_set_parent_duk,        2 },
   { "propSubscribe",           es_prop_subscribe,             3 },
   { "propHaveMore",            es_prop_have_more,             2 },

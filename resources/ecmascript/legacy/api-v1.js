@@ -28,9 +28,18 @@ showtime = {
   entityDecode: Showtime.entityDecode,
   queryStringSplit: Showtime.queryStringSplit,
   pathEscape: Showtime.pathEscape,
-  paramEscape: Showtime.paramEscape
+  paramEscape: Showtime.paramEscape,
 
+  RichText: function(x) {
+    this.str = x;
+  }
 };
+
+
+// This makes prop.js understand that it should set it as Rich formated prop
+showtime.RichText.prototype.toRichString = function(x) {
+  return this.str;
+}
 
 
 // -------------------------------------------------------------------------
