@@ -30,8 +30,7 @@ var propHandler = {
 
   set: function(obj, name, value) {
 
-    if(typeof value == 'object') {
-
+    if(typeof value == 'object' && value !== null) {
 
       if('toRichString' in value) {
         Showtime.propSetRichStr(obj, name, value.toRichString());
