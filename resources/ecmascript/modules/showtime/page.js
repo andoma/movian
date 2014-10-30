@@ -84,6 +84,18 @@ Page.prototype.appendItem = function(url, type, metadata) {
   return item;
 }
 
+Page.prototype.appendPassiveItem = function(type, data, metadata) {
+  this.root.entries++;
+
+  var item = new Item();
+  var root = item.root;
+  root.type = type;
+  root.data = data;
+  root.metadata = metadata;
+  Showtime.propSetParent(root, this.model.nodes);
+  return item;
+}
+
 Page.prototype.dump = function() {
   Showtime.propPrint(this.root);
 }
