@@ -65,6 +65,8 @@ var plugin = {
     return JSON.parse(Plugin.manifest);
   },
 
+  getAuthCredentials: Showtime.getAuthCredentials,
+
   createSettings: function(title, icon, description) {
     var x = new settings.globalSettings(Plugin.id, title, icon, description);
 

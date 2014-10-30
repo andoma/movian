@@ -29,6 +29,7 @@
 #endif
 
 #include "misc/str.h"
+#include "keyring.h"
 
 /**
  *
@@ -183,6 +184,61 @@ es_paramEscape(duk_context *ctx)
 
 
 /**
+ *
+ */
+static int
+es_getAuthCredentials(duk_context *ctx)
+{
+  char buf[256];
+  char *username, *password;
+  int r;
+
+  const char *source = duk_safe_to_string(ctx, 0);
+  const char *reason = duk_safe_to_string(ctx, 1);
+  int query          = duk_to_boolean(ctx, 2);
+  const char *id     = duk_safe_to_string(ctx, 3);
+  int forcetmp       = duk_to_boolean(ctx, 4);
+
+  if(*id == 0)
+    id = NULL;
+
+  es_context_t *ec = es_get(ctx);
+
+  snprintf(buf, sizeof(buf), "plugin-%s%s%s", ec->ec_id,
+	   id ? "-" : "", id ?: "");
+
+  int flags = 0;
+  flags |= query    ? KEYRING_QUERY_USER : 0;
+  flags |= forcetmp ? 0 : KEYRING_SHOW_REMEMBER_ME | KEYRING_REMEMBER_ME_SET;
+
+  r = keyring_lookup(buf, &username, &password, NULL, NULL,
+		     source, reason, flags);
+
+  if(r == 1) {
+    duk_push_false(ctx);
+    return 1;
+  }
+
+  duk_push_object(ctx);
+
+  if(r == -1) {
+
+    duk_push_true(ctx);
+    duk_put_prop_string(ctx, -2, "rejected");
+  } else {
+
+    duk_push_string(ctx, username);
+    duk_put_prop_string(ctx, -2, "username");
+
+    duk_push_string(ctx, password);
+    duk_put_prop_string(ctx, -2, "password");
+  }
+  duk_dump_context_stdout(ctx);
+  return 1;
+}
+
+
+/**
  * Showtime object exposed functions
  */
 const duk_function_list_entry fnlist_Showtime_misc[] = {
@@ -191,6 +247,7 @@ const duk_function_list_entry fnlist_Showtime_misc[] = {
   { "queryStringSplit",      es_queryStringSplit, 1 },
   { "pathEscape",            es_pathEscape,       1 },
   { "paramEscape",           es_paramEscape,      1 },
+  { "getAuthCredentials",    es_getAuthCredentials, 5 },
   { NULL, NULL, 0}
 };
  
