@@ -2,6 +2,7 @@
 var http    = require('showtime/http');
 var service = require('showtime/service');
 var page    = require('showtime/page');
+var settings= require('showtime/settings');
 
 showtime = {
 
@@ -62,6 +63,65 @@ var plugin = {
 
   getDescriptor: function() {
     return JSON.parse(Plugin.manifest);
+  },
+
+  createSettings: function(title, icon, description) {
+    var x = new settings.globalSettings(Plugin.id, title, icon, description);
+
+    var o = {
+      destroy: x.destroy,
+
+      createBool: function(id, title, def, func, persistent) {
+        return x.createBool({
+          id: id,
+          title: title,
+          def: def,
+          callback: func,
+          persistent: persistent
+        });
+      },
+
+      createString: function(id, title, def, func, persistent) {
+        return x.createString({
+          id: id,
+          title: title,
+          def: def,
+          callback: func,
+          persistent: persistent
+        });
+      },
+
+      createInt: function(id, title, def, min, max, step, unit,
+                          func, persistent) {
+        return x.createInteger({
+          id: id,
+          title: title,
+          def: def,
+          min: min,
+          max: max,
+          step: step,
+          unit: unit,
+          callback: func,
+          persistent: persistent
+        });
+      },
+
+      createAction: function(id, title, func) {
+        return x.createAction({
+          id: id,
+          title: title,
+          callback: func
+        })
+      },
+
+      createDivider: function(title) {
+        return x.createDivider({
+          title: title
+        })
+      }
+    }
+
+    return o;
   }
 
 };
