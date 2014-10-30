@@ -146,6 +146,7 @@ sp.createInteger = function(conf) {
   item.model.min  = conf.min;
   item.model.max  = conf.max;
   item.model.step = conf.step;
+  item.model.unit = conf.unit;
 
   prop.subscribeValue(item.model.value, function(newval) {
     if(group.zombie)
