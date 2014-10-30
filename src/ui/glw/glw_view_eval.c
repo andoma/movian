@@ -1516,6 +1516,7 @@ prop_callback_cloner(void *opaque, prop_event_t event, ...)
   case PROP_SET_CSTRING:
   case PROP_SET_INT:
   case PROP_SET_FLOAT:
+  case PROP_SET_PROP:
     t = prop_callback_alloc_token(gr, gps, TOKEN_VOID);
     t->t_propsubr = gps;
     rpn = gps->gps_rpn;
@@ -1684,6 +1685,7 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_SET_DIR:
+  case PROP_SET_PROP:
     t = prop_callback_alloc_token(gr, gps, TOKEN_PROPERTY_REF);
     t->t_propsubr = gps;
     rpn = gps->gps_rpn;
@@ -1751,6 +1753,7 @@ prop_callback_counter(void *opaque, prop_event_t event, ...)
   case PROP_SET_FLOAT:
   case PROP_SET_DIR:
   case PROP_SET_URI:
+  case PROP_SET_PROP:
     sc->sc_entries = 0;
     break;
 
@@ -1821,6 +1824,7 @@ ve_cb(void *opaque, prop_event_t event, ...)
   switch(event) {
   case PROP_SET_VOID:
   case PROP_SET_DIR:
+  case PROP_SET_PROP:
     t = prop_callback_alloc_token(gr, gps, TOKEN_VOID);
     rpn = gps->gps_rpn;
     break;
@@ -2086,6 +2090,7 @@ prop_callback_vectorizer(void *opaque, prop_event_t event, ...)
   switch(event) {
 
   case PROP_SET_VOID:
+  case PROP_SET_PROP:
     vectorizer_clean(gr, sv);
     t = prop_callback_alloc_token(gr, gps, TOKEN_VOID);
     t->t_propsubr = gps;

@@ -136,6 +136,7 @@ typedef enum {
   PROP_FLOAT,
   PROP_INT,
   PROP_URI,
+  PROP_PROP,   /* A simple reference to a prop */
   PROP_ZOMBIE, /* Destroyed can never be changed again */
 } prop_type_t;
 
@@ -193,7 +194,11 @@ struct prop {
    * Payload type
    * Protected by mutex
    */
+#ifdef PROP_DEBUG
+  prop_type_t hp_type;
+#else
   uint8_t hp_type;
+#endif
 
   /**
    * Extended refcount. Used to keep contents of the property alive
@@ -288,6 +293,7 @@ struct prop {
       rstr_t *title;
       rstr_t *uri;
     } uri;
+    struct prop *prop;
   } u;
 
 #define hp_cstring   u.cstr
@@ -300,6 +306,7 @@ struct prop {
 #define hp_pixmap   u.pixmap
 #define hp_uri_title u.uri.title
 #define hp_uri       u.uri.uri
+#define hp_prop      u.prop
 
 #ifdef PROP_DEBUG
   SIMPLEQ_HEAD(, prop_ref_trace) hp_ref_trace;

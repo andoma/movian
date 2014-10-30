@@ -544,16 +544,16 @@ nav_page_setup_prop(nav_page_t *np, const char *view, const char *how)
 		      np->np_url);
 
   if(np->np_opened_from)
-    prop_link(np->np_opened_from, prop_create(np->np_prop_root, "openedFrom"));
+    prop_set(np->np_prop_root, "openedFrom", PROP_SET_PROP, np->np_opened_from);
 
   if(np->np_origin)
     prop_link(np->np_origin, prop_create(np->np_prop_root, "origin"));
 
   if(view != NULL)
-    prop_set_string(prop_create(np->np_prop_root, "requestedView"), view);
+    prop_set(np->np_prop_root, "requestedView", PROP_SET_STRING, view);
 
   if(how != NULL)
-    prop_set_string(prop_create(np->np_prop_root, "how"), how);
+    prop_set(np->np_prop_root, "how", PROP_SET_STRING, how);
 
   // XXX Change this into event-style subscription
   np->np_close_sub = 
@@ -564,9 +564,8 @@ nav_page_setup_prop(nav_page_t *np, const char *view, const char *how)
 		   PROP_TAG_MUTEX, &nav_mutex,
 		   NULL);
 
-  prop_set_string(prop_create(np->np_prop_root, "url"), np->np_url);
-  prop_set_string(prop_create(np->np_prop_root, "parentUrl"),
-                  np->np_parent_url);
+  prop_set(np->np_prop_root, "url",       PROP_SET_STRING, np->np_url);
+  prop_set(np->np_prop_root, "parentUrl", PROP_SET_STRING, np->np_parent_url);
 
   np->np_direct_close_sub = 
     prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,

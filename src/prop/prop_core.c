@@ -484,6 +484,7 @@ prop_notify_free_payload(prop_notify_t *n)
   case PROP_DEL_CHILD:
   case PROP_REQ_NEW_CHILD:
   case PROP_SUGGEST_FOCUS:
+  case PROP_SET_PROP:
     prop_ref_dec_locked(n->hpn_prop);
     break;
 
@@ -793,6 +794,7 @@ notify_invoke(prop_sub_t *s, prop_notify_t *n)
   case PROP_DEL_CHILD:
   case PROP_REQ_NEW_CHILD:
   case PROP_SUGGEST_FOCUS:
+  case PROP_SET_PROP:
     if(pt != NULL)
       pt(s, n->hpn_event, n->hpn_prop, s->hps_user_int);
     else
@@ -1226,6 +1228,9 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
       break;
     case PROP_ZOMBIE:
       break;
+    case PROP_PROP:
+      PROPTRACE("prop by %s%s", origin, trail);
+      break;
     }
   }
   if((direct || s->hps_flags & PROP_SUB_INTERNAL) && pnq == NULL) {
@@ -1288,6 +1293,13 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
 	cb(s->hps_opaque, PROP_SET_VOID, p, s->hps_user_int);
       break;
 
+    case PROP_PROP:
+      if(pt != NULL)
+	pt(s, PROP_SET_DIR, p->hp_prop, s->hps_user_int);
+      else
+	cb(s->hps_opaque, PROP_SET_DIR, p->hp_prop, s->hps_user_int);
+      break;
+
     case PROP_ZOMBIE:
       abort();
 
@@ -1334,6 +1346,11 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
     break;
 
   case PROP_VOID:
+    n->hpn_event = PROP_SET_VOID;
+    break;
+
+  case PROP_PROP:
+    n->hpn_prop = prop_ref_inc(p->hp_prop);
     n->hpn_event = PROP_SET_VOID;
     break;
 
@@ -1700,6 +1717,10 @@ prop_clean(prop_t *p)
 
   case PROP_RSTRING:
     rstr_release(p->hp_rstring);
+    break;
+
+  case PROP_PROP:
+    prop_ref_dec_locked(p->hp_prop);
     break;
 
   case PROP_URI:
@@ -2155,6 +2176,10 @@ prop_destroy0(prop_t *p)
 
   case PROP_RSTRING:
     rstr_release(p->hp_rstring);
+    break;
+
+  case PROP_PROP:
+    prop_ref_dec_locked(p->hp_prop);
     break;
 
   case PROP_URI:
@@ -3785,6 +3810,33 @@ prop_set_void_ex(prop_t *p, prop_sub_t *skipme)
   hts_mutex_unlock(&prop_mutex);
 }
 
+
+/**
+ *
+ */
+static void
+prop_set_prop_exl(prop_t *p, prop_sub_t *skipme, prop_t *target)
+{
+  if(p->hp_type == PROP_ZOMBIE)
+    return;
+
+  if(p->hp_type != PROP_PROP) {
+
+    if(prop_clean(p))
+      return;
+
+  } else if(p->hp_prop == target) {
+    return;
+  } else {
+    prop_ref_dec_locked(p->hp_prop);
+  }
+
+  p->hp_prop = prop_ref_inc(target);
+  p->hp_type = PROP_PROP;
+
+  prop_notify_value(p, skipme, "prop_set_prop()", 0);
+}
+
 /**
  *
  */
@@ -4993,6 +5045,9 @@ prop_seti(prop_sub_t *skipme, prop_t *p, va_list ap)
   case PROP_SET_VOID:
     prop_set_void_exl(p, skipme);
     break;
+  case PROP_SET_PROP:
+    prop_set_prop_exl(p, skipme, va_arg(ap, prop_t *));
+    break;
  default:
    fprintf(stderr, "Unable to handle event: %d\n", ev);
    assert(0);
@@ -5321,6 +5376,10 @@ prop_print_tree0(prop_t *p, int indent, int flags)
 
   case PROP_CSTRING:
     fprintf(stderr, "\"%s\"\n", p->hp_cstring);
+    break;
+
+  case PROP_PROP:
+    fprintf(stderr, "\{%s}\n", p->hp_prop->hp_name ?: "NONAME");
     break;
 
   case PROP_URI:

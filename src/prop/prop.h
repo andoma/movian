@@ -32,7 +32,7 @@
 #include "misc/rstr.h"
 #include "compiler.h"
 
-#if ENABLE_BUGHUNT
+#ifndef NDEBUG
 #define PROP_DEBUG
 #define PROP_SUB_RECORD_SOURCE
 #endif
@@ -68,6 +68,7 @@ typedef enum {
   PROP_SET_FLOAT,
   PROP_SET_DIR,
   PROP_SET_URI,
+  PROP_SET_PROP,
   PROP_ADOPT_RSTRING,
 
   PROP_ADD_CHILD,
