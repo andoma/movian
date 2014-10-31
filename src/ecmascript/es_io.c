@@ -267,6 +267,32 @@ es_http_req(duk_context *ctx)
   ehr->ehr_min_expire = es_prop_to_int(ctx, 1, "cacheTime", 0);
   ehr->ehr_cache = es_prop_is_true(ctx, 1, "caching") || ehr->ehr_min_expire;
 
+
+  // -- Handle 'headers' argument
+
+  duk_get_prop_string(ctx, 1, "headers");
+
+  if(duk_is_object(ctx, -1)) {
+
+    printf("Doing headers\n");
+    duk_enum(ctx, -1, 0);
+
+    while(duk_next(ctx, -1, 1)) {
+      if(duk_is_object_coercible(ctx, -1)) {
+        const char *k = duk_safe_to_string(ctx, -2);
+        const char *v = duk_safe_to_string(ctx, -1);
+
+        http_header_add(&ehr->ehr_request_headers, k, v, 0);
+      }
+      duk_pop_2(ctx);
+    }
+    duk_pop(ctx); // Pop iterator
+  }
+  duk_pop(ctx); // pop headers object
+
+
+  // --- Handle 'postdata' argument
+
   duk_get_prop_string(ctx, 1, "postdata");
 
   if(duk_is_object(ctx, -1)) {
@@ -306,7 +332,7 @@ es_http_req(duk_context *ctx)
 
   }
 
-  duk_pop(ctx);
+  duk_pop(ctx); // pop postdata object
 
   /**
    * Extract args from control object
