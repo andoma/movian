@@ -274,7 +274,6 @@ es_http_req(duk_context *ctx)
 
   if(duk_is_object(ctx, -1)) {
 
-    printf("Doing headers\n");
     duk_enum(ctx, -1, 0);
 
     while(duk_next(ctx, -1, 1)) {
