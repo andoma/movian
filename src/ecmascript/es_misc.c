@@ -30,6 +30,7 @@
 
 #include "misc/str.h"
 #include "keyring.h"
+#include "notifications.h"
 
 /**
  *
@@ -236,6 +237,38 @@ es_getAuthCredentials(duk_context *ctx)
 
 
 /**
+ *
+ */
+static int
+es_message(duk_context *ctx)
+{
+  int r;
+
+  const char *message = duk_to_string(ctx, 0);
+  int ok     = duk_to_boolean(ctx, 1);
+  int cancel = duk_to_boolean(ctx, 2);
+
+  r = message_popup(message,
+		    (ok     ? MESSAGE_POPUP_OK : 0) |
+		    (cancel ? MESSAGE_POPUP_CANCEL : 0) |
+		    MESSAGE_POPUP_RICH_TEXT, NULL);
+
+  switch(r) {
+  case MESSAGE_POPUP_OK:
+    duk_push_true(ctx);
+    break;
+  case MESSAGE_POPUP_CANCEL:
+    duk_push_false(ctx);
+    break;
+  default:
+    duk_push_int(ctx, r);
+    break;
+  }
+  return 1;
+}
+
+
+/**
  * Showtime object exposed functions
  */
 const duk_function_list_entry fnlist_Showtime_misc[] = {
@@ -245,6 +278,7 @@ const duk_function_list_entry fnlist_Showtime_misc[] = {
   { "pathEscape",            es_pathEscape,       1 },
   { "paramEscape",           es_paramEscape,      1 },
   { "getAuthCredentials",    es_getAuthCredentials, 5 },
+  { "message",               es_message, 3 },
   { NULL, NULL, 0}
 };
  

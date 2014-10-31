@@ -30,6 +30,7 @@ showtime = {
   queryStringSplit: Showtime.queryStringSplit,
   pathEscape: Showtime.pathEscape,
   paramEscape: Showtime.paramEscape,
+  message: Showtime.message,
 
   RichText: function(x) {
     this.str = x;
