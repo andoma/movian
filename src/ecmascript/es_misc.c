@@ -196,11 +196,9 @@ es_getAuthCredentials(duk_context *ctx)
   const char *source = duk_safe_to_string(ctx, 0);
   const char *reason = duk_safe_to_string(ctx, 1);
   int query          = duk_to_boolean(ctx, 2);
-  const char *id     = duk_safe_to_string(ctx, 3);
   int forcetmp       = duk_to_boolean(ctx, 4);
 
-  if(*id == 0)
-    id = NULL;
+  const char *id = duk_is_string(ctx, 3) ? duk_to_string(ctx, 3) : NULL;
 
   es_context_t *ec = es_get(ctx);
 
@@ -233,7 +231,6 @@ es_getAuthCredentials(duk_context *ctx)
     duk_push_string(ctx, password);
     duk_put_prop_string(ctx, -2, "password");
   }
-  duk_dump_context_stdout(ctx);
   return 1;
 }
 
