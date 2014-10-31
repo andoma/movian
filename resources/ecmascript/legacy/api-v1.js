@@ -3,6 +3,7 @@ var http    = require('showtime/http');
 var service = require('showtime/service');
 var page    = require('showtime/page');
 var settings= require('showtime/settings');
+var store   = require('showtime/store');
 
 showtime = {
 
@@ -51,6 +52,8 @@ showtime.RichText.prototype.toRichString = function(x) {
 var plugin = {
 
   createService: service.create,
+
+  createStore: store.create,
 
   addURI: function(re, callback) {
     return new page.Route(re, callback);
