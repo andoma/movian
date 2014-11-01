@@ -1283,6 +1283,7 @@ const static charset_t charsets[] = {
    ALIAS("iso-ir-100",
          "ISO_8859-1",
          "latin1",
+         "latin-1",
          "l1",
          "IBM819",
          "CP819",
