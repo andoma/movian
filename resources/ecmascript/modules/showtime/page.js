@@ -72,6 +72,13 @@ function Page(root, flat) {
 }
 
 
+Page.prototype.error = function(msg) {
+  this.model.loading = false;
+  this.model.type = 'openerror';
+  this.model.error = msg;
+}
+
+
 Page.prototype.appendItem = function(url, type, metadata) {
   this.root.entries++;
 
