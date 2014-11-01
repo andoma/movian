@@ -32,6 +32,7 @@ showtime = {
   pathEscape: Showtime.pathEscape,
   paramEscape: Showtime.paramEscape,
   message: Showtime.message,
+  textDialog: Showtime.textDialog,
 
   RichText: function(x) {
     this.str = x;

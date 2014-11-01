@@ -237,7 +237,7 @@ es_getAuthCredentials(duk_context *ctx)
 
 
 /**
- *
+ * This could be implemented in javscript instead
  */
 static int
 es_message(duk_context *ctx)
@@ -269,6 +269,46 @@ es_message(duk_context *ctx)
 
 
 /**
+ * This could be implemented in javscript instead
+ */
+static int
+es_textDialog(duk_context *ctx)
+{
+  int r;
+
+  const char *message = duk_to_string(ctx, 0);
+  int ok     = duk_to_boolean(ctx, 1);
+  int cancel = duk_to_boolean(ctx, 2);
+
+  char *input;
+
+  r = text_dialog(message, &input,
+		    (ok     ? MESSAGE_POPUP_OK : 0) |
+		    (cancel ? MESSAGE_POPUP_CANCEL : 0) |
+		    MESSAGE_POPUP_RICH_TEXT);
+
+  if(r == 1) {
+    duk_push_false(ctx);
+    return 1;
+  }
+
+  duk_push_object(ctx);
+
+  if(r == -1 || input == NULL) {
+    duk_push_true(ctx);
+    duk_put_prop_string(ctx, -2, "rejected");
+  } else {
+    duk_push_string(ctx, input);
+    duk_put_prop_string(ctx, -2, "input");
+  }
+  return 1;
+}
+
+
+
+
+
+/**
  * Showtime object exposed functions
  */
 const duk_function_list_entry fnlist_Showtime_misc[] = {
@@ -279,6 +319,7 @@ const duk_function_list_entry fnlist_Showtime_misc[] = {
   { "paramEscape",           es_paramEscape,      1 },
   { "getAuthCredentials",    es_getAuthCredentials, 5 },
   { "message",               es_message, 3 },
+  { "textDialog",            es_textDialog, 3 },
   { NULL, NULL, 0}
 };
  
