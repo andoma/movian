@@ -8,6 +8,7 @@
 #include "misc/regex.h"
 #include "htsmsg/htsbuf.h"
 #include "task.h"
+#include "backend/backend.h"
 
 /**
  *
@@ -631,11 +632,38 @@ es_http_inspect(const char *url, http_request_inspection_t *hri)
 
 REGISTER_HTTP_REQUEST_INSPECTOR(es_http_inspect);
 
+
+/**
+ *
+ */
+static int
+es_probe(duk_context *ctx)
+{
+  const char *url = duk_require_string(ctx, 0);
+  char errbuf[256];
+  backend_probe_result_t res;
+
+  res = backend_probe(url, errbuf, sizeof(errbuf));
+
+  duk_push_object(ctx);
+
+  if(res != BACKEND_PROBE_OK) {
+    duk_push_string(ctx, errbuf);
+    duk_put_prop_string(ctx, -2, "errmsg");
+  }
+
+  duk_push_int(ctx, res);
+  duk_put_prop_string(ctx, -2, "result");
+  return 1;
+}
+
+
 /**
  * Showtime object exposed functions
  */
 const duk_function_list_entry fnlist_Showtime_io[] = {
   { "httpReq",              es_http_req,              3 },
   { "httpInspectorCreate",  es_http_inspector_create, 2 },
+  { "probe",                es_probe,                 1 },
   { NULL, NULL, 0}
 };

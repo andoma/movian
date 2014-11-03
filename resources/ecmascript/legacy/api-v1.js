@@ -88,6 +88,8 @@ var plugin = {
 
   getAuthCredentials: Showtime.getAuthCredentials,
 
+  probe: Showtime.probe,
+
   createSettings: function(title, icon, description) {
     var x = new settings.globalSettings(Plugin.id, title, icon, description);
 
