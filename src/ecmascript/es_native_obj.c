@@ -34,6 +34,7 @@ native_type_to_str(es_native_type_t type)
   case ES_NATIVE_PROP:     return "prop";
   case ES_NATIVE_HTSMSG:   return "htsmsg";
   case ES_NATIVE_RESOURCE: return "resource";
+  case ES_NATIVE_HASH:     return "hash";
   default: return "???";
   }
 }
@@ -86,6 +87,9 @@ call_finalizer(int type, void *ptr)
     break;
   case ES_NATIVE_HTSMSG:
     htsmsg_release(ptr);
+    break;
+  case ES_NATIVE_HASH:
+    es_hash_release(ptr);
     break;
   default:
     abort();

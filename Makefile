@@ -728,6 +728,7 @@ SRCS += ext/duktape/duktape.c \
 	src/ecmascript/es_io.c \
 	src/ecmascript/es_fs.c \
 	src/ecmascript/es_misc.c \
+	src/ecmascript/es_crypto.c \
 	src/ecmascript/es_string.c \
 	src/ecmascript/es_htsmsg.c \
 	src/ecmascript/es_native_obj.c \

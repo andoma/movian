@@ -17,6 +17,7 @@ typedef enum {
   ES_NATIVE_PROP = 1,
   ES_NATIVE_RESOURCE,
   ES_NATIVE_HTSMSG,
+  ES_NATIVE_HASH,
 
 } es_native_type_t;
 
@@ -209,6 +210,13 @@ int es_hook_invoke(const char *type,
                    void *opaque);
 
 /**
+ * Crypto
+ */
+struct es_hash;
+void es_hash_release(struct es_hash *);
+
+
+/**
  * Function definitions
  */
 extern const duk_function_list_entry fnlist_Showtime_service[];
@@ -222,5 +230,6 @@ extern const duk_function_list_entry fnlist_Showtime_htsmsg[];
 extern const duk_function_list_entry fnlist_Showtime_metadata[];
 extern const duk_function_list_entry fnlist_Showtime_sqlite[];
 extern const duk_function_list_entry fnlist_Showtime_misc[];
+extern const duk_function_list_entry fnlist_Showtime_crypto[];
 
 extern const duk_function_list_entry fnlist_Global_timer[];
