@@ -57,7 +57,7 @@ HttpResponse.prototype.toString = function() {
     // Data validates as UTF-8, return it
     return this.bytes.toString();
 
-  return Showtime.utf8FromBytes(this.bytes, "latin-1");
+  return Showtime.utf8FromBytes(this.bytes);
 }
 
 
