@@ -143,6 +143,14 @@ var plugin = {
         return x.createDivider({
           title: title
         })
+      },
+
+      createInfo: function(id, icon, text) {
+        return x.createInfo({
+          image: icon,
+          description: text
+        })
+      }
       }
     }
 
