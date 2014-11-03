@@ -305,7 +305,39 @@ es_textDialog(duk_context *ctx)
 }
 
 
+/**
+ *
+ */
+static int
+es_bin2hex(duk_context *ctx)
+{
+  duk_size_t bufsize;
+  void *buf = duk_require_buffer(ctx, 0, &bufsize);
 
+  int strlen = bufsize * 2 + 1;
+  char *str = malloc(strlen);
+  bin2hex(str, strlen, buf, bufsize);
+  duk_push_lstring(ctx, str, bufsize * 2);
+  free(str);
+  return 1;
+}
+
+
+/**
+ *
+ */
+static int
+es_hex2bin(duk_context *ctx)
+{
+  const char *str = duk_require_string(ctx, 0);
+  int len = strlen(str);
+  if(len & 1)
+    duk_error(ctx, DUK_ERR_ERROR, "String not integral number of bytes");
+
+  void *dst = duk_push_buffer(ctx, len / 2, 0);
+  hex2bin(dst, len / 2, str);
+  return 1;
+}
 
 
 /**
@@ -320,6 +352,8 @@ const duk_function_list_entry fnlist_Showtime_misc[] = {
   { "getAuthCredentials",    es_getAuthCredentials, 5 },
   { "message",               es_message, 3 },
   { "textDialog",            es_textDialog, 3 },
+  { "bin2hex",               es_bin2hex, 1},
+  { "hex2bin",               es_hex2bin, 1},
   { NULL, NULL, 0}
 };
  
