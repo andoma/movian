@@ -250,7 +250,6 @@ es_prop_enum_duk(duk_context *ctx)
     }
   }
   hts_mutex_unlock(&prop_mutex);
-  duk_dump_context_stdout(ctx);
   return 1;
 }
 
