@@ -81,6 +81,7 @@ typedef struct es_resource {
   LIST_ENTRY(es_resource) er_link;
   const es_resource_class_t *er_class;
   es_context_t *er_ctx;
+  char er_zombie;
   atomic_t er_refcount;
 
 } es_resource_t;

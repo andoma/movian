@@ -172,6 +172,9 @@ es_resource_release(es_resource_t *er)
 void
 es_resource_destroy(es_resource_t *er)
 {
+  if(er->er_zombie)
+    return;
+  er->er_zombie = 1;
   er->er_class->erc_destroy(er);
 }
 
