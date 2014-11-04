@@ -151,7 +151,6 @@ var plugin = {
           description: text
         })
       }
-      }
     }
 
     return o;
