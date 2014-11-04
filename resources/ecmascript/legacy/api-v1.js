@@ -41,6 +41,8 @@ showtime = {
   paramEscape: Showtime.paramEscape,
   message: Showtime.message,
   textDialog: Showtime.textDialog,
+  probe: Showtime.probe,
+
 
   sha1digest: function(str) {
     return cryptodigest('sha1', str);
@@ -87,8 +89,6 @@ var plugin = {
   },
 
   getAuthCredentials: Showtime.getAuthCredentials,
-
-  probe: Showtime.probe,
 
   createSettings: function(title, icon, description) {
     var x = new settings.globalSettings(Plugin.id, title, icon, description);
