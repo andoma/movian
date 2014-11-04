@@ -215,7 +215,7 @@ sp.createAction = function(conf) {
 /// Multiopt
 /// -----------------------------------------------
 
-sp.createMultiopt = function(conf) {
+sp.createMultiOpt = function(conf) {
   var group = this;
 
   var model = group.model.nodes[conf.id];

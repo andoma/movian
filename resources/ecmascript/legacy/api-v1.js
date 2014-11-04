@@ -152,8 +152,8 @@ var plugin = {
         })
       },
 
-      createMultiopt: function(id, title, options, callback) {
-        return x.createMultiopt({
+      createMultiOpt: function(id, title, options, callback) {
+        return x.createMultiOpt({
           id: id,
           title: title,
           options: options,
