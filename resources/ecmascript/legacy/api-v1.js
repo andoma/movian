@@ -150,6 +150,15 @@ var plugin = {
           image: icon,
           description: text
         })
+      },
+
+      createMultiopt: function(id, title, options, callback) {
+        return x.createMultiopt({
+          id: id,
+          title: title,
+          options: options,
+          callback: callback
+        })
       }
     }
 

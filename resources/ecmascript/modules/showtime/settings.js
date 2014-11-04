@@ -211,3 +211,53 @@ sp.createAction = function(conf) {
   return item;
 }
 
+/// -----------------------------------------------
+/// Multiopt
+/// -----------------------------------------------
+
+sp.createMultiopt = function(conf) {
+  var group = this;
+
+  var model = group.model.nodes[conf.id];
+  model.type = 'multiopt';
+  model.enabled = true;
+  model.metadata.title = conf.title;
+
+  var initial = group.getvalue(conf);
+
+  for(var i in conf.options) {
+    var o = conf.options[i];
+
+    var opt_id = o[0];
+    var opt_title = o[1];
+    var opt_default = o[2];
+
+    var opt = model.options[opt_id];
+
+    opt.title = opt_title;
+
+    if(initial == null)
+      initial = opt_id;
+
+    if(opt_id == initial || opt_default) {
+      prop.select(opt);
+      conf.callback(opt_id);
+      prop.link(opt, model.current);
+      model.value = opt_id;
+    }
+  }
+
+  prop.subscribe(model.options, function(type, a) {
+    if(type == 'selectchild') {
+      var id = prop.getName(a);
+      group.setvalue(conf, id);
+      conf.callback(id);
+      prop.link(a, model.current);
+      model.value = id;
+    }
+  }, {
+    autoDestroy: true
+  });
+
+
+}
