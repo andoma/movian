@@ -627,7 +627,7 @@ nav_open_thread(void *aux)
 {
   nav_open_backend_aux_t *noba = aux;
 
-  if(backend_open(noba->p, noba->url, 0))
+  if(backend_open(noba->p, noba->url, 1))
     nav_open_errorf(noba->p, _("No handler for URL"));
 
   free(noba->url);

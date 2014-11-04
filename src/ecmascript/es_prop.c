@@ -628,6 +628,28 @@ es_prop_unlink(duk_context *ctx)
 
 
 /**
+ *
+ */
+static int
+es_prop_send_event(duk_context *ctx)
+{
+  prop_t *p = es_stprop_get(ctx, 0);
+  const char *type = duk_require_string(ctx, 1);
+  event_t *e;
+
+  if(!strcmp(type, "redirect")) {
+    e = event_create_str(EVENT_REDIRECT, duk_require_string(ctx, 2));
+  } else {
+    duk_error(ctx, DUK_ERR_ERROR, "Event type %s not understood", type);
+  }
+
+  prop_send_ext_event(p, e);
+  event_release(e);
+  return 0;
+}
+
+
+/**
  * Showtime object exposed functions
  */
 const duk_function_list_entry fnlist_Showtime_prop[] = {
@@ -651,6 +673,7 @@ const duk_function_list_entry fnlist_Showtime_prop[] = {
   { "propSelect",              es_prop_select,                1 },
   { "propLink",                es_prop_link,                  2 },
   { "propUnlink",              es_prop_unlink,                1 },
+  { "propSendEvent",           es_prop_send_event,            3 },
 
   { NULL, NULL, 0}
 };

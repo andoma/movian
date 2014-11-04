@@ -4,6 +4,8 @@
 #include "service.h"
 #include "arch/threads.h"
 #include "misc/regex.h"
+#include "navigator.h"
+#include "backend/backend.h"
 
 LIST_HEAD(es_route_list, es_route);
 
@@ -166,6 +168,8 @@ ecmascript_openuri(prop_t *page, const char *url, int sync)
 
   es_stprop_push(ctx, page);
 
+  duk_push_boolean(ctx, sync);
+
   int array_idx = duk_push_array(ctx);
 
   for(int i = 1; i < 8; i++) {
@@ -178,10 +182,17 @@ ecmascript_openuri(prop_t *page, const char *url, int sync)
     duk_put_prop_index(ctx, array_idx, i-1);
   }
 
-  int rc = duk_pcall(ctx, 2);
-  if(rc)
+  int rc = duk_pcall(ctx, 3);
+  if(rc) {
+    if(duk_is_string(ctx, -1)) {
+      nav_open_error(page, duk_to_string(ctx, -1));
+    } else {
+      duk_get_prop_string(ctx, -1, "message");
+      nav_open_error(page, duk_to_string(ctx, -1));
+      duk_pop(ctx);
+    }
     es_dump_err(ctx);
-
+  }
   duk_pop(ctx);
 
   es_context_end(ec);
@@ -192,9 +203,25 @@ ecmascript_openuri(prop_t *page, const char *url, int sync)
 
 
 /**
+ *
+ */
+static int
+es_backend_open(duk_context *ctx)
+{
+  prop_t *p = es_stprop_get(ctx, 0);
+  const char *url = duk_require_string(ctx, 1);
+  int sync = duk_require_boolean(ctx, 2);
+  if(backend_open(p, url, sync))
+    duk_error(ctx, DUK_ERR_ERROR, "No handler for URL");
+  return 0;
+}
+
+
+/**
  * Showtime object exposed functions
  */
 const duk_function_list_entry fnlist_Showtime_route[] = {
   { "routeCreate",             es_route_create,      2 },
+  { "backendOpen",             es_backend_open,      3 },
   { NULL, NULL, 0}
 };

@@ -32,8 +32,9 @@ Item.prototype.dump = function(obj) {
 // The Page object
 // ---------------------------------------------------------------
 
-function Page(root, flat) {
+function Page(root, sync, flat) {
 
+  this.sync = sync;
   this.root = root;
   this.model = flat ? this.root : this.root.model;
   this.root.entries = 0;
@@ -60,15 +61,16 @@ function Page(root, flat) {
     }
   });
 
-  prop.subscribe(this.model.nodes, function(op, value) {
-    if(op == 'wantmorechilds') {
-      var nodes = this.model.nodes;
-      var have_more = typeof this.paginator == 'function' && !!this.paginator();
-      Showtime.propHaveMore(nodes, have_more);
-    }
-  }.bind(this), {
-    autoDestroy: true
-  });
+  this.nodesub =
+    prop.subscribe(this.model.nodes, function(op, value) {
+      if(op == 'wantmorechilds') {
+        var nodes = this.model.nodes;
+        var have_more = typeof this.paginator == 'function' && !!this.paginator();
+        Showtime.propHaveMore(nodes, have_more);
+      }
+    }.bind(this), {
+      autoDestroy: true
+    });
 }
 
 
@@ -107,6 +109,18 @@ Page.prototype.dump = function() {
   Showtime.propPrint(this.root);
 }
 
+Page.prototype.redirect = function(url) {
+
+  Showtime.resourceDestroy(this.nodesub);
+
+  if(this.sync) {
+    Showtime.backendOpen(this.root, url, true);
+  } else {
+    prop.sendEvent(this.root.eventSink, "redirect", url);
+  }
+}
+
+
 // ---------------------------------------------------------------
 // ---------------------------------------------------------------
 // Exported functions
@@ -116,13 +130,13 @@ Page.prototype.dump = function() {
 
 exports.Route = function(re, callback) {
 
-  this.route = Showtime.routeCreate(re, function(pageprop, args) {
+  this.route = Showtime.routeCreate(re, function(pageprop, sync, args) {
 
      // First, convert the raw page prop object into a proxied one
     pageprop = prop.makeProp(pageprop);
 
     // Prepend a Page object as first argument to callback
-    args.unshift(new Page(pageprop));
+    args.unshift(new Page(pageprop, sync, false));
 
     callback.apply(null, args);
   });
@@ -148,7 +162,7 @@ exports.Searcher = function(title, icon, callback) {
 
     prop.setParent(root, model.nodes);
 
-    var page = new Page(root, true);
+    var page = new Page(root, false, true);
     page.type = 'directory';
     root.url = Showtime.propMakeUrl(page.root);
     callback(page, query);

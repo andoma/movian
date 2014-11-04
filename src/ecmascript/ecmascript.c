@@ -516,6 +516,13 @@ es_context_end(es_context_t *ec)
 void
 es_dump_err(duk_context *ctx)
 {
+  if(duk_is_string(ctx, -1)) {
+    // Not a real exception
+    TRACE(TRACE_ERROR, "ECMASCRIPT", "%s",
+          duk_to_string(ctx, -1));
+    return;
+  }
+
   duk_get_prop_string(ctx, -1, "name");
   const char *name = duk_get_string(ctx, -1);
 
