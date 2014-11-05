@@ -43,6 +43,7 @@ showtime = {
   textDialog: Showtime.textDialog,
   probe: Showtime.probe,
   notify: Showtime.notify,
+  durationToString: Showtime.durationToString,
 
   print: print,
   trace: console.log,

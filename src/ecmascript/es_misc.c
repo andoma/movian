@@ -355,6 +355,25 @@ es_notify(duk_context *ctx)
 
 
 
+/**
+ *
+ */
+static int
+es_durationtostring(duk_context *ctx)
+{
+  int s = duk_to_uint(ctx, 0);
+  char tmp[32];
+  int m = s / 60;
+  int h = s / 3600;
+  if(h > 0) {
+    snprintf(tmp, sizeof(tmp), "%d:%02d:%02d", h, m % 60, s % 60);
+  } else {
+    snprintf(tmp, sizeof(tmp), "%d:%02d", m % 60, s % 60);
+  }
+  duk_push_string(ctx, tmp);
+  return 1;
+}
+
 
 
 /**
@@ -372,6 +391,7 @@ const duk_function_list_entry fnlist_Showtime_misc[] = {
   { "bin2hex",               es_bin2hex, 1},
   { "hex2bin",               es_hex2bin, 1},
   { "notify",                es_notify, 3},
+  { "durationToString",      es_durationtostring, 1},
   { NULL, NULL, 0}
 };
  
