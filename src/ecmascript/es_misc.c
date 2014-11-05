@@ -341,6 +341,23 @@ es_hex2bin(duk_context *ctx)
 
 
 /**
+ *
+ */
+static int
+es_notify(duk_context *ctx)
+{
+  const char *text = duk_to_string(ctx, 0);
+  unsigned int delay = duk_to_uint(ctx, 1);
+  const char *icon = duk_get_string(ctx, 2);
+  notify_add(NULL, NOTIFY_INFO, icon, delay, rstr_alloc("%s"), text);
+  return 0;
+}
+
+
+
+
+
+/**
  * Showtime object exposed functions
  */
 const duk_function_list_entry fnlist_Showtime_misc[] = {
@@ -354,6 +371,7 @@ const duk_function_list_entry fnlist_Showtime_misc[] = {
   { "textDialog",            es_textDialog, 3 },
   { "bin2hex",               es_bin2hex, 1},
   { "hex2bin",               es_hex2bin, 1},
+  { "notify",                es_notify, 3},
   { NULL, NULL, 0}
 };
  
