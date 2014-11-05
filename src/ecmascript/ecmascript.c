@@ -368,6 +368,10 @@ es_create_env(es_context_t *ec)
 
   duk_put_function_list(ctx, -1, fnlist_Global_timer);
 
+  duk_push_object(ctx);
+  duk_put_function_list(ctx, -1, fnlist_Showtime_console);
+  duk_put_prop_string(ctx, -2, "console");
+
   // Pop global object
 
   duk_pop(ctx);
@@ -464,7 +468,7 @@ es_context_release(es_context_t *ec)
     return;
 
   hts_mutex_destroy(&ec->ec_mutex);
-  TRACE(TRACE_DEBUG, "ECMASCRIPT", "%s fully unloaded", ec->ec_id);
+  TRACE(TRACE_DEBUG, ec->ec_id, "Inloaded");
   free(ec->ec_id);
   free(ec->ec_path);
   free(ec->ec_storage);
@@ -519,9 +523,11 @@ es_context_end(es_context_t *ec)
 void
 es_dump_err(duk_context *ctx)
 {
+  es_context_t *ec = es_get(ctx);
+
   if(duk_is_string(ctx, -1)) {
     // Not a real exception
-    TRACE(TRACE_ERROR, "ECMASCRIPT", "%s",
+    TRACE(TRACE_ERROR, ec->ec_id, "%s",
           duk_to_string(ctx, -1));
     return;
   }
@@ -541,10 +547,10 @@ es_dump_err(duk_context *ctx)
   duk_get_prop_string(ctx, -5, "stack");
   const char *stack = duk_get_string(ctx, -1);
 
-  TRACE(TRACE_ERROR, "ECMASCRIPT", "%s (%s) at %s:%d",
+  TRACE(TRACE_ERROR, ec->ec_id, "%s (%s) at %s:%d",
         name, message, filename, line_no);
 
-  TRACE(TRACE_ERROR, "ECMASCRIPT", "STACK DUMP: %s", stack);
+  TRACE(TRACE_ERROR, ec->ec_id, "STACK DUMP: %s", stack);
   duk_pop_n(ctx, 5);
 }
 
@@ -561,7 +567,7 @@ es_exec(es_context_t *ec, const char *path)
                        NULL);
 
   if(buf == NULL) {
-    TRACE(TRACE_ERROR, "ECMASCRIPT", "Unable to load %s", path);
+    TRACE(TRACE_ERROR, ec->ec_id, "Unable to load %s", path);
     return -1;
   }
 
@@ -572,7 +578,7 @@ es_exec(es_context_t *ec, const char *path)
 
   if(duk_pcompile(ctx, 0)) {
 
-    TRACE(TRACE_ERROR, "ECMASCRIPT", "Unable to compile %s -- %s",
+    TRACE(TRACE_ERROR, ec->ec_id, "Unable to compile %s -- %s",
           path, duk_safe_to_string(ctx, -1));
 
   } else {

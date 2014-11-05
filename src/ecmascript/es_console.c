@@ -13,10 +13,9 @@ es_console_log(duk_context *ctx)
   es_context_t *ec = es_get(ctx);
 
   const char *msg = duk_to_string(ctx, 0);
-  TRACE(TRACE_DEBUG, "ecmascript", "%s: %s", ec->ec_id, msg);
+  TRACE(TRACE_DEBUG, ec->ec_id, "%s", msg);
   return 0;
 }
-
 
 
 /**

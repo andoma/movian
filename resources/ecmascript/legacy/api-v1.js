@@ -43,6 +43,8 @@ showtime = {
   textDialog: Showtime.textDialog,
   probe: Showtime.probe,
 
+  print: print,
+  trace: console.log,
 
   sha1digest: function(str) {
     return cryptodigest('sha1', str);
