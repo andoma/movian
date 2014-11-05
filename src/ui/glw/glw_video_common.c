@@ -515,6 +515,8 @@ glw_video_dtor(glw_t *w)
   prop_unsubscribe(gv->gv_vo_displace_x_sub);
   prop_unsubscribe(gv->gv_vo_displace_y_sub);
   prop_unsubscribe(gv->gv_vzoom_sub);
+  prop_unsubscribe(gv->gv_pan_horizontal_sub);
+  prop_unsubscribe(gv->gv_pan_vertical_sub);
   prop_unsubscribe(gv->gv_hstretch_sub);
   prop_unsubscribe(gv->gv_fstretch_sub);
   prop_unsubscribe(gv->gv_vo_on_video_sub);
