@@ -159,7 +159,7 @@ es_escape(duk_context *ctx, int how)
   char *r = malloc(len);
   url_escape(r, len, str, how);
 
-  duk_push_lstring(ctx, r, len);
+  duk_push_lstring(ctx, r, len - 1);
   free(r);
   return 1;
 }
