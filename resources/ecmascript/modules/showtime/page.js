@@ -11,6 +11,7 @@ function Item(root) {
       value: prop.createRoot()
     }
   });
+  this.eventhandlers = {};
 }
 
 Duktape.fin(Item.prototype, function(x) {
@@ -25,8 +26,56 @@ Item.prototype.bindVideoMetadata = function(obj) {
 }
 
 Item.prototype.dump = function(obj) {
-  printProp(this.root);
+  prop.print(this.root);
 }
+
+Item.prototype.addOptAction = function(title, action) {
+  var node = prop.createRoot();
+  node.type = 'action';
+  node.metadata.title = title;
+  node.enabled = true;
+  node.action = action;
+
+  prop.setParent(node, this.root.options);
+}
+
+
+Item.prototype.addOptURL = function(title, url) {
+  var node = prop.createRoot();
+  node.type = 'location';
+  node.metadata.title = title;
+  node.enabled = true;
+  node.url = url;
+
+  prop.setParent(node, this.root.options);
+}
+
+
+
+Item.prototype.onEvent = function(type, callback) {
+  if(type in this.eventhandlers) {
+    this.eventhandlers[type].push(callback);
+  } else {
+    this.eventhandlers[type] = [callback];
+  }
+
+  if(!this.eventSubscription) {
+    this.eventSubscription =
+      prop.subscribe(this.root, function(type, val) {
+        if(type != "event")
+          return;
+        if(val in this.eventhandlers) {
+          for(x in this.eventhandlers[val]) {
+            this.eventhandlers[val][x](this);
+          }
+        }
+
+    }.bind(this), {
+      autoDestroy: true
+    });
+  }
+}
+
 
 // ---------------------------------------------------------------
 // The Page object
