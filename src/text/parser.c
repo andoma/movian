@@ -186,6 +186,10 @@ html_tag_to_code(char *s, uint32_t *output, int olen, int context, int flags)
     endtag = 1;
     tag++;
   }
+
+  while(*tag == ' ')
+    tag++;
+
   len = strlen(s);
   while(len > 0 && s[len-1] == ' ')
     s[len--] = 0;
