@@ -3091,6 +3091,10 @@ prop_unsubscribe0(prop_sub_t *s)
     pc->pc_refcount--;
   }
 
+#ifdef PROP_DEBUG
+  s->hps_dispatch = NULL;
+#endif
+
   if(s->hps_value_prop != NULL) {
     LIST_REMOVE(s, hps_value_prop_link);
     s->hps_value_prop = NULL;
