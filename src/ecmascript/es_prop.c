@@ -313,8 +313,14 @@ es_prop_set_value_duk(duk_context *ctx)
     SETPRINTF("%s", duk_get_boolean(ctx, 2) ? "true" : "false");
     prop_set(p, str, PROP_SET_INT, duk_get_boolean(ctx, 2));
   } else if(duk_is_number(ctx, 2)) {
-    SETPRINTF("%f", duk_get_number(ctx, 2));
-    prop_set(p, str, PROP_SET_FLOAT, duk_get_number(ctx, 2));
+    double dbl = duk_get_number(ctx, 2);
+    SETPRINTF("%f", dbl);
+
+    if(ceil(dbl) == dbl && dbl <= INT32_MAX && dbl >= INT32_MIN) {
+      prop_set(p, str, PROP_SET_INT, (int)dbl);
+    } else {
+      prop_set(p, str, PROP_SET_FLOAT, dbl);
+    }
   } else if(duk_is_string(ctx, 2)) {
     SETPRINTF("\"%s\"", duk_get_string(ctx, 2));
     prop_set(p, str, PROP_SET_STRING, duk_get_string(ctx, 2));
