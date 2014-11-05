@@ -184,6 +184,11 @@ mtm_rethink(media_track_mgr_t *mtm)
   if(TAILQ_FIRST(&mtm->mtm_tracks) == NULL) {
     // All tracks deleted, clear the user-has-configured flag
     mtm->mtm_user_set = 0;
+
+    if(mtm->mtm_type == MEDIA_TRACK_MANAGER_SUBTITLES) {
+      // Stop any pending load of subtitles
+      mystrset(&mtm->mtm_mp->mp_subtitle_loader_url, NULL);
+    }
     return;
   }
 
