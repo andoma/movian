@@ -295,6 +295,18 @@ es_prop_delete_child_duk(duk_context *ctx)
 }
 
 
+/**
+ *
+ */
+static int
+es_prop_delete_childs_duk(duk_context *ctx)
+{
+  prop_t *p = es_stprop_get(ctx, 0);
+  prop_destroy_childs(p);
+  return 0;
+}
+
+
 //#define SETPRINTF(fmt...) printf(fmt);
 #define SETPRINTF(fmt, ...)
 
@@ -675,6 +687,7 @@ const duk_function_list_entry fnlist_Showtime_prop[] = {
   { "propEnum",                es_prop_enum_duk,              1 },
   { "propHas",                 es_prop_has_duk,               2 },
   { "propDeleteChild",         es_prop_delete_child_duk,      2 },
+  { "propDeleteChilds",        es_prop_delete_childs_duk,     1 },
   { "propSelect",              es_prop_select,                1 },
   { "propLink",                es_prop_link,                  2 },
   { "propUnlink",              es_prop_unlink,                1 },

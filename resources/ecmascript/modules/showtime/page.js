@@ -158,6 +158,10 @@ Page.prototype.dump = function() {
   Showtime.propPrint(this.root);
 }
 
+Page.prototype.flush = function() {
+  prop.deleteChilds(this.model.nodes);
+}
+
 Page.prototype.redirect = function(url) {
 
   Showtime.resourceDestroy(this.nodesub);

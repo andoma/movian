@@ -92,6 +92,7 @@ exports.print = Showtime.propPrint;
 exports.setParent = Showtime.propSetParent;
 
 exports.subscribe = Showtime.propSubscribe;
+exports.deleteChilds = Showtime.propDeleteChilds;
 
 exports.createRoot = function() {
   return makeProp(Showtime.propCreate());
