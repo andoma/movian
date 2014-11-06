@@ -33,6 +33,8 @@
 #include "osx.h"
 #include "ui/webpopup.h"
 #include "htsmsg/htsmsg_store.h"
+#include "misc/md5.h"
+#include "misc/str.h"
 
 prop_courier_t *mainloop_courier;
 
@@ -62,7 +64,30 @@ showtime_get_avtime(void)
 @end
 
 
+/**
+ *
+ */
+static void
+get_device_id(void)
+{
+  char buf[512] = {0};
+  io_registry_entry_t ioRegistryRoot = IORegistryEntryFromPath(kIOMasterPortDefault, "IOService:/");
+ CFStringRef uuidCf = (CFStringRef) IORegistryEntryCreateCFProperty(ioRegistryRoot, CFSTR(kIOPlatformUUIDKey), kCFAllocatorDefault, 0);
+ IOObjectRelease(ioRegistryRoot);
+ CFStringGetCString(uuidCf, buf, sizeof(buf), kCFStringEncodingMacRoman);
+ CFRelease(uuidCf);
 
+
+  uint8_t digest[16];
+
+  md5_decl(ctx);
+  md5_init(ctx);
+
+  md5_update(ctx, (const void *)buf, strlen(buf));
+
+  md5_final(ctx, digest);
+  bin2hex(gconf.device_id, sizeof(gconf.device_id), digest, sizeof(digest));
+}
 
 
 /**
@@ -77,6 +102,8 @@ main(int argc, char **argv)
   [NSApp setDelegate: s];
 
   gconf.binary = argv[0];
+
+  get_device_id();
 
   posix_init();
 
