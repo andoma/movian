@@ -332,6 +332,12 @@ es_create_env(es_context_t *ec)
   duk_push_int(ctx, showtime_get_version_int());
   duk_put_prop_string(ctx, obj_idx, "currentVersionInt");
 
+  duk_push_string(ctx, htsversion);
+  duk_put_prop_string(ctx, obj_idx, "currentVersionString");
+
+  duk_push_string(ctx, gconf.device_id);
+  duk_put_prop_string(ctx, obj_idx, "deviceId");
+
   duk_put_function_list(ctx, obj_idx, fnlist_Showtime);
   duk_put_function_list(ctx, obj_idx, fnlist_Showtime_service);
   duk_put_function_list(ctx, obj_idx, fnlist_Showtime_route);

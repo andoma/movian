@@ -33,6 +33,12 @@ showtime = {
     return http.request(url, c);
   },
 
+
+  currentVersionInt: Showtime.currentVersionInt,
+  currentVersionString: Showtime.currentVersionString,
+  deviceId: Showtime.deviceId,
+
+
   httpReq: http.request,
 
   entityDecode: Showtime.entityDecode,
