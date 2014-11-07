@@ -46,6 +46,7 @@ exports.createFromPath = function(path) {
 
 
 exports.create = function(name) {
-  Showtime.fs.mkdirs('store');
-  return exports.createFromPath('store/' + name);
+  var path = 'store/' + name;
+  Showtime.fs.mkdirs(Showtime.fs.dirname(path));
+  return exports.createFromPath(path);
 }

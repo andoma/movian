@@ -65,7 +65,7 @@ get_filename(duk_context *ctx, int index)
 {
   const char *filename = duk_to_string(ctx, index);
 
-  if(strstr(filename, "../"))
+  if(strstr(filename, "../") || strstr(filename, "/.."))
     duk_error(ctx, DUK_ERR_ERROR, "Bad filename");
   return filename;
 }
@@ -267,6 +267,23 @@ es_file_mkdirs(duk_context *ctx)
 }
 
 
+/**
+ *
+ */
+static int
+es_file_dirname(duk_context *ctx)
+{
+  const char *filename = mystrdupa(get_filename(ctx, 0));
+
+  char *x = strrchr(filename, '/');
+  if(x) {
+    *x = 0;
+    duk_push_string(ctx, filename);
+  }
+  return 1;
+}
+
+
 
 /**
  * Showtime object exposed functions
@@ -279,5 +296,6 @@ const duk_function_list_entry fnlist_Showtime_fs[] = {
   { "ftrunctae",        es_file_ftruncate,        2 },
   { "rename",           es_file_rename,           2 },
   { "mkdirs",           es_file_mkdirs,           2 },
+  { "dirname",          es_file_dirname,          1 },
   { NULL, NULL, 0}
 };
