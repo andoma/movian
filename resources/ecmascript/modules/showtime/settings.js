@@ -176,7 +176,7 @@ sp.createInfo = function(id, icon, description) {
 sp.createAction = function(id, title, callback) {
   var group = this;
 
-  var item = createSetting(id, title, 'action', conf);
+  var item = createSetting(group, 'action', id, title);
 
   prop.subscribe(item.model.action, function(type) {
     if(type == 'event')
