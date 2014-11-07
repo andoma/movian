@@ -542,6 +542,13 @@ kv_url_opt_get_rstr(const char *url, int domain, const char *key)
   if(stmt) {
     r = db_rstr(stmt, 0);
     sqlite3_finalize(stmt);
+    if(gconf.enable_kvstore_debug)
+      TRACE(TRACE_DEBUG, "kvstore","GET DB url=%s key=%s domain=%d value=%s",
+            url, key, domain, rstr_get(r));
+  } else {
+    if(gconf.enable_kvstore_debug)
+      TRACE(TRACE_DEBUG, "kvstore","GET DB url=%s key=%s domain=%d value=UNSET",
+            url, key, domain);
   }
   kvstore_close(db);
   return r;

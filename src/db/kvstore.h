@@ -21,11 +21,14 @@
  */
 #pragma once
 
+struct prop;
+struct rstr;
+
 void kvstore_init(void);
 
 void kvstore_fini(void);
 
-void kv_prop_bind_create(prop_t *p, const char *url);
+void kv_prop_bind_create(struct prop *p, const char *url);
 
 // Direct access
 
@@ -34,7 +37,7 @@ void kv_prop_bind_create(prop_t *p, const char *url);
 #define KVSTORE_DOMAIN_PLUGIN  3
 #define KVSTORE_DOMAIN_SETTING 4
 
-rstr_t *kv_url_opt_get_rstr(const char *url, int domain, const char *key);
+struct rstr *kv_url_opt_get_rstr(const char *url, int domain, const char *key);
 
 int kv_url_opt_get_int(const char *url, int domain, const char *key, int def);
 
