@@ -348,6 +348,7 @@ es_create_env(es_context_t *ec)
   duk_put_function_list(ctx, obj_idx, fnlist_Showtime_htsmsg);
   duk_put_function_list(ctx, obj_idx, fnlist_Showtime_misc);
   duk_put_function_list(ctx, obj_idx, fnlist_Showtime_crypto);
+  duk_put_function_list(ctx, obj_idx, fnlist_Showtime_kvstore);
 #if ENABLE_METADATA
   duk_put_function_list(ctx, obj_idx, fnlist_Showtime_metadata);
 #endif

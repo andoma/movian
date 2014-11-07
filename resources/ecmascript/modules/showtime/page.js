@@ -1,4 +1,5 @@
 var prop = require('showtime/prop');
+var settings = require('showtime/settings');
 
 // ---------------------------------------------------------------
 // The Item object
@@ -109,6 +110,12 @@ function Page(root, sync, flat) {
       set: function(v) { this.root.source = v; }
     }
   });
+
+  if(!flat) {
+    this.options = new settings.kvstoreSettings(this.model.options,
+                                                this.root.url,
+                                                'plugin');
+  }
 
   this.nodesub =
     prop.subscribe(this.model.nodes, function(op, value) {
