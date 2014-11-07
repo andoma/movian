@@ -571,6 +571,9 @@ es_prop_subscribe(duk_context *ctx)
   if(es_prop_is_true(ctx, 2, "debug"))
     flags |= PROP_SUB_DEBUG;
 
+  if(es_prop_is_true(ctx, 2, "noInitialUpdate"))
+    flags |= PROP_SUB_NO_INITIAL_UPDATE;
+
   eps->eps_sub =
       prop_subscribe(flags,
                    PROP_TAG_ROOT, p,
