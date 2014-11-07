@@ -642,6 +642,9 @@ ecmascript_plugin_load(const char *id, const char *url,
   duk_push_string(ctx, manifest);
   duk_put_prop_string(ctx, plugin_obj_idx, "manifest");
 
+  duk_push_int(ctx, version);
+  duk_put_prop_string(ctx, plugin_obj_idx, "apiversion");
+
   if(!fa_parent(path, sizeof(path), url)) {
     duk_push_string(ctx, path);
     duk_put_prop_string(ctx, plugin_obj_idx, "path");
