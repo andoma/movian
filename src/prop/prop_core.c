@@ -1351,7 +1351,7 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
 
   case PROP_PROP:
     n->hpn_prop = prop_ref_inc(p->hp_prop);
-    n->hpn_event = PROP_SET_VOID;
+    n->hpn_event = PROP_SET_PROP;
     break;
 
   case PROP_ZOMBIE:
