@@ -89,25 +89,27 @@ function Page(root, sync, flat) {
   this.model = flat ? this.root : this.root.model;
   this.root.entries = 0;
 
+  var model = this.model;
+
   Object.defineProperties(this, {
 
     type: {
-      get: function()  { return this.model.type; },
-      set: function(v) { this.model.type = v; }
+      get: function()  { return model.type; },
+      set: function(v) { model.type = v; }
     },
 
     metadata: {
-      get: function()  { return this.model.metadata; }
+      get: function()  { return model.metadata; }
     },
 
     loading: {
-      get: function()  { return this.model.loading; },
-      set: function(v) { this.model.loading = v; }
+      get: function()  { return model.loading; },
+      set: function(v) { model.loading = v; }
     },
 
     source: {
-      get: function()  { return this.root.source; },
-      set: function(v) { this.root.source = v; }
+      get: function()  { return root.source; },
+      set: function(v) { root.source = v; }
     }
   });
 
@@ -118,9 +120,9 @@ function Page(root, sync, flat) {
   }
 
   this.nodesub =
-    prop.subscribe(this.model.nodes, function(op, value) {
+    prop.subscribe(model.nodes, function(op, value) {
       if(op == 'wantmorechilds') {
-        var nodes = this.model.nodes;
+        var nodes = model.nodes;
         var have_more = typeof this.paginator == 'function' && !!this.paginator();
         Showtime.propHaveMore(nodes, have_more);
       }
