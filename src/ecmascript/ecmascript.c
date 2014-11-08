@@ -475,7 +475,7 @@ es_context_release(es_context_t *ec)
     return;
 
   hts_mutex_destroy(&ec->ec_mutex);
-  TRACE(TRACE_DEBUG, ec->ec_id, "Inloaded");
+  TRACE(TRACE_DEBUG, ec->ec_id, "Unloaded");
   free(ec->ec_id);
   free(ec->ec_path);
   free(ec->ec_storage);
@@ -707,7 +707,6 @@ ecmascript_release_context_vector(es_context_t **v)
 }
 
 
-
 /**
  *
  */
@@ -763,7 +762,38 @@ ecmascript_init(void)
 }
 
 
-INITME(INIT_GROUP_API, ecmascript_init);
+/**
+ *
+ */
+static void
+ecmascript_fini(void)
+{
+  es_context_t *ec;
+  es_resource_t *er;
+
+  hts_mutex_lock(&es_context_mutex);
+  while((ec = LIST_FIRST(&es_contexts)) != NULL) {
+
+    assert(ec->ec_linked);
+    es_num_contexts--;
+    LIST_REMOVE(ec, ec_link);
+    ec->ec_linked = 0;
+    hts_mutex_unlock(&es_context_mutex);
+
+    es_context_begin(ec);
+
+    while((er = LIST_FIRST(&ec->ec_resources_permanent)) != NULL)
+      es_resource_destroy(er);
+
+    es_context_end(ec);
+    es_context_release(ec);
+    hts_mutex_lock(&es_context_mutex);
+  }
+  hts_mutex_unlock(&es_context_mutex);
+}
+
+
+INITME(INIT_GROUP_API, ecmascript_init, ecmascript_fini);
 
 /**
  *
