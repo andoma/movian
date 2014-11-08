@@ -1226,4 +1226,4 @@ http_req_args_fill_htsmsg(http_connection_t *hc, htsmsg_t *msg)
     htsmsg_add_str(msg, hh->hh_key, hh->hh_value);
 }
 
-INITME(INIT_GROUP_ASYNCIO, http_server_init);
+INITME(INIT_GROUP_ASYNCIO, http_server_init, NULL);

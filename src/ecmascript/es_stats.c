@@ -107,4 +107,4 @@ torrent_stats_init(void)
   http_path_add("/showtime/ecmascript/stats", NULL, dumpstats, 1);
 }
 
-INITME(INIT_GROUP_API, torrent_stats_init);
+INITME(INIT_GROUP_API, torrent_stats_init, NULL);

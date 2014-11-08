@@ -1485,7 +1485,7 @@ freetype_init(void)
 #endif
 }
 
-INITME(INIT_GROUP_GRAPHICS, freetype_init);
+INITME(INIT_GROUP_GRAPHICS, freetype_init, NULL);
 
 
 /**

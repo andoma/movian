@@ -357,4 +357,4 @@ lastfm_init(void)
 			       NULL, 0, 0);
 }
 
-INITME(INIT_GROUP_API, lastfm_init);
+INITME(INIT_GROUP_API, lastfm_init, NULL);

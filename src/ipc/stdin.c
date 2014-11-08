@@ -199,4 +199,4 @@ stdin_start(void)
 }
 
 
-INITME(INIT_GROUP_IPC, stdin_start);
+INITME(INIT_GROUP_IPC, stdin_start, NULL);

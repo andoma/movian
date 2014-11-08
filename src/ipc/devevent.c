@@ -338,4 +338,4 @@ devevent_start(void)
   hts_thread_create_detached("devevent", devevent_thread, NULL,
 			     THREAD_PRIO_UI_WORKER_HIGH);
 }
-INITME(INIT_GROUP_IPC, devevent_start);
+INITME(INIT_GROUP_IPC, devevent_start, NULL);

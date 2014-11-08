@@ -774,4 +774,4 @@ httpcontrol_init(void)
 #endif
 }
 
-INITME(INIT_GROUP_API, httpcontrol_init);
+INITME(INIT_GROUP_API, httpcontrol_init, NULL);

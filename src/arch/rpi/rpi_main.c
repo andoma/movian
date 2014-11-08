@@ -927,4 +927,4 @@ rpi_monitor_init(void)
   rpi_monitor_timercb(NULL, p);
 }
 
-INITME(INIT_GROUP_API, rpi_monitor_init);
+INITME(INIT_GROUP_API, rpi_monitor_init, NULL);

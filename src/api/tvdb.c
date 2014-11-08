@@ -540,6 +540,6 @@ tvdb_init(void)
                  NULL);
 }
 
-INITME(INIT_GROUP_API, tvdb_init);
+INITME(INIT_GROUP_API, tvdb_init, NULL);
 
 

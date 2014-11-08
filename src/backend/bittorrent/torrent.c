@@ -1491,4 +1491,4 @@ torrent_io_init(void)
 
 }
 
-INITME(INIT_GROUP_ASYNCIO, torrent_io_init);
+INITME(INIT_GROUP_ASYNCIO, torrent_io_init, NULL);

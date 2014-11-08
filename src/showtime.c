@@ -164,7 +164,21 @@ init_group(int group)
   const inithelper_t *ih;
   for(ih = inithelpers; ih != NULL; ih = ih->next) {
     if(ih->group == group)
-      ih->fn();
+      ih->init();
+  }
+}
+
+
+/**
+ *
+ */
+void
+fini_group(int group)
+{
+  const inithelper_t *ih;
+  for(ih = inithelpers; ih != NULL; ih = ih->next) {
+    if(ih->group == group && ih->fini != NULL)
+      ih->fini();
   }
 }
 
@@ -688,6 +702,8 @@ void
 showtime_fini(void)
 {
   prop_destroy_by_name(prop_get_global(), "popups");
+  fini_group(INIT_GROUP_API);
+  TRACE(TRACE_DEBUG, "core", "API group finished");
 #if ENABLE_PLAYQUEUE
   playqueue_fini();
   TRACE(TRACE_DEBUG, "core", "Playqueue finished");

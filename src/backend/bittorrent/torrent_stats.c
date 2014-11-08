@@ -191,4 +191,4 @@ torrent_stats_init(void)
   http_path_add("/showtime/torrents", NULL, torrent_dump_http, 1);
 }
 
-INITME(INIT_GROUP_API, torrent_stats_init);
+INITME(INIT_GROUP_API, torrent_stats_init, NULL);

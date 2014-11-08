@@ -591,7 +591,7 @@ tmdb_init(void)
 }
 
 
-INITME(INIT_GROUP_API, tmdb_init);
+INITME(INIT_GROUP_API, tmdb_init, NULL);
 
 /**
  *

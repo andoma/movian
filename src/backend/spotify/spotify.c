@@ -4730,4 +4730,4 @@ static backend_t be_spotify = {
 BE_REGISTER(spotify);
 
 
-INITME(INIT_GROUP_STATIC_APPS, spotify_init);
+INITME(INIT_GROUP_STATIC_APPS, spotify_init, NULL);

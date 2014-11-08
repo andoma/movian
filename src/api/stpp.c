@@ -504,4 +504,4 @@ ws_init(void)
 }
 
 
-INITME(INIT_GROUP_API, ws_init);
+INITME(INIT_GROUP_API, ws_init, NULL);

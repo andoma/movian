@@ -310,15 +310,17 @@ typedef struct inithelper {
     INIT_GROUP_ASYNCIO,
     INIT_GROUP_GRAPHICS,
   } group;
-  void (*fn)(void);
+  void (*init)(void);
+  void (*fini)(void);
 } inithelper_t;
 
 extern inithelper_t *inithelpers;
 
-#define INITME(group_, func_)					   \
+#define INITME(group_, init_, fini_)                               \
   static inithelper_t HTS_JOIN(inithelper, __LINE__) = {	   \
     .group = group_,						   \
-    .fn = func_							   \
+    .init = init_,                                                 \
+    .fini = fini_                                                  \
   };								   \
   INITIALIZER(HTS_JOIN(inithelperctor, __LINE__))                  \
   {								   \
@@ -328,3 +330,5 @@ extern inithelper_t *inithelpers;
   }
 
 void init_group(int group);
+
+void fini_group(int group);
