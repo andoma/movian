@@ -475,7 +475,6 @@ es_context_release(es_context_t *ec)
     return;
 
   hts_mutex_destroy(&ec->ec_mutex);
-  TRACE(TRACE_DEBUG, ec->ec_id, "Unloaded");
   free(ec->ec_id);
   free(ec->ec_path);
   free(ec->ec_storage);
@@ -518,6 +517,7 @@ es_context_end(es_context_t *ec)
 
     duk_destroy_heap(ec->ec_duk);
     ec->ec_duk = NULL;
+    TRACE(TRACE_DEBUG, ec->ec_id, "Unloaded");
   }
 
   hts_mutex_unlock(&ec->ec_mutex);
