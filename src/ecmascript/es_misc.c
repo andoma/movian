@@ -382,8 +382,8 @@ es_durationtostring(duk_context *ctx)
 static int
 es_cachePut(duk_context *ctx)
 {
-  const char *stash = duk_require_string(ctx, 0);
-  const char *  key = duk_require_string(ctx, 1);
+  const char *stash = duk_to_string(ctx, 0);
+  const char *  key = duk_to_string(ctx, 1);
   duk_size_t bufsize;
   void *buf = duk_to_buffer(ctx, 2, &bufsize);
   int maxage = duk_get_uint(ctx, 3);
@@ -400,15 +400,15 @@ es_cachePut(duk_context *ctx)
 static int
 es_cacheGet(duk_context *ctx)
 {
-  const char *stash = duk_require_string(ctx, 0);
-  const char *  key = duk_require_string(ctx, 1);
+  const char *stash = duk_to_string(ctx, 0);
+  const char *  key = duk_to_string(ctx, 1);
   buf_t *b = blobcache_get(key, stash, 0, NULL, NULL, NULL);
-  b = NULL;
   if(b == NULL) {
     duk_push_null(ctx);
   } else {
     void *v = duk_push_fixed_buffer(ctx, buf_size(b));
     memcpy(v, buf_cstr(b), buf_size(b));
+    buf_release(b);
   }
   return 1;
 }
