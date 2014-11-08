@@ -466,7 +466,9 @@ es_context_create(const char *id)
 
 
 /**
- *
+ * Be careful here as it will sometimes will be called with prop_mutex
+ * held (see es_prop_lockmgr() in es_prop.c). Thus any call that might
+ * access the prop system might deadlock. You have been warned.
  */
 void
 es_context_release(es_context_t *ec)
