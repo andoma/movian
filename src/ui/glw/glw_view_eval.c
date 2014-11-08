@@ -3198,6 +3198,7 @@ glwf_deliverEvent(glw_view_eval_context_t *ec, struct token *self,
 			    "First argument is not a property");
 
   if(argc == 2) {
+    char tmp[32];
     if((b = token_resolve(ec, argv[1])) == NULL)
       return -1;
 
@@ -3209,8 +3210,13 @@ glwf_deliverEvent(glw_view_eval_context_t *ec, struct token *self,
     case TOKEN_CSTRING:
       action = rstr_alloc(b->t_cstring);
       break;
+    case TOKEN_INT:
+      snprintf(tmp, sizeof(tmp), "%d", b->t_int);
+      action = rstr_alloc(tmp);
+      break;
     default:
       action = NULL;
+      break;
     }
   }
 
