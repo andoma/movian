@@ -583,3 +583,32 @@ event_from_Fkey(unsigned int keynum, unsigned int mod)
     return NULL;
   return event_create_action(a);
 }
+
+
+/**
+ *
+ */
+const char *
+event_sprint(const event_t *e)
+{
+  static __thread char buf[64];
+
+  const event_payload_t *ep = (const event_payload_t *)e;
+  const event_action_vector_t *eav = (const event_action_vector_t *)e;
+
+  
+  switch(e->e_type_x) {
+  case EVENT_DYNAMIC_ACTION:
+    return ep->payload;
+  case EVENT_ACTION_VECTOR:
+    buf[0] = 0;
+    for(int i = 0; i < eav->num; i++)
+      snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "%s%s",
+               i == 0 ? "" : ", ", action_code2str(eav->actions[i]));
+    break;
+  default:
+    snprintf(buf, sizeof(buf), "event<%d>", e->e_type_x);
+    break;
+  }
+  return buf;
+}
