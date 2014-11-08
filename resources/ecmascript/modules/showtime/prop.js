@@ -106,6 +106,10 @@ exports.sendEvent = Showtime.propSendEvent;
 
 exports.subscribeValue = function(prop, callback, ctrl) {
   return Showtime.propSubscribe(prop, function(type, v1, v2) {
+
+    if(type == 'destroyed')
+      return;
+
     callback.apply(null, makeValue(type, v1, v2));
   }, ctrl);
 }
