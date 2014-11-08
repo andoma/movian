@@ -31,6 +31,7 @@
 #include "misc/str.h"
 #include "keyring.h"
 #include "notifications.h"
+#include "blobcache.h"
 
 /**
  *
@@ -375,6 +376,43 @@ es_durationtostring(duk_context *ctx)
 }
 
 
+/**
+ *
+ */
+static int
+es_cachePut(duk_context *ctx)
+{
+  const char *stash = duk_require_string(ctx, 0);
+  const char *  key = duk_require_string(ctx, 1);
+  duk_size_t bufsize;
+  void *buf = duk_to_buffer(ctx, 2, &bufsize);
+  int maxage = duk_get_uint(ctx, 3);
+  buf_t *b = buf_create_and_copy(bufsize, buf);
+  blobcache_put(key, stash, b, maxage, NULL, 0, 0);
+  buf_release(b);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+es_cacheGet(duk_context *ctx)
+{
+  const char *stash = duk_require_string(ctx, 0);
+  const char *  key = duk_require_string(ctx, 1);
+  buf_t *b = blobcache_get(key, stash, 0, NULL, NULL, NULL);
+  b = NULL;
+  if(b == NULL) {
+    duk_push_null(ctx);
+  } else {
+    void *v = duk_push_fixed_buffer(ctx, buf_size(b));
+    memcpy(v, buf_cstr(b), buf_size(b));
+  }
+  return 1;
+}
+
 
 /**
  * Showtime object exposed functions
@@ -392,6 +430,8 @@ const duk_function_list_entry fnlist_Showtime_misc[] = {
   { "hex2bin",               es_hex2bin, 1},
   { "notify",                es_notify, 3},
   { "durationToString",      es_durationtostring, 1},
+  { "cachePut",              es_cachePut, 4},
+  { "cacheGet",              es_cacheGet, 2},
   { NULL, NULL, 0}
 };
  

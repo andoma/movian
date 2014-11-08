@@ -103,7 +103,18 @@ var plugin = {
   createSettings: function(title, icon, description) {
     return new settings.globalSettings(Plugin.id, title, icon,
                                        description);
+  },
+
+  cachePut: function(stash, key, obj, maxage) {
+    Showtime.cachePut('plugin/' + Plugin.id + '/' + stash,
+                      key, JSON.stringify(obj), maxage);
+  },
+
+  cacheGet: function(stash, key) {
+    var v = Showtime.cacheGet('plugin/' + Plugin.id + '/' + stash, key);
+    return v ? JSON.parse(v) : null;
   }
+
 };
 
 var x = Showtime.compile(Plugin.url);
