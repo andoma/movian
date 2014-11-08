@@ -52,6 +52,16 @@ Item.prototype.addOptURL = function(title, url) {
 }
 
 
+Item.prototype.addOptSeparator = function(title) {
+  var node = prop.createRoot();
+  node.type = 'separator';
+  node.metadata.title = title;
+  node.enabled = true;
+
+  prop.setParent(node, this.root.options);
+}
+
+
 
 Item.prototype.onEvent = function(type, callback) {
   if(type in this.eventhandlers) {
