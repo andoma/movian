@@ -67,7 +67,7 @@ Item.prototype.onEvent = function(type, callback) {
           return;
         if(val in this.eventhandlers) {
           for(x in this.eventhandlers[val]) {
-            this.eventhandlers[val][x](this);
+            this.eventhandlers[val][x](val);
           }
         }
 
