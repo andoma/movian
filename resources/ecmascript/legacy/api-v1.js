@@ -9,7 +9,7 @@ var cryptodigest = function(algo, str) {
   var hash = Showtime.hashCreate(algo);
   Showtime.hashUpdate(hash, str);
   var digest = Showtime.hashFinalize(hash);
-  return Showtime.bin2hex(digest);
+  return Duktape.enc('hex', digest);
 }
 
 
