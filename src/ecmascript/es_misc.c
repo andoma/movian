@@ -32,6 +32,7 @@
 #include "keyring.h"
 #include "notifications.h"
 #include "blobcache.h"
+#include "networking/http.h"
 
 /**
  *
