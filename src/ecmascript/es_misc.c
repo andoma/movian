@@ -380,6 +380,21 @@ es_cacheGet(duk_context *ctx)
 
 
 /**
+ *
+ */
+static int
+es_parseTime(duk_context *ctx)
+{
+  time_t t;
+  const char *str = duk_require_string(ctx, 0);
+  if(http_ctime(&t, str))
+    duk_error(ctx, DUK_ERR_ERROR, "Invalid time: %s", str);
+  duk_push_number(ctx, t * 1000ULL); // Convert to ms
+  return 1;
+
+}
+
+/**
  * Showtime object exposed functions
  */
 const duk_function_list_entry fnlist_Showtime_misc[] = {
@@ -395,6 +410,7 @@ const duk_function_list_entry fnlist_Showtime_misc[] = {
   { "durationToString",      es_durationtostring, 1},
   { "cachePut",              es_cachePut, 4},
   { "cacheGet",              es_cacheGet, 2},
+  { "parseTime",             es_parseTime, 1},
   { NULL, NULL, 0}
 };
  
