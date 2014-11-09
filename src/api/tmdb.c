@@ -182,11 +182,12 @@ tmdb_configure(void)
       goto done;
     }
 
-    htsmsg_t *doc = htsmsg_json_deserialize(buf_cstr(result));
+    htsmsg_t *doc = htsmsg_json_deserialize2(buf_cstr(result),
+                                             errbuf, sizeof(errbuf));
     buf_release(result);
 
     if(doc == NULL) {
-      TRACE(TRACE_INFO, "TMDB", "Unable to parse configuration (JSON err)");
+      TRACE(TRACE_ERROR, "TMDB", "Got bad JSON from config -- %s", errbuf);
       goto done;
     }
     
@@ -225,7 +226,11 @@ tmdb_load_movie_cast(const char *lookup_id)
     return NULL;
   }
 
-  htsmsg_t *doc = htsmsg_json_deserialize(buf_cstr(result));
+  htsmsg_t *doc = htsmsg_json_deserialize2(buf_cstr(result),
+                                           errbuf, sizeof(errbuf));
+  if(doc == NULL) {
+    TRACE(TRACE_ERROR, "TMDB", "Got bad JSON from %s -- %s", url, errbuf);
+  }
   buf_release(result);
   return doc;
 }
@@ -318,10 +323,11 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id,
     return METADATA_TEMPORARY_ERROR;
   }
 
-  htsmsg_t *doc = htsmsg_json_deserialize(buf_cstr(result));
+  htsmsg_t *doc = htsmsg_json_deserialize2(buf_cstr(result),
+                                           errbuf, sizeof(errbuf));
   buf_release(result);
   if(doc == NULL) {
-    TRACE(TRACE_INFO, "TMDB", "Invalid JSON", errbuf);
+    TRACE(TRACE_ERROR, "TMDB", "Got bad JSON from %s -- %s", url, errbuf);
     return METADATA_TEMPORARY_ERROR;
   }
 
@@ -414,7 +420,9 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
   else
     yeartxt[0] = 0;
 
-  result = fa_load("http://api.themoviedb.org/3/search/movie",
+  const char *url = "http://api.themoviedb.org/3/search/movie";
+
+  result = fa_load(url,
                    FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
                    FA_LOAD_QUERY_ARG("query", title),
                    FA_LOAD_QUERY_ARG("year", *yeartxt ? yeartxt : NULL),
@@ -426,10 +434,13 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
   if(result == NULL)
     return METADATA_TEMPORARY_ERROR;
 
-  htsmsg_t *doc = htsmsg_json_deserialize(buf_cstr(result));
+  htsmsg_t *doc = htsmsg_json_deserialize2(buf_cstr(result),
+                                           errbuf, sizeof(errbuf));
   buf_release(result);
-  if(doc == NULL)
+  if(doc == NULL) {
+    TRACE(TRACE_ERROR, "TMDB", "Got bad JSON from %s -- %s", url, errbuf);
     return METADATA_TEMPORARY_ERROR;
+  }
   int results = htsmsg_get_s32_or_default(doc, "total_results", 0);
   TRACE(TRACE_DEBUG, "TMDB", "Query '%s' year:%d -> %d pages %d results",
 	title,

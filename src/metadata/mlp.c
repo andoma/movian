@@ -921,7 +921,8 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
 	case METADATA_QTYPE_CUSTOM_IMDB:
 
 	  TRACE(TRACE_DEBUG, "METADATA",
-		"Performing IMDB lookup for %s using %s", q, ms->ms_name);
+		"Performing IMDB lookup for %s using %s for %s",
+                q, ms->ms_name, rstr_get(mlv->mlv_url));
 
 	  rval = msf->query_by_imdb_id(db, rstr_get(mlv->mlv_url), q, qtype);
 	  break;
@@ -933,8 +934,10 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
 
 	case METADATA_QTYPE_MOVIE:
 	  TRACE(TRACE_DEBUG, "METADATA",
-		"Performing search lookup on movie title %s, year:%d using %s",
-		rstr_get(mlv->mlv_filename), mlv->mlv_year, ms->ms_name);
+		"Performing search lookup on movie title %s, "
+                "year:%d using %s for %s",
+		rstr_get(mlv->mlv_filename), mlv->mlv_year, ms->ms_name,
+                rstr_get(mlv->mlv_url));
 
 	  rval = msf->query_by_title_and_year(db, rstr_get(mlv->mlv_url),
 					      rstr_get(mlv->mlv_filename),
@@ -954,8 +957,8 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
 	    continue;
 
 	  TRACE(TRACE_DEBUG, "METADATA",
-		"Performing custom search lookup for %s using %s", sq,
-		ms->ms_name);
+		"Performing custom search lookup for %s using %s for %s",
+                sq, ms->ms_name, rstr_get(mlv->mlv_url));
 	  rval = msf->query_by_title_and_year(db, rstr_get(mlv->mlv_url),
 					      sq, 0, duration, qtype);
 	  break;
@@ -966,9 +969,9 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
       }
 
       if(rval == METADATA_DEADLOCK || rval == METADATA_TEMPORARY_ERROR) {
-	if(rval == METADATA_TEMPORARY_ERROR)
-	  TRACE(TRACE_DEBUG, "METADATA", "Temporary error for %s",
-		rstr_get(mlv->mlv_url));
+        TRACE(TRACE_DEBUG, "METADATA", "%s for %s",
+              rstr_get(mlv->mlv_url),
+              rval == METADATA_DEADLOCK ? "Deadlock" : "Temporary error");
 
 	prop_set(mlv->mlv_m, "loading", PROP_SET_INT, 0);
 	if(md != NULL)
