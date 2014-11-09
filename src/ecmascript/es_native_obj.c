@@ -72,6 +72,36 @@ es_get_native_obj(duk_context *ctx, int obj_idx, es_native_type_t wanted_type)
 }
 
 
+
+/**
+ *
+ */
+void *
+es_get_native_obj_nothrow(duk_context *ctx, int obj_idx,
+                          es_native_type_t wanted_type)
+{
+  duk_get_finalizer(ctx, obj_idx);
+
+  if(!duk_is_function(ctx, -1))
+    return NULL;
+
+  es_native_type_t current_type = duk_get_magic(ctx, -1);
+
+  duk_pop(ctx);
+
+  if(current_type != wanted_type)
+    return NULL;
+
+  duk_get_prop_string(ctx, obj_idx, PTRNAME);
+  if(!duk_is_pointer(ctx, -1))
+    return NULL;
+
+  void *r = duk_get_pointer(ctx, -1);
+  duk_pop(ctx);
+  return r;
+}
+
+
 /**
  *
  */

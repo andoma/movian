@@ -326,11 +326,12 @@ es_prop_set_value_duk(duk_context *ctx)
     prop_set(p, str, PROP_SET_INT, duk_get_boolean(ctx, 2));
   } else if(duk_is_number(ctx, 2)) {
     double dbl = duk_get_number(ctx, 2);
-    SETPRINTF("%f", dbl);
 
     if(ceil(dbl) == dbl && dbl <= INT32_MAX && dbl >= INT32_MIN) {
+      SETPRINTF("%d", (int)dbl);
       prop_set(p, str, PROP_SET_INT, (int)dbl);
     } else {
+      SETPRINTF("%f", dbl);
       prop_set(p, str, PROP_SET_FLOAT, dbl);
     }
   } else if(duk_is_string(ctx, 2)) {
@@ -670,6 +671,41 @@ es_prop_send_event(duk_context *ctx)
 
 
 /**
+ *
+ */
+static int
+es_prop_is_value(duk_context *ctx)
+{
+  prop_t *p = es_get_native_obj_nothrow(ctx, 0, ES_NATIVE_PROP);
+  if(p == NULL) {
+    duk_push_false(ctx);
+
+  } else {
+    int v;
+
+    hts_mutex_lock(&prop_mutex);
+
+    switch(p->hp_type) {
+    case PROP_CSTRING:
+    case PROP_RSTRING:
+    case PROP_URI:
+    case PROP_FLOAT:
+    case PROP_INT:
+    case PROP_VOID:
+      v = 1;
+      break;
+    default:
+      v = 0;
+      break;
+    }
+    hts_mutex_unlock(&prop_mutex);
+    duk_push_boolean(ctx, v);
+  }
+  return 1;
+}
+
+
+/**
  * Showtime object exposed functions
  */
 const duk_function_list_entry fnlist_Showtime_prop[] = {
@@ -677,7 +713,7 @@ const duk_function_list_entry fnlist_Showtime_prop[] = {
   { "propPrint",               es_prop_print_duk,             1 },
   { "propRelease",             es_prop_release_duk,           1 },
   { "propCreate",              es_prop_create_duk,            0 },
-  { "propGetValue",            es_prop_get_value_duk,         2 },
+  { "propGetValue",            es_prop_get_value_duk,         1 },
   { "propGetName",             es_prop_get_name_duk,          1 },
   { "propGetChild",            es_prop_get_child_duk,         2 },
   { "propSet",                 es_prop_set_value_duk,         3 },
@@ -695,6 +731,6 @@ const duk_function_list_entry fnlist_Showtime_prop[] = {
   { "propLink",                es_prop_link,                  2 },
   { "propUnlink",              es_prop_unlink,                1 },
   { "propSendEvent",           es_prop_send_event,            3 },
-
+  { "propIsValue",             es_prop_is_value,              1 },
   { NULL, NULL, 0}
 };

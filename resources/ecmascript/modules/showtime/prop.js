@@ -18,11 +18,11 @@ var propHandler = {
   get: function(obj, name) {
 
     if(name == 'toString') return function() {
-      return String(Showtime.propGetValue(obj, name));
+      return String(Showtime.propGetValue(obj));
     }
 
     if(name == 'valueOf') return function() {
-      return Showtime.propGetValue(obj, name);
+      return Showtime.propGetValue(obj);
     }
 
     return makeProp(Showtime.propGetChild(obj, name));
@@ -34,6 +34,11 @@ var propHandler = {
 
       if('toRichString' in value) {
         Showtime.propSetRichStr(obj, name, value.toRichString());
+        return;
+      }
+
+      if(Showtime.propIsValue(value)) {
+        Showtime.propSet(obj, name, Showtime.propGetValue(value));
         return;
       }
 

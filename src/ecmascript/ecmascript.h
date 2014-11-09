@@ -102,6 +102,9 @@ void es_stprop_push(duk_context *ctx, struct prop *p);
 
 void *es_get_native_obj(duk_context *ctx, int obj_idx, es_native_type_t type);
 
+void *es_get_native_obj_nothrow(duk_context *ctx, int obj_idx,
+                                es_native_type_t wanted_type);
+
 int es_push_native_obj(duk_context *ctx, es_native_type_t type, void *ptr);
 
 /**
