@@ -42,13 +42,21 @@ function createSetting(group, type, id, title) {
 var sp = {};
 
 /// -----------------------------------------------
-/// Bool
+/// Destroy group
 /// -----------------------------------------------
 
 sp.destroy = function() {
   this.zombie = 1;
   if(this.id)
     delete prop.global.settings.apps.nodes[this.id];
+}
+
+/// -----------------------------------------------
+/// Dump contents of group
+/// -----------------------------------------------
+
+sp.dump = function() {
+  prop.print(this.nodes);
 }
 
 
