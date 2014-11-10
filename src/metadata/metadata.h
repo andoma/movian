@@ -19,10 +19,15 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 
+#pragma once
+
 #include "misc/queue.h"
 #include "misc/rstr.h"
 
-#pragma once
+#define METADATA_TRACE(x, ...) do {                                     \
+    if(gconf.enable_metadata_debug)                                     \
+      TRACE(TRACE_DEBUG, "METADATA", x, ##__VA_ARGS__);                 \
+  } while(0)
 
 struct prop;
 struct prop_sub;

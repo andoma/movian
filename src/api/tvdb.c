@@ -75,7 +75,8 @@ loadxml(const char *fmt, ...)
   }
   htsmsg_t *m = htsmsg_xml_deserialize_buf(result, errbuf, sizeof(errbuf));
   if(m == NULL)
-    TRACE(TRACE_INFO, "TVDB", "Unable to parse XML from %s -- %s", url, errbuf);
+    TRACE(TRACE_ERROR, "TVDB",
+          "Unable to parse XML from %s -- %s", url, errbuf);
   return m;
 }
 
@@ -378,7 +379,7 @@ tvdb_query_by_episode(void *db, const char *item_url,
   
   htsmsg_t *gs = htsmsg_xml_deserialize_buf(result, errbuf, sizeof(errbuf));
   if(gs == NULL) {
-    TRACE(TRACE_INFO, "TVDB", "Unable to parse XML -- %s", errbuf);
+    TRACE(TRACE_ERROR, "TVDB", "Unable to parse XML -- %s", errbuf);
     return METADATA_TEMPORARY_ERROR;
   }
 

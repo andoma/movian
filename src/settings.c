@@ -1469,6 +1469,9 @@ init_dev_settings(void)
   add_dev_bool(s, "Debug image loading and decoding",
 	       "imagedebug", &gconf.enable_image_debug);
 
+  add_dev_bool(s, "Debug metadata lookups",
+	       "metadatadebug", &gconf.enable_metadata_debug);
+
   add_dev_bool(s, "Debug settings store/load from disk",
 	       "settingsdebug", &gconf.enable_settings_debug);
 

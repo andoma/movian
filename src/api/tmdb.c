@@ -34,6 +34,11 @@
 #include "metadata/metadata_sources.h"
 #include "usage.h"
 
+#define TMDB_TRACE(x, ...) do {                                         \
+    if(gconf.enable_metadata_debug)                                     \
+      TRACE(TRACE_DEBUG, "TMDB", x, ##__VA_ARGS__);                     \
+  } while(0)
+
 // http://help.themoviedb.org/kb/api/about-3
 
 // Showtimes TMDB APIKEY
@@ -331,6 +336,7 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id,
     return METADATA_TEMPORARY_ERROR;
   }
 
+
   metadata_t *md = metadata_create();
   md->md_type = METADATA_TYPE_VIDEO;
 
@@ -393,6 +399,10 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id,
     }
     htsmsg_release(cast);
   }
+
+  TMDB_TRACE("Loaded movie info for %s -- %s", lookup_id,
+             itemid == METADATA_TEMPORARY_ERROR ? "Not found" : "Found");
+
   htsmsg_release(doc);
   metadata_destroy(md);
   return itemid;
@@ -442,12 +452,11 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
     return METADATA_TEMPORARY_ERROR;
   }
   int results = htsmsg_get_s32_or_default(doc, "total_results", 0);
-  TRACE(TRACE_DEBUG, "TMDB", "Query '%s' year:%d -> %d pages %d results",
-	title,
-	year,
+  TMDB_TRACE("Query '%s' year:%d -> %d pages %d results",
+	title, year,
 	htsmsg_get_s32_or_default(doc, "total_pages", -1),
 	results);
-  
+
   htsmsg_t *resultlist = htsmsg_get_list(doc, "results");
 
   int64_t rval = METADATA_PERMANENT_ERROR;
