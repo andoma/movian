@@ -1428,6 +1428,9 @@ init_dev_settings(void)
 	       "memdebug", &gconf.enable_mem_debug);
 #endif
 
+  add_dev_bool(s, "Force plugins to be loaded as ecmascript (duktape)",
+	       "forceecma", &gconf.enable_force_ecmascript);
+
   setting_create(SETTING_STRING, gconf.settings_dev, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE_CSTR("Network log destination"),
                  SETTING_CALLBACK(set_netlog, NULL),
