@@ -1,6 +1,6 @@
 ﻿language: Danish
 native: Dansk
-maintainer: Unknown
+maintainer: Klaus Rauteberg <showtime@rautenberg.dk>
 #
 # ./glwskins/default/cmdmenu.view
 #
@@ -17,22 +17,19 @@ msg: Fjern aktuel side fra bogmærker
 # ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
 id: Activate sleep timer
-# Missing translation
-msg: 
+msg: Aktivere dvale timer
 
 id: Disable sleep timer
-# Missing translation
-msg: 
+msg: Deaktivere dvale timer
 
 id: Exit Showtime
 msg: Afslut Showtime
 
 id: Go to Home screen
-msg: Gå til Startsiden
+msg: Gå til startskærm
 
 id: Hide system info
-# Missing translation
-msg: 
+msg: Skjul systeminfo
 
 id: Navigation
 msg: Navigation
@@ -50,8 +47,7 @@ id: Reload current page
 msg: Genstart aktuel side
 
 id: Show system info
-# Missing translation
-msg: 
+msg: Vis systeminfo
 
 id: Suspend
 msg: Suspendere
@@ -60,12 +56,10 @@ id: System
 msg: System
 
 id: Time until sleep
-# Missing translation
-msg: 
+msg: Tid indtil dvale
 
 id: min
-# Missing translation
-msg: 
+msg: min.
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_dir.view
@@ -152,8 +146,7 @@ msg: Videoindstillinger
 # ./glwskins/default/loading.view
 #
 id: Bitrate: %d kb/s
-# Missing translation
-msg: 
+msg: Bitrate: %d kb/s
 
 #
 # ./glwskins/default/log.view
@@ -168,15 +161,13 @@ id: Cancel
 msg: Afbryd
 
 id: Clear
-# Missing translation
-msg: 
+msg: Ryd
 
 id: Default
 msg: Standard
 
 id: Keyboard layout:
-# Missing translation
-msg: 
+msg: Tastatus layout:
 
 id: OK
 msg: OK
@@ -224,8 +215,7 @@ msg: Brickor
 # ./glwskins/default/pages/home_clist.view
 #
 id: Apps
-# Missing translation
-msg: 
+msg: Apps
 
 id: Dismiss
 msg: Fjern
@@ -279,8 +269,8 @@ id: Year:
 msg: År:
 
 id: Seen %d times
-msg[0]: 
-msg[1]: 
+msg[0]: Set %d gange
+msg[1]: Set %d gang
 
 #
 # ./glwskins/default/pages/listitems/add.view
@@ -337,8 +327,7 @@ msg: Spor %d / %d
 # ./glwskins/default/pages/slideshow.view
 #
 id: Paused
-# Missing translation
-msg: 
+msg: Pauset
 
 #
 # ./glwskins/default/pages/upgrade.view
@@ -359,8 +348,7 @@ id: Checking for updates...
 msg: Søger efter opdateringer...
 
 id: Checking installed version of %s
-# Missing translation
-msg: 
+smg: Tjekker installeret version af %s
 
 id: Current version:
 msg: Aktuel version:
@@ -369,12 +357,10 @@ id: Download and install...
 msg: Download og installer...
 
 id: Downloading %s
-# Missing translation
-msg: 
+msg: Downloader %s
 
-id: Installing %s
-# Missing translation
-msg: 
+id: Installing...
+msg: Installerer...
 
 id: New version %s is available for download
 msg: Ny version %s er klar til download
@@ -382,9 +368,8 @@ msg: Ny version %s er klar til download
 id: No upgrade available
 msg: Ingen opdatering tilgængelig
 
-id: Patching %s
-# Missing translation
-msg: 
+id: Patching binary
+msg: Patching binær
 
 id: Restarting Showtime in %d seconds...
 msg: Genstarter Showtime om %d sekunder...
@@ -405,15 +390,13 @@ id: Unable to query for new version
 msg: Kan ikke forespørge efter ny version
 
 id: Verifying %s
-# Missing translation
-msg: 
+msg: Bekræfter %s
 
 #
 # ./glwskins/default/pages/video.view
 #
 id: Audio volume adjustment: %d dB
-# Missing translation
-msg: 
+msg: Lydstyrke justering: %d dB
 
 id: CPU is too slow to decode this video
 msg: CPU'en er for langsom til at afkode denne video
@@ -455,36 +438,28 @@ msg: Intet medie hentet
 # ./glwskins/default/sysinfo.view
 #
 id: CPU Temp
-# Missing translation
-msg: 
+msg: CPU temp.
 
 id: Fragmentation
-# Missing translation
-msg: 
+msg: Fragmentering
 
 id: GPU Temp
-# Missing translation
-msg: 
+msg: GPU temp.
 
 id: HDD Avail
-# Missing translation
-msg: 
+msg: HDD status
 
 id: Inactive mem
-# Missing translation
-msg: 
+msg: Inaktiv humommelse
 
 id: Memory usage
-# Missing translation
-msg: 
+msg: Hukommelsesforbrug
 
 id: System Free
-# Missing translation
-msg: 
+msg: System fri
 
 id: System Total
-# Missing translation
-msg: 
+msg: System total
 
 #
 # ./glwskins/default/universe.view
@@ -508,8 +483,7 @@ msg: Brug orginaltitel
 # ./src/arch/linux/pulseaudio.c
 #
 id: Unable to initialize audio system %s -- %s
-# Missing translation
-msg: 
+msg: Kunne ikke initialisere lydsystem %s -- %s
 
 #
 # ./src/arch/ps3/ps3_main.c
@@ -521,13 +495,11 @@ msg: Systemet mangler hukommelse (%d Kb RAM tilgængelig)
 # ./src/arch/ps3/ps3_vdec.c
 #
 id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
-# Missing translation
-msg: 
+msg: Cell-h264: %d Ref-billeder for 1080 indhold er ikke kompatibel med PS3 HW dekoder. Deaktiverer acceleration
 
 id: Cell-h264: Broken headers, Disabling acceleration
-# Missing translation
-msg: 
-
+msg: Cell-h264: Ødelagt overskrifter, deaktiverer acceleration
+ 
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
 msg: Cell-h264:  Tving level 4.2 til indhold i level %d.%d. Dette vil nok stoppe videoafspilning.
 
@@ -547,27 +519,22 @@ msg: Kan ikke forespørge Cell codec. Fejl 0x%x
 # ./src/arch/rpi/rpi_audio.c
 #
 id: Analog
-# Missing translation
-msg: 
+msg: Analog
 
 id: Audio output port
-# Missing translation
-msg: 
+msg: Lyd udgangsport
 
 id: HDMI
-# Missing translation
-msg: 
+msg: HDMI
 
 #
 # ./src/arch/rpi/rpi_cec.c
 #
 id: Configure how Showtime communicates with your TV
-# Missing translation
-msg: 
+msg: Konfigurere hvordan Showtime skal kommunikere med dit TV
 
 id: Consumer Electronics Control
-# Missing translation
-msg: 
+msg: Consumer Electronics Control
 
 #
 # ./src/audio2/audio.c
@@ -576,134 +543,106 @@ id: Audio delay
 msg: Lyd forsinkelse
 
 id: Audio gain adjustment during video playback
-# Missing translation
-msg: 
+msg: Lyd er blever justeret under videoafspilning
 
 id: Audio settings during video playback
-# Missing translation
-msg: 
+msg: Lydindstillinger under videoafspilning
 
 id: Setup audio output
-# Missing translation
-msg: 
+msg: Opsæt lydudgang
 
 #
 # ./src/audio2/audio_test.c
 #
 id: 440Hz sinewave -12dB
-# Missing translation
-msg: 
+msg: 440Hz sinewave -12dB
 
 id: Audio test
-# Missing translation
-msg: 
+msg: Lydtest
 
 id: Center
-msg: Centreret
+msg: Center
 
 id: Front Left
-# Missing translation
-msg: 
+msg: Front ventsre
 
 id: Front Right
-# Missing translation
-msg: 
+msg: Front højre
 
 id: LFE
-# Missing translation
-msg: 
+msg: LFE
 
 id: Pink noise
-# Missing translation
-msg: 
+msg: Statisk støj
 
 id: Play test signal
-# Missing translation
-msg: 
+msg: Start testsignal
 
 id: Rear Left
-# Missing translation
-msg: 
+msg: Bagerst venstre
 
 id: Rear Right
-# Missing translation
-msg: 
+msg: Bagerst højre
 
 id: Speaker position
-# Missing translation
-msg: 
+msg: Højtalerposition
 
 id: Surround Left
-# Missing translation
-msg: 
+msg: Surround venstre
 
 id: Surround Right
-# Missing translation
-msg: 
+msg: Surround højre
 
 id: Test signal type
-# Missing translation
-msg: 
+msg: Testsignal type
 
 #
 # ./src/backend/bittorrent/bt_backend.c
 #
 id: No files in torrent
-# Missing translation
-msg: 
+msg: Ingen filer i torrent
 
 id: Unable to load torrent: %s
-# Missing translation
-msg: 
+msg: Kunne ikke hente torrent: %s
 
 id: Unable to open torrent: %s
-# Missing translation
-msg: 
+msg: Kunne ikke åbne torrent: %s
 
 id: Unable to parse torrent: %s
-# Missing translation
-msg: 
+msg: Kunne ikke parse torrent: %s
 
 #
 # ./src/backend/bittorrent/diskio.c
 #
 id: Cached torrents use %d MB out of allowed %d MB. Total free space on volume: %d MB
-# Missing translation
-msg: 
+msg: Lagrede torrents bruger %d MB ud af tilladte %d MB. Total ledig plads på drevet: %d MB
 
 #
 # ./src/backend/bittorrent/magnet.c
 #
 id: Invalid SHA-1 hash: %s
-# Missing translation
-msg: 
+msg: Ugyldig SHA-1 hash: %s
 
 id: No 'xt' in magnet link
-# Missing translation
-msg: 
+msg: Ingen 'xt' i magnet link
 
 id: Unknown hash scheme: %s
-# Missing translation
-msg: 
+msg: Ukendt hash skema: %s
 
 #
 # ./src/backend/bittorrent/torrent_settings.c
 #
 id: Enable bittorrent
-# Missing translation
-msg: 
+msg: Aktivere bittorrent
 
 id: Max usage of free space for caching torrents
-# Missing translation
-msg: 
+msg: Maks. forbrug af ledig plads til lagrede torrents
 
 id: Status
-# Missing translation
-msg: 
-
+msg: Status
+ 
 id: Torrent cache path
-# Missing translation
-msg: 
+msg: Torrent lagrede sti
 
 #
 # ./src/backend/dvd/cdda.c
@@ -823,8 +762,7 @@ id: Can't handle content type %d
 msg: Kan ikke håndtere indholdstype %d
 
 id: Checking file contents
-# Missing translation
-msg: 
+msg: Tjekker filens indhold
 
 id: Unable to open file: %s
 msg: Kan ikke åbne filen: %s
@@ -863,8 +801,7 @@ id: Date (oldest first)
 msg: Dato(ældste først)
 
 id: Deleted %s
-# Missing translation
-msg: 
+msg: Slettet %s
 
 id: Filename
 msg: Filnavn
@@ -885,8 +822,7 @@ id: Sort on
 msg: Sorter efter
 
 id: Unable to delete %s\n%s
-# Missing translation
-msg: 
+msg: Kunne ikke slette %s\n%s
 
 #
 # ./src/fileaccess/fa_spotlight.c
@@ -898,51 +834,43 @@ msg: Søg via spotlight
 # ./src/fileaccess/fileaccess.c
 #
 id: Are you sure you want to delete:
-# Missing translation
-msg: 
+msg: Er du sikker på at du vil slette:
 
 id: BitTorrent
-# Missing translation
-msg: 
+msg: BitTorrent
 
 id: Enable file deletion from item menu
-# Missing translation
-msg: 
+msg: Aktivere sletning af filer fra liste menu
 
 id: File browsing
-# Missing translation
-msg: 
+msg: Fil søgning
 
 id: Show filename extensions
-# Missing translation
-msg: 
+msg: Vis ekstension på filnavn
 
 id: Store per-file settings in filesystem
-# Missing translation
-msg: 
+msg: Gem pr. fil indstillinger i filsystem
 
 id: %d archive parts
-msg[0]: 
-msg[1]: 
+msg[0]: %d arkivdele
+msg[1]: %d arkivdel
 
 id: %d directories
-msg[0]: 
-msg[1]: 
+msg[0]: %d mapper
+msg[1]: %d mappe
 
 id: %d files
-msg[0]: 
-msg[1]: 
+msg[0]: %d filer
+msg[1]: %d fil
 
 #
 # ./src/i18n.c
 #
 id: Default character set
-# Missing translation
-msg: 
+msg: Standard karaktersæt
 
 id: Ignore 'The' at beginning of words when sorting
-# Missing translation
-msg: 
+msg: Ignorere 'The' ved start af ord når der sorteres
 
 id: Language
 msg: Sprog
@@ -978,7 +906,7 @@ msg: Tertiær sprog for undertekster
 # ./src/js/js_page.c
 #
 id: No handler for URL
-msg: Ingen håndtering af URL-adressen
+msg: Ingen håndtering af URL
 
 #
 # ./src/keymapper.c
@@ -1005,24 +933,19 @@ id: Align subtitles on video frame
 msg: Juster undertekster efter videobillede
 
 id: Audio volume
-# Missing translation
-msg: 
+msg: Lydstyrke
 
 id: Go to standby after video ends
-# Missing translation
-msg: 
+msg: Gå i standby efter slut af video
 
 id: Reset defaults for folder '%s'
-# Missing translation
-msg: 
+msg: Nulstil standarder for mappe '%s'
 
 id: Save as defaults for folder '%s'
-# Missing translation
-msg: 
+msg: Gem som standard for mappe '%s'
 
 id: Save as global default
-# Missing translation
-msg: 
+msg: Gem som global standard
 
 id: Stretch video to fullscreen
 msg: Stræk video til hele skærmen
@@ -1034,19 +957,16 @@ id: Subtitle delay
 msg: Undertekster forsinkelse
 
 id: Subtitle horizontal displacement
-# Missing translation
-msg: 
+msg: Horisontal visning af undertekster
 
 id: Subtitle scaling
 msg: Skalering af undertekster
 
 id: Subtitle vertical displacement
-# Missing translation
-msg: 
+msg: Vertikal visning af undertekster
 
 id: Video frame interpolation
-# Missing translation
-msg: 
+msg: Video billede interpolation
 
 id: Video zoom
 msg: Video zoom
@@ -1064,20 +984,16 @@ id: Automatic
 msg: Automatisk
 
 id: Manual
-# Missing translation
-msg: 
+msg: Manuel
 
 id: Mark all as seen
-# Missing translation
-msg: 
+msg: Markere alle som set
 
 id: Mark all as unseen
-# Missing translation
-msg: 
+msg: Markere alle som ikke set
 
 id: Metadata mode
-# Missing translation
-msg: 
+msg: Metadata mode
 
 #
 # ./src/metadata/metadata.c
@@ -1194,8 +1110,7 @@ id: Photos
 msg: Billeder
 
 id: Published in Virtual File System
-# Missing translation
-msg: 
+msg: Udgivet i Virtual fil system
 
 id: Removed bookmark: %s
 msg: Slettet bogmærke: %s
@@ -1216,27 +1131,22 @@ msg: URL
 # ./src/networking/connman.c
 #
 id: Enable Wi-Fi
-# Missing translation
-msg: 
+msg: Aktivere Wi-Fi
 
 id: Network connections
-# Missing translation
-msg: 
+msg: Netværksforbindelser
 
 #
 # ./src/networking/ftp_server.c
 #
 id: Enable FTP server
-# Missing translation
-msg: 
+msg: Aktivere FTP server
 
 id: FTP server
-# Missing translation
-msg: 
+msg: FTP server
 
 id: Server TCP port
-# Missing translation
-msg: 
+msg: Server TCP port
 
 #
 # ./src/plugins.c
@@ -1248,8 +1158,7 @@ id: Automatically upgrade plugins
 msg: Opdater automatisk plugins
 
 id: Available apps
-# Missing translation
-msg: 
+msg: Tilgængelige apps
 
 id: Background
 msg: Baggrund
@@ -1258,8 +1167,7 @@ id: Beta testing passwords
 msg: Betatest password
 
 id: Browse available apps
-# Missing translation
-msg: 
+msg: Gennemse tilgængelige apps
 
 id: Browsing
 msg: Browsing
@@ -1283,8 +1191,7 @@ id: Home page
 msg: Startside
 
 id: Installed apps
-# Missing translation
-msg: 
+msg: Installerede apps
 
 id: Installed version higher than available
 msg: Den installerede version er højere end den der er tilgængelig
@@ -1314,15 +1221,13 @@ id: Not upgradable
 msg: Ikke opdaterbare
 
 id: On Screen Keyboards
-# Missing translation
-msg: 
+msg: Tastaturer på skærmen
 
 id: Online TV
 msg: Online TV
 
 id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
-# Missing translation
-msg: 
+msg: Plugin %s %s er blevet afinstalleret da det kan skabe problemer.\nDu kan manuelt prøve at installere en anden version.
 
 id: Plugins
 msg: Plugins
@@ -1367,8 +1272,7 @@ id: Automatic standby
 msg: Automatisk standby
 
 id: Enable SSH server
-# Missing translation
-msg: 
+msg: Aktivere SSH server
 
 id: Logout
 msg: Log ud
@@ -1380,12 +1284,10 @@ id: Power off system
 msg: Sluk systemet
 
 id: SSH server
-# Missing translation
-msg: 
+msg: SSH server
 
 id: Standby
-# Missing translation
-msg: 
+msg: Standby
 
 id: Starting and stopping Showtime
 msg: Starter og stopper Showtime
@@ -1394,7 +1296,7 @@ msg: Starter og stopper Showtime
 # ./src/sd/sd.c
 #
 id: Enabled on home screen
-msg: Tillgænglig på startsiden
+msg: Aktiveret på start skærm
 
 id: Name
 msg: Navn
@@ -1430,20 +1332,17 @@ id: Look and feel
 msg: Udseende og stil
 
 id: Network services, etc
-# Missing translation
-msg: 
+msg: Nætværk servicer, osv.
 
 id: Network settings
-# Missing translation
-msg: 
+msg: Netværksindstillinger
 
 id: Settings useful for developers
 msg: Indstillinger nyttige for udviklere
 
 id: System name
-# Missing translation
-msg: 
-
+msg: Systemnavn
+ 
 id: System related settings
 msg: Systemrelaterede indstillinger
 
@@ -1451,27 +1350,23 @@ msg: Systemrelaterede indstillinger
 # ./src/subtitles/subtitles.c
 #
 id: Any subtitle in central folder
-# Missing translation
-msg: 
+msg: Undertekster i central mappe
 
 id: Any subtitle in same folder as video
-# Missing translation
-msg: 
+msg: Undertekster i samme mappe som video
 
 id: Auto
 msg: Auto
 
 id: Automatically select from this source
-# Missing translation
-msg: 
+msg: Vælg automatisk fra denne kilde
 
 id: Central subtitle folder
-# Missing translation
-msg: 
+msg: Central undertekstmappe
 
 id: Color
 msg: Farve
-
+ 
 id: External file
 msg: Ekstern fil
 
@@ -1494,12 +1389,10 @@ id: Outline size
 msg: Størrelse på konturer
 
 id: Path to central folder
-# Missing translation
-msg: 
+msg: Stil til central mappe
 
 id: Providers for Subtitles
-# Missing translation
-msg: 
+msg: Udbydere af undertekster
 
 id: Right
 msg: Højre
@@ -1520,16 +1413,13 @@ id: Subtitle size and positioning
 msg: Størrelse på undertekster og position
 
 id: Subtitles embedded in video file
-# Missing translation
-msg: 
+msg: Undertekster indeholdt i videofilen 
 
 id: Subtitles with matching filename in central folder
-# Missing translation
-msg: 
+msg: Undertekster med matchende filnavn i central mappe
 
 id: Subtitles with matching filename in same folder as video
-# Missing translation
-msg: 
+msg: Undertekster med matchende filnavn i samme mappe som video
 
 #
 # ./src/text/fontstash.c
@@ -1556,32 +1446,27 @@ id: Reset subtitle font to default
 msg: Nulstil undertekst skrifttype til standard
 
 id: Unable to install font: %s
-# Missing translation
-msg: 
+msg: Kan ikke installere font: %s
 
 id: Use font %s for
 msg: Benyt skrifttype %s til
 
 id: User interface
 msg: Brugergrænseflade
-
 #
 # ./src/ui/glw/glw_ps3.c
 #
 id: Seek using L2 and R2 button
-# Missing translation
-msg: 
+mag: Søg ved at bruge L2 og R2 knap
 
 id: Yes with Select button
-# Missing translation
-msg: 
+mag: Ja med Select knap
 
 #
 # ./src/ui/glw/glw_settings.c
 #
 id: Font and icon size
-# Missing translation
-msg: 
+msg: Skrift og ikon størrelse
 
 id: Horizontal underscan
 msg: Vandret underscanning
@@ -1589,13 +1474,11 @@ msg: Vandret underscanning
 id: Screensaver delay
 msg: Pauseskærm forsinkelse
 
-id: Vertical underscan
-# Missing translation
-msg: 
+id: Veritcal underscan
+msg: Lodret underscanning
 
 id: Wrap when reaching beginning/end of lists
-# Missing translation
-msg: 
+msg: Wrap når starten/slutningen af listen nåes
 
 #
 # ./src/ui/glw/glw_x11.c
@@ -1667,8 +1550,7 @@ id: Enable VDPAU
 msg: Aktiver VDPAU
 
 id: Master volume
-# Missing translation
-msg: 
+msg: Master volume
 
 id: Maximum resolution for deinterlacer
 msg: Maksimal opløsning af deinterlacer
@@ -1677,8 +1559,7 @@ id: No limit
 msg: Ingen grænser
 
 id: Per-file volume
-# Missing translation
-msg: 
+msg: Pr. fil volume
 
 id: Preferred VDPAU deinterlacer method
 msg: Foretrukket VDPAU deinterlacer metode
@@ -1693,12 +1574,10 @@ id: Temporal/Spatial
 msg: Midlertidig/Rumlig
 
 id: Up / Down during video playback controls
-# Missing translation
-msg: 
+msg: Op / Ned under videoafspilning kontrol
 
 id: Video acceleration and display behaviour
 msg: Videoacceleration og skærmpræsentation
 
 id: Video playback
 msg: Videoafspilning
-
