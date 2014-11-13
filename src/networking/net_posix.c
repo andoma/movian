@@ -237,29 +237,30 @@ tcp_connect_arch(const net_addr_t *addr,
                  int timeout, cancellable_t *c, int dbg)
 {
   int fd, r, err;
-  struct sockaddr_storage ss;
-  struct sockaddr_in *in;
-  struct sockaddr_in6 *in6;
+
+  union {
+    struct sockaddr_storage ss;
+    struct sockaddr_in in;
+    struct sockaddr_in6 in6;
+  } su;
+
   socklen_t errlen = sizeof(int);
   socklen_t slen;
 
-  memset(&ss, 0, sizeof(struct sockaddr_storage));
-
+  memset(&su, 0, sizeof(su));
 
   switch(addr->na_family) {
   case 4:
-    in = (struct sockaddr_in *)&ss;
-    in->sin_family = AF_INET;
-    in->sin_port = htons(addr->na_port);
-    memcpy(&in->sin_addr, addr->na_addr, sizeof(struct in_addr));
+    su.in.sin_family = AF_INET;
+    su.in.sin_port = htons(addr->na_port);
+    memcpy(&su.in.sin_addr, addr->na_addr, sizeof(struct in_addr));
     slen = sizeof(struct sockaddr_in);
     break;
 
   case AF_INET6:
-    in6 = (struct sockaddr_in6 *)&ss;
-    in6->sin6_family = AF_INET6;
-    in6->sin6_port = htons(addr->na_port);
-    memcpy(&in6->sin6_addr, addr->na_addr, sizeof(struct in6_addr));
+    su.in6.sin6_family = AF_INET6;
+    su.in6.sin6_port = htons(addr->na_port);
+    memcpy(&su.in6.sin6_addr, addr->na_addr, sizeof(struct in6_addr));
     slen = sizeof(struct sockaddr_in6);
     break;
 
@@ -268,10 +269,10 @@ tcp_connect_arch(const net_addr_t *addr,
     return NULL;
   }
 
-  if((fd = getstreamsocket(ss.ss_family, errbuf, errbufsize)) == -1)
+  if((fd = getstreamsocket(su.ss.ss_family, errbuf, errbufsize)) == -1)
     return NULL;
 
-  r = connect(fd, (struct sockaddr *)&ss, slen);
+  r = connect(fd, (struct sockaddr *)&su, slen);
 
   tcpcon_t *tc = calloc(1, sizeof(tcpcon_t));
   tc->fd = fd;
