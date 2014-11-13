@@ -806,7 +806,7 @@ http_client_oauth(http_request_inspection_t *hri,
   url_escape(str, sizeof(str), token_secret, URL_ESCAPE_PARAM);
   const char *oauth_token_secret = mystrdupa(str);
 
-  snprintf(str, sizeof(str), "%lu", time(NULL));
+  snprintf(str, sizeof(str), "%lu", (long)time(NULL));
   const char *oauth_timestamp = mystrdupa(str);
 
   sha1_decl(shactx);

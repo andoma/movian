@@ -23,7 +23,7 @@
 
 #include "config.h"
 
-#if defined(linux) || defined(__APPLE__)
+#if defined(linux) || defined(__APPLE__) || defined(__native_client__)
 #include "posix/posix_threads.h"
 #elif PS3
 #include "ps3/ps3_threads.h"

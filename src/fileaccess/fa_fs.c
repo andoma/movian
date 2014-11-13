@@ -805,6 +805,12 @@ fs_fsinfo(struct fa_protocol *fap, const char *url, fa_fsinfo_t *ffi)
 }
 
 
+#elif defined(__native_client__)
+static fa_err_code_t
+fs_fsinfo(struct fa_protocol *fap, const char *url, fa_fsinfo_t *ffi)
+{
+    return FAP_NOT_SUPPORTED;
+}
 #else
 #error Not sure how to do fs_fsinfo()
 #endif

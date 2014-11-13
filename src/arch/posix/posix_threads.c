@@ -19,6 +19,10 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 
+#if defined(__native_client__)
+#define _GNU_SOURCE  // Needed for PTHREAD_MUTEX_RECURSIVE
+#endif
+
 #if defined(linux)
 #include <sys/prctl.h>
 #include <sys/resource.h>
@@ -26,6 +30,7 @@
 #endif
 
 #include <sys/time.h>
+#include <sys/types.h>
 
 #include "showtime.h"
 #include "posix_threads.h"
