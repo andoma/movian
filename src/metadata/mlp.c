@@ -793,7 +793,17 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
 
   mlv->mlv_mlp.mlp_loading = 1;
 
+
   hts_mutex_unlock(&metadata_mutex);
+
+
+  METADATA_TRACE("Processing '%s' "
+                 "custom_title=%s imdbid=%s lonely=%s duration=%f",
+                 rstr_get(mlv->mlv_url),
+                 rstr_get(custom_title),
+                 rstr_get(imdb_id),
+                 lonely ? "yes" : "no",
+                 duration);
 
 
   /**
@@ -1840,8 +1850,10 @@ void
 mlv_set_imdb_id(metadata_lazy_video_t *mlv, rstr_t *imdb_id)
 {
   hts_mutex_lock(&metadata_mutex);
-  rstr_set(&mlv->mlv_imdb_id, imdb_id);
-  mlp_enqueue(&mlv->mlv_mlp);
+  if(!rstr_eq(mlv->mlv_imdb_id, imdb_id)) {
+    rstr_set(&mlv->mlv_imdb_id, imdb_id);
+    mlp_enqueue(&mlv->mlv_mlp);
+  }
   hts_mutex_unlock(&metadata_mutex);
 }
 
@@ -1853,8 +1865,10 @@ void
 mlv_set_duration(metadata_lazy_video_t *mlv, float duration)
 {
   hts_mutex_lock(&metadata_mutex);
-  mlv->mlv_duration = duration;
-  mlp_enqueue(&mlv->mlv_mlp);
+  if(mlv->mlv_duration != duration) {
+    mlv->mlv_duration = duration;
+    mlp_enqueue(&mlv->mlv_mlp);
+  }
   hts_mutex_unlock(&metadata_mutex);
 }
 
@@ -1867,6 +1881,9 @@ mlv_set_lonely(metadata_lazy_video_t *mlv, int lonely)
 {
   hts_mutex_lock(&metadata_mutex);
   if(mlv->mlv_lonely != lonely) {
+    METADATA_TRACE("Item '%s' is %slonely", rstr_get(mlv->mlv_url),
+                   lonely ? "" : "not ");
+
     mlv->mlv_lonely = lonely;
     mlp_enqueue(&mlv->mlv_mlp);
   }

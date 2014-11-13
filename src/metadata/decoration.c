@@ -165,13 +165,29 @@ typedef struct deco_item {
 static void load_nfo(deco_item_t *di);
 
 
+
+/**
+ *
+ */
+static rstr_t *
+select_imdb_id(deco_item_t *di)
+{
+  // Pick IMDB ID from stem
+  rstr_t *imdbid = di->di_ds->ds_imdb_id;
+
+  // If nothing on stem and the item is lonely, use a global imdb id
+  if(imdbid == NULL && di->di_db->db_lonely_video_item)
+    imdbid = di->di_db->db_imdb_id;
+  return imdbid;
+}
+
 /**
  *
  */
 static void
-analyze_video(deco_item_t *di)
+insert_video_mlv(deco_item_t *di)
 {
-  if(di->di_mlv != NULL || di->di_url == NULL || di->di_filename == NULL)
+  if(di->di_url == NULL || di->di_filename == NULL)
     return;
 
   deco_browse_t *db = di->di_db;
@@ -190,29 +206,12 @@ analyze_video(deco_item_t *di)
   }
 
   di->di_mlv = metadata_bind_video_info(di->di_url, fname,
-					di->di_ds->ds_imdb_id ?: db->db_imdb_id,
+                                        select_imdb_id(di),
 					di->di_duration,
 					di->di_root, db->db_title,
 					db->db_lonely_video_item, 0,
 					-1, -1, -1, manual);
   rstr_release(fname);
-}
-
-
-
-/**
- *
- */
-static void
-analyze_item(deco_item_t *di)
-{
-  switch(di->di_type) {
-  case CONTENT_VIDEO:
-    analyze_video(di);
-    break;
-  default:
-    break;
-  }
 }
 
 
@@ -454,22 +453,39 @@ video_analysis(deco_browse_t *db)
 {
   deco_item_t *di;
   int reasonable_video_items = 0;
-  int i;
 
-  for(i = 0; i < 2; i++) {
-    LIST_FOREACH(di, &db->db_items_per_ct[CONTENT_VIDEO], di_type_link) {
+  const int real_video_duration_threshold = 300;
 
-      if(di->di_duration > 300) {
-	if(i == 0)
-	  reasonable_video_items++;
-	else if(i == 1 && di->di_mlv)
-	  mlv_set_lonely(di->di_mlv, reasonable_video_items < 2);
-      }
+  LIST_FOREACH(di, &db->db_items_per_ct[CONTENT_VIDEO], di_type_link) {
+    if(di->di_duration > real_video_duration_threshold) {
+      reasonable_video_items++;
     }
   }
-  db->db_lonely_video_item = reasonable_video_items < 1;
 
-  
+  db->db_lonely_video_item = reasonable_video_items <= 1;
+
+  METADATA_TRACE("Analyzed '%s' Found %d video items > %d seconds",
+                 db->db_url, reasonable_video_items,
+                 real_video_duration_threshold);
+
+  LIST_FOREACH(di, &db->db_items_per_ct[CONTENT_VIDEO], di_type_link) {
+
+    if(di->di_mlv == NULL) {
+
+      insert_video_mlv(di);
+
+    } else {
+
+      // The MLV code is responsible for supressing any assignments that
+      // are equal to current values
+
+      mlv_set_duration(di->di_mlv, di->di_duration);
+      mlv_set_lonely(di->di_mlv,   db->db_lonely_video_item);
+      mlv_set_imdb_id(di->di_mlv,  select_imdb_id(di));
+
+    }
+  }
+
   const char *series = NULL;
   int season = -1;
 
@@ -616,15 +632,11 @@ di_set_url(deco_item_t *di, rstr_t *str)
   if(di->di_postfix != NULL) {
     if(!strcasecmp(di->di_postfix, "nfo")) {
       load_nfo(di);
-
-      TAILQ_FOREACH(di, &db->db_items, di_link) {
-	if(di->di_type == CONTENT_VIDEO && di->di_mlv != NULL)
-	  mlv_set_imdb_id(di->di_mlv, di->di_ds->ds_imdb_id ?: db->db_imdb_id);
-      }
+      di->di_db->db_pending_flags |= DB_PENDING_DEFERRED_VIDEO_ANALYSIS;
+      deco_pendings = 1;
       return;
     }
   }
-  
   stem_analysis(db, ds);
 }
 
@@ -660,7 +672,9 @@ static void
 di_set_filename(deco_item_t *di, rstr_t *str)
 {
   rstr_set(&di->di_filename, str);
-  analyze_item(di);
+
+  di->di_db->db_pending_flags |= DB_PENDING_DEFERRED_VIDEO_ANALYSIS;
+  deco_pendings = 1;
 }
 
 
@@ -672,11 +686,6 @@ di_set_duration(deco_item_t *di, int duration)
 {
   di->di_duration = duration;
   if(di->di_type == CONTENT_VIDEO) {
-    if(di->di_mlv == NULL)
-      analyze_video(di);
-    else
-      mlv_set_duration(di->di_mlv, di->di_duration);
-
     di->di_db->db_pending_flags |= DB_PENDING_DEFERRED_VIDEO_ANALYSIS;
     deco_pendings = 1;
   }
@@ -773,6 +782,8 @@ di_set_type(deco_item_t *di, const char *str)
 		     PROP_TAG_NAMED_ROOT, di->di_root, "node",
 		     PROP_TAG_COURIER, deco_courier,
 		     NULL);
+    di->di_db->db_pending_flags |= DB_PENDING_DEFERRED_ALBUM_ANALYSIS;
+    deco_pendings = 1;
     break;
 
   case CONTENT_VIDEO:
@@ -812,7 +823,6 @@ di_set_type(deco_item_t *di, const char *str)
   type_analysis(db);
   if(di->di_ds != NULL)
     stem_analysis(db, di->di_ds);
-  analyze_item(di);
 }
 
 
@@ -1110,12 +1120,9 @@ set_mode(void *opaque, const char *str)
   switch(v) {
 
   case DECO_MODE_AUTO:
+  case DECO_MODE_MANUAL:
     deco_pendings = 1;
     db->db_pending_flags |= DB_PENDING_DEFERRED_FULL_ANALYSIS;
-    // FALLTHRU
-  case DECO_MODE_MANUAL:
-    LIST_FOREACH(di, &db->db_items_per_ct[CONTENT_VIDEO], di_type_link)
-      analyze_video(di);
     break;
 
   case DECO_MODE_OFF:
@@ -1203,7 +1210,7 @@ deco_thread(void *aux)
 
     int do_timo = 0;
     if(deco_pendings)
-      do_timo = 50;
+      do_timo = 150;
 
     hts_mutex_unlock(&deco_mutex);
     r = prop_courier_wait(deco_courier, &q, do_timo);
@@ -1263,6 +1270,13 @@ load_nfo(deco_item_t *di)
     tt += strlen("http://www.imdb.com/title/");
 
     rstr_t *r = rstr_allocl(tt, strspn(tt, "t0123456789"));
+
+    METADATA_TRACE("Found IMDB id %s in .nfo file '%s' applying for stem '%s' "
+                   "and directory '%s'",
+                   rstr_get(r),
+                   rstr_get(di->di_url),
+                   di->di_ds->ds_stem,
+                   di->di_db->db_url);
 
     rstr_set(&di->di_ds->ds_imdb_id, r);
     rstr_set(&di->di_db->db_imdb_id, r);
