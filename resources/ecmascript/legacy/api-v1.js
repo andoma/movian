@@ -100,6 +100,8 @@ var plugin = {
 
   getAuthCredentials: Showtime.getAuthCredentials,
 
+  addHTTPAuth: Showtime.httpInspectorCreate,
+
   createSettings: function(title, icon, description) {
     return new settings.globalSettings(Plugin.id, title, icon,
                                        description);
