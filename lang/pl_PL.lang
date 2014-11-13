@@ -45,7 +45,7 @@ id: Power off
 msg: Wyłącz
 
 id: Reload current page
-msg: Odśwież
+msg: Odśwież obecną stronę
 
 id: Show system info
 msg: Pokaż informacje o systemie
@@ -448,7 +448,7 @@ id: GPU Temp
 msg: Temp. GPU
 
 id: HDD Avail
-msg: Dost HDD
+msg: Dost. HDD
 
 id: Inactive mem
 msg: Nieaktywna pamięć
@@ -847,7 +847,7 @@ id: File browsing
 msg: Przeglądanie plików
 
 id: Show filename extensions
-msg: Pokaż razszerzenia plików
+msg: Pokaż rozszerzenia plików
 
 id: Store per-file settings in filesystem
 msg: Zapisz ustawienia do osobnego pliku
