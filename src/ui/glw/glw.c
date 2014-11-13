@@ -222,6 +222,7 @@ glw_fini(glw_root_t *gr)
   free(gr->gr_vtmp_buffer);
   free(gr->gr_render_jobs);
   free(gr->gr_render_order);
+  free(gr->gr_vertex_buffer);
 }
 
 
