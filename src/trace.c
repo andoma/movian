@@ -84,7 +84,7 @@ trace_net_raw(const char *fmt, ...)
       return;
     }
 
-#ifndef linux
+#if defined(__APPLE__)
     log_server.sin_len = sizeof(log_server);
 #endif
     log_server.sin_family = AF_INET;
@@ -156,14 +156,14 @@ tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap)
   case TRACE_ERROR: leveltxt = "ERROR"; break;
   case TRACE_INFO:  leveltxt = "INFO";  break;
   case TRACE_DEBUG: leveltxt = "DEBUG"; break;
-  default:          leveltxt = "?????"; break;
+  default:          leveltxt = "?"; break;
   }
 
   vsnprintf(buf, sizeof(buf), fmt, ap);
 
   p = buf;
 
-  snprintf(buf2, sizeof(buf2), "%s [%s]:", subsys, leveltxt);
+  snprintf(buf2, sizeof(buf2), "%-15s [%-5s]:", subsys, leveltxt);
   l = strlen(buf2);
 
   while((s = strsep(&p, "\n")) != NULL) {
