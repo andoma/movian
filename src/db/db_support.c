@@ -635,7 +635,7 @@ db_log(void *aux, int code, const char *str)
   int non_extended_code = code & 0xff;
   // Some codes are nothing to worry about as we or sqlite retries internally
   if(non_extended_code == SQLITE_CONSTRAINT ||
-     non_extended_code == SQLITE_LOCKED_SHAREDCACHE ||
+     code == SQLITE_LOCKED_SHAREDCACHE ||
      non_extended_code == SQLITE_SCHEMA)
     return;
 
