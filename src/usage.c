@@ -81,6 +81,7 @@ usage_fini(void)
   hts_mutex_unlock(&usage_mutex);
 
   htsmsg_store_save(r, "usage");
+  htsmsg_release(r);
 }
 
 
