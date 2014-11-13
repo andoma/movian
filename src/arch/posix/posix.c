@@ -30,22 +30,6 @@
  */
 const char *showtime_get_system_type(void);
 
-#ifdef linux
-
-#elif defined(__APPLE__)
-
-
-#else
-
-static int
-get_system_concurrency(void)
-{
-  return 1;
-}
-
-#endif
-
-
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
