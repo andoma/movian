@@ -182,15 +182,6 @@ gvv_newframe(glw_video_t *gv, video_decoder_t *vd0, int flags)
 }
 
 
-
-static const float projection[16] = {
-  2.414213,0.000000,0.000000,0.000000,
-  0.000000,2.414213,0.000000,0.000000,
-  0.000000,0.000000,1.033898,-1.000000,
-  0.000000,0.000000,2.033898,0.000000
-};
-
-
 /**
  *
  */
@@ -224,7 +215,6 @@ gvv_render(glw_video_t *gv, glw_rctx_t *rc)
     gp = gbr->gbr_rgb2rgb_2f;
 
     const float yshift_b = (-0.5 * sb->gvs_yshift) / (float)sb->gvs_height[0];
-
     glw_renderer_vtx_st2(&gv->gv_quad, 0, 0, 1 + yshift_b);
     glw_renderer_vtx_st2(&gv->gv_quad, 1, 1, 1 + yshift_b);
     glw_renderer_vtx_st2(&gv->gv_quad, 2, 1, 0 + yshift_b);
@@ -280,6 +270,7 @@ surface_reset(vdpau_dev_t *vd, glw_video_t *gv, glw_video_surface_t *gvs)
   reap_task_t *t = glw_video_add_reap_task(gv, sizeof(reap_task_t), do_reap);
   t->gl_surface    = gvs->gvs_gl_surface;
   t->vdpau_surface = gvs->gvs_vdpau_surface;
+  memset(gvs, 0, sizeof(glw_video_surface_t));
 }
 
 
@@ -310,6 +301,7 @@ gvv_init(glw_video_t *gv)
 
   gv->gv_gpa.gpa_aux = gv;
   gv->gv_gpa.gpa_load_uniforms = glw_video_opengl_load_uniforms;
+  gv->gv_gpa.gpa_load_texture = NULL;
 
   gv->gv_planes = 1;
 
