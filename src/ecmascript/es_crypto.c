@@ -109,11 +109,9 @@ es_hashUpdate(duk_context *ctx)
   const void *buf;
   if(duk_is_buffer(ctx, 1)) {
     buf = duk_get_buffer(ctx, 1, &bufsize);
-  } else if(duk_is_string(ctx, 1)) {
-    buf = duk_get_string(ctx, 1);
-    bufsize = strlen(buf);
   } else {
-    duk_error(ctx, DUK_ERR_ERROR, "Bad type for hash update");
+    buf = duk_to_string(ctx, 1);
+    bufsize = strlen(buf);
   }
 
   switch(eh->mode) {
