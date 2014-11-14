@@ -67,6 +67,10 @@ showtime = {
 
   XML: function(v) {
     return require('showtime/xml').parse(v);
+  },
+
+  systemIpAddress: function() {
+      return Showtime.systemIpAddress();
   }
 };
 
