@@ -499,6 +499,7 @@ es_context_release(es_context_t *ec)
 void
 es_context_begin(es_context_t *ec)
 {
+  atomic_inc(&ec->ec_refcount);
   hts_mutex_lock(&ec->ec_mutex);
 }
 
@@ -514,8 +515,10 @@ es_context_end(es_context_t *ec)
     // No more permanent resources, attached. Terminate context
 
     es_resource_t *er;
-    while((er = LIST_FIRST(&ec->ec_resources_volatile)) != NULL)
+    while((er = LIST_FIRST(&ec->ec_resources_volatile)) != NULL) {
+      assert(er->er_zombie == 0);
       es_resource_destroy(er);
+    }
 
     duk_destroy_heap(ec->ec_duk);
     ec->ec_duk = NULL;
@@ -523,6 +526,7 @@ es_context_end(es_context_t *ec)
   }
 
   hts_mutex_unlock(&ec->ec_mutex);
+  es_context_release(ec);
 }
 
 
@@ -739,7 +743,6 @@ ecmascript_plugin_unload(const char *id)
     es_resource_destroy(er);
 
   es_context_end(ec);
-  es_context_release(ec);
 }
 
 
@@ -788,7 +791,7 @@ ecmascript_fini(void)
       es_resource_destroy(er);
 
     es_context_end(ec);
-    es_context_release(ec);
+
     hts_mutex_lock(&es_context_mutex);
   }
   hts_mutex_unlock(&es_context_mutex);

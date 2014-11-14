@@ -36,6 +36,7 @@ es_sqlite_destroy(es_resource_t *eres)
     TRACE(TRACE_DEBUG, "JS", "Database %s finalized", es->es_name);
 
   free(es->es_name);
+  es_resource_unlink(&es->super);
 }
 
 
