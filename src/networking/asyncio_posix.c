@@ -477,6 +477,8 @@ asyncio_add_worker(void (*fn)(void))
 static void *
 asyncio_thread(void *aux)
 {
+  asyncio_thread_id = hts_thread_current();
+
   hts_mutex_init(&asyncio_worker_mutex);
 
   arch_pipe(asyncio_pipe);
@@ -511,7 +513,7 @@ asyncio_thread(void *aux)
 void
 asyncio_init(void)
 {
-  hts_thread_create_joinable("asyncio", &asyncio_thread_id, asyncio_thread,
+  hts_thread_create_detached("asyncio", asyncio_thread,
                              NULL, THREAD_PRIO_MODEL);
 }
 
