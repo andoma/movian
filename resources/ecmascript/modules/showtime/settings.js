@@ -213,7 +213,7 @@ sp.createMultiOpt = function(id, title, options, callback, persistent) {
   for(var i in options) {
     var o = options[i];
 
-    var opt_id = o[0];
+    var opt_id = o[0].toString();
     var opt_title = o[1];
     var opt_default = o[2];
 
