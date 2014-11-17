@@ -596,7 +596,9 @@ event_sprint(const event_t *e)
   const event_payload_t *ep = (const event_payload_t *)e;
   const event_action_vector_t *eav = (const event_action_vector_t *)e;
 
-  
+  if(e == NULL)
+    return "(null)";
+
   switch(e->e_type_x) {
   case EVENT_DYNAMIC_ACTION:
     return ep->payload;
