@@ -27,6 +27,7 @@
 #include <stdio.h>
 
 #include <libavutil/aes.h>
+#include <libavutil/mem.h>
 
 #include "arch/halloc.h"
 
@@ -62,6 +63,7 @@ static void
 aes_close(fa_handle_t *h)
 {
   aes_fh_t *a = (aes_fh_t *)h;
+  av_freep(&a->aes);
   a->src->fh_proto->fap_close(a->src);
   free(a);
 }
