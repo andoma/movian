@@ -33,4 +33,11 @@ struct event *mp_dequeue_event_deadline(struct media_pipe *mp, int timeout);
 
 struct event *mp_wait_for_empty_queues(struct media_pipe *mp);
 
+void mp_event_dispatch(struct media_pipe *mp, struct event *e);
+
+void mp_event_set_callback(struct media_pipe *mp,
+                           int (*mp_callback)(struct media_pipe *mp,
+                                              void *opaque,
+                                              event_t *e),
+                           void *opaque);
 

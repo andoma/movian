@@ -235,7 +235,27 @@ typedef struct media_pipe {
 
   struct audio_decoder *mp_audio_decoder;
 
+  /**
+   * Event queue for events to be passed to the demuxer
+   */
   struct event_q mp_eq;
+
+  /**
+   * Callback where the demuxer can intercept events before those are
+   * enqueued on the event queue (mp_eq).
+   *
+   * If this function return non-zero the event is not enqueued on mp_eq
+   * otherwise (zero return) the event is enqueued. Enqueueing is also
+   * the default action if this callback is unset.
+   *
+   * Note that it's a good idea for this callback to execute quite
+   * quickly (ie, not block on I/O) as it might cause other threads to
+   * block otherwise.
+   *
+   * Note2: mp_mutex will be held when this is called.
+   */
+  int (*mp_handle_event)(struct media_pipe *mp, void *opaque, event_t *e);
+  void *mp_handle_event_opaque;
 
   /* Props */
 

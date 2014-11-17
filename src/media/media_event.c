@@ -159,9 +159,7 @@ mp_direct_seek(media_pipe_t *mp, int64_t ts)
   ets->ts = ts;
 
   e = &ets->h;
-  TAILQ_INSERT_TAIL(&mp->mp_eq, e, e_link);
-  hts_cond_signal(&mp->mp_backpressure);
-
+  mp_event_dispatch(mp, e);
 }
 
 
@@ -196,7 +194,20 @@ mp_seek_by_propchange(void *opaque, prop_event_t event, ...)
   mp_direct_seek(mp, t);
 }
 
-
+/**
+ *
+ */
+void
+mp_event_dispatch(media_pipe_t *mp, event_t *e)
+{
+  if(mp->mp_handle_event == NULL ||
+     !mp->mp_handle_event(mp, mp->mp_handle_event_opaque, e)) {
+    TAILQ_INSERT_TAIL(&mp->mp_eq, e, e_link);
+    hts_cond_signal(&mp->mp_backpressure);
+  } else {
+    event_release(e);
+  }
+}
 
 /**
  *
@@ -340,8 +351,7 @@ mp_enqueue_event_locked(media_pipe_t *mp, event_t *e)
     }
 
     atomic_inc(&e->e_refcount);
-    TAILQ_INSERT_TAIL(&mp->mp_eq, e, e_link);
-    hts_cond_signal(&mp->mp_backpressure);
+    mp_event_dispatch(mp, e);
   }
 }
 
@@ -356,4 +366,28 @@ mp_enqueue_event(media_pipe_t *mp, event_t *e)
   hts_mutex_unlock(&mp->mp_mutex);
 }
 
+
+/**
+ *
+ */
+void
+mp_event_set_callback(struct media_pipe *mp,
+                      int (*mp_callback)(struct media_pipe *mp,
+                                         void *opaque,
+                                         event_t *e),
+                      void *opaque)
+{
+  event_t *e;
+  hts_mutex_lock(&mp->mp_mutex);
+
+  while((e = TAILQ_FIRST(&mp->mp_eq)) != NULL) {
+    TAILQ_REMOVE(&mp->mp_eq, e, e_link);
+    mp_callback(mp, opaque, e);
+    event_release(e);
+  }
+
+  mp->mp_handle_event = mp_callback;
+  mp->mp_handle_event_opaque = opaque;
+  hts_mutex_unlock(&mp->mp_mutex);
+}
 

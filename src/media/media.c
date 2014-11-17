@@ -572,9 +572,7 @@ mp_set_playstatus_by_hold_locked(media_pipe_t *mp, const char *msg)
 
   prop_set_string(mp->mp_prop_playstatus, hold ? "pause" : "play");
 
-  event_t *e = event_create_int(EVENT_HOLD, hold);
-  TAILQ_INSERT_TAIL(&mp->mp_eq, e, e_link);
-  hts_cond_signal(&mp->mp_backpressure);
+  mp_event_dispatch(mp, event_create_int(EVENT_HOLD, hold));
 
   if(mp->mp_flags & MP_FLUSH_ON_HOLD)
     mp_flush_locked(mp);
