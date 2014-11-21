@@ -154,7 +154,7 @@ function Page(root, sync, flat) {
 Page.prototype.error = function(msg) {
   this.model.loading = false;
   this.model.type = 'openerror';
-  this.model.error = msg;
+  this.model.error = msg.toString();
 }
 
 
