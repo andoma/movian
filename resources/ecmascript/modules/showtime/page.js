@@ -31,11 +31,11 @@ Item.prototype.dump = function() {
 }
 
 Item.prototype.enable = function() {
-  this.root.enable = true;
+  this.root.enabled = true;
 }
 
 Item.prototype.disable = function() {
-  this.root.enable = false;
+  this.root.enabled = false;
 }
 
 Item.prototype.addOptAction = function(title, action) {
