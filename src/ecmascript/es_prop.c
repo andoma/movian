@@ -89,7 +89,7 @@ static int
 es_prop_print_duk(duk_context *ctx)
 {
   prop_t *p = es_stprop_get(ctx, 0);
-  prop_print_tree(p, 7);
+  prop_print_tree(p, 1);
   return 0;
 }
 
