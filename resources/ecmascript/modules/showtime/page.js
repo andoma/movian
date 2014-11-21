@@ -26,8 +26,16 @@ Item.prototype.bindVideoMetadata = function(obj) {
   this.mlv = Showtime.videoMetadataBind(this.root, this.root.url, obj);
 }
 
-Item.prototype.dump = function(obj) {
+Item.prototype.dump = function() {
   prop.print(this.root);
+}
+
+Item.prototype.enable = function() {
+  this.root.enable = true;
+}
+
+Item.prototype.disable = function() {
+  this.root.enable = false;
 }
 
 Item.prototype.addOptAction = function(title, action) {
@@ -98,6 +106,7 @@ function Page(root, sync, flat) {
   this.root = root;
   this.model = flat ? this.root : this.root.model;
   this.root.entries = 0;
+  this.eventhandlers = [];
 
   var model = this.model;
 
@@ -161,6 +170,18 @@ Page.prototype.appendItem = function(url, type, metadata) {
   return item;
 }
 
+Page.prototype.appendAction = function(type, data, enabled, metadata) {
+  var item = new Item();
+
+  var root = item.root;
+  root.enabled = enabled;
+  root.type = type;
+  root.data = data;
+  root.metadata = metadata;
+  Showtime.propSetParent(root, this.model.actions);
+  return item;
+}
+
 Page.prototype.appendPassiveItem = function(type, data, metadata) {
   this.root.entries++;
 
@@ -189,6 +210,30 @@ Page.prototype.redirect = function(url) {
     Showtime.backendOpen(this.root, url, true);
   } else {
     prop.sendEvent(this.root.eventSink, "redirect", url);
+  }
+}
+
+Page.prototype.onEvent = function(type, callback) {
+  if(type in this.eventhandlers) {
+    this.eventhandlers[type].push(callback);
+  } else {
+    this.eventhandlers[type] = [callback];
+  }
+
+  if(!this.eventSubscription) {
+    this.eventSubscription =
+      prop.subscribe(this.root.eventSink, function(type, val) {
+        if(type != "event")
+          return;
+        if(val in this.eventhandlers) {
+          for(x in this.eventhandlers[val]) {
+            this.eventhandlers[val][x](val);
+          }
+        }
+
+    }.bind(this), {
+      autoDestroy: true
+    });
   }
 }
 

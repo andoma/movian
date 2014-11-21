@@ -237,6 +237,7 @@ widget(deck, {
 	widget(list_x, {
 	  spacing: 5;
 
+          navWrap: true;
 	  scrollThreshold: $ui.width / 10;
 //	  alphaFallOff: 0.1;
 //	  blurFallOff: 0.1;
