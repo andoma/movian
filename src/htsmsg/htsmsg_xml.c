@@ -227,7 +227,7 @@ add_xml_field(xmlparser_t *xp, htsmsg_t *parent, char *tagname, int type,
       }
     }
   }
-  return htsmsg_field_add(parent, tagname, type, 0);
+  return htsmsg_field_add(parent, tagname, type, flags);
 }
 
 

@@ -33,7 +33,6 @@ showtime = {
     return http.request(url, c);
   },
 
-
   currentVersionInt: Showtime.currentVersionInt,
   currentVersionString: Showtime.currentVersionString,
   deviceId: Showtime.deviceId,
@@ -63,7 +62,11 @@ showtime = {
   },
 
   RichText: function(x) {
-    this.str = x;
+    this.str = x.toString();
+  },
+
+  XML: function(v) {
+    return require('showtime/xml').parse(v);
   }
 };
 

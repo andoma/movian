@@ -1,33 +1,70 @@
 
-// This is WIP and not working yet
-
-// ---------------------------------------------------------------
-// The HTSMSG object (Used to back XML)
-// ---------------------------------------------------------------
-
-function HtsmsgRef(msg, value) {
-  this.msg = msg;
-  this.value = value;
-  Object.freeze(this);
+function getfield(obj, key)
+{
+  var v = Showtime.htsmsgGet(obj.msg, key);
+  if(v === undefined)
+    return undefined;
+  if('msg' in v)
+    return new Proxy(v, htsmsgHandler);
+  return v.value;
 }
-
-Duktape.fin(HtsmsgRef.prototype, function(x) {
-  Showtime.htsmsgRelease(x.msg);
-});
 
 var htsmsgHandler = {
   get: function(obj, name) {
+
     if(name == 'toString') {
-      return function(x) {
+      return function() {
+        return obj.value ? obj.value.toString() : "<XML/>";
+      }
+    }
+
+    if(name == 'valueOf') {
+      return function() {
         return obj.value;
       }
     }
-    var v = Showtime.htsmsgGet(obj.msg, name);
-    return (typeof v === 'object') ? makeHtsmsg(v.msg, v.value) : v;
+
+    if(name == 'dump') {
+      return function() {
+        Showtime.htsmsgPrint(obj.msg);
+      }
+    }
+
+    if(name == 'toJSON') {
+      return undefined;
+    }
+
+    if(name == 'filterNodes') {
+      return function(filter) {
+        var count = Showtime.htsmsgLength(obj.msg);
+        var ret = [];
+
+        for(var i = 0; i < count; i++) {
+          if(Showtime.htsmsgGetName(obj.msg, i) == filter) {
+            ret.push(getfield(obj, i));
+          }
+        }
+        return ret;
+      }
+    }
+
+    if(name == 'length')
+      return Showtime.htsmsgLength(obj.msg);
+
+    return getfield(obj, name);
+  },
+
+  enumerate: function(obj) {
+    return obj.msg ? Showtime.htsmsgEnumerate(obj.msg) : [];
+  },
+
+  has: function(obj, name) {
+    return false;
   }
 }
 
 
-function makeHtsmsg(msg, value) {
-  return new Proxy(new HtsmsgRef(msg, value), htsmsgHandler);
+exports.parse = function(str) {
+  var x = Showtime.htsmsgCreateFromXML(str);
+  return new Proxy({msg: x}, htsmsgHandler);
 }
