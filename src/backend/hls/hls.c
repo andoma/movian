@@ -1527,6 +1527,9 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
           continue;
         }
 
+        if(h->h_seek_to != PTS_UNSET || h->h_exit_event != NULL)
+          continue;
+
       }
 
       if(!r) {
