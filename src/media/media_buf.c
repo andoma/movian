@@ -97,6 +97,7 @@ copy_mbm_from_mb(media_buf_meta_t *mbm, const media_buf_t *mb)
   mbm->mbm_epoch     = mb->mb_epoch;
   mbm->mbm_duration  = mb->mb_duration;
   mbm->mbm_flags.u32 = mb->mb_flags.u32;
+  mbm->mbm_sequence  = mb->mb_sequence;
 }
 
 #endif

@@ -157,7 +157,7 @@ mq_get_buffer_delay(media_queue_t *mq)
 /**
  *
  */
-static void
+void
 mp_update_buffer_delay(media_pipe_t *mp)
 {
   int vd = mq_get_buffer_delay(&mp->mp_video);
@@ -186,8 +186,7 @@ mp_enqueue_check_pre_buffering(media_pipe_t *mp)
  *
  */
 event_t *
-mb_enqueue_with_events_ex(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
-			  int *blocked)
+mb_enqueue_with_events(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 {
   event_t *e = NULL;
 
@@ -229,8 +228,6 @@ mb_enqueue_with_events_ex(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
     if(mp->mp_audio.mq_packets_current < aminpkt)
       break;
 
-    if(blocked != NULL)
-      *blocked = *blocked + 1;
     hts_cond_wait(&mp->mp_backpressure, &mp->mp_mutex);
   }
 

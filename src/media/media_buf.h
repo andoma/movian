@@ -58,6 +58,7 @@ typedef struct media_buf_meta {
   int64_t mbm_dts;
   int mbm_epoch;
   uint32_t mbm_duration;
+  int mbm_sequence;
 
   media_buf_flags_t mbm_flags;
 
@@ -91,12 +92,14 @@ typedef struct media_buf {
   media_buf_flags_t mb_flags;
 
   int mb_epoch;
+  int mb_sequence;
 
 #define mb_aspect_override      mb_flags.aspect_override
 #define mb_skip                 mb_flags.skip
 #define mb_disable_deinterlacer mb_flags.disable_deinterlacer
 #define mb_keyframe             mb_flags.keyframe
 #define mb_drive_clock          mb_flags.drive_clock
+#define mb_flush                mb_flags.flush
 
   enum {
     MB_VIDEO,

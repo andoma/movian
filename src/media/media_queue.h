@@ -38,6 +38,7 @@ typedef struct media_queue {
   int mq_stream;             /* Stream id, or -1 if queue is inactive */
   int mq_stream2;            /* Complementary stream */
   int mq_no_data_interest;   // Don't wakeup if adding new DATA packet
+  int mq_demuxer_flags;      // For demuxer use
   hts_cond_t mq_avail;
 
   int64_t mq_seektarget;
@@ -88,12 +89,9 @@ void mb_enq(struct media_pipe *mp, media_queue_t *mq, media_buf_t *mb);
 int mb_enqueue_no_block(struct media_pipe *mp, media_queue_t *mq,
                         media_buf_t *mb, int auxtype);
 
-struct event *mb_enqueue_with_events_ex(struct media_pipe *mp,
-                                        media_queue_t *mq,
-					media_buf_t *mb, int *blocked);
-
-#define mb_enqueue_with_events(mp, mq, mb) \
-  mb_enqueue_with_events_ex(mp, mq, mb, NULL)
+struct event *mb_enqueue_with_events(struct media_pipe *mp,
+                                     media_queue_t *mq,
+                                     media_buf_t *mb);
 
 void mb_enqueue_always(struct media_pipe *mp, media_queue_t *mq,
                        media_buf_t *mb);
@@ -110,3 +108,5 @@ void mq_init(media_queue_t *mq, prop_t *p, hts_mutex_t *mutex,
 void mq_destroy(media_queue_t *mq);
 
 void mq_update_stats(struct media_pipe *mp, media_queue_t *mq);
+
+void mp_update_buffer_delay(struct media_pipe *mp);

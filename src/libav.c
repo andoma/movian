@@ -239,6 +239,27 @@ libav_deliver_frame(video_decoder_t *vd,
 }
 
 
+
+/**
+ *
+ */
+static void
+libav_video_flush(media_codec_t *mc, video_decoder_t *vd)
+{
+  AVCodecContext *ctx = mc->ctx;
+  int got_pic = 0;
+  AVPacket avpkt;
+  av_init_packet(&avpkt);
+  avpkt.data = NULL;
+  avpkt.size = 0;
+  do {
+    avcodec_decode_video2(ctx, vd->vd_frame, &got_pic, &avpkt);
+  } while(got_pic);
+  avcodec_flush_buffers(ctx);
+}
+
+#include "misc/minmax.h"
+
 /**
  *
  */
@@ -251,6 +272,9 @@ libav_decode_video(struct media_codec *mc, struct video_decoder *vd,
   AVCodecContext *ctx = mc->ctx;
   AVFrame *frame = vd->vd_frame;
   int t;
+
+  if(mb->mb_flush)
+    libav_video_flush(mc, vd);
 
   copy_mbm_from_mb(&vd->vd_reorder[vd->vd_reorder_ptr], mb);
   ctx->reordered_opaque = vd->vd_reorder_ptr;
@@ -277,25 +301,6 @@ libav_decode_video(struct media_codec *mc, struct video_decoder *vd,
 
   libav_deliver_frame(vd, mp, mq, ctx, frame, mbm, t, mc);
   av_frame_unref(frame);
-}
-
-
-/**
- *
- */
-static void
-libav_video_flush(media_codec_t *mc, video_decoder_t *vd)
-{
-  AVCodecContext *ctx = mc->ctx;
-  int got_pic = 0;
-  AVPacket avpkt;
-  av_init_packet(&avpkt);
-  avpkt.data = NULL;
-  avpkt.size = 0;
-  do {
-    avcodec_decode_video2(ctx, vd->vd_frame, &got_pic, &avpkt);
-  } while(got_pic);
-  avcodec_flush_buffers(ctx);
 }
 
 
