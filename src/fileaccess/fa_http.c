@@ -465,7 +465,7 @@ validate_cookie(const char *req_host, const char *req_path,
    */ 
 
   for(x = req_host; x != s; x++) {
-    if(*x == '.')
+    if(*x == '.' && x + 1 != s)
       return 4;
   }
   return 0;
