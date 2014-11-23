@@ -440,9 +440,12 @@ validate_cookie(const char *req_host, const char *req_path,
    * Unless it matches the req_host perfectly
    */
 
-  if(strcmp(domain, req_host))
-    if(*domain != '.' || strchr(domain + 1, '.') == NULL)
-      return 2;
+   if(strcmp(domain, req_host)) {
+     if(*domain == '.')
+       domain++;
+     if(strchr(domain + 1, '.') == NULL)
+       return 2;
+   }
 
   /*
    * The value for the request-host does not domain-match the Domain
