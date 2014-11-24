@@ -272,7 +272,7 @@ deep_probe(fa_dir_entry_t *fde, scanner_t *s)
 {
   fde->fde_probestatus = FDE_PROBED_CONTENTS;
 
-  SCAN_TRACE("Deep probing %s. Content_type:%s",
+  SCAN_TRACE("Deep probing %s -- content_type:%s",
              rstr_get(fde->fde_url), content2type(fde->fde_type));
 
   if(fde->fde_type != CONTENT_UNKNOWN) {
