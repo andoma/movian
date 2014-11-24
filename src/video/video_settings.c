@@ -166,4 +166,23 @@ video_settings_init(void)
                  NULL);
 
 
+  setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Step when seeking backward")),
+                 SETTING_VALUE(15),
+                 SETTING_RANGE(3, 60),
+                 SETTING_UNIT_CSTR("s"),
+                 SETTING_WRITE_INT(&video_settings.seek_back_step),
+                 SETTING_HTSMSG("seekbackstep", store, "videoplayback"),
+                 NULL);
+
+  setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Step when seeking forward")),
+                 SETTING_VALUE(30),
+                 SETTING_RANGE(3, 60),
+                 SETTING_UNIT_CSTR("s"),
+                 SETTING_WRITE_INT(&video_settings.seek_fwd_step),
+                 SETTING_HTSMSG("seekfwdstep", store, "videoplayback"),
+                 NULL);
+
+
 }
