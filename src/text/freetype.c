@@ -902,7 +902,7 @@ text_render0(const uint32_t *uc, const int len,
 	     int min_size, const char **vpaths)
 {
   FT_UInt prev = 0;
-  FT_BBox bbox;
+  FT_BBox bbox = {0};
   FT_Vector delta;
   FT_Stroker stroker = NULL;
 
@@ -945,8 +945,6 @@ text_render0(const uint32_t *uc, const int len,
   if(current_size < 3 || scale < 0.001)
     return NULL;
 
-  bbox.xMin = 0;
-  bbox.yMin = 0;
   max_width *= 64;
 
   TAILQ_INIT(&lq);
@@ -1190,6 +1188,11 @@ text_render0(const uint32_t *uc, const int len,
 
     for(j = 0; j < li->count; j++) {
 
+      w += items[li->start +j].adv_x;
+
+      if(j > 0)
+        w += items[li->start + j].kerning;
+
       if(j == 0 && (g = items[li->start + j].g) != NULL) {
 	w += g->bbox.xMin;
 	bbox.xMin = MIN(g->bbox.xMin, bbox.xMin);
@@ -1198,13 +1201,7 @@ text_render0(const uint32_t *uc, const int len,
       if(items[li->start + j].set_margin)
 	wrap_margin = w;
 
-      if(j == li->count - 1 && (g = items[li->start + j].g) != NULL)
-	w += g->bbox.xMax;
-
-      int d = items[li->start + j].adv_x + 
-	(j > 0 ? items[li->start + j].kerning : 0);
-
-      if(lines < max_lines - 1 && w + d >= max_width && j < li->count - 1) {
+      if(lines < max_lines - 1 && w >= max_width) {
 	int k = j;
 	int w2 = w;
 
@@ -1243,7 +1240,7 @@ text_render0(const uint32_t *uc, const int len,
 	  glyph_t *eg = glyph_get(HORIZONTAL_ELLIPSIS_UNICODE, g->size, 0,
 				  g->face->url, g->face->font_domain,
 				  vpaths);
-	  if(w + d > max_width - eg->adv_x ) {
+	  if(w > max_width - eg->adv_x) {
 
 	    while(j > 0 && items[li->start + j - 1].code == ' ') {
 	      j--;
@@ -1268,8 +1265,6 @@ text_render0(const uint32_t *uc, const int len,
 	  }
 	}
       }
-      if(j < li->count - 1)
-	w += d;
     }
     
     li->width = w;
@@ -1286,10 +1281,28 @@ text_render0(const uint32_t *uc, const int len,
   if(max_width && siz_x > max_width) {
     siz_x = max_width;
   }
-  
+
   int target_width  = siz_x / 64;
   int target_height = 0;
-  int margin = 128;
+
+  TAILQ_FOREACH(li, &lq, link) {
+    if(li->type == LINE_TYPE_HR)
+      continue;
+
+    int w = 0;
+    for(j = 0; j < li->count; j++) {
+      int d = items[li->start + j].adv_x +
+        (j > 0 ? items[li->start + j].kerning : 0);
+
+      if ((g = items[li->start + j].g) != NULL) {
+        bbox.xMin = MIN(w + g->bbox.xMin, bbox.xMin);
+        bbox.xMax = MAX(w + g->bbox.xMax, bbox.xMax);
+      }
+
+      w += d;
+    }
+  }
+  int margin = MAX(-MIN(bbox.xMin, 0), MAX(0, bbox.xMax - siz_x));
 
   TAILQ_FOREACH(li, &lq, link) {
 
@@ -1346,7 +1359,7 @@ text_render0(const uint32_t *uc, const int len,
   }
 
   int origin_y = target_height * 64;
-  start_x = -bbox.xMin;
+  start_x = 0;
   start_y = 0;
 
   margin = (margin + 63) / 64;
