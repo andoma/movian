@@ -1388,6 +1388,13 @@ fileaccess_init(void)
                  SETTING_HTSMSG("filenameextensions", store, "faconf"),
                  NULL);
 
+  setting_create(SETTING_BOOL, gconf.settings_general, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Browse archives as folders")),
+                 SETTING_WRITE_BOOL(&gconf.fa_browse_archives),
+                 SETTING_VALUE(1),
+                 SETTING_HTSMSG("browsearchives", store, "faconf"),
+                 NULL);
+
   gconf.settings_bittorrent =
     settings_add_dir(gconf.settings_general, _p("BitTorrent"),
                      NULL, NULL, NULL, "settings:bittorrent");

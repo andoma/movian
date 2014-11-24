@@ -267,8 +267,6 @@ fa_probe_exif(metadata_t *md, const char *url, uint8_t *pb, fa_handle_t *fh,
 
 /**
  * Probe file by checking its header
- *
- * pb is guaranteed to point to at least 256 bytes of valid data
  */
 static int
 fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh,
@@ -302,7 +300,7 @@ fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh,
     return 1;
   }
 
-  if(l >= 16 && 
+  if(gconf.fa_browse_archives && l >= 16 &&
      buf[0] == 'R'  && buf[1] == 'a'  && buf[2] == 'r' && buf[3] == '!' &&
      buf[4] == 0x1a && buf[5] == 0x07 && buf[6] == 0x0 && buf[9] == 0x73) {
 
@@ -318,7 +316,8 @@ fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh,
     return 1;
   }
 
-  if(buf[0] == 0x50 && buf[1] == 0x4b && buf[2] == 0x03 && buf[3] == 0x04) {
+  if(gconf.fa_browse_archives && l > 4 &&
+     buf[0] == 0x50 && buf[1] == 0x4b && buf[2] == 0x03 && buf[3] == 0x04) {
 
     char path[256];
     buf_t *buf;

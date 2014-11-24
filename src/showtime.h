@@ -277,6 +277,7 @@ typedef struct gconf {
 
   int fa_allow_delete;
   int fa_kvstore_as_xattr;
+  int fa_browse_archives;
   int show_filename_extensions;
   int ignore_the_prefix;
 
