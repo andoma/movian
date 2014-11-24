@@ -98,6 +98,8 @@ typedef struct hls_segment {
   int64_t hs_opened_at;
   int hs_block_cnt;
 
+  int hs_unavailable;
+
 } hls_segment_t;
 
 
@@ -608,17 +610,19 @@ check_audio_only(hls_t *h)
 }
 
 
+
 /**
  *
  */
 static int
-variant_open_file(hls_variant_t *hv)
+variant_open_file(hls_variant_t *hv, hls_t *h)
 {
   hls_segment_t *hs = hv->hv_current_seg;
   fa_open_extra_t foe = {0};
   fa_handle_t *fh;
   char errbuf[512];
   const int fast_fail = 1;
+  int retry_counter = 0;
 
   if(fast_fail)
     foe.foe_open_timeout = 2000;
@@ -627,16 +631,30 @@ variant_open_file(hls_variant_t *hv)
 
   int flags = FA_STREAMING;
 
+ retry:
+
   hs->hs_opened_at = showtime_get_ts();
   hs->hs_block_cnt = hv->hv_hls->h_blocked;
 
   fh = fa_open_ex(hs->hs_url, errbuf, sizeof(errbuf), flags, &foe);
+
   if(fh == NULL) {
     if(foe.foe_protocol_error == 404) {
+      if(retry_counter < 3 && 0) {
+        HLS_TRACE(h, "Segment %s not found, retrying", hs->hs_url);
+        usleep(500000);
+        retry_counter++;
+        goto retry;
+      }
+      TRACE(TRACE_ERROR, "HLS", "Segment %s not found", hs->hs_url);
       hv->hv_recent_segment_status = HLS_ERROR_SEGMENT_NOT_FOUND;
+
     } else {
+      TRACE(TRACE_ERROR, "HLS", "Segment %s -- HTTP error %d",
+            hs->hs_url, foe.foe_protocol_error);
       hv->hv_recent_segment_status = HLS_ERROR_SEGMENT_BROKEN;
     }
+    hs->hs_unavailable = 1;
     return -1;
   }
 
@@ -659,6 +677,7 @@ variant_open_file(hls_variant_t *hv)
 	      rstr_get(hs->hs_key_url));
 	fa_close(fh);
         hv->hv_recent_segment_status = HLS_ERROR_SEGMENT_BAD_KEY;
+        hs->hs_unavailable = 1;
         return -1;
       }
 
@@ -752,15 +771,19 @@ static hls_variant_t *
 demuxer_select_variant_simple(hls_t *h, hls_demuxer_t *hd)
 {
   hls_variant_t *hv;
+  hls_variant_t *best = NULL;
 
   TAILQ_FOREACH(hv, &hd->hd_variants, hv_link) {
-    if(hv->hv_corrupt_counter >= HV_CORRUPT_LIMIT)
+    if(hv->hv_audio_only)
       continue;
 
-    if(hv->hv_bitrate < hd->hd_bw)
-      break;
+    if(hv->hv_bitrate >= hd->hd_bw)
+      continue;
+
+    if(best == NULL || best->hv_corrupt_counter > hv->hv_corrupt_counter)
+      best = hv;
   }
-  return hv;
+  return best;
 }
 
 
@@ -931,12 +954,7 @@ hls_libav_read(void *opaque, uint8_t *buf, int size)
           if(hts_cond_wait_timeout(&h->h_cond, &h->h_mutex, 1000))
             break;
 
-        if(h->h_exit_event != NULL) {
-          hts_mutex_unlock(&h->h_mutex);
-          return -1;
-        }
-
-        if(h->h_seek_to != PTS_UNSET) {
+        if(h->h_exit_event != NULL || h->h_seek_to != PTS_UNSET) {
           hts_mutex_unlock(&h->h_mutex);
           return -1;
         }
@@ -950,13 +968,32 @@ hls_libav_read(void *opaque, uint8_t *buf, int size)
       HLS_TRACE(h, "Opening variant %d sequence %d",
                 hv->hv_bitrate, hs->hs_seq);
 
-      int err = variant_open_file(hv);
+      int err = variant_open_file(hv, h);
       if(!err) {
-        // Open succeeded, continue with streaming
+        // Open succeeded, continue with streaming1
         h->h_current_seq = hv->hv_current_seg->hs_seq;
         break;
       }
+
+      assert(hv->hv_current_file == NULL);
+
+      if(h->h_exit_event != NULL || h->h_seek_to != PTS_UNSET)
+        return -1;
+
+      const hls_segment_t *prev = hv->hv_current_seg;
+
       hv->hv_current_seg = NULL;
+
+      if(prev->hs_unavailable) {
+        hv->hv_corrupt_counter++;
+        sleep(1);
+        HLS_TRACE(h, "Bad segment %d in bitrate %d trying different variant",
+                  prev->hs_seq, hv->hv_bitrate);
+        hls_demuxer_t *hd = &h->h_primary;
+
+        hd->hd_req = demuxer_select_variant(h, hd);
+        hd->hd_last_switch = now;
+      }
       return -1;
     }
 
