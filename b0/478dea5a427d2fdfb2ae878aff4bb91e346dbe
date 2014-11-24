@@ -1,0 +1,3 @@
+Since February 2014 (Showtime version 4.5.108), clearing metadata does not
+erase playcount, resume point, etc. Update the 'Clear metadata...' -warning text
+to reflect this
