@@ -57,7 +57,7 @@ rc2metadatacode(int rc)
 static void
 items_clear(void *opaque, prop_event_t event, ...)
 {
-  rstr_t *r = _("Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?");
+  rstr_t *r = _("Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?");
 
   int x = message_popup(rstr_get(r), MESSAGE_POPUP_RICH_TEXT |
 			MESSAGE_POPUP_CANCEL | MESSAGE_POPUP_OK, NULL);
