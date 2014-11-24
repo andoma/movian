@@ -640,6 +640,11 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
     return NULL;
   }
 
+
+  mp->mp_audio.mq_stream = -1;
+  mp->mp_video.mq_stream = -1;
+  mp->mp_video.mq_stream2 = -1;
+
   TRACE(TRACE_DEBUG, "Video", "Starting playback of %s (%s)",
 	url, fctx->iformat->name);
 
@@ -699,11 +704,6 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
   memset(cwvec, 0, sizeof(void *) * fctx->nb_streams);
   
   int cwvec_size = fctx->nb_streams;
-
-  mp->mp_audio.mq_stream = -1;
-  mp->mp_video.mq_stream = -1;
-  mp->mp_video.mq_stream2 = -1;
-
   media_format_t *fw = media_format_create(fctx);
 
 
