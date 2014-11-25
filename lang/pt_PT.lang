@@ -32,6 +32,10 @@ id: Hide system info
 # Missing translation
 msg: 
 
+id: Master volume
+# Missing translation
+msg: 
+
 id: Navigation
 msg: Navegação
 
@@ -59,6 +63,10 @@ msg: Sistema
 
 id: Time until sleep
 msg: Tempo até suspensão
+
+id: dB
+# Missing translation
+msg: 
 
 id: min
 msg: min
@@ -896,6 +904,10 @@ id: BitTorrent
 # Missing translation
 msg: 
 
+id: Browse archives as folders
+# Missing translation
+msg: 
+
 id: Enable file deletion from item menu
 msg: Ativar eliminação de ficheiros através do item de menu
 
@@ -1001,6 +1013,10 @@ id: Go to standby after video ends
 # Missing translation
 msg: 
 
+id: Horizontal pan
+# Missing translation
+msg: 
+
 id: Reset defaults for folder '%s'
 # Missing translation
 msg: 
@@ -1030,6 +1046,10 @@ id: Subtitle scaling
 msg: Redimensionamento de legendas
 
 id: Subtitle vertical displacement
+# Missing translation
+msg: 
+
+id: Vertical pan
 # Missing translation
 msg: 
 
@@ -1104,8 +1124,9 @@ msg: %d items apagado(s)
 id: Clear all metadata
 msg: Limpar todos os metadados
 
-id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
-msg: Limpar todos os metadados significa perder <b>toda</b> a informação sobre:\n\nSe uma faixa/filme foi vista\nO número de vezes que uma faixa/filme foi reproduzido\nA posição de resumo da reprodução\n\nE também vai apagar os metadados em cache de fontes externas como o themoviedb.org, etc\n\nTem a certeza que quer continuar?
+id: Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?
+# Missing translation
+msg: 
 
 #
 # ./src/metadata/mlp.c
@@ -1642,10 +1663,6 @@ msg: Ativar VDA
 id: Enable VDPAU
 msg: Ativar VDPAU
 
-id: Master volume
-# Missing translation
-msg: 
-
 id: Maximum resolution for deinterlacer
 msg: Resolução máxima para o deinterlacer
 
@@ -1661,6 +1678,14 @@ msg: Método preferido de VDPAU deinterlacer
 
 id: Resume video playback
 msg: Retomar a reprodução de vídeo
+
+id: Step when seeking backward
+# Missing translation
+msg: 
+
+id: Step when seeking forward
+# Missing translation
+msg: 
 
 id: Temporal
 msg: Temporal

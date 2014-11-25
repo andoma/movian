@@ -35,6 +35,10 @@ id: Hide system info
 # Missing translation
 msg: 
 
+id: Master volume
+# Missing translation
+msg: 
+
 id: Navigation
 msg: Navigácia
 
@@ -64,6 +68,10 @@ id: System
 msg: 
 
 id: Time until sleep
+# Missing translation
+msg: 
+
+id: dB
 # Missing translation
 msg: 
 
@@ -927,6 +935,10 @@ id: BitTorrent
 # Missing translation
 msg: 
 
+id: Browse archives as folders
+# Missing translation
+msg: 
+
 id: Enable file deletion from item menu
 # Missing translation
 msg: 
@@ -1034,6 +1046,10 @@ id: Go to standby after video ends
 # Missing translation
 msg: 
 
+id: Horizontal pan
+# Missing translation
+msg: 
+
 id: Reset defaults for folder '%s'
 # Missing translation
 msg: 
@@ -1063,6 +1079,10 @@ id: Subtitle scaling
 msg: Veľkosť titulkov
 
 id: Subtitle vertical displacement
+# Missing translation
+msg: 
+
+id: Vertical pan
 # Missing translation
 msg: 
 
@@ -1141,7 +1161,7 @@ id: Clear all metadata
 # Missing translation
 msg: 
 
-id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
+id: Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?
 # Missing translation
 msg: 
 
@@ -1726,10 +1746,6 @@ msg: Povoliť VDA
 id: Enable VDPAU
 msg: Povoliť VDPAU
 
-id: Master volume
-# Missing translation
-msg: 
-
 id: Maximum resolution for deinterlacer
 msg: Maximálne rozlíšenie pre deinterlacer
 
@@ -1745,6 +1761,14 @@ msg: Preferovaná metoda VDPAU deinterlaceru
 
 id: Resume video playback
 msg: Obnoviť prehrávanie
+
+id: Step when seeking backward
+# Missing translation
+msg: 
+
+id: Step when seeking forward
+# Missing translation
+msg: 
 
 id: Temporal
 msg: Temporálne

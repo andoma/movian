@@ -31,6 +31,10 @@ msg: 转至首页
 id: Hide system info
 msg: 隐藏系统信息
 
+id: Master volume
+# Missing translation
+msg: 
+
 id: Navigation
 msg: 导航
 
@@ -57,6 +61,10 @@ msg: 系统
 
 id: Time until sleep
 msg: 直到关机
+
+id: dB
+# Missing translation
+msg: 
 
 id: min
 msg: 最小
@@ -856,6 +864,10 @@ id: BitTorrent
 # Missing translation
 msg: 
 
+id: Browse archives as folders
+# Missing translation
+msg: 
+
 id: Enable file deletion from item menu
 msg: 启用文件删除功能
 
@@ -955,6 +967,10 @@ msg: 音量
 id: Go to standby after video ends
 msg: 视频播放结束后自动关机
 
+id: Horizontal pan
+# Missing translation
+msg: 
+
 id: Reset defaults for folder '%s'
 msg: 恢复文件夹'%s'的默认设置
 
@@ -981,6 +997,10 @@ msg: 字幕缩放
 
 id: Subtitle vertical displacement
 msg: 字幕垂直移位
+
+id: Vertical pan
+# Missing translation
+msg: 
 
 id: Video frame interpolation
 msg: 视频帧插值
@@ -1048,8 +1068,9 @@ msg: 已删除%d条
 id: Clear all metadata
 msg: 清除所有元信息
 
-id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
-msg: 清除所有元信息意味着你将清除掉<b>所有</b>以下数据：\n\n音乐或视频是否已播放\n音乐或视频的播放次数\n播放位置记录\n从外部源（例如themoviedb.org等）缓存的元信息\n\n确认要继续吗？
+id: Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?
+# Missing translation
+msg: 
 
 #
 # ./src/metadata/mlp.c
@@ -1567,10 +1588,6 @@ msg: 启用VDA
 id: Enable VDPAU
 msg: 启用VDPAU
 
-id: Master volume
-# Missing translation
-msg: 
-
 id: Maximum resolution for deinterlacer
 msg: 去隔行化使用最大可能的分辨率
 
@@ -1586,6 +1603,14 @@ msg: 优先使用VDPAU去隔行化方式
 
 id: Resume video playback
 msg: 从上次结束位置开始播放
+
+id: Step when seeking backward
+# Missing translation
+msg: 
+
+id: Step when seeking forward
+# Missing translation
+msg: 
 
 id: Temporal
 msg: 临时的

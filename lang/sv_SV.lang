@@ -31,6 +31,9 @@ msg: Gå till hemsidan
 id: Hide system info
 msg: Dölj systeminformation
 
+id: Master volume
+msg: Huvudvolym
+
 id: Navigation
 msg: Navigering
 
@@ -57,6 +60,10 @@ msg: System
 
 id: Time until sleep
 msg: Tid tills sovning
+
+id: dB
+# Missing translation
+msg: 
 
 id: min
 msg: min
@@ -839,6 +846,10 @@ msg: Är du säker att du vill ta bort:
 id: BitTorrent
 msg: BitTorrent
 
+id: Browse archives as folders
+# Missing translation
+msg: 
+
 id: Enable file deletion from item menu
 msg: Tillåt borttagning av filer från menyn
 
@@ -938,6 +949,10 @@ msg: Volym
 id: Go to standby after video ends
 msg: Gå till standby efter videon är slut
 
+id: Horizontal pan
+# Missing translation
+msg: 
+
 id: Reset defaults for folder '%s'
 msg: Återställ standardinställnigar för katalog '%s'
 
@@ -964,6 +979,10 @@ msg: Storlek på undertexter
 
 id: Subtitle vertical displacement
 msg: Vertikal positiono för undertexter
+
+id: Vertical pan
+# Missing translation
+msg: 
 
 id: Video frame interpolation
 msg: Interpolera videobilder
@@ -1031,8 +1050,9 @@ msg: %d objekt borttagna
 id: Clear all metadata
 msg: Ta bort all metadata
 
-id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
-msg: Att ta bort all mteadata betyder att du förlorar <b>all</b> information om:\n\nOm ett spår/film blivit spelat\nAntal gånger ett spår/film har blivit spelat\nÅterstartsposition\n\nÄr du säker?
+id: Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?
+# Missing translation
+msg: 
 
 #
 # ./src/metadata/mlp.c
@@ -1550,9 +1570,6 @@ msg: Slå på VDA
 id: Enable VDPAU
 msg: Aktivera VDPAU
 
-id: Master volume
-msg: Huvudvolym
-
 id: Maximum resolution for deinterlacer
 msg: Maximal upplösning för deinterlacing
 
@@ -1567,6 +1584,14 @@ msg: Föredragen metod för VDPAU deinterlacing
 
 id: Resume video playback
 msg: Återuppta videouppspelning
+
+id: Step when seeking backward
+# Missing translation
+msg: 
+
+id: Step when seeking forward
+# Missing translation
+msg: 
 
 id: Temporal
 msg: Temporär

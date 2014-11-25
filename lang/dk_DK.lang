@@ -31,6 +31,9 @@ msg: Gå til startskærm
 id: Hide system info
 msg: Skjul systeminfo
 
+id: Master volume
+msg: Master volume
+
 id: Navigation
 msg: Navigation
 
@@ -57,6 +60,10 @@ msg: System
 
 id: Time until sleep
 msg: Tid indtil dvale
+
+id: dB
+# Missing translation
+msg: 
 
 id: min
 msg: min.
@@ -348,7 +355,8 @@ id: Checking for updates...
 msg: Søger efter opdateringer...
 
 id: Checking installed version of %s
-smg: Tjekker installeret version af %s
+# Missing translation
+msg: 
 
 id: Current version:
 msg: Aktuel version:
@@ -359,8 +367,9 @@ msg: Download og installer...
 id: Downloading %s
 msg: Downloader %s
 
-id: Installing...
-msg: Installerer...
+id: Installing %s
+# Missing translation
+msg: 
 
 id: New version %s is available for download
 msg: Ny version %s er klar til download
@@ -368,8 +377,9 @@ msg: Ny version %s er klar til download
 id: No upgrade available
 msg: Ingen opdatering tilgængelig
 
-id: Patching binary
-msg: Patching binær
+id: Patching %s
+# Missing translation
+msg: 
 
 id: Restarting Showtime in %d seconds...
 msg: Genstarter Showtime om %d sekunder...
@@ -499,7 +509,7 @@ msg: Cell-h264: %d Ref-billeder for 1080 indhold er ikke kompatibel med PS3 HW d
 
 id: Cell-h264: Broken headers, Disabling acceleration
 msg: Cell-h264: Ødelagt overskrifter, deaktiverer acceleration
- 
+
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
 msg: Cell-h264:  Tving level 4.2 til indhold i level %d.%d. Dette vil nok stoppe videoafspilning.
 
@@ -640,7 +650,7 @@ msg: Maks. forbrug af ledig plads til lagrede torrents
 
 id: Status
 msg: Status
- 
+
 id: Torrent cache path
 msg: Torrent lagrede sti
 
@@ -839,6 +849,10 @@ msg: Er du sikker på at du vil slette:
 id: BitTorrent
 msg: BitTorrent
 
+id: Browse archives as folders
+# Missing translation
+msg: 
+
 id: Enable file deletion from item menu
 msg: Aktivere sletning af filer fra liste menu
 
@@ -938,6 +952,10 @@ msg: Lydstyrke
 id: Go to standby after video ends
 msg: Gå i standby efter slut af video
 
+id: Horizontal pan
+# Missing translation
+msg: 
+
 id: Reset defaults for folder '%s'
 msg: Nulstil standarder for mappe '%s'
 
@@ -964,6 +982,10 @@ msg: Skalering af undertekster
 
 id: Subtitle vertical displacement
 msg: Vertikal visning af undertekster
+
+id: Vertical pan
+# Missing translation
+msg: 
 
 id: Video frame interpolation
 msg: Video billede interpolation
@@ -1031,8 +1053,9 @@ msg: %d objekter slettet
 id: Clear all metadata
 msg: Fjern alle metadata
 
-id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
-msg: At fjerne alle metadata betyder at du mister <b>alle</b> informationer om:\n\nHvis et spor/film er blevet set\nAntal gange et spor/film er blevet afspillet\nFortsæt afspilling\n\nEr du sikker?
+id: Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?
+# Missing translation
+msg: 
 
 #
 # ./src/metadata/mlp.c
@@ -1342,7 +1365,7 @@ msg: Indstillinger nyttige for udviklere
 
 id: System name
 msg: Systemnavn
- 
+
 id: System related settings
 msg: Systemrelaterede indstillinger
 
@@ -1366,7 +1389,7 @@ msg: Central undertekstmappe
 
 id: Color
 msg: Farve
- 
+
 id: External file
 msg: Ekstern fil
 
@@ -1453,14 +1476,17 @@ msg: Benyt skrifttype %s til
 
 id: User interface
 msg: Brugergrænseflade
+
 #
 # ./src/ui/glw/glw_ps3.c
 #
 id: Seek using L2 and R2 button
-mag: Søg ved at bruge L2 og R2 knap
+# Missing translation
+msg: 
 
 id: Yes with Select button
-mag: Ja med Select knap
+# Missing translation
+msg: 
 
 #
 # ./src/ui/glw/glw_settings.c
@@ -1474,8 +1500,9 @@ msg: Vandret underscanning
 id: Screensaver delay
 msg: Pauseskærm forsinkelse
 
-id: Veritcal underscan
-msg: Lodret underscanning
+id: Vertical underscan
+# Missing translation
+msg: 
 
 id: Wrap when reaching beginning/end of lists
 msg: Wrap når starten/slutningen af listen nåes
@@ -1549,9 +1576,6 @@ msg: Aktiver VDA
 id: Enable VDPAU
 msg: Aktiver VDPAU
 
-id: Master volume
-msg: Master volume
-
 id: Maximum resolution for deinterlacer
 msg: Maksimal opløsning af deinterlacer
 
@@ -1567,6 +1591,14 @@ msg: Foretrukket VDPAU deinterlacer metode
 id: Resume video playback
 msg: Fortsæt video afspilning
 
+id: Step when seeking backward
+# Missing translation
+msg: 
+
+id: Step when seeking forward
+# Missing translation
+msg: 
+
 id: Temporal
 msg: Midlertidig
 
@@ -1581,3 +1613,4 @@ msg: Videoacceleration og skærmpræsentation
 
 id: Video playback
 msg: Videoafspilning
+

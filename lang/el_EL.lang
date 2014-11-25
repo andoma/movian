@@ -32,6 +32,10 @@ id: Hide system info
 # Missing translation
 msg: 
 
+id: Master volume
+# Missing translation
+msg: 
+
 id: Navigation
 msg: Πλοήγηση 
 
@@ -59,6 +63,10 @@ msg: Σύστημα
 
 id: Time until sleep
 msg: Χρόνος μέχρι να αδρανοποιηθεί το σύστημα
+
+id: dB
+# Missing translation
+msg: 
 
 id: min
 msg: λεπτό
@@ -882,6 +890,10 @@ id: BitTorrent
 # Missing translation
 msg: 
 
+id: Browse archives as folders
+# Missing translation
+msg: 
+
 id: Enable file deletion from item menu
 msg: Ενεργοποίηση διαγραφής αρχείων από το  μενού εργαλείων
 
@@ -981,6 +993,10 @@ msg: Ένταση ήχου
 id: Go to standby after video ends
 msg: Τερματισμός λειτουργίας όταν τελειώσει το βίντεο
 
+id: Horizontal pan
+# Missing translation
+msg: 
+
 id: Reset defaults for folder '%s'
 # Missing translation
 msg: 
@@ -1010,6 +1026,10 @@ msg: Κλιμάκωση υποτίτλων
 
 id: Subtitle vertical displacement
 msg: Κάθετη μετατόπιση υποτίτλων
+
+id: Vertical pan
+# Missing translation
+msg: 
 
 id: Video frame interpolation
 # Missing translation
@@ -1078,8 +1098,9 @@ msg: %d αρχεία διαγράφηκαν
 id: Clear all metadata
 msg: Καθαρισμός όλον των αρχείων metadata
 
-id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
-msg: Καθάρισμα όλον των αρχείων metadata σημαίνει απώλεια όλων των πληροφοριών για ένα αρχείο/ταινία που έχεις δει. Επιπλέον ο αριθμός των φορών που έχει παιχτεί ένα αρχείο/ταινία και η θέση για την συνέχιση μιας αναπαραγωγής,  θα διαγράφουν επίσης τα αρχεία cache των metadata από τις εξωτερικές πηγές όπως του themoviedb.org. Είσαι σίγουρος ότι θέλεις να προχωρήσεις;
+id: Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?
+# Missing translation
+msg: 
 
 #
 # ./src/metadata/mlp.c
@@ -1598,10 +1619,6 @@ msg: Ενεργοποίηση VDA
 id: Enable VDPAU
 msg: Ενεργοποίηση VDPAU
 
-id: Master volume
-# Missing translation
-msg: 
-
 id: Maximum resolution for deinterlacer
 msg: Μέγιστη ανάλυση για τον επανακωδικοποιητή
 
@@ -1617,6 +1634,14 @@ msg: Προτιμώμενη μέθοδος επανακωδικοποίησης
 
 id: Resume video playback
 msg: Συνέχιση αναπαραγωγής βίντεο
+
+id: Step when seeking backward
+# Missing translation
+msg: 
+
+id: Step when seeking forward
+# Missing translation
+msg: 
 
 id: Temporal
 msg: Προσωρινός

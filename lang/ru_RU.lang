@@ -31,6 +31,10 @@ msg: Перейти на главный экран
 id: Hide system info
 msg: Скрыть системную информацию
 
+id: Master volume
+# Missing translation
+msg: 
+
 id: Navigation
 msg: Навигация
 
@@ -57,6 +61,10 @@ msg: Система
 
 id: Time until sleep
 msg: Время до сна
+
+id: dB
+# Missing translation
+msg: 
 
 id: min
 msg: мин
@@ -856,6 +864,10 @@ id: BitTorrent
 # Missing translation
 msg: 
 
+id: Browse archives as folders
+# Missing translation
+msg: 
+
 id: Enable file deletion from item menu
 msg: Включить удаление файла из пункта меню
 
@@ -955,6 +967,10 @@ msg: Громкость
 id: Go to standby after video ends
 msg: Отключить систему по окончании видео
 
+id: Horizontal pan
+# Missing translation
+msg: 
+
 id: Reset defaults for folder '%s'
 msg: Сброс настроек по умолчанию для папки '%s'
 
@@ -981,6 +997,10 @@ msg: Масштаб субтитров
 
 id: Subtitle vertical displacement
 msg: Вертикальное смещение субтитров
+
+id: Vertical pan
+# Missing translation
+msg: 
 
 id: Video frame interpolation
 msg: Интерполяция видео кадра
@@ -1048,8 +1068,9 @@ msg: Удалено записей: %d
 id: Clear all metadata
 msg: Удалить все метаданные
 
-id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
-msg: При удалении метаданных будет удалена <b>вся</b> информация:\n\nТрек/видео/фильм был воспроизведен\nКол-во раз, которые Трек/видео/фильм был воспроизведен\nПозиция для продолжения воспроизведения\n\nТак же все метаданные, сохраненные из внешних источников, таких как themoviedb.org и т.п.\n\nВы действительно хотите продолжить?
+id: Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?
+# Missing translation
+msg: 
 
 #
 # ./src/metadata/mlp.c
@@ -1567,10 +1588,6 @@ msg: Включить VDA
 id: Enable VDPAU
 msg: Включить VDPAU
 
-id: Master volume
-# Missing translation
-msg: 
-
 id: Maximum resolution for deinterlacer
 msg: Максимальное разрешение для деинтерлейсинга
 
@@ -1586,6 +1603,14 @@ msg: Предпочтительный метод VPDAU деинтерлейси�
 
 id: Resume video playback
 msg: Boзoбнoвить вocпpoизвeдeниe видeo
+
+id: Step when seeking backward
+# Missing translation
+msg: 
+
+id: Step when seeking forward
+# Missing translation
+msg: 
 
 id: Temporal
 msg: Временный

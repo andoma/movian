@@ -34,6 +34,10 @@ id: Hide system info
 # Missing translation
 msg: 
 
+id: Master volume
+# Missing translation
+msg: 
+
 id: Navigation
 msg: Navigatie
 
@@ -60,6 +64,10 @@ id: System
 msg: Systeem
 
 id: Time until sleep
+# Missing translation
+msg: 
+
+id: dB
 # Missing translation
 msg: 
 
@@ -909,6 +917,10 @@ id: BitTorrent
 # Missing translation
 msg: 
 
+id: Browse archives as folders
+# Missing translation
+msg: 
+
 id: Enable file deletion from item menu
 # Missing translation
 msg: 
@@ -1016,6 +1028,10 @@ id: Go to standby after video ends
 # Missing translation
 msg: 
 
+id: Horizontal pan
+# Missing translation
+msg: 
+
 id: Reset defaults for folder '%s'
 # Missing translation
 msg: 
@@ -1045,6 +1061,10 @@ id: Subtitle scaling
 msg: Ondertitelingsgrootte
 
 id: Subtitle vertical displacement
+# Missing translation
+msg: 
+
+id: Vertical pan
 # Missing translation
 msg: 
 
@@ -1119,8 +1139,9 @@ msg: %d items verwijderd
 id: Clear all metadata
 msg: Alle metadata legen
 
-id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
-msg: Door alle metadata te verwijderen verliest u <b>alle</b> informatie over:\n\nAls een nummer/film bekeken is\nHet aantal keer dat een nummer/film is afgespeeld\nDe hervatpositie voor het afspelen van bestanden\n\nDit zal ook het cachegeheugen van de metadata voor externe bronnen zoals themoviedb.org, etc. verwijderen\n\nWeet u zeker dat u door wilt gaan?
+id: Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?
+# Missing translation
+msg: 
 
 #
 # ./src/metadata/mlp.c
@@ -1670,10 +1691,6 @@ msg: VDA inschakelen
 id: Enable VDPAU
 msg: VDPAU inschakelen
 
-id: Master volume
-# Missing translation
-msg: 
-
 id: Maximum resolution for deinterlacer
 msg: Maximale resolutie voor deinterlacer
 
@@ -1689,6 +1706,14 @@ msg: Voorkeursmethode voor VDPAU-deinterlacer
 
 id: Resume video playback
 msg: Videoweergave hervatten
+
+id: Step when seeking backward
+# Missing translation
+msg: 
+
+id: Step when seeking forward
+# Missing translation
+msg: 
 
 id: Temporal
 msg: Tijdelijk

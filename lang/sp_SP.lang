@@ -31,6 +31,10 @@ msg: Ir a Pantalla Principal
 id: Hide system info
 msg: Ocultar información del sistema
 
+id: Master volume
+# Missing translation
+msg: 
+
 id: Navigation
 msg: Navegación
 
@@ -57,6 +61,10 @@ msg: Sistema
 
 id: Time until sleep
 msg: Tiempo para apagar
+
+id: dB
+# Missing translation
+msg: 
 
 id: min
 msg: min
@@ -856,6 +864,10 @@ id: BitTorrent
 # Missing translation
 msg: 
 
+id: Browse archives as folders
+# Missing translation
+msg: 
+
 id: Enable file deletion from item menu
 msg: Habilitar borrar archivos desde menú
 
@@ -955,6 +967,10 @@ msg: Volumen del audio
 id: Go to standby after video ends
 msg: Apagar equipo al finalizar el video
 
+id: Horizontal pan
+# Missing translation
+msg: 
+
 id: Reset defaults for folder '%s'
 msg: Restaurar ajustes predeterminados para la carpeta '%s'
 
@@ -981,6 +997,10 @@ msg: Escala de subtítulos
 
 id: Subtitle vertical displacement
 msg: Desplazamiento vertical del subtítulo
+
+id: Vertical pan
+# Missing translation
+msg: 
 
 id: Video frame interpolation
 msg: Interpolar fotogramas de video
@@ -1048,8 +1068,9 @@ msg: %d items borrados
 id: Clear all metadata
 msg: Limpiar todos los metadatos
 
-id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
-msg: Limpiar todos los metadatos significa perder <b>toda</b> la información acerca:\n\nSi una canción/película ha sido vista\nNúmero de veces que una cancion/película ha sido reproducida\nPosición de resumen de reproducción\n\nTambién será borrado el cache de los metadatos provenientes de fuentes externas como themoviedb.org, etc\n\nEstá seguro de proceder?
+id: Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?
+# Missing translation
+msg: 
 
 #
 # ./src/metadata/mlp.c
@@ -1567,10 +1588,6 @@ msg: Activar VDA
 id: Enable VDPAU
 msg: Activar VDPAU
 
-id: Master volume
-# Missing translation
-msg: 
-
 id: Maximum resolution for deinterlacer
 msg: Resolución máxima del deinterlacer
 
@@ -1586,6 +1603,14 @@ msg: Método preferido para VDPAU deinterlacer
 
 id: Resume video playback
 msg: Continuar reproducción de video
+
+id: Step when seeking backward
+# Missing translation
+msg: 
+
+id: Step when seeking forward
+# Missing translation
+msg: 
 
 id: Temporal
 msg: Temporal

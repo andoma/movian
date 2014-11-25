@@ -31,6 +31,10 @@ msg: Zum Hauptmenü
 id: Hide system info
 msg: Systeminfo verbergen
 
+id: Master volume
+# Missing translation
+msg: 
+
 id: Navigation
 msg: Navigation
 
@@ -57,6 +61,10 @@ msg: System
 
 id: Time until sleep
 msg: Zeit bis Ausschalten
+
+id: dB
+# Missing translation
+msg: 
 
 id: min
 msg: min
@@ -856,6 +864,10 @@ id: BitTorrent
 # Missing translation
 msg: 
 
+id: Browse archives as folders
+# Missing translation
+msg: 
+
 id: Enable file deletion from item menu
 msg: Aktiviere Löschmöglichkeit im Menü
 
@@ -955,6 +967,10 @@ msg: Lautstärke
 id: Go to standby after video ends
 msg: Nach Filmende in Standby gehen
 
+id: Horizontal pan
+# Missing translation
+msg: 
+
 id: Reset defaults for folder '%s'
 msg: Standards für Ordner '%s' wieder herstellen
 
@@ -981,6 +997,10 @@ msg: Untertitelskalierung
 
 id: Subtitle vertical displacement
 msg: Vertikale Untertitelverschiebung
+
+id: Vertical pan
+# Missing translation
+msg: 
 
 id: Video frame interpolation
 msg: Bildraten Interpolation 
@@ -1048,8 +1068,9 @@ msg: %d Einträge gelöscht
 id: Clear all metadata
 msg: Alle Metadaten löschen
 
-id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
-msg: Wirklich <b>alle</b> Informationen über:\nWiedergabehäufigkeit\nWiedergabeposition\nsowie Metadaten aus externen Quellen(z.B. themoviedb.org)\nlöschen?
+id: Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?
+# Missing translation
+msg: 
 
 #
 # ./src/metadata/mlp.c
@@ -1567,10 +1588,6 @@ msg: VDA aktivieren
 id: Enable VDPAU
 msg: VDPAU aktivieren
 
-id: Master volume
-# Missing translation
-msg: 
-
 id: Maximum resolution for deinterlacer
 msg: Maximale Auflösung für Deinterlacer
 
@@ -1586,6 +1603,14 @@ msg: Bevorzugte VDPAU Deinterlacer-Methode
 
 id: Resume video playback
 msg: Wiedergabe von letzter Position
+
+id: Step when seeking backward
+# Missing translation
+msg: 
+
+id: Step when seeking forward
+# Missing translation
+msg: 
 
 id: Temporal
 msg: Temporal

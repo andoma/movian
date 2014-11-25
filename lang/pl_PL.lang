@@ -2,7 +2,6 @@ language: Polish
 native: Polski
 maintainer: Cichy <ml.cichy@gmail.com>
 #
-
 # ./glwskins/default/cmdmenu.view
 #
 id: Add current page to bookmarks
@@ -32,6 +31,9 @@ msg: Przejdź do ekranu głównego
 id: Hide system info
 msg: Ukryj informacje o systemie
 
+id: Master volume
+msg: Głośność ogólna
+
 id: Navigation
 msg: Nawigacja
 
@@ -58,6 +60,10 @@ msg: System
 
 id: Time until sleep
 msg: Czas do uśpienia
+
+id: dB
+# Missing translation
+msg: 
 
 id: min
 msg: min
@@ -840,6 +846,10 @@ msg: Czy na pewno chcesz usunąć:
 id: BitTorrent
 msg: BitTorrent
 
+id: Browse archives as folders
+# Missing translation
+msg: 
+
 id: Enable file deletion from item menu
 msg: Włącz opcję usuwania pliku w menu
 
@@ -939,6 +949,10 @@ msg: Głośność
 id: Go to standby after video ends
 msg: Przejdź w stan czuwania po zakończonym video
 
+id: Horizontal pan
+# Missing translation
+msg: 
+
 id: Reset defaults for folder '%s'
 msg: Przywróć ustawienia domyślne dla folderu '%s'
 
@@ -965,6 +979,10 @@ msg: Skalowanie napisów
 
 id: Subtitle vertical displacement
 msg: Przesunięcie napisów w pionie
+
+id: Vertical pan
+# Missing translation
+msg: 
 
 id: Video frame interpolation
 msg: Interpolacja klatek Video
@@ -1032,8 +1050,9 @@ msg: Usunięto %s elementów
 id: Clear all metadata
 msg: Usuń wszystkie metadane
 
-id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
-msg: Usunięcie wszystkich metadanych oznacza utratę <b>WSZYSTKICH<\b> informacji typu:\n\nCzy ścieżka/film był widziany\nIle razy był/a odtwarzany/a\nPozycji wznowienia\n\nZostaną usunięte także metadane pobrane z serwisów zewnętrznych jak themoviedb.org, itp.\n\nCzy na pewno kontynuować?
+id: Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?
+# Missing translation
+msg: 
 
 #
 # ./src/metadata/mlp.c
@@ -1551,9 +1570,6 @@ msg: Włącz VDA
 id: Enable VDPAU
 msg: Włącz VDPAU
 
-id: Master volume
-msg: Głośność ogólna
-
 id: Maximum resolution for deinterlacer
 msg: Maks. rozdzielczość przy usuwaniu przeplotu
 
@@ -1568,6 +1584,14 @@ msg: Preferowana metoda usuwania przeplotu dla VDPAU
 
 id: Resume video playback
 msg: Wznów odtwarzanie Video
+
+id: Step when seeking backward
+# Missing translation
+msg: 
+
+id: Step when seeking forward
+# Missing translation
+msg: 
 
 id: Temporal
 msg: Czasowy
