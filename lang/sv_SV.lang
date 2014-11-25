@@ -62,8 +62,7 @@ id: Time until sleep
 msg: Tid tills sovning
 
 id: dB
-# Missing translation
-msg: 
+msg: dB
 
 id: min
 msg: min
@@ -847,8 +846,7 @@ id: BitTorrent
 msg: BitTorrent
 
 id: Browse archives as folders
-# Missing translation
-msg: 
+msg: Utforska arkiv som foldrar
 
 id: Enable file deletion from item menu
 msg: Tillåt borttagning av filer från menyn
@@ -950,8 +948,7 @@ id: Go to standby after video ends
 msg: Gå till standby efter videon är slut
 
 id: Horizontal pan
-# Missing translation
-msg: 
+msg: Horisontal justering
 
 id: Reset defaults for folder '%s'
 msg: Återställ standardinställnigar för katalog '%s'
@@ -981,8 +978,7 @@ id: Subtitle vertical displacement
 msg: Vertikal positiono för undertexter
 
 id: Vertical pan
-# Missing translation
-msg: 
+msg: Vertikal justering
 
 id: Video frame interpolation
 msg: Interpolera videobilder
@@ -1051,8 +1047,7 @@ id: Clear all metadata
 msg: Ta bort all metadata
 
 id: Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?
-# Missing translation
-msg: 
+msg: Att ta bort all metadata innebär att du förlorar <b>all</b> sparad metadata från externa källor så som themoviedb.org, etc\n\nInformation om antal spelningar och position för återstart kommer att sparas.\nÄr du säker på att du vill fortsätta?
 
 #
 # ./src/metadata/mlp.c
@@ -1586,12 +1581,10 @@ id: Resume video playback
 msg: Återuppta videouppspelning
 
 id: Step when seeking backward
-# Missing translation
-msg: 
+msg: Steg vid sökning bakåt
 
 id: Step when seeking forward
-# Missing translation
-msg: 
+msg: Steg vid sökning framåt
 
 id: Temporal
 msg: Temporär
