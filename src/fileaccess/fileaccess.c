@@ -103,6 +103,13 @@ fa_resolve_proto(const char *url, fa_protocol_t **p,
 
   buf[n] = 0;
 
+  if(!strcmp(buf, "data") && url[0] == ':') {
+    extern fa_protocol_t fa_protocol_data;
+    *p = &fa_protocol_data;
+    return strdup(url + 1);
+  }
+
+
   if(url[0] != ':' || url[1] != '/' || url[2] != '/') {
     /* No protocol specified, assume a plain file */
     fap = &fa_protocol_fs;
