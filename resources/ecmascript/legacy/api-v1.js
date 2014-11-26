@@ -114,7 +114,9 @@ var plugin = {
   cacheGet: function(stash, key) {
     var v = Showtime.cacheGet('plugin/' + Plugin.id + '/' + stash, key);
     return v ? JSON.parse(v) : null;
-  }
+  },
+
+  config: {}
 
 };
 
