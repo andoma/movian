@@ -63,6 +63,10 @@ showtime = {
 
   RichText: function(x) {
     this.str = x.toString();
+  },
+
+  systemIpAddress: function() {
+      return Showtime.systemIpAddress();
   }
 };
 
