@@ -19,6 +19,7 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 
+#include <unistd.h>
 #include "showtime.h"
 #include "arch/arch.h"
 #include "fileaccess/fileaccess.h"
@@ -254,11 +255,20 @@ es_compile(duk_context *ctx)
 }
 
 
+static int
+es_sleep(duk_context *ctx)
+{
+  int t = duk_get_number(ctx, 0) * 1000000.0;
+  usleep(t);
+  return 0;
+}
+
 
 
 static const duk_function_list_entry fnlist_Showtime[] = {
   { "compile",                 es_compile,              1 },
   { "resourceDestroy",         es_resource_destroy_duk, 1 },
+  { "sleep",                   es_sleep,                1 },
   { NULL, NULL, 0}
 };
 

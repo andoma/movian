@@ -706,6 +706,20 @@ es_prop_is_value(duk_context *ctx)
 
 
 /**
+ *
+ */
+static int
+es_prop_atomic_add(duk_context *ctx)
+{
+  prop_t *p = es_stprop_get(ctx, 0);
+  int num = duk_require_number(ctx, 1);
+
+  prop_add_int(p, num);
+  return 0;
+}
+
+
+/**
  * Showtime object exposed functions
  */
 const duk_function_list_entry fnlist_Showtime_prop[] = {
