@@ -266,7 +266,7 @@ exports.Route.prototype.destroy = function() {
 
 exports.Searcher = function(title, icon, callback) {
 
-  this.searcher = Showtime.hookRegister('searcher', function(model, query) {
+  this.searcher = Showtime.hookRegister('searcher', function(model, query, loading) {
 
     // Convert the raw page prop object into a proxied one
     model = prop.makeProp(model);
@@ -276,13 +276,14 @@ exports.Searcher = function(title, icon, callback) {
     root.metadata.title = title;
     root.metadata.icon = icon;
     root.type = 'directory';
-
     prop.setParent(root, model.nodes);
 
     var page = new Page(root, false, true);
     page.type = 'directory';
     root.url = Showtime.propMakeUrl(page.root);
+    prop.atomicAdd(loading, 1);
     callback(page, query);
+    prop.atomicAdd(loading, -1);
   });
 }
 

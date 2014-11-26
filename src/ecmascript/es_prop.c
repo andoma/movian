@@ -732,5 +732,6 @@ const duk_function_list_entry fnlist_Showtime_prop[] = {
   { "propUnlink",              es_prop_unlink,                1 },
   { "propSendEvent",           es_prop_send_event,            3 },
   { "propIsValue",             es_prop_is_value,              1 },
+  { "propAtomicAdd",           es_prop_atomic_add,            2 },
   { NULL, NULL, 0}
 };
