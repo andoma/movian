@@ -484,15 +484,18 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
 	    int as_installed, int by_user)
 {
   char ctrlfile[URL_MAX];
+  char errbuf2[1024];
   buf_t *b;
   htsmsg_t *ctrl;
 
   snprintf(ctrlfile, sizeof(ctrlfile), "%s/plugin.json", url);
 
   if((b = fa_load(ctrlfile,
-                   FA_LOAD_ERRBUF(errbuf, errlen),
-                   NULL)) == NULL)
+                  FA_LOAD_ERRBUF(errbuf2, sizeof(errbuf2)),
+                  NULL)) == NULL) {
+    snprintf(errbuf, errlen, "Unable to load %s -- %s", ctrlfile, errbuf2);
     return -1;
+  }
 
   ctrl = htsmsg_json_deserialize2(buf_cstr(b), errbuf, errlen);
   if(ctrl == NULL)
