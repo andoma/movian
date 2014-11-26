@@ -63,10 +63,6 @@ showtime = {
 
   RichText: function(x) {
     this.str = x.toString();
-  },
-
-  XML: function(v) {
-    return require('showtime/xml').parse(v);
   }
 };
 
