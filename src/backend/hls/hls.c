@@ -640,7 +640,7 @@ variant_open_file(hls_variant_t *hv, hls_t *h)
 
   if(fh == NULL) {
     if(foe.foe_protocol_error == 404) {
-      if(retry_counter < 3 && 0) {
+      if(retry_counter < 3) {
         HLS_TRACE(h, "Segment %s not found, retrying", hs->hs_url);
         usleep(500000);
         retry_counter++;
