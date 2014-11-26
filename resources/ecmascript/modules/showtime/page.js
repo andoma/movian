@@ -282,8 +282,11 @@ exports.Searcher = function(title, icon, callback) {
     page.type = 'directory';
     root.url = Showtime.propMakeUrl(page.root);
     prop.atomicAdd(loading, 1);
-    callback(page, query);
-    prop.atomicAdd(loading, -1);
+    try {
+      callback(page, query);
+    } finally {
+      prop.atomicAdd(loading, -1);
+    }
   });
 }
 
