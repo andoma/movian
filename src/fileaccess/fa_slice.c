@@ -19,14 +19,6 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 
-#include <assert.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdio.h>
-#include "arch/halloc.h"
-
 #include "showtime.h"
 #include "fileaccess.h"
 #include "fa_proto.h"

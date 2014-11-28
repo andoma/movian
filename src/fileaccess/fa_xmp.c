@@ -19,19 +19,6 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 
-#include "config.h"
-
-#include <assert.h>
-#include <alloca.h>
-#include <string.h>
-#include <stdlib.h>
-#include <inttypes.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <stdio.h>
-
 #include <xmp.h>
 
 #include "showtime.h"

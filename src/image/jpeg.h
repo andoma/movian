@@ -22,6 +22,10 @@
 #ifndef JPEG_H__
 #define JPEG_H__
 
+#include <sys/time.h>
+#include <stddef.h>
+#include <stdint.h>
+
 typedef int (jpegreader_t)(void *handle, void *buf,
                            int64_t offset, size_t size);
 
