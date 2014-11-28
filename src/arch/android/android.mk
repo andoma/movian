@@ -8,12 +8,13 @@ SRCS += src/arch/android/android.c \
 	src/networking/asyncio_posix.c \
 	src/networking/net_android.c \
 	src/fileaccess/fa_funopen.c \
+	src/fileaccess/fa_fs.c \
 	src/arch/android/android_audio.c \
 	src/arch/android/android_glw.c \
 	src/arch/android/android_support.c \
 	src/prop/prop_jni.c \
 	src/ui/glw/glw_video_android.c \
-
+	src/arch/linux/linux_process_monitor.c
 
 ${BUILDDIR}/src/arch/android/%.o : CFLAGS = ${OPTFLAGS} \
 	-Wall -Werror -Wwrite-strings -Wno-deprecated-declarations \

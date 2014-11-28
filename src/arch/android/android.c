@@ -39,9 +39,8 @@
 #include "prop/prop_jni.h"
 #include "android.h"
 #include "navigator.h"
-#include "arch/linux/linux_process_monitor.h"
-
-#include "arch/sunxi/sunxi.h"
+#include <sys/mman.h>
+#include "arch/halloc.h"
 
 JavaVM *JVM;
 jclass STCore;
@@ -103,8 +102,15 @@ arch_get_seed(void)
 }
 
 
-#include <sys/mman.h>
-#include "arch/halloc.h"
+/**
+ *
+ */
+size_t
+arch_malloc_size(void *ptr)
+{
+  return malloc_usable_size(ptr);
+}
+
 
 /**
  *
@@ -184,6 +190,13 @@ arch_stop_req(void)
   return 0;
 }
 
+void
+arch_localtime(const time_t *now, struct tm *tm)
+{
+  localtime_r(now, tm);
+}
+
+
 /**
  *
  */
@@ -241,8 +254,6 @@ Java_com_showtimemediacenter_showtime_STCore_coreInit(JNIEnv *env, jobject obj, 
 
   service_create("music", "Movies", "file:///sdcard/Movies",
                  "video", NULL, 0, 1, SVC_ORIGIN_SYSTEM);
-
-  linux_process_monitor_init();
 
   android_nav = nav_spawn();
 }

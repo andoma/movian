@@ -26,7 +26,7 @@
 #include "backend/backend.h"
 #include "htsmsg/htsmsg.h"
 #include "ecmascript.h"
-
+#include "misc/minmax.h"
 
 static int es_num_contexts;
 static struct es_context_list es_contexts;

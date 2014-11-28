@@ -147,31 +147,17 @@ android_reset(glw_video_t *gv)
 }
 
 
-static void android_yuvp_deliver(const frame_info_t *fi, glw_video_t *gv);
-
-/**
- *
- */
-static glw_video_engine_t glw_android_video_yuvp = {
-  .gve_type              = 'YUVP',
-  .gve_newframe          = android_newframe,
-  .gve_render            = android_render,
-  .gve_reset             = android_reset,
-  .gve_init              = android_init,
-  .gve_deliver           = android_yuvp_deliver,
-};
-
-GLW_REGISTER_GVE(glw_android_video_yuvp);
 
 
-static void
-android_yuvp_deliver(const frame_info_t *fi, glw_video_t *gv)
+static int
+android_yuvp_deliver(const frame_info_t *fi, glw_video_t *gv,
+                     glw_video_engine_t *gve)
 {
   JNIEnv *env;
   (*JVM)->GetEnv(JVM, (void **)&env, JNI_VERSION_1_6);
 
-  if(glw_video_configure(gv, &glw_android_video_yuvp))
-    return;
+  if(glw_video_configure(gv, gve))
+    return -1;
 
   android_video_t *av = gv->gv_aux;
   media_pipe_t *mp = gv->gv_mp;
@@ -181,9 +167,9 @@ android_yuvp_deliver(const frame_info_t *fi, glw_video_t *gv)
 
  recheck:
   if(gv->w.glw_flags & GLW_DESTROYING)
-    return;
+    return -1;
 
-  int64_t now = showtime_get_ts();
+  int64_t now = showtime_get_avtime();
   hts_mutex_lock(&mp->mp_clock_mutex);
   aclock = mp->mp_audio_clock + now -
     mp->mp_audio_clock_avtime + mp->mp_avdelta;
@@ -206,7 +192,9 @@ android_yuvp_deliver(const frame_info_t *fi, glw_video_t *gv)
 
     if(waittime > 100000)
       waittime = 100000;
+    hts_mutex_unlock(&gv->gv_surface_mutex);
     usleep(waittime);
+    hts_mutex_lock(&gv->gv_surface_mutex);
     goto recheck;
   }
 
@@ -231,7 +219,9 @@ android_yuvp_deliver(const frame_info_t *fi, glw_video_t *gv)
 
     ANativeWindow_Buffer buffer;
 
+    hts_mutex_unlock(&gv->gv_surface_mutex);
     ANativeWindow_lock(anw, &buffer, NULL);
+    hts_mutex_lock(&gv->gv_surface_mutex);
 
     I420ToARGB(fi->fi_data[0], fi->fi_pitch[0],
                fi->fi_data[2], fi->fi_pitch[2],
@@ -249,132 +239,25 @@ android_yuvp_deliver(const frame_info_t *fi, glw_video_t *gv)
   (*env)->CallVoidMethod(env, av->av_VideoRenderer, mid);
 
   (*env)->PopLocalFrame(env, NULL);
+  return 0;
 }
 
-
-
-static void android_xxxx_deliver(const frame_info_t *fi, glw_video_t *gv);
 
 /**
  *
  */
-static glw_video_engine_t glw_android_video_xxxx = {
-  .gve_type              = 'XXXX',
+static glw_video_engine_t glw_android_video_yuvp = {
+  .gve_type              = 'YUVP',
   .gve_newframe          = android_newframe,
   .gve_render            = android_render,
   .gve_reset             = android_reset,
   .gve_init              = android_init,
-  .gve_deliver           = android_xxxx_deliver,
+  .gve_deliver           = android_yuvp_deliver,
 };
 
-GLW_REGISTER_GVE(glw_android_video_xxxx);
+GLW_REGISTER_GVE(glw_android_video_yuvp);
 
 
-static void
-android_xxxx_deliver(const frame_info_t *fi, glw_video_t *gv)
-{
-  JNIEnv *env;
-  (*JVM)->GetEnv(JVM, (void **)&env, JNI_VERSION_1_6);
-
-  if(glw_video_configure(gv, &glw_android_video_xxxx))
-    return;
-
-  android_video_t *av = gv->gv_aux;
-  media_pipe_t *mp = gv->gv_mp;
-
-  int64_t aclock, d;
-  int a_epoch;
-
- recheck:
-  if(gv->w.glw_flags & GLW_DESTROYING)
-    return;
-
-  int64_t now = showtime_get_ts();
-  hts_mutex_lock(&mp->mp_clock_mutex);
-  aclock = mp->mp_audio_clock + now -
-    mp->mp_audio_clock_avtime + mp->mp_avdelta;
-  a_epoch = mp->mp_audio_clock_epoch;
-  hts_mutex_unlock(&mp->mp_clock_mutex);
-
-  int64_t pts = fi->fi_pts;
-
-  d = pts - aclock;
-
-  int delta = 0;
-
-  if(pts == AV_NOPTS_VALUE || d < -5000000LL || d > 5000000LL)
-    pts = gv->gv_nextpts;
-
-  if(pts != AV_NOPTS_VALUE && (pts - delta) >= aclock &&
-     a_epoch == fi->fi_epoch) {
-
-    int64_t waittime = (pts - delta) - aclock;
-
-    if(waittime > 100000)
-      waittime = 100000;
-    usleep(waittime);
-    goto recheck;
-  }
-
-  av->av_pts = pts;
-
-  jmethodID mid;
-  jclass class = av->av_VideoRendererClass;
-
-  (*env)->PushLocalFrame(env, 64);
-
-  mid = (*env)->GetMethodID(env, class, "getSurface",
-                            "()Landroid/view/Surface;");
-
-  jobject surface = (*env)->CallObjectMethod(env, av->av_VideoRenderer, mid);
-
-  if(surface) {
-
-    ANativeWindow *anw = ANativeWindow_fromSurface(env, surface);
-
-    ANativeWindow_setBuffersGeometry(anw, fi->fi_width, fi->fi_height,
-                                     WINDOW_FORMAT_RGBA_8888);
-
-    ANativeWindow_Buffer buffer;
-
-    ANativeWindow_lock(anw, &buffer, NULL);
-
-    UYVYToARGB(fi->fi_data[0], fi->fi_pitch[0],
-               buffer.bits, buffer.stride * 4,
-               fi->fi_width, fi->fi_height);
-
-    ANativeWindow_unlockAndPost(anw);
-
-    ANativeWindow_release(anw);
-    (*env)->DeleteLocalRef(env, surface);
-  }
-
-  mid = (*env)->GetMethodID(env, class, "releaseSurface", "()V");
-  (*env)->CallVoidMethod(env, av->av_VideoRenderer, mid);
-
-  (*env)->PopLocalFrame(env, NULL);
-}
-
-
-
-
-static int surface_set_codec(media_codec_t *mc, glw_video_t *gv);
-static void surface_deliver(const frame_info_t *fi, glw_video_t *gv);
-
-/**
- *
- */
-static glw_video_engine_t glw_android_video_surface = {
-  .gve_type              = 'SURF',
-  .gve_newframe          = android_newframe,
-  .gve_render            = android_render,
-  .gve_reset             = android_reset,
-  .gve_init              = android_init,
-  .gve_set_codec         = surface_set_codec,
-  .gve_deliver           = surface_deliver,
-};
-
-GLW_REGISTER_GVE(glw_android_video_surface);
 
 
 /**
@@ -383,7 +266,9 @@ GLW_REGISTER_GVE(glw_android_video_surface);
  * (related to how the surface locking is (not) done)
  */
 static int
-surface_set_codec(media_codec_t *mc, glw_video_t *gv)
+surface_set_codec(media_codec_t *mc, glw_video_t *gv,
+                  const frame_info_t *fi,
+                  struct glw_video_engine *gve)
 {
 
   JNIEnv *env;
@@ -391,7 +276,7 @@ surface_set_codec(media_codec_t *mc, glw_video_t *gv)
 
   TRACE(TRACE_DEBUG, "VIDEO", "Configuring video surface");
 
-  if(glw_video_configure(gv, &glw_android_video_surface))
+  if(glw_video_configure(gv, gve))
     return 0;
 
 
@@ -415,14 +300,15 @@ surface_set_codec(media_codec_t *mc, glw_video_t *gv)
 }
 
 
-static void
-surface_deliver(const frame_info_t *fi, glw_video_t *gv)
+static int
+surface_deliver(const frame_info_t *fi, glw_video_t *gv,
+                struct glw_video_engine *gve)
 {
   JNIEnv *env;
   (*JVM)->GetEnv(JVM, (void **)&env, JNI_VERSION_1_6);
 
-  if(glw_video_configure(gv, &glw_android_video_surface))
-    return;
+  if(glw_video_configure(gv, gve))
+    return -1;
 
   android_video_t *av = gv->gv_aux;
   media_pipe_t *mp = gv->gv_mp;
@@ -443,7 +329,7 @@ surface_deliver(const frame_info_t *fi, glw_video_t *gv)
 
  recheck:
   if(gv->w.glw_flags & GLW_DESTROYING)
-    return;
+    return -1;
 
   int64_t now = showtime_get_ts();
   hts_mutex_lock(&mp->mp_clock_mutex);
@@ -468,9 +354,28 @@ surface_deliver(const frame_info_t *fi, glw_video_t *gv)
 
     if(waittime > 100000)
       waittime = 100000;
+    hts_mutex_unlock(&gv->gv_surface_mutex);
     usleep(waittime);
+    hts_mutex_lock(&gv->gv_surface_mutex);
     goto recheck;
   }
 
   av->av_pts = pts;
+  return 0;
 }
+
+
+/**
+ *
+ */
+static glw_video_engine_t glw_android_video_surface = {
+  .gve_type              = 'SURF',
+  .gve_newframe          = android_newframe,
+  .gve_render            = android_render,
+  .gve_reset             = android_reset,
+  .gve_init              = android_init,
+  .gve_set_codec         = surface_set_codec,
+  .gve_deliver           = surface_deliver,
+};
+
+GLW_REGISTER_GVE(glw_android_video_surface);

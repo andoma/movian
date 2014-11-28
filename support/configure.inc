@@ -102,6 +102,7 @@ CONFIG_LIST="
  htsp
  media_settings
  glw_settings
+ netlog
 "
 
 
@@ -606,3 +607,4 @@ enable sid
 enable htsp
 enable media_settings
 enable glw_settings
+enable netlog

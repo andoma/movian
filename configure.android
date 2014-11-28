@@ -55,7 +55,7 @@ if [ ! -f "${TOOLCHAIN}gcc" ]; then
         echo "NDK not found, either set NDK environment varable or specify --ndk=/path/to/ndk"
         die
     fi
-    ${NDK}/build/tools/make-standalone-toolchain.sh --platform=android-18 --install-dir=${TOPDIR}/build.android/toolchain
+    ${NDK}/build/tools/make-standalone-toolchain.sh --platform=android-17 --install-dir=${TOPDIR}/build.android/toolchain --toolchain=arm-linux-androideabi-4.9
 fi
 
 

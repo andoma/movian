@@ -1247,7 +1247,7 @@ glw_set_video_codec(uint32_t type, media_codec_t *mc, void *opaque,
 
   LIST_FOREACH(gve, &engines, gve_link) {
     if(gve->gve_type == type) {
-      r = gve->gve_set_codec(mc, gv, fi);
+      r = gve->gve_set_codec(mc, gv, fi, gve);
       break;
     }
   }

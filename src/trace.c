@@ -24,11 +24,15 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
+
+#include "showtime.h"
+#include "prop/prop.h"
+
+#if ENABLE_NETLOG
 #include <netinet/in.h>
 #include <sys/socket.h>
+#endif
 
-#include "prop/prop.h"
-#include "showtime.h"
 
 static hts_mutex_t trace_mutex;
 static prop_t *log_root;
@@ -56,6 +60,7 @@ static int log_fd;
 static int64_t log_start_ts;
 
 
+#if ENABLE_NETLOG
 /**
  *
  */
@@ -126,7 +131,7 @@ trace_net(int level, const char *prefix, const char *str)
 
   trace_net_raw("%s%s %s\033[0m\n", sgr, prefix, str);
 }
-
+#endif
 
 
 /**
@@ -170,7 +175,9 @@ tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap)
     if(!*s)
       continue; // Avoid empty lines
 
+#if ENABLE_NETLOG
     trace_net(level, buf2, s);
+#endif
 
     if(level <= gconf.trace_level)
       trace_arch(level, buf2, s);

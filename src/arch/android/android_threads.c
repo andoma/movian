@@ -40,6 +40,17 @@ hts_mutex_init_recursive(hts_mutex_t *m)
   pthread_mutexattr_destroy(&a);
 }
 
+
+/**
+ *
+ */
+extern void
+hts_cond_init(hts_cond_t *c, hts_mutex_t *m)
+{
+  pthread_cond_init(c, NULL);
+}
+
+
 /**
  *
  */
@@ -57,6 +68,21 @@ hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delta)
     ts.tv_sec++;
     ts.tv_nsec -= 1000000000;
   }
+  return pthread_cond_timedwait(c, m, &ts) == ETIMEDOUT;
+}
+
+
+/**
+ *
+ */
+int
+hts_cond_wait_timeout_abs(hts_cond_t *c, hts_mutex_t *m, int64_t deadline)
+{
+  struct timespec ts;
+
+  ts.tv_sec  =  deadline / 1000000LL;
+  ts.tv_nsec = (deadline % 1000000LL) * 1000;
+
   return pthread_cond_timedwait(c, m, &ts) == ETIMEDOUT;
 }
 

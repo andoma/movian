@@ -305,7 +305,8 @@ android_codec_decode(struct media_codec *mc, struct video_decoder *vd,
 
     int surface;
     if(avc->avc_direct) {
-      surface = mp->mp_set_video_codec('SURF', mc, mp->mp_video_frame_opaque);
+      surface = mp->mp_set_video_codec('SURF', mc, mp->mp_video_frame_opaque,
+                                       NULL);
     } else {
       surface = 0;
     }

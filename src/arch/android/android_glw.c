@@ -49,7 +49,7 @@ Java_com_showtimemediacenter_showtime_STCore_glwCreate(JNIEnv *env,
   if(glw_init(&agr->gr))
     return 0;
 
-  hts_cond_init(&agr->agr_runcond, &gr->gr_mutex);
+  hts_cond_init(&agr->agr_runcond, &agr->gr.gr_mutex);
 
   agr->agr_vrp = (*env)->NewGlobalRef(env, vrp);
 
@@ -142,6 +142,7 @@ Java_com_showtimemediacenter_showtime_STCore_glwStep(JNIEnv *env,
 {
   android_glw_root_t *agr = (android_glw_root_t *)id;
   glw_root_t *gr = &agr->gr;
+  int zmax;
 
   glw_lock(gr);
   gr->gr_can_externalize = 1;
@@ -151,7 +152,7 @@ Java_com_showtimemediacenter_showtime_STCore_glwStep(JNIEnv *env,
   glw_prepare_frame(gr, 0);
 
   glw_rctx_t rc;
-  glw_rctx_init(&rc, gr->gr_width, gr->gr_height, 1);
+  glw_rctx_init(&rc, gr->gr_width, gr->gr_height, 1, &zmax);
   glw_layout0(gr->gr_universe, &rc);
   glw_render0(gr->gr_universe, &rc);
 

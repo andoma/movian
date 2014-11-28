@@ -11,3 +11,6 @@ ext/sqlite/sqlite3
 .DS_Store
 debian/changelog
 .downloadcache
+android/Showtime/bin/
+android/Showtime/gen/
+android/Showtime/libs/

@@ -252,7 +252,8 @@ typedef struct glw_video_engine {
                      struct glw_video_engine *gve);
 
   int (*gve_set_codec)(media_codec_t *mc, glw_video_t *gv,
-		       const frame_info_t *fi);
+		       const frame_info_t *fi,
+                       struct glw_video_engine *gve);
 
   void (*gve_blackout)(glw_video_t *gv);
 
