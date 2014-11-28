@@ -408,7 +408,7 @@ zlib_setup()
     tar -x -C "${BUILDDIR}" -f "${zlibtarball}"
 
     (cd ${ZLIB_SRC_DIR} && \
-        CC=${TOOLCHAIN}gcc AR="${TOOLCHAIN}ar -r" RANLIB=${TOOLCHAIN}ranlib \
+        CC=${CC} AR="${TOOLCHAIN}ar -r" RANLIB=${TOOLCHAIN}ranlib \
         ./configure --static --prefix=${EXT_INSTALL_DIR})
 
     (cd ${ZLIB_SRC_DIR} && make -j4 && make install)
@@ -427,9 +427,9 @@ bzip2_setup()
 
     tar -x -C "${BUILDDIR}" -f "${bzip2tarball}"
 
-    sed -ibak s#^CC=gcc\$#CC=${TOOLCHAIN}gcc# ${BZIP2_SRC_DIR}/Makefile
-    sed -ibak s#^AR=ar\$#AR=${TOOLCHAIN}ar# ${BZIP2_SRC_DIR}/Makefile
-    sed -ibak s#^RANLIB=ranlib\$#RANLIB=${TOOLCHAIN}ranlib# ${BZIP2_SRC_DIR}/Makefile
+    sed -ibak "s#^CC=gcc\$#CC=${CC}#" ${BZIP2_SRC_DIR}/Makefile
+    sed -ibak "s#^AR=ar\$#AR=${TOOLCHAIN}ar#" ${BZIP2_SRC_DIR}/Makefile
+    sed -ibak "s#^RANLIB=ranlib\$#RANLIB=${TOOLCHAIN}ranlib#" ${BZIP2_SRC_DIR}/Makefile
 
     echo >>${CONFIG_MAK} "BZIP2_BUILD_DIR=${BZIP2_SRC_DIR}"
 
