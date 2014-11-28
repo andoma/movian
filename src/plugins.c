@@ -19,14 +19,6 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <unistd.h>
-#include <limits.h>
-#include <assert.h>
-
 #include "showtime.h"
 #include "fileaccess/fileaccess.h"
 #include "plugins.h"
@@ -1252,7 +1244,7 @@ plugin_remove(plugin_t *pl)
 
   snprintf(path, sizeof(path), "%s/installedplugins/%s.zip",
 	   gconf.persistent_path, pl->pl_id);
-  unlink(path);
+  fa_unlink(path, NULL, 0);
 
   TRACE(TRACE_DEBUG, "plugin", "Uninstalling %s", pl->pl_id);
   htsmsg_store_remove("plugins/%s", pl->pl_id);
@@ -1328,30 +1320,30 @@ plugin_install(plugin_t *pl, const char *package)
 
   snprintf(path, sizeof(path), "%s/installedplugins/%s.zip",
 	   gconf.persistent_path, pl->pl_id);
-  if(unlink(path)) {
+
+  if(fa_unlink(path, errbuf, sizeof(errbuf))) {
     TRACE(TRACE_DEBUG, "plugins", "First unlinking %s -- %s",
-	  path, strerror(errno));
+	  path, errbuf);
   }
 
-  int fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0660);
-  if(fd == -1) {
+  fa_handle_t *out = fa_open_ex(path, errbuf, sizeof(errbuf), FA_WRITE, NULL);
+  if(out == NULL) {
     TRACE(TRACE_ERROR, "plugins", "Unable to write to %s -- %s",
-	  path, strerror(errno));
+	  path, errbuf);
     prop_link(_p("File open error"), status);
     buf_release(b);
     goto cleanup;
   }
   size_t bsize = b->b_size;
-  size_t r = write(fd, buf, bsize);
+  size_t r = fa_write(out, buf, bsize);
   buf_release(b);
-  if(close(fd) || r != bsize) {
-    TRACE(TRACE_ERROR, "plugins", "Unable to write to %s -- %s",
-	  path, strerror(errno));
+  fa_close(out);
+  if(r != bsize) {
+    TRACE(TRACE_ERROR, "plugins", "Unable to write to %s", path);
     buf_release(b);
     prop_link(_p("Disk write error"), status);
     goto cleanup;
   }
-
 
   snprintf(path, sizeof(path),
 	   "zip://file://%s/installedplugins/%s.zip", gconf.persistent_path,
