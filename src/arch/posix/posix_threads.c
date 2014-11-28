@@ -59,11 +59,11 @@ hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delta)
 {
   struct timespec ts;
 
-#ifdef __APPLE__
-  /* darwin does not have clock_gettime */
+#if defined(__APPLE__) || defined(__native_client__)
   struct timeval tv;
   gettimeofday(&tv, NULL);
-  TIMEVAL_TO_TIMESPEC(&tv, &ts);
+  ts.tv_sec  = tv.tv_sec;
+  ts.tv_nsec = tv.tv_usec * 1000;
 #else
   clock_gettime(CLOCK_MONOTONIC, &ts);
 #endif
@@ -85,7 +85,7 @@ hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delta)
 int
 hts_cond_wait_timeout_abs(hts_cond_t *c, hts_mutex_t *m, int64_t deadline)
 {
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__native_client__)
   int64_t ts = deadline - showtime_get_ts();
   if(ts <= 0)
     return 1;
@@ -108,7 +108,7 @@ hts_cond_wait_timeout_abs(hts_cond_t *c, hts_mutex_t *m, int64_t deadline)
 extern void
 hts_cond_init(hts_cond_t *c, hts_mutex_t *m)
 {
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__native_client__)
   pthread_cond_init(c, NULL);
 #else
   pthread_condattr_t attr;
