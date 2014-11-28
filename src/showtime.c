@@ -54,7 +54,9 @@
 #include "subtitles/subtitles.h"
 #include "db/db_support.h"
 #include "htsmsg/htsmsg_store.h"
+#if ENABLE_SPIDERMONKEY
 #include "js/js.h"
+#endif
 #include "db/kvstore.h"
 #include "upgrade.h"
 #include "usage.h"

@@ -27,7 +27,6 @@
 #include "media/media.h"
 #include "vobsub.h"
 #include "backend/backend.h"
-#include "js/js.h"
 
 #include "subtitles.h"
 #include "video/video_settings.h"
