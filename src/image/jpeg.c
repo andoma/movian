@@ -24,7 +24,9 @@
  * http://park2.wakwak.com/~tsuruzoh/Computer/Digicams/exif-e.html
  */
 
+#include <time.h>
 #include <stdio.h>
+
 
 #include "jpeg.h"
 #include "image.h"
