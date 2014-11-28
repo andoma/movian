@@ -26,12 +26,14 @@
 #include "glw_renderer.h"
 #include "fileaccess/fileaccess.h"
 
+#if ENABLE_GLW_BACKEND_OPENGL
 const static float projection[16] = {
   2.414213,0.000000,0.000000,0.000000,
   0.000000,2.414213,0.000000,0.000000,
   0.000000,0.000000,1.033898,-1.000000,
   0.000000,0.000000,2.033898,0.000000
 };
+#endif
 
 typedef struct render_state {
   const struct glw_backend_texture *t0;
