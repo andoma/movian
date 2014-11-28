@@ -17,7 +17,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <netinet/in.h>
 #include <limits.h>
 
 #include "showtime.h"
@@ -413,7 +412,7 @@ torrent_diskio_verify(torrent_t *to)
   int cnt = 0;
   int max_block = -1;
   for(int i = 0; i < to->to_num_pieces; i++) {
-    int location = ntohl(to->to_cachefile_piece_map[i]);
+    unsigned int location = rd32_be((void *)&to->to_cachefile_piece_map[i]);
 
     if(location >= to->to_num_pieces)
       location = -1;

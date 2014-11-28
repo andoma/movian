@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string.h>
+
 static __inline void wr64_be(uint8_t *ptr, uint64_t val)
 {
 #if !defined(__BIG_ENDIAN__)

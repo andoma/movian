@@ -17,7 +17,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <netinet/in.h>
 
 #include "showtime.h"
 #include "navigator.h"

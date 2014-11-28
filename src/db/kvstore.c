@@ -30,14 +30,12 @@
 
 #include <sqlite3.h>
 
-#include <arpa/inet.h>
-
 #include "config.h"
 #include "showtime.h"
 #include "prop/prop.h"
 #include "kvstore.h"
 #include "misc/callout.h"
-
+#include "misc/bytestream.h"
 #include "fileaccess/fileaccess.h"
 
 #if CONFIG_KVSTORE
@@ -569,7 +567,7 @@ kv_url_opt_get_int(const char *url, int domain, const char *key, int def)
   fa_err_code_t err = opt_get_ea(url, domain, key, &data, &size);
 
   if(err == 0 && size == 4) {
-    int rval = ntohl(*(int *)data);
+    int rval = rd32_be(data);
     free(data);
 
     if(gconf.enable_kvstore_debug)
@@ -731,7 +729,7 @@ kv_write_xattr(const kvstore_write_t *kw)
   const char *value = vtmp;
 
   char ea[512];
-  int i32;
+  uint8_t d4[4];
 #if !defined(__BIG_ENDIAN__)
   int64_t i64;
 #endif
@@ -742,8 +740,8 @@ kv_write_xattr(const kvstore_write_t *kw)
 
   switch(kw->kw_type) {
   case KVSTORE_SET_INT:
-    i32 = htonl(kw->kw_int);
-    data = &i32;
+    wr32_be(d4, kw->kw_int);
+    data = d4;
     size = 4;
     snprintf(vtmp, sizeof(vtmp), "%d", kw->kw_int);
     break;

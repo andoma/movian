@@ -17,7 +17,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <netinet/in.h>
 
 #include "showtime.h"
 #include "navigator.h"
@@ -911,12 +910,12 @@ peer_connect(peer_t *p)
 static int
 recv_message(peer_t *p, htsbuf_queue_t *q)
 {
-  uint32_t len;
+  uint8_t d4[4];
   uint8_t msgid;
 
-  if(htsbuf_peek(q, &len, sizeof(len)) != sizeof(len))
+  if(htsbuf_peek(q, d4, sizeof(d4)) != sizeof(d4))
     return 1;
-  len = ntohl(len);
+  unsigned len = rd32_be(d4);
 
   if(len > 0x100000) { // Arbitrary
     peer_disconnect(p, "Bad message length");

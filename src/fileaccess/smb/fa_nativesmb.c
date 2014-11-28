@@ -20,7 +20,6 @@
  */
 
 #include <stdio.h>
-#include <arpa/inet.h>
 #include <assert.h>
 
 #include "config.h"
@@ -459,7 +458,7 @@ nbt_write(cifs_connection_t *cc, void *buf, int len)
 
   nbt->msg = NBT_SESSION_MSG;
   nbt->flags = 0;
-  nbt->length = htons(len - 4);
+  wr16_be((void *)&nbt->length, len - 4);
   tcp_write_data(cc->cc_tc, buf, len);
   return 0;
 }

@@ -21,9 +21,8 @@
 
 #include <stdlib.h>
 
-#include <sys/socket.h>
-
 #include "misc/minmax.h"
+#include "misc/bytestream.h"
 #include "net_i.h"
 
 #include "showtime.h"
@@ -499,10 +498,8 @@ tcp_connect(const char *hostname, int port,
     if(!net_resolve_numeric(hostname, &addr) && addr.na_family == 4) {
 
       netif_t *ni = net_get_interfaces();
-      uint32_t v4addr;
 
-      memcpy(&v4addr, addr.na_addr, 4);
-      v4addr = ntohl(v4addr);
+      const uint32_t v4addr = rd32_be(addr.na_addr);
       if(ni != NULL) {
         for(int i = 0; ni[i].ipv4; i++) {
           printf("%x %x %x\n", v4addr, ni[i].maskv4, ni[i].ipv4);
