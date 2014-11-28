@@ -27,7 +27,9 @@
 #include "i18n.h"
 #include "misc/str.h"
 #include "fileaccess/fileaccess.h"
+#if ENABLE_HTTPSERVER
 #include "networking/http_server.h"
+#endif
 #include "htsmsg/htsmsg_store.h"
 
 static void nls_init(prop_t *parent, htsmsg_t *store);
@@ -565,7 +567,7 @@ nls_lang_metadata(const char *path, char *errbuf, size_t errlen,
   return -1;
 }
 
-
+#if ENABLE_HTTPSERVER
 /**
  *
  */
@@ -730,6 +732,7 @@ upload_translation(http_connection_t *hc, const char *remain, void *opaque,
 
   return http_send_reply(hc, 0, "text/html", NULL, NULL, 0, &out);
 }
+#endif // ENABLE_HTTPSERVER
 
 
 typedef struct lang {
@@ -765,7 +768,9 @@ nls_init(prop_t *parent, htsmsg_t *store)
   LIST_HEAD(, lang) list;
   lang_t *l;
 
+#if ENABLE_HTTPSERVER
   http_path_add("/showtime/translation", NULL, upload_translation, 1);
+#endif
 
   if(fd == NULL) {
     TRACE(TRACE_ERROR, "i18n", "Unable to scan languages in %s/lang -- %s",

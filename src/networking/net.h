@@ -103,10 +103,6 @@ typedef struct netif {
 
 netif_t *net_get_interfaces(void);
 
-void net_local_addr_from_fd(net_addr_t *na, int fd);
-
-void net_remote_addr_from_fd(net_addr_t *na, int fd);
-
 void net_fmt_host(char *dst, size_t dstlen, const net_addr_t *na);
 
 int net_addr_cmp(const net_addr_t *a, const net_addr_t *b);

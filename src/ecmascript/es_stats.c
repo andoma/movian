@@ -31,6 +31,7 @@
 
 #include "ecmascript.h"
 
+#if ENABLE_HTTPSERVER
 
 /**
  *
@@ -102,9 +103,11 @@ dumpstats(http_connection_t *hc, const char *remain, void *opaque,
  *
  */
 static void
-torrent_stats_init(void)
+ecmascript_stats_init(void)
 {
   http_path_add("/showtime/ecmascript/stats", NULL, dumpstats, 1);
 }
 
-INITME(INIT_GROUP_API, torrent_stats_init, NULL);
+INITME(INIT_GROUP_API, ecmascript_stats_init, NULL);
+
+#endif // ENABLE_HTTPSERVER

@@ -224,54 +224,6 @@ tcp_read_data_nowait(tcpcon_t *tc, char *buf, const size_t bufsize)
 }
 
 
-#include <netinet/in.h>
-
-/**
- *
- */
-static void
-net_addr_from_sockaddr_in(net_addr_t *na, const struct sockaddr_in *sin)
-{
-  na->na_family = 4;
-  na->na_port = ntohs(sin->sin_port);
-  memcpy(na->na_addr, &sin->sin_addr, 4);
-}
-
-
-/**
- *
- */
-void
-net_local_addr_from_fd(net_addr_t *na, int fd)
-{
-  socklen_t slen = sizeof(struct sockaddr_in);
-  struct sockaddr_in self;
-
-  if(!getsockname(fd, (struct sockaddr *)&self, &slen)) {
-    net_addr_from_sockaddr_in(na, &self);
-  } else {
-    memset(na, 0, sizeof(net_addr_t));
-  }
-}
-
-
-/**
- *
- */
-void
-net_remote_addr_from_fd(net_addr_t *na, int fd)
-{
-  socklen_t slen = sizeof(struct sockaddr_in);
-  struct sockaddr_in self;
-
-  if(!getpeername(fd, (struct sockaddr *)&self, &slen)) {
-    net_addr_from_sockaddr_in(na, &self);
-  } else {
-    memset(na, 0, sizeof(net_addr_t));
-  }
-}
-
-
 /**
  *
  */
