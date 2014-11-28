@@ -321,7 +321,6 @@ SRCS += src/subtitles/subtitles.c \
 	src/subtitles/ext_subtitles.c \
 	src/subtitles/dvdspu.c \
 	src/subtitles/vobsub.c \
-	src/subtitles/sub_scanner.c \
 	src/subtitles/video_overlay.c \
 
 ##############################################################
