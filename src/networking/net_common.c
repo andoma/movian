@@ -307,7 +307,7 @@ void
 tcp_cancel(void *aux)
 {
   tcpcon_t *tc = aux;
-  shutdown(tc->fd, SHUT_RDWR);
+  tcp_shutdown(tc);
 }
 
 
