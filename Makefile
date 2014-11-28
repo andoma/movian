@@ -127,7 +127,6 @@ SRCS +=	src/misc/ptrvec.c \
 	src/misc/str.c \
 	src/misc/time.c \
 	src/misc/codepages.c \
-	src/misc/fs.c \
 	src/misc/extents.c \
 	src/misc/isolang.c \
 	src/misc/dbl.c \

@@ -32,7 +32,6 @@
 #include <limits.h>
 #include "showtime.h"
 #include "fileaccess.h"
-#include "misc/fs.h"
 #include "misc/minmax.h"
 
 #include "fa_proto.h"
@@ -447,17 +446,15 @@ fs_unlink(const fa_protocol_t *fap, const char *url,
 /**
  *
  */
-static int
-fs_makedirs(struct fa_protocol *fap, const char *url,
-            char *errbuf, size_t errsize)
+static fa_err_code_t
+fs_makedir(struct fa_protocol *fap, const char *url)
 {
-
-  int r = makedirs(url);
-
-  if(r) {
-    snprintf(errbuf, errsize, "Unable to create directory: %s",
-             strerror(errno));
-    return -1;
+  if(mkdir(url, 0770)) {
+    switch(errno) {
+    case ENOENT:  return FAP_NOENT;
+    case EPERM:   return FAP_PERMISSION_DENIED;
+    default:      return FAP_ERROR;
+    }
   }
   return 0;
 }
@@ -849,7 +846,7 @@ fa_protocol_t fa_protocol_fs = {
 #if ENABLE_REALPATH
   .fap_normalize = fs_normalize,
 #endif
-  .fap_makedirs = fs_makedirs,
+  .fap_makedir = fs_makedir,
 
 #ifdef __APPLE__
   .fap_set_xattr = fs_set_xattr,

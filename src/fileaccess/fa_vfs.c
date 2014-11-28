@@ -21,7 +21,6 @@
 
 #include "showtime.h"
 #include "fileaccess.h"
-#include "misc/fs.h"
 
 #include "fa_proto.h"
 #include "fa_vfs.h"
@@ -286,14 +285,14 @@ vfs_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
  *
  */
 static int
-vfs_makedirs(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
+vfs_makedir(fa_protocol_t *fap, const char *url)
 {
   char newpath[1024];
 
-  if(resolve_mapping2(url, newpath, sizeof(newpath), errbuf, errlen))
+  if(resolve_mapping2(url, newpath, sizeof(newpath), NULL, 0))
     return -1;
 
-  return fa_makedirs(newpath, errbuf, errlen);
+  return fa_makedir(newpath);
 }
 
 
@@ -366,7 +365,7 @@ fa_protocol_t fa_protocol_vfs = {
   .fap_scan  = vfs_scandir,
   .fap_open  = vfs_open,
   .fap_stat  = vfs_stat,
-  .fap_makedirs = vfs_makedirs,
+  .fap_makedir = vfs_makedir,
   .fap_unlink   = vfs_unlink,
   .fap_rmdir    = vfs_rmdir,
   .fap_rename   = vfs_rename,

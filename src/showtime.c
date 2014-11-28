@@ -74,8 +74,7 @@
 #include <libavutil/avutil.h>
 #endif
 
-
-#include "misc/fs.h"
+#include "fileaccess/fileaccess.h"
 
 inithelper_t *inithelpers;
 
@@ -267,7 +266,7 @@ showtime_swrefresh(void)
 void
 showtime_init(void)
 {
-  int r;
+  char errbuf[512];
 
   hts_mutex_init(&gconf.state_mutex);
   hts_cond_init(&gconf.state_cond, &gconf.state_mutex);
@@ -307,9 +306,9 @@ showtime_init(void)
 
   /* Try to create cache path */
   if(gconf.cache_path != NULL &&
-     (r = makedirs(gconf.cache_path)) != 0) {
+     fa_makedirs(gconf.cache_path, errbuf, sizeof(errbuf))) {
     TRACE(TRACE_ERROR, "cache", "Unable to create cache path %s -- %s",
-	  gconf.cache_path, strerror(r));
+	  gconf.cache_path, errbuf);
     gconf.cache_path = NULL;
   }
 
@@ -323,10 +322,10 @@ showtime_init(void)
 
   /* Try to create settings path */
   if(gconf.persistent_path != NULL &&
-     (r = makedirs(gconf.persistent_path)) != 0) {
+     fa_makedirs(gconf.persistent_path, errbuf, sizeof(errbuf))) {
     TRACE(TRACE_ERROR, "settings",
 	  "Unable to create path for persistent storage %s -- %s",
-	  gconf.persistent_path, strerror(r));
+	  gconf.persistent_path, errbuf);
     gconf.persistent_path = NULL;
   }
 

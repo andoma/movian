@@ -186,13 +186,9 @@ typedef struct fa_protocol {
 		       char *errbuf, size_t errsize);
 
   /**
-   * Make directories
-   *
-   * Should do the equiv to POSIX mkdir -p
+   * Make directory
    */
-
-  int (*fap_makedirs)(struct fa_protocol *fap, const char *url,
-                      char *errbuf, size_t errsize);
+  fa_err_code_t (*fap_makedir)(struct fa_protocol *fap, const char *url);
 
 
   /**

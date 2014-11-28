@@ -96,10 +96,10 @@ ftp_server_open(const char *url, char *errbuf, size_t errlen, int flags)
 /**
  *
  */
-static int
-ftp_server_makedirs(const char *url, char *errbuf, size_t errlen)
+static fa_err_code_t
+ftp_server_makedirs(const char *url)
 {
-  return fa_protocol_vfs.fap_makedirs(&fa_protocol_vfs, url, errbuf, errlen);
+  return fa_protocol_vfs.fap_makedir(&fa_protocol_vfs, url);
 }
 
 
@@ -693,12 +693,13 @@ static int
 cmd_MKD(ftp_connection_t *fc, char *args)
 {
   char pathbuf[1024];
-  char errbuf[256];
 
   construct_path(pathbuf, sizeof(pathbuf), fc, args);
 
-  if(ftp_server_makedirs(pathbuf, errbuf, sizeof(errbuf))) {
-    ftp_write(fc, 550, "%s: %s", args, errbuf);
+  fa_err_code_t err = ftp_server_makedirs(pathbuf);
+
+  if(err) {
+    ftp_write(fc, 550, "%s: error %d", args, err);
     return 0;
   }
   ftp_write(fc, 257, "\"%s\" directory created.", args);
