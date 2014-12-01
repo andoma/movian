@@ -304,10 +304,12 @@ showtime_init(void)
 
   TRACE(TRACE_DEBUG, "core", "Loading resources from %s", showtime_dataroot());
 
+  TRACE(TRACE_DEBUG, "core", "Cache path: %s", gconf.cache_path);
+
   /* Try to create cache path */
   if(gconf.cache_path != NULL &&
      fa_makedirs(gconf.cache_path, errbuf, sizeof(errbuf))) {
-    TRACE(TRACE_ERROR, "cache", "Unable to create cache path %s -- %s",
+    TRACE(TRACE_ERROR, "core", "Unable to create cache path %s -- %s",
 	  gconf.cache_path, errbuf);
     gconf.cache_path = NULL;
   }
@@ -320,10 +322,13 @@ showtime_init(void)
   /* Initializte blob cache */
   blobcache_init();
 
+
+  TRACE(TRACE_DEBUG, "core", "Persistent path: %s", gconf.persistent_path);
+
   /* Try to create settings path */
   if(gconf.persistent_path != NULL &&
      fa_makedirs(gconf.persistent_path, errbuf, sizeof(errbuf))) {
-    TRACE(TRACE_ERROR, "settings",
+    TRACE(TRACE_ERROR, "core",
 	  "Unable to create path for persistent storage %s -- %s",
 	  gconf.persistent_path, errbuf);
     gconf.persistent_path = NULL;
