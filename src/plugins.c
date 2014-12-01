@@ -648,8 +648,7 @@ plugin_load_installed(void)
   char errbuf[200];
   fa_dir_entry_t *fde;
 
-  snprintf(path, sizeof(path), "file://%s/installedplugins",
-	   gconf.persistent_path);
+  snprintf(path, sizeof(path), "%s/installedplugins", gconf.persistent_path);
 
   fa_dir_t *fd = fa_scandir(path, NULL, 0);
 
@@ -1314,7 +1313,7 @@ plugin_install(plugin_t *pl, const char *package)
   prop_link(_p("Installing"), status);
 
   snprintf(path, sizeof(path), "%s/installedplugins", gconf.persistent_path);
-  mkdir(path, 0770);
+  fa_makedir(path);
 
   plugin_unload(pl);
 
@@ -1346,7 +1345,7 @@ plugin_install(plugin_t *pl, const char *package)
   }
 
   snprintf(path, sizeof(path),
-	   "zip://file://%s/installedplugins/%s.zip", gconf.persistent_path,
+	   "zip://%s/installedplugins/%s.zip", gconf.persistent_path,
 	   pl->pl_id);
 
 #ifdef STOS
