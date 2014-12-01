@@ -19,17 +19,8 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/file.h>
-
 #include <assert.h>
 #include <stdio.h>
-#include <unistd.h>
-#include <dirent.h>
-#include <limits.h>
-#include <errno.h>
 
 #include "showtime.h"
 #include "blobcache.h"
@@ -128,7 +119,7 @@ blobcache_compute_maxsize(void)
   char path[PATH_MAX];
   fa_fsinfo_t ffi;
 
-  snprintf(path, sizeof(path), "file://%s", gconf.cache_path);
+  snprintf(path, sizeof(path), "%s", gconf.cache_path);
   if(!fa_fsinfo(path, &ffi)) {
     uint64_t avail = ffi.ffi_avail + current_cache_size;
     avail = MAX(BLOB_CACHE_MINSIZE, MIN(avail / 10, BLOB_CACHE_MAXSIZE));
@@ -184,7 +175,7 @@ make_filename(char *buf, size_t len, uint64_t hash, int for_write)
   uint8_t dir = hash;
   if(for_write) {
     snprintf(buf, len, "%s/bc2/%02x", gconf.cache_path, dir);
-    mkdir(buf, 0777);
+    fa_makedir(buf);
   }
   snprintf(buf, len, "%s/bc2/%02x/%016"PRIx64, gconf.cache_path, dir, hash);
 }
@@ -196,6 +187,7 @@ make_filename(char *buf, size_t len, uint64_t hash, int for_write)
 static void
 save_index(void)
 {
+  char errbuf[512];
   char filename[PATH_MAX];
   uint8_t *out, *base;
   int i;
@@ -207,11 +199,15 @@ save_index(void)
     return;
 
   snprintf(filename, sizeof(filename), "%s/bc2/index.dat", gconf.cache_path);
-  
-  int fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC, 0666);
-  if(fd == -1)
+
+  fa_handle_t *fh = fa_open_ex(filename, errbuf, sizeof(errbuf),
+                               FA_WRITE, NULL);
+  if(fh == NULL) {
+    TRACE(TRACE_ERROR, "cache", "Unable to write index %s -- %s",
+          filename, errbuf);
     return;
-  
+  }
+
   int items = 0;
   siz = 12 + 20;
 
@@ -225,7 +221,7 @@ save_index(void)
 
   base = out = mymalloc(siz);
   if(out == NULL) {
-    close(fd);
+    fa_close(fh);
     return;
   }
   *(uint32_t *)out = BC2_MAGIC_07;
@@ -261,7 +257,7 @@ save_index(void)
   sha1_update(shactx, base, siz - 20);
   sha1_final(shactx, out);
 
-  if(write(fd, base, siz) != siz) {
+  if(fa_write(fh, base, siz) != siz) {
     TRACE(TRACE_INFO, "blobcache", "Unable to store index file %s -- %s",
 	  filename, strerror(errno));
   } else {
@@ -269,10 +265,8 @@ save_index(void)
   }
 
   free(base);
-  close(fd);
-
+  fa_close(fh);
 }
-
 
 
 /**
@@ -281,34 +275,39 @@ save_index(void)
 static void
 load_index(void)
 {
+  char errbuf[512];
   char filename[PATH_MAX];
   const uint8_t *in;
   void *base;
   int i;
   blobcache_item_t *p;
-  struct stat st;
   uint8_t digest[20];
 
   snprintf(filename, sizeof(filename), "%s/bc2/index.dat", gconf.cache_path);
-  
-  int fd = open(filename, O_RDONLY, 0);
-  if(fd == -1)
-    return;
 
-  if(fstat(fd, &st) || st.st_size <= 20) {
-    close(fd);
+  fa_handle_t *fh = fa_open(filename, errbuf, sizeof(errbuf));
+  if(fh == NULL) {
+    TRACE(TRACE_DEBUG, "cache", "Unable to open index %s -- %s",
+          filename, errbuf);
     return;
   }
 
-  in = base = mymalloc(st.st_size);
+  int64_t size = fa_fsize(fh);
+
+  if(size < 20) {
+    fa_close(fh);
+    return;
+  }
+
+  in = base = mymalloc(size);
   if(base == NULL) {
-    close(fd);
+    fa_close(fh);
     return;
   }
 
-  size_t r = read(fd, base, st.st_size);
-  close(fd);
-  if(r != st.st_size) {
+  size_t r = fa_read(fh, base, size);
+  fa_close(fh);
+  if(r != size) {
     free(base);
     return;
   }
@@ -316,10 +315,10 @@ load_index(void)
 
   sha1_decl(shactx);
   sha1_init(shactx);
-  sha1_update(shactx, in, st.st_size - 20);
+  sha1_update(shactx, in, size - 20);
   sha1_final(shactx, digest);
 
-  if(memcmp(digest, in + st.st_size - 20, 20)) {
+  if(memcmp(digest, in + size - 20, 20)) {
     free(base);
     TRACE(TRACE_INFO, "blobcache", "Index file corrupt, throwing away cache");
     return;
@@ -499,7 +498,6 @@ blobcache_get(const char *key, const char *stash, int pad,
   uint64_t dk = digest_key(key, stash);
   blobcache_item_t *p, **q;
   char filename[PATH_MAX];
-  struct stat st;
   uint32_t now;
 
   hts_mutex_lock(&cache_lock);
@@ -526,7 +524,7 @@ blobcache_get(const char *key, const char *stash, int pad,
 
   blobcache_flush_t *bf;
   buf_t *b = NULL;
-  int fd = -1;
+  fa_handle_t *fh = NULL;
   TAILQ_FOREACH_REVERSE(bf, &flush_queue, blobcache_flush_queue, bf_link) {
     if(bf->bf_key_hash == p->bi_key_hash) {
       // Item is not yet written to disk
@@ -537,8 +535,8 @@ blobcache_get(const char *key, const char *stash, int pad,
 
   if(b == NULL) {
     make_filename(filename, sizeof(filename), p->bi_key_hash, 0);
-    fd = open(filename, O_RDONLY, 0);
-    if(fd == -1) {
+    fh = fa_open(filename, NULL, 0);
+    if(fh == NULL) {
     bad:
       *q = p->bi_link;
       pool_put(item_pool, p);
@@ -546,11 +544,10 @@ blobcache_get(const char *key, const char *stash, int pad,
       return NULL;
     }
 
-    if(fstat(fd, &st))
-      goto bad;
+    int64_t size = fa_fsize(fh);
 
-    if(st.st_size != p->bi_size + p->bi_content_type_len) {
-      unlink(filename);
+    if(size != p->bi_size + p->bi_content_type_len) {
+      fa_unlink(filename, NULL, 0);
       goto bad;
     }
   }
@@ -573,27 +570,27 @@ blobcache_get(const char *key, const char *stash, int pad,
 
     b = buf_create(p->bi_size + pad);
     if(b == NULL) {
-      close(fd);
+      fa_close(fh);
       return NULL;
     }
 
     if(p->bi_content_type_len) {
       b->b_content_type = rstr_allocl(NULL, p->bi_content_type_len);
-      if(read(fd, rstr_data(b->b_content_type), p->bi_content_type_len) !=
+      if(fa_read(fh, rstr_data(b->b_content_type), p->bi_content_type_len) !=
 	 p->bi_content_type_len) {
 	buf_release(b);
-	close(fd);
+	fa_close(fh);
 	return NULL;
       }
     }
 
-    if(read(fd, b->b_ptr, p->bi_size) != p->bi_size) {
+    if(fa_read(fh, b->b_ptr, p->bi_size) != p->bi_size) {
       buf_release(b);
-      close(fd);
+      fa_close(fh);
       return NULL;
     }
     memset(b->b_ptr + p->bi_size, 0, pad);
-    close(fd);
+    fa_close(fh);
   }
   return b;
 }
@@ -658,8 +655,8 @@ lookup_item(uint64_t dk)
 static void
 prune_stale(void)
 {
-  DIR *d1, *d2;
-  struct dirent *de1, *de2;
+  fa_dir_t *d1, *d2;
+  fa_dir_entry_t *de1, *de2;
   char path[PATH_MAX];
   char path2[PATH_MAX];
   char path3[PATH_MAX];
@@ -667,37 +664,38 @@ prune_stale(void)
 
   snprintf(path, sizeof(path), "%s/bc2", gconf.cache_path);
 
-  if((d1 = opendir(path)) == NULL)
+  if((d1 = fa_scandir(path, NULL, 0)) == NULL)
     return;
 
-  while((de1 = readdir(d1)) != NULL) {
-    if(de1->d_name[0] != '.') {
+  RB_FOREACH(de1, &d1->fd_entries, fde_link) {
+    const char *n1 = rstr_get(de1->fde_filename);
+    if(n1[0] != '.') {
       snprintf(path2, sizeof(path2), "%s/bc2/%s",
-	       gconf.cache_path, de1->d_name);
+	       gconf.cache_path, n1);
 
-      if((d2 = opendir(path2)) != NULL) {
-	while((de2 = readdir(d2)) != NULL) {
-          if(de2->d_name[0] != '.') {
+      if((d2 = fa_scandir(path2, NULL, 0)) != NULL) {
+        RB_FOREACH(de2, &d2->fd_entries, fde_link) {
+
+          const char *n2 = rstr_get(de2->fde_filename);
+          if(n2[0] != '.') {
 
 	    snprintf(path3, sizeof(path3), "%s/bc2/%s/%s",
-		     gconf.cache_path, de1->d_name,
-		     de2->d_name);
+		     gconf.cache_path, n1, n2);
 
-	    if(sscanf(de2->d_name, "%016"PRIx64, &k) != 1 ||
+	    if(sscanf(n2, "%016"PRIx64, &k) != 1 ||
 	       lookup_item(k) == NULL) {
 	      TRACE(TRACE_DEBUG, "Blobcache", "Removed stale file %s", path3);
-	      unlink(path3);
+	      fa_unlink(path3, NULL, 0);
 	    }
 	  }
 	}
-	closedir(d2);
+        fa_dir_free(d2);
       }
-      rmdir(path2);
+      fa_rmdir(path2, NULL, 0);
     }
   }
-  closedir(d1);
-}  
-
+  fa_dir_free(d1);
+}
 
 
 
@@ -709,7 +707,7 @@ prune_item(blobcache_item_t *p)
 {
   char filename[PATH_MAX];
   make_filename(filename, sizeof(filename), p->bi_key_hash, 0);
-  unlink(filename);
+  fa_unlink(filename, NULL, 0);
   pool_put(item_pool, p);
 }
 
@@ -786,48 +784,23 @@ prune_to_size(uint64_t maxsize)
 static void
 blobcache_prune_old(void)
 {
-  DIR *d1, *d2;
-  struct dirent *de1, *de2;
   char path[PATH_MAX];
-  char path2[PATH_MAX];
-  char path3[PATH_MAX];
 
   snprintf(path, sizeof(path), "%s/blobcache", gconf.cache_path);
-
-  if((d1 = opendir(path)) != NULL) {
-
-    while((de1 = readdir(d1)) != NULL) {
-      if(de1->d_name[0] != '.') {
-	snprintf(path2, sizeof(path2), "%s/blobcache/%s",
-		 gconf.cache_path, de1->d_name);
-
-	if((d2 = opendir(path2)) != NULL) {
-	  while((de2 = readdir(d2)) != NULL) {
-	    if(de2->d_name[0] != '.') {
-
-	      snprintf(path3, sizeof(path3), "%s/blobcache/%s/%s",
-		       gconf.cache_path, de1->d_name,
-		       de2->d_name);
-	      unlink(path3);
-	    }
-	  }
-	  closedir(d2);
-	}
-	rmdir(path2);
-      }
-    }
-    closedir(d1);
-    rmdir(path);
-  }
+  fa_unlink_recursive(path, NULL, 0, 0);
 
   snprintf(path, sizeof(path), "%s/cachedb/cache.db", gconf.cache_path);
-  unlink(path);
+  fa_unlink(path, NULL, 0);
   snprintf(path, sizeof(path), "%s/cachedb/cache.db-shm", gconf.cache_path);
-  unlink(path);
+  fa_unlink(path, NULL, 0);
   snprintf(path, sizeof(path), "%s/cachedb/cache.db-wal", gconf.cache_path);
-  unlink(path);
-}  
+  fa_unlink(path, NULL, 0);
+}
 
+
+/**
+ *
+ */
 static void
 cache_clear(void *opaque, prop_event_t event, ...)
 {
@@ -880,21 +853,20 @@ flushthread(void *aux)
     make_filename(filename, sizeof(filename), bf->bf_key_hash, 1);
     buf_t *b = bf->bf_buf;
 
-    int fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC, 0666);
-    if(fd != -1) {
+    fa_handle_t *fh = fa_open_ex(filename, NULL, 0, FA_WRITE, NULL);
+    if(fh != NULL) {
 
       if(b->b_content_type != NULL) {
 	const char *str = rstr_get(b->b_content_type);
 	size_t len = strlen(str);
-	if(write(fd, str, len) != len)
-	  unlink(filename);
+	if(fa_write(fh, str, len) != len)
+	  fa_unlink(filename, NULL, 0);
       }
 
-      if(write(fd, b->b_ptr, b->b_size) != b->b_size)
-        unlink(filename);
+      if(fa_write(fh, b->b_ptr, b->b_size) != b->b_size)
+        fa_unlink(filename, NULL, 0);
 
-      if(close(fd))
-        unlink(filename);
+      fa_close(fh);
     }
     hts_mutex_lock(&cache_lock);
 
@@ -923,14 +895,16 @@ void
 blobcache_init(void)
 {
   char buf[256];
+  char errbuf[512];
 
   TAILQ_INIT(&flush_queue);
 
   blobcache_prune_old();
   snprintf(buf, sizeof(buf), "%s/bc2", gconf.cache_path);
-  if(mkdir(buf, 0777) && errno != EEXIST)
+
+  if(fa_makedirs(buf, errbuf, sizeof(errbuf)))
     TRACE(TRACE_ERROR, "blobcache", "Unable to create cache dir %s -- %s",
-	  buf, strerror(errno));
+	  buf, errbuf);
 
   hts_mutex_init(&cache_lock);
   hts_cond_init(&cache_cond, &cache_lock);
