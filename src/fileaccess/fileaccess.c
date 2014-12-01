@@ -58,6 +58,7 @@
 
 static struct fa_protocol_list fileaccess_all_protocols;
 static HTS_MUTEX_DECL(fap_mutex);
+static fa_protocol_t *native_fap;
 
 /**
  *
@@ -91,7 +92,6 @@ static char *
 fa_resolve_proto(const char *url, fa_protocol_t **p,
 		 const char **vpaths, char *errbuf, size_t errsize)
 {
-  extern fa_protocol_t fa_protocol_fs;
   struct fa_stat fs;
   fa_protocol_t *fap;
   const char *url0 = url;
@@ -112,12 +112,13 @@ fa_resolve_proto(const char *url, fa_protocol_t **p,
 
   if(url[0] != ':' || url[1] != '/' || url[2] != '/') {
     /* No protocol specified, assume a plain file */
-    fap = &fa_protocol_fs;
-    if(url0[0] != '/' && fap->fap_stat(fap, url0, &fs, NULL, 0, 0)) {
+    if(native_fap == NULL ||
+       (url0[0] != '/' &&
+        native_fap->fap_stat(native_fap, url0, &fs, NULL, 0, 0))) {
       snprintf(errbuf, errsize, "File not found");
       return NULL;
     }
-    *p = fap;
+    *p = native_fap;
     return strdup(url0);
   }
 
@@ -1390,6 +1391,8 @@ void
 fileaccess_register_entry(fa_protocol_t *fap)
 {
   LIST_INSERT_HEAD(&fileaccess_all_protocols, fap, fap_link);
+  if(fap->fap_name != NULL && !strcmp(fap->fap_name, "file"))
+    native_fap = fap;
 }
 
 
