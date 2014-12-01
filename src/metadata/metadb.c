@@ -108,7 +108,7 @@ metadb_init(void)
   char buf2[256];
 
   snprintf(buf, sizeof(buf), "%s/metadb", gconf.persistent_path);
-  mkdir(buf, 0770);
+  fa_makedir(buf);
   snprintf(buf, sizeof(buf), "%s/metadb/meta.db", gconf.persistent_path);
 
   //  unlink(buf);
