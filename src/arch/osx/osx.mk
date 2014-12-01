@@ -12,6 +12,7 @@ SRCS += src/arch/osx/osx_app.m \
 	src/networking/asyncio_posix.c \
 	src/networking/net_ifaddr.c \
 	src/fileaccess/fa_funopen.c \
+	src/fileaccess/fa_fs.c \
 	src/ui/glw/glw_video_vda.c \
 
 

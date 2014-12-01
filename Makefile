@@ -210,7 +210,6 @@ SRCS +=	src/htsmsg/htsbuf.c \
 ##############################################################
 SRCS += src/fileaccess/fileaccess.c \
 	src/fileaccess/fa_vfs.c \
-	src/fileaccess/fa_fs.c \
 	src/fileaccess/fa_http.c \
 	src/fileaccess/fa_zip.c \
 	src/fileaccess/fa_zlib.c \

@@ -12,6 +12,7 @@ SRCS += src/arch/ps3/ps3_main.c \
 	src/networking/net_psl1ght.c \
 	src/networking/asyncio_posix.c \
 	src/fileaccess/fa_funopen.c \
+	src/fileaccess/fa_fs.c \
 
 #
 # Install
