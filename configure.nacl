@@ -1,0 +1,88 @@
+#!/bin/bash
+#
+# HTS configure script for PS3 with PSL1GHT toolchain
+#
+# Copyright (c) 2011 Andreas Öman
+#
+# Based on FFmpeg's configure script:
+#
+# Copyright (c) 2000-2002 Fabrice Bellard
+# Copyright (c) 2005-2008 Diego Biurrun
+# Copyright (c) 2005-2008 Mans Rullgard
+#
+
+OS="nacl"
+DEFAULT_UI="glw"
+CONFIGURE_POSTFIX="nacl"
+
+source support/configure.inc
+
+LIBAV_CFLAGS=""
+
+LIBAV_ARCH_FLAGS=""
+
+show_help(){
+  common_help
+  exit 1
+}
+
+for opt do
+  optval="${opt#*=}"
+  case "$opt" in
+  --help) show_help
+  ;;
+  --logtarget=*) DEFAULT_LOGTARGET="$optval"
+  ;;
+  *)
+  common_opt $opt $optval
+  esac
+done
+
+TOOLCHAIN=/Users/andoma/nacl/nacl_sdk/pepper_37/toolchain/mac_pnacl/bin/pnacl-
+
+CC=${TOOLCHAIN}clang
+FINALIZE=${TOOLCHAIN}finalize
+CXX=${TOOLCHAIN}clang++
+
+setup_env "$@"
+
+LIBAV_CFLAGS="-I${EXT_INSTALL_DIR}/include"
+LIBAV_LDFLAGS="-L${EXT_INSTALL_DIR}/lib"
+LIBAV_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=i686 --target-os=linux --disable-asm --disable-inline-asm --disable-programs --disable-ssse3 --disable-mmx --disable-mmxext --disable-amd3dnow --disable-amd3dnowext"
+
+enable sqlite_internal
+enable libfreetype
+enable trex
+enable emu_thread_specifics
+enable glw
+enable polarssl
+enable httpserver
+enable sqlite_vfs
+enable sqlite_locking
+enable glw_backend_opengl_es
+
+
+disable xmp
+disable ftpserver
+disable httpserver
+disable upnp
+disable spidermonkey
+disable bittorrent
+disable netlog
+
+zlib_setup
+bzip2_setup
+freetype_setup --host=i686-none-nacl
+libav_setup
+bzip2_setup
+
+cat >> ${CONFIG_MAK} <<EOF
+
+FINALIZE = ${FINALIZE}
+CFLAGS_cfg += -I/Users/andoma/nacl/nacl_sdk/pepper_37/include
+LDFLAGS_cfg += -L/Users/andoma/nacl/nacl_sdk/pepper_37/lib/pnacl/Debug
+LDFLAGS_cfg += -lppapi_gles2 -lppapi -lpthread
+EOF
+
+
+finalize
