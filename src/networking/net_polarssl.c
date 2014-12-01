@@ -36,6 +36,34 @@ polarssl_write(tcpcon_t *tc, const void *data, size_t len)
 }
 
 
+/**
+ *
+ */
+static int
+raw_recv(void *ctx, unsigned char *buf, size_t len)
+{
+  tcpcon_t *tc = ctx;
+  int ret = tc->raw_read(tc, buf, len, 0, NULL, NULL);
+  if(ret)
+    return POLARSSL_ERR_NET_CONN_RESET;
+
+  return ret;
+}
+
+
+/**
+ *
+ */
+static int
+raw_send( void *ctx, const unsigned char *buf, size_t len)
+{
+  tcpcon_t *tc = ctx;
+  if(tc->raw_write(tc, buf, len))
+    return POLARSSL_ERR_NET_CONN_RESET;
+
+  return len;
+}
+
 
 /**
  *
@@ -49,18 +77,21 @@ tcp_ssl_open(tcpcon_t *tc, char *errbuf, size_t errlen)
     return -1;
   }
 
+  tc->raw_read  = tc->read;
+  tc->raw_write = tc->write;
+
   tc->ssn = malloc(sizeof(ssl_session));
   tc->hs = malloc(sizeof(havege_state));
 
   havege_init(tc->hs);
   memset(tc->ssn, 0, sizeof(ssl_session));
 
-  ssl_set_endpoint(tc->ssl, SSL_IS_CLIENT );
-  ssl_set_authmode(tc->ssl, SSL_VERIFY_NONE );
+  ssl_set_endpoint(tc->ssl, SSL_IS_CLIENT);
+  ssl_set_authmode(tc->ssl, SSL_VERIFY_NONE);
 
-  ssl_set_rng(tc->ssl, havege_random, tc->hs );
-  ssl_set_bio(tc->ssl, net_recv, &tc->fd, net_send, &tc->fd);
-  ssl_set_ciphersuites(tc->ssl, ssl_default_ciphersuites );
+  ssl_set_rng(tc->ssl, havege_random, tc->hs);
+  ssl_set_bio(tc->ssl, raw_recv, tc, raw_send, tc);
+  ssl_set_ciphersuites(tc->ssl, ssl_default_ciphersuites);
   ssl_set_session(tc->ssl, tc->ssn );
 
   tc->read = polarssl_read;

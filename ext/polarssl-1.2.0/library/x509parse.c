@@ -1934,9 +1934,10 @@ int x509parse_crtpath( x509_cert *chain, const char *path )
 
     while( ( entry = readdir( dir ) ) != NULL )
     {
+#ifdef DT_REG
         if( entry->d_type != DT_REG )
             continue;
-
+#endif
         snprintf( entry_name, sizeof(entry_name), "%s/%s", path, entry->d_name );
         t_ret = x509parse_crtfile( chain, entry_name );
         if( t_ret < 0 )

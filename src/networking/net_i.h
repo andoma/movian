@@ -54,6 +54,11 @@ struct tcpcon {
     ssl_context *ssl;
     ssl_session *ssn;
     havege_state *hs;
+
+  int (*raw_write)(struct tcpcon *, const void *, size_t);
+  int (*raw_read)(struct tcpcon *, void *, size_t, int,
+                  net_read_cb_t *cb, void *opaque);
+
 #endif
 
   cancellable_t *c;

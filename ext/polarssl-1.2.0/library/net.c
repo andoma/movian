@@ -1,3 +1,4 @@
+#if !defined(__native_client__)
 /*
  *  TCP networking functions
  *
@@ -366,4 +367,5 @@ void net_close( int fd )
     close( fd );
 }
 
+#endif
 #endif

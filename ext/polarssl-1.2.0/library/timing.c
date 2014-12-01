@@ -284,8 +284,10 @@ void m_sleep( int milliseconds )
 
 #else
 
+#if 0
+
 static void sighandler( int signum )
-{   
+{
     alarmed = 1;
     signal( signum, sighandler );
 }
@@ -296,15 +298,11 @@ void set_alarm( int seconds )
     signal( SIGALRM, sighandler );
     alarm( seconds );
 }
+#endif
 
 void m_sleep( int milliseconds )
 {
-    struct timeval tv;
-
-    tv.tv_sec  = milliseconds / 1000;
-    tv.tv_usec = milliseconds * 1000;
-
-    select( 0, NULL, NULL, NULL, &tv );
+    usleep(1000 * milliseconds);
 }
 #endif /* INTEGRITY */
 
