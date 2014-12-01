@@ -19,17 +19,9 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <limits.h>
-#include <fcntl.h>
 #include <stdio.h>
-#include <errno.h>
-#include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
-#include <unistd.h>
-#include <dirent.h>
 
 #include "showtime.h"
 #include "htsmsg.h"
@@ -37,6 +29,8 @@
 #include "htsmsg_store.h"
 #include "misc/callout.h"
 #include "arch/arch.h"
+#include "fileaccess/fileaccess.h"
+
 #define SETTINGS_STORE_DELAY 2 // seconds
 
 LIST_HEAD(pending_store_list, pending_store);
@@ -54,7 +48,12 @@ typedef struct pending_store {
 } while(0)
 
 
-static int rename_cant_overwrite;
+#ifdef PS3
+#define RENAME_CANT_OVERWRITE 1
+#else
+#define RENAME_CANT_OVERWRITE 0
+#endif
+
 static struct pending_store_list pending_stores;
 static callout_t pending_store_callout;
 static hts_mutex_t pending_store_mutex;
@@ -78,46 +77,32 @@ pending_store_destroy(pending_store_t *ps)
 static void
 pending_store_write(pending_store_t *ps)
 {
-  char fullpath[PATH_MAX];
-  char fullpath2[PATH_MAX];
-  int x, l, fd;
-  struct stat st;
+  char fullpath[1024];
+  char fullpath2[1024];
+  char errbuf[512];
   htsbuf_queue_t hq;
   htsbuf_data_t *hd;
   int ok;
 
- retry:
-
   snprintf(fullpath, sizeof(fullpath), "%s/%s%s",
 	   showtime_settings_path, ps->ps_path,
-	   rename_cant_overwrite ? "" : ".tmp");
+	   RENAME_CANT_OVERWRITE ? "" : ".tmp");
 
-  l = strlen(fullpath);
-  for(x = 1; x < l; x++) {
-    if(fullpath[x] == '/') {
-      /* It's a directory here */
-
-      fullpath[x] = 0;
-
-      if(stat(fullpath, &st)) {
-        SETTINGS_TRACE("Dir %s does not exist", fullpath);
-
-        if(mkdir(fullpath, 0700)) {
-          TRACE(TRACE_ERROR, "Settings", "Unable to create dir \"%s\": %s",
-                fullpath, strerror(errno));
-          return;
-        } else {
-          SETTINGS_TRACE("Created dir %s", fullpath);
-        }
-      }
-      fullpath[x] = '/';
+  char *x = strrchr(fullpath, '/');
+  if(x != NULL) {
+    *x = 0;
+    if(fa_makedirs(fullpath, errbuf, sizeof(errbuf))) {
+      TRACE(TRACE_ERROR, "Settings", "Unable to create dir %s -- %s",
+            fullpath, errbuf);
     }
+    *x = '/';
   }
 
-
-  if((fd = open(fullpath, O_CREAT | O_TRUNC | O_WRONLY, 0700)) < 0) {
+  fa_handle_t *fh =
+    fa_open_ex(fullpath, errbuf, sizeof(errbuf), FA_WRITE, NULL);
+  if(fh == NULL) {
     TRACE(TRACE_ERROR, "Settings", "Unable to create \"%s\" - %s",
-	    fullpath, strerror(errno));
+	    fullpath, errbuf);
     return;
   }
 
@@ -129,38 +114,32 @@ pending_store_write(pending_store_t *ps)
   int bytes = 0;
 
   TAILQ_FOREACH(hd, &hq.hq_q, hd_link) {
-    if(write(fd, hd->hd_data + hd->hd_data_off, hd->hd_data_len) !=
+    if(fa_write(fh, hd->hd_data + hd->hd_data_off, hd->hd_data_len) !=
        hd->hd_data_len) {
-      TRACE(TRACE_ERROR, "Settings", "Failed to write file \"%s\" - %s",
-	      fullpath, strerror(errno));
+      TRACE(TRACE_ERROR, "Settings", "Failed to write file %s",
+	      fullpath);
       ok = 0;
       break;
     }
     bytes += hd->hd_data_len;
   }
   htsbuf_queue_flush(&hq);
-  fsync(fd);
-  close(fd);
+  //  fsync(fd);
+  fa_close(fh);
 
   if(!ok) {
-    unlink(fullpath);
+    fa_unlink(fullpath, NULL, 0);
     return;
   }
 
   snprintf(fullpath2, sizeof(fullpath2), "%s/%s", showtime_settings_path,
            ps->ps_path);
 
-  if(!rename_cant_overwrite && rename(fullpath, fullpath2)) {
-
-    if(errno == EEXIST) {
-      SETTINGS_TRACE(
-	    "Seems like rename() can not overwrite, retrying");
-      rename_cant_overwrite = 1;
-      goto retry;
-    }
+  if(!RENAME_CANT_OVERWRITE && fa_rename(fullpath, fullpath2,
+                                         errbuf, sizeof(errbuf))) {
 
     TRACE(TRACE_ERROR, "Settings", "Failed to rename \"%s\" -> \"%s\" - %s",
-	  fullpath, fullpath2, strerror(errno));
+	  fullpath, fullpath2, errbuf);
   } else {
     SETTINGS_TRACE("Wrote %d bytes to \"%s\"",
 	  bytes, fullpath2);
@@ -207,41 +186,16 @@ pending_store_fire(struct callout *c, void *opaque)
 void
 htsmsg_store_init(void)
 {
-  char p1[PATH_MAX], p2[PATH_MAX];
+  char p1[1024];
 
   hts_mutex_init(&pending_store_mutex);
 
   if(gconf.persistent_path == NULL)
     return;
 
-  snprintf(p1, sizeof(p1), "%s/settings",
-	   gconf.persistent_path);
+  snprintf(p1, sizeof(p1), "%s/settings", gconf.persistent_path);
 
   showtime_settings_path = strdup(p1);
-
-  // This file should not exist (it should be a directory)
-  snprintf(p2, sizeof(p2), "%s/%s", showtime_settings_path, "plugins");
-  unlink(p2);
-
-  if(!mkdir(p1, 0700)) {
-    DIR *dir;
-    struct dirent *d;
-
-    if((dir = opendir(gconf.persistent_path)) != NULL) {
-      while((d = readdir(dir)) != NULL) {
-	if(d->d_name[0] == '.')
-	  continue;
-
-	snprintf(p1, sizeof(p1), "%s/%s",
-		 gconf.persistent_path, d->d_name);
-
-	snprintf(p2, sizeof(p2), "%s/settings/%s",
-		 gconf.persistent_path, d->d_name);
-
-	rename(p1, p2);
-      }
-    }
-  }
 }
 
 
@@ -251,7 +205,7 @@ htsmsg_store_init(void)
 void
 htsmsg_store_save(htsmsg_t *record, const char *pathfmt, ...)
 {
-  char path[PATH_MAX];
+  char path[1024];
   va_list ap;
   char *n;
   pending_store_t *ps;
@@ -303,8 +257,7 @@ htsmsg_store_save(htsmsg_t *record, const char *pathfmt, ...)
 static htsmsg_t *
 htsmsg_store_load_one(const char *filename)
 {
-  struct stat st;
-  int fd;
+  char errbuf[512];
   char *mem;
   htsmsg_t *r;
   int n;
@@ -314,24 +267,25 @@ htsmsg_store_load_one(const char *filename)
     if(!strcmp(ps->ps_path, filename))
       return htsmsg_copy(ps->ps_msg);
 
-  if(stat(filename, &st) < 0) {
-    SETTINGS_TRACE(
-	  "Trying to load %s -- %s", filename, strerror(errno));
-    return NULL;
-  }
-  if((fd = open(filename, O_RDONLY, 0)) < 0) {
-    TRACE(TRACE_ERROR, "Settings", 
-	  "Unable to open %s -- %s", filename, strerror(errno));
+  fa_handle_t *fh = fa_open(filename, errbuf, sizeof(errbuf));
+  if(fh == NULL) {
+    TRACE(TRACE_ERROR, "Settings",
+	  "Unable to open %s -- %s", filename, errbuf);
     return NULL;
   }
 
-  mem = malloc(st.st_size + 1);
-  mem[st.st_size] = 0;
+  int64_t size = fa_fsize(fh);
 
-  n = read(fd, mem, st.st_size);
+  mem = malloc(size + 1);
+  if(mem == NULL) {
+    fa_close(fh);
+    return NULL;
+  }
 
-  close(fd);
-  if(n == st.st_size)
+  n = fa_read(fh, mem, size);
+
+  fa_close(fh);
+  if(n == size)
     r = htsmsg_json_deserialize(mem);
   else
     r = NULL;
@@ -350,13 +304,13 @@ htsmsg_store_load_one(const char *filename)
 static int
 htsmsg_store_buildpath(char *dst, size_t dstsize, const char *fmt, va_list ap)
 {
-  char *n = dst;
-
   if(showtime_settings_path == NULL)
      return -1;
 
   snprintf(dst, dstsize, "%s/", showtime_settings_path);
 
+  char *n = dst + strlen(dst);
+  
   vsnprintf(dst + strlen(dst), dstsize - strlen(dst), fmt, ap);
 
   while(*n) {
@@ -373,13 +327,10 @@ htsmsg_store_buildpath(char *dst, size_t dstsize, const char *fmt, va_list ap)
 htsmsg_t *
 htsmsg_store_load(const char *pathfmt, ...)
 {
-  char fullpath[PATH_MAX];
-  char child[PATH_MAX];
+  char fullpath[1024];
   va_list ap;
-  struct stat st;
-  struct dirent *d;
+  struct fa_stat st;
   htsmsg_t *r, *c;
-  DIR *dir;
 
   va_start(ap, pathfmt);
   if(htsmsg_store_buildpath(fullpath, sizeof(fullpath), pathfmt, ap) < 0)
@@ -387,26 +338,28 @@ htsmsg_store_load(const char *pathfmt, ...)
 
   hts_mutex_lock(&pending_store_mutex);
 
-  if(stat(fullpath, &st) == 0 && S_ISDIR(st.st_mode)) {
+  if(fa_stat(fullpath, &st, NULL, 0) == 0 && st.fs_type == CONTENT_DIR) {
 
-    if((dir = opendir(fullpath)) == NULL) {
+    fa_dir_t *fd = fa_scandir(fullpath, NULL, 0);
+    fa_dir_entry_t *fde;
+    if(fd == NULL) {
       hts_mutex_unlock(&pending_store_mutex);
       return NULL;
     }
 
     r = htsmsg_create_map();
 
-    while((d = readdir(dir)) != NULL) {
-      if(d->d_name[0] == '.')
+    RB_FOREACH(fde, &fd->fd_entries, fde_link) {
+      const char *filename = rstr_get(fde->fde_filename);
+      if(filename[0] == '.')
 	continue;
-      
-      snprintf(child, sizeof(child), "%s/%s", fullpath, d->d_name);
-      c = htsmsg_store_load_one(child);
+
+      c = htsmsg_store_load_one(rstr_get(fde->fde_url));
       if(c != NULL)
-	htsmsg_add_msg(r, d->d_name, c);
+	htsmsg_add_msg(r, rstr_get(fde->fde_filename), c);
 
     }
-    closedir(dir);
+    fa_dir_free(fd);
 
   } else {
     r = htsmsg_store_load_one(fullpath);
@@ -423,7 +376,7 @@ htsmsg_store_load(const char *pathfmt, ...)
 void
 htsmsg_store_remove(const char *pathfmt, ...)
 {
-  char fullpath[PATH_MAX];
+  char fullpath[1024];
   va_list ap;
 
   va_start(ap, pathfmt);
@@ -442,7 +395,7 @@ htsmsg_store_remove(const char *pathfmt, ...)
       pending_store_destroy(ps);
     }
 
-    unlink(fullpath);
+    fa_unlink(fullpath, NULL, 0);
     hts_mutex_unlock(&pending_store_mutex);
   }
   va_end(ap);
