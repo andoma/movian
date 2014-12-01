@@ -19,10 +19,6 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 
-#if defined(__native_client__)
-#define _GNU_SOURCE  // Needed for PTHREAD_MUTEX_RECURSIVE
-#endif
-
 #if defined(linux)
 #include <sys/prctl.h>
 #include <sys/resource.h>
@@ -59,7 +55,7 @@ hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delta)
 {
   struct timespec ts;
 
-#if defined(__APPLE__) || defined(__native_client__)
+#if defined(__APPLE__)
   struct timeval tv;
   gettimeofday(&tv, NULL);
   ts.tv_sec  = tv.tv_sec;
@@ -85,7 +81,7 @@ hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delta)
 int
 hts_cond_wait_timeout_abs(hts_cond_t *c, hts_mutex_t *m, int64_t deadline)
 {
-#if defined(__APPLE__) || defined(__native_client__)
+#if defined(__APPLE__)
   int64_t ts = deadline - showtime_get_ts();
   if(ts <= 0)
     return 1;
@@ -108,7 +104,7 @@ hts_cond_wait_timeout_abs(hts_cond_t *c, hts_mutex_t *m, int64_t deadline)
 extern void
 hts_cond_init(hts_cond_t *c, hts_mutex_t *m)
 {
-#if defined(__APPLE__) || defined(__native_client__)
+#if defined(__APPLE__)
   pthread_cond_init(c, NULL);
 #else
   pthread_condattr_t attr;
