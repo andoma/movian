@@ -453,6 +453,7 @@ fs_makedir(struct fa_protocol *fap, const char *url)
     switch(errno) {
     case ENOENT:  return FAP_NOENT;
     case EPERM:   return FAP_PERMISSION_DENIED;
+    case EEXIST:  return FAP_EXIST;
     default:      return FAP_ERROR;
     }
   }

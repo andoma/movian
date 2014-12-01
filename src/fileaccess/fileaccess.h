@@ -179,6 +179,7 @@ typedef enum {
   FAP_NOT_SUPPORTED     =  -3,
   FAP_PERMISSION_DENIED =  -4,
   FAP_NOENT             =  -5,
+  FAP_EXIST             =  -6,
 } fa_err_code_t;
 
 
