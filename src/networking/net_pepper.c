@@ -34,6 +34,8 @@
 #include "net_i.h"
 #include "misc/bytestream.h"
 
+#include "arch/nacl/nacl.h"
+
 #include "ppapi/c/pp_errors.h"
 #include "ppapi/c/pp_module.h"
 #include "ppapi/c/pp_var.h"
@@ -156,20 +158,7 @@ net_resolve(const char *hostname, net_addr_t *addr, const char **err)
     }
 
   } else {
-
-    switch(r) {
-    case PP_ERROR_NOACCESS:
-      *err = "Permission denied";
-      break;
-
-    case PP_ERROR_NAME_NOT_RESOLVED:
-      *err = "Unable to resolve name";
-      break;
-
-    default:
-      *err = "Unknown pepper error";
-      break;
-    }
+    *err = pepper_errmsg(r);
   }
 
   ppb_core->ReleaseResource(res);
@@ -217,7 +206,7 @@ tcp_connect_arch(const net_addr_t *na,
 
   int r = ppb_tcpsocket->Connect(sock, addr, PP_BlockUntilComplete());
   if(r) {
-    snprintf(errbuf, errlen, "Unable to connect -- %d", r);
+    snprintf(errbuf, errlen, "Unable to connect -- %s", pepper_errmsg(r));
     ppb_core->ReleaseResource(sock);
     return NULL;
   }
