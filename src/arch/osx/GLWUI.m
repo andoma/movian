@@ -62,9 +62,13 @@
  */
 - (void) closeWindow: (NSNotification *)not
 {
-  [self shutdown];
+  [window close];
 }
 
+
+- (void)windowWillClose:(NSNotification *)notification {
+  [self shutdown];
+}
 
 - (void)windowDidMiniaturize:(NSNotification *)notification
 {
@@ -289,7 +293,6 @@ static prop_t *stored_nav;
 
   free(gr);
 
-  [window close];
   [view release];
   [self release];
 }
