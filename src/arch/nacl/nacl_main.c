@@ -30,6 +30,8 @@
 #include "ppapi/c/pp_module.h"
 #include "ppapi/c/pp_var.h"
 #include "ppapi/c/ppb.h"
+#include "ppapi/c/ppb_audio.h"
+#include "ppapi/c/ppb_audio_config.h"
 #include "ppapi/c/ppb_core.h"
 #include "ppapi/c/ppb_console.h"
 #include "ppapi/c/ppb_file_system.h"
@@ -67,6 +69,8 @@ const PPB_MessageLoop *ppb_messageloop;
 const PPB_FileSystem *ppb_filesystem;
 const PPB_FileRef *ppb_fileref;
 const PPB_FileIO *ppb_fileio;
+const PPB_AudioConfig *ppb_audioconfig;
+const PPB_Audio *ppb_audio;
 
 PP_Instance g_Instance;
 PP_Resource g_persistent_fs;
@@ -546,7 +550,8 @@ PPP_InitializeModule(PP_Module a_module_id, PPB_GetInterface get_browser)
   ppb_filesystem         = get_browser(PPB_FILESYSTEM_INTERFACE);
   ppb_fileref            = get_browser(PPB_FILEREF_INTERFACE);
   ppb_fileio             = get_browser(PPB_FILEIO_INTERFACE);
-
+  ppb_audio              = get_browser(PPB_AUDIO_INTERFACE);
+  ppb_audioconfig        = get_browser(PPB_AUDIO_CONFIG_INTERFACE);
   return PP_OK;
 }
 
