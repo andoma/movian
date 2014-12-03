@@ -184,6 +184,11 @@ glw_init(glw_root_t *gr)
 		   NULL);
 
   TAILQ_INIT(&gr->gr_destroyer_queue);
+
+  TAILQ_INIT(&gr->gr_view_load_requests);
+  TAILQ_INIT(&gr->gr_view_eval_requests);
+  hts_cond_init(&gr->gr_view_loader_cond, &gr->gr_mutex);
+
   glw_tex_init(gr);
 
   gr->gr_frontface = GLW_CCW;
@@ -212,19 +217,42 @@ glw_fini(glw_root_t *gr)
     prop_unsubscribe(gr->gr_osk_ev_sub);
   }
 
+  gr->gr_view_loader_run = 0;
+  hts_cond_signal(&gr->gr_view_loader_cond);
+
   glw_text_bitmap_fini(gr);
   rstr_release(gr->gr_default_font);
   glw_tex_fini(gr);
-  free(gr->gr_skin);
   prop_unsubscribe(gr->gr_evsub);
-  pool_destroy(gr->gr_token_pool);
-  pool_destroy(gr->gr_clone_pool);
   prop_courier_destroy(gr->gr_courier);
   hts_mutex_destroy(&gr->gr_mutex);
+
+  /*
+   * The view loader thread sometimes run with gr_mutex unlocked
+   * and when doing so it expects certain variables in glw_root to
+   * be available.
+   *
+   * gr_vpaths (indirectly gr_skin) must be intact
+   *
+   * It may also allocate items from gr_token_pool (although not while
+   * locked but after we've asked it to exit), thus we must not
+   * destroy the pool until after the thread has joined.
+   *
+   */
+
+  if(gr->gr_view_loader_thread)
+    hts_thread_join(&gr->gr_view_loader_thread);
+
+  glw_view_loader_flush(gr);
+
+  pool_destroy(gr->gr_token_pool);
+  pool_destroy(gr->gr_clone_pool);
+
   free(gr->gr_vtmp_buffer);
   free(gr->gr_render_jobs);
   free(gr->gr_render_order);
   free(gr->gr_vertex_buffer);
+  free(gr->gr_skin);
 }
 
 
@@ -242,6 +270,7 @@ glw_unload_universe(glw_root_t *gr)
   glw_flush(gr);
 }
 
+
 /**
  *
  */
@@ -254,8 +283,8 @@ glw_load_universe(glw_root_t *gr)
   rstr_t *universe = rstr_alloc("skin://universe.view");
 
   gr->gr_universe = glw_view_create(gr,
-				    universe, NULL, page,
-				    NULL, NULL, NULL, 0, 1);
+				    universe, NULL, NULL, page,
+				    NULL, NULL, NULL);
 
   rstr_release(universe);
 }
@@ -515,6 +544,8 @@ glw_prepare_frame(glw_root_t *gr, int flags)
     gr->gr_need_refresh = GLW_REFRESH_FLAG_LAYOUT | GLW_REFRESH_FLAG_RENDER;
     gr->gr_scheduled_refresh = INT64_MAX;
   }
+
+  glw_view_loader_eval(gr);
 }
 
 
@@ -642,6 +673,18 @@ glw_destroy(glw_t *w)
   TAILQ_INSERT_TAIL(&gr->gr_destroyer_queue, w, glw_parent_link);
 
   glw_view_free_chain(gr, w->glw_dynamic_expressions);
+}
+
+
+/**
+ *
+ */
+void
+glw_destroy_childs(glw_t *w)
+{
+  glw_t *c;
+  while((c = TAILQ_FIRST(&w->glw_childs)) != NULL)
+    glw_destroy(c);
 }
 
 

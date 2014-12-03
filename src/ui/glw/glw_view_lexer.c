@@ -176,9 +176,9 @@ lexer_single_char(glw_root_t *gr, token_t *next, rstr_t *f, int line, char s)
  * Returns pointer to last token, or NULL if an error occured.
  * If an error occured 'ei' will be filled with data
  */
-static token_t *
-lexer(glw_root_t *gr, 
-      const char *src, errorinfo_t *ei, rstr_t *f, token_t *prev)
+token_t *
+glw_view_lexer(glw_root_t *gr, const char *src, errorinfo_t *ei,
+               rstr_t *f, token_t *prev)
 {
   const char *start;
   int line = 1;
@@ -373,37 +373,43 @@ lexer(glw_root_t *gr,
 }
 
 
+
 /**
- * Load a file using the 'glw_rawloader' method
+ * Load a view file and do lexographical parsing
  *
  * Returns pointer to last token, or NULL if an error occured.
  * If an error occured 'ei' will be filled with data
- *
  */
 token_t *
 glw_view_load1(glw_root_t *gr, rstr_t *url, errorinfo_t *ei, token_t *prev,
-	       int *nofile)
+               int may_unlock)
 {
   token_t *last;
   char errbuf[256];
 
   rstr_t *p = fa_absolute_path(url, prev->file);
+
+  if(may_unlock)
+    glw_unlock(gr);
+
   buf_t *b = fa_load(rstr_get(p),
-                      FA_LOAD_VPATHS(gr->gr_vpaths),
-                      FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
-                      NULL);
+                     FA_LOAD_VPATHS(gr->gr_vpaths),
+                     FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
+                     NULL);
+
+  if(may_unlock)
+    glw_lock(gr);
+
   if(b == NULL) {
     snprintf(ei->error, sizeof(ei->error), "Unable to open \"%s\" -- %s",
 	     rstr_get(p), errbuf);
     snprintf(ei->file,  sizeof(ei->file),  "%s", rstr_get(prev->file));
     ei->line = prev->line;
     rstr_release(p);
-    if(nofile)
-      *nofile = 1;
     return NULL;
   }
 
-  last = lexer(gr, buf_cstr(b), ei, p, prev);
+  last = glw_view_lexer(gr, buf_cstr(b), ei, p, prev);
   buf_release(b);
   rstr_release(p);
   return last;

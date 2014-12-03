@@ -286,13 +286,11 @@ void glw_view_token_free(glw_root_t *gr, token_t *t);
 
 token_t *glw_view_token_copy(glw_root_t *gr, token_t *src);
 
-token_t *glw_view_lexer(const char *src, errorinfo_t *ei, 
-			 rstr_t *f, token_t *prev);
+token_t *glw_view_load1(glw_root_t *gr, rstr_t *url, errorinfo_t *ei,
+                        token_t *prev, int may_unlock);
 
-
-token_t *glw_view_load1(glw_root_t *gr, rstr_t *url,
-			errorinfo_t *ei, token_t *prev,
-			int *nofile);
+token_t *glw_view_lexer(glw_root_t *gr, const char *src, errorinfo_t *ei,
+                        rstr_t *file, token_t *prev);
 
 int glw_view_parse(token_t *sof, errorinfo_t *ei, glw_root_t *gr);
 
@@ -316,7 +314,8 @@ int glw_view_seterr(errorinfo_t *ei, token_t *b, const char *fmt, ...);
 
 int glw_view_eval_block(token_t *t, glw_view_eval_context_t *ec);
 
-int glw_view_preproc(glw_root_t *gr, token_t *p, errorinfo_t *ei);
+int glw_view_preproc(glw_root_t *gr, token_t *p, errorinfo_t *ei,
+                     int may_unlock);
 
 token_t *glw_view_clone_chain(glw_root_t *gr, token_t *src, token_t **lp);
 
@@ -328,5 +327,8 @@ void glw_prop_subscription_destroy_list(glw_root_t *gr,
 
 void glw_prop_subscription_suspend_list(struct glw_prop_sub_list *l);
 
+void glw_view_loader_eval(glw_root_t *gr);
+
+void glw_view_loader_flush(glw_root_t *gr);
 
 #endif /* GLW_VIEW_H */

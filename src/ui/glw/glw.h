@@ -59,6 +59,7 @@ LIST_HEAD(glw_loadable_texture_list, glw_loadable_texture);
 TAILQ_HEAD(glw_loadable_texture_queue, glw_loadable_texture);
 LIST_HEAD(glw_video_list, glw_video);
 LIST_HEAD(glw_style_list, glw_style);
+TAILQ_HEAD(glw_view_load_request_queue, glw_view_load_request);
 
 // ------------------- Backends -----------------
 
@@ -757,6 +758,17 @@ typedef struct glw_root {
   prop_t *gr_screensaver_active;
 
   /**
+   * View loader
+   */
+
+  hts_thread_t gr_view_loader_thread;
+  int gr_view_loader_run;
+  hts_cond_t gr_view_loader_cond;
+  struct glw_view_load_request_queue gr_view_load_requests;
+  struct glw_view_load_request_queue gr_view_eval_requests;
+
+
+  /**
    * Font renderer
    */
   LIST_HEAD(,  glw_text_bitmap) gr_gtbs;
@@ -1255,10 +1267,9 @@ void glw_lp(float *v, glw_root_t *gr, float t, float alpha);
 /**
  * Views
  */
-glw_t *glw_view_create(glw_root_t *gr, rstr_t *url, 
-		       glw_t *parent, struct prop *prop,
-		       struct prop *prop_parent, prop_t *args,
-		       struct prop *prop_clone, int cache, int nofail);
+glw_t *glw_view_create(glw_root_t *gr, rstr_t *url, rstr_t *alturl,
+                       glw_t *parent, prop_t *prop, prop_t *prop_parent,
+                       prop_t *args, prop_t *prop_clone);
 
 void glw_view_eval_signal(glw_t *w, glw_signal_t sig);
 
@@ -1298,6 +1309,8 @@ glw_t *glw_create(glw_root_t *gr, const glw_class_t *class,
 void glw_lock_check(const char *file, const int line);
 
 void glw_destroy(glw_t *w);
+
+void glw_destroy_childs(glw_t *w);
 
 void glw_suspend_subscriptions(glw_t *w);
 
