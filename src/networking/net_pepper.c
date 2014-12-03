@@ -227,7 +227,6 @@ tcp_connect_arch(const net_addr_t *na,
 void
 tcp_close_arch(tcpcon_t *tc)
 {
-  ppb_tcpsocket->Close(tc->fd);
   ppb_core->ReleaseResource(tc->fd);
 }
 
@@ -238,7 +237,7 @@ tcp_close_arch(tcpcon_t *tc)
 void
 tcp_shutdown(tcpcon_t *tc)
 {
-  TRACE(TRACE_DEBUG, "NET", "%s NOT IMPLEMENTED", __FUNCTION__);
+  ppb_tcpsocket->Close(tc->fd);
 }
 
 
