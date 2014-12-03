@@ -160,7 +160,9 @@ init_done(void *data, int flags)
 
     TRACE(TRACE_DEBUG, "GLW", "GLW %p created", uiroot);
 
+    glw_lock(&uiroot->gr);
     glw_load_universe(&uiroot->gr);
+    glw_unlock(&uiroot->gr);
 
     glw_opengl_init_context(&uiroot->gr);
     glClearColor(0,0,0,0);
