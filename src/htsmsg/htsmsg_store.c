@@ -269,8 +269,7 @@ htsmsg_store_load_one(const char *filename)
 
   fa_handle_t *fh = fa_open(filename, errbuf, sizeof(errbuf));
   if(fh == NULL) {
-    TRACE(TRACE_ERROR, "Settings",
-	  "Unable to open %s -- %s", filename, errbuf);
+    SETTINGS_TRACE("Unable to open %s -- %s", filename, errbuf);
     return NULL;
   }
 
