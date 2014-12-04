@@ -19,13 +19,9 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 
-
-
-#include <sys/stat.h>
 #include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <stdio.h>
 
 #include <sqlite3.h>
@@ -118,7 +114,7 @@ kvstore_init(void)
   hts_mutex_init(&deferred_mutex);
 
   snprintf(buf, sizeof(buf), "%s/kvstore", gconf.persistent_path);
-  mkdir(buf, 0770);
+  fa_makedir(buf);
   snprintf(buf, sizeof(buf), "%s/kvstore/kvstore.db", gconf.persistent_path);
 
   //  unlink(buf);

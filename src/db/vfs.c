@@ -19,24 +19,21 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <time.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <sys/time.h>
-#include <limits.h>
 #include <string.h>
-#include <errno.h>
-#include <fcntl.h>
-
+#include <unistd.h>
 #include <sqlite3.h>
 
 #include "showtime.h"
 #include "arch/atomic.h"
 #include "misc/sha.h"
 #include "misc/minmax.h"
+#include "fileaccess/fileaccess.h"
+
+
 #if 0
 #define VFSTRACE(x...) TRACE(TRACE_DEBUG, "SQLITE_VFS", x)
 #else
@@ -48,7 +45,7 @@ static uint64_t random_seed;
 
 typedef struct vfsfile {
   struct sqlite3_file hdr;
-  int fd;
+  fa_handle_t *fh;
   char *fname;
 } vfsfile_t;
 
@@ -57,7 +54,8 @@ static int
 vfs_fs_Close(sqlite3_file *id)
 {
   vfsfile_t *vf = (vfsfile_t *)id;
-  close(vf->fd);
+  if(vf->fh != NULL)
+    fa_close(vf->fh);
   free(vf->fname);
   return SQLITE_OK;
 }
@@ -68,12 +66,12 @@ vfs_fs_Read(sqlite3_file *id, void *pBuf, int amt, sqlite3_int64 offset)
 {
   vfsfile_t *vf = (vfsfile_t *)id;
   int got;
-  int64_t pos = lseek(vf->fd, offset, SEEK_SET);
+  int64_t pos = fa_seek(vf->fh, offset, SEEK_SET);
   
   if(pos != offset)
     return SQLITE_IOERR;
   
-  got = read(vf->fd, pBuf, amt);
+  got = fa_read(vf->fh, pBuf, amt);
   
   VFSTRACE("Read file %s : %d bytes : %s",
 	   vf->fname, amt, got == amt ? "OK" : "FAIL");
@@ -93,18 +91,20 @@ vfs_fs_Write(sqlite3_file *id, const void *pBuf, int amt,sqlite3_int64 offset)
 {
   vfsfile_t *vf = (vfsfile_t *)id;
   int got;
-  int64_t pos = lseek(vf->fd, offset, SEEK_SET);
+  int64_t pos = fa_seek(vf->fh, offset, SEEK_SET);
   
   if(pos != offset)
     return SQLITE_IOERR;
 
-  got = write(vf->fd, pBuf, amt);
+  got = fa_write(vf->fh, pBuf, amt);
   
   VFSTRACE("Write file %s : %d bytes : %s",
 	   vf->fname, amt, got == amt ? "OK" : "FAIL");
 
+#if 0
   if(got == -1 && errno == ENOSPC)
     return SQLITE_FULL;
+#endif
   if(got != amt)
     return SQLITE_IOERR_WRITE;
   return SQLITE_OK;
@@ -115,7 +115,7 @@ static int
 vfs_fs_Truncate( sqlite3_file *id, sqlite3_int64 nByte )
 {
   vfsfile_t *vf = (vfsfile_t *)id;
-  return ftruncate(vf->fd, nByte) < 0 ? SQLITE_IOERR_TRUNCATE : SQLITE_OK;
+  return fa_ftruncate(vf->fh, nByte) < 0 ? SQLITE_IOERR_TRUNCATE : SQLITE_OK;
 }
 
 static int
@@ -128,10 +128,7 @@ static int
 vfs_fs_FileSize(sqlite3_file *id, sqlite3_int64 *pSize)
 {
   vfsfile_t *vf = (vfsfile_t *)id;
-  struct stat st;
-  if(fstat(vf->fd, &st) < 0)
-    return SQLITE_IOERR;
-  *pSize = st.st_size;
+  *pSize = fa_fsize(vf->fh);
   return SQLITE_OK;
 }
 
@@ -187,22 +184,25 @@ vfs_open(sqlite3_vfs *pVfs, const char *zName, sqlite3_file *id, int flags,
 {
   static atomic_t tmpfiletally;
   char tmpfile[256];
+  char errbuf[256];
   int v;
 
   vfsfile_t *vf = (vfsfile_t *)id;
   vf->hdr.pMethods = &vfs_fs_methods;
 
-  int isExclusive  = (flags & SQLITE_OPEN_EXCLUSIVE);
+  //  int isExclusive  = (flags & SQLITE_OPEN_EXCLUSIVE);
   int isDelete     = (flags & SQLITE_OPEN_DELETEONCLOSE);
-  int isCreate     = (flags & SQLITE_OPEN_CREATE);
-  int isReadonly   = (flags & SQLITE_OPEN_READONLY);
-  int isReadWrite  = (flags & SQLITE_OPEN_READWRITE);
-  int openFlags = 0;
+  //  int isCreate     = (flags & SQLITE_OPEN_CREATE);
+  //  int isReadonly   = (flags & SQLITE_OPEN_READONLY);
+  //  int isReadWrite  = (flags & SQLITE_OPEN_READWRITE);
 
-  if( isReadonly )  openFlags |= O_RDONLY;
-  if( isReadWrite ) openFlags |= O_RDWR;
-  if( isCreate )    openFlags |= O_CREAT;
-  if( isExclusive ) openFlags |= O_EXCL;
+  int openflags;
+
+  if(flags & SQLITE_OPEN_READONLY) {
+    openflags = 0;
+  } else {
+    openflags = FA_WRITE | FA_APPEND;
+  }
 
 
   if(zName == NULL) {
@@ -210,22 +210,26 @@ vfs_open(sqlite3_vfs *pVfs, const char *zName, sqlite3_file *id, int flags,
     snprintf(tmpfile, sizeof(tmpfile), "%s/sqlite.tmp.%d",
 	     gconf.cache_path, v);
     zName = tmpfile;
+  } else {
+    vf->fname = strdup(zName);
   }
 
-  vf->fd = open(zName, openFlags, 0666);
-  vf->fname = strdup(zName);
+  errbuf[0] = 0;
+  vf->fh = fa_open_ex(zName, errbuf, sizeof(errbuf), openflags, NULL);
 
-  VFSTRACE("Open%s file %s : %s",
+  VFSTRACE("Open%s file %s : %s -- %s openflags:0x%x",
 	   isDelete ? "+Delete" : "",
 	   zName,
-	   vf->fd == -1 ? "Fail" : "OK");
+	   vf->fh == NULL ? "Fail" : "OK",
+           errbuf, openflags);
 
-  if(vf->fd == -1)
+  if(vf->fh == NULL)
     return SQLITE_IOERR;
 
+
   if(isDelete)
-    unlink(zName);
-  
+    fa_unlink(zName, NULL, 0);
+
   return SQLITE_OK;
 }
 
@@ -234,7 +238,7 @@ static int
 vfs_delete(sqlite3_vfs *NotUsed, const char *zPath, int dirSync)
 {
   VFSTRACE("Delete file %s", zPath);
-  unlink(zPath);
+  fa_unlink(zPath, NULL, 0);
   return SQLITE_OK;
 }
 
