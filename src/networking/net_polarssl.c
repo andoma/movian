@@ -44,7 +44,7 @@ raw_recv(void *ctx, unsigned char *buf, size_t len)
 {
   tcpcon_t *tc = ctx;
   int ret = tc->raw_read(tc, buf, len, 0, NULL, NULL);
-  if(ret)
+  if(ret == -1)
     return POLARSSL_ERR_NET_CONN_RESET;
 
   return ret;
