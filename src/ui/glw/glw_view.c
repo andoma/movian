@@ -396,9 +396,6 @@ glw_view_create(glw_root_t *gr, rstr_t *url, rstr_t *alturl, glw_t *parent,
   glw_cached_view_t *gcv;
   glw_t *w = glw_create(gr, &glw_view, parent, NULL, NULL);
 
-  printf("Incoming request for view %s %s\n",
-         rstr_get(url), rstr_get(alturl));
-
   LIST_FOREACH(gcv, &gr->gr_views, gcv_link) {
     if(!strcmp(rstr_get(gcv->gcv_url), rstr_get(url)))
       break;
