@@ -29,11 +29,7 @@
 
 #include <libavutil/base64.h>
 
-#define hsprintf(fmt, ...) // printf(fmt, ##__VA_ARGS__)
-
-#if ENABLE_POSIX_NETWORKING
-#include <netinet/tcp.h>  // for TCP_ defines
-#endif
+#define hsprintf(fmt, ...)  // printf(fmt, ##__VA_ARGS__)
 
 #include "http.h"
 #include "http_server.h"
@@ -68,8 +64,6 @@ typedef struct http_path {
  *
  */
 struct http_connection {
-  
-  int hc_fd;
 
   asyncio_fd_t *hc_afd;
 
@@ -83,7 +77,6 @@ struct http_connection {
   struct http_header_list hc_req_args;
   struct http_header_list hc_response_headers;
 
-  htsbuf_queue_t hc_input;
   htsbuf_queue_t hc_output;
 
   http_cmd_t hc_cmd;
@@ -647,19 +640,19 @@ http_cmd_get(http_connection_t *hc, http_cmd_t method)
  *
  */
 static int
-http_read_post(http_connection_t *hc)
+http_read_post(http_connection_t *hc, htsbuf_queue_t *q)
 {
   const http_path_t *hp;
   const char *content_type;
   char *v, *argv[2], *args, *remain;
   int n;
-  size_t size = hc->hc_input.hq_size;
+  size_t size = q->hq_size;
   size_t rsize = hc->hc_post_len - hc->hc_post_offset;
 
   if(size > rsize)
     size = rsize;
 
-  n = htsbuf_read(&hc->hc_input, hc->hc_post_data + hc->hc_post_offset, size);
+  n = htsbuf_read(q, hc->hc_post_data + hc->hc_post_offset, size);
   assert(n == size);
 
   hc->hc_post_offset += size;
@@ -701,7 +694,7 @@ http_read_post(http_connection_t *hc)
  *
  */
 static int
-http_cmd_post(http_connection_t *hc)
+http_cmd_post(http_connection_t *hc, htsbuf_queue_t *q)
 {
   const char *v;
 
@@ -739,14 +732,14 @@ http_cmd_post(http_connection_t *hc)
 
 
   hc->hc_state = HCS_POSTDATA;
-  return http_read_post(hc);
+  return http_read_post(hc, q);
 }
 
 /**
  *
  */
 static int
-http_handle_request(http_connection_t *hc)
+http_handle_request(http_connection_t *hc, htsbuf_queue_t *q)
 {
   hc->hc_state = HCS_COMMAND;
   /* Set keep-alive status */
@@ -776,7 +769,7 @@ http_handle_request(http_connection_t *hc)
     return 0;
     
   case HTTP_CMD_POST:
-    return http_cmd_post(hc);
+    return http_cmd_post(hc, q);
 
   case HTTP_CMD_HEAD:
     hc->hc_no_output = 1;
@@ -794,22 +787,22 @@ http_handle_request(http_connection_t *hc)
  *
  */
 static int
-http_read_line(http_connection_t *hc, char *buf, size_t bufsize)
+http_read_line(htsbuf_queue_t *q, char *buf, size_t bufsize)
 {
   int len;
 
-  len = htsbuf_find(&hc->hc_input, 0xa);
+  len = htsbuf_find(q, 0xa);
   if(len == -1)
     return 0;
 
   if(len >= bufsize - 1)
     return -1;
 
-  htsbuf_read(&hc->hc_input, buf, len);
+  htsbuf_read(q, buf, len);
   buf[len] = 0;
   while(len > 0 && buf[len - 1] < 32)
     buf[--len] = 0;
-  htsbuf_drop(&hc->hc_input, 1); /* Drop the \n */
+  htsbuf_drop(q, 1); /* Drop the \n */
   return 1;
 }
 
@@ -885,10 +878,10 @@ websocket_sendq(http_connection_t *hc, int opcode, htsbuf_queue_t *hq)
  *
  */
 static int
-websocket_input(http_connection_t *hc)
+websocket_input(http_connection_t *hc, htsbuf_queue_t *q)
 {
   uint8_t hdr[14]; // max header length
-  int p = htsbuf_peek(&hc->hc_input, &hdr, 14);
+  int p = htsbuf_peek(q, &hdr, 14);
   const uint8_t *m;
 
   if(p < 2)
@@ -923,15 +916,15 @@ websocket_input(http_connection_t *hc)
     m = NULL;
   }
 
-  if(hc->hc_input.hq_size < hoff + len)
+  if(q->hq_size < hoff + len)
     return 0;
 
   uint8_t *d = mymalloc(len+1);
   if(d == NULL)
     return 1;
 
-  htsbuf_drop(&hc->hc_input, hoff);
-  htsbuf_read(&hc->hc_input, d, len);
+  htsbuf_drop(q, hoff);
+  htsbuf_read(q, d, len);
   d[len] = 0;
 
   if(m != NULL) {
@@ -957,7 +950,7 @@ websocket_input(http_connection_t *hc)
  *
  */
 static int
-http_handle_input(http_connection_t *hc)
+http_handle_input(http_connection_t *hc, htsbuf_queue_t *q)
 {
   char buf[1024];
   char *argv[3], *c;
@@ -970,7 +963,7 @@ http_handle_input(http_connection_t *hc)
       free(hc->hc_post_data);
       hc->hc_post_data = NULL;
 
-      r = http_read_line(hc, buf, sizeof(buf));
+      r = http_read_line(q, buf, sizeof(buf));
 
       if(r == -1)
 	return 1;
@@ -999,7 +992,7 @@ http_handle_input(http_connection_t *hc)
       http_headers_free(&hc->hc_response_headers);
 
     case HCS_HEADERS:
-      if((r = http_read_line(hc, buf, sizeof(buf))) == -1)
+      if((r = http_read_line(q, buf, sizeof(buf))) == -1)
 	return 1;
 
       if(r == 0)
@@ -1014,7 +1007,7 @@ http_handle_input(http_connection_t *hc)
 
       } else if(buf[0] == 0) {
 	
-	if(http_handle_request(hc))
+	if(http_handle_request(hc, q))
 	  return 1;
 
 	if(TAILQ_FIRST(&hc->hc_output.hq_q) == NULL && !hc->hc_keep_alive)
@@ -1032,12 +1025,12 @@ http_handle_input(http_connection_t *hc)
       break;
 
     case HCS_POSTDATA:
-      if(!http_read_post(hc))
+      if(!http_read_post(hc, q))
 	return 0;
       break;
 
     case HCS_WEBSOCKET:
-      if((r = websocket_input(hc)) != -1)
+      if((r = websocket_input(hc, q)) != -1)
 	return r;
       break;
     }
@@ -1051,67 +1044,8 @@ http_handle_input(http_connection_t *hc)
 static int
 http_write(http_connection_t *hc)
 {
-  htsbuf_data_t *hd;
-  int l, r = 0;
-
-  htsbuf_queue_t *q = &hc->hc_output;
-  
-  while((hd = TAILQ_FIRST(&q->hq_q)) != NULL) {
-
-    l = hd->hd_data_len - hd->hd_data_off;
-    r = write(hc->hc_fd, hd->hd_data + hd->hd_data_off, l);
-
-    if(r == -1 && (errno == EWOULDBLOCK || errno == EAGAIN))
-      r = 0;
-
-    if(r == -1)
-      return -1;
-
-    q->hq_size -= r;
-
-    if(r != l) {
-      // Failed to write it all
-      hd->hd_data_off += r;
-
-      asyncio_add_events(hc->hc_afd, ASYNCIO_WRITE);
-      return 0;
-    }
-
-    TAILQ_REMOVE(&q->hq_q, hd, hd_link);
-    free(hd->hd_data);
-    free(hd);
-  }
-  asyncio_rem_events(hc->hc_afd, ASYNCIO_WRITE);
+  asyncio_sendq(hc->hc_afd, &hc->hc_output, 0);
   return 0;
-}
-
-
-/**
- *
- */
-static int
-http_io(http_connection_t *hc, int events)
-{
-  int r;
-  if(events & ASYNCIO_ERROR)
-    return 1;
-
-  if(events & ASYNCIO_READ) {
-    int rlen = 1000;
-    char *mem = malloc(rlen);
-
-    r = read(hc->hc_fd, mem, rlen);
-    if(r > 0) {
-      htsbuf_append_prealloc(&hc->hc_input, mem, r);
-      if(http_handle_input(hc))
-	return 1;
-    } else {
-      free(mem);
-      return 1;
-    }
-  }
-  r = http_write(hc);
-  return r;
 }
 
 
@@ -1122,12 +1056,10 @@ static void
 http_close(http_connection_t *hc)
 {
   hsprintf("%p: ----------------- CLOSED CONNECTION\n", hc);
-  htsbuf_queue_flush(&hc->hc_input);
   htsbuf_queue_flush(&hc->hc_output);
   http_headers_free(&hc->hc_req_args);
   http_headers_free(&hc->hc_request_headers);
   http_headers_free(&hc->hc_response_headers);
-  close(hc->hc_fd);
   asyncio_del_fd(hc->hc_afd);
   free(hc->hc_url);
   free(hc->hc_url_orig);
@@ -1143,13 +1075,22 @@ http_close(http_connection_t *hc)
  *
  */
 static void
-http_io_callback(asyncio_fd_t *af, void *opaque, int events, int error)
+http_io_error(void *opaque, const char *error)
 {
-  http_connection_t *hc = opaque;
-  if(http_io(opaque, events))
-    http_close(hc);
+  http_close(opaque);
 }
 
+
+/**
+ *
+ */
+static void
+http_io_read(void *opaque, htsbuf_queue_t *q)
+{
+  http_connection_t *hc = opaque;
+  http_handle_input(hc, q);
+  http_write(hc);
+}
 
 
 /**
@@ -1182,10 +1123,8 @@ http_accept(void *opaque, int fd, const net_addr_t *local_addr,
             const net_addr_t *remote_addr)
 {
   http_connection_t *hc = calloc(1, sizeof(http_connection_t));
-  hc->hc_fd = fd;
-  hc->hc_afd = asyncio_add_fd(fd, ASYNCIO_READ | ASYNCIO_ERROR,
-                              http_io_callback, hc, "HTTP connection");
-  htsbuf_queue_init(&hc->hc_input, 0);
+  hc->hc_afd = asyncio_attach("HTTP connection", fd,
+                              http_io_error, http_io_read, hc);
   htsbuf_queue_init(&hc->hc_output, 0);
 
   hc->hc_local_addr  = *local_addr;

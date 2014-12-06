@@ -38,6 +38,11 @@
 #include "misc/minmax.h"
 #include "fileaccess/http_client.h"
 
+#define ASYNCIO_READ            0x1
+#define ASYNCIO_WRITE           0x2
+#define ASYNCIO_ERROR           0x4
+#define ASYNCIO_TIMEOUT         0x8
+
 LIST_HEAD(asyncio_fd_list, asyncio_fd);
 LIST_HEAD(asyncio_worker_list, asyncio_worker);
 LIST_HEAD(asyncio_timer_list, asyncio_timer);
@@ -381,7 +386,7 @@ asyncio_dopoll(void)
 /**
  *
  */
-void
+static void
 asyncio_set_events(asyncio_fd_t *af, int events)
 {
   asyncio_verify_thread();
@@ -397,7 +402,7 @@ asyncio_set_events(asyncio_fd_t *af, int events)
 /**
  *
  */
-void
+static void
 asyncio_add_events(asyncio_fd_t *af, int events)
 {
   asyncio_set_events(af, af->af_ext_events | events);
@@ -407,7 +412,7 @@ asyncio_add_events(asyncio_fd_t *af, int events)
 /**
  *
  */
-void
+static void
 asyncio_rem_events(asyncio_fd_t *af, int events)
 {
   asyncio_set_events(af, af->af_ext_events & ~events);
@@ -417,7 +422,7 @@ asyncio_rem_events(asyncio_fd_t *af, int events)
 /**
  *
  */
-asyncio_fd_t *
+static asyncio_fd_t *
 asyncio_add_fd(int fd, int events, asyncio_fd_callback_t *cb, void *opaque,
 	       const char *name)
 {
@@ -870,7 +875,6 @@ asyncio_connect(const char *name, const net_addr_t *addr,
 				    asyncio_tcp_connected, opaque,
                                     name);
 
-  af->af_fd = fd;
   af->af_error_callback = error_cb;
   af->af_read_callback  = read_cb;
   af->af_timeout = showtime_get_ts() + timeout * 1000;
@@ -888,6 +892,31 @@ asyncio_connect(const char *name, const net_addr_t *addr,
   } else {
     asyncio_add_events(af, ASYNCIO_WRITE);
   }
+  return af;
+}
+
+
+/**
+ *
+ */
+asyncio_fd_t *
+asyncio_attach(const char *name, int fd,
+		asyncio_error_callback_t *error_cb,
+		asyncio_read_callback_t *read_cb,
+		void *opaque)
+{
+  no_sigpipe(fd);
+  net_change_nonblocking(fd, 1);
+  net_change_ndelay(fd, 1);
+
+  asyncio_fd_t *af = asyncio_add_fd(fd, ASYNCIO_READ | ASYNCIO_ERROR,
+				    asyncio_tcp_connected, opaque,
+                                    name);
+
+  af->af_connected = 1;
+  af->af_fd = fd;
+  af->af_error_callback = error_cb;
+  af->af_read_callback  = read_cb;
   return af;
 }
 
