@@ -989,23 +989,6 @@ glw_video_render(glw_t *w, const glw_rctx_t *rc)
 
   glw_project(&gv->gv_rect, &rc1, gr);
 
-  int invisible = 0;
-  if(gv->gv_rect.x1 >= gr->gr_width)
-    invisible = 1;
-  if(gv->gv_rect.x2 < 0)
-    invisible = 1;
-  if(gv->gv_rect.y1 >= gr->gr_height)
-    invisible = 1;
-  if(gv->gv_rect.y2 < 0)
-    invisible = 1;
-
-  if(gv->gv_invisible != invisible) {
-    gv->gv_invisible = invisible;
-    event_t *e = event_create_int(EVENT_VIDEO_VISIBILITY, !gv->gv_invisible);
-    mp_enqueue_event(gv->gv_mp, e);
-    event_release(e);
-  }
-
   if(!glw_renderer_initialized(&gv->gv_quad)) {
     glw_renderer_init_quad(&gv->gv_quad);
 
