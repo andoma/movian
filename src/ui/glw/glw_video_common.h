@@ -70,11 +70,12 @@ typedef struct glw_video_surface {
   void *gvs_opaque;
   int gvs_format;
 
+  glw_backend_texture_t gvs_texture;
+  int gvs_uploaded;
+
 #if CONFIG_GLW_BACKEND_OPENGL
   GLuint gvs_pbo[3];
   int gvs_size[3];
-  int gvs_uploaded;
-  glw_backend_texture_t gvs_texture;
 #endif
 
 #if CONFIG_GLW_BACKEND_RSX
@@ -88,6 +89,9 @@ typedef struct glw_video_surface {
   VdpOutputSurface gvs_vdpau_surface;
   GLvdpauSurfaceNV gvs_gl_surface;
 #endif
+
+  struct AVFrame *gvs_frame;
+  float gvs_tex_width;
 
 } glw_video_surface_t;
 

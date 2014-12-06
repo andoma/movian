@@ -7,6 +7,7 @@ SRCS += src/arch/nacl/nacl_main.c \
 	src/arch/nacl/nacl_threads.c \
 	src/networking/net_pepper.c \
 	src/networking/asyncio_pepper.c \
+	src/ui/glw/glw_video_tex.c \
 
 ${PROG}.pexe: ${PROG}.bundle
 	${FINALIZE} -o $@ $<
