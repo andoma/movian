@@ -4992,7 +4992,7 @@ static int
 glwf_sinewave(glw_view_eval_context_t *ec, struct token *self,
 	      token_t **argv, unsigned int argc)
 {
-  const glw_root_t *gr = ec->w->glw_root;
+  glw_root_t *gr = ec->w->glw_root;
   token_t *a = argv[0];
   token_t *r;
 
@@ -5000,27 +5000,14 @@ glwf_sinewave(glw_view_eval_context_t *ec, struct token *self,
     return -1;
 
   float p = token2float(ec, a);
-  int64_t v64 = (double)gr->gr_time_sec / p * 4096.0;
+  int64_t v64 = gr->gr_time_sec / p * 4096.0;
 
   int v = v64 & 0xfff;
 
+  glw_need_refresh(gr, 0);
+
   r = eval_alloc(self, ec, TOKEN_FLOAT);
-
-  union {
-    float f;
-    uint32_t u32;
-  } u;
-
-  u.f = sin(v * M_PI * 2.0 / 4096.0);
-
-  if(u.u32 == self->t_extra_int) {
-    // flip lowest bit so we never output same value twice as that might
-    // cause conditional layout to think that we don't need to refresh
-    u.u32 ^= 1;
-  }
-
-  self->t_extra_int = u.u32;
-  r->t_float = u.f;
+  r->t_float = sin(v * M_PI * 2.0 / 4096.0);
   eval_push(ec, r);
   ec->dynamic_eval |= GLW_VIEW_EVAL_LAYOUT;
   return 0;
