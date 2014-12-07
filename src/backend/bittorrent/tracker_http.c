@@ -130,7 +130,7 @@ http_callback(http_req_aux_t *req, void *opaque)
     }
   }
  done:
-  asyncio_timer_arm(&tt->tt_timer, async_now + tt->tt_interval * 1000000LL);
+  asyncio_timer_arm_delta_sec(&tt->tt_timer, tt->tt_interval);
 }
 
 

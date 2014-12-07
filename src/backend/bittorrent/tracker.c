@@ -168,7 +168,7 @@ tracker_torrent_periodic(void *aux)
       tracker_torrent_destroy(tt);
     } else {
       // Resend stop request
-      asyncio_timer_arm(&tt->tt_timer, async_now + 5000000LL);
+      asyncio_timer_arm_delta_sec(&tt->tt_timer, 5);
     }
     return;
   }

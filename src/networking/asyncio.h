@@ -24,7 +24,6 @@
 #include "net.h"
 #include "misc/redblack.h"
 
-extern int64_t async_now;
 
 typedef struct asyncio_timer {
   LIST_ENTRY(asyncio_timer) at_link;
@@ -52,6 +51,8 @@ void asyncio_init_early(void);
 void asyncio_start(void);
 
 void asyncio_del_fd(asyncio_fd_t *af);
+
+int64_t async_current_time(void);
 
 /*************************************************************************
  * Workers
@@ -96,7 +97,7 @@ void asyncio_sendq(asyncio_fd_t *af, htsbuf_queue_t *q, int cork);
 
 int asyncio_get_port(asyncio_fd_t *af);
 
-void asyncio_set_timeout(asyncio_fd_t *af, int64_t timeout);
+void asyncio_set_timeout_delta_sec(asyncio_fd_t *af, int seconds);
 
 /*************************************************************************
  * UDP
@@ -119,7 +120,7 @@ void asyncio_udp_send(asyncio_fd_t *af, const void *data, int size,
 void asyncio_timer_init(asyncio_timer_t *at, void (*fn)(void *opaque),
 			void *opque);
 
-void asyncio_timer_arm(asyncio_timer_t *at, int64_t expire);
+void asyncio_timer_arm_delta_sec(asyncio_timer_t *at, int seconds);
 
 void asyncio_timer_disarm(asyncio_timer_t *at);
 

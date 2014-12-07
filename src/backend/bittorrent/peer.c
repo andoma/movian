@@ -125,7 +125,7 @@ peer_state_txt(unsigned int state)
 static void
 peer_arm_ka_timer(peer_t *p)
 {
-  asyncio_timer_arm(&p->p_ka_send_timer, async_now + 60 * 1000000);
+  asyncio_timer_arm_delta_sec(&p->p_ka_send_timer, 60);
 }
 
 
@@ -222,7 +222,7 @@ peer_error_cb(void *opaque, const char *error)
     p->p_peer_interested = 0;
 
     send_handshake(p);
-    asyncio_set_timeout(p->p_connection, async_now + 15 * 1000000);
+    asyncio_set_timeout_delta_sec(p->p_connection, 15);
     p->p_state = PEER_STATE_WAIT_HANDSHAKE;
     peer_trace(p, PEER_DBG_CONN, "Connected");
     return;
@@ -364,7 +364,7 @@ peer_shutdown(peer_t *p, int next_state, int resched)
     abort();
 
   case PEER_STATE_CONNECT_FAIL:
-    p->p_fail_time = async_now;
+    p->p_fail_time = async_current_time();
     p->p_connect_fail++;
     if(p->p_connect_fail == 5)
       goto destroy;
@@ -372,7 +372,7 @@ peer_shutdown(peer_t *p, int next_state, int resched)
     break;
 
   case PEER_STATE_DISCONNECTED:
-    p->p_fail_time = async_now;
+    p->p_fail_time = async_current_time();
     p->p_disconnected++;
     if(p->p_disconnected == 5)
       goto destroy;
@@ -677,13 +677,14 @@ recv_piece(peer_t *p, const uint8_t *buf, size_t len)
   to->to_downloaded_bytes += len;
   p->p_bytes_received += len;
 
-  int second = async_now / 1000000;
+  const int64_t now = async_current_time();
+  const int second = now / 1000000;
 
   average_fill(&to->to_download_rate, second, to->to_downloaded_bytes);
   average_fill(&p->p_download_rate,   second, p->p_bytes_received);
 
 
-  int delay = MIN(60000000, async_now - tr->tr_send_time);
+  int delay = MIN(60000000, now - tr->tr_send_time);
 
   if(p->p_block_delay) {
     p->p_block_delay = (p->p_block_delay * 7 + delay) / 8;
@@ -1061,7 +1062,7 @@ peer_read_cb(void *opaque, htsbuf_queue_t *q)
 
     if(p->p_connection != NULL) {
       timeout = 300;
-      asyncio_set_timeout(p->p_connection, async_now + timeout * 1000000);
+      asyncio_set_timeout_delta_sec(p->p_connection, timeout);
     }
     break;
   }

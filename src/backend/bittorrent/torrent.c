@@ -455,7 +455,7 @@ void
 torrent_receive_block(torrent_block_t *tb, const void *buf,
                       int begin, int len, torrent_t *to, peer_t *p)
 {
-  int second = async_now / 1000000;
+  int second = async_current_time() / 1000000;
 
   torrent_piece_t *tp = tb->tb_piece;
 
@@ -880,7 +880,7 @@ update_interest(torrent_t *to)
  *
  */
 static void
-add_request(torrent_block_t *tb, peer_t *p)
+add_request(torrent_block_t *tb, peer_t *p, int64_t now)
 {
   torrent_request_t *tr;
   LIST_FOREACH(tr, &p->p_requests, tr_peer_link) {
@@ -896,7 +896,7 @@ add_request(torrent_block_t *tb, peer_t *p)
 
   tr->tr_block = tb;
 
-  tr->tr_send_time = async_now;
+  tr->tr_send_time = now;
   tr->tr_req_num = tb->tb_req_tally;
   tb->tb_req_tally++;
 
@@ -912,7 +912,7 @@ add_request(torrent_block_t *tb, peer_t *p)
   LIST_INSERT_HEAD(&p->p_requests, tr, tr_peer_link);
   p->p_active_requests++;
 
-  p->p_last_send = async_now;
+  p->p_last_send = now;
 }
 
 
@@ -1015,7 +1015,8 @@ block_name(const torrent_block_t *tb)
  *
  */
 static void
-serve_waiting_blocks(torrent_t *to, torrent_piece_t *tp, int optimal)
+serve_waiting_blocks(torrent_t *to, torrent_piece_t *tp, int optimal,
+                     int64_t now)
 {
   torrent_block_t *tb, *next;
 
@@ -1031,14 +1032,14 @@ serve_waiting_blocks(torrent_t *to, torrent_piece_t *tp, int optimal)
       if(p == NULL || p->p_active_requests >= p->p_maxq)
 	break;
 
-      add_request(tb, p);
+      add_request(tb, p, now);
 
     } else {
       peer_t *p = find_any_peer(to, tp);
       if(p == NULL)
 	break;
 
-      add_request(tb, p);
+      add_request(tb, p, now);
 
     }
     LIST_REMOVE(tb, tb_piece_link);
@@ -1054,7 +1055,7 @@ serve_waiting_blocks(torrent_t *to, torrent_piece_t *tp, int optimal)
  */
 static peer_t *
 find_faster_peer(torrent_t *to, const torrent_block_t *tb,
-		 int64_t eta_to_beat)
+		 int64_t eta_to_beat, int64_t now)
 {
   peer_t *p, *best = NULL;
   const torrent_piece_t *tp = tb->tb_piece;
@@ -1083,7 +1084,7 @@ find_faster_peer(torrent_t *to, const torrent_block_t *tb,
     if(tr != NULL)
       continue;
 
-    int64_t t = async_now + p->p_block_delay * 2;
+    int64_t t = now + p->p_block_delay * 2;
 
     if(t < eta_to_beat) {
       eta_to_beat = t;
@@ -1099,7 +1100,7 @@ find_faster_peer(torrent_t *to, const torrent_block_t *tb,
  */
 static void
 check_active_requests(torrent_t *to, torrent_piece_t *tp,
-		      int64_t deadline)
+		      int64_t deadline, int64_t now)
 {
   torrent_block_t *tb, *next;
 
@@ -1120,10 +1121,10 @@ check_active_requests(torrent_t *to, torrent_piece_t *tp,
     int64_t eta, delay = 0;
 
     eta = cur->tr_send_time + curpeer->p_block_delay;
-    if(eta < async_now) {
+    if(eta < now) {
       // Didn't arrive on time, assume the delay will worse
       // the longer it takes
-      delay = async_now - eta;
+      delay = now - eta;
       eta += delay * 2;
     }
 
@@ -1133,7 +1134,7 @@ check_active_requests(torrent_t *to, torrent_piece_t *tp,
     // Now, let's see if we can find a peer that we think can beat
     // the current (offsetted) ETA for this block
 
-    peer_t *p = find_faster_peer(to, tb, eta);
+    peer_t *p = find_faster_peer(to, tb, eta, now);
     if(p == NULL)
       continue;
 
@@ -1145,9 +1146,9 @@ check_active_requests(torrent_t *to, torrent_piece_t *tp,
 	   eta - async_now, delay);
 #endif
 
-    add_request(tb, p);
+    add_request(tb, p, now);
 
-    int new_delay = async_now - cur->tr_send_time;
+    int new_delay = now - cur->tr_send_time;
     if(new_delay > curpeer->p_block_delay) {
       curpeer->p_block_delay = (curpeer->p_block_delay * 7 + new_delay) / 8;
     }
@@ -1280,6 +1281,8 @@ torrent_io_do_requests(torrent_t *to)
   torrent_piece_t *tp;
   //  int64_t deadline = INT64_MAX;
 
+  int64_t now = async_current_time();
+
 #if 0
   printf("----------------------------------------\n");
   LIST_FOREACH(tp, &to->to_serve_order, tp_serve_link) {
@@ -1294,16 +1297,16 @@ torrent_io_do_requests(torrent_t *to)
   LIST_FOREACH(tp, &to->to_serve_order, tp_serve_link) {
     if(tp->tp_deadline == INT64_MAX)
       break;
-    check_active_requests(to, tp, tp->tp_deadline);
+    check_active_requests(to, tp, tp->tp_deadline, now);
   }
 
   LIST_FOREACH(tp, &to->to_serve_order, tp_serve_link) {
     //    deadline = MIN(tp->tp_deadline, deadline);
-    serve_waiting_blocks(to, tp, 1);
+    serve_waiting_blocks(to, tp, 1, now);
   }
 
   LIST_FOREACH(tp, &to->to_serve_order, tp_serve_link)
-    serve_waiting_blocks(to, tp, 0);
+    serve_waiting_blocks(to, tp, 0, now);
 }
 
 
@@ -1419,7 +1422,7 @@ torrent_periodic_one(torrent_t *to, int second)
 static void
 torrent_periodic(void *aux)
 {
-  const int second = async_now / 1000000;
+  const int second = async_current_time() / 1000000;
 
   hts_mutex_lock(&bittorrent_mutex);
 
@@ -1436,7 +1439,7 @@ torrent_periodic(void *aux)
   }
 
   if(LIST_FIRST(&torrents) != NULL)
-    asyncio_timer_arm(&torrent_periodic_timer, async_now + 1000000);
+    asyncio_timer_arm_delta_sec(&torrent_periodic_timer, 1);
   hts_mutex_unlock(&bittorrent_mutex);
 }
 
@@ -1452,7 +1455,7 @@ torrent_boot_periodic(void)
   hts_mutex_lock(&bittorrent_mutex);
   if(LIST_FIRST(&torrents) != NULL &&
      !asyncio_timer_is_armed(&torrent_periodic_timer)) {
-    asyncio_timer_arm(&torrent_periodic_timer, async_now + 1000000);
+    asyncio_timer_arm_delta_sec(&torrent_periodic_timer, 1);
   }
   hts_mutex_unlock(&bittorrent_mutex);
 }

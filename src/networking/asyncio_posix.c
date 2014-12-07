@@ -75,7 +75,7 @@ static void adr_deliver_cb(void);
 
 static void ahr_deliver_cb(void);
 
-int64_t async_now;
+static int64_t async_now;
 
 static __inline void asyncio_verify_thread(void) {
   assert(hts_thread_current() == asyncio_thread_id);
@@ -125,6 +125,19 @@ struct asyncio_fd {
 };
 
 
+/**
+ *
+ */
+int64_t
+async_current_time(void)
+{
+  return async_now;
+}
+
+
+/**
+ *
+ */
 static void
 no_sigpipe(int fd)
 {
@@ -211,6 +224,7 @@ asyncio_wakeup_worker(int id)
   return asyncio_wakeup(id);
 }
 
+
 /**
  *
  */
@@ -239,7 +253,7 @@ at_compar(const asyncio_timer_t *a, const asyncio_timer_t *b)
 /**
  *
  */
-void
+static void
 asyncio_timer_arm(asyncio_timer_t *at, int64_t expire)
 {
   asyncio_verify_thread();
@@ -248,6 +262,16 @@ asyncio_timer_arm(asyncio_timer_t *at, int64_t expire)
 
   at->at_expire = expire;
   LIST_INSERT_SORTED(&asyncio_timers, at, at_link, at_compar, asyncio_timer_t);
+}
+
+
+/**
+ *
+ */
+void
+asyncio_timer_arm_delta_sec(asyncio_timer_t *at, int delta)
+{
+  asyncio_timer_arm(at, async_now + delta * 1000000LL);
 }
 
 
@@ -466,9 +490,9 @@ asyncio_del_fd(asyncio_fd_t *af)
  *
  */
 void
-asyncio_set_timeout(asyncio_fd_t *af, int64_t timeout)
+asyncio_set_timeout_delta_sec(asyncio_fd_t *af, int delta)
 {
-  af->af_timeout = timeout;
+  af->af_timeout = delta * 1000000LL + async_now;
 }
 
 /**

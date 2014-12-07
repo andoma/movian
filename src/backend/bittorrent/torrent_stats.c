@@ -54,6 +54,9 @@ static void
 torrent_dump(const torrent_t *to, htsbuf_queue_t *q)
 {
   char str[41];
+
+  int64_t now = async_current_time();
+
   bin2hex(str, sizeof(str), to->to_info_hash, 20);
 
   htsbuf_qprintf(q, "Infohash: %s  %d pieces (%d in RAM) refcount:%d\n", str,
@@ -119,11 +122,11 @@ torrent_dump(const torrent_t *to, htsbuf_queue_t *q)
     LIST_FOREACH(tr, &p->p_requests, tr_peer_link) {
       htsbuf_qprintf(q, "  piece:%-4d offset:0x%-8x length:0x%-5x age:%2.2fs ETA:%-6d req:%d %s  piece deadline:%ld\n",
                      tr->tr_piece, tr->tr_begin, tr->tr_length,
-                     (int)(async_now - tr->tr_send_time) / 1000000.0f,
-                     (int)((tr->tr_send_time + p->p_block_delay) - async_now) / 1000,
+                     (int)(now - tr->tr_send_time) / 1000000.0f,
+                     (int)((tr->tr_send_time + p->p_block_delay) - now) / 1000,
                      tr->tr_req_num,
                      tr->tr_block == NULL ? "ORPHANED " : "",
-		     tr->tr_block ? tr->tr_block->tb_piece->tp_deadline - async_now : -2LL);
+		     tr->tr_block ? tr->tr_block->tb_piece->tp_deadline - now : -2LL);
     }
   }
 

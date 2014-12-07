@@ -51,7 +51,7 @@ tracker_udp_send_connect(tracker_t *t)
   asyncio_udp_send(tracker_udp_fd, hello, 16, &t->t_addr);
 
   int timeout = 15 * (1 << t->t_conn_attempt);
-  asyncio_timer_arm(&t->t_timer, showtime_get_ts() + timeout * 1000000LL);
+  asyncio_timer_arm_delta_sec(&t->t_timer, timeout);
   t->t_conn_attempt++;
   tracker_trace(t,
                 "Sending connect to %s (attempt:%d txid:0x%08x timeout: %ds)",
@@ -146,7 +146,7 @@ tracker_udp_torrent_announce(tracker_torrent_t *tt, int event)
   wr32_be(out + 92, -1);
   wr16_be(out + 96, 43213);
   asyncio_udp_send(tracker_udp_fd, out, 98, &t->t_addr);
-  asyncio_timer_arm(&tt->tt_timer, async_now + tt->tt_interval * 1000000LL);
+  asyncio_timer_arm_delta_sec(&tt->tt_timer, tt->tt_interval);
 }
 
 
@@ -240,7 +240,7 @@ tracker_udp_handle_announce_reply(tracker_t *tr, const uint8_t *data, int size)
     data += 6;
     size -= 6;
   }
-  asyncio_timer_arm(&tt->tt_timer, async_now + tt->tt_interval * 1000000LL);
+  asyncio_timer_arm_delta_sec(&tt->tt_timer, tt->tt_interval);
 }
 
 
