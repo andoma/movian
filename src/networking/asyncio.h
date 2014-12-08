@@ -52,6 +52,8 @@ void asyncio_start(void);
 
 void asyncio_del_fd(asyncio_fd_t *af);
 
+
+// Return current time, must be same time domain as showtime_get_ts();
 int64_t async_current_time(void);
 
 /*************************************************************************
