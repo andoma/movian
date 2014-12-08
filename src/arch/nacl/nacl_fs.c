@@ -53,6 +53,18 @@ typedef struct fa_pepper {
   int for_writing;
 } fa_pepper_t;
 
+
+/**
+ *
+ */
+static inline void
+check_main_thread(void)
+{
+  if(ppb_core->IsMainThread())
+    *(int *)7 = 0;
+}
+
+
 /**
  *
  */
@@ -176,6 +188,8 @@ static fa_handle_t *
 fs_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
 	int flags, struct fa_open_extra *foe)
 {
+  check_main_thread();
+
   PP_Resource file_res = get_res(fap, url);
   if(file_res == 0) {
     snprintf(errbuf, errlen, "Unable to create path ref");
@@ -219,6 +233,7 @@ fs_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
 static void
 fs_close(fa_handle_t *fh)
 {
+  check_main_thread();
   fa_pepper_t *fp = (fa_pepper_t *)fh;
 
   if(fp->for_writing)
@@ -236,6 +251,7 @@ fs_close(fa_handle_t *fh)
 static int
 fs_read(fa_handle_t *fh, void *buf, size_t size)
 {
+  check_main_thread();
   fa_pepper_t *fp = (fa_pepper_t *)fh;
 
   int x = ppb_fileio->Read(fp->res, fp->fpos, buf, size,
@@ -252,6 +268,7 @@ fs_read(fa_handle_t *fh, void *buf, size_t size)
 static int
 fs_write(fa_handle_t *fh, const void *buf, size_t size)
 {
+  check_main_thread();
   fa_pepper_t *fp = (fa_pepper_t *)fh;
 
   int x = ppb_fileio->Write(fp->res, fp->fpos, buf, size,
@@ -269,6 +286,7 @@ fs_write(fa_handle_t *fh, const void *buf, size_t size)
 static int64_t
 fs_seek(fa_handle_t *fh, int64_t pos, int whence, int lazy)
 {
+  check_main_thread();
   fa_pepper_t *fp = (fa_pepper_t *)fh;
   int64_t np;
   struct PP_FileInfo info;
@@ -306,6 +324,7 @@ fs_seek(fa_handle_t *fh, int64_t pos, int whence, int lazy)
 static int64_t
 fs_fsize(fa_handle_t *fh)
 {
+  check_main_thread();
   fa_pepper_t *fp = (fa_pepper_t *)fh;
   struct PP_FileInfo info;
 
@@ -322,6 +341,7 @@ static int
 fs_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
 	char *errbuf, size_t errlen, int non_interactive)
 {
+  check_main_thread();
   PP_Resource file_res = get_res(fap, url);
   struct PP_FileInfo info;
 
@@ -350,6 +370,7 @@ static int
 fs_unlink(const fa_protocol_t *fap, const char *url,
           char *errbuf, size_t errlen)
 {
+  check_main_thread();
   PP_Resource res = get_res(fap, url);
   if(res == 0) {
     snprintf(errbuf, errlen, "Unable to create path ref");
@@ -374,6 +395,7 @@ static int
 fs_rename(const fa_protocol_t *fap, const char *old, const char *new,
           char *errbuf, size_t errlen)
 {
+  check_main_thread();
   PP_Resource old_res = get_res(fap, old);
   if(old_res == 0) {
     snprintf(errbuf, errlen, "Unable to create path ref");
@@ -403,6 +425,7 @@ fs_rename(const fa_protocol_t *fap, const char *old, const char *new,
 static int
 fs_ftruncate(fa_handle_t *fh, uint64_t newsize)
 {
+  check_main_thread();
   fa_pepper_t *fp = (fa_pepper_t *)fh;
 
   int x = ppb_fileio->SetLength(fp->res, newsize, PP_BlockUntilComplete());
@@ -415,6 +438,7 @@ fs_ftruncate(fa_handle_t *fh, uint64_t newsize)
 static fa_err_code_t
 fs_mkdir(fa_protocol_t *fap, const char *url)
 {
+  check_main_thread();
   PP_Resource res = get_res(fap, url);
   fa_err_code_t r;
   if(res == 0)
