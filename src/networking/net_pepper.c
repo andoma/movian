@@ -228,6 +228,7 @@ tcp_connect_arch(const net_addr_t *na,
   }
 
   int r = ppb_tcpsocket->Connect(sock, addr, PP_BlockUntilComplete());
+  ppb_core->ReleaseResource(addr);
   if(r) {
     snprintf(errbuf, errlen, "Unable to connect -- %s", pepper_errmsg(r));
     ppb_core->ReleaseResource(sock);
