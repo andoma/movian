@@ -310,6 +310,15 @@ net_change_ndelay(int fd, int on)
 int
 net_resolve_numeric(const char *str, net_addr_t *addr)
 {
-  TRACE(TRACE_DEBUG, "NET", "%s NOT IMPLEMENTED", __FUNCTION__);
+  int a,b,c,d;
+  if(sscanf(str, "%d.%d.%d.%d", &a, &b, &c, &d) == 4) {
+    memset(addr, 0, sizeof(net_addr_t));
+    addr->na_family = 4;
+    addr->na_addr[0] = a;
+    addr->na_addr[1] = b;
+    addr->na_addr[2] = c;
+    addr->na_addr[3] = d;
+    return 0;
+  }
   return 1;
 }

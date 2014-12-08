@@ -243,8 +243,8 @@ net_fmt_host(char *dst, size_t dstlen, const net_addr_t *na)
     break;
 
   default:
-    if(dstlen)
-      *dst = 0;
+    snprintf(dst, dstlen, "family-%d",na->na_family);
+    break;
   }
 }
 
