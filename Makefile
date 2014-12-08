@@ -272,6 +272,7 @@ SRCS-$(CONFIG_AIRPLAY) += src/api/airplay.c
 ##############################################################
 SRCS += src/networking/net_common.c \
 	src/networking/http.c \
+	src/networking/asyncio_http.c \
 
 SRCS-$(CONFIG_FTPSERVER) += src/networking/ftp_server.c
 
