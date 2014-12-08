@@ -43,6 +43,7 @@
 #include "ppapi/c/ppb_message_loop.h"
 #include "ppapi/c/ppb_graphics_3d.h"
 #include "ppapi/c/ppb_tcp_socket.h"
+#include "ppapi/c/ppb_udp_socket.h"
 #include "ppapi/c/ppb_var.h"
 #include "ppapi/c/ppb_view.h"
 #include "ppapi/c/ppp.h"
@@ -65,6 +66,7 @@ const PPB_KeyboardInputEvent *ppb_keyboardinputevent;
 const PPB_HostResolver *ppb_hostresolver;
 const PPB_NetAddress *ppb_netaddress;
 const PPB_TCPSocket *ppb_tcpsocket;
+const PPB_UDPSocket *ppb_udpsocket;
 const PPB_MessageLoop *ppb_messageloop;
 const PPB_FileSystem *ppb_filesystem;
 const PPB_FileRef *ppb_fileref;
@@ -546,6 +548,7 @@ PPP_InitializeModule(PP_Module a_module_id, PPB_GetInterface get_browser)
   ppb_hostresolver       = get_browser(PPB_HOSTRESOLVER_INTERFACE);
   ppb_netaddress         = get_browser(PPB_NETADDRESS_INTERFACE);
   ppb_tcpsocket          = get_browser(PPB_TCPSOCKET_INTERFACE);
+  ppb_udpsocket          = get_browser(PPB_UDPSOCKET_INTERFACE);
   ppb_messageloop        = get_browser(PPB_MESSAGELOOP_INTERFACE);
   ppb_filesystem         = get_browser(PPB_FILESYSTEM_INTERFACE);
   ppb_fileref            = get_browser(PPB_FILEREF_INTERFACE);
