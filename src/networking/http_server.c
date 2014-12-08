@@ -22,14 +22,12 @@
 #include <assert.h>
 #include <stdio.h>
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <unistd.h>
 #include <errno.h>
-#include <netinet/in.h>
 
 #include <libavutil/base64.h>
 
-#define hsprintf(fmt, ...)  // printf(fmt, ##__VA_ARGS__)
+#define hsprintf(fmt...)  // TRACE(TRACE_DEBUG, "HTTP", fmt)
 
 #include "http.h"
 #include "http_server.h"
