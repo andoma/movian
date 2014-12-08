@@ -158,9 +158,6 @@ init_done(void *data, int flags)
     glSetCurrentContextPPAPI(ui_context);
     TRACE(TRACE_DEBUG, "NACL", "Current 3d context set");
 
-    uiroot->gr.gr_prop_ui = prop_create_root("ui");
-    uiroot->gr.gr_prop_nav = nav_spawn();
-
     if(glw_init(&uiroot->gr))
       return;
 
@@ -202,7 +199,10 @@ init_thread(void *aux)
 
 
   showtime_init();
-  TRACE(TRACE_DEBUG, "NACL", "created");
+
+  uiroot->gr.gr_prop_ui = prop_create_root("ui");
+  uiroot->gr.gr_prop_nav = nav_spawn();
+
   ppb_core->CallOnMainThread(0, (const struct PP_CompletionCallback) {
       &init_done, NULL}, CORE_INITIALIZED);
 
