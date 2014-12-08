@@ -56,6 +56,8 @@ typedef struct decoder {
   int rdptr;
   int wrptr;
 
+  double nacl_latency;
+  int64_t fifo_latency;
 
 } decoder_t;
 
@@ -76,6 +78,8 @@ audio_cb(void *sample_buffer, uint32_t buffer_size_in_bytes,
   memcpy(sample_buffer, d->samples + off, buffer_size_in_bytes);
 
   d->rdptr++;
+
+  d->nacl_latency = latency;
 
   pthread_cond_signal(&d->cond);
   pthread_mutex_unlock(&d->mutex);
@@ -143,6 +147,11 @@ nacl_audio_reconfig(audio_decoder_t *ad)
   d->player = ppb_audio->Create(g_Instance, d->config, audio_cb, ad);
   ppb_audio->StartPlayback(d->player);
   TRACE(TRACE_DEBUG, "AUDIO", "Audio playback started");
+
+
+  d->fifo_latency = 1000000LL * ad->ad_tile_size * SLOTS / sample_rate;
+  TRACE(TRACE_DEBUG, "AUDIO", "Fifo latency: %d", (int)d->fifo_latency);
+
   return 0;
 }
 
@@ -169,6 +178,20 @@ nacl_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
   data[0] = (uint8_t *)(d->samples + off);
   avresample_read(ad->ad_avr, data, samples);
   d->wrptr++;
+
+  if(pts != AV_NOPTS_VALUE) {
+
+    int64_t delay = d->fifo_latency + d->nacl_latency * 1000000.0;
+    ad->ad_delay = delay;
+
+    media_pipe_t *mp = ad->ad_mp;
+
+    hts_mutex_lock(&mp->mp_clock_mutex);
+    mp->mp_audio_clock_avtime = showtime_get_avtime();
+    mp->mp_audio_clock_epoch = epoch;
+    mp->mp_audio_clock = pts - delay;
+    hts_mutex_unlock(&mp->mp_clock_mutex);
+  }
 
   return 0;
 }
