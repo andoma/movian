@@ -394,10 +394,17 @@ glw_view_create(glw_root_t *gr, rstr_t *url, rstr_t *alturl, glw_t *parent,
                 prop_t *prop_clone)
 {
   glw_cached_view_t *gcv;
+
+  if(url == NULL) {
+    assert(alturl != NULL);
+    url = alturl;
+    alturl = NULL;
+  }
+
   glw_t *w = glw_create(gr, &glw_view, parent, NULL, NULL);
 
   LIST_FOREACH(gcv, &gr->gr_views, gcv_link) {
-    if(!strcmp(rstr_get(gcv->gcv_url), rstr_get(url)))
+    if(rstr_eq(gcv->gcv_url, url) && rstr_eq(gcv->gcv_alturl, alturl))
       break;
   }
 

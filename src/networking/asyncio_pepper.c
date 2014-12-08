@@ -1,5 +1,910 @@
+#include "showtime.h"
+#include "misc/minmax.h"
+#include "misc/bytestream.h"
 #include "asyncio.h"
+#include "prop/prop.h"
+#include "arch/nacl/nacl.h"
+
+
+
+#include "ppapi/c/pp_errors.h"
+#include "ppapi/c/pp_module.h"
+#include "ppapi/c/pp_var.h"
+#include "ppapi/c/ppb.h"
+#include "ppapi/c/ppb_core.h"
+#include "ppapi/c/ppb_host_resolver.h"
+#include "ppapi/c/ppb_message_loop.h"
+#include "ppapi/c/ppb_tcp_socket.h"
+#include "ppapi/c/ppb_udp_socket.h"
+#include "ppapi/c/ppb_var.h"
+
+struct prop_courier *asyncio_courier;
+
+extern PP_Instance g_Instance;
+
+static const int asyncio_dbg = 1;
+
+LIST_HEAD(asyncio_fd_list, asyncio_fd);
+
+struct asyncio_fd {
+  void *af_opaque;
+  char *af_name;
+
+  union {
+    asyncio_error_callback_t  *af_error_callback;
+    asyncio_accept_callback_t *af_accept_callback;
+    asyncio_udp_callback_t    *af_udp_callback;
+  };
+
+  asyncio_read_callback_t *af_read_callback;
+
+  htsbuf_queue_t af_sendq;
+  htsbuf_queue_t af_recvq;
+
+  int af_refcount;
+  PP_Resource af_sock;
+  int af_pending_write;  // Number of bytes we're currently trying to write
+
+  char *af_recv_segment;
+  int af_recv_segment_size;
+
+  PP_Resource af_incoming_connection;
+
+  PP_Resource af_remote_addr;
+
+  int64_t af_timeout;
+  LIST_ENTRY(asyncio_fd) af_timeout_link;
+};
+
+static struct asyncio_fd_list timeout_list;
+static int timeout_list_count;
+
+
+extern PPB_HostResolver *ppb_hostresolver;
+extern PPB_Core *ppb_core;
+extern PPB_NetAddress *ppb_netaddress;
+extern PPB_TCPSocket *ppb_tcpsocket;
+extern PPB_UDPSocket *ppb_udpsocket;
+extern PPB_Var *ppb_var;
+extern const PPB_MessageLoop *ppb_messageloop;
+
+static PP_Resource asyncio_msgloop;
+
+
+#define MAX_WORKERS 64
+static void (*workers[MAX_WORKERS])(void);
+static int workers_cnt;
+
+LIST_HEAD(asyncio_timer_list, asyncio_timer);
+static struct asyncio_timer_list asyncio_timers;
+
+static void tcp_do_write(asyncio_fd_t *af);
+static void tcp_do_recv(asyncio_fd_t *af);
+static void tcp_do_accept(asyncio_fd_t *af);
+
+static void udp_do_recv(asyncio_fd_t *af);
+
+/**
+ *
+ */
+int
+asyncio_add_worker(void (*fn)(void))
+{
+  int r = ++workers_cnt;
+  workers[r] = fn;
+  return r;
+}
+
+
+/**
+ *
+ */
+void
+asyncio_wakeup_worker(int id)
+{
+  ppb_messageloop->PostWork(asyncio_msgloop,
+                            (const struct PP_CompletionCallback) {
+                              (void *)workers[id], NULL}, 0);
+}
+
+
+/**
+ *
+ */
+int64_t
+async_current_time(void)
+{
+  return showtime_get_ts();
+}
+
+
+
+
+void
+asyncio_timer_init(asyncio_timer_t *at, void (*fn)(void *opaque),
+                   void *opaque)
+{
+  at->at_fn = fn;
+  at->at_opaque = opaque;
+  at->at_expire = 0;
+}
+
+
+/**
+ *
+ */
+static int
+at_compar(const asyncio_timer_t *a, const asyncio_timer_t *b)
+{
+  if(a->at_expire < b->at_expire)
+    return -1;
+  return 1;
+}
+
+
+/**
+ *
+ */
+static void
+process_timers(int64_t now)
+{
+  asyncio_timer_t *at;
+
+  while((at = LIST_FIRST(&asyncio_timers)) != NULL &&
+        at->at_expire <= now) {
+    LIST_REMOVE(at, at_link);
+    at->at_expire = 0;
+    at->at_fn(at->at_opaque);
+  }
+}
+
+
+/**
+ *
+ */
+static void
+asyncio_timer_arm(asyncio_timer_t *at, int64_t expire)
+{
+  if(at->at_expire)
+    LIST_REMOVE(at, at_link);
+
+  at->at_expire = expire;
+  LIST_INSERT_SORTED(&asyncio_timers, at, at_link, at_compar, asyncio_timer_t);
+}
+
+
+/**
+ *
+ */
+void
+asyncio_timer_arm_delta_sec(asyncio_timer_t *at, int delta)
+{
+  asyncio_timer_arm(at, async_current_time() + delta * 1000000LL);
+}
+
+
+/**
+ *
+ */
+void
+asyncio_timer_disarm(asyncio_timer_t *at)
+{
+  if(at->at_expire) {
+    LIST_REMOVE(at, at_link);
+    at->at_expire = 0;
+  }
+}
+
+
+
+
+/**
+ *
+ */
+static asyncio_fd_t *
+asyncio_fd_create(const char *name, PP_Resource sock, void *opaque)
+{
+  asyncio_fd_t *af = calloc(1, sizeof(asyncio_fd_t));
+  af->af_sock = sock;
+  af->af_name = strdup(name);
+  af->af_opaque = opaque;
+  af->af_refcount = 1;
+  htsbuf_queue_init(&af->af_sendq, 0);
+  htsbuf_queue_init(&af->af_recvq, 0);
+  return af;
+}
+
+
+/**
+ *
+ */
+static asyncio_fd_t *
+asyncio_fd_retain(asyncio_fd_t *af)
+{
+  af->af_refcount++;
+  return af;
+}
+
+
+/**
+ *
+ */
+static void
+asyncio_fd_release(asyncio_fd_t *af)
+{
+  af->af_refcount--;
+  if(af->af_refcount > 0)
+    return;
+
+  assert(af->af_timeout == 0);
+  assert(af->af_recv_segment == NULL);
+  assert(af->af_pending_write == 0);
+  htsbuf_queue_flush(&af->af_sendq);
+  htsbuf_queue_flush(&af->af_recvq);
+  ppb_core->ReleaseResource(af->af_sock);
+  free(af->af_recv_segment);
+  free(af->af_name);
+  free(af);
+}
+
+
+/**
+ *
+ */
+void
+asyncio_del_fd(asyncio_fd_t *af)
+{
+  if(af->af_timeout) {
+    LIST_REMOVE(af, af_timeout_link);
+    timeout_list_count--;
+    af->af_timeout = 0;
+  }
+
+  af->af_read_callback = NULL;
+  af->af_error_callback = NULL;
+
+  ppb_tcpsocket->Close(af->af_sock);
+  asyncio_fd_release(af);
+}
+
+
+/**
+ *
+ */
+static void
+tcp_accept_completed(void *aux, int retcode)
+{
+  asyncio_fd_t *af = aux;
+
+  if(retcode == 0 && af->af_accept_callback != NULL) {
+    net_addr_t local = {0}, remote = {0};
+
+    pepper_NetAddress_to_net_addr(&local,
+                                  ppb_tcpsocket->GetLocalAddress(af->af_sock));
+
+    pepper_NetAddress_to_net_addr(&remote,
+                                  ppb_tcpsocket->GetRemoteAddress(af->af_sock));
+
+    af->af_accept_callback(af->af_opaque, af->af_incoming_connection,
+                           &local, &remote);
+  }
+
+  af->af_incoming_connection = 0;
+  tcp_do_accept(af);
+  asyncio_fd_release(af);
+}
+
+
+/**
+ *
+ */
+static void
+tcp_do_accept(asyncio_fd_t *af)
+{
+  assert(af->af_incoming_connection == 0);
+
+  ppb_tcpsocket->Accept(af->af_sock, &af->af_incoming_connection,
+                        (const struct PP_CompletionCallback) {
+                          tcp_accept_completed, asyncio_fd_retain(af)});
+}
+
+
+/**
+ *
+ */
+asyncio_fd_t *
+asyncio_listen(const char *name,
+               int port,
+               asyncio_accept_callback_t *cb,
+               void *opaque,
+               int bind_any_on_fail)
+{
+  PP_Resource sock = ppb_tcpsocket->Create(g_Instance);
+  PP_Resource addr;
+  struct PP_NetAddress_IPv4 ipv4_addr = {};
+
+  wr16_be((uint8_t *)&ipv4_addr.port, port);
+  addr = ppb_netaddress->CreateFromIPv4Address(g_Instance, &ipv4_addr);
+
+  int r = ppb_tcpsocket->Bind(sock, addr, PP_BlockUntilComplete());
+  if(r) {
+    TRACE(TRACE_ERROR, "ASYNCIO", "Unable to bind TCP socket %s -- %s",
+          name, pepper_errmsg(r));
+    ppb_core->ReleaseResource(addr);
+    ppb_core->ReleaseResource(sock);
+    return NULL;
+  }
+
+  r = ppb_tcpsocket->Listen(sock, 10, PP_BlockUntilComplete());
+
+  if(r) {
+    TRACE(TRACE_ERROR, "ASYNCIO", "Unable to listen on TCP socket %s -- %s",
+          name, pepper_errmsg(r));
+    ppb_core->ReleaseResource(addr);
+    ppb_core->ReleaseResource(sock);
+    return NULL;
+  }
+
+  if(1) {
+    struct PP_Var remote = ppb_netaddress->DescribeAsString(addr, 1);
+    uint32_t len;
+    const char *s = ppb_var->VarToUtf8(remote, &len);
+    TRACE(TRACE_DEBUG, "ASYNCIO", "Listening on TCP %.*s", len, s);
+    ppb_var->Release(remote);
+  }
+
+  ppb_core->ReleaseResource(addr);
+
+  asyncio_fd_t *af = asyncio_fd_create(name, sock, opaque);
+  tcp_do_accept(af);
+  af->af_accept_callback = cb;
+
+  return af;
+}
+
+
+/**
+ *
+ */
+static void
+tcp_read_completed(void *aux, int32_t result)
+{
+  asyncio_fd_t *af = aux;
+
+  if(result < 0) {
+    if(af->af_error_callback != NULL)
+      af->af_error_callback(af->af_opaque, pepper_errmsg(result));
+    free(af->af_recv_segment);
+    af->af_recv_segment = NULL;
+  } else {
+    assert(result <= af->af_recv_segment_size);
+    htsbuf_append_prealloc(&af->af_recvq, af->af_recv_segment, result);
+    af->af_recv_segment = NULL;
+
+    if(af->af_read_callback != NULL)
+      af->af_read_callback(af->af_opaque, &af->af_recvq);
+    tcp_do_recv(af);
+  }
+
+  asyncio_fd_release(af);
+}
+
+
+/**
+ *
+ */
+static void
+tcp_do_recv(asyncio_fd_t *af)
+{
+  assert(af->af_recv_segment == NULL);
+
+  af->af_recv_segment_size = 8192;
+  af->af_recv_segment = malloc(af->af_recv_segment_size);
+
+  ppb_tcpsocket->Read(af->af_sock,
+                      af->af_recv_segment, af->af_recv_segment_size,
+                      (const struct PP_CompletionCallback) {
+                        tcp_read_completed, asyncio_fd_retain(af)});
+}
+
+
+/**
+ *
+ */
+static void
+tcp_connected(void *aux, int32_t errcode)
+{
+  asyncio_fd_t *af = aux;
+
+  if(af->af_timeout) {
+    af->af_timeout = 0;
+    LIST_REMOVE(af, af_timeout_link);
+    timeout_list_count--;
+  }
+
+  if(af->af_error_callback != NULL) {
+
+    if(errcode) {
+      af->af_error_callback(af->af_opaque, pepper_errmsg(errcode));
+    } else {
+      af->af_error_callback(af->af_opaque, NULL);
+      tcp_do_recv(af);
+    }
+  }
+  asyncio_fd_release(af);
+}
+
+
+/**
+ *
+ */
+asyncio_fd_t *
+asyncio_connect(const char *name,
+                const net_addr_t *na,
+                asyncio_error_callback_t *error_cb,
+                asyncio_read_callback_t *read_cb,
+                void *opaque,
+                int timeout)
+{
+  PP_Resource sock = ppb_tcpsocket->Create(g_Instance);
+  PP_Resource addr;
+
+  struct PP_NetAddress_IPv4 ipv4_addr = {};
+  struct PP_NetAddress_IPv6 ipv6_addr = {};
+
+  switch(na->na_family) {
+  case 4:
+    memcpy(ipv4_addr.addr, na->na_addr, 4);
+    wr16_be((uint8_t *)&ipv4_addr.port, na->na_port);
+    addr = ppb_netaddress->CreateFromIPv4Address(g_Instance, &ipv4_addr);
+    break;
+  case 6:
+    memcpy(ipv6_addr.addr, na->na_addr, 16);
+    wr16_be((uint8_t *)&ipv6_addr.port, na->na_port);
+    addr = ppb_netaddress->CreateFromIPv6Address(g_Instance, &ipv6_addr);
+    break;
+  default:
+    abort();
+  }
+
+  if(asyncio_dbg) { // debug
+    struct PP_Var remote = ppb_netaddress->DescribeAsString(addr, 1);
+    uint32_t len;
+    const char *s = ppb_var->VarToUtf8(remote, &len);
+    TRACE(TRACE_DEBUG, "ASYNCIO", "Connecting to %.*s", len, s);
+    ppb_var->Release(remote);
+  }
+
+
+  asyncio_fd_t *af = asyncio_fd_create(name, sock, opaque);
+  af->af_error_callback = error_cb;
+  af->af_read_callback  = read_cb;
+
+  af->af_timeout = async_current_time() + timeout * 1000;
+  LIST_INSERT_HEAD(&timeout_list, af, af_timeout_link);
+  timeout_list_count++;
+
+  ppb_tcpsocket->Connect(sock, addr,
+                         (const struct PP_CompletionCallback) {
+                           tcp_connected, asyncio_fd_retain(af)});
+
+  ppb_core->ReleaseResource(addr);
+  return af;
+}
+
+
+/**
+ *
+ */
+asyncio_fd_t *
+asyncio_attach(const char *name, int fd,
+               asyncio_error_callback_t *error_cb,
+               asyncio_read_callback_t *read_cb,
+               void *opaque)
+{
+  asyncio_fd_t *af = asyncio_fd_create(name, fd, opaque);
+  af->af_error_callback = error_cb;
+  af->af_read_callback  = read_cb;
+
+  tcp_do_recv(af);
+
+  return af;
+}
+
+
+/**
+ *
+ */
+static void
+tcp_written(void *aux, int result)
+{
+  asyncio_fd_t *af = aux;
+  if(result < 0) {
+    if(af->af_error_callback != NULL)
+      af->af_error_callback(af->af_opaque, pepper_errmsg(result));
+  } else {
+    assert(result <= af->af_pending_write);
+    htsbuf_drop(&af->af_sendq, result);
+    af->af_pending_write = 0;
+    tcp_do_write(af);
+  }
+
+  asyncio_fd_release(af);
+}
+
+
+/**
+ *
+ */
+static void
+tcp_do_write(asyncio_fd_t *af)
+{
+  if(af->af_pending_write)
+    return;
+
+  const htsbuf_data_t *hd = TAILQ_FIRST(&af->af_sendq.hq_q);
+  if(hd == NULL)
+    return;
+
+  int size = hd->hd_data_len - hd->hd_data_off;
+  assert(size > 0);
+  const void *d = hd->hd_data + hd->hd_data_off;
+
+  af->af_pending_write = size;
+
+  ppb_tcpsocket->Write(af->af_sock, d, size,
+                       (const struct PP_CompletionCallback) {
+                         tcp_written, asyncio_fd_retain(af)});
+}
+
+
+
+/**
+ *
+ */
+void
+asyncio_send(asyncio_fd_t *af, const void *buf, size_t len, int cork)
+{
+  htsbuf_append(&af->af_sendq, buf, len);
+  if(!cork)
+    tcp_do_write(af);
+}
+
+
+/**
+ *
+ */
+void
+asyncio_sendq(asyncio_fd_t *af, htsbuf_queue_t *q, int cork)
+{
+  htsbuf_appendq(&af->af_sendq, q);
+  if(!cork)
+    tcp_do_write(af);
+}
+
+
+/**
+ *
+ */
+int
+asyncio_get_port(asyncio_fd_t *af)
+{
+  TRACE(TRACE_DEBUG, "ASYNCIO", "%s NOT IMPLEMENTED", __FUNCTION__);
+  return 0;
+}
+
+/**
+ *
+ */
+void
+asyncio_set_timeout_delta_sec(asyncio_fd_t *af, int seconds)
+{
+  if(af->af_timeout == 0) {
+    LIST_INSERT_HEAD(&timeout_list, af, af_timeout_link);
+    timeout_list_count++;
+  }
+
+  assert(af->af_error_callback != NULL);
+  af->af_timeout = seconds * 1000000LL + async_current_time();
+}
+
+
+/**
+ *
+ */
+static void
+udp_read_completed(void *aux, int32_t result)
+{
+  asyncio_fd_t *af = aux;
+
+  TRACE(TRACE_DEBUG, "ASYNCIO", "UDP RECV %s : %d", af->af_name, result);
+
+  if(result > 0 && af->af_udp_callback != NULL) {
+
+    if(1) {
+      struct PP_Var remote =
+        ppb_netaddress->DescribeAsString(af->af_remote_addr, 1);
+      uint32_t len;
+      const char *s = ppb_var->VarToUtf8(remote, &len);
+      TRACE(TRACE_DEBUG, "ASYNCIO", "Got UDP from %.*s", len, s);
+      ppb_var->Release(remote);
+    }
+
+    net_addr_t remote = {0};
+    pepper_NetAddress_to_net_addr(&remote, af->af_remote_addr);
+
+    af->af_udp_callback(af->af_opaque, af->af_recv_segment,
+                        result, &remote);
+  }
+
+  ppb_core->ReleaseResource(af->af_remote_addr);
+  af->af_remote_addr = 0;
+  udp_do_recv(af);
+  asyncio_fd_release(af);
+}
+
+
+/**
+ *
+ */
+static void
+udp_do_recv(asyncio_fd_t *af)
+{
+  assert(af->af_remote_addr == 0);
+
+  if(af->af_recv_segment == NULL) {
+    af->af_recv_segment_size = 65536;
+    af->af_recv_segment = malloc(af->af_recv_segment_size);
+  }
+
+  ppb_udpsocket->RecvFrom(af->af_sock,
+                          af->af_recv_segment, af->af_recv_segment_size,
+                          &af->af_remote_addr,
+                          (const struct PP_CompletionCallback) {
+                            udp_read_completed, asyncio_fd_retain(af)});
+}
+
+
+/**
+ *
+ */
+asyncio_fd_t *
+asyncio_udp_bind(const char *name,
+                 int port,
+                 asyncio_udp_callback_t *cb,
+                 void *opaque,
+                 int bind_any_on_fail)
+{
+  PP_Resource sock = ppb_udpsocket->Create(g_Instance);
+  PP_Resource addr;
+  struct PP_NetAddress_IPv4 ipv4_addr = {};
+
+  wr16_be((uint8_t *)&ipv4_addr.port, port);
+  addr = ppb_netaddress->CreateFromIPv4Address(g_Instance, &ipv4_addr);
+
+  int r = ppb_udpsocket->Bind(sock, addr, PP_BlockUntilComplete());
+  if(r) {
+    TRACE(TRACE_ERROR, "ASYNCIO", "Unable to bind UDP socket %s -- %s",
+          name, pepper_errmsg(r));
+    ppb_core->ReleaseResource(addr);
+    ppb_core->ReleaseResource(sock);
+    return NULL;
+  }
+
+  if(1) {
+    struct PP_Var remote = ppb_netaddress->DescribeAsString(addr, 1);
+    uint32_t len;
+    const char *s = ppb_var->VarToUtf8(remote, &len);
+    TRACE(TRACE_DEBUG, "ASYNCIO", "Listening on UDP %.*s", len, s);
+    ppb_var->Release(remote);
+  }
+
+  ppb_core->ReleaseResource(addr);
+
+  asyncio_fd_t *af = asyncio_fd_create(name, sock, opaque);
+  af->af_udp_callback = cb;
+  udp_do_recv(af);
+
+  return af;
+}
+
+/**
+ *
+ */
+void
+asyncio_udp_send(asyncio_fd_t *af, const void *data, int size,
+                 const net_addr_t *remote_addr)
+{
+  PP_Resource addr;
+  struct PP_NetAddress_IPv4 ipv4_addr = {};
+
+  memcpy(&ipv4_addr.addr, remote_addr->na_addr, 4);
+  wr16_be((uint8_t *)&ipv4_addr.port, remote_addr->na_port);
+  addr = ppb_netaddress->CreateFromIPv4Address(g_Instance, &ipv4_addr);
+
+  int r = ppb_udpsocket->SendTo(af->af_sock, data, size, addr,
+                                PP_BlockUntilComplete());
+
+
+  TRACE(TRACE_DEBUG, "ASYNCIO", "UDP SEND %s : %s", af->af_name,
+        pepper_errmsg(r));
+
+  ppb_core->ReleaseResource(addr);
+}
+
+
+
+
+
+/**
+ *
+ */
+struct asyncio_dns_req {
+  char *adr_hostname;
+  void *adr_opaque;
+  void (*adr_cb)(void *opaque, int status, const void *data);
+  PP_Resource adr_res;
+};
+
+
+/**
+ *
+ */
+static void
+dns_lookup_done(void *aux, int result)
+{
+  asyncio_dns_req_t *adr = aux;
+
+  if(result) {
+    adr->adr_cb(adr->adr_opaque, ASYNCIO_DNS_STATUS_FAILED,
+                pepper_errmsg(result));
+  } else {
+    net_addr_t addr;
+    if(pepper_Resolver_to_net_addr(&addr, adr->adr_res)) {
+      adr->adr_cb(adr->adr_opaque, ASYNCIO_DNS_STATUS_FAILED, "Bad address");
+    } else {
+      adr->adr_cb(adr->adr_opaque, ASYNCIO_DNS_STATUS_COMPLETED, &addr);
+    }
+  }
+
+  ppb_core->ReleaseResource(adr->adr_res);
+  free(adr->adr_hostname);
+  free(adr);
+}
+
+/**
+ *
+ */
+static void
+dns_do_request(void *aux, int r)
+{
+  asyncio_dns_req_t *adr = aux;
+
+  struct PP_HostResolver_Hint hint = {PP_NETADDRESS_FAMILY_UNSPECIFIED, 0};
+
+  ppb_hostresolver->Resolve(adr->adr_res, adr->adr_hostname, 0, &hint,
+                            (const struct PP_CompletionCallback) {
+                              dns_lookup_done, adr});
+}
+
+/**
+ *
+ */
+asyncio_dns_req_t *
+asyncio_dns_lookup_host(const char *hostname,
+                        void (*cb)(void *opaque,
+                                   int status,
+                                   const void *data),
+                        void *opaque)
+{
+  asyncio_dns_req_t *adr = calloc(1, sizeof(asyncio_dns_req_t));
+  adr->adr_hostname = strdup(hostname);
+  adr->adr_cb = cb;
+  adr->adr_opaque = opaque;
+  adr->adr_res = ppb_hostresolver->Create(g_Instance);
+
+  ppb_messageloop->PostWork(asyncio_msgloop,
+                            (const struct PP_CompletionCallback) {
+                              dns_do_request, adr}, 0);
+  return adr;
+}
+
+
+/**
+ *
+ */
+static void
+process_fd_timeouts(int64_t now)
+{
+  asyncio_fd_t *af;
+  asyncio_fd_t **vec = malloc(timeout_list_count * sizeof(asyncio_fd_t *));
+  int i;
+
+  const int count = timeout_list_count;
+
+  af = LIST_FIRST(&timeout_list);
+  for(i = 0; i < timeout_list_count; i++) {
+    vec[i] = asyncio_fd_retain(af);
+    af = LIST_NEXT(af, af_timeout_link);
+  }
+
+  assert(af == NULL);
+
+  for(i = 0; i < count; i++) {
+    af = vec[i];
+    if(af->af_timeout && af->af_timeout < now) {
+      LIST_REMOVE(af, af_timeout_link);
+      timeout_list_count--;
+      af->af_timeout = 0;
+      af->af_error_callback(af->af_opaque, "Connection timed out");
+    }
+    asyncio_fd_release(af);
+  }
+  free(vec);
+}
+
+
+/**
+ *
+ */
+static void
+asyncio_periodic(void *aux, int32_t res)
+{
+  int64_t now = async_current_time();
+
+  process_timers(now);
+  process_fd_timeouts(now);
+  ppb_messageloop->PostWork(asyncio_msgloop,
+                            (const struct PP_CompletionCallback) {
+                              asyncio_periodic, NULL}, 1000);
+}
+
+
+/**
+ *
+ */
+static void
+asyncio_courier_poll(void *aux, int val)
+{
+  prop_courier_poll(aux);
+}
+
+
+/**
+ *
+ */
+static void
+asyncio_courier_notify(void *opaque)
+{
+  ppb_messageloop->PostWork(asyncio_msgloop,
+                            (const struct PP_CompletionCallback) {
+                              asyncio_courier_poll, asyncio_courier}, 0);
+}
+
+
+/**
+ *
+ */
+static void *
+asyncio_thread(void *aux)
+{
+  asyncio_msgloop = ppb_messageloop->GetCurrent();
+
+  asyncio_courier = prop_courier_create_notify(asyncio_courier_notify, NULL);
+
+  init_group(INIT_GROUP_ASYNCIO);
+  asyncio_periodic(NULL, 0);
+  ppb_messageloop->Run(asyncio_msgloop);
+  return NULL;
+}
+
+
+/**
+ *
+ */
 void
 asyncio_init(void)
 {
+  hts_thread_create_detached("asyncio", asyncio_thread,
+                             NULL, THREAD_PRIO_MODEL);
 }
