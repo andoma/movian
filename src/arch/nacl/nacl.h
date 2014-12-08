@@ -22,3 +22,7 @@
 #pragma once
 
 const char *pepper_errmsg(int err);
+
+struct net_addr;
+int pepper_NetAddress_to_net_addr(struct net_addr *dst, int src);
+int pepper_Resolver_to_net_addr(struct net_addr *dst, int src);

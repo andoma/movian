@@ -116,6 +116,53 @@ tcp_from_fd(int fd)
  *
  */
 int
+pepper_NetAddress_to_net_addr(struct net_addr *addr, PP_Resource addr_res)
+{
+  struct PP_NetAddress_IPv4 ipv4_addr;
+  struct PP_NetAddress_IPv6 ipv6_addr;
+
+  switch(ppb_netaddress->GetFamily(addr_res)) {
+
+  case PP_NETADDRESS_FAMILY_IPV4:
+    ppb_netaddress->DescribeAsIPv4Address(addr_res, &ipv4_addr);
+    addr->na_family = 4;
+    memcpy(addr->na_addr, ipv4_addr.addr, 4);
+    addr->na_port = rd16_be((uint8_t *)&ipv4_addr.port);
+    return 0;
+
+  case PP_NETADDRESS_FAMILY_IPV6:
+    ppb_netaddress->DescribeAsIPv6Address(addr_res, &ipv6_addr);
+    addr->na_family = 6;
+    memcpy(addr->na_addr, ipv6_addr.addr, 16);
+    addr->na_port = rd16_be((uint8_t *)&ipv6_addr.port);
+    return 0;
+
+  default:
+    TRACE(TRACE_DEBUG, "NET", "Unknown family");
+    return -1;
+  }
+}
+
+/**
+ *
+ */
+int
+pepper_Resolver_to_net_addr(struct net_addr *addr, PP_Resource res)
+{
+  PP_Resource addr_res = ppb_hostresolver->GetNetAddress(res, 0);
+  if(addr_res == 0) {
+    TRACE(TRACE_DEBUG, "NET", "No addresses");
+    return -1;
+  }
+
+  return pepper_NetAddress_to_net_addr(addr, addr_res);
+}
+
+
+/**
+ *
+ */
+int
 net_resolve(const char *hostname, net_addr_t *addr, const char **err)
 {
   int rval = -1;
@@ -127,34 +174,10 @@ net_resolve(const char *hostname, net_addr_t *addr, const char **err)
   if(r == 0) {
     // OK
 
-    PP_Resource addr_res = ppb_hostresolver->GetNetAddress(res, 0);
-    if(addr_res == 0) {
-      *err = "No address";
-
+    if(pepper_Resolver_to_net_addr(addr, res)) {
+      *err = "Invalid address";
     } else {
-
-      struct PP_NetAddress_IPv4 ipv4_addr;
-      struct PP_NetAddress_IPv6 ipv6_addr;
-
-      switch(ppb_netaddress->GetFamily(addr_res)) {
-
-      case PP_NETADDRESS_FAMILY_IPV4:
-        ppb_netaddress->DescribeAsIPv4Address(addr_res, &ipv4_addr);
-        addr->na_family = 4;
-        memcpy(addr->na_addr, ipv4_addr.addr, 4);
-        rval = 0;
-        break;
-
-      case PP_NETADDRESS_FAMILY_IPV6:
-        ppb_netaddress->DescribeAsIPv6Address(addr_res, &ipv6_addr);
-        addr->na_family = 6;
-        memcpy(addr->na_addr, ipv6_addr.addr, 16);
-        rval = 0;
-        break;
-
-      default:
-        *err = "Bad address type";
-      }
+      rval = 0;
     }
 
   } else {
