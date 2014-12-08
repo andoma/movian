@@ -54,7 +54,7 @@ void htsbuf_qprintf(htsbuf_queue_t *hq, const char *fmt, ...);
 
 void htsbuf_append(htsbuf_queue_t *hq, const void *buf, size_t len);
 
-void htsbuf_append_prealloc(htsbuf_queue_t *hq, const void *buf, size_t len);
+void htsbuf_append_prealloc(htsbuf_queue_t *hq, void *buf, size_t len);
 
 void htsbuf_append_buf(htsbuf_queue_t *hq, buf_t *b);
 

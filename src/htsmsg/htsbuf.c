@@ -107,7 +107,7 @@ htsbuf_append(htsbuf_queue_t *hq, const void *buf, size_t len)
  *
  */
 void
-htsbuf_append_prealloc(htsbuf_queue_t *hq, const void *buf, size_t len)
+htsbuf_append_prealloc(htsbuf_queue_t *hq, void *buf, size_t len)
 {
   htsbuf_data_t *hd;
 
