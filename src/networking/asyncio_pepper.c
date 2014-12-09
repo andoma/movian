@@ -41,7 +41,7 @@ struct prop_courier *asyncio_courier;
 
 extern PP_Instance g_Instance;
 
-static const int asyncio_dbg = 1;
+static const int asyncio_dbg = 0;
 
 LIST_HEAD(asyncio_fd_list, asyncio_fd);
 
@@ -364,7 +364,7 @@ asyncio_listen(const char *name,
     return NULL;
   }
 
-  if(1) {
+  if(asyncio_dbg) {
     struct PP_Var remote = ppb_netaddress->DescribeAsString(addr, 1);
     uint32_t len;
     const char *s = ppb_var->VarToUtf8(remote, &len);
@@ -640,7 +640,7 @@ udp_read_completed(void *aux, int32_t result)
 
   if(result > 0 && af->af_udp_callback != NULL) {
 
-    if(1) {
+    if(asyncio_dbg) {
       struct PP_Var remote =
         ppb_netaddress->DescribeAsString(af->af_remote_addr, 1);
       uint32_t len;
@@ -710,7 +710,7 @@ asyncio_udp_bind(const char *name,
     return NULL;
   }
 
-  if(1) {
+  if(asyncio_dbg) {
     struct PP_Var remote = ppb_netaddress->DescribeAsString(addr, 1);
     uint32_t len;
     const char *s = ppb_var->VarToUtf8(remote, &len);
