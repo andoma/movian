@@ -86,7 +86,8 @@ typedef struct nacl_glw_root {
 
 } nacl_glw_root_t;
 
-static PP_Resource ui_context;
+PP_Resource nacl_3d_context;
+
 static nacl_glw_root_t *uiroot;
 
 static void mainloop(nacl_glw_root_t *ngr);
@@ -121,43 +122,45 @@ static int initialized;
 static void
 init_ui(void *data, int flags)
 {
+  nacl_glw_root_t *ngr = data;
+
   initialized |= flags;
 
   if(!(initialized & CORE_INITIALIZED))
     return;
 
-  if(uiroot->gr.gr_width == 0 || uiroot->gr.gr_height == 0)
+  if(ngr->gr.gr_width == 0 || ngr->gr.gr_height == 0)
     return;
 
-  if(ui_context) {
-    ppb_graphics3d->ResizeBuffers(ui_context,
-                                  uiroot->gr.gr_width,
-                                  uiroot->gr.gr_height);
+  if(nacl_3d_context) {
+    ppb_graphics3d->ResizeBuffers(nacl_3d_context,
+                                  ngr->gr.gr_width,
+                                  ngr->gr.gr_height);
     return;
   }
 
   const int32_t attrib_list[] = {
     PP_GRAPHICS3DATTRIB_ALPHA_SIZE, 8,
-    PP_GRAPHICS3DATTRIB_WIDTH,  uiroot->gr.gr_width,
-    PP_GRAPHICS3DATTRIB_HEIGHT, uiroot->gr.gr_height,
+    PP_GRAPHICS3DATTRIB_WIDTH,  ngr->gr.gr_width,
+    PP_GRAPHICS3DATTRIB_HEIGHT, ngr->gr.gr_height,
     PP_GRAPHICS3DATTRIB_NONE
   };
 
-  ui_context = ppb_graphics3d->Create(g_Instance, 0, attrib_list);
+  nacl_3d_context = ppb_graphics3d->Create(g_Instance, 0, attrib_list);
 
-  if(!ppb_instance->BindGraphics(g_Instance, ui_context)) {
+  if(!ppb_instance->BindGraphics(g_Instance, nacl_3d_context)) {
     TRACE(TRACE_DEBUG, "NACL", "Unable to bind 3d context");
     glSetCurrentContextPPAPI(0);
     return;
   }
 
-  glSetCurrentContextPPAPI(ui_context);
+  glSetCurrentContextPPAPI(nacl_3d_context);
   TRACE(TRACE_DEBUG, "NACL", "Current 3d context set");
 
-  glw_opengl_init_context(&uiroot->gr);
+  glw_opengl_init_context(&ngr->gr);
   glClearColor(0,0,0,0);
 
-  mainloop(uiroot);
+  mainloop(ngr);
 }
 
 
@@ -190,7 +193,7 @@ init_thread(void *aux)
   uiroot->gr.gr_prop_nav = nav_spawn();
 
   if(glw_init(&uiroot->gr))
-    return;
+    return NULL;
 
   TRACE(TRACE_DEBUG, "GLW", "GLW %p created", uiroot);
 
@@ -199,7 +202,7 @@ init_thread(void *aux)
   glw_unlock(&uiroot->gr);
 
   ppb_core->CallOnMainThread(0, (const struct PP_CompletionCallback) {
-      &init_ui, NULL}, CORE_INITIALIZED);
+      &init_ui, uiroot}, CORE_INITIALIZED);
 
   return NULL;
 }
@@ -320,7 +323,7 @@ mainloop(nacl_glw_root_t *ngr)
   cc.func = &swap_done;
   cc.user_data = ngr;
 
-  ppb_graphics3d->SwapBuffers(ui_context, cc);
+  ppb_graphics3d->SwapBuffers(nacl_3d_context, cc);
 }
 
 
@@ -341,7 +344,7 @@ Instance_DidChangeView(PP_Instance instance, PP_Resource view)
   uiroot->gr.gr_width  = width;
   uiroot->gr.gr_height = height;
 
-  init_ui(NULL, 0);
+  init_ui(uiroot, 0);
 }
 
 /**
