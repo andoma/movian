@@ -37,6 +37,7 @@
 #include "ppapi/c/ppb_file_system.h"
 #include "ppapi/c/ppb_file_ref.h"
 #include "ppapi/c/ppb_file_io.h"
+#include "ppapi/c/ppb_fullscreen.h"
 #include "ppapi/c/ppb_host_resolver.h"
 #include "ppapi/c/ppb_input_event.h"
 #include "ppapi/c/ppb_instance.h"
@@ -73,6 +74,7 @@ const PPB_FileRef *ppb_fileref;
 const PPB_FileIO *ppb_fileio;
 const PPB_AudioConfig *ppb_audioconfig;
 const PPB_Audio *ppb_audio;
+const PPB_Fullscreen *ppb_fullscreen;
 
 PP_Instance g_Instance;
 PP_Resource g_persistent_fs;
@@ -110,7 +112,6 @@ arch_exit(void)
 
 
 #define CORE_INITIALIZED   0x1
-#define SIZE_KNOWN         0x2
 
 static int initialized;
 
@@ -118,60 +119,45 @@ static int initialized;
  *
  */
 static void
-init_done(void *data, int flags)
+init_ui(void *data, int flags)
 {
   initialized |= flags;
 
   if(!(initialized & CORE_INITIALIZED))
     return;
 
-  if(!(initialized & SIZE_KNOWN))
+  if(uiroot->gr.gr_width == 0 || uiroot->gr.gr_height == 0)
     return;
 
   if(ui_context) {
     ppb_graphics3d->ResizeBuffers(ui_context,
                                   uiroot->gr.gr_width,
                                   uiroot->gr.gr_height);
-
-  } else {
-
-    if(!glInitializePPAPI(get_browser_interface)) {
-      TRACE(TRACE_DEBUG, "NACL", "Unable to initialize GL PPAPI");
-      return;
-    }
-
-    const int32_t attrib_list[] = {
-      PP_GRAPHICS3DATTRIB_ALPHA_SIZE, 8,
-      PP_GRAPHICS3DATTRIB_WIDTH,  uiroot->gr.gr_width,
-      PP_GRAPHICS3DATTRIB_HEIGHT, uiroot->gr.gr_height,
-      PP_GRAPHICS3DATTRIB_NONE
-    };
-
-    ui_context = ppb_graphics3d->Create(g_Instance, 0, attrib_list);
-
-    if(!ppb_instance->BindGraphics(g_Instance, ui_context)) {
-      TRACE(TRACE_DEBUG, "NACL", "Unable to bind 3d context");
-      glSetCurrentContextPPAPI(0);
-      return;
-    }
-
-    glSetCurrentContextPPAPI(ui_context);
-    TRACE(TRACE_DEBUG, "NACL", "Current 3d context set");
-
-    if(glw_init(&uiroot->gr))
-      return;
-
-    TRACE(TRACE_DEBUG, "GLW", "GLW %p created", uiroot);
-
-    glw_lock(&uiroot->gr);
-    glw_load_universe(&uiroot->gr);
-    glw_unlock(&uiroot->gr);
-
-    glw_opengl_init_context(&uiroot->gr);
-    glClearColor(0,0,0,0);
-
-    mainloop(uiroot);
+    return;
   }
+
+  const int32_t attrib_list[] = {
+    PP_GRAPHICS3DATTRIB_ALPHA_SIZE, 8,
+    PP_GRAPHICS3DATTRIB_WIDTH,  uiroot->gr.gr_width,
+    PP_GRAPHICS3DATTRIB_HEIGHT, uiroot->gr.gr_height,
+    PP_GRAPHICS3DATTRIB_NONE
+  };
+
+  ui_context = ppb_graphics3d->Create(g_Instance, 0, attrib_list);
+
+  if(!ppb_instance->BindGraphics(g_Instance, ui_context)) {
+    TRACE(TRACE_DEBUG, "NACL", "Unable to bind 3d context");
+    glSetCurrentContextPPAPI(0);
+    return;
+  }
+
+  glSetCurrentContextPPAPI(ui_context);
+  TRACE(TRACE_DEBUG, "NACL", "Current 3d context set");
+
+  glw_opengl_init_context(&uiroot->gr);
+  glClearColor(0,0,0,0);
+
+  mainloop(uiroot);
 }
 
 
@@ -203,8 +189,17 @@ init_thread(void *aux)
   uiroot->gr.gr_prop_ui = prop_create_root("ui");
   uiroot->gr.gr_prop_nav = nav_spawn();
 
+  if(glw_init(&uiroot->gr))
+    return;
+
+  TRACE(TRACE_DEBUG, "GLW", "GLW %p created", uiroot);
+
+  glw_lock(&uiroot->gr);
+  glw_load_universe(&uiroot->gr);
+  glw_unlock(&uiroot->gr);
+
   ppb_core->CallOnMainThread(0, (const struct PP_CompletionCallback) {
-      &init_done, NULL}, CORE_INITIALIZED);
+      &init_ui, NULL}, CORE_INITIALIZED);
 
   return NULL;
 }
@@ -219,6 +214,9 @@ Instance_DidCreate(PP_Instance instance,  uint32_t argc,
 {
   g_Instance = instance;
   gconf.trace_level = TRACE_DEBUG;
+
+  if(!glInitializePPAPI(get_browser_interface))
+    panic("Unable to initialize GL PPAPI");
 
   ppb_inputevent->RequestInputEvents(instance,
                                      PP_INPUTEVENT_CLASS_MOUSE |
@@ -343,7 +341,7 @@ Instance_DidChangeView(PP_Instance instance, PP_Resource view)
   uiroot->gr.gr_width  = width;
   uiroot->gr.gr_height = height;
 
-  init_done(NULL, SIZE_KNOWN);
+  init_ui(NULL, 0);
 }
 
 /**
@@ -373,6 +371,7 @@ Instance_HandleDocumentLoad(PP_Instance instance, PP_Resource url_loader)
 #define KC_ESC   27
 
 #define KC_F1    112
+#define KC_F11   122
 #define KC_F12   123
 
 #define KC_HOME    36
@@ -440,8 +439,12 @@ handle_keydown(nacl_glw_root_t *ngr, PP_Resource input_event)
   uint32_t code = ppb_keyboardinputevent->GetKeyCode(input_event);
   uint32_t mod  = ppb_inputevent->GetModifiers(input_event) & 0xf;
   event_t *e = NULL;
-  TRACE(TRACE_DEBUG, "NACL", "Code: %d mods:%x",
-        code, mod);
+
+  if(code == KC_F11) {
+    int fs = ppb_fullscreen->IsFullscreen(g_Instance);
+    ppb_fullscreen->SetFullscreen(g_Instance, !fs);
+    return;
+  }
 
   for(int i = 0; i < sizeof(keysym2action) / sizeof(*keysym2action); i++) {
 
@@ -555,6 +558,7 @@ PPP_InitializeModule(PP_Module a_module_id, PPB_GetInterface get_browser)
   ppb_fileio             = get_browser(PPB_FILEIO_INTERFACE);
   ppb_audio              = get_browser(PPB_AUDIO_INTERFACE);
   ppb_audioconfig        = get_browser(PPB_AUDIO_CONFIG_INTERFACE);
+  ppb_fullscreen         = get_browser(PPB_FULLSCREEN_INTERFACE);
   return PP_OK;
 }
 
