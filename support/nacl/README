@@ -1,0 +1,18 @@
+To run Showtime from this dir,
+
+ Start a HTTP server serving files from this dir. I typically use:
+
+   python -m SimpleHTTPServer
+
+Then start Chrome from commandline to allows NaCl from any websites and
+also allow full socket access. (The latter can only be done from command line)
+
+On OS/X I run:
+
+   /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --allow-nacl-socket-api=localhost  --enable-logging=stderr --enable-nacl http://localhost:8000/index.html
+
+Go fullscreen with F11
+
+For more key bindings see
+ https://showtimemediacenter.com/projects/showtime/wiki/Key_mappings
+

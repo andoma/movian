@@ -1,4 +1,4 @@
-.DEFAULT_GOAL := ${PROG}.pexe
+.DEFAULT_GOAL := dist
 
 SRCS += src/arch/nacl/nacl_main.c \
 	src/arch/nacl/nacl_misc.c \
@@ -11,3 +11,29 @@ SRCS += src/arch/nacl/nacl_main.c \
 
 ${PROG}.pexe: ${PROG}.bundle
 	${FINALIZE} -o $@ $<
+
+${BUILDDIR}/dist/%: support/nacl/%
+	@mkdir -p $(dir $@)
+	cp $< $@
+
+${BUILDDIR}/dist/showtime.pexe: ${PROG}.pexe
+	@mkdir -p $(dir $@)
+	cp $< $@
+
+${BUILDDIR}/dist/showtime.bundle: ${PROG}.bundle
+	@mkdir -p $(dir $@)
+	cp $< $@
+
+DISTFILES = \
+	${BUILDDIR}/dist/showtime.pexe \
+	${BUILDDIR}/dist/index.html \
+	${BUILDDIR}/dist/showtime.css \
+	${BUILDDIR}/dist/showtime.js \
+	${BUILDDIR}/dist/README \
+	${BUILDDIR}/dist/showtime.nmf \
+
+
+.PHONY: dist dbgdist
+dist:	${DISTFILES}
+
+dbgdist:	${DISTFILES} ${BUILDDIR}/dist/showtime.bundle

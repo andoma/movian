@@ -33,12 +33,18 @@ for opt do
   ;;
   --logtarget=*) DEFAULT_LOGTARGET="$optval"
   ;;
+  --pepper=*) PEPPER="$optval"
+  ;;
   *)
   common_opt $opt $optval
   esac
 done
 
-TOOLCHAIN=/Users/andoma/nacl/nacl_sdk/pepper_37/toolchain/mac_pnacl/bin/pnacl-
+if [ -z "${PEPPER}" ]; then
+    echo " --pepper=PATH   argument missing"
+fi
+
+TOOLCHAIN=${PEPPER}/toolchain/mac_pnacl/bin/pnacl-
 
 CC=${TOOLCHAIN}clang
 FINALIZE=${TOOLCHAIN}finalize
@@ -77,8 +83,8 @@ bzip2_setup
 cat >> ${CONFIG_MAK} <<EOF
 
 FINALIZE = ${FINALIZE}
-CFLAGS_cfg += -I/Users/andoma/nacl/nacl_sdk/pepper_37/include
-LDFLAGS_cfg += -L/Users/andoma/nacl/nacl_sdk/pepper_37/lib/pnacl/Debug
+CFLAGS_cfg += -I${PEPPER}/include
+LDFLAGS_cfg += -L${PEPPER}/lib/pnacl/Debug
 LDFLAGS_cfg += -lppapi_gles2 -lppapi -lpthread
 EOF
 

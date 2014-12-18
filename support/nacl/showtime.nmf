@@ -1,0 +1,14 @@
+{
+  "program": {
+    "portable": {
+      "pnacl-translate": {
+        "url": "showtime.pexe",
+        "optlevel": 2
+      },
+      "pnacl-debug": {
+        "url": "showtime.bundle",
+        "optlevel": 0
+      }
+    }
+  }
+}
