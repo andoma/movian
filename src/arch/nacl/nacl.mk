@@ -4,9 +4,11 @@ SRCS += src/arch/nacl/nacl_main.c \
 	src/arch/nacl/nacl_misc.c \
 	src/arch/nacl/nacl_fs.c \
 	src/arch/nacl/nacl_audio.c \
+	src/arch/nacl/nacl_video.c \
 	src/arch/nacl/nacl_threads.c \
 	src/networking/net_pepper.c \
 	src/networking/asyncio_pepper.c \
+	src/ui/glw/glw_video_yuvp.c \
 	src/ui/glw/glw_video_tex.c \
 
 ${PROG}.pexe: ${PROG}.bundle

@@ -141,6 +141,9 @@ typedef struct frame_info {
     COLOR_SPACE_SMPTE_240M,
   } fi_color_space;
 
+  void (*fi_ref_release)(void *aux);
+  void *fi_ref_aux;
+
 } frame_info_t;
 
 

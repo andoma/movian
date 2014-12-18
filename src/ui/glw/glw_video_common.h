@@ -93,6 +93,9 @@ typedef struct glw_video_surface {
   struct AVFrame *gvs_frame;
   float gvs_tex_width;
 
+  void *gvs_ref_aux;
+  void (*gvs_ref_release)(void *aux);
+
 } glw_video_surface_t;
 
 
