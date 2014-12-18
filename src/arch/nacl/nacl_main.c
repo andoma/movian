@@ -46,6 +46,7 @@
 #include "ppapi/c/ppb_tcp_socket.h"
 #include "ppapi/c/ppb_udp_socket.h"
 #include "ppapi/c/ppb_var.h"
+#include "ppapi/c/ppb_video_decoder.h"
 #include "ppapi/c/ppb_view.h"
 #include "ppapi/c/ppp.h"
 #include "ppapi/c/ppp_instance.h"
@@ -76,6 +77,7 @@ const PPB_FileIO *ppb_fileio;
 const PPB_AudioConfig *ppb_audioconfig;
 const PPB_Audio *ppb_audio;
 const PPB_Fullscreen *ppb_fullscreen;
+const PPB_VideoDecoder *ppb_videodecoder;
 
 PP_Instance g_Instance;
 PP_Resource g_persistent_fs;
@@ -632,6 +634,7 @@ PPP_InitializeModule(PP_Module a_module_id, PPB_GetInterface get_browser)
   ppb_audio              = get_browser(PPB_AUDIO_INTERFACE);
   ppb_audioconfig        = get_browser(PPB_AUDIO_CONFIG_INTERFACE);
   ppb_fullscreen         = get_browser(PPB_FULLSCREEN_INTERFACE);
+  ppb_videodecoder       = get_browser(PPB_VIDEODECODER_INTERFACE);
   return PP_OK;
 }
 
