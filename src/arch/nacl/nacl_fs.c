@@ -131,10 +131,7 @@ add_item(fa_protocol_t *fap, const char *dir, fa_dir_t *fd,
   memcpy(fname, str, len);
   fname[len] = 0;
 
-
   snprintf(out, sizeof(out), "%s://%s/%s", fap->fap_name, dir, fname);
-
-  TRACE(TRACE_DEBUG, "FOUND FILE", "%s", out);
 
   fa_dir_add(fd, out, fname,
              type == PP_FILETYPE_DIRECTORY ? CONTENT_DIR : CONTENT_FILE);
