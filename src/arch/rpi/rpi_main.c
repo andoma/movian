@@ -384,7 +384,8 @@ ui_create(void)
   gr->gr_prop_ui = prop_create_root("ui");
   gr->gr_prop_nav = nav_spawn();
 
-  if(glw_init(gr)) {
+  if(glw_init3(gr, &prop_courier_poll_with_alarm,
+               prop_courier_create_passive())) {
     TRACE(TRACE_ERROR, "GLW", "Unable to init GLW");
     exit(1);
   }
@@ -409,7 +410,6 @@ ui_create(void)
   signal(SIGINT, doexit);
   pthread_sigmask(SIG_UNBLOCK, &set, NULL);
 
-  gr->gr_prop_dispatcher = &prop_courier_poll_with_alarm;
   gr->gr_prop_maxtime = 5000;
 
   return gr;

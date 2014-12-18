@@ -50,6 +50,7 @@
 #include "ppapi/c/ppp.h"
 #include "ppapi/c/ppp_instance.h"
 #include "ppapi/c/ppp_input_event.h"
+#include "ppapi/c/ppp_messaging.h"
 
 #include "ui/glw/glw.h"
 #include "ppapi/gles2/gl2ext_ppapi.h"
@@ -114,6 +115,7 @@ arch_exit(void)
 
 #define CORE_INITIALIZED   0x1
 
+static int is_hidden;
 static int initialized;
 
 /**
@@ -164,6 +166,31 @@ init_ui(void *data, int flags)
 }
 
 
+
+/**
+ *
+ */
+static void
+ui_courier_poll(void *aux, int val)
+{
+  glw_root_t *gr = aux;
+  glw_lock(gr);
+  prop_courier_poll(gr->gr_courier);
+  glw_unlock(gr);
+}
+
+
+/**
+ *
+ */
+static void
+ui_courier_notify(void *opaque)
+{
+  ppb_core->CallOnMainThread(0, (const struct PP_CompletionCallback) {
+     ui_courier_poll, opaque}, 0);
+}
+
+
 /**
  *
  */
@@ -192,7 +219,9 @@ init_thread(void *aux)
   uiroot->gr.gr_prop_ui = prop_create_root("ui");
   uiroot->gr.gr_prop_nav = nav_spawn();
 
-  if(glw_init(&uiroot->gr))
+  prop_courier_t *pc = prop_courier_create_notify(ui_courier_notify, uiroot);
+
+  if(glw_init3(&uiroot->gr, NULL, pc))
     return NULL;
 
   TRACE(TRACE_DEBUG, "GLW", "GLW %p created", uiroot);
@@ -223,8 +252,10 @@ Instance_DidCreate(PP_Instance instance,  uint32_t argc,
 
   ppb_inputevent->RequestInputEvents(instance,
                                      PP_INPUTEVENT_CLASS_MOUSE |
-                                     PP_INPUTEVENT_CLASS_WHEEL |
-                                     PP_INPUTEVENT_CLASS_KEYBOARD);
+                                     PP_INPUTEVENT_CLASS_WHEEL);
+
+  ppb_inputevent->RequestFilteringInputEvents(instance,
+                                              PP_INPUTEVENT_CLASS_KEYBOARD);
 
   gconf.cache_path = strdup("cache:///cache");
   gconf.persistent_path = strdup("persistent:///persistent");
@@ -309,21 +340,34 @@ mainloop(nacl_glw_root_t *ngr)
   glw_lock(gr);
   glw_prepare_frame(gr, 0);
 
-  glw_rctx_init(&rc, gr->gr_width, gr->gr_height, 1, &zmax);
-  glw_layout0(gr->gr_universe, &rc);
+  int refresh = gr->gr_need_refresh;
+  gr->gr_need_refresh = 0;
 
-  glViewport(0, 0, gr->gr_width, gr->gr_height);
-  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-  glw_render0(gr->gr_universe, &rc);
+  if(refresh) {
+
+    glw_rctx_init(&rc, gr->gr_width, gr->gr_height, 1, &zmax);
+    glw_layout0(gr->gr_universe, &rc);
+
+    if(refresh & GLW_REFRESH_FLAG_RENDER && !is_hidden) {
+      glViewport(0, 0, gr->gr_width, gr->gr_height);
+      glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+      glw_render0(gr->gr_universe, &rc);
+
+    }
+  }
 
   glw_unlock(gr);
-  glw_post_scene(gr);
 
   struct PP_CompletionCallback cc;
   cc.func = &swap_done;
   cc.user_data = ngr;
 
-  ppb_graphics3d->SwapBuffers(nacl_3d_context, cc);
+  if(refresh & GLW_REFRESH_FLAG_RENDER && !is_hidden) {
+    glw_post_scene(gr);
+    ppb_graphics3d->SwapBuffers(nacl_3d_context, cc);
+  } else {
+    ppb_core->CallOnMainThread(16, cc, 0);
+  }
 }
 
 
@@ -336,13 +380,8 @@ Instance_DidChangeView(PP_Instance instance, PP_Resource view)
   struct PP_Rect rect;
   ppb_view->GetRect(view, &rect);
 
-  const int width  = rect.size.width;
-  const int height = rect.size.height;
-
-  TRACE(TRACE_DEBUG, "NACL", "View resized to %d x %d", width, height);
-
-  uiroot->gr.gr_width  = width;
-  uiroot->gr.gr_height = height;
+  uiroot->gr.gr_width  = rect.size.width;
+  uiroot->gr.gr_height = rect.size.height;
 
   init_ui(uiroot, 0);
 }
@@ -353,8 +392,8 @@ Instance_DidChangeView(PP_Instance instance, PP_Resource view)
 static void
 Instance_DidChangeFocus(PP_Instance instance, PP_Bool has_focus)
 {
-  TRACE(TRACE_DEBUG, "NACL", "Focus changed");
 }
+
 
 /**
  *
@@ -433,7 +472,7 @@ static const struct {
 /**
  *
  */
-static void
+static int
 handle_keydown(nacl_glw_root_t *ngr, PP_Resource input_event)
 {
   glw_root_t *gr = &ngr->gr;
@@ -446,7 +485,7 @@ handle_keydown(nacl_glw_root_t *ngr, PP_Resource input_event)
   if(code == KC_F11) {
     int fs = ppb_fullscreen->IsFullscreen(g_Instance);
     ppb_fullscreen->SetFullscreen(g_Instance, !fs);
-    return;
+    return 1;
   }
 
   for(int i = 0; i < sizeof(keysym2action) / sizeof(*keysym2action); i++) {
@@ -476,14 +515,16 @@ handle_keydown(nacl_glw_root_t *ngr, PP_Resource input_event)
     glw_lock(gr);
     glw_inject_event(gr, e);
     glw_unlock(gr);
+    return 1;
   }
-
+  return 0;
 }
+
 
 /**
  *
  */
-static void
+static int
 handle_char(nacl_glw_root_t *ngr, PP_Resource input_event)
 {
   glw_root_t *gr = &ngr->gr;
@@ -497,7 +538,7 @@ handle_char(nacl_glw_root_t *ngr, PP_Resource input_event)
     x[len] = 0;
     const char *X = x;
     uint32_t uc = utf8_get(&X);
-    if(uc)
+    if(uc && uc != 0xfffd)
       e = event_create_int(EVENT_UNICODE, uc);
 
   }
@@ -508,7 +549,9 @@ handle_char(nacl_glw_root_t *ngr, PP_Resource input_event)
     glw_lock(gr);
     glw_inject_event(gr, e);
     glw_unlock(gr);
+    return 1;
   }
+  return 0;
 }
 
 
@@ -523,17 +566,44 @@ Input_HandleInputEvent(PP_Instance instance, PP_Resource input_event)
 
   switch(type) {
   case PP_INPUTEVENT_TYPE_KEYDOWN:
-    handle_keydown(ngr, input_event);
-    break;
+    return handle_keydown(ngr, input_event);
   case PP_INPUTEVENT_TYPE_CHAR:
-    handle_char(ngr, input_event);
-    break;
+    return handle_char(ngr, input_event);
 
   default:
     break;
   }
-  return PP_TRUE;
+  return PP_FALSE;
 }
+
+
+/**
+ *
+ */
+static void
+Messaging_HandleMessage(PP_Instance instance, struct PP_Var v)
+{
+  unsigned int len;
+
+  const char *s = ppb_var->VarToUtf8(v, &len);
+
+  if(s == NULL)
+    return;
+
+  // zero terminate the string
+  char *x = alloca(len + 1);
+  memcpy(x, s, len);
+  x[len] = 0;
+
+  if(!strcmp(x, "hidden")) {
+    is_hidden = 1;
+  } else if(!strcmp(x, "visible")) {
+    is_hidden = 0;
+  } else {
+    TRACE(TRACE_DEBUG, "NACL", "Got unmapped event %s from browser", x);
+  }
+}
+
 
 /**
  *
@@ -588,6 +658,14 @@ PPP_GetInterface(const char* interface_name)
       &Input_HandleInputEvent,
     };
     return &input_event_interface;
+  }
+
+
+  if(!strcmp(interface_name, PPP_MESSAGING_INTERFACE)) {
+    static PPP_Messaging messaging_interface = {
+      &Messaging_HandleMessage,
+    };
+    return &messaging_interface;
   }
 
   return NULL;

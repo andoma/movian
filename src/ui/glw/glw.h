@@ -1145,6 +1145,10 @@ glw_filter_constraints(const glw_t *w)
 
 int glw_init(glw_root_t *gr);
 
+int glw_init3(glw_root_t *gr,
+              void (*dispatcher)(prop_courier_t *pc, int timeout),
+              prop_courier_t *courier);
+
 void glw_fini(glw_root_t *gr);
 
 void glw_load_universe(glw_root_t *gr);

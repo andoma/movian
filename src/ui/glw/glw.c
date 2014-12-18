@@ -112,19 +112,30 @@ glw_update_sizes(glw_root_t *gr)
   }
 }
 
-
 /**
  *
  */
 int
 glw_init(glw_root_t *gr)
 {
+  return glw_init3(gr, &prop_courier_poll_timed, prop_courier_create_passive());
+}
+
+
+/**
+ *
+ */
+int
+glw_init3(glw_root_t *gr,
+          void (*dispatcher)(prop_courier_t *pc, int timeout),
+          prop_courier_t *courier)
+{
   char skinbuf[PATH_MAX];
   const char *skin = gconf.skin;
   prop_t *p;
 
-  if(gr->gr_prop_dispatcher == NULL)
-    gr->gr_prop_dispatcher = &prop_courier_poll_timed;
+  gr->gr_prop_dispatcher = dispatcher;
+  gr->gr_courier = courier;
 
   gr->gr_prop_maxtime = -1;
 
@@ -149,7 +160,6 @@ glw_init(glw_root_t *gr)
     skin = skinbuf;
   }
   hts_mutex_init(&gr->gr_mutex);
-  gr->gr_courier = prop_courier_create_passive();
   gr->gr_token_pool = pool_create("glwtokens", sizeof(token_t), POOL_ZERO_MEM);
   gr->gr_clone_pool = pool_create("glwclone", sizeof(glw_clone_t),
 				  POOL_ZERO_MEM);
@@ -463,7 +473,8 @@ glw_reap(glw_root_t *gr)
 void
 glw_idle(glw_root_t *gr)
 {
-  gr->gr_prop_dispatcher(gr->gr_courier, gr->gr_prop_maxtime);
+  if(gr->gr_prop_dispatcher != NULL)
+    gr->gr_prop_dispatcher(gr->gr_courier, gr->gr_prop_maxtime);
   glw_reap(gr);
 }
 
@@ -506,9 +517,8 @@ glw_prepare_frame(glw_root_t *gr, int flags)
   prop_set_int(gr->gr_prop_width, gr->gr_width);
   prop_set_int(gr->gr_prop_height, gr->gr_height);
 
-  gr->gr_prop_dispatcher(gr->gr_courier, gr->gr_prop_maxtime);
-
-  //  glw_cursor_layout_frame(gr);
+  if(gr->gr_prop_dispatcher != NULL)
+    gr->gr_prop_dispatcher(gr->gr_courier, gr->gr_prop_maxtime);
 
   LIST_FOREACH(w, &gr->gr_every_frame_list, glw_every_frame_link)
     w->glw_class->gc_newframe(w, flags);
