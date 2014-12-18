@@ -199,6 +199,10 @@ render_unlocked(glw_root_t *gr)
   for(int j = 0; j < gr->gr_num_render_jobs; j++) {
     const glw_render_order_t *ro = gr->gr_render_order + j;
     const glw_render_job_t *rj = ro->job;
+
+    if(unlikely(rj->num_vertices == 0))
+      continue;
+
     const struct glw_backend_texture *t0 = rj->t0;
 
     glw_program_t *gp =
