@@ -636,7 +636,9 @@ udp_read_completed(void *aux, int32_t result)
 {
   asyncio_fd_t *af = aux;
 
-  TRACE(TRACE_DEBUG, "ASYNCIO", "UDP RECV %s : %d", af->af_name, result);
+  if(asyncio_dbg) {
+    TRACE(TRACE_DEBUG, "ASYNCIO", "UDP RECV %s : %d", af->af_name, result);
+  }
 
   if(result > 0 && af->af_udp_callback != NULL) {
 
@@ -745,8 +747,10 @@ asyncio_udp_send(asyncio_fd_t *af, const void *data, int size,
                                 PP_BlockUntilComplete());
 
 
-  TRACE(TRACE_DEBUG, "ASYNCIO", "UDP SEND %s : %s", af->af_name,
-        pepper_errmsg(r));
+  if(asyncio_dbg) {
+    TRACE(TRACE_DEBUG, "ASYNCIO", "UDP SEND %s : %s", af->af_name,
+          pepper_errmsg(r));
+  }
 
   ppb_core->ReleaseResource(addr);
 }
