@@ -1583,26 +1583,37 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
           continue;
       }
 
+      if(hd->hd_req) {
+
+        if(!r)
+          av_free_packet(&pkt);
+
+        if(hd->hd_current != NULL)
+          variant_close(hd->hd_current);
+
+        hd->hd_current = hd->hd_req;
+        hd->hd_req = NULL;
+        mp->mp_video.mq_demuxer_flags |= HLS_QUEUE_MERGE;
+        mp->mp_audio.mq_demuxer_flags |= HLS_QUEUE_MERGE;
+        continue;
+      }
+
+      if(h->h_seek_to != PTS_UNSET) {
+
+        if(!r)
+          av_free_packet(&pkt);
+
+        if(hd->hd_current != NULL)
+          variant_close(hd->hd_current);
+        mp_flush(mp, 0);
+        continue;
+      }
+
       if(r) {
-
         char buf[512];
-
         assert(hd->hd_current != NULL);
-
         variant_close(hd->hd_current);
-
-        if(h->h_seek_to != PTS_UNSET) {
-          mp_flush(mp, 0);
-          continue;
-        }
-
-        if(hd->hd_req) {
-          hd->hd_current = hd->hd_req;
-          hd->hd_req = NULL;
-          mp->mp_video.mq_demuxer_flags |= HLS_QUEUE_MERGE;
-          mp->mp_audio.mq_demuxer_flags |= HLS_QUEUE_MERGE;
-          continue;
-        }
+        hd->hd_current = NULL;
 
         if(av_strerror(r, buf, sizeof(buf)))
           snprintf(buf, sizeof(buf), "Error %d", r);
@@ -1616,8 +1627,9 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
       int si = pkt.stream_index;
       const AVStream *s = hv->hv_fctx->streams[si];
       hls_segment_t *hs = hv->hv_current_seg;
+      assert(hs != NULL);
 
-      if(hs != NULL && hs->hs_first_ts == PTS_UNSET && pkt.dts != PTS_UNSET) {
+      if(hs->hs_first_ts == PTS_UNSET && pkt.dts != PTS_UNSET) {
         hs->hs_first_ts = rescale(hv->hv_fctx, pkt.dts, si);
         hs->hs_ts_offset = hs->hs_first_ts - hs->hs_time_offset;
       }
