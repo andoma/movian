@@ -1091,7 +1091,12 @@ variant_open(hls_t *h, hls_demuxer_t *hd, hls_variant_t *hv)
   hv->hv_astream = -1;
 
   for(int j = 0; j < hv->hv_fctx->nb_streams; j++) {
-    const AVCodecContext *ctx = hv->hv_fctx->streams[j]->codec;
+    char str[256];
+    AVCodecContext *ctx = hv->hv_fctx->streams[j]->codec;
+
+    avcodec_string(str, sizeof(str), ctx, 0);
+    HLS_TRACE(h, "Stream #%d: %s", j, str);
+
     switch(ctx->codec_type) {
     case AVMEDIA_TYPE_VIDEO:
       if(hv->hv_vstream == -1 && ctx->codec_id == AV_CODEC_ID_H264)
