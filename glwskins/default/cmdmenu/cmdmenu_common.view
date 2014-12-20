@@ -273,7 +273,6 @@ widget(backdrop, {
 	    bind("list");
 	    width: 4;
 	    focusable: canScroll();
-	    navFocusable: true;
 	    alpha: iir(canScroll(), 16);
 	    
 	    widget(quad, {
@@ -322,7 +321,6 @@ widget(backdrop, {
 	    bind("list");
 	    width: 4;
 	    focusable: canScroll();
-	    navFocusable: true;
 	    alpha: iir(canScroll(), 16);
 	    
 	    widget(quad, {

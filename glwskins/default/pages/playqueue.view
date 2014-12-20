@@ -155,7 +155,6 @@ widget(container_y, {
 	  bind("list");
 	  width: 4;
 	  focusable: canScroll();
-	  navFocusable: true;
 	  alpha: iir(canScroll(), 16);
 	  
 	  widget(quad, {
