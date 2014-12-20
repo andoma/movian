@@ -56,7 +56,7 @@ glw_slideshow_render(glw_t *w, const glw_rctx_t *rc)
 
   p = glw_prev_widget(c);
   if(p == NULL)
-    p = glw_last_widget(w, 0);
+    p = glw_last_widget(w);
   if(p != NULL && p != c) {
     float a = glw_parent_data(p, glw_slideshow_item_t)->alpha;
     if(a > 0.01) {
@@ -145,7 +145,7 @@ glw_slideshow_layout(glw_t *w, const glw_rctx_t *rc)
    */
   p = glw_prev_widget(c);
   if(p == NULL)
-    p = glw_last_widget(&s->w, 0);
+    p = glw_last_widget(&s->w);
   if(p != NULL && p != c) {
     a = itemdata(p)->alpha;
     r |= update_parent_alpha(p, GLW_MAX(a - delta, 0.0f));
@@ -204,7 +204,7 @@ glw_slideshow_event(glw_t *w, event_t *e)
 
     c = w->glw_focused ? glw_prev_widget(w->glw_focused) : NULL;
     if(c == NULL)
-      c = glw_last_widget(w, 0);
+      c = glw_last_widget(w);
     w->glw_focused = c;
     s->deadline = 0;
     glw_need_refresh(gr, 0);
