@@ -1,4 +1,4 @@
-
+var prop    = require('showtime/prop');
 var http    = require('showtime/http');
 var service = require('showtime/service');
 var page    = require('showtime/page');
@@ -120,7 +120,14 @@ var plugin = {
     return v ? JSON.parse(v) : null;
   },
 
-  config: {}
+  config: {},
+
+  properties: prop.global.plugin[Plugin.id],
+
+  addItemHook: function(conf) {
+    require('showtime/itemhook').create(conf);
+  },
+
 
 };
 
