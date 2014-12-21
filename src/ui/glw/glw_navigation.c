@@ -49,7 +49,7 @@ glw_nav_first(glw_t *parent)
 
   while(c != NULL) {
     glw_t *to_focus = glw_get_focusable_child(c);
-    if(to_focus != NULL) {
+    if(to_focus != NULL && to_focus->glw_flags2 & GLW2_NAV_FOCUSABLE) {
       glw_focus_set(to_focus->glw_root, to_focus, GLW_FOCUS_SET_INTERACTIVE);
       return 1;
     }
@@ -69,7 +69,7 @@ glw_nav_last(glw_t *parent)
 
   while(c != NULL) {
     glw_t *to_focus = glw_get_focusable_child(c);
-    if(to_focus != NULL) {
+    if(to_focus != NULL && to_focus->glw_flags2 & GLW2_NAV_FOCUSABLE) {
       glw_focus_set(to_focus->glw_root, to_focus, GLW_FOCUS_SET_INTERACTIVE);
       return 1;
     }
