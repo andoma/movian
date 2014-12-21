@@ -532,6 +532,10 @@ es_context_end(es_context_t *ec)
 
     duk_destroy_heap(ec->ec_duk);
     ec->ec_duk = NULL;
+
+    // Hack for killing off any settings created by app
+    prop_destroy_by_name(prop_create(gconf.settings_apps, "nodes"), ec->ec_id);
+
     TRACE(TRACE_DEBUG, ec->ec_id, "Unloaded");
   }
 
