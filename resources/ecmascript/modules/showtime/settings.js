@@ -285,6 +285,8 @@ exports.globalSettings = function(id, title, icon, desc) {
   this.setvalue = function(id, value) {
     mystore[id] = value;
   };
+
+  this.properties = model;
 }
 
 
