@@ -230,7 +230,7 @@ sp.createMultiOpt = function(id, title, options, callback, persistent) {
   }
 
   if(!initial)
-    intital = o[0].toString();
+    initial = options[0][0].toString();
 
   if(initial) {
     var opt = model.options[initial];
