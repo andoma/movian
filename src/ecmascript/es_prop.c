@@ -472,28 +472,40 @@ es_sub_cb(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_EXT_EVENT:
-    nargs = 2;
-    duk_push_string(ctx, "event");
     e = va_arg(ap, const event_t *);
 
     if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
       const event_payload_t *ep = (const event_payload_t *)e;
+      nargs = 2;
+      duk_push_string(ctx, "action");
       duk_push_string(ctx, ep->payload);
 
     } else if(e->e_type_x == EVENT_ACTION_VECTOR) {
       const event_action_vector_t *eav = (const event_action_vector_t *)e;
       assert(eav->num > 0);
+      nargs = 2;
+      duk_push_string(ctx, "action");
       duk_push_string(ctx, action_code2str(eav->actions[0]));
 
     } else if(e->e_type_x == EVENT_UNICODE) {
       const event_int_t *eu = (const event_int_t *)e;
-      char tmp[8];
-      snprintf(tmp, sizeof(tmp), "%C", eu->val);
-      duk_push_string(ctx, tmp);
+      nargs = 2;
+      duk_push_string(ctx, "unicode");
+      duk_push_int(ctx, eu->val);
 
+    } else if(e->e_type_x == EVENT_PROPREF) {
+      event_prop_t *ep = (event_prop_t *)e;
+      nargs = 2;
+      duk_push_string(ctx, "propref");
+      es_stprop_push(ctx, ep->p);
     } else {
       duk_pop(ctx);
       nargs = 0;
+    }
+
+    if(nargs > 0 && e->e_nav != NULL) {
+      es_stprop_push(ctx, e->e_nav);
+      nargs++;
     }
     break;
 

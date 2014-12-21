@@ -187,7 +187,7 @@ sp.createAction = function(id, title, callback) {
   var item = createSetting(group, 'action', id, title);
 
   prop.subscribe(item.model.action, function(type) {
-    if(type == 'event')
+    if(type == 'action')
       callback();
   }, {
     autoDestroy: true

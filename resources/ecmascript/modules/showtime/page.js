@@ -81,7 +81,7 @@ Item.prototype.onEvent = function(type, callback) {
   if(!this.eventSubscription) {
     this.eventSubscription =
       prop.subscribe(this.root, function(type, val) {
-        if(type != "event")
+        if(type != "action")
           return;
         if(val in this.eventhandlers) {
           for(x in this.eventhandlers[val]) {
@@ -223,7 +223,7 @@ Page.prototype.onEvent = function(type, callback) {
   if(!this.eventSubscription) {
     this.eventSubscription =
       prop.subscribe(this.root.eventSink, function(type, val) {
-        if(type != "event")
+        if(type != "action")
           return;
         if(val in this.eventhandlers) {
           for(x in this.eventhandlers[val]) {
