@@ -7,7 +7,7 @@ widget(container_y, {
   widget(container_x, {
     spacing: 4;
     height: $ui.size * 2;
-    KEY("§", "½");
+    KEY("@", "½");
     KEY("1", "!");
     KEY("2", '"');
     KEY("3", "#");
