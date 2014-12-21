@@ -68,7 +68,7 @@ sp.createBool = function(id, title, def, callback, persistent) {
   var group = this;
   var item = createSetting(group, 'bool', id, title);
 
-  var initial = group.getvalue(id, def, 'int', persistent);
+  var initial = group.getvalue(id, def, 'bool', persistent);
   item.model.value = initial;
 
   prop.subscribeValue(item.model.value, function(newval) {
@@ -305,6 +305,8 @@ exports.kvstoreSettings = function(nodes, url, domain) {
 
     if(type == 'int')
       return Showtime.kvstoreGetInteger(url, domain, id, def);
+    else if(type == 'bool')
+      return Showtime.kvstoreGetBoolean(url, domain, id, def);
     else
       return Showtime.kvstoreGetString(url, domain, id) || def;
   };

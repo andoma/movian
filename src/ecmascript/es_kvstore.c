@@ -58,6 +58,22 @@ es_kvstore_get_int(duk_context *ctx)
  *
  */
 static int
+es_kvstore_get_bool(duk_context *ctx)
+{
+  int r = kv_url_opt_get_int(duk_to_string(ctx, 0),
+                             es_kvstore_get_domain(ctx, 1),
+                             duk_to_string(ctx, 2),
+                             duk_to_boolean(ctx, 3));
+
+  duk_push_boolean(ctx, r);
+  return 1;
+}
+
+
+/**
+ *
+ */
+static int
 es_kvstore_set(duk_context *ctx)
 {
   const char *url = duk_to_string(ctx, 0);
@@ -89,6 +105,7 @@ const duk_function_list_entry fnlist_Showtime_kvstore[] = {
 
   { "kvstoreGetString",      es_kvstore_get_string,   3},
   { "kvstoreGetInteger",     es_kvstore_get_int,      4},
+  { "kvstoreGetBoolean",     es_kvstore_get_bool,     4},
   { "kvstoreSet",            es_kvstore_set,          4},
   { NULL, NULL, 0}
 };
