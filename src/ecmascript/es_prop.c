@@ -672,6 +672,27 @@ es_prop_send_event(duk_context *ctx)
 
   if(!strcmp(type, "redirect")) {
     e = event_create_str(EVENT_REDIRECT, duk_require_string(ctx, 2));
+  } else if(!strcmp(type, "openurl")) {
+
+    event_openurl_args_t args = {};
+
+    rstr_t *url        = es_prop_to_rstr(ctx, 2, "url");
+    rstr_t *view       = es_prop_to_rstr(ctx, 2, "view");
+    rstr_t *how        = es_prop_to_rstr(ctx, 2, "how");
+    rstr_t *parent_url = es_prop_to_rstr(ctx, 2, "parenturl");
+
+    args.url        = rstr_get(url);
+    args.view       = rstr_get(view);
+    args.how        = rstr_get(how);
+    args.parent_url = rstr_get(parent_url);
+
+    e = event_create_openurl_args(&args);
+
+    rstr_release(url);
+    rstr_release(view);
+    rstr_release(how);
+    rstr_release(parent_url);
+
   } else {
     duk_error(ctx, DUK_ERR_ERROR, "Event type %s not understood", type);
   }
