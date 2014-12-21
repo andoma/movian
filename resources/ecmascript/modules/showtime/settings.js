@@ -18,9 +18,13 @@ function createSetting(group, type, id, title) {
       value: model
     },
 
-    vale: {
+    value: {
       get: function() {
         return model.value;
+      },
+
+      set: function(v) {
+        model.value = v;
       }
     },
 
