@@ -34,6 +34,7 @@
 #include "blobcache.h"
 #include "networking/http.h"
 #include "networking/net.h"
+#include "plugins.h"
 
 /**
  *
@@ -420,6 +421,20 @@ es_system_ip(duk_context *ctx)
 
 
 /**
+ *
+ */
+static int
+es_select_view(duk_context *ctx)
+{
+  es_context_t *ec = es_get(ctx);
+  const char *filename = duk_to_string(ctx, 0);
+  plugin_select_view(ec->ec_id, filename);
+  return 0;
+
+}
+
+
+/**
  * Showtime object exposed functions
  */
 const duk_function_list_entry fnlist_Showtime_misc[] = {
@@ -437,5 +452,6 @@ const duk_function_list_entry fnlist_Showtime_misc[] = {
   { "cacheGet",              es_cacheGet, 2},
   { "parseTime",             es_parseTime, 1},
   { "systemIpAddress",       es_system_ip, 0},
+  { "selectView",            es_select_view, 1},
   { NULL, NULL, 0}
 };

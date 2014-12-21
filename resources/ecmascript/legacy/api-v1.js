@@ -52,6 +52,7 @@ showtime = {
 
   print: print,
   trace: console.log,
+  basename: Showtime.fs.basename,
 
   sha1digest: function(str) {
     return cryptodigest('sha1', str);
@@ -104,6 +105,9 @@ var plugin = {
   getAuthCredentials: Showtime.getAuthCredentials,
 
   addHTTPAuth: Showtime.httpInspectorCreate,
+
+  copyFile: Showtime.fs.copyfile,
+  selectView: Showtime.selectView,
 
   createSettings: function(title, icon, description) {
     return new settings.globalSettings(Plugin.id, title, icon,

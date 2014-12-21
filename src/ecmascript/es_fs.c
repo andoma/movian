@@ -284,6 +284,51 @@ es_file_dirname(duk_context *ctx)
 }
 
 
+/**
+ *
+ */
+static int
+es_file_basename(duk_context *ctx)
+{
+  char tmp[URL_MAX];
+
+  fa_url_get_last_component(tmp, sizeof(tmp), get_filename(ctx, 0));
+  duk_push_string(ctx, tmp);
+  return 1;
+}
+
+
+/**
+ *
+ */
+static int
+es_file_copy(duk_context *ctx)
+{
+  char *cleanup;
+  char path[URL_MAX];
+  char errbuf[256];
+  es_context_t *ec = es_get(ctx);
+
+  const char *from = duk_to_string(ctx, 0);
+  const char *to   = duk_to_string(ctx, 1);
+
+  cleanup = mystrdupa(to);
+
+  fa_sanitize_filename(cleanup);
+
+  snprintf(path, sizeof(path), "%s/copy/%s",
+           ec->ec_storage, cleanup);
+
+  TRACE(TRACE_DEBUG, "JS", "Copying file from '%s' to '%s'", from, path);
+
+  if(fa_copy(path, from, errbuf, sizeof(errbuf)))
+    duk_error(ctx, DUK_ERR_ERROR, "Copy failed: %s", errbuf);
+
+  duk_push_string(ctx, path);
+  return 1;
+}
+
+
 
 /**
  * Showtime object exposed functions
@@ -297,5 +342,7 @@ const duk_function_list_entry fnlist_Showtime_fs[] = {
   { "rename",           es_file_rename,           2 },
   { "mkdirs",           es_file_mkdirs,           2 },
   { "dirname",          es_file_dirname,          1 },
+  { "basename",         es_file_basename,         1 },
+  { "copyfile",         es_file_copy,             2 },
   { NULL, NULL, 0}
 };
