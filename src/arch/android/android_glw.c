@@ -53,8 +53,6 @@ Java_com_showtimemediacenter_showtime_STCore_glwCreate(JNIEnv *env,
 
   agr->agr_vrp = (*env)->NewGlobalRef(env, vrp);
 
-  TRACE(TRACE_DEBUG, "GLW", "GLW %p created", agr);
-
   glw_load_universe(&agr->gr);
   return (intptr_t)agr;
 }
@@ -66,7 +64,6 @@ Java_com_showtimemediacenter_showtime_STCore_glwInit(JNIEnv *env,
                                                      jint id)
 {
   android_glw_root_t *agr = (android_glw_root_t *)id;
-  TRACE(TRACE_DEBUG, "GLW", "GLW %p initialied", agr);
   agr->agr_running = 1;
   glw_opengl_init_context(&agr->gr);
   glClearColor(0,0,0,0);
@@ -80,8 +77,6 @@ Java_com_showtimemediacenter_showtime_STCore_glwFini(JNIEnv *env,
 {
   android_glw_root_t *agr = (android_glw_root_t *)id;
   glw_root_t *gr = &agr->gr;
-
-  TRACE(TRACE_DEBUG, "GLW", "GLW %p finishing", agr);
 
   glw_lock(gr);
   // Calling twice will unload all textures, etc
@@ -102,14 +97,10 @@ Java_com_showtimemediacenter_showtime_STCore_glwDestroy(JNIEnv *env,
   android_glw_root_t *agr = (android_glw_root_t *)id;
   glw_root_t *gr = &agr->gr;
 
-  TRACE(TRACE_DEBUG, "GLW", "GLW %p destroying", agr);
-
   glw_lock(gr);
   while(agr->agr_running == 1)
     hts_cond_wait(&agr->agr_runcond, &gr->gr_mutex);
   glw_unlock(gr);
-
-  TRACE(TRACE_DEBUG, "GLW", "GLW %p destroyed", agr);
 
   (*env)->DeleteGlobalRef(env, agr->agr_vrp);
 
