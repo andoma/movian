@@ -387,10 +387,6 @@ xmp_setup() {
 #
 #
 libyuv_setup() {
-    if disabled xmp; then
-        return
-    fi
-
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lyuv"
     add_stamp libyuv
 }
