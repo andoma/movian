@@ -1224,9 +1224,11 @@ glw_set_video_codec(uint32_t type, media_codec_t *mc, void *opaque,
     return 0;
   }
 
-  gv->gv_dar_num = fi->fi_dar_num;
-  gv->gv_dar_den = fi->fi_dar_den;
-  gv->gv_vheight = fi->fi_height;
+  if(fi != NULL) {
+    gv->gv_dar_num = fi->fi_dar_num;
+    gv->gv_dar_den = fi->fi_dar_den;
+    gv->gv_vheight = fi->fi_height;
+  }
 
   LIST_FOREACH(gve, &engines, gve_link) {
     if(gve->gve_type == type) {

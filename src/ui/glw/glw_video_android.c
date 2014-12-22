@@ -313,25 +313,25 @@ surface_deliver(const frame_info_t *fi, glw_video_t *gv,
   android_video_t *av = gv->gv_aux;
   media_pipe_t *mp = gv->gv_mp;
 
-  int64_t aclock, d;
+  int64_t aclock;
   int a_epoch;
 
+#if 0
   static int64_t lastpts;
   static int64_t lastts;
-  int64_t ts = showtime_get_ts();
-
+  int64_t ts = showtime_get_avtime();
   TRACE(TRACE_DEBUG, "TIMESTAMP", "%20lld %10lld %20lld %10lld",
         fi->fi_pts, fi->fi_pts - lastpts,
         ts,         ts - lastts);
-
   lastpts = fi->fi_pts;
   lastts  = ts;
+#endif
 
  recheck:
   if(gv->w.glw_flags & GLW_DESTROYING)
     return -1;
 
-  int64_t now = showtime_get_ts();
+  int64_t now = showtime_get_avtime();
   hts_mutex_lock(&mp->mp_clock_mutex);
   aclock = mp->mp_audio_clock + now -
     mp->mp_audio_clock_avtime + mp->mp_avdelta;
@@ -340,24 +340,29 @@ surface_deliver(const frame_info_t *fi, glw_video_t *gv,
 
   int64_t pts = fi->fi_pts;
 
-  d = pts - aclock;
 
   int delta = 0;
 
-  if(pts == AV_NOPTS_VALUE || d < -5000000LL || d > 5000000LL)
+  const int64_t d = pts - aclock;
+  if((pts == PTS_UNSET || d < -5000000LL || d > 5000000LL) &&
+     gv->gv_nextpts != PTS_UNSET)
     pts = gv->gv_nextpts;
 
   if(pts != AV_NOPTS_VALUE && (pts - delta) >= aclock &&
      a_epoch == fi->fi_epoch) {
 
     int64_t waittime = (pts - delta) - aclock;
-
     if(waittime > 100000)
       waittime = 100000;
     hts_mutex_unlock(&gv->gv_surface_mutex);
     usleep(waittime);
     hts_mutex_lock(&gv->gv_surface_mutex);
     goto recheck;
+  }
+
+  if(pts != AV_NOPTS_VALUE && fi->fi_duration > 0) {
+    gv->gv_nextpts = pts + fi->fi_duration;
+    gv->gv_nextpts_epoch = fi->fi_epoch;
   }
 
   av->av_pts = pts;
