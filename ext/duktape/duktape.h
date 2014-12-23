@@ -5,7 +5,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 982eed592e095ffa00f2aa7625dba735235e962c (v1.0.0-23-g982eed5).
+ *  Git commit 316419d68e3f95850a5f54d4460d85198b8633d8 (v1.0.0-278-g316419d).
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -66,12 +66,13 @@
  *  * Sami Vaarala <sami.vaarala@iki.fi>
  *  * Niki Dobrev
  *  * Andreas \u00d6man <andreas@lonelycoder.com>
+ *  * L\u00e1szl\u00f3 Lang\u00f3 <llango.u-szeged@partner.samsung.com>
  *  
  *  Other contributions
  *  ===================
  *  
  *  The following people have contributed something other than code (e.g. reported
- *  bugs, provided ideas, etc; in order of appearance):
+ *  bugs, provided ideas, etc; roughly in order of appearance):
  *  
  *  * Greg Burns
  *  * Anthony Rabine
@@ -87,8 +88,15 @@
  *  * Rajaran Gaunker (https://github.com/zimbabao)
  *  * Andreas \u00d6man
  *  * Doug Sanden
+ *  * Josh Engebretson (https://github.com/JoshEngebretson)
  *  * Remo Eichenberger (https://github.com/remoe)
- *  * David Demelier
+ *  * Mamod Mehyar (https://github.com/mamod)
+ *  * David Demelier (https://github.com/hftmarkand)
+ *  * Tim Caswell (https://github.com/creationix)
+ *  * Mitchell Blank Jr (https://github.com/mitchblank)
+ *  
+ *  If you are accidentally missing from this list, send me an e-mail
+ *  (``sami.vaarala@iki.fi``) and I'll fix the omission.
  */
 
 #ifndef DUKTAPE_H_INCLUDED
@@ -1882,8 +1890,6 @@ typedef FILE duk_file;
 
 #define DUK_ABORT        abort
 #define DUK_EXIT         exit
-#define DUK_SETJMP       setjmp
-#define DUK_LONGJMP      longjmp
 
 /*
  *  Macro hackery to convert e.g. __LINE__ to a string without formatting,
@@ -2024,6 +2030,15 @@ typedef FILE duk_file;
 
 /*
  *  Symbol visibility macros
+ *
+ *  To avoid C++ declaration issues (see GH-63):
+ *
+ *    - Don't use DUK_LOCAL_DECL for local -data symbols- so that you don't
+ *      end up with both a "static" declaration and a definition.
+ *
+ *    - Wrap any DUK_INTERNAL_DECL with a '#if !defined(DUK_SINGLE_FILE)'
+ *      so that the internal declarations (which would map to "static" in
+ *      a single file distribution) get dropped.
  */
 
 /* XXX: user override for these? user override for just using the default visibility macros? */
@@ -2165,7 +2180,11 @@ typedef FILE duk_file;
  */
 
 #if defined(DUK_F_GCC)
+#if defined(DUK_F_CPP)
+#define DUK_USE_COMPILER_STRING "g++"
+#else
 #define DUK_USE_COMPILER_STRING "gcc"
+#endif
 #elif defined(DUK_F_CLANG)
 #define DUK_USE_COMPILER_STRING "clang"
 #elif defined(DUK_F_MSVC)
@@ -2176,6 +2195,42 @@ typedef FILE duk_file;
 #define DUK_USE_COMPILER_STRING "vbcc"
 #else
 #define DUK_USE_COMPILER_STRING "unknown"
+#endif
+
+/*
+ *  Long control transfer, setjmp/longjmp or alternatives
+ *
+ *  Signal mask is not saved (when that can be communicated to the platform)
+ */
+
+/* dummy non-zero value to be used as an argument for longjmp(), see man longjmp */
+#define DUK_LONGJMP_DUMMY_VALUE  1
+
+#if defined(DUK_OPT_SETJMP)
+#define DUK_USE_SETJMP
+#elif defined(DUK_OPT_UNDERSCORE_SETJMP)
+#define DUK_USE_UNDERSCORE_SETJMP
+#elif defined(DUK_OPT_SIGSETJMP)
+#define DUK_USE_SIGSETJMP
+#elif defined(__APPLE__)
+/* Use _setjmp() on Apple by default, see GH-55. */
+#define DUK_USE_UNDERSCORE_SETJMP
+#else
+/* The most portable default is setjmp(). */
+#define DUK_USE_SETJMP
+#endif
+
+#if defined(DUK_USE_UNDERSCORE_SETJMP)
+#define DUK_SETJMP(jb)        _setjmp((jb))
+#define DUK_LONGJMP(jb)       _longjmp((jb), DUK_LONGJMP_DUMMY_VALUE)
+#elif defined(DUK_USE_SIGSETJMP)
+#define DUK_SETJMP(jb)        sigsetjmp((jb), 0 /*savesigs*/)
+#define DUK_LONGJMP(jb)       siglongjmp((jb), DUK_LONGJMP_DUMMY_VALUE)
+#elif defined(DUK_USE_SETJMP)
+#define DUK_SETJMP(jb)        setjmp((jb))
+#define DUK_LONGJMP(jb)       longjmp((jb), DUK_LONGJMP_DUMMY_VALUE)
+#else
+#error internal error
 #endif
 
 /*
@@ -2229,6 +2284,19 @@ typedef FILE duk_file;
 
 #if defined(DUK_OPT_GC_TORTURE)
 #define DUK_USE_GC_TORTURE
+#endif
+
+/*
+ *  String table options
+ */
+
+#if defined(DUK_OPT_STRTAB_CHAIN) && defined(DUK_OPT_STRTAB_CHAIN_SIZE)
+/* Low memory algorithm: separate chaining using arrays, fixed size hash */
+#define DUK_USE_STRTAB_CHAIN
+#define DUK_USE_STRTAB_CHAIN_SIZE  DUK_OPT_STRTAB_CHAIN_SIZE
+#else
+/* Default algorithm: open addressing (probing) */
+#define DUK_USE_STRTAB_PROBE
 #endif
 
 /*
@@ -2354,6 +2422,11 @@ typedef FILE duk_file;
 /* Math built-in is stubbed out on BCC to allow compiler torture testing. */
 #else
 #define DUK_USE_MATH_BUILTIN
+#endif
+
+#define DUK_USE_STRICT_DECL
+#if defined(DUK_OPT_NO_STRICT_DECL)
+#undef DUK_USE_STRICT_DECL
 #endif
 
 #define DUK_USE_REGEXP_SUPPORT
@@ -2482,6 +2555,14 @@ typedef FILE duk_file;
 #undef DUK_USE_NONSTD_SETTER_KEY_ARGUMENT
 #endif
 
+/* JSON escaping of U+2028 and U+2029.
+ */
+
+#define DUK_USE_NONSTD_JSON_ESC_U2028_U2029
+#if defined(DUK_OPT_NO_NONSTD_JSON_ESC_U2028_U2029)
+#undef DUK_USE_NONSTD_JSON_ESC_U2028_U2029
+#endif
+
 /*
  *  Tailcalls
  */
@@ -2598,6 +2679,105 @@ typedef FILE duk_file;
 #undef DUK_USE_USER_INITJS
 #if defined(DUK_OPT_USER_INITJS)
 #define DUK_USE_USER_INITJS (DUK_OPT_USER_INITJS)
+#endif
+
+/*
+ *  External string data support
+ *
+ *  Allow duk_hstrings to store data also behind an external pointer (see
+ *  duk_hstring_external).  This increases code size slightly but is useful
+ *  in low memory environments where memory is more limited than flash.
+ */
+
+#undef DUK_USE_HSTRING_EXTDATA
+#if defined(DUK_OPT_EXTERNAL_STRINGS)
+#define DUK_USE_HSTRING_EXTDATA
+#endif
+
+#undef DUK_USE_EXTSTR_INTERN_CHECK
+#if defined(DUK_OPT_EXTERNAL_STRINGS) && defined(DUK_OPT_EXTSTR_INTERN_CHECK)
+#define DUK_USE_EXTSTR_INTERN_CHECK(ptr,len) DUK_OPT_EXTSTR_INTERN_CHECK((ptr), (len))
+#endif
+
+#undef DUK_USE_EXTSTR_FREE
+#if defined(DUK_OPT_EXTERNAL_STRINGS) && defined(DUK_OPT_EXTSTR_FREE)
+#define DUK_USE_EXTSTR_FREE(ptr) DUK_OPT_EXTSTR_FREE((ptr))
+#endif
+
+/*
+ *  Lightweight functions
+ */
+
+/* Force built-ins to use lightfunc function pointers when possible.  This
+ * makes the built-in functions non-compliant with respect to their property
+ * values and such, but is very useful in low memory environments (can save
+ * around 14kB of initial RAM footprint).
+ */
+#undef DUK_USE_LIGHTFUNC_BUILTINS
+#if defined(DUK_OPT_LIGHTFUNC_BUILTINS)
+#define DUK_USE_LIGHTFUNC_BUILTINS
+#endif
+
+/*
+ *  Pointer compression and 16-bit header fields for low memory environments
+ */
+
+#undef DUK_USE_HEAPPTR16
+#undef DUK_USE_HEAPPTR_ENC16
+#undef DUK_USE_HEAPPTR_DEC16
+#if defined(DUK_OPT_HEAPPTR16) && defined(DUK_OPT_HEAPPTR_ENC16) && defined(DUK_OPT_HEAPPTR_DEC16)
+#define DUK_USE_HEAPPTR16
+#define DUK_USE_HEAPPTR_ENC16(ptr) DUK_OPT_HEAPPTR_ENC16((ptr))
+#define DUK_USE_HEAPPTR_DEC16(ptr) DUK_OPT_HEAPPTR_DEC16((ptr))
+#endif
+
+#undef DUK_USE_DATAPTR16
+#undef DUK_USE_DATAPTR_ENC16
+#undef DUK_USE_DATAPTR_DEC16
+#if defined(DUK_OPT_DATAPTR16) && defined(DUK_OPT_DATAPTR_ENC16) && defined(DUK_OPT_DATAPTR_DEC16)
+#define DUK_USE_DATAPTR16
+#define DUK_USE_DATAPTR_ENC16(ptr) DUK_OPT_DATAPTR_ENC16((ptr))
+#define DUK_USE_DATAPTR_DEC16(ptr) DUK_OPT_DATAPTR_DEC16((ptr))
+#endif
+
+#undef DUK_USE_FUNCPTR16
+#undef DUK_USE_FUNCPTR_ENC16
+#undef DUK_USE_FUNCPTR_DEC16
+#if defined(DUK_OPT_FUNCPTR16) && defined(DUK_OPT_FUNCPTR_ENC16) && defined(DUK_OPT_FUNCPTR_DEC16)
+#define DUK_USE_FUNCPTR16
+#define DUK_USE_FUNCPTR_ENC16(ptr) DUK_OPT_FUNCPTR_ENC16((ptr))
+#define DUK_USE_FUNCPTR_DEC16(ptr) DUK_OPT_FUNCPTR_DEC16((ptr))
+#endif
+
+#undef DUK_USE_REFCOUNT16
+#if defined(DUK_OPT_REFCOUNT16)
+#define DUK_USE_REFCOUNT16
+#endif
+
+#undef DUK_USE_STRHASH16
+#if defined(DUK_OPT_STRHASH16)
+#define DUK_USE_STRHASH16
+#endif
+
+#undef DUK_USE_STRLEN16
+#if defined(DUK_OPT_STRLEN16)
+#define DUK_USE_STRLEN16
+#endif
+
+#undef DUK_USE_BUFLEN16
+#if defined(DUK_OPT_BUFLEN16)
+#define DUK_USE_BUFLEN16
+#endif
+
+#undef DUK_USE_OBJSIZES16
+#if defined(DUK_OPT_OBJSIZES16)
+#define DUK_USE_OBJSIZES16
+#endif
+
+/* For now, hash part is dropped if and only if 16-bit object fields are used. */
+#define DUK_USE_HOBJECT_HASH_PART
+#if defined(DUK_USE_OBJSIZES16)
+#undef DUK_USE_HOBJECT_HASH_PART
 #endif
 
 /*
@@ -2773,6 +2953,12 @@ struct duk_number_list_entry {
  */
 #define DUK_VERSION                       10099L
 
+/* Git describe for Duktape build.  Useful for non-official snapshot builds
+ * so that application code can easily log which Duktape snapshot was used.
+ * Not available in the Ecmascript environment.
+ */
+#define DUK_GIT_DESCRIBE                  "v1.0.0-278-g316419d"
+
 /* Used to represent invalid index; if caller uses this without checking,
  * this index will map to a non-existent stack entry.  Also used in some
  * API calls as a marker to denote "no value".
@@ -2799,6 +2985,7 @@ struct duk_number_list_entry {
 #define DUK_TYPE_OBJECT                   6    /* Ecmascript object: includes objects, arrays, functions, threads */
 #define DUK_TYPE_BUFFER                   7    /* fixed or dynamic, garbage collected byte buffer */
 #define DUK_TYPE_POINTER                  8    /* raw void pointer */
+#define DUK_TYPE_LIGHTFUNC                9    /* lightweight function pointer */
 
 /* Value mask types, used by e.g. duk_get_type_mask() */
 #define DUK_TYPE_MASK_NONE                (1 << DUK_TYPE_NONE)
@@ -2810,6 +2997,7 @@ struct duk_number_list_entry {
 #define DUK_TYPE_MASK_OBJECT              (1 << DUK_TYPE_OBJECT)
 #define DUK_TYPE_MASK_BUFFER              (1 << DUK_TYPE_BUFFER)
 #define DUK_TYPE_MASK_POINTER             (1 << DUK_TYPE_POINTER)
+#define DUK_TYPE_MASK_LIGHTFUNC           (1 << DUK_TYPE_LIGHTFUNC)
 #define DUK_TYPE_MASK_THROW               (1 << 10)  /* internal flag value: throw if mask doesn't match */
 
 /* Coercion hints */
@@ -2843,6 +3031,7 @@ struct duk_number_list_entry {
 #define DUK_STRING_PUSH_SAFE              (1 << 0)    /* no error if file does not exist */
 
 /* Duktape specific error codes */
+#define DUK_ERR_NONE                      0    /* no error (e.g. from duk_get_error_code()) */
 #define DUK_ERR_UNIMPLEMENTED_ERROR       50   /* UnimplementedError */
 #define DUK_ERR_UNSUPPORTED_ERROR         51   /* UnsupportedError */
 #define DUK_ERR_INTERNAL_ERROR            52   /* InternalError */
@@ -3043,6 +3232,7 @@ DUK_EXTERNAL_DECL void duk_push_thread_stash(duk_context *ctx, duk_context *targ
 DUK_EXTERNAL_DECL duk_idx_t duk_push_object(duk_context *ctx);
 DUK_EXTERNAL_DECL duk_idx_t duk_push_array(duk_context *ctx);
 DUK_EXTERNAL_DECL duk_idx_t duk_push_c_function(duk_context *ctx, duk_c_function func, duk_idx_t nargs);
+DUK_EXTERNAL_DECL duk_idx_t duk_push_c_lightfunc(duk_context *ctx, duk_c_function func, duk_idx_t nargs, duk_idx_t length, duk_int_t magic);
 DUK_EXTERNAL_DECL duk_idx_t duk_push_thread_raw(duk_context *ctx, duk_uint_t flags);
 
 #define duk_push_thread(ctx) \
@@ -3066,6 +3256,8 @@ DUK_EXTERNAL_DECL duk_idx_t duk_push_error_object_stash(duk_context *ctx, duk_er
 DUK_EXTERNAL_DECL void *duk_push_buffer(duk_context *ctx, duk_size_t size, duk_bool_t dynamic);
 DUK_EXTERNAL_DECL void *duk_push_fixed_buffer(duk_context *ctx, duk_size_t size);
 DUK_EXTERNAL_DECL void *duk_push_dynamic_buffer(duk_context *ctx, duk_size_t size);
+
+DUK_EXTERNAL_DECL duk_idx_t duk_push_heapptr(duk_context *ctx, void *ptr);
 
 /*
  *  Pop operations
@@ -3098,6 +3290,7 @@ DUK_EXTERNAL_DECL duk_bool_t duk_is_string(duk_context *ctx, duk_idx_t index);
 DUK_EXTERNAL_DECL duk_bool_t duk_is_object(duk_context *ctx, duk_idx_t index);
 DUK_EXTERNAL_DECL duk_bool_t duk_is_buffer(duk_context *ctx, duk_idx_t index);
 DUK_EXTERNAL_DECL duk_bool_t duk_is_pointer(duk_context *ctx, duk_idx_t index);
+DUK_EXTERNAL_DECL duk_bool_t duk_is_lightfunc(duk_context *ctx, duk_idx_t index);
 
 DUK_EXTERNAL_DECL duk_bool_t duk_is_array(duk_context *ctx, duk_idx_t index);
 DUK_EXTERNAL_DECL duk_bool_t duk_is_function(duk_context *ctx, duk_idx_t index);
@@ -3117,7 +3310,12 @@ DUK_EXTERNAL_DECL duk_bool_t duk_is_primitive(duk_context *ctx, duk_idx_t index)
 	                                    DUK_TYPE_MASK_STRING | \
 	                                    DUK_TYPE_MASK_OBJECT | \
 	                                    DUK_TYPE_MASK_BUFFER | \
-	                                    DUK_TYPE_MASK_POINTER)
+	                                    DUK_TYPE_MASK_POINTER | \
+	                                    DUK_TYPE_MASK_LIGHTFUNC)
+
+DUK_EXTERNAL_DECL duk_errcode_t duk_get_error_code(duk_context *ctx, duk_idx_t index);
+#define duk_is_error(ctx,index) \
+	(duk_get_error_code((ctx), (index)) != 0)
 
 /*
  *  Get operations: no coercion, returns default value for invalid
@@ -3137,6 +3335,7 @@ DUK_EXTERNAL_DECL void *duk_get_buffer(duk_context *ctx, duk_idx_t index, duk_si
 DUK_EXTERNAL_DECL void *duk_get_pointer(duk_context *ctx, duk_idx_t index);
 DUK_EXTERNAL_DECL duk_c_function duk_get_c_function(duk_context *ctx, duk_idx_t index);
 DUK_EXTERNAL_DECL duk_context *duk_get_context(duk_context *ctx, duk_idx_t index);
+DUK_EXTERNAL_DECL void *duk_get_heapptr(duk_context *ctx, duk_idx_t index);
 DUK_EXTERNAL_DECL duk_size_t duk_get_length(duk_context *ctx, duk_idx_t index);
 
 /*
@@ -3159,6 +3358,7 @@ DUK_EXTERNAL_DECL void *duk_require_buffer(duk_context *ctx, duk_idx_t index, du
 DUK_EXTERNAL_DECL void *duk_require_pointer(duk_context *ctx, duk_idx_t index);
 DUK_EXTERNAL_DECL duk_c_function duk_require_c_function(duk_context *ctx, duk_idx_t index);
 DUK_EXTERNAL_DECL duk_context *duk_require_context(duk_context *ctx, duk_idx_t index);
+DUK_EXTERNAL_DECL void *duk_require_heapptr(duk_context *ctx, duk_idx_t index);
 
 #define duk_require_object_coercible(ctx,index) \
 	((void) duk_check_type_mask((ctx), (index), DUK_TYPE_MASK_BOOLEAN | \
@@ -3167,6 +3367,7 @@ DUK_EXTERNAL_DECL duk_context *duk_require_context(duk_context *ctx, duk_idx_t i
 	                                            DUK_TYPE_MASK_OBJECT | \
 	                                            DUK_TYPE_MASK_BUFFER | \
 	                                            DUK_TYPE_MASK_POINTER | \
+	                                            DUK_TYPE_MASK_LIGHTFUNC | \
 	                                            DUK_TYPE_MASK_THROW))
 
 /*
@@ -3575,6 +3776,23 @@ DUK_EXTERNAL_DECL void duk_push_context_dump(duk_context *ctx);
 
 #if defined(DUK_USE_GC_TORTURE) && !defined(DUK_USE_MARK_AND_SWEEP)
 #error DUK_USE_GC_TORTURE defined without DUK_USE_MARK_AND_SWEEP
+#endif
+
+/*
+ *  Low memory feature consistency
+ */
+
+#if defined(DUK_USE_OBJSIZES16)
+#if defined(DUK_USE_HOBJECT_HASH_PART)
+#error DUK_USE_OBJSIZES16 assumes DUK_USE_HOBJECT_HASH_PART is not defined
+#endif
+#endif
+
+#if defined(DUK_USE_STRTAB_CHAIN) && defined(DUK_USE_STRTAB_PROBE)
+#error both DUK_USE_STRTAB_CHAIN and DUK_USE_STRTAB_PROBE defined
+#endif
+#if !defined(DUK_USE_STRTAB_CHAIN) && !defined(DUK_USE_STRTAB_PROBE)
+#error neither DUK_USE_STRTAB_CHAIN nor DUK_USE_STRTAB_PROBE is defined
 #endif
 
 #endif  /* DUK_FEATURES_SANITY_H_INCLUDED */
