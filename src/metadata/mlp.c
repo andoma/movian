@@ -584,8 +584,9 @@ query_by_filename_or_dirname(void *db, const metadata_lazy_video_t *mlv,
       return METADATA_PERMANENT_ERROR;
 
     if(title == NULL) {
-      metadata_folder_to_season(rstr_get(mlv->mlv_folder),
-				NULL, &title);
+      if(mlv->mlv_folder != NULL)
+        metadata_folder_to_season(rstr_get(mlv->mlv_folder),
+                                  NULL, &title);
 
       if(title == NULL) {
 	METADATA_TRACE(
@@ -648,10 +649,10 @@ query_by_filename_or_dirname(void *db, const metadata_lazy_video_t *mlv,
   }
 
 
-  if(rval == METADATA_PERMANENT_ERROR && lonely) {
+  if(rval == METADATA_PERMANENT_ERROR && lonely && mlv->mlv_folder != NULL) {
 
     metadata_filename_to_title(rstr_get(mlv->mlv_folder), &year, &title);
-  
+
     METADATA_TRACE(
 	  "Performing search lookup for %s year:%d, based on folder name",
 	  rstr_get(title), year);
