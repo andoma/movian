@@ -29,6 +29,7 @@
 #include <signal.h>
 #include <android/log.h>
 #include <jni.h>
+#include <sys/system_properties.h>
 #include <GLES2/gl2.h>
 
 #include "arch/arch.h"
@@ -41,6 +42,11 @@
 #include "navigator.h"
 #include <sys/mman.h>
 #include "arch/halloc.h"
+
+static char android_manufacturer[PROP_VALUE_MAX];
+static char android_model[PROP_VALUE_MAX];
+static char android_name[PROP_VALUE_MAX];
+static char system_type[256];
 
 JavaVM *JVM;
 jclass STCore;
@@ -175,7 +181,7 @@ mymemalign(size_t align, size_t size)
 const char *
 showtime_get_system_type(void)
 {
-  return "android";
+  return system_type;
 }
 
 void
@@ -211,6 +217,15 @@ jint
 JNI_OnLoad(JavaVM *vm, void *reserved)
 {
   JVM = vm;
+
+  __system_property_get("ro.product.manufacturer", android_manufacturer);
+  __system_property_get("ro.product.model",        android_model);
+  __system_property_get("ro.product.name",         android_name);
+
+  snprintf(system_type, sizeof(system_type),
+           "android/%s/%s/%s", android_manufacturer,
+           android_model, android_name);
+
   return JNI_VERSION_1_6;
 }
 
