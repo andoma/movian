@@ -208,6 +208,9 @@ render_unlocked(glw_root_t *gr)
     glw_program_t *gp =
       load_program(gr, t0, rj->t1, rj->blur, rj->flags, rj->gpa, &rs, rj);
 
+    if(gbr->gbr_use_stencil_buffer)
+      glStencilFunc(GL_GEQUAL, ro->zindex, 0xFF);
+
     if(unlikely(gp == NULL)) {
 
 #if ENABLE_GLW_BACKEND_OPENGL
@@ -614,3 +617,58 @@ glw_opengl_shaders_init(glw_root_t *gr, int delayed)
 
   return 0;
 }
+
+
+
+/**
+ *
+ */
+static const float stencilquad[6][VERTEX_SIZE] = {
+  {-1, -1, 0, 0, 1,1,1,1, 0,0,0,0},
+  { 1, -1, 0, 0, 1,1,1,1, 0,0,0,0},
+  { 1,  1, 0, 0, 1,1,1,1, 0,0,0,0},
+
+  {-1, -1, 0, 0, 1,1,1,1, 0,0,0,0},
+  { 1,  1, 0, 0, 1,1,1,1, 0,0,0,0},
+  { -1, 1, 0, 0, 1,1,1,1, 0,0,0,0},
+};
+
+
+/**
+ *
+ */
+void
+glw_stencil_quad(glw_root_t *gr, const glw_rctx_t *rc)
+{
+  glw_backend_root_t *gbr = &gr->gr_be;
+  glw_program_t *gp = gbr->gbr_renderer_flat;
+
+  glStencilFunc(GL_NEVER, rc->rc_zindex, 0xFF);
+  glStencilOp(GL_REPLACE, GL_KEEP, GL_KEEP);
+  glStencilMask(0xff);
+
+  glUseProgram(gp->gp_program);
+
+  glUniformMatrix4fv(gp->gp_uniform_modelview, 1, 0, glw_mtx_get(rc->rc_mtx));
+
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+  glFrontFace(GL_CCW);
+
+  const float *vertices = &stencilquad[0][0];
+
+  glVertexAttribPointer(0, 4, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
+                       vertices);
+
+  glVertexAttribPointer(1, 4, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
+                       vertices + 4);
+
+  glVertexAttribPointer(2, 4, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
+                       vertices + 8);
+
+  glDrawArrays(GL_TRIANGLES, 0, 6);
+
+  glUseProgram(0);
+  gbr->gbr_current = NULL;
+}
+

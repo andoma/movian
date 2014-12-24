@@ -96,6 +96,9 @@ android_render(glw_video_t *gv, glw_rctx_t *rc)
 {
   android_video_t *av = gv->gv_aux;
 
+  if(gv->gv_dar_num && gv->gv_dar_den)
+    glw_stencil_quad(gv->w.glw_root, rc);
+
   if(!memcmp(&av->av_display_rect, &gv->gv_rect, sizeof(glw_rect_t)))
     return;
 

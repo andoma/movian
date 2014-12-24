@@ -49,6 +49,8 @@ Java_com_showtimemediacenter_showtime_STCore_glwCreate(JNIEnv *env,
   if(glw_init(&agr->gr))
     return 0;
 
+  agr->gr.gr_be.gbr_use_stencil_buffer = 1;
+
   hts_cond_init(&agr->agr_runcond, &agr->gr.gr_mutex);
 
   agr->agr_vrp = (*env)->NewGlobalRef(env, vrp);
@@ -136,10 +138,12 @@ Java_com_showtimemediacenter_showtime_STCore_glwStep(JNIEnv *env,
   int zmax;
 
   glw_lock(gr);
-  gr->gr_can_externalize = 1;
-  gr->gr_externalize_cnt = 0;
   glViewport(0, 0, gr->gr_width, gr->gr_height);
-  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+  glEnable(GL_STENCIL_TEST);
+  glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+  glDepthMask(GL_FALSE);
+
   glw_prepare_frame(gr, 0);
 
   glw_rctx_t rc;
@@ -148,6 +152,10 @@ Java_com_showtimemediacenter_showtime_STCore_glwStep(JNIEnv *env,
   glw_render0(gr->gr_universe, &rc);
 
   glw_unlock(gr);
+
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  glDepthMask(GL_TRUE);
+
   glw_post_scene(gr);
 
 }

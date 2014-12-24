@@ -92,6 +92,8 @@ typedef struct glw_backend_root {
 
   struct glw_program *gbr_current;
 
+  int gbr_use_stencil_buffer;
+
   /**
    * Video renderer
    */
@@ -192,5 +194,7 @@ void glw_program_set_uniform_color(glw_backend_root_t *gbr,
 int glw_opengl_ff_init(struct glw_root *gr);
 
 int glw_opengl_shaders_init(struct glw_root *gr, int delayed);
+
+void glw_stencil_quad(struct glw_root *gr, const struct glw_rctx *rc);
 
 #endif /* GLW_OPENGL_H__ */
