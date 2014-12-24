@@ -5,7 +5,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 316419d68e3f95850a5f54d4460d85198b8633d8 (v1.0.0-278-g316419d).
+ *  Git commit 7b32caa5760778b5a603e2a678500158634a41a1 (v1.0.0-287-g7b32caa).
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -2029,6 +2029,22 @@ typedef FILE duk_file;
 #endif
 
 /*
+ *  DUK_NOINLINE: macro to avoid inlining a function.
+ */
+
+#if defined(DUK_F_CLANG)
+#define DUK_NOINLINE __attribute__ ((noinline))
+#elif defined(DUK_F_GCC) && defined(DUK_F_GCC_VERSION)
+#if (DUK_F_GCC_VERSION >= 30101)
+#define DUK_NOINLINE __attribute__ ((noinline))
+#endif
+#endif
+
+#if !defined(DUK_NOINLINE)
+#define DUK_NOINLINE /*nop*/
+#endif
+
+/*
  *  Symbol visibility macros
  *
  *  To avoid C++ declaration issues (see GH-63):
@@ -2957,7 +2973,7 @@ struct duk_number_list_entry {
  * so that application code can easily log which Duktape snapshot was used.
  * Not available in the Ecmascript environment.
  */
-#define DUK_GIT_DESCRIBE                  "v1.0.0-278-g316419d"
+#define DUK_GIT_DESCRIBE                  "v1.0.0-287-g7b32caa"
 
 /* Used to represent invalid index; if caller uses this without checking,
  * this index will map to a non-existent stack entry.  Also used in some
