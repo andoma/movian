@@ -261,6 +261,11 @@ struct prop {
    */
 #define PROP_INT_MARKED            0x100
 
+  /**
+   * Special debug
+   */
+#define PROP_DEBUG_THIS            0x200
+
 
   /**
    * Tags. Protected by prop_tag_mutex

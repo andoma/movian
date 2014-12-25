@@ -217,79 +217,6 @@ hc_image(http_connection_t *hc, const char *remain, void *opaque,
 
 
 
-static prop_t *
-prop_from_path(const char *path)
-{
-  char **n = strvec_split(path, '/');
-  prop_t *p = prop_get_by_name((const char **)n, 1, NULL);
-  strvec_free(n);
-  return p;
-}
-
-
-
-static int
-hc_prop(http_connection_t *hc, const char *remain, void *opaque,
-	http_cmd_t method)
-{
-  htsbuf_queue_t out;
-  rstr_t *r;
-  int rval, i;
-  prop_t *p;
-  const char *action = http_arg_get_req(hc, "action");
-
-  if(remain == NULL)
-    return 404;
-
-  p = prop_from_path(remain);
-
-  if(p == NULL)
-    return 404;
-  
-  htsbuf_queue_init(&out, 0);
-
-  switch(method) {
-  case HTTP_CMD_GET:
-
-    if(action != NULL) {
-      event_t *e = event_create_action_str(action);
-      prop_send_ext_event(p, e);
-      event_release(e);
-      rval = HTTP_STATUS_OK;
-      break;
-    }
-
-    r = prop_get_string(p, NULL);
-
-    if(r == NULL) {
-
-      char **childs = prop_get_name_of_childs(p);
-      if(childs == NULL) {
-	rval = HTTP_STATUS_UNSUPPORTED_MEDIA_TYPE;
-	break;
-      }
-      htsbuf_qprintf(&out, "dir");
-      for(i = 0; childs[i] != NULL; i++) {
-	htsbuf_qprintf(&out, "%c%s", i ? ',' : ':', childs[i]);
-      }
-    } else {
-      htsbuf_qprintf(&out, "value:");
-      htsbuf_append(&out, rstr_get(r), strlen(rstr_get(r)));
-      rstr_release(r);
-    }
-    htsbuf_append(&out, "\n", 1);
-    rval = http_send_reply(hc, 0, "text/ascii", NULL, NULL, 0, &out);
-    break;
-
-  default:
-    rval = HTTP_STATUS_METHOD_NOT_ALLOWED;
-    break;
-  }
-
-  prop_ref_dec(p);
-
-  return rval;
-}
 
 
 static int
@@ -756,7 +683,6 @@ httpcontrol_init(void)
   http_path_add("/showtime/image", NULL, hc_image, 0);
   http_path_add("/showtime/open", NULL, hc_open, 1);
   http_path_add("/showtime/openparameterized", NULL, hc_open_parameterized, 0);
-  http_path_add("/showtime/prop", NULL, hc_prop, 0);
   http_path_add("/showtime/input/action", NULL, hc_action, 0);
   http_path_add("/showtime/input/utf8", NULL, hc_utf8, 1);
   http_path_add("/showtime/notifyuser", NULL, hc_notify_user, 1);

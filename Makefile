@@ -102,6 +102,8 @@ SRCS-$(CONFIG_USAGEREPORT) += src/usage.c
 
 SRCS-$(CONFIG_PLAYQUEUE) += src/playqueue.c
 
+SRCS-$(CONFIG_HTTPSERVER) += src/prop/prop_http.c
+
 ##############################################################
 # Images
 ##############################################################
