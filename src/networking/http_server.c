@@ -479,7 +479,7 @@ http_exec(http_connection_t *hc, const http_path_t *hp, char *remain,
 	  http_cmd_t method)
 {
   hsprintf("%p: Dispatching [%s] on thread 0x%lx\n",
-	 hc, hp->hp_path, pthread_self());
+           hc, hp->hp_path, (unsigned long)pthread_self());
   int err = hp->hp_callback(hc, remain, hp->hp_opaque, method);
   hsprintf("%p: Returned from fn, err = %d\n", hc, err);
 
