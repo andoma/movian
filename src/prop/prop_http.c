@@ -104,7 +104,6 @@ hc_prop(http_connection_t *hc, const char *remain, void *opaque,
   s = http_arg_get_hdr(hc, "accept");
   html = s != NULL && strstr(s, "text/html");
 
-  const char *br = html ? "<br>" : "\n";
 
   if(remain == NULL) {
     return 404;
@@ -213,6 +212,7 @@ hc_prop(http_connection_t *hc, const char *remain, void *opaque,
 
 #ifdef PROP_SUB_RECORD_SOURCE
 
+    const char *br = html ? "<br>" : "\n";
     prop_sub_t *s;
 
     htsbuf_qprintf(&out, "Value Subscribers:%s", br);
