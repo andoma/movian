@@ -3922,6 +3922,38 @@ prop_value_compare(prop_t *a, prop_t *b)
 
 
 
+#ifdef PROP_DEBUG
+/**
+ *
+ */
+static void
+show_origins(prop_sub_t *s, const char *prefix, prop_t *broken_link)
+{
+  printf("Tracked sub %p @ '%s' ", s, prefix);
+  if(s->hps_origin == NULL) {
+    printf("No origins\n");
+    return;
+  }
+
+  if(s->hps_multiple_origins) {
+    printf("Multiple origins\n");
+    prop_originator_tracking_t *pot = s->hps_pots;
+    while(pot != NULL) {
+      printf("  %10s %s\n", pot->pot_p == broken_link ? "BREAK" : "",
+             prop_get_DN(pot->pot_p, 1));
+      pot = pot->pot_next;
+    }
+
+  } else {
+    printf("Single origin\n");
+    prop_t *p = s->hps_origin;
+    printf("  %10s %s\n", p == broken_link ? "BREAK" : "",
+           prop_get_DN(p, 1));
+  }
+}
+#endif
+
+
 /**
  *
  */
@@ -3934,8 +3966,11 @@ retarget_subscription(prop_t *p, prop_sub_t *s, prop_sub_t *skipme,
 
 #ifdef PROP_DEBUG
   if(s == track_sub) {
-    printf("Tracked sub %p got attached to %s previously at %s\n",
-           s, prop_get_DN(p, 7), prop_get_DN(s->hps_value_prop, 7));
+    printf("Tracked sub %p got %s to %s%s previously at %s%s\n",
+           s, pnq ? "restored" : "attached",
+           prop_get_DN(p, 7), p == s->hps_canonical_prop ? " (CANONICAL)" : "",
+           prop_get_DN(s->hps_value_prop, 7),
+           s->hps_value_prop == s->hps_canonical_prop ? " (CANONICAL)" : "");
   }
 
 #endif
@@ -4054,8 +4089,16 @@ relink_subscriptions(prop_t *src, prop_t *dst, prop_sub_t *skipme,
 
   while((s = LIST_FIRST(&dst->hp_value_subscriptions)) != NULL) {
     LIST_REMOVE(s, hps_value_prop_link);
+#ifdef PROP_DEBUG
+    if(s == track_sub)
+      show_origins(s, "relink pre", NULL);
+#endif
     retarget_subscription(src, s, skipme, origin, NULL);
     prepend_origins(s, prependvec, prependveclen);
+#ifdef PROP_DEBUG
+    if(s == track_sub)
+      show_origins(s, "relink post", NULL);
+#endif
   }
 
   if(dst->hp_type != PROP_DIR)
@@ -4153,6 +4196,10 @@ restore_and_descend(prop_t *dst, prop_t *src, prop_sub_t *skipme,
   for(s = LIST_FIRST(&src->hp_value_subscriptions); s != NULL; s = next) {
     next = LIST_NEXT(s, hps_value_prop_link);
 
+#ifdef PROP_DEBUG
+    if(s == track_sub)
+      show_origins(s, "restore_and_descend pre", broken_link);
+#endif
      if(s->hps_origin == NULL)
       continue;
 
@@ -4194,6 +4241,10 @@ restore_and_descend(prop_t *dst, prop_t *src, prop_sub_t *skipme,
     }
     retarget_subscription(dst, s, skipme, origin, pnq);
     prepend_origins(s, prependvec, prependveclen);
+#ifdef PROP_DEBUG
+    if(s == track_sub)
+      show_origins(s, "restore_and_descend post", broken_link);
+#endif
   }
 
   if(src->hp_type != PROP_DIR)
