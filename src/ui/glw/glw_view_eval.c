@@ -833,22 +833,22 @@ resolve_property_name2(glw_view_eval_context_t *ec, token_t *t)
 static int
 eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
 {
-  token_t *b = eval_pop(ec), *a = eval_pop(ec);
+  token_t *right = eval_pop(ec), *left = eval_pop(ec);
   int r = 0;
 
-  if(a == NULL || b == NULL)
+  if(left == NULL || right == NULL)
     return glw_view_seterr(ec->ei, self, "Invalid assignment");
 
   /* Catch some special cases here */
-  if(b->type == TOKEN_PROPERTY_NAME && 
-     !strcmp(rstr_get(b->t_rstring), "event")) {
+  if(right->type == TOKEN_PROPERTY_NAME && 
+     !strcmp(rstr_get(right->t_rstring), "event")) {
     /* Assignment from $event, if our eval context has an event use it */
     if(ec->event == NULL || ec->event->e_type_x != EVENT_KEYDESC)
       return 0;
-    b = eval_alloc(self, ec, TOKEN_RSTRING);
+    right = eval_alloc(self, ec, TOKEN_RSTRING);
     const event_payload_t *ep = (const event_payload_t *)ec->event;
-    b->t_rstring = rstr_alloc(ep->payload);
-  } else if(b->type == TOKEN_BLOCK) {
+    right->t_rstring = rstr_alloc(ep->payload);
+  } else if(right->type == TOKEN_BLOCK) {
     glw_view_eval_context_t n;
 
     memset(&n, 0, sizeof(n));
@@ -865,85 +865,89 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
 
     n.tgtprop = prop_create_root(NULL);
 
-    if(glw_view_eval_block(b, &n))
+    if(glw_view_eval_block(right, &n))
       return -1;
 
-    b = eval_alloc(b, ec, TOKEN_PROPERTY_OWNER);
-    b->t_prop = n.tgtprop;
+    right = eval_alloc(right, ec, TOKEN_PROPERTY_OWNER);
+    right->t_prop = n.tgtprop;
 
-  } else if(b->type == TOKEN_PROPERTY_REF &&
-	    a->type == TOKEN_PROPERTY_REF) {
+  } else if(right->type == TOKEN_PROPERTY_REF &&
+	    left->type == TOKEN_PROPERTY_REF) {
 
-    if(b->t_prop != a->t_prop)
-      prop_link_ex(b->t_prop, a->t_prop, NULL, PROP_LINK_NORMAL, how == 2);
-    eval_push(ec, b);
+    if(right->t_prop != left->t_prop)
+      prop_link_ex(right->t_prop, left->t_prop,
+                   NULL, PROP_LINK_NORMAL, how == 2);
+
+    eval_push(ec, right);
     return 0;
 
-  } else if((b = token_resolve(ec, b)) == NULL) {
+  } else if((right = token_resolve(ec, right)) == NULL) {
     return -1;
   }
 
-  if(a->type == TOKEN_PROPERTY_NAME)
-    if(resolve_property_name(ec, a))
+  if(left->type == TOKEN_PROPERTY_NAME)
+    if(resolve_property_name(ec, left))
       return -1;
     
 
-  if(how == 1 && b->type == TOKEN_VOID) {
-    eval_push(ec, b);
+  if(how == 1 && right->type == TOKEN_VOID) {
+    eval_push(ec, right);
     return 0;
   }
 
-  switch(a->type) {
+  switch(left->type) {
 
 
   case TOKEN_RESOLVED_ATTRIBUTE:
-    r = a->t_attrib->set(ec, a->t_attrib, b);
+    r = left->t_attrib->set(ec, left->t_attrib, right);
     break;
 
   case TOKEN_UNRESOLVED_ATTRIBUTE:
-    r = glw_view_unresolved_attribute_set(ec, rstr_get(a->t_rstring), b);
+    r = glw_view_unresolved_attribute_set(ec, rstr_get(left->t_rstring), right);
     break;
 
   case TOKEN_IDENTIFIER:
     if(ec->tgtprop == NULL)
       return glw_view_seterr(ec->ei, self, "Invalid assignment outside block");
 
-    prop_t *p = prop_create_r(ec->tgtprop, rstr_get(a->t_rstring));
+    prop_t *p = prop_create_r(ec->tgtprop, rstr_get(left->t_rstring));
 
-    rstr_release(a->t_rstring);
-    a->t_rstring = NULL;
-    a->type = TOKEN_PROPERTY_REF;
-    a->t_prop = p;
+    rstr_release(left->t_rstring);
+    left->t_rstring = NULL;
+    left->type = TOKEN_PROPERTY_REF;
+    left->t_prop = p;
     // FALLTHRU
 
    case TOKEN_PROPERTY_REF:
-    switch(b->type) {
+    switch(right->type) {
     case TOKEN_RSTRING:
-      prop_set_rstring(a->t_prop, b->t_rstring);
+      prop_set_rstring(left->t_prop, right->t_rstring);
       break;
     case TOKEN_CSTRING:
-      prop_set_cstring(a->t_prop, b->t_cstring);
+      prop_set_cstring(left->t_prop, right->t_cstring);
       break;
     case TOKEN_URI:
-      prop_set_uri(a->t_prop, rstr_get(b->t_uri_title),
-                   rstr_get(b->t_uri));
+      prop_set_uri(left->t_prop, rstr_get(right->t_uri_title),
+                   rstr_get(right->t_uri));
       break;
     case TOKEN_INT:
-      prop_set_int(a->t_prop, b->t_int);
+      prop_set_int(left->t_prop, right->t_int);
       break;
     case TOKEN_FLOAT:
-      prop_set_float(a->t_prop, b->t_float);
+      prop_set_float(left->t_prop, right->t_float);
       break;
     case TOKEN_EM:
-      prop_set_float(a->t_prop, b->t_float * ec->w->glw_root->gr_current_size);
+      prop_set_float(left->t_prop,
+                     right->t_float * ec->w->glw_root->gr_current_size);
       ec->dynamic_eval |= GLW_VIEW_EVAL_EM;
       break;
     case TOKEN_PROPERTY_REF:
-      if(b->t_prop != a->t_prop)
-	prop_link_ex(b->t_prop, a->t_prop, NULL, PROP_LINK_NORMAL, how == 2);
+      if(right->t_prop != left->t_prop)
+	prop_link_ex(right->t_prop, left->t_prop,
+                     NULL, PROP_LINK_NORMAL, how == 2);
       break;
     default:
-      prop_set_void(a->t_prop);
+      prop_set_void(left->t_prop);
       break;
     }
     r = 0;
@@ -951,10 +955,10 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
 
   default:
     return glw_view_seterr(ec->ei, self, "Invalid assignment %s = %s",
-			   token2name(a), token2name(b));
+			   token2name(left), token2name(right));
   }
 
-  eval_push(ec, b);
+  eval_push(ec, right);
   return r;
 }
 
