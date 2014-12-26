@@ -104,6 +104,8 @@ hc_prop(http_connection_t *hc, const char *remain, void *opaque,
   s = http_arg_get_hdr(hc, "accept");
   html = s != NULL && strstr(s, "text/html");
 
+  const char *br = html ? "<br>" : "\n";
+
   if(remain == NULL) {
     return 404;
   } else {
@@ -146,7 +148,8 @@ hc_prop(http_connection_t *hc, const char *remain, void *opaque,
     if(html) {
       htsbuf_qprintf(&out, "<html><body>");
     }
-    htsbuf_qprintf(&out, "%s = ", name);
+    htsbuf_qprintf(&out, "%s (ref:%d xref:%d) is a ", name,
+                   p->hp_refcount, p->hp_xref);
 
     hts_mutex_lock(&prop_mutex);
 
@@ -207,7 +210,24 @@ hc_prop(http_connection_t *hc, const char *remain, void *opaque,
       emit_value(&out, html, p);
       htsbuf_append(&out, "\n", 1);
     }
+
+#ifdef PROP_SUB_RECORD_SOURCE
+
+    prop_sub_t *s;
+
+    htsbuf_qprintf(&out, "Value Subscribers:%s", br);
+
+    LIST_FOREACH(s, &p->hp_value_subscriptions, hps_value_prop_link)
+      htsbuf_qprintf(&out, "%s:%d%s", s->hps_file, s->hps_line, br);
+
+    htsbuf_qprintf(&out, "Canonical Subscribers:%s", br);
+
+    LIST_FOREACH(s, &p->hp_canonical_subscriptions, hps_canonical_prop_link)
+      htsbuf_qprintf(&out, "%s:%d%s", s->hps_file, s->hps_line, br);
+#endif
+
     hts_mutex_unlock(&prop_mutex);
+
     rval = http_send_reply(hc, 0,
                            html ?
                            "text/html; charset=utf-8" :
