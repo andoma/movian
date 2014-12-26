@@ -547,7 +547,10 @@ nav_page_setup_prop(nav_page_t *np, const char *view, const char *how)
     prop_set(np->np_prop_root, "openedFrom", PROP_SET_PROP, np->np_opened_from);
 
   if(np->np_origin)
-    prop_link(np->np_origin, prop_create(np->np_prop_root, "origin"));
+    prop_set(np->np_prop_root, "origin", PROP_SET_PROP, np->np_origin);
+  // The following line does not work as it should due to bugs
+  // with prop unlinking, see #2419
+  //    prop_link(np->np_origin, prop_create(np->np_prop_root, "origin"));
 
   if(view != NULL)
     prop_set(np->np_prop_root, "requestedView", PROP_SET_STRING, view);
