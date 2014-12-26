@@ -4773,8 +4773,11 @@ static int
 glwf_trace(glw_view_eval_context_t *ec, struct token *self,
 	   token_t **argv, unsigned int argc)
 {
+  const char *prefix;
   token_t *a, *b;
-
+#ifdef PROP_DEBUG
+  char tmp[128];
+#endif
   ec->debug++;
 
   if((a = token_resolve(ec, argv[0])) == NULL ||
@@ -4787,27 +4790,35 @@ glwf_trace(glw_view_eval_context_t *ec, struct token *self,
   if(a->type != TOKEN_RSTRING)
     return 0;
 
+#ifdef PROP_DEBUG
+  snprintf(tmp, sizeof(tmp), "%s: sub @ %p", rstr_get(a->t_rstring),
+           argv[1]->type == TOKEN_PROPERTY_SUBSCRIPTION ?
+           argv[1]->t_propsubr->gps_sub : NULL);
+  prefix = tmp;
+#else
+  prefix = rstr_get(a->t_rstring);
+#endif
+
   switch(b->type) {
   case TOKEN_URI:
   case TOKEN_RSTRING:
   case TOKEN_IDENTIFIER:
-    TRACE(TRACE_DEBUG, "GLW", "%s: %s", rstr_get(a->t_rstring), 
-	  rstr_get(b->t_rstring));
+    TRACE(TRACE_DEBUG, "GLW", "%s: %s", prefix, rstr_get(b->t_rstring));
     break;
   case TOKEN_CSTRING:
-    TRACE(TRACE_DEBUG, "GLW", "%s: %s", rstr_get(a->t_rstring), b->t_cstring);
+    TRACE(TRACE_DEBUG, "GLW", "%s: %s", prefix, b->t_cstring);
     break;
   case TOKEN_FLOAT:
-    TRACE(TRACE_DEBUG, "GLW", "%s: %f", rstr_get(a->t_rstring), b->t_float);
+    TRACE(TRACE_DEBUG, "GLW", "%s: %f", prefix, b->t_float);
     break;
   case TOKEN_INT:
-    TRACE(TRACE_DEBUG, "GLW", "%s: %d", rstr_get(a->t_rstring), b->t_int);
+    TRACE(TRACE_DEBUG, "GLW", "%s: %d", prefix, b->t_int);
     break;
   case TOKEN_VOID:
-    TRACE(TRACE_DEBUG, "GLW", "%s: (void)", rstr_get(a->t_rstring), b->t_int);
+    TRACE(TRACE_DEBUG, "GLW", "%s: (void)", prefix, b->t_int);
     break;
   default:
-    TRACE(TRACE_DEBUG, "GLW", "%s: %s", rstr_get(a->t_rstring), token2name(b));
+    TRACE(TRACE_DEBUG, "GLW", "%s: %s", prefix, token2name(b));
     break;
   }
   return 0;
