@@ -226,6 +226,24 @@ hc_prop(http_connection_t *hc, const char *remain, void *opaque,
 }
 
 
+#ifdef PROP_DEBUG
+/**
+ *
+ */
+static int
+hc_subtrack(http_connection_t *hc, const char *remain, void *opaque,
+	   http_cmd_t method)
+{
+  if(remain == NULL)
+    return 404;
+  void *ptr = (void *)(intptr_t)strtol(remain, NULL, 16);
+  prop_track_sub(ptr);
+  return 200;
+}
+#endif
+
+
+
 /**
  *
  */
@@ -233,6 +251,9 @@ static void
 prop_http_init(void)
 {
   http_path_add("/showtime/prop", NULL, hc_prop, 0);
+#ifdef PROP_DEBUG
+  http_path_add("/subtrack", NULL, hc_subtrack, 0);
+#endif
 }
 
 INITME(INIT_GROUP_API, prop_http_init, NULL);
