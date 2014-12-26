@@ -162,7 +162,11 @@ ecmascript_openuri(prop_t *page, const char *url, int sync)
 
 
   duk_context *ctx = ec->ec_duk;
-
+  if(ctx == NULL) {
+    es_context_end(ec);
+    es_resource_release(&er->super);
+    return 1;
+  }
 
   es_push_root(ctx, er);
 
