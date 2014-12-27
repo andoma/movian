@@ -5,11 +5,14 @@ var settings = require('showtime/settings');
 // The Item object
 // ---------------------------------------------------------------
 
-function Item(root) {
+function Item(page) {
   Object.defineProperties(this, {
 
     root: {
       value: prop.createRoot()
+    },
+    page: {
+      value: page
     }
   });
   this.eventhandlers = {};
@@ -113,7 +116,7 @@ Item.prototype.onEvent = function(type, callback) {
 // ---------------------------------------------------------------
 
 function Page(root, sync, flat) {
-
+  this.items = [];
   this.sync = sync;
   this.root = root;
   this.model = flat ? this.root : this.root.model;
@@ -151,17 +154,31 @@ function Page(root, sync, flat) {
   }
 
   this.nodesub =
-    prop.subscribe(model.nodes, function(op, value) {
+    prop.subscribe(model.nodes, function(op, value, value2) {
       if(op == 'wantmorechilds') {
         var nodes = model.nodes;
         var have_more = typeof this.paginator == 'function' && !!this.paginator();
         Showtime.propHaveMore(nodes, have_more);
+      }
+
+      if(op == 'reqmove' && typeof this.reorderer == 'function') {
+        var item = this.items[this.findItemByProp(value)];
+        var before = value2 ? this.items[this.findItemByProp(value2)] : null;
+        this.reorderer(item, before);
       }
     }.bind(this), {
       autoDestroy: true
     });
 }
 
+Page.prototype.findItemByProp = function(v) {
+  for(var i = 0; i < this.items.length; i++) {
+    if(prop.isSame(this.items[i].root, v)) {
+      return i;
+    }
+  }
+  return -1;
+}
 
 Page.prototype.error = function(msg) {
   this.model.loading = false;
@@ -173,7 +190,9 @@ Page.prototype.error = function(msg) {
 Page.prototype.appendItem = function(url, type, metadata) {
   this.root.entries++;
 
-  var item = new Item();
+  var item = new Item(this);
+  this.items.push(item);
+
   var root = item.root;
   root.url = url;
   root.type = type;
@@ -183,7 +202,7 @@ Page.prototype.appendItem = function(url, type, metadata) {
 }
 
 Page.prototype.appendAction = function(type, data, enabled, metadata) {
-  var item = new Item();
+  var item = new Item(this);
 
   var root = item.root;
   root.enabled = enabled;
@@ -197,7 +216,9 @@ Page.prototype.appendAction = function(type, data, enabled, metadata) {
 Page.prototype.appendPassiveItem = function(type, data, metadata) {
   this.root.entries++;
 
-  var item = new Item();
+  var item = new Item(this);
+  this.items.push(item);
+
   var root = item.root;
   root.type = type;
   root.data = data;

@@ -406,6 +406,7 @@ es_sub_cb(void *opaque, prop_event_t event, ...)
   int i;
   int destroy = 0;
   const  event_t *e;
+  prop_t *p1, *p2;
   duk_context *ctx = ec->ec_duk;
 
   es_push_root(ctx, eps);
@@ -481,6 +482,20 @@ es_sub_cb(void *opaque, prop_event_t event, ...)
     nargs = 1;
     if(eps->eps_autodestry)
       destroy = 1;
+    break;
+
+  case PROP_REQ_MOVE_CHILD:
+    duk_push_string(ctx, "reqmove");
+    p1 = va_arg(ap, prop_t *);
+    p2 = va_arg(ap, prop_t *);
+    nargs = 3;
+    es_stprop_push(ctx, p1);
+
+    if(p2 != NULL) {
+      es_stprop_push(ctx, p2);
+    } else {
+      duk_push_null(ctx);
+    }
     break;
 
   case PROP_EXT_EVENT:
