@@ -459,8 +459,29 @@ nav_page_close_set(void *opaque, int value)
 static void
 nav_page_direct_close_set(void *opaque, int v)
 {
+  nav_page_t *scan;
   nav_page_t *np = opaque;
+  navigator_t *nav = np->np_nav;
+
   np->np_direct_close = v;
+
+  if(!v)
+    return;
+
+  // If this page is "to the right" in the future stack, close it
+
+  scan = nav->nav_page_current;
+  if(scan == NULL)
+    return;
+
+  scan = TAILQ_NEXT(scan, np_history_link);
+
+  for(; scan != NULL; scan = TAILQ_NEXT(scan, np_history_link)) {
+    if(scan == np) {
+      nav_close(np, 1);
+      return;
+    }
+  }
 }
 
 
