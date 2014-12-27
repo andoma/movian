@@ -169,6 +169,10 @@ es_http_do_request(es_http_request_t *ehr)
                HTTP_REQUEST_HEADERS(&ehr->ehr_request_headers),
                HTTP_METHOD(ehr->ehr_method),
                NULL);
+
+    if(ehr->ehr_error)
+      ehr->ehr_result = NULL;
+
   }
 
   if(ehr->ehr_httpargs != NULL)
