@@ -548,8 +548,15 @@ nav_page_setup_prop(nav_page_t *np, const char *view, const char *how)
 
   if(np->np_origin)
     prop_set(np->np_prop_root, "origin", PROP_SET_PROP, np->np_origin);
-  // The following line does not work as it should due to bugs
-  // with prop unlinking, see #2419
+  /*
+   * The following line does not work as it should due to bugs
+   * with prop unlinking, see #2419 so instead we just set a prop
+   * reference. Also notice that we used to do a
+   *
+   *     prop_unlink(prop_create(np->np_prop_root, "origin"));
+   *
+   * in nav_back() when we closed a page before this change
+   */
   //    prop_link(np->np_origin, prop_create(np->np_prop_root, "origin"));
 
   if(view != NULL)
@@ -702,9 +709,6 @@ nav_back(navigator_t *nav)
      (prev = TAILQ_PREV(np, nav_page_queue, np_history_link)) != NULL) {
 
     const int doclose = np->np_direct_close || gconf.enable_nav_always_close;
-
-    if(doclose)
-      prop_unlink(prop_create(np->np_prop_root, "origin"));
 
     nav_select(nav, prev, NULL);
 
