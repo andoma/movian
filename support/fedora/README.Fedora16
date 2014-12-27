@@ -84,9 +84,6 @@ pulseaudio-libs-devel	pulse support
 libXScrnSaver		X.Org screen saver support, not default on fedora
 libXScrnSaver-devel	X.Org screen saver support
 libXv-devel		X.Org libXv support
-libcdio-devel		cdio cdda support
-libcddb			cddb servers support, not default on fedora
-libcddb-devel		cddb servers support
 avahi-devel		Avahi support
 libvdpau-devel		VDPAU support
 mesa-libGLw
@@ -101,7 +98,7 @@ polarssl-devel
 // ffmpeg		will be needed when libav is not in main branch			
 // ffmpeg-devel
 
-root@computer ~]# yum install yasm alsa-lib-devel pulseaudio-libs-devel libXScrnSaver libXScrnSaver-devel libXv-devel libcdio-devel libcddb libcddb-devel avahi-devel libvdpau-devel mesa-libGLw mesa-libGLw-devel mesa-libGLU-devel librtmp-devel libdvdread-devel libdvdnav-devel polarssl polarssl-devel ffmpeg ffmpeg-devel
+root@computer ~]# yum install yasm alsa-lib-devel pulseaudio-libs-devel libXScrnSaver libXScrnSaver-devel libXv-devel avahi-devel libvdpau-devel mesa-libGLw mesa-libGLw-devel mesa-libGLU-devel librtmp-devel libdvdread-devel libdvdnav-devel polarssl polarssl-devel ffmpeg ffmpeg-devel
 
 
 ###############################################################################

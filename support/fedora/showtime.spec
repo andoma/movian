@@ -16,8 +16,6 @@ BuildRequires:	alsa-lib-devel
 BuildRequires:	pulseaudio-libs-devel
 BuildRequires:	libXScrnSaver-devel
 BuildRequires:	libXv-devel
-BuildRequires:	libcdio-devel
-BuildRequires:	libcddb-devel
 BuildRequires:	avahi-devel
 BuildRequires:	libvdpau-devel
 BuildRequires:	mesa-libGLw-devel
@@ -34,8 +32,6 @@ Requires:	alsa-lib
 Requires:	pulseaudio-libs
 Requires:	libXScrnSaver
 Requires:	libXv
-Requires:	libcdio
-Requires:	libcddb
 Requires:	avahi
 Requires:	libvdpau
 Requires:	mesa-libGLw

@@ -27,8 +27,6 @@ CONFIG_LIST="
  dvd
  dvd_linux
  dvd_wii
- cdda
- cddb
  glw
  glw_frontend_x11
  glw_frontend_wii
