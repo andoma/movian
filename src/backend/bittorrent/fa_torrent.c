@@ -6,6 +6,8 @@
 #include "misc/str.h"
 
 
+#define TORRENT_FILE_ROOT ((void *)-1)
+
 /**
  *
  */
@@ -13,8 +15,11 @@ static torrent_file_t *
 torrent_resolve_file(const char *url, char *errbuf, size_t errlen)
 {
   torrent_t *to = torrent_open_url(&url, errbuf, errlen);
-  if(to == NULL || url == NULL)
+  if(to == NULL)
     return NULL;
+
+  if(url == NULL)
+    return TORRENT_FILE_ROOT;
 
   torrent_file_t *tf;
   TAILQ_FOREACH(tf, &to->to_files, tf_torrent_link) {
@@ -81,7 +86,7 @@ torrent_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
              int flags, struct fa_open_extra *foe)
 {
   torrent_file_t *tf = torrent_resolve_file(url, errbuf, errlen);
-  if(tf == NULL) {
+  if(tf == NULL || tf == TORRENT_FILE_ROOT) {
     hts_mutex_unlock(&bittorrent_mutex);
     return NULL;
   }
@@ -220,9 +225,13 @@ torrent_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
   }
 
   memset(fs, 0, sizeof(struct fa_stat));
-  fs->fs_size = tf->tf_size;
-  fs->fs_mtime = 0;
-  fs->fs_type = tf->tf_size ? CONTENT_FILE : CONTENT_DIR;
+
+  if(tf == TORRENT_FILE_ROOT) {
+    fs->fs_type = CONTENT_DIR;
+  } else {
+    fs->fs_size = tf->tf_size;
+    fs->fs_type = tf->tf_size ? CONTENT_FILE : CONTENT_DIR;
+  }
 
   hts_mutex_unlock(&bittorrent_mutex);
   return 0;
