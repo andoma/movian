@@ -26,6 +26,10 @@ Item.prototype.bindVideoMetadata = function(obj) {
   this.mlv = Showtime.videoMetadataBind(this.root, this.root.url, obj);
 }
 
+Item.prototype.toString = function() {
+  return '[ITEM with title: ' + this.root.metadata.title.toString() + ']';
+}
+
 Item.prototype.dump = function() {
   prop.print(this.root);
 }
