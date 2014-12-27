@@ -1173,18 +1173,16 @@ plugins_init(const char *loadme)
 
   if(loadme != NULL) {
     char errbuf[200];
-    char url[PATH_MAX];
-    if(fa_normalize(loadme, url, sizeof(url))) {
+    char buf[PATH_MAX];
+    if(!fa_normalize(loadme, buf, sizeof(buf)))
+      loadme = buf;
+
+    devplugin = strdup(loadme);
+    if(plugin_load(devplugin, errbuf, sizeof(errbuf), 1, 0, 0)) {
       TRACE(TRACE_ERROR, "plugins",
-	    "Unable to load development plugin fa_normalize() failed");
+            "Unable to load development plugin: %s\n%s", loadme, errbuf);
     } else {
-      devplugin = strdup(url);
-      if(plugin_load(devplugin, errbuf, sizeof(errbuf), 1, 0, 0)) {
-	TRACE(TRACE_ERROR, "plugins",
-	      "Unable to load development plugin: %s\n%s", loadme, errbuf);
-      } else {
-	TRACE(TRACE_INFO, "plugins", "Loaded dev plugin %s", devplugin);
-      }
+      TRACE(TRACE_INFO, "plugins", "Loaded dev plugin %s", devplugin);
     }
   }
   hts_mutex_unlock(&plugin_mutex);
