@@ -85,6 +85,22 @@ Item.prototype.destroy = function() {
 }
 
 
+Item.prototype.moveBefore = function(before) {
+  prop.moveBefore(this.root, before ? before.root : null);
+  var thispos = this.page.items.indexOf(this);
+  if(before) {
+    var beforepos = this.page.items.indexOf(before);
+    this.page.items.splice(thispos, 1);
+    if(beforepos > thispos)
+      beforepos--;
+    this.page.items.splice(beforepos, 0, this);
+  } else {
+    this.page.items.splice(thispos, 1);
+    this.page.items.push(this);
+  }
+}
+
+
 
 Item.prototype.onEvent = function(type, callback) {
   if(type in this.eventhandlers) {
@@ -184,6 +200,10 @@ Page.prototype.error = function(msg) {
   this.model.loading = false;
   this.model.type = 'openerror';
   this.model.error = msg.toString();
+}
+
+Page.prototype.getItems = function() {
+  return this.items;
 }
 
 

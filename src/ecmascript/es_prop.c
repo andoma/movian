@@ -793,6 +793,19 @@ es_prop_is_same(duk_context *ctx)
 
 
 /**
+ *
+ */
+static int
+es_prop_move_before(duk_context *ctx)
+{
+  prop_t *a = es_stprop_get(ctx, 0);
+  prop_t *b = es_get_native_obj_nothrow(ctx, 1, ES_NATIVE_PROP);
+  prop_move(a, b);
+  return 0;
+}
+
+
+/**
  * Showtime object exposed functions
  */
 const duk_function_list_entry fnlist_Showtime_prop[] = {
@@ -822,5 +835,6 @@ const duk_function_list_entry fnlist_Showtime_prop[] = {
   { "propIsValue",             es_prop_is_value,              1 },
   { "propAtomicAdd",           es_prop_atomic_add,            2 },
   { "propIsSame",              es_prop_is_same,               2 },
+  { "propMoveBefore",          es_prop_move_before,           2 },
   { NULL, NULL, 0}
 };

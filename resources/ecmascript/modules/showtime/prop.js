@@ -126,3 +126,6 @@ exports.subscribeValue = function(prop, callback, ctrl) {
 exports.makeProp = makeProp;
 
 exports.makeUrl = Showtime.propMakeUrl;
+
+exports.moveBefore = Showtime.propMoveBefore;
+
