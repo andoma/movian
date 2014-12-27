@@ -108,14 +108,14 @@ torrent_release_on_prop_destroy(prop_t *p, torrent_t *to)
  *
  */
 static void
-torrent_browse(prop_t *page, torrent_t *to, const char *path)
+torrent_browse(prop_t *page, torrent_t *to, const char *path,
+               prop_t *model)
 {
   if(to->to_errbuf[0]) {
     nav_open_error(page, to->to_errbuf);
     return;
   }
 
-  prop_t *model = prop_create_r(page, "model");
   prop_t *nodes = prop_create_r(model, "nodes");
   prop_t *metadata = prop_create_r(page, "metadata");
 
@@ -131,8 +131,7 @@ torrent_browse(prop_t *page, torrent_t *to, const char *path)
 
     if(tf == NULL) {
       nav_open_error(page, "No such file or directory");
-      hts_mutex_unlock(&bittorrent_mutex);
-      return;
+      goto done;
     }
     tfq = &tf->tf_files;
   }
@@ -162,8 +161,10 @@ torrent_browse(prop_t *page, torrent_t *to, const char *path)
 
 
   prop_set(model, "type", PROP_SET_STRING, "directory");
+  prop_set(model, "loading", PROP_SET_INT, 0);
 
-  prop_ref_dec(model);
+  torrent_release_on_prop_destroy(page, to);
+ done:
   prop_ref_dec(nodes);
   prop_ref_dec(metadata);
 }
@@ -177,15 +178,18 @@ torrent_browse_open(prop_t *page, const char *url, int sync)
 {
   char errbuf[512];
   torrent_t *to;
+  prop_t *model = prop_create_r(page, "model");
+
+  prop_set(model, "loading", PROP_SET_INT, 1);
 
   to = torrent_open_url(&url, errbuf, sizeof(errbuf));
   if(to == NULL) {
-    hts_mutex_unlock(&bittorrent_mutex);
-    return nav_open_errorf(page, _("Unable to open torrent: %s"), errbuf);
+    nav_open_errorf(page, _("Unable to open torrent: %s"), errbuf);
+  } else {
+    torrent_browse(page, to, url, model);
   }
-  torrent_browse(page, to, url);
-  torrent_release_on_prop_destroy(page, to);
   hts_mutex_unlock(&bittorrent_mutex);
+  prop_ref_dec(model);
   return 0;
 }
 
