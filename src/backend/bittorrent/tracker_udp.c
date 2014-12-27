@@ -67,6 +67,8 @@ tracker_udp_got_dns(void *opaque, int status, const void *data)
 {
   tracker_t *t = opaque;
 
+  t->t_adr = NULL;
+
   hts_mutex_lock(&bittorrent_mutex);
 
   switch(status) {
@@ -337,7 +339,7 @@ tracker_udp_create(const char *hostname, int port)
   tracker_t *t = calloc(1, sizeof(tracker_t));
   asyncio_timer_init(&t->t_timer, tracker_udp_timer_cb, t);
   t->t_port = port;
-  asyncio_dns_lookup_host(hostname, tracker_udp_got_dns, t);
+  t->t_adr = asyncio_dns_lookup_host(hostname, tracker_udp_got_dns, t);
   t->t_announce = &tracker_udp_torrent_announce;
   return t;
 }

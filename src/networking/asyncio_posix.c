@@ -859,6 +859,7 @@ struct asyncio_dns_req {
   void (*adr_cb)(void *opaque, int status, const void *data);
 
   int adr_status;
+  int adr_cancelled;
   const void *adr_data;
   const char *adr_errmsg;
   net_addr_t adr_addr;
@@ -950,14 +951,27 @@ adr_deliver_cb(void)
   while((adr = TAILQ_FIRST(&asyncio_dns_completed)) != NULL) {
     TAILQ_REMOVE(&asyncio_dns_completed, adr, adr_link);
     hts_mutex_unlock(&asyncio_dns_mutex);
-    adr->adr_cb(adr->adr_opaque, adr->adr_status, adr->adr_data);
+    if(!adr->adr_cancelled)
+      adr->adr_cb(adr->adr_opaque, adr->adr_status, adr->adr_data);
 
     free(adr->adr_hostname);
     free(adr);
     hts_mutex_lock(&asyncio_dns_mutex);
-  } 
+  }
   hts_mutex_unlock(&asyncio_dns_mutex);
 }
+
+
+/**
+ * Cancel a pending DNS lookup
+ */
+void
+asyncio_dns_cancel(asyncio_dns_req_t *adr)
+{
+  asyncio_verify_thread();
+  adr->adr_cancelled = 1;
+}
+
 
 
 

@@ -90,6 +90,8 @@ typedef struct tracker {
 
   void (*t_destroy)(struct tracker_torrent *tt);
 
+  struct asyncio_dns_req *t_adr; // Pending Async DNS Request
+
 } tracker_t;
 
 

@@ -157,6 +157,8 @@ asyncio_dns_req_t *asyncio_dns_lookup_host(const char *hostname,
 					   void *opaque);
 
 
+void asyncio_dns_cancel(asyncio_dns_req_t *adr);
+
 /*************************************************************************
  * HTTP(S)
  *************************************************************************/

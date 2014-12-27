@@ -56,6 +56,9 @@ static void
 tracker_destroy(tracker_t *t)
 {
   tracker_trace(t, "Destroyed");
+  if(t->t_adr != NULL)
+    asyncio_dns_cancel(t->t_adr);
+
   asyncio_timer_disarm(&t->t_timer);
   LIST_REMOVE(t, t_link);
   free(t->t_url);
