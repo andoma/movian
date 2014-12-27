@@ -765,6 +765,19 @@ es_prop_atomic_add(duk_context *ctx)
 
 
 /**
+ *
+ */
+static int
+es_prop_is_same(duk_context *ctx)
+{
+  prop_t *a = es_stprop_get(ctx, 0);
+  prop_t *b = es_stprop_get(ctx, 1);
+  duk_push_boolean(ctx, a == b);
+  return 1;
+}
+
+
+/**
  * Showtime object exposed functions
  */
 const duk_function_list_entry fnlist_Showtime_prop[] = {
@@ -793,5 +806,6 @@ const duk_function_list_entry fnlist_Showtime_prop[] = {
   { "propSendEvent",           es_prop_send_event,            3 },
   { "propIsValue",             es_prop_is_value,              1 },
   { "propAtomicAdd",           es_prop_atomic_add,            2 },
+  { "propIsSame",              es_prop_is_same,               2 },
   { NULL, NULL, 0}
 };

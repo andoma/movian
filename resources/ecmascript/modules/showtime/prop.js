@@ -110,6 +110,7 @@ exports.unlink = Showtime.propUnlink;
 exports.sendEvent = Showtime.propSendEvent;
 exports.atomicAdd = Showtime.propAtomicAdd;
 exports.destroy = Showtime.propDestroy;
+exports.isSame = Showtime.propIsSame;
 
 exports.subscribeValue = function(prop, callback, ctrl) {
   return Showtime.propSubscribe(prop, function(type, v1, v2) {
