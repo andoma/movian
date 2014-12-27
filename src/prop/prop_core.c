@@ -1672,21 +1672,26 @@ prop_send_ext_event(prop_t *p, event_t *e)
 /**
  *
  */
-static int
+static prop_sub_t *
 prop_check_canonical_subs_descending(prop_t *p)
 {
   prop_t *c;
-  if(LIST_FIRST(&p->hp_canonical_subscriptions))
-    return 1;
+  prop_sub_t *r;
 
   if(p->hp_type != PROP_DIR)
-    return 0;
+    return NULL;
 
-  TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link)
-    if(prop_check_canonical_subs_descending(c))
-      return 1;
+  TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link) {
+    prop_sub_t *s = LIST_FIRST(&c->hp_canonical_subscriptions);
 
-  return 0;
+    if(s != NULL)
+      return s;
+
+    if((r = prop_check_canonical_subs_descending(c)) != NULL)
+      return r;
+  }
+
+  return NULL;
 }
 
 
@@ -1696,16 +1701,21 @@ prop_check_canonical_subs_descending(prop_t *p)
 static int attribute_unused_result
 prop_clean(prop_t *p)
 {
+  prop_sub_t *s;
   if(p->hp_flags & PROP_CLIPPED_VALUE) {
     return 1;
   }
   switch(p->hp_type) {
   case PROP_DIR:
-    if(prop_check_canonical_subs_descending(p)) {
-#ifdef PROP_DEBUG
+    s = prop_check_canonical_subs_descending(p);
+    if(s != NULL) {
+#ifdef PROP_SUB_RECORD_SOURCE
       trace(TRACE_NO_PROP, TRACE_ERROR, "prop",
-            "Refusing to clean prop %s because a decendant have "
-            "canonical subs", prop_get_DN(p, 1));
+            "Refusing to clean prop %s because a decendant (%s) have "
+            "canonical sub %s:%d",
+            prop_get_DN(p, 1),
+            prop_get_DN(s->hps_canonical_prop, 1),
+            s->hps_file, s->hps_line);
 #endif
       return 1;
     }
