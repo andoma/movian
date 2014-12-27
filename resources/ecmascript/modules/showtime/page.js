@@ -74,6 +74,14 @@ Item.prototype.addOptSeparator = function(title) {
 }
 
 
+Item.prototype.destroy = function() {
+  var pos = this.page.items.indexOf(this);
+  if(pos != -1)
+    this.page.items.splice(pos, 1);
+  prop.destroy(this.root);
+}
+
+
 
 Item.prototype.onEvent = function(type, callback) {
   if(type in this.eventhandlers) {
