@@ -1731,13 +1731,21 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
     }
 
     if(mb == MB_EOF) {
+      int is_empty = 0;
+      hts_mutex_lock(&mp->mp_mutex);
 
-      /* Wait for queues to drain */
-      e = mp_wait_for_empty_queues(mp);
-      if(e == NULL) {
-	e = event_create_type(EVENT_EOF);
-	break;
+      is_empty =
+        TAILQ_FIRST(&mp->mp_audio.mq_q_data) == NULL &&
+        TAILQ_FIRST(&mp->mp_video.mq_q_data) == NULL;
+      hts_mutex_unlock(&mp->mp_mutex);
+
+      if(!is_empty) {
+        usleep(100000);
+        continue;
       }
+      e = event_create_type(EVENT_EOF);
+      break;
+
     } else {
       enqueue_buffer(mp, mq, mb, h, hd->hd_current);
       mb = NULL;
