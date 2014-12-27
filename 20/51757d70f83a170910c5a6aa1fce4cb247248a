@@ -1,0 +1,1 @@
+hls: Fix a problem where Showtime would sometimes hang during end of stream
