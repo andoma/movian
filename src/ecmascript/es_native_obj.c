@@ -80,6 +80,12 @@ void *
 es_get_native_obj_nothrow(duk_context *ctx, int obj_idx,
                           es_native_type_t wanted_type)
 {
+  if(!duk_is_object(ctx, obj_idx))
+    return NULL;
+
+  if(duk_is_null(ctx, obj_idx))
+    return NULL;
+
   duk_get_finalizer(ctx, obj_idx);
 
   if(!duk_is_function(ctx, -1))
