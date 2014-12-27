@@ -60,6 +60,9 @@ HttpResponse.prototype.toString = function() {
   return Showtime.utf8FromBytes(this.bytes);
 }
 
+HttpResponse.prototype.convertFromEncoding = function(encoding) {
+  return Showtime.utf8FromBytes(this.bytes, encoding);
+}
 
 
 /**
