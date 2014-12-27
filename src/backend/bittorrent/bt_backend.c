@@ -117,13 +117,14 @@ torrent_browse(prop_t *page, torrent_t *to, const char *path,
   }
 
   prop_t *nodes = prop_create_r(model, "nodes");
-  prop_t *metadata = prop_create_r(page, "metadata");
+  prop_t *metadata = prop_create_r(model, "metadata");
 
   const struct torrent_file_queue *tfq;
   const torrent_file_t *tf;
 
   if(path == NULL) {
     tfq = &to->to_root;
+    prop_set(metadata, "title", PROP_SET_STRING, to->to_title);
   } else {
     TAILQ_FOREACH(tf, &to->to_files, tf_torrent_link)
       if(!strcmp(tf->tf_fullpath, path))
@@ -134,6 +135,7 @@ torrent_browse(prop_t *page, torrent_t *to, const char *path,
       goto done;
     }
     tfq = &tf->tf_files;
+    prop_set(metadata, "title", PROP_SET_STRING, tf->tf_name);
   }
 
   char hashstr[41];
