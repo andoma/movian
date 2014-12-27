@@ -115,6 +115,7 @@ typedef struct token {
   uint8_t t_flags;
 #define TOKEN_F_SELECTED 0x1 // The 'selected' in a vector
 #define TOKEN_F_CANONICAL_PATH 0x2 // Do not follow paths when resolving prop
+#define TOKEN_F_PROP_LINK      0x4 // Value is set using prop_link
 
   uint8_t t_dynamic_eval;
 

@@ -874,9 +874,11 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
   } else if(right->type == TOKEN_PROPERTY_REF &&
 	    left->type == TOKEN_PROPERTY_REF) {
 
-    if(right->t_prop != left->t_prop)
+    if(right->t_prop != left->t_prop) {
       prop_link_ex(right->t_prop, left->t_prop,
                    NULL, PROP_LINK_NORMAL, how == 2);
+      left->t_flags |= TOKEN_F_PROP_LINK;
+    }
 
     eval_push(ec, right);
     return 0;
@@ -888,8 +890,8 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
   if(left->type == TOKEN_PROPERTY_NAME)
     if(resolve_property_name(ec, left))
       return -1;
-    
 
+  // Conditional assignment: rvalue of (void) results in doing nothing
   if(how == 1 && right->type == TOKEN_VOID) {
     eval_push(ec, right);
     return 0;
@@ -919,6 +921,7 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
     // FALLTHRU
 
    case TOKEN_PROPERTY_REF:
+
     switch(right->type) {
     case TOKEN_RSTRING:
       prop_set_rstring(left->t_prop, right->t_rstring);
@@ -942,10 +945,22 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
       ec->dynamic_eval |= GLW_VIEW_EVAL_EM;
       break;
     case TOKEN_PROPERTY_REF:
-      if(right->t_prop != left->t_prop)
+      if(right->t_prop != left->t_prop) {
 	prop_link_ex(right->t_prop, left->t_prop,
                      NULL, PROP_LINK_NORMAL, how == 2);
+        left->t_flags |= TOKEN_F_PROP_LINK;
+      }
+
       break;
+    case TOKEN_VOID:
+      if(0 /* not yet */ && left->t_flags & TOKEN_F_PROP_LINK) {
+        prop_unlink(left->t_prop);
+        left->t_flags &= ~TOKEN_F_PROP_LINK;
+      } else {
+        prop_set_void(left->t_prop);
+      }
+      break;
+
     default:
       prop_set_void(left->t_prop);
       break;
