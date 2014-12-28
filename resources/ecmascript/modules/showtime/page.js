@@ -203,7 +203,7 @@ Page.prototype.error = function(msg) {
 }
 
 Page.prototype.getItems = function() {
-  return this.items;
+  return this.items.slice(0);
 }
 
 
