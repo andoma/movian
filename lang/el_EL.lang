@@ -694,18 +694,6 @@ id: Torrent cache path
 msg: 
 
 #
-# ./src/backend/dvd/cdda.c
-#
-id: Invalid CD URL
-msg: Μη έγκυρη διεύθυνση CD
-
-id: Invalid CD track
-msg: Μη έγκυρο κομμάτι CD
-
-id: Unable to open CD
-msg: Αδυναμία ανοίγματος CD
-
-#
 # ./src/backend/dvd/dvd.c
 #
 id: DVD

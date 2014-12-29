@@ -729,18 +729,6 @@ id: Torrent cache path
 msg: 
 
 #
-# ./src/backend/dvd/cdda.c
-#
-id: Invalid CD URL
-msg: 不正確的 CD 位址
-
-id: Invalid CD track
-msg: 不正確的 CD 音軌
-
-id: Unable to open CD
-msg: 無法開啟 CD
-
-#
 # ./src/backend/dvd/dvd.c
 #
 id: DVD

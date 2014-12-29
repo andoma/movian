@@ -651,18 +651,6 @@ id: Torrent cache path
 msg: 种子缓存路径
 
 #
-# ./src/backend/dvd/cdda.c
-#
-id: Invalid CD URL
-msg: 非法的CD URL
-
-id: Invalid CD track
-msg: 非法的CD音轨
-
-id: Unable to open CD
-msg: 不能打开CD
-
-#
 # ./src/backend/dvd/dvd.c
 #
 id: DVD

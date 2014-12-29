@@ -652,18 +652,6 @@ id: Torrent cache path
 msg: Folder buforowania Torrenta
 
 #
-# ./src/backend/dvd/cdda.c
-#
-id: Invalid CD URL
-msg: Błędny adres ścieżki CD
-
-id: Invalid CD track
-msg: Błąd odczytu ścieżki CD
-
-id: Unable to open CD
-msg: Nie można otworzyć CD
-
-#
 # ./src/backend/dvd/dvd.c
 #
 id: DVD

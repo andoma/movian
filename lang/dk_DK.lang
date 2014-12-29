@@ -655,18 +655,6 @@ id: Torrent cache path
 msg: Torrent lagrede sti
 
 #
-# ./src/backend/dvd/cdda.c
-#
-id: Invalid CD URL
-msg: Ugyldig CD URL
-
-id: Invalid CD track
-msg: Ugyldig CD track
-
-id: Unable to open CD
-msg: Kan ikke åbne CD
-
-#
 # ./src/backend/dvd/dvd.c
 #
 id: DVD

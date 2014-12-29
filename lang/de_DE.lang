@@ -668,18 +668,6 @@ id: Torrent cache path
 msg: 
 
 #
-# ./src/backend/dvd/cdda.c
-#
-id: Invalid CD URL
-msg: Ungültige CD URL
-
-id: Invalid CD track
-msg: Ungültiger CD Titel
-
-id: Unable to open CD
-msg: CD kann nicht geöffnet werden
-
-#
 # ./src/backend/dvd/dvd.c
 #
 id: DVD

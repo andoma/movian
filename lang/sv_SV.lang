@@ -651,18 +651,6 @@ id: Torrent cache path
 msg: Sökväg för sparade svärmar
 
 #
-# ./src/backend/dvd/cdda.c
-#
-id: Invalid CD URL
-msg: Ogiltlig CD URL
-
-id: Invalid CD track
-msg: Ogiltlight CD track
-
-id: Unable to open CD
-msg: Kan ej öppna CD
-
-#
 # ./src/backend/dvd/dvd.c
 #
 id: DVD
