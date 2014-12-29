@@ -32,8 +32,7 @@ id: Hide system info
 msg: 隐藏系统信息
 
 id: Master volume
-# Missing translation
-msg: 
+msg: 主音量
 
 id: Navigation
 msg: 导航
@@ -63,8 +62,7 @@ id: Time until sleep
 msg: 直到关机
 
 id: dB
-# Missing translation
-msg: 
+msg: dB
 
 id: min
 msg: 最小
@@ -154,8 +152,7 @@ msg: 视频设置
 # ./glwskins/default/loading.view
 #
 id: Bitrate: %d kb/s
-# Missing translation
-msg: 
+msg: 码率：%d kb/s
 
 #
 # ./glwskins/default/log.view
@@ -405,8 +402,7 @@ msg: 正在验证%s
 # ./glwskins/default/pages/video.view
 #
 id: Audio volume adjustment: %d dB
-# Missing translation
-msg: 
+msg: 音量调整：%d dB
 
 id: CPU is too slow to decode this video
 msg: 当前视频CPU解码过慢
@@ -457,8 +453,7 @@ id: GPU Temp
 msg: GPU温度
 
 id: HDD Avail
-# Missing translation
-msg: 
+msg: 硬盘可用
 
 id: Inactive mem
 msg: 不活动内存
@@ -611,61 +606,49 @@ msg: 测试信号类型
 # ./src/backend/bittorrent/bt_backend.c
 #
 id: No files in torrent
-# Missing translation
-msg: 
+msg: 种子中无文件
 
 id: Unable to load torrent: %s
-# Missing translation
-msg: 
+msg: 无法载入种子：%s
 
 id: Unable to open torrent: %s
-# Missing translation
-msg: 
+msg: 无法打开种子：%s
 
 id: Unable to parse torrent: %s
-# Missing translation
-msg: 
+msg: 无法解析种子：%s
 
 #
 # ./src/backend/bittorrent/diskio.c
 #
 id: Cached torrents use %d MB out of allowed %d MB. Total free space on volume: %d MB
-# Missing translation
-msg: 
+msg: 种子缓存已使用%d MB，最大允许使用%d MB。总可用空间：%d MB
 
 #
 # ./src/backend/bittorrent/magnet.c
 #
 id: Invalid SHA-1 hash: %s
-# Missing translation
-msg: 
+msg: 无效的SHA-1哈希值: %s
 
 id: No 'xt' in magnet link
-# Missing translation
-msg: 
+msg: magnet链接中缺少'xt'
 
 id: Unknown hash scheme: %s
-# Missing translation
-msg: 
+msg: 未知哈希模式：%s
 
 #
 # ./src/backend/bittorrent/torrent_settings.c
 #
 id: Enable bittorrent
-# Missing translation
-msg: 
+msg: 启用bittorrent
 
 id: Max usage of free space for caching torrents
-# Missing translation
-msg: 
+msg: 种子缓存最大空间使用率：
 
 id: Status
-# Missing translation
-msg: 
+msg: 状态
 
 id: Torrent cache path
-# Missing translation
-msg: 
+msg: 种子缓存路径
 
 #
 # ./src/backend/dvd/cdda.c
@@ -785,8 +768,7 @@ id: Can't handle content type %d
 msg: 无法处理内容类型%d
 
 id: Checking file contents
-# Missing translation
-msg: 
+msg: 正在检查文件内容
 
 id: Unable to open file: %s
 msg: 无法打开文件%s
@@ -861,12 +843,10 @@ id: Are you sure you want to delete:
 msg: 是否确定要删除：
 
 id: BitTorrent
-# Missing translation
-msg: 
+msg: BitTorrent
 
 id: Browse archives as folders
-# Missing translation
-msg: 
+msg: 使用文件夹方式浏览归档文件
 
 id: Enable file deletion from item menu
 msg: 启用文件删除功能
@@ -968,8 +948,7 @@ id: Go to standby after video ends
 msg: 视频播放结束后自动关机
 
 id: Horizontal pan
-# Missing translation
-msg: 
+msg: 水平位移
 
 id: Reset defaults for folder '%s'
 msg: 恢复文件夹'%s'的默认设置
@@ -999,8 +978,7 @@ id: Subtitle vertical displacement
 msg: 字幕垂直移位
 
 id: Vertical pan
-# Missing translation
-msg: 
+msg: 垂直位移
 
 id: Video frame interpolation
 msg: 视频帧插值
@@ -1069,8 +1047,7 @@ id: Clear all metadata
 msg: 清除所有元信息
 
 id: Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?
-# Missing translation
-msg: 
+msg: 清理所有元数据意味着失去所有从外部源例如themoviedb.org等缓存的<b>所有</b>元数据\n\n播放位置、播放次数等信息不受影响.\n确定要继续?
 
 #
 # ./src/metadata/mlp.c
@@ -1595,8 +1572,7 @@ id: No limit
 msg: 无限制
 
 id: Per-file volume
-# Missing translation
-msg: 
+msg: 单文件音量
 
 id: Preferred VDPAU deinterlacer method
 msg: 优先使用VDPAU去隔行化方式
@@ -1605,12 +1581,10 @@ id: Resume video playback
 msg: 从上次结束位置开始播放
 
 id: Step when seeking backward
-# Missing translation
-msg: 
+msg: 快退步速
 
 id: Step when seeking forward
-# Missing translation
-msg: 
+msg: 快进步速
 
 id: Temporal
 msg: 临时的
@@ -1619,8 +1593,7 @@ id: Temporal/Spatial
 msg: 临时的/固定的
 
 id: Up / Down during video playback controls
-# Missing translation
-msg: 
+msg: 视频播放时上/下键控制
 
 id: Video acceleration and display behaviour
 msg: 视频加速及显示方式
