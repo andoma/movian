@@ -526,7 +526,6 @@ es_sub_cb(void *opaque, prop_event_t event, ...)
       duk_push_string(ctx, "propref");
       es_stprop_push(ctx, ep->p);
     } else {
-      duk_pop(ctx);
       nargs = 0;
     }
 
