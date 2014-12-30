@@ -806,6 +806,19 @@ es_prop_move_before(duk_context *ctx)
 
 
 /**
+ *
+ */
+static int
+es_prop_unload_destroy(duk_context *ctx)
+{
+  es_context_t *ec = es_get(ctx);
+  prop_t *a = es_stprop_get(ctx, 0);
+  ec->ec_prop_unload_destroy = prop_vec_append(ec->ec_prop_unload_destroy, a);
+  return 0;
+}
+
+
+/**
  * Showtime object exposed functions
  */
 const duk_function_list_entry fnlist_Showtime_prop[] = {
@@ -836,5 +849,6 @@ const duk_function_list_entry fnlist_Showtime_prop[] = {
   { "propAtomicAdd",           es_prop_atomic_add,            2 },
   { "propIsSame",              es_prop_is_same,               2 },
   { "propMoveBefore",          es_prop_move_before,           2 },
+  { "propUnloadDestroy",       es_prop_unload_destroy,        1 },
   { NULL, NULL, 0}
 };

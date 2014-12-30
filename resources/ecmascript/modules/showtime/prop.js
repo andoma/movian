@@ -129,3 +129,4 @@ exports.makeUrl = Showtime.propMakeUrl;
 
 exports.moveBefore = Showtime.propMoveBefore;
 
+exports.unloadDestroy = Showtime.propUnloadDestroy;

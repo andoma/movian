@@ -8,6 +8,8 @@ exports.create = function(conf) {
   node.metadata.title = conf.title;
   node.metadata.icon = conf.icon;
 
+  prop.unloadDestroy(node);
+
   prop.setParent(node, prop.global.itemhooks);
 
   prop.subscribe(node.eventSink, function(type, obj, nav) {
@@ -26,5 +28,13 @@ exports.create = function(conf) {
 
       conf.handler(prop.makeProp(obj), navobj);
     }
+  }, {
+    autoDestroy: true
   });
+
+  return {
+    destroy: function() {
+      prop.destroy(node);
+    }
+  }
 }

@@ -458,6 +458,8 @@ es_context_create(const char *id)
   hts_mutex_init_recursive(&ec->ec_mutex);
   atomic_set(&ec->ec_refcount, 1);
 
+  ec->ec_prop_unload_destroy = prop_vec_create(16);
+
   ec->ec_duk = duk_create_heap(es_mem_alloc, es_mem_realloc, es_mem_free,
                                ec, NULL);
 
@@ -533,8 +535,8 @@ es_context_end(es_context_t *ec)
     duk_destroy_heap(ec->ec_duk);
     ec->ec_duk = NULL;
 
-    // Hack for killing off any settings created by app
-    prop_destroy_by_name(prop_create(gconf.settings_apps, "nodes"), ec->ec_id);
+    prop_vec_destroy_entries(ec->ec_prop_unload_destroy);
+    prop_vec_release(ec->ec_prop_unload_destroy);
 
     TRACE(TRACE_DEBUG, ec->ec_id, "Unloaded");
   }

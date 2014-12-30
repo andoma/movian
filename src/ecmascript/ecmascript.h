@@ -9,6 +9,7 @@
 struct es_resource;
 struct rstr;
 struct prop;
+struct prop_vec;
 
 #define ST_ERROR_SQLITE_BASE 0x10000
 
@@ -56,6 +57,8 @@ typedef struct es_context {
 
 
   struct htsmsg *ec_manifest; // plugin.json
+
+  struct prop_vec *ec_prop_unload_destroy;
 
 } es_context_t;
 

@@ -270,6 +270,9 @@ exports.globalSettings = function(id, title, icon, desc) {
   this.id = id;
 
   var model = prop.global.settings.apps.nodes[id];
+
+  prop.unloadDestroy(model);
+
   var metadata = model.metadata;
 
   model.type = 'settings';
