@@ -433,6 +433,8 @@ android_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   jmethodID mid;
   const char *type = NULL;
 
+  return 1;
+
   switch(mc->codec_id) {
 
   case AV_CODEC_ID_H264:
