@@ -1,7 +1,6 @@
-#pragma once
 /*
  *  Showtime Mediacenter
- *  Copyright (C) 2007-2013 Lonelycoder AB
+ *  Copyright (C) 2007-2014 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,21 +18,36 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
-#pragma once
 
-#include <jni.h>
-#include "ui/longpress.h"
+#include "showtime.h"
+#include "longpress.h"
 
-typedef struct android_glw_root {
-  glw_root_t gr;
+int
+longpress_periodic(lphelper_t *lph, int64_t now)
+{
+ if(lph->down != 1)
+    return 0;
 
-  jobject agr_vrp;
+  if(lph->expire > now)
+    return 0;
 
-  int agr_running;
-  hts_cond_t agr_runcond;
+  lph->down = 2;
+  return 1;
+}
 
-  lphelper_t agr_dpad_center;
+void
+longpress_down(lphelper_t *lph)
+{
+  if(lph->down)
+    return;
+  lph->expire = showtime_get_ts() + LP_TIMEOUT;
+  lph->down = 1;
+}
 
-} android_glw_root_t;
-
-
+int
+longpress_up(lphelper_t *lph)
+{
+  int r = lph->expire > showtime_get_ts() && lph->down != 2;
+  lph->down = 0;
+  return r;
+}

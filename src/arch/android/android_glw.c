@@ -158,6 +158,9 @@ Java_com_showtimemediacenter_showtime_STCore_glwStep(JNIEnv *env,
 
   glw_post_scene(gr);
 
+  if(longpress_periodic(&agr->agr_dpad_center, gr->gr_frame_start)) {
+    glw_inject_event(gr, event_create_action(ACTION_ITEMMENU));
+  }
 }
 
 
@@ -198,7 +201,6 @@ const static action_type_t *btn_to_action[end_of_AKEYCODE] = {
   [AKEYCODE_DPAD_UP]         = AVEC(ACTION_UP),
   [AKEYCODE_DPAD_RIGHT]      = AVEC(ACTION_RIGHT),
   [AKEYCODE_DPAD_DOWN]       = AVEC(ACTION_DOWN),
-  [AKEYCODE_DPAD_CENTER]     = AVEC(ACTION_ACTIVATE),
   [AKEYCODE_MENU]            = AVEC(ACTION_MENU),
   [AKEYCODE_STAR]            = AVEC(ACTION_ITEMMENU),
 };
@@ -215,6 +217,11 @@ Java_com_showtimemediacenter_showtime_STCore_glwKeyDown(JNIEnv *env,
   glw_root_t *gr = &agr->gr;
   event_t *e = NULL;
 
+  if(keycode == AKEYCODE_DPAD_CENTER) {
+    longpress_down(&agr->agr_dpad_center);
+    return 1;
+  }
+
   if(keycode < end_of_AKEYCODE) {
     const action_type_t *avec = btn_to_action[keycode];
     if(avec) {
@@ -225,10 +232,32 @@ Java_com_showtimemediacenter_showtime_STCore_glwKeyDown(JNIEnv *env,
     }
   }
 
-  TRACE(TRACE_DEBUG, "ANDROID", "Input key %d -> %p", keycode, e);
-
   if(e != NULL)
     glw_inject_event(gr, e);
 
   return e != NULL;
 }
+
+JNIEXPORT jboolean JNICALL
+Java_com_showtimemediacenter_showtime_STCore_glwKeyUp(JNIEnv *env,
+                                                      jobject obj,
+                                                      jint id,
+                                                      jint keycode)
+{
+  android_glw_root_t *agr = (android_glw_root_t *)id;
+  event_t *e = NULL;
+
+  switch(keycode) {
+  case AKEYCODE_DPAD_CENTER:
+    if(longpress_up(&agr->agr_dpad_center))
+      e = event_create_action(ACTION_ACTIVATE);
+    break;
+  }
+
+  if(e != NULL) {
+    glw_inject_event(&agr->gr, e);
+    return 1;
+  }
+  return 0;
+}
+
