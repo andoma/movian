@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <assert.h>
 
+#include "showtime.h"
 #include "ecmascript.h"
 #include "fileaccess/http_client.h"
 #include "fileaccess/fileaccess.h"
@@ -375,9 +376,14 @@ es_http_req(duk_context *ctx)
 
   es_http_do_request(ehr);
 
-  if(ehr->ehr_error)
+  if(ehr->ehr_error) {
+    const char *err_url = mystrdupa(ehr->ehr_url);
+    const char *err_buf = mystrdupa(ehr->ehr_errbuf);
+    ehr_cleanup(ehr);
+    free(ehr);
     duk_error(ctx, DUK_ERR_ERROR, "HTTP request failed %s -- %s",
-              ehr->ehr_url, ehr->ehr_errbuf);
+              err_url, err_buf);
+  }
 
   es_http_push_result(ctx, ehr);
   ehr_cleanup(ehr);
