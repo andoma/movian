@@ -601,6 +601,7 @@ es_exec(es_context_t *ec, const char *path)
   duk_context *ctx = ec->ec_duk;
 
   duk_push_lstring(ctx, buf_cstr(buf), buf_len(buf));
+  buf_release(buf);
   duk_push_string(ctx, path);
 
   if(duk_pcompile(ctx, 0)) {
