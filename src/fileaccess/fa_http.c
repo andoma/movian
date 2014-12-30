@@ -3097,13 +3097,8 @@ http_req_do(http_req_aux_t *hra)
   case 202:
   case 203:
   case 205:
-    if(no_content) {
+    if(no_content)
       hf->hf_rsize = 0;
-      http_destroy(hf);
-      if(hra->decoded_cleanup)
-        hra->decoded_cleanup(hra);
-      return 0;
-    }
     break;
 
   case 304:
