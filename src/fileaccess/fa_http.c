@@ -3089,7 +3089,14 @@ http_req_do(http_req_aux_t *hra)
   int no_content = !strcmp(m, "HEAD");
 
   switch(code) {
-  case 200 ... 205:
+  case 204:
+    no_content = 1;
+    // FALLTHRU
+  case 200:
+  case 201:
+  case 202:
+  case 203:
+  case 205:
     if(no_content) {
       hf->hf_rsize = 0;
       http_destroy(hf);
@@ -3357,6 +3364,8 @@ http_reqv(const char *url, va_list ap,
 
       if(ptr == HTTP_BUFFER_INTERNALLY)
         ptr = &hra->result;
+      else
+        *ptr = NULL;
 
       hra->decoded_opaque = calloc(1, sizeof(buf_t));
       *ptr = hra->decoded_opaque;
