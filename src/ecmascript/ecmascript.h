@@ -240,5 +240,6 @@ extern const duk_function_list_entry fnlist_Showtime_misc[];
 extern const duk_function_list_entry fnlist_Showtime_crypto[];
 extern const duk_function_list_entry fnlist_Showtime_console[];
 extern const duk_function_list_entry fnlist_Showtime_kvstore[];
+extern const duk_function_list_entry fnlist_Showtime_subtitles[];
 
 extern const duk_function_list_entry fnlist_Global_timer[];

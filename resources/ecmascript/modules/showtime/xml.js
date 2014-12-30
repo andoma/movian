@@ -68,3 +68,7 @@ exports.parse = function(str) {
   var x = Showtime.htsmsgCreateFromXML(str);
   return new Proxy({msg: x}, htsmsgHandler);
 }
+
+exports.htsmsg = function(x) {
+  return new Proxy({msg: x}, htsmsgHandler);
+}

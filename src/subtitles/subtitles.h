@@ -20,7 +20,11 @@
  */
 #pragma once
 
+#include "misc/rstr.h"
 #include "misc/queue.h"
+
+struct video_args;
+struct prop;
 
 /**
  *
@@ -72,6 +76,8 @@ typedef struct subtitle_provider {
   struct setting *sp_setting_enabled;
   struct setting *sp_setting_autosel;
 
+  void *sp_opaque;
+
 } subtitle_provider_t;
 
 
@@ -97,8 +103,6 @@ struct subtitle_settings {
 extern struct subtitle_settings subtitle_settings;
 
 
-struct video_args;
-struct prop;
 sub_scanner_t *sub_scanner_create(const char *url, struct prop *proproot,
 				  const struct video_args *va, int duration);
 
@@ -112,7 +116,7 @@ void sub_scanner_retain(sub_scanner_t *ss);
 void subtitles_init(void);
 
 void subtitle_provider_register(subtitle_provider_t *sp,
-                                const char *id, prop_t *title,
+                                const char *id, struct prop *title,
                                 int default_prio, const char *subtype,
                                 int default_enable, int default_autosel);
 

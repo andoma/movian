@@ -68,6 +68,17 @@ showtime = {
 
   systemIpAddress: function() {
       return Showtime.systemIpAddress();
+  },
+
+  getSubtitleLanguages: Showtime.getSubtitleLanguages,
+
+  xmlrpc: function() {
+    var a = [];
+    for(var i = 2; i < arguments.length; i++)
+      a.push(arguments[i]);
+    var json = JSON.stringify(a);
+    var x = Showtime.xmlrpc(arguments[0], arguments[1], json);
+    return require('showtime/xml').htsmsg(x);
   }
 };
 
@@ -132,6 +143,17 @@ var plugin = {
     require('showtime/itemhook').create(conf);
   },
 
+  addSubtitleProvider: function(fn) {
+    Showtime.subtitleAddProvider(function(root, query, basescore, autosel) {
+      var req = Object.create(query);
+      req.addSubtitle = function(url, title, language, format,
+                                 source, score) {
+        Showtime.subtitleAddItem(root, url, title, language, format, source,
+                                 basescore + score, autosel);
+      }
+      fn(req);
+    }, Plugin.id, Plugin.id);
+  }
 
 };
 

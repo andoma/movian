@@ -8,8 +8,11 @@
 #include "misc/str.h"
 #include "misc/regex.h"
 #include "htsmsg/htsbuf.h"
+#include "htsmsg/htsmsg.h"
+#include "htsmsg/htsmsg_json.h"
 #include "task.h"
 #include "backend/backend.h"
+#include "api/xmlrpc.h"
 
 /**
  *
@@ -669,11 +672,45 @@ es_probe(duk_context *ctx)
 
 
 /**
+ *
+ */
+static int
+es_xmlrpc(duk_context *ctx)
+{
+  int argc = duk_get_top(ctx);
+  printf("argc=%d\n", argc);
+  if(argc < 2)
+    return DUK_RET_TYPE_ERROR;
+
+  char errbuf[256];
+  const char *url    = duk_to_string(ctx, 0);
+  const char *method = duk_to_string(ctx, 1);
+  const char *json   = duk_to_string(ctx, 2);
+
+  htsmsg_t *args = htsmsg_json_deserialize2(json, errbuf, sizeof(errbuf));
+  if(args == NULL)
+    duk_error(ctx, DUK_ERR_ERROR, "Bad interim JSON -- %s", errbuf);
+
+  htsmsg_print(args);
+
+  htsmsg_t *reply = xmlrpc_request(url, method,
+                                   args, errbuf, sizeof(errbuf));
+
+  if(reply == NULL)
+    duk_error(ctx, DUK_ERR_ERROR, "XMLRPC request %s to %s failed -- %s",
+              method, url, errbuf);
+
+  es_push_native_obj(ctx, ES_NATIVE_HTSMSG, reply);
+  return 1;
+}
+
+/**
  * Showtime object exposed functions
  */
 const duk_function_list_entry fnlist_Showtime_io[] = {
   { "httpReq",              es_http_req,              3 },
   { "httpInspectorCreate",  es_http_inspector_create, 2 },
   { "probe",                es_probe,                 1 },
+  { "xmlrpc",               es_xmlrpc,                DUK_VARARGS },
   { NULL, NULL, 0}
 };
