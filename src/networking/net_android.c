@@ -35,7 +35,7 @@
 netif_t *
 net_get_interfaces(void)
 {
-  TRACE(TRACE_ERROR, "net", "net_get_interfaces not impemented");
+  //  TRACE(TRACE_ERROR, "net", "net_get_interfaces not impemented");
   return NULL;
 }
 
