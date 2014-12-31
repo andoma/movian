@@ -151,7 +151,7 @@ init_global_info(void)
 
   prop_set_string(prop_create(s, "version"), htsversion);
   prop_set_string(prop_create(s, "fullversion"), htsversion_full);
-  prop_set_string(prop_create(s, "copyright"), "© 2006 - 2012 Andreas Öman");
+  prop_set_string(prop_create(s, "copyright"), "© 2006 - 2015 Lonelycoder AB");
 
 }
 
@@ -423,7 +423,7 @@ parse_opts(int argc, char **argv)
   while(argc > 0) {
     if(!strcmp(argv[0], "-h") || !strcmp(argv[0], "--help")) {
       printf("Showtime %s\n"
-	     "Copyright (C) 2007-2012 Andreas Öman\n"
+	     "Copyright (C) 2007-2015 Lonelycoder AB\n"
 	     "\n"
 	     "Usage: %s [options] [<url>]\n"
 	     "\n"
