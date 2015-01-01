@@ -1481,4 +1481,7 @@ init_dev_settings(void)
   add_dev_bool(s, "Debug threads",
 	       "threadsdebug", &gconf.enable_thread_debug);
 
+  add_dev_bool(s, "Debug UPNP",
+	       "upnp", &gconf.enable_upnp_debug);
+
 }

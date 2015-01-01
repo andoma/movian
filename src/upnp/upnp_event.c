@@ -178,9 +178,9 @@ static void
 subscription_destroy(upnp_subscription_t *us, const char *reason)
 {
   upnp_local_service_t *uls = us->us_service;
-  TRACE(TRACE_DEBUG, "UPNP", 
-	"Deleted subscription for %s:%d callback: %s SID: %s -- %s",
-	uls->uls_name, uls->uls_version, us->us_callback, us->us_uuid, reason);
+  UPNP_TRACE("Deleted subscription for %s:%d callback: %s SID: %s -- %s",
+             uls->uls_name, uls->uls_version, us->us_callback, us->us_uuid,
+             reason);
 
   LIST_REMOVE(us, us_link);
   free(us->us_callback);
@@ -328,11 +328,11 @@ upnp_subscribe(http_connection_t *hc, const char *remain, void *opaque,
       us->us_uuid = sub_gen_uuid();
       http_set_response_hdr(hc, "SID", us->us_uuid);
       
-      TRACE(TRACE_DEBUG, "UPNP", 
-	    "Created subscription for %s:%d callback: %s SID: %s "
-	    "(timeout: %d seconds)",
-	    uls->uls_name, uls->uls_version, us->us_callback, us->us_uuid,
-	    timeout);
+      UPNP_TRACE(
+                 "Created subscription for %s:%d callback: %s SID: %s "
+                 "(timeout: %d seconds)",
+                 uls->uls_name, uls->uls_version, us->us_callback, us->us_uuid,
+                 timeout);
 
       callout_arm_hires(NULL, do_notify_one, upnp_event_generate_one(uls, us),
 			0);

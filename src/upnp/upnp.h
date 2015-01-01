@@ -22,8 +22,15 @@
 #ifndef UPNP_H__
 #define UPNP_H__
 
+#include "showtime.h"
 #include "misc/queue.h"
 #include "misc/callout.h"
+
+#define UPNP_TRACE(x, ...) do {                                 \
+    if(gconf.enable_upnp_debug)                                 \
+      TRACE(TRACE_DEBUG, "UPNP", x, ##__VA_ARGS__);		\
+  } while(0)
+
 
 LIST_HEAD(upnp_device_list, upnp_device);
 LIST_HEAD(upnp_service_list, upnp_service);

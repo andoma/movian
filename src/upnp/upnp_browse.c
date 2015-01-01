@@ -230,7 +230,7 @@ add_item(htsmsg_t *item, prop_t *root, const char *trackid, prop_t **trackptr,
     prop_set_string(prop_create(c, "url"), url);
     make_imageItem(c, m, item);
   } else {
-    TRACE(TRACE_DEBUG, "UPNP", "Cant handle upnp:class %s (%s)", cls, url);
+    UPNP_TRACE("UPNP", "Cant handle upnp:class %s (%s)", cls, url);
     prop_destroy(c);
     return;
   }
@@ -434,7 +434,7 @@ browse_items(upnp_browse_t *ub)
   nodes_from_meta(meta, ub->ub_items, NULL, NULL, 
 		  ub->ub_base_url, ub->ub_itemsub);
 
-  TRACE(TRACE_DEBUG, "UPNP", "Browsed %d of %d items",
+  UPNP_TRACE("Browsed %d of %d items",
 	ub->ub_loaded_entries, ub->ub_total_entries);
 
   htsmsg_release(meta);

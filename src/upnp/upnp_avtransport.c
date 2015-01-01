@@ -193,15 +193,14 @@ play_with_context(const char *uri, htsmsg_t *meta)
   if(id == NULL)
     return 1;
 
-  TRACE(TRACE_DEBUG, "UPNP", "Playing %s (id: %s, parent: %s)",
-	uri, id, parentid);
+  UPNP_TRACE("Playing %s (id: %s, parent: %s)", uri, id, parentid);
 
   hts_mutex_lock(&upnp_lock);
 
   us = upnp_service_guess(uri);
 
   if(us != NULL) {
-    TRACE(TRACE_DEBUG, "UPNP", "Using controlpoint %s", us->us_control_url);
+    UPNP_TRACE("Using controlpoint %s", us->us_control_url);
 
     prop_t *model = prop_create_root(NULL);
     prop_t *nodes = prop_create(model, "nodes");
