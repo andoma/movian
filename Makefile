@@ -138,7 +138,7 @@ SRCS +=	src/misc/ptrvec.c \
 	src/misc/big5.c \
 	src/misc/cancellable.c \
 
-SRCS-${CONFIG_TREX} += ext/trex/trex.c
+SRCS += ext/trex/trex.c
 
 SRCS-${CONFIG_BSPATCH} += ext/bspatch/bspatch.c
 

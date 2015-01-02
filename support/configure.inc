@@ -66,7 +66,6 @@ CONFIG_LIST="
  inotify
  fsevents
  realpath
- trex
  emu_thread_specifics
  libfontconfig
  readahead_cache

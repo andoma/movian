@@ -22,8 +22,6 @@
 
 #include "config.h"
 
-#if ENABLE_TREX
-
 #include "ext/trex/trex.h"
 
 typedef struct {
@@ -68,19 +66,3 @@ static __inline void hts_regfree(hts_regex_t *r)
   trex_free(r->r);
 }
 
-
-#else // ENABLE_TREX
-
-#include <regex.h>
-
-typedef regex_t hts_regex_t;
-
-typedef regmatch_t hts_regmatch_t;
-
-#define hts_regexec(a, b, c, d, e) regexec(a, b, c, d, e)
-
-#define hts_regcomp(a, b) regcomp(a, b, REG_EXTENDED)
-
-#define hts_regfree(a) regfree(a)
-
-#endif // ENABLE_TREX
