@@ -185,8 +185,6 @@ esp_query(subtitle_provider_t *SP, sub_scanner_t *ss, int score,
     duk_push_int(ctx, score);
     duk_push_boolean(ctx, autosel);
 
-    duk_dump_context_stdout(ctx);
-
     int rc = duk_pcall(ctx, 4);
     if(rc)
       es_dump_err(ctx);
