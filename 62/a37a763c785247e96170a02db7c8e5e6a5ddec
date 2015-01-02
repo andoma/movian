@@ -1,0 +1,4 @@
+Upgrade to libav version 11, this add support for:
+
+- HEVC/h265 decoding (in SW, no HW acceleration)
+- Opus audio decoding
