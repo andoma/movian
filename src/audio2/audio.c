@@ -306,9 +306,10 @@ audio_setup_spdif_muxer(audio_decoder_t *ad, AVCodec *codec,
 
 
 /**
+ * Return 1 if packet should be retained (more data to be extracted)
  *
  */
-static void
+static int
 audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 {
   const audio_class_t *ac = ad->ad_ac;
@@ -319,9 +320,9 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
   int got_frame;
 
   if(mb->mb_skip || mb->mb_stream != mq->mq_stream) 
-    return;
+    return 0;
 
-  while(mb->mb_size) {
+  if(1) {
 
     if(mb->mb_cw == NULL) {
       frame->sample_rate = mb->mb_rate;
@@ -372,7 +373,7 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 	  ac->ac_deliver_coded_locked(ad, mb->mb_data, mb->mb_size,
 				      mb->mb_pts, mb->mb_epoch);
 	  hts_mutex_unlock(&mp->mp_mutex);
-	  return;
+	  return 0;
 	}
       }
 
@@ -385,7 +386,7 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 	mb->mb_dts = AV_NOPTS_VALUE;
 	av_write_frame(ad->ad_spdif_muxer, &mb->mb_pkt);
 	avio_flush(ad->ad_spdif_muxer->pb);
-	return;
+	return 0;
       }
 
 
@@ -409,13 +410,13 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 
 	if(avcodec_open2(mc->ctx, codec, NULL) < 0) {
 	  av_freep(&mc->ctx);
-	  return;
+	  return 0;
 	}
       }
 
       r = avcodec_decode_audio4(ctx, frame, &got_frame, &mb->mb_pkt);
       if(r < 0)
-	return;
+	return 0;
 
       if(frame->sample_rate == 0) {
 	frame->sample_rate = ctx->sample_rate;
@@ -430,7 +431,7 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
             TRACE(TRACE_ERROR, "Audio",
                   "Unable to determine sample rate");
           }
-	  return;
+	  return 0;
         }
       }
 
@@ -443,7 +444,7 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
               TRACE(TRACE_ERROR, "Audio",
                     "Unable to map %d channels to channel layout");
           }
-	  return;
+	  return 0;
 	}
       }
 
@@ -544,6 +545,8 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
       }
     }
   }
+
+  return mb->mb_size > 0;
 }
 
 
@@ -620,8 +623,6 @@ audio_decode_thread(void *aux)
 
     mq->mq_packets_current--;
     mp->mp_buffer_current -= mb->mb_size;
-    mq_update_stats(mp, mq);
-    hts_cond_signal(&mp->mp_backpressure);
 
     if(mb->mb_data_type == MB_CTRL_UNBLOCK) {
       assert(blocked);
@@ -639,7 +640,13 @@ audio_decode_thread(void *aux)
 
       switch(mb->mb_data_type) {
       case MB_AUDIO:
-	audio_process_audio(ad, mb);
+	if(audio_process_audio(ad, mb)) {
+          hts_mutex_lock(&mp->mp_mutex);
+          mq->mq_packets_current++;
+          mp->mp_buffer_current += mb->mb_size;
+          TAILQ_INSERT_HEAD(&mq->mq_q_data, mb, mb_link);
+          continue;
+        }
 	break;
 
       case MB_SET_PROP_STRING:
@@ -693,6 +700,8 @@ audio_decode_thread(void *aux)
 
       hts_mutex_lock(&mp->mp_mutex);
     }
+    mq_update_stats(mp, mq);
+    hts_cond_signal(&mp->mp_backpressure);
     media_buf_free_locked(mp, mb);
   }
 
