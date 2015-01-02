@@ -11,6 +11,7 @@ struct rstr;
 struct prop;
 struct prop_vec;
 
+#define ST_ERROR_PROP_ZOMBIE 0x8000
 #define ST_ERROR_SQLITE_BASE 0x10000
 
 
@@ -95,6 +96,8 @@ es_context_t *es_get(duk_context *ctx);
 void es_dumpstack(duk_context *ctx);
 
 void es_dump_err(duk_context *ctx);
+
+int es_get_err_code(duk_context *ctx);
 
 
 void es_stprop_push(duk_context *ctx, struct prop *p);

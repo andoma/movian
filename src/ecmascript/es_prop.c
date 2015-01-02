@@ -143,7 +143,7 @@ es_prop_get_value_duk(duk_context *ctx)
 
   if(p->hp_type == PROP_ZOMBIE) {
     hts_mutex_unlock(&prop_mutex);
-    return 0;
+    duk_error(ctx, ST_ERROR_PROP_ZOMBIE, NULL);
   }
 
   switch(p->hp_type) {
@@ -198,7 +198,7 @@ es_prop_get_child_duk(duk_context *ctx)
 
   if(p->hp_type == PROP_ZOMBIE) {
     hts_mutex_unlock(&prop_mutex);
-    return 0;
+    duk_error(ctx, ST_ERROR_PROP_ZOMBIE, NULL);
   }
 
   if(str != NULL) {
@@ -818,6 +818,17 @@ es_prop_unload_destroy(duk_context *ctx)
 
 
 /**
+ *
+ */
+static int
+es_prop_is_zombie(duk_context *ctx)
+{
+  prop_t *a = es_stprop_get(ctx, 0);
+  duk_push_boolean(ctx, a->hp_type == PROP_ZOMBIE);
+  return 1;
+}
+
+/**
  * Showtime object exposed functions
  */
 const duk_function_list_entry fnlist_Showtime_prop[] = {
@@ -849,5 +860,6 @@ const duk_function_list_entry fnlist_Showtime_prop[] = {
   { "propIsSame",              es_prop_is_same,               2 },
   { "propMoveBefore",          es_prop_move_before,           2 },
   { "propUnloadDestroy",       es_prop_unload_destroy,        1 },
+  { "propIsZombie",            es_prop_is_zombie,             1 },
   { NULL, NULL, 0}
 };

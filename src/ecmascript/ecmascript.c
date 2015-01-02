@@ -566,7 +566,7 @@ es_dump_err(duk_context *ctx)
   const char *name = duk_get_string(ctx, -1);
 
   duk_get_prop_string(ctx, -2, "message");
-  const char *message = duk_get_string(ctx, -1);
+  const char *message = duk_to_string(ctx, -1);
 
   duk_get_prop_string(ctx, -3, "fileName");
   const char *filename = duk_get_string(ctx, -1);
@@ -582,6 +582,19 @@ es_dump_err(duk_context *ctx)
 
   TRACE(TRACE_ERROR, ec->ec_id, "STACK DUMP: %s", stack);
   duk_pop_n(ctx, 5);
+}
+
+
+/**
+ *
+ */
+int
+es_get_err_code(duk_context *ctx)
+{
+  duk_get_prop_string(ctx, -1, "message");
+  int r = duk_to_int(ctx, -1);
+  duk_pop(ctx);
+  return r;
 }
 
 

@@ -173,7 +173,20 @@ function Page(root, sync, flat) {
     prop.subscribe(model.nodes, function(op, value, value2) {
       if(op == 'wantmorechilds') {
         var nodes = model.nodes;
-        var have_more = typeof this.paginator == 'function' && !!this.paginator();
+        var have_more = false;
+
+        if(typeof this.paginator == 'function') {
+
+          try {
+            have_more = !!this.paginator();
+          } catch(e) {
+            if(!prop.isZombie(model)) {
+              throw e;
+            } else {
+              console.log("Page closed during pagination, error supressed");
+            }
+          }
+        }
         Showtime.propHaveMore(nodes, have_more);
       }
 
@@ -302,13 +315,23 @@ exports.Route = function(re, callback) {
 
   this.route = Showtime.routeCreate(re, function(pageprop, sync, args) {
 
-     // First, convert the raw page prop object into a proxied one
-    pageprop = prop.makeProp(pageprop);
+    try {
 
-    // Prepend a Page object as first argument to callback
-    args.unshift(new Page(pageprop, sync, false));
+      // First, convert the raw page prop object into a proxied one
+      pageprop = prop.makeProp(pageprop);
 
-    callback.apply(null, args);
+      // Prepend a Page object as first argument to callback
+      args.unshift(new Page(pageprop, sync, false));
+
+      callback.apply(null, args);
+    } catch(e) {
+
+      if(!prop.isZombie(pageprop)) {
+        throw e;
+      } else {
+        console.log("Page at route " + re + " was closed, error supressed");
+      }
+    }
   });
 }
 
@@ -321,24 +344,34 @@ exports.Searcher = function(title, icon, callback) {
 
   this.searcher = Showtime.hookRegister('searcher', function(model, query, loading) {
 
-    // Convert the raw page prop object into a proxied one
-    model = prop.makeProp(model);
-
-    var root = prop.createRoot();
-
-    root.metadata.title = title;
-    root.metadata.icon = icon;
-    root.type = 'directory';
-    prop.setParent(root, model.nodes);
-
-    var page = new Page(root, false, true);
-    page.type = 'directory';
-    root.url = Showtime.propMakeUrl(page.root);
-    prop.atomicAdd(loading, 1);
     try {
-      callback(page, query);
-    } finally {
-      prop.atomicAdd(loading, -1);
+
+      // Convert the raw page prop object into a proxied one
+      model = prop.makeProp(model);
+
+      var root = prop.createRoot();
+
+      root.metadata.title = title;
+      root.metadata.icon = icon;
+      root.type = 'directory';
+      prop.setParent(root, model.nodes);
+
+      var page = new Page(root, false, true);
+      page.type = 'directory';
+      root.url = Showtime.propMakeUrl(page.root);
+      prop.atomicAdd(loading, 1);
+      try {
+        callback(page, query);
+      } finally {
+        prop.atomicAdd(loading, -1);
+      }
+    } catch(e) {
+
+      if(!prop.isZombie(model)) {
+        throw e;
+      } else {
+        console.log("Search for " + query + " was closed, error supressed");
+      }
     }
   });
 }
