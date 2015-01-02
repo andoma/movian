@@ -871,6 +871,7 @@ video_ps3_vdec_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 
 	TRACE(TRACE_DEBUG, "VDEC", "Dumping SPS");
 	int too_big_refframes = 0;
+        int mb_height = 0;
 	for(int i = 0; i < H264_PARSER_NUM_SPS; i++) {
 	  const h264_sps_t *s = &hp.sps_array[i];
 	  if(!s->present)
@@ -893,14 +894,19 @@ video_ps3_vdec_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
           crop_right  = s->crop_right;
           crop_bottom = s->crop_bottom;
 
+	  if(s->mb_height >= 45 && s->num_ref_frames > 9)
+	    too_big_refframes = s->num_ref_frames;
+
 	  if(s->mb_height >= 68 && s->num_ref_frames > 4)
 	    too_big_refframes = s->num_ref_frames;
+          mb_height = s->mb_height;
 	}
 	h264_parser_fini(&hp);
 
 	if(too_big_refframes) {
 	  notify_add(mp->mp_prop_notifications, NOTIFY_WARNING, NULL, 10,
-		     _("Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration"), too_big_refframes);
+		     _("Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration"), too_big_refframes,
+                     mb_height * 16);
 	  return -1;
 	}
       }
