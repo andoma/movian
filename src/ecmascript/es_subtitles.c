@@ -54,6 +54,8 @@ es_sp_destroy(es_resource_t *eres)
   subtitle_provider_unregister(&esp->sp);
   prop_destroy(esp->title);
   free(esp->id);
+
+  es_resource_unlink(eres);
 }
 
 
