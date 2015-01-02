@@ -204,6 +204,13 @@ libav_deliver_frame(video_decoder_t *vd,
                          frame->width, frame->height, PIX_FMT_YUV420P,
                          0, NULL, NULL, NULL);
 
+  if(vd->vd_sws == NULL) {
+    TRACE(TRACE_ERROR, "Video", "Unable to convert from %s to %s",
+	  av_get_pix_fmt_name(frame->format),
+	  av_get_pix_fmt_name(PIX_FMT_YUV420P));
+    return;
+  }
+
   if(vd->vd_convert_width  != frame->width  ||
      vd->vd_convert_height != frame->height ||
      vd->vd_convert_pixfmt != frame->format) {
