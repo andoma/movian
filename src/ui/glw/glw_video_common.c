@@ -1331,6 +1331,10 @@ video_deliver_lavc(const frame_info_t *fi, glw_video_t *gv,
     nfi.fi_type = 'YUVp';
     break;
 
+  case AV_PIX_FMT_XYZ12LE:
+    nfi.fi_type = 'XYZ6';
+    break;
+
   default:
     return 1;
   }
