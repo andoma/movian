@@ -33,6 +33,7 @@ widget(container_y, {
     caption: $self.model.error;
     TextStyleItem();
     sizeScale: 1.5;
+    maxlines: 10;
   });
   
   space(1);
