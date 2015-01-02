@@ -367,6 +367,15 @@ fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh,
     return 1;
   }
 
+  if(buf[0] == 'B' && buf[1] == 'M') {
+    /* BMP */
+    uint32_t siz = buf[2] | (buf[3] << 8) | (buf[4] << 16) | (buf[5] << 24);
+    if(siz == fa_fsize(fh)) {
+      md->md_contenttype = CONTENT_IMAGE;
+      return 1;
+    }
+  }
+
   if(!memcmp(buf, gifsig, sizeof(gifsig))) {
     /* GIF */
     md->md_contenttype = CONTENT_IMAGE;

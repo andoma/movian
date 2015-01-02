@@ -416,6 +416,9 @@ image_decode_libav(image_coded_type_t type,
   case IMAGE_GIF:
     codec = avcodec_find_decoder(AV_CODEC_ID_GIF);
     break;
+  case IMAGE_BMP:
+    codec = avcodec_find_decoder(AV_CODEC_ID_BMP);
+    break;
   default:
     codec = NULL;
     break;

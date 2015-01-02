@@ -133,6 +133,8 @@ fa_imageloader2(const char *url, const char **vpaths,
   } else if(!memcmp(gif87sig, p, sizeof(gif87sig)) ||
 	    !memcmp(gif89sig, p, sizeof(gif89sig))) {
     fmt = IMAGE_GIF;
+  } else if(p[0] == 'B' && p[1] == 'M') {
+    fmt = IMAGE_BMP;
   } else if(!memcmp(svgsig1, p, sizeof(svgsig1)) ||
 	    !memcmp(svgsig2, p, sizeof(svgsig2))) {
     fmt = IMAGE_SVG;
@@ -248,6 +250,8 @@ fa_imageloader(const char *url, const struct image_meta *im,
   } else if(!memcmp(gif87sig, p, sizeof(gif87sig)) ||
 	    !memcmp(gif89sig, p, sizeof(gif89sig))) {
     fmt = IMAGE_GIF;
+  } else if(p[0] == 'B' && p[1] == 'M') {
+    fmt = IMAGE_BMP;
   } else if(!memcmp(svgsig1, p, sizeof(svgsig1)) ||
 	    !memcmp(svgsig2, p, sizeof(svgsig2))) {
     fmt = IMAGE_SVG;

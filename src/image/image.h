@@ -71,6 +71,7 @@ typedef enum image_coded_type {
   IMAGE_JPEG,
   IMAGE_GIF,
   IMAGE_SVG,
+  IMAGE_BMP,
 } image_coded_type_t;
 
 

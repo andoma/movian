@@ -205,6 +205,9 @@ hc_image(http_connection_t *hc, const char *remain, void *opaque,
   case IMAGE_GIF:
     content = "image/gif";
     break;
+  case IMAGE_BMP:
+    content = "image/bmp";
+    break;
   default:
     content = "image";
     break;
