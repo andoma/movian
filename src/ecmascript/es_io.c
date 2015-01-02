@@ -678,7 +678,6 @@ static int
 es_xmlrpc(duk_context *ctx)
 {
   int argc = duk_get_top(ctx);
-  printf("argc=%d\n", argc);
   if(argc < 2)
     return DUK_RET_TYPE_ERROR;
 
@@ -690,8 +689,6 @@ es_xmlrpc(duk_context *ctx)
   htsmsg_t *args = htsmsg_json_deserialize2(json, errbuf, sizeof(errbuf));
   if(args == NULL)
     duk_error(ctx, DUK_ERR_ERROR, "Bad interim JSON -- %s", errbuf);
-
-  htsmsg_print(args);
 
   htsmsg_t *reply = xmlrpc_request(url, method,
                                    args, errbuf, sizeof(errbuf));
