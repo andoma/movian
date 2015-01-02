@@ -45,16 +45,14 @@ media_codec_deref(media_codec_t *cw)
   if(cw->ctx != NULL && cw->ctx->codec != NULL)
     avcodec_close(cw->ctx);
 
-  if(cw->ctx != cw->fmt_ctx && cw->fmt_ctx != NULL &&
-     cw->fmt_ctx->codec != NULL)
+  if(cw->fmt_ctx != NULL && cw->fmt_ctx->codec != NULL)
     avcodec_close(cw->fmt_ctx);
 #endif
 
   if(cw->close != NULL)
     cw->close(cw);
 
-  if(cw->ctx != cw->fmt_ctx)
-    free(cw->ctx);
+  free(cw->ctx);
 
   if(cw->fmt_ctx && cw->fw == NULL)
     free(cw->fmt_ctx);

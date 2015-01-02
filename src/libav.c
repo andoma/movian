@@ -348,16 +348,11 @@ media_codec_create_lavc(media_codec_t *cw, const media_codec_params_t *mcp,
   if(codec == NULL)
     return -1;
 
-  if(cw->codec_id == AV_CODEC_ID_AC3 ||
-     cw->codec_id == AV_CODEC_ID_EAC3 ||
-     cw->codec_id == AV_CODEC_ID_DTS) {
+  cw->ctx = avcodec_alloc_context3(codec);
+  if(cw->fmt_ctx != NULL)
+    avcodec_copy_context(cw->ctx, cw->fmt_ctx);
 
-    // We create codec instances later in audio thread.
-    return 0;
-  }
-
-  cw->ctx = cw->fmt_ctx ?: avcodec_alloc_context3(codec);
-  //  cw->codec_ctx->debug = FF_DEBUG_PICT_INFO | FF_DEBUG_BUGS;
+  // cw->ctx->debug = FF_DEBUG_PICT_INFO | FF_DEBUG_BUGS;
 
   if(mcp != NULL && mcp->extradata != NULL && !cw->ctx->extradata) {
     cw->ctx->extradata = calloc(1, mcp->extradata_size +
@@ -389,8 +384,7 @@ media_codec_create_lavc(media_codec_t *cw, const media_codec_params_t *mcp,
     TRACE(TRACE_INFO, "libav", "Unable to open codec %s",
 	  codec ? codec->name : "<noname>");
 
-    if(cw->fmt_ctx != cw->ctx)
-      av_freep(&cw->ctx);
+    av_freep(&cw->ctx);
 
     return -1;
   }
