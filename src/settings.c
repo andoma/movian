@@ -1490,7 +1490,7 @@ init_dev_settings(void)
   add_dev_bool(s, "Debug Bittorrent tracker communication",
 	       "bttracker", &gconf.enable_torrent_tracker_debug);
 
-  add_dev_bool(s, "Debug Bittorrent peer conncetions",
+  add_dev_bool(s, "Debug Bittorrent peer connections",
 	       "btpeercon", &gconf.enable_torrent_peer_connection_debug);
 
   add_dev_bool(s, "Debug Bittorrent peer downloading",
