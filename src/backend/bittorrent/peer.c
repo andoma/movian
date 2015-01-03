@@ -62,8 +62,6 @@ static void peer_send_cancel(peer_t *p, const torrent_request_t *tr);
 #define PEER_DBG_DOWNLOAD 0x2
 #define PEER_DBG_UPLOAD   0x4
 
-static int peer_debug_flags;
-
 static void
 peer_trace(const peer_t *p, int type, const char *msg, ...)
   attribute_printf(3, 4);
@@ -71,8 +69,17 @@ peer_trace(const peer_t *p, int type, const char *msg, ...)
 static void
 peer_trace(const peer_t *p, int type, const char *msg, ...)
 {
-  if(!(peer_debug_flags & type))
-    return;
+  switch(type) {
+  case PEER_DBG_CONN:
+    if(!gconf.enable_torrent_peer_connection_debug)
+      return;
+  case PEER_DBG_DOWNLOAD:
+    if(!gconf.enable_torrent_peer_download_debug)
+      return;
+  case PEER_DBG_UPLOAD:
+    if(!gconf.enable_torrent_peer_upload_debug)
+      return;
+  }
 
   va_list ap;
   char buf[256];

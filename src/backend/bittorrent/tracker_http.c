@@ -134,6 +134,7 @@ tracker_http_torrent_announce(tracker_torrent_t *tt, int event)
   tracker_t *t = tt->tt_tracker;
   torrent_t *to = tt->tt_torrent;
   const char *eventstr;
+  int flags = 0;
 
   if(tt->tt_tentative)
     eventstr = "started";
@@ -147,6 +148,9 @@ tracker_http_torrent_announce(tracker_torrent_t *tt, int event)
   if(tt->tt_http_req != NULL)
     asyncio_http_cancel(tt->tt_http_req);
 
+  if(gconf.enable_torrent_tracker_debug)
+    flags = FA_DEBUG;
+
   tt->tt_http_req =
     asyncio_http_req(t->t_url, http_callback, tt,
                      HTTP_ARGBIN("info_hash", to->to_info_hash, 20),
@@ -159,6 +163,7 @@ tracker_http_torrent_announce(tracker_torrent_t *tt, int event)
                      HTTP_ARG("event", eventstr),
                      HTTP_ARG("trackerid", tt->tt_trackerid),
                      HTTP_RESULT_PTR(HTTP_BUFFER_INTERNALLY),
+                     HTTP_FLAGS(flags),
                      NULL);
 
 }

@@ -33,8 +33,6 @@
 
 
 static int torrent_write_thread_running;
-static int diskio_debug = 0;
-
 
 static void
 diskio_trace(const torrent_t *t, const char *msg, ...)
@@ -43,7 +41,7 @@ diskio_trace(const torrent_t *t, const char *msg, ...)
 static void
 diskio_trace(const torrent_t *t, const char *msg, ...)
 {
-  if(!diskio_debug)
+  if(!gconf.enable_torrent_diskio_debug)
     return;
 
   va_list ap;
@@ -105,7 +103,7 @@ update_disk_usage(void)
     btg.btg_free_space_percentage / 100;
 
   btg.btg_cache_limit = limit ?: 1;
-  if(diskio_debug) {
+  if(gconf.enable_torrent_diskio_debug) {
     TRACE(TRACE_DEBUG, "BITTORRENT",
           "Disk usage %"PRId64" MB / %"PRId64" MB (%d%%)",
           sum, btg.btg_cache_limit, sum * 100 / btg.btg_cache_limit);
@@ -621,14 +619,14 @@ torrent_diskio_scan(void)
       btg.btg_total_bytes_inactive += sf->sf_size;
     }
 
-    if(diskio_debug)
+    if(gconf.enable_torrent_diskio_debug)
       TRACE(TRACE_DEBUG, "BITTORRENT",
             "%s: %"PRId64" bytes %d seconds old\n",
             rstr_get(sf->sf_url),
             sf->sf_size, (int)(time(NULL) - sf->sf_mtime));
   }
 
-  if(diskio_debug) {
+  if(gconf.enable_torrent_diskio_debug) {
     TRACE(TRACE_DEBUG, "BITTORRENT",
           "Disk usage: Active: %"PRId64" MB, Inactive: %"PRId64" MB\n",
           btg.btg_total_bytes_active / 1000000,
@@ -655,10 +653,12 @@ torrent_diskio_scan(void)
         } else {
           btg.btg_total_bytes_inactive -= sf->sf_size;
 
-          if(diskio_debug)
+
+          if(gconf.enable_torrent_diskio_debug) {
             TRACE(TRACE_DEBUG, "BITTORRENT",
                   "Removed %s (%"PRId64" bytes) from cache",
                   rstr_get(sf->sf_url), sf->sf_size);
+          }
         }
       }
     }

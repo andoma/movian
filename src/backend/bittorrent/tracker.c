@@ -27,8 +27,6 @@
 
 #include "bittorrent.h"
 
-static int tracker_debug = 0;
-
 static int tracker_new_torrent_signal;
 
 struct tracker_list trackers;
@@ -36,7 +34,7 @@ struct tracker_list trackers;
 void
 tracker_trace(const tracker_t *t, const char *msg, ...)
 {
-  if(!tracker_debug)
+  if(!gconf.enable_torrent_tracker_debug)
     return;
 
   va_list ap;

@@ -1484,4 +1484,21 @@ init_dev_settings(void)
   add_dev_bool(s, "Debug UPNP",
 	       "upnp", &gconf.enable_upnp_debug);
 
+  add_dev_bool(s, "Debug Bittorrent general events",
+	       "bt", &gconf.enable_torrent_debug);
+
+  add_dev_bool(s, "Debug Bittorrent tracker communication",
+	       "bttracker", &gconf.enable_torrent_tracker_debug);
+
+  add_dev_bool(s, "Debug Bittorrent peer conncetions",
+	       "btpeercon", &gconf.enable_torrent_peer_connection_debug);
+
+  add_dev_bool(s, "Debug Bittorrent peer downloading",
+	       "btpeerdl", &gconf.enable_torrent_peer_download_debug);
+
+  add_dev_bool(s, "Debug Bittorrent peer uploading",
+	       "btpeerul", &gconf.enable_torrent_peer_upload_debug);
+
+  add_dev_bool(s, "Debug Bittorrent disk I/O",
+	       "btdiskio", &gconf.enable_torrent_diskio_debug);
 }

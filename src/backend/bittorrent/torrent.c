@@ -43,7 +43,6 @@ struct torrent_list torrents;
 static int torrent_pendings_signal;
 static int torrent_boot_periodic_signal;
 static int torrent_hash_thread_running;
-static int torrent_debug = 0;
 
 hts_cond_t torrent_piece_hash_needed_cond;
 hts_cond_t torrent_piece_io_needed_cond;
@@ -67,7 +66,7 @@ torrent_trace(const torrent_t *t, const char *msg, ...)
 static void
 torrent_trace(const torrent_t *t, const char *msg, ...)
 {
-  if(!torrent_debug)
+  if(!gconf.enable_torrent_debug)
     return;
 
   va_list ap;
