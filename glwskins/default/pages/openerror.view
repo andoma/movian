@@ -26,6 +26,7 @@ widget(container_y, {
     align: center;
     caption: $self.url;
     TextStyleItem();
+    maxlines: 10;
   });
 
   widget(label, {
