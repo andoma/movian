@@ -31,6 +31,8 @@ es_route_destroy(es_resource_t *eres)
 {
   es_route_t *er = (es_route_t *)eres;
 
+  es_debug(eres->er_ctx, "Route %s removed", er->er_pattern);
+
   es_root_unregister(eres->er_ctx->ec_duk, eres);
 
   hts_mutex_lock(&route_mutex);
@@ -116,6 +118,9 @@ es_route_create(duk_context *ctx)
   }
 
   er->er_pattern = strdup(str);
+
+  es_debug(ec, "Route %s added", er->er_pattern);
+
   er->er_prio = strcspn(str, "()[].*?+$") ?: INT32_MAX;
 
   LIST_INSERT_SORTED(&routes, er, er_link, er_cmp, es_route_t);
@@ -176,9 +181,14 @@ ecmascript_openuri(prop_t *page, const char *url, int sync)
 
   int array_idx = duk_push_array(ctx);
 
+  es_debug(ec, "Opening route %s", er->er_pattern);
+
   for(int i = 1; i < 8; i++) {
     if(matches[i].rm_so == -1)
       break;
+
+    es_debug(ec, "  Page argument %d : %.*s", i,
+             matches[i].rm_eo - matches[i].rm_so, url + matches[i].rm_so);
 
     duk_push_lstring(ctx,
                      url + matches[i].rm_so,

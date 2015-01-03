@@ -453,9 +453,12 @@ es_mem_free(void *udata, void *ptr)
  *
  */
 static es_context_t *
-es_context_create(const char *id)
+es_context_create(const char *id, int flags)
 {
   es_context_t *ec = calloc(1, sizeof(es_context_t));
+
+  ec->ec_debug  = !!(flags & ECMASCRIPT_DEBUG);
+
   hts_mutex_init_recursive(&ec->ec_mutex);
   atomic_set(&ec->ec_refcount, 1);
 
@@ -657,10 +660,11 @@ es_get_env(duk_context *ctx)
 int
 ecmascript_plugin_load(const char *id, const char *url,
                        char *errbuf, size_t errlen,
-                       int version, const char *manifest)
+                       int version, const char *manifest,
+                       int flags)
 {
   char path[PATH_MAX];
-  es_context_t *ec = es_context_create(id);
+  es_context_t *ec = es_context_create(id, flags);
 
 
   es_context_begin(ec);
@@ -786,7 +790,7 @@ ecmascript_init(void)
   if(gconf.load_ecmascript == NULL)
     return;
 
-  es_context_t *ec = es_context_create("cmdline");
+  es_context_t *ec = es_context_create("cmdline", ECMASCRIPT_DEBUG);
   es_context_begin(ec);
 
   ec->ec_storage = strdup("/tmp");

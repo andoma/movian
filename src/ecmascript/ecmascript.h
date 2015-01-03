@@ -1,5 +1,6 @@
 #pragma once
 
+#include "showtime.h"
 #include "ext/duktape/duktape.h"
 #include "misc/queue.h"
 #include "arch/threads.h"
@@ -37,6 +38,8 @@ typedef struct es_context {
   char *ec_id;
   char *ec_path;
   char *ec_storage;
+
+  char ec_debug;
 
   int ec_linked;
 
@@ -171,7 +174,10 @@ void ecmascript_release_context_vector(es_context_t **v);
  */
 int ecmascript_plugin_load(const char *id, const char *fullpath,
                            char *errbuf, size_t errlen,
-                           int version, const char *manifest);
+                           int version, const char *manifest,
+                           int flags);
+
+#define ECMASCRIPT_DEBUG  0x1
 
 void ecmascript_plugin_unload(const char *id);
 
@@ -225,6 +231,15 @@ int es_hook_invoke(const char *type,
 struct es_hash;
 void es_hash_release(struct es_hash *);
 
+
+/**
+ *
+ */
+#define es_debug(ec, fmt, ...) do {                             \
+    if((ec)->ec_debug) {                                        \
+      TRACE(TRACE_DEBUG, (ec)->ec_id, fmt, ##__VA_ARGS__);     \
+    }                                                           \
+  } while(0)
 
 /**
  * Function definitions

@@ -499,6 +499,8 @@ es_http_inspector_create(duk_context *ctx)
   ehi->ehi_pattern = strdup(str);
   ehi->ehi_prio = strlen(str);
 
+  es_debug(ec, "Adding HTTP insepction for pattern %s", str);
+
   LIST_INSERT_SORTED(&http_inspectors, ehi, ehi_link, ehi_cmp,
                      es_http_inspector_t);
 
@@ -534,7 +536,11 @@ get_hri(duk_context *ctx)
 static int
 es_http_inspector_fail(duk_context *ctx)
 {
-  http_client_fail_req(get_hri(ctx), duk_safe_to_string(ctx, 0));
+  es_context_t *ec = es_get(ctx);
+  http_request_inspection_t *hri = get_hri(ctx);
+  const char *reason = duk_safe_to_string(ctx, 0);
+  es_debug(ec, "Inspector failing request -- %s", reason);
+  http_client_fail_req(hri, duk_safe_to_string(ctx, 0));
   return 0;
 }
 
@@ -545,9 +551,13 @@ es_http_inspector_fail(duk_context *ctx)
 static int
 es_http_inspector_set_header(duk_context *ctx)
 {
-  http_client_set_header(get_hri(ctx),
-                         duk_safe_to_string(ctx, 0),
-                         duk_safe_to_string(ctx, 1));
+  es_context_t *ec = es_get(ctx);
+  http_request_inspection_t *hri = get_hri(ctx);
+  const char *key = duk_safe_to_string(ctx, 0);
+  const char *value = duk_safe_to_string(ctx, 1);
+  es_debug(ec, "Inspector adding header %s = %s",
+           key, value);
+  http_client_set_header(hri, key, value);
   return 0;
 }
 
@@ -558,9 +568,13 @@ es_http_inspector_set_header(duk_context *ctx)
 static int
 es_http_inspector_set_cookie(duk_context *ctx)
 {
-  http_client_set_cookie(get_hri(ctx),
-                         duk_safe_to_string(ctx, 0),
-                         duk_safe_to_string(ctx, 1));
+  es_context_t *ec = es_get(ctx);
+  http_request_inspection_t *hri = get_hri(ctx);
+  const char *key = duk_safe_to_string(ctx, 0);
+  const char *value = duk_safe_to_string(ctx, 1);
+  es_debug(ec, "Inspector setting cookie %s = %s",
+           key, value);
+  http_client_set_cookie(hri, key, value);
   return 0;
 }
 
@@ -603,6 +617,8 @@ es_http_inspect(const char *url, http_request_inspection_t *hri)
 
   es_context_t *ec = ehi->super.er_ctx;
   es_context_begin(ec);
+
+  es_debug(ec, "Inspecting %s using %s", url, ehi->ehi_pattern);
 
   duk_context *ctx = ec->ec_duk;
 

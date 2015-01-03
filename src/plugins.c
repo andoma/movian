@@ -481,7 +481,7 @@ plugin_unload(plugin_t *pl)
  */
 static int
 plugin_load(const char *url, char *errbuf, size_t errlen, int force,
-	    int as_installed, int by_user)
+	    int as_installed, int by_user, int in_debug)
 {
   char ctrlfile[URL_MAX];
   char errbuf2[1024];
@@ -547,9 +547,13 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
 
     int version = htsmsg_get_u32_or_default(ctrl, "apiversion", 1);
 
+    int flags = 0;
+    if(htsmsg_get_u32_or_default(ctrl, "debug", 0) || in_debug)
+      flags |= ECMASCRIPT_DEBUG;
+
     hts_mutex_unlock(&plugin_mutex);
     r = ecmascript_plugin_load(id, fullpath, errbuf, errlen, version,
-                               buf_cstr(b));
+                               buf_cstr(b), flags);
     hts_mutex_lock(&plugin_mutex);
     if(!r)
       pl->pl_unload = plugin_unload_ecmascript;
@@ -653,7 +657,7 @@ plugin_load_installed(void)
   if(fd != NULL) {
     RB_FOREACH(fde, &fd->fd_entries, fde_link) {
       snprintf(path, sizeof(path), "zip://%s", rstr_get(fde->fde_url));
-      if(plugin_load(path, errbuf, sizeof(errbuf), 0, 1, 0)) {
+      if(plugin_load(path, errbuf, sizeof(errbuf), 0, 1, 0, 0)) {
 	TRACE(TRACE_ERROR, "plugins", "Unable to load %s\n%s", path, errbuf);
       }
     }
@@ -1178,7 +1182,7 @@ plugins_init(const char *loadme)
       loadme = buf;
 
     devplugin = strdup(loadme);
-    if(plugin_load(devplugin, errbuf, sizeof(errbuf), 1, 0, 0)) {
+    if(plugin_load(devplugin, errbuf, sizeof(errbuf), 1, 0, 0, 1)) {
       TRACE(TRACE_ERROR, "plugins",
             "Unable to load development plugin: %s\n%s", loadme, errbuf);
     } else {
@@ -1201,7 +1205,7 @@ plugins_reload_dev_plugin(void)
 
   hts_mutex_lock(&plugin_mutex);
 
-  if(plugin_load(devplugin, errbuf, sizeof(errbuf), 1, 0, 1))
+  if(plugin_load(devplugin, errbuf, sizeof(errbuf), 1, 0, 1, 1))
     TRACE(TRACE_ERROR, "plugins", 
 	  "Unable to reload development plugin: %s\n%s", devplugin, errbuf);
   else
@@ -1340,7 +1344,7 @@ plugin_install(plugin_t *pl, const char *package)
   arch_sync_path(path);
 #endif
 
-  if(plugin_load(path, errbuf, sizeof(errbuf), 1, 1, 1)) {
+  if(plugin_load(path, errbuf, sizeof(errbuf), 1, 1, 1, 0)) {
     prop_unlink(status);
     TRACE(TRACE_ERROR, "plugins", "Unable to load %s -- %s", path, errbuf);
     prop_set_string(status, errbuf);
