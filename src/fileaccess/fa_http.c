@@ -3015,7 +3015,9 @@ http_req_do(http_req_aux_t *hra)
   htsbuf_append(&q, " ", 1);
   htsbuf_append(&q, hf->hf_path, strlen(hf->hf_path));
 
-  char prefix = '?';
+  // If the path already contains a '?' we prefix first parameter with '&'
+  // instead
+  char prefix = strchr(hf->hf_path, '?') ? '&' : '?';
 
   if(hra->arguments != NULL) {
     char **args = hra->arguments;
