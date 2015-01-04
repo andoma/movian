@@ -3144,6 +3144,13 @@ http_req_do(http_req_aux_t *hra)
     goto retry;
 
   default:
+
+    if(hra->flags & FA_CONTENT_ON_ERROR && hf->hf_rsize) {
+      HF_TRACE(hf, "%s failed with %d but content is available",
+               hf->hf_url, code);
+      break;
+    }
+
     snprintf(hra->errbuf, hra->errlen, "HTTP error: %d", code);
 
     if(!no_content && http_drain_content(hf))
