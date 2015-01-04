@@ -332,9 +332,11 @@ EOF
 
 
 update_ext_submodule() {
-    status=`git submodule status ext/$1 | cut -b 1`
-    echo "Updating $1, submodule status = $status"
+    echo "Updating $1, submodule status before update"
+    git submodule status
     git submodule update --init ext/$1
+    echo "Updating $1, submodule status after update"
+    git submodule status
 }
 
 
