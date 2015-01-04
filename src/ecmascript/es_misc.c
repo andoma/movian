@@ -35,6 +35,7 @@
 #include "networking/http.h"
 #include "networking/net.h"
 #include "plugins.h"
+#include "metadata/playinfo.h"
 
 /**
  *
@@ -430,7 +431,19 @@ es_select_view(duk_context *ctx)
   const char *filename = duk_to_string(ctx, 0);
   plugin_select_view(ec->ec_id, filename);
   return 0;
+}
 
+
+/**
+ *
+ */
+static int
+es_bind_play_info(duk_context *ctx)
+{
+  struct prop *p = es_stprop_get(ctx, 0);
+  const char *url = duk_to_string(ctx, 1);
+  playinfo_bind_url_to_prop(url, p);
+  return 0;
 }
 
 
@@ -453,5 +466,6 @@ const duk_function_list_entry fnlist_Showtime_misc[] = {
   { "parseTime",             es_parseTime, 1},
   { "systemIpAddress",       es_system_ip, 0},
   { "selectView",            es_select_view, 1},
+  { "bindPlayInfo",          es_bind_play_info, 2},
   { NULL, NULL, 0}
 };
