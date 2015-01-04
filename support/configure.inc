@@ -332,10 +332,10 @@ EOF
 
 update_ext_submodule() {
     echo "Updating $1, submodule status before update"
-    git submodule status
-    git submodule update --init ext/$1
+    git submodule status ext/$1
+    git submodule update -f --init ext/$1
     echo "Updating $1, submodule status after update"
-    git submodule status
+    git submodule status ext/$1
 }
 
 
