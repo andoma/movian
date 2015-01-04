@@ -230,6 +230,29 @@ Page.prototype.appendItem = function(url, type, metadata) {
   root.url = url;
   root.type = type;
   root.metadata = metadata;
+
+  if(type == 'video') {
+
+    var metabind_url = url;
+    if(url.indexOf('videoparams:') == 0) {
+      try {
+        var x = JSON.parse(url.substring(12));
+        if(typeof(x.canonical_url) == 'string') {
+          metabind_url = x.canonical_url;
+        } else {
+          for(var i = 0; i < x.sources.length; i++) {
+            if(typeof(x.sources[i].url) == 'string') {
+              metabind_url = x.sources[i].url;
+              break;
+            }
+          }
+        }
+      } catch(e) {
+      }
+    }
+    Showtime.bindPlayInfo(root, metabind_url);
+  }
+
   Showtime.propSetParent(root, this.model.nodes);
   return item;
 }
