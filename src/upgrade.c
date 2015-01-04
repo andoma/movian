@@ -967,7 +967,7 @@ static int
 attempt_upgrade(int accept_patch)
 {
 #if STOS
-  if(stos_upgrade_needed) {
+  if(stos_upgrade_needed && stos_artifacts != NULL) {
     int r = stos_perform_upgrade(accept_patch);
     if(r)
       return r;
