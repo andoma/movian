@@ -101,7 +101,7 @@ aescbc_read(fa_handle_t *handle, void *buf, size_t size)
   aes_fh_t *a = (aes_fh_t *)handle;
 
   while(1) {
-      
+
     if(a->outlen > 0) {
       size = MIN(size, a->outlen);
       memcpy(buf, a->outptr, size);
@@ -121,7 +121,7 @@ aescbc_read(fa_handle_t *handle, void *buf, size_t size)
     }
 
     if((blocks = (a->inlen - a->inlen_used) / BLOCKSIZE) == 0)
-      return -1;
+      return 0;
 
     if(!a->eof)
       blocks--;

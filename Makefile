@@ -373,7 +373,9 @@ BUNDLES-$(CONFIG_HTSP) += resources/tvheadend
 ##############################################################
 # TV
 ##############################################################
-SRCS-$(CONFIG_HLS)  += src/backend/hls/hls.c \
+SRCS-$(CONFIG_HLS) += \
+	src/backend/hls/hls.c \
+	src/backend/hls/hls_ts.c \
 
 ##############################################################
 # Icecast

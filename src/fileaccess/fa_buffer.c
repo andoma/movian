@@ -479,16 +479,16 @@ fab_read(fa_handle_t *handle, void *buf, size_t size)
 }
 
 
-#if BK_CHK
+#if BF_CHK
 static int
-fab_read(fa_handle_t *handle, void *buf, size_t size)
+fab_read_chk(fa_handle_t *handle, void *buf, size_t size)
 {
   buffered_file_t *bf = (buffered_file_t *)handle;
   int64_t pre = bf->bf_fpos;
   printf("fab_read(%ld + %zd) <eof = %ld> = ", bf->bf_fpos, size,
 	 bf->bf_size);
 
-  int r = fab_read0(handle, buf, size);
+  int r = fab_read(handle, buf, size);
 
   printf("%d <now at %ld  d=%ld>\n", r, bf->bf_fpos, bf->bf_fpos - pre);
 
@@ -538,7 +538,11 @@ fab_set_read_timeout(fa_handle_t *handle, int ms)
 static fa_protocol_t fa_protocol_buffered = {
   .fap_name  = "buffer",
   .fap_close = fab_close,
+#if BF_CHK
+  .fap_read  = fab_read_chk,
+#else
   .fap_read  = fab_read,
+#endif
   .fap_seek  = fab_seek,
   .fap_fsize = fab_fsize,
   .fap_set_read_timeout = fab_set_read_timeout,
@@ -584,7 +588,7 @@ fa_buffered_open(const char *url, char *errbuf, size_t errsize, int flags,
 
   int mflags = flags;
   flags &= ~ (FA_BUFFERED_SMALL | FA_BUFFERED_BIG | FA_BUFFERED_NO_PREFETCH);
-
+  foe->foe_c = NULL;
   fh = fa_open_ex(url, errbuf, errsize, flags, foe);
   if(fh == NULL)
     return NULL;

@@ -149,7 +149,7 @@ mq_get_buffer_delay(media_queue_t *mq)
 
   if(f != NULL && l != NULL && f->mb_epoch == l->mb_epoch &&
      l->mb_pts != AV_NOPTS_VALUE && f->mb_pts != AV_NOPTS_VALUE) {
-    mq->mq_buffer_delay = l->mb_pts - f->mb_pts;
+    mq->mq_buffer_delay = (l->mb_pts - l->mb_delta) - (f->mb_pts - f->mb_delta);
   }
 
   return mq->mq_buffer_delay;

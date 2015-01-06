@@ -184,6 +184,9 @@ typedef struct media_pipe {
 #define MP_HOLD_OS            0x4  // Operating system doing other stuff
 #define MP_HOLD_STREAM        0x8  // DVD VM pause, etc
 #define MP_HOLD_DISPLAY       0x10 // Display on/off
+#define MP_HOLD_SYNC          0x20 /* Stream sync, useful when merging streams
+                                    * from different sources (HLS, DASH, etc)
+                                    */
 
   int mp_hold_gate;
 
@@ -204,7 +207,7 @@ typedef struct media_pipe {
 
 
   unsigned int mp_buffer_current; // Bytes current queued (total for all queues)
-  int mp_buffer_delay;            // Current delay of buffer in µs
+  unsigned int mp_buffer_delay;   // Current delay of buffer in µs
   unsigned int mp_buffer_limit;   // Max buffer size
   unsigned int mp_max_realtime_delay; // Max delay in a queue (real time)
   int mp_satisfied;        /* If true, means we are satisfied with buffer

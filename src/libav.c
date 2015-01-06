@@ -136,8 +136,8 @@ libav_deliver_frame(video_decoder_t *vd,
 #if 0
   static int64_t lastpts = AV_NOPTS_VALUE;
   if(lastpts != AV_NOPTS_VALUE) {
-    printf("DEC: %20"PRId64" : %-20"PRId64" %d %"PRId64" %d\n", pts, pts - lastpts, mbm->mbm_drive_clock,
-           mbm->mbm_delta, duration);
+    printf("DEC: %20"PRId64" : %-20"PRId64" %d %"PRId64" %6d %d\n", pts, pts - lastpts, mbm->mbm_drive_clock,
+           mbm->mbm_delta, duration, mbm->mbm_sequence);
     if(pts - lastpts > 1000000) {
       abort();
     }
@@ -253,15 +253,59 @@ libav_deliver_frame(video_decoder_t *vd,
 static void
 libav_video_flush(media_codec_t *mc, video_decoder_t *vd)
 {
-  AVCodecContext *ctx = mc->ctx;
   int got_pic = 0;
+  AVCodecContext *ctx = mc->ctx;
+  AVFrame *frame = vd->vd_frame;
   AVPacket avpkt;
+
   av_init_packet(&avpkt);
   avpkt.data = NULL;
   avpkt.size = 0;
-  do {
+
+  while(1) {
     avcodec_decode_video2(ctx, vd->vd_frame, &got_pic, &avpkt);
-  } while(got_pic);
+    if(got_pic)
+      break;
+    av_frame_unref(frame);
+  };
+  avcodec_flush_buffers(ctx);
+}
+
+
+/**
+ *
+ */
+static void
+libav_video_eof(media_codec_t *mc, video_decoder_t *vd,
+                struct media_queue *mq)
+{
+  int got_pic = 0;
+  media_pipe_t *mp = vd->vd_mp;
+  AVCodecContext *ctx = mc->ctx;
+  AVFrame *frame = vd->vd_frame;
+  AVPacket avpkt;
+  int t;
+
+  av_init_packet(&avpkt);
+  avpkt.data = NULL;
+  avpkt.size = 0;
+
+  while(1) {
+
+    avgtime_start(&vd->vd_decode_time);
+
+    avcodec_decode_video2(ctx, vd->vd_frame, &got_pic, &avpkt);
+
+    t = avgtime_stop(&vd->vd_decode_time, mq->mq_prop_decode_avg,
+                     mq->mq_prop_decode_peak);
+
+    if(!got_pic)
+      break;
+    const media_buf_meta_t *mbm = &vd->vd_reorder[frame->reordered_opaque];
+    if(!mbm->mbm_skip)
+      libav_deliver_frame(vd, mp, mq, ctx, frame, mbm, t, mc);
+    av_frame_unref(frame);
+  };
   avcodec_flush_buffers(ctx);
 }
 
@@ -281,7 +325,7 @@ libav_decode_video(struct media_codec *mc, struct video_decoder *vd,
   int t;
 
   if(mb->mb_flush)
-    libav_video_flush(mc, vd);
+    libav_video_eof(mc, vd, mq);
 
   copy_mbm_from_mb(&vd->vd_reorder[vd->vd_reorder_ptr], mb);
   ctx->reordered_opaque = vd->vd_reorder_ptr;
@@ -301,12 +345,12 @@ libav_decode_video(struct media_codec *mc, struct video_decoder *vd,
   if(mp->mp_stats)
     mp_set_mq_meta(mq, ctx->codec, ctx);
 
-  const media_buf_meta_t *mbm = &vd->vd_reorder[frame->reordered_opaque];
-
-  if(got_pic == 0 || mbm->mbm_skip == 1)
+  if(got_pic == 0)
     return;
 
-  libav_deliver_frame(vd, mp, mq, ctx, frame, mbm, t, mc);
+  const media_buf_meta_t *mbm = &vd->vd_reorder[frame->reordered_opaque];
+  if(!mbm->mbm_skip)
+    libav_deliver_frame(vd, mp, mq, ctx, frame, mbm, t, mc);
   av_frame_unref(frame);
 }
 

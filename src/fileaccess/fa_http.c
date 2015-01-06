@@ -289,7 +289,9 @@ http_connection_get(const char *hostname, int port, int ssl,
 
   if((tc = tcp_connect(hostname, port, errbuf, errlen,
                        timeout, tcp_connect_flags, c)) == NULL) {
-    HTTP_TRACE(dbg, "Connection to %s:%d failed -- %s", hostname, port, errbuf);
+    HTTP_TRACE(dbg, "Connection to %s:%d failed -- %s%s",
+               hostname, port, errbuf,
+               cancellable_is_cancelled(c) ? ", Cancelled by user" : "");
     return NULL;
   }
   HTTP_TRACE(dbg, "Connected to %s:%d (id=%d)", hostname, port, id);
