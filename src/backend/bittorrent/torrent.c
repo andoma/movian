@@ -195,7 +195,6 @@ torrent_create_from_infofile(buf_t *b, char *errbuf, size_t errlen)
 
   if(doc == NULL)
     return NULL;
-  htsmsg_print(doc);
 
   LIST_FOREACH(to, &torrents, to_link)
     if(!memcmp(to->to_info_hash, info_hash, 20))
