@@ -359,6 +359,7 @@ SRCS-$(CONFIG_BITTORRENT) += \
 	src/backend/bittorrent/tracker_udp.c \
 	src/backend/bittorrent/tracker_http.c \
 	src/backend/bittorrent/bencode.c \
+	src/backend/bittorrent/magnet.c \
 
 
 ##############################################################

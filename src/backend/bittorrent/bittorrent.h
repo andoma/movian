@@ -15,6 +15,7 @@ extern struct torrent_list torrents;
 extern hts_cond_t torrent_piece_hash_needed_cond;
 extern hts_cond_t torrent_piece_io_needed_cond;
 extern hts_cond_t torrent_piece_verified_cond;
+extern hts_cond_t torrent_metainfo_available_cond;
 extern struct tracker_list trackers;
 
 LIST_HEAD(tracker_torrent_list, tracker_torrent);
@@ -30,6 +31,7 @@ TAILQ_HEAD(torrent_piece_queue, torrent_piece);
 LIST_HEAD(torrent_block_list, torrent_block);
 LIST_HEAD(torrent_piece_list, torrent_piece);
 LIST_HEAD(piece_peer_list, piece_peer);
+LIST_HEAD(metainfo_request_list, metainfo_request);
 
 typedef struct bt_global {
   int btg_max_peers_global;
@@ -109,6 +111,32 @@ typedef struct piece_peer {
 
 } piece_peer_t;
 
+
+/**
+ *
+ */
+typedef struct metainfo_request {
+  LIST_ENTRY(metainfo_request) mr_peer_link;
+  struct peer *mr_peer;
+
+  LIST_ENTRY(metainfo_request) mr_query_link;
+
+  void *mr_data;
+
+  enum {
+    MR_PENDING_SEND,
+    MR_SENT,
+    MR_RECEIVED,
+    MR_REJECTED,
+  } mr_state;
+
+  int mr_size;
+  int mr_piece;
+  int mr_total_size;
+
+} metainfo_request_t;
+
+
 /**
  *
  */
@@ -148,12 +176,21 @@ typedef struct peer {
   char p_peer_choking : 1;
   char p_peer_interested : 1;
   char p_fast_ext : 1;
+  char p_ext_prot : 1;
 
   char p_id[21];
 
 
   int p_num_pieces_have;
   uint8_t *p_piece_flags;
+
+  /**
+   * If don't know the size of the torrent just yet we just keep
+   * the initial bitfield here until we can verify that it matches
+   * against the actual torrent size
+   */
+  uint8_t *p_pending_bitfield;
+  int p_pending_bitfield_size;
 
   struct torrent_request_list p_requests;
 
@@ -179,6 +216,15 @@ typedef struct peer {
   average_t p_download_rate;
 
   struct piece_peer_list p_pieces;
+
+  /**
+   * Extension mapping,
+   * 0 == no support
+   */
+
+  uint8_t p_ext_ut_metadata;
+
+  struct metainfo_request_list p_metainfo_requests;
 
 } peer_t;
 
@@ -354,7 +400,6 @@ typedef struct torrent {
   int to_next_disk_block;
   int to_total_disk_blocks;
 
-
 } torrent_t;
 
 
@@ -408,7 +453,10 @@ typedef struct tracker_torrent {
  * Protocol definitions
  */
 
-torrent_t *torrent_create(buf_t *metainfo, char *errbuf, size_t errlen);
+torrent_t *torrent_create_from_hash(const uint8_t *info_hash);
+
+torrent_t *torrent_create_from_infofile(buf_t *metainfo,
+                                        char *errbuf, size_t errlen);
 
 torrent_t *torrent_find_by_hash(const uint8_t *infohash);
 
@@ -432,6 +480,9 @@ void torrent_receive_block(torrent_block_t *tb, const void *buf,
 
 void torrent_hash_wakeup(void);
 
+int torrent_parse_infodict(torrent_t *to, struct htsmsg *info,
+                           char *errbuf, size_t errlen);
+
 /**
  * Peer functions
  */
@@ -453,6 +504,8 @@ void peer_choke(peer_t *p, int choke);
 void peer_update_interest(torrent_t *to, peer_t *p);
 
 void peer_shutdown_all(torrent_t *to);
+
+void peer_activate_pending_data(torrent_t *to);
 
 /**
  * Disk IO
@@ -497,3 +550,12 @@ void torrent_settings_init(void);
 void torrent_piece_peer_destroy(piece_peer_t *pp);
 
 torrent_t *torrent_open_url(const char **urlp, char *errbuf, size_t errlen);
+
+/**
+ * Magnet
+ */
+torrent_t *magnet_open(const char *url0, char *errbuf, size_t errlen);
+
+void peer_send_metainfo_request(peer_t *p, metainfo_request_t *mr);
+
+void torrent_wakeup_for_metadata_requests(void);

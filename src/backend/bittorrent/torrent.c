@@ -42,16 +42,18 @@ HTS_MUTEX_DECL(bittorrent_mutex);
 struct torrent_list torrents;
 static int torrent_pendings_signal;
 static int torrent_boot_periodic_signal;
+static int torrent_metainfo_signal;
 static int torrent_hash_thread_running;
 
 hts_cond_t torrent_piece_hash_needed_cond;
 hts_cond_t torrent_piece_io_needed_cond;
 hts_cond_t torrent_piece_verified_cond;
+hts_cond_t torrent_metainfo_available_cond;
 
 //----------------------------------------------------------------
 
-static int torrent_parse_metainfo(torrent_t *to, htsmsg_t *metainfo,
-                                  char *errbuf, size_t errlen);
+static int torrent_parse_torrentfile(torrent_t *to, htsmsg_t *metainfo,
+                                     char *errbuf, size_t errlen);
 
 static void update_interest(torrent_t *to);
 
@@ -138,52 +140,80 @@ torrent_find_by_hash(const uint8_t *info_hash)
 /**
  *
  */
+static torrent_t *
+torrent_create(const uint8_t *info_hash)
+{
+  if(LIST_FIRST(&torrents) == NULL)
+    asyncio_wakeup_worker(torrent_boot_periodic_signal);
+
+  torrent_t *to = calloc(1, sizeof(torrent_t));
+  memcpy(to->to_info_hash, info_hash, 20);
+  LIST_INSERT_HEAD(&torrents, to, to_link);
+  TAILQ_INIT(&to->to_inactive_peers);
+  TAILQ_INIT(&to->to_disconnected_peers);
+  TAILQ_INIT(&to->to_connect_failed_peers);
+  TAILQ_INIT(&to->to_files);
+  TAILQ_INIT(&to->to_root);
+  TAILQ_INIT(&to->to_active_pieces);
+
+  to->to_title = malloc(41);
+  bin2hex(to->to_title, 40, info_hash, 20);
+  to->to_title[40] = 0;
+  return to;
+}
+
+
+/**
+ *
+ */
 torrent_t *
-torrent_create(buf_t *b, char *errbuf, size_t errlen)
+torrent_create_from_hash(const uint8_t *info_hash)
+{
+  torrent_t *to;
+
+  LIST_FOREACH(to, &torrents, to_link)
+    if(!memcmp(to->to_info_hash, info_hash, 20))
+      return to;
+
+  return torrent_create(info_hash);
+}
+
+
+/**
+ *
+ */
+torrent_t *
+torrent_create_from_infofile(buf_t *b, char *errbuf, size_t errlen)
 {
   torrent_t *to;
   uint8_t info_hash[20] = {0};
 
   htsmsg_t *doc = bencode_deserialize(buf_cstr(b), buf_cstr(b) + buf_size(b),
                                       errbuf, errlen,
-                                      torrent_extract_info_hash, info_hash);
+                                      torrent_extract_info_hash, info_hash,
+                                      NULL);
 
   if(doc == NULL)
     return NULL;
+  htsmsg_print(doc);
 
   LIST_FOREACH(to, &torrents, to_link)
     if(!memcmp(to->to_info_hash, info_hash, 20))
       break;
 
-  if(to == NULL) {
+  if(to == NULL)
+    to = torrent_create(info_hash);
 
-    if(LIST_FIRST(&torrents) == NULL)
-      asyncio_wakeup_worker(torrent_boot_periodic_signal);
-
-    to = calloc(1, sizeof(torrent_t));
-    memcpy(to->to_info_hash, info_hash, 20);
-    LIST_INSERT_HEAD(&torrents, to, to_link);
-    TAILQ_INIT(&to->to_inactive_peers);
-    TAILQ_INIT(&to->to_disconnected_peers);
-    TAILQ_INIT(&to->to_connect_failed_peers);
-    TAILQ_INIT(&to->to_files);
-    TAILQ_INIT(&to->to_root);
-    TAILQ_INIT(&to->to_active_pieces);
-
-    to->to_title = malloc(41);
-    bin2hex(to->to_title, 40, info_hash, 20);
-    to->to_title[40] = 0;
-
-    if(torrent_parse_metainfo(to, doc, errbuf, errlen)) {
+  if(to->to_metainfo == NULL) {
+    if(torrent_parse_torrentfile(to, doc, errbuf, errlen)) {
       htsmsg_release(doc);
       return NULL; // Torrent will be garbage collected later
     }
 
     to->to_metainfo = buf_retain(b);
-
     torrent_diskio_open(to);
-
   }
+
   htsmsg_release(doc);
   return to;
 }
@@ -456,47 +486,20 @@ torrent_attempt_more_peers(torrent_t *to)
 }
 
 
+
+
 /**
  *
  */
-static int
-torrent_parse_metainfo(torrent_t *to, htsmsg_t *metainfo,
+int
+torrent_parse_infodict(torrent_t *to, htsmsg_t *info,
                        char *errbuf, size_t errlen)
 {
-  htsmsg_t *info = htsmsg_get_map(metainfo, "info");
-  if(info == NULL) {
-    snprintf(errbuf, errlen, "Missing info dict");
-    return 1;
-  }
-
   const char *name = htsmsg_get_str(info, "name");
   if(name != NULL)
     mystrset(&to->to_title, name);
 
-
-  htsmsg_t *al = htsmsg_get_list(metainfo, "announce-list");
-  if(al != NULL) {
-    htsmsg_field_t *f;
-    HTSMSG_FOREACH(f, al) {
-      htsmsg_t *l = f->hmf_childs;
-      if(l == NULL)
-        continue;
-      htsmsg_field_t *ff;
-      HTSMSG_FOREACH(ff, l) {
-        const char *t = htsmsg_field_get_string(ff);
-        if(t != NULL) {
-          torrent_add_tracker(to, t);
-        }
-      }
-    }
-  } else {
-    const char *announce = htsmsg_get_str(metainfo, "announce");
-    if(announce != NULL)
-      torrent_add_tracker(to, announce);
-  }
-
   htsmsg_t *files = htsmsg_get_list(info, "files");
-
   uint64_t offset = 0;
 
   if(files != NULL) {
@@ -629,6 +632,43 @@ torrent_parse_metainfo(torrent_t *to, htsmsg_t *metainfo,
   return 0;
 }
 
+
+/**
+ *
+ */
+static int
+torrent_parse_torrentfile(torrent_t *to, htsmsg_t *metainfo,
+                          char *errbuf, size_t errlen)
+{
+  htsmsg_t *al = htsmsg_get_list(metainfo, "announce-list");
+  if(al != NULL) {
+    htsmsg_field_t *f;
+    HTSMSG_FOREACH(f, al) {
+      htsmsg_t *l = f->hmf_childs;
+      if(l == NULL)
+        continue;
+      htsmsg_field_t *ff;
+      HTSMSG_FOREACH(ff, l) {
+        const char *t = htsmsg_field_get_string(ff);
+        if(t != NULL) {
+          torrent_add_tracker(to, t);
+        }
+      }
+    }
+  } else {
+    const char *announce = htsmsg_get_str(metainfo, "announce");
+    if(announce != NULL)
+      torrent_add_tracker(to, announce);
+  }
+
+  htsmsg_t *info = htsmsg_get_map(metainfo, "info");
+  if(info == NULL) {
+    snprintf(errbuf, errlen, "Missing info dict");
+    return 1;
+  }
+
+  return torrent_parse_infodict(to, info, errbuf, errlen);
+}
 
 
 /**
@@ -1470,6 +1510,40 @@ torrent_hash_wakeup(void)
  *
  */
 static void
+torrent_check_metainfo(void)
+{
+  torrent_t *to;
+  peer_t *p;
+  metainfo_request_t *mr;
+
+  hts_mutex_lock(&bittorrent_mutex);
+
+  LIST_FOREACH(to, &torrents, to_link) {
+    LIST_FOREACH(p, &to->to_running_peers, p_running_link) {
+      LIST_FOREACH(mr, &p->p_metainfo_requests, mr_peer_link) {
+        if(mr->mr_state == MR_PENDING_SEND)
+          peer_send_metainfo_request(p, mr);
+      }
+    }
+  }
+
+  hts_mutex_unlock(&bittorrent_mutex);
+}
+
+
+/**
+ *
+ */
+void
+torrent_wakeup_for_metadata_requests(void)
+{
+  asyncio_wakeup_worker(torrent_metainfo_signal);
+}
+
+/**
+ *
+ */
+static void
 torrent_io_init(void)
 {
   btg.btg_max_peers_global = 200;
@@ -1479,10 +1553,12 @@ torrent_io_init(void)
 
   torrent_pendings_signal = asyncio_add_worker(torrent_check_pendings);
   torrent_boot_periodic_signal = asyncio_add_worker(torrent_boot_periodic);
+  torrent_metainfo_signal = asyncio_add_worker(torrent_check_metainfo);
 
   hts_cond_init(&torrent_piece_hash_needed_cond, &bittorrent_mutex);
   hts_cond_init(&torrent_piece_io_needed_cond, &bittorrent_mutex);
   hts_cond_init(&torrent_piece_verified_cond, &bittorrent_mutex);
+  hts_cond_init(&torrent_metainfo_available_cond, &bittorrent_mutex);
 
   hts_mutex_lock(&bittorrent_mutex);
   torrent_settings_init();

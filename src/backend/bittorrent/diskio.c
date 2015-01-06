@@ -385,7 +385,8 @@ torrent_diskio_verify(torrent_t *to)
 
   htsmsg_t *doc = bencode_deserialize(buf_cstr(b), buf_cstr(b) + buf_size(b),
                                       errbuf, sizeof(errbuf),
-                                      torrent_extract_info_hash, info_hash);
+                                      torrent_extract_info_hash, info_hash,
+                                      NULL);
 
   buf_release(b);
   if(doc == NULL) {

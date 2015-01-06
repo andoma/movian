@@ -314,7 +314,8 @@ bencode_parse_value(const char *s, const char *stop,
 htsmsg_t *
 bencode_deserialize(const char *src, const char *stop,
                     char *errbuf, size_t errlen,
-                    bencode_pase_cb_t *cb, void *opaque)
+                    bencode_pase_cb_t *cb, void *opaque,
+                    int *remainp)
 {
   const char *end;
   void *c;
@@ -350,6 +351,10 @@ bencode_deserialize(const char *src, const char *stop,
       snprintf(errbuf, errlen, "%s at offset %d : '%.20s'", errmsg, (int)offset,
 	       src + offset);
     }
+  } else {
+    if(remainp != NULL)
+      *remainp = end - src;
+
   }
   return c;
 }
@@ -411,14 +416,13 @@ bencode_serialize_r(htsmsg_t *msg, char *ptr)
       break;
 
     case HMF_DBL:
-      // questionable
       snprintf(buf, sizeof(buf), "i%" PRId64"e", (int64_t)f->hmf_dbl);
-      sublen = serialize_bytes(buf, strlen(buf), ptr);
-      break;
-
+      if(0)
     case HMF_S64:
-      snprintf(buf, sizeof(buf), "i%" PRId64"e", f->hmf_s64);
-      sublen = serialize_bytes(buf, strlen(buf), ptr);
+        snprintf(buf, sizeof(buf), "i%" PRId64"e", f->hmf_s64);
+      sublen = strlen(buf);
+      if(ptr != NULL)
+        memcpy(ptr, buf, sublen);
       break;
     default:
       abort();

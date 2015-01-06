@@ -21,58 +21,306 @@
 #include "showtime.h"
 #include "navigator.h"
 #include "backend/backend.h"
+#include "misc/sha.h"
 #include "misc/str.h"
 #include "networking/http.h"
+#include "htsmsg/htsmsg.h"
 
 #include "bittorrent.h"
+#include "bencode.h"
 
 // http://www.bittorrent.org/beps/bep_0009.html
 
-/**
- *
- */
-static int
-magnet_open2(prop_t *page, struct http_header_list *list, int sync)
+
+static void
+magnet_trace(const torrent_t *t, const char *msg, ...)
+  attribute_printf(2, 3);
+
+static void
+magnet_trace(const torrent_t *t, const char *msg, ...)
 {
-  const char *dn = http_header_get(list, "dn");
+  if(!gconf.enable_torrent_debug)
+    return;
 
-  const char *xt = http_header_get(list, "xt");
-  if(xt == NULL)
-    return nav_open_errorf(page, _("No 'xt' in magnet link"));
+  va_list ap;
+  char buf[256];
+  va_start(ap, msg);
+  vsnprintf(buf, sizeof(buf), msg, ap);
+  va_end(ap);
 
-  const char *hash = mystrbegins(xt, "urn:btih:");
-  if(hash == NULL)
-    return nav_open_errorf(page, _("Unknown hash scheme: %s"), xt);
-
-  uint8_t infohash[20];
-
-  if(hex2bin(infohash, sizeof(infohash), hash) != sizeof(infohash))
-    return nav_open_errorf(page, _("Invalid SHA-1 hash: %s"), hash);
-
-  TRACE(TRACE_DEBUG, "MAGNET", "Opening magnet for hash %s -- %s",
-	hash, dn ?: "<unknown name>");
-
-  const char *trackers[20];
-  int num_trackers = 0;
-  http_header_t *hh;
-
-  LIST_FOREACH(hh, list, hh_link) {
-    if(num_trackers < 19 && !strcmp(hh->hh_key, "tr"))
-      trackers[num_trackers++] = hh->hh_value;
-  }
-  trackers[num_trackers] = NULL;
-  torrent_create(infohash, dn, trackers);
-  return 0;
+  TRACE(TRACE_DEBUG, "MAGNET", "%s: %s", t->to_title, buf);
 }
 
 /**
  *
  */
-static int
-magnet_open(prop_t *page, const char *url0, int sync)
+static torrent_t *
+magnet_parse(struct http_header_list *list, char *errbuf, size_t errlen)
 {
-  url0 += strlen("magnet:");
+  const char *dn = http_header_get(list, "dn");
 
+  const char *xt = http_header_get(list, "xt");
+  if(xt == NULL) {
+    snprintf(errbuf, errlen, "No 'xt' in magnet link");
+    return NULL;
+  }
+
+  const char *hash = mystrbegins(xt, "urn:btih:");
+  if(hash == NULL) {
+    snprintf(errbuf, errlen, "Unknown hash scheme: %s", xt);
+    return NULL;
+  }
+
+  uint8_t infohash[20];
+
+  if(hex2bin(infohash, sizeof(infohash), hash) != sizeof(infohash)) {
+    snprintf(errbuf, errlen, "Invalid SHA-1 hash: %s", hash);
+    return NULL;
+  }
+
+  TRACE(TRACE_DEBUG, "MAGNET", "Opening magnet for hash %s -- %s",
+	hash, dn ?: "<unknown name>");
+
+
+
+  torrent_t *to = torrent_create_from_hash(infohash);
+
+  http_header_t *hh;
+
+  LIST_FOREACH(hh, list, hh_link) {
+    if(!strcmp(hh->hh_key, "tr")) {
+      tracker_t *tr = tracker_create(hh->hh_value);
+      if(tr != NULL)
+        tracker_add_torrent(tr, to);
+    }
+  }
+  return to;
+}
+
+
+
+static void
+magnet_destroy_metainfo_requests(struct metainfo_request_list *list)
+{
+  metainfo_request_t *mr;
+  while((mr = LIST_FIRST(list)) != NULL) {
+    LIST_REMOVE(mr, mr_peer_link);
+    LIST_REMOVE(mr, mr_query_link);
+    free(mr->mr_data);
+    free(mr);
+  }
+}
+
+
+/**
+ *
+ */
+static buf_t *
+metainfo_load(torrent_t *to, char *errbuf, size_t errlen)
+{
+  // Compute final deadline for getting metadata
+
+  hts_mutex_assert(&bittorrent_mutex);
+
+  int64_t deadline = showtime_get_ts() + 120 * 1000000LL;
+
+  while(1) {
+
+    buf_t *r = NULL;
+    int num_pieces = 1; // Until we know better
+    int metainfo_size = 0;
+
+    for(int piece = 0; piece < num_pieces; piece++) {
+
+      int max_active_requests = 1;
+      int64_t piece_start = showtime_get_ts();
+      metainfo_request_t *mr;
+      peer_t *p;
+      struct metainfo_request_list requests;
+      LIST_INIT(&requests);
+
+      while(1) {
+
+        // First check if we have a satisfied request
+
+        mr = NULL;
+        LIST_FOREACH(p, &to->to_running_peers, p_running_link) {
+          LIST_FOREACH(mr, &p->p_metainfo_requests, mr_peer_link) {
+            if(mr->mr_piece == piece && mr->mr_state >= MR_RECEIVED)
+              break;
+          }
+          if(mr != NULL)
+            break;
+        }
+
+        if(mr != NULL) {
+
+          p = mr->mr_peer;
+
+          if(mr->mr_state == MR_RECEIVED) {
+
+            // Move peer that responded first to front
+            LIST_REMOVE(p, p_running_link);
+            LIST_INSERT_HEAD(&to->to_running_peers, p, p_running_link);
+
+            LIST_REMOVE(mr, mr_peer_link);
+            LIST_REMOVE(mr, mr_query_link);
+            magnet_destroy_metainfo_requests(&requests);
+            break;
+
+          } else {
+
+            assert(mr->mr_state == MR_REJECTED);
+            // Peer rejected our request, mark it as unable to send metadata
+            p->p_ext_ut_metadata = 0;
+
+            LIST_REMOVE(mr, mr_peer_link);
+            LIST_REMOVE(mr, mr_query_link);
+            free(mr);
+          }
+        }
+
+
+        int active_requests = 0;
+        LIST_FOREACH(mr, &requests, mr_query_link)
+          active_requests++;
+
+        LIST_FOREACH(p, &to->to_running_peers, p_running_link) {
+          if(active_requests >= max_active_requests)
+            break;
+          if(!p->p_ext_ut_metadata)
+            continue;
+          LIST_FOREACH(mr, &p->p_metainfo_requests, mr_peer_link) {
+            if(mr->mr_piece == piece)
+              break;
+          }
+          if(mr != NULL)
+            continue;
+
+          mr = calloc(1, sizeof(metainfo_request_t));
+          mr->mr_state = MR_PENDING_SEND;
+          mr->mr_peer = p;
+          mr->mr_piece = piece;
+          LIST_INSERT_HEAD(&p->p_metainfo_requests, mr, mr_peer_link);
+          LIST_INSERT_HEAD(&requests, mr, mr_query_link);
+          active_requests++;
+        }
+        torrent_wakeup_for_metadata_requests();
+
+        hts_cond_wait_timeout(&torrent_metainfo_available_cond,
+                              &bittorrent_mutex, 1000);
+
+
+        int64_t now = showtime_get_ts();
+
+        if(now > deadline) {
+          buf_release(r);
+          magnet_destroy_metainfo_requests(&requests);
+          snprintf(errbuf, errlen, "Timeout waiting for metadata piece %d/%d",
+                   piece, num_pieces);
+          return NULL;
+        }
+
+        int64_t elapsed = now - piece_start;
+
+        max_active_requests = elapsed / 1000000LL;
+        if(max_active_requests > 5)
+          max_active_requests = 5;
+      }
+
+      magnet_trace(to, "Got metadata piece %d/%d (%d bytes) from peer %s",
+                   piece, num_pieces, mr->mr_size, mr->mr_peer->p_name);
+
+
+      if(piece == 0) {
+        metainfo_size = mr->mr_total_size;
+
+        magnet_trace(to, "Got first piece claiming total size %d",
+                     metainfo_size);
+
+        if(r != NULL)
+          buf_release(r);
+
+        r = buf_create(metainfo_size);
+        num_pieces = (metainfo_size + 16383) / 16384;
+      }
+
+      int bad_size;
+
+      if(piece == num_pieces - 1) {
+        bad_size = mr->mr_size != (metainfo_size & 16383);
+      } else {
+        bad_size = mr->mr_size != 16384;
+      }
+
+      if(bad_size) {
+        magnet_trace(to, "Got bad metadata piece size (%d/%d) is %d bytes",
+                     piece, num_pieces, mr->mr_size);
+        free(mr->mr_data);
+        free(mr);
+        buf_release(r);
+        r = NULL;
+        break;
+      }
+
+      memcpy(buf_str(r) + piece * 16384, mr->mr_data, mr->mr_size);
+
+      free(mr->mr_data);
+      free(mr);
+    }
+
+    if(r == NULL)
+      continue;
+
+    uint8_t digest[20];
+    sha1_decl(shactx);
+    sha1_init(shactx);
+    sha1_update(shactx, buf_data(r), buf_size(r));
+    sha1_final(shactx, digest);
+
+    if(!memcmp(digest, to->to_info_hash, 20)) {
+      magnet_trace(to, "Downloaded metainfo hash verified OK");
+      return r;
+    }
+
+    magnet_trace(to, "Downloaded metainfo hash failed, retrying");
+    buf_release(r);
+  }
+}
+
+
+
+/**
+ * This function creates a so called 'torrentdoc' (basically what's
+ * bencoded into a .torrent file). That's currently just the list
+ * of trackers + metadata info dict
+ */
+static htsmsg_t *
+create_torrent_doc(torrent_t *to, htsmsg_t *info)
+{
+  tracker_torrent_t *tt;
+  htsmsg_t *torrentdoc = htsmsg_create_map();
+
+  htsmsg_t *al = htsmsg_create_list();
+  htsmsg_t *al2 = htsmsg_create_list();
+
+  LIST_FOREACH(tt, &to->to_trackers, tt_torrent_link)
+    htsmsg_add_str(al2, NULL, tt->tt_tracker->t_url);
+
+  htsmsg_add_msg(al, NULL, al2);
+  htsmsg_add_msg(torrentdoc, "announce-list", al);
+  htsmsg_add_msg(torrentdoc, "info", info);
+
+  return torrentdoc;
+}
+
+
+/**
+ *
+ */
+torrent_t *
+magnet_open(const char *url0, char *errbuf, size_t errlen)
+{
   if(*url0 == '?')
     url0++;
 
@@ -82,99 +330,35 @@ magnet_open(prop_t *page, const char *url0, int sync)
 
   http_parse_uri_args(&list, url, 1);
 
-  int r = magnet_open2(page, &list, sync);
+  torrent_t *to = magnet_parse(&list, errbuf, errlen);
   http_headers_free(&list);
-  return r;
-}
+  if(to == NULL)
+    return NULL;
 
+  torrent_retain(to);
 
-/**
- *
- */
-static int
-magnet_canhandle(const char *url)
-{
-  return !strncmp(url, "magnet:", strlen("magnet:"));
-}
+  buf_t *b = metainfo_load(to, errbuf, errlen);
 
+  torrent_release(to);
 
-/**
- *
- */
-static backend_t be_magnet = {
-  .be_canhandle = magnet_canhandle,
-  .be_open      = magnet_open,
-};
+  if(b == NULL)
+    return NULL;
 
-BE_REGISTER(magnet);
+  htsmsg_t *doc = bencode_deserialize(buf_cstr(b), buf_cstr(b) + buf_size(b),
+                                      errbuf, errlen, NULL, NULL, NULL);
+  buf_release(b);
 
-
-
-
-#if 0
-/**
- *
- */
-static int
-magnet_open2(prop_t *page, struct http_header_list *list, int sync)
-{
-  const char *dn = http_header_get(list, "dn");
-
-  const char *xt = http_header_get(list, "xt");
-  if(xt == NULL)
-    return nav_open_errorf(page, _("No 'xt' in magnet link"));
-
-  const char *hash = mystrbegins(xt, "urn:btih:");
-  if(hash == NULL)
-    return nav_open_errorf(page, _("Unknown hash scheme: %s"), xt);
-
-  uint8_t infohash[20];
-
-  if(hex2bin(infohash, sizeof(infohash), hash) != sizeof(infohash))
-    return nav_open_errorf(page, _("Invalid SHA-1 hash: %s"), hash);
-
-  TRACE(TRACE_DEBUG, "MAGNET", "Opening magnet for hash %s -- %s",
-	hash, dn ?: "<unknown name>");
-
-  const char *trackers[20];
-  int num_trackers = 0;
-  http_header_t *hh;
-
-  LIST_FOREACH(hh, list, hh_link) {
-    if(num_trackers < 19 && !strcmp(hh->hh_key, "tr"))
-      trackers[num_trackers++] = hh->hh_value;
+  if(torrent_parse_infodict(to, doc, errbuf, errlen)) {
+    htsmsg_release(doc);
+    return NULL;
   }
-  trackers[num_trackers] = NULL;
 
-  hts_mutex_lock(&bittorrent_mutex);
-  torrent_t *to = torrent_create(infohash, dn, trackers, NULL);
-  torrent_browse(page, to, NULL);
-  torrent_release_on_prop_destroy(page, to);
-  hts_mutex_unlock(&bittorrent_mutex);
+  htsmsg_t *torrentdoc = create_torrent_doc(to, doc); // Gets ownership of 'doc'
 
-  return 0;
+  to->to_metainfo = bencode_serialize(torrentdoc);
+  htsmsg_release(torrentdoc);
+
+  torrent_diskio_open(to);
+  peer_activate_pending_data(to);
+  return to;
 }
-
-
-/**
- *
- */
-static int
-magnet_open(prop_t *page, const char *url0, int sync)
-{
-  if(*url0 == '?')
-    url0++;
-
-  char *url = mystrdupa(url0);
-
-  struct http_header_list list = {};
-
-  http_parse_uri_args(&list, url, 1);
-
-  int r = magnet_open2(page, &list, sync);
-  http_headers_free(&list);
-  return r;
-}
-
-
-#endif

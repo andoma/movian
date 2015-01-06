@@ -62,7 +62,7 @@ http_callback(http_req_aux_t *req, void *opaque)
   if(b != NULL) {
     msg = bencode_deserialize(buf_cstr(b),
                               buf_cstr(b) + buf_size(b),
-                              errbuf, sizeof(errbuf), NULL, NULL);
+                              errbuf, sizeof(errbuf), NULL, NULL, NULL);
     if(msg != NULL) {
 
       const char *err = htsmsg_get_str(msg, "failure reason");
