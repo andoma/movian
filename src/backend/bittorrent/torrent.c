@@ -494,6 +494,11 @@ int
 torrent_parse_infodict(torrent_t *to, htsmsg_t *info,
                        char *errbuf, size_t errlen)
 {
+  if(gconf.enable_torrent_debug) {
+    TRACE(TRACE_DEBUG, "BITTORRENT", "%s: Decoded metadata", to->to_title);
+    htsmsg_print("BITTORRENT", info);
+  }
+
   const char *name = htsmsg_get_str(info, "name");
   if(name != NULL)
     mystrset(&to->to_title, name);

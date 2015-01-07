@@ -65,6 +65,12 @@ http_callback(http_req_aux_t *req, void *opaque)
                               errbuf, sizeof(errbuf), NULL, NULL, NULL);
     if(msg != NULL) {
 
+      if(gconf.enable_torrent_tracker_debug) {
+        TRACE(TRACE_DEBUG, "TRACKER", "%s: Decoded response:",
+              tt->tt_tracker->t_url);
+        htsmsg_print("TRACKER", msg);
+      }
+
       const char *err = htsmsg_get_str(msg, "failure reason");
       if(err != NULL) {
         tracker_trace(tt->tt_tracker, "%s for %s", err, to->to_title);

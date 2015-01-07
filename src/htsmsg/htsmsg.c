@@ -29,6 +29,7 @@
 #include "misc/buf.h"
 #include "htsmsg.h"
 
+#include "showtime.h"
 /**
  *
  */
@@ -563,73 +564,80 @@ htsmsg_detach_submsg(htsmsg_field_t *f)
 }
 
 
-/*
+/**
  *
  */
 static void
-htsmsg_print0(htsmsg_t *msg, int indent)
+htsmsg_print0(const char *prefix, htsmsg_t *msg, int indent)
 {
   htsmsg_field_t *f;
-  int i;
+
+  char tmp[64];
+  const char *payload;
+  const char *type;
+  const char *sep;
 
   TAILQ_FOREACH(f, &msg->hm_fields, hmf_link) {
-
-    for(i = 0; i < indent; i++) printf("\t");
-
-    printf("%s %s%s%s%s(", f->hmf_name ? f->hmf_name : "",
-           f->hmf_namespace ? "[in " : "",
-           rstr_get(f->hmf_namespace) ?: "",
-           f->hmf_namespace ? "] " : "",
-           f->hmf_flags & HMF_XML_ATTRIBUTE ? "[XML-Attribute] " : "");
-
+    payload = "";
+    sep = "} { ";
     switch(f->hmf_type) {
-
     case HMF_MAP:
-      printf("MAP) = ");
+      type = "map";
       break;
-
     case HMF_LIST:
-      printf("LIST) = ");
+      type = "list";
+      sep = "] [ ";
       break;
-
     case HMF_STR:
-      printf("STR) = \"%s\"", f->hmf_str);
+      type = "str";
+      payload = f->hmf_str;
       break;
 
     case HMF_BIN:
-      printf("BIN) = [");
-      for(i = 0; i < f->hmf_binsize - 1; i++)
-	printf("%02x.", ((uint8_t *)f->hmf_bin)[i]);
-      printf("%02x]", ((uint8_t *)f->hmf_bin)[i]);
+      type = "bin";
+      snprintf(tmp, sizeof(tmp), "[%zd bytes data]", f->hmf_binsize);
+      payload = tmp;
       break;
 
     case HMF_S64:
-      printf("S64) = %" PRId64, f->hmf_s64);
+      type = "int";
+      snprintf(tmp, sizeof(tmp), "%" PRId64, f->hmf_s64);
+      payload = tmp;
       break;
 
     case HMF_DBL:
-      printf("DBL) = %f", f->hmf_dbl);
+      type = "int";
+      snprintf(tmp, sizeof(tmp), "%f", f->hmf_dbl);
+      payload = tmp;
       break;
     }
 
+    TRACE(TRACE_DEBUG, prefix, "%*.s\"%s\"%s%s%s%s = (%s)%s%s",
+          indent, "",
+          f->hmf_name ? f->hmf_name : "",
+          f->hmf_namespace ? " [in " : "",
+          rstr_get(f->hmf_namespace) ?: "",
+          f->hmf_namespace ? "] " : "",
+          f->hmf_flags & HMF_XML_ATTRIBUTE ? " [XML-Attribute]" : "",
+          type,
+          payload,
+          f->hmf_childs != NULL ? sep+1 : "");
+
     if(f->hmf_childs != NULL) {
-      printf(" {\n");
-      htsmsg_print0(f->hmf_childs, indent + 1);
-      for(i = 0; i < indent; i++) printf("\t"); printf("}\n");
-    } else {
-      printf("\n");
+      htsmsg_print0(prefix, f->hmf_childs, indent + 2);
+      TRACE(TRACE_DEBUG, prefix, "%*.s%c", indent, "", sep[0]);
     }
   }
 }
 
-/*
+/**
  *
  */
 void
-htsmsg_print(htsmsg_t *msg)
+htsmsg_print(const char *prefix, htsmsg_t *msg)
 {
-  htsmsg_print0(msg, 0);
-} 
+  htsmsg_print0("MESSAGE", msg, 0);
+}
 
 
 /**

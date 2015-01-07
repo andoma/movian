@@ -180,8 +180,9 @@ es_htsmsg_length_duk(duk_context *ctx)
 static int
 es_htsmsg_print_duk(duk_context *ctx)
 {
+  es_context_t *ec = es_get(ctx);
   htsmsg_t *m = es_get_native_obj(ctx, 0, ES_NATIVE_HTSMSG);
-  htsmsg_print(m);
+  htsmsg_print(ec->ec_id, m);
   return 0;
 }
 

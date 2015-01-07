@@ -285,9 +285,9 @@ int htsmsg_delete_field(htsmsg_t *msg, const char *name);
 htsmsg_t *htsmsg_detach_submsg(htsmsg_field_t *f);
 
 /**
- * Print a message to stdout. 
+ * Print a message to log
  */
-void htsmsg_print(htsmsg_t *msg);
+void htsmsg_print(const char *prefix, htsmsg_t *msg);
 
 /**
  * Create a new field. Primarily intended for htsmsg internal functions.
