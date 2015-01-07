@@ -300,7 +300,6 @@ typedef struct torrent {
   uint8_t to_info_hash[20];
 
   uint64_t to_downloaded_bytes;
-  uint64_t to_remaining_bytes;
   uint64_t to_uploaded_bytes;
   uint64_t to_wasted_bytes;
   uint64_t to_total_length;

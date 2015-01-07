@@ -138,7 +138,7 @@ tracker_http_torrent_announce(tracker_torrent_t *tt, int event)
                      HTTP_ARGINT("port", 7898),
                      HTTP_ARGINT64("uploaded", to->to_uploaded_bytes),
                      HTTP_ARGINT64("downloaded", to->to_downloaded_bytes),
-                     HTTP_ARGINT64("left", to->to_remaining_bytes),
+                     HTTP_ARGINT64("left", to->to_total_length ?: 16384),
                      HTTP_ARG("event", eventstr),
                      HTTP_ARG("trackerid", tt->tt_trackerid),
                      HTTP_RESULT_PTR(HTTP_BUFFER_INTERNALLY),

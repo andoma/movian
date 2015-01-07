@@ -139,7 +139,7 @@ tracker_udp_torrent_announce(tracker_torrent_t *tt, int event)
   memcpy(out + 36, btg.btg_peer_id, 20);
 
   wr64_be(out + 56, to->to_downloaded_bytes);
-  wr64_be(out + 64, to->to_remaining_bytes);
+  wr64_be(out + 64, to->to_total_length ?: 16384);
   wr64_be(out + 72, to->to_uploaded_bytes);
   wr32_be(out + 80, event);
 
