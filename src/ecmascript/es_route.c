@@ -6,6 +6,7 @@
 #include "misc/regex.h"
 #include "navigator.h"
 #include "backend/backend.h"
+#include "usage.h"
 
 LIST_HEAD(es_route_list, es_route);
 
@@ -182,6 +183,8 @@ ecmascript_openuri(prop_t *page, const char *url, int sync)
   int array_idx = duk_push_array(ctx);
 
   es_debug(ec, "Opening route %s", er->er_pattern);
+
+  usage_inc_plugin_counter(ec->ec_id, "openuri", 1);
 
   for(int i = 1; i < 8; i++) {
     if(matches[i].rm_so == -1)

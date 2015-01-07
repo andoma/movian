@@ -29,6 +29,7 @@
 #include "misc/str.h"
 #include "media/media_track.h"
 #include "i18n.h"
+#include "usage.h"
 
 typedef struct es_sp {
   es_resource_t super;
@@ -148,6 +149,8 @@ esp_query(subtitle_provider_t *SP, sub_scanner_t *ss, int score,
   es_context_begin(ec);
   duk_context *ctx = ec->ec_duk;
   if(ctx != NULL) {
+
+    usage_inc_plugin_counter(ec->ec_id, "subsearch", 1);
 
     sub_scanner_retain(ss);
 
