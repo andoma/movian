@@ -32,7 +32,7 @@ set_torrent_cache_path(void *opaque, const char *str)
   rstr_release(btg.btg_cache_path);
   btg.btg_cache_path = rstr_alloc(str);
   if(allow_update)
-    torrent_diskio_scan();
+    torrent_diskio_scan(0);
 }
 
 
@@ -43,7 +43,7 @@ set_torrent_free_percentage(void *opaque, int v)
 {
   btg.btg_free_space_percentage = v;
   if(allow_update)
-    torrent_diskio_scan();
+    torrent_diskio_scan(0);
 }
 
 
@@ -89,6 +89,12 @@ torrent_settings_init(void)
                  SETTING_HTSMSG("path", store, "bittorrent"),
                  NULL);
 
+  setting_create(SETTING_ACTION, s, 0,
+                 SETTING_TITLE(_p("Clear cache")),
+                 SETTING_MUTEX(&bittorrent_mutex),
+                 SETTING_CALLBACK(torrent_diskio_cache_clear, NULL),
+                 NULL);
+
 
   settings_create_separator(s, _p("Status"));
 
@@ -99,6 +105,6 @@ torrent_settings_init(void)
   settings_create_info(s, NULL, btg.btg_disk_status);
 
   allow_update = 1;
-  torrent_diskio_scan();
+  torrent_diskio_scan(0);
 
 }

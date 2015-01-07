@@ -144,7 +144,7 @@ torrent_write_to_disk(torrent_t *to, torrent_piece_t *tp)
        growth * to->to_piece_length >= btg.btg_cache_limit) {
 
       diskio_trace(to, "Write would exceed cache size, need to cleanup");
-      if(torrent_diskio_scan()) {
+      if(torrent_diskio_scan(0)) {
         // Managed to clean up something
         continue;
       }
@@ -554,7 +554,7 @@ sf_cmp(const scanned_file_t *a, const scanned_file_t *b)
  *
  */
 int
-torrent_diskio_scan(void)
+torrent_diskio_scan(int force_flush)
 {
   scanned_file_t *sf, *next;
   char tmp[41];
@@ -644,7 +644,8 @@ torrent_diskio_scan(void)
 
     if(!sf->sf_active) {
 
-      if(btg.btg_total_bytes_active + btg.btg_total_bytes_inactive >=
+      if(force_flush ||
+         btg.btg_total_bytes_active + btg.btg_total_bytes_inactive >=
          btg.btg_cache_limit) {
         if(fa_unlink(rstr_get(sf->sf_url), errbuf, sizeof(errbuf))) {
           TRACE(TRACE_ERROR, "BITTORRENT",
@@ -668,6 +669,14 @@ torrent_diskio_scan(void)
     free(sf);
   }
   rstr_release(path);
+  update_disk_usage();
   return rval;
 }
 
+
+
+void
+torrent_diskio_cache_clear(void)
+{
+  torrent_diskio_scan(1);
+}

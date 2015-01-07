@@ -517,7 +517,9 @@ void torrent_diskio_open(torrent_t *to);
 
 void torrent_diskio_close(torrent_t *to);
 
-int torrent_diskio_scan(void);
+int torrent_diskio_scan(int force_flush);
+
+void torrent_diskio_cache_clear(void);
 
 /**
  * Tracker
