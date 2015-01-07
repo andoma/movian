@@ -156,7 +156,7 @@ void es_context_release(es_context_t *ec);
 
 void es_context_begin(es_context_t *ec);
 
-void es_context_end(es_context_t *ec);
+void es_context_end(es_context_t *ec, int do_gc);
 
 es_context_t **ecmascript_get_all_contexts(void);
 

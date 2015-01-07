@@ -523,9 +523,10 @@ es_context_begin(es_context_t *ec)
  *
  */
 void
-es_context_end(es_context_t *ec)
+es_context_end(es_context_t *ec, int do_gc)
 {
-  duk_gc(ec->ec_duk, 0);
+  if(do_gc)
+    duk_gc(ec->ec_duk, 0);
 
   if(LIST_FIRST(&ec->ec_resources_permanent) == NULL) {
     // No more permanent resources, attached. Terminate context
@@ -707,7 +708,7 @@ ecmascript_plugin_load(const char *id, const char *url,
     es_exec(ec, url);
   }
 
-  es_context_end(ec);
+  es_context_end(ec, 1);
 
   es_context_release(ec);
 
@@ -777,7 +778,7 @@ ecmascript_plugin_unload(const char *id)
   while((er = LIST_FIRST(&ec->ec_resources_permanent)) != NULL)
     es_resource_destroy(er);
 
-  es_context_end(ec);
+  es_context_end(ec, 1);
 }
 
 
@@ -797,7 +798,7 @@ ecmascript_init(void)
 
   es_exec(ec, gconf.load_ecmascript);
 
-  es_context_end(ec);
+  es_context_end(ec, 1);
   es_context_release(ec);
 }
 
@@ -825,7 +826,7 @@ ecmascript_fini(void)
     while((er = LIST_FIRST(&ec->ec_resources_permanent)) != NULL)
       es_resource_destroy(er);
 
-    es_context_end(ec);
+    es_context_end(ec, 1);
 
     hts_mutex_lock(&es_context_mutex);
   }

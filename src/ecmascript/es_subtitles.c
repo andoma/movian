@@ -195,7 +195,7 @@ esp_query(subtitle_provider_t *SP, sub_scanner_t *ss, int score,
 
   }
   es_resource_release(&esp->super);
-  es_context_end(ec);
+  es_context_end(ec, 1);
 }
 
 

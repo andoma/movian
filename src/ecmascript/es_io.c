@@ -248,7 +248,7 @@ ehr_task(void *aux)
 
   es_resource_destroy(&ehr->super);
 
-  es_context_end(ec);
+  es_context_end(ec, 1);
 }
 
 
@@ -652,7 +652,7 @@ es_http_inspect(const char *url, http_request_inspection_t *hri)
   duk_del_prop_string(ctx, obj_idx, HRINAME);
   duk_pop_2(ctx);
 
-  es_context_end(ec);
+  es_context_end(ec, 1);
   es_resource_release(&ehi->super);
 
   return rval;

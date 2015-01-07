@@ -156,7 +156,7 @@ timer_thread(void *aux)
     if(destroy)
       es_resource_destroy(&et->super);
 
-    es_context_end(ec);
+    es_context_end(ec, 0);
 
     hts_mutex_lock(&timer_mutex);
   }
