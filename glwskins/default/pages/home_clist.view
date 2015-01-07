@@ -200,9 +200,9 @@ widget(container_x, {
 			      sort,   "node.title", false, false,
 			      filter, "node.type", neq, "video", exclude);
 
-    $view.audio  = propSorter($global.services.enabled,
+    $view.music  = propSorter($global.services.enabled,
 			      sort,   "node.title", false, false,
-			      filter, "node.type", neq, "audio", exclude);
+			      filter, "node.type", neq, "music", exclude);
 
     $view.tv     = propSorter($global.services.enabled,
 			      sort,   "node.title", false, false,
@@ -224,9 +224,9 @@ widget(container_x, {
       TYPED_ITEM($self.icon, $self.type, $self.title, $self.url);
     });
     
-    DIVIDER("Audio", !count($view.audio));
+    DIVIDER("Audio", !count($view.music));
 
-    cloner($view.audio, container_z, {
+    cloner($view.music, container_z, {
       TYPED_ITEM($self.icon, $self.type, $self.title, $self.url);
     });
 
