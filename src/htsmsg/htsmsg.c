@@ -610,6 +610,8 @@ htsmsg_print0(const char *prefix, htsmsg_t *msg, int indent)
       snprintf(tmp, sizeof(tmp), "%f", f->hmf_dbl);
       payload = tmp;
       break;
+    default:
+      abort();
     }
 
     TRACE(TRACE_DEBUG, prefix, "%*.s\"%s\"%s%s%s%s = (%s)%s%s",
