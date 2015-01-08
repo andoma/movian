@@ -1,0 +1,2 @@
+Fix recent (4.8) bug causing subtitles sourced from plugins
+not be automatically selected
