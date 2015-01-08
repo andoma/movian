@@ -81,6 +81,24 @@ torrent_scandir(fa_protocol_t *fap, fa_dir_t *fd, const char *url,
 /**
  *
  */
+static prop_t *
+mkinfo(prop_t *p, prop_t *title)
+{
+  prop_t *node = prop_create_r(p, NULL);
+
+  prop_t *dst_title = prop_create_r(node, "title");
+  prop_link(title, dst_title);
+  prop_ref_dec(dst_title);
+
+  prop_t *info = prop_create_r(node, "info");
+  prop_ref_dec(node);
+  return info;
+}
+
+
+/**
+ *
+ */
 static fa_handle_t *
 torrent_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
              int flags, struct fa_open_extra *foe)
@@ -95,8 +113,18 @@ torrent_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
 
   if(foe != NULL) {
     tfh->tfh_fa_stats = prop_ref_inc(foe->foe_stats);
+
     prop_set(tfh->tfh_fa_stats, "bitrateValid", PROP_SET_INT, 1);
-    prop_set(tfh->tfh_fa_stats, "infoValid", PROP_SET_INT, 1);
+
+    prop_t *info = prop_create_r(tfh->tfh_fa_stats, "infoNodes");
+
+    tfh->tfh_torrent_seeders  = mkinfo(info, _p("Torrent seeders"));
+    tfh->tfh_torrent_leechers = mkinfo(info, _p("Torrent leechers"));
+    tfh->tfh_known_peers      = mkinfo(info, _p("Known peers"));
+    tfh->tfh_connected_peers  = mkinfo(info, _p("Connected peers"));
+    tfh->tfh_recv_peers       = mkinfo(info, _p("Receiving from"));
+
+    prop_ref_dec(info);
   }
   tfh->tfh_file = tf;
   torrent_t *to = tf->tf_torrent;
@@ -196,6 +224,13 @@ torrent_close(fa_handle_t *fh)
   hts_mutex_unlock(&bittorrent_mutex);
 
   prop_ref_dec(tfh->tfh_fa_stats);
+
+  prop_ref_dec(tfh->tfh_torrent_seeders);
+  prop_ref_dec(tfh->tfh_torrent_leechers);
+  prop_ref_dec(tfh->tfh_known_peers);
+  prop_ref_dec(tfh->tfh_connected_peers);
+  prop_ref_dec(tfh->tfh_recv_peers);
+
   free(tfh);
 }
 

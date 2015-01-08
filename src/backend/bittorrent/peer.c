@@ -180,6 +180,9 @@ peer_abort_requests(peer_t *p)
 
   asyncio_timer_disarm(&p->p_data_recv_timer);
 
+  if(LIST_FIRST(&p->p_requests) != NULL)
+    p->p_torrent->to_peers_with_outstanding_requests--;
+
   while((tr = LIST_FIRST(&p->p_requests)) != NULL) {
     torrent_block_t *tb = tr->tr_block;
 
@@ -265,6 +268,25 @@ peer_free_pieces(peer_t *p)
   while((pp = LIST_FIRST(&p->p_pieces)) != NULL)
     torrent_piece_peer_destroy(pp);
 }
+
+
+/**
+ *
+ */
+static void
+peer_destroy_request(torrent_request_t *tr)
+{
+  peer_t *p = tr->tr_peer;
+  assert(p->p_active_requests > 0);
+  p->p_active_requests--;
+  LIST_REMOVE(tr, tr_peer_link);
+
+  if(LIST_FIRST(&p->p_requests) == NULL)
+    p->p_torrent->to_peers_with_outstanding_requests--;
+
+  free(tr);
+}
+
 
 /**
  *
@@ -684,11 +706,7 @@ recv_piece(peer_t *p, const uint8_t *buf, size_t len)
     torrent_receive_block(tr->tr_block, buf, begin, len, to, p);
   }
 
-  assert(p->p_active_requests > 0);
-  p->p_active_requests--;
-  LIST_REMOVE(tr, tr_peer_link);
-  free(tr);
-
+  peer_destroy_request(tr);
   return 0;
 }
 
@@ -747,18 +765,15 @@ recv_reject(peer_t *p, const uint8_t *buf, size_t len)
   }
 
 
-  const torrent_t *to = p->p_torrent;
+  torrent_t *to = p->p_torrent;
 
   if(p->p_piece_flags == NULL)
     p->p_piece_flags = calloc(1, to->to_num_pieces);
 
   p->p_piece_flags[tr->tr_piece] |= PIECE_REJECTED;
 
-  assert(p->p_active_requests > 0);
-  p->p_active_requests--;
-  LIST_REMOVE(tr, tr_peer_link);
-  free(tr);
 
+  peer_destroy_request(tr);
   return 0;
 }
 
@@ -1100,9 +1115,7 @@ void
 peer_cancel_request(torrent_request_t *tr)
 {
   peer_send_cancel(tr->tr_peer, tr);
-  tr->tr_peer->p_active_requests--;
-  LIST_REMOVE(tr, tr_peer_link);
-  free(tr);
+  peer_destroy_request(tr);
 }
 
 

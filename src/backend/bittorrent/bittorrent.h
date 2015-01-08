@@ -357,6 +357,7 @@ typedef struct torrent {
 
   int to_active_peers;
   int to_num_peers;
+  int to_peers_with_outstanding_requests;
 
   struct peer_queue to_inactive_peers;
   struct peer_queue to_disconnected_peers;
@@ -414,7 +415,13 @@ typedef struct torrent_fh {
 					    an active piece */
   uint64_t tfh_fpos;
   torrent_file_t *tfh_file;
+
   prop_t *tfh_fa_stats;
+  prop_t *tfh_torrent_seeders;
+  prop_t *tfh_torrent_leechers;
+  prop_t *tfh_known_peers;
+  prop_t *tfh_connected_peers;
+  prop_t *tfh_recv_peers;
 
   int64_t tfh_deadline;
 

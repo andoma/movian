@@ -82,6 +82,9 @@ http_callback(http_req_aux_t *req, void *opaque)
       if(trackerid != NULL)
         mystrset(&tt->tt_trackerid, trackerid);
 
+      tt->tt_seeders  = htsmsg_get_u32_or_default(msg, "complete", 0);
+      tt->tt_leechers = htsmsg_get_u32_or_default(msg, "incomplete", 0);
+
       tt->tt_interval =
         htsmsg_get_u32_or_default(msg, "min interval",
                                   htsmsg_get_u32_or_default(msg,

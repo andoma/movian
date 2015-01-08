@@ -17,14 +17,45 @@ widget(container_y, {
       shadow: true;
     });
 
-    widget(label, {
+    widget(container_x, {
+      spacing: 0.5em;
       hidden: !$nav.currentpage.model.io.bitrateValid;
-      align: center;
-      caption: fmt(_("Bitrate: %d kb/s"),
-		   $nav.currentpage.model.io.bitrate);
-      outline: true;
-      bold: true;
-      shadow: true;
+
+      widget(label, {
+        filterConstraintX: true;
+        align: right;
+        shadow: true;
+        outline: true;
+        color: 0.6;
+        caption: _("Bitrate:");
+      });
+
+      widget(label, {
+        filterConstraintX: true;
+        shadow: true;
+        outline: true;
+        caption: fmt(_("%d kb/s"), $nav.currentpage.model.io.bitrate);
+      });
+    });
+
+    cloner($nav.currentpage.model.io.infoNodes, container_x, {
+      spacing: 0.5em;
+
+      widget(label, {
+        filterConstraintX: true;
+        align: right;
+        shadow: true;
+        outline: true;
+        color: 0.6;
+        caption: $self.title + ":";
+      });
+
+      widget(label, {
+        filterConstraintX: true;
+        shadow: true;
+        outline: true;
+        caption: $self.info;
+      });
     });
   });
 });

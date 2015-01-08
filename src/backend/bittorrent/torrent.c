@@ -873,6 +873,9 @@ add_request(torrent_block_t *tb, peer_t *p)
   tr->tr_peer = p;
   tr->tr_qdepth = p->p_active_requests;
 
+  if(LIST_FIRST(&p->p_requests) == NULL)
+    p->p_torrent->to_peers_with_outstanding_requests++;
+
   LIST_INSERT_HEAD(&p->p_requests, tr, tr_peer_link);
   p->p_active_requests++;
 
@@ -1347,9 +1350,24 @@ torrent_periodic_one(torrent_t *to, int second)
   int rate = average_read(&to->to_download_rate, second) / 125;
 
   torrent_fh_t *tfh;
+
+  const tracker_torrent_t *tt;
+  int seeders = 0;
+  int leechers = 0;
+
+  LIST_FOREACH(tt, &to->to_trackers, tt_torrent_link) {
+    seeders  = MAX(seeders,  tt->tt_seeders);
+    leechers = MAX(leechers, tt->tt_leechers);
+  }
+
   LIST_FOREACH(tfh, &to->to_fhs, tfh_torrent_link) {
     if(tfh->tfh_fa_stats != NULL) {
       prop_set(tfh->tfh_fa_stats, "bitrate", PROP_SET_INT, rate);
+      prop_set_int(tfh->tfh_known_peers, to->to_num_peers);
+      prop_set_int(tfh->tfh_connected_peers, to->to_active_peers);
+      prop_set_int(tfh->tfh_torrent_seeders, seeders);
+      prop_set_int(tfh->tfh_torrent_leechers, leechers);
+      prop_set_int(tfh->tfh_recv_peers, to->to_peers_with_outstanding_requests);
     }
   }
 
