@@ -195,6 +195,7 @@ torrent_create_from_hash(const uint8_t *info_hash)
         if(!torrent_parse_torrentfile(to, doc, errbuf, sizeof(errbuf))) {
           to->to_metainfo = b; // ownership tranfered
           b = NULL;
+          torrent_diskio_open(to);
           torrent_trace(to, "Torrent initialized from disk cache");
         } else {
           torrent_trace(to, "Failed to decode on-disk metainfo -- %s",
