@@ -157,7 +157,7 @@ torrent_create(const uint8_t *info_hash)
   TAILQ_INIT(&to->to_active_pieces);
 
   to->to_title = malloc(41);
-  bin2hex(to->to_title, 40, info_hash, 20);
+  bin2hex(to->to_title, 41, info_hash, 20);
   to->to_title[40] = 0;
   return to;
 }
@@ -170,12 +170,45 @@ torrent_t *
 torrent_create_from_hash(const uint8_t *info_hash)
 {
   torrent_t *to;
+  char errbuf[512];
 
   LIST_FOREACH(to, &torrents, to_link)
     if(!memcmp(to->to_info_hash, info_hash, 20))
-      return to;
+      break;
 
-  return torrent_create(info_hash);
+  if(to == NULL)
+    to = torrent_create(info_hash);
+
+  if(to->to_metainfo == NULL) {
+    buf_t *b = torrent_diskio_load_infofile_from_hash(info_hash);
+    if(b != NULL) {
+
+      torrent_trace(to, "Trying to initialize torrent from disk cache");
+
+      htsmsg_t *doc = bencode_deserialize(buf_cstr(b),
+                                          buf_cstr(b) + buf_size(b),
+                                          errbuf, sizeof(errbuf),
+                                          NULL, NULL, NULL);
+
+      if(doc != NULL) {
+
+        if(!torrent_parse_torrentfile(to, doc, errbuf, sizeof(errbuf))) {
+          to->to_metainfo = b; // ownership tranfered
+          b = NULL;
+          torrent_trace(to, "Torrent initialized from disk cache");
+        } else {
+          torrent_trace(to, "Failed to decode on-disk metainfo -- %s",
+                        errbuf);
+        }
+        htsmsg_release(doc);
+      } else {
+        torrent_trace(to, "Failed to decode on-disk metainfo -- %s",
+                      errbuf);
+      }
+      buf_release(b);
+    }
+  }
+  return to;
 }
 
 

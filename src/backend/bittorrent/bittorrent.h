@@ -527,6 +527,8 @@ int torrent_diskio_scan(int force_flush);
 
 void torrent_diskio_cache_clear(void);
 
+buf_t *torrent_diskio_load_infofile_from_hash(const uint8_t *hash);
+
 /**
  * Tracker
  */

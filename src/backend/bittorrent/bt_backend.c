@@ -69,10 +69,12 @@ torrent_open_url(const char **urlp, char *errbuf, size_t errlen)
 
   hts_mutex_lock(&bittorrent_mutex);
 
-  if(hex2binl(infohash, 20, url, 40) == 20 && url[40] == '/') {
-    to = torrent_find_by_hash(infohash);
-    if(to == NULL) {
-      snprintf(errbuf, errlen, "Torrent not found");
+  if(hex2binl(infohash, 20, url, 40) == 20 &&
+     (url[40] == '/' || url[40] == 0)) {
+    to = torrent_create_from_hash(infohash);
+
+    if(url[40] == 0) {
+      *urlp = NULL;
     } else {
       url += 41;
       if(*url == 0)

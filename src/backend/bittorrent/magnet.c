@@ -118,10 +118,9 @@ magnet_destroy_metainfo_requests(struct metainfo_request_list *list)
 static buf_t *
 metainfo_load(torrent_t *to, char *errbuf, size_t errlen)
 {
-  // Compute final deadline for getting metadata
-
   hts_mutex_assert(&bittorrent_mutex);
 
+  // Compute final deadline for getting metadata
   int64_t deadline = showtime_get_ts() + 120 * 1000000LL;
 
   while(1) {
@@ -334,6 +333,9 @@ magnet_open(const char *url0, char *errbuf, size_t errlen)
   http_headers_free(&list);
   if(to == NULL)
     return NULL;
+
+  if(to->to_metainfo != NULL)
+    return to;
 
   torrent_retain(to);
 
