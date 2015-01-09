@@ -791,7 +791,7 @@ $(foreach VAR,$(BRIEF), \
     $(eval $(VAR) = @$$(call ECHO,$(VAR),$$(MSG)); $($(VAR))))
 endif
 
-.PHONY:	clean distclean makever
+.PHONY:	clean distclean makever build-%
 
 ${PROG}: $(OBJS) $(ALLDEPS)  support/dataroot/wd.c
 	$(CC) -o $@ $(OBJS) support/dataroot/wd.c $(LDFLAGS) ${LDFLAGS_cfg}
@@ -875,7 +875,9 @@ export BUILDDIR
 export OPTFLAGS
 
 # External builds
-$(BUILDDIR)/stamps/%.stamp:
-	${MAKE} -f ${C}/ext/$*.mk build
+$(BUILDDIR)/stamps/%.stamp: build-%
 	@mkdir -p $(dir $@)
 	touch $@
+
+build-%:
+	${MAKE} -f ${C}/ext/$*.mk build
