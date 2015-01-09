@@ -159,7 +159,11 @@ msg: Configurações de vídeo
 #
 # ./glwskins/default/loading.view
 #
-id: Bitrate: %d kb/s
+id: %d kb/s
+# Missing translation
+msg: 
+
+id: Bitrate:
 # Missing translation
 msg: 
 
@@ -527,7 +531,7 @@ msg: Memória do sistema baixa (%d kb disponíveis)
 #
 # ./src/arch/ps3/ps3_vdec.c
 #
-id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
+id: Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration
 # Missing translation
 msg: 
 
@@ -659,15 +663,7 @@ id: No files in torrent
 # Missing translation
 msg: 
 
-id: Unable to load torrent: %s
-# Missing translation
-msg: 
-
 id: Unable to open torrent: %s
-# Missing translation
-msg: 
-
-id: Unable to parse torrent: %s
 # Missing translation
 msg: 
 
@@ -679,23 +675,35 @@ id: Cached torrents use %d MB out of allowed %d MB. Total free space on volume: 
 msg: 
 
 #
-# ./src/backend/bittorrent/magnet.c
+# ./src/backend/bittorrent/fa_torrent.c
 #
-id: Invalid SHA-1 hash: %s
+id: Connected peers
 # Missing translation
 msg: 
 
-id: No 'xt' in magnet link
+id: Known peers
 # Missing translation
 msg: 
 
-id: Unknown hash scheme: %s
+id: Receiving from
+# Missing translation
+msg: 
+
+id: Torrent leechers
+# Missing translation
+msg: 
+
+id: Torrent seeders
 # Missing translation
 msg: 
 
 #
 # ./src/backend/bittorrent/torrent_settings.c
 #
+id: Clear cache
+# Missing translation
+msg: 
+
 id: Enable bittorrent
 # Missing translation
 msg: 

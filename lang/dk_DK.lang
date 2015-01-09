@@ -152,8 +152,13 @@ msg: Videoindstillinger
 #
 # ./glwskins/default/loading.view
 #
-id: Bitrate: %d kb/s
-msg: Bitrate: %d kb/s
+id: %d kb/s
+# Missing translation
+msg: 
+
+id: Bitrate:
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/log.view
@@ -504,8 +509,9 @@ msg: Systemet mangler hukommelse (%d Kb RAM tilgængelig)
 #
 # ./src/arch/ps3/ps3_vdec.c
 #
-id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
-msg: Cell-h264: %d Ref-billeder for 1080 indhold er ikke kompatibel med PS3 HW dekoder. Deaktiverer acceleration
+id: Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration
+# Missing translation
+msg: 
 
 id: Cell-h264: Broken headers, Disabling acceleration
 msg: Cell-h264: Ødelagt overskrifter, deaktiverer acceleration
@@ -612,14 +618,8 @@ msg: Testsignal type
 id: No files in torrent
 msg: Ingen filer i torrent
 
-id: Unable to load torrent: %s
-msg: Kunne ikke hente torrent: %s
-
 id: Unable to open torrent: %s
 msg: Kunne ikke åbne torrent: %s
-
-id: Unable to parse torrent: %s
-msg: Kunne ikke parse torrent: %s
 
 #
 # ./src/backend/bittorrent/diskio.c
@@ -628,20 +628,35 @@ id: Cached torrents use %d MB out of allowed %d MB. Total free space on volume: 
 msg: Lagrede torrents bruger %d MB ud af tilladte %d MB. Total ledig plads på drevet: %d MB
 
 #
-# ./src/backend/bittorrent/magnet.c
+# ./src/backend/bittorrent/fa_torrent.c
 #
-id: Invalid SHA-1 hash: %s
-msg: Ugyldig SHA-1 hash: %s
+id: Connected peers
+# Missing translation
+msg: 
 
-id: No 'xt' in magnet link
-msg: Ingen 'xt' i magnet link
+id: Known peers
+# Missing translation
+msg: 
 
-id: Unknown hash scheme: %s
-msg: Ukendt hash skema: %s
+id: Receiving from
+# Missing translation
+msg: 
+
+id: Torrent leechers
+# Missing translation
+msg: 
+
+id: Torrent seeders
+# Missing translation
+msg: 
 
 #
 # ./src/backend/bittorrent/torrent_settings.c
 #
+id: Clear cache
+# Missing translation
+msg: 
+
 id: Enable bittorrent
 msg: Aktivere bittorrent
 

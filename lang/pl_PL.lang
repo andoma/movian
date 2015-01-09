@@ -151,8 +151,13 @@ msg: Ustawienia Video
 #
 # ./glwskins/default/loading.view
 #
-id: Bitrate: %d kb/s
-msg: Bitrate: %d kb/s
+id: %d kb/s
+# Missing translation
+msg: 
+
+id: Bitrate:
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/log.view
@@ -500,8 +505,9 @@ msg: Mała ilość dostępnej pamięci (dostępne %d kB RAM)
 #
 # ./src/arch/ps3/ps3_vdec.c
 #
-id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
-msg: Cell-h264: %d klatek referencyjnych dla jakości 1080 jest niekompatybilna ze sprzętowym dekoderem PS3. Wyłączam akcelerację
+id: Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration
+# Missing translation
+msg: 
 
 id: Cell-h264: Broken headers, Disabling acceleration
 msg: Cell-h264: Uszkodzony nagłówek, wyłączanie akceleracji
@@ -608,14 +614,8 @@ msg: Typ sygnału testowego
 id: No files in torrent
 msg: Brak plików w torrencie
 
-id: Unable to load torrent: %s
-msg: Nie można załadować torrenta: %s
-
 id: Unable to open torrent: %s
 msg: Nie można otworzyć torrenta: %s
-
-id: Unable to parse torrent: %s
-msg: Nie można zanalizować torrenta: %s
 
 #
 # ./src/backend/bittorrent/diskio.c
@@ -624,20 +624,35 @@ id: Cached torrents use %d MB out of allowed %d MB. Total free space on volume: 
 msg: Zbuforowane torrenty zajmują %d MB z dozwolonych %d MB. Ogół wolnego miejsca na dysku: %d MB
 
 #
-# ./src/backend/bittorrent/magnet.c
+# ./src/backend/bittorrent/fa_torrent.c
 #
-id: Invalid SHA-1 hash: %s
-msg: Błędny hash SHA-1: %s
+id: Connected peers
+# Missing translation
+msg: 
 
-id: No 'xt' in magnet link
-msg: Brak 'xt' w linku magnet
+id: Known peers
+# Missing translation
+msg: 
 
-id: Unknown hash scheme: %s
-msg: Nieznany schemat hash: %s
+id: Receiving from
+# Missing translation
+msg: 
+
+id: Torrent leechers
+# Missing translation
+msg: 
+
+id: Torrent seeders
+# Missing translation
+msg: 
 
 #
 # ./src/backend/bittorrent/torrent_settings.c
 #
+id: Clear cache
+# Missing translation
+msg: 
+
 id: Enable bittorrent
 msg: Włącz BitTorrent
 

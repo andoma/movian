@@ -151,8 +151,13 @@ msg: Videoinställningar
 #
 # ./glwskins/default/loading.view
 #
-id: Bitrate: %d kb/s
-msg: Hastighet: %d kb/s
+id: %d kb/s
+# Missing translation
+msg: 
+
+id: Bitrate:
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/log.view
@@ -500,8 +505,9 @@ msg: System har lite ledigt minne (%d kB RAM tillgängligt)
 #
 # ./src/arch/ps3/ps3_vdec.c
 #
-id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
-msg: %d referensbilder för 1080 material är inte kompatibelt med PS3 hårdvaruavkodning. Slår av acceleration.
+id: Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration
+# Missing translation
+msg: 
 
 id: Cell-h264: Broken headers, Disabling acceleration
 msg: Trasig videoinformation. Slår av acceleration.
@@ -608,14 +614,8 @@ msg: Typ av testsignal
 id: No files in torrent
 msg: Inga filer i svärmen
 
-id: Unable to load torrent: %s
-msg: Kan ej ladda svärmen: %s
-
 id: Unable to open torrent: %s
 msg: Kan ej öppna svärmen: %s
-
-id: Unable to parse torrent: %s
-msg: Kan ej avkoda svärmen: %s
 
 #
 # ./src/backend/bittorrent/diskio.c
@@ -624,20 +624,35 @@ id: Cached torrents use %d MB out of allowed %d MB. Total free space on volume: 
 msg: Sparade svärmar använder %d MB av tillåtna %d MB. Totalt fritt utrymme på volymen: %d MB
 
 #
-# ./src/backend/bittorrent/magnet.c
+# ./src/backend/bittorrent/fa_torrent.c
 #
-id: Invalid SHA-1 hash: %s
-msg: Felaktig SAH-1 hash: %s
+id: Connected peers
+# Missing translation
+msg: 
 
-id: No 'xt' in magnet link
-msg: Ingen 'xt' i magnet-länk
+id: Known peers
+# Missing translation
+msg: 
 
-id: Unknown hash scheme: %s
-msg: Okänt hash-schema: %s
+id: Receiving from
+# Missing translation
+msg: 
+
+id: Torrent leechers
+# Missing translation
+msg: 
+
+id: Torrent seeders
+# Missing translation
+msg: 
 
 #
 # ./src/backend/bittorrent/torrent_settings.c
 #
+id: Clear cache
+# Missing translation
+msg: 
+
 id: Enable bittorrent
 msg: Använd svärmar
 

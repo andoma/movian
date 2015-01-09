@@ -151,8 +151,13 @@ msg: Настройки видео
 #
 # ./glwskins/default/loading.view
 #
-id: Bitrate: %d kb/s
-msg: Битрейт: %d кб/с
+id: %d kb/s
+# Missing translation
+msg: 
+
+id: Bitrate:
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/log.view
@@ -500,8 +505,9 @@ msg: Мало памяти (доступно %d Кб RAM)
 #
 # ./src/arch/ps3/ps3_vdec.c
 #
-id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
-msg: Cell-h264: %d Ref-frames для контента 1080 является несовместимым с PS3 HW декодером. Ускорение отключено
+id: Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration
+# Missing translation
+msg: 
 
 id: Cell-h264: Broken headers, Disabling acceleration
 msg: Поврежденные заголовки, ускорение отключено
@@ -608,14 +614,8 @@ msg: Тип тестового сигнала
 id: No files in torrent
 msg: Нет файлов в торрент
 
-id: Unable to load torrent: %s
-msg: Невозможно загрузить торрент: %s
-
 id: Unable to open torrent: %s
 msg: Невозможно открыть торрент: %s
-
-id: Unable to parse torrent: %s
-msg: Невозможно разобрать торрент: %s
 
 #
 # ./src/backend/bittorrent/diskio.c
@@ -624,20 +624,35 @@ id: Cached torrents use %d MB out of allowed %d MB. Total free space on volume: 
 msg: Кэш торрента использует %d МБ из разрешенных %d МБ. Итого свободного места на томе: %d МБ
 
 #
-# ./src/backend/bittorrent/magnet.c
+# ./src/backend/bittorrent/fa_torrent.c
 #
-id: Invalid SHA-1 hash: %s
-msg: Неверный SHA-1 хэш: %s
+id: Connected peers
+# Missing translation
+msg: 
 
-id: No 'xt' in magnet link
-msg: Нет 'xt' в магнет ссылке
+id: Known peers
+# Missing translation
+msg: 
 
-id: Unknown hash scheme: %s
-msg: Неизвестная схема хэша: %s
+id: Receiving from
+# Missing translation
+msg: 
+
+id: Torrent leechers
+# Missing translation
+msg: 
+
+id: Torrent seeders
+# Missing translation
+msg: 
 
 #
 # ./src/backend/bittorrent/torrent_settings.c
 #
+id: Clear cache
+# Missing translation
+msg: 
+
 id: Enable bittorrent
 msg: Включить битторрент
 

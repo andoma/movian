@@ -151,8 +151,13 @@ msg: 视频设置
 #
 # ./glwskins/default/loading.view
 #
-id: Bitrate: %d kb/s
-msg: 码率：%d kb/s
+id: %d kb/s
+# Missing translation
+msg: 
+
+id: Bitrate:
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/log.view
@@ -500,8 +505,9 @@ msg: 系统内存偏少(%d kB RAM可用)
 #
 # ./src/arch/ps3/ps3_vdec.c
 #
-id: Cell-h264: %d Ref-frames for 1080 content is incompatible with PS3 HW decoder. Disabling acceleration
-msg: Cell-h264: PS3硬件不兼容1080p内容的%d帧引用，将禁用硬件加速。
+id: Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration
+# Missing translation
+msg: 
 
 id: Cell-h264: Broken headers, Disabling acceleration
 msg: 头信息破损，将禁用硬件加速。
@@ -608,14 +614,8 @@ msg: 测试信号类型
 id: No files in torrent
 msg: 种子中无文件
 
-id: Unable to load torrent: %s
-msg: 无法载入种子：%s
-
 id: Unable to open torrent: %s
 msg: 无法打开种子：%s
-
-id: Unable to parse torrent: %s
-msg: 无法解析种子：%s
 
 #
 # ./src/backend/bittorrent/diskio.c
@@ -624,20 +624,35 @@ id: Cached torrents use %d MB out of allowed %d MB. Total free space on volume: 
 msg: 种子缓存已使用%d MB，最大允许使用%d MB。总可用空间：%d MB
 
 #
-# ./src/backend/bittorrent/magnet.c
+# ./src/backend/bittorrent/fa_torrent.c
 #
-id: Invalid SHA-1 hash: %s
-msg: 无效的SHA-1哈希值: %s
+id: Connected peers
+# Missing translation
+msg: 
 
-id: No 'xt' in magnet link
-msg: magnet链接中缺少'xt'
+id: Known peers
+# Missing translation
+msg: 
 
-id: Unknown hash scheme: %s
-msg: 未知哈希模式：%s
+id: Receiving from
+# Missing translation
+msg: 
+
+id: Torrent leechers
+# Missing translation
+msg: 
+
+id: Torrent seeders
+# Missing translation
+msg: 
 
 #
 # ./src/backend/bittorrent/torrent_settings.c
 #
+id: Clear cache
+# Missing translation
+msg: 
+
 id: Enable bittorrent
 msg: 启用bittorrent
 
