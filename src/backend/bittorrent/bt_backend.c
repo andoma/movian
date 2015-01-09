@@ -211,14 +211,13 @@ torrent_movie_open(prop_t *page, const char *url0, int sync)
   // Create videoparams message
 
   htsmsg_t *vp = htsmsg_create_map();
-  snprintf(url, sizeof(url), "torrent:video:%s", hashstr);
-  htsmsg_add_str(vp, "canonicalUrl", url);
 
   htsmsg_add_str(vp, "title", to->to_title);
 
 
   snprintf(url, sizeof(url), "torrentfile://%s/%s",
            hashstr, best->tf_fullpath);
+  htsmsg_add_str(vp, "canonicalUrl", url);
 
   htsmsg_t *src = htsmsg_create_map();
   htsmsg_add_str(src, "url", url);
@@ -310,14 +309,17 @@ bt_playvideo(const char *url, media_pipe_t *mp,
   bin2hex(hashstr, sizeof(hashstr), to->to_info_hash, 20);
   hashstr[40] = 0;
 
+  video_args_t va2 = *va;
+
   snprintf(newurl, sizeof(newurl), "torrentfile://%s/%s",
            hashstr, best->tf_fullpath);
+  va2.canonical_url = newurl;
 
   torrent_retain(to);
   hts_mutex_unlock(&bittorrent_mutex);
 
 
-  event_t *e = backend_play_video(newurl, mp, errbuf, errlen, vq, vsl, va);
+  event_t *e = backend_play_video(newurl, mp, errbuf, errlen, vq, vsl, &va2);
 
   hts_mutex_lock(&bittorrent_mutex);
   torrent_release(to);
