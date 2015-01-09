@@ -58,10 +58,7 @@ be_file_canhandle(const char *url)
 static rstr_t *
 title_from_url(const char *url)
 {
-  char tmp[1024];
-  fa_url_get_last_component(tmp, sizeof(tmp), url);
-  rstr_t *r = rstr_alloc(tmp);
-  return r;
+  return fa_get_title(url);
 }
 
 

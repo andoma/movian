@@ -1759,29 +1759,24 @@ fa_pathjoin(char *dst, size_t dstlen, const char *p1, const char *p2)
 }
 
 
-
 /**
  *
  */
-void
-fa_url_get_last_component(char *dst, size_t dstlen, const char *url)
+static void
+fa_url_get_last_component_i(fa_protocol_t *fap, const char *filename,
+                            char *dst, size_t dstlen, const char *url)
 {
   int e, b;
-  fa_protocol_t *fap;
-  char *filename;
 
   if(dstlen == 0)
     return;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, NULL, 0)) != NULL) {
+  if(fap != NULL) {
+    assert(filename != NULL);
     if(fap->fap_get_last_component != NULL) {
       fap->fap_get_last_component(fap, filename, dst, dstlen);
-      fap_release(fap);
-      free(filename);
       return;
     }
-    fap_release(fap);
-    free(filename);
   }
 
   e = strlen(url);
@@ -1811,6 +1806,60 @@ fa_url_get_last_component(char *dst, size_t dstlen, const char *url)
   dst[dstlen - 1] = 0;
 }
 
+
+
+/**
+ *
+ */
+void
+fa_url_get_last_component(char *dst, size_t dstlen, const char *url)
+{
+  fa_protocol_t *fap;
+  char *filename;
+
+  if(dstlen == 0)
+    return;
+
+  filename = fa_resolve_proto(url, &fap, NULL, NULL, 0);
+  fa_url_get_last_component_i(fap, filename, dst, dstlen, url);
+  free(filename);
+  if(fap != NULL)
+    fap_release(fap);
+  return;
+}
+
+
+/**
+ *
+ */
+rstr_t *
+fa_get_title(const char *url)
+{
+  char str[256];
+  fa_protocol_t *fap;
+  char *filename;
+
+  filename = fa_resolve_proto(url, &fap, NULL, NULL, 0);
+
+  if(fap != NULL && fap->fap_title != NULL) {
+
+    rstr_t *r = fap->fap_title(fap, filename);
+
+    if(r != NULL) {
+      free(filename);
+      fap_release(fap);
+      return r;
+    }
+  }
+
+  fa_url_get_last_component_i(fap, filename, str, sizeof(str), url);
+
+  free(filename);
+  if(fap != NULL)
+    fap_release(fap);
+
+  return rstr_alloc(str);
+}
 
 
 /**

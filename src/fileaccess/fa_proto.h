@@ -230,6 +230,11 @@ typedef struct fa_protocol {
   fa_err_code_t (*fap_fsinfo)(struct fa_protocol *fap, const char *url,
                               fa_fsinfo_t *ffi);
 
+  /**
+   * Return file system info
+   */
+  rstr_t *(*fap_title)(struct fa_protocol *fap, const char *url);
+
 } fa_protocol_t;
 
 

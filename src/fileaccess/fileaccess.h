@@ -318,6 +318,8 @@ int fa_normalize(const char *url, char *dst, size_t dstlen);
 
 rstr_t *fa_absolute_path(rstr_t *filename, rstr_t *at);
 
+rstr_t *fa_get_title(const char *url);
+
 int fa_check_url(const char *url, char *errbuf, size_t errlen);
 
 int fa_read_to_htsbuf(struct htsbuf_queue *hq, fa_handle_t *fh, int maxbytes);

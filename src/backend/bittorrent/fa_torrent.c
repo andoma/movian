@@ -331,6 +331,23 @@ torrent_unreference(fa_handle_t *fh)
 /**
  *
  */
+static rstr_t *
+torrent_title(fa_protocol_t *fap, const char *url)
+{
+  rstr_t *r = NULL;
+  torrent_t *to = torrent_open_url(&url, NULL, 0);
+
+  if(to != NULL && url == NULL)
+    r = rstr_alloc(to->to_title);
+
+  hts_mutex_unlock(&bittorrent_mutex);
+  return r;
+}
+
+
+/**
+ *
+ */
 static fa_protocol_t fa_protocol_torrent = {
   .fap_name        = "torrentfile",
   .fap_scan        = torrent_scandir,
@@ -343,5 +360,6 @@ static fa_protocol_t fa_protocol_torrent = {
   .fap_deadline    = torrent_deadline,
   .fap_reference   = torrent_reference,
   .fap_unreference = torrent_unreference,
+  .fap_title       = torrent_title,
 };
 FAP_REGISTER(torrent);
