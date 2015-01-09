@@ -37,7 +37,7 @@
 
 
 
-#include <ft2build.h>  
+#include <ft2build.h>
 #include FT_FREETYPE_H
 #include FT_GLYPH_H
 #include FT_OUTLINE_H
@@ -299,7 +299,7 @@ face_create_epilogue(face_t *face, const char *url,
   mystrlower(face->family);
   mystrlower(face->fullname);
 
-  TRACE(TRACE_DEBUG, "Freetype", 
+  TRACE(TRACE_DEBUG, "Freetype",
 	"Loaded font family='%s' fullname='%s' style='%s' from %s domain:%d",
 	face->family, face->fullname, style, face->url, font_domain);
 
@@ -353,7 +353,7 @@ face_create_from_fh(fa_handle_t *fh, const char *url,
 
   oa.stream = srec;
   oa.flags = FT_OPEN_STREAM;
-  
+
   if((err = FT_Open_Face(text_library, &oa, 0, &face->face)) != 0) {
     snprintf(errbuf, errlen, "Unable to open face: %d", err);
     free(face);
@@ -418,7 +418,7 @@ face_resolve(int uc, uint8_t style, const char *name, int font_domain,
 
     face_t *best = NULL;
     int best_score = 0; // Higher is better
-    
+
     // Try to find best matching font amongst our loaded faces
 
     char *lcname = mystrdupa(name);
@@ -444,7 +444,7 @@ face_resolve(int uc, uint8_t style, const char *name, int font_domain,
 
       /*
        * Faces that can't render our glyph is not so good either :)
-       */ 
+       */
       if(!FT_Get_Char_Index(f->face, uc))
 	continue;
 
@@ -453,7 +453,7 @@ face_resolve(int uc, uint8_t style, const char *name, int font_domain,
       // Correct style give some extra points
       if(f->style == style)
 	score += 4;
-      
+
       if(!strcmp(f->fullname, lcname)) {
 	score += 100;
       } else if(!strcmp(f->family, lcname)) {
@@ -497,7 +497,7 @@ face_resolve(int uc, uint8_t style, const char *name, int font_domain,
       return f;
   }
 #endif
-  
+
   // Last resort, anything that has the glyph
   LIST_FOREACH(f, &dynamic_faces, link)
     if(FT_Get_Char_Index(f->face, uc))
@@ -523,7 +523,7 @@ face_find(int uc, uint8_t style, const char *name, int font_domain,
     return NULL;
 
   f->lookup_font_domain = font_domain;
-  if(strcmp(name ?: "", f->lookup_name ?: "")) 
+  if(strcmp(name ?: "", f->lookup_name ?: ""))
     mystrset(&f->lookup_name, name);
 
   return f;
@@ -588,13 +588,13 @@ glyph_get(int uc, int size, uint8_t style, const char *font,
 
     if((err = FT_Load_Glyph(f->face, gi, FT_LOAD_FORCE_AUTOHINT)) != 0)
       return NULL;
-    
+
     gs = f->face->glyph;
 
     if(style & TR_STYLE_ITALIC && !(f->style & TR_STYLE_ITALIC))
       FT_GlyphSlot_Oblique(gs);
 
-    if(style & TR_STYLE_BOLD && !(f->style & TR_STYLE_BOLD) && 
+    if(style & TR_STYLE_BOLD && !(f->style & TR_STYLE_BOLD) &&
        gs->format == FT_GLYPH_FORMAT_OUTLINE) {
       int v = FT_MulFix(gs->face->units_per_EM,
 			gs->face->size->metrics.y_scale) / 64;
@@ -616,7 +616,7 @@ glyph_get(int uc, int size, uint8_t style, const char *font,
     g->uc = uc;
     g->style = style;
     g->size = size;
-	 
+
     g->adv_x = gs->advance.x;
     LIST_INSERT_HEAD(&glyph_hash[hash], g, hash_link);
     num_glyphs++;
@@ -733,13 +733,13 @@ draw_glyphs(pixmap_t *pm, struct line_queue *lq, int target_height,
     if(li->type == LINE_TYPE_HR) {
       int ypos = 0;
       ypos = target_height - (pen_y + li->height * 64);
-			      
+
       ypos = ypos >> 6;
       ypos = MIN(target_height, MAX(0, ypos));
 
-      
+
       switch(pm->pm_type) {
-      case PIXMAP_BGR32: 
+      case PIXMAP_BGR32:
 	{
 	  uint32_t *yptr = (uint32_t *)(pm->pm_data + ypos * pm->pm_linesize);
 	  int i;
@@ -756,12 +756,12 @@ draw_glyphs(pixmap_t *pm, struct line_queue *lq, int target_height,
 
 	  color = (a << 24) | ((b >> 1) << 16) |
 	    ((g >> 1) << 8) | (r >> 1);
-	  
+
 	  for(i = 0; i < pm->pm_width; i++)
 	    *yptr++ = color;
 	}
 	break;
-	
+
       case PIXMAP_IA:
 	{
 	  uint8_t *yptr = pm->pm_data + ypos * pm->pm_linesize;
@@ -776,14 +776,14 @@ draw_glyphs(pixmap_t *pm, struct line_queue *lq, int target_height,
 	  yptr = pm->pm_data + (ypos + 1) * pm->pm_linesize;
 
 	  r = li->color >> 1;
-	  
+
 	  for(i = 0; i < pm->pm_width; i++) {
 	    *yptr++ = r;
 	    *yptr++ = a;
 	  }
 	}
 	break;
-	
+
       default:
 	break;
       }
@@ -791,7 +791,7 @@ draw_glyphs(pixmap_t *pm, struct line_queue *lq, int target_height,
     }
 
     pen_x = li->xoffset;
-    
+
     switch(li->alignment) {
     case TR_ALIGN_LEFT:
     case TR_ALIGN_JUSTIFIED:
@@ -811,7 +811,7 @@ draw_glyphs(pixmap_t *pm, struct line_queue *lq, int target_height,
 	continue;
 
       pen_x += items[i].kerning;
-      
+
       pen.x = start_x + pen_x + 31;
       pen.y = start_y + pen_y + origin_y + 31 - li->descender;
 
@@ -822,12 +822,12 @@ draw_glyphs(pixmap_t *pm, struct line_queue *lq, int target_height,
       pen.y >>= 6;
 
 
-      
+
       if(items[i].outline > 0 && (g->outline == NULL ||
 				  g->outline_amt != items[i].outline)) {
 	if(g->outline)
 	  FT_Done_Glyph(g->outline);
-	
+
 	g->outline = g->orig_glyph;
 	FT_Stroker_Set(text_stroker,
 		       items[i].outline,
@@ -840,7 +840,7 @@ draw_glyphs(pixmap_t *pm, struct line_queue *lq, int target_height,
 	else if(FT_Glyph_To_Bitmap(&g->outline, FT_RENDER_MODE_NORMAL, NULL, 1))
 	  g->outline = NULL;
       }
-      
+
       if(g->bmp == NULL) {
 	g->bmp = g->orig_glyph;
 	if(FT_Glyph_To_Bitmap(&g->bmp, FT_RENDER_MODE_NORMAL, NULL, 0))
@@ -851,7 +851,7 @@ draw_glyphs(pixmap_t *pm, struct line_queue *lq, int target_height,
 	draw_glyph(pm,
 		   bmp->left + items[i].shadow + margin + pen.x,
 		   target_height - bmp->top + items[i].shadow + margin - pen.y,
-		   &bmp->bitmap, 
+		   &bmp->bitmap,
 		   items[i].shadow_color);
       }
 
@@ -860,7 +860,7 @@ draw_glyphs(pixmap_t *pm, struct line_queue *lq, int target_height,
 	draw_glyph(pm,
 		   bmp->left + margin + pen.x,
 		   target_height - bmp->top + margin - pen.y,
-		   &bmp->bitmap, 
+		   &bmp->bitmap,
 		   items[i].outline_color);
       }
 
@@ -869,7 +869,7 @@ draw_glyphs(pixmap_t *pm, struct line_queue *lq, int target_height,
 	draw_glyph(pm,
 		   bmp->left + margin + pen.x,
 		   target_height - bmp->top + margin - pen.y,
-		   &bmp->bitmap, 
+		   &bmp->bitmap,
 		   items[i].color);
 
 	if(ti != NULL && ti->ti_charpos != NULL) {
@@ -1014,7 +1014,7 @@ text_render0(const uint32_t *uc, const int len,
       TAILQ_INSERT_TAIL(&lq, li, link);
       li = NULL;
       continue;
-      
+
     case TR_CODE_CENTER_ON:
       if(i != 0)
 	li = NULL;
@@ -1207,7 +1207,7 @@ text_render0(const uint32_t *uc, const int len,
 
 	while(k > 0 && items[li->start + k - 1].code != ' ') {
 	  k--;
-	  w2 -= items[li->start + k].adv_x + 
+	  w2 -= items[li->start + k].adv_x +
 	    (k > 0 ? items[li->start + k].kerning : 0);
 	}
 
@@ -1224,7 +1224,7 @@ text_render0(const uint32_t *uc, const int len,
 	  next= lix;
 	  ti_flags |= IMAGE_TEXT_WRAPPED;
 	  k--;
-	  w2 -= items[li->start + k].adv_x + 
+	  w2 -= items[li->start + k].adv_x +
 	    (k > 0 ? items[li->start + k].kerning : 0);
 
 	  li->count = k;
@@ -1235,7 +1235,7 @@ text_render0(const uint32_t *uc, const int len,
 
 
       if(lines == max_lines - 1 && g != NULL && max_width) {
-	
+
 	if(flags & TR_RENDER_ELLIPSIZE) {
 	  glyph_t *eg = glyph_get(HORIZONTAL_ELLIPSIS_UNICODE, g->size, 0,
 				  g->face->url, g->face->font_domain,
@@ -1244,14 +1244,14 @@ text_render0(const uint32_t *uc, const int len,
 
 	    while(j > 0 && items[li->start + j - 1].code == ' ') {
 	      j--;
-	      w -= items[li->start + j].adv_x + 
+	      w -= items[li->start + j].adv_x +
 		(j > 0 ? items[li->start + j].kerning : 0);
 	    }
-	    
+
 	    items[li->start + j].g = eg;
 	    items[li->start + j].kerning = 0;
 	    ti_flags |= IMAGE_TEXT_TRUNCATED;
-	    
+
 	    w += eg->adv_x;
 	    li->count = j + 1;
 	    break;
@@ -1266,7 +1266,7 @@ text_render0(const uint32_t *uc, const int len,
 	}
       }
     }
-    
+
     li->width = w;
     siz_x = MAX(w, siz_x);
     lines++;
@@ -1354,7 +1354,7 @@ text_render0(const uint32_t *uc, const int len,
     case LINE_TYPE_HR:
       break;
     }
-    
+
     target_height += li->height;
   }
 
@@ -1443,7 +1443,7 @@ text_render(const uint32_t *uc, const int len, int flags, int default_size,
 
   hts_mutex_lock(&text_mutex);
 
-  im = text_render0(uc, len, flags, default_size, scale, alignment, 
+  im = text_render0(uc, len, flags, default_size, scale, alignment,
 		    max_width, max_lines, family, context, min_size,
 		    vpaths);
   while(num_glyphs > 512)
