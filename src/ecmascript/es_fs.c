@@ -61,13 +61,20 @@ const es_resource_class_t es_resource_fd = {
  *
  */
 static const char *
-get_filename(duk_context *ctx, int index)
+get_filename(duk_context *ctx, int index, const es_context_t *ec)
 {
   const char *filename = duk_to_string(ctx, index);
 
   if(strstr(filename, "../") || strstr(filename, "/.."))
-    duk_error(ctx, DUK_ERR_ERROR, "Bad filename");
-  return filename;
+    duk_error(ctx, DUK_ERR_ERROR,
+              "Bad filename %s -- Contains parent references", filename);
+
+  if((ec->ec_storage != NULL && mystrbegins(filename, ec->ec_storage)) ||
+     (ec->ec_path    != NULL && mystrbegins(filename, ec->ec_path)))
+    return filename;
+
+  duk_error(ctx, DUK_ERR_ERROR, "Bad filename %s -- Access not allowed",
+            filename);
 }
 
 /**
@@ -76,17 +83,17 @@ get_filename(duk_context *ctx, int index)
 static int
 es_file_open(duk_context *ctx)
 {
-  char path[PATH_MAX];
   char errbuf[512];
 
-  const char *filename = get_filename(ctx, 0);
+  es_context_t *ec = es_get(ctx);
+
+  const char *filename = get_filename(ctx, 0, ec);
 
   const char *flagsstr = duk_to_string(ctx, 1);
   //  int mode = duk_to_int(ctx, 2);
 
   int flags;
 
-  es_context_t *ec = es_get(ctx);
 
   if(!strcmp(flagsstr, "r")) {
     flags = 0;
@@ -98,15 +105,13 @@ es_file_open(duk_context *ctx)
     duk_error(ctx, DUK_ERR_ERROR, "Invalid flags '%s' to open", flagsstr);
   }
 
-  snprintf(path, sizeof(path), "%s/%s", ec->ec_storage, filename);
-
-  fa_handle_t *fh = fa_open_ex(path, errbuf, sizeof(errbuf), flags, NULL);
+  fa_handle_t *fh = fa_open_ex(filename, errbuf, sizeof(errbuf), flags, NULL);
   if(fh == NULL)
     duk_error(ctx, DUK_ERR_ERROR, "Unable to open file '%s' -- %s",
-              path, errbuf);
+              filename, errbuf);
 
   es_fd_t *efd = es_resource_create(ec, &es_resource_fd, 0);
-  efd->efd_path = strdup(path);
+  efd->efd_path = strdup(filename);
   efd->efd_fh = fh;
 
   es_resource_push(ctx, &efd->super);
@@ -225,21 +230,15 @@ es_file_ftruncate(duk_context *ctx)
 static int
 es_file_rename(duk_context *ctx)
 {
-  const char *oldname = get_filename(ctx, 0);
-  const char *newname = get_filename(ctx, 1);
-  char errbuf[512];
-  char oldpath[PATH_MAX];
-  char newpath[PATH_MAX];
-
   es_context_t *ec = es_get(ctx);
 
-  snprintf(oldpath, sizeof(oldpath), "%s/%s", ec->ec_storage, oldname);
-  snprintf(newpath, sizeof(newpath), "%s/%s", ec->ec_storage, newname);
+  const char *oldname = get_filename(ctx, 0, ec);
+  const char *newname = get_filename(ctx, 1, ec);
+  char errbuf[512];
 
-
-  if(fa_rename(oldpath, newpath, errbuf, sizeof(errbuf)))
+  if(fa_rename(oldname, newname, errbuf, sizeof(errbuf)))
     duk_error(ctx, DUK_ERR_ERROR, "Unable to rename '%s' to '%s' -- %s",
-              oldpath, newpath, errbuf);
+              oldname, newname, errbuf);
 
   return 0;
 }
@@ -251,17 +250,14 @@ es_file_rename(duk_context *ctx)
 static int
 es_file_mkdirs(duk_context *ctx)
 {
-  const char *filename = get_filename(ctx, 0);
-  char errbuf[512];
-  char path[PATH_MAX];
-
   es_context_t *ec = es_get(ctx);
 
-  snprintf(path, sizeof(path), "%s/%s", ec->ec_storage, filename);
+  const char *filename = get_filename(ctx, 0, ec);
+  char errbuf[512];
 
-  if(fa_makedirs(path, errbuf, sizeof(errbuf)))
-    duk_error(ctx, DUK_ERR_ERROR, "Unable to mkdir '%s' to '%s' -- %s",
-              path, errbuf);
+  if(fa_makedirs(filename, errbuf, sizeof(errbuf)))
+    duk_error(ctx, DUK_ERR_ERROR, "Unable to mkdir '%s' -- %s",
+              filename, errbuf);
 
   return 0;
 }
@@ -273,7 +269,8 @@ es_file_mkdirs(duk_context *ctx)
 static int
 es_file_dirname(duk_context *ctx)
 {
-  const char *filename = mystrdupa(get_filename(ctx, 0));
+  es_context_t *ec = es_get(ctx);
+  const char *filename = mystrdupa(get_filename(ctx, 0, ec));
 
   char *x = strrchr(filename, '/');
   if(x) {
@@ -290,9 +287,10 @@ es_file_dirname(duk_context *ctx)
 static int
 es_file_basename(duk_context *ctx)
 {
+  es_context_t *ec = es_get(ctx);
   char tmp[URL_MAX];
 
-  fa_url_get_last_component(tmp, sizeof(tmp), get_filename(ctx, 0));
+  fa_url_get_last_component(tmp, sizeof(tmp), get_filename(ctx, 0, ec));
   duk_push_string(ctx, tmp);
   return 1;
 }

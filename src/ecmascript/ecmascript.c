@@ -304,9 +304,11 @@ es_modsearch(duk_context *ctx)
   es_context_t *ec = es_get(ctx);
   const char *id = duk_require_string(ctx, 0);
 
-  snprintf(path, sizeof(path), "%s/%s.js", ec->ec_path, id);
-  if(tryload(ctx, path))
-    return 1;
+  if(ec->ec_path != NULL) {
+    snprintf(path, sizeof(path), "%s/%s.js", ec->ec_path, id);
+    if(tryload(ctx, path))
+      return 1;
+  }
 
   snprintf(path, sizeof(path),
            "dataroot://resources/ecmascript/modules/%s.js", id);
@@ -321,7 +323,7 @@ es_modsearch(duk_context *ctx)
  *
  */
 static void
-es_create_env(es_context_t *ec)
+es_create_env(es_context_t *ec, const char *loaddir, const char *storage)
 {
   duk_context *ctx = ec->ec_duk;
 
@@ -347,6 +349,16 @@ es_create_env(es_context_t *ec)
 
   duk_push_string(ctx, gconf.device_id);
   duk_put_prop_string(ctx, obj_idx, "deviceId");
+
+  if(loaddir != NULL) {
+    duk_push_string(ctx, loaddir);
+    duk_put_prop_string(ctx, obj_idx, "loadPath");
+  }
+
+  if(storage != NULL) {
+    duk_push_string(ctx, storage);
+    duk_put_prop_string(ctx, obj_idx, "storagePath");
+  }
 
   duk_put_function_list(ctx, obj_idx, fnlist_Showtime);
   duk_put_function_list(ctx, obj_idx, fnlist_Showtime_service);
@@ -453,9 +465,27 @@ es_mem_free(void *udata, void *ptr)
  *
  */
 static es_context_t *
-es_context_create(const char *id, int flags)
+es_context_create(const char *id, int flags, const char *url,
+                  const char *storage)
 {
   es_context_t *ec = calloc(1, sizeof(es_context_t));
+  char path[PATH_MAX];
+
+  if(!fa_parent(path, sizeof(path), url)) {
+    ec->ec_path = strdup(path);
+  } else {
+    char normalize[PATH_MAX];
+    if(!fa_normalize(url, normalize, sizeof(normalize)) &&
+       !fa_parent(path, sizeof(path), normalize)) {
+        ec->ec_path = strdup(path);
+    } else {
+      TRACE(TRACE_ERROR, id,
+            "Unable to get parent directory for %s -- No loadPath set");
+    }
+  }
+
+  if(storage != NULL)
+    ec->ec_storage = strdup(storage);
 
   ec->ec_debug  = !!(flags & ECMASCRIPT_DEBUG);
 
@@ -467,7 +497,7 @@ es_context_create(const char *id, int flags)
   ec->ec_duk = duk_create_heap(es_mem_alloc, es_mem_realloc, es_mem_free,
                                ec, NULL);
 
-  es_create_env(ec);
+  es_create_env(ec, ec->ec_path, ec->ec_storage);
 
   ec->ec_id = strdup(id);
 
@@ -664,9 +694,12 @@ ecmascript_plugin_load(const char *id, const char *url,
                        int version, const char *manifest,
                        int flags)
 {
-  char path[PATH_MAX];
-  es_context_t *ec = es_context_create(id, flags);
+  char storage[PATH_MAX];
 
+  snprintf(storage, sizeof(storage),
+           "%s/plugins/%s", gconf.persistent_path, id);
+
+  es_context_t *ec = es_context_create(id, flags, url, storage);
 
   es_context_begin(ec);
 
@@ -688,15 +721,10 @@ ecmascript_plugin_load(const char *id, const char *url,
   duk_push_int(ctx, version);
   duk_put_prop_string(ctx, plugin_obj_idx, "apiversion");
 
-  if(!fa_parent(path, sizeof(path), url)) {
-    duk_push_string(ctx, path);
+  if(ec->ec_path) {
+    duk_push_string(ctx, ec->ec_path);
     duk_put_prop_string(ctx, plugin_obj_idx, "path");
-    ec->ec_path = strdup(path);
   }
-
-  snprintf(path, sizeof(path), "%s/plugins/%s",
-           gconf.persistent_path, ec->ec_id);
-  ec->ec_storage = strdup(path);
 
   duk_put_prop_string(ctx, -2, "Plugin");
 
@@ -791,10 +819,9 @@ ecmascript_init(void)
   if(gconf.load_ecmascript == NULL)
     return;
 
-  es_context_t *ec = es_context_create("cmdline", ECMASCRIPT_DEBUG);
+  es_context_t *ec = es_context_create("cmdline", ECMASCRIPT_DEBUG,
+                                       gconf.load_ecmascript, "/tmp");
   es_context_begin(ec);
-
-  ec->ec_storage = strdup("/tmp");
 
   es_exec(ec, gconf.load_ecmascript);
 
