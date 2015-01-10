@@ -231,11 +231,14 @@ vd_thread(void *aux)
     if(mb->mb_data_type == MB_VIDEO && mc->decode_locked != NULL) {
 
       if(mc != mc_current) {
-	if(mc_current != NULL)
+        hts_mutex_unlock(&mp->mp_mutex);
+	if(mc_current != NULL) {
 	  media_codec_deref(mc_current);
-
+          mp->mp_set_video_codec('none', NULL, mp->mp_video_frame_opaque, NULL);
+        }
 	mc_current = media_codec_ref(mc);
 	prop_set_int(mq->mq_prop_too_slow, 0);
+        hts_mutex_lock(&mp->mp_mutex);
       }
 
       size = mb->mb_size;
@@ -286,11 +289,8 @@ vd_thread(void *aux)
 
       mp->mp_video_frame_deliver(NULL, mp->mp_video_frame_opaque);
 
-      if(mc_current != NULL) {
+      if(mc_current != NULL)
         mc_current->flush(mc_current, vd);
-	media_codec_deref(mc_current);
-	mc_current = NULL;
-      }
 
       mp->mp_video_frame_deliver(NULL, mp->mp_video_frame_opaque);
       if(mp->mp_seek_video_done != NULL)
@@ -299,8 +299,10 @@ vd_thread(void *aux)
 
     case MB_VIDEO:
       if(mc != mc_current) {
-	if(mc_current != NULL)
+	if(mc_current != NULL) {
 	  media_codec_deref(mc_current);
+          mp->mp_set_video_codec('none', NULL, NULL, NULL);
+        }
 
 	mc_current = media_codec_ref(mc);
 	prop_set_int(mq->mq_prop_too_slow, 0);
@@ -412,8 +414,10 @@ vd_thread(void *aux)
 
   hts_mutex_unlock(&mp->mp_mutex);
 
-  if(mc_current != NULL)
+  if(mc_current != NULL) {
     media_codec_deref(mc_current);
+    mp->mp_set_video_codec('none', NULL, mp->mp_video_frame_opaque, NULL);
+  }
 
   if(vd->vd_ext_subtitles != NULL)
     subtitles_destroy(vd->vd_ext_subtitles);

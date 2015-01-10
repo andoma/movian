@@ -1234,7 +1234,13 @@ glw_set_video_codec(uint32_t type, media_codec_t *mc, void *opaque,
   glw_video_engine_t *gve;
   int r = -1;
   hts_mutex_lock(&gv->gv_surface_mutex);
-  
+
+  if(type == 'none') {
+    glw_video_configure(gv, NULL);
+    hts_mutex_unlock(&gv->gv_surface_mutex);
+    return 0;
+  }
+
   gv->gv_dar_num = fi->fi_dar_num;
   gv->gv_dar_den = fi->fi_dar_den;
   gv->gv_vheight = fi->fi_height;
