@@ -953,7 +953,7 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
 
       break;
     case TOKEN_VOID:
-      if(0 /* not yet */ && left->t_flags & TOKEN_F_PROP_LINK) {
+      if(left->t_flags & TOKEN_F_PROP_LINK) {
         prop_unlink(left->t_prop);
         left->t_flags &= ~TOKEN_F_PROP_LINK;
       } else {
@@ -4446,24 +4446,9 @@ glwf_focusedChild(glw_view_eval_context_t *ec, struct token *self,
   ec->dynamic_eval |= GLW_VIEW_EVAL_OTHER;
 
   c = w->glw_focused;
-  if(c != NULL) {
-    if(c->glw_originating_prop != NULL) {
-      r = eval_alloc(self, ec, TOKEN_PROPERTY_REF);
-      r->t_prop = prop_ref_inc(c->glw_originating_prop);
-      eval_push(ec, r);
-      return 0;
-    }
-
-    glw_t *d;
-    int num = 0;
-    TAILQ_FOREACH(d, &w->glw_childs, glw_parent_link) {
-      if(d == c)
-        break;
-      num++;
-    }
-
-    r = eval_alloc(self, ec, TOKEN_INT);
-    r->t_int = num;
+  if(c != NULL && c->glw_originating_prop != NULL) {
+    r = eval_alloc(self, ec, TOKEN_PROPERTY_REF);
+    r->t_prop = prop_ref_inc(c->glw_originating_prop);
     eval_push(ec, r);
     return 0;
   }
