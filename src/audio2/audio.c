@@ -636,19 +636,22 @@ audio_decode_thread(void *aux)
     if(mb->mb_data_type == MB_CTRL_UNBLOCK) {
       assert(blocked);
       blocked = 0;
-    } else if(ad->ad_mode == AUDIO_MODE_CODED && 
+    } else if(ad->ad_mode == AUDIO_MODE_CODED &&
 	      ac->ac_deliver_coded_locked != NULL &&
 	      mb->mb_data_type == MB_AUDIO) {
 
-      int r = ac->ac_deliver_coded_locked(ad, mb->mb_data, mb->mb_size,
-                                          mb->mb_pts, mb->mb_epoch);
-      if(r) {
-        TAILQ_INSERT_HEAD(&mq->mq_q_data, mb, mb_link);
-        mq->mq_packets_current++;
-        mp->mp_buffer_current += mb->mb_size;
+      if(!mb->mb_skip && mb->mb_stream == mq->mq_stream) {
 
-        hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
-        continue;
+        int r = ac->ac_deliver_coded_locked(ad, mb->mb_data, mb->mb_size,
+                                          mb->mb_pts, mb->mb_epoch);
+        if(r) {
+          TAILQ_INSERT_HEAD(&mq->mq_q_data, mb, mb_link);
+          mq->mq_packets_current++;
+          mp->mp_buffer_current += mb->mb_size;
+
+          hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
+          continue;
+        }
       }
 
     } else {
