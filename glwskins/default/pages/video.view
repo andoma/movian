@@ -93,7 +93,7 @@ widget(container_z, {
 			     "error", [1, 0.5, 0.5]);
 	    shadow: true;
 	  });
-	  
+
 	  widget(label, {
 	    OSD();
 	    caption: $self.text;
@@ -160,7 +160,7 @@ widget(container_z, {
 	border: 56;
 	borderOnly: true;
 	padding: -56;
-	
+
 	widget(backdrop, {
 	  alphaSelf: 0.85;
 	  source: "skin://graphics/popupmenu2.png";
@@ -168,7 +168,7 @@ widget(container_z, {
 	  color: 0;
 
 	  widget(container_y, {
-	  
+
 	    widget(label, {
 	      TextStyleItem();
 	      caption: _("Playback status");
@@ -176,24 +176,24 @@ widget(container_z, {
 	    });
 
 	    VerticalSeparator();
-	    
+
 	    widget(container_x, {
 
 	      spacing: 10;
-	      
+
 	      widget(container_y, {
 		widget(label, {
 		  InfoLabel();
 		  align: right;
 		  caption: "Source:";
 		});
-		
+
 		widget(label, {
 		  InfoLabel();
 		  align: right;
 		  caption: "Video codec:";
 		});
-	      
+
 		widget(label, {
 		  InfoLabel();
 		  align: right;
@@ -205,35 +205,35 @@ widget(container_z, {
 		  align: right;
 		  caption: "Audio codec:";
 		});
-		
+
 		widget(label, {
                   hidden: isVoid($self.media.video.decodetime_avg);
 		  InfoLabel();
 		  align: right;
 		  caption: "Video decode time:";
 		});
-		
+
 		widget(label, {
                   hidden: isVoid($self.media.avdiffError);
 		  InfoLabel();
 		  align: right;
 		  caption: "A/V diff:";
 		});
-		
+
 		widget(label, {
 		  InfoLabel();
 		  hidden: !$self.media.isRemote;
 		  align: right;
 		  caption: "Remote queue len:";
 		});
-		
+
 		widget(label, {
 		  InfoLabel();
 		  hidden: !$self.media.isRemote;
 		  align: right;
 		  caption: "Remote queue drops:";
 		});
-		
+
 		widget(label, {
 		  InfoLabel();
 		  align: right;
@@ -251,7 +251,7 @@ widget(container_z, {
 		  align: right;
 		  caption: "Video queue len:";
 		});
-		
+
 		widget(label, {
 		  InfoLabel();
 		  align: right;
@@ -271,35 +271,35 @@ widget(container_z, {
 		  caption: $self.title + ":";
                 });
 	      });
-	      
+
 
 	      widget(container_y, {
 		widget(label, {
 		  TextStyleItem();
 		  caption: $self.media.metadata.format;
 		});
-		
+
 		widget(label, {
 		  TextStyleItem();
 		  caption: $self.media.video.codec;
 		});
-		
+
 		widget(label, {
 		  TextStyleItem();
 		  caption: fmt("%d kb/s", $self.media.video.bitrate);
 		});
-		
+
 		widget(label, {
 		  TextStyleItem();
 		  caption: $self.media.audio.codec;
 		});
-	      
+
 		widget(label, {
                   hidden: isVoid($self.media.video.decodetime_avg);
 		  TextStyleItem();
 		  caption: fmt("%d ms", $self.media.video.decodetime_avg);
 		});
-	      
+
 		widget(label, {
                   hidden: isVoid($self.media.avdiffError);
 		  TextStyleItem();
@@ -313,26 +313,26 @@ widget(container_z, {
 					    $self.media.avdiff * 1000)
 				    );
 		});
-		
+
 		widget(label, {
 		  TextStyleItem();
 		  hidden: !$self.media.isRemote;
 		  caption: $self.media.remote.qlen;
 		});
-		
+
 		widget(label, {
 		  TextStyleItem();
 		  hidden: !$self.media.isRemote;
 		  caption: $self.media.remote.drops;
 		});
-		
+
 		widget(bar, {
 		  height: $ui.size;
 		  color1: 1;
 		  color2: 1;
 		  fill: $self.media.buffer.current / $self.media.buffer.limit;
 		});
-		
+
 		widget(label, {
 		  TextStyleItem();
 		  caption: fmt("%ds", $self.media.buffer.delay);
@@ -342,7 +342,7 @@ widget(container_z, {
 		  TextStyleItem();
 		  caption: $self.media.video.dqlen;
 		});
-		
+
 		widget(label, {
 		  TextStyleItem();
 		  caption: $self.media.audio.dqlen;
