@@ -33,7 +33,6 @@ typedef struct fa_protocol {
   int fap_flags;
 #define FAP_INCLUDE_PROTO_IN_URL 0x1
 #define FAP_ALLOW_CACHE          0x2
-#define FAP_NO_PARKING           0x4
 
   atomic_t fap_refcount;
 
@@ -231,9 +230,14 @@ typedef struct fa_protocol {
                               fa_fsinfo_t *ffi);
 
   /**
-   * Return file system info
+   * Return nice (user facing) title for URL
    */
   rstr_t *(*fap_title)(struct fa_protocol *fap, const char *url);
+
+  /**
+   * Check if a file handle may be parked
+   */
+  int (*fap_no_parking)(fa_handle_t *fh);
 
 } fa_protocol_t;
 

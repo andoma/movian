@@ -258,8 +258,11 @@ fab_close(fa_handle_t *handle)
 {
 #ifdef FILE_PARKING
   buffered_file_t *closeme = NULL, *bf = (buffered_file_t *)handle;
+  fa_handle_t *src = bf->bf_src;
 
-  if(bf->bf_src->fh_proto->fap_flags & FAP_NO_PARKING ||
+
+  if((src->fh_proto->fap_no_parking != NULL &&
+      src->fh_proto->fap_no_parking(src)) ||
      bf->bf_flags & FA_NO_PARKING) {
     fab_destroy((buffered_file_t *)handle);
     return;

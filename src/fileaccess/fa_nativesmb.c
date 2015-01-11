@@ -2914,10 +2914,20 @@ smb_init(void)
 
 
 /**
+ *
+ */
+static int
+smb_no_parking(fa_handle_t *fh)
+{
+  return 1;
+}
+
+
+/**
  * Main SMB protocol dispatch
  */
 static fa_protocol_t fa_protocol_smb = {
-  .fap_flags = FAP_INCLUDE_PROTO_IN_URL | FAP_ALLOW_CACHE | FAP_NO_PARKING,
+  .fap_flags = FAP_INCLUDE_PROTO_IN_URL | FAP_ALLOW_CACHE,
   .fap_init  = smb_init,
   .fap_name  = "smb",
   .fap_scan  = smb_scandir,
@@ -2931,5 +2941,6 @@ static fa_protocol_t fa_protocol_smb = {
   .fap_rmdir = smb_rmdir,
   .fap_set_xattr = smb_set_xattr,
   .fap_get_xattr = smb_get_xattr,
+  .fap_no_parking = smb_no_parking,
 };
 FAP_REGISTER(smb);

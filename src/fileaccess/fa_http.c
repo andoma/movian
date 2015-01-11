@@ -2332,6 +2332,16 @@ http_get_last_component(struct fa_protocol *fap, const char *url,
 }
 
 
+/**
+ *
+ */
+static int
+http_no_parking(fa_handle_t *fh)
+{
+  http_file_t *hf = (http_file_t *)fh;
+  return hf->hf_connection_mode == CONNECTION_MODE_CLOSE;
+}
+
 
 /**
  *
@@ -2370,6 +2380,7 @@ static fa_protocol_t fa_protocol_http = {
   .fap_load = http_load,
   .fap_get_last_component = http_get_last_component,
   .fap_set_read_timeout = http_set_read_timeout,
+  .fap_no_parking = http_no_parking,
 };
 
 FAP_REGISTER(http);
@@ -2390,6 +2401,7 @@ static fa_protocol_t fa_protocol_https = {
   .fap_load = http_load,
   .fap_get_last_component = http_get_last_component,
   .fap_set_read_timeout = http_set_read_timeout,
+  .fap_no_parking = http_no_parking,
 };
 
 FAP_REGISTER(https);
@@ -2708,6 +2720,7 @@ static fa_protocol_t fa_protocol_webdav = {
   .fap_load = http_load,
   .fap_get_last_component = http_get_last_component,
   .fap_set_read_timeout = http_set_read_timeout,
+  .fap_no_parking = http_no_parking,
 };
 FAP_REGISTER(webdav);
 
@@ -2727,6 +2740,7 @@ static fa_protocol_t fa_protocol_webdavs = {
   .fap_load = http_load,
   .fap_get_last_component = http_get_last_component,
   .fap_set_read_timeout = http_set_read_timeout,
+  .fap_no_parking = http_no_parking,
 };
 FAP_REGISTER(webdavs);
 
