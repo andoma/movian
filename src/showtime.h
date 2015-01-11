@@ -222,6 +222,7 @@ typedef struct gconf {
   int can_not_exit;
 
   int disable_upnp;
+  int disable_upgrades;
   int disable_sd;
 
 
