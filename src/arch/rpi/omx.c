@@ -20,6 +20,7 @@
  */
 #include <assert.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "media/media.h"
 #include "omx.h"
@@ -240,10 +241,34 @@ void
 omx_set_state(omx_component_t *oc, OMX_STATETYPE reqstate)
 {
   OMX_STATETYPE state;
-
+  int attempts = 20;
   omxchk(OMX_GetState(oc->oc_handle, &state));
   omxdbg("Telling component '%s' to go from state %d -> to state %d\n", oc->oc_name, state, reqstate);
-  omx_send_command(oc, OMX_CommandStateSet, reqstate, NULL, reqstate != OMX_StateLoaded);
+
+
+  while(1) {
+    oc->oc_cmd_done = 0;
+
+    int r = OMX_SendCommand(oc->oc_handle, OMX_CommandStateSet,
+                          reqstate, NULL);
+
+    if(r == OMX_ErrorInsufficientResources && attempts) {
+      usleep(10000);
+      attempts--;
+      continue;
+    }
+
+    if(r != 0) {
+      panic("OMX Setstate %s from %d to %d error 0x%x",
+            oc->oc_name, state, reqstate, r);
+    }
+
+    // When transitioning to loaded the component will no longer respond
+    if(reqstate != OMX_StateLoaded)
+      omx_wait_command(oc);
+
+    return;
+  }
 }
 
 
