@@ -207,12 +207,14 @@ widget(container_z, {
 		});
 		
 		widget(label, {
+                  hidden: isVoid($self.media.video.decodetime_avg);
 		  InfoLabel();
 		  align: right;
 		  caption: "Video decode time:";
 		});
 		
 		widget(label, {
+                  hidden: isVoid($self.media.avdiffError);
 		  InfoLabel();
 		  align: right;
 		  caption: "A/V diff:";
@@ -293,11 +295,13 @@ widget(container_z, {
 		});
 	      
 		widget(label, {
+                  hidden: isVoid($self.media.video.decodetime_avg);
 		  TextStyleItem();
 		  caption: fmt("%d ms", $self.media.video.decodetime_avg);
 		});
 	      
 		widget(label, {
+                  hidden: isVoid($self.media.avdiffError);
 		  TextStyleItem();
 		  caption: translate($self.media.avdiffError,
 				     fmt("%d ms", $self.media.avdiff * 1000),
