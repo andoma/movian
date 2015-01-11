@@ -712,8 +712,6 @@ tv_update_state(void)
     printf("failed to get state\n");
     return;
   }
-  printf("state.state=0x%x\n", state.state);
-
 }
 
 
@@ -747,24 +745,6 @@ tv_init(void)
 {
   vc_tv_register_callback(tv_service_callback, NULL);
   tv_update_state();
-#if 0
-  int x;
-
-  x = vc_tv_hdmi_audio_supported(EDID_AudioFormat_ePCM, 8,
-				 EDID_AudioSampleRate_e48KHz,
-				 EDID_AudioSampleSize_16bit);
-  printf("8ch 48khz=0x%x\n", x);
-
-  x = vc_tv_hdmi_audio_supported(EDID_AudioFormat_ePCM, 2,
-				 EDID_AudioSampleRate_e48KHz,
-				 EDID_AudioSampleSize_16bit);
-  printf("2ch 44khz=0x%x\n", x);
-
-  x = vc_tv_hdmi_audio_supported(EDID_AudioFormat_eDTS, 2,
-				 EDID_AudioSampleRate_e48KHz,
-				 EDID_AudioSampleSize_16bit);
-  printf("DTS 48khz=0x%x\n", x);
-#endif
 }
 
 

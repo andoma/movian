@@ -56,9 +56,9 @@ typedef struct audio_class {
 
   void (*ac_set_volume)(struct audio_decoder *ad, float scale);
 
-  void (*ac_deliver_coded_locked)(struct audio_decoder *ad,
-				  const void *data, size_t len,
-				  int64_t pts, int epoch);
+  int (*ac_deliver_coded_locked)(struct audio_decoder *ad,
+                                 const void *data, size_t len,
+                                 int64_t pts, int epoch);
 
 } audio_class_t;
 

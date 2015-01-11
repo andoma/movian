@@ -56,6 +56,11 @@ typedef struct decoder {
   float d_master_mute;
 
   char d_hdmi_8ch_pcm;
+  char d_hdmi_ac3;
+  char d_hdmi_eac3;
+  char d_hdmi_dts;
+  char d_hdmi_mlp;
+  char d_hdmi_aac;
 
   char d_local_output;
 
@@ -105,6 +110,27 @@ static const GUID KSDATAFORMAT_SUBTYPE_PCM = {
 static float master_volume = 1.0;
 static int master_mute;
 static int local_output;
+static int hdmi_ac3_mode;
+static int hdmi_dts_mode;
+static int hdmi_8ch_mode;
+
+
+/**
+ *
+ */
+static int
+check_mode(int detected, int configured)
+{
+  /**
+   * Configured
+   *   0 -> Autodetect
+   *   1 -> Off
+   *   2 -> On
+   *
+   * Hence,
+   */
+  return configured ? configured - 1 : detected;
+}
 
 /**
  *
@@ -117,15 +143,46 @@ rpi_audio_init(audio_decoder_t *ad)
   d->d_master_volume = master_volume;
   d->d_master_mute = master_mute;
 
-  int x;
-
   d->d_local_output = local_output;
 
-  x = vc_tv_hdmi_audio_supported(EDID_AudioFormat_ePCM, 8,
-				 EDID_AudioSampleRate_e48KHz,
-				 EDID_AudioSampleSize_16bit);
-  
-  d->d_hdmi_8ch_pcm = !x;
+  d->d_hdmi_8ch_pcm =
+    !vc_tv_hdmi_audio_supported(EDID_AudioFormat_ePCM, 8,
+                                EDID_AudioSampleRate_e48KHz,
+                                EDID_AudioSampleSize_16bit);
+
+  d->d_hdmi_ac3 =
+    !vc_tv_hdmi_audio_supported(EDID_AudioFormat_eAC3, 2,
+                                EDID_AudioSampleRate_e44KHz,
+                                EDID_AudioSampleSize_16bit);
+
+  d->d_hdmi_eac3 =
+    !vc_tv_hdmi_audio_supported(EDID_AudioFormat_eEAC3, 2,
+                                EDID_AudioSampleRate_e44KHz,
+                                EDID_AudioSampleSize_16bit);
+
+  d->d_hdmi_dts =
+    !vc_tv_hdmi_audio_supported(EDID_AudioFormat_eDTS, 2,
+                                EDID_AudioSampleRate_e44KHz,
+                                EDID_AudioSampleSize_16bit);
+
+  d->d_hdmi_mlp =
+    !vc_tv_hdmi_audio_supported(EDID_AudioFormat_eMLP, 2,
+                                EDID_AudioSampleRate_e44KHz,
+                                EDID_AudioSampleSize_16bit);
+
+  d->d_hdmi_aac =
+    !vc_tv_hdmi_audio_supported(EDID_AudioFormat_eAAC, 2,
+                                EDID_AudioSampleRate_e44KHz,
+                                EDID_AudioSampleSize_16bit);
+
+  TRACE(TRACE_DEBUG, "RPI", "Supported audio formats "
+        "AC3:%s EAC3:%s DTS:%s MLP:%s AAC:%s 8ChPCM:%s",
+        d->d_hdmi_ac3     ? "YES" : "NO",
+        d->d_hdmi_eac3    ? "YES" : "NO",
+        d->d_hdmi_dts     ? "YES" : "NO",
+        d->d_hdmi_mlp     ? "YES" : "NO",
+        d->d_hdmi_aac     ? "YES" : "NO",
+        d->d_hdmi_8ch_pcm ? "YES" : "NO");
 
   if(!d->d_hdmi_8ch_pcm)
     ad->ad_stereo_downmix = 1;
@@ -347,10 +404,8 @@ get_out_channel_layout(const decoder_t *d)
   switch(d->ad.ad_in_channel_layout) {
 
   default:
-    if(d->d_hdmi_8ch_pcm && !d->d_local_output) {
-      TRACE(TRACE_DEBUG, "RPI", "8 Channel PCM support detected");
+    if(check_mode(d->d_hdmi_8ch_pcm && !d->d_local_output, hdmi_8ch_mode))
       return AV_CH_LAYOUT_7POINT1;
-    }
 
     // FALLTHRU
 
@@ -644,6 +699,18 @@ rpi_get_mode(audio_decoder_t *ad, int codec,
     encoding = OMX_AUDIO_CodingVORBIS;
     break;
 
+  case AV_CODEC_ID_AC3:
+    if(!check_mode(d->d_hdmi_ac3 && !d->d_local_output, hdmi_ac3_mode))
+      return AUDIO_MODE_PCM;
+    encoding = OMX_AUDIO_CodingDDP;
+    break;
+
+  case AV_CODEC_ID_DTS:
+    if(!check_mode(d->d_hdmi_dts && !d->d_local_output, hdmi_dts_mode))
+      return AUDIO_MODE_PCM;
+    encoding = OMX_AUDIO_CodingDTS;
+    break;
+
   default:
     return AUDIO_MODE_PCM;
   }
@@ -652,9 +719,9 @@ rpi_get_mode(audio_decoder_t *ad, int codec,
 
   OMX_CONFIG_BOOLEANTYPE boolType;
   OMX_INIT_STRUCTURE(boolType);
-  boolType.bEnabled = OMX_FALSE;
+  boolType.bEnabled = OMX_TRUE;
 
-  omxchk(OMX_SetParameter(d->d_decoder->oc_handle, 
+  omxchk(OMX_SetParameter(d->d_decoder->oc_handle,
 			  OMX_IndexParamBrcmDecoderPassThrough, &boolType));
 
   // Input port
@@ -719,7 +786,7 @@ rpi_get_mode(audio_decoder_t *ad, int codec,
 /**
  *
  */
-static void
+static int
 rpi_audio_deliver_coded(audio_decoder_t *ad, const void *data, size_t size,
 			int64_t pts, int epoch)
 {
@@ -730,11 +797,11 @@ rpi_audio_deliver_coded(audio_decoder_t *ad, const void *data, size_t size,
   OMX_BUFFERHEADERTYPE *buf;
 
   if(ad->ad_discontinuity && pts == PTS_UNSET && ad->ad_mp->mp_extra != NULL) {
-    return;
+    return 0;
   }
 
   if((buf = oc->oc_avail) == NULL)
-    return;
+    return 1;
 
   oc->oc_avail = buf->pAppPrivate;
   oc->oc_inflight_buffers++;
@@ -768,6 +835,8 @@ rpi_audio_deliver_coded(audio_decoder_t *ad, const void *data, size_t size,
 
   omxchk(OMX_EmptyThisBuffer(oc->oc_handle, buf));
   hts_mutex_lock(&ad->ad_mp->mp_mutex);
+
+  return 0;
 }
 
 
@@ -822,6 +891,33 @@ audio_driver_init(struct prop *asettings, struct htsmsg *store)
                  SETTING_WRITE_INT(&local_output),
                  SETTING_OPTION("0", _p("HDMI")),
                  SETTING_OPTION("1", _p("Analog")),
+                 NULL);
+
+  setting_create(SETTING_MULTIOPT, asettings, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("8 Channel PCM")),
+                 SETTING_HTSMSG("8chmode", store, "audio2"),
+                 SETTING_WRITE_INT(&hdmi_8ch_mode),
+                 SETTING_OPTION("0", _p("Autodetect")),
+                 SETTING_OPTION("1", _p("Off")),
+                 SETTING_OPTION("2", _p("On")),
+                 NULL);
+
+  setting_create(SETTING_MULTIOPT, asettings, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("AC3 Pass-Through")),
+                 SETTING_HTSMSG("ac3mode", store, "audio2"),
+                 SETTING_WRITE_INT(&hdmi_ac3_mode),
+                 SETTING_OPTION("0", _p("Autodetect")),
+                 SETTING_OPTION("1", _p("Off")),
+                 SETTING_OPTION("2", _p("On")),
+                 NULL);
+
+  setting_create(SETTING_MULTIOPT, asettings, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("DTS Pass-Through")),
+                 SETTING_HTSMSG("dtsmode", store, "audio2"),
+                 SETTING_WRITE_INT(&hdmi_dts_mode),
+                 SETTING_OPTION("0", _p("Autodetect")),
+                 SETTING_OPTION("1", _p("Off")),
+                 SETTING_OPTION("2", _p("On")),
                  NULL);
 
   prop_subscribe(0,

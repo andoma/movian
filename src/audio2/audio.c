@@ -243,12 +243,40 @@ spdif_mux_write(void *opaque, uint8_t *buf, int buf_size)
 }
 
 
+
 /**
  *
  */
 static void
-audio_setup_spdif_muxer(audio_decoder_t *ad, AVCodec *codec,
-			media_queue_t *mq)
+audio_set_passthru_metadata(audio_decoder_t *ad, const AVCodec *codec,
+                            media_queue_t *mq)
+{
+  const char *name;
+  switch(codec->id) {
+  case AV_CODEC_ID_DTS:  name = "DTS"; break;
+  case AV_CODEC_ID_AC3:  name = "AC3"; break;
+  case AV_CODEC_ID_EAC3: name = "EAC3"; break;
+  default:
+    name = "";
+    break;
+  }
+
+  char str[64];
+  snprintf(str, sizeof(str), "%s%sPass-Through", name, *name ? " " : "");
+  prop_set_string(mq->mq_prop_codec, str);
+
+  ad->ad_in_sample_rate = 0;
+  ad->ad_in_sample_format = 0;
+  ad->ad_in_channel_layout = 0;
+  prop_set(ad->ad_mp->mp_prop_ctrl, "canAdjustVolume", PROP_SET_INT, 0);
+}
+
+
+/**
+ *
+ */
+static void
+audio_setup_spdif_muxer(audio_decoder_t *ad, AVCodec *codec)
 {
   AVOutputFormat *ofmt = av_guess_format("spdif", NULL, NULL);
   if(ofmt == NULL)
@@ -283,25 +311,6 @@ audio_setup_spdif_muxer(audio_decoder_t *ad, AVCodec *codec,
   }
   ad->ad_spdif_muxer = fctx;
   TRACE(TRACE_DEBUG, "audio", "SPDIF muxer opened");
-
-  const char *name;
-  switch(codec->id) {
-  case AV_CODEC_ID_DTS:  name = "DTS"; break;
-  case AV_CODEC_ID_AC3:  name = "AC3"; break;
-  case AV_CODEC_ID_EAC3: name = "EAC3"; break;
-  default:
-    name = "";
-    break;
-  }
-
-  char str[64];
-  snprintf(str, sizeof(str), "%s%sPass-Through", name, *name ? " " : "");
-  prop_set_string(mq->mq_prop_codec, str);
-
-  ad->ad_in_sample_rate = 0;
-  ad->ad_in_sample_format = 0;
-  ad->ad_in_channel_layout = 0;
-  prop_set(ad->ad_mp->mp_prop_ctrl, "canAdjustVolume", PROP_SET_INT, 0);
 }
 
 
@@ -365,11 +374,11 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 			  ctx ? ctx->extradata_size : 0) : AUDIO_MODE_PCM;
 
 	if(ad->ad_mode == AUDIO_MODE_SPDIF) {
-	  audio_setup_spdif_muxer(ad, codec, mq);
+	  audio_setup_spdif_muxer(ad, codec);
+          audio_set_passthru_metadata(ad, codec, mq);
 	} else if(ad->ad_mode == AUDIO_MODE_CODED) {
-	  
 	  hts_mutex_lock(&mp->mp_mutex);
-	  
+          audio_set_passthru_metadata(ad, codec, mq);
 	  ac->ac_deliver_coded_locked(ad, mb->mb_data, mb->mb_size,
 				      mb->mb_pts, mb->mb_epoch);
 	  hts_mutex_unlock(&mp->mp_mutex);
@@ -631,8 +640,16 @@ audio_decode_thread(void *aux)
 	      ac->ac_deliver_coded_locked != NULL &&
 	      mb->mb_data_type == MB_AUDIO) {
 
-      ac->ac_deliver_coded_locked(ad, mb->mb_data, mb->mb_size,
-				  mb->mb_pts, mb->mb_epoch);
+      int r = ac->ac_deliver_coded_locked(ad, mb->mb_data, mb->mb_size,
+                                          mb->mb_pts, mb->mb_epoch);
+      if(r) {
+        TAILQ_INSERT_HEAD(&mq->mq_q_data, mb, mb_link);
+        mq->mq_packets_current++;
+        mp->mp_buffer_current += mb->mb_size;
+
+        hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
+        continue;
+      }
 
     } else {
 
