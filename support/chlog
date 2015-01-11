@@ -12,7 +12,7 @@ case $1 in
 	git push origin refs/notes/changelog
 	;;
     pull)
-        git fetch origin refs/notes/changelog:refs/notes/changelog
+        git fetch -f origin refs/notes/changelog:refs/notes/changelog
         ;;
 
 esac
