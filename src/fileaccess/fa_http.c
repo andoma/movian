@@ -2127,7 +2127,6 @@ http_seek(fa_handle_t *handle, int64_t pos, int whence, int lazy)
 
 	if(!hf_drain_bytes(hf, d)) {
 	  hf->hf_pos = np;
-	  hf->hf_rsize -= d;
 	  return np;
 	}
         http_detach(hf, 0, "Disconnected while draining");
