@@ -139,6 +139,9 @@ const static action_type_t *btn_to_action[256] = {
 
   [CEC_User_Control_RootMenu]    = AVEC(ACTION_HOME),
 
+  [CEC_User_Control_SetupMenu]   = AVEC(ACTION_MENU),
+  [CEC_User_Control_ContentsMenu]= AVEC(ACTION_ITEMMENU),
+
   [CEC_User_Control_F1Blue]      = AVEC(ACTION_ENABLE_SCREENSAVER),
   [CEC_User_Control_F2Red]       = AVEC(ACTION_MENU),
   [CEC_User_Control_F3Green]     = AVEC(ACTION_SHOW_MEDIA_STATS),
