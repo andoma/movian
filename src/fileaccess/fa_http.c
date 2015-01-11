@@ -1885,7 +1885,8 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
 
     } else {
 
-      HF_TRACE(hf, "read() needs to send a new GET request");
+      HF_TRACE(hf, "read() needs to send a new GET request on connection %d",
+               hc->hc_id);
       read_size = size - totsize;
 
       /* Must send a new request */
