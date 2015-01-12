@@ -131,6 +131,8 @@ sp.createInt = function(id, title, def, min, max, step, unit,
   var initial = group.getvalue(id, def, 'int', persistent);
   item.model.value = initial;
 
+  prop.setClipRange(item.model.value, min, max);
+
   item.model.min  = min;
   item.model.max  = max;
   item.model.step = step;

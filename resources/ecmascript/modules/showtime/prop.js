@@ -132,3 +132,5 @@ exports.moveBefore = Showtime.propMoveBefore;
 exports.unloadDestroy = Showtime.propUnloadDestroy;
 
 exports.isZombie = Showtime.propIsZombie;
+
+exports.setClipRange = Showtime.propSetClipRange;

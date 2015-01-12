@@ -828,6 +828,18 @@ es_prop_is_zombie(duk_context *ctx)
   return 1;
 }
 
+
+/**
+ *
+ */
+static int
+es_prop_set_clip_range(duk_context *ctx)
+{
+  prop_t *a = es_stprop_get(ctx, 0);
+  prop_set_int_clipping_range(a, duk_to_int(ctx, 1), duk_to_int(ctx, 2));
+  return 0;
+}
+
 /**
  * Showtime object exposed functions
  */
@@ -861,5 +873,6 @@ const duk_function_list_entry fnlist_Showtime_prop[] = {
   { "propMoveBefore",          es_prop_move_before,           2 },
   { "propUnloadDestroy",       es_prop_unload_destroy,        1 },
   { "propIsZombie",            es_prop_is_zombie,             1 },
+  { "propSetClipRange",        es_prop_set_clip_range,        3 },
   { NULL, NULL, 0}
 };
