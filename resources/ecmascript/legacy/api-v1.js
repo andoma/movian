@@ -1,9 +1,4 @@
 var prop    = require('showtime/prop');
-var http    = require('showtime/http');
-var service = require('showtime/service');
-var page    = require('showtime/page');
-var settings= require('showtime/settings');
-var store   = require('showtime/store');
 
 var cryptodigest = function(algo, str) {
   var hash = Showtime.hashCreate(algo);
@@ -30,15 +25,16 @@ showtime = {
     for(var p in ctrl)
       c[p] = ctrl[p];
 
-    return http.request(url, c);
+    return require('showtime/http').request(url, c);
   },
 
   currentVersionInt: Showtime.currentVersionInt,
   currentVersionString: Showtime.currentVersionString,
   deviceId: Showtime.deviceId,
 
-
-  httpReq: http.request,
+  httpReq: function(url, ctrl, cb) {
+    return require('showtime/http').request(url, ctrl, cb);
+  },
 
   entityDecode: Showtime.entityDecode,
   queryStringSplit: Showtime.queryStringSplit,
@@ -95,15 +91,21 @@ showtime.RichText.prototype.toRichString = function(x) {
 
 var plugin = {
 
-  createService: service.create,
+  createService: function(title, url, type, enabled, icon) {
+    return require('showtime/service').create(title, url, type, enabled, icon);
+  },
 
-  createStore: store.create,
+  createStore: function(name) {
+    return require('showtime/store').create(name);
+  },
 
   addURI: function(re, callback) {
+    var page = require('showtime/page');
     return new page.Route(re, callback);
   },
 
   addSearcher: function(title, icon, cb) {
+    var page = require('showtime/page');
     return new page.Searcher(title, icon,cb);
   },
 
@@ -121,8 +123,8 @@ var plugin = {
   selectView: Showtime.selectView,
 
   createSettings: function(title, icon, description) {
-    return new settings.globalSettings(Plugin.id, title, icon,
-                                       description);
+    var settings = require('showtime/settings');
+    return new settings.globalSettings(Plugin.id, title, icon, description);
   },
 
   cachePut: function(stash, key, obj, maxage) {
@@ -157,5 +159,5 @@ var plugin = {
 
 };
 
-var x = Showtime.compile(Plugin.url);
-x.call(plugin);
+// This is the return value
+plugin;

@@ -636,7 +636,7 @@ es_get_err_code(duk_context *ctx)
  *
  */
 static int
-es_exec(es_context_t *ec, const char *path)
+es_load_and_compile(es_context_t *ec, const char *path)
 {
   char errbuf[256];
   buf_t *buf = fa_load(path,
@@ -658,32 +658,33 @@ es_exec(es_context_t *ec, const char *path)
 
     TRACE(TRACE_ERROR, ec->ec_id, "Unable to compile %s -- %s",
           path, duk_safe_to_string(ctx, -1));
-
-  } else {
-
-    int rc;
-
-    rc = duk_pcall(ctx, 0);
-    if(rc != 0)
-      es_dump_err(ctx);
+    duk_pop(ctx);
+    return -1;
   }
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+es_exec(es_context_t *ec, const char *path)
+{
+  duk_context *ctx = ec->ec_duk;
+  int rc;
+
+  if(es_load_and_compile(ec, path))
+    return -1;
+
+  rc = duk_pcall(ctx, 0);
+  if(rc != 0)
+    es_dump_err(ctx);
 
   duk_pop(ctx);
   return 0;
 }
 
-#if 0
-/**
- *
- */
-static void
-es_get_env(duk_context *ctx)
-{
-  duk_push_global_object(ctx);
-  duk_get_prop_string(ctx, -1, "Showtime");
-  duk_replace(ctx, -2);
-}
-#endif
 
 /**
  *
@@ -727,15 +728,51 @@ ecmascript_plugin_load(const char *id, const char *url,
   }
 
   duk_put_prop_string(ctx, -2, "Plugin");
-
   duk_pop(ctx);
 
   if(version == 1) {
-    es_exec(ec, "dataroot://resources/ecmascript/legacy/api-v1.js");
+
+    int64_t ts0 = showtime_get_ts();
+
+    if(es_load_and_compile(ec,
+                           "dataroot://resources/ecmascript/legacy/api-v1.js"))
+      goto bad;
+
+    int64_t ts1 = showtime_get_ts();
+
+    if(duk_pcall(ctx, 0)) {
+      es_dump_err(ctx);
+      goto bad;
+    }
+
+    int64_t ts2 = showtime_get_ts();
+
+    if(es_load_and_compile(ec, url)) {
+      duk_pop(ctx);
+      goto bad;
+    }
+
+    int64_t ts3 = showtime_get_ts();
+
+    duk_swap_top(ctx, 0);
+    if(duk_pcall_method(ctx, 0))
+      es_dump_err(ctx);
+
+    int64_t ts4 = showtime_get_ts();
+
+    es_debug(ec, "API v1 emulation: Compile:%dms Exec:%dms",
+             ((int)(ts1 - ts0)) / 1000,
+             ((int)(ts2 - ts1)) / 1000);
+
+    es_debug(ec, "Plugin main:      Compile:%dms Exec:%dms",
+             ((int)(ts3 - ts2)) / 1000,
+             ((int)(ts4 - ts3)) / 1000);
+
   } else {
     es_exec(ec, url);
   }
 
+ bad:
   es_context_end(ec, 1);
 
   es_context_release(ec);
