@@ -471,18 +471,25 @@ es_context_create(const char *id, int flags, const char *url,
   es_context_t *ec = calloc(1, sizeof(es_context_t));
   char path[PATH_MAX];
 
-  if(!fa_parent(path, sizeof(path), url)) {
+  fa_stat_t st;
+
+  if(!fa_parent(path, sizeof(path), url) &&
+     !fa_stat(path, &st, NULL, 0)) {
     ec->ec_path = strdup(path);
-  } else {
+  }
+
+  if(ec->ec_path == NULL) {
     char normalize[PATH_MAX];
     if(!fa_normalize(url, normalize, sizeof(normalize)) &&
        !fa_parent(path, sizeof(path), normalize)) {
-        ec->ec_path = strdup(path);
-    } else {
-      TRACE(TRACE_ERROR, id,
-            "Unable to get parent directory for %s -- No loadPath set");
+      ec->ec_path = strdup(path);
     }
   }
+
+  if(ec->ec_path == NULL)
+    TRACE(TRACE_ERROR, id,
+          "Unable to get parent directory for %s -- No loadPath set",
+          url);
 
   if(storage != NULL)
     ec->ec_storage = strdup(storage);
