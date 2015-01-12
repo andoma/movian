@@ -544,6 +544,9 @@ parse_opts(int argc, char **argv)
       gconf.load_jsfile = argv[1];
       argc -= 2; argv += 2;
       continue;
+    } else if(!strcmp(argv[0], "--bypass-ecmascript-acl")) {
+      gconf.bypass_ecmascript_acl = 1;
+      argc -= 1; argv += 1;
     } else if(!strcmp(argv[0], "--ecmascript") && argc > 1) {
       gconf.load_ecmascript = argv[1];
       argc -= 2; argv += 2;

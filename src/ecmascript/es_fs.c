@@ -65,6 +65,9 @@ get_filename(duk_context *ctx, int index, const es_context_t *ec)
 {
   const char *filename = duk_to_string(ctx, index);
 
+  if(gconf.bypass_ecmascript_acl)
+    return filename;
+
   if(strstr(filename, "../") || strstr(filename, "/.."))
     duk_error(ctx, DUK_ERR_ERROR,
               "Bad filename %s -- Contains parent references", filename);
