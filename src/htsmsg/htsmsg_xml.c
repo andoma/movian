@@ -78,6 +78,7 @@ typedef struct xmlparser {
   } xp_encoding;
 
   char xp_errmsg[128];
+  char *xp_errpos;
 
   char xp_trim_whitespace;
 
@@ -85,8 +86,10 @@ typedef struct xmlparser {
 
 } xmlparser_t;
 
-#define xmlerr(xp, fmt, ...)                                            \
-  snprintf((xp)->xp_errmsg, sizeof((xp)->xp_errmsg), fmt, ##__VA_ARGS__)
+#define xmlerr2(xp, pos, fmt, ...) do {                                 \
+    snprintf((xp)->xp_errmsg, sizeof((xp)->xp_errmsg), fmt, ##__VA_ARGS__); \
+    (xp)->xp_errpos = pos;                                               \
+  } while(0)
 
 
 typedef struct cdata_content {
@@ -246,7 +249,7 @@ htsmsg_xml_parse_attrib(xmlparser_t *xp, htsmsg_t *msg, char *src,
   /* Parse attribute name */
   while(1) {
     if(*src == 0) {
-      xmlerr(xp, "Unexpected end of file during attribute name parsing");
+      xmlerr2(xp, src, "Unexpected end of file during attribute name parsing");
       return NULL;
     }
 
@@ -257,7 +260,7 @@ htsmsg_xml_parse_attrib(xmlparser_t *xp, htsmsg_t *msg, char *src,
 
   attriblen = src - attribname;
   if(attriblen < 1 || attriblen > 65535) {
-    xmlerr(xp, "Invalid attribute name");
+    xmlerr2(xp, attribname, "Invalid attribute name");
     return NULL;
   }
 
@@ -265,7 +268,7 @@ htsmsg_xml_parse_attrib(xmlparser_t *xp, htsmsg_t *msg, char *src,
     src++;
 
   if(*src != '=') {
-    xmlerr(xp, "Expected '=' in attribute parsing");
+    xmlerr2(xp, src, "Expected '=' in attribute parsing");
     return NULL;
   }
   src++;
@@ -277,14 +280,14 @@ htsmsg_xml_parse_attrib(xmlparser_t *xp, htsmsg_t *msg, char *src,
   /* Parse attribute payload */
   quote = *src++;
   if(quote != '"' && quote != '\'') {
-    xmlerr(xp, "Expected ' or \" before attribute value");
+    xmlerr2(xp, src - 1, "Expected ' or \" before attribute value");
     return NULL;
   }
 
   payload = src;
   while(1) {
     if(*src == 0) {
-      xmlerr(xp, "Unexpected end of file during attribute value parsing");
+      xmlerr2(xp, src, "Unexpected end of file during attribute value parsing");
       return NULL;
     }
     if(*src == quote)
@@ -294,7 +297,7 @@ htsmsg_xml_parse_attrib(xmlparser_t *xp, htsmsg_t *msg, char *src,
 
   payloadlen = src - payload;
   if(payloadlen < 0 || payloadlen > 65535) {
-    xmlerr(xp, "Invalid attribute value");
+    xmlerr2(xp, payload, "Invalid attribute value");
     return NULL;
   }
 
@@ -353,7 +356,7 @@ htsmsg_xml_parse_tag(xmlparser_t *xp, htsmsg_t *parent, char *src,
 
   while(1) {
     if(*src == 0) {
-      xmlerr(xp, "Unexpected end of file during tag name parsing");
+      xmlerr2(xp, src, "Unexpected end of file during tag name parsing");
       return NULL;
     }
     if(is_xmlws(*src) || *src == '>' || *src == '/')
@@ -363,7 +366,7 @@ htsmsg_xml_parse_tag(xmlparser_t *xp, htsmsg_t *parent, char *src,
 
   taglen = src - tagname;
   if(taglen < 1 || taglen > 65535) {
-    xmlerr(xp, "Invalid tag name");
+    xmlerr2(xp, tagname, "Invalid tag name");
     return NULL;
   }
 
@@ -373,7 +376,7 @@ htsmsg_xml_parse_tag(xmlparser_t *xp, htsmsg_t *parent, char *src,
       src++;
 
     if(*src == 0) {
-      xmlerr(xp, "Unexpected end of file in tag");
+      xmlerr2(xp, src, "Unexpected end of file in tag");
       return NULL;
     }
 
@@ -430,7 +433,7 @@ htsmsg_xml_parse_pi(xmlparser_t *xp, htsmsg_t *parent, char *src,
 
   while(1) {
     if(*src == 0) {
-      xmlerr(xp, "Unexpected end of file during parsing of "
+      xmlerr2(xp, src, "Unexpected end of file during parsing of "
 	     "Processing instructions");
       return NULL;
     }
@@ -442,7 +445,7 @@ htsmsg_xml_parse_pi(xmlparser_t *xp, htsmsg_t *parent, char *src,
 
   l = src - s;
   if(l < 1 || l > 1024) {
-    xmlerr(xp, "Invalid 'Processing instructions' name");
+    xmlerr2(xp, src, "Invalid 'Processing instructions' name");
     return NULL;
   }
   piname = alloca(l + 1);
@@ -458,7 +461,7 @@ htsmsg_xml_parse_pi(xmlparser_t *xp, htsmsg_t *parent, char *src,
 
     if(*src == 0) {
       htsmsg_release(attrs);
-      xmlerr(xp, "Unexpected end of file during parsing of "
+      xmlerr2(xp, src, "Unexpected end of file during parsing of "
 	     "Processing instructions");
       return NULL;
     }
@@ -490,10 +493,11 @@ htsmsg_xml_parse_pi(xmlparser_t *xp, htsmsg_t *parent, char *src,
 static char *
 xml_parse_comment(xmlparser_t *xp, char *src)
 {
+  char *start = src;
   /* comment */
   while(1) {
     if(*src == 0) { /* EOF inside comment is invalid */
-      xmlerr(xp, "Unexpected end of file inside a comment");
+      xmlerr2(xp, start, "Unexpected end of file inside a comment");
       return NULL;
     }
 
@@ -515,10 +519,12 @@ decode_label_reference(xmlparser_t *xp,
   char *label;
   int code;
 
+  char *start = src;
   while(*src != 0 && *src != ';')
     src++;
   if(*src == 0) {
-    xmlerr(xp, "Unexpected end of file during parsing of label reference");
+    xmlerr2(xp, start,
+            "Unexpected end of file during parsing of label reference");
     return NULL;
   }
 
@@ -534,7 +540,7 @@ decode_label_reference(xmlparser_t *xp,
   if(code != -1)
     add_unicode(ccq, code);
   else {
-    xmlerr(xp, "Unknown label referense: \"&%s;\"\n", label);
+    xmlerr2(xp, start, "Unknown label referense: \"&%s;\"\n", label);
     return NULL;
   }
 
@@ -589,7 +595,7 @@ htsmsg_xml_parse_cd0(xmlparser_t *xp,
 	  src = htsmsg_xml_parse_cd0(xp, ccq, tags, pis, src, 1, buf);
 	  continue;
 	}
-	xmlerr(xp, "Unknown syntatic element: <!%.10s", src);
+	xmlerr2(xp, src, "Unknown syntatic element: <!%.10s", src);
 	return NULL;
       }
 
@@ -598,7 +604,7 @@ htsmsg_xml_parse_cd0(xmlparser_t *xp,
 	src++;
 	while(*src != '>') {
 	  if(*src == 0) { /* EOF inside endtag */
-	    xmlerr(xp, "Unexpected end of file inside close tag");
+	    xmlerr2(xp, src, "Unexpected end of file inside close tag");
 	    return NULL;
 	  }
 	  src++;
@@ -619,12 +625,13 @@ htsmsg_xml_parse_cd0(xmlparser_t *xp,
       src++;
 
       if(*src == '#') {
+        char *start = src;
 	src++;
 	/* Character reference */
 	if((c = decode_character_reference(&src)) != 0)
 	  add_unicode(ccq, c);
 	else {
-	  xmlerr(xp, "Invalid character reference");
+	  xmlerr2(xp, start, "Invalid character reference");
 	  return NULL;
 	}
       } else {
@@ -820,6 +827,35 @@ htsmsg_parse_prolog(xmlparser_t *xp, char *src, buf_t *buf)
 /**
  *
  */
+static void
+get_line_col(const char *str, int len, const char *pos, int *linep, int *colp)
+{
+  const char *end = str + len;
+  int line = 1;
+  int column = 0;
+
+  while(str < end) {
+    column++;
+    if(*str == '\n') {
+      column = 0;
+      line++;
+    } else if(*str == '\r') {
+      column = 0;
+    }
+
+    if(str == pos)
+      break;
+    str++;
+  }
+
+  *linep = line;
+  *colp  = column;
+}
+
+
+/**
+ *
+ */
 htsmsg_t *
 htsmsg_xml_deserialize_buf(buf_t *buf, char *errbuf, size_t errbufsize)
 {
@@ -827,7 +863,8 @@ htsmsg_xml_deserialize_buf(buf_t *buf, char *errbuf, size_t errbufsize)
   xmlparser_t xp;
   int i;
   char *src;
-
+  int line;
+  int col;
   buf = buf_make_writable(buf);
 
   xp.xp_errmsg[0] = 0;
@@ -850,7 +887,11 @@ htsmsg_xml_deserialize_buf(buf_t *buf, char *errbuf, size_t errbufsize)
   return m;
 
  err:
-  snprintf(errbuf, errbufsize, "%s", xp.xp_errmsg);
+
+  get_line_col(buf->b_ptr, buf->b_size, xp.xp_errpos, &line, &col);
+
+  snprintf(errbuf, errbufsize, "%s at line %d column %d",
+           xp.xp_errmsg, line, col);
 
   /* Remove any odd chars inside of errmsg */
   for(i = 0; i < errbufsize; i++) {
