@@ -142,7 +142,7 @@ nacl_audio_reconfig(audio_decoder_t *ad)
   ad->ad_out_channel_layout = AV_CH_LAYOUT_STEREO;
   ad->ad_tile_size = tile_size;
 
-  d->samples = malloc(SLOTS * 2 * sizeof(uint16_t) * ad->ad_tile_size);
+  d->samples = calloc(1, SLOTS * 2 * sizeof(uint16_t) * ad->ad_tile_size);
 
   d->player = ppb_audio->Create(g_Instance, d->config, audio_cb, ad);
   ppb_audio->StartPlayback(d->player);
