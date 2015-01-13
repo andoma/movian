@@ -1,4 +1,4 @@
-.DEFAULT_GOAL := dist
+.DEFAULT_GOAL := stage
 
 SRCS += src/arch/nacl/nacl_main.c \
 	src/arch/nacl/nacl_misc.c \
@@ -15,28 +15,45 @@ SRCS += src/arch/nacl/nacl_main.c \
 ${PROG}.pexe: ${PROG}.bundle
 	${FINALIZE} -o $@ $<
 
-${BUILDDIR}/dist/%: support/nacl/%
+${BUILDDIR}/stage/%: support/nacl/%
 	@mkdir -p $(dir $@)
 	cp $< $@
 
-${BUILDDIR}/dist/showtime.pexe: ${PROG}.pexe
+${BUILDDIR}/stage/showtime.pexe: ${PROG}.pexe
 	@mkdir -p $(dir $@)
 	cp $< $@
 
-${BUILDDIR}/dist/showtime.bundle: ${PROG}.bundle
+${BUILDDIR}/stage/showtime.bundle: ${PROG}.bundle
 	@mkdir -p $(dir $@)
 	cp $< $@
 
-DISTFILES = \
-	${BUILDDIR}/dist/showtime.pexe \
-	${BUILDDIR}/dist/index.html \
-	${BUILDDIR}/dist/showtime.css \
-	${BUILDDIR}/dist/showtime.js \
-	${BUILDDIR}/dist/README \
-	${BUILDDIR}/dist/showtime.nmf \
+${BUILDDIR}/stage/manifest.json: support/nacl/manifest.json
+	@mkdir -p $(dir $@)
+	sed <$< >$@ -e "s/__VERSION__/$(shell git describe | sed -e 's/-g.*//' -e 's/-/./g')/"
+
+STAGEFILES = \
+	${BUILDDIR}/stage/showtime.pexe \
+	${BUILDDIR}/stage/index.html \
+	${BUILDDIR}/stage/showtime.css \
+	${BUILDDIR}/stage/showtime.js \
+	${BUILDDIR}/stage/showtime.nmf \
+	${BUILDDIR}/stage/manifest.json \
+	${BUILDDIR}/stage/background.js \
+	${BUILDDIR}/stage/st128.png \
+	${BUILDDIR}/stage/st16.png \
 
 
-.PHONY: dist dbgdist
-dist:	${DISTFILES}
+.PHONY: stage dbgstage dist
+stage:	${STAGEFILES}
 
-dbgdist:	${DISTFILES} ${BUILDDIR}/dist/showtime.bundle
+dbgstage:	${STAGEFILES} ${BUILDDIR}/stage/showtime.bundle
+
+VERSION := $(shell support/getver.sh)
+
+DISTARCHIVE := ${BUILDDIR}/showtime-${VERSION}.zip
+
+${DISTARCHIVE}: ${STAGEFILES}
+	rm -f ${DISTARCHIVE}
+	zip -j ${DISTARCHIVE} ${BUILDDIR}/stage/*
+
+dist: ${DISTARCHIVE}

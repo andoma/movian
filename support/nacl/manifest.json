@@ -1,0 +1,31 @@
+{
+  "manifest_version": 2,
+  "name": "Showtime Media Center",
+  "version": "__VERSION__",
+
+  "description": "A media center for playing all sorts of audio/video files.",
+  "icons": {
+    "16": "st16.png",
+    "128": "st128.png"
+  },
+
+  "minimum_chrome_version": "38",
+  "offline_enabled": true,
+  "permissions": ["unlimitedStorage",
+                  {
+                    "socket": [
+                      "tcp-listen:*:*",
+                      "tcp-connect",
+                      "resolve-host",
+                      "udp-bind:*:*",
+                      "udp-send-to:*:*"
+                    ]
+                  }
+                 ],
+
+  "app": {
+    "background": {
+      "scripts": ["background.js"]
+    }
+  }
+}
