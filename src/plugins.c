@@ -525,8 +525,13 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int flags)
   int r;
   char fullpath[URL_MAX];
 
-  if(gconf.enable_force_ecmascript && !strcmp(type, "javascript"))
-    type = "ecmascript";
+  if(!strcmp(type, "javascript")) {
+#if ENABLE_SPIDERMONKEY
+    if(gconf.enable_force_ecmascript)
+#endif
+      type = "ecmascript";
+  }
+
 
   if(!strcmp(type, "views")) {
     // No special tricks here, we always loads 'glwviews' from all plugins
