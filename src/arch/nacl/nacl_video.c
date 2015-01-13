@@ -389,6 +389,8 @@ static int
 nacl_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
                   media_pipe_t *mp)
 {
+  return 1;
+
   if(ppb_videodecoder == NULL)
     return 1;
 

@@ -766,6 +766,7 @@ struct asyncio_dns_req {
   char *adr_hostname;
   void *adr_opaque;
   void (*adr_cb)(void *opaque, int status, const void *data);
+  int adr_cancelled;
   PP_Resource adr_res;
 };
 
@@ -778,21 +779,32 @@ dns_lookup_done(void *aux, int result)
 {
   asyncio_dns_req_t *adr = aux;
 
-  if(result) {
-    adr->adr_cb(adr->adr_opaque, ASYNCIO_DNS_STATUS_FAILED,
-                pepper_errmsg(result));
-  } else {
-    net_addr_t addr;
-    if(pepper_Resolver_to_net_addr(&addr, adr->adr_res)) {
-      adr->adr_cb(adr->adr_opaque, ASYNCIO_DNS_STATUS_FAILED, "Bad address");
+  if(!adr->adr_cancelled) {
+
+    if(result) {
+      adr->adr_cb(adr->adr_opaque, ASYNCIO_DNS_STATUS_FAILED,
+                  pepper_errmsg(result));
     } else {
-      adr->adr_cb(adr->adr_opaque, ASYNCIO_DNS_STATUS_COMPLETED, &addr);
+      net_addr_t addr;
+      if(pepper_Resolver_to_net_addr(&addr, adr->adr_res)) {
+        adr->adr_cb(adr->adr_opaque, ASYNCIO_DNS_STATUS_FAILED, "Bad address");
+      } else {
+        adr->adr_cb(adr->adr_opaque, ASYNCIO_DNS_STATUS_COMPLETED, &addr);
+      }
     }
   }
-
   ppb_core->ReleaseResource(adr->adr_res);
   free(adr->adr_hostname);
   free(adr);
+}
+
+/**
+ * Cancel a pending DNS lookup
+ */
+void
+asyncio_dns_cancel(asyncio_dns_req_t *adr)
+{
+  adr->adr_cancelled = 1;
 }
 
 /**

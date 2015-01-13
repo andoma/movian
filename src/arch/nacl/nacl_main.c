@@ -20,6 +20,7 @@
  */
 
 #include <unistd.h>
+#include <stdlib.h>
 
 #include "showtime.h"
 #include "arch/arch.h"
@@ -42,12 +43,16 @@
 #include "ppapi/c/ppb_input_event.h"
 #include "ppapi/c/ppb_instance.h"
 #include "ppapi/c/ppb_message_loop.h"
+#include "ppapi/c/ppb_messaging.h"
 #include "ppapi/c/ppb_graphics_3d.h"
 #include "ppapi/c/ppb_tcp_socket.h"
 #include "ppapi/c/ppb_udp_socket.h"
 #include "ppapi/c/ppb_var.h"
+#include "ppapi/c/ppb_var_dictionary.h"
+#include "ppapi/c/ppb_var_array_buffer.h"
 #include "ppapi/c/ppb_video_decoder.h"
 #include "ppapi/c/ppb_view.h"
+
 #include "ppapi/c/ppp.h"
 #include "ppapi/c/ppp_instance.h"
 #include "ppapi/c/ppp_input_event.h"
@@ -56,10 +61,17 @@
 #include "ui/glw/glw.h"
 #include "ppapi/gles2/gl2ext_ppapi.h"
 
+#include "nacl_dnd.h"
+#include "nacl.h"
+
+#include "media/media.h"
+
 PPB_GetInterface get_browser_interface;
 
 const PPB_Console *ppb_console;
 const PPB_Var *ppb_var;
+const PPB_VarDictionary *ppb_vardict;
+const PPB_VarArrayBuffer *ppb_vararraybuf;
 const PPB_Core *ppb_core;
 const PPB_View *ppb_view;
 const PPB_Instance *ppb_instance;
@@ -71,6 +83,7 @@ const PPB_NetAddress *ppb_netaddress;
 const PPB_TCPSocket *ppb_tcpsocket;
 const PPB_UDPSocket *ppb_udpsocket;
 const PPB_MessageLoop *ppb_messageloop;
+const PPB_Messaging *ppb_messaging;
 const PPB_FileSystem *ppb_filesystem;
 const PPB_FileRef *ppb_fileref;
 const PPB_FileIO *ppb_fileio;
@@ -84,9 +97,22 @@ PP_Resource g_persistent_fs;
 PP_Resource g_cache_fs;
 
 
+static hts_mutex_t nacl_jsrpc_mutex;
+static hts_cond_t nacl_jsrpc_cond;
+static int nacl_jsrpc_counter;
+
+typedef struct nacl_jsrpc {
+  LIST_ENTRY(nacl_jsrpc) nj_link;
+  int nj_reqid;
+  struct PP_Var nj_result;
+  
+} nacl_jsrpc_t;
+
+static LIST_HEAD(, nacl_jsrpc) nacl_jsrpcs;
+
+
 typedef struct nacl_glw_root {
   glw_root_t gr;
-
 } nacl_glw_root_t;
 
 PP_Resource nacl_3d_context;
@@ -119,6 +145,20 @@ arch_exit(void)
 
 static int is_hidden;
 static int initialized;
+
+
+/**
+ *
+ */
+static void
+send_running(void)
+{
+  struct PP_Var req = ppb_vardict->Create();
+  nacl_dict_set_str(req, "msgtype", "running");
+  ppb_messaging->PostMessage(g_Instance, req);
+  ppb_var->Release(req);
+}
+
 
 /**
  *
@@ -161,12 +201,13 @@ init_ui(void *data, int flags)
   glSetCurrentContextPPAPI(nacl_3d_context);
   TRACE(TRACE_DEBUG, "NACL", "Current 3d context set");
 
+  send_running();
+
   glw_opengl_init_context(&ngr->gr);
   glClearColor(0,0,0,0);
 
   mainloop(ngr);
 }
-
 
 
 /**
@@ -248,6 +289,9 @@ Instance_DidCreate(PP_Instance instance,  uint32_t argc,
 {
   g_Instance = instance;
   gconf.trace_level = TRACE_DEBUG;
+
+  hts_mutex_init(&nacl_jsrpc_mutex);
+  hts_cond_init(&nacl_jsrpc_cond, &nacl_jsrpc_mutex);
 
   if(!glInitializePPAPI(get_browser_interface))
     panic("Unable to initialize GL PPAPI");
@@ -578,6 +622,164 @@ Input_HandleInputEvent(PP_Instance instance, PP_Resource input_event)
   return PP_FALSE;
 }
 
+/**
+ *
+ */
+static struct PP_Var
+nacl_jsrpc(struct PP_Var req)
+{
+  hts_mutex_lock(&nacl_jsrpc_mutex);
+  int id = ++nacl_jsrpc_counter;
+
+  nacl_dict_set_int(req, "reqid", id);
+
+  nacl_jsrpc_t *nj = calloc(1, sizeof(nacl_jsrpc_t));
+  nj->nj_reqid = id;
+  LIST_INSERT_HEAD(&nacl_jsrpcs, nj, nj_link);
+
+  ppb_messaging->PostMessage(g_Instance, req);
+  ppb_var->Release(req);
+
+  while(nj->nj_reqid != 0)
+    hts_cond_wait(&nacl_jsrpc_cond, &nacl_jsrpc_mutex);
+
+  LIST_REMOVE(nj, nj_link);
+
+  hts_mutex_unlock(&nacl_jsrpc_mutex);
+
+  struct PP_Var result = nj->nj_result;
+  free(nj);
+
+  return result;
+}
+
+
+/**
+ *
+ */
+static void
+jsrpc_handle_reply(struct PP_Var reply)
+{
+  nacl_jsrpc_t *nj;
+  int reqid = nacl_var_dict_get_int64(reply, "reqid", 0);
+
+  hts_mutex_lock(&nacl_jsrpc_mutex);
+  LIST_FOREACH(nj, &nacl_jsrpcs, nj_link) {
+    if(nj->nj_reqid == reqid)
+      break;
+  }
+
+  nj->nj_result = reply;
+  ppb_var->AddRef(nj->nj_result);
+  nj->nj_reqid = 0;
+  hts_cond_broadcast(&nacl_jsrpc_cond);
+  hts_mutex_unlock(&nacl_jsrpc_mutex);
+}
+
+
+/**
+ *
+ */
+void
+nacl_fsinfo(uint64_t *size, uint64_t *avail, const char *fs)
+{
+  struct PP_Var request = ppb_vardict->Create();
+  nacl_dict_set_str(request, "msgtype", "fsinfo");
+  nacl_dict_set_str(request, "fs", fs);
+
+  struct PP_Var result = nacl_jsrpc(request);
+
+  int64_t s    = nacl_var_dict_get_int64(result, "size", 0);
+  int64_t used = nacl_var_dict_get_int64(result, "used", 0);
+
+  *size = s;
+  *avail = s - used;
+}
+
+
+/**
+ *
+ */
+void
+nacl_dict_set_str(struct PP_Var var_dict, const char *key, const char *value)
+{
+  struct PP_Var var_key = ppb_var->VarFromUtf8(key, strlen(key));
+  struct PP_Var var_value = ppb_var->VarFromUtf8(value, strlen(value));
+
+  ppb_vardict->Set(var_dict, var_key, var_value);
+  ppb_var->Release(var_key);
+  ppb_var->Release(var_value);
+}
+
+
+/**
+ *
+ */
+void
+nacl_dict_set_int(struct PP_Var var_dict, const char *key, int i)
+{
+  struct PP_Var var_key = ppb_var->VarFromUtf8(key, strlen(key));
+  struct PP_Var var_value = PP_MakeInt32(i);
+
+  ppb_vardict->Set(var_dict, var_key, var_value);
+  ppb_var->Release(var_key);
+}
+
+
+/**
+ *
+ */
+void
+nacl_dict_set_int64(struct PP_Var var_dict, const char *key, int64_t i)
+{
+  struct PP_Var var_key = ppb_var->VarFromUtf8(key, strlen(key));
+  struct PP_Var var_value = PP_MakeDouble(i);
+
+  ppb_vardict->Set(var_dict, var_key, var_value);
+  ppb_var->Release(var_key);
+}
+
+
+/**
+ *
+ */
+rstr_t *
+nacl_var_dict_get_str(struct PP_Var dict, const char *key)
+{
+  rstr_t *ret = NULL;
+  unsigned int len;
+  struct PP_Var var_key = ppb_var->VarFromUtf8(key, strlen(key));
+  struct PP_Var r = ppb_vardict->Get(dict, var_key);
+  ppb_var->Release(var_key);
+
+  const char *s = ppb_var->VarToUtf8(r, &len);
+  if(s != NULL)
+    ret = rstr_allocl(s, len);
+  ppb_var->Release(r);
+  return ret;
+}
+
+
+/**
+ *
+ */
+int64_t
+nacl_var_dict_get_int64(struct PP_Var dict, const char *key, int64_t def)
+{
+  struct PP_Var var_key = ppb_var->VarFromUtf8(key, strlen(key));
+  struct PP_Var r = ppb_vardict->Get(dict, var_key);
+  ppb_var->Release(var_key);
+
+  switch(r.type) {
+  case PP_VARTYPE_INT32:
+    return r.value.as_int;
+  case PP_VARTYPE_DOUBLE:
+    return r.value.as_double;
+  default:
+    return def;
+  }
+}
+
 
 /**
  *
@@ -585,25 +787,36 @@ Input_HandleInputEvent(PP_Instance instance, PP_Resource input_event)
 static void
 Messaging_HandleMessage(PP_Instance instance, struct PP_Var v)
 {
-  unsigned int len;
-
-  const char *s = ppb_var->VarToUtf8(v, &len);
-
-  if(s == NULL)
+  rstr_t *type = nacl_var_dict_get_str(v, "msgtype");
+  if(type == NULL)
     return;
 
-  // zero terminate the string
-  char *x = alloca(len + 1);
-  memcpy(x, s, len);
-  x[len] = 0;
-
-  if(!strcmp(x, "hidden")) {
+  const char *t = rstr_get(type);
+  if(!strcmp(t, "hidden")) {
     is_hidden = 1;
-  } else if(!strcmp(x, "visible")) {
+    media_global_hold(1, MP_HOLD_OS);
+  } else if(!strcmp(t, "visible")) {
     is_hidden = 0;
+    media_global_hold(0, MP_HOLD_OS);
+  } else if(!strcmp(t, "openurl")) {
+    rstr_t *url = nacl_var_dict_get_str(v, "url");
+    if(url != NULL)
+      event_dispatch(event_create_openurl(rstr_get(url)));
+    rstr_release(url);
+
+  } else if(!strcmp(t, "dndopenreply")) {
+    nacl_dnd_open_reply(v);
+  } else if(!strcmp(t, "dndreadreply")) {
+    nacl_dnd_read_reply(v);
+  } else if(!strcmp(t, "rpcreply")) {
+    jsrpc_handle_reply(v);
+
   } else {
-    TRACE(TRACE_DEBUG, "NACL", "Got unmapped event %s from browser", x);
+    TRACE(TRACE_DEBUG, "NACL", "Got unmapped event %s from browser", t);
   }
+
+  rstr_release(type);
+
 }
 
 
@@ -617,6 +830,8 @@ PPP_InitializeModule(PP_Module a_module_id, PPB_GetInterface get_browser)
 
   ppb_console            = get_browser(PPB_CONSOLE_INTERFACE);
   ppb_var                = get_browser(PPB_VAR_INTERFACE);
+  ppb_vardict            = get_browser(PPB_VAR_DICTIONARY_INTERFACE);
+  ppb_vararraybuf        = get_browser(PPB_VAR_ARRAY_BUFFER_INTERFACE);
   ppb_core               = get_browser(PPB_CORE_INTERFACE);
   ppb_view               = get_browser(PPB_VIEW_INTERFACE);
   ppb_graphics3d         = get_browser(PPB_GRAPHICS_3D_INTERFACE);
@@ -628,6 +843,7 @@ PPP_InitializeModule(PP_Module a_module_id, PPB_GetInterface get_browser)
   ppb_tcpsocket          = get_browser(PPB_TCPSOCKET_INTERFACE);
   ppb_udpsocket          = get_browser(PPB_UDPSOCKET_INTERFACE);
   ppb_messageloop        = get_browser(PPB_MESSAGELOOP_INTERFACE);
+  ppb_messaging          = get_browser(PPB_MESSAGING_INTERFACE);
   ppb_filesystem         = get_browser(PPB_FILESYSTEM_INTERFACE);
   ppb_fileref            = get_browser(PPB_FILEREF_INTERFACE);
   ppb_fileio             = get_browser(PPB_FILEIO_INTERFACE);

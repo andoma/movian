@@ -239,6 +239,8 @@ fs_close(fa_handle_t *fh)
   ppb_fileio->Close(fp->res);
 
   ppb_core->ReleaseResource(fp->res);
+
+  free(fh);
 }
 
 
@@ -447,6 +449,17 @@ fs_mkdir(fa_protocol_t *fap, const char *url)
 }
 
 
+/**
+ *
+ */
+static fa_err_code_t
+fs_fsinfo(struct fa_protocol *fap, const char *url, fa_fsinfo_t *ffi)
+{
+  nacl_fsinfo(&ffi->ffi_size, &ffi->ffi_avail, fap->fap_name);
+  return 0;
+}
+
+
 fa_protocol_t fa_protocol_cache = {
   .fap_name  = "cache",
   .fap_scan  = fs_scandir,
@@ -462,6 +475,7 @@ fa_protocol_t fa_protocol_cache = {
   .fap_rename = fs_rename,
   .fap_ftruncate = fs_ftruncate,
   .fap_makedir = fs_mkdir,
+  .fap_fsinfo = fs_fsinfo,
 };
 
 FAP_REGISTER(cache);
@@ -482,6 +496,7 @@ fa_protocol_t fa_protocol_persistent = {
   .fap_rename = fs_rename,
   .fap_ftruncate = fs_ftruncate,
   .fap_makedir = fs_mkdir,
+  .fap_fsinfo = fs_fsinfo,
 };
 
 FAP_REGISTER(persistent);

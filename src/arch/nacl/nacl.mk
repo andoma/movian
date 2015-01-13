@@ -6,6 +6,7 @@ SRCS += src/arch/nacl/nacl_main.c \
 	src/arch/nacl/nacl_audio.c \
 	src/arch/nacl/nacl_video.c \
 	src/arch/nacl/nacl_threads.c \
+	src/arch/nacl/nacl_dnd.c \
 	src/networking/net_pepper.c \
 	src/networking/asyncio_pepper.c \
 	src/ui/glw/glw_video_yuvp.c \

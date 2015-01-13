@@ -1,6 +1,6 @@
 /*
  *  Showtime Mediacenter
- *  Copyright (C) 2007-2013 Lonelycoder AB
+ *  Copyright (C) 2007-2014 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,26 +21,6 @@
 
 #pragma once
 
-#include "ppapi/c/pp_var.h"
+void nacl_dnd_open_reply(struct PP_Var var);
 
-const char *pepper_errmsg(int err);
-
-struct net_addr;
-struct rstr;
-
-int pepper_NetAddress_to_net_addr(struct net_addr *dst, int src);
-int pepper_Resolver_to_net_addr(struct net_addr *dst, int src);
-
-struct rstr *nacl_var_dict_get_str(struct PP_Var dict, const char *key);
-
-int64_t nacl_var_dict_get_int64(struct PP_Var dict, const char *key,
-                                int64_t def);
-
-void nacl_fsinfo(uint64_t *size, uint64_t *avail, const char *fs);
-
-void nacl_dict_set_str(struct PP_Var var_dict, const char *key,
-                       const char *value);
-
-void nacl_dict_set_int(struct PP_Var var_dict, const char *key, int i);
-
-void nacl_dict_set_int64(struct PP_Var var_dict, const char *key, int64_t i);
+void nacl_dnd_read_reply(struct PP_Var var);
