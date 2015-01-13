@@ -11,7 +11,7 @@
 
   "minimum_chrome_version": "38",
   "offline_enabled": true,
-  "permissions": ["unlimitedStorage",
+  "permissions": ["unlimitedStorage", "fullscreen",
                   {
                     "socket": [
                       "tcp-listen:*:*",
