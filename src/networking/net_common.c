@@ -480,12 +480,11 @@ tcp_connect(const char *hostname, int port,
   } else {
     if(net_resolve(hostname, &addr, &errmsg)) {
 
-      snprintf(errbuf, errlen, "%s", errmsg);
+      snprintf(errbuf, errlen, "Unable to resolve %s -- %s", hostname, errmsg);
 
       // If no dots in hostname, try to resolve using NetBIOS name lookup
       if(strchr(hostname, '.') != NULL || nmb_resolve(hostname, &addr))
         return NULL;
-
     }
   }
 
