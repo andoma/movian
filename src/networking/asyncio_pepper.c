@@ -539,6 +539,7 @@ tcp_written(void *aux, int result)
 {
   asyncio_fd_t *af = aux;
   if(result < 0) {
+    af->af_pending_write = 0;
     if(af->af_error_callback != NULL)
       af->af_error_callback(af->af_opaque, pepper_errmsg(result));
   } else {
