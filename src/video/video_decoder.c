@@ -301,7 +301,7 @@ vd_thread(void *aux)
       if(mc != mc_current) {
 	if(mc_current != NULL) {
 	  media_codec_deref(mc_current);
-          mp->mp_set_video_codec('none', NULL, NULL, NULL);
+          mp->mp_set_video_codec('none', NULL, mp->mp_video_frame_opaque, NULL);
         }
 
 	mc_current = media_codec_ref(mc);
