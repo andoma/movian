@@ -130,7 +130,7 @@ newframe(CVDisplayLinkRef displayLink, const CVTimeStamp *now,
 }
 
 - (void)glwMouseEvent:(int)type event:(NSEvent*)event {  
-  NSPoint loc = [event locationInWindow];
+  NSPoint loc = [self convertPointToBacking:[event locationInWindow]];
   glw_pointer_event_t gpe;
 
 #if 0
@@ -315,10 +315,10 @@ newframe(CVDisplayLinkRef displayLink, const CVTimeStamp *now,
   if(stopped)
     return;
 
-  NSSize s = [self bounds].size;
+  NSRect bb = [self convertRectToBacking:[self bounds]];
 
-  gr->gr_width = s.width;
-  gr->gr_height = s.height;
+  gr->gr_width = bb.size.width;
+  gr->gr_height = bb.size.height;
 
   NSOpenGLContext *cc = [self openGLContext];
   [cc makeCurrentContext];
@@ -456,6 +456,8 @@ newframe(CVDisplayLinkRef displayLink, const CVTimeStamp *now,
     NSLog(@"Unable to create a windowed OpenGL context.");
     exit(0);
   }
+
+  [self setWantsBestResolutionOpenGLSurface:YES];
 
   [wpf release];
   
