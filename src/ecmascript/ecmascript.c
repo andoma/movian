@@ -71,12 +71,15 @@ es_prop_to_int(duk_context *ctx, int obj_idx, const char *id, int def)
 rstr_t *
 es_prop_to_rstr(duk_context *ctx, int obj_idx, const char *id)
 {
+  rstr_t *r = NULL;
+
   if(!duk_is_object(ctx, obj_idx))
     return NULL;
 
   duk_get_prop_string(ctx, obj_idx, id);
-  const char *str = duk_to_string(ctx, -1);
-  rstr_t *r = rstr_alloc(str);
+  const char *str = duk_get_string(ctx, -1);
+  if(str != NULL)
+    r = rstr_alloc(str);
   duk_pop(ctx);
   return r;
 }
