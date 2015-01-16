@@ -52,6 +52,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "showtime.h"
 #include "htsmsg_xml.h"
 #include "htsbuf.h"
 #include "misc/str.h"
@@ -79,6 +80,7 @@ typedef struct xmlparser {
 
   char xp_errmsg[128];
   char *xp_errpos;
+  int xp_parser_err_line;
 
   char xp_trim_whitespace;
 
@@ -89,6 +91,7 @@ typedef struct xmlparser {
 #define xmlerr2(xp, pos, fmt, ...) do {                                 \
     snprintf((xp)->xp_errmsg, sizeof((xp)->xp_errmsg), fmt, ##__VA_ARGS__); \
     (xp)->xp_errpos = pos;                                               \
+    (xp)->xp_parser_err_line = __LINE__;                                \
   } while(0)
 
 
@@ -325,14 +328,30 @@ htsmsg_xml_parse_attrib(xmlparser_t *xp, htsmsg_t *msg, char *src,
     return src;
   }
 
-  attribname[attriblen] = 0;
-  payload[payloadlen] = 0;
+  if(attribname[attriblen] == '\n' || payload[payloadlen] == '\n') {
+    // If we overwrite line endings the line/column computation on error
+    // will fail, so for those rare cases, allocate normally
 
-  htsmsg_set_backing_store(msg, buf);
+    char *a = mystrndupa(attribname, attriblen);
 
-  htsmsg_field_t *f = add_xml_field(xp, msg, attribname, HMF_STR,
-                                    HMF_XML_ATTRIBUTE);
-  f->hmf_str = payload;
+    htsmsg_field_t *f = add_xml_field(xp, msg, a, HMF_STR,
+                                      HMF_XML_ATTRIBUTE | HMF_NAME_ALLOCED |
+                                      HMF_ALLOCED);
+    f->hmf_str = malloc(payloadlen + 1);
+    memcpy(f->hmf_str, payload, payloadlen);
+    f->hmf_str[payloadlen] = 0;
+
+  } else {
+
+    attribname[attriblen] = 0;
+    payload[payloadlen] = 0;
+
+    htsmsg_set_backing_store(msg, buf);
+
+    htsmsg_field_t *f = add_xml_field(xp, msg, attribname, HMF_STR,
+                                      HMF_XML_ATTRIBUTE);
+    f->hmf_str = payload;
+  }
 
   return src;
 }
@@ -395,10 +414,22 @@ htsmsg_xml_parse_tag(xmlparser_t *xp, htsmsg_t *parent, char *src,
       return NULL;
   }
 
-  htsmsg_set_backing_store(parent, buf);
-  tagname[taglen] = 0;
+  htsmsg_field_t *f;
 
-  htsmsg_field_t *f = add_xml_field(xp, parent, tagname, HMF_MAP, 0);
+  if(tagname[taglen] == '\n') {
+    // If we overwrite line endings the line/column computation on error
+    // will fail, so for those rare cases, allocate normally
+
+    char *t = mystrndupa(tagname, taglen);
+    f = add_xml_field(xp, parent, t, HMF_MAP, HMF_NAME_ALLOCED);
+
+  } else {
+    htsmsg_set_backing_store(parent, buf);
+
+    tagname[taglen] = 0;
+
+    f = add_xml_field(xp, parent, tagname, HMF_MAP, 0);
+  }
 
   if(!empty)
     src = htsmsg_xml_parse_cd(xp, m, f, src, buf);
@@ -529,8 +560,16 @@ decode_label_reference(xmlparser_t *xp,
   }
 
   l = src - s;
-  if(l < 1 || l > 1024)
+  if(l < 1) {
+    xmlerr2(xp, s, "Too short label reference");
     return NULL;
+  }
+
+  if(l > 1024) {
+    xmlerr2(xp, s, "Too long label reference");
+    return NULL;
+  }
+
   label = alloca(l + 1);
   memcpy(label, s, l);
   label[l] = 0;
@@ -620,7 +659,6 @@ htsmsg_xml_parse_cd0(xmlparser_t *xp,
     if(*src == '&' && !raw) {
       if(cc != NULL)
 	cc->cc_end = src;
-      cc = NULL;
 
       src++;
 
@@ -634,9 +672,17 @@ htsmsg_xml_parse_cd0(xmlparser_t *xp,
 	  xmlerr2(xp, start, "Invalid character reference");
 	  return NULL;
 	}
+        cc = NULL;
       } else {
 	/* Label references */
-	src = decode_label_reference(xp, ccq, src);
+	char *x = decode_label_reference(xp, ccq, src);
+
+        if(x != NULL) {
+          src = x;
+          cc = NULL;
+        } else {
+          continue;
+        }
       }
       continue;
     }
@@ -712,13 +758,12 @@ htsmsg_xml_parse_cd(xmlparser_t *xp, htsmsg_t *msg, htsmsg_field_t *field,
     }
   }
 
-  if(field != NULL && y == 1 && c > 0) {
+  cc = TAILQ_FIRST(&ccq);
+
+  if(field != NULL && y == 1 && c > 0 && *cc->cc_end != '\n') {
     /* One segment UTF-8 (or 7bit ASCII),
        use data directly from source */
 
-    cc = TAILQ_FIRST(&ccq);
-
-    assert(cc != NULL);
     assert(TAILQ_NEXT(cc, cc_link) == NULL);
 
     field->hmf_str = cc->cc_start;
@@ -870,6 +915,7 @@ htsmsg_xml_deserialize_buf(buf_t *buf, char *errbuf, size_t errbufsize)
   xp.xp_errmsg[0] = 0;
   xp.xp_encoding = XML_ENCODING_UTF8;
   xp.xp_trim_whitespace = 1;
+  xp.xp_parser_err_line = 0;
 
   LIST_INIT(&xp.xp_namespaces);
   src = buf->b_ptr;
@@ -890,8 +936,10 @@ htsmsg_xml_deserialize_buf(buf_t *buf, char *errbuf, size_t errbufsize)
 
   get_line_col(buf->b_ptr, buf->b_size, xp.xp_errpos, &line, &col);
 
-  snprintf(errbuf, errbufsize, "%s at line %d column %d",
-           xp.xp_errmsg, line, col);
+  snprintf(errbuf, errbufsize,
+           "%s at line %d column %d (XML error %d at byte %d)",
+           xp.xp_errmsg, line, col, xp.xp_parser_err_line,
+           (int)((void *)xp.xp_errpos - (void *)buf->b_ptr));
 
   /* Remove any odd chars inside of errmsg */
   for(i = 0; i < errbufsize; i++) {
