@@ -1683,3 +1683,32 @@ deescape_cstyle(char *src)
   }
   *dst = 0;
 }
+
+
+/**
+ *
+ */
+void
+rgbstr_to_floatvec(const char *s, float *out)
+{
+  int nibbles[6], n;
+
+  for(n = 0; s[n] && n < 6; n++)
+    nibbles[n] = hexnibble(s[n]);
+
+  if(n >= 6) {
+    out[0] = (nibbles[0] << 4 | nibbles[1]) / 255.0;
+    out[1] = (nibbles[2] << 4 | nibbles[3]) / 255.0;
+    out[2] = (nibbles[4] << 4 | nibbles[5]) / 255.0;
+  } else if(n >= 3) {
+
+    out[0] = nibbles[0] / 15.0f;
+    out[1] = nibbles[1] / 15.0f;
+    out[2] = nibbles[2] / 15.0f;
+  } else {
+    out[0] = 0;
+    out[1] = 0;
+    out[2] = 0;
+  }
+
+}

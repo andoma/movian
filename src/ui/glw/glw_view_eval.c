@@ -462,6 +462,38 @@ token2rstr(token_t *t)
 }
 
 
+/**
+ *
+ */
+static token_t *
+token_rgbstr_to_vec(token_t *t, glw_view_eval_context_t *ec)
+{
+  const char *s, *s0;
+  int n = 0;
+  switch(t->type) {
+
+  case TOKEN_RSTRING:
+    s = rstr_get(t->t_rstring);
+    if(s[0] != '#')
+      return t;
+    s++;
+    s0 = s;
+    for(; *s; s++, n++) {
+      if(hexnibble(*s) == -1)
+        return t;
+    }
+    if(n == 3 || n == 6) {
+      t = eval_alloc(t, ec, TOKEN_VECTOR_FLOAT);
+      t->t_elements = 3;
+      rgbstr_to_floatvec(s0, t->t_float_vector);
+    }
+    return t;
+
+  default:
+    return t;
+  }
+}
+
 
 /**
  *
@@ -485,6 +517,9 @@ eval_op(glw_view_eval_context_t *ec, struct token *self)
 
   if(b->type == TOKEN_VOID)
     b = &t_zero;
+
+  a = token_rgbstr_to_vec(a, ec);
+  b = token_rgbstr_to_vec(b, ec);
 
   switch(self->type) {
   case TOKEN_ADD:
@@ -559,18 +594,19 @@ eval_op(glw_view_eval_context_t *ec, struct token *self)
     r->t_float = f_fn(token2float(ec, a), token2float(ec, b));
 
   } else if(a->type == TOKEN_VECTOR_FLOAT && b->type == TOKEN_VECTOR_FLOAT) {
+
     if(a->t_elements != b->t_elements)
-      return glw_view_seterr(ec->ei, self, 
+      return glw_view_seterr(ec->ei, self,
 			      "Arithmetic op is invalid for "
 			      "non-equal sized vectors");
-    
+
     r = eval_alloc(self, ec, TOKEN_VECTOR_FLOAT);
 
     r->t_elements = a->t_elements;
     for(i = 0; i < a->t_elements; i++)
       r->t_float_vector[i] = f_fn(a->t_float_vector[i],
                                   b->t_float_vector[i]);
-    
+
   } else if(a->type == TOKEN_VECTOR_FLOAT && token_floatish(b)) {
 
     float v = token2float(ec, b);
