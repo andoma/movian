@@ -1022,12 +1022,6 @@ check_autofocus_limit(glw_t *n, glw_t *o)
   for(x = o; x != NULL; x = x->glw_parent) {
     if(x->glw_flags & GLW_MARK)
       break;
-
-    if(x->glw_flags2 & GLW2_AUTO_FOCUS_LIMIT) {
-      // Found limit in old tree, we're done
-      limit = 1;
-      break;
-    }
   }
 
   // Scan new tree up to intersection point
