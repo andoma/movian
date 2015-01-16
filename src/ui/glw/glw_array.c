@@ -445,8 +445,8 @@ glw_array_render(glw_t *w, const glw_rctx_t *rc)
   rc1 = rc0;
 
   glw_reposition(&rc1,
-		 a->border[0], rc->rc_height - a->border[1],
-		 rc->rc_width  - a->border[2], a->border[3]);
+		 a->border[0], rc0.rc_height - a->border[1],
+		 rc0.rc_width  - a->border[2], a->border[3]);
 
   int width = rc1.rc_width;
   int height = rc1.rc_height;
