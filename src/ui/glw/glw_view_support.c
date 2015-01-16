@@ -409,7 +409,7 @@ token2name(token_t *t)
 
     for(i = 0; i < t->t_elements; i++)
       snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "%f ", 
-	       t->t_float_vector_int[i]);
+	       t->t_float_vector[i]);
 
     snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "]");
     

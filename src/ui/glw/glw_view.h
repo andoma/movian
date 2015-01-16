@@ -149,7 +149,7 @@ typedef struct token {
       int how;  // same as PROP_SET_ ...
     } f;
 
-    float float_vec_int[4];
+    float float_vec[4];
 
     struct {
       const struct token_func   *func;
@@ -187,7 +187,7 @@ typedef struct token {
 #define t_rstrtype        u.rstr.type
 #define t_float           u.f.value
 #define t_float_how       u.f.how
-#define t_float_vector_int u.float_vec_int
+#define t_float_vector    u.float_vec
 #define t_int             u.ival
 #define t_func            u.func
 #define t_func_arg        u.farg

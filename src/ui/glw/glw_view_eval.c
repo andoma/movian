@@ -568,9 +568,9 @@ eval_op(glw_view_eval_context_t *ec, struct token *self)
 
     r->t_elements = a->t_elements;
     for(i = 0; i < a->t_elements; i++)
-      r->t_float_vector_int[i] = f_fn(a->t_float_vector_int[i],
-				      b->t_float_vector_int[i]);
-
+      r->t_float_vector[i] = f_fn(a->t_float_vector[i],
+                                  b->t_float_vector[i]);
+    
   } else if(a->type == TOKEN_VECTOR_FLOAT && token_floatish(b)) {
 
     float v = token2float(ec, b);
@@ -579,7 +579,7 @@ eval_op(glw_view_eval_context_t *ec, struct token *self)
 
     r->t_elements = a->t_elements;
     for(i = 0; i < a->t_elements; i++)
-      r->t_float_vector_int[i] = f_fn(a->t_float_vector_int[i], v);
+      r->t_float_vector[i] = f_fn(a->t_float_vector[i], v);
 
   } else if(token_floatish(a) && b->type == TOKEN_VECTOR_FLOAT) {
 
@@ -589,7 +589,7 @@ eval_op(glw_view_eval_context_t *ec, struct token *self)
 
     r->t_elements = b->t_elements;
     for(i = 0; i < b->t_elements; i++)
-      r->t_float_vector_int[i] = f_fn(v, b->t_float_vector_int[i]);
+      r->t_float_vector[i] = f_fn(v, b->t_float_vector[i]);
   } else {
     r = eval_alloc(self, ec, TOKEN_VOID);
   }
@@ -2426,7 +2426,7 @@ make_vector(glw_view_eval_context_t *ec, token_t *t)
   for(i = t->t_num_args - 1; i >= 0; i--) {
     if((a = token_resolve(ec, eval_pop(ec))) == NULL)
       return -1;
-    r->t_float_vector_int[i] = token2float(ec, a);
+    r->t_float_vector[i] = token2float(ec, a);
   }
   eval_push(ec, r);
   return 0;
