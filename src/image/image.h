@@ -218,3 +218,9 @@ image_find_component(image_t *img, image_component_type_t type)
       return &img->im_components[i];
   return NULL;
 }
+
+
+/**
+ * Dominant color computation
+ */
+void dominant_color(const struct pixmap *pm);

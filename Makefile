@@ -114,6 +114,7 @@ SRCS +=	src/image/image.c \
 	src/image/jpeg.c \
 	src/image/vector.c \
 	src/image/image_decoder_libav.c \
+	src/image/dominantcolor.c \
 
 ##############################################################
 # Misc support
