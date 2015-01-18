@@ -1771,8 +1771,8 @@ fa_url_get_last_component_i(fa_protocol_t *fap, const char *filename,
   if(dstlen == 0)
     return;
 
-  if(fap != NULL) {
-    assert(filename != NULL);
+  if(filename != NULL) {
+    assert(fap != NULL);
     if(fap->fap_get_last_component != NULL) {
       fap->fap_get_last_component(fap, filename, dst, dstlen);
       return;
