@@ -289,8 +289,21 @@ vd_thread(void *aux)
 
       mp->mp_video_frame_deliver(NULL, mp->mp_video_frame_opaque);
 
-      if(mc_current != NULL)
+      if(mc_current != NULL) {
         mc_current->flush(mc_current, vd);
+
+
+        // Need to release here because during end of video playback.
+        // The only thing holding reference to the codec is this
+        // 'mc_current'. So when the demuxer layer have released
+        // its references and the pipe is empty and a flush is sent
+        // we should also release the codec (causing it to close).
+        // Otherwise we will keeping a reference and another stream
+        // opening a new instance will fail to allocate resources.
+        // see #2495
+        media_codec_deref(mc_current);
+        mc_current = NULL;
+      }
 
       mp->mp_video_frame_deliver(NULL, mp->mp_video_frame_opaque);
       if(mp->mp_seek_video_done != NULL)
