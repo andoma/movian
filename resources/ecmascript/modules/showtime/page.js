@@ -18,15 +18,17 @@ function Item(page) {
   this.eventhandlers = {};
 }
 
-Duktape.fin(Item.prototype, function(x) {
-  if(this.mlv)
-    Showtime.videoMetadataUnbind(this.mlv);
-});
-
 Item.prototype.bindVideoMetadata = function(obj) {
   if(this.mlv)
-    Showtime.videoMetadataUnbind(this.mlv);
+    Showtime.resourceDestroy(this.mlv);
   this.mlv = Showtime.videoMetadataBind(this.root, this.root.url, obj);
+}
+
+Item.prototype.unbindVideoMetadata = function(obj) {
+  if(this.mlv) {
+    Showtime.resourceDestroy(this.mlv);
+    delete this.mlv
+  }
 }
 
 Item.prototype.toString = function() {

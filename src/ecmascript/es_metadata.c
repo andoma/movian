@@ -24,6 +24,7 @@ es_mlv_destroy(es_resource_t *eres)
 {
   es_mlv_t *em = (es_mlv_t *)eres;
   mlv_unbind(em->mlv, 0);
+  es_resource_unlink(eres);
 }
 
 
