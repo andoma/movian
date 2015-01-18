@@ -356,19 +356,23 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
   if(mb != NULL && mb != MB_SPECIAL_EOF)
     media_buf_free_unlocked(mp, mb);
 
-  // Compute stop position (in percentage of video length)
+  if(fctx->duration != AV_NOPTS_VALUE) {
 
-  int spp = fctx->duration > 0 ? (mp->mp_seek_base * 100 / fctx->duration) : 0;
+    // Compute stop position (in percentage of video length)
 
-  if(spp >= video_settings.played_threshold || event_is_type(e, EVENT_EOF)) {
-    playinfo_set_restartpos(canonical_url, -1, 0);
-    playinfo_register_play(canonical_url, 1);
-    TRACE(TRACE_DEBUG, "Video",
-	  "Playback reached %d%%, counting as played (%s)",
-	  spp, canonical_url);
-  } else if(last_timestamp_presented != PTS_UNSET) {
-    playinfo_set_restartpos(canonical_url, last_timestamp_presented / 1000,
-			    0);
+    int spp =
+      fctx->duration > 0 ? (mp->mp_seek_base * 100 / fctx->duration) : 0;
+
+    if(spp >= video_settings.played_threshold || event_is_type(e, EVENT_EOF)) {
+      playinfo_set_restartpos(canonical_url, -1, 0);
+      playinfo_register_play(canonical_url, 1);
+      TRACE(TRACE_DEBUG, "Video",
+            "Playback reached %d%%, counting as played (%s)",
+            spp, canonical_url);
+    } else if(last_timestamp_presented != PTS_UNSET) {
+      playinfo_set_restartpos(canonical_url, last_timestamp_presented / 1000,
+                              0);
+    }
   }
   return e;
 }
