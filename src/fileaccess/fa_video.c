@@ -622,12 +622,14 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
                      video_queue_t *vq, fa_handle_t *fh,
 		     const video_args_t *va0)
 {
+  sub_scanner_t *ss = NULL;
   video_args_t va = *va0;
 
   if(!(va.flags & BACKEND_VIDEO_NO_FILE_HASH)) {
     compute_hash(fh, &va);
     if(!va.hash_valid)
-      TRACE(TRACE_DEBUG, "Video", "Unable to compute opensub hash");
+      TRACE(TRACE_DEBUG, "Video",
+            "Unable to compute opensub hash, stream probably not seekable");
   }
 
   AVIOContext *avio = fa_libav_reopen(fh, 0);
@@ -690,12 +692,14 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
 #endif
 
   /**
-   * Create subtitle scanner
+   * Create subtitle scanner.
+   * Only scan for subs if we can compute hash or if duration is valid
    */
-  sub_scanner_t *ss =
-    sub_scanner_create(url, mp->mp_prop_subtitle_tracks, &va,
-		       fctx->duration != AV_NOPTS_VALUE ? 
-                       fctx->duration / 1000000 : 0);
+  if(fctx->duration != AV_NOPTS_VALUE || va.hash_valid) {
+    ss = sub_scanner_create(url, mp->mp_prop_subtitle_tracks, &va,
+                            fctx->duration != AV_NOPTS_VALUE ?
+                            fctx->duration / 1000000 : 0);
+  }
 
   /**
    * Init codec contexts
@@ -835,7 +839,8 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
 
   media_format_deref(fw);
 
-  sub_scanner_destroy(ss);
+  if(ss != NULL)
+    sub_scanner_destroy(ss);
 
 #if ENABLE_METADATA
   if(md != NULL)
