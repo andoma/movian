@@ -39,6 +39,7 @@
 #include "avahi.h"
 #include "sd.h"
 
+static AvahiSimplePoll *asp;
 
 static struct service_instance_list services;
 
@@ -56,6 +57,7 @@ typedef struct service_aux {
 static void
 client_state_change(AvahiClient *c, AvahiClientState state, void *aux)
 {
+  TRACE(TRACE_DEBUG, "AVAHI", "Client state change %d", state);
 }
 
 
@@ -346,7 +348,7 @@ client_callback(AvahiClient *c, AvahiClientState state, void *userdata)
   assert(c);
 
   /* Called whenever the client or server state changes */
-
+  TRACE(TRACE_DEBUG, "AVAHI", "State %d", state);
   switch (state) {
   case AVAHI_CLIENT_S_RUNNING:
 
@@ -384,13 +386,16 @@ client_callback(AvahiClient *c, AvahiClientState state, void *userdata)
 }
 #endif
 
+#if STOS
+static int hostname_changed;
+#endif
+
 /**
  *
  */
 static void *
 avahi_thread(void *aux)
 {
-  AvahiSimplePoll *asp = avahi_simple_poll_new();
   const AvahiPoll *ap = avahi_simple_poll_get(asp);
 
   AvahiClient *c;
@@ -406,7 +411,20 @@ avahi_thread(void *aux)
   avahi_client_new(ap, AVAHI_CLIENT_NO_FAIL, client_callback, NULL, NULL);
 #endif
 
-  while((avahi_simple_poll_iterate(asp, -1)) != -1) {}
+#if STOS
+  avahi_client_set_host_name(c, gconf.system_name);
+#endif
+
+  while((avahi_simple_poll_iterate(asp, -1)) != -1) {
+#if STOS
+    if(avahi_client_get_state(c) !=  AVAHI_CLIENT_S_REGISTERING) {
+      if(hostname_changed) {
+        hostname_changed = 0;
+        avahi_client_set_host_name(c, gconf.system_name);
+      }
+    }
+#endif
+  }
 
   return NULL;
 }
@@ -418,6 +436,22 @@ avahi_thread(void *aux)
 void
 avahi_init(void)
 {
+  asp = avahi_simple_poll_new();
+
   hts_thread_create_detached("AVAHI", avahi_thread, NULL,
 			     THREAD_PRIO_BGTASK);
 }
+
+#if STOS
+
+/**
+ *
+ */
+void
+avahi_update_hostname(void)
+{
+  hostname_changed = 1;
+  if(asp != NULL)
+    avahi_simple_poll_wakeup(asp);
+}
+#endif

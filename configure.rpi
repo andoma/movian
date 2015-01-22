@@ -74,6 +74,11 @@ if [ -n "$SYSROOT" ]; then
     echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags gio-2.0`
     echo "Using gio:             `pkg-config --modversion gio-2.0`"
 
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs avahi-client`
+    echo >>${CONFIG_MAK} "CFLAGS_AVAHI += "`pkg-config --cflags avahi-client`
+    echo "Using AVAHI client:    `pkg-config --modversion avahi-client`"
+    enable avahi
+
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lbz2"
 
     enable connman

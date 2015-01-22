@@ -1186,6 +1186,11 @@ static void
 set_system_name(void *opaque, const char *str)
 {
   snprintf(gconf.system_name, sizeof(gconf.system_name), "%s", str);
+#if STOS && ENABLE_AVAHI
+  extern void avahi_update_hostname(void);
+  avahi_update_hostname();
+#endif
+
 }
 
 
@@ -1253,29 +1258,13 @@ settings_init(void)
   // Add configurable system name
 
   htsmsg_t *s = htsmsg_store_load("netinfo") ?: htsmsg_create_map();
-  
-  const char *sysname = NULL;
-#if !defined(STOS) && (defined(linux) || defined(__APPLE__))
-  char hname[64];
-  if(!gethostname(hname, sizeof(hname)))
-    sysname = hname;
-#endif
-
-  if(sysname == NULL)
-    sysname = showtime_get_system_type();
-
-  
-
-  char default_name[64];
-  snprintf(default_name, sizeof(default_name), "Showtime on %s", sysname);
-	   
 
   setting_create(SETTING_STRING, gconf.settings_network,
 		 SETTINGS_INITIAL_UPDATE | SETTINGS_EMPTY_IS_DEFAULT,
                  SETTING_TITLE(_p("System name")),
-		 SETTING_VALUE(default_name),
+		 SETTING_VALUE("Showtime"),
                  SETTING_CALLBACK(set_system_name, NULL),
-                 SETTING_HTSMSG("systemname", s, "netinfo"),
+                 SETTING_HTSMSG("sysname", s, "netinfo"),
                  NULL);
 
 

@@ -6,8 +6,8 @@ build()
     TOOLCHAIN_URL=http://www.lonelycoder.com/download/arm-unknown-linux-gnueabi.tar.gz
     TOOLCHAIN="${WORKINGDIR}/arm-unknown-linux-gnueabi"
 
-    SYSROOT_URL=http://www.lonelycoder.com/download/rpi_alpha_sysroot.tar.gz
-    SYSROOT="${WORKINGDIR}/rpi_alpha_sysroot"
+    SYSROOT_URL=http://www.lonelycoder.com/download/rpi_sysroot-1.0-13-ga8630c9.tar.gz
+    SYSROOT="${WORKINGDIR}/rpi_sysroot-1.0-13-ga8630c9"
 
   
     cleanup() {
