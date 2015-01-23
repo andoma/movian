@@ -224,7 +224,7 @@ widget(container_x, {
       TYPED_ITEM($self.icon, $self.type, $self.title, $self.url);
     });
     
-    DIVIDER("Audio", !count($view.music));
+    DIVIDER("Music", !count($view.music));
 
     cloner($view.music, container_z, {
       TYPED_ITEM($self.icon, $self.type, $self.title, $self.url);
