@@ -1,0 +1,4 @@
+Add option "Erase all playback info" in page menu.
+
+This will remove resume points, play count, etc for all items
+in the current folder
