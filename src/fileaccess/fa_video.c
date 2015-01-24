@@ -807,9 +807,13 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
 
   mp->mp_start_time = fctx->start_time;
 
+  int flags = MP_CAN_PAUSE;
+
+  if(fctx->duration != PTS_UNSET)
+    flags |= MP_CAN_SEEK;
+
   // Start it
-  mp_configure(mp, MP_CAN_SEEK | MP_CAN_PAUSE,
-	       MP_BUFFER_DEEP, fctx->duration, "video");
+  mp_configure(mp, flags, MP_BUFFER_DEEP, fctx->duration, "video");
 
   if(!(va.flags & BACKEND_VIDEO_NO_AUDIO))
     mp_become_primary(mp);
