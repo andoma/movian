@@ -34,8 +34,6 @@
 #include "showtime.h"
 #include "playinfo.h"
 
-#define METADATA_VERSION_STR "1"
-
 static HTS_MUTEX_DECL(mip_mutex);
 
 static void update_by_url(const char *url, int dolock);
