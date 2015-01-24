@@ -1,0 +1,7 @@
+Raspberry Pi: Add mDNS / Bonjour support
+
+We now announce our systems hostname when running STOS so you
+can reach your Raspberry Pi on your network by using
+"showtime.local" in your browser or SSH client.
+
+The announced name can be changed in Settings -> Network
