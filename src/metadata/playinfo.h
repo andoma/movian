@@ -36,3 +36,5 @@ void playinfo_bind_url_to_prop(const char *url, struct prop *parent);
 
 void playinfo_mark_urls_as(const char **urls, int num_urls, int seen);
 
+void playinfo_erase_urls(const char **urls, int num_urls);
+

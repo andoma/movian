@@ -279,3 +279,24 @@ playinfo_mark_urls_as(const char **urls, int num_urls, int seen)
     update_by_url(urls[j], 1);
   }
 }
+
+
+/**
+ *
+ */
+void
+playinfo_erase_urls(const char **urls, int num_urls)
+{
+  for(int j = 0; j < num_urls; j++) {
+    kv_url_opt_set(urls[j], KVSTORE_DOMAIN_SYS, "playcount",
+                   KVSTORE_SET_VOID);
+
+    kv_url_opt_set(urls[j], KVSTORE_DOMAIN_SYS, "lastplayed",
+                   KVSTORE_SET_VOID);
+
+    kv_url_opt_set(urls[j], KVSTORE_DOMAIN_SYS, "restartposition",
+                   KVSTORE_SET_VOID);
+
+    update_by_url(urls[j], 1);
+  }
+}

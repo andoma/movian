@@ -101,6 +101,7 @@ struct deco_browse {
   struct setting *db_setting_mode;
   struct setting *db_setting_mark_all_as_seen;
   struct setting *db_setting_mark_all_as_unseen;
+  struct setting *db_setting_erase_playinfo;
 };
 
 
@@ -968,6 +969,7 @@ deco_browse_destroy(deco_browse_t *db)
   setting_destroy(db->db_setting_mode);
   setting_destroy(db->db_setting_mark_all_as_seen);
   setting_destroy(db->db_setting_mark_all_as_unseen);
+  setting_destroy(db->db_setting_erase_playinfo);
   prop_unsubscribe(db->db_sub);
   prop_ref_dec(db->db_prop_contents);
   prop_ref_dec(db->db_prop_model);
@@ -1052,6 +1054,23 @@ decorated_browse_destroy(deco_browse_t *db)
   hts_mutex_unlock(&deco_mutex);
 }
 
+/**
+ *
+ */
+static void
+erase_playinfo(void *opaque)
+{
+  deco_browse_t *db = opaque;
+  deco_item_t *di;
+  const char **urls = malloc(sizeof(const char *) * db->db_total);
+
+  int i = 0;
+  TAILQ_FOREACH(di, &db->db_items, di_link)
+    urls[i++] = rstr_get(di->di_url);
+
+  playinfo_erase_urls(urls, db->db_total);
+  free(urls);
+}
 
 /**
  *
@@ -1189,6 +1208,15 @@ decorated_browse_create(prop_t *model, struct prop_nf *pnf, prop_t *items,
                    SETTING_TITLE(_p("Mark all as unseen")),
                    SETTING_COURIER(deco_courier),
                    SETTING_CALLBACK(mark_all_as_unseen, db),
+                   NULL);
+
+
+  db->db_setting_erase_playinfo =
+    setting_create(SETTING_ACTION, options,
+                   SETTINGS_INITIAL_UPDATE | SETTINGS_RAW_NODES,
+                   SETTING_TITLE(_p("Erase all playback info")),
+                   SETTING_COURIER(deco_courier),
+                   SETTING_CALLBACK(erase_playinfo, db),
                    NULL);
 
   hts_mutex_unlock(&deco_mutex);
