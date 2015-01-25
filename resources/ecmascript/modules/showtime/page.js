@@ -239,8 +239,8 @@ Page.prototype.appendItem = function(url, type, metadata) {
     if(url.indexOf('videoparams:') == 0) {
       try {
         var x = JSON.parse(url.substring(12));
-        if(typeof(x.canonical_url) == 'string') {
-          metabind_url = x.canonical_url;
+        if(typeof(x.canonicalUrl) == 'string') {
+          metabind_url = x.canonicalUrl;
         } else {
           for(var i = 0; i < x.sources.length; i++) {
             if(typeof(x.sources[i].url) == 'string') {
