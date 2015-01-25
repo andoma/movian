@@ -373,7 +373,14 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
       playinfo_set_restartpos(canonical_url, last_timestamp_presented / 1000,
                               0);
     }
+  } else {
+    /*
+     * Hack to wipe out bad records from the db. See #2503
+     * Remove some time in the future.
+     */
+    playinfo_set_restartpos(canonical_url, -1, 0);
   }
+
   return e;
 }
 
