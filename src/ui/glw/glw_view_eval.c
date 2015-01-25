@@ -5051,14 +5051,17 @@ glwf_sinewave(glw_view_eval_context_t *ec, struct token *self,
     return -1;
 
   float p = token2float(ec, a);
-  int64_t v64 = gr->gr_time_sec / p * 4096.0;
+  float inc = M_PI * 2  / (p * gr->gr_framerate);
 
-  int v = v64 & 0xfff;
+  self->t_extra_float += inc;
+
+  if(self->t_extra_float >= 360)
+    self->t_extra_float -= 360;
 
   glw_need_refresh(gr, 0);
 
   r = eval_alloc(self, ec, TOKEN_FLOAT);
-  r->t_float = sin(v * M_PI * 2.0 / 4096.0);
+  r->t_float = sin(self->t_extra_float);
   eval_push(ec, r);
   ec->dynamic_eval |= GLW_VIEW_EVAL_LAYOUT;
   return 0;
