@@ -112,7 +112,10 @@ var plugin = {
   path: Plugin.path,
 
   getDescriptor: function() {
-    return JSON.parse(Plugin.manifest);
+    if(this.descriptor === undefined)
+      this.descriptor = JSON.parse(Plugin.manifest);
+
+    return this.descriptor;
   },
 
   getAuthCredentials: Showtime.getAuthCredentials,
