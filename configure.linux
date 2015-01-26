@@ -118,7 +118,6 @@ for opt do
   ;;
   --enable-all)
 	  enable libgme
-	  enable libsidplay2
   ;;
   --glw-frontend=*) GLWFRONTEND="$optval"
   ;;
@@ -572,19 +571,6 @@ if enabled libgme; then
     check_header "gme/gme.h" || fatal "libgme" "Missing include file gme/gme.h"
     check_lib    "gme"       || fatal "libgme" "Unable to link with libgme"
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lgme"
-fi
-
-
-#
-# libsidplay2 and libresid-builder
-#
-if enabled libsidplay2; then
-    check_header_cpp "sidplay/sidplay2.h" || fatal "libsidplay2" "Missing include file sidplay/sidplay2.h"
-
-    check_header_cpp "sidplay/builders/resid.h" || fatal "libsidplay2" "Missing include file sidplay/builders/resid.h"
-
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lsidplay2 -lresid-builder"
-
 fi
 
 

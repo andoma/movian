@@ -60,7 +60,6 @@ CONFIG_LIST="
  spidermonkey
  libxxf86vm
  libxrandr
- libsidplay2
  httpserver
  timegm
  inotify

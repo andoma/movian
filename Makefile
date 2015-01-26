@@ -387,14 +387,6 @@ SRCS-${CONFIG_SPOTIFY} += src/backend/spotify/spotify.c
 BUNDLES-$(CONFIG_SPOTIFY) += resources/spotify
 
 ##############################################################
-# libsidplay2
-##############################################################
-
-SRCS-${CONFIG_LIBSIDPLAY2} += \
-	src/backend/sid/sid_wrapper.cpp \
-	src/backend/sid/sid.c
-
-##############################################################
 # GLW user interface
 ##############################################################
 SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
