@@ -4039,7 +4039,7 @@ spotify_thread(void *aux)
 	if(spotify_mp == NULL)
 	  break;
 
-	mp_flush(spotify_mp, 0);
+	mp_flush(spotify_mp);
 	
 	seek_pos = sm->sm_int;
 	f_sp_session_player_seek(s, sm->sm_int);
@@ -4248,7 +4248,7 @@ be_spotify_play(const char *url, media_pipe_t *mp,
        event_is_action(e, ACTION_STOP) ||
        event_is_type  (e, EVENT_PLAYQUEUE_JUMP)) {
     skip:      
-      mp_flush(mp, 0);
+      mp_flush(mp);
       break;
       
     } else if(event_is_type(e, EVENT_SEEK)) {

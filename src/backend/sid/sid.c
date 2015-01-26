@@ -88,7 +88,6 @@ be_sid2player_play(const char *url0, media_pipe_t *mp,
   if(player == NULL)
     return NULL;
 
-  mp_set_playstatus_by_hold(mp, hold, NULL);
   mp->mp_audio.mq_stream = 0;
   mp_configure(mp, MP_CAN_PAUSE, MP_BUFFER_NONE, 0, "tracks");
   mp_become_primary(mp);
@@ -151,13 +150,13 @@ be_sid2player_play(const char *url0, media_pipe_t *mp,
     }
 
     if(event_is_type(e, EVENT_PLAYQUEUE_JUMP)) {
-      mp_flush(mp, 0);
+      mp_flush(mp);
       break;
 
     } else if(event_is_action(e, ACTION_SKIP_BACKWARD) ||
 	      event_is_action(e, ACTION_SKIP_FORWARD) ||
 	      event_is_action(e, ACTION_STOP)) {
-      mp_flush(mp, 0);
+      mp_flush(mp);
       break;
     }
     event_release(e);

@@ -1358,7 +1358,7 @@ zap_channel(htsp_connection_t *hc, htsp_subscription_t *hs,
   hts_mutex_lock(&hc->hc_subscription_mutex);
   hs->hs_sid = atomic_add_and_fetch(&hc->hc_sid_generator, 1);
 
-  mp_flush(hs->hs_mp, 1);
+  mp_flush(hs->hs_mp);
   hts_mutex_unlock(&hc->hc_subscription_mutex);
 
   m = htsmsg_create_map();
@@ -1832,7 +1832,7 @@ be_htsp_playvideo(const char *url, media_pipe_t *mp,
 
   e = htsp_subscriber(hc, hs, errbuf, errlen, primary, va->priority, vq, url);
 
-  mp_flush(mp, 0);
+  mp_flush(mp);
   mp_shutdown(mp);
 
   hts_mutex_lock(&hc->hc_subscription_mutex);

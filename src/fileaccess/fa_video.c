@@ -127,7 +127,7 @@ video_seek(AVFormatContext *fctx, media_pipe_t *mp, media_buf_t **mbp,
   mp->mp_video.mq_seektarget = pos;
   mp->mp_audio.mq_seektarget = pos;
 
-  mp_flush(mp, 0);
+  mp_flush(mp);
   
   if(*mbp != NULL && *mbp != MB_SPECIAL_EOF)
     media_buf_free_unlocked(mp, *mbp);
@@ -843,7 +843,7 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
 
   mp->mp_start_time = 0;
 
-  mp_flush(mp, 0);
+  mp_flush(mp);
   mp_shutdown(mp);
 
   for(i = 0; i < cwvec_size; i++)

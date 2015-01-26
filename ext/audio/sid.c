@@ -1329,13 +1329,13 @@ be_sidplayer_play(const char *url0, media_pipe_t *mp,
     }
 
     if(event_is_type(e, EVENT_PLAYQUEUE_JUMP)) {
-      mp_flush(mp, 0);
+      mp_flush(mp);
       break;
 
     } else if(event_is_action(e, ACTION_SKIP_FORWARD) ||
 	      event_is_action(e, ACTION_SKIP_BACKWARD) ||
 	      event_is_action(e, ACTION_STOP)) {
-      mp_flush(mp, 0);
+      mp_flush(mp);
       break;
     }
     event_release(e);

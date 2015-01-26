@@ -502,7 +502,7 @@ stream_radio(icecast_play_context_t *ipc, char *errbuf, size_t errlen)
 	     event_is_action(e, ACTION_SKIP_BACKWARD) ||
 	     event_is_action(e, ACTION_SKIP_FORWARD) ||
 	     event_is_action(e, ACTION_STOP)) {
-	    mp_flush(mp, 0);
+	    mp_flush(mp);
 	    break;
 	  }
 	  event_release(e);
@@ -586,7 +586,7 @@ stream_radio(icecast_play_context_t *ipc, char *errbuf, size_t errlen)
 	     event_is_action(e, ACTION_SKIP_BACKWARD) ||
 	     event_is_action(e, ACTION_SKIP_FORWARD) ||
 	     event_is_action(e, ACTION_STOP)) {
-      mp_flush(mp, 0);
+      mp_flush(mp);
       break;
     }
     event_release(e);

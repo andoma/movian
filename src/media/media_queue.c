@@ -113,7 +113,7 @@ mp_flush_locked(media_pipe_t *mp)
  *
  */
 void
-mp_flush(media_pipe_t *mp, int blank)
+mp_flush(media_pipe_t *mp)
 {
   hts_mutex_lock(&mp->mp_mutex);
   mp_flush_locked(mp);

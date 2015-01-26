@@ -316,7 +316,7 @@ test_generator_thread(void *aux)
     }
 
     if(event_is_type(e, EVENT_EXIT)) {
-      mp_flush(mp, 0);
+      mp_flush(mp);
       break;
     }
     event_release(e);

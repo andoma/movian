@@ -183,7 +183,7 @@ video_seek(rtmp_t *r, media_pipe_t *mp, media_buf_t **mbp,
   mp->mp_video.mq_seektarget = pos;
   mp->mp_audio.mq_seektarget = pos;
 
-  mp_flush(mp, 0);
+  mp_flush(mp);
 
   if(mbp != NULL && *mbp != NULL) {
     media_buf_free_unlocked(mp, *mbp);
@@ -749,7 +749,7 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
     }
   }
 
-  mp_flush(mp, 0);
+  mp_flush(mp);
   mp_shutdown(mp);
 
   TRACE(TRACE_DEBUG, "RTMP", "End of stream");

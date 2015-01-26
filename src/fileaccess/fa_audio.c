@@ -109,7 +109,7 @@ rescale(AVFormatContext *fctx, int64_t ts, int si)
 static void
 seekflush(media_pipe_t *mp, media_buf_t **mbp)
 {
-  mp_flush(mp, 0);
+  mp_flush(mp);
   
   if(*mbp != NULL && *mbp != MB_SPECIAL_EOF)
     media_buf_free_unlocked(mp, *mbp);
@@ -249,7 +249,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 	     event_is_action(e, ACTION_SKIP_BACKWARD) ||
 	     event_is_action(e, ACTION_SKIP_FORWARD) ||
 	     event_is_action(e, ACTION_STOP)) {
-	    mp_flush(mp, 0);
+	    mp_flush(mp);
 	    break;
 	  }
 	  event_release(e);
@@ -307,7 +307,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 
     if(event_is_type(e, EVENT_PLAYQUEUE_JUMP)) {
 
-      mp_flush(mp, 0);
+      mp_flush(mp);
       break;
 
     } else if(event_is_type(e, EVENT_CURRENT_TIME)) {
@@ -344,7 +344,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
     } else if(event_is_action(e, ACTION_SKIP_FORWARD) ||
 	      event_is_action(e, ACTION_STOP)) {
     skip:
-      mp_flush(mp, 0);
+      mp_flush(mp);
       break;
     }
     event_release(e);

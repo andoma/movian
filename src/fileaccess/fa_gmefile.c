@@ -159,7 +159,7 @@ FAP_REGISTER(gmefile);
 static void
 seekflush(media_pipe_t *mp, media_buf_t **mbp)
 {
-  mp_flush(mp, 0);
+  mp_flush(mp);
   
   if(*mbp != NULL) {
     media_buf_free_unlocked(mp, *mbp);
@@ -236,7 +236,7 @@ fa_gme_playfile_internal(media_pipe_t *mp, const void *buf, size_t size,
     }
 
     if(event_is_type(e, EVENT_PLAYQUEUE_JUMP)) {
-      mp_flush(mp, 0);
+      mp_flush(mp);
       break;
 
     } else if(event_is_type(e, EVENT_SEEK)) {
@@ -248,7 +248,7 @@ fa_gme_playfile_internal(media_pipe_t *mp, const void *buf, size_t size,
     } else if(event_is_action(e, ACTION_SKIP_BACKWARD) ||
 	      event_is_action(e, ACTION_SKIP_FORWARD) ||
 	      event_is_action(e, ACTION_STOP)) {
-      mp_flush(mp, 0);
+      mp_flush(mp);
       break;
     }
     event_release(e);
