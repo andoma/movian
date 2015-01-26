@@ -1781,7 +1781,6 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 
   mp_event_set_callback(mp, NULL, NULL);
 
-  mp_flush(mp);
   mp_shutdown(mp);
 
   sub_scanner_destroy(ss);

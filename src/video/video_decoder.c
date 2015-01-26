@@ -234,7 +234,6 @@ vd_thread(void *aux)
         hts_mutex_unlock(&mp->mp_mutex);
 	if(mc_current != NULL) {
 	  media_codec_deref(mc_current);
-          mp->mp_set_video_codec('none', NULL, mp->mp_video_frame_opaque, NULL);
         }
 	mc_current = media_codec_ref(mc);
 	prop_set_int(mq->mq_prop_too_slow, 0);
@@ -289,23 +288,31 @@ vd_thread(void *aux)
 
       mp->mp_video_frame_deliver(NULL, mp->mp_video_frame_opaque);
 
-      if(mc_current != NULL) {
-        mc_current->flush(mc_current, vd);
+      if(mb->mb_data32) {
+
+        // Final flush, sent from mp_shutdown()
+        // Release codec if we hang on to it
+
+        if(mc_current != NULL) {
+          mc_current->flush(mc_current, vd);
 
 
-        // Need to release here because during end of video playback.
-        // The only thing holding reference to the codec is this
-        // 'mc_current'. So when the demuxer layer have released
-        // its references and the pipe is empty and a flush is sent
-        // we should also release the codec (causing it to close).
-        // Otherwise we will keeping a reference and another stream
-        // opening a new instance will fail to allocate resources.
-        // see #2495
-        media_codec_deref(mc_current);
-        mc_current = NULL;
+          // Need to release here because during end of video playback.
+          // The only thing holding reference to the codec is this
+          // 'mc_current'. So when the demuxer layer have released
+          // its references and the pipe is empty and a flush is sent
+          // we should also release the codec (causing it to close).
+          // Otherwise we will keeping a reference and another stream
+          // opening a new instance will fail to allocate resources.
+          // see #2495
+          media_codec_deref(mc_current);
+          mc_current = NULL;
+        }
+
+        mp->mp_set_video_codec('none', NULL, mp->mp_video_frame_opaque, NULL);
+        mp->mp_video_frame_deliver(NULL, mp->mp_video_frame_opaque);
       }
 
-      mp->mp_video_frame_deliver(NULL, mp->mp_video_frame_opaque);
       if(mp->mp_seek_video_done != NULL)
 	mp->mp_seek_video_done(mp);
       break;

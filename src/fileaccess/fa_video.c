@@ -843,7 +843,6 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
 
   mp->mp_start_time = 0;
 
-  mp_flush(mp);
   mp_shutdown(mp);
 
   for(i = 0; i < cwvec_size; i++)

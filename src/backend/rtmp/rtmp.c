@@ -749,7 +749,6 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
     }
   }
 
-  mp_flush(mp);
   mp_shutdown(mp);
 
   TRACE(TRACE_DEBUG, "RTMP", "End of stream");

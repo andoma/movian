@@ -96,7 +96,7 @@ struct event *mb_enqueue_with_events(struct media_pipe *mp,
 void mb_enqueue_always(struct media_pipe *mp, media_queue_t *mq,
                        media_buf_t *mb);
 
-void mp_flush_locked(struct media_pipe *mp);
+void mp_flush_locked(struct media_pipe *mp, int final);
 
 void mp_flush(struct media_pipe *mp);
 

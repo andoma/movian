@@ -1832,7 +1832,6 @@ be_htsp_playvideo(const char *url, media_pipe_t *mp,
 
   e = htsp_subscriber(hc, hs, errbuf, errlen, primary, va->priority, vq, url);
 
-  mp_flush(mp);
   mp_shutdown(mp);
 
   hts_mutex_lock(&hc->hc_subscription_mutex);

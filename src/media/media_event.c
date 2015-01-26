@@ -102,10 +102,12 @@ mp_seek_in_queues(media_pipe_t *mp, int64_t pos)
 
       mb = media_buf_alloc_locked(mp, 0);
       mb->mb_data_type = MB_CTRL_FLUSH;
+      mb->mb_data32 = 0;
       mb_enq(mp, &mp->mp_video, mb);
 
       mb = media_buf_alloc_locked(mp, 0);
       mb->mb_data_type = MB_CTRL_FLUSH;
+      mb->mb_data32 = 0;
       mb_enq(mp, &mp->mp_audio, mb);
 
       mp_check_underrun(mp);

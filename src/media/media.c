@@ -507,6 +507,10 @@ mp_unbecome_primary(media_pipe_t *mp)
 void
 mp_shutdown(struct media_pipe *mp)
 {
+  hts_mutex_lock(&mp->mp_mutex);
+  mp_flush_locked(mp, 1);
+  hts_mutex_unlock(&mp->mp_mutex);
+
   mp_unbecome_primary(mp);
 
   if(mp->mp_audio_decoder != NULL) {
@@ -575,7 +579,7 @@ mp_set_playstatus_by_hold_locked(media_pipe_t *mp, const char *msg)
   mp_event_dispatch(mp, event_create_int(EVENT_HOLD, hold));
 
   if(mp->mp_flags & MP_FLUSH_ON_HOLD)
-    mp_flush_locked(mp);
+    mp_flush_locked(mp, 0);
 
   if(mp->mp_hold_changed != NULL)
     mp->mp_hold_changed(mp);
