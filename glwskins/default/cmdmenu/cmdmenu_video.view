@@ -83,7 +83,7 @@ widget(deck, {
 	widget(label, {
 	  weight: 2;
 	  TextStyleItem();
-	  caption: $self.title;
+	  caption: $self.title ?? $self.source;
 	  filterConstraintX: true;
 	});
 
