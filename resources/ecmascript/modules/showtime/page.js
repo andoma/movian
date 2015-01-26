@@ -177,6 +177,11 @@ function Page(root, sync, flat) {
         var nodes = model.nodes;
         var have_more = false;
 
+        if(typeof this.asyncPaginator == 'function') {
+          this.asyncPaginator();
+          return;
+        }
+
         if(typeof this.paginator == 'function') {
 
           try {
@@ -200,6 +205,11 @@ function Page(root, sync, flat) {
     }.bind(this), {
       autoDestroy: true
     });
+}
+
+
+Page.prototype.haveMore = function(v) {
+  Showtime.propHaveMore(this.model.nodes, v);
 }
 
 Page.prototype.findItemByProp = function(v) {
