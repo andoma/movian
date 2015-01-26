@@ -5055,8 +5055,8 @@ glwf_sinewave(glw_view_eval_context_t *ec, struct token *self,
 
   self->t_extra_float += inc;
 
-  if(self->t_extra_float >= 360)
-    self->t_extra_float -= 360;
+  if(self->t_extra_float >= M_PI * 2)
+    self->t_extra_float -= M_PI * 2;
 
   glw_need_refresh(gr, 0);
 
