@@ -464,7 +464,7 @@ check_audio_only(hls_demuxer_t *hd)
  *
  */
 hls_error_t
-hls_segment_open(hls_segment_t *hs, int buffered)
+hls_segment_open(hls_segment_t *hs)
 {
   hls_variant_t *hv = hs->hs_variant;
   fa_open_extra_t foe = {0};
@@ -481,13 +481,10 @@ hls_segment_open(hls_segment_t *hs, int buffered)
 
   foe.foe_c = &hd->hd_cancellable;
 
-  int flags;
+  int flags = FA_BUFFERED_BIG | FA_STREAMING;
 
-  if(hs->hs_byte_offset != -1 || buffered) {
-    flags = FA_BUFFERED_BIG;
-  } else {
-    flags = FA_STREAMING;
-  }
+  if(hs->hs_byte_offset != -1)
+    flags &= ~FA_STREAMING;
 
   hs->hs_opened_at = showtime_get_ts();
   hs->hs_block_cnt = h->h_blocked;

@@ -238,7 +238,7 @@ typedef struct hls_audio_track {
   } while(0)
 
 
-hls_error_t hls_segment_open(hls_segment_t *hs, int buffered);
+hls_error_t hls_segment_open(hls_segment_t *hs);
 
 void hls_segment_close(hls_segment_t *hs);
 

@@ -1068,7 +1068,7 @@ hls_ts_demuxer_read(hls_demuxer_t *hd)
       while(1) {
 
         assert(hs != NULL);
-        hls_error_t err = hls_segment_open(hs, 1);
+        hls_error_t err = hls_segment_open(hs);
 
         if(h->h_exit_event != NULL || hd->hd_seek_to_segment != PTS_UNSET) {
           hls_segment_close(hs);
