@@ -75,6 +75,10 @@ showtime = {
     var json = JSON.stringify(a);
     var x = Showtime.xmlrpc(arguments[0], arguments[1], json);
     return require('showtime/xml').htsmsg(x);
+  },
+
+  sleep: function(x) {
+      return Showtime.sleep(x);
   }
 };
 
