@@ -43,6 +43,7 @@
 #include "misc/callout.h"
 #include "usage.h"
 #include "misc/minmax.h"
+#include "misc/bytestream.h"
 
 // http://msdn.microsoft.com/en-us/library/ee442092.aspx
 
@@ -183,6 +184,9 @@ smberr_write(char *errbuf, size_t errlen, int code)
     break;
   case 0xc0000022:
     r = _("Access denied");
+    break;
+  case 0xc0000034:
+    r = _("Object name not found");
     break;
   default:
     snprintf(errbuf, errlen, "NTStatus: 0x%08x", code);
@@ -1437,7 +1441,7 @@ release_tree_io_error(cifs_tree_t *ct, char *errbuf, size_t errlen)
 /**
  *
  */
-static int
+static int __attribute__((unused))
 release_tree_protocol_error(cifs_tree_t *ct, char *errbuf, size_t errlen)
 {
   snprintf(errbuf, errlen, "Protocol error");
@@ -1486,6 +1490,338 @@ backslashify(char *str)
 }
 
 
+static void
+close_srvsvc(cifs_tree_t *ct, int fid)
+{
+  SMB_CLOSE_req_t *req = alloca(sizeof(SMB_CLOSE_req_t));
+  memset(req, 0, sizeof(SMB_CLOSE_req_t));
+
+  smbv1_init_header(ct->ct_cc, &req->hdr, SMB_CLOSE,
+                    SMB_FLAGS_CANONICAL_PATHNAMES, 0, ct->ct_tid, 1);
+
+  req->fid = fid;
+  req->wordcount = 3;
+  nbt_write(ct->ct_cc, req, sizeof(SMB_CLOSE_req_t));
+}
+
+/**
+ *
+ */
+static int
+open_srvsvc(cifs_tree_t *ct, char *errbuf, size_t errlen)
+{
+  cifs_connection_t *cc = ct->ct_cc;
+  const char *filename = "\\srvsvc";
+
+  int plen = utf8_to_smb(cc, NULL, filename);
+  int tlen = sizeof(SMB_NTCREATE_ANDX_req_t) + plen + cc->cc_unicode;
+
+  SMB_NTCREATE_ANDX_req_t *req = alloca(tlen);
+  memset(req, 0, tlen);
+
+  smbv1_init_header(cc, &req->hdr, SMB_NT_CREATE_ANDX,
+                    SMB_FLAGS_CANONICAL_PATHNAMES |
+                    SMB_FLAGS_CASELESS_PATHNAMES, 0, ct->ct_tid, 1);
+
+  req->wordcount=24;
+  req->andx_command = 0xff;
+  req->access_mask = htole_32(0x2019f);
+  req->file_attributes = htole_32(0);
+  req->create_disposition = htole_32(1);
+  req->share_access = htole_32(3);
+  req->impersonation_level = htole_32(2);
+  req->security_flags = 0;
+
+  utf8_to_smb(cc, req->data + cc->cc_unicode, filename);
+  req->name_len = htole_16(plen - cc->cc_unicode - 1);
+  req->byte_count = htole_16(plen + cc->cc_unicode);
+
+  void *rbuf;
+  int rlen;
+
+  if(nbt_async_req_reply(ct->ct_cc, req, tlen, &rbuf, &rlen, 0)) {
+    snprintf(errbuf, errlen, "I/O error");
+    return -1;
+  }
+
+  if(check_smb_error(ct, rbuf, rlen, sizeof(SMB_NTCREATE_ANDX_resp_t),
+		     errbuf, errlen))
+    return -1;
+
+  hts_mutex_unlock(&smb_global_mutex);
+
+  const SMB_NTCREATE_ANDX_resp_t *resp = rbuf;
+  int fid = resp->fid;
+  free(rbuf);
+  return fid;
+}
+
+
+static const uint8_t bind_args[] = {
+  0x00, 0x00, 0x01, 0x00, 0xc8, 0x4f, 0x32, 0x4b,
+  0x70, 0x16, 0xd3, 0x01, 0x12, 0x78, 0x5a, 0x47,
+  0xbf, 0x6e, 0xe1, 0x88, 0x03, 0x00, 0x00, 0x00,
+  0x04, 0x5d, 0x88, 0x8a, 0xeb, 0x1c, 0xc9, 0x11,
+  0x9f, 0xe8, 0x08, 0x00, 0x2b, 0x10, 0x48, 0x60,
+  0x02, 0x00, 0x00, 0x00};
+
+
+/**
+ *
+ */
+static int
+dcerpc_bind(cifs_tree_t *ct, int fid, char *errbuf, size_t errlen)
+{
+  cifs_connection_t *cc = ct->ct_cc;
+  int tlen = sizeof(DCERPC_bind_req_t) + sizeof(bind_args);
+  DCERPC_bind_req_t *req = alloca(tlen);
+  TRANS_req_t *treq = &req->h.trans;
+
+  memset(req, 0, sizeof(DCERPC_bind_req_t));
+
+  smbv1_init_header(cc, &treq->hdr, SMB_TRANSACTION,
+                    SMB_FLAGS_CANONICAL_PATHNAMES |
+                    SMB_FLAGS_CASELESS_PATHNAMES, 0, ct->ct_tid, 1);
+
+  treq->wordcount = 16;
+  treq->total_data_count = htole_16(72);
+  treq->max_data_count = htole_16(cc->cc_max_buffer_size);
+  treq->param_offset = htole_16(84);
+  treq->data_count = htole_16(72);
+  treq->data_offset = htole_16(84);
+  treq->setup_count = 2;
+
+  req->h.function = htole_16(0x26); // TransactNmPipe
+  req->h.fid = fid;
+  req->h.byte_count = htole_16(89);
+  memcpy(req->h.name, "\\\000P\000I\000P\000E\x00\\\000\000", 14);
+
+  req->h.rpc.major_version = 5;
+  req->h.rpc.type = 0xb; // Bind
+  req->h.rpc.flags = 0x3;
+  req->h.rpc.data_representation = htole_32(0x10);
+  req->h.rpc.frag_length = htole_16(72);
+  req->h.rpc.callid = htole_32(1);
+
+  req->max_xmit_frag = treq->max_data_count;
+  req->max_recv_frag = treq->max_data_count;
+  req->num_ctx_items = 1;
+  memcpy(req->payload, bind_args, sizeof(bind_args));
+
+  void *rbuf;
+  int rlen;
+
+  if(nbt_async_req_reply(ct->ct_cc, req, tlen, &rbuf, &rlen, 0)) {
+    snprintf(errbuf, errlen, "I/O error");
+    return -1;
+  }
+  return 0;
+}
+
+
+/**
+ *
+ */
+static const uint8_t enumargs[] = {
+  0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+  0x04, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff,
+  0x08, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+static int
+parse_enum_shares(const uint8_t *data, int len, cifs_connection_t *cc,
+                  fa_dir_t *fd)
+{
+  int count;
+  char sharename[310];
+  char comment[310];
+  char url[512];
+
+  if(len < 24)
+    return -1;
+  data += 20;
+  len -= 20;
+  int num_shares = rd32_le(data);
+  data += 4;
+  len -= 4;
+
+  if(num_shares > 256)
+    return -1;
+
+  snprintf(url, sizeof(url), "smb://%s", cc->cc_hostname);
+  if(cc->cc_port != 445)
+    snprintf(url + strlen(url), sizeof(url) - strlen(url), ":%d", cc->cc_port);
+
+  char *urlbase = url + strlen(url);
+  int urlspace = sizeof(url) - strlen(url);
+
+  uint32_t *typearray = alloca(sizeof(int) * num_shares);
+
+  for(int i = 0; i < num_shares; i++) {
+    // Each entry consumes 12 bytes
+    if(len < 12)
+      return -1;
+    typearray[i] = rd32_le(data + 4);
+    len -= 12;
+    data += 12;
+  }
+
+  for(int i = 0; i < num_shares; i++) {
+    if(len < 12)
+      return -1;
+
+    count = rd32_le(data + 8);
+
+    if(count < 1 || count > 64)
+      return -1;
+
+    len -= 12;
+    data += 12;
+
+    ucs2_to_utf8((uint8_t *)sharename, sizeof(sharename), data, (count-1)*2, 1);
+
+    count = (count + 1) & ~1;
+
+    len -=  count * 2;
+    data += count * 2;
+
+    if(len < 12)
+      return -1;
+
+    count = rd32_le(data + 8);
+
+    if(count < 1 || count > 100)
+      return -1;
+
+    len -= 12;
+    data += 12;
+
+    ucs2_to_utf8((uint8_t *)comment, sizeof(comment), data, (count-1)*2, 1);
+
+    count = (count + 1) & ~1;
+    len -=  count * 2;
+    data += count * 2;
+
+
+    snprintf(urlbase, urlspace, "/%s", sharename);
+    SMBTRACE("Enumerated share %s (%s) -> %s type=%x",
+             sharename, comment, url, typearray[i]);
+
+    if(typearray[i] == 0) {
+      // 0 for DISKTREE shares
+      fa_dir_add(fd, url, sharename, CONTENT_DIR);
+    }
+  }
+  return 0;
+}
+
+/**
+ *
+ */
+static int
+dcerpc_enum_shares(cifs_tree_t *ct, int fid, char *errbuf, size_t errlen,
+                   fa_dir_t *fd)
+{
+  cifs_connection_t *cc = ct->ct_cc;
+  const char *servername = cc->cc_hostname;
+
+  int servernamechars = strlen(servername) + 1;
+  int snlen = utf8_to_smb(cc, NULL, servername);
+  snlen = (snlen + 3) & ~3;
+  int arglen = 16 + snlen + 32;
+  int tlen = sizeof(DCERPC_enum_shares_req_t) + arglen;
+  DCERPC_enum_shares_req_t *req = alloca(tlen);
+  TRANS_req_t *treq = &req->h.trans;
+
+  memset(req, 0, tlen);
+
+  smbv1_init_header(cc, &treq->hdr, SMB_TRANSACTION,
+                    SMB_FLAGS_CANONICAL_PATHNAMES |
+                    SMB_FLAGS_CASELESS_PATHNAMES, 0, ct->ct_tid, 1);
+
+  int frag_len = arglen + 24;
+
+  treq->wordcount = 16;
+  treq->total_data_count = htole_16(frag_len);
+  treq->max_data_count = htole_16(cc->cc_max_buffer_size);
+  treq->param_offset = htole_16(84);
+  treq->data_count = htole_16(frag_len);
+  treq->data_offset = htole_16(84);
+  treq->setup_count = 2;
+
+  req->h.function = htole_16(0x26); // TransactNmPipe
+  req->h.fid = fid;
+  req->h.byte_count = htole_16(frag_len + 17);
+  memcpy(req->h.name, "\\\000P\000I\000P\000E\x00\\\000\000", 14);
+
+  req->h.rpc.major_version = 5;
+  req->h.rpc.type = 0x0; // Request
+  req->h.rpc.flags = 0x3;
+  req->h.rpc.data_representation = htole_32(0x10);
+  req->h.rpc.frag_length = htole_16(frag_len);
+  req->h.rpc.callid = htole_32(2);
+
+  req->alloc_hint = htole_32(68);
+  req->context_id = 0;
+  req->opnum = htole_16(15); // NetShareEnumAll
+
+  uint8_t *p = req->payload;
+
+  wr32_le(p + 0, 0x20000);
+  wr32_le(p + 4, servernamechars);
+  wr32_le(p + 12, servernamechars);
+  p += 16;
+  utf8_to_smb(cc, p, servername);
+  p += snlen;
+  memcpy(p, enumargs, 32);
+
+  void *rbuf;
+  int rlen;
+
+  if(nbt_async_req_reply(ct->ct_cc, req, tlen, &rbuf, &rlen, 0)) {
+    snprintf(errbuf, errlen, "I/O error");
+    return -1;
+  }
+
+  if(rlen <  sizeof(TRANS_reply_t)) {
+    snprintf(errbuf, errlen, "Short packet");
+    goto bad;
+  }
+
+  const TRANS_reply_t *treply = rbuf;
+  int data_offset = letoh_16(treply->data_offset);
+  int data_len = rlen - data_offset;
+  if(data_len < sizeof(DCERPC_enum_shares_reply_t)) {
+    snprintf(errbuf, errlen, "Short enumshare reply");
+    goto bad;
+  }
+
+  const DCERPC_enum_shares_reply_t *reply = rbuf + data_offset;
+
+  if(reply->hdr.flags != 3) {
+    snprintf(errbuf, errlen, "Fragmented enumshare replies not supported");
+    goto bad;
+  }
+
+
+  parse_enum_shares(reply->payload,
+                    data_len - sizeof(DCERPC_enum_shares_reply_t), cc, fd);
+
+  free(rbuf);
+  close_srvsvc(ct, fid),
+  cifs_release_tree(ct, 0);
+  return 0;
+
+
+ bad:
+  free(rbuf);
+  close_srvsvc(ct, fid),
+  cifs_release_tree(ct, 0);
+  return -1;
+}
+
+
+
 /**
  *
  */
@@ -1493,86 +1829,20 @@ static int
 cifs_enum_shares(cifs_connection_t *cc, fa_dir_t *fd,
 		 char *errbuf, size_t errlen)
 {
-  fa_dir_entry_t *fde;
-  TRANS_req_t *req;
-  const TRANS_reply_t *resp;
   cifs_tree_t *ct;
-  void *rbuf;
-  int rlen;
-  char url[512];
-  int tlen = sizeof(TRANS_req_t) + 32;
-
-  req = alloca(tlen);
-
-  memset(req, 0, tlen);
 
   ct = smb_tree_connect_andX(cc, "IPC$", errbuf, errlen, 0);
   if(ct == NULL)
     return -1;
 
-  smb_init_header(ct->ct_cc, &req->hdr, SMB_TRANSACTION,
-		  SMB_FLAGS_CASELESS_PATHNAMES, 0, ct->ct_tid, 0);
-
-  req->wordcount = htole_16(14);
-  req->total_param_count = htole_16(19);
-  req->param_count = htole_16(19);
-  req->max_param_count = htole_16(1024);
-  req->max_data_count = htole_16(8096);
-  req->param_offset = htole_16(76);
-  req->data_offset = htole_16(95);
-  req->byte_count = htole_16(32);
-
-  memcpy(&req->payload[0], "\\PIPE\\LANMAN\0\0\0WrLeh\0B13BWz\0\x01\0\xa0\x1f", 32);
-
-  if(nbt_async_req_reply(ct->ct_cc, req, tlen, &rbuf, &rlen, 0))
-    return release_tree_io_error(ct, errbuf, errlen);
-
-  if(check_smb_error(ct, rbuf, rlen, sizeof(TRANS_reply_t), errbuf, errlen))
+  int fid = open_srvsvc(ct, errbuf, errlen);
+  if(fid < 0)
     return -1;
 
-  resp = rbuf;
-
-  int poff = letoh_16(resp->param_offset);
-  int doff = letoh_16(resp->data_offset);
-
-  if(poff + 8 > rlen) {
-    free(rbuf);
-    return release_tree_protocol_error(ct, errbuf, errlen);
-  }
-
-
-  const uint16_t *params = rbuf + poff;
-  if(letoh_16(params[0]) != 0) {
-    free(rbuf);
-    cifs_release_tree(ct, 1);
-    snprintf(errbuf, errlen, "RPC status %d", letoh_16(params[0]));
+  if(dcerpc_bind(ct, fid, errbuf, errlen) < 0)
     return -1;
-  }
 
-  snprintf(url, sizeof(url), "smb://%s", ct->ct_cc->cc_hostname);
-  if(ct->ct_cc->cc_port != 445)
-    snprintf(url + strlen(url), sizeof(url) - strlen(url), ":%d",
-	     ct->ct_cc->cc_port);
-  int ul = strlen(url);
-
-  const char *p = rbuf + doff;
-  int i, entries = letoh_16(params[2]);
-  for(i = 0; i < entries; i++) {
-    int padding = (strlen(p)+1+2) % 16 ? 16-((strlen(p)+1) % 16) : 0;
-    if (*((uint16_t *)&p[strlen(p)+1+padding-2]) == 0) {
-      snprintf(url + ul, sizeof(url) - ul, "/%s", p);
-
-      fde = fa_dir_add(fd, url, p, CONTENT_DIR);
-      if(fde != NULL)
-	fde->fde_statdone = 1;
-    }
-    p += strlen(p)+1+padding+4;
-  }
-  cifs_release_tree(ct, 0);
-
-  free(rbuf);
-  return 0;
-
+  return dcerpc_enum_shares(ct, fid, errbuf, errlen, fd);
 }
 
 
@@ -2206,6 +2476,12 @@ smb_set_xattr(struct fa_protocol *fap, const char *url,
 
   r = cifs_resolve(url, filename, sizeof(filename), NULL, 0, 0, &ct, &cc);
 
+  if(r == CIFS_RESOLVE_CONNECTION) {
+    cc->cc_refcount--;
+    hts_mutex_unlock(&smb_global_mutex);
+    return FAP_NOT_SUPPORTED;
+  }
+
   if(r != CIFS_RESOLVE_TREE)
     return -1;
 
@@ -2270,6 +2546,12 @@ smb_get_xattr(struct fa_protocol *fap, const char *url,
   const int name_len = strlen(name);
 
   r = cifs_resolve(url, filename, sizeof(filename), NULL, 0, 0, &ct, &cc);
+
+  if(r == CIFS_RESOLVE_CONNECTION) {
+    cc->cc_refcount--;
+    hts_mutex_unlock(&smb_global_mutex);
+    return FAP_NOT_SUPPORTED;
+  }
 
   if(r != CIFS_RESOLVE_TREE)
     return -1;

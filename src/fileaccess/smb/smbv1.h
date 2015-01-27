@@ -150,11 +150,73 @@ typedef struct {
 
   uint8_t reserved3;
 
+} __attribute__((packed)) TRANS_req_t;
+
+
+typedef struct {
+  uint8_t major_version;
+  uint8_t minor_version;
+  uint8_t type;
+  uint8_t flags;
+  uint32_t data_representation;
+  uint16_t frag_length;
+  uint16_t auth_length;
+  uint32_t callid;
+} __attribute__((packed)) DCERPC_hdr_t;
+
+typedef struct {
+  TRANS_req_t trans;
+  uint16_t function;
+  uint16_t fid;
   uint16_t byte_count;
+  uint8_t pad1;
+  char name[14];
+  uint16_t pad2;
+
+  DCERPC_hdr_t rpc;
+
+} __attribute__((packed)) DCERPC_req_t;
+
+
+typedef struct {
+
+  DCERPC_req_t h;
+
+  uint16_t max_xmit_frag;
+  uint16_t max_recv_frag;
+  uint32_t association_group;
+  uint8_t num_ctx_items;
+
+  uint8_t pad3[3];
 
   char payload[0];
 
-} __attribute__((packed)) TRANS_req_t;
+} __attribute__((packed)) DCERPC_bind_req_t;
+
+
+typedef struct {
+
+  DCERPC_req_t h;
+
+  uint32_t alloc_hint;
+  uint16_t context_id;
+  uint16_t opnum;
+  uint8_t payload[0];
+
+} __attribute__((packed)) DCERPC_enum_shares_req_t;
+
+
+typedef struct {
+
+  DCERPC_hdr_t hdr;
+  uint32_t alloc_hint;
+  uint16_t context_id;
+  uint8_t cancel_count;
+  uint8_t pad;
+  uint8_t payload[0];
+
+} __attribute__((packed)) DCERPC_enum_shares_reply_t;
+
 
 
 
