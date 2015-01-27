@@ -1548,8 +1548,6 @@ open_srvsvc(cifs_tree_t *ct, char *errbuf, size_t errlen)
 		     errbuf, errlen))
     return -1;
 
-  hts_mutex_unlock(&smb_global_mutex);
-
   const SMB_NTCREATE_ANDX_resp_t *resp = rbuf;
   int fid = resp->fid;
   free(rbuf);
