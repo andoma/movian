@@ -239,7 +239,7 @@ SRCS-$(CONFIG_LOCATEDB)        += src/fileaccess/fa_locatedb.c
 SRCS-$(CONFIG_SPOTLIGHT)       += src/fileaccess/fa_spotlight.c
 SRCS-$(CONFIG_READAHEAD_CACHE) += src/fileaccess/fa_cache.c
 SRCS-$(CONFIG_LIBNTFS)         += src/fileaccess/fa_ntfs.c
-SRCS-$(CONFIG_NATIVESMB)       += src/fileaccess/fa_nativesmb.c
+SRCS-$(CONFIG_NATIVESMB)       += src/fileaccess/smb/fa_nativesmb.c
 SRCS-$(CONFIG_RAR)             += src/fileaccess/fa_rar.c
 SRCS-$(CONFIG_SID)             += src/fileaccess/fa_sidfile.c \
 				  ext/audio/sid.c

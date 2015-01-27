@@ -35,8 +35,8 @@
 #endif
 
 #include "showtime.h"
-#include "fileaccess.h"
-#include "fa_proto.h"
+#include "fileaccess/fileaccess.h"
+#include "fileaccess/fa_proto.h"
 #include "keyring.h"
 #include "networking/net.h"
 #include "misc/str.h"
