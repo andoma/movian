@@ -89,7 +89,9 @@ glw_update_sizes(glw_root_t *gr)
     glw_text_flush(gr);
     glw_icon_flush(gr);
     glw_update_em(gr);
-    TRACE(TRACE_DEBUG, "GLW", "UI size scale changed to %d", val);
+    TRACE(TRACE_DEBUG, "GLW",
+          "UI size scale changed to %d (user adjustment: %d)",
+          val, glw_settings.gs_size);
   }
 
   val = GLW_CLAMP(gr->gr_base_underscan_h + glw_settings.gs_underscan_h,
