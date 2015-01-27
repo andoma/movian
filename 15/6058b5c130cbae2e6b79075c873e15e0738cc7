@@ -1,0 +1,4 @@
+Add support for supplemental audio tracks in HLS demuxer.
+
+For HLS stream with multiple audio tracks the user can now select
+audio tracks in the menu during video playback
