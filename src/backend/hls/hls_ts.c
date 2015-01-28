@@ -169,6 +169,8 @@ ts_demuxer_destroy(ts_demuxer_t *td)
   while((tss = LIST_FIRST(&td->td_services)) != NULL)
     tss_destroy(tss);
 
+  free(td->td_pat.tt_data);
+
   free(td);
 }
 
@@ -1027,8 +1029,10 @@ hls_ts_demuxer_read(hls_demuxer_t *hd)
     ts_demuxer_t *td = hv->hv_demuxer_private;
 
     if(td == NULL) {
+      assert(hv->hv_demuxer_private == NULL);
       td = hv->hv_demuxer_private = calloc(1, sizeof(ts_demuxer_t));
       TAILQ_INIT(&td->td_packets);
+      assert(hv->hv_demuxer_close == NULL);
       hv->hv_demuxer_close = hls_ts_demuxer_close;
       td->td_mp = mp;
       td->td_hd = hd;

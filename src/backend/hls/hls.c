@@ -127,6 +127,8 @@ static void
 variant_destroy(hls_variant_t *hv)
 {
   hls_segment_t *hs;
+  hls_variant_close(hv);
+
   while((hs = TAILQ_FIRST(&hv->hv_segments)) != NULL)
     segment_destroy(hs);
 
@@ -1514,6 +1516,22 @@ hls_get_audio_track(hls_t *h, int pid, const char *id, const char *language,
   return hat->hat_stream_id;
 }
 
+/**
+ *
+ */
+static void
+hls_free_audio_tracks(hls_t *h)
+{
+  hls_audio_track_t *hat;
+
+
+  while((hat = LIST_FIRST(&h->h_audio_tracks)) != NULL) {
+    LIST_REMOVE(hat, hat_link);
+    free(hat->hat_id);
+    free(hat);
+  }
+}
+
 
 /**
  *
@@ -1798,6 +1816,8 @@ hls_play_extm3u(char *buf, const char *url, media_pipe_t *mp,
   hls_demuxer_close(mp, &h.h_audio);
 
   media_codec_deref(h.h_codec_h264);
+
+  hls_free_audio_tracks(&h);
 
   hts_cond_destroy(&h.h_cond);
   hts_mutex_destroy(&h.h_mutex);

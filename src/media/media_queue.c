@@ -460,6 +460,7 @@ static void
 mb_prop_dtor(media_buf_t *mb)
 {
   prop_ref_dec(mb->mb_prop);
+  av_packet_unref(&mb->mb_pkt);
 }
 
 
