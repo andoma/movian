@@ -588,7 +588,8 @@ fa_buffered_open(const char *url, char *errbuf, size_t errsize, int flags,
 
   int mflags = flags;
   flags &= ~ (FA_BUFFERED_SMALL | FA_BUFFERED_BIG | FA_BUFFERED_NO_PREFETCH);
-  foe->foe_c = NULL;
+  if(foe != NULL)
+    foe->foe_c = NULL;
   fh = fa_open_ex(url, errbuf, errsize, flags, foe);
   if(fh == NULL)
     return NULL;
