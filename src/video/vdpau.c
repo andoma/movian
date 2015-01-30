@@ -187,6 +187,7 @@ vdpau_info(vdpau_dev_t *vd)
 {
   int i;
   VdpStatus r;
+  return;
 
   TRACE(TRACE_DEBUG, "VDPAU", "VDPAU decoder supported profiles");
   TRACE(TRACE_DEBUG, "VDPAU", "%-20s  %-20s %-10s %-10s %-10s",
