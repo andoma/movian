@@ -81,9 +81,3 @@ tcp_ssl_close(tcpcon_t *tc)
   free(tc->ssn);
   free(tc->hs);
 }
-
-
-void
-net_ssl_init(void)
-{
-}

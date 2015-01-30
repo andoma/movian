@@ -44,6 +44,7 @@
 #include "usage.h"
 #include "misc/minmax.h"
 #include "misc/bytestream.h"
+#include "misc/endian.h"
 
 // http://msdn.microsoft.com/en-us/library/ee442092.aspx
 
@@ -135,6 +136,10 @@ typedef struct cifs_connection {
 
   int cc_auto_close;
 
+  char *cc_native_os;
+  char *cc_native_lanman;
+  char *cc_primary_domain;
+
 } cifs_connection_t;
 
 
@@ -197,6 +202,49 @@ smberr_write(char *errbuf, size_t errlen, int code)
   rstr_release(r);
 }
 
+
+/**
+ *
+ */
+static char *
+readstring(uint8_t **pp, int *lp, int unicode)
+{
+  if(unicode == 0)
+    return NULL;
+
+  int remain = *lp;
+  uint8_t *p = *pp;
+  int outbytes = 0;
+  int c = 0;
+  if(remain < 2)
+    return NULL;
+
+  while(remain >= 2) {
+    if(p[0] == 0 && p[1] == 0) {
+      remain -= 2;
+      break;
+    }
+    outbytes += utf8_put(NULL, p[0] | p[1] << 8);
+    p+=2;
+    remain -= 2;
+    c++;
+  }
+
+  *lp = remain;
+
+  char *str = malloc(outbytes + 1);
+  str[outbytes] = 0;
+
+  outbytes = 0;
+  p = *pp; // start over
+  for(; c > 0; c--) {
+    outbytes += utf8_put(str + outbytes, p[0] | p[1] << 8);
+    p+=2;
+  }
+
+  *pp = p + 2;
+  return str;
+}
 
 
 
@@ -463,6 +511,9 @@ cifs_maybe_destroy(cifs_connection_t *cc)
 
   hts_cond_destroy(&cc->cc_cond);
   free(cc->cc_hostname);
+  free(cc->cc_native_os);
+  free(cc->cc_native_lanman);
+  free(cc->cc_primary_domain);
   free(cc);
 }
 
@@ -631,27 +682,41 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
 
     assert(r == 0);
 
+  } else if(as_guest == 2) {
+    // Anonymous
+    username = NULL;
+    password_cleartext = NULL;
+    free(domain);
+    domain = NULL;
+
   } else {
     username = strdup("guest");
     password_cleartext = strdup("");
   }
 
-  uint8_t pwdigest[16];
-  NTLM_hash(password_cleartext, pwdigest);
-  lmresponse(password, pwdigest, cc->cc_challenge_key);
-  password_len = 24;
+  int password_pad = 0;
 
-  SMBTRACE("SETUP %s:%s:%s", username ?: "<unset>",
-	   *password_cleartext ? "<hidden>" : "<unset>", domain);
+  if(password_cleartext != NULL) {
+    uint8_t pwdigest[16];
+    NTLM_hash(password_cleartext, pwdigest);
+    lmresponse(password, pwdigest, cc->cc_challenge_key);
+    password_len = 24;
 
-  free(password_cleartext);
+    SMBTRACE("SETUP %s:%s:%s", username ?: "<unset>",
+             *password_cleartext ? "<hidden>" : "<unset>", domain);
+    free(password_cleartext);
 
-  ulen = utf8_to_smb(cc, NULL, username);
-  size_t dlen = utf8_to_smb(cc, NULL, domain);
-  int password_pad = cc->cc_unicode && (password_len & 1) == 0;
+  } else {
+    SMBTRACE("SETUP anonymous");
+    password_len = 0;
+  }
+  password_pad = cc->cc_unicode && (password_len & 1) == 0;
+
+
+  ulen = username ? utf8_to_smb(cc, NULL, username) : 2;
+  size_t dlen = domain ? utf8_to_smb(cc, NULL, domain) : 2;
   int bytecount = password_len + password_pad + ulen + dlen + olen + llen;
   int tlen = bytecount + sizeof(SMB_SETUP_ANDX_req_t);
-
 
   req = alloca(tlen);
   memset(req, 0, tlen);
@@ -673,7 +738,8 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
   req->bytecount = htole_16(bytecount);
 
   void *ptr = req->data;
-  memcpy(ptr, password,password_len);
+
+  memcpy(ptr, password, password_len);
   ptr += password_len + password_pad;
 
   if(username != NULL) {
@@ -686,7 +752,16 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
   }
   free(username);
   username = NULL;
-  ptr += utf8_to_smb(cc, ptr, domain);
+
+
+  if(domain != NULL) {
+    ptr += utf8_to_smb(cc, ptr, domain);
+  } else {
+    *((char *)ptr) = 0;
+    ptr += 1;
+    *((char *)ptr) = 0;
+    ptr += 1;
+  }
   ptr += utf8_to_smb(cc, ptr, os);
   ptr += utf8_to_smb(cc, ptr, lanmgr);
   assert((ptr - (void *)req) == tlen);
@@ -727,9 +802,28 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
 
   int guest = letoh_16(reply->action) & 1;
   cc->cc_uid = letoh_16(reply->hdr.uid);
+
+
+  int bc = letoh_16(reply->bytecount) - 1;
+
+  uint8_t *data = reply->data + 1; // 1 byte pad
+
+  cc->cc_native_os = readstring(&data, &bc, cc->cc_unicode);
+  if(cc->cc_native_os != NULL) {
+    cc->cc_native_lanman = readstring(&data, &bc, cc->cc_unicode);
+    if(cc->cc_native_lanman != NULL) {
+      cc->cc_primary_domain = readstring(&data, &bc, cc->cc_unicode);
+    }
+  }
+
   free(rbuf);
 
-  SMBTRACE("Logged in as UID:%d guest=%s", cc->cc_uid, guest ? "yes" : "no");
+  SMBTRACE("Logged in as UID:%d guest=%s os='%s' lanman='%s' PD='%s'",
+           cc->cc_uid, guest ? "yes" : "no",
+           cc->cc_native_os      ? cc->cc_native_os      : "<unset>",
+           cc->cc_native_lanman  ? cc->cc_native_lanman  : "<unset>",
+           cc->cc_primary_domain ? cc->cc_primary_domain : "<unset>");
+
 
   if(guest && !as_guest && cc->cc_security_mode & SECURITY_USER_LEVEL) {
     retry_reason = "Login attempt failed";
@@ -2653,6 +2747,141 @@ cifs_periodic(struct callout *c, void *opaque)
   }
 }
 
+
+
+
+/**
+ *
+ */
+static char **
+smb_NetServerEnum2(cifs_tree_t *ct, char *errbuf, size_t errlen)
+{
+  cifs_connection_t *cc = ct->ct_cc;
+  const char *domain = cc->cc_primary_domain ?: "WORKGROUP";
+  int dlen = strlen(domain) + 1;
+
+  int tlen = sizeof(SMB_enum_servers_req_t) + dlen;
+  SMB_enum_servers_req_t *req = alloca(tlen);
+
+  memset(req, 0, tlen);
+
+  smbv1_init_header(cc, &req->trans.hdr, SMB_TRANSACTION,
+                    SMB_FLAGS_CANONICAL_PATHNAMES |
+                    SMB_FLAGS_CASELESS_PATHNAMES, 0, ct->ct_tid, 1);
+
+  req->trans.wordcount = 14;
+  req->trans.total_param_count = htole_16(36);
+  req->trans.max_param_count = htole_16(8);
+  req->trans.max_data_count = htole_16(65535);
+  req->trans.param_count = htole_16(36);
+  req->trans.param_offset = htole_16(92);
+  req->bytecount = htole_16(55 + dlen);
+  memcpy(req->transaction_name,
+         "\\\000P\000I\000P\000E\000\\\000L\000A\000N\000M\000A\000N\000\000\000"
+         ,26);
+
+  req->function_code = htole_16(104); // NetServerEnum2
+  memcpy(req->parameter_desc, "WrLehDz", 8);
+  memcpy(req->return_desc, "B16BBDz", 8);
+  req->detail_level = htole_16(1);
+  req->receive_buffer_length = htole_16(65535);
+  req->server_type = -1;
+  strcpy(req->domain, domain);
+
+  void *rbuf;
+  int rlen;
+
+  if(nbt_async_req_reply(ct->ct_cc, req, tlen, &rbuf, &rlen, 0)) {
+    snprintf(errbuf, errlen, "I/O error");
+    return NULL;
+  }
+
+  if(check_smb_error(ct, rbuf, rlen, sizeof(TRANS_reply_t), errbuf, errlen))
+    return NULL;
+
+  const TRANS_reply_t *treply = rbuf;
+  int param_offset = letoh_16(treply->param_offset);
+  int param_count = letoh_16(treply->param_count);
+
+
+  if(param_count < 8 || param_offset + 8 > rlen) {
+    snprintf(errbuf, errlen, "Bad params %d %d", param_offset, param_count);
+    goto bad;
+  }
+
+  int entries = rd16_le(rbuf + param_offset + 6);
+
+  if(entries > 256) {
+    snprintf(errbuf, errlen, "Too many servers");
+    goto bad;
+  }
+
+  char **rvec = calloc(entries + 1, sizeof(char *));
+
+  int data_offset = letoh_16(treply->data_offset);
+  const uint8_t *items = rbuf + data_offset;
+  int remain = rlen - data_offset;
+
+  char servername[17];
+  servername[16] = 0;
+  for(int i = 0; i < entries; i++) {
+    if(remain < 26)
+      break;
+    memcpy(servername, items, 16);
+    SMBTRACE("Found server %s\n", servername);
+
+    remain -= 26;
+    items += 26;
+    rvec[i] = strdup(servername);
+  }
+
+  free(rbuf);
+  return rvec;
+
+ bad:
+  free(rbuf);
+  cifs_release_tree(ct, 0);
+  return NULL;
+}
+
+
+/**
+ *
+ */
+char **
+smb_enum_servers(const char *hostname)
+{
+  char errbuf[256];
+  cifs_connection_t *cc;
+  int port = 445;
+
+  cc = cifs_get_connection(hostname, port, errbuf, sizeof(errbuf), 1, 2);
+  if(cc == SAMBA_NEED_AUTH)
+    return NULL;
+  if(cc == NULL) {
+    TRACE(TRACE_DEBUG, "SMB",
+          "Unable to connect to %s:%d for network listings -- %s",
+          hostname, port, errbuf);
+    return NULL;
+  }
+
+  cifs_tree_t *ct;
+
+  ct = smb_tree_connect_andX(cc, "IPC$", errbuf, sizeof(errbuf), 1);
+  if(ct == SAMBA_NEED_AUTH)
+    return NULL;
+
+  char **servers = smb_NetServerEnum2(ct, errbuf, sizeof(errbuf));
+
+  if(servers == NULL) {
+    TRACE(TRACE_DEBUG, "SMB",
+          "Failed to enumerate network servers at %s:%d -- %s",
+          hostname, port, errbuf);
+    return NULL;
+  }
+  cifs_release_tree(ct, 1);
+  return servers;
+}
 
 
 /**

@@ -479,10 +479,6 @@ asyncio_thread(void *aux)
 {
   asyncio_thread_id = hts_thread_current();
 
-  hts_mutex_init(&asyncio_worker_mutex);
-
-  arch_pipe(asyncio_pipe);
-
   asyncio_courier = prop_courier_create_notify(asyncio_courier_notify, NULL);
 
   asyncio_add_fd(asyncio_pipe[0], ASYNCIO_READ, asyncio_handle_pipe,
@@ -490,13 +486,7 @@ asyncio_thread(void *aux)
 
   init_group(INIT_GROUP_ASYNCIO);
 
-  TAILQ_INIT(&asyncio_dns_pending);
-  TAILQ_INIT(&asyncio_dns_completed);
-
-  hts_mutex_init(&asyncio_dns_mutex);
   asyncio_dns_worker = asyncio_add_worker(adr_deliver_cb);
-
-  hts_mutex_init(&asyncio_http_mutex);
   asyncio_http_worker = asyncio_add_worker(ahr_deliver_cb);
 
   async_now = showtime_get_ts();
@@ -511,7 +501,23 @@ asyncio_thread(void *aux)
  *
  */
 void
-asyncio_init(void)
+asyncio_init_early(void)
+{
+  TAILQ_INIT(&asyncio_dns_pending);
+  TAILQ_INIT(&asyncio_dns_completed);
+
+  hts_mutex_init(&asyncio_worker_mutex);
+  hts_mutex_init(&asyncio_dns_mutex);
+  hts_mutex_init(&asyncio_http_mutex);
+
+  arch_pipe(asyncio_pipe);
+}
+
+/**
+ *
+ */
+void
+asyncio_start(void)
 {
   hts_thread_create_detached("asyncio", asyncio_thread,
                              NULL, THREAD_PRIO_MODEL);
@@ -1014,7 +1020,8 @@ asyncio_udp_bind(const char *name,
 		 int port,
 		 asyncio_udp_callback_t *cb,
 		 void *opaque,
-		 int bind_any)
+		 int bind_any,
+                 int broadcast)
 {
   struct sockaddr_in si = {0};
   socklen_t sl = sizeof(struct sockaddr_in);
@@ -1029,6 +1036,9 @@ asyncio_udp_bind(const char *name,
   si.sin_family = AF_INET;
 
   setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(int));
+
+  if(broadcast)
+    setsockopt(fd, SOL_SOCKET, SO_BROADCAST, &one, sizeof(one));
 
   if(port) {
 

@@ -88,6 +88,7 @@ widget(array, {
 		       "bluray",   "Disc",
 		       "setting",  "Settings",
 		       "plugin",   "Plugin",
+		       "server",   "Computer",
 		       "photos",   "Pictures") + ".svg",
 	     navOpen($self.url), $self.badge);
   });

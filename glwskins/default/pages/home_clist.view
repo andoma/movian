@@ -78,6 +78,7 @@
 		 "dvd",      "Disc",
 		 "cd",       "Disc",
 		 "bluray",   "Disc",
+		 "server",   "Computer",
 		 "photos",   "Pictures") + ".svg",
        TITLE,
        URL);

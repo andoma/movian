@@ -25,7 +25,8 @@ widget(backdrop, {
 		  "search", "dataroot://resources/svg/Search.svg",
 		  "keymap", "dataroot://resources/svg/Keyboard.svg",
 		  "subtitle", "dataroot://resources/svg/Script.svg",
-                  "plugin", "dataroot://resources/svg/Plugin.svg"
+                  "plugin", "dataroot://resources/svg/Plugin.svg",
+		  "server", "dataroot://resources/svg/Computer.svg"
 		 );
       sizeScale: 2;
       shadow: isVoid($self.metadata.icon);

@@ -215,6 +215,7 @@ widget(array, {
 		       "network",  "Home",
 		       "setting",  "Settings",
 		       "plugin",   "Plugin",
+		       "server",   "Computer",
 		       "photos",   "Pictures") + ".svg",
 	     navOpen($self.url, void, $self), $self.badge);
   });

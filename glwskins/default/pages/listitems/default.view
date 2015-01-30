@@ -27,6 +27,7 @@ widget(backdrop, {
 		  "album",     "Disc",
 		  "load",      "Load",
 		  "font",      "Font",
+		  "server",   "Computer",
 		  "image",     "Pictures"
 		 ) + ".svg";
 	.shadow = true;

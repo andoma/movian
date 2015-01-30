@@ -1,4 +1,6 @@
 #include <pthread.h>
+
+#include "showtime.h"
 #include "net_i.h"
 
 
@@ -109,7 +111,7 @@ tcp_ssl_close(tcpcon_t *tc)
 /**
  *
  */
-void
+static void
 net_ssl_init(void)
 {
   SSL_library_init();
@@ -124,3 +126,5 @@ net_ssl_init(void)
   CRYPTO_set_id_callback(ssl_tid_fn);
 }
 
+
+INITME(INIT_GROUP_NET, net_ssl_init, NULL);

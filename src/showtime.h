@@ -318,6 +318,7 @@ extern const char *htsversion_full;
 typedef struct inithelper {
   struct inithelper *next;
   enum {
+    INIT_GROUP_NET,
     INIT_GROUP_API,
     INIT_GROUP_IPC,
     INIT_GROUP_STATIC_APPS,

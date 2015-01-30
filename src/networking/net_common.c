@@ -27,6 +27,7 @@
 #include "net_i.h"
 
 #include "showtime.h"
+#include "fileaccess/smb/nmb.h"
 
 /**
  *
@@ -280,12 +281,14 @@ net_fmt_host(char *dst, size_t dstlen, const net_addr_t *na)
 {
   switch(na->na_family) {
   case 4:
-    snprintf(dst, dstlen, "%d.%d.%d.%d:%d",
-             na->na_addr[0],
-             na->na_addr[1],
-             na->na_addr[2],
-             na->na_addr[3],
-	     na->na_port);
+    if(na->na_port != 0)
+      snprintf(dst, dstlen, "%d.%d.%d.%d:%d",
+               na->na_addr[0], na->na_addr[1], na->na_addr[2],  na->na_addr[3],
+               na->na_port);
+    else
+      snprintf(dst, dstlen, "%d.%d.%d.%d",
+               na->na_addr[0], na->na_addr[1], na->na_addr[2],  na->na_addr[3]);
+
     break;
 
   default:
@@ -527,8 +530,13 @@ tcp_connect(const char *hostname, int port,
 
   } else {
     if(net_resolve(hostname, &addr, &errmsg)) {
+
       snprintf(errbuf, errlen, "%s", errmsg);
-      return NULL;
+
+      // If no dots in hostname, try to resolve using NetBIOS name lookup
+      if(strchr(hostname, '.') != NULL || nmb_resolve(hostname, &addr))
+        return NULL;
+
     }
   }
 
@@ -566,14 +574,4 @@ tcp_close(tcpcon_t *tc)
   tcp_close_arch(tc);
 
   free(tc);
-}
-
-
-/**
- *
- */
-void
-net_init(void)
-{
-  net_ssl_init();
 }

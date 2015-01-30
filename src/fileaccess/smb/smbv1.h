@@ -1,5 +1,7 @@
 #pragma once
 
+#include "nbt.h"
+
 /**
  * SMB Header (32 bytes)
  */
@@ -98,7 +100,7 @@ typedef struct {
   uint16_t andx_offset;
   uint16_t action;
   uint16_t bytecount;
-  char data[0];
+  uint8_t data[0];
 
 } __attribute__((packed)) SMB_SETUP_ANDX_reply_t;
 
@@ -217,6 +219,24 @@ typedef struct {
 
 } __attribute__((packed)) DCERPC_enum_shares_reply_t;
 
+
+
+typedef struct {
+
+  TRANS_req_t trans;
+
+  uint16_t bytecount;
+  uint8_t padding1;
+  uint8_t transaction_name[26];
+  uint16_t padding2;
+  uint16_t function_code;
+  uint8_t parameter_desc[8];
+  uint8_t return_desc[8];
+  uint16_t detail_level;
+  uint16_t receive_buffer_length;
+  uint32_t server_type;
+  char domain[0];
+} __attribute__((packed)) SMB_enum_servers_req_t;
 
 
 
@@ -553,3 +573,4 @@ typedef struct {
 #define TRANS2_QUERY_PATH_INFORMATION 5
 #define TRANS2_SET_PATH_INFORMATION   6
 
+char **smb_enum_servers(const char *hostname);

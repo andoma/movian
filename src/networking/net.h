@@ -44,8 +44,6 @@ typedef void (net_read_cb_t)(void *opaque, int bytes_done);
 
 typedef struct tcpcon tcpcon_t;
 
-void net_init(void);
-
 #define TCP_SSL      0x1
 #define TCP_DEBUG    0x2
 #define TCP_NO_PROXY 0x4

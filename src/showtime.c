@@ -272,9 +272,11 @@ showtime_init(void)
 
   gconf.exit_code = 1;
 
-  net_init();
+  asyncio_init_early();
+  init_group(INIT_GROUP_NET);
 
   unicode_init();
+
 
   /* Initialize property tree */
   prop_init();
@@ -402,7 +404,7 @@ showtime_init(void)
   init_group(INIT_GROUP_API);
 
   /* Asynchronous IO (Used by HTTP server, etc) */
-  asyncio_init();
+  asyncio_start();
 
   runcontrol_init();
 

@@ -47,7 +47,9 @@ typedef void (asyncio_udp_callback_t)(void *opaque,
 
 typedef void (asyncio_read_callback_t)(void *opaque, htsbuf_queue_t *q);
 
-void asyncio_init(void);
+void asyncio_init_early(void);
+
+void asyncio_start(void);
 
 /*************************************************************************
  * Low level FD
@@ -118,7 +120,8 @@ asyncio_fd_t *asyncio_udp_bind(const char *name,
 			       int port,
 			       asyncio_udp_callback_t *cb,
 			       void *opaque,
-			       int bind_any_on_fail);
+			       int bind_any_on_fail,
+                               int broadcast);
 
 void asyncio_udp_send(asyncio_fd_t *af, const void *data, int size,
 		      const net_addr_t *remote_addr);

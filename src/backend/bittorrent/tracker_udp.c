@@ -352,7 +352,7 @@ static void
 tracker_udp_init(void)
 {
   tracker_udp_fd = asyncio_udp_bind("bittorrent udp tracker",
-				    0, tracker_udp_input, NULL, 0);
+				    0, tracker_udp_input, NULL, 0, 0);
 }
 
 INITME(INIT_GROUP_ASYNCIO, tracker_udp_init, NULL);
