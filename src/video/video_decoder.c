@@ -288,14 +288,15 @@ vd_thread(void *aux)
 
       mp->mp_video_frame_deliver(NULL, mp->mp_video_frame_opaque);
 
+      if(mc_current != NULL)
+        mc_current->flush(mc_current, vd);
+
       if(mb->mb_data32) {
 
         // Final flush, sent from mp_shutdown()
         // Release codec if we hang on to it
 
         if(mc_current != NULL) {
-          mc_current->flush(mc_current, vd);
-
 
           // Need to release here because during end of video playback.
           // The only thing holding reference to the codec is this
