@@ -75,8 +75,9 @@ static struct strtab catnames[] = {
 static const char *plugin_repo_url = "http://showtime.lonelycoder.com/plugins/plugins-v1.json";
 static char *plugin_alt_repo_url;
 static char *plugin_beta_passwords;
-static hts_mutex_t plugin_mutex;
-static char *devplugin;
+static HTS_MUTEX_DECL(plugin_mutex);
+
+static char **devplugins;
 
 static prop_t *plugin_root_list;
 static prop_t *plugin_start_model;
@@ -476,12 +477,16 @@ plugin_unload(plugin_t *pl)
 }
 
 
+#define PLUGIN_LOAD_FORCE        0x1
+#define PLUGIN_LOAD_AS_INSTALLED 0x2
+#define PLUGIN_LOAD_BY_USER      0x4
+#define PLUGIN_LOAD_DEBUG        0x8
+
 /**
  *
  */
 static int
-plugin_load(const char *url, char *errbuf, size_t errlen, int force,
-	    int as_installed, int by_user, int in_debug)
+plugin_load(const char *url, char *errbuf, size_t errlen, int flags)
 {
   char ctrlfile[URL_MAX];
   char errbuf2[1024];
@@ -518,7 +523,7 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
 
   plugin_t *pl = plugin_find(id);
 
-  if(!force && pl->pl_loaded) {
+  if(!(flags & PLUGIN_LOAD_FORCE) && pl->pl_loaded) {
     snprintf(errbuf, errlen, "Plugin \"%s\" already loaded", id);
     goto bad;
   }
@@ -548,7 +553,7 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
     int version = htsmsg_get_u32_or_default(ctrl, "apiversion", 1);
 
     int flags = 0;
-    if(htsmsg_get_u32_or_default(ctrl, "debug", 0) || in_debug)
+    if(htsmsg_get_u32_or_default(ctrl, "debug", 0) || flags & PLUGIN_LOAD_DEBUG)
       flags |= ECMASCRIPT_DEBUG;
 
     hts_mutex_unlock(&plugin_mutex);
@@ -605,7 +610,9 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
           continue;
         snprintf(fullpath, sizeof(fullpath), "%s/%s", url, file);
 
-        int dosel = htsmsg_get_u32_or_default(o, "select", by_user);
+        int dosel =
+          htsmsg_get_u32_or_default(o, "select",
+                                    !!(flags & PLUGIN_LOAD_BY_USER));
 
         plugins_view_add(pl, uit, class, title, fullpath, dosel, file);
       }
@@ -614,7 +621,7 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
 
   if(!r) {
 
-    if(as_installed) {
+    if(flags & PLUGIN_LOAD_AS_INSTALLED) {
       plugin_prop_setup(ctrl, pl, url);
       pl->pl_installed = 1;
       mystrset(&pl->pl_inst_ver, htsmsg_get_str(ctrl, "version"));
@@ -657,7 +664,8 @@ plugin_load_installed(void)
   if(fd != NULL) {
     RB_FOREACH(fde, &fd->fd_entries, fde_link) {
       snprintf(path, sizeof(path), "zip://%s", rstr_get(fde->fde_url));
-      if(plugin_load(path, errbuf, sizeof(errbuf), 0, 1, 0, 0)) {
+      if(plugin_load(path, errbuf, sizeof(errbuf),
+                     PLUGIN_LOAD_AS_INSTALLED)) {
 	TRACE(TRACE_ERROR, "plugins", "Unable to load %s\n%s", path, errbuf);
       }
     }
@@ -1164,9 +1172,8 @@ plugins_upgrade_check(void)
  *
  */
 void
-plugins_init(const char *loadme)
+plugins_init(char **devplugs)
 {
-
   plugins_view_settings_init();
 
   hts_mutex_init(&plugin_mutex);
@@ -1175,18 +1182,24 @@ plugins_init(const char *loadme)
 
   hts_mutex_lock(&plugin_mutex);
 
-  if(loadme != NULL) {
-    char errbuf[200];
-    char buf[PATH_MAX];
-    if(!fa_normalize(loadme, buf, sizeof(buf)))
-      loadme = buf;
+  if(devplugs != NULL) {
 
-    devplugin = strdup(loadme);
-    if(plugin_load(devplugin, errbuf, sizeof(errbuf), 1, 0, 0, 1)) {
-      TRACE(TRACE_ERROR, "plugins",
-            "Unable to load development plugin: %s\n%s", loadme, errbuf);
-    } else {
-      TRACE(TRACE_INFO, "plugins", "Loaded dev plugin %s", devplugin);
+    const char *path;
+    for(; (path = *devplugs) != NULL; devplugs++) {
+      char errbuf[200];
+      char buf[PATH_MAX];
+      if(!fa_normalize(path, buf, sizeof(buf)))
+        path = buf;
+
+      strvec_addp(&devplugins, path);
+
+      if(plugin_load(path, errbuf, sizeof(errbuf),
+                     PLUGIN_LOAD_FORCE | PLUGIN_LOAD_DEBUG)) {
+        TRACE(TRACE_ERROR, "plugins",
+              "Unable to load development plugin: %s\n%s", path, errbuf);
+      } else {
+        TRACE(TRACE_INFO, "plugins", "Loaded dev plugin %s", path);
+      }
     }
   }
   hts_mutex_unlock(&plugin_mutex);
@@ -1200,17 +1213,21 @@ void
 plugins_reload_dev_plugin(void)
 {
   char errbuf[200];
-  if(devplugin == NULL)
+  if(devplugins == NULL)
     return;
 
   hts_mutex_lock(&plugin_mutex);
 
-  if(plugin_load(devplugin, errbuf, sizeof(errbuf), 1, 0, 1, 1))
-    TRACE(TRACE_ERROR, "plugins", 
-	  "Unable to reload development plugin: %s\n%s", devplugin, errbuf);
-  else
-    TRACE(TRACE_INFO, "plugins", "Reloaded dev plugin %s", devplugin);
+  const char *path;
+  for(int i = 0; (path = devplugins[i]) != NULL; i++) {
 
+    if(plugin_load(path, errbuf, sizeof(errbuf),
+                   PLUGIN_LOAD_FORCE | PLUGIN_LOAD_DEBUG | PLUGIN_LOAD_BY_USER))
+      TRACE(TRACE_ERROR, "plugins",
+            "Unable to reload development plugin: %s\n%s", path, errbuf);
+    else
+      TRACE(TRACE_INFO, "plugins", "Reloaded dev plugin %s", path);
+  }
   hts_mutex_unlock(&plugin_mutex);
 }
 
@@ -1344,7 +1361,9 @@ plugin_install(plugin_t *pl, const char *package)
   arch_sync_path(path);
 #endif
 
-  if(plugin_load(path, errbuf, sizeof(errbuf), 1, 1, 1, 0)) {
+  if(plugin_load(path, errbuf, sizeof(errbuf),
+                 PLUGIN_LOAD_FORCE | PLUGIN_LOAD_AS_INSTALLED |
+                 PLUGIN_LOAD_BY_USER)) {
     prop_unlink(status);
     TRACE(TRACE_ERROR, "plugins", "Unable to load %s -- %s", path, errbuf);
     prop_set_string(status, errbuf);

@@ -23,7 +23,7 @@
 
 struct prop;
 
-void plugins_init(const char *loadme);
+void plugins_init(char **devplugins);
 
 void plugins_init2(void);
 

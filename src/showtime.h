@@ -257,7 +257,7 @@ typedef struct gconf {
   int enable_torrent_peer_download_debug;
 
 
-  const char *devplugin;
+  char **devplugins;
   const char *plugin_repo;
   const char *load_jsfile;
   const char *load_ecmascript;

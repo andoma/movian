@@ -377,7 +377,7 @@ showtime_init(void)
   audio_init();
 
   /* Initialize plugin manager */
-  plugins_init(gconf.devplugin);
+  plugins_init(gconf.devplugins);
 
   /* Start software installer thread (plugins, upgrade, etc) */
   hts_thread_create_detached("swinst", swthread, NULL, THREAD_PRIO_BGTASK);
@@ -535,7 +535,7 @@ parse_opts(int argc, char **argv)
       argc -= 1; argv += 1;
       continue;
     } else if(!strcmp(argv[0], "-p") && argc > 1) {
-      gconf.devplugin = argv[1];
+      strvec_addp(&gconf.devplugins,argv[1]);
       argc -= 2; argv += 2;
       continue;
     } else if(!strcmp(argv[0], "--plugin-repo") && argc > 1) {
