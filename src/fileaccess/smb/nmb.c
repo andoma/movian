@@ -39,6 +39,7 @@ LIST_HEAD(nmb_resolve_list, nmb_resolve);
 
 typedef struct nmb_server {
   LIST_ENTRY(nmb_server) ns_link;
+  char *ns_workgroup;
   char *ns_name;
   int ns_mark;
   service_t *ns_service;
@@ -130,6 +131,7 @@ ns_destroy(nmb_server_t *ns)
   LIST_REMOVE(ns, ns_link);
   service_destroy(ns->ns_service);
   free(ns->ns_name);
+  free(ns->ns_workgroup);
   free(ns);
 }
 
@@ -165,25 +167,28 @@ query_master_browser(void *a)
   hts_mutex_lock(&nmb_mutex);
 
   LIST_FOREACH(ns, &nmb_servers, ns_link)
-    ns->ns_mark = 1;
+    ns->ns_mark++;
 
-  for(int i = 0; servers[i] != NULL; i++) {
-    const char *s = servers[i];
-
+  for(int i = 0; servers[i] != NULL; i+=2) {
+    const char *name = servers[i];
+    const char *workgroup = servers[i+1];
     LIST_FOREACH(ns, &nmb_servers, ns_link) {
-      if(!strcmp(ns->ns_name, s))
+      if(!strcmp(ns->ns_name, name) && !strcmp(ns->ns_workgroup, workgroup))
         break;
     }
     if(ns == NULL) {
+      char id[64];
       char url[64];
 
       ns = calloc(1, sizeof(nmb_server_t));
-      ns->ns_name = strdup(s);
+      ns->ns_name = strdup(name);
+      ns->ns_workgroup = strdup(workgroup);
       LIST_INSERT_HEAD(&nmb_servers, ns, ns_link);
 
-      snprintf(url, sizeof(url), "smb://%s", s);
+      snprintf(id, sizeof(id), "%s/%s", workgroup, name);
+      snprintf(url, sizeof(url), "smb://%s", name);
 
-      ns->ns_service = service_create_managed(url, s, url, "server", NULL,
+      ns->ns_service = service_create_managed(id, name, url, "server", NULL,
                                               0, 0, SVC_ORIGIN_DISCOVERED,
                                               0, 0);
     } else {
@@ -196,7 +201,7 @@ query_master_browser(void *a)
   for(ns = LIST_FIRST(&nmb_servers); ns != NULL; ns = next) {
 
     next = LIST_NEXT(ns, ns_link);
-    if(ns->ns_mark)
+    if(ns->ns_mark >= 2)
       ns_destroy(ns);
 
   }

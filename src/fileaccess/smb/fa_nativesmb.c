@@ -2816,7 +2816,7 @@ smb_NetServerEnum2(cifs_tree_t *ct, char *errbuf, size_t errlen)
     goto bad;
   }
 
-  char **rvec = calloc(entries + 1, sizeof(char *));
+  char **rvec = calloc(2 * (entries + 1), sizeof(char *));
 
   int data_offset = letoh_16(treply->data_offset);
   const uint8_t *items = rbuf + data_offset;
@@ -2832,7 +2832,8 @@ smb_NetServerEnum2(cifs_tree_t *ct, char *errbuf, size_t errlen)
 
     remain -= 26;
     items += 26;
-    rvec[i] = strdup(servername);
+    rvec[i * 2 + 0] = strdup(servername);
+    rvec[i * 2 + 1] = strdup(domain);
   }
 
   free(rbuf);
@@ -2859,9 +2860,8 @@ smb_enum_servers(const char *hostname)
   if(cc == SAMBA_NEED_AUTH)
     return NULL;
   if(cc == NULL) {
-    TRACE(TRACE_DEBUG, "SMB",
-          "Unable to connect to %s:%d for network listings -- %s",
-          hostname, port, errbuf);
+    SMBTRACE("Unable to connect to %s:%d for network listings -- %s",
+             hostname, port, errbuf);
     return NULL;
   }
 
@@ -2874,9 +2874,8 @@ smb_enum_servers(const char *hostname)
   char **servers = smb_NetServerEnum2(ct, errbuf, sizeof(errbuf));
 
   if(servers == NULL) {
-    TRACE(TRACE_DEBUG, "SMB",
-          "Failed to enumerate network servers at %s:%d -- %s",
-          hostname, port, errbuf);
+    SMBTRACE("Failed to enumerate network servers at %s:%d -- %s",
+             hostname, port, errbuf);
     return NULL;
   }
   cifs_release_tree(ct, 1);
