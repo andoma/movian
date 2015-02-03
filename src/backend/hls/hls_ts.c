@@ -63,8 +63,6 @@ typedef struct ts_demuxer {
     TD_MUX_MODE_RAW,
   } td_mux_mode;
 
-  int td_drive_clock;
-
   uint8_t td_buf[2048];
   int td_buf_bytes;
 
@@ -588,7 +586,7 @@ enqueue_packet(ts_demuxer_t *td, const void *data, int len,
   mb->mb_keyframe = keyframe;
   mb->mb_sequence = seq;
   mb->mb_epoch = td->td_mp->mp_epoch;
-  mb->mb_drive_clock = td->td_drive_clock;
+  mb->mb_drive_clock = te->te_data_type == MB_VIDEO;
 
   if(mb->mb_keyframe && !te->te_logged_keyframe) {
     te->te_logged_keyframe = 1;
@@ -1036,7 +1034,6 @@ hls_ts_demuxer_read(hls_demuxer_t *hd)
       hv->hv_demuxer_close = hls_ts_demuxer_close;
       td->td_mp = mp;
       td->td_hd = hd;
-      td->td_drive_clock = hd == &hd->hd_hls->h_primary;
     }
 
     media_buf_t *mb = get_pkt(td);
