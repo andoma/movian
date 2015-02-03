@@ -2770,10 +2770,10 @@ smb_NetServerEnum2(cifs_tree_t *ct, char *errbuf, size_t errlen)
                     SMB_FLAGS_CASELESS_PATHNAMES, 0, ct->ct_tid, 1);
 
   req->trans.wordcount = 14;
-  req->trans.total_param_count = htole_16(36);
+  req->trans.total_param_count = htole_16(26 + dlen);
   req->trans.max_param_count = htole_16(8);
   req->trans.max_data_count = htole_16(65535);
-  req->trans.param_count = htole_16(36);
+  req->trans.param_count = htole_16(26 + dlen);
   req->trans.param_offset = htole_16(92);
   req->bytecount = htole_16(55 + dlen);
   memcpy(req->transaction_name,
