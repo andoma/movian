@@ -327,6 +327,7 @@ nmb_resolve_timeout(void *aux)
   nmb_resolve_t *nr = aux;
 
   hts_mutex_lock(&nmb_mutex);
+  LIST_REMOVE(nr, nr_link);
   nr->nr_status = -1;
   hts_cond_broadcast(&nmb_resolver_cond);
   hts_mutex_unlock(&nmb_mutex);
