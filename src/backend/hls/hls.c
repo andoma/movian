@@ -1280,6 +1280,7 @@ get_media_buf(hls_t *h)
 
     hls_free_mbp(mp, &h->h_primary.hd_mb);
     hls_free_mbp(mp, &h->h_audio.hd_mb);
+    mp_flush(mp);
   }
 
   if((b1 = hls_demuxer_get(&h->h_primary)) == NULL)
