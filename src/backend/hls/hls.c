@@ -709,7 +709,8 @@ hls_variant_select_next_segment(hls_variant_t *hv, time_t now)
 
     if(hs == NULL && hd->hd_seek_to_segment != PTS_UNSET) {
       hs = hv_find_segment_by_time(hv, hd->hd_seek_to_segment);
-      HLS_TRACE(h, "Seek to %"PRId64" -- %s", hd->hd_seek_to_segment,
+      HLS_TRACE(h, "%s: Seek to %"PRId64" -- %s", hd->hd_type,
+                hd->hd_seek_to_segment,
                 hs ? "Segment found" : "Segment not found");
       hd->hd_seek_to_segment = PTS_UNSET;
     }
