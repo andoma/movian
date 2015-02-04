@@ -264,7 +264,7 @@ libav_video_flush(media_codec_t *mc, video_decoder_t *vd)
 
   while(1) {
     avcodec_decode_video2(ctx, vd->vd_frame, &got_pic, &avpkt);
-    if(got_pic)
+    if(!got_pic)
       break;
     av_frame_unref(frame);
   };
