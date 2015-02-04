@@ -95,7 +95,6 @@ mp_seek_in_queues(media_pipe_t *mp, int64_t pos)
       }
       rval = 0;
 
-      mp->mp_epoch++;
       update_epoch_in_queue(&mp->mp_audio.mq_q_data, mp->mp_epoch);
       update_epoch_in_queue(&mp->mp_video.mq_q_data, mp->mp_epoch);
       update_epoch_in_queue(&mp->mp_video.mq_q_aux, mp->mp_epoch);
@@ -140,13 +139,13 @@ mp_direct_seek(media_pipe_t *mp, int64_t ts)
   mp->mp_epoch++;
   mp->mp_seek_base = ts;
 
+  if(mp->mp_seek_initiate != NULL)
+    mp->mp_seek_initiate(mp);
+
   if(!mp_seek_in_queues(mp, ts + mp->mp_start_time)) {
     prop_set(mp->mp_prop_root, "seektime", PROP_SET_FLOAT, ts / 1000000.0);
     return;
   }
-
-  if(mp->mp_seek_initiate != NULL)
-    mp->mp_seek_initiate(mp);
 
   /* If there already is a seek event enqueued, update it */
   TAILQ_FOREACH(e, &mp->mp_eq, e_link) {
