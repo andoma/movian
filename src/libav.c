@@ -412,11 +412,8 @@ media_codec_create_lavc(media_codec_t *cw, const media_codec_params_t *mcp,
     cw->ctx->extradata_size = mcp->extradata_size;
   }
 
-  if(cw->codec_id == AV_CODEC_ID_H264 && gconf.concurrency > 1) {
-    cw->ctx->thread_count = gconf.concurrency;
-    if(mcp && mcp->cheat_for_speed)
-      cw->ctx->flags2 |= CODEC_FLAG2_FAST;
-  }
+  if(mcp && mcp->cheat_for_speed)
+    cw->ctx->flags2 |= CODEC_FLAG2_FAST;
 
   if(codec->type == AVMEDIA_TYPE_VIDEO) {
 
