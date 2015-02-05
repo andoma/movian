@@ -98,6 +98,7 @@ typedef struct hls_variant {
 
   void *hv_demuxer_private;
   void (*hv_demuxer_close)(struct hls_variant *);
+  void (*hv_demuxer_flush)(struct hls_variant *);
 
   int hv_vstream;
   int hv_astream;
@@ -178,6 +179,11 @@ typedef struct hls_demuxer {
 
   struct hls *hd_hls;
 
+  /** Used to find segment to seek to, will be reset to PTS_UNSET
+   * once the segment has been found. After the correct segment has
+   * been found we rely on mq_seek_target mark frames as skipped until
+   * we reach the final seek point
+   */
   int64_t hd_seek_to_segment;
 
   media_buf_t *hd_mb;

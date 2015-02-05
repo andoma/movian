@@ -706,9 +706,12 @@ hls_variant_select_next_segment(hls_variant_t *hv, time_t now)
   if(hv->hv_current_seg == NULL) {
 
     hs = NULL;
-
-    if(hs == NULL && hd->hd_seek_to_segment != PTS_UNSET) {
+    if(hd->hd_seek_to_segment != PTS_UNSET) {
       hs = hv_find_segment_by_time(hv, hd->hd_seek_to_segment);
+
+      if(hv->hv_frozen && hs == NULL)
+        return HLS_EOF;
+
       HLS_TRACE(h, "%s: Seek to %"PRId64" -- %s", hd->hd_type,
                 hd->hd_seek_to_segment,
                 hs ? "Segment found" : "Segment not found");
@@ -1066,6 +1069,16 @@ enqueue_buffer(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
 {
   const int is_video = mb->mb_data_type == MB_VIDEO;
 
+  if(unlikely(mq->mq_seektarget != AV_NOPTS_VALUE)) {
+    int64_t ts = mb->mb_pts != AV_NOPTS_VALUE ? mb->mb_pts : mb->mb_dts;
+    //    printf("%ld %ld %s\n", ts, mq->mq_seektarget, ts < mq->mq_seektarget ? "drop": "grant");
+    if(ts < mq->mq_seektarget) {
+      mb->mb_skip = 1;
+    } else {
+      mq->mq_seektarget = AV_NOPTS_VALUE;
+    }
+  }
+
   hts_mutex_lock(&mp->mp_mutex);
 
   const int vminpkt = mp->mp_video.mq_stream != -1 ? 5 : 0;
@@ -1250,6 +1263,21 @@ hls_demuxer_get_audio(hls_t *h)
 /**
  *
  */
+static void
+hls_demuxer_seek(media_pipe_t *mp, hls_demuxer_t *hd, int64_t pos)
+{
+  hd->hd_seek_to_segment = pos;
+
+  if(hd->hd_current != NULL && hd->hd_current->hv_demuxer_flush)
+    hd->hd_current->hv_demuxer_flush(hd->hd_current);
+
+  hls_free_mbp(mp, &hd->hd_mb);
+}
+
+
+/**
+ *
+ */
 static void __attribute__((unused))
 print_ts(media_buf_t *mb)
 {
@@ -1275,12 +1303,13 @@ get_media_buf(hls_t *h)
   const int dumpinfo = 0;
 
   if(h->h_pending_seek != PTS_UNSET) {
-    h->h_primary.hd_seek_to_segment = h->h_pending_seek;
-    h->h_audio.hd_seek_to_segment = h->h_pending_seek;
-    h->h_pending_seek = PTS_UNSET;
+    hls_demuxer_seek(mp, &h->h_primary, h->h_pending_seek);
+    hls_demuxer_seek(mp, &h->h_audio,   h->h_pending_seek);
 
-    hls_free_mbp(mp, &h->h_primary.hd_mb);
-    hls_free_mbp(mp, &h->h_audio.hd_mb);
+
+    h->h_pending_seek = PTS_UNSET;
+    mp->mp_video.mq_seektarget = h->h_pending_seek;
+    mp->mp_audio.mq_seektarget = h->h_pending_seek;
     mp_flush(mp);
   }
 
@@ -1455,8 +1484,9 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
       playinfo_set_restartpos(canonical_url, -1, 0);
       playinfo_register_play(canonical_url, 1);
       TRACE(TRACE_DEBUG, "Video",
-	    "Playback reached %d%%, counting as played (%s)",
-	    spp, canonical_url);
+	    "Playback reached %d%%%s, counting as played (%s)",
+	    spp, event_is_type(e, EVENT_EOF) ? ", EOF detected" : "",
+            canonical_url);
     } else if(h->h_last_timestamp_presented != PTS_UNSET) {
       playinfo_set_restartpos(canonical_url,
                               h->h_last_timestamp_presented / 1000,

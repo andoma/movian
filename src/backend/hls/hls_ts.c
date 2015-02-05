@@ -864,6 +864,26 @@ hls_ts_demuxer_close(hls_variant_t *hv)
 }
 
 
+/**
+ *
+ */
+static void
+hls_ts_demuxer_flush(hls_variant_t *hv)
+{
+  ts_demuxer_t *td = hv->hv_demuxer_private;
+  ts_es_t *te;
+
+  LIST_FOREACH(te, &td->td_elemtary_streams, te_link) {
+    media_codec_t *mc = te->te_codec;
+    if(mc == NULL)
+      continue;
+
+    av_parser_close(mc->parser_ctx);
+    mc->parser_ctx = av_parser_init(mc->codec_id);
+  }
+}
+
+
 
 /**
  *
@@ -1032,6 +1052,7 @@ hls_ts_demuxer_read(hls_demuxer_t *hd)
       TAILQ_INIT(&td->td_packets);
       assert(hv->hv_demuxer_close == NULL);
       hv->hv_demuxer_close = hls_ts_demuxer_close;
+      hv->hv_demuxer_flush = hls_ts_demuxer_flush;
       td->td_mp = mp;
       td->td_hd = hd;
     }
@@ -1039,6 +1060,11 @@ hls_ts_demuxer_read(hls_demuxer_t *hd)
     media_buf_t *mb = get_pkt(td);
     if(mb != NULL)
       return mb;
+
+    if(hd->hd_seek_to_segment != PTS_UNSET && hv->hv_current_seg != NULL) {
+      hls_segment_close(hv->hv_current_seg);
+      hv->hv_current_seg = NULL;
+    }
 
     if(hv->hv_current_seg == NULL || hv->hv_current_seg->hs_fh == NULL) {
 
