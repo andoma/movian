@@ -651,8 +651,10 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
     char id[256];
     char name[256];
 
-    if(retry_reason && non_interactive)
+    if(retry_reason && non_interactive) {
+      free(domain);
       return -2;
+    }
 
     snprintf(id, sizeof(id), "smb:connection:%s:%d",
 	     cc->cc_hostname, cc->cc_port);

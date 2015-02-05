@@ -288,6 +288,7 @@ gvv_reset(glw_video_t *gv)
     surface_reset(vd, gv, &gv->gv_surfaces[i]);
 
   vdpau_mixer_deinit(&gvv->gvv_vm);
+  free(gvv);
 }
 
 
