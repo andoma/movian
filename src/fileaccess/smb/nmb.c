@@ -346,7 +346,7 @@ nmb_resolver_process(void)
     LIST_REMOVE(nr, nr_link);
     hts_mutex_unlock(&nmb_mutex);
     LIST_INSERT_HEAD(&nmb_resolve_sent, nr, nr_link);
-    nr->nr_txid = nmb_send_query(nr->nr_hostname, 0, 1);
+    nr->nr_txid = nmb_send_query(nr->nr_hostname, 0x20, 1);
     asyncio_timer_init(&nr->nr_timeout, nmb_resolve_timeout, nr);
     asyncio_timer_arm(&nr->nr_timeout, showtime_get_ts() + 3000000);
     hts_mutex_lock(&nmb_mutex);
