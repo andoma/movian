@@ -1282,12 +1282,15 @@ static void __attribute__((unused))
 print_ts(media_buf_t *mb)
 {
   if(mb == HLS_EOF)
-    printf("%8s:%5s:%-20s %-20s", "", "", "EOF", "");
+    printf("%5s:%8s:%5s:%-20s %-20s", "", "", "", "EOF", "");
   else if(mb->mb_dts == PTS_UNSET)
-    printf("%08x:%5d:%-20s %-20s", mb->mb_epoch, mb->mb_sequence, "UNSET", "");
+    printf("%5s:%08x:%5d:%-20s %-20s",
+           mb->mb_data_type == MB_VIDEO ? "VIDEO" : "AUDIO",
+           mb->mb_epoch, mb->mb_sequence, "UNSET", "");
   else
-    printf("%08x:%5d:%-20"PRId64" %-20"PRId64, mb->mb_epoch,
-           mb->mb_sequence, mb->mb_dts, mb->mb_delta);
+    printf("%5s:%08x:%5d:%-20"PRId64" %-20"PRId64,
+           mb->mb_data_type == MB_VIDEO ? "VIDEO" : "AUDIO",
+           mb->mb_epoch, mb->mb_sequence, mb->mb_dts, mb->mb_delta);
 }
 
 /**
