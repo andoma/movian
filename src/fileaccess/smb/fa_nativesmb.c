@@ -2870,7 +2870,7 @@ smb_enum_servers(const char *hostname)
   cifs_tree_t *ct;
 
   ct = smb_tree_connect_andX(cc, "IPC$", errbuf, sizeof(errbuf), 1);
-  if(ct == SAMBA_NEED_AUTH)
+  if(ct == SAMBA_NEED_AUTH || ct == NULL)
     return NULL;
 
   char **servers = smb_NetServerEnum2(ct, errbuf, sizeof(errbuf));
