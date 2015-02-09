@@ -309,17 +309,13 @@ bt_playvideo(const char *url, media_pipe_t *mp,
   bin2hex(hashstr, sizeof(hashstr), to->to_info_hash, 20);
   hashstr[40] = 0;
 
-  video_args_t va2 = *va;
-
   snprintf(newurl, sizeof(newurl), "torrentfile://%s/%s",
            hashstr, best->tf_fullpath);
-  va2.canonical_url = newurl;
 
   torrent_retain(to);
   hts_mutex_unlock(&bittorrent_mutex);
 
-
-  event_t *e = backend_play_video(newurl, mp, errbuf, errlen, vq, vsl, &va2);
+  event_t *e = backend_play_video(newurl, mp, errbuf, errlen, vq, vsl, va);
 
   hts_mutex_lock(&bittorrent_mutex);
   torrent_release(to);
