@@ -158,7 +158,7 @@ play_video(const char *url, struct media_pipe *mp,
 	   char *errbuf, size_t errlen,
 	   video_queue_t *vq,
            const char *parent_url, const char *parent_title,
-           prop_t *origin)
+           prop_t *origin, int resume_mode)
 {
   htsmsg_t *subs, *sources;
   const char *str;
@@ -179,6 +179,7 @@ play_video(const char *url, struct media_pipe *mp,
   va.season = -1;
   va.origin = origin;
   va.priority = priority;
+  va.resume_mode = resume_mode;
 
   LIST_INIT(&vsources);
 
@@ -201,7 +202,7 @@ play_video(const char *url, struct media_pipe *mp,
 	      url, rstr_get(r));
 	event_t *e = play_video(rstr_get(r), mp, flags, priority,
 				errbuf, errlen, vq, parent_title, parent_url,
-                                origin);
+                                origin, resume_mode);
 	rstr_release(r);
 	return e;
       }
@@ -660,7 +661,7 @@ video_player_idle(void *aux)
     RESUME_NO,
     RESUME_AS_GLOBAL_SETTING,
     RESUME_YES,
-  } resume_mode = RESUME_NO;
+  } resume_ctrl = RESUME_NO;
 
 
   while(run) {
@@ -672,33 +673,35 @@ video_player_idle(void *aux)
 
       int play_flags = play_flags_permanent;
 
-      switch(resume_mode) {
+      int resume_mode = VIDEO_RESUME_NO;
+      switch(resume_ctrl) {
       case RESUME_NO:
         break;
 
       case RESUME_AS_GLOBAL_SETTING:
-        if(video_settings.resume_mode == VIDEO_RESUME_YES)
-          play_flags |= BACKEND_VIDEO_RESUME;
+        resume_mode = video_settings.resume_mode;
         break;
 
       case RESUME_YES:
-        play_flags |= BACKEND_VIDEO_RESUME;
+        resume_mode = VIDEO_RESUME_YES;
         break;
       }
 
-      resume_mode = RESUME_NO; // For next item during continuous play
+      resume_ctrl = RESUME_NO; // For next item during continuous play
 
-      TRACE(TRACE_DEBUG, "vp", "Playing '%s'%s%s%s",
+      TRACE(TRACE_DEBUG, "vp", "Playing '%s'%s%s resume:%s%s",
             rstr_get(play_url),
             play_flags & BACKEND_VIDEO_PRIMARY  ? ", primary" : "",
             play_flags & BACKEND_VIDEO_NO_AUDIO ? ", no-audio" : "",
-            play_flags & BACKEND_VIDEO_RESUME   ? ", attempt-resume" : "");
+            resume_mode == VIDEO_RESUME_YES ? "yes" :
+            resume_mode == VIDEO_RESUME_NO  ? "no" : "ask user",
+            resume_ctrl == RESUME_AS_GLOBAL_SETTING ? "" : "<- overridden");
 
       e = play_video(rstr_get(play_url), mp,
 		     play_flags, play_priority,
 		     errbuf, sizeof(errbuf), vq,
                      rstr_get(parent_url), rstr_get(parent_title),
-                     origin);
+                     origin, resume_mode);
       mp_bump_epoch(mp);
       prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 0);
       if(e == NULL) {
@@ -756,13 +759,13 @@ video_player_idle(void *aux)
       rstr_release(play_url);
       play_url = rstr_alloc(ep->url);
 
-      resume_mode = RESUME_AS_GLOBAL_SETTING;
+      resume_ctrl = RESUME_AS_GLOBAL_SETTING;
 
       if(ep->how) {
 	if(!strcmp(ep->how, "beginning"))
-          resume_mode = RESUME_NO;
+          resume_ctrl = RESUME_NO;
 	else if(!strcmp(ep->how, "resume"))
-          resume_mode = RESUME_YES;
+          resume_ctrl = RESUME_YES;
 	else if(!strcmp(ep->how, "continuous"))
 	  force_continuous = 1;
       }

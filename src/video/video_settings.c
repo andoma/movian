@@ -138,8 +138,9 @@ video_settings_init(void)
                  SETTING_TITLE(_p("Resume video playback")),
                  SETTING_WRITE_INT(&video_settings.resume_mode),
                  SETTING_HTSMSG("resumemode", store, "videoplayback"),
-                 SETTING_OPTION("1", _p("Yes")),
-                 SETTING_OPTION("0", _p("No")),
+                 SETTING_OPTION("2", _p("Ask")),
+                 SETTING_OPTION("1", _p("Always")),
+                 SETTING_OPTION("0", _p("Never")),
                  NULL);
 
   setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,

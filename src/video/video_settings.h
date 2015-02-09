@@ -36,6 +36,7 @@ struct video_settings {
   enum {
     VIDEO_RESUME_NO = 0,
     VIDEO_RESUME_YES = 1,
+    VIDEO_RESUME_ASK = 2,
   } resume_mode;
 
   enum {

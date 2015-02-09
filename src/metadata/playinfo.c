@@ -33,6 +33,8 @@
 #include "db/kvstore.h"
 #include "showtime.h"
 #include "playinfo.h"
+#include "video/video_settings.h"
+#include "notifications.h"
 
 static HTS_MUTEX_DECL(mip_mutex);
 
@@ -75,9 +77,31 @@ playinfo_set_restartpos(const char *url, int64_t pos_ms, int unimportant)
  *
  */
 int64_t
-playinfo_get_restartpos(const char *url)
+playinfo_get_restartpos(const char *url, const char *title, int resume_mode)
 {
-  return kv_url_opt_get_int64(url, KVSTORE_DOMAIN_SYS, "restartposition", 0);
+  if(resume_mode == VIDEO_RESUME_NO)
+    return 0;
+
+  int64_t pos = kv_url_opt_get_int64(url, KVSTORE_DOMAIN_SYS, "restartposition", 0);
+  if(pos == 0 || resume_mode == VIDEO_RESUME_YES)
+    return pos;
+
+  prop_t *p = prop_ref_inc(prop_create_root(NULL));
+
+  prop_set(p, "type",     PROP_SET_STRING, "resume");
+  prop_set(p, "title",    PROP_SET_STRING, title);
+  prop_set(p, "position", PROP_SET_INT, (int)(pos / 1000));
+
+  event_t *e = popup_display(p);
+
+  if(!event_is_action(e, ACTION_OK))
+    pos = 0;
+
+  event_release(e);
+  prop_destroy(p);
+  prop_ref_dec(p);
+  return pos;
+
 }
 
 /**

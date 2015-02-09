@@ -173,7 +173,9 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 		  seek_index_t *sidx, // Minute for minute thumbs
 		  seek_index_t *cidx, // Chapters
 		  int cwvec_size,
-		  fa_handle_t *fh)
+		  fa_handle_t *fh,
+                  int resume_mode,
+                  const char *title)
 {
   media_buf_t *mb = NULL;
   media_queue_t *mq = NULL;
@@ -191,8 +193,8 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
   mp->mp_video.mq_seektarget = AV_NOPTS_VALUE;
   mp->mp_audio.mq_seektarget = AV_NOPTS_VALUE;
 
-  if(flags & BACKEND_VIDEO_RESUME && mp->mp_flags & MP_CAN_SEEK) {
-    int64_t start = playinfo_get_restartpos(canonical_url) * 1000;
+  if(mp->mp_flags & MP_CAN_SEEK) {
+    int64_t start = playinfo_get_restartpos(canonical_url, title, resume_mode) * 1000;
     if(start) {
       TRACE(TRACE_DEBUG, "VIDEO", "Attempting to resume from %.2f seconds",
             start / 1000000.0f);
@@ -834,7 +836,7 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
   event_t *e;
   e = video_player_loop(fctx, cwvec, mp, va.flags, errbuf, errlen,
 			va.canonical_url, freetype_context, si, ci,
-			cwvec_size, fh);
+			cwvec_size, fh, va.resume_mode, va.title);
 
   seek_index_destroy(si);
   seek_index_destroy(ci);

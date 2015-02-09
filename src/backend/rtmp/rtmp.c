@@ -669,13 +669,7 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
   r.r = RTMP_Alloc();
   RTMP_Init(r.r);
 
-  int64_t start = 0;
-
-  if(va.flags & BACKEND_VIDEO_RESUME) {
-    start = playinfo_get_restartpos(va.canonical_url);
-    TRACE(TRACE_DEBUG, "RTMP", "Attempting to resume from %.2f seconds",
-          start / 1000.0f);
-  }
+  int64_t start = playinfo_get_restartpos(va.canonical_url, va.title, va.resume_mode);
 
   if(!RTMP_SetupURL(r.r, url)) {
     snprintf(errbuf, errlen, "Unable to setup RTMP-session");
