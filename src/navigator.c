@@ -101,7 +101,8 @@ typedef struct nav_page {
   prop_t *np_prop_root;
   char *np_url;
   char *np_parent_url;
-
+  char *np_how;
+  
   int np_direct_close;
 
   prop_sub_t *np_close_sub;
@@ -342,6 +343,7 @@ nav_close(nav_page_t *np, int with_prop)
   rstr_release(np->np_title);
   free(np->np_url);
   free(np->np_parent_url);
+  free(np->np_how);
   free(np);
 }
 
@@ -557,7 +559,7 @@ nav_page_icon_set(void *opaque, rstr_t *str)
  *
  */
 static void
-nav_page_setup_prop(nav_page_t *np, const char *view, const char *how)
+nav_page_setup_prop(nav_page_t *np, const char *view)
 {
   np->np_prop_root = prop_create_root("page");
 
@@ -583,9 +585,10 @@ nav_page_setup_prop(nav_page_t *np, const char *view, const char *how)
   if(view != NULL)
     prop_set(np->np_prop_root, "requestedView", PROP_SET_STRING, view);
 
-  if(how != NULL)
-    prop_set(np->np_prop_root, "how", PROP_SET_STRING, how);
+  prop_set(np->np_prop_root, "how", PROP_SET_STRING, np->np_how);
 
+  prop_print_tree(prop_create(np->np_prop_root, "how"), 1);
+  
   // XXX Change this into event-style subscription
   np->np_close_sub = 
     prop_subscribe(0,
@@ -697,9 +700,10 @@ nav_open0(navigator_t *nav, const char *url, const char *view, prop_t *origin,
   np->np_opened_from = prop_ref_inc(model);
   np->np_origin = prop_ref_inc(origin);
   np->np_direct_close = 0;
+  np->np_how = how ? strdup(how) : NULL;
   TAILQ_INSERT_TAIL(&nav->nav_pages, np, np_global_link);
 
-  nav_page_setup_prop(np, view, how);
+  nav_page_setup_prop(np, view);
 
   nav_insert_page(nav, np, origin);
   nav_open_backend(np);
@@ -772,7 +776,8 @@ nav_reload_current(navigator_t *nav)
   page_unsub(np);
 
   prop_destroy(np->np_prop_root);
-  nav_page_setup_prop(np, NULL, "continue");
+  mystrset(&np->np_how, "continue");
+  nav_page_setup_prop(np, NULL);
 
   if(prop_set_parent(np->np_prop_root, nav->nav_prop_pages)) {
     /* nav->nav_prop_pages is a zombie, this is an error */
@@ -804,7 +809,7 @@ page_redirect(nav_page_t *np, const char *url)
   prop_destroy_childs(np->np_prop_root);
   mystrset(&np->np_url, url);
 
-  nav_page_setup_prop(np, NULL, NULL);
+  nav_page_setup_prop(np, NULL);
 
   if(prop_set_parent_ex(np->np_prop_root, nav->nav_prop_pages,
                         p, NULL)) {
