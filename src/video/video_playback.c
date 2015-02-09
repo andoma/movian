@@ -689,13 +689,13 @@ video_player_idle(void *aux)
 
       resume_ctrl = RESUME_NO; // For next item during continuous play
 
-      TRACE(TRACE_DEBUG, "vp", "Playing '%s'%s%s resume:%s%s",
+      TRACE(TRACE_DEBUG, "vp", "Playing '%s'%s%s, resume:%s%s",
             rstr_get(play_url),
             play_flags & BACKEND_VIDEO_PRIMARY  ? ", primary" : "",
             play_flags & BACKEND_VIDEO_NO_AUDIO ? ", no-audio" : "",
             resume_mode == VIDEO_RESUME_YES ? "yes" :
             resume_mode == VIDEO_RESUME_NO  ? "no" : "ask user",
-            resume_ctrl == RESUME_AS_GLOBAL_SETTING ? "" : "<- overridden");
+            resume_ctrl == RESUME_AS_GLOBAL_SETTING ? "" : " (overridden)");
 
       e = play_video(rstr_get(play_url), mp,
 		     play_flags, play_priority,
