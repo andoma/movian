@@ -587,8 +587,6 @@ nav_page_setup_prop(nav_page_t *np, const char *view)
 
   prop_set(np->np_prop_root, "how", PROP_SET_STRING, np->np_how);
 
-  prop_print_tree(prop_create(np->np_prop_root, "how"), 1);
-  
   // XXX Change this into event-style subscription
   np->np_close_sub = 
     prop_subscribe(0,
