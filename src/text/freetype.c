@@ -1302,6 +1302,11 @@ text_render0(const uint32_t *uc, const int len,
       w += d;
     }
   }
+
+
+  if(max_width && bbox.xMax > max_width)
+    bbox.xMax = max_width;
+
   int margin = MAX(-MIN(bbox.xMin, 0), MAX(0, bbox.xMax - siz_x));
 
   TAILQ_FOREACH(li, &lq, link) {
