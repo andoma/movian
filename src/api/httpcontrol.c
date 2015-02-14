@@ -149,7 +149,7 @@ hc_done(http_connection_t *hc, const char *remain, void *opaque,
 
   htsbuf_queue_init(&out, 0);
   htsbuf_qprintf(&out, "OK");
-  return http_send_reply(hc, 0, "text/ascii", NULL, NULL, 0, &out);
+  return http_send_reply(hc, 0, "text/plain", NULL, NULL, 0, &out);
 }
 
 
@@ -455,7 +455,7 @@ hc_memstats(http_connection_t *hc, const char * remain, void *opaque,
   htsbuf_queue_init(&out, 0);
 
   htsbuf_append(&out, hugebuf, hugeptr);
-  return http_send_reply(hc, 0, "text/ascii", NULL, NULL, 0, &out);
+  return http_send_reply(hc, 0, "text/plain", NULL, NULL, 0, &out);
 }
 
 /**
@@ -508,7 +508,7 @@ hc_hexdump(http_connection_t *hc, const char *remain, void *opaque,
   htsbuf_queue_init(&out, 0);
 
   hexdump("mem", a, len, &out);
-  return http_send_reply(hc, 0, "text/ascii", NULL, NULL, 0, &out);
+  return http_send_reply(hc, 0, "text/plain", NULL, NULL, 0, &out);
 }
 
 #endif

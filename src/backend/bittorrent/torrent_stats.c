@@ -179,7 +179,7 @@ torrent_dump_http(http_connection_t *hc, const char *remain, void *opaque,
   hts_mutex_unlock(&bittorrent_mutex);
 
   return http_send_reply(hc, 0,
-                         "text/ascii; charset=utf-8", NULL, NULL, 0, &out);
+                         "text/plain; charset=utf-8", NULL, NULL, 0, &out);
 }
 
 /**

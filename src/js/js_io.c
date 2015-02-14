@@ -343,7 +343,7 @@ js_http_request(JSContext *cx, jsval *rval,
       htsbuf_queue_init(&hq, 0);
       htsbuf_append(&hq, str, strlen(str));
       postdata = &hq;
-      postcontenttype =  "text/ascii";
+      postcontenttype =  "text/plain";
     }
   }
 

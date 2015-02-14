@@ -357,7 +357,7 @@ memstats(http_connection_t *hc, const char *remain, void *opaque,
   hfree(as.ptr, size);
   
 
-  return http_send_reply(hc, 0, "text/ascii", NULL, NULL, 0, &out);
+  return http_send_reply(hc, 0, "text/plain", NULL, NULL, 0, &out);
 }
 
 void verify_heap(void);

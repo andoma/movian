@@ -335,7 +335,7 @@ es_http_req(duk_context *ctx)
     ehr->ehr_postdata = malloc(sizeof(htsbuf_queue_t));
     htsbuf_queue_init(ehr->ehr_postdata, 0);
     htsbuf_append(ehr->ehr_postdata, str, len);
-    ehr->ehr_postcontenttype =  strdup("text/ascii");
+    ehr->ehr_postcontenttype =  strdup("text/plain");
   } else {
 
   }

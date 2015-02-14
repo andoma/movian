@@ -231,7 +231,7 @@ hc_prop(http_connection_t *hc, const char *remain, void *opaque,
     rval = http_send_reply(hc, 0,
                            html ?
                            "text/html; charset=utf-8" :
-                           "text/ascii; charset=utf-8",
+                           "text/plain; charset=utf-8",
                            NULL, NULL, 0, &out);
     break;
 

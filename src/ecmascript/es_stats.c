@@ -94,7 +94,7 @@ dumpstats(http_connection_t *hc, const char *remain, void *opaque,
   htsbuf_qprintf(&out, "\n");
 
   return http_send_reply(hc, 0,
-                         "text/ascii; charset=utf-8", NULL, NULL, 0, &out);
+                         "text/plain; charset=utf-8", NULL, NULL, 0, &out);
 }
 
 

@@ -487,7 +487,7 @@ http_exec(http_connection_t *hc, const http_path_t *hp, char *remain,
     htsbuf_queue_t out;
     htsbuf_queue_init(&out, 0);
     htsbuf_append(&out, "OK\n", 3);
-    http_send_reply(hc, 0, "text/ascii", NULL, NULL, 0, &out);
+    http_send_reply(hc, 0, "text/plain", NULL, NULL, 0, &out);
     return;
   } else if(err > 0)
     http_error(hc, err, NULL);
