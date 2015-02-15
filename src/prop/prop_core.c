@@ -1663,6 +1663,8 @@ prop_send_subscription_monitor_active(prop_t *p)
 void
 prop_send_ext_event(prop_t *p, event_t *e)
 {
+  if(p == NULL)
+    return;
   hts_mutex_lock(&prop_mutex);
   prop_send_ext_event0(p, e);
   hts_mutex_unlock(&prop_mutex);
