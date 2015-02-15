@@ -232,7 +232,7 @@ nmb_udp_input(void *opaque, const void *data, int size,
     void *a = malloc(4);
     memcpy(a, pkt->addr, 4);
     task_run(query_master_browser, a);
-    asyncio_timer_arm(&nmb_flush_timer, showtime_get_ts() + 60 * 1000000LL);
+    asyncio_timer_arm_delta_sec(&nmb_flush_timer, 60);
     return;
   }
 
@@ -287,7 +287,7 @@ nmb_send_query(const char *name, uint8_t type, int dups)
 static void
 nmb_send_msb_query(void *aux)
 {
-  asyncio_timer_arm(&nmb_timer, showtime_get_ts() + 15 * 1000000LL);
+  asyncio_timer_arm_delta_sec(&nmb_timer, 15);
 
   nmb_txid = nmb_send_query("\001\002__MSBROWSE__\002\001", 1, 0);
 }
@@ -348,7 +348,7 @@ nmb_resolver_process(void)
     LIST_INSERT_HEAD(&nmb_resolve_sent, nr, nr_link);
     nr->nr_txid = nmb_send_query(nr->nr_hostname, 0x20, 1);
     asyncio_timer_init(&nr->nr_timeout, nmb_resolve_timeout, nr);
-    asyncio_timer_arm(&nr->nr_timeout, showtime_get_ts() + 3000000);
+    asyncio_timer_arm_delta_sec(&nr->nr_timeout, 3);
     hts_mutex_lock(&nmb_mutex);
   }
   hts_mutex_unlock(&nmb_mutex);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string.h>
+#include <stdint.h>
 
 static __inline void wr64_be(uint8_t *ptr, uint64_t val)
 {
