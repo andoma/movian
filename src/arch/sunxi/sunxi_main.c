@@ -271,7 +271,7 @@ ui_run(void)
 
     glw_post_scene(gr);
     
-    int64_t ts2 = showtime_get_ts();
+    int64_t ts2 = arch_get_ts();
     eglSwapBuffers(su.su_dpy, surface);
 #if 0
     int err = ioctl(sunxi.fb0fd, 0x4741, framenum);
@@ -286,10 +286,10 @@ ui_run(void)
       foo = framenum;
     }
 #endif
-    int64_t ts3 = showtime_get_ts();
+    int64_t ts3 = arch_get_ts();
     if(0)printf("ts3-ts2 = %lld\n", ts3 - ts2);
 
-    int64_t ts = showtime_get_ts();
+    int64_t ts = arch_get_ts();
 
     if(0)printf("%lld\n", ts - ts0);
     ts0 = ts;

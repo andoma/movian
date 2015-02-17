@@ -131,7 +131,7 @@ asyncio_wakeup_worker(int id)
 int64_t
 async_current_time(void)
 {
-  return showtime_get_ts();
+  return arch_get_ts();
 }
 
 

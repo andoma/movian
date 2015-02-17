@@ -1477,11 +1477,11 @@ torrent_piece_verify_hash(torrent_t *to, torrent_piece_t *tp)
   tp->tp_refcount++;
 
   hts_mutex_unlock(&bittorrent_mutex);
-  int64_t ts = showtime_get_ts();
+  int64_t ts = arch_get_ts();
   sha1_init(shactx);
   sha1_update(shactx, tp->tp_data, tp->tp_piece_length);
   sha1_final(shactx, digest);
-  ts = showtime_get_ts() - ts;
+  ts = arch_get_ts() - ts;
   hts_mutex_lock(&bittorrent_mutex);
 
   tp->tp_hash_computed = 1;

@@ -64,7 +64,7 @@ typedef struct decoder {
 int64_t
 showtime_get_avtime(void)
 {
-  return showtime_get_ts();
+  return arch_get_ts();
 }
 
 

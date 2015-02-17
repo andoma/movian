@@ -726,7 +726,7 @@ hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delay)
 int
 hts_cond_wait_timeout_abs(hts_cond_t *c, hts_mutex_t *m, int64_t ts)
 {
-  ts = ts - showtime_get_ts();
+  ts = ts - arch_get_ts();
   if(ts <= 0)
     return 1;
 

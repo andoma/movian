@@ -240,12 +240,12 @@ check_vsync(glw_x11_t *gx11)
 
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
   glXSwapBuffers(gx11->display, gx11->win);
-  c = showtime_get_ts();
+  c = arch_get_ts();
   for(i = 0; i < 5; i++) {
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     glXSwapBuffers(gx11->display, gx11->win);
   }
-  c = showtime_get_ts() - c;
+  c = arch_get_ts() - c;
 
   return c > 25000; // Probably working
 }

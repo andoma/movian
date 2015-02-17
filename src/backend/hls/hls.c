@@ -487,7 +487,7 @@ hls_segment_open(hls_segment_t *hs)
   if(hs->hs_byte_offset != -1)
     flags &= ~FA_STREAMING;
 
-  hs->hs_opened_at = showtime_get_ts();
+  hs->hs_opened_at = arch_get_ts();
   hs->hs_block_cnt = h->h_blocked;
 
   fh = fa_open_ex(hs->hs_url, errbuf, sizeof(errbuf), flags, &foe);
@@ -547,7 +547,7 @@ hls_variant_update_bw(hls_segment_t *hs)
   if(hs == NULL || !hs->hs_opened_at)
     return;
 
-  int ts = showtime_get_ts() - hs->hs_opened_at;
+  int ts = arch_get_ts() - hs->hs_opened_at;
   if(h->h_blocked != hs->hs_block_cnt)
     return;
 

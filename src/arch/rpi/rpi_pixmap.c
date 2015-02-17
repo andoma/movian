@@ -172,7 +172,7 @@ setup_tunnel(rpi_pixmap_decoder_t *rpd)
 
 #ifdef TIMING
 #define CHECKPOINT(x)				\
-  ts2 = showtime_get_ts();			\
+  ts2 = arch_get_ts();			\
   printf("%s in %lld\n", x, ts2 - ts);		\
   ts = ts2;
 #else
@@ -199,7 +199,7 @@ rpi_pixmap_decode(image_coded_type_t type,
     return NULL;
 
 #ifdef TIMING
-  int64_t ts = showtime_get_ts(), ts2;
+  int64_t ts = arch_get_ts(), ts2;
 #endif
   rpi_pixmap_decoder_t *rpd = pixmap_decoder_create(OMX_IMAGE_CodingJPEG);
 

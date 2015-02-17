@@ -234,7 +234,7 @@ torrent_announce_all(torrent_t *to)
 static void
 tracker_init(void)
 {
-  uint32_t x = showtime_get_ts();
+  uint32_t x = arch_get_ts();
   for(int i = 0; i < 20; i++) {
     x = x * 1664525 + 1013904223;
     btg.btg_peer_id[i] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_."[x & 0x3f];

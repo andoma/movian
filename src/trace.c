@@ -187,7 +187,7 @@ tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap)
       entries++;
     }
     if(log_fd != -1) {
-      int ts = (showtime_get_ts() - log_start_ts) / 1000LL;
+      int ts = (arch_get_ts() - log_start_ts) / 1000LL;
       snprintf(buf3, sizeof(buf3), "%02d:%02d:%02d.%03d: ",
 	       ts / 3600000,
 	       (ts / 60000) % 60,
@@ -334,7 +334,7 @@ trace_init(void)
     close(log_fd);
     log_fd = -1;
   }
-  log_start_ts = showtime_get_ts();
+  log_start_ts = arch_get_ts();
   log_root = prop_create(prop_get_global(), "logbuffer");
   hts_mutex_init(&trace_mutex);
   trace_initialized = 1;

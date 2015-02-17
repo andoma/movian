@@ -176,7 +176,7 @@ fc_connect(const char *hostname, int port,
 {
   tcpcon_t *tc;
   ftp_connection_t *fc;
-  int64_t now = showtime_get_ts();
+  int64_t now = arch_get_ts();
   int id;
 
  again:
@@ -307,7 +307,7 @@ ftp_file_release(ftp_file_t *ff, int drop)
 
     } else {
 
-      fc->fc_expire = showtime_get_ts() + 10000000;
+      fc->fc_expire = arch_get_ts() + 10000000;
       hts_mutex_lock(&ftp_global_mutex);
       LIST_INSERT_HEAD(&ftp_connections, fc, fc_link);
       hts_mutex_unlock(&ftp_global_mutex);

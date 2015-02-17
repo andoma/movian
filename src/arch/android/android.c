@@ -72,7 +72,7 @@ trace_arch(int level, const char *prefix, const char *str)
  *
  */
 int64_t
-showtime_get_ts(void)
+arch_get_ts(void)
 {
   struct timeval tv;
   gettimeofday(&tv, NULL);
@@ -207,7 +207,7 @@ arch_localtime(const time_t *now, struct tm *tm)
 int64_t
 showtime_get_avtime(void)
 {
-  return showtime_get_ts();
+  return arch_get_ts();
 }
 
 

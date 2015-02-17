@@ -111,7 +111,7 @@ setup_floater(glw_freefloat_t *ff, glw_t *c)
   cd->s = 0.001;
   cd->s2 = 0;
 
-  cd->a = showtime_get_ts();
+  cd->a = arch_get_ts();
   cd->x = -1.0 + (ff->xpos % ff->num_visible) * 2 /
     ((float)ff->num_visible - 1);
 
@@ -263,7 +263,7 @@ static void
 glw_freefloat_ctor(glw_t *w)
 {
   glw_freefloat_t *ff = (glw_freefloat_t *)w;
-  ff->rand = showtime_get_ts();
+  ff->rand = arch_get_ts();
   ff->num_visible = GLW_FREEFLOAT_MAX_VISIBLE;
 }
 

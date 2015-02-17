@@ -35,12 +35,12 @@ typedef struct avgtime {
 
 static __inline void avgtime_start(avgtime_t *a)
 {
-  a->start = showtime_get_ts();
+  a->start = arch_get_ts();
 }
 
 static __inline int avgtime_stop(avgtime_t *a, prop_t *avg, prop_t *peak)
 {
-  int64_t now = showtime_get_ts();
+  int64_t now = arch_get_ts();
   int d = now - a->start;
   int i, sum;
 

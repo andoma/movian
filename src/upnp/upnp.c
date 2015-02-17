@@ -246,7 +246,7 @@ upnp_init(void)
       conf = htsmsg_create_map();
     
     sha1_init(shactx);
-    v = showtime_get_ts();
+    v = arch_get_ts();
     sha1_update(shactx, (void *)&v, sizeof(uint64_t));
 
     v = arch_get_seed();

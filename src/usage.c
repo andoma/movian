@@ -40,7 +40,7 @@ void
 usage_init(void)
 {
   hts_mutex_init(&usage_mutex);
-  usage_time_base = showtime_get_ts() / 1000000LL;
+  usage_time_base = arch_get_ts() / 1000000LL;
 
   usage_counters  = htsmsg_create_map();
   plugin_counters = htsmsg_create_map();
@@ -65,7 +65,7 @@ make_usage_report(void)
   if(gconf.os_info[0])
     htsmsg_add_str(out, "os" , gconf.os_info);
 
-  time_t now = showtime_get_ts() / 1000000LL;
+  time_t now = arch_get_ts() / 1000000LL;
 
   int runtime = now - usage_time_base;
   htsmsg_s32_inc(usage_counters, "runtime", runtime);
@@ -92,7 +92,7 @@ usage_fini(void)
 
   hts_mutex_lock(&usage_mutex);
 
-  int runtime = showtime_get_ts() / 1000000LL - usage_time_base;
+  int runtime = arch_get_ts() / 1000000LL - usage_time_base;
   htsmsg_s32_inc(usage_counters, "runtime", runtime);
 
   htsmsg_t *r = make_usage_report();

@@ -199,7 +199,7 @@ trace_arch(int level, const char *prefix, const char *str)
  *
  */
 int64_t
-showtime_get_ts(void)
+arch_get_ts(void)
 {
 #if _POSIX_TIMERS > 0 && defined(_POSIX_MONOTONIC_CLOCK)
   struct timespec tv;

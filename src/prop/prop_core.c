@@ -906,9 +906,9 @@ prop_notify_dispatch(struct prop_notify_queue *q, const char *trace_name)
 #else
       snprintf(info, sizeof(info), "%p", n->hpn_sub);
 #endif
-      int64_t ts = showtime_get_ts();
+      int64_t ts = arch_get_ts();
       prop_dispatch_one(n, PROP_LOCK_LOCK);
-      ts = showtime_get_ts() - ts;
+      ts = arch_get_ts() - ts;
       if(ts > 10000) {
         TRACE(ts > 100000 ? TRACE_INFO : TRACE_DEBUG,
               "PROP", "%s: Dispatch of [%s] took %d us",
@@ -4966,13 +4966,13 @@ prop_courier_poll_timed(prop_courier_t *pc, int maxtime)
     hts_mutex_unlock(&prop_mutex);
   }
 
-  int64_t ts = showtime_get_ts();
+  int64_t ts = arch_get_ts();
 
   while((n = TAILQ_FIRST(&pc->pc_dispatch_queue)) != NULL) {
     prop_dispatch_one(n, PROP_LOCK_LOCK);
     TAILQ_REMOVE(&pc->pc_dispatch_queue, n, hpn_link);
     TAILQ_INSERT_TAIL(&pc->pc_free_queue, n, hpn_link);
-    if(showtime_get_ts() > ts + maxtime)
+    if(arch_get_ts() > ts + maxtime)
       break;
   }
 }

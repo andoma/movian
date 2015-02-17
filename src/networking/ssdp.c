@@ -477,10 +477,10 @@ ssdp_loop(int log_fail)
 
   while(ssdp_run) {
     
-    int64_t delta = next_send - showtime_get_ts();
+    int64_t delta = next_send - arch_get_ts();
     if(delta <= 0) {
       delta = 15000000LL;
-      next_send = showtime_get_ts() + delta;
+      next_send = arch_get_ts() + delta;
       ssdp_send_notify("ssdp:alive");
     }
     r = poll(fds, 2, (delta / 1000) + 1);

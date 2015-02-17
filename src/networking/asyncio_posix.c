@@ -350,7 +350,7 @@ asyncio_dopoll(void)
 
   poll(fds, n, timeout);
 
-  async_now = showtime_get_ts();
+  async_now = arch_get_ts();
 
   for(int i = 0; i < n; i++) {
     af = afds[i];
@@ -378,7 +378,7 @@ asyncio_dopoll(void)
                     (fds[i].revents & POLLOUT ? ASYNCIO_WRITE : 0), 0);
 
     if(0) {
-      int64_t now = showtime_get_ts();
+      int64_t now = arch_get_ts();
 
       if(now - async_now > 10000) {
         TRACE(TRACE_ERROR, "ASYNCIO", "Long callback on socktet %s (%d µs)",
@@ -552,7 +552,7 @@ asyncio_thread(void *aux)
 
   init_group(INIT_GROUP_ASYNCIO);
 
-  async_now = showtime_get_ts();
+  async_now = arch_get_ts();
 
   while(1)
     asyncio_dopoll();
@@ -888,7 +888,7 @@ asyncio_connect(const char *name, const net_addr_t *addr,
 
   af->af_error_callback = error_cb;
   af->af_read_callback  = read_cb;
-  af->af_timeout = showtime_get_ts() + timeout * 1000;
+  af->af_timeout = arch_get_ts() + timeout * 1000;
 
   int r = connect(fd, (struct sockaddr *)&si, sizeof(struct sockaddr_in));
   if(r == -1) {

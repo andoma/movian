@@ -324,7 +324,7 @@ arch_sd_init(void)
  *
  */
 int64_t
-showtime_get_ts(void)
+arch_get_ts(void)
 {
   extern long long gettime();
   long long t = gettime();

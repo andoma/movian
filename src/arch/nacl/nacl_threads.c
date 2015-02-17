@@ -90,7 +90,7 @@ hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delta)
 int
 hts_cond_wait_timeout_abs(hts_cond_t *c, hts_mutex_t *m, int64_t deadline)
 {
-  int64_t ts = deadline - showtime_get_ts();
+  int64_t ts = deadline - arch_get_ts();
   if(ts <= 0)
     return 1;
 

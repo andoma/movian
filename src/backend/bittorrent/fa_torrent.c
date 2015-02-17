@@ -299,7 +299,7 @@ static void
 torrent_deadline(fa_handle_t *fh, int deadline)
 {
   torrent_fh_t *tfh = (torrent_fh_t *)fh;
-  tfh->tfh_deadline = showtime_get_ts() + deadline;
+  tfh->tfh_deadline = arch_get_ts() + deadline;
 }
 
 

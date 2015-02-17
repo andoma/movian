@@ -417,7 +417,7 @@ mp_dequeue_event_deadline(media_pipe_t *mp, int timeout)
 {
   event_t *e;
 
-  int64_t ts = showtime_get_ts() + timeout * 1000LL;
+  int64_t ts = arch_get_ts() + timeout * 1000LL;
 
   hts_mutex_lock(&mp->mp_mutex);
 

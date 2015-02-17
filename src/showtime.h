@@ -80,7 +80,7 @@ uint32_t showtime_get_version_int(void);
 
 uint32_t showtime_parse_version_int(const char *str);
 
-extern int64_t showtime_get_ts(void);
+extern int64_t arch_get_ts(void);
 
 extern int64_t showtime_get_avtime(void);
 

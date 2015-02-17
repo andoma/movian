@@ -1576,7 +1576,7 @@ get_random_string(void)
   char buf[40];
   static uint64_t seed;
   int i;
-  seed ^= showtime_get_ts();
+  seed ^= arch_get_ts();
 
   sha1_init(shactx);
   sha1_update(shactx, (void *)&seed, sizeof(uint64_t));

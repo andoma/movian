@@ -41,7 +41,7 @@ tracker_udp_send_connect(tracker_t *t)
   static uint32_t idgen;
 
   idgen++;
-  idgen ^= (showtime_get_ts() & 0xfffff000);
+  idgen ^= (arch_get_ts() & 0xfffff000);
   t->t_conn_txid = idgen | 0x80000000;
 
   t->t_state = TRACKER_STATE_CONNECTING;

@@ -201,18 +201,18 @@ static int64_t play_key_timeout;
 static void
 cec_emit_key_down(int code)
 {
-  int64_t now = showtime_get_ts();
+  int64_t now = arch_get_ts();
 
   if(stop_key_timeout < now && play_key_timeout < now) {
     if(code == CEC_User_Control_Stop && stop_is_meta_key) {
       CEC_DEBUG("Stop key intercepted as modifier");
-      stop_key_timeout = showtime_get_ts() + 1000000;
+      stop_key_timeout = arch_get_ts() + 1000000;
       return;
     }
 
     if(code == CEC_User_Control_Play && play_is_meta_key) {
       CEC_DEBUG("Play key intercepted as modifier");
-      play_key_timeout = showtime_get_ts() + 1000000;
+      play_key_timeout = arch_get_ts() + 1000000;
       return;
     }
   }

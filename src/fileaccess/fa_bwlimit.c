@@ -76,9 +76,9 @@ static int
 bwlimit_read(fa_handle_t *handle, void *buf, size_t size)
 {
   bwlimit_t *s = (bwlimit_t *)handle;
-  int64_t ts = showtime_get_ts();
+  int64_t ts = arch_get_ts();
   int r = fa_read(s->s_src, buf, size);
-  ts = showtime_get_ts() - ts;
+  ts = arch_get_ts() - ts;
 
   int64_t delay = s->s_spill + r * 1000000LL / s->s_bps - ts;
 

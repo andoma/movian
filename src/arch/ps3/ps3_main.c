@@ -158,7 +158,7 @@ memlogger_fn(callout_t *co, void *aux)
  *
  */
 int64_t
-showtime_get_ts(void)
+arch_get_ts(void)
 {
   return mftb() / ticks_per_us;
 }

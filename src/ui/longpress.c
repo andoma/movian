@@ -38,14 +38,14 @@ longpress_down(lphelper_t *lph)
 {
   if(lph->down)
     return;
-  lph->expire = showtime_get_ts() + LP_TIMEOUT;
+  lph->expire = arch_get_ts() + LP_TIMEOUT;
   lph->down = 1;
 }
 
 int
 longpress_up(lphelper_t *lph)
 {
-  int r = lph->expire > showtime_get_ts() && lph->down != 2;
+  int r = lph->expire > arch_get_ts() && lph->down != 2;
   lph->down = 0;
   return r;
 }

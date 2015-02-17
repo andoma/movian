@@ -57,7 +57,7 @@ void
 runcontrol_activity(void)
 {
   if(standby_delay)
-    last_activity = showtime_get_ts();
+    last_activity = arch_get_ts();
 }
 
 
@@ -67,7 +67,7 @@ runcontrol_activity(void)
 static void
 check_autostandby(callout_t *c, void *aux)
 {
-  int64_t idle = showtime_get_ts() - last_activity;
+  int64_t idle = arch_get_ts() - last_activity;
 
   idle /= (1000000 * 60); // Convert to minutes
 
@@ -89,7 +89,7 @@ current_media_playstatus(void *opaque, const char *str)
 {
   // Reset time to avoid risk of turning off as soon as track playback
   // has ended if UI has been idle
-  last_activity = showtime_get_ts();
+  last_activity = arch_get_ts();
 
   active_media = !!str; // If str is something then we're playing, paused, etc
 }
@@ -111,7 +111,7 @@ init_autostandby(void)
                  SETTING_ZERO_TEXT(_p("Off")),
                  NULL);
 
-  last_activity = showtime_get_ts();
+  last_activity = arch_get_ts();
 
   prop_subscribe(0,
 		 PROP_TAG_NAME("global", "media", "current", "playstatus"),

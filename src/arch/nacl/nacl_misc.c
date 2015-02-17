@@ -70,7 +70,7 @@ arch_malloc_size(void *ptr)
  *
  */
 int64_t
-showtime_get_ts(void)
+arch_get_ts(void)
 {
   struct timeval tv;
   gettimeofday(&tv, NULL);
@@ -84,7 +84,7 @@ showtime_get_ts(void)
 int64_t
 showtime_get_avtime(void)
 {
-  return showtime_get_ts();
+  return arch_get_ts();
 }
 
 

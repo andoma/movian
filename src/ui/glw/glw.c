@@ -204,7 +204,7 @@ glw_init3(glw_root_t *gr,
 
   gr->gr_framerate = 60;
   gr->gr_frameduration = 1000000 / gr->gr_framerate;
-  gr->gr_ui_start = showtime_get_ts();
+  gr->gr_ui_start = arch_get_ts();
   gr->gr_frame_start = gr->gr_ui_start;
   glw_reset_screensaver(gr);
   gr->gr_open_osk = glw_osk_open;
@@ -486,7 +486,7 @@ glw_prepare_frame(glw_root_t *gr, int flags)
 
   glw_update_sizes(gr);
 
-  gr->gr_frame_start        = showtime_get_ts();
+  gr->gr_frame_start        = arch_get_ts();
   gr->gr_frame_start_avtime = showtime_get_avtime();
   gr->gr_time_usec          = gr->gr_frame_start - gr->gr_ui_start;
   gr->gr_time_sec           = gr->gr_time_usec / 1000000.0f;

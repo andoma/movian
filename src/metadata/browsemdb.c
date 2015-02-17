@@ -468,9 +468,9 @@ metadata_browse(void *db, const char *url, prop_t *nodes,
       prop_unlink(status);
     }
 
-    //    int64_t ts = showtime_get_ts();
+    //    int64_t ts = arch_get_ts();
     bmdb_query_exec(db, &b);
-    //    printf("Query took %lld\n", showtime_get_ts() - ts);
+    //    printf("Query took %lld\n", arch_get_ts() - ts);
     prop_set(model, "loading", PROP_SET_INT, 0);
     sleep(1);
   }
