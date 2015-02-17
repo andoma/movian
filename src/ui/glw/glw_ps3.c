@@ -33,7 +33,7 @@
 #include "glw_settings.h"
 #include "glw_video_common.h"
 
-#include "showtime.h"
+#include "main.h"
 #include "settings.h"
 #include "misc/extents.h"
 #include "misc/str.h"

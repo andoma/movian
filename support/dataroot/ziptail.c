@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "arch/threads.h"
-#include "showtime.h"
+#include "main.h"
 #include "fileaccess/fileaccess.h"
 
 static int initialized;

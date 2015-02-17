@@ -26,7 +26,7 @@
 #include "prop/prop.h"
 #include "prop/prop_concat.h"
 
-#include "showtime.h"
+#include "main.h"
 #include "media/media.h"
 #include "htsmsg/htsmsg_json.h"
 #include "misc/str.h"

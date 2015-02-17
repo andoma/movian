@@ -20,7 +20,7 @@
 #include <alsa/asoundlib.h>
 #include <assert.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "audio.h"
 #include "media/media.h"
 #include "alsa.h"

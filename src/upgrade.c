@@ -26,7 +26,7 @@
 #include <limits.h>
 #include <dirent.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "upgrade.h"
 #include "arch/arch.h"
 #include "arch/halloc.h"

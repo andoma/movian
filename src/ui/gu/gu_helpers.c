@@ -19,7 +19,7 @@
  */
 #include <assert.h>
 #include "gu.h"
-#include "showtime.h"
+#include "main.h"
 
 
 /**

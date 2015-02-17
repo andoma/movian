@@ -18,7 +18,7 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 #include "arch/threads.h"
-#include "showtime.h"
+#include "main.h"
 #include <OMX_Component.h>
 #include <OMX_Core.h>
 #include <OMX_Broadcom.h>

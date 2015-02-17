@@ -20,7 +20,7 @@
 #include <libavutil/aes.h>
 #include <libavutil/mem.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "fileaccess.h"
 #include "fa_proto.h"
 #include "misc/minmax.h"

@@ -19,7 +19,7 @@
  */
 #include <string.h>
 #include <assert.h>
-#include "showtime.h"
+#include "main.h"
 #include "gu.h"
 #include "gu_directory.h"
 

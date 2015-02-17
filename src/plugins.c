@@ -17,7 +17,7 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
-#include "showtime.h"
+#include "main.h"
 #include "fileaccess/fileaccess.h"
 #include "plugins.h"
 #include "settings.h"

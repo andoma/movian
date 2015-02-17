@@ -24,7 +24,7 @@
 
 #include <VideoDecodeAcceleration/VDADecoder.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "media/media.h"
 #include "video_decoder.h"
 #include "video_settings.h"

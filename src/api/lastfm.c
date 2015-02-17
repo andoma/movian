@@ -24,7 +24,7 @@
 #include "htsmsg/htsmsg.h"
 #include "htsmsg/htsmsg_xml.h"
 
-#include "showtime.h"
+#include "main.h"
 #include "lastfm.h"
 #include "fileaccess/http_client.h"
 #include "blobcache.h"

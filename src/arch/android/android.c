@@ -31,7 +31,7 @@
 #include <GLES2/gl2.h>
 
 #include "arch/arch.h"
-#include "showtime.h"
+#include "main.h"
 #include "service.h"
 #include "networking/net.h"
 #include "ui/glw/glw.h"

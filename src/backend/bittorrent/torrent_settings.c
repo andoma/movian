@@ -21,7 +21,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "bittorrent.h"
 #include "settings.h"
 #include "htsmsg/htsmsg_store.h"

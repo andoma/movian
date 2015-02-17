@@ -35,7 +35,7 @@
 #include <X11/Xatom.h>
 #include <X11/XF86keysym.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "ui/linux/x11_common.h"
 #include "ui/linux/nvidia.h"
 #include "settings.h"

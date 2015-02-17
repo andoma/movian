@@ -28,7 +28,7 @@
 #include <assert.h>
 #include <zlib.h>
 
-#include "showtime.h"
+#include "main.h"
 
 #include "keyring.h"
 #include "fileaccess.h"

@@ -20,7 +20,7 @@
 #include <assert.h>
 #include <stdio.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "metadata/metadata.h"
 #include "htsmsg/htsmsg_xml.h"
 #include "htsmsg/htsmsg_store.h"

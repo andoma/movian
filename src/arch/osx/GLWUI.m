@@ -20,7 +20,7 @@
 #import <Cocoa/Cocoa.h>
 #import <QuartzCore/QuartzCore.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "osx.h"
 #include "src/ui/glw/glw.h"
 #include "navigator.h"

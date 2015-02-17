@@ -19,7 +19,7 @@
  */
 #include <unistd.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "media/media.h"
 #include "misc/isolang.h"
 #include "i18n.h"

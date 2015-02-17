@@ -25,7 +25,7 @@
 #include <assert.h>
 #include <time.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "navigator.h"
 #include "backend/backend.h"
 #include "playqueue.h"

@@ -27,7 +27,7 @@
 #include "arch/threads.h"
 #include "arch/atomic.h"
 
-#include "showtime.h"
+#include "main.h"
 #include "prop/prop_nodefilter.h"
 #include "networking/net.h"
 #include "navigator.h"

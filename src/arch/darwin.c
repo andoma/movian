@@ -25,7 +25,7 @@
 #include <mach/mach_host.h>
 
 #include "darwin.h"
-#include "showtime.h"
+#include "main.h"
 #include "misc/callout.h"
 #include "prop/prop.h"
 

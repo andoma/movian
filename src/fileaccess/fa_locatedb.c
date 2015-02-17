@@ -28,7 +28,7 @@
 #include <regex.h>
 #include <ctype.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "backend/backend.h"
 #include "backend/search.h"
 #include "fileaccess.h"

@@ -20,7 +20,7 @@
 #ifndef HTTP_SERVER_H__
 #define HTTP_SERVER_H__
 
-#include "showtime.h"
+#include "main.h"
 #include "htsmsg/htsbuf.h"
 #include "htsmsg/htsmsg.h"
 #include "misc/strtab.h"

@@ -25,7 +25,7 @@
 #include "htsmsg/htsmsg.h"
 #include "htsmsg/htsmsg_store.h"
 
-#include "showtime.h"
+#include "main.h"
 #include "settings.h"
 #include "runcontrol.h"
 
@@ -51,7 +51,7 @@ static htsmsg_t *rcstore;
 /**
  * Called from various places to indicate that user is active
  *
- * Defined in showtime.h
+ * Defined in main.h
  */
 void
 runcontrol_activity(void)

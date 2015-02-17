@@ -22,7 +22,7 @@
 #include <assert.h>
 #include <errno.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "fileaccess.h"
 #include "fa_proto.h"
 #include "misc/callout.h"

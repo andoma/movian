@@ -26,7 +26,7 @@
 #include <stdio.h>
 
 #include "media/media.h"
-#include "showtime.h"
+#include "main.h"
 #include "audio2/audio_ext.h"
 #include "event.h"
 #include "playqueue.h"

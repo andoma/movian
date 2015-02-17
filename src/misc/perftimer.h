@@ -20,7 +20,7 @@
 #ifndef PERFTIMER_H__
 #define PERFTIMER_H__
 
-#include "showtime.h"
+#include "main.h"
 
 typedef struct perftimer {
   int avg;

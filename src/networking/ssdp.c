@@ -27,7 +27,7 @@
 
 #include <netinet/in.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "ssdp.h"
 #include "http.h"
 #include "http_server.h"

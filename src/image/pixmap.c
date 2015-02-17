@@ -24,7 +24,7 @@
 #include <math.h>
 
 
-#include "showtime.h"
+#include "main.h"
 #include "arch/atomic.h"
 #include "pixmap.h"
 #include "misc/minmax.h"

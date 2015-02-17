@@ -39,7 +39,7 @@
 #include <sys/prctl.h>
 #include <fcntl.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "arch/arch.h"
 
 int (*extra_traphandler)(int sig, siginfo_t *si, void *UC);

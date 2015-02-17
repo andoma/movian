@@ -28,7 +28,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <limits.h>
-#include "showtime.h"
+#include "main.h"
 #include "fileaccess.h"
 #include "misc/minmax.h"
 

@@ -19,7 +19,7 @@
  */
 #include <CoreServices/CoreServices.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "backend/backend.h"
 #include "backend/search.h"
 #include "fileaccess.h"

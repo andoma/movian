@@ -23,7 +23,7 @@
 #include <sys/types.h>
 #include <sys/sysctl.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "navigator.h"
 #include "arch/arch.h"
 #include "arch/darwin.h"

@@ -20,7 +20,7 @@
 #include <gtk/gtk.h>
 #include <webkit/webkit.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "ui/webpopup.h"
 #include "misc/str.h"
 #include "linux.h"

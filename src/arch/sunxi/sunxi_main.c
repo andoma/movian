@@ -25,7 +25,7 @@
 #include <signal.h>
 #include <unistd.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "navigator.h"
 #include "arch/arch.h"
 #include "arch/posix/posix.h"

@@ -25,7 +25,7 @@
 #include <NVCtrl/NVCtrl.h>
 #include <NVCtrl/NVCtrlLib.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "prop/prop.h"
 #include "nvidia.h"
 #include "ui/ui.h"

@@ -19,7 +19,7 @@
  */
 #include <unistd.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "js.h"
 #include "db/db_support.h"
 #include "fileaccess/fileaccess.h"

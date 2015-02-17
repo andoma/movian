@@ -25,7 +25,7 @@
 #include <unistd.h>
 #include <sqlite3.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "arch/atomic.h"
 #include "misc/sha.h"
 #include "misc/minmax.h"

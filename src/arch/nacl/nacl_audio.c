@@ -27,7 +27,7 @@
 #include "ppapi/c/ppb_audio_config.h"
 #include "ppapi/c/ppb_core.h"
 
-#include "showtime.h"
+#include "main.h"
 #include "audio2/audio.h"
 #include "media/media.h"
 

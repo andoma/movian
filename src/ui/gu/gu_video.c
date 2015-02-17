@@ -22,7 +22,7 @@
 
 #include <gdk/gdkx.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "navigator.h"
 #include "gu.h"
 

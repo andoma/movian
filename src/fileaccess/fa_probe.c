@@ -33,7 +33,7 @@
 #include "xmp.h"
 #endif
 
-#include "showtime.h"
+#include "main.h"
 #include "fileaccess.h"
 #include "fa_probe.h"
 #include "navigator.h"

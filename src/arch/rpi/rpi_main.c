@@ -34,7 +34,7 @@
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "arch/arch.h"
 #include "arch/posix/posix.h"
 

@@ -50,7 +50,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "htsmsg_xml.h"
 #include "htsbuf.h"
 #include "misc/str.h"

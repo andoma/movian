@@ -24,7 +24,7 @@
 
 #include "buf.h"
 #include "str.h"
-#include "showtime.h"
+#include "main.h"
 #include "sha.h"
 #include "i18n.h"
 

@@ -19,7 +19,7 @@
  */
 #include <gio/gio.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "prop/prop.h"
 #include "prop/prop_gvariant.h"
 #include "prop/prop_glib_courier.h"

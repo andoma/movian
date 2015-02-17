@@ -28,7 +28,7 @@
 
 #include "prop/prop.h"
 
-#include "showtime.h"
+#include "main.h"
 #include "media/media.h"
 #include "metadata.h"
 #include "db/db_support.h"

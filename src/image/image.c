@@ -19,7 +19,7 @@
  */
 #include "image.h"
 
-#include "showtime.h"
+#include "main.h"
 #include "arch/atomic.h"
 #include "misc/buf.h"
 #include "pixmap.h"

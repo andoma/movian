@@ -28,7 +28,7 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "glw_video_common.h"
 
 #define GVF_TEX_L   0

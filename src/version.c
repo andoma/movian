@@ -23,7 +23,7 @@
 const char *htsversion=BUILD_VERSION;
 const char *htsversion_full=BUILD_VERSION;
 
-#include "showtime.h"
+#include "main.h"
 #include <stdio.h>
 
 uint32_t

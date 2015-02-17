@@ -19,7 +19,7 @@
  */
 #include <assert.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "navigator.h"
 #include "gu.h"
 #include "event.h"

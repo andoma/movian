@@ -23,7 +23,7 @@
 
 #include <jni.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "video/video_decoder.h"
 #include "video/h264_annexb.h"
 

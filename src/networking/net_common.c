@@ -23,7 +23,7 @@
 #include "misc/bytestream.h"
 #include "net_i.h"
 
-#include "showtime.h"
+#include "main.h"
 #include "fileaccess/smb/nmb.h"
 
 /**

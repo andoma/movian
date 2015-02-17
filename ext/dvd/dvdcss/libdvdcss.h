@@ -23,7 +23,7 @@
  *****************************************************************************/
 
 #include "fileaccess/svfs.h"
-#include "showtime.h"
+#include "main.h"
 
 struct iovec;
 

@@ -28,7 +28,7 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "media/media.h"
 #include "glw.h"
 #include "misc/perftimer.h"

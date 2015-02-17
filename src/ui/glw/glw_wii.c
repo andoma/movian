@@ -29,7 +29,7 @@
 #include <wiiuse/wpad.h>
 #include <wiikeyboard/keyboard.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "ui/ui.h"
 #include "settings.h"
 #include "ui/glw/glw.h"

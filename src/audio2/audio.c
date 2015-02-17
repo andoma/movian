@@ -21,7 +21,7 @@
 #include <unistd.h>
 
 
-#include "showtime.h"
+#include "main.h"
 #include "media/media.h"
 #include "audio_ext.h"
 #include "audio.h"

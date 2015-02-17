@@ -21,7 +21,7 @@
 #include <AudioToolbox/AudioQueue.h>
 #include <CoreAudio/HostTime.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "audio.h"
 #include "media/media.h"
 

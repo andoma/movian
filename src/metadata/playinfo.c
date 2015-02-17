@@ -30,7 +30,7 @@
 #include "metadata.h"
 #include "db/db_support.h"
 #include "db/kvstore.h"
-#include "showtime.h"
+#include "main.h"
 #include "playinfo.h"
 #include "video/video_settings.h"
 #include "notifications.h"

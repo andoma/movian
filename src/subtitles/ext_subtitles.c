@@ -22,7 +22,7 @@
 #include <unistd.h>
 #include <assert.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "ext_subtitles.h"
 #include "fileaccess/fileaccess.h"
 #include "misc/gz.h"

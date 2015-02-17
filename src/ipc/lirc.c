@@ -28,7 +28,7 @@
 #include <sys/un.h>
 #include <errno.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "htsmsg/htsbuf.h"
 #include "event.h"
 

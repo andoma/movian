@@ -30,7 +30,7 @@
 #include <avahi-common/error.h>
 #include <avahi-common/malloc.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "misc/queue.h"
 #include "arch/threads.h"
 #include "prop/prop.h"

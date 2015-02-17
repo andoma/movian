@@ -19,7 +19,7 @@
  */
 #include <assert.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "ecmascript.h"
 
 

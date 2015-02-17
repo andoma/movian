@@ -23,7 +23,7 @@
 #include "prop/prop.h"
 #include "sd.h"
 #include "arch/arch.h"
-#include "showtime.h"
+#include "main.h"
 #include "service.h"
 #include "misc/strtab.h"
 #include "settings.h"

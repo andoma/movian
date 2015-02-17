@@ -25,7 +25,7 @@
 #include <stdio.h>
 
 #include <arch/threads.h>
-#include "showtime.h"
+#include "main.h"
 #include "fileaccess.h"
 #include "fa_proto.h"
 #include "misc/redblack.h"

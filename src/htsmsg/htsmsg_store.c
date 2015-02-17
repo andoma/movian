@@ -21,7 +21,7 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "htsmsg.h"
 #include "htsmsg_json.h"
 #include "htsmsg_store.h"

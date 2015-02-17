@@ -42,7 +42,7 @@
 #include "arch/threads.h"
 #include "arch/atomic.h"
 #include "arch/arch.h"
-#include "showtime.h"
+#include "main.h"
 #include "service.h"
 #include "misc/callout.h"
 #include "misc/md5.h"

@@ -18,7 +18,7 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 #include <unistd.h>
-#include "showtime.h"
+#include "main.h"
 #include "arch/arch.h"
 #include "fileaccess/fileaccess.h"
 #include "backend/backend.h"

@@ -41,7 +41,7 @@
 #include "dvdnav.h"
 #include "dvdnav_internal.h"
 
-#include "showtime.h"
+#include "main.h"
 
 /*
 #define LOG_DEBUG

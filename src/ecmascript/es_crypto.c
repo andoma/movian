@@ -20,7 +20,7 @@
 #include <unistd.h>
 #include <assert.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "ecmascript.h"
 
 #include <libavutil/sha.h>

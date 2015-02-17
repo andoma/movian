@@ -19,7 +19,7 @@
  */
 #include <stdlib.h>
 #include <assert.h>
-#include "showtime.h"
+#include "main.h"
 #include "media/media.h"
 #include "vdpau.h"
 #include "video/video_decoder.h"

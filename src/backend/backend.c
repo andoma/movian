@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <ctype.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "backend.h"
 #include "navigator.h"
 #include "event.h"

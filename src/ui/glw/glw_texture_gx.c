@@ -33,7 +33,7 @@
 #include "glw.h"
 #include "glw_texture.h"
 
-#include "showtime.h"
+#include "main.h"
 
 /**
  * Free texture (always invoked in main rendering thread)

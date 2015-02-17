@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "navigator.h"
 #include "fileaccess.h"
 #include "fa_probe.h"

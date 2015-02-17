@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "settings.h"
 #include "event.h"
 #include "navigator.h"

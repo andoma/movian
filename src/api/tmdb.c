@@ -21,7 +21,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "htsmsg/htsmsg_json.h"
 #include "htsmsg/htsmsg_store.h"
 #include "fileaccess/fileaccess.h"

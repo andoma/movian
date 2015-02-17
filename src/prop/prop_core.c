@@ -27,7 +27,7 @@
 
 #include "arch/atomic.h"
 
-#include "showtime.h"
+#include "main.h"
 #include "prop_i.h"
 #include "misc/str.h"
 #include "event.h"

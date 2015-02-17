@@ -30,7 +30,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "fileaccess.h"
 #include "fa_proto.h"
 #include "misc/str.h"

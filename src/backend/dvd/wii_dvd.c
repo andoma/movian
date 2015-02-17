@@ -24,7 +24,7 @@
 #include <malloc.h>
 #include <di/di.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "misc/callout.h"
 #include "navigator.h"
 #include "backend/backend.h"

@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <arpa/inet.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "sd.h"
 #include "bonjour.h"
 

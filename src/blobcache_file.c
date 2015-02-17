@@ -20,7 +20,7 @@
 #include <assert.h>
 #include <stdio.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "blobcache.h"
 #include "misc/pool.h"
 #include "misc/sha.h"

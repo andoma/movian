@@ -31,7 +31,7 @@
 #include <libavutil/mem.h>
 #include <libswscale/swscale.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "video_decoder.h"
 #include "event.h"
 #include "media/media.h"

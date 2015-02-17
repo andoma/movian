@@ -20,7 +20,7 @@
 #include <assert.h>
 #include <stdio.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "settings.h"
 #include "i18n.h"
 #include "misc/str.h"

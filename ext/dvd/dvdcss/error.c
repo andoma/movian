@@ -40,7 +40,7 @@
 #include "css.h"
 #include "libdvdcss.h"
 
-#include "showtime.h"
+#include "main.h"
 
 /*****************************************************************************
  * Error messages

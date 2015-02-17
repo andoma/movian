@@ -24,7 +24,7 @@
 #include <zlib.h>
 
 #include "gz.h"
-#include "showtime.h"
+#include "main.h"
 #include "misc/buf.h"
 
 /**

@@ -23,7 +23,7 @@
 #include "navigator.h"
 #include "backend/backend.h"
 #include "media/media.h"
-#include "showtime.h"
+#include "main.h"
 #include "i18n.h"
 #include "misc/isolang.h"
 #include "misc/str.h"

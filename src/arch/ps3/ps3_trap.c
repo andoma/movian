@@ -19,7 +19,7 @@
  */
 #include <stdio.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "fileaccess/fileaccess.h"
 #include "arch/halloc.h"
 #include "ps3.h"

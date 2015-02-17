@@ -36,7 +36,7 @@
 
 #include <sys/syscall.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "misc/callout.h"
 #include "misc/md5.h"
 #include "misc/str.h"

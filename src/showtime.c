@@ -23,7 +23,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "event.h"
 #include "prop/prop.h"
 #include "arch/arch.h"

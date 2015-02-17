@@ -19,7 +19,7 @@
  */
 #include "navigator.h"
 #include "gu.h"
-#include "showtime.h"
+#include "main.h"
 #include "gu_menu.h"
 
 #include <gdk/gdkkeysyms.h>

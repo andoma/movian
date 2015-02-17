@@ -28,7 +28,7 @@
 #include <poll.h>
 #include <string.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "arch/threads.h"
 #include "event.h"
 

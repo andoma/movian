@@ -24,7 +24,7 @@
 #include <stdarg.h>
 
 #include "htsbuf.h"
-#include "showtime.h"
+#include "main.h"
 #include "misc/rstr.h"
 #include "misc/minmax.h"
 

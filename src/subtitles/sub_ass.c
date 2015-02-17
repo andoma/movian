@@ -19,7 +19,7 @@
  */
 #include <stdio.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "video_overlay.h"
 #include "text/text.h"
 #include "image/pixmap.h"

@@ -20,7 +20,7 @@
 #include <libavformat/avio.h>
 #include <libavformat/avformat.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "fa_libav.h"
 
 /**

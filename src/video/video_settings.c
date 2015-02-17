@@ -18,7 +18,7 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 #include <stdio.h>
-#include "showtime.h"
+#include "main.h"
 #include "htsmsg/htsmsg_store.h"
 #include "settings.h"
 #include "video_settings.h"

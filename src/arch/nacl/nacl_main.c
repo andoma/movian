@@ -20,7 +20,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "arch/arch.h"
 #include "misc/str.h"
 #include "navigator.h"

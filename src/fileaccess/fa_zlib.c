@@ -24,7 +24,7 @@
 
 #include "fileaccess.h"
 #include "fa_zlib.h"
-#include "showtime.h"
+#include "main.h"
 #include "misc/minmax.h"
 
 

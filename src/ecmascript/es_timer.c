@@ -18,7 +18,7 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 #include <assert.h>
-#include "showtime.h"
+#include "main.h"
 #include "compiler.h"
 #include "ecmascript.h"
 

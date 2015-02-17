@@ -19,7 +19,7 @@
  */
 #include <stdio.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "networking/http_server.h"
 #include "fileaccess/http_client.h"
 #include "htsmsg/htsmsg_xml.h"

@@ -20,7 +20,7 @@
 #include <errno.h>
 #include <jni.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "arch/posix/posix_threads.h"
 
 extern JavaVM *JVM;

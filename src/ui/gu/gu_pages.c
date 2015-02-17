@@ -20,7 +20,7 @@
 #include <assert.h>
 #include <string.h>
 #include "gu.h"
-#include "showtime.h"
+#include "main.h"
 
 static void gu_openerror_create(gu_nav_page_t *gnp);
 

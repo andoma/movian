@@ -20,7 +20,7 @@
 #include <libavformat/avformat.h>
 #include <libavutil/mathematics.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "fa_video.h"
 #include "event.h"
 #include "media/media.h"

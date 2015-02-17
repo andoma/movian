@@ -20,7 +20,7 @@
 #ifndef AVGTIME_H__
 #define AVGTIME_H__
 
-#include "showtime.h"
+#include "main.h"
 #include "prop/prop.h"
 
 typedef struct avgtime {

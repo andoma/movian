@@ -22,7 +22,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "video_playback.h"
 #include "video_settings.h"
 #include "event.h"

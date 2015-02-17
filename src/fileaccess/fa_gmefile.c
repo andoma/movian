@@ -32,7 +32,7 @@
 
 #include <gme/gme.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "backend/backend.h"
 #include "fileaccess.h"
 #include "fa_proto.h"

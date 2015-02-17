@@ -19,7 +19,7 @@
  */
 #include <stdio.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "backend.h"
 #include "backend_prop.h"
 #include "prop/prop.h"

@@ -23,7 +23,7 @@
 
 #include "ppapi/c/pp_errors.h"
 
-#include "showtime.h"
+#include "main.h"
 #include "arch/halloc.h"
 #include "misc/callout.h"
 #include "misc/md5.h"

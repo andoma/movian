@@ -39,7 +39,7 @@ const char *showtime_get_system_type(void);
 #include <sys/time.h>
 #include <signal.h>
 #include "text/text.h"
-#include "showtime.h"
+#include "main.h"
 
 #include "networking/net.h"
 

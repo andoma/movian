@@ -27,7 +27,7 @@
 #include "misc/buf.h"
 #include "htsmsg.h"
 
-#include "showtime.h"
+#include "main.h"
 /**
  *
  */

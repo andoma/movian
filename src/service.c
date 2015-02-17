@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "service.h"
 #include "misc/strtab.h"
 #include "misc/str.h"

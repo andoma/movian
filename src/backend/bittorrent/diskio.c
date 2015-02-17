@@ -22,7 +22,7 @@
 #include <unistd.h>
 #include <limits.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "navigator.h"
 #include "backend/backend.h"
 #include "misc/str.h"

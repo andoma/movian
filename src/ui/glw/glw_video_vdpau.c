@@ -31,7 +31,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "glw_video_common.h"
 
 #include "GL/glx.h"

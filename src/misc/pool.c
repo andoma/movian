@@ -25,7 +25,7 @@
 #include "arch/threads.h"
 
 #include "queue.h"
-#include "showtime.h"
+#include "main.h"
 #include "pool.h"
 
 #if ENABLE_BUGHUNT

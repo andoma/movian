@@ -19,7 +19,7 @@
  */
 #include <string.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "event.h"
 #include "gu.h"
 

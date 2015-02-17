@@ -30,7 +30,7 @@
 #include <math.h>
 #include <libve.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "glw_video_common.h"
 
 #include "video/video_decoder.h"

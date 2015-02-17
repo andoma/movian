@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "fileaccess/fileaccess.h"
 #include "misc/minmax.h"
 

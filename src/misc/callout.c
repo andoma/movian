@@ -18,7 +18,7 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 #include <time.h>
-#include "showtime.h"
+#include "main.h"
 #include "prop/prop.h"
 #include "callout.h"
 #include "arch/arch.h"

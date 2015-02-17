@@ -26,7 +26,7 @@
 #include <libve.h>
 
 
-#include "showtime.h"
+#include "main.h"
 #include "arch/sunxi/sunxi.h"
 #include "video_decoder.h"
 #include "cedar.h"

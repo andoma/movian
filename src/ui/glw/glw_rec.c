@@ -20,7 +20,7 @@
 #include <libavformat/avformat.h>
 #include <libavutil/mathematics.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "glw_rec.h"
 
 struct glw_rec {

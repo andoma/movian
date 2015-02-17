@@ -19,7 +19,7 @@
  */
 #include <stdlib.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "misc/regex.h"
 #include "misc/str.h"
 

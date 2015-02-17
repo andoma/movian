@@ -23,7 +23,7 @@
 #include <net/if.h>
 #include <netinet/in.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "net.h"
 
 

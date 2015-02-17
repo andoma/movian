@@ -22,7 +22,7 @@
 
 #include <psl1ght/lv2.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "ps3.h"
 #include "ps3_threads.h"
 

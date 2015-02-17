@@ -19,7 +19,7 @@
  */
 #include <time.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "audio2/alsa.h"
 
 

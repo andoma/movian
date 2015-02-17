@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "prop/prop.h"
 #include "prop/prop_nodefilter.h"
 #include "prop/prop_concat.h"

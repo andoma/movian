@@ -21,7 +21,7 @@
 #include <unistd.h>
 #include <limits.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "metadata/metadata.h"
 #include "db/db_support.h"
 #include "fa_indexer.h"

@@ -20,7 +20,7 @@
 #include "misc/minmax.h"
 #include <assert.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "misc/queue.h"
 #include "misc/str.h"
 #include "image/pixmap.h"

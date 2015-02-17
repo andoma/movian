@@ -24,7 +24,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <limits.h>
-#include "showtime.h"
+#include "main.h"
 #include "fileaccess.h"
 #include "filebundle.h"
 

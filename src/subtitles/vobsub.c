@@ -22,7 +22,7 @@
 
 #include <libavutil/mem.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "fileaccess/fileaccess.h"
 #include "vobsub.h"
 #include "misc/isolang.h"

@@ -20,7 +20,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "fileaccess/http_client.h"
 #include "networking/asyncio.h"
 #include "htsmsg/htsmsg.h"

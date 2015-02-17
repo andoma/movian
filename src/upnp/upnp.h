@@ -20,7 +20,7 @@
 #ifndef UPNP_H__
 #define UPNP_H__
 
-#include "showtime.h"
+#include "main.h"
 #include "misc/queue.h"
 #include "misc/callout.h"
 

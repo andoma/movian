@@ -32,7 +32,7 @@
 
 #include <libavutil/avutil.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "media/media.h"
 #include "audio2/audio.h"
 

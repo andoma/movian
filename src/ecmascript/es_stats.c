@@ -21,7 +21,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "navigator.h"
 #include "backend/backend.h"
 #include "misc/str.h"

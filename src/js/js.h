@@ -21,7 +21,7 @@
 #define JS_H__
 
 
-#include "showtime.h"
+#include "main.h"
 #include "prop/prop.h"
 #include "ext/spidermonkey/jsapi.h"
 #include "htsmsg/htsmsg.h"

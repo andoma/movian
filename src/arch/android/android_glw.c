@@ -27,7 +27,7 @@
 
 #include "arch/arch.h"
 #include "text/text.h"
-#include "showtime.h"
+#include "main.h"
 #include "navigator.h"
 
 #include "ui/glw/glw.h"

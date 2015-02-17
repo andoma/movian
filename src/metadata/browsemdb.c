@@ -21,7 +21,7 @@
 #include <unistd.h>
 #include <stdio.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "backend/backend.h"
 #include "db/db_support.h"
 #include "metadata.h"

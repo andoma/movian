@@ -23,7 +23,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "sunxi.h"
 #include "backend/backend.h"
 #include "misc/pixmap.h"

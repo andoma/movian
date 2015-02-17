@@ -24,7 +24,7 @@
 #include <android/native_window_jni.h>
 #include <libswscale/swscale.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "glw_video_common.h"
 
 #include "arch/android/android_glw.h"

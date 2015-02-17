@@ -28,7 +28,7 @@
 #include "misc/dbl.h"
 #include "htsmsg/htsmsg_xml.h"
 #include "misc/str.h"
-#include "showtime.h"
+#include "main.h"
 
 typedef struct svg_state {
   float cur[2];

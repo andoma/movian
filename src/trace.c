@@ -23,7 +23,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "prop/prop.h"
 
 #if ENABLE_NETLOG

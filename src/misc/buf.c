@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "buf.h"
 #include "arch/atomic.h"
 

@@ -52,7 +52,7 @@
 
 #include "dvdread_internal.h"
 
-#include "showtime.h"
+#include "main.h"
 
 #define DEFAULT_UDF_CACHE_LEVEL 1
 

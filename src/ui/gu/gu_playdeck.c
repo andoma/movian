@@ -20,7 +20,7 @@
 #include <string.h>
 #include "navigator.h"
 #include "gu.h"
-#include "showtime.h"
+#include "main.h"
 #include "event.h"
 
 /**

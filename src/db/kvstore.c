@@ -25,7 +25,7 @@
 #include <sqlite3.h>
 
 #include "config.h"
-#include "showtime.h"
+#include "main.h"
 #include "prop/prop.h"
 #include "kvstore.h"
 #include "misc/callout.h"

@@ -21,7 +21,7 @@
 
 #include <jni.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "arch/threads.h"
 #include "prop/prop.h"
 #include "misc/redblack.h"

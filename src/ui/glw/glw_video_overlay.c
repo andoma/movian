@@ -17,7 +17,7 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
-#include "showtime.h"
+#include "main.h"
 #include "media/media.h"
 #include "glw_video_common.h"
 #include "glw_video_overlay.h"

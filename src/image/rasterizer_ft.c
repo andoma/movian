@@ -23,7 +23,7 @@
 
 #include "misc/minmax.h"
 #include "pixmap.h"
-#include "showtime.h"
+#include "main.h"
 #include "image.h"
 #include "vector.h"
 

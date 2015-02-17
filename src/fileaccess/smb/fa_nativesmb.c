@@ -31,7 +31,7 @@
 #error No crypto
 #endif
 
-#include "showtime.h"
+#include "main.h"
 #include "fileaccess/fileaccess.h"
 #include "fileaccess/fa_proto.h"
 #include "keyring.h"

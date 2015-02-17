@@ -32,7 +32,7 @@
 
 #include <sys/syscall.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "misc/callout.h"
 #include "prop/prop.h"
 

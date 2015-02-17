@@ -26,7 +26,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "posix_threads.h"
 
 #include <errno.h>

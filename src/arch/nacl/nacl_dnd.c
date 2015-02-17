@@ -28,7 +28,7 @@
 #include "ppapi/c/ppb_var_dictionary.h"
 #include "ppapi/c/ppb_var_array_buffer.h"
 
-#include "showtime.h"
+#include "main.h"
 #include "fileaccess/fa_proto.h"
 
 #include "nacl_dnd.h"

@@ -21,7 +21,7 @@
 
 #include "backend/backend.h"
 #include "gu.h"
-#include "showtime.h"
+#include "main.h"
 #include "image/image.h"
 #include "image/pixmap.h"
 

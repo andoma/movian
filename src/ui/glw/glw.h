@@ -33,7 +33,7 @@
 #include "misc/pool.h"
 #include "image/pixmap.h" // for PIXMAP_ROW_ALIGN
 #include "prop/prop.h"
-#include "showtime.h"
+#include "main.h"
 #include "settings.h"
 #include "misc/minmax.h"
 

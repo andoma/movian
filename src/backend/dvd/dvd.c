@@ -26,7 +26,7 @@
 #include "fileaccess/fileaccess.h"
 #include "dvd.h"
 #include "notifications.h"
-#include "showtime.h"
+#include "main.h"
 #include "metadata/metadata.h"
 #include "misc/isolang.h"
 #include <libavcodec/avcodec.h>

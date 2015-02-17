@@ -24,7 +24,7 @@
 #include <jni.h>
 #include <android/keycodes.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "android.h"
 
 

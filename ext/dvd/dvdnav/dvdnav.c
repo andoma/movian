@@ -49,7 +49,7 @@
 #include "read_cache.h"
 #include <libdvdread/nav_read.h>
 #include "remap.h"
-#include "showtime.h"
+#include "main.h"
 
 static dvdnav_status_t dvdnav_clear(dvdnav_t * this) {
   /* clear everything except file, vm, mutex, readahead */

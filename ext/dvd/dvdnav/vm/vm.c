@@ -51,7 +51,7 @@
 #include "dvdnav.h"
 #include "dvdnav_internal.h"
 
-#include "showtime.h"
+#include "main.h"
 
 #ifdef _MSC_VER
 #include <io.h>   /* read() */

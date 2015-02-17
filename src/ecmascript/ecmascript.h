@@ -18,7 +18,7 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 #pragma once
-#include "showtime.h"
+#include "main.h"
 #include "ext/duktape/duktape.h"
 #include "misc/queue.h"
 #include "arch/threads.h"

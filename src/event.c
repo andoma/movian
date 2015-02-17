@@ -25,7 +25,7 @@
 #include <string.h>
 #include <assert.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "event.h"
 #include "misc/strtab.h"
 #include "prop/prop.h"

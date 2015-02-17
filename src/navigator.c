@@ -24,7 +24,7 @@
 #include <unistd.h>
 #include <stdio.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "navigator.h"
 #include "backend/backend.h"
 #include "backend/backend_prop.h"

@@ -30,7 +30,7 @@
 #include <limits.h>
 #include <sys/file.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "prop/prop_nodefilter.h"
 #include "navigator.h"
 #include "backend/backend.h"

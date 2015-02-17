@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "backend/backend.h"
 #include "navigator.h"
 #include "fileaccess.h"

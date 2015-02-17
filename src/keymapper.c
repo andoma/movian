@@ -22,7 +22,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "keymapper.h"
 #include "settings.h"
 #include "event.h"

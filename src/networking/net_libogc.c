@@ -25,7 +25,7 @@
 #include <string.h>
 #include <arch/threads.h>
 #include <errno.h>
-#include "showtime.h"
+#include "main.h"
 #include <ogc/ipc.h>
 
 

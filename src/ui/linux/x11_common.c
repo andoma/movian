@@ -48,7 +48,7 @@
 #endif
 
 #include "misc/callout.h"
-#include "showtime.h"
+#include "main.h"
 
 #include "x11_common.h"
 

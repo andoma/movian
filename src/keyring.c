@@ -23,7 +23,7 @@
 #include <inttypes.h>
 #include "htsmsg/htsmsg_store.h"
 
-#include "showtime.h"
+#include "main.h"
 #include "event.h"
 #include "keyring.h"
 #include "prop/prop.h"

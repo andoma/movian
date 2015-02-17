@@ -809,7 +809,7 @@ ${BUILDDIR}/zipbundles/bundle.zip:
 	mkdir -p ${BUILDDIR}/zipbundles
 	zip -0r ${BUILDDIR}/zipbundles/bundle.zip ${BUNDLES}
 
-$(BUILDDIR)/support/dataroot/ziptail.o: src/showtime.h
+$(BUILDDIR)/support/dataroot/ziptail.o: src/main.h
 
 ${PROG}.ziptail: $(OBJS) $(ALLDEPS) $(BUILDDIR)/support/dataroot/ziptail.o
 	$(CC) -o $@ $(OBJS) $(BUILDDIR)/support/dataroot/ziptail.o $(LDFLAGS) ${LDFLAGS_cfg}

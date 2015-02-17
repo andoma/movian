@@ -37,7 +37,7 @@
 
 #include "threads.h"
 
-#include "showtime.h"
+#include "main.h"
 #include "arch.h"
 
 #include <stdarg.h>

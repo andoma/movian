@@ -18,7 +18,7 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 #include <stdio.h>
-#include "showtime.h"
+#include "main.h"
 #include "prop_i.h"
 
 /**

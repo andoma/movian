@@ -19,7 +19,7 @@
  */
 #import <Webkit/Webkit.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "ui/webpopup.h"
 #include "osx.h"
 #include "misc/str.h"

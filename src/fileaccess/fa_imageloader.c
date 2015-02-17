@@ -26,7 +26,7 @@
 #include <string.h>
 
 
-#include "showtime.h"
+#include "main.h"
 #include "fileaccess.h"
 #include "fa_imageloader.h"
 #if ENABLE_LIBAV

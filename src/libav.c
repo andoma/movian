@@ -23,7 +23,7 @@
 #include <libswscale/swscale.h>
 #include <libavutil/pixdesc.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "media/media.h"
 #include "libav.h"
 #include "fileaccess/fa_libav.h"

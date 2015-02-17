@@ -19,7 +19,7 @@
  */
 #include <unistd.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "audio2/audio.h"
 #include "media/media.h"
 

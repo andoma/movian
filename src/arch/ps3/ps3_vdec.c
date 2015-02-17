@@ -25,7 +25,7 @@
 #include <psl1ght/lv2.h>
 
 #include "arch/threads.h"
-#include "showtime.h"
+#include "main.h"
 #include "arch/halloc.h"
 #include "notifications.h"
 

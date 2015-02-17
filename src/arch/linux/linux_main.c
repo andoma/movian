@@ -21,7 +21,7 @@
 #include <gdk/gdkkeysyms.h>
 #include <gtk/gtk.h>
 
-#include "showtime.h"
+#include "main.h"
 #include "arch/arch.h"
 #include "arch/posix/posix.h"
 #include "linux.h"
