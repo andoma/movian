@@ -405,7 +405,7 @@ avahi_thread(void *aux)
   service_type_add("_htsp._tcp", SERVICE_HTSP, c);
 
 #if ENABLE_AIRPLAY
-  name = strdup("Showtime");
+  name = strdup(APPNAMEUSER);
   avahi_client_new(ap, AVAHI_CLIENT_NO_FAIL, client_callback, NULL, NULL);
 #endif
 

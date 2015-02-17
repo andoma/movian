@@ -260,7 +260,7 @@ db_upgrade_schema(sqlite3 *db, const char *schemadir, const char *dbname,
 
   if(ver > tgtver) {
     TRACE(TRACE_ERROR, "DB", "%s: Installed version %d is too high for "
-	  "this version of Showtime", dbname, ver);
+	  "this version of "APPNAMEUSER, dbname, ver);
     if(detach[0]) db_one_statement(db, detach, NULL);
     return -1;
   }

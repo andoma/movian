@@ -94,7 +94,8 @@ widget(container_y, {
       widget(label, {
 	TextStyleItem();
 	caption: select($args.status.minver,
-			fmt(_("Showtime %s or newer is required"),
+			fmt(_("%s %s or newer is required"),
+                            $global.app.name,
 			    $args.status.minver), "");
       });
     });

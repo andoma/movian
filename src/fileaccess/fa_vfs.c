@@ -30,7 +30,7 @@ static int vfs_mapping_tally;
 static hts_mutex_t vfs_mutex;
 
 static const char *READMETXT =
-  "This is Showtime's virtual file system\n"
+  "This is "APPNAMEUSER"'s virtual file system\n"
   "\n"
   "To add stuff here go to Settings -> Bookmarks in Showtime's UI\n"
   "and mark items as 'Published in Virtual File System'\n";

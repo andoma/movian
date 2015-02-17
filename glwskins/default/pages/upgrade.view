@@ -81,7 +81,7 @@ widget(container_y, {
 
     widget(label, {
       filterConstraintX: true;
-      caption: $global.showtime.version;
+      caption: $global.app.version;
       sizeScale: 1.5;
       shadow: true;
       outline: true;
@@ -188,7 +188,7 @@ widget(container_y, {
       spacing: $ui.size;
       align: center;
       widget(label, {
-	caption: _("Showtime is up to date");
+	caption: fmt_(_("%s is up to date"), $global.app.name);
 	shadow: true;
 	outline: true;
 	align: center;
@@ -242,8 +242,8 @@ widget(container_y, {
       align: center;
 
       widget(label, {
-	caption: fmt(_("Restarting Showtime in %d seconds..."),
-		     $global.upgrade.countdown);
+	caption: fmt(_("Restarting %s in %d seconds..."),
+		     $global.app.name, $global.upgrade.countdown);
 	shadow: true;
 	outline: true;
 	align: center;

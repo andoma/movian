@@ -662,7 +662,6 @@ asyncio_listen(const char *name, int port, asyncio_accept_callback_t *cb,
 
     si.sin_port = htons(port);
     if(bind(fd, (struct sockaddr *)&si, sizeof(struct sockaddr_in))) {
-
       if(!bind_any) {
         TRACE(TRACE_ERROR, "TCP", "%s: Bind failed -- %s", name,
               strerror(errno));

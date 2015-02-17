@@ -206,7 +206,7 @@ ftp_write(ftp_connection_t *fc, int code, const char *fmt, ...)
 static int
 cmd_QUIT(ftp_connection_t *fc, char *args)
 {
-  ftp_write(fc, 221, "Thank you for using the Showtime FTP service");
+  ftp_write(fc, 221, "Thank you for using the "APPNAMEUSER" FTP service");
   return 1;
 }
 

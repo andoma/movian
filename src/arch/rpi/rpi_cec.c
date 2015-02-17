@@ -517,7 +517,7 @@ handle_vendor_command_lg(const VC_CEC_MESSAGE_T *msg)
       vc_cec_send_message(CEC_BROADCAST_ADDR, response, 3, VC_FALSE);
     }
 
-    vc_cec_set_osd_name("Showtime");
+    vc_cec_set_osd_name(APPNAMEUSER);
     break;
   }  
 }
@@ -616,7 +616,7 @@ cec_callback(void *callback_data, uint32_t param0, uint32_t param1,
       break;
 
     case CEC_Opcode_GiveOSDName:
-      send_osd_name(&msg, "Showtime");
+      send_osd_name(&msg, APPNAMEUSER);
       break;
 
     case CEC_Opcode_GetCECVersion:
@@ -689,7 +689,7 @@ cec_thread(void *aux)
   set =
     settings_add_dir(NULL, _p("Consumer Electronics Control"),
 		     "display", NULL,
-		     _p("Configure how Showtime communicates with your TV"),
+		     _p("Configure communications with your TV"),
 		     "settings:cec");
 
   setting_create(SETTING_BOOL, set,

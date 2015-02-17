@@ -366,7 +366,7 @@ htsp_login(htsp_connection_t *hc)
   htsmsg_t *m;
 
   m = htsmsg_create_map();
-  htsmsg_add_str(m, "clientname", "HTS Showtime");
+  htsmsg_add_str(m, "clientname", APPNAMEUSER);
   htsmsg_add_u32(m, "htspversion", 1);
   htsmsg_add_str(m, "method", "hello");
 

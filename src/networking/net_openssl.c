@@ -23,7 +23,7 @@
 #include "net_i.h"
 
 
-static SSL_CTX *showtime_ssl_ctx;
+static SSL_CTX *app_ssl_ctx;
 static pthread_mutex_t *ssl_locks;
 
 static unsigned long
@@ -85,13 +85,13 @@ ssl_write(tcpcon_t *tc, const void *data, size_t len)
 int
 tcp_ssl_open(tcpcon_t *tc, char *errbuf, size_t errlen)
 {
-  if(showtime_ssl_ctx == NULL) {
+  if(app_ssl_ctx == NULL) {
     snprintf(errbuf, errlen, "SSL not initialized");
     return -1;
   }
   char errmsg[120];
 
-  if((tc->ssl = SSL_new(showtime_ssl_ctx)) == NULL) {
+  if((tc->ssl = SSL_new(app_ssl_ctx)) == NULL) {
     ERR_error_string(ERR_get_error(), errmsg);
     snprintf(errbuf, errlen, "SSL: %s", errmsg);
     return -1;
@@ -135,7 +135,7 @@ net_ssl_init(void)
 {
   SSL_library_init();
   SSL_load_error_strings();
-  showtime_ssl_ctx = SSL_CTX_new(SSLv23_client_method());
+  app_ssl_ctx = SSL_CTX_new(SSLv23_client_method());
 
   int i, n = CRYPTO_num_locks();
   ssl_locks = malloc(sizeof(pthread_mutex_t) * n);

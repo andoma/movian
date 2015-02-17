@@ -176,7 +176,7 @@ ssdp_send(int fd, uint32_t myaddr, struct sockaddr_in *dst,
 	   "%s\r\n"
 	   "USN: uuid:%s%s\r\n"
 	   "%s"
-	   "SERVER: Showtime,%s,UPnP/1.0,Showtime,%s\r\n"
+	   "SERVER: "APPNAMEUSER",%s,UPnP/1.0,"APPNAMEUSER",%s\r\n"
 	   "%s%s%s"
 	   "%s"
 	   "LOCATION: http://%d.%d.%d.%d:%d%s\r\n"

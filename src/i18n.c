@@ -721,7 +721,7 @@ upload_translation(http_connection_t *hc, const char *remain, void *opaque,
   }
 
   htsbuf_qprintf(&out,
-                 "<h3>Load new translation file into Showtime</h3>"
+                 "<h3>Load new translation file into "APPNAMEUSER"</h3>"
                  "<form method=\"post\" enctype=\"multipart/form-data\">"
                  "<label for=\"file\">.lang file:</label>"
                  "<input type=\"file\" name=\"file\" id=\"file\"><br>"

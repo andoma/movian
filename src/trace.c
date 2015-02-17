@@ -341,7 +341,7 @@ trace_init(void)
   extern const char *htsversion_full;
 
   TRACE(TRACE_INFO, "SYSTEM",
-        "Showtime %s starting. %d CPU cores. Systemtype:%s OS:%s",
+        APPNAMEUSER" %s starting. %d CPU cores. Systemtype:%s OS:%s",
         htsversion_full, gconf.concurrency,
         arch_get_system_type(),
         gconf.os_info[0] ? gconf.os_info : "<unknown>");

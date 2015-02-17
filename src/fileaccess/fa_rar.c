@@ -675,7 +675,7 @@ rar_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
   if(rf->rf_method != '0') {
     rar_file_unref(rf);
     snprintf(errbuf, errlen,
-	     "Showtime does not support compressed files in RAR archives");
+	     "Compressed files in RAR archives is not supported");
     return NULL;
   }
 

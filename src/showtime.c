@@ -143,14 +143,14 @@ fflog(void *ptr, int level, const char *fmt, va_list vl)
 static void
 init_global_info(void)
 {
-  prop_t *s = prop_create(prop_get_global(), "showtime");
+  prop_t *s = prop_create(prop_get_global(), "app");
   extern const char *htsversion;
   extern const char *htsversion_full;
 
-  prop_set_string(prop_create(s, "version"), htsversion);
-  prop_set_string(prop_create(s, "fullversion"), htsversion_full);
-  prop_set_string(prop_create(s, "copyright"), "© 2006 - 2015 Lonelycoder AB");
-
+  prop_set(s, "name", PROP_SET_STRING, APPNAMEUSER);
+  prop_set(s, "version", PROP_SET_STRING, htsversion);
+  prop_set(s, "fullversion", PROP_SET_STRING, htsversion_full);
+  prop_set(s, "copyright", PROP_SET_STRING, "© 2006 - 2015 Lonelycoder AB");
 }
 
 /**
@@ -430,7 +430,7 @@ parse_opts(int argc, char **argv)
 
   while(argc > 0) {
     if(!strcmp(argv[0], "-h") || !strcmp(argv[0], "--help")) {
-      printf("Showtime %s\n"
+      printf(APPNAMEUSER" %s\n"
 	     "Copyright (C) 2007-2015 Lonelycoder AB\n"
 	     "\n"
 	     "Usage: %s [options] [<url>]\n"
@@ -443,7 +443,7 @@ parse_opts(int argc, char **argv)
 	     "   --libav-log       - Print libav log messages.\n"
 	     "   --with-standby    - Enable system standby.\n"
 	     "   --with-poweroff   - Enable system power-off.\n"
-	     "   -s <path>         - Non-default Showtime settings path.\n"
+	     "   -s <path>         - Non-default settings path.\n"
 	     "   --ui <ui>         - Use specified user interface.\n"
 	     "   -L <ip:host>      - Send log messages to remote <ip:host>.\n"
 	     "   --syslog          - Send log messages to syslog.\n"
@@ -464,7 +464,7 @@ parse_opts(int argc, char **argv)
 	     "   -j <path>           Load javascript file\n"
 	     "   --skin <skin>     Select skin (for GLW ui)\n"
 	     "\n"
-	     "  URL is any URL-type supported by Showtime, "
+	     "  URL is any URL-type supported, "
 	     "e.g., \"file:///...\"\n"
 	     "\n",
 	     htsversion_full,
@@ -741,6 +741,6 @@ main_fini(void)
   notifications_fini();
   usage_fini();
   htsmsg_store_flush();
-  TRACE(TRACE_DEBUG, "core", "Showtime terminated normally");
+  TRACE(TRACE_DEBUG, "core", APPNAMEUSER" terminated normally");
   trace_fini();
 }

@@ -1261,7 +1261,7 @@ settings_init(void)
   setting_create(SETTING_STRING, gconf.settings_network,
 		 SETTINGS_INITIAL_UPDATE | SETTINGS_EMPTY_IS_DEFAULT,
                  SETTING_TITLE(_p("System name")),
-		 SETTING_VALUE("Showtime"),
+		 SETTING_VALUE(APPNAME),
                  SETTING_CALLBACK(set_system_name, NULL),
                  SETTING_HTSMSG("sysname", s, "netinfo"),
                  NULL);

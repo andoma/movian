@@ -73,7 +73,7 @@ widget(container_y, {
 
 	  widget(label, {
 	    TextStyleItem();
-	    caption: fmt("Showtime %s", $global.showtime.version);
+	    caption: fmt("%s %s", $global.app.name, $global.app.version);
 	    align: center;
 	  });
 

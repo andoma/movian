@@ -29,7 +29,7 @@
 
   SEP(_("System"));
 
-  ITEM(_("Exit Showtime"), event(Quit),
+  ITEM(fmt(_("Exit %s"), $global.app.name), event(Quit),
        "dataroot://resources/svg/Exit.svg", $global.runcontrol.canExit);
 
   ITEM(_("Suspend"), event(Standby),

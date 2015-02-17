@@ -292,7 +292,7 @@ http_send_header(http_connection_t *hc, int rc, const char *content,
 		 val2str(hc->hc_version, HTTP_versiontab),
 		 rc, http_rc2str(rc));
 
-  htsbuf_qprintf(&hdrs, "Server: HTS/Showtime %s\r\n",
+  htsbuf_qprintf(&hdrs, "Server: "APPNAMEUSER" %s\r\n",
 		 htsversion_full);
 
   htsbuf_qprintf(&hdrs, "Date: %s\r\n", http_asctime(t, date, sizeof(date)));

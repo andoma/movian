@@ -374,16 +374,16 @@ ps3_early_init(int argc, char **argv)
 
 
   if(argc == 0) {
-    my_trace("Showtime starting from ???\n");
+    my_trace(APPNAMEUSER" starting from ???\n");
     return;
   }
-  my_trace("Showtime starting from %s\n", argv[0]);
+  my_trace(APPNAMEUSER" starting from %s\n", argv[0]);
   gconf.binary = strdup(argv[0]);
 
   snprintf(buf, sizeof(buf), "%s", argv[0]);
   x = strrchr(buf, '/');
   if(x == NULL) {
-    my_trace("Showtime starting but argv[0] seems invalid");
+    my_trace(APPNAMEUSER" starting but argv[0] seems invalid");
     exit(0);
   }
   x++;

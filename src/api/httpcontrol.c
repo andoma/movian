@@ -122,10 +122,10 @@ hc_root_old(http_connection_t *hc)
 
   htsbuf_qprintf(&out, 
 		 "<form name=\"input\" method=\"get\">"
-		 "Open URL in Showtime: "
+		 "Open URL in %s: "
 		 "<input type=\"text\" name=\"url\" style=\"width:500px\"/>"
 		 "<input type=\"submit\" value=\"Open\" />"
-		 "</form>");
+		 "</form>", APPNAMEUSER);
   
   htsbuf_qprintf(&out, "<h3>Diagnostics</h3>"); 
 

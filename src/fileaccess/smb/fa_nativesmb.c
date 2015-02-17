@@ -619,7 +619,7 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
 
   char *username = NULL;
   const char *os = "Unix";
-  const char *lanmgr = "Showtime";
+  const char *lanmgr = APPNAMEUSER;
 
   char *domain = NULL;
 

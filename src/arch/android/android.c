@@ -179,7 +179,7 @@ mymemalign(size_t align, size_t size)
 const char *
 arch_get_system_type(void)
 {
-  return system_type;
+  return "Android";
 }
 
 void
