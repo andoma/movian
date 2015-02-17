@@ -861,7 +861,7 @@ plugin_setup_start_model(void)
   prop_set(plugin_start_model, "contents", PROP_SET_STRING, "plugins");
   prop_set(plugin_start_model, "type",     PROP_SET_STRING, "directory");
 
-  prop_link(_p("Apps"),
+  prop_link(_p("Plugins"),
 	    prop_create(prop_create(plugin_start_model, "metadata"), "title"));
 
   pc = prop_concat_create(prop_create(plugin_start_model, "nodes"), 0);
@@ -872,7 +872,7 @@ plugin_setup_start_model(void)
   
   p = prop_create(sta, NULL);
   prop_set_string(prop_create(p, "type"), "directory");
-  prop_link(_p("Browse available apps"),
+  prop_link(_p("Browse available plugins"),
 	    prop_create(prop_create(p, "metadata"), "title"));
   prop_set_string(prop_create(p, "url"), "plugin:repo");
 
@@ -886,7 +886,7 @@ plugin_setup_start_model(void)
                        PROP_NF_CMP_NEQ, 1, NULL, PROP_NF_MODE_EXCLUDE);
 
   d = prop_create_root(NULL);
-  prop_link(_p("Installed apps"),
+  prop_link(_p("Installed plugins"),
 	    prop_create(prop_create(d, "metadata"), "title"));
   prop_set_string(prop_create(d, "type"), "separator");
   prop_concat_add_source(pc, inst, d);
@@ -908,7 +908,7 @@ plugin_setup_repo_model(void)
   prop_set(model, "safeui",   PROP_SET_INT,    1);
   prop_set(model, "contents", PROP_SET_STRING, "plugins");
 
-  prop_link(_p("Available apps"),
+  prop_link(_p("Available plugins"),
 	    prop_create(prop_create(model, "metadata"), "title"));
 
   pc = prop_concat_create(prop_create(model, "nodes"), 0);
