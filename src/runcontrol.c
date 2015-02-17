@@ -268,8 +268,8 @@ runcontrol_init(void)
 
   rcstore = htsmsg_store_load("runcontrol") ?: htsmsg_create_map();
 
-  settings_create_separator(gconf.settings_general, 
-			  _p("Starting and stopping Showtime"));
+  settings_create_separator(gconf.settings_general,
+			  _p("Starting and stopping"));
 
   if(gconf.can_standby) {
     init_autostandby();
@@ -291,7 +291,7 @@ runcontrol_init(void)
 			   do_open_shell, NULL, 0, NULL);
 
   if(!gconf.can_not_exit)
-    settings_create_action(gconf.settings_general, _p("Exit Showtime"),
+    settings_create_action(gconf.settings_general, _p("Quit"),
 			   do_exit, NULL, 0, NULL);
 
   if(gconf.showtime_shell_fd > 0) {
