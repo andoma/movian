@@ -17,16 +17,6 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
-/*
- * Note: Do not place #includes here.
- *
- * #define _GNU_SOURCE
- * #include <sched.h>
- * 
- * Must be first or compilation might fail on linux
- *
- */
-const char *showtime_get_system_type(void);
 
 #include <stdio.h>
 #include <unistd.h>

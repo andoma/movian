@@ -154,7 +154,7 @@ glw_init3(glw_root_t *gr,
 
   if(skin == NULL) {
     snprintf(skinbuf, sizeof(skinbuf),
-	     "%s/glwskins/"SHOWTIME_GLW_DEFAULT_SKIN, showtime_dataroot());
+	     "%s/glwskins/"SHOWTIME_GLW_DEFAULT_SKIN, app_dataroot());
     skin = skinbuf;
   }
   hts_mutex_init(&gr->gr_mutex);
@@ -487,7 +487,7 @@ glw_prepare_frame(glw_root_t *gr, int flags)
   glw_update_sizes(gr);
 
   gr->gr_frame_start        = arch_get_ts();
-  gr->gr_frame_start_avtime = showtime_get_avtime();
+  gr->gr_frame_start_avtime = arch_get_avtime();
   gr->gr_time_usec          = gr->gr_frame_start - gr->gr_ui_start;
   gr->gr_time_sec           = gr->gr_time_usec / 1000000.0f;
 

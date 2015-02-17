@@ -6,7 +6,7 @@ static char buf[1024];
 static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 
 
-const char *showtime_dataroot(void)
+const char *app_dataroot(void)
 {
   if(!initialized) {
     CFBundleRef mainBundle;

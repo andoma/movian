@@ -122,7 +122,7 @@ kvstore_init(void)
   if(db == NULL)
     return;
 
-  snprintf(buf, sizeof(buf), "%s/resources/kvstore", showtime_dataroot());
+  snprintf(buf, sizeof(buf), "%s/resources/kvstore", app_dataroot());
 
   int r = db_upgrade_schema(db, buf, "kvstore", NULL, NULL);
 

@@ -294,7 +294,7 @@ glw_video_compute_avdiff(glw_root_t *gr, media_pipe_t *mp,
 	  mp->mp_audio_clock,
 	  gr->gr_frame_start_avtime - lastclock,
 	  statustab[code],
-	  showtime_get_avtime() - aclock);
+	  arch_get_avtime() - aclock);
     lastpts = pts;
     lastaclock = aclock;
     lastclock = gr->gr_frame_start_avtime;

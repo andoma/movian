@@ -320,7 +320,7 @@ mac_audio_deliver(audio_decoder_t *ad, int samples,
   if(ats.mFlags & kAudioTimeStampHostTimeValid &&
      pts != AV_NOPTS_VALUE) {
     int64_t t = AudioConvertHostTimeToNanos(ats.mHostTime) / 1000LL;
-    ad->ad_delay = t - showtime_get_avtime();
+    ad->ad_delay = t - arch_get_avtime();
 
     media_pipe_t *mp = ad->ad_mp;
 

@@ -177,7 +177,7 @@ mymemalign(size_t align, size_t size)
 }
 
 const char *
-showtime_get_system_type(void)
+arch_get_system_type(void)
 {
   return system_type;
 }
@@ -205,7 +205,7 @@ arch_localtime(const time_t *now, struct tm *tm)
  *
  */
 int64_t
-showtime_get_avtime(void)
+arch_get_avtime(void)
 {
   return arch_get_ts();
 }
@@ -255,7 +255,7 @@ Java_com_showtimemediacenter_showtime_STCore_coreInit(JNIEnv *env, jobject obj, 
 
   signal(SIGPIPE, SIG_IGN);
 
-  showtime_init();
+  main_init();
 
   jclass c = (*env)->FindClass(env, "com/showtimemediacenter/showtime/STCore");
   STCore = (*env)->NewGlobalRef(env, c);

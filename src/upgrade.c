@@ -548,7 +548,7 @@ stos_check_upgrade(void)
     return -1;
   }
 
-  stos_avail_version = showtime_parse_version_int(version);
+  stos_avail_version = parse_version_int(version);
   TRACE(TRACE_DEBUG, "STOS", "Available version: %s (%d)",
 	version, stos_avail_version);
   
@@ -662,7 +662,7 @@ check_upgrade(int set_news)
 
     const char *stosVersion = htsmsg_get_str(manifest, "stosVersion");
     if(stosVersion != NULL) {
-      stos_req_version = showtime_parse_version_int(stosVersion);
+      stos_req_version = parse_version_int(stosVersion);
 
       if(stos_current_version < stos_req_version) {
 	stos_upgrade_needed = 1;
@@ -735,8 +735,8 @@ check_upgrade(int set_news)
   int canUpgrade = gconf.enable_omnigrade;
   
   if(ver != NULL) {
-    int current_ver = showtime_get_version_int();
-    int available_ver = showtime_parse_version_int(ver);
+    int current_ver = app_get_version_int();
+    int available_ver = parse_version_int(ver);
     if(available_ver > current_ver) {
       canUpgrade = 1;
     }
@@ -997,10 +997,10 @@ attempt_upgrade(int accept_patch)
 
 #if STOS
   if(stos_upgrade_needed)
-    showtime_shutdown(SHOWTIME_EXIT_REBOOT);
+    app_shutdown(APP_EXIT_REBOOT);
   else
 #endif
-    showtime_shutdown(SHOWTIME_EXIT_RESTART);
+    app_shutdown(APP_EXIT_RESTART);
   return 0;
 }
 
@@ -1090,7 +1090,7 @@ stos_get_current_version(void)
     char *x = strchr(buf, '\n');
     if(x)
       *x = 0;
-    stos_current_version = showtime_parse_version_int(buf);
+    stos_current_version = parse_version_int(buf);
     TRACE(TRACE_DEBUG, "STOS", "Current version: %s (%d)", buf, 
 	  stos_current_version);
   }

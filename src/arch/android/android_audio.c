@@ -270,7 +270,7 @@ android_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
 
     mp->mp_audio_clock = pts - delay;
     mp->mp_audio_clock_epoch = epoch;
-    mp->mp_audio_clock_avtime = showtime_get_avtime();
+    mp->mp_audio_clock_avtime = arch_get_avtime();
 
     hts_mutex_unlock(&mp->mp_clock_mutex);
   }

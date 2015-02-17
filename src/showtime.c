@@ -247,7 +247,7 @@ swthread(void *aux)
  *
  */
 void
-showtime_swrefresh(void)
+swrefresh(void)
 {
   hts_mutex_lock(&gconf.state_mutex);
   gconf.swrefresh = 1;
@@ -261,7 +261,7 @@ showtime_swrefresh(void)
  *
  */
 void
-showtime_init(void)
+main_init(void)
 {
   char errbuf[512];
 
@@ -299,7 +299,7 @@ showtime_init(void)
   /* Usage counters */
   usage_init();
 
-  TRACE(TRACE_DEBUG, "core", "Loading resources from %s", showtime_dataroot());
+  TRACE(TRACE_DEBUG, "core", "Loading resources from %s", app_dataroot());
 
   TRACE(TRACE_DEBUG, "core", "Cache path: %s", gconf.cache_path);
 
@@ -649,7 +649,7 @@ shutdown_hook_run(int early)
  *
  */
 void
-showtime_flush_caches(void)
+app_flush_caches(void)
 {
   kvstore_deferred_flush();
   htsmsg_store_flush();
@@ -672,7 +672,7 @@ shutdown_eject(void *aux)
  *
  */
 void
-showtime_shutdown(int retcode)
+app_shutdown(int retcode)
 {
   TRACE(TRACE_DEBUG, "core", "Shutdown requested, returncode = %d", retcode);
 
@@ -688,7 +688,7 @@ showtime_shutdown(int retcode)
   prop_destroy_by_name(prop_get_global(), "popups");
   gconf.exit_code = retcode;
 
-  showtime_flush_caches();
+  app_flush_caches();
 
   TRACE(TRACE_DEBUG, "core", "Caches flushed");
 
@@ -714,7 +714,7 @@ showtime_shutdown(int retcode)
  * The end of all things
  */
 void
-showtime_fini(void)
+main_fini(void)
 {
   prop_destroy_by_name(prop_get_global(), "popups");
   fini_group(INIT_GROUP_API);

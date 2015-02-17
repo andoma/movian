@@ -41,7 +41,7 @@
  *
  */
 const char *
-showtime_get_system_type(void)
+arch_get_system_type(void)
 {
   return "NaCl";
 }
@@ -82,7 +82,7 @@ arch_get_ts(void)
  *
  */
 int64_t
-showtime_get_avtime(void)
+arch_get_avtime(void)
 {
   return arch_get_ts();
 }

@@ -254,7 +254,7 @@ static int
 cmd_SYST(ftp_connection_t *fc, char *args)
 {
   ftp_write(fc, 215, "UNIX Type: L8 Version: %s %s",
-             htsversion, showtime_get_system_type());
+             htsversion, arch_get_system_type());
   return 0;
 }
 

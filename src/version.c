@@ -27,7 +27,7 @@ const char *htsversion_full=BUILD_VERSION;
 #include <stdio.h>
 
 uint32_t
-showtime_parse_version_int(const char *str)
+parse_version_int(const char *str)
 {
   int major = 0;
   int minor = 0;
@@ -41,8 +41,8 @@ showtime_parse_version_int(const char *str)
 }
 
 uint32_t
-showtime_get_version_int(void) 
+app_get_version_int(void) 
 {
-  return showtime_parse_version_int(BUILD_VERSION);
+  return parse_version_int(BUILD_VERSION);
 }
 

@@ -209,8 +209,8 @@ update_state(plugin_t *pl)
 
   int version_dep_ok =
     pl->pl_showtime_min_version == NULL ||
-    showtime_parse_version_int(pl->pl_showtime_min_version) <=
-    showtime_get_version_int();
+    parse_version_int(pl->pl_showtime_min_version) <=
+    app_get_version_int();
 
   prop_set(pl->pl_status, "minver", PROP_SET_VOID);
   pl->pl_new_version_avail = 0;
@@ -237,9 +237,9 @@ update_state(plugin_t *pl)
     if(pl->pl_repo_ver != NULL) {
       pl->pl_new_version_avail = 1;
 
-      int repo_ver = showtime_parse_version_int(pl->pl_repo_ver);
+      int repo_ver = parse_version_int(pl->pl_repo_ver);
       if(pl->pl_inst_ver != NULL &&
-	 repo_ver > showtime_parse_version_int(pl->pl_inst_ver)) {
+	 repo_ver > parse_version_int(pl->pl_inst_ver)) {
 
 	if(!version_dep_ok) {
 	  status = _("Not upgradable");

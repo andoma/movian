@@ -37,16 +37,16 @@
 
 void parse_opts(int argc, char **argv);
 
-void showtime_init(void);
+void main_init(void);
 
-void showtime_fini(void);
+void main_fini(void);
 
-void showtime_swrefresh(void);
+void swrefresh(void);
 
 extern void panic(const char *fmt, ...)
   attribute_printf(1,2) attribute_noreturn;
 
-extern const char *showtime_dataroot(void);
+extern const char *app_dataroot(void);
 
 #define BYPASS_CACHE  ((int *)-1)
 #define DISABLE_CACHE ((int *)-2)
@@ -72,19 +72,19 @@ rstr_t *nls_get_rstringp(const char *string, const char *singularis, int val);
 #define URL_MAX 2048
 #define HOSTNAME_MAX 256 /* FQDN is max 255 bytes including ending dot */
 
-void showtime_shutdown(int retcode);
+void app_shutdown(int retcode);
 
-void showtime_flush_caches(void);
+void app_flush_caches(void);
 
-uint32_t showtime_get_version_int(void);
+uint32_t app_get_version_int(void);
 
-uint32_t showtime_parse_version_int(const char *str);
+uint32_t parse_version_int(const char *str);
 
 extern int64_t arch_get_ts(void);
 
-extern int64_t showtime_get_avtime(void);
+extern int64_t arch_get_avtime(void);
 
-extern const char *showtime_get_system_type(void);
+extern const char *arch_get_system_type(void);
 
 extern uint64_t arch_get_seed(void);
 
@@ -182,13 +182,13 @@ void shutdown_hook_run(int early);
 void *shutdown_hook_add(void (*fn)(void *opaque, int exitcode), void *opaque,
 			int early);
 
-#define SHOWTIME_EXIT_OK       0
-#define SHOWTIME_EXIT_STANDBY  10
-#define SHOWTIME_EXIT_POWEROFF 11
-#define SHOWTIME_EXIT_LOGOUT   12
-#define SHOWTIME_EXIT_RESTART  13
-#define SHOWTIME_EXIT_SHELL    14
-#define SHOWTIME_EXIT_REBOOT   15
+#define APP_EXIT_OK       0
+#define APP_EXIT_STANDBY  10
+#define APP_EXIT_POWEROFF 11
+#define APP_EXIT_LOGOUT   12
+#define APP_EXIT_RESTART  13
+#define APP_EXIT_SHELL    14
+#define APP_EXIT_REBOOT   15
 
 
 typedef struct gconf {

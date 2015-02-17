@@ -1460,7 +1460,7 @@ js_init(void)
   showtimeobj = JS_NewObject(cx, &showtime_class, NULL, NULL);
   JS_DefineFunctions(cx, showtimeobj, showtime_functions);
 
-  val = INT_TO_JSVAL(showtime_get_version_int());
+  val = INT_TO_JSVAL(app_get_version_int());
   JS_SetProperty(cx, showtimeobj, "currentVersionInt", &val);
 
   val = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, htsversion));

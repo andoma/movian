@@ -715,7 +715,7 @@ video_player_idle(void *aux)
     }
 
     if(event_is_type(e, EVENT_EOF) && mp->mp_auto_standby) {
-      showtime_shutdown(SHOWTIME_EXIT_STANDBY);
+      app_shutdown(APP_EXIT_STANDBY);
       event_release(e);
       e = NULL;
       break;

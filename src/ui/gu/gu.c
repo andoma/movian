@@ -101,7 +101,7 @@ gw_close(GtkWidget *widget,GdkEvent *event, gpointer data)
   gu_win_destroy(gw);
 
   if(LIST_FIRST(&gu->gu_windows) == NULL)
-    showtime_shutdown(0);
+    app_shutdown(0);
 
   return TRUE;
 }

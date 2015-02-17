@@ -7,7 +7,7 @@ static int initialized;
 static char buf[256];
 static HTS_MUTEX_DECL(mtx);
 
-const char *showtime_dataroot(void)
+const char *app_dataroot(void)
 {
   if(!initialized) {
     hts_mutex_lock(&mtx);

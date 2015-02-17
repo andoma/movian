@@ -459,7 +459,7 @@ glw_program_set_uniform_color(glw_backend_root_t *gbr,
 
 #define SHADERPATH(FILENAME) \
   snprintf(path, sizeof(path), "%s/src/ui/glw/glsl/%s", \
-	   showtime_dataroot(), FILENAME);
+	   app_dataroot(), FILENAME);
 
 /**
  *

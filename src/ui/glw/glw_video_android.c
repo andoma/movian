@@ -170,7 +170,7 @@ android_yuvp_deliver(const frame_info_t *fi, glw_video_t *gv,
   if(gv->w.glw_flags & GLW_DESTROYING)
     return -1;
 
-  int64_t now = showtime_get_avtime();
+  int64_t now = arch_get_avtime();
   hts_mutex_lock(&mp->mp_clock_mutex);
   aclock = mp->mp_audio_clock + now -
     mp->mp_audio_clock_avtime + mp->mp_avdelta;
@@ -320,7 +320,7 @@ surface_deliver(const frame_info_t *fi, glw_video_t *gv,
 #if 0
   static int64_t lastpts;
   static int64_t lastts;
-  int64_t ts = showtime_get_avtime();
+  int64_t ts = arch_get_avtime();
   TRACE(TRACE_DEBUG, "TIMESTAMP", "%20lld %10lld %20lld %10lld",
         fi->fi_pts, fi->fi_pts - lastpts,
         ts,         ts - lastts);
@@ -332,7 +332,7 @@ surface_deliver(const frame_info_t *fi, glw_video_t *gv,
   if(gv->w.glw_flags & GLW_DESTROYING)
     return -1;
 
-  int64_t now = showtime_get_avtime();
+  int64_t now = arch_get_avtime();
   hts_mutex_lock(&mp->mp_clock_mutex);
   aclock = mp->mp_audio_clock + now -
     mp->mp_audio_clock_avtime + mp->mp_avdelta;

@@ -74,7 +74,7 @@ check_autostandby(callout_t *c, void *aux)
   if(standby_delay && idle >= standby_delay && !active_media) {
     TRACE(TRACE_INFO, "runcontrol", "Automatic standby after %d minutes idle",
 	  standby_delay);
-    showtime_shutdown(SHOWTIME_EXIT_STANDBY);
+    app_shutdown(APP_EXIT_STANDBY);
     return;
   }
   callout_arm(&autostandby_timer, check_autostandby, NULL, 1);
@@ -142,7 +142,7 @@ decrease_sleeptimer(callout_t *c, void *aux)
 
   if(sleeptime < 0) {
     TRACE(TRACE_INFO, "runcontrol", "Automatic standby by sleep timer");
-    showtime_shutdown(SHOWTIME_EXIT_STANDBY);
+    app_shutdown(APP_EXIT_STANDBY);
     return;
   }
   prop_set_int_ex(sleeptime_prop, sleeptime_sub, sleeptime);
@@ -199,32 +199,32 @@ init_sleeptimer(prop_t *rc)
 static void
 do_power_off(void *opaque, prop_event_t event, ...)
 {
-  showtime_shutdown(SHOWTIME_EXIT_POWEROFF);
+  app_shutdown(APP_EXIT_POWEROFF);
 }
 
 static void
 do_logout(void *opaque, prop_event_t event, ...)
 {
-  showtime_shutdown(SHOWTIME_EXIT_LOGOUT);
+  app_shutdown(APP_EXIT_LOGOUT);
 }
 
 static void
 do_open_shell(void *opaque, prop_event_t event, ...)
 {
-  showtime_shutdown(SHOWTIME_EXIT_SHELL);
+  app_shutdown(APP_EXIT_SHELL);
 }
 
 static void
 do_standby(void *opaque, prop_event_t event, ...)
 {
-  showtime_shutdown(SHOWTIME_EXIT_STANDBY);
+  app_shutdown(APP_EXIT_STANDBY);
 }
 
 
 static void
 do_exit(void *opaque, prop_event_t event, ...)
 {
-  showtime_shutdown(0);
+  app_shutdown(0);
 }
 
 

@@ -51,7 +51,7 @@
  *
  */
 const char *
-showtime_get_system_type(void)
+arch_get_system_type(void)
 {
 #if defined(__i386__)
   return "Linux/i386";

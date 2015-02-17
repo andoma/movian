@@ -24,7 +24,7 @@
 
 
 int64_t
-showtime_get_avtime(void)
+arch_get_avtime(void)
 {
   struct timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);

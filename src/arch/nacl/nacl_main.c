@@ -255,7 +255,7 @@ init_thread(void *aux)
   }
 
 
-  showtime_init();
+  main_init();
 
   uiroot->gr.gr_prop_ui = prop_create_root("ui");
   uiroot->gr.gr_prop_nav = nav_spawn();

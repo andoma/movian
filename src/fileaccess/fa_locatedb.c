@@ -209,7 +209,7 @@ fa_locate_searcher (fa_search_t *fas)
     return fa_search_destroy(fas);
 
   snprintf(iconpath, sizeof(iconpath), "%s/resources/fileaccess/fs_icon.png",
-	   showtime_dataroot());
+	   app_dataroot());
 
   /* Consume 'locate' results. */
   while (1) {

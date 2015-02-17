@@ -413,7 +413,7 @@ wait_for_aclock(media_pipe_t *mp, int64_t pts, int epoch)
   }
 
   hts_mutex_lock(&mp->mp_clock_mutex);
-  rt = showtime_get_avtime();
+  rt = arch_get_avtime();
   aclock = mp->mp_audio_clock + rt - mp->mp_audio_clock_avtime;
   hts_mutex_unlock(&mp->mp_clock_mutex);
 

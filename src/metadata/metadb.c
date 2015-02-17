@@ -117,7 +117,7 @@ metadb_init(void)
   if(db == NULL)
     return;
 
-  snprintf(buf, sizeof(buf), "%s/resources/metadb", showtime_dataroot());
+  snprintf(buf, sizeof(buf), "%s/resources/metadb", app_dataroot());
   snprintf(buf2, sizeof(buf2), "%s/kvstore/kvstore.db", gconf.persistent_path);
 
   int r = db_upgrade_schema(db, buf, "metadb", "kvstore", buf2);

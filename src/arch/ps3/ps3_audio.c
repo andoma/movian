@@ -62,7 +62,7 @@ typedef struct decoder {
  *
  */
 int64_t
-showtime_get_avtime(void)
+arch_get_avtime(void)
 {
   return arch_get_ts();
 }
@@ -307,7 +307,7 @@ ps3_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
 
       hts_mutex_lock(&mp->mp_clock_mutex);
       mp->mp_audio_clock = pts;
-      mp->mp_audio_clock_avtime = showtime_get_avtime();
+      mp->mp_audio_clock_avtime = arch_get_avtime();
       mp->mp_audio_clock_epoch = epoch;
       hts_mutex_unlock(&mp->mp_clock_mutex);
       pts = AV_NOPTS_VALUE;

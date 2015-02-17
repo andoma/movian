@@ -160,7 +160,7 @@ main(int argc, char **argv)
 
   linux_init();
 
-  showtime_init();
+  main_init();
 
   if(gconf.ui && !strcmp(gconf.ui, "gu"))
     ui_wanted = &ui_gu;
@@ -181,7 +181,7 @@ main(int argc, char **argv)
 
   mainloop();
 
-  showtime_fini();
+  main_fini();
 
   arch_exit();
 }

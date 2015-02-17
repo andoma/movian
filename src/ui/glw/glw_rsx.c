@@ -59,7 +59,7 @@ load_vp(const char *filename)
   char url[512];
 
   snprintf(url, sizeof(url), "%s/src/ui/glw/rsx/%s", 
-	   showtime_dataroot(), filename);
+	   app_dataroot(), filename);
 
   if((b = fa_load(url, FA_LOAD_ERRBUF(errmsg, sizeof(errmsg)),
                    NULL)) == NULL) {
@@ -137,7 +137,7 @@ load_fp(glw_root_t *gr, const char *filename)
 
   char url[512];
   snprintf(url, sizeof(url), "%s/src/ui/glw/rsx/%s", 
-	   showtime_dataroot(), filename);
+	   app_dataroot(), filename);
 
   if((b = fa_load(url, FA_LOAD_ERRBUF(errmsg, sizeof(errmsg)),
                    NULL)) == NULL) {

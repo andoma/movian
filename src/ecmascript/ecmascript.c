@@ -342,7 +342,7 @@ es_create_env(es_context_t *ec, const char *loaddir, const char *storage)
 
   int obj_idx = duk_push_object(ctx);
 
-  duk_push_int(ctx, showtime_get_version_int());
+  duk_push_int(ctx, app_get_version_int());
   duk_put_prop_string(ctx, obj_idx, "currentVersionInt");
 
   duk_push_string(ctx, htsversion);

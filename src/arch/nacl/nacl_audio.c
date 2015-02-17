@@ -185,7 +185,7 @@ nacl_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
     media_pipe_t *mp = ad->ad_mp;
 
     hts_mutex_lock(&mp->mp_clock_mutex);
-    mp->mp_audio_clock_avtime = showtime_get_avtime();
+    mp->mp_audio_clock_avtime = arch_get_avtime();
     mp->mp_audio_clock_epoch = epoch;
     mp->mp_audio_clock = pts - delay;
     hts_mutex_unlock(&mp->mp_clock_mutex);

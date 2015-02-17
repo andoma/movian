@@ -31,7 +31,7 @@
 static void
 m_quit(GtkWidget *menu_item, gpointer data)
 {
-  showtime_shutdown(0);
+  app_shutdown(0);
 }
 
 

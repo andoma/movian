@@ -532,7 +532,7 @@ glw_wii_loop(glw_wii_t *gwii)
 
     if(SYS_ResetButtonDown() && !resetted) {
       resetted = 1;
-      showtime_shutdown(0);
+      app_shutdown(0);
     }
   }
 }

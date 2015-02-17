@@ -33,7 +33,7 @@ load_syms(void)
   char sympath[256];
   char errbuf[256];
 
-  snprintf(sympath, sizeof(sympath), "%s/showtime.syms", showtime_dataroot());
+  snprintf(sympath, sizeof(sympath), "%s/showtime.syms", app_dataroot());
 
   my_trace("sympath: %s\n", sympath);
 

@@ -303,7 +303,7 @@ hc_binreplace(http_connection_t *hc, const char *remain, void *opaque,
   
   close(fd);
   TRACE(TRACE_INFO, "BINREPLACE", "All done, restarting");
-  showtime_shutdown(13);
+  app_shutdown(13);
   return HTTP_STATUS_OK;
 }
 

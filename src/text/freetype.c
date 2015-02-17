@@ -1492,7 +1492,7 @@ freetype_init(void)
 
   snprintf(url, sizeof(url),
 	   "%s/resources/fonts/liberation/LiberationSans-Regular.ttf",
-	   showtime_dataroot());
+	   app_dataroot());
 
   freetype_load_default_font(url, 0);
 

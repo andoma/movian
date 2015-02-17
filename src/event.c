@@ -487,13 +487,13 @@ event_dispatch(event_t *e)
 				 1, NULL), e);
   
   if(event_is_action(e, ACTION_QUIT)) {
-    showtime_shutdown(0);
+    app_shutdown(0);
 
   } else if(event_is_action(e, ACTION_STANDBY)) {
-    showtime_shutdown(10);
+    app_shutdown(10);
 
   } else if(event_is_action(e, ACTION_POWER_OFF)) {
-    showtime_shutdown(11);
+    app_shutdown(11);
 
   } else if(event_is_action(e, ACTION_NAV_BACK) ||
 	    event_is_action(e, ACTION_NAV_FWD) ||

@@ -343,6 +343,6 @@ trace_init(void)
   TRACE(TRACE_INFO, "SYSTEM",
         "Showtime %s starting. %d CPU cores. Systemtype:%s OS:%s",
         htsversion_full, gconf.concurrency,
-        showtime_get_system_type(),
+        arch_get_system_type(),
         gconf.os_info[0] ? gconf.os_info : "<unknown>");
 }

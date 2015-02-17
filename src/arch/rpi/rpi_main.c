@@ -67,7 +67,7 @@ static int ctrlc;
  *
  */
 int64_t
-showtime_get_avtime(void)
+arch_get_avtime(void)
 {
   struct timeval tv;
   gettimeofday(&tv, NULL);
@@ -640,7 +640,7 @@ rpi_mainloop(void)
 
   while(runmode != RUNMODE_EXIT && !ctrlc) {
     if(ui_should_run()) {
-      showtime_swrefresh();
+      swrefresh();
       ui_run(gr, dpy);
     } else {
       glw_lock(gr);
@@ -800,7 +800,7 @@ main(int argc, char **argv)
 
   linux_init();
 
-  showtime_init();
+  main_init();
 
   tv_init();
 
@@ -831,7 +831,7 @@ main(int argc, char **argv)
 
   rpi_mainloop();
   shutdown_hook_run(1);
-  showtime_fini();
+  main_fini();
   arch_exit();
 }
 

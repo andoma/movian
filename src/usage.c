@@ -59,8 +59,8 @@ make_usage_report(void)
 
   htsmsg_add_str(out, "deviceid", gconf.device_id);
   htsmsg_add_str(out, "version", htsversion_full);
-  htsmsg_add_str(out, "arch", showtime_get_system_type());
-  htsmsg_add_u32(out, "verint", showtime_get_version_int());
+  htsmsg_add_str(out, "arch", arch_get_system_type());
+  htsmsg_add_u32(out, "verint", app_get_version_int());
   htsmsg_add_u32(out, "generated", time(NULL));
   if(gconf.os_info[0])
     htsmsg_add_str(out, "os" , gconf.os_info);

@@ -1075,7 +1075,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
       case ClientMessage:
 	if((Atom)event.xclient.data.l[0] == gx11->atom_deletewindow) {
 	  /* Window manager wants us to close */
-	  showtime_shutdown(0);
+	  app_shutdown(0);
 	}
 	break;
 	  

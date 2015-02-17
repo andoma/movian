@@ -24,7 +24,7 @@
  *
  */
 int64_t
-showtime_get_avtime(void)
+arch_get_avtime(void)
 {
   struct timeval tv;
   gettimeofday(&tv, NULL);

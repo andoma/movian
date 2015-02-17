@@ -1,4 +1,4 @@
-const char *showtime_dataroot(void)
+const char *app_dataroot(void)
 {
   return "bundle://";
 } 

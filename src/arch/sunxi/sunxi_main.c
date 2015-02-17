@@ -298,7 +298,7 @@ ui_run(void)
 
     if(ctrlc == 1) {
       ctrlc = 2;
-      showtime_shutdown(0);
+      app_shutdown(0);
     }
 
   }
@@ -347,7 +347,7 @@ main(int argc, char **argv)
 
   gconf.concurrency =   sysconf(_SC_NPROCESSORS_CONF);
 
-  showtime_init();
+  main_init();
 
   trap_init();
 
@@ -378,7 +378,7 @@ main(int argc, char **argv)
 
   sunxi_fini();
 
-  showtime_fini();
+  main_fini();
 
   arch_exit();
 }

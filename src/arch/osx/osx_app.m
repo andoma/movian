@@ -44,7 +44,7 @@ static void mainloop_courier_init(void);
  *
  */
 int64_t
-showtime_get_avtime(void)
+arch_get_avtime(void)
 {
   return AudioConvertHostTimeToNanos(AudioGetCurrentHostTime()) / 1000LL;
 }
@@ -109,7 +109,7 @@ main(int argc, char **argv)
 
   gconf.concurrency = get_system_concurrency();
 
-  showtime_init();
+  main_init();
 
 #if ENABLE_WEBPOPUP
   webpopup_init();
@@ -154,7 +154,7 @@ arch_stop_req(void)
  *
  */
 const char *
-showtime_get_system_type(void)
+arch_get_system_type(void)
 {
   return "Apple";
 }
@@ -229,9 +229,9 @@ mainloop_courier_init(void)
  */
 - (void) applicationWillTerminate: (NSNotification *)not;
 {
-  showtime_flush_caches();
+  app_flush_caches();
   shutdown_hook_run(1);
-  showtime_fini();
+  main_fini();
 }
 
 

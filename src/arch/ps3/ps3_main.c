@@ -441,7 +441,7 @@ preload_fonts(void)
 }
 
 const char *
-showtime_get_system_type(void)
+arch_get_system_type(void)
 {
   return "PS3";
 }
@@ -531,11 +531,11 @@ arch_localtime(const time_t *now, struct tm *tm)
 void
 arch_exit(void)
 {
-  if(gconf.exit_code == SHOWTIME_EXIT_STANDBY) {
+  if(gconf.exit_code == APP_EXIT_STANDBY) {
     unlink("/dev_hdd0/tmp/turnoff");
     Lv2Syscall3(379, 0x100, 0, 0 );
   }
-  if(gconf.exit_code == SHOWTIME_EXIT_RESTART)
+  if(gconf.exit_code == APP_EXIT_RESTART)
     sysProcessExitSpawn2(gconf.binary, 0, 0, 0, 0, 1200, 0x70);
 
   exit(gconf.exit_code);
@@ -585,7 +585,7 @@ main(int argc, char **argv)
 
   my_trace("The binary is: %s\n", gconf.binary);
   set_device_id();
-  showtime_init();
+  main_init();
 
   sysprop = prop_create(prop_get_global(), "system");
   memprop = prop_create(sysprop, "mem");
@@ -624,7 +624,7 @@ main(int argc, char **argv)
   extern void glw_ps3_start(void);
   glw_ps3_start();
 
-  showtime_fini();
+  main_fini();
 
   arch_exit();
 
