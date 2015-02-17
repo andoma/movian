@@ -1,7 +1,5 @@
-#pragma once
 /*
- *  Showtime Mediacenter
- *  Copyright (C) 2007-2013 Lonelycoder AB
+ *  Copyright (C) 2007-2015 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,7 +18,6 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 #pragma once
-
 int mktime_utc(time_t *tp, unsigned int year, unsigned int month,
                unsigned int day,
                unsigned int hour, unsigned int min, unsigned int sec);

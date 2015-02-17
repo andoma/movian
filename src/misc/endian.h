@@ -1,5 +1,4 @@
 /*
- *  Showtime Mediacenter
  *  Copyright (C) 2007-2015 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -19,8 +18,6 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 #pragma once
-
-
 static inline uint16_t
 myswap16(uint16_t val)
 {
