@@ -9,6 +9,19 @@ source support/configure.inc
 SDK="${ANDROID_HOME}"
 NDK="${ANDROID_HOME}/../ndk"
 
+export ANDROID_API=android-17
+export ANDROID_EABI=arm-linux-androideabi-4.9
+
+install_openssl()
+{
+    OPENSSL_VER="1.0.2"
+
+    download_file http://www.lonelycoder.com/download/openssl-${OPENSSL_VER}-${ANDROID_API}-${ANDROID_EABI}.tar.gz openssltarball
+
+    tar -C "${BUILDDIR}/inst" --strip-components=1 -xf "${openssltarball}"
+}
+
+
 show_help(){
   common_help
   echo "  --sdk=PREFIX          Use Android SDK from this path [$SDK]"
@@ -68,16 +81,15 @@ enable sqlite_internal
 enable spidermonkey
 enable glw_backend_opengl_es
 enable glw
-enable polarssl
 enable librtmp
 enable httpserver
-#enable dvd
 enable libfreetype
 enable stdin
+enable openssl
 
 bzip2_setup
 freetype_setup --host=arm-linux-gnueabihf
-
+install_openssl
 ARCH_CFLAGS="-march=armv7-a -mfloat-abi=softfp -mfpu=neon"
 ARCH_LDFLAGS="-march=armv7-a -Wl,--fix-cortex-a8"
 
