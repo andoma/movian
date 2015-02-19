@@ -42,6 +42,9 @@ mktime_utc(time_t *tp, unsigned int year, unsigned int month, unsigned int day,
 {
   int i;
 
+  if(year < 100)
+    year += 2000;
+
   if(year < 1970 || year > 2038 || month >= 12)
     return -1;
 
