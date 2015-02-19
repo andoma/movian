@@ -188,7 +188,7 @@ widget(container_y, {
       spacing: $ui.size;
       align: center;
       widget(label, {
-	caption: fmt_(_("%s is up to date"), $global.app.name);
+	caption: fmt(_("%s is up to date"), $global.app.name);
 	shadow: true;
 	outline: true;
 	align: center;
