@@ -64,7 +64,7 @@ trace_arch(int level, const char *prefix, const char *str)
   case TRACE_DEBUG:   prio = ANDROID_LOG_DEBUG; break;
   default:            prio = ANDROID_LOG_ERROR; break;
   }
-  __android_log_print(prio, "Showtime", "%s %s", prefix, str);
+  __android_log_print(prio, APPNAMEUSER, "%s %s", prefix, str);
 }
 
 
@@ -232,8 +232,9 @@ JNI_OnLoad(JavaVM *vm, void *reserved)
  *
  */
 JNIEXPORT void JNICALL
-Java_com_showtimemediacenter_showtime_STCore_coreInit(JNIEnv *env, jobject obj, jstring j_settings, jstring j_cachedir)
+Java_com_lonelycoder_mediaplayer_Core_coreInit(JNIEnv *env, jobject obj, jstring j_settings, jstring j_cachedir)
 {
+  trace_arch(TRACE_INFO, "Core", "Native core initializing");
   gconf.trace_level = TRACE_DEBUG;
 
   struct timeval tv;
@@ -257,7 +258,7 @@ Java_com_showtimemediacenter_showtime_STCore_coreInit(JNIEnv *env, jobject obj, 
 
   main_init();
 
-  jclass c = (*env)->FindClass(env, "com/showtimemediacenter/showtime/STCore");
+  jclass c = (*env)->FindClass(env, "com/lonelycoder/mediaplayer/Core");
   STCore = (*env)->NewGlobalRef(env, c);
 
   prop_jni_init(env);
@@ -276,7 +277,7 @@ Java_com_showtimemediacenter_showtime_STCore_coreInit(JNIEnv *env, jobject obj, 
  *
  */
 JNIEXPORT void JNICALL
-Java_com_showtimemediacenter_showtime_STCore_pollCourier(JNIEnv *env, jobject obj)
+Java_com_lonelycoder_mediaplayer_Core_pollCourier(JNIEnv *env, jobject obj)
 {
   prop_jni_poll();
 }

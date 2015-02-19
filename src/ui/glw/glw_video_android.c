@@ -59,7 +59,7 @@ android_init(glw_video_t *gv)
 
   jclass class = (*env)->GetObjectClass(env, agr->agr_vrp);
   jmethodID mid = (*env)->GetMethodID(env, class, "createVideoRenderer",
-                                      "()Lcom/showtimemediacenter/showtime/VideoRenderer;");
+                                      "()Lcom/lonelycoder/mediaplayer/VideoRenderer;");
   jobject vr = (*env)->CallObjectMethod(env, agr->agr_vrp, mid);
 
 
@@ -138,7 +138,7 @@ android_reset(glw_video_t *gv)
 
   jclass class = (*env)->GetObjectClass(env, agr->agr_vrp);
   jmethodID mid = (*env)->GetMethodID(env, class, "destroyVideoRenderer",
-                                      "(Lcom/showtimemediacenter/showtime/VideoRenderer;)V");
+                                      "(Lcom/lonelycoder/mediaplayer/VideoRenderer;)V");
   (*env)->CallVoidMethod(env, agr->agr_vrp, mid, av->av_VideoRenderer);
 
   (*env)->DeleteGlobalRef(env, av->av_VideoRenderer);

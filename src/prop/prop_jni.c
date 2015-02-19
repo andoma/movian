@@ -274,10 +274,10 @@ makesub(JNIEnv *env,
 
 
 JNIEXPORT jint JNICALL
-Java_com_showtimemediacenter_showtime_STCore_subValue(JNIEnv *, jobject , jint, jstring, jobject);
+Java_com_lonelycoder_mediaplayer_Core_subValue(JNIEnv *, jobject , jint, jstring, jobject);
 
 JNIEXPORT jint JNICALL
-Java_com_showtimemediacenter_showtime_STCore_subValue(JNIEnv *env,
+Java_com_lonelycoder_mediaplayer_Core_subValue(JNIEnv *env,
                                                        jobject obj,
                                                        jint j_propid,
                                                        jstring j_path,
@@ -302,11 +302,11 @@ Java_com_showtimemediacenter_showtime_STCore_subValue(JNIEnv *env,
 
 
 JNIEXPORT jint JNICALL
-Java_com_showtimemediacenter_showtime_STCore_subNodes(JNIEnv *, jobject , jint, jstring, jobject);
+Java_com_lonelycoder_mediaplayer_Core_subNodes(JNIEnv *, jobject , jint, jstring, jobject);
 
 
 JNIEXPORT jint JNICALL
-Java_com_showtimemediacenter_showtime_STCore_subNodes(JNIEnv *env,
+Java_com_lonelycoder_mediaplayer_Core_subNodes(JNIEnv *env,
                                                       jobject obj,
                                                       jint j_propid,
                                                       jstring j_path,
@@ -328,10 +328,10 @@ Java_com_showtimemediacenter_showtime_STCore_subNodes(JNIEnv *env,
 
 
 JNIEXPORT void JNICALL
-Java_com_showtimemediacenter_showtime_STCore_unsub(JNIEnv *env, jobject obj, jint j_sid);
+Java_com_lonelycoder_mediaplayer_Core_unsub(JNIEnv *env, jobject obj, jint j_sid);
 
 JNIEXPORT void JNICALL
-Java_com_showtimemediacenter_showtime_STCore_unsub(JNIEnv *env, jobject obj, jint j_sid)
+Java_com_lonelycoder_mediaplayer_Core_unsub(JNIEnv *env, jobject obj, jint j_sid)
 {
   jni_subscription_t *js = jni_sub_find(j_sid);
 
@@ -352,20 +352,20 @@ Java_com_showtimemediacenter_showtime_STCore_unsub(JNIEnv *env, jobject obj, jin
 }
 
 JNIEXPORT void JNICALL
-Java_com_showtimemediacenter_showtime_STCore_propRelease(JNIEnv *env, jobject obj, jint j_prop);
+Java_com_lonelycoder_mediaplayer_Core_propRelease(JNIEnv *env, jobject obj, jint j_prop);
 
 JNIEXPORT void JNICALL
-Java_com_showtimemediacenter_showtime_STCore_propRelease(JNIEnv *env, jobject obj, jint j_prop)
+Java_com_lonelycoder_mediaplayer_Core_propRelease(JNIEnv *env, jobject obj, jint j_prop)
 {
   prop_ref_dec((prop_t *)j_prop);
 }
 
 
 JNIEXPORT void JNICALL
-Java_com_showtimemediacenter_showtime_STCore_propRetain(JNIEnv *env, jobject obj, jint j_prop);
+Java_com_lonelycoder_mediaplayer_Core_propRetain(JNIEnv *env, jobject obj, jint j_prop);
 
 JNIEXPORT void JNICALL
-Java_com_showtimemediacenter_showtime_STCore_propRetain(JNIEnv *env, jobject obj, jint j_prop)
+Java_com_lonelycoder_mediaplayer_Core_propRetain(JNIEnv *env, jobject obj, jint j_prop)
 {
   prop_t *p = prop_ref_inc((prop_t *)j_prop);
   (void)p;

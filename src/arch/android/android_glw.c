@@ -36,7 +36,7 @@
 #include "android_glw.h"
 
 JNIEXPORT jint JNICALL
-Java_com_showtimemediacenter_showtime_STCore_glwCreate(JNIEnv *env,
+Java_com_lonelycoder_mediaplayer_Core_glwCreate(JNIEnv *env,
                                                        jobject obj,
                                                        jobject vrp)
 {
@@ -59,7 +59,7 @@ Java_com_showtimemediacenter_showtime_STCore_glwCreate(JNIEnv *env,
 
 
 JNIEXPORT void JNICALL
-Java_com_showtimemediacenter_showtime_STCore_glwInit(JNIEnv *env,
+Java_com_lonelycoder_mediaplayer_Core_glwInit(JNIEnv *env,
                                                      jobject obj,
                                                      jint id)
 {
@@ -71,7 +71,7 @@ Java_com_showtimemediacenter_showtime_STCore_glwInit(JNIEnv *env,
 
 
 JNIEXPORT void JNICALL
-Java_com_showtimemediacenter_showtime_STCore_glwFini(JNIEnv *env,
+Java_com_lonelycoder_mediaplayer_Core_glwFini(JNIEnv *env,
                                                      jobject obj,
                                                      jint id)
 {
@@ -90,7 +90,7 @@ Java_com_showtimemediacenter_showtime_STCore_glwFini(JNIEnv *env,
 
 
 JNIEXPORT void JNICALL
-Java_com_showtimemediacenter_showtime_STCore_glwDestroy(JNIEnv *env,
+Java_com_lonelycoder_mediaplayer_Core_glwDestroy(JNIEnv *env,
                                                      jobject obj,
                                                      jint id)
 {
@@ -112,7 +112,7 @@ Java_com_showtimemediacenter_showtime_STCore_glwDestroy(JNIEnv *env,
 
 
 JNIEXPORT void JNICALL
-Java_com_showtimemediacenter_showtime_STCore_glwResize(JNIEnv *env,
+Java_com_lonelycoder_mediaplayer_Core_glwResize(JNIEnv *env,
                                                        jobject obj,
                                                        jint id,
                                                        jint width,
@@ -127,7 +127,7 @@ Java_com_showtimemediacenter_showtime_STCore_glwResize(JNIEnv *env,
 
 
 JNIEXPORT void JNICALL
-Java_com_showtimemediacenter_showtime_STCore_glwStep(JNIEnv *env,
+Java_com_lonelycoder_mediaplayer_Core_glwStep(JNIEnv *env,
                                                      jobject obj,
                                                      jint id)
 {
@@ -163,7 +163,7 @@ Java_com_showtimemediacenter_showtime_STCore_glwStep(JNIEnv *env,
 
 
 JNIEXPORT void JNICALL
-Java_com_showtimemediacenter_showtime_STCore_glwMotion(JNIEnv *env,
+Java_com_lonelycoder_mediaplayer_Core_glwMotion(JNIEnv *env,
                                                        jobject obj,
                                                        jint id,
                                                        jint action,
@@ -210,7 +210,7 @@ const static action_type_t *btn_to_action[end_of_AKEYCODE] = {
 
 
 JNIEXPORT jboolean JNICALL
-Java_com_showtimemediacenter_showtime_STCore_glwKeyDown(JNIEnv *env,
+Java_com_lonelycoder_mediaplayer_Core_glwKeyDown(JNIEnv *env,
                                                         jobject obj,
                                                         jint id,
                                                         jint keycode)
@@ -241,7 +241,7 @@ Java_com_showtimemediacenter_showtime_STCore_glwKeyDown(JNIEnv *env,
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_showtimemediacenter_showtime_STCore_glwKeyUp(JNIEnv *env,
+Java_com_lonelycoder_mediaplayer_Core_glwKeyUp(JNIEnv *env,
                                                       jobject obj,
                                                       jint id,
                                                       jint keycode)
