@@ -68,7 +68,7 @@ if [ ! -f "${TOOLCHAIN}gcc" ]; then
         echo "NDK not found, either set NDK environment varable or specify --ndk=/path/to/ndk"
         die
     fi
-    ${NDK}/build/tools/make-standalone-toolchain.sh --platform=android-17 --install-dir=${TOPDIR}/build.android/toolchain --toolchain=arm-linux-androideabi-4.9
+    ${NDK}/build/tools/make-standalone-toolchain.sh --platform=${ANDROID_API} --install-dir=${TOPDIR}/build.android/toolchain --toolchain=${ANDROID_EABI}
 fi
 
 
@@ -81,7 +81,7 @@ enable sqlite_internal
 enable spidermonkey
 enable glw_backend_opengl_es
 enable glw
-enable librtmp
+#enable librtmp
 enable httpserver
 enable libfreetype
 enable stdin
@@ -95,19 +95,18 @@ ARCH_LDFLAGS="-march=armv7-a -Wl,--fix-cortex-a8"
 
 LIBAV_CFLAGS="-I${EXT_INSTALL_DIR}/include ${ARCH_CFLAGS}"
 LIBAV_LDFLAGS="-L${EXT_INSTALL_DIR}/lib  ${ARCH_LDFLAGS}"
-LIBAV_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=armv7 --target-os=linux"
+LIBAV_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=armv7 --target-os=android --enable-shared --disable-static"
 
 libav_setup
 rtmpdump_setup
 xmp_setup
 libyuv_setup
 
-# libspotify_setup "12.1.103-Linux-armv6-bcm2708hardfp"
-
 cat >> ${CONFIG_MAK} <<EOF
 CFLAGS_arch = ${ARCH_CFLAGS}
 CFLAGS_cfg += ${ARCH_CFLAGS}
 LDFLAGS_cfg += ${ARCH_LDFLAGS} -lOpenSLES -lGLESv2 -llog -landroid -ljnigraphics
+LDFLAGS_cfg += -lssl -lcrypto
 SDK = ${SDK}
 NDK = ${NDK}
 ADB = ${SDK}/platform-tools/adb

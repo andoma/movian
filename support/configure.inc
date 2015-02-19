@@ -381,6 +381,10 @@ libav_setup() {
 #
 #
 rtmpdump_setup() {
+    if disabled librtmp; then
+        return
+    fi
+
     update_ext_submodule rtmpdump
 }
 
