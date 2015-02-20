@@ -62,8 +62,7 @@ id: Time until sleep
 msg: Tid indtil dvale
 
 id: dB
-# Missing translation
-msg: 
+msg: dB
 
 id: min
 msg: min.
@@ -153,12 +152,10 @@ msg: Videoindstillinger
 # ./glwskins/default/loading.view
 #
 id: %d kb/s
-# Missing translation
-msg: 
+msg: %d kb/s
 
 id: Bitrate:
-# Missing translation
-msg: 
+smg: Bitrate:
 
 #
 # ./glwskins/default/log.view
@@ -360,8 +357,7 @@ id: Checking for updates...
 msg: Søger efter opdateringer...
 
 id: Checking installed version of %s
-# Missing translation
-msg: 
+msg: Tjekker installeret version af %s
 
 id: Current version:
 msg: Aktuel version:
@@ -373,8 +369,7 @@ id: Downloading %s
 msg: Downloader %s
 
 id: Installing %s
-# Missing translation
-msg: 
+msg: Installerer %s
 
 id: New version %s is available for download
 msg: Ny version %s er klar til download
@@ -383,8 +378,7 @@ id: No upgrade available
 msg: Ingen opdatering tilgængelig
 
 id: Patching %s
-# Missing translation
-msg: 
+msg: Patching %s
 
 id: Restarting Showtime in %d seconds...
 msg: Genstarter Showtime om %d sekunder...
@@ -510,8 +504,7 @@ msg: Systemet mangler hukommelse (%d Kb RAM tilgængelig)
 # ./src/arch/ps3/ps3_vdec.c
 #
 id: Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration
-# Missing translation
-msg: 
+msg: Cell-h264: %d Ref-billeder for %d indhold er ikke kompatibel med PS3 HW dekoder. Deaktiverer acceleration
 
 id: Cell-h264: Broken headers, Disabling acceleration
 msg: Cell-h264: Ødelagt overskrifter, deaktiverer acceleration
@@ -631,31 +624,25 @@ msg: Lagrede torrents bruger %d MB ud af tilladte %d MB. Total ledig plads på d
 # ./src/backend/bittorrent/fa_torrent.c
 #
 id: Connected peers
-# Missing translation
-msg: 
+msg: Forbundet peers
 
 id: Known peers
-# Missing translation
-msg: 
+msg: Kendte peers
 
 id: Receiving from
-# Missing translation
-msg: 
+msg: Modtager fra
 
 id: Torrent leechers
-# Missing translation
-msg: 
+msg: Torrent leechers
 
 id: Torrent seeders
-# Missing translation
-msg: 
+msg: Torrent seeders
 
 #
 # ./src/backend/bittorrent/torrent_settings.c
 #
 id: Clear cache
-# Missing translation
-msg: 
+msg: Tøm cache
 
 id: Enable bittorrent
 msg: Aktivere bittorrent
@@ -665,7 +652,7 @@ msg: Maks. forbrug af ledig plads til lagrede torrents
 
 id: Status
 msg: Status
-
+ 
 id: Torrent cache path
 msg: Torrent lagrede sti
 
@@ -853,8 +840,7 @@ id: BitTorrent
 msg: BitTorrent
 
 id: Browse archives as folders
-# Missing translation
-msg: 
+msg: Gennemse arkiver som mapper
 
 id: Enable file deletion from item menu
 msg: Aktivere sletning af filer fra liste menu
@@ -956,8 +942,7 @@ id: Go to standby after video ends
 msg: Gå i standby efter slut af video
 
 id: Horizontal pan
-# Missing translation
-msg: 
+msg: Vandret pan
 
 id: Reset defaults for folder '%s'
 msg: Nulstil standarder for mappe '%s'
@@ -987,8 +972,7 @@ id: Subtitle vertical displacement
 msg: Vertikal visning af undertekster
 
 id: Vertical pan
-# Missing translation
-msg: 
+msg: Lodret pan
 
 id: Video frame interpolation
 msg: Video billede interpolation
@@ -1057,8 +1041,7 @@ id: Clear all metadata
 msg: Fjern alle metadata
 
 id: Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?
-# Missing translation
-msg: 
+msg: At fjerne alle metadata betyder at du mister <b>alle</b> metadata cached fra eksterne kilder så som themoviedb.org, osv.\n\nOplysninger om resumé-punkter, spilletider, osv. bliver gemt.\nEr du sikker på at fortsætte?
 
 #
 # ./src/metadata/mlp.c
@@ -1484,12 +1467,10 @@ msg: Brugergrænseflade
 # ./src/ui/glw/glw_ps3.c
 #
 id: Seek using L2 and R2 button
-# Missing translation
-msg: 
+msg: Søg ved at bruge L2 og R2 knap
 
 id: Yes with Select button
-# Missing translation
-msg: 
+msg: Ja med Select knap
 
 #
 # ./src/ui/glw/glw_settings.c
@@ -1504,8 +1485,7 @@ id: Screensaver delay
 msg: Pauseskærm forsinkelse
 
 id: Vertical underscan
-# Missing translation
-msg: 
+msg: Lodret underscanning
 
 id: Wrap when reaching beginning/end of lists
 msg: Wrap når starten/slutningen af listen nåes
@@ -1595,12 +1575,10 @@ id: Resume video playback
 msg: Fortsæt video afspilning
 
 id: Step when seeking backward
-# Missing translation
-msg: 
+msg: Trin ved søgning tilbage
 
 id: Step when seeking forward
-# Missing translation
-msg: 
+msg: Trin ved søgning fremad
 
 id: Temporal
 msg: Midlertidig
@@ -1616,4 +1594,3 @@ msg: Videoacceleration og skærmpræsentation
 
 id: Video playback
 msg: Videoafspilning
-
