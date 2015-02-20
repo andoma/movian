@@ -21,13 +21,14 @@ widget(backdrop, {
 		  "archive",   "Archive",
 		  "artist",    "User",
 		  "directory", "Folder",
+		  "share",     "Share",
 		  "dvd",       "Disc",
 		  "playlist",  "List",
 		  "video",     "Movie",
 		  "album",     "Disc",
 		  "load",      "Load",
 		  "font",      "Font",
-		  "server",   "Computer",
+		  "server",    "Computer",
 		  "image",     "Pictures"
 		 ) + ".svg";
 	.shadow = true;

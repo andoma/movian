@@ -169,7 +169,8 @@ make_prop(fa_dir_entry_t *fde)
   } else {
 
     rstr_t *title;
-    if(fde->fde_type == CONTENT_DIR) {
+    if(fde->fde_type == CONTENT_DIR ||
+       fde->fde_type == CONTENT_SHARE) {
       title = rstr_dup(fde->fde_filename);
     } else {
       title = metadata_remove_postfix_rstr(fde->fde_filename);
@@ -268,6 +269,9 @@ type_from_filename(const char *filename)
 static void
 deep_probe(fa_dir_entry_t *fde, scanner_t *s)
 {
+  if(fde->fde_type == CONTENT_SHARE)
+    return;
+
   fde->fde_probestatus = FDE_PROBED_CONTENTS;
 
   SCAN_TRACE("Deep probing %s -- content_type:%s",
@@ -296,9 +300,9 @@ deep_probe(fa_dir_entry_t *fde, scanner_t *s)
 
     if(fde->fde_md == NULL) {
 
-      if(fde->fde_type == CONTENT_DIR)
+      if(fde->fde_type == CONTENT_DIR) {
         fde->fde_md = fa_probe_dir(rstr_get(fde->fde_url));
-      else {
+      } else {
 	fde->fde_md = fa_probe_metadata(rstr_get(fde->fde_url), NULL, 0,
 					rstr_get(fde->fde_filename), NULL);
         is = INDEX_STATUS_FILE_ANALYZED;
@@ -561,7 +565,17 @@ rescan(scanner_t *s)
 
     b = fa_dir_find(fd, a->fde_url);
     if(b != NULL) {
+
       // Exists in old and new set
+
+      if(b->fde_type == CONTENT_SHARE) {
+        a->fde_type = b->fde_type;
+        fa_dir_entry_free(fd, b);
+        if(a->fde_prop != NULL)
+          set_type(a->fde_prop, a->fde_type);
+        continue;
+      }
+
 
       if(!fa_dir_entry_stat(b) && 
 	 a->fde_stat.fs_mtime != b->fde_stat.fs_mtime) {

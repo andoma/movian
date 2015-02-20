@@ -1277,6 +1277,7 @@ metadb_metadata_write(void *db, const char *url, time_t mtime,
   case CONTENT_IMAGE:
   case CONTENT_DIR:
   case CONTENT_DVD:
+  case CONTENT_SHARE:
     break;
   default:
     return;
@@ -2151,6 +2152,7 @@ metadata_get(void *db, int item_id, int contenttype, get_cache_t *gc)
     break;
 
   case CONTENT_DIR:
+  case CONTENT_SHARE:
   case CONTENT_DVD:
     r = 0;
     break;

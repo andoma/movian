@@ -361,7 +361,7 @@ fs_sub_scan_dir(sub_scanner_t *ss, const char *url, const char *video,
     if(ss->ss_stop)
       break;
 
-    if(fde->fde_type == CONTENT_DIR) {
+    if(fde->fde_type == CONTENT_DIR || fde->fde_type == CONTENT_SHARE) {
       if(descend_filter == NULL ||
 	 !strcasecmp(rstr_get(fde->fde_filename), descend_filter)) {
 	fs_sub_scan_dir(ss, rstr_get(fde->fde_url), video, descend_filter,

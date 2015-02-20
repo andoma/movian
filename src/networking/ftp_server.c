@@ -378,7 +378,7 @@ cmd_CWD(ftp_connection_t *fc, char *args)
   struct fa_stat fs;
   int err = ftp_server_stat(newpath, &fs, errbuf, sizeof(errbuf));
 
-  if(!err && fs.fs_type != CONTENT_DIR) {
+  if(!err && !content_dirish(fs.fs_type)) {
     snprintf(errbuf, sizeof(errbuf), "Not a directory");
     err = 1;
   }
@@ -541,7 +541,7 @@ cmd_LIST(ftp_connection_t *fc, char *args)
 
     tcp_printf(tc,
                "%crwx------  1 nobody nobody %10"PRIu64" May  5 11:20 %s\r\n",
-               fde->fde_type == CONTENT_DIR ? 'd' : '-',
+               content_dirish(fde->fde_type) ? 'd' : '-',
                fde->fde_stat.fs_size,
                rstr_get(fde->fde_filename));
   }

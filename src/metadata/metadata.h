@@ -69,9 +69,15 @@ typedef enum {
   CONTENT_ALBUM       = 9,
   CONTENT_PLUGIN      = 10,
   CONTENT_FONT        = 11,
+  CONTENT_SHARE       = 12,
   CONTENT_num
 } contenttype_t;
 
+
+static inline int content_dirish(contenttype_t ct)
+{
+  return ct == CONTENT_DIR || ct == CONTENT_SHARE || ct == CONTENT_ARCHIVE;
+}
 
 /**
  * Metadata types.

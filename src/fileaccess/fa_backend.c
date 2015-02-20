@@ -103,6 +103,7 @@ file_open_dir(prop_t *page, const char *url, time_t mtime,
     break;
     
   case CONTENT_DIR:
+  case CONTENT_SHARE:
   case CONTENT_ARCHIVE:
     file_open_browse(page, url, mtime, model);
     break;
@@ -260,6 +261,9 @@ be_file_open(prop_t *page, const char *url, int sync)
   } else if(fs.fs_type == CONTENT_DIR) {
     usage_inc_counter("fa_open_dir", 1);
     file_open_dir(page, url, fs.fs_mtime, model);
+  } else if(fs.fs_type == CONTENT_SHARE) {
+    usage_inc_counter("fa_open_share", 1);
+    file_open_browse(page, url, fs.fs_mtime, model);
   } else {
     usage_inc_counter("fa_open_file", 1);
     file_open_file(page, url, &fs, model, loading, io, loading_status);
