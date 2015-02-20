@@ -1593,8 +1593,17 @@ glw_event_to_widget(glw_t *w, event_t *e)
 int
 glw_event(glw_root_t *gr, event_t *e)
 {
-  glw_t *w = gr->gr_universe;
-  return glw_event_to_widget(w, e);
+  if(gr->gr_current_focus != NULL) {
+    if(event_is_action(e, ACTION_FOCUS_NEXT)) {
+      glw_focus_crawl(gr->gr_current_focus, 1, 1);
+      return 1;
+    }
+    if(event_is_action(e, ACTION_FOCUS_PREV)) {
+      glw_focus_crawl(gr->gr_current_focus, 0, 1);
+      return 1;
+    }
+  }
+  return glw_event_to_widget(gr->gr_universe, e);
 }
 
 
