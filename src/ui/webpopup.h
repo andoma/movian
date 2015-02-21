@@ -51,3 +51,6 @@ void webpopup_result_free(webpopup_result_t *wr);
 
 void webpopup_finalize_result(webpopup_result_t *wr);
 
+void webbrowser_open(const char *url, const char *title);
+
+void webbrowser_close(void);

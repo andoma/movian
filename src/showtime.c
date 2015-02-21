@@ -667,26 +667,16 @@ shutdown_eject(void *aux)
   return NULL;
 }
 
-
 /**
  *
  */
-void
-app_shutdown(int retcode)
+static void *
+do_shutdown(void *aux)
 {
-  TRACE(TRACE_DEBUG, "core", "Shutdown requested, returncode = %d", retcode);
-
-  if(gconf.exit_code != 1) {
-    // Force exit
-    gconf.exit_code = retcode;
-    arch_exit();
-  }
-
-  hts_thread_create_detached("eject", shutdown_eject, NULL, THREAD_PRIO_BGTASK);
+  shutdown_hook_run(2);
 
   event_dispatch(event_create_action(ACTION_STOP));
   prop_destroy_by_name(prop_get_global(), "popups");
-  gconf.exit_code = retcode;
 
   app_flush_caches();
 
@@ -707,6 +697,28 @@ app_shutdown(int retcode)
     // function may be called from UI thread)
     shutdown_hook_run(1);
   }
+  return NULL;
+}
+
+/**
+ *
+ */
+void
+app_shutdown(int retcode)
+{
+  TRACE(TRACE_DEBUG, "core", "Shutdown requested, returncode = %d", retcode);
+
+  if(gconf.exit_code != 1) {
+    // Force exit
+    gconf.exit_code = retcode;
+    arch_exit();
+  }
+
+  gconf.exit_code = retcode;
+
+  hts_thread_create_detached("eject", shutdown_eject, NULL, THREAD_PRIO_BGTASK);
+  hts_thread_create_detached("shutdown", do_shutdown, NULL, THREAD_PRIO_BGTASK);
+
 }
 
 

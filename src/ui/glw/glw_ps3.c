@@ -63,6 +63,8 @@ typedef struct glw_ps3 {
 
   glw_root_t gr;
 
+  float gp_browser_alpha;
+
   int gp_stop;
   int gp_seekmode;
 
@@ -465,6 +467,8 @@ setupRenderTarget(glw_ps3_t *gp, u32 currentBuffer)
 static void 
 drawFrame(glw_ps3_t *gp, int buffer, int with_universe)
 {
+  extern int browser_visible;
+
   gcmContextData *ctx = gp->gr.gr_be.be_ctx;
 
   realityViewportTranslate(ctx,
@@ -522,7 +526,11 @@ drawFrame(glw_ps3_t *gp, int buffer, int with_universe)
   glw_rctx_t rc;
   int zmax = 0;
   glw_rctx_init(&rc, gp->gr.gr_width * gp->scale, gp->gr.gr_height, 1, &zmax);
-  rc.rc_alpha = 1 - gp->gp_stop * 0.1;
+
+  glw_lp(&gp->gp_browser_alpha, &gp->gr, browser_visible, 0.1);
+
+  rc.rc_alpha = 1 - gp->gp_stop * 0.1 - gp->gp_browser_alpha * 0.8;
+
   glw_layout0(gp->gr.gr_universe, &rc);
   glw_render0(gp->gr.gr_universe, &rc);
   glw_unlock(&gp->gr);
