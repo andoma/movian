@@ -173,10 +173,6 @@ main(int argc, char **argv)
 		 PROP_TAG_COURIER, glibcourier, 
 		 NULL);
 
-#if ENABLE_WEBPOPUP
-  linux_webpopup_init();
-#endif
-
   add_xdg_paths();
 
   mainloop();

@@ -43,9 +43,10 @@ typedef struct webpopup {
   hts_cond_t wp_cond;
 
   GtkWidget *wp_win;
-  //  GtkWidget *wp_scrolled_win;
+  GtkWidget *wp_scrolled_win;
   GtkWidget *wp_webview;
-
+  int wp_scrolled;
+  int wp_no_result;
 } webpopup_t;
 
 
@@ -141,38 +142,49 @@ linux_webpopup_check(void)
     wp->wp_webview = webkit_web_view_new();
 
 
-#if 0
-    wp->wp_scrolled_win = gtk_scrolled_window_new(NULL, NULL);
-    gtk_container_add(GTK_CONTAINER(wp->wp_scrolled_win), wp->wp_webview);
-    gtk_container_add(GTK_CONTAINER(wp->wp_win), wp->wp_scrolled_win);
-#else
-    WebKitWebSettings *s =
-      webkit_web_view_get_settings(WEBKIT_WEB_VIEW(wp->wp_webview));
-    g_object_set(G_OBJECT(s), "auto-resize-window", 1, NULL);
-    gtk_container_add(GTK_CONTAINER(wp->wp_win), wp->wp_webview);
-#endif
-    g_signal_connect(G_OBJECT(wp->wp_webview),
-		     "navigation-policy-decision-requested",
-		     G_CALLBACK(navigation_policy_decision_requested), wp);
+    if(wp->wp_scrolled) {
+      wp->wp_scrolled_win = gtk_scrolled_window_new(NULL, NULL);
+      gtk_container_add(GTK_CONTAINER(wp->wp_scrolled_win), wp->wp_webview);
+      gtk_container_add(GTK_CONTAINER(wp->wp_win), wp->wp_scrolled_win);
+    } else {
+      WebKitWebSettings *s =
+        webkit_web_view_get_settings(WEBKIT_WEB_VIEW(wp->wp_webview));
+      g_object_set(G_OBJECT(s), "auto-resize-window", 1, NULL);
+      gtk_container_add(GTK_CONTAINER(wp->wp_win), wp->wp_webview);
+    }
 
-    g_signal_connect(G_OBJECT(wp->wp_webview),
-		     "load-error",
-		     G_CALLBACK(load_error), wp);
+    if(!wp->wp_no_result) {
+      g_signal_connect(G_OBJECT(wp->wp_webview),
+                       "navigation-policy-decision-requested",
+                       G_CALLBACK(navigation_policy_decision_requested), wp);
+
+      g_signal_connect(G_OBJECT(wp->wp_webview),
+                       "load-error",
+                       G_CALLBACK(load_error), wp);
+    }
 
     g_signal_connect(G_OBJECT(wp->wp_win), "delete_event",
 		     G_CALLBACK(closed_window), wp);
 
     webkit_web_view_load_uri(WEBKIT_WEB_VIEW(wp->wp_webview), wp->wp_url);
 
-    //gtk_window_set_default_size(GTK_WINDOW(wp->wp_win), 1200, 800);
+    if(wp->wp_scrolled)
+      gtk_window_set_default_size(GTK_WINDOW(wp->wp_win), 1200, 800);
 
     gtk_widget_show_all(wp->wp_win);
   }
 
   while((wp = LIST_FIRST(&pending_close)) != NULL) {
     LIST_REMOVE(wp, wp_link);
-    hts_cond_signal(&wp->wp_cond);
     gtk_widget_destroy(wp->wp_win);
+
+    if(wp->wp_no_result) {
+      free(wp->wp_url);
+      free(wp->wp_title);
+      free(wp);
+    } else {
+      hts_cond_signal(&wp->wp_cond);
+    }
   }
 }
 
@@ -214,6 +226,19 @@ webpopup_create(const char *url, const char *title, const char *trap)
  *
  */
 void
-linux_webpopup_init(void)
+webbrowser_open(const char *url, const char *title)
 {
+  webpopup_t *wp = calloc(1, sizeof(webpopup_t));
+  wp->wp_url   = strdup(url);
+  wp->wp_title = strdup(title);
+  wp->wp_no_result = 1;
+  wp->wp_wr.wr_resultcode = -1;
+  wp->wp_scrolled = 1;
+  hts_mutex_lock(&gdk_mutex);
+  LIST_INSERT_HEAD(&pending_open, wp, wp_link);
+  g_main_context_wakeup(g_main_context_default());
+
+  gdk_threads_leave();
 }
+
+

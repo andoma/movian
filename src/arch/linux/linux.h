@@ -24,8 +24,6 @@ void linux_trap_init(void);
 
 void linux_check_capabilities(void);
 
-void linux_webpopup_init(void);
-
 void linux_webpopup_check(void);
 
 void linux_init_monitors(void);
