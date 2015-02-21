@@ -27,6 +27,13 @@
 #include "event.h"
 #include "keyring.h"
 #include "htsmsg/htsmsg_store.h"
+#include "fileaccess/fileaccess.h"
+#include "htsmsg/htsmsg_json.h"
+
+#if ENABLE_WEBPOPUP
+#include "ui/webpopup.h"
+#endif
+
 
 static prop_t *notify_prop_entries;
 static hts_mutex_t news_mutex;
@@ -313,9 +320,10 @@ text_dialog(const char *message, char **answer, int flags)
 static void
 dismis_news(const char *id)
 {
-  TRACE(TRACE_DEBUG, "news", "Dismissed news: %s", id);
   htsmsg_add_u32(dismissed_news_out, id, 1);
   htsmsg_store_save(dismissed_news_out, "dismissed_news");
+  prop_t *root = prop_create(prop_get_global(), "news");
+  prop_destroy_by_name(root, id);
 }
 
 
@@ -353,36 +361,35 @@ news_sink(void *opaque, prop_event_t event, ...)
   default:
     break;
   }
-  va_end(ap);  
-
+  va_end(ap);
 }
+
 
 
 /**
  *
  */
-prop_t *
-add_news(const char *id, const char *message,
-	 const char *location, const char *caption)
+static prop_t *
+add_news_locked(const char *id, const char *message,
+                const char *location, const char *caption,
+                const char *action)
 {
   prop_t *p, *ret = NULL;
-
   prop_t *root = prop_create(prop_get_global(), "news");
-
-  hts_mutex_lock(&news_mutex);
 
   if(dismissed_news_out != NULL) {
 
     if(htsmsg_get_u32_or_default(dismissed_news_in, id, 0)) {
       dismis_news(id);
     } else {
-      
-      p = prop_create_root(NULL);
-      prop_set_string(prop_create(p, "message"), message);
-      prop_set_string(prop_create(p, "id"), id);
-      prop_set_string(prop_create(p, "location"), location);
-      prop_set_string(prop_create(p, "caption"), caption);
-		       
+
+      p = prop_create_root(id);
+      prop_set(p, "message",  PROP_SET_STRING, message);
+      prop_set(p, "id",       PROP_SET_STRING, id);
+      prop_set(p, "location", PROP_SET_STRING, location);
+      prop_set(p, "caption",  PROP_SET_STRING, caption);
+      prop_set(p, "action",   PROP_SET_STRING, action);
+
       prop_subscribe(PROP_SUB_TRACK_DESTROY,
 		     PROP_TAG_CALLBACK, news_sink, prop_ref_inc(p),
 		     PROP_TAG_ROOT, prop_create(p, "eventSink"),
@@ -393,6 +400,115 @@ add_news(const char *id, const char *message,
 	prop_destroy(p);
     }
   }
-  hts_mutex_unlock(&news_mutex);
   return ret;
+}
+
+
+/**
+ *
+ */
+prop_t *
+add_news(const char *id, const char *message,
+	 const char *location, const char *caption)
+{
+  hts_mutex_lock(&news_mutex);
+  prop_t *p = add_news_locked(id, message, location, caption, NULL);
+  hts_mutex_unlock(&news_mutex);
+  return p;
+}
+
+#if ENABLE_WEBPOPUP
+
+/**
+ *
+ */
+static void
+open_news(void *opaque, prop_event_t event, ...)
+{
+  prop_t *p = opaque;
+  event_t *e;
+  va_list ap;
+
+  va_start(ap, event);
+
+  switch(event) {
+  case PROP_DESTROYED:
+    prop_unsubscribe(va_arg(ap, prop_sub_t *));
+    prop_ref_dec(p);
+    break;
+
+  case PROP_EXT_EVENT:
+    e = va_arg(ap, event_t *);
+    if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
+      const event_payload_t *ep = (const event_payload_t *)e;
+      const char *id = mystrbegins(ep->payload, "sitenews:");
+      if(id != NULL) {
+
+	dismis_news(ep->payload);
+        char url[512];
+        snprintf(url, sizeof(url), "http://www2.movian.tv/news/%s", id);
+        TRACE(TRACE_DEBUG, "NEWS", "Opening %s", url);
+        webbrowser_open(url, APPNAMEUSER);
+      }
+    }
+    break;
+
+  default:
+    break;
+  }
+  va_end(ap);
+}
+#endif
+
+/**
+ *
+ */
+void
+load_site_news(void)
+{
+#if ENABLE_WEBPOPUP
+  buf_t *b;
+  b = fa_load("https://movian.tv/projects/showtime/news.json",
+              FA_LOAD_FLAGS(FA_DISABLE_AUTH),
+              NULL);
+  if(b == NULL)
+    return;
+
+  htsmsg_t *doc = htsmsg_json_deserialize(buf_cstr(b));
+  buf_release(b);
+  if(doc == NULL)
+    return;
+
+  hts_mutex_lock(&news_mutex);
+  htsmsg_t *news = htsmsg_get_list(doc, "news");
+  if(news != NULL) {
+    htsmsg_field_t *f;
+    HTSMSG_FOREACH(f, news) {
+      htsmsg_t *entry;
+      if((entry = htsmsg_get_map_by_field(f)) == NULL)
+        continue;
+
+      const char *title;
+      title = htsmsg_get_str(entry, "title");
+      int id = htsmsg_get_u32_or_default(entry, "id", 0);
+
+      if(id <= 55)
+        continue; // Old news is "so" exciting
+
+      char idstr[64];
+      snprintf(idstr, sizeof(idstr), "sitenews:%d", id);
+      prop_t *p = add_news_locked(idstr, title, NULL, "Read more", idstr);
+      if(p != NULL) {
+        prop_subscribe(PROP_SUB_TRACK_DESTROY,
+                       PROP_TAG_CALLBACK, open_news, p,
+                       PROP_TAG_ROOT, prop_create(p, "eventSink"),
+                       PROP_TAG_MUTEX, &news_mutex,
+                       NULL);
+      }
+    }
+  }
+
+  hts_mutex_unlock(&news_mutex);
+  htsmsg_release(doc);
+#endif
 }

@@ -216,6 +216,9 @@ swthread(void *aux)
 
     usage_report_send(1);
   }
+
+  load_site_news();
+
   hts_mutex_lock(&gconf.state_mutex);
   gconf.swrefresh = 0;
 
@@ -236,6 +239,7 @@ swthread(void *aux)
       plugins_upgrade_check();
     upgrade_refresh();
     usage_report_send(0);
+    load_site_news();
     hts_mutex_lock(&gconf.state_mutex);
   }
   hts_mutex_unlock(&gconf.state_mutex);

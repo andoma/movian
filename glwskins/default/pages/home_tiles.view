@@ -88,7 +88,9 @@ widget(container_y, {
     space(1);
 
     widget(backdrop, {
-      onEvent(activate, navOpen($self.location));
+      onEvent(activate, select(isVoid($self.location),
+                               deliverEvent($self.eventSink, $self.action),
+                               navOpen($self.location)));
       focusable: 0.1;
       alpha: isFocused() + 0.5;
       source: "skin://graphics/border-tiny.png";
