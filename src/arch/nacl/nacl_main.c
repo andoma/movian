@@ -582,7 +582,7 @@ handle_char(nacl_glw_root_t *ngr, PP_Resource input_event)
     x[len] = 0;
     const char *X = x;
     uint32_t uc = utf8_get(&X);
-    if(uc && uc != 0xfffd)
+    if(uc > 31 && uc != 0xfffd)
       e = event_create_int(EVENT_UNICODE, uc);
 
   }
