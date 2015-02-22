@@ -119,7 +119,7 @@ send_report(void *aux)
 
   htsmsg_json_serialize(m, &hq, 0);
 
-  http_req("https://showtimemediacenter.com/showtime/status/v1/usage",
+  http_req("https://movian.tv/movian/status/v1/usage",
            HTTP_POSTDATA(&hq, "application/json"),
            NULL);
 
