@@ -693,11 +693,23 @@ asyncio_udp_bind(const char *name,
                  int port,
                  asyncio_udp_callback_t *cb,
                  void *opaque,
-                 int bind_any_on_fail)
+                 int bind_any_on_fail,
+                 int broadcast)
 {
   PP_Resource sock = ppb_udpsocket->Create(g_Instance);
   PP_Resource addr;
   struct PP_NetAddress_IPv4 ipv4_addr = {};
+
+  if(broadcast) {
+    int r = ppb_udpsocket->SetOption(sock, PP_UDPSOCKET_OPTION_BROADCAST,
+                                     PP_MakeBool(1), PP_BlockUntilComplete());
+    if(r)
+      TRACE(TRACE_ERROR, "ASYNCIO",
+            "Failed to put socket %s into broadcast modé -- %s",
+            name, pepper_errmsg(r));
+  }
+
+
 
   wr16_be((uint8_t *)&ipv4_addr.port, port);
   addr = ppb_netaddress->CreateFromIPv4Address(g_Instance, &ipv4_addr);
