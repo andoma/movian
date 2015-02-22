@@ -35,6 +35,8 @@ for opt do
   ;;
   --pepper=*) PEPPER="$optval"
   ;;
+  --host=*) HOST="$optval"
+  ;;
   *)
   common_opt $opt $optval
   esac
@@ -42,9 +44,22 @@ done
 
 if [ -z "${PEPPER}" ]; then
     echo " --pepper=PATH   argument missing"
+    exit 1
 fi
 
-TOOLCHAIN=${PEPPER}/toolchain/mac_pnacl/bin/pnacl-
+KNAME=`uname -s`
+
+if [ "$KNAME" == "Linux" ]; then
+    HOSTENV=linux
+elif [ "$KNAME" == "Darwin" ]; then
+    HOSTENV=mac
+else
+    echo "NACL cross compile not supported on this platform"
+    exit 1
+fi
+
+
+TOOLCHAIN=${PEPPER}/toolchain/${HOSTENV}_pnacl/bin/pnacl-
 
 CC=${TOOLCHAIN}clang
 FINALIZE=${TOOLCHAIN}finalize
