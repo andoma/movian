@@ -47,7 +47,9 @@ typedef struct webpopup {
   hts_cond_t wp_cond;
   int wp_rc;
   WebWin *wp_ww;
+  int wp_no_result;
 } webpopup_t;
+
 
 
 static hts_mutex_t webpopup_mtx;
@@ -73,7 +75,7 @@ static webpopup_t *wp_current;
   if([sender mainFrame] == frame) {
     const char *url = [[[[[frame provisionalDataSource] request] URL] absoluteString] UTF8String];
     webpopup_t *wp = _webpopup;
-    if(wp != NULL && mystrbegins(url, wp->wp_trap)) {
+    if(wp != NULL && wp->wp_trap != NULL && mystrbegins(url, wp->wp_trap)) {
       mystrset(&wp->wp_wr.wr_trapped.url, url);
       [self shutdown:WEBPOPUP_TRAPPED_URL];
     }
@@ -104,7 +106,7 @@ static webpopup_t *wp_current;
   }
 
   webpopup_t *wp = _webpopup;
-  if(wp != NULL && mystrbegins(url, wp->wp_trap)) {
+  if(wp != NULL && wp->wp_trap != NULL && mystrbegins(url, wp->wp_trap)) {
     mystrset(&wp->wp_wr.wr_trapped.url, url);
     [self shutdown:WEBPOPUP_TRAPPED_URL];
   }
@@ -249,10 +251,18 @@ webpopup_perform(void *aux)
     [wp->wp_ww release];
     wp_current->wp_ww = NULL;
 
-    hts_mutex_lock(&webpopup_mtx);
-    wp->wp_wr.wr_resultcode = wp->wp_rc;
-    hts_cond_signal(&wp->wp_cond);
-    hts_mutex_unlock(&webpopup_mtx);
+    if(wp->wp_no_result == 0) {
+      hts_mutex_lock(&webpopup_mtx);
+      wp->wp_wr.wr_resultcode = wp->wp_rc;
+      hts_cond_signal(&wp->wp_cond);
+      hts_mutex_unlock(&webpopup_mtx);
+    } else {
+      free(wp->wp_title);
+      free(wp->wp_url);
+      free(wp);
+
+
+    }
     wp_current = NULL;
   }
 
@@ -293,6 +303,27 @@ webpopup_create(const char *url, const char *title, const char *trap)
   free(wp->wp_trap);
 
   return wr;
+}
+
+
+/**
+ *
+ */
+void
+webbrowser_open(const char *url, const char *title)
+{
+  webpopup_t *wp = calloc(1, sizeof(webpopup_t));
+  wp->wp_wr.wr_resultcode = -1;
+  wp->wp_url   = strdup(url);
+  wp->wp_title = strdup(title);
+  wp->wp_no_result = 1;
+
+  hts_mutex_lock(&webpopup_mtx);
+  TAILQ_INSERT_TAIL(&webpopup_pending, wp, wp_link);
+  CFRunLoopSourceSignal(webpopup_source);
+  CFRunLoopWakeUp(CFRunLoopGetMain());
+
+  hts_mutex_unlock(&webpopup_mtx);
 }
 
 
