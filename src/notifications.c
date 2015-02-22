@@ -29,6 +29,7 @@
 #include "htsmsg/htsmsg_store.h"
 #include "fileaccess/fileaccess.h"
 #include "htsmsg/htsmsg_json.h"
+#include "misc/time.h"
 
 #if ENABLE_WEBPOPUP
 #include "ui/webpopup.h"
@@ -458,7 +459,29 @@ open_news(void *opaque, prop_event_t event, ...)
   }
   va_end(ap);
 }
+
+/**
+ *
+ */
+static int
+parse_created_on_time(time_t *tp, const char *d)
+{
+  int year;
+  int month;
+  int day;
+  int hour;
+  int min;
+  int sec;
+
+  if(sscanf(d, "%d-%d-%dT%d:%d:%dZ",
+	    &year, &month, &day, &hour, &min, &sec) != 6)
+    return -1;
+
+  return mktime_utc(tp, year, month-1, day, hour, min, sec);
+}
+
 #endif
+
 
 /**
  *
@@ -467,19 +490,53 @@ void
 load_site_news(void)
 {
 #if ENABLE_WEBPOPUP
+  struct http_header_list response_headers;
   buf_t *b;
   b = fa_load("https://movian.tv/projects/showtime/news.json",
               FA_LOAD_FLAGS(FA_DISABLE_AUTH),
+              FA_LOAD_RESPONSE_HEADERS(&response_headers),
               NULL);
   if(b == NULL)
     return;
 
+  const char *dateheader = http_header_get(&response_headers, "date");
+  if(dateheader == NULL) {
+    buf_release(b);
+    http_headers_free(&response_headers);
+    return;
+  }
+  dateheader = mystrdupa(dateheader);
+  http_headers_free(&response_headers);
+
+
+  htsmsg_t *newsinfo = htsmsg_store_load("sitenews");
+  time_t no_news_before;
+
+  if(newsinfo == NULL)
+    newsinfo = htsmsg_create_map();
+
+  no_news_before = htsmsg_get_u32_or_default(newsinfo, "nothingbefore", 0);
+
+  if(no_news_before == 0) {
+    if(http_ctime(&no_news_before, dateheader)) {
+      buf_release(b);
+      htsmsg_release(newsinfo);
+      return;
+    }
+
+    htsmsg_add_u32(newsinfo, "nothingbefore", no_news_before);
+    htsmsg_store_save(newsinfo, "sitenews");
+    htsmsg_release(newsinfo);
+  }
+
   htsmsg_t *doc = htsmsg_json_deserialize(buf_cstr(b));
   buf_release(b);
-  if(doc == NULL)
+  if(doc == NULL) {
     return;
+  }
 
   hts_mutex_lock(&news_mutex);
+
   htsmsg_t *news = htsmsg_get_list(doc, "news");
   if(news != NULL) {
     htsmsg_field_t *f;
@@ -488,12 +545,19 @@ load_site_news(void)
       if((entry = htsmsg_get_map_by_field(f)) == NULL)
         continue;
 
-      const char *title;
-      title = htsmsg_get_str(entry, "title");
+      const char *title = htsmsg_get_str(entry, "title");
+      const char *created_on = htsmsg_get_str(entry, "created_on");
       int id = htsmsg_get_u32_or_default(entry, "id", 0);
+      if(created_on == NULL || title == NULL || id == 0)
+        continue;
 
-      if(id <= 55)
-        continue; // Old news is "so" exciting
+      time_t t;
+
+      if(parse_created_on_time(&t, created_on))
+        continue;
+
+      if(t < no_news_before)
+        continue;
 
       char idstr[64];
       snprintf(idstr, sizeof(idstr), "sitenews:%d", id);
