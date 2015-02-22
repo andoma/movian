@@ -1,7 +1,7 @@
 
 build()
 {
-    TOOLCHAIN_URL=https://github.com/andoma/ps3toolchain/tarball/8cfff90a828ef447d39f3c34252ad0a70afc0d9a
+    TOOLCHAIN_URL=https://github.com/andoma/ps3toolchain/tarball/a1b052fac457155b3eaf3c8eb6015d52c60c24e6
     TOOLCHAIN_HASH=`echo ${TOOLCHAIN_URL} | sha1sum  | awk '{print $1}'`
     TOOLCHAIN="${WORKINGDIR}/${TOOLCHAIN_HASH}"
     
