@@ -922,12 +922,7 @@ asyncio_courier_notify(void *opaque)
 static void *
 asyncio_thread(void *aux)
 {
-  asyncio_msgloop = ppb_messageloop->GetCurrent();
-
-  asyncio_courier = prop_courier_create_notify(asyncio_courier_notify, NULL);
-
-  init_group(INIT_GROUP_ASYNCIO);
-  asyncio_periodic(NULL, 0);
+  ppb_messageloop->AttachToCurrentThread(asyncio_msgloop);
   ppb_messageloop->Run(asyncio_msgloop);
   return NULL;
 }
@@ -937,8 +932,34 @@ asyncio_thread(void *aux)
  *
  */
 void
-asyncio_init(void)
+asyncio_init_early(void)
 {
-  hts_thread_create_detached("asyncio", asyncio_thread,
-                             NULL, THREAD_PRIO_MODEL);
+  pthread_t p;
+  asyncio_msgloop = ppb_messageloop->Create(g_Instance);
+  pthread_create(&p, NULL, asyncio_thread, NULL);
+}
+
+
+/**
+ *
+ */
+static void
+asyncio_start_on_thread(void *aux, int val)
+{
+  asyncio_courier = prop_courier_create_notify(asyncio_courier_notify, NULL);
+
+  init_group(INIT_GROUP_ASYNCIO);
+  asyncio_periodic(NULL, 0);
+}
+
+
+/**
+ *
+ */
+void
+asyncio_start(void)
+{
+  ppb_messageloop->PostWork(asyncio_msgloop,
+                            (const struct PP_CompletionCallback) {
+                              asyncio_start_on_thread, NULL}, 0);
 }
