@@ -1,6 +1,12 @@
 var stelem;
 var droppedfile;
 
+var loadtimeout = setTimeout(function() {
+   document.getElementById('loader').style.display='block';
+
+}, 1000);
+
+
 function handleDrop(e) {
   e.stopPropagation();
   e.preventDefault();
@@ -73,16 +79,16 @@ function handleMessage(e) {
 
   case 'running':
     document.getElementById("loader").parentNode.removeChild(loader);
+    clearTimeout(loadtimeout);
     break;
   }
 }
 
 
-function launchShowtime() {
+function launch() {
+  document.getElementById('appcontainer').innerHTML = '<embed id="app" src="app.nmf" type="application/x-pnacl"/>';
 
-  document.getElementById('showtimecontainer').innerHTML = '<embed id="showtime" src="showtime.nmf" type="application/x-pnacl"/>';
-
-  stelem = document.getElementById('showtime')
+  stelem = document.getElementById('app')
 
   stelem.addEventListener('dragover', handleDragOver, false);
   stelem.addEventListener('drop', handleDrop, false);
@@ -92,10 +98,10 @@ function launchShowtime() {
 
 navigator.webkitPersistentStorage.requestQuota(128*1024*1024, function(bytes) {
   console.log('Allocated '+bytes+' bytes of persistant storage.');
-  launchShowtime();
-  document.getElementById("showtime").focus();
+  launch();
+  document.getElementById("app").focus();
 }, function(e) {
-  alert('Failed to allocate disk space, Showtime will not start')
+  alert('Failed to allocate disk space, Movian will not start')
 });
 
 

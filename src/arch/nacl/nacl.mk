@@ -19,11 +19,11 @@ ${BUILDDIR}/stage/%: support/nacl/%
 	@mkdir -p $(dir $@)
 	cp $< $@
 
-${BUILDDIR}/stage/showtime.pexe: ${PROG}.pexe
+${BUILDDIR}/stage/app.pexe: ${PROG}.pexe
 	@mkdir -p $(dir $@)
 	cp $< $@
 
-${BUILDDIR}/stage/showtime.bundle: ${PROG}.bundle
+${BUILDDIR}/stage/app.bundle: ${PROG}.bundle
 	@mkdir -p $(dir $@)
 	cp $< $@
 
@@ -32,11 +32,11 @@ ${BUILDDIR}/stage/manifest.json: support/nacl/manifest.json
 	sed <$< >$@ -e "s/__VERSION__/$(shell git describe | sed -e 's/-g.*//' -e 's/-/./g')/"
 
 STAGEFILES = \
-	${BUILDDIR}/stage/showtime.pexe \
+	${BUILDDIR}/stage/app.pexe \
 	${BUILDDIR}/stage/index.html \
-	${BUILDDIR}/stage/showtime.css \
-	${BUILDDIR}/stage/showtime.js \
-	${BUILDDIR}/stage/showtime.nmf \
+	${BUILDDIR}/stage/app.css \
+	${BUILDDIR}/stage/app.js \
+	${BUILDDIR}/stage/app.nmf \
 	${BUILDDIR}/stage/manifest.json \
 	${BUILDDIR}/stage/background.js \
 	${BUILDDIR}/stage/st128.png \
