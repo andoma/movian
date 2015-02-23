@@ -76,6 +76,7 @@ const PPB_Instance *ppb_instance;
 const PPB_Graphics3D *ppb_graphics3d;
 const PPB_InputEvent *ppb_inputevent;
 const PPB_KeyboardInputEvent *ppb_keyboardinputevent;
+const PPB_MouseInputEvent *ppb_mouseinputevent;
 const PPB_HostResolver *ppb_hostresolver;
 const PPB_NetAddress *ppb_netaddress;
 const PPB_TCPSocket *ppb_tcpsocket;
@@ -603,12 +604,82 @@ handle_char(nacl_glw_root_t *ngr, PP_Resource input_event)
  *
  */
 static PP_Bool
+handle_mouse_event(nacl_glw_root_t *ngr, PP_Resource mouse_event,
+                   PP_InputEvent_Type type)
+{
+  glw_pointer_event_t gpe = {0};
+
+  struct PP_Point pos = ppb_mouseinputevent->GetPosition(mouse_event);
+
+  gpe.x =  (2.0 * pos.x / ngr->gr.gr_width ) - 1;
+  gpe.y = -(2.0 * pos.y / ngr->gr.gr_height) + 1;
+
+  PP_InputEvent_MouseButton ppbtn =
+    ppb_mouseinputevent->GetButton(mouse_event);
+
+  switch(type) {
+  case PP_INPUTEVENT_TYPE_MOUSEDOWN:
+
+    switch(ppbtn) {
+    default:
+      return PP_FALSE;
+    case PP_INPUTEVENT_MOUSEBUTTON_LEFT:
+      gpe.type = GLW_POINTER_LEFT_PRESS;
+      break;
+    case PP_INPUTEVENT_MOUSEBUTTON_RIGHT:
+      gpe.type = GLW_POINTER_RIGHT_PRESS;
+      break;
+    }
+    break;
+
+  case PP_INPUTEVENT_TYPE_MOUSEUP:
+    switch(ppbtn) {
+    default:
+      return PP_FALSE;
+    case PP_INPUTEVENT_MOUSEBUTTON_LEFT:
+      gpe.type = GLW_POINTER_LEFT_RELEASE;
+      break;
+    case PP_INPUTEVENT_MOUSEBUTTON_RIGHT:
+      gpe.type = GLW_POINTER_RIGHT_RELEASE;
+      break;
+    }
+    break;
+  case PP_INPUTEVENT_TYPE_MOUSEMOVE:
+  case PP_INPUTEVENT_TYPE_MOUSEENTER:
+    gpe.type = GLW_POINTER_MOTION_UPDATE;
+    break;
+
+  case PP_INPUTEVENT_TYPE_MOUSELEAVE:
+    gpe.type = GLW_POINTER_GONE;
+    break;
+  default:
+    return PP_FALSE;
+  }
+
+  glw_lock(&ngr->gr);
+  glw_pointer_event(&ngr->gr, &gpe);
+  glw_unlock(&ngr->gr);
+  return PP_TRUE;
+}
+
+
+/**
+ *
+ */
+static PP_Bool
 Input_HandleInputEvent(PP_Instance instance, PP_Resource input_event)
 {
   PP_InputEvent_Type type = ppb_inputevent->GetType(input_event);
   nacl_glw_root_t *ngr = uiroot;
 
   switch(type) {
+  case PP_INPUTEVENT_TYPE_MOUSEDOWN:
+  case PP_INPUTEVENT_TYPE_MOUSEUP:
+  case PP_INPUTEVENT_TYPE_MOUSEMOVE:
+  case PP_INPUTEVENT_TYPE_MOUSELEAVE:
+  case PP_INPUTEVENT_TYPE_MOUSEENTER:
+    return handle_mouse_event(ngr, input_event, type);
+
   case PP_INPUTEVENT_TYPE_KEYDOWN:
     return handle_keydown(ngr, input_event);
   case PP_INPUTEVENT_TYPE_CHAR:
@@ -836,6 +907,7 @@ PPP_InitializeModule(PP_Module a_module_id, PPB_GetInterface get_browser)
   ppb_instance           = get_browser(PPB_INSTANCE_INTERFACE);
   ppb_inputevent         = get_browser(PPB_INPUT_EVENT_INTERFACE);
   ppb_keyboardinputevent = get_browser(PPB_KEYBOARD_INPUT_EVENT_INTERFACE);
+  ppb_mouseinputevent    = get_browser(PPB_MOUSE_INPUT_EVENT_INTERFACE);
   ppb_hostresolver       = get_browser(PPB_HOSTRESOLVER_INTERFACE);
   ppb_netaddress         = get_browser(PPB_NETADDRESS_INTERFACE);
   ppb_tcpsocket          = get_browser(PPB_TCPSOCKET_INTERFACE);
