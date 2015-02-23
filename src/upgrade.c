@@ -982,7 +982,7 @@ attempt_upgrade(int accept_patch)
 		  showtime_download_url,
 		  showtime_download_size,
 		  showtime_download_digest,
-		  "Showtime", 0, overwrite,
+		  APPNAMEUSER, 0, overwrite,
                   accept_patch ? fname : NULL))
     return 1;
 
