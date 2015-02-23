@@ -84,18 +84,28 @@ glw_renderer_triangle(glw_renderer_t *gr, int element,
 }
 
 
+static uint16_t quadvertices[6] = {
+  0, 1, 2,
+  0, 2, 3,
+};
+
 /**
  *
  */
 void
 glw_renderer_init_quad(glw_renderer_t *gr)
 {
-  static uint16_t quad[6] = {
-    0, 1, 2,
-    0, 2, 3,
-  };
+  glw_renderer_init(gr, 4, 2, quadvertices);
+}
 
-  glw_renderer_init(gr, 4, 2, quad);
+
+/**
+ *
+ */
+void
+glw_renderer_init_triangle(glw_renderer_t *gr)
+{
+  glw_renderer_init(gr, 3, 1, quadvertices);
 }
 
 

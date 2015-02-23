@@ -136,6 +136,8 @@ void glw_renderer_init(glw_renderer_t *gr, int vertices, int triangles,
 
 void glw_renderer_init_quad(glw_renderer_t *gr);
 
+void glw_renderer_init_triangle(glw_renderer_t *gr);
+
 void glw_renderer_triangle(glw_renderer_t *gr, int element, 
 			   uint16_t a, uint16_t b, uint16_t c);
 

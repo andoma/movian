@@ -273,3 +273,113 @@ static glw_class_t glw_throbber = {
 };
 
 GLW_REGISTER_CLASS(glw_throbber);
+
+
+
+
+
+typedef struct glw_throbber_tri {
+  glw_t w;
+
+  float angle;
+
+  glw_renderer_t renderer;
+  int o;
+} glw_throbber_tri_t;
+
+
+/**
+ *
+ */
+static void
+glw_throbber_tri_layout(glw_t *w, const glw_rctx_t *rc)
+{
+  glw_throbber_tri_t *gt = (glw_throbber_tri_t *)w;
+  if(w->glw_alpha < 0.01)
+    return;
+
+  glw_need_refresh(w->glw_root, 0);
+  gt->angle += 0.8;
+  gt->o++;
+}
+
+
+/**
+ *
+ */
+static void
+glw_throbber_tri_render(glw_t *w, const glw_rctx_t *rc)
+{
+  glw_throbber_tri_t *gt = (glw_throbber_tri_t *)w;
+  glw_rctx_t rc0, rc1;
+  glw_root_t *gr = w->glw_root;
+  float a0 = w->glw_alpha * rc->rc_alpha;
+
+  if(a0 < 0.01)
+    return;
+
+  if(!glw_renderer_initialized(&gt->renderer)) {
+    glw_renderer_init_triangle(&gt->renderer);
+
+    glw_renderer_vtx_pos(&gt->renderer, 0,  -0.866, -1, 0);
+    glw_renderer_vtx_col(&gt->renderer, 0,   0.20, 0.25, 0.81, 1);
+    glw_renderer_vtx_pos(&gt->renderer, 1,   0.886,  0, 0);
+    glw_renderer_vtx_col(&gt->renderer, 1,   0.19, 0.39, 0.90, 1);
+    glw_renderer_vtx_pos(&gt->renderer, 2,  -0.866,  1, 0);
+    glw_renderer_vtx_col(&gt->renderer, 2,   0.28, 0.58, 0.90, 1);
+  }
+
+  rc0 = *rc;
+  glw_scale_to_aspect(&rc0, 1.0);
+
+  glw_Rotatef(&rc0, gt->angle / 3, 0, 0, -1);
+
+  rc1 = rc0;
+  glw_Translatef(&rc1, -0.886/2, 0.5, 0);
+  glw_Scalef(&rc1, 0.5, 0.5, 1.0);
+  glw_Rotatef(&rc1, -gt->angle, 0, 0, -1);
+  glw_renderer_draw(&gt->renderer, gr, &rc1,
+                    NULL, NULL,
+                    NULL, NULL, a0, 0, NULL);
+
+
+  rc1 = rc0;
+  glw_Translatef(&rc1, -0.886/2, -0.5, 0);
+  glw_Scalef(&rc1, 0.5, 0.5, 1.0);
+  glw_Rotatef(&rc1, -gt->angle, 0, 0, -1);
+  glw_renderer_draw(&gt->renderer, gr, &rc1,
+                    NULL, NULL,
+                    NULL, NULL, a0, 0, NULL);
+
+  rc1 = rc0;
+  glw_Translatef(&rc1, 0.886/2, 0, 0);
+  glw_Scalef(&rc1, 0.5, 0.5, 1.0);
+  glw_Rotatef(&rc1, -gt->angle, 0, 0, -1);
+  glw_renderer_draw(&gt->renderer, gr, &rc1,
+                    NULL, NULL,
+                    NULL, NULL, a0, 0, NULL);
+}
+
+
+static void
+glw_throbber_tri_dtor(glw_t *w)
+{
+  glw_throbber_tri_t *gt = (glw_throbber_tri_t *)w;
+  glw_renderer_free(&gt->renderer);
+
+}
+
+
+
+/**
+ *
+ */
+static glw_class_t glw_throbber_tri = {
+  .gc_name = "throbbertri",
+  .gc_instance_size = sizeof(glw_throbber_tri_t),
+  .gc_render = glw_throbber_tri_render,
+  .gc_layout = glw_throbber_tri_layout,
+  .gc_dtor = glw_throbber_tri_dtor,
+};
+
+GLW_REGISTER_CLASS(glw_throbber_tri);
