@@ -4524,7 +4524,7 @@ enable_cb(int enabled)
 
     spotify_setting[0] =
       setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
-                     SETTING_TITLE(_p("Automatic login when Showtime starts")),
+                     SETTING_TITLE(_p("Automatic login on start")),
                      SETTING_VALUE(1),
                      SETTING_WRITE_BOOL(&spotify_autologin),
                      SETTING_HTSMSG("autologin", store, "spotify"),
