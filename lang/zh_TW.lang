@@ -24,7 +24,7 @@ id: Disable sleep timer
 # Missing translation
 msg: 
 
-id: Exit Showtime
+id: Exit %s
 # Missing translation
 msg: 
 
@@ -267,6 +267,10 @@ msg: 日期：
 #
 # ./glwskins/default/pages/iteminfo/plugin.view
 #
+id: %s %s or newer is required
+# Missing translation
+msg: 
+
 id: Author: 
 msg: 作者：
 
@@ -275,9 +279,6 @@ msg: 最新版本：
 
 id: Installed version: 
 msg: 安裝版本：
-
-id: Showtime %s or newer is required
-msg: 僅支援 Showtime %s 以上版本
 
 #
 # ./glwskins/default/pages/iteminfo/video.view
@@ -368,6 +369,10 @@ msg:
 #
 # ./glwskins/default/pages/upgrade.view
 #
+id: %s is up to date
+# Missing translation
+msg: 
+
 id: An error occured during download
 msg: 下載過程發生錯誤
 
@@ -411,14 +416,12 @@ id: Patching %s
 # Missing translation
 msg: 
 
-id: Restarting Showtime in %d seconds...
-msg: 將於 %s 秒後重新載入 Showtime
+id: Restarting %s in %d seconds...
+# Missing translation
+msg: 
 
 id: Retry...
 msg: 正在重試…
-
-id: Showtime is up to date
-msg: Showtime 已是最新版本
 
 id: Stable
 msg: 穩定版本
@@ -469,6 +472,17 @@ msg: 記住登入資訊
 
 id: Username
 msg: 使用者帳號
+
+#
+# ./glwskins/default/popups/resume.view
+#
+id: No, Start over
+# Missing translation
+msg: 
+
+id: Resume %s from %s
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/screensaver.view
@@ -573,6 +587,14 @@ msg: 無法查詢 Cell 解碼套件。錯誤 0x%x
 #
 # ./src/arch/rpi/rpi_audio.c
 #
+id: 8 Channel PCM
+# Missing translation
+msg: 
+
+id: AC3 Pass-Through
+# Missing translation
+msg: 
+
 id: Analog
 # Missing translation
 msg: 
@@ -581,14 +603,29 @@ id: Audio output port
 # Missing translation
 msg: 
 
+id: Autodetect
+# Missing translation
+msg: 
+
+id: DTS Pass-Through
+# Missing translation
+msg: 
+
 id: HDMI
+# Missing translation
+msg: 
+
+id: Off
+msg: 關閉
+
+id: On
 # Missing translation
 msg: 
 
 #
 # ./src/arch/rpi/rpi_cec.c
 #
-id: Configure how Showtime communicates with your TV
+id: Configure communications with your TV
 # Missing translation
 msg: 
 
@@ -746,6 +783,17 @@ id: DVD read error, restarting disc
 msg: DVD 讀取錯誤，嘗試重新讀取中
 
 #
+# ./src/backend/hls/hls.c
+#
+id: Primary
+# Missing translation
+msg: 
+
+id: Supplementary
+# Missing translation
+msg: 
+
+#
 # ./src/backend/htsp/htsp.c
 #
 id: Invalid HTSP URL
@@ -767,8 +815,9 @@ id: Albums
 # Missing translation
 msg: 
 
-id: Automatic login when Showtime starts
-msg: 啟動 Showtime 時自動登入
+id: Automatic login on start
+# Missing translation
+msg: 
 
 id: Collaborative
 msg: 協作列表
@@ -858,21 +907,6 @@ id: Search using Unix locatedb
 msg: 使用 Unix locatedb 進行搜尋
 
 #
-# ./src/fileaccess/fa_nativesmb.c
-#
-id: Access denied
-msg: 拒絕存取
-
-id: Account restricted
-msg: 受限制的帳號
-
-id: Bad network share name
-msg: 錯誤的分享名稱
-
-id: Logon failure
-msg: 登入失敗
-
-#
 # ./src/fileaccess/fa_scanner.c
 #
 id: Artists
@@ -897,9 +931,6 @@ msg: 檔案名稱
 id: Indexed mode
 # Missing translation
 msg: 
-
-id: Off
-msg: 關閉
 
 id: Show only supported files
 msg: 只顯示支援的檔案
@@ -962,6 +993,25 @@ msg[1]:
 id: %d files
 msg[0]: 
 msg[1]: 
+
+#
+# ./src/fileaccess/smb/fa_nativesmb.c
+#
+id: Access denied
+msg: 拒絕存取
+
+id: Account restricted
+msg: 受限制的帳號
+
+id: Bad network share name
+msg: 錯誤的分享名稱
+
+id: Logon failure
+msg: 登入失敗
+
+id: Object name not found
+# Missing translation
+msg: 
 
 #
 # ./src/i18n.c
@@ -1101,6 +1151,10 @@ msg:
 #
 id: Automatic
 msg: 自動
+
+id: Erase all playback info
+# Missing translation
+msg: 
 
 id: Manual
 # Missing translation
@@ -1295,7 +1349,7 @@ msg: 變更外掛程式來源伺服器
 id: Automatically upgrade plugins
 msg: 自動更新外掛程式
 
-id: Available apps
+id: Available plugins
 # Missing translation
 msg: 
 
@@ -1307,7 +1361,7 @@ id: Beta testing passwords
 # Missing translation
 msg: 
 
-id: Browse available apps
+id: Browse available plugins
 # Missing translation
 msg: 
 
@@ -1335,7 +1389,7 @@ id: Home page
 # Missing translation
 msg: 
 
-id: Installed apps
+id: Installed plugins
 # Missing translation
 msg: 
 
@@ -1444,6 +1498,10 @@ msg: 開啟 Shell 介面
 id: Power off system
 msg: 關閉主機
 
+id: Quit
+# Missing translation
+msg: 
+
 id: SSH server
 # Missing translation
 msg: 
@@ -1452,8 +1510,9 @@ id: Standby
 # Missing translation
 msg: 
 
-id: Starting and stopping Showtime
-msg: 啟動與結束 Showtime
+id: Starting and stopping
+# Missing translation
+msg: 
 
 #
 # ./src/sd/sd.c
@@ -1697,14 +1756,15 @@ msg: 視訊模式
 #
 # ./src/upgrade.c
 #
+id: %s version %s is available
+# Missing translation
+msg: 
+
 id: Notify about upgrades
 msg: 有更新時通知我
 
 id: Open download page
 msg: 開啟下載頁面
-
-id: Showtime version %s is available
-msg: Showtime 版本 %s 已經可以下載了
 
 id: Software upgrade
 msg: 軟體更新
@@ -1730,6 +1790,14 @@ msg: 找不到服務
 #
 # ./src/video/video_settings.c
 #
+id: Always
+# Missing translation
+msg: 
+
+id: Ask
+# Missing translation
+msg: 
+
 id: Automatically play next video in list
 msg: 自動接續播放列表中的媒體檔案
 
@@ -1744,6 +1812,10 @@ msg: 啟用 VDPAU
 
 id: Maximum resolution for deinterlacer
 msg: 去交錯器支援的最大解析度
+
+id: Never
+# Missing translation
+msg: 
 
 id: No limit
 msg: 無限制

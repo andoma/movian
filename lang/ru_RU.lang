@@ -22,8 +22,9 @@ msg: Включить таймер сна
 id: Disable sleep timer
 msg: Выключить таймер сна
 
-id: Exit Showtime
-msg: Выйти из Showtime
+id: Exit %s
+# Missing translation
+msg: 
 
 id: Go to Home screen
 msg: Перейти на главный экран
@@ -246,6 +247,10 @@ msg: Дата:
 #
 # ./glwskins/default/pages/iteminfo/plugin.view
 #
+id: %s %s or newer is required
+# Missing translation
+msg: 
+
 id: Author: 
 msg: Автор:
 
@@ -254,9 +259,6 @@ msg: Доступная версия:
 
 id: Installed version: 
 msg: Установленная версия:
-
-id: Showtime %s or newer is required
-msg: Требуется Showtime %s или новее
 
 #
 # ./glwskins/default/pages/iteminfo/video.view
@@ -343,6 +345,10 @@ msg: Пауза
 #
 # ./glwskins/default/pages/upgrade.view
 #
+id: %s is up to date
+# Missing translation
+msg: 
+
 id: An error occured during download
 msg: Произошла ошибка во время загрузки
 
@@ -382,14 +388,12 @@ msg: Нет обновлений
 id: Patching %s
 msg: Исправление %s
 
-id: Restarting Showtime in %d seconds...
-msg: Перезапуск Showtime через %d секунд...
+id: Restarting %s in %d seconds...
+# Missing translation
+msg: 
 
 id: Retry...
 msg: Повторить ...
-
-id: Showtime is up to date
-msg: Текущая версия Showtime самая новая
 
 id: Stable
 msg: Стабильный
@@ -438,6 +442,17 @@ msg: Запомнить меня
 
 id: Username
 msg: Имя пользователя
+
+#
+# ./glwskins/default/popups/resume.view
+#
+id: No, Start over
+# Missing translation
+msg: 
+
+id: Resume %s from %s
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/screensaver.view
@@ -530,20 +545,44 @@ msg: Невозможно запросить Cell-кодек. Ошибка 0x%x
 #
 # ./src/arch/rpi/rpi_audio.c
 #
+id: 8 Channel PCM
+# Missing translation
+msg: 
+
+id: AC3 Pass-Through
+# Missing translation
+msg: 
+
 id: Analog
 msg: Аналог
 
 id: Audio output port
 msg: Аудиовыход
 
+id: Autodetect
+# Missing translation
+msg: 
+
+id: DTS Pass-Through
+# Missing translation
+msg: 
+
 id: HDMI
 msg: HDMI
+
+id: Off
+msg: Выкл
+
+id: On
+# Missing translation
+msg: 
 
 #
 # ./src/arch/rpi/rpi_cec.c
 #
-id: Configure how Showtime communicates with your TV
-msg: Настройка соединения Showtime с вашим ТВ
+id: Configure communications with your TV
+# Missing translation
+msg: 
 
 id: Consumer Electronics Control
 msg: Управление бытовой электроникой
@@ -675,6 +714,17 @@ id: DVD read error, restarting disc
 msg: Ошибка чтения DVD, перезапуск диска
 
 #
+# ./src/backend/hls/hls.c
+#
+id: Primary
+# Missing translation
+msg: 
+
+id: Supplementary
+# Missing translation
+msg: 
+
+#
 # ./src/backend/htsp/htsp.c
 #
 id: Invalid HTSP URL
@@ -695,8 +745,9 @@ msg: Результаты поиска для: %s
 id: Albums
 msg: Альбомы
 
-id: Automatic login when Showtime starts
-msg: Автоматически подключаться при запуске Showtime
+id: Automatic login on start
+# Missing translation
+msg: 
 
 id: Collaborative
 msg: Совместный
@@ -783,21 +834,6 @@ id: Search using Unix locatedb
 msg: Поиск с использованием Unix locatedb
 
 #
-# ./src/fileaccess/fa_nativesmb.c
-#
-id: Access denied
-msg: Доступ запрещен
-
-id: Account restricted
-msg: Аккаунт ограничен
-
-id: Bad network share name
-msg: Неверное сетевое имя
-
-id: Logon failure
-msg: Ошибка входа
-
-#
 # ./src/fileaccess/fa_scanner.c
 #
 id: Artists
@@ -817,9 +853,6 @@ msg: Имя файла
 
 id: Indexed mode
 msg: Индексированный режим
-
-id: Off
-msg: Выкл
 
 id: Show only supported files
 msg: Показывать только поддерживаемые файлы
@@ -874,6 +907,25 @@ msg[1]: папок: %d
 id: %d files
 msg[0]: файлов: %d
 msg[1]: файлов: %d
+
+#
+# ./src/fileaccess/smb/fa_nativesmb.c
+#
+id: Access denied
+msg: Доступ запрещен
+
+id: Account restricted
+msg: Аккаунт ограничен
+
+id: Bad network share name
+msg: Неверное сетевое имя
+
+id: Logon failure
+msg: Ошибка входа
+
+id: Object name not found
+# Missing translation
+msg: 
 
 #
 # ./src/i18n.c
@@ -1000,6 +1052,10 @@ msg: Индексация
 #
 id: Automatic
 msg: Автоматический
+
+id: Erase all playback info
+# Missing translation
+msg: 
 
 id: Manual
 msg: Ручной
@@ -1175,8 +1231,9 @@ msg: Альтернативный URL-репозитория плагинов
 id: Automatically upgrade plugins
 msg: Автоматическое обновление плагинов
 
-id: Available apps
-msg: Доступные приложения
+id: Available plugins
+# Missing translation
+msg: 
 
 id: Background
 msg: Фон
@@ -1184,8 +1241,9 @@ msg: Фон
 id: Beta testing passwords
 msg: Пароли бета-теста
 
-id: Browse available apps
-msg: Просмотр доступных приложений
+id: Browse available plugins
+# Missing translation
+msg: 
 
 id: Browsing
 msg: Вид элементов при навигации
@@ -1208,8 +1266,9 @@ msg: Ошибка при открытии файла
 id: Home page
 msg: Главный экран
 
-id: Installed apps
-msg: Установленные приложения
+id: Installed plugins
+# Missing translation
+msg: 
 
 id: Installed version higher than available
 msg: Установленная версия новее, чем доступная
@@ -1301,14 +1360,19 @@ msg: Открыть оболочку
 id: Power off system
 msg: Отключение системы
 
+id: Quit
+# Missing translation
+msg: 
+
 id: SSH server
 msg: SSH-сервер
 
 id: Standby
 msg: Режим ожидания
 
-id: Starting and stopping Showtime
-msg: Запуск и остановка Showtime
+id: Starting and stopping
+# Missing translation
+msg: 
 
 #
 # ./src/sd/sd.c
@@ -1523,14 +1587,15 @@ msg: Видеорежимы
 #
 # ./src/upgrade.c
 #
+id: %s version %s is available
+# Missing translation
+msg: 
+
 id: Notify about upgrades
 msg: Уведомлять об обновлениях
 
 id: Open download page
 msg: Открыть страницу загрузки
-
-id: Showtime version %s is available
-msg: Доступна версия Showtime: %s
 
 id: Software upgrade
 msg: Обновление ПО
@@ -1556,6 +1621,14 @@ msg: Сервис не найден
 #
 # ./src/video/video_settings.c
 #
+id: Always
+# Missing translation
+msg: 
+
+id: Ask
+# Missing translation
+msg: 
+
 id: Automatically play next video in list
 msg: Автоматически проигрывать следующее видео в списке
 
@@ -1570,6 +1643,10 @@ msg: Включить VDPAU
 
 id: Maximum resolution for deinterlacer
 msg: Максимальное разрешение для деинтерлейсинга
+
+id: Never
+# Missing translation
+msg: 
 
 id: No limit
 msg: Без ограничений

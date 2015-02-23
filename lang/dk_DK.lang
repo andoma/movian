@@ -22,8 +22,9 @@ msg: Aktivere dvale timer
 id: Disable sleep timer
 msg: Deaktivere dvale timer
 
-id: Exit Showtime
-msg: Afslut Showtime
+id: Exit %s
+# Missing translation
+msg: 
 
 id: Go to Home screen
 msg: Gå til startskærm
@@ -155,7 +156,8 @@ id: %d kb/s
 msg: %d kb/s
 
 id: Bitrate:
-smg: Bitrate:
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/log.view
@@ -244,6 +246,10 @@ msg: Dato:
 #
 # ./glwskins/default/pages/iteminfo/plugin.view
 #
+id: %s %s or newer is required
+# Missing translation
+msg: 
+
 id: Author: 
 msg: Forfatter:
 
@@ -252,9 +258,6 @@ msg: Tilgængelig version:
 
 id: Installed version: 
 msg: Installeret version:
-
-id: Showtime %s or newer is required
-msg: Showtime %s eller nyere er krævet
 
 #
 # ./glwskins/default/pages/iteminfo/video.view
@@ -341,6 +344,10 @@ msg: Pauset
 #
 # ./glwskins/default/pages/upgrade.view
 #
+id: %s is up to date
+# Missing translation
+msg: 
+
 id: An error occured during download
 msg: En fejl opstod under download
 
@@ -380,14 +387,12 @@ msg: Ingen opdatering tilgængelig
 id: Patching %s
 msg: Patching %s
 
-id: Restarting Showtime in %d seconds...
-msg: Genstarter Showtime om %d sekunder...
+id: Restarting %s in %d seconds...
+# Missing translation
+msg: 
 
 id: Retry...
 msg: Forsøg igen...
-
-id: Showtime is up to date
-msg: Showtime er opdateret
 
 id: Stable
 msg: Stabil
@@ -436,6 +441,17 @@ msg: Husk mig
 
 id: Username
 msg: Brugernavn
+
+#
+# ./glwskins/default/popups/resume.view
+#
+id: No, Start over
+# Missing translation
+msg: 
+
+id: Resume %s from %s
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/screensaver.view
@@ -527,20 +543,44 @@ msg: Kan ikke forespørge Cell codec. Fejl 0x%x
 #
 # ./src/arch/rpi/rpi_audio.c
 #
+id: 8 Channel PCM
+# Missing translation
+msg: 
+
+id: AC3 Pass-Through
+# Missing translation
+msg: 
+
 id: Analog
 msg: Analog
 
 id: Audio output port
 msg: Lyd udgangsport
 
+id: Autodetect
+# Missing translation
+msg: 
+
+id: DTS Pass-Through
+# Missing translation
+msg: 
+
 id: HDMI
 msg: HDMI
+
+id: Off
+msg: Sluk
+
+id: On
+# Missing translation
+msg: 
 
 #
 # ./src/arch/rpi/rpi_cec.c
 #
-id: Configure how Showtime communicates with your TV
-msg: Konfigurere hvordan Showtime skal kommunikere med dit TV
+id: Configure communications with your TV
+# Missing translation
+msg: 
 
 id: Consumer Electronics Control
 msg: Consumer Electronics Control
@@ -652,7 +692,7 @@ msg: Maks. forbrug af ledig plads til lagrede torrents
 
 id: Status
 msg: Status
- 
+
 id: Torrent cache path
 msg: Torrent lagrede sti
 
@@ -664,6 +704,17 @@ msg: DVD
 
 id: DVD read error, restarting disc
 msg: DVD læsefejl, genstarter disk
+
+#
+# ./src/backend/hls/hls.c
+#
+id: Primary
+# Missing translation
+msg: 
+
+id: Supplementary
+# Missing translation
+msg: 
 
 #
 # ./src/backend/htsp/htsp.c
@@ -686,8 +737,9 @@ msg: Søgeresultat for: %s
 id: Albums
 msg: Album
 
-id: Automatic login when Showtime starts
-msg: Automatisk login når Showtime starter
+id: Automatic login on start
+# Missing translation
+msg: 
 
 id: Collaborative
 msg: Samarbejde
@@ -774,21 +826,6 @@ id: Search using Unix locatedb
 msg: Søg via Unix locatedb
 
 #
-# ./src/fileaccess/fa_nativesmb.c
-#
-id: Access denied
-msg: Adgang nægtet
-
-id: Account restricted
-msg: Konto begrænset
-
-id: Bad network share name
-msg: Dårligt netværk sharenavn
-
-id: Logon failure
-msg: Logonfejl
-
-#
 # ./src/fileaccess/fa_scanner.c
 #
 id: Artists
@@ -808,9 +845,6 @@ msg: Filnavn
 
 id: Indexed mode
 msg: Indekseret tilstand
-
-id: Off
-msg: Sluk
 
 id: Show only supported files
 msg: Vis kun supporterede filer
@@ -865,6 +899,25 @@ msg[1]: %d mappe
 id: %d files
 msg[0]: %d filer
 msg[1]: %d fil
+
+#
+# ./src/fileaccess/smb/fa_nativesmb.c
+#
+id: Access denied
+msg: Adgang nægtet
+
+id: Account restricted
+msg: Konto begrænset
+
+id: Bad network share name
+msg: Dårligt netværk sharenavn
+
+id: Logon failure
+msg: Logonfejl
+
+id: Object name not found
+# Missing translation
+msg: 
 
 #
 # ./src/i18n.c
@@ -991,6 +1044,10 @@ msg: Indekserer
 #
 id: Automatic
 msg: Automatisk
+
+id: Erase all playback info
+# Missing translation
+msg: 
 
 id: Manual
 msg: Manuel
@@ -1166,8 +1223,9 @@ msg: Alternativ plugin Respository URL
 id: Automatically upgrade plugins
 msg: Opdater automatisk plugins
 
-id: Available apps
-msg: Tilgængelige apps
+id: Available plugins
+# Missing translation
+msg: 
 
 id: Background
 msg: Baggrund
@@ -1175,8 +1233,9 @@ msg: Baggrund
 id: Beta testing passwords
 msg: Betatest password
 
-id: Browse available apps
-msg: Gennemse tilgængelige apps
+id: Browse available plugins
+# Missing translation
+msg: 
 
 id: Browsing
 msg: Browsing
@@ -1199,8 +1258,9 @@ msg: Fil åbningsfejl
 id: Home page
 msg: Startside
 
-id: Installed apps
-msg: Installerede apps
+id: Installed plugins
+# Missing translation
+msg: 
 
 id: Installed version higher than available
 msg: Den installerede version er højere end den der er tilgængelig
@@ -1292,14 +1352,19 @@ msg: Åben shell
 id: Power off system
 msg: Sluk systemet
 
+id: Quit
+# Missing translation
+msg: 
+
 id: SSH server
 msg: SSH server
 
 id: Standby
 msg: Standby
 
-id: Starting and stopping Showtime
-msg: Starter og stopper Showtime
+id: Starting and stopping
+# Missing translation
+msg: 
 
 #
 # ./src/sd/sd.c
@@ -1514,14 +1579,15 @@ msg: Videotilstande
 #
 # ./src/upgrade.c
 #
+id: %s version %s is available
+# Missing translation
+msg: 
+
 id: Notify about upgrades
 msg: Informer om opdateringer
 
 id: Open download page
 msg: Åben downloadside
-
-id: Showtime version %s is available
-msg: Showtime version %s er tilgængelig
 
 id: Software upgrade
 msg: Softwareopdatering
@@ -1547,6 +1613,14 @@ msg: Tjenesten findes ikke
 #
 # ./src/video/video_settings.c
 #
+id: Always
+# Missing translation
+msg: 
+
+id: Ask
+# Missing translation
+msg: 
+
 id: Automatically play next video in list
 msg: Afspil automatisk næste video i listen
 
@@ -1561,6 +1635,10 @@ msg: Aktiver VDPAU
 
 id: Maximum resolution for deinterlacer
 msg: Maksimal opløsning af deinterlacer
+
+id: Never
+# Missing translation
+msg: 
 
 id: No limit
 msg: Ingen grænser
@@ -1594,3 +1672,4 @@ msg: Videoacceleration og skærmpræsentation
 
 id: Video playback
 msg: Videoafspilning
+

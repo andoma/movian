@@ -22,8 +22,9 @@ msg: 启用定时关机
 id: Disable sleep timer
 msg: 禁用定时关机
 
-id: Exit Showtime
-msg: 退出Showtime
+id: Exit %s
+# Missing translation
+msg: 
 
 id: Go to Home screen
 msg: 转至首页
@@ -246,6 +247,10 @@ msg: 日期
 #
 # ./glwskins/default/pages/iteminfo/plugin.view
 #
+id: %s %s or newer is required
+# Missing translation
+msg: 
+
 id: Author: 
 msg: 作者
 
@@ -254,9 +259,6 @@ msg: 可用版本
 
 id: Installed version: 
 msg: 已安装版本
-
-id: Showtime %s or newer is required
-msg: 需要%s或更新版本的Showtime
 
 #
 # ./glwskins/default/pages/iteminfo/video.view
@@ -343,6 +345,10 @@ msg: 已暂停
 #
 # ./glwskins/default/pages/upgrade.view
 #
+id: %s is up to date
+# Missing translation
+msg: 
+
 id: An error occured during download
 msg: 下载失败
 
@@ -382,14 +388,12 @@ msg: 无可用更新
 id: Patching %s
 msg: 正在更新%s
 
-id: Restarting Showtime in %d seconds...
-msg: %d秒后重启Showtime...
+id: Restarting %s in %d seconds...
+# Missing translation
+msg: 
 
 id: Retry...
 msg: 重试...
-
-id: Showtime is up to date
-msg: Showtime已是最新版
 
 id: Stable
 msg: 稳定版
@@ -438,6 +442,17 @@ msg: 记住用户
 
 id: Username
 msg: 用户名
+
+#
+# ./glwskins/default/popups/resume.view
+#
+id: No, Start over
+# Missing translation
+msg: 
+
+id: Resume %s from %s
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/screensaver.view
@@ -530,20 +545,44 @@ msg: 无法查询Cell解码器，错误码0x%x
 #
 # ./src/arch/rpi/rpi_audio.c
 #
+id: 8 Channel PCM
+# Missing translation
+msg: 
+
+id: AC3 Pass-Through
+# Missing translation
+msg: 
+
 id: Analog
 msg: 模拟
 
 id: Audio output port
 msg: 音频输出端口
 
+id: Autodetect
+# Missing translation
+msg: 
+
+id: DTS Pass-Through
+# Missing translation
+msg: 
+
 id: HDMI
 msg: HDMI
+
+id: Off
+msg: 关闭
+
+id: On
+# Missing translation
+msg: 
 
 #
 # ./src/arch/rpi/rpi_cec.c
 #
-id: Configure how Showtime communicates with your TV
-msg: 配置Showtime和电视的交互
+id: Configure communications with your TV
+# Missing translation
+msg: 
 
 id: Consumer Electronics Control
 msg: 消费型电子产品控制
@@ -675,6 +714,17 @@ id: DVD read error, restarting disc
 msg: DVD读取错误，重新开始读取光盘
 
 #
+# ./src/backend/hls/hls.c
+#
+id: Primary
+# Missing translation
+msg: 
+
+id: Supplementary
+# Missing translation
+msg: 
+
+#
 # ./src/backend/htsp/htsp.c
 #
 id: Invalid HTSP URL
@@ -695,8 +745,9 @@ msg: "%s"的查询结果
 id: Albums
 msg: 专辑
 
-id: Automatic login when Showtime starts
-msg: Showtime启动时自动登录
+id: Automatic login on start
+# Missing translation
+msg: 
 
 id: Collaborative
 msg: 协作
@@ -783,21 +834,6 @@ id: Search using Unix locatedb
 msg: 使用Unix locatedb搜索
 
 #
-# ./src/fileaccess/fa_nativesmb.c
-#
-id: Access denied
-msg: 访问被拒绝
-
-id: Account restricted
-msg: 帐号受限
-
-id: Bad network share name
-msg: 网络共享名不正确
-
-id: Logon failure
-msg: 登录失败
-
-#
 # ./src/fileaccess/fa_scanner.c
 #
 id: Artists
@@ -817,9 +853,6 @@ msg: 文件名
 
 id: Indexed mode
 msg: 索引方式
-
-id: Off
-msg: 关闭
 
 id: Show only supported files
 msg: 只显示支持的文件
@@ -874,6 +907,25 @@ msg[1]: %d个文件夹
 id: %d files
 msg[0]: %d个文件
 msg[1]: %d个文件
+
+#
+# ./src/fileaccess/smb/fa_nativesmb.c
+#
+id: Access denied
+msg: 访问被拒绝
+
+id: Account restricted
+msg: 帐号受限
+
+id: Bad network share name
+msg: 网络共享名不正确
+
+id: Logon failure
+msg: 登录失败
+
+id: Object name not found
+# Missing translation
+msg: 
 
 #
 # ./src/i18n.c
@@ -1000,6 +1052,10 @@ msg: 正在索引
 #
 id: Automatic
 msg: 自动
+
+id: Erase all playback info
+# Missing translation
+msg: 
 
 id: Manual
 msg: 手动
@@ -1175,8 +1231,9 @@ msg: 更改插件库URL
 id: Automatically upgrade plugins
 msg: 自动更新插件
 
-id: Available apps
-msg: 可用应用
+id: Available plugins
+# Missing translation
+msg: 
 
 id: Background
 msg: 背景
@@ -1184,8 +1241,9 @@ msg: 背景
 id: Beta testing passwords
 msg: Beta测试用密码
 
-id: Browse available apps
-msg: 浏览可用的应用
+id: Browse available plugins
+# Missing translation
+msg: 
 
 id: Browsing
 msg: 浏览
@@ -1208,8 +1266,9 @@ msg: 打开文件错误
 id: Home page
 msg: 首页
 
-id: Installed apps
-msg: 已安装的应用
+id: Installed plugins
+# Missing translation
+msg: 
 
 id: Installed version higher than available
 msg: 安装版本比可用版本高
@@ -1301,14 +1360,19 @@ msg: 打开Shell
 id: Power off system
 msg: 关机
 
+id: Quit
+# Missing translation
+msg: 
+
 id: SSH server
 msg: SSH服务器
 
 id: Standby
 msg: 关机
 
-id: Starting and stopping Showtime
-msg: 启动和关闭Showtime
+id: Starting and stopping
+# Missing translation
+msg: 
 
 #
 # ./src/sd/sd.c
@@ -1523,14 +1587,15 @@ msg: 视频模式
 #
 # ./src/upgrade.c
 #
+id: %s version %s is available
+# Missing translation
+msg: 
+
 id: Notify about upgrades
 msg: 通知版本更新
 
 id: Open download page
 msg: 打开下载页面
-
-id: Showtime version %s is available
-msg: Showtime %s 可用
 
 id: Software upgrade
 msg: 软件更新
@@ -1556,6 +1621,14 @@ msg: 未发现服务
 #
 # ./src/video/video_settings.c
 #
+id: Always
+# Missing translation
+msg: 
+
+id: Ask
+# Missing translation
+msg: 
+
 id: Automatically play next video in list
 msg: 文件播放结束时自动播放列表中的下一个文件
 
@@ -1570,6 +1643,10 @@ msg: 启用VDPAU
 
 id: Maximum resolution for deinterlacer
 msg: 去隔行化使用最大可能的分辨率
+
+id: Never
+# Missing translation
+msg: 
 
 id: No limit
 msg: 无限制

@@ -22,8 +22,9 @@ msg: Włącz wyłącznik czasowy
 id: Disable sleep timer
 msg: Wyłącz wyłącznik czasowy 
 
-id: Exit Showtime
-msg: Zamknij Showtime
+id: Exit %s
+# Missing translation
+msg: 
 
 id: Go to Home screen
 msg: Przejdź do ekranu głównego
@@ -246,6 +247,10 @@ msg: Data:
 #
 # ./glwskins/default/pages/iteminfo/plugin.view
 #
+id: %s %s or newer is required
+# Missing translation
+msg: 
+
 id: Author: 
 msg: Autor: 
 
@@ -254,9 +259,6 @@ msg: Dostępna wersja:
 
 id: Installed version: 
 msg: Zainstalowana wersja: 
-
-id: Showtime %s or newer is required
-msg: Wymagany Showtime w wersji %s lub nowszy
 
 #
 # ./glwskins/default/pages/iteminfo/video.view
@@ -343,6 +345,10 @@ msg: Wstrzymany
 #
 # ./glwskins/default/pages/upgrade.view
 #
+id: %s is up to date
+# Missing translation
+msg: 
+
 id: An error occured during download
 msg: Wystąpił błąd w trakcie pobierania
 
@@ -382,14 +388,12 @@ msg: Brak aktualizacji
 id: Patching %s
 msg: Poprawka dla %s
 
-id: Restarting Showtime in %d seconds...
-msg: Restart Showtime za %d sekund...
+id: Restarting %s in %d seconds...
+# Missing translation
+msg: 
 
 id: Retry...
 msg: Ponów...
-
-id: Showtime is up to date
-msg: Showtime jest aktualny
 
 id: Stable
 msg: Stabilne
@@ -438,6 +442,17 @@ msg: Zapamiętaj
 
 id: Username
 msg: Użytkownik
+
+#
+# ./glwskins/default/popups/resume.view
+#
+id: No, Start over
+# Missing translation
+msg: 
+
+id: Resume %s from %s
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/screensaver.view
@@ -530,20 +545,44 @@ msg: Błąd sprawdzania kodeka Cell. Błąd 0x%x
 #
 # ./src/arch/rpi/rpi_audio.c
 #
+id: 8 Channel PCM
+# Missing translation
+msg: 
+
+id: AC3 Pass-Through
+# Missing translation
+msg: 
+
 id: Analog
 msg: Analogowe
 
 id: Audio output port
 msg: Port wyjścia audio
 
+id: Autodetect
+# Missing translation
+msg: 
+
+id: DTS Pass-Through
+# Missing translation
+msg: 
+
 id: HDMI
 msg: HDMI
+
+id: Off
+msg: Wyłączony
+
+id: On
+# Missing translation
+msg: 
 
 #
 # ./src/arch/rpi/rpi_cec.c
 #
-id: Configure how Showtime communicates with your TV
-msg: Skonfiguruj tryb w jakim Showtime komunikuje się z TV
+id: Configure communications with your TV
+# Missing translation
+msg: 
 
 id: Consumer Electronics Control
 msg: Consumer Electronics Control (CEC)
@@ -675,6 +714,17 @@ id: DVD read error, restarting disc
 msg: Błąd odczytu DVD, ponowny odczyt płyty
 
 #
+# ./src/backend/hls/hls.c
+#
+id: Primary
+# Missing translation
+msg: 
+
+id: Supplementary
+# Missing translation
+msg: 
+
+#
 # ./src/backend/htsp/htsp.c
 #
 id: Invalid HTSP URL
@@ -695,8 +745,9 @@ msg: Wyniki wyszukiwania dla: %s
 id: Albums
 msg: Albumy
 
-id: Automatic login when Showtime starts
-msg: Automatyczne logowanie przy starcie programu
+id: Automatic login on start
+# Missing translation
+msg: 
 
 id: Collaborative
 msg: Wspólne
@@ -783,21 +834,6 @@ id: Search using Unix locatedb
 msg: Szukaj za pomocą Unix locatedb
 
 #
-# ./src/fileaccess/fa_nativesmb.c
-#
-id: Access denied
-msg: Brak dostępu
-
-id: Account restricted
-msg: Konto z ograniczeniami
-
-id: Bad network share name
-msg: Błędna nazwa udziału sieciowego
-
-id: Logon failure
-msg: Błąd logowania
-
-#
 # ./src/fileaccess/fa_scanner.c
 #
 id: Artists
@@ -817,9 +853,6 @@ msg: Nazwa pliku
 
 id: Indexed mode
 msg: Tryb indeksowania
-
-id: Off
-msg: Wyłączony
 
 id: Show only supported files
 msg: Pokazuj tylko obsługiwane formaty
@@ -874,6 +907,25 @@ msg[1]: %d folder
 id: %d files
 msg[0]: %d pliki 
 msg[1]: %d plik
+
+#
+# ./src/fileaccess/smb/fa_nativesmb.c
+#
+id: Access denied
+msg: Brak dostępu
+
+id: Account restricted
+msg: Konto z ograniczeniami
+
+id: Bad network share name
+msg: Błędna nazwa udziału sieciowego
+
+id: Logon failure
+msg: Błąd logowania
+
+id: Object name not found
+# Missing translation
+msg: 
 
 #
 # ./src/i18n.c
@@ -1000,6 +1052,10 @@ msg: Indeksowanie
 #
 id: Automatic
 msg: Automatyczne
+
+id: Erase all playback info
+# Missing translation
+msg: 
 
 id: Manual
 msg: Ręczny
@@ -1175,8 +1231,9 @@ msg: Alternatywne repozytorium wtyczek - adres
 id: Automatically upgrade plugins
 msg: Automatycznie aktualizuj wtyczki
 
-id: Available apps
-msg: Dostępne aplikacje
+id: Available plugins
+# Missing translation
+msg: 
 
 id: Background
 msg: Tło
@@ -1184,8 +1241,9 @@ msg: Tło
 id: Beta testing passwords
 msg: Hasło beta-testów
 
-id: Browse available apps
-msg: Przeglądaj dostępne aplikacje
+id: Browse available plugins
+# Missing translation
+msg: 
 
 id: Browsing
 msg: Przeglądanie
@@ -1208,8 +1266,9 @@ msg: Błąd otwierania pliku
 id: Home page
 msg: Strona główna
 
-id: Installed apps
-msg: Zainstalowane aplikacje
+id: Installed plugins
+# Missing translation
+msg: 
 
 id: Installed version higher than available
 msg: Zainstalowana wersja jest nowsza od dostępnej
@@ -1301,14 +1360,19 @@ msg: Otwórz linię komend
 id: Power off system
 msg: Wyłącz system
 
+id: Quit
+# Missing translation
+msg: 
+
 id: SSH server
 msg: Serwer SSH
 
 id: Standby
 msg: Tryb oczekiwania
 
-id: Starting and stopping Showtime
-msg: Uruchamianie i zatrzymywanie Showtime
+id: Starting and stopping
+# Missing translation
+msg: 
 
 #
 # ./src/sd/sd.c
@@ -1523,14 +1587,15 @@ msg: Tryby wyświetlania Video
 #
 # ./src/upgrade.c
 #
+id: %s version %s is available
+# Missing translation
+msg: 
+
 id: Notify about upgrades
 msg: Powiadom o aktualizacjach
 
 id: Open download page
 msg: Otwórz stronę pobierania
-
-id: Showtime version %s is available
-msg: Dostępna jest wersja %s Showtime
 
 id: Software upgrade
 msg: Aktualizacja oprogramowania
@@ -1556,6 +1621,14 @@ msg: Nie znaleziono usługi
 #
 # ./src/video/video_settings.c
 #
+id: Always
+# Missing translation
+msg: 
+
+id: Ask
+# Missing translation
+msg: 
+
 id: Automatically play next video in list
 msg: Automatycznie odtwarzaj kolejny plik z listy
 
@@ -1570,6 +1643,10 @@ msg: Włącz VDPAU
 
 id: Maximum resolution for deinterlacer
 msg: Maks. rozdzielczość przy usuwaniu przeplotu
+
+id: Never
+# Missing translation
+msg: 
 
 id: No limit
 msg: Bez limitu

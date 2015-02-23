@@ -22,8 +22,9 @@ msg: Activer la mise en veille
 id: Disable sleep timer
 msg: Désactiver la mise en veille
 
-id: Exit Showtime
-msg: Quitter Showtime
+id: Exit %s
+# Missing translation
+msg: 
 
 id: Go to Home screen
 msg: Retour à la page d'accueil
@@ -246,6 +247,10 @@ msg: Date:
 #
 # ./glwskins/default/pages/iteminfo/plugin.view
 #
+id: %s %s or newer is required
+# Missing translation
+msg: 
+
 id: Author: 
 msg: Auteur:
 
@@ -254,9 +259,6 @@ msg: Version disponible:
 
 id: Installed version: 
 msg: Version installée:
-
-id: Showtime %s or newer is required
-msg: Showtime %s ou plus récent est nécessaire
 
 #
 # ./glwskins/default/pages/iteminfo/video.view
@@ -343,6 +345,10 @@ msg: Pause
 #
 # ./glwskins/default/pages/upgrade.view
 #
+id: %s is up to date
+# Missing translation
+msg: 
+
 id: An error occured during download
 msg: Une erreur est apparue pendant le téléchargement
 
@@ -382,14 +388,12 @@ msg: Pas de mise à jour disponible
 id: Patching %s
 msg: Mise en place du patch %s
 
-id: Restarting Showtime in %d seconds...
-msg: Showtime va redémarrer dans %d seconds...
+id: Restarting %s in %d seconds...
+# Missing translation
+msg: 
 
 id: Retry...
 msg: Nouvelle tentative...
-
-id: Showtime is up to date
-msg: Showtime est à jour
 
 id: Stable
 msg: Stable
@@ -438,6 +442,17 @@ msg: Se souvenir de moi
 
 id: Username
 msg: Nom d'utilisateur
+
+#
+# ./glwskins/default/popups/resume.view
+#
+id: No, Start over
+# Missing translation
+msg: 
+
+id: Resume %s from %s
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/screensaver.view
@@ -530,20 +545,44 @@ msg: Impossible d'avoir le codec Cell. Error 0x%x
 #
 # ./src/arch/rpi/rpi_audio.c
 #
+id: 8 Channel PCM
+# Missing translation
+msg: 
+
+id: AC3 Pass-Through
+# Missing translation
+msg: 
+
 id: Analog
 msg: Analogique
 
 id: Audio output port
 msg: Sortie audio
 
+id: Autodetect
+# Missing translation
+msg: 
+
+id: DTS Pass-Through
+# Missing translation
+msg: 
+
 id: HDMI
 msg: HDMI
+
+id: Off
+msg: Arrêt
+
+id: On
+# Missing translation
+msg: 
 
 #
 # ./src/arch/rpi/rpi_cec.c
 #
-id: Configure how Showtime communicates with your TV
-msg: Configurer comment Showtime communique avec votre TV
+id: Configure communications with your TV
+# Missing translation
+msg: 
 
 id: Consumer Electronics Control
 msg: Consumer Electronics Control (CEC)
@@ -675,6 +714,17 @@ id: DVD read error, restarting disc
 msg: Erreur de lecture du DVD, redémarrage du disque
 
 #
+# ./src/backend/hls/hls.c
+#
+id: Primary
+# Missing translation
+msg: 
+
+id: Supplementary
+# Missing translation
+msg: 
+
+#
 # ./src/backend/htsp/htsp.c
 #
 id: Invalid HTSP URL
@@ -695,8 +745,9 @@ msg: Résultat de la recherche pour : %s
 id: Albums
 msg: Albums
 
-id: Automatic login when Showtime starts
-msg: S'authentifier automatiquement au démarrage de Showtime
+id: Automatic login on start
+# Missing translation
+msg: 
 
 id: Collaborative
 msg: En collaboration
@@ -783,21 +834,6 @@ id: Search using Unix locatedb
 msg: Chercher via Unix locatedb
 
 #
-# ./src/fileaccess/fa_nativesmb.c
-#
-id: Access denied
-msg: Accès refusé
-
-id: Account restricted
-msg: Compte restreint
-
-id: Bad network share name
-msg: Partage réseau inexistant
-
-id: Logon failure
-msg: Impossible de se connecter
-
-#
 # ./src/fileaccess/fa_scanner.c
 #
 id: Artists
@@ -817,9 +853,6 @@ msg: Nom du fichier
 
 id: Indexed mode
 msg: Mode indexé
-
-id: Off
-msg: Arrêt
 
 id: Show only supported files
 msg: N'afficher que les fichiers supportés
@@ -874,6 +907,25 @@ msg[1]: %d répertoires
 id: %d files
 msg[0]: %d fichiers
 msg[1]: %d fichiers
+
+#
+# ./src/fileaccess/smb/fa_nativesmb.c
+#
+id: Access denied
+msg: Accès refusé
+
+id: Account restricted
+msg: Compte restreint
+
+id: Bad network share name
+msg: Partage réseau inexistant
+
+id: Logon failure
+msg: Impossible de se connecter
+
+id: Object name not found
+# Missing translation
+msg: 
 
 #
 # ./src/i18n.c
@@ -1000,6 +1052,10 @@ msg: Indexation
 #
 id: Automatic
 msg: Automatique
+
+id: Erase all playback info
+# Missing translation
+msg: 
 
 id: Manual
 msg: Manuel
@@ -1175,8 +1231,9 @@ msg: Adresse URL de Repository alternative
 id: Automatically upgrade plugins
 msg: Mise à jour automatique des extensions
 
-id: Available apps
-msg: Applications disponible
+id: Available plugins
+# Missing translation
+msg: 
 
 id: Background
 msg: Fond d'écran
@@ -1184,8 +1241,9 @@ msg: Fond d'écran
 id: Beta testing passwords
 msg: Mots de passe pour les bêta tests
 
-id: Browse available apps
-msg: Parcourir les applications disponible
+id: Browse available plugins
+# Missing translation
+msg: 
 
 id: Browsing
 msg: Navigation
@@ -1208,8 +1266,9 @@ msg: Impossible d'ouvrir le fichier
 id: Home page
 msg: Page d'accueil
 
-id: Installed apps
-msg: Applications installées
+id: Installed plugins
+# Missing translation
+msg: 
 
 id: Installed version higher than available
 msg: Version installée supérieure à celle disponible
@@ -1301,14 +1360,19 @@ msg: Ouvrir le shell
 id: Power off system
 msg: Eteindre le système
 
+id: Quit
+# Missing translation
+msg: 
+
 id: SSH server
 msg: Serveur SSH
 
 id: Standby
 msg: Eteindre
 
-id: Starting and stopping Showtime
-msg: Démarrer et Arrêter Showtime
+id: Starting and stopping
+# Missing translation
+msg: 
 
 #
 # ./src/sd/sd.c
@@ -1523,14 +1587,15 @@ msg: Modes vidéo
 #
 # ./src/upgrade.c
 #
+id: %s version %s is available
+# Missing translation
+msg: 
+
 id: Notify about upgrades
 msg: Me prévenir des mises à jour
 
 id: Open download page
 msg: Ouvrir la page de téléchargement
-
-id: Showtime version %s is available
-msg: La version %s de Showtime est disponible
 
 id: Software upgrade
 msg: Mise à jour du logiciel
@@ -1556,6 +1621,14 @@ msg: Service non trouvé
 #
 # ./src/video/video_settings.c
 #
+id: Always
+# Missing translation
+msg: 
+
+id: Ask
+# Missing translation
+msg: 
+
 id: Automatically play next video in list
 msg: Jouer la vidéo suivante automatiquement
 
@@ -1570,6 +1643,10 @@ msg: Activer VDPAU
 
 id: Maximum resolution for deinterlacer
 msg: Résolution maximale pour désentrelacer
+
+id: Never
+# Missing translation
+msg: 
 
 id: No limit
 msg: Pas de limite

@@ -24,7 +24,7 @@ id: Disable sleep timer
 # Missing translation
 msg: 
 
-id: Exit Showtime
+id: Exit %s
 # Missing translation
 msg: 
 
@@ -269,6 +269,10 @@ msg:
 #
 # ./glwskins/default/pages/iteminfo/plugin.view
 #
+id: %s %s or newer is required
+# Missing translation
+msg: 
+
 id: Author: 
 # Missing translation
 msg: 
@@ -279,9 +283,6 @@ msg:
 
 id: Installed version: 
 msg: Naložena verzija:
-
-id: Showtime %s or newer is required
-msg: Potrebujete Showtime %s ali novejši
 
 #
 # ./glwskins/default/pages/iteminfo/video.view
@@ -372,6 +373,10 @@ msg:
 #
 # ./glwskins/default/pages/upgrade.view
 #
+id: %s is up to date
+# Missing translation
+msg: 
+
 id: An error occured during download
 msg: Napaka pri prenosu
 
@@ -415,14 +420,12 @@ id: Patching %s
 # Missing translation
 msg: 
 
-id: Restarting Showtime in %d seconds...
-msg: Ponoven zagon Showtime-a v %d sekundah...
+id: Restarting %s in %d seconds...
+# Missing translation
+msg: 
 
 id: Retry...
 msg: Ponoven poskus...
-
-id: Showtime is up to date
-msg: Showtime je posodobljen
 
 id: Stable
 msg: Stabilno
@@ -473,6 +476,17 @@ msg: Zapomni si
 
 id: Username
 msg: Uporabniško ime
+
+#
+# ./glwskins/default/popups/resume.view
+#
+id: No, Start over
+# Missing translation
+msg: 
+
+id: Resume %s from %s
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/screensaver.view
@@ -577,6 +591,14 @@ msg: Ne morem odpreti Cell-Kodeka. Napaka 0x%x
 #
 # ./src/arch/rpi/rpi_audio.c
 #
+id: 8 Channel PCM
+# Missing translation
+msg: 
+
+id: AC3 Pass-Through
+# Missing translation
+msg: 
+
 id: Analog
 # Missing translation
 msg: 
@@ -585,14 +607,29 @@ id: Audio output port
 # Missing translation
 msg: 
 
+id: Autodetect
+# Missing translation
+msg: 
+
+id: DTS Pass-Through
+# Missing translation
+msg: 
+
 id: HDMI
+# Missing translation
+msg: 
+
+id: Off
+msg: Izklop
+
+id: On
 # Missing translation
 msg: 
 
 #
 # ./src/arch/rpi/rpi_cec.c
 #
-id: Configure how Showtime communicates with your TV
+id: Configure communications with your TV
 # Missing translation
 msg: 
 
@@ -750,6 +787,17 @@ id: DVD read error, restarting disc
 msg: Napaka pri branju DVD-ja, disk bo ponovno zagnan
 
 #
+# ./src/backend/hls/hls.c
+#
+id: Primary
+# Missing translation
+msg: 
+
+id: Supplementary
+# Missing translation
+msg: 
+
+#
 # ./src/backend/htsp/htsp.c
 #
 id: Invalid HTSP URL
@@ -771,8 +819,9 @@ id: Albums
 # Missing translation
 msg: 
 
-id: Automatic login when Showtime starts
-msg: Samodejna prijava pri zagonu Showtime-a
+id: Automatic login on start
+# Missing translation
+msg: 
 
 id: Collaborative
 msg: Kolaborativno
@@ -862,21 +911,6 @@ id: Search using Unix locatedb
 msg: Za iskanje uporabi Unix Locatedb
 
 #
-# ./src/fileaccess/fa_nativesmb.c
-#
-id: Access denied
-msg: Dostop je zavrnjen
-
-id: Account restricted
-msg: Račun je blokiran
-
-id: Bad network share name
-msg: Napačno omrežno deljeno ime
-
-id: Logon failure
-msg: Napaka prijave
-
-#
 # ./src/fileaccess/fa_scanner.c
 #
 id: Artists
@@ -901,9 +935,6 @@ msg: Ime datoteke
 id: Indexed mode
 # Missing translation
 msg: 
-
-id: Off
-msg: Izklop
 
 id: Show only supported files
 msg: Prikaži samo podprte datoteke
@@ -966,6 +997,25 @@ msg[1]:
 id: %d files
 msg[0]: 
 msg[1]: 
+
+#
+# ./src/fileaccess/smb/fa_nativesmb.c
+#
+id: Access denied
+msg: Dostop je zavrnjen
+
+id: Account restricted
+msg: Račun je blokiran
+
+id: Bad network share name
+msg: Napačno omrežno deljeno ime
+
+id: Logon failure
+msg: Napaka prijave
+
+id: Object name not found
+# Missing translation
+msg: 
 
 #
 # ./src/i18n.c
@@ -1105,6 +1155,10 @@ msg:
 #
 id: Automatic
 msg: Avtomatsko
+
+id: Erase all playback info
+# Missing translation
+msg: 
 
 id: Manual
 # Missing translation
@@ -1299,7 +1353,7 @@ msg: Alternativna URL povezava do vtičnikov
 id: Automatically upgrade plugins
 msg: Avtomatska posodobitev vtičnikov
 
-id: Available apps
+id: Available plugins
 # Missing translation
 msg: 
 
@@ -1311,7 +1365,7 @@ id: Beta testing passwords
 # Missing translation
 msg: 
 
-id: Browse available apps
+id: Browse available plugins
 # Missing translation
 msg: 
 
@@ -1339,7 +1393,7 @@ id: Home page
 # Missing translation
 msg: 
 
-id: Installed apps
+id: Installed plugins
 # Missing translation
 msg: 
 
@@ -1448,6 +1502,10 @@ msg: Odpri jedro
 id: Power off system
 msg: Izklop Sitema
 
+id: Quit
+# Missing translation
+msg: 
+
 id: SSH server
 # Missing translation
 msg: 
@@ -1456,8 +1514,9 @@ id: Standby
 # Missing translation
 msg: 
 
-id: Starting and stopping Showtime
-msg: Zagon in Ustavitev Showtime-a
+id: Starting and stopping
+# Missing translation
+msg: 
 
 #
 # ./src/sd/sd.c
@@ -1702,14 +1761,15 @@ msg: Video Možnost
 #
 # ./src/upgrade.c
 #
+id: %s version %s is available
+# Missing translation
+msg: 
+
 id: Notify about upgrades
 msg: Opomni o posodobitvah
 
 id: Open download page
 msg: Odpre stran s prenosi
-
-id: Showtime version %s is available
-msg: Verzija %s Showtime-a dosegljiva
 
 id: Software upgrade
 msg: Posodobitev programa
@@ -1735,6 +1795,14 @@ msg: Storitev ni najdena
 #
 # ./src/video/video_settings.c
 #
+id: Always
+# Missing translation
+msg: 
+
+id: Ask
+# Missing translation
+msg: 
+
 id: Automatically play next video in list
 msg: Avtomatsko predvajajte naslednji video iz liste
 
@@ -1749,6 +1817,10 @@ msg: Omogočiti VDPAU
 
 id: Maximum resolution for deinterlacer
 msg: največja resolucija za deinterlacer
+
+id: Never
+# Missing translation
+msg: 
 
 id: No limit
 msg: Ni omejitev

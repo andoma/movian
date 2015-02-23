@@ -24,7 +24,7 @@ id: Disable sleep timer
 # Missing translation
 msg: 
 
-id: Exit Showtime
+id: Exit %s
 # Missing translation
 msg: 
 
@@ -267,6 +267,10 @@ msg: Dátum:
 #
 # ./glwskins/default/pages/iteminfo/plugin.view
 #
+id: %s %s or newer is required
+# Missing translation
+msg: 
+
 id: Author: 
 msg: Autor:
 
@@ -275,9 +279,6 @@ msg: Dostupná verzia:
 
 id: Installed version: 
 msg: Inštalovaná verzia:
-
-id: Showtime %s or newer is required
-msg: Je potrebný Showtime v. %s alebo novší
 
 #
 # ./glwskins/default/pages/iteminfo/video.view
@@ -368,6 +369,10 @@ msg:
 #
 # ./glwskins/default/pages/upgrade.view
 #
+id: %s is up to date
+# Missing translation
+msg: 
+
 id: An error occured during download
 msg: Pri sťahovaní došlo k chybe
 
@@ -411,14 +416,12 @@ id: Patching %s
 # Missing translation
 msg: 
 
-id: Restarting Showtime in %d seconds...
-msg: Showtime bude reštartovaný za %d sekúnd...
+id: Restarting %s in %d seconds...
+# Missing translation
+msg: 
 
 id: Retry...
 msg: Skúšam znova...
-
-id: Showtime is up to date
-msg: Showtime je aktuálny
 
 id: Stable
 msg: Stabilný
@@ -469,6 +472,17 @@ msg: Pamätať si
 
 id: Username
 msg: Užívateľ
+
+#
+# ./glwskins/default/popups/resume.view
+#
+id: No, Start over
+# Missing translation
+msg: 
+
+id: Resume %s from %s
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/screensaver.view
@@ -573,6 +587,14 @@ msg: Unable to query Cell codec. Error 0x%x
 #
 # ./src/arch/rpi/rpi_audio.c
 #
+id: 8 Channel PCM
+# Missing translation
+msg: 
+
+id: AC3 Pass-Through
+# Missing translation
+msg: 
+
 id: Analog
 # Missing translation
 msg: 
@@ -581,14 +603,29 @@ id: Audio output port
 # Missing translation
 msg: 
 
+id: Autodetect
+# Missing translation
+msg: 
+
+id: DTS Pass-Through
+# Missing translation
+msg: 
+
 id: HDMI
+# Missing translation
+msg: 
+
+id: Off
+msg: Vyp
+
+id: On
 # Missing translation
 msg: 
 
 #
 # ./src/arch/rpi/rpi_cec.c
 #
-id: Configure how Showtime communicates with your TV
+id: Configure communications with your TV
 # Missing translation
 msg: 
 
@@ -746,6 +783,17 @@ id: DVD read error, restarting disc
 msg: Chyba pri čítaní DVD, disk bude načítaný znovu
 
 #
+# ./src/backend/hls/hls.c
+#
+id: Primary
+# Missing translation
+msg: 
+
+id: Supplementary
+# Missing translation
+msg: 
+
+#
 # ./src/backend/htsp/htsp.c
 #
 id: Invalid HTSP URL
@@ -767,8 +815,9 @@ id: Albums
 # Missing translation
 msg: 
 
-id: Automatic login when Showtime starts
-msg: Automatické přihlášení při startu programu
+id: Automatic login on start
+# Missing translation
+msg: 
 
 id: Collaborative
 msg: Spolupráca
@@ -858,21 +907,6 @@ id: Search using Unix locatedb
 msg: Pri hľadaní použiť Unix locatedb
 
 #
-# ./src/fileaccess/fa_nativesmb.c
-#
-id: Access denied
-msg: Prístup zamietnutý
-
-id: Account restricted
-msg: Účet obmedzený
-
-id: Bad network share name
-msg: Nesprávný názov sieťového umiestnenia
-
-id: Logon failure
-msg: Chyba prihlásenia
-
-#
 # ./src/fileaccess/fa_scanner.c
 #
 id: Artists
@@ -897,9 +931,6 @@ msg: Názov súboru
 id: Indexed mode
 # Missing translation
 msg: 
-
-id: Off
-msg: Vyp
 
 id: Show only supported files
 msg: Zobraziť len podporované súbory
@@ -962,6 +993,25 @@ msg[1]:
 id: %d files
 msg[0]: 
 msg[1]: 
+
+#
+# ./src/fileaccess/smb/fa_nativesmb.c
+#
+id: Access denied
+msg: Prístup zamietnutý
+
+id: Account restricted
+msg: Účet obmedzený
+
+id: Bad network share name
+msg: Nesprávný názov sieťového umiestnenia
+
+id: Logon failure
+msg: Chyba prihlásenia
+
+id: Object name not found
+# Missing translation
+msg: 
 
 #
 # ./src/i18n.c
@@ -1101,6 +1151,10 @@ msg:
 #
 id: Automatic
 msg: Automaticky
+
+id: Erase all playback info
+# Missing translation
+msg: 
 
 id: Manual
 # Missing translation
@@ -1295,7 +1349,7 @@ msg: URL náhradného úložiska pluginov
 id: Automatically upgrade plugins
 msg: Automaticky upgradovať pluginy
 
-id: Available apps
+id: Available plugins
 # Missing translation
 msg: 
 
@@ -1307,7 +1361,7 @@ id: Beta testing passwords
 # Missing translation
 msg: 
 
-id: Browse available apps
+id: Browse available plugins
 # Missing translation
 msg: 
 
@@ -1335,7 +1389,7 @@ id: Home page
 # Missing translation
 msg: 
 
-id: Installed apps
+id: Installed plugins
 # Missing translation
 msg: 
 
@@ -1444,6 +1498,10 @@ msg: Príkazové riadky
 id: Power off system
 msg: Vypnúť systém
 
+id: Quit
+# Missing translation
+msg: 
+
 id: SSH server
 # Missing translation
 msg: 
@@ -1452,8 +1510,9 @@ id: Standby
 # Missing translation
 msg: 
 
-id: Starting and stopping Showtime
-msg: Štart a ukončenie Showtime
+id: Starting and stopping
+# Missing translation
+msg: 
 
 #
 # ./src/sd/sd.c
@@ -1697,14 +1756,15 @@ msg: Režimy videa
 #
 # ./src/upgrade.c
 #
+id: %s version %s is available
+# Missing translation
+msg: 
+
 id: Notify about upgrades
 msg: Upozorniť na aktualizácie
 
 id: Open download page
 msg: Otvoriť stránku s downloadmi
-
-id: Showtime version %s is available
-msg: Je dostupná Showtime verzia %s 
 
 id: Software upgrade
 msg: Upgrade aplikácie
@@ -1730,6 +1790,14 @@ msg: Služba nebola nájdená
 #
 # ./src/video/video_settings.c
 #
+id: Always
+# Missing translation
+msg: 
+
+id: Ask
+# Missing translation
+msg: 
+
 id: Automatically play next video in list
 msg: Automaticky prehrať dalšie video v zozname
 
@@ -1744,6 +1812,10 @@ msg: Povoliť VDPAU
 
 id: Maximum resolution for deinterlacer
 msg: Maximálne rozlíšenie pre deinterlacer
+
+id: Never
+# Missing translation
+msg: 
 
 id: No limit
 msg: Bez obmedzenia

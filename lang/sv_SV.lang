@@ -22,8 +22,9 @@ msg: Aktivera sov-timer
 id: Disable sleep timer
 msg: Avaktivera sov-timer
 
-id: Exit Showtime
-msg: Avsluta Showtime
+id: Exit %s
+# Missing translation
+msg: 
 
 id: Go to Home screen
 msg: Gå till hemsidan
@@ -246,6 +247,10 @@ msg: Datum:
 #
 # ./glwskins/default/pages/iteminfo/plugin.view
 #
+id: %s %s or newer is required
+# Missing translation
+msg: 
+
 id: Author: 
 msg: Upphovsman:
 
@@ -254,9 +259,6 @@ msg: Tillgänglig version:
 
 id: Installed version: 
 msg: Installerad version:
-
-id: Showtime %s or newer is required
-msg: Showtime %s eller nyare behövs
 
 #
 # ./glwskins/default/pages/iteminfo/video.view
@@ -343,6 +345,10 @@ msg: Pausad
 #
 # ./glwskins/default/pages/upgrade.view
 #
+id: %s is up to date
+# Missing translation
+msg: 
+
 id: An error occured during download
 msg: Ett fel inträffade under nerladdning
 
@@ -382,14 +388,12 @@ msg: Ingen uppgradering tillgänglig
 id: Patching %s
 msg: Patchar %s
 
-id: Restarting Showtime in %d seconds...
-msg: Startar om Showtime om %d sekunder...
+id: Restarting %s in %d seconds...
+# Missing translation
+msg: 
 
 id: Retry...
 msg: Försök igen...
-
-id: Showtime is up to date
-msg: Showtime är uppdaterat
 
 id: Stable
 msg: Stabil
@@ -438,6 +442,17 @@ msg: Kom ihåg mig
 
 id: Username
 msg: Användarnamn
+
+#
+# ./glwskins/default/popups/resume.view
+#
+id: No, Start over
+# Missing translation
+msg: 
+
+id: Resume %s from %s
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/screensaver.view
@@ -530,20 +545,44 @@ msg: Kan ej fråga Cell codec. Fel 0x%x
 #
 # ./src/arch/rpi/rpi_audio.c
 #
+id: 8 Channel PCM
+# Missing translation
+msg: 
+
+id: AC3 Pass-Through
+# Missing translation
+msg: 
+
 id: Analog
 msg: Analog
 
 id: Audio output port
 msg: Ljudutgång
 
+id: Autodetect
+# Missing translation
+msg: 
+
+id: DTS Pass-Through
+# Missing translation
+msg: 
+
 id: HDMI
 msg: HDMI
+
+id: Off
+msg: Av
+
+id: On
+# Missing translation
+msg: 
 
 #
 # ./src/arch/rpi/rpi_cec.c
 #
-id: Configure how Showtime communicates with your TV
-msg: Konfigurerar hur Showtime kommunicerar med din TV
+id: Configure communications with your TV
+# Missing translation
+msg: 
 
 id: Consumer Electronics Control
 msg: Consumer Electronics Control
@@ -675,6 +714,17 @@ id: DVD read error, restarting disc
 msg: Problem att läsa DVD, startar om skivan
 
 #
+# ./src/backend/hls/hls.c
+#
+id: Primary
+# Missing translation
+msg: 
+
+id: Supplementary
+# Missing translation
+msg: 
+
+#
 # ./src/backend/htsp/htsp.c
 #
 id: Invalid HTSP URL
@@ -695,8 +745,9 @@ msg: Sökresultat för: %s
 id: Albums
 msg: Album
 
-id: Automatic login when Showtime starts
-msg: Logga automatiskt in när Showtime startar
+id: Automatic login on start
+# Missing translation
+msg: 
 
 id: Collaborative
 msg: Kollaborativ
@@ -783,21 +834,6 @@ id: Search using Unix locatedb
 msg: Sök mha. Unix locatedb
 
 #
-# ./src/fileaccess/fa_nativesmb.c
-#
-id: Access denied
-msg: Tillträde nekat
-
-id: Account restricted
-msg: Kontot är begränsat
-
-id: Bad network share name
-msg: Felaktigt delningsnamn
-
-id: Logon failure
-msg: Login misslyckades
-
-#
 # ./src/fileaccess/fa_scanner.c
 #
 id: Artists
@@ -817,9 +853,6 @@ msg: Filnamn
 
 id: Indexed mode
 msg: Indexerat läge
-
-id: Off
-msg: Av
 
 id: Show only supported files
 msg: Visa bara spelbara filer
@@ -874,6 +907,25 @@ msg[1]: %d katalog
 id: %d files
 msg[0]: %d filer
 msg[1]: %d fil
+
+#
+# ./src/fileaccess/smb/fa_nativesmb.c
+#
+id: Access denied
+msg: Tillträde nekat
+
+id: Account restricted
+msg: Kontot är begränsat
+
+id: Bad network share name
+msg: Felaktigt delningsnamn
+
+id: Logon failure
+msg: Login misslyckades
+
+id: Object name not found
+# Missing translation
+msg: 
 
 #
 # ./src/i18n.c
@@ -1000,6 +1052,10 @@ msg: Indexerar
 #
 id: Automatic
 msg: Automatisk
+
+id: Erase all playback info
+# Missing translation
+msg: 
 
 id: Manual
 msg: Manuell
@@ -1175,8 +1231,9 @@ msg: Alternativ URL för pluginmagasin
 id: Automatically upgrade plugins
 msg: Updatera plugin automatiskt
 
-id: Available apps
-msg: Tillgängliga applikationer
+id: Available plugins
+# Missing translation
+msg: 
 
 id: Background
 msg: Bakgrund
@@ -1184,8 +1241,9 @@ msg: Bakgrund
 id: Beta testing passwords
 msg: Betatestlösenord
 
-id: Browse available apps
-msg: Lista tillgängliga applikationer
+id: Browse available plugins
+# Missing translation
+msg: 
 
 id: Browsing
 msg: Browsing
@@ -1208,8 +1266,9 @@ msg: Kunde ej öppna fil
 id: Home page
 msg: Hemsida
 
-id: Installed apps
-msg: Installerade applikationer
+id: Installed plugins
+# Missing translation
+msg: 
 
 id: Installed version higher than available
 msg: Installerad version är högre än den som är tillgänglig
@@ -1301,14 +1360,19 @@ msg: Öppna skal
 id: Power off system
 msg: Stäng av systemet
 
+id: Quit
+# Missing translation
+msg: 
+
 id: SSH server
 msg: SSH server
 
 id: Standby
 msg: Viloläge
 
-id: Starting and stopping Showtime
-msg: Starta och stanna Showtime
+id: Starting and stopping
+# Missing translation
+msg: 
 
 #
 # ./src/sd/sd.c
@@ -1523,14 +1587,15 @@ msg: Videolägen
 #
 # ./src/upgrade.c
 #
+id: %s version %s is available
+# Missing translation
+msg: 
+
 id: Notify about upgrades
 msg: Avisera uppgraderingar
 
 id: Open download page
 msg: Öppna sida för nerladdning
-
-id: Showtime version %s is available
-msg: Version %s av Showtime är tillgängligt
 
 id: Software upgrade
 msg: Uppgradera mjukvara
@@ -1556,6 +1621,14 @@ msg: Kan ej hitta tjänsten
 #
 # ./src/video/video_settings.c
 #
+id: Always
+# Missing translation
+msg: 
+
+id: Ask
+# Missing translation
+msg: 
+
 id: Automatically play next video in list
 msg: Spela nästa video i listan automatiskt
 
@@ -1570,6 +1643,10 @@ msg: Aktivera VDPAU
 
 id: Maximum resolution for deinterlacer
 msg: Maximal upplösning för deinterlacing
+
+id: Never
+# Missing translation
+msg: 
 
 id: No limit
 msg: Ingen begränsning

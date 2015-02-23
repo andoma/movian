@@ -22,8 +22,9 @@ msg: Aktiviere automatisches Ausschalten
 id: Disable sleep timer
 msg: Deaktiviere automatisches Ausschalten
 
-id: Exit Showtime
-msg: Showtime beenden
+id: Exit %s
+# Missing translation
+msg: 
 
 id: Go to Home screen
 msg: Zum Hauptmenü
@@ -248,6 +249,10 @@ msg: Datum:
 #
 # ./glwskins/default/pages/iteminfo/plugin.view
 #
+id: %s %s or newer is required
+# Missing translation
+msg: 
+
 id: Author: 
 msg: Author:
 
@@ -256,9 +261,6 @@ msg: verfügbare Version:
 
 id: Installed version: 
 msg: Installierte Version:
-
-id: Showtime %s or newer is required
-msg: Showtime %s oder neuer wird benötigt
 
 #
 # ./glwskins/default/pages/iteminfo/video.view
@@ -345,6 +347,10 @@ msg: Unterbrochen
 #
 # ./glwskins/default/pages/upgrade.view
 #
+id: %s is up to date
+# Missing translation
+msg: 
+
 id: An error occured during download
 msg: Fehler beim Download
 
@@ -384,14 +390,12 @@ msg: Kein Update verfügbar
 id: Patching %s
 msg: Patche %s
 
-id: Restarting Showtime in %d seconds...
-msg: Showtime wird in %s Sekunden neugestartet
+id: Restarting %s in %d seconds...
+# Missing translation
+msg: 
 
 id: Retry...
 msg: Versuche erneut...
-
-id: Showtime is up to date
-msg: Showtime ist aktuell
 
 id: Stable
 msg: stabile Version
@@ -441,6 +445,17 @@ msg: Namen speichern
 
 id: Username
 msg: Benutzername
+
+#
+# ./glwskins/default/popups/resume.view
+#
+id: No, Start over
+# Missing translation
+msg: 
+
+id: Resume %s from %s
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/screensaver.view
@@ -534,20 +549,44 @@ msg: Kann Cell-Codec nicht abfragen. Fehler 0x%x
 #
 # ./src/arch/rpi/rpi_audio.c
 #
+id: 8 Channel PCM
+# Missing translation
+msg: 
+
+id: AC3 Pass-Through
+# Missing translation
+msg: 
+
 id: Analog
 msg: Analog
 
 id: Audio output port
 msg: Audioausgang
 
+id: Autodetect
+# Missing translation
+msg: 
+
+id: DTS Pass-Through
+# Missing translation
+msg: 
+
 id: HDMI
 msg: HDMI
+
+id: Off
+msg: Aus
+
+id: On
+# Missing translation
+msg: 
 
 #
 # ./src/arch/rpi/rpi_cec.c
 #
-id: Configure how Showtime communicates with your TV
-msg: Einstellen wie Showtime sich mit dem Fernseher verbindet
+id: Configure communications with your TV
+# Missing translation
+msg: 
 
 id: Consumer Electronics Control
 msg: Consumer Electronics Control (CEC)
@@ -686,6 +725,17 @@ id: DVD read error, restarting disc
 msg: DVD Lesefehler, Disk wird neugestartet
 
 #
+# ./src/backend/hls/hls.c
+#
+id: Primary
+# Missing translation
+msg: 
+
+id: Supplementary
+# Missing translation
+msg: 
+
+#
 # ./src/backend/htsp/htsp.c
 #
 id: Invalid HTSP URL
@@ -706,8 +756,9 @@ msg: Suchergebnis für: %s
 id: Albums
 msg: Alben
 
-id: Automatic login when Showtime starts
-msg: Automatisch bei Programmstart einloggen
+id: Automatic login on start
+# Missing translation
+msg: 
 
 id: Collaborative
 msg: Gemeinschaftlich
@@ -795,21 +846,6 @@ id: Search using Unix locatedb
 msg: Suchen per Unix Locatedb
 
 #
-# ./src/fileaccess/fa_nativesmb.c
-#
-id: Access denied
-msg: Zugang verweigert
-
-id: Account restricted
-msg: Zugang ist beschränkt
-
-id: Bad network share name
-msg: Falscher Freigabename
-
-id: Logon failure
-msg: Logon Fehler
-
-#
 # ./src/fileaccess/fa_scanner.c
 #
 id: Artists
@@ -829,9 +865,6 @@ msg: Dateiname
 
 id: Indexed mode
 msg: Indexmodus
-
-id: Off
-msg: Aus
 
 id: Show only supported files
 msg: Nur unterstützte Dateitypen anzeigen
@@ -888,6 +921,25 @@ msg[1]: %d Verzeichnisse
 id: %d files
 msg[0]: %d Datei
 msg[1]: %d Dateien
+
+#
+# ./src/fileaccess/smb/fa_nativesmb.c
+#
+id: Access denied
+msg: Zugang verweigert
+
+id: Account restricted
+msg: Zugang ist beschränkt
+
+id: Bad network share name
+msg: Falscher Freigabename
+
+id: Logon failure
+msg: Logon Fehler
+
+id: Object name not found
+# Missing translation
+msg: 
 
 #
 # ./src/i18n.c
@@ -1016,6 +1068,10 @@ msg: Indizieren
 #
 id: Automatic
 msg: Automatisch
+
+id: Erase all playback info
+# Missing translation
+msg: 
 
 id: Manual
 msg: Manuell
@@ -1192,8 +1248,9 @@ msg: Alternative URL für Plugins
 id: Automatically upgrade plugins
 msg: Plugins automatisch updaten
 
-id: Available apps
-msg: Verfügbare Apps
+id: Available plugins
+# Missing translation
+msg: 
 
 id: Background
 msg: Hintergrund
@@ -1201,8 +1258,9 @@ msg: Hintergrund
 id: Beta testing passwords
 msg: Passwort für Betatests
 
-id: Browse available apps
-msg: verfügbare Apps durchsuchen
+id: Browse available plugins
+# Missing translation
+msg: 
 
 id: Browsing
 msg: Durchsuchen
@@ -1225,8 +1283,9 @@ msg: Fehler beim Datei öffnen
 id: Home page
 msg: Startseite
 
-id: Installed apps
-msg: Installierte Apps
+id: Installed plugins
+# Missing translation
+msg: 
 
 id: Installed version higher than available
 msg: Installierte Version ist höher als die verfügbare
@@ -1318,14 +1377,19 @@ msg: Shell öffnen
 id: Power off system
 msg: System abschalten
 
+id: Quit
+# Missing translation
+msg: 
+
 id: SSH server
 msg: SSH-Server
 
 id: Standby
 msg: Standby
 
-id: Starting and stopping Showtime
-msg: Showtime starten und stoppen
+id: Starting and stopping
+# Missing translation
+msg: 
 
 #
 # ./src/sd/sd.c
@@ -1540,14 +1604,15 @@ msg: Video Modus
 #
 # ./src/upgrade.c
 #
+id: %s version %s is available
+# Missing translation
+msg: 
+
 id: Notify about upgrades
 msg: Über Updates benachrichtigen
 
 id: Open download page
 msg: Downloadseite öffnen
-
-id: Showtime version %s is available
-msg: Showtime Version %s steht zur Verfügung
 
 id: Software upgrade
 msg: Software update
@@ -1573,6 +1638,14 @@ msg: Service nicht gefunden
 #
 # ./src/video/video_settings.c
 #
+id: Always
+# Missing translation
+msg: 
+
+id: Ask
+# Missing translation
+msg: 
+
 id: Automatically play next video in list
 msg: Nächstes Video in der Liste automatisch starten 
 
@@ -1587,6 +1660,10 @@ msg: VDPAU aktivieren
 
 id: Maximum resolution for deinterlacer
 msg: Maximale Auflösung für Deinterlacer
+
+id: Never
+# Missing translation
+msg: 
 
 id: No limit
 msg: Keine Begrenzung

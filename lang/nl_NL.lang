@@ -24,8 +24,9 @@ id: Disable sleep timer
 # Missing translation
 msg: 
 
-id: Exit Showtime
-msg: Showtime afsluiten
+id: Exit %s
+# Missing translation
+msg: 
 
 id: Go to Home screen
 msg: Naar het thuisscherm gaan
@@ -259,6 +260,10 @@ msg:
 #
 # ./glwskins/default/pages/iteminfo/plugin.view
 #
+id: %s %s or newer is required
+# Missing translation
+msg: 
+
 id: Author: 
 # Missing translation
 msg: 
@@ -270,9 +275,6 @@ msg:
 id: Installed version: 
 # Missing translation
 msg: 
-
-id: Showtime %s or newer is required
-msg: Showtime %s of nieuwer is vereist
 
 #
 # ./glwskins/default/pages/iteminfo/video.view
@@ -359,6 +361,10 @@ msg: Gepauzeerd
 #
 # ./glwskins/default/pages/upgrade.view
 #
+id: %s is up to date
+# Missing translation
+msg: 
+
 id: An error occured during download
 msg: Er is een fout opgetreden tijdens het downloaden
 
@@ -402,14 +408,12 @@ id: Patching %s
 # Missing translation
 msg: 
 
-id: Restarting Showtime in %d seconds...
-msg: Showtime herstarten in %d seconden...
+id: Restarting %s in %d seconds...
+# Missing translation
+msg: 
 
 id: Retry...
 msg: Opnieuw proberen...
-
-id: Showtime is up to date
-msg: Showtime is bijgewerkt
 
 id: Stable
 msg: Stabiel
@@ -460,6 +464,17 @@ msg: Onthoud mij
 
 id: Username
 msg: Gebruikersnaam
+
+#
+# ./glwskins/default/popups/resume.view
+#
+id: No, Start over
+# Missing translation
+msg: 
+
+id: Resume %s from %s
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/screensaver.view
@@ -562,6 +577,14 @@ msg: De Cell-codec kon niet worden aangevraagd. Fout 0x%x
 #
 # ./src/arch/rpi/rpi_audio.c
 #
+id: 8 Channel PCM
+# Missing translation
+msg: 
+
+id: AC3 Pass-Through
+# Missing translation
+msg: 
+
 id: Analog
 # Missing translation
 msg: 
@@ -570,14 +593,29 @@ id: Audio output port
 # Missing translation
 msg: 
 
+id: Autodetect
+# Missing translation
+msg: 
+
+id: DTS Pass-Through
+# Missing translation
+msg: 
+
 id: HDMI
+# Missing translation
+msg: 
+
+id: Off
+msg: Uit
+
+id: On
 # Missing translation
 msg: 
 
 #
 # ./src/arch/rpi/rpi_cec.c
 #
-id: Configure how Showtime communicates with your TV
+id: Configure communications with your TV
 # Missing translation
 msg: 
 
@@ -735,6 +773,17 @@ id: DVD read error, restarting disc
 msg: DVD-leesfout, schijf herstarten
 
 #
+# ./src/backend/hls/hls.c
+#
+id: Primary
+# Missing translation
+msg: 
+
+id: Supplementary
+# Missing translation
+msg: 
+
+#
 # ./src/backend/htsp/htsp.c
 #
 id: Invalid HTSP URL
@@ -755,8 +804,9 @@ msg: Zoekresultaat voor: %s
 id: Albums
 msg: Albums
 
-id: Automatic login when Showtime starts
-msg: Automatisch inloggen als Showtime opstart
+id: Automatic login on start
+# Missing translation
+msg: 
 
 id: Collaborative
 msg: Gezamenlijk
@@ -844,21 +894,6 @@ id: Search using Unix locatedb
 msg: Zoeken via Unix-locatedb
 
 #
-# ./src/fileaccess/fa_nativesmb.c
-#
-id: Access denied
-msg: Toegang geweigerd
-
-id: Account restricted
-msg: Account beperkt
-
-id: Bad network share name
-msg: Onjuiste deelnaam voor netwerk
-
-id: Logon failure
-msg: Inlogfout
-
-#
 # ./src/fileaccess/fa_scanner.c
 #
 id: Artists
@@ -879,9 +914,6 @@ msg: Bestandsnaam
 
 id: Indexed mode
 msg: Geïndexeerde modus
-
-id: Off
-msg: Uit
 
 id: Show only supported files
 msg: Alleen ondersteunde bestanden weergeven
@@ -944,6 +976,25 @@ msg[1]:
 id: %d files
 msg[0]: 
 msg[1]: 
+
+#
+# ./src/fileaccess/smb/fa_nativesmb.c
+#
+id: Access denied
+msg: Toegang geweigerd
+
+id: Account restricted
+msg: Account beperkt
+
+id: Bad network share name
+msg: Onjuiste deelnaam voor netwerk
+
+id: Logon failure
+msg: Inlogfout
+
+id: Object name not found
+# Missing translation
+msg: 
 
 #
 # ./src/i18n.c
@@ -1082,6 +1133,10 @@ msg: Indexeren
 #
 id: Automatic
 msg: Automatisch
+
+id: Erase all playback info
+# Missing translation
+msg: 
 
 id: Manual
 # Missing translation
@@ -1268,7 +1323,7 @@ msg: Alternatieve repository-URL voor plugin
 id: Automatically upgrade plugins
 msg: Plugins automatisch bijwerken
 
-id: Available apps
+id: Available plugins
 # Missing translation
 msg: 
 
@@ -1278,7 +1333,7 @@ msg: Achtergrond
 id: Beta testing passwords
 msg: Beta testers wachtwoord
 
-id: Browse available apps
+id: Browse available plugins
 # Missing translation
 msg: 
 
@@ -1303,7 +1358,7 @@ msg: Fout bij openen bestand
 id: Home page
 msg: Thuispagina
 
-id: Installed apps
+id: Installed plugins
 # Missing translation
 msg: 
 
@@ -1400,6 +1455,10 @@ msg: Shell openen
 id: Power off system
 msg: Systeem uitschakelen
 
+id: Quit
+# Missing translation
+msg: 
+
 id: SSH server
 # Missing translation
 msg: 
@@ -1408,8 +1467,9 @@ id: Standby
 # Missing translation
 msg: 
 
-id: Starting and stopping Showtime
-msg: Showtime starten en stoppen
+id: Starting and stopping
+# Missing translation
+msg: 
 
 #
 # ./src/sd/sd.c
@@ -1642,14 +1702,15 @@ msg: Videomodi
 #
 # ./src/upgrade.c
 #
+id: %s version %s is available
+# Missing translation
+msg: 
+
 id: Notify about upgrades
 msg: Informeren over updates
 
 id: Open download page
 msg: Downloadpagina openen
-
-id: Showtime version %s is available
-msg: Showtime-versie %s is beschikbaar
 
 id: Software upgrade
 msg: Softwareupdate
@@ -1675,6 +1736,14 @@ msg: Service niet gevonden
 #
 # ./src/video/video_settings.c
 #
+id: Always
+# Missing translation
+msg: 
+
+id: Ask
+# Missing translation
+msg: 
+
 id: Automatically play next video in list
 msg: De volgende video in de lijst automatisch afspelen
 
@@ -1689,6 +1758,10 @@ msg: VDPAU inschakelen
 
 id: Maximum resolution for deinterlacer
 msg: Maximale resolutie voor deinterlacer
+
+id: Never
+# Missing translation
+msg: 
 
 id: No limit
 msg: Geen limiet
