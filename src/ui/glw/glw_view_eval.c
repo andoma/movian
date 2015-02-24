@@ -90,7 +90,7 @@ typedef struct sub_cloner {
 
   token_t *sc_cloner_body;
   const glw_class_t *sc_cloner_class;
-  
+
   struct glw_prop_sub_pending_queue sc_pending;
   prop_t *sc_pending_select;
 
@@ -217,7 +217,7 @@ glw_prop_subscription_destroy_list(glw_root_t *gr, struct glw_prop_sub_list *l)
 
     case GPS_CLONER:
       sc = (sub_cloner_t *)gps;
- 
+
       cloner_cleanup(gr, sc);
 
       if(sc->sc_originating_prop)
@@ -324,7 +324,7 @@ token_resolve_ex(glw_view_eval_context_t *ec, token_t *t, int type)
   if((t->type == TOKEN_PROPERTY_NAME ||
       t->type == TOKEN_PROPERTY_REF) && subscribe_prop(ec, t, type))
     return NULL;
-  
+
   if(t->type == TOKEN_PROPERTY_SUBSCRIPTION) {
     ec->dynamic_eval |= GLW_VIEW_EVAL_PROP;
     t = t->t_propsubr->gps_token ?: eval_alloc(t, ec, TOKEN_VOID);
@@ -524,14 +524,14 @@ eval_op(glw_view_eval_context_t *ec, struct token *self)
     if((aa = token_as_string(a)) != NULL &&
        (bb = token_as_string(b)) != NULL) {
       /* Concatenation of strings */
-      
-      int rich = 
+
+      int rich =
 	(a->type == TOKEN_RSTRING && a->t_rstrtype == PROP_STR_RICH) ||
 	(b->type == TOKEN_RSTRING && b->t_rstrtype == PROP_STR_RICH);
 
-      int al = rich && a->t_rstrtype == PROP_STR_UTF8 ? 
+      int al = rich && a->t_rstrtype == PROP_STR_UTF8 ?
 	html_enteties_escape(aa, NULL) - 1 : strlen(aa);
-      int bl = rich && b->t_rstrtype == PROP_STR_UTF8 ? 
+      int bl = rich && b->t_rstrtype == PROP_STR_UTF8 ?
 	html_enteties_escape(bb, NULL) - 1 : strlen(bb);
 
       r = eval_alloc(self, ec, TOKEN_RSTRING);
@@ -769,11 +769,11 @@ eval_lt(glw_view_eval_context_t *ec, struct token *self, int gt)
  * Returns the second argument if the first is void, otherwise returns
  * the first arg
  */
-static int 
+static int
 eval_null_coalesce(glw_view_eval_context_t *ec, struct token *self)
 {
   token_t *b = eval_pop(ec), *a = eval_pop(ec);
- 
+
   if((a = token_resolve(ec, a)) == NULL)
     return -1;
   if((b = token_resolve(ec, b)) == NULL)
@@ -874,7 +874,7 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
     return glw_view_seterr(ec->ei, self, "Invalid assignment");
 
   /* Catch some special cases here */
-  if(right->type == TOKEN_PROPERTY_NAME && 
+  if(right->type == TOKEN_PROPERTY_NAME &&
      !strcmp(rstr_get(right->t_rstring), "event")) {
     /* Assignment from $event, if our eval context has an event use it */
     if(ec->event == NULL || ec->event->e_type_x != EVENT_KEYDESC)
@@ -1016,7 +1016,7 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
  *
  */
 static void
-eval_dynamic(glw_t *w, token_t *rpn, struct glw_rctx *rc, 
+eval_dynamic(glw_t *w, token_t *rpn, struct glw_rctx *rc,
 	     prop_t *prop, prop_t *view, prop_t *clone)
 {
   glw_view_eval_context_t ec;
@@ -1046,7 +1046,7 @@ static uint8_t signal_to_eval_mask[GLW_SIGNAL_num] = {
   [GLW_SIGNAL_INACTIVE]                      = GLW_VIEW_EVAL_ACTIVE,
 
   [GLW_SIGNAL_FHP_PATH_CHANGED]              = GLW_VIEW_EVAL_FHP_CHANGE,
-  
+
   [GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE]       = GLW_VIEW_EVAL_OTHER,
   [GLW_SIGNAL_FOCUS_CHILD_AUTOMATIC]         = GLW_VIEW_EVAL_OTHER,
   [GLW_SIGNAL_CAN_SCROLL_CHANGED]            = GLW_VIEW_EVAL_OTHER,
@@ -1238,7 +1238,7 @@ clone_sig_handler(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   case GLW_SIGNAL_ACTIVE:
     if(!sc->sc_positions_valid)
       cloner_resequence(sc);
-    
+
     if(c->c_pos < sc->sc_lowest_active)
       sc->sc_lowest_active = c->c_pos;
 
@@ -1315,7 +1315,7 @@ cloner_resequence(sub_cloner_t *sc)
  *
  */
 static void
-cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before, 
+cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
 		  glw_t *parent, errorinfo_t *ei, int flags)
 {
   glw_t *b;
@@ -1381,7 +1381,7 @@ cloner_add_child(sub_cloner_t *sc, prop_t *p, prop_t *before,
    * Put it on a pending list and add it once the cloner has been
    * setup.
    */
-  
+
   b = before ? prop_tag_get(before, &sc->sc_pending) : NULL;
 
   gpsp = malloc(sizeof(glw_prop_sub_pending_t));
@@ -1523,7 +1523,7 @@ static void
 cloner_suggest_focus(sub_cloner_t *sc, prop_t *p, glw_t *parent)
 {
   glw_clone_t *c;
-  
+
   if((c = prop_tag_get(p, sc)) != NULL) {
     if(parent->glw_class->gc_suggest_focus != NULL)
       parent->glw_class->gc_suggest_focus(parent, c->c_w);
@@ -1664,7 +1664,7 @@ prop_callback_cloner(void *opaque, prop_event_t event, ...)
   }
 
   if(t != NULL) {
-      
+
     if(gps->gps_token != NULL) {
       glw_view_token_free(gr, gps->gps_token);
       gps->gps_token = NULL;
@@ -1672,7 +1672,7 @@ prop_callback_cloner(void *opaque, prop_event_t event, ...)
     gps->gps_token = t;
   }
 
-  if(rpn != NULL) 
+  if(rpn != NULL)
     eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop, gps->gps_prop_view,
 		 gps->gps_prop_clone);
 }
@@ -1769,7 +1769,7 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
   }
 
   if(t != NULL) {
-      
+
     if(gps->gps_token != NULL) {
       glw_view_token_free(gps->gps_widget->glw_root, gps->gps_token);
       gps->gps_token = NULL;
@@ -1777,7 +1777,7 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
     gps->gps_token = t;
   }
 
-  if(rpn != NULL) 
+  if(rpn != NULL)
     eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop, gps->gps_prop_view,
 		 gps->gps_prop_clone);
 }
@@ -1821,7 +1821,7 @@ prop_callback_counter(void *opaque, prop_event_t event, ...)
     pv = va_arg(ap, prop_vec_t *);
     sc->sc_entries += prop_vec_len(pv);
     break;
-    
+
   case PROP_DEL_CHILD:
     sc->sc_entries--;
     break;
@@ -1854,7 +1854,7 @@ prop_callback_counter(void *opaque, prop_event_t event, ...)
 
   gps->gps_token = t;
 
-  if(rpn != NULL) 
+  if(rpn != NULL)
     eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop, gps->gps_prop_view,
 		 gps->gps_prop_clone);
 }
@@ -1873,7 +1873,7 @@ ve_cb(void *opaque, prop_event_t event, ...)
   va_list ap;
   va_start(ap, event);
 
-  
+
   switch(event) {
   case PROP_SET_VOID:
   case PROP_SET_DIR:
@@ -1964,7 +1964,7 @@ ve_cb(void *opaque, prop_event_t event, ...)
 
   }
 
-  if(rpn != NULL) 
+  if(rpn != NULL)
     eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop, gps->gps_prop_view,
 		 gps->gps_prop_clone);
 }
@@ -1983,7 +1983,7 @@ vectorizer_add_element(sub_vectorizer_t *sv, prop_t *p, prop_t *before,
   ve->ve_prop = prop_ref_inc(p);
 
   if(flags & PROP_ADD_SELECTED) {
-    if(sv->sv_selected != NULL) 
+    if(sv->sv_selected != NULL)
       sv->sv_selected->ve_token->t_flags &= ~TOKEN_F_SELECTED;
     sv->sv_selected = ve;
   }
@@ -2082,15 +2082,15 @@ vectorizer_del_element(sub_vectorizer_t *sv, prop_t *p, glw_root_t *gr)
     prev->ve_token->next = ve->ve_token->next;
   }
 
-  if(sv->sv_selected == ve) 
+  if(sv->sv_selected == ve)
     sv->sv_selected = NULL;
-  
+
   prop_unsubscribe(ve->ve_sub);
   glw_view_token_free(gr, ve->ve_token);
   prop_ref_dec(ve->ve_prop);
   TAILQ_REMOVE(&sv->sv_elements, ve, ve_link);
   free(ve);
-  
+
   token_t *rpn = gps->gps_rpn;
   if(rpn != NULL)
     eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop, gps->gps_prop_view,
@@ -2110,7 +2110,7 @@ vectorizer_select_element(sub_vectorizer_t *sv, prop_t *p, glw_root_t *gr)
   if(sv->sv_selected == ve)
     return;
 
-  if(sv->sv_selected != NULL) 
+  if(sv->sv_selected != NULL)
     sv->sv_selected->ve_token->t_flags &= ~TOKEN_F_SELECTED;
 
   sv->sv_selected = ve;
@@ -2259,7 +2259,7 @@ prop_callback_vectorizer(void *opaque, prop_event_t event, ...)
   }
 
   if(t != NULL) {
-      
+
     if(gps->gps_token != NULL) {
       glw_view_token_free(gr, gps->gps_token);
       gps->gps_token = NULL;
@@ -2267,7 +2267,7 @@ prop_callback_vectorizer(void *opaque, prop_event_t event, ...)
     gps->gps_token = t;
   }
 
-  if(rpn != NULL) 
+  if(rpn != NULL)
     eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop, gps->gps_prop_view,
 		 gps->gps_prop_clone);
 }
@@ -2289,8 +2289,8 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
   prop_callback_t *cb;
   prop_t *prop = NULL;
 
-  if(w == NULL) 
-    return glw_view_seterr(ec->ei, self, 
+  if(w == NULL)
+    return glw_view_seterr(ec->ei, self,
 			    "Properties can not be mapped in this scope");
 
   switch(self->type) {
@@ -2324,7 +2324,7 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
       sc->sc_originating_prop = prop_ref_inc(ec->prop);
       sc->sc_view_prop        = prop_ref_inc(ec->prop_viewx);
       sc->sc_view_args        = prop_ref_inc(ec->prop_args);
-      
+
       TAILQ_INIT(&sc->sc_pending);
     } while(0);
     cb = prop_callback_cloner;
@@ -2456,7 +2456,7 @@ make_vector(glw_view_eval_context_t *ec, token_t *t)
 
   r = eval_alloc(t, ec, TOKEN_VECTOR_FLOAT);
   r->t_elements = t->t_num_args;
- 
+
   for(i = t->t_num_args - 1; i >= 0; i--) {
     if((a = token_resolve(ec, eval_pop(ec))) == NULL)
       return -1;
@@ -2516,7 +2516,7 @@ glw_view_eval_rpn0(token_t *t0, glw_view_eval_context_t *ec)
       if(eval_bool_not(ec, t))
 	return -1;
       break;
-	
+
     case TOKEN_NULL_COALESCE:
       if(eval_null_coalesce(ec, t))
 	return -1;
@@ -2629,7 +2629,7 @@ glw_view_eval_block(token_t *t, glw_view_eval_context_t *ec)
       if(glw_view_eval_rpn(t, ec, &copy))
 	return -1;
 
-      if(!copy) 
+      if(!copy)
 	break;
 
       *p = t->next;
@@ -2641,7 +2641,7 @@ glw_view_eval_block(token_t *t, glw_view_eval_context_t *ec)
       t->t_dynamic_eval = copy;
       w->glw_dynamic_eval |= copy;
       continue;
-      
+
     case TOKEN_FLOAT:
     case TOKEN_INT:
     case TOKEN_VECTOR_FLOAT:
@@ -2668,7 +2668,7 @@ glw_view_eval_block(token_t *t, glw_view_eval_context_t *ec)
 /**
  *
  */
-static int 
+static int
 glwf_widget(glw_view_eval_context_t *ec, struct token *self,
 	    token_t **argv, unsigned int argc)
 {
@@ -2677,12 +2677,12 @@ glwf_widget(glw_view_eval_context_t *ec, struct token *self,
   glw_view_eval_context_t n;
   token_t *b = argv[0];
 
-  if(ec->w == NULL) 
-    return glw_view_seterr(ec->ei, self, 
+  if(ec->w == NULL)
+    return glw_view_seterr(ec->ei, self,
 			    "Widget can not be created in this scope");
-    
+
   if(b->type != TOKEN_BLOCK)
-    return glw_view_seterr(ec->ei, self, 
+    return glw_view_seterr(ec->ei, self,
 			    "widget: Invalid second argument, "
 			    "expected block");
 
@@ -2753,7 +2753,7 @@ glwf_resolve_widget_class(glw_root_t *gr, errorinfo_t *ei, token_t *t)
 /**
  *
  */
-static int 
+static int
 glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
 	    token_t **argv, unsigned int argc)
 {
@@ -2766,23 +2766,23 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
   glw_t *parent = ec->w;
   glw_t *w;
 
-  if(parent == NULL) 
-    return glw_view_seterr(ec->ei, self, 
+  if(parent == NULL)
+    return glw_view_seterr(ec->ei, self,
 			    "Cloner can not be created in this scope");
 
   if((a = token_resolve_ex(ec, a, GPS_CLONER)) == NULL)
     return -1;
-    
+
   if(b->type != TOKEN_IDENTIFIER)
-    return glw_view_seterr(ec->ei, self, 
+    return glw_view_seterr(ec->ei, self,
 			    "cloner: Invalid second argument, "
 			    "expected widget class");
-    
+
  if((cl = glw_class_find_by_name(rstr_get(b->t_rstring))) == NULL)
      return glw_view_seterr(ec->ei, self, "cloner: Invalid class");
 
   if(c->type != TOKEN_BLOCK)
-    return glw_view_seterr(ec->ei, self, 
+    return glw_view_seterr(ec->ei, self,
 			    "cloner: Invalid third argument, "
 			    "expected block");
 
@@ -2798,7 +2798,7 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
 
     if(dummy == NULL)
       dummy = glw_class_find_by_name("dummy");
-    
+
     self->t_extra = glw_create(ec->gr, dummy, parent, NULL, NULL);
 
     glw_hide(self->t_extra);
@@ -2826,7 +2826,7 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
       TAILQ_REMOVE(&sc->sc_pending, gpsp, gpsp_link);
 
       f = gpsp->gpsp_prop == sc->sc_pending_select ? PROP_ADD_SELECTED : 0;
-	
+
       cloner_add_child0(sc, gpsp->gpsp_prop, NULL, parent, ec->ei, f);
       prop_tag_clear(gpsp->gpsp_prop, &sc->sc_pending);
       prop_ref_dec(gpsp->gpsp_prop);
@@ -2893,15 +2893,15 @@ glwf_style(glw_view_eval_context_t *ec, struct token *self,
 /**
  *
  */
-static int 
+static int
 glwf_space(glw_view_eval_context_t *ec, struct token *self,
 	   token_t **argv, unsigned int argc)
 
 {
   token_t *a = argv[0];
   static const glw_class_t *dummy;
-  if(ec->w == NULL) 
-    return glw_view_seterr(ec->ei, self, 
+  if(ec->w == NULL)
+    return glw_view_seterr(ec->ei, self,
 			    "Widget can not be created in this scope");
 
   if((a = token_resolve(ec, a)) == NULL)
@@ -3021,7 +3021,7 @@ glw_event_map_eval_block_create(glw_view_eval_context_t *ec,
 /**
  *
  */
-static int 
+static int
 glwf_onEvent(glw_view_eval_context_t *ec, struct token *self,
 	     token_t **argv, unsigned int argc)
 
@@ -3033,8 +3033,8 @@ glwf_onEvent(glw_view_eval_context_t *ec, struct token *self,
   glw_t *w = ec->w;
   glw_event_map_t *gem;
 
-  if(w == NULL) 
-    return glw_view_seterr(ec->ei, self, 
+  if(w == NULL)
+    return glw_view_seterr(ec->ei, self,
 			   "Events can not be mapped in this scope");
 
   if(a == NULL || b == NULL)
@@ -3095,7 +3095,7 @@ glwf_onEvent(glw_view_eval_context_t *ec, struct token *self,
 /**
  *
  */
-static int 
+static int
 glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
 	     token_t **argv, unsigned int argc)
 {
@@ -3141,7 +3141,7 @@ glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
   if(argc > 2 && argv[2]->type != TOKEN_VOID) {
     if((c = resolve_property_name2(ec, argv[2])) == NULL)
       return -1;
-    
+
     if(c->type != TOKEN_PROPERTY_REF)
       return glw_view_seterr(ec->ei, c, "navOpen(): "
 			     "Third argument is not a property");
@@ -3151,7 +3151,7 @@ glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
   if(argc > 3  && argv[3]->type != TOKEN_VOID) {
     if((d = resolve_property_name2(ec, argv[3])) == NULL)
       return -1;
-    
+
     if(d->type != TOKEN_PROPERTY_REF)
       return glw_view_seterr(ec->ei, d, "navOpen(): "
 			     "Fourth argument is not a property");
@@ -3232,7 +3232,7 @@ glwf_deliverRef(glw_view_eval_context_t *ec, struct token *self,
 /**
  *
  */
-static int 
+static int
 glwf_deliverEvent(glw_view_eval_context_t *ec, struct token *self,
 		  token_t **argv, unsigned int argc)
 {
@@ -3284,7 +3284,7 @@ glwf_deliverEvent(glw_view_eval_context_t *ec, struct token *self,
 /**
  *
  */
-static int 
+static int
 glwf_playTrackFromSource(glw_view_eval_context_t *ec, struct token *self,
 			 token_t **argv, unsigned int argc)
 {
@@ -3311,7 +3311,7 @@ glwf_playTrackFromSource(glw_view_eval_context_t *ec, struct token *self,
 /**
  *
  */
-static int 
+static int
 glwf_enqueueTrack(glw_view_eval_context_t *ec, struct token *self,
 		  token_t **argv, unsigned int argc)
 {
@@ -3331,7 +3331,7 @@ glwf_enqueueTrack(glw_view_eval_context_t *ec, struct token *self,
 /**
  *
  */
-static int 
+static int
 glwf_selectTrack(glw_view_eval_context_t *ec, struct token *self,
 		 token_t **argv, unsigned int argc, event_type_t type)
 {
@@ -3365,7 +3365,7 @@ glwf_selectTrack(glw_view_eval_context_t *ec, struct token *self,
 /**
  *
  */
-static int 
+static int
 glwf_selectAudioTrack(glw_view_eval_context_t *ec, struct token *self,
 		 token_t **argv, unsigned int argc)
 {
@@ -3375,7 +3375,7 @@ glwf_selectAudioTrack(glw_view_eval_context_t *ec, struct token *self,
 /**
  *
  */
-static int 
+static int
 glwf_selectSubtitleTrack(glw_view_eval_context_t *ec, struct token *self,
 		 token_t **argv, unsigned int argc)
 {
@@ -3386,7 +3386,7 @@ glwf_selectSubtitleTrack(glw_view_eval_context_t *ec, struct token *self,
 /**
  *
  */
-static int 
+static int
 glwf_fireEvent(glw_view_eval_context_t *ec, struct token *self,
 	       token_t **argv, unsigned int argc)
 {
@@ -3397,7 +3397,7 @@ glwf_fireEvent(glw_view_eval_context_t *ec, struct token *self,
 
   a->type = TOKEN_NOP; // Steal event
   glw_event_map_t *gem = a->t_gem;
-  
+
   gem->gem_fire(ec->w, gem, NULL);
   return 0;
 }
@@ -3406,7 +3406,7 @@ glwf_fireEvent(glw_view_eval_context_t *ec, struct token *self,
 /**
  *
  */
-static int 
+static int
 glwf_targetedEvent(glw_view_eval_context_t *ec, struct token *self,
 	   token_t **argv, unsigned int argc)
 {
@@ -3421,7 +3421,7 @@ glwf_targetedEvent(glw_view_eval_context_t *ec, struct token *self,
   if(a->type != TOKEN_RSTRING)
     return glw_view_seterr(ec->ei, a, "event(): "
 			    "First argument is not a string");
-  
+
   if(b->type == TOKEN_IDENTIFIER) {
 
     action = action_str2code(rstr_get(b->t_rstring));
@@ -3436,7 +3436,7 @@ glwf_targetedEvent(glw_view_eval_context_t *ec, struct token *self,
     return glw_view_seterr(ec->ei, b,
 			   "targetedEvent(): Invalid second argument");
   }
-  
+
   r = eval_alloc(self, ec, TOKEN_EVENT);
   r->t_gem = glw_event_map_internal_create(rstr_get(a->t_rstring), action,
 					   uc);
@@ -3448,7 +3448,7 @@ glwf_targetedEvent(glw_view_eval_context_t *ec, struct token *self,
 /**
  *
  */
-static int 
+static int
 glwf_event(glw_view_eval_context_t *ec, struct token *self,
 	   token_t **argv, unsigned int argc)
 {
@@ -3460,7 +3460,7 @@ glwf_event(glw_view_eval_context_t *ec, struct token *self,
   if(a->type != TOKEN_IDENTIFIER ||
      (action = action_str2code(rstr_get(a->t_rstring))) < 0)
     return glw_view_seterr(ec->ei, a, "event(): Invalid target event");
-  
+
   r = eval_alloc(self, ec, TOKEN_EVENT);
   r->t_gem = glw_event_map_internal_create(NULL, action, 0);
   eval_push(ec, r);
@@ -3490,7 +3490,7 @@ typedef struct glwf_changed_extra {
 /**
  *
  */
-static int 
+static int
 glwf_changed(glw_view_eval_context_t *ec, struct token *self,
 	     token_t **argv, unsigned int argc)
 
@@ -3502,7 +3502,7 @@ glwf_changed(glw_view_eval_context_t *ec, struct token *self,
   int supp_first = 0;
 
   if(argc < 2 || argc > 3)
-    return glw_view_seterr(ec->ei, self, 
+    return glw_view_seterr(ec->ei, self,
 			    "changed(): Invalid number of arguments");
 
   if((a = token_resolve(ec, argv[0])) == NULL)
@@ -3516,14 +3516,14 @@ glwf_changed(glw_view_eval_context_t *ec, struct token *self,
   }
 
   if(a->type != TOKEN_FLOAT && a->type != TOKEN_RSTRING &&
-     a->type != TOKEN_VOID && a->type != TOKEN_CSTRING && 
+     a->type != TOKEN_VOID && a->type != TOKEN_CSTRING &&
      a->type != TOKEN_INT && a->type != TOKEN_PROPERTY_REF)
     return glw_view_seterr(ec->ei, self,
 			   "Invalid first operand (%s) to changed()",
 			   token2name(a));
 
   if(b->type != TOKEN_FLOAT)
-    return glw_view_seterr(ec->ei, self, 
+    return glw_view_seterr(ec->ei, self,
 			    "Invalid second operand to changed(), "
 			    "expected scalar");
 
@@ -3659,7 +3659,7 @@ glwf_changed_dtor(glw_root_t *gr, struct token *self)
 /**
  * Infinite Impulse Response filter
  */
-static int 
+static int
 glwf_iir(glw_view_eval_context_t *ec, struct token *self,
 	 token_t **argv, unsigned int argc)
 {
@@ -3735,7 +3735,7 @@ typedef struct glw_scurve_extra {
 /**
  * Scurve model
  */
-static int 
+static int
 glwf_scurve(glw_view_eval_context_t *ec, struct token *self,
 	    token_t **argv, unsigned int argc)
 {
@@ -3745,7 +3745,7 @@ glwf_scurve(glw_view_eval_context_t *ec, struct token *self,
   float f, v, tup, tdown;
   glw_scurve_extra_t *s = self->t_extra;
 
-  if(argc < 2) 
+  if(argc < 2)
     return glw_view_seterr(ec->ei, self,
 			    "scurve() requires at least two arguments");
 
@@ -3911,7 +3911,7 @@ dofmt(char *out, const char *fmt, token_t **argv, unsigned int argc)
 
   while((c = *fmt) != 0) {
     if(c != '%') {
-      if(out) 
+      if(out)
 	out[len] = c;
       len++;
       fmt++;
@@ -3947,7 +3947,7 @@ dofmt(char *out, const char *fmt, token_t **argv, unsigned int argc)
       fmt += off;
 
       if(type == '%') {
-	if(out) 
+	if(out)
 	  out[len] = '%';
 	len++;
 	continue;
@@ -4023,7 +4023,7 @@ dofmt(char *out, const char *fmt, token_t **argv, unsigned int argc)
 /**
  * String formating
  */
-static int 
+static int
 glwf_fmt(glw_view_eval_context_t *ec, struct token *self,
 	 token_t **argv, unsigned int argc)
 {
@@ -4034,13 +4034,13 @@ glwf_fmt(glw_view_eval_context_t *ec, struct token *self,
   token_t **res_args;
   unsigned int num_res_args;
 
-  if(argc < 1) 
+  if(argc < 1)
     return glw_view_seterr(ec->ei, self,
 			    "fmt() requires at least one arguments");
-  
+
   if((a = token_resolve(ec, a)) == NULL)
     return -1;
-  
+
   if((fmt = token_as_string(a)) == NULL) {
     r = eval_alloc(self, ec, TOKEN_RSTRING);
     r->t_rstring = rstr_alloc("");
@@ -4071,7 +4071,7 @@ glwf_fmt(glw_view_eval_context_t *ec, struct token *self,
 /**
  *
  */
-static int 
+static int
 token_cmp(token_t *a, token_t *b)
 {
   const char *aa, *bb;
@@ -4100,7 +4100,7 @@ token_cmp(token_t *a, token_t *b)
 /**
  * Associative lookup
  */
-static int 
+static int
 glwf_translate(glw_view_eval_context_t *ec, struct token *self,
 	       token_t **argv, unsigned int argc)
 
@@ -4108,11 +4108,11 @@ glwf_translate(glw_view_eval_context_t *ec, struct token *self,
   token_t *idx, *def, *k, *v;
   int i;
 
-  if(argc < 2) 
+  if(argc < 2)
     return glw_view_seterr(ec->ei, self,
 			    "translate() requires at least two arguments");
 
-  if(argc & 1) 
+  if(argc & 1)
     return glw_view_seterr(ec->ei, self,
 			    "translate() requires even number of arguments");
 
@@ -4129,7 +4129,7 @@ glwf_translate(glw_view_eval_context_t *ec, struct token *self,
       return -1;
     if((v = token_resolve(ec, *argv++)) == NULL)
       return -1;
-    
+
     if(!token_cmp(idx, k)) {
       eval_push(ec, v);
       return 0;
@@ -4142,7 +4142,7 @@ glwf_translate(glw_view_eval_context_t *ec, struct token *self,
 /**
  * strftime support (only localtime)
  */
-static int 
+static int
 glwf_strftime(glw_view_eval_context_t *ec, struct token *self,
 	       token_t **argv, unsigned int argc)
 {
@@ -4159,7 +4159,7 @@ glwf_strftime(glw_view_eval_context_t *ec, struct token *self,
     return -1;
 
   if(b->type != TOKEN_RSTRING)
-    return glw_view_seterr(ec->ei, self, 
+    return glw_view_seterr(ec->ei, self,
 			    "Invalid second operand to strftime()");
 
   t = token2int(ec, a);
@@ -4179,7 +4179,7 @@ glwf_strftime(glw_view_eval_context_t *ec, struct token *self,
 /**
  * Return 1 if the given token is set (string is != "", value != 0)
  */
-static int 
+static int
 glwf_isset(glw_view_eval_context_t *ec, struct token *self,
 	   token_t **argv, unsigned int argc)
 {
@@ -4220,7 +4220,7 @@ glwf_isset(glw_view_eval_context_t *ec, struct token *self,
 /**
  * Return 1 if the given token is void
  */
-static int 
+static int
 glwf_isvoid(glw_view_eval_context_t *ec, struct token *self,
 	   token_t **argv, unsigned int argc)
 {
@@ -4240,7 +4240,7 @@ glwf_isvoid(glw_view_eval_context_t *ec, struct token *self,
 /**
  * Int to string
  */
-static int 
+static int
 glwf_value2duration(glw_view_eval_context_t *ec, struct token *self,
 		    token_t **argv, unsigned int argc)
 {
@@ -4251,7 +4251,7 @@ glwf_value2duration(glw_view_eval_context_t *ec, struct token *self,
   int s = 0;
 
   if(argc < 1 || argc > 2)
-    return glw_view_seterr(ec->ei, self, 
+    return glw_view_seterr(ec->ei, self,
 			    "value2duration(): Invalid number of arguments");
 
   a =            token_resolve(ec, argv[0]);
@@ -4279,7 +4279,7 @@ glwf_value2duration(glw_view_eval_context_t *ec, struct token *self,
     if(str == NULL) {
       int m = s / 60;
       int h = s / 3600;
-  
+
       if(h > 0 || (b != NULL && token2bool(b))) {
 	snprintf(tmp, sizeof(tmp), "%d:%02d:%02d", h, m % 60, s % 60);
       } else {
@@ -4299,7 +4299,7 @@ glwf_value2duration(glw_view_eval_context_t *ec, struct token *self,
 /**
  * Int to string
  */
-static int 
+static int
 glwf_value2size(glw_view_eval_context_t *ec, struct token *self,
 		token_t **argv, unsigned int argc)
 {
@@ -4355,7 +4355,7 @@ glwf_value2size(glw_view_eval_context_t *ec, struct token *self,
 /**
  * Create a new child under the given property
  */
-static int 
+static int
 glwf_createchild(glw_view_eval_context_t *ec, struct token *self,
 		 token_t **argv, unsigned int argc)
 {
@@ -4387,7 +4387,7 @@ glwf_createchild(glw_view_eval_context_t *ec, struct token *self,
 /**
  * Delete given property
  */
-static int 
+static int
 glwf_delete(glw_view_eval_context_t *ec, struct token *self,
 	    token_t **argv, unsigned int argc)
 {
@@ -4402,7 +4402,7 @@ glwf_delete(glw_view_eval_context_t *ec, struct token *self,
     break;
 
   default:
-    return glw_view_seterr(ec->ei, a, 
+    return glw_view_seterr(ec->ei, a,
 			   "Invalid operand to delete()");
   }
   prop_request_delete(a->t_prop);
@@ -4414,7 +4414,7 @@ glwf_delete(glw_view_eval_context_t *ec, struct token *self,
 /**
  * Return 1 if the current widget is in focus
  */
-static int 
+static int
 glwf_isFocused(glw_view_eval_context_t *ec, struct token *self,
 	       token_t **argv, unsigned int argc)
 {
@@ -4432,7 +4432,7 @@ glwf_isFocused(glw_view_eval_context_t *ec, struct token *self,
 /**
  * Return 1 if the current widget is in focus
  */
-static int 
+static int
 glwf_isHovered(glw_view_eval_context_t *ec, struct token *self,
 	       token_t **argv, unsigned int argc)
 {
@@ -4449,7 +4449,7 @@ glwf_isHovered(glw_view_eval_context_t *ec, struct token *self,
 /**
  * Return 1 if the current widget is depressed
  */
-static int 
+static int
 glwf_isPressed(glw_view_eval_context_t *ec, struct token *self,
 	       token_t **argv, unsigned int argc)
 {
@@ -4467,14 +4467,14 @@ glwf_isPressed(glw_view_eval_context_t *ec, struct token *self,
 /**
  * Returns the focused child (or void if nothing is focused)
  */
-static int 
+static int
 glwf_focusedChild(glw_view_eval_context_t *ec, struct token *self,
 		  token_t **argv, unsigned int argc)
 {
   glw_t *w = ec->w, *c;
   token_t *r;
 
-  if(w == NULL) 
+  if(w == NULL)
     return glw_view_seterr(ec->ei, self, "focusedChild() without widget");
 
   ec->dynamic_eval |= GLW_VIEW_EVAL_OTHER;
@@ -4494,11 +4494,11 @@ glwf_focusedChild(glw_view_eval_context_t *ec, struct token *self,
 
 
 /**
- * Returns the focused child index 
+ * Returns the focused child index
  *
  * Only works if we have a cloner that spawns the childs
  */
-static int 
+static int
 glwf_focusedIndex(glw_view_eval_context_t *ec, struct token *self,
 		  token_t **argv, unsigned int argc)
 {
@@ -4527,7 +4527,7 @@ glwf_focusedIndex(glw_view_eval_context_t *ec, struct token *self,
 /**
  * Return caption from the given widget
  */
-static int 
+static int
 glwf_getCaption(glw_view_eval_context_t *ec, struct token *self,
 		  token_t **argv, unsigned int argc)
 {
@@ -4557,9 +4557,9 @@ glwf_getCaption(glw_view_eval_context_t *ec, struct token *self,
 
 
 /**
- * 
+ *
  */
-static int 
+static int
 glwf_bind(glw_view_eval_context_t *ec, struct token *self,
 		  token_t **argv, unsigned int argc)
 {
@@ -4598,9 +4598,9 @@ typedef struct glwf_delta_extra {
 
 
 /**
- * 
+ *
  */
-static int 
+static int
 glwf_delta(glw_view_eval_context_t *ec, struct token *self,
 	   token_t **argv, unsigned int argc)
 {
@@ -4634,7 +4634,7 @@ glwf_delta(glw_view_eval_context_t *ec, struct token *self,
   }
 
   p = prop_ref_inc(a->t_prop);
- 
+
   ec->dynamic_eval |= GLW_VIEW_EVAL_KEEP;
 
   if(p == de->p && de->f + f == 0) {
@@ -4744,7 +4744,7 @@ glwf_set_dtor(glw_root_t *Gr, struct token *self)
 /**
  * Return 1 if the current widget is visible (rendered)
  */
-static int 
+static int
 glwf_isVisible(glw_view_eval_context_t *ec, struct token *self,
 	       token_t **argv, unsigned int argc)
 {
@@ -4764,7 +4764,7 @@ glwf_isVisible(glw_view_eval_context_t *ec, struct token *self,
 /**
  * Return 1 if the current widget is can to be scrolled / moved
  */
-static int 
+static int
 glwf_canScroll(glw_view_eval_context_t *ec, struct token *self,
 	       token_t **argv, unsigned int argc)
 {
@@ -4781,11 +4781,11 @@ glwf_canScroll(glw_view_eval_context_t *ec, struct token *self,
 
 
 /**
- * Evals the first arg, if true, the second arg is returned. 
+ * Evals the first arg, if true, the second arg is returned.
  * Otherwise the third arg is returned.
  * Equivivalent to the C ?: operator
  */
-static int 
+static int
 glwf_select(glw_view_eval_context_t *ec, struct token *self,
 	    token_t **argv, unsigned int argc)
 {
@@ -4807,7 +4807,7 @@ glwf_select(glw_view_eval_context_t *ec, struct token *self,
  * TRACE() the second argument, prefixed with the first (which must
  * be a string).
  */
-static int 
+static int
 glwf_trace(glw_view_eval_context_t *ec, struct token *self,
 	   token_t **argv, unsigned int argc)
 {
@@ -4898,9 +4898,9 @@ glwf_browse_dtor(glw_root_t *gr, struct token *self)
 
 
 /**
- * 
+ *
  */
-static int 
+static int
 glwf_browse(glw_view_eval_context_t *ec, struct token *self,
 	   token_t **argv, unsigned int argc)
 {
@@ -4938,7 +4938,7 @@ glwf_browse(glw_view_eval_context_t *ec, struct token *self,
     if(backend_open(be->p, rstr_get(url), 0)) {
       prop_destroy(be->p);
       be->p = NULL;
-      return glw_view_seterr(ec->ei, a, "browse(%s): %s", 
+      return glw_view_seterr(ec->ei, a, "browse(%s): %s",
 			     rstr_get(url), errbuf);
     }
     be->url = rstr_dup(url);
@@ -4974,14 +4974,14 @@ glwf_null_ctor(struct token *self)
 /**
  * Return true if the passed argument is a link
  */
-static int 
+static int
 glwf_isLink(glw_view_eval_context_t *ec, struct token *self,
 	    token_t **argv, unsigned int argc)
 {
   token_t *a, *r;
   if((a = token_resolve(ec, argv[0])) == NULL)
     return -1;
-  
+
   r = eval_alloc(self, ec, TOKEN_INT);
   r->t_int = a->type == TOKEN_URI;
   eval_push(ec, r);
@@ -4992,7 +4992,7 @@ glwf_isLink(glw_view_eval_context_t *ec, struct token *self,
 /**
  * Create a link given two arguments (title + url)
  */
-static int 
+static int
 glwf_link(glw_view_eval_context_t *ec, struct token *self,
 	    token_t **argv, unsigned int argc)
 {
@@ -5001,7 +5001,7 @@ glwf_link(glw_view_eval_context_t *ec, struct token *self,
     return -1;
   if((b = token_resolve(ec, argv[1])) == NULL)
     return -1;
-  
+
   if(a->type != TOKEN_RSTRING || b->type != TOKEN_RSTRING) {
     r = eval_alloc(self, ec, TOKEN_VOID);
   } else {
@@ -5017,7 +5017,7 @@ glwf_link(glw_view_eval_context_t *ec, struct token *self,
 /**
  * sin(x)
  */
-static int 
+static int
 glwf_sin(glw_view_eval_context_t *ec, struct token *self,
 	 token_t **argv, unsigned int argc)
 {
@@ -5037,7 +5037,7 @@ glwf_sin(glw_view_eval_context_t *ec, struct token *self,
 /**
  * sinewave(x)
  */
-static int 
+static int
 glwf_sinewave(glw_view_eval_context_t *ec, struct token *self,
 	      token_t **argv, unsigned int argc)
 {
@@ -5067,9 +5067,9 @@ glwf_sinewave(glw_view_eval_context_t *ec, struct token *self,
 
 
 /**
- * 
+ *
  */
-static int 
+static int
 glwf_monotime(glw_view_eval_context_t *ec, struct token *self,
 	      token_t **argv, unsigned int argc)
 {
@@ -5086,9 +5086,9 @@ glwf_monotime(glw_view_eval_context_t *ec, struct token *self,
 
 
 /**
- * 
+ *
  */
-static int 
+static int
 glwf_rand(glw_view_eval_context_t *ec, struct token *self,
 	  token_t **argv, unsigned int argc)
 {
@@ -5119,7 +5119,7 @@ typedef struct glwf_delay_extra {
 /**
  *
  */
-static int 
+static int
 glwf_delay(glw_view_eval_context_t *ec, struct token *self,
 	   token_t **argv, unsigned int argc)
 
@@ -5145,7 +5145,7 @@ glwf_delay(glw_view_eval_context_t *ec, struct token *self,
       gr->gr_frame_start;
     e->curval = f;
   }
-  
+
   if(e->deadline > gr->gr_frame_start) {
     f = e->oldval;
     ec->dynamic_eval |= GLW_VIEW_EVAL_LAYOUT;
@@ -5185,14 +5185,14 @@ glwf_delay_dtor(glw_root_t *gr, struct token *self)
 /**
  * Return 1 if the current widget is ready
  */
-static int 
+static int
 glwf_isReady(glw_view_eval_context_t *ec, struct token *self,
 	       token_t **argv, unsigned int argc)
 {
   token_t *r = eval_alloc(self, ec, TOKEN_INT);
   glw_t *w = ec->w;
-  
- 
+
+
   if(w->glw_class->gc_ready == NULL || w->glw_class->gc_ready(w)) {
     r->t_int = 1;
   } else {
@@ -5207,7 +5207,7 @@ glwf_isReady(glw_view_eval_context_t *ec, struct token *self,
 /**
  *
  */
-static int 
+static int
 glwf_suggestFocus(glw_view_eval_context_t *ec, struct token *self,
 		  token_t **argv, unsigned int argc)
 {
@@ -5215,7 +5215,7 @@ glwf_suggestFocus(glw_view_eval_context_t *ec, struct token *self,
 
   if((a = token_resolve(ec, argv[0])) == NULL)
     return -1;
-  
+
   if(token2bool(a))
     glw_focus_suggest(ec->w);
   return 0;
@@ -5283,7 +5283,7 @@ glwf_propGrouper(glw_view_eval_context_t *ec, struct token *self,
   if(b->type != TOKEN_RSTRING)
     return glw_view_seterr(ec->ei, a, "propGrouper(): "
 			   "Second argument is not a string");
-  
+
   if(self->t_extra != NULL)
     prop_grouper_destroy(self->t_extra);
 
@@ -5325,7 +5325,7 @@ glwf_propSorter(glw_view_eval_context_t *ec, struct token *self,
 
   if((a = resolve_property_name2(ec, argv[0])) == NULL)
     return -1;
-  
+
   if(self->t_extra != NULL)
     prop_nf_release(self->t_extra);
 
@@ -5367,14 +5367,14 @@ glwf_propSorter(glw_view_eval_context_t *ec, struct token *self,
 	return -1;
       if((d = token_resolve(ec, argv[3])) == NULL)
 	return -1;
-      
+
       argc -= 4;
       argv += 4;
 
       const char *path = token_as_string(a);
       if(path == NULL)
 	continue;
-      
+
       if(b->type != TOKEN_IDENTIFIER || d->type != TOKEN_IDENTIFIER)
 	continue;
 
@@ -5385,7 +5385,7 @@ glwf_propSorter(glw_view_eval_context_t *ec, struct token *self,
 	cf = PROP_NF_CMP_NEQ;
       else
 	continue;
-      
+
       prop_nf_mode_t mode;
       if(!strcmp(rstr_get(d->t_rstring), "include"))
 	mode = PROP_NF_MODE_INCLUDE;
@@ -5393,7 +5393,7 @@ glwf_propSorter(glw_view_eval_context_t *ec, struct token *self,
 	mode = PROP_NF_MODE_EXCLUDE;
       else
 	continue;
-      
+
       const char *val = token_as_string(c);
 
       if(val != NULL) {
@@ -5402,7 +5402,7 @@ glwf_propSorter(glw_view_eval_context_t *ec, struct token *self,
 	prop_nf_pred_int_add(self->t_extra, path, cf, token2int(ec, b),
                              NULL, mode);
       }
-      
+
     } else if(!strcmp(cmd, "sort") && sortidx < 4) {
       if(argc < 3)
 	return glw_view_seterr(ec->ei, argv[-1], "propSorter(): "
@@ -5508,9 +5508,9 @@ glwf_getHeight(glw_view_eval_context_t *ec, struct token *self,
 
 
 /**
- * 
+ *
  */
-static int 
+static int
 glwf_preferTentative(glw_view_eval_context_t *ec, struct token *self,
 		     token_t **argv, unsigned int argc)
 {
@@ -5569,9 +5569,9 @@ glwf_freetoken_dtor(glw_root_t *gr, struct token *self)
 
 
 /**
- * 
+ *
  */
-static int 
+static int
 glwf_ignoreTentative(glw_view_eval_context_t *ec, struct token *self,
 		     token_t **argv, unsigned int argc)
 {
@@ -5614,16 +5614,16 @@ glwf_ignoreTentative(glw_view_eval_context_t *ec, struct token *self,
 /**
  * Cast to int
  */
-static int 
+static int
 glwf_int(glw_view_eval_context_t *ec, struct token *self,
 	     token_t **argv, unsigned int argc)
 {
   token_t *a = argv[0];
   token_t *r;
-  
+
   if((a = token_resolve(ec, a)) == NULL)
     return -1;
-  
+
   r = eval_alloc(self, ec, TOKEN_INT);
   r->t_int = token2int(ec, a);
   eval_push(ec, r);
@@ -5635,7 +5635,7 @@ glwf_int(glw_view_eval_context_t *ec, struct token *self,
 /**
  * Clamp
  */
-static int 
+static int
 glwf_clamp(glw_view_eval_context_t *ec, struct token *self,
 	   token_t **argv, unsigned int argc)
 {
@@ -5643,7 +5643,7 @@ glwf_clamp(glw_view_eval_context_t *ec, struct token *self,
   token_t *b = argv[1];
   token_t *c = argv[2];
   token_t *r;
-  
+
   if((a = token_resolve(ec, a)) == NULL)
     return -1;
   if((b = token_resolve(ec, b)) == NULL)
@@ -5757,19 +5757,19 @@ glwf_join(glw_view_eval_context_t *ec, struct token *self,
 
 
 
-static int 
+static int
 glwf_pluralise(glw_view_eval_context_t *ec, struct token *self,
 	       token_t **argv, unsigned int argc)
 {
   token_t *a, *b, *c;
-  
+
   if((a = token_resolve(ec, argv[0])) == NULL)
     return -1;
   if((b = token_resolve(ec, argv[1])) == NULL)
     return -1;
   if((c = token_resolve(ec, argv[2])) == NULL)
     return -1;
-  
+
   if(a->type != TOKEN_RSTRING)
     return glw_view_seterr(ec->ei, a, "first arg must be a string");
   if(b->type != TOKEN_RSTRING)
@@ -5972,7 +5972,7 @@ multiopt_add_link(glwf_multiopt_extra_t *x, token_t *d,
   TAILQ_FOREACH(mi, &x->q, mi_link)
     if(!strcmp(rstr_get(d->t_uri), rstr_get(mi->mi_value)))
       break;
-    
+
   if(mi == NULL) {
     mi = calloc(1, sizeof(multiopt_item_t));
     mi->mi_value = rstr_dup(d->t_uri);
@@ -5981,7 +5981,7 @@ multiopt_add_link(glwf_multiopt_extra_t *x, token_t *d,
     mi->mi_mark = 0;
   }
 
-  if(x->userval != NULL && !strcmp(rstr_get(x->userval), 
+  if(x->userval != NULL && !strcmp(rstr_get(x->userval),
 				   rstr_get(mi->mi_value)))
     *up = mi;
   rstr_set(&mi->mi_title, d->t_uri_title);
@@ -6016,9 +6016,9 @@ multiopt_add_vector(glwf_multiopt_extra_t *x, token_t *t0,
 }
 
 /**
- * 
+ *
  */
-static int 
+static int
 glwf_multiopt(glw_view_eval_context_t *ec, struct token *self,
 		token_t **argv, unsigned int argc)
 {
@@ -6029,7 +6029,7 @@ glwf_multiopt(glw_view_eval_context_t *ec, struct token *self,
 
 
   if(argc < 4)
-    return glw_view_seterr(ec->ei, self, 
+    return glw_view_seterr(ec->ei, self,
 			   "multiopt(): Invalid number of args");
   if((dst     = resolve_property_name2(ec, argv[0])) == NULL)
     return -1;
@@ -6083,8 +6083,8 @@ glwf_multiopt(glw_view_eval_context_t *ec, struct token *self,
 
       x->setting_sub =
 	prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
-		       PROP_TAG_CALLBACK, multiopt_item_cb, x, 
-		       PROP_TAG_ROOT, x->opts, 
+		       PROP_TAG_CALLBACK, multiopt_item_cb, x,
+		       PROP_TAG_ROOT, x->opts,
 		       PROP_TAG_COURIER, ec->w->glw_root->gr_courier,
 		       NULL);
     }
@@ -6104,8 +6104,8 @@ glwf_multiopt(glw_view_eval_context_t *ec, struct token *self,
     if(x->storage != NULL) {
       x->storage_sub =
 	prop_subscribe(PROP_SUB_DIRECT_UPDATE,
-		       PROP_TAG_CALLBACK_RSTR, multiopt_storage_cb, x, 
-		       PROP_TAG_ROOT, x->storage, 
+		       PROP_TAG_CALLBACK_RSTR, multiopt_storage_cb, x,
+		       PROP_TAG_ROOT, x->storage,
 		       PROP_TAG_COURIER, ec->w->glw_root->gr_courier,
 		       NULL);
     }
@@ -6142,7 +6142,7 @@ glwf_multiopt(glw_view_eval_context_t *ec, struct token *self,
 
     default:
       break;
-    } 
+    }
   }
 
   for(i = 0; i < lp_num; i++)
@@ -6191,13 +6191,13 @@ glwf_multiopt(glw_view_eval_context_t *ec, struct token *self,
 /**
  *
  */
-static int 
+static int
 glwf_canSelectNext(glw_view_eval_context_t *ec, struct token *self,
 		   token_t **argv, unsigned int argc)
 {
   token_t *r = eval_alloc(self, ec, TOKEN_INT);
   glw_t *w = ec->w;
-   
+
   r->t_int = w->glw_class->gc_can_select_child != NULL &&
     w->glw_class->gc_can_select_child(w, 1);
   ec->dynamic_eval |= GLW_VIEW_EVAL_OTHER;
@@ -6209,13 +6209,13 @@ glwf_canSelectNext(glw_view_eval_context_t *ec, struct token *self,
 /**
  *
  */
-static int 
+static int
 glwf_canSelectPrev(glw_view_eval_context_t *ec, struct token *self,
 		   token_t **argv, unsigned int argc)
 {
   token_t *r = eval_alloc(self, ec, TOKEN_INT);
   glw_t *w = ec->w;
-   
+
   r->t_int = w->glw_class->gc_can_select_child != NULL &&
     w->glw_class->gc_can_select_child(w, 0);
   ec->dynamic_eval |= GLW_VIEW_EVAL_OTHER;
@@ -6227,15 +6227,15 @@ glwf_canSelectPrev(glw_view_eval_context_t *ec, struct token *self,
 /**
  * Set default font
  */
-static int 
+static int
 glwf_setDefaultFont(glw_view_eval_context_t *ec, struct token *self,
 		    token_t **argv, unsigned int argc)
 {
   token_t *a = argv[0];
-  
+
   if((a = token_resolve(ec, a)) == NULL)
     return -1;
-  
+
   rstr_t *r = token2rstr(a);
   rstr_set(&ec->w->glw_root->gr_default_font, r);
   rstr_release(r);
@@ -6247,19 +6247,19 @@ glwf_setDefaultFont(glw_view_eval_context_t *ec, struct token *self,
 /**
  * Return selected element from TOKEN_VECTOR
  */
-static int 
+static int
 glwf_selectedElement(glw_view_eval_context_t *ec, struct token *self,
 		     token_t **argv, unsigned int argc)
 {
   token_t *a, *r = NULL;
   if((a = token_resolve(ec, argv[0])) == NULL)
     return -1;
-  
+
   if(a->type == TOKEN_VECTOR)
     for(r = a->child; r != NULL; r = r->next)
       if(r->t_flags & TOKEN_F_SELECTED)
 	break;
-  
+
   eval_push(ec, r ?: eval_alloc(self, ec, TOKEN_VOID));
   return 0;
 }
