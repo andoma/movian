@@ -493,7 +493,7 @@ load_site_news(void)
   struct http_header_list response_headers;
   buf_t *b;
   b = fa_load("https://movian.tv/projects/showtime/news.json",
-              FA_LOAD_FLAGS(FA_DISABLE_AUTH),
+              FA_LOAD_FLAGS(FA_DISABLE_AUTH | FA_COMPRESSION),
               FA_LOAD_RESPONSE_HEADERS(&response_headers),
               NULL);
   if(b == NULL)

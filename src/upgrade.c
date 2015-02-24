@@ -526,7 +526,7 @@ stos_check_upgrade(void)
 
   b = fa_load(url,
                FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
-               FA_LOAD_FLAGS(FA_DISABLE_AUTH),
+               FA_LOAD_FLAGS(FA_DISABLE_AUTH | FA_COMPRESSION),
                NULL);
   if(b == NULL) {
     TRACE(TRACE_ERROR, "STOS", "Unable to query for STOS manifest -- %s",
@@ -639,7 +639,7 @@ check_upgrade(int set_news)
 
   b = fa_load(url,
                FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
-               FA_LOAD_FLAGS(FA_DISABLE_AUTH),
+               FA_LOAD_FLAGS(FA_DISABLE_AUTH | FA_COMPRESSION),
                NULL);
 
   if(b == NULL) {
