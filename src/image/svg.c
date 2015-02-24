@@ -32,6 +32,7 @@
 
 typedef struct svg_state {
   float cur[2];
+  float last_ctrl[2];  // For s/S command
   float ctm[9];
   image_component_vector_t *icv;
   float scaling;
@@ -230,15 +231,14 @@ cmd_curveto_rel(svg_state_t *state, const float *p)
   c[0] = state->cur[0] + p[0];
   c[1] = state->cur[1] + p[1];
 
-  d[0] = state->cur[0] + p[2];
-  d[1] = state->cur[1] + p[3];
+  state->last_ctrl[0] = d[0] = state->cur[0] + p[2];
+  state->last_ctrl[1] = d[1] = state->cur[1] + p[3];
 
   e[0] = state->cur[0] + p[4];
   e[1] = state->cur[1] + p[5];
-  
+
   state->cur[0] = e[0];
   state->cur[1] = e[1];
-
 
   float ts[2], tc[2], td[3], te[2];
 
@@ -262,12 +262,12 @@ cmd_curveto_abs(svg_state_t *state, const float *p)
   c[0] = p[0];
   c[1] = p[1];
 
-  d[0] = p[2];
-  d[1] = p[3];
+  state->last_ctrl[0] = d[0] = p[2];
+  state->last_ctrl[1] = d[1] = p[3];
 
   e[0] = p[4];
   e[1] = p[5];
-  
+
   state->cur[0] = e[0];
   state->cur[1] = e[1];
 
@@ -281,6 +281,69 @@ cmd_curveto_abs(svg_state_t *state, const float *p)
 
   cmd_curve(state, ts, tc, td, te);
 }
+
+
+static void
+cmd_shorthand_rel(svg_state_t *state, const float *p)
+{
+  float s[2], c[2], d[3], e[2];
+
+  s[0] = state->cur[0];
+  s[1] = state->cur[1];
+
+  c[0] = state->cur[0] + (state->cur[0] - state->last_ctrl[0]);
+  c[1] = state->cur[1] + (state->cur[1] - state->last_ctrl[1]);
+
+  state->last_ctrl[0] = d[0] = state->cur[0] + p[0];
+  state->last_ctrl[1] = d[1] = state->cur[1] + p[1];
+
+  e[0] = state->cur[0] + p[2];
+  e[1] = state->cur[1] + p[3];
+
+  state->cur[0] = e[0];
+  state->cur[1] = e[1];
+
+  float ts[2], tc[2], td[3], te[2];
+
+  svg_mtx_vec_mul(ts, state->ctm, s);
+  svg_mtx_vec_mul(tc, state->ctm, c);
+  svg_mtx_vec_mul(td, state->ctm, d);
+  svg_mtx_vec_mul(te, state->ctm, e);
+
+  cmd_curve(state, ts, tc, td, te);
+}
+
+
+static void
+cmd_shorthand_abs(svg_state_t *state, const float *p)
+{
+  float s[2], c[2], d[3], e[2];
+
+  s[0] = state->cur[0];
+  s[1] = state->cur[1];
+
+  c[0] = state->cur[0] + (state->cur[0] - state->last_ctrl[0]);
+  c[1] = state->cur[1] + (state->cur[1] - state->last_ctrl[1]);
+
+  state->last_ctrl[0] = d[0] = p[0];
+  state->last_ctrl[1] = d[1] = p[1];
+
+  e[0] = p[2];
+  e[1] = p[3];
+
+  state->cur[0] = e[0];
+  state->cur[1] = e[1];
+
+  float ts[2], tc[2], td[3], te[2];
+
+  svg_mtx_vec_mul(ts, state->ctm, s);
+  svg_mtx_vec_mul(tc, state->ctm, c);
+  svg_mtx_vec_mul(td, state->ctm, d);
+  svg_mtx_vec_mul(te, state->ctm, e);
+
+  cmd_curve(state, ts, tc, td, te);
+}
+
 
 static void
 cmd_lineto(svg_state_t *state)
@@ -421,6 +484,16 @@ stroke_path(svg_state_t *state, const char *str)
     case 'C':
       next_cmd = cur_cmd = cmd_curveto_abs;
       num_params = 6;
+      break;
+
+    case 's':
+      next_cmd = cur_cmd = cmd_shorthand_rel;
+      num_params = 4;
+      break;
+
+    case 'S':
+      next_cmd = cur_cmd = cmd_shorthand_abs;
+      num_params = 4;
       break;
 
     case 'l':
