@@ -1599,7 +1599,7 @@ fa_load(const char *url, ...)
     htsbuf_queue_init(&q, 0);
 
     htsbuf_append(&q, url, strlen(url));
-    char prefix = '?';
+    char prefix = strchr(url, '?') ? '&' : '?';
     SIMPLEQ_FOREACH(la, &qargs, link) {
       htsbuf_append(&q, &prefix, 1);
       htsbuf_append_and_escape_url(&q, la->key);
