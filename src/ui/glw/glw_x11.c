@@ -292,8 +292,8 @@ window_open(glw_x11_t *gx11, int fullscreen)
 
     x = gx11->screen_width  / 4;
     y = gx11->screen_height / 4;
-    w = gx11->req_width  ?: 853;
-    h = gx11->req_height ?: 480;
+    w = gx11->req_width  ?: 1280;
+    h = gx11->req_height ?: 720;
   }
 
   gx11->win = 
