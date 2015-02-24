@@ -592,6 +592,49 @@ stroke_rect_element(svg_state_t *s, htsmsg_t *attribs)
 /**
  *
  */
+static int
+stroke_polygon_element(svg_state_t *s, htsmsg_t *attribs)
+{
+  const char *str = htsmsg_get_str(attribs, "points");
+  if(str == NULL)
+    return -1;
+
+  const char *endptr;
+  int num = 0;
+  while(1) {
+    float v[2];
+    while(*str < 33 && *str)
+      str++;
+    v[0] = my_str2double(str, &endptr);
+    if(endptr == str)
+      break;
+    str = endptr;
+    while(*str < 33 && *str)
+      str++;
+    if(*str == ',')
+      str++;
+    while(*str < 33 && *str)
+      str++;
+    v[1] = my_str2double(str, &endptr);
+    if(endptr == str)
+      break;
+    str = endptr;
+
+    if(num == 0) {
+      cmd_move_abs(s, v);
+    } else {
+      cmd_lineto_abs(s, v);
+    }
+    num++;
+  }
+  cmd_close(s);
+  return 0;
+}
+
+
+/**
+ *
+ */
 static void
 svg_parse_element(const svg_state_t *s0, htsmsg_t *element, 
 		  int (*element_parser)(svg_state_t *s, htsmsg_t *element))
@@ -703,6 +746,8 @@ svg_parse_root(svg_state_t *s, htsmsg_t *tags)
       svg_parse_element(s, c, stroke_path_element);
     else if(!strcmp(f->hmf_name, "rect"))
       svg_parse_element(s, c, stroke_rect_element);
+    else if(!strcmp(f->hmf_name, "polygon"))
+      svg_parse_element(s, c, stroke_polygon_element);
     else if(!strcmp(f->hmf_name, "g"))
       svg_parse_g(s, c);
   }
