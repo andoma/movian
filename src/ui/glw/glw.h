@@ -654,6 +654,11 @@ typedef struct glw_class {
   /**
    *
    */
+  void (*gc_set_align)(struct glw *w, int v);
+
+  /**
+   *
+   */
   void (*gc_freeze)(struct glw *w);
 
   /**

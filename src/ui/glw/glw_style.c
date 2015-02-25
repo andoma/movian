@@ -67,6 +67,8 @@ struct glw_style {
 
   LIST_ENTRY(glw_style) gs_link;
 
+  rstr_t *gs_source;
+
   int gs_refcount;
 
   uint32_t gs_flags2_set;
@@ -84,6 +86,9 @@ struct glw_style {
 #define GS_SET_WEIGHT       0x8
 #define GS_SET_WIDTH        0x10
 #define GS_SET_HEIGHT       0x20
+#define GS_SET_SOURCE       0x40
+#define GS_SET_ALIGN        0x80
+
 };
 
 
@@ -213,6 +218,7 @@ glw_style_release(glw_style_t *gs)
   }
 
   glw_view_free_chain(w->glw_root, gs->gs_rpns);
+  rstr_release(gs->gs_source);
   free(gs);
 }
 
@@ -562,6 +568,45 @@ gs_set_height(struct glw *w, int v)
 /**
  *
  */
+static void
+gs_set_align(struct glw *w, int v)
+{
+  glw_style_t *gs = (glw_style_t *)w;
+
+  gs->gs_flags |= GS_SET_ALIGN;
+
+  w->glw_alignment = v;
+
+  LIST_FOREACH(w, &gs->gs_widgets, glw_style_link) {
+    if(w->glw_alignment != v) {
+      w->glw_alignment = v;
+      glw_need_refresh(w->glw_root, 0);
+    }
+  }
+}
+
+
+/**
+ *
+ */
+static void
+gs_set_source(struct glw *w, rstr_t *r)
+{
+  glw_style_t *gs = (glw_style_t *)w;
+
+  gs->gs_flags |= GS_SET_SOURCE;
+
+  rstr_set(&gs->gs_source, r);
+
+  LIST_FOREACH(w, &gs->gs_widgets, glw_style_link)
+    if(w->glw_class->gc_set_source != NULL)
+      w->glw_class->gc_set_source(w, r);
+}
+
+
+/**
+ *
+ */
 static glw_class_t glw_style = {
   .gc_name              = "style",
   .gc_set_float3        = gs_set_float3,
@@ -580,6 +625,8 @@ static glw_class_t glw_style = {
   .gc_set_weight        = gs_set_weight,
   .gc_set_width         = gs_set_width,
   .gc_set_height        = gs_set_height,
+  .gc_set_source        = gs_set_source,
+  .gc_set_align         = gs_set_align,
 };
 
 
@@ -802,6 +849,17 @@ glw_style_bind(glw_t *w, glw_style_t *gs, glw_view_eval_context_t *ec)
 
   if(gs->gs_flags & GS_SET_HEIGHT)
     glw_set_height(w, gs->w.glw_req_size_y);
+
+  if(gs->gs_flags & GS_SET_ALIGN) {
+    if(w->glw_alignment != gs->w.glw_alignment) {
+      w->glw_alignment = gs->w.glw_alignment;
+      glw_need_refresh(w->glw_root, 0);
+    }
+  }
+
+  if(gs->gs_flags & GS_SET_SOURCE)
+    if(w->glw_class->gc_set_source != NULL)
+      w->glw_class->gc_set_source(w, gs->gs_source);
 
   return r;
 }

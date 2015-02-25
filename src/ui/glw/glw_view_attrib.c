@@ -851,9 +851,17 @@ set_align(glw_view_eval_context_t *ec, const token_attrib_t *a,
 	  struct token *t)
 {
   int v;
-  if(t->type != TOKEN_IDENTIFIER || (v = str2val(rstr_get(t->t_rstring), aligntab)) < 0)
+  if(t->type != TOKEN_IDENTIFIER ||
+     (v = str2val(rstr_get(t->t_rstring), aligntab)) < 0)
     return glw_view_seterr(ec->ei, t, "Invalid assignment for attribute %s",
-			    a->name);
+                           a->name);
+
+  if(ec->w->glw_class->gc_set_align != NULL) {
+    ec->w->glw_class->gc_set_align(ec->w, v);
+    return 0;
+  }
+
+
   ec->w->glw_alignment = v;
   glw_need_refresh(ec->w->glw_root, 0);
   return 0;
