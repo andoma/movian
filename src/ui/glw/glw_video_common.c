@@ -796,7 +796,7 @@ set_how(glw_t *w, const char *how)
  *
  */
 static void
-set_source(glw_t *w, rstr_t *url)
+set_source(glw_t *w, rstr_t *url, glw_style_t *origin)
 {
   glw_video_t *gv = (glw_video_t *)w;
 
@@ -853,7 +853,8 @@ set_audio_volume(glw_video_t *gv, float v)
  *
  */
 static int
-glw_video_set_float(glw_t *w, glw_attribute_t attrib, float value)
+glw_video_set_float(glw_t *w, glw_attribute_t attrib, float value,
+                    glw_style_t *origin)
 {
   glw_video_t *gv = (glw_video_t *)w;
 
@@ -872,7 +873,8 @@ glw_video_set_float(glw_t *w, glw_attribute_t attrib, float value)
  *
  */
 static int
-glw_video_set_int(glw_t *w, glw_attribute_t attrib, int value)
+glw_video_set_int(glw_t *w, glw_attribute_t attrib, int value,
+                  glw_style_t *origin)
 {
   glw_video_t *gv = (glw_video_t *)w;
   event_t *e;
@@ -935,7 +937,8 @@ glw_video_set_prop(glw_t *w, glw_attribute_t attrib, prop_t *p)
  *
  */
 static int
-glw_video_set_rstr(glw_t *w, glw_attribute_t attrib, rstr_t *rstr)
+glw_video_set_rstr(glw_t *w, glw_attribute_t attrib, rstr_t *rstr,
+                   glw_style_t *origin)
 {
   glw_video_t *gv = (glw_video_t *)w;
 

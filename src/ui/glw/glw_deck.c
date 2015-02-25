@@ -316,7 +316,8 @@ glw_deck_ctor(glw_t *w)
  *
  */
 static int
-glw_deck_set_int(glw_t *w, glw_attribute_t attrib, int value)
+glw_deck_set_int(glw_t *w, glw_attribute_t attrib, int value,
+                 glw_style_t *gs)
 {
   glw_deck_t *gd = (glw_deck_t *)w;
 
@@ -340,7 +341,8 @@ glw_deck_set_int(glw_t *w, glw_attribute_t attrib, int value)
  *
  */
 static int
-glw_deck_set_float(glw_t *w, glw_attribute_t attrib, float value)
+glw_deck_set_float(glw_t *w, glw_attribute_t attrib, float value,
+                   glw_style_t *gs)
 {
   glw_deck_t *gd = (glw_deck_t *)w;
 

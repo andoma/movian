@@ -811,7 +811,8 @@ glw_text_bitmap_ctor(glw_t *w)
  *
  */
 static int
-glw_text_bitmap_set_float3(glw_t *w, glw_attribute_t attrib, const float *rgb)
+glw_text_bitmap_set_float3(glw_t *w, glw_attribute_t attrib, const float *rgb,
+                           glw_style_t *origin)
 {
   glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
 
@@ -828,7 +829,8 @@ glw_text_bitmap_set_float3(glw_t *w, glw_attribute_t attrib, const float *rgb)
  *
  */
 static int
-gtb_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v)
+gtb_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v,
+                glw_style_t *origin)
 {
   glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
   int16_t oldpad[4];
@@ -850,7 +852,7 @@ gtb_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v)
  *
  */
 static void
-mod_text_flags(glw_t *w, int set, int clr)
+mod_text_flags(glw_t *w, int set, int clr, glw_style_t *origin)
 {
   glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
   gtb->gtb_flags = (gtb->gtb_flags | set) & ~clr;
@@ -876,7 +878,7 @@ set_caption(glw_t *w, const char *caption, int type)
  *
  */
 static int
-gtb_set_rstr(glw_t *w, glw_attribute_t a, rstr_t *str)
+gtb_set_rstr(glw_t *w, glw_attribute_t a, rstr_t *str, glw_style_t *origin)
 {
   glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
   switch(a) {
@@ -986,7 +988,7 @@ gtb_set_em(glw_t *w, glw_attribute_t a, float v)
  *
  */
 static int
-gtb_set_float(glw_t *w, glw_attribute_t a, float v)
+gtb_set_float(glw_t *w, glw_attribute_t a, float v, glw_style_t *origin)
 {
   glw_text_bitmap_t *gtb = (void *)w;
 
@@ -1007,7 +1009,7 @@ gtb_set_float(glw_t *w, glw_attribute_t a, float v)
  *
  */
 static int
-gtb_set_int(glw_t *w, glw_attribute_t a, int v)
+gtb_set_int(glw_t *w, glw_attribute_t a, int v, glw_style_t *origin)
 {
   glw_text_bitmap_t *gtb = (void *)w;
 

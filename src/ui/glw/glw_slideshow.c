@@ -267,7 +267,8 @@ glw_slideshow_ctor(glw_t *w)
  *
  */
 static int
-glw_slideshow_set_float(glw_t *w, glw_attribute_t attrib, float value)
+glw_slideshow_set_float(glw_t *w, glw_attribute_t attrib, float value,
+                        glw_style_t *gs)
 {
   glw_slideshow_t *s = (glw_slideshow_t *)w;
   const int v = value * 1000000;

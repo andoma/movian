@@ -246,7 +246,8 @@ glw_throbber_ctor(glw_t *w)
  *
  */
 static int
-glw_throbber_set_float3(glw_t *w, glw_attribute_t attrib, const float *rgb)
+glw_throbber_set_float3(glw_t *w, glw_attribute_t attrib, const float *rgb,
+                        glw_style_t *origin)
 {
   glw_throbber_t *gt = (glw_throbber_t *)w;
 

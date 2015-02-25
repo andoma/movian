@@ -996,10 +996,10 @@ glw_root_set_hover(glw_root_t *gr, glw_t *w)
  *
  */
 void
-glw_set_focus_weight(glw_t *w, float f)
+glw_set_focus_weight(glw_t *w, float f, glw_style_t *gs)
 {
   if(w->glw_class->gc_set_focus_weight != NULL) {
-    w->glw_class->gc_set_focus_weight(w, f);
+    w->glw_class->gc_set_focus_weight(w, f, gs);
     return;
   }
 

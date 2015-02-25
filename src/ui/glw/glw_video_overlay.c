@@ -237,7 +237,7 @@ glw_video_overlay_layout(glw_video_t *gv,
     if(gv->gv_vo_scaling > 0)
       scaling = scaling * gv->gv_vo_scaling / 100.0;
 
-    gc->gc_set_float(w, GLW_ATTRIB_SIZE_SCALE, scaling);
+    gc->gc_set_float(w, GLW_ATTRIB_SIZE_SCALE, scaling, NULL);
 
 
     if(gvo->gvo_abspos) {
@@ -269,7 +269,7 @@ glw_video_overlay_layout(glw_video_t *gv,
 	break;
       }
 
-      gc->gc_set_int16_4(w, GLW_ATTRIB_PADDING, f);
+      gc->gc_set_int16_4(w, GLW_ATTRIB_PADDING, f, NULL);
       glw_layout0(w, rc);
       l->used_height[gvo->gvo_alignment] += w->glw_req_size_y;
     }
@@ -803,7 +803,7 @@ gvo_create_from_vo_text(glw_video_t *gv, video_overlay_t *vo)
   gc->gc_freeze(w);
 
   gc->gc_set_int(w, GLW_ATTRIB_SIZE,
-		 gv->w.glw_root->gr_current_size * 1.5);
+		 gv->w.glw_root->gr_current_size * 1.5, NULL);
 
   if(gvo->gvo_abspos) {
 
@@ -833,7 +833,7 @@ gvo_create_from_vo_text(glw_video_t *gv, video_overlay_t *vo)
                        glw_video_overlay_t);
   }
 
-  gc->gc_set_int(w, GLW_ATTRIB_MAX_LINES, 10);
+  gc->gc_set_int(w, GLW_ATTRIB_MAX_LINES, 10, NULL);
 
   glw_gtb_set_caption_raw(w, vo->vo_text, vo->vo_text_length);
   vo->vo_text = NULL; // Steal it

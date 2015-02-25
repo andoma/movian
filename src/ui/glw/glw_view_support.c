@@ -211,6 +211,10 @@ glw_view_token_copy(glw_root_t *gr, token_t *src)
     dst->t_elements = src->t_elements;
     break;
 
+  case TOKEN_RPN:
+    dst->t_rpn_origin = src->t_rpn_origin;
+    break;
+
   case TOKEN_START:
   case TOKEN_END:
   case TOKEN_HASH:
@@ -242,7 +246,6 @@ glw_view_token_copy(glw_root_t *gr, token_t *src)
   case TOKEN_GT:
   case TOKEN_NULL_COALESCE:
   case TOKEN_EXPR:
-  case TOKEN_RPN:
   case TOKEN_PURE_RPN:
   case TOKEN_BLOCK:
   case TOKEN_NOP:

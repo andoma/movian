@@ -271,7 +271,8 @@ glw_bloom_ctor(glw_t *w)
  *
  */
 static int
-glw_bloom_set_float(glw_t *w, glw_attribute_t attrib, float value)
+glw_bloom_set_float(glw_t *w, glw_attribute_t attrib, float value,
+                    glw_style_t *gs)
 {
   glw_bloom_t *b = (void *)w;
 

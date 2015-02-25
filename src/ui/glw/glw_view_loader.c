@@ -210,7 +210,7 @@ glw_view_loader_dtor(glw_t *w)
  *
  */
 static void
-set_source(glw_t *w, rstr_t *url)
+set_source(glw_t *w, rstr_t *url, glw_style_t *origin)
 {
   glw_view_loader_t *a = (glw_view_loader_t *)w;
   glw_t *c;
@@ -264,7 +264,8 @@ set_alt(glw_t *w, rstr_t *url)
  *
  */
 static int
-glw_view_loader_set_int(glw_t *w, glw_attribute_t attrib, int value)
+glw_view_loader_set_int(glw_t *w, glw_attribute_t attrib, int value,
+                        glw_style_t *origin)
 {
   glw_view_loader_t *vl = (void *)w;
 
@@ -286,7 +287,8 @@ glw_view_loader_set_int(glw_t *w, glw_attribute_t attrib, int value)
  *
  */
 static int
-glw_view_loader_set_float(glw_t *w, glw_attribute_t attrib, float value)
+glw_view_loader_set_float(glw_t *w, glw_attribute_t attrib, float value,
+                          glw_style_t *origin)
 {
   glw_view_loader_t *vl = (void *)w;
 

@@ -109,7 +109,7 @@ static void
 set_parent_url_rstr(glw_t *w, rstr_t *rstr)
 {
   if(w->glw_class->gc_set_rstr != NULL)
-    w->glw_class->gc_set_rstr(w, GLW_ATTRIB_PARENT_URL, rstr);
+    w->glw_class->gc_set_rstr(w, GLW_ATTRIB_PARENT_URL, rstr, NULL);
 }
 
 
@@ -189,7 +189,7 @@ set_font(glw_view_eval_context_t *ec, const token_attrib_t *a,
   glw_t *w = ec->w;
 
   if(w->glw_class->gc_set_rstr != NULL)
-    w->glw_class->gc_set_rstr(w, GLW_ATTRIB_FONT, str);
+    w->glw_class->gc_set_rstr(w, GLW_ATTRIB_FONT, str, NULL);
   rstr_release(str);
   return 0;
 }
@@ -260,9 +260,9 @@ set_float(glw_view_eval_context_t *ec, const token_attrib_t *a,
 			   a->name, token2name(t));
   }
 
-  void (*fn)(struct glw *w, float v) = a->fn;
+  void (*fn)(struct glw *w, float v, glw_style_t *origin) = a->fn;
   assert(fn != NULL);
-  fn(w, v);
+  fn(w, v, NULL);
   return 0;
 }
 
@@ -271,10 +271,10 @@ set_float(glw_view_eval_context_t *ec, const token_attrib_t *a,
  *
  */
 void
-glw_set_weight(glw_t *w, float v)
+glw_set_weight(glw_t *w, float v, glw_style_t *origin)
 {
   if(w->glw_class->gc_set_weight != NULL) {
-    w->glw_class->gc_set_weight(w, v);
+    w->glw_class->gc_set_weight(w, v, origin);
     return;
   }
 
@@ -287,10 +287,10 @@ glw_set_weight(glw_t *w, float v)
  *
  */
 void
-glw_set_alpha(glw_t *w, float v)
+glw_set_alpha(glw_t *w, float v, glw_style_t *origin)
 {
   if(w->glw_class->gc_set_alpha != NULL) {
-    w->glw_class->gc_set_alpha(w, v);
+    w->glw_class->gc_set_alpha(w, v, origin);
     return;
   }
 
@@ -306,10 +306,10 @@ glw_set_alpha(glw_t *w, float v)
  *
  */
 void
-glw_set_blur(glw_t *w, float v)
+glw_set_blur(glw_t *w, float v, glw_style_t *origin)
 {
   if(w->glw_class->gc_set_blur != NULL) {
-    w->glw_class->gc_set_blur(w, v);
+    w->glw_class->gc_set_blur(w, v, origin);
     return;
   }
 
@@ -359,10 +359,10 @@ set_number_int(glw_t *w, const token_attrib_t *a, const token_t *t, int v)
   const glw_class_t *gc = w->glw_class;
   int r;
 
-  r = gc->gc_set_int ? gc->gc_set_int(w, a->attrib, v) : -1;
+  r = gc->gc_set_int ? gc->gc_set_int(w, a->attrib, v, NULL) : -1;
 
   if(r == -1)
-    r = gc->gc_set_float ? gc->gc_set_float(w, a->attrib, v) : -1;
+    r = gc->gc_set_float ? gc->gc_set_float(w, a->attrib, v, NULL) : -1;
 
   if(r == -1) {
     TRACE(TRACE_DEBUG, "GLW",
@@ -385,10 +385,10 @@ set_number_float(glw_t *w, const token_attrib_t *a, const token_t *t, float v)
   const glw_class_t *gc = w->glw_class;
   int r;
 
-  r = gc->gc_set_float ? gc->gc_set_float(w, a->attrib, v) : -1;
+  r = gc->gc_set_float ? gc->gc_set_float(w, a->attrib, v, NULL) : -1;
 
   if(r == -1)
-    r = gc->gc_set_int ? gc->gc_set_int(w, a->attrib, v) : -1;
+    r = gc->gc_set_int ? gc->gc_set_int(w, a->attrib, v, NULL) : -1;
 
   if(r == -1) {
     TRACE(TRACE_DEBUG, "GLW",
@@ -422,10 +422,10 @@ set_number_em(glw_t *w, const token_attrib_t *a, const token_t *t,
 
     ec->dynamic_eval |= GLW_VIEW_EVAL_EM;
 
-    r = gc->gc_set_float ? gc->gc_set_float(w, a->attrib, v) : -1;
+    r = gc->gc_set_float ? gc->gc_set_float(w, a->attrib, v, NULL) : -1;
 
     if(r == -1)
-      r = gc->gc_set_int ? gc->gc_set_int(w, a->attrib, v) : -1;
+      r = gc->gc_set_int ? gc->gc_set_int(w, a->attrib, v, NULL) : -1;
   }
 
   if(r == -1) {
@@ -531,9 +531,9 @@ set_int(glw_view_eval_context_t *ec, const token_attrib_t *a,
 			   a->name, token2name(t));
   }
 
-  void (*fn)(struct glw *w, int v) = a->fn;
+  void (*fn)(struct glw *w, int v, glw_style_t *origin) = a->fn;
   assert(fn != NULL);
-  fn(w, v);
+  fn(w, v, NULL);
   return 0;
 }
 
@@ -542,10 +542,10 @@ set_int(glw_view_eval_context_t *ec, const token_attrib_t *a,
  *
  */
 void
-glw_set_width(glw_t *w, int v)
+glw_set_width(glw_t *w, int v, glw_style_t *origin)
 {
   if(w->glw_class->gc_set_width != NULL) {
-    w->glw_class->gc_set_width(w, v);
+    w->glw_class->gc_set_width(w, v, origin);
     return;
   }
 
@@ -558,10 +558,10 @@ glw_set_width(glw_t *w, int v)
  *
  */
 void
-glw_set_height(glw_t *w, int v)
+glw_set_height(glw_t *w, int v, glw_style_t *origin)
 {
   if(w->glw_class->gc_set_height != NULL) {
-    w->glw_class->gc_set_height(w, v);
+    w->glw_class->gc_set_height(w, v, origin);
     return;
   }
 
@@ -569,6 +569,23 @@ glw_set_height(glw_t *w, int v)
   glw_need_refresh(w->glw_root, 0);
 }
 
+
+/**
+ *
+ */
+void
+glw_set_align(glw_t *w, int v, glw_style_t *origin)
+{
+  if(w->glw_class->gc_set_align != NULL) {
+    w->glw_class->gc_set_align(w, v, origin);
+    return;
+  }
+
+  if(w->glw_alignment != v) {
+    w->glw_alignment = v;
+    glw_need_refresh(w->glw_root, 0);
+  }
+}
 
 /**
  *
@@ -663,7 +680,7 @@ set_float3(glw_view_eval_context_t *ec, const token_attrib_t *a,
 
   const glw_class_t *gc = w->glw_class;
 
-  int r = gc->gc_set_float3 ? gc->gc_set_float3(w, a->attrib, vec3) : -1;
+  int r = gc->gc_set_float3 ? gc->gc_set_float3(w, a->attrib, vec3, NULL) : -1;
 
   if(r == -1) {
     TRACE(TRACE_DEBUG, "GLW",
@@ -811,7 +828,7 @@ set_int16_4(glw_view_eval_context_t *ec, const token_attrib_t *a,
 
   const glw_class_t *gc = w->glw_class;
 
-  int r = gc->gc_set_int16_4 ? gc->gc_set_int16_4(w, a->attrib, v) : -1;
+  int r = gc->gc_set_int16_4 ? gc->gc_set_int16_4(w, a->attrib, v, NULL) : -1;
 
   if(r == -1) {
     TRACE(TRACE_DEBUG, "GLW",
@@ -856,14 +873,7 @@ set_align(glw_view_eval_context_t *ec, const token_attrib_t *a,
     return glw_view_seterr(ec->ei, t, "Invalid assignment for attribute %s",
                            a->name);
 
-  if(ec->w->glw_class->gc_set_align != NULL) {
-    ec->w->glw_class->gc_set_align(ec->w, v);
-    return 0;
-  }
-
-
-  ec->w->glw_alignment = v;
-  glw_need_refresh(ec->w->glw_root, 0);
+  glw_set_align(ec->w, v, NULL);
   return 0;
 }
 
@@ -892,7 +902,7 @@ set_transition_effect(glw_view_eval_context_t *ec, const token_attrib_t *a,
 			    a->name);
 
   if(ec->w->glw_class->gc_set_int != NULL)
-    ec->w->glw_class->gc_set_int(ec->w, GLW_ATTRIB_TRANSITION_EFFECT, v);
+    ec->w->glw_class->gc_set_int(ec->w, GLW_ATTRIB_TRANSITION_EFFECT, v, NULL);
   glw_need_refresh(ec->w->glw_root, 0);
   return 0;
 }
@@ -972,7 +982,7 @@ mod_flags2(glw_t *w, int set, int clr)
   const glw_class_t *gc = w->glw_class;
 
   if(gc->gc_mod_flags2_always != NULL)
-    gc->gc_mod_flags2_always(w, set, clr);
+    gc->gc_mod_flags2_always(w, set, clr, NULL);
 
   set &= ~w->glw_flags2;
   w->glw_flags2 |= set;
@@ -993,7 +1003,7 @@ static void
 mod_text_flags(glw_t *w, int set, int clr)
 {
   if(w->glw_class->gc_mod_text_flags != NULL)
-    w->glw_class->gc_mod_text_flags(w, set, clr);
+    w->glw_class->gc_mod_text_flags(w, set, clr, NULL);
   glw_need_refresh(w->glw_root, 0);
 }
 
@@ -1005,7 +1015,7 @@ static void
 mod_img_flags(glw_t *w, int set, int clr)
 {
   if(w->glw_class->gc_mod_image_flags != NULL)
-    w->glw_class->gc_mod_image_flags(w, set, clr);
+    w->glw_class->gc_mod_image_flags(w, set, clr, NULL);
   glw_need_refresh(w->glw_root, 0);
 }
 
@@ -1097,7 +1107,7 @@ set_source(glw_view_eval_context_t *ec, const token_attrib_t *a,
   switch(t->type) {
   default:
     if(w->glw_class->gc_set_source != NULL)
-      w->glw_class->gc_set_source(w, NULL);
+      w->glw_class->gc_set_source(w, NULL, NULL);
     return 0;
 
   case TOKEN_VECTOR:
@@ -1116,7 +1126,7 @@ set_source(glw_view_eval_context_t *ec, const token_attrib_t *a,
   r = fa_absolute_path(r, t->file);
 
   if(w->glw_class->gc_set_source != NULL)
-    w->glw_class->gc_set_source(w, r);
+    w->glw_class->gc_set_source(w, r, NULL);
 
   glw_need_refresh(w->glw_root, 0);
   rstr_release(r);
@@ -1193,12 +1203,12 @@ set_page(glw_view_eval_context_t *ec, const token_attrib_t *a,
 
   case TOKEN_INT:
     if(c->gc_set_int)
-      c->gc_set_int(ec->w, GLW_ATTRIB_PAGE, t->t_int);
+      c->gc_set_int(ec->w, GLW_ATTRIB_PAGE, t->t_int, NULL);
     break;
 
   case TOKEN_FLOAT:
     if(c->gc_set_int)
-      c->gc_set_int(ec->w, GLW_ATTRIB_PAGE, t->t_float);
+      c->gc_set_int(ec->w, GLW_ATTRIB_PAGE, t->t_float, NULL);
     break;
   }
   return 0;

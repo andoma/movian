@@ -1082,7 +1082,8 @@ glw_icon_ctor(glw_t *w)
  *
  */
 static int
-glw_image_set_float3(glw_t *w, glw_attribute_t attrib, const float *rgb)
+glw_image_set_float3(glw_t *w, glw_attribute_t attrib, const float *rgb,
+                     glw_style_t *gs)
 {
   glw_image_t *gi = (void *)w;
 
@@ -1124,7 +1125,8 @@ update_box(glw_image_t *gi)
  *
  */
 static int
-image_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v)
+image_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v,
+                  glw_style_t *gs)
 {
   glw_image_t *gi = (void *)w;
 
@@ -1161,7 +1163,7 @@ image_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v)
  *
  */
 static void
-mod_image_flags(glw_t *w, int set, int clr)
+mod_image_flags(glw_t *w, int set, int clr, glw_style_t *gs)
 {
   glw_image_t *gi = (void *)w;
   gi->gi_bitmap_flags = (gi->gi_bitmap_flags | set) & ~clr;
@@ -1249,7 +1251,7 @@ set_path(glw_image_t *gi, rstr_t *filename)
  *
  */
 static void
-set_source(glw_t *w, rstr_t *filename)
+set_source(glw_t *w, rstr_t *filename, glw_style_t *gs)
 {
   glw_image_t *gi = (glw_image_t *)w;
   set_path(gi, filename);
@@ -1333,7 +1335,8 @@ glw_image_set_em(glw_t *w, glw_attribute_t attrib, float value)
  *
  */
 static int
-glw_image_set_float(glw_t *w, glw_attribute_t attrib, float value)
+glw_image_set_float(glw_t *w, glw_attribute_t attrib, float value,
+                    glw_style_t *gs)
 {
   glw_image_t *gi = (glw_image_t *)w;
 
@@ -1384,7 +1387,8 @@ glw_image_set_float(glw_t *w, glw_attribute_t attrib, float value)
  *
  */
 static int
-glw_image_set_int(glw_t *w, glw_attribute_t attrib, int value)
+glw_image_set_int(glw_t *w, glw_attribute_t attrib, int value,
+                  glw_style_t *gs)
 {
   glw_image_t *gi = (glw_image_t *)w;
 

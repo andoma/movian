@@ -525,7 +525,8 @@ bind_to_property(glw_t *w, prop_t *p, const char **pname,
  *
  */
 static int
-glw_slider_set_float(glw_t *w, glw_attribute_t attrib, float value)
+glw_slider_set_float(glw_t *w, glw_attribute_t attrib, float value,
+                     glw_style_t *gs)
 {
   glw_slider_t *s = (glw_slider_t *)w;
 

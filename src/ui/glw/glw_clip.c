@@ -231,7 +231,8 @@ glw_fade_callback(glw_t *w, void *opaque, glw_signal_t signal,
  *
  */
 static int
-fader_set_float(glw_t *w, glw_attribute_t attrib, float value)
+fader_set_float(glw_t *w, glw_attribute_t attrib, float value,
+                glw_style_t *gs)
 {
   glw_fade_t *gf = (glw_fade_t *)w;
 
@@ -378,7 +379,7 @@ glw_stencil_callback(glw_t *w, void *opaque, glw_signal_t signal,
  *
  */
 static void
-stencil_set_source(glw_t *w, rstr_t *filename)
+stencil_set_source(glw_t *w, rstr_t *filename, glw_style_t *style)
 {
   glw_stencil_t *gs = (glw_stencil_t *)w;
   
@@ -394,7 +395,8 @@ stencil_set_source(glw_t *w, rstr_t *filename)
  *
  */
 static int
-stencil_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v)
+stencil_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v,
+                    glw_style_t *style)
 {
   glw_stencil_t *gs = (glw_stencil_t *)w;
 
@@ -411,7 +413,8 @@ stencil_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v)
  *
  */
 static int
-set_float3(glw_t *w, glw_attribute_t attrib, const float *xyz)
+set_float3(glw_t *w, glw_attribute_t attrib, const float *xyz,
+           glw_style_t *style)
 {
   glw_stencil_t *gs = (glw_stencil_t *)w;
 

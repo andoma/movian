@@ -588,7 +588,8 @@ glw_array_ctor(glw_t *w)
  *
  */
 static int
-glw_array_set_int(glw_t *w, glw_attribute_t attrib, int value)
+glw_array_set_int(glw_t *w, glw_attribute_t attrib, int value,
+                  glw_style_t *gs)
 {
   glw_array_t *a = (glw_array_t *)w;
 
@@ -650,7 +651,8 @@ glw_array_set_int(glw_t *w, glw_attribute_t attrib, int value)
  *
  */
 static int
-glw_array_set_float(glw_t *w, glw_attribute_t attrib, float value)
+glw_array_set_float(glw_t *w, glw_attribute_t attrib, float value,
+                    glw_style_t *gs)
 {
   glw_array_t *a = (glw_array_t *)w;
 
@@ -682,7 +684,8 @@ glw_array_set_float(glw_t *w, glw_attribute_t attrib, float value)
  *
  */
 static int
-glw_array_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v)
+glw_array_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v,
+                      glw_style_t *gs)
 {
   glw_array_t *a = (glw_array_t *)w;
   switch(attrib) {

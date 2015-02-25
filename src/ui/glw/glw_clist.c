@@ -233,7 +233,8 @@ ctor(glw_t *w)
  *
  */
 static int
-glw_clist_set_int(glw_t *w, glw_attribute_t attrib, int value)
+glw_clist_set_int(glw_t *w, glw_attribute_t attrib, int value,
+                  glw_style_t *gs)
 {
   glw_clist_t *l = (glw_clist_t *)w;
 
@@ -264,7 +265,8 @@ glw_clist_set_int(glw_t *w, glw_attribute_t attrib, int value)
  *
  */
 static int
-glw_clist_set_float(glw_t *w, glw_attribute_t attrib, float value)
+glw_clist_set_float(glw_t *w, glw_attribute_t attrib, float value,
+                    glw_style_t *gs)
 {
   glw_clist_t *l = (glw_clist_t *)w;
 

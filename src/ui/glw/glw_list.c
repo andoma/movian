@@ -674,7 +674,8 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
  *
  */
 static int
-glw_list_set_float(glw_t *w, glw_attribute_t attrib, float value)
+glw_list_set_float(glw_t *w, glw_attribute_t attrib, float value,
+                   glw_style_t *gs)
 {
   glw_list_t *l = (glw_list_t *)w;
   switch(attrib) {
@@ -713,7 +714,8 @@ glw_list_set_float(glw_t *w, glw_attribute_t attrib, float value)
  *
  */
 static int
-glw_list_set_int(glw_t *w, glw_attribute_t attrib, int value)
+glw_list_set_int(glw_t *w, glw_attribute_t attrib, int value,
+                 glw_style_t *gs)
 {
   glw_list_t *l = (glw_list_t *)w;
 
@@ -794,7 +796,8 @@ glw_list_suggest_focus(glw_t *w, glw_t *c)
  *
  */
 static int
-glw_list_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v)
+glw_list_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v,
+                     glw_style_t *gs)
 {
   glw_list_t *l = (glw_list_t *)w;
 

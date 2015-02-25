@@ -126,7 +126,8 @@ glw_bar_layout(glw_t *w, const glw_rctx_t *rc)
  *
  */
 static int
-glw_bar_set_float(glw_t *w, glw_attribute_t attrib, float value)
+glw_bar_set_float(glw_t *w, glw_attribute_t attrib, float value,
+                  glw_style_t *gs)
 {
   glw_bar_t *gb = (glw_bar_t *)w;
 
@@ -150,7 +151,8 @@ glw_bar_set_float(glw_t *w, glw_attribute_t attrib, float value)
  *
  */
 static int
-glw_bar_set_float3(glw_t *w, glw_attribute_t attrib, const float *vector)
+glw_bar_set_float3(glw_t *w, glw_attribute_t attrib, const float *vector,
+                   glw_style_t *gs)
 {
   glw_bar_t *gb = (glw_bar_t *)w;
 

@@ -707,7 +707,8 @@ glw_container_z_callback(glw_t *w, void *opaque, glw_signal_t signal,
  *
  */
 static int
-glw_container_set_int(glw_t *w, glw_attribute_t attrib, int value)
+glw_container_set_int(glw_t *w, glw_attribute_t attrib, int value,
+                      glw_style_t *gs)
 {
   glw_container_t *co = (glw_container_t *)w;
 
@@ -731,7 +732,8 @@ glw_container_set_int(glw_t *w, glw_attribute_t attrib, int value)
  *
  */
 static int
-container_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v)
+container_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v,
+                      glw_style_t *gs)
 {
   glw_container_t *co = (glw_container_t *)w;
 

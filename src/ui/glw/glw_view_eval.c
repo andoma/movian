@@ -2857,8 +2857,8 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
  *
  */
 static int
-glwf_style(glw_view_eval_context_t *ec, struct token *self,
-           token_t **argv, unsigned int argc)
+glwf_style0(glw_view_eval_context_t *ec, struct token *self,
+            token_t **argv, unsigned int argc, int inherit)
 {
   int r;
   glw_view_eval_context_t n;
@@ -2884,21 +2884,16 @@ glwf_style(glw_view_eval_context_t *ec, struct token *self,
   n.ei = ec->ei;
   n.gr = ec->gr;
 
-  glw_style_t *gs = glw_style_create(ec->w->glw_root, a->t_rstring);
+  glw_style_t *gs = glw_style_create(ec->w, a->t_rstring,
+                                     self->file, self->line);
   n.w = (glw_t *)gs;
-
   n.sublist = &n.w->glw_prop_subscriptions;
 
   token_t *nonpure = NULL;
   r = glw_view_eval_block(b, &n, &nonpure);
 
-  if(nonpure != NULL) {
-#if 0
-    printf("%s: Non pure expressions\n", rstr_get(a->t_rstring));
-    glw_view_print_tree(nonpure, 8);
-#endif
+  if(nonpure != NULL)
     glw_style_attach_rpns(gs, nonpure);
-  }
 
   if(!r) {
     // Attach new style to our parent
@@ -2907,9 +2902,30 @@ glwf_style(glw_view_eval_context_t *ec, struct token *self,
     ec->w->glw_styles = gss;
   }
 
-
   return r ? -1 : 0;
 }
+
+
+/**
+ *
+ */
+static int
+glwf_style(glw_view_eval_context_t *ec, struct token *self,
+           token_t **argv, unsigned int argc)
+{
+  return glwf_style0(ec, self, argv, argc, 1);
+}
+
+/**
+ *
+ */
+static int
+glwf_newstyle(glw_view_eval_context_t *ec, struct token *self,
+           token_t **argv, unsigned int argc)
+{
+  return glwf_style0(ec, self, argv, argc, 0);
+}
+
 
 
 
@@ -6415,6 +6431,7 @@ static const token_func_t funcvec[] = {
   {"widget", 1, glwf_widget, NULL, NULL, glwf_resolve_widget_class},
   {"cloner", 3, glwf_cloner},
   {"style", 2, glwf_style},
+  {"newstyle", 2, glwf_newstyle},
   {"space", 1, glwf_space},
   {"onEvent", -1, glwf_onEvent},
   {"navOpen", -1, glwf_navOpen},

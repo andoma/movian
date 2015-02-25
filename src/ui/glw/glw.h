@@ -410,13 +410,16 @@ typedef struct glw_class {
 #define GLW_SET_RERENDER_REQUIRED  1
 #define GLW_SET_LAYOUT_ONLY        2
 
-  int (*gc_set_int)(struct glw *w, glw_attribute_t a, int value);
+  int (*gc_set_int)(struct glw *w, glw_attribute_t a, int value,
+                    glw_style_t *gs);
 
-  int (*gc_set_float)(struct glw *w, glw_attribute_t a, float value);
+  int (*gc_set_float)(struct glw *w, glw_attribute_t a, float value,
+                      glw_style_t *gs);
 
   int (*gc_set_em)(struct glw *w, glw_attribute_t a, float value);
 
-  int (*gc_set_rstr)(struct glw *w, glw_attribute_t a, rstr_t *value);
+  int (*gc_set_rstr)(struct glw *w, glw_attribute_t a, rstr_t *value,
+                     glw_style_t *gs);
 
   int (*gc_set_prop)(struct glw *w, glw_attribute_t a, prop_t *p);
 
@@ -427,11 +430,13 @@ typedef struct glw_class {
 
   int (*gc_set_page_id)(struct glw *w, const char *id);
 
-  int (*gc_set_float3)(struct glw *w, glw_attribute_t a, const float *vector);
+  int (*gc_set_float3)(struct glw *w, glw_attribute_t a, const float *vector,
+                       glw_style_t *gs);
 
   int (*gc_set_float4)(struct glw *w, glw_attribute_t a, const float *vector);
 
-  int (*gc_set_int16_4)(struct glw *w, glw_attribute_t a, const int16_t *v);
+  int (*gc_set_int16_4)(struct glw *w, glw_attribute_t a, const int16_t *v,
+                        glw_style_t *gs);
 
   /**
    * Set attributes for the widget based on (unresolved) name only.
@@ -549,7 +554,8 @@ typedef struct glw_class {
   /**
    *
    */
-  void (*gc_mod_image_flags)(struct glw *w, int set, int clr);
+  void (*gc_mod_image_flags)(struct glw *w, int set, int clr,
+                             glw_style_t *gs);
 
   /**
    *
@@ -559,7 +565,8 @@ typedef struct glw_class {
   /**
    *
    */
-  void (*gc_mod_text_flags)(struct glw *w, int set, int clr);
+  void (*gc_mod_text_flags)(struct glw *w, int set, int clr,
+                            glw_style_t *gs);
 
   /**
    *
@@ -569,7 +576,8 @@ typedef struct glw_class {
   /**
    *
    */
-  void (*gc_mod_flags2_always)(struct glw *w, int set, int clr);
+  void (*gc_mod_flags2_always)(struct glw *w, int set, int clr,
+                               glw_style_t *gs);
 
   /**
    *
@@ -599,7 +607,7 @@ typedef struct glw_class {
   /**
    *
    */
-  void (*gc_set_source)(struct glw *w, rstr_t *url);
+  void (*gc_set_source)(struct glw *w, rstr_t *url, glw_style_t *gs);
 
   /**
    *
@@ -624,37 +632,37 @@ typedef struct glw_class {
   /**
    *
    */
-  void (*gc_set_focus_weight)(struct glw *w, float f);
+  void (*gc_set_focus_weight)(struct glw *w, float f, glw_style_t *gs);
 
   /**
    *
    */
-  void (*gc_set_alpha)(struct glw *w, float f);
+  void (*gc_set_alpha)(struct glw *w, float f, glw_style_t *gs);
 
   /**
    *
    */
-  void (*gc_set_blur)(struct glw *w, float f);
+  void (*gc_set_blur)(struct glw *w, float f, glw_style_t *gs);
 
   /**
    *
    */
-  void (*gc_set_weight)(struct glw *w, float f);
+  void (*gc_set_weight)(struct glw *w, float f, glw_style_t *gs);
 
   /**
    *
    */
-  void (*gc_set_width)(struct glw *w, int v);
+  void (*gc_set_width)(struct glw *w, int v, glw_style_t *gs);
 
   /**
    *
    */
-  void (*gc_set_height)(struct glw *w, int v);
+  void (*gc_set_height)(struct glw *w, int v, glw_style_t *gs);
 
   /**
    *
    */
-  void (*gc_set_align)(struct glw *w, int v);
+  void (*gc_set_align)(struct glw *w, int v, glw_style_t *gs);
 
   /**
    *
@@ -717,6 +725,8 @@ typedef struct glw_root {
   prop_courier_t *gr_courier;
 
   struct glw_style_list gr_all_styles;
+
+  int gr_style_tally;
 
   struct glw_queue gr_destroyer_queue;
 
@@ -1185,15 +1195,17 @@ void glw_remove_from_parent(glw_t *w, glw_t *p);
 
 #define glw_unlock(gr) hts_mutex_unlock(&(gr)->gr_mutex);
 
-void glw_set_weight(glw_t *w, float v);
+void glw_set_weight(glw_t *w, float v, glw_style_t *origin);
 
-void glw_set_alpha(glw_t *w, float v);
+void glw_set_alpha(glw_t *w, float v, glw_style_t *origin);
 
-void glw_set_blur(glw_t *w, float v);
+void glw_set_blur(glw_t *w, float v, glw_style_t *origin);
 
-void glw_set_width(glw_t *w, int v);
+void glw_set_width(glw_t *w, int v, glw_style_t *origin);
 
-void glw_set_height(glw_t *w, int v);
+void glw_set_height(glw_t *w, int v, glw_style_t *origin);
+
+void glw_set_align(glw_t *w, int v, glw_style_t *origin);
 
 void glw_set_divider(glw_t *w, int v);
 
@@ -1233,7 +1245,7 @@ void glw_focus_suggest(glw_t *w);
 
 glw_t *glw_focus_by_path(glw_t *w);
 
-void glw_set_focus_weight(glw_t *w, float f);
+void glw_set_focus_weight(glw_t *w, float f, glw_style_t *gs);
 
 int glw_is_child_focusable(glw_t *w);
 

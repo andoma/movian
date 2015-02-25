@@ -170,7 +170,8 @@ glw_expander_ctor(glw_t *w)
  *
  */
 static int
-glw_expander_set_float(glw_t *w, glw_attribute_t attrib, float value)
+glw_expander_set_float(glw_t *w, glw_attribute_t attrib, float value,
+                       glw_style_t *gs)
 {
   glw_expander_t *exp = (glw_expander_t *)w;
 

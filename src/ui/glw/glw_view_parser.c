@@ -264,7 +264,18 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei, glw_root_t *gr)
     tokenqueue_enqueue(&outq, tokenstack_pop(&stack), curfunc);
   }
 
+
   expr->child = outq.head;
+  /*
+   * Assignments to the 'style' property are always pure because
+   * delegating that to the target of the style will result in a cycle.
+   *
+   * The check ifself is a bit ugly though
+   */
+  if(expr->child->type == TOKEN_RESOLVED_ATTRIBUTE &&
+     !strcmp(expr->child->t_attrib->name, "style"))
+    type = TOKEN_PURE_RPN;
+
   expr->type = type;
   return 0;
 

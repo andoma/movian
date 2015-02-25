@@ -101,7 +101,8 @@ glw_quad_init(glw_t *w)
  *
  */
 static int
-glw_quad_set_float3(glw_t *w, glw_attribute_t attrib, const float *vector)
+glw_quad_set_float3(glw_t *w, glw_attribute_t attrib, const float *vector,
+                    glw_style_t *gs)
 {
   glw_quad_t *q = (glw_quad_t *)w;
   switch(attrib) {

@@ -141,7 +141,8 @@ glw_displacement_ctor(glw_t *w)
  *
  */
 static int
-set_float3(glw_t *w, glw_attribute_t attrib, const float *vector)
+set_float3(glw_t *w, glw_attribute_t attrib, const float *vector,
+           glw_style_t *gs)
 {
   glw_displacement_t *gd = (glw_displacement_t *)w;
 
@@ -161,7 +162,8 @@ set_float3(glw_t *w, glw_attribute_t attrib, const float *vector)
  *
  */
 static int
-displacement_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v)
+displacement_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v,
+                         glw_style_t *gs)
 {
   glw_displacement_t *gd = (glw_displacement_t *)w;
 

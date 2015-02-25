@@ -117,8 +117,6 @@ typedef struct token {
 #define TOKEN_F_CANONICAL_PATH 0x2 // Do not follow paths when resolving prop
 #define TOKEN_F_PROP_LINK      0x4 // Value is set using prop_link
 
-#define TOKEN_F_INSERTED_BY_STYLE 0x8 // non-pure rpn inserted by style
-
   uint8_t t_dynamic_eval;
 
   union {
@@ -197,6 +195,7 @@ typedef struct token {
 #define t_prop            u.prop
 #define t_uri_title       u.uri.title
 #define t_uri             u.uri.uri
+#define t_rpn_origin      u.ival
 
 } token_t;
 
