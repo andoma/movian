@@ -196,7 +196,7 @@ eval_loaded_view(glw_root_t *gr, glw_cached_view_t *gcv, glw_view_t *view,
   view->viewprop = ec.prop_viewx = prop_create_root("view");
   ec.sublist = &ec.w->glw_prop_subscriptions;
 
-  if(glw_view_eval_block(t, &ec)) {
+  if(glw_view_eval_block(t, &ec, NULL)) {
     glw_destroy_childs(ec.w);
     glw_view_error(ec.w, ei.error, ei.file, ei.line);
   }

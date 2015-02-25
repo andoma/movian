@@ -19,6 +19,9 @@
  */
 #include "glw.h"
 
+struct token;
+struct glw_view_eval_context;
+
 /*********************************************************
  * Styles
  */
@@ -37,8 +40,11 @@ glw_style_set_add(glw_style_set_t *gss, glw_style_t *gs);
 
 glw_style_t *glw_style_create(glw_root_t *gr, rstr_t *name);
 
-int glw_style_set_for_widget(glw_t *w, const char *name);
+int glw_style_set_for_widget(glw_t *w, const char *name,
+                             struct glw_view_eval_context *ec);
 
-int glw_style_bind(glw_t *w, glw_style_t *gs);
+int glw_style_bind(glw_t *w, glw_style_t *gs, struct glw_view_eval_context *ec);
 
 void glw_style_update_em(glw_root_t *gr);
+
+void glw_style_attach_rpns(glw_style_t *gs, struct token *t);

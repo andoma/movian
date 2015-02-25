@@ -1221,7 +1221,7 @@ set_style(glw_view_eval_context_t *ec, const token_attrib_t *a,
     break;
   }
 
-  int r = glw_style_set_for_widget(ec->w, str);
+  int r = glw_style_set_for_widget(ec->w, str, ec);
   if(r)
     attr_need_refresh(ec->w->glw_root, t, a->name, r);
   return 0;

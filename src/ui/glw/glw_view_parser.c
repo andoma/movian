@@ -129,22 +129,27 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei, glw_root_t *gr)
   token_t *t = expr->child, *x;
   token_t *curfunc = NULL;
 
+  int type = TOKEN_PURE_RPN;
+
   expr->child = NULL;  /* Avoid duplicate free if we bail out */
 
   while(t != NULL) {
 
     switch(t->type) {
+
+    case TOKEN_BLOCK:
+    case TOKEN_PROPERTY_REF:
+    case TOKEN_PROPERTY_NAME:
+      type = TOKEN_RPN;
+      /* FALLTHRU */
+    case TOKEN_RESOLVED_ATTRIBUTE:
+    case TOKEN_UNRESOLVED_ATTRIBUTE:
     case TOKEN_RSTRING:
     case TOKEN_CSTRING:
     case TOKEN_FLOAT:
     case TOKEN_EM:
     case TOKEN_INT:
     case TOKEN_IDENTIFIER:
-    case TOKEN_RESOLVED_ATTRIBUTE:
-    case TOKEN_UNRESOLVED_ATTRIBUTE:
-    case TOKEN_BLOCK:
-    case TOKEN_PROPERTY_REF:
-    case TOKEN_PROPERTY_NAME:
     case TOKEN_VOID:
       t = tokenqueue_enqueue(&outq, t, curfunc);
       continue;
@@ -186,8 +191,10 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei, glw_root_t *gr)
       t = tokenstack_push(&stack, t);
       continue;
 
-    case TOKEN_LEFT_BRACKET:
     case TOKEN_FUNCTION:
+      type = TOKEN_RPN;
+      /* FALLTHRU */
+    case TOKEN_LEFT_BRACKET:
       t->tmp = curfunc;
       curfunc = t;
 
@@ -258,7 +265,7 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei, glw_root_t *gr)
   }
 
   expr->child = outq.head;
-  expr->type = TOKEN_RPN;
+  expr->type = type;
   return 0;
 
  err:
@@ -296,7 +303,7 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei, glw_root_t *gr)
 static void
 optimize_attribute_assignment(token_t *t, token_t *prev, glw_root_t *gr)
 {
-  if(t->type == TOKEN_RPN) {
+  if(t->type == TOKEN_PURE_RPN) {
     token_t *att = t->child;
     if(att->type == TOKEN_RESOLVED_ATTRIBUTE &&
        att->next != NULL && att->next->next != NULL &&

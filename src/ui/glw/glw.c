@@ -673,7 +673,7 @@ glw_destroy(glw_t *w)
     glw_remove_from_parent(w, p);
   }
 
-  glw_style_bind(w, NULL);
+  glw_style_bind(w, NULL, NULL);
   glw_style_set_release(w->glw_styles);
 
   rstr_release(w->glw_id_rstr);

@@ -59,6 +59,8 @@ typedef struct glw_style_attribute {
  */
 struct glw_style {
   glw_t w;
+
+  token_t *gs_rpns;
   rstr_t *gs_name;
   struct glw_head gs_widgets;
   struct glw_style_attribute_list gs_attributes;
@@ -209,6 +211,8 @@ glw_style_release(glw_style_t *gs)
     LIST_REMOVE(gsa, gsa_link);
     free(gsa);
   }
+
+  glw_view_free_chain(w->glw_root, gs->gs_rpns);
   free(gs);
 }
 
@@ -598,6 +602,17 @@ glw_style_create(glw_root_t *gr, rstr_t *name)
  *
  */
 void
+glw_style_attach_rpns(glw_style_t *gs, struct token *t)
+{
+  assert(gs->gs_rpns == NULL);
+  gs->gs_rpns = t;
+}
+
+
+/**
+ *
+ */
+void
 glw_style_set_release(glw_style_set_t *gss)
 {
   int i;
@@ -658,8 +673,60 @@ glw_style_set_add(glw_style_set_t *gss, glw_style_t *gs)
 /**
  *
  */
+static void
+glw_style_remove_style_rpns(glw_t *w)
+{
+  token_t *t, **p = &w->glw_dynamic_expressions;
+
+  while((t = *p) != NULL) {
+
+    if(t->t_flags & TOKEN_F_INSERTED_BY_STYLE) {
+      *p = t->next;
+      t->next = NULL;
+      glw_view_free_chain(w->glw_root, t);
+    } else {
+      p = &t->next;
+    }
+  }
+}
+
+/**
+ *
+ */
+static void
+glw_style_insert_style_rpns(glw_t *w, token_t *rpns,
+                            glw_view_eval_context_t *ec)
+{
+  token_t *rpn = glw_view_clone_chain(w->glw_root, rpns, NULL);
+  int copy;
+
+  while(rpn) {
+    token_t *t = rpn;
+    rpn = t->next;
+    assert(t->type == TOKEN_RPN);
+
+    glw_view_eval_rpn(t, ec, &copy);
+
+    if(copy) {
+      t->next = w->glw_dynamic_expressions;
+      w->glw_dynamic_expressions = t;
+      t->t_dynamic_eval = copy;
+      t->t_flags |= TOKEN_F_INSERTED_BY_STYLE;
+      w->glw_dynamic_eval |= copy;
+    } else {
+      t->next = NULL;
+      glw_view_free_chain(w->glw_root, t);
+    }
+  }
+}
+
+
+
+/**
+ *
+ */
 int
-glw_style_bind(glw_t *w, glw_style_t *gs)
+glw_style_bind(glw_t *w, glw_style_t *gs, glw_view_eval_context_t *ec)
 {
   glw_style_attribute_t *gsa;
   int r = 0;
@@ -669,9 +736,13 @@ glw_style_bind(glw_t *w, glw_style_t *gs)
 
   w->glw_style = gs;
 
+  glw_style_remove_style_rpns(w);
+
   if(gs == NULL)
     return 0;
 
+  assert(ec != NULL);
+  glw_style_insert_style_rpns(w, gs->gs_rpns, ec);
 
   LIST_INSERT_HEAD(&gs->gs_widgets, w, glw_style_link);
 
@@ -740,7 +811,8 @@ glw_style_bind(glw_t *w, glw_style_t *gs)
  *
  */
 int
-glw_style_set_for_widget(glw_t *w, const char *name)
+glw_style_set_for_widget(glw_t *w, const char *name,
+                         glw_view_eval_context_t *ec)
 {
   glw_style_set_t *gss = w->glw_styles;
   int i;
@@ -748,12 +820,12 @@ glw_style_set_for_widget(glw_t *w, const char *name)
   if(name != NULL && gss != NULL) {
     for(i = 0; i < gss->gss_numstyles; i++) {
       if(!strcmp(name, rstr_get(gss->gss_styles[i]->gs_name))) {
-        return glw_style_bind(w, gss->gss_styles[i]);
+        return glw_style_bind(w, gss->gss_styles[i], ec);
       }
     }
   }
 
-  return glw_style_bind(w, NULL);
+  return glw_style_bind(w, NULL, NULL);
 }
 
 

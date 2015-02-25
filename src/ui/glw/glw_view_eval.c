@@ -899,7 +899,7 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
 
     n.tgtprop = prop_create_root(NULL);
 
-    if(glw_view_eval_block(right, &n))
+    if(glw_view_eval_block(right, &n, NULL))
       return -1;
 
     right = eval_alloc(right, ec, TOKEN_PROPERTY_OWNER);
@@ -1162,7 +1162,7 @@ clone_eval(glw_clone_t *c)
   n.w = c->c_w;
 
   n.sublist = &n.w->glw_prop_subscriptions;
-  glw_view_eval_block(body, &n);
+  glw_view_eval_block(body, &n, NULL);
   glw_view_free_chain(n.gr, body);
 
   if(gc->gc_thaw != NULL)
@@ -2575,7 +2575,7 @@ glw_view_eval_rpn0(token_t *t0, glw_view_eval_context_t *ec)
 /**
  *
  */
-static int
+int
 glw_view_eval_rpn(token_t *t, glw_view_eval_context_t *pec, int *copyp)
 {
   glw_view_eval_context_t ec;
@@ -2610,7 +2610,7 @@ glw_view_eval_rpn(token_t *t, glw_view_eval_context_t *pec, int *copyp)
  *
  */
 int
-glw_view_eval_block(token_t *t, glw_view_eval_context_t *ec)
+glw_view_eval_block(token_t *t, glw_view_eval_context_t *ec, token_t **nonpure)
 {
   int copy;
   token_t **p;
@@ -2626,6 +2626,20 @@ glw_view_eval_block(token_t *t, glw_view_eval_context_t *ec)
     case TOKEN_NOP:
       break;
     case TOKEN_RPN:
+
+      if(nonpure != NULL) {
+        /* Extract non-pure expressions.
+         * This is used for styles where expressions needs to be evaluated
+         * on the widget where the style is applied.
+         */
+
+        *p = t->next;
+        t->next = *nonpure;
+        *nonpure = t;
+        continue;
+      }
+      /* FALLTHRU */
+    case TOKEN_PURE_RPN:
       if(glw_view_eval_rpn(t, ec, &copy))
 	return -1;
 
@@ -2709,7 +2723,7 @@ glwf_widget(glw_view_eval_context_t *ec, struct token *self,
 
   n.sublist = &n.w->glw_prop_subscriptions;
 
-  r = glw_view_eval_block(b, &n);
+  r = glw_view_eval_block(b, &n, NULL);
 
   if(c->gc_thaw != NULL)
     c->gc_thaw(n.w);
@@ -2875,7 +2889,16 @@ glwf_style(glw_view_eval_context_t *ec, struct token *self,
 
   n.sublist = &n.w->glw_prop_subscriptions;
 
-  r = glw_view_eval_block(b, &n);
+  token_t *nonpure = NULL;
+  r = glw_view_eval_block(b, &n, &nonpure);
+
+  if(nonpure != NULL) {
+#if 0
+    printf("%s: Non pure expressions\n", rstr_get(a->t_rstring));
+    glw_view_print_tree(nonpure, 8);
+#endif
+    glw_style_attach_rpns(gs, nonpure);
+  }
 
   if(!r) {
     // Attach new style to our parent
@@ -2959,7 +2982,7 @@ glw_event_map_eval_block_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
   n.event = src;
 
   body = glw_view_clone_chain(n.gr, b->block, NULL);
-  glw_view_eval_block(body, &n);
+  glw_view_eval_block(body, &n, NULL);
   glw_prop_subscription_destroy_list(w->glw_root, &l);
   glw_view_free_chain(n.gr, body);
 }

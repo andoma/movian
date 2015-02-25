@@ -104,6 +104,7 @@ glw_view_token_free(glw_root_t *gr, token_t *t)
   case TOKEN_GT:
   case TOKEN_EXPR:
   case TOKEN_RPN:
+  case TOKEN_PURE_RPN:
   case TOKEN_BLOCK:
   case TOKEN_NOP:
   case TOKEN_COLON:
@@ -242,6 +243,7 @@ glw_view_token_copy(glw_root_t *gr, token_t *src)
   case TOKEN_NULL_COALESCE:
   case TOKEN_EXPR:
   case TOKEN_RPN:
+  case TOKEN_PURE_RPN:
   case TOKEN_BLOCK:
   case TOKEN_NOP:
   case TOKEN_VOID:
@@ -356,6 +358,7 @@ token2name(token_t *t)
   case TOKEN_BLOCK:         return "<block>";
   case TOKEN_EXPR:          return "<infix expr>";
   case TOKEN_RPN:           return "<rpn>";
+  case TOKEN_PURE_RPN:      return "<pure-rpn>";
   case TOKEN_NOP:           return "<nop>";
 
   case TOKEN_FUNCTION:

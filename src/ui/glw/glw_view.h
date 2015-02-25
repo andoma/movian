@@ -83,6 +83,8 @@ typedef enum {
   /* Synthetic tokens (after parser) */
   TOKEN_EXPR,                  // infix expression
   TOKEN_RPN,                   // RPN expression
+  TOKEN_PURE_RPN,              /* Pure == Can be evaluated elsewhere in
+                                  widget tree with same result */
   TOKEN_BLOCK,
   TOKEN_NOP,
   TOKEN_VECTOR_FLOAT,
@@ -114,6 +116,8 @@ typedef struct token {
 #define TOKEN_F_SELECTED 0x1 // The 'selected' in a vector
 #define TOKEN_F_CANONICAL_PATH 0x2 // Do not follow paths when resolving prop
 #define TOKEN_F_PROP_LINK      0x4 // Value is set using prop_link
+
+#define TOKEN_F_INSERTED_BY_STYLE 0x8 // non-pure rpn inserted by style
 
   uint8_t t_dynamic_eval;
 
@@ -310,7 +314,10 @@ int glw_view_unresolved_attribute_set(glw_view_eval_context_t *ec,
 
 int glw_view_seterr(errorinfo_t *ei, token_t *b, const char *fmt, ...);
 
-int glw_view_eval_block(token_t *t, glw_view_eval_context_t *ec);
+int glw_view_eval_block(token_t *t, glw_view_eval_context_t *ec,
+                        token_t **nonpure);
+
+int glw_view_eval_rpn(token_t *t, glw_view_eval_context_t *pec, int *copyp);
 
 int glw_view_preproc(glw_root_t *gr, token_t *p, errorinfo_t *ei,
                      int may_unlock);
