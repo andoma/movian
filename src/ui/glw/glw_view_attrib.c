@@ -1281,8 +1281,6 @@ static const token_attrib_t attribtab[] = {
   {"automargin",            mod_flag, GLW2_AUTOMARGIN,             mod_flags2},
   {"expediteSubscriptions", mod_flag, GLW2_EXPEDITE_SUBSCRIPTIONS, mod_flags2},
   {"reverseRender",         mod_flag, GLW2_REVERSE_RENDER,         mod_flags2},
-  {"layoutFixedWidth",      mod_flag, GLW2_LAYOUTFIXED_X,          mod_flags2},
-  {"layoutFixedHeight",     mod_flag, GLW2_LAYOUTFIXED_Y,          mod_flags2},
   {"navWrap",               mod_flag, GLW2_NAV_WRAP,               mod_flags2},
   {"autoFocusLimit",        mod_flag, GLW2_AUTO_FOCUS_LIMIT,       mod_flags2},
   {"cursor",                mod_flag, GLW2_CURSOR,                 mod_flags2},

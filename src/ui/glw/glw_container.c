@@ -145,16 +145,10 @@ glw_container_x_layout(glw_t *w, const glw_rctx_t *rc)
   float pos;        // Current position
   float fixscale;   // Scaling to apply to fixed width requests
                     // Used if the available width < sum of requested width
-  glw_rctx_t rc_f, rc0;
+  glw_rctx_t rc0;
 
   if(co->w.glw_alpha < 0.01f)
     return;
-
-  if(w->glw_flags2 & GLW2_LAYOUTFIXED_X) {
-    rc_f = *rc;
-    rc_f.rc_width = w->glw_req_size_x;
-    rc = &rc_f;
-  }
 
   rc0 = *rc;
 
@@ -514,7 +508,7 @@ glw_container_y_render(glw_t *w, const glw_rctx_t *rc)
   float alpha = rc->rc_alpha * w->glw_alpha;
   float sharpness  = rc->rc_sharpness  * w->glw_sharpness;
   glw_container_t *co = (glw_container_t *)w;
-  glw_rctx_t rc0;
+  glw_rctx_t rc0, rc1;
   const int rr = w->glw_flags2 & GLW2_REVERSE_RENDER;
 
   if(alpha < 0.01f)
@@ -524,7 +518,7 @@ glw_container_y_render(glw_t *w, const glw_rctx_t *rc)
     glw_store_matrix(w, rc);
 
   if(co->co_padding[0] || co->co_padding[2]) {
-    glw_rctx_t rc1 = *rc;
+    rc1 = *rc;
     glw_reposition(&rc1,
 		   co->co_padding[0],
 		   rc->rc_height,
@@ -568,23 +562,17 @@ glw_container_x_render(glw_t *w, const glw_rctx_t *rc)
   float alpha = rc->rc_alpha * w->glw_alpha;
   float sharpness = rc->rc_sharpness * w->glw_sharpness;
   glw_container_t *co = (glw_container_t *)w;
-  glw_rctx_t rc0, rc_f;
+  glw_rctx_t rc0, rc1;
   const int rr = w->glw_flags2 & GLW2_REVERSE_RENDER;
 
   if(alpha < 0.01f)
     return;
 
-  if(w->glw_flags2 & GLW2_LAYOUTFIXED_X) {
-    rc_f = *rc;
-    rc_f.rc_width = w->glw_req_size_x;
-    rc = &rc_f;
-  }
-
   if(glw_is_focusable(w))
     glw_store_matrix(w, rc);
 
   if(co->co_padding[1] || co->co_padding[3]) {
-    glw_rctx_t rc1 = *rc;
+    rc1 = *rc;
     glw_reposition(&rc1,
 		   0,
 		   rc->rc_height - co->co_padding[1],

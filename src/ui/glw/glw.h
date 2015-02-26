@@ -1112,8 +1112,6 @@ typedef struct glw {
                                                navigating with keyboard input */
 #define GLW2_HOMOGENOUS             0x20000
 #define GLW2_DEBUG                  0x40000     /* Debug this object */
-#define GLW2_LAYOUTFIXED_X          0x80000
-#define GLW2_LAYOUTFIXED_Y          0x100000
 #define GLW2_NAV_WRAP               0x200000
 #define GLW2_AUTO_FOCUS_LIMIT       0x400000
 #define GLW2_CURSOR                 0x800000
