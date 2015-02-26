@@ -1089,7 +1089,7 @@ glw_style_bind(glw_t *w, glw_style_t *gs, glw_view_eval_context_t *ec)
     glw_set_height(w, gs->w.glw_req_size_y, gs);
 
   if(gs->gs_flags & GS_SET_ALIGN)
-    glw_set_align(w, gs->w.glw_req_size_y, gs);
+    glw_set_align(w, gs->w.glw_alignment, gs);
 
   if(gs->gs_flags & GS_SET_SOURCE)
     if(w->glw_class->gc_set_source != NULL)
