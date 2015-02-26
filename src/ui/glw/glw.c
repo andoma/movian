@@ -1402,27 +1402,33 @@ glw_focus_open_path_close_all_other(glw_t *w)
 {
   glw_t *c;
   glw_t *p = w->glw_parent;
-
+  int do_clear = 0;
   TAILQ_FOREACH(c, &p->glw_childs, glw_parent_link) {
     if(c == w)
       continue;
     c->glw_flags |= GLW_FOCUS_BLOCKED;
     if(c->glw_flags & GLW_IN_FOCUS_PATH) {
-      glw_focus_set(w->glw_root, NULL, GLW_FOCUS_SET_AUTOMATIC);
+      do_clear = 1;
     }
   }
 
   w->glw_flags &= ~GLW_FOCUS_BLOCKED;
   c = glw_focus_by_path(w);
 
-  if(c != NULL)
+  if(c != NULL) {
     glw_focus_set(w->glw_root, c, GLW_FOCUS_SET_AUTOMATIC);
-  else if(p->glw_parent->glw_focused == p && 
-	  w->glw_root->gr_current_focus == NULL) {
+    return;
+  } else if(p->glw_parent->glw_focused == p && do_clear) {
     glw_t *r = glw_focus_crawl1(w, 1);
-    if(r != NULL)
+    if(r != NULL) {
       glw_focus_set(w->glw_root, r, GLW_FOCUS_SET_AUTOMATIC);
+      return;
+    }
   }
+
+  if(do_clear)
+    glw_focus_set(w->glw_root, NULL, GLW_FOCUS_SET_AUTOMATIC);
+
 }
 
 
