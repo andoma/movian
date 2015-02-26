@@ -25,7 +25,7 @@ include ${C}/config.default
 BUILDDIR ?= ${C}/build.${BUILD}
 
 # All targets deps on Makefile, but we can comment that out during dev:ing
-#ALLDEPS=${BUILDDIR}/config.mak Makefile src/arch/${OS}/${OS}.mk
+ALLDEPS=${BUILDDIR}/config.mak Makefile src/arch/${OS}/${OS}.mk
 
 ALLDEPS += ${STAMPS}
 
