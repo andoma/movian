@@ -920,7 +920,7 @@ glw_image_layout(glw_t *w, const glw_rctx_t *rc)
     }
 
     if(gi->gi_need_reload && gi->gi_pending == NULL &&
-       gi->gi_pending_url == NULL && rc->rc_width && rc->rc_height) {
+       gi->gi_pending_url == NULL && rc->rc_width > 0 && rc->rc_height > 0) {
 
       int xs = -1, ys = -1, rescale;
 
