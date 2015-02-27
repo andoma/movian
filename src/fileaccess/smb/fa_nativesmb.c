@@ -1471,7 +1471,7 @@ cifs_resolve(const char *url, char *filename, size_t filenamesize,
 
   snprintf(filename, filenamesize, "%s", fn ?: "");
 
-  if(need_file && strchr(filename, '/') == NULL) {
+  if(need_file && strlen(filename) == 0) {
       snprintf(errbuf, errlen, "Invalid URL for operation");
       return CIFS_RESOLVE_ERROR;
   }
