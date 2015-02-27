@@ -4533,6 +4533,35 @@ glwf_focusedChild(glw_view_eval_context_t *ec, struct token *self,
 
 
 /**
+ * Returns the focused clone (or void if nothing is focused)
+ */
+static int
+glwf_focusedClone(glw_view_eval_context_t *ec, struct token *self,
+		  token_t **argv, unsigned int argc)
+{
+  glw_t *w = ec->w, *c;
+  token_t *r;
+
+  if(w == NULL)
+    return glw_view_seterr(ec->ei, self, "focusedClone() without widget");
+
+  ec->dynamic_eval |= GLW_VIEW_EVAL_OTHER;
+
+  c = w->glw_focused;
+  if(c != NULL && c->glw_clone != NULL) {
+    r = eval_alloc(self, ec, TOKEN_PROPERTY_REF);
+    r->t_prop = prop_ref_inc(c->glw_clone->c_clone_root);
+    eval_push(ec, r);
+    return 0;
+  }
+
+  r = eval_alloc(self, ec, TOKEN_VOID);
+  eval_push(ec, r);
+  return 0;
+}
+
+
+/**
  * Returns the focused child index
  *
  * Only works if we have a cloner that spawns the childs
@@ -6457,6 +6486,7 @@ static const token_func_t funcvec[] = {
   {"isHovered", 0, glwf_isHovered},
   {"isPressed", 0, glwf_isPressed},
   {"focusedChild", 0, glwf_focusedChild},
+  {"focusedClone", 0, glwf_focusedClone},
   {"focusedIndex", 0, glwf_focusedIndex},
   {"getCaption", 1, glwf_getCaption},
   {"bind", 1, glwf_bind},
