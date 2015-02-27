@@ -838,6 +838,9 @@ typedef struct glw_root {
   prop_t *gr_pointer_visible;
   int gr_focus_work;
 
+  struct glw *gr_current_cursor;
+  void (*gr_cursor_focus_tracker)(struct glw *w, struct glw *cursor);
+
   /**
    * Backend specifics
    */

@@ -26,9 +26,12 @@
 
 
 typedef struct glw_cursor {
-  glw_t h;
+  glw_t w;
+
+  int gc_initialized;
+  Mtx gc_mtx;
   glw_rctx_t gc_cursor_rctx;
-  float alpha;
+
 } glw_cursor_t;
 
 
@@ -38,45 +41,54 @@ typedef struct glw_cursor {
 static void
 glw_cursor_layout(glw_t *w, const glw_rctx_t *rc)
 {
-  glw_t *c;
-  glw_cursor_t *gc = (glw_cursor_t *)w;
+  glw_t *c = TAILQ_FIRST(&w->glw_childs);
+  if(c != NULL)
+    glw_layout0(c, rc);
+}
 
-  if(w->glw_alpha < 0.01)
-    return;
 
-  c = TAILQ_FIRST(&w->glw_childs);
-  if(c == NULL)
-    return;
-
-  glw_layout0(c, rc);
-
-  c = TAILQ_NEXT(c, glw_parent_link);
-  if(c == NULL)
-    return;
-
+/**
+ *
+ */
+static void
+render_focus_widget(glw_t *w, glw_cursor_t *gc, Mtx saved,
+                    glw_rctx_t *rc0, const glw_rctx_t *rc,
+                    int *zmax)
+{
   glw_root_t *gr = w->glw_root;
+
+  if(!(gc->w.glw_flags & GLW_IN_FOCUS_PATH))
+    return;
 
   glw_t *f = gr->gr_current_focus;
 
-  float cursor_alpha = 0;
+  if(f->glw_matrix != NULL) {
 
-  if(f == NULL)
-    return;
+    Mtx a_inv;
+    glw_mtx_invert(a_inv, saved);
+    Mtx *b = f->glw_matrix;
 
-  if(f->glw_flags & GLW_IN_FOCUS_PATH &&
-     w->glw_flags & GLW_IN_FOCUS_PATH) {
-
-    if(f->glw_matrix != NULL) {
-      Mtx *x = f->glw_matrix;
-
-      for(int i = 0; i < 16; i++) {
-        glw_lp(&gc->gc_cursor_rctx.rc_mtx[i], gr, (*x)[i], 0.5);
-        //        printf("%2.3f%c", gc->gc_matrix[i], (i+1) & 3 ? '\t' : '\n');
-      }
+    if(0) {
+      glw_rect_t focus_rect;
+      glw_project_matrix(&focus_rect, *b, gr);
+      printf("Current focus: %d,%d - %d,%d\n",
+             focus_rect.x1, focus_rect.y1,
+             focus_rect.x2, focus_rect.y2);
     }
 
-    if(f->glw_flags2 & GLW2_CURSOR)
-      cursor_alpha = 1;
+    Mtx x;
+    glw_mtx_mul(x, a_inv, *b);
+
+    if (!gc->gc_initialized) {
+      glw_mtx_copy(gc->gc_mtx, x);
+      gc->gc_initialized = 1;
+    } else {
+      for(int i = 0; i < 16; i++) {
+        glw_lp(&gc->gc_mtx[i], gr, x[i], 0.5);
+        /* printf("%2.3f%c", gc->gc_mtx[i], (i+1) & 3 ? '\t' : '\n'); */
+      }
+    }
+    glw_mtx_mul(gc->gc_cursor_rctx.rc_mtx, saved, gc->gc_mtx);
   }
 
   glw_rect_t cursor_rect;
@@ -92,13 +104,15 @@ glw_cursor_layout(glw_t *w, const glw_rctx_t *rc)
   if(gc->gc_cursor_rctx.rc_height <= 0)
     return;
 
-  glw_lp(&gc->alpha, w->glw_root, cursor_alpha, 0.5);
-
-  gc->gc_cursor_rctx.rc_alpha = rc->rc_alpha * w->glw_alpha * gc->alpha;
+  gc->gc_cursor_rctx.rc_alpha = 1.0f;
   gc->gc_cursor_rctx.rc_sharpness = 1.0f;
 
+  glw_layout0(w, &gc->gc_cursor_rctx);
 
-  glw_layout0(c, &gc->gc_cursor_rctx);
+  rc0->rc_zindex = MAX(*zmax, rc->rc_zindex);
+  gc->gc_cursor_rctx.rc_zmax = rc0->rc_zmax;
+  gc->gc_cursor_rctx.rc_zindex = rc0->rc_zindex;
+  glw_render0(w, &gc->gc_cursor_rctx);
 }
 
 
@@ -106,12 +120,26 @@ glw_cursor_layout(glw_t *w, const glw_rctx_t *rc)
  *
  */
 static void
+glw_cursor_focus_tracker(glw_t *w, glw_t *cursor)
+{
+  if(w->glw_flags & GLW_IN_HOVER_PATH) {
+    //    printf("Hover %s\n", glw_get_path(w));
+  }
+
+}
+
+/**
+ *
+ */
+static void
 glw_cursor_render(glw_t *w, const glw_rctx_t *rc)
 {
+  glw_root_t *gr = w->glw_root;
   glw_cursor_t *gc = (glw_cursor_t *)w;
-  glw_t *c, *d;
   glw_rctx_t rc0;
   int zmax = 0;
+  glw_t *c;
+  Mtx saved;
 
   if(w->glw_alpha < 0.01)
     return;
@@ -120,18 +148,29 @@ glw_cursor_render(glw_t *w, const glw_rctx_t *rc)
   if(c == NULL)
     return;
 
+  glw_mtx_copy(saved, rc->rc_mtx);
+
   rc0 = *rc;
   rc0.rc_zmax = &zmax;
 
+  glw_t *saved_cursor = gr->gr_current_cursor;
+  void (*saved_focus_tracker)(struct glw *w, struct glw *cursor) =
+    gr->gr_cursor_focus_tracker;
+
+  gr->gr_cursor_focus_tracker = glw_cursor_focus_tracker;
+  gr->gr_current_cursor = w;
+
   glw_render0(c, &rc0);
+
+  gr->gr_cursor_focus_tracker = saved_focus_tracker;
+  gr->gr_current_cursor = saved_cursor;
+
   glw_zinc(&rc0);
 
-  d = TAILQ_NEXT(c, glw_parent_link);
-  if(d != NULL) {
-    rc0.rc_zindex = MAX(zmax, rc->rc_zindex);
-    gc->gc_cursor_rctx.rc_zmax = rc0.rc_zmax;
-    gc->gc_cursor_rctx.rc_zindex = rc0.rc_zindex;
-    glw_render0(d, &gc->gc_cursor_rctx);
+  c = TAILQ_NEXT(c, glw_parent_link);
+  if(c != NULL) {
+    render_focus_widget(c, gc, saved, &rc0, rc, &zmax);
+
   }
 
   *rc->rc_zmax = MAX(*rc->rc_zmax, zmax);
