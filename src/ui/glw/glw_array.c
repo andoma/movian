@@ -279,13 +279,14 @@ glw_array_layout(glw_t *w, const glw_rctx_t *rc)
 
     if(c == a->scroll_to_me) {
       a->scroll_to_me = NULL;
-     
       if(ypos - a->filtered_pos < 0) {
 	a->current_pos = ypos;
 	a->w.glw_flags |= GLW_UPDATE_METRICS;
+        glw_schedule_refresh(w->glw_root, 0);
       } else if(ypos - a->filtered_pos + rc0.rc_height > height) {
 	a->current_pos = ypos + rc0.rc_height - height;
 	a->w.glw_flags |= GLW_UPDATE_METRICS;
+        glw_schedule_refresh(w->glw_root, 0);
       }
     }
 
@@ -474,6 +475,7 @@ static void
 glw_array_scroll(glw_array_t *a, glw_scroll_t *gs)
 {
   a->current_pos = GLW_MAX(gs->value * (a->total_size - a->page_size), 0);
+  glw_schedule_refresh(a->w.glw_root, 0);
 }
 
 
@@ -570,6 +572,7 @@ glw_array_pointer_event(glw_t *w, const glw_pointer_event_t *gpe)
   if(gpe->type == GLW_POINTER_SCROLL) {
     a->current_pos += a->page_size * gpe->delta_y;
     a->w.glw_flags |= GLW_UPDATE_METRICS;
+    glw_schedule_refresh(a->w.glw_root, 0);
     return 1;
   }
   return 0;
