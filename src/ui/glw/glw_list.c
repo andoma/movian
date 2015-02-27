@@ -122,7 +122,8 @@ glw_list_layout_y(glw_t *w, const glw_rctx_t *rc)
   glw_list_t *l = (glw_list_t *)w;
   glw_t *c;
   const int bd = l->scroll_threshold;
-  int ypos = bd;
+  int ypos;
+
   glw_rctx_t rc0 = *rc;
 
   glw_reposition(&rc0, l->padding[0], rc->rc_height - l->padding[1],
@@ -138,7 +139,40 @@ glw_list_layout_y(glw_t *w, const glw_rctx_t *rc)
       l->scroll_to_me = w->glw_focused;
   }
 
-  
+  if(l->scroll_to_me != NULL) {
+
+    ypos = bd;
+    TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+      if(c->glw_flags & GLW_HIDDEN)
+        continue;
+
+      int f = glw_filter_constraints(c);
+      int height;
+
+      if(f & GLW_CONSTRAINT_Y) {
+        height = c->glw_req_size_y;
+      } else {
+        height = rc0.rc_width / 10;
+      }
+
+      if(c == l->scroll_to_me) {
+
+        if(ypos - l->filtered_pos < bd) {
+          l->current_pos = ypos - bd;
+          l->w.glw_flags |= GLW_UPDATE_METRICS;
+        } else if(ypos - l->filtered_pos + height > height0) {
+          l->current_pos = ypos + height - height0;
+          l->w.glw_flags |= GLW_UPDATE_METRICS;
+        }
+      }
+
+      ypos += height;
+      ypos += l->spacing;
+    }
+    l->scroll_to_me = NULL;
+  }
+
+
   if(l->touched) {
 
     l->filtered_pos = l->current_pos;
@@ -158,6 +192,7 @@ glw_list_layout_y(glw_t *w, const glw_rctx_t *rc)
     }
   }
 
+  ypos = bd;
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
@@ -184,18 +219,6 @@ glw_list_layout_y(glw_t *w, const glw_rctx_t *rc)
     if(ypos - l->filtered_pos > -height0 &&
        ypos - l->filtered_pos <  height0 * 2)
       glw_layout0(c, &rc0);
-
-    if(c == l->scroll_to_me) {
-      l->scroll_to_me = NULL;
-     
-      if(ypos - l->filtered_pos < bd) {
-	l->current_pos = ypos - bd;
-	l->w.glw_flags |= GLW_UPDATE_METRICS;
-      } else if(ypos - l->filtered_pos + rc0.rc_height > height0) {
-	l->current_pos = ypos + rc0.rc_height - height0;
-	l->w.glw_flags |= GLW_UPDATE_METRICS;
-      }
-    }
 
     ypos += rc0.rc_height;
     ypos += l->spacing;
