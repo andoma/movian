@@ -221,3 +221,5 @@ glw_mtx_copy(Mtx dst, const Mtx src)
 {
   memcpy(dst, src, sizeof(Mtx));
 }
+
+void glw_mtx_mul(Mtx dst, Mtx a, Mtx b);
