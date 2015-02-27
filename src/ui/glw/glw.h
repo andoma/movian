@@ -705,6 +705,8 @@ typedef struct glw_root {
   void (*gr_prop_dispatcher)(prop_courier_t *pc, int timeout);
   int gr_prop_maxtime;
 
+  int gr_keyboard_mode;
+
   int gr_reduce_cpu;
   prop_sub_t *gr_evsub;
 
@@ -839,7 +841,8 @@ typedef struct glw_root {
   int gr_focus_work;
 
   struct glw *gr_current_cursor;
-  void (*gr_cursor_focus_tracker)(struct glw *w, struct glw *cursor);
+  void (*gr_cursor_focus_tracker)(struct glw *w, const struct glw_rctx *rc,
+                                  struct glw *cursor);
 
   /**
    * Backend specifics
@@ -1295,7 +1298,7 @@ void glw_view_eval_signal(glw_t *w, glw_signal_t sig);
 
 void glw_view_eval_layout(glw_t *w, const glw_rctx_t *rc, int mask);
 
-void glw_view_eval_em(glw_t *w);
+void glw_view_eval_dynamics(glw_t *w, int flags);
 
 /**
  * Transitions

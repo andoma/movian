@@ -42,6 +42,7 @@ static void glw_focus_leave(glw_t *w);
 static void glw_root_set_hover(glw_root_t *gr, glw_t *w);
 static void glw_eventsink(void *opaque, prop_event_t event, ...);
 static void glw_update_em(glw_root_t *gr);
+static void glw_set_keyboard_mode(glw_root_t *gr, int on);
 
 glw_settings_t glw_settings;
 
@@ -1771,6 +1772,7 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
     runcontrol_activity();
     glw_reset_screensaver(gr);
     gr->gr_screensaver_force_enable = 0;
+    glw_set_keyboard_mode(gr, 0);
   }
 
   /* If a widget has grabbed to pointer (such as when holding the button
@@ -1974,7 +1976,9 @@ glw_dispatch_event(glw_root_t *gr, event_t *e)
        event_is_type(e, EVENT_SELECT_SUBTITLE_TRACK)
 
      )) {
-    
+
+    glw_set_keyboard_mode(gr, 1);
+
     if(glw_kill_screensaver(gr)) {
       return;
     }
@@ -2511,8 +2515,15 @@ glw_store_matrix(glw_t *w, const glw_rctx_t *rc)
 
   if(w->glw_matrix == NULL)
     w->glw_matrix = malloc(sizeof(Mtx));
-  
+
   memcpy(w->glw_matrix, rc->rc_mtx, sizeof(Mtx));
+
+  if(likely(!(w->glw_flags & (GLW_IN_FOCUS_PATH | GLW_IN_HOVER_PATH))))
+    return;
+
+  if(w->glw_root->gr_cursor_focus_tracker != NULL)
+    w->glw_root->gr_cursor_focus_tracker(w, rc,
+                                         w->glw_root->gr_current_cursor);
 }
 
 
@@ -2846,15 +2857,15 @@ glw_need_refresh0(glw_root_t *gr, int how, const char *file, int line)
 
 
 static void
-glw_update_em_r(glw_t *w)
+glw_update_dynamics_r(glw_t *w, int flags)
 {
   glw_t *c;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
-    glw_update_em_r(c);
+    glw_update_dynamics_r(c, flags);
 
-  if(w->glw_dynamic_eval & GLW_VIEW_EVAL_EM)
-    glw_view_eval_em(w);
+  if(w->glw_dynamic_eval & flags)
+    glw_view_eval_dynamics(w, flags);
 }
 
 
@@ -2862,7 +2873,21 @@ static void
 glw_update_em(glw_root_t *gr)
 {
   if(gr->gr_universe != NULL)
-    glw_update_em_r(gr->gr_universe);
+    glw_update_dynamics_r(gr->gr_universe, GLW_VIEW_EVAL_EM);
 
   glw_style_update_em(gr);
+}
+
+
+static void
+glw_set_keyboard_mode(glw_root_t *gr, int on)
+{
+  if(gr->gr_keyboard_mode == on)
+    return;
+
+  gr->gr_keyboard_mode = on;
+  prop_set(gr->gr_prop_ui, "keyboard", PROP_SET_INT, on);
+
+  if(gr->gr_universe != NULL)
+    glw_update_dynamics_r(gr->gr_universe, GLW_VIEW_EVAL_FHP_CHANGE);
 }

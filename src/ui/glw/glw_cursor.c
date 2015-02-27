@@ -32,6 +32,9 @@ typedef struct glw_cursor {
   Mtx gc_mtx;
   glw_rctx_t gc_cursor_rctx;
 
+  glw_rctx_t gc_hover_rctx;
+  int gc_hover_set;
+
 } glw_cursor_t;
 
 
@@ -116,16 +119,45 @@ render_focus_widget(glw_t *w, glw_cursor_t *gc, Mtx saved,
 }
 
 
+
 /**
  *
  */
 static void
-glw_cursor_focus_tracker(glw_t *w, glw_t *cursor)
+render_hover_widget(glw_t *w, glw_cursor_t *gc,
+                    glw_rctx_t *rc0, const glw_rctx_t *rc,
+                    int *zmax)
 {
-  if(w->glw_flags & GLW_IN_HOVER_PATH) {
-    //    printf("Hover %s\n", glw_get_path(w));
-  }
+  //  glw_root_t *gr = w->glw_root;
 
+  if(!(gc->w.glw_flags & GLW_IN_HOVER_PATH))
+    return;
+
+  gc->gc_hover_rctx.rc_alpha = 1.0f;
+  gc->gc_hover_rctx.rc_sharpness = 1.0f;
+
+  glw_layout0(w, &gc->gc_hover_rctx);
+
+  rc0->rc_zindex = MAX(*zmax, rc->rc_zindex);
+  gc->gc_hover_rctx.rc_zmax = rc0->rc_zmax;
+  gc->gc_hover_rctx.rc_zindex = rc0->rc_zindex;
+  glw_render0(w, &gc->gc_hover_rctx);
+}
+
+
+/**
+ *
+ */
+static void
+glw_cursor_focus_tracker(glw_t *w, const glw_rctx_t *rc, glw_t *cursor)
+{
+  glw_cursor_t *gc = (glw_cursor_t *)cursor;
+
+  if(!(w->glw_flags & GLW_IN_HOVER_PATH))
+    return;
+
+  gc->gc_hover_rctx = *rc;
+  gc->gc_hover_set = 1;
 }
 
 /**
@@ -153,8 +185,11 @@ glw_cursor_render(glw_t *w, const glw_rctx_t *rc)
   rc0 = *rc;
   rc0.rc_zmax = &zmax;
 
+  gc->gc_hover_set = 0;
+
   glw_t *saved_cursor = gr->gr_current_cursor;
-  void (*saved_focus_tracker)(struct glw *w, struct glw *cursor) =
+  void (*saved_focus_tracker)(struct glw *w, const struct glw_rctx *rc,
+                              struct glw *cursor) =
     gr->gr_cursor_focus_tracker;
 
   gr->gr_cursor_focus_tracker = glw_cursor_focus_tracker;
@@ -171,6 +206,10 @@ glw_cursor_render(glw_t *w, const glw_rctx_t *rc)
   if(c != NULL) {
     render_focus_widget(c, gc, saved, &rc0, rc, &zmax);
 
+    c = TAILQ_NEXT(c, glw_parent_link);
+    if(c != NULL) {
+      render_hover_widget(c, gc, &rc0, rc, &zmax);
+    }
   }
 
   *rc->rc_zmax = MAX(*rc->rc_zmax, zmax);

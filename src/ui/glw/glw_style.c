@@ -1119,7 +1119,7 @@ glw_style_update_em(glw_root_t *gr)
   glw_style_t *gs;
   LIST_FOREACH(gs, &gr->gr_all_styles, gs_link)
     if(gs->w.glw_dynamic_eval & GLW_VIEW_EVAL_EM)
-      glw_view_eval_em(&gs->w);
+      glw_view_eval_dynamics(&gs->w, GLW_VIEW_EVAL_EM);
 
 
 }
