@@ -432,9 +432,28 @@ glw_event_map_intercept(glw_t *w, event_t *e)
 
   LIST_FOREACH(gem, &w->glw_event_maps, gem_link) {
 
-    if((gem->gem_action == ACTION_invalid && event_is_type(e, EVENT_KEYDESC)) ||
+    if((gem->gem_action == GLW_EVENT_KEYCODE &&
+        event_is_type(e, EVENT_KEYDESC)) ||
        event_is_action(e, gem->gem_action)) {
       gem->gem_fire(w, gem, e);
+      return 1;
+    }
+  }
+  return 0;
+}
+
+
+/**
+ *
+ */
+int
+glw_event_glw_action(glw_t *w, int action)
+{
+  glw_event_map_t *gem;
+
+  LIST_FOREACH(gem, &w->glw_event_maps, gem_link) {
+    if(gem->gem_action == action) {
+      gem->gem_fire(w, gem, NULL);
       return 1;
     }
   }

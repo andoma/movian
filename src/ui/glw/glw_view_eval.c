@@ -3083,7 +3083,11 @@ glwf_onEvent(glw_view_eval_context_t *ec, struct token *self,
     return glw_view_seterr(ec->ei, a, "Invalid source event type");
 
   if(!strcmp(rstr_get(a->t_rstring), "KeyCode")) {
-    action = -1;
+    action = GLW_EVENT_KEYCODE;
+  } else if(!strcmp(rstr_get(a->t_rstring), "GainedFocus")) {
+    action = GLW_EVENT_GAINED_FOCUS;
+  } else if(!strcmp(rstr_get(a->t_rstring), "LostFocus")) {
+    action = GLW_EVENT_LOST_FOCUS;
   } else {
     action = action_str2code(rstr_get(a->t_rstring));
 

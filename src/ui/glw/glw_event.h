@@ -20,6 +20,9 @@
 #pragma once
 #include "event.h"
 
+#define GLW_EVENT_KEYCODE      -1
+#define GLW_EVENT_GAINED_FOCUS -2
+#define GLW_EVENT_LOST_FOCUS   -3
 
 /**
  *
@@ -61,3 +64,5 @@ glw_event_map_t *glw_event_map_deliverEvent_create(prop_t *target,
 						   rstr_t *action);
 
 glw_event_map_t *glw_event_map_propref_create(prop_t *prop, prop_t *target);
+
+int glw_event_glw_action(glw_t *w, int action);

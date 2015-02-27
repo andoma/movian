@@ -944,9 +944,16 @@ glw_path_modify(glw_t *w, int set, int clr, glw_t *stop)
   glw_path_flood(w, set, clr);
 
   for(; w != NULL && w != stop; w = w->glw_parent) {
+
+    int old_flags = w->glw_flags;
+
     w->glw_flags = (w->glw_flags | set) & clr;
     if(!(w->glw_flags & GLW_DESTROYING))
       glw_signal0(w, GLW_SIGNAL_FHP_PATH_CHANGED, NULL);
+
+    if((old_flags ^ w->glw_flags) & GLW_IN_FOCUS_PATH)
+      glw_event_glw_action(w, w->glw_flags & GLW_IN_FOCUS_PATH ?
+                           GLW_EVENT_GAINED_FOCUS : GLW_EVENT_LOST_FOCUS);
   }
 }
 
