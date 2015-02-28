@@ -58,6 +58,8 @@ typedef struct es_context {
   char *ec_storage;
 
   char ec_debug;
+  char ec_bypass_file_acl_write;
+  char ec_bypass_file_acl_read;
 
   int ec_linked;
 
@@ -195,7 +197,9 @@ int ecmascript_plugin_load(const char *id, const char *fullpath,
                            int version, const char *manifest,
                            int flags);
 
-#define ECMASCRIPT_DEBUG  0x1
+#define ECMASCRIPT_DEBUG                 0x1
+#define ECMASCRIPT_FILE_BYPASS_ACL_READ  0x2
+#define ECMASCRIPT_FILE_BYPASS_ACL_WRITE 0x4
 
 void ecmascript_plugin_unload(const char *id);
 

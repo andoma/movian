@@ -551,6 +551,14 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int flags)
     if(htsmsg_get_u32_or_default(ctrl, "debug", 0) || flags & PLUGIN_LOAD_DEBUG)
       flags |= ECMASCRIPT_DEBUG;
 
+    htsmsg_t *e = htsmsg_get_map(ctrl, "entitlements");
+    if(e != NULL) {
+      if(htsmsg_get_u32_or_default(e, "bypassFileACLRead", 0))
+        flags |= ECMASCRIPT_FILE_BYPASS_ACL_READ;
+      if(htsmsg_get_u32_or_default(e, "bypassFileACLWrite", 0))
+        flags |= ECMASCRIPT_FILE_BYPASS_ACL_WRITE;
+    }
+
     hts_mutex_unlock(&plugin_mutex);
     r = ecmascript_plugin_load(id, fullpath, errbuf, errlen, version,
                                buf_cstr(b), flags);

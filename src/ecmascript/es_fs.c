@@ -80,11 +80,18 @@ const es_resource_class_t es_resource_fd = {
  *
  */
 static const char *
-get_filename(duk_context *ctx, int index, const es_context_t *ec)
+get_filename(duk_context *ctx, int index, const es_context_t *ec,
+             int for_write)
 {
   const char *filename = duk_to_string(ctx, index);
 
   if(gconf.bypass_ecmascript_acl)
+    return filename;
+
+  if(for_write && ec->ec_bypass_file_acl_write)
+    return filename;
+
+  if(!for_write && ec->ec_bypass_file_acl_read)
     return filename;
 
   if(strstr(filename, "../") || strstr(filename, "/.."))
@@ -109,8 +116,6 @@ es_file_open(duk_context *ctx)
 
   es_context_t *ec = es_get(ctx);
 
-  const char *filename = get_filename(ctx, 0, ec);
-
   const char *flagsstr = duk_to_string(ctx, 1);
   //  int mode = duk_to_int(ctx, 2);
 
@@ -126,6 +131,8 @@ es_file_open(duk_context *ctx)
   } else {
     duk_error(ctx, DUK_ERR_ERROR, "Invalid flags '%s' to open", flagsstr);
   }
+
+  const char *filename = get_filename(ctx, 0, ec, !!flags);
 
   fa_handle_t *fh = fa_open_ex(filename, errbuf, sizeof(errbuf), flags, NULL);
   if(fh == NULL)
@@ -254,8 +261,8 @@ es_file_rename(duk_context *ctx)
 {
   es_context_t *ec = es_get(ctx);
 
-  const char *oldname = get_filename(ctx, 0, ec);
-  const char *newname = get_filename(ctx, 1, ec);
+  const char *oldname = get_filename(ctx, 0, ec, 0);
+  const char *newname = get_filename(ctx, 1, ec, 1);
   char errbuf[512];
 
   if(fa_rename(oldname, newname, errbuf, sizeof(errbuf)))
@@ -274,7 +281,7 @@ es_file_mkdirs(duk_context *ctx)
 {
   es_context_t *ec = es_get(ctx);
 
-  const char *filename = get_filename(ctx, 0, ec);
+  const char *filename = get_filename(ctx, 0, ec, 1);
   char errbuf[512];
 
   if(fa_makedirs(filename, errbuf, sizeof(errbuf)))
@@ -292,7 +299,7 @@ static int
 es_file_dirname(duk_context *ctx)
 {
   es_context_t *ec = es_get(ctx);
-  const char *filename = mystrdupa(get_filename(ctx, 0, ec));
+  const char *filename = mystrdupa(get_filename(ctx, 0, ec, 0));
 
   char *x = strrchr(filename, '/');
   if(x) {
@@ -312,7 +319,7 @@ es_file_basename(duk_context *ctx)
   es_context_t *ec = es_get(ctx);
   char tmp[URL_MAX];
 
-  fa_url_get_last_component(tmp, sizeof(tmp), get_filename(ctx, 0, ec));
+  fa_url_get_last_component(tmp, sizeof(tmp), get_filename(ctx, 0, ec, 0));
   duk_push_string(ctx, tmp);
   return 1;
 }

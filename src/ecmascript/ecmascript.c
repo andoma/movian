@@ -496,6 +496,8 @@ es_context_create(const char *id, int flags, const char *url,
     ec->ec_storage = strdup(storage);
 
   ec->ec_debug  = !!(flags & ECMASCRIPT_DEBUG);
+  ec->ec_bypass_file_acl_read  = !!(flags & ECMASCRIPT_FILE_BYPASS_ACL_READ);
+  ec->ec_bypass_file_acl_write = !!(flags & ECMASCRIPT_FILE_BYPASS_ACL_WRITE);
 
   hts_mutex_init_recursive(&ec->ec_mutex);
   atomic_set(&ec->ec_refcount, 1);
