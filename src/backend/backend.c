@@ -44,6 +44,25 @@ LIST_HEAD(backend_list, backend);
 
 static struct backend_list backends;
 
+
+
+typedef struct loading_image {
+  LIST_ENTRY(loading_image) li_link;
+  TAILQ_ENTRY(loading_image) li_cache_link;
+  image_t *li_image;
+  int li_waiters;
+  char li_done;
+  char li_url[0];
+} loading_image_t;
+
+
+LIST_HEAD(loading_image_list, loading_image);
+TAILQ_HEAD(loading_image_queue, loading_image);
+
+static struct loading_image_list loading_images;
+static struct loading_image_queue cached_images;
+static int num_cached_images;
+
 static hts_mutex_t imageloader_mutex;
 static hts_cond_t imageloader_cond;
 
@@ -68,6 +87,8 @@ backend_init(void)
 
   hts_mutex_init(&imageloader_mutex);
   hts_cond_init(&imageloader_cond, &imageloader_mutex);
+
+  TAILQ_INIT(&cached_images);
 
   LIST_FOREACH(be, &backends, be_global_link)
     if(be->be_init != NULL)
@@ -167,17 +188,25 @@ static backend_t be_page = {
 BE_REGISTER(page);
 
 
-typedef struct loading_image {
-  LIST_ENTRY(loading_image) li_link;
-  int li_refcount;
-  int li_done;
-  char li_url[0];
-} loading_image_t;
+/**
+ *
+ */
+static void
+prune_image_cache(void)
+{
+  while(num_cached_images > 3) {
+    loading_image_t *li = TAILQ_FIRST(&cached_images);
+    assert(li->li_waiters == 0);
+    assert(li->li_done == 1);
+    assert(li->li_image != NULL);
 
-
-LIST_HEAD(loading_image_list, loading_image);
-
-static struct loading_image_list loading_images;
+    num_cached_images--;
+    TAILQ_REMOVE(&cached_images, li, li_cache_link);
+    image_release(li->li_image);
+    LIST_REMOVE(li, li_link);
+    free(li);
+  }
+}
 
 /**
  *
@@ -280,45 +309,72 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im0,
       break;
 
   if(li == NULL) {
-    li = malloc(sizeof(loading_image_t) + strlen(url) + 1);
+    li = calloc(1, sizeof(loading_image_t) + strlen(url) + 1);
     LIST_INSERT_HEAD(&loading_images, li, li_link);
-    li->li_done = 0;
-    li->li_refcount = 1;
+    li->li_waiters = 1;
     strcpy(li->li_url, url);
   } else {
-    li->li_refcount++;
+
+    if(li->li_waiters == 0) {
+      num_cached_images--;
+      TAILQ_REMOVE(&cached_images, li, li_cache_link);
+    }
+
+    li->li_waiters++;
 
     while(li->li_done == 0)
       hts_cond_wait(&imageloader_cond, &imageloader_mutex);
 
-    li->li_done = 0;
+    if(li->li_image != NULL && im.im_want_thumb == 0) {
+      img = image_retain(li->li_image);
+    }
+
   }
+  li->li_done = 0;
 
   hts_mutex_unlock(&imageloader_mutex);
 
-  img = nb->be_imageloader(url, &im, vpaths, errbuf, errlen, cache_control, c);
-
-  if(img != NULL && img != NOT_MODIFIED && !im.im_no_decoding) {
-
-    if(c != NULL && c->cancelled) {
-      snprintf(errbuf, errlen, "Cancelled");
+  if(img == NULL) {
+    img = nb->be_imageloader(url, &im, vpaths, errbuf,
+                             errlen, cache_control, c);
+  }
+  if(c != NULL && c->cancelled) {
+    snprintf(errbuf, errlen, "Cancelled");
+    if(img != NOT_MODIFIED)
       image_release(img);
-      img = NULL;
-    } else {
+    img = NULL;
+  }
 
+  if(img != NULL && img != NOT_MODIFIED) {
+
+    if(!(img->im_flags & IMAGE_ADAPTED) && li->li_image == NULL)
+      li->li_image = image_retain(img);
+
+    if(!im.im_no_decoding) {
       img = image_decode(img, &im, errbuf, errlen);
-
     }
+
   }
 
   hts_mutex_lock(&imageloader_mutex);
-  li->li_refcount--;
+  li->li_waiters--;
+  li->li_done = 1;
 
-  if(li->li_refcount == 0) {
-    LIST_REMOVE(li, li_link);
-    free(li);
+  if(li->li_waiters == 0) {
+    // No more waiters.
+
+    if(li->li_image != NULL) {
+
+      prune_image_cache();
+
+      num_cached_images++;
+      TAILQ_INSERT_TAIL(&cached_images, li, li_cache_link);
+    } else {
+      LIST_REMOVE(li, li_link);
+      free(li);
+    }
+
   } else {
-    li->li_done = 1;
     hts_cond_broadcast(&imageloader_cond);
   }
 

@@ -845,6 +845,7 @@ svg_decode(buf_t *buf, const image_meta_t *im,
            char *errbuf, size_t errlen)
 {
   image_t *img;
+  buf = buf_retain(buf);
   htsmsg_t *doc = htsmsg_xml_deserialize_buf(buf, errbuf, errlen);
   if(doc == NULL)
     return NULL;

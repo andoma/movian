@@ -237,53 +237,46 @@ image_create_from_pixmap(pixmap_t *pm)
  *
  */
 static image_t *
-image_decode_coded(image_t *im, const image_meta_t *meta,
+image_decode_coded(const image_t *src, const image_meta_t *meta,
                    char *errbuf, size_t errlen)
 {
-  image_component_t *ic = &im->im_components[0];
-  image_component_coded_t *icc = &ic->coded;
+  const image_component_t *ic = &src->im_components[0];
+  const image_component_coded_t *icc = &ic->coded;
 
-  if(icc->icc_type == IMAGE_SVG) {
-    buf_t *b = icc->icc_buf;
-    icc->icc_buf = NULL;
-    return svg_decode(b, meta, errbuf, errlen);
-  }
-
-  im->im_origin_coded_type = icc->icc_type;
+  if(icc->icc_type == IMAGE_SVG)
+    return svg_decode(icc->icc_buf, meta,  errbuf, errlen);
 
   pixmap_t *pm = NULL;
 
   if(accel_image_decode != NULL)
     pm = accel_image_decode(icc->icc_type, icc->icc_buf, meta, errbuf, errlen,
-                            im);
+                            src);
 
   if(pm == NULL)
     pm = image_decode_libav(icc->icc_type, icc->icc_buf, meta, errbuf, errlen);
 
-  if(pm == NULL) {
+  if(pm == NULL)
     return NULL;
-  }
-
-  image_clear_component(ic);
-  ic->type = IMAGE_PIXMAP;
-  ic->pm = pm;
 
   /*
    * Invert aspect ratio for orientations that rotate image 90/270 deg, etc
    * Might seem strange, but it does the right thing
    */
 
-  if(im->im_orientation >= LAYOUT_ORIENTATION_TRANSPOSE)
+  if(src->im_orientation >= LAYOUT_ORIENTATION_TRANSPOSE)
     pm->pm_aspect = 1.0f / pm->pm_aspect;
 
-  return im;
+  image_t *new = image_create_from_pixmap(pm);
+  new->im_origin_coded_type = icc->icc_type;
+  pixmap_release(pm);
+  return new;
 }
 
 
 /**
  *
  */
-static image_t *
+static void
 image_postprocess_pixmap(image_t *img, const image_meta_t *im)
 {
   image_component_t *ic = &img->im_components[0];
@@ -294,8 +287,6 @@ image_postprocess_pixmap(image_t *img, const image_meta_t *im)
   if(im->im_corner_radius)
     ic->pm = pixmap_rounded_corners(ic->pm, im->im_corner_radius,
 				    im->im_corner_selection);
-
-  return img;
 }
 
 
@@ -307,7 +298,7 @@ image_decode(image_t *im, const image_meta_t *meta,
              char *errbuf, size_t errlen)
 {
   image_t *r;
-  image_component_t *ic = &im->im_components[0];
+  const image_component_t *ic = &im->im_components[0];
 
   assert(im->im_num_components == 1); // We can only deal with one for now
 
@@ -316,24 +307,26 @@ image_decode(image_t *im, const image_meta_t *meta,
     return im;
 
   case IMAGE_PIXMAP:
-    return image_postprocess_pixmap(im, meta);
+    image_postprocess_pixmap(im, meta);
+    return im;
 
   case IMAGE_CODED:
     r = image_decode_coded(im, meta, errbuf, errlen);
-    if(r == NULL) {
-      image_release(im);
-      return NULL;
-    }
+    if(r == NULL)
+      break;
     return image_decode(r, meta, errbuf, errlen);
 
   case IMAGE_VECTOR:
-    image_rasterize_ft(ic, im->im_width, im->im_height, im->im_margin);
-    return image_decode(im, meta, errbuf, errlen);
+    r = image_rasterize_ft(ic, im->im_width, im->im_height, im->im_margin);
+    break;
 
-  case IMAGE_TEXT_INFO:
+  default:
     abort();
   }
-  abort();
+
+  image_release(im);
+
+  return r;
 }
 
 

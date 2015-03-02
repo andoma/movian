@@ -670,9 +670,10 @@ be_tmdb_imageloader(const char *url, const image_meta_t *im,
   image_t *img = backend_imageloader(rstr, im, vpaths, errbuf, errlen,
 				     cache_control, c);
   rstr_release(rstr);
-  return img;
-  
+  if(img != NULL && img != NOT_MODIFIED)
+    img->im_flags |= IMAGE_ADAPTED;
 
+  return img;
 }
 
 /**

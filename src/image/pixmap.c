@@ -984,6 +984,7 @@ be_showtime_pixmap_loader(const char *url, const image_meta_t *im,
     pixmap_horizontal_gradient(pm, t, b);
     img = image_create_from_pixmap(pm);
     pixmap_release(pm);
+    img->im_flags |= IMAGE_ADAPTED;
 
   } else {
     snprintf(errbuf, errlen, "Invalid URL");

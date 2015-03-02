@@ -139,7 +139,9 @@ typedef struct image {
   uint16_t im_flags;
 #define IMAGE_THUMBNAIL   0x1
 #define IMAGE_PROGRESSIVE 0x2
-
+#define IMAGE_ADAPTED     0x4  /* When an image is loaded and this flag
+                                  is set the returned image is also dependant
+                                  on the image_meta parameters. */
   uint8_t im_color_planes;
   uint8_t im_origin_coded_type;
   uint8_t im_orientation;
@@ -169,8 +171,8 @@ image_t *image_create_vector(int width, int height, int margin);
 image_t *image_decode(image_t *img, const image_meta_t *im,
                       char *errbuf, size_t errlen);
 
-void image_rasterize_ft(image_component_t *ic,
-                        int with, int height, int margin);
+image_t *image_rasterize_ft(const image_component_t *ic,
+                            int with, int height, int margin);
 
 /***************************************************************************
  * Coded images (JPEG, PNG, etc)

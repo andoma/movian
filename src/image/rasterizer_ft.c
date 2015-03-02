@@ -375,8 +375,9 @@ rasterize(state_t *s, pixmap_t *pm)
 /**
  *
  */
-void
-image_rasterize_ft(image_component_t *ic, int width, int height, int margin)
+image_t *
+image_rasterize_ft(const image_component_t *ic,
+                   int width, int height, int margin)
 {
   const image_component_vector_t *icv = &ic->vector;
 
@@ -450,9 +451,9 @@ image_rasterize_ft(image_component_t *ic, int width, int height, int margin)
   FT_Stroker_Done(s.stroker);
   hts_mutex_unlock(&ft_mutex);
 
-  image_clear_component(ic);
-  ic->type = IMAGE_PIXMAP;
-  ic->pm = pm;
+  image_t *r = image_create_from_pixmap(pm);
+  pixmap_release(pm);
+  return r;
 }
 
 

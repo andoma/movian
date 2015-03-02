@@ -233,6 +233,7 @@ fa_imageloader(const char *url, const struct image_meta *im,
       image_t *im = image_retain(ji.ji_thumbnail);
       fa_close(fh);
       jpeg_info_clear(&ji);
+      im->im_flags |= IMAGE_ADAPTED;
       return im;
     }
 
@@ -647,6 +648,8 @@ fa_image_from_video(const char *url0, const image_meta_t *im,
   img = fa_image_from_video2(url, im, cacheid, errbuf, errlen,
                              secs, stattime, c);
   hts_mutex_unlock(&image_from_video_mutex[1]);
+  if(img != NULL)
+    img->im_flags |= IMAGE_ADAPTED;
   return img;
 }
 #endif
