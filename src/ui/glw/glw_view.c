@@ -211,7 +211,7 @@ static void
 gcv_load(glw_root_t *gr, glw_cached_view_t *gcv, int may_unlock)
 {
   char errbuf[512];
-  buf_t *b;
+  buf_t *buf;
   errorinfo_t ei;
 
   gcv->gcv_loaded = 1; // A view is also "loaded" when there is an error
@@ -220,23 +220,23 @@ gcv_load(glw_root_t *gr, glw_cached_view_t *gcv, int may_unlock)
     glw_unlock(gr);
 
   rstr_t *file = gcv->gcv_url;
-  b = fa_load(rstr_get(gcv->gcv_url),
+  buf = fa_load(rstr_get(gcv->gcv_url),
               FA_LOAD_VPATHS(gr->gr_vpaths),
               FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
               NULL);
 
-  if(b == NULL && gcv->gcv_alturl != NULL) {
+  if(buf == NULL && gcv->gcv_alturl != NULL) {
     file = gcv->gcv_alturl;
-    b = fa_load(rstr_get(gcv->gcv_alturl),
-                FA_LOAD_VPATHS(gr->gr_vpaths),
-                FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
-                NULL);
+    buf = fa_load(rstr_get(gcv->gcv_alturl),
+                  FA_LOAD_VPATHS(gr->gr_vpaths),
+                  FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
+                  NULL);
   }
 
   if(may_unlock)
     glw_lock(gr);
 
-  if(b == NULL) {
+  if(buf == NULL) {
     char errmsg[1024];
     snprintf(errmsg, sizeof(errmsg), "Unable to open \"%s\" -- %s",
              rstr_get(file), errbuf);
@@ -248,7 +248,8 @@ gcv_load(glw_root_t *gr, glw_cached_view_t *gcv, int may_unlock)
   sof->type = TOKEN_START;
   sof->file = rstr_dup(file);
 
-  token_t *l = glw_view_lexer(gr, buf_cstr(b), &ei, file, sof);
+  token_t *l = glw_view_lexer(gr, buf_cstr(buf), &ei, file, sof);
+  buf_release(buf);
   if(l == NULL) {
     glw_view_free_chain(gr, sof);
     goto bad;
