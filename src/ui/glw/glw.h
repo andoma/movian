@@ -1124,12 +1124,6 @@ typedef struct glw {
 
 #define GLW2_POSITIONAL_NAVIGATION  0x1000000
 
-#define GLW2_LEFT_EDGE              0x10000000
-#define GLW2_TOP_EDGE               0x20000000
-#define GLW2_RIGHT_EDGE             0x40000000
-#define GLW2_BOTTOM_EDGE            0x80000000
-
-
   float glw_alpha;                   /* Alpha set by user */
   float glw_sharpness;               /* 1-Blur set by user */
 

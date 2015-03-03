@@ -290,26 +290,6 @@ glw_array_layout(glw_t *w, const glw_rctx_t *rc)
       }
     }
 
-    if(column == 0) {
-      c->glw_flags2 |= GLW2_LEFT_EDGE;
-    } else {
-      c->glw_flags2 &= ~GLW2_LEFT_EDGE;
-
-      if(prev != NULL) {
-	prev->glw_flags2 |= GLW2_RIGHT_EDGE;
-      } else {
-	prev->glw_flags2 &= ~GLW2_RIGHT_EDGE;
-      }
-    }
-
-    if(topedge) {
-      c->glw_flags2 |= GLW2_TOP_EDGE;
-    } else {
-      c->glw_flags2 &= ~GLW2_TOP_EDGE;
-    }
-
-    c->glw_flags2 &= ~GLW2_BOTTOM_EDGE; // Will be set later
-
     if(c->glw_flags & GLW_CONSTRAINT_D) {
       ypos += rc0.rc_height + yspacing;
       column = 0;
@@ -329,22 +309,7 @@ glw_array_layout(glw_t *w, const glw_rctx_t *rc)
   if(column != 0)
     ypos += a->child_height_px;
 
-
-  glw_t *last = TAILQ_LAST(&w->glw_childs, glw_queue);
-  if(last != NULL) {
-    last->glw_flags2 |= GLW2_BOTTOM_EDGE | GLW2_RIGHT_EDGE;
-    c = last;
-    while((c = TAILQ_PREV(c, glw_queue, glw_parent_link)) != NULL) {
-      glw_array_item_t *cd = glw_parent_data(c, glw_array_item_t);
-      glw_array_item_t *cdl = glw_parent_data(last, glw_array_item_t);
-      if(cd->pos_y == cdl->pos_y)
-	c->glw_flags2 |= GLW2_BOTTOM_EDGE;
-      else
-	break;
-    }
-  }
-
- if(a->total_size != ypos) {
+  if(a->total_size != ypos) {
     a->total_size = ypos;
     a->w.glw_flags |= GLW_UPDATE_METRICS;
   }
