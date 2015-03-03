@@ -25,6 +25,7 @@
 
 #include "prop/prop.h"
 #include "prop/prop_concat.h"
+#include "prop/prop_linkselected.h"
 
 #include "main.h"
 #include "media/media.h"
@@ -1250,7 +1251,7 @@ load_sources(metadata_lazy_video_t *mlv)
   int cur = metadb_item_get_preferred_ds(rstr_get(mlv->mlv_url));
 
   if(!mlv->mlv_manual) {
-    c = prop_create_root(NULL);
+    c = prop_create_root("0");
     prop_link(_p("Automatic"), prop_create(c, "title"));
     pv = prop_vec_append(pv, c);
   }
@@ -1596,6 +1597,7 @@ mlv_add_options(metadata_lazy_video_t *mlv)
 {
   prop_t *p;
   prop_vec_t *pv = prop_vec_create(10);
+  prop_t *options;
 
   // -------------------------------------------------------------------
   // Separator
@@ -1632,11 +1634,14 @@ mlv_add_options(metadata_lazy_video_t *mlv)
   prop_link(_p("Metadata source"),
 	    prop_create(prop_create(p, "metadata"), "title"));
 
-  mlv->mlv_source_opt_sub = 
+  options = prop_create(p, "options");
+  prop_linkselected_create(options, p, "current", "value");
+
+  mlv->mlv_source_opt_sub =
     prop_subscribe(PROP_SUB_SUBSCRIPTION_MONITOR | PROP_SUB_TRACK_DESTROY,
 		   PROP_TAG_CALLBACK, mlv_sub_source, mlv,
 		   PROP_TAG_MUTEX, &metadata_mutex,
-		   PROP_TAG_ROOT, prop_create(p, "options"),
+		   PROP_TAG_ROOT, options,
 		   NULL);
   mlv->mlv_mlp.mlp_refcount++;
 
@@ -1653,11 +1658,14 @@ mlv_add_options(metadata_lazy_video_t *mlv)
   prop_link(_p("Movie"),
 	    prop_create(prop_create(p, "metadata"), "title"));
 
-  mlv->mlv_alt_opt_sub = 
+  options = prop_create(p, "options");
+  prop_linkselected_create(options, p, "current", "value");
+
+  mlv->mlv_alt_opt_sub =
     prop_subscribe(PROP_SUB_SUBSCRIPTION_MONITOR | PROP_SUB_TRACK_DESTROY,
 		   PROP_TAG_CALLBACK, mlv_sub_alternative, mlv,
 		   PROP_TAG_MUTEX, &metadata_mutex,
-		   PROP_TAG_ROOT, prop_create(p, "options"),
+		   PROP_TAG_ROOT, options,
 		   NULL);
   mlv->mlv_mlp.mlp_refcount++;
 
@@ -1739,12 +1747,12 @@ mlv_add_options(metadata_lazy_video_t *mlv)
 
   // Add all options
 
-  prop_t *options = prop_create_r(mlv->mlv_root, "options");
+  prop_t *all = prop_create_r(mlv->mlv_root, "options");
 
-  prop_set_parent_vector(pv, options, NULL, NULL);
+  prop_set_parent_vector(pv, all, NULL, NULL);
   prop_vec_release(pv);
 
-  prop_ref_dec(options);
+  prop_ref_dec(all);
 
 }
 
