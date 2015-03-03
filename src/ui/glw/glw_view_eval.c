@@ -6423,7 +6423,7 @@ glwf_propName(glw_view_eval_context_t *ec, struct token *self,
   if((a = resolve_property_name2(ec, argv[0])) == NULL)
     return -1;
 
-  if(a->type == TOKEN_PROPERTY_REF) {
+  if(a->type == TOKEN_PROPERTY_REF && a->t_prop != NULL) {
     r = eval_alloc(self, ec, TOKEN_RSTRING);
     r->t_rstring = prop_get_name(a->t_prop);
   } else {
