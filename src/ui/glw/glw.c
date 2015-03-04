@@ -1742,7 +1742,7 @@ glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
   if(w->glw_class->gc_gpe_iterator != NULL ) {
     return w->glw_class->gc_gpe_iterator(gr, w, gpe, hp, p, dir);
   } else {
-    TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
+    TAILQ_FOREACH_REVERSE(c, &w->glw_childs, glw_queue, glw_parent_link)
       if(glw_pointer_event0(gr, c, gpe, hp, p, dir))
 	return 1;
     return 0;
