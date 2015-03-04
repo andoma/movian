@@ -715,6 +715,7 @@ static int
 checkstop_index(void *opaque)
 {
   scanner_t *s = opaque;
+  prop_courier_poll(s->s_pc);
   return s->s_mode != s->s_checkstop_cmp;
 }
 
