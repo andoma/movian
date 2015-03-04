@@ -80,6 +80,14 @@ fontconfig_resolve(int uc, uint8_t style, const char *family,
   for(i = 0; i < sorted->nfont; i++) {
     fp = sorted->fonts[i];
 
+    FcBool outline = 0;
+    FcBool scalable = 0;
+    FcPatternGetBool(fp, FC_OUTLINE, 0, &outline);
+    FcPatternGetBool(fp, FC_SCALABLE, 0, &scalable);
+
+    if(!outline || !scalable)
+      continue;
+
     if(FcPatternGetCharSet(fp, FC_CHARSET, 0, &r_charset) != FcResultMatch)
       continue;
     if(FcCharSetHasChar(r_charset, uc))
