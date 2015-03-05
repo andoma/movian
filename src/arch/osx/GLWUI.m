@@ -64,8 +64,9 @@
 }
 
 
-- (void)windowWillClose:(NSNotification *)notification {
+- (BOOL)windowShouldClose:(NSNotification *)notification {
   [self shutdown];
+  return YES;
 }
 
 - (void)windowDidMiniaturize:(NSNotification *)notification
