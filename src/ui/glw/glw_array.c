@@ -128,10 +128,9 @@ static void
 glw_array_layout(glw_t *w, const glw_rctx_t *rc)
 {
   glw_array_t *a = (glw_array_t *)w;
-  glw_t *c, *prev = NULL;
+  glw_t *c;
   glw_rctx_t rc0 = *rc;
   int column = 0;
-  int topedge = 1;
   float xspacing = 0, yspacing = 0;
   int height, width, rows;
   int xpos = 0, ypos = 0;
@@ -242,7 +241,6 @@ glw_array_layout(glw_t *w, const glw_rctx_t *rc)
       if(column != 0) {
 	ypos += rc0.rc_height + yspacing;
 	column = 0;
-	topedge = 0;
       }
 
       rc0.rc_width  = width;
@@ -293,17 +291,13 @@ glw_array_layout(glw_t *w, const glw_rctx_t *rc)
     if(c->glw_flags & GLW_CONSTRAINT_D) {
       ypos += rc0.rc_height + yspacing;
       column = 0;
-      topedge = 0;
-      
     } else {
       column++;
       if(column == a->xentries) {
 	ypos += a->child_height_px + yspacing;
 	column = 0;
-	topedge = 0;
       }
     }
-    prev = c;
   }
 
   if(column != 0)
