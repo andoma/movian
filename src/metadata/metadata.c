@@ -260,6 +260,8 @@ metadata_to_proptree(const metadata_t *md, prop_t *proproot,
 			     md->md_artist);
   }
 
+  prop_set(proproot, "icon", PROP_SET_RSTRING, md->md_icon);
+
   if(md->md_album) {
     prop_set_rstring(prop_create(proproot, "album"),  md->md_album);
 
