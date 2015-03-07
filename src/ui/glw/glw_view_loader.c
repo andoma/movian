@@ -356,7 +356,7 @@ glw_view_loader_set_prop(glw_t *w, glw_attribute_t attrib, prop_t *p)
  *
  */
 static const char *
-get_identity(glw_t *w)
+get_identity(glw_t *w, char *tmp, size_t tmpsize)
 {
   glw_view_loader_t *l = (glw_view_loader_t *)w;
   return rstr_get(l->url) ?: "NULL";

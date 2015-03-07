@@ -1444,7 +1444,7 @@ glw_image_ready(glw_t *w)
  *
  */
 static const char *
-get_identity(glw_t *w)
+get_identity(glw_t *w, char *tmp, size_t tmpsize)
 {
   glw_image_t *gi = (glw_image_t *)w;
   glw_loadable_texture_t *glt = gi->gi_current;
@@ -1478,11 +1478,12 @@ glw_icon_flush(glw_root_t *gr)
 int
 glw_image_get_details(glw_t *w, char *path, size_t pathlen, float *alpha)
 {
+  char tmp[32];
   if(w->glw_class != &glw_backdrop)
     return -1;
 
   glw_image_t *gi = (glw_image_t *)w;
-  const char *p = get_identity(w);
+  const char *p = get_identity(w, tmp, sizeof(tmp));
   if(p == NULL)
     return -1;
   snprintf(path, pathlen, "%s", p);

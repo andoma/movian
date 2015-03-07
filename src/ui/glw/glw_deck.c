@@ -362,6 +362,26 @@ glw_deck_set_float(glw_t *w, glw_attribute_t attrib, float value,
 /**
  *
  */
+static const char *
+get_identity(glw_t *w, char *tmp, size_t tmpsize)
+{
+  glw_t *c;
+  int num = 0;
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+    if(c == w->glw_selected)
+      break;
+    num++;
+  }
+  if(c == NULL)
+    return "None";
+  snprintf(tmp, tmpsize, "%d", num);
+  return tmp;
+}
+
+
+/**
+ *
+ */
 static glw_class_t glw_deck = {
   .gc_name = "deck",
   .gc_instance_size = sizeof(glw_deck_t),
@@ -376,6 +396,7 @@ static glw_class_t glw_deck = {
   .gc_select_child = deck_select_child,
   .gc_can_select_child = deck_can_select_child,
   .gc_send_event = glw_deck_event,
+  .gc_get_identity = get_identity,
 };
 
 GLW_REGISTER_CLASS(glw_deck);

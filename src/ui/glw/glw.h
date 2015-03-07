@@ -677,7 +677,7 @@ typedef struct glw_class {
   /**
    *
    */
-  const char *(*gc_get_identity)(struct glw *w);
+  const char *(*gc_get_identity)(struct glw *w, char *tmp, size_t tmpsize);
 
   /**
    * Registration link

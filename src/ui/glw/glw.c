@@ -2293,7 +2293,7 @@ glw_get_a_name_r(glw_t *w, char *buf)
 {
   glw_t *c;
   const char *r = NULL;
-
+  char tmp[32];
   if(w->glw_class->gc_get_text != NULL)
     r = w->glw_class->gc_get_text(w);
 
@@ -2303,7 +2303,7 @@ glw_get_a_name_r(glw_t *w, char *buf)
 
   r = NULL;
   if(w->glw_class->gc_get_identity != NULL)
-    r = w->glw_class->gc_get_identity(w);
+    r = w->glw_class->gc_get_identity(w, tmp, sizeof(tmp));
 
   if(r != NULL)
     snprintf(buf + strlen(buf), GET_A_NAME_BUF - strlen(buf),
@@ -2341,10 +2341,11 @@ glw_get_a_name(glw_t *w)
 static void
 glw_get_path_r(char *buf, size_t buflen, glw_t *w)
 {
+  char tmp[32];
   if(w->glw_parent)
     glw_get_path_r(buf, buflen, w->glw_parent);
   const char *ident = w->glw_class->gc_get_identity ? 
-    w->glw_class->gc_get_identity(w) : NULL;
+    w->glw_class->gc_get_identity(w, tmp, sizeof(tmp)) : NULL;
 
   if(ident == NULL)
     ident = rstr_get(w->glw_id_rstr);
