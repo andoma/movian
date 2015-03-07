@@ -42,7 +42,7 @@ static void glw_focus_leave(glw_t *w);
 static void glw_root_set_hover(glw_root_t *gr, glw_t *w);
 static void glw_eventsink(void *opaque, prop_event_t event, ...);
 static void glw_update_em(glw_root_t *gr);
-static void glw_set_keyboard_mode(glw_root_t *gr, int on);
+static int  glw_set_keyboard_mode(glw_root_t *gr, int on);
 
 glw_settings_t glw_settings;
 
@@ -1975,11 +1975,11 @@ glw_dispatch_event(glw_root_t *gr, event_t *e)
        event_is_action(e, ACTION_POWER_OFF) ||
        event_is_action(e, ACTION_STANDBY) ||
        event_is_type(e, EVENT_SELECT_AUDIO_TRACK) ||
-       event_is_type(e, EVENT_SELECT_SUBTITLE_TRACK)
+       event_is_type(e, EVENT_SELECT_SUBTITLE_TRACK))) {
 
-     )) {
-
-    glw_set_keyboard_mode(gr, 1);
+    if(glw_set_keyboard_mode(gr, 1)) {
+      return; // Use the event to wakeup the nav based focus
+    }
 
     if(glw_kill_screensaver(gr)) {
       return;
@@ -2882,15 +2882,17 @@ glw_update_em(glw_root_t *gr)
 }
 
 
-static void
+static int
 glw_set_keyboard_mode(glw_root_t *gr, int on)
 {
   if(gr->gr_keyboard_mode == on)
-    return;
+    return 0;
 
   gr->gr_keyboard_mode = on;
   prop_set(gr->gr_prop_ui, "keyboard", PROP_SET_INT, on);
 
   if(gr->gr_universe != NULL)
     glw_update_dynamics_r(gr->gr_universe, GLW_VIEW_EVAL_FHP_CHANGE);
+
+  return 1;
 }
