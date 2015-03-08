@@ -152,7 +152,7 @@ msg: Impostazioni video
 # ./glwskins/default/loading.view
 #
 id: %d kb/s
-msg: %d kn/s
+msg: %d kb/s
 
 id: Bitrate:
 msg: Bitrate:
@@ -725,7 +725,7 @@ id: Albums
 msg: Album
 
 id: Automatic login on start
-msg: Login qutomatico all'avvio
+msg: Login automatico all'avvio
 
 id: Collaborative
 msg: Collaborativo
