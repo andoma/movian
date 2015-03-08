@@ -23,8 +23,7 @@ id: Disable sleep timer
 msg: Disattiva timer spegnimento
 
 id: Exit %s
-# Missing translation
-msg: 
+msg: Esci %s
 
 id: Go to Home screen
 msg: Vai alla Home
@@ -33,8 +32,7 @@ id: Hide system info
 msg: Nascondi info di sistema
 
 id: Master volume
-# Missing translation
-msg: 
+msg: Volume principale
 
 id: Navigation
 msg: Navigazione
@@ -64,8 +62,7 @@ id: Time until sleep
 msg: Tempo allo spegnimento
 
 id: dB
-# Missing translation
-msg: 
+msg: dB
 
 id: min
 msg: min
@@ -155,12 +152,10 @@ msg: Impostazioni video
 # ./glwskins/default/loading.view
 #
 id: %d kb/s
-# Missing translation
-msg: 
+msg: %d kn/s
 
 id: Bitrate:
-# Missing translation
-msg: 
+msg: Bitrate:
 
 #
 # ./glwskins/default/log.view
@@ -250,8 +245,7 @@ msg: Data:
 # ./glwskins/default/pages/iteminfo/plugin.view
 #
 id: %s %s or newer is required
-# Missing translation
-msg: 
+msg: %s %s o più recente è richiesta
 
 id: Author: 
 msg: Autore:
@@ -306,7 +300,7 @@ msg: Si
 # ./glwskins/default/pages/listitems/font.view
 #
 id: Condensed
-msg: Condensed
+msg: Sintesi
 
 id: Main
 msg: Principale
@@ -348,8 +342,7 @@ msg: In Pausa
 # ./glwskins/default/pages/upgrade.view
 #
 id: %s is up to date
-# Missing translation
-msg: 
+msg: %s è aggiornato
 
 id: An error occured during download
 msg: Errore durante il download
@@ -392,7 +385,7 @@ msg: Patchando %s
 
 id: Restarting %s in %d seconds...
 # Missing translation
-msg: 
+msg: Riavviando %s in %d secondi...
 
 id: Retry...
 msg: Riprovo...
@@ -413,8 +406,7 @@ msg: Verificando %s
 # ./glwskins/default/pages/video.view
 #
 id: Audio volume adjustment: %d dB
-# Missing translation
-msg: 
+msg: Regola il volume audio: %d dB
 
 id: CPU is too slow to decode this video
 msg: CPU troppo lenta per poter decodificare questo video
@@ -450,12 +442,10 @@ msg: Nome Utente
 # ./glwskins/default/popups/resume.view
 #
 id: No, Start over
-# Missing translation
-msg: 
+msg: No, Ricomincia
 
 id: Resume %s from %s
-# Missing translation
-msg: 
+msg: Riprendi %s da %s
 
 #
 # ./glwskins/default/screensaver.view
@@ -476,8 +466,7 @@ id: GPU Temp
 msg: Temperatura GPU
 
 id: HDD Avail
-# Missing translation
-msg: 
+msg: HDD Utilità
 
 id: Inactive mem
 msg: Memoria inattiva
@@ -525,8 +514,7 @@ msg: Memoria in esaurimento (%d kB di RAM disponibile)
 # ./src/arch/ps3/ps3_vdec.c
 #
 id: Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration
-# Missing translation
-msg: 
+msg: Cell-h264: %d Frame ref per %d il contenuto è incompatile con il decoder HW di PS3. Accelerazione disattivata
 
 id: Cell-h264: Broken headers, Disabling acceleration
 msg: Cell-h264: header non valido. Disattivazione accelerazione
@@ -550,12 +538,10 @@ msg: Impossibile richiedere il Cell codec. Errore 0x%x
 # ./src/arch/rpi/rpi_audio.c
 #
 id: 8 Channel PCM
-# Missing translation
-msg: 
+msg: 8 Canali PCM
 
 id: AC3 Pass-Through
-# Missing translation
-msg: 
+msg: Passa per AC3
 
 id: Analog
 msg: Analogico
@@ -564,12 +550,10 @@ id: Audio output port
 msg: Porta d'uscita Audio
 
 id: Autodetect
-# Missing translation
-msg: 
+msg: Rileva automaticamente
 
 id: DTS Pass-Through
-# Missing translation
-msg: 
+msg: Passa per DTS
 
 id: HDMI
 msg: HDMI
@@ -578,15 +562,14 @@ id: Off
 msg: Disattiva
 
 id: On
-# Missing translation
-msg: 
+msg: Attiva
 
 #
 # ./src/arch/rpi/rpi_cec.c
 #
 id: Configure communications with your TV
 # Missing translation
-msg: 
+msg: Configura la comunicazione con la tua TV
 
 id: Consumer Electronics Control
 msg: Canale CEC
@@ -655,65 +638,52 @@ msg: Test tipo di segnale
 # ./src/backend/bittorrent/bt_backend.c
 #
 id: No files in torrent
-# Missing translation
-msg: 
+msg: Nessun files nel torrent
 
 id: Unable to open torrent: %s
-# Missing translation
-msg: 
+msg: Impossibile aprire il torrent: %s
 
 #
 # ./src/backend/bittorrent/diskio.c
 #
 id: Cached torrents use %d MB out of allowed %d MB. Total free space on volume: %d MB
-# Missing translation
-msg: 
+msg: Utilizzo cache torrent %d MB oltr il concesso %d MB. Spazio libero totale sul volume: %d MB
 
 #
 # ./src/backend/bittorrent/fa_torrent.c
 #
 id: Connected peers
-# Missing translation
-msg: 
+msg: Peers connessi
 
 id: Known peers
-# Missing translation
-msg: 
+msg: Peers comosciuti
 
 id: Receiving from
-# Missing translation
-msg: 
+msg: Ricevendo da
 
 id: Torrent leechers
-# Missing translation
-msg: 
+msg: Torrent leechers
 
 id: Torrent seeders
-# Missing translation
-msg: 
+msg: Torrent seeders
 
 #
 # ./src/backend/bittorrent/torrent_settings.c
 #
 id: Clear cache
-# Missing translation
-msg: 
+msg: Pulisci cache
 
 id: Enable bittorrent
-# Missing translation
-msg: 
+msg: Abilita bittorent
 
 id: Max usage of free space for caching torrents
-# Missing translation
-msg: 
+msg: Uso massimo dello spazio libero per la cache dei torrent
 
 id: Status
-# Missing translation
-msg: 
+msg: Stato
 
 id: Torrent cache path
-# Missing translation
-msg: 
+msg: Percorso cache torrent
 
 #
 # ./src/backend/dvd/dvd.c
@@ -728,12 +698,10 @@ msg: Errore nella lettura DVD, riavvio del disco in corso
 # ./src/backend/hls/hls.c
 #
 id: Primary
-# Missing translation
-msg: 
+msg: Primario
 
 id: Supplementary
-# Missing translation
-msg: 
+msg: Supplementare
 
 #
 # ./src/backend/htsp/htsp.c
@@ -757,8 +725,7 @@ id: Albums
 msg: Album
 
 id: Automatic login on start
-# Missing translation
-msg: 
+msg: Login qutomatico all'avvio
 
 id: Collaborative
 msg: Collaborativo
@@ -824,7 +791,7 @@ id: Cache cleared
 msg: Cache pulita
 
 id: Clear cached files
-msg: Pulisci cache
+msg: Pulisci i files nella cache
 
 #
 # ./src/fileaccess/fa_backend.c
@@ -833,8 +800,7 @@ id: Can't handle content type %d
 msg: Impossibile gestire questo tipo di contenuti %d
 
 id: Checking file contents
-# Missing translation
-msg: 
+msg: Verificando il contenuto del file
 
 id: Unable to open file: %s
 msg: Impossibile aprire il file: %s
@@ -891,18 +857,16 @@ id: Are you sure you want to delete:
 msg: Sicuro di voler eliminare:
 
 id: BitTorrent
-# Missing translation
-msg: 
+msg: BitTorrent
 
 id: Browse archives as folders
-# Missing translation
-msg: 
+msg: Sfoglia archivi come cartelle
 
 id: Enable file deletion from item menu
 msg: Attiva eliminazione file dal menu
 
 id: File browsing
-msg: Gestione file
+msg: Sfoglia file
 
 id: Show filename extensions
 msg: Mostra estensioni nel nome del file
@@ -938,8 +902,7 @@ id: Logon failure
 msg: Accesso fallito
 
 id: Object name not found
-# Missing translation
-msg: 
+msg: Nome oggetto non trovato
 
 #
 # ./src/i18n.c
@@ -1017,8 +980,7 @@ id: Go to standby after video ends
 msg: Vai in standby dopo la fine del video
 
 id: Horizontal pan
-# Missing translation
-msg: 
+msg: Pan orizzontale
 
 id: Reset defaults for folder '%s'
 msg: Ripristina impostazioni di default per la cartella '%s' 
@@ -1048,8 +1010,7 @@ id: Subtitle vertical displacement
 msg: Spostamento verticale dei sottotitoli
 
 id: Vertical pan
-# Missing translation
-msg: 
+msg: Pan verticale
 
 id: Video frame interpolation
 msg: Interpolazione dei frame video
@@ -1071,7 +1032,7 @@ msg: Automatico
 
 id: Erase all playback info
 # Missing translation
-msg: 
+msg: Cancella tutte le informazioni di riproduzione
 
 id: Manual
 msg: Manuale
@@ -1122,8 +1083,7 @@ id: Clear all metadata
 msg: Pulisci tutti i metadata
 
 id: Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?
-# Missing translation
-msg: 
+msg: Pulire tutti i metadata vuol dire perdere <b>tutti</b> i metadata immagazzinati dalle sorgenti esterne come themoviedb.org, ecc\n\nInformazioni circa i punti di ripristo, conteggio riproduzioni, ecc saranno salvati.\nSei sicuro di procedere?
 
 #
 # ./src/metadata/mlp.c
@@ -1249,8 +1209,7 @@ id: Automatically upgrade plugins
 msg: Aggiorna automaticamente i plugin
 
 id: Available plugins
-# Missing translation
-msg: 
+msg: Plugin dispoinibili
 
 id: Background
 msg: Sfondo
@@ -1259,8 +1218,7 @@ id: Beta testing passwords
 msg: Password di beta testing
 
 id: Browse available plugins
-# Missing translation
-msg: 
+msg: Sfoglia i plugin disponibili
 
 id: Browsing
 msg: Sfogliando
@@ -1284,8 +1242,7 @@ id: Home page
 msg: Pagina Iniziale
 
 id: Installed plugins
-# Missing translation
-msg: 
+msg: Plugin installati
 
 id: Installed version higher than available
 msg: La versione installata è più recente di quella disponibile
@@ -1378,8 +1335,7 @@ id: Power off system
 msg: Spegni sistema
 
 id: Quit
-# Missing translation
-msg: 
+msg: Esci
 
 id: SSH server
 msg: Server SSH
@@ -1388,8 +1344,7 @@ id: Standby
 msg: Standby
 
 id: Starting and stopping
-# Missing translation
-msg: 
+msg: Avvio e arresto
 
 #
 # ./src/sd/sd.c
@@ -1605,8 +1560,7 @@ msg: Modalità video
 # ./src/upgrade.c
 #
 id: %s version %s is available
-# Missing translation
-msg: 
+msg: %s versione %s è disponibile
 
 id: Notify about upgrades
 msg: Notifica riguardo gli aggiornamenti
@@ -1639,12 +1593,10 @@ msg: Servizio non trovato
 # ./src/video/video_settings.c
 #
 id: Always
-# Missing translation
-msg: 
+msg: Sempre
 
 id: Ask
-# Missing translation
-msg: 
+msg: Chiedi
 
 id: Automatically play next video in list
 msg: Riproduci automaticamente il successivo video nella lista
@@ -1662,15 +1614,13 @@ id: Maximum resolution for deinterlacer
 msg: Risoluzione massima per il deinterlacciatore
 
 id: Never
-# Missing translation
-msg: 
+msg: Mai
 
 id: No limit
 msg: Nessun limite
 
 id: Per-file volume
-# Missing translation
-msg: 
+msg: Per volume di file
 
 id: Preferred VDPAU deinterlacer method
 msg: Metodo di deinterlacciamento VDPAU preferito
@@ -1679,12 +1629,10 @@ id: Resume video playback
 msg: Riprendi riproduzione del video
 
 id: Step when seeking backward
-# Missing translation
-msg: 
+msg: Segna quando cerchi all'indietro
 
 id: Step when seeking forward
-# Missing translation
-msg: 
+msg: Segna quando cerchi in avanti
 
 id: Temporal
 msg: Temporale
@@ -1693,8 +1641,7 @@ id: Temporal/Spatial
 msg: Temporale/Spaziale
 
 id: Up / Down during video playback controls
-# Missing translation
-msg: 
+msg: Sù / Giù durante i controlli di riproduzione video
 
 id: Video acceleration and display behaviour
 msg: Accelerazione video e comportamento schermo
