@@ -384,7 +384,6 @@ id: Patching %s
 msg: Patchando %s
 
 id: Restarting %s in %d seconds...
-# Missing translation
 msg: Riavviando %s in %d secondi...
 
 id: Retry...
@@ -514,7 +513,7 @@ msg: Memoria in esaurimento (%d kB di RAM disponibile)
 # ./src/arch/ps3/ps3_vdec.c
 #
 id: Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration
-msg: Cell-h264: %d Frame ref per %d il contenuto è incompatile con il decoder HW di PS3. Accelerazione disattivata
+msg: Cell-h264: %d Frame ref per %d il contenuto è incompatibile con il decoder HW di PS3. Accelerazione disattivata
 
 id: Cell-h264: Broken headers, Disabling acceleration
 msg: Cell-h264: header non valido. Disattivazione accelerazione
@@ -568,7 +567,6 @@ msg: Attiva
 # ./src/arch/rpi/rpi_cec.c
 #
 id: Configure communications with your TV
-# Missing translation
 msg: Configura la comunicazione con la tua TV
 
 id: Consumer Electronics Control
@@ -647,7 +645,7 @@ msg: Impossibile aprire il torrent: %s
 # ./src/backend/bittorrent/diskio.c
 #
 id: Cached torrents use %d MB out of allowed %d MB. Total free space on volume: %d MB
-msg: Utilizzo cache torrent %d MB oltr il concesso %d MB. Spazio libero totale sul volume: %d MB
+msg: Utilizzo cache torrent %d MB oltre il concesso %d MB. Spazio libero totale sul volume: %d MB
 
 #
 # ./src/backend/bittorrent/fa_torrent.c
@@ -656,7 +654,7 @@ id: Connected peers
 msg: Peers connessi
 
 id: Known peers
-msg: Peers comosciuti
+msg: Peers conosciuti
 
 id: Receiving from
 msg: Ricevendo da
@@ -1031,7 +1029,6 @@ id: Automatic
 msg: Automatico
 
 id: Erase all playback info
-# Missing translation
 msg: Cancella tutte le informazioni di riproduzione
 
 id: Manual
@@ -1209,7 +1206,7 @@ id: Automatically upgrade plugins
 msg: Aggiorna automaticamente i plugin
 
 id: Available plugins
-msg: Plugin dispoinibili
+msg: Plugin disponibili
 
 id: Background
 msg: Sfondo
