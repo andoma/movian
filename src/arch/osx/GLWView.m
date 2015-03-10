@@ -25,6 +25,7 @@
 #include "osx_c.h"
 #include "src/ui/glw/glw.h"
 
+#define AUTOHIDE_TIMEOUT 100 // In frames (Bad)
 
 @interface GLWView (hidden)
 
@@ -112,6 +113,65 @@ newframe(CVDisplayLinkRef displayLink, const CVTimeStamp *now,
 /**
  *
  */
+static void
+glw_in_fullwindow(void *opaque, int val)
+{
+  GLWView *view = (GLWView *)opaque;
+  view->in_full_window = val;
+}
+
+
+/**
+ *
+ */
+- (void)hideCursor
+{
+  glw_pointer_event_t gpe = {0};
+
+  if(cursor_hidden)
+    return;
+
+  cursor_hidden = YES;
+  [NSCursor hide];
+
+  gpe.type = GLW_POINTER_GONE;
+  glw_pointer_event(gr, &gpe);
+}
+
+
+/**
+ *
+ */
+- (void)showCursor
+{
+  if(!cursor_hidden)
+    return;
+
+  autohide_counter = AUTOHIDE_TIMEOUT;
+
+  cursor_hidden = NO;
+  [NSCursor unhide];
+}
+
+
+/**
+ *
+ */
+- (void)autoHideCursor
+{
+  if(cursor_hidden)
+    return;
+
+  if(autohide_counter == 0)
+    [self hideCursor];
+  else if(gr->gr_pointer_grab == NULL)
+    autohide_counter--;
+}
+
+
+/**
+ *
+ */
 - (CVReturn)getFrameForTime:(const CVTimeStamp *)ot
 {
   gr->gr_framerate = ot->rateScalar * ot->videoTimeScale / 
@@ -191,6 +251,7 @@ newframe(CVDisplayLinkRef displayLink, const CVTimeStamp *now,
 }
 
 - (void)mouseMoved:(NSEvent *)event {
+  [self showCursor];
   [self glwMouseEvent:GLW_POINTER_MOTION_UPDATE event:event];
 }
 
@@ -281,8 +342,10 @@ newframe(CVDisplayLinkRef displayLink, const CVTimeStamp *now,
     e = event_from_Fkey(cim - NSF1FunctionKey + 1,
 			mod & NSShiftKeyMask ? 1 : 0);
 
-  if(e == NULL) 
+  if(e == NULL)
     e = event_create_int(EVENT_UNICODE, c);
+
+  [self hideCursor];
 
   prop_send_ext_event(eventSink, e);
   event_release(e);
@@ -349,6 +412,9 @@ newframe(CVDisplayLinkRef displayLink, const CVTimeStamp *now,
 
   glw_lock(gr);
 
+  if(in_full_window)
+    [self autoHideCursor];
+
   glw_prepare_frame(gr, GLW_NO_FRAMERATE_UPDATE);
 
   int refresh = gr->gr_need_refresh;
@@ -391,6 +457,8 @@ newframe(CVDisplayLinkRef displayLink, const CVTimeStamp *now,
 {
   stopped = YES;
 
+  [self showCursor];
+
   CVDisplayLinkStop(m_displayLink);
 
   NSOpenGLContext *currentContext = [self openGLContext];
@@ -412,6 +480,8 @@ newframe(CVDisplayLinkRef displayLink, const CVTimeStamp *now,
 - (void)dealloc
 {
   CVDisplayLinkRelease(m_displayLink);
+  [self showCursor];
+  prop_unsubscribe(fullWindow);
   [super dealloc];
 }
 
@@ -462,6 +532,14 @@ newframe(CVDisplayLinkRef displayLink, const CVTimeStamp *now,
   gr = root;
   minimized = NO;
   eventSink = prop_create(gr->gr_prop_ui, "eventSink");
+
+  fullWindow =
+    prop_subscribe(0,
+		   PROP_TAG_NAME("ui", "fullwindow"),
+		   PROP_TAG_COURIER, gr->gr_courier,
+		   PROP_TAG_CALLBACK_INT, glw_in_fullwindow, self,
+		   PROP_TAG_ROOT, gr->gr_prop_ui,
+		   NULL);
 
   GLint one = 1;
   [[self openGLContext] setValues:&one forParameter:NSOpenGLCPSwapInterval];

@@ -34,10 +34,14 @@ void webpopup_init(void);
 {
   struct glw_root *gr;
   struct prop *eventSink;
+  struct prop_sub *fullWindow;
   bool minimized;
   bool compositeKey;
   bool stopped;
+  bool cursor_hidden;
+  bool in_full_window;
   int mouse_down;
+  int autohide_counter;
   CVDisplayLinkRef m_displayLink;
   CGLContextObj m_cgl_context;
   CGLPixelFormatObj m_cgl_pixel_format;
