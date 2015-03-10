@@ -40,6 +40,7 @@ void webpopup_init(void);
   bool stopped;
   bool cursor_hidden;
   bool in_full_window;
+  bool is_key_window;
   int mouse_down;
   int autohide_counter;
   CVDisplayLinkRef m_displayLink;

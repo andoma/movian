@@ -128,6 +128,9 @@ glw_in_fullwindow(void *opaque, int val)
 {
   glw_pointer_event_t gpe = {0};
 
+  if(!is_key_window)
+    return;
+
   if(cursor_hidden)
     return;
 
@@ -490,9 +493,14 @@ glw_in_fullwindow(void *opaque, int val)
  *
  */
 - (void)becomeKeyWindow {
+  is_key_window = YES;
   [[self window] setAcceptsMouseMovedEvents:YES];
 }
 
+- (void) resignKeyWindow {
+  is_key_window = NO;
+  [self showCursor];
+}
 
 /**
  *
