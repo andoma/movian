@@ -93,7 +93,7 @@ static webpopup_t *wp_current;
 
   NSURLRequest *request = [[frame dataSource] request];
   NSURLResponse *response = [[frame dataSource] response];
-  
+
   const char *url = [[[request URL] absoluteString] UTF8String];
   int code = 200;
   if([response respondsToSelector:@selector(statusCode)])
@@ -128,7 +128,7 @@ static webpopup_t *wp_current;
  */
 - (void)webView:(WebView *)sender didFailProvisionalLoadWithError:(NSError *)error forFrame:(WebFrame *)frame
 {
-  if([sender mainFrame] == frame) 
+  if([sender mainFrame] == frame)
     [self shutdown:WEBPOPUP_CLOSED_BY_USER];
 }
 
@@ -184,9 +184,9 @@ static webpopup_t *wp_current;
    _webview = [[WebView alloc] initWithFrame:frame
                                     frameName:@"Frame"
                                     groupName:nil];
-    
+
     [_window setContentView:_webview];
-  
+
     //[window addChildWindow:popup ordered:NSWindowAbove];
     [_window makeKeyAndOrderFront:nil];
 
@@ -226,7 +226,7 @@ wp_open_new(void)
   wp_current = wp = TAILQ_FIRST(&webpopup_pending);
   if(wp != NULL) {
     TAILQ_REMOVE(&webpopup_pending, wp, wp_link);
-  
+
     NSString *url   = [[NSString alloc] initWithUTF8String: wp->wp_url];
     NSString *title = [[NSString alloc] initWithUTF8String: wp->wp_title];
     wp->wp_ww = [[WebWin alloc] initWithUrl:url wp:wp title:title];

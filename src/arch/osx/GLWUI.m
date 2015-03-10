@@ -247,7 +247,7 @@ static prop_t *stored_nav;
 			 PROP_TAG_ROOT, gr->gr_prop_ui,
 			 PROP_TAG_COURIER, mainloop_courier,
 			 NULL);
-  
+
   fullwindow = NO;
 
 

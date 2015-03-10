@@ -123,11 +123,11 @@ main(int argc, char **argv)
 
   if(!gconf.noui)
     [[GLWUI alloc] init];
-    
+
   [app run];
   return 0;
 }
- 
+
 
 /**
  *
@@ -222,7 +222,7 @@ mainloop_courier_init(void)
 }
 
 
-@implementation Showtime 
+@implementation Showtime
 
 /**
  *
@@ -256,14 +256,14 @@ mainloop_courier_init(void)
   NSMenuItem *menuitem;
   // Create the application (Apple) menu.
   NSMenu *menuApp = [[NSMenu alloc] initWithTitle: @"Apple Menu"];
-	
+
   menuitem = [[NSMenuItem alloc] initWithTitle:@"About Showtime"
 					action:@selector(about:)
 				 keyEquivalent:@""];
   [menuitem setTarget: self];
   [menuApp addItem: menuitem];
   [menuitem release];
-	
+
   // -----------------------------------------------------------
   [menuApp addItem: [NSMenuItem separatorItem]];
   // -----------------------------------------------------------
@@ -304,7 +304,7 @@ mainloop_courier_init(void)
   [menuitem setTarget: NSApp];
   [menuApp addItem: menuitem];
   [menuitem release];
-	
+
   // -----------------------------------------------------------
   [NSApp performSelector:NSSelectorFromString(@"setAppleMenu:") withObject:menuApp];
 
@@ -326,7 +326,7 @@ mainloop_courier_init(void)
 {
   NSMenuItem *menuitem;
   NSMenu *menuApp = [[NSMenu alloc] initWithTitle: @"File"];
-	
+
   // -----------------------------------------------------------
   menuitem = [[NSMenuItem alloc] initWithTitle:@"New Window"
 					action:@selector(newWindow:)
@@ -334,7 +334,7 @@ mainloop_courier_init(void)
   [menuitem setTarget: self];
   [menuApp addItem: menuitem];
   [menuitem release];
-	
+
 
   // -----------------------------------------------------------
   menuitem = [[NSMenuItem alloc] initWithTitle:@"Close Window"
@@ -342,7 +342,7 @@ mainloop_courier_init(void)
 				 keyEquivalent:@"w"];
   [menuApp addItem: menuitem];
   [menuitem release];
-	
+
   // -----------------------------------------------------------
 
   NSMenuItem *dummyItem = [[NSMenuItem alloc] initWithTitle:@""
