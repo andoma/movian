@@ -1363,10 +1363,10 @@ plugin_install(plugin_t *pl, const char *package)
   arch_sync_path(path);
 #endif
 
+  prop_unlink(status);
   if(plugin_load(path, errbuf, sizeof(errbuf),
                  PLUGIN_LOAD_FORCE | PLUGIN_LOAD_AS_INSTALLED |
                  PLUGIN_LOAD_BY_USER)) {
-    prop_unlink(status);
     TRACE(TRACE_ERROR, "plugins", "Unable to load %s -- %s", path, errbuf);
     prop_set_string(status, errbuf);
     goto cleanup;
