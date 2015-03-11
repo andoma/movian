@@ -5515,6 +5515,8 @@ void
 prop_print_tree(prop_t *p, int followlinks)
 {
   hts_mutex_lock(&prop_mutex);
+  fprintf(stderr, "Print tree form %s\n",
+          prop_get_DN(p, 1));
   prop_print_tree0(p, 0, followlinks);
   hts_mutex_unlock(&prop_mutex);
 }
