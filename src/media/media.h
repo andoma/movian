@@ -306,6 +306,7 @@ typedef struct media_pipe {
 
   prop_sub_t *mp_sub_currenttime;
   prop_sub_t *mp_sub_stats;
+  prop_sub_t *mp_sub_eventsink;
 
   int64_t mp_seek_base;
   int64_t mp_start_time;

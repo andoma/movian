@@ -43,6 +43,14 @@ widget(container_z, {
 	primary: true;
 	source: $self.source;
 	focusable: true;
+
+        onEvent(left,  deliverEvent($self.media.eventsink, "SeekReverse"));
+        onEvent(right, deliverEvent($self.media.eventsink, "SeekForward"));
+
+        onEvent(up,    deliverEvent($self.media.eventsink, "VolumeUp"));
+        onEvent(down,  deliverEvent($self.media.eventsink, "VolumeDown"));
+
+        onEvent(activate,deliverEvent($self.media.eventsink, "PlayPause"));
       });
 
       widget(container_y, {

@@ -115,7 +115,8 @@ glw_video_widget_event(glw_t *w, event_t *e)
 {
   glw_video_t *gv = (glw_video_t *)w;
   media_pipe_t *mp = gv->gv_mp;
-  event_int_t *eu = (event_int_t *)e;
+
+  // Intercept media events
 
   if(event_is_action(e, ACTION_PLAYPAUSE) ||
      event_is_action(e, ACTION_PLAY) ||
@@ -127,57 +128,19 @@ glw_video_widget_event(glw_t *w, event_t *e)
     return 1;
   }
 
-  if((event_is_type(e, EVENT_UNICODE) && eu->val == 32) ||
-     ((event_is_action(e, ACTION_ACTIVATE) && !gv->gv_spu_in_menu &&
-       gv->gv_flags & GLW_VIDEO_DPAD_SEEK))) {
-    // Convert event into playpause
-    e = event_create_action(ACTION_PLAYPAUSE);
-    mp_enqueue_event(mp, e);
-    event_release(e);
-    return 1;
-  }
+  // If we are in DVD menu, intercept those events as well
 
-  if(event_is_action(e, ACTION_UP) ||
-     event_is_action(e, ACTION_DOWN) ||
-     event_is_action(e, ACTION_LEFT) ||
-     event_is_action(e, ACTION_RIGHT) ||
-     event_is_action(e, ACTION_ACTIVATE)) {
-    if(gv->gv_spu_in_menu) {
+  if(gv->gv_spu_in_menu) {
+    if(event_is_action(e, ACTION_UP) ||
+       event_is_action(e, ACTION_DOWN) ||
+       event_is_action(e, ACTION_LEFT) ||
+       event_is_action(e, ACTION_RIGHT) ||
+       event_is_action(e, ACTION_ACTIVATE)) {
       mp_enqueue_event(mp, e);
-      return 1;
-    }
-
-    if(!(gv->gv_flags & GLW_VIDEO_DPAD_SEEK))
-      return 0;
-
-    if(event_is_action(e, ACTION_LEFT)) {
-      e = event_create_action(ACTION_SEEK_BACKWARD);
-      mp_enqueue_event(mp, e);
-      event_release(e);
-      return 1;
-    }
-
-    if(event_is_action(e, ACTION_RIGHT)) {
-      e = event_create_action(ACTION_SEEK_FORWARD);
-      mp_enqueue_event(mp, e);
-      event_release(e);
-      return 1;
-    }
-
-    if(event_is_action(e, ACTION_UP)) {
-      e = event_create_action(ACTION_VOLUME_UP);
-      mp_enqueue_event(mp, e);
-      event_release(e);
-      return 1;
-    }
-
-    if(event_is_action(e, ACTION_DOWN)) {
-      e = event_create_action(ACTION_VOLUME_DOWN);
-      mp_enqueue_event(mp, e);
-      event_release(e);
       return 1;
     }
   }
+
   return 0;
 }
 
@@ -644,8 +607,6 @@ glw_video_ctor(glw_t *w)
 {
   glw_video_t *gv = (glw_video_t *)w;
   glw_root_t *gr = w->glw_root;
-
-  gv->gv_flags |= GLW_VIDEO_DPAD_SEEK;
 
   kalman_init(&gv->gv_avfilter);
 

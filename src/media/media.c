@@ -59,7 +59,7 @@ static int num_media_pipelines;
 void (*media_pipe_init_extra)(media_pipe_t *mp);
 void (*media_pipe_fini_extra)(media_pipe_t *mp);
 
-static void media_eventsink(void *opaque, prop_event_t event, ...);
+static void media_global_eventsink(void *opaque, prop_event_t event, ...);
 
 static void mp_unbecome_primary(media_pipe_t *mp);
 
@@ -81,7 +81,7 @@ media_init(void)
   HTS_JOIN(sp, k0)[4] = 0x78;
   prop_subscribe(0,
 		 PROP_TAG_NAME("media", "eventsink"),
-		 PROP_TAG_CALLBACK, media_eventsink, NULL,
+		 PROP_TAG_CALLBACK, media_global_eventsink, NULL,
 		 PROP_TAG_MUTEX, &media_mutex,
 		 PROP_TAG_ROOT, media_prop_root,
 		 NULL);
@@ -269,6 +269,15 @@ mp_create(const char *name, int flags)
 		   PROP_TAG_ROOT, mp->mp_prop_stats,
 		   NULL);
 
+  mp->mp_sub_eventsink =
+    prop_subscribe(0,
+		   PROP_TAG_NAME("media", "eventsink"),
+                   PROP_TAG_CALLBACK_EVENT, media_eventsink, mp,
+                   PROP_TAG_LOCKMGR, mp_lockmgr,
+                   PROP_TAG_MUTEX, mp,
+		   PROP_TAG_NAMED_ROOT, mp->mp_prop_root, "media",
+		   NULL);
+
 
   if(media_pipe_init_extra != NULL)
     media_pipe_init_extra(mp);
@@ -313,6 +322,7 @@ mp_destroy(media_pipe_t *mp)
 
   prop_unsubscribe(mp->mp_sub_currenttime);
   prop_unsubscribe(mp->mp_sub_stats);
+  prop_unsubscribe(mp->mp_sub_eventsink);
 
 #if ENABLE_MEDIA_SETTINGS
   mp_settings_clear(mp);
@@ -771,7 +781,7 @@ mp_lockmgr(void *ptr, int op)
  * Global eventsink (not tied to a specific media_pipe)
  */
 static void
-media_eventsink(void *opaque, prop_event_t event, ...)
+media_global_eventsink(void *opaque, prop_event_t event, ...)
 {
   event_t *e;
 

@@ -228,7 +228,7 @@ typedef struct glw_rect {
  */
 #define GLW_VIDEO_PRIMARY       0x1
 #define GLW_VIDEO_NO_AUDIO      0x2
-#define GLW_VIDEO_DPAD_SEEK     0x4
+
 
 typedef enum {
   GLW_POINTER_LEFT_PRESS,

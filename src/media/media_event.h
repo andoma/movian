@@ -18,6 +18,8 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 #pragma once
+void media_eventsink(void *opaque, event_t *e);
+
 void mp_seek_by_propchange(void *opaque, prop_event_t event, ...);
 
 void mp_enqueue_event(struct media_pipe *mp, struct event *e);

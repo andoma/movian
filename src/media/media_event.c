@@ -372,6 +372,16 @@ mp_enqueue_event(media_pipe_t *mp, event_t *e)
  *
  */
 void
+media_eventsink(void *opaque, event_t *e)
+{
+  mp_enqueue_event_locked(opaque, e);
+}
+
+
+/**
+ *
+ */
+void
 mp_event_set_callback(struct media_pipe *mp,
                       int (*mp_callback)(struct media_pipe *mp,
                                          void *opaque,
