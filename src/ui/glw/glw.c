@@ -1978,7 +1978,17 @@ glw_dispatch_event(glw_root_t *gr, event_t *e)
        event_is_type(e, EVENT_SELECT_SUBTITLE_TRACK))) {
 
     if(glw_set_keyboard_mode(gr, 1)) {
-      return; // Use the event to wakeup the nav based focus
+      /*
+       * Ok, we switched form mouse to keyboard mode.
+       * For some events we don't want to actually execute on the
+       * action but rather "use" the event to do the switch
+       */
+
+      if(event_is_action(e, ACTION_UP) ||
+         event_is_action(e, ACTION_DOWN) ||
+         event_is_action(e, ACTION_LEFT) ||
+         event_is_action(e, ACTION_RIGHT))
+        return;
     }
 
     if(glw_kill_screensaver(gr)) {
