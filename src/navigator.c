@@ -214,7 +214,7 @@ nav_create(prop_t *prop)
   nav->nav_prop_can_go_back = prop_create(nav->nav_prop_root, "canGoBack");
   nav->nav_prop_can_go_fwd  = prop_create(nav->nav_prop_root, "canGoForward");
   nav->nav_prop_can_go_home = prop_create(nav->nav_prop_root, "canGoHome");
-  prop_t *eventsink         = prop_create(nav->nav_prop_root, "eventsink");
+  prop_t *eventsink         = prop_create(nav->nav_prop_root, "eventSink");
   prop_set_int(nav->nav_prop_can_go_home, 1);
 
   nav->nav_eventsink =

@@ -1591,7 +1591,7 @@ glw_root_event_handler(glw_root_t *gr, event_t *e)
 	    event_is_action(e, ACTION_RELOAD_DATA) ||
 	    event_is_type(e, EVENT_OPENURL)) {
 
-    prop_t *p = prop_get_by_name(PNVEC("nav", "eventsink"), 0,
+    prop_t *p = prop_get_by_name(PNVEC("nav", "eventSink"), 0,
                                  PROP_TAG_ROOT, gr->gr_prop_nav,
                                  NULL);
     prop_send_ext_event(p, e);
@@ -1785,7 +1785,7 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
     gr->gr_mouse_y = gpe->y;
     gr->gr_mouse_valid = 1;
 
-    if(gpe->type == GLW_POINTER_MOTION_UPDATE ||
+     if(gpe->type == GLW_POINTER_MOTION_UPDATE ||
        gpe->type == GLW_POINTER_MOTION_REFRESH) {
 
       prop_set_int(gr->gr_pointer_visible, 1);
@@ -2066,7 +2066,7 @@ glw_inject_event(glw_root_t *gr, event_t *e)
       event_is_action(e, ACTION_PLAYQUEUE) ||
       event_is_action(e, ACTION_RELOAD_DATA) ||
       event_is_type(e, EVENT_OPENURL))) {
-    p = prop_get_by_name(PNVEC("nav", "eventsink"), 0,
+    p = prop_get_by_name(PNVEC("nav", "eventSink"), 0,
 			 PROP_TAG_ROOT, gr->gr_prop_nav,
 			 NULL);
   } else {

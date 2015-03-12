@@ -1486,7 +1486,7 @@ js_init(void)
 
   js_event_sub = prop_subscribe(0,
 				PROP_TAG_CALLBACK, js_global_event, NULL,
-				PROP_TAG_NAME("global", "eventsink"),
+				PROP_TAG_NAME("global", "eventSink"),
 				PROP_TAG_COURIER, js_global_pc,
 				NULL);
 

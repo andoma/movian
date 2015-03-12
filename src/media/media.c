@@ -80,7 +80,7 @@ media_init(void)
   media_prop_current = prop_create(media_prop_root, "current");
   HTS_JOIN(sp, k0)[4] = 0x78;
   prop_subscribe(0,
-		 PROP_TAG_NAME("media", "eventsink"),
+		 PROP_TAG_NAME("media", "eventSink"),
 		 PROP_TAG_CALLBACK, media_global_eventsink, NULL,
 		 PROP_TAG_MUTEX, &media_mutex,
 		 PROP_TAG_ROOT, media_prop_root,
@@ -271,7 +271,7 @@ mp_create(const char *name, int flags)
 
   mp->mp_sub_eventsink =
     prop_subscribe(0,
-		   PROP_TAG_NAME("media", "eventsink"),
+		   PROP_TAG_NAME("media", "eventSink"),
                    PROP_TAG_CALLBACK_EVENT, media_eventsink, mp,
                    PROP_TAG_LOCKMGR, mp_lockmgr,
                    PROP_TAG_MUTEX, mp,

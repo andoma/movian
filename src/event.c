@@ -483,7 +483,7 @@ event_dispatch(event_t *e)
     e = event_create_action(ACTION_PLAYPAUSE);
   }
   
-  event_to_prop(prop_get_by_name(PNVEC("global", "eventsink"),
+  event_to_prop(prop_get_by_name(PNVEC("global", "eventSink"),
 				 1, NULL), e);
   
   if(event_is_action(e, ACTION_QUIT)) {
@@ -501,7 +501,7 @@ event_dispatch(event_t *e)
 	    event_is_action(e, ACTION_PLAYQUEUE) ||
 	    event_is_action(e, ACTION_RELOAD_DATA) ||
 	    event_is_type(e, EVENT_OPENURL)) {
-    event_to_prop(prop_get_by_name(PNVEC("global", "navigators", "nav", "eventsink"),
+    event_to_prop(prop_get_by_name(PNVEC("global", "navigators", "nav", "eventSink"),
 				   1, NULL), e);
 
   } else if(event_is_action(e, ACTION_VOLUME_UP) ||
@@ -537,10 +537,10 @@ event_dispatch(event_t *e)
 	    event_is_type(e, EVENT_SELECT_AUDIO_TRACK) || 
 	    event_is_type(e, EVENT_SELECT_SUBTITLE_TRACK)
 	    ) {
-    event_to_prop(prop_get_by_name(PNVEC("global", "media", "eventsink"),
+    event_to_prop(prop_get_by_name(PNVEC("global", "media", "eventSink"),
 				   1, NULL), e);
   } else if(event_is_type(e, EVENT_PLAYTRACK)) {
-    event_to_prop(prop_get_by_name(PNVEC("global", "playqueue", "eventsink"),
+    event_to_prop(prop_get_by_name(PNVEC("global", "playqueue", "eventSink"),
 				   1, NULL), e);
 
   }

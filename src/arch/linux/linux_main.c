@@ -168,7 +168,7 @@ main(int argc, char **argv)
   glibcourier = glib_courier_create(g_main_context_default());
 
   prop_subscribe(0,
-		 PROP_TAG_NAME("global", "eventsink"),
+		 PROP_TAG_NAME("global", "eventSink"),
 		 PROP_TAG_CALLBACK_EVENT, linux_global_eventsink, NULL,
 		 PROP_TAG_COURIER, glibcourier, 
 		 NULL);

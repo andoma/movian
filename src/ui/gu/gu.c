@@ -492,7 +492,7 @@ gu_fullwindow_update(gu_window_t *gw)
 static void
 gu_playqueue_send_event(gu_tab_t *gt, struct event *e)
 {
-  prop_t *p = prop_get_by_name(PNVEC("global", "playqueue", "eventsink"), 1,
+  prop_t *p = prop_get_by_name(PNVEC("global", "playqueue", "eventSink"), 1,
 			       NULL);
 
   prop_send_ext_event(p, e);
@@ -517,7 +517,7 @@ gu_tab_play_track(gu_tab_t *gt, prop_t *track, prop_t *source)
 void
 gu_tab_send_event(gu_tab_t *gt, event_t *e)
 {
-  prop_t *p = prop_get_by_name(PNVEC("nav", "eventsink"), 1,
+  prop_t *p = prop_get_by_name(PNVEC("nav", "eventSink"), 1,
 			       PROP_TAG_NAMED_ROOT, gt->gt_nav, "nav",
 			       NULL);
 

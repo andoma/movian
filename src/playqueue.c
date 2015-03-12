@@ -866,7 +866,7 @@ playqueue_init(void)
 			     THREAD_PRIO_DEMUXER);
 
   prop_subscribe(0,
-		 PROP_TAG_NAME("playqueue", "eventsink"),
+		 PROP_TAG_NAME("playqueue", "eventSink"),
 		 PROP_TAG_CALLBACK, pq_eventsink, NULL,
 		 PROP_TAG_ROOT, playqueue_root,
 		 NULL);

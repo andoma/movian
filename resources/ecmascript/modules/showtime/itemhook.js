@@ -20,7 +20,7 @@ exports.create = function(conf) {
       var navobj = {
         openURL: function(url) {
           if(nav)
-            prop.sendEvent(nav.eventsink, 'openurl', {
+            prop.sendEvent(nav.eventSink, 'openurl', {
               url: url
             });
         }

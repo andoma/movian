@@ -44,13 +44,13 @@ widget(container_z, {
 	source: $self.source;
 	focusable: true;
 
-        onEvent(left,  deliverEvent($self.media.eventsink, "SeekReverse"));
-        onEvent(right, deliverEvent($self.media.eventsink, "SeekForward"));
+        onEvent(left,  deliverEvent($self.media.eventSink, "SeekReverse"));
+        onEvent(right, deliverEvent($self.media.eventSink, "SeekForward"));
 
-        onEvent(up,    deliverEvent($self.media.eventsink, "VolumeUp"));
-        onEvent(down,  deliverEvent($self.media.eventsink, "VolumeDown"));
+        onEvent(up,    deliverEvent($self.media.eventSink, "VolumeUp"));
+        onEvent(down,  deliverEvent($self.media.eventSink, "VolumeDown"));
 
-        onEvent(activate,deliverEvent($self.media.eventsink, "PlayPause"));
+        onEvent(activate,deliverEvent($self.media.eventSink, "PlayPause"));
       });
 
       widget(container_y, {
