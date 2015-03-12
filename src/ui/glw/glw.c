@@ -1993,7 +1993,8 @@ glw_dispatch_event(glw_root_t *gr, event_t *e)
       }
     }
     if(glw_kill_screensaver(gr)) {
-      return;
+      if(e->e_flags & EVENT_KEYPRESS)
+        return;
     }
   }
 
