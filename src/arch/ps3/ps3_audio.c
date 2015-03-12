@@ -252,7 +252,9 @@ ps3_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
     float *dst = buf + d->channels * AUDIO_BLOCK_SAMPLES * bi;
     uint8_t *planes[8] = {0};
 
-    vector float m = vec_splats(audio_master_volume * ad->ad_vol_scale);
+    float s = audio_master_mute ? 0 : audio_master_volume * ad->ad_vol_scale;
+
+    vector float m = vec_splats(s);
     vector float z = vec_splats(0.0f);
 
     switch(ad->ad_out_channel_layout) {
