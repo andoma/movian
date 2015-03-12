@@ -157,6 +157,7 @@ stdin_thread(void *aux)
 
     if(e == NULL)
       continue;
+    e->e_flags |= EVENT_KEYPRESS;
     event_to_ui(e);
   }
   return NULL;

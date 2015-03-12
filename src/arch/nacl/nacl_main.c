@@ -557,6 +557,7 @@ handle_keydown(nacl_glw_root_t *ngr, PP_Resource input_event)
 
 
   if(e != NULL) {
+    e->e_flags |= EVENT_KEYPRESS;
     glw_lock(gr);
     glw_inject_event(gr, e);
     glw_unlock(gr);

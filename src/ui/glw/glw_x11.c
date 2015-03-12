@@ -917,6 +917,7 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
     e = event_create_str(EVENT_KEYDESC, buf);
   }
   if(e != NULL) {
+    e->e_flags |= EVENT_KEYPRESS;
     glw_inject_event(&gx11->gr, e);
     return 1;
   }

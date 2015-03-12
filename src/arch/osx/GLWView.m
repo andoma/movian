@@ -348,6 +348,8 @@ glw_in_fullwindow(void *opaque, int val)
   if(e == NULL)
     e = event_create_int(EVENT_UNICODE, c);
 
+  e->e_flags |= EVENT_KEYPRESS;
+
   [self hideCursor];
 
   prop_send_ext_event(eventSink, e);

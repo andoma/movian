@@ -208,6 +208,7 @@ dd_read(de_dev_t *dd)
 
       while(cnt--) {
 	e = event_create_action(action);
+        e->e_flags |= EVENT_KEYPRESS;
 	event_to_ui(e);
 	
       }
@@ -229,7 +230,9 @@ dd_read(de_dev_t *dd)
 
   for(i = 0; key_to_action[i][0]; i++) {
     if(key_to_action[i][0] == ie.code) {
-      event_to_ui(event_create_action(key_to_action[i][1+shift]));
+      event_t *e = event_create_action(key_to_action[i][1+shift]);
+      e->e_flags |= EVENT_KEYPRESS;
+      event_to_ui(e);
       return 0;
     }
   }
@@ -269,9 +272,10 @@ dd_read(de_dev_t *dd)
     break;
   }
 
-  if(e != NULL)
+  if(e != NULL) {
+    e->e_flags |= EVENT_KEYPRESS;
     event_to_ui(e);
-
+  }
 
   return 0;
 }

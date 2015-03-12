@@ -157,7 +157,9 @@ Java_com_lonelycoder_mediaplayer_Core_glwStep(JNIEnv *env,
   glw_post_scene(gr);
 
   if(longpress_periodic(&agr->agr_dpad_center, gr->gr_frame_start)) {
-    glw_inject_event(gr, event_create_action(ACTION_ITEMMENU));
+    event_t *e = event_create_action(ACTION_ITEMMENU);
+    e->e_flags |= EVENT_KEYPRESS;
+    glw_inject_event(gr, e);
   }
 }
 
@@ -234,9 +236,11 @@ Java_com_lonelycoder_mediaplayer_Core_glwKeyDown(JNIEnv *env,
     }
   }
 
-  if(e != NULL)
+  if(e != NULL) {
+    e->e_flags |= EVENT_KEYPRESS;
     glw_inject_event(gr, e);
-
+  }
+  
   return e != NULL;
 }
 
@@ -257,6 +261,7 @@ Java_com_lonelycoder_mediaplayer_Core_glwKeyUp(JNIEnv *env,
   }
 
   if(e != NULL) {
+    e->e_flags |= EVENT_KEYPRESS;
     glw_inject_event(&agr->gr, e);
     return 1;
   }

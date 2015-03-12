@@ -720,6 +720,7 @@ handle_btn(glw_ps3_t *gp, int pad, int code, int pressed, int sel, int pre)
       }
 
       if(e != NULL) {
+        e->e_flags |= EVENT_KEYPRESS;
 	event_addref(e);
 	event_to_ui(e);
 
@@ -1060,6 +1061,7 @@ handle_kb(glw_ps3_t *gp)
 	      }
 
 	      if(e != NULL) {
+                e->e_flags |= EVENT_KEYPRESS;
 		event_to_ui(e);
 		break;
 	      }

@@ -235,6 +235,7 @@ cec_emit_key_down(int code)
     while(avec[i] != 0)
       i++;
     event_t *e = event_create_action_multi(avec, i);
+    e->e_flags |= EVENT_KEYPRESS;
     event_to_ui(e);
   } else {
     CEC_DEBUG("Unmapped code 0x%02x", code);

@@ -185,7 +185,9 @@ TAILQ_HEAD(event_q, event);
  */
 typedef struct event {
   atomic_t e_refcount;
-  int     e_mapped;
+  int     e_flags;
+#define EVENT_MAPPED 0x1
+#define EVENT_KEYPRESS 0x2 // Came from user keypress
   struct prop *e_nav;
   event_type_t e_type_x;
   void (*e_dtor)(struct event *e);
@@ -326,7 +328,8 @@ void *event_create(event_type_t type, size_t size);
 
 event_t *event_create_action(action_type_t action);
 
-event_t *event_create_action_multi(const action_type_t *actions, size_t numactions);
+event_t *event_create_action_multi(const action_type_t *actions,
+                                   size_t numactions);
 
 event_t *event_create_action_str(const char *str);
 

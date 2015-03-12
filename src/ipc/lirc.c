@@ -123,6 +123,7 @@ lirc_thread(void *aux)
 	snprintf(buf, sizeof(buf), "IR+%s", keyname);
 	e = event_create_str(EVENT_KEYDESC, buf);
       }
+      e->e_flags |= EVENT_KEYPRESS;
       event_to_ui(e);
     }
   }

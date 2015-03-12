@@ -41,7 +41,7 @@ event_create(event_type_t type, size_t size)
   e->e_nav = NULL;
   e->e_dtor = NULL;
   atomic_set(&e->e_refcount, 1);
-  e->e_mapped = 0;
+  e->e_flags = 0;
   assert(type > EVENT_OFFSET);
   e->e_type_x = type;
   return e;
