@@ -87,7 +87,7 @@ render_focus_widget(glw_t *w, glw_cursor_t *gc, Mtx saved,
       gc->gc_initialized = 1;
     } else {
       for(int i = 0; i < 16; i++) {
-        glw_lp(&gc->gc_mtx[i], gr, x[i], 0.5);
+        glw_lp(&gc->gc_mtx[i], gr, x[i], 0.75);
         /* printf("%2.3f%c", gc->gc_mtx[i], (i+1) & 3 ? '\t' : '\n'); */
       }
     }
