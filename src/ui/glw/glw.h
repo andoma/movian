@@ -238,14 +238,15 @@ typedef enum {
   GLW_POINTER_MOTION_UPDATE,  // Updated (mouse did really move)
   GLW_POINTER_MOTION_REFRESH, // GLW Internal refresh (every frame)
   GLW_POINTER_FOCUS_MOTION,
+  GLW_POINTER_FINE_SCROLL,
   GLW_POINTER_SCROLL,
   GLW_POINTER_GONE,
 } glw_pointer_event_type_t;
 
 typedef struct glw_pointer_event {
   float x, y;
+  float delta_x;
   float delta_y;
-  float vel_x, vel_y;
   glw_pointer_event_type_t type;
   int flags;
 } glw_pointer_event_t;

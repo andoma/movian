@@ -194,24 +194,34 @@ glw_in_fullwindow(void *opaque, int val)
   NSPoint loc = [self convertPointToBacking:[event locationInWindow]];
   glw_pointer_event_t gpe;
 
-#if 0
-  if(gcocoa.is_cursor_hidden)
-    [self glwUnHideCursor];
-#endif
-
   gpe.x = (2.0 * loc.x / gr->gr_width) - 1;
   gpe.y = (2.0 * loc.y / gr->gr_height) - 1;
   gpe.type = type;
-  if(type == GLW_POINTER_SCROLL)
+
+  if(type == GLW_POINTER_SCROLL) {
+    gpe.delta_x = -[event deltaX];
     gpe.delta_y = -[event deltaY];
+  }
+
+  if(type == GLW_POINTER_FINE_SCROLL) {
+    NSPoint p = {[event deltaX], [event deltaY]};
+    NSPoint p2 = [self convertPointToBacking:p];
+    gpe.delta_x = p2.x * 4;
+    gpe.delta_y = p2.y * -4;
+  }
 
   glw_lock(gr);
   glw_pointer_event(gr, &gpe);
   glw_unlock(gr);
 }
 
-- (void)scrollWheel:(NSEvent *)event {
-  [self glwMouseEvent:GLW_POINTER_SCROLL event:event];
+- (void)scrollWheel:(NSEvent *)event
+{
+  if([event hasPreciseScrollingDeltas]) {
+    [self glwMouseEvent:GLW_POINTER_FINE_SCROLL event:event];
+  } else {
+    [self glwMouseEvent:GLW_POINTER_SCROLL event:event];
+  }
 }
 
 

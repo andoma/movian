@@ -528,11 +528,22 @@ glw_array_pointer_event(glw_t *w, const glw_pointer_event_t *gpe)
 {
   glw_array_t *a = (glw_array_t *)w;
 
-  if(gpe->type == GLW_POINTER_SCROLL) {
+  switch(gpe->type) {
+
+  case GLW_POINTER_SCROLL:
     a->current_pos += a->page_size * gpe->delta_y;
     a->w.glw_flags |= GLW_UPDATE_METRICS;
-    glw_schedule_refresh(a->w.glw_root, 0);
+    glw_schedule_refresh(w->glw_root, 0);
     return 1;
+
+  case GLW_POINTER_FINE_SCROLL:
+    a->current_pos += gpe->delta_y;
+    a->w.glw_flags |= GLW_UPDATE_METRICS;
+    glw_schedule_refresh(w->glw_root, 0);
+    return 1;
+
+  default:
+    return 0;
   }
   return 0;
 }
