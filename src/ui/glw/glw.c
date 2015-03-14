@@ -1706,6 +1706,7 @@ glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
 	switch(gpe->type) {
 
 	case GLW_POINTER_RIGHT_PRESS:
+          glw_focus_set(gr, w, GLW_FOCUS_SET_INTERACTIVE);
           e = event_create_action(ACTION_ITEMMENU);
           glw_event_to_widget(w, e);
           event_release(e);
