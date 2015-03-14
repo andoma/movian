@@ -240,7 +240,7 @@ set_source(glw_t *w, rstr_t *url, glw_style_t *origin)
     glw_view_create(w->glw_root, url, alt_url, w,
                     a->prop_self_override ?: a->prop,
                     a->prop_parent_override ?: a->prop_parent, a->args,
-                    a->prop_clone);
+                    a->prop_clone, NULL, 0);
     return;
   }
 

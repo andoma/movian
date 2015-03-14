@@ -121,7 +121,7 @@ glw_view_error(glw_t *parent, const char *error, const char *file, int line)
   }
 
   glw_t *w = glw_create(parent->glw_root, glw_class_find_by_name("label"),
-                        parent, NULL, NULL);
+                        parent, NULL, NULL, NULL, 0);
   w->glw_class->gc_set_caption(w, buf, 0);
 }
 
@@ -390,7 +390,7 @@ glw_view_loader_flush(glw_root_t *gr)
 glw_t *
 glw_view_create(glw_root_t *gr, rstr_t *url, rstr_t *alturl, glw_t *parent,
                 prop_t *prop, prop_t *prop_parent, prop_t *args,
-                prop_t *prop_clone)
+                prop_t *prop_clone, rstr_t *file, int line)
 {
   glw_cached_view_t *gcv;
 
@@ -400,7 +400,7 @@ glw_view_create(glw_root_t *gr, rstr_t *url, rstr_t *alturl, glw_t *parent,
     alturl = NULL;
   }
 
-  glw_t *w = glw_create(gr, &glw_view, parent, NULL, NULL);
+  glw_t *w = glw_create(gr, &glw_view, parent, NULL, NULL, file, line);
 
   LIST_FOREACH(gcv, &gr->gr_views, gcv_link) {
     if(rstr_eq(gcv->gcv_url, url) && rstr_eq(gcv->gcv_alturl, alturl))

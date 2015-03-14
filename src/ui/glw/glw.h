@@ -37,6 +37,15 @@
 #include "settings.h"
 #include "misc/minmax.h"
 
+#ifdef DEBUG
+#define GLW_TRACE(x, ...) do {                                     \
+    if(gconf.debug_glw)                                            \
+      TRACE(TRACE_DEBUG, "GLW", x, ##__VA_ARGS__);                 \
+  } while(0)
+#else
+#define GLW_TRACE(x, ...)
+#endif
+
 // #define GLW_TRACK_REFRESH
 
 // Beware: If you bump these over 16 remember to fix bitmasks too
@@ -1136,6 +1145,10 @@ typedef struct glw {
 
   uint8_t glw_dynamic_eval;   // GLW_VIEW_EVAL_ -flags
 
+#ifdef DEBUG
+  rstr_t *glw_file;
+  int glw_line;
+#endif
 } glw_t;
 
 
@@ -1287,7 +1300,8 @@ void glw_lp(float *v, glw_root_t *gr, float t, float alpha);
  */
 glw_t *glw_view_create(glw_root_t *gr, rstr_t *url, rstr_t *alturl,
                        glw_t *parent, prop_t *prop, prop_t *prop_parent,
-                       prop_t *args, prop_t *prop_clone);
+                       prop_t *args, prop_t *prop_clone,
+                       rstr_t *file, int line);
 
 void glw_view_eval_signal(glw_t *w, glw_signal_t sig);
 
@@ -1320,7 +1334,8 @@ int glw_widget_unproject(Mtx m, float *xp, float *yp,
 			 const Vec3 p, const Vec3 dir);
 
 glw_t *glw_create(glw_root_t *gr, const glw_class_t *class,
-		  glw_t *parent, glw_t *before, prop_t *originator);
+                  glw_t *parent, glw_t *before, prop_t *originator,
+                  rstr_t *file, int line);
 
 #define glw_lock_assert() glw_lock_check(__FILE__, __LINE__)
 

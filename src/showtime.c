@@ -487,6 +487,10 @@ parse_opts(int argc, char **argv)
       gconf.libavlog = 1;
       argc -= 1; argv += 1;
       continue;
+    } else if(!strcmp(argv[0], "--debug-glw")) {
+      gconf.debug_glw = 1;
+      argc -= 1; argv += 1;
+      continue;
     } else if(!strcmp(argv[0], "--no-ui")) {
       gconf.noui = 1;
       argc -= 1; argv += 1;

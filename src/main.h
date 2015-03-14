@@ -210,6 +210,7 @@ typedef struct gconf {
   int noui;
   int fullscreen;
   int swrefresh;
+  int debug_glw;
 
   int can_standby;
   int can_poweroff;

@@ -293,7 +293,7 @@ glw_load_universe(glw_root_t *gr)
 
   gr->gr_universe = glw_view_create(gr,
 				    universe, NULL, NULL, page,
-				    NULL, NULL, NULL);
+				    NULL, NULL, NULL, NULL, 0);
 
   rstr_release(universe);
 }
@@ -360,7 +360,8 @@ glw_render_zoffset(glw_t *w, const glw_rctx_t *rc)
  */
 glw_t *
 glw_create(glw_root_t *gr, const glw_class_t *class,
-	   glw_t *parent, glw_t *before, prop_t *originator)
+           glw_t *parent, glw_t *before, prop_t *originator,
+           rstr_t *file, int line)
 {
   glw_t *w;
 
@@ -374,7 +375,10 @@ glw_create(glw_root_t *gr, const glw_class_t *class,
   w->glw_refcnt = 1;
   w->glw_alignment = class->gc_default_alignment;
   w->glw_flags2 = GLW2_ENABLED | GLW2_NAV_FOCUSABLE | GLW2_CURSOR;
-
+#ifdef DEBUG
+  w->glw_file = rstr_dup(file);
+  w->glw_line = line;
+#endif
   if(likely(parent != NULL))
     w->glw_styles = glw_style_set_retain(parent->glw_styles);
 
@@ -1208,6 +1212,9 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how)
 #endif
 
   if(w != NULL) {
+    GLW_TRACE("Focus set to %s:%d\n",
+              rstr_get(w->glw_file), w->glw_line);
+
     gr->gr_last_focus = w;
 
     glw_path_modify(w, GLW_IN_FOCUS_PATH, 0, com);
@@ -1224,6 +1231,8 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how)
 	gr->gr_last_focused_interactive = prop_ref_inc(p);
       }
     }
+  } else {
+    GLW_TRACE("Focus set to none");
   }
   gr->gr_focus_work = 0;
 }

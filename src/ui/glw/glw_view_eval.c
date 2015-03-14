@@ -1341,7 +1341,9 @@ cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
 
   c->c_clone_root = prop_create_root("clone");
 
-  c->c_w = glw_create(gr, sc->sc_cloner_class, parent, b, p);
+  c->c_w = glw_create(gr, sc->sc_cloner_class, parent, b, p,
+                      sc->sc_cloner_body->file,
+                      sc->sc_cloner_body->line);
   c->c_w->glw_clone = c;
 
   if(c->c_w->glw_class->gc_set_roots != NULL) {
@@ -2712,7 +2714,7 @@ glwf_widget(glw_view_eval_context_t *ec, struct token *self,
   n.ei = ec->ei;
   n.gr = ec->gr;
   n.rc = ec->rc;
-  n.w = glw_create(ec->gr, c, ec->w, NULL, NULL);
+  n.w = glw_create(ec->gr, c, ec->w, NULL, NULL, self->file, self->line);
 
   if(c->gc_freeze != NULL)
     c->gc_freeze(n.w);
@@ -2813,7 +2815,8 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
     if(dummy == NULL)
       dummy = glw_class_find_by_name("dummy");
 
-    self->t_extra = glw_create(ec->gr, dummy, parent, NULL, NULL);
+    self->t_extra = glw_create(ec->gr, dummy, parent, NULL, NULL,
+                               self->file, self->line);
 
     glw_hide(self->t_extra);
   }
@@ -2949,7 +2952,8 @@ glwf_space(glw_view_eval_context_t *ec, struct token *self,
   if(dummy == NULL)
     dummy = glw_class_find_by_name("dummy");
 
-  glw_t *w = glw_create(ec->gr, dummy, ec->w, NULL, NULL);
+  glw_t *w = glw_create(ec->gr, dummy, ec->w, NULL, NULL,
+                        self->file, self->line);
   glw_conf_constraints(w, 0, 0, token2float(ec, a), GLW_CONSTRAINT_CONF_W);
   return 0;
 }
