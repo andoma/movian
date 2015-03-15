@@ -35,6 +35,7 @@ typedef struct {
   int16_t knob_size_px;
   int16_t slider_size_px;
   char fixed_knob_size;
+  char interpolate;
 
   prop_sub_t *sub;
   prop_t *p;
@@ -59,10 +60,12 @@ static glw_class_t glw_slider_x, glw_slider_y;
 static void
 update_value_delta(glw_slider_t *s, float d)
 {
-  if(s->p != NULL)
+  if(s->p != NULL) {
+    s->interpolate = 2;
     prop_add_float(s->p, d * (s->max - s->min));
-  else {
+  } else {
     s->value = GLW_MAX(s->min, GLW_MIN(s->max, s->value + d));
+    s->interpolate = 1;
     if(s->bound_widget != NULL) {
       glw_scroll_t gs;
       gs.value = s->value;
@@ -84,6 +87,7 @@ update_value(glw_slider_t *s, float v, int how)
     prop_set_float_ex(s->p, NULL, v * (s->max - s->min) + s->min, how);
   else {
     s->value = v;
+    s->interpolate = 0;
     if(s->bound_widget != NULL) {
       glw_scroll_t gs;
       gs.value = s->value;
@@ -142,8 +146,11 @@ glw_slider_layout(glw_t *w, const glw_rctx_t *rc)
     s->slider_size_px = rc->rc_height;
   }
 
-  glw_lp(&s->knob_pos_px, w->glw_root, p, 0.25);
-
+  if(s->interpolate)
+    glw_lp(&s->knob_pos_px, w->glw_root, p, 0.25);
+  else
+    s->knob_pos_px = p;
+  
   glw_layout0(c, &rc0);
 }
 
@@ -331,6 +338,7 @@ slider_bound_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   case GLW_SIGNAL_SLIDER_METRICS:
     s->fixed_knob_size = 1;
     s->value = m->position;
+    s->interpolate = 0;
     s->knob_size_fixed = m->knob_size;
 
     if((s->knob_size_fixed != 1.0) == !(s->w.glw_flags & GLW_CAN_SCROLL)) {
@@ -465,6 +473,8 @@ prop_callback(void *opaque, prop_event_t event, ...)
 
   v = GLW_RESCALE(v, sl->min, sl->max);
   sl->value = GLW_MAX(0, GLW_MIN(1.0, v));
+  if(sl->interpolate)
+    sl->interpolate--;
 }
 
 /**
