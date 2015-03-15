@@ -65,20 +65,18 @@ widget(container_z, {
           });
 
           widget(container_y, {
-
-            widget(label, {
-              filterConstraintX: true;
-              caption: strftime($global.media.current.metadata.events.next.start, "%H:%M") + " - " +
-                strftime($global.media.current.metadata.events.next.stop, "%H:%M");
-              shadow: true;
-              outline: true;
-              align: right;
-            });
-
             widget(label, {
               filterConstraintX: true;
               caption: strftime($global.media.current.metadata.events.current.start, "%H:%M") + " - " +
                 strftime($global.media.current.metadata.events.current.stop, "%H:%M");
+              shadow: true;
+              outline: true;
+              align: right;
+            });
+            widget(label, {
+              filterConstraintX: true;
+              caption: strftime($global.media.current.metadata.events.next.start, "%H:%M") + " - " +
+                strftime($global.media.current.metadata.events.next.stop, "%H:%M");
               shadow: true;
               outline: true;
               align: right;
