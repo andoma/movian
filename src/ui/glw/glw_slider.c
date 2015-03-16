@@ -36,7 +36,7 @@ typedef struct {
   int16_t slider_size_px;
   char fixed_knob_size;
   char interpolate;
-
+  char keystep;
   prop_sub_t *sub;
   prop_t *p;
   float grab_delta;
@@ -222,6 +222,9 @@ glw_slider_event_y(glw_t *w, event_t *e)
   glw_slider_t *s = (glw_slider_t *)w;
   float d;
 
+  if(!s->keystep)
+    return 0;
+
   if(event_is_action(e, ACTION_UP)) {
     d = -s->step;
   } else if(event_is_action(e, ACTION_DOWN)) {
@@ -243,6 +246,9 @@ glw_slider_event_x(glw_t *w, event_t *e)
 {
   glw_slider_t *s = (glw_slider_t *)w;
   float d;
+
+  if(!s->keystep)
+    return 0;
 
   if(event_is_action(e, ACTION_LEFT)) {
     d = -s->step_i;
@@ -504,6 +510,7 @@ glw_slider_ctor(glw_t *w)
   s->max = 1.0;
   s->step_i = 0.1;
   s->step = 0.1;
+  s->keystep = 1;
 }
 
 
@@ -586,6 +593,20 @@ glw_slider_bind_id(glw_t *w, const char *id)
   return 1;
 }
 
+/**
+ *
+ */
+static int
+glw_slider_set_int_unresolved(glw_t *w, const char *a, int value)
+{
+  glw_slider_t *s = (glw_slider_t *)w;
+
+  if(!strcmp(a, "keyStep")) {
+    s->keystep = value;
+    return GLW_SET_NO_CHANGE;
+  }
+  return GLW_SET_NOT_RESPONDING;
+}
 
 
 
@@ -601,6 +622,7 @@ static glw_class_t glw_slider_x = {
   .gc_bind_to_property = bind_to_property,
   .gc_send_event = glw_slider_event_x,
   .gc_pointer_event = pointer_event,
+  .gc_set_int_unresolved = glw_slider_set_int_unresolved,
 };
 
 static glw_class_t glw_slider_y = {
@@ -615,6 +637,7 @@ static glw_class_t glw_slider_y = {
   .gc_bind_to_property = bind_to_property,
   .gc_send_event = glw_slider_event_y,
   .gc_pointer_event = pointer_event,
+  .gc_set_int_unresolved = glw_slider_set_int_unresolved,
 };
 
 GLW_REGISTER_CLASS(glw_slider_x);
