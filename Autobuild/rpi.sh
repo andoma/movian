@@ -3,19 +3,17 @@ build()
 {
     mkdir -p ${WORKINGDIR}
 
-    TOOLCHAIN_URL=http://www.lonelycoder.com/download/arm-unknown-linux-gnueabi.tar.gz
-    TOOLCHAIN="${WORKINGDIR}/arm-unknown-linux-gnueabi"
+    STOSVERSION="stos-host-2.0.1.gb0b51"
 
-    SYSROOT_URL=http://www.lonelycoder.com/download/rpi_sysroot-1.0-13-ga8630c9.tar.gz
-    SYSROOT="${WORKINGDIR}/rpi_sysroot-1.0-13-ga8630c9"
+    TOOLCHAIN_URL=https://movian.tv/static/${STOSVERSION}.tar.bz2
+    TOOLCHAIN="${WORKINGDIR}/${STOSVERSION}"
 
-  
     cleanup() {
 	echo "Cleaning up"
-	rm -rf "${TOOLCHAIN}" "${SYSROOT}" "${TEMPFILE}"
+	rm -rf "${TOOLCHAIN}"
 	exit 1
     }
-    
+
     echo "Toolchain from: '${TOOLCHAIN_URL}' Local install in: ${TOOLCHAIN}"
     if [ -d "${TOOLCHAIN}" ]; then
 	echo "Toolchain seems to exist"
@@ -24,10 +22,12 @@ build()
 	trap cleanup SIGINT
 	(
 	    set -eu
-	    cd ${WORKINGDIR}
-	    curl -L "${TOOLCHAIN_URL}" | tar xfz -
+	    cd "${WORKINGDIR}"
+            mkdir -p "${STOSVERSION}"
+            cd  "${STOSVERSION}"
+	    curl -L "${TOOLCHAIN_URL}" | tar xfj -
 	)
-	
+
 	STATUS=$?
 	if [ $STATUS -ne 0 ]; then
 	    echo "Unable to stage toolchain"
@@ -36,30 +36,6 @@ build()
 	trap SIGINT
 	set -e
     fi
-
-
-    echo "Sysroot firmware from: '${SYSROOT_URL}' Local install in: ${SYSROOT}"
-    if [ -d "${SYSROOT}" ]; then
-	echo "Sysroot seems to exist"
-    else
-	set +e
-	trap cleanup SIGINT
-	(
-	    set -eu
-	    mkdir -p ${SYSROOT}
-	    cd ${SYSROOT}
-	    curl -L "${SYSROOT_URL}" | tar xfz - --strip-components=1
-	)
-	
-	STATUS=$?
-	if [ $STATUS -ne 0 ]; then
-	    echo "Unable to stage sysroot"
-	    cleanup
-	fi
-	trap SIGINT
-	set -e
-    fi
-
 
     set +e
     which ccache >/dev/null
@@ -74,8 +50,8 @@ build()
 
     set -x
     ./configure.rpi --build=${TARGET} \
-	--toolchain="${TOOLCHAIN}/bin/arm-linux-gnueabihf-" \
-	--sysroot="${SYSROOT}" \
+	--toolchain="${TOOLCHAIN}/host/usr/bin/arm-buildroot-linux-gnueabihf-" \
+	--sysroot="${TOOLCHAIN}/host/usr/arm-buildroot-linux-gnueabihf/sysroot" \
 	${RELEASE} \
 	--cleanbuild \
 	${USE_CCACHE} \

@@ -70,6 +70,10 @@ if [ -n "$SYSROOT" ]; then
     echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags freetype2`
     echo "Using freetype:        `pkg-config --modversion freetype2`"
 
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs gthread-2.0`
+    echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags gthread-2.0`
+    echo "Using gthread:         `pkg-config --modversion gthread-2.0`"
+
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs gio-2.0`
     echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags gio-2.0`
     echo "Using gio:             `pkg-config --modversion gio-2.0`"
@@ -106,7 +110,7 @@ libspotify_setup "12.1.103-Linux-armv6-bcm2708hardfp"
 
 cat >> ${CONFIG_MAK} <<EOF
 CFLAGS_cfg +=  -fgnu89-inline
-CFLAGS_cfg += -mfpu=vfp -mcpu=arm1176jzf-s -funwind-tables
+CFLAGS_cfg += -funwind-tables
 CFLAGS_cfg += -DOMX_SKIP64BIT
 CFLAGS_cfg += -DRPISTOS -DSTOS
 CFLAGS_cfg  += -I${VCROOT}/include
@@ -114,7 +118,7 @@ CFLAGS_cfg  += -I${VCROOT}/include/IL
 CFLAGS_cfg  += -I${VCROOT}/include/interface/vcos/pthreads/
 CFLAGS_cfg  += -I${VCROOT}/include/interface/vmcs_host/linux
 LDFLAGS_cfg += -L${VCROOT}/lib
-LDFLAGS_cfg += -lopenmaxil -lGLESv2 -lEGL -lvcos -lbcm_host -lvchiq_arm
+LDFLAGS_cfg += -lvchostif -lopenmaxil -lGLESv2 -lEGL -lvcos -lbcm_host -lvchiq_arm
 LDFLAGS_cfg += -lpthread -lrt -ldl
 EOF
 
