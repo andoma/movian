@@ -1285,6 +1285,7 @@ static const token_attrib_t attribtab[] = {
   {"autoFocusLimit",        mod_flag, GLW2_AUTO_FOCUS_LIMIT,       mod_flags2},
   {"cursor",                mod_flag, GLW2_CURSOR,                 mod_flags2},
   {"navPositional",         mod_flag, GLW2_POSITIONAL_NAVIGATION,  mod_flags2},
+  {"clickable",             mod_flag, GLW2_CLICKABLE,              mod_flags2},
 
   {"fixedSize",       mod_flag, GLW_IMAGE_FIXED_SIZE,   mod_img_flags},
   {"bevelLeft",       mod_flag, GLW_IMAGE_BEVEL_LEFT,   mod_img_flags},

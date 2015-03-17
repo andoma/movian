@@ -100,7 +100,7 @@ glw_bloom_render(glw_t *w, const glw_rctx_t *rc)
   if(!b->b_need_render)
     return;
   
-  if(glw_is_focusable(w))
+  if(glw_is_focusable_or_clickable(w))
     glw_store_matrix(w, rc);
   
   rc0 = *rc;

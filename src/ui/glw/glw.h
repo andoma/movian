@@ -1131,8 +1131,8 @@ typedef struct glw {
 #define GLW2_NAV_WRAP               0x200000
 #define GLW2_AUTO_FOCUS_LIMIT       0x400000
 #define GLW2_CURSOR                 0x800000
-
 #define GLW2_POSITIONAL_NAVIGATION  0x1000000
+#define GLW2_CLICKABLE              0x2000000 // Widget is clickable
 
   float glw_alpha;                   /* Alpha set by user */
   float glw_sharpness;               /* 1-Blur set by user */
@@ -1227,6 +1227,9 @@ void glw_set_divider(glw_t *w, int v);
  *
  */
 #define glw_is_focusable(w) ((w)->glw_focus_weight > 0)
+
+#define glw_is_focusable_or_clickable(w) \
+  (((w)->glw_focus_weight > 0) || (w)->glw_flags2 & GLW2_CLICKABLE)
 
 #define glw_is_focused(w) (!!((w)->glw_flags & GLW_IN_FOCUS_PATH))
 

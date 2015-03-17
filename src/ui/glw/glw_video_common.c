@@ -934,7 +934,7 @@ glw_video_render(glw_t *w, const glw_rctx_t *rc)
   gv->gv_rwidth  = rc0.rc_width;
   gv->gv_rheight = rc0.rc_height;
 
-  if(glw_is_focusable(w))
+  if(glw_is_focusable_or_clickable(w))
     glw_store_matrix(w, &rc0);
 
   glw_rctx_t rc1 = rc0;

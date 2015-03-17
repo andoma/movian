@@ -1277,7 +1277,7 @@ glw_focus_init_widget(glw_t *w, float weight)
  *
  */
 static glw_t *
-glw_focus_leave0(glw_t *w, glw_t *cur)
+glw_focus_find_focusable(glw_t *w, glw_t *cur)
 {
   glw_t *c, *r;
 
@@ -1297,7 +1297,7 @@ glw_focus_leave0(glw_t *w, glw_t *cur)
     if(glw_is_focusable(c))
       return c;
     if(TAILQ_FIRST(&c->glw_childs)) {
-      if((r = glw_focus_leave0(c, NULL)) != NULL)
+      if((r = glw_focus_find_focusable(c, NULL)) != NULL)
 	return r;
     }
   }
@@ -1320,7 +1320,7 @@ glw_focus_leave(glw_t *w)
     assert(w->glw_parent->glw_focused == w);
 
     if(!(w->glw_parent->glw_flags & GLW_DESTROYING)) {
-      r = glw_focus_leave0(w->glw_parent, w);
+      r = glw_focus_find_focusable(w->glw_parent, w);
       if(r != NULL)
 	break;
     }
@@ -1347,7 +1347,6 @@ glw_focus_crawl0(glw_t *w, glw_t *cur, int forward)
 
   for(; c != NULL; c = forward ? TAILQ_NEXT(c, glw_parent_link) :
 	TAILQ_PREV(c, glw_queue, glw_parent_link)) {
-
     if(c->glw_flags & (GLW_FOCUS_BLOCKED | GLW_HIDDEN))
       continue;
     if(glw_is_focusable(c))
@@ -1440,8 +1439,17 @@ glw_focus_open_path_close_all_other(glw_t *w)
     glw_t *r = glw_focus_crawl1(w, 1);
     if(r != NULL) {
       glw_focus_set(w->glw_root, r, GLW_FOCUS_SET_AUTOMATIC,
-                    "OpenCloseCrawl");
+                    "OpenCloseCrawlDown");
       return;
+    }
+
+    while(w->glw_parent != NULL) {
+      if((r = glw_focus_find_focusable(w->glw_parent, w)) != NULL) {
+        glw_focus_set(w->glw_root, r, GLW_FOCUS_SET_AUTOMATIC,
+                      "OpenCloseCrawlUp");
+        return;
+      }
+      w = w->glw_parent;
     }
   }
 
@@ -1709,13 +1717,13 @@ glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
       gpe0.y = y;
       gpe0.delta_y = gpe->delta_y;
 
-      if(glw_is_focusable(w) && *hp == NULL)
+      if(glw_is_focusable_or_clickable(w) && *hp == NULL)
 	*hp = w;
 
       if(glw_send_pointer_event(w, &gpe0))
 	return 1;
 
-      if(glw_is_focusable(w)) {
+      if(glw_is_focusable_or_clickable(w)) {
 	switch(gpe->type) {
 
 	case GLW_POINTER_RIGHT_PRESS:

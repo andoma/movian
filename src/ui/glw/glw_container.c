@@ -514,7 +514,7 @@ glw_container_y_render(glw_t *w, const glw_rctx_t *rc)
   if(alpha < 0.01f)
     return;
   
-  if(glw_is_focusable(w))
+  if(glw_is_focusable_or_clickable(w))
     glw_store_matrix(w, rc);
 
   if(co->co_padding[0] || co->co_padding[2]) {
@@ -568,7 +568,7 @@ glw_container_x_render(glw_t *w, const glw_rctx_t *rc)
   if(alpha < 0.01f)
     return;
 
-  if(glw_is_focusable(w))
+  if(glw_is_focusable_or_clickable(w))
     glw_store_matrix(w, rc);
 
   if(co->co_padding[1] || co->co_padding[3]) {
@@ -621,7 +621,7 @@ glw_container_z_render(glw_t *w, const glw_rctx_t *rc)
   if(alpha < 0.01f)
     return;
 
-  if(glw_is_focusable(w))
+  if(glw_is_focusable_or_clickable(w))
     glw_store_matrix(w, rc);
 
   rc0 = *rc;

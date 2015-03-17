@@ -116,7 +116,7 @@ glw_displacement_render(glw_t *w, const glw_rctx_t *rc)
 		  rc->rc_width  - gd->gd_padding[2],
 		  gd->gd_padding[3]);
 
-  if(glw_is_focusable(w))
+  if(glw_is_focusable_or_clickable(w))
     glw_store_matrix(w, &rc0);
 
   glw_render0(c, &rc0);

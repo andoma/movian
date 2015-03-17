@@ -288,7 +288,7 @@ glw_image_render(glw_t *w, const glw_rctx_t *rc)
 
     glw_align_2(&rc0, w->glw_alignment);
 
-    if(glw_is_focusable(w))
+    if(glw_is_focusable_or_clickable(w))
       glw_store_matrix(w, &rc0);
 
     if(w->glw_class == &glw_frontdrop && TAILQ_FIRST(&w->glw_childs) != NULL) {
@@ -319,7 +319,7 @@ glw_image_render(glw_t *w, const glw_rctx_t *rc)
 
     rc0 = *rc;
 
-    if(glw_is_focusable(w))
+    if(glw_is_focusable_or_clickable(w))
       glw_store_matrix(w, &rc0);
 
     if(w->glw_class == &glw_frontdrop && TAILQ_FIRST(&w->glw_childs) != NULL) {

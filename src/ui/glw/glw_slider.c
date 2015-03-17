@@ -165,7 +165,7 @@ glw_slider_render_x(glw_t *w, const glw_rctx_t *rc)
   glw_t *c;
   glw_rctx_t rc0;
 
-  if(glw_is_focusable(w))
+  if(glw_is_focusable_or_clickable(w))
     glw_store_matrix(w, rc);
 
   if((c = TAILQ_FIRST(&w->glw_childs)) == NULL)
@@ -194,7 +194,7 @@ glw_slider_render_y(glw_t *w, const glw_rctx_t *rc)
   glw_t *c;
   glw_rctx_t rc0;
 
-  if(glw_is_focusable(w))
+  if(glw_is_focusable_or_clickable(w))
     glw_store_matrix(w, rc);
 
   if((c = TAILQ_FIRST(&w->glw_childs)) == NULL)

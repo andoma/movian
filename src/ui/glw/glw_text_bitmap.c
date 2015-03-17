@@ -370,7 +370,7 @@ glw_text_bitmap_render(glw_t *w, const glw_rctx_t *rc)
   float alpha;
   float blur = 1 - (rc->rc_sharpness * w->glw_sharpness);
 
-  if(glw_is_focusable(w))
+  if(glw_is_focusable_or_clickable(w))
     glw_store_matrix(w, rc);
 
   alpha = rc->rc_alpha * w->glw_alpha;
