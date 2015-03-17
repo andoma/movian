@@ -48,7 +48,8 @@ glw_nav_first(glw_t *parent)
   while(c != NULL) {
     glw_t *to_focus = glw_get_focusable_child(c);
     if(to_focus != NULL && to_focus->glw_flags2 & GLW2_NAV_FOCUSABLE) {
-      glw_focus_set(to_focus->glw_root, to_focus, GLW_FOCUS_SET_INTERACTIVE);
+      glw_focus_set(to_focus->glw_root, to_focus, GLW_FOCUS_SET_INTERACTIVE,
+                    "NavFirst");
       return 1;
     }
     c = glw_next_widget(c);
@@ -68,7 +69,8 @@ glw_nav_last(glw_t *parent)
   while(c != NULL) {
     glw_t *to_focus = glw_get_focusable_child(c);
     if(to_focus != NULL && to_focus->glw_flags2 & GLW2_NAV_FOCUSABLE) {
-      glw_focus_set(to_focus->glw_root, to_focus, GLW_FOCUS_SET_INTERACTIVE);
+      glw_focus_set(to_focus->glw_root, to_focus, GLW_FOCUS_SET_INTERACTIVE,
+                    "NavLast");
       return 1;
     }
     c = glw_prev_widget(c);
@@ -106,7 +108,8 @@ glw_navigate_step(glw_t *c, int count, int may_wrap)
   }
 
   if(to_focus != NULL) {
-    glw_focus_set(to_focus->glw_root, to_focus, GLW_FOCUS_SET_INTERACTIVE);
+    glw_focus_set(to_focus->glw_root, to_focus, GLW_FOCUS_SET_INTERACTIVE,
+                  "NavStep");
     return 1;
   } else if(may_wrap) {
     if(forward) {
@@ -388,6 +391,6 @@ glw_navigate_matrix(struct glw *w, struct event *e)
   if(nma.best == NULL)
     return 0;
 
-  glw_focus_set(gr, nma.best, GLW_FOCUS_SET_INTERACTIVE);
+  glw_focus_set(gr, nma.best, GLW_FOCUS_SET_INTERACTIVE, "NavPositional");
   return 1;
 }

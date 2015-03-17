@@ -909,12 +909,12 @@ glw_move(glw_t *w, glw_t *b)
       glw_t *w2 = TAILQ_NEXT(w, glw_parent_link);
       if(w2 != NULL && p->glw_focused == w2) {
 	glw_t *c = glw_focus_by_path(w);
-	glw_focus_set(c->glw_root, c, GLW_FOCUS_SET_AUTOMATIC_FF);
+	glw_focus_set(c->glw_root, c, GLW_FOCUS_SET_AUTOMATIC_FF, "Move");
       }
     } else if(was_first) {
       glw_t *w2 = TAILQ_FIRST(&p->glw_childs);
       glw_t *c = glw_focus_by_path(w2);
-      glw_focus_set(c->glw_root, c, GLW_FOCUS_SET_AUTOMATIC_FF);
+      glw_focus_set(c->glw_root, c, GLW_FOCUS_SET_AUTOMATIC_FF, "Move");
     }
   }
   glw_signal0(p, GLW_SIGNAL_CHILD_MOVED, w);
@@ -1109,7 +1109,7 @@ check_autofocus_limit(glw_t *n, glw_t *o)
  *
  */
 void
-glw_focus_set(glw_root_t *gr, glw_t *w, int how)
+glw_focus_set(glw_root_t *gr, glw_t *w, int how, const char *whom)
 {
   glw_t *x, *y, *com;
   glw_signal_t sig;
@@ -1212,8 +1212,8 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how)
 #endif
 
   if(w != NULL) {
-    GLW_TRACE("Focus set to %s:%d\n",
-              rstr_get(w->glw_file), w->glw_line);
+    GLW_TRACE("Focus set to %s:%d bt %s",
+              rstr_get(w->glw_file), w->glw_line, whom);
 
     gr->gr_last_focus = w;
 
@@ -1232,7 +1232,7 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how)
       }
     }
   } else {
-    GLW_TRACE("Focus set to none");
+    GLW_TRACE("Focus set to none by %s", whom);
   }
   gr->gr_focus_work = 0;
 }
@@ -1269,7 +1269,7 @@ glw_focus_init_widget(glw_t *w, float weight)
 {
   w->glw_focus_weight = weight;
   int v = w->glw_flags2 & GLW2_AUTOREFOCUSABLE && was_interactive(w);
-  glw_focus_set(w->glw_root, w, v);
+  glw_focus_set(w->glw_root, w, v, "Init");
 }
 
 
@@ -1326,7 +1326,7 @@ glw_focus_leave(glw_t *w)
     }
     w = w->glw_parent;
   }
-  glw_focus_set(w->glw_root, r, GLW_FOCUS_SET_INTERACTIVE);
+  glw_focus_set(w->glw_root, r, GLW_FOCUS_SET_INTERACTIVE, "FocusLeave");
 }
 
 
@@ -1406,7 +1406,7 @@ glw_focus_crawl(glw_t *w, int forward, int interactive)
   if(r != NULL)
     glw_focus_set(w->glw_root, r,
 		  interactive ? GLW_FOCUS_SET_INTERACTIVE :
-		  GLW_FOCUS_SET_AUTOMATIC);
+		  GLW_FOCUS_SET_AUTOMATIC, "FocusCrawl");
 }
 
 
@@ -1433,18 +1433,21 @@ glw_focus_open_path_close_all_other(glw_t *w)
   c = glw_focus_by_path(w);
 
   if(c != NULL) {
-    glw_focus_set(w->glw_root, c, GLW_FOCUS_SET_AUTOMATIC);
+    glw_focus_set(w->glw_root, c, GLW_FOCUS_SET_AUTOMATIC,
+                  "OpenCloseFound");
     return;
   } else if(p->glw_parent->glw_focused == p && do_clear) {
     glw_t *r = glw_focus_crawl1(w, 1);
     if(r != NULL) {
-      glw_focus_set(w->glw_root, r, GLW_FOCUS_SET_AUTOMATIC);
+      glw_focus_set(w->glw_root, r, GLW_FOCUS_SET_AUTOMATIC,
+                    "OpenCloseCrawl");
       return;
     }
   }
 
   if(do_clear)
-    glw_focus_set(w->glw_root, NULL, GLW_FOCUS_SET_AUTOMATIC);
+    glw_focus_set(w->glw_root, NULL, GLW_FOCUS_SET_AUTOMATIC,
+                  "OpenCloseNone");
 
 }
 
@@ -1465,7 +1468,8 @@ glw_focus_open_path(glw_t *w)
 
   c = glw_focus_by_path(w);
   if(c != NULL)
-    glw_focus_set(w->glw_root, c, GLW_FOCUS_SET_AUTOMATIC);
+    glw_focus_set(w->glw_root, c, GLW_FOCUS_SET_AUTOMATIC,
+                  "OpenPath");
 }
 
 
@@ -1576,7 +1580,7 @@ glw_focus_child(glw_t *w)
   if(c == NULL)
     return 0;
 
-  glw_focus_set(w->glw_root, c, GLW_FOCUS_SET_INTERACTIVE);
+  glw_focus_set(w->glw_root, c, GLW_FOCUS_SET_INTERACTIVE, "FocusChild");
   return 1;
 }
 
@@ -1715,7 +1719,7 @@ glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
 	switch(gpe->type) {
 
 	case GLW_POINTER_RIGHT_PRESS:
-          glw_focus_set(gr, w, GLW_FOCUS_SET_INTERACTIVE);
+          glw_focus_set(gr, w, GLW_FOCUS_SET_INTERACTIVE, "RightPress");
           e = event_create_action(ACTION_ITEMMENU);
           glw_event_to_widget(w, e);
           event_release(e);
@@ -1729,7 +1733,8 @@ glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
 	case GLW_POINTER_LEFT_RELEASE:
 	  if(gr->gr_pointer_press == w) {
 	    if(w->glw_flags2 & GLW2_FOCUS_ON_CLICK)
-	      glw_focus_set(gr, w, GLW_FOCUS_SET_INTERACTIVE);
+	      glw_focus_set(gr, w, GLW_FOCUS_SET_INTERACTIVE,
+                            "LeftPress");
 
 	    glw_path_modify(w, 0, GLW_IN_PRESSED_PATH, NULL);
 	    e = event_create_action(ACTION_ACTIVATE);

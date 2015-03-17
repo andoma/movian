@@ -1241,7 +1241,8 @@ void glw_store_matrix(glw_t *w, const glw_rctx_t *rc);
 #define GLW_FOCUS_SET_INTERACTIVE  2
 #define GLW_FOCUS_SET_SUGGESTED    3
 
-void glw_focus_set(glw_root_t *gr, glw_t *w, int how);
+void glw_focus_set(glw_root_t *gr, glw_t *w, int how,
+                   const char *whom);
 
 void glw_focus_open_path(glw_t *w);
 

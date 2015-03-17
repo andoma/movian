@@ -6476,7 +6476,8 @@ glwf_focus(glw_view_eval_context_t *ec, struct token *self,
   if(a->type == TOKEN_RSTRING) {
     glw_t *w = glw_find_neighbour(ec->w, rstr_get(a->t_rstring));
     if(w != NULL) {
-      glw_focus_set(w->glw_root, w, GLW_FOCUS_SET_INTERACTIVE);
+      glw_focus_set(w->glw_root, w, GLW_FOCUS_SET_INTERACTIVE,
+                    "FocusMethod");
     }
   }
   return 0;
