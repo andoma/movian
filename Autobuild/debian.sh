@@ -1,3 +1,5 @@
+CHANGELOG=debian/changelog
+
 NOW=`date -R`
 VER=`git describe | sed "s/\([0-9]*\)\.\([0-9]*\)-\([0-9]*\)-.*/\1.\2.\3/"`
 
