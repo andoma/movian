@@ -110,7 +110,7 @@ static htsmsg_t *stos_artifacts;
 
 
 /**
- * 
+ *
  */
 static buf_t *
 patched_config_file(buf_t *upd, char *upd_begin, char *upd_end,
@@ -168,7 +168,7 @@ patched_config_file(buf_t *upd, char *upd_begin, char *upd_end,
     goto fail;
   }
 
- 
+
   if(cur_end < cur_begin) {
     TRACE(TRACE_DEBUG, "upgrade",
 	  "Partial update ignored, END marker before BEGIN marker");
@@ -199,7 +199,7 @@ patched_config_file(buf_t *upd, char *upd_begin, char *upd_end,
   memcpy(out,               cur_data,  seg1);
   memcpy(out + seg1,        upd_begin, seg2);
   memcpy(out + seg1 + seg2, cur_end,   seg3);
-  
+
   free(cur_data);
 
   buf_release(upd);
@@ -220,7 +220,7 @@ install_error(const char *str, const char *url)
   prop_set_string(upgrade_error, str);
   prop_set_string(upgrade_status, "upgradeError");
   if(url)
-    TRACE(TRACE_ERROR, "upgrade", "Download of %s failed -- %s", 
+    TRACE(TRACE_ERROR, "upgrade", "Download of %s failed -- %s",
 	  url, str);
   else
     TRACE(TRACE_ERROR, "upgrade", "Error occured: %s", str);
@@ -316,9 +316,9 @@ upgrade_file(const char *fname, const char *url,
 #endif
 
   prop_set_string(upgrade_status, "download");
-  TRACE(TRACE_INFO, "upgrade", "Starting download of %s (%d bytes)", 
+  TRACE(TRACE_INFO, "upgrade", "Starting download of %s (%d bytes)",
 	url, size);
- 
+
   buf_t *b;
 
   int r = http_req(url,
@@ -329,7 +329,7 @@ upgrade_file(const char *fname, const char *url,
                    HTTP_REQUEST_HEADERS(&req_headers),
                    HTTP_PROGRESS_CALLBACK(download_callback, NULL),
                    NULL);
-  
+
   if(r) {
     install_error(errbuf, url);
 
@@ -551,7 +551,7 @@ stos_check_upgrade(void)
   stos_avail_version = parse_version_int(version);
   TRACE(TRACE_DEBUG, "STOS", "Available version: %s (%d)",
 	version, stos_avail_version);
-  
+
 
   htsmsg_release(stos_artifacts);
   stos_artifacts = NULL;
@@ -733,7 +733,7 @@ check_upgrade(int set_news)
   prop_set(upgrade_root, "size", PROP_SET_INT, dlsize);
 
   int canUpgrade = gconf.enable_omnigrade;
-  
+
   if(ver != NULL) {
     int current_ver = app_get_version_int();
     int available_ver = parse_version_int(ver);
@@ -1050,9 +1050,9 @@ upgrade_cb(void *opaque, prop_event_t event, ...)
     e = va_arg(ap, event_t *);
     if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
       const event_payload_t *ep = (const event_payload_t *)e;
-      if(!strcmp(ep->payload, "checkUpdates")) 
+      if(!strcmp(ep->payload, "checkUpdates"))
 	check_upgrade(0);
-      if(!strcmp(ep->payload, "install")) 
+      if(!strcmp(ep->payload, "install"))
 	install();
     }
     break;
@@ -1091,7 +1091,7 @@ stos_get_current_version(void)
     if(x)
       *x = 0;
     stos_current_version = parse_version_int(buf);
-    TRACE(TRACE_DEBUG, "STOS", "Current version: %s (%d)", buf, 
+    TRACE(TRACE_DEBUG, "STOS", "Current version: %s (%d)", buf,
 	  stos_current_version);
   }
   fclose(fp);
