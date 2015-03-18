@@ -8,40 +8,21 @@
 
 set -eu
 
-BUILD_API_VERSION=3
-EXTRA_BUILD_NAME=""
 JARGS=""
-JOBSARGS=""
 TARGET=""
 RELEASE="--release"
 WORKINGDIR="/var/tmp/showtime-autobuild"
-OP="build"
 while getopts "vht:e:j:w:o:c:" OPTION
 do
   case $OPTION in
-      v)
-	  echo $BUILD_API_VERSION
-	  exit 0
-	  ;;
-      h)
-	  echo "This script is intended to be used by the autobuild system only"
-	  exit 0
-	  ;;
       t)
 	  TARGET="$OPTARG"
 	  ;;
-      e)
-	  EXTRA_BUILD_NAME="$OPTARG"
-	  ;;
       j)
-	  JOBSARGS="--jobs=$OPTARG"
 	  JARGS="-j$OPTARG"
 	  ;;
       w)
 	  WORKINGDIR="$OPTARG"
-	  ;;
-      o)
-	  OP="$OPTARG"
 	  ;;
   esac
 done
