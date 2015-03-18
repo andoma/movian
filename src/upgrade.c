@@ -842,7 +842,9 @@ app_add_artifact(struct artifact_queue *aq)
   a->a_final_path = strdup(gconf.upgrade_path ?: gconf.binary);
 
 #if STOS
-  a->a_temp_path = strdup("/boot/dl/"APPNAME);
+  char tmp[PATH_MAX];
+  snprintf(tmp, sizeof(tmp), "%s.tmp", a->a_final_path);
+  a->a_temp_path = strdup(tmp);
 #endif
 
   TAILQ_INSERT_TAIL(aq, a, a_link);
