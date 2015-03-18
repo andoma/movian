@@ -68,6 +68,7 @@ static char *upgrade_track;
 static char *app_download_url;
 static uint8_t app_download_digest[20];
 static int app_download_size;
+static char *app_download_name;
 
 static int notify_upgrades;
 static int inhibit_checks = 1;
@@ -118,6 +119,7 @@ typedef struct artifact {
   char *a_temp_path;
   char *a_final_path;
   rstr_t *a_task;
+  char *a_name;
 
   uint8_t a_digest[20];
 
@@ -144,6 +146,7 @@ artifacts_free(struct artifact_queue *aq)
     free(a->a_url);
     free(a->a_temp_path);
     free(a->a_final_path);
+    free(a->a_name);
     rstr_release(a->a_task);
     free(a);
   }
@@ -337,6 +340,8 @@ download_file(artifact_t *a, int try_patch)
 
   sha1_decl(shactx);
 
+  TRACE(TRACE_INFO, "upgrade", "Downloading artifact %s", a->a_name);
+
   LIST_INIT(&req_headers);
   LIST_INIT(&response_headers);
 
@@ -389,7 +394,7 @@ download_file(artifact_t *a, int try_patch)
   }
 #endif
 
-  TRACE(TRACE_INFO, "upgrade", "Starting download of %s (%d bytes)",
+  TRACE(TRACE_DEBUG, "upgrade", "Starting download of %s (%d bytes)",
 	a->a_url, a->a_size);
 
   buf_t *b;
@@ -477,7 +482,7 @@ download_file(artifact_t *a, int try_patch)
   const char *dstpath = a->a_temp_path ? a->a_temp_path : a->a_final_path;
 
 
-  TRACE(TRACE_INFO, "upgrade", "Writing %s from %d bytes received",
+  TRACE(TRACE_DEBUG, "upgrade", "Writing %s from %d bytes received",
 	dstpath, (int)b->b_size);
 
   int flags = O_CREAT | O_RDWR | O_TRUNC;
@@ -718,6 +723,7 @@ check_upgrade(int set_news)
 
   const char *dlurl = NULL;
   const char *sha1 = NULL;
+  const char *name = NULL;
   int dlsize = 0;
   const char *ver;
 
@@ -736,6 +742,7 @@ check_upgrade(int set_news)
 
       dlurl = htsmsg_get_str(a, "url");
       sha1 = htsmsg_get_str(a, "sha1");
+      name = htsmsg_get_str(a, "name");
       dlsize = htsmsg_get_u32_or_default(a, "size", 0);
       break;
     }
@@ -751,6 +758,7 @@ check_upgrade(int set_news)
   hex2bin(app_download_digest, sizeof(app_download_digest), sha1);
 
   mystrset(&app_download_url, dlurl);
+  mystrset(&app_download_name, name);
 
   prop_set(upgrade_root, "track", PROP_SET_STRING, upgrade_track);
   prop_set(upgrade_root, "availableVersion", PROP_SET_STRING, ver);
@@ -825,8 +833,9 @@ static void
 app_add_artifact(struct artifact_queue *aq)
 {
   artifact_t *a = calloc(1, sizeof(artifact_t));
+  a->a_name = strdup(app_download_name ?: APPNAME);
   a->a_task = rstr_alloc(APPNAMEUSER);
-  a->a_url = app_download_url;
+  a->a_url = strdup(app_download_url);
   a->a_size = app_download_size;
   memcpy(a->a_digest, app_download_digest, 20);
 
@@ -928,6 +937,7 @@ stos_add_artifacts(struct artifact_queue *aq)
     artifact_t *a = calloc(1, sizeof(artifact_t));
 
     a->a_task = _("System");
+    a->a_name = strdup(name);
     a->a_url = strdup(dlurl);
     a->a_temp_path = strdup(dlpath);
     a->a_final_path = strdup(finalpath);
