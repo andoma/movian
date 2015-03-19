@@ -48,6 +48,7 @@
 
 #if STOS
 #include <sys/mount.h>
+#include <sys/utsname.h>
 #endif
 
 extern char *showtime_bin;
@@ -337,6 +338,9 @@ download_file(artifact_t *a, int try_patch)
 
   void *current_data = NULL;
   int current_size = 0;
+
+  if(a->a_url == NULL)
+    return 0; // Nothing to download
 
   sha1_decl(shactx);
 
@@ -891,6 +895,9 @@ clean_dl_dir(void)
 static void
 stos_add_artifacts(struct artifact_queue *aq)
 {
+  struct utsname uts;
+  uname(&uts);
+
   htsmsg_field_t *f;
 
   HTSMSG_FOREACH(f, stos_artifacts) {
@@ -908,7 +915,7 @@ stos_add_artifacts(struct artifact_queue *aq)
     const char *sha1  = htsmsg_get_str(msg, "sha1");
     int dlsize        = htsmsg_get_u32_or_default(msg, "size", 0);
     const char *name  = htsmsg_get_str(msg, "name");
-
+    const char *selectors  = htsmsg_get_str(msg, "selectors");
     if(dlurl == NULL || sha1 == NULL || name == NULL)
       continue;
 
@@ -938,9 +945,43 @@ stos_add_artifacts(struct artifact_queue *aq)
 
     artifact_t *a = calloc(1, sizeof(artifact_t));
 
+
+    if(selectors != NULL) {
+      char *s = strdup(selectors);
+      char *s2 = s;
+      while(s2) {
+        const char *key = s2;
+        char *value = strchr(key, '=');
+        if(value == NULL)
+          goto done;
+        *value = 0;
+        value++;
+        char *n = strchr(value, ',');
+        if(n != NULL) {
+          *n = 0;
+          s2 = n + 1;
+        } else {
+          s2 = NULL;
+        }
+
+        if(!strcmp(key, "machine")) {
+          // Machine must match for this artifact to be used, otherwise delete
+          if(strcmp(value, uts.machine)) {
+            TRACE(TRACE_DEBUG, "Upgrade",
+                  "%s [%s] skipped (not for this machine [%s])",
+                  name, value, uts.machine);
+            dlurl = NULL;
+          }
+        }
+      }
+
+    done:
+      free(s);
+    }
+
     a->a_task = _("System");
     a->a_name = strdup(name);
-    a->a_url = strdup(dlurl);
+    a->a_url = dlurl ? strdup(dlurl) : NULL;
     a->a_temp_path = strdup(dlpath);
     a->a_final_path = strdup(finalpath);
     hex2bin(a->a_digest, sizeof(a->a_digest), sha1);
@@ -971,7 +1012,7 @@ move_files_into_place(struct artifact_queue *aq)
 
   TAILQ_FOREACH(a, aq, a_link) {
 
-    if(a->a_temp_path == NULL)
+    if(a->a_temp_path == NULL || a->a_url == NULL)
       continue;
 
     TRACE(TRACE_DEBUG, "Upgrade", "Moving %s -> %s",
@@ -989,6 +1030,50 @@ move_files_into_place(struct artifact_queue *aq)
   sync();
   TRACE(TRACE_DEBUG, "Upgrade", "Syncing filesystems done");
 #endif
+}
+
+
+/**
+ *
+ */
+static void
+delete_unused_files(struct artifact_queue *aq)
+{
+  artifact_t *a;
+
+  TAILQ_FOREACH(a, aq, a_link) {
+
+    if(a->a_url != NULL)
+      continue;
+
+
+    if(unlink(a->a_final_path) == -1) {
+      if(errno != ENOENT)
+        TRACE(TRACE_INFO, "Upgrade", "Unable to delete %s -- %s",
+              a->a_final_path, strerror(errno));
+    } else {
+      TRACE(TRACE_DEBUG, "Upgrade", "Deleted %s", a->a_final_path);
+    }
+  }
+}
+
+
+/**
+ *
+ */
+static void
+print_summary(const struct artifact_queue *aq)
+{
+  const artifact_t *a;
+  TRACE(TRACE_DEBUG, "Upgrade", "Summary of what will be done");
+  TAILQ_FOREACH(a, aq, a_link) {
+    if(a->a_url == NULL)
+      TRACE(TRACE_DEBUG, "Upgrade", "File %s will be deleted",
+            a->a_final_path);
+    else
+      TRACE(TRACE_DEBUG, "Upgrade", "File %s will be downloaded from %s (%s)",
+            a->a_final_path, a->a_url, a->a_name);
+  }
 }
 
 /**
@@ -1024,6 +1109,10 @@ install_locked(struct artifact_queue *aq)
 #endif
 
   app_add_artifact(aq);
+
+  print_summary(aq);
+
+  delete_unused_files(aq);
 
   artifacts_compute_progressbar_scale(aq);
 

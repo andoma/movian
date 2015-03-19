@@ -356,7 +356,7 @@ main_init(void)
   av_log_set_callback(fflog);
   av_register_all();
 
-  TRACE(TRACE_INFO, "libav", LIBAVFORMAT_IDENT", "LIBAVCODEC_IDENT", "LIBAVUTIL_IDENT);
+  TRACE(TRACE_INFO, "libav", LIBAVFORMAT_IDENT", "LIBAVCODEC_IDENT", "LIBAVUTIL_IDENT" cpuflags:0x%x", av_get_cpu_flags());
 #endif
 
   init_group(INIT_GROUP_GRAPHICS);
