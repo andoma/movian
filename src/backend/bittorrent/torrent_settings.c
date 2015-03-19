@@ -60,7 +60,7 @@ torrent_settings_init(void)
 
   int freespace = 10;
 
-#if RPISTOS
+#ifdef STOS
   freespace = 75;
 #endif
 
