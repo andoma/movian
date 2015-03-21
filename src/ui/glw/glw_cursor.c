@@ -206,9 +206,11 @@ glw_cursor_render(glw_t *w, const glw_rctx_t *rc)
   if(c != NULL) {
     render_focus_widget(c, gc, saved, &rc0, rc, &zmax);
 
-    c = TAILQ_NEXT(c, glw_parent_link);
-    if(c != NULL) {
-      render_hover_widget(c, gc, &rc0, rc, &zmax);
+    if(!gr->gr_keyboard_mode) {
+      c = TAILQ_NEXT(c, glw_parent_link);
+      if(c != NULL) {
+        render_hover_widget(c, gc, &rc0, rc, &zmax);
+      }
     }
   }
 

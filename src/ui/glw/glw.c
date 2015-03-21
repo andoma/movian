@@ -1001,6 +1001,8 @@ glw_root_set_hover(glw_root_t *gr, glw_t *w)
   gr->gr_pointer_hover = w;
   if(w != NULL)
     glw_path_modify(w, GLW_IN_HOVER_PATH, 0, com);
+
+  glw_need_refresh(gr, 0);
 }
 
 
@@ -2929,5 +2931,6 @@ glw_set_keyboard_mode(glw_root_t *gr, int on)
   if(gr->gr_universe != NULL)
     glw_update_dynamics_r(gr->gr_universe, GLW_VIEW_EVAL_FHP_CHANGE);
 
+  glw_need_refresh(gr, 0);
   return 1;
 }
