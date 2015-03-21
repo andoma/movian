@@ -860,12 +860,13 @@ flushthread(void *aux)
     time(&now);
 
     if(now < 1426926328) { // 2015-03-21 (when this code was written)
-      TRACE(TRACE_INFO, "Cache", "Clock not good, waiting");
       hts_cond_wait_timeout(&cache_cond, &cache_lock, 1000);
     } else {
       bcstate = BLOBCACHE_RUN;
     }
   }
+
+  TRACE(TRACE_DEBUG, "Cache", "System time seems valid. Accepting writes");
 
   while(bcstate != BLOBCACHE_STOPPING) {
 
