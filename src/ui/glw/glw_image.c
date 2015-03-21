@@ -48,7 +48,7 @@ typedef struct glw_image {
   int16_t gi_box_right;
   int16_t gi_box_top;
   int16_t gi_box_bottom;
- 
+
   int gi_bitmap_flags;
 
   uint8_t gi_rescale_hold;
@@ -153,7 +153,7 @@ glw_image_dtor(glw_t *w)
   sources_free(gi->gi_sources);
 
   rstr_release(gi->gi_pending_url);
-    
+
   if(gi->gi_current != NULL)
     glw_tex_deref(w->glw_root, gi->gi_current);
 
@@ -168,7 +168,7 @@ glw_image_dtor(glw_t *w)
 /**
  *
  */
-static void 
+static void
 glw_image_set_fs(glw_t *w, rstr_t *fs)
 {
   glw_image_t *gi = (glw_image_t *)w;
@@ -244,7 +244,7 @@ glw_scale_to_pixels(glw_rctx_t *rc, int w, int h)
 /**
  *
  */
-static void 
+static void
 glw_image_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_image_t *gi = (void *)w;
@@ -256,7 +256,7 @@ glw_image_render(glw_t *w, const glw_rctx_t *rc)
   float alpha_self;
   float blur = 1 - (rc->rc_sharpness * w->glw_sharpness);
   glw_rctx_t rc0;
-  
+
   if(gi->gi_recompile) {
     glw_destroy_program(w->glw_root, gi->gi_gpa.gpa_prog);
     gi->gi_gpa.gpa_prog =
@@ -277,7 +277,7 @@ glw_image_render(glw_t *w, const glw_rctx_t *rc)
     rc0 = *rc;
 
     glw_align_1(&rc0, w->glw_alignment);
-      
+
     if(gi->gi_bitmap_flags & GLW_IMAGE_FIXED_SIZE)
       glw_scale_to_pixels(&rc0, glt->glt_xs, glt->glt_ys);
     else if(w->glw_class == &glw_image || w->glw_class == &glw_icon) {
@@ -365,20 +365,20 @@ glw_image_layout_tesselated(glw_root_t *gr, const glw_rctx_t *rc,
     gi->gi_automargin_top = 0;
     gi->gi_automargin_right = 0;
     gi->gi_automargin_bottom = 0;
-    
+
     glw_t *c = TAILQ_FIRST(&gi->w.glw_childs);
 
     if(c != NULL && (c->glw_flags & (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y)) ==
 		     (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y)) {
 
-      int hspill = rc->rc_width - c->glw_req_size_x - 
+      int hspill = rc->rc_width - c->glw_req_size_x -
 	gi->gi_box_left - gi->gi_box_right;
 
       if(hspill > 0) {
 	gi->gi_automargin_left = hspill / 2 + (hspill & 1);
 	gi->gi_automargin_right = hspill / 2;
       }
-      
+
       int vspill = rc->rc_height - c->glw_req_size_y -
 	gi->gi_box_top - gi->gi_box_bottom;
 
@@ -398,10 +398,10 @@ glw_image_layout_tesselated(glw_root_t *gr, const glw_rctx_t *rc,
 
       if(myaspect > aspect) {
 	// We are wider than our child wants
-	
+
 	int cwidth = ch * aspect;
 	int hspill = cw - cwidth;
-      
+
 	if(hspill > 0) {
 	  gi->gi_automargin_left = hspill / 2 + (hspill & 1);
 	  gi->gi_automargin_right = hspill / 2;
@@ -416,10 +416,10 @@ glw_image_layout_tesselated(glw_root_t *gr, const glw_rctx_t *rc,
 	}
       }
     } else if(gi->gi_child_aspect > 0) {
-      
+
       int px = rc->rc_height * gi->gi_child_aspect;
       int hspill = rc->rc_width - px - gi->gi_box_left - gi->gi_box_right;
-      
+
       if(hspill > 0) {
 	gi->gi_automargin_left = hspill / 2 + (hspill & 1);
 	gi->gi_automargin_right = hspill / 2;
@@ -455,7 +455,7 @@ glw_image_layout_tesselated(glw_root_t *gr, const glw_rctx_t *rc,
   vex[1][0] = GLW_MIN(-1.0f + 2.0f * (BL + gi->gi_margin[0] + gi->gi_automargin_left)  / rc->rc_width, 0.0f);
   vex[2][0] = GLW_MAX( 1.0f - 2.0f * (BR + gi->gi_margin[2] + gi->gi_automargin_right) / rc->rc_width, 0.0f);
   vex[3][0] = GLW_MAX( 1.0f - 2.0f * (gi->gi_margin[2] + gi->gi_automargin_right) / rc->rc_width, 0.0f);
-    
+
   vex[0][1] = GLW_MAX( 1.0f - 2.0f * (gi->gi_margin[1] + gi->gi_automargin_top)  / rc->rc_height, 0.0f);
   vex[1][1] = GLW_MAX( 1.0f - 2.0f * (gi->gi_border[1] + gi->gi_margin[1] + gi->gi_automargin_top)  / rc->rc_height, 0.0f);
   vex[2][1] = GLW_MIN(-1.0f + 2.0f * (gi->gi_border[3] + gi->gi_margin[3] + gi->gi_automargin_bottom) / rc->rc_height, 0.0f);
@@ -527,7 +527,7 @@ glw_image_layout_alpha_edges(glw_root_t *gr, const glw_rctx_t *rc,
   vex[1][0] = GLW_MIN(-1.0f + 2.0f * gi->gi_alpha_edge / rc->rc_width, 0.0f);
   vex[2][0] = GLW_MAX( 1.0f - 2.0f * gi->gi_alpha_edge / rc->rc_width, 0.0f);
   vex[3][0] = 1.0f;
-    
+
   vex[0][1] = 1.0f;
   vex[1][1] = GLW_MAX( 1.0f - 2.0f * gi->gi_alpha_edge / rc->rc_height, 0.0f);
   vex[2][1] = GLW_MIN(-1.0f + 2.0f * gi->gi_alpha_edge / rc->rc_height, 0.0f);
@@ -607,26 +607,26 @@ glw_image_update_constraints(glw_image_t *gi)
 
   if(gi->gi_bitmap_flags & GLW_IMAGE_FIXED_SIZE) {
 
-    glw_set_constraints(&gi->w, 
+    glw_set_constraints(&gi->w,
 			glt->glt_xs,
 			glt->glt_ys,
 			0,
 			GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y);
 
-  } else if(gi->w.glw_class == &glw_backdrop || 
+  } else if(gi->w.glw_class == &glw_backdrop ||
 	    gi->w.glw_class == &glw_frontdrop) {
 
     c = TAILQ_FIRST(&gi->w.glw_childs);
 
     if(c != NULL) {
-      glw_set_constraints(&gi->w, 
+      glw_set_constraints(&gi->w,
 			  c->glw_req_size_x +
 			  gi->gi_box_left + gi->gi_box_right,
-			  c->glw_req_size_y + 
+			  c->glw_req_size_y +
 			  gi->gi_box_top + gi->gi_box_bottom,
 			  c->glw_req_weight,
 			  c->glw_flags & GLW_CONSTRAINT_FLAGS);
-      
+
       if(gi->w.glw_flags2 & GLW2_AUTOMARGIN)
 	gi->gi_update = 1;
 
@@ -635,7 +635,7 @@ glw_image_update_constraints(glw_image_t *gi)
 
 
     } else if(glt != NULL) {
-      glw_set_constraints(&gi->w, 
+      glw_set_constraints(&gi->w,
 			  glt->glt_xs - glt->glt_margin * 2,
 			  glt->glt_ys - glt->glt_margin * 2,
 			  0, 0);
@@ -662,7 +662,7 @@ glw_image_update_constraints(glw_image_t *gi)
 
 /**
  *
- * 0--1--2--3 
+ * 0--1--2--3
  * | /| /|\ |
  * |/ |/ | \|
  * 4--5--6--7
@@ -758,8 +758,8 @@ glw_image_layout(glw_t *w, const glw_rctx_t *rc)
   }
 
   if(gr->gr_can_externalize &&
-     rc->rc_width == gr->gr_width && 
-     rc->rc_height == gr->gr_height && 
+     rc->rc_width == gr->gr_width &&
+     rc->rc_height == gr->gr_height &&
      w->glw_class == &glw_backdrop) {
 
 
@@ -769,7 +769,7 @@ glw_image_layout(glw_t *w, const glw_rctx_t *rc)
       return;
     }
   }
-  
+
   gi->gi_externalized = 0;
 
   if(gi->gi_pending_url != NULL) {
@@ -789,7 +789,7 @@ glw_image_layout(glw_t *w, const glw_rctx_t *rc)
 	glw_tex_deref(w->glw_root, gi->gi_current);
 	gi->gi_current = NULL;
       }
-	
+
       gi->gi_update = 1;
 
     } else {
@@ -822,7 +822,7 @@ glw_image_layout(glw_t *w, const glw_rctx_t *rc)
       }
     }
   }
-  
+
   if((glt = gi->gi_pending) != NULL) {
     glw_tex_layout(gr, glt);
 
@@ -869,7 +869,7 @@ glw_image_layout(glw_t *w, const glw_rctx_t *rc)
       glw_renderer_free(&gi->gi_gr);
 
       switch(gi->gi_mode) {
-	
+
       case GI_MODE_NORMAL:
 	glw_renderer_init_quad(&gi->gi_gr);
 	glw_image_layout_normal(gr, rc, gi, glt);
@@ -902,7 +902,7 @@ glw_image_layout(glw_t *w, const glw_rctx_t *rc)
       gi->gi_last_height = rc->rc_height;
 
       switch(gi->gi_mode) {
-	
+
       case GI_MODE_NORMAL:
 	break;
       case GI_MODE_BORDER_SCALING:
@@ -970,7 +970,7 @@ glw_image_layout(glw_t *w, const glw_rctx_t *rc)
 
   if((c = TAILQ_FIRST(&w->glw_childs)) != NULL) {
     rc0 = *rc;
-    
+
     if(gi->w.glw_flags2 & GLW2_DEBUG)
       printf("Output width = %d-%d=%d   Output height=%d-%d=%d\n",
 	     rc0.rc_width, (gi->gi_box_left + gi->gi_box_right),
@@ -981,7 +981,7 @@ glw_image_layout(glw_t *w, const glw_rctx_t *rc)
 
     rc0.rc_width  -= gi->gi_box_left + gi->gi_box_right +
       gi->gi_automargin_left + gi->gi_automargin_right;
-    rc0.rc_height -= gi->gi_box_top  + gi->gi_box_bottom + 
+    rc0.rc_height -= gi->gi_box_top  + gi->gi_box_bottom +
       gi->gi_automargin_top + gi->gi_automargin_bottom;
 
 
@@ -1037,7 +1037,7 @@ compute_colors(glw_image_t *gi)
 /**
  *
  */
-static void 
+static void
 glw_image_ctor(glw_t *w)
 {
   glw_image_t *gi = (void *)w;
@@ -1066,7 +1066,7 @@ glw_image_ctor(glw_t *w)
 /**
  *
  */
-static void 
+static void
 glw_icon_ctor(glw_t *w)
 {
   glw_image_ctor(w);
@@ -1186,11 +1186,11 @@ get_curname(glw_image_t *gi)
 
   if(gi->gi_pending_url != NULL)
     curname = gi->gi_pending_url;
-  else if(gi->gi_pending != NULL) 
+  else if(gi->gi_pending != NULL)
     curname = gi->gi_pending->glt_url;
-  else if(gi->gi_current != NULL) 
+  else if(gi->gi_current != NULL)
     curname = gi->gi_current->glt_url;
-  else 
+  else
     curname = NULL;
   return curname;
 }
@@ -1238,7 +1238,7 @@ static void
 set_path(glw_image_t *gi, rstr_t *filename)
 {
   const rstr_t *curname = get_curname(gi);
-  
+
   if(curname != NULL && filename != NULL && !strcmp(rstr_get(filename),
 						    rstr_get(curname)))
     return;
@@ -1466,7 +1466,7 @@ glw_icon_flush(glw_root_t *gr)
     if(gi->gi_fixed_size)
       continue;
     float siz = gi->gi_size_scale * gr->gr_current_size;
-    
+
     glw_set_constraints(&gi->w, siz, siz, 0,
 			GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y);
   }
