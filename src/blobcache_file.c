@@ -33,6 +33,8 @@
 #include "misc/minmax.h"
 #include "fileaccess/fileaccess.h"
 
+#define bcprintf(x...) // printf(x)
+
 // Flags
 
 #define BC2_MAGIC_07      0x62630207
@@ -99,14 +101,20 @@ static pool_t *item_pool;
 static hts_mutex_t cache_lock;
 static hts_cond_t cache_cond;
 static hts_thread_t bcthread;
-static int bcrun = 1;
+static enum {
+  BLOBCACHE_RUN_BAD_CLOCK,
+  BLOBCACHE_RUN,
+  BLOBCACHE_STOPPING,
+} bcstate;
+
+static int loaded_cache_is_from;
+
 static int index_dirty;
 
 #define BLOB_CACHE_MINSIZE   (10 * 1000 * 1000)
 #define BLOB_CACHE_MAXSIZE (1000 * 1000 * 1000)
 
 static uint64_t current_cache_size;
-
 
 /**
  *
@@ -333,16 +341,10 @@ load_index(void)
   case BC2_MAGIC_06:
     TRACE(TRACE_INFO, "blobcache", "Upgrading from older format 0x%08x", magic);
     // FALLTHRU
-  case BC2_MAGIC_07: {
-    if(*(uint32_t *)in > time(NULL)) {
-      TRACE(TRACE_INFO, "blobcache",
-	    "Clock going backwards, throwing away cache");
-      free(base);
-      return;
-    }
+  case BC2_MAGIC_07:
+    loaded_cache_is_from = *(uint32_t *)in;
     in += 4;
     break;
-  }
 
   case BC2_MAGIC_05:
     TRACE(TRACE_INFO, "blobcache", "Upgrading from older format 0x%08x", magic);
@@ -429,8 +431,11 @@ blobcache_put(const char *key, const char *stash, buf_t *b,
   if(etag != NULL && strlen(etag) > 255)
     etag = NULL;
 
+  bcprintf("cache: Writing %s ... ", key);
+
   hts_mutex_lock(&cache_lock);
-  if(!bcrun) {
+  if(bcstate != BLOBCACHE_RUN) {
+    bcprintf("Cache not running\n");
     hts_mutex_unlock(&cache_lock);
     return 0;
   }
@@ -449,8 +454,11 @@ blobcache_put(const char *key, const char *stash, buf_t *b,
     p->bi_flags = flags;
     mystrset(&p->bi_etag, etag);
     hts_mutex_unlock(&cache_lock);
+    bcprintf("Already in\n");
     return 1;
   }
+
+  bcprintf("Ok\n");
 
   blobcache_flush_t *bf = pool_get(item_pool);
   bf->bf_key_hash = dk;
@@ -498,9 +506,12 @@ blobcache_get(const char *key, const char *stash, int pad,
   char filename[PATH_MAX];
   uint32_t now;
 
+  bcprintf("cache: Reading %s ... ", key);
+
   hts_mutex_lock(&cache_lock);
 
-  if(!bcrun) {
+  if(bcstate == BLOBCACHE_STOPPING) {
+    bcprintf("Cache stopped ... ");
     p = NULL;
   } else {
     for(q = &hashvector[dk & ITEM_HASH_MASK]; (p = *q); q = &p->bi_link)
@@ -509,13 +520,19 @@ blobcache_get(const char *key, const char *stash, int pad,
   }
 
   if(p == NULL) {
+    bcprintf("Item not found\n");
     hts_mutex_unlock(&cache_lock);
     return NULL;
   }
 
   now = time(NULL);
 
-  int expired = now > p->bi_expiry;
+  // If clock is not OK yet, always consider stuff as non-expired
+  int expired = bcstate == BLOBCACHE_RUN && now > p->bi_expiry;
+
+  bcprintf("Found (expired=%s%s)\n",
+           expired ? "yes":"no",
+           bcstate == BLOBCACHE_RUN ? "" : " (Bad system clock)");
 
   if(expired && ignore_expiry == NULL)
     goto bad;
@@ -556,7 +573,10 @@ blobcache_get(const char *key, const char *stash, int pad,
   if(etagp != NULL)
     *etagp = p->bi_etag ? strdup(p->bi_etag) : NULL;
 
-  p->bi_lastaccess = now;
+  // Only mark lastaccess if clock is good
+  if(bcstate == BLOBCACHE_RUN)
+    p->bi_lastaccess = now;
+
   index_dirty = 1; // We don't deem it important enough to wakeup on get
 
   if(ignore_expiry != NULL)
@@ -608,7 +628,8 @@ blobcache_get_meta(const char *key, const char *stash,
   blobcache_item_t *p;
   int r;
   hts_mutex_lock(&cache_lock);
-  if(!bcrun) {
+
+  if(bcstate == BLOBCACHE_STOPPING) {
     p = NULL;
   } else {
     for(p = hashvector[dk & ITEM_HASH_MASK]; p != NULL; p = p->bi_link)
@@ -833,7 +854,20 @@ flushthread(void *aux)
 
   hts_mutex_lock(&cache_lock);
 
-  while(bcrun) {
+  // First make sure clock is valid
+  while(bcstate == BLOBCACHE_RUN_BAD_CLOCK) {
+    time_t now;
+    time(&now);
+
+    if(now < 1426926328) { // 2015-03-21 (when this code was written)
+      TRACE(TRACE_INFO, "Cache", "Clock not good, waiting");
+      hts_cond_wait_timeout(&cache_cond, &cache_lock, 1000);
+    } else {
+      bcstate = BLOBCACHE_RUN;
+    }
+  }
+
+  while(bcstate != BLOBCACHE_STOPPING) {
 
     if((bf = TAILQ_FIRST(&flush_queue)) == NULL) {
 
@@ -933,7 +967,7 @@ void
 blobcache_fini(void)
 {
   hts_mutex_lock(&cache_lock);
-  bcrun = 0;
+  bcstate = BLOBCACHE_STOPPING;
   hts_cond_signal(&cache_cond);
   hts_mutex_unlock(&cache_lock);
   hts_thread_join(&bcthread);
