@@ -1584,6 +1584,7 @@ fa_load(const char *url, ...)
 
     case FA_LOAD_TAG_RESPONSE_HEADERS:
       response_headers = va_arg(ap, struct http_header_list *);
+      LIST_INIT(response_headers);
       break;
 
     default:
