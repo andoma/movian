@@ -627,7 +627,7 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
   sub_scanner_t *ss = NULL;
   video_args_t va = *va0;
 
-  if(!(va.flags & BACKEND_VIDEO_NO_FILE_HASH)) {
+  if(!(va.flags & BACKEND_VIDEO_NO_SUBTITLE_SCAN)) {
     compute_hash(fh, &va);
     if(!va.hash_valid)
       TRACE(TRACE_DEBUG, "Video",
@@ -693,15 +693,18 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
   }
 #endif
 
-  /**
-   * Create subtitle scanner.
-   * Only scan for subs if we can compute hash or if duration is valid
-   */
-  if(fctx->duration != AV_NOPTS_VALUE || va.hash_valid) {
-    ss = sub_scanner_create(url, mp->mp_prop_subtitle_tracks, &va,
-                            fctx->duration != AV_NOPTS_VALUE ?
-                            fctx->duration / 1000000 : 0);
+  if(!(va.flags & BACKEND_VIDEO_NO_SUBTITLE_SCAN)) {
+    /**
+     * Create subtitle scanner.
+     * Only scan for subs if we can compute hash or if duration is valid
+     */
+    if(fctx->duration != AV_NOPTS_VALUE || va.hash_valid) {
+      ss = sub_scanner_create(url, mp->mp_prop_subtitle_tracks, &va,
+                              fctx->duration != AV_NOPTS_VALUE ?
+                              fctx->duration / 1000000 : 0);
+    }
   }
+
 
   /**
    * Init codec contexts

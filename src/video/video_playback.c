@@ -301,9 +301,12 @@ play_video(const char *url, struct media_pipe *mp,
     }
 
     // Check if we should disable filesystem scanning (subtitles)
-
     if(htsmsg_get_u32_or_default(m, "no_fs_scan", 0))
       flags |= BACKEND_VIDEO_NO_FS_SCAN;
+
+    // Subtitle scanning can be turned of completely
+    if(htsmsg_get_u32_or_default(m, "no_subtitle_scan", 0))
+      flags |= BACKEND_VIDEO_NO_SUBTITLE_SCAN;
 
     vs = LIST_FIRST(&vsources);
   

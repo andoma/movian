@@ -47,11 +47,11 @@ typedef enum {
 } backend_probe_result_t;
 
 
-#define BACKEND_VIDEO_PRIMARY     0x1
-#define BACKEND_VIDEO_NO_AUDIO    0x2
-#define BACKEND_VIDEO_NO_FS_SCAN  0x4 // Don't scan FS for subtitles
-#define BACKEND_VIDEO_SET_TITLE   0x8
-#define BACKEND_VIDEO_NO_FILE_HASH 0x10
+#define BACKEND_VIDEO_PRIMARY      0x1
+#define BACKEND_VIDEO_NO_AUDIO     0x2
+#define BACKEND_VIDEO_NO_FS_SCAN   0x4 // Don't scan FS for subtitles
+#define BACKEND_VIDEO_SET_TITLE    0x8
+#define BACKEND_VIDEO_NO_SUBTITLE_SCAN 0x10 // Don't scan for subtitles at all
 
 
 /**
