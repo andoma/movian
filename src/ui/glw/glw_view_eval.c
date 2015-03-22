@@ -6484,6 +6484,24 @@ glwf_focus(glw_view_eval_context_t *ec, struct token *self,
 }
 
 
+#ifndef NDEBUG
+/**
+ *
+ */
+static int
+glwf_dumpdynamicstatements(glw_view_eval_context_t *ec, struct token *self,
+                           token_t **argv, unsigned int argc)
+{
+  printf("Dynamic statements for widget %s at %s:%d\n",
+         ec->w->glw_class->gc_name,
+         rstr_get(ec->w->glw_file),
+         ec->w->glw_line);
+  glw_view_print_tree(ec->w->glw_dynamic_expressions, 1);
+  return 0;
+}
+#endif
+
+
 /**
  *
  */
@@ -6564,6 +6582,10 @@ static const token_func_t funcvec[] = {
   {"propName", 1, glwf_propName},
   {"propSelect", 1, glwf_propSelect},
   {"focus", 1, glwf_focus},
+
+#ifndef NDEBUG
+  {"dumpDynamicStatements", 0, glwf_dumpdynamicstatements},
+#endif
 };
 
 
