@@ -1138,6 +1138,10 @@ http_server_init(void)
                                   http_accept,
                                   NULL, 1);
 
+#if STOS
+  asyncio_listen("http-server", 80, http_accept, NULL, 1);
+#endif
+
   if(http_server_fd != NULL) {
     http_server_port = asyncio_get_port(http_server_fd);
 
