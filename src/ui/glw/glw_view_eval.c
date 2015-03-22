@@ -2649,7 +2649,7 @@ glw_view_eval_block(token_t *t, glw_view_eval_context_t *ec, token_t **nonpure)
       if(glw_view_eval_rpn(t, ec, &copy))
 	return -1;
 
-      if(!copy)
+      if(!copy || ec->passive_subscriptions)
 	break;
 
       *p = t->next;
