@@ -23,7 +23,7 @@ id: Disable sleep timer
 msg: Disattiva timer spegnimento
 
 id: Exit %s
-msg: Esci %s
+msg: Esci da %s
 
 id: Go to Home screen
 msg: Vai alla Home
@@ -218,7 +218,7 @@ msg: Risorse trovate nella rete locale
 # ./glwskins/default/pages/home.view
 #
 id: Tiled
-msg: Tiled
+msg: A riquadri
 
 #
 # ./glwskins/default/pages/home_clist.view
@@ -278,8 +278,8 @@ id: Year:
 msg: Anno:
 
 id: Seen %d times
-msg[0]: 
-msg[1]: 
+msg[0]: Visto %d volte
+msg[1]: Visto %d volta
 
 #
 # ./glwskins/default/pages/listitems/add.view
@@ -465,7 +465,7 @@ id: GPU Temp
 msg: Temperatura GPU
 
 id: HDD Avail
-msg: HDD Utilità
+msg: HDD Lib./Tot.
 
 id: Inactive mem
 msg: Memoria inattiva
@@ -873,16 +873,16 @@ id: Store per-file settings in filesystem
 msg: Memorizza nel filesystem impostazioni separate per ogni file
 
 id: %d archive parts
-msg[0]: 
-msg[1]: 
+msg[0]: %d parti dell'archivio
+msg[1]: %d parte dell'archivio
 
 id: %d directories
-msg[0]: 
-msg[1]: 
+msg[0]: %d directories
+msg[1]: %d directory
 
 id: %d files
-msg[0]: 
-msg[1]: 
+msg[0]: %d files
+msg[1]: %d file
 
 #
 # ./src/fileaccess/smb/fa_nativesmb.c
@@ -1245,7 +1245,7 @@ id: Installed version higher than available
 msg: La versione installata è più recente di quella disponibile
 
 id: Installing
-msg: Installazione
+msg: Installato
 
 id: List of albums
 msg: Elenco degli album
