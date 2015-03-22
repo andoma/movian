@@ -115,7 +115,7 @@ static void gs_mod_flags2(struct glw *w, int set, int clr,
 static glw_style_t *
 glw_style_find(glw_t *w, const char *name)
 {
-  glw_style_set_t *gss = w->glw_styles;
+  glw_styleset_t *gss = w->glw_styles;
 
   if(name != NULL && gss != NULL)
     for(int i = 0; i < gss->gss_numstyles; i++)
@@ -257,7 +257,7 @@ glw_style_release(glw_style_t *gs)
     LIST_REMOVE(w, glw_style_link);
 
   glw_style_release(gs->gs_ancestor);
-  glw_style_set_release(w->glw_styles);
+  glw_styleset_release(w->glw_styles);
 
   LIST_REMOVE(gs, gs_link);
 
@@ -783,7 +783,7 @@ glw_style_create(glw_t *parent, rstr_t *name, rstr_t *file, int line)
   LIST_INSERT_HEAD(&gr->gr_all_styles, gs, gs_link);
   gs->w.glw_class = &glw_style;
   gs->w.glw_root = gr;
-  gs->w.glw_styles = glw_style_set_retain(parent->glw_styles);
+  gs->w.glw_styles = glw_styleset_retain(parent->glw_styles);
 
   gs->gs_id = ++gr->gr_style_tally;
   gs->gs_name = rstr_dup(name);
@@ -817,7 +817,7 @@ glw_style_attach_rpns(glw_style_t *gs, struct token *t)
  *
  */
 void
-glw_style_set_release(glw_style_set_t *gss)
+glw_styleset_release(glw_styleset_t *gss)
 {
   int i;
 
@@ -838,11 +838,11 @@ glw_style_set_release(glw_style_set_t *gss)
 /**
  *
  */
-glw_style_set_t *
-glw_style_set_add(glw_style_set_t *gss, glw_style_t *gs)
+glw_styleset_t *
+glw_styleset_add(glw_styleset_t *gss, glw_style_t *gs)
 {
   int i, items;
-  glw_style_set_t *copy;
+  glw_styleset_t *copy;
 
   if(gss == NULL) {
     i = 0;
@@ -859,7 +859,7 @@ glw_style_set_add(glw_style_set_t *gss, glw_style_t *gs)
     items = i == gss->gss_numstyles ? i + 1 : gss->gss_numstyles;
   }
 
-  copy = malloc(sizeof(glw_style_set_t) + sizeof(glw_style_t *) * items);
+  copy = malloc(sizeof(glw_styleset_t) + sizeof(glw_style_t *) * items);
   copy->gss_refcount = 1;
   copy->gss_numstyles = items;
   if(gss != NULL) {
@@ -1103,7 +1103,7 @@ glw_style_bind(glw_t *w, glw_style_t *gs, glw_view_eval_context_t *ec)
  *
  */
 int
-glw_style_set_for_widget(glw_t *w, const char *name,
+glw_styleset_for_widget(glw_t *w, const char *name,
                          glw_view_eval_context_t *ec)
 {
   return glw_style_bind(w, glw_style_find(w, name), ec);

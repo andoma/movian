@@ -2904,8 +2904,8 @@ glwf_style0(glw_view_eval_context_t *ec, struct token *self,
 
   if(!r) {
     // Attach new style to our parent
-    glw_style_set_t *gss = glw_style_set_add(ec->w->glw_styles, gs);
-    glw_style_set_release(ec->w->glw_styles);
+    glw_styleset_t *gss = glw_styleset_add(ec->w->glw_styles, gs);
+    glw_styleset_release(ec->w->glw_styles);
     ec->w->glw_styles = gss;
   }
 

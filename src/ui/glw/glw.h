@@ -1012,11 +1012,11 @@ typedef struct glw_signal_handler {
 LIST_HEAD(glw_signal_handler_list, glw_signal_handler);
 
 
-typedef struct glw_style_set {
+typedef struct glw_styleset {
   unsigned int gss_refcount;
   int gss_numstyles;
   struct glw_style *gss_styles[0];
-} glw_style_set_t;
+} glw_styleset_t;
 
 /**
  * GL widget
@@ -1056,7 +1056,7 @@ typedef struct glw {
    * Styling
    */
 
-  glw_style_set_t *glw_styles; // List of available styles
+  glw_styleset_t *glw_styles; // List of available styles
   LIST_ENTRY(glw) glw_style_link;
   struct glw_style *glw_style; // Current style
 

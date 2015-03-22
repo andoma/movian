@@ -25,23 +25,23 @@ struct glw_view_eval_context;
 /*********************************************************
  * Styles
  */
-static __inline glw_style_set_t * attribute_unused_result
-glw_style_set_retain(glw_style_set_t *gss)
+static __inline glw_styleset_t * attribute_unused_result
+glw_styleset_retain(glw_styleset_t *gss)
 {
   if(gss != NULL)
     gss->gss_refcount++;
   return gss;
 }
 
-void glw_style_set_release(glw_style_set_t *gss);
+void glw_styleset_release(glw_styleset_t *gss);
 
-glw_style_set_t * attribute_unused_result
-glw_style_set_add(glw_style_set_t *gss, glw_style_t *gs);
+glw_styleset_t * attribute_unused_result
+glw_styleset_add(glw_styleset_t *gss, glw_style_t *gs);
 
 glw_style_t *glw_style_create(glw_t *parent, rstr_t *name,
                               rstr_t *file, int line);
 
-int glw_style_set_for_widget(glw_t *w, const char *name,
+int glw_styleset_for_widget(glw_t *w, const char *name,
                              struct glw_view_eval_context *ec);
 
 int glw_style_bind(glw_t *w, glw_style_t *gs, struct glw_view_eval_context *ec);

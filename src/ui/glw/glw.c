@@ -380,7 +380,7 @@ glw_create(glw_root_t *gr, const glw_class_t *class,
   w->glw_line = line;
 #endif
   if(likely(parent != NULL))
-    w->glw_styles = glw_style_set_retain(parent->glw_styles);
+    w->glw_styles = glw_styleset_retain(parent->glw_styles);
 
   LIST_INSERT_HEAD(&gr->gr_active_dummy_list, w, glw_active_link);
 
@@ -679,7 +679,7 @@ glw_destroy(glw_t *w)
   }
 
   glw_style_bind(w, NULL, NULL);
-  glw_style_set_release(w->glw_styles);
+  glw_styleset_release(w->glw_styles);
 
   rstr_release(w->glw_id_rstr);
 
