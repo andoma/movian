@@ -1003,11 +1003,18 @@ glw_style_bind(glw_t *w, glw_style_t *gs, glw_view_eval_context_t *ec)
   int r = 0;
 
   int target_is_style = w->glw_class == &glw_style;
+  glw_style_t *old = w->glw_style;
 
-  if(w->glw_style != NULL) {
+  if(old != NULL) {
 
     LIST_REMOVE(w, glw_style_link);
-    glw_style_remove_styling_rpns_on_widget(w, w->glw_style->gs_id);
+
+
+    do {
+      glw_style_remove_styling_rpns_on_widget(w, old->gs_id);
+      old = old->gs_ancestor;
+    } while(old != NULL);
+
     glw_style_release(w->glw_style);
   }
 
