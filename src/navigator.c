@@ -36,7 +36,6 @@
 #include "misc/str.h"
 #include "db/kvstore.h"
 #include "htsmsg/htsmsg_store.h"
-#include "fileaccess/fa_vfs.h"
 
 TAILQ_HEAD(nav_page_queue, nav_page);
 LIST_HEAD(bookmark_list, bookmark);
@@ -47,7 +46,7 @@ static prop_t *bookmark_nodes;
 
 static void bookmarks_init(void);
 static void bookmark_add(const char *title, const char *url, const char *type,
-			 const char *icon, const char *id, int vfs);
+			 const char *icon, const char *id);
 static void bookmarks_save(void);
 
 static struct bookmark_list bookmarks;
@@ -65,7 +64,6 @@ typedef struct bookmark {
   prop_sub_t *bm_url_sub;
   prop_sub_t *bm_type_sub;
   prop_sub_t *bm_icon_sub;
-  prop_sub_t *bm_vfs_sub;
 
   rstr_t *bm_id;
   rstr_t *bm_title;
@@ -73,13 +71,9 @@ typedef struct bookmark {
   rstr_t *bm_type;
   rstr_t *bm_icon;
 
-  int bm_vfs;
-  int bm_vfs_id;
-
   service_t *bm_service;
 
   setting_t *bm_type_setting;
-  setting_t *bm_vfs_setting;
   setting_t *bm_delete;
 
   prop_t *bm_info;
@@ -501,7 +495,7 @@ nav_page_bookmarked_set(void *opaque, int v)
 
     notify_add(NULL, NOTIFY_INFO, NULL, 3, _("Added new bookmark: %s"), title);
 
-    bookmark_add(title, np->np_url, "other", rstr_get(np->np_icon), NULL, 0);
+    bookmark_add(title, np->np_url, "other", rstr_get(np->np_icon), NULL);
 
   } else {
     bookmark_t *bm;
@@ -928,8 +922,6 @@ bookmarks_save(void)
     htsmsg_add_str(b, "url", rstr_get(bm->bm_url));
     if(bm->bm_icon)
       htsmsg_add_str(b, "icon", rstr_get(bm->bm_icon));
-    if(bm->bm_vfs)
-      htsmsg_add_u32(b, "vfs", bm->bm_vfs);
     htsmsg_add_msg(m, NULL, b);
   }
 
@@ -959,7 +951,6 @@ bookmark_destroyed(void *opaque, prop_event_t event, ...)
   prop_unsubscribe(bm->bm_url_sub);
   prop_unsubscribe(bm->bm_type_sub);
   prop_unsubscribe(bm->bm_icon_sub);
-  prop_unsubscribe(bm->bm_vfs_sub);
 
   rstr_release(bm->bm_id);
   rstr_release(bm->bm_title);
@@ -982,30 +973,6 @@ bookmark_destroyed(void *opaque, prop_event_t event, ...)
   nav_update_bookmarked();
 }
 
-/**
- *
- */
-static void
-update_vfs_mapping(bookmark_t *bm)
-{
-  if(bm->bm_vfs && bm->bm_title && rstr_get(bm->bm_title)[0]) {
-    if(bm->bm_vfs_id)
-      return;
-
-    if(bm->bm_url && rstr_get(bm->bm_url)[0]) {
-      bm->bm_vfs_id = vfs_add_mapping(rstr_get(bm->bm_title),
-				      rstr_get(bm->bm_url));
-    } else {
-      vfs_del_mapping(bm->bm_vfs_id);
-      bm->bm_vfs_id = 0;
-    }
-  } else {
-    if(!bm->bm_vfs_id)
-      return;
-    vfs_del_mapping(bm->bm_vfs_id);
-    bm->bm_vfs_id = 0;
-  }
-}
 
 /**
  *
@@ -1017,7 +984,6 @@ bm_set_title(void *opaque, rstr_t *str)
 
   rstr_set(&bm->bm_title, str);
   service_set_title(bm->bm_service, str);
-  update_vfs_mapping(bm);
   bookmarks_save();
 }
 
@@ -1032,7 +998,6 @@ bm_set_url(void *opaque, rstr_t *str)
 
   rstr_set(&bm->bm_url, str);
   service_set_url(bm->bm_service, str);
-  update_vfs_mapping(bm);
   bookmarks_save();
   nav_update_bookmarked();
 }
@@ -1061,19 +1026,6 @@ bm_set_icon(void *opaque, rstr_t *str)
 
   rstr_set(&bm->bm_icon, str);
   service_set_icon(bm->bm_service, str);
-  bookmarks_save();
-}
-
-
-/**
- *
- */
-static void
-bm_set_vfs(void *opaque, int v)
-{
-  bookmark_t *bm = opaque;
-  bm->bm_vfs = v;
-  update_vfs_mapping(bm);
   bookmarks_save();
 }
 
@@ -1125,7 +1077,7 @@ bm_delete(void *opaque, prop_event_t event, ...)
  */
 static void
 bookmark_add(const char *title, const char *url, const char *type,
-	     const char *icon, const char *id, int vfs)
+	     const char *icon, const char *id)
 {
   if(title == NULL || url == NULL)
     return;
@@ -1201,14 +1153,6 @@ bookmark_add(const char *title, const char *url, const char *type,
                    SETTING_MUTEX(&nav_mutex),
                    NULL);
 
-  bm->bm_vfs_setting =
-    setting_create(SETTING_BOOL, m, SETTINGS_INITIAL_UPDATE,
-                   SETTING_TITLE(_p("Published in Virtual File System")),
-                   SETTING_VALUE(vfs),
-                   SETTING_CALLBACK(bm_set_vfs, bm),
-                   SETTING_MUTEX(&nav_mutex),
-                   NULL);
-
   prop_link(prop_create(md, "url"), prop_create(md, "shortdesc"));
 
   bm->bm_info = prop_create_root(NULL);
@@ -1244,7 +1188,7 @@ bookmarks_callback(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_REQ_NEW_CHILD:
-    bookmark_add("New bookmark", "none:", "other", NULL, NULL, 0);
+    bookmark_add("New bookmark", "none:", "other", NULL, NULL);
     break;
 
   case PROP_REQ_DELETE_VECTOR:
@@ -1264,8 +1208,7 @@ bookmark_load(htsmsg_t *o)
 	       htsmsg_get_str(o, "url"),
 	       htsmsg_get_str(o, "svctype"),
 	       htsmsg_get_str(o, "icon"),
-	       htsmsg_get_str(o, "id"),
-               htsmsg_get_u32_or_default(o, "vfs", 0));
+	       htsmsg_get_str(o, "id"));
 }
 
 /**

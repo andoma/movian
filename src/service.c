@@ -30,7 +30,6 @@
 #include "backend/backend.h"
 #include "htsmsg/htsmsg_store.h"
 #include "settings.h"
-#include "fileaccess/fa_vfs.h"
 
 LIST_HEAD(service_type_list, service_type);
 
@@ -302,24 +301,6 @@ service_settings_saver(void *opaque, htsmsg_t *msg)
 /**
  *
  */
-static void 
-service_set_vfs(void *opaque, int v)
-{
-  service_t *s = opaque;
-  if(v) {
-    if(!s->s_vfs_id)
-      s->s_vfs_id = vfs_add_mapping(s->s_title, s->s_url);
-  } else {
-    if(s->s_vfs_id)
-      vfs_del_mapping(s->s_vfs_id);
-    s->s_vfs_id = 0;
-  }
-}
-
-
-/**
- *
- */
 service_t *
 service_create_managed(const char *id0,
 		       const char *title,
@@ -329,7 +310,6 @@ service_create_managed(const char *id0,
 		       int probe,
 		       int enabled,
 		       service_origin_t origin,
-		       int vfsable,
 		       const char *description)
 {
 
@@ -386,18 +366,6 @@ service_create_managed(const char *id0,
                                                  service_settings_saver,
                                                  s),
                      NULL);
-
-  if(vfsable) {
-    s->s_setting_vfs =
-      setting_create(SETTING_BOOL, s->s_settings, SETTINGS_INITIAL_UPDATE,
-		     SETTING_TITLE(_p("Published in Virtual File System")),
-		     SETTING_CALLBACK(service_set_vfs, s),
-		     SETTING_HTSMSG_CUSTOM_SAVER("vfs",
-						 s->s_settings_store,
-						 service_settings_saver,
-						 s),
-		     NULL);
-  }
   return s;
 }
 

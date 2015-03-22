@@ -19,32 +19,38 @@
  */
 #include "main.h"
 #include "fileaccess.h"
-
+#include "prop/prop.h"
 #include "fa_proto.h"
 #include "fa_vfs.h"
 
 LIST_HEAD(vfs_mapping_list, vfs_mapping);
 
-static struct vfs_mapping_list vfs_mappings;
-static int vfs_mapping_tally;
+static struct vfs_mapping_list vfs_exported_mappings;
 static hts_mutex_t vfs_mutex;
 
 static const char *READMETXT =
-  "This is "APPNAMEUSER"'s virtual file system\n"
+  "This is "APPNAMEUSER"'s exported file system\n"
   "\n"
-  "To add stuff here go to Settings -> Bookmarks in Showtime's UI\n"
-  "and mark items as 'Published in Virtual File System'\n";
+  "Items on home screen and in 'Local network' that contain files and\n"
+  "folders will appear here\n";
 
 /**
  *
  */
 typedef struct vfs_mapping {
   LIST_ENTRY(vfs_mapping) vm_link;
-  char *vm_vdir;
+  rstr_t *vm_vdir;
   int vm_vdirlen;
-  char *vm_prefix;
-  int vm_id;
+  char *vm_url;
+
+  prop_sub_t *vm_url_sub;
+  prop_sub_t *vm_name_sub;
+
+  int vm_is_fs;
+  int vm_exported;
+
 } vfs_mapping_t;
+
 
 
 /**
@@ -53,59 +59,35 @@ typedef struct vfs_mapping {
 static int
 vm_compar(const vfs_mapping_t *a, const vfs_mapping_t *b)
 {
-  return strcmp(a->vm_vdir, b->vm_vdir);
+  return strcmp(rstr_get(a->vm_vdir), rstr_get(b->vm_vdir));
 }
 
 
 /**
  *
  */
-int
-vfs_add_mapping(const char *vdir, const char *prefix)
+static void
+update_export(vfs_mapping_t *vm)
 {
-  vfs_mapping_t *vm;
-  hts_mutex_lock(&vfs_mutex);
+  int export = vm->vm_is_fs && vm->vm_vdir && rstr_get(vm->vm_vdir)[0];
 
-  LIST_FOREACH(vm, &vfs_mappings, vm_link) {
-    if(!strcmp(vm->vm_vdir, vdir))
-      break;
-  }
+  if(!export) {
+    if(!vm->vm_exported)
+      return;
 
-  if(vm == NULL) {
-    vm = calloc(1, sizeof(vfs_mapping_t));
-    vm->vm_vdir    = strdup(vdir);
-    vm->vm_vdirlen = strlen(vdir);
-    vm->vm_id      = ++vfs_mapping_tally;
-    LIST_INSERT_SORTED(&vfs_mappings, vm, vm_link, vm_compar, vfs_mapping_t);
-  }
-  mystrset(&vm->vm_prefix, prefix);
-  int id = vm->vm_id;
-  hts_mutex_unlock(&vfs_mutex);
-  return id;
-}
-
-
-/**
- *
- */
-void
-vfs_del_mapping(int id)
-{
-  vfs_mapping_t *vm;
-
-  hts_mutex_lock(&vfs_mutex);
-  LIST_FOREACH(vm, &vfs_mappings, vm_link) {
-    if(vm->vm_id == id)
-      break;
-  }
-
-  if(vm != NULL)
     LIST_REMOVE(vm, vm_link);
-  hts_mutex_unlock(&vfs_mutex);
+    vm->vm_exported = 0;
 
-  free(vm->vm_vdir);
-  free(vm->vm_prefix);
-  free(vm);
+  } else {
+
+    if(vm->vm_exported)
+      LIST_REMOVE(vm, vm_link);
+    else
+      vm->vm_exported = 1;
+
+    LIST_INSERT_SORTED(&vfs_exported_mappings, vm, vm_link,
+                       vm_compar, vfs_mapping_t);
+  }
 }
 
 
@@ -118,13 +100,12 @@ find_mapping(const char *path, const char **remain)
   int plen = strlen(path);
   vfs_mapping_t *vm;
 
-  LIST_FOREACH(vm, &vfs_mappings, vm_link) {
+  LIST_FOREACH(vm, &vfs_exported_mappings, vm_link) {
     if(plen < vm->vm_vdirlen)
       continue;
 
-    if(memcmp(path, vm->vm_vdir, vm->vm_vdirlen))
+    if(memcmp(path, rstr_get(vm->vm_vdir), vm->vm_vdirlen))
       continue;
-
     if(path[vm->vm_vdirlen] == 0) {
       *remain = NULL;
       return vm;
@@ -153,9 +134,10 @@ resolve_mapping(const char *path, char *newpath, size_t newpathlen)
     return -1;
   }
   if(remain)
-    snprintf(newpath, newpathlen, "%s/%s", vm->vm_prefix, remain);
+    snprintf(newpath, newpathlen, "%s/%s", vm->vm_url, remain);
   else
-    snprintf(newpath, newpathlen, "%s", vm->vm_prefix);
+    snprintf(newpath, newpathlen, "%s", vm->vm_url);
+
   hts_mutex_unlock(&vfs_mutex);
   return 0;
 }
@@ -175,13 +157,13 @@ vfs_scandir(fa_protocol_t *fap, fa_dir_t *fd, const char *url,
 
     hts_mutex_lock(&vfs_mutex);
 
-    if(LIST_FIRST(&vfs_mappings) == NULL)
+    if(LIST_FIRST(&vfs_exported_mappings) == NULL)
       fa_dir_add(fd, "vfs:///README.TXT", "README.TXT", CONTENT_FILE);
 
-    LIST_FOREACH(vm, &vfs_mappings, vm_link) {
+    LIST_FOREACH(vm, &vfs_exported_mappings, vm_link) {
       char u[512];
-      snprintf(u, sizeof(u), "vfs:///%s", vm->vm_vdir);
-      fa_dir_add(fd, u, vm->vm_vdir, CONTENT_DIR);
+      snprintf(u, sizeof(u), "vfs:///%s", rstr_get(vm->vm_vdir));
+      fa_dir_add(fd, u, rstr_get(vm->vm_vdir), CONTENT_DIR);
     }
     hts_mutex_unlock(&vfs_mutex);
     return 0;
@@ -343,6 +325,129 @@ vfs_rename(const fa_protocol_t *fap, const char *old, const char *new,
   return fa_rename(oldpath, newpath, errbuf, errlen);
 }
 
+/**
+ *
+ */
+static void
+vfs_mapping_set_url(void *opaque, rstr_t *str)
+{
+  vfs_mapping_t *vm = opaque;
+  const char *url = rstr_get(str);
+  char realurl[1024];
+
+  if(url != NULL && !strncmp(url, "search:", strlen("search:")))
+    url += strlen("search:");
+
+  if(url != NULL) {
+    vm->vm_is_fs = fa_can_handle(url, NULL, 0);
+
+    if(vm->vm_is_fs) {
+      if(!fa_normalize(url, realurl, sizeof(realurl)))
+        url = realurl;
+    } else {
+      url = NULL;
+    }
+  } else {
+    vm->vm_is_fs = 0;
+  }
+
+  mystrset(&vm->vm_url, url);
+
+  update_export(vm);
+}
+
+/**
+ *
+ */
+static void
+vfs_mapping_set_title(void *opaque, rstr_t *str)
+{
+  vfs_mapping_t *vm = opaque;
+
+  rstr_set(&vm->vm_vdir, str);
+  if(str)
+    vm->vm_vdirlen = strlen(rstr_get(str));
+
+  update_export(vm);
+}
+
+
+/**
+ *
+ */
+static void
+vfs_add_node(prop_t *p)
+{
+  vfs_mapping_t *vm = calloc(1, sizeof(vfs_mapping_t));
+
+  prop_tag_set(p, &vfs_exported_mappings, vm);
+
+  vm->vm_url_sub =
+    prop_subscribe(0,
+                   PROP_TAG_NAMED_ROOT, p, "node",
+                   PROP_TAG_NAME("node", "url"),
+                   PROP_TAG_CALLBACK_RSTR, vfs_mapping_set_url, vm,
+                   PROP_TAG_MUTEX, &vfs_mutex,
+                   NULL);
+
+  vm->vm_name_sub =
+    prop_subscribe(0,
+                   PROP_TAG_NAMED_ROOT, p, "node",
+                   PROP_TAG_NAME("node", "title"),
+                   PROP_TAG_CALLBACK_RSTR, vfs_mapping_set_title, vm,
+                   PROP_TAG_MUTEX, &vfs_mutex,
+                   NULL);
+}
+
+
+/**
+ *
+ */
+static void
+vfs_del_node(vfs_mapping_t *vm)
+{
+  prop_unsubscribe(vm->vm_url_sub);
+  prop_unsubscribe(vm->vm_name_sub);
+
+  if(vm->vm_exported)
+    LIST_REMOVE(vm, vm_link);
+  rstr_release(vm->vm_vdir);
+  free(vm->vm_url);
+  free(vm);
+}
+
+
+/**
+ *
+ */
+static void
+vfs_service_callback(void *opaque, prop_event_t event, ...)
+{
+  prop_vec_t *pv;
+  va_list ap;
+  va_start(ap, event);
+
+  switch(event) {
+  default:
+    break;
+  case PROP_ADD_CHILD:
+  case PROP_ADD_CHILD_BEFORE:
+    vfs_add_node(va_arg(ap, prop_t *));
+    break;
+
+  case PROP_ADD_CHILD_VECTOR:
+  case PROP_ADD_CHILD_VECTOR_BEFORE:
+    pv = va_arg(ap, prop_vec_t *);
+    for(int i = 0; i < pv->pv_length; i++)
+      vfs_add_node(pv->pv_vec[i]);
+    break;
+
+  case PROP_DEL_CHILD:
+    vfs_del_node(prop_tag_clear(va_arg(ap, prop_t *),
+                                &vfs_exported_mappings));
+    break;
+  }
+}
 
 /**
  *
@@ -351,6 +456,14 @@ static void
 vfs_init(void)
 {
   hts_mutex_init(&vfs_mutex);
+
+  prop_subscribe(0,
+                 PROP_TAG_NAME("global", "services", "all"),
+                 PROP_TAG_CALLBACK, vfs_service_callback, NULL,
+                 PROP_TAG_MUTEX, &vfs_mutex,
+                 NULL);
+
+
 }
 
 
