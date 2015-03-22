@@ -91,7 +91,7 @@ glw_layer_layout(glw_t *w, const glw_rctx_t *rc)
 
 
     glw_lp(&cd->z,     w->glw_root, z, 0.25);
-    glw_lp(&cd->alpha, w->glw_root, a, 0.25);
+    glw_lp(&cd->alpha, w->glw_root, a, 0.8);
 
     rc0.rc_layer = cd->layer + rc->rc_layer;
 
@@ -158,7 +158,7 @@ glw_layer_render(glw_t *w, const glw_rctx_t *rc)
     if(rc0.rc_alpha < 0.01)
       continue;
     rc0.rc_layer = cd->layer + rc->rc_layer;
-    glw_Translatef(&rc0, 0, 0, 0.1*cd->z);
+    //    glw_Translatef(&rc0, 0, 0, cd->z);
 
     rc0.rc_zindex = MAX(zmax, rc->rc_zindex);
     glw_render0(c, &rc0);

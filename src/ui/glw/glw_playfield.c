@@ -149,7 +149,7 @@ static int
 playfield_select_child(glw_t *w, glw_t *c, prop_t *origin)
 {
   glw_playfield_t *p = (glw_playfield_t *)w;
-  float speed = 0.1;
+  float speed = 0.5;
 
   glw_need_refresh(w->glw_root, 0);
 
