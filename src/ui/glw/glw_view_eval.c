@@ -2455,9 +2455,47 @@ make_vector(glw_view_eval_context_t *ec, token_t *t)
 {
   token_t *a, *r;
   int i;
+  token_t *v = ec->stack;
+
+  int numerics = 0;
+  int strings = 0;
+
+  for(i = 0; i < t->t_num_args; i++) {
+    switch(v->type) {
+    case TOKEN_INT:
+    case TOKEN_EM:
+    case TOKEN_FLOAT:
+      numerics++;
+      break;
+    case TOKEN_RSTRING:
+    case TOKEN_URI:
+      strings++;
+      break;
+    default:
+      break;
+    }
+    v = v->tmp;
+  }
+
+  if(strings > numerics) {
+    r = eval_alloc(t, ec, TOKEN_VECTOR);
+    r->t_elements = t->t_num_args;
+
+    token_t **tp = &r->child;
+
+    for(i = 0; i < t->t_num_args; i++) {
+      if((a = token_resolve(ec, eval_pop(ec))) == NULL)
+        return -1;
+      a = glw_view_token_copy(ec->w->glw_root, a);
+      *tp = a;
+      tp = &a->next;
+    }
+    eval_push(ec, r);
+    return 0;
+  }
 
   if(t->t_num_args < 1 || t->t_num_args > 4)
-    return glw_view_seterr(ec->ei, t, "Invalid vector length (%d)",
+    return glw_view_seterr(ec->ei, t, "Invalid numeric vector length (%d)",
 			   t->t_num_args);
 
   r = eval_alloc(t, ec, TOKEN_VECTOR_FLOAT);

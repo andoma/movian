@@ -1222,24 +1222,27 @@ static int
 set_style(glw_view_eval_context_t *ec, const token_attrib_t *a,
           struct token *t)
 {
-  const char *str;
+  int r;
 
   switch(t->type) {
   default:
-    str = NULL;
+    r = glw_styleset_for_widget(ec->w, NULL, ec);
     break;
 
   case TOKEN_CSTRING:
-    str = t->t_cstring;
+    r = glw_styleset_for_widget(ec->w, t->t_cstring, ec);
     break;
 
   case TOKEN_RSTRING:
   case TOKEN_URI:
-    str = rstr_get(t->t_rstring);
+    r = glw_styleset_for_widget(ec->w, rstr_get(t->t_rstring), ec);
+    break;
+
+  case TOKEN_VECTOR:
+    r = glw_styleset_for_widget_multiple(ec->w, t->child, ec);
     break;
   }
 
-  int r = glw_styleset_for_widget(ec->w, str, ec);
   if(r)
     attr_need_refresh(ec->w->glw_root, t, a->name, r);
   return 0;

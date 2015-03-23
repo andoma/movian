@@ -162,6 +162,8 @@ glw_init3(glw_root_t *gr,
   gr->gr_token_pool = pool_create("glwtokens", sizeof(token_t), POOL_ZERO_MEM);
   gr->gr_clone_pool = pool_create("glwclone", sizeof(glw_clone_t),
 				  POOL_ZERO_MEM);
+  gr->gr_style_binding_pool = pool_create("glwstylebindings",
+                                          sizeof(glw_style_binding_t), 0);
 
   gr->gr_skin = strdup(skin);
 
@@ -678,7 +680,8 @@ glw_destroy(glw_t *w)
     glw_remove_from_parent(w, p);
   }
 
-  glw_style_bind(w, NULL, NULL);
+  glw_style_unbind_all(w);
+
   glw_styleset_release(w->glw_styles);
 
   rstr_release(w->glw_id_rstr);

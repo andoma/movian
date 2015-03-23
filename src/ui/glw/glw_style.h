@@ -41,11 +41,17 @@ glw_styleset_add(glw_styleset_t *gss, glw_style_t *gs);
 glw_style_t *glw_style_create(glw_t *parent, rstr_t *name,
                               rstr_t *file, int line);
 
-int glw_styleset_for_widget(glw_t *w, const char *name,
-                             struct glw_view_eval_context *ec);
-
-int glw_style_bind(glw_t *w, glw_style_t *gs, struct glw_view_eval_context *ec);
-
 void glw_style_update_em(glw_root_t *gr);
 
 void glw_style_attach_rpns(glw_style_t *gs, struct token *t);
+
+int glw_styleset_for_widget(glw_t *w, const char *name,
+                            struct glw_view_eval_context *ec);
+
+int glw_styleset_for_widget_multiple(glw_t *w, struct token *chain,
+                                     struct glw_view_eval_context *ec);
+
+void glw_style_bind_ancestor(glw_style_t *gs, glw_style_t *ancestor);
+
+void glw_style_unbind_all(glw_t *w);
+

@@ -722,6 +722,7 @@ typedef struct glw_root {
 
   pool_t *gr_token_pool;
   pool_t *gr_clone_pool;
+  pool_t *gr_style_binding_pool;
 
   int gr_frames;
 
@@ -1012,11 +1013,30 @@ typedef struct glw_signal_handler {
 LIST_HEAD(glw_signal_handler_list, glw_signal_handler);
 
 
+/**
+ *
+ */
 typedef struct glw_styleset {
   unsigned int gss_refcount;
   int gss_numstyles;
   struct glw_style *gss_styles[0];
 } glw_styleset_t;
+
+
+/**
+ *
+ */
+
+LIST_HEAD(glw_style_binding_list, glw_style_binding);
+
+typedef struct glw_style_binding {
+  LIST_ENTRY(glw_style_binding) gsb_style_link;
+  LIST_ENTRY(glw_style_binding) gsb_widget_link;
+  struct glw *gsb_widget;
+  struct glw_style *gsb_style;
+  int gsb_mark;
+} glw_style_binding_t;
+
 
 /**
  * GL widget
@@ -1055,11 +1075,8 @@ typedef struct glw {
   /**
    * Styling
    */
-
   glw_styleset_t *glw_styles; // List of available styles
-  LIST_ENTRY(glw) glw_style_link;
-  struct glw_style *glw_style; // Current style
-
+  struct glw_style_binding_list glw_style_bindings; // Bound styles
 
   int glw_refcnt;
 

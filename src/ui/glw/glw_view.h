@@ -221,20 +221,15 @@ typedef struct glw_view_eval_context {
   struct prop *prop, *prop_parent, *prop_viewx, *prop_args, *prop_clone;
   struct glw_root *gr;
   const struct glw_rctx *rc;
-
-  int dynamic_eval;
-
-  token_t *rpn; 
-
-  int passive_subscriptions;
-
+  token_t *rpn;
   struct glw_prop_sub_list *sublist;
-
   struct event *event;
-
   prop_t *tgtprop;
 
-  int debug;
+  uint16_t dynamic_eval;
+  char debug;
+  char passive_subscriptions;
+  uint8_t style_index_tally;
 
 } glw_view_eval_context_t;
 

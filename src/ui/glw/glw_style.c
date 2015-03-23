@@ -71,7 +71,7 @@ struct glw_style {
   glw_style_t *gs_ancestor;
   token_t *gs_rpns;
   rstr_t *gs_name;
-  struct glw_head gs_widgets;
+  struct glw_style_binding_list gs_bindings;
   struct glw_style_attribute_list gs_attributes;
 
   LIST_ENTRY(glw_style) gs_link;
@@ -237,6 +237,18 @@ glw_style_retain(glw_style_t *gs)
   return gs;
 }
 
+/**
+ *
+ */
+static void
+glw_style_binding_destroy(glw_style_binding_t *gsb, glw_root_t *gr)
+{
+  if(gsb->gsb_style != NULL)
+    LIST_REMOVE(gsb, gsb_style_link);
+  LIST_REMOVE(gsb, gsb_widget_link);
+  pool_put(gr->gr_style_binding_pool, gsb);
+}
+
 
 /**
  *
@@ -247,21 +259,22 @@ glw_style_release(glw_style_t *gs)
   if(gs == NULL)
     return;
 
+  glw_style_binding_t *gsb;
   glw_style_attribute_t *gsa;
   glw_t *w = &gs->w;
   gs->gs_refcount--;
   if(gs->gs_refcount)
     return;
 
-  if(w->glw_style != NULL)
-    LIST_REMOVE(w, glw_style_link);
+  while((gsb = LIST_FIRST(&w->glw_style_bindings)) != NULL)
+    glw_style_binding_destroy(gsb, w->glw_root);
 
   glw_style_release(gs->gs_ancestor);
   glw_styleset_release(w->glw_styles);
 
   LIST_REMOVE(gs, gs_link);
 
-  assert(LIST_FIRST(&gs->gs_widgets) == NULL);
+  assert(LIST_FIRST(&gs->gs_bindings) == NULL);
   glw_prop_subscription_destroy_list(w->glw_root, &w->glw_prop_subscriptions);
   glw_view_free_chain(w->glw_root, w->glw_dynamic_expressions);
 
@@ -319,10 +332,12 @@ gsa_check_blocking(glw_style_attribute_t *gsa, glw_style_t *origin)
 static int
 gs_apply_float3(glw_style_t *gs, glw_style_attribute_t *gsa)
 {
-  glw_t *w;
   int r = 0;
-  LIST_FOREACH(w, &gs->gs_widgets, glw_style_link)
+  glw_style_binding_t *gsb;
+  LIST_FOREACH(gsb, &gs->gs_bindings, gsb_style_link) {
+    glw_t *w = gsb->gsb_widget;
     setr(w->glw_class->gc_set_float3(w, gsa->gsa_attribute, gsa->fvec, gs), &r);
+  }
   return r;
 }
 
@@ -356,11 +371,13 @@ gs_set_float3(struct glw *w, glw_attribute_t a, const float *vector,
 static int
 gs_apply_int16_4(glw_style_t *gs, glw_style_attribute_t *gsa)
 {
-  glw_t *w;
   int r = 0;
-  LIST_FOREACH(w, &gs->gs_widgets, glw_style_link)
+  glw_style_binding_t *gsb;
+  LIST_FOREACH(gsb, &gs->gs_bindings, gsb_style_link) {
+    glw_t *w = gsb->gsb_widget;
     setr(w->glw_class->gc_set_int16_4(w, gsa->gsa_attribute,
                                       gsa->i16vec, gs), &r);
+  }
   return r;
 }
 
@@ -396,11 +413,13 @@ gs_set_int16_4(struct glw *w, glw_attribute_t a, const int16_t *vector,
 static int
 gs_apply_rstr(glw_style_t *gs, glw_style_attribute_t *gsa)
 {
-  glw_t *w;
   int r = 0;
-  LIST_FOREACH(w, &gs->gs_widgets, glw_style_link)
+  glw_style_binding_t *gsb;
+  LIST_FOREACH(gsb, &gs->gs_bindings, gsb_style_link) {
+    glw_t *w = gsb->gsb_widget;
     setr(w->glw_class->gc_set_rstr(w, gsa->gsa_attribute, gsa->rstr,
                                    gs), &r);
+  }
   return r;
 }
 
@@ -434,10 +453,12 @@ gs_set_rstr(struct glw *w, glw_attribute_t a, rstr_t *rstr,
 static int
 gs_apply_int(glw_style_t *gs, glw_style_attribute_t *gsa)
 {
-  glw_t *w;
   int r = 0;
-  LIST_FOREACH(w, &gs->gs_widgets, glw_style_link)
+  glw_style_binding_t *gsb;
+  LIST_FOREACH(gsb, &gs->gs_bindings, gsb_style_link) {
+    glw_t *w = gsb->gsb_widget;
     setr(set_int_on_widget(w, gsa, gs), &r);
+  }
   return r;
 }
 
@@ -471,10 +492,12 @@ gs_set_int(struct glw *w, glw_attribute_t a, int i32,
 static int
 gs_apply_float(glw_style_t *gs, glw_style_attribute_t *gsa)
 {
-  glw_t *w;
   int r = 0;
-  LIST_FOREACH(w, &gs->gs_widgets, glw_style_link)
+  glw_style_binding_t *gsb;
+  LIST_FOREACH(gsb, &gs->gs_bindings, gsb_style_link) {
+    glw_t *w = gsb->gsb_widget;
     setr(set_float_on_widget(w, gsa, gs), &r);
+  }
   return r;
 }
 
@@ -522,8 +545,11 @@ gs_mod_flags2(struct glw *w, int set, int clr, glw_style_t *origin)
   gs->gs_flags2_clr &= ~set;
   gs->gs_flags2_set &= ~clr;
 
-  LIST_FOREACH(w, &gs->gs_widgets, glw_style_link)
+  glw_style_binding_t *gsb;
+  LIST_FOREACH(gsb, &gs->gs_bindings, gsb_style_link) {
+    glw_t *w = gsb->gsb_widget;
     set_flags2_on_widget(w, set, clr, gs);
+  }
 }
 
 
@@ -548,9 +574,12 @@ gs_mod_text_flags(struct glw *w, int set, int clr, glw_style_t *origin)
   gs->gs_text_flags_clr &= ~set;
   gs->gs_text_flags_set &= ~clr;
 
-  LIST_FOREACH(w, &gs->gs_widgets, glw_style_link)
+  glw_style_binding_t *gsb;
+  LIST_FOREACH(gsb, &gs->gs_bindings, gsb_style_link) {
+    glw_t *w = gsb->gsb_widget;
     if(w->glw_class->gc_mod_text_flags != NULL)
       w->glw_class->gc_mod_text_flags(w, set, clr, gs);
+  }
 }
 
 
@@ -575,9 +604,12 @@ gs_mod_image_flags(struct glw *w, int set, int clr, glw_style_t *origin)
   gs->gs_image_flags_clr &= ~set;
   gs->gs_image_flags_set &= ~clr;
 
-  LIST_FOREACH(w, &gs->gs_widgets, glw_style_link)
+  glw_style_binding_t *gsb;
+  LIST_FOREACH(gsb, &gs->gs_bindings, gsb_style_link) {
+    glw_t *w = gsb->gsb_widget;
     if(w->glw_class->gc_mod_image_flags != NULL)
       w->glw_class->gc_mod_image_flags(w, set, clr, gs);
+  }
 }
 
 
@@ -612,8 +644,11 @@ gs_set_focus_weight(struct glw *w, float v, glw_style_t *origin)
 
   w->glw_focus_weight = v;
 
-  LIST_FOREACH(w, &gs->gs_widgets, glw_style_link)
+  glw_style_binding_t *gsb;
+  LIST_FOREACH(gsb, &gs->gs_bindings, gsb_style_link) {
+    glw_t *w = gsb->gsb_widget;
     glw_set_focus_weight(w, v, gs);
+  }
 }
 
 
@@ -630,8 +665,11 @@ gs_set_alpha(struct glw *w, float v, glw_style_t *origin)
 
   w->glw_alpha = v;
 
-  LIST_FOREACH(w, &gs->gs_widgets, glw_style_link)
+  glw_style_binding_t *gsb;
+  LIST_FOREACH(gsb, &gs->gs_bindings, gsb_style_link) {
+    glw_t *w = gsb->gsb_widget;
     glw_set_alpha(w, v, gs);
+  }
 }
 
 
@@ -648,8 +686,11 @@ gs_set_blur(struct glw *w, float v, glw_style_t *origin)
 
   w->glw_sharpness = v; // We borrow this even though it's not sharpness
 
-  LIST_FOREACH(w, &gs->gs_widgets, glw_style_link)
+  glw_style_binding_t *gsb;
+  LIST_FOREACH(gsb, &gs->gs_bindings, gsb_style_link) {
+    glw_t *w = gsb->gsb_widget;
     glw_set_blur(w, v, gs);
+  }
 }
 
 
@@ -666,8 +707,11 @@ gs_set_weight(struct glw *w, float v, glw_style_t *origin)
 
   w->glw_req_weight = v;
 
-  LIST_FOREACH(w, &gs->gs_widgets, glw_style_link)
+  glw_style_binding_t *gsb;
+  LIST_FOREACH(gsb, &gs->gs_bindings, gsb_style_link) {
+    glw_t *w = gsb->gsb_widget;
     glw_set_weight(w, v, gs);
+  }
 }
 
 
@@ -684,8 +728,11 @@ gs_set_width(struct glw *w, int v, glw_style_t *origin)
 
   w->glw_req_size_x = v;
 
-  LIST_FOREACH(w, &gs->gs_widgets, glw_style_link)
+  glw_style_binding_t *gsb;
+  LIST_FOREACH(gsb, &gs->gs_bindings, gsb_style_link) {
+    glw_t *w = gsb->gsb_widget;
     glw_set_width(w, v, gs);
+  }
 }
 
 
@@ -702,8 +749,11 @@ gs_set_height(struct glw *w, int v, glw_style_t *origin)
 
   w->glw_req_size_y = v;
 
-  LIST_FOREACH(w, &gs->gs_widgets, glw_style_link)
+  glw_style_binding_t *gsb;
+  LIST_FOREACH(gsb, &gs->gs_bindings, gsb_style_link) {
+    glw_t *w = gsb->gsb_widget;
     glw_set_height(w, v, gs);
+  }
 }
 
 
@@ -720,8 +770,11 @@ gs_set_align(struct glw *w, int v, glw_style_t *origin)
 
   w->glw_alignment = v;
 
-  LIST_FOREACH(w, &gs->gs_widgets, glw_style_link)
+  glw_style_binding_t *gsb;
+  LIST_FOREACH(gsb, &gs->gs_bindings, gsb_style_link) {
+    glw_t *w = gsb->gsb_widget;
     glw_set_align(w, v, gs);
+  }
 }
 
 
@@ -738,9 +791,12 @@ gs_set_source(struct glw *w, rstr_t *r, glw_style_t *origin)
 
   rstr_set(&gs->gs_source, r);
 
-  LIST_FOREACH(w, &gs->gs_widgets, glw_style_link)
+  glw_style_binding_t *gsb;
+  LIST_FOREACH(gsb, &gs->gs_bindings, gsb_style_link) {
+    glw_t *w = gsb->gsb_widget;
     if(w->glw_class->gc_set_source != NULL)
       w->glw_class->gc_set_source(w, r, gs);
+  }
 }
 
 
@@ -791,7 +847,7 @@ glw_style_create(glw_t *parent, rstr_t *name, rstr_t *file, int line)
   gs->gs_line = line;
   gs->gs_ancestor = glw_style_retain(ancestor);
 
-  glw_style_bind(&gs->w, ancestor, NULL);
+  glw_style_bind_ancestor(gs, ancestor);
 
   return gs;
 }
@@ -906,14 +962,16 @@ static void
 glw_style_remove_styling_rpns_on_style(glw_style_t *gs, int origin)
 {
   glw_root_t *gr = gs->w.glw_root;
-  glw_t *w;
 
   glw_style_remove_styling_rpns(gr, &gs->gs_rpns, origin);
 
-  LIST_FOREACH(w, &gs->gs_widgets, glw_style_link)
+  glw_style_binding_t *gsb;
+  LIST_FOREACH(gsb, &gs->gs_bindings, gsb_style_link) {
+    glw_t *w = gsb->gsb_widget;
     glw_style_remove_styling_rpns_on_widget(w, origin);
-
+  }
 }
+
 
 /**
  *
@@ -982,8 +1040,10 @@ glw_style_insert_styling_rpns_on_style(glw_style_t *dst, glw_style_t *src,
   last->next = dst->gs_rpns;
   dst->gs_rpns = first;
 
-  glw_t *w;
-  LIST_FOREACH(w, &dst->gs_widgets, glw_style_link) {
+
+  glw_style_binding_t *gsb;
+  LIST_FOREACH(gsb, &dst->gs_bindings, gsb_style_link) {
+    glw_t *w = gsb->gsb_widget;
     if(w->glw_class == &glw_style)
       glw_style_insert_styling_rpns_on_style((glw_style_t *)w, src, ec);
     else
@@ -992,45 +1052,29 @@ glw_style_insert_styling_rpns_on_style(glw_style_t *dst, glw_style_t *src,
 }
 
 
-
 /**
  *
  */
-int
-glw_style_bind(glw_t *w, glw_style_t *gs, glw_view_eval_context_t *ec)
+static int
+glw_style_insert(glw_t *w, glw_style_t *gs, glw_view_eval_context_t *ec)
 {
-  glw_style_attribute_t *gsa;
   int r = 0;
+  glw_style_attribute_t *gsa;
+  glw_style_binding_t *gsb = pool_get(w->glw_root->gr_style_binding_pool);
 
-  int target_is_style = w->glw_class == &glw_style;
-  glw_style_t *old = w->glw_style;
+  gsb->gsb_style = glw_style_retain(gs);
+  gsb->gsb_widget = w;
+  LIST_INSERT_HEAD(&w->glw_style_bindings, gsb, gsb_widget_link);
+  LIST_INSERT_HEAD(&gs->gs_bindings, gsb, gsb_style_link);
+  gsb->gsb_mark = 0;
 
-  if(old != NULL) {
 
-    LIST_REMOVE(w, glw_style_link);
-
-
-    do {
-      glw_style_remove_styling_rpns_on_widget(w, old->gs_id);
-      old = old->gs_ancestor;
-    } while(old != NULL);
-
-    glw_style_release(w->glw_style);
-  }
-
-  w->glw_style = glw_style_retain(gs);
-
-  if(gs == NULL)
-    return 0;
-
-  if(target_is_style) {
+  if(w->glw_class == &glw_style) {
     glw_style_t *dst = (glw_style_t *)w;
     glw_style_insert_styling_rpns_on_style(dst, gs, ec);
   } else {
     glw_style_insert_styling_rpns_on_widget(w, gs->gs_rpns, ec);
   }
-
-  LIST_INSERT_HEAD(&gs->gs_widgets, w, glw_style_link);
 
   LIST_FOREACH(gsa, &gs->gs_attributes, gsa_link) {
 
@@ -1109,12 +1153,104 @@ glw_style_bind(glw_t *w, glw_style_t *gs, glw_view_eval_context_t *ec)
 /**
  *
  */
+static void
+glw_style_bindings_sweep(glw_t *w, int all)
+{
+  glw_style_binding_t *gsb, *next;
+  glw_root_t *gr = w->glw_root;
+
+  for(gsb = LIST_FIRST(&w->glw_style_bindings); gsb != NULL; gsb = next) {
+    next = LIST_NEXT(gsb, gsb_style_link);
+
+    if(all || gsb->gsb_mark) {
+
+      glw_style_t *gs = gsb->gsb_style;
+
+      LIST_REMOVE(gsb, gsb_style_link);
+
+      do {
+        glw_style_remove_styling_rpns_on_widget(w, gs->gs_id);
+        gs = gs->gs_ancestor;
+      } while(gs != NULL);
+
+      glw_style_release(gsb->gsb_style);
+      glw_style_binding_destroy(gsb, gr);
+    }
+  }
+}
+
+
+/**
+ *
+ */
 int
 glw_styleset_for_widget(glw_t *w, const char *name,
-                         glw_view_eval_context_t *ec)
+                        glw_view_eval_context_t *ec)
 {
-  return glw_style_bind(w, glw_style_find(w, name), ec);
+  glw_style_bindings_sweep(w, 1);
+
+  glw_style_t *gs = glw_style_find(w, name);
+  return gs != NULL ? glw_style_insert(w, gs, ec) : 0;
 }
+
+
+/**
+ *
+ */
+int
+glw_styleset_for_widget_multiple(glw_t *w, struct token *t,
+                                 struct glw_view_eval_context *ec)
+{
+  glw_style_binding_t *gsb;
+  int r = 0;
+
+  LIST_FOREACH(gsb, &w->glw_style_bindings, gsb_widget_link)
+    gsb->gsb_mark = 1;
+
+  for(; t != NULL; t = t->next) {
+    if(!(t->type == TOKEN_RSTRING || t->type == TOKEN_URI))
+      continue;
+
+    glw_style_t *gs = glw_style_find(w, rstr_get(t->t_rstring));
+    if(gs == NULL)
+      continue;
+
+    LIST_FOREACH(gsb, &w->glw_style_bindings, gsb_widget_link)
+      if(gsb->gsb_style == gs)
+        break;
+
+    if(gsb != NULL) {
+      gsb->gsb_mark = 0;
+      continue;
+    }
+
+    setr(glw_style_insert(w, gs, ec), &r);
+  }
+  glw_style_bindings_sweep(w, 0);
+  return r;
+}
+
+
+/**
+ *
+ */
+void
+glw_style_bind_ancestor(glw_style_t *gs, glw_style_t *ancestor)
+{
+  if(ancestor != NULL)
+    glw_style_insert(&gs->w, ancestor, NULL);
+}
+
+
+/**
+ *
+ */
+void
+glw_style_unbind_all(glw_t *w)
+{
+  glw_style_bindings_sweep(w, 1);
+}
+
 
 
 /**
