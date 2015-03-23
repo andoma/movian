@@ -837,10 +837,16 @@ htsmsg_parse_prolog(xmlparser_t *xp, char *src, buf_t *buf)
     }
 
     if(!strncmp(src, "<!DOCTYPE", 9)) {
+      int depth = 0;
+
       while(*src != 0) {
-	if(*src == '>') {
+	if(*src == '<') {
+          depth++;
+        } else if(*src == '>') {
 	  src++;
-	  break;
+          depth--;
+          if(depth == 0)
+            break;
 	}
 	src++;
       }
