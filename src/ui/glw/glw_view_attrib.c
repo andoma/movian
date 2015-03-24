@@ -33,6 +33,30 @@
 /**
  *
  */
+static void
+respond_error(glw_t *w, const token_t *t, const char *name)
+{
+    const glw_class_t *gc = w->glw_class;
+    TRACE(TRACE_DEBUG, "GLW",
+          "Widget %s "
+#ifdef DEBUG
+          "(%s:%d) "
+#endif
+          "assignment at %s:%d does not respond "
+          "to attribute %s",
+          gc->gc_name,
+#ifdef DEBUG
+          rstr_get(w->glw_file), w->glw_line,
+#endif
+          rstr_get(t->file), t->line, name);
+}
+
+
+
+
+/**
+ *
+ */
 static int
 set_rstring(glw_view_eval_context_t *ec, const token_attrib_t *a,
             struct token *t)
@@ -365,9 +389,7 @@ set_number_int(glw_t *w, const token_attrib_t *a, const token_t *t, int v)
     r = gc->gc_set_float ? gc->gc_set_float(w, a->attrib, v, NULL) : -1;
 
   if(r == -1) {
-    TRACE(TRACE_DEBUG, "GLW",
-          "Widget %s at %s:%d does not respond to attribute %s",
-          gc->gc_name, rstr_get(t->file), t->line, a->name);
+    respond_error(w, t, a->name);
     return;
   }
 
@@ -391,9 +413,7 @@ set_number_float(glw_t *w, const token_attrib_t *a, const token_t *t, float v)
     r = gc->gc_set_int ? gc->gc_set_int(w, a->attrib, v, NULL) : -1;
 
   if(r == -1) {
-    TRACE(TRACE_DEBUG, "GLW",
-          "Widget %s at %s:%d does not respond to attribute %s",
-          gc->gc_name, rstr_get(t->file), t->line, a->name);
+    respond_error(w, t, a->name);
     return;
   }
 
@@ -429,9 +449,7 @@ set_number_em(glw_t *w, const token_attrib_t *a, const token_t *t,
   }
 
   if(r == -1) {
-    TRACE(TRACE_DEBUG, "GLW",
-          "Widget %s at %s:%d does not respond to attribute %s",
-          gc->gc_name, rstr_get(t->file), t->line, a->name);
+    respond_error(w, t, a->name);
     return;
   }
 
@@ -683,9 +701,7 @@ set_float3(glw_view_eval_context_t *ec, const token_attrib_t *a,
   int r = gc->gc_set_float3 ? gc->gc_set_float3(w, a->attrib, vec3, NULL) : -1;
 
   if(r == -1) {
-    TRACE(TRACE_DEBUG, "GLW",
-          "Widget %s at %s:%d does not respond to attribute %s",
-          gc->gc_name, rstr_get(t->file), t->line, a->name);
+    respond_error(w, t, a->name);
     return 0;
   }
   if(r)
@@ -755,9 +771,7 @@ set_float4(glw_view_eval_context_t *ec, const token_attrib_t *a,
   int r = gc->gc_set_float4 ? gc->gc_set_float4(w, a->attrib, vec4) : -1;
 
   if(r == -1) {
-    TRACE(TRACE_DEBUG, "GLW",
-          "Widget %s at %s:%d does not respond to attribute %s",
-          gc->gc_name, rstr_get(t->file), t->line, a->name);
+    respond_error(w, t, a->name);
     return 0;
   }
   if(r)
@@ -831,9 +845,7 @@ set_int16_4(glw_view_eval_context_t *ec, const token_attrib_t *a,
   int r = gc->gc_set_int16_4 ? gc->gc_set_int16_4(w, a->attrib, v, NULL) : -1;
 
   if(r == -1) {
-    TRACE(TRACE_DEBUG, "GLW",
-          "Widget %s at %s:%d does not respond to attribute %s",
-          gc->gc_name, rstr_get(t->file), t->line, a->name);
+    respond_error(w, t, a->name);
     return 0;
   }
   if(r)
@@ -1412,9 +1424,7 @@ unresolved_set_float(glw_t *w, const char *attrib, const token_t *t,
       gc->gc_set_int_unresolved(w, attrib, val) : -1;
 
   if(r == -1) {
-    TRACE(TRACE_DEBUG, "GLW",
-          "Widget %s at %s:%d does not respond to %s=%f assignment",
-          gc->gc_name, rstr_get(t->file), t->line, attrib, val);
+    respond_error(w, t, attrib);
     return;
   }
 
@@ -1441,9 +1451,7 @@ unresolved_set_int(glw_t *w, const char *attrib, const token_t *t,
       gc->gc_set_float_unresolved(w, attrib, val) : -1;
 
   if(r == -1) {
-    TRACE(TRACE_DEBUG, "GLW",
-          "Widget %s at %s:%d does not respond to %s=%d assignment",
-          gc->gc_name, rstr_get(t->file), t->line, attrib, val);
+    respond_error(w, t, attrib);
     return;
   }
 
@@ -1466,9 +1474,7 @@ unresolved_set_str(glw_t *w, const char *attrib, const token_t *t,
     gc->gc_set_str_unresolved(w, attrib, val) : -1;
 
   if(r == -1) {
-    TRACE(TRACE_DEBUG, "GLW",
-          "Widget %s at %s:%d does not respond to %s=\"%s\" assignment",
-          gc->gc_name, rstr_get(t->file), t->line, attrib, val);
+    respond_error(w, t, attrib);
     return;
   }
 
