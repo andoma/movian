@@ -798,13 +798,15 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
 
 
   METADATA_TRACE("Processing '%s' "
-                 "custom_title=%s imdbid=%s lonely=%s duration=%f",
+                 "custom_title=%s imdbid=%s lonely=%s duration=%f%s",
                  rstr_get(mlv->mlv_url),
                  rstr_get(custom_title),
                  rstr_get(imdb_id),
                  lonely ? "yes" : "no",
-                 duration);
+                 duration,
+                 refresh ? ", force-refresh" : "");
 
+  int disable_cache = refresh;
 
   /**
    * If duration is low skip this unless user have specified a custom query
@@ -896,29 +898,32 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
 
       }
 
-      if(md && md->md_dsid == ms->ms_id && is_qtype_compat(qtype, md->md_qtype))
-	break;
+      if(!disable_cache) {
+        if(md && md->md_dsid == ms->ms_id &&
+           is_qtype_compat(qtype, md->md_qtype))
+          break;
 
-      /**
-       * If current metadata source is seen (marked by metadb_get_videoinfo())
-       * and the query type corresponds we should be fully up to date,
-       * thus continue
-       */
-       
-      if(msqi->msqi_mark && is_qtype_compat(qtype, msqi->msqi_qtype)) {
+        /**
+         * If current metadata source is seen (marked by metadb_get_videoinfo())
+         * and the query type corresponds we should be fully up to date,
+         * thus continue
+         */
 
-	/**
-	 * This weirdness is to be able to requery if we discover
-	 * that a movie is lonely in its folder
-	 * (To query using directory name)
-	 */
-	if(msqi->msqi_status == METAITEM_STATUS_ABSENT &&
-	   msqi->msqi_qtype == METADATA_QTYPE_FILENAME &&
-	   lonely) {
+        if(msqi->msqi_mark && is_qtype_compat(qtype, msqi->msqi_qtype)) {
 
-	} else {
-	  continue;
-	}
+          /**
+           * This weirdness is to be able to requery if we discover
+           * that a movie is lonely in its folder
+           * (To query using directory name)
+           */
+          if(msqi->msqi_status == METAITEM_STATUS_ABSENT &&
+             msqi->msqi_qtype == METADATA_QTYPE_FILENAME &&
+             lonely) {
+
+          } else {
+            continue;
+          }
+        }
       }
 
       rval = metadb_videoitem_delete_from_ds(db, rstr_get(mlv->mlv_url),
