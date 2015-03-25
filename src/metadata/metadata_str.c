@@ -197,6 +197,18 @@ metadata_filename_to_title(const char *filename, int *yearp, rstr_t **titlep)
     i--;
   }
 
+  char *lastword = strrchr(s, ' ');
+  if(lastword && lastword > s) {
+    int y = atoi(lastword + 1);
+    if(y > 1900 && y < 2040) {
+      year = y;
+      *lastword = 0;
+    }
+  }
+
+
+
+
   for(i = 0; s[i]; i++) {
     if(s[i] == '.') {
       s[i] = ' ';
