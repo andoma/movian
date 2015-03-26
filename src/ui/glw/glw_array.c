@@ -643,6 +643,7 @@ glw_array_set_float(glw_t *w, glw_attribute_t attrib, float value,
     if(a->blur_falloff == value)
       return 0;
 
+    a->blur_falloff = value;
     a->noclip = 1;
     break;
 
