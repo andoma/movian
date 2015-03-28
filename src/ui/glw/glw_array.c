@@ -680,9 +680,12 @@ static glw_t *
 glw_array_get_next_row(glw_t *c, int reverse)
 {
   int current_col = glw_parent_data(c, glw_array_item_t)->col;
+  if(current_col == -1)
+    current_col = 0;
   if(reverse) {
     while((c = glw_get_prev_n(c, 1)) != NULL) {
-      if(glw_parent_data(c, glw_array_item_t)->col == current_col &&
+      if((glw_parent_data(c, glw_array_item_t)->col == current_col ||
+          c->glw_flags & GLW_CONSTRAINT_D) &&
          glw_get_focusable_child(c))
 	return c;
     }
