@@ -265,11 +265,21 @@ es_sleep(duk_context *ctx)
 }
 
 
+static int
+es_timestamp(duk_context *ctx)
+{
+  int64_t ts0 = arch_get_ts();
+  duk_push_number(ctx, (double)ts0);
+  return 1;
+}
+
+
 
 static const duk_function_list_entry fnlist_Showtime[] = {
   { "compile",                 es_compile,              1 },
   { "resourceDestroy",         es_resource_destroy_duk, 1 },
   { "sleep",                   es_sleep,                1 },
+  { "timestamp",               es_timestamp,            0 },
   { NULL, NULL, 0}
 };
 
