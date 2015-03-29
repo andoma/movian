@@ -237,7 +237,7 @@ es_resource_destroy_duk(duk_context *ctx)
 static int
 es_compile(duk_context *ctx)
 {
-  const char *path = duk_get_string(ctx, 0);
+  const char *path = duk_require_string(ctx, 0);
   char errbuf[256];
   buf_t *buf = fa_load(path,
                        FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
