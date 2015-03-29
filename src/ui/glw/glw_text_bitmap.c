@@ -187,6 +187,7 @@ glw_text_bitmap_layout(glw_t *w, const glw_rctx_t *rc)
 
     gtb->gtb_saved_width  = rc->rc_width;
     gtb->gtb_saved_height = rc->rc_height;
+    gtb->gtb_update_cursor = 1;
     gtb->gtb_need_layout = 1;
 
     if(gtb->w.glw_flags2 & GLW2_DEBUG)
@@ -301,37 +302,38 @@ glw_text_bitmap_layout(glw_t *w, const glw_rctx_t *rc)
      gtb->gtb_state == GTB_VALID) {
 
     int i = gtb->gtb_edit_ptr;
-    int left, right;
+    int left;
     float x1, y1, x2, y2;
 
     if(ti != NULL && ti->ti_charpos != NULL) {
 
       if(i < ti->ti_charposlen) {
 	left  = ti->ti_charpos[i*2  ];
-	right = ti->ti_charpos[i*2+1];
       } else {
 	left  = ti->ti_charpos[2 * ti->ti_charposlen - 1];
-	right = left + 10;
       }
-
-      left  += gtb->gtb_padding[0];
-      right += gtb->gtb_padding[2];
 
     } else {
 
       left = 0;
-      right = 10;
     }
 
-    x1 = -1.0f + 2.0f * left   / (float)rc->rc_width;
-    x2 = -1.0f + 2.0f * right  / (float)rc->rc_width;
-    y1 = -0.9f;
-    y2 =  0.9f;
+    left  += gtb->gtb_padding[0];
+
+    x1 = -1.0f + 2.0f * (left - 1)  / (float)rc->rc_width;
+    x2 = -1.0f + 2.0f * (left    )  / (float)rc->rc_width;
+    y1 = -1.0f + 2.0f * gtb->gtb_padding[3] / (float)rc->rc_height;
+    y2 =  1.0f - 2.0f * gtb->gtb_padding[1] / (float)rc->rc_height;
 
     glw_renderer_vtx_pos(&gtb->gtb_cursor_renderer, 0, x1, y1, 0.0);
     glw_renderer_vtx_pos(&gtb->gtb_cursor_renderer, 1, x2, y1, 0.0);
     glw_renderer_vtx_pos(&gtb->gtb_cursor_renderer, 2, x2, y2, 0.0);
     glw_renderer_vtx_pos(&gtb->gtb_cursor_renderer, 3, x1, y2, 0.0);
+
+    if(w->glw_flags2 & GLW2_DEBUG) {
+      printf("Cursor updated %f %f %f %f  rect:%d,%d\n",
+             x1, y1, x2, y2, rc->rc_width, rc->rc_height);
+    }
 
     gtb->gtb_update_cursor = 0;
   }
@@ -481,6 +483,12 @@ gtb_recompute_constraints_after_padding_change(glw_text_bitmap_t *gtb,
 
   const int ys = w->glw_req_size_y - oldpad[1] - oldpad[3] +
     gtb->gtb_padding[1] + gtb->gtb_padding[3];
+
+  if(gtb->w.glw_flags2 & GLW2_DEBUG)
+    printf("Constraints %c%c %d,%d (padding changed)\n",
+	   flags & GLW_CONSTRAINT_X ? 'X' : ' ',
+	   flags & GLW_CONSTRAINT_Y ? 'Y' : ' ',
+	   xs, ys);
 
   glw_set_constraints(w, xs, ys, 0, flags);
 }
@@ -803,6 +811,7 @@ glw_text_bitmap_ctor(glw_t *w)
   gtb->gtb_color.g = 1.0;
   gtb->gtb_color.b = 1.0;
   gtb->gtb_maxlines = 1;
+  gtb->gtb_update_cursor = 1;
   LIST_INSERT_HEAD(&gr->gr_gtbs, gtb, gtb_global_link);
 }
 
@@ -1200,6 +1209,7 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
     } else {
       int lh = (gtb->gtb_default_size ?: gr->gr_current_size) *
 	gtb->gtb_size_scale;
+      lh += gtb->gtb_padding[1] + gtb->gtb_padding[3];
       glw_set_constraints(&gtb->w, 0, lh, 0, GLW_CONSTRAINT_Y);
     }
   }
