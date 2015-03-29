@@ -117,6 +117,8 @@ search_open(prop_t *page, const char *url0, int sync)
   prop_set(meta, "title", PROP_SET_STRING, title);
 
 
+  prop_set(model, "contents", PROP_SET_STRING, "searchresults");
+
   source = prop_create_r(page, "source");
   prop_t *model_nodes  = prop_create_r(model, "nodes");
   prop_t *source_nodes = prop_create_r(source, "nodes");
