@@ -480,6 +480,12 @@ es_context_create(const char *id, int flags, const char *url,
                   const char *storage)
 {
   es_context_t *ec = calloc(1, sizeof(es_context_t));
+
+  char normalize[PATH_MAX];
+
+  if(!fa_normalize(url, normalize, sizeof(normalize)))
+    url = normalize;
+
   char path[PATH_MAX];
 
   fa_stat_t st;
@@ -489,13 +495,6 @@ es_context_create(const char *id, int flags, const char *url,
     ec->ec_path = strdup(path);
   }
 
-  if(ec->ec_path == NULL) {
-    char normalize[PATH_MAX];
-    if(!fa_normalize(url, normalize, sizeof(normalize)) &&
-       !fa_parent(path, sizeof(path), normalize)) {
-      ec->ec_path = strdup(path);
-    }
-  }
 
   if(ec->ec_path == NULL)
     TRACE(TRACE_ERROR, id,
