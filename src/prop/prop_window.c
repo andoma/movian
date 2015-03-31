@@ -176,6 +176,11 @@ src_cb(void *opaque, prop_event_t event, ...)
     pw_clear(pw);
     break;
 
+  case PROP_HAVE_MORE_CHILDS_YES:
+  case PROP_HAVE_MORE_CHILDS_NO:
+  case PROP_WANT_MORE_CHILDS:
+    break;
+
   default:
     fprintf(stderr, "prop_window can't handle event %d\n", event);
     abort();
