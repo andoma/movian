@@ -23,8 +23,7 @@ id: Disable sleep timer
 msg: 禁用定时关机
 
 id: Exit %s
-# Missing translation
-msg: 
+msg: 退出%s
 
 id: Go to Home screen
 msg: 转至首页
@@ -153,12 +152,10 @@ msg: 视频设置
 # ./glwskins/default/loading.view
 #
 id: %d kb/s
-# Missing translation
-msg: 
+msg: %d kb/s
 
 id: Bitrate:
-# Missing translation
-msg: 
+msg: 码率
 
 #
 # ./glwskins/default/log.view
@@ -248,8 +245,7 @@ msg: 日期
 # ./glwskins/default/pages/iteminfo/plugin.view
 #
 id: %s %s or newer is required
-# Missing translation
-msg: 
+msg: 需要%s %s或更新版本
 
 id: Author: 
 msg: 作者
@@ -346,8 +342,7 @@ msg: 已暂停
 # ./glwskins/default/pages/upgrade.view
 #
 id: %s is up to date
-# Missing translation
-msg: 
+msg: %s已是最新
 
 id: An error occured during download
 msg: 下载失败
@@ -389,8 +384,7 @@ id: Patching %s
 msg: 正在更新%s
 
 id: Restarting %s in %d seconds...
-# Missing translation
-msg: 
+msg: %d秒后重启%s...
 
 id: Retry...
 msg: 重试...
@@ -447,12 +441,10 @@ msg: 用户名
 # ./glwskins/default/popups/resume.view
 #
 id: No, Start over
-# Missing translation
-msg: 
+msg: 不，从头开始
 
 id: Resume %s from %s
-# Missing translation
-msg: 
+msg: 恢复播放%s（上次播放位置%s）
 
 #
 # ./glwskins/default/screensaver.view
@@ -521,11 +513,10 @@ msg: 系统内存偏少(%d kB RAM可用)
 # ./src/arch/ps3/ps3_vdec.c
 #
 id: Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration
-# Missing translation
-msg: 
+msg: Cell-h264: PS3硬件解压不兼容引用帧数为%d的%d。硬件加速将被禁用
 
 id: Cell-h264: Broken headers, Disabling acceleration
-msg: 头信息破损，将禁用硬件加速。
+msg: Cell-h264: 头信息破损，将禁用硬件加速。
 
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
 msg: Cell-h264: 强制级别%d.%d的内容为级别4.2。可能会影响播放。
@@ -546,12 +537,10 @@ msg: 无法查询Cell解码器，错误码0x%x
 # ./src/arch/rpi/rpi_audio.c
 #
 id: 8 Channel PCM
-# Missing translation
-msg: 
+msg: 8声道PCM
 
 id: AC3 Pass-Through
-# Missing translation
-msg: 
+msg: AC3直通
 
 id: Analog
 msg: 模拟
@@ -560,12 +549,10 @@ id: Audio output port
 msg: 音频输出端口
 
 id: Autodetect
-# Missing translation
-msg: 
+msg: 自动检测
 
 id: DTS Pass-Through
-# Missing translation
-msg: 
+msg: DTS直通
 
 id: HDMI
 msg: HDMI
@@ -574,15 +561,13 @@ id: Off
 msg: 关闭
 
 id: On
-# Missing translation
-msg: 
+msg: 启用
 
 #
 # ./src/arch/rpi/rpi_cec.c
 #
 id: Configure communications with your TV
-# Missing translation
-msg: 
+msg: 配置和电视的通讯
 
 id: Consumer Electronics Control
 msg: 消费型电子产品控制
@@ -666,31 +651,25 @@ msg: 种子缓存已使用%d MB，最大允许使用%d MB。总可用空间：%d
 # ./src/backend/bittorrent/fa_torrent.c
 #
 id: Connected peers
-# Missing translation
-msg: 
+msg: 已连接用户
 
 id: Known peers
-# Missing translation
-msg: 
+msg: 已知用户
 
 id: Receiving from
-# Missing translation
-msg: 
+msg: 正接收
 
 id: Torrent leechers
-# Missing translation
-msg: 
+msg: Torrent下载者
 
 id: Torrent seeders
-# Missing translation
-msg: 
+msg: Torrent做种者
 
 #
 # ./src/backend/bittorrent/torrent_settings.c
 #
 id: Clear cache
-# Missing translation
-msg: 
+msg: 清除缓存
 
 id: Enable bittorrent
 msg: 启用bittorrent
@@ -717,12 +696,10 @@ msg: DVD读取错误，重新开始读取光盘
 # ./src/backend/hls/hls.c
 #
 id: Primary
-# Missing translation
-msg: 
+msg: 主
 
 id: Supplementary
-# Missing translation
-msg: 
+msg: 补充
 
 #
 # ./src/backend/htsp/htsp.c
@@ -746,8 +723,7 @@ id: Albums
 msg: 专辑
 
 id: Automatic login on start
-# Missing translation
-msg: 
+msg: 启动时自动登录
 
 id: Collaborative
 msg: 协作
@@ -924,8 +900,7 @@ id: Logon failure
 msg: 登录失败
 
 id: Object name not found
-# Missing translation
-msg: 
+msg: 对象名不存在
 
 #
 # ./src/i18n.c
@@ -1054,8 +1029,7 @@ id: Automatic
 msg: 自动
 
 id: Erase all playback info
-# Missing translation
-msg: 
+msg: 清除所有播放信息
 
 id: Manual
 msg: 手动
@@ -1232,8 +1206,7 @@ id: Automatically upgrade plugins
 msg: 自动更新插件
 
 id: Available plugins
-# Missing translation
-msg: 
+msg: 可用插件
 
 id: Background
 msg: 背景
@@ -1242,8 +1215,7 @@ id: Beta testing passwords
 msg: Beta测试用密码
 
 id: Browse available plugins
-# Missing translation
-msg: 
+msg: 浏览可用插件
 
 id: Browsing
 msg: 浏览
@@ -1267,8 +1239,7 @@ id: Home page
 msg: 首页
 
 id: Installed plugins
-# Missing translation
-msg: 
+msg: 已安装插件
 
 id: Installed version higher than available
 msg: 安装版本比可用版本高
@@ -1361,8 +1332,7 @@ id: Power off system
 msg: 关机
 
 id: Quit
-# Missing translation
-msg: 
+msg: 退出
 
 id: SSH server
 msg: SSH服务器
@@ -1371,8 +1341,7 @@ id: Standby
 msg: 关机
 
 id: Starting and stopping
-# Missing translation
-msg: 
+msg: 启动和关闭
 
 #
 # ./src/sd/sd.c
@@ -1588,8 +1557,7 @@ msg: 视频模式
 # ./src/upgrade.c
 #
 id: %s version %s is available
-# Missing translation
-msg: 
+msg: %s版本%s可更新
 
 id: Notify about upgrades
 msg: 通知版本更新
@@ -1622,12 +1590,10 @@ msg: 未发现服务
 # ./src/video/video_settings.c
 #
 id: Always
-# Missing translation
-msg: 
+msg: 每次
 
 id: Ask
-# Missing translation
-msg: 
+msg: 询问
 
 id: Automatically play next video in list
 msg: 文件播放结束时自动播放列表中的下一个文件
@@ -1645,8 +1611,7 @@ id: Maximum resolution for deinterlacer
 msg: 去隔行化使用最大可能的分辨率
 
 id: Never
-# Missing translation
-msg: 
+msg: 从不
 
 id: No limit
 msg: 无限制
