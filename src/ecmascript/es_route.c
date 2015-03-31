@@ -253,11 +253,10 @@ es_backend_open(duk_context *ctx)
 }
 
 
-/**
- * Showtime object exposed functions
- */
-const duk_function_list_entry fnlist_Showtime_route[] = {
-  { "routeCreate",             es_route_create,      2 },
+static const duk_function_list_entry fnlist_route[] = {
+  { "create",                  es_route_create,      2 },
   { "backendOpen",             es_backend_open,      3 },
   { NULL, NULL, 0}
 };
+
+ES_MODULE("route", fnlist_route);

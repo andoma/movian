@@ -315,7 +315,7 @@ es_db_upgrade_schema(duk_context *ctx)
 /**
  * Showtime object exposed functions
  */
-const duk_function_list_entry fnlist_Showtime_sqlite[] = {
+static const duk_function_list_entry fnlist_sqlite[] = {
   { "create",          es_sqlite_create,         1 },
   { "query",           es_sqlite_query,          DUK_VARARGS },
   { "changes",         es_db_changes,            1 },
@@ -326,3 +326,6 @@ const duk_function_list_entry fnlist_Showtime_sqlite[] = {
   { "upgradeSchema",   es_db_upgrade_schema,     2 },
   { NULL, NULL, 0}
 };
+
+
+ES_MODULE("sqlite", fnlist_sqlite);

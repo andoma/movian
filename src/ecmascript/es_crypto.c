@@ -151,10 +151,11 @@ es_hashFinalize(duk_context *ctx)
 /**
  * Showtime object exposed functions
  */
-const duk_function_list_entry fnlist_Showtime_crypto[] = {
+static const duk_function_list_entry fnlist_crypto[] = {
   { "hashCreate",            es_hashCreate,       1 },
   { "hashUpdate",            es_hashUpdate,       2 },
   { "hashFinalize",          es_hashFinalize,     1 },
   { NULL, NULL, 0}
 };
 
+ES_MODULE("crypto", fnlist_crypto);

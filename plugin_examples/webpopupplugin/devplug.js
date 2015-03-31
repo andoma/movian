@@ -29,7 +29,7 @@ new page.Route("devplug:webtest", function(page) {
   var auth = d.headers['Authentication-Callback'] + '?redirect_to=' + trap;
 
   // Display web flow
-  var o = Showtime.webpopup(auth, "Login and auth TMDB", trap);
+  var o = require('native/popup').webpopup(auth, "Login and auth TMDB", trap);
 
   if(o.result == 'trapped') {
     // We ended up at our trap URL

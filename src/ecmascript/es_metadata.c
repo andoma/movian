@@ -24,6 +24,7 @@
 #include "ecmascript.h"
 #include "metadata/metadata.h"
 #include "metadata/metadata_str.h"
+#include "metadata/playinfo.h"
 #include "prop/prop.h"
 
 
@@ -98,10 +99,28 @@ es_video_metadata_bind_duk(duk_context *ctx)
 }
 
 
+
+
+/**
+ *
+ */
+static int
+es_bind_play_info(duk_context *ctx)
+{
+  struct prop *p = es_stprop_get(ctx, 0);
+  const char *url = duk_to_string(ctx, 1);
+  playinfo_bind_url_to_prop(url, p);
+  return 0;
+}
+
+
 /**
  * Showtime object exposed functions
  */
-const duk_function_list_entry fnlist_Showtime_metadata[] = {
+static const duk_function_list_entry fnlist_metadata[] = {
   { "videoMetadataBind",     es_video_metadata_bind_duk,       3 },
+  { "bindPlayInfo",          es_bind_play_info, 2},
   { NULL, NULL, 0}
 };
+
+ES_MODULE("metadata", fnlist_metadata);

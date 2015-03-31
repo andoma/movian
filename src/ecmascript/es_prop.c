@@ -859,39 +859,38 @@ es_prop_set_clip_range(duk_context *ctx)
   return 0;
 }
 
-/**
- * Showtime object exposed functions
- */
-const duk_function_list_entry fnlist_Showtime_prop[] = {
+static const duk_function_list_entry fnlist_prop[] = {
 
-  { "propPrint",               es_prop_print_duk,             1 },
-  { "propRelease",             es_prop_release_duk,           1 },
-  { "propCreate",              es_prop_create_duk,            0 },
-  { "propGetValue",            es_prop_get_value_duk,         1 },
-  { "propGetName",             es_prop_get_name_duk,          1 },
-  { "propGetChild",            es_prop_get_child_duk,         2 },
-  { "propSet",                 es_prop_set_value_duk,         3 },
-  { "propSetRichStr",          es_prop_set_rich_str_duk,      3 },
-  { "propSetParent",           es_prop_set_parent_duk,        2 },
-  { "propSubscribe",           es_prop_subscribe,             3 },
-  { "propHaveMore",            es_prop_have_more,             2 },
-  { "propMakeUrl",             es_prop_make_url,              1 },
-  { "propGlobal",              es_prop_get_global,            0 },
-  { "propEnum",                es_prop_enum_duk,              1 },
-  { "propHas",                 es_prop_has_duk,               2 },
-  { "propDeleteChild",         es_prop_delete_child_duk,      2 },
-  { "propDeleteChilds",        es_prop_delete_childs_duk,     1 },
-  { "propDestroy",             es_prop_destroy_duk,           1 },
-  { "propSelect",              es_prop_select,                1 },
-  { "propLink",                es_prop_link,                  2 },
-  { "propUnlink",              es_prop_unlink,                1 },
-  { "propSendEvent",           es_prop_send_event,            3 },
-  { "propIsValue",             es_prop_is_value,              1 },
-  { "propAtomicAdd",           es_prop_atomic_add,            2 },
-  { "propIsSame",              es_prop_is_same,               2 },
-  { "propMoveBefore",          es_prop_move_before,           2 },
-  { "propUnloadDestroy",       es_prop_unload_destroy,        1 },
-  { "propIsZombie",            es_prop_is_zombie,             1 },
-  { "propSetClipRange",        es_prop_set_clip_range,        3 },
+  { "print",               es_prop_print_duk,             1 },
+  { "release",             es_prop_release_duk,           1 },
+  { "create",              es_prop_create_duk,            0 },
+  { "getValue",            es_prop_get_value_duk,         1 },
+  { "getName",             es_prop_get_name_duk,          1 },
+  { "getChild",            es_prop_get_child_duk,         2 },
+  { "set",                 es_prop_set_value_duk,         3 },
+  { "setRichStr",          es_prop_set_rich_str_duk,      3 },
+  { "setParent",           es_prop_set_parent_duk,        2 },
+  { "subscribe",           es_prop_subscribe,             3 },
+  { "haveMore",            es_prop_have_more,             2 },
+  { "makeUrl",             es_prop_make_url,              1 },
+  { "global",              es_prop_get_global,            0 },
+  { "enumerate",           es_prop_enum_duk,              1 },
+  { "has",                 es_prop_has_duk,               2 },
+  { "deleteChild",         es_prop_delete_child_duk,      2 },
+  { "deleteChilds",        es_prop_delete_childs_duk,     1 },
+  { "destroy",             es_prop_destroy_duk,           1 },
+  { "select",              es_prop_select,                1 },
+  { "link",                es_prop_link,                  2 },
+  { "unlink",              es_prop_unlink,                1 },
+  { "sendEvent",           es_prop_send_event,            3 },
+  { "isValue",             es_prop_is_value,              1 },
+  { "atomicAdd",           es_prop_atomic_add,            2 },
+  { "isSame",              es_prop_is_same,               2 },
+  { "moveBefore",          es_prop_move_before,           2 },
+  { "unloadDestroy",       es_prop_unload_destroy,        1 },
+  { "isZombie",            es_prop_is_zombie,             1 },
+  { "setClipRange",        es_prop_set_clip_range,        3 },
   { NULL, NULL, 0}
 };
+
+ES_MODULE("prop", fnlist_prop);

@@ -1,12 +1,16 @@
 var prop    = require('showtime/prop');
 
 var cryptodigest = function(algo, str) {
-  var hash = Showtime.hashCreate(algo);
-  Showtime.hashUpdate(hash, str);
-  var digest = Showtime.hashFinalize(hash);
+  var crypto = require('native/crypto');
+  var hash = crypto.hashCreate(algo);
+  crypto.hashUpdate(hash, str);
+  var digest = crypto.hashFinalize(hash);
   return Duktape.enc('hex', digest);
 }
 
+var misc = require('native/misc');
+var string = require('native/string');
+var popup = require('native/popup');
 
 showtime = {
 
@@ -28,27 +32,29 @@ showtime = {
     return require('showtime/http').request(url, c);
   },
 
-  currentVersionInt: Showtime.currentVersionInt,
-  currentVersionString: Showtime.currentVersionString,
-  deviceId: Showtime.deviceId,
+  currentVersionInt: Core.currentVersionInt,
+  currentVersionString: Core.currentVersionString,
+  deviceId: Core.deviceId,
 
   httpReq: function(url, ctrl, cb) {
     return require('showtime/http').request(url, ctrl, cb);
   },
 
-  entityDecode: Showtime.entityDecode,
-  queryStringSplit: Showtime.queryStringSplit,
-  pathEscape: Showtime.pathEscape,
-  paramEscape: Showtime.paramEscape,
-  message: Showtime.message,
-  textDialog: Showtime.textDialog,
-  probe: Showtime.probe,
-  notify: Showtime.notify,
-  durationToString: Showtime.durationToString,
+  entityDecode: string.entityDecode,
+  queryStringSplit: string.queryStringSplit,
+  pathEscape: string.pathEscape,
+  paramEscape: string.paramEscape,
+  durationToString: string.durationToString,
+
+  message: popup.message,
+  textDialog: popup.textDialog,
+  notify: popup.notify,
+
+  probe: misc.probe,
 
   print: print,
   trace: console.log,
-  basename: Showtime.fs.basename,
+  basename: require('native/fs').basename,
 
   sha1digest: function(str) {
     return cryptodigest('sha1', str);
@@ -63,22 +69,22 @@ showtime = {
   },
 
   systemIpAddress: function() {
-      return Showtime.systemIpAddress();
+      return misc.systemIpAddress();
   },
 
-  getSubtitleLanguages: Showtime.getSubtitleLanguages,
+  getSubtitleLanguages: require('native/subtitle').getLanguages,
 
   xmlrpc: function() {
     var a = [];
     for(var i = 2; i < arguments.length; i++)
       a.push(arguments[i]);
     var json = JSON.stringify(a);
-    var x = Showtime.xmlrpc(arguments[0], arguments[1], json);
+    var x = require('native/io').xmlrpc(arguments[0], arguments[1], json);
     return require('showtime/xml').htsmsg(x);
   },
 
   sleep: function(x) {
-      return Showtime.sleep(x);
+      return Core.sleep(x);
   }
 };
 
@@ -122,12 +128,12 @@ var plugin = {
     return this.descriptor;
   },
 
-  getAuthCredentials: Showtime.getAuthCredentials,
+  getAuthCredentials: popup.getAuthCredentials,
 
-  addHTTPAuth: Showtime.httpInspectorCreate,
+  addHTTPAuth: require('native/io').httpInspectorCreate,
 
-  copyFile: Showtime.fs.copyfile,
-  selectView: Showtime.selectView,
+  copyFile: require('native/fs').copyfile,
+  selectView: misc.selectView,
 
   createSettings: function(title, icon, description) {
     var settings = require('showtime/settings');
@@ -135,12 +141,12 @@ var plugin = {
   },
 
   cachePut: function(stash, key, obj, maxage) {
-    Showtime.cachePut('plugin/' + Plugin.id + '/' + stash,
+    misc.cachePut('plugin/' + Plugin.id + '/' + stash,
                       key, JSON.stringify(obj), maxage);
   },
 
   cacheGet: function(stash, key) {
-    var v = Showtime.cacheGet('plugin/' + Plugin.id + '/' + stash, key);
+    var v = misc.cacheGet('plugin/' + Plugin.id + '/' + stash, key);
     return v ? JSON.parse(v) : null;
   },
 
@@ -153,11 +159,11 @@ var plugin = {
   },
 
   addSubtitleProvider: function(fn) {
-    Showtime.subtitleAddProvider(function(root, query, basescore, autosel) {
+    require('native/subtitle').addProvider(function(root, query, basescore, autosel) {
       var req = Object.create(query);
       req.addSubtitle = function(url, title, language, format,
                                  source, score) {
-        Showtime.subtitleAddItem(root, url, title, language, format, source,
+        require('native/subtitle').addItem(root, url, title, language, format, source,
                                  basescore + score, autosel);
       }
       fn(req);

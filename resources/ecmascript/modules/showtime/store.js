@@ -54,7 +54,9 @@ exports.createFromPath = function(path) {
 
 
 exports.create = function(name) {
-  var path = Showtime.storagePath + '/store/' + name;
-  Showtime.fs.mkdirs(Showtime.fs.dirname(path));
+  var path = Core.storagePath + '/store/' + name;
+  var fs = require('native/fs');
+
+  fs.mkdirs(fs.dirname(path));
   return exports.createFromPath(path);
 }

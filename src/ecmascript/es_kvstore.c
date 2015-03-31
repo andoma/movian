@@ -117,14 +117,13 @@ es_kvstore_set(duk_context *ctx)
 }
 
 
-/**
- * Showtime object exposed functions
- */
-const duk_function_list_entry fnlist_Showtime_kvstore[] = {
+static const duk_function_list_entry fnlist_kvstore[] = {
 
-  { "kvstoreGetString",      es_kvstore_get_string,   3},
-  { "kvstoreGetInteger",     es_kvstore_get_int,      4},
-  { "kvstoreGetBoolean",     es_kvstore_get_bool,     4},
-  { "kvstoreSet",            es_kvstore_set,          4},
+  { "getString",      es_kvstore_get_string,   3},
+  { "getInteger",     es_kvstore_get_int,      4},
+  { "getBoolean",     es_kvstore_get_bool,     4},
+  { "set",            es_kvstore_set,          4},
   { NULL, NULL, 0}
 };
+
+ES_MODULE("kvstore", fnlist_kvstore);

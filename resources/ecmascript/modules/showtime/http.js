@@ -45,23 +45,25 @@ function HttpResponse(bytes, headers) {
 
 HttpResponse.prototype.toString = function() {
 
+  var string = require('native/string');
+
   // This function should do the equiv. of what http_response_toString()
   // does in js_io.c
 
   var cs = (/.*charset=(.*)/.exec(this.contenttype) || [])[1];
 
   if(cs)   // A character set was set in the HTTP header contenttype header
-    return Showtime.utf8FromBytes(this.bytes, cs);
+    return string.utf8FromBytes(this.bytes, cs);
 
-  if(Showtime.isUtf8(this.bytes))
+  if(string.isUtf8(this.bytes))
     // Data validates as UTF-8, return it
     return this.bytes.toString();
 
-  return Showtime.utf8FromBytes(this.bytes);
+  return string.utf8FromBytes(this.bytes);
 }
 
 HttpResponse.prototype.convertFromEncoding = function(encoding) {
-  return Showtime.utf8FromBytes(this.bytes, encoding);
+  return require('native/string').utf8FromBytes(this.bytes, encoding);
 }
 
 
@@ -84,9 +86,11 @@ exports.request = function(url, ctrl, callback) {
   }
 
 
+  var io = require('native/io')
+
   if(callback) {
 
-    Showtime.httpReq(url, ctrl || {}, function(err, res) {
+    io.httpReq(url, ctrl || {}, function(err, res) {
       if(err)
         callback(err, null);
       else
@@ -94,6 +98,6 @@ exports.request = function(url, ctrl, callback) {
     });
     return;
   }
-  var res = Showtime.httpReq(url, ctrl || {});
+  var res = io.httpReq(url, ctrl || {});
   return new HttpResponse(res.buffer, res.responseheaders);
 }

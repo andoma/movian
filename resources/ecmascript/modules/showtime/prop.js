@@ -4,10 +4,12 @@
  * This code interacts tightly with the code in src/ecmascript/es_prop.c
  *
  * The general idea is that the native object (those accessed by
- * Showtime.propXXX) are not to be exposed to Javascript code directly.
+ * np.*) are not to be exposed to Javascript code directly.
  * But may only be passed as a proxied object
  *
  */
+
+var np = require('native/prop');
 
 
 /**
@@ -18,14 +20,14 @@ var propHandler = {
   get: function(obj, name) {
 
     if(name == 'toString') return function() {
-      return String(Showtime.propGetValue(obj));
+      return String(np.getValue(obj));
     }
 
     if(name == 'valueOf') return function() {
-      return Showtime.propGetValue(obj);
+      return np.getValue(obj);
     }
 
-    return makeProp(Showtime.propGetChild(obj, name));
+    return makeProp(np.getChild(obj, name));
   },
 
   set: function(obj, name, value) {
@@ -33,16 +35,16 @@ var propHandler = {
     if(typeof value == 'object' && value !== null) {
 
       if('toRichString' in value) {
-        Showtime.propSetRichStr(obj, name, value.toRichString());
+        np.setRichStr(obj, name, value.toRichString());
         return;
       }
 
-      if(Showtime.propIsValue(value)) {
-        Showtime.propSet(obj, name, Showtime.propGetValue(value));
+      if(np.isValue(value)) {
+        np.set(obj, name, np.getValue(value));
         return;
       }
 
-      var x = Showtime.propGetChild(obj, name);
+      var x = np.getChild(obj, name);
       if(typeof x !== 'object')
         throw "Assignment to non directory prop";
 
@@ -51,13 +53,13 @@ var propHandler = {
         x[i] = value[i];
 
     } else {
-      Showtime.propSet(obj, name, value);
+      np.set(obj, name, value);
     }
   },
 
-  enumerate: Showtime.propEnum,
-  has: Showtime.propHas,
-  deleteProperty: Showtime.propDeleteChild
+  enumerate: np.enumerate,
+  has: np.has,
+  deleteProperty: np.deleteChild
 }
 
 
@@ -83,37 +85,20 @@ function makeValue(type, v1, v2) {
   }
 }
 
+exports.__proto__ = np;
 
 /**
  * Exported members
  */
-exports.global = makeProp(Showtime.propGlobal());
-
-/*-------------------------------------------------------------------------
- * Exported functions
- */
-exports.print = Showtime.propPrint;
-
-exports.setParent = Showtime.propSetParent;
-
-exports.subscribe = Showtime.propSubscribe;
-exports.deleteChilds = Showtime.propDeleteChilds;
+exports.global = makeProp(np.global());
+exports.makeProp = makeProp;
 
 exports.createRoot = function() {
-  return makeProp(Showtime.propCreate());
+  return makeProp(np.create());
 }
 
-exports.select = Showtime.propSelect;
-exports.getName = Showtime.propGetName;
-exports.link = Showtime.propLink;
-exports.unlink = Showtime.propUnlink;
-exports.sendEvent = Showtime.propSendEvent;
-exports.atomicAdd = Showtime.propAtomicAdd;
-exports.destroy = Showtime.propDestroy;
-exports.isSame = Showtime.propIsSame;
-
 exports.subscribeValue = function(prop, callback, ctrl) {
-  return Showtime.propSubscribe(prop, function(type, v1, v2) {
+  return np.subscribe(prop, function(type, v1, v2) {
 
     if(type == 'destroyed')
       return;
@@ -121,16 +106,3 @@ exports.subscribeValue = function(prop, callback, ctrl) {
     callback.apply(null, makeValue(type, v1, v2));
   }, ctrl);
 }
-
-
-exports.makeProp = makeProp;
-
-exports.makeUrl = Showtime.propMakeUrl;
-
-exports.moveBefore = Showtime.propMoveBefore;
-
-exports.unloadDestroy = Showtime.propUnloadDestroy;
-
-exports.isZombie = Showtime.propIsZombie;
-
-exports.setClipRange = Showtime.propSetClipRange;

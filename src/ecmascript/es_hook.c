@@ -151,10 +151,9 @@ es_hook_register(duk_context *ctx)
 }
 
 
-/**
- * mutex object exposed functions
- */
-const duk_function_list_entry fnlist_Showtime_hook[] = {
-  { "hookRegister",         es_hook_register,      2 },
+static const duk_function_list_entry fnlist_hook[] = {
+  { "register",         es_hook_register,      2 },
   { NULL, NULL, 0}
 };
+
+ES_MODULE("hook", fnlist_hook);

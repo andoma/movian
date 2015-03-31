@@ -263,23 +263,28 @@ void es_hash_release(struct es_hash *);
     }                                                           \
   } while(0)
 
-/**
- * Function definitions
- */
-extern const duk_function_list_entry fnlist_Showtime_service[];
-extern const duk_function_list_entry fnlist_Showtime_route[];
-extern const duk_function_list_entry fnlist_Showtime_hook[];
-extern const duk_function_list_entry fnlist_Showtime_prop[];
-extern const duk_function_list_entry fnlist_Showtime_io[];
-extern const duk_function_list_entry fnlist_Showtime_fs[];
-extern const duk_function_list_entry fnlist_Showtime_string[];
-extern const duk_function_list_entry fnlist_Showtime_htsmsg[];
-extern const duk_function_list_entry fnlist_Showtime_metadata[];
-extern const duk_function_list_entry fnlist_Showtime_sqlite[];
-extern const duk_function_list_entry fnlist_Showtime_misc[];
-extern const duk_function_list_entry fnlist_Showtime_crypto[];
-extern const duk_function_list_entry fnlist_Showtime_console[];
-extern const duk_function_list_entry fnlist_Showtime_kvstore[];
-extern const duk_function_list_entry fnlist_Showtime_subtitles[];
 
-extern const duk_function_list_entry fnlist_Global_timer[];
+/**
+ * Native modules
+ */
+typedef struct ecmascript_module {
+  LIST_ENTRY(ecmascript_module) link;
+  const char *name;
+  const duk_function_list_entry *functions;
+} ecmascript_module_t;
+
+void ecmascript_register_module(ecmascript_module_t *m);
+
+#define ES_MODULE(nam, fn)                                        \
+  static ecmascript_module_t HTS_JOIN(esmoduledef, __LINE__) = {  \
+    .name = nam,                                                  \
+    .functions = fn                                               \
+  };                                                              \
+  INITIALIZER(HTS_JOIN(esmoduledefinit, __LINE__))                \
+  { ecmascript_register_module(&HTS_JOIN(esmoduledef, __LINE__));}
+
+/**
+ * Global functions
+ */
+extern const duk_function_list_entry es_fnlist_timer[];
+extern const duk_function_list_entry es_fnlist_console[];

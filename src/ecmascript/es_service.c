@@ -129,9 +129,10 @@ es_service_enable(duk_context *ctx)
 
 
 
-const duk_function_list_entry fnlist_Showtime_service[] = {
-
-  { "serviceCreate",           es_service_create,      6 },
-  { "serviceEnable",           es_service_enable,      2 },
+static const duk_function_list_entry fnlist_service[] = {
+  { "create",           es_service_create,      6 },
+  { "enable",           es_service_enable,      2 },
   { NULL, NULL, 0}
 };
+
+ES_MODULE("service", fnlist_service);

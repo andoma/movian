@@ -40,7 +40,7 @@ es_console_log(duk_context *ctx)
 /**
  * Showtime object exposed functions
  */
-const duk_function_list_entry fnlist_Showtime_console[] = {
+const duk_function_list_entry es_fnlist_console[] = {
   { "log",                      es_console_log,           1 },
   { NULL, NULL, 0}
 };

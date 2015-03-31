@@ -1,10 +1,12 @@
 
+var sqlite = require('native/sqlite');
+
 exports.DB = function(dbname) {
-  this.db = Showtime.sqlite.create(dbname);
+  this.db = sqlite.create(dbname);
 }
 
 exports.DB.prototype.close = function() {
-  Showtime.resourceDestroy(this.db);
+  Core.resourceDestroy(this.db);
 }
 
 exports.DB.prototype.query = function() {
@@ -14,28 +16,28 @@ exports.DB.prototype.query = function() {
     args[i] = arguments[i];
   args.unshift(this.db);
 
-  Showtime.sqlite.query.apply(null, args);
+  sqlite.query.apply(null, args);
 }
 
 exports.DB.prototype.step = function() {
-  return Showtime.sqlite.step(this.db);
+  return sqlite.step(this.db);
 }
 
 
 exports.DB.prototype.upgradeSchema = function(path) {
-  return Showtime.sqlite.upgradeSchema(this.db, path);
+  return sqlite.upgradeSchema(this.db, path);
 }
 
 
 Object.defineProperties(exports.DB.prototype, {
   lastRowId: {
-    get: function() { return Showtime.sqlite.lastRowId(this.db) }
+    get: function() { return sqlite.lastRowId(this.db) }
   },
   lastErrorString: {
-    get: function() { return Showtime.sqlite.lastErrorString(this.db) }
+    get: function() { return sqlite.lastErrorString(this.db) }
   },
   lastErrorCode: {
-    get: function() { return Showtime.sqlite.lastErrorCode(this.db) }
+    get: function() { return sqlite.lastErrorCode(this.db) }
   }
 
 });

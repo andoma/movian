@@ -1,7 +1,9 @@
 
+var htsmsg = require('native/htsmsg');
+
 function getfield(obj, key)
 {
-  var v = Showtime.htsmsgGet(obj.msg, key);
+  var v = htsmsg.get(obj.msg, key);
   if(v === undefined)
     return undefined;
   if('msg' in v)
@@ -26,7 +28,7 @@ var htsmsgHandler = {
 
     if(name == 'dump') {
       return function() {
-        Showtime.htsmsgPrint(obj.msg);
+        htsmsg.print(obj.msg);
       }
     }
 
@@ -36,11 +38,11 @@ var htsmsgHandler = {
 
     if(name == 'filterNodes') {
       return function(filter) {
-        var count = Showtime.htsmsgLength(obj.msg);
+        var count = htsmsg.length(obj.msg);
         var ret = [];
 
         for(var i = 0; i < count; i++) {
-          if(Showtime.htsmsgGetName(obj.msg, i) == filter) {
+          if(htsmsg.getName(obj.msg, i) == filter) {
             ret.push(getfield(obj, i));
           }
         }
@@ -49,13 +51,13 @@ var htsmsgHandler = {
     }
 
     if(name == 'length')
-      return Showtime.htsmsgLength(obj.msg);
+      return htsmsg.length(obj.msg);
 
     return getfield(obj, name);
   },
 
   enumerate: function(obj) {
-    return obj.msg ? Showtime.htsmsgEnumerate(obj.msg) : [];
+    return obj.msg ? htsmsg.enumerate(obj.msg) : [];
   },
 
   has: function(obj, name) {
@@ -65,7 +67,7 @@ var htsmsgHandler = {
 
 
 exports.parse = function(str) {
-  var x = Showtime.htsmsgCreateFromXML(str);
+  var x = htsmsg.createFromXML(str);
   return new Proxy({msg: x}, htsmsgHandler);
 }
 

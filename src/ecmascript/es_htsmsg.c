@@ -206,17 +206,16 @@ es_htsmsg_print_duk(duk_context *ctx)
 }
 
 
-/**
- * Showtime object exposed functions
- */
-const duk_function_list_entry fnlist_Showtime_htsmsg[] = {
+static const duk_function_list_entry fnlist_htsmsg[] = {
 
-  { "htsmsgCreateFromXML",     es_htsmsg_create_from_xml_duk, 1 },
-  { "htsmsgGet",               es_htsmsg_get_value_duk,       2 },
-  { "htsmsgEnumerate",         es_htsmsg_enumerate_duk,       1 },
-  { "htsmsgLength",            es_htsmsg_length_duk,          1 },
-  { "htsmsgGetName",           es_htsmsg_get_name_duk,        2 },
-  { "htsmsgPrint",             es_htsmsg_print_duk,           1 },
+  { "createFromXML",     es_htsmsg_create_from_xml_duk, 1 },
+  { "get",               es_htsmsg_get_value_duk,       2 },
+  { "enumerate",         es_htsmsg_enumerate_duk,       1 },
+  { "length",            es_htsmsg_length_duk,          1 },
+  { "getName",           es_htsmsg_get_name_duk,        2 },
+  { "print",             es_htsmsg_print_duk,           1 },
 
   { NULL, NULL, 0}
 };
+
+ES_MODULE("htsmsg", fnlist_htsmsg);

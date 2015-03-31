@@ -274,9 +274,11 @@ es_getsubtitlelanguages(duk_context *ctx)
 /**
  * Showtime object exposed functions
  */
-const duk_function_list_entry fnlist_Showtime_subtitles[] = {
-  { "subtitleAddProvider",     es_subtitleprovideradd,       3 },
-  { "subtitleAddItem",         es_subtitleadditem,           8 },
-  { "getSubtitleLanguages",    es_getsubtitlelanguages,      0 },
+static const duk_function_list_entry fnlist_subtitle[] = {
+  { "addProvider",     es_subtitleprovideradd,       3 },
+  { "addItem",         es_subtitleadditem,           8 },
+  { "getLanguages",    es_getsubtitlelanguages,      0 },
   { NULL, NULL, 0}
 };
+
+ES_MODULE("subtitle", fnlist_subtitle);

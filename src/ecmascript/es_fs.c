@@ -355,12 +355,7 @@ es_file_copy(duk_context *ctx)
   return 1;
 }
 
-
-
-/**
- * Showtime object exposed functions
- */
-const duk_function_list_entry fnlist_Showtime_fs[] = {
+static const duk_function_list_entry fnlist_fs[] = {
   { "open",             es_file_open,             3 },
   { "read",             es_file_read,             5 },
   { "write",            es_file_write,            5 },
@@ -373,3 +368,5 @@ const duk_function_list_entry fnlist_Showtime_fs[] = {
   { "copyfile",         es_file_copy,             2 },
   { NULL, NULL, 0}
 };
+
+ES_MODULE("fs", fnlist_fs);

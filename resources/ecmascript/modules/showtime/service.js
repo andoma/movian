@@ -10,22 +10,23 @@ function Service(id) {
     },
     enabled: {
       set: function(val) {
-        Showtime.serviceEnable(this.id, val);
+        require('native/service').enable(this.id, val);
       },
       get: function() {
-        return Showtime.serviceEnable(this.id);
+        require('native/service').enable(this.id);
       }
     }
   });
 }
 
 Service.prototype.destroy = function() {
-  Showtime.resourceDestroy(this.id);
+  Core.resourceDestroy(this.id);
 }
 
 
 exports.create = function(title, url, type, enabled, icon) {
-  return new Service(Showtime.serviceCreate("plugin:" + Plugin.id, title, url,
-                                            type, enabled, icon));
+  var s = require('native/service');
+  return new Service(s.create("plugin:" + Plugin.id, title, url,
+                              type, enabled, icon));
 
 }

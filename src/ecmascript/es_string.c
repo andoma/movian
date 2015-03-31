@@ -148,10 +148,143 @@ es_utf8_from_bytes_duk(duk_context *duk)
 
 
 /**
- * Showtime object exposed functions
+ *
  */
-const duk_function_list_entry fnlist_Showtime_string[] = {
-  { "isUtf8",                   es_is_utf8_duk,           1 },
-  { "utf8FromBytes",            es_utf8_from_bytes_duk,   2 },
+static int
+es_entitydecode(duk_context *ctx)
+{
+  char *out = strdup(duk_safe_to_string(ctx, 0));
+  html_entities_decode(out);
+  duk_push_string(ctx, out);
+  free(out);
+  return 1;
+}
+
+
+/**
+ *
+ */
+static int
+es_queryStringSplit(duk_context *ctx)
+{
+  const char *str = duk_safe_to_string(ctx, 0);
+  char *s0, *s;
+  duk_push_object(ctx);
+
+  s0 = s = strdup(str);
+
+  while(s) {
+
+    char *k = s;
+    char *v = strchr(s, '=');
+    if(v == NULL)
+      break;
+
+    *v++ = 0;
+
+    if((s = strchr(v, '&')) != NULL)
+      *s++ = 0;
+
+    k = strdup(k);
+    v = strdup(v);
+
+    url_deescape(k);
+    url_deescape(v);
+
+    duk_push_string(ctx, v);
+    duk_put_prop_string(ctx, -2, k);
+    free(k);
+    free(v);
+  }
+  free(s0);
+  return 1;
+}
+
+
+/**
+ *
+ */
+static int
+es_escape(duk_context *ctx, int how)
+{
+  const char *str = duk_safe_to_string(ctx, 0);
+
+  size_t len = url_escape(NULL, 0, str, how);
+  char *r = malloc(len);
+  url_escape(r, len, str, how);
+
+  duk_push_lstring(ctx, r, len - 1);
+  free(r);
+  return 1;
+}
+
+/**
+ *
+ */
+static int
+es_pathEscape(duk_context *ctx)
+{
+  return es_escape(ctx, URL_ESCAPE_PATH);
+}
+
+
+/**
+ *
+ */
+static int
+es_paramEscape(duk_context *ctx)
+{
+  return es_escape(ctx, URL_ESCAPE_PARAM);
+}
+
+/**
+ *
+ */
+static int
+es_durationtostring(duk_context *ctx)
+{
+  int s = duk_to_uint(ctx, 0);
+  char tmp[32];
+  int m = s / 60;
+  int h = s / 3600;
+  if(h > 0) {
+    snprintf(tmp, sizeof(tmp), "%d:%02d:%02d", h, m % 60, s % 60);
+  } else {
+    snprintf(tmp, sizeof(tmp), "%d:%02d", m % 60, s % 60);
+  }
+  duk_push_string(ctx, tmp);
+  return 1;
+}
+
+
+/**
+ *
+ */
+static int
+es_parseTime(duk_context *ctx)
+{
+  time_t t;
+  const char *str = duk_require_string(ctx, 0);
+  if(http_ctime(&t, str))
+    duk_error(ctx, DUK_ERR_ERROR, "Invalid time: %s", str);
+  duk_push_number(ctx, t * 1000ULL); // Convert to ms
+  return 1;
+
+}
+
+
+
+
+static const duk_function_list_entry fnlist_string[] = {
+  { "isUtf8",                es_is_utf8_duk,           1 },
+  { "utf8FromBytes",         es_utf8_from_bytes_duk,   2 },
+  { "entityDecode",          es_entitydecode,          1 },
+  { "queryStringSplit",      es_queryStringSplit,      1 },
+  { "pathEscape",            es_pathEscape,            1 },
+  { "paramEscape",           es_paramEscape,           1 },
+  { "durationToString",      es_durationtostring,      1 },
+  { "parseTime",             es_parseTime,             1 },
   { NULL, NULL, 0}
 };
+
+ES_MODULE("string", fnlist_string);

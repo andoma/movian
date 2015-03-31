@@ -267,9 +267,9 @@ exports.globalSettings = function(id, title, icon, desc) {
 
   this.__proto__ = sp;
 
-  var basepath = Showtime.storagePath + '/settings';
+  var basepath = Core.storagePath + '/settings';
 
-  Showtime.fs.mkdirs(basepath);
+  require('native/fs').mkdirs(basepath);
 
   this.id = id;
 
@@ -316,17 +316,19 @@ exports.kvstoreSettings = function(nodes, url, domain) {
     if(!persistent)
       return def;
 
+    var kvstore = require('native/kvstore');
+
     if(type == 'int')
-      return Showtime.kvstoreGetInteger(url, domain, id, def);
+      return kvstore.etInteger(url, domain, id, def);
     else if(type == 'bool')
-      return Showtime.kvstoreGetBoolean(url, domain, id, def);
+      return kvstore.getBoolean(url, domain, id, def);
     else
-      return Showtime.kvstoreGetString(url, domain, id) || def;
+      return kvstore.getString(url, domain, id) || def;
   };
 
   this.setvalue = function(id, value, persistent) {
     if(persistent)
-      Showtime.kvstoreSet(url, domain, id, value);
+      kvstore.set(url, domain, id, value);
   };
 }
 
