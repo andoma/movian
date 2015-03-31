@@ -191,7 +191,8 @@ glw_text_bitmap_layout(glw_t *w, const glw_rctx_t *rc)
     gtb->gtb_need_layout = 1;
 
     if(gtb->w.glw_flags2 & GLW2_DEBUG)
-      printf("   parent widget gives us :%d x %d\n", rc->rc_width, rc->rc_height);
+      printf("  textbitmap: Parent widget gives us :%d x %d ti=%p\n",
+             rc->rc_width, rc->rc_height, ti);
 
   }
 
@@ -209,10 +210,20 @@ glw_text_bitmap_layout(glw_t *w, const glw_rctx_t *rc)
 
     float x1, y1, x2, y2;
 
+    if(gtb->w.glw_flags2 & GLW2_DEBUG)
+      printf("  textbitmap: text_width:%d left:%d right:%d margin:%d\n",
+             text_width, left, right, margin);
+
     // Horizontal
     if(text_width > right - left || ti->ti_flags & IMAGE_TEXT_TRUNCATED) {
+
       // Oversized, must cut
+
       text_width = right - left;
+
+      if(gtb->w.glw_flags2 & GLW2_DEBUG)
+        printf("  textbitmap: Oversized, must cut. Width is now %d\n",
+               text_width);
 
       if(!(gtb->gtb_flags & GTB_ELLIPSIZE)) {
 	glw_renderer_vtx_col(&gtb->gtb_text_renderer, 0, 1,1,1,1+text_width/20);
@@ -284,6 +295,9 @@ glw_text_bitmap_layout(glw_t *w, const glw_rctx_t *rc)
 
     const float s = text_width  / (float)tex_width;
     const float t = text_height / (float)tex_height;
+
+    if(gtb->w.glw_flags2 & GLW2_DEBUG)
+      printf("  s=%f t=%f\n", s, t);
 
     glw_renderer_vtx_pos(&gtb->gtb_text_renderer, 0, x1, y1, 0.0);
     glw_renderer_vtx_st (&gtb->gtb_text_renderer, 0, 0, t);
@@ -460,7 +474,7 @@ gtb_set_constraints(glw_root_t *gr, glw_text_bitmap_t *gtb,
     flags |= GLW_CONSTRAINT_X;
 
   if(gtb->w.glw_flags2 & GLW2_DEBUG)
-    printf("Constraints %c%c %d,%d\n",
+    printf("Textbitmap constraints %c%c %d,%d\n",
 	   flags & GLW_CONSTRAINT_X ? 'X' : ' ',
 	   flags & GLW_CONSTRAINT_Y ? 'Y' : ' ',
 	   xs, ys);
@@ -1106,7 +1120,7 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
       gtb->gtb_saved_width - gtb->gtb_padding[0] - gtb->gtb_padding[2];
   }
   if(gtb->w.glw_flags2 & GLW2_DEBUG)
-    printf("   max_width=%d\n", max_width);
+    printf("  Max_width=%d\n", max_width);
 
   max_lines = gtb->gtb_maxlines;
 
@@ -1159,7 +1173,7 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
     font = rstr_dup(gr->gr_default_font);
 
   if(gtb->w.glw_flags2 & GLW2_DEBUG)
-    printf("Font is %s\n", rstr_get(font));
+    printf("  Font is %s\n", rstr_get(font));
 
   /* gtb (i.e the widget) may be destroyed directly after we unlock,
      so we can't access it after this point. We can hold a reference
@@ -1191,6 +1205,10 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
   glw_unref(&gtb->w);
 
   glw_need_refresh(gr, 0);
+
+  if(gtb->w.glw_flags2 & GLW2_DEBUG)
+    printf("  Returned image is %d x %d margin:%d\n",
+           im->im_width, im->im_height, im->im_margin);
 
   if(gtb->gtb_state == GTB_RENDERING) {
     gtb->gtb_state = GTB_VALID;
