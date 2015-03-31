@@ -27,6 +27,7 @@ typedef struct glw_container {
   float weight_sum;
 
   int16_t width;
+  int16_t spacing_width;
   int16_t height;
   int16_t co_padding[4];
   int16_t co_spacing;
@@ -110,15 +111,16 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
   if(co->w.glw_flags2 & GLW2_HOMOGENOUS)
     width += numfix * co->co_biggest;
 
-  if(elements > 0)
-    width += (elements - 1) * co->co_spacing;
+  int16_t spacing_width = elements > 0 ? (elements - 1) * co->co_spacing : 0;
 
-  if(co->weight_sum != weight ||
-     co->width      != width  ||
-     co->cflags     != cflags) {
+  if(co->weight_sum    != weight ||
+     co->width         != width  ||
+     co->spacing_width != spacing_width  ||
+     co->cflags        != cflags) {
 
     co->weight_sum = weight;
     co->width = width;
+    co->spacing_width = spacing_width;
     co->cflags = cflags;
     glw_need_refresh(co->w.glw_root, 0);
   }
@@ -126,7 +128,7 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
 
   height += co->co_padding[3] + co->co_padding[1];
 
-  glw_set_constraints(&co->w, width, height, 0, cflags);
+  glw_set_constraints(&co->w, width + spacing_width, height, 0, cflags);
   return 1;
 }
 
@@ -139,7 +141,7 @@ glw_container_x_layout(glw_t *w, const glw_rctx_t *rc)
 {
   glw_container_t *co = (glw_container_t *)w;
   glw_t *c;
-  int width = co->width;
+  int aspect_width = 0;          // Width used by aspect constraints
   float IW;
   int weightavail;  // Pixels available for weighted childs
   float pos;        // Current position
@@ -152,37 +154,52 @@ glw_container_x_layout(glw_t *w, const glw_rctx_t *rc)
 
   rc0 = *rc;
 
+  if(w->glw_flags2 & GLW2_DEBUG) {
+    printf("%d x %d\n", rc->rc_width, rc->rc_height);
+  }
+
   rc0.rc_height = rc->rc_height - co->co_padding[1] - co->co_padding[3];
 
   if(co->co_using_aspect) {
     // If any of our childs wants a fixed aspect we need to compute
     // the total width those will consume
+
     TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
       int f = glw_filter_constraints(c);
       float w = (f & GLW_CONSTRAINT_W ? c->glw_req_weight : 1.0f);
       if(w < 0)
-	width += rc0.rc_height * -w;
+	aspect_width += rc0.rc_height * -w;
     }
+
   }
 
-  if(width > rc->rc_width) {
+  if(w->glw_flags2 & GLW2_DEBUG) {
+    printf("Widthsum: xconstraints:%d aspect:%d spacing:%d\n",
+           co->width, aspect_width, co->spacing_width);
+  }
+
+  if(co->width + aspect_width + co->spacing_width > rc->rc_width) {
     // Requested pixel size > available width, must scale
     weightavail = 0;
-    fixscale = (float)rc->rc_width / width;
+    fixscale = (float)(rc->rc_width - aspect_width - co->spacing_width) /
+      co->width;
     pos = co->co_padding[0] * fixscale;
   } else {
     fixscale = 1;
 
-    weightavail = rc->rc_width - width;  // Pixels available for weighted childs
+    int wsum = co->width + aspect_width + co->spacing_width;
+
+    weightavail = rc->rc_width - wsum;
+    // Pixels available for weighted childs
 
     pos = co->co_padding[0];
 
     if(co->weight_sum == 0) {
 
       if(co->w.glw_alignment == LAYOUT_ALIGN_CENTER) {
-	pos = rc->rc_width / 2 - width / 2;
+	pos = rc->rc_width / 2 - wsum / 2;
       } else if(co->w.glw_alignment == LAYOUT_ALIGN_RIGHT) {
-	pos = rc->rc_width - width;
+	pos = rc->rc_width - wsum;
       }
     }
   }
@@ -220,6 +237,9 @@ glw_container_x_layout(glw_t *w, const glw_rctx_t *rc)
     right = rintf(pos);
     
     rc0.rc_width = right - left;
+    if(w->glw_flags2 & GLW2_DEBUG) {
+      printf("    child get %d spacing:%d\n", rc0.rc_width, co->co_spacing);
+    }
 
     glw_container_item_t *cd = glw_parent_data(c, glw_container_item_t);
 
