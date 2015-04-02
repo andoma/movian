@@ -163,7 +163,13 @@ function Page(root, sync, flat) {
     source: {
       get: function()  { return root.source; },
       set: function(v) { root.source = v; }
+    },
+
+    entries: {
+      get: function()  { return root.entries; },
+      set: function(v) { root.entries = v; }
     }
+
   });
 
   if(!flat) {
@@ -234,7 +240,6 @@ Page.prototype.getItems = function() {
 
 
 Page.prototype.appendItem = function(url, type, metadata) {
-  this.root.entries++;
 
   var item = new Item(this);
   this.items.push(item);
@@ -283,7 +288,6 @@ Page.prototype.appendAction = function(type, data, enabled, metadata) {
 }
 
 Page.prototype.appendPassiveItem = function(type, data, metadata) {
-  this.root.entries++;
 
   var item = new Item(this);
   this.items.push(item);
