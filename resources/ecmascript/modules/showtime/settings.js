@@ -319,7 +319,7 @@ exports.kvstoreSettings = function(nodes, url, domain) {
     var kvstore = require('native/kvstore');
 
     if(type == 'int')
-      return kvstore.etInteger(url, domain, id, def);
+      return kvstore.getInteger(url, domain, id, def);
     else if(type == 'bool')
       return kvstore.getBoolean(url, domain, id, def);
     else
