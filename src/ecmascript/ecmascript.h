@@ -34,18 +34,31 @@ struct prop_vec;
 #define ST_ERROR_SQLITE_BASE 0x10000
 
 
-typedef enum {
-  ES_NATIVE_PROP = 1,
-  ES_NATIVE_RESOURCE,
-  ES_NATIVE_HTSMSG,
-  ES_NATIVE_HASH,
-
-} es_native_type_t;
-
-
-
 LIST_HEAD(es_resource_list, es_resource);
 LIST_HEAD(es_context_list, es_context);
+
+
+
+/**
+ * Native class
+ */
+typedef struct ecmascript_native_class {
+  const char *name;
+  int id;
+  void (*release)(void *ptr);
+} ecmascript_native_class_t;
+
+void ecmascript_register_native_class(ecmascript_native_class_t *c);
+
+#define ES_NATIVE_CLASS(nam, fn)                                  \
+  ecmascript_native_class_t HTS_JOIN(es_native_, nam) = {   \
+    .name = #nam,                                                  \
+    .release = (void *)fn                                         \
+  };                                                              \
+  INITIALIZER(HTS_JOIN(esnativeclassdefinit, __LINE__))                \
+  { ecmascript_register_native_class(&HTS_JOIN(es_native_, nam));}
+
+
 
 
 /**
@@ -129,12 +142,14 @@ void es_stprop_push(duk_context *ctx, struct prop *p);
  * Native object wrapping
  */
 
-void *es_get_native_obj(duk_context *ctx, int obj_idx, es_native_type_t type);
+void *es_get_native_obj(duk_context *ctx, int obj_idx,
+                        ecmascript_native_class_t *c);
 
 void *es_get_native_obj_nothrow(duk_context *ctx, int obj_idx,
-                                es_native_type_t wanted_type);
+                                ecmascript_native_class_t *c);
 
-int es_push_native_obj(duk_context *ctx, es_native_type_t type, void *ptr);
+int es_push_native_obj(duk_context *ctx, ecmascript_native_class_t *c,
+                       void *ptr);
 
 /**
  * Resources
@@ -242,17 +257,9 @@ void ecmascript_search(struct prop *model, const char *query,
 /**
  * Hooks
  */
-
 int es_hook_invoke(const char *type,
                    int (*push_args)(duk_context *duk, void *opaque),
                    void *opaque);
-
-/**
- * Crypto
- */
-struct es_hash;
-void es_hash_release(struct es_hash *);
-
 
 /**
  *

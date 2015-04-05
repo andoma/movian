@@ -42,7 +42,7 @@ typedef struct es_hash {
 } es_hash_t;
 
 
-void
+static void
 es_hash_release(struct es_hash *eh)
 {
   switch(eh->mode) {
@@ -57,6 +57,7 @@ es_hash_release(struct es_hash *eh)
 }
 
 
+ES_NATIVE_CLASS(hash, &es_hash_release);
 
 /**
  *
@@ -91,7 +92,7 @@ es_hashCreate(duk_context *ctx)
     free(eh);
     duk_error(ctx, DUK_ERR_ERROR, "Unknown hash algo %s", algo);
   }
-  es_push_native_obj(ctx, ES_NATIVE_HASH, eh);
+  es_push_native_obj(ctx, &es_native_hash, eh);
   return 1;
 }
 
@@ -102,7 +103,7 @@ es_hashCreate(duk_context *ctx)
 static int
 es_hashUpdate(duk_context *ctx)
 {
-  es_hash_t *eh = es_get_native_obj(ctx, 0, ES_NATIVE_HASH);
+  es_hash_t *eh = es_get_native_obj(ctx, 0, &es_native_hash);
   duk_size_t bufsize;
   const void *buf;
   if(duk_is_buffer(ctx, 1)) {
@@ -130,7 +131,7 @@ es_hashUpdate(duk_context *ctx)
 static int
 es_hashFinalize(duk_context *ctx)
 {
-  es_hash_t *eh = es_get_native_obj(ctx, 0, ES_NATIVE_HASH);
+  es_hash_t *eh = es_get_native_obj(ctx, 0, &es_native_hash);
 
   void *digest = duk_push_buffer(ctx, eh->digest_len, 0);
 

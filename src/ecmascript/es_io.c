@@ -33,6 +33,8 @@
 #include "backend/backend.h"
 #include "api/xmlrpc.h"
 
+extern ecmascript_native_class_t es_native_htsmsg;
+
 /**
  *
  */
@@ -732,7 +734,7 @@ es_xmlrpc(duk_context *ctx)
     duk_error(ctx, DUK_ERR_ERROR, "XMLRPC request %s to %s failed -- %s",
               method, url, errbuf);
 
-  es_push_native_obj(ctx, ES_NATIVE_HTSMSG, reply);
+  es_push_native_obj(ctx, &es_native_htsmsg, reply);
   return 1;
 }
 

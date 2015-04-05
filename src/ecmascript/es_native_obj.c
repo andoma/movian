@@ -25,16 +25,18 @@
 
 #define PTRNAME "\xff""ptr"
 
-static const char *
-native_type_to_str(es_native_type_t type)
+
+static ecmascript_native_class_t *native_classes[16];
+
+void
+ecmascript_register_native_class(ecmascript_native_class_t *c)
 {
-  switch(type) {
-  case ES_NATIVE_PROP:     return "prop";
-  case ES_NATIVE_HTSMSG:   return "htsmsg";
-  case ES_NATIVE_RESOURCE: return "resource";
-  case ES_NATIVE_HASH:     return "hash";
-  default: return "???";
-  }
+  static int idgen;
+
+  assert(idgen < ARRAYSIZE(native_classes));
+  c->id = idgen;
+  native_classes[idgen] = c;
+  idgen++;
 }
 
 
@@ -42,23 +44,23 @@ native_type_to_str(es_native_type_t type)
  *
  */
 void *
-es_get_native_obj(duk_context *ctx, int obj_idx, es_native_type_t wanted_type)
+es_get_native_obj(duk_context *ctx, int obj_idx,
+                  ecmascript_native_class_t *wanted_type)
 {
   duk_get_finalizer(ctx, obj_idx);
 
   if(!duk_is_function(ctx, -1)) {
     duk_error(ctx, DUK_ERR_ERROR, "Object is not of type %s (no finalizer)",
-              native_type_to_str(wanted_type));
+              wanted_type->name);
   }
 
-  es_native_type_t current_type = duk_get_magic(ctx, -1);
+  int current_type = duk_get_magic(ctx, -1);
 
   duk_pop(ctx);
 
-  if(current_type != wanted_type)
-    duk_error(ctx, DUK_ERR_ERROR, "Object is %s, expected %s",
-              native_type_to_str(current_type),
-              native_type_to_str(wanted_type));
+  if(current_type != wanted_type->id)
+    duk_error(ctx, DUK_ERR_ERROR, "Object is not of typ %s",
+              wanted_type->name);
 
   duk_get_prop_string(ctx, obj_idx, PTRNAME);
   if(!duk_is_pointer(ctx, -1))
@@ -76,7 +78,7 @@ es_get_native_obj(duk_context *ctx, int obj_idx, es_native_type_t wanted_type)
  */
 void *
 es_get_native_obj_nothrow(duk_context *ctx, int obj_idx,
-                          es_native_type_t wanted_type)
+                          ecmascript_native_class_t *wanted_type)
 {
   if(!duk_is_object(ctx, obj_idx))
     return NULL;
@@ -89,11 +91,11 @@ es_get_native_obj_nothrow(duk_context *ctx, int obj_idx,
   if(!duk_is_function(ctx, -1))
     return NULL;
 
-  es_native_type_t current_type = duk_get_magic(ctx, -1);
+  int current_type = duk_get_magic(ctx, -1);
 
   duk_pop(ctx);
 
-  if(current_type != wanted_type)
+  if(current_type != wanted_type->id)
     return NULL;
 
   duk_get_prop_string(ctx, obj_idx, PTRNAME);
@@ -112,23 +114,7 @@ es_get_native_obj_nothrow(duk_context *ctx, int obj_idx,
 static void
 call_finalizer(int type, void *ptr)
 {
-  switch(type) {
-  case ES_NATIVE_PROP:
-    prop_ref_dec(ptr);
-    break;
-  case ES_NATIVE_RESOURCE:
-    es_resource_release(ptr);
-    break;
-  case ES_NATIVE_HTSMSG:
-    htsmsg_release(ptr);
-    break;
-  case ES_NATIVE_HASH:
-    es_hash_release(ptr);
-    break;
-  default:
-    abort();
-  }
-
+  native_classes[type]->release(ptr);
 }
 
 
@@ -156,7 +142,8 @@ es_native_finalizer(duk_context *ctx)
  *
  */
 int
-es_push_native_obj(duk_context *ctx, es_native_type_t type, void *ptr)
+es_push_native_obj(duk_context *ctx, ecmascript_native_class_t *class,
+                   void *ptr)
 {
   int obj_idx = duk_push_object(ctx);
 
@@ -164,7 +151,7 @@ es_push_native_obj(duk_context *ctx, es_native_type_t type, void *ptr)
   duk_put_prop_string(ctx, obj_idx, PTRNAME);
 
   duk_push_c_function(ctx, es_native_finalizer, 1);
-  duk_set_magic(ctx, -1, type);
+  duk_set_magic(ctx, -1, class->id);
   duk_set_finalizer(ctx, obj_idx);
 
   return obj_idx;

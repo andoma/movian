@@ -23,6 +23,8 @@
 #include "ecmascript.h"
 
 
+ES_NATIVE_CLASS(htsmsg, &htsmsg_release);
+
 /**
  *
  */
@@ -36,7 +38,7 @@ es_htsmsg_create_from_xml_duk(duk_context *ctx)
   if(m == NULL)
     duk_error(ctx, DUK_ERR_ERROR, "Malformed XML -- %s", errbuf);
 
-  es_push_native_obj(ctx, ES_NATIVE_HTSMSG, m);
+  es_push_native_obj(ctx, &es_native_htsmsg, m);
   return 1;
 }
 
@@ -70,7 +72,7 @@ push_htsmsg_field(duk_context *ctx, const htsmsg_field_t *f)
 static int
 es_htsmsg_get_value_duk(duk_context *ctx)
 {
-  htsmsg_t *m = es_get_native_obj(ctx, 0, ES_NATIVE_HTSMSG);
+  htsmsg_t *m = es_get_native_obj(ctx, 0, &es_native_htsmsg);
   htsmsg_field_t *f;
   int want_attr = 0;
 
@@ -113,7 +115,7 @@ es_htsmsg_get_value_duk(duk_context *ctx)
   int res_idx = duk_push_object(ctx);
 
   if(f->hmf_childs != NULL) {
-    es_push_native_obj(ctx, ES_NATIVE_HTSMSG, htsmsg_retain(f->hmf_childs));
+    es_push_native_obj(ctx, &es_native_htsmsg, htsmsg_retain(f->hmf_childs));
     duk_put_prop_string(ctx, res_idx, "msg");
   }
 
@@ -129,7 +131,7 @@ es_htsmsg_get_value_duk(duk_context *ctx)
 static int
 es_htsmsg_get_name_duk(duk_context *ctx)
 {
-  htsmsg_t *m = es_get_native_obj(ctx, 0, ES_NATIVE_HTSMSG);
+  htsmsg_t *m = es_get_native_obj(ctx, 0, &es_native_htsmsg);
   htsmsg_field_t *f;
   int i = duk_require_int(ctx, 1);
 
@@ -153,7 +155,7 @@ es_htsmsg_get_name_duk(duk_context *ctx)
 static int
 es_htsmsg_enumerate_duk(duk_context *ctx)
 {
-  htsmsg_t *m = es_get_native_obj(ctx, 0, ES_NATIVE_HTSMSG);
+  htsmsg_t *m = es_get_native_obj(ctx, 0, &es_native_htsmsg);
   htsmsg_field_t *f;
   int idx = 0;
 
@@ -179,7 +181,7 @@ es_htsmsg_enumerate_duk(duk_context *ctx)
 static int
 es_htsmsg_length_duk(duk_context *ctx)
 {
-  htsmsg_t *m = es_get_native_obj(ctx, 0, ES_NATIVE_HTSMSG);
+  htsmsg_t *m = es_get_native_obj(ctx, 0, &es_native_htsmsg);
   htsmsg_field_t *f;
   unsigned int cnt = 0;
 
@@ -200,7 +202,7 @@ static int
 es_htsmsg_print_duk(duk_context *ctx)
 {
   es_context_t *ec = es_get(ctx);
-  htsmsg_t *m = es_get_native_obj(ctx, 0, ES_NATIVE_HTSMSG);
+  htsmsg_t *m = es_get_native_obj(ctx, 0, &es_native_htsmsg);
   htsmsg_print(ec->ec_id, m);
   return 0;
 }

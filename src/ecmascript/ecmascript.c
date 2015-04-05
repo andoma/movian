@@ -33,6 +33,8 @@ static HTS_MUTEX_DECL(es_context_mutex);
 
 static LIST_HEAD(, ecmascript_module) modules;
 
+ES_NATIVE_CLASS(resource, &es_resource_release);
+
 /**
  *
  */
@@ -212,7 +214,7 @@ void
 es_resource_push(duk_context *ctx, es_resource_t *er)
 {
   es_resource_retain(er);
-  es_push_native_obj(ctx, ES_NATIVE_RESOURCE, er);
+  es_push_native_obj(ctx, &es_native_resource, er);
 }
 
 
@@ -224,7 +226,7 @@ es_resource_get(duk_context *ctx, int obj_idx,
                 const es_resource_class_t *erc)
 {
 
-  es_resource_t *er = es_get_native_obj(ctx, obj_idx, ES_NATIVE_RESOURCE);
+  es_resource_t *er = es_get_native_obj(ctx, obj_idx, &es_native_resource);
   if(er->er_class != erc)
     duk_error(ctx, DUK_ERR_ERROR, "Invalid resource class %s expected %s",
               er->er_class->erc_name, erc->erc_name);
@@ -238,7 +240,7 @@ es_resource_get(duk_context *ctx, int obj_idx,
 static int
 es_resource_destroy_duk(duk_context *ctx)
 {
-  es_resource_t *er = es_get_native_obj(ctx, 0, ES_NATIVE_RESOURCE);
+  es_resource_t *er = es_get_native_obj(ctx, 0, &es_native_resource);
   es_resource_destroy(er);
   return 0;
 }

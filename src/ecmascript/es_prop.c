@@ -33,7 +33,13 @@ typedef struct es_prop_sub {
   char eps_autodestry;
 } es_prop_sub_t;
 
+static void
+es_prop_ref_dec(prop_t *p)
+{
+  prop_ref_dec(p);
+}
 
+ES_NATIVE_CLASS(prop, es_prop_ref_dec);
 
 /**
  *
@@ -68,7 +74,7 @@ static const es_resource_class_t es_resource_prop_sub = {
 prop_t *
 es_stprop_get(duk_context *ctx, int val_index)
 {
-  return es_get_native_obj(ctx, val_index, ES_NATIVE_PROP);
+  return es_get_native_obj(ctx, val_index, &es_native_prop);
 }
 
 
@@ -78,7 +84,7 @@ es_stprop_get(duk_context *ctx, int val_index)
 void
 es_stprop_push(duk_context *ctx, prop_t *p)
 {
-  es_push_native_obj(ctx, ES_NATIVE_PROP, prop_ref_inc(p));
+  es_push_native_obj(ctx, &es_native_prop, prop_ref_inc(p));
 }
 
 /**
@@ -234,7 +240,7 @@ es_prop_get_child_duk(duk_context *ctx)
   }
 
   if(p != NULL) {
-    es_push_native_obj(ctx, ES_NATIVE_PROP, prop_ref_inc(p));
+    es_push_native_obj(ctx, &es_native_prop, prop_ref_inc(p));
     hts_mutex_unlock(&prop_mutex);
     return 1;
   }
@@ -754,7 +760,7 @@ es_prop_send_event(duk_context *ctx)
 static int
 es_prop_is_value(duk_context *ctx)
 {
-  prop_t *p = es_get_native_obj_nothrow(ctx, 0, ES_NATIVE_PROP);
+  prop_t *p = es_get_native_obj_nothrow(ctx, 0, &es_native_prop);
   if(p == NULL) {
     duk_push_false(ctx);
 
@@ -817,7 +823,7 @@ static int
 es_prop_move_before(duk_context *ctx)
 {
   prop_t *a = es_stprop_get(ctx, 0);
-  prop_t *b = es_get_native_obj_nothrow(ctx, 1, ES_NATIVE_PROP);
+  prop_t *b = es_get_native_obj_nothrow(ctx, 1, &es_native_prop);
   prop_move(a, b);
   return 0;
 }
