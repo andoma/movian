@@ -12,6 +12,7 @@ exports.writeFileSync = function(filename, data, opts) {
 }
 
 exports.readFileSync = function(filename, opts) {
+  var fs = require('native/fs');
   var fd = fs.open(filename, 'r');
   try {
     var buf = new Duktape.Buffer(fs.fsize(fd));
