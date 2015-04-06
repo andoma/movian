@@ -101,6 +101,7 @@ libav_setup
 rtmpdump_setup
 xmp_setup
 libyuv_setup
+gumbo_setup
 
 cat >> ${CONFIG_MAK} <<EOF
 CFLAGS_arch = ${ARCH_CFLAGS}

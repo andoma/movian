@@ -101,6 +101,7 @@ fi
 libav_setup
 rtmpdump_setup
 xmp_setup
+gumbo_setup
 
 libspotify_setup "12.1.103-Linux-armv6-bcm2708hardfp"
 

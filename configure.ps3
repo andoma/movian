@@ -68,6 +68,7 @@ libav_setup
 rtmpdump_setup
 xmp_setup
 bzip2_setup
+gumbo_setup
 
 enable libntfs
 update_ext_submodule libntfs_ext

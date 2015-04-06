@@ -745,11 +745,32 @@ SRCS-$(CONFIG_SQLITE) += src/ecmascript/es_sqlite.c
 ${BUILDDIR}/ext/duktape/%.o : CFLAGS = -Wall ${OPTFLAGS} \
  -fstrict-aliasing -std=c99 #-DDUK_OPT_ASSERTIONS #-DDUK_OPT_DEBUG -DDUK_OPT_DPRINT -DDUK_OPT_DDPRINT -DDUK_OPT_DDDPRINT
 
-include src/arch/${OS}/${OS}.mk
+
+##############################################################
+# Gumbo
+##############################################################
+
+SRCS-$(CONFIG_GUMBO) += \
+	ext/gumbo-parser/src/attribute.c \
+	ext/gumbo-parser/src/char_ref.c \
+	ext/gumbo-parser/src/error.c \
+	ext/gumbo-parser/src/parser.c \
+	ext/gumbo-parser/src/string_buffer.c \
+	ext/gumbo-parser/src/string_piece.c \
+	ext/gumbo-parser/src/tag.c \
+	ext/gumbo-parser/src/tokenizer.c \
+	ext/gumbo-parser/src/utf8.c \
+	ext/gumbo-parser/src/util.c \
+	ext/gumbo-parser/src/vector.c \
+	src/ecmascript/es_gumbo.c \
+
+${BUILDDIR}/ext/gumbo-parser/%.o : CFLAGS = -Wall ${OPTFLAGS} -fstrict-aliasing -std=c99 -Wno-unused-variable
 
 ##############################################################
 ##############################################################
 ##############################################################
+
+include src/arch/${OS}/${OS}.mk
 
 
 # Various transformations
