@@ -10,3 +10,6 @@
 [submodule "ext/libntfs_ext"]
 	path = ext/libntfs_ext
 	url = https://github.com/andoma/libntfs_ext.git
+[submodule "ext/gumbo-parser"]
+	path = ext/gumbo-parser
+	url = https://github.com/google/gumbo-parser

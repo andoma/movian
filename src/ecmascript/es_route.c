@@ -141,7 +141,7 @@ es_route_create(duk_context *ctx)
 
   es_debug(ec, "Route %s added", er->er_pattern);
 
-  er->er_prio = strcspn(str, "()[].*?+$") ?: INT32_MAX;
+  er->er_prio = strcspn(str, "()[]*?+$") ?: INT32_MAX;
 
   LIST_INSERT_SORTED(&routes, er, er_link, er_cmp, es_route_t);
 
