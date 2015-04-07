@@ -50,7 +50,7 @@ showtime = {
   textDialog: popup.textDialog,
   notify: popup.notify,
 
-  probe: misc.probe,
+  probe: require('showtime/io').probe,
 
   print: print,
   trace: console.log,
