@@ -93,8 +93,10 @@ static int http_tokenize(char *buf, char **vec, int vecsize, int delimiter);
 
 #define HF_TRACE(hf, x, ...) do {                               \
     if((hf)->hf_debug)                                          \
-      TRACE(TRACE_DEBUG, "HTTP", x, ##__VA_ARGS__);		\
+      hf_trace(hf, x, ##__VA_ARGS__);                           \
   } while(0)
+
+
 
 /**
  * Connection parking
@@ -105,6 +107,7 @@ static struct http_connection_queue http_connections;
 static int http_parked_connections;
 static hts_mutex_t http_connections_mutex;
 static atomic_t http_connection_tally;
+static atomic_t http_file_tally;
 
 typedef struct http_connection {
   char hc_hostname[HOSTNAME_MAX];
@@ -208,6 +211,8 @@ typedef struct http_file {
 
   average_t hf_download_rate;
 
+  int hf_id;
+
   char hf_line[4096];
 
 } http_file_t;
@@ -217,9 +222,42 @@ typedef struct http_file {
  *
  */
 static void
+hf_trace(http_file_t *hf, const char *fmt, ...)
+{
+  va_list ap;
+  char subsys[64];
+  snprintf(subsys, sizeof(subsys), "HTTP-%d", hf->hf_id);
+  va_start(ap, fmt);
+  tracev(0, TRACE_DEBUG, subsys, fmt, ap);
+  va_end(ap);
+}
+
+
+/**
+ *
+ */
+static void
+trace_request(htsbuf_queue_t *hq, http_file_t *hf)
+{
+  char subsys[64];
+  snprintf(subsys, sizeof(subsys), "HTTP-%d", hf->hf_id);
+
+  char *r = malloc(hq->hq_size + 1);
+  htsbuf_peek(hq, r, hq->hq_size);
+  r[hq->hq_size] = 0;
+  LINEPARSE(s, r)
+    TRACE(TRACE_DEBUG, subsys, "> %s", s);
+  free(r);
+}
+
+
+/**
+ *
+ */
+static void
 http_connection_destroy(http_connection_t *hc, int dbg, const char *reason)
 {
-  HTTP_TRACE(dbg, "Disconnected from %s:%d (id=%d) %s",
+  HTTP_TRACE(dbg, "Disconnected from %s:%d (cid=%d) %s",
 	     hc->hc_hostname, hc->hc_port, hc->hc_id, reason);
   tcp_close(hc->hc_tc);
   free(hc);
@@ -261,7 +299,7 @@ http_connection_get(const char *hostname, int port, int ssl,
         TAILQ_REMOVE(&http_connections, hc, hc_link);
         http_parked_connections--;
         hts_mutex_unlock(&http_connections_mutex);
-        HTTP_TRACE(dbg, "Reusing connection to %s:%d (id=%d)",
+        HTTP_TRACE(dbg, "Reusing connection to %s:%d (cid=%d)",
                    hc->hc_hostname, hc->hc_port, hc->hc_id);
         hc->hc_reused = 1;
         tcp_set_cancellable(hc->hc_tc, c);
@@ -293,7 +331,7 @@ http_connection_get(const char *hostname, int port, int ssl,
                cancellable_is_cancelled(c) ? ", Cancelled by user" : "");
     return NULL;
   }
-  HTTP_TRACE(dbg, "Connected to %s:%d (id=%d)", hostname, port, id);
+  HTTP_TRACE(dbg, "Connected to %s:%d (cid=%d)", hostname, port, id);
 
   hc = malloc(sizeof(http_connection_t));
   snprintf(hc->hc_hostname, sizeof(hc->hc_hostname), "%s", hostname);
@@ -319,7 +357,7 @@ http_connection_park(http_connection_t *hc, int dbg, int max_age)
 
   tcp_set_cancellable(hc->hc_tc, NULL);
 
-  HTTP_TRACE(dbg, "Parking connection to %s:%d (id=%d)",
+  HTTP_TRACE(dbg, "Parking connection to %s:%d (cid=%d)",
 	     hc->hc_hostname, hc->hc_port, hc->hc_id);
 
   hc->hc_reuse_before = now + max_age;
@@ -1096,20 +1134,6 @@ http_request_inspect(struct http_header_list *headers,
   return 0;
 }
 
-/**
- *
- */
-static void
-trace_request(htsbuf_queue_t *hq)
-{
-  char *r = malloc(hq->hq_size + 1);
-  htsbuf_peek(hq, r, hq->hq_size);
-  r[hq->hq_size] = 0;
-  LINEPARSE(s, r)
-    TRACE(TRACE_DEBUG, "HTTP", "> %s", s);
-  free(r);
-}
-
 
 /**
  *
@@ -1188,8 +1212,11 @@ http_drain_content(http_file_t *hf)
   if((buf = http_read_content(hf)) == NULL)
     return -1;
 
-  if(hf->hf_debug)
-    hexdump("drain", buf_cstr(buf), buf_size(buf));
+  if(hf->hf_debug) {
+    char subsys[64];
+    snprintf(subsys, sizeof(subsys), "HTTP-%d", hf->hf_id);
+    hexdump(subsys, buf_cstr(buf), buf_size(buf));
+  }
 
   buf_release(buf);
 
@@ -1312,11 +1339,16 @@ http_read_response(http_file_t *hf, struct http_header_list *headers)
   hf->hf_content_type = NULL;
   hf->hf_max_age = 30;
 
-  HF_TRACE(hf, "%s: Response:", hf->hf_url);
+  int first_line = 1;
 
   for(li = 0; ;li++) {
     if(tcp_read_line(hc->hc_tc, hf->hf_line, sizeof(hf->hf_line)) < 0)
       return -1;
+
+    if(first_line) {
+      HF_TRACE(hf, "%s: Response:", hf->hf_url);
+      first_line = 0;
+    }
 
     HF_TRACE(hf, "< %s", hf->hf_line);
 
@@ -1703,7 +1735,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
 
   if(hf->hf_debug)
-    trace_request(&q);
+    trace_request(&q, hf);
 
   tcp_write_queue(hf->hf_connection->hc_tc, &q);
 
@@ -1797,6 +1829,7 @@ http_open_ex(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
              int *non_interactive, int flags, struct fa_open_extra *foe)
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
+  hf->hf_id = atomic_add_and_fetch(&http_file_tally, 1);
   hf->hf_version = 1;
   hf->hf_url = strdup(url);
   hf->hf_debug = !!(flags & FA_DEBUG) || gconf.enable_http_debug;
@@ -1932,7 +1965,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
       http_headers_free(&cookies);
       http_headers_send(&q, &headers, hf->hf_user_request_headers);
       if(hf->hf_debug)
-        trace_request(&q);
+        trace_request(&q, hf);
 
       tcp_write_queue(hc->hc_tc, &q);
 
@@ -2664,6 +2697,7 @@ dav_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   int statcode = -1;
+  hf->hf_id = atomic_add_and_fetch(&http_file_tally, 1);
   hf->hf_version = 1;
   hf->hf_url = strdup(url);
 
@@ -2695,6 +2729,7 @@ dav_scandir(fa_protocol_t *fap, fa_dir_t *fd, const char *url,
 {
   int retval;
   http_file_t *hf = calloc(1, sizeof(http_file_t));
+  hf->hf_id = atomic_add_and_fetch(&http_file_tally, 1);
   hf->hf_version = 1;
   hf->hf_url = strdup(url);
   
@@ -3086,7 +3121,7 @@ http_req_do(http_req_aux_t *hra)
   http_headers_send(&q, &headers, &hra->headers_in);
 
   if(hf->hf_debug)
-    trace_request(&q);
+    trace_request(&q, hf);
 
   tcp_write_queue(hf->hf_connection->hc_tc, &q);
 
@@ -3295,6 +3330,8 @@ http_reqv(const char *url, va_list ap,
   htsbuf_queue_t *hq;
   int i32;
   int64_t i64;
+
+  hf->hf_id = atomic_add_and_fetch(&http_file_tally, 1);
 
   atomic_set(&hra->refcount, 1);
 
