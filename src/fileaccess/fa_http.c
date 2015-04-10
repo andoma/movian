@@ -3204,7 +3204,7 @@ http_req_do(http_req_aux_t *hra)
 
   default:
 
-    if(hra->flags & FA_CONTENT_ON_ERROR && hf->hf_rsize) {
+    if(hra->flags & FA_CONTENT_ON_ERROR && hf->hf_rsize && code > 0) {
       HF_TRACE(hf, "%s failed with %d but content is available",
                hf->hf_url, code);
       break;
