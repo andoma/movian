@@ -348,7 +348,7 @@ http_connection_get(const char *hostname, int port, int ssl,
  *
  */
 static void
-http_connection_park(http_connection_t *hc, int dbg, int max_age)
+http_connection_park(http_connection_t *hc, int dbg, int max_age, const char *reason)
 {
   time_t now;
   http_connection_t *next;
@@ -357,8 +357,8 @@ http_connection_park(http_connection_t *hc, int dbg, int max_age)
 
   tcp_set_cancellable(hc->hc_tc, NULL);
 
-  HTTP_TRACE(dbg, "Parking connection to %s:%d (cid=%d)",
-	     hc->hc_hostname, hc->hc_port, hc->hc_id);
+  HTTP_TRACE(dbg, "Parking connection to %s:%d (cid=%d) -- %s",
+	     hc->hc_hostname, hc->hc_port, hc->hc_id, reason);
 
   hc->hc_reuse_before = now + max_age;
 
@@ -1488,7 +1488,7 @@ http_detach(http_file_t *hf, int reusable, const char *reason)
     return;
 
   if(reusable && !gconf.disable_http_reuse && hf->hf_read_timeout == 0) {
-    http_connection_park(hf->hf_connection, hf->hf_debug, hf->hf_max_age);
+    http_connection_park(hf->hf_connection, hf->hf_debug, hf->hf_max_age, reason);
   } else {
     http_connection_destroy(hf->hf_connection, hf->hf_debug, reason);
   }
@@ -1731,6 +1731,9 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 		     &cookies);
   http_headers_free(&cookies);
 
+  hf_trace(hf, "Sending open request for %s (cid=%d)",
+           hf->hf_url, hf->hf_connection->hc_id);
+
   http_headers_send(&q, &headers, hf->hf_user_request_headers);
 
 
@@ -1919,7 +1922,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
 
     } else {
 
-      HF_TRACE(hf, "read() needs to send a new GET request on connection %d",
+      HF_TRACE(hf, "read() needs to send a new GET request (cid=%d)",
                hc->hc_id);
       read_size = size - totsize;
 
@@ -1963,6 +1966,8 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
 
       http_cookie_append(hc->hc_hostname, hf->hf_path, &headers, &cookies);
       http_headers_free(&cookies);
+      hf_trace(hf, "Read issuing new request for %s (cid=%d)",
+               hf->hf_url, hf->hf_connection->hc_id);
       http_headers_send(&q, &headers, hf->hf_user_request_headers);
       if(hf->hf_debug)
         trace_request(&q, hf);
@@ -2628,6 +2633,8 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
 		       &cookies);
     http_headers_free(&cookies);
 
+    hf_trace(hf, "Webdav sending request for %s (cid=%d)",
+             hf->hf_url, hf->hf_connection->hc_id);
     http_headers_send(&q, &headers, hf->hf_user_request_headers);
 
     tcp_write_queue(hf->hf_connection->hc_tc, &q);
@@ -3118,6 +3125,8 @@ http_req_do(http_req_aux_t *hra)
   http_cookie_append(hc->hc_hostname, hf->hf_path, &headers, &cookies);
   http_headers_free(&cookies);
 
+  hf_trace(hf, "Sending reqeest for %s (cid=%d)",
+           hf->hf_url, hf->hf_connection->hc_id);
   http_headers_send(&q, &headers, &hra->headers_in);
 
   if(hf->hf_debug)
