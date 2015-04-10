@@ -87,8 +87,8 @@ glw_freefloat_render(glw_t *w, const glw_rctx_t *rc)
 
     glw_Rotatef(&rc0, 
 		-30 + cd->v * 60,
-		fabsf(sin(cd->a)),
-		fabsf(cos(cd->a)),
+		fabsf(sinf(cd->a)),
+		fabsf(cosf(cd->a)),
 		0.0);
 
     rc0.rc_zindex = MAX(zmax, rc->rc_zindex);
