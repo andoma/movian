@@ -36,12 +36,12 @@ var propHandler = {
 
       if('toRichString' in value) {
         np.setRichStr(obj, name, value.toRichString());
-        return;
+        return true;
       }
 
       if(np.isValue(value)) {
         np.set(obj, name, np.getValue(value));
-        return;
+        return true;
       }
 
       var x = np.getChild(obj, name);
@@ -55,6 +55,7 @@ var propHandler = {
     } else {
       np.set(obj, name, value);
     }
+    return true;
   },
 
   enumerate: np.enumerate,
