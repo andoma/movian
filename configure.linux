@@ -95,7 +95,6 @@ enable libxv
 enable openssl
 enable locatedb
 enable vdpau
-enable spidermonkey
 enable libxxf86vm
 enable httpserver
 enable timegm

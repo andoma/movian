@@ -33,7 +33,6 @@ CXX=${TOOLCHAIN}g++
 setup_env "$@"
 
 enable sqlite_internal
-enable spidermonkey
 enable glw_backend_opengl_es
 enable glw
 #enable polarssl

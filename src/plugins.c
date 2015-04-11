@@ -31,10 +31,6 @@
 #include "misc/strtab.h"
 #include "arch/arch.h"
 
-#if ENABLE_SPIDERMONKEY
-#include "js/js.h"
-#endif
-
 #include "ecmascript/ecmascript.h"
 
 typedef enum {
@@ -429,18 +425,6 @@ plugin_prop_setup(htsmsg_t *pm, plugin_t *pl, const char *basepath)
 }
 
 
-#if ENABLE_SPIDERMONKEY
-/**
- *
- */
-static void
-js_unload(plugin_t *pl)
-{
-  js_plugin_unload(pl->pl_id);
-}
-#endif
-
-
 /**
  *
  */
@@ -523,13 +507,6 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int flags)
   int r;
   char fullpath[URL_MAX];
 
-  if(!strcmp(type, "javascript")) {
-#if ENABLE_SPIDERMONKEY
-    if(gconf.enable_force_ecmascript)
-#endif
-      type = "ecmascript";
-  }
-
 
   if(!strcmp(type, "views")) {
     // No special tricks here, we always loads 'glwviews' from all plugins
@@ -566,29 +543,18 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int flags)
     if(!r)
       pl->pl_unload = plugin_unload_ecmascript;
 
-
-#if ENABLE_SPIDERMONKEY
-    } else if(!strcmp(type, "javascript")) {
-
-    const char *file = htsmsg_get_str(ctrl, "file");
-    if(file == NULL) {
-      snprintf(errbuf, errlen, "Missing \"file\" element in control file %s",
-               ctrlfile);
-      return -1;
-    }
-    snprintf(fullpath, sizeof(fullpath), "%s/%s", url, file);
-
-    hts_mutex_unlock(&plugin_mutex);
-    r = js_plugin_load(id, fullpath, errbuf, errlen);
-    hts_mutex_lock(&plugin_mutex);
-    if(!r)
-      pl->pl_unload = js_unload;
-
-#endif
   } else {
-    snprintf(errbuf, errlen, "Unknown type \"%s\" in control file %s",
+    if(flags & PLUGIN_LOAD_BY_USER) {
+      snprintf(errbuf, errlen, "Unknown type \"%s\" in control file %s",
              type, ctrlfile);
-    goto bad;
+      goto bad;
+    } else {
+      TRACE(TRACE_ERROR, "Plugin",
+            "Installed plugin at %s has unknown type %s but keeping anyway ,"
+            "since it might be upgraded",
+            ctrlfile, type);
+      r = 0;
+    }
   }
 
 

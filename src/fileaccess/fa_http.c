@@ -44,10 +44,6 @@
 #include "misc/average.h"
 #include "misc/minmax.h"
 
-#if ENABLE_SPIDERMONKEY
-#include "js/js.h"
-#endif
-
 #if ENABLE_OPENSSL
 #include <openssl/ssl.h>
 #include <openssl/err.h>

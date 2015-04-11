@@ -257,7 +257,6 @@ typedef struct gconf {
 
   char **devplugins;
   const char *plugin_repo;
-  const char *load_jsfile;
   const char *load_ecmascript;
   int bypass_ecmascript_acl;
 

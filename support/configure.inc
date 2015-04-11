@@ -58,7 +58,6 @@ CONFIG_LIST="
  locatedb
  spotlight
  vdpau
- spidermonkey
  libxxf86vm
  libxrandr
  httpserver

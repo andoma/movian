@@ -164,12 +164,6 @@ memtrace(void)
         "Memory allocator status -- Used: %d (%d segs) Free: %d (%d segs)",
         ms.used, ms.used_segs, ms.free, ms.free_segs);
 
-#if ENABLE_SPIDERMONKEY
-  extern int js_get_mem_usage(void);
-  trace(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
-        "Memory used by Spidermonkey: %d bytes", js_get_mem_usage());
-#endif
-
   for(int i = 0; i < 33; i++) {
     trace(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
           "%2d: %8d %8d",

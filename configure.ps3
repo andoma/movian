@@ -46,7 +46,6 @@ setup_env "$@"
 
 enable sqlite_internal
 enable libfreetype
-enable spidermonkey
 enable emu_thread_specifics
 enable glw_frontend_ps3
 enable glw_backend_rsx

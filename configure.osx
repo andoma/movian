@@ -44,7 +44,6 @@ enable glw_backend_opengl
 enable coreaudio
 enable bonjour
 enable spotlight
-enable spidermonkey
 enable stdin
 enable httpserver
 enable timegm

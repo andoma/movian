@@ -51,9 +51,6 @@
 #include "subtitles/subtitles.h"
 #include "db/db_support.h"
 #include "htsmsg/htsmsg_store.h"
-#if ENABLE_SPIDERMONKEY
-#include "js/js.h"
-#endif
 #include "db/kvstore.h"
 #include "upgrade.h"
 #include "usage.h"
@@ -395,11 +392,6 @@ main_init(void)
   /* Video settings */
   video_settings_init();
 
-#if ENABLE_SPIDERMONKEY
-  if(gconf.load_jsfile)
-    js_load(gconf.load_jsfile);
-#endif
-
   /* Various interprocess communication stuff (D-Bus on Linux, etc) */
   init_group(INIT_GROUP_IPC);
 
@@ -551,10 +543,6 @@ parse_opts(int argc, char **argv)
       continue;
     } else if(!strcmp(argv[0], "--plugin-repo") && argc > 1) {
       gconf.plugin_repo = argv[1];
-      argc -= 2; argv += 2;
-      continue;
-    } else if(!strcmp(argv[0], "-j") && argc > 1) {
-      gconf.load_jsfile = argv[1];
       argc -= 2; argv += 2;
       continue;
     } else if(!strcmp(argv[0], "--bypass-ecmascript-acl")) {
