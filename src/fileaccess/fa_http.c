@@ -3125,7 +3125,7 @@ http_req_do(http_req_aux_t *hra)
   http_cookie_append(hc->hc_hostname, hf->hf_path, &headers, &cookies);
   http_headers_free(&cookies);
 
-  hf_trace(hf, "Sending reqeest for %s (cid=%d)",
+  hf_trace(hf, "Sending request for %s (cid=%d)",
            hf->hf_url, hf->hf_connection->hc_id);
   http_headers_send(&q, &headers, &hra->headers_in);
 
