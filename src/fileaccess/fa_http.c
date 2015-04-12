@@ -89,7 +89,7 @@ static int http_tokenize(char *buf, char **vec, int vecsize, int delimiter);
 
 #define HF_TRACE(hf, x, ...) do {                               \
     if((hf)->hf_debug)                                          \
-      hf_trace(hf, x, ##__VA_ARGS__);                           \
+      hf_trace0(hf, x, ##__VA_ARGS__);                           \
   } while(0)
 
 
@@ -218,7 +218,7 @@ typedef struct http_file {
  *
  */
 static void
-hf_trace(http_file_t *hf, const char *fmt, ...)
+hf_trace0(http_file_t *hf, const char *fmt, ...)
 {
   va_list ap;
   char subsys[64];
@@ -1727,7 +1727,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 		     &cookies);
   http_headers_free(&cookies);
 
-  hf_trace(hf, "Sending open request for %s (cid=%d)",
+  HF_TRACE(hf, "Sending open request for %s (cid=%d)",
            hf->hf_url, hf->hf_connection->hc_id);
 
   http_headers_send(&q, &headers, hf->hf_user_request_headers);
@@ -1962,7 +1962,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
 
       http_cookie_append(hc->hc_hostname, hf->hf_path, &headers, &cookies);
       http_headers_free(&cookies);
-      hf_trace(hf, "Read issuing new request for %s (cid=%d)",
+      HF_TRACE(hf, "Read issuing new request for %s (cid=%d)",
                hf->hf_url, hf->hf_connection->hc_id);
       http_headers_send(&q, &headers, hf->hf_user_request_headers);
       if(hf->hf_debug)
@@ -2629,7 +2629,7 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
 		       &cookies);
     http_headers_free(&cookies);
 
-    hf_trace(hf, "Webdav sending request for %s (cid=%d)",
+    HF_TRACE(hf, "Webdav sending request for %s (cid=%d)",
              hf->hf_url, hf->hf_connection->hc_id);
     http_headers_send(&q, &headers, hf->hf_user_request_headers);
 
@@ -3121,7 +3121,7 @@ http_req_do(http_req_aux_t *hra)
   http_cookie_append(hc->hc_hostname, hf->hf_path, &headers, &cookies);
   http_headers_free(&cookies);
 
-  hf_trace(hf, "Sending request for %s (cid=%d)",
+  HF_TRACE(hf, "Sending request for %s (cid=%d)",
            hf->hf_url, hf->hf_connection->hc_id);
   http_headers_send(&q, &headers, &hra->headers_in);
 
