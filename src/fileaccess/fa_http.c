@@ -44,17 +44,6 @@
 #include "misc/average.h"
 #include "misc/minmax.h"
 
-#if ENABLE_OPENSSL
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <openssl/hmac.h>
-#endif
-
-#if ENABLE_POLARSSL
-#include "polarssl/net.h"
-#include "polarssl/havege.h"
-#endif
-
 #include "usage.h"
 
 LIST_HEAD(http_request_inspector_list, http_request_inspector);
@@ -777,21 +766,6 @@ http_auth_cache_set(http_file_t *hf)
   hts_mutex_unlock(&http_auth_caches_mutex);
 }
 
-/**
- *
- */
-static int
-kvcomp(const void *A, const void *B)
-{
-  const char **a = (const char **)A;
-  const char **b = (const char **)B;
-
-  int r;
-  if((r = strcmp(a[0], b[0])) != 0)
-    return r;
-  return strcmp(a[1], b[1]);
-}
-
 
 /**
  *
@@ -801,162 +775,6 @@ http_request_inspector_register(http_request_inspector_t *hri)
 {
   LIST_INSERT_HEAD(&http_request_inspectors, hri, link);
 }
-
-/**
- *
- */
-int
-http_client_oauth(http_request_inspection_t *hri,
-		  const char *consumer_key,
-		  const char *consumer_secret,
-		  const char *token,
-		  const char *token_secret)
-{
-  char key[512];
-  char str[2048];
-  char sig[128];
-  const http_file_t *hf = hri->hri_hf;
-  const http_connection_t *hc = hf->hf_connection;
-  int len = 0, i = 0;
-  const char **params;
-
-  if(hri->hri_parameters != NULL)
-    while(hri->hri_parameters[len])
-      len++;
-
-  if(len&1)
-    return -1;
-
-  len /= 2;
-  len += 6;
-
-  params = alloca(sizeof(char *) * len * 2);
-
-  url_escape(str, sizeof(str), consumer_key, URL_ESCAPE_PARAM);
-  const char *oauth_consumer_key = mystrdupa(str);
-
-  url_escape(str, sizeof(str), consumer_secret, URL_ESCAPE_PARAM);
-  const char *oauth_consumer_secret = mystrdupa(str);
-
-  url_escape(str, sizeof(str), token, URL_ESCAPE_PARAM);
-  const char *oauth_token = mystrdupa(str);
-
-  url_escape(str, sizeof(str), token_secret, URL_ESCAPE_PARAM);
-  const char *oauth_token_secret = mystrdupa(str);
-
-  snprintf(str, sizeof(str), "%lu", (long)time(NULL));
-  const char *oauth_timestamp = mystrdupa(str);
-
-  sha1_decl(shactx);
-  sha1_init(shactx);
-  sha1_update(shactx, nonce, sizeof(nonce));
-  sha1_final(shactx, nonce);
-
-  snprintf(str, sizeof(str),
-	   "%02x%02x%02x%02x%02x%02x%02x%02x"
-	   "%02x%02x%02x%02x%02x%02x%02x%02x"
-	   "%02x%02x%02x%02x",
-	   nonce[0], nonce[1], nonce[2], nonce[3], nonce[4],
-	   nonce[5], nonce[6], nonce[7], nonce[8], nonce[9],
-	   nonce[10], nonce[11], nonce[12], nonce[13], nonce[14],
-	   nonce[15], nonce[16], nonce[17], nonce[18], nonce[19]);
-  
-  const char *oauth_nonce = mystrdupa(str);
-
-  params[0] = "oauth_consumer_key";
-  params[1] = oauth_consumer_key;  
-
-  params[2] = "oauth_timestamp";
-  params[3] = oauth_timestamp;
-
-  params[4] = "oauth_nonce";
-  params[5] = oauth_nonce;
-
-  params[6] = "oauth_version";
-  params[7] = "1.0";
-
-  params[8] = "oauth_signature_method";
-  params[9] = "HMAC-SHA1";
-
-  params[10] = "oauth_token";
-  params[11] = oauth_token;
-  int j = 12;
-  if(hri->hri_parameters != NULL) {
-    i = 0;
-    while(hri->hri_parameters[i])
-      params[j++] = hri->hri_parameters[i++];
-  }
-
-  qsort(params, len, sizeof(char *) * 2, kvcomp);
-
-  snprintf(str, sizeof(str), "%s&", hri->hri_method);
-
-  if(!hc->hc_ssl && hc->hc_port == 80)
-    snprintf(str + strlen(str), sizeof(str) - strlen(str),
-	     "http%%3A%%2F%%2F%s", hc->hc_hostname);
-  else if(hc->hc_ssl && hc->hc_port == 443)
-    snprintf(str + strlen(str), sizeof(str) - strlen(str),
-	     "https%%3A%%2F%%2F%s", hc->hc_hostname);
-  else
-    snprintf(str + strlen(str), sizeof(str) - strlen(str),
-	     "%s%%3A%%2F%%2F%s%%3A%d", hc->hc_ssl ? "https" : "http",
-	     hc->hc_hostname, hc->hc_port);
-
-  url_escape(str + strlen(str), sizeof(str) - strlen(str), hf->hf_path,
-	     URL_ESCAPE_PARAM);
-
-  const char *div = "&";
-  for(i = 0; i < len; i++) {
-    snprintf(str + strlen(str), sizeof(str) - strlen(str),
-	     "%s%s%%3D%s", div, params[i*2],params[1+i*2]);
-    div = "%26";
-  }
-
-  snprintf(key, sizeof(key), "%s&%s",
-	   oauth_consumer_secret, oauth_token_secret);
-
-  unsigned char md[20];
-#if ENABLE_OPENSSL
-  HMAC(EVP_sha1(), key, strlen(key), (const unsigned char *)str, strlen(str),
-       md, NULL);
-#elif ENABLE_POLARSSL
-
-  sha1_context ctx;
-  sha1_hmac_starts(&ctx, (const unsigned char *)key, strlen(key));
-  sha1_hmac_update(&ctx, (const unsigned char *)str, strlen(str));
-  sha1_hmac_finish(&ctx, md);
-#else
-#error Need HMAC plz
-#endif
-
-
-  snprintf(str, sizeof(str), "OAuth realm=\"\", "
-		 "oauth_consumer_key=\"%s\", "
-		 "oauth_timestamp=\"%s\", "
-		 "oauth_nonce=\"%s\", "
-		 "oauth_version=\"1.0\", "
-		 "oauth_token=\"%s\", "
-		 "oauth_signature_method=\"HMAC-SHA1\", "
-		 "oauth_signature=\"",
-		 oauth_consumer_key,
-		 oauth_timestamp,
-		 oauth_nonce,
-		 oauth_token);
-
-#if ENABLE_LIBAV
-  av_base64_encode(sig, sizeof(sig), md, 20);
-#else
-  abort();
-#endif
-  url_escape(str + strlen(str), sizeof(str) - strlen(str), sig,
-	     URL_ESCAPE_PARAM);
-  snprintf(str + strlen(str), sizeof(str) - strlen(str), "\"");
-
-  http_header_add(hri->hri_headers, "Authorization", str, 0);
-
-  return 0;
-}
-
 
 /**
  *

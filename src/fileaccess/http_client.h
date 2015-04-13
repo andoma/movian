@@ -109,12 +109,6 @@ void http_req_release(http_req_aux_t *hra);
 
 http_req_aux_t *http_req_retain(http_req_aux_t *hra) attribute_unused_result;
 
-int http_client_oauth(http_request_inspection_t *hri,
-		      const char *consumer_key,
-		      const char *consumer_secret,
-		      const char *token,
-		      const char *token_secret);
-
 int http_client_rawauth(http_request_inspection_t *hri, const char *str);
 
 void http_client_set_header(http_request_inspection_t *hri, const char *key,
