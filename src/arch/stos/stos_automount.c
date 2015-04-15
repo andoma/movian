@@ -340,7 +340,7 @@ scan_current(const char *path)
  *
  */
 static void
-initial_unmount(const char *path)
+unmount_all(const char *path)
 {
   char newpath[PATH_MAX];
   struct dirent **namelist;
@@ -357,7 +357,7 @@ initial_unmount(const char *path)
     if(namelist[n]->d_name[0] == '.')
       continue;
     snprintf(newpath, sizeof(newpath), "%s/%s", path, namelist[n]->d_name);
-    TRACE(TRACE_DEBUG, "Automount", "Unmounting stale mount %s", newpath);
+    TRACE(TRACE_DEBUG, "Automount", "Unmounting %s", newpath);
     
     if(umount2(newpath, MNT_DETACH) < 0)
       TRACE(TRACE_ERROR, "Automount", "Unable to unmount %s -- %s",
@@ -370,6 +370,9 @@ initial_unmount(const char *path)
   free(namelist);
 }
 
+static const char *fsinfodir = "/stos/fsinfo";
+static hts_thread_t automount_tid;
+static int automount_pipe[2];
 
 /**
  *
@@ -377,19 +380,17 @@ initial_unmount(const char *path)
 static void *
 automount_thread(void *aux)
 {
-  int fd;
+  static int fd;
   struct inotify_event *e;
   char buf[1024];
-
-  if((fd = inotify_init()) == -1)
-    return NULL;
-
-  const char *fsinfodir = "/stos/fsinfo";
-
+  struct pollfd fds[2];
 
   mkdir(fsinfodir, 0755);
 
-  initial_unmount("/stos/media");
+  unmount_all("/stos/media");
+
+  if((fd = inotify_init()) == -1)
+    return NULL;
 
   if(inotify_add_watch(fd, fsinfodir, IN_ONLYDIR | IN_CLOSE_WRITE |
 		       IN_DELETE) == -1) {
@@ -400,14 +401,28 @@ automount_thread(void *aux)
   }
 
 
+  fds[0].fd = fd;
+  fds[0].events = POLLIN;
+
+  fds[1].fd = automount_pipe[0];
+  fds[1].events = POLLERR;
+
   scan_current(fsinfodir);
 
   while(1) {
 
     try_mount();
+    int n = poll(fds, 2, -1);
+    if(n < 0)
+      break;
+    if(fds[1].revents & (POLLERR | POLLHUP))
+      break;
+    if(fds[0].revents & (POLLERR | POLLHUP))
+      break;
 
-    int n = read(fd, buf, sizeof(buf));
-
+    n = read(fd, buf, sizeof(buf));
+    if(n < 0)
+      break;
     int off = 0;
     while(n > sizeof(struct inotify_event)) {
 
@@ -416,26 +431,44 @@ automount_thread(void *aux)
       if(e->len == 0)
         break;
 
-      if(e->mask & IN_DELETE) {
+      if(e->mask & IN_DELETE)
         remove_fs(e->name);
-      }
 
-      if(e->mask & IN_CLOSE_WRITE) {
+      if(e->mask & IN_CLOSE_WRITE)
         add_fs(fsinfodir, e->name);
-      }
 
       off += sizeof(struct inotify_event) + e->len;
       n   -= sizeof(struct inotify_event) + e->len;
     }
   }
+  close(automount_pipe[0]);
+  return NULL;
 }
 
 
 static void
 stos_automount_start(void)
 {
-  hts_thread_create_detached("automounter", automount_thread, NULL,
-			     THREAD_PRIO_BGTASK);
+  if(pipe(automount_pipe) < 0) {
+    automount_pipe[1] = -1;
+    return;
+  }
+
+  hts_thread_create_joinable("automounter", &automount_tid,
+                             automount_thread, NULL,
+                             THREAD_PRIO_BGTASK);
 }
 
-INITME(INIT_GROUP_IPC, stos_automount_start, NULL);
+
+static void
+stos_automount_stop(void)
+{
+  if(automount_pipe[1] == -1)
+    return;
+
+  close(automount_pipe[1]);
+  hts_thread_join(&automount_tid);
+  unmount_all("/stos/media");
+}
+
+INITME(INIT_GROUP_IPC, stos_automount_start, stos_automount_stop);

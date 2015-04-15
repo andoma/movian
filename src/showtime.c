@@ -727,6 +727,8 @@ main_fini(void)
   prop_destroy_by_name(prop_get_global(), "popups");
   fini_group(INIT_GROUP_API);
   TRACE(TRACE_DEBUG, "core", "API group finished");
+  fini_group(INIT_GROUP_IPC);
+  TRACE(TRACE_DEBUG, "core", "IPC group finished");
 #if ENABLE_PLAYQUEUE
   playqueue_fini();
   TRACE(TRACE_DEBUG, "core", "Playqueue finished");
