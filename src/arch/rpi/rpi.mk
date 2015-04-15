@@ -21,6 +21,7 @@ SRCS += src/arch/linux/linux_misc.c \
 	src/networking/net_posix.c \
 	src/networking/net_ifaddr.c \
 	src/ipc/devevent.c \
+	src/arch/stos/stos_automount.c \
 
 #
 # OS specific sources and flags
