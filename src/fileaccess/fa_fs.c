@@ -517,6 +517,7 @@ fs_notify(struct fa_protocol *fap, const char *url,
 		       IN_DELETE | IN_MOVED_FROM | IN_MOVED_TO) == -1) {
     TRACE(TRACE_DEBUG, "FS", "Unable to watch %s -- %s",
 	  url, strerror(errno));
+    close(fd);
     return;
   }
 
