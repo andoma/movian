@@ -716,9 +716,10 @@ typedef struct glw_root {
   int gr_prop_maxtime;
 
   int gr_keyboard_mode;
-
+  int gr_skin_scale_adjustment;
   int gr_reduce_cpu;
   prop_sub_t *gr_evsub;
+  prop_sub_t *gr_scalesub;
 
   pool_t *gr_token_pool;
   pool_t *gr_clone_pool;

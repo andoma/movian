@@ -80,7 +80,8 @@ glw_update_sizes(glw_root_t *gr)
 
   int base_size = MIN(bs1, bs2);
 
-  val = GLW_CLAMP(base_size + glw_settings.gs_size, 8, 40);
+  val = GLW_CLAMP(base_size + glw_settings.gs_size +
+                  gr->gr_skin_scale_adjustment, 8, 40);
 
   if(gr->gr_current_size != val) {
     gr->gr_current_size = val;
@@ -89,8 +90,8 @@ glw_update_sizes(glw_root_t *gr)
     glw_icon_flush(gr);
     glw_update_em(gr);
     TRACE(TRACE_DEBUG, "GLW",
-          "UI size scale changed to %d (user adjustment: %d)",
-          val, glw_settings.gs_size);
+          "UI size scale changed to %d (user adj: %d  skin adj: %d) ",
+          val, glw_settings.gs_size, gr->gr_skin_scale_adjustment);
   }
 
   val = GLW_CLAMP(gr->gr_base_underscan_h + glw_settings.gs_underscan_h,
@@ -110,6 +111,16 @@ glw_update_sizes(glw_root_t *gr)
     gr->gr_underscan_v = val;
   }
 }
+
+
+static void
+glw_sizeoffset_callback(void *opaque, int value)
+{
+  glw_root_t *gr = opaque;
+  gr->gr_skin_scale_adjustment = value;
+  
+}
+
 
 /**
  *
@@ -194,6 +205,14 @@ glw_init3(glw_root_t *gr,
 		   PROP_TAG_COURIER, gr->gr_courier,
 		   NULL);
 
+  gr->gr_scalesub =
+    prop_subscribe(0,
+		   PROP_TAG_CALLBACK_INT, glw_sizeoffset_callback, gr,
+		   PROP_TAG_NAME("ui", "sizeOffset"),
+		   PROP_TAG_ROOT, gr->gr_prop_ui,
+		   PROP_TAG_COURIER, gr->gr_courier,
+		   NULL);
+
   TAILQ_INIT(&gr->gr_destroyer_queue);
 
   TAILQ_INIT(&gr->gr_view_load_requests);
@@ -235,6 +254,7 @@ glw_fini(glw_root_t *gr)
   rstr_release(gr->gr_default_font);
   glw_tex_fini(gr);
   prop_unsubscribe(gr->gr_evsub);
+  prop_unsubscribe(gr->gr_scalesub);
   prop_courier_destroy(gr->gr_courier);
   hts_mutex_destroy(&gr->gr_mutex);
 
