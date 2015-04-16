@@ -1206,7 +1206,7 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
 
   glw_need_refresh(gr, 0);
 
-  if(gtb->w.glw_flags2 & GLW2_DEBUG)
+  if(gtb->w.glw_flags2 & GLW2_DEBUG && im != NULL)
     printf("  Returned image is %d x %d margin:%d\n",
            im->im_width, im->im_height, im->im_margin);
 

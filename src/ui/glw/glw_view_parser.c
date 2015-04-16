@@ -381,7 +381,7 @@ parse_prep_expression(token_t *expr, errorinfo_t *ei, glw_root_t *gr)
       while(t != NULL && t->type == TOKEN_DOT) {
 	t1 = t->next;
 	if(t1 == NULL || t1->type != TOKEN_IDENTIFIER) {
-	  glw_view_seterr(ei, t1, "Invalid object dereference");
+	  glw_view_seterr(ei, t, "Invalid object dereference");
 	  return -1;
 	}
 
