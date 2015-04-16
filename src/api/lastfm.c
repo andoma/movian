@@ -39,225 +39,47 @@ static metadata_source_t *lastfm;
  *
  */
 static void
-lastfm_parse_artist_images(void *db, int64_t artist_id, htsmsg_t *xml,
-			   int *totalpages,
-			   void (*cb)(void *opaque, const char *url,
-				      int width, int height),
-			   void *opaque)
-{
-  htsmsg_t *images, *image, *sizes, *size, *attr;
-  htsmsg_field_t *f, *s;
-  const char *url, *str;
-
-  *totalpages = 1;
-
-  if((images = htsmsg_get_map_multi(xml, "tags", "lfm", 
-				    "tags", "images", NULL)) == NULL)
-    return;
-
-  if((attr = htsmsg_get_map(images, "attrib")) != NULL &&
-     (str = htsmsg_get_str(attr, "totalpages")) != NULL) {
-    *totalpages = atoi(str);
-  }
-
-  if((images = htsmsg_get_map(images, "tags")) == NULL)
-    return;
-
-  HTSMSG_FOREACH(f, images) {
-    if(strcmp(f->hmf_name, "image") ||
-       ((image = htsmsg_get_map_by_field(f)) == NULL) ||
-       ((image = htsmsg_get_map(image, "tags")) == NULL))
-      continue;
-    
-    if((sizes = htsmsg_get_map_multi(image, "sizes", "tags", NULL)) == NULL)
-      continue;
-
-    HTSMSG_FOREACH(s, sizes) {
-      if(strcmp(s->hmf_name, "size") ||
-	 ((size = htsmsg_get_map_by_field(s)) == NULL))
-	continue;
-
-
-      if((attr = htsmsg_get_map(size, "attrib")) == NULL)
-	continue;
-      
-      if(strcmp(htsmsg_get_str(attr, "name") ?: "", "original"))
-	continue;
-
-      if((url = htsmsg_get_str(size, "cdata")) == NULL)
-	continue;
-
-      int width = htsmsg_get_s32_or_default(attr, "width", 0);
-      int height = htsmsg_get_s32_or_default(attr, "height", 0);
-
-      metadb_insert_artistpic(db, artist_id, url, width, height);
-      cb(opaque, url, width, height);
-#if 0
-      p = prop_create_root(NULL);
-
-      prop_set_string(prop_create(p, "url"), url);
-
-      if(prop_set_parent(p, parent))
-	prop_destroy(p);
-#endif
-    }
-  }
-}
-
-
-
-/**
- *
- */
-void
-lastfm_load_artistinfo(void *db, const char *artist,
-		       void (*cb)(void *opaque, const char *url,
-				  int width, int height),
-		       void *opaque)
-{
-  buf_t *result;
-  char errbuf[100];
-  int n, page = 1;
-  htsmsg_t *xml, *info;
-  int totalpages;
-
-  if(lastfm == NULL)
-    return;
-
-  TRACE(TRACE_DEBUG, "lastfm", "Loading images for artist %s", artist);
-
-  n = http_req("http://ws.audioscrobbler.com/2.0/",
-               HTTP_ARG("method", "artist.getinfo"),
-               HTTP_ARG("artist", artist),
-               HTTP_ARG("api_key", LASTFM_APIKEY),
-               HTTP_RESULT_PTR(&result),
-               HTTP_ERRBUF(errbuf, sizeof(errbuf)),
-               HTTP_FLAGS(FA_COMPRESSION),
-               NULL);
-
-  if(n) {
-    TRACE(TRACE_DEBUG, "lastfm",
-          "artist.getinfo query to lastfm failed: %s",  errbuf);
-    return;
-  }
-
-
-  info = htsmsg_xml_deserialize_buf(result, errbuf, sizeof(errbuf));
-
-  if(info == NULL) {
-    TRACE(TRACE_DEBUG, "lastfm", "lastfm xml parse failed: %s",  errbuf);
-    return;
-  }
-
-  const char *mbid = htsmsg_get_str_multi(info,
-					  "tags", "lfm",
-					  "tags", "artist",
-					  "tags", "mbid", 
-					  "cdata", NULL);
-
-  if(mbid == NULL) {
-    TRACE(TRACE_DEBUG, "lastfm", "No MBID for '%s', skipping", artist);
-    htsmsg_release(info);
-    return;
-  }
-
-  int64_t artist_id =
-    metadb_artist_get_by_title(db, artist, lastfm->ms_id, mbid);
-
-  if(artist_id < 0) {
-    htsmsg_release(info);
-    return;
-  }
-
-  while(1) {
-
-    n = http_req("http://ws.audioscrobbler.com/2.0/",
-                 HTTP_ARG("method", "artist.getimages"),
-                 HTTP_ARG("mbid", mbid),
-                 HTTP_ARG("api_key", LASTFM_APIKEY),
-                 HTTP_ARG("order", "popularity"),
-                 HTTP_ARGINT("page", page),
-                 HTTP_RESULT_PTR(&result),
-                 HTTP_ERRBUF(errbuf, sizeof(errbuf)),
-                 HTTP_FLAGS(FA_COMPRESSION),
-                 NULL);
-
-    if(n) {
-      TRACE(TRACE_DEBUG, "lastfm",
-            "artist.getimages query to lastfm failed: %s",  errbuf);
-      break;
-    }
-
-
-    xml = htsmsg_xml_deserialize_buf(result, errbuf, sizeof(errbuf));
-    if(xml == NULL) {
-      TRACE(TRACE_DEBUG, "lastfm", "lastfm xml parse failed: %s",  errbuf);
-      break;
-    }
-
-    lastfm_parse_artist_images(db, artist_id, xml, &totalpages, cb, opaque);
-
-    htsmsg_release(xml);
-
-    if(page == 5 || page == totalpages)
-      break;
-
-    page++;
-  }
-  htsmsg_release(info);
-}
-
-
-/**
- *
- */
-static void
 lastfm_parse_albuminfo(void *db, htsmsg_t *xml, const char *artist,
 		       const char *album)
 {
   htsmsg_t *tags, *tracks;
   htsmsg_field_t *f, *g;
-  const char *size, *url;
 
-  if((tags = htsmsg_get_map_multi(xml, "tags", "lfm", 
-				  "tags", "album", 
-				  "tags", NULL)) == NULL) {
+  if((tags = htsmsg_get_map_multi(xml, "lfm", "album", NULL)) == NULL)
     return;
-  }
 
   const char *artist_mbid = NULL;
+  const char *album_mbid = htsmsg_get_str(tags, "mbid");
 
-  const char *album_mbid = htsmsg_get_str_multi(tags, "mbid", "cdata", NULL);
+  if((tracks = htsmsg_get_map(tags, "tracks")) != NULL) {
 
-  if((tracks = htsmsg_get_map_multi(tags, "tracks", "tags", NULL)) != NULL) {
+    const char *artstr = htsmsg_get_str_multi(tags, "artist", NULL);
 
-    const char *artstr = htsmsg_get_str_multi(tags, "artist", "cdata", NULL);
+    if(artstr != NULL) {
 
-    HTSMSG_FOREACH(f, tracks) {
-      htsmsg_t *track;
-      if(artist_mbid != NULL)
-	break;
-      if(strcmp(f->hmf_name, "track") ||
-	 ((track = htsmsg_get_map_by_field(f)) == NULL))
-	continue;
-      htsmsg_t *ttags = htsmsg_get_map(track, "tags");
-      
-      HTSMSG_FOREACH(g, ttags) {
-	htsmsg_t *artist;
-	if(artist_mbid != NULL)
-	  break;
-	if(strcmp(g->hmf_name, "artist") ||
-	   ((artist = htsmsg_get_map_by_field(g)) == NULL))
-	  continue;
-	const char *ta;
-	ta = htsmsg_get_str_multi(artist, "tags", "name", "cdata", NULL);
-	if(ta == NULL)
-	  continue;
+      HTSMSG_FOREACH(f, tracks) {
+        htsmsg_t *track;
+        if(artist_mbid != NULL)
+          break;
+        if(strcmp(f->hmf_name, "track") ||
+           ((track = htsmsg_get_map_by_field(f)) == NULL))
+          continue;
 
-	if(!strcmp(artstr, ta)) {
-	  artist_mbid = htsmsg_get_str_multi(artist, "tags", "mbid",
-					     "cdata", NULL);
-	}
+        HTSMSG_FOREACH(g, track) {
+          htsmsg_t *artist;
+          if(artist_mbid != NULL)
+            break;
+          if(strcmp(g->hmf_name, "artist") ||
+             ((artist = htsmsg_get_map_by_field(g)) == NULL))
+            continue;
+          const char *ta;
+          ta = htsmsg_get_str(artist, "name");
+          if(ta == NULL)
+            continue;
+
+          if(!strcmp(artstr, ta))
+            artist_mbid = htsmsg_get_str_multi(artist, "mbid", NULL);
+        }
       }
     }
   }
@@ -276,15 +98,21 @@ lastfm_parse_albuminfo(void *db, htsmsg_t *xml, const char *artist,
     return;
 
   HTSMSG_FOREACH(f, tags) {
-    htsmsg_t *image;
-    if(strcmp(f->hmf_name, "image") ||
-       ((image = htsmsg_get_map_by_field(f)) == NULL))
+    if(strcmp(f->hmf_name, "image"))
       continue;
 
-    if((url = htsmsg_get_str(image, "cdata")) == NULL)
+    if(f->hmf_type != HMF_STR)
       continue;
 
-    if((size = htsmsg_get_str_multi(image, "attrib", "size", NULL)) == NULL)
+    const char *url = f->hmf_str;
+    if(url == NULL)
+      continue;
+
+    htsmsg_t *image = htsmsg_get_map_by_field(f);
+    if(image == NULL)
+      continue;
+    const char *size = htsmsg_get_str(image, "size");
+    if(size == NULL)
       continue;
 
     int width = 0, height = 0;
@@ -297,6 +125,8 @@ lastfm_parse_albuminfo(void *db, htsmsg_t *xml, const char *artist,
       width = 300; height = 300;
     } else
       continue;
+
+    printf("Added albumart %s (%d x %d)\n", url, width, height);
 
     metadb_insert_albumart(db, album_id, url, width, height);
   }

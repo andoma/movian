@@ -199,7 +199,7 @@ mlp_sub_cb(void *opaque, prop_event_t event, ...)
   va_end(ap);
 }
 
-
+#if 0
 /**
  *
  */
@@ -213,7 +213,7 @@ mlp_add_artist_to_prop(void *opaque, const char *url, int width, int height)
   if(prop_set_parent(p, opaque))
     prop_destroy(p);
 }
-
+#endif
 
 
 /**
@@ -234,6 +234,8 @@ typedef struct metadata_lazy_artist {
 static void
 mlp_artist_load(void *db, metadata_lazy_prop_t *mlp)
 {
+#if 0
+  // lastfm artistinfo no longer give any images, so don't even do it
   metadata_lazy_artist_t *mla = (metadata_lazy_artist_t *)mlp;
   int r;
 
@@ -248,6 +250,7 @@ mlp_artist_load(void *db, metadata_lazy_prop_t *mlp)
 
   hts_mutex_lock(&metadata_mutex);
   mlp_release(mlp);
+#endif
 }
 
 
