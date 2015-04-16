@@ -31,11 +31,13 @@
 #include "main.h"
 
 typedef struct svg_state {
+  float first[2];
   float cur[2];
   float last_ctrl[2];  // For s/S command
   float ctm[9];
   image_component_vector_t *icv;
   float scaling;
+  int closed;
 } svg_state_t;
 
 static void svg_parse_g(svg_state_t *s0, htsmsg_t *c);
@@ -187,8 +189,12 @@ static void
 cmd_move(svg_state_t *state)
 {
   float pt[2];
+  if(state->closed) {
+    state->first[0] = state->cur[0];
+    state->first[1] = state->cur[1];
+    state->closed = 0;
+  }
   svg_mtx_vec_mul(pt, state->ctm, state->cur);
-
   vec_emit_f1(state->icv, VC_MOVE_TO, pt);
 }
 
@@ -414,6 +420,10 @@ static void
 cmd_close(svg_state_t *state)
 {
   vec_emit_0(state->icv, VC_CLOSE);
+
+  state->cur[0] = state->first[0];
+  state->cur[1] = state->first[1];
+  state->closed = 1;
 }
 
 
@@ -742,6 +752,7 @@ svg_parse_root(svg_state_t *s, htsmsg_t *tags)
     htsmsg_t *c;
     if((c = htsmsg_get_map_by_field(f)) == NULL)
       continue;
+    s->closed = 1;
     if(!strcmp(f->hmf_name, "path"))
       svg_parse_element(s, c, stroke_path_element);
     else if(!strcmp(f->hmf_name, "rect"))
