@@ -166,7 +166,7 @@ glw_navigate_vertical(struct glw *w, struct event *e)
   if(c == NULL)
     return 0;
 
-  const int may_wrap = glw_navigate_may_wrap(w);
+  const int may_wrap = glw_navigate_may_wrap(c);
 
   if(event_is_action(e, ACTION_DOWN)) {
     return glw_navigate_step(c, 1, may_wrap);
@@ -205,10 +205,10 @@ glw_navigate_horizontal(struct glw *w, struct event *e)
 {
   glw_t *c = w->glw_focused;
 
-  const int may_wrap = glw_navigate_may_wrap(w);
-
   if(c == NULL)
     return 0;
+
+  const int may_wrap = glw_navigate_may_wrap(c);
 
   if(event_is_action(e, ACTION_LEFT)) {
     return glw_navigate_step(c, -1, may_wrap);

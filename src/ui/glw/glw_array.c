@@ -709,10 +709,11 @@ glw_array_bubble_event(struct glw *w, struct event *e)
 {
   glw_array_t *a = (glw_array_t *)w;
   glw_t *c = w->glw_focused;
-  const int may_wrap = glw_navigate_may_wrap(w);
 
   if(c == NULL)
     return 0;
+
+  const int may_wrap = glw_navigate_may_wrap(c);
 
   if(event_is_action(e, ACTION_RIGHT)) {
     return glw_navigate_step(c, 1, may_wrap);
