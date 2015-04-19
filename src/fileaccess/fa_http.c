@@ -173,6 +173,8 @@ typedef struct http_file {
 
   char hf_req_compression;
 
+  char *hf_original_url;
+
   // Set if the filesize is known to never change
   char hf_filesize_is_final;
 
@@ -1339,9 +1341,15 @@ redirect(http_file_t *hf, int *redircount, char *errbuf, size_t errlen,
 			 hc->hc_hostname, hc->hc_port,
 			 hf->hf_path, hf->hf_location);
 
-  if(code == 301)
+  if(code == 301) {
     add_premanent_redirect(hf->hf_url, newurl);
+  } else {
 
+    if(hf->hf_original_url == NULL) {
+      hf->hf_original_url = hf->hf_url;
+      hf->hf_url = NULL;
+    }
+  }
   free(hf->hf_url);
   hf->hf_url = newurl;
 
@@ -1629,6 +1637,7 @@ http_destroy(http_file_t *hf)
 	      hf->hf_connection_mode == CONNECTION_MODE_PERSISTENT,
 	      "Request destroyed");
   free(hf->hf_url);
+  free(hf->hf_original_url);
   free(hf->hf_auth);
   free(hf->hf_auth_realm);
   free(hf->hf_location);
@@ -1694,6 +1703,21 @@ http_close(fa_handle_t *handle)
 
 
 /**
+ * If we followed a redirect and it was temporary we need to
+ * reset the URL to the original URL. We might be reading on
+ * a temporary generated URL (see issue #2591)
+ */
+static void
+http_reset_url(http_file_t *hf)
+{
+  if(hf->hf_original_url != NULL) {
+    mystrset(&hf->hf_url, hf->hf_original_url);
+    HF_TRACE(hf, "read() reverting to original URL %s", hf->hf_url);
+  }
+}
+
+
+/**
  * Read from file
  */
 static int
@@ -1707,6 +1731,9 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
   size_t read_size;   // Amount of bytes to read in one round
   struct http_header_list headers, cookies;
   char errbuf[512];
+
+  int redircount = 0;
+
   if(size == 0)
     return 0;
 
@@ -1791,6 +1818,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
       code = http_read_response(hf, hf->hf_user_response_headers);
       if(code == -1 && hf->hf_connection->hc_reused) {
 	http_detach(hf, 0, "Read error on reused connection, retrying");
+        http_reset_url(hf);
 	goto retry;
       }
 
@@ -1798,6 +1826,18 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
       case 206:
 	// Range transfer OK
 	break;
+
+      case 301:
+      case 302:
+      case 303:
+      case 307:
+        if(redirect(hf, &redircount, NULL, 0, code, 1))
+          return -1;
+
+        if(hf->hf_connection_mode == CONNECTION_MODE_CLOSE)
+          http_detach(hf, 0, "Redirect");
+
+        continue;
 
       case 200:
 	if(range[0])
@@ -1824,13 +1864,15 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
       case 416:
 	hf->hf_no_ranges = 1;
 	http_detach(hf, 0, "Requested Range Not Satisfiable");
+        http_reset_url(hf);
 	continue;
 
       default:
 	HF_TRACE(hf, "Read error (%d) [%s] filesize %lld -- retrying", code,
                  range, hf->hf_filesize);
 	http_detach(hf, 0, "Read error");
-	continue;
+        http_reset_url(hf);
+        continue;
       }
 
       if(hf->hf_rsize < read_size)
@@ -1871,6 +1913,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
       if(tcp_read_data(hc->hc_tc, buf + totsize, read_size, NULL, NULL)) {
         // Fail, so disconnect
         http_detach(hf, 0, "Read error during fa_read()");
+        http_reset_url(hf);
         // But we can retry a couple of times
         continue;
       }
