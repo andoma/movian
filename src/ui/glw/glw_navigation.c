@@ -142,7 +142,7 @@ glw_navigate_move(glw_t *w, int steps)
 int
 glw_navigate_may_wrap(glw_t *w)
 {
-  if(!(w->glw_flags2 & GLW2_NAV_WRAP)) {
+  if(!(w->glw_parent->glw_flags2 & GLW2_NAV_WRAP)) {
     return 0;
   }
   if(!glw_settings.gs_wrap) {
