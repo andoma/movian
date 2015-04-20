@@ -1,0 +1,6 @@
+{
+  "type": "ecmascript",
+  "id": "async_page_load",
+  "file": "async_page_load.js",
+  "apiversion": 2
+}
