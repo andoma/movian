@@ -230,7 +230,6 @@ typedef struct gconf {
   int disable_http_reuse;
   int enable_experimental;
   int enable_detailed_avdiff;
-  int enable_force_ecmascript;
   int enable_hls_debug;
   int enable_ftp_client_debug;
   int enable_ftp_server_debug;
