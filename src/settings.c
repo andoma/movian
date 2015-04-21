@@ -1412,8 +1412,10 @@ init_dev_settings(void)
   add_dev_bool(s, "Always close pages when pressing back",
 	       "navalwaysclose", &gconf.enable_nav_always_close);
 
+#ifndef PS3
   add_dev_bool(s, "Disable HTTP connection reuse",
 	       "nohttpreuse", &gconf.disable_http_reuse);
+#endif
 
 #if ENABLE_NETLOG
   setting_create(SETTING_STRING, gconf.settings_dev, SETTINGS_INITIAL_UPDATE,
