@@ -1411,13 +1411,6 @@ init_dev_settings(void)
   add_dev_bool(s, "Disable HTTP connection reuse",
 	       "nohttpreuse", &gconf.disable_http_reuse);
 
-  add_dev_bool(s, "Log AV-diff stats",
-	       "detailedavdiff", &gconf.enable_detailed_avdiff);
-#ifdef PS3
-  add_dev_bool(s, "Log memory usage",
-	       "memdebug", &gconf.enable_mem_debug);
-#endif
-
 #if ENABLE_NETLOG
   setting_create(SETTING_STRING, gconf.settings_dev, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE_CSTR("Network log destination"),
@@ -1433,6 +1426,13 @@ init_dev_settings(void)
 
   add_dev_bool(s, "Debug all HTTP requests",
 	       "httpdebug", &gconf.enable_http_debug);
+
+  add_dev_bool(s, "Log AV-diff stats",
+	       "detailedavdiff", &gconf.enable_detailed_avdiff);
+#ifdef PS3
+  add_dev_bool(s, "Log memory usage",
+	       "memdebug", &gconf.enable_mem_debug);
+#endif
 
   add_dev_bool(s, "Debug HLS",
 	       "hlsdebug", &gconf.enable_hls_debug);
