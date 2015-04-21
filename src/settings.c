@@ -1345,6 +1345,10 @@ add_dev_bool(htsmsg_t *s, const char *title, const char *id, int *val)
                  SETTING_WRITE_BOOL(val),
                  SETTING_HTSMSG(id, s, "dev"),
                  NULL);
+
+  if(htsmsg_get_u32_or_default(s, id, 0))
+    TRACE(TRACE_DEBUG, "DEV", "Developer setting '%s' is enabled",
+          title, id);
 }
 
 
