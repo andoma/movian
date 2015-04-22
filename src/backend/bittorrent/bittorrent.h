@@ -392,6 +392,7 @@ typedef struct torrent {
   struct torrent_file_queue to_root;
 
   unsigned int to_num_active_pieces;
+  unsigned int to_active_pieces_mem;
 
   struct torrent_piece_queue to_active_pieces;
   struct torrent_piece_list to_serve_order;

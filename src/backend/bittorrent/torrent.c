@@ -347,6 +347,7 @@ torrent_destroy(torrent_t *to)
     torrent_piece_destroy(to, tp);
   }
 
+  assert(to->to_active_pieces_mem == 0);
   assert(to->to_num_active_pieces == 0);
   assert(LIST_FIRST(&to->to_serve_order) == NULL);
 
@@ -777,6 +778,8 @@ torrent_piece_find(torrent_t *to, int piece_index)
     // Last piece, truncate piece length
     tp->tp_piece_length = to->to_total_length % to->to_piece_length;
   }
+  to->to_active_pieces_mem += tp->tp_piece_length;
+
 
   if(to->to_cachefile_piece_map[piece_index] != -1) {
     // We have this piece on disk, signal that we want to load it
@@ -1185,7 +1188,7 @@ torrent_piece_destroy(torrent_t *to, torrent_piece_t *tp)
   assert(LIST_FIRST(&tp->tp_active_fh) == NULL);
   assert(LIST_FIRST(&tp->tp_waiting_blocks) == NULL);
   assert(LIST_FIRST(&tp->tp_sent_blocks) == NULL);
-  to->to_num_active_pieces--;
+  to->to_active_pieces_mem -= tp->tp_piece_length;
 
   TAILQ_REMOVE(&to->to_active_pieces, tp, tp_link);
   LIST_REMOVE(tp, tp_serve_link);
@@ -1205,7 +1208,7 @@ flush_active_pieces(torrent_t *to)
   for(tp = TAILQ_FIRST(&to->to_active_pieces); tp != NULL; tp = next) {
     next = TAILQ_NEXT(tp, tp_link);
 
-    if(to->to_num_active_pieces <= 20)
+    if(to->to_active_pieces_mem <= 32 * 1024 * 1024)
       break;
 
     if(tp->tp_load_req)
