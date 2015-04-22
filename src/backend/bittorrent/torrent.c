@@ -1189,6 +1189,7 @@ torrent_piece_destroy(torrent_t *to, torrent_piece_t *tp)
   assert(LIST_FIRST(&tp->tp_waiting_blocks) == NULL);
   assert(LIST_FIRST(&tp->tp_sent_blocks) == NULL);
   to->to_active_pieces_mem -= tp->tp_piece_length;
+  to->to_num_active_pieces--;
 
   TAILQ_REMOVE(&to->to_active_pieces, tp, tp_link);
   LIST_REMOVE(tp, tp_serve_link);
