@@ -643,7 +643,7 @@ torrent_parse_infodict(torrent_t *to, htsmsg_t *info,
   to->to_total_length = offset;
 
   to->to_piece_length = htsmsg_get_u32_or_default(info, "piece length", 0);
-  if(to->to_piece_length < 32768 || to->to_piece_length > 8388608) {
+  if(to->to_piece_length < 32768 || to->to_piece_length > 16777216) {
     snprintf(errbuf, errlen, "Invalid piece length: %d", to->to_piece_length);
     return 1;
   }
