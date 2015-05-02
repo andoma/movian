@@ -323,7 +323,7 @@ custom_cell_renderer_progress_render (GtkCellRenderer *cell,
   CustomCellRendererProgress *cellprogress = CUSTOM_CELL_RENDERER_PROGRESS (cell);
   GtkStateType                state;
   gint                        width, height;
-  gint                        x_offset, y_offset;
+  gint                        x_offset = 0, y_offset = 0;
 
   custom_cell_renderer_progress_get_size (cell, widget, cell_area,
                                           &x_offset, &y_offset,
