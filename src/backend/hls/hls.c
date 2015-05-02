@@ -547,11 +547,13 @@ hls_variant_update_bw(hls_segment_t *hs)
   if(hs == NULL || !hs->hs_opened_at)
     return;
 
-  int ts = arch_get_ts() - hs->hs_opened_at;
+  int64_t ts = arch_get_ts() - hs->hs_opened_at;
+  if(ts < 10 || ts > INT32_MAX)
+    return;
   if(h->h_blocked != hs->hs_block_cnt)
     return;
 
-  int bw = 8000000LL * hs->hs_size / ts;
+  int bw = 8000000LL * hs->hs_size / (int)ts;
 
   if(hd->hd_bw == 0) {
     hd->hd_bw = bw;
