@@ -215,9 +215,12 @@ es_http_push_result(duk_context *ctx, es_http_request_t *ehr)
 {
   int res_idx = duk_push_object(ctx);
 
-  void *ptr = duk_push_fixed_buffer(ctx, buf_len(ehr->ehr_result));
-  memcpy(ptr, buf_data(ehr->ehr_result), buf_len(ehr->ehr_result));
-  duk_put_prop_string(ctx, res_idx, "buffer");
+  if(ehr->ehr_result != NULL) {
+
+    void *ptr = duk_push_fixed_buffer(ctx, buf_len(ehr->ehr_result));
+    memcpy(ptr, buf_data(ehr->ehr_result), buf_len(ehr->ehr_result));
+    duk_put_prop_string(ctx, res_idx, "buffer");
+  }
 
   int arr_idx = duk_push_array(ctx);
 
