@@ -247,6 +247,7 @@ typedef struct gconf {
   int enable_thread_debug;
   int enable_metadata_debug;
   int enable_upnp_debug;
+  int enable_ecmascript_debug;
 
   int enable_torrent_debug;
   int enable_torrent_tracker_debug;

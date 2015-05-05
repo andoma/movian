@@ -1433,6 +1433,9 @@ init_dev_settings(void)
   add_dev_bool(s, "Debug all HTTP requests",
 	       "httpdebug", &gconf.enable_http_debug);
 
+  add_dev_bool(s, "Debug various ecmascript engine things",
+	       "ecmascriptdebug", &gconf.enable_ecmascript_debug);
+
   add_dev_bool(s, "Log AV-diff stats",
 	       "detailedavdiff", &gconf.enable_detailed_avdiff);
 #ifdef PS3

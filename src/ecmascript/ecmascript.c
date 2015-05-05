@@ -303,7 +303,7 @@ static const duk_function_list_entry fnlist_core[] = {
  *
  */
 static int
-tryload(duk_context *ctx, const char *path)
+tryload(duk_context *ctx, const char *path, const char *id, es_context_t *ec)
 {
   char errbuf[256];
   buf_t *buf = fa_load(path,
@@ -311,6 +311,7 @@ tryload(duk_context *ctx, const char *path)
                        NULL);
 
   if(buf != NULL) {
+    es_debug(ec, "Module %s loaded from %s", id, path);
     duk_push_lstring(ctx, buf_cstr(buf), buf_len(buf));
     buf_release(buf);
     return 1;
@@ -328,6 +329,8 @@ es_modsearch(duk_context *ctx)
 
   es_context_t *ec = es_get(ctx);
   const char *id = duk_require_string(ctx, 0);
+
+  es_debug(ec, "Searching for module %s", id);
 
   const char *nativemod = mystrbegins(id, "native/");
   if(nativemod != NULL) {
@@ -347,13 +350,13 @@ es_modsearch(duk_context *ctx)
 
   if(ec->ec_path != NULL) {
     snprintf(path, sizeof(path), "%s/%s.js", ec->ec_path, id);
-    if(tryload(ctx, path))
+    if(tryload(ctx, path, id, ec))
       return 1;
   }
 
   snprintf(path, sizeof(path),
            "dataroot://resources/ecmascript/modules/%s.js", id);
-  if(tryload(ctx, path))
+  if(tryload(ctx, path, id, ec))
     return 1;
 
   duk_error(ctx, DUK_ERR_ERROR, "Can't find module %s", id);
@@ -508,7 +511,8 @@ es_context_create(const char *id, int flags, const char *url,
   if(storage != NULL)
     ec->ec_storage = strdup(storage);
 
-  ec->ec_debug  = !!(flags & ECMASCRIPT_DEBUG);
+  ec->ec_debug  = !!(flags & ECMASCRIPT_DEBUG) ||
+    gconf.enable_ecmascript_debug;
   ec->ec_bypass_file_acl_read  = !!(flags & ECMASCRIPT_FILE_BYPASS_ACL_READ);
   ec->ec_bypass_file_acl_write = !!(flags & ECMASCRIPT_FILE_BYPASS_ACL_WRITE);
 
