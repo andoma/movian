@@ -5,7 +5,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 29e1c2a97b5f79c3a2f58abe2415677600863781 (v1.2.0-7-g29e1c2a).
+ *  Git commit e225b941d546ecb1d5f5da2f72adcb48d4684380 (v1.2.0-53-ge225b94).
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -92,7 +92,7 @@
  *  * Josh Engebretson (https://github.com/JoshEngebretson)
  *  * Remo Eichenberger (https://github.com/remoe)
  *  * Mamod Mehyar (https://github.com/mamod)
- *  * David Demelier (https://github.com/hftmarkand)
+ *  * David Demelier (https://github.com/markand)
  *  * Tim Caswell (https://github.com/creationix)
  *  * Mitchell Blank Jr (https://github.com/mitchblank)
  *  * https://github.com/yushli
@@ -3137,7 +3137,7 @@ struct duk_memory_functions;
 struct duk_function_list_entry;
 struct duk_number_list_entry;
 
-typedef void duk_context;
+typedef struct duk_hthread duk_context;
 typedef struct duk_memory_functions duk_memory_functions;
 typedef struct duk_function_list_entry duk_function_list_entry;
 typedef struct duk_number_list_entry duk_number_list_entry;
@@ -3191,7 +3191,7 @@ struct duk_number_list_entry {
  * so that application code can easily log which Duktape snapshot was used.
  * Not available in the Ecmascript environment.
  */
-#define DUK_GIT_DESCRIBE                  "v1.2.0-7-g29e1c2a"
+#define DUK_GIT_DESCRIBE                  "v1.2.0-53-ge225b94"
 
 /* Duktape debug protocol version used by this build. */
 #define DUK_DEBUG_PROTOCOL_VERSION        1
@@ -3792,6 +3792,7 @@ DUK_EXTERNAL_DECL duk_codepoint_t duk_char_code_at(duk_context *ctx, duk_idx_t i
 
 DUK_EXTERNAL_DECL duk_bool_t duk_equals(duk_context *ctx, duk_idx_t index1, duk_idx_t index2);
 DUK_EXTERNAL_DECL duk_bool_t duk_strict_equals(duk_context *ctx, duk_idx_t index1, duk_idx_t index2);
+DUK_EXTERNAL_DECL duk_bool_t duk_instanceof(duk_context *ctx, duk_idx_t index1, duk_idx_t index2);
 
 /*
  *  Function (method) calls
