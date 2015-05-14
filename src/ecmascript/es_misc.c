@@ -324,6 +324,7 @@ static const duk_function_list_entry fnlist_popup[] = {
   { "message",               es_message, 3 },
   { "textDialog",            es_textDialog, 3 },
   { "notify",                es_notify, 3},
+  { NULL, NULL, 0}
 };
 
 ES_MODULE("popup", fnlist_popup);
