@@ -43,11 +43,18 @@
 static int
 tcp_write(tcpcon_t *tc, const void *data, size_t len)
 {
+  while(1) {
+    int r;
 #ifdef MSG_NOSIGNAL
-  return send(tc->fd, data, len, MSG_NOSIGNAL) != len ? ECONNRESET : 0;
+    r = send(tc->fd, data, len, MSG_NOSIGNAL);
 #else
-  return send(tc->fd, data, len, 0           ) != len ? ECONNRESET : 0;
+    r = send(tc->fd, data, len, 0);
 #endif
+    if(r == -1 && (errno == EINTR || errno == EAGAIN))
+      continue;
+
+    return r != len ? ECONNRESET : 0;
+  }
 }
 
 
@@ -65,15 +72,17 @@ tcp_read(tcpcon_t *tc, void *buf, size_t len, int all,
   while(1) {
 
     x = recv(tc->fd, buf + off, len - off, flags);
-    if(x <= 0)
+    if(x <= 0) {
+      if(errno == EINTR || errno == EAGAIN)
+        continue;
       return -1;
-    
+    }
     if(all) {
 
       off += x;
       if(off == len)
 	return len;
-      
+
       if(cb != NULL)
 	cb(opaque, off);
 
@@ -97,7 +106,7 @@ getstreamsocket(int family, char *errbuf, size_t errbufsize)
   if(fd == -1) {
     snprintf(errbuf, errbufsize, "Unable to create socket: %s",
 	     strerror(errno));
-    return -1;  
+    return -1;
   }
 
   /**
@@ -274,11 +283,8 @@ tcp_connect_arch(const net_addr_t *addr,
 
   tcpcon_t *tc = calloc(1, sizeof(tcpcon_t));
   tc->fd = fd;
-  tc->c = c;
   htsbuf_queue_init(&tc->spill, 0);
-
-  if(c != NULL)
-    cancellable_bind(c, tcp_cancel, tc);
+  tcp_set_cancellable(tc, c);
 
   if(r == -1) {
     if(errno == EINPROGRESS) {
@@ -290,7 +296,6 @@ tcp_connect_arch(const net_addr_t *addr,
 
       r = poll(&pfd, 1, timeout);
       if(r < 1) {
-
 
 	/* Timeout */
         if(!r)

@@ -18,27 +18,27 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 #pragma once
-typedef struct cancellable {
-  int cancelled;
-  void (*cancel)(void *opaque);
-  void *opaque;
-} cancellable_t;
 
+#include "arch/atomic.h"
 
-static __inline int cancellable_is_cancelled(const cancellable_t *c)
-{
-  return c != NULL && c->cancelled;
-}
+typedef struct cancellable cancellable_t;
 
-void cancellable_bind(cancellable_t *c, void (*fn)(void *opaque),
-                      void *opaque);
+int cancellable_is_cancelled(const cancellable_t *c);
 
-void cancellable_unbind(cancellable_t *c);
+cancellable_t *cancellable_bind(cancellable_t *c,
+                                void (*cancel)(void *opaque),
+                                void *opaque)  attribute_unused_result;
+
+void cancellable_unbind(cancellable_t *c, void *opaque);
 
 void cancellable_cancel(cancellable_t *c);
 
-static __inline void cancellable_reset(cancellable_t *c)
-{
-  c->cancelled = 0;
-  c->cancel = NULL;
-}
+void cancellable_cancel_locked(cancellable_t *c);
+
+void cancellable_reset(cancellable_t *c);
+
+cancellable_t *cancellable_create(void);
+
+void cancellable_release(cancellable_t *c);
+
+cancellable_t *cancellable_retain(cancellable_t *c);

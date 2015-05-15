@@ -48,6 +48,10 @@ typedef struct buffered_file {
   time_t bf_park_time;
 
   fa_handle_t *bf_src;
+  cancellable_t *bf_outbound_cancellable;
+
+  cancellable_t *bf_inbound_cancellable;
+
 #if BF_CHK
   fa_handle_t *bf_chk;
 #endif
@@ -68,6 +72,7 @@ typedef struct buffered_file {
   char *bf_url;
 
   buffered_zone_t bf_zones[BF_ZONES];
+
 
 } buffered_file_t;
 
@@ -237,6 +242,7 @@ fab_destroy(buffered_file_t *bf)
   if(bf->bf_mem != NULL)
     hfree(bf->bf_mem, bf->bf_mem_size);
   free(bf->bf_url);
+  cancellable_release(bf->bf_outbound_cancellable);
   free(bf);
 }
 
@@ -248,22 +254,27 @@ fab_destroy(buffered_file_t *bf)
 static void
 fab_close(fa_handle_t *handle)
 {
+  buffered_file_t *bf = (buffered_file_t *)handle;
+  cancellable_unbind(bf->bf_inbound_cancellable, bf);
+  bf->bf_inbound_cancellable = NULL;
+
 #ifdef FILE_PARKING
-  buffered_file_t *closeme = NULL, *bf = (buffered_file_t *)handle;
+  buffered_file_t *closeme = NULL;
   fa_handle_t *src = bf->bf_src;
 
 
   if((src->fh_proto->fap_no_parking != NULL &&
       src->fh_proto->fap_no_parking(src)) ||
-     bf->bf_flags & FA_NO_PARKING) {
-    fab_destroy((buffered_file_t *)handle);
+     bf->bf_flags & FA_NO_PARKING ||
+     cancellable_is_cancelled(bf->bf_outbound_cancellable)) {
+    fab_destroy(bf);
     return;
   }
 
   hts_mutex_lock(&buffered_global_mutex);
   if(parked)
     closeme = parked;
-  
+
   parked = bf;
   time(&parked->bf_park_time);
   hts_mutex_unlock(&buffered_global_mutex);
@@ -271,7 +282,7 @@ fab_close(fa_handle_t *handle)
   if(closeme)
     fab_destroy(closeme);
 #else
-  fab_destroy((buffered_file_t *)handle);
+  fab_destroy(bf);
 #endif
 }
 
@@ -544,12 +555,36 @@ static fa_protocol_t fa_protocol_buffered = {
 /**
  *
  */
+static void
+fab_cancel(void *aux)
+{
+  buffered_file_t *bf = aux;
+  cancellable_cancel_locked(bf->bf_outbound_cancellable);
+}
+
+/**
+ *
+ */
 fa_handle_t *
 fa_buffered_open(const char *url, char *errbuf, size_t errsize, int flags,
                  struct fa_open_extra *foe)
 {
   buffered_file_t *closeme = NULL;
-  fa_handle_t *fh = NULL;
+  fa_handle_t *fh;
+  fa_protocol_t *fap;
+  char *filename;
+
+  if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
+    return NULL;
+
+  if(!(fap->fap_flags & FAP_ALLOW_CACHE)) {
+    fh = fap->fap_open(fap, filename, errbuf, errsize, flags, foe);
+    fap_release(fap);
+    free(filename);
+    return fh;
+  }
+
+  fh = NULL;
   hts_mutex_lock(&buffered_global_mutex);
 
   if(parked) {
@@ -568,28 +603,55 @@ fa_buffered_open(const char *url, char *errbuf, size_t errsize, int flags,
     fh = (fa_handle_t *)parked;
     parked = NULL;
   }
-  
 
   hts_mutex_unlock(&buffered_global_mutex);
-    
+
   if(closeme != NULL)
     fab_destroy(closeme);
 
-  if(fh != NULL)
+  if(fh != NULL) {
+    fap_release(fap);
+    free(filename);
+
+    if(foe->foe_cancellable != NULL) {
+      buffered_file_t *bf = (buffered_file_t *)fh;
+      assert(bf->bf_inbound_cancellable == NULL);
+      bf->bf_inbound_cancellable =
+        cancellable_bind(foe->foe_cancellable, fab_cancel, fh);
+    }
     return fh;
+  }
 
   int mflags = flags;
   flags &= ~ (FA_BUFFERED_SMALL | FA_BUFFERED_BIG | FA_BUFFERED_NO_PREFETCH);
-  if(foe != NULL)
-    foe->foe_c = NULL;
-  fh = fa_open_ex(url, errbuf, errsize, flags, foe);
-  if(fh == NULL)
-    return NULL;
 
-  if(!(fh->fh_proto->fap_flags & FAP_ALLOW_CACHE))
-    return fh;
+  fa_open_extra_t new_foe;
 
   buffered_file_t *bf = calloc(1, sizeof(buffered_file_t));
+
+  bf->bf_outbound_cancellable = cancellable_create();
+
+  if(foe != NULL) {
+    if(foe->foe_cancellable != NULL) {
+      bf->bf_inbound_cancellable =
+        cancellable_bind(foe->foe_cancellable, fab_cancel, bf);
+    }
+
+    foe->foe_cancellable = bf->bf_outbound_cancellable;
+  } else {
+    memset(&new_foe, 0, sizeof(fa_open_extra_t));
+    new_foe.foe_cancellable = bf->bf_outbound_cancellable;
+    foe = &new_foe;
+  }
+
+  fh = fap->fap_open(fap, filename, errbuf, errsize, flags, foe);
+  fap_release(fap);
+  free(filename);
+  if(fh == NULL) {
+    free(bf);
+    return NULL;
+  }
+
   bf->bf_url = strdup(url);
   if(!(mflags & FA_BUFFERED_NO_PREFETCH))
     bf->bf_min_request = mflags & FA_BUFFERED_BIG ? 256 * 1024 : 64 * 1024;

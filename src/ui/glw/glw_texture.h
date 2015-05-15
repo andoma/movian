@@ -61,7 +61,7 @@ typedef struct glw_loadable_texture {
 
   pixmap_t *glt_pixmap;
 
-  cancellable_t glt_cancellable;
+  cancellable_t *glt_cancellable;
 
   int16_t glt_req_xs;
   int16_t glt_req_ys;

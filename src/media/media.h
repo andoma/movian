@@ -22,6 +22,7 @@
 
 #include "config.h"
 #include "settings.h"
+#include "misc/cancellable.h"
 
 // -------------------------------------------------------------------
 
@@ -401,10 +402,10 @@ media_pipe_t *mp_create(const char *name, int flags);
 void mp_destroy(media_pipe_t *mp);
 
 /**
- * Clear out all streams, needs to be done when reusing the same media_pipe
+ * Reset various things, needs to be done when reusing the same media_pipe
  * for a different source
  */
-void mp_reinit_streams(media_pipe_t *mp);
+void mp_reset(media_pipe_t *mp);
 
 /**
  * Lockmgr to be passed to prop framework for prop callbacks into
@@ -509,9 +510,6 @@ void mp_set_clr_flags(media_pipe_t *mp, int set, int clr);
  * Update total duration of the currently played object
  */
 void mp_set_duration(media_pipe_t *mp, int64_t duration);
-
-void mp_set_cancellable(media_pipe_t *mp, struct cancellable *c);
-
 
 /**
  * Can be used to pause/unpause all media pipelines using the given flag

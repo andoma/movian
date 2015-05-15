@@ -846,13 +846,15 @@ torrent_load(torrent_t *to, void *buf, uint64_t offset, size_t size,
     if(!tp->tp_hash_computed) {
       asyncio_wakeup_worker(torrent_pendings_signal);
 
-      while(!tp->tp_hash_ok)
+      while(!tp->tp_hash_ok && !tfh->tfh_cancelled)
         hts_cond_wait(&torrent_piece_verified_cond, &bittorrent_mutex);
     }
 
     LIST_REMOVE(tfh, tfh_piece_link);
-
     piece_update_deadline(to, tp);
+
+    if(tfh->tfh_cancelled)
+      return -1;
 
     int copy = MIN(size, to->to_piece_length - piece_offset);
 

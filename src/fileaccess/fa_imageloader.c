@@ -196,7 +196,7 @@ fa_imageloader(const char *url, const struct image_meta *im,
     return fa_imageloader2(url, vpaths, errbuf, errlen, cache_control, c);
 
   fa_open_extra_t foe = {
-    .foe_c = c
+    .foe_cancellable = c
   };
 
   if((fh = fa_open_vpaths(url, vpaths, errbuf, errlen,

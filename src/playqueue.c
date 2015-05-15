@@ -1103,6 +1103,8 @@ player_thread(void *aux)
       continue;
     }
 
+    mp_reset(mp);
+
     prop_t *sm = prop_get_by_name(PNVEC("self", "metadata"), 1,
                                   PROP_TAG_NAMED_ROOT, pqe->pqe_node, "self",
                                   NULL);

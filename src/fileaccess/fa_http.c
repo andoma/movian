@@ -192,7 +192,7 @@ typedef struct http_file {
   const struct http_header_list *hf_user_request_headers;
   struct http_header_list *hf_user_response_headers;
 
-  cancellable_t *hf_c;
+  cancellable_t *hf_cancellable;
 
   uint64_t hf_bytes_downloaded;
 
@@ -1498,8 +1498,8 @@ http_connect(http_file_t *hf, char *errbuf, int errlen, int allow_reuse)
   const int timeout = hf->hf_connect_timeout ?: 30000;
 
   hf->hf_connection = http_connection_get(hostname, port, ssl, errbuf, errlen,
-					  hf->hf_debug, timeout, hf->hf_c,
-                                          allow_reuse);
+					  hf->hf_debug, timeout,
+                                          hf->hf_cancellable, allow_reuse);
 
   if(hf->hf_read_timeout != 0 && hf->hf_connection != NULL)
     tcp_set_read_timeout(hf->hf_connection->hc_tc, hf->hf_read_timeout);
@@ -1632,7 +1632,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 static void
 http_destroy(http_file_t *hf)
 {
-  http_detach(hf, 
+  http_detach(hf,
 	      hf->hf_rsize == 0 &&
 	      hf->hf_connection_mode == CONNECTION_MODE_PERSISTENT,
 	      "Request destroyed");
@@ -1643,6 +1643,7 @@ http_destroy(http_file_t *hf)
   free(hf->hf_location);
   free(hf->hf_content_type);
   prop_ref_dec(hf->hf_stats_speed);
+  cancellable_release(hf->hf_cancellable);
   free(hf);
 }
 
@@ -1668,7 +1669,7 @@ http_open_ex(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
     }
     hf->hf_user_request_headers  = foe->foe_request_headers;
     hf->hf_user_response_headers = foe->foe_response_headers;
-    hf->hf_c = foe->foe_c;
+    hf->hf_cancellable = cancellable_retain(foe->foe_cancellable);
     hf->hf_connect_timeout = foe->foe_open_timeout;
   }
 
@@ -3344,7 +3345,7 @@ http_reqv(const char *url, va_list ap,
       break;
 
     case HTTP_TAG_CANCELLABLE:
-      hf->hf_c = va_arg(ap, cancellable_t *);
+      hf->hf_cancellable = cancellable_retain(va_arg(ap, cancellable_t *));
       break;
 
     case HTTP_TAG_CONNECT_TIMEOUT:

@@ -17,18 +17,29 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
-#include "arch/threads.h"
 
+#include <stdlib.h>
+
+#include "arch/threads.h"
 #include "cancellable.h"
 
 static HTS_MUTEX_DECL(cancellable_mutex);
 
+struct cancellable {
+  atomic_t refcount;
+  int cancelled;
+  void (*cancel)(void *opaque);
+  void *opaque;
+};
+
+
 /**
  *
  */
-void
+cancellable_t *
 cancellable_bind(cancellable_t *c, void (*fn)(void *opaque), void *opaque)
 {
+  atomic_inc(&c->refcount);
   hts_mutex_lock(&cancellable_mutex);
   c->cancel = fn;
   c->opaque = opaque;
@@ -37,6 +48,7 @@ cancellable_bind(cancellable_t *c, void (*fn)(void *opaque), void *opaque)
     fn(opaque);
 
   hts_mutex_unlock(&cancellable_mutex);
+  return c;
 }
 
 
@@ -44,14 +56,32 @@ cancellable_bind(cancellable_t *c, void (*fn)(void *opaque), void *opaque)
  *
  */
 void
-cancellable_unbind(cancellable_t *c)
+cancellable_unbind(cancellable_t *c, void *opaque)
 {
   if(c == NULL)
     return;
+
   hts_mutex_lock(&cancellable_mutex);
-  c->cancel = NULL;
-  c->opaque = NULL;
+
+  if(c->opaque == opaque) {
+    c->cancel = NULL;
+    c->opaque = NULL;
+  }
+
   hts_mutex_unlock(&cancellable_mutex);
+  cancellable_release(c);
+}
+
+
+/**
+ *
+ */
+void
+cancellable_cancel_locked(cancellable_t *c)
+{
+  c->cancelled = 1;
+  if(c->cancel != NULL)
+    c->cancel(c->opaque);
 }
 
 
@@ -62,10 +92,66 @@ void
 cancellable_cancel(cancellable_t *c)
 {
   hts_mutex_lock(&cancellable_mutex);
-
-  c->cancelled = 1;
-  if(c->cancel != NULL)
-    c->cancel(c->opaque);
-
+  cancellable_cancel_locked(c);
   hts_mutex_unlock(&cancellable_mutex);
+}
+
+
+/**
+ *
+ */
+void cancellable_reset(cancellable_t *c)
+{
+  hts_mutex_lock(&cancellable_mutex);
+  c->cancelled = 0;
+  c->cancel = NULL;
+  hts_mutex_unlock(&cancellable_mutex);
+}
+
+
+/**
+ *
+ */
+int
+cancellable_is_cancelled(const cancellable_t *c)
+{
+  if(c == NULL)
+    return 0;
+
+  return c->cancelled;
+}
+
+
+/**
+ *
+ */
+cancellable_t *
+cancellable_create(void)
+{
+  cancellable_t *c = calloc(1, sizeof(cancellable_t));
+
+  atomic_set(&c->refcount, 1);
+  return c;
+}
+
+
+void
+cancellable_release(cancellable_t *c)
+{
+  if(c == NULL)
+    return;
+
+  if(atomic_dec(&c->refcount))
+    return;
+
+  free(c);
+}
+
+
+cancellable_t *
+cancellable_retain(cancellable_t *c)
+{
+  if(c != NULL)
+    atomic_inc(&c->refcount);
+  return c;
 }

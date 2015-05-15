@@ -480,7 +480,7 @@ hls_segment_open(hls_segment_t *hs)
   if(fast_fail)
     foe.foe_open_timeout = 2000;
 
-  foe.foe_c = &hd->hd_cancellable;
+  foe.foe_cancellable = hd->hd_cancellable;
 
   int flags = FA_BUFFERED_BIG | FA_STREAMING;
 
@@ -927,8 +927,8 @@ hls_event_callback(media_pipe_t *mp, void *aux, event_t *e)
 
     event_ts_t *ets = (event_ts_t *)e;
 
-    cancellable_cancel(&h->h_primary.hd_cancellable);
-    cancellable_cancel(&h->h_audio.hd_cancellable);
+    cancellable_cancel(h->h_primary.hd_cancellable);
+    cancellable_cancel(h->h_audio.hd_cancellable);
 
     hts_mutex_lock(&h->h_mutex);
     h->h_pending_seek = ets->ts;
@@ -941,8 +941,8 @@ hls_event_callback(media_pipe_t *mp, void *aux, event_t *e)
             event_is_type(e, EVENT_EXIT) ||
             event_is_type(e, EVENT_PLAY_URL)) {
 
-    cancellable_cancel(&h->h_primary.hd_cancellable);
-    cancellable_cancel(&h->h_audio.hd_cancellable);
+    cancellable_cancel(h->h_primary.hd_cancellable);
+    cancellable_cancel(h->h_audio.hd_cancellable);
 
     hts_mutex_lock(&h->h_mutex);
 
@@ -1774,6 +1774,7 @@ hls_demuxer_init(hls_demuxer_t *hd, hls_t *h, const char *type)
   hd->hd_hls = h;
   hd->hd_type = type;
   hd->hd_seek_to_segment = PTS_UNSET;
+  hd->hd_cancellable = cancellable_create();
 }
 
 
@@ -1787,6 +1788,7 @@ hls_demuxer_close(media_pipe_t *mp, hls_demuxer_t *hd)
   if(hd->hd_audio_codec != NULL)
     media_codec_deref(hd->hd_audio_codec);
   hls_free_mbp(mp, &hd->hd_mb);
+  cancellable_release(hd->hd_cancellable);
 }
 
 /**

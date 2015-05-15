@@ -21,6 +21,7 @@
 #include "fileaccess/fileaccess.h"
 #include "networking/asyncio.h"
 #include "misc/average.h"
+#include "misc/cancellable.h"
 
 #define PIECE_HAVE     0x1
 #define PIECE_NOTIFIED 0x2
@@ -443,6 +444,9 @@ typedef struct torrent_fh {
   prop_t *tfh_recv_peers;
 
   int64_t tfh_deadline;
+
+  struct cancellable *tfh_cancellable;
+  char tfh_cancelled;
 
 } torrent_fh_t;
 

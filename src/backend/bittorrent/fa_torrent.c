@@ -118,6 +118,19 @@ mkinfo(prop_t *p, prop_t *title)
 /**
  *
  */
+static void
+torrent_cancel(void *opaque)
+{
+  torrent_fh_t *tfh = opaque;
+  hts_mutex_lock(&bittorrent_mutex);
+  tfh->tfh_cancelled = 1;
+  hts_cond_broadcast(&torrent_piece_verified_cond);
+  hts_mutex_unlock(&bittorrent_mutex);
+}
+
+/**
+ *
+ */
 static fa_handle_t *
 torrent_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
              int flags, struct fa_open_extra *foe)
@@ -152,6 +165,11 @@ torrent_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
   torrent_retain(to);
   hts_mutex_unlock(&bittorrent_mutex);
   tfh->h.fh_proto = fap;
+
+  if(foe != NULL && foe->foe_cancellable != NULL)
+    tfh->tfh_cancellable =
+      cancellable_bind(foe->foe_cancellable, torrent_cancel, tfh);
+
   return &tfh->h;
 }
 
@@ -233,6 +251,9 @@ static void
 torrent_close(fa_handle_t *fh)
 {
   torrent_fh_t *tfh = (torrent_fh_t *)fh;
+
+  cancellable_unbind(tfh->tfh_cancellable, tfh);
+
   hts_mutex_lock(&bittorrent_mutex);
 
   LIST_REMOVE(tfh, tfh_torrent_file_link);

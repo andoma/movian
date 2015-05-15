@@ -99,6 +99,8 @@ mp_create(const char *name, int flags)
   prop_t *p;
 
   mp = calloc(1, sizeof(media_pipe_t));
+  mp->mp_cancellable = cancellable_create();
+
   mp->mp_vol_ui = 1.0f;
 
   mp->mp_satisfied = -1;
@@ -290,8 +292,10 @@ mp_create(const char *name, int flags)
  *
  */
 void
-mp_reinit_streams(media_pipe_t *mp)
+mp_reset(media_pipe_t *mp)
 {
+  cancellable_reset(mp->mp_cancellable);
+
   prop_set(mp->mp_prop_io, "bitrate", PROP_SET_VOID);
   prop_set(mp->mp_prop_io, "bitrateValid", PROP_SET_VOID);
 
@@ -388,6 +392,7 @@ mp_release(media_pipe_t *mp)
   if(mp->mp_satisfied == 0)
     atomic_dec(&media_buffer_hungry);
 
+  cancellable_release(mp->mp_cancellable);
   free(mp);
 }
 
@@ -734,18 +739,6 @@ mp_configure(media_pipe_t *mp, int flags, int buffer_size, int64_t duration,
   if(mp->mp_flags & MP_PRE_BUFFERING)
     mp_check_underrun(mp);
 
-  hts_mutex_unlock(&mp->mp_mutex);
-}
-
-
-/**
- *
- */
-void
-mp_set_cancellable(media_pipe_t *mp, struct cancellable *c)
-{
-  hts_mutex_lock(&mp->mp_mutex);
-  mp->mp_cancellable = c;
   hts_mutex_unlock(&mp->mp_mutex);
 }
 

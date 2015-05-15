@@ -63,8 +63,6 @@ typedef struct icecast_play_context {
 
   prop_t *ipc_radio_info;
 
-  cancellable_t ipc_cancellable;
-
   char ipc_streaminfo_set;
 
 } icecast_play_context_t;
@@ -206,7 +204,7 @@ open_stream(icecast_play_context_t *ipc)
   fa_open_extra_t foe = {
     .foe_request_headers  = &ipc->ipc_request_headers,
     .foe_response_headers = &ipc->ipc_response_headers,
-    .foe_c =                &ipc->ipc_cancellable,
+    .foe_cancellable =       ipc->ipc_mp->mp_cancellable,
   };
 
   if(num_dead == ipc->ipc_nsources) {
@@ -217,7 +215,7 @@ open_stream(icecast_play_context_t *ipc)
 
     if(fh == NULL) {
 
-      if(cancellable_is_cancelled(&ipc->ipc_cancellable))
+      if(cancellable_is_cancelled(ipc->ipc_mp->mp_cancellable))
         return -1;
 
       TRACE(TRACE_ERROR, "Radio", "Unable to open %s -- %s",
@@ -323,7 +321,7 @@ open_stream(icecast_play_context_t *ipc)
 
     if(fh == NULL) {
       is->is_dead = 1;
-      if(ipc->ipc_cancellable.cancelled)
+      if(cancellable_is_cancelled(ipc->ipc_mp->mp_cancellable))
         return -1;
 
 
@@ -359,7 +357,7 @@ open_stream(icecast_play_context_t *ipc)
   if((fctx = fa_libav_open_format(avio, url, errbuf, sizeof(errbuf), ct,
                                   4096, 0, -1)) == NULL) {
 
-    if(!cancellable_is_cancelled(&ipc->ipc_cancellable)) {
+    if(!cancellable_is_cancelled(ipc->ipc_mp->mp_cancellable)) {
       TRACE(TRACE_ERROR, "Radio", "Unable to open %s -- %s",
             ipc->ipc_url, errbuf);
     }
@@ -457,8 +455,6 @@ stream_radio(icecast_play_context_t *ipc, char *errbuf, size_t errlen)
   TAILQ_INIT(&ipc->ipc_sources);
 
   http_header_add(&ipc->ipc_request_headers, "Icy-MetaData", "1", 1);
-
-  mp_set_cancellable(mp, &ipc->ipc_cancellable);
 
   while(1) {
 
@@ -592,7 +588,6 @@ stream_radio(icecast_play_context_t *ipc, char *errbuf, size_t errlen)
   }
 
   prop_set_void(ipc->ipc_radio_info);
-  mp_set_cancellable(mp, NULL);
 
   if(mb != NULL && mb != MB_SPECIAL_EOF)
     media_buf_free_unlocked(mp, mb);

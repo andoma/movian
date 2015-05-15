@@ -315,14 +315,16 @@ tcp_cancel(void *aux)
 void
 tcp_set_cancellable(tcpcon_t *tc, struct cancellable *c)
 {
-  if(tc->c == c)
+  if(tc->cancellable == c)
     return;
 
-  cancellable_unbind(tc->c);
+  if(tc->cancellable != NULL) {
+    cancellable_unbind(tc->cancellable, tc);
+    tc->cancellable = NULL;
+  }
 
-  tc->c = c;
-  if(tc->c != NULL)
-    cancellable_bind(tc->c, tcp_cancel, tc);
+  if(c != NULL)
+    tc->cancellable = cancellable_bind(c, tcp_cancel, tc);
 }
 
 
@@ -514,7 +516,8 @@ tcp_close(tcpcon_t *tc)
   if(tc->ssl != NULL)
     tcp_ssl_close(tc);
 
-  cancellable_unbind(tc->c);
+  tcp_set_cancellable(tc, NULL);
+
   htsbuf_queue_flush(&tc->spill);
 
   tcp_close_arch(tc);

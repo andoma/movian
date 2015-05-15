@@ -61,7 +61,7 @@ static fa_protocol_t *native_fap;
 /**
  *
  */
-static void
+void
 fap_release(fa_protocol_t *fap)
 {
   if(fap->fap_fini == NULL)
@@ -86,7 +86,7 @@ fap_retain(fa_protocol_t *fap)
 /**
  *
  */
-static char *
+char *
 fa_resolve_proto(const char *url, fa_protocol_t **p,
 		 const char **vpaths, char *errbuf, size_t errsize)
 {
@@ -257,7 +257,7 @@ fa_open_ex(const char *url, char *errbuf, size_t errsize, int flags,
   fap_release(fap);
   free(filename);
 #ifdef FA_DUMP
-  if(flags & FA_DUMP) 
+  if(flags & FA_DUMP)
     fh->fh_dump_fd = open("dumpfile.bin", O_CREAT | O_TRUNC | O_WRONLY, 0666);
   else
     fh->fh_dump_fd = -1;
@@ -280,9 +280,6 @@ fa_open_vpaths(const char *url, const char **vpaths,
 
   if((filename = fa_resolve_proto(url, &fap, vpaths, errbuf, errsize)) == NULL)
     return NULL;
-  
-  if(flags & (FA_BUFFERED_SMALL | FA_BUFFERED_BIG))
-    return fa_buffered_open(url, errbuf, errsize, flags, foe);
 
   fh = fap->fap_open(fap, filename, errbuf, errsize, flags, foe);
 #ifdef FA_DUMP
@@ -290,7 +287,6 @@ fa_open_vpaths(const char *url, const char **vpaths,
 #endif
   fap_release(fap);
   free(filename);
-
   return fh;
 }
 

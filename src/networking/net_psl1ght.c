@@ -213,11 +213,8 @@ tcp_connect_arch(const net_addr_t *addr,
 
   tcpcon_t *tc = calloc(1, sizeof(tcpcon_t));
   tc->fd = fd;
-  tc->c = c;
   htsbuf_queue_init(&tc->spill, 0);
-
-  if(c != NULL)
-    cancellable_bind(c, tcp_cancel, tc);
+  tcp_set_cancellable(tc, c);
 
   const char *errtype = "";
 

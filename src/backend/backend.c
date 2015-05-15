@@ -338,7 +338,7 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im0,
     img = nb->be_imageloader(url, &im, vpaths, errbuf,
                              errlen, cache_control, c);
   }
-  if(c != NULL && c->cancelled) {
+  if(cancellable_is_cancelled(c)) {
     snprintf(errbuf, errlen, "Cancelled");
     if(img != NOT_MODIFIED)
       image_release(img);

@@ -57,7 +57,7 @@ struct tcpcon {
 
 #endif
 
-  cancellable_t *c;
+  cancellable_t *cancellable;
 
 };
 

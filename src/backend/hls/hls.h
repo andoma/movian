@@ -174,7 +174,7 @@ typedef struct hls_demuxer {
 
   time_t hd_last_switch;
 
-  cancellable_t hd_cancellable;
+  cancellable_t *hd_cancellable;
 
   struct hls *hd_hls;
 

@@ -1976,7 +1976,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
   mp->mp_audio.mq_stream  = -1;
   mp->mp_video.mq_stream2 = -1;
 
-  mp_reinit_streams(mp);
+  mp_reset(mp);
 
   if((sourceinfo = htsmsg_get_map(m, "sourceinfo")) != NULL) {
 

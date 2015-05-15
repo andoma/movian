@@ -181,7 +181,7 @@ play_video(const char *url, struct media_pipe *mp,
 
   LIST_INIT(&vsources);
 
-  mp_reinit_streams(mp);
+  mp_reset(mp);
 
   if(strncmp(url, "videoparams:", strlen("videoparams:"))) {
     backend_t *be = backend_canhandle(url);

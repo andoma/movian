@@ -28,6 +28,15 @@
 
 #include "backend/backend.h"
 
+/**
+ *
+ */
+static void
+glt_destroy(glw_loadable_texture_t *glt)
+{
+  cancellable_release(glt->glt_cancellable);
+  free(glt);
+}
 
 /**
  *
@@ -35,7 +44,7 @@
 static void
 glt_cancel(glw_loadable_texture_t *glt)
 {
-  cancellable_cancel(&glt->glt_cancellable);
+  cancellable_cancel(glt->glt_cancellable);
 }
 
 
@@ -66,7 +75,7 @@ glw_tex_purge_stash(glw_root_t *gr, int stash)
         glt->glt_url = NULL;
         LIST_REMOVE(glt, glt_global_link);
       }
-      free(glt);
+      glt_destroy(glt);
     }
   }
 }
@@ -247,11 +256,11 @@ loader_thread(void *aux)
 	ccptr = NULL;
       }
 
-      cancellable_reset(&glt->glt_cancellable);
+      cancellable_reset(glt->glt_cancellable);
 
       glw_unlock(gr);
       img = backend_imageloader(url, &im, gr->gr_vpaths, errbuf, sizeof(errbuf),
-                                ccptr, &glt->glt_cancellable);
+                                ccptr, glt->glt_cancellable);
 
       glw_lock(gr);
 
@@ -461,7 +470,7 @@ glw_tex_purge(glw_root_t *gr)
   while((glt = TAILQ_FIRST(&gr->gr_tex_rel_queue)) != NULL) {
     TAILQ_REMOVE(&gr->gr_tex_rel_queue, glt, glt_work_link);
     glw_tex_backend_free_render_resources(gr, glt);
-    free(glt);
+    glt_destroy(glt);
   }
 }
 
@@ -540,6 +549,7 @@ glw_tex_create(glw_root_t *gr, rstr_t *filename, int flags, int xs, int ys,
 
   if(glt == NULL) {
     glt = calloc(1, sizeof(glw_loadable_texture_t));
+    glt->glt_cancellable = cancellable_create();
     glt->glt_url = rstr_dup(filename);
     LIST_INSERT_HEAD(&gr->gr_tex_list, glt, glt_global_link);
     glt->glt_state = GLT_STATE_INACTIVE;

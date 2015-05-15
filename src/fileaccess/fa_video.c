@@ -541,7 +541,8 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   fa_handle_t *fh;
 
   fa_open_extra_t foe = {
-    .foe_stats = mp->mp_prop_io
+    .foe_stats = mp->mp_prop_io,
+    .foe_cancellable = mp->mp_cancellable,
   };
 
   fh = fa_open_ex(url, errbuf, errlen, FA_BUFFERED_BIG, &foe);

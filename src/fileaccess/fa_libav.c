@@ -17,6 +17,9 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
+
+#include <unistd.h>
+
 #include <libavformat/avio.h>
 #include <libavformat/avformat.h>
 

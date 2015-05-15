@@ -346,9 +346,7 @@ mp_enqueue_event_locked(media_pipe_t *mp, event_t *e)
        event_is_action(e, ACTION_SKIP_FORWARD) ||
        event_is_action(e, ACTION_SKIP_BACKWARD)) {
 
-      if(mp->mp_cancellable != NULL) {
-        cancellable_cancel(mp->mp_cancellable);
-      }
+      cancellable_cancel(mp->mp_cancellable);
     }
 
     atomic_inc(&e->e_refcount);
