@@ -236,7 +236,6 @@ SRCS-$(CONFIG_XMP)             += src/fileaccess/fa_xmp.c
 SRCS-$(CONFIG_LIBGME)          += src/fileaccess/fa_gmefile.c
 SRCS-$(CONFIG_LOCATEDB)        += src/fileaccess/fa_locatedb.c
 SRCS-$(CONFIG_SPOTLIGHT)       += src/fileaccess/fa_spotlight.c
-SRCS-$(CONFIG_READAHEAD_CACHE) += src/fileaccess/fa_cache.c
 SRCS-$(CONFIG_LIBNTFS)         += src/fileaccess/fa_ntfs.c
 SRCS-$(CONFIG_NATIVESMB)       += src/fileaccess/smb/fa_nativesmb.c \
 				  src/fileaccess/smb/nmb.c

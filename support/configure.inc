@@ -67,7 +67,6 @@ CONFIG_LIST="
  realpath
  emu_thread_specifics
  libfontconfig
- readahead_cache
  sqlite_vfs
  sqlite_locking
  sqlite_internal

@@ -237,10 +237,7 @@ fa_open_ex(const char *url, char *errbuf, size_t errsize, int flags,
 
   if(!(flags & FA_WRITE)) {
     // Only do caching if we are in read only mode
-#if ENABLE_READAHEAD_CACHE
-    if(flags & FA_CACHE)
-      return fa_cache_open(url, errbuf, errsize, flags & ~FA_CACHE, foe);
-#endif
+
     if(flags & (FA_BUFFERED_SMALL | FA_BUFFERED_BIG))
       return fa_buffered_open(url, errbuf, errsize, flags, foe);
   }
@@ -1428,10 +1425,6 @@ fileaccess_init(void)
   LIST_FOREACH(fap, &fileaccess_all_protocols, fap_link)
     if(fap->fap_init != NULL)
       fap->fap_init();
-
-#if ENABLE_READAHEAD_CACHE
-  fa_cache_init();
-#endif
 
 #if ENABLE_METADATA
   fa_indexer_init();
