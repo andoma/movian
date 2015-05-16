@@ -255,9 +255,10 @@ hls_variant_update(hls_variant_t *hv, time_t now)
   hls_t *h = hv->hv_demuxer->hd_hls;
 
   buf_t *b = fa_load(hv->hv_url,
-                      FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
-                      FA_LOAD_FLAGS(FA_COMPRESSION),
-                      NULL);
+                     FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
+                     FA_LOAD_FLAGS(FA_COMPRESSION),
+                     FA_LOAD_CANCELLABLE(h->h_mp->mp_cancellable),
+                     NULL);
 
   if(b == NULL) {
     TRACE(TRACE_ERROR, "HLS", "Unable to open %s -- %s", hv->hv_url, errbuf);
@@ -1882,10 +1883,10 @@ hls_playvideo(const char *url, media_pipe_t *mp,
   if(!strcmp(url, "test"))
     url = TESTURL;
   buf = fa_load(url,
-                 FA_LOAD_ERRBUF(errbuf, errlen),
-                 FA_LOAD_FLAGS(FA_COMPRESSION),
-                 NULL);
-
+                FA_LOAD_ERRBUF(errbuf, errlen),
+                FA_LOAD_FLAGS(FA_COMPRESSION),
+                FA_LOAD_CANCELLABLE(mp->mp_cancellable),
+                NULL);
   if(buf == NULL)
     return NULL;
 
