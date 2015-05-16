@@ -124,6 +124,7 @@ typedef struct http_file {
   char *hf_location;
   char *hf_auth_realm;
 
+  char **hf_ret_location; // Return final location to caller
 
   char hf_authurl[128];
   char hf_path[URL_MAX];
@@ -2095,7 +2096,8 @@ http_load(struct fa_protocol *fap, const char *url,
 	  int flags, fa_load_cb_t *cb, void *opaque,
           cancellable_t *c,
           struct http_header_list *request_headers,
-          struct http_header_list *response_headers)
+          struct http_header_list *response_headers,
+          char **location)
 {
   buf_t *b;
   int err;
@@ -2130,6 +2132,7 @@ http_load(struct fa_protocol *fap, const char *url,
                  HTTP_REQUEST_HEADERS(request_headers),
                  HTTP_PROGRESS_CALLBACK(cb, opaque),
                  HTTP_CANCELLABLE(c),
+                 HTTP_LOCATION(location),
                  NULL);
 
   if(err == -1) {
@@ -2957,7 +2960,6 @@ http_req_do(http_req_aux_t *hra)
     prefix = '&';
   }
 
-
   htsbuf_qprintf(&q, " HTTP/1.%d\r\n", hf->hf_version);
 
   http_headers_init(&headers, hf);
@@ -2997,6 +2999,11 @@ http_req_do(http_req_aux_t *hra)
       htsbuf_hexdump(&hra->postdata, "HTTP-POSTDATA");
 
     tcp_write_queue_dontfree(hf->hf_connection->hc_tc, &hra->postdata);
+  }
+
+  if(hf->hf_ret_location != NULL) {
+    free(*hf->hf_ret_location);
+    *hf->hf_ret_location = strdup(hf->hf_url);
   }
 
   code = http_read_response(hf, hra->headers_out);
@@ -3354,6 +3361,12 @@ http_reqv(const char *url, va_list ap,
 
     case HTTP_TAG_READ_TIMEOUT:
       hf->hf_read_timeout = va_arg(ap, int);
+      break;
+
+    case HTTP_TAG_LOCATION:
+      hf->hf_ret_location = va_arg(ap, char **);
+      if(hf->hf_ret_location != NULL)
+        *hf->hf_ret_location = NULL;
       break;
 
       break;

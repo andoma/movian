@@ -43,6 +43,7 @@ enum {
   HTTP_TAG_CANCELLABLE,
   HTTP_TAG_CONNECT_TIMEOUT,
   HTTP_TAG_READ_TIMEOUT,
+  HTTP_TAG_LOCATION,
 };
 
 
@@ -63,6 +64,7 @@ enum {
 #define HTTP_CANCELLABLE(a)                HTTP_TAG_CANCELLABLE, a
 #define HTTP_CONNECT_TIMEOUT(a)            HTTP_TAG_CONNECT_TIMEOUT, a
 #define HTTP_READ_TIMEOUT(a)               HTTP_TAG_READ_TIMEOUT, a
+#define HTTP_LOCATION(a)                   HTTP_TAG_LOCATION, a
 
 /**
  * Tell HTTP client to create an internal buffer. To be used when

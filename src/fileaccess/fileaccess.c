@@ -1506,6 +1506,8 @@ fa_load(const char *url, ...)
   buf_t *buf = NULL;
   int tag;
   loadarg_t *la;
+  char **locationptr = NULL;
+
   va_list ap;
   va_start(ap, url);
 
@@ -1576,6 +1578,10 @@ fa_load(const char *url, ...)
       LIST_INIT(response_headers);
       break;
 
+    case FA_LOAD_TAG_LOCATION:
+      locationptr = va_arg(ap, char **);
+      break;
+
     default:
       abort();
     }
@@ -1601,6 +1607,9 @@ fa_load(const char *url, ...)
     url = mystrdupa(newurl); // Copy it to stack to avoid all free()s
     free(newurl);
   }
+
+  if(locationptr != NULL)
+    *locationptr = strdup(url);
 
   if((filename = fa_resolve_proto(url, &fap, vpaths, errbuf, errlen)) == NULL)
     return NULL;
@@ -1643,7 +1652,7 @@ fa_load(const char *url, ...)
     
     data2 = fap->fap_load(fap, filename, errbuf, errlen,
 			  &etag, &mtime, &max_age, flags, cb, opaque, c,
-                          request_headers, response_headers);
+                          request_headers, response_headers, locationptr);
     
     fap_release(fap);
     free(filename);
