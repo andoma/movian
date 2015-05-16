@@ -1882,19 +1882,25 @@ hls_playvideo(const char *url, media_pipe_t *mp,
   url += strlen("hls:");
   if(!strcmp(url, "test"))
     url = TESTURL;
+
+  char *baseurl = NULL;
+
   buf = fa_load(url,
                 FA_LOAD_ERRBUF(errbuf, errlen),
                 FA_LOAD_FLAGS(FA_COMPRESSION),
                 FA_LOAD_CANCELLABLE(mp->mp_cancellable),
+                FA_LOAD_LOCATION(&baseurl),
                 NULL);
-  if(buf == NULL)
+  if(buf == NULL) {
+    free(baseurl);
     return NULL;
-
+  }
   buf = buf_make_writable(buf);
   char *s = buf_str(buf);
 
-  event_t *e = hls_play_extm3u(s, url, mp, errbuf, errlen, vq, vsl, va0);
+  event_t *e = hls_play_extm3u(s, baseurl, mp, errbuf, errlen, vq, vsl, va0);
   buf_release(buf);
+  free(baseurl);
   return e;
 }
 
