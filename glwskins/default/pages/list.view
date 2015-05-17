@@ -28,7 +28,8 @@ widget(keyintercept, {
 	  &clone.focused = focusedChild();
 	  spacing: 3;
 
-	  cloner($page.model.nodes, loader, {
+	  cloner(propSorter($page.model.nodes,
+                      sort, "node.metadata.channelNumber", false, false), loader, {
 	    time: 0.1;
 	    effect: blend;
 	    alt: "listitems/default.view";
