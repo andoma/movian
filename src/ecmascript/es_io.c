@@ -595,9 +595,12 @@ es_http_inspector_set_cookie(duk_context *ctx)
   es_context_t *ec = es_get(ctx);
   http_request_inspection_t *hri = get_hri(ctx);
   const char *key = duk_safe_to_string(ctx, 0);
-  const char *value = duk_safe_to_string(ctx, 1);
-  es_debug(ec, "Inspector setting cookie %s = %s",
-           key, value);
+  const char *value = duk_get_string(ctx, 1);
+  if(value) {
+    es_debug(ec, "Inspector setting cookie %s = %s", key, value);
+  } else {
+    es_debug(ec, "Inspector clearing cookie %s", key);
+  }
   http_client_set_cookie(hri, key, value);
   return 0;
 }

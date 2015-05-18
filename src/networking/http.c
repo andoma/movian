@@ -80,7 +80,7 @@ void
 http_header_add(struct http_header_list *headers, const char *key,
 		const char *value, int append)
 {
-  http_header_add_alloced(headers, key, strdup(value), append);
+  http_header_add_alloced(headers, key, value ? strdup(value) : NULL, append);
 }
 
 /**
@@ -92,7 +92,7 @@ http_header_add_lws(struct http_header_list *headers, const char *data)
   http_header_t *hh;
   int cl;
   hh = LIST_FIRST(headers);
-  if(hh == NULL)
+  if(hh == NULL || hh->hh_value == NULL)
     return;
   
   cl = strlen(hh->hh_value);
@@ -148,7 +148,7 @@ http_header_merge(struct http_header_list *dst,
       http_header_add(dst, hhs->hh_key, hhs->hh_value, 0);
     } else {
       free(hhd->hh_value);
-      hhd->hh_value = strdup(hhs->hh_value);
+      hhd->hh_value = hhs->hh_value ? strdup(hhs->hh_value) : NULL;
     }
   }
 }

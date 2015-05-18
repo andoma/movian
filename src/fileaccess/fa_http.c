@@ -681,6 +681,14 @@ http_cookie_append(const char *req_host, const char *req_path,
     if(http_header_get(extra_cookies, hc->hc_name))
       continue;
 
+    // Skip overridden headers
+    LIST_FOREACH(hh, extra_cookies, hh_link) {
+      if(!strcmp(hh->hh_key, hc->hc_name))
+        break;
+    }
+    if(hh != NULL)
+      continue;
+
     htsbuf_append(&hq, s, strlen(s));
     htsbuf_append(&hq, hc->hc_name, strlen(hc->hc_name));
     htsbuf_append(&hq, "=", 1);
@@ -691,6 +699,8 @@ http_cookie_append(const char *req_host, const char *req_path,
   hts_mutex_unlock(&http_cookies_mutex);
 
   LIST_FOREACH(hh, extra_cookies, hh_link) {
+    if(hh->hh_value == NULL)
+      continue;
     htsbuf_append(&hq, s, strlen(s));
     htsbuf_append(&hq, hh->hh_key, strlen(hh->hh_key));
     htsbuf_append(&hq, "=", 1);
