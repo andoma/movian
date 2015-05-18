@@ -17,7 +17,8 @@ widget(container_y, {
 
   widget(label, {
     align: center;
-    caption: _("Unable to open resource");
+    caption: fmt(_("Unable to open %s"),
+                 $self.model.metadata.title ?? _("resource"));
     TextStyleItem();
     sizeScale: 1.5;
   });
