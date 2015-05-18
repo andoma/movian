@@ -698,6 +698,7 @@ video_player_idle(void *aux)
             resume_mode == VIDEO_RESUME_NO  ? "no" : "ask user",
             resume_ctrl == RESUME_AS_GLOBAL_SETTING ? "" : " (overridden)");
 
+      prop_set(mp->mp_prop_metadata, "title", PROP_SET_VOID);
       e = play_video(rstr_get(play_url), mp,
 		     play_flags, play_priority,
 		     errbuf, sizeof(errbuf), vq,
@@ -705,9 +706,10 @@ video_player_idle(void *aux)
                      origin, resume_mode);
       mp_bump_epoch(mp);
       prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 0);
-      prop_set(mp->mp_prop_metadata, "title", PROP_SET_VOID);
       if(e == NULL) {
 	prop_set_string(errprop, errbuf);
+      } else {
+        prop_set(mp->mp_prop_metadata, "title", PROP_SET_VOID);
       }
     }
 
