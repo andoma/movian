@@ -796,6 +796,8 @@ rtmp_probe(const char *url0, char *errbuf, size_t errlen)
   RTMP *r;
   char *url = mystrdupa(url0);
 
+  int timeout_ms = 5000;
+
   r = RTMP_Alloc();
   RTMP_Init(r, NULL);
 
@@ -805,11 +807,13 @@ rtmp_probe(const char *url0, char *errbuf, size_t errlen)
     return BACKEND_PROBE_FAIL;
   }
 
-  if(!RTMP_Connect(r, NULL, errbuf, errlen, 5000)) {
+  if(!RTMP_Connect(r, NULL, errbuf, errlen, timeout_ms)) {
     RTMP_Close(r);
     RTMP_Free(r);
     return BACKEND_PROBE_FAIL;
   }
+
+  RTMP_SetReadTimeout(r, timeout_ms);
 
   if(!RTMP_ConnectStream(r, 0)) {
     snprintf(errbuf, errlen, "Unable to connect RTMP-stream");
