@@ -331,13 +331,6 @@ void fa_pathjoin(char *dst, size_t dstlen, const char *p1, const char *p2);
 
 void fa_url_get_last_component(char *dst, size_t dstlen, const char *url);
 
-// Cache (XXX: Remove me)
-
-void fa_cache_init(void);
-
-fa_handle_t *fa_cache_open(const char *url, char *errbuf,
-			   size_t errsize, int flags, struct prop *stats);
-
 // Buffered I/O
 
 fa_handle_t *fa_buffered_open(const char *url, char *errbuf, size_t errsize,
