@@ -492,7 +492,7 @@ service_probe_loop(void *aux)
 
        // backend_probe() can take a lot of time so we unlock
       hts_mutex_unlock(&service_mutex);
-      st = (service_status_t)backend_probe(url, txt, sizeof(txt));
+      st = (service_status_t)backend_probe(url, txt, sizeof(txt), 0);
       free(url);
       hts_mutex_lock(&service_mutex);
     }

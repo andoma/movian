@@ -1792,7 +1792,7 @@ fa_parent(char *dst, size_t dstlen, const char *url)
 
 
 int
-fa_check_url(const char *url, char *errbuf, size_t errlen)
+fa_check_url(const char *url, char *errbuf, size_t errlen, int timeout_ms)
 {
   fa_protocol_t *fap;
   char *filename;

@@ -791,12 +791,10 @@ rtmp_init(void)
  *
  */
 static int
-rtmp_probe(const char *url0, char *errbuf, size_t errlen)
+rtmp_probe(const char *url0, char *errbuf, size_t errlen, int timeout_ms)
 {
   RTMP *r;
   char *url = mystrdupa(url0);
-
-  int timeout_ms = 5000;
 
   r = RTMP_Alloc();
   RTMP_Init(r, NULL);

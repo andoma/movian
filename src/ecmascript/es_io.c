@@ -696,10 +696,11 @@ static int
 es_probe(duk_context *ctx)
 {
   const char *url = duk_require_string(ctx, 0);
+  int timeout = duk_to_int32(ctx, 1);
   char errbuf[256];
   backend_probe_result_t res;
 
-  res = backend_probe(url, errbuf, sizeof(errbuf));
+  res = backend_probe(url, errbuf, sizeof(errbuf), timeout);
 
   duk_push_object(ctx);
 
@@ -747,7 +748,7 @@ es_xmlrpc(duk_context *ctx)
 static const duk_function_list_entry fnlist_io[] = {
   { "httpReq",              es_http_req,              3 },
   { "httpInspectorCreate",  es_http_inspector_create, 2 },
-  { "probe",                es_probe,                 1 },
+  { "probe",                es_probe,                 2 },
   { "xmlrpc",               es_xmlrpc,                DUK_VARARGS },
   { NULL, NULL, 0}
 };

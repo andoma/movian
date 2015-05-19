@@ -117,7 +117,7 @@ typedef struct backend {
 
   int (*be_normalize)(const char *url, char *dst, size_t dstlen);
 
-  int (*be_probe)(const char *url, char *errbuf, size_t errlen);
+  int (*be_probe)(const char *url, char *errbuf, size_t errlen, int timeout_ms);
 
   void (*be_search)(struct prop *model, const char *query, prop_t *loading);
 
@@ -163,7 +163,8 @@ backend_t *backend_canhandle(const char *url)
 
 
 backend_probe_result_t backend_probe(const char *url,
-				     char *errbuf, size_t errlen)
+				     char *errbuf, size_t errlen,
+                                     int timeout_ms)
      attribute_unused_result;
 
 void backend_register(backend_t *be);
