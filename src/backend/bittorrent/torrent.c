@@ -1611,7 +1611,7 @@ torrent_wakeup_for_metadata_requests(void)
  *
  */
 static void
-torrent_io_init(void)
+torrent_early_init(void)
 {
   btg.btg_max_peers_global = 200;
   btg.btg_max_peers_torrent = 50;
@@ -1626,11 +1626,21 @@ torrent_io_init(void)
   hts_cond_init(&torrent_piece_io_needed_cond, &bittorrent_mutex);
   hts_cond_init(&torrent_piece_verified_cond, &bittorrent_mutex);
   hts_cond_init(&torrent_metainfo_available_cond, &bittorrent_mutex);
+}
 
+INITME(INIT_GROUP_NET, torrent_early_init, NULL);
+
+
+/**
+ *
+ */
+static void
+torrent_asyncio_init(void)
+{
   hts_mutex_lock(&bittorrent_mutex);
   torrent_settings_init();
   hts_mutex_unlock(&bittorrent_mutex);
 
 }
 
-INITME(INIT_GROUP_ASYNCIO, torrent_io_init, NULL);
+INITME(INIT_GROUP_ASYNCIO, torrent_asyncio_init, NULL);

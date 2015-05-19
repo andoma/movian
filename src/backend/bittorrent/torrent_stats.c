@@ -62,8 +62,10 @@ torrent_dump(const torrent_t *to, htsbuf_queue_t *q)
 
   bin2hex(str, sizeof(str), to->to_info_hash, 20);
 
-  htsbuf_qprintf(q, "Infohash: %s  %d pieces (%d in RAM) refcount:%d\n", str,
-                 to->to_num_pieces, to->to_num_active_pieces, to->to_refcount);
+  htsbuf_qprintf(q, "Infohash: %s  %d pieces (%d in RAM using %d bytes) "
+                 "refcount:%d\n", str,
+                 to->to_num_pieces, to->to_num_active_pieces,
+                 to->to_active_pieces_mem, to->to_refcount);
   htsbuf_qprintf(q, "\nOpen files\n");
 
   torrent_fh_t *tfh;
