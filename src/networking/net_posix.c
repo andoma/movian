@@ -50,7 +50,7 @@ tcp_write(tcpcon_t *tc, const void *data, size_t len)
 #else
     r = send(tc->fd, data, len, 0);
 #endif
-    if(r == -1 && (errno == EINTR || errno == EAGAIN))
+    if(r == -1 && (errno == EINTR))
       continue;
 
     return r != len ? ECONNRESET : 0;
@@ -73,7 +73,7 @@ tcp_read(tcpcon_t *tc, void *buf, size_t len, int all,
 
     x = recv(tc->fd, buf + off, len - off, flags);
     if(x <= 0) {
-      if(errno == EINTR || errno == EAGAIN)
+      if(errno == EINTR)
         continue;
       return -1;
     }
