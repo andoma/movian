@@ -454,9 +454,7 @@ tcp_connect(const char *hostname, int port,
       const uint32_t v4addr = rd32_be(addr.na_addr);
       if(ni != NULL) {
         for(int i = 0; ni[i].ipv4; i++) {
-          printf("%x %x %x\n", v4addr, ni[i].maskv4, ni[i].ipv4);
           if((v4addr & ni[i].maskv4) == (ni[i].ipv4 & ni[i].maskv4)) {
-            printf("%s is local\n", hostname);
             goto connect;
           }
         }
