@@ -515,6 +515,11 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
       if(ret == 0) {
 	int64_t restartpos = r->seekpos_video;
 
+        if(cancellable_is_cancelled(mp->mp_cancellable)) {
+          snprintf(errbuf, errlen, "Cancelled");
+          return NULL;
+        }
+
 	TRACE(TRACE_ERROR, "RTMP", "Disconnected");
 	sleep(1);
 
@@ -526,8 +531,8 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
 
 
 	RTMP_Close(r->r);
-	
-	RTMP_Init(r->r);
+
+	RTMP_Init(r->r, mp->mp_cancellable);
 
 	memset(&p, 0, sizeof(p));
 
@@ -539,8 +544,7 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
 	  return NULL;
 	}
 
-	if(!RTMP_Connect(r->r, NULL)) {
-	  snprintf(errbuf, errlen, "Unable to connect RTMP session");
+	if(!RTMP_Connect(r->r, NULL, errbuf, errlen, 5000)) {
 	  return NULL;
 	}
 
@@ -666,7 +670,7 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
   RTMP_LogSetLevel(rtmp_log_level);
 
   r.r = RTMP_Alloc();
-  RTMP_Init(r.r);
+  RTMP_Init(r.r, mp->mp_cancellable);
 
   int64_t start = playinfo_get_restartpos(va.canonical_url, va.title, va.resume_mode);
 
@@ -678,8 +682,7 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
 
   r.r->Link.lFlags |= RTMP_LF_SWFV;
 
-  if(!RTMP_Connect(r.r, NULL)) {
-    snprintf(errbuf, errlen, "Unable to connect RTMP-session");
+  if(!RTMP_Connect(r.r, NULL, errbuf, errlen, 5000)) {
     rtmp_free(&r);
     return NULL;
   }
@@ -744,7 +747,7 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
 
   mp_shutdown(mp);
 
-  TRACE(TRACE_DEBUG, "RTMP", "End of stream");
+  TRACE(TRACE_DEBUG, "RTMP", "End of playback");
 
   rtmp_free(&r);
   return e;
@@ -794,7 +797,7 @@ rtmp_probe(const char *url0, char *errbuf, size_t errlen)
   char *url = mystrdupa(url0);
 
   r = RTMP_Alloc();
-  RTMP_Init(r);
+  RTMP_Init(r, NULL);
 
   if(!RTMP_SetupURL(r, url)) {
     snprintf(errbuf, errlen, "Unable to setup RTMP-session");
@@ -802,8 +805,7 @@ rtmp_probe(const char *url0, char *errbuf, size_t errlen)
     return BACKEND_PROBE_FAIL;
   }
 
-  if(!RTMP_Connect(r, NULL)) {
-    snprintf(errbuf, errlen, "Unable to connect RTMP-session");
+  if(!RTMP_Connect(r, NULL, errbuf, errlen, 5000)) {
     RTMP_Close(r);
     RTMP_Free(r);
     return BACKEND_PROBE_FAIL;
