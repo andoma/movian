@@ -19,7 +19,6 @@ SRCS += src/arch/ps3/ps3_main.c \
 # Install
 #
 
-TITLE := Showtime
 VERSION := $(shell support/getver.sh)
 SFO := $(PSL1GHT)/host/bin/sfo.py
 PKG := $(PSL1GHT)/host/bin/pkg.py
@@ -65,7 +64,7 @@ $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN: ${EBOOT}  src/arch/ps3/ps3.mk
 
 $(BUILDDIR)/showtime.pkg: $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN $(BUILDDIR)/pkg/USRDIR/showtime.self
 	cp $(ICON0) $(BUILDDIR)/pkg/ICON0.PNG
-	$(SFO) --title "$(TITLE)" --appid "$(APPID)" -f $(SFOXML) $(BUILDDIR)/pkg/PARAM.SFO
+	$(SFO) --title "$(APPNAMEUSER)" --appid "$(APPID)" -f $(SFOXML) $(BUILDDIR)/pkg/PARAM.SFO
 	$(PKG) --contentid $(CONTENTID) $(BUILDDIR)/pkg/ $@
 
 $(BUILDDIR)/showtime_geohot.pkg: $(BUILDDIR)/showtime.pkg  src/arch/ps3/ps3.mk
