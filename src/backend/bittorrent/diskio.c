@@ -248,28 +248,44 @@ torrent_read_from_disk(torrent_t *to, torrent_piece_t *tp)
   tp->tp_refcount++;
 
   int idx = to->to_cachefile_piece_map[tp->tp_index];
+  int ok;
 
-  assert(idx >= 0);
+  if(idx >= 0) {
+    uint64_t data_offset =
+      idx * to->to_piece_length + to->to_cachefile_store_offset;
 
-  uint64_t data_offset =
-    idx * to->to_piece_length + to->to_cachefile_store_offset;
+    hts_mutex_unlock(&bittorrent_mutex);
+    fa_seek(to->to_cachefile, data_offset, SEEK_SET);
+    int len = fa_read(to->to_cachefile, tp->tp_data, tp->tp_piece_length);
+    hts_mutex_lock(&bittorrent_mutex);
 
-  hts_mutex_unlock(&bittorrent_mutex);
-  fa_seek(to->to_cachefile, data_offset, SEEK_SET);
-  int len = fa_read(to->to_cachefile, tp->tp_data, tp->tp_piece_length);
-  hts_mutex_lock(&bittorrent_mutex);
+    static int x;
+    x++;
+    if(x == 2) {
+      len = 1;
+      x = 0;
+    }
 
-  int ok = len == tp->tp_piece_length;
+    ok = len == tp->tp_piece_length;
 
-  diskio_trace(to, "Load piece %d from disk: %s",
-               tp->tp_index, ok ? "OK" : "FAIL");
+    diskio_trace(to, "Load piece %d from disk: %s",
+                 tp->tp_index, ok ? "OK" : "FAIL");
+  } else {
+    // Piece no longer exist on disk. We fail silently here and just
+    // let the torrent streamer reload it
+    ok = 0;
+  }
 
   tp->tp_load_req = 0;
-  tp->tp_complete = 1;
-  tp->tp_on_disk = 1;
 
-  torrent_hash_wakeup();
-
+  if(ok) {
+    tp->tp_complete = 1;
+    tp->tp_on_disk = 1;
+    torrent_hash_wakeup();
+  } else {
+    tp->tp_loadfail = 1;
+    to->to_loadfail = 1;
+  }
   torrent_piece_release(tp);
   torrent_release(to);
 }

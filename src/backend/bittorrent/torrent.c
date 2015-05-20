@@ -1358,6 +1358,23 @@ torrent_reload_corrupt_pieces(torrent_t *to)
  *
  */
 static void
+torrent_reload_loadfail_pieces(torrent_t *to)
+{
+  torrent_piece_t *tp;
+
+  TAILQ_FOREACH(tp, &to->to_active_pieces, tp_link) {
+    if(tp->tp_loadfail) {
+      tp->tp_loadfail = 0;
+      torrent_piece_enqueue_requests(to, tp);
+    }
+  }
+}
+
+
+/**
+ *
+ */
+static void
 torrent_check_pendings(void)
 {
   hts_mutex_lock(&bittorrent_mutex);
@@ -1378,6 +1395,11 @@ torrent_check_pendings(void)
     if(to->to_corrupt_piece) {
       to->to_corrupt_piece = 0;
       torrent_reload_corrupt_pieces(to);
+    }
+
+    if(to->to_loadfail) {
+      to->to_loadfail = 0;
+      torrent_reload_loadfail_pieces(to);
     }
 
     torrent_io_do_requests(to);
