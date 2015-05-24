@@ -153,12 +153,10 @@ msg: Ustawienia Video
 # ./glwskins/default/loading.view
 #
 id: %d kb/s
-# Missing translation
-msg: 
+msg: %d kb/s
 
 id: Bitrate:
-# Missing translation
-msg: 
+msg: Bitrate:
 
 #
 # ./glwskins/default/log.view
@@ -521,8 +519,7 @@ msg: Mała ilość dostępnej pamięci (dostępne %d kB RAM)
 # ./src/arch/ps3/ps3_vdec.c
 #
 id: Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration
-# Missing translation
-msg: 
+msg: Cell-h264: %d klatek referencyjnych dla %d zawartości jest niekompatybilna ze sprzętowym dekoderem PS3. Wyłączanie akceleracji
 
 id: Cell-h264: Broken headers, Disabling acceleration
 msg: Cell-h264: Uszkodzony nagłówek, wyłączanie akceleracji
@@ -654,7 +651,7 @@ id: No files in torrent
 msg: Brak plików w torrencie
 
 id: Unable to open torrent: %s
-msg: Nie można otworzyć torrenta: %s
+msg: Nie można otworzyć pliku torrent: %s
 
 #
 # ./src/backend/bittorrent/diskio.c
@@ -666,31 +663,25 @@ msg: Zbuforowane torrenty zajmują %d MB z dozwolonych %d MB. Ogół wolnego mie
 # ./src/backend/bittorrent/fa_torrent.c
 #
 id: Connected peers
-# Missing translation
-msg: 
+msg: Podłączeni
 
 id: Known peers
-# Missing translation
-msg: 
+msg: Znani udostępniający
 
 id: Receiving from
-# Missing translation
-msg: 
+msg: Odbieranie od
 
 id: Torrent leechers
-# Missing translation
-msg: 
+msg: Pobierający
 
 id: Torrent seeders
-# Missing translation
-msg: 
+msg: Udostępniający
 
 #
 # ./src/backend/bittorrent/torrent_settings.c
 #
 id: Clear cache
-# Missing translation
-msg: 
+msg: Wyczyść cache
 
 id: Enable bittorrent
 msg: Włącz BitTorrent
@@ -934,7 +925,7 @@ id: Default character set
 msg: Domyślny zestaw znaków
 
 id: Ignore 'The' at beginning of words when sorting
-msg: Przy sortowaniu ignoruj 'The' jeśli występuje w wyrazie
+msg: Przy sortowaniu ignoruj 'The' jeśli występuje w nazwie
 
 id: Language
 msg: Język
@@ -1112,7 +1103,7 @@ msg: Wyczyszczenie wszystkich danych oznacza utratę <b>WSZYSTKICH</b> metadanyc
 # ./src/metadata/mlp.c
 #
 id: Custom search query
-msg: Własny tryb przeszukiwania
+msg: Własny tryb wyszukiwania
 
 id: Custom title
 msg: Własny tytuł
@@ -1124,7 +1115,7 @@ id: Metadata loaded from '%s' using %s
 msg: Metadane załadowane z '%s' używając %s
 
 id: Metadata search
-msg: Przeszukiwanie metadanych
+msg: Wyszukiwanie metadanych
 
 id: Metadata source
 msg: Źródło metadanych
@@ -1661,10 +1652,10 @@ id: Resume video playback
 msg: Wznów odtwarzanie Video
 
 id: Step when seeking backward
-msg: Krok przy szukaniu wstecz
+msg: Krok przy przewijaniu do tyłu
 
 id: Step when seeking forward
-msg: Krok przy szukaniu do przodu
+msg: Krok przy przewijaniu do przodu
 
 id: Temporal
 msg: Czasowy
@@ -1680,4 +1671,3 @@ msg: Akceleracja Video i zachowanie wyświetlacza
 
 id: Video playback
 msg: Odtwarzanie Video
-
