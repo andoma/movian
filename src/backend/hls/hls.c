@@ -845,17 +845,52 @@ demuxer_select_variant_simple(hls_demuxer_t *hd)
   if(bw == 0)
     bw = 256000;
 
+  int lcc = INT32_MAX;
+
+  // Figure out which stream have the lowest corruption counter
+  int i = 0;
   TAILQ_FOREACH(hv, &hd->hd_variants, hv_link) {
     if(hv->hv_audio_only)
+      continue;
+
+    printf("Variant %d : %d bps cc: %d\n",
+           i, hv->hv_bitrate, hv->hv_corrupt_counter);
+    i++;
+    lcc = MIN(lcc, hv->hv_corrupt_counter);
+  }
+
+  // First, try to select best mathcing bandwidth among streams with
+  // lowest corruption
+
+  TAILQ_FOREACH(hv, &hd->hd_variants, hv_link) {
+    if(hv->hv_audio_only)
+      continue;
+
+    if(hv->hv_corrupt_counter != lcc)
       continue;
 
     if(hv->hv_bitrate >= bw)
       continue;
 
-    if(best == NULL || best->hv_corrupt_counter > hv->hv_corrupt_counter)
+    if(best == NULL)
       best = hv;
   }
-  return best;
+
+  if(best != NULL)
+    return best;
+
+  // Try to select something that's not corrupted
+
+  TAILQ_FOREACH_REVERSE(hv, &hd->hd_variants, hls_variant_queue, hv_link) {
+    if(hv->hv_audio_only)
+      continue;
+
+    if(hv->hv_corrupt_counter != lcc)
+      continue;
+
+    return best;
+  }
+  return NULL;
 }
 
 
