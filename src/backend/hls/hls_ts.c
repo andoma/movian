@@ -599,7 +599,7 @@ enqueue_packet(ts_demuxer_t *td, const void *data, int len,
   if(mb->mb_keyframe && !te->te_logged_keyframe) {
     te->te_logged_keyframe = 1;
     HLS_TRACE(hv->hv_demuxer->hd_hls,
-              "HLS", "%s        keyframe %20lld:%20lld\n",
+              "%s        keyframe %20lld:%20lld\n",
               te->te_data_type == MB_VIDEO ? "VIDEO" : "AUDIO",
               te->te_codec->parser_ctx->dts,
               te->te_codec->parser_ctx->pts);
