@@ -648,6 +648,7 @@ fa_buffered_open(const char *url, char *errbuf, size_t errsize, int flags,
   fap_release(fap);
   free(filename);
   if(fh == NULL) {
+    cancellable_unbind(bf->bf_inbound_cancellable, bf);
     free(bf);
     return NULL;
   }
