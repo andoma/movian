@@ -294,8 +294,9 @@ hls_variant_update(hls_variant_t *hv, time_t now)
                      NULL);
 
   if(b == NULL) {
-    TRACE(TRACE_ERROR, "HLS", "Unable to open variant %s -- %s",
-          hv->hv_url, errbuf);
+    if(!cancellable_is_cancelled(h->h_mp->mp_cancellable))
+      TRACE(TRACE_ERROR, "HLS", "Unable to open variant %s -- %s",
+            hv->hv_url, errbuf);
     return HLS_ERROR_VARIANT_NOT_FOUND;
   }
 
