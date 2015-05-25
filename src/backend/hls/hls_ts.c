@@ -870,6 +870,7 @@ hls_ts_demuxer_close(hls_variant_t *hv)
   ts_demuxer_destroy(td);
   hv->hv_demuxer_private = NULL;
   hv->hv_demuxer_close = NULL;
+  hv->hv_demuxer_flush = NULL;
 }
 
 
