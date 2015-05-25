@@ -597,10 +597,11 @@ enqueue_packet(ts_demuxer_t *td, const void *data, int len,
 
   if(mb->mb_keyframe && !te->te_logged_keyframe) {
     te->te_logged_keyframe = 1;
-    TRACE(TRACE_DEBUG, "HLS", "%s        keyframe %20lld:%20lld\n",
-          te->te_data_type == MB_VIDEO ? "VIDEO" : "AUDIO",
-          te->te_codec->parser_ctx->dts,
-          te->te_codec->parser_ctx->pts);
+    HLS_TRACE(hs->hs_variant->hv_demuxer->hd_hls,
+              "HLS", "%s        keyframe %20lld:%20lld\n",
+              te->te_data_type == MB_VIDEO ? "VIDEO" : "AUDIO",
+              te->te_codec->parser_ctx->dts,
+              te->te_codec->parser_ctx->pts);
   }
 
   mb->mb_stream = te->te_stream;
@@ -754,9 +755,10 @@ emit_packet(ts_es_t *te, ts_demuxer_t *td, hls_segment_t *hs)
 
   if(!te->te_logged_ts && te->te_pts != PTS_UNSET) {
     te->te_logged_ts = 1;
-    TRACE(TRACE_DEBUG, "HLS", "%s First timestamp %20lld:%20lld\n",
-          te->te_data_type == MB_VIDEO ? "VIDEO" : "AUDIO",
-          te->te_dts, te->te_pts);
+    HLS_TRACE(hs->hs_variant->hv_demuxer->hd_hls,
+              "%s First timestamp %20lld:%20lld\n",
+              te->te_data_type == MB_VIDEO ? "VIDEO" : "AUDIO",
+              te->te_dts, te->te_pts);
   }
 
   data += hlen;
