@@ -1311,6 +1311,9 @@ get_media_buf(hls_t *h)
     hls_demuxer_seek(mp, &h->h_primary, h->h_pending_seek);
     hls_demuxer_seek(mp, &h->h_audio,   h->h_pending_seek);
 
+    cancellable_reset(h->h_primary.hd_cancellable);
+    cancellable_reset(h->h_audio.hd_cancellable);
+
 
     h->h_pending_seek = PTS_UNSET;
     mp->mp_video.mq_seektarget = h->h_pending_seek;
