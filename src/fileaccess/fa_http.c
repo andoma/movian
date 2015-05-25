@@ -1490,7 +1490,12 @@ http_connect(http_file_t *hf, char *errbuf, int errlen, int allow_reuse)
       url = hr->hr_to;
       break;
     }
-  
+
+  if(hf->hf_ret_location != NULL) {
+    free(*hf->hf_ret_location);
+    *hf->hf_ret_location = strdup(url);
+  }
+
   url_split(proto, sizeof(proto), hf->hf_authurl, sizeof(hf->hf_authurl), 
 	    hostname, sizeof(hostname), &port,
 	    hf->hf_path, sizeof(hf->hf_path), 
@@ -3009,11 +3014,6 @@ http_req_do(http_req_aux_t *hra)
       htsbuf_hexdump(&hra->postdata, "HTTP-POSTDATA");
 
     tcp_write_queue_dontfree(hf->hf_connection->hc_tc, &hra->postdata);
-  }
-
-  if(hf->hf_ret_location != NULL) {
-    free(*hf->hf_ret_location);
-    *hf->hf_ret_location = strdup(hf->hf_url);
   }
 
   code = http_read_response(hf, hra->headers_out);
