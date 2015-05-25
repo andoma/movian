@@ -541,7 +541,8 @@ probe_duration(ts_es_t *te, uint8_t *data, int size)
 static void
 enqueue_packet(ts_demuxer_t *td, const void *data, int len,
                int64_t dts, int64_t pts, int keyframe,
-               hls_segment_t *hs, int seq, ts_es_t *te)
+               hls_segment_t *hs, int seq, ts_es_t *te,
+               const hls_variant_t *hv)
 {
   int64_t ts_offset;
 
@@ -597,7 +598,7 @@ enqueue_packet(ts_demuxer_t *td, const void *data, int len,
 
   if(mb->mb_keyframe && !te->te_logged_keyframe) {
     te->te_logged_keyframe = 1;
-    HLS_TRACE(hs->hs_variant->hv_demuxer->hd_hls,
+    HLS_TRACE(hv->hv_demuxer->hd_hls,
               "HLS", "%s        keyframe %20lld:%20lld\n",
               te->te_data_type == MB_VIDEO ? "VIDEO" : "AUDIO",
               te->te_codec->parser_ctx->dts,
@@ -670,7 +671,7 @@ parse_data(ts_demuxer_t *td, hls_variant_t *hv, ts_es_t *te,
         dts = pts = te->te_bts + ts;
       }
 
-      enqueue_packet(td, outbuf, outlen, dts, pts, keyframe, hs, seq, te);
+      enqueue_packet(td, outbuf, outlen, dts, pts, keyframe, hs, seq, te, hv);
     }
   skip:
 
@@ -682,11 +683,13 @@ parse_data(ts_demuxer_t *td, hls_variant_t *hv, ts_es_t *te,
 }
 
 
+#if 0 // Not in use
 static int
 h264_check_keyframe(const uint8_t *p, int len)
 {
   return (p[0] & 0x1f) == 0x5;
 }
+
 
 static int
 is_h264_keyframe(const uint8_t *d, int len)
@@ -726,13 +729,14 @@ is_h264_keyframe(const uint8_t *d, int len)
  */
 static void
 parse_h264(ts_demuxer_t *td, ts_es_t *te, const uint8_t *data, int size,
-           hls_segment_t *hs)
+           hls_segment_t *hs, hls_variant_t *hv)
 {
   int keyframe = is_h264_keyframe(data, size);
 
   enqueue_packet(td, data, size, te->te_dts, te->te_pts, keyframe, hs,
-                 hs->hs_seq, te);
+                 hs->hs_seq, te, hv);
 }
+#endif
 
 /**
  *
@@ -765,9 +769,11 @@ emit_packet(ts_es_t *te, ts_demuxer_t *td, hls_segment_t *hs)
   size -= hlen;
 
 
+#if 0 // Not in use
   if(te->te_data_type == MB_VIDEO && 0)
-    parse_h264(td, te, data, size, hs);
+    parse_h264(td, te, data, size, hs, hv);
   else
+#endif
     parse_data(td, hs->hs_variant, te, data, size);
 }
 
@@ -973,38 +979,6 @@ probe_non_muxed(ts_demuxer_t *td, const uint8_t *data, int size,
 /**
  *
  */
-static const char *hlserrstr[] = {
-  [HLS_ERROR_SEGMENT_NOT_FOUND]     = "Segment not found",
-  [HLS_ERROR_SEGMENT_BROKEN]        = "Unable to open segment",
-  [HLS_ERROR_SEGMENT_BAD_KEY]       = "Unable to get encryption key",
-  [HLS_ERROR_VARIANT_PROBE_ERROR]   = "Probing error",
-  [HLS_ERROR_VARIANT_NO_VIDEO]      = "No video",
-  [HLS_ERROR_VARIANT_UNKNOWN_AUDIO] = "Unknown audio codec",
-};
-
-
-/**
- *
- */
-static void
-bad_variant(hls_variant_t *hv, hls_error_t err)
-{
-  hls_demuxer_t *hd = hv->hv_demuxer;
-  hls_t *h = hd->hd_hls;
-
-  HLS_TRACE(h, "Unable to demux variant %s -- %s",
-            hv->hv_name, hlserrstr[err]);
-  hv->hv_corrupt_counter++;
-  hls_variant_close(hv);
-
-  hd->hd_req = hls_demuxer_select_variant(hd);
-  hd->hd_last_switch = time(NULL);
-}
-
-
-/**
- *
- */
 media_buf_t *
 hls_ts_demuxer_read(hls_demuxer_t *hd)
 {
@@ -1136,7 +1110,7 @@ hls_ts_demuxer_read(hls_demuxer_t *hd)
         }
 
         if(err) {
-          bad_variant(hv, err);
+          hls_bad_variant(hv, err);
           return NULL;
         }
         hv->hv_current_seg = hs;
@@ -1168,7 +1142,7 @@ hls_ts_demuxer_read(hls_demuxer_t *hd)
         }
 
         if(r <= 0) {
-          bad_variant(hv, HLS_ERROR_VARIANT_PROBE_ERROR);
+          hls_bad_variant(hv, HLS_ERROR_VARIANT_PROBE_ERROR);
           return NULL;
         }
 
@@ -1203,12 +1177,12 @@ hls_ts_demuxer_read(hls_demuxer_t *hd)
 
 
       if(hd == &h->h_primary) {
-        bad_variant(hv, HLS_ERROR_VARIANT_NO_VIDEO);
+        hls_bad_variant(hv, HLS_ERROR_VARIANT_NO_VIDEO);
         return NULL;
       }
 
       if(probe_non_muxed(td, td->td_buf, sizeof(td->td_buf), hs)) {
-        bad_variant(hv, HLS_ERROR_VARIANT_UNKNOWN_AUDIO);
+        hls_bad_variant(hv, HLS_ERROR_VARIANT_UNKNOWN_AUDIO);
         return NULL;
       }
 

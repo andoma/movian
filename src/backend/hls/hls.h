@@ -83,6 +83,8 @@ typedef enum {
   HLS_ERROR_VARIANT_PROBE_ERROR,
   HLS_ERROR_VARIANT_NO_VIDEO,
   HLS_ERROR_VARIANT_UNKNOWN_AUDIO,
+  HLS_ERROR_VARIANT_EMPTY,
+  HLS_ERROR_VARIANT_NOT_FOUND,
 } hls_error_t;
 
 
@@ -251,8 +253,6 @@ void hls_variant_open(hls_variant_t *hv);
 
 void hls_variant_close(hls_variant_t *hv);
 
-int hls_variant_update(hls_variant_t *hv, time_t now);
-
 hls_variant_t *hls_demuxer_select_variant(hls_demuxer_t *hd);
 
 int hls_check_bw_switch(hls_demuxer_t *hd, time_t now);
@@ -267,6 +267,8 @@ int hls_get_audio_track(hls_t *h, int pid, const char *name,
                         const char *fmt, int autosel);
 
 hls_segment_t *hv_find_segment_by_seq(const hls_variant_t *hv, int seq);
+
+void hls_bad_variant(hls_variant_t *hv, hls_error_t err);
 
 // TS demuxer
 

@@ -233,13 +233,46 @@ hv_parse_key(hls_variant_parser_t *hvp, const char *baseurl, const char *V)
   }
 }
 
-#define VARIANT_UNLOADABLE 1
-#define VARIANT_EMPTY      2
+
 
 /**
  *
  */
-int
+static const char *hlserrstr[] = {
+  [HLS_ERROR_SEGMENT_NOT_FOUND]     = "Segment not found",
+  [HLS_ERROR_SEGMENT_BROKEN]        = "Unable to open segment",
+  [HLS_ERROR_SEGMENT_BAD_KEY]       = "Unable to get encryption key",
+  [HLS_ERROR_VARIANT_PROBE_ERROR]   = "Probing error",
+  [HLS_ERROR_VARIANT_NO_VIDEO]      = "No video",
+  [HLS_ERROR_VARIANT_UNKNOWN_AUDIO] = "Unknown audio codec",
+  [HLS_ERROR_VARIANT_EMPTY]         = "Variant is empty",
+  [HLS_ERROR_VARIANT_NOT_FOUND]     = "Variant not found",
+};
+
+
+/**
+ *
+ */
+void
+hls_bad_variant(hls_variant_t *hv, hls_error_t err)
+{
+  hls_demuxer_t *hd = hv->hv_demuxer;
+  hls_t *h = hd->hd_hls;
+
+  HLS_TRACE(h, "Unable to demux variant %s -- %s",
+            hv->hv_name, hlserrstr[err]);
+  hv->hv_corrupt_counter++;
+  hls_variant_close(hv);
+
+  hd->hd_req = hls_demuxer_select_variant(hd);
+  hd->hd_last_switch = time(NULL);
+}
+
+
+/**
+ *
+ */
+static hls_error_t attribute_unused_result
 hls_variant_update(hls_variant_t *hv, time_t now)
 {
   hls_segment_t *hs;
@@ -261,8 +294,9 @@ hls_variant_update(hls_variant_t *hv, time_t now)
                      NULL);
 
   if(b == NULL) {
-    TRACE(TRACE_ERROR, "HLS", "Unable to open %s -- %s", hv->hv_url, errbuf);
-    return VARIANT_UNLOADABLE;
+    TRACE(TRACE_ERROR, "HLS", "Unable to open variant %s -- %s",
+          hv->hv_url, errbuf);
+    return HLS_ERROR_VARIANT_NOT_FOUND;
   }
 
   hv->hv_loaded = now;
@@ -372,7 +406,7 @@ hls_variant_update(hls_variant_t *hv, time_t now)
   rstr_release(hvp.hvp_key_url);
 
   if(TAILQ_FIRST(&hv->hv_segments) == NULL)
-    return VARIANT_EMPTY;
+    return HLS_ERROR_VARIANT_EMPTY;
 
   if(changed) {
     HLS_TRACE(h, "Loaded segments %d ... %d",
@@ -703,7 +737,12 @@ hls_variant_select_next_segment(hls_variant_t *hv, time_t now)
   hls_t *h = hd->hd_hls;
   hls_segment_t *hs;
 
-  hls_variant_update(hv, now);
+  hls_error_t err = hls_variant_update(hv, now);
+
+  if(err != HLS_ERROR_OK) {
+    hls_bad_variant(hv, err);
+    return NULL;
+  }
 
   if(hv->hv_current_seg == NULL) {
 
