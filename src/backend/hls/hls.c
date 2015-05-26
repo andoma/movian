@@ -547,6 +547,7 @@ hls_segment_open(hls_segment_t *hs)
   case HLS_CRYPTO_AES128:
 
     if(!rstr_eq(hs->hs_key_url, hv->hv_key_url)) {
+      HLS_TRACE(h, "Loading key %s", rstr_get(hs->hs_key_url));
       buf_release(hv->hv_key);
       hv->hv_key = fa_load(rstr_get(hs->hs_key_url),
                             FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),

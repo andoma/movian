@@ -1161,6 +1161,7 @@ hls_ts_demuxer_read(hls_demuxer_t *hd)
       if(i != sizeof(td->td_buf) - 188 * 2) {
 
         td->td_mux_mode = TD_MUX_MODE_TS;
+        HLS_TRACE(h, "Variant %s is a transport stream", hv->hv_name);
 
         while(i <= sizeof(td->td_buf) - 188) {
           process_tsb(td, td->td_buf + i, hs);
