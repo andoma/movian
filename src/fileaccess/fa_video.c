@@ -628,6 +628,11 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
   sub_scanner_t *ss = NULL;
   video_args_t va = *va0;
 
+  mp_configure(mp, MP_CAN_PAUSE, MP_BUFFER_DEEP, 0, "video");
+
+  if(!(va.flags & BACKEND_VIDEO_NO_AUDIO))
+    mp_become_primary(mp);
+
   if(!(va.flags & BACKEND_VIDEO_NO_SUBTITLE_SCAN)) {
     compute_hash(fh, &va);
     if(!va.hash_valid)
@@ -809,16 +814,10 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
 
   mp->mp_start_time = fctx->start_time;
 
-  int flags = MP_CAN_PAUSE;
-
   if(fctx->duration != PTS_UNSET)
-    flags |= MP_CAN_SEEK;
+    mp_set_clr_flags(mp, MP_CAN_SEEK, 0);
 
-  // Start it
-  mp_configure(mp, flags, MP_BUFFER_DEEP, fctx->duration, "video");
-
-  if(!(va.flags & BACKEND_VIDEO_NO_AUDIO))
-    mp_become_primary(mp);
+  mp_set_duration(mp, fctx->duration);
 
   seek_index_t *si = build_index(mp, fctx, url);
   seek_index_t *ci = build_chapters(mp, fctx, url);
