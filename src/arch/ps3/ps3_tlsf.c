@@ -31,6 +31,8 @@
 #include "networking/http_server.h"
 #include "arch/halloc.h"
 
+#define USE_VIRTUAL_MEM
+
 #define MB(x) ((x) * 1024 * 1024)
 
 static int total_avail;
@@ -46,16 +48,17 @@ static void __attribute__((constructor)) mallocsetup(void)
 {
   hts_mutex_init(&mutex);
 
-#if 0
-  int size = MB(96);
-
-  Lv2Syscall3(348, size, 0x400, (u64)&taddr);
-#else
+#ifdef USE_VIRTUAL_MEM
 
   int size = MB(256);
   int psize = MB(96);
 
   Lv2Syscall6(300, size, psize, 0xFFFFFFFFU, 0x200ULL, 1UL, (u64)&heap_base);
+#else
+
+  int size = MB(96);
+
+  Lv2Syscall3(348, size, 0x400, (u64)&heap_base);
 
 #endif
 
@@ -81,6 +84,7 @@ void vm_stat_log(void);
 
 void vm_stat_log(void)
 {
+#ifdef USE_VIRTUAL_MEM
   vm_statistics vs;
 
   Lv2Syscall2(312, heap_base, (uint64_t)&vs);
@@ -93,6 +97,7 @@ void vm_stat_log(void)
 	vs.page_out,
 	vs.pmem_used / 1024,
 	vs.pmem_total / 1024);
+#endif
 }
 
 
@@ -210,12 +215,14 @@ void free(void *ptr)
 	      "free(%p+%d) == page_free(0x%x+%d)",
 	      ptr, bs, np, s);
 #endif
+#ifdef USE_VIRTUAL_MEM
 	if(Lv2Syscall2(308, np, s))  // Invalidate
 	  trace(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
 		"Invalidate failed");
 	if(Lv2Syscall2(310, np, s))  // Sync
 	  trace(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
 		"Sync failed");
+#endif
       }
     }
   }
