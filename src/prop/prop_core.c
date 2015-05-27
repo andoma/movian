@@ -31,6 +31,9 @@
 #include "prop_i.h"
 #include "misc/str.h"
 #include "event.h"
+
+#include "prop_proxy.h"
+
 #ifdef PROP_DEBUG
 int prop_trace;
 static prop_sub_t *track_sub;
@@ -1232,6 +1235,8 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
     case PROP_PROP:
       PROPTRACE("prop by %s%s", origin, trail);
       break;
+    case PROP_PROXY:
+      abort();
     }
   }
   if((direct || s->hps_flags & PROP_SUB_INTERNAL) && pnq == NULL) {
@@ -1302,6 +1307,7 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
       break;
 
     case PROP_ZOMBIE:
+    case PROP_PROXY:
       abort();
 
     }
@@ -1356,6 +1362,7 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
     break;
 
   case PROP_ZOMBIE:
+  case PROP_PROXY:
     abort();
   }
 
@@ -1723,6 +1730,7 @@ prop_clean(prop_t *p)
     break;
 
   case PROP_ZOMBIE:
+  case PROP_PROXY:
     return 1;
 
   case PROP_VOID:
@@ -2208,6 +2216,8 @@ prop_destroy0(prop_t *p)
   case PROP_VOID:
   case PROP_CSTRING:
     break;
+  case PROP_PROXY:
+    abort();
   }
 
   p->hp_type = PROP_ZOMBIE;
@@ -2708,8 +2718,8 @@ gen_add_flags(prop_t *c, prop_t *p)
 prop_sub_t *
 prop_subscribe_ex(const char *file, int line, int flags, ...)
 #else
-prop_sub_t *
-prop_subscribe(int flags, ...)
+  prop_sub_t *
+  prop_subscribe(int flags, ...)
 #endif
 {
   prop_t *p, *value, *canonical, *c;
@@ -2735,20 +2745,30 @@ prop_subscribe(int flags, ...)
   prop_t *origin_chain[16];
   origin_chain[0] = NULL;
 
+  struct prop_proxy_connection *ppc = NULL;
+
   LIST_INIT(&proproots);
 
   do {
     tag = va_arg(ap, int);
     switch(tag) {
     case PROP_TAG_NAME_VECTOR:
-      name = va_arg(ap,  const char **);
+      if(name != NULL)
+        (void)va_arg(ap, const char **);
+      else
+        name = va_arg(ap,  const char **);
       break;
 
     case PROP_TAG_NAMESTR:
-      do {
+      if(name != NULL) {
+        (void)va_arg(ap, const char *);
+      } else {
 	const char *s, *s0 = va_arg(ap, const char *);
-	int segments = 1, ptr = 0, len;
+        int segments = 1, ptr = 0, len;
 	char **nv;
+
+        if(s0 == NULL)
+          break;
 
 	for(s = s0; *s != 0; s++)
 	  if(*s == '.')
@@ -2774,7 +2794,7 @@ prop_subscribe(int flags, ...)
 	memcpy(nv[ptr], s0, len);
 	nv[ptr++][len] = 0;
 	nv[ptr] = NULL;
-      } while(0);
+      }
       break;
 
     case PROP_TAG_CALLBACK:
@@ -2891,8 +2911,12 @@ prop_subscribe(int flags, ...)
     pr = LIST_FIRST(&proproots);
 
     canonical = value = pr ? pr->p : NULL;
+
     if(dolock)
       hts_mutex_lock(&prop_mutex);
+
+    if(value != NULL && value->hp_type == PROP_PROXY)
+      ppc = value->hp_proxy_ppc;
 
   } else {
 
@@ -2906,14 +2930,19 @@ prop_subscribe(int flags, ...)
     if(dolock)
       hts_mutex_lock(&prop_mutex);
 
-    if(p != NULL) {
+    if(p == NULL) {
+      canonical = value = NULL;
+
+    } else if(p->hp_type == PROP_PROXY) {
+      ppc = p->hp_proxy_ppc;
+      canonical = value = p;
+
+    } else {
       /* Canonical name is the resolved props without following symlinks */
       canonical = prop_subfind(p, name, 0, 0, NULL);
-      
+
       /* ... and value will follow links */
       value     = prop_subfind(p, name, 1, 0, origin_chain);
-    } else {
-      canonical = value = NULL;
     }
   }
 
@@ -2926,10 +2955,10 @@ prop_subscribe(int flags, ...)
     }
   }
 
-  if(value && value->hp_type == PROP_ZOMBIE)
+  if(value != NULL && value->hp_type == PROP_ZOMBIE)
     value = NULL;
 
-  if(canonical && canonical->hp_type == PROP_ZOMBIE)
+  if(canonical != NULL && canonical->hp_type == PROP_ZOMBIE)
     canonical = NULL;
 
 
@@ -2999,87 +3028,97 @@ prop_subscribe(int flags, ...)
   s->hps_lockmgr(s->hps_lock, PROP_LOCK_RETAIN);
 
   s->hps_canonical_prop = canonical;
-  if(canonical != NULL) {
-    LIST_INSERT_HEAD(&canonical->hp_canonical_subscriptions, s, 
-		     hps_canonical_prop_link);
-
-    if(s->hps_flags & PROP_SUB_SUBSCRIPTION_MONITOR &&
-       (canonical->hp_flags & PROP_MONITORED) == 0) {
-      canonical->hp_flags |= PROP_MONITORED;
-
-      LIST_FOREACH(t, &canonical->hp_value_subscriptions, hps_value_prop_link) {
-	if(!(t->hps_flags & PROP_SUB_SUBSCRIPTION_MONITOR))
-	  break;
-      }
-      if(t != NULL) {
-	// monitor was enabled but there are already subscribers
-	activate_on_canonical = 1;
-      }
-    }
-
-    if(s->hps_flags & PROP_SUB_MULTI)
-      prop_set_multi(canonical);
-  }
-
   s->hps_value_prop = value;
-  if(value != NULL) {
 
-    LIST_INSERT_HEAD(&value->hp_value_subscriptions, s, 
-		     hps_value_prop_link);
+  if(ppc != NULL) {
 
+    // Subscribe via external proxy
+    prop_proxy_subscribe(ppc, s, p, name);
 
-    if(notify_now) {
+  } else {
 
-      prop_build_notify_value(s, direct, "prop_subscribe()", 
-			      s->hps_value_prop, NULL, 0);
+    if(canonical != NULL) {
+      LIST_INSERT_HEAD(&canonical->hp_canonical_subscriptions, s,
+                       hps_canonical_prop_link);
 
-      if(value->hp_type == PROP_DIR && !(s->hps_flags & PROP_SUB_MULTI)) {
+      if(s->hps_flags & PROP_SUB_SUBSCRIPTION_MONITOR &&
+         (canonical->hp_flags & PROP_MONITORED) == 0) {
+        canonical->hp_flags |= PROP_MONITORED;
 
-	if(value->hp_selected == NULL && direct) {
-
-	  int cnt = 0;
-	  TAILQ_FOREACH(c, &value->hp_childs, hp_parent_link)
-	    cnt++;
-	
-	  prop_vec_t *pv = prop_vec_create(cnt);
-	  TAILQ_FOREACH(c, &value->hp_childs, hp_parent_link)
-	    pv = prop_vec_append(pv, c);
-
-	  prop_build_notify_childv(s, pv, PROP_ADD_CHILD_VECTOR_DIRECT,
-				   NULL, 1);
-	  prop_vec_release(pv);
-
-	} else {
-	  TAILQ_FOREACH(c, &value->hp_childs, hp_parent_link)
-	    prop_build_notify_child(s, c, PROP_ADD_CHILD, direct,
-				    gen_add_flags(c, value));
-	}
+        LIST_FOREACH(t, &canonical->hp_value_subscriptions,
+                     hps_value_prop_link) {
+          if(!(t->hps_flags & PROP_SUB_SUBSCRIPTION_MONITOR))
+            break;
+        }
+        if(t != NULL) {
+          // monitor was enabled but there are already subscribers
+          activate_on_canonical = 1;
+        }
       }
+
+      if(s->hps_flags & PROP_SUB_MULTI)
+        prop_set_multi(canonical);
     }
-  
-    /* If we have any subscribers monitoring for subscriptions, notify them */
-    if(!(s->hps_flags & PROP_SUB_SUBSCRIPTION_MONITOR) && 
-       value->hp_flags & PROP_MONITORED)
-      prop_send_subscription_monitor_active(value);
-  }
 
-  if(activate_on_canonical)
-    prop_send_subscription_monitor_active(canonical);
+    if(value != NULL) {
 
-  if(canonical == NULL && 
-     s->hps_flags & (PROP_SUB_TRACK_DESTROY | PROP_SUB_TRACK_DESTROY_EXP)) {
+      LIST_INSERT_HEAD(&value->hp_value_subscriptions, s, 
+                       hps_value_prop_link);
 
-    if(direct) {
-      prop_callback_t *cb = s->hps_callback;
-      prop_trampoline_t *pt = s->hps_trampoline;
-      if(pt != NULL)
-	pt(s, PROP_DESTROYED, s, s->hps_user_int);
-      else
-	cb(s->hps_opaque, PROP_DESTROYED, s, s->hps_user_int);
-      s = NULL;
 
-    } else {
-      prop_notify_destroyed(s);
+      if(notify_now) {
+
+        prop_build_notify_value(s, direct, "prop_subscribe()", 
+                                s->hps_value_prop, NULL, 0);
+
+        if(value->hp_type == PROP_DIR && !(s->hps_flags & PROP_SUB_MULTI)) {
+
+          if(value->hp_selected == NULL && direct) {
+
+            int cnt = 0;
+            TAILQ_FOREACH(c, &value->hp_childs, hp_parent_link)
+              cnt++;
+	
+            prop_vec_t *pv = prop_vec_create(cnt);
+            TAILQ_FOREACH(c, &value->hp_childs, hp_parent_link)
+              pv = prop_vec_append(pv, c);
+
+            prop_build_notify_childv(s, pv, PROP_ADD_CHILD_VECTOR_DIRECT,
+                                     NULL, 1);
+            prop_vec_release(pv);
+
+          } else {
+            TAILQ_FOREACH(c, &value->hp_childs, hp_parent_link)
+              prop_build_notify_child(s, c, PROP_ADD_CHILD, direct,
+                                      gen_add_flags(c, value));
+          }
+        }
+      }
+
+      /* If we have any subscribers monitoring for subscriptions, notify them */
+      if(!(s->hps_flags & PROP_SUB_SUBSCRIPTION_MONITOR) &&
+         value->hp_flags & PROP_MONITORED)
+        prop_send_subscription_monitor_active(value);
+    }
+
+    if(activate_on_canonical)
+      prop_send_subscription_monitor_active(canonical);
+
+    if(canonical == NULL &&
+       s->hps_flags & (PROP_SUB_TRACK_DESTROY | PROP_SUB_TRACK_DESTROY_EXP)) {
+
+      if(direct) {
+        prop_callback_t *cb = s->hps_callback;
+        prop_trampoline_t *pt = s->hps_trampoline;
+        if(pt != NULL)
+          pt(s, PROP_DESTROYED, s, s->hps_user_int);
+        else
+          cb(s->hps_opaque, PROP_DESTROYED, s, s->hps_user_int);
+        s = NULL;
+
+      } else {
+        prop_notify_destroyed(s);
+      }
     }
   }
   if(dolock)
@@ -5475,7 +5514,11 @@ prop_print_tree0(prop_t *p, int indent, int flags)
   case PROP_VOID:
     fprintf(stderr, "<void>\n");
     break;
-    
+
+  case PROP_PROXY:
+    fprintf(stderr, "<proxy>\n");
+    break;
+
   case PROP_ZOMBIE:
     fprintf(stderr, "<zombie, ref=%d>\n", atomic_get(&p->hp_refcount));
     break;

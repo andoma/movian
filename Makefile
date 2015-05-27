@@ -79,6 +79,7 @@ SRCS += src/showtime.c \
 	src/prop/prop_reorder.c \
 	src/prop/prop_linkselected.c \
 	src/prop/prop_window.c \
+	src/prop/prop_proxy.c \
 	src/metadata/playinfo.c \
 	src/db/kvstore.c \
 
@@ -273,6 +274,7 @@ SRCS-$(CONFIG_AIRPLAY) += src/api/airplay.c
 SRCS += src/networking/net_common.c \
 	src/networking/http.c \
 	src/networking/asyncio_http.c \
+	src/networking/websocket.c \
 
 SRCS-$(CONFIG_FTPSERVER) += src/networking/ftp_server.c
 

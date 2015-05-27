@@ -136,6 +136,7 @@ typedef enum {
   PROP_URI,
   PROP_PROP,   /* A simple reference to a prop */
   PROP_ZOMBIE, /* Destroyed can never be changed again */
+  PROP_PROXY,  /* Proxy property, real property is remote */
 } prop_type_t;
 
 
@@ -296,6 +297,10 @@ struct prop {
       rstr_t *title;
       rstr_t *uri;
     } uri;
+    struct {
+      struct prop_proxy_connection *ppc;
+      uint32_t id;
+    } proxy;
     struct prop *prop;
   } u;
 
@@ -310,6 +315,9 @@ struct prop {
 #define hp_uri_title u.uri.title
 #define hp_uri       u.uri.uri
 #define hp_prop      u.prop
+
+#define hp_proxy_ppc u.proxy.ppc
+#define hp_proxy_id  u.proxy.id
 
 #ifdef PROP_DEBUG
   SIMPLEQ_HEAD(, prop_ref_trace) hp_ref_trace;
@@ -400,18 +408,29 @@ struct prop_sub {
   prop_lockmgr_t *hps_lockmgr;
 
   /**
-   * Linkage to property. Protected by global mutex
+   * Linkage to property or proxy connection. Protected by global mutex
    */
   LIST_ENTRY(prop_sub) hps_value_prop_link;
-  prop_t *hps_value_prop;
-
   /**
-   * Linkage to property. Protected by global mutex
+   * Linkage to canonical property. Protected by global mutex
    */
   LIST_ENTRY(prop_sub) hps_canonical_prop_link;
-  prop_t *hps_canonical_prop;
 
-  
+
+  union {
+    struct {
+    // If hps_proxy is not set, these are the "active" members
+      prop_t *hps_value_prop;
+      prop_t *hps_canonical_prop;
+    };
+    // If hps_proxy is set, these are the "active" members
+    struct {
+      struct prop_proxy_connection *hps_ppc;
+      int hps_proxy_subid;
+    };
+  };
+
+
   union {
     prop_originator_tracking_t *hps_pots;
     prop_t *hps_origin;
@@ -438,6 +457,7 @@ struct prop_sub {
   uint8_t hps_pending_unlink : 1;
   uint8_t hps_multiple_origins : 1;
   uint8_t hps_global_dispatch : 1;
+  uint8_t hps_proxy : 1;
 
   /**
    * Flags as passed to prop_subscribe(). May never be changed

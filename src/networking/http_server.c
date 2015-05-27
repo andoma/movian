@@ -33,7 +33,7 @@
 #include "prop/prop.h"
 #include "arch/arch.h"
 #include "asyncio.h"
-#include "misc/bytestream.h"
+#include "websocket.h"
 #include "upnp/upnp.h"
 
 static LIST_HEAD(, http_path) http_paths;
@@ -102,9 +102,7 @@ struct http_connection {
 
   char hc_my_addr[128]; // hc_local_addr as text
 
-  uint8_t hc_ws_opcode;
-  int hc_ws_packet_size;
-  void *hc_ws_packet;
+  websocket_state_t hc_ws;
 };
 
 
@@ -786,34 +784,6 @@ http_handle_request(http_connection_t *hc, htsbuf_queue_t *q)
 /**
  *
  */
-static char *
-http_read_line(htsbuf_queue_t *q)
-{
-  int len;
-
-  len = htsbuf_find(q, 0xa);
-  if(len == -1)
-    return NULL;
-
-  if(len >= 10000)
-    return (void *)-1;
-
-  char *buf = malloc(len + 1);
-  if(buf == NULL)
-    return (void *)-1;
-
-  htsbuf_read(q, buf, len);
-  buf[len] = 0;
-  while(len > 0 && buf[len - 1] < 32)
-    buf[--len] = 0;
-  htsbuf_drop(q, 1); /* Drop the \n */
-  return buf;
-}
-
-
-/**
- *
- */
 void
 http_set_opaque(http_connection_t *hc, void *opaque)
 {
@@ -824,42 +794,11 @@ http_set_opaque(http_connection_t *hc, void *opaque)
 /**
  *
  */
-static void
-websocket_send_hdr(http_connection_t *hc, int opcode, size_t len)
-{
-  uint8_t hdr[14]; // max header length
-  int hlen;
-  hdr[0] = 0x80 | (opcode & 0xf);
-  if(len <= 125) {
-    hdr[1] = len;
-    hlen = 2;
-  } else if(len < 65536) {
-    hdr[1] = 126;
-    hdr[2] = len >> 8;
-    hdr[3] = len;
-    hlen = 4;
-  } else {
-    hdr[1] = 127;
-    uint64_t u64 = len;
-#if defined(__LITTLE_ENDIAN__)
-    u64 = __builtin_bswap64(u64);
-#endif
-    memcpy(hdr + 2, &u64, sizeof(uint64_t));
-    hlen = 10;
-  }
-
-  htsbuf_append(&hc->hc_output, hdr, hlen);
-}
-
-
-/**
- *
- */
 void
 websocket_send(http_connection_t *hc, int opcode, const void *data,
 	       size_t len)
 {
-  websocket_send_hdr(hc, opcode, len);
+  websocket_append_hdr(&hc->hc_output, opcode, len);
   htsbuf_append(&hc->hc_output, data, len);
   http_write(hc);
 }
@@ -871,96 +810,24 @@ websocket_send(http_connection_t *hc, int opcode, const void *data,
 void
 websocket_sendq(http_connection_t *hc, int opcode, htsbuf_queue_t *hq)
 {
-  websocket_send_hdr(hc, opcode, hq->hq_size);
+  websocket_append_hdr(&hc->hc_output, opcode, hq->hq_size);
   htsbuf_appendq(&hc->hc_output, hq);
   http_write(hc);
 }
 
 
-
 /**
  *
  */
-static int
-websocket_input(http_connection_t *hc, htsbuf_queue_t *q)
+static void
+websocket_input(void *opaque, int opcode, uint8_t *data, int len)
 {
-  uint8_t hdr[14]; // max header length
-  int p = htsbuf_peek(q, &hdr, 14);
-  const uint8_t *m;
-
-  if(p < 2)
-    return 0;
-  uint8_t fin = hdr[0] & 0x80;
-  int opcode  = hdr[0] & 0xf;
-  int64_t len = hdr[1] & 0x7f;
-  int hoff = 2;
-  if(len == 126) {
-    if(p < 4)
-      return 0;
-    len = hdr[2] << 8 | hdr[3];
-    hoff = 4;
-  } else if(len == 127) {
-    if(p < 10)
-      return 0;
-    len = rd64_be(hdr + 2);
-    hoff = 10;
-  }
-
-  if(hdr[1] & 0x80) {
-    if(p < hoff + 4)
-      return 0;
-    m = hdr + hoff;
-
-    hoff += 4;
-  } else {
-    m = NULL;
-  }
-
-  if(q->hq_size < hoff + len)
-    return 0;
-
-  htsbuf_drop(q, hoff);
-
-  if(opcode & 0x8) {
-    // Ctrl frame
-    uint8_t *p = mymalloc(len);
-    if(p == NULL)
-      return 1;
-
-    htsbuf_read(q, p, len);
-    if(m != NULL) for(int i = 0; i < len; i++) p[i] ^= m[i&3];
-
-    if(opcode == 9) // PING
-      websocket_send(hc, 10, p, len);
-    free(p);
-    return -1;
-  }
-
-  hc->hc_ws_packet = myrealloc(hc->hc_ws_packet, hc->hc_ws_packet_size + len+1);
-  if(hc->hc_ws_packet == NULL)
-    return 1;
-
-  uint8_t *d = hc->hc_ws_packet + hc->hc_ws_packet_size;
-  d[len] = 0;
-  htsbuf_read(q, d, len);
-
-
-  if(m != NULL) for(int i = 0; i < len; i++) d[i] ^= m[i&3];
-
-  if(opcode != 0)
-    hc->hc_ws_opcode = opcode;
-
-  hc->hc_ws_packet_size += len;
-
-  if(fin) {
-    hc->hc_path->hp_ws_data(hc, hc->hc_ws_opcode, hc->hc_ws_packet,
-                            hc->hc_ws_packet_size, hc->hc_opaque);
-    hc->hc_ws_packet_size = 0;
-  }
-  return -1;
+  http_connection_t *hc = opaque;
+  if(opcode == 9)
+    websocket_send(hc, 10, data, len);
+  else
+    hc->hc_path->hp_ws_data(hc, opcode, data, len, hc->hc_opaque);
 }
-
-
 
 /**
  *
@@ -1060,7 +927,7 @@ http_handle_input(http_connection_t *hc, htsbuf_queue_t *q)
       break;
 
     case HCS_WEBSOCKET:
-      if((r = websocket_input(hc, q)) != -1)
+      if((r = websocket_parse(q, websocket_input, hc, &hc->hc_ws)) != -1)
 	return r;
       break;
     }
@@ -1094,7 +961,7 @@ http_close(http_connection_t *hc)
   free(hc->hc_url);
   free(hc->hc_url_orig);
   free(hc->hc_post_data);
-  free(hc->hc_ws_packet);
+  free(hc->hc_ws.packet);
 
   if(hc->hc_path != NULL && hc->hc_path->hp_ws_fini != NULL)
     hc->hc_path->hp_ws_fini(hc, hc->hc_opaque);

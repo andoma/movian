@@ -78,4 +78,7 @@ const char *http_asctime(time_t tp, char *out, size_t outlen);
 void http_parse_uri_args(struct http_header_list *hc, char *args,
 			 int append);
 
+struct htsbuf_queue;
+char *http_read_line(struct htsbuf_queue *q);
+
 #endif // HTTP_H__

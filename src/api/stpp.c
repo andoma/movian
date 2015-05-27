@@ -26,12 +26,8 @@
 #include "prop/prop.h"
 #include "misc/redblack.h"
 #include "misc/dbl.h"
-
-
-#define STPP_CMD_SUBSCRIBE   1
-#define STPP_CMD_UNSUBSCRIBE 2
-#define STPP_CMD_SET         3
-#define STPP_CMD_NOTIFY      4
+#include "misc/bytestream.h"
+#include "stpp.h"
 
 RB_HEAD(stpp_subscription_tree, stpp_subscription);
 RB_HEAD(stpp_prop_tree, stpp_prop);
@@ -238,7 +234,7 @@ stpp_sub_json(void *opaque, prop_event_t event, ...)
   prop_vec_t *pv;
   const char *str, *str2;
   va_start(ap, event);
-
+  
   switch(event) {
   case PROP_SET_FLOAT:
     my_double2str(buf, sizeof(buf), va_arg(ap, double));
@@ -327,14 +323,72 @@ stpp_sub_json(void *opaque, prop_event_t event, ...)
 
 
 /**
+ * Binary output
+ */
+static void
+stpp_sub_binary(void *opaque, prop_event_t event, ...)
+{
+  stpp_subscription_t *ss = opaque;
+  http_connection_t *hc = ss->ss_stpp->stpp_hc;
+  va_list ap;
+  const char *str;
+  uint8_t *buf;
+  int buflen = 1 + 1 + 4;
+  int len;
+
+  va_start(ap, event);
+
+  switch(event) {
+  case PROP_SET_INT:
+    buflen += 4;
+    buf = alloca(buflen);
+    buf[1] = STPP_SET_INT;
+    wr32_le(buf + 6, va_arg(ap, int));
+    ss_clear_props(ss);
+    break;
+
+  case PROP_SET_VOID:
+    buf = alloca(buflen);
+    buf[1] = STPP_SET_VOID;
+    ss_clear_props(ss);
+    break;
+
+  case PROP_SET_DIR:
+    buf = alloca(buflen);
+    buf[1] = STPP_SET_DIR;
+    ss_clear_props(ss);
+    break;
+
+  case PROP_SET_RSTRING:
+    str = rstr_get(va_arg(ap, rstr_t *));
+    if(0)
+    case PROP_SET_CSTRING:
+      str = va_arg(ap, const char *);
+    len = strlen(str);
+    buflen += len;
+    buf = alloca(buflen);
+    buf[1] = STPP_SET_STRING;
+    memcpy(buf + 6, str, len);
+    ss_clear_props(ss);
+    break;
+  default:
+    printf("STPP SUB BINARY cant handle event %d", event);
+    return;
+  }
+  buf[0] = STPP_CMD_NOTIFY;
+  wr32_le(buf + 2, ss->ss_id);
+  hexdump("STPP SEND", buf, buflen);
+  websocket_send(hc, 2, buf, buflen);
+}
+
+/**
  *
  */
 static void
-stpp_cmd_sub(stpp_t *stpp, unsigned int id, int propref, const char *path)
+stpp_cmd_sub(stpp_t *stpp, unsigned int id, int propref, const char *path,
+             const char **namevec,
+             void (*notify)(void *opaque, prop_event_t event, ...))
 {
-  if(path == NULL)
-    return;
-
   prop_t *p = resolve_propref(stpp, propref);
   stpp_subscription_t *ss = calloc(1, sizeof(stpp_subscription_t));
 
@@ -350,7 +404,8 @@ stpp_cmd_sub(stpp_t *stpp, unsigned int id, int propref, const char *path)
   ss->ss_sub = prop_subscribe(PROP_SUB_ALT_PATH,
 			      PROP_TAG_COURIER, asyncio_courier,
 			      PROP_TAG_NAMESTR, path,
-			      PROP_TAG_CALLBACK, stpp_sub_json, ss,
+			      PROP_TAG_NAME_VECTOR, namevec,
+			      PROP_TAG_CALLBACK, notify, ss,
 			      PROP_TAG_ROOT, p,
 			      NULL);
 }
@@ -421,7 +476,8 @@ stpp_json(stpp_t *stpp, htsmsg_t *m)
     stpp_cmd_sub(stpp,
 		 htsmsg_get_u32_or_default(m, HTSMSG_INDEX(1), 0),
 		 htsmsg_get_u32_or_default(m, HTSMSG_INDEX(2), 0),
-		 htsmsg_get_str(m,            HTSMSG_INDEX(3)));
+		 htsmsg_get_str(m,            HTSMSG_INDEX(3)), NULL,
+                 stpp_sub_json);
     break;
 
   case STPP_CMD_UNSUBSCRIBE:
@@ -438,6 +494,70 @@ stpp_json(stpp_t *stpp, htsmsg_t *m)
   }
 }
 
+
+/**
+ * Websocket server always pad frame with a zero byte at the end
+ * (Not included in len). So it's safe to just use strings at end
+ * of messages
+ *
+ * Function returns -1 on malformed messages
+ */
+static int
+stpp_binary(stpp_t *stpp, const uint8_t *data, int len)
+{
+  if(len < 1)
+    return -1;
+  const uint8_t cmd = data[0];
+  data++;
+  len--;
+
+  switch(cmd) {
+  case STPP_CMD_SUBSCRIBE:
+    if(len < 8) {
+      return -1;
+    } else {
+      const char **name = NULL;
+      if(len > 8) {
+
+        const uint8_t *src = data + 8;
+        int remain = len - 8;
+        int comp = 0;
+        while(remain > 0) {
+          comp++;
+          remain -= *src + 1;
+          src    += *src + 1;
+        }
+        if(remain != 0)
+          return -1;
+        name = alloca(sizeof(const char *) * (comp + 1));
+        src = data + 8;
+        for(int i = 0; i < comp; i++) {
+          int l = *src++;
+          char *x = alloca(l + 1);
+          memcpy(x, src, l);
+          name[i] = x;
+          x[l] = 0;
+          src += l;
+        }
+        name[comp] = 0;
+      }
+      stpp_cmd_sub(stpp, rd32_le(data), rd32_le(data + 4), NULL, name,
+                   stpp_sub_binary);
+    }
+    break;
+
+  case STPP_CMD_UNSUBSCRIBE:
+    if(len != 4)
+      return -1;
+    stpp_cmd_unsub(stpp, rd32_le(data));
+    break;
+
+  default:
+    return -1;
+  }
+  return 0;
+}
+
 /**
  *
  */
@@ -446,14 +566,21 @@ stpp_input(http_connection_t *hc, int opcode,
 	   uint8_t *data, size_t len, void *opaque)
 {
   stpp_t *stpp = opaque;
-  
-  if(opcode != 1)
-    return 0;
+  htsmsg_t *m;
+  switch(opcode) {
+  case 1: // Text frame
+    m = htsmsg_json_deserialize((const char *)data);
+    if(m != NULL) {
+      stpp_json(stpp, m);
+      htsmsg_release(m);
+    }
+    break;
+  case 2: // Binary frame
+    stpp_binary(stpp, data, len);
+    break;
 
-  htsmsg_t *m = htsmsg_json_deserialize((const char *)data);
-  if(m != NULL) {
-    stpp_json(stpp, m);
-    htsmsg_release(m);
+  default:
+    break;
   }
   return 0;
 }
@@ -465,9 +592,6 @@ stpp_input(http_connection_t *hc, int opcode,
 static int
 stpp_init(http_connection_t *hc)
 {
-  if(!gconf.enable_experimental)
-    return 403;
-
   stpp_t *stpp = calloc(1, sizeof(stpp_t));
   stpp->stpp_hc = hc;
   http_set_opaque(hc, stpp);

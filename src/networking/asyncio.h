@@ -49,6 +49,7 @@ void asyncio_start(void);
 
 void asyncio_del_fd(asyncio_fd_t *af);
 
+void asyncio_run_task(void (*fn)(void *aux), void *aux);
 
 // Return current time, must be same time domain as arch_get_ts();
 int64_t async_current_time(void);

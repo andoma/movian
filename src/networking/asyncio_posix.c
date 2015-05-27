@@ -43,6 +43,7 @@ LIST_HEAD(asyncio_fd_list, asyncio_fd);
 LIST_HEAD(asyncio_worker_list, asyncio_worker);
 LIST_HEAD(asyncio_timer_list, asyncio_timer);
 TAILQ_HEAD(asyncio_dns_req_queue, asyncio_dns_req);
+TAILQ_HEAD(asyncio_task_queue, asyncio_task);
 
 static hts_thread_t asyncio_thread_id;
 
@@ -61,6 +62,9 @@ static hts_mutex_t asyncio_dns_mutex;
 static int asyncio_dns_worker;
 static struct asyncio_dns_req_queue asyncio_dns_pending;
 static struct asyncio_dns_req_queue asyncio_dns_completed;
+
+static hts_mutex_t asyncio_task_mutex;
+static struct asyncio_task_queue asyncio_tasks;
 
 static void adr_deliver_cb(void);
 
@@ -112,6 +116,16 @@ struct asyncio_fd {
   uint16_t af_ext_events;
   uint8_t af_connected;
 };
+
+
+/**
+ *
+ */
+typedef struct asyncio_task {
+  TAILQ_ENTRY(asyncio_task) at_link;
+  void (*at_fn)(void *aux);
+  void *at_aux;
+} asyncio_task_t;
 
 
 /**
@@ -505,6 +519,23 @@ asyncio_handle_pipe(asyncio_fd_t *af, void *opaque, int event, int error)
     return;
   }
 
+  if(x == 1) {
+    struct asyncio_task_queue atq;
+    asyncio_task_t *at, *next;
+
+    hts_mutex_lock(&asyncio_task_mutex);
+    TAILQ_MOVE(&atq, &asyncio_tasks, at_link);
+    TAILQ_INIT(&asyncio_tasks);
+    hts_mutex_unlock(&asyncio_task_mutex);
+
+    for(at = TAILQ_FIRST(&atq); at != NULL; at = next) {
+      next = TAILQ_NEXT(at, at_link);
+      at->at_fn(at->at_aux);
+      free(at);
+    }
+    return;
+  }
+
   asyncio_worker_t *aw;
   hts_mutex_lock(&asyncio_worker_mutex);
 
@@ -529,7 +560,7 @@ asyncio_add_worker(void (*fn)(void))
 
   aw->fn = fn;
 
-  static  int generator;
+  static  int generator = 1;
 
   hts_mutex_lock(&asyncio_worker_mutex);
   generator++;
@@ -572,11 +603,14 @@ asyncio_thread(void *aux)
 void
 asyncio_init_early(void)
 {
+  TAILQ_INIT(&asyncio_tasks);
   TAILQ_INIT(&asyncio_dns_pending);
   TAILQ_INIT(&asyncio_dns_completed);
+  TAILQ_INIT(&asyncio_tasks);
 
   hts_mutex_init(&asyncio_worker_mutex);
   hts_mutex_init(&asyncio_dns_mutex);
+  hts_mutex_init(&asyncio_task_mutex);
 
   arch_pipe(asyncio_pipe);
 }
@@ -589,6 +623,24 @@ asyncio_start(void)
 {
   hts_thread_create_detached("asyncio", asyncio_thread,
                              NULL, THREAD_PRIO_MODEL);
+}
+
+/**
+ *
+ */
+void
+asyncio_run_task(void (*fn)(void *aux), void *aux)
+{
+  asyncio_task_t *at = malloc(sizeof(asyncio_task_t));
+  at->at_fn = fn;
+  at->at_aux = aux;
+
+  hts_mutex_lock(&asyncio_task_mutex);
+  int do_signal = TAILQ_EMPTY(&asyncio_tasks);
+  TAILQ_INSERT_TAIL(&asyncio_tasks, at, at_link);
+  hts_mutex_unlock(&asyncio_task_mutex);
+  if(do_signal)
+    asyncio_wakeup(1);
 }
 
 

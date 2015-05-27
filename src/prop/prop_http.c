@@ -79,6 +79,9 @@ emit_value(htsbuf_queue_t *q, int html, prop_t *p)
   case PROP_ZOMBIE:
     htsbuf_qprintf(q, "(zombie)");
     break;
+  case PROP_PROXY:
+    htsbuf_qprintf(q, "(proxy)");
+    break;
   case PROP_PROP:
     htsbuf_qprintf(q, "(prop)");
     break;

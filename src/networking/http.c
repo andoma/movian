@@ -24,6 +24,7 @@
 #include "http.h"
 #include "misc/time.h"
 #include "misc/str.h"
+#include "htsmsg/htsbuf.h"
 
 /**
  *
@@ -235,4 +236,33 @@ http_parse_uri_args(struct http_header_list *list, char *args,
     url_deescape(v);
     http_header_add(list, k, v, append);
   }
+}
+
+
+
+/**
+ *
+ */
+char *
+http_read_line(htsbuf_queue_t *q)
+{
+  int len;
+
+  len = htsbuf_find(q, 0xa);
+  if(len == -1)
+    return NULL;
+
+  if(len >= 10000)
+    return (void *)-1;
+
+  char *buf = malloc(len + 1);
+  if(buf == NULL)
+    return (void *)-1;
+
+  htsbuf_read(q, buf, len);
+  buf[len] = 0;
+  while(len > 0 && buf[len - 1] < 32)
+    buf[--len] = 0;
+  htsbuf_drop(q, 1); /* Drop the \n */
+  return buf;
 }
