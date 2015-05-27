@@ -843,6 +843,7 @@ video_player_idle(void *aux)
     video_queue_destroy(vq);
   prop_ref_dec(origin);
   prop_ref_dec(errprop);
+  mp_shutdown(mp);
   mp_release(mp);
   return NULL;
 }
