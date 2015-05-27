@@ -512,6 +512,11 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
   prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 1);
 
+  if(!(va.flags & BACKEND_VIDEO_NO_AUDIO))
+    mp_become_primary(mp);
+
+  prop_set(mp->mp_prop_root, "type", PROP_SET_STRING, "video");
+
 #if ENABLE_DVD && ENABLE_METADATA
   if(va.mimetype == NULL) {
     struct fa_stat fs;
@@ -816,9 +821,6 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
 
   // Start it
   mp_configure(mp, flags, MP_BUFFER_DEEP, fctx->duration, "video");
-
-  if(!(va.flags & BACKEND_VIDEO_NO_AUDIO))
-    mp_become_primary(mp);
 
   seek_index_t *si = build_index(mp, fctx, url);
   seek_index_t *ci = build_chapters(mp, fctx, url);
