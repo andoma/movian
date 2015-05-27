@@ -386,6 +386,13 @@ handle_pmt(void *opaque, const uint8_t *ptr, int len)
         te->te_stream = hls_get_audio_track(h, pid, NULL, NULL, "AAC", 1);
         break;
 
+      case 0x81:
+        te->te_codec = media_codec_create(AV_CODEC_ID_AC3, 1, NULL, NULL, NULL,
+                                          td->td_mp);
+        te->te_data_type = MB_AUDIO;
+        te->te_stream = hls_get_audio_track(h, pid, NULL, NULL, "AC3", 1);
+        break;
+
       case 0x03:
       case 0x04:
         te->te_codec = media_codec_create(AV_CODEC_ID_MP3, 1, NULL, NULL, NULL,
