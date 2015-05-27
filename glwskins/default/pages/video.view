@@ -14,7 +14,7 @@
 
 
 
-$ui.showplaydeck = $self.media.stats ||
+$ui.showplaydeck = $self.media.stats || $self.media.loading ||
   changed($self.media.seektime, 5, true) ||
   changed($self.media.metadata.title, 5, true);
 
