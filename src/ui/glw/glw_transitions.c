@@ -106,7 +106,7 @@ trans_slide_vertical(float b, float alpha, glw_rctx_t *rc)
 static void
 trans_none(float b, float alpha, glw_rctx_t *rc)
 {
-
+  rc->rc_alpha = alpha;
 }
 
 /**
