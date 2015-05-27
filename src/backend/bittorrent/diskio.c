@@ -258,14 +258,6 @@ torrent_read_from_disk(torrent_t *to, torrent_piece_t *tp)
     fa_seek(to->to_cachefile, data_offset, SEEK_SET);
     int len = fa_read(to->to_cachefile, tp->tp_data, tp->tp_piece_length);
     hts_mutex_lock(&bittorrent_mutex);
-
-    static int x;
-    x++;
-    if(x == 2) {
-      len = 1;
-      x = 0;
-    }
-
     ok = len == tp->tp_piece_length;
 
     diskio_trace(to, "Load piece %d from disk: %s",
