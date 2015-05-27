@@ -38,6 +38,8 @@
 #include "usage.h"
 #include "misc/minmax.h"
 
+#define HLS_CORRUPTION_MEASURE_PERIOD 60
+
 /**
  * Relevant docs:
  *
@@ -51,6 +53,8 @@
 
 #define TESTURL "http://devimages.apple.com.edgekey.net/resources/http-streaming/examples/bipbop_16x9/bipbop_16x9_variant.m3u8"
 
+
+static hls_variant_t *hls_demuxer_select_variant(hls_demuxer_t *hd, time_t now);
 
 
 /**
@@ -258,13 +262,21 @@ hls_bad_variant(hls_variant_t *hv, hls_error_t err)
 {
   hls_demuxer_t *hd = hv->hv_demuxer;
   hls_t *h = hd->hd_hls;
+  time_t now = time(NULL);
 
   HLS_TRACE(h, "Unable to demux variant %s -- %s",
             hv->hv_name, hlserrstr[err]);
   hv->hv_corrupt_counter++;
-  hls_variant_close(hv);
+  if(hv->hv_corrupt_timer < now - HLS_CORRUPTION_MEASURE_PERIOD) {
+    hv->hv_corruptions_last_period = 1;
+    hv->hv_corrupt_timer = now;
+  } else {
+    hv->hv_corruptions_last_period++;
+  }
 
-  hd->hd_req = hls_demuxer_select_variant(hd);
+  hls_variant_close(hv);
+  usleep(100000);
+  hd->hd_req = hls_demuxer_select_variant(hd, now);
   hd->hd_last_switch = time(NULL);
 }
 
@@ -838,7 +850,7 @@ hls_select_default_variant(hls_demuxer_t *hd)
  *
  */
 static hls_variant_t *
-demuxer_select_variant_simple(hls_demuxer_t *hd)
+demuxer_select_variant_simple(hls_demuxer_t *hd, time_t now)
 {
   hls_variant_t *hv;
   hls_variant_t *best = NULL;
@@ -853,6 +865,9 @@ demuxer_select_variant_simple(hls_demuxer_t *hd)
   TAILQ_FOREACH(hv, &hd->hd_variants, hv_link) {
     if(hv->hv_audio_only)
       continue;
+    if(hv->hv_corrupt_timer < now - HLS_CORRUPTION_MEASURE_PERIOD)
+      hv->hv_corruptions_last_period = 0;
+
     lcc = MIN(lcc, hv->hv_corrupt_counter);
   }
 
@@ -861,6 +876,8 @@ demuxer_select_variant_simple(hls_demuxer_t *hd)
 
   TAILQ_FOREACH(hv, &hd->hd_variants, hv_link) {
     if(hv->hv_audio_only)
+      continue;
+    if(hv->hv_corruptions_last_period >= 3)
       continue;
 
     if(hv->hv_corrupt_counter != lcc)
@@ -881,12 +898,12 @@ demuxer_select_variant_simple(hls_demuxer_t *hd)
   TAILQ_FOREACH_REVERSE(hv, &hd->hd_variants, hls_variant_queue, hv_link) {
     if(hv->hv_audio_only)
       continue;
-
-    if(hv->hv_corrupt_counter != lcc)
+    if(hv->hv_corruptions_last_period >= 3)
       continue;
 
     return hv;
   }
+  hd->hd_no_functional_streams = 1;
   return NULL;
 }
 
@@ -901,9 +918,6 @@ demuxer_select_variant_random(hls_demuxer_t *hd)
   int cnt = 0;
 
   TAILQ_FOREACH(hv, &hd->hd_variants, hv_link) {
-    if(hv->hv_corrupt_counter >= HV_CORRUPT_LIMIT)
-      continue;
-
     if(!hv->hv_audio_only)
       cnt++;
 
@@ -912,9 +926,6 @@ demuxer_select_variant_random(hls_demuxer_t *hd)
   int r = rand() % cnt;
   cnt = 0;
   TAILQ_FOREACH(hv, &hd->hd_variants, hv_link) {
-    if(hv->hv_corrupt_counter >= HV_CORRUPT_LIMIT)
-      continue;
-
     if(hv->hv_audio_only)
       continue;
     if(r == cnt)
@@ -929,40 +940,38 @@ demuxer_select_variant_random(hls_demuxer_t *hd)
 /**
  *
  */
-hls_variant_t *
-hls_demuxer_select_variant(hls_demuxer_t *hd)
+static hls_variant_t *
+hls_demuxer_select_variant(hls_demuxer_t *hd, time_t now)
 {
   if(0)
     return demuxer_select_variant_random(hd);
 
-  return demuxer_select_variant_simple(hd);
+  return demuxer_select_variant_simple(hd, now);
 }
 
 
 /**
  *
  */
-int
+void
 hls_check_bw_switch(hls_demuxer_t *hd, time_t now)
 {
   if(hd->hd_bw == 0)
-    return 0;
+    return;
 
   if(hd->hd_last_switch + 3 > now)
-    return 0;
+    return;
 
-  hls_variant_t *hv = hls_demuxer_select_variant(hd);
+  hls_variant_t *hv = hls_demuxer_select_variant(hd, now);
 
   hd->hd_last_switch = now;
 
   if(hv == NULL || hv == hd->hd_current)
-    return 0;
+    return;
 
   hd->hd_req = hv;
 
   hls_free_mbp(hd->hd_hls->h_mp, &hd->hd_mb);
-
-  return -1;
 }
 
 
@@ -1496,6 +1505,13 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
   h->h_audio.  hd_current = hls_select_default_variant(&h->h_audio);
 
   while(1) {
+
+    if(h->h_primary.hd_no_functional_streams ||
+       h->h_audio.hd_no_functional_streams) {
+      snprintf(errbuf, errlen, "No playable streams");
+      e = NULL;
+      break;
+    }
 
     hts_mutex_lock(&h->h_mutex);
     e = h->h_exit_event;

@@ -126,10 +126,8 @@ typedef struct hls_variant {
   int hv_height;
 
   int hv_corrupt_counter;
-
-#define HV_CORRUPT_LIMIT 3 /* If corrupt_counter >= this, we never consider
-			    * this variant again
-			    */
+  int hv_corruptions_last_period;
+  time_t hv_corrupt_timer; // When period above started
 
   char *hv_subs_group;
   char *hv_audio_group;
@@ -179,6 +177,9 @@ typedef struct hls_demuxer {
   cancellable_t *hd_cancellable;
 
   struct hls *hd_hls;
+
+  // When set, nothing seems to be working, bail out
+  int hd_no_functional_streams;
 
   /** Used to find segment to seek to, will be reset to PTS_UNSET
    * once the segment has been found. After the correct segment has
@@ -253,9 +254,7 @@ void hls_variant_open(hls_variant_t *hv);
 
 void hls_variant_close(hls_variant_t *hv);
 
-hls_variant_t *hls_demuxer_select_variant(hls_demuxer_t *hd);
-
-int hls_check_bw_switch(hls_demuxer_t *hd, time_t now);
+void hls_check_bw_switch(hls_demuxer_t *hd, time_t now);
 
 hls_variant_t *hls_select_default_variant(hls_demuxer_t *hd);
 
