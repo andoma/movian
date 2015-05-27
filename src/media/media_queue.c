@@ -530,7 +530,14 @@ mb_enq(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
   mq->mq_packets_current++;
   mb->mb_epoch = mp->mp_epoch;
   mp->mp_buffer_current += mb->mb_size;
-  mq_update_stats(mp, mq);
+
+  if(mp->mp_stats_update_limiter == 0) {
+    mq_update_stats(mp, mq);
+    mp->mp_stats_update_limiter = 100;
+  } else {
+    mp->mp_stats_update_limiter--;
+  }
+
   if(do_signal)
     hts_cond_signal(&mq->mq_avail);
 }

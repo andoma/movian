@@ -142,15 +142,16 @@ extern int hts_cond_wait_timeoutx(hts_cond_t *c, hts_mutex_t *m, int delay, cons
 typedef sys_ppu_thread_t hts_thread_t;
 
 #define THREAD_PRIO_AUDIO          10
-#define THREAD_PRIO_VIDEO          100
-#define THREAD_PRIO_DEMUXER        200
-#define THREAD_PRIO_UI_WORKER_HIGH 400
-#define THREAD_PRIO_UI_WORKER_MED  450
-#define THREAD_PRIO_FILESYSTEM     500
-#define THREAD_PRIO_MODEL          1000
-#define THREAD_PRIO_METADATA       2000
-#define THREAD_PRIO_UI_WORKER_LOW  2300
-#define THREAD_PRIO_METADATA_BG    2600
+#define THREAD_PRIO_VDEC           1400
+#define THREAD_PRIO_VIDEO          1500
+#define THREAD_PRIO_DEMUXER        2000
+#define THREAD_PRIO_UI_WORKER_HIGH 2100
+#define THREAD_PRIO_UI_WORKER_MED  2200
+#define THREAD_PRIO_FILESYSTEM     2300
+#define THREAD_PRIO_MODEL          2400
+#define THREAD_PRIO_METADATA       2500
+#define THREAD_PRIO_UI_WORKER_LOW  2600
+#define THREAD_PRIO_METADATA_BG    2700
 #define THREAD_PRIO_BGTASK         3000
 
 

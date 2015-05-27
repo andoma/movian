@@ -40,7 +40,6 @@ static int vdec_h264_loaded;
 #define VDEC_DETAILED_DEBUG 0
 
 #define VDEC_SPU_PRIO 100
-#define VDEC_PPU_PRIO 1000
 
 LIST_HEAD(vdec_pic_list, vdec_pic);
 
@@ -956,7 +955,7 @@ video_ps3_vdec_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   vdd->config.mem_addr = (intptr_t)vdd->mem;
   vdd->config.mem_size = dec_attr.mem_size;
   vdd->config.num_spus = spu_threads;
-  vdd->config.ppu_thread_prio = VDEC_PPU_PRIO;
+  vdd->config.ppu_thread_prio = THREAD_PRIO_VDEC;
   vdd->config.spu_thread_prio = VDEC_SPU_PRIO;
   vdd->config.ppu_thread_stack_size = 1 << 14;
 
