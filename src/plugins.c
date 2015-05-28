@@ -550,7 +550,7 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int flags)
       goto bad;
     } else {
       TRACE(TRACE_ERROR, "Plugin",
-            "Installed plugin at %s has unknown type %s but keeping anyway ,"
+            "Installed plugin at %s has unknown type %s but keeping anyway, "
             "since it might be upgraded",
             ctrlfile, type);
       r = 0;
