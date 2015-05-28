@@ -65,6 +65,9 @@ typedef struct {
   sub_scanner_t *ss;
   const video_args_t *va;
   const char *url;
+
+  int is_loading;
+
 } rtmp_t;
 
 
@@ -237,6 +240,11 @@ sendpkt(rtmp_t *r, media_queue_t *mq, media_codec_t *mc,
   event_t *e = NULL;
   media_buf_t *mb = media_buf_alloc_unlocked(r->mp, size);
 
+  if(r->is_loading) {
+    r->is_loading = 0;
+    prop_set(r->mp->mp_prop_root, "loading", PROP_SET_INT, 0);
+  }
+
   mb->mb_data_type = dt;
   mb->mb_duration = duration;
   mb->mb_cw = media_codec_ref(mc);
@@ -244,7 +252,7 @@ sendpkt(rtmp_t *r, media_queue_t *mq, media_codec_t *mc,
   mb->mb_dts = dts;
   mb->mb_pts = pts;
   mb->mb_skip = skip;
-	
+
   memcpy(mb->mb_data, data, size);
 
   do {
@@ -727,7 +735,7 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
 
   r.url = url;
   r.va = &va;
-  prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 0);
+  r.is_loading = 1;
   e = rtmp_loop(&r, mp, url, errbuf, errlen);
 
   if(r.ss)
