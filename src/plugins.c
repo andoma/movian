@@ -740,6 +740,9 @@ plugin_load_repo(void)
       const char *id = htsmsg_get_str(pm, "id");
       if(id == NULL)
 	continue;
+      const char *type = htsmsg_get_str(pm, "type");
+      if(type != NULL && !strcmp(type, "javascript"))
+        continue;
       pl = plugin_find(id);
       pl->pl_mark = 0;
       plugin_prop_setup(pm, pl, NULL);
