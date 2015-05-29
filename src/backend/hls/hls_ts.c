@@ -91,6 +91,7 @@ typedef struct ts_es {
 
   char te_logged_ts;
   char te_logged_keyframe;
+  int te_logged_info;
 
   int64_t te_pts;
   int64_t te_dts;
@@ -106,6 +107,7 @@ typedef struct ts_es {
   int te_current_seq;
 
   int64_t te_ts_offset;
+
 } ts_es_t;
 
 
@@ -369,7 +371,7 @@ handle_pmt(void *opaque, const uint8_t *ptr, int len)
     }
 
     ts_es_t *te = find_es(td, pid, 1);
-
+    const char *name = NULL;
     if(te->te_codec == NULL) {
 
       switch(estype) {
@@ -377,6 +379,7 @@ handle_pmt(void *opaque, const uint8_t *ptr, int len)
         te->te_codec = media_codec_ref(td->td_hd->hd_hls->h_codec_h264);
         te->te_data_type = MB_VIDEO;
         te->te_stream = 0;
+        name = "h264";
         break;
 
       case 0x0f:
@@ -384,6 +387,7 @@ handle_pmt(void *opaque, const uint8_t *ptr, int len)
                                           td->td_mp);
         te->te_data_type = MB_AUDIO;
         te->te_stream = hls_get_audio_track(h, pid, NULL, NULL, "AAC", 1);
+        name = "AAC";
         break;
 
       case 0x81:
@@ -391,6 +395,7 @@ handle_pmt(void *opaque, const uint8_t *ptr, int len)
                                           td->td_mp);
         te->te_data_type = MB_AUDIO;
         te->te_stream = hls_get_audio_track(h, pid, NULL, NULL, "AC3", 1);
+        name = "AC3";
         break;
 
       case 0x03:
@@ -399,12 +404,21 @@ handle_pmt(void *opaque, const uint8_t *ptr, int len)
                                           td->td_mp);
         te->te_data_type = MB_AUDIO;
         te->te_stream = hls_get_audio_track(h, pid, NULL, NULL, "MP3", 1);
+        name = "MP3";
         break;
 
       default:
         break;
       }
     }
+
+    if(!te->te_logged_info) {
+      te->te_logged_info = 1;
+      HLS_TRACE(h, "New %s TS PID %d type %s (0x%x)%s",
+                td->td_hd->hd_type, pid, name ? name : "<unknown>", estype,
+                te->te_codec ? ", codec initialized" : "unsupported type");
+    }
+
   }
 }
 
@@ -465,8 +479,9 @@ parse_pes_header(ts_es_t *te, const uint8_t *buf, size_t len)
     te->te_dts = getpts(buf + 5);
 
     d = (te->te_pts - te->te_dts) & PTS_MASK;
-    if(d > 180000) // More than two seconds of PTS/DTS delta, probably corrupt
-      te->te_dts = te->te_pts = PTS_UNSET;
+    if(d > 180000)
+      // More than two seconds of PTS/DTS delta, PTS is probably corrupt
+      te->te_pts = PTS_UNSET;
 
   } else if((flags & 0xc0) == 0x80) {
     if(hlen < 5)
