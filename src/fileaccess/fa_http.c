@@ -1675,7 +1675,8 @@ http_open_ex(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
   hf->hf_id = atomic_add_and_fetch(&http_file_tally, 1);
   hf->hf_version = 1;
   hf->hf_url = strdup(url);
-  hf->hf_debug = !!(flags & FA_DEBUG) || gconf.enable_http_debug;
+  if(!(flags & FA_NO_DEBUG))
+    hf->hf_debug = !!(flags & FA_DEBUG) || gconf.enable_http_debug;
   hf->hf_streaming = !!(flags & FA_STREAMING);
   hf->hf_no_retries = !!(flags & FA_NO_RETRIES);
   if(foe != NULL) {
@@ -3392,7 +3393,8 @@ http_reqv(const char *url, va_list ap,
   if(hra->headers_out != NULL)
     LIST_INIT(hra->headers_out);
   hf->hf_version = 1;
-  hf->hf_debug = !!(hra->flags & FA_DEBUG) || gconf.enable_http_debug;
+  if(!(hra->flags & FA_NO_DEBUG))
+    hf->hf_debug = !!(hra->flags & FA_DEBUG) || gconf.enable_http_debug;
   hf->hf_req_compression = !!(hra->flags & FA_COMPRESSION);
   hf->hf_url = strdup(url);
 

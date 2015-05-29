@@ -210,8 +210,6 @@ swthread(void *aux)
       TRACE(TRACE_DEBUG, "upgrade",
             "Failed to check for app upgrade, retrying in %d seconds", i + 1);
     }
-
-    usage_report_send(1);
   }
 
   load_site_news();
@@ -235,7 +233,6 @@ swthread(void *aux)
     if(!timeout)
       plugins_upgrade_check();
     upgrade_refresh();
-    usage_report_send(0);
     load_site_news();
     hts_mutex_lock(&gconf.state_mutex);
   }
@@ -296,9 +293,6 @@ main_init(void)
 
   /* Initialize settings */
   settings_init();
-
-  /* Usage counters */
-  usage_init();
 
   TRACE(TRACE_DEBUG, "core", "Loading resources from %s", app_dataroot());
 
@@ -749,7 +743,6 @@ main_fini(void)
 #endif
   kvstore_fini();
   notifications_fini();
-  usage_fini();
   htsmsg_store_flush();
   TRACE(TRACE_DEBUG, "core", APPNAMEUSER" terminated normally");
   trace_fini();

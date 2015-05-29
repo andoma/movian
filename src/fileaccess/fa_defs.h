@@ -19,7 +19,7 @@
  */
 #pragma once
 #define FA_DEBUG           0x1
-// #define FA_DUMP  0x2
+#define FA_NO_DEBUG        0x2  // Force debug to be off
 #define FA_STREAMING       0x4
 #define FA_CACHE           0x8
 #define FA_BUFFERED_SMALL  0x10

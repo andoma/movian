@@ -32,7 +32,7 @@
 #include "bittorrent.h"
 #include "bencode.h"
 #include "misc/minmax.h"
-
+#include "usage.h"
 
 #define TORRENT_REQ_SIZE 16384
 
@@ -161,6 +161,8 @@ torrent_create(const uint8_t *info_hash)
   to->to_title = malloc(41);
   bin2hex(to->to_title, 41, info_hash, 20);
   to->to_title[40] = 0;
+
+  usage_inc_counter("open_torrent", 1);
   return to;
 }
 

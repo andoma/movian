@@ -829,7 +829,8 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
     goto again;
   }
 
-  usage_inc_counter("smbconnect", 1);
+  if(as_guest != 2)
+    usage_inc_counter("smbconnect", 1);
 
   return 0;
 }
