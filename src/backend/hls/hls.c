@@ -1006,6 +1006,15 @@ hls_event_callback(media_pipe_t *mp, void *aux, event_t *e)
     event_int_t *ei = (event_int_t *)e;
     h->h_playback_priority = ei->val;
 
+  } else if(event_is_type(e, EVENT_SELECT_AUDIO_TRACK)) {
+    event_select_track_t *est = (event_select_track_t *)e;
+    const char *id = mystrbegins(est->id, "hls:");
+    if(id != NULL) {
+      const int streamid = atoi(id);
+      assert(streamid != 0);
+      h->h_audio.hd_pending_stream = streamid;
+    }
+
   } else if(event_is_type(e, EVENT_SEEK) && mp->mp_flags & MP_CAN_SEEK) {
 
     event_ts_t *ets = (event_ts_t *)e;
@@ -1031,6 +1040,7 @@ hls_event_callback(media_pipe_t *mp, void *aux, event_t *e)
 
     if(h->h_exit_event == NULL) {
       hts_cond_signal(&h->h_cond);
+      HLS_TRACE(h, "Exit received");
       h->h_exit_event = e;
       event_addref(e);
     }
@@ -1231,7 +1241,8 @@ enqueue_buffer(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
     mq->mq_demuxer_flags &= ~HLS_QUEUE_MERGE;
     flush = 1;
     assert(mb->mb_keyframe == 1);
-    HLS_TRACE(h, "%s queue merged", is_video ? "Video" : "Audio");
+    HLS_TRACE(h, "%s queue merged at DTS %"PRId64,
+              is_video ? "Video" : "Audio", mb->mb_dts);
   }
 
 
@@ -1289,6 +1300,11 @@ enqueue_buffer(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
   mb->mb_flush = flush;
   mb_enq(mp, mq, mb);
 
+  if(!is_video && mq->mq_stream != h->h_audio.hd_current_stream) {
+    HLS_TRACE(h, "Telling audio decoder to switch from stream %d to %d",
+              mq->mq_stream, h->h_audio.hd_current_stream);
+    mq->mq_stream = h->h_audio.hd_current_stream;
+  }
   hts_mutex_unlock(&mp->mp_mutex);
 }
 
@@ -1313,9 +1329,9 @@ hls_demuxer_get_audio(hls_t *h)
 {
   hls_demuxer_t *hd = &h->h_audio;
 
-  if(hd->hd_current_stream != h->h_mp->mp_audio.mq_stream) {
+  if(hd->hd_current_stream != hd->hd_pending_stream) {
 
-    hd->hd_current_stream = h->h_mp->mp_audio.mq_stream;
+    hd->hd_current_stream = hd->hd_pending_stream;
 
     hls_variant_t *hv;
     TAILQ_FOREACH(hv, &hd->hd_variants, hv_link)
@@ -1330,12 +1346,21 @@ hls_demuxer_get_audio(hls_t *h)
       hls_variant_close(hd->hd_current);
     }
 
-    hd->hd_current = hv;
 
-    media_pipe_t *mp = h->h_mp;
-    mp->mp_audio.mq_demuxer_flags |= HLS_QUEUE_MERGE;
-    mp->mp_audio.mq_demuxer_flags &= ~HLS_QUEUE_KEYFRAME_SEEN;
-    HLS_TRACE(h, "Audio queue merge started");
+    if(hd->hd_current != NULL && hv == NULL) {
+      // Switching to an audio stream in primary mux requires a full
+      // resync
+      HLS_TRACE(h, "Force primary stream to resynchronize due to audio switch");
+      h->h_primary.hd_req = h->h_primary.hd_current;
+    } else {
+
+      media_pipe_t *mp = h->h_mp;
+      mp->mp_audio.mq_demuxer_flags |= HLS_QUEUE_MERGE;
+      mp->mp_audio.mq_demuxer_flags &= ~HLS_QUEUE_KEYFRAME_SEEN;
+      HLS_TRACE(h, "Audio queue merge started");
+    }
+
+    hd->hd_current = hv;
 
     hls_free_mbp(h->h_mp, &hd->hd_mb);
   }
@@ -1506,6 +1531,8 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
   h->h_primary.hd_current = hls_select_default_variant(&h->h_primary);
   h->h_audio.  hd_current = hls_select_default_variant(&h->h_audio);
 
+  h->h_audio.hd_pending_stream = 1;
+
   while(1) {
 
     if(h->h_primary.hd_no_functional_streams ||
@@ -1636,7 +1663,7 @@ hls_get_audio_track(hls_t *h, int pid, const char *mux_id, const char *language,
     hat->hat_pid = pid;
     hat->hat_mux_id = mux_id ? strdup(mux_id) : NULL;
     LIST_INSERT_HEAD(&h->h_audio_tracks, hat, hat_link);
-    snprintf(trackuri, sizeof(trackuri), "libav:%d", newid);
+    snprintf(trackuri, sizeof(trackuri), "hls:%d", newid);
 
     prop_t *s;
     int score = 1000;

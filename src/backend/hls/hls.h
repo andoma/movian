@@ -169,6 +169,7 @@ typedef struct hls_demuxer {
   int hd_bw;
 
   int hd_current_stream;
+  int hd_pending_stream;
 
   media_codec_t *hd_audio_codec;
 
