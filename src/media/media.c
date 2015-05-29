@@ -163,7 +163,6 @@ mp_create(const char *name, int flags)
   mp->mp_prop_audio_track_current = prop_create(mp->mp_prop_audio, "current");
   mp->mp_prop_audio_tracks = prop_create(mp->mp_prop_metadata, "audiostreams");
   prop_set_string(mp->mp_prop_audio_track_current, "audio:off");
-  mp_add_track_off(mp->mp_prop_audio_tracks, "audio:off");
 
   mp_track_mgr_init(mp,
                     &mp->mp_audio_track_mgr,
@@ -302,8 +301,7 @@ mp_reset(media_pipe_t *mp)
   prop_destroy_childs(mp->mp_prop_audio_tracks);
   prop_destroy_childs(mp->mp_prop_subtitle_tracks);
 
-  mp_add_track_off(mp->mp_prop_audio_tracks, "audio:off");
-  prop_set_string(mp->mp_prop_audio_track_current, "audio:off");
+  prop_set_void(mp->mp_prop_audio_track_current);
 
   mp_add_track_off(mp->mp_prop_subtitle_tracks, "sub:off");
   prop_set_string(mp->mp_prop_subtitle_track_current, "sub:off");
