@@ -1603,41 +1603,63 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
  *
  */
 int
-hls_get_audio_track(hls_t *h, int pid, const char *id, const char *language,
+hls_get_audio_track(hls_t *h, int pid, const char *mux_id, const char *language,
                     const char *fmt, int autosel)
 {
   hls_audio_track_t *hat;
   char trackuri[256];
 
+  rstr_t *rformat     = rstr_alloc(fmt);
+  rstr_t *rlanguage   = rstr_alloc(language);
+
   LIST_FOREACH(hat, &h->h_audio_tracks, hat_link) {
-    if(id == NULL) {
-      if(pid == hat->hat_pid)
-        return hat->hat_stream_id;
-    } else {
-      if(!strcmp(id, hat->hat_id))
-        return hat->hat_stream_id;
-    }
+    if(mux_id == NULL && hat->hat_mux_id == NULL && hat->hat_pid == pid)
+      break;
+    if(mux_id != NULL && hat->hat_mux_id != NULL &&
+       !strcmp(hat->hat_mux_id, mux_id))
+      break;
   }
 
-  hat = LIST_FIRST(&h->h_audio_tracks);
-  int newid = hat ? hat->hat_stream_id + 1 : 1;
+  if(hat != NULL) {
 
-  hat = calloc(1, sizeof(hls_audio_track_t));
-  hat->hat_stream_id = newid;
-  hat->hat_pid = pid;
-  hat->hat_id = id ? strdup(id) : NULL;
-  LIST_INSERT_HEAD(&h->h_audio_tracks, hat, hat_link);
-  snprintf(trackuri, sizeof(trackuri), "libav:%d", newid);
+    prop_set(hat->hat_trackprop, "format", PROP_SET_RSTRING, rformat);
 
-  prop_t *s;
+  } else {
 
-  if(id)
-    s = _p("Supplementary");
-  else
-    s = _p("Primary");
+    hat = LIST_FIRST(&h->h_audio_tracks);
+    int newid = hat ? hat->hat_stream_id + 1 : 1;
 
-  mp_add_track(h->h_mp->mp_prop_audio_tracks, NULL, trackuri, fmt, fmt,
-               language, NULL, s, 1000, autosel);
+    hat = calloc(1, sizeof(hls_audio_track_t));
+    hat->hat_stream_id = newid;
+    hat->hat_pid = pid;
+    hat->hat_mux_id = mux_id ? strdup(mux_id) : NULL;
+    LIST_INSERT_HEAD(&h->h_audio_tracks, hat, hat_link);
+    snprintf(trackuri, sizeof(trackuri), "libav:%d", newid);
+
+    prop_t *s;
+    int score = 1000;
+
+    if(mux_id) {
+      s = _p("Supplementary");
+    } else {
+      s = _p("Primary");
+      score += 10;
+    }
+
+    hat->hat_trackprop =
+      mp_add_trackr(h->h_mp->mp_prop_audio_tracks,
+                    NULL,
+                    trackuri,
+                    rformat,
+                    rformat,
+                    rlanguage,
+                    NULL,
+                    s,
+                    score,
+                    autosel);
+  }
+  rstr_release(rformat);
+  rstr_release(rlanguage);
 
   return hat->hat_stream_id;
 }
@@ -1650,10 +1672,10 @@ hls_free_audio_tracks(hls_t *h)
 {
   hls_audio_track_t *hat;
 
-
   while((hat = LIST_FIRST(&h->h_audio_tracks)) != NULL) {
     LIST_REMOVE(hat, hat_link);
-    free(hat->hat_id);
+    prop_ref_dec(hat->hat_trackprop);
+    free(hat->hat_mux_id);
     free(hat);
   }
 }

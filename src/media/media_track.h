@@ -71,15 +71,15 @@ void mp_add_track(prop_t *parent,
 		  int score,
                   int autosel);
 
-void mp_add_trackr(prop_t *parent,
-		   rstr_t *title,
-		   const char *url,
-		   rstr_t *format,
-		   rstr_t *longformat,
-		   rstr_t *isolang,
-		   rstr_t *source,
-		   prop_t *sourcep,
-		   int score,
-                   int autosel);
+prop_t *mp_add_trackr(prop_t *parent,
+                      rstr_t *title,
+                      const char *url,
+                      rstr_t *format,
+                      rstr_t *longformat,
+                      rstr_t *isolang,
+                      rstr_t *source,
+                      prop_t *sourcep,
+                      int score,
+                      int autosel) attribute_unused_result;
 
 void mp_add_track_off(prop_t *tracks, const char *title);

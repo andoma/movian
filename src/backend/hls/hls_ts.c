@@ -325,7 +325,8 @@ handle_pmt(void *opaque, const uint8_t *ptr, int len)
 {
   ts_service_t *tss = opaque;
   ts_demuxer_t *td = tss->tss_demuxer;
-  hls_t *h = td->td_hd->hd_hls;
+  hls_demuxer_t *hd = td->td_hd;
+  hls_t *h = hd->hd_hls;
   int pid;
   int dllen;
   uint8_t dlen, estype;
@@ -374,6 +375,15 @@ handle_pmt(void *opaque, const uint8_t *ptr, int len)
     const char *name = NULL;
     if(te->te_codec == NULL) {
 
+      const char *muxid;
+      int hat_pid;
+      if(hd == &h->h_primary) {
+        muxid = NULL;
+        hat_pid = pid;
+      } else {
+        muxid = hd->hd_current->hv_url;
+        hat_pid = 0;
+      }
       switch(estype) {
       case 0x1b:
         te->te_codec = media_codec_ref(td->td_hd->hd_hls->h_codec_h264);
@@ -386,7 +396,7 @@ handle_pmt(void *opaque, const uint8_t *ptr, int len)
         te->te_codec = media_codec_create(AV_CODEC_ID_AAC, 1, NULL, NULL, NULL,
                                           td->td_mp);
         te->te_data_type = MB_AUDIO;
-        te->te_stream = hls_get_audio_track(h, pid, NULL, NULL, "AAC", 1);
+        te->te_stream = hls_get_audio_track(h, hat_pid, muxid, NULL, "AAC", 1);
         name = "AAC";
         break;
 
@@ -394,7 +404,7 @@ handle_pmt(void *opaque, const uint8_t *ptr, int len)
         te->te_codec = media_codec_create(AV_CODEC_ID_AC3, 1, NULL, NULL, NULL,
                                           td->td_mp);
         te->te_data_type = MB_AUDIO;
-        te->te_stream = hls_get_audio_track(h, pid, NULL, NULL, "AC3", 1);
+        te->te_stream = hls_get_audio_track(h, hat_pid, muxid, NULL, "AC3", 1);
         name = "AC3";
         break;
 
@@ -403,7 +413,7 @@ handle_pmt(void *opaque, const uint8_t *ptr, int len)
         te->te_codec = media_codec_create(AV_CODEC_ID_MP3, 1, NULL, NULL, NULL,
                                           td->td_mp);
         te->te_data_type = MB_AUDIO;
-        te->te_stream = hls_get_audio_track(h, pid, NULL, NULL, "MP3", 1);
+        te->te_stream = hls_get_audio_track(h, hat_pid, muxid, NULL, "MP3", 1);
         name = "MP3";
         break;
 
@@ -414,9 +424,10 @@ handle_pmt(void *opaque, const uint8_t *ptr, int len)
 
     if(!te->te_logged_info) {
       te->te_logged_info = 1;
-      HLS_TRACE(h, "New %s TS PID %d type %s (0x%x)%s",
+      HLS_TRACE(h, "New %s TS PID %d type %s (0x%x)%s stream=%d",
                 td->td_hd->hd_type, pid, name ? name : "<unknown>", estype,
-                te->te_codec ? ", codec initialized" : "unsupported type");
+                te->te_codec ? ", codec initialized" : "unsupported type",
+                te->te_stream);
     }
 
   }
@@ -621,10 +632,12 @@ enqueue_packet(ts_demuxer_t *td, const void *data, int len,
   if(mb->mb_keyframe && !te->te_logged_keyframe) {
     te->te_logged_keyframe = 1;
     HLS_TRACE(hv->hv_demuxer->hd_hls,
-              "%s        keyframe %20lld:%20lld\n",
+              "%s        keyframe %20lld:%20lld demuxer:%s stream:%d\n",
               te->te_data_type == MB_VIDEO ? "VIDEO" : "AUDIO",
               te->te_codec->parser_ctx->dts,
-              te->te_codec->parser_ctx->pts);
+              te->te_codec->parser_ctx->pts,
+              hv->hv_demuxer->hd_type,
+              te->te_stream);
   }
 
   mb->mb_stream = te->te_stream;

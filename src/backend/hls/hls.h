@@ -236,7 +236,8 @@ typedef struct hls_audio_track {
   LIST_ENTRY(hls_audio_track) hat_link;
   int hat_stream_id;
   int hat_pid;
-  char *hat_id;
+  char *hat_mux_id;
+  prop_t *hat_trackprop;
 } hls_audio_track_t;
 
 

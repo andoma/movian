@@ -225,16 +225,17 @@ metadata_stream_make_prop(const metadata_stream_t *ms, prop_t *parent,
     rstr_release(fmt);
   }
   
-  mp_add_trackr(parent,
-		title,
-		url,
-		ms->ms_codec,
-		ms->ms_info,
-		ms->ms_isolang,
-		NULL,
-		_p("Embedded in file"),
-		score,
-                autosel);
+  prop_t *p = mp_add_trackr(parent,
+                            title,
+                            url,
+                            ms->ms_codec,
+                            ms->ms_info,
+                            ms->ms_isolang,
+                            NULL,
+                            _p("Embedded in file"),
+                            score,
+                            autosel);
+  prop_ref_dec(p);
   
   rstr_release(title);
 }

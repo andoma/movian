@@ -36,7 +36,7 @@ static void mp_load_ext_sub(media_pipe_t *mp, const char *url);
 /**
  *
  */
-void
+prop_t *
 mp_add_trackr(prop_t *parent,
 	      rstr_t *title,
 	      const char *url,
@@ -49,6 +49,7 @@ mp_add_trackr(prop_t *parent,
               int autosel)
 {
   prop_t *p = prop_create_root(NULL);
+  prop_t *retval = prop_ref_inc(p);
   prop_t *s = prop_create(p, "source");
 
   prop_set(p, "url", PROP_SET_STRING, url);
@@ -77,6 +78,7 @@ mp_add_trackr(prop_t *parent,
 
   if(prop_set_parent(p, parent))
     prop_destroy(p);
+  return retval;
 }
 
 
@@ -101,8 +103,9 @@ mp_add_track(prop_t *parent,
   rstr_t *risolang    = rstr_alloc(isolang);
   rstr_t *rsource     = rstr_alloc(source);
 
-  mp_add_trackr(parent, rtitle, url, rformat, rlongformat, risolang,
-		rsource, sourcep, score, autosel);
+  prop_t *p = mp_add_trackr(parent, rtitle, url, rformat, rlongformat, risolang,
+                            rsource, sourcep, score, autosel);
+  prop_ref_dec(p);
   
   rstr_release(rtitle);
   rstr_release(rformat);
@@ -204,7 +207,8 @@ mtm_rethink(media_track_mgr_t *mtm)
 					     mt->mt_url)) {
 
       mtm->mtm_user_set = 1;
-      TRACE(TRACE_DEBUG, "media", "Selecting track %s (preferred by user)",
+      TRACE(TRACE_DEBUG, "media",
+            "Selecting track %s (previously selected by user)",
             mt->mt_url);
       event_t *e = event_create_select_track(mt->mt_url,
 					     mtm_event_type(mtm), 0);
@@ -579,7 +583,7 @@ mp_track_mgr_select_track(media_track_mgr_t *mtm, event_select_track_t *est)
 
   if(is_audio) {
 
-    TRACE(TRACE_DEBUG, "Media", "Selecting audio track %s", id);
+    TRACE(TRACE_DEBUG, "Media", "Switching to audio track %s", id);
 
 
     if(!strcmp(id, "audio:off")) {
@@ -596,7 +600,7 @@ mp_track_mgr_select_track(media_track_mgr_t *mtm, event_select_track_t *est)
 
   } else {
 
-    TRACE(TRACE_INFO, "Media", "Selecting subtitle track %s", id);
+    TRACE(TRACE_INFO, "Media", "Switching to subtitle track %s", id);
 
     // Sending an empty MB_CTRL_EXT_SUBTITLE will cause unload
     mp_send_cmd_locked(mp, &mp->mp_video, MB_CTRL_EXT_SUBTITLE);
