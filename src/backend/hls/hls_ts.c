@@ -329,7 +329,7 @@ handle_pmt(void *opaque, const uint8_t *ptr, int len)
   hls_t *h = hd->hd_hls;
   int pid;
   int dllen;
-  uint8_t dlen, estype;
+  uint8_t dlen, estype, dtag;
 
   if(len < 9) {
     return;
@@ -361,13 +361,26 @@ handle_pmt(void *opaque, const uint8_t *ptr, int len)
     ptr += 5;
     len -= 5;
 
+    char langbuf[4] = {0};
+    const char *lang = NULL;
+
     while(dllen > 1) {
-      //      dtag = ptr[0];
+      dtag = ptr[0];
       dlen = ptr[1];
 
       len -= 2; ptr += 2; dllen -= 2;
+
       if(dlen > len)
 	break;
+
+      switch(dtag) {
+      case 0xa:
+        if(dlen >= 3) {
+          memcpy(langbuf, ptr, 3);
+          lang = langbuf;
+          break;
+        }
+      }
       len -= dlen; ptr += dlen; dllen -= dlen;
     }
 
@@ -396,7 +409,7 @@ handle_pmt(void *opaque, const uint8_t *ptr, int len)
         te->te_codec = media_codec_create(AV_CODEC_ID_AAC, 1, NULL, NULL, NULL,
                                           td->td_mp);
         te->te_data_type = MB_AUDIO;
-        te->te_stream = hls_get_audio_track(h, hat_pid, muxid, NULL, "AAC", 1);
+        te->te_stream = hls_get_audio_track(h, hat_pid, muxid, lang, "AAC", 1);
         name = "AAC";
         break;
 
@@ -404,7 +417,7 @@ handle_pmt(void *opaque, const uint8_t *ptr, int len)
         te->te_codec = media_codec_create(AV_CODEC_ID_AC3, 1, NULL, NULL, NULL,
                                           td->td_mp);
         te->te_data_type = MB_AUDIO;
-        te->te_stream = hls_get_audio_track(h, hat_pid, muxid, NULL, "AC3", 1);
+        te->te_stream = hls_get_audio_track(h, hat_pid, muxid, lang, "AC3", 1);
         name = "AC3";
         break;
 
@@ -413,7 +426,7 @@ handle_pmt(void *opaque, const uint8_t *ptr, int len)
         te->te_codec = media_codec_create(AV_CODEC_ID_MP3, 1, NULL, NULL, NULL,
                                           td->td_mp);
         te->te_data_type = MB_AUDIO;
-        te->te_stream = hls_get_audio_track(h, hat_pid, muxid, NULL, "MP3", 1);
+        te->te_stream = hls_get_audio_track(h, hat_pid, muxid, lang, "MP3", 1);
         name = "MP3";
         break;
 
