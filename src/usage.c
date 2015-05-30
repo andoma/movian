@@ -165,7 +165,11 @@ try_send(void *aux)
     if(gconf.os_info[0])
       htsmsg_add_str(metrics, "_os_version" , gconf.os_info);
 
+    if(gconf.device_type[0])
+      htsmsg_add_str(metrics, "_device" , gconf.device_type);
+
     htsmsg_add_str(metrics, "_app_version", htsversion_full);
+    htsmsg_add_str(metrics, "_locale", gconf.lang);
 
     htsmsg_add_msg(m, "metrics", metrics);
     session_start_time = arch_get_ts();
@@ -196,6 +200,8 @@ try_send(void *aux)
 static void
 usage_init(void)
 {
+  if(gconf.disable_analytics)
+    return;
   if(gconf.device_id[0] == 0)
     return;
   task_run(try_send, NULL);
@@ -241,6 +247,9 @@ static void
 usage_fini(void)
 {
   callout_disarm(&usage_callout);
+  if(!start_sent)
+    return;
+
   htsmsg_t *m = htsmsg_create_map();
 
   htsmsg_add_str(m, "device_id", gconf.device_id);

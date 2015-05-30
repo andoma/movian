@@ -1409,6 +1409,11 @@ init_dev_settings(void)
   add_dev_bool(s, "Enable omnigrade",
 	       "omnigrade", &gconf.enable_omnigrade);
 
+#ifndef NDEBUG
+  add_dev_bool(s, "Disable analytics",
+	       "disableanalytics", &gconf.disable_analytics);
+#endif
+
   add_dev_bool(s, "Always close pages when pressing back",
 	       "navalwaysclose", &gconf.enable_nav_always_close);
 

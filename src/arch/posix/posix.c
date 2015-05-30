@@ -77,6 +77,30 @@ linux_get_dist(void)
 #endif
 
 
+#ifdef STOS
+/**
+ *
+ */
+static char *
+stos_get_dist(void)
+{
+  char *r = NULL;
+  char buf[128] = {0};
+  strcpy(buf, "STOS ");
+  FILE *fp = fopen("/stosversion", "r");
+  if(fp == NULL)
+    return r;
+  if(fgets(buf+5, 127-5, fp) != NULL) {
+    char *x = strchr(buf, '\n');
+    if(x)
+      *x = 0;
+    r = strdup(buf);
+  }
+  fclose(fp);
+  return r;
+}
+#endif
+
 /**
  *
  */
@@ -87,19 +111,20 @@ posix_init(void)
 
   if(!uname(&uts)) {
     char *dist = NULL;
+
+#ifdef STOS
+    dist = stos_get_dist();
+#endif
 #ifdef linux
-    dist = linux_get_dist();
+    if(dist == NULL)
+      dist = linux_get_dist();
 #endif
     if(dist != NULL) {
       snprintf(gconf.os_info, sizeof(gconf.os_info), "%s", dist);
       free(dist);
     } else {
       snprintf(gconf.os_info, sizeof(gconf.os_info),
-               "%s-%s-%s-%s",
-               uts.sysname,
-               uts.release,
-               uts.version,
-               uts.machine);
+               "%s-%s", uts.sysname,  uts.release);
     }
   }
 

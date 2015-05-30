@@ -507,6 +507,9 @@ set_device_id(void)
              platinfo[0],
              platinfo[1],
              platinfo[2]);
+
+    strcpy(gconf.device_type, "PS3 ");
+    memcpy(gconf.device_type + 4, platinfo+8, 8);
   }
 
 }

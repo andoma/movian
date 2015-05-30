@@ -497,13 +497,14 @@ static void
 set_language(void *opaque, const char *str)
 {
   char buf[200];
-
   nls_clear();
 
   if(!strcmp(str, "none")) {
     TRACE(TRACE_INFO, "i18n", "Unloading language definition");
+    snprintf(gconf.lang, sizeof(gconf.lang), "en");
     return;
   }
+  snprintf(gconf.lang, sizeof(gconf.lang), "%s", str);
 
   snprintf(buf, sizeof(buf), "%s/lang/%s.lang", app_dataroot(), str);
   TRACE(TRACE_INFO, "i18n", "Loading language %s", str);
