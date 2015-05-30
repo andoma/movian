@@ -636,7 +636,7 @@ htsmsg_print0(const char *prefix, htsmsg_t *msg, int indent)
 void
 htsmsg_print(const char *prefix, htsmsg_t *msg)
 {
-  htsmsg_print0("MESSAGE", msg, 0);
+  htsmsg_print0(prefix, msg, 0);
 }
 
 
