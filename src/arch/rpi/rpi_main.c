@@ -47,6 +47,7 @@
 #include "backend/backend.h"
 #include "notifications.h"
 #include "misc/callout.h"
+#include "misc/strtab.h"
 
 #if ENABLE_CONNMAN
 #include <gio/gio.h>
@@ -73,6 +74,56 @@ arch_get_avtime(void)
   struct timeval tv;
   gettimeofday(&tv, NULL);
   return (int64_t)tv.tv_sec * 1000000LL + tv.tv_usec;
+}
+
+
+static struct strtab rpirevisions[] = {
+  {"-1 Model B r1.0 256MB", 2},
+  {"-1 Model B r1.0 256MB + ECN0001", 3},
+  {"-1 Model B r2.0 256MB", 4},
+  {"-1 Model B r2.0 256MB", 5},
+  {"-1 Model B r2.0 256MB", 6},
+  {"-1 Model A 256MB", 7},
+  {"-1 Model A 256MB", 8},
+  {"-1 Model A 256MB", 9},
+  {"-1 Model B r2.0 512MB", 0xd},
+  {"-1 Model B r2.0 512MB", 0xe},
+  {"-1 Model B r2.0 512MB", 0xf},
+  {"-1 Model B+ 512MB", 0x10},
+  {"-1 Compute Module 512MB", 0x11},
+  {"-1 Model A+ 512MB", 0x12},
+  {"-2 Model B (Sony) 1GB", 0xa01041},
+  {"-2 Model B (Embest) 1GB", 0xa21041},
+};
+
+static void
+rpi_get_revision(void)
+{
+  char buf[256] = {0};
+  FILE *fp = fopen("/proc/cpuinfo", "r");
+  if(fp == NULL)
+    return;
+  while(fgets(buf, sizeof(buf) - 1, fp) != NULL) {
+    if(strncmp(buf, "Revision", strlen("Revision")))
+      continue;
+    const char *x = strchr(buf, ':');
+    if(x == NULL)
+      continue;
+    x += 2;
+    int rev = strtol(x, NULL, 16);
+    rev &= 0xffffff;
+    fclose(fp);
+    const char *model = val2str(rev, rpirevisions);
+    if(model == NULL) {
+      snprintf(gconf.device_type, sizeof(gconf.device_type),
+               "Raspberry Pi unknown revision 0x%x", rev);
+    } else {
+      snprintf(gconf.device_type, sizeof(gconf.device_type),
+               "Raspberry Pi%s", model);
+    }
+    return;
+  }
+  fclose(fp);
 }
 
 
@@ -775,6 +826,8 @@ main(int argc, char **argv)
   asm volatile("vmrs r0, fpscr\n"
 	       "orr r0, $(1 << 24)\n"
 	       "vmsr fpscr, r0" : : : "r0");
+
+  rpi_get_revision();
 
   linux_check_capabilities();
 

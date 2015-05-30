@@ -404,6 +404,8 @@ main_init(void)
   runcontrol_init();
 
   TRACE(TRACE_DEBUG, "SYSTEM", "Hashed device ID: %s", gconf.device_id);
+  if(gconf.device_type[0])
+    TRACE(TRACE_DEBUG, "SYSTEM", "Device type: %s", gconf.device_type);
 }
 
 
