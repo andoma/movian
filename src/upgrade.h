@@ -21,3 +21,5 @@
 void upgrade_init(void);
 
 int upgrade_refresh(void);
+
+char *upgrade_get_track(void);

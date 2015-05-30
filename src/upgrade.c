@@ -1367,6 +1367,18 @@ upgrade_open_url(prop_t *page, const char *url, int sync)
 /**
  *
  */
+char *
+upgrade_get_track(void)
+{
+  hts_mutex_lock(&upgrade_mutex);
+  char *r = upgrade_track ? strdup(upgrade_track) : NULL;
+  hts_mutex_unlock(&upgrade_mutex);
+  return r;
+}
+
+/**
+ *
+ */
 static backend_t be_upgrade = {
   .be_canhandle = upgrade_canhandle,
   .be_open = upgrade_open_url,

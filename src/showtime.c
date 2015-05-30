@@ -193,6 +193,8 @@ swthread(void *aux)
 
   upgrade_init();
 
+  usage_start();
+
   if(!gconf.disable_upgrades) {
 
     for(int i = 0; i < 10; i++) {

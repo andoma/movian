@@ -28,6 +28,7 @@
 #include "plugins.h"
 #include "task.h"
 #include "misc/callout.h"
+#include "upgrade.h"
 
 static hts_mutex_t usage_mutex;
 static htsmsg_t *usage_counters;
@@ -59,6 +60,7 @@ static int64_t session_start_time;
 static int
 sendmsg(htsmsg_t *msg)
 {
+  //  htsmsg_print("msg", msg);
   htsmsg_t *list = htsmsg_create_list();
   htsmsg_add_msg(list, NULL, msg);
 
@@ -168,6 +170,12 @@ try_send(void *aux)
     if(gconf.device_type[0])
       htsmsg_add_str(metrics, "_device" , gconf.device_type);
 
+    char *track = upgrade_get_track();
+    if(track != NULL)
+      htsmsg_add_str(metrics, "_carrier", track);
+    else
+      htsmsg_add_str(metrics, "_carrier", "none");
+
     htsmsg_add_str(metrics, "_app_version", htsversion_full);
     htsmsg_add_str(metrics, "_locale", gconf.lang);
 
@@ -200,9 +208,16 @@ try_send(void *aux)
 static void
 usage_init(void)
 {
-  if(gconf.disable_analytics)
-    return;
-  if(gconf.device_id[0] == 0)
+}
+
+
+/**
+ *
+ */
+void
+usage_start(void)
+{
+  if(gconf.disable_analytics || gconf.device_id[0] == 0)
     return;
   task_run(try_send, NULL);
 }

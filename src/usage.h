@@ -22,11 +22,15 @@
 
 #if ENABLE_USAGEREPORT
 
+void usage_start(void);
+
 void usage_inc_counter(const char *id, int value);
 
 void usage_inc_plugin_counter(const char *plugin, const char *id, int value);
 
 #else
+
+#define usage_start()
 
 #define usage_inc_counter(id, value)
 
