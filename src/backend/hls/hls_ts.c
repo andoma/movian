@@ -437,12 +437,16 @@ handle_pmt(void *opaque, const uint8_t *ptr, int len)
 
     if(!te->te_logged_info) {
       te->te_logged_info = 1;
-      HLS_TRACE(h, "New %s TS PID %d type %s (0x%x)%s stream=%d",
-                td->td_hd->hd_type, pid, name ? name : "<unknown>", estype,
-                te->te_codec ? ", codec initialized" : "unsupported type",
-                te->te_stream);
-    }
 
+      if(te->te_codec == NULL) {
+        TRACE(TRACE_ERROR, "HLS", "Unsupported estype 0x%x on pid %d in %s",
+              estype, pid, td->td_hd->hd_type);
+      } else {
+        HLS_TRACE(h, "New %s TS PID %d type %s (0x%x) stream=%d",
+                  td->td_hd->hd_type, pid, name ? name : "<unknown>", estype,
+                  te->te_stream);
+      }
+    }
   }
 }
 
