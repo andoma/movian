@@ -117,9 +117,10 @@ typedef struct ts_es {
 static void
 td_flush_packets(ts_demuxer_t *td)
 {
-  media_buf_t *mb, *next;
-  for(mb = TAILQ_FIRST(&td->td_packets); mb != NULL; mb = next) {
-    next = TAILQ_NEXT(mb, mb_link);
+  media_buf_t *mb;
+
+  while((mb = TAILQ_FIRST(&td->td_packets)) != NULL) {
+    TAILQ_REMOVE(&td->td_packets, mb, mb_link);
     media_buf_free_unlocked(td->td_mp, mb);
   }
 }
@@ -945,10 +946,15 @@ hls_ts_demuxer_flush(hls_variant_t *hv)
     media_codec_t *mc = te->te_codec;
     if(mc == NULL)
       continue;
-
     av_parser_close(mc->parser_ctx);
     mc->parser_ctx = av_parser_init(mc->codec_id);
+
+    te->te_packet_size = 0;
+    te->te_pts = PTS_UNSET;
+    te->te_dts = PTS_UNSET;
   }
+  td_flush_packets(td);
+
 }
 
 

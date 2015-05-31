@@ -769,9 +769,14 @@ hls_variant_select_next_segment(hls_variant_t *hv, time_t now)
       if(hv->hv_frozen && hs == NULL)
         return HLS_EOF;
 
-      HLS_TRACE(h, "%s: Seek to %"PRId64" -- %s", hd->hd_type,
-                hd->hd_seek_to_segment,
-                hs ? "Segment found" : "Segment not found");
+      if(hs != NULL) {
+        HLS_TRACE(h, "%s: Seek to %"PRId64" -- Segment %d", hd->hd_type,
+                  hd->hd_seek_to_segment, hs->hs_seq);
+      } else {
+        HLS_TRACE(h, "%s: Seek to %"PRId64" -- Segment not found", hd->hd_type,
+                  hd->hd_seek_to_segment);
+      }
+
       hd->hd_seek_to_segment = PTS_UNSET;
     }
 
@@ -1162,10 +1167,12 @@ enqueue_buffer(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
                hls_t *h, hls_variant_t *hv)
 {
   const int is_video = mb->mb_data_type == MB_VIDEO;
-
   if(unlikely(mq->mq_seektarget != AV_NOPTS_VALUE)) {
     int64_t ts = mb->mb_pts != AV_NOPTS_VALUE ? mb->mb_pts : mb->mb_dts;
-    //    printf("%ld %ld %s\n", ts, mq->mq_seektarget, ts < mq->mq_seektarget ? "drop": "grant");
+    /*
+    printf("%s: %ld %ld %s\n", is_video ? "VIDEO" : "AUDIO",
+           ts, mq->mq_seektarget, ts < mq->mq_seektarget ? "drop": "grant");
+    */
     if(ts < mq->mq_seektarget) {
       mb->mb_skip = 1;
     } else {
@@ -1274,6 +1281,7 @@ enqueue_buffer(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
     mbx->mb_keyframe = mb->mb_keyframe;
     mbx->mb_data_type = MB_VIDEO;
     mbx->mb_cw = media_codec_ref(mb->mb_cw);
+    mbx->mb_skip = mb->mb_skip;
 
 #ifdef DUMP_VIDEO
     dump_video(mbx);
@@ -1422,10 +1430,16 @@ get_media_buf(hls_t *h)
     cancellable_reset(h->h_audio.hd_cancellable);
 
 
-    h->h_pending_seek = PTS_UNSET;
     mp->mp_video.mq_seektarget = h->h_pending_seek;
     mp->mp_audio.mq_seektarget = h->h_pending_seek;
+    h->h_pending_seek = PTS_UNSET;
     mp_flush(mp);
+
+    mp->mp_video.mq_demuxer_flags &= ~HLS_QUEUE_KEYFRAME_SEEN;
+    mp->mp_audio.mq_demuxer_flags &= ~HLS_QUEUE_KEYFRAME_SEEN;
+
+    assert(h->h_primary.hd_mb == NULL);
+    assert(h->h_audio  .hd_mb == NULL);
   }
 
   if((b1 = hls_demuxer_get(&h->h_primary)) == NULL)
