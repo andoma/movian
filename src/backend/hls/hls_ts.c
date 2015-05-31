@@ -399,6 +399,10 @@ handle_pmt(void *opaque, const uint8_t *ptr, int len)
         hat_pid = 0;
       }
       switch(estype) {
+      case 0x15:
+        name = "data";
+        break;
+
       case 0x1b:
         te->te_codec = media_codec_ref(td->td_hd->hd_hls->h_codec_h264);
         te->te_data_type = MB_VIDEO;
@@ -439,7 +443,7 @@ handle_pmt(void *opaque, const uint8_t *ptr, int len)
     if(!te->te_logged_info) {
       te->te_logged_info = 1;
 
-      if(te->te_codec == NULL) {
+      if(name == NULL) {
         TRACE(TRACE_ERROR, "HLS", "Unsupported estype 0x%x on pid %d in %s",
               estype, pid, td->td_hd->hd_type);
       } else {
