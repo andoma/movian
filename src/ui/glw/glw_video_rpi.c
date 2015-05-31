@@ -40,9 +40,14 @@
 typedef struct rpi_video_display {
   omx_component_t *rvd_vrender;
   omx_component_t *rvd_vsched;
+  omx_component_t *rvd_imgfx;
 
   omx_tunnel_t *rvd_tun_clock_vsched;
-  omx_tunnel_t *rvd_tun_vdecoder_vsched;
+
+  // Pipeline order is  decoder -> (imgfx) -> vsched -> render
+  omx_tunnel_t *rvd_tun_vdecoder_output;
+  omx_tunnel_t *rvd_tun_imgfx_output;
+
   omx_tunnel_t *rvd_tun_vsched_vrender;
 
   int rvd_reconfigure;
@@ -167,21 +172,29 @@ rvd_reset(glw_video_t *gv)
 
   omx_flush_port(rvd->rvd_vrender, 90);
 
-  if(rvd->rvd_tun_vsched_vrender != NULL) 
+  if(rvd->rvd_tun_vsched_vrender != NULL)
     omx_tunnel_destroy(rvd->rvd_tun_vsched_vrender);
-  
-  if(rvd->rvd_tun_vdecoder_vsched != NULL)
-    omx_tunnel_destroy(rvd->rvd_tun_vdecoder_vsched);
 
+  if(rvd->rvd_tun_imgfx_output != NULL)
+    omx_tunnel_destroy(rvd->rvd_tun_imgfx_output);
+
+  if(rvd->rvd_tun_vdecoder_output != NULL)
+    omx_tunnel_destroy(rvd->rvd_tun_vdecoder_output);
 
   omx_set_state(rvd->rvd_vrender,  OMX_StateIdle);
   omx_set_state(rvd->rvd_vsched,   OMX_StateIdle);
+  if(rvd->rvd_imgfx)
+    omx_set_state(rvd->rvd_imgfx,  OMX_StateIdle);
 
   omx_set_state(rvd->rvd_vrender,  OMX_StateLoaded);
   omx_set_state(rvd->rvd_vsched,   OMX_StateLoaded);
+  if(rvd->rvd_imgfx)
+    omx_set_state(rvd->rvd_imgfx,  OMX_StateLoaded);
 
   omx_component_destroy(rvd->rvd_vrender);
   omx_component_destroy(rvd->rvd_vsched);
+  if(rvd->rvd_imgfx)
+    omx_component_destroy(rvd->rvd_imgfx);
 
   if(rvd->rvd_mc != NULL)
     media_codec_deref(rvd->rvd_mc);
@@ -233,15 +246,118 @@ static void
 rvd_blackout(glw_video_t *gv)
 {
   rpi_video_display_t *rvd = gv->gv_aux;
+  if(rvd->rvd_imgfx != NULL) {
+    omx_flush_port(rvd->rvd_imgfx, 190);
+    omx_flush_port(rvd->rvd_imgfx, 191);
+  }
   omx_flush_port(rvd->rvd_vsched, 10);
   omx_flush_port(rvd->rvd_vsched, 11);
   omx_flush_port(rvd->rvd_vrender, 90);
 }
 
 
-static int rvd_set_codec(media_codec_t *mc, glw_video_t *gv,
-			 const frame_info_t *fi,
-                         struct glw_video_engine *gve);
+/**
+ *
+ */
+static int
+rvd_set_codec(media_codec_t *mc, glw_video_t *gv, const frame_info_t *fi,
+              struct glw_video_engine *gve)
+{
+  media_pipe_t *mp = gv->gv_mp;
+
+  glw_video_configure(gv, gve);
+
+  gv->gv_width = fi->fi_width;
+  gv->gv_height = fi->fi_height;
+
+  rpi_video_display_t *rvd = gv->gv_aux;
+  rpi_video_codec_t *rvc = mc->opaque;
+
+  if(rvd->rvd_vrender == NULL) {
+
+    rvd->rvd_vrender = omx_component_create("OMX.broadcom.video_render",
+					    &rvd->rvd_mutex, NULL);
+    rvd->rvd_vsched  = omx_component_create("OMX.broadcom.video_scheduler",
+                                            &rvd->rvd_mutex, NULL);
+
+    rvd->rvd_vsched->oc_opaque = rvd;
+    rvd->rvd_vrender->oc_opaque = rvd;
+
+    gv->gv_vd->vd_render_component = rvd->rvd_vrender;
+
+    omx_enable_buffer_marks(rvd->rvd_vrender);
+
+    rvd->rvd_tun_clock_vsched =
+      omx_tunnel_create(omx_get_clock(mp), 81, rvd->rvd_vsched, 12,
+			"clock -> vsched");
+
+    rvd->rvd_vsched->oc_port_settings_changed_cb =
+      vsched_port_settings_changed;
+
+    rvd->rvd_vrender->oc_event_mark_cb = buffer_mark;
+
+  }
+  omx_set_state(rvd->rvd_vrender, OMX_StateIdle);
+
+  if(rvd->rvd_tun_vdecoder_output != NULL)
+    omx_tunnel_destroy(rvd->rvd_tun_vdecoder_output);
+
+  if(rvd->rvd_tun_imgfx_output != NULL)
+    omx_tunnel_destroy(rvd->rvd_tun_imgfx_output);
+
+  if(rvd->rvd_mc != NULL)
+    media_codec_deref(rvd->rvd_mc);
+
+  rvd->rvd_mc = media_codec_ref(mc);
+
+  if(fi->fi_interlaced) {
+
+    if(rvd->rvd_imgfx == NULL) {
+      rvd->rvd_imgfx = omx_component_create("OMX.broadcom.image_fx",
+                                            &rvd->rvd_mutex, NULL);
+      rvd->rvd_imgfx->oc_opaque = rvd;
+
+      OMX_CONFIG_IMAGEFILTERPARAMSTYPE image_filter;
+      OMX_INIT_STRUCTURE(image_filter);
+      image_filter.nPortIndex = 191;
+      image_filter.nNumParams = 1;
+      image_filter.nParams[0] = 3;
+      if(1)
+        image_filter.eImageFilter = OMX_ImageFilterDeInterlaceFast;
+      else
+        image_filter.eImageFilter = OMX_ImageFilterDeInterlaceAdvanced;
+
+      omxchk(OMX_SetConfig(rvd->rvd_imgfx->oc_handle,
+                           OMX_IndexConfigCommonImageFilterParameters,
+                           &image_filter));
+
+    }
+
+    rvd->rvd_tun_vdecoder_output =
+      omx_tunnel_create(rvc->rvc_decoder, 131, rvd->rvd_imgfx, 190,
+                        "vdecoder -> imgfx");
+
+    rvd->rvd_tun_imgfx_output =
+      omx_tunnel_create(rvd->rvd_imgfx, 191, rvd->rvd_vsched, 10,
+                        "imgfx -> vsched");
+
+    omx_set_state(rvd->rvd_imgfx,  OMX_StateExecuting);
+
+  } else {
+
+    if(rvd->rvd_imgfx != NULL) {
+      omx_component_destroy(rvd->rvd_imgfx);
+      rvd->rvd_imgfx = NULL;
+    }
+
+    rvd->rvd_tun_vdecoder_output =
+      omx_tunnel_create(rvc->rvc_decoder, 131, rvd->rvd_vsched, 10,
+                        "vdecoder -> vsched");
+  }
+
+  omx_set_state(rvd->rvd_vsched,  OMX_StateExecuting);
+  return 0;
+}
 
 
 /**
@@ -258,63 +374,3 @@ static glw_video_engine_t glw_video_rvd = {
 };
 
 GLW_REGISTER_GVE(glw_video_rvd);
-
-/**
- *
- */
-static int
-rvd_set_codec(media_codec_t *mc, glw_video_t *gv, const frame_info_t *fi,
-              struct glw_video_engine *gve)
-{
-  media_pipe_t *mp = gv->gv_mp;
-
-  glw_video_configure(gv, &glw_video_rvd);
-
-  gv->gv_width = fi->fi_width;
-  gv->gv_height = fi->fi_height;
-
-  rpi_video_display_t *rvd = gv->gv_aux;
-  rpi_video_codec_t *rvc = mc->opaque;
-  
-
-  if(rvd->rvd_vrender == NULL) {
-
-    rvd->rvd_vrender = omx_component_create("OMX.broadcom.video_render",
-					    &rvd->rvd_mutex, NULL);
-    rvd->rvd_vsched  = omx_component_create("OMX.broadcom.video_scheduler",
-                                            &rvd->rvd_mutex, NULL);
-
-    rvd->rvd_vsched->oc_opaque = rvd;
-    rvd->rvd_vrender->oc_opaque = rvd;
-
-    gv->gv_vd->vd_render_component = rvd->rvd_vrender;
-       
-    omx_enable_buffer_marks(rvd->rvd_vrender);
-
-    rvd->rvd_tun_clock_vsched =
-      omx_tunnel_create(omx_get_clock(mp), 81, rvd->rvd_vsched, 12,
-			"clock -> vsched");
-    
-    rvd->rvd_vsched->oc_port_settings_changed_cb =
-      vsched_port_settings_changed;
-
-    rvd->rvd_vrender->oc_event_mark_cb = buffer_mark;
-
-  }
-  omx_set_state(rvd->rvd_vrender, OMX_StateIdle);
-
-  if(rvd->rvd_tun_vdecoder_vsched != NULL)
-    omx_tunnel_destroy(rvd->rvd_tun_vdecoder_vsched);
-      
-  if(rvd->rvd_mc != NULL)
-    media_codec_deref(rvd->rvd_mc);
-
-  rvd->rvd_mc = media_codec_ref(mc);
-
-  rvd->rvd_tun_vdecoder_vsched =
-    omx_tunnel_create(rvc->rvc_decoder, 131, rvd->rvd_vsched, 10,
-		      "vdecoder -> vsched");
-
-  omx_set_state(rvd->rvd_vsched,  OMX_StateExecuting);
-  return 0;
-}
