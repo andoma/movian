@@ -751,7 +751,9 @@ hls_variant_select_next_segment(hls_variant_t *hv, time_t now)
 {
   hls_demuxer_t *hd = hv->hv_demuxer;
   hls_t *h = hd->hd_hls;
+  media_pipe_t *mp = h->h_mp;
   hls_segment_t *hs;
+
 
   hls_error_t err = hls_variant_update(hv, now);
 
@@ -816,18 +818,17 @@ hls_variant_select_next_segment(hls_variant_t *hv, time_t now)
      * Ok, so no segment is availble yet => go to sleep (but wakeup
      * if we need to exit or if we need to seek someplace)
      */
-    hts_mutex_lock(&h->h_mutex);
-    while(h->h_exit_event == NULL || hd->hd_seek_to_segment != PTS_UNSET)
-      if(hts_cond_wait_timeout(&h->h_cond, &h->h_mutex, 1000))
-        break;
+    hts_mutex_lock(&mp->mp_mutex);
 
-    if(h->h_exit_event != NULL || hd->hd_seek_to_segment != PTS_UNSET) {
-      hts_mutex_unlock(&h->h_mutex);
-      return NULL;
+    if(TAILQ_FIRST(&mp->mp_eq) == NULL) {
+      if(hts_cond_wait_timeout(&mp->mp_backpressure, &mp->mp_mutex, 1000)) {
+        hts_mutex_unlock(&mp->mp_mutex);
+        return HLS_NYA;
+      }
     }
 
-    hts_mutex_unlock(&h->h_mutex);
-    return HLS_NYA;
+    hts_mutex_unlock(&mp->mp_mutex);
+    return NULL;
   }
   return hs;
 }
@@ -1020,39 +1021,16 @@ hls_event_callback(media_pipe_t *mp, void *aux, event_t *e)
       h->h_audio.hd_pending_stream = streamid;
     }
 
-  } else if(event_is_type(e, EVENT_SEEK) && mp->mp_flags & MP_CAN_SEEK) {
-
-    event_ts_t *ets = (event_ts_t *)e;
-
-    cancellable_cancel(h->h_primary.hd_cancellable);
-    cancellable_cancel(h->h_audio.hd_cancellable);
-
-    hts_mutex_lock(&h->h_mutex);
-    h->h_pending_seek = ets->ts;
-    hts_cond_signal(&h->h_cond);
-    hts_mutex_unlock(&h->h_mutex);
-
-
   } else if(event_is_action(e, ACTION_SKIP_FORWARD) ||
             event_is_action(e, ACTION_SKIP_BACKWARD) ||
             event_is_type(e, EVENT_EXIT) ||
-            event_is_type(e, EVENT_PLAY_URL)) {
+            event_is_type(e, EVENT_PLAY_URL) ||
+            event_is_type(e, EVENT_SEEK)) {
 
     cancellable_cancel(h->h_primary.hd_cancellable);
     cancellable_cancel(h->h_audio.hd_cancellable);
-
-    hts_mutex_lock(&h->h_mutex);
-
-    if(h->h_exit_event == NULL) {
-      hts_cond_signal(&h->h_cond);
-      HLS_TRACE(h, "Exit received");
-      h->h_exit_event = e;
-      event_addref(e);
-    }
-
-    hts_mutex_unlock(&h->h_mutex);
+    return 0; // Continue processing
   }
-
 
   return 1;
 }
@@ -1162,23 +1140,11 @@ drop_early_audio_packets(media_pipe_t *mp, int64_t dts)
 /**
  *
  */
-static void
+static event_t *
 enqueue_buffer(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
                hls_t *h, hls_variant_t *hv)
 {
   const int is_video = mb->mb_data_type == MB_VIDEO;
-  if(unlikely(mq->mq_seektarget != AV_NOPTS_VALUE)) {
-    int64_t ts = mb->mb_pts != AV_NOPTS_VALUE ? mb->mb_pts : mb->mb_dts;
-    /*
-    printf("%s: %ld %ld %s\n", is_video ? "VIDEO" : "AUDIO",
-           ts, mq->mq_seektarget, ts < mq->mq_seektarget ? "drop": "grant");
-    */
-    if(ts < mq->mq_seektarget) {
-      mb->mb_skip = 1;
-    } else {
-      mq->mq_seektarget = AV_NOPTS_VALUE;
-    }
-  }
 
   hts_mutex_lock(&mp->mp_mutex);
 
@@ -1189,6 +1155,12 @@ enqueue_buffer(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
 
   while(1) {
 
+    event_t *e = TAILQ_FIRST(&mp->mp_eq);
+    if(e != NULL) {
+      TAILQ_REMOVE(&mp->mp_eq, e, e_link);
+      hts_mutex_unlock(&mp->mp_mutex);
+      return e;
+    }
 
     // Check if buffer is full
     if(mp->mp_buffer_current + mb->mb_size < mp->mp_buffer_limit)
@@ -1206,6 +1178,20 @@ enqueue_buffer(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
     h->h_blocked++;
     hts_cond_wait(&mp->mp_backpressure, &mp->mp_mutex);
   }
+
+  if(unlikely(mq->mq_seektarget != AV_NOPTS_VALUE)) {
+    int64_t ts = mb->mb_pts != AV_NOPTS_VALUE ? mb->mb_pts : mb->mb_dts;
+    /*
+    printf("%s: %ld %ld %s\n", is_video ? "VIDEO" : "AUDIO",
+           ts, mq->mq_seektarget, ts < mq->mq_seektarget ? "drop": "grant");
+    */
+    if(ts < mq->mq_seektarget) {
+      mb->mb_skip = 1;
+    } else {
+      mq->mq_seektarget = AV_NOPTS_VALUE;
+    }
+  }
+
 
   int flush = 0;
 
@@ -1228,7 +1214,7 @@ enqueue_buffer(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
       media_buf_free_locked(mp, mb);
       mq->mq_demuxer_flags &= ~HLS_QUEUE_KEYFRAME_SEEN;
       hts_mutex_unlock(&mp->mp_mutex);
-      return;
+      return NULL;
     }
 
     TAILQ_FOREACH(b, &mq->mq_q_data, mb_link)
@@ -1297,7 +1283,7 @@ enqueue_buffer(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
     media_buf_free_locked(mp, mb);
 
     hts_mutex_unlock(&mp->mp_mutex);
-    return;
+    return NULL;
   }
 
 #ifdef DUMP_VIDEO
@@ -1314,6 +1300,7 @@ enqueue_buffer(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
     mq->mq_stream = h->h_audio.hd_current_stream;
   }
   hts_mutex_unlock(&mp->mp_mutex);
+  return NULL;
 }
 
 
@@ -1422,26 +1409,6 @@ get_media_buf(hls_t *h)
 
   const int dumpinfo = 0;
 
-  if(h->h_pending_seek != PTS_UNSET) {
-    hls_demuxer_seek(mp, &h->h_primary, h->h_pending_seek);
-    hls_demuxer_seek(mp, &h->h_audio,   h->h_pending_seek);
-
-    cancellable_reset(h->h_primary.hd_cancellable);
-    cancellable_reset(h->h_audio.hd_cancellable);
-
-
-    mp->mp_video.mq_seektarget = h->h_pending_seek;
-    mp->mp_audio.mq_seektarget = h->h_pending_seek;
-    h->h_pending_seek = PTS_UNSET;
-    mp_flush(mp);
-
-    mp->mp_video.mq_demuxer_flags &= ~HLS_QUEUE_KEYFRAME_SEEN;
-    mp->mp_audio.mq_demuxer_flags &= ~HLS_QUEUE_KEYFRAME_SEEN;
-
-    assert(h->h_primary.hd_mb == NULL);
-    assert(h->h_audio  .hd_mb == NULL);
-  }
-
   if((b1 = hls_demuxer_get(&h->h_primary)) == NULL)
     return NULL;
   if((b2 = hls_demuxer_get_audio(h)) == NULL)
@@ -1497,6 +1464,28 @@ get_media_buf(hls_t *h)
 /**
  *
  */
+static void
+hls_seek(hls_t *h, int64_t ts)
+{
+  media_pipe_t *mp = h->h_mp;
+  hls_demuxer_seek(mp, &h->h_primary, ts);
+  hls_demuxer_seek(mp, &h->h_audio,   ts);
+
+  cancellable_reset(h->h_primary.hd_cancellable);
+  cancellable_reset(h->h_audio.hd_cancellable);
+
+  mp->mp_video.mq_seektarget = ts;
+  mp->mp_audio.mq_seektarget = ts;
+  mp_flush(mp);
+
+  mp->mp_video.mq_demuxer_flags &= ~HLS_QUEUE_KEYFRAME_SEEN;
+  mp->mp_audio.mq_demuxer_flags &= ~HLS_QUEUE_KEYFRAME_SEEN;
+}
+
+
+/**
+ *
+ */
 static event_t *
 hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
          const video_args_t *va)
@@ -1525,8 +1514,6 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 
   //  mp->mp_pre_buffer_delay = 10000000;
 
-  h->h_pending_seek = PTS_UNSET;
-
   mp->mp_video.mq_seektarget = AV_NOPTS_VALUE;
   mp->mp_audio.mq_seektarget = AV_NOPTS_VALUE;
   mp->mp_seek_base = 0;
@@ -1539,7 +1526,7 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
     TRACE(TRACE_DEBUG, "HLS", "Attempting to resume from %.2f seconds",
           start / 1000000.0f);
     mp->mp_seek_base = start;
-    h->h_pending_seek = start;
+    hls_seek(h, start);
   }
 
   h->h_primary.hd_current = hls_select_default_variant(&h->h_primary);
@@ -1555,15 +1542,24 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
       e = NULL;
       break;
     }
+    if(e == NULL)
+      e = mp_dequeue_event_deadline(mp, 0);
 
-    hts_mutex_lock(&h->h_mutex);
-    e = h->h_exit_event;
-    if(e != NULL)
-      h->h_exit_event = NULL;
-    hts_mutex_unlock(&h->h_mutex);
+    if(e != NULL) {
+      if(event_is_action(e, ACTION_SKIP_FORWARD) ||
+         event_is_action(e, ACTION_SKIP_BACKWARD) ||
+         event_is_type(e, EVENT_EXIT) ||
+         event_is_type(e, EVENT_PLAY_URL)) {
+        break;
+      }
 
-    if(e)
-      break;
+      if(event_is_type(e, EVENT_SEEK)) {
+        event_ts_t *ets = (event_ts_t *)e;
+        hls_seek(h, ets->ts);
+      }
+      event_release(e);
+      e = NULL;
+    }
 
     if(!h->h_sub_scanning_done && h->h_duration) {
       h->h_sub_scanning_done = 1;
@@ -1594,7 +1590,6 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
     } else {
 
       media_buf_t *mb = hd->hd_mb;
-      hd->hd_mb = NULL;
 
       media_queue_t *mq;
       if(mb->mb_data_type == MB_VIDEO)
@@ -1602,11 +1597,15 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
       else
         mq = &mp->mp_audio;
 
-      enqueue_buffer(mp, mq, mb, h, hd->hd_current);
+      e = enqueue_buffer(mp, mq, mb, h, hd->hd_current);
+      if(e == NULL) {
+        hd->hd_mb = NULL;
+      } else {
 
-      if(loading) {
-        prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 0);
-        loading = 0;
+        if(loading) {
+          prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 0);
+          loading = 0;
+        }
       }
     }
   }
@@ -1967,8 +1966,6 @@ hls_play_extm3u(char *buf, const char *url, media_pipe_t *mp,
 
   hls_t h;
   memset(&h, 0, sizeof(h));
-  hts_mutex_init(&h.h_mutex);
-  hts_cond_init(&h.h_cond, &h.h_mutex);
   hls_demuxer_init(&h.h_primary, &h, "primary");
   hls_demuxer_init(&h.h_audio, &h, "audio");
   h.h_mp = mp;
@@ -2011,9 +2008,6 @@ hls_play_extm3u(char *buf, const char *url, media_pipe_t *mp,
   media_codec_deref(h.h_codec_h264);
 
   hls_free_audio_tracks(&h);
-
-  hts_cond_destroy(&h.h_cond);
-  hts_mutex_destroy(&h.h_mutex);
 
   HLS_TRACE(&h, "HLS player done");
 

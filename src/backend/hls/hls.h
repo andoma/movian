@@ -219,12 +219,6 @@ typedef struct hls {
   char h_sub_scanning_done;
   char h_enqueued_something;
 
-  event_t *h_exit_event;
-  int64_t h_pending_seek;
-
-  hts_mutex_t h_mutex;
-  hts_cond_t h_cond;
-
   int64_t h_duration;  // Total duration (if known)
 
   struct hls_audio_track_list h_audio_tracks;

@@ -1146,9 +1146,7 @@ hls_ts_demuxer_read(hls_demuxer_t *hd)
         assert(hs != NULL);
         hls_error_t err = hls_segment_open(hs);
 
-        if(h->h_exit_event != NULL ||
-           hd->hd_seek_to_segment != PTS_UNSET ||
-           cancellable_is_cancelled(hd->hd_cancellable)) {
+        if(cancellable_is_cancelled(hd->hd_cancellable)) {
           hls_segment_close(hs);
           hv->hv_current_seg = NULL;
           return NULL;
@@ -1197,11 +1195,8 @@ hls_ts_demuxer_read(hls_demuxer_t *hd)
                     td->td_buf + td->td_buf_bytes,
                     sizeof(td->td_buf) - td->td_buf_bytes);
 
-        if(h->h_exit_event != NULL ||
-           hd->hd_seek_to_segment != PTS_UNSET ||
-           cancellable_is_cancelled(hd->hd_cancellable)) {
+        if(cancellable_is_cancelled(hd->hd_cancellable))
           return NULL;
-        }
 
         if(r <= 0) {
           hls_bad_variant(hv, HLS_ERROR_VARIANT_PROBE_ERROR);
@@ -1256,6 +1251,9 @@ hls_ts_demuxer_read(hls_demuxer_t *hd)
     case TD_MUX_MODE_RAW:
       r = fa_read(hs->hs_fh, td->td_buf, sizeof(td->td_buf));
 
+      if(cancellable_is_cancelled(hd->hd_cancellable))
+        return NULL;
+
       if(r < 0)
         return HLS_EOF;
 
@@ -1273,6 +1271,9 @@ hls_ts_demuxer_read(hls_demuxer_t *hd)
       r = fa_read(hs->hs_fh,
                   td->td_buf + td->td_buf_bytes,
                   188 - td->td_buf_bytes);
+
+      if(cancellable_is_cancelled(hd->hd_cancellable))
+        return NULL;
 
       if(r < 0)
         return HLS_EOF;

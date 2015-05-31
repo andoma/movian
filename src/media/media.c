@@ -433,14 +433,20 @@ mp_dequeue_event_deadline(media_pipe_t *mp, int timeout)
 {
   event_t *e;
 
-  int64_t ts = arch_get_ts() + timeout * 1000LL;
-
   hts_mutex_lock(&mp->mp_mutex);
 
-  while((e = TAILQ_FIRST(&mp->mp_eq)) == NULL) {
-    if(hts_cond_wait_timeout_abs(&mp->mp_backpressure, &mp->mp_mutex, ts))
-      break;
+  if(timeout == 0) {
+    e = TAILQ_FIRST(&mp->mp_eq);
+  } else {
+
+    int64_t ts = arch_get_ts() + timeout * 1000LL;
+
+    while((e = TAILQ_FIRST(&mp->mp_eq)) == NULL) {
+      if(hts_cond_wait_timeout_abs(&mp->mp_backpressure, &mp->mp_mutex, ts))
+        break;
+    }
   }
+
   if(e != NULL)
     TAILQ_REMOVE(&mp->mp_eq, e, e_link);
 
