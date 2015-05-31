@@ -1600,8 +1600,6 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
       e = enqueue_buffer(mp, mq, mb, h, hd->hd_current);
       if(e == NULL) {
         hd->hd_mb = NULL;
-      } else {
-
         if(loading) {
           prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 0);
           loading = 0;
