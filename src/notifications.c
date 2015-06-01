@@ -492,12 +492,16 @@ load_site_news(void)
 #if ENABLE_WEBPOPUP
   struct http_header_list response_headers;
   buf_t *b;
-  b = fa_load("https://movian.tv/projects/showtime/news.json",
+  char errbuf[512];
+  b = fa_load("https://movian.tv/projects/movian/news.json",
               FA_LOAD_FLAGS(FA_DISABLE_AUTH | FA_COMPRESSION),
               FA_LOAD_RESPONSE_HEADERS(&response_headers),
+              FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
               NULL);
-  if(b == NULL)
+  if(b == NULL) {
+    TRACE(TRACE_DEBUG, "News", "Unable to load news -- %s", errbuf);
     return;
+  }
 
   const char *dateheader = http_header_get(&response_headers, "date");
   if(dateheader == NULL) {
@@ -574,5 +578,6 @@ load_site_news(void)
 
   hts_mutex_unlock(&news_mutex);
   htsmsg_release(doc);
+  TRACE(TRACE_DEBUG, "News", "News loaded and updated");
 #endif
 }

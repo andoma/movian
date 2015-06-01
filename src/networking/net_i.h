@@ -47,9 +47,8 @@ struct tcpcon {
 #endif
 
 #if ENABLE_POLARSSL
-    ssl_context *ssl;
-    ssl_session *ssn;
-    havege_state *hs;
+  ssl_context *ssl;
+  void *rndstate;
 
   int (*raw_write)(struct tcpcon *, const void *, size_t);
   int (*raw_read)(struct tcpcon *, void *, size_t, int,
@@ -69,6 +68,7 @@ tcpcon_t *tcp_connect_arch(const net_addr_t *addr, char *errbuf,
 
 void tcp_close_arch(tcpcon_t *tc);
 
-int tcp_ssl_open(tcpcon_t *tc, char *errbuf, size_t errlen);
+int tcp_ssl_open(tcpcon_t *tc, char *errbuf, size_t errlen,
+                 const char *hostname);
 
 void tcp_ssl_close(tcpcon_t *tc);

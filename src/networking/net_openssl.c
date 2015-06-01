@@ -135,7 +135,7 @@ net_ssl_init(void)
 {
   SSL_library_init();
   SSL_load_error_strings();
-  app_ssl_ctx = SSL_CTX_new(SSLv23_client_method());
+  app_ssl_ctx = SSL_CTX_new(TLSv1_client_method());
 
   int i, n = CRYPTO_num_locks();
   ssl_locks = malloc(sizeof(pthread_mutex_t) * n);

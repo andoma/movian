@@ -496,7 +496,7 @@ tcp_connect(const char *hostname, int port,
  connected:
   if(flags & TCP_SSL) {
 
-    if(tcp_ssl_open(tc, errbuf, errlen)) {
+    if(tcp_ssl_open(tc, errbuf, errlen, hostname)) {
       tcp_close(tc);
       return NULL;
     }

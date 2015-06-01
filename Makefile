@@ -563,44 +563,81 @@ ${BUILDDIR}/ext/dvd/dvdnav/%.o : CFLAGS = ${OPTFLAGS} \
 # polarssl
 ##############################################################
 SRCS-$(CONFIG_POLARSSL) += \
-	ext/polarssl-1.2.0/library/aes.c \
-	ext/polarssl-1.2.0/library/arc4.c \
-	ext/polarssl-1.2.0/library/asn1parse.c \
-	ext/polarssl-1.2.0/library/asn1write.c \
-	ext/polarssl-1.2.0/library/base64.c \
-	ext/polarssl-1.2.0/library/bignum.c \
-	ext/polarssl-1.2.0/library/camellia.c \
-	ext/polarssl-1.2.0/library/certs.c \
-	ext/polarssl-1.2.0/library/debug.c \
-	ext/polarssl-1.2.0/library/des.c \
-	ext/polarssl-1.2.0/library/dhm.c \
-	ext/polarssl-1.2.0/library/gcm.c \
-	ext/polarssl-1.2.0/library/havege.c \
-	ext/polarssl-1.2.0/library/md.c \
-	ext/polarssl-1.2.0/library/md_wrap.c \
-	ext/polarssl-1.2.0/library/md2.c \
-	ext/polarssl-1.2.0/library/md4.c \
-	ext/polarssl-1.2.0/library/md5.c \
-	ext/polarssl-1.2.0/library/net.c \
-	ext/polarssl-1.2.0/library/padlock.c \
-	ext/polarssl-1.2.0/library/pem.c \
-	ext/polarssl-1.2.0/library/rsa.c \
-	ext/polarssl-1.2.0/library/sha1.c \
-	ext/polarssl-1.2.0/library/sha2.c \
-	ext/polarssl-1.2.0/library/sha4.c \
-	ext/polarssl-1.2.0/library/ssl_cli.c \
-	ext/polarssl-1.2.0/library/ssl_srv.c \
-	ext/polarssl-1.2.0/library/ssl_tls.c \
-	ext/polarssl-1.2.0/library/timing.c \
-	ext/polarssl-1.2.0/library/version.c \
-	ext/polarssl-1.2.0/library/x509parse.c \
-	ext/polarssl-1.2.0/library/xtea.c \
+	ext/polarssl-1.3/library/aes.c \
+	ext/polarssl-1.3/library/aesni.c \
+	ext/polarssl-1.3/library/arc4.c \
+	ext/polarssl-1.3/library/asn1parse.c \
+	ext/polarssl-1.3/library/asn1write.c \
+	ext/polarssl-1.3/library/base64.c \
+	ext/polarssl-1.3/library/bignum.c \
+	ext/polarssl-1.3/library/blowfish.c \
+	ext/polarssl-1.3/library/camellia.c \
+	ext/polarssl-1.3/library/ccm.c \
+	ext/polarssl-1.3/library/certs.c \
+	ext/polarssl-1.3/library/cipher.c \
+	ext/polarssl-1.3/library/cipher_wrap.c \
+	ext/polarssl-1.3/library/ctr_drbg.c \
+	ext/polarssl-1.3/library/debug.c \
+	ext/polarssl-1.3/library/des.c \
+	ext/polarssl-1.3/library/dhm.c \
+	ext/polarssl-1.3/library/ecdh.c \
+	ext/polarssl-1.3/library/ecdsa.c \
+	ext/polarssl-1.3/library/ecp.c \
+	ext/polarssl-1.3/library/ecp_curves.c \
+	ext/polarssl-1.3/library/entropy.c \
+	ext/polarssl-1.3/library/entropy_poll.c \
+	ext/polarssl-1.3/library/error.c \
+	ext/polarssl-1.3/library/gcm.c \
+	ext/polarssl-1.3/library/havege.c \
+	ext/polarssl-1.3/library/hmac_drbg.c \
+	ext/polarssl-1.3/library/md2.c \
+	ext/polarssl-1.3/library/md4.c \
+	ext/polarssl-1.3/library/md5.c \
+	ext/polarssl-1.3/library/md.c \
+	ext/polarssl-1.3/library/md_wrap.c \
+	ext/polarssl-1.3/library/memory_buffer_alloc.c \
+	ext/polarssl-1.3/library/net.c \
+	ext/polarssl-1.3/library/oid.c \
+	ext/polarssl-1.3/library/padlock.c \
+	ext/polarssl-1.3/library/pbkdf2.c \
+	ext/polarssl-1.3/library/pem.c \
+	ext/polarssl-1.3/library/pk.c \
+	ext/polarssl-1.3/library/pkcs11.c \
+	ext/polarssl-1.3/library/pkcs12.c \
+	ext/polarssl-1.3/library/pkcs5.c \
+	ext/polarssl-1.3/library/pkparse.c \
+	ext/polarssl-1.3/library/pk_wrap.c \
+	ext/polarssl-1.3/library/pkwrite.c \
+	ext/polarssl-1.3/library/platform.c \
+	ext/polarssl-1.3/library/ripemd160.c \
+	ext/polarssl-1.3/library/rsa.c \
+	ext/polarssl-1.3/library/sha1.c \
+	ext/polarssl-1.3/library/sha256.c \
+	ext/polarssl-1.3/library/sha512.c \
+	ext/polarssl-1.3/library/ssl_cache.c \
+	ext/polarssl-1.3/library/ssl_ciphersuites.c \
+	ext/polarssl-1.3/library/ssl_cli.c \
+	ext/polarssl-1.3/library/ssl_srv.c \
+	ext/polarssl-1.3/library/ssl_tls.c \
+	ext/polarssl-1.3/library/threading.c \
+	ext/polarssl-1.3/library/timing.c \
+	ext/polarssl-1.3/library/version.c \
+	ext/polarssl-1.3/library/version_features.c \
+	ext/polarssl-1.3/library/x509.c \
+	ext/polarssl-1.3/library/x509_create.c \
+	ext/polarssl-1.3/library/x509_crl.c \
+	ext/polarssl-1.3/library/x509_crt.c \
+	ext/polarssl-1.3/library/x509_csr.c \
+	ext/polarssl-1.3/library/x509write_crt.c \
+	ext/polarssl-1.3/library/x509write_csr.c \
+	ext/polarssl-1.3/library/xtea.c \
 
-${BUILDDIR}/ext/polarssl-1.2.0/library/%.o : CFLAGS = -Wall ${OPTFLAGS}
+
+${BUILDDIR}/ext/polarssl-1.3/library/%.o : CFLAGS = -Wall ${OPTFLAGS}
 
 
 ifeq ($(CONFIG_POLARSSL), yes)
-CFLAGS_com += -Iext/polarssl-1.2.0/include
+CFLAGS_com += -Iext/polarssl-1.3/include
 endif
 
 ##############################################################

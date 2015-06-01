@@ -17,8 +17,13 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
+
+#include "main.h"
 #include <errno.h>
 #include "net_i.h"
+#include "polarssl/ctr_drbg.h"
+#include "polarssl/entropy.h"
+#include "polarssl/error.h"
 
 /**
  *
@@ -82,36 +87,65 @@ raw_send( void *ctx, const unsigned char *buf, size_t len)
 
   return len;
 }
-
+static void
+printdbg(void *aux, int level, const char *txt)
+{
+  fprintf(stdout, "%s", txt);
+  fflush(stdout);
+}
 
 /**
  *
  */
 int
-tcp_ssl_open(tcpcon_t *tc, char *errbuf, size_t errlen)
+tcp_ssl_open(tcpcon_t *tc, char *errbuf, size_t errlen, const char *hostname)
 {
-  tc->ssl = malloc(sizeof(ssl_context));
-  if(ssl_init(tc->ssl)) {
-    snprintf(errbuf, errlen, "SSL failed to initialize");
+  int ret;
+  entropy_context entropy;
+  entropy_init(&entropy);
+
+  tc->rndstate = malloc(sizeof(ctr_drbg_context));
+
+  if((ret = ctr_drbg_init(tc->rndstate, entropy_func, &entropy,
+                          (const uint8_t *)gconf.device_id,
+                          sizeof(gconf.device_id))) != 0) {
+    polarssl_strerror(ret, errbuf, errlen);
+    entropy_free(&entropy);
     return -1;
   }
+
+  entropy_free(&entropy);
+
+  tc->ssl = malloc(sizeof(ssl_context));
+  if((ret = ssl_init(tc->ssl)) != 0) {
+    polarssl_strerror(ret, errbuf, errlen);
+    return -1;
+  }
+
+  ssl_set_dbg(tc->ssl, printdbg, NULL);
 
   tc->raw_read  = tc->read;
   tc->raw_write = tc->write;
 
-  tc->ssn = malloc(sizeof(ssl_session));
-  tc->hs = malloc(sizeof(havege_state));
-
-  havege_init(tc->hs);
-  memset(tc->ssn, 0, sizeof(ssl_session));
-
   ssl_set_endpoint(tc->ssl, SSL_IS_CLIENT);
   ssl_set_authmode(tc->ssl, SSL_VERIFY_NONE);
+  if(hostname != NULL)
+    ssl_set_hostname(tc->ssl, hostname);
 
-  ssl_set_rng(tc->ssl, havege_random, tc->hs);
+  ssl_set_min_version(tc->ssl, SSL_MAJOR_VERSION_3, SSL_MINOR_VERSION_1);
+  ssl_set_arc4_support(tc->ssl, SSL_ARC4_DISABLED );
+
+  ssl_set_rng(tc->ssl, ctr_drbg_random, tc->rndstate);
+
   ssl_set_bio(tc->ssl, raw_recv, tc, raw_send, tc);
-  ssl_set_ciphersuites(tc->ssl, ssl_default_ciphersuites);
-  ssl_set_session(tc->ssl, tc->ssn );
+
+  while((ret = ssl_handshake(tc->ssl)) != 0) {
+    if(ret != POLARSSL_ERR_NET_WANT_READ &&
+       ret != POLARSSL_ERR_NET_WANT_WRITE) {
+      polarssl_strerror(ret, errbuf, errlen);
+      return -1;
+    }
+  }
 
   tc->read = polarssl_read;
   tc->write = polarssl_write;
@@ -128,6 +162,5 @@ tcp_ssl_close(tcpcon_t *tc)
   ssl_free(tc->ssl);
 
   free(tc->ssl);
-  free(tc->ssn);
-  free(tc->hs);
+  free(tc->rndstate);
 }
