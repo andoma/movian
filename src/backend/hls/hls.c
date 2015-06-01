@@ -664,9 +664,9 @@ hv_find_segment_by_time(const hls_variant_t *hv, int64_t pos)
  *
  */
 static int
-get_current_video_seq(media_pipe_t *mp)
+get_current_video_seq(media_pipe_t *mp, hls_t *h)
 {
-  int seq = 0;
+  int seq = h->h_last_enqueued_seq;
   media_buf_t *mb;
 
   hts_mutex_lock(&mp->mp_mutex);
@@ -783,7 +783,7 @@ hls_variant_select_next_segment(hls_variant_t *hv, time_t now)
     }
 
     if(hs == NULL) {
-      int seq = get_current_video_seq(h->h_mp);
+      int seq = get_current_video_seq(h->h_mp, h);
       if(seq == 0 && !hv->hv_frozen) {
         seq = MAX(hv->hv_last_seq - 3, hv->hv_first_seq);
         HLS_TRACE(h, "Live stream selecting initial segment %d", seq);
@@ -1293,6 +1293,7 @@ enqueue_buffer(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
 
   mb->mb_flush = flush;
   mb_enq(mp, mq, mb);
+  h->h_last_enqueued_seq = mb->mb_sequence;
 
   if(!is_video && mq->mq_stream != h->h_audio.hd_current_stream) {
     HLS_TRACE(h, "Telling audio decoder to switch from stream %d to %d",

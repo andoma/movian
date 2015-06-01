@@ -223,6 +223,8 @@ typedef struct hls {
 
   struct hls_audio_track_list h_audio_tracks;
 
+  int h_last_enqueued_seq;
+
 } hls_t;
 
 
