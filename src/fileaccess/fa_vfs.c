@@ -148,7 +148,7 @@ resolve_mapping(const char *path, char *newpath, size_t newpathlen)
  */
 static int
 vfs_scandir(fa_protocol_t *fap, fa_dir_t *fd, const char *url,
-            char *errbuf, size_t errlen)
+            char *errbuf, size_t errlen, int flags)
 {
   char newpath[1024];
 
@@ -175,8 +175,8 @@ vfs_scandir(fa_protocol_t *fap, fa_dir_t *fd, const char *url,
     snprintf(errbuf, errlen, "No such file or directory");
     return -1;
   }
-
-  return fa_scandir2(fd, newpath, errbuf, errlen);
+  printf("Scandir %s\n", newpath);
+  return fa_scandir2(fd, newpath, errbuf, errlen, flags);
 }
 
 
@@ -256,7 +256,8 @@ vfs_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
     snprintf(errbuf, errlen, "No such file or directory");
     return -1;
   }
-  return fa_stat(newpath, fs, errbuf, errlen);
+  return fa_stat_ex(newpath, fs, errbuf, errlen,
+                    non_interactive ? FA_NON_INTERACTIVE : 0);
 }
 
 

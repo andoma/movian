@@ -141,7 +141,7 @@ add_item(fa_protocol_t *fap, const char *dir, fa_dir_t *fd,
  */
 static int
 fs_scandir(fa_protocol_t *fap, fa_dir_t *fd, const char *url,
-           char *errbuf, size_t errlen)
+           char *errbuf, size_t errlen, int flags)
 {
   PP_Resource file_res = get_res(fap, url);
   if(file_res == 0) {

@@ -404,7 +404,8 @@ fa_set_read_timeout(void *fh_, int ms)
  *
  */
 int
-fa_stat(const char *url, struct fa_stat *buf, char *errbuf, size_t errsize)
+fa_stat_ex(const char *url, struct fa_stat *buf, char *errbuf, size_t errsize,
+           int flags)
 {
   fa_protocol_t *fap;
   char *filename;
@@ -413,7 +414,9 @@ fa_stat(const char *url, struct fa_stat *buf, char *errbuf, size_t errsize)
   if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
     return -1;
 
-  r = fap->fap_stat(fap, filename, buf, errbuf, errsize, 0);
+  int non_interactive = !!(flags & FA_NON_INTERACTIVE);
+
+  r = fap->fap_stat(fap, filename, buf, errbuf, errsize, non_interactive);
   fap_release(fap);
   free(filename);
 
@@ -436,7 +439,7 @@ fa_scandir(const char *url, char *errbuf, size_t errsize)
 
   if(fap->fap_scan != NULL) {
     fd = fa_dir_alloc();
-    if(fap->fap_scan(fap, fd, filename, errbuf, errsize)) {
+    if(fap->fap_scan(fap, fd, filename, errbuf, errsize, 0)) {
       fa_dir_free(fd);
       fd = NULL;
     }
@@ -454,7 +457,8 @@ fa_scandir(const char *url, char *errbuf, size_t errsize)
  *
  */
 int
-fa_scandir2(fa_dir_t *fd, const char *url, char *errbuf, size_t errsize)
+fa_scandir2(fa_dir_t *fd, const char *url, char *errbuf, size_t errsize,
+            int flags)
 {
   fa_protocol_t *fap;
   char *filename;
@@ -464,7 +468,7 @@ fa_scandir2(fa_dir_t *fd, const char *url, char *errbuf, size_t errsize)
     return -1;
 
   if(fap->fap_scan != NULL) {
-    if(fap->fap_scan(fap, fd, filename, errbuf, errsize))
+    if(fap->fap_scan(fap, fd, filename, errbuf, errsize, flags))
       rval = -1;
 
   } else {

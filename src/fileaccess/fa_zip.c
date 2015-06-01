@@ -515,7 +515,7 @@ zip_file_unref(zip_file_t *zf)
  */
 static int
 zip_scandir(fa_protocol_t *fap, fa_dir_t *fd, const char *url,
-            char *errbuf, size_t errlen)
+            char *errbuf, size_t errlen, int flags)
 {
   zip_file_t *c, *zf;
   char buf[URL_MAX];

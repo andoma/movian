@@ -182,7 +182,8 @@ typedef enum {
 
 
 fa_dir_t *fa_scandir(const char *url, char *errbuf, size_t errsize);
-int fa_scandir2(fa_dir_t *fd, const char *url, char *errbuf, size_t errsize);
+int fa_scandir2(fa_dir_t *fd, const char *url, char *errbuf, size_t errsize,
+                int flags);
 
 fa_dir_t *fa_get_parts(const char *url, char *errbuf, size_t errsize);
 
@@ -207,7 +208,11 @@ int64_t fa_seek4(void *fh, int64_t pos, int whence, int lazy);
 int64_t fa_fsize(void *fh);
 int fa_ftruncate(void *fh, uint64_t newsize);
 
-int fa_stat(const char *url, struct fa_stat *buf, char *errbuf, size_t errsize);
+int fa_stat_ex(const char *url, struct fa_stat *buf, char *errbuf,
+               size_t errsize, int flags);
+
+#define fa_stat(a, b, c, d) fa_stat_ex(a, b, c, d, 0)
+
 int fa_findfile(const char *path, const char *file, 
 		char *fullpath, size_t fullpathlen);
 void fa_set_read_timeout(void *fh_, int ms);

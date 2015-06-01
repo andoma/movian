@@ -2196,13 +2196,14 @@ cifs_scandir(cifs_tree_t *ct, const char *path, fa_dir_t *fd,
 
 static int
 smb_scandir(fa_protocol_t *fap, fa_dir_t *fa, const char *url,
-            char *errbuf, size_t errlen)
+            char *errbuf, size_t errlen, int flags)
 {
   char filename[512];
   cifs_tree_t *ct;
   cifs_connection_t *cc;
   int r;
-  r = cifs_resolve(url, filename, sizeof(filename), errbuf, errlen, 0,
+  r = cifs_resolve(url, filename, sizeof(filename), errbuf, errlen,
+                   flags & FA_NON_INTERACTIVE ? 1 : 0,
 		   &ct, &cc, 0);
   switch(r) {
   default:

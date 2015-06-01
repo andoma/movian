@@ -36,3 +36,4 @@
 #define FA_NO_PARKING      0x4000
 #define FA_BUFFERED_NO_PREFETCH 0x8000
 #define FA_CONTENT_ON_ERROR     0x10000
+#define FA_NON_INTERACTIVE      0x20000 // No auth popups, etc

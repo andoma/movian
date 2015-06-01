@@ -568,7 +568,7 @@ rar_file_unref(rar_file_t *rf)
  */
 static int
 rar_scandir(fa_protocol_t *fap, fa_dir_t *fd, const char *url0,
-            char *errbuf, size_t errlen)
+            char *errbuf, size_t errlen, int flags)
 {
   rar_file_t *c, *rf;
   char buf[URL_MAX];

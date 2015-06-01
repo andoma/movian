@@ -114,7 +114,7 @@ get_split_piece_count(const char *fn)
 
 static int
 fs_scandir(fa_protocol_t *fap, fa_dir_t *fd, const char *url,
-           char *errbuf, size_t errlen)
+           char *errbuf, size_t errlen, int flags)
 {
   char buf[URL_MAX];
   struct stat st;

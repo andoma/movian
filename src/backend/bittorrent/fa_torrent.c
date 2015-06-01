@@ -54,7 +54,7 @@ torrent_resolve_file(const char *url, char *errbuf, size_t errlen)
  */
 static int
 torrent_scandir(fa_protocol_t *fap, fa_dir_t *fd, const char *url,
-                char *errbuf, size_t errlen)
+                char *errbuf, size_t errlen, int flags)
 {
   torrent_t *to = torrent_open_url(&url, errbuf, errlen);
   if(to == NULL) {

@@ -57,7 +57,7 @@ fs_urlsnprintf(char *buf, size_t bufsize, const char *prefix, const char *base,
  */
 static int
 ntfs_scandir(fa_protocol_t *fap, fa_dir_t *fd,
-	     const char *url, char *errbuf, size_t errlen)
+	     const char *url, char *errbuf, size_t errlen, int flags)
 {
   DIR_ITER *di = ps3ntfs_diropen(url);
   char filename[1024];

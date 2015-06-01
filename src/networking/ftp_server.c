@@ -76,7 +76,7 @@ static int
 ftp_server_stat(const char *url, struct fa_stat *fs,
                 char *errbuf, size_t errlen)
 {
-  return fa_protocol_vfs.fap_stat(&fa_protocol_vfs, url, fs, errbuf, errlen, 0);
+  return fa_protocol_vfs.fap_stat(&fa_protocol_vfs, url, fs, errbuf, errlen, 1);
 }
 
 
@@ -139,7 +139,8 @@ ftp_server_scandir(const char *url, char *errbuf, size_t errlen)
 {
   fa_dir_t *fd = fa_dir_alloc();
 
-  if(fa_protocol_vfs.fap_scan(&fa_protocol_vfs, fd, url, errbuf, errlen)) {
+  if(fa_protocol_vfs.fap_scan(&fa_protocol_vfs, fd, url, errbuf, errlen,
+                              FA_NON_INTERACTIVE)) {
     fa_dir_free(fd);
     return NULL;
   }
@@ -537,7 +538,8 @@ cmd_LIST(ftp_connection_t *fc, char *args)
   RB_FOREACH(fde, &fd->fd_entries, fde_link) {
 
     if(!fde->fde_statdone)
-      fa_stat(rstr_get(fde->fde_url), &fde->fde_stat, NULL, 0);
+      fa_stat_ex(rstr_get(fde->fde_url), &fde->fde_stat, NULL, 0,
+                 FA_NON_INTERACTIVE);
 
     tcp_printf(tc,
                "%crwx------  1 nobody nobody %10"PRIu64" May  5 11:20 %s\r\n",
