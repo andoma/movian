@@ -83,7 +83,7 @@ ssl_write(tcpcon_t *tc, const void *data, size_t len)
 
 
 int
-tcp_ssl_open(tcpcon_t *tc, char *errbuf, size_t errlen)
+tcp_ssl_open(tcpcon_t *tc, char *errbuf, size_t errlen, const char *hostname)
 {
   if(app_ssl_ctx == NULL) {
     snprintf(errbuf, errlen, "SSL not initialized");
@@ -96,6 +96,7 @@ tcp_ssl_open(tcpcon_t *tc, char *errbuf, size_t errlen)
     snprintf(errbuf, errlen, "SSL: %s", errmsg);
     return -1;
   }
+  SSL_set_tlsext_host_name(tc->ssl, hostname);
 
   if(SSL_set_fd(tc->ssl, tc->fd) == 0) {
     ERR_error_string(ERR_get_error(), errmsg);
