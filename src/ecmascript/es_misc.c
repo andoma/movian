@@ -159,6 +159,9 @@ es_message(duk_context *ctx)
   int ok     = duk_to_boolean(ctx, 1);
   int cancel = duk_to_boolean(ctx, 2);
 
+  if(!ok && !cancel)
+    ok = 1; // We need to show one button at least
+
   r = message_popup(message,
 		    (ok     ? MESSAGE_POPUP_OK : 0) |
 		    (cancel ? MESSAGE_POPUP_CANCEL : 0) |
