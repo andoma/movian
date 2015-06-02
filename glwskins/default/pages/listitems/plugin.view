@@ -1,14 +1,14 @@
 #import "skin://common.view"
 
 widget(backdrop, {
-  
+
   source: "highlight.png";
   autoRefocusable: true;
   focusable: true;
   focusOnClick: true;
   onEvent(activate,
-	  deliverEvent($self, 
-		       select($self.status.canInstall, "install",
+	  deliverEvent($self,
+		       select($self.status.canInstall, "install:"+($self.package ?? ""),
 			      select($self.status.canUpgrade, "upgrade",
 				     select($self.status.canUninstall, "uninstall",
 					    void)))));

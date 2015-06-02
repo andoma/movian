@@ -80,6 +80,7 @@ typedef enum {
   PROP_REQ_NEW_CHILD,
   PROP_REQ_DELETE_VECTOR,
   PROP_DESTROYED,
+  PROP_VALUE_PROP,
   PROP_EXT_EVENT,
   PROP_SUBSCRIPTION_MONITOR_ACTIVE,
   PROP_HAVE_MORE_CHILDS_YES,
@@ -152,6 +153,8 @@ void prop_init_late(void);
 #define PROP_SUB_SINGLETON            0x800
 #define PROP_SUB_USER_INT             0x1000
 #define PROP_SUB_ALT_PATH             0x2000
+#define PROP_SUB_SEND_VALUE_PROP      0x4000
+
 // Remember that flags field is uint16_t in prop_i.h so don't go above 0x8000
 
 

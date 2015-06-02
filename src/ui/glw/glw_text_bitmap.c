@@ -781,7 +781,6 @@ prop_callback(void *opaque, prop_event_t event, ...)
 {
   glw_text_bitmap_t *gtb = opaque;
   const char *caption;
-  prop_t *p;
   prop_str_type_t type = 0;
   va_list ap;
   va_start(ap, event);
@@ -789,21 +788,23 @@ prop_callback(void *opaque, prop_event_t event, ...)
   switch(event) {
   case PROP_SET_VOID:
     caption = NULL;
-    p = va_arg(ap, prop_t *);
     break;
 
   case PROP_SET_RSTRING:
     caption = rstr_get(va_arg(ap, const rstr_t *));
-    p = va_arg(ap, prop_t *);
+    (void)va_arg(ap, prop_t *); // valueprop
     type = va_arg(ap, prop_str_type_t);
     break;
+
+  case PROP_VALUE_PROP:
+    prop_ref_dec(gtb->gtb_p);
+    gtb->gtb_p = prop_ref_inc(va_arg(ap, prop_t *));
+    return;
 
   default:
     return;
   }
 
-  prop_ref_dec(gtb->gtb_p);
-  gtb->gtb_p = prop_ref_inc(p);
 
   caption_set_internal(gtb, caption, type);
 }
@@ -931,7 +932,7 @@ bind_to_property(glw_t *w, prop_t *p, const char **pname,
   gtb_unbind(gtb);
 
   gtb->gtb_sub =
-    prop_subscribe(PROP_SUB_DIRECT_UPDATE,
+    prop_subscribe(PROP_SUB_DIRECT_UPDATE | PROP_SUB_SEND_VALUE_PROP,
 		   PROP_TAG_NAME_VECTOR, pname,
 		   PROP_TAG_CALLBACK, prop_callback, gtb,
 		   PROP_TAG_COURIER, w->glw_root->gr_courier,

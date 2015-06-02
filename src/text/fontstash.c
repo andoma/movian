@@ -206,7 +206,6 @@ font_event(void *opaque, prop_event_t event, ...)
   va_list ap;
   prop_sub_t *s;
   event_t *e;
-  prop_t *p;
 
   va_start(ap, event);
 
@@ -221,15 +220,12 @@ font_event(void *opaque, prop_event_t event, ...)
 
   case PROP_EXT_EVENT:
     e = va_arg(ap, event_t *);
-    p = va_arg(ap, prop_t *);
 
     if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
       const event_payload_t *ep = (const event_payload_t *)e;
-      if(!strcmp(ep->payload, "use")) {
-	rstr_t *package = prop_get_string(p, "url", NULL);
-	use_font(f, rstr_get(package));
-	rstr_release(package);
-      }
+      const char *install = mystrbegins(ep->payload, "use:");
+      if(install != NULL)
+	use_font(f, install);
     }
     break;
   }

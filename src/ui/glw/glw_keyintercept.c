@@ -166,7 +166,6 @@ prop_callback(void *opaque, prop_event_t event, ...)
 {
   glw_keyintercept_t *ki = opaque;
   const char *str;
-  prop_t *p;
   int c;
   va_list ap;
   va_start(ap, event);
@@ -175,7 +174,6 @@ prop_callback(void *opaque, prop_event_t event, ...)
   case PROP_SET_VOID:
     ki->buflen = 0;
     str = NULL;
-    p = va_arg(ap, prop_t *);
     break;
 
   case PROP_SET_RSTRING:
@@ -184,15 +182,17 @@ prop_callback(void *opaque, prop_event_t event, ...)
     ki->buflen = 0;
     while((c = utf8_get(&str)) != 0 && ki->buflen < 64)
       ki->buf[ki->buflen++] = c;
-    p = va_arg(ap, prop_t *);
+    break;
+
+  case PROP_VALUE_PROP:
+    prop_ref_dec(ki->prop);
+    ki->prop = prop_ref_inc(va_arg(ap, prop_t *));
     break;
 
   default:
     return;
   }
 
-  prop_ref_dec(ki->prop);
-  ki->prop = prop_ref_inc(p);
 }
 
 
@@ -207,7 +207,7 @@ bind_to_property(glw_t *w, prop_t *p, const char **pname,
   ki_unbind(ki);
 
   ki->sub = 
-    prop_subscribe(PROP_SUB_DIRECT_UPDATE,
+    prop_subscribe(PROP_SUB_DIRECT_UPDATE | PROP_SUB_SEND_VALUE_PROP,
 		   PROP_TAG_NAME_VECTOR, pname, 
 		   PROP_TAG_CALLBACK, prop_callback, ki, 
 		   PROP_TAG_COURIER, w->glw_root->gr_courier,

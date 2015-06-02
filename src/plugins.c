@@ -277,7 +277,6 @@ plugin_event(void *opaque, prop_event_t event, ...)
   va_list ap;
   prop_sub_t *s;
   event_t *e;
-  prop_t *p;
 
   va_start(ap, event);
 
@@ -292,16 +291,13 @@ plugin_event(void *opaque, prop_event_t event, ...)
 
   case PROP_EXT_EVENT:
     e = va_arg(ap, event_t *);
-    p = va_arg(ap, prop_t *);
 
     if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
       const event_payload_t *ep = (const event_payload_t *)e;
-      if(!strcmp(ep->payload, "install")) {
-	rstr_t *package = prop_get_string(p, "package", NULL);
-	plugin_install(pl, rstr_get(package));
-	rstr_release(package);
-      }
-      else if(!strcmp(ep->payload, "upgrade"))
+      const char *install = mystrbegins(ep->payload, "install:");
+      if(install != NULL) {
+	plugin_install(pl, *install ? install : NULL);
+      } else if(!strcmp(ep->payload, "upgrade"))
 	plugin_install(pl, NULL);
       else if(!strcmp(ep->payload, "uninstall"))
 	plugin_remove(pl);

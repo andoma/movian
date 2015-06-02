@@ -423,7 +423,6 @@ prop_callback(void *opaque, prop_event_t event, ...)
   glw_slider_t *sl = opaque;
   glw_root_t *gr;
   float v;
-  prop_t *p;
   int how = 0;
   int grabbed;
 
@@ -441,26 +440,26 @@ prop_callback(void *opaque, prop_event_t event, ...)
       gr->gr_pointer_grab = NULL;
 
     v = 0;
-    p = va_arg(ap, prop_t *);
     break;
 
   case PROP_SET_FLOAT:
     v = va_arg(ap, double);
-    p = va_arg(ap, prop_t *);
     how = va_arg(ap, int);
     break;
 
   case PROP_SET_INT:
     v = va_arg(ap, int);
-    p = va_arg(ap, prop_t *);
     break;
+
+  case PROP_VALUE_PROP:
+    prop_ref_dec(sl->p);
+    sl->p = prop_ref_inc(va_arg(ap, prop_t *));
+    return;
 
   default:
     return;
   }
-  prop_ref_dec(sl->p);
-  sl->p = prop_ref_inc(p);
-  
+
   switch(how) {
   case PROP_SET_NORMAL:
     if(sl->tentative_only)
@@ -524,7 +523,7 @@ bind_to_property(glw_t *w, prop_t *p, const char **pname,
   glw_slider_t *s = (glw_slider_t *)w;
   slider_unbind(s);
 
-  s->sub = prop_subscribe(PROP_SUB_DIRECT_UPDATE,
+  s->sub = prop_subscribe(PROP_SUB_DIRECT_UPDATE | PROP_SUB_SEND_VALUE_PROP,
 			  PROP_TAG_NAME_VECTOR, pname,
 			  PROP_TAG_CALLBACK, prop_callback, s,
 			  PROP_TAG_COURIER, w->glw_root->gr_courier, 

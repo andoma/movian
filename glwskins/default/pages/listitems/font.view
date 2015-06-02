@@ -6,7 +6,7 @@ widget(backdrop, {
   autoRefocusable: true;
   focusable: true;
   focusOnClick: true;
-  onEvent(activate, deliverEvent($self, "use"));
+  onEvent(activate, deliverEvent($self, "use:" + $self.url));
 
   alphaSelf: iir(isFocused() * 1, 8) + isHovered() * 0.1;
 

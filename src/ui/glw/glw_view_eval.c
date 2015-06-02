@@ -1666,6 +1666,7 @@ prop_callback_cloner(void *opaque, prop_event_t event, ...)
   case PROP_SET_STRING:
   case PROP_REQ_MOVE_CHILD:
   case PROP_ADOPT_RSTRING:
+  case PROP_VALUE_PROP:
     break;
 
   }
@@ -1708,7 +1709,7 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
     t = prop_callback_alloc_token(gr, gps, TOKEN_RSTRING);
     t->t_propsubr = gps;
     t->t_rstring =rstr_dup(va_arg(ap, rstr_t *));
-    (void)va_arg(ap, prop_t *);
+    (void)va_arg(ap, prop_t *); // valueprop
     t->t_rstrtype = va_arg(ap, prop_str_type_t);
     rpn = gps->gps_rpn;
     break;
@@ -1731,7 +1732,7 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
     t = prop_callback_alloc_token(gr, gps, TOKEN_FLOAT);
     t->t_propsubr = gps;
     t->t_float = va_arg(ap, double);
-    (void)va_arg(ap, prop_t *);
+    (void)va_arg(ap, prop_t *); // vauleprop
     t->t_float_how = va_arg(ap, int);
     rpn = gps->gps_rpn;
     break;
@@ -1749,7 +1750,7 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
     t = prop_callback_alloc_token(gr, gps, TOKEN_PROPERTY_REF);
     t->t_propsubr = gps;
     rpn = gps->gps_rpn;
-    t->t_prop = prop_ref_inc(va_arg(ap, prop_t *));
+    t->t_prop = prop_ref_inc(va_arg(ap, prop_t *)); // valueprop?
     break;
 
   case PROP_ADD_CHILD:
@@ -1772,6 +1773,7 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
   case PROP_SET_STRING:
   case PROP_REQ_MOVE_CHILD:
   case PROP_ADOPT_RSTRING:
+  case PROP_VALUE_PROP:
     break;
   }
 
@@ -1847,6 +1849,7 @@ prop_callback_counter(void *opaque, prop_event_t event, ...)
   case PROP_SET_STRING:
   case PROP_REQ_MOVE_CHILD:
   case PROP_ADOPT_RSTRING:
+  case PROP_VALUE_PROP:
     break;
   }
 
@@ -1892,7 +1895,7 @@ ve_cb(void *opaque, prop_event_t event, ...)
   case PROP_SET_RSTRING:
     t = prop_callback_alloc_token(gr, gps, TOKEN_RSTRING);
     t->t_rstring =rstr_dup(va_arg(ap, rstr_t *));
-    (void)va_arg(ap, prop_t *);
+    (void)va_arg(ap, prop_t *); // valueprop
     t->t_rstrtype = va_arg(ap, prop_str_type_t);
     rpn = gps->gps_rpn;
     break;
@@ -1912,7 +1915,7 @@ ve_cb(void *opaque, prop_event_t event, ...)
   case PROP_SET_FLOAT:
     t = prop_callback_alloc_token(gr, gps, TOKEN_FLOAT);
     t->t_float = va_arg(ap, double);
-    (void)va_arg(ap, prop_t *);
+    (void)va_arg(ap, prop_t *); // valueprop
     t->t_float_how = va_arg(ap, int);
     rpn = gps->gps_rpn;
     break;
@@ -1944,6 +1947,7 @@ ve_cb(void *opaque, prop_event_t event, ...)
   case PROP_SET_STRING:
   case PROP_REQ_MOVE_CHILD:
   case PROP_ADOPT_RSTRING:
+  case PROP_VALUE_PROP:
     break;
   }
 
@@ -2162,7 +2166,7 @@ prop_callback_vectorizer(void *opaque, prop_event_t event, ...)
     t = prop_callback_alloc_token(gr, gps, TOKEN_RSTRING);
     t->t_propsubr = gps;
     t->t_rstring =rstr_dup(va_arg(ap, rstr_t *));
-    (void)va_arg(ap, prop_t *);
+    (void)va_arg(ap, prop_t *); // valueprop
     t->t_rstrtype = va_arg(ap, prop_str_type_t);
     rpn = gps->gps_rpn;
     break;
@@ -2188,7 +2192,7 @@ prop_callback_vectorizer(void *opaque, prop_event_t event, ...)
     t = prop_callback_alloc_token(gr, gps, TOKEN_FLOAT);
     t->t_propsubr = gps;
     t->t_float = va_arg(ap, double);
-    (void)va_arg(ap, prop_t *);
+    (void)va_arg(ap, prop_t *); // valueprop
     t->t_float_how = va_arg(ap, int);
     rpn = gps->gps_rpn;
     break;
@@ -2261,6 +2265,7 @@ prop_callback_vectorizer(void *opaque, prop_event_t event, ...)
   case PROP_SET_STRING:
   case PROP_REQ_MOVE_CHILD:
   case PROP_ADOPT_RSTRING:
+  case PROP_VALUE_PROP:
     break;
 
   }

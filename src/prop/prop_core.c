@@ -511,6 +511,7 @@ prop_notify_free_payload(prop_notify_t *n)
   case PROP_HAVE_MORE_CHILDS_NO:
   case PROP_DESTROYED:
   case PROP_ADOPT_RSTRING:
+  case PROP_VALUE_PROP:
     break;
   }
 }
@@ -850,6 +851,12 @@ notify_invoke(prop_sub_t *s, prop_notify_t *n)
     prop_vec_release(n->hpn_propv);
     prop_ref_dec(n->hpn_prop2);
     break;
+  case PROP_VALUE_PROP:
+    assert(pt == NULL);
+    cb(s->hps_opaque, n->hpn_event, n->hpn_prop);
+    prop_ref_dec(n->hpn_prop);
+    break;
+
   case PROP_SET_STRING:
   case PROP_ADOPT_RSTRING:
     break;
@@ -1248,6 +1255,12 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
     prop_callback_t *cb = s->hps_callback;
     prop_trampoline_t *pt = s->hps_trampoline;
 
+
+    if(s->hps_flags & PROP_SUB_SEND_VALUE_PROP) {
+      assert(pt == NULL);
+      cb(s->hps_opaque, PROP_VALUE_PROP, p);
+    }
+
     switch(p->hp_type) {
     case PROP_RSTRING:
       if(pt != NULL)
@@ -1312,6 +1325,17 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
 
     }
     return;
+  }
+
+  if(s->hps_flags & PROP_SUB_SEND_VALUE_PROP) {
+    n = get_notify(s);
+    n->hpn_prop = prop_ref_inc(p);
+    n->hpn_event = PROP_VALUE_PROP;
+    if(pnq) {
+      TAILQ_INSERT_TAIL(pnq, n, hpn_link);
+    } else {
+      courier_enqueue(s, n);
+    }
   }
 
   n = get_notify(s);
