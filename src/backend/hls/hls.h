@@ -108,6 +108,7 @@ typedef struct hls_variant {
   int hv_first_seq;
 
   struct hls_segment_queue hv_segments;
+  struct hls_segment *hv_segment_search;
 
   char hv_frozen;
   char hv_audio_only;
@@ -263,7 +264,7 @@ int hls_get_audio_track(hls_t *h, int pid, const char *name,
                         const char *language,
                         const char *fmt, int autosel);
 
-hls_segment_t *hv_find_segment_by_seq(const hls_variant_t *hv, int seq);
+hls_segment_t *hv_find_segment_by_seq(hls_variant_t *hv, int seq);
 
 void hls_bad_variant(hls_variant_t *hv, hls_error_t err);
 

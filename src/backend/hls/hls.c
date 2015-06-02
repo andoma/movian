@@ -119,6 +119,8 @@ segment_destroy(hls_segment_t *hs)
   TAILQ_REMOVE(&hs->hs_variant->hv_segments, hs, hs_link);
   free(hs->hs_url);
   rstr_release(hs->hs_key_url);
+  if(hs == hs->hs_variant->hv_segment_search)
+    hs->hs_variant->hv_segment_search = NULL;
   free(hs);
 }
 
@@ -680,15 +682,26 @@ get_current_video_seq(media_pipe_t *mp, hls_t *h)
 
 
 /**
- * XXX: Make faster
+ * Most requests are for same sequence so we just keep a cache pointer
  */
 hls_segment_t *
-hv_find_segment_by_seq(const hls_variant_t *hv, int seq)
+hv_find_segment_by_seq(hls_variant_t *hv, int seq)
 {
-  hls_segment_t *hs;
-  TAILQ_FOREACH(hs, &hv->hv_segments, hs_link) {
+  hls_segment_t *hs = hv->hv_segment_search;
+  if(hs != NULL) {
     if(hs->hs_seq == seq)
+      return hs;
+    hs = TAILQ_NEXT(hs, hs_link);
+    if(hs != NULL && hs->hs_seq == seq) {
+      hv->hv_segment_search = hs;
+      return hs;
+    }
+  }
+  TAILQ_FOREACH(hs, &hv->hv_segments, hs_link) {
+    if(hs->hs_seq == seq) {
+      hv->hv_segment_search = hs;
       break;
+    }
   }
   return hs;
 }
