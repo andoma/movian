@@ -43,6 +43,8 @@ int html_entity_lookup(const char *name);
 
 size_t html_enteties_escape(const char *src, char *dst);
 
+char *fmtstr(const char *fmt, ...);
+
 void 
 url_split(char *proto, int proto_size,
 	  char *authorization, int authorization_size,

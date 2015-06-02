@@ -1133,46 +1133,68 @@ bin2hex(char *dst, size_t dstlen, const uint8_t *src, size_t srclen)
 
 
 /**
+ *
+ */
+char *
+fmtstr(const char *fmt, ...)
+{
+  int n;
+  int size = 100;
+  char *p, *np;
+  va_list ap;
+
+  if((p = malloc(size)) == NULL)
+    return NULL;
+
+  while(1) {
+    va_start(ap, fmt);
+    n = vsnprintf(p, size, fmt, ap);
+    va_end(ap);
+
+    if(n < 0)
+      return NULL;
+
+    if(n < size)
+      return p;
+
+    size = n + 1;
+
+    if((np = realloc (p, size)) == NULL) {
+      free(p);
+      return NULL;
+    } else {
+      p = np;
+    }
+  }
+}
+
+
+
+/**
  * Create URL using ref referred from base
  */
 char *
 url_resolve_relative(const char *proto, const char *hostname, int port,
 		     const char *path, const char *ref)
 {
-  char out[512];
-  int l;
-  
   if(strstr(ref, "://"))
     return strdup(ref);
 
-  if(port != -1)
-    l = snprintf(out, sizeof(out), "%s://%s:%d", proto, hostname, port);
-  else
-    l = snprintf(out, sizeof(out), "%s://%s", proto, hostname);
-  
+  int pathlen = 0;
 
   if(*ref != '/') {
-
     const char *r = strrchr(path, '/');
     if(r != NULL) {
-      size_t l2 = r + 1 - path;
-
-      if(l2 + l > sizeof(out) - 1)
-	return NULL;
-
-      memcpy(out + l, path, l2);
-      l += l2;
-
-      size_t l3 = strlen(ref) + 1;
-      if(l3 + l > sizeof(out) - 1)
-	return NULL;
-      
-      memcpy(out + l, ref, l3);
-      return strdup(out);
+      pathlen = r - path + 1;
     }
   }
-  snprintf(out + l, sizeof(out) - l, "%s", ref); 
-  return strdup(out);
+
+  if(port != -1)
+    return fmtstr("%s://%s:%d%.*s%s", proto, hostname, port,
+                  pathlen, path, ref);
+
+  return fmtstr("%s://%s%.*s%s", proto, hostname,
+                pathlen, path, ref);
 }
 
 
