@@ -108,6 +108,8 @@ typedef struct ts_es {
 
   int64_t te_ts_offset;
 
+  int te_last_seq;
+
 } ts_es_t;
 
 
@@ -709,13 +711,6 @@ parse_data(ts_demuxer_t *td, hls_variant_t *hv, ts_es_t *te,
         mq = &mp->mp_audio;
       }
 
-      if(!(mq->mq_demuxer_flags & HLS_QUEUE_KEYFRAME_SEEN)) {
-        if(dts == PTS_UNSET)
-          goto skip; // We really need a keyframe with a DTS set
-        if(!keyframe)
-          goto skip;
-      }
-
       if(te->te_probe_frame) {
         // Need to find actual duration be decoding a frame
         probe_duration(te, outbuf, outlen);
@@ -726,7 +721,19 @@ parse_data(ts_demuxer_t *td, hls_variant_t *hv, ts_es_t *te,
         AVRational timebase = {1, te->te_sample_rate};
         int64_t ts = av_rescale_q(te->te_samples, timebase, mpeg_tc);
         dts = pts = te->te_bts + ts;
+      } else {
+        if(!(mq->mq_demuxer_flags & HLS_QUEUE_KEYFRAME_SEEN)) {
+          if(dts == PTS_UNSET)
+            goto skip; // We really need a keyframe with a DTS set
+          if(!keyframe)
+            goto skip;
+        }
       }
+
+      if(seq == -1)
+        seq = te->te_last_seq;
+      else
+        te->te_last_seq = seq;
 
       enqueue_packet(td, outbuf, outlen, dts, pts, keyframe, hs, seq, te, hv);
     }
@@ -956,6 +963,7 @@ hls_ts_demuxer_flush(hls_variant_t *hv)
     te->te_packet_size = 0;
     te->te_pts = PTS_UNSET;
     te->te_dts = PTS_UNSET;
+    te->te_last_seq = 0;
   }
   td_flush_packets(td);
 
