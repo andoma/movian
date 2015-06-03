@@ -12,7 +12,7 @@ multiopt($view.path,
          void,
          $global.glw.osk.userKeyboard,
          vectorize($global.glw.views.standard.osk),
-         link(_("Default"), "skin://osk/default.view")
+         makeUri(_("Default"), "skin://osk/default.view")
          );
 
 widget(container_y, {

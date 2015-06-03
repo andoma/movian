@@ -5132,11 +5132,11 @@ glwf_isLink(glw_view_eval_context_t *ec, struct token *self,
 
 
 /**
- * Create a link given two arguments (title + url)
+ * Create a URI given two arguments (title + URI)
  */
 static int
-glwf_link(glw_view_eval_context_t *ec, struct token *self,
-	    token_t **argv, unsigned int argc)
+glwf_makeUri(glw_view_eval_context_t *ec, struct token *self,
+             token_t **argv, unsigned int argc)
 {
   token_t *a, *b, *r;
   if((a = token_resolve(ec, argv[0])) == NULL)
@@ -6657,7 +6657,7 @@ static const token_func_t funcvec[] = {
   {"fmt", -1, glwf_fmt},
   {"_pl", 3, glwf_pluralise},
   {"multiopt", -1, glwf_multiopt, glwf_multiopt_ctor, glwf_multiopt_dtor},
-  {"link", 2, glwf_link},
+  {"makeUri", 2, glwf_makeUri},
   {"canSelectNext", 0, glwf_canSelectNext},
   {"canSelectPrevious", 0, glwf_canSelectPrev},
   {"setDefaultFont", 1, glwf_setDefaultFont},

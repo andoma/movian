@@ -14,7 +14,7 @@ multiopt($view.path,
 	 $page.persistent.glwUserView,
 	 // List of view follows
 	 // First custom view set by model
-	 link(_("Custom"), $page.model.metadata.glwview),
+	 makeUri(_("Custom"), $page.model.metadata.glwview),
 
 	 // Optionally a list of custom views set by model
 	 vectorize($page.model.metadata.glwviews),
@@ -32,18 +32,18 @@ multiopt($view.path,
 
 	 // Then comes internal views selected based on content
 	 translate($page.model.contents, void,
-		   "album",      link(_("Album"),      "album.view"),
-		   "artist",     link(_("Artist"),     "artist.view"),
-		   "tvchannels", link(_("Tvchannels"), "tvchannels.view"),
-		   "images",     link(_("Images"),     "images.view")
+		   "album",      makeUri(_("Album"),      "album.view"),
+		   "artist",     makeUri(_("Artist"),     "artist.view"),
+		   "tvchannels", makeUri(_("Tvchannels"), "tvchannels.view"),
+		   "images",     makeUri(_("Images"),     "images.view")
 		    ),
 
 	 select($page.model.contents == "images", 
-		link(_("Slideshow"), "slideshow.view"), void),
+		makeUri(_("Slideshow"), "slideshow.view"), void),
 
 	 select($page.model.safeui, void,
 		vectorize($global.glw.views.standard.directory)),
-	 link(_("List"), "list.view")
+	 makeUri(_("List"), "list.view")
 	);
 
 widget(layer, {

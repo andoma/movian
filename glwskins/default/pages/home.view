@@ -6,8 +6,8 @@ multiopt($view.path,
 	 $page.persistent.glwUserView,
 
 	 vectorize($global.glw.views.standard.home),
-	 link(_("Tiled"), "home_tiles.view"),
-	 link(_("List"), "home_clist.view"));
+	 makeUri(_("Tiled"), "home_tiles.view"),
+	 makeUri(_("List"), "home_clist.view"));
 
 widget(loader, {
   noInitialTransform: true;
