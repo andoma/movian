@@ -242,7 +242,7 @@ widget(deck, {
 //	  alphaFallOff: 0.1;
 //	  blurFallOff: 0.1;
 	  
-	    &self.focused = focusedChild();
+	  $self.focused <- focusedChild();
 	  
 	  cloner($global.media.current.seekindex.positions, container_z, {
 	    width: $ui.size * 14.2222;

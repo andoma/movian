@@ -14,7 +14,7 @@ widget(container_y, {
 
 
   widget(list_y, {
-    &view.focused = focusedChild();
+    $view.focused <- focusedChild();
 
     cloner($args.metadata.events.list, container_x, {
 

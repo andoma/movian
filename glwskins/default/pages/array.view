@@ -18,7 +18,7 @@ widget(container_y, {
     widget(array, {
       id: "array";
       navWrap: true;
-      &clone.focused = focusedChild();
+      $clone.focused <- focusedChild();
 
       scrollThreshold: 100;
 

@@ -74,7 +74,7 @@ widget(keyintercept, {
 
       widget(array, {
 	id: "array";
-	  &clone.focused = focusedChild();
+	$clone.focused <- focusedChild();
 
 	scrollThreshold: 100;
 

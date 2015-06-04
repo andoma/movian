@@ -93,7 +93,7 @@ widget(container_x, {
     .center = 0.2;
     .spacing = $ui.size / 2;
 
-    $view.focused = focusedChild();
+    $view.focused <- focusedChild();
 
     $view.change = changed($view.focused, 1);
 

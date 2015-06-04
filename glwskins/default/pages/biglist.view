@@ -21,7 +21,7 @@ widget(container_y, {
       spacing: 5;
       widget(list_y, {
 	id: "list";
-	  &clone.focused = focusedChild();
+	$clone.focused <- focusedChild();
 	spacing: 5;
 
 	cloner($page.model.nodes, loader, {

@@ -226,7 +226,7 @@ widget(list_y, {
       widget(list_x, {
 	spacing: 5;
 	
-	  &self.focused = focusedChild();
+	$self.focused <- focusedChild();
 	
 	cloner($global.media.current.seekindex.positions, container_z, {
 	  width: $ui.size * 14.2222;

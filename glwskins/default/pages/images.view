@@ -65,7 +65,7 @@ widget(container_y, {
 
 	scrollThreshold: $ui.width / 10;
 
-	&view.focused ?= focusedChild();
+	$view.focused <- focusedChild();
 	
 	cloner($page.model.nodes, loader, {
 	  noInitialTransform: true;

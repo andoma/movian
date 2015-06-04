@@ -60,7 +60,7 @@ widget(layer, {
     time: 0;
     noInitialTransform: true;
     source: select($clone.itemMenu, "skin://cmdmenu/cmdmenu_item.view", "");
-    .args ?= $clone.focused;
+    .args <- $clone.focused;
   });
 });
 

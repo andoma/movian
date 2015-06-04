@@ -88,6 +88,7 @@ static const int tokenprecedence[TOKEN_num] = {
   [TOKEN_ASSIGNMENT]    = 1,
   [TOKEN_COND_ASSIGNMENT]    = 1,
   [TOKEN_DEBUG_ASSIGNMENT]    = 1,
+  [TOKEN_LINK_ASSIGNMENT]    = 1,
   [TOKEN_NULL_COALESCE] = 2,
   [TOKEN_BOOLEAN_OR]    = 3,
   [TOKEN_BOOLEAN_AND]= 4,
@@ -178,6 +179,7 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei, glw_root_t *gr)
     case TOKEN_ASSIGNMENT:
     case TOKEN_COND_ASSIGNMENT:
     case TOKEN_DEBUG_ASSIGNMENT:
+    case TOKEN_LINK_ASSIGNMENT:
     case TOKEN_EQ:
     case TOKEN_NULL_COALESCE:
     case TOKEN_NEQ:
@@ -247,7 +249,7 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei, glw_root_t *gr)
 
 
     default:
-      glw_view_seterr(ei, t, "Unexpected symbol");
+      glw_view_seterr(ei, t, "Unexpected symbol in RPN processor");
       goto err;
     }
     x = t;
@@ -366,8 +368,11 @@ parse_prep_expression(token_t *expr, errorinfo_t *ei, glw_root_t *gr)
 	t->type == TOKEN_AMPERSAND) 
        && t1 != NULL && t1->type == TOKEN_IDENTIFIER) {
       t0 = t2 = t;
-      if(t->type == TOKEN_AMPERSAND)
+      if(t->type == TOKEN_AMPERSAND) {
         t0->t_flags |= TOKEN_F_CANONICAL_PATH;
+        TRACE(TRACE_INFO, "GLW", "%s:%d: Form &property is deprecated",
+               rstr_get(t->file), t->line);
+      }
       t0->type = TOKEN_PROPERTY_NAME;
 
       t0->next = t1->next;

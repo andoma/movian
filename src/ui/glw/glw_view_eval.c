@@ -813,7 +813,8 @@ propname_to_array(const char *pname[], const token_t *a)
  *
  */
 static int
-resolve_property_name(glw_view_eval_context_t *ec, token_t *a)
+resolve_property_name(glw_view_eval_context_t *ec, token_t *a,
+                      int follow_symlinks)
 {
   const char *pname[16];
   prop_t *p;
@@ -821,7 +822,7 @@ resolve_property_name(glw_view_eval_context_t *ec, token_t *a)
 
   propname_to_array(pname, a);
 
-  p = prop_get_by_name(pname, !(a->t_flags & TOKEN_F_CANONICAL_PATH),
+  p = prop_get_by_name(pname, follow_symlinks,
 		       PROP_TAG_NAMED_ROOT, ec->prop, "self",
 		       PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
 		       PROP_TAG_NAMED_ROOT, ec->prop_viewx, "view",
@@ -852,7 +853,7 @@ resolve_property_name2(glw_view_eval_context_t *ec, token_t *t)
 {
   switch(t->type) {
   case TOKEN_PROPERTY_NAME:
-    if(resolve_property_name(ec, t))
+    if(resolve_property_name(ec, t, !(t->t_flags & TOKEN_F_CANONICAL_PATH)))
       return NULL;
     /* FALLTHRU */
   case TOKEN_PROPERTY_REF:
@@ -863,6 +864,67 @@ resolve_property_name2(glw_view_eval_context_t *ec, token_t *t)
     return NULL;
   }
   return t;
+}
+
+
+/**
+ *
+ */
+static int
+eval_link_assign(glw_view_eval_context_t *ec, struct token *self)
+{
+  token_t *right = eval_pop(ec), *left = eval_pop(ec);
+
+  switch(right->type) {
+  case TOKEN_PROPERTY_NAME:
+    if(resolve_property_name(ec, right, 0))
+      return -1;
+    /* FALLTHRU */
+  case TOKEN_PROPERTY_REF:
+    break;
+  default:
+    break;
+  }
+
+  switch(left->type) {
+  case TOKEN_RESOLVED_ATTRIBUTE:
+    return left->t_attrib->set(ec, left->t_attrib, right);
+
+  case TOKEN_UNRESOLVED_ATTRIBUTE:
+    return glw_view_unresolved_attribute_set(ec, rstr_get(left->t_rstring),
+                                             right);
+
+  case TOKEN_PROPERTY_NAME:
+    if(resolve_property_name(ec, left, 0))
+      return -1;
+    break;
+
+  case TOKEN_IDENTIFIER:
+    if(ec->tgtprop == NULL)
+      return glw_view_seterr(ec->ei, self,
+                             "Invalid link assignment outside block");
+
+    prop_t *p = prop_create_r(ec->tgtprop, rstr_get(left->t_rstring));
+
+    rstr_release(left->t_rstring);
+    left->t_rstring = NULL;
+    left->type = TOKEN_PROPERTY_REF;
+    left->t_prop = p;
+    break;
+
+  case TOKEN_PROPERTY_REF:
+    break;
+
+  default:
+    glw_view_seterr(ec->ei, left,
+		    "Link target '%s' is not a property", token2name(left));
+    return -1;
+  }
+
+  if(right->type == TOKEN_PROPERTY_REF)
+    prop_link_ex(right->t_prop, left->t_prop,
+                 NULL, PROP_LINK_NORMAL, 0);
+  return 0;
 }
 
 
@@ -914,6 +976,9 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
 	    left->type == TOKEN_PROPERTY_REF) {
 
     if(right->t_prop != left->t_prop) {
+      TRACE(TRACE_INFO, "GLW",
+            "%s:%d: Prop linking via assignment is deprecated",
+            rstr_get(self->file), self->line);
       prop_link_ex(right->t_prop, left->t_prop,
                    NULL, PROP_LINK_NORMAL, how == 2);
       left->t_flags |= TOKEN_F_PROP_LINK;
@@ -922,12 +987,15 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
     eval_push(ec, right);
     return 0;
 
-  } else if((right = token_resolve(ec, right)) == NULL) {
-    return -1;
+  } else {
+    if((right = token_resolve(ec, right)) == NULL) {
+      return -1;
+    }
   }
 
   if(left->type == TOKEN_PROPERTY_NAME)
-    if(resolve_property_name(ec, left))
+    if(resolve_property_name(ec, left,
+                             !(left->t_flags & TOKEN_F_CANONICAL_PATH)))
       return -1;
 
   // Conditional assignment: rvalue of (void) results in doing nothing
@@ -985,6 +1053,9 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
       break;
     case TOKEN_PROPERTY_REF:
       if(right->t_prop != left->t_prop) {
+        TRACE(TRACE_INFO, "GLW",
+              "%s:%d: Prop linking via assignment is deprecated",
+              rstr_get(self->file), self->line);
 	prop_link_ex(right->t_prop, left->t_prop,
                      NULL, PROP_LINK_NORMAL, how == 2);
         left->t_flags |= TOKEN_F_PROP_LINK;
@@ -1700,6 +1771,7 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
 
   switch(event) {
   case PROP_SET_VOID:
+  case PROP_SET_DIR:
     t = prop_callback_alloc_token(gr, gps, TOKEN_VOID);
     t->t_propsubr = gps;
     rpn = gps->gps_rpn;
@@ -1745,12 +1817,11 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
     rpn = gps->gps_rpn;
     break;
 
-  case PROP_SET_DIR:
   case PROP_SET_PROP:
     t = prop_callback_alloc_token(gr, gps, TOKEN_PROPERTY_REF);
     t->t_propsubr = gps;
     rpn = gps->gps_rpn;
-    t->t_prop = prop_ref_inc(va_arg(ap, prop_t *)); // valueprop?
+    t->t_prop = prop_ref_inc(va_arg(ap, prop_t *));
     break;
 
   case PROP_ADD_CHILD:
@@ -2610,6 +2681,11 @@ glw_view_eval_rpn0(token_t *t0, glw_view_eval_context_t *ec)
 
     case TOKEN_DEBUG_ASSIGNMENT:
       if(eval_assign(ec, t, 2))
+	return -1;
+      break;
+
+    case TOKEN_LINK_ASSIGNMENT:
+      if(eval_link_assign(ec, t))
 	return -1;
       break;
 
@@ -4490,7 +4566,7 @@ glwf_delete(glw_view_eval_context_t *ec, struct token *self,
 
   switch(a->type) {
   case TOKEN_PROPERTY_NAME:
-    if(resolve_property_name(ec, a))
+    if(resolve_property_name(ec, a, !(a->t_flags & TOKEN_F_CANONICAL_PATH)))
       return -1;
 
   case TOKEN_PROPERTY_REF:
@@ -6568,6 +6644,46 @@ glwf_focus(glw_view_eval_context_t *ec, struct token *self,
   }
   return 0;
 }
+
+
+
+#if 0
+/**
+ *
+ */
+static void
+glwf_link_dtor(glw_root_t *gr, struct token *self)
+{
+  if(self->t_extra != NULL) {
+    prop_unlink(self->t_extra);
+    prop_ref_dec(self->t_extra);
+  }
+}
+
+
+/**
+ *
+ */
+static int
+glwf_link(glw_view_eval_context_t *ec, struct token *self,
+          token_t **argv, unsigned int argc)
+{
+  token_t *a = resolve_property_name2(ec, argv[0]);
+  token_t *b = resolve_property_name2(ec, argv[1]);
+
+  if((a = token_resolve(ec, argv[0])) == NULL)
+    return -1;
+
+  if(a->type == TOKEN_RSTRING) {
+    glw_t *w = glw_find_neighbour(ec->w, rstr_get(a->t_rstring));
+    if(w != NULL) {
+      glw_focus_set(w->glw_root, w, GLW_FOCUS_SET_INTERACTIVE,
+                    "FocusMethod");
+    }
+  }
+  return 0;
+}
+#endif
 
 
 #ifndef NDEBUG
