@@ -195,84 +195,84 @@ widget(container_z, {
 		widget(label, {
 		  InfoLabel();
 		  align: right;
-		  caption: "Source:";
+		  caption: _("Source:");
 		});
 
 		widget(label, {
 		  InfoLabel();
 		  align: right;
-		  caption: "Video codec:";
+		  caption: _("Video codec:");
 		});
 
 		widget(label, {
 		  InfoLabel();
 		  align: right;
-		  caption: "Video bitrate:";
+		  caption: _("Video bitrate:");
 		});
 
 		widget(label, {
 		  InfoLabel();
 		  align: right;
-		  caption: "Audio codec:";
+		  caption: _("Audio codec:");
 		});
 
 		widget(label, {
                   hidden: isVoid($self.media.video.decodetime_avg);
 		  InfoLabel();
 		  align: right;
-		  caption: "Video decode time:";
+		  caption: _("Video decode time:");
 		});
 
 		widget(label, {
                   hidden: isVoid($self.media.avdiffError);
 		  InfoLabel();
 		  align: right;
-		  caption: "A/V diff:";
+		  caption: _("A/V diff:");
 		});
 
 		widget(label, {
 		  InfoLabel();
 		  hidden: !$self.media.isRemote;
 		  align: right;
-		  caption: "Remote queue len:";
+		  caption: _("Remote queue len:");
 		});
 
 		widget(label, {
 		  InfoLabel();
 		  hidden: !$self.media.isRemote;
 		  align: right;
-		  caption: "Remote queue drops:";
+		  caption: _("Remote queue drops:");
 		});
 
 		widget(label, {
 		  InfoLabel();
 		  align: right;
-		  caption: "Packet buffer:";
+		  caption: _("Packet buffer:");
 		});
 
 		widget(label, {
 		  InfoLabel();
 		  align: right;
-		  caption: "Remaining buffer:";
+		  caption: _("Remaining buffer:");
 		});
 
 		widget(label, {
 		  InfoLabel();
 		  align: right;
-		  caption: "Video queue len:";
+		  caption: _("Video queue len:");
 		});
 
 		widget(label, {
 		  InfoLabel();
 		  align: right;
-		  caption: "Audio queue len:";
+		  caption: _("Audio queue len:");
 		});
 
 		widget(label, {
 		  hidden: !$self.media.io.bitrateValid;
 		  InfoLabel();
 		  align: right;
-		  caption: "Download speed:";
+		  caption: _("Download speed:");
 		});
 
                 cloner($self.media.io.infoNodes, label, {
