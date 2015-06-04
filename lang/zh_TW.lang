@@ -436,6 +436,18 @@ msg: 無法查詢最新版本
 #
 # ./glwskins/default/pages/video.view
 #
+id: A/V diff:
+# Missing translation
+msg: 
+
+id: Audio codec:
+# Missing translation
+msg: 
+
+id: Audio queue len:
+# Missing translation
+msg: 
+
 id: Audio volume adjustment: %d dB
 # Missing translation
 msg: 
@@ -443,8 +455,48 @@ msg:
 id: CPU is too slow to decode this video
 msg: 處理器速度過慢，無法正常解碼視訊信號
 
+id: Download speed:
+# Missing translation
+msg: 
+
+id: Packet buffer:
+# Missing translation
+msg: 
+
 id: Playback status
 msg: 影片資訊
+
+id: Remaining buffer:
+# Missing translation
+msg: 
+
+id: Remote queue drops:
+# Missing translation
+msg: 
+
+id: Remote queue len:
+# Missing translation
+msg: 
+
+id: Source:
+# Missing translation
+msg: 
+
+id: Video bitrate:
+# Missing translation
+msg: 
+
+id: Video codec:
+# Missing translation
+msg: 
+
+id: Video decode time:
+# Missing translation
+msg: 
+
+id: Video queue len:
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/playdecks/dvd.view

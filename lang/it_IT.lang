@@ -403,14 +403,66 @@ msg: Impossibile cercare nuove versioni
 #
 # ./glwskins/default/pages/video.view
 #
+id: A/V diff:
+# Missing translation
+msg: 
+
+id: Audio codec:
+# Missing translation
+msg: 
+
+id: Audio queue len:
+# Missing translation
+msg: 
+
 id: Audio volume adjustment: %d dB
 msg: Regola il volume audio: %d dB
 
 id: CPU is too slow to decode this video
 msg: CPU troppo lenta per poter decodificare questo video
 
+id: Download speed:
+# Missing translation
+msg: 
+
+id: Packet buffer:
+# Missing translation
+msg: 
+
 id: Playback status
 msg: Stato di riproduzione
+
+id: Remaining buffer:
+# Missing translation
+msg: 
+
+id: Remote queue drops:
+# Missing translation
+msg: 
+
+id: Remote queue len:
+# Missing translation
+msg: 
+
+id: Source:
+# Missing translation
+msg: 
+
+id: Video bitrate:
+# Missing translation
+msg: 
+
+id: Video codec:
+# Missing translation
+msg: 
+
+id: Video decode time:
+# Missing translation
+msg: 
+
+id: Video queue len:
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/playdecks/dvd.view
