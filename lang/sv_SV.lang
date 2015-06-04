@@ -327,8 +327,13 @@ msg: Uppgradera
 #
 # ./glwskins/default/pages/openerror.view
 #
-id: Unable to open resource
-msg: Kan ej öppna resurs
+id: Unable to open %s
+# Missing translation
+msg: 
+
+id: resource
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/playqueue.view
@@ -376,9 +381,6 @@ msg: Ladda ner och installera..
 id: Downloading %s
 msg: Laddar ner %s
 
-id: Installing %s
-msg: Installerar %s
-
 id: New version %s is available for download
 msg: Ny version %s är tillgänglig för nerladdning
 
@@ -403,9 +405,6 @@ msg: Test
 
 id: Unable to query for new version
 msg: Kan ej fråga efter ny version
-
-id: Verifying %s
-msg: Verifierar %s
 
 #
 # ./glwskins/default/pages/video.view
@@ -967,12 +966,6 @@ id: Tertiary subtitle language code
 msg: Tertiärt språk för undertexter
 
 #
-# ./src/js/js_page.c
-#
-id: No handler for URL
-msg: Ingen hanterare för URLen
-
-#
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
@@ -1177,14 +1170,14 @@ msg: Bokmärken
 id: Music
 msg: Musik
 
+id: No handler for URL
+msg: Ingen hanterare för URLen
+
 id: Other
 msg: Annat
 
 id: Photos
 msg: Foton
-
-id: Published in Virtual File System
-msg: Publiserad i virtuella filsystemet
 
 id: Removed bookmark: %s
 msg: Tog bort bokmärke: %s

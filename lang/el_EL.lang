@@ -333,8 +333,13 @@ msg: Αναβάθμιση
 #
 # ./glwskins/default/pages/openerror.view
 #
-id: Unable to open resource
-msg: Αδυναμία ανοίγματος πηγής !
+id: Unable to open %s
+# Missing translation
+msg: 
+
+id: resource
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/playqueue.view
@@ -382,9 +387,6 @@ msg: Λήψη και εγκατάσταση...
 id: Downloading %s
 msg: Λήψη %s
 
-id: Installing %s
-msg: Εγκατάσταση %s
-
 id: New version %s is available for download
 msg: Καινούρια έκδοση %s είναι διαθέσιμη για λήψη
 
@@ -409,9 +411,6 @@ msg: Δοκιμαστική
 
 id: Unable to query for new version
 msg: Αδυναμία αναζήτησης νέας έκδοσης
-
-id: Verifying %s
-msg: Επαλήθευση %s
 
 #
 # ./glwskins/default/pages/video.view
@@ -1006,12 +1005,6 @@ id: Tertiary subtitle language code
 msg: Τριτεύων κωδικοποίηση γλώσσας υποτίτλων
 
 #
-# ./src/js/js_page.c
-#
-id: No handler for URL
-msg: Δεν υπάρχει κρατημένο URL
-
-#
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
@@ -1223,14 +1216,14 @@ msg: Σελιδοδείκτες
 id: Music
 msg: Μουσική
 
+id: No handler for URL
+msg: Δεν υπάρχει κρατημένο URL
+
 id: Other
 msg: ’λλα
 
 id: Photos
 msg: Φωτογραφίες
-
-id: Published in Virtual File System
-msg: Δημοσίευση στο εικονικό σύστημα αρχείων
 
 id: Removed bookmark: %s
 msg: Αφαιρέθηκε ο σελιδοδείκτης: %s 

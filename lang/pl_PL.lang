@@ -327,8 +327,13 @@ msg: Zaktualizuj
 #
 # ./glwskins/default/pages/openerror.view
 #
-id: Unable to open resource
-msg: Nie można otworzyć zasobu
+id: Unable to open %s
+# Missing translation
+msg: 
+
+id: resource
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/playqueue.view
@@ -376,9 +381,6 @@ msg: Pobierz i zainstaluj...
 id: Downloading %s
 msg: Pobieranie %s
 
-id: Installing %s
-msg: Instalowanie %s
-
 id: New version %s is available for download
 msg: Nowa wersja %s jest dostępna do pobrania
 
@@ -403,9 +405,6 @@ msg: Testowe
 
 id: Unable to query for new version
 msg: Nie można sprawdzić dostępności nowej wersji
-
-id: Verifying %s
-msg: Weryfikowanie %s
 
 #
 # ./glwskins/default/pages/video.view
@@ -967,12 +966,6 @@ id: Tertiary subtitle language code
 msg: Trzeci język napisów
 
 #
-# ./src/js/js_page.c
-#
-id: No handler for URL
-msg: Brak wsparcia dla URL
-
-#
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
@@ -1177,14 +1170,14 @@ msg: Zakładki
 id: Music
 msg: Muzyka
 
+id: No handler for URL
+msg: Brak wsparcia dla URL
+
 id: Other
 msg: Inne
 
 id: Photos
 msg: Zdjęcia
-
-id: Published in Virtual File System
-msg: Znajdują sie w Wirtualnym Systemie Plikó
 
 id: Removed bookmark: %s
 msg: Usunięto zakładkę: %s

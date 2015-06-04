@@ -327,8 +327,13 @@ msg: Обновление
 #
 # ./glwskins/default/pages/openerror.view
 #
-id: Unable to open resource
-msg: Невозможно открыть ресурс
+id: Unable to open %s
+# Missing translation
+msg: 
+
+id: resource
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/playqueue.view
@@ -376,9 +381,6 @@ msg: Загрузить и установить...
 id: Downloading %s
 msg: Загрузка %s
 
-id: Installing %s
-msg: Установка %s
-
 id: New version %s is available for download
 msg: Новая версия %s доступна для загрузки
 
@@ -403,9 +405,6 @@ msg: Тестовый
 
 id: Unable to query for new version
 msg: Невозможно проверить новую версию
-
-id: Verifying %s
-msg: Проверка %s
 
 #
 # ./glwskins/default/pages/video.view
@@ -967,12 +966,6 @@ id: Tertiary subtitle language code
 msg: Код третьего языка субтитров
 
 #
-# ./src/js/js_page.c
-#
-id: No handler for URL
-msg: Нет обработчика для URL
-
-#
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
@@ -1177,14 +1170,14 @@ msg: Закладки
 id: Music
 msg: Музыка
 
+id: No handler for URL
+msg: Нет обработчика для URL
+
 id: Other
 msg: Прочее
 
 id: Photos
 msg: Фото
-
-id: Published in Virtual File System
-msg: Опубликовано в Виртуальной Файловой Системе
 
 id: Removed bookmark: %s
 msg: Удалить закладки: %s

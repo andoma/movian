@@ -350,8 +350,13 @@ msg: Upgradovať
 #
 # ./glwskins/default/pages/openerror.view
 #
-id: Unable to open resource
-msg: Zdroj nie je možné otvoriť 
+id: Unable to open %s
+# Missing translation
+msg: 
+
+id: resource
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/playqueue.view
@@ -402,10 +407,6 @@ id: Downloading %s
 # Missing translation
 msg: 
 
-id: Installing %s
-# Missing translation
-msg: 
-
 id: New version %s is available for download
 msg: Nová verzia %s je k stiahnuťiu
 
@@ -431,10 +432,6 @@ msg: Testovací
 
 id: Unable to query for new version
 msg: Nepodarilo sa zistiť novú verziu
-
-id: Verifying %s
-# Missing translation
-msg: 
 
 #
 # ./glwskins/default/pages/video.view
@@ -1055,12 +1052,6 @@ id: Tertiary subtitle language code
 msg: Tretí jazyk titulkov
 
 #
-# ./src/js/js_page.c
-#
-id: No handler for URL
-msg: Nemožno spracovať URL
-
-#
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
@@ -1289,15 +1280,14 @@ msg: Obľúbené
 id: Music
 msg: Hudba
 
+id: No handler for URL
+msg: Nemožno spracovať URL
+
 id: Other
 msg: Ostatné
 
 id: Photos
 msg: Snímky
-
-id: Published in Virtual File System
-# Missing translation
-msg: 
 
 id: Removed bookmark: %s
 msg: Odstránená záložka: %s

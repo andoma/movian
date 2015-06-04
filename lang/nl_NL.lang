@@ -343,8 +343,13 @@ msg: Bijwerken
 #
 # ./glwskins/default/pages/openerror.view
 #
-id: Unable to open resource
-msg: De bron kon niet worden geopend
+id: Unable to open %s
+# Missing translation
+msg: 
+
+id: resource
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/playqueue.view
@@ -394,10 +399,6 @@ id: Downloading %s
 # Missing translation
 msg: 
 
-id: Installing %s
-# Missing translation
-msg: 
-
 id: New version %s is available for download
 msg: Nieuwe versie %s kan worden gedownload
 
@@ -423,10 +424,6 @@ msg: Test
 
 id: Unable to query for new version
 msg: Kan niet zoeken naar een nieuwere versie
-
-id: Verifying %s
-# Missing translation
-msg: 
 
 #
 # ./glwskins/default/pages/video.view
@@ -1038,12 +1035,6 @@ id: Tertiary subtitle language code
 msg: Tertiaire audiotaal
 
 #
-# ./src/js/js_page.c
-#
-id: No handler for URL
-msg: Geen handler voor URL
-
-#
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
@@ -1263,15 +1254,14 @@ msg: Bladwijzers
 id: Music
 msg: Muziek
 
+id: No handler for URL
+msg: Geen handler voor URL
+
 id: Other
 msg: Overige
 
 id: Photos
 msg: Foto's
-
-id: Published in Virtual File System
-# Missing translation
-msg: 
 
 id: Removed bookmark: %s
 msg: Bladwijzer verwijderd: %s

@@ -329,8 +329,13 @@ msg: Update
 #
 # ./glwskins/default/pages/openerror.view
 #
-id: Unable to open resource
-msg: Quelle kann nicht geöffnet werden
+id: Unable to open %s
+# Missing translation
+msg: 
+
+id: resource
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/playqueue.view
@@ -378,9 +383,6 @@ msg: Herunterladen und installieren...
 id: Downloading %s
 msg: Lade %s herunter
 
-id: Installing %s
-msg: Installiere %s
-
 id: New version %s is available for download
 msg: Neue Version %s ist verfügbar
 
@@ -405,9 +407,6 @@ msg: Testversion
 
 id: Unable to query for new version
 msg: Kann nicht auf neue Version prüfen
-
-id: Verifying %s
-msg: Prüfe %s
 
 #
 # ./glwskins/default/pages/video.view
@@ -981,12 +980,6 @@ id: Tertiary subtitle language code
 msg: Dritte Untertitel-Sprache
 
 #
-# ./src/js/js_page.c
-#
-id: No handler for URL
-msg: kann URL nicht verarbeiten
-
-#
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
@@ -1194,14 +1187,14 @@ msg: Lesezeichen
 id: Music
 msg: Musik
 
+id: No handler for URL
+msg: kann URL nicht verarbeiten
+
 id: Other
 msg: Andere
 
 id: Photos
 msg: Foto
-
-id: Published in Virtual File System
-msg: Im virtuellen Dateisystem veröffentlicht 
 
 id: Removed bookmark: %s
 msg: Lesezeichen %s entfernt

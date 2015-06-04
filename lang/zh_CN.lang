@@ -323,8 +323,13 @@ msg: 升级
 #
 # ./glwskins/default/pages/openerror.view
 #
-id: Unable to open resource
-msg: 不能打开资源
+id: Unable to open %s
+# Missing translation
+msg: 
+
+id: resource
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/playqueue.view
@@ -371,9 +376,6 @@ msg: 正在下载并安装...
 id: Downloading %s
 msg: 正在下载%s
 
-id: Installing %s
-msg: 正在安装%s
-
 id: New version %s is available for download
 msg: 新版本%s可用
 
@@ -397,9 +399,6 @@ msg: 测试版
 
 id: Unable to query for new version
 msg: 无法检查最新版
-
-id: Verifying %s
-msg: 正在验证%s
 
 #
 # ./glwskins/default/pages/video.view
@@ -942,12 +941,6 @@ id: Tertiary subtitle language code
 msg: 字幕第三语言代码
 
 #
-# ./src/js/js_page.c
-#
-id: No handler for URL
-msg: 无法处理URL
-
-#
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
@@ -1151,14 +1144,14 @@ msg: 收藏夹
 id: Music
 msg: 音乐
 
+id: No handler for URL
+msg: 无法处理URL
+
 id: Other
 msg: 其它
 
 id: Photos
 msg: 照片
-
-id: Published in Virtual File System
-msg: 虚拟文件系统中已发布
 
 id: Removed bookmark: %s
 msg: 删除书签: %s

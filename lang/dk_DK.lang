@@ -326,8 +326,13 @@ msg: Opdatere
 #
 # ./glwskins/default/pages/openerror.view
 #
-id: Unable to open resource
-msg: Kan ikke åbne ressource
+id: Unable to open %s
+# Missing translation
+msg: 
+
+id: resource
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/playqueue.view
@@ -375,9 +380,6 @@ msg: Download og installer...
 id: Downloading %s
 msg: Downloader %s
 
-id: Installing %s
-msg: Installerer %s
-
 id: New version %s is available for download
 msg: Ny version %s er klar til download
 
@@ -402,9 +404,6 @@ msg: Tester
 
 id: Unable to query for new version
 msg: Kan ikke forespørge efter ny version
-
-id: Verifying %s
-msg: Bekræfter %s
 
 #
 # ./glwskins/default/pages/video.view
@@ -959,12 +958,6 @@ id: Tertiary subtitle language code
 msg: Tertiær sprog for undertekster
 
 #
-# ./src/js/js_page.c
-#
-id: No handler for URL
-msg: Ingen håndtering af URL
-
-#
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
@@ -1169,14 +1162,14 @@ msg: Bogmærker
 id: Music
 msg: Musik
 
+id: No handler for URL
+msg: Ingen håndtering af URL
+
 id: Other
 msg: Andre
 
 id: Photos
 msg: Billeder
-
-id: Published in Virtual File System
-msg: Udgivet i Virtual fil system
 
 id: Removed bookmark: %s
 msg: Slettet bogmærke: %s
