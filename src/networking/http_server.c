@@ -33,7 +33,7 @@
 #include "prop/prop.h"
 #include "arch/arch.h"
 #include "asyncio.h"
-
+#include "misc/bytestream.h"
 #include "upnp/upnp.h"
 
 static LIST_HEAD(, http_path) http_paths;
@@ -101,6 +101,10 @@ struct http_connection {
   void *hc_opaque;
 
   char hc_my_addr[128]; // hc_local_addr as text
+
+  uint8_t hc_ws_opcode;
+  int hc_ws_packet_size;
+  void *hc_ws_packet;
 };
 
 
@@ -882,11 +886,10 @@ websocket_input(http_connection_t *hc, htsbuf_queue_t *q)
 
   if(p < 2)
     return 0;
-
+  uint8_t fin = hdr[0] & 0x80;
   int opcode  = hdr[0] & 0xf;
   int64_t len = hdr[1] & 0x7f;
   int hoff = 2;
-
   if(len == 126) {
     if(p < 4)
       return 0;
@@ -895,10 +898,7 @@ websocket_input(http_connection_t *hc, htsbuf_queue_t *q)
   } else if(len == 127) {
     if(p < 10)
       return 0;
-    memcpy(&len, hdr + 2, sizeof(uint64_t));
-#if defined(__LITTLE_ENDIAN__)
-    len = __builtin_bswap64(len);
-#endif
+    len = rd64_be(hdr + 2);
     hoff = 10;
   }
 
@@ -915,28 +915,44 @@ websocket_input(http_connection_t *hc, htsbuf_queue_t *q)
   if(q->hq_size < hoff + len)
     return 0;
 
-  uint8_t *d = mymalloc(len+1);
-  if(d == NULL)
+  htsbuf_drop(q, hoff);
+
+  if(opcode & 0x8) {
+    // Ctrl frame
+    uint8_t *p = mymalloc(len);
+    if(p == NULL)
+      return 1;
+
+    htsbuf_read(q, p, len);
+    if(m != NULL) for(int i = 0; i < len; i++) p[i] ^= m[i&3];
+
+    if(opcode == 9) // PING
+      websocket_send(hc, 10, p, len);
+    free(p);
+    return -1;
+  }
+
+  hc->hc_ws_packet = myrealloc(hc->hc_ws_packet, hc->hc_ws_packet_size + len+1);
+  if(hc->hc_ws_packet == NULL)
     return 1;
 
-  htsbuf_drop(q, hoff);
-  htsbuf_read(q, d, len);
+  uint8_t *d = hc->hc_ws_packet + hc->hc_ws_packet_size;
   d[len] = 0;
+  htsbuf_read(q, d, len);
 
-  if(m != NULL) {
-    int i;
-    for(i = 0; i < len; i++)
-      d[i] ^= m[i&3];
-  }
-  
 
-  if(opcode == 9) {
-    // PING
-    websocket_send(hc, 10, d, len);
-  } else {
-    hc->hc_path->hp_ws_data(hc, opcode, d, len, hc->hc_opaque);
+  if(m != NULL) for(int i = 0; i < len; i++) d[i] ^= m[i&3];
+
+  if(opcode != 0)
+    hc->hc_ws_opcode = opcode;
+
+  hc->hc_ws_packet_size += len;
+
+  if(fin) {
+    hc->hc_path->hp_ws_data(hc, hc->hc_ws_opcode, hc->hc_ws_packet,
+                            hc->hc_ws_packet_size, hc->hc_opaque);
+    hc->hc_ws_packet_size = 0;
   }
-  free(d);
   return -1;
 }
 
@@ -1060,6 +1076,7 @@ http_close(http_connection_t *hc)
   free(hc->hc_url);
   free(hc->hc_url_orig);
   free(hc->hc_post_data);
+  free(hc->hc_ws_packet);
 
   if(hc->hc_path != NULL && hc->hc_path->hp_ws_fini != NULL)
     hc->hc_path->hp_ws_fini(hc, hc->hc_opaque);
