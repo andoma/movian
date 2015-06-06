@@ -23,8 +23,7 @@ id: Disable sleep timer
 msg: Wyłącz wyłącznik czasowy 
 
 id: Exit %s
-# Missing translation
-msg: 
+msg: Zamknij %s
 
 id: Go to Home screen
 msg: Przejdź do ekranu głównego
@@ -153,12 +152,10 @@ msg: Ustawienia Video
 # ./glwskins/default/loading.view
 #
 id: %d kb/s
-# Missing translation
-msg: 
+msg: %d kb/s
 
 id: Bitrate:
-# Missing translation
-msg: 
+msg: Bitrate:
 
 #
 # ./glwskins/default/log.view
@@ -248,8 +245,7 @@ msg: Data:
 # ./glwskins/default/pages/iteminfo/plugin.view
 #
 id: %s %s or newer is required
-# Missing translation
-msg: 
+msg: Wymagany %s w wersji %s lub nowszy
 
 id: Author: 
 msg: Autor: 
@@ -328,12 +324,10 @@ msg: Zaktualizuj
 # ./glwskins/default/pages/openerror.view
 #
 id: Unable to open %s
-# Missing translation
-msg: 
+msg: Nie można otworzyć %s
 
 id: resource
-# Missing translation
-msg: 
+msg: zasobu
 
 #
 # ./glwskins/default/pages/playqueue.view
@@ -351,8 +345,7 @@ msg: Wstrzymany
 # ./glwskins/default/pages/upgrade.view
 #
 id: %s is up to date
-# Missing translation
-msg: 
+msg: %s jest aktualny
 
 id: An error occured during download
 msg: Wystąpił błąd w trakcie pobierania
@@ -391,8 +384,7 @@ id: Patching %s
 msg: Poprawka dla %s
 
 id: Restarting %s in %d seconds...
-# Missing translation
-msg: 
+msg: Restart %s za %d sekund...
 
 id: Retry...
 msg: Ponów...
@@ -410,16 +402,13 @@ msg: Nie można sprawdzić dostępności nowej wersji
 # ./glwskins/default/pages/video.view
 #
 id: A/V diff:
-# Missing translation
-msg: 
+msg: Różnica A/V
 
 id: Audio codec:
-# Missing translation
-msg: 
+msg: Kodek Audio
 
 id: Audio queue len:
-# Missing translation
-msg: 
+msg: Długość bufora audio:
 
 id: Audio volume adjustment: %d dB
 msg: Zwiększenie głośności o: %d dB
@@ -428,47 +417,37 @@ id: CPU is too slow to decode this video
 msg: Procesor jest zbyt wolny by dekodować te Video
 
 id: Download speed:
-# Missing translation
-msg: 
+msg: Prędkość pobierania:
 
 id: Packet buffer:
-# Missing translation
-msg: 
+msg: Bufor pakietu:
 
 id: Playback status
 msg: Status odtwarzania
 
 id: Remaining buffer:
-# Missing translation
-msg: 
+msg: Pozostały bufor:
 
 id: Remote queue drops:
-# Missing translation
-msg: 
+msg: Pominięte elementy zdalnej kolejki:
 
 id: Remote queue len:
-# Missing translation
-msg: 
+msg: Długość zdalnej kolejki:
 
 id: Source:
-# Missing translation
-msg: 
+msg: Źródło:
 
 id: Video bitrate:
-# Missing translation
-msg: 
+msg: Bitrate Video:
 
 id: Video codec:
-# Missing translation
-msg: 
+msg: Kodek Video:
 
 id: Video decode time:
-# Missing translation
-msg: 
+msg: Czas dekodowania Video:
 
 id: Video queue len:
-# Missing translation
-msg: 
+msg: Długość kolejki Video:
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -498,12 +477,10 @@ msg: Użytkownik
 # ./glwskins/default/popups/resume.view
 #
 id: No, Start over
-# Missing translation
-msg: 
+msg: Nie, Zacznij od początku
 
 id: Resume %s from %s
-# Missing translation
-msg: 
+msg: Wznów %s od %s
 
 #
 # ./glwskins/default/screensaver.view
@@ -572,8 +549,7 @@ msg: Mała ilość dostępnej pamięci (dostępne %d kB RAM)
 # ./src/arch/ps3/ps3_vdec.c
 #
 id: Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration
-# Missing translation
-msg: 
+msg: Cell-h264: %d klatek referencyjnych dla %d zawartości jest niekompatybilna ze sprzętowym dekoderem PS3. Wyłączanie akceleracji
 
 id: Cell-h264: Broken headers, Disabling acceleration
 msg: Cell-h264: Uszkodzony nagłówek, wyłączanie akceleracji
@@ -597,12 +573,10 @@ msg: Błąd sprawdzania kodeka Cell. Błąd 0x%x
 # ./src/arch/rpi/rpi_audio.c
 #
 id: 8 Channel PCM
-# Missing translation
-msg: 
+msg: 8 kanałowy PCM
 
 id: AC3 Pass-Through
-# Missing translation
-msg: 
+msg: AC3 Pass-Through
 
 id: Analog
 msg: Analogowe
@@ -611,12 +585,10 @@ id: Audio output port
 msg: Port wyjścia audio
 
 id: Autodetect
-# Missing translation
-msg: 
+msg: Autowykrywanie
 
 id: DTS Pass-Through
-# Missing translation
-msg: 
+msg: DTS Pass-Through
 
 id: HDMI
 msg: HDMI
@@ -625,15 +597,13 @@ id: Off
 msg: Wyłączony
 
 id: On
-# Missing translation
-msg: 
+msg: Włączony
 
 #
 # ./src/arch/rpi/rpi_cec.c
 #
 id: Configure communications with your TV
-# Missing translation
-msg: 
+msg: Skonfiguruj tryb komunikacji ze swoim TV
 
 id: Consumer Electronics Control
 msg: Consumer Electronics Control (CEC)
@@ -705,7 +675,7 @@ id: No files in torrent
 msg: Brak plików w torrencie
 
 id: Unable to open torrent: %s
-msg: Nie można otworzyć torrenta: %s
+msg: Nie można otworzyć pliku torrent: %s
 
 #
 # ./src/backend/bittorrent/diskio.c
@@ -717,31 +687,25 @@ msg: Zbuforowane torrenty zajmują %d MB z dozwolonych %d MB. Ogół wolnego mie
 # ./src/backend/bittorrent/fa_torrent.c
 #
 id: Connected peers
-# Missing translation
-msg: 
+msg: Podłączeni
 
 id: Known peers
-# Missing translation
-msg: 
+msg: Znani udostępniający
 
 id: Receiving from
-# Missing translation
-msg: 
+msg: Odbieranie od
 
 id: Torrent leechers
-# Missing translation
-msg: 
+msg: Pobierający
 
 id: Torrent seeders
-# Missing translation
-msg: 
+msg: Udostępniający
 
 #
 # ./src/backend/bittorrent/torrent_settings.c
 #
 id: Clear cache
-# Missing translation
-msg: 
+msg: Wyczyść pamięć podręczną
 
 id: Enable bittorrent
 msg: Włącz BitTorrent
@@ -768,12 +732,10 @@ msg: Błąd odczytu DVD, ponowny odczyt płyty
 # ./src/backend/hls/hls.c
 #
 id: Primary
-# Missing translation
-msg: 
+msg: Podstawowy
 
 id: Supplementary
-# Missing translation
-msg: 
+msg: Dodatkowy
 
 #
 # ./src/backend/htsp/htsp.c
@@ -797,8 +759,7 @@ id: Albums
 msg: Albumy
 
 id: Automatic login on start
-# Missing translation
-msg: 
+msg: Automatyczne logowanie przy starcie programu
 
 id: Collaborative
 msg: Wspólne
@@ -975,8 +936,7 @@ id: Logon failure
 msg: Błąd logowania
 
 id: Object name not found
-# Missing translation
-msg: 
+msg: Nazwa obiektu nie znaleziona
 
 #
 # ./src/i18n.c
@@ -985,7 +945,7 @@ id: Default character set
 msg: Domyślny zestaw znaków
 
 id: Ignore 'The' at beginning of words when sorting
-msg: Przy sortowaniu ignoruj 'The' jeśli występuje w wyrazie
+msg: Przy sortowaniu ignoruj 'The' jeśli występuje w nazwie
 
 id: Language
 msg: Język
@@ -1099,8 +1059,7 @@ id: Automatic
 msg: Automatyczne
 
 id: Erase all playback info
-# Missing translation
-msg: 
+msg: Usuń wszelkie dane o odtwadzaniu
 
 id: Manual
 msg: Ręczny
@@ -1157,7 +1116,7 @@ msg: Wyczyszczenie wszystkich danych oznacza utratę <b>WSZYSTKICH</b> metadanyc
 # ./src/metadata/mlp.c
 #
 id: Custom search query
-msg: Własny tryb przeszukiwania
+msg: Własny tryb wyszukiwania
 
 id: Custom title
 msg: Własny tytuł
@@ -1169,7 +1128,7 @@ id: Metadata loaded from '%s' using %s
 msg: Metadane załadowane z '%s' używając %s
 
 id: Metadata search
-msg: Przeszukiwanie metadanych
+msg: Wyszukiwanie metadanych
 
 id: Metadata source
 msg: Źródło metadanych
@@ -1277,8 +1236,7 @@ id: Automatically upgrade plugins
 msg: Automatycznie aktualizuj wtyczki
 
 id: Available plugins
-# Missing translation
-msg: 
+msg: Dostępne wtyczki
 
 id: Background
 msg: Tło
@@ -1287,8 +1245,7 @@ id: Beta testing passwords
 msg: Hasło beta-testów
 
 id: Browse available plugins
-# Missing translation
-msg: 
+msg: Przeglądaj dostępne wtyczki
 
 id: Browsing
 msg: Przeglądanie
@@ -1312,8 +1269,7 @@ id: Home page
 msg: Strona główna
 
 id: Installed plugins
-# Missing translation
-msg: 
+msg: Zainstalowane wtyczki
 
 id: Installed version higher than available
 msg: Zainstalowana wersja jest nowsza od dostępnej
@@ -1406,8 +1362,7 @@ id: Power off system
 msg: Wyłącz system
 
 id: Quit
-# Missing translation
-msg: 
+msg: Zakończ
 
 id: SSH server
 msg: Serwer SSH
@@ -1416,8 +1371,7 @@ id: Standby
 msg: Tryb oczekiwania
 
 id: Starting and stopping
-# Missing translation
-msg: 
+msg: Uruchamianie i zatrzymywanie
 
 #
 # ./src/sd/sd.c
@@ -1633,8 +1587,7 @@ msg: Tryby wyświetlania Video
 # ./src/upgrade.c
 #
 id: %s version %s is available
-# Missing translation
-msg: 
+msg: Dostępna jest wersja %s %s
 
 id: Notify about upgrades
 msg: Powiadom o aktualizacjach
@@ -1667,12 +1620,10 @@ msg: Nie znaleziono usługi
 # ./src/video/video_settings.c
 #
 id: Always
-# Missing translation
-msg: 
+msg: Zawsze
 
 id: Ask
-# Missing translation
-msg: 
+msg: Zapytaj
 
 id: Automatically play next video in list
 msg: Automatycznie odtwarzaj kolejny plik z listy
@@ -1690,8 +1641,7 @@ id: Maximum resolution for deinterlacer
 msg: Maks. rozdzielczość przy usuwaniu przeplotu
 
 id: Never
-# Missing translation
-msg: 
+msg: Nigdy
 
 id: No limit
 msg: Bez limitu
@@ -1706,10 +1656,10 @@ id: Resume video playback
 msg: Wznów odtwarzanie Video
 
 id: Step when seeking backward
-msg: Krok przy szukaniu wstecz
+msg: Krok przy przewijaniu do tyłu
 
 id: Step when seeking forward
-msg: Krok przy szukaniu do przodu
+msg: Krok przy przewijaniu do przodu
 
 id: Temporal
 msg: Czasowy
