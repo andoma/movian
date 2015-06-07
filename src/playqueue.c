@@ -911,6 +911,7 @@ playqueue_open(prop_t *page)
 static int
 be_playqueue_open(prop_t *page, const char *url, int sync)
 {
+  usage_page_open(sync, "Playqueue");
   return playqueue_open(page);
 }
 
@@ -1136,8 +1137,6 @@ player_thread(void *aux)
 
     if(startpaused)
       mp_hold(mp, MP_HOLD_PAUSE, NULL);
-
-    usage_inc_counter("playaudio", 1);
 
     e = backend_play_audio(pqe->pqe_url, mp, errbuf, sizeof(errbuf),
 			   startpaused, NULL);

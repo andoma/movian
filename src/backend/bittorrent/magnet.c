@@ -85,7 +85,7 @@ magnet_parse(struct http_header_list *list, char *errbuf, size_t errlen)
 
 
 
-  torrent_t *to = torrent_create_from_hash(infohash);
+  torrent_t *to = torrent_create_from_hash(infohash, "magnet");
 
   http_header_t *hh;
 

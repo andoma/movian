@@ -776,7 +776,7 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
   event_t *e = NULL;
   const char *title;
 
-  usage_inc_counter("playvideodvd", 1);
+  usage_event("Play video", 1, USAGE_SEG("format", "DVD"));
 
   TRACE(TRACE_DEBUG, "DVD", "Starting playback of %s", url);
 

@@ -278,7 +278,7 @@ fc_connect(const char *hostname, int port,
     snprintf(buf1, sizeof(buf1), "ftp://%s", hostname);
   fc->fc_url = strdup(buf1);
 
-  usage_inc_counter("ftpconnect", 1);
+  usage_event("FTP Client", 1, NULL);
 
   return fc;
 

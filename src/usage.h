@@ -20,21 +20,23 @@
 #pragma once
 #include "config.h"
 
+#define USAGE_SEG(n, ...) (const char *[]){n, ##__VA_ARGS__, NULL}
+
 #if ENABLE_USAGEREPORT
 
 void usage_start(void);
 
-void usage_inc_counter(const char *id, int value);
+void usage_event(const char *key, int count, const char **segmentation);
 
-void usage_inc_plugin_counter(const char *plugin, const char *id, int value);
+void usage_page_open(int sync, const char *responder);
 
 #else
 
 #define usage_start()
 
-#define usage_inc_counter(id, value)
+#define usage_event(a, b, c)
 
-#define usage_inc_plugin_counter(plugin, id, value)
+#define usage_page_open(sync, responder)
 
 #endif
 

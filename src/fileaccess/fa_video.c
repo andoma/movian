@@ -39,6 +39,7 @@
 #include "misc/str.h"
 #include "i18n.h"
 #include "metadata/playinfo.h"
+#include "usage.h"
 
 #if ENABLE_METADATA
 #include "fa_probe.h"
@@ -650,6 +651,7 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
     return NULL;
   }
 
+  usage_event("Play video", 1, USAGE_SEG("format", fctx->iformat->name));
 
   mp->mp_audio.mq_stream = -1;
   mp->mp_video.mq_stream = -1;

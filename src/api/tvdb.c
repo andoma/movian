@@ -361,8 +361,9 @@ tvdb_query_by_episode(void *db, const char *item_url,
 {
   buf_t *result;
   char errbuf[256];
-  
-  usage_inc_counter("tvdb_query_by_episode", 1);
+
+  usage_event("TVDB query by episode", 1,
+              USAGE_SEG("qtype", metadata_qtypestr(qtype)));
 
   result = fa_load("http://www.thetvdb.com/api/GetSeries.php",
                    FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),

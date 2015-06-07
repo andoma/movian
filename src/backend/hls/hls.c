@@ -1972,7 +1972,7 @@ hls_play_extm3u(char *buf, const char *url, media_pipe_t *mp,
     return NULL;
   }
 
-  usage_inc_counter("playvideohls", 1);
+  usage_event("Play video", 1, USAGE_SEG("format", "HLS"));
 
   prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 1);
 
@@ -2075,13 +2075,23 @@ hls_canhandle(const char *url)
   return !strncmp(url, "hls:", strlen("hls:"));
 }
 
+/**
+ *
+ */
+static int
+hls_open(prop_t *page, const char *url, int sync)
+{
+  usage_page_open(sync, "HLS");
+  return backend_open_video(page, url, sync);
+}
+
 
 /**
  *
  */
 static backend_t be_hls = {
   .be_canhandle = hls_canhandle,
-  .be_open = backend_open_video,
+  .be_open = hls_open,
   .be_play_video = hls_playvideo,
 };
 

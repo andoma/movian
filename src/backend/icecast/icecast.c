@@ -448,7 +448,7 @@ stream_radio(icecast_play_context_t *ipc, char *errbuf, size_t errlen)
   media_pipe_t *mp = ipc->ipc_mp;
   mq = &mp->mp_audio;
 
-  usage_inc_counter("icecast", 1);
+  usage_event("Play audio", 1, USAGE_SEG("format", "icecast"));
 
   ipc->ipc_radio_info = prop_create(mp->mp_prop_root, "radioinfo");
 
@@ -630,7 +630,7 @@ icecast_open(prop_t *page, const char *url, int sync)
 {
   icecast_play_context_t *ipc = calloc(1, sizeof(icecast_play_context_t));
   ipc->ipc_url = strdup(url + strlen("icecast:"));
-
+  usage_page_open(sync, "Icecast");
   hts_thread_create_detached("icecast", icecast_thread, ipc,
 			     THREAD_PRIO_MODEL);
   return 0;

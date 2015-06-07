@@ -37,6 +37,7 @@
 #include "notifications.h"
 #include "metadata/playinfo.h"
 #include "misc/minmax.h"
+#include "usage.h"
 
 #if ENABLE_LIBGME
 #include <gme/gme.h>
@@ -187,6 +188,8 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
     fa_libav_close(avio);
     return NULL;
   }
+
+  usage_event("Play audio", 1, USAGE_SEG("format", fctx->iformat->name));
 
   TRACE(TRACE_DEBUG, "Audio", "Starting playback of %s", url);
 

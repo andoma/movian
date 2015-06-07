@@ -935,7 +935,7 @@ ftp_accept(void *opaque, int fd, const net_addr_t *local_addr,
   set_wd(fc, "/");
   set_type(fc, 'A');
 
-  usage_inc_counter("ftpserverconnect", 1);
+  usage_event("FTP Server", 1, NULL);
 
   hts_thread_create_detached("FTP-session", ftp_session, fc,
 			     THREAD_PRIO_MODEL);

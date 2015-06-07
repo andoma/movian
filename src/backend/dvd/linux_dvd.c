@@ -35,6 +35,7 @@
 #include "media/media.h"
 #include "dvd.h"
 #include "service.h"
+#include "usage.h"
 
 typedef enum {
   DISC_NO_DRIVE,
@@ -229,9 +230,20 @@ be_dvd_init(void)
 /**
  *
  */
+static int
+be_dvd_open(prop_t *page, const char *url, int sync)
+{
+  usage_page_open(sync, "DVD");
+  return backend_open_video(page, url, sync);
+}
+
+
+/**
+ *
+ */
 static backend_t be_dvd = {
   .be_canhandle = be_dvd_canhandle,
-  .be_open = backend_open_video,
+  .be_open = be_dvd_open,
   .be_play_video = be_dvd_play,
   .be_init = be_dvd_init,
 };

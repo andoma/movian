@@ -344,7 +344,7 @@ ntfs_periodic(struct callout *c, void *opaque)
     TRACE(TRACE_DEBUG, "NTFS", "Mounted %d partitions on device %d",
 	  d->partitions_mounted, i);
 
-    usage_inc_counter("ntfsmount", 1);
+    usage_event("NTFS Mount", 1, NULL);
 
     d->services = malloc(sizeof(service_t *) * d->partitions_mounted);
 

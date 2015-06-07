@@ -667,7 +667,7 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
   event_t *e;
   char *url = mystrdupa(url0);
 
-  usage_inc_counter("playvideortmp", 1);
+  usage_event("Play video", 1, USAGE_SEG("format", "RTMP"));
 
   prop_set(mp->mp_prop_metadata, "format", PROP_SET_STRING, "RTMP");
   prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 1);
@@ -835,6 +835,16 @@ rtmp_probe(const char *url0, char *errbuf, size_t errlen, int timeout_ms)
 }
 
 
+/**
+ *
+ */
+static int
+rtmp_open(prop_t *page, const char *url, int sync)
+{
+  usage_page_open(sync, "RTMP");
+  return backend_open_video(page, url, sync);
+}
+
 
 /**
  *
@@ -842,7 +852,7 @@ rtmp_probe(const char *url0, char *errbuf, size_t errlen, int timeout_ms)
 static backend_t be_rtmp = {
   .be_init = rtmp_init,
   .be_canhandle = rtmp_canhandle,
-  .be_open = backend_open_video,
+  .be_open = rtmp_open,
   .be_play_video = rtmp_playvideo,
   .be_probe = rtmp_probe,
 };

@@ -40,7 +40,7 @@
 #include "notifications.h"
 #include "backend/backend.h"
 #include "misc/minmax.h"
-
+#include "usage.h"
 
 #if CONFIG_BSPATCH
 #include "ext/bspatch/bspatch.h"
@@ -1090,12 +1090,14 @@ install_locked(struct artifact_queue *aq)
   // First, remount /boot as readwrite
   if(mount("/dev/mmcblk0p1", "/boot", "vfat", MS_REMOUNT, NULL)) {
     install_error("Unable to remount /boot to read-write", NULL);
+    usage_event("Upgrade error", 1, USAGE_SEG("reason", "Remount"));
     return;
   }
 
   rval = mkdir("/boot/dl", 0770);
   if(rval == -1 && errno != EEXIST) {
     install_error("Unable to create temp directory /boot/dl", NULL);
+    usage_event("Upgrade error", 1, USAGE_SEG("reason", "mkdir"));
     return;
   }
 
@@ -1107,6 +1109,10 @@ install_locked(struct artifact_queue *aq)
     stos_add_artifacts(aq);
 
 #endif
+
+  usage_event("Upgrade", 1,
+              USAGE_SEG("arch", archname,
+                        "track", upgrade_track));
 
   app_add_artifact(aq);
 
@@ -1354,6 +1360,7 @@ static int
 upgrade_open_url(prop_t *page, const char *url, int sync)
 {
   if(!strcmp(url, "showtime:upgrade")) {
+    usage_page_open(sync, "Upgrade");
     backend_page_open(page, "page:upgrade", sync);
     upgrade_refresh();
     prop_set(page, "directClose", PROP_SET_INT, 1);

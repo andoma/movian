@@ -267,8 +267,6 @@ rar_archive_load(rar_archive_t *ra)
   rar_segment_t *rs;
   struct fa_stat fs;
 
-  usage_inc_counter("rarloadarchive", 1);
-
   ra->ra_root = calloc(1, sizeof(rar_file_t));
   ra->ra_root->rf_type = CONTENT_DIR;
   ra->ra_root->rf_archive = ra;

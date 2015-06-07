@@ -31,7 +31,7 @@
 #include "backend/backend.h"
 #include "backend/backend_prop.h"
 #include "backend/search.h"
-
+#include "usage.h"
 
 /**
  *
@@ -106,10 +106,12 @@ search_open(prop_t *page, const char *url0, int sync)
 
   if(!backend_open(page, url, sync))
     return 0;
-  
+
+  usage_page_open(sync, "Search");
+
   model = prop_create_r(page, "model");
   prop_set(model, "type", PROP_SET_STRING, "directory");
-  
+
   meta = prop_create_r(model, "metadata");
   rstr_t *fmt = _("Search result for: %s");
   snprintf(title, sizeof(title), rstr_get(fmt), url);

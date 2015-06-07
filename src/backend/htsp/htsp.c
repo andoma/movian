@@ -1219,22 +1219,29 @@ be_htsp_open(prop_t *page, const char *url, int sync)
 
   TRACE(TRACE_DEBUG, "HTSP", "Open %s", url);
 
-  if(!strncmp(path, "/dvr/", strlen("/dvr/")))
+  if(!strncmp(path, "/dvr/", strlen("/dvr/"))) {
+    usage_page_open(sync, "HTSP DVR");
     return backend_open_video(page, url, sync);
+  }
 
-  if(!strncmp(path, "/channel/", strlen("/channel/")))
+  if(!strncmp(path, "/channel/", strlen("/channel/"))) {
+    usage_page_open(sync, "HTSP Channel");
     return backend_open_video(page, url, sync);
+  }
 
   if(!strcmp(path, "/channels")) {
+    usage_page_open(sync, "HTSP Channels");
 
     make_model(page, "Channels", hc->hc_channels_sorted, "tvchannels");
 
   } else if(!strncmp(path, "/tag/", strlen("/tag/"))) {
+    usage_page_open(sync, "HTSP Tag");
     prop_t *model;
     model = prop_create(hc->hc_tags_nodes, path + strlen("/tag/"));
     make_model2(page, model, "tvchannels");
 
   } else if(!strcmp(path, "")) {
+    usage_page_open(sync, "HTSP Tags");
 
     make_model(page, "Tags", hc->hc_tags_nodes, NULL);
 
@@ -1802,8 +1809,6 @@ be_htsp_playvideo(const char *url, media_pipe_t *mp,
   int primary = !!(va->flags & BACKEND_VIDEO_PRIMARY);
   const char *r;
 
-  usage_inc_counter("playvideohtsp", 1);
-
   TRACE(TRACE_DEBUG, "HTSP",
 	"Starting video playback %s primary=%s, priority=%d",
 	url, primary ? "yes" : "no", va->priority);
@@ -1816,7 +1821,7 @@ be_htsp_playvideo(const char *url, media_pipe_t *mp,
   if((r = mystrbegins(path, "/dvr/")) != NULL)
     return be_htsp_playdvr(url, mp, errbuf, errlen, vq, hc, r, va);
 
-
+  usage_event("Play video", 1, USAGE_SEG("format", "HTSP"));
 
   hs = calloc(1, sizeof(htsp_subscription_t));
 

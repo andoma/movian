@@ -689,8 +689,6 @@ video_player_idle(void *aux)
     if(play_url != NULL) {
       prop_set_void(errprop);
 
-      usage_inc_counter("playvideo", 1);
-
       int play_flags = play_flags_permanent;
 
       int resume_mode = VIDEO_RESUME_NO;

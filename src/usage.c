@@ -31,8 +31,7 @@
 #include "upgrade.h"
 
 static hts_mutex_t usage_mutex;
-static htsmsg_t *usage_counters;
-static htsmsg_t *plugin_counters;
+static htsmsg_t *eventmap;
 static callout_t usage_callout;
 
 static void try_send(void *aux);
@@ -44,8 +43,6 @@ static void
 usage_early_init(void)
 {
   hts_mutex_init(&usage_mutex);
-  usage_counters  = htsmsg_create_map();
-  plugin_counters = htsmsg_create_map();
 }
 
 INITME(INIT_GROUP_NET, usage_early_init, NULL);
@@ -91,50 +88,12 @@ add_events(htsmsg_t *m)
 {
   hts_mutex_lock(&usage_mutex);
 
-  htsmsg_field_t *f, *f2;
-  htsmsg_t *events = NULL;
-
-  HTSMSG_FOREACH(f, usage_counters) {
-    if(f->hmf_type != HMF_S64)
-      continue;
-    if(events == NULL)
-      events = htsmsg_create_list();
-    htsmsg_t *s = htsmsg_create_map();
-    htsmsg_add_str(s, "key", f->hmf_name);
-    htsmsg_add_s64(s, "count", f->hmf_s64);
-    htsmsg_add_msg(events, NULL, s);
+  if(eventmap != NULL) {
+    htsmsg_add_msg(m, "events", eventmap);
+    eventmap = NULL;
   }
-
-  htsmsg_release(usage_counters);
-  usage_counters  = htsmsg_create_map();
-
-  HTSMSG_FOREACH(f, plugin_counters) {
-    htsmsg_t *pm = f->hmf_childs;
-    if(pm == NULL)
-      continue;
-    HTSMSG_FOREACH(f2, pm) {
-      if(f2->hmf_type != HMF_S64)
-        continue;
-      if(events == NULL)
-        events = htsmsg_create_list();
-      htsmsg_t *s = htsmsg_create_map();
-      htsmsg_add_str(s, "key", f2->hmf_name);
-      htsmsg_add_s64(s, "count", f2->hmf_s64);
-      htsmsg_t *seg = htsmsg_create_map();
-      htsmsg_add_str(seg, "plugin", f->hmf_name);
-      htsmsg_add_msg(s, "segmentation", seg);
-      htsmsg_add_msg(events, NULL, s);
-    }
-  }
-
-  htsmsg_release(plugin_counters);
-  plugin_counters = htsmsg_create_map();
 
   hts_mutex_unlock(&usage_mutex);
-
-  if(events != NULL)
-    htsmsg_add_msg(m, "events", events);
-
 }
 
 
@@ -222,36 +181,85 @@ usage_start(void)
   task_run(try_send, NULL);
 }
 
-
 /**
  *
  */
 void
-usage_inc_counter(const char *id, int value)
+usage_event(const char *key, int count, const char **segmentation)
 {
+  htsmsg_t *pm;
+  htsmsg_field_t *f;
+  if(gconf.disable_analytics)
+    return;
+
   hts_mutex_lock(&usage_mutex);
-  htsmsg_s32_inc(usage_counters, id, value);
+
+  if(eventmap == NULL)
+    eventmap = htsmsg_create_list();
+
+  HTSMSG_FOREACH(f, eventmap) {
+    if((pm = f->hmf_childs) == NULL)
+      continue;
+
+    const char *k = htsmsg_get_str(pm, "key");
+    if(strcmp(key, k))
+      continue;
+
+    htsmsg_t *segs = htsmsg_get_map(pm, "segmentation");
+
+    if(segmentation != NULL) {
+      const char **s = segmentation;
+
+      if(segs == NULL)
+        continue;
+
+      for(;*s != NULL; s+=2) {
+        const char *skey = s[0];
+        const char *sval = s[1];
+
+        const char *v = htsmsg_get_str(segs, skey);
+        if(v == NULL || strcmp(v, sval))
+          break;
+      }
+
+      if(*s != NULL)
+        continue;
+    } else {
+
+      if(segs != NULL)
+        continue;
+    }
+
+    htsmsg_s32_inc(pm, "count", count);
+    hts_mutex_unlock(&usage_mutex);
+    return;
+  }
+
+  pm = htsmsg_create_map();
+  htsmsg_add_str(pm, "key", key);
+  htsmsg_s32_inc(pm, "count", count);
+
+  if(segmentation != NULL) {
+    const char **s = segmentation;
+    htsmsg_t *segs = htsmsg_create_map();
+    for(;*s != NULL; s+=2)
+      htsmsg_add_str(segs, s[0], s[1]);
+
+    htsmsg_add_msg(pm, "segmentation", segs);
+  }
+
+  htsmsg_add_msg(eventmap, NULL, pm);
   hts_mutex_unlock(&usage_mutex);
 }
 
-
 /**
  *
  */
 void
-usage_inc_plugin_counter(const char *plugin, const char *id, int value)
+usage_page_open(int sync, const char *responder)
 {
-  hts_mutex_lock(&usage_mutex);
-  htsmsg_t *m = htsmsg_get_map(plugin_counters, plugin);
-  if(m == NULL) {
-    m = htsmsg_create_map();
-    htsmsg_add_msg(plugin_counters, plugin, m);
-    m = htsmsg_get_map(plugin_counters, plugin);
-    assert(m != NULL);
-  }
-
-  htsmsg_s32_inc(m, id, value);
-  hts_mutex_unlock(&usage_mutex);
+  usage_event(sync ? "Open model" : "Open page", 1,
+              USAGE_SEG("responder", responder));
 }
 
 

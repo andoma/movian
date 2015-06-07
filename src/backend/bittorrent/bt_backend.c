@@ -32,6 +32,7 @@
 #include "misc/sha.h"
 #include "media/media.h"
 #include "video/video_playback.h"
+#include "usage.h"
 
 // http://www.bittorrent.org/beps/bep_0009.htm
 
@@ -73,7 +74,7 @@ torrent_open_url(const char **urlp, char *errbuf, size_t errlen)
 
   if(hex2binl(infohash, 20, url, 40) == 20 &&
      (url[40] == '/' || url[40] == 0)) {
-    to = torrent_create_from_hash(infohash);
+    to = torrent_create_from_hash(infohash, "URL");
 
     if(url[40] == 0) {
       *urlp = NULL;
@@ -137,6 +138,8 @@ torrent_browse_open(prop_t *page, const char *url, int sync)
   prop_t *model = prop_create_r(page, "model");
   prop_set(model, "loading", PROP_SET_INT, 1);
 
+  usage_page_open(sync, "Torrent browse");
+
   to = torrent_open_url(&url, errbuf, sizeof(errbuf));
   if(to == NULL) {
     nav_open_errorf(page, _("Unable to open torrent: %s"), errbuf);
@@ -188,6 +191,7 @@ static int
 torrent_movie_open(prop_t *page, const char *url0, int sync)
 {
   char errbuf[512];
+  usage_page_open(sync, "Torrent movie");
 
   hts_mutex_lock(&bittorrent_mutex);
 

@@ -421,7 +421,8 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
   if(tmdb == NULL)
     return METADATA_TEMPORARY_ERROR;
 
-  usage_inc_counter("tmdb_query_by_title", 1);
+  usage_event("TMDB query by title", 1,
+              USAGE_SEG("qtype", metadata_qtypestr(qtype)));
 
   if(year)
     snprintf(yeartxt, sizeof(yeartxt), "%d", year);
@@ -511,7 +512,8 @@ tmdb_query_by_imdb_id(void *db, const char *item_url, const char *imdb_id,
   if(tmdb == NULL)
     return METADATA_TEMPORARY_ERROR;
 
-  usage_inc_counter("tmdb_query_by_imdb_id", 1);
+  usage_event("TMDB query by IMDB-id", 1,
+              USAGE_SEG("qtype", metadata_qtypestr(qtype)));
 
   return tmdb_load_movie_info(db, item_url, imdb_id, qtype);
 }
@@ -525,7 +527,7 @@ tmdb_query_by_id(void *db, const char *item_url, const char *imdb_id)
   if(tmdb == NULL)
     return METADATA_TEMPORARY_ERROR;
 
-  usage_inc_counter("tmdb_query_by_id", 1);
+  usage_event("TMDB query by id", 1, NULL);
 
   return tmdb_load_movie_info(db, item_url, imdb_id, 0);
 }

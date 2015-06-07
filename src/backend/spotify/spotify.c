@@ -4172,10 +4172,10 @@ be_spotify_play(const char *url, media_pipe_t *mp,
   spotify_uri_t su;
   event_t *e, *eof = NULL;
   event_ts_t *ets;
-  
+
   memset(&su, 0, sizeof(su));
 
-  usage_inc_counter("spotifyplay", 1);
+  usage_event("Play audio", 1, USAGE_SEG("format", "Spotify"));
 
   if(!strcmp(url, "spotify:track:0000000000000000000000")) {
     /* Invalid track - happens for localtracks */

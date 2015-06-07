@@ -143,7 +143,7 @@ torrent_find_by_hash(const uint8_t *info_hash)
  *
  */
 static torrent_t *
-torrent_create(const uint8_t *info_hash)
+torrent_create(const uint8_t *info_hash, const char *initiator)
 {
   if(LIST_FIRST(&torrents) == NULL)
     asyncio_wakeup_worker(torrent_boot_periodic_signal);
@@ -162,7 +162,8 @@ torrent_create(const uint8_t *info_hash)
   bin2hex(to->to_title, 41, info_hash, 20);
   to->to_title[40] = 0;
 
-  usage_inc_counter("open_torrent", 1);
+  usage_event("Open Torrent", 1,
+              USAGE_SEG("initiator", initiator));
   return to;
 }
 
@@ -171,7 +172,7 @@ torrent_create(const uint8_t *info_hash)
  *
  */
 torrent_t *
-torrent_create_from_hash(const uint8_t *info_hash)
+torrent_create_from_hash(const uint8_t *info_hash, const char *initiator)
 {
   torrent_t *to;
   char errbuf[512];
@@ -181,7 +182,7 @@ torrent_create_from_hash(const uint8_t *info_hash)
       break;
 
   if(to == NULL)
-    to = torrent_create(info_hash);
+    to = torrent_create(info_hash, initiator);
 
   if(to->to_metainfo == NULL) {
     buf_t *b = torrent_diskio_load_infofile_from_hash(info_hash);
@@ -239,7 +240,7 @@ torrent_create_from_infofile(buf_t *b, char *errbuf, size_t errlen)
       break;
 
   if(to == NULL)
-    to = torrent_create(info_hash);
+    to = torrent_create(info_hash, "infofile");
 
   if(to->to_metainfo == NULL) {
     if(torrent_parse_torrentfile(to, doc, errbuf, errlen)) {

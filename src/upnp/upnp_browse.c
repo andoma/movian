@@ -874,7 +874,7 @@ browse_video_item(upnp_browse_t *ub, htsmsg_t *item)
  *
  */
 static void
-browse_item(upnp_browse_t *ub, htsmsg_t *item)
+browse_item(upnp_browse_t *ub, htsmsg_t *item, int sync)
 {
   const char *cls;
   cls = htsmsg_get_str(item, "class");
@@ -884,11 +884,11 @@ browse_item(upnp_browse_t *ub, htsmsg_t *item)
 
   if(!strncmp(cls, "object.item.videoItem",
 	      strlen("object.item.videoItem"))) {
+    usage_page_open(sync, "UPNP Video");
     browse_video_item(ub, item);
-    usage_inc_counter("upnpbrowsevideo", 1);
   } else {
+    usage_page_open(sync, "UPNP Unknown-item");
     browse_fail(ub, "Don't know how to browse %s", cls);
-    usage_inc_counter("upnpbrowsefail", 1);
   }
 }
 
@@ -911,9 +911,6 @@ browse_container(upnp_browse_t *ub, htsmsg_t *container)
     prop_set_string(ub->ub_contents, "albumTracks");
 
   browse_directory(ub, name);
-
-  usage_inc_counter("upnpbrowsedir", 1);
-
 }
 
 
@@ -959,13 +956,15 @@ browse_self(upnp_browse_t *ub, int sync)
 
   if(!sync && (x = htsmsg_get_map_multi(meta, "DIDL-Lite", "container",
                                         NULL)) != NULL) {
+    usage_page_open(sync, "UPNP Container");
     browse_container(ub, x);
 
   } else if((x = htsmsg_get_map_multi(meta, "DIDL-Lite", "item",
                                       NULL)) != NULL) {
-    browse_item(ub, x);
+    browse_item(ub, x, sync);
   } else {
     browse_fail(ub, "Browsing something that is neither item nor container");
+    usage_page_open(sync, "UPNP bad-item");
   }
   htsmsg_release(meta);
   htsmsg_release(out);
@@ -1003,9 +1002,12 @@ be_upnp_browse(prop_t *page, const char *url, int sync)
 
   ub->ub_title = prop_create_r(metadata, "title");
 
-  if(!upnp_browse_resolve(ub))
+  if(!upnp_browse_resolve(ub)) {
     browse_self(ub, sync);
-  
+  } else {
+    usage_page_open(sync, "UPNP bad-route");
+  }
+
   ub_destroy(ub);
   return 0;
 }

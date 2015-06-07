@@ -2585,8 +2585,6 @@ dav_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
   hf->hf_version = 1;
   hf->hf_url = strdup(url);
 
-  usage_inc_counter("davstat", 1);
-
   if(dav_propfind(hf, NULL, errbuf, errlen, 
 		  non_interactive ? &statcode : NULL)) {
     http_destroy(hf);

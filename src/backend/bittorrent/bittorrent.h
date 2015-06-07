@@ -484,7 +484,8 @@ typedef struct tracker_torrent {
  * Protocol definitions
  */
 
-torrent_t *torrent_create_from_hash(const uint8_t *info_hash);
+torrent_t *torrent_create_from_hash(const uint8_t *info_hash,
+                                    const char *initiator);
 
 torrent_t *torrent_create_from_infofile(buf_t *metainfo,
                                         char *errbuf, size_t errlen);

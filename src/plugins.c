@@ -30,6 +30,7 @@
 #include "notifications.h"
 #include "misc/strtab.h"
 #include "arch/arch.h"
+#include "usage.h"
 
 #include "ecmascript/ecmascript.h"
 
@@ -1221,6 +1222,9 @@ plugin_remove(plugin_t *pl)
 {
   char path[PATH_MAX];
 
+  usage_event("Plugin remove", 1,
+              USAGE_SEG("plugin", pl->pl_id));
+
   snprintf(path, sizeof(path), "%s/installedplugins/%s.zip",
 	   gconf.persistent_path, pl->pl_id);
   fa_unlink(path, NULL, 0);
@@ -1245,6 +1249,10 @@ plugin_install(plugin_t *pl, const char *package)
 {
   char errbuf[200];
   char path[200];
+
+  usage_event(pl->pl_can_upgrade ? "Plugin upgrade" : "Plugin install", 1,
+              USAGE_SEG("plugin", pl->pl_id,
+                        "source", package ? "File" : "Repo"));
 
   if(package == NULL)
     package = pl->pl_package;
@@ -1352,8 +1360,10 @@ static int
 plugin_open_url(prop_t *page, const char *url, int sync)
 {
   if(!strcmp(url, "plugin:start")) {
+    usage_page_open(sync, "Plugins installed");
     prop_link(plugin_start_model, prop_create(page, "model"));
   } else if(!strcmp(url, "plugin:repo")) {
+    usage_page_open(sync, "Plugins repo");
     prop_link(plugin_repo_model, prop_create(page, "model"));
     plugins_upgrade_check();
   } else {

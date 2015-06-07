@@ -291,6 +291,7 @@ void metadata_to_proptree(const metadata_t *md,
 
 metadata_t *metadata_get_video_data(const char *url);
 
+const char *metadata_qtypestr(int qtype);
 
 //-----------------------------------------------------------------------
 //-----------------------------------------------------------------------
