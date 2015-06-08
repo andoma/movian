@@ -53,6 +53,39 @@ magnet_trace(const torrent_t *t, const char *msg, ...)
   TRACE(TRACE_DEBUG, "MAGNET", "%s: %s", t->to_title, buf);
 }
 
+
+static int
+base32decode(uint8_t *dst, const char *in)
+{
+  int bits = 11;
+  uint16_t x = 0;
+  int written = 0;
+  while(*in) {
+    char c = *in++;
+    uint16_t v;
+    if(c >= 'A' && c <= 'Z')
+      v = c - 'A';
+    else if(c >= 'a' && c <= 'z')
+      v = c - 'a';
+    else if(c >= '2' && c <= '7')
+      v = 26 + c - '2';
+    else
+      return -1;
+
+    x |= (v << bits);
+    if(bits <= 8) {
+      *dst++ = (x >> 8);
+      if(++written == 20)
+        return 0;
+      x <<= 8;
+      bits += 3;
+    } else {
+      bits -= 5;
+    }
+  }
+  return -1;
+}
+
 /**
  *
  */
@@ -76,14 +109,15 @@ magnet_parse(struct http_header_list *list, char *errbuf, size_t errlen)
   uint8_t infohash[20];
 
   if(hex2bin(infohash, sizeof(infohash), hash) != sizeof(infohash)) {
-    snprintf(errbuf, errlen, "Invalid SHA-1 hash: %s", hash);
-    return NULL;
+    // Try base32
+    if(base32decode(infohash, hash)) {
+      snprintf(errbuf, errlen, "Invalid hash: %s", hash);
+      return NULL;
+    }
   }
 
   TRACE(TRACE_DEBUG, "MAGNET", "Opening magnet for hash %s -- %s",
 	hash, dn ?: "<unknown name>");
-
-
 
   torrent_t *to = torrent_create_from_hash(infohash, "magnet");
 
