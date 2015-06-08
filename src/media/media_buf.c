@@ -89,7 +89,7 @@ media_buf_from_avpkt_unlocked(media_pipe_t *mp, AVPacket *pkt)
 void
 copy_mbm_from_mb(media_buf_meta_t *mbm, const media_buf_t *mb)
 {
-  mbm->mbm_delta     = mb->mb_delta;
+  mbm->mbm_user_time = mb->mb_user_time;
   mbm->mbm_pts       = mb->mb_pts;
   mbm->mbm_dts       = mb->mb_dts;
   mbm->mbm_epoch     = mb->mb_epoch;

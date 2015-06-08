@@ -103,10 +103,8 @@ video_deliver_frame(video_decoder_t *vd, const frame_info_t *info)
   int r = vd->vd_mp->mp_video_frame_deliver(info,
                                             vd->vd_mp->mp_video_frame_opaque);
 
-
   if(info->fi_drive_clock && !r)
-    video_decoder_set_current_time(vd, info->fi_pts, info->fi_epoch,
-				   info->fi_delta);
+    video_decoder_set_current_time(vd, info->fi_user_time, info->fi_epoch, 0);
 
   return r;
 }
@@ -167,8 +165,7 @@ vd_thread(void *aux)
 
       vd->vd_estimated_duration = mbm->mbm_duration;
 
-      video_decoder_set_current_time(vd, mbm->mbm_pts, mbm->mbm_epoch,
-				     mbm->mbm_delta);
+      video_decoder_set_current_time(vd, mbm->mbm_user_time, mbm->mbm_epoch, 0);
       hts_mutex_lock(&mp->mp_mutex);
       continue;
     }

@@ -150,7 +150,7 @@ libav_deliver_frame(video_decoder_t *vd,
   fi.fi_height = frame->height;
   fi.fi_pts = pts;
   fi.fi_epoch = mbm->mbm_epoch;
-  fi.fi_delta = mbm->mbm_delta;
+  fi.fi_user_time = mbm->mbm_user_time;
   fi.fi_duration = duration;
   fi.fi_drive_clock = mbm->mbm_drive_clock;
 

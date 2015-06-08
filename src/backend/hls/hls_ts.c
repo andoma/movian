@@ -96,6 +96,7 @@ typedef struct ts_es {
   int64_t te_pts;
   int64_t te_dts;
   int64_t te_bts; // Base timestamp
+  int64_t te_last_dts;
 
   media_codec_t *te_codec;
 
@@ -294,6 +295,9 @@ find_es(ts_demuxer_t *td, uint16_t pid, int create)
   if(create) {
     te = calloc(1, sizeof(ts_es_t));
     te->te_pid = pid;
+    te->te_last_dts = PTS_UNSET;
+    te->te_pts = PTS_UNSET;
+    te->te_dts = PTS_UNSET;
     LIST_INSERT_HEAD(&td->td_elemtary_streams, te, te_link);
   }
   return te;
@@ -591,6 +595,37 @@ probe_duration(ts_es_t *te, uint8_t *data, int size)
   av_frame_free(&frame);
 }
 
+#if 0
+
+/**
+ *
+ */
+static int64_t
+find_segment_ts_offset_in_demuxer(hls_demuxer_t *hd, int seq)
+{
+  hls_variant_t *hv;
+  TAILQ_FOREACH(hv, &hd->hd_variants, hv_link) {
+    hls_segment_t *hs = hv_find_segment_by_seq(hv, seq);
+    if(hs != NULL && hs->hs_ts_offset != PTS_UNSET)
+      return hs->hs_ts_offset;
+  }
+  return PTS_UNSET;
+}
+
+/**
+ *
+ */
+static int64_t
+find_segment_ts_offset(hls_t *h, int seq)
+{
+  int64_t ts;
+  ts = find_segment_ts_offset_in_demuxer(&h->h_audio, seq);
+  if(ts != PTS_UNSET)
+    return ts;
+  return find_segment_ts_offset_in_demuxer(&h->h_primary, seq);
+}
+#endif
+
 
 /**
  *
@@ -599,68 +634,80 @@ static void
 enqueue_packet(ts_demuxer_t *td, const void *data, int len,
                int64_t dts, int64_t pts, int keyframe,
                hls_segment_t *hs, int seq, ts_es_t *te,
-               const hls_variant_t *hv)
+               const hls_demuxer_t *hd)
 {
-  int64_t ts_offset;
+  hls_t *h = td->td_hd->hd_hls;
 
   dts = rescale(dts);
   pts = rescale(pts);
 
-  if(hs == NULL) {
-    ts_offset = te->te_ts_offset;
-  } else {
+  if(te->te_sample_rate == 0) {
 
-    if(unlikely(hs->hs_ts_offset == PTS_UNSET)) {
+    media_pipe_t *mp = td->td_mp;
+    media_queue_t *mq;
 
-      if(!hs->hs_discontinuity) {
-        // Not a discontinuity, just steal offset from previous segment
-        hls_segment_t *prev = TAILQ_PREV(hs, hls_segment_queue, hs_link);
-        if(prev != NULL)
-          hs->hs_ts_offset = prev->hs_ts_offset;
-      }
-
-      if(hs->hs_ts_offset == PTS_UNSET && dts != PTS_UNSET) {
-
-        hs->hs_ts_offset = dts - hs->hs_time_offset;
-#if 0
-        printf("TS offset for seq %d: %"PRId64" - %"PRId64" = %"PRId64"\n",
-               hs->hs_seq, dts, hs->hs_time_offset, hs->hs_ts_offset);
-#endif
-        hls_segment_t *next;
-
-        for(next = TAILQ_NEXT(hs, hs_link) ;
-            next != NULL && !next->hs_discontinuity ;
-            next = TAILQ_NEXT(next, hs_link)) {
-          next->hs_ts_offset = hs->hs_ts_offset;
-        }
-      }
-
-      if(hs->hs_ts_offset == PTS_UNSET) {
-        return;
-      }
+    if(te->te_data_type == MB_VIDEO) {
+      mq = &mp->mp_video;
+    } else {
+      mq = &mp->mp_audio;
     }
-    ts_offset = te->te_ts_offset = hs->hs_ts_offset;
+
+    if(!(mq->mq_demuxer_flags & HLS_QUEUE_KEYFRAME_SEEN)) {
+      if(dts == PTS_UNSET)
+        return;
+      if(!keyframe)
+        return;
+    }
   }
 
   media_buf_t *mb = media_buf_alloc_unlocked(td->td_mp, len);
   memcpy(mb->mb_data, data, len);
-  mb->mb_dts = dts == PTS_UNSET ? PTS_UNSET : dts - ts_offset;
-  mb->mb_pts = pts == PTS_UNSET ? PTS_UNSET : pts - ts_offset;
+
+  if(hs != NULL && pts != PTS_UNSET) {
+
+    if(hs->hs_ts_offset == PTS_UNSET)
+      hs->hs_ts_offset = pts;
+
+    mb->mb_user_time = hs->hs_time_offset + pts - hs->hs_ts_offset;
+    mb->mb_drive_clock = te->te_data_type == MB_AUDIO;
+  }
+
+
+
+  if(h->h_select_new_ts_offset && dts != PTS_UNSET) {
+
+    if(dts < te->te_last_dts) {
+      h->h_ts_offset = te->te_last_dts - dts;
+      HLS_TRACE(h, "Timestamp offset: %"PRId64, h->h_ts_offset);
+      h->h_select_new_ts_offset = 0;
+    }
+  }
+
+
+  if(dts != PTS_UNSET) {
+    dts += h->h_ts_offset;
+    te->te_last_dts = dts;
+  }
+  mb->mb_dts = dts;
+
+  if(pts != PTS_UNSET)
+    pts += h->h_ts_offset;
+  mb->mb_pts = pts;
+
+
   mb->mb_cw = media_codec_ref(te->te_codec);
   mb->mb_data_type = te->te_data_type;
   mb->mb_keyframe = keyframe;
   mb->mb_sequence = seq;
-  mb->mb_epoch = td->td_mp->mp_epoch;
-  mb->mb_drive_clock = te->te_data_type == MB_VIDEO;
 
   if(mb->mb_keyframe && !te->te_logged_keyframe) {
     te->te_logged_keyframe = 1;
-    HLS_TRACE(hv->hv_demuxer->hd_hls,
+    HLS_TRACE(h,
               "%s        keyframe %20lld:%20lld demuxer:%s stream:%d\n",
               te->te_data_type == MB_VIDEO ? "VIDEO" : "AUDIO",
               te->te_codec->parser_ctx->dts,
               te->te_codec->parser_ctx->pts,
-              hv->hv_demuxer->hd_type,
+              hd->hd_type,
               te->te_stream);
   }
 
@@ -676,13 +723,12 @@ static void
 parse_data(ts_demuxer_t *td, hls_variant_t *hv, ts_es_t *te,
            const uint8_t *data, int size)
 {
-  media_pipe_t *mp = td->td_mp;
   media_codec_t *mc = te->te_codec;
 
   if(mc == NULL)
     return;
 
-  while(size > 0) {
+  while(size > 0 || data == NULL) {
 
     uint8_t *outbuf;
     int outlen;
@@ -699,20 +745,15 @@ parse_data(ts_demuxer_t *td, hls_variant_t *hv, ts_es_t *te,
       int     seq        = mc->parser_ctx->pos;
       const int keyframe = mc->parser_ctx->key_frame;
 
-      hls_segment_t *hs =
-        hv->hv_frozen ? hv_find_segment_by_seq(hv, seq) : NULL;
+      if(seq == -1)
+        seq = te->te_last_seq;
+      else
+        te->te_last_seq = seq;
 
-
-      media_queue_t *mq;
-
-      if(te->te_data_type == MB_VIDEO) {
-        mq = &mp->mp_video;
-      } else {
-        mq = &mp->mp_audio;
-      }
+      hls_segment_t *hs  = hv != NULL ? hv_find_segment_by_seq(hv, seq) : NULL;
 
       if(te->te_probe_frame) {
-        // Need to find actual duration be decoding a frame
+        // Need to find actual duration by decoding a frame
         probe_duration(te, outbuf, outlen);
       }
 
@@ -721,30 +762,52 @@ parse_data(ts_demuxer_t *td, hls_variant_t *hv, ts_es_t *te,
         AVRational timebase = {1, te->te_sample_rate};
         int64_t ts = av_rescale_q(te->te_samples, timebase, mpeg_tc);
         dts = pts = te->te_bts + ts;
-      } else {
-        if(!(mq->mq_demuxer_flags & HLS_QUEUE_KEYFRAME_SEEN)) {
-          if(dts == PTS_UNSET)
-            goto skip; // We really need a keyframe with a DTS set
-          if(!keyframe)
-            goto skip;
-        }
       }
 
-      if(seq == -1)
-        seq = te->te_last_seq;
-      else
-        te->te_last_seq = seq;
 
-      enqueue_packet(td, outbuf, outlen, dts, pts, keyframe, hs, seq, te, hv);
+      enqueue_packet(td, outbuf, outlen, dts, pts, keyframe, hs, seq, te,
+                     td->td_hd);
     }
-  skip:
 
     te->te_pts = PTS_UNSET;
     te->te_dts = PTS_UNSET;
+
+    if(data == NULL) {
+      if(outlen == 0)
+        return;
+      continue;
+    }
+
     data += rlen;
     size -= rlen;
   }
 }
+
+
+/**
+ *
+ */
+static void
+drain_parsers(ts_demuxer_t *td)
+{
+  ts_es_t *te;
+  LIST_FOREACH(te, &td->td_elemtary_streams, te_link) {
+    media_codec_t *mc = te->te_codec;
+
+    if(mc == NULL)
+      continue;
+
+    parse_data(td, NULL, te, NULL, 0);
+
+    te->te_packet_size = 0;
+    te->te_pts = PTS_UNSET;
+    te->te_dts = PTS_UNSET;
+    av_parser_close(mc->parser_ctx);
+    mc->parser_ctx = av_parser_init(mc->codec_id);
+
+  }
+}
+
 
 
 #if 0 // Not in use
@@ -963,6 +1026,7 @@ hls_ts_demuxer_flush(hls_variant_t *hv)
     te->te_packet_size = 0;
     te->te_pts = PTS_UNSET;
     te->te_dts = PTS_UNSET;
+    te->te_last_dts = PTS_UNSET;
     te->te_last_seq = 0;
   }
   td_flush_packets(td);
@@ -1064,7 +1128,7 @@ hls_ts_demuxer_read(hls_demuxer_t *hd)
 
     time_t now = time(NULL); // Bad
 
-    hls_check_bw_switch(hd, now);
+    hls_check_bw_switch(hd, now, mp);
 
     if(hd->hd_req != NULL) {
 
@@ -1140,9 +1204,9 @@ hls_ts_demuxer_read(hls_demuxer_t *hd)
 
         hls_variant_open(hv);
 
-        HLS_TRACE(h, "%s: Opening variant %s sequence %d discontinuity:%s",
+        HLS_TRACE(h, "%s: Opening variant %s sequence %d discontinuity-seq:%d",
                   hd->hd_type, hv->hv_name, hs->hs_seq,
-                  hs->hs_discontinuity ? "Yes" : "No");
+                  hs->hs_discontinuity_seq);
 
         break;
       }
@@ -1191,6 +1255,16 @@ hls_ts_demuxer_read(hls_demuxer_t *hd)
 
     hls_segment_t *hs = hv->hv_current_seg;
     int r;
+
+    if(hs->hs_discontinuity_seq != hd->hd_discontinuity_seq) {
+      drain_parsers(td);
+      hd->hd_discontinuity_seq = hs->hs_discontinuity_seq;
+      hd->hd_discontinuity = 1;
+    }
+
+    if(hd->hd_discontinuity) {
+      return HLS_DIS;
+    }
 
     switch(td->td_mux_mode) {
 

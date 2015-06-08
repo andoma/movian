@@ -127,27 +127,27 @@ mq_get_buffer_delay(media_queue_t *mq)
   media_buf_t *f, *l;
 
   if(mq->mq_stream == -1)
-    return INT32_MAX;
+    return 0;
 
   f = TAILQ_FIRST(&mq->mq_q_data);
   l = TAILQ_LAST(&mq->mq_q_data, media_buf_queue);
 
   int cnt = 5;
 
-  while(f && f->mb_pts == AV_NOPTS_VALUE && cnt > 0) {
+  while(f && f->mb_user_time == PTS_UNSET && cnt > 0) {
     f = TAILQ_NEXT(f, mb_link);
     cnt--;
   }
 
   cnt = 5;
-  while(l && l->mb_pts == AV_NOPTS_VALUE && cnt > 0) {
+  while(l && l->mb_user_time == PTS_UNSET && cnt > 0) {
     l = TAILQ_PREV(l, media_buf_queue, mb_link);
     cnt--;
   }
 
   if(f != NULL && l != NULL && f->mb_epoch == l->mb_epoch &&
-     l->mb_pts != AV_NOPTS_VALUE && f->mb_pts != AV_NOPTS_VALUE) {
-    mq->mq_buffer_delay = (l->mb_pts - l->mb_delta) - (f->mb_pts - f->mb_delta);
+     l->mb_user_time != PTS_UNSET && f->mb_user_time != PTS_UNSET) {
+    mq->mq_buffer_delay = l->mb_user_time - f->mb_user_time;
   }
 
   return mq->mq_buffer_delay;
@@ -163,7 +163,7 @@ mp_update_buffer_delay(media_pipe_t *mp)
   int vd = mq_get_buffer_delay(&mp->mp_video);
   int ad = mq_get_buffer_delay(&mp->mp_audio);
 
-  mp->mp_buffer_delay = MIN(vd, ad);
+  mp->mp_buffer_delay = MAX(vd, ad);
 }
 
 

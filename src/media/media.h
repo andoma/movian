@@ -116,7 +116,7 @@ typedef struct frame_info {
   int fi_width;
   int fi_height;
   int64_t fi_pts;
-  int64_t fi_delta;
+  int64_t fi_user_time;
   int fi_epoch;
   int fi_duration;
 

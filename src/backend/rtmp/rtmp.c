@@ -251,6 +251,7 @@ sendpkt(rtmp_t *r, media_queue_t *mq, media_codec_t *mc,
   mb->mb_drive_clock = drive_clock;
   mb->mb_dts = dts;
   mb->mb_pts = pts;
+  mb->mb_user_time = pts;
   mb->mb_skip = skip;
 
   memcpy(mb->mb_data, data, size);

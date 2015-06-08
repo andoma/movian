@@ -475,9 +475,10 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
       ad->ad_epoch = mb->mb_epoch;
 
       if(mb->mb_drive_clock)
-	mp_set_current_time(mp, mb->mb_pts - ad->ad_delay,
-			    mb->mb_epoch, mb->mb_delta);
+	mp_set_current_time(mp, mb->mb_user_time, mb->mb_epoch, ad->ad_delay);
+
       mb->mb_pts = PTS_UNSET; // No longer valid
+      mb->mb_user_time = PTS_UNSET;
     }
 
 

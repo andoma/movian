@@ -278,8 +278,8 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
       mb->mb_stream = pkt.stream_index;
 
       if(mb->mb_pts != AV_NOPTS_VALUE) {
-        if(fctx->start_time != AV_NOPTS_VALUE)
-          mb->mb_delta =  fctx->start_time;
+        const int64_t offset = fctx->start_time;
+        mb->mb_user_time = mb->mb_pts + (offset != PTS_UNSET ? offset : 0);
 	mb->mb_drive_clock = 1;
       }
 

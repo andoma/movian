@@ -170,8 +170,6 @@ typedef struct dvd_player {
   int dp_vwidth;
   int dp_vheight;
 
-  int64_t dp_time_pts_delta;
-
 } dvd_player_t;
 
 #define dvd_in_menu(dp) ((dp)->dp_pci.hli.hl_gi.hli_ss)
@@ -240,17 +238,12 @@ dvd_media_enqueue0(dvd_player_t *dp, media_queue_t *mq, media_buf_t *mb,
   mb->mb_disable_deinterlacer = 1;
   mb->mb_dts = dts;
   mb->mb_pts = pts;
-  
-  if(pts != AV_NOPTS_VALUE && mb->mb_data_type == MB_VIDEO) {
-    if(dp->dp_time_pts_delta == AV_NOPTS_VALUE) {
-      int64_t t = av_rescale_q(dvdnav_get_current_time(dp->dp_dvdnav),
-			       mpeg_tc, AV_TIME_BASE_Q);
-      dp->dp_time_pts_delta = pts - t;
-    }
+
+  if(mb->mb_data_type == MB_VIDEO) {
+    mb->mb_user_time = av_rescale_q(dvdnav_get_current_time(dp->dp_dvdnav),
+                                    mpeg_tc, AV_TIME_BASE_Q);
     mb->mb_drive_clock = 1;
-    mb->mb_delta = dp->dp_time_pts_delta;
   }
-  
 
   do {
 
@@ -786,7 +779,6 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
   dp = calloc(1, sizeof(dvd_player_t));
 
   dp->dp_mp = mp;
-  dp->dp_time_pts_delta = AV_NOPTS_VALUE;
 
   mp->mp_video.mq_stream = 0;
   mp->mp_audio.mq_stream = 0;
@@ -881,7 +873,6 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
       dp->dp_aspect_override = dvdnav_get_video_aspect(dp->dp_dvdnav) ? 2 : 1;
       dvdnav_get_video_res(dp->dp_dvdnav, &dp->dp_vwidth, &dp->dp_vheight);
       mp_bump_epoch(mp);
-      dp->dp_time_pts_delta = AV_NOPTS_VALUE;
       dvd_update_streams(dp);
       update_duration(dp, mp);
       break;
@@ -890,7 +881,6 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
       pci = malloc(sizeof(pci_t));
       memcpy(pci, dvdnav_get_current_nav_pci(dp->dp_dvdnav), sizeof(pci_t));
       if(dp->dp_end_ptm != pci->pci_gi.vobu_s_ptm) {
-	dp->dp_time_pts_delta = AV_NOPTS_VALUE;
 	mp_bump_epoch(mp);
       }
       dp->dp_end_ptm = pci->pci_gi.vobu_e_ptm;

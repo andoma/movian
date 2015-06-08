@@ -28,8 +28,9 @@ event_t *hls_play_extm3u(char *s, const char *url, media_pipe_t *mp,
 #define HLS_QUEUE_MERGE         0x1
 #define HLS_QUEUE_KEYFRAME_SEEN 0x2
 
-#define HLS_EOF  ((void *)-1)
-#define HLS_NYA  ((void *)-2)
+#define HLS_EOF  ((void *)-1)  // End-of-file
+#define HLS_NYA  ((void *)-2)  // Not-yet available
+#define HLS_DIS  ((void *)-3)  // Discontinuity
 
 
 TAILQ_HEAD(hls_variant_queue, hls_variant);
@@ -54,6 +55,7 @@ typedef struct hls_segment {
   int64_t hs_ts_offset;
 
   int hs_seq;
+  int hs_discontinuity_seq;
 
   uint8_t hs_crypto;
   uint8_t hs_open_error;
@@ -67,7 +69,6 @@ typedef struct hls_segment {
   int hs_block_cnt;
 
   char hs_unavailable;
-  char hs_discontinuity;
   char hs_mark;
 
   fa_handle_t *hs_fh;
@@ -192,9 +193,19 @@ typedef struct hls_demuxer {
 
   media_buf_t *hd_mb;
 
+  int hd_discontinuity;
+  int hd_discontinuity_seq;
+
 } hls_demuxer_t;
 
-
+/**
+ *
+ */
+typedef struct hls_segment_timing {
+  int64_t hst_offset;
+  char hts_discontinuity;
+  char hts_offset_valid;
+} hls_segment_timing_t;
 
 /**
  *
@@ -225,7 +236,9 @@ typedef struct hls {
   struct hls_audio_track_list h_audio_tracks;
 
   int h_last_enqueued_seq;
+  int h_select_new_ts_offset;
 
+  int64_t h_ts_offset;
 } hls_t;
 
 
@@ -244,6 +257,11 @@ typedef struct hls_audio_track {
       TRACE(TRACE_DEBUG, "HLS", x, ##__VA_ARGS__);		\
   } while(0)
 
+#define HLS_INFO(h, x, ...) do {                               \
+    if((h)->h_debug)                                            \
+      TRACE(TRACE_INFO, "HLS", x, ##__VA_ARGS__);		\
+  } while(0)
+
 
 hls_error_t hls_segment_open(hls_segment_t *hs);
 
@@ -253,7 +271,7 @@ void hls_variant_open(hls_variant_t *hv);
 
 void hls_variant_close(hls_variant_t *hv);
 
-void hls_check_bw_switch(hls_demuxer_t *hd, time_t now);
+void hls_check_bw_switch(hls_demuxer_t *hd, time_t now, media_pipe_t *mp);
 
 hls_variant_t *hls_select_default_variant(hls_demuxer_t *hd);
 
