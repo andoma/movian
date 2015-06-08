@@ -115,7 +115,7 @@ handle_metadata0(rtmp_t *r, AMFObject *obj,
     mp_set_duration(mp, r->total_duration * 1000LL);
     mp_set_clr_flags(mp, MP_CAN_SEEK, 0);
 
-    if(r->ss == NULL)
+    if(r->ss == NULL && !(r->va->flags & BACKEND_VIDEO_NO_SUBTITLE_SCAN))
       r->ss = sub_scanner_create(r->url, mp->mp_prop_subtitle_tracks, r->va, 0);
 
   } else {
