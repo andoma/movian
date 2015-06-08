@@ -1548,6 +1548,9 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 
   h->h_audio.hd_pending_stream = 1;
 
+  if(va->flags & BACKEND_VIDEO_NO_SUBTITLE_SCAN)
+    h->h_sub_scanning_done = 1;
+
   while(1) {
 
     if(h->h_primary.hd_no_functional_streams ||
