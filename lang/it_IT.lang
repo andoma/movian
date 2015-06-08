@@ -324,12 +324,10 @@ msg: Aggiorna
 # ./glwskins/default/pages/openerror.view
 #
 id: Unable to open %s
-# Missing translation
-msg: 
+msg: Impossibile aprire
 
 id: resource
-# Missing translation
-msg: 
+msg: risorsa
 
 #
 # ./glwskins/default/pages/playqueue.view
@@ -404,16 +402,13 @@ msg: Impossibile cercare nuove versioni
 # ./glwskins/default/pages/video.view
 #
 id: A/V diff:
-# Missing translation
-msg: 
+msg: diff A/V:
 
 id: Audio codec:
-# Missing translation
-msg: 
+msg: Codec audio:
 
 id: Audio queue len:
-# Missing translation
-msg: 
+msg: Lung. coda audio:
 
 id: Audio volume adjustment: %d dB
 msg: Regola il volume audio: %d dB
@@ -422,47 +417,37 @@ id: CPU is too slow to decode this video
 msg: CPU troppo lenta per poter decodificare questo video
 
 id: Download speed:
-# Missing translation
-msg: 
+msg: Velocità di download:
 
 id: Packet buffer:
-# Missing translation
-msg: 
+msg: Pacchetto buffer:
 
 id: Playback status
 msg: Stato di riproduzione
 
 id: Remaining buffer:
-# Missing translation
-msg: 
+msg: Buffer rimanente:
 
 id: Remote queue drops:
-# Missing translation
-msg: 
+msg: Persi nella coda remota:
 
 id: Remote queue len:
-# Missing translation
-msg: 
+msg: Lung. coda remota:
 
 id: Source:
-# Missing translation
-msg: 
+msg: Fonte:
 
 id: Video bitrate:
-# Missing translation
-msg: 
+msg: Bitrate video:
 
 id: Video codec:
-# Missing translation
-msg: 
+msg: Codec video:
 
 id: Video decode time:
-# Missing translation
-msg: 
+msg: Tempo di decodifica video:
 
 id: Video queue len:
-# Missing translation
-msg: 
+msg: Lung. coda video:
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -960,7 +945,7 @@ id: Default character set
 msg: Collezione carattere di default
 
 id: Ignore 'The' at beginning of words when sorting
-msg: Ignora 'The' all'inizio delle parole durante l'ordinamento
+msg: Ignora l'articolo all'inizio delle parole durante l'ordinamento
 
 id: Language
 msg: Linguaggio
