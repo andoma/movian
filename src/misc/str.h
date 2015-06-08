@@ -22,6 +22,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdarg.h>
 
 struct buf;
 
@@ -45,7 +46,9 @@ size_t html_enteties_escape(const char *src, char *dst);
 
 char *fmtstr(const char *fmt, ...);
 
-void 
+char *fmtstrv(const char *fmt, va_list ap);
+
+void
 url_split(char *proto, int proto_size,
 	  char *authorization, int authorization_size,
 	  char *hostname, int hostname_size,

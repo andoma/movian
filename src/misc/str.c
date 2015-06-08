@@ -1136,36 +1136,51 @@ bin2hex(char *dst, size_t dstlen, const uint8_t *src, size_t srclen)
  *
  */
 char *
-fmtstr(const char *fmt, ...)
+fmtstrv(const char *fmt, va_list src)
 {
   int n;
   int size = 100;
   char *p, *np;
   va_list ap;
 
-  if((p = malloc(size)) == NULL)
-    return NULL;
+  if((p = malloc(size)) != NULL) {
+    while(1) {
+      va_copy(ap, src);
+      n = vsnprintf(p, size, fmt, ap);
+      va_end(ap);
 
-  while(1) {
-    va_start(ap, fmt);
-    n = vsnprintf(p, size, fmt, ap);
-    va_end(ap);
+      if(n < 0)
+        break;
 
-    if(n < 0)
-      return NULL;
+      if(n < size)
+        return p;
 
-    if(n < size)
-      return p;
+      size = n + 1;
 
-    size = n + 1;
-
-    if((np = realloc (p, size)) == NULL) {
-      free(p);
-      return NULL;
-    } else {
-      p = np;
+      if((np = realloc(p, size)) == NULL) {
+        free(p);
+        break;
+      } else {
+        p = np;
+      }
     }
   }
+  return strdup("<out-of-memory>");
+}
+
+
+/**
+ *
+ */
+char *
+fmtstr(const char *fmt, ...)
+{
+  va_list ap;
+
+  va_start(ap, fmt);
+  char *r = fmtstrv(fmt, ap);
+  va_end(ap);
+  return r;
 }
 
 

@@ -25,6 +25,7 @@
 
 #include "main.h"
 #include "prop/prop.h"
+#include "misc/str.h"
 
 #if ENABLE_NETLOG
 #include <netinet/in.h>
@@ -47,7 +48,7 @@ SIMPLEQ_HEAD(tracetmp_queue, tracetmp);
 typedef struct tracetmp {
   SIMPLEQ_ENTRY(tracetmp) link;
   const char *s1;
-  const char *s2;
+  rstr_t *s2;
 } tracetmp_t;
 
 
@@ -138,7 +139,6 @@ trace_net(int level, const char *prefix, const char *str)
 void
 tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap)
 {
-  static char buf[1024];
   char buf2[64];
   char buf3[64];
   char *s, *p;
@@ -162,8 +162,7 @@ tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap)
   default:          leveltxt = "?"; break;
   }
 
-  vsnprintf(buf, sizeof(buf), fmt, ap);
-
+  char * const buf = fmtstrv(fmt, ap);
   p = buf;
 
   snprintf(buf2, sizeof(buf2), "%-15s [%-5s]:", subsys, leveltxt);
@@ -182,7 +181,7 @@ tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap)
     if(!(flags & TRACE_NO_PROP) && level != TRACE_EMERG) {
       tt = alloca(sizeof(tracetmp_t));
       tt->s1 = mystrdupa(buf2);
-      tt->s2 = mystrdupa(s);
+      tt->s2 = rstr_alloc(s);
       SIMPLEQ_INSERT_TAIL(&q, tt, link);
       entries++;
     }
@@ -219,10 +218,10 @@ tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap)
   SIMPLEQ_FOREACH(tt, &q, link) {
     prop_t *p = prop_create_root(NULL);
 
-    prop_set_string(prop_create(p, "prefix"), tt->s1);
-    prop_set_string(prop_create(p, "message"), tt->s2);
-    prop_set_rstring(prop_create(p, "severity"), rlev);
-    
+    prop_set(p, "prefix", PROP_SET_STRING, tt->s1);
+    prop_set(p, "message", PROP_ADOPT_RSTRING, tt->s2);
+    prop_set(p, "severity", PROP_SET_RSTRING, rlev);
+
     if(prop_set_parent(p, log_root))
       abort();
   }
@@ -233,6 +232,7 @@ tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap)
     prop_destroy_first(log_root);
     zapcnt--;
   }
+  free(buf);
 }
 
 
