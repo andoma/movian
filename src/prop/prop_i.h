@@ -116,7 +116,7 @@ typedef struct prop_notify {
 #define hpn_uri_title u.uri.title
 #define hpn_uri       u.uri.uri
 
-  prop_t *hpn_prop2;
+  prop_t *hpn_prop_extra;
   int hpn_flags;
 
 } prop_notify_t;

@@ -139,6 +139,7 @@ typedef struct kv_prop_bind {
   prop_sub_t *kpb_sub;
   int kpb_init;
   char *kpb_url;
+  rstr_t *kpb_name;
 } kv_prop_bind_t;
 
 
@@ -204,8 +205,6 @@ kv_value_cb(void *opaque, prop_event_t event, ...)
 {
   kv_prop_bind_t *kpb = opaque;
   va_list ap, apx;
-  //  prop_t *p;
-  //  rstr_t *key;
   void *db;
   sqlite3_stmt *stmt;
   int rc;
@@ -213,6 +212,11 @@ kv_value_cb(void *opaque, prop_event_t event, ...)
   va_start(ap, event);
 
   switch(event) {
+  case PROP_VALUE_PROP:
+    rstr_release(kpb->kpb_name);
+    kpb->kpb_name = prop_get_name(va_arg(apx, prop_t *));
+    break;
+
   case PROP_DESTROYED:
     prop_unsubscribe(va_arg(ap, prop_sub_t *));
     break;
@@ -222,6 +226,9 @@ kv_value_cb(void *opaque, prop_event_t event, ...)
   case PROP_SET_CSTRING:
   case PROP_SET_INT:
   case PROP_SET_FLOAT:
+
+    if(kpb->kpb_name == NULL)
+      break;
 
     db = kvstore_get();
     if(db == NULL)
@@ -293,12 +300,10 @@ kv_value_cb(void *opaque, prop_event_t event, ...)
       break;
     }
 
-    rstr_t *key = prop_get_name(va_arg(apx, prop_t *));
-    db_bind_rstr(stmt, 2, key);
+    db_bind_rstr(stmt, 2, kpb->kpb_name);
 
     rc = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
-    rstr_release(key);
 
     if(rc == SQLITE_LOCKED) {
       db_rollback_deadlock(db);
@@ -322,6 +327,7 @@ static void
 kpb_destroy(kv_prop_bind_t *kpb)
 {
   prop_unsubscribe(kpb->kpb_sub);
+  rstr_release(kpb->kpb_name);
   free(kpb->kpb_url);
   free(kpb);
 }

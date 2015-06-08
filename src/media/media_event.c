@@ -180,7 +180,6 @@ mp_seek_by_propchange(void *opaque, prop_event_t event, ...)
     break;
   case PROP_SET_FLOAT:
     t = va_arg(ap, double) * 1000000.0;
-    (void)va_arg(ap, prop_t *);  // valueprop
     how = va_arg(ap, int);
     break;
   default:

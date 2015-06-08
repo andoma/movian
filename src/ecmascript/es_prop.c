@@ -442,13 +442,11 @@ es_sub_cb(void *opaque, prop_event_t event, ...)
 
   switch(event) {
   case PROP_SET_DIR:
-    (void)va_arg(ap, prop_t *);
     duk_push_string(ctx, "dir");
     nargs = 1;
     break;
 
   case PROP_SET_VOID:
-    (void)va_arg(ap, prop_t *);
     duk_push_string(ctx, "set");
     duk_push_null(ctx);
     nargs = 2;
@@ -456,7 +454,6 @@ es_sub_cb(void *opaque, prop_event_t event, ...)
 
   case PROP_SET_RSTRING:
     r = va_arg(ap, const rstr_t *);
-    (void)va_arg(ap, prop_t *);
     duk_push_string(ctx, "set");
     duk_push_string(ctx, rstr_get(r));
     nargs = 2;
@@ -464,7 +461,6 @@ es_sub_cb(void *opaque, prop_event_t event, ...)
 
   case PROP_SET_CSTRING:
     c = va_arg(ap, const char *);
-    (void)va_arg(ap, prop_t *);
     duk_push_string(ctx, "set");
     duk_push_string(ctx, c);
     nargs = 2;
@@ -473,7 +469,6 @@ es_sub_cb(void *opaque, prop_event_t event, ...)
   case PROP_SET_URI:
     r = va_arg(ap, const rstr_t *);
     r2 = va_arg(ap, const rstr_t *);
-    (void)va_arg(ap, prop_t *);
     duk_push_string(ctx, "uri");
     duk_push_string(ctx, rstr_get(r));
     duk_push_string(ctx, rstr_get(r2));
@@ -482,7 +477,6 @@ es_sub_cb(void *opaque, prop_event_t event, ...)
 
   case PROP_SET_INT:
     i = va_arg(ap, int);
-    (void)va_arg(ap, prop_t *);
     duk_push_string(ctx, "set");
     duk_push_int(ctx, i);
     nargs = 2;
@@ -490,7 +484,6 @@ es_sub_cb(void *opaque, prop_event_t event, ...)
 
   case PROP_SET_FLOAT:
     d = va_arg(ap, double);
-    (void)va_arg(ap, prop_t *);
     duk_push_string(ctx, "set");
     duk_push_number(ctx, d);
     nargs = 2;

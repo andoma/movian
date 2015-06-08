@@ -462,25 +462,22 @@ prop_notify_free_payload(prop_notify_t *n)
   case PROP_SET_CSTRING:
   case PROP_SET_INT:
   case PROP_SET_FLOAT:
-    prop_ref_dec_locked(n->hpn_prop2);
     break;
 
   case PROP_SET_RSTRING:
     rstr_release(n->hpn_rstring);
-    prop_ref_dec_locked(n->hpn_prop2);
     break;
 
   case PROP_SET_URI:
     rstr_release(n->hpn_uri_title);
     rstr_release(n->hpn_uri);
-    prop_ref_dec_locked(n->hpn_prop2);
     break;
 
   case PROP_ADD_CHILD_BEFORE:
   case PROP_MOVE_CHILD:
   case PROP_REQ_MOVE_CHILD:
   case PROP_SELECT_CHILD:
-    prop_ref_dec_locked(n->hpn_prop2);
+    prop_ref_dec_locked(n->hpn_prop_extra);
   case PROP_ADD_CHILD:
   case PROP_DEL_CHILD:
   case PROP_REQ_NEW_CHILD:
@@ -491,12 +488,11 @@ prop_notify_free_payload(prop_notify_t *n)
 
   case PROP_EXT_EVENT:
     event_release(n->hpn_ext_event);
-    prop_ref_dec_locked(n->hpn_prop2);
     break;
 
 
   case PROP_ADD_CHILD_VECTOR_BEFORE:
-    prop_ref_dec_locked(n->hpn_prop2);
+    prop_ref_dec_locked(n->hpn_prop_extra);
     // FALLTHRU
   case PROP_REQ_DELETE_VECTOR:
   case PROP_ADD_CHILD_VECTOR:
@@ -716,58 +712,52 @@ notify_invoke(prop_sub_t *s, prop_notify_t *n)
   case PROP_SET_DIR:
   case PROP_SET_VOID:
     if(pt != NULL)
-      pt(s, n->hpn_event, n->hpn_prop2);
+      pt(s, n->hpn_event);
     else
-      cb(s->hps_opaque, n->hpn_event, n->hpn_prop2, s->hps_user_int);
-    if(n->hpn_prop2 != NULL)
-      prop_ref_dec(n->hpn_prop2);
+      cb(s->hps_opaque, n->hpn_event, s->hps_user_int);
     break;
 
   case PROP_SET_RSTRING:
     if(pt != NULL)
-      pt(s, n->hpn_event, n->hpn_rstring, n->hpn_prop2, n->hpn_rstrtype);
+      pt(s, n->hpn_event, n->hpn_rstring, n->hpn_rstrtype);
     else
-      cb(s->hps_opaque, n->hpn_event, n->hpn_rstring, n->hpn_prop2, n->hpn_rstrtype, s->hps_user_int);
+      cb(s->hps_opaque, n->hpn_event, n->hpn_rstring,
+         n->hpn_rstrtype, s->hps_user_int);
     rstr_release(n->hpn_rstring);
-    prop_ref_dec(n->hpn_prop2);
     break;
 
   case PROP_SET_CSTRING:
     if(pt != NULL)
-      pt(s, n->hpn_event, n->hpn_cstring, n->hpn_prop2);
+      pt(s, n->hpn_event, n->hpn_cstring);
     else
-      cb(s->hps_opaque, n->hpn_event, n->hpn_cstring, n->hpn_prop2, s->hps_user_int);
-    prop_ref_dec(n->hpn_prop2);
+      cb(s->hps_opaque, n->hpn_event, n->hpn_cstring, s->hps_user_int);
     break;
 
   case PROP_SET_URI:
     if(pt != NULL)
-      pt(s, n->hpn_event, n->hpn_uri_title, n->hpn_uri, n->hpn_prop2);
+      pt(s, n->hpn_event, n->hpn_uri_title, n->hpn_uri);
     else
       cb(s->hps_opaque, n->hpn_event, n->hpn_uri_title, n->hpn_uri,
-	 n->hpn_prop2, s->hps_user_int);
+	 s->hps_user_int);
     rstr_release(n->hpn_uri_title);
     rstr_release(n->hpn_uri);
-    prop_ref_dec(n->hpn_prop2);
     break;
 
 
   case PROP_SET_INT:
     if(pt != NULL)
-      pt(s, n->hpn_event, n->hpn_int, n->hpn_prop2, s->hps_user_int);
+      pt(s, n->hpn_event, n->hpn_int, s->hps_user_int);
     else
-      cb(s->hps_opaque, n->hpn_event, n->hpn_int, n->hpn_prop2, s->hps_user_int);
-    prop_ref_dec(n->hpn_prop2);
+      cb(s->hps_opaque, n->hpn_event, n->hpn_int, s->hps_user_int);
     break;
 
   case PROP_SET_FLOAT:
     if(pt != NULL)
-      pt(s, n->hpn_event, n->hpn_float, n->hpn_prop2,
+      pt(s, n->hpn_event, n->hpn_float,
 	 n->hpn_float_how, s->hps_user_int);
     else
-      cb(s->hps_opaque, n->hpn_event, n->hpn_float, n->hpn_prop2,
+      cb(s->hps_opaque, n->hpn_event, n->hpn_float,
 	 n->hpn_float_how, s->hps_user_int);
-    prop_ref_dec(n->hpn_prop2);
     break;
 
   case PROP_ADD_CHILD:
@@ -783,14 +773,12 @@ notify_invoke(prop_sub_t *s, prop_notify_t *n)
   case PROP_SELECT_CHILD:
   case PROP_REQ_MOVE_CHILD:
     if(pt != NULL)
-      pt(s, n->hpn_event, n->hpn_prop, n->hpn_prop2, n->hpn_flags, s->hps_user_int);
+      pt(s, n->hpn_event, n->hpn_prop, n->hpn_prop_extra, n->hpn_flags, s->hps_user_int);
     else
-      cb(s->hps_opaque, n->hpn_event, n->hpn_prop, 
-	 n->hpn_prop2, n->hpn_flags, s->hps_user_int);
-    if(n->hpn_prop != NULL)
-      prop_ref_dec(n->hpn_prop);
-    if(n->hpn_prop2 != NULL)
-      prop_ref_dec(n->hpn_prop2);
+      cb(s->hps_opaque, n->hpn_event, n->hpn_prop,
+	 n->hpn_prop_extra, n->hpn_flags, s->hps_user_int);
+    prop_ref_dec(n->hpn_prop);
+    prop_ref_dec(n->hpn_prop_extra);
     break;
 
   case PROP_DEL_CHILD:
@@ -814,11 +802,10 @@ notify_invoke(prop_sub_t *s, prop_notify_t *n)
 
   case PROP_EXT_EVENT:
     if(pt != NULL)
-      pt(s, n->hpn_event, n->hpn_ext_event, n->hpn_prop2, s->hps_user_int);
+      pt(s, n->hpn_event, n->hpn_ext_event, s->hps_user_int);
     else
-      cb(s->hps_opaque, n->hpn_event, n->hpn_ext_event, n->hpn_prop2, s->hps_user_int);
+      cb(s->hps_opaque, n->hpn_event, n->hpn_ext_event, s->hps_user_int);
     event_release(n->hpn_ext_event);
-    prop_ref_dec(n->hpn_prop2);
     break;
 
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
@@ -844,12 +831,13 @@ notify_invoke(prop_sub_t *s, prop_notify_t *n)
 
   case PROP_ADD_CHILD_VECTOR_BEFORE:
     if(pt != NULL)
-      pt(s, n->hpn_event, n->hpn_propv, n->hpn_prop2, s->hps_user_int);
+      pt(s, n->hpn_event, n->hpn_propv, n->hpn_prop_extra, s->hps_user_int);
     else
-      cb(s->hps_opaque, n->hpn_event, n->hpn_propv, n->hpn_prop2, s->hps_user_int);
+      cb(s->hps_opaque, n->hpn_event, n->hpn_propv, n->hpn_prop_extra,
+         s->hps_user_int);
 
     prop_vec_release(n->hpn_propv);
-    prop_ref_dec(n->hpn_prop2);
+    prop_ref_dec(n->hpn_prop_extra);
     break;
   case PROP_VALUE_PROP:
     assert(pt == NULL);
@@ -1264,52 +1252,53 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
     switch(p->hp_type) {
     case PROP_RSTRING:
       if(pt != NULL)
-	pt(s, PROP_SET_RSTRING, p->hp_rstring, p, p->hp_rstrtype, s->hps_user_int);
+	pt(s, PROP_SET_RSTRING, p->hp_rstring, p->hp_rstrtype, s->hps_user_int);
       else
-	cb(s->hps_opaque, PROP_SET_RSTRING, p->hp_rstring, p, p->hp_rstrtype, s->hps_user_int);
+	cb(s->hps_opaque, PROP_SET_RSTRING,
+           p->hp_rstring, p->hp_rstrtype, s->hps_user_int);
       break;
 
     case PROP_CSTRING:
       if(pt != NULL)
-	pt(s, PROP_SET_CSTRING, p->hp_cstring, p, s->hps_user_int);
+	pt(s, PROP_SET_CSTRING, p->hp_cstring, s->hps_user_int);
       else
-	cb(s->hps_opaque, PROP_SET_CSTRING, p->hp_cstring, p, s->hps_user_int);
+	cb(s->hps_opaque, PROP_SET_CSTRING, p->hp_cstring, s->hps_user_int);
       break;
 
     case PROP_URI:
       if(pt != NULL)
-	pt(s, PROP_SET_URI, p->hp_uri_title, p->hp_uri, p, s->hps_user_int);
+	pt(s, PROP_SET_URI, p->hp_uri_title, p->hp_uri, s->hps_user_int);
       else
 	cb(s->hps_opaque, PROP_SET_URI,
-	   p->hp_uri_title, p->hp_uri, p, s->hps_user_int);
+	   p->hp_uri_title, p->hp_uri, s->hps_user_int);
       break;
 
     case PROP_FLOAT:
       if(pt != NULL)
-	pt(s, PROP_SET_FLOAT, p->hp_float, p, how, s->hps_user_int);
+	pt(s, PROP_SET_FLOAT, p->hp_float, how, s->hps_user_int);
       else
-	cb(s->hps_opaque, PROP_SET_FLOAT, p->hp_float, p, how, s->hps_user_int);
+	cb(s->hps_opaque, PROP_SET_FLOAT, p->hp_float, how, s->hps_user_int);
       break;
 
     case PROP_INT:
       if(pt != NULL)
-	pt(s, PROP_SET_INT, p->hp_int, p, s->hps_user_int);
+	pt(s, PROP_SET_INT, p->hp_int, s->hps_user_int);
       else
-	cb(s->hps_opaque, PROP_SET_INT, p->hp_int, p, s->hps_user_int);
+	cb(s->hps_opaque, PROP_SET_INT, p->hp_int, s->hps_user_int);
       break;
 
     case PROP_DIR:
       if(pt != NULL)
-	pt(s, PROP_SET_DIR, p, s->hps_user_int);
+	pt(s, PROP_SET_DIR, s->hps_user_int);
       else
-	cb(s->hps_opaque, PROP_SET_DIR, p, s->hps_user_int);
+	cb(s->hps_opaque, PROP_SET_DIR, s->hps_user_int);
       break;
 
     case PROP_VOID:
       if(pt != NULL)
-	pt(s, PROP_SET_VOID, p, s->hps_user_int);
+	pt(s, PROP_SET_VOID, s->hps_user_int);
       else
-	cb(s->hps_opaque, PROP_SET_VOID, p, s->hps_user_int);
+	cb(s->hps_opaque, PROP_SET_VOID, s->hps_user_int);
       break;
 
     case PROP_PROP:
@@ -1339,8 +1328,6 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
   }
 
   n = get_notify(s);
-
-  n->hpn_prop2 = prop_ref_inc(p);
 
   switch(p->hp_type) {
   case PROP_RSTRING:
@@ -1422,7 +1409,7 @@ prop_notify_void(prop_sub_t *s)
   prop_notify_t *n = get_notify(s);
 
   n->hpn_event = PROP_SET_VOID;
-  n->hpn_prop2 = NULL;
+  n->hpn_prop_extra = NULL;
   courier_enqueue(s, n);
 }
 
@@ -1550,7 +1537,7 @@ prop_build_notify_child2(prop_sub_t *s, prop_t *p, prop_t *extra,
     atomic_inc(&extra->hp_refcount);
 
   n->hpn_prop = p;
-  n->hpn_prop2 = extra;
+  n->hpn_prop_extra = extra;
   n->hpn_event = event;
   n->hpn_flags = flags;
   courier_enqueue(s, n);
@@ -1596,7 +1583,7 @@ prop_build_notify_childv(prop_sub_t *s, prop_vec_t *pv, prop_event_t event,
   n->hpn_propv = prop_vec_addref(pv);
   n->hpn_flags = 0;
   n->hpn_event = event;
-  n->hpn_prop2 = prop_ref_inc(p2);
+  n->hpn_prop_extra = prop_ref_inc(p2);
   courier_enqueue(s, n);
 }
 
@@ -1632,7 +1619,6 @@ prop_send_ext_event0(prop_t *p, event_t *e)
     n = get_notify(s);
 
     n->hpn_event = PROP_EXT_EVENT;
-    n->hpn_prop2 = prop_ref_inc(p);
     atomic_inc(&e->e_refcount);
     n->hpn_ext_event = e;
     courier_enqueue(s, n);

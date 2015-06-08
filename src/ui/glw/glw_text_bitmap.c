@@ -792,7 +792,6 @@ prop_callback(void *opaque, prop_event_t event, ...)
 
   case PROP_SET_RSTRING:
     caption = rstr_get(va_arg(ap, const rstr_t *));
-    (void)va_arg(ap, prop_t *); // valueprop
     type = va_arg(ap, prop_str_type_t);
     break;
 
