@@ -79,6 +79,13 @@ sp_cmp(const stpp_prop_t *a, const stpp_prop_t *b)
   return a->sp_id - b->sp_id;
 }
 
+static stpp_prop_t *
+sp_get(prop_t *p, stpp_subscription_t *ss)
+{
+  return prop_tag_get(p, ss);
+}
+
+
 
 /**
  *
@@ -140,7 +147,7 @@ stpp_sub_json_add_child(stpp_subscription_t *ss, http_connection_t *hc,
 			prop_t *p, prop_t *before)
 { 
   char buf2[128];
-  unsigned int b = before ? ((stpp_prop_t *)prop_tag_get(before, ss))->sp_id:0;
+  unsigned int b = before ? sp_get(before, ss)->sp_id : 0;
   stpp_prop_t *sp = stpp_property_export_from_sub(ss, p);
   snprintf(buf2, sizeof(buf2), "[5,%u,%u,[%u]]", ss->ss_id, b, sp->sp_id);
   websocket_send(hc, 1, buf2, strlen(buf2));
@@ -154,7 +161,7 @@ static void
 stpp_sub_json_add_childs(stpp_subscription_t *ss, http_connection_t *hc,
 			 prop_vec_t *pv, prop_t *before)
 { 
-  unsigned int b = before ? ((stpp_prop_t *)prop_tag_get(before, ss))->sp_id:0;
+  unsigned int b = before ? sp_get(before, ss)->sp_id : 0;
   int i;
   htsbuf_queue_t hq;
 
@@ -335,7 +342,14 @@ stpp_sub_binary(void *opaque, prop_event_t event, ...)
   uint8_t *buf;
   int buflen = 1 + 1 + 4;
   int len;
-
+  int flags;
+  prop_t *p, *before;
+  const prop_vec_t *pv;
+  stpp_prop_t *sp;
+  union {
+    float f;
+    int i;
+  } u;
   va_start(ap, event);
 
   switch(event) {
@@ -344,6 +358,15 @@ stpp_sub_binary(void *opaque, prop_event_t event, ...)
     buf = alloca(buflen);
     buf[1] = STPP_SET_INT;
     wr32_le(buf + 6, va_arg(ap, int));
+    ss_clear_props(ss);
+    break;
+
+  case PROP_SET_FLOAT:
+    buflen += 4;
+    buf = alloca(buflen);
+    buf[1] = STPP_SET_FLOAT;
+    u.f = va_arg(ap, double);
+    wr32_le(buf + 6, u.i);
     ss_clear_props(ss);
     break;
 
@@ -371,13 +394,92 @@ stpp_sub_binary(void *opaque, prop_event_t event, ...)
     memcpy(buf + 6, str, len);
     ss_clear_props(ss);
     break;
+
+  case PROP_ADD_CHILD:
+    buflen += 4;
+    buf = alloca(buflen);
+    wr32_le(buf + 6,
+            stpp_property_export_from_sub(ss, va_arg(ap, prop_t *))->sp_id);
+
+    flags = va_arg(ap, int);
+    if(flags & PROP_ADD_SELECTED)
+      buf[1] = STPP_ADD_CHILD_SELECTED;
+    else
+      buf[1] = STPP_ADD_CHILDS;
+    break;
+
+  case PROP_ADD_CHILD_BEFORE:
+    p = va_arg(ap, prop_t *);
+    before = va_arg(ap, prop_t *);
+
+    buflen += 8;
+    buf = alloca(buflen);
+    wr32_le(buf + 6,  sp_get(before, ss)->sp_id);
+    wr32_le(buf + 10, stpp_property_export_from_sub(ss, p)->sp_id);
+    buf[1] = STPP_ADD_CHILDS;
+    break;
+
+  case PROP_ADD_CHILD_VECTOR:
+    pv = va_arg(ap, const prop_vec_t *);
+    buflen += prop_vec_len(pv) * 4;
+    buf = alloca(buflen);
+    for(int i = 0; i < prop_vec_len(pv); i++) {
+      wr32_le(buf + 6 + i * 4,
+              stpp_property_export_from_sub(ss, prop_vec_get(pv, i))->sp_id);
+    }
+    buf[1] = STPP_ADD_CHILDS;
+    break;
+
+  case PROP_ADD_CHILD_VECTOR_BEFORE:
+    pv = va_arg(ap, const prop_vec_t *);
+    before = va_arg(ap, prop_t *);
+
+    buflen += prop_vec_len(pv) * 4 + 4;
+    buf = alloca(buflen);
+    wr32_le(buf + 6,  sp_get(before, ss)->sp_id);
+    for(int i = 0; i < prop_vec_len(pv); i++) {
+      wr32_le(buf + 10 + i * 4,
+              stpp_property_export_from_sub(ss, prop_vec_get(pv, i))->sp_id);
+    }
+    buf[1] = STPP_ADD_CHILDS;
+    break;
+
+  case PROP_DEL_CHILD:
+    sp = prop_tag_clear(va_arg(ap, prop_t *), ss);
+    buflen += 4;
+    buf = alloca(buflen);
+    wr32_le(buf + 6, sp->sp_id);
+    buf[1] = STPP_DEL_CHILD;
+    stpp_property_unexport_from_sub(ss, sp);
+    break;
+
+  case PROP_MOVE_CHILD:
+    p = va_arg(ap, prop_t *);
+    before = va_arg(ap, prop_t *);
+
+    buflen += before ? 8 : 4;
+    buf = alloca(buflen);
+
+    wr32_le(buf + 6, sp_get(p, ss)->sp_id);
+    if(before)
+      wr32_le(buf + 10, sp_get(before, ss)->sp_id);
+    buf[1] = STPP_MOVE_CHILD;
+    break;
+
+  case PROP_SELECT_CHILD:
+    buflen += 4;
+    buf = alloca(buflen);
+    wr32_le(buf + 6, sp_get(va_arg(ap, prop_t *), ss)->sp_id);
+    buf[1] = STPP_SELECT_CHILD;
+    break;
+
   default:
-    printf("STPP SUB BINARY cant handle event %d", event);
+    printf("STPP SUB BINARY cant handle event %d\n", event);
     return;
   }
   buf[0] = STPP_CMD_NOTIFY;
   wr32_le(buf + 2, ss->ss_id);
-  hexdump("STPP SEND", buf, buflen);
+  hexdump("STPP-BINARY", buf, buflen);
   websocket_send(hc, 2, buf, buflen);
 }
 
@@ -386,6 +488,7 @@ stpp_sub_binary(void *opaque, prop_event_t event, ...)
  */
 static void
 stpp_cmd_sub(stpp_t *stpp, unsigned int id, int propref, const char *path,
+             uint16_t flags,
              const char **namevec,
              void (*notify)(void *opaque, prop_event_t event, ...))
 {
@@ -401,7 +504,7 @@ stpp_cmd_sub(stpp_t *stpp, unsigned int id, int propref, const char *path,
   }
 
   ss->ss_stpp = stpp;
-  ss->ss_sub = prop_subscribe(PROP_SUB_ALT_PATH,
+  ss->ss_sub = prop_subscribe(PROP_SUB_ALT_PATH | flags,
 			      PROP_TAG_COURIER, asyncio_courier,
 			      PROP_TAG_NAMESTR, path,
 			      PROP_TAG_NAME_VECTOR, namevec,
@@ -476,7 +579,7 @@ stpp_json(stpp_t *stpp, htsmsg_t *m)
     stpp_cmd_sub(stpp,
 		 htsmsg_get_u32_or_default(m, HTSMSG_INDEX(1), 0),
 		 htsmsg_get_u32_or_default(m, HTSMSG_INDEX(2), 0),
-		 htsmsg_get_str(m,            HTSMSG_INDEX(3)), NULL,
+		 htsmsg_get_str(m,            HTSMSG_INDEX(3)), 0, NULL,
                  stpp_sub_json);
     break;
 
@@ -508,19 +611,20 @@ stpp_binary(stpp_t *stpp, const uint8_t *data, int len)
   if(len < 1)
     return -1;
   const uint8_t cmd = data[0];
+  const int sub_name_offset = 10;
   data++;
   len--;
 
   switch(cmd) {
   case STPP_CMD_SUBSCRIBE:
-    if(len < 8) {
+    if(len < sub_name_offset) {
       return -1;
     } else {
       const char **name = NULL;
-      if(len > 8) {
+      if(len > sub_name_offset) {
 
-        const uint8_t *src = data + 8;
-        int remain = len - 8;
+        const uint8_t *src = data + sub_name_offset;
+        int remain = len - sub_name_offset;
         int comp = 0;
         while(remain > 0) {
           comp++;
@@ -530,7 +634,7 @@ stpp_binary(stpp_t *stpp, const uint8_t *data, int len)
         if(remain != 0)
           return -1;
         name = alloca(sizeof(const char *) * (comp + 1));
-        src = data + 8;
+        src = data + sub_name_offset;
         for(int i = 0; i < comp; i++) {
           int l = *src++;
           char *x = alloca(l + 1);
@@ -541,8 +645,8 @@ stpp_binary(stpp_t *stpp, const uint8_t *data, int len)
         }
         name[comp] = 0;
       }
-      stpp_cmd_sub(stpp, rd32_le(data), rd32_le(data + 4), NULL, name,
-                   stpp_sub_binary);
+      stpp_cmd_sub(stpp, rd32_le(data), rd32_le(data + 4), NULL,
+                   rd16_le(data + 8), name, stpp_sub_binary);
     }
     break;
 

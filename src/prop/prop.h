@@ -137,25 +137,26 @@ void prop_init_late(void);
 #define PNVEC(name, ...) (const char *[]){name, ##__VA_ARGS__, NULL}
 
 /**
- * Prop flags
+ * Prop flags. These are sent over the wire so nothing can be removed
  */
-#define PROP_SUB_DIRECT_UPDATE 0x1
-#define PROP_SUB_NO_INITIAL_UPDATE 0x2
-#define PROP_SUB_TRACK_DESTROY 0x4
-#define PROP_SUB_DEBUG         0x8 // TRACE(TRACE_DEBUG, ...) changes
-#define PROP_SUB_SUBSCRIPTION_MONITOR 0x10
-#define PROP_SUB_EXPEDITE             0x20
-#define PROP_SUB_MULTI                0x40
-#define PROP_SUB_INTERNAL             0x80
-#define PROP_SUB_DONTLOCK             0x100
-#define PROP_SUB_IGNORE_VOID          0x200
-#define PROP_SUB_TRACK_DESTROY_EXP    0x400
-#define PROP_SUB_SINGLETON            0x800
-#define PROP_SUB_USER_INT             0x1000
-#define PROP_SUB_ALT_PATH             0x2000
-#define PROP_SUB_SEND_VALUE_PROP      0x4000
-
+#define PROP_SUB_TRACK_DESTROY        0x1
+#define PROP_SUB_DEBUG                0x2
+#define PROP_SUB_SUBSCRIPTION_MONITOR 0x4
+#define PROP_SUB_EXPEDITE             0x8
+#define PROP_SUB_MULTI                0x10
+#define PROP_SUB_INTERNAL             0x20
+#define PROP_SUB_IGNORE_VOID          0x40
+#define PROP_SUB_TRACK_DESTROY_EXP    0x80
+#define PROP_SUB_SEND_VALUE_PROP      0x100
+#define PROP_SUB_NO_INITIAL_UPDATE    0x200
 // Remember that flags field is uint16_t in prop_i.h so don't go above 0x8000
+// for persistent flags
+
+#define PROP_SUB_DIRECT_UPDATE        0x10000
+#define PROP_SUB_DONTLOCK             0x20000
+#define PROP_SUB_SINGLETON            0x40000
+#define PROP_SUB_ALT_PATH             0x80000
+
 
 
 enum {
@@ -438,6 +439,7 @@ void prop_notify_dispatch(struct prop_notify_queue *q, const char *tracename);
 
 void prop_courier_stop(prop_courier_t *pc);
 
+// Does not create properties, can't be used over remote connections
 prop_t *prop_find(prop_t *parent, ...) attribute_null_sentinel;
 
 prop_t *prop_first_child(prop_t *p);

@@ -25,6 +25,8 @@
 #include "src/ui/glw/glw.h"
 #include "navigator.h"
 
+#include "networking/net.h"
+#include "prop/prop_proxy.h"
 
 @interface GLWWindow : NSWindow
 {
@@ -221,7 +223,22 @@ static prop_t *stored_nav;
 
   gr->gr_prop_ui = prop_create_root("ui");
 
-  if(stored_nav != NULL) {
+
+  if(gconf.remote_ui) {
+    struct net_addr na;
+    const char *errtxt;
+    if(net_resolve(gconf.remote_ui, &na, &errtxt))
+      exit(1);
+    na.na_port = 42000;
+    prop_t *p = prop_proxy_connect(&na);
+
+    gr->gr_prop_nav =
+      prop_get_by_name(PNVEC("remote", "navigators", "current"),
+                       1,
+                       PROP_TAG_NAMED_ROOT, p, "remove",
+                       NULL);
+
+  } else if(stored_nav != NULL) {
     gr->gr_prop_nav = stored_nav;
     stored_nav = NULL;
   } else {

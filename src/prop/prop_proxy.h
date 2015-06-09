@@ -32,7 +32,12 @@ prop_proxy_connection_t *ppc_retain(prop_proxy_connection_t *ppc);
 
 void ppc_release(prop_proxy_connection_t *ppc);
 
-struct prop *prop_proxy_make(prop_proxy_connection_t *ppc, uint32_t id);
+struct prop *prop_proxy_make(prop_proxy_connection_t *ppc, uint32_t id,
+                             struct prop_sub *s, char **pfx);
 
 void prop_proxy_subscribe(prop_proxy_connection_t *ppc, struct prop_sub *s,
                           struct prop *p, const char **name);
+
+void prop_proxy_unsubscribe(struct prop_sub *s);
+
+void prop_proxy_destroy(struct prop *p);

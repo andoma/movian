@@ -26,6 +26,7 @@
 
 #include "prop.h"
 #include "misc/pool.h"
+#include "misc/redblack.h"
 
 extern hts_mutex_t prop_mutex;
 extern hts_mutex_t prop_tag_mutex;
@@ -37,8 +38,10 @@ extern pool_t *sub_pool;
 
 TAILQ_HEAD(prop_queue, prop);
 LIST_HEAD(prop_list, prop);
+RB_HEAD(prop_tree, prop);
 LIST_HEAD(prop_sub_list, prop_sub);
 TAILQ_HEAD(prop_sub_dispatch_queue, prop_sub_dispatch);
+
 
 
 /**
@@ -122,6 +125,9 @@ typedef struct prop_notify {
 } prop_notify_t;
 
 
+prop_notify_t *prop_get_notify(prop_sub_t *s);
+
+
 
 /**
  * Property types
@@ -163,11 +169,28 @@ struct prop {
    */
   const char *hp_name;
 
-  /**
-   * Parent linkage. Protected by mutex
-   */
-  struct prop *hp_parent;
-  TAILQ_ENTRY(prop) hp_parent_link;
+  union {
+    struct {
+      /**
+       * Parent linkage. Protected by mutex
+       */
+      struct prop *hp_parent;
+      TAILQ_ENTRY(prop) hp_parent_link;
+
+      /**
+       * Subscriptions. Protected by mutex
+       */
+      struct prop_sub_list hp_value_subscriptions;
+      struct prop_sub_list hp_canonical_subscriptions;
+    };
+
+
+    // When hp_type == PROP_PROXY
+    struct {
+      RB_ENTRY(prop) hp_sub_link;
+      struct prop_sub *hp_sub;
+    };
+  };
 
 
   /**
@@ -182,12 +205,6 @@ struct prop {
    */
   struct prop_list hp_targets;
 
-
-  /**
-   * Subscriptions. Protected by mutex
-   */
-  struct prop_sub_list hp_value_subscriptions;
-  struct prop_sub_list hp_canonical_subscriptions;
 
   /**
    * Payload type
@@ -265,6 +282,11 @@ struct prop {
    */
 #define PROP_DEBUG_THIS            0x200
 
+  /**
+   * Indicates that this is a proxy property that should follow symbolic
+   * links when referenced on remote end.
+   */
+#define PROP_PROXY_FOLLOW_SYMLINK 0x400
 
   /**
    * Tags. Protected by prop_tag_mutex
@@ -299,6 +321,7 @@ struct prop {
     } uri;
     struct {
       struct prop_proxy_connection *ppc;
+      char **pfx;
       uint32_t id;
     } proxy;
     struct prop *prop;
@@ -318,6 +341,7 @@ struct prop {
 
 #define hp_proxy_ppc u.proxy.ppc
 #define hp_proxy_id  u.proxy.id
+#define hp_proxy_pfx u.proxy.pfx
 
 #ifdef PROP_DEBUG
   SIMPLEQ_HEAD(, prop_ref_trace) hp_ref_trace;
@@ -411,30 +435,28 @@ struct prop_sub {
    * Linkage to property or proxy connection. Protected by global mutex
    */
   LIST_ENTRY(prop_sub) hps_value_prop_link;
-  /**
-   * Linkage to canonical property. Protected by global mutex
-   */
-  LIST_ENTRY(prop_sub) hps_canonical_prop_link;
 
 
   union {
     struct {
-    // If hps_proxy is not set, these are the "active" members
+      // If hps_proxy is not set, these are the "active" members
       prop_t *hps_value_prop;
       prop_t *hps_canonical_prop;
+      LIST_ENTRY(prop_sub) hps_canonical_prop_link;
+      union {
+        prop_originator_tracking_t *hps_pots;
+        prop_t *hps_origin;
+      };
+
     };
     // If hps_proxy is set, these are the "active" members
     struct {
       struct prop_proxy_connection *hps_ppc;
+      struct prop_tree hps_prop_tree;
       int hps_proxy_subid;
     };
   };
 
-
-  union {
-    prop_originator_tracking_t *hps_pots;
-    prop_t *hps_origin;
-  };
 
   /**
    * Refcount. Not protected by mutex. Modification needs to be issued
@@ -529,5 +551,7 @@ void prop_set_string_exl(prop_t *p, prop_sub_t *skipme, const char *str,
 void prop_sub_ref_dec_locked(prop_sub_t *s);
 
 int prop_dispatch_one(prop_notify_t *n, int lockmode);
+
+void prop_courier_enqueue(prop_sub_t *s, prop_notify_t *n);
 
 #endif // PROP_I_H__
