@@ -158,8 +158,6 @@ static int key_to_action[][3] = {
   {KEY_STOPCD,             ACTION_STOP},
   {KEY_RECORD,             ACTION_RECORD},
   {KEY_SLEEP,              ACTION_STANDBY},
-  {KEY_PAGEUP,             ACTION_PAGE_UP},
-  {KEY_PAGEDOWN,           ACTION_PAGE_DOWN},
   {KEY_BACK,               ACTION_NAV_BACK},
 
   // These should be configurable
@@ -236,15 +234,25 @@ dd_read(de_dev_t *dd)
       return 0;
     }
   }
-  
+
   switch(ie.code) {
   case KEY_SPACE:
     e = event_create_int(EVENT_UNICODE, 32);
     break;
 
-  case KEY_ENTER: 
+  case KEY_ENTER:
     e = event_create_action_multi((const action_type_t[]){
 	ACTION_ACTIVATE, ACTION_ENTER}, 2);
+    break;
+
+  case KEY_PAGEUP:
+    e = event_create_action_multi((const action_type_t[]){
+        ACTION_PAGE_UP,   ACTION_PREV_CHANNEL, ACTION_SKIP_BACKWARD}, 3);
+    break;
+
+  case KEY_PAGEDOWN:
+    e = event_create_action_multi((const action_type_t[]){
+        ACTION_PAGE_DOWN,  ACTION_NEXT_CHANNEL, ACTION_SKIP_FORWARD}, 3);
     break;
 
   case KEY_BACKSPACE:

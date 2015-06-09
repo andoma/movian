@@ -745,8 +745,8 @@ static const struct {
   { XK_Left,         ShiftMask | ControlMask,   ACTION_SKIP_BACKWARD},
   { XK_Right,        ShiftMask | ControlMask,   ACTION_SKIP_FORWARD},
   
-  { XK_Prior,        0,            ACTION_PAGE_UP, ACTION_PREV_CHANNEL},
-  { XK_Next,         0,            ACTION_PAGE_DOWN, ACTION_NEXT_CHANNEL},
+  { XK_Prior,        0,            ACTION_PAGE_UP,   ACTION_PREV_CHANNEL, ACTION_SKIP_BACKWARD},
+  { XK_Next,         0,            ACTION_PAGE_DOWN, ACTION_NEXT_CHANNEL, ACTION_SKIP_FORWARD},
 
   { XK_Home,         0,           ACTION_TOP},
   { XK_End,          0,           ACTION_BOTTOM},
@@ -879,7 +879,7 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
 
 	if(keysym2action[i].action3 != ACTION_NONE)
 	  e = event_create_action_multi(av, 3);
-	if(keysym2action[i].action2 != ACTION_NONE)
+        else if(keysym2action[i].action2 != ACTION_NONE)
 	  e = event_create_action_multi(av, 2);
 	else
 	  e = event_create_action_multi(av, 1);

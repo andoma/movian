@@ -506,8 +506,8 @@ static const struct {
   { KC_LEFT,         MOD_SHIFT | MOD_CTRL,   ACTION_SKIP_BACKWARD},
   { KC_RIGHT,        MOD_SHIFT | MOD_CTRL,   ACTION_SKIP_FORWARD},
 
-  { KC_PAGE_UP,      0,            ACTION_PAGE_UP, ACTION_PREV_CHANNEL},
-  { KC_PAGE_DOWN,    0,            ACTION_PAGE_DOWN, ACTION_NEXT_CHANNEL},
+  { KC_PAGE_UP,      0, ACTION_PAGE_UP,   ACTION_PREV_CHANNEL, ACTION_SKIP_BACKWARD},
+  { KC_PAGE_DOWN,    0, ACTION_PAGE_DOWN, ACTION_NEXT_CHANNEL, ACTION_SKIP_FORWARD},
 
   { KC_HOME,         0,           ACTION_TOP},
   { KC_END,          0,           ACTION_BOTTOM},
@@ -544,7 +544,7 @@ handle_keydown(nacl_glw_root_t *ngr, PP_Resource input_event)
 
       if(keysym2action[i].action3 != ACTION_NONE)
         e = event_create_action_multi(av, 3);
-      if(keysym2action[i].action2 != ACTION_NONE)
+      else if(keysym2action[i].action2 != ACTION_NONE)
         e = event_create_action_multi(av, 2);
       else
         e = event_create_action_multi(av, 1);

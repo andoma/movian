@@ -63,8 +63,8 @@ static const struct {
   { NSUpArrowFunctionKey,     NSShiftKeyMask,   ACTION_MOVE_UP },
   { NSDownArrowFunctionKey,   NSShiftKeyMask,   ACTION_MOVE_DOWN },
 
-  { NSPageUpFunctionKey,      0,                ACTION_PAGE_UP, ACTION_NEXT_CHANNEL },
-  { NSPageDownFunctionKey,    0,                ACTION_PAGE_DOWN, ACTION_PREV_CHANNEL },
+  { NSPageUpFunctionKey,      0, ACTION_PAGE_UP, ACTION_PREV_CHANNEL, ACTION_SKIP_BACKWARD },
+  { NSPageDownFunctionKey,    0, ACTION_PAGE_DOWN, ACTION_NEXT_CHANNEL, ACTION_SKIP_FORWARD },
   { NSHomeFunctionKey,        0,                ACTION_TOP },
   { NSEndFunctionKey,         0,                ACTION_BOTTOM },
 
@@ -343,7 +343,7 @@ glw_in_fullwindow(void *opaque, int val)
 
       if(keysym2action[i].action3 != ACTION_NONE)
 	e = event_create_action_multi(av, 3);
-      if(keysym2action[i].action2 != ACTION_NONE)
+      else if(keysym2action[i].action2 != ACTION_NONE)
 	e = event_create_action_multi(av, 2);
       else
           e = event_create_action_multi(av, 1);
