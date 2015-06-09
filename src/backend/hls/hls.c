@@ -2061,8 +2061,13 @@ hls_playvideo(const char *url, media_pipe_t *mp,
   }
   buf = buf_make_writable(buf);
   char *s = buf_str(buf);
-
-  event_t *e = hls_play_extm3u(s, baseurl, mp, errbuf, errlen, vq, vsl, va0);
+  event_t *e;
+  if(s == NULL) {
+    snprintf(errbuf, errlen, "Playlist contains no data");
+    e = NULL;
+  } else {
+    e = hls_play_extm3u(s, baseurl, mp, errbuf, errlen, vq, vsl, va0);
+  }
   buf_release(buf);
   free(baseurl);
   return e;
