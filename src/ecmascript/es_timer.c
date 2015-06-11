@@ -129,6 +129,7 @@ timer_thread(void *aux)
     if(et->et_interval) {
       et->et_expire = now + et->et_interval * 1000LL;
       LIST_INSERT_SORTED(&timers, et, et_link, estimercmp, es_timer_t);
+      destroy = 0;
     } else {
       et->et_expire = 0;
       destroy = 1;
