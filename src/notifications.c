@@ -224,6 +224,8 @@ message_popup(const char *message, int flags, const char **extra)
 
   p = prop_ref_inc(prop_create_root(NULL));
 
+  TRACE(TRACE_DEBUG, "Notification", "%s", message);
+
   prop_set_string(prop_create(p, "type"), "message");
   prop_set_string_ex(prop_create(p, "message"), NULL, message,
 		     flags & MESSAGE_POPUP_RICH_TEXT ?
