@@ -65,9 +65,6 @@ typedef struct hls_segment {
 
   struct hls_variant *hs_variant;
 
-  int64_t hs_opened_at;
-  int hs_block_cnt;
-
   char hs_unavailable;
   char hs_mark;
 
@@ -129,7 +126,7 @@ typedef struct hls_variant {
 
   int hv_corrupt_counter;
   int hv_corruptions_last_period;
-  time_t hv_corrupt_timer; // When period above started
+  int64_t hv_corrupt_timer; // When period above started
 
   char *hv_subs_group;
   char *hv_audio_group;
@@ -169,13 +166,16 @@ typedef struct hls_demuxer {
   hls_variant_t *hd_req;
 
   int hd_bw;
+  int64_t hd_download_counter_reset_at;
+  int64_t hd_download_counter;
+  int hd_download_blocked;
 
   int hd_current_stream;
   int hd_pending_stream;
 
   media_codec_t *hd_audio_codec;
 
-  time_t hd_last_switch;
+  int64_t hd_last_switch;
 
   cancellable_t *hd_cancellable;
 
@@ -257,12 +257,6 @@ typedef struct hls_audio_track {
       TRACE(TRACE_DEBUG, "HLS", x, ##__VA_ARGS__);		\
   } while(0)
 
-#define HLS_INFO(h, x, ...) do {                               \
-    if((h)->h_debug)                                            \
-      TRACE(TRACE_INFO, "HLS", x, ##__VA_ARGS__);		\
-  } while(0)
-
-
 hls_error_t hls_segment_open(hls_segment_t *hs);
 
 void hls_segment_close(hls_segment_t *hs);
@@ -271,12 +265,12 @@ void hls_variant_open(hls_variant_t *hv);
 
 void hls_variant_close(hls_variant_t *hv);
 
-void hls_check_bw_switch(hls_demuxer_t *hd, time_t now, media_pipe_t *mp);
+void hls_check_bw_switch(hls_demuxer_t *hd, int64_t now, media_pipe_t *mp);
 
 hls_variant_t *hls_select_default_variant(hls_demuxer_t *hd);
 
 
-hls_segment_t *hls_variant_select_next_segment(hls_variant_t *hv, time_t now);
+hls_segment_t *hls_variant_select_next_segment(hls_variant_t *hv);
 
 int hls_get_audio_track(hls_t *h, int pid, const char *name,
                         const char *language,

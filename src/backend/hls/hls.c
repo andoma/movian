@@ -38,7 +38,7 @@
 #include "usage.h"
 #include "misc/minmax.h"
 
-#define HLS_CORRUPTION_MEASURE_PERIOD 60
+#define HLS_CORRUPTION_MEASURE_PERIOD (60 * 1000000)
 
 /**
  * Relevant docs:
@@ -54,7 +54,10 @@
 #define TESTURL "http://devimages.apple.com.edgekey.net/resources/http-streaming/examples/bipbop_16x9/bipbop_16x9_variant.m3u8"
 
 
-static hls_variant_t *hls_demuxer_select_variant(hls_demuxer_t *hd, time_t now);
+static hls_variant_t *hls_demuxer_select_variant(hls_demuxer_t *hd, int64_t now,
+                                                 int bw);
+
+static void refresh_bw(hls_demuxer_t *hd, int64_t now, media_pipe_t *mp, int always);
 
 
 /**
@@ -264,7 +267,7 @@ hls_bad_variant(hls_variant_t *hv, hls_error_t err)
 {
   hls_demuxer_t *hd = hv->hv_demuxer;
   hls_t *h = hd->hd_hls;
-  time_t now = time(NULL);
+  int64_t now = arch_get_ts();
 
   HLS_TRACE(h, "Unable to demux variant %s -- %s",
             hv->hv_name, hlserrstr[err]);
@@ -278,8 +281,8 @@ hls_bad_variant(hls_variant_t *hv, hls_error_t err)
 
   hls_variant_close(hv);
   usleep(100000);
-  hd->hd_req = hls_demuxer_select_variant(hd, now);
-  hd->hd_last_switch = time(NULL);
+  hd->hd_req = hls_demuxer_select_variant(hd, now, 0);
+  hd->hd_last_switch = now;
 }
 
 
@@ -287,7 +290,7 @@ hls_bad_variant(hls_variant_t *hv, hls_error_t err)
  *
  */
 static hls_error_t attribute_unused_result
-hls_variant_update(hls_variant_t *hv, time_t now)
+hls_variant_update(hls_variant_t *hv)
 {
   hls_segment_t *hs;
   char errbuf[1024];
@@ -295,6 +298,8 @@ hls_variant_update(hls_variant_t *hv, time_t now)
 
   if(hv->hv_frozen)
     return 0;
+
+  time_t now = time(NULL);
 
   if(hv->hv_loaded == now)
     return 0;
@@ -534,9 +539,6 @@ hls_segment_open(hls_segment_t *hs)
   if(hs->hs_byte_offset != -1)
     flags &= ~FA_STREAMING;
 
-  hs->hs_opened_at = arch_get_ts();
-  hs->hs_block_cnt = h->h_blocked;
-
   fh = fa_open_ex(hs->hs_url, errbuf, sizeof(errbuf), flags, &foe);
 
   if(fh == NULL) {
@@ -585,54 +587,11 @@ hls_segment_open(hls_segment_t *hs)
 /**
  *
  */
-static void
-hls_variant_update_bw(hls_segment_t *hs)
-{
-  hls_variant_t *hv = hs->hs_variant;
-  hls_demuxer_t *hd = hv->hv_demuxer;
-  const hls_t *h = hd->hd_hls;
-
-  if(hd != &h->h_primary)
-    return;
-
-  if(hs == NULL || !hs->hs_opened_at)
-    return;
-
-  int64_t ts = arch_get_ts() - hs->hs_opened_at;
-  if(ts < 1000 || ts > INT32_MAX)
-    return;
-  if(h->h_blocked != hs->hs_block_cnt)
-    return;
-
-  int bw = MIN(1000000000, 8000000LL * hs->hs_size / (int)ts);
-  if(bw == 1000000000)
-    return;
-
-  if(hd->hd_bw == 0) {
-    hd->hd_bw = (bw + hd->hd_bw * 3) / 4;
-  } else if (bw < hd->hd_bw) {
-    hd->hd_bw = bw;
-  } else {
-    hd->hd_bw = (bw + hd->hd_bw * 7) / 8;
-  }
-
-  HLS_INFO(h, "Estimated bandwidth: %d bps (filtered: %d bps)", bw, hd->hd_bw);
-
-  prop_set(h->h_mp->mp_prop_io, "bitrate", PROP_SET_INT, hd->hd_bw / 1000);
-  prop_set(h->h_mp->mp_prop_io, "bitrateValid", PROP_SET_INT, 1);
-}
-
-
-/**
- *
- */
 void
 hls_segment_close(hls_segment_t *hs)
 {
   if(hs->hs_fh == NULL)
     return;
-
-  hls_variant_update_bw(hs);
 
   fa_close(hs->hs_fh);
   hs->hs_fh = NULL;
@@ -715,6 +674,14 @@ hls_variant_open(hls_variant_t *hv)
 
   if(hd == &h->h_primary) {
     media_pipe_t *mp = h->h_mp;
+    char info[64];
+    if(hv->hv_bitrate) {
+      snprintf(info, sizeof(info), "HLS %d kb/s", hv->hv_bitrate / 1000);
+    } else {
+      snprintf(info, sizeof(info), "HLS");
+    }
+    prop_set(mp->mp_prop_metadata, "format", PROP_SET_STRING, info);
+#if 0
     prop_t *fmt = prop_create_r(mp->mp_prop_metadata, "format");
 
     if(hv->hv_bitrate) {
@@ -726,6 +693,7 @@ hls_variant_open(hls_variant_t *hv)
     }
 
     prop_ref_dec(fmt);
+#endif
 
     mp_set_duration(mp, hv->hv_frozen ? hv->hv_duration :  AV_NOPTS_VALUE);
     if(hv->hv_frozen) {
@@ -753,11 +721,84 @@ hls_variant_close(hls_variant_t *hv)
 }
 
 
+
+
+
+/**
+ *
+ */
+static void
+reset_bw(hls_demuxer_t *hd, int64_t now)
+{
+  hls_t *h = hd->hd_hls;
+
+  hd->hd_download_counter_reset_at = now;
+  hd->hd_download_counter = 0;
+  hd->hd_download_blocked = h->h_blocked;
+}
+
+
+/**
+ *
+ */
+static void
+refresh_bw(hls_demuxer_t *hd, int64_t now, media_pipe_t *mp, int always)
+{
+  hls_t *h = hd->hd_hls;
+
+  if(hd->hd_download_counter_reset_at == 0) {
+    reset_bw(hd, now);
+    return;
+  }
+
+  if(!always) {
+
+    int do_calc = 0;
+
+    if(now > hd->hd_download_counter_reset_at + 1000000 &&
+       hd->hd_download_counter > 50000)
+      do_calc = 1;
+
+    if(hd->hd_download_counter > 500000)
+      do_calc = 1;
+
+    if(!do_calc)
+      return;
+  }
+
+
+  if(hd->hd_download_blocked != h->h_blocked)
+    return;
+
+  int64_t delta = now - hd->hd_download_counter_reset_at;
+  if(delta <= 0)
+    return;
+
+  int64_t bw = 8000000 * hd->hd_download_counter / delta;
+  bw = MIN(bw, 100000000); // Clamp at 100mbps
+
+  if(hd->hd_bw == 0) {
+    hd->hd_bw = bw / 4;
+  } else if (bw < hd->hd_bw) {
+    hd->hd_bw = (bw * 7 + hd->hd_bw) / 8;
+  } else {
+    hd->hd_bw = (bw + hd->hd_bw * 7) / 8;
+  }
+  HLS_TRACE(h, "%s: Estimated bandwidth: %d bps (filtered: %d bps)",
+            hd->hd_type, bw, hd->hd_bw);
+
+  if(hd == &h->h_primary)
+    prop_set(mp->mp_prop_io, "bitrate", PROP_SET_INT, hd->hd_bw / 1000);
+  prop_set(mp->mp_prop_io, "bitrateValid", PROP_SET_INT, 1);
+  reset_bw(hd, now);
+}
+
+
 /**
  *
  */
 hls_segment_t *
-hls_variant_select_next_segment(hls_variant_t *hv, time_t now)
+hls_variant_select_next_segment(hls_variant_t *hv)
 {
   hls_demuxer_t *hd = hv->hv_demuxer;
   hls_t *h = hd->hd_hls;
@@ -765,7 +806,7 @@ hls_variant_select_next_segment(hls_variant_t *hv, time_t now)
   hls_segment_t *hs;
 
 
-  hls_error_t err = hls_variant_update(hv, now);
+  hls_error_t err = hls_variant_update(hv);
 
   if(err != HLS_ERROR_OK) {
     hls_bad_variant(hv, err);
@@ -829,15 +870,20 @@ hls_variant_select_next_segment(hls_variant_t *hv, time_t now)
    * Ok, so no segment is availble yet => go to sleep (but wakeup
    * if we need to exit or if we need to seek someplace)
    */
+
+  refresh_bw(hd, arch_get_ts(), mp, 1);
+
   hts_mutex_lock(&mp->mp_mutex);
 
   if(TAILQ_FIRST(&mp->mp_eq) == NULL) {
     if(hts_cond_wait_timeout(&mp->mp_backpressure, &mp->mp_mutex, 1000)) {
       hts_mutex_unlock(&mp->mp_mutex);
+      reset_bw(hd, arch_get_ts());
       return HLS_NYA;
     }
   }
   hts_mutex_unlock(&mp->mp_mutex);
+  reset_bw(hd, arch_get_ts());
   return NULL;
 }
 
@@ -866,14 +912,10 @@ hls_select_default_variant(hls_demuxer_t *hd)
  *
  */
 static hls_variant_t *
-demuxer_select_variant_simple(hls_demuxer_t *hd, time_t now)
+demuxer_select_variant_simple(hls_demuxer_t *hd, int64_t now, int bw)
 {
   hls_variant_t *hv;
   hls_variant_t *best = NULL;
-
-  int bw = hd->hd_bw;
-  if(bw == 0)
-    bw = 256000;
 
   int lcc = INT32_MAX;
 
@@ -957,40 +999,40 @@ demuxer_select_variant_random(hls_demuxer_t *hd)
  *
  */
 static hls_variant_t *
-hls_demuxer_select_variant(hls_demuxer_t *hd, time_t now)
+hls_demuxer_select_variant(hls_demuxer_t *hd, int64_t now, int bw)
 {
   if(0)
     return demuxer_select_variant_random(hd);
 
-  return demuxer_select_variant_simple(hd, now);
+  return demuxer_select_variant_simple(hd, now, bw);
 }
+
 
 
 /**
  *
  */
 void
-hls_check_bw_switch(hls_demuxer_t *hd, time_t now, media_pipe_t *mp)
+hls_check_bw_switch(hls_demuxer_t *hd, int64_t now, media_pipe_t *mp)
 {
+  refresh_bw(hd, now, mp, 0);
+
   if(hd->hd_bw == 0)
     return;
 
-  if(hd->hd_last_switch + 3 > now)
+  if(hd->hd_last_switch + 250000 > now)
     return;
 
-  hls_variant_t *hv = hls_demuxer_select_variant(hd, now);
+  hls_variant_t *hv = hls_demuxer_select_variant(hd, now, hd->hd_bw * 0.8);
 
   if(hv == NULL || hv == hd->hd_current)
     return;
-
   if(hd->hd_current != NULL &&
      hv->hv_bitrate > hd->hd_current->hv_bitrate) {
-    printf("Switching from %d to %d buffer=%d\n",
-           hd->hd_current->hv_bitrate,  hv->hv_bitrate,
-           mp->mp_buffer_delay);
 
-    if(mp->mp_buffer_delay < 10000000) {
-      printf("Not going up in bitrate because buffer is too low\n");
+    int64_t limit = 10000000;
+
+    if(mp->mp_buffer_delay < limit) {
       return;
     }
   }
@@ -1427,7 +1469,7 @@ get_media_buf(hls_t *h)
   hls_demuxer_t *hd;
   media_pipe_t *mp = h->h_mp;
 
-  const int dumpinfo = 1;
+  const int dumpinfo = 0;
  again:
   if((b2 = hls_demuxer_get_audio(h)) == NULL)
     return NULL;
@@ -1584,7 +1626,7 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 
   mp_configure(mp, MP_CAN_PAUSE, MP_BUFFER_DEEP, 0, "video");
 
-  //  mp->mp_pre_buffer_delay = 10000000;
+  // mp->mp_pre_buffer_delay = 10000000;
 
   mp->mp_video.mq_seektarget = AV_NOPTS_VALUE;
   mp->mp_audio.mq_seektarget = AV_NOPTS_VALUE;

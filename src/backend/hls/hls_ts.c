@@ -1126,7 +1126,7 @@ hls_ts_demuxer_read(hls_demuxer_t *hd)
 
     assert(hd->hd_current != NULL);
 
-    time_t now = time(NULL); // Bad
+    int64_t now = arch_get_ts();
 
     hls_check_bw_switch(hd, now, mp);
 
@@ -1189,9 +1189,7 @@ hls_ts_demuxer_read(hls_demuxer_t *hd)
       hls_segment_t *hs;
       while(1) {
 
-        now = time(NULL);
-
-        hs = hls_variant_select_next_segment(hv, now);
+        hs = hls_variant_select_next_segment(hv);
 
         if(hs == HLS_NYA)
           continue;
@@ -1286,6 +1284,7 @@ hls_ts_demuxer_read(hls_demuxer_t *hd)
         }
 
         td->td_buf_bytes += r;
+        hd->hd_download_counter += r;
       }
 
       // Search stream for TS mux lock, we want two continous packets
@@ -1343,6 +1342,7 @@ hls_ts_demuxer_read(hls_demuxer_t *hd)
         hls_segment_close(hs);
         continue;
       }
+      hd->hd_download_counter += r;
 
       unmuxed_input(td, td->td_buf, r, hs);
       break;
@@ -1366,6 +1366,7 @@ hls_ts_demuxer_read(hls_demuxer_t *hd)
       }
 
       td->td_buf_bytes += r;
+      hd->hd_download_counter += r;
 
       if(td->td_buf_bytes == 188) {
         td->td_buf_bytes = 0;
