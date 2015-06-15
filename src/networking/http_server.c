@@ -1112,7 +1112,7 @@ http_io_read(void *opaque, htsbuf_queue_t *q)
 const char *
 http_get_my_host(http_connection_t *hc)
 {
-  if(!hc->hc_my_addr)
+  if(!hc->hc_my_addr[0])
     net_fmt_host(hc->hc_my_addr, sizeof(hc->hc_my_addr), &hc->hc_local_addr);
   return hc->hc_my_addr;
 }
