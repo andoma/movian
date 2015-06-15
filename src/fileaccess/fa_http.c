@@ -1460,6 +1460,7 @@ http_set_read_timeout(fa_handle_t *fh, int ms)
   http_file_t *hf = (http_file_t *)fh;
 
   hf->hf_read_timeout = ms;
+  hf->hf_connect_timeout = ms;
 
   if(hf->hf_connection != NULL)
     tcp_set_read_timeout(hf->hf_connection->hc_tc, ms);
