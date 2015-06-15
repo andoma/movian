@@ -523,7 +523,6 @@ glw_in_fullwindow(void *opaque, int val)
   NSOpenGLPixelFormatAttribute attribs_windowed[] = {
     NSOpenGLPFAWindow,
     NSOpenGLPFAColorSize, 32,
-    NSOpenGLPFAAccelerated,
     NSOpenGLPFADoubleBuffer,
     NSOpenGLPFASingleRenderer,
     0 };
