@@ -1641,7 +1641,7 @@ glw_root_event_handler(glw_root_t *gr, event_t *e)
 	    event_is_type(e, EVENT_OPENURL)) {
 
     prop_t *p = prop_get_by_name(PNVEC("nav", "eventSink"), 0,
-                                 PROP_TAG_ROOT, gr->gr_prop_nav,
+                                 PROP_TAG_NAMED_ROOT, gr->gr_prop_nav, "nav",
                                  NULL);
     prop_send_ext_event(p, e);
     prop_ref_dec(p);
@@ -2118,11 +2118,11 @@ glw_inject_event(glw_root_t *gr, event_t *e)
       event_is_action(e, ACTION_RELOAD_DATA) ||
       event_is_type(e, EVENT_OPENURL))) {
     p = prop_get_by_name(PNVEC("nav", "eventSink"), 0,
-			 PROP_TAG_ROOT, gr->gr_prop_nav,
+			 PROP_TAG_NAMED_ROOT, gr->gr_prop_nav, "nav",
 			 NULL);
   } else {
     p = prop_get_by_name(PNVEC("ui", "eventSink"), 0,
-			 PROP_TAG_ROOT, gr->gr_prop_ui,
+			 PROP_TAG_NAMED_ROOT, gr->gr_prop_ui, "nav",
 			 NULL);
   }
   prop_send_ext_event(p, e);
