@@ -1198,6 +1198,13 @@ url_resolve_relative(const char *proto, const char *hostname, int port,
   int pathlen = 0;
 
   if(*ref != '/') {
+    char *x = strrchr(path, '?');
+    if(x != NULL) {
+      char *x2 = mystrdupa(path);
+      x2[x - path] = 0;
+      path = x2;
+    }
+
     const char *r = strrchr(path, '/');
     if(r != NULL) {
       pathlen = r - path + 1;
