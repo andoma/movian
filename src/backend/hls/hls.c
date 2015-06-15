@@ -111,12 +111,52 @@ get_attrib(char *v, const char **keyp, const char **valuep)
 }
 
 
+
+/**
+ *
+ */
+static hls_discontinuity_segment_t *
+discontinuity_seq_get(hls_t *h, int discontinuity_seq)
+{
+  hls_discontinuity_segment_t *hds;
+  TAILQ_FOREACH(hds, &h->h_discontinuity_segments, hds_link) {
+    if(hds->hds_seq == discontinuity_seq) {
+      hds->hds_refcount++;
+      return hds;
+    }
+  }
+
+  hds = calloc(1, sizeof(hls_discontinuity_segment_t));
+  TAILQ_INSERT_TAIL(&h->h_discontinuity_segments, hds, hds_link);
+  if(discontinuity_seq != 0)
+    hds->hds_offset = PTS_UNSET;
+  hds->hds_refcount = 1;
+  hds->hds_seq = discontinuity_seq;
+  return hds;
+}
+
+
+/**
+ *
+ */
+static void
+discontinuity_seq_release(hls_discontinuity_segment_t *hds, hls_t *h)
+{
+  if(--hds->hds_refcount)
+    return;
+  TAILQ_REMOVE(&h->h_discontinuity_segments, hds, hds_link);
+  free(hds);
+}
+
+
 /**
  *
  */
 static void
 segment_destroy(hls_segment_t *hs)
 {
+  hls_t *h = hs->hs_variant->hv_demuxer->hd_hls;
+  discontinuity_seq_release(hs->hs_discontinuity_segment, h);
   if(hs->hs_fh != NULL)
     fa_close(hs->hs_fh);
   TAILQ_REMOVE(&hs->hs_variant->hv_segments, hs, hs_link);
@@ -171,6 +211,7 @@ static hls_variant_t *
 variant_create(hls_demuxer_t *hd)
 {
   hls_variant_t *hv = calloc(1, sizeof(hls_variant_t));
+  hv->hv_start_time_offset = PTS_UNSET;
   hv->hv_demuxer = hd;
   hv->hv_first_seq = -1;
   hv->hv_last_seq = -1;
@@ -242,7 +283,24 @@ hv_parse_key(hls_variant_parser_t *hvp, const char *baseurl, const char *V)
   }
 }
 
+/**
+ *
+ */
+static void
+hv_parse_start(hls_variant_t *hv, const char *V)
+{
+  char *v = mystrdupa(V);
+  while(*v) {
+    const char *key, *value;
+    v = get_attrib(v, &key, &value);
+    if(v == NULL)
+      break;
 
+    if(!strcmp(key, "TIME-OFFSET")) {
+      hv->hv_start_time_offset = MAX(my_str2double(value, NULL), 0.0f) * 1000000;
+    }
+  }
+}
 
 /**
  *
@@ -332,6 +390,9 @@ hls_variant_update(hls_variant_t *hv)
   int first_seq = -1;
   int discontinuity_seq = 0;
 
+  if(TAILQ_FIRST(&h->h_discontinuity_segments) != NULL)
+    discontinuity_seq = TAILQ_FIRST(&h->h_discontinuity_segments)->hds_seq;
+
   memset(&hvp, 0, sizeof(hvp));
 
   LINEPARSE(s, buf_str(b)) {
@@ -352,6 +413,8 @@ hls_variant_update(hls_variant_t *hv)
       discontinuity_seq = atoi(v);
     } else if(!strcmp(s, "#EXT-X-DISCONTINUITY")) {
       discontinuity_seq++;
+    } else if((v = mystrbegins(s, "#EXT-X-START:")) != NULL) {
+      hv_parse_start(hv, v);
     } else if((v = mystrbegins(s, "#EXT-X-BYTERANGE:")) != NULL) {
       byte_size = atoi(v);
       const char *o = strchr(v, '@');
@@ -376,7 +439,8 @@ hls_variant_update(hls_variant_t *hv)
 	hs->hs_duration    = duration * 1000000LL;
 	hs->hs_crypto      = hvp.hvp_crypto;
 	hs->hs_key_url     = rstr_dup(hvp.hvp_key_url);
-        hs->hs_discontinuity_seq = discontinuity_seq;
+        hs->hs_discontinuity_segment =
+          discontinuity_seq_get(h, discontinuity_seq);
 
 	hv->hv_duration   += hs->hs_duration;
 
@@ -523,15 +587,12 @@ hls_segment_open(hls_segment_t *hs)
   fa_open_extra_t foe = {0};
   fa_handle_t *fh;
   char errbuf[512];
-  const int fast_fail = 1;
   hls_demuxer_t *hd = hv->hv_demuxer;
   const hls_t *h = hd->hd_hls;
 
   assert(hs->hs_fh == NULL);
 
-  if(fast_fail)
-    foe.foe_open_timeout = 2000;
-
+  foe.foe_open_timeout = 3000;
   foe.foe_cancellable = hd->hd_cancellable;
 
   int flags = FA_BUFFERED_BIG | FA_STREAMING;
@@ -550,6 +611,8 @@ hls_segment_open(hls_segment_t *hs)
       return HLS_ERROR_SEGMENT_BROKEN;
     }
   }
+
+  fa_set_read_timeout(fh, 3000);
 
   if(hs->hs_byte_size != -1 && hs->hs_byte_offset != -1)
     fh = fa_slice_open(fh, hs->hs_byte_offset, hs->hs_byte_size);
@@ -764,6 +827,10 @@ refresh_bw(hls_demuxer_t *hd, int64_t now, media_pipe_t *mp, int always)
 
     if(!do_calc)
       return;
+  } else {
+    if(hd->hd_download_counter < 10000)
+      return;
+
   }
 
 
@@ -784,8 +851,9 @@ refresh_bw(hls_demuxer_t *hd, int64_t now, media_pipe_t *mp, int always)
   } else {
     hd->hd_bw = (bw + hd->hd_bw * 7) / 8;
   }
-  HLS_TRACE(h, "%s: Estimated bandwidth: %d bps (filtered: %d bps)",
-            hd->hd_type, bw, hd->hd_bw);
+  HLS_TRACE(h, "%s: Current bandwidth: %d bps (measured: %d bps) "
+            "%"PRId64" bytes in %"PRId64" µs",
+            hd->hd_type, hd->hd_bw, bw, hd->hd_download_counter, delta);
 
   if(hd == &h->h_primary)
     prop_set(mp->mp_prop_io, "bitrate", PROP_SET_INT, hd->hd_bw / 1000);
@@ -836,11 +904,28 @@ hls_variant_select_next_segment(hls_variant_t *hv)
     if(hs == NULL) {
       int seq = get_current_video_seq(h->h_mp, h);
       if(seq == 0 && !hv->hv_frozen) {
-        seq = MAX(hv->hv_last_seq - 3, hv->hv_first_seq);
-        HLS_TRACE(h, "Live stream selecting initial segment %d", seq);
+
+        if(hv->hv_start_time_offset != PTS_UNSET) {
+          int64_t acc = 0;
+
+          hls_segment_t *x;
+          TAILQ_FOREACH(x, &hv->hv_segments, hs_link) {
+            acc += x->hs_duration;
+            if(hv->hv_start_time_offset < acc) {
+              hs = x;
+              HLS_TRACE(h, "Live stream starting at segment %d", hs->hs_seq);
+              break;
+            }
+          }
+        }
+
+        if(hs == NULL) {
+          seq = MAX(hv->hv_last_seq - 3, hv->hv_first_seq);
+          HLS_TRACE(h, "Live stream selecting initial segment %d", seq);
+        }
       }
 
-      if(seq) {
+      if(hs == NULL && seq) {
 
         int i;
         for(i = 0; i < 5; i++) {
@@ -1242,8 +1327,6 @@ enqueue_buffer(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
 
   if(unlikely(mq->mq_seektarget != AV_NOPTS_VALUE)) {
     int64_t ts = mb->mb_user_time;
-    printf("%s: %ld %ld %s\n", is_video ? "VIDEO" : "AUDIO",
-           ts, mq->mq_seektarget, ts < mq->mq_seektarget ? "drop": "grant");
     if(ts < mq->mq_seektarget) {
       mb->mb_skip = 1;
     } else {
@@ -1498,7 +1581,6 @@ get_media_buf(hls_t *h)
     if(b2 == HLS_EOF) {
       h->h_primary.hd_discontinuity = 0;
       h->h_primary.hd_mb = NULL;
-      h->h_select_new_ts_offset = 1;
       if(dumpinfo)
         printf("Primary discontinuity reset\n");
       goto again;
@@ -1509,7 +1591,6 @@ get_media_buf(hls_t *h)
       h->h_audio.hd_discontinuity = 0;
       h->h_primary.hd_mb = NULL;
       h->h_audio.hd_mb = NULL;
-      h->h_select_new_ts_offset = 1;
       if(dumpinfo)
         printf("Both discontinuity reset\n");
       goto again;
@@ -1521,7 +1602,6 @@ get_media_buf(hls_t *h)
     if(b1 == HLS_EOF) {
       h->h_audio.hd_discontinuity = 0;
       h->h_audio.hd_mb = NULL;
-      h->h_select_new_ts_offset = 1;
       if(dumpinfo)
         printf("Audio discontinuity reset\n");
       goto again;
@@ -1571,18 +1651,33 @@ clear_ts_offsets(hls_demuxer_t *hd)
   }
 }
 
+
+/**
+ *
+ */
+static void
+clear_hds_offset(hls_t *h)
+{
+  hls_discontinuity_segment_t *hds;
+
+  TAILQ_FOREACH(hds, &h->h_discontinuity_segments, hds_link)
+    if(hds->hds_seq != 0)
+      hds->hds_offset = PTS_UNSET;
+}
+
 /**
  *
  */
 static void
 hls_seek(hls_t *h, int64_t ts)
 {
-  printf("Seek to %"PRId64" --------------------------------\n", ts);
   media_pipe_t *mp = h->h_mp;
-  h->h_ts_offset = 0;
+
+  HLS_TRACE(h, "Seeking to %"PRId64, ts);
+
   hls_demuxer_seek(mp, &h->h_primary, ts);
   hls_demuxer_seek(mp, &h->h_audio,   ts);
-
+  clear_hds_offset(h);
   clear_ts_offsets(&h->h_primary);
   clear_ts_offsets(&h->h_audio);
   cancellable_reset(h->h_primary.hd_cancellable);
@@ -2081,9 +2176,9 @@ hls_play_extm3u(char *buf, const char *url, media_pipe_t *mp,
 
   hls_t h;
   memset(&h, 0, sizeof(h));
+  TAILQ_INIT(&h.h_discontinuity_segments);
   hls_demuxer_init(&h.h_primary, &h, "primary");
   hls_demuxer_init(&h.h_audio, &h, "audio");
-  h.h_ts_offset = 0;
   h.h_mp = mp;
   h.h_baseurl = url;
   h.h_codec_h264 = media_codec_create(AV_CODEC_ID_H264, 1, NULL, NULL, NULL, mp);
@@ -2124,7 +2219,7 @@ hls_play_extm3u(char *buf, const char *url, media_pipe_t *mp,
   media_codec_deref(h.h_codec_h264);
 
   hls_free_audio_tracks(&h);
-
+  assert(TAILQ_FIRST(&h.h_discontinuity_segments) == NULL);
   HLS_TRACE(&h, "HLS player done");
 
   return e;

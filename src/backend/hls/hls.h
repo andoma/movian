@@ -40,6 +40,18 @@ LIST_HEAD(hls_audio_track_list, hls_audio_track);
 #define HLS_CRYPTO_NONE   0
 #define HLS_CRYPTO_AES128 1
 
+
+/**
+ *
+ */
+typedef struct hls_discontinuity_segment {
+  TAILQ_ENTRY(hls_discontinuity_segment) hds_link;
+  int hds_seq;
+  int hds_refcount;
+  int64_t hds_offset;
+} hls_discontinuity_segment_t;
+
+
 /**
  *
  */
@@ -55,7 +67,7 @@ typedef struct hls_segment {
   int64_t hs_ts_offset;
 
   int hs_seq;
-  int hs_discontinuity_seq;
+  hls_discontinuity_segment_t *hs_discontinuity_segment;
 
   uint8_t hs_crypto;
   uint8_t hs_open_error;
@@ -110,6 +122,7 @@ typedef struct hls_variant {
 
   char hv_frozen;
   char hv_audio_only;
+
   int hv_h264_profile;
   int hv_h264_level;
   int hv_target_duration;
@@ -117,7 +130,6 @@ typedef struct hls_variant {
   time_t hv_loaded; /* last time it was loaded successfully
                      *  0 means not loaded
                      */
-
   int hv_program;
   int hv_bitrate;
 
@@ -151,6 +163,8 @@ typedef struct hls_variant {
   char hv_name[32];
 
   int hv_audio_stream;
+  
+  int64_t hv_start_time_offset;
 
 } hls_variant_t;
 
@@ -198,14 +212,7 @@ typedef struct hls_demuxer {
 
 } hls_demuxer_t;
 
-/**
- *
- */
-typedef struct hls_segment_timing {
-  int64_t hst_offset;
-  char hts_discontinuity;
-  char hts_offset_valid;
-} hls_segment_timing_t;
+TAILQ_HEAD(hls_discontinuity_segment_queue, hls_discontinuity_segment);
 
 /**
  *
@@ -236,9 +243,9 @@ typedef struct hls {
   struct hls_audio_track_list h_audio_tracks;
 
   int h_last_enqueued_seq;
-  int h_select_new_ts_offset;
 
-  int64_t h_ts_offset;
+  struct hls_discontinuity_segment_queue h_discontinuity_segments;
+
 } hls_t;
 
 
