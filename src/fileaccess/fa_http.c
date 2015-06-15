@@ -312,6 +312,8 @@ http_connection_get(const char *hostname, int port, int ssl,
   if(ssl)
     tcp_connect_flags |= TCP_SSL;
 
+  HTTP_TRACE(dbg, "Connecting to %s:%d", hostname, port);
+
   if((tc = tcp_connect(hostname, port, errbuf, errlen,
                        timeout, tcp_connect_flags, c)) == NULL) {
     HTTP_TRACE(dbg, "Connection to %s:%d failed -- %s%s",
