@@ -235,7 +235,7 @@ static prop_t *stored_nav;
     gr->gr_prop_nav =
       prop_get_by_name(PNVEC("remote", "navigators", "current"),
                        1,
-                       PROP_TAG_NAMED_ROOT, p, "remove",
+                       PROP_TAG_NAMED_ROOT, p, "remote",
                        NULL);
 
   } else if(stored_nav != NULL) {
