@@ -627,8 +627,6 @@ enqueue_packet(ts_demuxer_t *td, const void *data, int len,
     }
 
     if(hds->hds_offset == PTS_UNSET) {
-      printf("HDS unset dts = %ld %ld %s\n", dts, te->te_last_dts,
-             dts < te->te_last_dts ? "less" : "not less");
       if(dts != PTS_UNSET) {
         if(te->te_last_dts != PTS_UNSET) {
           hds->hds_offset = te->te_last_dts - dts;
