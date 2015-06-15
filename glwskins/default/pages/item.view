@@ -31,7 +31,7 @@ widget(container_y, {
   widget(container_x, {
     spacing: 20;
     widget(image, {
-      source: $page.model.metadata.icon;
+      source: $self.model.metadata.icon;
       width: 160;
       align: topLeft;
       aspectConstraint: true;
@@ -42,7 +42,7 @@ widget(container_y, {
       filterConstraintY: true;
       filterConstraintX: true;
       spacing: 2;
-      cloner($page.model.nodes, loader, {
+      cloner($self.model.nodes, loader, {
 	source: "skin://itemviews/" + $self.type + ".view";
       });	  
       
@@ -51,7 +51,7 @@ widget(container_y, {
       widget(list_x, {
 	spacing: $ui.size * 2;
 	
-	cloner($page.model.actions, container_z, {
+	cloner($self.model.actions, container_z, {
 	  hidden: !$self.enabled;
 	  widget(label, {
 	    focusable: true;
@@ -60,7 +60,7 @@ widget(container_y, {
 	    color: select(isFocused(), 1, 0.5);
 	    onEvent(activate,
 		    translate($self.type, void,
-			      "pageevent", deliverEvent($page.eventSink, $self.data),
+			      "pageevent", deliverEvent($self.eventSink, $self.data),
 			      "navopen", navOpen($self.data)
 			     ));
 	  });	

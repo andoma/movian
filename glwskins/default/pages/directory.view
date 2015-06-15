@@ -11,16 +11,16 @@ onEvent(ChangeView, deliverEvent($clone.settings.options, "Cycle"));
 multiopt($view.path,
 	 $clone.settings,
 	 _("View"),
-	 $page.persistent.glwUserView,
+	 $self.persistent.glwUserView,
 	 // List of view follows
 	 // First custom view set by model
-	 makeUri(_("Custom"), $page.model.metadata.glwview),
+	 makeUri(_("Custom"), $self.model.metadata.glwview),
 
 	 // Optionally a list of custom views set by model
-	 vectorize($page.model.metadata.glwviews),
+	 vectorize($self.model.metadata.glwviews),
 
 	 // Then comes external views selected based on content
-	 translate($page.model.contents, void,
+	 translate($self.model.contents, void,
 		   "tracks",     vectorize($global.glw.views.standard.tracks),
 		   "album",      vectorize($global.glw.views.standard.album),
 		   "albums",     vectorize($global.glw.views.standard.albums),
@@ -31,17 +31,17 @@ multiopt($view.path,
 		    ),
 
 	 // Then comes internal views selected based on content
-	 translate($page.model.contents, void,
+	 translate($self.model.contents, void,
 		   "album",      makeUri(_("Album"),      "album.view"),
 		   "artist",     makeUri(_("Artist"),     "artist.view"),
 		   "tvchannels", makeUri(_("Tvchannels"), "tvchannels.view"),
 		   "images",     makeUri(_("Images"),     "images.view")
 		    ),
 
-	 select($page.model.contents == "images", 
+	 select($self.model.contents == "images", 
 		makeUri(_("Slideshow"), "slideshow.view"), void),
 
-	 select($page.model.safeui, void,
+	 select($self.model.safeui, void,
 		vectorize($global.glw.views.standard.directory)),
 	 makeUri(_("List"), "list.view")
 	);

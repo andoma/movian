@@ -32,7 +32,7 @@
       outline: true;
       sizeScale: 2;
       padding: [5,0];
-      caption: $page.model.metadata.title;
+      caption: $self.model.metadata.title;
     });
 
     widget(container_y, {
@@ -42,11 +42,11 @@
         align: center;
         shadow: true;
         outline: true;
-        caption: $page.model.status;
+        caption: $self.model.status;
       });
 
       widget(container_y, {
-        alpha: iir($page.model.progressmeter, 8);
+        alpha: iir($self.model.progressmeter, 8);
         filterConstraintY: true;
         align: center;
         widget(container_z, {
@@ -57,7 +57,7 @@
 	  });
       
 	  widget(clip, {
-	    clipping: [-1, 0, 1 - ($page.model.percentage / 100), 0];
+	    clipping: [-1, 0, 1 - ($self.model.percentage / 100), 0];
 	    widget(backdrop, {
 	      margin: [-8, -3, -8, -5];
 	      border: [16, 8];

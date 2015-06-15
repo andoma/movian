@@ -6,7 +6,7 @@ widget(backdrop, {
   autoRefocusable: true;
   focusable: true;
   focusOnClick: true;
-  onEvent(activate, { createChild($page.model.nodes); });
+  onEvent(activate, { createChild($self.model.nodes); });
   
   alphaSelf: iir(isFocused() * 1, 8) + isHovered() * 0.1;
 

@@ -24,14 +24,14 @@ widget(keyintercept, {
 	  borderOnly: true;
 	  source: "skin://graphics/frame.png";
 	  widget(image, {
-	    source: $page.model.metadata.artist_portrait;
+	    source: $self.model.metadata.artist_portrait;
 	    aspectConstraint: true;
 	  });
 	});
 
 	widget(slideshow, {
 	  transitionTime: 1;
-	  cloner($page.model.metadata.artist_portrait, displacement, {
+	  cloner($self.model.metadata.artist_portrait, displacement, {
 	    rotation: [-10 + rand() * 20,0,0,1];
 	    translation: [0.25,-0.1,0];
 	    widget(frontdrop, {
@@ -49,13 +49,13 @@ widget(keyintercept, {
 	  });
 	});
 
-	page: select(count($page.model.metadata.artist_portrait), 1, 0);
+	page: select(count($self.model.metadata.artist_portrait), 1, 0);
       });
       
       widget(container_y, {
 	filterConstraintX: true;
 	widget(label, {
-	  caption: $page.model.metadata.title;
+	  caption: $self.model.metadata.title;
 	  sizeScale: 2;
 	  TextStyleItem();
 	});
@@ -63,7 +63,7 @@ widget(keyintercept, {
 	widget(label, {
 	  maxlines: 7;
 	  TextStyleItem();
-	  caption: $page.model.metadata.artist_bio;
+	  caption: $self.model.metadata.artist_bio;
 	  align: justified;
 	  ellipsize: true;
 	});
@@ -86,7 +86,7 @@ widget(keyintercept, {
 
 	childTilesX: 6;
 	
-	cloner($page.model.nodes, loader, {
+	cloner($self.model.nodes, loader, {
 	  time: 0.1;
 	  effect: blend;
 	  source: "squareitems/" + 

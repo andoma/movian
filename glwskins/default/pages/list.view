@@ -28,7 +28,7 @@ widget(keyintercept, {
 	  $clone.focused <- focusedChild();
 	  spacing: 3;
 
-	  cloner($page.model.nodes, loader, {
+	  cloner($self.model.nodes, loader, {
 	    time: 0.1;
 	    effect: blend;
 	    alt: "listitems/default.view";
@@ -37,9 +37,9 @@ widget(keyintercept, {
 
 
 	  widget(loader, {
-	    hidden: !$page.model.mayadd;
+	    hidden: !$self.model.mayadd;
 	    noInitialTransform: true;
-	    source: select($page.model.mayadd, "listitems/add.view", "");
+	    source: select($self.model.mayadd, "listitems/add.view", "");
 	  });
 	});
 	widget(slider_y, {

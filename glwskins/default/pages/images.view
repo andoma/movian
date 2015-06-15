@@ -67,7 +67,7 @@ widget(container_y, {
 
 	$view.focused <- focusedChild();
 	
-	cloner($page.model.nodes, loader, {
+	cloner($self.model.nodes, loader, {
 	  noInitialTransform: true;
 	  source: "smallitems/" + 
 	    translate($self.type, "default",

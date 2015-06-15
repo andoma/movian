@@ -30,7 +30,7 @@ widget(container_y, {
 
       childTilesX: 6;
       
-      cloner($page.model.nodes, loader, {
+      cloner($self.model.nodes, loader, {
 	time: 0.1;
 	effect: blend;
 	source: "squareitems/" + 

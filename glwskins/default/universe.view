@@ -60,7 +60,7 @@ widget(container_z, {
 	    widget(loader, {
 	      time: 0.2;
 	      noInitialTransform: true;
-	      source: "pages/" + $page.model.type + ".view";
+	      source: "pages/" + $self.model.type + ".view";
 	    });
 
 	    widget(loader, {

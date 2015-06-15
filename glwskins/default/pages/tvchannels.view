@@ -37,7 +37,7 @@ widget(container_y, {
 	
 	$self.focused <- focusedChild();
 	
-	cloner($page.model.nodes, container_z, {
+	cloner($self.model.nodes, container_z, {
 	  autoRefocusable: true;
 	  focusable: true;
 	  width: $ui.size * 12;

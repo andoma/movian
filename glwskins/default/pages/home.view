@@ -3,7 +3,7 @@ onEvent(ChangeView, deliverEvent($clone.settings.options, "Cycle"));
 multiopt($view.path,
 	 $clone.settings,
 	 _("View"),
-	 $page.persistent.glwUserView,
+	 $self.persistent.glwUserView,
 
 	 vectorize($global.glw.views.standard.home),
 	 makeUri(_("Tiled"), "home_tiles.view"),
