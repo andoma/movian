@@ -148,6 +148,8 @@ mq_get_buffer_delay(media_queue_t *mq)
   if(f != NULL && l != NULL && f->mb_epoch == l->mb_epoch &&
      l->mb_user_time != PTS_UNSET && f->mb_user_time != PTS_UNSET) {
     mq->mq_buffer_delay = l->mb_user_time - f->mb_user_time;
+    if(mq->mq_buffer_delay < 0)
+      mq->mq_buffer_delay = 0;
   }
 
   return mq->mq_buffer_delay;
