@@ -96,7 +96,6 @@ typedef struct ts_es {
   int64_t te_pts;
   int64_t te_dts;
   int64_t te_bts; // Base timestamp
-  int64_t te_last_dts;
 
   media_codec_t *te_codec;
 
@@ -295,7 +294,6 @@ find_es(ts_demuxer_t *td, uint16_t pid, int create)
   if(create) {
     te = calloc(1, sizeof(ts_es_t));
     te->te_pid = pid;
-    te->te_last_dts = PTS_UNSET;
     te->te_pts = PTS_UNSET;
     te->te_dts = PTS_UNSET;
     LIST_INSERT_HEAD(&td->td_elemtary_streams, te, te_link);
@@ -603,7 +601,7 @@ static void
 enqueue_packet(ts_demuxer_t *td, const void *data, int len,
                int64_t dts, int64_t pts, int keyframe,
                hls_segment_t *hs, int seq, ts_es_t *te,
-               const hls_demuxer_t *hd)
+               hls_demuxer_t *hd)
 {
   hls_t *h = td->td_hd->hd_hls;
 
@@ -612,6 +610,7 @@ enqueue_packet(ts_demuxer_t *td, const void *data, int len,
 
   media_buf_t *mb = media_buf_alloc_unlocked(td->td_mp, len);
   memcpy(mb->mb_data, data, len);
+  mb->mb_user_time = PTS_UNSET;
 
   if(hs != NULL) {
     hls_discontinuity_segment_t *hds = hs->hs_discontinuity_segment;
@@ -619,17 +618,30 @@ enqueue_packet(ts_demuxer_t *td, const void *data, int len,
     // Compute user time
     if(pts != PTS_UNSET) {
 
-      if(hs->hs_ts_offset == PTS_UNSET)
+      if(hs->hs_ts_offset == PTS_UNSET) {
+#if 0
+        if(te->te_data_type == MB_VIDEO)
+          printf("%s: segment %d get ts offset %ld\n",
+                 hs->hs_variant->hv_name, hs->hs_seq, pts);
+#endif
         hs->hs_ts_offset = pts;
+      }
 
-      mb->mb_user_time = hs->hs_time_offset + pts - hs->hs_ts_offset;
-      mb->mb_drive_clock = te->te_data_type == MB_AUDIO;
+      mb->mb_user_time = hs->hs_time_offset + MAX(pts - hs->hs_ts_offset, 0);
+#if 0
+      if(te->te_data_type == MB_VIDEO)
+        printf("%d: %ld = %ld + (%ld - %ld = %ld)\n",
+               hs->hs_seq,
+               mb->mb_user_time, hs->hs_time_offset, pts, hs->hs_ts_offset,
+               pts - hs->hs_ts_offset);
+#endif
+      mb->mb_drive_clock = te->te_data_type == MB_VIDEO;
     }
 
     if(hds->hds_offset == PTS_UNSET) {
       if(dts != PTS_UNSET) {
-        if(te->te_last_dts != PTS_UNSET) {
-          hds->hds_offset = te->te_last_dts - dts;
+        if(hd->hd_last_dts != PTS_UNSET) {
+          hds->hds_offset = hd->hd_last_dts - dts;
         } else {
           hds->hds_offset = 0;
         }
@@ -642,7 +654,7 @@ enqueue_packet(ts_demuxer_t *td, const void *data, int len,
 
       if(dts != PTS_UNSET) {
         dts += hds->hds_offset;
-        te->te_last_dts = dts;
+        hd->hd_last_dts = dts;
       }
 
       if(pts != PTS_UNSET)
@@ -949,7 +961,6 @@ hls_ts_demuxer_flush(hls_variant_t *hv)
     te->te_packet_size = 0;
     te->te_pts = PTS_UNSET;
     te->te_dts = PTS_UNSET;
-    te->te_last_dts = PTS_UNSET;
     te->te_last_seq = 0;
   }
   td_flush_packets(td);

@@ -212,6 +212,8 @@ typedef struct hls_demuxer {
   int hd_discontinuity;
   int hd_discontinuity_seq;
 
+  int64_t hd_last_dts;
+
 } hls_demuxer_t;
 
 TAILQ_HEAD(hls_discontinuity_segment_queue, hls_discontinuity_segment);

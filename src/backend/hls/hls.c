@@ -1656,6 +1656,7 @@ static void
 clear_ts_offsets(hls_demuxer_t *hd)
 {
   hls_variant_t *hv;
+  hd->hd_last_dts = PTS_UNSET;
   TAILQ_FOREACH(hv, &hd->hd_variants, hv_link) {
     hls_segment_t *hs;
     TAILQ_FOREACH(hs, &hv->hv_segments, hs_link) {
@@ -2152,6 +2153,7 @@ hls_demuxer_init(hls_demuxer_t *hd, hls_t *h, const char *type)
   hd->hd_hls = h;
   hd->hd_type = type;
   hd->hd_seek_to_segment = PTS_UNSET;
+  hd->hd_last_dts = PTS_UNSET;
   hd->hd_cancellable = cancellable_create();
 }
 
