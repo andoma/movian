@@ -107,14 +107,14 @@ void trace_init(void);
 
 void trace_fini(void);
 
-void trace(int flags, int level, const char *subsys, const char *fmt, ...);
+void tracelog(int flags, int level, const char *subsys, const char *fmt, ...);
 
 void tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap);
 
 void trace_arch(int level, const char *prefix, const char *buf);
 
 #define TRACE(level, subsys, fmt, ...) \
-  trace(0, level, subsys, fmt, ##__VA_ARGS__)
+  tracelog(0, level, subsys, fmt, ##__VA_ARGS__)
 
 
 void hexdump(const char *pfx, const void *data, int len);

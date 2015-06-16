@@ -73,7 +73,7 @@ static void prop_flood_flag(prop_t *p, int set, int clr);
 static void prop_destroy_childs0(prop_t *p);
 
 #define PROPTRACE(fmt, ...) \
-  trace(TRACE_NO_PROP, TRACE_DEBUG, "prop", fmt, ##__VA_ARGS__)
+  tracelog(TRACE_NO_PROP, TRACE_DEBUG, "prop", fmt, ##__VA_ARGS__)
 
 #ifdef PROP_SUB_STATS
 static LIST_HEAD(, prop_sub) all_subs;
@@ -1733,7 +1733,7 @@ prop_clean(prop_t *p)
     s = prop_check_canonical_subs_descending(p);
     if(s != NULL) {
 #ifdef PROP_SUB_RECORD_SOURCE
-      trace(TRACE_NO_PROP, TRACE_ERROR, "prop",
+      tracelog(TRACE_NO_PROP, TRACE_ERROR, "prop",
             "Refusing to clean prop %s because a decendant (%s) have "
             "canonical sub %s:%d",
             prop_get_DN(p, 1),
@@ -5082,7 +5082,7 @@ void
 prop_courier_destroy(prop_courier_t *pc)
 {
   if(pc->pc_refcount != 0) {
-    trace(TRACE_NO_PROP, TRACE_ERROR, "prop",
+    tracelog(TRACE_NO_PROP, TRACE_ERROR, "prop",
 	  "Refcnt is %d on courier '%s' destroy", pc->pc_refcount,
           pc->pc_name);
 

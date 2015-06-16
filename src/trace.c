@@ -242,7 +242,7 @@ tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap)
  *
  */
 void
-trace(int flags, int level, const char *subsys, const char *fmt, ...)
+tracelog(int flags, int level, const char *subsys, const char *fmt, ...)
 {
   va_list ap;
   va_start(ap, fmt);

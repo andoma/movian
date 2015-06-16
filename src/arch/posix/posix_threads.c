@@ -206,8 +206,8 @@ hts_thread_create_detached(const char *title, void *(*func)(void *), void *aux,
 		 make_trampoline(title, func, aux, prio));
   pthread_attr_destroy(&attr);
   if(gconf.enable_thread_debug)
-    trace(TRACE_NO_PROP, TRACE_DEBUG,
-          "thread", "Created detached thread: %s", title);
+    tracelog(TRACE_NO_PROP, TRACE_DEBUG,
+             "thread", "Created detached thread: %s", title);
 
 }
 
@@ -233,6 +233,6 @@ hts_thread_create_joinable(const char *title, hts_thread_t *p,
   pthread_attr_destroy(&attr);
 
   if(gconf.enable_thread_debug)
-    trace(TRACE_NO_PROP, TRACE_DEBUG,
-          "thread", "Created thread: %s", title);
+    tracelog(TRACE_NO_PROP, TRACE_DEBUG,
+             "thread", "Created thread: %s", title);
 }
