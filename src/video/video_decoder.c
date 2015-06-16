@@ -165,7 +165,9 @@ vd_thread(void *aux)
 
       vd->vd_estimated_duration = mbm->mbm_duration;
 
-      video_decoder_set_current_time(vd, mbm->mbm_user_time, mbm->mbm_epoch, 0);
+      if(mbm->mbm_drive_clock)
+        video_decoder_set_current_time(vd, mbm->mbm_user_time,
+                                       mbm->mbm_epoch, 0);
       hts_mutex_lock(&mp->mp_mutex);
       continue;
     }
