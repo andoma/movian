@@ -466,8 +466,6 @@ parse_opts(int argc, char **argv)
 	     gconf.cache_path,
 	     gconf.persistent_path);
       exit(0);
-      argc--;
-      argv++;
 
     } else if(!strcmp(argv[0], "-d")) {
       gconf.trace_level = TRACE_DEBUG;
