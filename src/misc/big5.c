@@ -35,7 +35,7 @@ big5_convert(const struct charset *cs, char *dst,
   int outlen = 0;
 
   for(int i = 0; i < len; i++) {
-    if(*src < 0x80) {
+    if((uint8_t)*src < 0x80) {
       if(dst != NULL)
         *dst++ = *src;
       outlen++;

@@ -1588,11 +1588,11 @@ utf16_to_utf8(buf_t *b)
   if(len < 2)
     return NULL;
 
-  if(src[0] == 0xff && src[1] == 0xfe) {
+  if((uint8_t)src[0] == 0xff && (uint8_t)src[1] == 0xfe) {
     le = 1;
     src += 2;
     len -= 2;
-  } else if(src[0] == 0xfe && src[1] == 0xff) {
+  } else if((uint8_t)src[0] == 0xfe && (uint8_t)src[1] == 0xff) {
     src += 2;
     len -= 2;
   }

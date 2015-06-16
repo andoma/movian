@@ -748,7 +748,7 @@ htsmsg_xml_parse_cd(xmlparser_t *xp, htsmsg_t *msg, htsmsg_field_t *field,
     case XML_ENCODING_8859_1:
       l = 0;
       for(x = cc->cc_start; x < cc->cc_end; x++)
-	l += 1 + (*x >= 0x80);
+	l += 1 + ((uint8_t)*x >= 0x80);
 
       c += l;
       y += 1 + (l != cc->cc_end - cc->cc_start);
