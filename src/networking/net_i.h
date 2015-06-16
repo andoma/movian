@@ -21,16 +21,20 @@
 #include "net.h"
 #include "misc/cancellable.h"
 
+
 #if ENABLE_OPENSSL
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-#endif
-
-#if ENABLE_POLARSSL
+#elif ENABLE_POLARSSL
 #include "polarssl/net.h"
 #include "polarssl/ssl.h"
 #include "polarssl/havege.h"
+#elif defined(__APPLE__)
+#include <Security/SecureTransport.h>
+#else
+#error No SSL/TLS implementation
 #endif
+
 
 
 struct tcpcon {
@@ -44,17 +48,18 @@ struct tcpcon {
 
 #if ENABLE_OPENSSL
   SSL *ssl;
-#endif
-
-#if ENABLE_POLARSSL
+#elif ENABLE_POLARSSL
   ssl_context *ssl;
   void *rndstate;
+#elif defined(__APPLE__)
+  SSLContextRef ssl;
+#endif
+
 
   int (*raw_write)(struct tcpcon *, const void *, size_t);
   int (*raw_read)(struct tcpcon *, void *, size_t, int,
                   net_read_cb_t *cb, void *opaque);
 
-#endif
 
   cancellable_t *cancellable;
 
