@@ -136,8 +136,8 @@ prop_get_name(prop_t *p)
 attribute_unused static const char *
 prop_get_DN(prop_t *p, int compact)
 {
-  static __thread int idx;
-  static __thread char buf[4][256];
+  static int idx;
+  static char buf[4][256];
   
   const int maxlen = 256;
   prop_t *revvec[32];
