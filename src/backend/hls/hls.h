@@ -82,6 +82,9 @@ typedef struct hls_segment {
 
   fa_handle_t *hs_fh;
 
+  int64_t hs_open_time;
+  int hs_blocked_counter;
+
 } hls_segment_t;
 
 

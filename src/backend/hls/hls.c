@@ -57,8 +57,6 @@
 static hls_variant_t *hls_demuxer_select_variant(hls_demuxer_t *hd, int64_t now,
                                                  int bw);
 
-static void refresh_bw(hls_demuxer_t *hd, int always);
-
 
 /**
  *
@@ -157,8 +155,10 @@ segment_destroy(hls_segment_t *hs)
 {
   hls_t *h = hs->hs_variant->hv_demuxer->hd_hls;
   discontinuity_seq_release(hs->hs_discontinuity_segment, h);
+
   if(hs->hs_fh != NULL)
     fa_close(hs->hs_fh);
+
   TAILQ_REMOVE(&hs->hs_variant->hv_segments, hs, hs_link);
   free(hs->hs_url);
   rstr_release(hs->hs_key_url);
@@ -591,6 +591,8 @@ hls_segment_open(hls_segment_t *hs)
   const hls_t *h = hd->hd_hls;
 
   assert(hs->hs_fh == NULL);
+  hs->hs_open_time = arch_get_ts();
+  hs->hs_blocked_counter = h->h_blocked;
 
   foe.foe_open_timeout = 3000;
   foe.foe_cancellable = hd->hd_cancellable;
@@ -655,6 +657,19 @@ hls_segment_close(hls_segment_t *hs)
 {
   if(hs->hs_fh == NULL)
     return;
+
+  hls_demuxer_t *hd = hs->hs_variant->hv_demuxer;
+  hls_t *h = hd->hd_hls;
+
+  if(hs->hs_blocked_counter == h->h_blocked) {
+    int64_t ts = arch_get_ts() - hs->hs_open_time;
+    if(ts > 1000) {
+      int64_t bw = 8000000LL * hs->hs_size / ts;
+      bw = MIN(100000000, bw);
+      hd->hd_bw = bw;
+      hd->hd_bw_updated = 1;
+    }
+  }
 
   fa_close(hs->hs_fh);
   hs->hs_fh = NULL;
@@ -784,94 +799,6 @@ hls_variant_close(hls_variant_t *hv)
 }
 
 
-
-
-
-/**
- *
- */
-static void
-reset_bw(hls_demuxer_t *hd, int64_t now)
-{
-  hls_t *h = hd->hd_hls;
-
-  hd->hd_download_counter_reset_at = now;
-  hd->hd_download_counter = 0;
-  hd->hd_download_counter2 = 0;
-  hd->hd_download_blocked = h->h_blocked;
-}
-
-
-/**
- *
- */
-static void
-refresh_bw(hls_demuxer_t *hd, int always)
-{
-  hls_t *h = hd->hd_hls;
-  int64_t now;
-
-  if(hd->hd_download_counter_reset_at == 0) {
-    reset_bw(hd, arch_get_ts());
-    return;
-  }
-
-  if(!always) {
-
-    if(hd->hd_download_counter < 100000)
-      return;
-
-    hd->hd_download_counter2 += hd->hd_download_counter;
-    hd->hd_download_counter = 0;
-
-    now = arch_get_ts();
-    if(now < hd->hd_download_counter_reset_at + 1000000)
-      return;
-
-  } else {
-
-    now = arch_get_ts();
-    if(hd->hd_download_counter < 10000) {
-      reset_bw(hd, now);
-      return;
-    }
-
-    hd->hd_download_counter2 += hd->hd_download_counter;
-    hd->hd_download_counter = 0;
-  }
-
-  if(hd->hd_download_blocked != h->h_blocked)
-    return;
-
-  int64_t delta = now - hd->hd_download_counter_reset_at;
-  if(delta <= 0)
-    return;
-
-  int64_t bw = 8000000 * hd->hd_download_counter2 / delta;
-  bw = MIN(bw, 100000000); // Clamp at 100mbps
-
-  if(hd->hd_bw == 0) {
-    hd->hd_bw = bw / 4;
-  } else if (bw < hd->hd_bw) {
-    hd->hd_bw = (bw * 7 + hd->hd_bw) / 8;
-  } else {
-    hd->hd_bw = (bw + hd->hd_bw * 7) / 8;
-  }
-  hd->hd_bw_updated = 1;
-  HLS_TRACE(h, "%s: Current bandwidth: %d bps (measured: %d bps) "
-            "%"PRId64" bytes in %"PRId64" µs",
-            hd->hd_type, hd->hd_bw, bw, hd->hd_download_counter2, delta);
-
-  if(hd == &h->h_primary) {
-    media_pipe_t *mp = h->h_mp;
-    prop_set(mp->mp_prop_io, "bitrate", PROP_SET_INT, hd->hd_bw / 1000);
-    prop_set(mp->mp_prop_io, "bitrateValid", PROP_SET_INT, 1);
-  }
-
-  reset_bw(hd, now);
-}
-
-
 /**
  *
  */
@@ -966,19 +893,15 @@ hls_variant_select_next_segment(hls_variant_t *hv)
    * if we need to exit or if we need to seek someplace)
    */
 
-  refresh_bw(hd, 1);
-
   hts_mutex_lock(&mp->mp_mutex);
 
   if(TAILQ_FIRST(&mp->mp_eq) == NULL) {
     if(hts_cond_wait_timeout(&mp->mp_backpressure, &mp->mp_mutex, 1000)) {
       hts_mutex_unlock(&mp->mp_mutex);
-      reset_bw(hd, arch_get_ts());
       return HLS_NYA;
     }
   }
   hts_mutex_unlock(&mp->mp_mutex);
-  reset_bw(hd, arch_get_ts());
   return NULL;
 }
 
@@ -1110,17 +1033,23 @@ hls_demuxer_select_variant(hls_demuxer_t *hd, int64_t now, int bw)
 void
 hls_check_bw_switch(hls_demuxer_t *hd)
 {
-  refresh_bw(hd, 0);
+  hls_t *h = hd->hd_hls;
 
   if(hd->hd_bw_updated == 0)
     return;
-  hd->hd_bw_updated = 0;
+
+  if(hd == &h->h_primary) {
+    media_pipe_t *mp = h->h_mp;
+    prop_set(mp->mp_prop_io, "bitrate", PROP_SET_INT, hd->hd_bw / 1000);
+    prop_set(mp->mp_prop_io, "bitrateValid", PROP_SET_INT, 1);
+  }
 
   int64_t now = arch_get_ts();
   if(hd->hd_last_switch + 250000 > now)
     return;
 
-  hls_variant_t *hv = hls_demuxer_select_variant(hd, now, hd->hd_bw * 0.8);
+  hd->hd_bw_updated = 0;
+  hls_variant_t *hv = hls_demuxer_select_variant(hd, now, hd->hd_bw);
 
   if(hv == NULL || hv == hd->hd_current)
     return;
@@ -1306,9 +1235,6 @@ enqueue_buffer(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
 
   hts_mutex_lock(&mp->mp_mutex);
 
-  const int vminpkt = mp->mp_video.mq_stream != -1 ? 5 : 0;
-  const int aminpkt = mp->mp_audio.mq_stream != -1 ? 5 : 0;
-
   mp_update_buffer_delay(mp);
 
   while(1) {
@@ -1321,16 +1247,8 @@ enqueue_buffer(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
     }
 
     // Check if buffer is full
-    if(mp->mp_buffer_current + mb->mb_size < mp->mp_buffer_limit)
-      break;
-
-    // These two safeguards so we don't run out of packets in any
-    // of the queues
-
-    if(mp->mp_video.mq_packets_current < vminpkt)
-      break;
-
-    if(mp->mp_audio.mq_packets_current < aminpkt)
+    if(mp->mp_buffer_current + mb->mb_size < mp->mp_buffer_limit &&
+       mp->mp_buffer_delay < 60000000)
       break;
 
     h->h_blocked++;
