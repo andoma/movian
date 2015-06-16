@@ -218,12 +218,8 @@ rpi_codec_decode_locked(struct media_codec *mc, struct video_decoder *vd,
       buf->nTimeStamp = omx_ticks_from_s64(0);
     }
 
-    if(mbm->mbm_skip) {
+    if(mbm->mbm_skip)
       buf->nFlags |= OMX_BUFFERFLAG_DECODEONLY;
-    }
-    if(mbm->mbm_keyframe) {
-      buf->nFlags |= OMX_BUFFERFLAG_SYNCFRAME;
-    }
 
     // Enqueue on temporary stack queue
 
