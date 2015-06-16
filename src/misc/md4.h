@@ -24,44 +24,24 @@
 
 #include <CommonCrypto/CommonDigest.h>
 
-#define md5_decl(ctx) CC_MD5_CTX ctx
+#define md4_decl(ctx) CC_MD4_CTX ctx
 
-#define md5_init(ctx) CC_MD5_Init(&ctx)
+#define md4_init(ctx) CC_MD4_Init(&ctx)
 
-#define md5_update(ctx, data, len) CC_MD5_Update(&ctx, data, len)
+#define md4_update(ctx, data, len) CC_MD4_Update(&ctx, data, len)
 
-#define md5_final(ctx, output) CC_MD5_Final(output, &ctx)
+#define md4_final(ctx, output) CC_MD4_Final(output, &ctx)
 
-#elif ENABLE_LIBAV
-
-#include <libavutil/md5.h>
-#include <libavutil/mem.h>
-
-#define md5_decl(ctx) struct AVMD5 *ctx = NULL;
-
-#define md5_init(ctx) do {                      \
-  ctx = av_md5_alloc();                         \
-  av_md5_init(ctx);                             \
-  } while(0)
-
-#define md5_update(ctx, data, len) av_md5_update(ctx, data, len)
-
-#define md5_final(ctx, output) do {             \
-  av_md5_final(ctx, output);                    \
-  av_freep(&ctx);                               \
-  } while(0)
 #elif ENABLE_POLARSSL
 
-#include "polarssl/md5.h"
+#include "polarssl/md4.h"
 
-#define md5_decl(ctx) md5_context *ctx = alloca(sizeof(md5_context));
+#define md4_decl(ctx) md4_context *ctx = alloca(sizeof(md4_context));
 
-#define md5_init(ctx) md5_starts(ctx);
+#define md4_init(ctx) md4_starts(ctx);
 
-#define md5_final(ctx, output) md5_finish(ctx, output);
+#define md4_final(ctx, output) md4_finish(ctx, output);
 
 #else
-
-#error No md5 crypto
-
+#error No md4 crypto
 #endif

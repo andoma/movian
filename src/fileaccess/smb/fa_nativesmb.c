@@ -20,13 +20,18 @@
 #include <stdio.h>
 #include <assert.h>
 
+
 #include "config.h"
+#include "misc/md4.h"
+
+
+// We don't have wrappers for DES
 #if ENABLE_OPENSSL
-#include <openssl/md4.h>
 #include <openssl/des.h>
 #elif ENABLE_POLARSSL
-#include "polarssl/md4.h"
 #include "polarssl/des.h"
+#elif ENABLE_COMMONCRYPTO
+#include <CommonCrypto/CommonCrypto.h>
 #else
 #error No crypto
 #endif
@@ -262,6 +267,7 @@ parsetime(int64_t v)
 static void
 NTLM_hash(const char *password, uint8_t *digest)
 {
+  md4_decl(ctx);
   int len = strlen(password);
   uint8_t *d = alloca(len * 2);
   int i;
@@ -270,24 +276,18 @@ NTLM_hash(const char *password, uint8_t *digest)
     d[i*2]   = password[i];
     d[i*2+1] = 0;
   }
-#if ENABLE_OPENSSL
-  MD4(d, len*2, digest);
-#else
-  md4(d, len*2, digest);
-#endif
+  md4_init(ctx);
+  md4_update(ctx, d, len * 2);
+  md4_final(ctx, digest);
 }
 
-
-#if ENABLE_OPENSSL
 
 /**
  *
  */
 static void
-des_key_spread(const uint8_t *normal, DES_key_schedule *sched)
+des_key_spread(const uint8_t *normal, uint8_t spread[8])
 {
-  uint8_t spread[8];
-
   spread[ 0] = normal[ 0] & 0xfe;
   spread[ 1] = ((normal[ 0] << 7) | (normal[ 1] >> 1)) & 0xfe;
   spread[ 2] = ((normal[ 1] << 6) | (normal[ 2] >> 2)) & 0xfe;
@@ -296,67 +296,52 @@ des_key_spread(const uint8_t *normal, DES_key_schedule *sched)
   spread[ 5] = ((normal[ 4] << 3) | (normal[ 5] >> 5)) & 0xfe;
   spread[ 6] = ((normal[ 5] << 2) | (normal[ 6] >> 6)) & 0xfe;
   spread[ 7] = normal[ 6] << 1;
-  DES_set_key_unchecked((DES_cblock *)spread, sched);
 }
+
 
 /**
  *
  */
 static void
-lmresponse(uint8_t *out, const uint8_t *hash, const uint8_t *challenge)
+lmresponse_round(uint8_t *out, const uint8_t *challenge, const uint8_t *hash)
 {
-  const uint8_t tmp[7] = {hash[14], hash[15]};
+  uint8_t spread[8];
+  des_key_spread(hash, spread);
+
+#if ENABLE_OPENSSL
   DES_key_schedule sched;
-
-  des_key_spread(hash, &sched);
+  DES_set_key_unchecked((DES_cblock *)spread, sched);
   DES_ecb_encrypt((DES_cblock *)challenge, (DES_cblock *)out, &sched, 1);
+#elif ENABLE_POLARSSL
 
-  des_key_spread(hash+7, &sched);
-  DES_ecb_encrypt((DES_cblock *)challenge, (DES_cblock *)(out+8), &sched, 1);
-
-  des_key_spread(tmp, &sched);
-  DES_ecb_encrypt((DES_cblock *)challenge, (DES_cblock *)(out+16), &sched, 1);
-}
-#endif
-
-#if ENABLE_POLARSSL
-
-
-static void
-des_key_spread(const uint8_t *normal, des_context *ctx)
-{
-  uint8_t spread[8];
-
-  spread[ 0] = normal[ 0] & 0xfe;
-  spread[ 1] = ((normal[ 0] << 7) | (normal[ 1] >> 1)) & 0xfe;
-  spread[ 2] = ((normal[ 1] << 6) | (normal[ 2] >> 2)) & 0xfe;
-  spread[ 3] = ((normal[ 2] << 5) | (normal[ 3] >> 3)) & 0xfe;
-  spread[ 4] = ((normal[ 3] << 4) | (normal[ 4] >> 4)) & 0xfe;
-  spread[ 5] = ((normal[ 4] << 3) | (normal[ 5] >> 5)) & 0xfe;
-  spread[ 6] = ((normal[ 5] << 2) | (normal[ 6] >> 6)) & 0xfe;
-  spread[ 7] = normal[ 6] << 1;
-  des_setkey_enc(ctx, spread);
-}
-
-
-
-static void
-lmresponse(uint8_t *out, const uint8_t *hash, const uint8_t *challenge)
-{
-  const uint8_t tmp[7] = {hash[14], hash[15]};
   des_context ctx;
-
-  des_key_spread(hash, &ctx);
+  des_setkey_enc(&ctx, spread);
   des_crypt_ecb(&ctx, challenge, out);
 
-  des_key_spread(hash+7, &ctx);
-  des_crypt_ecb(&ctx, challenge, out+8);
-
-  des_key_spread(tmp, &ctx);
-  des_crypt_ecb(&ctx, challenge, out+16);
+#elif ENABLE_COMMONCRYPTO
+  CCCryptorRef ref;
+  CCCryptorCreate(kCCEncrypt, kCCAlgorithmDES, 0, spread, 8, NULL, &ref);
+  size_t written;
+  CCCryptorUpdate(ref, challenge, 8, out, 8, &written);
+  CCCryptorRelease(ref);
+#else
+#error No crypto
+#endif
 }
 
-#endif
+
+/**
+ *
+ */
+static void
+lmresponse(uint8_t *out, const uint8_t *hash, const uint8_t *challenge)
+{
+  const uint8_t tmp[7] = {hash[14], hash[15]};
+
+  lmresponse_round(out,      challenge, hash);
+  lmresponse_round(out + 8,  challenge, hash + 7);
+  lmresponse_round(out + 16, challenge, tmp);
+}
 
 
 /**

@@ -20,7 +20,19 @@
 #pragma once
 #include "config.h"
 
-#if ENABLE_POLARSSL
+#if ENABLE_COMMONCRYPTO
+
+#include <CommonCrypto/CommonDigest.h>
+
+#define sha1_decl(ctx) CC_SHA1_CTX ctx
+
+#define sha1_init(ctx) CC_SHA1_Init(&ctx)
+
+#define sha1_update(ctx, data, len) CC_SHA1_Update(&ctx, data, len)
+
+#define sha1_final(ctx, output) CC_SHA1_Final(output, &ctx)
+
+#elif ENABLE_POLARSSL
 
 #include "polarssl/sha1.h"
 

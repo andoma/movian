@@ -52,6 +52,7 @@ CONFIG_LIST="
  libxv
  openssl
  polarssl
+ commoncrypto
  librtmp
  libx11
  libxext
