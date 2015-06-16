@@ -180,8 +180,10 @@ typedef struct hls_demuxer {
   hls_variant_t *hd_req;
 
   int hd_bw;
+  int hd_bw_updated;
   int64_t hd_download_counter_reset_at;
   int64_t hd_download_counter;
+  int64_t hd_download_counter2;
   int hd_download_blocked;
 
   int hd_current_stream;
@@ -272,7 +274,7 @@ void hls_variant_open(hls_variant_t *hv);
 
 void hls_variant_close(hls_variant_t *hv);
 
-void hls_check_bw_switch(hls_demuxer_t *hd, int64_t now, media_pipe_t *mp);
+void hls_check_bw_switch(hls_demuxer_t *hd);
 
 hls_variant_t *hls_select_default_variant(hls_demuxer_t *hd);
 

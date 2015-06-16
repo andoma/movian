@@ -1049,9 +1049,7 @@ hls_ts_demuxer_read(hls_demuxer_t *hd)
 
     assert(hd->hd_current != NULL);
 
-    int64_t now = arch_get_ts();
-
-    hls_check_bw_switch(hd, now, mp);
+    hls_check_bw_switch(hd);
 
     if(hd->hd_req != NULL) {
 

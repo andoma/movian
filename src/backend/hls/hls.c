@@ -57,7 +57,7 @@
 static hls_variant_t *hls_demuxer_select_variant(hls_demuxer_t *hd, int64_t now,
                                                  int bw);
 
-static void refresh_bw(hls_demuxer_t *hd, int64_t now, media_pipe_t *mp, int always);
+static void refresh_bw(hls_demuxer_t *hd, int always);
 
 
 /**
@@ -797,6 +797,7 @@ reset_bw(hls_demuxer_t *hd, int64_t now)
 
   hd->hd_download_counter_reset_at = now;
   hd->hd_download_counter = 0;
+  hd->hd_download_counter2 = 0;
   hd->hd_download_blocked = h->h_blocked;
 }
 
@@ -805,34 +806,39 @@ reset_bw(hls_demuxer_t *hd, int64_t now)
  *
  */
 static void
-refresh_bw(hls_demuxer_t *hd, int64_t now, media_pipe_t *mp, int always)
+refresh_bw(hls_demuxer_t *hd, int always)
 {
   hls_t *h = hd->hd_hls;
+  int64_t now;
 
   if(hd->hd_download_counter_reset_at == 0) {
-    reset_bw(hd, now);
+    reset_bw(hd, arch_get_ts());
     return;
   }
 
   if(!always) {
 
-    int do_calc = 0;
-
-    if(now > hd->hd_download_counter_reset_at + 1000000 &&
-       hd->hd_download_counter > 50000)
-      do_calc = 1;
-
-    if(hd->hd_download_counter > 500000)
-      do_calc = 1;
-
-    if(!do_calc)
+    if(hd->hd_download_counter < 100000)
       return;
+
+    hd->hd_download_counter2 += hd->hd_download_counter;
+    hd->hd_download_counter = 0;
+
+    now = arch_get_ts();
+    if(now < hd->hd_download_counter_reset_at + 1000000)
+      return;
+
   } else {
-    if(hd->hd_download_counter < 10000)
+
+    now = arch_get_ts();
+    if(hd->hd_download_counter < 10000) {
+      reset_bw(hd, now);
       return;
+    }
 
+    hd->hd_download_counter2 += hd->hd_download_counter;
+    hd->hd_download_counter = 0;
   }
-
 
   if(hd->hd_download_blocked != h->h_blocked)
     return;
@@ -841,7 +847,7 @@ refresh_bw(hls_demuxer_t *hd, int64_t now, media_pipe_t *mp, int always)
   if(delta <= 0)
     return;
 
-  int64_t bw = 8000000 * hd->hd_download_counter / delta;
+  int64_t bw = 8000000 * hd->hd_download_counter2 / delta;
   bw = MIN(bw, 100000000); // Clamp at 100mbps
 
   if(hd->hd_bw == 0) {
@@ -851,13 +857,17 @@ refresh_bw(hls_demuxer_t *hd, int64_t now, media_pipe_t *mp, int always)
   } else {
     hd->hd_bw = (bw + hd->hd_bw * 7) / 8;
   }
+  hd->hd_bw_updated = 1;
   HLS_TRACE(h, "%s: Current bandwidth: %d bps (measured: %d bps) "
             "%"PRId64" bytes in %"PRId64" µs",
-            hd->hd_type, hd->hd_bw, bw, hd->hd_download_counter, delta);
+            hd->hd_type, hd->hd_bw, bw, hd->hd_download_counter2, delta);
 
-  if(hd == &h->h_primary)
+  if(hd == &h->h_primary) {
+    media_pipe_t *mp = h->h_mp;
     prop_set(mp->mp_prop_io, "bitrate", PROP_SET_INT, hd->hd_bw / 1000);
-  prop_set(mp->mp_prop_io, "bitrateValid", PROP_SET_INT, 1);
+    prop_set(mp->mp_prop_io, "bitrateValid", PROP_SET_INT, 1);
+  }
+
   reset_bw(hd, now);
 }
 
@@ -956,7 +966,7 @@ hls_variant_select_next_segment(hls_variant_t *hv)
    * if we need to exit or if we need to seek someplace)
    */
 
-  refresh_bw(hd, arch_get_ts(), mp, 1);
+  refresh_bw(hd, 1);
 
   hts_mutex_lock(&mp->mp_mutex);
 
@@ -1098,13 +1108,15 @@ hls_demuxer_select_variant(hls_demuxer_t *hd, int64_t now, int bw)
  *
  */
 void
-hls_check_bw_switch(hls_demuxer_t *hd, int64_t now, media_pipe_t *mp)
+hls_check_bw_switch(hls_demuxer_t *hd)
 {
-  refresh_bw(hd, now, mp, 0);
+  refresh_bw(hd, 0);
 
-  if(hd->hd_bw == 0)
+  if(hd->hd_bw_updated == 0)
     return;
+  hd->hd_bw_updated = 0;
 
+  int64_t now = arch_get_ts();
   if(hd->hd_last_switch + 250000 > now)
     return;
 
@@ -1117,7 +1129,7 @@ hls_check_bw_switch(hls_demuxer_t *hd, int64_t now, media_pipe_t *mp)
 
     int64_t limit = 10000000;
 
-    if(mp->mp_buffer_delay < limit) {
+    if(hd->hd_hls->h_mp->mp_buffer_delay < limit) {
       return;
     }
   }
