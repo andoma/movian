@@ -1422,6 +1422,7 @@ enqueue_buffer(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
     mbx->mb_data_type = MB_VIDEO;
     mbx->mb_cw = media_codec_ref(mb->mb_cw);
     mbx->mb_skip = mb->mb_skip;
+    mbx->mb_user_time = mb->mb_user_time;
 
 #ifdef DUMP_VIDEO
     dump_video(mbx);
