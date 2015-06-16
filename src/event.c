@@ -581,7 +581,7 @@ event_from_Fkey(unsigned int keynum, unsigned int mod)
   return event_create_action(a);
 }
 
-
+#if 0
 /**
  *
  */
@@ -611,3 +611,5 @@ event_sprint(const event_t *e)
   }
   return buf;
 }
+
+#endif
