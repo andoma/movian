@@ -1503,6 +1503,9 @@ cifs_resolve(const char *url, char *filename, size_t filenamesize,
       if(ct == SAMBA_NEED_AUTH)
         return CIFS_RESOLVE_NEED_AUTH;
 
+      if(ct == NULL)
+        return CIFS_RESOLVE_ERROR;
+
       *p_ct = ct;
       return CIFS_RESOLVE_TREE;
     }
