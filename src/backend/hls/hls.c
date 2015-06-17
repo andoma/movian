@@ -520,6 +520,10 @@ hls_dump_demuxer(const hls_demuxer_t *hd, const hls_t *h)
       HLS_TRACE(h, "    Audio only\n");
       continue;
     }
+    if(hv->hv_initial) {
+      HLS_TRACE(h, "    Initial\n");
+      continue;
+    }
 
     switch(hv->hv_h264_profile) {
     case 66:
@@ -918,6 +922,11 @@ hls_select_default_variant(hls_demuxer_t *hd)
 {
   hls_variant_t *hv;
   hls_variant_t *best = NULL;
+  TAILQ_FOREACH(hv, &hd->hd_variants, hv_link) {
+    if(hv->hv_initial)
+      return hv;
+  }
+
   TAILQ_FOREACH_REVERSE(hv, &hd->hd_variants, hls_variant_queue, hv_link) {
     if(hv->hv_audio_only)
       continue;
@@ -2118,6 +2127,7 @@ hls_play_extm3u(char *buf, const char *url, media_pipe_t *mp,
   if(strstr(buf, "#EXT-X-STREAM-INF:")) {
 
     hls_variant_t *hv = NULL;
+    int first_variant = 1;
 
     LINEPARSE(s, buf) {
       const char *v;
@@ -2126,6 +2136,8 @@ hls_play_extm3u(char *buf, const char *url, media_pipe_t *mp,
       else if((v = mystrbegins(s, "#EXT-X-STREAM-INF:")) != NULL)
         hls_ext_x_stream_inf(&h, v, &hv, &h.h_primary);
       else if(s[0] != '#') {
+        hv->hv_initial = first_variant;
+        first_variant = 0;
         hls_add_variant(&h, s, hv, &h.h_primary, NULL);
         hv = NULL;
       }

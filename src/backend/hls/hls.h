@@ -126,6 +126,7 @@ typedef struct hls_variant {
 
   char hv_frozen;
   char hv_audio_only;
+  char hv_initial;
 
   int hv_h264_profile;
   int hv_h264_level;
