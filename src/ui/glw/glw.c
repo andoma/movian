@@ -601,6 +601,9 @@ glw_unref(glw_t *w)
 {
   if(w->glw_refcnt == 1) {
     assert(w->glw_clone == NULL);
+#ifdef DEBUG
+    rstr_release(w->glw_file);
+#endif
     free(w);
   }
   else
