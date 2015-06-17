@@ -132,6 +132,11 @@ mq_get_buffer_delay(media_queue_t *mq)
   f = TAILQ_FIRST(&mq->mq_q_data);
   l = TAILQ_LAST(&mq->mq_q_data, media_buf_queue);
 
+  if(f == NULL) {
+    mq->mq_buffer_delay = 0;
+    return 0;
+  }
+
   int cnt = 5;
 
   while(f && f->mb_user_time == PTS_UNSET && cnt > 0) {
