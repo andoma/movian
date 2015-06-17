@@ -2048,7 +2048,7 @@ void
 fa_sanitize_filename(char *f)
 {
   while(*f) {
-    switch(*f) {
+    switch((uint8_t)*f) {
 
     case 1 ... 31:
     case '/':
