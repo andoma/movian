@@ -1,16 +1,16 @@
-Showtime mediaplayer
-====================
+Movian mediaplayer
+==================
 
-(c) 2006 - 2013 Andreas Öman
-
+(c) 2006 - 2015 Lonelycoder AB
 
 For more information and latest versions, please visit:
-[https://showtimemediacenter.com/](https://showtimemediacenter.com/)
+
+[https://movian.tv/](https://movian.tv/)
 
 ## How to build for Linux
 
 First you need to satisfy some dependencies:
-For Ubuntu 12.04)  
+For Ubuntu 12.04)
 
 	sudo apt-get install libfreetype6-dev libfontconfig1-dev libxext-dev libgl1-mesa-dev libasound2-dev libasound2-dev libgtk2.0-dev libxss-dev libxxf86vm-dev libxv-dev libvdpau-dev yasm libpulse-dev libssl-dev curl libwebkitgtk-dev libsqlite3-dev
 
@@ -65,11 +65,11 @@ If configured successfully run:
 
 	$ make
 
-Run showtime binary from build directory
+Run Movian binary from build directory
 
 	$ build.osx/Showtime.app/Contents/MacOS/showtime
 
-Run showtime application from build directory
+Run Movian application from build directory
 
 	$ open build.osx/Showtime.app
 
@@ -77,7 +77,7 @@ Optionally you can build Showtime.dmg disk image. Note that you should
 configure with `--release` to embed theme files or else the binary will
 include paths to your local build tree.
 
-	$ make Showtime.dmg
+	$ make dist
 
 For more information read support/osx/README
 
@@ -97,6 +97,6 @@ First you need to satisfy some dependencies (For Ubuntu 12.04LTS 64bit):
 
 $ ./Autobuild.sh -t rpi
 
-To update Showtime on rpi with compiled one, enable Binreplace in settings:dev and issue:
+To update Movian on rpi with compiled one, enable Binreplace in settings:dev and issue:
 
-	curl --data-binary @build.rpi/showtime.sqfs http://rpi_ip_address:42000/showtime/replace 
+	curl --data-binary @build.rpi/showtime.sqfs http://rpi_ip_address:42000/showtime/replace
