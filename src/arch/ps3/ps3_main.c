@@ -482,15 +482,10 @@ hfree(void *ptr, size_t size)
 static void
 set_device_id(void)
 {
-  uint8_t buf[16];
   uint8_t digest[16];
-
-  Lv2Syscall1(870, (uint64_t)&buf[0]);
 
   md5_decl(ctx);
   md5_init(ctx);
-
-  md5_update(ctx, buf, 16);
 
   union net_ctl_info info;
 
