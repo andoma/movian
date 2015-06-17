@@ -1045,7 +1045,7 @@ hls_check_bw_switch(hls_demuxer_t *hd)
   }
 
   int64_t now = arch_get_ts();
-  if(hd->hd_last_switch + 250000 > now)
+  if(hd->hd_last_switch + 1000000 > now)
     return;
 
   hd->hd_bw_updated = 0;
@@ -1053,15 +1053,6 @@ hls_check_bw_switch(hls_demuxer_t *hd)
 
   if(hv == NULL || hv == hd->hd_current)
     return;
-  if(hd->hd_current != NULL &&
-     hv->hv_bitrate > hd->hd_current->hv_bitrate) {
-
-    int64_t limit = 10000000;
-
-    if(hd->hd_hls->h_mp->mp_buffer_delay < limit) {
-      return;
-    }
-  }
 
   hd->hd_last_switch = now;
   hd->hd_req = hv;
