@@ -113,10 +113,10 @@ void
 image_dump(const image_t *im, const char *prefix)
 {
   if(im == NULL) {
-    trace(TRACE_NO_PROP, TRACE_DEBUG, prefix, "NULL");
+    tracelog(TRACE_NO_PROP, TRACE_DEBUG, prefix, "NULL");
     return;
   }
-  trace(TRACE_NO_PROP, TRACE_DEBUG, prefix,
+  tracelog(TRACE_NO_PROP, TRACE_DEBUG, prefix,
         "Image %d x %d (margin: %d) %d components",
         im->im_width, im->im_height, im->im_margin, im->im_num_components);
   for(int i = 0; i < im->im_num_components; i++) {
@@ -126,30 +126,30 @@ image_dump(const image_t *im, const char *prefix)
     switch(ic->type) {
     case IMAGE_component_none:
 
-      trace(TRACE_NO_PROP, TRACE_DEBUG, prefix,
+      tracelog(TRACE_NO_PROP, TRACE_DEBUG, prefix,
             "[%d]: Empty", i);
       break;
 
     case IMAGE_PIXMAP:
       pm = ic->pm;
-      trace(TRACE_NO_PROP, TRACE_DEBUG, prefix,
+      tracelog(TRACE_NO_PROP, TRACE_DEBUG, prefix,
             "[%d]: Pixmap %d x %d",
             i, pm->pm_width, pm->pm_height);
       break;
 
     case IMAGE_CODED:
-      trace(TRACE_NO_PROP, TRACE_DEBUG, prefix,
+      tracelog(TRACE_NO_PROP, TRACE_DEBUG, prefix,
             "IMG", "[%d]: Coded", i);
       break;
 
   case IMAGE_VECTOR:
-      trace(TRACE_NO_PROP, TRACE_DEBUG, prefix,
+      tracelog(TRACE_NO_PROP, TRACE_DEBUG, prefix,
             "[%d]: Vector %d ops", i, ic->vector.icv_used);
     break;
 
     case IMAGE_TEXT_INFO:
       ti = &ic->text_info;
-      trace(TRACE_NO_PROP, TRACE_DEBUG, prefix,
+      tracelog(TRACE_NO_PROP, TRACE_DEBUG, prefix,
             "[%d]: Textinfo, lines:%d, flags: [%s %s]",
             i, ti->ti_lines,
             ti->ti_flags & IMAGE_TEXT_WRAPPED   ? "Wrapped" : "",
