@@ -608,9 +608,8 @@ enqueue_packet(ts_demuxer_t *td, const void *data, int len,
   dts = rescale(dts);
   pts = rescale(pts);
 
-  media_buf_t *mb = media_buf_alloc_unlocked(td->td_mp, len);
-  memcpy(mb->mb_data, data, len);
-  mb->mb_user_time = PTS_UNSET;
+  int64_t user_time = PTS_UNSET;
+  int drive_clock = 0;
 
   if(hs != NULL) {
     hls_discontinuity_segment_t *hds = hs->hs_discontinuity_segment;
@@ -627,7 +626,7 @@ enqueue_packet(ts_demuxer_t *td, const void *data, int len,
         hs->hs_ts_offset = pts;
       }
 
-      mb->mb_user_time = hs->hs_time_offset + MAX(pts - hs->hs_ts_offset, 0);
+      user_time = hs->hs_time_offset + MAX(pts - hs->hs_ts_offset, 0);
 #if 0
       if(te->te_data_type == MB_VIDEO)
         printf("%d: %ld = %ld + (%ld - %ld = %ld)\n",
@@ -635,7 +634,7 @@ enqueue_packet(ts_demuxer_t *td, const void *data, int len,
                mb->mb_user_time, hs->hs_time_offset, pts, hs->hs_ts_offset,
                pts - hs->hs_ts_offset);
 #endif
-      mb->mb_drive_clock = te->te_data_type == MB_VIDEO;
+      drive_clock = te->te_data_type == MB_VIDEO;
     }
 
     if(hds->hds_offset == PTS_UNSET) {
@@ -689,10 +688,12 @@ enqueue_packet(ts_demuxer_t *td, const void *data, int len,
     }
   }
 
-
-
+  media_buf_t *mb = media_buf_alloc_unlocked(td->td_mp, len);
+  memcpy(mb->mb_data, data, len);
+  mb->mb_user_time = user_time;
   mb->mb_dts = dts;
   mb->mb_pts = pts;
+  mb->mb_drive_clock = drive_clock;
 
   mb->mb_cw = media_codec_ref(te->te_codec);
   mb->mb_data_type = te->te_data_type;
