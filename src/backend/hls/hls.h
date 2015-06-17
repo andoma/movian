@@ -77,7 +77,7 @@ typedef struct hls_segment {
 
   struct hls_variant *hs_variant;
 
-  char hs_unavailable;
+  char hs_permanent_error;
   char hs_mark;
 
   fa_handle_t *hs_fh;
@@ -92,6 +92,7 @@ typedef enum {
   HLS_ERROR_OK = 0,
   HLS_ERROR_SEGMENT_NOT_FOUND,
   HLS_ERROR_SEGMENT_BROKEN,
+  HLS_ERROR_SEGMENT_ACCESS_DENIED,
   HLS_ERROR_SEGMENT_BAD_KEY,
   HLS_ERROR_VARIANT_PROBE_ERROR,
   HLS_ERROR_VARIANT_NO_VIDEO,
@@ -252,6 +253,8 @@ typedef struct hls {
   int h_last_enqueued_seq;
 
   struct hls_discontinuity_segment_queue h_discontinuity_segments;
+
+  hls_error_t h_last_error;
 
 } hls_t;
 

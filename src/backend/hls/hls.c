@@ -308,6 +308,7 @@ hv_parse_start(hls_variant_t *hv, const char *V)
 static const char *hlserrstr[] = {
   [HLS_ERROR_SEGMENT_NOT_FOUND]     = "Segment not found",
   [HLS_ERROR_SEGMENT_BROKEN]        = "Unable to open segment",
+  [HLS_ERROR_SEGMENT_ACCESS_DENIED] = "Access denied",
   [HLS_ERROR_SEGMENT_BAD_KEY]       = "Unable to get encryption key",
   [HLS_ERROR_VARIANT_PROBE_ERROR]   = "Probing error",
   [HLS_ERROR_VARIANT_NO_VIDEO]      = "No video",
@@ -326,6 +327,8 @@ hls_bad_variant(hls_variant_t *hv, hls_error_t err)
   hls_demuxer_t *hd = hv->hv_demuxer;
   hls_t *h = hd->hd_hls;
   int64_t now = arch_get_ts();
+
+  h->h_last_error = err;
 
   HLS_TRACE(h, "Unable to demux variant %s -- %s",
             hv->hv_name, hlserrstr[err]);
@@ -601,15 +604,17 @@ hls_segment_open(hls_segment_t *hs)
 
   if(hs->hs_byte_offset != -1)
     flags &= ~FA_STREAMING;
-
+  
   fh = fa_open_ex(hs->hs_url, errbuf, sizeof(errbuf), flags, &foe);
 
   if(fh == NULL) {
     usleep(500000);
     if(foe.foe_protocol_error == 404) {
       return HLS_ERROR_SEGMENT_NOT_FOUND;
+    } else if(foe.foe_protocol_error == 403) {
+      hs->hs_permanent_error = 1;
+      return HLS_ERROR_SEGMENT_ACCESS_DENIED;
     } else {
-      hs->hs_unavailable = 1;
       return HLS_ERROR_SEGMENT_BROKEN;
     }
   }
@@ -634,7 +639,6 @@ hls_segment_open(hls_segment_t *hs)
 	TRACE(TRACE_ERROR, "HLS", "Unable to load key file %s",
 	      rstr_get(hs->hs_key_url));
 	fa_close(fh);
-        hs->hs_unavailable = 1;
         return HLS_ERROR_SEGMENT_BAD_KEY;
       }
       rstr_set(&hv->hv_key_url, hs->hs_key_url);
@@ -1673,7 +1677,11 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 
     if(h->h_primary.hd_no_functional_streams ||
        h->h_audio.hd_no_functional_streams) {
-      snprintf(errbuf, errlen, "No playable streams");
+      if(h->h_last_error)
+        snprintf(errbuf, errlen, "No playable streams -- %s",
+                 hlserrstr[h->h_last_error]);
+      else
+        snprintf(errbuf, errlen, "No playable streams");
       e = NULL;
       break;
     }
