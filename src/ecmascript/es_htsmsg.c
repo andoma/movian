@@ -203,7 +203,7 @@ es_htsmsg_print_duk(duk_context *ctx)
 {
   es_context_t *ec = es_get(ctx);
   htsmsg_t *m = es_get_native_obj(ctx, 0, &es_native_htsmsg);
-  htsmsg_print(ec->ec_id, m);
+  htsmsg_print(rstr_get(ec->ec_id), m);
   return 0;
 }
 

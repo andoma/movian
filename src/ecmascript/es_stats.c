@@ -57,7 +57,8 @@ dump_context(htsbuf_queue_t *out, es_context_t *ec)
 {
   hts_mutex_lock(&ec->ec_mutex);
 
-  htsbuf_qprintf(out, "\n--- %s ------------------------\n", ec->ec_id);
+  htsbuf_qprintf(out, "\n--- %s ------------------------\n",
+                 rstr_get(ec->ec_id));
 
   htsbuf_qprintf(out, "  Loaded from %s\n", ec->ec_path);
 

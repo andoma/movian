@@ -357,13 +357,15 @@ tvdb_find_series(void *db, const char *id, int qtype,
 static int64_t 
 tvdb_query_by_episode(void *db, const char *item_url, 
 		      const char *title, int season, int episode,
-		      int qtype)
+		      int qtype, const char *initiator)
 {
   buf_t *result;
   char errbuf[256];
 
   usage_event("TVDB query by episode", 1,
-              USAGE_SEG("qtype", metadata_qtypestr(qtype)));
+              USAGE_SEG("qtype", metadata_qtypestr(qtype),
+                        "initiator", initiator));
+
 
   result = fa_load("http://www.thetvdb.com/api/GetSeries.php",
                    FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),

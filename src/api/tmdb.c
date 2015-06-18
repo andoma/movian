@@ -412,7 +412,7 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id,
 static int64_t
 tmdb_query_by_title_and_year(void *db, const char *item_url,
 			     const char *title, int year, int duration,
-			     int qtype)
+			     int qtype, const char *initiator)
 {
   char errbuf[256];
   buf_t *result;
@@ -422,8 +422,8 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
     return METADATA_TEMPORARY_ERROR;
 
   usage_event("TMDB query by title", 1,
-              USAGE_SEG("qtype", metadata_qtypestr(qtype)));
-
+              USAGE_SEG("qtype", metadata_qtypestr(qtype),
+                        "initiator", initiator));
   if(year)
     snprintf(yeartxt, sizeof(yeartxt), "%d", year);
   else
@@ -507,13 +507,15 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
  */
 static int64_t
 tmdb_query_by_imdb_id(void *db, const char *item_url, const char *imdb_id,
-		      int qtype)
+		      int qtype, const char *initiator)
 {
   if(tmdb == NULL)
     return METADATA_TEMPORARY_ERROR;
 
   usage_event("TMDB query by IMDB-id", 1,
-              USAGE_SEG("qtype", metadata_qtypestr(qtype)));
+              USAGE_SEG("qtype", metadata_qtypestr(qtype),
+                        "initiator", initiator));
+
 
   return tmdb_load_movie_info(db, item_url, imdb_id, qtype);
 }
@@ -522,12 +524,15 @@ tmdb_query_by_imdb_id(void *db, const char *item_url, const char *imdb_id,
  *
  */
 static int64_t
-tmdb_query_by_id(void *db, const char *item_url, const char *imdb_id)
+tmdb_query_by_id(void *db, const char *item_url, const char *imdb_id,
+                 const char *initiator)
 {
   if(tmdb == NULL)
     return METADATA_TEMPORARY_ERROR;
 
-  usage_event("TMDB query by id", 1, NULL);
+  usage_event("TMDB query by id", 1,
+              USAGE_SEG("initiator", initiator));
+
 
   return tmdb_load_movie_info(db, item_url, imdb_id, 0);
 }

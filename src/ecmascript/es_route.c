@@ -202,9 +202,7 @@ ecmascript_openuri(prop_t *page, const char *url, int sync)
   int array_idx = duk_push_array(ctx);
 
   es_debug(ec, "Opening route %s", er->er_pattern);
-  char responder[512];
-  snprintf(responder, sizeof(responder), "Plugin %s", ec->ec_id);
-  usage_page_open(sync, ec->ec_id);
+  usage_page_open(sync, rstr_get(ec->ec_id));
 
   for(int i = 1; i < 8; i++) {
     if(matches[i].rm_so == -1)

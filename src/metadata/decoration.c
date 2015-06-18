@@ -101,6 +101,8 @@ struct deco_browse {
   struct setting *db_setting_mark_all_as_seen;
   struct setting *db_setting_mark_all_as_unseen;
   struct setting *db_setting_erase_playinfo;
+
+  rstr_t *db_initiator;
 };
 
 
@@ -210,7 +212,8 @@ insert_video_mlv(deco_item_t *di)
 					di->di_duration,
 					di->di_root, db->db_title,
 					db->db_lonely_video_item, 0,
-					-1, -1, -1, manual);
+					-1, -1, -1, manual,
+                                        db->db_initiator);
   rstr_release(fname);
 }
 
@@ -976,6 +979,7 @@ deco_browse_destroy(deco_browse_t *db)
   LIST_REMOVE(db, db_link);
   rstr_release(db->db_title);
   free(db->db_url);
+  rstr_release(db->db_initiator);
   free(db);
 }
 
@@ -1155,10 +1159,12 @@ set_mode(void *opaque, const char *str)
  */
 deco_browse_t *
 decorated_browse_create(prop_t *model, struct prop_nf *pnf, prop_t *items,
-			rstr_t *title, int flags, const char *url)
+			rstr_t *title, int flags, const char *url,
+                        const char *initiator)
 {
 
   deco_browse_t *db = calloc(1, sizeof(deco_browse_t));
+  db->db_initiator = rstr_alloc(initiator);
   db->db_url = strdup(url);
   TAILQ_INIT(&db->db_items);
 

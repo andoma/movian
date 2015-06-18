@@ -526,7 +526,7 @@ es_context_create(const char *id, int flags, const char *url,
 
   es_create_env(ec, ec->ec_path, ec->ec_storage);
 
-  ec->ec_id = strdup(id);
+  ec->ec_id = rstr_alloc(id);
 
   hts_mutex_lock(&es_context_mutex);
   es_num_contexts++;
@@ -550,7 +550,7 @@ es_context_release(es_context_t *ec)
     return;
 
   hts_mutex_destroy(&ec->ec_mutex);
-  free(ec->ec_id);
+  rstr_release(ec->ec_id);
   free(ec->ec_path);
   free(ec->ec_storage);
 
@@ -600,7 +600,7 @@ es_context_end(es_context_t *ec, int do_gc)
     prop_vec_destroy_entries(ec->ec_prop_unload_destroy);
     prop_vec_release(ec->ec_prop_unload_destroy);
 
-    TRACE(TRACE_DEBUG, ec->ec_id, "Unloaded");
+    TRACE(TRACE_DEBUG, rstr_get(ec->ec_id), "Unloaded");
   }
 
   hts_mutex_unlock(&ec->ec_mutex);
@@ -618,7 +618,7 @@ es_dump_err(duk_context *ctx)
 
   if(duk_is_string(ctx, -1)) {
     // Not a real exception
-    TRACE(TRACE_ERROR, ec->ec_id, "%s",
+    TRACE(TRACE_ERROR, rstr_get(ec->ec_id), "%s",
           duk_to_string(ctx, -1));
     return;
   }
@@ -638,10 +638,10 @@ es_dump_err(duk_context *ctx)
   duk_get_prop_string(ctx, -5, "stack");
   const char *stack = duk_get_string(ctx, -1);
 
-  TRACE(TRACE_ERROR, ec->ec_id, "%s (%s) at %s:%d",
+  TRACE(TRACE_ERROR, rstr_get(ec->ec_id), "%s (%s) at %s:%d",
         name, message, filename, line_no);
 
-  TRACE(TRACE_ERROR, ec->ec_id, "STACK DUMP: %s", stack);
+  TRACE(TRACE_ERROR, rstr_get(ec->ec_id), "STACK DUMP: %s", stack);
   duk_pop_n(ctx, 5);
 }
 
@@ -671,7 +671,7 @@ es_load_and_compile(es_context_t *ec, const char *path)
                        NULL);
 
   if(buf == NULL) {
-    TRACE(TRACE_ERROR, ec->ec_id, "Unable to load %s", path);
+    TRACE(TRACE_ERROR, rstr_get(ec->ec_id), "Unable to load %s", path);
     return -1;
   }
 
@@ -683,7 +683,7 @@ es_load_and_compile(es_context_t *ec, const char *path)
 
   if(duk_pcompile(ctx, 0)) {
 
-    TRACE(TRACE_ERROR, ec->ec_id, "Unable to compile %s -- %s",
+    TRACE(TRACE_ERROR, rstr_get(ec->ec_id), "Unable to compile %s -- %s",
           path, duk_safe_to_string(ctx, -1));
     duk_pop(ctx);
     return -1;
@@ -852,7 +852,7 @@ ecmascript_plugin_unload(const char *id)
 
   hts_mutex_lock(&es_context_mutex);
   LIST_FOREACH(ec, &es_contexts, ec_link) {
-    if(!strcmp(id, ec->ec_id)) {
+    if(!strcmp(id, rstr_get(ec->ec_id))) {
       assert(ec->ec_linked);
       es_num_contexts--;
       LIST_REMOVE(ec, ec_link);

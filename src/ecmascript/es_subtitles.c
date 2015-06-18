@@ -150,7 +150,8 @@ esp_query(subtitle_provider_t *SP, sub_scanner_t *ss, int score,
 
     extern ecmascript_native_class_t es_native_prop;
 
-    usage_event("Subtitle search", 1, USAGE_SEG("responder", ec->ec_id));
+    usage_event("Subtitle search", 1,
+                USAGE_SEG("responder", rstr_get(ec->ec_id)));
 
     sub_scanner_retain(ss);
 

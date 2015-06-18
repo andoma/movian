@@ -233,18 +233,21 @@ TAILQ_HEAD(metadata_source_queue, metadata_source);
  *
  */
 typedef struct metadata_source_funcs {
-  int64_t (*query_by_title_and_year)(void *db, const char *item_url, 
+  int64_t (*query_by_title_and_year)(void *db, const char *item_url,
 				     const char *title, int year,
-				     int duration, int qtype);
+				     int duration, int qtype,
+                                     const char *initiator);
 
-  int64_t (*query_by_imdb_id)(void *db, const char *item_url, 
-			      const char *imdb_id, int qtype);
+  int64_t (*query_by_imdb_id)(void *db, const char *item_url,
+			      const char *imdb_id, int qtype,
+                              const char *initiator);
 
-  int64_t (*query_by_id)(void *db, const char *item_url, const char *id);
+  int64_t (*query_by_id)(void *db, const char *item_url, const char *id,
+                         const char *initiator);
 
-  int64_t (*query_by_episode)(void *db, const char *item_url, 
+  int64_t (*query_by_episode)(void *db, const char *item_url,
 			      const char *title, int season, int episode,
-			      int qtype);
+			      int qtype, const char *initiator);
 
 } metadata_source_funcs_t;
 
@@ -415,7 +418,8 @@ typedef struct deco_browse deco_browse_t;
 
 deco_browse_t *decorated_browse_create(struct prop *model, struct prop_nf *pnf,
                                        struct prop *items, rstr_t *title,
-                                       int flags, const char *url);
+                                       int flags, const char *url,
+                                       const char *initiator);
 
 // Use if DECO_FLAGS_NO_AUTO_DESTROY
 void decorated_browse_destroy(deco_browse_t *db);
@@ -436,7 +440,8 @@ metadata_lazy_video_t *metadata_bind_video_info(rstr_t *url, rstr_t *filename,
 						int passive,
 						int year, int season,
 						int episode,
-                                                int manual);
+                                                int manual,
+                                                rstr_t *initiator);
 
 void mlv_unbind(metadata_lazy_video_t *mlv, int cleanup);
 

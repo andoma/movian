@@ -114,7 +114,7 @@ es_getAuthCredentials(duk_context *ctx)
 
   es_context_t *ec = es_get(ctx);
 
-  snprintf(buf, sizeof(buf), "plugin-%s%s%s", ec->ec_id,
+  snprintf(buf, sizeof(buf), "plugin-%s%s%s", rstr_get(ec->ec_id),
 	   id ? "-" : "", id ?: "");
 
   int flags = 0;
@@ -301,7 +301,7 @@ es_select_view(duk_context *ctx)
 {
   es_context_t *ec = es_get(ctx);
   const char *filename = duk_to_string(ctx, 0);
-  plugin_select_view(ec->ec_id, filename);
+  plugin_select_view(rstr_get(ec->ec_id), filename);
   return 0;
 }
 

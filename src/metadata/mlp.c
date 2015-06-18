@@ -393,7 +393,7 @@ metadata_bind_albumart(prop_t *prop, rstr_t *artist, rstr_t *album)
 struct metadata_lazy_video {
 
   metadata_lazy_prop_t mlv_mlp;
-
+  rstr_t *mlv_initiator;
   rstr_t *mlv_url;
   rstr_t *mlv_filename;
   rstr_t *mlv_folder;
@@ -609,7 +609,8 @@ query_by_filename_or_dirname(void *db, const metadata_lazy_video_t *mlv,
 
     rval = msf->query_by_episode(db, rstr_get(mlv->mlv_url),
 				 rstr_get(title), season, episode,
-				 METADATA_QTYPE_EPISODE);
+				 METADATA_QTYPE_EPISODE,
+                                 rstr_get(mlv->mlv_initiator));
     *qtype = METADATA_QTYPE_EPISODE;
     rstr_release(title);
     return rval;
@@ -629,7 +630,8 @@ query_by_filename_or_dirname(void *db, const metadata_lazy_video_t *mlv,
     rval = msf->query_by_title_and_year(db, rstr_get(mlv->mlv_url),
 					rstr_get(title), year,
 					duration,
-					METADATA_QTYPE_FILENAME);
+					METADATA_QTYPE_FILENAME,
+                                        rstr_get(mlv->mlv_initiator));
     *qtype = METADATA_QTYPE_FILENAME;
 
     if(rval == METADATA_PERMANENT_ERROR && year != 0) {
@@ -642,7 +644,8 @@ query_by_filename_or_dirname(void *db, const metadata_lazy_video_t *mlv,
       rval = msf->query_by_title_and_year(db, rstr_get(mlv->mlv_url),
 					  rstr_get(title), 0,
 					  duration,
-					  METADATA_QTYPE_FILENAME);
+					  METADATA_QTYPE_FILENAME,
+                                          rstr_get(mlv->mlv_initiator));
       *qtype = METADATA_QTYPE_FILENAME;
     }
     rstr_release(title);
@@ -662,7 +665,8 @@ query_by_filename_or_dirname(void *db, const metadata_lazy_video_t *mlv,
     rval = msf->query_by_title_and_year(db, rstr_get(mlv->mlv_url),
 					rstr_get(title), year,
 					duration,
-					METADATA_QTYPE_DIRECTORY);
+					METADATA_QTYPE_DIRECTORY,
+                                        rstr_get(mlv->mlv_initiator));
     *qtype = METADATA_QTYPE_DIRECTORY;
     rstr_release(title);
   }
@@ -942,7 +946,8 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
 		"Performing IMDB lookup for %s using %s for %s",
                 q, ms->ms_name, rstr_get(mlv->mlv_url));
 
-	  rval = msf->query_by_imdb_id(db, rstr_get(mlv->mlv_url), q, qtype);
+	  rval = msf->query_by_imdb_id(db, rstr_get(mlv->mlv_url), q, qtype,
+                                       rstr_get(mlv->mlv_initiator));
 	  break;
 
 	case METADATA_QTYPE_FILENAME_OR_DIRECTORY:
@@ -960,14 +965,16 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
 	  rval = msf->query_by_title_and_year(db, rstr_get(mlv->mlv_url),
 					      rstr_get(mlv->mlv_filename),
 					      mlv->mlv_year, duration,
-					      qtype);
+					      qtype,
+                                              rstr_get(mlv->mlv_initiator));
 	  break;
 
 	case METADATA_QTYPE_TVSHOW:
 	  rval = msf->query_by_episode(db, rstr_get(mlv->mlv_url),
 				       rstr_get(mlv->mlv_filename),
 				       mlv->mlv_season, mlv->mlv_episode,
-				       qtype);
+				       qtype,
+                                       rstr_get(mlv->mlv_initiator));
 	  break;
 
 	case METADATA_QTYPE_CUSTOM:
@@ -978,7 +985,8 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
 		"Performing custom search lookup for %s using %s for %s",
                 sq, ms->ms_name, rstr_get(mlv->mlv_url));
 	  rval = msf->query_by_title_and_year(db, rstr_get(mlv->mlv_url),
-					      sq, 0, duration, qtype);
+					      sq, 0, duration, qtype,
+                                              rstr_get(mlv->mlv_initiator));
 	  break;
 
 	default:
@@ -1027,8 +1035,8 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
 	  rstr_get(md->md_ext_id));
 
     rval = ms->ms_funcs->query_by_id(db, rstr_get(mlv->mlv_url),
-				     rstr_get(md->md_ext_id));
-    
+				     rstr_get(md->md_ext_id),
+                                     rstr_get(mlv->mlv_initiator));
     metadata_destroy(md);
 
     if(rval == METADATA_DEADLOCK) {
@@ -1527,7 +1535,7 @@ static void
 mlv_dtor(metadata_lazy_prop_t *mlp)
 {
   metadata_lazy_video_t *mlv = (metadata_lazy_video_t *)mlp;
-
+  rstr_release(mlv->mlv_initiator);
   prop_unsubscribe(mlv->mlv_trig_title);
   prop_unsubscribe(mlv->mlv_trig_desc);
   prop_unsubscribe(mlv->mlv_trig_rating);
@@ -1802,7 +1810,7 @@ metadata_bind_video_info(rstr_t *url, rstr_t *filename,
 			 prop_t *root,
 			 rstr_t *folder, int lonely, int passive,
 			 int year, int season, int episode,
-                         int manual)
+                         int manual, rstr_t *initiator)
 {
   metadata_lazy_video_t *mlv = mlp_alloc(&mlc_video);
 
@@ -1816,6 +1824,7 @@ metadata_bind_video_info(rstr_t *url, rstr_t *filename,
   mlv->mlv_passive = passive;
   mlv->mlv_manual = manual;
   mlv->mlv_root = prop_ref_inc(root);
+  mlv->mlv_initiator = rstr_dup(initiator);
   mlv->mlv_m = prop_create_r(root, "metadata");
 
 

@@ -91,7 +91,7 @@ es_video_metadata_bind_duk(duk_context *ctx)
 
   em->mlv =
     metadata_bind_video_info(url, title, imdb, duration, root, NULL, 0, 0,
-                             year, season, episode, 0);
+                             year, season, episode, 0, ec->ec_id);
   rstr_release(title);
   rstr_release(url);
   es_resource_push(ctx, &em->super);

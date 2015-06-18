@@ -66,7 +66,7 @@ void ecmascript_register_native_class(ecmascript_native_class_t *c);
  */
 typedef struct es_context {
   LIST_ENTRY(es_context) ec_link;
-  char *ec_id;
+  rstr_t *ec_id;
   char *ec_path;
   char *ec_storage;
 
@@ -264,10 +264,10 @@ int es_hook_invoke(const char *type,
 /**
  *
  */
-#define es_debug(ec, fmt, ...) do {                             \
-    if((ec)->ec_debug) {                                        \
-      TRACE(TRACE_DEBUG, (ec)->ec_id, fmt, ##__VA_ARGS__);     \
-    }                                                           \
+#define es_debug(ec, fmt, ...) do {                                     \
+    if((ec)->ec_debug) {                                                \
+      TRACE(TRACE_DEBUG, rstr_get((ec)->ec_id), fmt, ##__VA_ARGS__);   \
+    }                                                                   \
   } while(0)
 
 

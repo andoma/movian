@@ -1186,7 +1186,7 @@ browse_as_dir(scanner_t *s)
     decorated_browse_create(s->s_model, s->s_pnf, s->s_nodes, s->s_title,
                             DECO_FLAGS_RAW_FILENAMES |
                             DECO_FLAGS_NO_AUTO_DESTROY, 
-                            s->s_url);
+                            s->s_url, "Directory");
 }
 
 /**
