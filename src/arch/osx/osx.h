@@ -71,6 +71,6 @@ void webpopup_init(void);
 
   bool fullwindow;
   prop_sub_t *fwsub;  // Full window
-
+  NSString *title;
 }
 @end

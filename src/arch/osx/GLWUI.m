@@ -110,7 +110,7 @@
 				     backing:NSBackingStoreBuffered
 				       defer:NO];
 
-     [window setTitle:@"Showtime"];
+     [window setTitle:title];
      [window setFrameAutosaveName:@"main"];
   }
 
@@ -238,16 +238,21 @@ static prop_t *stored_nav;
                        PROP_TAG_NAMED_ROOT, p, "remote",
                        NULL);
 
+    title = [[NSString alloc] initWithUTF8String: "Remote"];
+
   } else if(stored_nav != NULL) {
     gr->gr_prop_nav = stored_nav;
     stored_nav = NULL;
+    title = [[NSString alloc] initWithUTF8String: "Showtime"];
   } else {
     gr->gr_prop_nav = nav_spawn();
+    title = [[NSString alloc] initWithUTF8String: "Showtime"];
   }
 
   if(glw_init(gr)) {
     prop_destroy(gr->gr_prop_ui);
     free(gr);
+    [title release];
     [self release];
     return nil;
   }
@@ -303,6 +308,7 @@ static prop_t *stored_nav;
 
   free(gr);
 
+  [title release];
   [view release];
   [self release];
 }
