@@ -189,6 +189,20 @@ usage_event(const char *key, int count, const char **segmentation)
 {
   htsmsg_t *pm;
   htsmsg_field_t *f;
+
+  if(gconf.show_usage_events) {
+    printf("event: %s %d ", key, count);
+    const char **s = segmentation;
+
+    if(s != NULL) {
+      for(;*s != NULL; s+=2) {
+        printf("%s=%s  ", s[0], s[1]);
+      }
+    }
+    printf("\n");
+  }
+
+
   if(gconf.disable_analytics)
     return;
 

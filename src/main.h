@@ -213,6 +213,7 @@ typedef struct gconf {
   int fullscreen;
   int swrefresh;
   int debug_glw;
+  int show_usage_events;
 
   int can_standby;
   int can_poweroff;

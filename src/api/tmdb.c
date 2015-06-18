@@ -307,7 +307,7 @@ tmdb_insert_movie_cast(void *db, int64_t itemid, htsmsg_t *doc)
  */
 static int64_t
 tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id,
-		     int qtype)
+		     int qtype, int *cache_info)
 {
   char url[300];
   char errbuf[256];
@@ -319,6 +319,7 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id,
                    FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
                    FA_LOAD_QUERY_ARG("api_key", TMDB_APIKEY),
                    FA_LOAD_QUERY_ARG("language", getlang()),
+                   FA_LOAD_CACHE_INFO(cache_info),
                    FA_LOAD_FLAGS(FA_COMPRESSION),
                    NULL);
   if(result == NULL) {
@@ -406,24 +407,19 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id,
   return itemid;
 }
 
+
 /**
  *
  */
 static int64_t
-tmdb_query_by_title_and_year(void *db, const char *item_url,
-			     const char *title, int year, int duration,
-			     int qtype, const char *initiator)
+tmdb_query_by_title_and_year0(void *db, const char *item_url,
+                              const char *title, int year, int duration,
+                              int qtype, int *cache_info)
 {
   char errbuf[256];
   buf_t *result;
   char yeartxt[20];
 
-  if(tmdb == NULL)
-    return METADATA_TEMPORARY_ERROR;
-
-  usage_event("TMDB query by title", 1,
-              USAGE_SEG("qtype", metadata_qtypestr(qtype),
-                        "initiator", initiator));
   if(year)
     snprintf(yeartxt, sizeof(yeartxt), "%d", year);
   else
@@ -438,6 +434,7 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
                    FA_LOAD_QUERY_ARG("api_key", TMDB_APIKEY),
                    FA_LOAD_QUERY_ARG("language", getlang()),
                    FA_LOAD_FLAGS(FA_COMPRESSION),
+                   FA_LOAD_CACHE_INFO(cache_info),
                    NULL);
 
   if(result == NULL)
@@ -505,19 +502,77 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
 /**
  *
  */
+static const char *
+result_to_str(int64_t rval, int cache_info)
+{
+  switch(rval) {
+  case METADATA_TEMPORARY_ERROR:
+    return "Temporary error";
+  case METADATA_PERMANENT_ERROR:
+    return "Permanent error";
+  default:
+
+    switch(cache_info) {
+    case FA_CACHE_INFO_FROM_CACHE:
+      return "OK (Cached)";
+    case FA_CACHE_INFO_FROM_CACHE_NOT_MODIFIED:
+      return "OK (Cached-not-modified)";
+    case FA_CACHE_INFO_EXPIRED_FROM_CACHE:
+      return "OK (Cached-expired)";
+    default:
+      return "OK";
+    }
+
+  }
+}
+
+/**
+ *
+ */
+static int64_t
+tmdb_query_by_title_and_year(void *db, const char *item_url,
+			     const char *title, int year, int duration,
+			     int qtype, const char *initiator)
+{
+  int cache_info = 0;
+
+  if(tmdb == NULL)
+    return METADATA_TEMPORARY_ERROR;
+
+  int64_t rval =
+    tmdb_query_by_title_and_year0(db, item_url, title, year, duration, qtype,
+                                  &cache_info);
+
+  usage_event("TMDB query by title", 1,
+              USAGE_SEG("qtype", metadata_qtypestr(qtype),
+                        "initiator", initiator,
+                        "result", result_to_str(rval, cache_info)));
+
+  return rval;
+}
+
+
+/**
+ *
+ */
 static int64_t
 tmdb_query_by_imdb_id(void *db, const char *item_url, const char *imdb_id,
 		      int qtype, const char *initiator)
 {
+  int cache_info = 0;
+
   if(tmdb == NULL)
     return METADATA_TEMPORARY_ERROR;
 
+  int64_t rval = tmdb_load_movie_info(db, item_url, imdb_id, qtype,
+                                      &cache_info);
+
   usage_event("TMDB query by IMDB-id", 1,
               USAGE_SEG("qtype", metadata_qtypestr(qtype),
-                        "initiator", initiator));
+                        "initiator", initiator,
+                        "result", result_to_str(rval, cache_info)));
 
-
-  return tmdb_load_movie_info(db, item_url, imdb_id, qtype);
+  return rval;
 }
 
 /**
@@ -527,14 +582,19 @@ static int64_t
 tmdb_query_by_id(void *db, const char *item_url, const char *imdb_id,
                  const char *initiator)
 {
+  int cache_info = 0;
+
   if(tmdb == NULL)
     return METADATA_TEMPORARY_ERROR;
 
+
+  int64_t rval = tmdb_load_movie_info(db, item_url, imdb_id, 0, &cache_info);
+
   usage_event("TMDB query by id", 1,
-              USAGE_SEG("initiator", initiator));
+              USAGE_SEG("initiator", initiator,
+                        "result", result_to_str(rval, cache_info)));
 
-
-  return tmdb_load_movie_info(db, item_url, imdb_id, 0);
+  return rval;
 }
 
 

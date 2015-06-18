@@ -300,6 +300,7 @@ enum {
   FA_LOAD_TAG_REQUEST_HEADERS,
   FA_LOAD_TAG_RESPONSE_HEADERS,
   FA_LOAD_TAG_LOCATION,
+  FA_LOAD_TAG_CACHE_INFO,
 };
 
 #define FA_LOAD_ERRBUF(a, b)            FA_LOAD_TAG_ERRBUF, a, b
@@ -314,6 +315,11 @@ enum {
 #define FA_LOAD_REQUEST_HEADERS(a)      FA_LOAD_TAG_REQUEST_HEADERS, a
 #define FA_LOAD_RESPONSE_HEADERS(a)     FA_LOAD_TAG_RESPONSE_HEADERS, a
 #define FA_LOAD_LOCATION(a)             FA_LOAD_TAG_LOCATION, a
+#define FA_LOAD_CACHE_INFO(a)           FA_LOAD_TAG_CACHE_INFO, a
+
+#define FA_CACHE_INFO_FROM_CACHE              1
+#define FA_CACHE_INFO_FROM_CACHE_NOT_MODIFIED 2
+#define FA_CACHE_INFO_EXPIRED_FROM_CACHE      3
 
 buf_t *fa_load(const char *url, ...) attribute_null_sentinel;
 

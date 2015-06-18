@@ -1511,6 +1511,7 @@ fa_load(const char *url, ...)
   int tag;
   loadarg_t *la;
   char **locationptr = NULL;
+  int *cache_info_ptr = NULL;
 
   va_list ap;
   va_start(ap, url);
@@ -1586,6 +1587,11 @@ fa_load(const char *url, ...)
       locationptr = va_arg(ap, char **);
       break;
 
+    case FA_LOAD_TAG_CACHE_INFO:
+      cache_info_ptr = va_arg(ap, int *);
+      *cache_info_ptr = 0;
+      break;
+
     default:
       abort();
     }
@@ -1632,6 +1638,8 @@ fa_load(const char *url, ...)
 	  free(etag);
           fap_release(fap);
           free(filename);
+          if(cache_info_ptr != NULL)
+            *cache_info_ptr = FA_CACHE_INFO_EXPIRED_FROM_CACHE;
 	  return buf;
 	}
 	
@@ -1640,6 +1648,8 @@ fa_load(const char *url, ...)
 	  free(etag);
           fap_release(fap);
 	  free(filename);
+          if(cache_info_ptr != NULL)
+            *cache_info_ptr = FA_CACHE_INFO_FROM_CACHE;
 	  return buf;
 	}
       } else if(cache_control != NULL) {
@@ -1665,6 +1675,8 @@ fa_load(const char *url, ...)
 	return NOT_MODIFIED;
 
       free(etag);
+      if(cache_info_ptr != NULL)
+        *cache_info_ptr = FA_CACHE_INFO_FROM_CACHE_NOT_MODIFIED;
       return buf;
     }
 
@@ -1673,6 +1685,8 @@ fa_load(const char *url, ...)
          Return the cached entry anyway. It must be better than nothing
       */
       free(etag);
+      if(cache_info_ptr != NULL)
+        *cache_info_ptr = FA_CACHE_INFO_EXPIRED_FROM_CACHE;
       return buf;
     }
 
