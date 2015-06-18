@@ -944,7 +944,7 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
   if(right->type == TOKEN_PROPERTY_NAME &&
      !strcmp(rstr_get(right->t_rstring), "event")) {
     /* Assignment from $event, if our eval context has an event use it */
-    if(ec->event == NULL || ec->event->e_type_x != EVENT_KEYDESC)
+    if(ec->event == NULL || ec->event->e_type != EVENT_KEYDESC)
       return 0;
     right = eval_alloc(self, ec, TOKEN_RSTRING);
     const event_payload_t *ep = (const event_payload_t *)ec->event;

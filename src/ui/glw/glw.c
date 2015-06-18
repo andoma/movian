@@ -1627,7 +1627,7 @@ glw_focus_child(glw_t *w)
 int
 glw_root_event_handler(glw_root_t *gr, event_t *e)
 {
-  if(e->e_type_x == EVENT_KEYDESC)
+  if(e->e_type == EVENT_KEYDESC)
     return 0;
 
   if(event_is_action(e, ACTION_ENABLE_SCREENSAVER)) {
@@ -1987,12 +1987,12 @@ glw_dispatch_event(glw_root_t *gr, event_t *e)
 
   runcontrol_activity();
 
-  if(e->e_type_x == EVENT_REPAINT_UI) {
+  if(e->e_type == EVENT_REPAINT_UI) {
     glw_text_flush(gr);
     return;
   }
 
-  if(e->e_type_x == EVENT_KEYDESC) {
+  if(e->e_type == EVENT_KEYDESC) {
     event_t *e2;
 
     if(glw_event(gr, e))

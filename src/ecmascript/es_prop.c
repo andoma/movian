@@ -525,20 +525,20 @@ es_sub_cb(void *opaque, prop_event_t event, ...)
       duk_push_string(ctx, "action");
       duk_push_string(ctx, ep->payload);
 
-    } else if(e->e_type_x == EVENT_ACTION_VECTOR) {
+    } else if(e->e_type == EVENT_ACTION_VECTOR) {
       const event_action_vector_t *eav = (const event_action_vector_t *)e;
       assert(eav->num > 0);
       nargs = 2;
       duk_push_string(ctx, "action");
       duk_push_string(ctx, action_code2str(eav->actions[0]));
 
-    } else if(e->e_type_x == EVENT_UNICODE) {
+    } else if(e->e_type == EVENT_UNICODE) {
       const event_int_t *eu = (const event_int_t *)e;
       nargs = 2;
       duk_push_string(ctx, "unicode");
       duk_push_int(ctx, eu->val);
 
-    } else if(e->e_type_x == EVENT_PROPREF) {
+    } else if(e->e_type == EVENT_PROPREF) {
       event_prop_t *ep = (event_prop_t *)e;
       nargs = 2;
       duk_push_string(ctx, "propref");

@@ -42,8 +42,7 @@ event_create(event_type_t type, size_t size)
   e->e_dtor = NULL;
   atomic_set(&e->e_refcount, 1);
   e->e_flags = 0;
-  assert(type > EVENT_OFFSET);
-  e->e_type_x = type;
+  e->e_type = type;
   return e;
 }
 
@@ -409,7 +408,7 @@ event_is_action(event_t *e, action_type_t at)
   int i;
   event_action_vector_t *eav;
 
-  if(e->e_type_x != EVENT_ACTION_VECTOR)
+  if(e->e_type != EVENT_ACTION_VECTOR)
     return 0;
 
   eav = (event_action_vector_t *)e;
@@ -597,7 +596,7 @@ event_sprint(const event_t *e)
   if(e == NULL)
     return "(null)";
 
-  switch(e->e_type_x) {
+  switch(e->e_type) {
   case EVENT_DYNAMIC_ACTION:
     return ep->payload;
   case EVENT_ACTION_VECTOR:
@@ -607,7 +606,7 @@ event_sprint(const event_t *e)
                i == 0 ? "" : ", ", action_code2str(eav->actions[i]));
     break;
   default:
-    snprintf(buf, sizeof(buf), "event<%d>", e->e_type_x);
+    snprintf(buf, sizeof(buf), "event<%d>", e->e_type);
     break;
   }
   return buf;
