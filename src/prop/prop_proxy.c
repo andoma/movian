@@ -491,6 +491,16 @@ prop_proxy_send_data(prop_proxy_connection_t *ppc,
  *
  */
 void
+prop_proxy_send_event(prop_t *p, event_t *e)
+{
+  printf("prop proxy event sending not supported yet\n");
+}
+
+
+/**
+ *
+ */
+void
 prop_proxy_subscribe(prop_proxy_connection_t *ppc, prop_sub_t *s,
                      prop_t *p, const char **name)
 {

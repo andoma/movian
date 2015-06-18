@@ -1612,6 +1612,12 @@ prop_send_ext_event0(prop_t *p, event_t *e)
   prop_sub_t *s;
   prop_notify_t *n;
 
+  if(p->hp_type == PROP_PROXY) {
+    prop_proxy_send_event(p, e);
+    return;
+  }
+
+
   while(p->hp_originator != NULL)
     p = p->hp_originator;
 

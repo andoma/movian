@@ -25,6 +25,7 @@ struct prop_sub;
 struct prop;
 struct net_addr;
 struct prop_sub;
+struct event;
 
 struct prop *prop_proxy_connect(struct net_addr *addr);
 
@@ -41,3 +42,5 @@ void prop_proxy_subscribe(prop_proxy_connection_t *ppc, struct prop_sub *s,
 void prop_proxy_unsubscribe(struct prop_sub *s);
 
 void prop_proxy_destroy(struct prop *p);
+
+void prop_proxy_send_event(struct prop *p, struct event *e);

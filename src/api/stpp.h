@@ -26,6 +26,7 @@
 #define STPP_CMD_UNSUBSCRIBE 2
 #define STPP_CMD_SET         3
 #define STPP_CMD_NOTIFY      4
+#define STPP_CMD_EVENT       5
 
 // These things are sent over the wire so no changes here please
 
