@@ -193,6 +193,8 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
     }
   }
 
+  const int64_t offset = fctx->start_time != PTS_UNSET ? fctx->start_time : 0;
+
   while(1) {
     /**
      * Need to fetch a new packet ?
@@ -280,10 +282,13 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 
       mb->mb_stream = pkt.stream_index;
 
-      if(mb->mb_data_type == MB_VIDEO && mb->mb_pts != PTS_UNSET) {
-        const int64_t offset = fctx->start_time;
+      if(mb->mb_pts != PTS_UNSET)
+        mb->mb_user_time = mb->mb_pts - offset;
+      else
+        mb->mb_user_time = PTS_UNSET;
+
+      if(mb->mb_data_type == MB_VIDEO && mb->mb_user_time != PTS_UNSET) {
 	mb->mb_drive_clock = 1;
-        mb->mb_user_time = mb->mb_pts + (offset != PTS_UNSET ? offset : 0);
       }
 
       mb->mb_keyframe = !!(pkt.flags & AV_PKT_FLAG_KEY);
@@ -814,8 +819,6 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
     }
   }
 
-  mp->mp_start_time = fctx->start_time;
-
   int flags = MP_CAN_PAUSE;
 
   if(fctx->duration != PTS_UNSET)
@@ -839,8 +842,6 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
   seek_index_destroy(ci);
 
   TRACE(TRACE_DEBUG, "Video", "Stopped playback of %s", url);
-
-  mp->mp_start_time = 0;
 
   mp_shutdown(mp);
 

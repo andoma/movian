@@ -42,4 +42,5 @@ ext_subtitles_t *subtitles_load(struct media_pipe *mp, const char *url);
 
 ext_subtitles_t *load_ssa(const char *url, char *buf, size_t len);
 
-void subtitles_pick(ext_subtitles_t *es, int64_t pts, media_pipe_t *mp);
+void subtitles_pick(ext_subtitles_t *es, int64_t user_time, int64_t pts,
+                    media_pipe_t *mp);

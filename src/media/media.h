@@ -311,7 +311,6 @@ typedef struct media_pipe {
   prop_sub_t *mp_sub_eventsink;
 
   int64_t mp_seek_base;
-  int64_t mp_start_time;
   int64_t mp_duration;  // Duration of currently played (0 if unknown)
   int mp_epoch;
 

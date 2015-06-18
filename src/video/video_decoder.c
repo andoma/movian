@@ -79,18 +79,22 @@ video_decoder_infer_pts(const media_buf_meta_t *mbm,
  *
  */
 static void
-video_decoder_set_current_time(video_decoder_t *vd, int64_t ts,
-			       int epoch, int64_t delta)
+video_decoder_set_current_time(video_decoder_t *vd, int64_t user_time,
+			       int epoch, int64_t pts)
 {
-  if(ts == PTS_UNSET)
+  if(user_time == PTS_UNSET)
     return;
 
-  mp_set_current_time(vd->vd_mp, ts, epoch, delta);
+  mp_set_current_time(vd->vd_mp, user_time, epoch, 0);
 
-  vd->vd_subpts = ts - vd->vd_mp->mp_svdelta - delta;
+  if(pts == PTS_UNSET)
+    return;
+
+  vd->vd_subpts = user_time - vd->vd_mp->mp_svdelta;
+  pts -= vd->vd_mp->mp_svdelta;
 
   if(vd->vd_ext_subtitles != NULL)
-    subtitles_pick(vd->vd_ext_subtitles, vd->vd_subpts, vd->vd_mp);
+    subtitles_pick(vd->vd_ext_subtitles, vd->vd_subpts, pts, vd->vd_mp);
 }
 
 
@@ -104,7 +108,8 @@ video_deliver_frame(video_decoder_t *vd, const frame_info_t *info)
                                             vd->vd_mp->mp_video_frame_opaque);
 
   if(info->fi_drive_clock && !r)
-    video_decoder_set_current_time(vd, info->fi_user_time, info->fi_epoch, 0);
+    video_decoder_set_current_time(vd, info->fi_user_time, info->fi_epoch,
+                                   info->fi_pts);
 
   return r;
 }
@@ -167,7 +172,7 @@ vd_thread(void *aux)
 
       if(mbm->mbm_drive_clock)
         video_decoder_set_current_time(vd, mbm->mbm_user_time,
-                                       mbm->mbm_epoch, 0);
+                                       mbm->mbm_epoch, mbm->mbm_pts);
       hts_mutex_lock(&mp->mp_mutex);
       continue;
     }
@@ -180,7 +185,7 @@ vd_thread(void *aux)
       TAILQ_REMOVE(&mq->mq_q_ctrl, ctrl, mb_link);
       mb = ctrl;
 
-    } else if(aux != NULL && aux->mb_pts < vd->vd_subpts + 1000000LL) {
+    } else if(aux != NULL && aux->mb_user_time < vd->vd_subpts + 1000000LL) {
 
       if(vd->vd_hold) {
 	hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
