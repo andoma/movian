@@ -351,7 +351,7 @@ hls_bad_variant(hls_variant_t *hv, hls_error_t err)
  *
  */
 static hls_error_t attribute_unused_result
-hls_variant_update(hls_variant_t *hv)
+hls_variant_update(hls_variant_t *hv, media_pipe_t *mp)
 {
   hls_segment_t *hs;
   char errbuf[1024];
@@ -360,13 +360,18 @@ hls_variant_update(hls_variant_t *hv)
   if(hv->hv_frozen)
     return 0;
 
-  time_t now = time(NULL);
 
-  if(hv->hv_loaded == now)
-    return 0;
+  if(hv->hv_loaded != 0) {
+
+    if(mp->mp_buffer_delay > 10000000)
+      return 0;
+
+    time_t now = time(NULL);
+    if(hv->hv_loaded == now)
+      return 0;
+  }
 
   hls_t *h = hv->hv_demuxer->hd_hls;
-
   buf_t *b = fa_load(hv->hv_url,
                      FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
                      FA_LOAD_FLAGS(FA_COMPRESSION),
@@ -380,7 +385,7 @@ hls_variant_update(hls_variant_t *hv)
     return HLS_ERROR_VARIANT_NOT_FOUND;
   }
 
-  hv->hv_loaded = now;
+  hv->hv_loaded = time(NULL);
 
   b = buf_make_writable(b);
 
@@ -493,9 +498,9 @@ hls_variant_update(hls_variant_t *hv)
     return HLS_ERROR_VARIANT_EMPTY;
 
   if(changed) {
-    HLS_TRACE(h, "Loaded segments %d ... %d",
-              TAILQ_FIRST(&hv->hv_segments)->hs_seq,
-              TAILQ_LAST(&hv->hv_segments, hls_segment_queue)->hs_seq);
+    int first = TAILQ_FIRST(&hv->hv_segments)->hs_seq;
+    int last = TAILQ_LAST(&hv->hv_segments, hls_segment_queue)->hs_seq;
+    HLS_TRACE(h, "Loaded segments %d ... %d (%d)", first, last, last - first);
   }
 
   if(hv->hv_frozen && hv->hv_duration)
@@ -819,7 +824,7 @@ hls_variant_select_next_segment(hls_variant_t *hv)
   hls_segment_t *hs;
 
 
-  hls_error_t err = hls_variant_update(hv);
+  hls_error_t err = hls_variant_update(hv, mp);
 
   if(err != HLS_ERROR_OK) {
     hls_bad_variant(hv, err);
