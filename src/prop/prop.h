@@ -442,6 +442,8 @@ void prop_courier_stop(prop_courier_t *pc);
 // Does not create properties, can't be used over remote connections
 prop_t *prop_find(prop_t *parent, ...) attribute_null_sentinel;
 
+prop_t *prop_findv(prop_t *p, char **names);
+
 prop_t *prop_first_child(prop_t *p);
 
 void prop_send_ext_event(prop_t *p, event_t *e);

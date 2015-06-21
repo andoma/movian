@@ -27,6 +27,7 @@
 #include "main.h"
 #include "misc/rstr.h"
 #include "misc/minmax.h"
+#include "misc/bytestream.h"
 
 /**
  *
@@ -100,6 +101,29 @@ htsbuf_append(htsbuf_queue_t *hq, const void *buf, size_t len)
   hd->hd_data_off = 0;
   memcpy(hd->hd_data, buf, len);
 }
+
+
+/**
+ *
+ */
+void
+htsbuf_append_byte(htsbuf_queue_t *hq, uint8_t b)
+{
+  htsbuf_append(hq, &b, 1);
+}
+
+
+/**
+ *
+ */
+void
+htsbuf_append_le32(htsbuf_queue_t *hq, uint32_t v)
+{
+  uint8_t buf[4];
+  wr32_le(buf, v);
+  htsbuf_append(hq, &buf, 4);
+}
+
 
 /**
  *

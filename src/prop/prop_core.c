@@ -2714,13 +2714,29 @@ prop_get_by_name(const char **name, int follow_symlinks, ...)
   name++;
   hts_mutex_lock(&prop_mutex);
   if(p->hp_type == PROP_PROXY) {
-    int len;
-    for(len = 0; name[len] != NULL; len++) {}
+    int len = 0;
+    if(p->hp_proxy_pfx != NULL)
+      while(p->hp_proxy_pfx[len] != NULL)
+        len++;
+
+    while(name[len] != NULL)
+      len++;
     char **vec = malloc((1 + len) * sizeof(char *));
-    for(int i = 0; i < len; i++)
-      vec[i] = strdup(name[i]);
+
+    len = 0;
+    if(p->hp_proxy_pfx != NULL) {
+      while(p->hp_proxy_pfx[len] != NULL) {
+        vec[len] = strdup(p->hp_proxy_pfx[len]);
+        len++;
+      }
+    }
+
+    for(int i = 0 ; name[i] != NULL; i++)
+      vec[len++] = strdup(name[i]);
     vec[len] = NULL;
+
     p = prop_proxy_make(p->hp_proxy_ppc, p->hp_proxy_id, NULL, vec);
+
     if(follow_symlinks)
       p->hp_flags |= PROP_PROXY_FOLLOW_SYMLINK;
 
@@ -4687,6 +4703,43 @@ prop_suggest_focus(prop_t *p)
   hts_mutex_lock(&prop_mutex);
   prop_suggest_focus0(p);
   hts_mutex_unlock(&prop_mutex);
+}
+
+
+/**
+ *
+ */
+prop_t *
+prop_findv(prop_t *p, char **names)
+{
+  hts_mutex_lock(&prop_mutex);
+
+  while(p->hp_originator != NULL)
+    p = p->hp_originator;
+
+  prop_t *c = p;
+
+  for(int i = 0; names[i] != NULL; i++) {
+    const char *n = names[i];
+
+    if(p->hp_type != PROP_DIR) {
+      c = NULL;
+      break;
+    }
+
+    TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link)
+      if(c->hp_name != NULL && !strcmp(c->hp_name, n))
+	break;
+    if(c == NULL)
+      break;
+
+    while(c->hp_originator != NULL)
+      c = c->hp_originator;
+    p = c;
+  }
+  c = prop_ref_inc(c);
+  hts_mutex_unlock(&prop_mutex);
+  return c;
 }
 
 

@@ -43,4 +43,4 @@ void prop_proxy_unsubscribe(struct prop_sub *s);
 
 void prop_proxy_destroy(struct prop *p);
 
-void prop_proxy_send_event(struct prop *p, struct event *e);
+void prop_proxy_send_event(struct prop *p, const struct event *e);

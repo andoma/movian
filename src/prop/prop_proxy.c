@@ -490,10 +490,133 @@ prop_proxy_send_data(prop_proxy_connection_t *ppc,
 /**
  *
  */
-void
-prop_proxy_send_event(prop_t *p, event_t *e)
+static void
+prop_proxy_send_queue(prop_proxy_connection_t *ppc, htsbuf_queue_t *q)
 {
-  printf("prop proxy event sending not supported yet\n");
+  if(TAILQ_FIRST(&ppc->ppc_outq.hq_q) == NULL)
+    asyncio_run_task(ppc_send, ppc_retain(ppc));
+
+  websocket_append_hdr(&ppc->ppc_outq, 2, q->hq_size);
+  htsbuf_appendq(&ppc->ppc_outq, q);
+}
+
+/**
+ *
+ */
+static void
+prop_proxy_send_prop(prop_t *p, htsbuf_queue_t *q)
+{
+  assert(p->hp_type == PROP_PROXY);
+
+  htsbuf_append_le32(q, p->hp_proxy_id);
+
+  char **pfx = p->hp_proxy_pfx;
+  if(pfx != NULL) {
+    for(int i = 0; pfx[i] != NULL; i++) {
+      int len = strlen(pfx[i]);
+      assert(len < 256);
+      htsbuf_append_byte(q, len);
+      htsbuf_append(q, pfx[i], len);
+    }
+  }
+
+  htsbuf_append_byte(q, 0);
+}
+
+
+/**
+ *
+ */
+static void
+prop_proxy_send_str(const char *str, htsbuf_queue_t *q)
+{
+  int len = strlen(str);
+  if(len >= 0xff) {
+    htsbuf_append_byte(q, 0xff);
+    htsbuf_append_le32(q, len);
+  } else {
+    htsbuf_append_byte(q, len);
+  }
+  htsbuf_append(q, str, len);
+}
+
+
+/**
+ *
+ */
+void
+prop_proxy_send_event(prop_t *p, const event_t *e)
+{
+  htsbuf_queue_t q;
+  prop_proxy_connection_t *ppc = p->hp_proxy_ppc;
+
+  htsbuf_queue_init(&q, 0);
+  htsbuf_append_byte(&q, STPP_CMD_EVENT);
+  prop_proxy_send_prop(p, &q);
+
+  htsbuf_append_byte(&q, e->e_type);
+  switch(e->e_type) {
+  case EVENT_ACTION_VECTOR:
+    {
+      const event_action_vector_t *eav = (const event_action_vector_t *)e;
+      for(int i = 0; i < eav->num; i++) {
+        const char *a = action_code2str(eav->actions[i]);
+        int len = strlen(a);
+        assert(len < 256);
+        htsbuf_append_byte(&q, len);
+        htsbuf_append(&q, a, len);
+      }
+    }
+    break;
+  case EVENT_DYNAMIC_ACTION:
+  case EVENT_SELECT_AUDIO_TRACK:
+  case EVENT_SELECT_SUBTITLE_TRACK:
+    {
+      const event_payload_t *ep = (const event_payload_t *)e;
+      htsbuf_append(&q, ep->payload, strlen(ep->payload));
+    }
+    break;
+  case EVENT_OPENURL:
+    {
+      const event_openurl_t *eo = (const event_openurl_t *)e;
+      uint8_t flags = 0;
+
+      flags |= eo->url        ? 0x01 : 0;
+      flags |= eo->view       ? 0x02 : 0;
+      flags |= eo->origin     ? 0x04 : 0;
+      flags |= eo->model      ? 0x08 : 0;
+      flags |= eo->how        ? 0x10 : 0;
+      flags |= eo->parent_url ? 0x20 : 0;
+      htsbuf_append_byte(&q, flags);
+
+      if(eo->url != NULL)
+        prop_proxy_send_str(eo->url, &q);
+
+      if(eo->view != NULL)
+        prop_proxy_send_str(eo->view, &q);
+
+      if(eo->origin != NULL)
+        prop_proxy_send_prop(eo->origin, &q);
+
+      if(eo->model != NULL)
+        prop_proxy_send_prop(eo->model, &q);
+
+      if(eo->how != NULL)
+        prop_proxy_send_str(eo->how, &q);
+
+      if(eo->parent_url != NULL)
+        prop_proxy_send_str(eo->parent_url, &q);
+    }
+    break;
+
+
+
+  default:
+    printf("Can't serialize event %d\n", e->e_type);
+    htsbuf_queue_flush(&q);
+    return;
+  }
+  prop_proxy_send_queue(ppc, &q);
 }
 
 
@@ -576,41 +699,3 @@ prop_proxy_unsubscribe(prop_sub_t *s)
   prop_proxy_send_data(ppc, data, 5);
 }
 
-#if 0
-/**
- *
- */
-static void
-test_callback(void *opaque, prop_event_t event, ...)
-{
-  printf("Event %d\n", event);
-}
-
-static void
-test_task(void *aux)
-{
-  sleep(1);
-  printf("Doing proxy stuff\n");
-
-  net_addr_t na;
-  net_resolve("localhost", &na, NULL);
-  na.na_port = 42000;
-  prop_t *p = prop_proxy_connect(&na);
-  prop_print_tree(p, 1);
-
-  prop_subscribe(0,
-                 PROP_TAG_CALLBACK, test_callback, NULL,
-                 PROP_TAG_NAMED_ROOT, p, "remote",
-                 PROP_TAG_NAMESTR, "remote.navigators.current.pages",
-                 NULL);
-}
-
-static void
-proxy_test(void)
-{
-  if(1)task_run(test_task, NULL);
-}
-
-INITME(INIT_GROUP_API, proxy_test, NULL);
-
-#endif

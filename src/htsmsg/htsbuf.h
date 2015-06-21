@@ -56,6 +56,10 @@ void htsbuf_append_prealloc(htsbuf_queue_t *hq, void *buf, size_t len);
 
 void htsbuf_append_buf(htsbuf_queue_t *hq, buf_t *b);
 
+void htsbuf_append_byte(htsbuf_queue_t *hq, uint8_t b);
+
+void htsbuf_append_le32(htsbuf_queue_t *hq, uint32_t v);
+
 void htsbuf_data_free(htsbuf_queue_t *hq, htsbuf_data_t *hd);
 
 size_t htsbuf_read(htsbuf_queue_t *hq, void *buf, size_t len);

@@ -479,7 +479,7 @@ stpp_sub_binary(void *opaque, prop_event_t event, ...)
   }
   buf[0] = STPP_CMD_NOTIFY;
   wr32_le(buf + 2, ss->ss_id);
-  hexdump("STPP-BINARY", buf, buflen);
+  hexdump("STPP-NOTIFY", buf, buflen);
   websocket_send(hc, 2, buf, buflen);
 }
 
@@ -489,7 +489,7 @@ stpp_sub_binary(void *opaque, prop_event_t event, ...)
 static void
 stpp_cmd_sub(stpp_t *stpp, unsigned int id, int propref, const char *path,
              uint16_t flags,
-             const char **namevec,
+             char **namevec,
              void (*notify)(void *opaque, prop_event_t event, ...))
 {
   prop_t *p = resolve_propref(stpp, propref);
@@ -598,6 +598,180 @@ stpp_json(stpp_t *stpp, htsmsg_t *m)
 }
 
 
+
+/**
+ *
+ */
+static int
+decode_string_vector(char ***vp, const uint8_t *src, int remain)
+{
+  const uint8_t *s = src;
+  int origlen = remain;
+  *vp = NULL;
+  int comp = 0;
+  while(remain > 0) {
+    remain -= *src + 1;
+    if(*src == 0)
+      break;
+    src += *src + 1;
+    comp++;
+  }
+  assert(remain >= 0);
+  for(int i = 0; i < comp; i++) {
+    int l = *s++;
+    strvec_addpn(vp, (const char *)s, l);
+    s += l;
+  }
+  return origlen - remain;
+}
+
+
+/**
+ *
+ */
+static prop_t *
+decode_propref(stpp_t *stpp, const uint8_t **datap, int *lenp)
+{
+  const uint8_t *data = *datap;
+  int len = *lenp;
+  if(len < 5)
+    return NULL;
+
+  prop_t *p = resolve_propref(stpp, rd32_le(data));
+  if(p == NULL)
+    return NULL;
+  char **strvec = NULL;
+  int x = decode_string_vector(&strvec, data + 4 , len - 4);
+  *datap = data + 4 + x;
+  *lenp  = len  - 4 - x;
+
+  if(strvec == NULL)
+    return prop_ref_inc(p);
+
+  prop_t *p2 = prop_findv(p, strvec);
+  strvec_free(strvec);
+  return p2;
+}
+
+
+/**
+ *
+ */
+static char *
+decode_string(const uint8_t **datap, int *lenp)
+{
+  const uint8_t *data = *datap;
+  int len = *lenp;
+
+  if(len < 1)
+    return NULL;
+  int slen = data[0];
+  int x;
+  if(slen == 0xff) {
+    if(len < 5)
+      return NULL;
+    slen = rd32_le(data + 1);
+    x = 5;
+  } else {
+    x = 1;
+  }
+  data += x;
+  len -= x;
+
+  if(slen > len)
+    return NULL;
+
+  *datap = data + slen;
+  *lenp  = len - slen;
+
+  char *s = malloc(slen + 1);
+  s[slen] = 0;
+  memcpy(s, data, slen);
+  return s;
+}
+
+
+/**
+ *
+ */
+static void
+stpp_binary_event(prop_t *p, event_type_t event,
+                  const uint8_t *data, int len, stpp_t *stpp)
+{
+  event_t *e = NULL;
+  switch(event) {
+  case EVENT_ACTION_VECTOR:
+    {
+      char **strvec = NULL;
+      int x = 0;
+
+      decode_string_vector(&strvec, data, len);
+      while(strvec[x] != NULL)
+        x++;
+
+      action_type_t *atv = alloca(x * sizeof(action_type_t));
+      for(int i = 0; i < x; i++)
+        atv[i] = action_str2code(strvec[i]);
+
+      strvec_free(strvec);
+
+      e = event_create_action_multi(atv, x);
+    }
+    break;
+  case EVENT_OPENURL:
+    {
+      if(len < 1)
+        break;
+      uint8_t flags = data[0];
+      data++;
+      len--;
+
+      event_openurl_args_t args = {0};
+
+      if(flags & 0x01 && (args.url = decode_string(&data, &len)) == NULL)
+        flags = 0;
+
+      if(flags & 0x02 && (args.view = decode_string(&data, &len)) == NULL)
+        flags = 0;
+
+      if(flags & 0x04 &&
+         (args.origin = decode_propref(stpp, &data, &len)) == NULL)
+        flags = 0;
+
+      if(flags & 0x08 &&
+         (args.model = decode_propref(stpp, &data, &len)) == NULL)
+        flags = 0;
+
+      if(flags & 0x10 && (args.how = decode_string(&data, &len)) == NULL)
+        flags = 0;
+
+      if(flags & 0x20 && (args.parent_url = decode_string(&data, &len)) == NULL)
+        flags = 0;
+
+      if(flags)
+        e = event_create_openurl_args(&args);
+
+
+      free((void *)args.url);
+      free((void *)args.view);
+      free((void *)args.how);
+      free((void *)args.parent_url);
+      prop_ref_dec(args.origin);
+      prop_ref_dec(args.model);
+    }
+    break;
+
+  default:
+    TRACE(TRACE_ERROR, "STPP", "Can't handle event type %d", event);
+    return;
+  }
+
+  if(e == NULL)
+    return;
+  prop_send_ext_event(p, e);
+  event_release(e);
+}
+
 /**
  * Websocket server always pad frame with a zero byte at the end
  * (Not included in len). So it's safe to just use strings at end
@@ -610,50 +784,63 @@ stpp_binary(stpp_t *stpp, const uint8_t *data, int len)
 {
   if(len < 1)
     return -1;
+  hexdump("STPP-INPUT", data, len);
   const uint8_t cmd = data[0];
-  const int sub_name_offset = 10;
   data++;
   len--;
 
   switch(cmd) {
   case STPP_CMD_SUBSCRIBE:
-    if(len < sub_name_offset) {
+    if(len < 10)
       return -1;
-    } else {
-      const char **name = NULL;
-      if(len > sub_name_offset) {
 
-        const uint8_t *src = data + sub_name_offset;
-        int remain = len - sub_name_offset;
-        int comp = 0;
-        while(remain > 0) {
-          comp++;
-          remain -= *src + 1;
-          src    += *src + 1;
-        }
-        if(remain != 0)
-          return -1;
-        name = alloca(sizeof(const char *) * (comp + 1));
-        src = data + sub_name_offset;
-        for(int i = 0; i < comp; i++) {
-          int l = *src++;
-          char *x = alloca(l + 1);
-          memcpy(x, src, l);
-          name[i] = x;
-          x[l] = 0;
-          src += l;
-        }
-        name[comp] = 0;
-      }
-      stpp_cmd_sub(stpp, rd32_le(data), rd32_le(data + 4), NULL,
-                   rd16_le(data + 8), name, stpp_sub_binary);
-    }
+    char **name = NULL;
+    decode_string_vector(&name, data + 10, len - 10);
+
+    stpp_cmd_sub(stpp, rd32_le(data), rd32_le(data + 4), NULL,
+                 rd16_le(data + 8), name, stpp_sub_binary);
+
+    strvec_free(name);
     break;
 
   case STPP_CMD_UNSUBSCRIBE:
     if(len != 4)
       return -1;
     stpp_cmd_unsub(stpp, rd32_le(data));
+    break;
+
+  case STPP_CMD_EVENT:
+    {
+      if(len < 5)
+        return -1;
+      char **name = NULL;
+
+      prop_t *p = resolve_propref(stpp, rd32_le(data));
+      if(p == NULL)
+        return -1;
+
+      data += 4;
+      len -= 4;
+      int x = decode_string_vector(&name, data, len);
+      data += x;
+      len -= x;
+
+      if(len < 1) {
+        strvec_free(name);
+        return -1;
+      }
+
+      prop_t *p2 = prop_findv(p, name);
+      strvec_free(name);
+
+      if(p2 != NULL) {
+        int event = data[0];
+        data++;
+        len--;
+        stpp_binary_event(p2, event, data, len, stpp);
+      }
+      prop_ref_dec(p2);
+    }
     break;
 
   default:
