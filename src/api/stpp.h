@@ -27,7 +27,10 @@
 #define STPP_CMD_SET         3
 #define STPP_CMD_NOTIFY      4
 #define STPP_CMD_EVENT       5
+#define STPP_CMD_REQ_MOVE    6
 
+
+// Notify types (First byte in STPP_CMD_NOTIFY message)
 // These things are sent over the wire so no changes here please
 
 #define STPP_SET_VOID           0

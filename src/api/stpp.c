@@ -842,6 +842,17 @@ stpp_binary(stpp_t *stpp, const uint8_t *data, int len)
       prop_ref_dec(p2);
     }
     break;
+  case STPP_CMD_REQ_MOVE:
+    {
+      if(len < 4)
+        return -1;
+      prop_t *p = resolve_propref(stpp, rd32_le(data));
+      prop_t *before = NULL;
+      if(len == 8)
+        before = resolve_propref(stpp, rd32_le(data + 4));
+      prop_req_move(p, before);
+    }
+    break;
 
   default:
     return -1;

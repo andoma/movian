@@ -624,6 +624,29 @@ prop_proxy_send_event(prop_t *p, const event_t *e)
  *
  */
 void
+prop_proxy_req_move(struct prop *p, struct prop *before)
+{
+  prop_proxy_connection_t *ppc = p->hp_proxy_ppc;
+
+  uint8_t buf[9] = {STPP_CMD_REQ_MOVE};
+
+  assert(p->hp_type == PROP_PROXY);
+  if(before != NULL)
+    assert(before->hp_type == PROP_PROXY);
+
+  wr32_le(buf + 1, p->hp_proxy_id);
+  if(before == NULL) {
+    prop_proxy_send_data(ppc, buf, 5);
+  } else {
+    wr32_le(buf + 5, before->hp_proxy_id);
+    prop_proxy_send_data(ppc, buf, 9);
+  }
+}
+
+/**
+ *
+ */
+void
 prop_proxy_subscribe(prop_proxy_connection_t *ppc, prop_sub_t *s,
                      prop_t *p, const char **name)
 {
