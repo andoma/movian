@@ -20,7 +20,7 @@ widget(container_y, {
     padding: [4,0];
     widget(list_y, {
       id: "list";
-      cloner($global.logbuffer, label, {
+      cloner($core.logbuffer, label, {
 	caption: $self.prefix + $self.message;
 	ellipsize: true;
 	font: $ui.monofont;

@@ -144,6 +144,9 @@ glw_init3(glw_root_t *gr,
   const char *skin = gconf.skin;
   prop_t *p;
 
+  if(gr->gr_prop_core == NULL)
+    gr->gr_prop_core = prop_get_global();
+  
   gr->gr_prop_dispatcher = dispatcher;
   gr->gr_courier = courier;
 

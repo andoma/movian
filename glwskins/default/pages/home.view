@@ -5,7 +5,7 @@ multiopt($view.path,
 	 _("View"),
 	 $self.persistent.glwUserView,
 
-	 vectorize($global.glw.views.standard.home),
+	 vectorize($core.glw.views.standard.home),
 	 makeUri(_("Tiled"), "home_tiles.view"),
 	 makeUri(_("List"), "home_clist.view"));
 

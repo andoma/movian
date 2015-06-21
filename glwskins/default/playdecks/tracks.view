@@ -20,7 +20,7 @@ widget(container_z, {
 
       widget(image, {
 	width: $ui.size * 2;
-	source: $global.media.current.metadata.album_art ??
+	source: $core.media.current.metadata.album_art ??
 	  "dataroot://resources/svg/Disc.svg";
       });
       widget(container_y, {
@@ -28,8 +28,8 @@ widget(container_z, {
 	align: center;
 	widget(label, {
 	  caption: join(" • ",
-			$global.media.current.metadata.artist,
-			$global.media.current.metadata.title);
+			$core.media.current.metadata.artist,
+			$core.media.current.metadata.title);
 
 	  shadow: true;
 	  outline: true;

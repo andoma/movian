@@ -10,8 +10,8 @@ $ui.osk.shifted = $ui.osk.shift ^^ $ui.osk.caps;
 multiopt($view.path,
          $view.selopt,
          void,
-         $global.glw.osk.userKeyboard,
-         vectorize($global.glw.views.standard.osk),
+         $core.glw.osk.userKeyboard,
+         vectorize($core.glw.views.standard.osk),
          makeUri(_("Default"), "skin://osk/default.view")
          );
 

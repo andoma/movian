@@ -73,35 +73,35 @@ widget(container_y, {
 
 	  widget(label, {
 	    TextStyleItem();
-	    caption: fmt("%s %s", $global.app.name, $global.app.version);
+	    caption: fmt("%s %s", $core.app.name, $core.app.version);
 	    align: center;
 	  });
 
 	  VerticalSeparator();
 
           InfoLine(_("Memory usage"),
-                   fmt("%d kB", $global.system.mem.activeMem));
+                   fmt("%d kB", $core.system.mem.activeMem));
           InfoLine(_("System Total"),
-                   fmt("%d kB", $global.system.mem.systotal));
+                   fmt("%d kB", $core.system.mem.systotal));
           InfoLine(_("System Free"),
-                   fmt("%d kB", $global.system.mem.sysfree));
+                   fmt("%d kB", $core.system.mem.sysfree));
           InfoLine(_("Fragmentation"),
-                   fmt("%d", $global.system.mem.unusedChunks),
-		   isVoid($global.system.mem.unusedChunks));
+                   fmt("%d", $core.system.mem.unusedChunks),
+		   isVoid($core.system.mem.unusedChunks));
           InfoLine(_("Inactive mem"),
-                   fmt("%d kB", $global.system.mem.inaciveMem),
-                   isVoid($global.system.mem.inaciveMem));
+                   fmt("%d kB", $core.system.mem.inaciveMem),
+                   isVoid($core.system.mem.inaciveMem));
           InfoLine(_("CPU Temp"),
-                   fmt("%d°C", $global.system.temp.cpu),
-		   isVoid($global.system.temp.cpu));
+                   fmt("%d°C", $core.system.temp.cpu),
+		   isVoid($core.system.temp.cpu));
           InfoLine(_("GPU Temp"),
-                   fmt("%d°C", $global.system.temp.gpu),
-		   isVoid($global.system.temp.gpu));
+                   fmt("%d°C", $core.system.temp.gpu),
+		   isVoid($core.system.temp.gpu));
           InfoLine(_("HDD Avail"),
-                   fmt("%.1f / %.1f GB", $global.system.hdd.avail,
-                       $global.system.hdd.size),
-		   isVoid($global.system.hdd.avail));
-          cloner($global.system.cpuinfo.cpus, container_z, {
+                   fmt("%.1f / %.1f GB", $core.system.hdd.avail,
+                       $core.system.hdd.size),
+		   isVoid($core.system.hdd.avail));
+          cloner($core.system.cpuinfo.cpus, container_z, {
             InfoBar($self.name, $self.load)
           });
 

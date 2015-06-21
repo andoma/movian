@@ -20,7 +20,7 @@ widget(container_z, {
 	filterConstraintX: true;
 	align: center;
 	widget(label, {
-	  caption: $global.media.current.metadata.title;
+	  caption: $core.media.current.metadata.title;
 
 	  shadow: true;
 	  outline: true;

@@ -74,7 +74,7 @@ widget(array, {
   childWidth: $ui.size * 8;
   childHeight: $ui.size * 8;
 
-  cloner($global.services.discovered, container_z, {
+  cloner($core.services.discovered, container_z, {
     HOMEITEM($self.title,
 	     $self.icon ?? 
 	     "dataroot://resources/svg/" + 

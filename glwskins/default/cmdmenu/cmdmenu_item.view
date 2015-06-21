@@ -116,7 +116,7 @@ commandMenuChrome(
        $self.model.canDelete || $args.canDelete,
        [1,0.8,0.8]);
 
-  cloner($global.itemhooks, container_z, {
+  cloner($core.itemhooks, container_z, {
     hidden: !($self.itemtype == $args.type || $self.itemtype == void);
     ITEM($self.metadata.title, {
       fireEvent(deliverRef($self.eventSink, $args));

@@ -95,7 +95,7 @@ widget(container_y, {
 	TextStyleItem();
 	caption: select($args.status.minver,
 			fmt(_("%s %s or newer is required"),
-                            $global.app.name,
+                            $core.app.name,
 			    $args.status.minver), "");
       });
     });

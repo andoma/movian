@@ -29,32 +29,32 @@
 
   SEP(_("System"));
 
-  ITEM(fmt(_("Exit %s"), $global.app.name), event(Quit),
-       "dataroot://resources/svg/Exit.svg", $global.runcontrol.canExit);
+  ITEM(fmt(_("Exit %s"), $core.app.name), event(Quit),
+       "dataroot://resources/svg/Exit.svg", $core.runcontrol.canExit);
 
   ITEM(_("Suspend"), event(Standby),
-       "dataroot://resources/svg/Power.svg", $global.runcontrol.canStandby);
+       "dataroot://resources/svg/Power.svg", $core.runcontrol.canStandby);
 
   ITEMSLIDER(_("Time until sleep"),
              0,
-             $global.runcontrol.sleepTimeMax,
-             $global.runcontrol.sleepTimeStep,
-             $global.runcontrol.sleepTime, _("min"),
-             $global.runcontrol.sleepTimer);
+             $core.runcontrol.sleepTimeMax,
+             $core.runcontrol.sleepTimeStep,
+             $core.runcontrol.sleepTime, _("min"),
+             $core.runcontrol.sleepTimer);
 
 
 
-  ITEM(select($global.runcontrol.sleepTimer,
+  ITEM(select($core.runcontrol.sleepTimer,
               _("Disable sleep timer"),
               _("Activate sleep timer")), {
-    $global.runcontrol.sleepTimer = !$global.runcontrol.sleepTimer;
-  }, "dataroot://resources/svg/Power.svg", $global.runcontrol.canStandby);
+    $core.runcontrol.sleepTimer = !$core.runcontrol.sleepTimer;
+  }, "dataroot://resources/svg/Power.svg", $core.runcontrol.canStandby);
 
   ITEM(_("Power off"), event(PowerOff),
-       "dataroot://resources/svg/Power.svg", $global.runcontrol.canPowerOff);
+       "dataroot://resources/svg/Power.svg", $core.runcontrol.canPowerOff);
 
   ITEMSLIDER(_("Master volume"), -75, 12, 1,
-             $global.audio.mastervolume, _("dB"), true);
+             $core.audio.mastervolume, _("dB"), true);
 }
 
 #define BUTTON(ICON, EVENT, ENABLED, WEIGHT = 0.5) {

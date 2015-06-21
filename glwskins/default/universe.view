@@ -1,6 +1,6 @@
-setDefaultFont($global.fonts.main);
+setDefaultFont($core.fonts.main);
 $ui.monofont = "dataroot://resources/fonts/UbuntuMono-Regular.ttf";
-$ui.condensedfont = $global.fonts.condensed ?? 
+$ui.condensedfont = $core.fonts.condensed ?? 
   "skin://fonts/OpenSans-CondBold.ttf";
 $ui.background = "skin://graphics/background.jpg";
 
@@ -21,7 +21,7 @@ onEvent(sysinfo, {
 widget(container_z, {
 
   widget(loader, {
-    source: selectedElement(vectorize($global.glw.views.standard.background))
+    source: selectedElement(vectorize($core.glw.views.standard.background))
       ?? "background.view";
     effect: blend;
     time: 0.3;
@@ -29,7 +29,7 @@ widget(container_z, {
 
   widget(loader, {
     alpha: iir($nav.currentpage.model.loading, 8);
-    source: selectedElement(vectorize($global.glw.views.standard.loading))
+    source: selectedElement(vectorize($core.glw.views.standard.loading))
       ?? "loading.view";
   });
 
@@ -37,7 +37,7 @@ widget(container_z, {
     time: 0.3;
     effect: blend;
     source: select($ui.screensaverActive,
-		   selectedElement(vectorize($global.glw.views.standard.screensaver)) ?? "skin://screensaver.view", "");
+		   selectedElement(vectorize($core.glw.views.standard.screensaver)) ?? "skin://screensaver.view", "");
   });
 
   widget(underscan, {
@@ -73,7 +73,7 @@ widget(container_z, {
 	  });
 	});
 
-	cloner($global.popups, loader, {
+	cloner($core.popups, loader, {
 	  source: "popups/" + $self.type + ".view";
 	});
 
@@ -94,12 +94,12 @@ widget(container_z, {
 	widget(expander_y, {
 
 	  $ui.playdeckheight = getHeight();
-	  expansion: scurve($ui.showplaydeck && $global.media.current.type, 0.1);
+	  expansion: scurve($ui.showplaydeck && $core.media.current.type, 0.1);
 	  widget(loader, {
 	    time: 0;
 	    effect: blend;
 	    noInitialTransform: true;
-	    source: "skin://playdecks/" + $global.media.current.type + ".view";
+	    source: "skin://playdecks/" + $core.media.current.type + ".view";
 	  });
 	});
       });
@@ -114,7 +114,7 @@ widget(container_z, {
     expediteSubscriptions: true;
     padding: 50;
     align: top;
-    cloner($global.notifications.nodes, container_x, {
+    cloner($core.notifications.nodes, container_x, {
       widget(backdrop, {
 	filterConstraintX: true;
 	source: "skin://graphics/blackdrop16.png";
@@ -155,8 +155,8 @@ widget(container_z, {
       filterConstraintX: true;
       align: center;
       widget(label, {
-	alpha: iir(changed($global.audio.mastervolume, 2, true), 7);
-	caption: fmt(_("Master volume: %d dB"), $global.audio.mastervolume);
+	alpha: iir(changed($core.audio.mastervolume, 2, true), 7);
+	caption: fmt(_("Master volume: %d dB"), $core.audio.mastervolume);
 	align: center;
 	outline: true;
 	shadow: true;
@@ -165,7 +165,7 @@ widget(container_z, {
       
 
       widget(label, {
-	alpha: iir($global.audio.mastermute, 7);
+	alpha: iir($core.audio.mastermute, 7);
 	caption: _("Audio muted");
 	align: center;
 	outline: true;

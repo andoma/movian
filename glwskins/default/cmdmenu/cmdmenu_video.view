@@ -24,12 +24,12 @@ widget(deck, {
     ITEM(_("Seek by time"), {
       $clone.menuPage = 6;
     }, "dataroot://resources/svg/SeekByFrame.svg",
-	 $global.media.current.seekindex.available);
+	 $core.media.current.seekindex.available);
 
     ITEM(_("Chapters"), {
       $clone.menuPage = 7;
     }, "dataroot://resources/svg/Book.svg",
-	 $global.media.current.chapterindex.available);
+	 $core.media.current.chapterindex.available);
 
     SEP(_("Settings"));
 
@@ -52,7 +52,7 @@ widget(deck, {
     });
 
     ITEMSLIDER(_("Master volume"), -75, 12, 1,
-               $global.audio.mastervolume, _("dB"), true);
+               $core.audio.mastervolume, _("dB"), true);
 
 
 
@@ -244,12 +244,12 @@ widget(deck, {
 	  
 	  $self.focused <- focusedChild();
 	  
-	  cloner($global.media.current.seekindex.positions, container_z, {
+	  cloner($core.media.current.seekindex.positions, container_z, {
 	    width: $ui.size * 14.2222;
 	    
 	    focusable: true;
 	    onEvent(activate, {
-	      $global.media.current.currenttime = $self.timestamp;
+	      $core.media.current.currenttime = $self.timestamp;
 	    });
 	    
 	  widget(backdrop, {
@@ -306,13 +306,13 @@ widget(deck, {
 
     SEP(_("Chapters"));
 
-    cloner($global.media.current.chapterindex.positions, backdrop, {
+    cloner($core.media.current.chapterindex.positions, backdrop, {
 
       source: "skin://pages/listitems/highlight.png";
       alphaSelf: iir(isFocused() * 1, 8) + isHovered() * 0.1;
       focusable: true;
       onEvent(activate, {
-	$global.media.current.currenttime = $self.timestamp;
+	$core.media.current.currenttime = $self.timestamp;
       });
 
       widget(container_x, {

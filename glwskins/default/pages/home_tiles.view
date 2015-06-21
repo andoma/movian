@@ -69,7 +69,7 @@ widget(container_y, {
 
   padding: $ui.size / 2;
 
-  cloner($global.news, container_x, {
+  cloner($core.news, container_x, {
     spacing: $ui.size;
     padding: [$ui.size*2, $ui.size / 3];
 
@@ -202,7 +202,7 @@ widget(array, {
 
   childTilesX: 7;
 
-  cloner($global.services.stable, container_z, {
+  cloner($core.services.stable, container_z, {
     HOMEITEM($self.title,
 	     $self.icon ?? 
 	     "dataroot://resources/svg/" + 

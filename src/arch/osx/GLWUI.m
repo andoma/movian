@@ -232,6 +232,8 @@ static prop_t *stored_nav;
     na.na_port = 42000;
     prop_t *p = prop_proxy_connect(&na);
 
+    gr->gr_prop_core = p;
+
     gr->gr_prop_nav =
       prop_get_by_name(PNVEC("remote", "navigators", "current"),
                        1,

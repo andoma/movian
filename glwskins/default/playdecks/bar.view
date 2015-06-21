@@ -1,10 +1,10 @@
 widget(container_x, {
-  hidden: select($global.media.current.metadata.duration, false, true);
+  hidden: select($core.media.current.metadata.duration, false, true);
   
   filterConstraintX: true;
   spacing: 10;
   widget(label, {
-    caption: value2duration($global.media.current.currenttime);
+    caption: value2duration($core.media.current.currenttime);
     shadow: true;
     outline: true;
   });
@@ -19,8 +19,8 @@ widget(container_x, {
       });
       
       widget(clip, {
-	clipping: [-1, 0, 1 - ($global.media.current.currenttime
-			      / $global.media.current.metadata.duration), 0];
+	clipping: [-1, 0, 1 - ($core.media.current.currenttime
+			      / $core.media.current.metadata.duration), 0];
 	widget(backdrop, {
 	  margin: [-8, -3, -8, -5];
 	  border: [16, 8];
@@ -30,7 +30,7 @@ widget(container_x, {
     });
   });
   widget(label, {
-    caption: value2duration($global.media.current.metadata.duration);
+    caption: value2duration($core.media.current.metadata.duration);
     shadow: true;
     outline: true;
   });

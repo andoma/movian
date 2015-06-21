@@ -217,6 +217,7 @@ bind_to_property(glw_t *w, prop_t *p, const char **pname,
 		   PROP_TAG_NAMED_ROOT, clone, "clone",
 		   PROP_TAG_NAMED_ROOT, w->glw_root->gr_prop_ui, "ui",
 		   PROP_TAG_NAMED_ROOT, w->glw_root->gr_prop_nav, "nav",
+                   PROP_TAG_NAMED_ROOT, w->glw_root->gr_prop_core, "core",
 		   NULL);
 }
 

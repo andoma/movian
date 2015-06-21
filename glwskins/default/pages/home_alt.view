@@ -123,7 +123,7 @@ widget(container_z, {
 		 navOpen("settings:"), false, 0.5);
 	HOMEITEM("Plugins", "dataroot://resources/svg/Plugin.svg",
 		 navOpen("plugin:start"), 
-		 $global.plugins.status.upgradeable, 0.5);
+		 $core.plugins.status.upgradeable, 0.5);
 	HOMEITEM("Showtime", "dataroot://resources/showtime/showtime.png",
 		 navOpen("page:about"), false, 0.5);
       });
@@ -131,7 +131,7 @@ widget(container_z, {
       XITEM_TITLE("System");
     });
 
-    cloner(propSorter(propGrouper($global.services.enabled, "node.type"),
+    cloner(propSorter(propGrouper($core.services.enabled, "node.type"),
 		      sort, "node.name", false, false), container_z, {
       XITEM_PROPS();
 

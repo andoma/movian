@@ -24,17 +24,17 @@ widget(container_z, {
 	
 	widget(image, {
           aspectConstraint: true;
-          source: $global.media.current.metadata.icon ??
+          source: $core.media.current.metadata.icon ??
             "dataroot://resources/svg/Display.svg";
-          hidden: select($global.media.current.metadata.icon, false, true);
+          hidden: select($core.media.current.metadata.icon, false, true);
 	});
 
 	widget(label, {
           filterConstraintX: true;
-          caption: $global.media.current.metadata.title;
+          caption: $core.media.current.metadata.title;
           shadow: true;
           outline: true;
-          hidden: select($global.media.current.metadata.icon, true, false);
+          hidden: select($core.media.current.metadata.icon, true, false);
           sizeScale: 0.8;
           maxlines: 2;
 	});
@@ -51,14 +51,14 @@ widget(container_z, {
           widget(container_y, {
             widget(label, {
               filterConstraintX: true;
-              caption: $global.media.current.metadata.events.current.title;
+              caption: $core.media.current.metadata.events.current.title;
               shadow: true;
               outline: true;
             });
 
             widget(label, {
               filterConstraintX: true;
-              caption: $global.media.current.metadata.events.next.title;
+              caption: $core.media.current.metadata.events.next.title;
               shadow: true;
               outline: true;
             });
@@ -67,16 +67,16 @@ widget(container_z, {
           widget(container_y, {
             widget(label, {
               filterConstraintX: true;
-              caption: strftime($global.media.current.metadata.events.current.start, "%H:%M") + " - " +
-                strftime($global.media.current.metadata.events.current.stop, "%H:%M");
+              caption: strftime($core.media.current.metadata.events.current.start, "%H:%M") + " - " +
+                strftime($core.media.current.metadata.events.current.stop, "%H:%M");
               shadow: true;
               outline: true;
               align: right;
             });
             widget(label, {
               filterConstraintX: true;
-              caption: strftime($global.media.current.metadata.events.next.start, "%H:%M") + " - " +
-                strftime($global.media.current.metadata.events.next.stop, "%H:%M");
+              caption: strftime($core.media.current.metadata.events.next.start, "%H:%M") + " - " +
+                strftime($core.media.current.metadata.events.next.stop, "%H:%M");
               shadow: true;
               outline: true;
               align: right;
@@ -88,7 +88,7 @@ widget(container_z, {
 
         widget(label, {
           filterConstraintX: true;
-          caption: $global.media.current.metadata.events.current.description;
+          caption: $core.media.current.metadata.events.current.description;
           shadow: true;
           outline: true;
           sizeScale: 0.8;
