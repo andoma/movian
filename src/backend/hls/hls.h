@@ -45,7 +45,7 @@ LIST_HEAD(hls_audio_track_list, hls_audio_track);
  *
  */
 typedef struct hls_discontinuity_segment {
-  TAILQ_ENTRY(hls_discontinuity_segment) hds_link;
+  LIST_ENTRY(hls_discontinuity_segment) hds_link;
   int hds_seq;
   int hds_refcount;
   int64_t hds_offset;
@@ -221,7 +221,7 @@ typedef struct hls_demuxer {
 
 } hls_demuxer_t;
 
-TAILQ_HEAD(hls_discontinuity_segment_queue, hls_discontinuity_segment);
+LIST_HEAD(hls_discontinuity_segment_list, hls_discontinuity_segment);
 
 /**
  *
@@ -253,7 +253,7 @@ typedef struct hls {
 
   int h_last_enqueued_seq;
 
-  struct hls_discontinuity_segment_queue h_discontinuity_segments;
+  struct hls_discontinuity_segment_list h_discontinuity_segments;
 
   hls_error_t h_last_error;
 

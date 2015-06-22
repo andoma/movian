@@ -117,7 +117,7 @@ static hls_discontinuity_segment_t *
 discontinuity_seq_get(hls_t *h, int discontinuity_seq)
 {
   hls_discontinuity_segment_t *hds;
-  TAILQ_FOREACH(hds, &h->h_discontinuity_segments, hds_link) {
+  LIST_FOREACH(hds, &h->h_discontinuity_segments, hds_link) {
     if(hds->hds_seq == discontinuity_seq) {
       hds->hds_refcount++;
       return hds;
@@ -125,7 +125,7 @@ discontinuity_seq_get(hls_t *h, int discontinuity_seq)
   }
 
   hds = calloc(1, sizeof(hls_discontinuity_segment_t));
-  TAILQ_INSERT_TAIL(&h->h_discontinuity_segments, hds, hds_link);
+  LIST_INSERT_HEAD(&h->h_discontinuity_segments, hds, hds_link);
   if(discontinuity_seq != 0)
     hds->hds_offset = PTS_UNSET;
   hds->hds_refcount = 1;
@@ -138,11 +138,11 @@ discontinuity_seq_get(hls_t *h, int discontinuity_seq)
  *
  */
 static void
-discontinuity_seq_release(hls_discontinuity_segment_t *hds, hls_t *h)
+discontinuity_seq_release(hls_discontinuity_segment_t *hds)
 {
   if(--hds->hds_refcount)
     return;
-  TAILQ_REMOVE(&h->h_discontinuity_segments, hds, hds_link);
+  LIST_REMOVE(hds, hds_link);
   free(hds);
 }
 
@@ -153,8 +153,7 @@ discontinuity_seq_release(hls_discontinuity_segment_t *hds, hls_t *h)
 static void
 segment_destroy(hls_segment_t *hs)
 {
-  hls_t *h = hs->hs_variant->hv_demuxer->hd_hls;
-  discontinuity_seq_release(hs->hs_discontinuity_segment, h);
+  discontinuity_seq_release(hs->hs_discontinuity_segment);
 
   if(hs->hs_fh != NULL)
     fa_close(hs->hs_fh);
@@ -386,10 +385,7 @@ hls_variant_update(hls_variant_t *hv, media_pipe_t *mp)
   int items = 0;
   hls_variant_parser_t hvp;
   int first_seq = -1;
-  int discontinuity_seq = 0;
-
-  if(TAILQ_FIRST(&h->h_discontinuity_segments) != NULL)
-    discontinuity_seq = TAILQ_FIRST(&h->h_discontinuity_segments)->hds_seq;
+  int discontinuity_seq = -1;
 
   memset(&hvp, 0, sizeof(hvp));
 
@@ -410,6 +406,13 @@ hls_variant_update(hls_variant_t *hv, media_pipe_t *mp)
     } else if((v = mystrbegins(s, "#EXT-X-DISCONTINUITY-SEQUENCE:")) != NULL) {
       discontinuity_seq = atoi(v);
     } else if(!strcmp(s, "#EXT-X-DISCONTINUITY")) {
+      if(discontinuity_seq == -1) {
+        hs = hv_find_segment_by_seq(hv, seq - 1);
+        if(hs != NULL)
+          discontinuity_seq = hs->hs_discontinuity_segment->hds_seq;
+        else
+          discontinuity_seq = 0;
+      }
       discontinuity_seq++;
     } else if((v = mystrbegins(s, "#EXT-X-START:")) != NULL) {
       hv_parse_start(hv, v);
@@ -425,6 +428,14 @@ hls_variant_update(hls_variant_t *hv, media_pipe_t *mp)
 
 
       if(seq > hv->hv_last_seq) {
+
+        if(discontinuity_seq == -1) {
+          hs = hv_find_segment_by_seq(hv, seq - 1);
+          if(hs != NULL)
+            discontinuity_seq = hs->hs_discontinuity_segment->hds_seq;
+          else
+            discontinuity_seq = 0;
+        }
 
 	if(hv->hv_first_seq == -1) {
 	  hv->hv_first_seq = seq;
@@ -734,6 +745,13 @@ hv_find_segment_by_seq(hls_variant_t *hv, int seq)
       return hs;
     }
   }
+
+  hs = TAILQ_LAST(&hv->hv_segments, hls_segment_queue);
+  if(hs == NULL)
+    return NULL;
+  if(hs->hs_seq == seq)
+    return hs;
+
   TAILQ_FOREACH(hs, &hv->hv_segments, hs_link) {
     if(hs->hs_seq == seq) {
       hv->hv_segment_search = hs;
@@ -1614,7 +1632,7 @@ clear_hds_offset(hls_t *h)
 {
   hls_discontinuity_segment_t *hds;
 
-  TAILQ_FOREACH(hds, &h->h_discontinuity_segments, hds_link)
+  LIST_FOREACH(hds, &h->h_discontinuity_segments, hds_link)
     if(hds->hds_seq != 0)
       hds->hds_offset = PTS_UNSET;
 }
@@ -2135,7 +2153,6 @@ hls_play_extm3u(char *buf, const char *url, media_pipe_t *mp,
 
   hls_t h;
   memset(&h, 0, sizeof(h));
-  TAILQ_INIT(&h.h_discontinuity_segments);
   hls_demuxer_init(&h.h_primary, &h, "primary");
   hls_demuxer_init(&h.h_audio, &h, "audio");
   h.h_mp = mp;
@@ -2181,7 +2198,7 @@ hls_play_extm3u(char *buf, const char *url, media_pipe_t *mp,
   media_codec_deref(h.h_codec_h264);
 
   hls_free_audio_tracks(&h);
-  assert(TAILQ_FIRST(&h.h_discontinuity_segments) == NULL);
+  assert(LIST_FIRST(&h.h_discontinuity_segments) == NULL);
   HLS_TRACE(&h, "HLS player done");
 
   return e;
