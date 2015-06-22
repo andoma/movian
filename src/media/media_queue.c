@@ -52,10 +52,11 @@ mq_flush_q(media_pipe_t *mp, media_queue_t *mq, struct media_buf_queue *q,
 static void
 mq_flush_locked(media_pipe_t *mp, media_queue_t *mq, int full)
 {
+  mq->mq_last_deq_dts = PTS_UNSET;
   mq_flush_q(mp, mq, &mq->mq_q_data, full);
   mq_flush_q(mp, mq, &mq->mq_q_ctrl, full);
   mq_flush_q(mp, mq, &mq->mq_q_aux, full);
-  mq_update_stats(mp, mq);
+  mq_update_stats(mp, mq, 1);
 }
 
 
@@ -137,20 +138,20 @@ mq_get_buffer_delay(media_queue_t *mq)
     return 0;
   }
 
-  int cnt = 5;
+  int cnt = 10;
 
   while(f && f->mb_user_time == PTS_UNSET && cnt > 0) {
     f = TAILQ_NEXT(f, mb_link);
     cnt--;
   }
 
-  cnt = 5;
+  cnt = 10;
   while(l && l->mb_user_time == PTS_UNSET && cnt > 0) {
     l = TAILQ_PREV(l, media_buf_queue, mb_link);
     cnt--;
   }
 
-  if(f != NULL && l != NULL && f->mb_epoch == l->mb_epoch &&
+  if(f != NULL && l != NULL &&
      l->mb_user_time != PTS_UNSET && f->mb_user_time != PTS_UNSET) {
     mq->mq_buffer_delay = l->mb_user_time - f->mb_user_time;
     if(mq->mq_buffer_delay < 0)
@@ -289,7 +290,7 @@ mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
   mq->mq_packets_current++;
   mp->mp_buffer_current += mb->mb_size;
   mb->mb_epoch = mp->mp_epoch;
-  mq_update_stats(mp, mq);
+  mq_update_stats(mp, mq, 0);
   hts_cond_signal(&mq->mq_avail);
 
   hts_mutex_unlock(&mp->mp_mutex);
@@ -313,8 +314,12 @@ mb_enqueue_always(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
  *
  */
 void
-mq_update_stats(media_pipe_t *mp, media_queue_t *mq)
+mq_update_stats(media_pipe_t *mp, media_queue_t *mq, int force)
 {
+  if(!force && --mp->mp_stats_update_limiter > 0)
+    return;
+  mp->mp_stats_update_limiter = 100;
+
   int satisfied = mp->mp_eof ||
     mp->mp_buffer_current == 0 ||
     mp->mp_buffer_current * 8 > mp->mp_buffer_limit * 7 ||
@@ -353,6 +358,7 @@ void
 mq_init(media_queue_t *mq, prop_t *p, hts_mutex_t *mutex, media_pipe_t *mp)
 {
   mq->mq_mp = mp;
+  mq->mq_last_deq_dts = PTS_UNSET;
   TAILQ_INIT(&mq->mq_q_data);
   TAILQ_INIT(&mq->mq_q_ctrl);
   TAILQ_INIT(&mq->mq_q_aux);
@@ -538,12 +544,7 @@ mb_enq(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
   mb->mb_epoch = mp->mp_epoch;
   mp->mp_buffer_current += mb->mb_size;
 
-  if(mp->mp_stats_update_limiter == 0) {
-    mq_update_stats(mp, mq);
-    mp->mp_stats_update_limiter = 100;
-  } else {
-    mp->mp_stats_update_limiter--;
-  }
+  mq_update_stats(mp, mq, 0);
 
   if(do_signal)
     hts_cond_signal(&mq->mq_avail);

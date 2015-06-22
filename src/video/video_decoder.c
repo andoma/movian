@@ -214,6 +214,8 @@ vd_thread(void *aux)
       TAILQ_REMOVE(&mq->mq_q_data, data, mb_link);
       mp_check_underrun(mp);
       mb = data;
+      if(mb->mb_dts != PTS_UNSET)
+        mq->mq_last_deq_dts = mb->mb_dts;
 
     } else {
       hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
@@ -223,7 +225,7 @@ vd_thread(void *aux)
 
     mq->mq_packets_current--;
     mp->mp_buffer_current -= mb->mb_size;
-    mq_update_stats(mp, mq);
+    mq_update_stats(mp, mq, 1);
 
     hts_cond_signal(&mp->mp_backpressure);
 

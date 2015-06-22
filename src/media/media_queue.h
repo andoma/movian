@@ -38,6 +38,8 @@ typedef struct media_queue {
   int mq_demuxer_flags;      // For demuxer use
   hts_cond_t mq_avail;
 
+  int64_t mq_last_deq_dts;
+
   int64_t mq_seektarget;
 
   int64_t mq_buffer_delay;
@@ -104,6 +106,6 @@ void mq_init(media_queue_t *mq, prop_t *p, hts_mutex_t *mutex,
 
 void mq_destroy(media_queue_t *mq);
 
-void mq_update_stats(struct media_pipe *mp, media_queue_t *mq);
+void mq_update_stats(struct media_pipe *mp, media_queue_t *mq, int force);
 
 void mp_update_buffer_delay(struct media_pipe *mp);

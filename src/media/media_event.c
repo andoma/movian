@@ -70,7 +70,7 @@ mp_seek_in_queues(media_pipe_t *mp, int64_t user_time)
 	media_buf_free_locked(mp, mb);
 	adrop++;
       }
-      mq_update_stats(mp, &mp->mp_audio);
+      mq_update_stats(mp, &mp->mp_audio, 1);
 
       while(1) {
 	mb = TAILQ_FIRST(&mp->mp_video.mq_q_data);
@@ -82,7 +82,7 @@ mp_seek_in_queues(media_pipe_t *mp, int64_t user_time)
 	media_buf_free_locked(mp, mb);
 	vdrop++;
       }
-      mq_update_stats(mp, &mp->mp_video);
+      mq_update_stats(mp, &mp->mp_video, 1);
 
 
       while(mb != vbuf) {

@@ -360,18 +360,8 @@ hls_variant_update(hls_variant_t *hv, media_pipe_t *mp)
   if(hv->hv_frozen)
     return 0;
 
-
-  if(hv->hv_loaded != 0) {
-
-    if(mp->mp_buffer_delay > 10000000)
-      return 0;
-
-    time_t now = time(NULL);
-    if(hv->hv_loaded == now)
-      return 0;
-  }
-
   hls_t *h = hv->hv_demuxer->hd_hls;
+
   buf_t *b = fa_load(hv->hv_url,
                      FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
                      FA_LOAD_FLAGS(FA_COMPRESSION),
@@ -824,13 +814,16 @@ hls_variant_select_next_segment(hls_variant_t *hv)
   hls_segment_t *hs;
 
 
-  hls_error_t err = hls_variant_update(hv, mp);
+  if(hv->hv_loaded == 0) {
+    hls_error_t err = hls_variant_update(hv, mp);
 
-  if(err != HLS_ERROR_OK) {
-    hls_bad_variant(hv, err);
-    return NULL;
+    if(err != HLS_ERROR_OK) {
+      hls_bad_variant(hv, err);
+      return NULL;
+    }
   }
 
+ retry:
   if(hv->hv_current_seg == NULL) {
 
     hs = NULL;
@@ -870,7 +863,7 @@ hls_variant_select_next_segment(hls_variant_t *hv)
         }
 
         if(hs == NULL) {
-          seq = MAX(hv->hv_last_seq - 3, hv->hv_first_seq);
+          seq = MAX(hv->hv_last_seq - 5, hv->hv_first_seq);
           HLS_TRACE(h, "Live stream selecting initial segment %d", seq);
         }
       }
@@ -899,6 +892,19 @@ hls_variant_select_next_segment(hls_variant_t *hv)
   if(hv->hv_frozen) {
     // We're not a live stream and no segment can be found, this is EOF
     return HLS_EOF;
+  }
+
+  if(mp->mp_buffer_delay < 10000000) {
+
+    if(hv->hv_loaded != time(NULL)) {
+      hls_error_t err = hls_variant_update(hv, mp);
+
+      if(err != HLS_ERROR_OK) {
+        hls_bad_variant(hv, err);
+        return NULL;
+      }
+      goto retry;
+    }
   }
 
   /*
@@ -1052,12 +1058,12 @@ void
 hls_check_bw_switch(hls_demuxer_t *hd)
 {
   hls_t *h = hd->hd_hls;
+  media_pipe_t *mp = h->h_mp;
 
   if(hd->hd_bw_updated == 0)
     return;
 
   if(hd == &h->h_primary) {
-    media_pipe_t *mp = h->h_mp;
     prop_set(mp->mp_prop_io, "bitrate", PROP_SET_INT, hd->hd_bw / 1000);
     prop_set(mp->mp_prop_io, "bitrateValid", PROP_SET_INT, 1);
   }
@@ -1072,10 +1078,20 @@ hls_check_bw_switch(hls_demuxer_t *hd)
   if(hv == NULL || hv == hd->hd_current)
     return;
 
+
+  if(hv->hv_bitrate > hd->hd_current->hv_bitrate) {
+    // Stepping up, only do it if we have more than 10s worth of buffer
+    if(mp->mp_buffer_delay < 10000000) {
+      hd->hd_last_switch = now;
+      return;
+    }
+  }
+
+
   hd->hd_last_switch = now;
   hd->hd_req = hv;
 
-  hls_free_mbp(hd->hd_hls->h_mp, &hd->hd_mb);
+  hls_free_mbp(mp, &hd->hd_mb);
 }
 
 
@@ -1277,13 +1293,9 @@ enqueue_buffer(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
   int flush = 0;
 
   if(mq->mq_demuxer_flags & HLS_QUEUE_MERGE) {
-    media_buf_t *b;
 
-    TAILQ_FOREACH(b, &mq->mq_q_data, mb_link)
-      if(b->mb_dts != PTS_UNSET)
-        break;
-
-    if(b != NULL && mb->mb_dts < b->mb_dts) {
+    if(mq->mq_last_deq_dts != PTS_UNSET &&
+       mb->mb_dts < mq->mq_last_deq_dts) {
       /*
        * This frame has already been dequeued (DTS lower)
        * Drop packet and restart keyframe search
@@ -1298,6 +1310,7 @@ enqueue_buffer(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
       return NULL;
     }
 
+    media_buf_t *b;
     TAILQ_FOREACH(b, &mq->mq_q_data, mb_link)
       if(b->mb_dts != PTS_UNSET && b->mb_dts >= mb->mb_dts)
         break;
