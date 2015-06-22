@@ -1281,6 +1281,9 @@ plugin_install(plugin_t *pl, const char *package)
   if(b == NULL) {
     prop_unlink(status);
     prop_set_string(status, errbuf);
+    TRACE(TRACE_INFO, "plugins", "Failed to downloading plugin %s from %s -- %s",
+          pl->pl_id, package, errbuf);
+
   cleanup:
     prop_set(pl->pl_status, "canInstall", PROP_SET_INT, 1);
     prop_ref_dec(status);
