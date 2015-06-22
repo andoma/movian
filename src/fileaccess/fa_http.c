@@ -345,6 +345,7 @@ http_connection_park(http_connection_t *hc, int dbg, int max_age, const char *re
 
   time(&now);
 
+  tcp_set_read_timeout(hc->hc_tc, 0);
   tcp_set_cancellable(hc->hc_tc, NULL);
 
   HTTP_TRACE(dbg, "Parking connection to %s:%d (cid=%d) -- %s",
@@ -1316,7 +1317,7 @@ http_detach(http_file_t *hf, int reusable, const char *reason)
   if(hf->hf_connection == NULL)
     return;
 
-  if(reusable && !gconf.disable_http_reuse && hf->hf_read_timeout == 0) {
+  if(reusable && !gconf.disable_http_reuse) {
     http_connection_park(hf->hf_connection, hf->hf_debug, hf->hf_max_age, reason);
   } else {
     http_connection_destroy(hf->hf_connection, hf->hf_debug, reason);
