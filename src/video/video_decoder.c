@@ -80,10 +80,16 @@ video_decoder_infer_pts(const media_buf_meta_t *mbm,
  */
 static void
 video_decoder_set_current_time(video_decoder_t *vd, int64_t user_time,
-			       int epoch, int64_t pts)
+			       int epoch, int64_t pts, int drive_mode)
 {
-  if(user_time == PTS_UNSET)
-    return;
+  if(drive_mode == 2) {
+    if(pts == PTS_UNSET || user_time == PTS_UNSET)
+      return;
+    user_time = pts - user_time;
+  } else {
+    if(user_time == PTS_UNSET)
+      return;
+  }
 
   mp_set_current_time(vd->vd_mp, user_time, epoch, 0);
 
@@ -109,7 +115,7 @@ video_deliver_frame(video_decoder_t *vd, const frame_info_t *info)
 
   if(info->fi_drive_clock && !r)
     video_decoder_set_current_time(vd, info->fi_user_time, info->fi_epoch,
-                                   info->fi_pts);
+                                   info->fi_pts, info->fi_drive_clock);
 
   return r;
 }
@@ -172,7 +178,8 @@ vd_thread(void *aux)
 
       if(mbm->mbm_drive_clock)
         video_decoder_set_current_time(vd, mbm->mbm_user_time,
-                                       mbm->mbm_epoch, mbm->mbm_pts);
+                                       mbm->mbm_epoch, mbm->mbm_pts,
+                                       mbm->mbm_drive_clock);
       hts_mutex_lock(&mp->mp_mutex);
       continue;
     }

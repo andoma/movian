@@ -282,13 +282,9 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 
       mb->mb_stream = pkt.stream_index;
 
-      if(mb->mb_pts != PTS_UNSET)
-        mb->mb_user_time = mb->mb_pts - offset;
-      else
-        mb->mb_user_time = PTS_UNSET;
-
-      if(mb->mb_data_type == MB_VIDEO && mb->mb_user_time != PTS_UNSET) {
-	mb->mb_drive_clock = 1;
+      if(mb->mb_data_type == MB_VIDEO) {
+	mb->mb_drive_clock = 2;
+        mb->mb_user_time = offset;
       }
 
       mb->mb_keyframe = !!(pkt.flags & AV_PKT_FLAG_KEY);

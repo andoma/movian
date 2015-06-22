@@ -36,7 +36,7 @@ typedef union media_buf_flags {
     uint32_t flush                : 1;
     uint32_t nopts                : 1;
     uint32_t nodts                : 1;
-    uint32_t drive_clock          : 1;
+    uint32_t drive_clock          : 2;
     uint32_t disable_deinterlacer : 1;
   };
 

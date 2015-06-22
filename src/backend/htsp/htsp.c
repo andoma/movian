@@ -1932,9 +1932,6 @@ htsp_mux_input(htsp_connection_t *hc, htsmsg_t *m)
       if(mb->mb_data_type == MB_SUBTITLE)
 	mb->mb_font_context = 0;
 
-      if(mb->mb_data_type == MB_VIDEO)
-	mb->mb_drive_clock = 1;
-
       if(mb_enqueue_no_block(mp, hss->hss_mq, mb,
 			     mb->mb_data_type == MB_SUBTITLE ?
 			     mb->mb_data_type : -1))

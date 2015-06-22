@@ -108,7 +108,7 @@ emit_frame(vda_decoder_t *vdad, vda_frame_t *vf, media_queue_t *mq)
   fi.fi_pts = vf->vf_pts;
   fi.fi_color_space = -1;
   fi.fi_epoch = vf->vf_epoch;
-  fi.fi_drive_clock = 1;
+  fi.fi_drive_clock = vf->vf_drive_clock;
   fi.fi_vshift = 1;
   fi.fi_hshift = 1;
   fi.fi_duration = vf->vf_duration > 10000 ? vf->vf_duration : vdad->vdad_estimated_duration;

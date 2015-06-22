@@ -52,7 +52,7 @@ typedef struct pktmeta {
   char flush : 1; 
   char nopts : 1;
   char nodts : 1;
-  char drive_clock : 1;
+  char drive_clock : 2;
   char disable_deinterlacer : 1;
 } pktmeta_t;
 
