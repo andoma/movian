@@ -1281,7 +1281,7 @@ plugin_install(plugin_t *pl, const char *package)
   if(b == NULL) {
     prop_unlink(status);
     prop_set_string(status, errbuf);
-    TRACE(TRACE_INFO, "plugins", "Failed to downloading plugin %s from %s -- %s",
+    TRACE(TRACE_INFO, "plugins", "Failed to download plugin %s from %s -- %s",
           pl->pl_id, package, errbuf);
 
   cleanup:
@@ -1295,6 +1295,9 @@ plugin_install(plugin_t *pl, const char *package)
   if(b->b_size < 4 ||
      buf[0] != 0x50 || buf[1] != 0x4b || buf[2] != 0x03 || buf[3] != 0x04) {
     prop_link(_p("Corrupt plugin bundle"), status);
+    TRACE(TRACE_INFO, "plugins", "Plugin %s from %s -- not a valid bundle",
+          pl->pl_id, package);
+    hexdump("BUNDLE", buf, MIN(b->b_size, 64));
     goto cleanup;
   }
 
