@@ -680,7 +680,30 @@ hls_segment_close(hls_segment_t *hs)
     if(ts > 1000) {
       int64_t bw = 8000000LL * hs->hs_size / ts;
       bw = MIN(100000000, bw);
-      hd->hd_bw = bw;
+
+
+      int low_buffer = h->h_mp->mp_buffer_delay < 5000000;
+      const char *delta;
+      if(hd->hd_bw == 0) {
+        hd->hd_bw = bw;
+        delta = "Initial";
+      } else if(bw < hd->hd_bw) {
+        delta = "Decrease";
+        if(low_buffer)
+          hd->hd_bw = (hd->hd_bw + bw) / 2;
+        else
+          hd->hd_bw = (hd->hd_bw * 7 + bw) / 8;
+      } else {
+        delta = "Increase";
+        hd->hd_bw = (hd->hd_bw + bw) / 2;
+      }
+      HLS_TRACE(h, "Estimated bandwidth updated %d bps "
+                "(most recent segment %d bps) "
+                "buffer: %ds (%s) delta: %s\n",
+                hd->hd_bw, (int)bw,
+                (int)(h->h_mp->mp_buffer_delay / 1000000),
+                low_buffer ? "Low" : "OK",
+                delta);
       hd->hd_bw_updated = 1;
     }
   }
