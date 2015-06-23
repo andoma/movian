@@ -28,35 +28,12 @@ struct name {					\
   struct type *first, *last, *root;		\
 }
 
-#define RB_COMPACT
-
-#ifdef RB_COMPACT
-
-#define RB_ENTRY(type)				\
-struct {					\
-  struct type *left, *right;                    \
-  intptr_t parcol;				\
+// Head without first and last pointers
+#define RB_HEAD_NFL(name, type)			\
+struct name {					\
+  struct type *root;                            \
 }
 
-#define RB_SP(node, field, p) do {              \
-    int col = (node)->field.parcol & 1;         \
-    intptr_t v = (intptr_t)p;                   \
-    (node)->field.parcol = v | col;             \
-} while(0)
-
-#define RB_GP(node, field)  ({                          \
-      typeof(node) tmp = (void*)((node)->field.parcol & ~1UL);  \
-      tmp;                                              \
-  })
-
-#define RB_SC(node, field, col) do {            \
-    intptr_t v = (node)->field.parcol & ~1UL;   \
-    (node)->field.parcol = v | col;             \
-} while(0)
-
-#define RB_GC(node, field)   ((node)->field.parcol & 1)
-
-#else
 
 #define RB_ENTRY(type)				\
 struct {					\
@@ -69,8 +46,6 @@ struct {					\
 #define RB_SC(node, field, col)  (node)->field.color = (col)
 #define RB_GC(node, field)      ((node)->field.color)
 
-#endif
-
 
 #define RB_INIT(head)				\
 do {						\
@@ -79,6 +54,10 @@ do {						\
   (head)->root    = NULL;			\
 } while(0)
 
+#define RB_INIT_NFL(head)                       \
+do {						\
+  (head)->root    = NULL;			\
+} while(0)
 
 
 #define RB_ROTATE_LEFT(x, field, root)		\
@@ -223,6 +202,47 @@ do {							\
   c;									 \
 })
 
+/**
+ * Insert a new node, if a collision occures the colliding node is returned
+ */
+#define RB_INSERT_SORTED_NFL(head, skel, field, cmpfunc)                 \
+({									 \
+  int res, fromleft = 0;						 \
+  typeof(skel) x = skel, c, parent = NULL;				 \
+									 \
+  c = (head)->root;							 \
+  while(c != NULL) {							 \
+    res = cmpfunc(x, c);						 \
+    if(res < 0) {							 \
+      parent = c;							 \
+      c = c->field.left;						 \
+      fromleft = 1;							 \
+    } else if(res > 0) {						 \
+      parent = c;							 \
+      c = c->field.right;						 \
+      fromleft = 0;							 \
+    } else {								 \
+      break;								 \
+    }									 \
+  }									 \
+  if(c == NULL) {							 \
+    RB_SP(x, field, parent);                                             \
+    x->field.left = NULL;						 \
+    x->field.right = NULL;						 \
+    RB_SC(x, field, RB_TREE_NODE_RED);                                  \
+									 \
+    if(parent) {							 \
+      if(fromleft)							 \
+	parent->field.left = x;						 \
+      else								 \
+	parent->field.right = x;					 \
+    } else {								 \
+      (head)->root = x;							 \
+    }									 \
+    RB_INSERT_BALANCE(x, field, (head)->root);                           \
+  }									 \
+  c;									 \
+})
 
 /**
  * Returns next node
@@ -334,6 +354,163 @@ do {									 \
   if (y == (head)->last) {						 \
     (head)->last = RB_PREV(y, field);				         \
   }									 \
+  if (y->field.left == NULL) {						 \
+    x = y->field.right;							 \
+  }									 \
+  else {								 \
+    if (y->field.right == NULL) {					 \
+      x = y->field.left;						 \
+    }									 \
+    else {								 \
+      y = y->field.right;						 \
+      while (y->field.left != NULL) {					 \
+	y = y->field.left;						 \
+      }									 \
+      x = y->field.right;						 \
+    }									 \
+  }									 \
+  if (y != z) {								 \
+    RB_SP(z->field.left, field, y);                                     \
+    y->field.left = z->field.left;					 \
+    if (y != z->field.right) {						 \
+      x_parent = RB_GP(y, field);                                       \
+      if (x != NULL) {							 \
+	RB_SP(x, field, RB_GP(y, field));                               \
+      }									 \
+      RB_GP(y, field)->field.left = x;                                  \
+      y->field.right = z->field.right;					 \
+      RB_SP(z->field.right, field, y);                                  \
+    }									 \
+    else {								 \
+      x_parent = y;							 \
+    }									 \
+    if ((head)->root == z) {						 \
+      (head)->root = y;							 \
+    }									 \
+    else if (RB_GP(z, field)->field.left == z) {                        \
+      RB_GP(z, field)->field.left = y;                                  \
+    }									 \
+    else {								 \
+      RB_GP(z, field)->field.right = y;                                 \
+    }									 \
+    RB_SP(y, field, RB_GP(z, field));                                   \
+									 \
+    swapColor = RB_GC(y, field);                                        \
+    RB_SC(y, field, RB_GC(z, field));                                   \
+    RB_SC(z, field, swapColor);                                         \
+									 \
+    y = z;								 \
+  }									 \
+  else {								 \
+    x_parent = RB_GP(y, field);                                         \
+    if (x != NULL) {							 \
+      RB_SP(x, field, RB_GP(y, field));                                 \
+    }									 \
+    if ((head)->root == z) {						 \
+      (head)->root = x;							 \
+    }									 \
+    else {								 \
+      if (RB_GP(z, field)->field.left == z) {                           \
+	RB_GP(z, field)->field.left = x;                                \
+      }									 \
+      else {								 \
+	RB_GP(z, field)->field.right = x;                               \
+      }									 \
+    }									 \
+  }									 \
+									 \
+  if (RB_GC(y, field) != RB_TREE_NODE_RED) {                            \
+    while (x != (head)->root && 					 \
+	   (x == NULL || RB_GC(x, field) == RB_TREE_NODE_BLACK)) {      \
+      if (x == x_parent->field.left) {					 \
+	w = x_parent->field.right;					 \
+	if (RB_GC(w, field) == RB_TREE_NODE_RED) {                      \
+	  RB_SC(w, field, RB_TREE_NODE_BLACK);                          \
+	  RB_SC(x_parent, field, RB_TREE_NODE_RED);                     \
+	  RB_ROTATE_LEFT(x_parent, field, (head)->root);		 \
+	  w = x_parent->field.right;					 \
+	}								 \
+	if ((w->field.left == NULL || 					 \
+	     RB_GC(w->field.left, field) == RB_TREE_NODE_BLACK) &&      \
+	    (w->field.right == NULL ||                                  \
+	     RB_GC(w->field.right, field) == RB_TREE_NODE_BLACK)) {     \
+									 \
+	  RB_SC(w, field, RB_TREE_NODE_RED);                            \
+	  x = x_parent;							 \
+	  x_parent = RB_GP(x_parent, field);                            \
+	} else {							 \
+	  if (w->field.right == NULL || 				 \
+	      RB_GC(w->field.right, field) == RB_TREE_NODE_BLACK) {     \
+									 \
+	    if (w->field.left) {					 \
+	      RB_SC(w->field.left, field, RB_TREE_NODE_BLACK);          \
+	    }								 \
+	    RB_SC(w, field, RB_TREE_NODE_RED);                          \
+	    RB_ROTATE_RIGHT(w, field, (head)->root);			 \
+	    w = x_parent->field.right;					 \
+	  }								 \
+	  RB_SC(w, field, RB_GC(x_parent, field));                      \
+	  RB_SC(x_parent, field, RB_TREE_NODE_BLACK);                   \
+	  if (w->field.right) {						 \
+	    RB_SC(w->field.right, field, RB_TREE_NODE_BLACK);           \
+	  }								 \
+	  RB_ROTATE_LEFT(x_parent, field, (head)->root);		 \
+	  break;							 \
+	}								 \
+      }									 \
+      else {								 \
+	w = x_parent->field.left;					 \
+	if (RB_GC(w, field) == RB_TREE_NODE_RED) {                      \
+	  RB_SC(w, field, RB_TREE_NODE_BLACK);                        \
+	  RB_SC(x_parent, field, RB_TREE_NODE_RED);                     \
+	  RB_ROTATE_RIGHT(x_parent, field, (head)->root);		 \
+	  w = x_parent->field.left;					 \
+	}								 \
+	if ((w->field.right == NULL || 					 \
+	     RB_GC(w->field.right, field) == RB_TREE_NODE_BLACK) &&        \
+	    (w->field.left == NULL || 					 \
+	     RB_GC(w->field.left, field) == RB_TREE_NODE_BLACK)) {      \
+									 \
+	  RB_SC(w, field, RB_TREE_NODE_RED);                            \
+	  x = x_parent;							 \
+	  x_parent = RB_GP(x_parent, field);                            \
+	}								 \
+	else {								 \
+	  if (w->field.left == NULL || 					 \
+	      RB_GC(w->field.left, field) == RB_TREE_NODE_BLACK) {      \
+									 \
+	    if (w->field.right) {					 \
+	      RB_SC(w->field.right, field, RB_TREE_NODE_BLACK);         \
+	    }								 \
+	    RB_SC(w, field, RB_TREE_NODE_RED);                          \
+	    RB_ROTATE_LEFT(w, field, (head)->root);			 \
+	    w = x_parent->field.left;					 \
+	  }								 \
+	  RB_SC(w, field, RB_GC(x_parent, field));                      \
+	  RB_SC(x_parent, field, RB_TREE_NODE_BLACK);                   \
+	  if (w->field.left) {						 \
+	    RB_SC(w->field.left, field, RB_TREE_NODE_BLACK);            \
+	  }								 \
+	  RB_ROTATE_RIGHT(x_parent, field, (head)->root);		 \
+	  break;							 \
+	}								 \
+      }									 \
+    }									 \
+    if (x) {								 \
+      RB_SC(x, field, RB_TREE_NODE_BLACK);                              \
+    }									 \
+  }									 \
+} while(0)
+
+/**
+ * Remove the given node
+ */
+#define RB_REMOVE_NFL(head, e, field)					 \
+do {									 \
+  int swapColor;							 \
+  typeof(e) x, y, z = e, x_parent, w;					 \
+									 \
+  y = z;								 \
   if (y->field.left == NULL) {						 \
     x = y->field.right;							 \
   }									 \
