@@ -140,20 +140,20 @@ mq_get_buffer_delay(media_queue_t *mq)
 
   int cnt = 10;
 
-  while(f && f->mb_user_time == PTS_UNSET && cnt > 0) {
+  while(f && f->mb_dts == PTS_UNSET && cnt > 0) {
     f = TAILQ_NEXT(f, mb_link);
     cnt--;
   }
 
   cnt = 10;
-  while(l && l->mb_user_time == PTS_UNSET && cnt > 0) {
+  while(l && l->mb_dts == PTS_UNSET && cnt > 0) {
     l = TAILQ_PREV(l, media_buf_queue, mb_link);
     cnt--;
   }
 
-  if(f != NULL && l != NULL &&
-     l->mb_user_time != PTS_UNSET && f->mb_user_time != PTS_UNSET) {
-    mq->mq_buffer_delay = l->mb_user_time - f->mb_user_time;
+  if(f != NULL && l != NULL && f->mb_epoch == l->mb_epoch &&
+     l->mb_dts != PTS_UNSET && f->mb_dts != PTS_UNSET) {
+    mq->mq_buffer_delay = l->mb_dts - f->mb_dts;
     if(mq->mq_buffer_delay < 0)
       mq->mq_buffer_delay = 0;
   }
