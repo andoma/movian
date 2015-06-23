@@ -141,13 +141,13 @@ ps3_audio_reconfig(audio_decoder_t *ad)
     if(max_pcm == 8) {
       conf.channel = 8;
       conf.encoder = AUDIO_OUT_CODING_TYPE_LPCM;
-    } else if(max_dts == 6) {
-      conf.channel = 6;
-      conf.encoder = AUDIO_OUT_CODING_TYPE_DTS;
-      conf.down_mixer = AUDIO_OUT_DOWNMIXER_TYPE_B;
     } else if(max_ac3 == 6) {
       conf.channel = 6;
       conf.encoder = AUDIO_OUT_CODING_TYPE_AC3;
+      conf.down_mixer = AUDIO_OUT_DOWNMIXER_TYPE_B;
+    } else if(max_dts == 6) {
+      conf.channel = 6;
+      conf.encoder = AUDIO_OUT_CODING_TYPE_DTS;
       conf.down_mixer = AUDIO_OUT_DOWNMIXER_TYPE_B;
     } else {
       d->channels = 2;
@@ -164,12 +164,12 @@ ps3_audio_reconfig(audio_decoder_t *ad)
     if(max_pcm >= 6) {
       conf.channel = 6;
       conf.encoder = AUDIO_OUT_CODING_TYPE_LPCM;
-    } else if(max_dts == 6) {
-      conf.channel = 6;
-      conf.encoder = AUDIO_OUT_CODING_TYPE_DTS;
     } else if(max_ac3 == 6) {
       conf.channel = 6;
       conf.encoder = AUDIO_OUT_CODING_TYPE_AC3;
+    } else if(max_dts == 6) {
+      conf.channel = 6;
+      conf.encoder = AUDIO_OUT_CODING_TYPE_DTS;
     } else {
       conf.channel = 2;
       conf.encoder = AUDIO_OUT_CODING_TYPE_LPCM;
