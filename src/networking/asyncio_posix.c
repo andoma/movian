@@ -190,8 +190,10 @@ static void
 asyncio_wakeup(int id)
 {
   char x = id;
-  if(write(asyncio_pipe[1], &x, 1) != 1)
-    TRACE(TRACE_ERROR, "TCP", "Pipe problems");
+  int r = write(asyncio_pipe[1], &x, 1);
+
+  if(r != 1)
+    TRACE(TRACE_ERROR, "TCP", "Pipe problems r=%d errno=%d", r, errno);
 }
 
 /**
@@ -732,6 +734,7 @@ do_write(asyncio_fd_t *af)
 
     if(r == -1) {
       asyncio_rem_events(af, ASYNCIO_WRITE);
+      af->af_pending_errno = errno;
       return;
     }
 
