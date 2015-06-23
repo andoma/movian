@@ -22,6 +22,7 @@
 #include <string.h>
 
 #include "main.h"
+#include "misc/minmax.h"
 #include "htsmsg/htsmsg_json.h"
 #include "htsmsg/htsmsg_store.h"
 #include "fileaccess/fileaccess.h"
@@ -60,6 +61,40 @@ typedef struct tmdb_image_size {
 
 static tmdb_image_size_t *poster_sizes, *backdrop_sizes, *profile_sizes;
 
+
+static int64_t tmdb_no_request_before;
+
+/**
+ *
+ */
+static void
+tmdb_handle_rate_limit(struct http_header_list *response_headers)
+{
+  const char *retry = http_header_get(response_headers, "retry-after");
+  int waittime = 5;
+  if(retry != NULL)
+    waittime = atoi(retry) + 1;
+
+  http_headers_free(response_headers);
+
+  TMDB_TRACE("Rate limited - Throttling requests for %d seconds", waittime);
+  hts_mutex_lock(&tmdb_mutex);
+  tmdb_no_request_before = arch_get_ts() + waittime * 1000000;
+  hts_mutex_unlock(&tmdb_mutex);
+}
+
+static void
+tmdb_check_rate_limit(void)
+{
+  while(1) {
+    hts_mutex_lock(&tmdb_mutex);
+    int64_t sleeptime = tmdb_no_request_before - arch_get_ts();
+    hts_mutex_unlock(&tmdb_mutex);
+    if(sleeptime < 0)
+      return;
+    usleep(MIN(sleeptime, 10000000));
+  }
+}
 
 /**
  *
@@ -218,16 +253,30 @@ tmdb_load_movie_cast(const char *lookup_id)
   snprintf(url, sizeof(url), "http://api.themoviedb.org/3/movie/%s/casts",
 	   lookup_id);
 
+ retry:
+  tmdb_check_rate_limit();
+  int http_response_code = 0;
+  struct http_header_list response_headers;
+  LIST_INIT(&response_headers);
+
   result = fa_load(url,
                    FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
                    FA_LOAD_QUERY_ARG("api_key", TMDB_APIKEY),
                    FA_LOAD_QUERY_ARG("language", getlang()),
+                   FA_LOAD_RESPONSE_HEADERS(&response_headers),
+                   FA_LOAD_PROTOCOL_CODE(&http_response_code),
                    FA_LOAD_FLAGS(FA_COMPRESSION),
                    NULL);
   if(result == NULL) {
+    if(http_response_code == 429) {
+      tmdb_handle_rate_limit(&response_headers);
+      goto retry;
+    }
+    http_headers_free(&response_headers);
     TRACE(TRACE_INFO, "TMDB", "Load error %s", errbuf);
     return NULL;
   }
+  http_headers_free(&response_headers);
 
   htsmsg_t *doc = htsmsg_json_deserialize2(buf_cstr(result),
                                            errbuf, sizeof(errbuf));
@@ -315,17 +364,31 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id,
 
   snprintf(url, sizeof(url), "http://api.themoviedb.org/3/movie/%s", lookup_id);
 
+ retry:
+  tmdb_check_rate_limit();
+  int http_response_code = 0;
+  struct http_header_list response_headers;
+  LIST_INIT(&response_headers);
+
   result = fa_load(url,
                    FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
                    FA_LOAD_QUERY_ARG("api_key", TMDB_APIKEY),
                    FA_LOAD_QUERY_ARG("language", getlang()),
                    FA_LOAD_CACHE_INFO(cache_info),
+                   FA_LOAD_RESPONSE_HEADERS(&response_headers),
+                   FA_LOAD_PROTOCOL_CODE(&http_response_code),
                    FA_LOAD_FLAGS(FA_COMPRESSION),
                    NULL);
   if(result == NULL) {
+    if(http_response_code == 429) {
+      tmdb_handle_rate_limit(&response_headers);
+      goto retry;
+    }
+    http_headers_free(&response_headers);
     TRACE(TRACE_INFO, "TMDB", "Load error %s", errbuf);
     return METADATA_TEMPORARY_ERROR;
   }
+  http_headers_free(&response_headers);
 
   htsmsg_t *doc = htsmsg_json_deserialize2(buf_cstr(result),
                                            errbuf, sizeof(errbuf));
@@ -427,18 +490,33 @@ tmdb_query_by_title_and_year0(void *db, const char *item_url,
 
   const char *url = "http://api.themoviedb.org/3/search/movie";
 
+ retry:
+  tmdb_check_rate_limit();
+  int http_response_code = 0;
+  struct http_header_list response_headers;
+  LIST_INIT(&response_headers);
+
   result = fa_load(url,
                    FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
                    FA_LOAD_QUERY_ARG("query", title),
                    FA_LOAD_QUERY_ARG("year", *yeartxt ? yeartxt : NULL),
                    FA_LOAD_QUERY_ARG("api_key", TMDB_APIKEY),
                    FA_LOAD_QUERY_ARG("language", getlang()),
+                   FA_LOAD_RESPONSE_HEADERS(&response_headers),
+                   FA_LOAD_PROTOCOL_CODE(&http_response_code),
                    FA_LOAD_FLAGS(FA_COMPRESSION),
                    FA_LOAD_CACHE_INFO(cache_info),
                    NULL);
 
-  if(result == NULL)
+  if(result == NULL) {
+    if(http_response_code == 429) {
+      tmdb_handle_rate_limit(&response_headers);
+      goto retry;
+    }
+    http_headers_free(&response_headers);
     return METADATA_TEMPORARY_ERROR;
+  }
+  http_headers_free(&response_headers);
 
   htsmsg_t *doc = htsmsg_json_deserialize2(buf_cstr(result),
                                            errbuf, sizeof(errbuf));
