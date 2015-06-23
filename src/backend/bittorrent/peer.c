@@ -620,6 +620,11 @@ recv_have_all(peer_t *p)
 {
   torrent_t *to = p->p_torrent;
 
+  if(to->to_metainfo == NULL) {
+    p->p_pending_have_all = 1;
+    return;
+  }
+
   if(p->p_piece_flags == NULL)
     p->p_piece_flags = calloc(1, to->to_num_pieces);
 
@@ -1091,6 +1096,7 @@ peer_update_interest(torrent_t *to, peer_t *p)
     if(p->p_piece_flags == NULL)
       continue;
 
+    assert(tp->tp_index < to->to_num_pieces);
     if(!(p->p_piece_flags[tp->tp_index] & PIECE_HAVE))
       continue;
 
@@ -1309,6 +1315,17 @@ peer_activate_pending_data(torrent_t *to)
   peer_t *p, *next;
   for(p = LIST_FIRST(&to->to_running_peers); p != NULL; p = next) {
     next = LIST_NEXT(p, p_running_link);
+
+    if(p->p_pending_have_all) {
+
+      if(p->p_piece_flags == NULL)
+        p->p_piece_flags = calloc(1, to->to_num_pieces);
+
+      for(int i = 0; i < to->to_num_pieces; i++) {
+        p->p_piece_flags[i] |= PIECE_HAVE;
+      }
+      p->p_num_pieces_have = to->to_num_pieces;
+    }
 
     if(p->p_pending_bitfield != NULL) {
       void *d = p->p_pending_bitfield;

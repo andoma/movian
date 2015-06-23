@@ -196,6 +196,7 @@ typedef struct peer {
   char p_peer_interested : 1;
   char p_fast_ext : 1;
   char p_ext_prot : 1;
+  char p_pending_have_all : 1;
 
   char p_id[21];
 

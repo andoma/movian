@@ -1249,7 +1249,7 @@ torrent_send_have(torrent_t *to)
     peer_t *p;
 
     const int pid = tp->tp_index;
-
+    assert(pid < to->to_num_pieces);
     LIST_FOREACH(p, &to->to_running_peers, p_running_link) {
 
       if(p->p_piece_flags == NULL)
