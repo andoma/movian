@@ -6644,6 +6644,23 @@ glwf_focus(glw_view_eval_context_t *ec, struct token *self,
 }
 
 
+/**
+ *
+ */
+static int
+glwf_toggle(glw_view_eval_context_t *ec, struct token *self,
+            token_t **argv, unsigned int argc)
+{
+  token_t *a = argv[0];
+
+  if(resolve_property_name(ec, a, 0))
+    return -1;
+
+  if(a->type == TOKEN_PROPERTY_REF)
+    prop_toggle_int(a->t_prop);
+
+  return 0;
+}
 
 #if 0
 /**
@@ -6783,6 +6800,7 @@ static const token_func_t funcvec[] = {
   {"propName", 1, glwf_propName},
   {"propSelect", 1, glwf_propSelect},
   {"focus", 1, glwf_focus},
+  {"toggle", 1, glwf_toggle},
 
 #ifndef NDEBUG
   {"dumpDynamicStatements", 0, glwf_dumpdynamicstatements},

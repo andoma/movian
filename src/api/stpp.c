@@ -897,6 +897,9 @@ stpp_binary(stpp_t *stpp, const uint8_t *data, int len)
           if(len == 4)
             prop_set_int(p, rd32_le(data));
           break;
+        case STPP_TOGGLE_INT:
+          prop_toggle_int(p);
+          break;
         case STPP_SET_VOID:
           prop_set_void(p);
           break;

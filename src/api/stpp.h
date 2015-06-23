@@ -46,3 +46,4 @@
 #define STPP_SELECT_CHILD       10
 #define STPP_ADD_CHILD_SELECTED 11
 #define STPP_VALUE_PROP         12
+#define STPP_TOGGLE_INT         13

@@ -7,7 +7,7 @@ widget(backdrop, {
   focusOnClick: true;
 
   onEvent(activate, {
-    $self.value = !$self.value;
+    toggle($self.value);
   });
 
   alphaSelf: iir(isFocused() * 1, 8) + isHovered() * 0.1;

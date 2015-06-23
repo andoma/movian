@@ -791,7 +791,14 @@ prop_proxy_set_float(struct prop *p, float v)
 void
 prop_proxy_set_int(struct prop *p, int v)
 {
-  printf("%s not implemeted\n", __FUNCTION__);
+  prop_proxy_connection_t *ppc = p->hp_proxy_ppc;
+  htsbuf_queue_t q;
+  htsbuf_queue_init(&q, 0);
+  htsbuf_append_byte(&q, STPP_CMD_SET);
+  prop_proxy_send_prop(p, &q);
+  htsbuf_append_byte(&q, STPP_SET_INT);
+  htsbuf_append_le32(&q, v);
+  prop_proxy_send_queue(ppc, &q);
 }
 
 
@@ -812,7 +819,13 @@ prop_proxy_add_int(struct prop *p, int v)
 void
 prop_proxy_toggle_int(struct prop *p)
 {
-  printf("%s not implemeted\n", __FUNCTION__);
+  prop_proxy_connection_t *ppc = p->hp_proxy_ppc;
+  htsbuf_queue_t q;
+  htsbuf_queue_init(&q, 0);
+  htsbuf_append_byte(&q, STPP_CMD_SET);
+  prop_proxy_send_prop(p, &q);
+  htsbuf_append_byte(&q, STPP_TOGGLE_INT);
+  prop_proxy_send_queue(ppc, &q);
 }
 
 
