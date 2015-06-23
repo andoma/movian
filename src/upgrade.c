@@ -413,6 +413,7 @@ download_file(artifact_t *a, int try_patch)
                    NULL);
 
   if(r) {
+    http_headers_free(&response_headers);
     install_error(errbuf, a->a_url);
 
     if(current_data)
@@ -439,6 +440,7 @@ download_file(artifact_t *a, int try_patch)
       if(new == NULL) {
 	TRACE(TRACE_DEBUG, "upgrade", "Patch is corrupt");
 	hfree(current_data, current_size);
+        http_headers_free(&response_headers);
 	return -1;
       }
       b = new;
@@ -446,6 +448,8 @@ download_file(artifact_t *a, int try_patch)
     hfree(current_data, current_size);
   }
 #endif
+
+  http_headers_free(&response_headers);
 
   TRACE(TRACE_DEBUG, "upgrade", "Verifying SHA-1 of %d bytes",
         (int)b->b_size);

@@ -44,6 +44,7 @@ enum {
   HTTP_TAG_CONNECT_TIMEOUT,
   HTTP_TAG_READ_TIMEOUT,
   HTTP_TAG_LOCATION,
+  HTTP_TAG_RESPONSE_CODE,
 };
 
 
@@ -65,6 +66,7 @@ enum {
 #define HTTP_CONNECT_TIMEOUT(a)            HTTP_TAG_CONNECT_TIMEOUT, a
 #define HTTP_READ_TIMEOUT(a)               HTTP_TAG_READ_TIMEOUT, a
 #define HTTP_LOCATION(a)                   HTTP_TAG_LOCATION, a
+#define HTTP_RESPONSE_CODE(a)              HTTP_TAG_RESPONSE_CODE, a
 
 /**
  * Tell HTTP client to create an internal buffer. To be used when

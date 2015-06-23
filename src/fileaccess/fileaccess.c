@@ -1512,6 +1512,7 @@ fa_load(const char *url, ...)
   loadarg_t *la;
   char **locationptr = NULL;
   int *cache_info_ptr = NULL;
+  int *protocol_code = NULL;
 
   va_list ap;
   va_start(ap, url);
@@ -1592,6 +1593,9 @@ fa_load(const char *url, ...)
       *cache_info_ptr = 0;
       break;
 
+    case FA_LOAD_TAG_PROTOCOL_CODE:
+      protocol_code = va_arg(ap, int *);
+      break;
     default:
       abort();
     }
@@ -1663,11 +1667,12 @@ fa_load(const char *url, ...)
 
     if(cache_control == BYPASS_CACHE)
       blobcache_get_meta(url, "fa_load", &etag, &mtime);
-    
+
     data2 = fap->fap_load(fap, filename, errbuf, errlen,
 			  &etag, &mtime, &max_age, flags, cb, opaque, c,
-                          request_headers, response_headers, locationptr);
-    
+                          request_headers, response_headers, locationptr,
+                          protocol_code);
+
     fap_release(fap);
     free(filename);
     if(data2 == NOT_MODIFIED) {

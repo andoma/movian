@@ -2117,7 +2117,7 @@ http_load(struct fa_protocol *fap, const char *url,
           cancellable_t *c,
           struct http_header_list *request_headers,
           struct http_header_list *response_headers,
-          char **location)
+          char **location, int *protocol_code)
 {
   buf_t *b;
   int err;
@@ -2153,6 +2153,7 @@ http_load(struct fa_protocol *fap, const char *url,
                  HTTP_PROGRESS_CALLBACK(cb, opaque),
                  HTTP_CANCELLABLE(c),
                  HTTP_LOCATION(location),
+                 HTTP_RESPONSE_CODE(protocol_code),
                  NULL);
 
   if(err == -1) {
@@ -2723,6 +2724,7 @@ struct http_req_aux {
 
   buf_t *result;
 
+  int *http_code_ptr;
 };
 
 /**
@@ -3027,6 +3029,9 @@ http_req_do(http_req_aux_t *hra)
 
   int no_content = !strcmp(m, "HEAD");
 
+  if(hra->http_code_ptr != NULL)
+    *hra->http_code_ptr = code;
+
   switch(code) {
   case 204:
     no_content = 1;
@@ -3133,8 +3138,6 @@ http_req_do(http_req_aux_t *hra)
  cleanup:
   free(hra->tmpbuf);
 
-  if(r)
-    http_headers_free(hra->headers_out);
   if(r && hra->decoded_cleanup)
     hra->decoded_cleanup(hra);
   http_destroy(hra->hf);
@@ -3382,6 +3385,10 @@ http_reqv(const char *url, va_list ap,
         *hf->hf_ret_location = NULL;
       break;
 
+    case HTTP_TAG_RESPONSE_CODE:
+      hra->http_code_ptr = va_arg(ap, int *);
+      if(hra->http_code_ptr != NULL)
+        *hra->http_code_ptr = 0;
       break;
 
     default:

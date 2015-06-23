@@ -159,7 +159,7 @@ typedef struct fa_protocol {
                      cancellable_t *c,
                      struct http_header_list *request_headers,
                      struct http_header_list *response_headers,
-                     char **location);
+                     char **location, int *protocol_code);
 
   /**
    * Normalize the given URL.
