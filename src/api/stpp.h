@@ -36,7 +36,7 @@
 #define STPP_SET_VOID           0
 #define STPP_SET_INT            1
 #define STPP_SET_FLOAT          2
-#define STPP_SET_STRING         3
+#define STPP_SET_STRING         3 // First byte is strtype
 #define STPP_SET_URI            4
 #define STPP_SET_DIR            5
 #define STPP_ADD_CHILDS         6
@@ -45,3 +45,4 @@
 #define STPP_MOVE_CHILD         9
 #define STPP_SELECT_CHILD       10
 #define STPP_ADD_CHILD_SELECTED 11
+#define STPP_VALUE_PROP         12

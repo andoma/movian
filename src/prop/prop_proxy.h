@@ -46,3 +46,17 @@ void prop_proxy_destroy(struct prop *p);
 void prop_proxy_send_event(struct prop *p, const struct event *e);
 
 void prop_proxy_req_move(struct prop *p, struct prop *before);
+
+void prop_proxy_link(struct prop *src, struct prop *dst);
+
+void prop_proxy_set_string(struct prop *p, const char *str, int type);
+
+void prop_proxy_set_float(struct prop *p, float v);
+
+void prop_proxy_set_int(struct prop *p, int v);
+
+void prop_proxy_add_int(struct prop *p, int v);
+
+void prop_proxy_toggle_int(struct prop *p);
+
+void prop_proxy_set_void(struct prop *p);

@@ -52,7 +52,8 @@ typedef struct stpp_subscription {
   unsigned int ss_id;
   prop_sub_t *ss_sub;
   stpp_t *ss_stpp;
-  struct stpp_prop_list ss_props; // Exported props
+  struct stpp_prop_list ss_dir_props;   // Exported props when in dir mode
+  struct stpp_prop_list ss_value_props; // Exported props when in value mode
 } stpp_subscription_t;
 
 static int
@@ -91,14 +92,15 @@ sp_get(prop_t *p, stpp_subscription_t *ss)
  *
  */
 static stpp_prop_t *
-stpp_property_export_from_sub(stpp_subscription_t *ss, prop_t *p)
+stpp_property_export_from_sub(stpp_subscription_t *ss, prop_t *p,
+                              struct stpp_prop_list *list)
 {
   stpp_t *stpp = ss->ss_stpp;
   stpp_prop_t *sp = malloc(sizeof(stpp_prop_t));
   sp->sp_id = ++stpp->stpp_prop_tally;
   sp->sp_prop = prop_ref_inc(p);
   sp->sp_sub = ss;
-  LIST_INSERT_HEAD(&ss->ss_props, sp, sp_sub_link);
+  LIST_INSERT_HEAD(list, sp, sp_sub_link);
   if(RB_INSERT_SORTED(&stpp->stpp_props, sp, sp_link, sp_cmp))
     abort();
   prop_tag_set(p, ss, sp);
@@ -148,7 +150,7 @@ stpp_sub_json_add_child(stpp_subscription_t *ss, http_connection_t *hc,
 { 
   char buf2[128];
   unsigned int b = before ? sp_get(before, ss)->sp_id : 0;
-  stpp_prop_t *sp = stpp_property_export_from_sub(ss, p);
+  stpp_prop_t *sp = stpp_property_export_from_sub(ss, p, &ss->ss_dir_props);
   snprintf(buf2, sizeof(buf2), "[5,%u,%u,[%u]]", ss->ss_id, b, sp->sp_id);
   websocket_send(hc, 1, buf2, strlen(buf2));
 }
@@ -170,7 +172,7 @@ stpp_sub_json_add_childs(stpp_subscription_t *ss, http_connection_t *hc,
 
   for(i = 0; i < prop_vec_len(pv); i++) {
     prop_t *p = prop_vec_get(pv, i);
-    stpp_prop_t *sp = stpp_property_export_from_sub(ss, p);
+    stpp_prop_t *sp = stpp_property_export_from_sub(ss, p, &ss->ss_dir_props);
     htsbuf_qprintf(&hq, "%s%u", i ? "," : "", sp->sp_id);
   }
   htsbuf_append(&hq, "]]", 1);
@@ -215,10 +217,10 @@ stpp_sub_json_move_child(stpp_subscription_t *ss, http_connection_t *hc,
  *
  */
 static void
-ss_clear_props(stpp_subscription_t *ss)
+ss_clear_props(stpp_subscription_t *ss, struct stpp_prop_list *list)
 {
   stpp_prop_t *sp;
-  while((sp = LIST_FIRST(&ss->ss_props)) != NULL) {
+  while((sp = LIST_FIRST(list)) != NULL) {
     prop_tag_clear(sp->sp_prop, ss);
     stpp_property_unexport_from_sub(ss, sp);
   }
@@ -247,13 +249,13 @@ stpp_sub_json(void *opaque, prop_event_t event, ...)
     my_double2str(buf, sizeof(buf), va_arg(ap, double));
     snprintf(buf2, sizeof(buf2), "[4,%u,%s]", ss->ss_id, buf);
     websocket_send(hc, 1, buf2, strlen(buf2));
-    ss_clear_props(ss);
+    ss_clear_props(ss, &ss->ss_dir_props);
     break;
 
   case PROP_SET_INT:
     snprintf(buf2, sizeof(buf2), "[4,%u,%d]", ss->ss_id, va_arg(ap, int));
     websocket_send(hc, 1, buf2, strlen(buf2));
-    ss_clear_props(ss);
+    ss_clear_props(ss, &ss->ss_dir_props);
     break;
 
   case PROP_SET_RSTRING:
@@ -267,13 +269,13 @@ stpp_sub_json(void *opaque, prop_event_t event, ...)
     htsbuf_append_and_escape_jsonstr(&hq, str);
     htsbuf_append(&hq, "]", 1);
     websocket_sendq(hc, 1, &hq);
-    ss_clear_props(ss);
+    ss_clear_props(ss, &ss->ss_dir_props);
     break;
 
   case PROP_SET_VOID:
     snprintf(buf2, sizeof(buf2), "[4,%u,null]", ss->ss_id);
     websocket_send(hc, 1, buf2, strlen(buf2));
-    ss_clear_props(ss);
+    ss_clear_props(ss, &ss->ss_dir_props);
     break;
 
   case PROP_SET_URI:
@@ -286,12 +288,13 @@ stpp_sub_json(void *opaque, prop_event_t event, ...)
     htsbuf_append_and_escape_jsonstr(&hq, str2);
     htsbuf_append(&hq, "]]", 2);
     websocket_sendq(hc, 1, &hq);
-    ss_clear_props(ss);
+    ss_clear_props(ss, &ss->ss_dir_props);
     break;
 
   case PROP_SET_DIR:
     snprintf(buf2, sizeof(buf2), "[4,%u,[\"dir\"]]", ss->ss_id);
     websocket_send(hc, 1, buf2, strlen(buf2));
+    ss_clear_props(ss, &ss->ss_dir_props);
     break;
 
   case PROP_ADD_CHILD:
@@ -358,7 +361,7 @@ stpp_sub_binary(void *opaque, prop_event_t event, ...)
     buf = alloca(buflen);
     buf[1] = STPP_SET_INT;
     wr32_le(buf + 6, va_arg(ap, int));
-    ss_clear_props(ss);
+    ss_clear_props(ss, &ss->ss_dir_props);
     break;
 
   case PROP_SET_FLOAT:
@@ -367,19 +370,19 @@ stpp_sub_binary(void *opaque, prop_event_t event, ...)
     buf[1] = STPP_SET_FLOAT;
     u.f = va_arg(ap, double);
     wr32_le(buf + 6, u.i);
-    ss_clear_props(ss);
+    ss_clear_props(ss, &ss->ss_dir_props);
     break;
 
   case PROP_SET_VOID:
     buf = alloca(buflen);
     buf[1] = STPP_SET_VOID;
-    ss_clear_props(ss);
+    ss_clear_props(ss, &ss->ss_dir_props);
     break;
 
   case PROP_SET_DIR:
     buf = alloca(buflen);
     buf[1] = STPP_SET_DIR;
-    ss_clear_props(ss);
+    ss_clear_props(ss, &ss->ss_dir_props);
     break;
 
   case PROP_SET_RSTRING:
@@ -388,18 +391,20 @@ stpp_sub_binary(void *opaque, prop_event_t event, ...)
     case PROP_SET_CSTRING:
       str = va_arg(ap, const char *);
     len = strlen(str);
-    buflen += len;
+    buflen += len + 1;
     buf = alloca(buflen);
     buf[1] = STPP_SET_STRING;
-    memcpy(buf + 6, str, len);
-    ss_clear_props(ss);
+    buf[6] = event == PROP_SET_RSTRING ? va_arg(ap, int) : 0;
+    memcpy(buf + 7, str, len);
+    ss_clear_props(ss, &ss->ss_dir_props);
     break;
 
   case PROP_ADD_CHILD:
     buflen += 4;
     buf = alloca(buflen);
     wr32_le(buf + 6,
-            stpp_property_export_from_sub(ss, va_arg(ap, prop_t *))->sp_id);
+            stpp_property_export_from_sub(ss, va_arg(ap, prop_t *),
+                                          &ss->ss_dir_props)->sp_id);
 
     flags = va_arg(ap, int);
     if(flags & PROP_ADD_SELECTED)
@@ -415,7 +420,8 @@ stpp_sub_binary(void *opaque, prop_event_t event, ...)
     buflen += 8;
     buf = alloca(buflen);
     wr32_le(buf + 6,  sp_get(before, ss)->sp_id);
-    wr32_le(buf + 10, stpp_property_export_from_sub(ss, p)->sp_id);
+    wr32_le(buf + 10, stpp_property_export_from_sub(ss, p,
+                                                    &ss->ss_dir_props)->sp_id);
     buf[1] = STPP_ADD_CHILDS;
     break;
 
@@ -425,7 +431,8 @@ stpp_sub_binary(void *opaque, prop_event_t event, ...)
     buf = alloca(buflen);
     for(int i = 0; i < prop_vec_len(pv); i++) {
       wr32_le(buf + 6 + i * 4,
-              stpp_property_export_from_sub(ss, prop_vec_get(pv, i))->sp_id);
+              stpp_property_export_from_sub(ss, prop_vec_get(pv, i),
+                                            &ss->ss_dir_props)->sp_id);
     }
     buf[1] = STPP_ADD_CHILDS;
     break;
@@ -439,7 +446,8 @@ stpp_sub_binary(void *opaque, prop_event_t event, ...)
     wr32_le(buf + 6,  sp_get(before, ss)->sp_id);
     for(int i = 0; i < prop_vec_len(pv); i++) {
       wr32_le(buf + 10 + i * 4,
-              stpp_property_export_from_sub(ss, prop_vec_get(pv, i))->sp_id);
+              stpp_property_export_from_sub(ss, prop_vec_get(pv, i),
+                                            &ss->ss_dir_props)->sp_id);
     }
     buf[1] = STPP_ADD_CHILDS;
     break;
@@ -471,6 +479,26 @@ stpp_sub_binary(void *opaque, prop_event_t event, ...)
     buf = alloca(buflen);
     wr32_le(buf + 6, sp_get(va_arg(ap, prop_t *), ss)->sp_id);
     buf[1] = STPP_SELECT_CHILD;
+    break;
+
+  case PROP_VALUE_PROP:
+    p = va_arg(ap, prop_t *);
+
+    if(LIST_FIRST(&ss->ss_value_props) != NULL &&
+       LIST_FIRST(&ss->ss_value_props)->sp_prop == p) {
+      printf("Not sending same prop\n");
+      return;
+    }
+
+    ss_clear_props(ss, &ss->ss_value_props);
+
+    buflen += 4;
+    buf = alloca(buflen);
+
+    wr32_le(buf + 6,
+            stpp_property_export_from_sub(ss, p,
+                                          &ss->ss_value_props)->sp_id);
+    buf[1] = STPP_VALUE_PROP;
     break;
 
   default:
@@ -520,7 +548,8 @@ stpp_cmd_sub(stpp_t *stpp, unsigned int id, int propref, const char *path,
 static void
 ss_destroy(stpp_t *stpp, stpp_subscription_t *ss)
 {
-  ss_clear_props(ss);
+  ss_clear_props(ss, &ss->ss_dir_props);
+  ss_clear_props(ss, &ss->ss_value_props);
   prop_unsubscribe(ss->ss_sub);
   RB_REMOVE(&stpp->stpp_subscriptions, ss, ss_link);
   free(ss);
@@ -782,6 +811,11 @@ stpp_binary_event(prop_t *p, event_type_t event,
 static int
 stpp_binary(stpp_t *stpp, const uint8_t *data, int len)
 {
+  union {
+    float f;
+    int i;
+  } u;
+
   if(len < 1)
     return -1;
   hexdump("STPP-INPUT", data, len);
@@ -840,6 +874,41 @@ stpp_binary(stpp_t *stpp, const uint8_t *data, int len)
         stpp_binary_event(p2, event, data, len, stpp);
       }
       prop_ref_dec(p2);
+    }
+    break;
+
+  case STPP_CMD_SET:
+    {
+      prop_t *p = decode_propref(stpp, &data, &len);
+      if(p == NULL)
+        break;
+
+      if(len > 0) {
+        uint8_t cmd = data[0];
+        data++;
+        len--;
+        switch(cmd) {
+        case STPP_SET_STRING:
+          if(len < 1)
+            break;
+          prop_set_string_ex(p, NULL, (const char *)data + 1, data[0]);
+          break;
+        case STPP_SET_INT:
+          if(len == 4)
+            prop_set_int(p, rd32_le(data));
+          break;
+        case STPP_SET_VOID:
+          prop_set_void(p);
+          break;
+        case STPP_SET_FLOAT:
+          if(len != 4)
+            break;
+          u.i = rd32_le(data);
+          prop_set_float(p, u.f);
+          break;
+        }
+      }
+      prop_ref_dec(p);
     }
     break;
   case STPP_CMD_REQ_MOVE:

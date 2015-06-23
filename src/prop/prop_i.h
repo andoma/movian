@@ -38,7 +38,7 @@ extern pool_t *sub_pool;
 
 TAILQ_HEAD(prop_queue, prop);
 LIST_HEAD(prop_list, prop);
-RB_HEAD(prop_tree, prop);
+RB_HEAD_NFL(prop_tree, prop);
 LIST_HEAD(prop_sub_list, prop_sub);
 TAILQ_HEAD(prop_sub_dispatch_queue, prop_sub_dispatch);
 
@@ -437,10 +437,21 @@ struct prop_sub {
   LIST_ENTRY(prop_sub) hps_value_prop_link;
 
 
+  /**
+   * Property backing this subscription.
+   *
+   * For non-proxied properties this points to the property with the value
+   * and hps_value_prop_link is linked to that propertys list.
+   *
+   * For proxied properties this is only set if we are subscribing to the
+   * value prop (PROP_SUB_SEND_VALUE_PROP) and if set we own the property
+   * and must destroy it via prop_destroy0() when subscription dies.
+   */
+  prop_t *hps_value_prop;
+
   union {
     struct {
       // If hps_proxy is not set, these are the "active" members
-      prop_t *hps_value_prop;
       prop_t *hps_canonical_prop;
       LIST_ENTRY(prop_sub) hps_canonical_prop_link;
       union {

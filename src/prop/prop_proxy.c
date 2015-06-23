@@ -148,7 +148,7 @@ prop_proxy_make(prop_proxy_connection_t *ppc, uint32_t id, prop_sub_t *s,
 
   if(s != NULL) {
     p->hp_sub = s;
-    if(RB_INSERT_SORTED(&s->hps_prop_tree, p, hp_sub_link, prop_id_cmp)) {
+    if(RB_INSERT_SORTED_NFL(&s->hps_prop_tree, p, hp_sub_link, prop_id_cmp)) {
       printf("HELP Unable to insert node %d, collision detected\n", id);
       pool_put(prop_pool, p);
       strvec_free(pfx);
@@ -173,7 +173,7 @@ prop_proxy_destroy(struct prop *p)
 {
   ppc_release(p->hp_proxy_ppc);
   if(p->hp_sub != NULL) {
-    RB_REMOVE(&p->hp_sub->hps_prop_tree, p, hp_sub_link);
+    RB_REMOVE_NFL(&p->hp_sub->hps_prop_tree, p, hp_sub_link);
     p->hp_sub = NULL;
   }
   strvec_free(p->hp_proxy_pfx);
@@ -189,7 +189,7 @@ ppc_destroy_props_on_sub(prop_sub_t *s)
   prop_t *p;
   while((p = s->hps_prop_tree.root) != NULL) {
     if(p->hp_sub != NULL) {
-      RB_REMOVE(&s->hps_prop_tree, p, hp_sub_link);
+      RB_REMOVE_NFL(&s->hps_prop_tree, p, hp_sub_link);
       p->hp_sub = NULL;
     }
     prop_destroy0(p);
@@ -225,7 +225,7 @@ ppc_ws_input_notify(prop_proxy_connection_t *ppc, const uint8_t *data, int len)
   int cnt;
   prop_sub_t *s;
   prop_t *p;
-  
+
   if(len < 5)
     return;
 
@@ -251,10 +251,12 @@ ppc_ws_input_notify(prop_proxy_connection_t *ppc, const uint8_t *data, int len)
   len -= 5;
   switch(setop) {
   case STPP_SET_STRING:
+    if(len < 1)
+      break;
     ppc_destroy_props_on_sub(s);
     n = prop_get_notify(s);
-    n->hpn_rstring = rstr_allocl((const char *)data, len);
-    n->hpn_rstrtype = 0;
+    n->hpn_rstring = rstr_allocl((const char *)data + 1, len - 1);
+    n->hpn_rstrtype = data[0];
     n->hpn_event = PROP_SET_RSTRING;
     break;
 
@@ -356,6 +358,19 @@ ppc_ws_input_notify(prop_proxy_connection_t *ppc, const uint8_t *data, int len)
     n->hpn_event = PROP_ADD_CHILD;
     n->hpn_flags = PROP_ADD_SELECTED;
     n->hpn_prop = prop_ref_inc(p);
+    break;
+
+  case STPP_VALUE_PROP:
+    if(len != 4)
+      break;
+
+    if(s->hps_value_prop != NULL)
+      prop_destroy0(s->hps_value_prop);
+
+    s->hps_value_prop = prop_proxy_make(ppc, rd32_le(data), NULL, NULL);
+    n = prop_get_notify(s);
+    n->hpn_event = PROP_VALUE_PROP;
+    n->hpn_prop = prop_ref_inc(s->hps_value_prop);
     break;
 
 
@@ -653,7 +668,9 @@ prop_proxy_subscribe(prop_proxy_connection_t *ppc, prop_sub_t *s,
   assert(p->hp_type == PROP_PROXY);
 
   s->hps_ppc = ppc;
-  RB_INIT(&s->hps_prop_tree);
+  RB_INIT_NFL(&s->hps_prop_tree);
+  s->hps_value_prop = NULL;
+
   LIST_INSERT_HEAD(&ppc->ppc_subs, s, hps_value_prop_link);
 
   ppc->ppc_subscription_tally++;
@@ -715,10 +732,97 @@ void
 prop_proxy_unsubscribe(prop_sub_t *s)
 {
   prop_proxy_connection_t *ppc = s->hps_ppc;
+
+  if(s->hps_value_prop != NULL) {
+    prop_destroy0(s->hps_value_prop);
+    s->hps_value_prop = NULL;
+  }
+
   LIST_REMOVE(s, hps_value_prop_link);
   uint8_t *data = alloca(5);
   data[1] = STPP_CMD_UNSUBSCRIBE;
   wr32_le(data + 1, s->hps_proxy_subid);
   prop_proxy_send_data(ppc, data, 5);
+}
+
+
+/**
+ *
+ */
+void
+prop_proxy_link(struct prop *src, struct prop *dst)
+{
+  printf("%s not implemeted\n", __FUNCTION__);
+}
+
+
+/**
+ *
+ */
+void
+prop_proxy_set_string(struct prop *p, const char *str, int type)
+{
+  prop_proxy_connection_t *ppc = p->hp_proxy_ppc;
+  htsbuf_queue_t q;
+
+  htsbuf_queue_init(&q, 0);
+  htsbuf_append_byte(&q, STPP_CMD_SET);
+  prop_proxy_send_prop(p, &q);
+  htsbuf_append_byte(&q, STPP_SET_STRING);
+  htsbuf_append_byte(&q, type);
+  htsbuf_append(&q, str, strlen(str));
+  prop_proxy_send_queue(ppc, &q);
+}
+
+
+/**
+ *
+ */
+void
+prop_proxy_set_float(struct prop *p, float v)
+{
+  printf("%s not implemeted\n", __FUNCTION__);
+}
+
+
+/**
+ *
+ */
+void
+prop_proxy_set_int(struct prop *p, int v)
+{
+  printf("%s not implemeted\n", __FUNCTION__);
+}
+
+
+/**
+ *
+ */
+void
+prop_proxy_add_int(struct prop *p, int v)
+{
+  printf("%s not implemeted\n", __FUNCTION__);
+}
+
+
+
+/**
+ *
+ */
+void
+prop_proxy_toggle_int(struct prop *p)
+{
+  printf("%s not implemeted\n", __FUNCTION__);
+}
+
+
+
+/**
+ *
+ */
+void
+prop_proxy_set_void(struct prop *p)
+{
+  printf("%s not implemeted\n", __FUNCTION__);
 }
 

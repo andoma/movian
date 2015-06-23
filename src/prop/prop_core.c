@@ -3353,6 +3353,11 @@ prop_set_string_exl(prop_t *p, prop_sub_t *skipme, const char *str,
   if(p->hp_type == PROP_ZOMBIE)
     return;
 
+  if(p->hp_type == PROP_PROXY) {
+    prop_proxy_set_string(p, str, type);
+    return;
+  }
+
   if(p->hp_type != PROP_RSTRING) {
 
     if(prop_clean(p))
@@ -3402,6 +3407,11 @@ prop_set_rstring_exl(prop_t *p, prop_sub_t *skipme, rstr_t *rstr)
   if(p->hp_type == PROP_ZOMBIE)
     return;
 
+  if(p->hp_type == PROP_PROXY) {
+    prop_proxy_set_string(p, rstr_get(rstr), PROP_STR_UTF8);
+    return;
+  }
+
   if(p->hp_type != PROP_RSTRING) {
 
     if(prop_clean(p))
@@ -3447,7 +3457,11 @@ prop_set_rstring_ex(prop_t *p, prop_sub_t *skipme, rstr_t *rstr)
 static void
 prop_set_cstring_exl(prop_t *p, prop_sub_t *skipme, const char *cstr)
 {
-  if(p->hp_type == PROP_ZOMBIE) {
+  if(p->hp_type == PROP_ZOMBIE)
+    return;
+
+  if(p->hp_type == PROP_PROXY) {
+    prop_proxy_set_string(p, cstr, PROP_STR_UTF8);
     return;
   }
 
@@ -3627,6 +3641,12 @@ static void
 prop_set_float_exl(prop_t *p, prop_sub_t *skipme, float v, int how)
 {
   int forceupdate = !!how;
+
+  if(p->hp_type == PROP_PROXY) {
+    prop_proxy_set_float(p, v);
+    return;
+  }
+
   if((p = prop_get_float_locked(p, &forceupdate)) != NULL) {
 
     if(forceupdate || p->hp_float != v) {
@@ -3726,6 +3746,11 @@ prop_set_int_exl(prop_t *p, prop_sub_t *skipme, int v)
   if(p->hp_type == PROP_ZOMBIE)
     return;
 
+  if(p->hp_type == PROP_PROXY) {
+    prop_proxy_set_int(p, v);
+    return;
+  }
+
   if(p->hp_type != PROP_INT) {
 
     if(p->hp_type == PROP_FLOAT) {
@@ -3778,6 +3803,12 @@ prop_add_int_ex(prop_t *p, prop_sub_t *skipme, int v)
 
   hts_mutex_lock(&prop_mutex);
 
+  if(p->hp_type == PROP_PROXY) {
+    prop_proxy_add_int(p, v);
+    hts_mutex_unlock(&prop_mutex);
+    return;
+  }
+
   if(p->hp_type == PROP_ZOMBIE) {
     hts_mutex_unlock(&prop_mutex);
     return;
@@ -3824,6 +3855,12 @@ prop_toggle_int_ex(prop_t *p, prop_sub_t *skipme)
     return;
 
   hts_mutex_lock(&prop_mutex);
+
+  if(p->hp_type == PROP_PROXY) {
+    prop_proxy_toggle_int(p);
+    hts_mutex_unlock(&prop_mutex);
+    return;
+  }
 
   if(p->hp_type == PROP_ZOMBIE) {
     hts_mutex_unlock(&prop_mutex);
@@ -3908,6 +3945,11 @@ prop_set_void_exl(prop_t *p, prop_sub_t *skipme)
 {
   if(p->hp_type == PROP_ZOMBIE)
     return;
+
+  if(p->hp_type == PROP_PROXY) {
+    prop_proxy_set_void(p);
+    return;
+  }
 
   if(p->hp_type != PROP_VOID) {
 
@@ -4549,7 +4591,17 @@ prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard, int debug)
     return;
 
   hts_mutex_lock(&prop_mutex);
-  prop_link0(src, dst, skipme, hard, debug);
+
+
+  if(src->hp_type == PROP_PROXY && dst->hp_type == PROP_PROXY) {
+    assert(skipme == NULL);
+    prop_proxy_link(src, dst);
+  } else if(src->hp_type == PROP_PROXY || dst->hp_type == PROP_PROXY) {
+    printf("Linking a proxied property with a non-proxied one is mind-boggling difficult, giving up\n");
+  } else {
+    prop_link0(src, dst, skipme, hard, debug);
+  }
+  
   hts_mutex_unlock(&prop_mutex);
 }
 
@@ -4566,6 +4618,8 @@ prop_unlink_ex(prop_t *p, prop_sub_t *skipme)
     return;
 
   hts_mutex_lock(&prop_mutex);
+
+  assert(p->hp_type != PROP_PROXY);
 
   if(p->hp_type == PROP_ZOMBIE) {
     hts_mutex_unlock(&prop_mutex);
