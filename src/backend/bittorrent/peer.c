@@ -1028,9 +1028,11 @@ recv_message(peer_t *p, htsbuf_queue_t *q)
     break;
 
   default:
+#if 0
     TRACE(TRACE_ERROR, "BITTORRENT",
           "%s: Can't handle message id 0x%x (yet)", p->p_name, msgid);
     hexdump("DUMP", data, len);
+#endif
     break;
   }
 
