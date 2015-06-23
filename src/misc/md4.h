@@ -42,6 +42,18 @@
 
 #define md4_final(ctx, output) md4_finish(ctx, output);
 
+#elif ENABLE_OPENSSL
+
+#include <openssl/md4.h>
+
+#define md4_decl(ctx) MD4_CTX ctx
+
+#define md4_init(ctx) MD4_Init(&ctx)
+
+#define md4_update(ctx, data, len) MD4_Update(&ctx, data, len)
+
+#define md4_final(ctx, output) MD4_Final(output, &ctx)
+
 #else
 #error No md4 crypto
 #endif

@@ -310,7 +310,7 @@ lmresponse_round(uint8_t *out, const uint8_t *challenge, const uint8_t *hash)
 
 #if ENABLE_OPENSSL
   DES_key_schedule sched;
-  DES_set_key_unchecked((DES_cblock *)spread, sched);
+  DES_set_key_unchecked((DES_cblock *)spread, &sched);
   DES_ecb_encrypt((DES_cblock *)challenge, (DES_cblock *)out, &sched, 1);
 #elif ENABLE_POLARSSL
 
