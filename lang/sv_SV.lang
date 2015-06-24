@@ -23,8 +23,7 @@ id: Disable sleep timer
 msg: Avaktivera sov-timer
 
 id: Exit %s
-# Missing translation
-msg: 
+msg: Avsluta %s
 
 id: Go to Home screen
 msg: Gå till hemsidan
@@ -153,12 +152,10 @@ msg: Videoinställningar
 # ./glwskins/default/loading.view
 #
 id: %d kb/s
-# Missing translation
-msg: 
+msg: %d kb/s
 
 id: Bitrate:
-# Missing translation
-msg: 
+msg: Bithastighet:
 
 #
 # ./glwskins/default/log.view
@@ -248,8 +245,7 @@ msg: Datum:
 # ./glwskins/default/pages/iteminfo/plugin.view
 #
 id: %s %s or newer is required
-# Missing translation
-msg: 
+msg: %s %s eller nyare krävs
 
 id: Author: 
 msg: Upphovsman:
@@ -328,12 +324,10 @@ msg: Uppgradera
 # ./glwskins/default/pages/openerror.view
 #
 id: Unable to open %s
-# Missing translation
-msg: 
+msg: Kan ej öppna %s
 
 id: resource
-# Missing translation
-msg: 
+msg: resurs
 
 #
 # ./glwskins/default/pages/playqueue.view
@@ -351,8 +345,7 @@ msg: Pausad
 # ./glwskins/default/pages/upgrade.view
 #
 id: %s is up to date
-# Missing translation
-msg: 
+msg: %s är uppdaterad
 
 id: An error occured during download
 msg: Ett fel inträffade under nerladdning
@@ -391,8 +384,7 @@ id: Patching %s
 msg: Patchar %s
 
 id: Restarting %s in %d seconds...
-# Missing translation
-msg: 
+msg: Startar om %s om %d sekunder...
 
 id: Retry...
 msg: Försök igen...
@@ -410,16 +402,13 @@ msg: Kan ej fråga efter ny version
 # ./glwskins/default/pages/video.view
 #
 id: A/V diff:
-# Missing translation
-msg: 
+msg: A/V diff:
 
 id: Audio codec:
-# Missing translation
-msg: 
+msg: Ljudcodec:
 
 id: Audio queue len:
-# Missing translation
-msg: 
+msg: Ljudkönlängd:
 
 id: Audio volume adjustment: %d dB
 msg: Ljudvolumjustering: %d dB
@@ -428,47 +417,37 @@ id: CPU is too slow to decode this video
 msg: CPUn är för långsam för att spela upp videon
 
 id: Download speed:
-# Missing translation
-msg: 
+msg: Nerladdningshastighet:
 
 id: Packet buffer:
-# Missing translation
-msg: 
+msg: Paketbuffer:
 
 id: Playback status
 msg: Uppspelningsstatus
 
 id: Remaining buffer:
-# Missing translation
-msg: 
+msg: Kvarstående buffer:
 
 id: Remote queue drops:
-# Missing translation
-msg: 
+msg: Tappade paket på server:
 
 id: Remote queue len:
-# Missing translation
-msg: 
+msg: Kö på server:
 
 id: Source:
-# Missing translation
-msg: 
+msg: Källa:
 
 id: Video bitrate:
-# Missing translation
-msg: 
+msg: Videohastighet:
 
 id: Video codec:
-# Missing translation
-msg: 
+msg: Videokodning:
 
 id: Video decode time:
-# Missing translation
-msg: 
+msg: Videoavkodningstid:
 
 id: Video queue len:
-# Missing translation
-msg: 
+msg: Videokölängd:
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -498,12 +477,10 @@ msg: Användarnamn
 # ./glwskins/default/popups/resume.view
 #
 id: No, Start over
-# Missing translation
-msg: 
+msg: Nej, Starta om
 
 id: Resume %s from %s
-# Missing translation
-msg: 
+msg: Starta om %s från %s
 
 #
 # ./glwskins/default/screensaver.view
@@ -572,8 +549,7 @@ msg: System har lite ledigt minne (%d kB RAM tillgängligt)
 # ./src/arch/ps3/ps3_vdec.c
 #
 id: Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration
-# Missing translation
-msg: 
+msg: Antatel referensbilder är inkompatibelt med PS3 videoavkodare
 
 id: Cell-h264: Broken headers, Disabling acceleration
 msg: Trasig videoinformation. Slår av acceleration.
@@ -597,12 +573,10 @@ msg: Kan ej fråga Cell codec. Fel 0x%x
 # ./src/arch/rpi/rpi_audio.c
 #
 id: 8 Channel PCM
-# Missing translation
-msg: 
+msg: 8 Kanalig PCM
 
 id: AC3 Pass-Through
-# Missing translation
-msg: 
+msg: AC3 direkt
 
 id: Analog
 msg: Analog
@@ -611,12 +585,10 @@ id: Audio output port
 msg: Ljudutgång
 
 id: Autodetect
-# Missing translation
-msg: 
+msg: Automatisk
 
 id: DTS Pass-Through
-# Missing translation
-msg: 
+msg: DTS Direkt
 
 id: HDMI
 msg: HDMI
@@ -625,15 +597,13 @@ id: Off
 msg: Av
 
 id: On
-# Missing translation
-msg: 
+msg: På
 
 #
 # ./src/arch/rpi/rpi_cec.c
 #
 id: Configure communications with your TV
-# Missing translation
-msg: 
+msg: Konfigurera kommunikation med din TV
 
 id: Consumer Electronics Control
 msg: Consumer Electronics Control
@@ -717,31 +687,25 @@ msg: Sparade svärmar använder %d MB av tillåtna %d MB. Totalt fritt utrymme p
 # ./src/backend/bittorrent/fa_torrent.c
 #
 id: Connected peers
-# Missing translation
-msg: 
+msg: Anslutna peer
 
 id: Known peers
-# Missing translation
-msg: 
+msg: Kända peer
 
 id: Receiving from
-# Missing translation
-msg: 
+msg: Tar emot från
 
 id: Torrent leechers
-# Missing translation
-msg: 
+msg: Torrent leechers
 
 id: Torrent seeders
-# Missing translation
-msg: 
+msg: Torrent seeders
 
 #
 # ./src/backend/bittorrent/torrent_settings.c
 #
 id: Clear cache
-# Missing translation
-msg: 
+msg: Töm cache
 
 id: Enable bittorrent
 msg: Använd svärmar
@@ -768,12 +732,10 @@ msg: Problem att läsa DVD, startar om skivan
 # ./src/backend/hls/hls.c
 #
 id: Primary
-# Missing translation
-msg: 
+msg: Primär
 
 id: Supplementary
-# Missing translation
-msg: 
+msg: Extra
 
 #
 # ./src/backend/htsp/htsp.c
@@ -797,8 +759,7 @@ id: Albums
 msg: Album
 
 id: Automatic login on start
-# Missing translation
-msg: 
+msg: Automatiskt login vid start
 
 id: Collaborative
 msg: Kollaborativ
@@ -975,8 +936,7 @@ id: Logon failure
 msg: Login misslyckades
 
 id: Object name not found
-# Missing translation
-msg: 
+msg: Objektets namn ej funnet
 
 #
 # ./src/i18n.c
@@ -1099,8 +1059,7 @@ id: Automatic
 msg: Automatisk
 
 id: Erase all playback info
-# Missing translation
-msg: 
+msg: Ta bort all information om uppspelningar, etc
 
 id: Manual
 msg: Manuell
@@ -1277,8 +1236,7 @@ id: Automatically upgrade plugins
 msg: Updatera plugin automatiskt
 
 id: Available plugins
-# Missing translation
-msg: 
+msg: Tillgängliga plugins
 
 id: Background
 msg: Bakgrund
@@ -1287,8 +1245,7 @@ id: Beta testing passwords
 msg: Betatestlösenord
 
 id: Browse available plugins
-# Missing translation
-msg: 
+msg: Lista tillgängliga plugins
 
 id: Browsing
 msg: Browsing
@@ -1312,8 +1269,7 @@ id: Home page
 msg: Hemsida
 
 id: Installed plugins
-# Missing translation
-msg: 
+msg: Installerade plugins
 
 id: Installed version higher than available
 msg: Installerad version är högre än den som är tillgänglig
@@ -1406,8 +1362,7 @@ id: Power off system
 msg: Stäng av systemet
 
 id: Quit
-# Missing translation
-msg: 
+msg: Avlusta
 
 id: SSH server
 msg: SSH server
@@ -1416,8 +1371,7 @@ id: Standby
 msg: Viloläge
 
 id: Starting and stopping
-# Missing translation
-msg: 
+msg: Starta och stanna
 
 #
 # ./src/sd/sd.c
@@ -1633,8 +1587,7 @@ msg: Videolägen
 # ./src/upgrade.c
 #
 id: %s version %s is available
-# Missing translation
-msg: 
+msg: %s version %s är tillgänglig
 
 id: Notify about upgrades
 msg: Avisera uppgraderingar
@@ -1667,12 +1620,10 @@ msg: Kan ej hitta tjänsten
 # ./src/video/video_settings.c
 #
 id: Always
-# Missing translation
-msg: 
+msg: Alltid
 
 id: Ask
-# Missing translation
-msg: 
+msg: Fråga
 
 id: Automatically play next video in list
 msg: Spela nästa video i listan automatiskt
@@ -1690,8 +1641,7 @@ id: Maximum resolution for deinterlacer
 msg: Maximal upplösning för deinterlacing
 
 id: Never
-# Missing translation
-msg: 
+msg: Aldrig
 
 id: No limit
 msg: Ingen begränsning
