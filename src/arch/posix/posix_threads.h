@@ -94,6 +94,8 @@ extern void hts_thread_create_joinable(const char *, hts_thread_t *,
 #define hts_thread_join(t)                  pthread_join(*(t), NULL)
 #define hts_thread_current()                pthread_self()
 
+extern const char *hts_thread_name(char *buf, size_t len);
+
 #if !ENABLE_EMU_THREAD_SPECIFICS
 
 typedef pthread_key_t hts_key_t;

@@ -120,6 +120,12 @@ keyring_lookup(const char *id, char **username, char **password,
   hts_mutex_lock(&keyring_mutex);
 
   if(flags & KEYRING_QUERY_USER) {
+    char tmpbuf[64];
+
+    TRACE(TRACE_DEBUG, "Keyring",
+          "Query user for credentials for %s (%s) (on thread: %s)",
+          source, reason, hts_thread_name(tmpbuf, sizeof(tmpbuf)));
+
     htsmsg_t *parent;
     prop_t *p = prop_ref_inc(prop_create_root(NULL));
 

@@ -217,6 +217,13 @@ thread_dump(void)
 
 
 static __thread int my_thread_id;
+static __thread const char *my_thread_name;
+
+const char *
+hts_thread_name(char *buf, size_t len)
+{
+  return my_thread_name ?: "no-name-set";
+}
 
 /**
  *
@@ -228,6 +235,7 @@ thread_trampoline(void *aux)
 
   sys_ppu_thread_get_id(&ti->id);
   my_thread_id = ti->id;
+  my_thread_name = ti->name;
   hts_mutex_lock(&thread_info_mutex);
   LIST_INSERT_HEAD(&threads, ti, link);
   hts_mutex_unlock(&thread_info_mutex);

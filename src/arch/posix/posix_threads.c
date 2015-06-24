@@ -140,6 +140,24 @@ make_trampoline(const char *title, void *(*func)(void *), void *aux,
   return t;
 }
 
+
+const char *
+hts_thread_name(char *buf, size_t len)
+{
+#if defined(linux)
+  char tmp[17];
+  tmp[16] = 0;
+  prctl(PR_GET_NAME, tmp, 0, 0, 0);
+  snprintf(buf, len, "%s", tmp);
+  return buf;
+#elif defined(APPLE)
+  pthread_getname_np(pthread_self(), buf, len);
+  return buf;
+#else
+  return "thread-name-unset";
+#endif
+}
+
 /**
  *
  */

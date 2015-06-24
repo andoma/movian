@@ -168,7 +168,7 @@ extern void hts_thread_join(hts_thread_t *id);
 
 extern hts_thread_t hts_thread_current(void);
 
-
+extern const char *hts_thread_name(char *buf, size_t len);
 
 LIST_HEAD(thread_info_list, thread_info);
 typedef struct thread_info {
