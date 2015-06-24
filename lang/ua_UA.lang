@@ -1,0 +1,1678 @@
+language: Ukrainian
+native: Українська
+maintainer: lprot <lprot@list.ru>
+#
+# ./glwskins/default/cmdmenu.view
+#
+id: Add current page to bookmarks
+msg: Додати поточну сторінку в закладки
+
+id: Open settings
+msg: Відкрити налаштування
+
+id: Remove current page from bookmarks
+msg: Видалити поточну сторінку з закладок
+
+#
+# ./glwskins/default/cmdmenu/cmdmenu_common.view
+#
+id: Activate sleep timer
+msg: Увімкнути таймер сну
+
+id: Disable sleep timer
+msg: Вимкнути таймер сну
+
+id: Exit %s
+msg: Вийти з %s
+
+id: Go to Home screen
+msg: Перейти на головний екран
+
+id: Hide system info
+msg: Сховати системну інформацію
+
+id: Master volume
+msg: Загальна гучність
+
+id: Navigation
+msg: Навігація
+
+id: Open Settings
+msg: Відкрити налаштування
+
+id: Playqueue
+msg: Черга відтворення
+
+id: Power off
+msg: Вимкнути систему
+
+id: Reload current page
+msg: Перезавантажити поточну сторінку
+
+id: Show system info
+msg: Показати системну інформацію
+
+id: Suspend
+msg: Призупинити
+
+id: System
+msg: Система
+
+id: Time until sleep
+msg: Час до початку сну
+
+id: dB
+msg: дБ
+
+id: min
+msg: мін
+
+#
+# ./glwskins/default/cmdmenu/cmdmenu_dir.view
+#
+id: Add '%s' to home screen
+msg: Додати '%s' на головний екран
+
+id: Remove '%s' from home screen
+msg: Видалити '%s' з головного екрану
+
+#
+# ./glwskins/default/cmdmenu/cmdmenu_item.view
+#
+id: Continue from %s
+msg: Продовжити з %s
+
+id: Continue playback here
+msg: Продовжити відтворення тут
+
+id: Delete
+msg: Видалити
+
+id: Mark as seen
+msg: Відмітити як переглянуте
+
+id: Mark as unseen
+msg: Відмітити як не переглянуте
+
+id: Play from beginning
+msg: Відтворити з початку
+
+id: Play until end of list
+msg: Відтворення до кінця списку
+
+id: Queue
+msg: Черга
+
+id: Star
+msg: Відмітити
+
+id: Unstar
+msg: Зняти відмітку
+
+#
+# ./glwskins/default/cmdmenu/cmdmenu_video.view
+#
+id: Audio
+msg: Звук
+
+id: Audio settings
+msg: Налаштування звуку
+
+id: Audio tracks
+msg: Звукові рядки
+
+id: Chapters
+msg: Розділи
+
+id: Seek by time
+msg: Пошук по часу
+
+id: Settings
+msg: Налаштування
+
+id: Subtitle settings
+msg: Налаштування субтитрів
+
+id: Subtitle tracks
+msg: Рядки субтитрів
+
+id: Subtitles
+msg: Субтитри
+
+id: Video
+msg: Відео
+
+id: Video menu
+msg: Меню відео
+
+id: Video settings
+msg: Налаштування відео
+
+#
+# ./glwskins/default/loading.view
+#
+id: %d kb/s
+msg: %d кб/с
+
+id: Bitrate:
+msg: Бітрейт:
+
+#
+# ./glwskins/default/log.view
+#
+id: System log
+msg: Системний лог
+
+#
+# ./glwskins/default/osk.view
+#
+id: Cancel
+msg: Відміна
+
+id: Clear
+msg: Очистити
+
+id: Default
+msg: По замовчуванню
+
+id: Keyboard layout:
+msg: Разкладка клавіатури:
+
+id: OK
+msg: OK
+
+#
+# ./glwskins/default/pages/directory.view
+#
+id: Album
+msg: Альбом
+
+id: Artist
+msg: Виконавець
+
+id: Custom
+msg: Користувацькі
+
+id: Images
+msg: Зображення
+
+id: List
+msg: Список
+
+id: Slideshow
+msg: Слайд-шоу
+
+id: Tvchannels
+msg: ТБ-канали
+
+id: View
+msg: Вигляд
+
+#
+# ./glwskins/default/pages/discovered.view
+#
+id: Discovered resources on local network
+msg: Знайдені ресурси в локальній мережі
+
+#
+# ./glwskins/default/pages/home.view
+#
+id: Tiled
+msg: Плитка
+
+#
+# ./glwskins/default/pages/home_clist.view
+#
+id: Apps
+msg: Додатки
+
+id: Dismiss
+msg: Відхилити
+
+id: Search / Open URL
+msg: Знайти / Відкрити URL
+
+#
+# ./glwskins/default/pages/iteminfo/image.view
+#
+id: Camera:
+msg: Камера:
+
+id: Date:
+msg: Дата:
+
+#
+# ./glwskins/default/pages/iteminfo/plugin.view
+#
+id: %s %s or newer is required
+msg: Необхідно %s %s або новійше
+
+id: Author:
+msg: Автор:
+
+id: Available version:
+msg: Доступна версія:
+
+id: Installed version:
+msg: Встановлена версія:
+
+#
+# ./glwskins/default/pages/iteminfo/video.view
+#
+id: Duration:
+msg: Тривалість:
+
+id: File date:
+msg: Дата файлу:
+
+id: Genre:
+msg: Жанр:
+
+id: Metadata from
+msg: Метадані від
+
+id: Rating:
+msg: Рейтинг:
+
+id: Year:
+msg: Рік:
+
+id: Seen %d times
+msg[0]: Переглянуто %d раз/и
+msg[1]: Переглянуто %d раз/и
+
+#
+# ./glwskins/default/pages/listitems/add.view
+#
+id: Add new entry
+msg: Додати новий запис
+
+#
+# ./glwskins/default/pages/listitems/bool.view
+#
+id: No
+msg: Ні
+
+id: Yes
+msg: Так
+
+#
+# ./glwskins/default/pages/listitems/font.view
+#
+id: Condensed
+msg: Стиснутий
+
+id: Main
+msg: Головний
+
+id: Subs
+msg: Субтитри
+
+#
+# ./glwskins/default/pages/listitems/plugin.view
+#
+id: Install
+msg: Установка
+
+id: Uninstall
+msg: Видалення
+
+id: Upgrade
+msg: Оновлення
+
+#
+# ./glwskins/default/pages/openerror.view
+#
+id: Unable to open %s
+msg: Неможливо відкрити %s
+
+id: resource
+msg: ресурс
+
+#
+# ./glwskins/default/pages/playqueue.view
+#
+id: Track %d / %d
+msg: Трек %d / %d
+
+#
+# ./glwskins/default/pages/slideshow.view
+#
+id: Paused
+msg: Пауза
+
+#
+# ./glwskins/default/pages/upgrade.view
+#
+id: %s is up to date
+msg: %s вже оновлено
+
+id: An error occured during download
+msg: Під час завантаження сталася помилка
+
+id: Available version:
+msg: Доступні версії:
+
+id: Changelog for %s releases
+msg: Перелік змін в релізі %s
+
+id: Check for updates now
+msg: Перевірити оновлення зараз
+
+id: Checking for updates...
+msg: Перевірка оновленнь ...
+
+id: Checking installed version of %s
+msg: Перевірка встановленої версії %s
+
+id: Current version:
+msg: Поточна версія:
+
+id: Download and install...
+msg: Завантажити і встановити...
+
+id: Downloading %s
+msg: Завантаження %s
+
+id: New version %s is available for download
+msg: Нова версія %s доступна для завантаження
+
+id: No upgrade available
+msg: Оновлення відсутні
+
+id: Patching %s
+msg: Виправлення %s
+
+id: Restarting %s in %d seconds...
+msg: Перезапуск %s через %d секунд...
+
+id: Retry...
+msg: Повторити ...
+
+id: Stable
+msg: Стабільний
+
+id: Testing
+msg: Тестовий
+
+id: Unable to query for new version
+msg: Неможливо виконати запит нової версії
+
+#
+# ./glwskins/default/pages/video.view
+#
+id: A/V diff:
+msg: А/В різниця:
+
+id: Audio codec:
+msg: Кодек звуку:
+
+id: Audio queue len:
+msg: Довжина черги звуку:
+
+id: Audio volume adjustment: %d dB
+msg: Регулювання гучності звуку: %d дБ
+
+id: CPU is too slow to decode this video
+msg: Процессор занадто повільний для декодування цього відео
+
+id: Download speed:
+msg: Швидкість завантаження:
+
+id: Packet buffer:
+msg: Буфер пакетів:
+
+id: Playback status
+msg: Статус відтворення
+
+id: Remaining buffer:
+msg: Залишилось в буфері:
+
+id: Remote queue drops:
+msg: Розривів віддаленої черги:
+
+id: Remote queue len:
+msg: Довжина віддаленої черги:
+
+id: Source:
+msg: Джерело:
+
+id: Video bitrate:
+msg: Бітрейт відео:
+
+id: Video codec:
+msg: Відео кодек:
+
+id: Video decode time:
+msg: Час декодування відео:
+
+id: Video queue len:
+msg: Довжина відео черги:
+
+#
+# ./glwskins/default/playdecks/dvd.view
+#
+id: Chapter: %d
+msg: Розділ: %d
+
+id: Title: %d
+msg: Назва: %d
+
+#
+# ./glwskins/default/popups/auth.view
+#
+id: Domain
+msg: Домен
+
+id: Password
+msg: Пароль
+
+id: Remember me
+msg: Запам'ятати мене
+
+id: Username
+msg: Ім'я користувача
+
+#
+# ./glwskins/default/popups/resume.view
+#
+id: No, Start over
+msg: Ні, розпочати знову
+
+id: Resume %s from %s
+msg: Продовжити %s з %s
+
+#
+# ./glwskins/default/screensaver.view
+#
+id: No media loaded
+msg: Медіа не завантажено
+
+#
+# ./glwskins/default/sysinfo.view
+#
+id: CPU Temp
+msg: Температура CPU
+
+id: Fragmentation
+msg: Фрагментація
+
+id: GPU Temp
+msg: Температура GPU
+
+id: HDD Avail
+msg: HDD доступно
+
+id: Inactive mem
+msg: Неактивна пам'ять
+
+id: Memory usage
+msg: Використання пам'яті
+
+id: System Free
+msg: Вільно в системі
+
+id: System Total
+msg: Усього в системі
+
+#
+# ./glwskins/default/universe.view
+#
+id: Audio muted
+msg: Звук вимкнений
+
+id: Master volume: %d dB
+msg: Загальна гучність: %d дБ
+
+#
+# ./src/api/tmdb.c
+#
+id: Language (ISO 639-1 code)
+msg: Дві літери коду мови (згідно з ISO 639-1)
+
+id: Use original title
+msg: Використовувати оригінальну назву
+
+#
+# ./src/arch/linux/pulseaudio.c
+#
+id: Unable to initialize audio system %s -- %s
+msg: Неможливо ініціалізувати звукову систему %s -- %s
+
+#
+# ./src/arch/ps3/ps3_main.c
+#
+id: System is low on memory (%d kB RAM available)
+msg: Мало пам'яті (доступно %d Кб RAM)
+
+#
+# ./src/arch/ps3/ps3_vdec.c
+#
+id: Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration
+msg: Cell-h264: %d Ref-frames для %d контенту є несумісним з апаратним декодером PS3. Прискорення декодування вимкнено.
+
+id: Cell-h264: Broken headers, Disabling acceleration
+msg: Заголовки пошкоджено, прискорення декодування вимкнено
+
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+msg: Cell-h264: Примусовий рівень 4.2 для контенту рівня %d.%d. Це може зашкодити відтворенню відео.
+
+id: Unable to accelerate %s, library not loaded.
+msg: Неможливо прискорити %s, библіотеку не завантажено.
+
+id: Unable to open Cell codec. Error 0x%x
+msg: Неможливо відкрити Cell-кодек. Помилка 0x%x
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+msg: Неможливо відкрити Cell-кодек. Не вдалося виділити %d байт RAM
+
+id: Unable to query Cell codec. Error 0x%x
+msg: Неможливо опитати Cell-кодек. Помилка 0x%x
+
+#
+# ./src/arch/rpi/rpi_audio.c
+#
+id: 8 Channel PCM
+msg: 8-ми канальний PCM
+
+id: AC3 Pass-Through
+msg: AC3 Pass-Through
+
+id: Analog
+msg: Аналог
+
+id: Audio output port
+msg: Аудіовихід
+
+id: Autodetect
+msg: Автовизначення
+
+id: DTS Pass-Through
+msg: DTS Pass-Through
+
+id: HDMI
+msg: HDMI
+
+id: Off
+msg: Вимкн
+
+id: On
+msg: Увімкн
+
+#
+# ./src/arch/rpi/rpi_cec.c
+#
+id: Configure communications with your TV
+msg: Налаштування зв'язку з TV
+
+id: Consumer Electronics Control
+msg: Керування побутовою електронікою
+
+#
+# ./src/audio2/audio.c
+#
+id: Audio delay
+msg: Затримка звуку
+
+id: Audio gain adjustment during video playback
+msg: Регулювання підсилення зуку під час відтворення відео
+
+id: Audio settings during video playback
+msg: Налаштування звуку під час відтворення відео
+
+id: Setup audio output
+msg: Налаштування звукового виходу
+
+#
+# ./src/audio2/audio_test.c
+#
+id: 440Hz sinewave -12dB
+msg: 440Гц синусоїдальна хвиля -12дб
+
+id: Audio test
+msg: Тест звуку
+
+id: Center
+msg: Центр
+
+id: Front Left
+msg: Спереду зліва
+
+id: Front Right
+msg: Спереду справа
+
+id: LFE
+msg: LFE
+
+id: Pink noise
+msg: Рожевий шум
+
+id: Play test signal
+msg: Відтворити тестовий сигнал
+
+id: Rear Left
+msg: Ззаду зліва
+
+id: Rear Right
+msg: Ззаду справа
+
+id: Speaker position
+msg: Розташування динаміків
+
+id: Surround Left
+msg: Об'ємний зліва
+
+id: Surround Right
+msg: Об'ємний справа
+
+id: Test signal type
+msg: Тип тестового сигналу
+
+#
+# ./src/backend/bittorrent/bt_backend.c
+#
+id: No files in torrent
+msg: Нема файлів в торенті
+
+id: Unable to open torrent: %s
+msg: Неможливо відкрити торент: %s
+
+#
+# ./src/backend/bittorrent/diskio.c
+#
+id: Cached torrents use %d MB out of allowed %d MB. Total free space on volume: %d MB
+msg: Кэш торентів використовує %d МБ з дозволенних %d МБ. Усього вільного місця на диску: %d МБ
+
+#
+# ./src/backend/bittorrent/fa_torrent.c
+#
+id: Connected peers
+msg: Підключено пірів
+
+id: Known peers
+msg: Відомо пірів
+
+id: Receiving from
+msg: Приймається від
+
+id: Torrent leechers
+msg: Торент лічерів
+
+id: Torrent seeders
+msg: Торент сідерів
+
+#
+# ./src/backend/bittorrent/torrent_settings.c
+#
+id: Clear cache
+msg: Очистити кеш
+
+id: Enable bittorrent
+msg: Включити бітторент
+
+id: Max usage of free space for caching torrents
+msg: Макс використання вільного місця для кэшування торентів
+
+id: Status
+msg: Статус
+
+id: Torrent cache path
+msg: Шлях до торент кэшу
+
+#
+# ./src/backend/dvd/dvd.c
+#
+id: DVD
+msg: DVD
+
+id: DVD read error, restarting disc
+msg: Помилка читання DVD, перезапуск диску
+
+#
+# ./src/backend/hls/hls.c
+#
+id: Primary
+msg: Основний
+
+id: Supplementary
+msg: Додатковий
+
+#
+# ./src/backend/htsp/htsp.c
+#
+id: Invalid HTSP URL
+msg: Невірний HTSP URL
+
+#
+# ./src/backend/search.c
+#
+id: Search
+msg: Пошук
+
+id: Search result for: %s
+msg: Результати пошуку для: %s
+
+#
+# ./src/backend/spotify/spotify.c
+#
+id: Albums
+msg: Альбоми
+
+id: Automatic login on start
+msg: Автоматичний вхід при запуску
+
+id: Collaborative
+msg: Спільний
+
+id: Compilations
+msg: Підбірки
+
+id: Forget me
+msg: Забути мене
+
+id: Friends
+msg: Друзі
+
+id: High bitrate
+msg: Високий бітрейт
+
+id: Inbox
+msg: Вхідні
+
+id: New albums on Spotify
+msg: Нові альбоми на Spotify
+
+id: New releases
+msg: Нові релізи
+
+id: Offline
+msg: Офлайн
+
+id: Offline sync in 96kbps
+msg: Офлайн синхронизація в 96кб/с
+
+id: Playlists
+msg: Плейлісти
+
+id: Relogin (switch user)
+msg: Перезайти (змінити користувача)
+
+id: Search result
+msg: Результат пошуку
+
+id: Singles
+msg: Сінгли
+
+id: Spotify friends
+msg: Друзі на Spotify
+
+id: Spotify music service
+msg: Музичний сервіс Spotify
+
+id: Spotify playlists
+msg: Плейлісти Spotify
+
+id: Spotify: Connection error: %s
+msg: Spotify: Помилка підключення: %s
+
+id: Starred
+msg: З відмітками
+
+#
+# ./src/blobcache_file.c
+#
+id: Cache cleared
+msg: Кеш очищений
+
+id: Clear cached files
+msg: Видалити кешовані файли
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+msg: Нeвідомий тип кoнтeнту %d
+
+id: Checking file contents
+msg: Перевірка змісту файлу
+
+id: Unable to open file: %s
+msg: Heвдалось відкрити фaйл: %s
+
+#
+# ./src/fileaccess/fa_locatedb.c
+#
+id: Search using Unix locatedb
+msg: Пошук з використанням Unix locatedb
+
+#
+# ./src/fileaccess/fa_scanner.c
+#
+id: Artists
+msg: Артисти
+
+id: Date (newest first)
+msg: Дата (з початку нові)
+
+id: Date (oldest first)
+msg: Дата (з початку старі)
+
+id: Deleted %s
+msg: Видалено: %s
+
+id: Filename
+msg: Ім'я файлу
+
+id: Indexed mode
+msg: Індексований режим
+
+id: Show only supported files
+msg: Показувати тільки підтримувані файли
+
+id: Sort folders first
+msg: Сортувати з початку теки
+
+id: Sort on
+msg: Сортувати по
+
+id: Unable to delete %s\n%s
+msg: Не вдалося видалити %s\n%s
+
+#
+# ./src/fileaccess/fa_spotlight.c
+#
+id: Search using spotlight
+msg: Пошук з використанням spotlight
+
+#
+# ./src/fileaccess/fileaccess.c
+#
+id: Are you sure you want to delete:
+msg: Ви впевнені, що хочете видалити:
+
+id: BitTorrent
+msg: BitTorrent
+
+id: Browse archives as folders
+msg: Перегляди архіви як теки
+
+id: Enable file deletion from item menu
+msg: Включити видалення файлів з меню елемента
+
+id: File browsing
+msg: Перегляд файлів
+
+id: Show filename extensions
+msg: Відображати розширення у файлів
+
+id: Store per-file settings in filesystem
+msg: Зберігати налаштування кожного файлу в файловій системі
+
+id: %d archive parts
+msg[0]: частин архіву: %d
+msg[1]: частин архиву: %d
+
+id: %d directories
+msg[0]: тек: %d
+msg[1]: тек: %d
+
+id: %d files
+msg[0]: файлів: %d
+msg[1]: файлів: %d
+
+#
+# ./src/fileaccess/smb/fa_nativesmb.c
+#
+id: Access denied
+msg: У доступі відмовлено
+
+id: Account restricted
+msg: Акаунт обмежено
+
+id: Bad network share name
+msg: Невірне ім'я мережевого ресурсу
+
+id: Logon failure
+msg: Помилка входу
+
+id: Object name not found
+msg: Ім'я об'єкту не знайдено
+
+#
+# ./src/i18n.c
+#
+id: Default character set
+msg: Набір символів по замовчуванню
+
+id: Ignore 'The' at beginning of words when sorting
+msg: Ігнорувати 'The' на початку слів при сортуванні
+
+id: Language
+msg: Мова
+
+id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+msg: Коди мов повинні бути налаштовані у вигляді трьох символів ISO-кодування, наприклад: rus, eng, fra
+
+id: Languages
+msg: Мови
+
+id: Preferred languages
+msg: Переважні мови
+
+id: Primary audio language code
+msg: Код основної мови для звуку
+
+id: Primary subtitle language code
+msg: Код основної мови для субтитрів
+
+id: Secondary audio language code
+msg: Код другої мови для звуку
+
+id: Secondary subtitle language code
+msg: Код другої мови для субтитрів
+
+id: Tertiary audio language code
+msg: Код третьої мови для звуку
+
+id: Tertiary subtitle language code
+msg: Код третьої мови для субтитрів
+
+#
+# ./src/keymapper.c
+#
+id: Configure mapping of keyboard and remote controller keys
+msg: Налаштування кнопок клавіатури та дистанціного пульта управління
+
+id: Keymapper
+msg: Налаштування кнопок
+
+#
+# ./src/keyring.c
+#
+id: Forget remembered passwords
+msg: Забути паролі які запам'ятовувались
+
+id: Rembered passwords erased
+msg: Паролі які запам'ятовувались видалено
+
+#
+# ./src/media/media_settings.c
+#
+id: Align subtitles on video frame
+msg: Вирівнювання субтитрів у відеокадрі
+
+id: Audio volume
+msg: Гучність звуку
+
+id: Go to standby after video ends
+msg: Перейти в режим очікування після закінчення відео
+
+id: Horizontal pan
+msg: Горизонтальне панарамування
+
+id: Reset defaults for folder '%s'
+msg: Скинути налашування по замовчуванню для теки '%s'
+
+id: Save as defaults for folder '%s'
+msg: Зберегти налаштування по замовчуванню для теки '%s'
+
+id: Save as global default
+msg: Зберегти як глобальні налаштування по замовчуванню
+
+id: Stretch video to fullscreen
+msg: Розтянути відео на цілий екран
+
+id: Stretch video to widescreen
+msg: Розтянути відео на широкий екран
+
+id: Subtitle delay
+msg: Затримка субтитрів
+
+id: Subtitle horizontal displacement
+msg: Зміщення субтитрів по горизонталі
+
+id: Subtitle scaling
+msg: Масштаб субтитрів
+
+id: Subtitle vertical displacement
+msg: Вертикальне зміщення субтитрів
+
+id: Vertical pan
+msg: Вертикальне панарамування
+
+id: Video frame interpolation
+msg: Інтерполяція відеокадрів
+
+id: Video zoom
+msg: Масштаб відео
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+msg: Індексація
+
+#
+# ./src/metadata/decoration.c
+#
+id: Automatic
+msg: Автоматично
+
+id: Erase all playback info
+msg: Видалити всю інформацію про відтворення
+
+id: Manual
+msg: Ручний
+
+id: Mark all as seen
+msg: Відмітити усе як переглянуте
+
+id: Mark all as unseen
+msg: Відмітити усе як непереглянуте
+
+id: Metadata mode
+msg: Режим отримання метаданих
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+msg: Вбудовано у файл
+
+id: Track %d
+msg: Трек %d
+
+#
+# ./src/metadata/metadata_sources.c
+#
+id: Enabled
+msg: Увімкнено
+
+id: Metadata
+msg: Метадані
+
+id: Metadata configuration and provider settings
+msg: Конфигурація метаданих і налаштування постачальника
+
+id: Providers for Music
+msg: Постачальник для музики
+
+id: Providers for Video
+msg: Постачальники для відео
+
+#
+# ./src/metadata/metadb.c
+#
+id: %d items deleted
+msg: Видалено записів: %d
+
+id: Clear all metadata
+msg: Очистити усі метадані
+
+id: Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?
+msg: Очищення усіх метаданих означає втрату <b>усіх</b> метаданих, кешованих з зовнішніх джерел, таких як themoviedb.org і т.д.\n\nІнформація про позиції де перегляд закінчився, кількість переглядів і т.д буде збережена.\nВи впевнені, що продовжуєте?
+
+#
+# ./src/metadata/mlp.c
+#
+id: Custom search query
+msg: Заданий пошуковий запит
+
+id: Custom title
+msg: Задати назву
+
+id: IMDb ID
+msg: IMDb ID
+
+id: Metadata loaded from '%s' using %s
+msg: Метадані завантажуються з '%s' з використанням %s
+
+id: Metadata search
+msg: Пошук метаданих
+
+id: Metadata source
+msg: Джерело метаданих
+
+id: Movie
+msg: Фільми
+
+id: Movie title
+msg: Назва фільму
+
+id: No data found
+msg: Дані не знайдено
+
+id: None
+msg: Пусто
+
+id: Refresh metadata
+msg: Оновити метадані
+
+id: Title, Season, Episode
+msg: Назва, сезон, епізод
+
+id: custom IMDb ID
+msg: користувацький IMDb ID
+
+id: custom query
+msg: користувацький запит
+
+id: filename
+msg: ім'я файла
+
+id: filename as TV episode
+msg: ім'я файла як епізод ТБ
+
+id: folder name
+msg: ім'я теки
+
+#
+# ./src/navigator.c
+#
+id: Add and remove items on homepage
+msg: Додати і видалити елементи на головному екрані
+
+id: Added new bookmark: %s
+msg: Додано нові закладки: %s
+
+id: Bookmarks
+msg: Закладки
+
+id: Music
+msg: Музика
+
+id: No handler for URL
+msg: Відсутній обробник для URL
+
+id: Other
+msg: Інше
+
+id: Photos
+msg: Фото
+
+id: Removed bookmark: %s
+msg: Видалити закладки: %s
+
+id: TV
+msg: ТБ
+
+id: Title
+msg: Назва
+
+id: Type
+msg: Тип
+
+id: URL
+msg: URL
+
+#
+# ./src/networking/connman.c
+#
+id: Enable Wi-Fi
+msg: Увімкнути Wi-Fi
+
+id: Network connections
+msg: Мережеві підключення
+
+#
+# ./src/networking/ftp_server.c
+#
+id: Enable FTP server
+msg: Увімкнути FTP-сервер
+
+id: FTP server
+msg: FTP-сервер
+
+id: Server TCP port
+msg: TCP-порт сервера
+
+#
+# ./src/plugins.c
+#
+id: Alternate plugin Repository URL
+msg: Альтернативний URL репозиторію плагінів
+
+id: Automatically upgrade plugins
+msg: Автоматично оновлювати плагіни
+
+id: Available plugins
+msg: Доступні плагіни
+
+id: Background
+msg: Фон
+
+id: Beta testing passwords
+msg: Паролі бета-теста
+
+id: Browse available plugins
+msg: Переглянути доступні плагіни
+
+id: Browsing
+msg: Вигляд елементов при навігації
+
+id: Cloud services
+msg: Хмарні сервіси
+
+id: Corrupt plugin bundle
+msg: Пошкоджений пакет плагіну
+
+id: Disk write error
+msg: Помилка запису на диск
+
+id: Downloading
+msg: Завантаження
+
+id: File open error
+msg: Помилка відкриття файлу
+
+id: Home page
+msg: Головний екран
+
+id: Installed plugins
+msg: Встановлені плагіни
+
+id: Installed version higher than available
+msg: Встановлена версія новіша ніж доступна
+
+id: Installing
+msg: Встановлення
+
+id: List of albums
+msg: Список альбомів
+
+id: Loading screen
+msg: Екран завантаження
+
+id: Movies
+msg: Фільми
+
+id: Music streaming
+msg: Потокова музика
+
+id: Not installable
+msg: Не может бути встановлено
+
+id: Not installed
+msg: Не встановлено
+
+id: Not upgradable
+msg: Не оновлювано
+
+id: On Screen Keyboards
+msg: Екранна клавіатура
+
+id: Online TV
+msg: Онлайн ТБ
+
+id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
+msg: Плагін %s %s було видалено, тому що він вкликає проблеми.\nСпробуйте перевстановити іншу версію вручну.
+
+id: Plugins
+msg: Плагіни
+
+id: Preferred views from plugins
+msg: Переважний вигляд з плагинів
+
+id: Screen saver
+msg: Екранна заставка
+
+id: TV channels
+msg: ТБ канали
+
+id: Unable to load plugin.json: %s
+msg: Не вдається завантажити plugin.json: %s
+
+id: Unable to load plugin.json: Malformed JSON
+msg: Не вдається завантажити plugin.json: Некорректний JSON
+
+id: Uncategorized
+msg: Без категорії
+
+id: Up to date
+msg: Остання версія
+
+id: Upgradable
+msg: Оновлюємий
+
+id: Upgraded plugin %s to version %s
+msg: Плагін %s оновлений до версії %s
+
+id: User interface extensions
+msg: Розширення інтерфейсу користувача
+
+id: Video streaming
+msg: Потокове відео
+
+#
+# ./src/runcontrol.c
+#
+id: Automatic standby
+msg: Автоматичний режим очікування
+
+id: Enable SSH server
+msg: Включити SSH-сервер
+
+id: Logout
+msg: Вихід із системи
+
+id: Open shell
+msg: Відкрити оболонку
+
+id: Power off system
+msg: Відключення системи
+
+id: Quit
+msg: Вихід
+
+id: SSH server
+msg: SSH сервер
+
+id: Standby
+msg: Режим очікування
+
+id: Starting and stopping
+msg: Запуск і зупинка
+
+#
+# ./src/sd/sd.c
+#
+id: Enabled on home screen
+msg: Увімкнено на головному екрані
+
+id: Name
+msg: Ім'я
+
+#
+# ./src/service.c
+#
+id: Local network
+msg: Локальна мережа
+
+#
+# ./src/settings.c
+#
+id: Applications and installed plugins
+msg: Додатки і встановлені плагіни
+
+id: Developer settings
+msg: Налаштування для розробників
+
+id: Discovered media sources
+msg: Знайдені медіа джерела
+
+id: Fonts and user interface styling
+msg: Шрифти та інтерфейс користувача
+
+id: General
+msg: Загальне
+
+id: Global settings
+msg: Глобальні налаштування
+
+id: Look and feel
+msg: Зовнішній вигляд інтерфейсу
+
+id: Network services, etc
+msg: Мережеві сервіси і т.д.
+
+id: Network settings
+msg: Мережеві налаштування
+
+id: Settings useful for developers
+msg: Налаштування корисні для розробників
+
+id: System name
+msg: Ім'я системи
+
+id: System related settings
+msg: Налаштування системи
+
+#
+# ./src/subtitles/subtitles.c
+#
+id: Any subtitle in central folder
+msg: Будь-які субтитри з центральної теки
+
+id: Any subtitle in same folder as video
+msg: Будь-які субтитри з теки яка спільна з відео
+
+id: Auto
+msg: Авто
+
+id: Automatically select from this source
+msg: Автоматично вибирати з цього джерела
+
+id: Central subtitle folder
+msg: Центральна тека з субтитрами
+
+id: Color
+msg: Колір
+
+id: External file
+msg: Зовнішній файл
+
+id: Force subtitles to reside on video frame
+msg: Примусово втискувати субтитри у відеокадр
+
+id: Generic settings for video subtitles
+msg: Базові налаштування відео субтитрів
+
+id: Ignore embedded styling
+msg: Ігнорувати вбудований стиль
+
+id: Left
+msg: Зліва
+
+id: Outline color
+msg: Колір контуру
+
+id: Outline size
+msg: Розмір контуру
+
+id: Path to central folder
+msg: Шлях до центральної теки
+
+id: Providers for Subtitles
+msg: Постачальники для субтитрів
+
+id: Right
+msg: Зправа
+
+id: Shadow color
+msg: Колір тіні
+
+id: Shadow offset
+msg: Зміщення тіні
+
+id: Subtitle position
+msg: Позиція субтитрів
+
+id: Subtitle size
+msg: Розмір субтитрів
+
+id: Subtitle size and positioning
+msg: Размір и позиція субтитрів
+
+id: Subtitles embedded in video file
+msg: Субтитри, вбудовані у відеофайл
+
+id: Subtitles with matching filename in central folder
+msg: Субтитри з відповідним іменем файлу в центральній теці
+
+id: Subtitles with matching filename in same folder as video
+msg: Субтитри з відповідним іменем файлу в спільній з файлом теці
+
+#
+# ./src/text/fontstash.c
+#
+id: Defaults
+msg: По замовчуванню
+
+id: Fonts
+msg: Шрифти
+
+id: Installed fonts
+msg: Встановлені шрифти
+
+id: Narrow text
+msg: Вузький шрифт
+
+id: Reset main font to default
+msg: Скидання головного шрифта по замовчуванню
+
+id: Reset narrow font to default
+msg: Скидання вузького шрифта по замовчуванню
+
+id: Reset subtitle font to default
+msg: Скидання шрифта субтитрів по замовчуванню
+
+id: Unable to install font: %s
+msg: Неможливо встановити шрифт: %s
+
+id: Use font %s for
+msg: Використовувати шрифт %s для
+
+id: User interface
+msg: Інтерфейс користувача
+
+#
+# ./src/ui/glw/glw_ps3.c
+#
+id: Seek using L2 and R2 button
+msg: Перемотка відео кнопками L2 та R2
+
+id: Yes with Select button
+msg: З натиснутою кнопкою Select
+
+#
+# ./src/ui/glw/glw_settings.c
+#
+id: Font and icon size
+msg: Розмір шрифтів та іконок
+
+id: Horizontal underscan
+msg: Горизонтальна розгортка
+
+id: Screensaver delay
+msg: Затримка екранної заставки
+
+id: Vertical underscan
+msg: Вертикальна розгортка
+
+id: Wrap when reaching beginning/end of lists
+msg: Переносити курсор при досягненні початку/кінця списку
+
+#
+# ./src/ui/glw/glw_x11.c
+#
+id: Map mouse wheel to up/down
+msg: Використовувати колесо миші для навігації вгору/вниз
+
+#
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+msg: Автопереключення в цей режим
+
+id: DVI-Video color range
+msg: Діапазон кольорів  DVI-Video
+
+id: Switch to this mode now
+msg: Перемкнути в цей режим зараз
+
+id: Video modes
+msg: Відеорежими
+
+#
+# ./src/upgrade.c
+#
+id: %s version %s is available
+msg: %s версія %s доступна
+
+id: Notify about upgrades
+msg: Повідомляти про оновлення
+
+id: Open download page
+msg: Відкрити сторінку завантаження
+
+id: Software upgrade
+msg: Оновлення ПЗ
+
+id: Upgrade to releases from
+msg: Оновлення до релізу
+
+#
+# ./src/upnp/upnp_browse.c
+#
+id: Device not found
+msg: Пристрій не знайдено
+
+id: Malformed URI after device
+msg: Некоректний URI після пристрою
+
+id: Malformed URI after service
+msg: Некоректний URI після служби
+
+id: Service not found
+msg: Сервіс не найдено
+
+#
+# ./src/video/video_settings.c
+#
+id: Always
+msg: Завжди
+
+id: Ask
+msg: Запитувати
+
+id: Automatically play next video in list
+msg: Автоматично відтворювати наступне відео у списку
+
+id: Count video as played when reaching
+msg: Рахувати відео переглянутим при досягненні
+
+id: Enable VDA
+msg: Увімкнути VDA
+
+id: Enable VDPAU
+msg: Увімкнути VDPAU
+
+id: Maximum resolution for deinterlacer
+msg: Максимальна роздільча здатність для деінтерлейсера
+
+id: Never
+msg: Ніколи
+
+id: No limit
+msg: Без обмежень
+
+id: Per-file volume
+msg: Гучність для файлу
+
+id: Preferred VDPAU deinterlacer method
+msg: Переважний метод деінтерлесера VPDAU
+
+id: Resume video playback
+msg: Відновити відтворення відео
+
+id: Step when seeking backward
+msg: Крок при перемотуванні назад
+
+id: Step when seeking forward
+msg: Крок при перемотуванні вперед
+
+id: Temporal
+msg: Тимчасовий
+
+id: Temporal/Spatial
+msg: Тимчасовий/Просторовий
+
+id: Up / Down during video playback controls
+msg: Контроль вверх/вниз під час відтворення відео
+
+id: Video acceleration and display behaviour
+msg: Прискорення відео і поведінка зображення
+
+id: Video playback
+msg: Відтворення відео
+
