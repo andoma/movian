@@ -23,8 +23,7 @@ id: Disable sleep timer
 msg: Выключить таймер сна
 
 id: Exit %s
-# Missing translation
-msg: 
+msg: Выход
 
 id: Go to Home screen
 msg: Перейти на главный экран
@@ -153,12 +152,10 @@ msg: Настройки видео
 # ./glwskins/default/loading.view
 #
 id: %d kb/s
-# Missing translation
-msg: 
+msg: %d кб/с
 
 id: Bitrate:
-# Missing translation
-msg: 
+msg: Битрейт:
 
 #
 # ./glwskins/default/log.view
@@ -248,8 +245,7 @@ msg: Дата:
 # ./glwskins/default/pages/iteminfo/plugin.view
 #
 id: %s %s or newer is required
-# Missing translation
-msg: 
+msg: Требуется %s %s или новее
 
 id: Author: 
 msg: Автор:
@@ -328,12 +324,10 @@ msg: Обновление
 # ./glwskins/default/pages/openerror.view
 #
 id: Unable to open %s
-# Missing translation
-msg: 
+msg: Невозможно открыть %s
 
 id: resource
-# Missing translation
-msg: 
+msg: ресурс
 
 #
 # ./glwskins/default/pages/playqueue.view
@@ -351,8 +345,7 @@ msg: Пауза
 # ./glwskins/default/pages/upgrade.view
 #
 id: %s is up to date
-# Missing translation
-msg: 
+msg: %s является актуальной
 
 id: An error occured during download
 msg: Произошла ошибка во время загрузки
@@ -391,8 +384,7 @@ id: Patching %s
 msg: Исправление %s
 
 id: Restarting %s in %d seconds...
-# Missing translation
-msg: 
+msg: Перезапуск %s через %d секунд...
 
 id: Retry...
 msg: Повторить ...
@@ -410,16 +402,13 @@ msg: Невозможно проверить новую версию
 # ./glwskins/default/pages/video.view
 #
 id: A/V diff:
-# Missing translation
-msg: 
+msg: A/V смещение:
 
 id: Audio codec:
-# Missing translation
-msg: 
+msg: Аудиокодек:
 
 id: Audio queue len:
-# Missing translation
-msg: 
+msg: Очередь аудио сервера:
 
 id: Audio volume adjustment: %d dB
 msg: Регулировка громкости аудио: %d дБ
@@ -428,47 +417,37 @@ id: CPU is too slow to decode this video
 msg: CPU является слишком медленным для декодирования видео
 
 id: Download speed:
-# Missing translation
-msg: 
+msg: Скорость загрузки:
 
 id: Packet buffer:
-# Missing translation
-msg: 
+msg: Пакет буферизации:
 
 id: Playback status
 msg: Статус воспроизведения
 
 id: Remaining buffer:
-# Missing translation
-msg: 
+msg: Остаток буферизации:
 
 id: Remote queue drops:
-# Missing translation
-msg: 
+msg: Пакеты сервера:
 
 id: Remote queue len:
-# Missing translation
-msg: 
+msg: Буферизация сервера:
 
 id: Source:
-# Missing translation
-msg: 
+msg: Источник:
 
 id: Video bitrate:
-# Missing translation
-msg: 
+msg: Видео битрейт:
 
 id: Video codec:
-# Missing translation
-msg: 
+msg: Видеокодек:
 
 id: Video decode time:
-# Missing translation
-msg: 
+msg: Время видеодекодирования:
 
 id: Video queue len:
-# Missing translation
-msg: 
+msg: Видео буферизация сервера:
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -498,12 +477,10 @@ msg: Имя пользователя
 # ./glwskins/default/popups/resume.view
 #
 id: No, Start over
-# Missing translation
-msg: 
+msg: Нет, начать сначала
 
 id: Resume %s from %s
-# Missing translation
-msg: 
+msg: Возобновить %s с %s
 
 #
 # ./glwskins/default/screensaver.view
@@ -572,11 +549,10 @@ msg: Мало памяти (доступно %d Кб RAM)
 # ./src/arch/ps3/ps3_vdec.c
 #
 id: Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration
-# Missing translation
-msg: 
+msg: Cell-h264: %d ре-фреймы для содержимого %d являются несовместимыми с PS3 HW декодером. Ускорение отключено
 
 id: Cell-h264: Broken headers, Disabling acceleration
-msg: Поврежденные заголовки, ускорение отключено
+msg: Cell-h264: Поврежденные заголовки, ускорение отключено
 
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
 msg: Cell-h264: Принудительный уровень 4.2 для контента уровня %d.%d. Это может нарушить воспроизведение видео.
@@ -597,12 +573,10 @@ msg: Невозможно запросить Cell-кодек. Ошибка 0x%x
 # ./src/arch/rpi/rpi_audio.c
 #
 id: 8 Channel PCM
-# Missing translation
-msg: 
+msg: 8 канальный PCM
 
 id: AC3 Pass-Through
-# Missing translation
-msg: 
+msg: AC3 Pass-Through
 
 id: Analog
 msg: Аналог
@@ -611,12 +585,10 @@ id: Audio output port
 msg: Аудиовыход
 
 id: Autodetect
-# Missing translation
-msg: 
+msg: Автораспознание
 
 id: DTS Pass-Through
-# Missing translation
-msg: 
+msg: DTS Pass-Through
 
 id: HDMI
 msg: HDMI
@@ -625,15 +597,13 @@ id: Off
 msg: Выкл
 
 id: On
-# Missing translation
-msg: 
+msg: Вкл
 
 #
 # ./src/arch/rpi/rpi_cec.c
 #
 id: Configure communications with your TV
-# Missing translation
-msg: 
+msg: Настройка связи с телевизором
 
 id: Consumer Electronics Control
 msg: Управление бытовой электроникой
@@ -717,31 +687,25 @@ msg: Кэш торрента использует %d МБ из разрешен�
 # ./src/backend/bittorrent/fa_torrent.c
 #
 id: Connected peers
-# Missing translation
-msg: 
+msg: Подключенные пиры
 
 id: Known peers
-# Missing translation
-msg: 
+msg: Известные пиры
 
 id: Receiving from
-# Missing translation
-msg: 
+msg: Прием от
 
 id: Torrent leechers
-# Missing translation
-msg: 
+msg: Торрент личеры
 
 id: Torrent seeders
-# Missing translation
-msg: 
+msg: Торрент сидеры
 
 #
 # ./src/backend/bittorrent/torrent_settings.c
 #
 id: Clear cache
-# Missing translation
-msg: 
+msg: Очистка кэша
 
 id: Enable bittorrent
 msg: Включить битторрент
@@ -768,12 +732,10 @@ msg: Ошибка чтения DVD, перезапуск диска
 # ./src/backend/hls/hls.c
 #
 id: Primary
-# Missing translation
-msg: 
+msg: Основной
 
 id: Supplementary
-# Missing translation
-msg: 
+msg: Дополнительный
 
 #
 # ./src/backend/htsp/htsp.c
@@ -797,8 +759,7 @@ id: Albums
 msg: Альбомы
 
 id: Automatic login on start
-# Missing translation
-msg: 
+msg: Автологин при запуске
 
 id: Collaborative
 msg: Совместный
@@ -975,8 +936,7 @@ id: Logon failure
 msg: Ошибка входа
 
 id: Object name not found
-# Missing translation
-msg: 
+msg: Название объекта не найдено
 
 #
 # ./src/i18n.c
@@ -1099,8 +1059,7 @@ id: Automatic
 msg: Автоматический
 
 id: Erase all playback info
-# Missing translation
-msg: 
+msg: Удалить всю информацию о воспроизведении
 
 id: Manual
 msg: Ручной
@@ -1277,8 +1236,7 @@ id: Automatically upgrade plugins
 msg: Автоматическое обновление плагинов
 
 id: Available plugins
-# Missing translation
-msg: 
+msg: Доступные плагины
 
 id: Background
 msg: Фон
@@ -1287,8 +1245,7 @@ id: Beta testing passwords
 msg: Пароли бета-теста
 
 id: Browse available plugins
-# Missing translation
-msg: 
+msg: Просмотр доступных плагинов
 
 id: Browsing
 msg: Вид элементов при навигации
@@ -1312,8 +1269,7 @@ id: Home page
 msg: Главный экран
 
 id: Installed plugins
-# Missing translation
-msg: 
+msg: Установленные плагины
 
 id: Installed version higher than available
 msg: Установленная версия новее, чем доступная
@@ -1406,8 +1362,7 @@ id: Power off system
 msg: Отключение системы
 
 id: Quit
-# Missing translation
-msg: 
+msg: Выход
 
 id: SSH server
 msg: SSH-сервер
@@ -1416,8 +1371,7 @@ id: Standby
 msg: Режим ожидания
 
 id: Starting and stopping
-# Missing translation
-msg: 
+msg: Запуск и остановка
 
 #
 # ./src/sd/sd.c
@@ -1633,8 +1587,7 @@ msg: Видеорежимы
 # ./src/upgrade.c
 #
 id: %s version %s is available
-# Missing translation
-msg: 
+msg: %s версия %s доступна
 
 id: Notify about upgrades
 msg: Уведомлять об обновлениях
@@ -1667,12 +1620,10 @@ msg: Сервис не найден
 # ./src/video/video_settings.c
 #
 id: Always
-# Missing translation
-msg: 
+msg: Всегда
 
 id: Ask
-# Missing translation
-msg: 
+msg: Спросить
 
 id: Automatically play next video in list
 msg: Автоматически проигрывать следующее видео в списке
@@ -1690,8 +1641,7 @@ id: Maximum resolution for deinterlacer
 msg: Максимальное разрешение для деинтерлейсинга
 
 id: Never
-# Missing translation
-msg: 
+msg: Никогда
 
 id: No limit
 msg: Без ограничений
@@ -1725,4 +1675,3 @@ msg: Ускорение видео и поведение изображения
 
 id: Video playback
 msg: Воспроизведение видео
-
