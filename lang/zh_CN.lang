@@ -444,7 +444,7 @@ id: Video codec:
 msg: 视频编码：
 
 id: Video decode time:
-msg: 视频解码时间：
+msg: 视频解码耗时：
 
 id: Video queue len:
 msg: 视频队列长度
