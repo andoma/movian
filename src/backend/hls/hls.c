@@ -618,6 +618,10 @@ hls_segment_open(hls_segment_t *hs)
   fh = fa_open_ex(hs->hs_url, errbuf, sizeof(errbuf), flags, &foe);
 
   if(fh == NULL) {
+
+    if(cancellable_is_cancelled(hd->hd_cancellable))
+      return HLS_ERROR_SEGMENT_NOT_FOUND;
+
     usleep(500000);
     if(foe.foe_protocol_error == 404) {
       return HLS_ERROR_SEGMENT_NOT_FOUND;

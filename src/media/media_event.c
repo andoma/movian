@@ -386,18 +386,7 @@ mp_event_set_callback(struct media_pipe *mp,
                                          event_t *e),
                       void *opaque)
 {
-  event_t *e;
   hts_mutex_lock(&mp->mp_mutex);
-
-  if(mp_callback != NULL) {
-    // Fire any pending events immediately
-    while((e = TAILQ_FIRST(&mp->mp_eq)) != NULL) {
-      TAILQ_REMOVE(&mp->mp_eq, e, e_link);
-      mp_callback(mp, opaque, e);
-      event_release(e);
-    }
-  }
-
   mp->mp_handle_event = mp_callback;
   mp->mp_handle_event_opaque = opaque;
   hts_mutex_unlock(&mp->mp_mutex);
