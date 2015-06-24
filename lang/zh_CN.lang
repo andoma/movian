@@ -324,12 +324,10 @@ msg: 升级
 # ./glwskins/default/pages/openerror.view
 #
 id: Unable to open %s
-# Missing translation
-msg: 
+msg: 无法打开%s
 
 id: resource
-# Missing translation
-msg: 
+msg: 资源
 
 #
 # ./glwskins/default/pages/playqueue.view
@@ -404,16 +402,13 @@ msg: 无法检查最新版
 # ./glwskins/default/pages/video.view
 #
 id: A/V diff:
-# Missing translation
-msg: 
+msg: 音视频时差：
 
 id: Audio codec:
-# Missing translation
-msg: 
+msg: 音频编码：
 
 id: Audio queue len:
-# Missing translation
-msg: 
+msg: 音频队列长度：
 
 id: Audio volume adjustment: %d dB
 msg: 音量调整：%d dB
@@ -422,47 +417,37 @@ id: CPU is too slow to decode this video
 msg: 当前视频CPU解码过慢
 
 id: Download speed:
-# Missing translation
-msg: 
+msg: 下载速度
 
 id: Packet buffer:
-# Missing translation
-msg: 
+msg: 数据包缓冲池：
 
 id: Playback status
 msg: 播放信息
 
 id: Remaining buffer:
-# Missing translation
-msg: 
+msg: 剩余缓冲池
 
 id: Remote queue drops:
-# Missing translation
-msg: 
+msg: 远程队列丢弃数：
 
 id: Remote queue len:
-# Missing translation
-msg: 
+msg: 远程队列长度：
 
 id: Source:
-# Missing translation
-msg: 
+msg: 源：
 
 id: Video bitrate:
-# Missing translation
-msg: 
+msg: 视频码率：
 
 id: Video codec:
-# Missing translation
-msg: 
+msg: 视频编码：
 
 id: Video decode time:
-# Missing translation
-msg: 
+msg: 视频解码时间：
 
 id: Video queue len:
-# Missing translation
-msg: 
+msg: 视频队列长度
 
 #
 # ./glwskins/default/playdecks/dvd.view
