@@ -368,9 +368,13 @@ asyncio_dopoll(void)
     if(fds[i].revents & POLLERR) {
       int err;
       socklen_t errlen = sizeof(int);
-    
-      getsockopt(af->af_fd, SOL_SOCKET, SO_ERROR, (void *)&err, &errlen);
-      af->af_callback(af, af->af_opaque, ASYNCIO_ERROR, err);
+
+      if(getsockopt(af->af_fd, SOL_SOCKET, SO_ERROR, (void *)&err, &errlen)) {
+        TRACE(TRACE_ERROR, "ASYNCIO", "getsockopt failed for 0x%x -- %d",
+              af->af_fd, errno);
+      } else {
+        af->af_callback(af, af->af_opaque, ASYNCIO_ERROR, err);
+      }
       continue;
     }
 
@@ -815,9 +819,13 @@ asyncio_tcp_connected(asyncio_fd_t *af, void *opaque, int events, int error)
     asyncio_rem_events(af, ASYNCIO_WRITE);
     int err;
     socklen_t errlen = sizeof(int);
-    
-    getsockopt(af->af_fd, SOL_SOCKET, SO_ERROR, (void *)&err, &errlen);
-    
+
+    if(getsockopt(af->af_fd, SOL_SOCKET, SO_ERROR, (void *)&err, &errlen)) {
+      TRACE(TRACE_ERROR, "ASYNCIO", "getsockopt failed for 0x%x -- %d",
+            af->af_fd, errno);
+      return;
+    }
+
     if(err) {
       char buf[256];
       snprintf(buf, sizeof(buf), "%s", strerror(errno));
