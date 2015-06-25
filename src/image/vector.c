@@ -24,7 +24,7 @@
 /**
  *
  */
-static const char vec_cmd_len[] = {
+static const char vec_cmd_len[VC_num] = {
   [VC_SET_FILL_ENABLE] = 1,
   [VC_SET_FILL_COLOR] = 1,
   [VC_SET_STROKE_WIDTH] = 1,

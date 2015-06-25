@@ -34,6 +34,7 @@ typedef enum {
   VC_LINE_TO,
   VC_CUBIC_TO,
   VC_CLOSE,
+  VC_num
 } vec_cmd_t;
 
 void vec_emit_0(image_component_vector_t *icv, vec_cmd_t cmd);
