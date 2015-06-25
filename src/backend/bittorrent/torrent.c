@@ -1534,13 +1534,14 @@ torrent_piece_verify_hash(torrent_t *to, torrent_piece_t *tp)
 
   asyncio_wakeup_worker(torrent_pendings_signal);
 
+  if(tp->tp_hash_ok && to->to_cachefile != NULL)
+    torrent_diskio_wakeup();
+
   torrent_piece_release(tp);
   torrent_release(to);
 
   hts_cond_broadcast(&torrent_piece_verified_cond);
 
-  if(tp->tp_hash_ok && to->to_cachefile != NULL)
-    torrent_diskio_wakeup();
 }
 
 
