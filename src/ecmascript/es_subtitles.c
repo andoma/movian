@@ -153,8 +153,6 @@ esp_query(subtitle_provider_t *SP, sub_scanner_t *ss, int score,
     usage_event("Subtitle search", 1,
                 USAGE_SEG("responder", rstr_get(ec->ec_id)));
 
-    sub_scanner_retain(ss);
-
     es_push_root(ctx, esp);
 
     es_push_native_obj(ctx, &es_native_prop, prop_ref_inc(ss->ss_proproot));
