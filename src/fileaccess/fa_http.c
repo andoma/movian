@@ -321,6 +321,12 @@ http_connection_get(const char *hostname, int port, int ssl,
                cancellable_is_cancelled(c) ? ", Cancelled by user" : "");
     return NULL;
   }
+  if(cancellable_is_cancelled(c)) {
+    snprintf(errbuf, errlen, "Cancelled");
+    tcp_close(tc);
+    return NULL;
+  }
+
   HTTP_TRACE(dbg, "Connected to %s:%d (cid=%d)", hostname, port, id);
 
   hc = malloc(sizeof(http_connection_t));
