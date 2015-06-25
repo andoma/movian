@@ -146,7 +146,7 @@ esp_query(subtitle_provider_t *SP, sub_scanner_t *ss, int score,
 
   es_context_begin(ec);
   duk_context *ctx = ec->ec_duk;
-  if(ctx != NULL) {
+  if(ctx != NULL && ss != NULL) {
 
     extern ecmascript_native_class_t es_native_prop;
 
