@@ -1076,6 +1076,21 @@ strvec_addp(char ***strvp, const char *v)
 /**
  *
  */
+int
+strvec_len(char **s)
+{
+  int len = 0;
+  while(*s != NULL) {
+    len++;
+    s++;
+  }
+  return len;
+}
+
+
+/**
+ *
+ */
 void
 strappend(char **strp, const char *src)
 {
