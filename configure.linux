@@ -510,7 +510,7 @@ if enabled avahi; then
 fi
 
 #
-# polaressl
+# polarssl
 #
 if enabled polarssl; then
     enable librtmp
