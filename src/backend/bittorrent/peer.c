@@ -1367,9 +1367,11 @@ peer_parse_extension_metadata(peer_t *p, htsmsg_t *msg,
 {
   int msg_type   = htsmsg_get_u32_or_default(msg, "msg_type", -1);
   int piece      = htsmsg_get_u32_or_default(msg, "piece", -1);
-  int total_size = htsmsg_get_u32_or_default(msg, "total_size", 0);
+  int total_size = htsmsg_get_u32_or_default(msg, "total_size", -1);
   metainfo_request_t *mr;
   if(msg_type != 1 && msg_type != 2)
+    return;
+  if(total_size < 1)
     return;
 
   LIST_FOREACH(mr, &p->p_metainfo_requests, mr_peer_link) {
