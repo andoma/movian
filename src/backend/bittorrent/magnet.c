@@ -375,9 +375,22 @@ magnet_open(const char *url0, char *errbuf, size_t errlen)
 
   torrent_retain(to);
 
+  while(to->to_loading_metadata)
+    hts_cond_wait(&torrent_metainfo_available_cond, &bittorrent_mutex);
+
+  if(to->to_metainfo != NULL) {
+    torrent_release(to);
+    return to;
+  }
+
+  to->to_loading_metadata = 1;
+
   buf_t *b = metainfo_load(to, errbuf, errlen);
 
   torrent_release(to);
+
+  to->to_loading_metadata = 0;
+  hts_cond_broadcast(&torrent_metainfo_available_cond);
 
   if(b == NULL)
     return NULL;

@@ -406,6 +406,7 @@ typedef struct torrent {
   char to_need_updated_interest;
   char to_corrupt_piece;
   char to_loadfail;
+  char to_loading_metadata;
 
   char to_errbuf[256];
 
