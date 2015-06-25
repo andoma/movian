@@ -168,6 +168,28 @@ prop_proxy_make(prop_proxy_connection_t *ppc, uint32_t id, prop_sub_t *s,
 /**
  *
  */
+struct prop *
+prop_proxy_create(struct prop *parent, const char *name)
+{
+  assert(parent->hp_type == PROP_PROXY);
+  char **pfx;
+  if(parent->hp_proxy_pfx != NULL) {
+    int i, len = strvec_len(parent->hp_proxy_pfx);
+    pfx = malloc(sizeof(char *) * (len + 2));
+    for(i = 0; i < len; i++)
+      pfx[i] = strdup(parent->hp_proxy_pfx[i]);
+    pfx[i] = strdup(name);
+    pfx[i + 1] = NULL;
+  } else {
+    pfx = NULL;
+    strvec_addp(&pfx, name);
+  }
+  return prop_proxy_make(parent->hp_proxy_ppc, parent->hp_proxy_id, NULL, pfx);
+}
+
+/**
+ *
+ */
 void
 prop_proxy_destroy(struct prop *p)
 {

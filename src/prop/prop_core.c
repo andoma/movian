@@ -1849,6 +1849,9 @@ prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme, int noalloc)
 
   assert(parent->hp_type != PROP_ZOMBIE);
 
+  if(parent->hp_type == PROP_PROXY)
+    return prop_proxy_create(parent, name);
+
   prop_make_dir(parent, skipme, "prop_create()");
 
   if(name != NULL) {

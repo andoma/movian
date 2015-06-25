@@ -33,6 +33,8 @@ prop_proxy_connection_t *ppc_retain(prop_proxy_connection_t *ppc);
 
 void ppc_release(prop_proxy_connection_t *ppc);
 
+struct prop *prop_proxy_create(struct prop *parent, const char *name);
+
 struct prop *prop_proxy_make(prop_proxy_connection_t *ppc, uint32_t id,
                              struct prop_sub *s, char **pfx);
 
