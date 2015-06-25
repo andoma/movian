@@ -298,6 +298,9 @@ mp_reset(media_pipe_t *mp)
   prop_set(mp->mp_prop_io, "bitrate", PROP_SET_VOID);
   prop_set(mp->mp_prop_io, "bitrateValid", PROP_SET_VOID);
 
+  prop_t *p = prop_create(mp->mp_prop_io, "infoNodes");
+  prop_destroy_childs(p);
+
   prop_destroy_childs(mp->mp_prop_audio_tracks);
   prop_destroy_childs(mp->mp_prop_subtitle_tracks);
 
