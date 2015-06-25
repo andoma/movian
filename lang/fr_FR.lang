@@ -1,6 +1,6 @@
 language: French
 native: Français
-maintainer: Niconico27
+maintainer: Tajmouati Abdelhak <infopassion64@gmail.com>
 #
 # ./glwskins/default/cmdmenu.view
 #
@@ -23,8 +23,7 @@ id: Disable sleep timer
 msg: Désactiver la mise en veille
 
 id: Exit %s
-# Missing translation
-msg: 
+msg: Quitter
 
 id: Go to Home screen
 msg: Retour à la page d'accueil
@@ -153,12 +152,10 @@ msg: Paramètres vidéo
 # ./glwskins/default/loading.view
 #
 id: %d kb/s
-# Missing translation
-msg: 
+msg: %d kb/s
 
 id: Bitrate:
-# Missing translation
-msg: 
+msg: Bitrate:
 
 #
 # ./glwskins/default/log.view
@@ -248,8 +245,7 @@ msg: Date:
 # ./glwskins/default/pages/iteminfo/plugin.view
 #
 id: %s %s or newer is required
-# Missing translation
-msg: 
+msg: %s %s ou plus récent est requis
 
 id: Author: 
 msg: Auteur:
@@ -328,12 +324,10 @@ msg: Mettre à jour
 # ./glwskins/default/pages/openerror.view
 #
 id: Unable to open %s
-# Missing translation
-msg: 
+msg: Impossible d'ouvrir % s
 
 id: resource
-# Missing translation
-msg: 
+msg: ressource
 
 #
 # ./glwskins/default/pages/playqueue.view
@@ -351,8 +345,7 @@ msg: Pause
 # ./glwskins/default/pages/upgrade.view
 #
 id: %s is up to date
-# Missing translation
-msg: 
+msg: % s est à jour
 
 id: An error occured during download
 msg: Une erreur est apparue pendant le téléchargement
@@ -391,8 +384,7 @@ id: Patching %s
 msg: Mise en place du patch %s
 
 id: Restarting %s in %d seconds...
-# Missing translation
-msg: 
+msg: Redémarrage % s dans% d secondes ...
 
 id: Retry...
 msg: Nouvelle tentative...
@@ -410,12 +402,10 @@ msg: Recherche de nouvelle mise à jour impossible
 # ./glwskins/default/pages/video.view
 #
 id: A/V diff:
-# Missing translation
-msg: 
+msg: A/V diff:
 
 id: Audio codec:
-# Missing translation
-msg: 
+msg: Codec audio :
 
 id: Audio queue len:
 # Missing translation
@@ -428,19 +418,16 @@ id: CPU is too slow to decode this video
 msg: Le CPU est trop faible pour décoder cette vidéo
 
 id: Download speed:
-# Missing translation
-msg: 
+msg: Vitesse de téléchargement:
 
 id: Packet buffer:
-# Missing translation
-msg: 
+msg:  Mémoire tampon de paquets 
 
 id: Playback status
 msg: Status de la lecture
 
 id: Remaining buffer:
-# Missing translation
-msg: 
+msg: Mémoire tampon restante:
 
 id: Remote queue drops:
 # Missing translation
@@ -451,20 +438,16 @@ id: Remote queue len:
 msg: 
 
 id: Source:
-# Missing translation
-msg: 
+msg: Source:
 
 id: Video bitrate:
-# Missing translation
-msg: 
+msg: Bitrate vidéo:
 
 id: Video codec:
-# Missing translation
-msg: 
+msg: Codec vidéo :
 
 id: Video decode time:
-# Missing translation
-msg: 
+msg: Temps de décodage vidéo:
 
 id: Video queue len:
 # Missing translation
@@ -498,12 +481,10 @@ msg: Nom d'utilisateur
 # ./glwskins/default/popups/resume.view
 #
 id: No, Start over
-# Missing translation
-msg: 
+msg: Non, Recommencer
 
 id: Resume %s from %s
-# Missing translation
-msg: 
+msg: Reprendre %s depuis %s
 
 #
 # ./glwskins/default/screensaver.view
@@ -572,8 +553,7 @@ msg: Mémoire système faible (%d kB de RAM restant)
 # ./src/arch/ps3/ps3_vdec.c
 #
 id: Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration
-# Missing translation
-msg: 
+msg: Cell-h264: %d Ref-frames pour %d contenu est incompatible avec le décodeur HW de PS3. L'accélération vidéo est désactivée.
 
 id: Cell-h264: Broken headers, Disabling acceleration
 msg: En-têtes du fichier malformés. L'accélération vidéo est désactivée.
@@ -611,8 +591,7 @@ id: Audio output port
 msg: Sortie audio
 
 id: Autodetect
-# Missing translation
-msg: 
+msg: Détection Automatique
 
 id: DTS Pass-Through
 # Missing translation
@@ -632,8 +611,7 @@ msg:
 # ./src/arch/rpi/rpi_cec.c
 #
 id: Configure communications with your TV
-# Missing translation
-msg: 
+msg: Configurer les communications avec votre téléviseur
 
 id: Consumer Electronics Control
 msg: Consumer Electronics Control (CEC)
@@ -717,16 +695,13 @@ msg: Le cache Torrent utilise %d Mo sur %d Mo. Espace libre total sur le volume:
 # ./src/backend/bittorrent/fa_torrent.c
 #
 id: Connected peers
-# Missing translation
-msg: 
+msg: Peers connectés
 
 id: Known peers
-# Missing translation
-msg: 
+msg: Peers connus
 
 id: Receiving from
-# Missing translation
-msg: 
+msg: Réception de
 
 id: Torrent leechers
 # Missing translation
@@ -740,8 +715,7 @@ msg:
 # ./src/backend/bittorrent/torrent_settings.c
 #
 id: Clear cache
-# Missing translation
-msg: 
+msg: Vider le cache
 
 id: Enable bittorrent
 msg: Activation de bittorrent
@@ -768,12 +742,10 @@ msg: Erreur de lecture du DVD, redémarrage du disque
 # ./src/backend/hls/hls.c
 #
 id: Primary
-# Missing translation
-msg: 
+msg: Primaire
 
 id: Supplementary
-# Missing translation
-msg: 
+msg: Supplémentaire
 
 #
 # ./src/backend/htsp/htsp.c
@@ -797,8 +769,7 @@ id: Albums
 msg: Albums
 
 id: Automatic login on start
-# Missing translation
-msg: 
+msg: Connexion automatique au démarrage
 
 id: Collaborative
 msg: En collaboration
@@ -975,8 +946,8 @@ id: Logon failure
 msg: Impossible de se connecter
 
 id: Object name not found
-# Missing translation
-msg: 
+msg: Nom de l'objet introuvable
+
 
 #
 # ./src/i18n.c
@@ -1099,8 +1070,7 @@ id: Automatic
 msg: Automatique
 
 id: Erase all playback info
-# Missing translation
-msg: 
+msg: Supprimer toutes les infos de lecture
 
 id: Manual
 msg: Manuel
@@ -1277,8 +1247,7 @@ id: Automatically upgrade plugins
 msg: Mise à jour automatique des extensions
 
 id: Available plugins
-# Missing translation
-msg: 
+msg: Plugins disponibles
 
 id: Background
 msg: Fond d'écran
@@ -1287,8 +1256,7 @@ id: Beta testing passwords
 msg: Mots de passe pour les bêta tests
 
 id: Browse available plugins
-# Missing translation
-msg: 
+msg: Parcourir les plugins disponibles
 
 id: Browsing
 msg: Navigation
@@ -1312,8 +1280,7 @@ id: Home page
 msg: Page d'accueil
 
 id: Installed plugins
-# Missing translation
-msg: 
+msg: Plugins installés
 
 id: Installed version higher than available
 msg: Version installée supérieure à celle disponible
@@ -1406,8 +1373,7 @@ id: Power off system
 msg: Eteindre le système
 
 id: Quit
-# Missing translation
-msg: 
+msg: Quitter
 
 id: SSH server
 msg: Serveur SSH
@@ -1416,8 +1382,7 @@ id: Standby
 msg: Eteindre
 
 id: Starting and stopping
-# Missing translation
-msg: 
+msg: Démarrage et arrêt
 
 #
 # ./src/sd/sd.c
@@ -1633,8 +1598,7 @@ msg: Modes vidéo
 # ./src/upgrade.c
 #
 id: %s version %s is available
-# Missing translation
-msg: 
+msg: %s version %s est disponible
 
 id: Notify about upgrades
 msg: Me prévenir des mises à jour
@@ -1667,12 +1631,10 @@ msg: Service non trouvé
 # ./src/video/video_settings.c
 #
 id: Always
-# Missing translation
-msg: 
+msg: Toujours
 
 id: Ask
-# Missing translation
-msg: 
+msg: Question
 
 id: Automatically play next video in list
 msg: Jouer la vidéo suivante automatiquement
@@ -1690,8 +1652,7 @@ id: Maximum resolution for deinterlacer
 msg: Résolution maximale pour désentrelacer
 
 id: Never
-# Missing translation
-msg: 
+msg: Jamais
 
 id: No limit
 msg: Pas de limite
