@@ -32,7 +32,7 @@ id: Hide system info
 msg: Nascondi info di sistema
 
 id: Master volume
-msg: Volume principale
+msg: Volume generale
 
 id: Navigation
 msg: Navigazione
@@ -50,10 +50,10 @@ id: Reload current page
 msg: Ricarica pagina attuale
 
 id: Show system info
-msg: Mostra info di sistema
+msg: Mostra informazioni sistema
 
 id: Suspend
-msg: Sospendi
+msg: Spegni PS3
 
 id: System
 msg: Sistema
@@ -125,7 +125,7 @@ id: Chapters
 msg: Capitoli
 
 id: Seek by time
-msg: Salta per tempo
+msg: Ricerca per tempo
 
 id: Settings
 msg: Impostazioni
@@ -285,7 +285,7 @@ msg[1]: Visto %d volta
 # ./glwskins/default/pages/listitems/add.view
 #
 id: Add new entry
-msg: Aggiungi nuovo valore
+msg: Aggiungi nuova voce
 
 #
 # ./glwskins/default/pages/listitems/bool.view
@@ -411,7 +411,7 @@ id: Audio queue len:
 msg: Lung. coda audio:
 
 id: Audio volume adjustment: %d dB
-msg: Regola il volume audio: %d dB
+msg: Regolazione volume audio: %d dB
 
 id: CPU is too slow to decode this video
 msg: CPU troppo lenta per poter decodificare questo video
@@ -492,13 +492,13 @@ msg: Nessun media caricato
 # ./glwskins/default/sysinfo.view
 #
 id: CPU Temp
-msg: Temperatura CPU
+msg: Temp. CPU
 
 id: Fragmentation
 msg: Frammentazione
 
 id: GPU Temp
-msg: Temperatura GPU
+msg: Temp. GPU
 
 id: HDD Avail
 msg: HDD Lib./Tot.
@@ -507,7 +507,7 @@ id: Inactive mem
 msg: Memoria inattiva
 
 id: Memory usage
-msg: Memoria utilizzata
+msg: Memoria usata
 
 id: System Free
 msg: Libera
@@ -522,13 +522,13 @@ id: Audio muted
 msg: Audio silenziato
 
 id: Master volume: %d dB
-msg: Volume principale: %d dB
+msg: Volume generale: %d dB
 
 #
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
-msg: Linguaggio (codice ISO 639-1)
+msg: Lingua (codice ISO 639-1)
 
 id: Use original title
 msg: Usa titolo originale
@@ -897,7 +897,7 @@ id: Browse archives as folders
 msg: Sfoglia archivi come cartelle
 
 id: Enable file deletion from item menu
-msg: Attiva eliminazione file dal menu
+msg: Attiva cancellazione file dal menu
 
 id: File browsing
 msg: Sfoglia file
@@ -906,7 +906,7 @@ id: Show filename extensions
 msg: Mostra estensioni nel nome del file
 
 id: Store per-file settings in filesystem
-msg: Memorizza nel filesystem impostazioni separate per ogni file
+msg: Memorizza nel filesystem e impostazioni per ogni file
 
 id: %d archive parts
 msg[0]: %d parti dell'archivio
@@ -942,46 +942,46 @@ msg: Nome oggetto non trovato
 # ./src/i18n.c
 #
 id: Default character set
-msg: Collezione carattere di default
+msg: Carattere predefinito
 
 id: Ignore 'The' at beginning of words when sorting
 msg: Ignora l'articolo all'inizio delle parole durante l'ordinamento
 
 id: Language
-msg: Linguaggio
+msg: Lingua
 
 id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
-msg: I codici di linguaggio vanno impostati usando i corrispondenti 3 caratteri ISO.\nAd esempio ENG, SWE, FRA, ITA...
+msg: I codici della lingua vanno impostati usando i corrispondenti 3 caratteri ISO.\nAd esempio ENG, SWE, FRA, ITA...
 
 id: Languages
-msg: Linguaggio
+msg: Lingue
 
 id: Preferred languages
-msg: Imposta i linguaggi preferiti
+msg: lingue preferite
 
 id: Primary audio language code
-msg: Codice di linguaggio primario per l'audio
+msg: Codice lingua primario per l'audio
 
 id: Primary subtitle language code
-msg: Codice di linguaggio primario per i sottotitoli
+msg: Codice lingua primario per i sottotitoli
 
 id: Secondary audio language code
-msg: Codice di linguaggio secondario per l'audio
+msg: Codice lingua secondario per l'audio
 
 id: Secondary subtitle language code
-msg: Codice di linguaggio secondario per i sottotitoli
+msg: Codice lingua secondario per i sottotitoli
 
 id: Tertiary audio language code
-msg: Codice di linguaggio terziario per l'audio
+msg: Codice lingua terziario per l'audio
 
 id: Tertiary subtitle language code
-msg: Codice di linguaggio terziario per i sottotitoli
+msg: Codice lingua terziario per i sottotitoli
 
 #
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
-msg: Configura mappatura tastiera e comandi remoti
+msg: Configura mappatura tastiera e tasti comandi remoti
 
 id: Keymapper
 msg: Mappatura tasti
@@ -1230,7 +1230,7 @@ msg: Porta TCP del server
 # ./src/plugins.c
 #
 id: Alternate plugin Repository URL
-msg: URL Repository alternativo del plugin
+msg: URL Repository plugin alternativo
 
 id: Automatically upgrade plugins
 msg: Aggiorna automaticamente i plugin
@@ -1248,7 +1248,7 @@ id: Browse available plugins
 msg: Sfoglia i plugin disponibili
 
 id: Browsing
-msg: Sfogliando
+msg: Navigazione
 
 id: Cloud services
 msg: Servizi Cloud
@@ -1311,7 +1311,7 @@ id: Plugins
 msg: Plugins
 
 id: Preferred views from plugins
-msg: Visualizzazioni preferite dai plugin
+msg: Visualizzazioni preferite per i plugin
 
 id: Screen saver
 msg: Salvaschermo
@@ -1410,7 +1410,7 @@ id: Global settings
 msg: Impostazioni globali
 
 id: Look and feel
-msg: Aspetto e comportamento
+msg: Aspetto
 
 id: Network services, etc
 msg: Servizi di rete, ecc
@@ -1518,19 +1518,19 @@ id: Narrow text
 msg: Narrow text
 
 id: Reset main font to default
-msg: Ripristina carattere principale di default
+msg: Ripristina carattere principale predefinito
 
 id: Reset narrow font to default
-msg: Ripristina carattere stretto di default
+msg: Ripristina carattere stretto predefinito
 
 id: Reset subtitle font to default
-msg: Ripristina carattere sottotitoli di default
+msg: Ripristina carattere sottotitoli predefinito
 
 id: Unable to install font: %s
-msg: Impossibile installare il font: %s
+msg: Impossibile installare il carattere: %s
 
 id: Use font %s for
-msg: Usa il font %s per
+msg: Usa il carattere %s per
 
 id: User interface
 msg: Interfaccia utente
@@ -1539,7 +1539,7 @@ msg: Interfaccia utente
 # ./src/ui/glw/glw_ps3.c
 #
 id: Seek using L2 and R2 button
-msg: Salta nella posizione usando i tasti L2 e R2
+msg: Cercare usando i tasti L2 e R2
 
 id: Yes with Select button
 msg: Si con il tasto Select
@@ -1548,7 +1548,7 @@ msg: Si con il tasto Select
 # ./src/ui/glw/glw_settings.c
 #
 id: Font and icon size
-msg: Dimensione icona e font
+msg: Dimensione carattere e icona
 
 id: Horizontal underscan
 msg: Underscan orizzontale
@@ -1560,7 +1560,7 @@ id: Vertical underscan
 msg: Underscan verticale
 
 id: Wrap when reaching beginning/end of lists
-msg: Riavvolgi quando raggiungi l'inizio o la fine delle liste
+msg: Ricominciare quando si raggiunge l'inizio/la fine degli elenchi
 
 #
 # ./src/ui/glw/glw_x11.c
@@ -1590,7 +1590,7 @@ id: %s version %s is available
 msg: %s versione %s è disponibile
 
 id: Notify about upgrades
-msg: Notifica riguardo gli aggiornamenti
+msg: Notifica sugli aggiornamenti
 
 id: Open download page
 msg: Apri pagina di download
@@ -1629,7 +1629,7 @@ id: Automatically play next video in list
 msg: Riproduci automaticamente il successivo video nella lista
 
 id: Count video as played when reaching
-msg: Conteggia il video come riprodotto quando raggiunge
+msg: Conta il video come riprodotto quando raggiunge
 
 id: Enable VDA
 msg: Attiva VDA
@@ -1647,7 +1647,7 @@ id: No limit
 msg: Nessun limite
 
 id: Per-file volume
-msg: Per volume di file
+msg: Volume per file
 
 id: Preferred VDPAU deinterlacer method
 msg: Metodo di deinterlacciamento VDPAU preferito
@@ -1656,10 +1656,10 @@ id: Resume video playback
 msg: Riprendi riproduzione del video
 
 id: Step when seeking backward
-msg: Segna quando cerchi all'indietro
+msg: Passo ricerca indietro
 
 id: Step when seeking forward
-msg: Segna quando cerchi in avanti
+msg: Passo ricerca avanti
 
 id: Temporal
 msg: Temporale
@@ -1668,7 +1668,7 @@ id: Temporal/Spatial
 msg: Temporale/Spaziale
 
 id: Up / Down during video playback controls
-msg: Sù / Giù durante i controlli di riproduzione video
+msg: Tasti Sù / Giù durante la riproduzione video
 
 id: Video acceleration and display behaviour
 msg: Accelerazione video e comportamento schermo
