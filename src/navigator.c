@@ -36,6 +36,7 @@
 #include "misc/str.h"
 #include "db/kvstore.h"
 #include "htsmsg/htsmsg_store.h"
+#include "prop/prop_linkselected.h"
 
 TAILQ_HEAD(nav_page_queue, nav_page);
 LIST_HEAD(bookmark_list, bookmark);
@@ -43,6 +44,7 @@ LIST_HEAD(navigator_list, navigator);
 
 static prop_t *bookmark_root;
 static prop_t *bookmark_nodes;
+static prop_t *all_navigators;
 
 static void bookmarks_init(void);
 static void bookmark_add(const char *title, const char *url, const char *type,
@@ -191,17 +193,17 @@ nav_update_bookmarked(void)
  *
  */
 static navigator_t *
-nav_create(prop_t *prop)
+nav_create(void)
 {
   hts_mutex_lock(&nav_mutex);
   navigator_t *nav = calloc(1, sizeof(navigator_t));
 
   LIST_INSERT_HEAD(&navigators, nav, nav_link);
 
-  nav->nav_prop_root = prop;
-
   TAILQ_INIT(&nav->nav_pages);
   TAILQ_INIT(&nav->nav_history);
+
+  nav->nav_prop_root = prop_create(all_navigators, NULL);
 
   nav->nav_prop_pages       = prop_create(nav->nav_prop_root, "pages");
   nav->nav_prop_curpage     = prop_create(nav->nav_prop_root, "currentpage");
@@ -257,7 +259,7 @@ nav_create(prop_t *prop)
 prop_t *
 nav_spawn(void)
 {
-  return nav_create(prop_create_root("nav"))->nav_prop_root;
+  return nav_create()->nav_prop_root;
 }
 
 
@@ -268,6 +270,11 @@ void
 nav_init(void)
 {
   bookmarks_init();
+
+  prop_t *navs = prop_create(prop_get_global(), "navigators");
+
+  all_navigators = prop_create(navs, "nodes");
+  prop_linkselected_create(all_navigators, navs, "current", NULL);
 }
 
 

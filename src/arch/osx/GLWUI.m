@@ -259,6 +259,8 @@ static prop_t *stored_nav;
     return nil;
   }
 
+  prop_select(gr->gr_prop_nav);
+
   evsub = prop_subscribe(0,
 			 PROP_TAG_CALLBACK, eventsink, self,
 			 PROP_TAG_NAME("ui", "eventSink"),

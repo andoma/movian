@@ -146,7 +146,7 @@ glw_init3(glw_root_t *gr,
 
   if(gr->gr_prop_core == NULL)
     gr->gr_prop_core = prop_get_global();
-  
+
   gr->gr_prop_dispatcher = dispatcher;
   gr->gr_courier = courier;
 
@@ -158,14 +158,6 @@ glw_init3(glw_root_t *gr,
 
   if(prop_set_parent(gr->gr_prop_ui, p))
     abort();
-
-  p = prop_create(prop_get_global(), "navigators");
-
-  if(prop_set_parent(gr->gr_prop_nav, p))
-    abort();
-
-  prop_link(gr->gr_prop_nav, prop_create(p, "current"));
-
 
   if(skin == NULL) {
     snprintf(skinbuf, sizeof(skinbuf),

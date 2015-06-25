@@ -37,6 +37,9 @@ set(lspriv_t *lp, prop_t *p)
   lp->lp_current = p;
   prop_link(lp->lp_current, lp->lp_target);
 
+  if(lp->lp_name == NULL)
+    return;
+
   rstr_t *r = prop_get_name(p);
   prop_set_rstring(lp->lp_name, r);
   rstr_release(r);
@@ -114,7 +117,7 @@ prop_linkselected_create(prop_t *dir, prop_t *p,
   lspriv_t *lp = calloc(1, sizeof(lspriv_t));
 
   lp->lp_target = prop_create_r(p, target);
-  lp->lp_name   = prop_create_r(p, name);
+  lp->lp_name   = name ? prop_create_r(p, name) : NULL;
 
   prop_subscribe(PROP_SUB_TRACK_DESTROY,
                  PROP_TAG_CALLBACK, prop_linkselected_cb, lp,
