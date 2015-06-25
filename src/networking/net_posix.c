@@ -357,8 +357,7 @@ void
 tcp_huge_buffer(tcpcon_t *tc)
 {
   int v = 192 * 1024;
-  if(setsockopt(tc->fd, SOL_SOCKET, SO_RCVBUF, &v, sizeof(v)) == -1)
-    TRACE(TRACE_ERROR, "TCP", "Unable to increase RCVBUF");
+  setsockopt(tc->fd, SOL_SOCKET, SO_RCVBUF, &v, sizeof(v);
 }
 
 
@@ -371,8 +370,7 @@ tcp_set_read_timeout(tcpcon_t *tc, int ms)
   struct timeval tv;
   tv.tv_sec  = ms / 1000;
   tv.tv_usec = (ms % 1000) * 1000;
-  if(setsockopt(tc->fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) == -1)
-    TRACE(TRACE_ERROR, "TCP", "Unable to set RCVTIMO");
+  setsockopt(tc->fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv);
 }
 
 
