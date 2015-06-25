@@ -23,19 +23,16 @@ id: Disable sleep timer
 msg: Desativar temporização de suspensão
 
 id: Exit %s
-# Missing translation
-msg: 
+msg: Sair %
 
 id: Go to Home screen
 msg: Ir para a página inicial
 
 id: Hide system info
-# Missing translation
-msg: 
+msg: Ocultar informação de sistema
 
 id: Master volume
-# Missing translation
-msg: 
+msg: Volume principal
 
 id: Navigation
 msg: Navegação
@@ -53,8 +50,7 @@ id: Reload current page
 msg: Recarregar página atual
 
 id: Show system info
-# Missing translation
-msg: 
+msg: Mostrar informação do sistema
 
 id: Suspend
 msg: Suspender
@@ -66,8 +62,7 @@ id: Time until sleep
 msg: Tempo até suspensão
 
 id: dB
-# Missing translation
-msg: 
+msg: dB
 
 id: min
 msg: min
@@ -157,12 +152,10 @@ msg: Configurações de vídeo
 # ./glwskins/default/loading.view
 #
 id: %d kb/s
-# Missing translation
-msg: 
+msg: %d kb/s
 
 id: Bitrate:
-# Missing translation
-msg: 
+msg: Bitrate:
 
 #
 # ./glwskins/default/log.view
@@ -177,15 +170,13 @@ id: Cancel
 msg: Cancelar
 
 id: Clear
-# Missing translation
-msg: 
+msg: Limpar
 
 id: Default
 msg: Por defeito
 
 id: Keyboard layout:
-# Missing translation
-msg: 
+msg: Esquema teclado
 
 id: OK
 msg: OK
@@ -233,7 +224,7 @@ msg: Azulejos
 # ./glwskins/default/pages/home_clist.view
 #
 id: Apps
-msg: Apps
+msg: Aplicações
 
 id: Dismiss
 msg: Anular
@@ -254,8 +245,7 @@ msg: Data:
 # ./glwskins/default/pages/iteminfo/plugin.view
 #
 id: %s %s or newer is required
-# Missing translation
-msg: 
+msg: %s %s ou mais recente necessário
 
 id: Author: 
 msg: Autor:
@@ -288,7 +278,7 @@ id: Year:
 msg: Ano:
 
 id: Seen %d times
-msg[0]: 
+msg[0]: Visto %d vezes
 msg[1]: 
 
 #
@@ -316,7 +306,7 @@ id: Main
 msg: Principal
 
 id: Subs
-msg: Subs
+msg: Legendas
 
 #
 # ./glwskins/default/pages/listitems/plugin.view
@@ -334,12 +324,10 @@ msg: Atualizar
 # ./glwskins/default/pages/openerror.view
 #
 id: Unable to open %s
-# Missing translation
-msg: 
+msg: Impossivel abrir %s
 
 id: resource
-# Missing translation
-msg: 
+msg: recurso
 
 #
 # ./glwskins/default/pages/playqueue.view
@@ -357,8 +345,7 @@ msg: Em pausa
 # ./glwskins/default/pages/upgrade.view
 #
 id: %s is up to date
-# Missing translation
-msg: 
+msg: %s está atual
 
 id: An error occured during download
 msg: Um erro aconteceu durante o download
@@ -376,38 +363,34 @@ id: Checking for updates...
 msg: A procurar por atualizações...
 
 id: Checking installed version of %s
-# Missing translation
-msg: 
+msg: A verificar a versão de %s instalada
 
 id: Current version:
 msg: Versão atual:
 
 id: Download and install...
-msg: Efetuar download e instalar...
+msg: ETransferir e instalar...
 
 id: Downloading %s
-# Missing translation
-msg: 
+msg: A transferir %s
 
 id: New version %s is available for download
-msg: Uma nova versão %s está disponível para download
+msg: Uma nova versão %s está disponível para transferência
 
 id: No upgrade available
 msg: Não existem atualizações disponíveis
 
 id: Patching %s
-# Missing translation
-msg: 
+msg: A corrigir %s
 
 id: Restarting %s in %d seconds...
-# Missing translation
-msg: 
+msg: A reiniciar %s em %d segundos...
 
 id: Retry...
 msg: Tentar novamente...
 
 id: Stable
-msg: Estáve
+msg: Estável
 
 id: Testing
 msg: Teste
@@ -419,66 +402,52 @@ msg: Não foi possível procurar uma nova versão
 # ./glwskins/default/pages/video.view
 #
 id: A/V diff:
-# Missing translation
-msg: 
+msg: Dif. A/V:
 
 id: Audio codec:
-# Missing translation
-msg: 
+msg: Codev áudio:
 
 id: Audio queue len:
-# Missing translation
-msg: 
+msg: Tam. da fila áudio: 
 
 id: Audio volume adjustment: %d dB
-# Missing translation
-msg: 
+msg: Ajuste de volume: %d dB
 
 id: CPU is too slow to decode this video
 msg: O CPU é muito lento para descodificar este vídeo
 
 id: Download speed:
-# Missing translation
-msg: 
+msg: Velocidade transf.:
 
 id: Packet buffer:
-# Missing translation
-msg: 
+msg: Buffer de pacotes:
 
 id: Playback status
 msg: Estado da reprodução
 
 id: Remaining buffer:
-# Missing translation
-msg: 
+msg: Buffer restante:
 
 id: Remote queue drops:
-# Missing translation
-msg: 
+msg: Quebra de fila remota:
 
 id: Remote queue len:
-# Missing translation
-msg: 
+msg: Tam. de fila remota:
 
 id: Source:
-# Missing translation
-msg: 
+msg: Origem: 
 
 id: Video bitrate:
-# Missing translation
-msg: 
+msg: Taxa de video:
 
 id: Video codec:
-# Missing translation
-msg: 
+msg: Codec video: 
 
 id: Video decode time:
-# Missing translation
-msg: 
+msg: Tempo descod. video:
 
 id: Video queue len:
-# Missing translation
-msg: 
+msg: Tam. da fila video: 
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -508,12 +477,10 @@ msg: Nome do utilizador
 # ./glwskins/default/popups/resume.view
 #
 id: No, Start over
-# Missing translation
-msg: 
+msg: Não, Recomeçar 
 
 id: Resume %s from %s
-# Missing translation
-msg: 
+msg: Reiniciar %s a partir de %s 
 
 #
 # ./glwskins/default/screensaver.view
@@ -526,35 +493,28 @@ msg: Nenhum media carregado
 #
 id: CPU Temp
 # Missing translation
-msg: 
+msg: Temp. CPU
 
 id: Fragmentation
-# Missing translation
-msg: 
+msg: Fragmentação: 
 
 id: GPU Temp
-# Missing translation
-msg: 
+msg: Temp. GPU
 
 id: HDD Avail
-# Missing translation
-msg: 
+msg: HDD Dispon. 
 
 id: Inactive mem
-# Missing translation
-msg: 
+msg: Memória inat. 
 
 id: Memory usage
-# Missing translation
-msg: 
+msg: Memória usada
 
 id: System Free
-# Missing translation
-msg: 
+msg: Sistema dispon.
 
 id: System Total
-# Missing translation
-msg: 
+msg: Total Sist. 
 
 #
 # ./glwskins/default/universe.view
@@ -578,8 +538,7 @@ msg: Usar título original
 # ./src/arch/linux/pulseaudio.c
 #
 id: Unable to initialize audio system %s -- %s
-# Missing translation
-msg: 
+msg: Impossivel inicializar sistema áudio %s -- %s
 
 #
 # ./src/arch/ps3/ps3_main.c
@@ -591,12 +550,10 @@ msg: O sistema está com pouca memória (%d kB RAM disponível)
 # ./src/arch/ps3/ps3_vdec.c
 #
 id: Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration
-# Missing translation
-msg: 
+msg: Cell-h264 %d frames de referência para %d é incompatível com descodificador HW PS3. Aceleração desactivada.
 
 id: Cell-h264: Broken headers, Disabling acceleration
-# Missing translation
-msg: 
+msg: Cell-h264: Cabeçalhos inválidos, Aceleração desactivada
 
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
 msg: Cell-h264: A forçar nível 4.2 para conteúdo no nível %d.%d. Isto pode quebrar a reprodução de vídeo.
@@ -617,50 +574,41 @@ msg: Não foi possível pesquisar no codificador Cell. Erro 0x%x
 # ./src/arch/rpi/rpi_audio.c
 #
 id: 8 Channel PCM
-# Missing translation
-msg: 
+msg: 8 canais PCM
 
 id: AC3 Pass-Through
-# Missing translation
-msg: 
+msg: AC3 directo
 
 id: Analog
-# Missing translation
-msg: 
+msg: Analógico
 
 id: Audio output port
-# Missing translation
-msg: 
+msg: Porta de saída áudio
 
 id: Autodetect
-# Missing translation
-msg: 
+msg: Detectar automaticamente 
 
 id: DTS Pass-Through
-# Missing translation
-msg: 
+msg: DTS directo 
 
 id: HDMI
-# Missing translation
-msg: 
+msg: HDMI
 
 id: Off
 msg: Deslig.
 
 id: On
 # Missing translation
-msg: 
+msg: Ligado 
 
 #
 # ./src/arch/rpi/rpi_cec.c
 #
 id: Configure communications with your TV
-# Missing translation
-msg: 
+msg: Configure as ligações à TV
 
 id: Consumer Electronics Control
-# Missing translation
-msg: 
+msg: Controlo de dispositivos 
 
 #
 # ./src/audio2/audio.c
@@ -669,138 +617,109 @@ id: Audio delay
 msg: Atraso de áudio
 
 id: Audio gain adjustment during video playback
-# Missing translation
-msg: 
+msg: Ajuste de ganho áudio durante a reprodução de video
 
 id: Audio settings during video playback
-# Missing translation
-msg: 
+msg: Ajustes áudio durante reprodução de video
 
 id: Setup audio output
-# Missing translation
-msg: 
+msg: Configurar saída áudio
 
 #
 # ./src/audio2/audio_test.c
 #
 id: 440Hz sinewave -12dB
-# Missing translation
-msg: 
+msg: Onda sinusoidal 440 Hz -12 dB
 
 id: Audio test
-# Missing translation
-msg: 
+msg: Teste áudio
 
 id: Center
-msg: Centrado
+msg: Centro
 
 id: Front Left
-# Missing translation
-msg: 
+msg: Esquerda frente
 
 id: Front Right
-# Missing translation
-msg: 
+msg: Direita frente 
 
 id: LFE
-# Missing translation
-msg: 
+msg: LFE
 
 id: Pink noise
-# Missing translation
-msg: 
+msg: Pink noise 
 
 id: Play test signal
-# Missing translation
-msg: 
+msg: Tocar som de teste
 
 id: Rear Left
-# Missing translation
-msg: 
+msg: Esquerda atrás 
 
 id: Rear Right
-# Missing translation
-msg: 
+msg: Direita atrás 
 
 id: Speaker position
-# Missing translation
-msg: 
+msg: Posição das colunas 
 
 id: Surround Left
-# Missing translation
-msg: 
+msg: Esquerda surround 
 
 id: Surround Right
-# Missing translation
-msg: 
+msg: Direita surround 
 
 id: Test signal type
-# Missing translation
-msg: 
+msg: Tipo de som de teste 
 
 #
 # ./src/backend/bittorrent/bt_backend.c
 #
 id: No files in torrent
-# Missing translation
-msg: 
+msg: Torrent sem ficheiros
 
 id: Unable to open torrent: %s
-# Missing translation
-msg: 
+msg: Impossivel abrir torrent: %s
 
 #
 # ./src/backend/bittorrent/diskio.c
 #
 id: Cached torrents use %d MB out of allowed %d MB. Total free space on volume: %d MB
-# Missing translation
-msg: 
+msg: Torrents em cache a usar %d MB do máximo de %d MB. Espaço total disponivel: %d MB 
 
 #
 # ./src/backend/bittorrent/fa_torrent.c
 #
 id: Connected peers
-# Missing translation
-msg: 
+msg: Pares ligados 
 
 id: Known peers
-# Missing translation
-msg: 
+msg: Pares conhecidos
 
 id: Receiving from
-# Missing translation
-msg: 
+msg: A receber de 
 
 id: Torrent leechers
-# Missing translation
-msg: 
+msg: Torrent leechers
 
 id: Torrent seeders
-# Missing translation
-msg: 
+msg: Torrent seeders
 
 #
 # ./src/backend/bittorrent/torrent_settings.c
 #
 id: Clear cache
-# Missing translation
-msg: 
+msg: Limpar cache
 
 id: Enable bittorrent
-# Missing translation
-msg: 
+msg: Activar bittorrent
 
 id: Max usage of free space for caching torrents
-# Missing translation
-msg: 
+msg: Utilização máxima de espaço livre para cache de torrents
 
 id: Status
-# Missing translation
-msg: 
+msg: Estado
 
 id: Torrent cache path
-# Missing translation
-msg: 
+msg: Caminho para cache de torrents
 
 #
 # ./src/backend/dvd/dvd.c
@@ -815,12 +734,10 @@ msg: Erro na leitura do DVD, a reiniciar disco
 # ./src/backend/hls/hls.c
 #
 id: Primary
-# Missing translation
-msg: 
+msg: Principal
 
 id: Supplementary
-# Missing translation
-msg: 
+msg: Suplementar 
 
 #
 # ./src/backend/htsp/htsp.c
@@ -844,8 +761,7 @@ id: Albums
 msg: Álbuns
 
 id: Automatic login on start
-# Missing translation
-msg: 
+msg: Login automátimo ao iniciar
 
 id: Collaborative
 msg: Colaborativo
@@ -860,7 +776,7 @@ id: Friends
 msg: Amigos
 
 id: High bitrate
-msg: Alta bitrate
+msg: Bitrate elevado
 
 id: Inbox
 msg: Caixa de entrada
@@ -869,7 +785,7 @@ id: New albums on Spotify
 msg: Novos albuns no Spotify
 
 id: New releases
-msg: Novas releases
+msg: Novos lançamentos
 
 id: Offline
 msg: Offline
@@ -921,7 +837,7 @@ msg: Não foi possível abrir o tipo de conteúdo: %d
 
 id: Checking file contents
 # Missing translation
-msg: 
+msg: A verificar conteudo do ficheiro
 
 id: Unable to open file: %s
 msg: Não foi possível abrir o ficheiro: %s
@@ -978,30 +894,25 @@ id: Are you sure you want to delete:
 msg: Tem a certeza que pretende eliminar:
 
 id: BitTorrent
-# Missing translation
-msg: 
+msg: BitTorrent
 
 id: Browse archives as folders
-# Missing translation
-msg: 
+msg: Navegar arquivos como pastas
 
 id: Enable file deletion from item menu
 msg: Ativar eliminação de ficheiros através do item de menu
 
 id: File browsing
-# Missing translation
-msg: 
+msg: Navegação de arquivos 
 
 id: Show filename extensions
-# Missing translation
-msg: 
+msg: Mostrar extensões dos ficheiros 
 
 id: Store per-file settings in filesystem
-# Missing translation
-msg: 
+msg: Armazenar definições per-ficheiro no sistema de ficheiros
 
 id: %d archive parts
-msg[0]: 
+msg[0]: %d partes de arquivo 
 msg[1]: 
 
 id: %d directories
@@ -1028,15 +939,13 @@ id: Logon failure
 msg: Falha no login
 
 id: Object name not found
-# Missing translation
-msg: 
+msg: Objecto não encontrado
 
 #
 # ./src/i18n.c
 #
 id: Default character set
-# Missing translation
-msg: 
+msg: Character set padrão
 
 id: Ignore 'The' at beginning of words when sorting
 msg: Na ordenação, ignorar 'The' no ínicio das palavras
@@ -1096,28 +1005,23 @@ id: Align subtitles on video frame
 msg: Alinhar as legendas no quadro de vídeo
 
 id: Audio volume
-# Missing translation
-msg: 
+msg: Volume áudio
 
 id: Go to standby after video ends
-# Missing translation
-msg: 
+msg: Desligar após final do video
 
 id: Horizontal pan
-# Missing translation
-msg: 
+msg: Alinhamento horizontal
 
 id: Reset defaults for folder '%s'
-# Missing translation
-msg: 
+msg: Reiniciar defaults para a pasta '%s' 
 
 id: Save as defaults for folder '%s'
-# Missing translation
-msg: 
+msg: Gravar como default para a pasta '%s'
 
 id: Save as global default
 # Missing translation
-msg: 
+msg: Gravar como default global
 
 id: Stretch video to fullscreen
 msg: Esticar vídeo para fullscreen
@@ -1129,23 +1033,19 @@ id: Subtitle delay
 msg: Atraso de legendas
 
 id: Subtitle horizontal displacement
-# Missing translation
-msg: 
+msg: Deslocamento horizontal de legendas
 
 id: Subtitle scaling
 msg: Redimensionamento de legendas
 
 id: Subtitle vertical displacement
-# Missing translation
-msg: 
+msg: Deslocamento vertical de legendas
 
 id: Vertical pan
-# Missing translation
-msg: 
+msg: Alinhamento vertical
 
 id: Video frame interpolation
-# Missing translation
-msg: 
+msg: Interpolação de frames video
 
 id: Video zoom
 msg: Zoom de vídeo
@@ -1163,24 +1063,19 @@ id: Automatic
 msg: Automático
 
 id: Erase all playback info
-# Missing translation
-msg: 
+msg: Eliminar toda a informação de reprodução
 
 id: Manual
-# Missing translation
-msg: 
+msg: Manual
 
 id: Mark all as seen
-# Missing translation
-msg: 
+msg: Marcar todos como visto
 
 id: Mark all as unseen
-# Missing translation
-msg: 
+msg: Marcar todos como não visto 
 
 id: Metadata mode
-# Missing translation
-msg: 
+msg: Modo metadata
 
 #
 # ./src/metadata/metadata.c
@@ -1219,8 +1114,7 @@ id: Clear all metadata
 msg: Limpar todos os metadados
 
 id: Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?
-# Missing translation
-msg: 
+msg: Limpar todos os metadados significa perder <b>todos</b> os metadados guardados de fontes externas como themoviedb.org, etc\n\nInformação sobre pontos de reinicio, número de visualizações, etc será mantida..\nDeseja continuar?
 
 #
 # ./src/metadata/mlp.c
@@ -1319,27 +1213,22 @@ msg: Endereço
 # ./src/networking/connman.c
 #
 id: Enable Wi-Fi
-# Missing translation
-msg: 
+msg: Activar Wi-Fi
 
 id: Network connections
-# Missing translation
-msg: 
+msg: Ligações de rede
 
 #
 # ./src/networking/ftp_server.c
 #
 id: Enable FTP server
-# Missing translation
-msg: 
+msg: Activar servidor FTP
 
 id: FTP server
-# Missing translation
-msg: 
+msg: Servidor FTP
 
 id: Server TCP port
-# Missing translation
-msg: 
+msg: Porta TCP do servidor
 
 #
 # ./src/plugins.c
@@ -1351,8 +1240,7 @@ id: Automatically upgrade plugins
 msg: Atualizar automaticamente os plugins
 
 id: Available plugins
-# Missing translation
-msg: 
+msg: Plugins disponiveis
 
 id: Background
 msg: Fundo
@@ -1361,8 +1249,7 @@ id: Beta testing passwords
 msg: Palavras-passe de testes beta
 
 id: Browse available plugins
-# Missing translation
-msg: 
+msg: Navegar pleos plugins disponiveis
 
 id: Browsing
 msg: Navegando
@@ -1417,8 +1304,7 @@ id: Not upgradable
 msg: Não atualizável
 
 id: On Screen Keyboards
-# Missing translation
-msg: 
+msg: Teclado On-Screen
 
 id: Online TV
 msg: TV online
@@ -1469,8 +1355,7 @@ id: Automatic standby
 msg: Modo de espera automático
 
 id: Enable SSH server
-# Missing translation
-msg: 
+msg: Activar servidor SSH
 
 id: Logout
 msg: Logout
@@ -1482,20 +1367,16 @@ id: Power off system
 msg: Desligar o sistema
 
 id: Quit
-# Missing translation
-msg: 
+msg: Sair
 
 id: SSH server
-# Missing translation
-msg: 
+msg: Servidor SSH
 
 id: Standby
-# Missing translation
-msg: 
+msg: Standby
 
 id: Starting and stopping
-# Missing translation
-msg: 
+msg: Arranque e paragem
 
 #
 # ./src/sd/sd.c
@@ -1537,19 +1418,16 @@ id: Look and feel
 msg: Olhar e sentir
 
 id: Network services, etc
-# Missing translation
-msg: 
+msg: Serviços de rede, etc
 
 id: Network settings
-# Missing translation
-msg: 
+msg: Configuração de rede
 
 id: Settings useful for developers
 msg: Configurações úteis para programadores
 
 id: System name
-# Missing translation
-msg: 
+msg: Nome do sistema
 
 id: System related settings
 msg: Configurações relacionadas com o sistema
@@ -1654,8 +1532,7 @@ id: Reset subtitle font to default
 msg: Repor tipo de letra de legenda por defeito
 
 id: Unable to install font: %s
-# Missing translation
-msg: 
+msg: Impossivel instalar fonte: %s
 
 id: Use font %s for
 msg: Usar a fonte %s para
@@ -1667,19 +1544,16 @@ msg: Interface de utilizador
 # ./src/ui/glw/glw_ps3.c
 #
 id: Seek using L2 and R2 button
-# Missing translation
-msg: 
+msg: Procurar usando os botões L2 e R2
 
 id: Yes with Select button
-# Missing translation
-msg: 
+msg: Sim com o botão Select
 
 #
 # ./src/ui/glw/glw_settings.c
 #
 id: Font and icon size
-# Missing translation
-msg: 
+msg: Tamnho de fonte e icons
 
 id: Horizontal underscan
 msg: Underscan horizontal
@@ -1688,12 +1562,10 @@ id: Screensaver delay
 msg: Atraso da proteção de ecrã
 
 id: Vertical underscan
-# Missing translation
-msg: 
+msg: Underscan horizontal
 
 id: Wrap when reaching beginning/end of lists
-# Missing translation
-msg: 
+msg: Wrap ao chegar ao principio/fim das listas
 
 #
 # ./src/ui/glw/glw_x11.c
@@ -1720,8 +1592,7 @@ msg: Modos de vídeo
 # ./src/upgrade.c
 #
 id: %s version %s is available
-# Missing translation
-msg: 
+msg: %s versão %s disponivel
 
 id: Notify about upgrades
 msg: Notificar por atualizações
@@ -1754,12 +1625,10 @@ msg: O serviço não foi encontrado
 # ./src/video/video_settings.c
 #
 id: Always
-# Missing translation
-msg: 
+msg: Sempre
 
 id: Ask
-# Missing translation
-msg: 
+msg: Perguntar
 
 id: Automatically play next video in list
 msg: Reproduzir automaticamente o próximo vídeo da lista
@@ -1784,8 +1653,7 @@ id: No limit
 msg: Sem limite
 
 id: Per-file volume
-# Missing translation
-msg: 
+msg: Volume per-ficheiro
 
 id: Preferred VDPAU deinterlacer method
 msg: Método preferido de VDPAU deinterlacer
@@ -1794,12 +1662,10 @@ id: Resume video playback
 msg: Retomar a reprodução de vídeo
 
 id: Step when seeking backward
-# Missing translation
-msg: 
+msg: Saltos ao procurar para trás
 
 id: Step when seeking forward
-# Missing translation
-msg: 
+msg: Saltos ao procurar para a frente
 
 id: Temporal
 msg: Temporal
@@ -1808,8 +1674,7 @@ id: Temporal/Spatial
 msg: Temporal/Espacial
 
 id: Up / Down during video playback controls
-# Missing translation
-msg: 
+msg: Controlos Cima / Baixo durante reprodução de video
 
 id: Video acceleration and display behaviour
 msg: Acelaração de vídeo e comportamento da visualização
