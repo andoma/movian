@@ -218,6 +218,8 @@ peer_error_cb(void *opaque, const char *error)
 {
   peer_t *p = opaque;
 
+  hts_mutex_lock(&bittorrent_mutex);
+
   if(error == NULL) {
     p->p_am_choking = 1;
     p->p_am_interested = 0;
@@ -228,15 +230,17 @@ peer_error_cb(void *opaque, const char *error)
     asyncio_set_timeout_delta_sec(p->p_connection, 15);
     p->p_state = PEER_STATE_WAIT_HANDSHAKE;
     peer_trace(p, PEER_DBG_CONN, "Connected");
-    return;
+  } else {
+
+    peer_trace(p, PEER_DBG_CONN, "%s in state %s",
+               error, peer_state_txt(p->p_state));
+
+    peer_shutdown(p, p->p_state == PEER_STATE_RUNNING ?
+                  PEER_STATE_DISCONNECTED :
+                  PEER_STATE_CONNECT_FAIL, 1);
   }
+  hts_mutex_unlock(&bittorrent_mutex);
 
-  peer_trace(p, PEER_DBG_CONN, "%s in state %s",
-             error, peer_state_txt(p->p_state));
-
-  peer_shutdown(p, p->p_state == PEER_STATE_RUNNING ? 
-		PEER_STATE_DISCONNECTED :
-		PEER_STATE_CONNECT_FAIL, 1);
 }
 
 
@@ -1050,6 +1054,8 @@ peer_read_cb(void *opaque, htsbuf_queue_t *q)
   peer_t *p = opaque;
   int timeout;
 
+  hts_mutex_lock(&bittorrent_mutex);
+
   switch(p->p_state) {
 
   default:
@@ -1076,6 +1082,7 @@ peer_read_cb(void *opaque, htsbuf_queue_t *q)
     }
     break;
   }
+  hts_mutex_unlock(&bittorrent_mutex);
 }
 
 
