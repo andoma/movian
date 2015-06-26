@@ -187,7 +187,7 @@ tcp_connect_arch(const net_addr_t *addr,
 {
   int fd, r, err, optval;
   struct sockaddr_in in;
-  socklen_t errlen = sizeof(int);
+  net_socklen_t errlen = sizeof(int);
 
   switch(addr->na_family) {
   case 4:
