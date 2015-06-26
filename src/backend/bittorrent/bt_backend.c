@@ -79,7 +79,7 @@ torrent_open_url(const char **urlp, char *errbuf, size_t errlen)
     if(url[40] == 0) {
       *urlp = NULL;
     } else {
-      url += 41;
+      url += 40;
       if(*url == 0)
         *urlp = NULL;
       else
@@ -221,7 +221,7 @@ torrent_movie_open(prop_t *page, const char *url0, int sync)
   htsmsg_add_str(vp, "title", to->to_title);
 
 
-  snprintf(url, sizeof(url), "torrentfile://%s/%s",
+  snprintf(url, sizeof(url), "torrentfile://%s%s",
            hashstr, best->tf_fullpath);
   htsmsg_add_str(vp, "canonicalUrl", url);
 
@@ -284,7 +284,7 @@ static event_t *
 bt_playvideo(const char *url, media_pipe_t *mp,
              char *errbuf, size_t errlen,
              video_queue_t *vq, struct vsource_list *vsl,
-             const video_args_t *va)
+             const video_args_t *va0)
 {
   const char *u;
 
@@ -315,13 +315,16 @@ bt_playvideo(const char *url, media_pipe_t *mp,
   bin2hex(hashstr, sizeof(hashstr), to->to_info_hash, 20);
   hashstr[40] = 0;
 
-  snprintf(newurl, sizeof(newurl), "torrentfile://%s/%s",
+  snprintf(newurl, sizeof(newurl), "torrentfile://%s%s",
            hashstr, best->tf_fullpath);
 
   torrent_retain(to);
   hts_mutex_unlock(&bittorrent_mutex);
 
-  event_t *e = backend_play_video(newurl, mp, errbuf, errlen, vq, vsl, va);
+  video_args_t va = *va0;
+  va.canonical_url = newurl;
+
+  event_t *e = backend_play_video(newurl, mp, errbuf, errlen, vq, vsl, &va);
 
   hts_mutex_lock(&bittorrent_mutex);
   torrent_release(to);

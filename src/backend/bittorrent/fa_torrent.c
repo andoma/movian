@@ -87,7 +87,7 @@ torrent_scandir(fa_protocol_t *fap, fa_dir_t *fd, const char *url,
   torrent_file_t *tf;
   TAILQ_FOREACH(tf, tfq, tf_parent_link) {
     char buf[1024];
-    snprintf(buf, sizeof(buf), "torrentfile://%s/%s",
+    snprintf(buf, sizeof(buf), "torrentfile://%s%s",
              hashstr, tf->tf_fullpath);
     fa_dir_add(fd, buf, tf->tf_name,
                tf->tf_size ? CONTENT_FILE : CONTENT_DIR);

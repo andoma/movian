@@ -1809,6 +1809,8 @@ be_htsp_playvideo(const char *url, media_pipe_t *mp,
   int primary = !!(va->flags & BACKEND_VIDEO_PRIMARY);
   const char *r;
 
+  mp_set_url(mp, va->canonical_url, va->parent_url, va->parent_title);
+
   TRACE(TRACE_DEBUG, "HTSP",
 	"Starting video playback %s primary=%s, priority=%d",
 	url, primary ? "yes" : "no", va->priority);

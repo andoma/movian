@@ -668,6 +668,8 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
   event_t *e;
   char *url = mystrdupa(url0);
 
+  mp_set_url(mp, va0->canonical_url, va0->parent_url, va0->parent_title);
+
   usage_event("Play video", 1, USAGE_SEG("format", "RTMP"));
 
   prop_set(mp->mp_prop_metadata, "format", PROP_SET_STRING, "RTMP");

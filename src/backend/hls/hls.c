@@ -2243,6 +2243,8 @@ hls_playvideo(const char *url, media_pipe_t *mp,
 {
   buf_t *buf;
 
+  mp_set_url(mp, va0->canonical_url, va0->parent_url, va0->parent_title);
+
   prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 1);
 
   url += strlen("hls:");

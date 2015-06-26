@@ -511,6 +511,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 {
   rstr_t *title = NULL;
   video_args_t va = *va0;
+  mp_set_url(mp, va0->canonical_url, va0->parent_url, va0->parent_title);
 
   prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 1);
 
@@ -558,6 +559,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
   if(va.flags & BACKEND_VIDEO_SET_TITLE) {
     char tmp[1024];
+
     fa_url_get_last_component(tmp, sizeof(tmp), va.canonical_url);
     char *x = strrchr(tmp, '.');
     if(x)

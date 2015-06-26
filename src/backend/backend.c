@@ -126,8 +126,6 @@ backend_play_video(const char *url, struct media_pipe *mp,
     return NULL;
   }
 
-  mp_set_url(mp, va->canonical_url, va->parent_url, va->parent_title);
-
   return nb->be_play_video(url, mp, errbuf, errlen, vq, vsl, va);
 }
 

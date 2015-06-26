@@ -233,7 +233,6 @@ play_video(const char *url, struct media_pipe *mp,
     va.parent_url = parent_url;
     va.flags = flags | BACKEND_VIDEO_SET_TITLE;
 
-    mp_set_url(mp, url, va.parent_url, va.parent_title);
     e = be->be_play_video(url, mp, errbuf, errlen, vq, &vsources, &va);
 
   } else {
