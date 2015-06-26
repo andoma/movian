@@ -1063,7 +1063,7 @@ peer_read_cb(void *opaque, htsbuf_queue_t *q)
 
   case PEER_STATE_WAIT_HANDSHAKE:
     if(recv_handshake(p, q))
-      return;
+      break;
     LIST_INSERT_HEAD(&p->p_torrent->to_running_peers, p, p_running_link);
     p->p_state = PEER_STATE_RUNNING;
     // FALLTHRU
