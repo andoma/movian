@@ -30,6 +30,8 @@
 #endif
 #include "htsmsg/htsmsg_store.h"
 
+static HTS_MUTEX_DECL(nls_mutex);
+
 static void nls_init(prop_t *parent, htsmsg_t *store);
 
 
@@ -216,7 +218,7 @@ i18n_get_default_charset(void)
 }
 
 
-LIST_HEAD(nls_string_queue, nls_string);
+LIST_HEAD(nls_string_list, nls_string);
 
 
 /**
@@ -237,7 +239,9 @@ typedef struct nls_string {
 
 } nls_string_t;
 
-static struct nls_string_queue nls_strings;
+#define NLS_STRING_HASH_WIDTH 61
+
+static struct nls_string_list nls_strings[NLS_STRING_HASH_WIDTH];
 
 
 /**
@@ -326,12 +330,15 @@ nls_string_find(const char *key)
 {
   nls_string_t *ns;
 
-  LIST_FOREACH(ns, &nls_strings, ns_link)
+  unsigned int hash = mystrhash(key) % NLS_STRING_HASH_WIDTH;
+
+  hts_mutex_lock(&nls_mutex);
+
+  LIST_FOREACH(ns, &nls_strings[hash], ns_link)
     if(!strcmp(rstr_get(ns->ns_key), key))
       break;
 
   if(ns == NULL) {
-
     ns = calloc(1, sizeof(nls_string_t));
     ns->ns_key = rstr_alloc(key);
     ns->ns_prop = prop_create_root(NULL);
@@ -340,7 +347,9 @@ nls_string_find(const char *key)
   } else {
     LIST_REMOVE(ns, ns_link);
   }
-  LIST_INSERT_HEAD(&nls_strings, ns, ns_link);
+  LIST_INSERT_HEAD(&nls_strings[hash], ns, ns_link);
+
+  hts_mutex_unlock(&nls_mutex);
   return ns;
 }
 
@@ -389,10 +398,15 @@ static void
 nls_clear(void)
 {
   nls_string_t *ns;
-  LIST_FOREACH(ns, &nls_strings, ns_link) {
-    ns_val_clr(ns);
-    prop_set_rstring(ns->ns_prop, ns->ns_key);
+  hts_mutex_lock(&nls_mutex);
+
+  for(int i = 0; i < NLS_STRING_HASH_WIDTH; i++) {
+    LIST_FOREACH(ns, &nls_strings[i], ns_link) {
+      ns_val_clr(ns);
+      prop_set_rstring(ns->ns_prop, ns->ns_key);
+    }
   }
+  hts_mutex_unlock(&nls_mutex);
 }
 
 
