@@ -183,6 +183,8 @@ play_video(const char *url, struct media_pipe *mp,
 
   mp_reset(mp);
 
+  prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 1);
+
   if(strncmp(url, "videoparams:", strlen("videoparams:"))) {
     backend_t *be = backend_canhandle(url);
 
