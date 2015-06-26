@@ -367,9 +367,10 @@ ps3_early_init(int argc, char **argv)
   netInitialize();
   netCtlInit();
 
-  
+  extern void *__netMemory;
   ticks_per_us = Lv2Syscall0(147) / 1000000;
-  my_trace("Ticks per µs = %ld\n", ticks_per_us);
+  my_trace("Ticks per µs = %ld  netlib memory at:%p\n",
+           ticks_per_us, __netMemory);
 
 
   if(argc == 0) {
