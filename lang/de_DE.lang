@@ -1,6 +1,6 @@
 language: German
 native: Deutsch
-maintainer: Maximilian Jänsch <showtime@jaensch-koloska.de>
+maintainer: Viktor Wirt
 #
 # ./glwskins/default/cmdmenu.view
 #
@@ -23,7 +23,7 @@ id: Disable sleep timer
 msg: Deaktiviere automatisches Ausschalten
 
 id: Exit %s
-msg: Beende %s
+msg: %s beenden
 
 id: Go to Home screen
 msg: Zum Hauptmenü
@@ -47,7 +47,7 @@ id: Power off
 msg: Ausschalten
 
 id: Reload current page
-msg: Aktuelle Seite neuladen
+msg: Aktuelle Seite neu laden
 
 id: Show system info
 msg: Systeminfo anzeigen
@@ -1258,16 +1258,16 @@ id: Cloud services
 msg: Cloud-Services
 
 id: Corrupt plugin bundle
-msg: Kaputte Plugindatei
+msg: Defektes Pluginpacket
 
 id: Disk write error
 msg: Disk Schreibfehler
 
 id: Downloading
-msg: Lade Herunter
+msg: Lade herunter
 
 id: File open error
-msg: Fehler beim Datei öffnen
+msg: Fehler beim öffnen der Datei
 
 id: Home page
 msg: Startseite
@@ -1276,7 +1276,7 @@ id: Installed plugins
 msg: Installierte Plugins
 
 id: Installed version higher than available
-msg: Installierte Version ist höher als die verfügbare
+msg: Die installierte Version ist höher als die verfügbare
 
 id: Installing
 msg: Installiere
@@ -1294,13 +1294,13 @@ id: Music streaming
 msg: Musik streaming
 
 id: Not installable
-msg: nicht installierbar
+msg: Nicht installierbar
 
 id: Not installed
-msg: nicht installiert
+msg: Nicht installiert
 
 id: Not upgradable
-msg: nicht updatebar
+msg: Nicht updatebar
 
 id: On Screen Keyboards
 msg: Bildschirmtastatur
@@ -1309,7 +1309,7 @@ id: Online TV
 msg: Online TV
 
 id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
-msg: Plugin %s %s wurde deinstalliert, da es evtl. Probleme verursacht.\n Sie können versuchen manuell eine andere Version zu installieren.
+msg: Plugin %s %s wurde deinstalliert, da es evtl. Probleme verursacht.\nSie können versuchen manuell eine andere Version zu installieren.
 
 id: Plugins
 msg: Plugins
@@ -1327,7 +1327,7 @@ id: Unable to load plugin.json: %s
 msg: Kann plugin.json: %s nicht laden
 
 id: Unable to load plugin.json: Malformed JSON
-msg: kann plugin.json nicht laden: fehlformatiertes JSON
+msg: Kann plugin.json nicht laden: Fehlformatiertes JSON
 
 id: Uncategorized
 msg: Unkategorisiert
@@ -1351,13 +1351,13 @@ msg: Video streaming
 # ./src/runcontrol.c
 #
 id: Automatic standby
-msg: Automatisch in standby wechseln
+msg: Automatisch in Standby wechseln
 
 id: Enable SSH server
 msg: SSH-Server einschalten
 
 id: Logout
-msg: Logout
+msg: Ausloggen
 
 id: Open shell
 msg: Shell öffnen
@@ -1453,7 +1453,7 @@ id: Color
 msg: Farbe
 
 id: External file
-msg: externe Datei
+msg: Externe Datei
 
 id: Force subtitles to reside on video frame
 msg: Untertitel im Bild anzeigen
@@ -1462,7 +1462,7 @@ id: Generic settings for video subtitles
 msg: Allgemeine Einstellungen für Untertitel
 
 id: Ignore embedded styling
-msg: eingebetteten Stil ignorieren
+msg: Eingebetteten Stil ignorieren
 
 id: Left
 msg: Links
@@ -1519,7 +1519,7 @@ id: Installed fonts
 msg: Installierte Schriftarten
 
 id: Narrow text
-msg: enger Text 
+msg: Enger Text 
 
 id: Reset main font to default
 msg: Hauptschriftart auf Standard setzen
@@ -1612,10 +1612,10 @@ id: Device not found
 msg: Gerät nicht gefunden
 
 id: Malformed URI after device
-msg: ungültige URI nach Gerät
+msg: Ungültige URI nach Gerät
 
 id: Malformed URI after service
-msg: ungültige URI nach service
+msg: Ungültige URI nach Service
 
 id: Service not found
 msg: Service nicht gefunden
@@ -1627,7 +1627,7 @@ id: Always
 msg: Immer 
 
 id: Ask
-msg: Frag
+msg: Nachfragen
 
 id: Automatically play next video in list
 msg: Nächstes Video in der Liste automatisch starten 
@@ -1666,10 +1666,10 @@ id: Step when seeking forward
 msg: Schritt beim Vorspulen
 
 id: Temporal
-msg: Temporal
+msg: Zeitlich
 
 id: Temporal/Spatial
-msg: Temporal/Spatial
+msg: Zeitlich/Räumlich
 
 id: Up / Down during video playback controls
 msg: Hoch / Runter während Videoabspielens kontrolliert
