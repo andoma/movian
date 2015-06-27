@@ -173,7 +173,7 @@ id: Clear
 msg: Limpar
 
 id: Default
-msg: Por defeito
+msg: Padrão
 
 id: Keyboard layout:
 msg: Esquema teclado
@@ -492,7 +492,6 @@ msg: Nenhum media carregado
 # ./glwskins/default/sysinfo.view
 #
 id: CPU Temp
-# Missing translation
 msg: Temp. CPU
 
 id: Fragmentation
@@ -598,7 +597,6 @@ id: Off
 msg: Deslig.
 
 id: On
-# Missing translation
 msg: Ligado 
 
 #
@@ -836,7 +834,6 @@ id: Can't handle content type %d
 msg: Não foi possível abrir o tipo de conteúdo: %d
 
 id: Checking file contents
-# Missing translation
 msg: A verificar conteudo do ficheiro
 
 id: Unable to open file: %s
@@ -909,7 +906,7 @@ id: Show filename extensions
 msg: Mostrar extensões dos ficheiros 
 
 id: Store per-file settings in filesystem
-msg: Armazenar definições per-ficheiro no sistema de ficheiros
+msg: Armazenar definições por ficheiro no sistema de ficheiros
 
 id: %d archive parts
 msg[0]: %d partes de arquivo 
@@ -1014,14 +1011,13 @@ id: Horizontal pan
 msg: Alinhamento horizontal
 
 id: Reset defaults for folder '%s'
-msg: Reiniciar defaults para a pasta '%s' 
+msg: Reiniciar padrões para a pasta '%s' 
 
 id: Save as defaults for folder '%s'
-msg: Gravar como default para a pasta '%s'
+msg: Gravar como padrão para a pasta '%s'
 
 id: Save as global default
-# Missing translation
-msg: Gravar como default global
+msg: Gravar como padrão global
 
 id: Stretch video to fullscreen
 msg: Esticar vídeo para fullscreen
@@ -1273,8 +1269,7 @@ id: Home page
 msg: Página inicial
 
 id: Installed plugins
-# Missing translation
-msg: 
+msg: Plugins instalados
 
 id: Installed version higher than available
 msg: Está instalada uma versão mais atual que a disponível
@@ -1511,7 +1506,7 @@ msg: Legendas com um nome idêntico na pasta do vídeo
 # ./src/text/fontstash.c
 #
 id: Defaults
-msg: Por defeito
+msg: Padrões
 
 id: Fonts
 msg: Tipos de letra
@@ -1523,13 +1518,13 @@ id: Narrow text
 msg: Texto estreito
 
 id: Reset main font to default
-msg: Repor tipo de letra principal por defeito
+msg: Repor tipo de letra principal por omissão
 
 id: Reset narrow font to default
-msg: Repor tipo de letra estreito por defeito
+msg: Repor tipo de letra estreito por omissão
 
 id: Reset subtitle font to default
-msg: Repor tipo de letra de legenda por defeito
+msg: Repor tipo de letra de legenda por omissão
 
 id: Unable to install font: %s
 msg: Impossivel instalar fonte: %s
@@ -1646,14 +1641,13 @@ id: Maximum resolution for deinterlacer
 msg: Resolução máxima para o deinterlacer
 
 id: Never
-# Missing translation
-msg: 
+msg: Nunca
 
 id: No limit
 msg: Sem limite
 
 id: Per-file volume
-msg: Volume per-ficheiro
+msg: Volume por ficheiro
 
 id: Preferred VDPAU deinterlacer method
 msg: Método preferido de VDPAU deinterlacer
