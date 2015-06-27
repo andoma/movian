@@ -1,6 +1,6 @@
 language: Greek
 native: Ελληνικά
-maintainer: ananias47 & panos kosmo ananias47@hotmail.com 
+maintainer: ananias47 & panos kosmo ananias47@hotmail.com & VIRGIN KLM github.com/VIRGINKLM/
 #
 # ./glwskins/default/cmdmenu.view
 #
@@ -8,7 +8,7 @@ id: Add current page to bookmarks
 msg: Προσθήκη της τρέχουσας σελίδας στους σελιδοδείκτες 
 
 id: Open settings
-msg: ’νοιγμα Ρυθμίσεων 
+msg: Άνοιγμα Ρυθμίσεων 
 
 id: Remove current page from bookmarks
 msg: Αφαίρεση της τρέχουσας σελίδας από τους σελιδοδείκτες
@@ -23,25 +23,22 @@ id: Disable sleep timer
 msg: Απενεργοποίηση χρονοδιακόπτη διακοπής λειτουργίας
 
 id: Exit %s
-# Missing translation
-msg: 
+msg: Έξοδος από %s
 
 id: Go to Home screen
 msg: Μετάβαση στην αρχική σελίδα
 
 id: Hide system info
-# Missing translation
-msg: 
+msg: Απόκρυψη πληροφοριών συστήματος
 
 id: Master volume
-# Missing translation
-msg: 
+msg: Κεντρική ένταση
 
 id: Navigation
 msg: Πλοήγηση 
 
 id: Open Settings
-msg: ’νοιγμα Ρυθμίσεων
+msg: Άνοιγμα Ρυθμίσεων
 
 id: Playqueue
 msg: Αναπαραγωγή Λίστας
@@ -53,8 +50,7 @@ id: Reload current page
 msg: Ανανέωση τρέχουσας σελίδας
 
 id: Show system info
-# Missing translation
-msg: 
+msg: Εμφάνιση πληροφοριών συστήματος
 
 id: Suspend
 msg: Αναστολή λειτουργείας
@@ -66,8 +62,7 @@ id: Time until sleep
 msg: Χρόνος μέχρι να αδρανοποιηθεί το σύστημα
 
 id: dB
-# Missing translation
-msg: 
+msg: dB
 
 id: min
 msg: λεπτό
@@ -79,7 +74,7 @@ id: Add '%s' to home screen
 msg: Προσθήκη '%s' στην αρχική σελίδα
 
 id: Remove '%s' from home screen
-msg: : Αφαίρεση  '%s' από την αρχική σελίδα
+msg: : Αφαίρεση '%s' από την αρχική σελίδα
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_item.view
@@ -157,12 +152,10 @@ msg: Ρυθμίσεις Βίντεο
 # ./glwskins/default/loading.view
 #
 id: %d kb/s
-# Missing translation
-msg: 
+msg: %d kb/s
 
 id: Bitrate:
-# Missing translation
-msg: 
+msg: Ρυθμός μετάδοσης:
 
 #
 # ./glwskins/default/log.view
@@ -177,15 +170,13 @@ id: Cancel
 msg: Ακύρωση
 
 id: Clear
-# Missing translation
-msg: 
+msg: Σβύσιμο
 
 id: Default
 msg: Προεπιλογή
 
 id: Keyboard layout:
-# Missing translation
-msg: 
+msg: Διάταξη πληκτρολογίου
 
 id: OK
 msg: OK
@@ -194,7 +185,7 @@ msg: OK
 # ./glwskins/default/pages/directory.view
 #
 id: Album
-msg: ’λμπουμ
+msg: Άλμπουμ
 
 id: Artist
 msg: Καλλιτέχνης
@@ -221,7 +212,7 @@ msg: Προβολή
 # ./glwskins/default/pages/discovered.view
 #
 id: Discovered resources on local network
-msg: Ανακαλύφθηκαν πηγές στο τοπικό δίκτυο
+msg: Βρέθηκαν πηγές στο τοπικό δίκτυο
 
 #
 # ./glwskins/default/pages/home.view
@@ -239,7 +230,7 @@ id: Dismiss
 msg: Ματαίωση
 
 id: Search / Open URL
-msg: Αναζήτηση/’νοιγμα URL
+msg: Αναζήτηση/Άνοιγμα URL
 
 #
 # ./glwskins/default/pages/iteminfo/image.view
@@ -254,8 +245,7 @@ msg: Ημερομηνία:
 # ./glwskins/default/pages/iteminfo/plugin.view
 #
 id: %s %s or newer is required
-# Missing translation
-msg: 
+msg: Απειτείται %s %s ή νεότερη/ο
 
 id: Author: 
 msg: Συγγραφέας:
@@ -334,12 +324,10 @@ msg: Αναβάθμιση
 # ./glwskins/default/pages/openerror.view
 #
 id: Unable to open %s
-# Missing translation
-msg: 
+msg: Αδυναμία ανοίγματος %s
 
 id: resource
-# Missing translation
-msg: 
+msg: πηγή
 
 #
 # ./glwskins/default/pages/playqueue.view
@@ -357,8 +345,7 @@ msg: Διακόπηκε
 # ./glwskins/default/pages/upgrade.view
 #
 id: %s is up to date
-# Missing translation
-msg: 
+msg: Το %s είναι ενημερωμένο
 
 id: An error occured during download
 msg: Ένα σφάλμα συνέβη κατά την διάρκεια της λήψης!
@@ -367,7 +354,7 @@ id: Available version:
 msg: Διαθέσιμη Έκδοση:
 
 id: Changelog for %s releases
-msg: Αλλαγές για την %s έκδοση
+msg: Αλλαγές για την έκδοση %s
 
 id: Check for updates now
 msg: Έλεγχος για ενημερώσεις 
@@ -388,17 +375,16 @@ id: Downloading %s
 msg: Λήψη %s
 
 id: New version %s is available for download
-msg: Καινούρια έκδοση %s είναι διαθέσιμη για λήψη
+msg: Η καινούργια έκδοση %s είναι διαθέσιμη για λήψη
 
 id: No upgrade available
 msg: Δεν υπάρχει διαθέσιμη αναβάθμιση
 
 id: Patching %s
-msg: Patching %s
+msg: Εφαρμογή patch %s
 
 id: Restarting %s in %d seconds...
-# Missing translation
-msg: 
+msg: Επανεκκίνηση %s σε %d δευτερόλεπτα...
 
 id: Retry...
 msg: Επανάληψη...
@@ -416,66 +402,52 @@ msg: Αδυναμία αναζήτησης νέας έκδοσης
 # ./glwskins/default/pages/video.view
 #
 id: A/V diff:
-# Missing translation
-msg: 
+msg: A/V διαφορές:
 
 id: Audio codec:
-# Missing translation
-msg: 
+msg: Κωδικοποιητής ήχου
 
 id: Audio queue len:
-# Missing translation
-msg: 
+msg: Διάρκεια ουράς ήχου:
 
 id: Audio volume adjustment: %d dB
-# Missing translation
-msg: 
+msg: Ρύθμιση έντασης ήχου: %d dB
 
 id: CPU is too slow to decode this video
 msg: Ο CPU είναι πολύ αργός για να αποκωδικοποιήσει αυτό το βίντεο
 
 id: Download speed:
-# Missing translation
-msg: 
+msg: Ταχύτητα λήψης:
 
 id: Packet buffer:
-# Missing translation
-msg: 
+msg: Buffer πακέτου:
 
 id: Playback status
 msg: Κατάσταση Αναπαραγωγής
 
 id: Remaining buffer:
-# Missing translation
-msg: 
+msg: Υπόλοιπο πακέτου:
 
 id: Remote queue drops:
-# Missing translation
-msg: 
+msg: Drops απομακρυσμένης ουράς:
 
 id: Remote queue len:
-# Missing translation
-msg: 
+msg: Διάρκεια απομακρυσμένης ουράς:
 
 id: Source:
-# Missing translation
-msg: 
+msg: Πηγή:
 
 id: Video bitrate:
-# Missing translation
-msg: 
+msg: Ρυθμός μετάδοσης video:
 
 id: Video codec:
-# Missing translation
-msg: 
+msg: Κωδικοποιητής video:
 
 id: Video decode time:
-# Missing translation
-msg: 
+msg: Χρόνος αποκωδικοποίησης video:
 
 id: Video queue len:
-# Missing translation
-msg: 
+msg: Διάρκεια ουράς video:
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -505,12 +477,10 @@ msg: Όνομα Χρήστη
 # ./glwskins/default/popups/resume.view
 #
 id: No, Start over
-# Missing translation
-msg: 
+msg: Όχι, Ξεκίνημα από την αρχή
 
 id: Resume %s from %s
-# Missing translation
-msg: 
+msg: Συνέχιση %s από %s
 
 #
 # ./glwskins/default/screensaver.view
@@ -531,8 +501,7 @@ id: GPU Temp
 msg: Θερμ. GPU
 
 id: HDD Avail
-# Missing translation
-msg: 
+msg: Ελ. χώρος HDD
 
 id: Inactive mem
 msg: Αδρανής Μνήμη
@@ -568,8 +537,7 @@ msg: Χρησιμοποίηση πρωτότυπου τίτλου
 # ./src/arch/linux/pulseaudio.c
 #
 id: Unable to initialize audio system %s -- %s
-# Missing translation
-msg: 
+msg: Αδυναμία προετοιμασίας συστήματος ήχου %s -- %s
 
 #
 # ./src/arch/ps3/ps3_main.c
@@ -581,15 +549,13 @@ msg: Το σύστημα είναι χαμηλό σε μνήμη (%d kB RAM δι
 # ./src/arch/ps3/ps3_vdec.c
 #
 id: Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration
-# Missing translation
-msg: 
+msg: Cell-h264: %d Ref-frames για το περιεχόμενο %d είναι ασύμβατα με τον επιταχυντή hardware του PS3. Απενεργοπόιηση επιτάχυνσης
 
 id: Cell-h264: Broken headers, Disabling acceleration
-# Missing translation
-msg: 
+msg: Cell-h264: Κατεστραμένες κεφαλίδες, Απενεργοπόιηση επιτάχυνσης
 
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
-msg: Cell-h264: Εξαναγκασμός του επιπέδου 4.2 να χωρέσει στο επίπεδο %d.%d. Η αναπαραγωγή μπορεί να διακοπεί.
+msg: Cell-h264: Εξαναγκασμός του επιπέδου 4.2 σε επίπεδο %d.%d. Η αναπαραγωγή μπορεί να διακοπεί.
 
 id: Unable to accelerate %s, library not loaded.
 msg: Αδυναμία επιτάχυνσης %s, η βιβλιοθήκη δεν φορτώθηκε.
@@ -607,46 +573,37 @@ msg: Αδυναμία αναζήτησης του κώδικα Cell. Σφάλμ�
 # ./src/arch/rpi/rpi_audio.c
 #
 id: 8 Channel PCM
-# Missing translation
-msg: 
+msg: 8 Κανάλια PCM
 
 id: AC3 Pass-Through
-# Missing translation
-msg: 
+msg: AC3 Pass-Through
 
 id: Analog
-# Missing translation
-msg: 
+msg: Αναλογικό
 
 id: Audio output port
-# Missing translation
-msg: 
+msg: Θύρα εξόδου ήχου
 
 id: Autodetect
-# Missing translation
-msg: 
+msg: Αυτόματη αναγνώριση
 
 id: DTS Pass-Through
-# Missing translation
-msg: 
+msg: DTS Pass-Through
 
 id: HDMI
-# Missing translation
-msg: 
+msg: HDMI
 
 id: Off
-msg: Κλειστό
+msg: Ανενεργό
 
 id: On
-# Missing translation
-msg: 
+msg: Ενεργό
 
 #
 # ./src/arch/rpi/rpi_cec.c
 #
 id: Configure communications with your TV
-# Missing translation
-msg: 
+msg: Ρύθμιση επικοινωνίας με την τηλεόραση σας
 
 id: Consumer Electronics Control
 msg: Ηλεκτρονικά Συστήματα Ελέγχου Καταναλωτών (CEC)
@@ -658,138 +615,109 @@ id: Audio delay
 msg: Καθυστέρηση ήχου
 
 id: Audio gain adjustment during video playback
-# Missing translation
-msg: 
+msg: Προσαρμογή ενύσχισης ήχου κατά την διαρκεια αναπαραγωγής video
 
 id: Audio settings during video playback
-# Missing translation
-msg: 
+msg: Ρυθμίσεις ήχου κατά την διαρκεια αναπαραγωγής video
 
 id: Setup audio output
-# Missing translation
-msg: 
+msg: Ρύθμιση εξόδου ήχου
 
 #
 # ./src/audio2/audio_test.c
 #
 id: 440Hz sinewave -12dB
-# Missing translation
-msg: 
+msg: 440Hz ημιτονοειδές κύμα -12dB
 
 id: Audio test
-# Missing translation
-msg: 
+msg: Δοκιμή ήχου
 
 id: Center
 msg: Κεντρικά
 
 id: Front Left
-# Missing translation
-msg: 
+msg: Εμπρόσθιο Αριστερό
 
 id: Front Right
-# Missing translation
-msg: 
+msg: Εμπρόσθιο Δεξί
 
 id: LFE
-# Missing translation
-msg: 
+msg: Υπογούφερ
 
 id: Pink noise
-# Missing translation
-msg: 
+msg: Ροζ θόρυβος
 
 id: Play test signal
-# Missing translation
-msg: 
+msg: Αναπαραγωγή δοκιμαστικού ήχου
 
 id: Rear Left
-# Missing translation
-msg: 
+msg: Όπισθιο Αριστερό
 
 id: Rear Right
-# Missing translation
-msg: 
+msg: Όπισθιο Δεξί
 
 id: Speaker position
-# Missing translation
-msg: 
+msg: Θέση ηχείων
 
 id: Surround Left
-# Missing translation
-msg: 
+msg: Surround Αριστερό
 
 id: Surround Right
-# Missing translation
-msg: 
+msg: Surround Δεξί
 
 id: Test signal type
-# Missing translation
-msg: 
+msg: Τύπος δοκιμαστικού ήχου
 
 #
 # ./src/backend/bittorrent/bt_backend.c
 #
 id: No files in torrent
-# Missing translation
-msg: 
+msg: Κανένα αρχείο στο torrent
 
 id: Unable to open torrent: %s
-# Missing translation
-msg: 
+msg: Αδυναμία ανοίγματος torrent: %s
 
 #
 # ./src/backend/bittorrent/diskio.c
 #
 id: Cached torrents use %d MB out of allowed %d MB. Total free space on volume: %d MB
-# Missing translation
-msg: 
+msg: Τα torrents χρησιμοποιούν %d MB από τα επιτρεπόμενα %d MB. Συνολικός ελεύθερος χώρος: %d MB
 
 #
 # ./src/backend/bittorrent/fa_torrent.c
 #
 id: Connected peers
-# Missing translation
-msg: 
+msg: Συνδεδεμένοι χρήστες
 
 id: Known peers
-# Missing translation
-msg: 
+msg: Γνωστοί χρήστες
 
 id: Receiving from
-# Missing translation
-msg: 
+msg: Λήψη από
 
 id: Torrent leechers
-# Missing translation
-msg: 
+msg: Παρασιτικοί χρήστες
 
 id: Torrent seeders
-# Missing translation
-msg: 
+msg: Διαμοιραστές
 
 #
 # ./src/backend/bittorrent/torrent_settings.c
 #
 id: Clear cache
-# Missing translation
-msg: 
+msg: Καθαρισμός προσωρινής μνήμης
 
 id: Enable bittorrent
-# Missing translation
-msg: 
+msg: Ενεργοποίηση bittorrent
 
 id: Max usage of free space for caching torrents
-# Missing translation
-msg: 
+msg: Μέγιστη ελεύθερη μνήμη για προσωρινη αποθήκευση torrent(s)
 
 id: Status
-# Missing translation
-msg: 
+msg: Κατάσταση
 
 id: Torrent cache path
-# Missing translation
-msg: 
+msg: Διαδρομή προσωρινής αποθήκευσης torrent
 
 #
 # ./src/backend/dvd/dvd.c
@@ -804,11 +732,9 @@ msg: Σφάλμα αναπαραγωγής DVD, επανεκκίνηση δίσ�
 # ./src/backend/hls/hls.c
 #
 id: Primary
-# Missing translation
-msg: 
+msg: Πρωταρχικό
 
-id: Supplementary
-# Missing translation
+id: Συμπληρωματικό
 msg: 
 
 #
@@ -830,11 +756,10 @@ msg: Αποτελέσματα αναζήτησης για: %s
 # ./src/backend/spotify/spotify.c
 #
 id: Albums
-msg: ’λμπουμ
+msg: Άλμπουμ
 
 id: Automatic login on start
-# Missing translation
-msg: 
+msg: Αυτόματη σύνδεση κατά την εκκίνηση
 
 id: Collaborative
 msg: Συνεργασία
@@ -843,7 +768,7 @@ id: Compilations
 msg: Συλλογές
 
 id: Forget me
-msg: Διαγραφή στοιχείων μου
+msg: Διαγραφή των στοιχείων μου
 
 id: Friends
 msg: Φίλοι
@@ -876,7 +801,7 @@ id: Search result
 msg: Αποτελέσματα Αναζήτησης
 
 id: Singles
-msg: Μονά
+msg: Singles
 
 id: Spotify friends
 msg: Φίλοι στο Spotify
@@ -906,14 +831,13 @@ msg: Καθάρισμα αρχείων Cache
 # ./src/fileaccess/fa_backend.c
 #
 id: Can't handle content type %d
-msg: Δεν μπορεί να χειριστεί τον τύπο περιεχομένου
+msg: Αδυναμία χειρισμού τύπων περιεχομένου %d
 
 id: Checking file contents
-# Missing translation
-msg: 
+msg: Έλεγχος περιεχόμενων αρχείου
 
 id: Unable to open file: %s
-msg: Δεν μπορεί να ανοιχτεί το αρχείο: %s
+msg: Αδυναμία ανοίγματος του αρχείου: %s
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -946,7 +870,7 @@ id: Show only supported files
 msg: Παρουσίαση μόνο υποστηριζόμενων αρχείων
 
 id: Sort folders first
-msg: Πρώτα τα μικρά αρχεία
+msg: Ταξινόμηση φακέλων πρώτα
 
 id: Sort on
 msg: Ταξινόμηση
@@ -964,15 +888,14 @@ msg: Αναζήτηση μέσω Spotlight
 # ./src/fileaccess/fileaccess.c
 #
 id: Are you sure you want to delete:
-msg: Είσαι σίγουρος ότι θέλεις να διαγραφεί:
+msg[0]: Είστε σίγουρος ότι θέλετε να διαγραψετε τα:
+msg[1]: Είστε σίγουρος ότι θέλετε να διαγραψετε το:
 
 id: BitTorrent
-# Missing translation
-msg: 
+msg: BitTorrent
 
 id: Browse archives as folders
-# Missing translation
-msg: 
+msg: Περιήγηση αρχείων σε φακέλους
 
 id: Enable file deletion from item menu
 msg: Ενεργοποίηση διαγραφής αρχείων από το  μενού εργαλείων
@@ -984,8 +907,7 @@ id: Show filename extensions
 msg: Εμφάνιση επεκτάσεων αρχείων
 
 id: Store per-file settings in filesystem
-# Missing translation
-msg: 
+msg: Αποθήκευση ρυθμίσεων ανα-αρχείο στο σύστημα αρχείων
 
 id: %d archive parts
 msg[0]: %d κομμάτια αρχείου
@@ -1014,8 +936,7 @@ id: Logon failure
 msg: Σφάλμα κατά την είσοδο
 
 id: Object name not found
-# Missing translation
-msg: 
+msg: Το όνομα του αντικειμένου δεν βρέθηκε
 
 #
 # ./src/i18n.c
@@ -1060,7 +981,7 @@ msg: Τριτεύων κωδικοποίηση γλώσσας υποτίτλων
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
-msg: Ρύθμιση χρήσης των κουμπιών του πληκτρολογίου και του τηλεχειριστηρίου
+msg: Ρύθμιση χαρτογράφησης κουμπιών του πληκτρολογίου και του τηλεχειριστηρίου
 
 id: Keymapper
 msg: Χάρτης Πλήκτρων
@@ -1087,26 +1008,22 @@ id: Go to standby after video ends
 msg: Τερματισμός λειτουργίας όταν τελειώσει το βίντεο
 
 id: Horizontal pan
-# Missing translation
-msg: 
+msg: Οριζόντια επέκταση
 
 id: Reset defaults for folder '%s'
-# Missing translation
-msg: 
+msg: Επαναφορά προεπιλογών για τον φάκελο '%s'
 
 id: Save as defaults for folder '%s'
-# Missing translation
-msg: 
+msg: Αποθήκευση προεπιλογών για τον φάκελο '%s'
 
 id: Save as global default
-# Missing translation
-msg: 
+msg: Αποθήκευση ως καθολική προεπιλογή
 
 id: Stretch video to fullscreen
-msg: Αναπαραγωγή βίντεο σε  πλήρη οθόνη
+msg: Αναπαραγωγή βίντεο σε πλήρη οθόνη
 
 id: Stretch video to widescreen
-msg: Αναπαραγωγή βίντεο σε  ευρεία οθόνη
+msg: Αναπαραγωγή βίντεο σε ευρεία οθόνη
 
 id: Subtitle delay
 msg: Καθυστέρηση υποτίτλων
@@ -1121,12 +1038,10 @@ id: Subtitle vertical displacement
 msg: Κάθετη μετατόπιση υποτίτλων
 
 id: Vertical pan
-# Missing translation
-msg: 
+msg: Κάθετη επέκταση
 
 id: Video frame interpolation
-# Missing translation
-msg: 
+msg: Παρεμβολή video frame 
 
 id: Video zoom
 msg: Μεγέθυνση βίντεο
@@ -1144,17 +1059,16 @@ id: Automatic
 msg: Αυτόματο
 
 id: Erase all playback info
-# Missing translation
-msg: 
+msg: Διαγραφή πληροφοριών αναπαραγωγής
 
 id: Manual
 msg: Χειροκίνητο
 
 id: Mark all as seen
-msg: Μαρκάρισμα όλον ότι τα έχω δει
+msg: Μαρκάρισμα όλων ότι τα έχω δει
 
 id: Mark all as unseen
-msg: Μαρκάρισμα όλον ότι δεν τα έχω δει
+msg: Μαρκάρισμα όλων ότι δεν τα έχω δει
 
 id: Metadata mode
 msg: Λειτουργία- Metadata
@@ -1193,11 +1107,10 @@ id: %d items deleted
 msg: %d αρχεία διαγράφηκαν
 
 id: Clear all metadata
-msg: Καθαρισμός όλον των αρχείων metadata
+msg: Καθαρισμός όλων των αρχείων metadata
 
 id: Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?
-# Missing translation
-msg: 
+msg: Ο καθαρισμός όλων των αρχείων metadata σημαίνει απώλεια <b>όλων</b> των αρχείων metadata από εξωτερικές πηγές όπως το themoviedb.org, κλπ\n\nΠληροφορίες όπως σημεία συνέχισης, μετρητές αναπαραγωγών, κλπ θα παραμείνουν.\nΕίστε σίγουροι ότι θέλετε να συνεχίσετε;
 
 #
 # ./src/metadata/mlp.c
@@ -1257,10 +1170,10 @@ msg: Όνομα φακέλου
 # ./src/navigator.c
 #
 id: Add and remove items on homepage
-msg: Προθήκη και αφαίρεση δυνατοτήτων στην αρχική οθόνη 
+msg: Προσθήκη και αφαίρεση δυνατοτήτων στην αρχική οθόνη 
 
 id: Added new bookmark: %s
-msg: Προστέθηκε νέος σελιδοδείκτης: %s
+msg: Προσθέθηκε νέος σελιδοδείκτης: %s
 
 id: Bookmarks
 msg: Σελιδοδείκτες
@@ -1272,7 +1185,7 @@ id: No handler for URL
 msg: Δεν υπάρχει κρατημένο URL
 
 id: Other
-msg: ’λλα
+msg: Άλλα
 
 id: Photos
 msg: Φωτογραφίες
@@ -1323,8 +1236,7 @@ id: Automatically upgrade plugins
 msg: Αυτόματη αναβάθμιση επεκτάσεων
 
 id: Available plugins
-# Missing translation
-msg: 
+msg: Διαθέσιμες επεκτάσεις
 
 id: Background
 msg: Υπόβαθρο
@@ -1333,8 +1245,7 @@ id: Beta testing passwords
 msg: Κωδικοί δοκιμαστικής έκδοσης 
 
 id: Browse available plugins
-# Missing translation
-msg: 
+msg: Περιήγηση διαθέσιμων επεκτάσεων
 
 id: Browsing
 msg: Αναζήτηση
@@ -1358,8 +1269,7 @@ id: Home page
 msg: Αρχική Σελίδα
 
 id: Installed plugins
-# Missing translation
-msg: 
+msg: Εγκατεστημένες επεκτάσεις
 
 id: Installed version higher than available
 msg: Η εγκατεστημένη έκδοση είναι πιο πρόσφατη από την διαθέσιμη
@@ -1368,16 +1278,16 @@ id: Installing
 msg: Εγκατάσταση
 
 id: List of albums
-msg: Λίστες ’λμπουμ
+msg: Λίστες Άλμπουμ
 
 id: Loading screen
-msg: Οθόνη Φόρτισης
+msg: Οθόνη Φόρτωσης
 
 id: Movies
 msg: Ταινίες
 
 id: Music streaming
-msg: Streaming  Μουσικής
+msg: Streaming Μουσικής
 
 id: Not installable
 msg: Δεν μπορεί να εγκατασταθεί
@@ -1389,14 +1299,13 @@ id: Not upgradable
 msg: Δεν μπορεί να αναβαθμιστεί
 
 id: On Screen Keyboards
-# Missing translation
-msg: 
+msg: Πληκτρολογια στην οθόνη
 
 id: Online TV
 msg: Διαδικτυακή TV
 
 id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
-msg: Το πρόσθετο %s % αποκαταστάθηκε επειδή μπορεί να προκαλέσει προβλήματα. Προσπάθησε να επανεγκαταστάσεις μια διαφορετική έκδοση χειροκίνητα.
+msg: Το πρόσθετο %s % καταργήθηκε επειδή μπορεί να προκαλέσει προβλήματα. Προσπάθηστε να επανεγκαταστήσετε μια διαφορετική έκδοση χειροκίνητα.
 
 id: Plugins
 msg: Πρόσθετα
@@ -1417,7 +1326,7 @@ id: Unable to load plugin.json: Malformed JSON
 msg: Αδυναμία φόρτωσης plugin.json: Ακατάλληλο JSON
 
 id: Uncategorized
-msg: Κατηγοριοποίηση 
+msg: Χωρίς Κατηγοριοποίηση 
 
 id: Up to date
 msg: Ενημερωμένο
@@ -1447,24 +1356,22 @@ id: Logout
 msg: Αποσύνδεση
 
 id: Open shell
-msg: ’νοιγμα Shell 
+msg: Άνοιγμα Shell 
 
 id: Power off system
 msg: Τερματισμός Συστήματος 
 
 id: Quit
-# Missing translation
-msg: 
+msg: Έξοδος
 
 id: SSH server
 msg: SSH-Server
 
 id: Standby
-msg: Τερματισμός Λειτουργίας
+msg: Λειτουργία Αναμονής
 
 id: Starting and stopping
-# Missing translation
-msg: 
+msg: Ξεκίνημα και σταμάτημα
 
 #
 # ./src/sd/sd.c
@@ -1635,7 +1542,7 @@ id: Seek using L2 and R2 button
 msg: Μετάβαση με την χρήση των L2 και R2 κουμπιών
 
 id: Yes with Select button
-msg: Επιλογή ναι με την χρήση του κουμπιού select
+msg: Επιλογή "ναι" με την χρήση του κουμπιού select
 
 #
 # ./src/ui/glw/glw_settings.c
@@ -1653,7 +1560,7 @@ id: Vertical underscan
 msg: Κάθετο underscan (περίγραμμα)
 
 id: Wrap when reaching beginning/end of lists
-msg: Ατελείωτες κινήσεις μέσα  στους καταλόγους
+msg: Ατελείωτες κινήσεις μέσα στους καταλόγους
 
 #
 # ./src/ui/glw/glw_x11.c
@@ -1668,32 +1575,31 @@ id: Auto-switch to this mode
 msg: Αυτόματη μετάβαση σε αυτήν την λειτουργεία 
 
 id: DVI-Video color range
-msg: Ποικιλία χρωμάτων DVI-Βίντεο
+msg: Εύρος χρωμάτων DVI-Βίντεο
 
 id: Switch to this mode now
-msg: Μετάβαση σε αυτήν την λειτουργεία τώρα
+msg: Μετάβαση σε αυτήν την λειτουργία τώρα
 
 id: Video modes
-msg: Λειτουργείες Βίντεο
+msg: Λειτουργίες Βίντεο
 
 #
 # ./src/upgrade.c
 #
 id: %s version %s is available
-# Missing translation
-msg: 
+msg: Η έκδοση του %s %s είναι διαθέσιμη
 
 id: Notify about upgrades
 msg: Ενημέρωση για αναβαθμίσεις
 
 id: Open download page
-msg: ’νοιγμα σελίδας λήψης
+msg: Άνοιγμα σελίδας λήψης
 
 id: Software upgrade
 msg: Αναβάθμιση Προγράμματος 
 
 id: Upgrade to releases from
-msg: Ενημέρωση για
+msg: Αναβάθμιση ενημερώσεων από
 
 #
 # ./src/upnp/upnp_browse.c
@@ -1702,10 +1608,10 @@ id: Device not found
 msg: Η συσκευή δεν βρέθηκε
 
 id: Malformed URI after device
-msg: ’κυρη URI από την συσκευή
+msg: Εσφαλμένη μορφή URI από την συσκευή
 
 id: Malformed URI after service
-msg: ’κυρη URI από την υπηρεσία
+msg: Εσφαλμένη μορφή URI από την υπηρεσία
 
 id: Service not found
 msg: Η υπηρεσία δεν βρέθηκε
@@ -1714,12 +1620,10 @@ msg: Η υπηρεσία δεν βρέθηκε
 # ./src/video/video_settings.c
 #
 id: Always
-# Missing translation
-msg: 
+msg: Πάντα
 
 id: Ask
-# Missing translation
-msg: 
+msg: Ερώτηση
 
 id: Automatically play next video in list
 msg: Αυτόματη αναπαραγωγή του επόμενου βίντεο στην λίστα 
@@ -1734,32 +1638,28 @@ id: Enable VDPAU
 msg: Ενεργοποίηση VDPAU
 
 id: Maximum resolution for deinterlacer
-msg: Μέγιστη ανάλυση για τον επανακωδικοποιητή
+msg: Μέγιστη ανάλυση για απόπλεξη
 
 id: Never
-# Missing translation
-msg: 
+msg: Ποτέ
 
 id: No limit
 msg: Χωρίς όριο
 
 id: Per-file volume
-# Missing translation
-msg: 
+msg: Ένταση ανα-αρχείο
 
 id: Preferred VDPAU deinterlacer method
-msg: Προτιμώμενη μέθοδος επανακωδικοποίησης
+msg: Προτιμώμενη μέθοδος απόπλεξης
 
 id: Resume video playback
 msg: Συνέχιση αναπαραγωγής βίντεο
 
 id: Step when seeking backward
-# Missing translation
-msg: 
+msg: Βήμα κατα την αναζήτηση προς τα πίσω
 
 id: Step when seeking forward
-# Missing translation
-msg: 
+msg: Βήμα κατα την αναζήτηση προς τα μπροστά
 
 id: Temporal
 msg: Προσωρινός
@@ -1768,8 +1668,7 @@ id: Temporal/Spatial
 msg: Προσωρινός/Με Διαστήματα
 
 id: Up / Down during video playback controls
-# Missing translation
-msg: 
+msg: Πάνω / Κάτω κατά την αναπαραγωγή video
 
 id: Video acceleration and display behaviour
 msg: Επιτάχυνση βίντεο και ρυθμίσεις αναπαραγωγής
