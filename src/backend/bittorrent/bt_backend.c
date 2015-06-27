@@ -80,10 +80,10 @@ torrent_open_url(const char **urlp, char *errbuf, size_t errlen)
       *urlp = NULL;
     } else {
       url += 40;
-      if(*url == 0)
+      if(*url == 0 || !strcmp(url, "/"))
         *urlp = NULL;
       else
-        *urlp = url;
+        *urlp = url + 1;
     }
   } else {
 
@@ -227,7 +227,7 @@ torrent_movie_open(prop_t *page, const char *url0, int sync)
   htsmsg_add_str(vp, "title", to->to_title);
 
 
-  snprintf(url, sizeof(url), "torrentfile://%s%s",
+  snprintf(url, sizeof(url), "torrentfile://%s/%s",
            hashstr, best->tf_fullpath);
   htsmsg_add_str(vp, "canonicalUrl", url);
 
@@ -320,7 +320,7 @@ bt_playvideo(const char *url, media_pipe_t *mp,
   bin2hex(hashstr, sizeof(hashstr), to->to_info_hash, 20);
   hashstr[40] = 0;
 
-  snprintf(newurl, sizeof(newurl), "torrentfile://%s%s",
+  snprintf(newurl, sizeof(newurl), "torrentfile://%s/%s",
            hashstr, best->tf_fullpath);
 
   torrent_retain(to);
