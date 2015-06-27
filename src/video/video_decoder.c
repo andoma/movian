@@ -192,7 +192,7 @@ vd_thread(void *aux)
       TAILQ_REMOVE(&mq->mq_q_ctrl, ctrl, mb_link);
       mb = ctrl;
 
-    } else if(aux != NULL && aux->mb_user_time < vd->vd_subpts + 1000000LL) {
+    } else if(aux != NULL && aux->mb_pts < vd->vd_subpts + 1000000LL) {
 
       if(vd->vd_hold) {
 	hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
