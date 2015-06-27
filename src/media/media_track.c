@@ -167,6 +167,18 @@ mtm_event_type(media_track_mgr_t *mtm)
  *
  */
 static void
+mtm_send_sub_unload(media_pipe_t *mp)
+{
+  media_buf_t *mb = media_buf_alloc_locked(mp, 0);
+  mb->mb_data_type = MB_CTRL_EXT_SUBTITLE;
+  mb->mb_data = NULL;
+  mb_enq(mp, &mp->mp_video, mb);
+}
+
+/**
+ *
+ */
+static void
 mtm_rethink(media_track_mgr_t *mtm)
 {
   media_track_t *mt, *best = NULL;
@@ -189,6 +201,7 @@ mtm_rethink(media_track_mgr_t *mtm)
     if(mtm->mtm_type == MEDIA_TRACK_MANAGER_SUBTITLES) {
       // Stop any pending load of subtitles
       mystrset(&mtm->mtm_mp->mp_subtitle_loader_url, NULL);
+      mtm_send_sub_unload(mtm->mtm_mp);
     }
     return;
   }
