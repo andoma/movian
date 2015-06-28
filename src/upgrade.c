@@ -55,7 +55,7 @@ extern char *showtime_bin;
 
 static HTS_MUTEX_DECL(upgrade_mutex);
 
-static const char *ctrlbase = "http://upgrade.movian.tv/upgrade/1";
+static const char *ctrlbase = "http://upgrade.movian.tv/upgrade/2";
 static const char *artifact_type;
 static const char *archname;
 
