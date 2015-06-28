@@ -1,0 +1,1680 @@
+language: Finnish
+native: Suomi
+maintainer: Mikko Virtanen <virtanmi@gmail.com>
+#
+# ./glwskins/default/cmdmenu.view
+#
+id: Add current page to bookmarks
+msg: Lisää nykyinen sivu kirjanmerkkeihin
+
+id: Open settings
+msg: Avaa asetukset
+
+id: Remove current page from bookmarks
+msg: Poista nykyinen sivu kirjanmerkeistä
+
+#
+# ./glwskins/default/cmdmenu/cmdmenu_common.view
+#
+id: Activate sleep timer
+msg: Uniajastus päälle
+
+id: Disable sleep timer
+msg: Uniajastus pois päältä
+
+id: Exit %s
+msg: Poistu %s
+
+id: Go to Home screen
+msg: Palaa pääsivulle
+
+id: Hide system info
+msg: Piilota järjestelmätiedot
+
+id: Master volume
+msg: Äänentaso
+
+id: Navigation
+msg: Ohjaus
+
+id: Open Settings
+msg: Avaa asetukset
+
+id: Playqueue
+msg: Soittolista
+
+id: Power off
+msg: Sulje virta
+
+id: Reload current page
+msg: Lataa sivu uusiksi
+
+id: Show system info
+msg: Näytä järjestelmätiedot
+
+id: Suspend
+msg: Keskeytä
+
+id: System
+msg: Järjestelmä
+
+id: Time until sleep
+msg: Uniajastuksen ajankohta
+
+id: dB
+msg: dB
+
+id: min
+msg: min
+
+#
+# ./glwskins/default/cmdmenu/cmdmenu_dir.view
+#
+id: Add '%s' to home screen
+msg: Lisää '%s' pääsivulle
+
+id: Remove '%s' from home screen
+msg: Poista '%s' pääsivulta
+
+#
+# ./glwskins/default/cmdmenu/cmdmenu_item.view
+#
+id: Continue from %s
+msg: Jatka kohdasta %s
+
+id: Continue playback here
+msg: Aloita toisto tästä
+
+id: Delete
+msg: Poista
+
+id: Mark as seen
+msg: Merkkaa nähdyksi
+
+id: Mark as unseen
+msg: Merkkaa näkemättömäksi
+
+id: Play from beginning
+msg: Toista alusta
+
+id: Play until end of list
+msg: Toista listan loppuun
+
+id: Queue
+msg: Toistolista
+
+id: Star
+msg: Suosikki
+
+id: Unstar
+msg: Inhokki
+
+#
+# ./glwskins/default/cmdmenu/cmdmenu_video.view
+#
+id: Audio
+msg: Ääni
+
+id: Audio settings
+msg: Ääniasetukset
+
+id: Audio tracks
+msg: Ääniraidat
+
+id: Chapters
+msg: Kappaleet
+
+id: Seek by time
+msg: Aikahaku
+
+id: Settings
+msg: Asetukset
+
+id: Subtitle settings
+msg: Tekstitysasetukset
+
+id: Subtitle tracks
+msg: Tekstiraidat
+
+id: Subtitles
+msg: Tekstitykset
+
+id: Video
+msg: Video
+
+id: Video menu
+msg: Videovalikko
+
+id: Video settings
+msg: Videoasetukset
+
+#
+# ./glwskins/default/loading.view
+#
+id: %d kb/s
+msg: %d kb/s
+
+id: Bitrate:
+msg: Bitrate:
+
+#
+# ./glwskins/default/log.view
+#
+id: System log
+msg: Systemlog
+
+#
+# ./glwskins/default/osk.view
+#
+id: Cancel
+msg: Peru
+
+id: Clear
+msg: Tyhjennä
+
+id: Default
+msg: Oletus
+
+id: Keyboard layout:
+msg: Näppäimistö
+
+id: OK
+msg: OK
+
+#
+# ./glwskins/default/pages/directory.view
+#
+id: Album
+msg: Albumi
+
+id: Artist
+msg: Artisti
+
+id: Custom
+msg: Erikoinen
+
+id: Images
+msg: Kuvat
+
+id: List
+msg: Lista
+
+id: Slideshow
+msg: Diaesitys
+
+id: Tvchannels
+msg: TV-kanavat
+
+id: View
+msg: Näytä
+
+#
+# ./glwskins/default/pages/discovered.view
+#
+id: Discovered resources on local network
+msg: Löydetyt sijainnit lähiverkosta
+
+#
+# ./glwskins/default/pages/home.view
+#
+id: Tiled
+msg: Ruudukko
+
+#
+# ./glwskins/default/pages/home_clist.view
+#
+id: Apps
+msg: Sovellukset
+
+id: Dismiss
+msg: Hylkää
+
+id: Search / Open URL
+msg: Etsi / avaa URL
+
+#
+# ./glwskins/default/pages/iteminfo/image.view
+#
+id: Camera: 
+msg: Kamera:
+
+id: Date: 
+msg: Päiväys:
+
+#
+# ./glwskins/default/pages/iteminfo/plugin.view
+#
+id: %s %s or newer is required
+msg: vaatimus: %s %s (tai uudempi)
+
+id: Author: 
+msg: Tekijä:
+
+id: Available version: 
+msg: Saatavilla oleva versio:
+
+id: Installed version: 
+msg: Asennettu versio:
+
+#
+# ./glwskins/default/pages/iteminfo/video.view
+#
+id: Duration:
+msg: Pituus:
+
+id: File date:
+msg: Tiedoston aikaleimaus:
+
+id: Genre:
+msg: Genre:
+
+id: Metadata from
+msg: Metadata: 
+
+id: Rating:
+msg: Arvostelu:
+
+id: Year:
+msg: Vuosi:
+
+id: Seen %d times
+msg[0]: Nähty %d kertaa
+msg[1]: Nähty %d kertaa
+
+#
+# ./glwskins/default/pages/listitems/add.view
+#
+id: Add new entry
+msg: Lisää uusi nimike
+
+#
+# ./glwskins/default/pages/listitems/bool.view
+#
+id: No
+msg: Ei
+
+id: Yes
+msg: Kyllä
+
+#
+# ./glwskins/default/pages/listitems/font.view
+#
+id: Condensed
+msg: Pieni
+
+id: Main
+msg: Normaali
+
+id: Subs
+msg: Tekstitykset
+
+#
+# ./glwskins/default/pages/listitems/plugin.view
+#
+id: Install
+msg: Asennus
+
+id: Uninstall
+msg: Asennuksen poisto
+
+id: Upgrade
+msg: Päivitys
+
+#
+# ./glwskins/default/pages/openerror.view
+#
+id: Unable to open %s
+msg: Ei voi avata %s
+
+id: resource
+msg: resurssi
+
+#
+# ./glwskins/default/pages/playqueue.view
+#
+id: Track %d / %d
+msg: Raita %d / %d
+
+#
+# ./glwskins/default/pages/slideshow.view
+#
+id: Paused
+msg: Tauolla
+
+#
+# ./glwskins/default/pages/upgrade.view
+#
+id: %s is up to date
+msg: %s on ajantasolla
+
+id: An error occured during download
+msg: Virhe tapahtui ladattaessa
+
+id: Available version:
+msg: Saatavilla oleva versio:
+
+id: Changelog for %s releases
+msg: Muutoslogi %s julkaisuille
+
+id: Check for updates now
+msg: Tarkista päivitykset nyt
+
+id: Checking for updates...
+msg: Tarkistetaan päivityksiä...
+
+id: Checking installed version of %s
+msg: Tarkistetaan asennettua versiota %s
+
+id: Current version:
+msg: Nykyinen versio:
+
+id: Download and install...
+msg: Lataa ja asenna...
+
+id: Downloading %s
+msg: Lataa %s
+
+id: New version %s is available for download
+msg: Uusi versio saatavilla %s ladattavaksi
+
+id: No upgrade available
+msg: Ei päivityksiä saatavilla
+
+id: Patching %s
+msg: Päivittää... %s
+
+id: Restarting %s in %d seconds...
+msg: Uudelleenkäynnistää %s : %d sekuntia...
+
+id: Retry...
+msg: Uudelleen
+
+id: Stable
+msg: Vakaa
+
+id: Testing
+msg: Testaa
+
+id: Unable to query for new version
+msg: Uuden version haku ei onnistunut
+
+#
+# ./glwskins/default/pages/video.view
+#
+id: A/V diff:
+msg: A/V diff:
+
+id: Audio codec:
+msg: Ääni codec:
+
+id: Audio queue len:
+msg: Äänitejonon pituus:
+
+id: Audio volume adjustment: %d dB
+msg: Äänenvoimakkuuden säätö: %d dB
+
+id: CPU is too slow to decode this video
+msg: Prosessori on liian hidas purkamaan tätä videota
+
+id: Download speed:
+msg: Latausnopeus:
+
+id: Packet buffer:
+msg: Pakettijono:
+
+id: Playback status
+msg: Toiston tila
+
+id: Remaining buffer:
+msg: Jäljellä oleva jono:
+
+id: Remote queue drops:
+msg: Etäjono:
+
+id: Remote queue len:
+msg: Etäjonon pituus:
+
+id: Source:
+msg: Lähde:
+
+id: Video bitrate:
+msg: Videon bitrate:
+
+id: Video codec:
+msg: Video codec:
+
+id: Video decode time:
+msg: Videon purkuaika:
+
+id: Video queue len:
+msg: Videojonon pituus:
+
+#
+# ./glwskins/default/playdecks/dvd.view
+#
+id: Chapter: %d
+msg: Kappale: %d
+
+id: Title: %d
+msg: Nimike: %d
+
+#
+# ./glwskins/default/popups/auth.view
+#
+id: Domain
+msg: Domain
+
+id: Password
+msg: Salasana
+
+id: Remember me
+msg: Muista minut
+
+id: Username
+msg: Käyttäjätunnus
+
+#
+# ./glwskins/default/popups/resume.view
+#
+id: No, Start over
+msg: Ei, aloita uudelleen
+
+id: Resume %s from %s
+msg: Toista %s kohdasta %s
+
+#
+# ./glwskins/default/screensaver.view
+#
+id: No media loaded
+msg: Ei mediaa ladattuna
+
+#
+# ./glwskins/default/sysinfo.view
+#
+id: CPU Temp
+msg: CPU-prosessorin lämpötila
+
+id: Fragmentation
+msg: Hajanaisuus (Fragmentation)
+
+id: GPU Temp
+msg: GPU-grafiikkaprosessorin lämpötila
+
+id: HDD Avail
+msg: Kiintolevy(t) saatavilla
+
+id: Inactive mem
+msg: Käyttämätöntä muistia
+
+id: Memory usage
+msg: Muistinkulutus
+
+id: System Free
+msg: Järjestelmässä vapaana
+
+id: System Total
+msg: Järjestelmässä yhteensä
+
+#
+# ./glwskins/default/universe.view
+#
+id: Audio muted
+msg: Ääni mykistetty
+
+id: Master volume: %d dB
+msg: Äänentaso: %d dB
+
+#
+# ./src/api/tmdb.c
+#
+id: Language (ISO 639-1 code)
+msg: Kieli (ISO 639-1 merkistö)
+
+id: Use original title
+msg: Käytä alkuperäistä nimikettä
+
+#
+# ./src/arch/linux/pulseaudio.c
+#
+id: Unable to initialize audio system %s -- %s
+msg: Äänijärjestelmän alustus epänonnistui %s -- %s
+
+#
+# ./src/arch/ps3/ps3_main.c
+#
+id: System is low on memory (%d kB RAM available)
+msg: Järjestelmän muisti loppumassa (%d kB jäljellä)
+
+#
+# ./src/arch/ps3/ps3_vdec.c
+#
+id: Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration
+msg: Purku ei mahdollista PS3:lla. Kiihdytetty toisto pois käytöstä.
+
+id: Cell-h264: Broken headers, Disabling acceleration
+msg: Tiedostovika, kiihdytetty toisto pois käytöstä.
+
+
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+msg: Cell-h264: Pakotetaan taso 4.2 sisällölle: %d.%d. Tämä voi aiheuttaa häiriötä toiminnassa.
+
+id: Unable to accelerate %s, library not loaded.
+msg: Ei voida ajaa kiihdytettynä %s, kirjastoa ei ladattuna.
+
+id: Unable to open Cell codec. Error 0x%x
+msg: Cell koodekin avaus epäonnistui. Virhe 0x%x
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+msg: Cell koodekin avaus epännistui. Muistia ei voida varata: %d tavua.
+
+id: Unable to query Cell codec. Error 0x%x
+msg: Cell koodekin kutsu epäonnistui. Virhe 0x%x
+
+#
+# ./src/arch/rpi/rpi_audio.c
+#
+id: 8 Channel PCM
+msg: 8 kavavan PCM
+
+id: AC3 Pass-Through
+msg: AC3 läpitoisto
+
+id: Analog
+msg: Analogi
+
+id: Audio output port
+msg: Äänen ulostulo
+
+id: Autodetect
+msg: Automaattinen tunnistus
+
+id: DTS Pass-Through
+msg: DTS läpitoisto
+
+id: HDMI
+msg: HDMI
+
+id: Off
+msg: Pois päältä
+
+id: On
+msg: Päällä
+
+#
+# ./src/arch/rpi/rpi_cec.c
+#
+id: Configure communications with your TV
+msg: Säädä verkkoasetukset TV.n kanssa
+
+id: Consumer Electronics Control
+msg: CEC
+
+#
+# ./src/audio2/audio.c
+#
+id: Audio delay
+msg: Äänen viive
+
+id: Audio gain adjustment during video playback
+msg: Äänen korotus videotoiston aikana
+
+id: Audio settings during video playback
+msg: Ääniasetukset videotoiston aikana
+
+id: Setup audio output
+msg: Aseta äänen ulostulo
+
+#
+# ./src/audio2/audio_test.c
+#
+id: 440Hz sinewave -12dB
+msg: 440Hz sinuskäyrä -12dB
+
+id: Audio test
+msg: Äänitesti
+
+id: Center
+msg: Keskellä
+
+id: Front Left
+msg: Etuvasen
+
+id: Front Right
+msg: Etuoikea
+
+id: LFE
+msg: Subwoofer
+
+id: Pink noise
+msg: Vaaleanpunainen kohina
+
+id: Play test signal
+msg: Soita testiääni
+
+id: Rear Left
+msg: Takavasen
+
+id: Rear Right
+msg: Takaoikea
+
+id: Speaker position
+msg: Kaiuttimet
+
+id: Surround Left
+msg: Surround vasen
+
+id: Surround Right
+msg: Surround oikea
+
+id: Test signal type
+msg: Testiäänen tyyppi
+
+#
+# ./src/backend/bittorrent/bt_backend.c
+#
+id: No files in torrent
+msg: Ei tiedostoja torrentissa
+
+id: Unable to open torrent: %s
+msg: Torrent-tiedostoa ei voida avata: %s
+
+#
+# ./src/backend/bittorrent/diskio.c
+#
+id: Cached torrents use %d MB out of allowed %d MB. Total free space on volume: %d MB
+msg: Esiladatut torrentit kuluttavat %d MB sallitusta %d MB. Vapaatilaa käytössä: %d MB
+
+#
+# ./src/backend/bittorrent/fa_torrent.c
+#
+id: Connected peers
+msg: Yhdistettyjä vertaisverkon käyttäjiä
+
+id: Known peers
+msg: Tunnistetut vertaisverkon käyttäjät
+
+id: Receiving from
+msg: Lataamassa henkilöltä
+
+id: Torrent leechers
+msg: Torrent-lataajat
+
+id: Torrent seeders
+msg: Torrent-syöttäjät
+
+#
+# ./src/backend/bittorrent/torrent_settings.c
+#
+id: Clear cache
+msg: Tyhjennä välimuisti
+
+id: Enable bittorrent
+msg: Mahdollista bittorrent
+
+id: Max usage of free space for caching torrents
+msg: Maksimiraja torrenteille varatuille tilalle
+
+id: Status
+msg: Tila
+
+id: Torrent cache path
+msg: Torrentin välimuistin polku
+
+#
+# ./src/backend/dvd/dvd.c
+#
+id: DVD
+msg: DVD
+
+id: DVD read error, restarting disc
+msg: DVD lukuvirhe, uudelleenkäynnistetään levy
+
+#
+# ./src/backend/hls/hls.c
+#
+id: Primary
+msg: Ensisijainen
+
+id: Supplementary
+msg: Lisuke
+
+#
+# ./src/backend/htsp/htsp.c
+#
+id: Invalid HTSP URL
+msg: Vääräntyyppinen HTSP URL
+
+#
+# ./src/backend/search.c
+#
+id: Search
+msg: Etsi
+
+id: Search result for: %s
+msg: Hakutulokset: %s
+
+#
+# ./src/backend/spotify/spotify.c
+#
+id: Albums
+msg: Albumit
+
+id: Automatic login on start
+msg: Automaattinen sisäänkirjautuminen käynnistyksessä
+
+id: Collaborative
+msg: Yhteistyönä
+
+id: Compilations
+msg: Kokoelmat
+
+id: Forget me
+msg: Unohda minut
+
+id: Friends
+msg: Ystävät
+
+id: High bitrate
+msg: Korkea bitrate
+
+id: Inbox
+msg: Saapuneet
+
+id: New albums on Spotify
+msg: Uusia albumeja Spotifyssä
+
+id: New releases
+msg: Uudet julkaisut
+
+id: Offline
+msg: Offline
+
+id: Offline sync in 96kbps
+msg: Offline tahdistus: 96kbps
+
+id: Playlists
+msg: Soittolistat
+
+id: Relogin (switch user)
+msg: Uudelleenkirjaudu (vaihda käyttäjää)
+
+id: Search result
+msg: Hakutulokset
+
+id: Singles
+msg: Singlet
+
+id: Spotify friends
+msg: Spotify-ystävät
+
+id: Spotify music service
+msg: Spotify musiikkipalvelut
+
+id: Spotify playlists
+msg: Spotify soittolistat
+
+id: Spotify: Connection error: %s
+msg: Spotify: Verkkovirhe: %s
+
+id: Starred
+msg: Tykätty
+
+#
+# ./src/blobcache_file.c
+#
+id: Cache cleared
+msg: Välimuisti puhdistettu
+
+id: Clear cached files
+msg: Puhdista välimuistin tiedostot
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+msg: Ei voida käsitellä tiedostotyyppiä %d
+
+id: Checking file contents
+msg: Tarkastellaan tiedoston sisältöä
+
+id: Unable to open file: %s
+msg: Ei voida avata tiedostoa: %s
+
+#
+# ./src/fileaccess/fa_locatedb.c
+#
+id: Search using Unix locatedb
+msg: Etsi käyttäen: Unix locatedb
+
+#
+# ./src/fileaccess/fa_scanner.c
+#
+id: Artists
+msg: Artistit
+
+id: Date (newest first)
+msg: Päiväys (uusin ensin)
+
+id: Date (oldest first)
+msg: Päiväys(vanhin ensin)
+
+id: Deleted %s
+msg: Poistettu %s
+
+id: Filename
+msg: Tiedostonimi
+
+id: Indexed mode
+msg: Indeksointitila
+
+id: Show only supported files
+msg: Näytä vain tuetut tiedostot
+
+id: Sort folders first
+msg: Järjestä kansiot ensin
+
+id: Sort on
+msg: Järjestä
+
+id: Unable to delete %s\n%s
+msg: Ei voida poistaa %s\n%s
+
+#
+# ./src/fileaccess/fa_spotlight.c
+#
+id: Search using spotlight
+msg: Etsi käyttäen Spotlightia
+
+#
+# ./src/fileaccess/fileaccess.c
+#
+id: Are you sure you want to delete:
+msg: Oletko varma että haluat poistaa:
+
+id: BitTorrent
+msg: BitTorrent
+
+id: Browse archives as folders
+msg: Käsittele pakettitiedostot kansioina
+
+id: Enable file deletion from item menu
+msg: Mahdollista tiedoston poisto valikosta
+
+id: File browsing
+msg: Tiedostoselaus
+
+id: Show filename extensions
+msg: Näytä tiedostopäätteet
+
+id: Store per-file settings in filesystem
+msg: Säilytä tiedostokohtaiset asetukset
+
+id: %d archive parts
+msg[0]: %d pakettitiedostot
+msg[1]: %d pakettitiedosto
+
+id: %d directories
+msg[0]: %d kansiot
+msg[1]: %d kansio
+
+id: %d files
+msg[0]: %d tiedostot
+msg[1]: %d tiedosto
+
+#
+# ./src/fileaccess/smb/fa_nativesmb.c
+#
+id: Access denied
+msg: Käyttö estetty
+
+id: Account restricted
+msg: Tili rajoitettu
+
+id: Bad network share name
+msg: Väärä verkon jakonimi
+
+id: Logon failure
+msg: Kirjautuminen epäonnistui
+
+id: Object name not found
+msg: Objektin nimeä ei löydetty
+
+#
+# ./src/i18n.c
+#
+id: Default character set
+msg: Ensijainen merkistö
+
+id: Ignore 'The' at beginning of words when sorting
+msg: Älä huomioi "The"-sanaa järjestettäessä
+
+id: Language
+msg: Kieli
+
+id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+msg: Kielet asetetaan kolmen kirjaimen järjestelmällä kuten: eng, swe, fra
+
+id: Languages
+msg: Kielet
+
+id: Preferred languages
+msg: Ensisijaiset kielet
+
+id: Primary audio language code
+msg: Ensisijainen ääniraidan tekstitys
+
+id: Primary subtitle language code
+msg: Ensisijainen tekstityskieli
+
+id: Secondary audio language code
+msg: Toissijainen ääniraidan tekstitys
+
+id: Secondary subtitle language code
+msg: Toissijainen tekstityskieli
+
+id: Tertiary audio language code
+msg: Kolmas ääniraidan tekstitys
+
+id: Tertiary subtitle language code
+msg: Kolmas tekstityskieli
+
+#
+# ./src/keymapper.c
+#
+id: Configure mapping of keyboard and remote controller keys
+msg: Määritä näppäimistön ja etähallintalaitteen toiminnot
+
+id: Keymapper
+msg: Näppäinkartta
+
+#
+# ./src/keyring.c
+#
+id: Forget remembered passwords
+msg: Unohda salasanat
+
+id: Rembered passwords erased
+msg: Salasanat poistettu
+
+#
+# ./src/media/media_settings.c
+#
+id: Align subtitles on video frame
+msg: Sijoita tekstitykset videoresoluution mukaan
+
+id: Audio volume
+msg: Äänenvoimakkuus
+
+id: Go to standby after video ends
+msg: Sammuta laite kun video päättyy
+
+id: Horizontal pan
+msg: Vaakasijoitus
+
+id: Reset defaults for folder '%s'
+msg: Palauta alkuperäisasetukset kansiolle '%s'
+
+id: Save as defaults for folder '%s'
+msg: Tallenna oletusasetukseksi kansiolle '%s'
+
+id: Save as global default
+msg: Tallenna yleisasetukseksi
+
+id: Stretch video to fullscreen
+msg: Venytä video koko ruudun kokoiseksi
+
+id: Stretch video to widescreen
+msg: Venytä video laajakuvaksi
+
+id: Subtitle delay
+msg: Tekstityksen viive
+
+id: Subtitle horizontal displacement
+msg: Tekstityksen vaakasijainti
+
+id: Subtitle scaling
+msg: Tekstityksen koko
+
+id: Subtitle vertical displacement
+msg: Tekstityksen pystysijainti
+
+id: Vertical pan
+msg: Pystysijoitus
+
+id: Video frame interpolation
+msg: Videon interpolaatio
+
+id: Video zoom
+msg: Video zoom
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+msg: Indeksointi
+
+#
+# ./src/metadata/decoration.c
+#
+id: Automatic
+msg: Automaattinen
+
+id: Erase all playback info
+msg: Poista kaikki toistoon liittyvä tieto
+
+id: Manual
+msg: Manuaali
+
+id: Mark all as seen
+msg: Merkkaa kaikki nähdyksi
+
+id: Mark all as unseen
+msg: Merkkaa kaikki näkemättömäksi
+
+id: Metadata mode
+msg: Metadata moodi
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+msg: Sisällytetty tiedostoon
+
+id: Track %d
+msg: Raita %d
+
+#
+# ./src/metadata/metadata_sources.c
+#
+id: Enabled
+msg: Sallittu
+
+id: Metadata
+msg: Metadata
+
+id: Metadata configuration and provider settings
+msg: Metadata säätö ja tarjonta-asetukset
+
+id: Providers for Music
+msg: Musiikin tarjoajat
+
+id: Providers for Video
+msg: Videon tarjoajat
+
+#
+# ./src/metadata/metadb.c
+#
+id: %d items deleted
+msg: %d nimikettä poistettu
+
+id: Clear all metadata
+msg: Tyhjennä kaikki metadata
+
+id: Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?
+msg: Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?
+
+
+#
+# ./src/metadata/mlp.c
+#
+id: Custom search query
+msg: Tarkennettu haku
+
+id: Custom title
+msg: Nimikkeen nimi
+
+id: IMDb ID
+msg: IMDb ID
+
+id: Metadata loaded from '%s' using %s
+msg: Metadata ladattu '%s', käyttäen %s
+
+id: Metadata search
+msg: Metadatahaku
+
+id: Metadata source
+msg: Metadatalähde
+
+id: Movie
+msg: Elokuva
+
+id: Movie title
+msg: Elokuvan nimi
+
+id: No data found
+msg: Ei dataa saatavilla
+
+id: None
+msg: Ei mikään
+
+id: Refresh metadata
+msg: Päivitä metadata
+
+id: Title, Season, Episode
+msg: Nimike, Kausi, Jakso
+
+id: custom IMDb ID
+msg: erikois IMDb ID
+
+id: custom query
+msg: tarkennettu kysely
+
+id: filename
+msg: tiedostonimi
+
+id: filename as TV episode
+msg: tiedostonimi kuten TV jakso
+
+id: folder name
+msg: kansionimi
+
+#
+# ./src/navigator.c
+#
+id: Add and remove items on homepage
+msg: Lisää ja poista nimikkeitä pääsivulta
+
+id: Added new bookmark: %s
+msg: Lisätty uusi kirjanmerkki: %s
+
+id: Bookmarks
+msg: Kirjanmerkit
+
+id: Music
+msg: Musiikki
+
+id: No handler for URL
+msg: No handler for URL
+
+id: Other
+msg: Muu
+
+id: Photos
+msg: Kuvat
+
+id: Removed bookmark: %s
+msg: Poistettu kirjanmerkki: %s
+
+id: TV
+msg: TV
+
+id: Title
+msg: Nimike
+
+id: Type
+msg: Tyyppi
+
+id: URL
+msg: URL
+
+#
+# ./src/networking/connman.c
+#
+id: Enable Wi-Fi
+msg: Päälle Wi-Fi
+
+id: Network connections
+msg: Verkkosijainnit
+
+#
+# ./src/networking/ftp_server.c
+#
+id: Enable FTP server
+msg: FTP-palvelin päälle
+
+id: FTP server
+msg: FTP palvelin
+
+id: Server TCP port
+msg: Palvelimen TCP portti
+
+#
+# ./src/plugins.c
+#
+id: Alternate plugin Repository URL
+msg: Vaihtoehtoinen lisäosien sijaintiosoite
+
+id: Automatically upgrade plugins
+msg: Päivitä lisäosat automaattisesti
+
+id: Available plugins
+msg: Saatavilla olevat lisäosat
+
+id: Background
+msg: Tausta
+
+id: Beta testing passwords
+msg: Betatest salasanat
+
+id: Browse available plugins
+msg: Selaa saatavilla olevia lisäosia
+
+id: Browsing
+msg: Selaa
+
+id: Cloud services
+msg: Pilvipalvelut
+
+id: Corrupt plugin bundle
+msg: Viallinen lisäosa
+
+id: Disk write error
+msg: Ei voida kirjoittaa levylle
+
+id: Downloading
+msg: Lataamassa
+
+id: File open error
+msg: Tiedoston avaamisvirhe
+
+id: Home page
+msg: Pääsivu
+
+id: Installed plugins
+msg: Asennetut lisäosat
+
+id: Installed version higher than available
+msg: Asennetut lisäosat uudempia kuin saatavilla olevat
+
+id: Installing
+msg: Asentaa
+
+id: List of albums
+msg: Albumilista
+
+id: Loading screen
+msg: Latauskuva
+
+id: Movies
+msg: Elokuva
+
+id: Music streaming
+msg: Musiikin suoratoisto
+
+id: Not installable
+msg: Ei asennettavissa
+
+id: Not installed
+msg: Ei asennettu
+
+id: Not upgradable
+msg: Ei päivitettävissä
+
+id: On Screen Keyboards
+msg: On Screen Keyboards
+
+id: Online TV
+msg: Online TV
+
+id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
+msg: Lisäosa %s %on poistettu käytöstä koska se voi aiheuttaa epävakautta. Voit yrittää asentaa toisen version käsin.
+
+id: Plugins
+msg: Lisäosat
+
+id: Preferred views from plugins
+msg: Ensijaiset näkymät lisäosille
+
+id: Screen saver
+msg: Ruudunsäästäjä
+
+id: TV channels
+msg: TV-kanavat
+
+id: Unable to load plugin.json: %s
+msg: Ei voida ladata plugin.json: %s
+
+id: Unable to load plugin.json: Malformed JSON
+msg: Ei voida ladata plugin.json: JSON epänormaali
+
+id: Uncategorized
+msg: Luokittelemattomat
+
+id: Up to date
+msg: Uusin versio
+
+id: Upgradable
+msg: Päivitettävä
+
+id: Upgraded plugin %s to version %s
+msg: Päivitetty lisäosa %s versioon %s
+
+id: User interface extensions
+msg: Käyttöliittymän lisäosat
+
+id: Video streaming
+msg: Videon suoratoisto
+
+#
+# ./src/runcontrol.c
+#
+id: Automatic standby
+msg: Automaattinen lepotila
+
+id: Enable SSH server
+msg: Aktivoi SSH palvelin
+
+id: Logout
+msg: Kirjaudu ulos
+
+id: Open shell
+msg: Avaa komentokonsoli
+
+id: Power off system
+msg: Sammuta järjestelmä
+
+id: Quit
+msg: Lopeta
+
+id: SSH server
+msg: SSH server
+
+id: Standby
+msg: Sammuta
+
+id: Starting and stopping
+msg: Aloitetaan ja lopetetaan
+
+#
+# ./src/sd/sd.c
+#
+id: Enabled on home screen
+msg: Mahdollistettu pääsivulla
+
+id: Name
+msg: Nimi
+
+#
+# ./src/service.c
+#
+id: Local network
+msg: Paikallinen verkko
+
+#
+# ./src/settings.c
+#
+id: Applications and installed plugins
+msg: Sovellukset ja asennetut lisäosat
+
+id: Developer settings
+msg: Kehittäjäasetukset
+
+id: Discovered media sources
+msg: Löydetyt medialähteet
+
+id: Fonts and user interface styling
+msg: Kirjasimet ja käyttöliittymäasetukset
+
+id: General
+msg: Yleiset
+
+id: Global settings
+msg: Yleiset asetukset
+
+id: Look and feel
+msg: Ulkoasu
+
+id: Network services, etc
+msg: Verkkopalvelut, jne
+
+id: Network settings
+msg: Verkkoasetukset
+
+id: Settings useful for developers
+msg: Asetuksrt kehittäjille
+
+id: System name
+msg: Järjestelmän nimi
+
+id: System related settings
+msg: Järjestelmäasetukset
+
+#
+# ./src/subtitles/subtitles.c
+#
+id: Any subtitle in central folder
+msg: Mikä tahansa yleisessä tekstityskansiossa
+
+id: Any subtitle in same folder as video
+msg: Mikä tahansa tekstitys videon kansiossa
+
+id: Auto
+msg: Auto
+
+id: Automatically select from this source
+msg: Valitse automaattisesti tästä lähteestä
+
+id: Central subtitle folder
+msg: Yleinen tekstityskansio
+
+id: Color
+msg: Väri
+
+id: External file
+msg: Lisätiedosto
+
+id: Force subtitles to reside on video frame
+msg: Pakota tekstitykset videon raamiin
+
+id: Generic settings for video subtitles
+msg: Yleiset asetukset tekstityksille
+
+id: Ignore embedded styling
+msg: Älä huomioi sisennettyä tekstitystyyliä
+
+id: Left
+msg: Vasen
+
+id: Outline color
+msg: Korostuksen väri
+
+id: Outline size
+msg: Korostuksen koko
+
+id: Path to central folder
+msg: Polku yleiskansioon
+
+id: Providers for Subtitles
+msg: Tekstitysten tarjoajat
+
+id: Right
+msg: Oikea
+
+id: Shadow color
+msg: Varjon väri
+
+id: Shadow offset
+msg: Varjon etäisyys
+
+id: Subtitle position
+msg: Tekstityksen sijainti
+
+id: Subtitle size
+msg: Tekstityksen koko
+
+id: Subtitle size and positioning
+msg: Tekstityksen koko ja sijainti
+
+id: Subtitles embedded in video file
+msg: Tekstitykset sulautettu videoon
+
+id: Subtitles with matching filename in central folder
+msg: Tekstitykset joilla vastaava tiedostonimi yleiskansiossa
+
+id: Subtitles with matching filename in same folder as video
+msg: Tekstitykset joilla on sama tiedostonimi videon kansiossa
+
+#
+# ./src/text/fontstash.c
+#
+id: Defaults
+msg: Oletukset
+
+id: Fonts
+msg: Kirjasimet
+
+id: Installed fonts
+msg: Asennetut kirjasimet
+
+id: Narrow text
+msg: Pieni kirjain
+
+id: Reset main font to default
+msg: Palauta pääkirjasin oletukseksi
+
+id: Reset narrow font to default
+msg: Palauta kapea kirjasin oletukseksi
+
+id: Reset subtitle font to default
+msg: Palauta tekstityksen kirjasin oletukseksi
+
+id: Unable to install font: %s
+msg: Ei voida asentaa kirjasinta: %s
+
+id: Use font %s for
+msg: Käytä kirjasinta %s kohteelle
+
+id: User interface
+msg: Käyttöliittymä
+
+#
+# ./src/ui/glw/glw_ps3.c
+#
+id: Seek using L2 and R2 button
+msg: Hae käyttäen L2 ja R2 nappeja
+
+id: Yes with Select button
+msg: KYLLÄ Select-napilla
+
+#
+# ./src/ui/glw/glw_settings.c
+#
+id: Font and icon size
+msg: Kirjasin- ja kuvakekoot
+
+id: Horizontal underscan
+msg: Sovita videon kuva sopimaan vaakasuunnassa
+
+id: Screensaver delay
+msg: Näytönsäästäjän viive
+
+id: Vertical underscan
+msg: Sovita videon kuva sopimaan pystysuunnassa
+
+id: Wrap when reaching beginning/end of lists
+msg: Jatka ympäri kun päästään valikon alkuun/loppuun
+
+#
+# ./src/ui/glw/glw_x11.c
+#
+id: Map mouse wheel to up/down
+msg: Määritä hiiren rulla ylös/alas toiminnolle
+
+#
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+msg: Vaihda automaattisesti tähän tilaan
+
+id: DVI-Video color range
+msg: DVI-Video väriasteikko
+
+id: Switch to this mode now
+msg: Vaihda tähän tilaan nyt
+
+id: Video modes
+msg: Videotilat
+
+#
+# ./src/upgrade.c
+#
+id: %s version %s is available
+msg: %s versio %s on saatavilla
+
+id: Notify about upgrades
+msg: Muistuta päivityksistä
+
+id: Open download page
+msg: Avaa lataus-sivu
+
+id: Software upgrade
+msg: Ohjelmistopäivitys
+
+id: Upgrade to releases from
+msg: Minkälaiset versiot päivitetään
+
+#
+# ./src/upnp/upnp_browse.c
+#
+id: Device not found
+msg: Laitetta ei löydy
+
+id: Malformed URI after device
+msg: Vääräntyyppinen URI laitteella
+
+id: Malformed URI after service
+msg: Väärätyyppinen URI palvelulla
+
+id: Service not found
+msg: Palvelua ei löytynyt
+
+#
+# ./src/video/video_settings.c
+#
+id: Always
+msg: Aina
+
+id: Ask
+msg: Kysy
+
+id: Automatically play next video in list
+msg: Toista automaattisesti seuraava video listalla
+
+id: Count video as played when reaching
+msg: Merkitse video katsotuksi kun ollaan katsottu
+
+id: Enable VDA
+msg: Päälle VDA
+
+id: Enable VDPAU
+msg: Päälle VDPAU
+
+id: Maximum resolution for deinterlacer
+msg: Maksimaalinen resoluutio lomituksen korjaukselle
+
+id: Never
+msg: Ei koskaan
+
+id: No limit
+msg: Ei rajaa
+
+id: Per-file volume
+msg: Tiedostokohtainen äänentaso
+
+id: Preferred VDPAU deinterlacer method
+msg: Haluttu VDPAU lomituksen korjaukselle
+
+id: Resume video playback
+msg: Palaa videotoistoon
+
+id: Step when seeking backward
+msg: Askellus kun kelataan taaksepäin
+
+id: Step when seeking forward
+msg: Askellus kun kelataan eteenpäin
+
+id: Temporal
+msg: Väliaikainen
+
+id: Temporal/Spatial
+msg: Väliaikainen
+
+id: Up / Down during video playback controls
+msg: YLÖS/ALAS toiminnot videotoiston aikana
+
+id: Video acceleration and display behaviour
+msg: Videon kiihdytys ja näyttöasetukset
+
+id: Video playback
+msg: Videotoisto
+
