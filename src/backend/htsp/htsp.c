@@ -1976,6 +1976,8 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 
   mp = hs->hs_mp;
 
+  prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 0);
+
   TRACE(TRACE_DEBUG, "HTSP", "Got start notitification");
   mp->mp_audio.mq_stream  = -1;
   mp->mp_video.mq_stream2 = -1;
