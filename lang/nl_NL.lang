@@ -17,27 +17,22 @@ msg: Huidige pagina van bladwijzers verwijderen
 # ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
 id: Activate sleep timer
-# Missing translation
-msg: 
+msg: Sluimertimer
 
 id: Disable sleep timer
-# Missing translation
-msg: 
+msg: Sluimertimer uitschakelen
 
 id: Exit %s
-# Missing translation
-msg: 
+msg: Exit %s
 
 id: Go to Home screen
 msg: Naar het thuisscherm gaan
 
 id: Hide system info
-# Missing translation
-msg: 
+msg: Verberg systeem info
 
 id: Master volume
-# Missing translation
-msg: 
+msg: Hoofd volume
 
 id: Navigation
 msg: Navigatie
@@ -55,8 +50,7 @@ id: Reload current page
 msg: Huidige pagina herladen
 
 id: Show system info
-# Missing translation
-msg: 
+msg: Toon systeem info
 
 id: Suspend
 msg: Slaapstand
@@ -65,16 +59,13 @@ id: System
 msg: Systeem
 
 id: Time until sleep
-# Missing translation
-msg: 
+msg: Tijd tot sluimer
 
 id: dB
-# Missing translation
-msg: 
+msg: dB
 
 id: min
-# Missing translation
-msg: 
+msg: min
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_dir.view
@@ -161,12 +152,10 @@ msg: Video-instellingen
 # ./glwskins/default/loading.view
 #
 id: %d kb/s
-# Missing translation
-msg: 
+msg: %d kb/s
 
 id: Bitrate:
-# Missing translation
-msg: 
+msg: Bitrate:
 
 #
 # ./glwskins/default/log.view
@@ -181,15 +170,13 @@ id: Cancel
 msg: Annuleren
 
 id: Clear
-# Missing translation
-msg: 
+msg: Wis
 
 id: Default
 msg: Standaard
 
 id: Keyboard layout:
-# Missing translation
-msg: 
+msg: Toetsenbord indeling
 
 id: OK
 msg: Oke
@@ -237,8 +224,7 @@ msg: Betegeld
 # ./glwskins/default/pages/home_clist.view
 #
 id: Apps
-# Missing translation
-msg: 
+msg: Toepassingen
 
 id: Dismiss
 msg: Sluiten
@@ -249,32 +235,26 @@ msg: Zoeken / Open URL
 #
 # ./glwskins/default/pages/iteminfo/image.view
 #
-id: Camera: 
-# Missing translation
-msg: 
+id: Camera:
+msg: Camera:
 
-id: Date: 
-# Missing translation
-msg: 
+id: Date:
+msg: Datum:
 
 #
 # ./glwskins/default/pages/iteminfo/plugin.view
 #
 id: %s %s or newer is required
-# Missing translation
-msg: 
+msg: %s %s of nieuwer is vereist
 
-id: Author: 
-# Missing translation
-msg: 
+id: Author:
+msg: Auteur:
 
-id: Available version: 
-# Missing translation
-msg: 
+id: Available version:
+msg: Aanwezige versie:
 
-id: Installed version: 
-# Missing translation
-msg: 
+id: Installed version:
+msg: Geinstalleerde versie:
 
 #
 # ./glwskins/default/pages/iteminfo/video.view
@@ -298,8 +278,8 @@ id: Year:
 msg: Jaar:
 
 id: Seen %d times
-msg[0]: 
-msg[1]: 
+msg[0]: Bekeken %d keer
+msg[1]: Bekeken %d keer
 
 #
 # ./glwskins/default/pages/listitems/add.view
@@ -344,12 +324,10 @@ msg: Bijwerken
 # ./glwskins/default/pages/openerror.view
 #
 id: Unable to open %s
-# Missing translation
-msg: 
+msg: Kan %s niet openen
 
 id: resource
-# Missing translation
-msg: 
+msg: Bron
 
 #
 # ./glwskins/default/pages/playqueue.view
@@ -367,8 +345,7 @@ msg: Gepauzeerd
 # ./glwskins/default/pages/upgrade.view
 #
 id: %s is up to date
-# Missing translation
-msg: 
+msg: %s is huidige versie
 
 id: An error occured during download
 msg: Er is een fout opgetreden tijdens het downloaden
@@ -386,8 +363,7 @@ id: Checking for updates...
 msg: Controleren op updates...
 
 id: Checking installed version of %s
-# Missing translation
-msg: 
+msg: Controleren geïnstalleerde versie van  %s
 
 id: Current version:
 msg: Huidige versie:
@@ -396,8 +372,7 @@ id: Download and install...
 msg: Downloaden en installeren...
 
 id: Downloading %s
-# Missing translation
-msg: 
+msg: Downloaden %s
 
 id: New version %s is available for download
 msg: Nieuwe versie %s kan worden gedownload
@@ -406,12 +381,10 @@ id: No upgrade available
 msg: Geen updates beschikbaar
 
 id: Patching %s
-# Missing translation
-msg: 
+msg: Patchen %s
 
 id: Restarting %s in %d seconds...
-# Missing translation
-msg: 
+msg: Herstarten %s in %d seconden..
 
 id: Retry...
 msg: Opnieuw proberen...
@@ -429,66 +402,52 @@ msg: Kan niet zoeken naar een nieuwere versie
 # ./glwskins/default/pages/video.view
 #
 id: A/V diff:
-# Missing translation
-msg: 
+msg: A/V Verschil:
 
 id: Audio codec:
-# Missing translation
-msg: 
+msg: Audio codec:
 
 id: Audio queue len:
-# Missing translation
-msg: 
+msg: Audio queue len:
 
 id: Audio volume adjustment: %d dB
-# Missing translation
-msg: 
+msg: Audio volume aanpassing: %d dB
 
 id: CPU is too slow to decode this video
 msg: De CPU is te langzaam om deze video te decoderen
 
 id: Download speed:
-# Missing translation
-msg: 
+msg: Download snelheid:
 
 id: Packet buffer:
-# Missing translation
-msg: 
+msg: Packet buffer:
 
 id: Playback status
 msg: Afspeelstatus
 
 id: Remaining buffer:
-# Missing translation
-msg: 
+msg: Remaining buffer:
 
 id: Remote queue drops:
-# Missing translation
-msg: 
+msg: Remote queue drops:
 
 id: Remote queue len:
-# Missing translation
-msg: 
+msg: Remote queue len:
 
 id: Source:
-# Missing translation
-msg: 
+msg: Bron:
 
 id: Video bitrate:
-# Missing translation
-msg: 
+msg: Video bitrate:
 
 id: Video codec:
-# Missing translation
-msg: 
+msg: Video codec:
 
 id: Video decode time:
-# Missing translation
-msg: 
+msg: Video decode time:
 
 id: Video queue len:
-# Missing translation
-msg: 
+msg: Video queue len:
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -518,12 +477,10 @@ msg: Gebruikersnaam
 # ./glwskins/default/popups/resume.view
 #
 id: No, Start over
-# Missing translation
-msg: 
+msg: Nee, begin opnieuw
 
 id: Resume %s from %s
-# Missing translation
-msg: 
+msg: Hervatten %s from %s
 
 #
 # ./glwskins/default/screensaver.view
@@ -535,36 +492,28 @@ msg: Geen media geladen
 # ./glwskins/default/sysinfo.view
 #
 id: CPU Temp
-# Missing translation
-msg: 
+msg: CPU Temp
 
 id: Fragmentation
-# Missing translation
-msg: 
+msg: Fragmentatie
 
 id: GPU Temp
-# Missing translation
-msg: 
+msg: GPU Temp
 
 id: HDD Avail
-# Missing translation
-msg: 
+msg: HDD Vrij
 
 id: Inactive mem
-# Missing translation
-msg: 
+msg: Inactief geh
 
 id: Memory usage
-# Missing translation
-msg: 
+msg: Geheugen gebruik
 
 id: System Free
-# Missing translation
-msg: 
+msg: Systeem Vrij
 
 id: System Total
-# Missing translation
-msg: 
+msg: Systeem Totaal
 
 #
 # ./glwskins/default/universe.view
@@ -588,8 +537,7 @@ msg: Originele titel gebruiken
 # ./src/arch/linux/pulseaudio.c
 #
 id: Unable to initialize audio system %s -- %s
-# Missing translation
-msg: 
+msg: Niet in staat om audio-systeem te initialiseren %s -- %s
 
 #
 # ./src/arch/ps3/ps3_main.c
@@ -601,12 +549,10 @@ msg: Het systeem heeft weinig geheugen over (%d kB RAM beschikbaar)
 # ./src/arch/ps3/ps3_vdec.c
 #
 id: Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration
-# Missing translation
-msg: 
+msg: Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration
 
 id: Cell-h264: Broken headers, Disabling acceleration
-# Missing translation
-msg: 
+msg: Cell-h264: Kapotte headers, Uitschakelen versnelling
 
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
 msg: Cell-h264: Niveau 4.2 voor inhoud in niveau %d.%d forceren. De video wordt mogelijk niet goed afgespeeld.
@@ -627,190 +573,151 @@ msg: De Cell-codec kon niet worden aangevraagd. Fout 0x%x
 # ./src/arch/rpi/rpi_audio.c
 #
 id: 8 Channel PCM
-# Missing translation
-msg: 
+msg: 8 Kanaals PCM
 
 id: AC3 Pass-Through
-# Missing translation
-msg: 
+msg: AC3 Pass-Through
 
 id: Analog
-# Missing translation
-msg: 
+msg: Analoog
 
 id: Audio output port
-# Missing translation
-msg: 
+msg: Audio uitgangs poort
 
 id: Autodetect
-# Missing translation
-msg: 
+msg: Automatisch detecteren
 
 id: DTS Pass-Through
-# Missing translation
-msg: 
+msg: DTS Pass-Through
 
 id: HDMI
-# Missing translation
-msg: 
+msg: HDMI
 
 id: Off
 msg: Uit
 
 id: On
-# Missing translation
-msg: 
+msg: Aan
 
 #
 # ./src/arch/rpi/rpi_cec.c
 #
 id: Configure communications with your TV
-# Missing translation
-msg: 
+msg: Communicatie met TV instellen
 
 id: Consumer Electronics Control
-# Missing translation
-msg: 
+msg: Consument Elektronica Controle
 
 #
 # ./src/audio2/audio.c
 #
 id: Audio delay
-msg: Geluidsvertaging
+msg: Geluidsvertraging
 
 id: Audio gain adjustment during video playback
-# Missing translation
-msg: 
+msg: Audio versterking aanpassing tijdens het afspelen van video
 
 id: Audio settings during video playback
-# Missing translation
-msg: 
+msg: Audio-instellingen tijdens het afspelen van video
 
 id: Setup audio output
-# Missing translation
-msg: 
+msg: Instelling audio-uitgang
 
 #
 # ./src/audio2/audio_test.c
 #
 id: 440Hz sinewave -12dB
-# Missing translation
-msg: 
+msg: 440Hz sinusgolf -12dB
 
 id: Audio test
-# Missing translation
-msg: 
+msg: Geluidstest
 
 id: Center
-msg: Centreren
+msg: Midden
 
 id: Front Left
-# Missing translation
-msg: 
+msg: Links Voor
 
 id: Front Right
-# Missing translation
-msg: 
+msg: Rechts Voor
 
 id: LFE
-# Missing translation
-msg: 
+msg: LFE
 
 id: Pink noise
-# Missing translation
-msg: 
+msg: Roze ruis
 
 id: Play test signal
-# Missing translation
-msg: 
+msg: Testsignaal afspelen
 
 id: Rear Left
-# Missing translation
-msg: 
+msg: Links Achter
 
 id: Rear Right
-# Missing translation
-msg: 
+msg: Rechts Achter
 
 id: Speaker position
-# Missing translation
-msg: 
+msg: Luidspreker positie
 
 id: Surround Left
-# Missing translation
-msg: 
+msg: Linker Surround
 
 id: Surround Right
-# Missing translation
-msg: 
+msg: Rechter Surround
 
 id: Test signal type
-# Missing translation
-msg: 
+msg: Soort testsignaal
 
 #
 # ./src/backend/bittorrent/bt_backend.c
 #
 id: No files in torrent
-# Missing translation
-msg: 
+msg: Geen bestanden in torrent
 
 id: Unable to open torrent: %s
-# Missing translation
-msg: 
+msg: Niet in staat om torrent te openen: %s
 
 #
 # ./src/backend/bittorrent/diskio.c
 #
 id: Cached torrents use %d MB out of allowed %d MB. Total free space on volume: %d MB
-# Missing translation
-msg: 
+msg: Cache opgeslagen torrents gebruiken %d MB van toegestane %d MB. Totale vrije ruimte op volume: %d MB
 
 #
 # ./src/backend/bittorrent/fa_torrent.c
 #
 id: Connected peers
-# Missing translation
-msg: 
+msg: Verbonden peers
 
 id: Known peers
-# Missing translation
-msg: 
+msg: Bekende peers
 
 id: Receiving from
-# Missing translation
-msg: 
+msg: Ontvangen van
 
 id: Torrent leechers
-# Missing translation
-msg: 
+msg: Torrent Leechers
 
 id: Torrent seeders
-# Missing translation
-msg: 
+msg: Torrent seeders
 
 #
 # ./src/backend/bittorrent/torrent_settings.c
 #
 id: Clear cache
-# Missing translation
-msg: 
+msg: Cache wissen
 
 id: Enable bittorrent
-# Missing translation
-msg: 
+msg: Inschakelen bittorrent
 
 id: Max usage of free space for caching torrents
-# Missing translation
-msg: 
+msg: Max gebruik van vrije ruimte voor torrents cache
 
 id: Status
-# Missing translation
-msg: 
+msg: Status
 
 id: Torrent cache path
-# Missing translation
-msg: 
+msg: Torrent cache pad
 
 #
 # ./src/backend/dvd/dvd.c
@@ -825,12 +732,10 @@ msg: DVD-leesfout, schijf herstarten
 # ./src/backend/hls/hls.c
 #
 id: Primary
-# Missing translation
-msg: 
+msg: Primair
 
 id: Supplementary
-# Missing translation
-msg: 
+msg: Aanvullend
 
 #
 # ./src/backend/htsp/htsp.c
@@ -854,8 +759,7 @@ id: Albums
 msg: Albums
 
 id: Automatic login on start
-# Missing translation
-msg: 
+msg: Automatisch inloggen bij opstarten
 
 id: Collaborative
 msg: Gezamenlijk
@@ -870,7 +774,7 @@ id: Friends
 msg: Vrienden
 
 id: High bitrate
-msg: Hoge bitsnelheid
+msg: Hoge bitrate
 
 id: Inbox
 msg: Postvak IN
@@ -930,8 +834,7 @@ id: Can't handle content type %d
 msg: De inhoudstype %d wordt niet ondersteund
 
 id: Checking file contents
-# Missing translation
-msg: 
+msg: Controleren bestandsinhoud
 
 id: Unable to open file: %s
 msg: Het bestand kon niet worden geopend: %s
@@ -955,8 +858,7 @@ id: Date (oldest first)
 msg: Datum (oudste eerst)
 
 id: Deleted %s
-# Missing translation
-msg: 
+msg: Verwijderd %s
 
 id: Filename
 msg: Bestandsnaam
@@ -974,8 +876,7 @@ id: Sort on
 msg: Sorteren op
 
 id: Unable to delete %s\n%s
-# Missing translation
-msg: 
+msg: Verwijderen mislukt %s\n%s
 
 #
 # ./src/fileaccess/fa_spotlight.c
@@ -987,44 +888,37 @@ msg: Zoeken via Spotlight
 # ./src/fileaccess/fileaccess.c
 #
 id: Are you sure you want to delete:
-# Missing translation
-msg: 
+msg: Weet u zeker dat u wilt verwijderen:
 
 id: BitTorrent
-# Missing translation
-msg: 
+msg: BitTorrent
 
 id: Browse archives as folders
-# Missing translation
-msg: 
+msg: Blader archieven als mappen
 
 id: Enable file deletion from item menu
-# Missing translation
-msg: 
+msg: Inschakelen bestandsverwijdering vanuit artikel-menu
 
 id: File browsing
-# Missing translation
-msg: 
+msg: Bestand bladeren
 
 id: Show filename extensions
-# Missing translation
-msg: 
+msg: Toon bestandsextensies
 
 id: Store per-file settings in filesystem
-# Missing translation
-msg: 
+msg: Sla per-bestand instellingen op in bestandssysteem
 
 id: %d archive parts
-msg[0]: 
-msg[1]: 
+msg[0]:
+msg[1]:
 
 id: %d directories
-msg[0]: 
-msg[1]: 
+msg[0]:
+msg[1]:
 
 id: %d files
-msg[0]: 
-msg[1]: 
+msg[0]:
+msg[1]:
 
 #
 # ./src/fileaccess/smb/fa_nativesmb.c
@@ -1042,19 +936,16 @@ id: Logon failure
 msg: Inlogfout
 
 id: Object name not found
-# Missing translation
-msg: 
+msg: Object naam niet gevonden
 
 #
 # ./src/i18n.c
 #
 id: Default character set
-# Missing translation
-msg: 
+msg: Standaard tekenset
 
 id: Ignore 'The' at beginning of words when sorting
-# Missing translation
-msg: 
+msg: Negeer 'The' aan het begin van woorden bij sorteren
 
 id: Language
 msg: Taal
@@ -1111,28 +1002,22 @@ id: Align subtitles on video frame
 msg: Ondertiteling op videoframe aanpassen
 
 id: Audio volume
-# Missing translation
-msg: 
+msg: Geluidssterkte
 
 id: Go to standby after video ends
-# Missing translation
-msg: 
+msg: Ga naar stand-by na video eind
 
 id: Horizontal pan
-# Missing translation
-msg: 
+msg: Horizontale pan
 
 id: Reset defaults for folder '%s'
-# Missing translation
-msg: 
+msg: Resetten standaardinstellingen voor de map '%s'
 
 id: Save as defaults for folder '%s'
-# Missing translation
-msg: 
+msg: Opslaan als standaardinstellingen voor map '%s'
 
 id: Save as global default
-# Missing translation
-msg: 
+msg: Opslaan als globale standaardinstelling
 
 id: Stretch video to fullscreen
 msg: Video uitrekken naar volledig scherm
@@ -1144,23 +1029,19 @@ id: Subtitle delay
 msg: Ondertitelingsvertaging
 
 id: Subtitle horizontal displacement
-# Missing translation
-msg: 
+msg: Ondertitel horizontale verplaatsing
 
 id: Subtitle scaling
 msg: Ondertitelingsgrootte
 
 id: Subtitle vertical displacement
-# Missing translation
-msg: 
+msg: Ondertitel vertikale verplaatsing
 
 id: Vertical pan
-# Missing translation
-msg: 
+msg: Vertikale pan
 
 id: Video frame interpolation
-# Missing translation
-msg: 
+msg: Videoframe interpolatie
 
 id: Video zoom
 msg: Videovergroting
@@ -1178,24 +1059,19 @@ id: Automatic
 msg: Automatisch
 
 id: Erase all playback info
-# Missing translation
-msg: 
+msg: Alle afgespeelde info wissen
 
 id: Manual
-# Missing translation
-msg: 
+msg: Handmatig
 
 id: Mark all as seen
-# Missing translation
-msg: 
+msg: Markeer alles als gezien
 
 id: Mark all as unseen
-# Missing translation
-msg: 
+msg: Markeer alles als ongezien
 
 id: Metadata mode
-# Missing translation
-msg: 
+msg: Metadata-modus
 
 #
 # ./src/metadata/metadata.c
@@ -1234,8 +1110,7 @@ id: Clear all metadata
 msg: Alle metadata legen
 
 id: Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?
-# Missing translation
-msg: 
+msg: Het wissen van alle metadata betekent het verliezen van <b>alle</b> metadata in de cache van externe bronnen zoals themoviedb.org, etc\n\nInformatie over hervattingspunten, totaal beluisterde nummers, etc wordt opgeslagen. \nWeet u zeker dat u verder wilt gaan?
 
 #
 # ./src/metadata/mlp.c
@@ -1334,27 +1209,22 @@ msg: URL
 # ./src/networking/connman.c
 #
 id: Enable Wi-Fi
-# Missing translation
-msg: 
+msg: Inschakelen WiFi
 
 id: Network connections
-# Missing translation
-msg: 
+msg: Netwerkverbindingen
 
 #
 # ./src/networking/ftp_server.c
 #
 id: Enable FTP server
-# Missing translation
-msg: 
+msg: FTP-server inschakelen
 
 id: FTP server
-# Missing translation
-msg: 
+msg: FTP-server
 
 id: Server TCP port
-# Missing translation
-msg: 
+msg: Server TCP-poort
 
 #
 # ./src/plugins.c
@@ -1366,8 +1236,7 @@ id: Automatically upgrade plugins
 msg: Plugins automatisch bijwerken
 
 id: Available plugins
-# Missing translation
-msg: 
+msg: Available plugins
 
 id: Background
 msg: Achtergrond
@@ -1376,8 +1245,7 @@ id: Beta testing passwords
 msg: Beta testers wachtwoord
 
 id: Browse available plugins
-# Missing translation
-msg: 
+msg: Beschikbare plugins bekijken
 
 id: Browsing
 msg: Bladeren
@@ -1401,8 +1269,7 @@ id: Home page
 msg: Thuispagina
 
 id: Installed plugins
-# Missing translation
-msg: 
+msg: Geïnstalleerde plugins
 
 id: Installed version higher than available
 msg: Geïnstalleerde versie hoger dan beschikbaar
@@ -1432,15 +1299,13 @@ id: Not upgradable
 msg: Niet bij te werken
 
 id: On Screen Keyboards
-# Missing translation
-msg: 
+msg: Scherm Toetsenborden
 
 id: Online TV
 msg: Online tv
 
 id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
-# Missing translation
-msg: 
+msg: Plugin %s %s is verwijderd omdat het problemen kan veroorzaken.\nU kunt proberen handmatig een andere versie te installeren.
 
 id: Plugins
 msg: Plugins
@@ -1485,8 +1350,7 @@ id: Automatic standby
 msg: Automatische slaapstand
 
 id: Enable SSH server
-# Missing translation
-msg: 
+msg: Inschakelen SSH server
 
 id: Logout
 msg: Uitloggen
@@ -1498,20 +1362,16 @@ id: Power off system
 msg: Systeem uitschakelen
 
 id: Quit
-# Missing translation
-msg: 
+msg: Stoppen
 
 id: SSH server
-# Missing translation
-msg: 
+msg: SSH server
 
 id: Standby
-# Missing translation
-msg: 
+msg: Slaapstand
 
 id: Starting and stopping
-# Missing translation
-msg: 
+msg: Starten en stoppen
 
 #
 # ./src/sd/sd.c
@@ -1553,19 +1413,16 @@ id: Look and feel
 msg: Uiterlijk
 
 id: Network services, etc
-# Missing translation
-msg: 
+msg: Netwerk diensten, etc
 
 id: Network settings
-# Missing translation
-msg: 
+msg: Netwerkinstellingen
 
 id: Settings useful for developers
 msg: Handige instellingen voor ontwikkelaars
 
 id: System name
-# Missing translation
-msg: 
+msg: Systeem naam
 
 id: System related settings
 msg: Systeemgerelateerde instellingen
@@ -1574,23 +1431,19 @@ msg: Systeemgerelateerde instellingen
 # ./src/subtitles/subtitles.c
 #
 id: Any subtitle in central folder
-# Missing translation
-msg: 
+msg: Elke ondertitel in centrale map
 
 id: Any subtitle in same folder as video
-# Missing translation
-msg: 
+msg: Elke ondertitel in zelfde map als video
 
 id: Auto
 msg: Automatisch
 
 id: Automatically select from this source
-# Missing translation
-msg: 
+msg: Automatisch selecteren van deze bron
 
 id: Central subtitle folder
-# Missing translation
-msg: 
+msg: Centrale ondertitel map
 
 id: Color
 msg: Kleur
@@ -1617,12 +1470,10 @@ id: Outline size
 msg: Omtrekgrootte
 
 id: Path to central folder
-# Missing translation
-msg: 
+msg: Pad naar centrale map
 
 id: Providers for Subtitles
-# Missing translation
-msg: 
+msg: Aanbieders voor Ondertitels
 
 id: Right
 msg: Rechts
@@ -1643,16 +1494,13 @@ id: Subtitle size and positioning
 msg: Ondertitelingsgrootte en -positionering
 
 id: Subtitles embedded in video file
-# Missing translation
-msg: 
+msg: Ondertitels ingebed in videobestand
 
 id: Subtitles with matching filename in central folder
-# Missing translation
-msg: 
+msg: Ondertitels met bijpassende bestandsnaam in centrale map
 
 id: Subtitles with matching filename in same folder as video
-# Missing translation
-msg: 
+msg: Ondertitels met bijpassende bestandsnaam in zelfde map als video
 
 #
 # ./src/text/fontstash.c
@@ -1679,8 +1527,7 @@ id: Reset subtitle font to default
 msg: Herstel ondertitel lettertype naar standaard
 
 id: Unable to install font: %s
-# Missing translation
-msg: 
+msg: Kan lettertype niet installeren: %s
 
 id: Use font %s for
 msg: Lettertype %s gebruiken voor
@@ -1692,19 +1539,16 @@ msg: Gebruikersinterface
 # ./src/ui/glw/glw_ps3.c
 #
 id: Seek using L2 and R2 button
-# Missing translation
-msg: 
+msg: Seek using L2 and R2 button
 
 id: Yes with Select button
-# Missing translation
-msg: 
+msg: Ja met Select knop
 
 #
 # ./src/ui/glw/glw_settings.c
 #
 id: Font and icon size
-# Missing translation
-msg: 
+msg: Lettertype en pictogram grootte
 
 id: Horizontal underscan
 msg: Horizontale underscan
@@ -1713,12 +1557,10 @@ id: Screensaver delay
 msg: Vertraging schermbeveiliging
 
 id: Vertical underscan
-# Missing translation
-msg: 
+msg: Verticale onderscan
 
 id: Wrap when reaching beginning/end of lists
-# Missing translation
-msg: 
+msg: Omwikkel bij het bereiken van begin/einde van lijsten
 
 #
 # ./src/ui/glw/glw_x11.c
@@ -1745,8 +1587,7 @@ msg: Videomodi
 # ./src/upgrade.c
 #
 id: %s version %s is available
-# Missing translation
-msg: 
+msg: %s versie %s is beschikbaar
 
 id: Notify about upgrades
 msg: Informeren over updates
@@ -1779,12 +1620,10 @@ msg: Service niet gevonden
 # ./src/video/video_settings.c
 #
 id: Always
-# Missing translation
-msg: 
+msg: Altijd
 
 id: Ask
-# Missing translation
-msg: 
+msg: Vraag
 
 id: Automatically play next video in list
 msg: De volgende video in de lijst automatisch afspelen
@@ -1802,15 +1641,13 @@ id: Maximum resolution for deinterlacer
 msg: Maximale resolutie voor deinterlacer
 
 id: Never
-# Missing translation
-msg: 
+msg: Nooit
 
 id: No limit
 msg: Geen limiet
 
 id: Per-file volume
-# Missing translation
-msg: 
+msg: Per-bestand geluidssterkte
 
 id: Preferred VDPAU deinterlacer method
 msg: Voorkeursmethode voor VDPAU-deinterlacer
@@ -1819,12 +1656,10 @@ id: Resume video playback
 msg: Videoweergave hervatten
 
 id: Step when seeking backward
-# Missing translation
-msg: 
+msg: Stap bij achteruit zoeken
 
 id: Step when seeking forward
-# Missing translation
-msg: 
+msg: Stap bij voorwaarts zoeken
 
 id: Temporal
 msg: Tijdelijk
@@ -1833,12 +1668,10 @@ id: Temporal/Spatial
 msg: Tijdelijk/ruimtelijk
 
 id: Up / Down during video playback controls
-# Missing translation
-msg: 
+msg: Omhoog / Omlaag tijdens het afspelen van video bediening
 
 id: Video acceleration and display behaviour
 msg: Videoversnelling en weergavegedrag
 
 id: Video playback
 msg: Videoweergave
-
