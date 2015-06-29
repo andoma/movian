@@ -1136,7 +1136,7 @@ id: IMDb ID
 msg: IMDb ID
 
 id: Metadata loaded from '%s' using %s
-msg: Métadonnées téléchargées depuis '%s' en utilisant %s
+msg: Métadonnées chargées depuis '%s' en utilisant %s
 
 id: Metadata search
 msg: Recherche des métadonnées
@@ -1686,4 +1686,3 @@ msg: Accélération vidéo et comportement de l'affichage
 
 id: Video playback
 msg: Lecture vidéo
-
