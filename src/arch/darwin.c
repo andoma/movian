@@ -19,12 +19,15 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/sysctl.h>
 
 #include <mach/mach.h>
+#include <mach/task.h>
 #include <mach/processor_info.h>
 #include <mach/mach_host.h>
+#include <mach/host_info.h>
+#include <mach/task_info.h>
 
-#include "darwin.h"
 #include "main.h"
 #include "misc/callout.h"
 #include "prop/prop.h"
@@ -37,6 +40,50 @@ static callout_t timer;
 static prop_t *p_cpuroot;
 static prop_t **p_cpu;
 static prop_t **p_load;
+
+
+
+
+static void
+mem_monitor_do(void)
+{
+  int mib[6];
+  mib[0] = CTL_HW;
+  mib[1] = HW_PAGESIZE;
+
+  int pagesize;
+  size_t length;
+  length = sizeof(pagesize);
+  if(sysctl (mib, 2, &pagesize, &length, NULL, 0) < 0)
+    return;
+
+  mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
+
+  vm_statistics_data_t vmstat;
+  if(host_statistics (mach_host_self (), HOST_VM_INFO,
+                      (host_info_t) &vmstat, &count) != KERN_SUCCESS)
+    return;
+
+  int total =
+    vmstat.wire_count +
+    vmstat.active_count +
+    vmstat.inactive_count +
+    vmstat.free_count;
+
+  prop_t *mem = prop_create(p_sys, "mem");
+
+  prop_set(mem, "systotal", PROP_SET_INT, total / 1024 * pagesize);
+  prop_set(mem, "sysfree",  PROP_SET_INT, vmstat.free_count / 1024 * pagesize);
+
+  task_basic_info_64_data_t info;
+  unsigned size = sizeof(info);
+  task_info(mach_task_self(), TASK_BASIC_INFO_64, (task_info_t) &info, &size);
+
+  prop_set(mem, "activeMem", PROP_SET_INT, (int)(info.resident_size / 1024));
+}
+
+
+
 
 static void
 cpu_monitor_do(void)
@@ -98,9 +145,10 @@ timercb(callout_t *c, void *aux)
 {
   callout_arm(&timer, timercb, NULL, 1);
   cpu_monitor_do();
+  mem_monitor_do();
 }
 
-void
+static void
 darwin_init_cpu_monitor(void)
 {
   kern_return_t r;
@@ -133,5 +181,8 @@ darwin_init_cpu_monitor(void)
                 (vm_size_t)sizeof(*pinfo) * msg_count);
   
   cpu_monitor_do();
+  mem_monitor_do();
   callout_arm(&timer, timercb, NULL, 1);
 }
+
+INITME(INIT_GROUP_API, darwin_init_cpu_monitor, NULL);

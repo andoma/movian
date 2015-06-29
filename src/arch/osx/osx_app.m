@@ -26,7 +26,6 @@
 #include "main.h"
 #include "navigator.h"
 #include "arch/arch.h"
-#include "arch/darwin.h"
 #include "arch/posix/posix.h"
 #include "osx.h"
 #include "ui/webpopup.h"
@@ -116,8 +115,6 @@ main(int argc, char **argv)
 #endif
 
   mainloop_courier_init();
-
-  darwin_init_cpu_monitor();
 
   [s initMenues];
 
