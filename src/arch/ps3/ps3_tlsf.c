@@ -165,12 +165,12 @@ memtrace(void)
   tlsf_walk_heap(gpool, mywalker, &ms);
   hts_mutex_unlock(&mutex);
 
-  trace(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
+  tracelog(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
         "Memory allocator status -- Used: %d (%d segs) Free: %d (%d segs)",
         ms.used, ms.used_segs, ms.free, ms.free_segs);
 
   for(int i = 0; i < 33; i++) {
-    trace(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
+    tracelog(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
           "%2d: %8d %8d",
           i, ms.hist_used[i], ms.hist_free[i]);
   }
@@ -211,16 +211,16 @@ void free(void *ptr)
       s &= ~0xffff;
       if(s > 0) {
 #if 0
-	trace(TRACE_NO_PROP, TRACE_DEBUG, "MEMORY",
+	tracelog(TRACE_NO_PROP, TRACE_DEBUG, "MEMORY",
 	      "free(%p+%d) == page_free(0x%x+%d)",
 	      ptr, bs, np, s);
 #endif
 #ifdef USE_VIRTUAL_MEM
 	if(Lv2Syscall2(308, np, s))  // Invalidate
-	  trace(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
+	  tracelog(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
 		"Invalidate failed");
 	if(Lv2Syscall2(310, np, s))  // Sync
-	  trace(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
+	  tracelog(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
 		"Sync failed");
 #endif
       }
@@ -391,9 +391,9 @@ verify_heap(void)
   hts_mutex_unlock(&mutex);
 
   if(r)
-    trace(TRACE_NO_PROP, TRACE_ERROR, "HEAPCHECK", "Heap check verify failed");
+    tracelog(TRACE_NO_PROP, TRACE_ERROR, "HEAPCHECK", "Heap check verify failed");
   else
-    trace(TRACE_NO_PROP, TRACE_DEBUG, "HEAPCHECK", "Heap OK");
+    tracelog(TRACE_NO_PROP, TRACE_DEBUG, "HEAPCHECK", "Heap OK");
 }
 
 
@@ -409,7 +409,7 @@ mymalloc(size_t bytes)
 
   if(r == NULL) {
     memtrace();
-    trace(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
+    tracelog(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
           "malloc(%d) failed", (int)bytes);
     errno = ENOMEM;
   }
@@ -425,7 +425,7 @@ myrealloc(void *ptr, size_t bytes)
   hts_mutex_unlock(&mutex);
   if(r == NULL) {
     memtrace();
-    trace(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
+    tracelog(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
           "realloc(%d) failed", (int)bytes);
     errno = ENOMEM;
   }
@@ -439,7 +439,7 @@ mycalloc(size_t nmemb, size_t bytes)
   memset(r, 0, bytes * nmemb);
   if(r == NULL) {
     memtrace();
-    trace(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
+    tracelog(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
           "calloc(%d,%d) failed", (int)nmemb, (int)bytes);
     errno = ENOMEM;
   }
@@ -457,7 +457,7 @@ void *mymemalign(size_t align, size_t bytes)
   hts_mutex_unlock(&mutex);
   if(r == NULL) {
     memtrace();
-    trace(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
+    tracelog(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
           "memalign(%d,%d) failed", (int)align, (int)bytes);
     errno = ENOMEM;
   }

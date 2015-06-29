@@ -283,8 +283,8 @@ start_thread(const char *name, hts_thread_t *p,
   }
   
   if(gconf.enable_thread_debug)
-    trace(TRACE_NO_PROP, TRACE_DEBUG,
-          "THREADS", "Created thread %s (0x%x)", name, *p);
+    tracelog(TRACE_NO_PROP, TRACE_DEBUG,
+             "THREADS", "Created thread %s (0x%x)", name, *p);
 
 }
 
