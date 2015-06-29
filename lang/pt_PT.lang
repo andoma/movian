@@ -23,7 +23,7 @@ id: Disable sleep timer
 msg: Desativar temporização de suspensão
 
 id: Exit %s
-msg: Sair %
+msg: Sair %s
 
 id: Go to Home screen
 msg: Ir para a página inicial
@@ -173,7 +173,7 @@ id: Clear
 msg: Limpar
 
 id: Default
-msg: Por defeito
+msg: Padrão
 
 id: Keyboard layout:
 msg: Esquema teclado
@@ -245,7 +245,7 @@ msg: Data:
 # ./glwskins/default/pages/iteminfo/plugin.view
 #
 id: %s %s or newer is required
-msg: %s %s ou mais recente necessário
+msg: É necessário %s %s ou mais recente
 
 id: Author: 
 msg: Autor:
@@ -279,7 +279,7 @@ msg: Ano:
 
 id: Seen %d times
 msg[0]: Visto %d vezes
-msg[1]: 
+msg[1]: Visto %d vez
 
 #
 # ./glwskins/default/pages/listitems/add.view
@@ -348,13 +348,13 @@ id: %s is up to date
 msg: %s está atual
 
 id: An error occured during download
-msg: Um erro aconteceu durante o download
+msg: Aconteceu um erro durante a transferência
 
 id: Available version:
-msg: Versão disponível
+msg: Versão disponível:
 
 id: Changelog for %s releases
-msg: Log de alterações para as releases %s
+msg: Registo de alterações para as releases %s
 
 id: Check for updates now
 msg: Procurar por atualizações agora
@@ -369,7 +369,7 @@ id: Current version:
 msg: Versão atual:
 
 id: Download and install...
-msg: ETransferir e instalar...
+msg: Transferir e instalar...
 
 id: Downloading %s
 msg: A transferir %s
@@ -405,7 +405,7 @@ id: A/V diff:
 msg: Dif. A/V:
 
 id: Audio codec:
-msg: Codev áudio:
+msg: Codec áudio:
 
 id: Audio queue len:
 msg: Tam. da fila áudio: 
@@ -417,7 +417,7 @@ id: CPU is too slow to decode this video
 msg: O CPU é muito lento para descodificar este vídeo
 
 id: Download speed:
-msg: Velocidade transf.:
+msg: Vel. transf.:
 
 id: Packet buffer:
 msg: Buffer de pacotes:
@@ -492,11 +492,10 @@ msg: Nenhum media carregado
 # ./glwskins/default/sysinfo.view
 #
 id: CPU Temp
-# Missing translation
 msg: Temp. CPU
 
 id: Fragmentation
-msg: Fragmentação: 
+msg: Fragment. 
 
 id: GPU Temp
 msg: Temp. GPU
@@ -505,13 +504,13 @@ id: HDD Avail
 msg: HDD Dispon. 
 
 id: Inactive mem
-msg: Memória inat. 
+msg: Mem. inat. 
 
 id: Memory usage
-msg: Memória usada
+msg: Mem. usada
 
 id: System Free
-msg: Sistema dispon.
+msg: Sist. dispon.
 
 id: System Total
 msg: Total Sist. 
@@ -556,7 +555,7 @@ id: Cell-h264: Broken headers, Disabling acceleration
 msg: Cell-h264: Cabeçalhos inválidos, Aceleração desactivada
 
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
-msg: Cell-h264: A forçar nível 4.2 para conteúdo no nível %d.%d. Isto pode quebrar a reprodução de vídeo.
+msg: Cell-h264: A forçar nível 4.2 para conteúdo no nível %d.%d. Isto pode impedir a reprodução de vídeo.
 
 id: Unable to accelerate %s, library not loaded.
 msg: Não foi possível acelerar %s, a biblioteca não foi carregada.
@@ -574,7 +573,7 @@ msg: Não foi possível pesquisar no codificador Cell. Erro 0x%x
 # ./src/arch/rpi/rpi_audio.c
 #
 id: 8 Channel PCM
-msg: 8 canais PCM
+msg: PCM 8 Canais
 
 id: AC3 Pass-Through
 msg: AC3 directo
@@ -598,14 +597,13 @@ id: Off
 msg: Deslig.
 
 id: On
-# Missing translation
 msg: Ligado 
 
 #
 # ./src/arch/rpi/rpi_cec.c
 #
 id: Configure communications with your TV
-msg: Configure as ligações à TV
+msg: Configurar as ligações à TV
 
 id: Consumer Electronics Control
 msg: Controlo de dispositivos 
@@ -761,7 +759,7 @@ id: Albums
 msg: Álbuns
 
 id: Automatic login on start
-msg: Login automátimo ao iniciar
+msg: Login automático ao iniciar
 
 id: Collaborative
 msg: Colaborativo
@@ -833,10 +831,9 @@ msg: Limpar ficheiros de cache
 # ./src/fileaccess/fa_backend.c
 #
 id: Can't handle content type %d
-msg: Não foi possível abrir o tipo de conteúdo: %d
+msg: Não foi possível abrir o tipo de conteúdo %d
 
 id: Checking file contents
-# Missing translation
 msg: A verificar conteudo do ficheiro
 
 id: Unable to open file: %s
@@ -909,15 +906,15 @@ id: Show filename extensions
 msg: Mostrar extensões dos ficheiros 
 
 id: Store per-file settings in filesystem
-msg: Armazenar definições per-ficheiro no sistema de ficheiros
+msg: Armazenar definições por ficheiro no sistema de ficheiros
 
 id: %d archive parts
 msg[0]: %d partes de arquivo 
-msg[1]: 
+msg[1]: %d parte de arquivo
 
 id: %d directories
-msg[0]: %d diretórios
-msg[1]: %d diretório
+msg[0]: %d diretorias
+msg[1]: %d diretoria
 
 id: %d files
 msg[0]: %d ficheiros
@@ -927,7 +924,7 @@ msg[1]: %d ficheiro
 # ./src/fileaccess/smb/fa_nativesmb.c
 #
 id: Access denied
-msg: Acesso não permitido
+msg: Acesso negado
 
 id: Account restricted
 msg: Conta restringida
@@ -1014,14 +1011,13 @@ id: Horizontal pan
 msg: Alinhamento horizontal
 
 id: Reset defaults for folder '%s'
-msg: Reiniciar defaults para a pasta '%s' 
+msg: Reiniciar padrões para a pasta '%s' 
 
 id: Save as defaults for folder '%s'
-msg: Gravar como default para a pasta '%s'
+msg: Gravar como padrão para a pasta '%s'
 
 id: Save as global default
-# Missing translation
-msg: Gravar como default global
+msg: Gravar como padrão global
 
 id: Stretch video to fullscreen
 msg: Esticar vídeo para fullscreen
@@ -1075,7 +1071,7 @@ id: Mark all as unseen
 msg: Marcar todos como não visto 
 
 id: Metadata mode
-msg: Modo metadata
+msg: Modo metadados
 
 #
 # ./src/metadata/metadata.c
@@ -1249,7 +1245,7 @@ id: Beta testing passwords
 msg: Palavras-passe de testes beta
 
 id: Browse available plugins
-msg: Navegar pleos plugins disponiveis
+msg: Navegar pelos plugins disponiveis
 
 id: Browsing
 msg: Navegando
@@ -1258,13 +1254,13 @@ id: Cloud services
 msg: Serviços em cloud
 
 id: Corrupt plugin bundle
-msg: Bundle de plugin corrupto
+msg: Pacote de plugin corrupto
 
 id: Disk write error
 msg: Erro de escrita em disco
 
 id: Downloading
-msg: A efetuar download
+msg: A efetuar transferência
 
 id: File open error
 msg: Erro ao abrir o ficheiro
@@ -1273,8 +1269,7 @@ id: Home page
 msg: Página inicial
 
 id: Installed plugins
-# Missing translation
-msg: 
+msg: Plugins instalados
 
 id: Installed version higher than available
 msg: Está instalada uma versão mais atual que a disponível
@@ -1352,7 +1347,7 @@ msg: Streaming de vídeo
 # ./src/runcontrol.c
 #
 id: Automatic standby
-msg: Modo de espera automático
+msg: Modo de standby automático
 
 id: Enable SSH server
 msg: Activar servidor SSH
@@ -1511,7 +1506,7 @@ msg: Legendas com um nome idêntico na pasta do vídeo
 # ./src/text/fontstash.c
 #
 id: Defaults
-msg: Por defeito
+msg: Padrões
 
 id: Fonts
 msg: Tipos de letra
@@ -1595,16 +1590,16 @@ id: %s version %s is available
 msg: %s versão %s disponivel
 
 id: Notify about upgrades
-msg: Notificar por atualizações
+msg: Notificar acerca atualizações
 
 id: Open download page
-msg: Abrir página de download
+msg: Abrir página de transferência
 
 id: Software upgrade
 msg: Atualização de software
 
 id: Upgrade to releases from
-msg: Atualizar para releases desde
+msg: Atualizar para releases a partir de
 
 #
 # ./src/upnp/upnp_browse.c
@@ -1646,14 +1641,13 @@ id: Maximum resolution for deinterlacer
 msg: Resolução máxima para o deinterlacer
 
 id: Never
-# Missing translation
-msg: 
+msg: Nunca
 
 id: No limit
 msg: Sem limite
 
 id: Per-file volume
-msg: Volume per-ficheiro
+msg: Volume por ficheiro
 
 id: Preferred VDPAU deinterlacer method
 msg: Método preferido de VDPAU deinterlacer
