@@ -318,10 +318,8 @@ load_timedtext(const char *url, buf_t *buf)
   HTSMSG_FOREACH(f, transcript) {
     if(f->hmf_type == HMF_STR && f->hmf_childs != NULL) {
       htsmsg_t *n = f->hmf_childs;
-      const char *str, *txt;
+      const char *str;
       int64_t start, end;
-
-      txt = f->hmf_str;
 
       if((str = htsmsg_get_str(n, "start")) == NULL)
 	continue;
@@ -331,7 +329,10 @@ load_timedtext(const char *url, buf_t *buf)
 	continue;
       end = start + my_str2double(str, NULL) * 1000000.0;
 
+      char *txt = strdup(f->hmf_str);
+      html_entities_decode(txt);
       es_insert_text(es, txt, start, end, 0);
+      free(txt);
     }
   }
   return es;
