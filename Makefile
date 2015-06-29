@@ -383,12 +383,6 @@ SRCS-$(CONFIG_HLS) += \
 SRCS-$(CONFIG_ICECAST)  += src/backend/icecast/icecast.c \
 
 ##############################################################
-# Spotify
-##############################################################
-SRCS-${CONFIG_SPOTIFY} += src/backend/spotify/spotify.c
-BUNDLES-$(CONFIG_SPOTIFY) += resources/spotify
-
-##############################################################
 # GLW user interface
 ##############################################################
 SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \

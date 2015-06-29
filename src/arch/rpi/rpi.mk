@@ -45,7 +45,6 @@ ${BUILDDIR}/showtime.sqfs: ${PROG}.stripped ${SYMS}
 	mkdir -p "${SQDIR}/lib"
 	cp ${PROG}.stripped "${SQDIR}/bin/showtime"
 	cp ${SYMS} "${SQDIR}/bin/showtime.syms"
-	cp -d ${LIBSPOTIFY_PATH}/lib/libspotify.* "${SQDIR}/lib"
 
 	mksquashfs "${SQDIR}" ${BUILDDIR}/showtime.sqfs  -noD -noF -noI -noappend
 

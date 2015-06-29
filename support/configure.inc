@@ -39,8 +39,6 @@ CONFIG_LIST="
  glw_backend_opengl_es
  gu
  libogc
- spotify
- libspotify_load_runtime
  lirc
  stdin
  release
@@ -498,24 +496,6 @@ freetype_setup()
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lfreetype -lbz2"
     add_stamp freetype
 }
-
-
-
-#
-#
-#
-libspotify_setup() {
-     download_file https://developer.spotify.com/download/libspotify/libspotify-$1-release.tar.gz libspotifytarball
-     tar -x -C "${BUILDDIR}" -f "$libspotifytarball"
-     P=${BUILDDIR}/libspotify-$1-release
-     echo >>${CONFIG_H} "#define LIBSPOTIFY_PATH \"${P}\""
-     echo >>${CONFIG_MAK} "LIBSPOTIFY_PATH=${P}"
-     echo >>${CONFIG_MAK} "CFLAGS_cfg += -I$P/include"
-     support/spotifysyms.sh "$P/include/libspotify/api.h" "$P/include/libspotify/apifunctions.h"
-     enable spotify
-     enable libspotify_load_runtime
-}
-
 
 #
 # Do final common stuff

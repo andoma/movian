@@ -1,9 +1,3 @@
-ifdef SPOTIFY_FRAMEWORK
-SPOTIFY_FRAMEWORK_FILES := $(shell cd ${SPOTIFY_FRAMEWORK} && find . -type f -or -type l)
-SPOTIFY_INST_PATH := ${APPDIR}/Contents/Frameworks/libspotify.framework
-SPOTIFY_INST_FILES := $(addprefix $(SPOTIFY_INST_PATH)/, $(SPOTIFY_FRAMEWORK_FILES))
-endif
-
 ${APPDIR}/Contents/MacOS/showtime: ${APPPROG} \
 			${APPDIR}/Contents/Info.plist \
 			${APPDIR}/Contents/Resources/hts.icns \

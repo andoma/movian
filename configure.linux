@@ -594,20 +594,6 @@ if pkg-config valgrind; then
 fi
 
 
-#
-# libspotify
-#
-LIBSPOTIFY_ARCH=""
-case "$ARCH" in
-    x86_64)
-	libspotify_setup "12.1.51-Linux-x86_64"
-	;;
-    i686)
-	libspotify_setup "12.1.51-Linux-i686"
-	;;
-esac
-
-
 LIBAV_ARCH_FLAGS="--disable-shared --enable-static"
 libav_setup
 rtmpdump_setup

@@ -34,6 +34,5 @@ install: ${PROG}.stripped
 	cp ${PROG}.stripped ${INSTDIR}/bin/
 	cp -a ${GLLIBS}/*.so ${INSTDIR}/lib/
 	cp -a ${LIBAV_INSTALL_DIR}/lib/lib* ${INSTDIR}/lib/
-	cp -a ${LIBSPOTIFY_PATH}/lib/lib* ${INSTDIR}/lib/
 	${STRIP} ${INSTDIR}/lib/*.so
 

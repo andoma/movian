@@ -32,7 +32,6 @@ show_help(){
   echo "  --cc=CC                  Build using the given compiler"
   echo "  --release                Stage for release"
   echo "  --macosxsdk=PATH         Mac OS X SDK path [$MACOSXSDK]"
-  echo "  --spotify-framework=PATH Path to libspotify.framework"
   exit 1
 }
 
@@ -51,7 +50,6 @@ enable realpath
 enable polarssl
 enable librtmp
 enable dvd
-enable spotify
 enable vda
 enable fsevents
 enable webpopup
@@ -73,8 +71,6 @@ for opt do
   --arch=*) ARCH="$optval"
   ;;
   --macosx-sdk=*) MACOSXSDK="$optval"
-  ;;
-  --spotify-framework=*) SPOTIFY_FRAMEWORK="$optval"
   ;;
   *)
   common_opt $opt $optval
@@ -130,25 +126,6 @@ echo >>${CONFIG_MAK} "LDFLAGS_cfg += -weak_framework VideoDecodeAcceleration"
 
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework CoreAudio"
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework AudioToolBox"
-
-#
-# libspotify
-#
-
-if disabled libspotify_load_runtime; then
-    LIBSPOTIFY_VERSION="12.1.51"
-
-    if [ "$SPOTIFY_FRAMEWORK" == "" ] ; then
-        download_file https://developer.spotify.com/download/libspotify/libspotify-${LIBSPOTIFY_VERSION}-Darwin-universal.zip zipfile
-        unzip -oq "$zipfile" -d "${BUILDDIR}"
-        SPOTIFY_FRAMEWORK="${BUILDDIR}/libspotify-${LIBSPOTIFY_VERSION}-Darwin-universal/libspotify.framework"
-    fi
-    support/spotifysyms.sh "${SPOTIFY_FRAMEWORK}/headers/api.h" "${SPOTIFY_FRAMEWORK}/headers/apifunctions.h"
-    echo >>${CONFIG_MAK} "SPOTIFY_FRAMEWORK = ${SPOTIFY_FRAMEWORK}"
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -F\$(shell dirname \$(SPOTIFY_FRAMEWORK)) -framework libspotify"
-    echo >>${CONFIG_MAK} "CFLAGS_cfg += -F\$(shell dirname \$(SPOTIFY_FRAMEWORK))"
-fi
-
 
 freetype_setup
 LIBAV_ARCH_FLAGS="--disable-shared --enable-static"

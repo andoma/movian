@@ -76,8 +76,6 @@ LIST_HEAD(plugin_view_entry_list, plugin_view_entry);
 
 static struct plugin_list plugins;
 
-static htsmsg_t *static_apps_state;
-
 typedef struct plugin {
   LIST_ENTRY(plugin) pl_link;
   char *pl_id;
@@ -993,118 +991,6 @@ plugins_setup_root_props(void)
 }
 
 
-static void install_static(plugin_t *pl);
-
-/**
- *
- */
-static void
-plugin_static_event(void *opaque, prop_event_t event, ...)
-{
-  plugin_t *pl = opaque;
-  va_list ap;
-  event_t *e;
-
-  va_start(ap, event);
-
-  switch(event) {
-  default:
-    break;
-
-  case PROP_DESTROYED:
-    prop_unsubscribe(va_arg(ap, prop_sub_t *));
-    break;
-
-  case PROP_EXT_EVENT:
-    e = va_arg(ap, event_t *);
-
-    if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
-      const event_payload_t *ep = (const event_payload_t *)e;
-      if(!strcmp(ep->payload, "install")) {
-	pl->pl_installed = 1;
-	install_static(pl);
-      } else if(!strcmp(ep->payload, "uninstall")) {
-	pl->pl_installed = 0;
-      } else {
-	break;
-      }
-    }
-    prop_set(pl->pl_status, "installed", PROP_SET_INT, pl->pl_installed);
-    pl->pl_enable_cb(pl->pl_installed);
-    htsmsg_delete_field(static_apps_state, pl->pl_id);
-    htsmsg_add_u32(static_apps_state, pl->pl_id, pl->pl_installed);
-    htsmsg_store_save(static_apps_state, "staticapps");
-    update_state(pl);
-    break;
-  }
-}
-
-
-
-/**
- *
- */
-static void
-install_static(plugin_t *pl)
-{
-  prop_t *p;
-  p = prop_create(plugin_root_list, pl->pl_id);
-  prop_set(p, "type", PROP_SET_STRING, "plugin");
-
-  prop_link(pl->pl_status, prop_create(p, "status"));
-
-  prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_SINGLETON,
-		 PROP_TAG_CALLBACK, plugin_static_event, pl,
-		 PROP_TAG_ROOT, p,
-		 PROP_TAG_MUTEX, &plugin_mutex,
-		 NULL);
-}
-
-
-/**
- *
- */
-void
-plugin_add_static(const char *id, const char *category,
-		  const char *title, const char *icon,
-		  const char *synopsis,
-		  const char *description,
-		  void (*cb)(int enabled))
-{
-  plugin_t *pl = plugin_find(id);
-  pl->pl_enable_cb = cb;
-  prop_t *p = prop_create(plugin_root_list, pl->pl_id);
-  prop_set(p, "type", PROP_SET_STRING, "plugin");
-
-  prop_t *metadata = prop_create(p, "metadata");
-  prop_set(metadata, "title", PROP_SET_STRING, title);
-  prop_set(metadata, "category", PROP_SET_STRING, category);
-  prop_set(metadata, "icon", PROP_SET_STRING, icon);
-  prop_set(metadata, "synopsis", PROP_SET_STRING, synopsis);
-  prop_set_string_ex(prop_create(metadata, "description"),
-		     NULL,
-		     description,
-		     PROP_STR_RICH);
-
-  prop_link(pl->pl_status, prop_create(p, "status"));
-
-  pl->pl_installed = htsmsg_get_u32_or_default(static_apps_state, id, 0);
-  update_state(pl);
-
-  prop_subscribe(0,
-		 PROP_TAG_CALLBACK, plugin_static_event, pl,
-		 PROP_TAG_ROOT, p,
-		 PROP_TAG_MUTEX, &plugin_mutex,
-		 NULL);
-
-  if(pl->pl_installed)
-    install_static(pl);
-
-  cb(pl->pl_installed);
-  
-}
-
-
 /**
  *
  */
@@ -1113,8 +999,6 @@ plugins_init2(void)
 {
   hts_mutex_lock(&plugin_mutex);
   plugin_load_installed();
-  static_apps_state = htsmsg_store_load("staticapps") ?: htsmsg_create_map();
-  init_group(INIT_GROUP_STATIC_APPS);
   hts_mutex_unlock(&plugin_mutex);
 }
 
