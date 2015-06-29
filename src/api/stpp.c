@@ -507,7 +507,6 @@ stpp_sub_binary(void *opaque, prop_event_t event, ...)
   }
   buf[0] = STPP_CMD_NOTIFY;
   wr32_le(buf + 2, ss->ss_id);
-  hexdump("STPP-NOTIFY", buf, buflen);
   websocket_send(hc, 2, buf, buflen);
 }
 
@@ -818,7 +817,6 @@ stpp_binary(stpp_t *stpp, const uint8_t *data, int len)
 
   if(len < 1)
     return -1;
-  hexdump("STPP-INPUT", data, len);
   const uint8_t cmd = data[0];
   data++;
   len--;
