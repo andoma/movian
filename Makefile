@@ -64,7 +64,6 @@ SRCS += src/showtime.c \
 	src/settings.c \
 	src/service.c \
 	src/notifications.c \
-	src/keymapper.c \
 	src/plugins.c \
 	src/upgrade.c \
 	src/blobcache_file.c \

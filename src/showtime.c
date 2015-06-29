@@ -40,7 +40,6 @@
 #include "misc/callout.h"
 #include "runcontrol.h"
 #include "service.h"
-#include "keymapper.h"
 #include "plugins.h"
 #include "blobcache.h"
 #include "i18n.h"
@@ -357,9 +356,6 @@ main_init(void)
 #if ENABLE_GLW
   glw_settings_init();
 #endif
-
-  /* Global keymapper */
-  keymapper_init();
 
   /* Initialize media subsystem */
   media_init();

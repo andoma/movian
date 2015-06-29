@@ -23,8 +23,6 @@
 #include <errno.h>
 #include <assert.h>
 
-#include "keymapper.h"
-
 #include "arch/threads.h"
 #include "text/text.h"
 
@@ -1988,16 +1986,10 @@ glw_dispatch_event(glw_root_t *gr, event_t *e)
   }
 
   if(e->e_type == EVENT_KEYDESC) {
-    event_t *e2;
 
     if(glw_event(gr, e))
       return; // Was consumed
 
-    const event_payload_t *ep = (const event_payload_t *)e;
-    e2 = keymapper_resolve(ep->payload);
-
-    if(e2 != NULL)
-      glw_inject_event(gr, e2);
     return;
   }
 
