@@ -300,6 +300,7 @@ check_subtitle_file(sub_scanner_t *ss,
 
   } else if(!strcasecmp(postfix, ".sub") ||
             !strcasecmp(postfix, ".txt") ||
+            !strcasecmp(postfix, ".xml") ||
             !strcasecmp(postfix, ".mpl")) {
 
     type = subtitles_probe(sub_url);

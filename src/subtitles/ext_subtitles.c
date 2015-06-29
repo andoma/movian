@@ -278,6 +278,70 @@ load_srt(const char *url, const char *buf, size_t len)
  *
  */
 static int
+is_timedtext(buf_t *buf)
+{
+  if(buf_len(buf) < 30)
+    return 0;
+  if(memcmp(buf_cstr(buf), "<?xml", 5))
+    return 0;
+  if(strstr(buf_cstr(buf), "<transcript>") == NULL)
+    return 0;
+  return 1;
+}
+
+
+/**
+ *
+ */
+static ext_subtitles_t *
+load_timedtext(const char *url, buf_t *buf)
+{
+  char errbuf[256];
+  htsmsg_field_t *f;
+  htsmsg_t *xml = htsmsg_xml_deserialize_buf(buf, errbuf, sizeof(errbuf));
+
+  if(xml == NULL) {
+    TRACE(TRACE_INFO, "Subtitles", "Unable to load timed text: %s", errbuf);
+    return NULL;
+  }
+
+  htsmsg_t *transcript = htsmsg_get_map_multi(xml, "transcript", NULL);
+
+  if(transcript == NULL) {
+    htsmsg_release(xml);
+    return NULL;
+  }
+
+  ext_subtitles_t *es = calloc(1, sizeof(ext_subtitles_t));
+  TAILQ_INIT(&es->es_entries);
+
+  HTSMSG_FOREACH(f, transcript) {
+    if(f->hmf_type == HMF_STR && f->hmf_childs != NULL) {
+      htsmsg_t *n = f->hmf_childs;
+      const char *str, *txt;
+      int64_t start, end;
+
+      txt = f->hmf_str;
+
+      if((str = htsmsg_get_str(n, "start")) == NULL)
+	continue;
+      start = my_str2double(str, NULL) * 1000000.0;
+
+      if((str = htsmsg_get_str(n, "dur")) == NULL)
+	continue;
+      end = start + my_str2double(str, NULL) * 1000000.0;
+
+      es_insert_text(es, txt, start, end, 0);
+    }
+  }
+  return es;
+}
+
+
+/**
+ *
+ */
+static int
 is_ttml(buf_t *buf)
 {
   if(buf_len(buf) < 30)
@@ -694,6 +758,8 @@ subtitles_create(const char *path, buf_t *buf, AVRational *fr)
   ext_subtitles_t *s = NULL;
   if(is_ttml(buf)) {
     s = load_ttml(path, buf);
+  } else if(is_timedtext(buf)) {
+    s = load_timedtext(path, buf);
   } else {
 
     const uint8_t *u8 = buf_c8(buf);
@@ -927,6 +993,8 @@ subtitles_probe(const char *url)
     ret = "SUB";
   else if(is_tmp(buf_cstr(b), buf_len(b)))
     ret = "TMP";
+  else if(is_timedtext(b))
+    ret = "TimedText";
   else
     ret = NULL;
 
