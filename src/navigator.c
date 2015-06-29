@@ -259,7 +259,9 @@ nav_create(void)
 prop_t *
 nav_spawn(void)
 {
-  return nav_create()->nav_prop_root;
+  prop_t *p = nav_create()->nav_prop_root;
+  prop_select(p);
+  return p;
 }
 
 
