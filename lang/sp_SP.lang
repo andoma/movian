@@ -1,4 +1,4 @@
-﻿language: Spanish
+language: Spanish
 native: Español
 maintainer: Diego Franco <diegofernandofranco@gmail.com>
 #
@@ -32,7 +32,7 @@ id: Hide system info
 msg: Ocultar información del sistema
 
 id: Master volume
-msg: volumen principal
+msg: Volumen principal
 
 id: Navigation
 msg: Navegación
