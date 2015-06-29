@@ -682,6 +682,10 @@ asyncio_tcp_accept(asyncio_fd_t *af, void *opaque, int events, int error)
   setsockopt(fd, IPPROTO_TCP, TCP_KEEPCNT, &val, sizeof(val));
 #endif
 
+#ifdef __PPU__
+#define TCP_NODELAY 1
+#endif
+
 #ifdef TCP_NODELAY
   val = 1;
   setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &val, sizeof(val));
