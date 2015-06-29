@@ -55,18 +55,12 @@
 
 @implementation GLWUI
 
-/**
- *
- */
-- (void) closeWindow: (NSNotification *)not
-{
-  [window close];
+- (BOOL)windowShouldClose:(NSNotification *)notification {
+  return YES;
 }
 
-
-- (BOOL)windowShouldClose:(NSNotification *)notification {
+- (void)windowWillClose:(NSNotification *)notification {
   [self shutdown];
-  return YES;
 }
 
 - (void)windowDidMiniaturize:(NSNotification *)notification

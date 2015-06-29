@@ -486,6 +486,10 @@ glw_in_fullwindow(void *opaque, int val)
   glw_unlock(gr);
 
   CGLUnlockContext((CGLContextObj)[currentContext CGLContextObj]);
+
+  [self showCursor];
+  prop_unsubscribe(fullWindow);
+  fullWindow = NULL;
 }
 
 
@@ -495,8 +499,6 @@ glw_in_fullwindow(void *opaque, int val)
 - (void)dealloc
 {
   CVDisplayLinkRelease(m_displayLink);
-  [self showCursor];
-  prop_unsubscribe(fullWindow);
   [super dealloc];
 }
 
