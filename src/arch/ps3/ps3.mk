@@ -35,6 +35,10 @@ SELF=${BUILDDIR}/showtime.self
 SYMS=${BUILDDIR}/showtime.syms
 ZS=${BUILDDIR}/showtime.zs
 
+$(BUILDDIR)/PARAM.SFO: $(SFOXML)
+	$(SFO) --title "$(APPNAMEUSER)" --appid "$(APPID)" -f $< $@
+
+
 ${EBOOT}: support/ps3/eboot.c src/arch/ps3/ps3.mk
 	$(CC) $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg)  -o $@ $< ${LDFLAGS_EBOOT}
 	${STRIP} $@
@@ -47,9 +51,10 @@ ${ELF}: ${BUILDDIR}/showtime.ziptail src/arch/ps3/ps3.mk
 ${SYMS}: ${BUILDDIR}/showtime.ziptail src/arch/ps3/ps3.mk
 	${OBJDUMP} -t -j .text $< | awk '{print $$1 " " $$NF}'|sort >$@
 
-${ZS}:  ${BUILDDIR}/zipbundles/bundle.zip ${SYMS} src/arch/ps3/ps3.mk
+${ZS}:  ${BUILDDIR}/zipbundles/bundle.zip ${SYMS} src/arch/ps3/ps3.mk $(BUILDDIR)/PARAM.SFO ${ICON0}
 	cp $< $@
-	zip -9j ${ZS} ${SYMS}
+	cp ${ICON0} $(BUILDDIR)/ICON0.PNG
+	zip -9j ${ZS} ${SYMS} $(BUILDDIR)/PARAM.SFO $(BUILDDIR)/ICON0.PNG
 
 ${SELF}: ${ELF} ${ZS} src/arch/ps3/ps3.mk
 	make_self $< $@
@@ -62,9 +67,9 @@ $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN: ${EBOOT}  src/arch/ps3/ps3.mk
 	@mkdir -p $(BUILDDIR)/pkg/USRDIR
 	make_self_npdrm $< $@ $(CONTENTID)
 
-$(BUILDDIR)/showtime.pkg: $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN $(BUILDDIR)/pkg/USRDIR/showtime.self
+$(BUILDDIR)/showtime.pkg: $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN $(BUILDDIR)/pkg/USRDIR/showtime.self $(BUILDDIR)/PARAM.SFO
 	cp $(ICON0) $(BUILDDIR)/pkg/ICON0.PNG
-	$(SFO) --title "$(APPNAMEUSER)" --appid "$(APPID)" -f $(SFOXML) $(BUILDDIR)/pkg/PARAM.SFO
+	cp $(BUILDDIR)/PARAM.SFO $(BUILDDIR)/pkg/PARAM.SFO
 	$(PKG) --contentid $(CONTENTID) $(BUILDDIR)/pkg/ $@
 
 $(BUILDDIR)/showtime_geohot.pkg: $(BUILDDIR)/showtime.pkg  src/arch/ps3/ps3.mk

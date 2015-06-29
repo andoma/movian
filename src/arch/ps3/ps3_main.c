@@ -26,6 +26,8 @@
 #include <malloc.h>
 #include <dirent.h>
 #include <assert.h>
+#include <fcntl.h>
+
 
 #include <netinet/in.h>
 #include <net/net.h>
@@ -52,6 +54,8 @@
 #include "fileaccess/fileaccess.h"
 #include "arch/halloc.h"
 #include "ps3.h"
+
+static void replace_gamefile(const char *name);
 
 // #define EMERGENCY_EXIT_THREAD
 static uint64_t ticks_per_us;
@@ -627,6 +631,9 @@ main(int argc, char **argv)
   static callout_t co;
   scan_root_fs(&co, NULL);
 
+  replace_gamefile("PARAM.SFO");
+  replace_gamefile("ICON0.PNG");
+
   extern void glw_ps3_start(void);
   glw_ps3_start();
 
@@ -683,4 +690,70 @@ arch_pipe(int pipefd[2])
   }
 
   return 0;
+}
+
+
+/**
+ *
+ */
+static void
+overwrite_gamefile(int fd, const void *buf, int size, const char *name)
+{
+  if(lseek(fd, 0, SEEK_SET) != 0)
+    return;
+  if(write(fd, buf, size) != size)
+    return;
+  ftruncate(fd, size);
+  TRACE(TRACE_INFO, "SYSTEM", "%s updated", name);
+}
+
+
+/**
+ *
+ */
+static void
+replace_gamefile(const char *name)
+{
+  char path[256];
+  snprintf(path, sizeof(path), "%s/%s", app_dataroot(), name);
+
+  fa_handle_t *fh = fa_open(path, NULL, 0);
+
+  if(fh == NULL) {
+    return;
+  }
+  int size = fa_fsize(fh);
+  char *buf = malloc(size);
+
+  int r = fa_read(fh, buf, size);
+  fa_close(fh);
+  if(r != size) {
+    free(buf);
+    return;
+  }
+
+  snprintf(path, sizeof(path), "%s/../%s", gconf.dirname, name);
+  int fd = open(path, O_RDWR);
+
+  if(fd != -1) {
+    struct stat st;
+    if(fstat(fd, &st) != -1) {
+      if(st.st_size == size) {
+        char *buf2 = malloc(st.st_size);
+        if(buf2 != NULL) {
+          int x = read(fd, buf2, st.st_size);
+          if(x == st.st_size) {
+            if(memcmp(buf, buf2, x)) {
+              overwrite_gamefile(fd, buf, size, name);
+            }
+          }
+          free(buf2);
+        }
+      } else {
+        overwrite_gamefile(fd, buf, size, name);
+      }
+    }
+    close(fd);
+  }
+  free(buf);
 }
