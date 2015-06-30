@@ -16,17 +16,17 @@ widget(backdrop, {
       color: select(isFocused(), 1.0, 0.6);
       source: $self.metadata.icon ?? 
 	translate($self.subtype,
-		  "dataroot://resources/svg/Settings.svg",
-		  "sound", "dataroot://resources/svg/Sound.svg",
-		  "audio", "dataroot://resources/svgs/Music.svg",
-		  "video", "dataroot://resources/svg/Movie.svg",
-		  "bookmark", "dataroot://resources/svg/Bookmark.svg",
-		  "display", "dataroot://resources/svg/Display.svg",
-		  "search", "dataroot://resources/svg/Search.svg",
-		  "keymap", "dataroot://resources/svg/Keyboard.svg",
-		  "subtitle", "dataroot://resources/svg/Script.svg",
-                  "plugin", "dataroot://resources/svg/Plugin.svg",
-		  "server", "dataroot://resources/svg/Computer.svg"
+		  "dataroot://res/svg/Settings.svg",
+		  "sound", "dataroot://res/svg/Sound.svg",
+		  "audio", "dataroot://res/svgs/Music.svg",
+		  "video", "dataroot://res/svg/Movie.svg",
+		  "bookmark", "dataroot://res/svg/Bookmark.svg",
+		  "display", "dataroot://res/svg/Display.svg",
+		  "search", "dataroot://res/svg/Search.svg",
+		  "keymap", "dataroot://res/svg/Keyboard.svg",
+		  "subtitle", "dataroot://res/svg/Script.svg",
+                  "plugin", "dataroot://res/svg/Plugin.svg",
+		  "server", "dataroot://res/svg/Computer.svg"
 		 );
       sizeScale: 2;
       shadow: isVoid($self.metadata.icon);

@@ -11,7 +11,7 @@ $view.item = $args;
 commandMenuChrome(
 
   SEPICON($args.metadata.title,
-	  "dataroot://resources/svg/" + 
+	  "dataroot://res/svg/" + 
 	  translate($args.type,  "File",
 		    "archive",   "Archive",
 		    "artist",    "User",
@@ -30,7 +30,7 @@ commandMenuChrome(
 
   ITEM(_("Queue"),  {
     fireEvent(enqueuetrack($args));
-  }, "dataroot://resources/svg/Enqueue.svg",
+  }, "dataroot://res/svg/Enqueue.svg",
        $args.type == "audio");
 
   // Play (video) from beginning
@@ -38,7 +38,7 @@ commandMenuChrome(
   ITEM(_("Play from beginning"),  {
     fireEvent(navOpen($args.url, void, $args, $self.model, "beginning", $self.url));
     $clone.itemMenu = false;
-  }, "dataroot://resources/svg/Play.svg",
+  }, "dataroot://res/svg/Play.svg",
        $args.type == "video");
 
   // Continue (video) playback
@@ -46,7 +46,7 @@ commandMenuChrome(
   ITEM(fmt(_("Continue from %s"), value2duration($args.restartpos)),  {
     fireEvent(navOpen($args.url, void, $args, $self.model, "resume", $self.url));
     $clone.itemMenu = false;
-  }, "dataroot://resources/svg/Play.svg",
+  }, "dataroot://res/svg/Play.svg",
        $args.type == "video" && $args.restartpos > 0);
 
   // Play (video) from beginning
@@ -54,7 +54,7 @@ commandMenuChrome(
   ITEM(_("Play until end of list"), {
     fireEvent(navOpen($args.url, void, $args, $self.model, "continuous", $self.url));
     $clone.itemMenu = false;
-  }, "dataroot://resources/svg/Play.svg",
+  }, "dataroot://res/svg/Play.svg",
        $args.type == "video");
 
   // Continue here after track ends
@@ -62,7 +62,7 @@ commandMenuChrome(
   ITEM(_("Continue playback here"), {
     fireEvent(playTrackFromSource($args, $self.model, true));
     $clone.itemMenu = false;
-  }, "dataroot://resources/svg/Enqueue.svg",
+  }, "dataroot://res/svg/Enqueue.svg",
        $args.type == "audio");
 
   // Mark as unseen (video)
@@ -70,7 +70,7 @@ commandMenuChrome(
   ITEM(_("Mark as unseen"), {
     $args.playcount = false; 
     $clone.itemMenu = false;
-  }, "dataroot://resources/svg/Check.svg",
+  }, "dataroot://res/svg/Check.svg",
        $args.type == "video" && $args.playcount > 0);
 
   // Mark as seen (video)
@@ -78,7 +78,7 @@ commandMenuChrome(
   ITEM(_("Mark as seen"), {
     $args.playcount = true;
     $clone.itemMenu = false;
-  }, "dataroot://resources/svg/Check.svg",
+  }, "dataroot://res/svg/Check.svg",
        $args.type == "video" && $args.playcount < 1);
 
   // Star / Unstar feature
@@ -87,8 +87,8 @@ commandMenuChrome(
 	     $args.metadata.starred,
 	     deliverEvent($args, "starToggle"),
 	     !isVoid($args.metadata.starred),
-	     "dataroot://resources/svg/Star.svg",
-	     "dataroot://resources/svg/Nostar.svg",
+	     "dataroot://res/svg/Star.svg",
+	     "dataroot://res/svg/Nostar.svg",
 	     [1,1,0]);
 
 
@@ -97,7 +97,7 @@ commandMenuChrome(
   ITEM($args.metadata.artist, {
     fireEvent(navOpen($args.metadata.artist));
     $clone.itemMenu = false;
-  }, "dataroot://resources/svg/User.svg",
+  }, "dataroot://res/svg/User.svg",
        isLink($args.metadata.artist));
 
   // Goto album
@@ -105,14 +105,14 @@ commandMenuChrome(
   ITEM($args.metadata.album, {
     fireEvent(navOpen($args.metadata.album));
     $clone.itemMenu = false;
-  }, "dataroot://resources/svg/Disc.svg",
+  }, "dataroot://res/svg/Disc.svg",
        isLink($args.metadata.album));
 
   // Delete item
 
   ITEM(_("Delete"), { 
     delete($args);
-  }, "dataroot://resources/svg/Delete.svg",
+  }, "dataroot://res/svg/Delete.svg",
        $self.model.canDelete || $args.canDelete,
        [1,0.8,0.8]);
 

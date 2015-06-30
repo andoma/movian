@@ -74,7 +74,7 @@ widget(container_y, {
     padding: [$ui.size*2, $ui.size / 3];
 
     widget(icon, {
-      source: "dataroot://resources/svg/Alert.svg";
+      source: "dataroot://res/svg/Alert.svg";
       shadow: true;
       sizeScale: 1;
     });
@@ -131,7 +131,7 @@ widget(container_y, {
       spacing: $ui.size;
       padding: [$ui.size, 0];
       widget(icon, {
-	source: "dataroot://resources/svg/Search.svg";
+	source: "dataroot://res/svg/Search.svg";
 	shadow: true;
 	sizeScale: 2;
 	color: [0.431, 0.811, 1];
@@ -205,7 +205,7 @@ widget(array, {
   cloner($core.services.stable, container_z, {
     HOMEITEM($self.title,
 	     $self.icon ?? 
-	     "dataroot://resources/svg/" + 
+	     "dataroot://res/svg/" + 
 	     translate($self.type, "Folder",
 		       "music",    "Music",
 		       "video",    "Movie",

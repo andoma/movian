@@ -15,7 +15,7 @@ widget(backdrop, {
     widget(icon, {
       align: left;
       color: select(isFocused(), 1.0, 0.6);
-      source: $self.metadata.icon ?? "dataroot://resources/svg/Display.svg";
+      source: $self.metadata.icon ?? "dataroot://res/svg/Display.svg";
       shadow: true;
     });
     

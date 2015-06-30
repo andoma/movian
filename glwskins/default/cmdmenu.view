@@ -23,7 +23,7 @@ $view.sizer = $ui.size / 5;
 
 	widget(icon, {
 	  color: iir(0.6 + (isFocused() || isPressed() || isHovered()), 4);
-	  source: "dataroot://resources/svg/" + ICON + ".svg";
+	  source: "dataroot://res/svg/" + ICON + ".svg";
 	  shadow: true;
 	  sizeScale: 1.5;
 	});
@@ -57,7 +57,7 @@ $view.sizer = $ui.size / 5;
 	  SquareButtonFront();
 	  widget(icon, {
 	    color: iir(0.6 + (isFocused() || isPressed() || isHovered()), 4);
-	    source: "dataroot://resources/svg/" + ICON + ".svg";
+	    source: "dataroot://res/svg/" + ICON + ".svg";
 	    shadow: true;
 	    sizeScale: 1.5;
 	  });
@@ -94,7 +94,7 @@ $view.sizer = $ui.size / 5;
 	SquareButtonFront();
 	widget(icon, {
 	  color: iir(select(STATE, 1, 0.2), 4);
-	  source: "dataroot://resources/svg/" + ICON + ".svg";
+	  source: "dataroot://res/svg/" + ICON + ".svg";
 	  shadow: true;
 	  sizeScale: 1.5;
 	});
@@ -128,7 +128,7 @@ $view.sizer = $ui.size / 5;
 
 	  widget(icon, {
 	    color: iir(select(STATE, 1, 0.2), 4);
-	    source: "dataroot://resources/svg/" + ICON + ".svg";
+	    source: "dataroot://res/svg/" + ICON + ".svg";
 	    shadow: true;
 	    sizeScale: 1.5;
 	  });

@@ -69,7 +69,7 @@
 
 
 #define TYPED_ITEM(ICON, TYPE, TITLE, URL) {
-  ITEM(ICON ?? "dataroot://resources/svg/" + 
+  ITEM(ICON ?? "dataroot://res/svg/" + 
        translate(TYPE, "Folder",
 		 "music",    "Music",
 		 "video",    "Movie",
@@ -104,7 +104,7 @@ widget(container_x, {
       padding: [$ui.size*2, 0];
 
       widget(icon, {
-	source: "dataroot://resources/svg/Alert.svg";
+	source: "dataroot://res/svg/Alert.svg";
 	shadow: true;
 	sizeScale: 1;
       });
@@ -162,7 +162,7 @@ widget(container_x, {
 
       widget(image, {
 	.width = $ui.size * 4;
-	.source = "dataroot://resources/svg/Search.svg";;
+	.source = "dataroot://res/svg/Search.svg";;
 	.shadow = true;
       });
 
@@ -254,7 +254,7 @@ widget(container_x, {
 
     DIVIDER("System", false);
 
-    ITEM("dataroot://resources/svg/Settings.svg", _("Settings"), "settings:");
-    ITEM("dataroot://resources/svg/Plugin.svg", _("Apps"), "plugin:start");
+    ITEM("dataroot://res/svg/Settings.svg", _("Settings"), "settings:");
+    ITEM("dataroot://res/svg/Plugin.svg", _("Apps"), "plugin:start");
   });
 });

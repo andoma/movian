@@ -59,9 +59,9 @@ widget(backdrop, {
       hidden: !$args.showOrigin;
       color: select(isFocused(), 1.0, 0.6);
       source: translate($self.origin, void,
-                        "global", "dataroot://resources/svg/Settings.svg",
-                        "directory", "dataroot://resources/svg/Folder.svg",
-                        "local", "dataroot://resources/svg/Movie.svg"
+                        "global", "dataroot://res/svg/Settings.svg",
+                        "directory", "dataroot://res/svg/Folder.svg",
+                        "local", "dataroot://res/svg/Movie.svg"
                         );
     });
   });

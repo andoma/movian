@@ -15,9 +15,9 @@ widget(backdrop, {
     widget(icon, {
       color: select(isFocused(), 1.0, 0.6);
       source: translate($self.metadata.type,
-			"dataroot://resources/svg/Settings.svg",
-			"wifi", "dataroot://resources/svg/Wifi.svg",
-			"ethernet", "dataroot://resources/svg/Ethernet.svg"
+			"dataroot://res/svg/Settings.svg",
+			"wifi", "dataroot://res/svg/Wifi.svg",
+			"ethernet", "dataroot://res/svg/Ethernet.svg"
 		 );
       sizeScale: 2;
       shadow: true;
@@ -27,12 +27,12 @@ widget(backdrop, {
       color: select(isFocused(), 1.0, 0.6);
       source: translate($self.metadata.state,
 			"",
-			"failure",       "dataroot://resources/svg/Alert.svg",
-			"association",   "dataroot://resources/svg/Radio.svg",
-			"configuration", "dataroot://resources/svg/Trafic.svg",
-			"ready",         "dataroot://resources/svg/Link.svg",
-			"disconnect",    "dataroot://resources/svg/Out.svg",
-			"online",        "dataroot://resources/svg/Check.svg"
+			"failure",       "dataroot://res/svg/Alert.svg",
+			"association",   "dataroot://res/svg/Radio.svg",
+			"configuration", "dataroot://res/svg/Trafic.svg",
+			"ready",         "dataroot://res/svg/Link.svg",
+			"disconnect",    "dataroot://res/svg/Out.svg",
+			"online",        "dataroot://res/svg/Check.svg"
 		       );
       sizeScale: 2;
       shadow: true;
@@ -63,7 +63,7 @@ widget(backdrop, {
       color: select(isFocused(), 1.0, 0.6);
       source: select(isVoid($self.metadata.security),
 		     "", 
-		     "dataroot://resources/svg/Lock.svg"
+		     "dataroot://res/svg/Lock.svg"
 		    );
       sizeScale: 2;
       shadow: true;
@@ -72,7 +72,7 @@ widget(backdrop, {
     widget(icon, {
       color: select(isFocused(), 1.0, 0.6);
       source: select($self.metadata.favorite,
-		     "dataroot://resources/svg/Favorite.svg",
+		     "dataroot://res/svg/Favorite.svg",
 		     "");
       sizeScale: 2;
       shadow: true;

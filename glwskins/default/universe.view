@@ -1,5 +1,5 @@
 setDefaultFont($core.fonts.main);
-$ui.monofont = "dataroot://resources/fonts/UbuntuMono-Regular.ttf";
+$ui.monofont = "dataroot://res/fonts/UbuntuMono-Regular.ttf";
 $ui.condensedfont = $core.fonts.condensed ?? 
   "skin://fonts/OpenSans-CondBold.ttf";
 $ui.background = "skin://graphics/background.jpg";
@@ -126,7 +126,7 @@ widget(container_z, {
 	  widget(icon, {
 	    align: topLeft;
 	    sizeScale: 1.5;
-	    source: "dataroot://resources/svg/Alert.svg";
+	    source: "dataroot://res/svg/Alert.svg";
 	    color: translate($self.type, [1,1,1],
 			     "info", [0.5, 1, 0.5],
 			     "warning",  [1, 1, 0.5],

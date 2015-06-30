@@ -16,7 +16,7 @@ widget(backdrop, {
       align: left;
       color: select(isFocused(), 1.0, 0.6);
       source: 
-      "dataroot://resources/svg/" + 
+      "dataroot://res/svg/" + 
 	translate($self.type,  "File",
 		  "archive",   "Archive",
 		  "artist",    "User",

@@ -119,7 +119,7 @@ spotlight_searcher(void *aux)
   int i, t;
   char iconpath[PATH_MAX];
 
-  snprintf(iconpath, sizeof(iconpath), "%s/resources/fileaccess/fs_icon.png",
+  snprintf(iconpath, sizeof(iconpath), "%s/res/fileaccess/fs_icon.png",
 	   app_dataroot());
 
   fas->fas_pc = prop_courier_create_passive();

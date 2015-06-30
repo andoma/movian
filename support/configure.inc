@@ -537,23 +537,23 @@ EOF
     fi
 
     # Fonts
-    echo >>${CONFIG_MAK} "BUNDLES+=resources/fonts"
+    echo >>${CONFIG_MAK} "BUNDLES+=res/fonts"
     
     # SVG icons
-    echo >>${CONFIG_MAK} "BUNDLES+=resources/svg"
+    echo >>${CONFIG_MAK} "BUNDLES+=res/svg"
 
     # Languages
     echo >>${CONFIG_MAK} "BUNDLES+=lang"
 
     # Static web resources
-    echo >>${CONFIG_MAK} "BUNDLES+=resources/static"
+    echo >>${CONFIG_MAK} "BUNDLES+=res/static"
 
     # Static ecmascript resources
-    echo >>${CONFIG_MAK} "BUNDLES+=resources/ecmascript"
+    echo >>${CONFIG_MAK} "BUNDLES+=res/ecmascript"
 
     # Test signal audio samples
     if enabled audiotest; then
-	echo >>${CONFIG_MAK} "BUNDLES+=resources/speaker_positions"
+	echo >>${CONFIG_MAK} "BUNDLES+=res/speaker_positions"
     fi
 
     # sqlite

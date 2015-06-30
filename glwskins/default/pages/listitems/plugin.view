@@ -20,7 +20,7 @@ widget(backdrop, {
     widget(icon, {
       align: left;
       color: select(isFocused(), 1.0, 0.6);
-      source: "dataroot://resources/svg/Plugin.svg";
+      source: "dataroot://res/svg/Plugin.svg";
       shadow: true;
     });
     
@@ -47,8 +47,8 @@ widget(backdrop, {
       alpha: $self.status.canUpgrade || $self.status.cantUpgrade;
       color: select(isFocused(), 1.0, 0.6);
       source: select($self.status.cantUpgrade, 
-		     "dataroot://resources/svg/Alert.svg",
-		     "dataroot://resources/svg/ArrowUp.svg");
+		     "dataroot://res/svg/Alert.svg",
+		     "dataroot://res/svg/ArrowUp.svg");
     });
 
     widget(icon, {

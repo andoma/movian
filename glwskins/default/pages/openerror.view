@@ -3,7 +3,7 @@
 widget(container_z, {
 
   widget(image, {
-    source: "dataroot://resources/svg/Alert.svg";
+    source: "dataroot://res/svg/Alert.svg";
     alpha: 0.1;
   });
 

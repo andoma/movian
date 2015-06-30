@@ -3,7 +3,7 @@
 #define STAR_FULL() {
   widget(icon, {
     color: [1, 1, 0.2];
-    source: "dataroot://resources/svg/Star.svg";
+    source: "dataroot://res/svg/Star.svg";
   });
 }
 
@@ -11,7 +11,7 @@
   widget(icon, {
     color: [0.33, 0.33, 0];
     shadow: true;
-    source: "dataroot://resources/svg/Star.svg";
+    source: "dataroot://res/svg/Star.svg";
   });
 }
 
@@ -34,7 +34,7 @@ widget(container_y, {
 	  width: $ui.width / 6;
 	  source: $args.metadata.usericon ?? 
 	    $args.metadata.icon ?? 
-	    "dataroot://resources/svg/Movie.svg";
+	    "dataroot://res/svg/Movie.svg";
 	});
       });
     });

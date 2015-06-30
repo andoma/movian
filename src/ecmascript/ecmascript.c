@@ -355,7 +355,7 @@ es_modsearch(duk_context *ctx)
   }
 
   snprintf(path, sizeof(path),
-           "dataroot://resources/ecmascript/modules/%s.js", id);
+           "dataroot://res/ecmascript/modules/%s.js", id);
   if(tryload(ctx, path, id, ec))
     return 1;
 
@@ -761,8 +761,7 @@ ecmascript_plugin_load(const char *id, const char *url,
 
     int64_t ts0 = arch_get_ts();
 
-    if(es_load_and_compile(ec,
-                           "dataroot://resources/ecmascript/legacy/api-v1.js"))
+    if(es_load_and_compile(ec, "dataroot://res/ecmascript/legacy/api-v1.js"))
       goto bad;
 
     int64_t ts1 = arch_get_ts();

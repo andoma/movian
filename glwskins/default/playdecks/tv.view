@@ -25,7 +25,7 @@ widget(container_z, {
 	widget(image, {
           aspectConstraint: true;
           source: $core.media.current.metadata.icon ??
-            "dataroot://resources/svg/Display.svg";
+            "dataroot://res/svg/Display.svg";
           hidden: select($core.media.current.metadata.icon, false, true);
 	});
 

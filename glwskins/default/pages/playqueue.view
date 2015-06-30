@@ -114,20 +114,20 @@ widget(container_y, {
       
       widget(container_x, {
 	align: center;
-	actionBtn("dataroot://resources/svg/SkipBack.svg", event(PreviousTrack),
+	actionBtn("dataroot://res/svg/SkipBack.svg", event(PreviousTrack),
 		  $core.media.current.canSkipBackward);
-	actionBtn("dataroot://resources/svg/Play.svg", event(PlayPause), true);
-	actionBtn("dataroot://resources/svg/SkipNext.svg", event(NextTrack),
+	actionBtn("dataroot://res/svg/Play.svg", event(PlayPause), true);
+	actionBtn("dataroot://res/svg/SkipNext.svg", event(NextTrack),
 		  $core.media.current.canSkipForward);
       });
 
       widget(container_x, {
 	align: center;
-	toggleBtn("dataroot://resources/svg/Repeat.svg",
+	toggleBtn("dataroot://res/svg/Repeat.svg",
 		  $core.media.current.repeat,
 		  $core.media.current.canRepeat);
 
-	toggleBtn("dataroot://resources/svg/Shuffle.svg",
+	toggleBtn("dataroot://res/svg/Shuffle.svg",
 		  $core.media.current.shuffle,
 		  $core.media.current.canShuffle);
       });

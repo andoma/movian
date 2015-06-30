@@ -30,10 +30,10 @@
   SEP(_("System"));
 
   ITEM(fmt(_("Exit %s"), $core.app.name), event(Quit),
-       "dataroot://resources/svg/Exit.svg", $core.runcontrol.canExit);
+       "dataroot://res/svg/Exit.svg", $core.runcontrol.canExit);
 
   ITEM(_("Suspend"), event(Standby),
-       "dataroot://resources/svg/Power.svg", $core.runcontrol.canStandby);
+       "dataroot://res/svg/Power.svg", $core.runcontrol.canStandby);
 
   ITEMSLIDER(_("Time until sleep"),
              0,
@@ -48,10 +48,10 @@
               _("Disable sleep timer"),
               _("Activate sleep timer")), {
     $core.runcontrol.sleepTimer = !$core.runcontrol.sleepTimer;
-  }, "dataroot://resources/svg/Power.svg", $core.runcontrol.canStandby);
+  }, "dataroot://res/svg/Power.svg", $core.runcontrol.canStandby);
 
   ITEM(_("Power off"), event(PowerOff),
-       "dataroot://resources/svg/Power.svg", $core.runcontrol.canPowerOff);
+       "dataroot://res/svg/Power.svg", $core.runcontrol.canPowerOff);
 
   ITEMSLIDER(_("Master volume"), -75, 12, 1,
              $core.audio.mastervolume, _("dB"), true);
@@ -62,7 +62,7 @@
   widget(icon, {
     focusable: true;
     color: [0.431, 0.811, 1] + iir((isFocused() || isPressed() || isHovered()), 4);
-    source: "dataroot://resources/svg/" + ICON + ".svg";
+    source: "dataroot://res/svg/" + ICON + ".svg";
     shadow: true;
     sizeScale: 1.5;
   });

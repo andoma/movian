@@ -208,7 +208,7 @@ fa_locate_searcher (fa_search_t *fas)
   if (fa_create_paths_regex(&preg) == -1)
     return fa_search_destroy(fas);
 
-  snprintf(iconpath, sizeof(iconpath), "%s/resources/fileaccess/fs_icon.png",
+  snprintf(iconpath, sizeof(iconpath), "%s/res/fileaccess/fs_icon.png",
 	   app_dataroot());
 
   /* Consume 'locate' results. */

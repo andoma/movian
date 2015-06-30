@@ -77,7 +77,7 @@ widget(array, {
   cloner($core.services.discovered, container_z, {
     HOMEITEM($self.title,
 	     $self.icon ?? 
-	     "dataroot://resources/svg/" + 
+	     "dataroot://res/svg/" + 
 	     translate($self.type, "Folder",
 		       "music",    "Music",
 		       "video",    "Movie",

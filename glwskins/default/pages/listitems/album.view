@@ -15,7 +15,7 @@ widget(backdrop, {
     widget(icon, {
       align: left;
       color: select(isFocused(), 1.0, 0.6);
-      source: "dataroot://resources/svg/Disc.svg";
+      source: "dataroot://res/svg/Disc.svg";
       shadow: true;
     });
     

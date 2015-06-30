@@ -194,14 +194,14 @@ unpack_audio(const char *url, pcm_sound_t *out)
 static void
 unpack_speaker_positions(pcm_sound_t v[8])
 {
-  unpack_audio("dataroot://resources/speaker_positions/fl.mp3", &v[0]);
-  unpack_audio("dataroot://resources/speaker_positions/fr.mp3", &v[1]);
-  unpack_audio("dataroot://resources/speaker_positions/c.mp3", &v[2]);
-  unpack_audio("dataroot://resources/speaker_positions/lfe.mp3", &v[3]);
-  unpack_audio("dataroot://resources/speaker_positions/sl.mp3", &v[4]);
-  unpack_audio("dataroot://resources/speaker_positions/sr.mp3", &v[5]);
-  unpack_audio("dataroot://resources/speaker_positions/rl.mp3", &v[6]);
-  unpack_audio("dataroot://resources/speaker_positions/rr.mp3", &v[7]);
+  unpack_audio("dataroot://res/speaker_positions/fl.mp3", &v[0]);
+  unpack_audio("dataroot://res/speaker_positions/fr.mp3", &v[1]);
+  unpack_audio("dataroot://res/speaker_positions/c.mp3", &v[2]);
+  unpack_audio("dataroot://res/speaker_positions/lfe.mp3", &v[3]);
+  unpack_audio("dataroot://res/speaker_positions/sl.mp3", &v[4]);
+  unpack_audio("dataroot://res/speaker_positions/sr.mp3", &v[5]);
+  unpack_audio("dataroot://res/speaker_positions/rl.mp3", &v[6]);
+  unpack_audio("dataroot://res/speaker_positions/rr.mp3", &v[7]);
 }
 
 /**

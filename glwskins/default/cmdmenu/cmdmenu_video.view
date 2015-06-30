@@ -15,35 +15,35 @@ widget(deck, {
 
     ITEM(_("Audio tracks"), {
       $clone.menuPage = 1;
-    }, "dataroot://resources/svg/Music.svg");
+    }, "dataroot://res/svg/Music.svg");
     
     ITEM(_("Subtitle tracks"), {
       $clone.menuPage = 2;
-    }, "dataroot://resources/svg/Script.svg");
+    }, "dataroot://res/svg/Script.svg");
 
     ITEM(_("Seek by time"), {
       $clone.menuPage = 6;
-    }, "dataroot://resources/svg/SeekByFrame.svg",
+    }, "dataroot://res/svg/SeekByFrame.svg",
 	 $core.media.current.seekindex.available);
 
     ITEM(_("Chapters"), {
       $clone.menuPage = 7;
-    }, "dataroot://resources/svg/Book.svg",
+    }, "dataroot://res/svg/Book.svg",
 	 $core.media.current.chapterindex.available);
 
     SEP(_("Settings"));
 
     ITEM(_("Audio"), {
       $clone.menuPage = 3;
-    }, "dataroot://resources/svg/Music.svg");
+    }, "dataroot://res/svg/Music.svg");
 
     ITEM(_("Subtitles"), {
       $clone.menuPage = 4;
-    }, "dataroot://resources/svg/Script.svg");
+    }, "dataroot://res/svg/Script.svg");
 
     ITEM(_("Video"), {
       $clone.menuPage = 5;
-    }, "dataroot://resources/svg/Movie.svg");
+    }, "dataroot://res/svg/Movie.svg");
 
     cloner($self.media.settings.nodes, loader, {
       source: "skin://pages/listitems/" + $self.type + ".view";
@@ -75,7 +75,7 @@ widget(deck, {
       widget(container_x, {
 	alpha: 0.6 + iir(isFocused(), 6);
 	widget(icon, {
-	  source: "dataroot://resources/svg/Check.svg";
+	  source: "dataroot://res/svg/Check.svg";
 	  shadow: true;
 	  alpha: iir($self.url == $parent.media.audio.current, 8);
 	});
@@ -121,7 +121,7 @@ widget(deck, {
 	alpha: 0.6 + iir(isFocused(), 6);
 	spacing: $ui.size / 2;
 	widget(icon, {
-	  source: "dataroot://resources/svg/Check.svg";
+	  source: "dataroot://res/svg/Check.svg";
 	  shadow: true;
 	  alpha: iir($self.url == $parent.media.subtitle.current, 8);
 	});

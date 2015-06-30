@@ -73,7 +73,7 @@ widget(container_z, {
 	widget(container_x, {
 	  hidden: select($self.media.error, false, true);
 	  widget(icon, {
-	    source: "dataroot://resources/svg/Alert.svg";
+	    source: "dataroot://res/svg/Alert.svg";
 	  });
 	  widget(label, {
 	    OSD();
@@ -84,7 +84,7 @@ widget(container_z, {
 	widget(container_x, {
 	  hidden: select($self.media.video.too_slow, false, true);
 	  widget(icon, {
-	    source: "dataroot://resources/svg/Alert.svg";
+	    source: "dataroot://res/svg/Alert.svg";
 	  });
 	  widget(label, {
 	    OSD();
@@ -96,7 +96,7 @@ widget(container_z, {
 	cloner($self.media.notifications, container_x, {
 	  spacing: 10;
 	  widget(icon, {
-	    source: "dataroot://resources/svg/Alert.svg";
+	    source: "dataroot://res/svg/Alert.svg";
 	    color: translate($self.type, [1,1,1],
 			     "info", [0.5, 1, 0.5],
 			     "warning",  [1, 1, 0.5],
@@ -118,7 +118,7 @@ widget(container_z, {
 	  spacing: 10;
 	  hidden: !changed($self.media.audio.current, 5);
 	  widget(icon, {
-	    source: "dataroot://resources/svg/Sound.svg";
+	    source: "dataroot://res/svg/Sound.svg";
 	  });
 	  widget(deck, {
 	    effect: flipHorizontal;
@@ -145,7 +145,7 @@ widget(container_z, {
 	  spacing: 10;
 	  hidden: !changed($self.media.subtitle.current, 5);
 	  widget(icon, {
-	    source: "dataroot://resources/svg/Script.svg";
+	    source: "dataroot://res/svg/Script.svg";
 	  });
 	  widget(deck, {
 	    effect: flipHorizontal;

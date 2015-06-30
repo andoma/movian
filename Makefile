@@ -164,7 +164,7 @@ SRCS-$(CONFIG_METADATA) += src/api/lastfm.c \
 			   src/api/tvdb.c \
 
 
-BUNDLES-$(CONFIG_METADATA) += resources/metadb
+BUNDLES-$(CONFIG_METADATA) += res/metadb
 
 
 ##############################################################
@@ -193,7 +193,7 @@ ${BUILDDIR}/ext/sqlite/sqlite3.o : CFLAGS = -O2 ${SQLITE_CFLAGS_cfg} \
 
 SRCS-$(CONFIG_SQLITE_VFS) += src/db/vfs.c
 
-BUNDLES-$(CONFIG_KVSTORE) += resources/kvstore
+BUNDLES-$(CONFIG_KVSTORE) += res/kvstore
 
 ##############################################################
 # HTSMSG
@@ -243,7 +243,7 @@ SRCS-$(CONFIG_RAR)             += src/fileaccess/fa_rar.c
 SRCS-$(CONFIG_SID)             += src/fileaccess/fa_sidfile.c \
 				  ext/audio/sid.c
 
-BUNDLES += resources/fileaccess
+BUNDLES += res/fileaccess
 
 ##############################################################
 # Service Discovery
@@ -368,7 +368,7 @@ SRCS-$(CONFIG_BITTORRENT) += \
 ##############################################################
 SRCS-$(CONFIG_HTSP)  += src/backend/htsp/htsp.c
 
-BUNDLES-$(CONFIG_HTSP) += resources/tvheadend
+BUNDLES-$(CONFIG_HTSP) += res/tvheadend
 
 ##############################################################
 # TV

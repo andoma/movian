@@ -604,7 +604,7 @@ hc_root(http_connection_t *hc, const char *remain, void *opaque,
 {
   if(!gconf.enable_experimental)
     return hc_root_old(hc);
-  return hc_serve_file(hc, "dataroot://resources/static/index.html", NULL);
+  return hc_serve_file(hc, "dataroot://res/static/index.html", NULL);
 }
 
 /**
@@ -614,7 +614,7 @@ static int
 hc_favicon(http_connection_t *hc, const char *remain, void *opaque,
 	   http_cmd_t method)
 {
-  return hc_serve_file(hc, "dataroot://resources/static/favicon.ico",
+  return hc_serve_file(hc, "dataroot://res/static/favicon.ico",
 		       "image/ico");
 }
 
@@ -629,7 +629,7 @@ hc_static(http_connection_t *hc, const char *remain, void *opaque,
   char path[PATH_MAX];
   if(remain == NULL || strstr(remain, ".."))
     return 404;
-  snprintf(path, sizeof(path), "dataroot://resources/static/%s", remain);
+  snprintf(path, sizeof(path), "dataroot://res/static/%s", remain);
   return hc_serve_file(hc, path, NULL);
 }
 

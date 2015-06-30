@@ -15,7 +15,7 @@ widget(backdrop, {
     widget(icon, {
       align: left;
       color: select(isFocused(), 1.0, 0.6);
-      source: "dataroot://resources/svg/Font.svg";
+      source: "dataroot://res/svg/Font.svg";
       shadow: true;
     });
     

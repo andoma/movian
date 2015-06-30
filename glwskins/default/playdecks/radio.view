@@ -21,7 +21,7 @@ widget(container_z, {
       widget(image, {
 	width: $ui.size * 2;
 	source: $core.media.current.metadata.album_art ??
-	  "dataroot://resources/svg/Disc.svg";
+	  "dataroot://res/svg/Disc.svg";
       });
       widget(container_y, {
 	filterConstraintX: true;

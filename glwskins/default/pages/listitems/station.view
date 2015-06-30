@@ -16,7 +16,7 @@ widget(backdrop, {
     widget(icon, {
       align: left;
       color: select(isFocused(), 1.0, 0.6);
-      source: "dataroot://resources/svg/Radio.svg";
+      source: "dataroot://res/svg/Radio.svg";
       shadow: true;
     });
 
@@ -24,8 +24,8 @@ widget(backdrop, {
       align: left;
       color: select(isFocused(), 1.0, 0.6);
       source: translate($self.media.playstatus, void,
-			"play", "dataroot://resources/svg/Play.svg",
-			"pause", "dataroot://resources/svg/Pause.svg");
+			"play", "dataroot://res/svg/Play.svg",
+			"pause", "dataroot://res/svg/Pause.svg");
     });
     widget(label, {
       TextStyleItem();
