@@ -1,6 +1,6 @@
 language: Portuguese
 native: Português
-maintainer: andreus sebes
+maintainer: bguerreiro3@gmail.com
 #
 # ./glwskins/default/cmdmenu.view
 #
@@ -1410,7 +1410,7 @@ id: Global settings
 msg: Definições globais
 
 id: Look and feel
-msg: Olhar e sentir
+msg: Aspecto
 
 id: Network services, etc
 msg: Serviços de rede, etc
