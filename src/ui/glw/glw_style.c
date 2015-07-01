@@ -1160,7 +1160,7 @@ glw_style_bindings_sweep(glw_t *w, int all)
   glw_root_t *gr = w->glw_root;
 
   for(gsb = LIST_FIRST(&w->glw_style_bindings); gsb != NULL; gsb = next) {
-    next = LIST_NEXT(gsb, gsb_style_link);
+    next = LIST_NEXT(gsb, gsb_widget_link);
 
     if(all || gsb->gsb_mark) {
 
@@ -1174,6 +1174,7 @@ glw_style_bindings_sweep(glw_t *w, int all)
       } while(gs != NULL);
 
       glw_style_release(gsb->gsb_style);
+      gsb->gsb_style = NULL;
       glw_style_binding_destroy(gsb, gr);
     }
   }
