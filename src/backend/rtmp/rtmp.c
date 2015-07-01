@@ -756,11 +756,11 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
     }
   }
 
-  mp_shutdown(mp);
-
   TRACE(TRACE_DEBUG, "RTMP", "End of playback");
 
   rtmp_free(&r);
+
+  mp_shutdown(mp);
   return e;
 }
 
