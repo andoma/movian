@@ -1,7 +1,7 @@
 ${APPDIR}/Contents/MacOS/showtime: ${APPPROG} \
 			${APPDIR}/Contents/Info.plist \
 			${APPDIR}/Contents/Resources/hts.icns \
-			${APPDIR}/Contents/Resources/MainMenu.nib \
+			${APPDIR}/Contents/Resources/MainMenu.nib
 	@echo "APP\t$@"
 	@mkdir -p $(dir $@)
 	@cp $< $@
