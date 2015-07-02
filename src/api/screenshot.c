@@ -17,6 +17,7 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
+#include <stdio.h>
 
 #include "main.h"
 #include "networking/http.h"
