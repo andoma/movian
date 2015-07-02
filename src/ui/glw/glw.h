@@ -862,7 +862,7 @@ typedef struct glw_root {
    */
   glw_backend_root_t gr_be;
   void (*gr_be_render_unlocked)(struct glw_root *gr);
-
+  struct pixmap *(*gr_br_read_pixels)(struct glw_root *gr);
   /**
    * Settings
    */

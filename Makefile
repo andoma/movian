@@ -263,8 +263,11 @@ ${BUILDDIR}/src/sd/avahi.o : CFLAGS = $(CFLAGS_AVAHI) -Wall -Werror  ${OPTFLAGS}
 SRCS += 		src/api/xmlrpc.c \
 			src/api/soap.c \
 
-SRCS-$(CONFIG_HTTPSERVER) += src/api/httpcontrol.c
-SRCS-$(CONFIG_HTTPSERVER) += src/api/stpp.c
+SRCS-$(CONFIG_HTTPSERVER) += \
+	src/api/httpcontrol.c \
+	src/api/screenshot.c \
+	src/api/stpp.c \
+
 SRCS-$(CONFIG_AIRPLAY) += src/api/airplay.c
 
 ##############################################################

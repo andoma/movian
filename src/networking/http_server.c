@@ -394,6 +394,7 @@ http_send_reply(http_connection_t *hc, int rc, const char *content,
     else
       htsbuf_appendq(&hc->hc_output, output);
   }
+  http_write(hc);
   return 0;
 }
 

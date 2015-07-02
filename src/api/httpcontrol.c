@@ -126,15 +126,15 @@ hc_root_old(http_connection_t *hc)
 		 "<input type=\"text\" name=\"url\" style=\"width:500px\"/>"
 		 "<input type=\"submit\" value=\"Open\" />"
 		 "</form>", APPNAMEUSER);
-  
+
   htsbuf_qprintf(&out, "<h3>Diagnostics</h3>"); 
 
   diag_html(hc, &out);
-
+  htsbuf_qprintf(&out, "<p><a href=\"/showtime/screenshot\">Upload screenshot to imgur</a></p>");
   htsbuf_qprintf(&out, "<p><a href=\"/showtime/translation\">Upload and test new translation (.lang) file</a></p>");
 
   htsbuf_qprintf(&out, "</body></html>");
-		 
+
   return http_send_reply(hc, 0, "text/html", NULL, NULL, 0, &out);
 }
 

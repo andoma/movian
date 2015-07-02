@@ -160,6 +160,7 @@ typedef enum {
   EVENT_REDIRECT                      = 25,
   EVENT_PROPREF                       = 26,
   EVENT_DYNAMIC_ACTION                = 27,
+  EVENT_MAKE_SCREENSHOT               = 28,
 } event_type_t;
 
 

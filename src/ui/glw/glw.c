@@ -35,6 +35,8 @@
 #include "glw_style.h"
 #include "glw_navigation.h"
 
+#include "api/screenshot.h"
+
 static void glw_focus_init_widget(glw_t *w, float weight);
 static void glw_focus_leave(glw_t *w);
 static void glw_root_set_hover(glw_root_t *gr, glw_t *w);
@@ -1970,6 +1972,24 @@ glw_kill_screensaver(glw_root_t *gr)
   return r;
 }
 
+
+/**
+ *
+ */
+static void
+glw_screenshot(glw_root_t *gr)
+{
+  if(gr->gr_br_read_pixels == NULL) {
+    screenshot_deliver(NULL);
+    return;
+  }
+
+  pixmap_t *pm = gr->gr_br_read_pixels(gr);
+  screenshot_deliver(pm);
+  pixmap_release(pm);
+}
+
+
 /**
  *
  */
@@ -1982,6 +2002,11 @@ glw_dispatch_event(glw_root_t *gr, event_t *e)
 
   if(e->e_type == EVENT_REPAINT_UI) {
     glw_text_flush(gr);
+    return;
+  }
+
+  if(e->e_type == EVENT_MAKE_SCREENSHOT) {
+    glw_screenshot(gr);
     return;
   }
 

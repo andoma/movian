@@ -107,6 +107,19 @@ glw_rtt_destroy(glw_root_t *gr, glw_rtt_t *grtt)
 }
 
 
+/**
+ *
+ */
+static pixmap_t *
+opengl_read_pixels(glw_root_t *gr)
+{
+  pixmap_t *pm = pixmap_create(gr->gr_width, gr->gr_height, PIXMAP_BGR32, 0);
+
+  glReadPixels(0, 0, gr->gr_width, gr->gr_height,
+               GL_BGRA, GL_UNSIGNED_BYTE, pm->pm_data);
+  return pm;
+}
+
 
 /**
  *
@@ -121,6 +134,7 @@ glw_opengl_init_context(glw_root_t *gr)
   glEnable(GL_CULL_FACE);
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, PIXMAP_ROW_ALIGN);
+  glPixelStorei(GL_PACK_ALIGNMENT, PIXMAP_ROW_ALIGN);
 
   glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &tu);
   if(tu < 6) {
@@ -135,6 +149,8 @@ glw_opengl_init_context(glw_root_t *gr)
   const char *vendor   = (const char *)glGetString(GL_VENDOR);
   const char *renderer = (const char *)glGetString(GL_RENDERER);
   TRACE(TRACE_INFO, "GLW", "OpenGL Renderer: '%s' by '%s'", renderer, vendor);
+
+  gr->gr_br_read_pixels = opengl_read_pixels;
 
   return glw_opengl_shaders_init(gr, 0);
 }
