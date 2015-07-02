@@ -332,7 +332,7 @@ demux_block(const vobsub_t *vs, const uint8_t *buf, int len,
 
   while(len > 0) {
 
-    if(len < 4)
+    if(len < 6)
       break;
 
     startcode = getu32(buf, len);
