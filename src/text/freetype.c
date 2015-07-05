@@ -539,7 +539,7 @@ face_set_size(face_t *f, int size)
 
   FT_Size_RequestRec  req;
   req.type = FT_SIZE_REQUEST_TYPE_REAL_DIM;
-  req.width = size << 6;
+  req.width = 0;
   req.height = size << 6;
   req.horiResolution = 0;
   req.vertResolution = 0;
@@ -788,19 +788,21 @@ draw_glyphs(pixmap_t *pm, struct line_queue *lq, int target_height,
       continue;
     }
 
-    pen_x = li->xoffset;
 
     switch(li->alignment) {
     case TR_ALIGN_LEFT:
     case TR_ALIGN_JUSTIFIED:
+      pen_x = 0;
       break;
     case TR_ALIGN_CENTER:
-      pen_x += (siz_x - li->width) / 2;
+      pen_x = (siz_x - li->width) / 2;
       break;
     case TR_ALIGN_RIGHT:
-      pen_x += siz_x - li->width;
+      pen_x = siz_x - li->width;
       break;
     }
+
+    pen_x = MAX(pen_x, 0) + li->xoffset;
 
     for(i = li->start; i < li->start + li->count; i++) {
 
