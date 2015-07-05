@@ -375,8 +375,9 @@ gs_apply_int16_4(glw_style_t *gs, glw_style_attribute_t *gsa)
   glw_style_binding_t *gsb;
   LIST_FOREACH(gsb, &gs->gs_bindings, gsb_style_link) {
     glw_t *w = gsb->gsb_widget;
-    setr(w->glw_class->gc_set_int16_4(w, gsa->gsa_attribute,
-                                      gsa->i16vec, gs), &r);
+    if(w->glw_class->gc_set_int16_4 != NULL)
+      setr(w->glw_class->gc_set_int16_4(w, gsa->gsa_attribute,
+                                        gsa->i16vec, gs), &r);
   }
   return r;
 }
