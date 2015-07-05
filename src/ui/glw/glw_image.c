@@ -552,7 +552,7 @@ glw_image_layout_alpha_edges(glw_root_t *gr, const glw_rctx_t *rc,
  *
  */
 static void
-glw_image_layout_normal(glw_root_t *gr, const glw_rctx_t *rc, glw_image_t *gi,
+glw_image_layout_normal(glw_root_t *gr, glw_image_t *gi,
 			glw_loadable_texture_t *glt)
 {
   int m = glt->glt_margin;
@@ -876,7 +876,7 @@ glw_image_layout(glw_t *w, const glw_rctx_t *rc)
 
       case GI_MODE_NORMAL:
 	glw_renderer_init_quad(&gi->gi_gr);
-	glw_image_layout_normal(gr, rc, gi, glt);
+	glw_image_layout_normal(gr, gi, glt);
 	break;
       case GI_MODE_BORDER_SCALING:
 	glw_renderer_init(&gi->gi_gr, 16, 18, borderobject);
