@@ -76,9 +76,9 @@ glw_update_sizes(glw_root_t *gr)
 {
   int val;
   int bs1 = gr->gr_height / 35; // 35 is just something
-  int bs2 = gr->gr_width  / 65; // 65 is another value
+  //  int bs2 = gr->gr_width  / 65; // 65 is another value
 
-  int base_size = MIN(bs1, bs2);
+  int base_size = bs1; // MIN(bs1, bs2);
 
   val = GLW_CLAMP(base_size + glw_settings.gs_size +
                   gr->gr_skin_scale_adjustment, 8, 40);
