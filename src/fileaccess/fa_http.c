@@ -2526,6 +2526,9 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
              hf->hf_url, hf->hf_connection->hc_id);
     http_headers_send(&q, &headers, hf->hf_user_request_headers);
 
+    if(hf->hf_debug)
+      trace_request(&q, hf);
+
     tcp_write_queue(hf->hf_connection->hc_tc, &q);
     code = http_read_response(hf, hf->hf_user_response_headers);
 
@@ -2593,6 +2596,8 @@ dav_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   int statcode = -1;
+  hf->hf_debug = gconf.enable_http_debug;
+
   hf->hf_id = atomic_add_and_fetch(&http_file_tally, 1);
   hf->hf_version = 1;
   hf->hf_url = strdup(url);
