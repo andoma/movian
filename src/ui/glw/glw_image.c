@@ -281,6 +281,10 @@ glw_image_render(glw_t *w, const glw_rctx_t *rc)
     if(gi->gi_bitmap_flags & GLW_IMAGE_FIXED_SIZE)
       glw_scale_to_pixels(&rc0, glt->glt_xs, glt->glt_ys);
     else if(w->glw_class == &glw_image || w->glw_class == &glw_icon) {
+      glw_reposition(&rc0, gi->gi_margin[0],
+                     rc0.rc_height - gi->gi_margin[1],
+                     rc0.rc_width - gi->gi_margin[2],
+                     gi->gi_margin[3]);
       glw_scale_to_aspect(&rc0, glt->glt_aspect);
     }
     if(gi->gi_angle != 0)
