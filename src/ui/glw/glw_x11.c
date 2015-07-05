@@ -753,6 +753,7 @@ static const struct {
 
   { XK_plus,         ControlMask, ACTION_ZOOM_UI_INCR},
   { XK_minus,        ControlMask, ACTION_ZOOM_UI_DECR},
+  { XK_0,            ControlMask, ACTION_ZOOM_UI_RESET},
 
   { XK_F4,           Mod1Mask,    ACTION_QUIT},
 

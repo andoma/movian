@@ -1005,12 +1005,12 @@ add_sort_option_type(scanner_t *s, prop_t *model)
     abort();
 
   prop_t *on_date = prop_create_root("date");
-  prop_link(_p("Date (newest first)"), prop_create(on_date, "title"));
+  prop_link(_p("Newest first"), prop_create(on_date, "title"));
   if(prop_set_parent(on_date, options))
     abort();
 
   prop_t *on_dateold = prop_create_root("dateold");
-  prop_link(_p("Date (oldest first)"), prop_create(on_dateold, "title"));
+  prop_link(_p("Oldest first"), prop_create(on_dateold, "title"));
   if(prop_set_parent(on_dateold, options))
     abort();
 
