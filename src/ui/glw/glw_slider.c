@@ -322,6 +322,7 @@ pointer_event(glw_t *w, const glw_pointer_event_t *gpe)
     return 0;
   }
   update_value(s, v, how);
+  glw_need_refresh(s->w.glw_root, 0);
   return 0;
 }
 
@@ -478,6 +479,7 @@ prop_callback(void *opaque, prop_event_t event, ...)
 
   v = GLW_RESCALE(v, sl->min, sl->max);
   sl->value = GLW_MAX(0, GLW_MIN(1.0, v));
+  glw_need_refresh(sl->w.glw_root, 0);
   if(sl->interpolate)
     sl->interpolate--;
 }
