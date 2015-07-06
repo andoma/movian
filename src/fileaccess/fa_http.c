@@ -2380,7 +2380,8 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
     if((c = htsmsg_get_map_multi(c, "propstat", "prop", NULL)) == NULL)
       continue;
 
-    isdir = !!htsmsg_get_map_multi(c, "resourcetype", "collection", NULL);
+    htsmsg_t *tr = htsmsg_get_map(c, "resourcetype");
+    isdir = tr != NULL ? !!htsmsg_field_find(tr, "collection") : 0;
 
     if(fd != NULL) {
 
