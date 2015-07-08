@@ -166,6 +166,31 @@ get_srt_timestamp(linereader_t *lr, int64_t *start, int64_t *stop)
 /**
  *
  */
+static void
+srt_skip_preamble(const char **bufp, size_t *lenp)
+{
+  const char *buf = *bufp;
+  size_t len = *lenp;
+
+  // WEBVTT is srt (see #2752)
+  if(len > 6 && !memcmp(buf, "WEBVTT", 6)) {
+    buf += 6;
+    len -= 6;
+  }
+
+  // Skip over any initial control characters (Issue #1885)
+  while(len && *buf && *buf <= 32) {
+    len--;
+    buf++;
+  }
+
+  *bufp = buf;
+  *lenp = len;
+}
+
+/**
+ *
+ */
 static int
 is_srt(const char *buf, size_t len)
 {
@@ -174,11 +199,7 @@ is_srt(const char *buf, size_t len)
   int n;
   int64_t start, stop;
 
-  // Skip over any initial control characters (Issue #1885)
-  while(len && *buf && *buf < 32) {
-    len--;
-    buf++;
-  }
+  srt_skip_preamble(&buf, &len);
 
   linereader_init(&lr, buf, len);
 
@@ -229,11 +250,7 @@ load_srt(const char *url, const char *buf, size_t len)
   const int tag_flags = TEXT_PARSE_HTML_TAGS | TEXT_PARSE_HTML_ENTITIES |
     TEXT_PARSE_SLOPPY_TAGS | TEXT_PARSE_SUB_TAGS;
 
-  // Skip over any initial control characters (Issue #1885)
-  while(len && *buf && *buf < 32) {
-    len--;
-    buf++;
-  }
+  srt_skip_preamble(&buf, &len);
 
   TAILQ_INIT(&es->es_entries);
   linereader_init(&lr, buf, len);
