@@ -393,8 +393,11 @@ glw_in_fullwindow(void *opaque, int val)
 
   NSRect bb = [self convertRectToBacking:[self bounds]];
 
+  glw_lock(gr);
   gr->gr_width = bb.size.width;
   gr->gr_height = bb.size.height;
+  glw_need_refresh(gr, 0);
+  glw_unlock(gr);
 
   NSOpenGLContext *cc = [self openGLContext];
   [cc makeCurrentContext];
