@@ -189,6 +189,7 @@ glw_init3(glw_root_t *gr,
   gr->gr_screensaver_active = prop_create(gr->gr_prop_ui, "screensaverActive");
   gr->gr_prop_width         = prop_create(gr->gr_prop_ui, "width");
   gr->gr_prop_height        = prop_create(gr->gr_prop_ui, "height");
+  gr->gr_prop_aspect        = prop_create(gr->gr_prop_ui, "aspect");
 
   prop_set_int(gr->gr_screensaver_active, 0);
 
@@ -536,6 +537,7 @@ glw_prepare_frame(glw_root_t *gr, int flags)
   prop_set_int(gr->gr_screensaver_active, glw_screensaver_is_active(gr));
   prop_set_int(gr->gr_prop_width, gr->gr_width);
   prop_set_int(gr->gr_prop_height, gr->gr_height);
+  prop_set_float(gr->gr_prop_aspect, (float)gr->gr_width / gr->gr_height);
 
   if(gr->gr_prop_dispatcher != NULL)
     gr->gr_prop_dispatcher(gr->gr_courier, gr->gr_prop_maxtime);
