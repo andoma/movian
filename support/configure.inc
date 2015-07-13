@@ -18,6 +18,7 @@ DOWNLOADCACHE=${TOPDIR}/.downloadcache
 GLW_DEFAULT_SKIN="default"
 DEFAULT_LOGTARGET=""
 APPNAME="Movian"
+OPTLEVEL=2
 
 CONFIG_LIST="
  libasound
@@ -220,6 +221,7 @@ common_help(){
   echo "  --extra-cflags           Extra cflags"
   echo "  --extra-ldflags          Extra ldflags"
   echo "  --downloadcache          Where to download files during build [$DOWNLOADCACHE]"
+  echo " --optlevel=LEVEL          Optimization level [$OPTLEVEL]"
   echo ""
   echo "Platform specific options:"
 }
@@ -261,6 +263,8 @@ common_opt(){
   ;;
 
   --appname=*) APPNAME="$2"
+  ;;
+  --optlevel=*) OPTLEVEL="$2"
   ;;
   *)
   die_invalid_opt $1
@@ -320,6 +324,7 @@ APPNAMEUSER=${APPNAME}
 TOPDIR=$TOPDIR
 OS=$OS
 CONFIGURE_POSTFIX=$CONFIGURE_POSTFIX
+OPTLEVEL=${OPTLEVEL}
 CFLAGS_cfg += ${EXTRA_CFLAGS}
 LDFLAGS_cfg += ${EXTRA_LDFLAGS}
 EOF

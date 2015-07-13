@@ -29,7 +29,7 @@ ALLDEPS=${BUILDDIR}/config.mak Makefile src/arch/${OS}/${OS}.mk
 
 ALLDEPS += ${STAMPS}
 
-OPTFLAGS ?= -O2
+OPTFLAGS ?= -O${OPTLEVEL}
 
 PROG=${BUILDDIR}/showtime
 LIB=${BUILDDIR}/libshowtime
