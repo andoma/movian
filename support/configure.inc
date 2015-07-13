@@ -578,7 +578,7 @@ EOF
     if enabled release; then
 	echo >>${CONFIG_MAK} "CFLAGS_dbg = -DNDEBUG -D_NDEBUG"
     else
-	echo >>${CONFIG_MAK} "CFLAGS_dbg = -DJS_GC_ZEAL -DDEBUG=1"
+	echo >>${CONFIG_MAK} "CFLAGS_dbg = -DDEBUG=1"
     fi
 
     cat >> ${CONFIG_MAK} << EOF 
