@@ -20,17 +20,13 @@
 #pragma once
 #include "event.h"
 
-#define GLW_EVENT_KEYCODE      -1
-#define GLW_EVENT_GAINED_FOCUS -2
-#define GLW_EVENT_LOST_FOCUS   -3
-
 /**
  *
  */
 typedef struct glw_event_map {
   LIST_ENTRY(glw_event_map) gem_link;
 
-  action_type_t gem_action;
+  rstr_t *gem_action;
 
   void (*gem_fire)(glw_t *w, struct glw_event_map *gem, struct event *src);
   void (*gem_dtor)(glw_root_t *gr, struct glw_event_map *gem);
@@ -41,7 +37,7 @@ typedef struct glw_event_map {
 /**
  *
  */
-void glw_event_map_remove_by_action(glw_t *w, action_type_t action);
+void glw_event_map_remove_by_action(glw_t *w, const char *action);
 
 
 void glw_event_map_add(glw_t *w, glw_event_map_t *gem);
@@ -65,4 +61,4 @@ glw_event_map_t *glw_event_map_deliverEvent_create(prop_t *target,
 
 glw_event_map_t *glw_event_map_propref_create(prop_t *prop, prop_t *target);
 
-int glw_event_glw_action(glw_t *w, int action);
+int glw_event_glw_action(glw_t *w, const char *action);

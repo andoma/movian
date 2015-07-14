@@ -981,7 +981,7 @@ glw_path_modify(glw_t *w, int set, int clr, glw_t *stop)
 
     if((old_flags ^ w->glw_flags) & GLW_IN_FOCUS_PATH)
       glw_event_glw_action(w, w->glw_flags & GLW_IN_FOCUS_PATH ?
-                           GLW_EVENT_GAINED_FOCUS : GLW_EVENT_LOST_FOCUS);
+                           "GainedFocus" : "LostFocus");
   }
 }
 
@@ -1680,7 +1680,6 @@ glw_event_to_widget(glw_t *w, event_t *e)
   // Then ascend all the way up to root
 
   while(w != NULL) {
-
     w->glw_flags &= ~GLW_FLOATING_FOCUS; // Correct ??
 
     if(glw_event_map_intercept(w, e))
@@ -1752,7 +1751,6 @@ glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
 	switch(gpe->type) {
 
 	case GLW_POINTER_RIGHT_PRESS:
-          glw_focus_set(gr, w, GLW_FOCUS_SET_INTERACTIVE, "RightPress");
           e = event_create_action(ACTION_ITEMMENU);
           glw_event_to_widget(w, e);
           event_release(e);

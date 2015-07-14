@@ -27,6 +27,7 @@
 #include "arch/atomic.h"
 
 struct prop;
+struct rstr;
 
 typedef enum {
 
@@ -161,6 +162,7 @@ typedef enum {
   EVENT_PROPREF                       = 26,
   EVENT_DYNAMIC_ACTION                = 27,
   EVENT_MAKE_SCREENSHOT               = 28,
+  EVENT_PROP_ACTION                   = 29,
 } event_type_t;
 
 
@@ -310,6 +312,16 @@ typedef struct event_prop {
   struct prop *p;
 } event_prop_t;
 
+
+/**
+ *
+ */
+typedef struct event_prop_action {
+  event_t h;
+  struct prop *p;
+  struct rstr *action;
+} event_prop_action_t;
+
 void event_generic_dtor(event_t *e);
 
 void *event_create(event_type_t type, size_t size);
@@ -351,6 +363,8 @@ event_t *event_create_select_track(const char *id, event_type_t type,
 				   int manual);
 
 event_t *event_create_prop(event_type_t type, struct prop *p);
+
+event_t *event_create_prop_action(struct prop *p, struct rstr *action);
 
 const char *action_code2str(action_type_t code);
 

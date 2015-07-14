@@ -448,6 +448,33 @@ event_create_prop(event_type_t type, prop_t *p)
  *
  */
 static void
+event_prop_action_dtor(event_t *e)
+{
+  event_prop_action_t *epa = (event_prop_action_t *)e;
+  prop_ref_dec(epa->p);
+  rstr_release(epa->action);
+}
+
+
+/**
+ *
+ */
+event_t *
+event_create_prop_action(prop_t *p, rstr_t *action)
+{
+  event_prop_action_t *e = event_create(EVENT_PROP_ACTION,
+                                        sizeof(event_prop_action_t));
+  e->p = prop_ref_inc(p);
+  e->action = rstr_dup(action);
+  e->h.e_dtor = event_prop_action_dtor;
+  return &e->h;
+}
+
+
+/**
+ *
+ */
+static void
 event_to_prop(prop_t *p, event_t *e)
 {
   prop_send_ext_event(p, e);

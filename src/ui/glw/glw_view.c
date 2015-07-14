@@ -171,7 +171,7 @@ gcv_release(glw_root_t *gr, glw_cached_view_t *gcv)
  */
 static void
 eval_loaded_view(glw_root_t *gr, glw_cached_view_t *gcv, glw_view_t *view,
-                 prop_t *prop, prop_t *prop_parent, prop_t *args,
+                 prop_t *prop_self, prop_t *prop_parent, prop_t *prop_args,
                  prop_t *prop_clone)
 {
   if(gcv->gcv_error) {
@@ -189,11 +189,14 @@ eval_loaded_view(glw_root_t *gr, glw_cached_view_t *gcv, glw_view_t *view,
   ec.rc = NULL;
   ec.w = &view->w;
   ec.ei = &ei;
-  ec.prop = prop;
+  view->viewprop =  prop_create_root("view");
+
+  ec.prop_self   = prop_self;
   ec.prop_parent = prop_parent;
-  ec.prop_args    = args;
-  ec.prop_clone = prop_clone;
-  view->viewprop = ec.prop_viewx = prop_create_root("view");
+  ec.prop_args   = prop_args;
+  ec.prop_clone  = prop_clone;
+  ec.prop_view   = view->viewprop;
+  
   ec.sublist = &ec.w->glw_prop_subscriptions;
 
   if(glw_view_eval_block(t, &ec, NULL)) {
