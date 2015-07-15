@@ -6686,45 +6686,6 @@ glwf_eventWithProp(glw_view_eval_context_t *ec, struct token *self,
 
 
 
-#if 0
-/**
- *
- */
-static void
-glwf_link_dtor(glw_root_t *gr, struct token *self)
-{
-  if(self->t_extra != NULL) {
-    prop_unlink(self->t_extra);
-    prop_ref_dec(self->t_extra);
-  }
-}
-
-
-/**
- *
- */
-static int
-glwf_link(glw_view_eval_context_t *ec, struct token *self,
-          token_t **argv, unsigned int argc)
-{
-  token_t *a = resolve_property_name2(ec, argv[0]);
-  token_t *b = resolve_property_name2(ec, argv[1]);
-
-  if((a = token_resolve(ec, argv[0])) == NULL)
-    return -1;
-
-  if(a->type == TOKEN_RSTRING) {
-    glw_t *w = glw_find_neighbour(ec->w, rstr_get(a->t_rstring));
-    if(w != NULL) {
-      glw_focus_set(w->glw_root, w, GLW_FOCUS_SET_INTERACTIVE,
-                    "FocusMethod");
-    }
-  }
-  return 0;
-}
-#endif
-
-
 #ifndef NDEBUG
 /**
  *
@@ -6826,7 +6787,6 @@ static const token_func_t funcvec[] = {
   {"focus", 1, glwf_focus},
   {"toggle", 1, glwf_toggle},
   {"eventWithProp", 2, glwf_eventWithProp},
-
 #ifndef NDEBUG
   {"dumpDynamicStatements", 0, glwf_dumpdynamicstatements},
 #endif
