@@ -192,7 +192,7 @@ sp.createAction = function(id, title, callback) {
 
   var item = createSetting(group, 'action', id, title);
 
-  prop.subscribe(item.model.action, function(type) {
+  prop.subscribe(item.model.eventSink, function(type) {
     if(type == 'action')
       callback();
   }, {

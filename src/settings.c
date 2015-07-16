@@ -680,7 +680,7 @@ setting_create(int type, prop_t *model, int flags, ...)
 
 
   case SETTING_ACTION:
-    s->s_val = prop_create_r(s->s_root, "action");
+    s->s_val = prop_create_r(s->s_root, "eventSink");
     break;
 
   case SETTING_SEPARATOR:
