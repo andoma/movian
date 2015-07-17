@@ -3205,12 +3205,15 @@ glwf_onEvent(glw_view_eval_context_t *ec, struct token *self,
   if(a == NULL || b == NULL)
     return glw_view_seterr(ec->ei, self, "Missing operands");
 
-  if(a->type != TOKEN_IDENTIFIER)
+  rstr_t *filter = token2rstr(a);
+  if(filter == NULL)
     return glw_view_seterr(ec->ei, a, "Invalid source event type");
 
   if(c != NULL) {
-    if((c = token_resolve(ec, c)) == NULL)
+    if((c = token_resolve(ec, c)) == NULL) {
+      rstr_release(filter);
       return -1;
+    }
     enabled = token2bool(c);
   } else {
     enabled = 1;
@@ -3235,15 +3238,17 @@ glwf_onEvent(glw_view_eval_context_t *ec, struct token *self,
       goto disable;
 
     default:
+      rstr_release(filter);
       return glw_view_seterr(ec->ei, a, "onEvent: Second arg is invalid");
     }
 
-    gem->gem_action = rstr_dup(a->t_rstring);
+    gem->gem_action = filter;
     glw_event_map_add(w, gem);
     return 0;
   }
  disable:
-  glw_event_map_remove_by_action(w, rstr_get(a->t_rstring));
+  glw_event_map_remove_by_action(w, rstr_get(filter));
+  rstr_release(filter);
   return 0;
 }
 
@@ -3609,16 +3614,18 @@ glwf_event(glw_view_eval_context_t *ec, struct token *self,
 	   token_t **argv, unsigned int argc)
 {
   token_t *a, *r;
-  int action;
 
-  a = argv[0];
+  if((a = token_resolve(ec, argv[0])) == NULL)
+    return -1;
 
-  if(a->type != TOKEN_IDENTIFIER ||
-     (action = action_str2code(rstr_get(a->t_rstring))) < 0)
-    return glw_view_seterr(ec->ei, a, "event(): Invalid target event");
-
-  r = eval_alloc(self, ec, TOKEN_EVENT);
-  r->t_gem = glw_event_map_internal_create(NULL, action, 0);
+  const char *action = token_as_string(a);
+  if(action == NULL) {
+    r = eval_alloc(self, ec, TOKEN_VOID);
+  } else {
+    event_t *e = event_create_action_str(action);
+    r = eval_alloc(self, ec, TOKEN_EVENT);
+    r->t_gem = glw_event_map_external_create(e);
+  }
   eval_push(ec, r);
   return 0;
 }
