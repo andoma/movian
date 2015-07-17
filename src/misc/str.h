@@ -143,4 +143,6 @@ void mystrlower(char *s);
 
 void rgbstr_to_floatvec(const char *s, float *out);
 
+int pattern_match(const char *str, const char *pat);
+
 #endif

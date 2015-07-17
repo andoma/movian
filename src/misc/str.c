@@ -1767,5 +1767,36 @@ rgbstr_to_floatvec(const char *s, float *out)
     out[1] = 0;
     out[2] = 0;
   }
+}
 
+
+static char
+mkup(char x)
+{
+  if(x >= 'a' && x <= 'z')
+    x -= 32;
+  return x;
+}
+
+
+/**
+ *
+ */
+int
+pattern_match(const char *str, const char *pat)
+{
+  for(; '*'^*pat; ++pat, ++str) {
+    if(!*str)
+      return !*pat;
+    if(mkup(*str) ^ mkup(*pat) && '?' ^ *pat)
+      return 0;
+  }
+  while('*' == pat[1])
+    pat++;
+
+  do {
+    if(pattern_match(str, pat + 1))
+      return 1;
+  } while (*str++);
+  return 0;
 }
