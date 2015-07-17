@@ -822,22 +822,17 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
     goto bad;
   }
 
-
- redo:
-  if(md != NULL) {
-    metadata_destroy(md);
-    md = NULL;
-  }
-
   if(!refresh) {
+    /**
+     * If we are not refreshing, read from database (basically our cache)
+     */
     r = metadb_get_videoinfo(db, rstr_get(mlv->mlv_url),
                              msqivec, num_msqi, &fixed_ds, &md,
                              mlv->mlv_manual);
     if(r)
-      goto done;
+      goto done; // Found something, we're done
 
   } else {
-    refresh = 0;
     fixed_ds = 0;
   }
 
@@ -1019,8 +1014,13 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
         r = rval;
         goto done;
       }
-      goto redo;
     }
+    if(md != NULL)
+      metadata_destroy(md);
+    md = NULL;
+    r = metadb_get_videoinfo(db, rstr_get(mlv->mlv_url),
+                             msqivec, num_msqi, &fixed_ds, &md,
+                             mlv->mlv_manual);
   }
 
   if(md != NULL &&
@@ -1416,7 +1416,7 @@ mlv_sub_actions(void *opaque, prop_event_t event, ...)
     e = va_arg(ap, event_t *);
     if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
       const event_payload_t *ep = (const event_payload_t *)e;
-      if(!strcmp(ep->payload, "refreshMetadata")) {
+      if(!strcmp(ep->payload, "item.metadata.refresh")) {
 	mlv_refresh_video_info(mlv);
 	load_alternatives(mlv);
 	const char *s;
@@ -1696,7 +1696,7 @@ mlv_add_options(metadata_lazy_video_t *mlv)
 
   prop_set(p, "type",    PROP_SET_STRING, "string");
   prop_set(p, "enabled", PROP_SET_INT, 1);
-  prop_set(p, "action",  PROP_SET_STRING, "refreshMetadata");
+  prop_set(p, "action",  PROP_SET_STRING, "item.metadata.refresh");
   prop_set(p, "value",   PROP_SET_RSTRING, mlv->mlv_custom_query);
 
   prop_link(_p("Custom search query"),
@@ -1721,7 +1721,7 @@ mlv_add_options(metadata_lazy_video_t *mlv)
 
   prop_set(p, "type",    PROP_SET_STRING, "action");
   prop_set(p, "enabled", PROP_SET_INT, 1);
-  prop_set(p, "action",  PROP_SET_STRING, "refreshMetadata");
+  prop_set(p, "action",  PROP_SET_STRING, "item.metadata.refresh");
 
   prop_link(_p("Refresh metadata"),
 	    prop_create(prop_create(p, "metadata"), "title"));
@@ -1743,7 +1743,7 @@ mlv_add_options(metadata_lazy_video_t *mlv)
 
   prop_set(p, "type",    PROP_SET_STRING, "string");
   prop_set(p, "enabled", PROP_SET_INT, 1);
-  prop_set(p, "action",  PROP_SET_STRING, "refreshMetadata");
+  prop_set(p, "action",  PROP_SET_STRING, "item.metadata.refresh");
   prop_set(p, "value",   PROP_SET_RSTRING, mlv->mlv_custom_title);
 
   prop_link(_p("Custom title"),
