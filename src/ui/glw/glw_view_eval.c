@@ -3013,7 +3013,7 @@ glwf_style0(glw_view_eval_context_t *ec, struct token *self,
   n.gr = ec->gr;
 
   glw_style_t *gs = glw_style_create(ec->w, a->t_rstring,
-                                     self->file, self->line);
+                                     self->file, self->line, inherit);
   n.w = (glw_t *)gs;
   n.sublist = &n.w->glw_prop_subscriptions;
 

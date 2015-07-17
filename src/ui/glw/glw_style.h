@@ -39,7 +39,7 @@ glw_styleset_t * attribute_unused_result
 glw_styleset_add(glw_styleset_t *gss, glw_style_t *gs);
 
 glw_style_t *glw_style_create(glw_t *parent, rstr_t *name,
-                              rstr_t *file, int line);
+                              rstr_t *file, int line, int inherit);
 
 void glw_style_update_em(glw_root_t *gr);
 

@@ -831,9 +831,11 @@ static glw_class_t glw_style = {
  *
  */
 glw_style_t *
-glw_style_create(glw_t *parent, rstr_t *name, rstr_t *file, int line)
+glw_style_create(glw_t *parent, rstr_t *name, rstr_t *file, int line,
+                 int inherit)
 {
-  glw_style_t *ancestor = glw_style_find(parent, rstr_get(name));
+  glw_style_t *ancestor =
+    inherit ? glw_style_find(parent, rstr_get(name)) : NULL;
 
   glw_root_t *gr = parent->glw_root;
   glw_style_t *gs = calloc(1, sizeof(glw_style_t));
