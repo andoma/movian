@@ -22,7 +22,7 @@
 #include "event.h"
 #include "glw.h"
 #include "glw_event.h"
-
+#include "misc/str.h"
 
 /**
  *
@@ -418,7 +418,6 @@ glw_event_map_internal_create(const char *target, action_type_t event,
   return &g->map;
 }
 
-
 /**
  *
  */
@@ -426,21 +425,18 @@ int
 glw_event_map_intercept(glw_t *w, event_t *e)
 {
   glw_event_map_t *gem;
-#if 0
-  if(e->e_flags & EVENT_MAPPED)
-    return 0; /* Avoid recursion */
-#endif
-  
+
   LIST_FOREACH(gem, &w->glw_event_maps, gem_link) {
     const char *str;
+
 
     switch(e->e_type) {
     case EVENT_ACTION_VECTOR:
       {
         event_action_vector_t *eav = (event_action_vector_t *)e;
         for(int i = 0; i < eav->num; i++) {
-          if(!strcasecmp(rstr_get(gem->gem_action),
-                         action_code2str(eav->actions[i]))) {
+          if(pattern_match(action_code2str(eav->actions[i]),
+                           rstr_get(gem->gem_action))) {
             gem->gem_fire(w, gem, e);
             return 1;
           }
@@ -466,7 +462,7 @@ glw_event_map_intercept(glw_t *w, event_t *e)
       continue;
     }
 
-    if(!strcasecmp(str, rstr_get(gem->gem_action))) {
+    if(pattern_match(str, rstr_get(gem->gem_action))) {
       gem->gem_fire(w, gem, e);
       return 1;
     }
