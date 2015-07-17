@@ -278,13 +278,26 @@ glw_image_render(glw_t *w, const glw_rctx_t *rc)
 
     glw_align_1(&rc0, w->glw_alignment);
 
-    if(gi->gi_bitmap_flags & GLW_IMAGE_FIXED_SIZE)
+    if(gi->gi_bitmap_flags & GLW_IMAGE_FIXED_SIZE) {
       glw_scale_to_pixels(&rc0, glt->glt_xs, glt->glt_ys);
-    else if(w->glw_class == &glw_image || w->glw_class == &glw_icon) {
+
+    } else if(w->glw_class == &glw_image || w->glw_class == &glw_icon) {
+
+      int extra_y_margin = 0;
+      if(w->glw_class == &glw_icon) {
+
+        int ys = gi->gi_fixed_size;
+        if(ys == 0)
+          ys = gi->gi_size_scale * w->glw_root->gr_current_size;
+        if(ys > rc->rc_height)
+          ys = rc->rc_height;
+
+        extra_y_margin = MAX(rc->rc_height - ys, 0) / 2;
+      }
       glw_reposition(&rc0, gi->gi_margin[0],
-                     rc0.rc_height - gi->gi_margin[1],
+                     rc0.rc_height - gi->gi_margin[1] - extra_y_margin,
                      rc0.rc_width - gi->gi_margin[2],
-                     gi->gi_margin[3]);
+                     gi->gi_margin[3] + extra_y_margin);
       glw_scale_to_aspect(&rc0, glt->glt_aspect);
     }
     if(gi->gi_angle != 0)
@@ -799,7 +812,16 @@ glw_image_layout(glw_t *w, const glw_rctx_t *rc)
     } else {
 
       if(hq) {
-	if(w->glw_class == &glw_image || w->glw_class == &glw_icon) {
+
+        if(w->glw_class == &glw_icon) {
+
+          int ys = gi->gi_fixed_size;
+          if(ys == 0)
+            ys = gi->gi_size_scale * w->glw_root->gr_current_size;
+          if(ys > rc->rc_height)
+            ys = rc->rc_height;
+
+        } else if(w->glw_class == &glw_image) {
 	  if(rc->rc_width < rc->rc_height) {
 	    xs = rc->rc_width;
 	  } else {
