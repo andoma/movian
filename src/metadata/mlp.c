@@ -525,12 +525,12 @@ build_info_text(metadata_lazy_video_t *mlv, const metadata_t *md)
       break;
     }
 
-    rstr_t *fmt = _("Metadata loaded from '%s' using %s");
+    rstr_t *fmt = _("Metadata loaded from <b>%s</b> based on %s");
 
     const metadata_source_t *ms =
       metadata_source_get(mlv->mlv_type, md->md_dsid);
 
-    snprintf(tmp, sizeof(tmp), rstr_get(fmt), 
+    snprintf(tmp, sizeof(tmp), rstr_get(fmt),
 	     ms ? ms->ms_description : "???",
 	     rstr_get(qtype) ?: "???");
 
@@ -540,7 +540,7 @@ build_info_text(metadata_lazy_video_t *mlv, const metadata_t *md)
     rstr_release(qtype);
   }
 
-  prop_set_rstring(mlv->mlv_info_text_prop, txt);
+  prop_set_rstring_ex(mlv->mlv_info_text_prop, NULL, txt, PROP_STR_RICH);
   rstr_release(mlv->mlv_info_text_rstr);
 
   mlv->mlv_info_text_rstr = txt;
@@ -1622,7 +1622,7 @@ mlv_add_options(metadata_lazy_video_t *mlv)
   prop_set(p, "type",    PROP_SET_STRING, "separator");
   prop_set(p, "enabled", PROP_SET_INT, 1);
 
-  prop_link(_p("Metadata search"),
+  prop_link(_p("Metadata"),
 	    prop_create(prop_create(mlv->mlv_title_opt, "metadata"), "title"));
 
   pv = prop_vec_append(pv, p);
@@ -1634,7 +1634,8 @@ mlv_add_options(metadata_lazy_video_t *mlv)
   prop_set(p, "type",    PROP_SET_STRING, "info");
   prop_set(p, "enabled", PROP_SET_INT, 1);
   mlv->mlv_info_text_prop = prop_create_r(prop_create(p, "metadata"), "title");
-  prop_set_rstring(mlv->mlv_info_text_prop, mlv->mlv_info_text_rstr);
+  prop_set_rstring_ex(mlv->mlv_info_text_prop, NULL, mlv->mlv_info_text_rstr,
+                      PROP_STR_RICH);
 
   pv = prop_vec_append(pv, p);
 

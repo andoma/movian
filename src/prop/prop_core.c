@@ -3405,13 +3405,14 @@ prop_set_string_ex(prop_t *p, prop_sub_t *skipme, const char *str,
  *
  */
 static void
-prop_set_rstring_exl(prop_t *p, prop_sub_t *skipme, rstr_t *rstr)
+prop_set_rstring_exl(prop_t *p, prop_sub_t *skipme, rstr_t *rstr,
+                     prop_str_type_t type)
 {
   if(p->hp_type == PROP_ZOMBIE)
     return;
 
   if(p->hp_type == PROP_PROXY) {
-    prop_proxy_set_string(p, rstr_get(rstr), PROP_STR_UTF8);
+    prop_proxy_set_string(p, rstr_get(rstr), type);
     return;
   }
 
@@ -3427,8 +3428,7 @@ prop_set_rstring_exl(prop_t *p, prop_sub_t *skipme, rstr_t *rstr)
   }
   p->hp_rstring = rstr_dup(rstr);
   p->hp_type = PROP_RSTRING;
-  p->hp_rstrtype = 0;
-
+  p->hp_rstrtype = type;
   prop_notify_value(p, skipme, "prop_set_rstring()", 0);
 }
 
@@ -3438,7 +3438,8 @@ prop_set_rstring_exl(prop_t *p, prop_sub_t *skipme, rstr_t *rstr)
  *
  */
 void
-prop_set_rstring_ex(prop_t *p, prop_sub_t *skipme, rstr_t *rstr)
+prop_set_rstring_ex(prop_t *p, prop_sub_t *skipme, rstr_t *rstr,
+                    prop_str_type_t type)
 {
   if(p == NULL)
     return;
@@ -3449,7 +3450,7 @@ prop_set_rstring_ex(prop_t *p, prop_sub_t *skipme, rstr_t *rstr)
   }
 
   hts_mutex_lock(&prop_mutex);
-  prop_set_rstring_exl(p, skipme, rstr);
+  prop_set_rstring_exl(p, skipme, rstr, type);
   hts_mutex_unlock(&prop_mutex);
 }
 
@@ -4028,7 +4029,7 @@ prop_copy_ex(prop_t *dst, prop_sub_t *skipme, prop_t *src)
       prop_set_float_exl(dst, skipme, src->hp_float, 0);
       break;
     case PROP_RSTRING:
-      prop_set_rstring_exl(dst, skipme, src->hp_rstring);
+      prop_set_rstring_exl(dst, skipme, src->hp_rstring, 0);
       break;
     case PROP_CSTRING:
       prop_set_cstring_exl(dst, skipme, src->hp_cstring);
@@ -5300,7 +5301,7 @@ prop_seti(prop_sub_t *skipme, prop_t *p, va_list ap)
     if(rstr == NULL)
       prop_set_void_exl(p, skipme);
     else {
-      prop_set_rstring_exl(p, skipme, rstr);
+      prop_set_rstring_exl(p, skipme, rstr, 0);
       if(ev == PROP_ADOPT_RSTRING)
         rstr_release(rstr);
     }

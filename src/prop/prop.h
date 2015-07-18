@@ -252,7 +252,8 @@ void prop_setdn(prop_sub_t *skipme, prop_t *p, const char *str, ...);
 void prop_set_string_ex(prop_t *p, prop_sub_t *skipme, const char *str,
 			prop_str_type_t type);
 
-void prop_set_rstring_ex(prop_t *p, prop_sub_t *skipme, rstr_t *rstr);
+void prop_set_rstring_ex(prop_t *p, prop_sub_t *skipme, rstr_t *rstr,
+                         prop_str_type_t type);
 
 void prop_set_cstring_ex(prop_t *p, prop_sub_t *skipme, const char *str);
 
@@ -304,7 +305,7 @@ void prop_set_uri_ex(prop_t *p, prop_sub_t *skipme, const char *title,
 
 #define prop_set_uri(p, title, uri) prop_set_uri_ex(p, NULL, title, uri)
 
-#define prop_set_rstring(p, rstr) prop_set_rstring_ex(p, NULL, rstr)
+#define prop_set_rstring(p, rstr) prop_set_rstring_ex(p, NULL, rstr, 0)
 
 #define prop_set_cstring(p, cstr) prop_set_cstring_ex(p, NULL, cstr)
 
