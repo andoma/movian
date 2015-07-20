@@ -1058,8 +1058,6 @@ typedef struct glw {
   TAILQ_ENTRY(glw) glw_parent_link;
   struct glw_queue glw_childs;
 
-  TAILQ_ENTRY(glw) glw_render_link;
-
   struct glw *glw_selected;
   struct glw *glw_focused;
 
