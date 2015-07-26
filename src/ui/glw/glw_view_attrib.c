@@ -1295,7 +1295,6 @@ static const token_attrib_t attribtab[] = {
   {"autofade",              mod_flag, GLW2_AUTOFADE,               mod_flags2},
   {"automargin",            mod_flag, GLW2_AUTOMARGIN,             mod_flags2},
   {"expediteSubscriptions", mod_flag, GLW2_EXPEDITE_SUBSCRIPTIONS, mod_flags2},
-  {"reverseRender",         mod_flag, GLW2_REVERSE_RENDER,         mod_flags2},
   {"navWrap",               mod_flag, GLW2_NAV_WRAP,               mod_flags2},
   {"autoFocusLimit",        mod_flag, GLW2_AUTO_FOCUS_LIMIT,       mod_flags2},
   {"cursor",                mod_flag, GLW2_CURSOR,                 mod_flags2},

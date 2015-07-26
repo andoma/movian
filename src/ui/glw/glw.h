@@ -1138,7 +1138,6 @@ typedef struct glw {
 #define GLW2_AUTOFADE               0x200
 #define GLW2_EXPEDITE_SUBSCRIPTIONS 0x400
 #define GLW2_AUTOMARGIN             0x800
-#define GLW2_REVERSE_RENDER         0x1000
 #define GLW2_NO_INITIAL_TRANS       0x2000
 #define GLW2_FOCUS_ON_CLICK         0x4000
 #define GLW2_AUTOREFOCUSABLE        0x8000
