@@ -20,19 +20,35 @@
 #include "glw.h"
 #include "glw_navigation.h"
 
+LIST_HEAD(glw_container_list, glw_container);
+
+typedef struct glw_table {
+  glw_t w;
+  int gt_num_columns;
+  int16_t *gt_columns;
+  struct glw_container_list gt_rows;
+} glw_table_t;
+
+
 typedef struct glw_container {
   glw_t w;
-  
+
+  glw_table_t *co_table;
+  LIST_ENTRY(glw_container) co_table_link;
+  uint16_t *co_column_widths;
+
   int cflags;
   float weight_sum;
 
   int16_t width;
   int16_t spacing_width;
   int16_t height;
-  int16_t co_padding[4];
   int16_t co_spacing;
+  int16_t co_padding[4];
   int16_t co_biggest;
+  uint16_t co_num_columns;
   char co_using_aspect;
+
 
 } glw_container_t;
 
@@ -44,6 +60,48 @@ typedef struct glw_container_item {
   int16_t size;
   char inited;
 } glw_container_item_t;
+
+
+
+static glw_class_t glw_table;
+
+
+
+/**
+ *
+ */
+static void
+table_recompute(glw_table_t *gt)
+{
+  glw_container_t *co;
+  int columns = 0;
+  int spacing_width = 0;
+
+  LIST_FOREACH(co, &gt->gt_rows, co_table_link) {
+    columns       = MAX(co->co_num_columns, columns);
+    spacing_width = MAX(co->spacing_width, spacing_width);
+  }
+
+  if(columns != gt->gt_num_columns) {
+    gt->gt_columns = realloc(gt->gt_columns, columns * sizeof(int16_t));
+    gt->gt_num_columns = columns;
+  }
+
+  int width_sum = 0;
+
+  for(int i = 0; i < columns; i++) {
+    int w = 0;
+    LIST_FOREACH(co, &gt->gt_rows, co_table_link) {
+      if(co->co_num_columns <= columns)
+        w = MAX(w, co->co_column_widths[i]);
+    }
+    gt->gt_columns[i] = w;
+    width_sum += w;
+  }
+  glw_mod_constraints(&gt->w,
+                      width_sum + spacing_width, 0, 0,
+                      GLW_CONSTRAINT_X, GLW_CONSTRAINT_X);
+}
 
 
 /**
@@ -59,6 +117,7 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
   int cflags = 0, f;
   int elements = 0;
   int numfix = 0;
+  glw_table_t *tab = co->co_table;
 
   co->co_biggest = 0;
   co->co_using_aspect = 0;
@@ -66,7 +125,26 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
   if(co->w.glw_flags2 & GLW2_DEBUG)
     printf("Constraint round\n");
 
+  if(unlikely(tab != NULL)) {
+
+    int num_childs = 0;
+    TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
+      if(c->glw_flags & GLW_HIDDEN || c == skip)
+        continue;
+      num_childs++;
+    }
+
+    if(co->co_num_columns != num_childs) {
+      co->co_column_widths =
+        realloc(co->co_column_widths, sizeof(uint16_t) * num_childs);
+      co->co_num_columns = num_childs;
+    }
+    memset(co->co_column_widths, 0, sizeof(uint16_t) * num_childs);
+  }
+
+  int i = -1;
   TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
+    i++;
     if(c->glw_flags & GLW_HIDDEN || c == skip)
       continue;
 
@@ -93,6 +171,9 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
 	numfix++;
       } else {
 	width += c->glw_req_size_x;
+
+        if(unlikely(tab != NULL))
+          co->co_column_widths[i] = c->glw_req_size_x;
       }
     } else if(f & GLW_CONSTRAINT_W) {
       if(c->glw_req_weight == 0)
@@ -127,6 +208,8 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
 
 
   height += co->co_padding[3] + co->co_padding[1];
+  if(unlikely(tab != NULL))
+    table_recompute(tab);
 
   glw_set_constraints(&co->w, width + spacing_width, height, 0, cflags);
   return 1;
@@ -148,6 +231,7 @@ glw_container_x_layout(glw_t *w, const glw_rctx_t *rc)
   float fixscale;   // Scaling to apply to fixed width requests
                     // Used if the available width < sum of requested width
   glw_rctx_t rc0;
+  const glw_table_t *tab = co->co_table;
 
   if(co->w.glw_alpha < 0.01f)
     return;
@@ -207,16 +291,18 @@ glw_container_x_layout(glw_t *w, const glw_rctx_t *rc)
   int right, left = rintf(pos);
 
   IW = 1.0f / rc->rc_width;
-
+  int i = -1;
   TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
     float cw;
-
+    i++;
     if(c->glw_flags & GLW_HIDDEN)
       continue;
 
     int f = glw_filter_constraints(c);
 
-    if(f & GLW_CONSTRAINT_X) {
+    if(unlikely(tab != NULL)) {
+      cw = tab->gt_columns[i];
+    } else if(f & GLW_CONSTRAINT_X) {
       if(co->w.glw_flags2 & GLW2_HOMOGENOUS)
 	cw = co->co_biggest * fixscale;
       else
@@ -529,7 +615,6 @@ glw_container_y_render(glw_t *w, const glw_rctx_t *rc)
   float sharpness  = rc->rc_sharpness  * w->glw_sharpness;
   glw_container_t *co = (glw_container_t *)w;
   glw_rctx_t rc0, rc1;
-  const int rr = w->glw_flags2 & GLW2_REVERSE_RENDER;
 
   if(alpha < 0.01f)
     return;
@@ -547,11 +632,7 @@ glw_container_y_render(glw_t *w, const glw_rctx_t *rc)
     rc = &rc1;
   }
 
-  for(c = rr ? TAILQ_LAST(&w->glw_childs, glw_queue) :
-	TAILQ_FIRST(&w->glw_childs);
-      c;
-      c = rr ? TAILQ_PREV(c, glw_queue, glw_parent_link) : 
-	TAILQ_NEXT(c, glw_parent_link)) {
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
 
     glw_container_item_t *cd = glw_parent_data(c, glw_container_item_t);
 
@@ -563,7 +644,7 @@ glw_container_y_render(glw_t *w, const glw_rctx_t *rc)
     rc0.rc_sharpness  = sharpness * cd->fade;
 
     rc0.rc_height = cd->size;
-    
+
     glw_Translatef(&rc0, 0, 1.0 - cd->pos, 0);
     glw_Scalef(&rc0, 1.0, cd->scale, cd->scale);
 
@@ -583,7 +664,6 @@ glw_container_x_render(glw_t *w, const glw_rctx_t *rc)
   float sharpness = rc->rc_sharpness * w->glw_sharpness;
   glw_container_t *co = (glw_container_t *)w;
   glw_rctx_t rc0, rc1;
-  const int rr = w->glw_flags2 & GLW2_REVERSE_RENDER;
 
   if(alpha < 0.01f)
     return;
@@ -601,11 +681,7 @@ glw_container_x_render(glw_t *w, const glw_rctx_t *rc)
     rc = &rc1;
   }
 
-  for(c = rr ? TAILQ_LAST(&w->glw_childs, glw_queue) :
-	TAILQ_FIRST(&w->glw_childs);
-      c;
-      c = rr ? TAILQ_PREV(c, glw_queue, glw_parent_link) : 
-	TAILQ_NEXT(c, glw_parent_link)) {
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
 
     if(c->glw_flags & GLW_HIDDEN)
       continue;
@@ -663,16 +739,22 @@ glw_container_z_render(glw_t *w, const glw_rctx_t *rc)
 
 static int
 glw_container_x_callback(glw_t *w, void *opaque, glw_signal_t signal,
-			  void *extra)
+                         void *extra)
 {
+  glw_container_t *co = (glw_container_t *)w;
   switch(signal) {
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
   case GLW_SIGNAL_CHILD_CREATED:
   case GLW_SIGNAL_CHILD_HIDDEN:
   case GLW_SIGNAL_CHILD_UNHIDDEN:
-    return glw_container_x_constraints((glw_container_t *)w, NULL);
+    return glw_container_x_constraints(co, NULL);
   case GLW_SIGNAL_CHILD_DESTROYED:
-    return glw_container_x_constraints((glw_container_t *)w, extra);
+    return glw_container_x_constraints(co, extra);
+  case GLW_SIGNAL_DESTROY:
+    if(co->co_table != NULL)
+      LIST_REMOVE(co, co_table_link);
+    free(co->co_column_widths);
+    return 0;
   default:
     return 0;
   }
@@ -774,6 +856,80 @@ retire_child(glw_t *w, glw_t *c)
 
 
 
+
+/**
+ *
+ */
+static glw_t *
+glw_container_find_table(glw_t *w)
+{
+  for(; w != NULL; w = w->glw_parent)
+    if(w->glw_class == &glw_table)
+      return w;
+  return NULL;
+}
+
+
+/**
+ *
+ */
+static int
+glw_container_set_int_unresolved(glw_t *w, const char *a, int value)
+{
+  glw_container_t *co = (glw_container_t *)w;
+
+  if(!strcmp(a, "tableMode")) {
+    if(!value == !co->co_table)
+      return GLW_SET_NO_CHANGE;
+
+    if(co->co_table != NULL)
+      LIST_REMOVE(co, co_table_link);
+
+    if(value) {
+      co->co_table = (glw_table_t *)glw_container_find_table(w);
+      if(co->co_table != NULL)
+        LIST_INSERT_HEAD(&co->co_table->gt_rows, co, co_table_link);
+
+    } else {
+      co->co_table = NULL;
+    }
+    return GLW_SET_RERENDER_REQUIRED;
+  }
+  return GLW_SET_NOT_RESPONDING;
+}
+
+
+/**
+ *
+ */
+static int
+glw_table_callback(glw_t *w, void *opaque, glw_signal_t signal,
+                   void *extra)
+{
+  glw_t *src;
+  glw_table_t *gt = (glw_table_t *)w;
+  switch(signal) {
+  case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
+    src = extra;
+    glw_mod_constraints(w,
+                        0,
+                        src->glw_req_size_y,
+                        src->glw_req_weight,
+                        (src->glw_flags & (GLW_CONSTRAINT_FLAGS)),
+                        GLW_CONSTRAINT_Y | GLW_CONSTRAINT_W | GLW_CONSTRAINT_D);
+    break;
+
+  case GLW_SIGNAL_DESTROY:
+    free(gt->gt_columns);
+    break;
+
+  default:
+    break;
+  }
+  return 0;
+}
+
+
 /**
  *
  */
@@ -789,6 +945,7 @@ static glw_class_t glw_container_x = {
   .gc_default_alignment = LAYOUT_ALIGN_LEFT,
   .gc_set_int16_4 = container_set_int16_4,
   .gc_bubble_event = glw_navigate_horizontal,
+  .gc_set_int_unresolved = glw_container_set_int_unresolved,
 };
 
 static glw_class_t glw_container_y = {
@@ -809,15 +966,21 @@ static glw_class_t glw_container_y = {
 static glw_class_t glw_container_z = {
   .gc_name = "container_z",
   .gc_flags = GLW_CAN_HIDE_CHILDS,
-  .gc_instance_size = sizeof(glw_container_t),
-  .gc_set_int = glw_container_set_int,
+  .gc_instance_size = sizeof(glw_t),
   .gc_layout = glw_container_z_layout,
   .gc_render = glw_container_z_render,
   .gc_signal_handler = glw_container_z_callback,
 };
 
-
+static glw_class_t glw_table = {
+  .gc_name = "table",
+  .gc_instance_size = sizeof(glw_table_t),
+  .gc_layout = glw_container_z_layout,
+  .gc_render = glw_container_z_render,
+  .gc_signal_handler = glw_table_callback,
+};
 
 GLW_REGISTER_CLASS(glw_container_x);
 GLW_REGISTER_CLASS(glw_container_y);
 GLW_REGISTER_CLASS(glw_container_z);
+GLW_REGISTER_CLASS(glw_table);
