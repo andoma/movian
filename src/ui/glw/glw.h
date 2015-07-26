@@ -1492,6 +1492,9 @@ void glw_set_constraints(glw_t *w, int x, int y, float weight,
 void glw_conf_constraints(glw_t *w, int x, int y, float weight,
 			  int conf);
 
+void glw_mod_constraints(glw_t *w, int x, int y, float weight, int flags,
+                         int modflags);
+
 void glw_copy_constraints(glw_t *w, glw_t *src);
 
 void glw_clear_constraints(glw_t *w);
