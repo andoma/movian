@@ -365,13 +365,13 @@ asyncio_dopoll(void)
       continue;
     }
 
-    if(fds[i].revents & POLLERR || err) {
+    if(fds[i].revents & POLLERR || err < 0) {
       int err;
       socklen_t errlen = sizeof(int);
 
       if(getsockopt(af->af_fd, SOL_SOCKET, SO_ERROR, (void *)&err, &errlen)) {
-        TRACE(TRACE_ERROR, "ASYNCIO", "getsockopt failed for 0x%x -- %d",
-              af->af_fd, errno);
+        TRACE(TRACE_ERROR, "ASYNCIO", "getsockopt failed for 0x%x -- %s",
+              af->af_fd, strerror(errno));
       } else {
         if(err) {
           af->af_callback(af, af->af_opaque, ASYNCIO_ERROR, err);
