@@ -180,7 +180,7 @@ rpi_codec_decode_locked(struct media_codec *mc, struct video_decoder *vd,
   int domark = 1;
 
   OMX_BUFFERHEADERTYPE *q = NULL, **pq = &q, *buf;
-#if 1
+#if 0
   printf("FRAME\t");
   if(mb->mb_pts != PTS_UNSET) {
     static int64_t last_pts;
