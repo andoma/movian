@@ -697,24 +697,32 @@ fa_probe_metadata(const char *url, char *errbuf, size_t errsize,
   metadata_t *md = metadata_create();
 
 #if ENABLE_LIBGME
-  if(gme_probe(md, url, fh))
+  if(gme_probe(md, url, fh)) {
+    fa_close(fh);
     return md;
+  }
 #endif
 
 #if ENABLE_XMP
-  if(xmp_probe(md, url, fh))
+  if(xmp_probe(md, url, fh)) {
+    fa_close(fh);
     return md;
+  }
 #endif
 
   fa_seek(fh, 0, SEEK_SET);
-
   if(fa_probe_header(md, url, fh, filename)) {
     fa_close(fh);
     return md;
   }
 
+  if(!fa_probe_iso(md, fh)) {
+    fa_close(fh);
+    return md;
+  }
+
   AVIOContext *avio = fa_libav_reopen(fh, 0);
- 
+
   if((fctx = fa_libav_open_format(avio, url, errbuf, errsize,
                                   NULL, 0, -1, 2)) == NULL) {
     fa_libav_close(avio);
