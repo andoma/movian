@@ -3,10 +3,24 @@ setDefaultFont("skin://fonts/RobotoCondensed-Light.ttf");
 $ui.sizeOffset = 4;
 $ui.xmargin = select($ui.aspect > 1, $ui.width / 50, 0);
 
+
 onEvent(sysinfo, {
   toggle($ui.sysinfo);
 });
 
+onEvent(logwindow, {
+  toggle($ui.logwindow);
+});
+
+onEvent(back, {
+  $ui.logwindow = false;
+}, $ui.logwindow);
+
+
+
+style(PageContainer, {
+  alpha: 1 - iir(clamp(getLayer(), 0, 1), 4) * 0.9;
+});
 
 widget(container_z, {
   widget(backdrop, {
@@ -46,6 +60,11 @@ widget(container_z, {
           });
 	  cloner($core.popups, loader, {
 	    source: "popups/" + $self.type + ".view";
+	  });
+
+	  widget(loader, {
+            hidden: !$ui.logwindow;
+	    source: select($ui.logwindow, "log.view", "");
 	  });
         });
 

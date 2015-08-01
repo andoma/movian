@@ -2,11 +2,13 @@
 -- Most important
 ---------------
 
+Rework  $view.currentPageClone <- focusedClone();
+
+Fix loader displaying same thing multiple times (log overlay, etc)
+
 List items
 
-- Video?
-
-- Item menu
+- Item menu for other items
 
 Video playback
  - Settings
@@ -18,6 +20,8 @@ screen saver
 
 log view (perhaps just copy it)
 
+polish top-level popups
+
 ---------------
 -- questions
 ---------------
@@ -25,4 +29,3 @@ log view (perhaps just copy it)
 what to do with itemviews (the headweb things)?
   Add a video page?  Copy stuff from video_details?
 
-polish top-level popups

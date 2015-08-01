@@ -63,7 +63,7 @@ widget(cursor, {
 
     widget(container_x, {
 
-      alpha: 1 - iir(clamp(getLayer(), 0, 1), 7);
+      style: "PageContainer";
 
       widget(loader, {
         filterConstraintX: true;
