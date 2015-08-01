@@ -36,6 +36,17 @@ typedef struct glw_event_external {
 /**
  *
  */
+void
+glw_event_map_destroy(glw_root_t *gr, glw_event_map_t *gem)
+{
+  rstr_release(gem->gem_action);
+  gem->gem_dtor(gr, gem);
+}
+
+
+/**
+ *
+ */
 static void
 glw_event_map_external_dtor(glw_root_t *gr, glw_event_map_t *gem)
 {
@@ -61,7 +72,7 @@ glw_event_map_external_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
 glw_event_map_t *
 glw_event_map_external_create(event_t *e)
 {
-  glw_event_external_t *gee = malloc(sizeof(glw_event_external_t));
+  glw_event_external_t *gee = calloc(1, sizeof(glw_event_external_t));
   e->e_flags |= EVENT_MAPPED;
   gee->e = e;
   gee->map.gem_dtor = glw_event_map_external_dtor;
@@ -118,7 +129,7 @@ glw_event_map_playTrack_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
 glw_event_map_t *
 glw_event_map_playTrack_create(prop_t *track, prop_t *source, int mode)
 {
-  glw_event_playTrack_t *g = malloc(sizeof(glw_event_playTrack_t));
+  glw_event_playTrack_t *g = calloc(1, sizeof(glw_event_playTrack_t));
 
   g->track  = prop_ref_inc(track);
   g->source = prop_ref_inc(source);
@@ -179,7 +190,7 @@ glw_event_map_propref_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
 glw_event_map_t *
 glw_event_map_propref_create(prop_t *prop, prop_t *target)
 {
-  glw_event_propref_t *g = malloc(sizeof(glw_event_propref_t));
+  glw_event_propref_t *g = calloc(1, sizeof(glw_event_propref_t));
 
   g->prop   = prop_ref_inc(prop);
   g->target = prop_ref_inc(target);
@@ -240,7 +251,7 @@ glw_event_map_deliverEvent_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
 glw_event_map_t *
 glw_event_map_deliverEvent_create(prop_t *target, rstr_t *action)
 {
-  glw_event_deliverEvent_t *de = malloc(sizeof(glw_event_deliverEvent_t));
+  glw_event_deliverEvent_t *de = calloc(1, sizeof(glw_event_deliverEvent_t));
   
   de->target = prop_ref_inc(target);
   de->action = rstr_dup(action);
@@ -263,7 +274,7 @@ glw_event_map_add(glw_t *w, glw_event_map_t *gem)
   LIST_FOREACH(o, &w->glw_event_maps, gem_link) {
     if(!strcmp(rstr_get(o->gem_action), rstr_get(gem->gem_action))) {
       LIST_REMOVE(o, gem_link);
-      o->gem_dtor(w->glw_root, o);
+      glw_event_map_destroy(w->glw_root, o);
       break;
     }
   }
@@ -282,7 +293,7 @@ glw_event_map_remove_by_action(glw_t *w, const char *action)
   LIST_FOREACH(o, &w->glw_event_maps, gem_link) {
     if(!strcmp(rstr_get(o->gem_action), action)) {
       LIST_REMOVE(o, gem_link);
-      o->gem_dtor(w->glw_root, o);
+      glw_event_map_destroy(w->glw_root, o);
       break;
     }
   }
@@ -407,7 +418,7 @@ glw_event_map_t *
 glw_event_map_internal_create(const char *target, action_type_t event,
 			      int uc)
 {
-  glw_event_internal_t *g = malloc(sizeof(glw_event_internal_t));
+  glw_event_internal_t *g = calloc(1, sizeof(glw_event_internal_t));
   
   g->target = target ? strdup(target) : NULL;
   g->event  = event;

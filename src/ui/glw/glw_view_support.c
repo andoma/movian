@@ -124,7 +124,7 @@ glw_view_token_free(glw_root_t *gr, token_t *t)
     break;
 
   case TOKEN_EVENT:
-    t->t_gem->gem_dtor(gr, t->t_gem);
+    glw_event_map_destroy(gr, t->t_gem);
     break;
 
   case TOKEN_URI:

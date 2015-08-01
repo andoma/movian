@@ -42,7 +42,7 @@ void glw_event_map_remove_by_action(glw_t *w, const char *action);
 
 void glw_event_map_add(glw_t *w, glw_event_map_t *gem);
 
-void glw_event_map_destroy(glw_event_map_t *gem);
+void glw_event_map_destroy(glw_root_t *gr, glw_event_map_t *gem);
 
 int glw_event_map_intercept(glw_t *w, struct event *e);
 

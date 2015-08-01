@@ -3166,7 +3166,7 @@ static glw_event_map_t *
 glw_event_map_eval_block_create(glw_view_eval_context_t *ec,
 				struct token *block)
 {
-  glw_event_map_eval_block_t *b = malloc(sizeof(glw_event_map_eval_block_t));
+  glw_event_map_eval_block_t *b = calloc(1, sizeof(glw_event_map_eval_block_t));
 
   b->block = glw_view_clone_chain(ec->gr, block, NULL);
 

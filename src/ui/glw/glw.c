@@ -675,7 +675,7 @@ glw_destroy(glw_t *w)
 
   while((gem = LIST_FIRST(&w->glw_event_maps)) != NULL) {
     LIST_REMOVE(gem, gem_link);
-    gem->gem_dtor(gr, gem);
+    glw_event_map_destroy(gr, gem);
   }
 
   free(w->glw_matrix);
