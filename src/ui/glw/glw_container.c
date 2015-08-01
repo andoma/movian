@@ -88,11 +88,10 @@ table_recompute(glw_table_t *gt)
   }
 
   int width_sum = 0;
-
   for(int i = 0; i < columns; i++) {
     int w = 0;
     LIST_FOREACH(co, &gt->gt_rows, co_table_link) {
-      if(co->co_num_columns <= columns)
+      if(i < co->co_num_columns)
         w = MAX(w, co->co_column_widths[i]);
     }
     gt->gt_columns[i] = w;
