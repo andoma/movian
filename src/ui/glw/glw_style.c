@@ -911,7 +911,6 @@ glw_styleset_add(glw_styleset_t *gss, glw_style_t *gs)
     for(i = 0; i < gss->gss_numstyles; i++) {
       if(!strcmp(rstr_get(gs->gs_name),
                  rstr_get(gss->gss_styles[i]->gs_name))) {
-        glw_style_release(gss->gss_styles[i]); // Will be replaced
         break;
       }
     }
