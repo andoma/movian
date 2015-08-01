@@ -317,15 +317,25 @@ rvd_set_codec(media_codec_t *mc, glw_video_t *gv, const frame_info_t *fi,
                                             &rvd->rvd_mutex, NULL);
       rvd->rvd_imgfx->oc_opaque = rvd;
 
+      // add extra buffers for Advanced Deinterlace
+      OMX_PARAM_U32TYPE extra_buffers;
+      OMX_INIT_STRUCTURE(extra_buffers);
+      extra_buffers.nU32 = 3;
+      omxchk(OMX_SetParameter(rvd->rvd_imgfx->oc_handle,
+                              OMX_IndexParamBrcmExtraBuffers, &extra_buffers));
+
       OMX_CONFIG_IMAGEFILTERPARAMSTYPE image_filter;
       OMX_INIT_STRUCTURE(image_filter);
       image_filter.nPortIndex = 191;
+
       image_filter.nNumParams = 1;
       image_filter.nParams[0] = 3;
-      if(1)
+
+      if(0) {
         image_filter.eImageFilter = OMX_ImageFilterDeInterlaceFast;
-      else
+      } else {
         image_filter.eImageFilter = OMX_ImageFilterDeInterlaceAdvanced;
+      }
 
       omxchk(OMX_SetConfig(rvd->rvd_imgfx->oc_handle,
                            OMX_IndexConfigCommonImageFilterParameters,
