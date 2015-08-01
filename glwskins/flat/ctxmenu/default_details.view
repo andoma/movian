@@ -1,0 +1,40 @@
+#import "skin://styles/style_list.view"
+
+#define ITEM(CAPTION, EVENT, ICON=void, ENABLED=true) {
+  widget(container_x, {
+    hidden: !ENABLED;
+    style: "ListItem";
+    focusable: true;
+
+    onEvent(activate, EVENT);
+
+    widget(icon, {
+      style: "ListItemIcon";
+      source: ICON;
+    });
+
+    widget(label, {
+      caption: CAPTION;
+      style: "ActionLabel";
+    });
+  });
+}
+
+
+
+
+
+
+
+widget(container_y, {
+  space(1);
+  widget(container_x, {
+    filterConstraintY: true;
+    space(1);
+    widget(list_y, {
+      filterConstraintX: true;
+    });
+    space(1);
+  });
+  space(1);
+});

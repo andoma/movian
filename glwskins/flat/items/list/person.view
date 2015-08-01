@@ -1,0 +1,30 @@
+#import "skin://theme.view"
+
+widget(container_z, {
+
+  height: 4em;
+  ListItemBevel();
+  focusable: 0.1;
+
+  widget(container_x, {
+    style: "ListItem";
+
+    widget(image, {
+      margin:[0,1];
+      style: "ListItemIcon";
+      source: $self.portrait;
+    });
+
+    widget(container_y, {
+      align: center;
+      filterConstraintX: true;
+      widget(label, {
+        caption: $self.name;
+        font: "skin://fonts/RobotoCondensed-Regular.ttf";
+      });
+      widget(label, {
+        caption: $self.character;
+      });
+    });
+  });
+});

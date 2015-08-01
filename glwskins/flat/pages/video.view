@@ -1,0 +1,156 @@
+#import "skin://styles/style_list.view"
+
+style(OsdItem, {
+  filterConstraintX: true;
+  color: iir(!isNavFocused(), 4);
+  shadow: iir(!isNavFocused(), 4);
+});
+
+
+delta($ui.fullwindow, isVisible());
+
+$self.directClose = 1;
+$self.close = $self.media.playstatus == "stop";
+$view.osdpage = 0;
+
+onEvent(back, {
+  $view.osdpage = select($view.osdpage > 1, 1, 0);
+}, $view.osdpage);
+
+onEvent(cancel, {
+  $view.osdpage = select($view.osdpage > 1, 1, 0);
+}, $view.osdpage);
+
+widget(container_z, {
+
+  // --------------------------------------------
+  // --- Primary video display
+  // --------------------------------------------
+
+  widget(video, {
+    zoffset: -500;
+    how: $self.how;
+    model: $self.openedFrom;
+    parentUrl: $self.parentUrl;
+    origin: $self.origin;
+    primary: true;
+    source: $self.source;
+    focusable: 0.1;
+
+    onEvent(left,  deliverEvent($self.media.eventSink, "SeekReverse"));
+    onEvent(right, deliverEvent($self.media.eventSink, "SeekForward"));
+
+    onEvent(up,    deliverEvent($self.media.eventSink, "VolumeUp"));
+    onEvent(down,  deliverEvent($self.media.eventSink, "VolumeDown"));
+
+    onEvent(activate, {
+      $view.osdpage = !$view.osdpage;
+    });
+  });
+
+
+  widget(container_y, {
+
+    alpha: iir(translate($view.osdpage, 0,
+                         0, changed($self.media.seektime, 5, true),
+                         1, 1), 4);
+
+    widget(container_x, {
+      height: 8em;
+      padding: [4em, 1em];
+
+      filterConstraintX: true;
+      spacing: 1em;
+      widget(image, {
+        $view.iconWidth = getWidth();
+        aspectConstraint: true;
+        source: $self.media.metadata.icon;
+      });
+
+
+      widget(container_y, {
+        filterConstraintX: true;
+        spacing: 3;
+
+        widget(label, {
+          size: 1.5em;
+	  caption: $self.media.metadata.title;
+          shadow: true;
+        });
+
+        widget(container_x, {
+          spacing: 0.5em;
+
+          widget(label, {
+            width: 3em;
+            caption: value2duration($self.media.currenttime);
+            shadow: true;
+            align: right;
+          });
+
+          widget(container_z, {
+
+            widget(container_y, {
+              align: center;
+              widget(container_z, {
+                height: 3;
+                widget(container_y, {
+                  padding: 1;
+                  widget(quad, {
+                    alpha: 0.3;
+                    additive: true;
+                  });
+                });
+
+                widget(clip, {
+
+                  clipping: [0, 0,
+                             1 - ($self.media.currenttime /
+                                  $self.media.metadata.duration),
+                             0];
+
+                  widget(quad, {
+                    alpha: 0.9;
+                    additive: true;
+                  });
+                });
+              });
+            });
+
+            widget(slider_x, {
+              focusable: 0.1;
+              bind($self.media.currenttime);
+              max: $self.media.metadata.duration;
+              widget(quad, {
+                // Add something clever here
+              });
+            });
+          });
+          widget(label, {
+            width: 4em;
+            shadow: true;
+            caption: value2duration($self.media.metadata.duration);
+
+          });
+        });
+      });
+    });
+    space(1);
+  });
+
+  widget(container_y, {
+
+    widget(deck, {
+
+      space(1);
+
+#import "skin://osd/osd_main.view"
+#import "skin://osd/osd_info.view"
+#import "skin://osd/osd_subs.view"
+#import "skin://osd/osd_settings.view"
+
+      page: $view.osdpage;
+    });
+    space(1);
+  });
+});

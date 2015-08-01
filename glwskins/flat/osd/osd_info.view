@@ -1,0 +1,8 @@
+widget(container_z, {
+
+  widget(label, {
+    focusable: true;
+    caption: "hej";
+  });
+
+});

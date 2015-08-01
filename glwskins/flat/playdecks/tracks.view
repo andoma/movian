@@ -1,0 +1,43 @@
+
+widget(container_z, {
+
+  widget(quad, {
+    color: 0;
+    alpha: 0.2;
+  });
+
+  widget(container_x, {
+    padding: [2em, 0.5em];
+    spacing: 0.5em;
+
+    widget(icon, {
+      source: "skin://icons/ic_skip_previous_48px.svg";
+    });
+    widget(icon, {
+      source: "skin://icons/ic_pause_48px.svg";
+    });
+    widget(icon, {
+      source: "skin://icons/ic_skip_next_48px.svg";
+    });
+
+    widget(label, {
+      caption: join(" • ",
+		    $core.media.current.metadata.artist,
+		    $core.media.current.metadata.title);
+      style: "playdeckText";
+    });
+
+
+    space(1);
+
+    widget(container_x, {
+      width: 5em;
+      padding: [0, -4em, 0, 0];
+      widget(image, {
+        zoffset: 100;
+        source: $core.media.current.metadata.album_art;
+      });
+    });
+
+  });
+});

@@ -1,0 +1,54 @@
+#define ListItemBevel() {
+  widget(container_y, {
+
+    style: "ListItemBevel";
+
+    filterConstraintY: true;
+    widget(quad, {
+      height: 1;
+      alpha: 0.15;
+    });
+    space(1);
+    widget(quad, {
+      height: 1;
+      color: 0;
+      alpha: 0.15;
+    });
+  });
+}
+
+
+#define GridItemBevel() {
+  widget(container_y, {
+
+    style: "GridItemBevel";
+
+    filterConstraintY: true;
+    widget(quad, {
+      height: 1;
+      alpha: 0.15;
+    });
+    space(1);
+    widget(quad, {
+      height: 1;
+      color: 0;
+      alpha: 0.15;
+    });
+  });
+  widget(container_x, {
+
+    style: "GridItemBevel";
+
+    filterConstraintX: true;
+    widget(quad, {
+      width: 1;
+      alpha: 0.15;
+    });
+    space(1);
+    widget(quad, {
+      width: 1;
+      color: 0;
+      alpha: 0.15;
+    });
+  });
+}

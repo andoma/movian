@@ -1,0 +1,57 @@
+#import "skin://styles/style_list.view"
+
+widget(container_y, {
+
+  widget(label, {
+    height: 3em;
+    padding: [4em, 0];
+    align: center;
+    caption: $self.model.metadata.title;
+    size: 2em;
+  });
+
+  widget(list_y, {
+
+    spacing: 1em;
+    padding: [2em, 0, 2em, 2em];
+    navWrap: true;
+    chaseFocus: true;
+    alphaFallOff: 0.1;
+    blurFallOff: 0.3;
+    scrollThreshold: 2em;
+
+    &clone.focused = focusedChild();
+
+    cloner($self.model.nodes, container_y, {
+
+      widget(container_x, {
+        spacing: 1em;
+
+        widget(label, {
+          filterConstraintX: true;
+          caption: $self.metadata.title;
+          size: 2em;
+        });
+
+        widget(label, {
+          caption: $self.entries;
+        });
+
+      });
+      widget(container_x, {
+        padding: [2em, 0];
+        spacing: 2em;
+
+        cloner(propWindow($self.nodes, 0, 3), loader, {
+//          weight: -3;
+          filterConstraintX: true;
+          time: 0.1;
+          effect: blend;
+          noInitialTransform: true;
+          alt: "skin://items/rect/default.view";
+          source: "skin://items/rect/" + $self.type + ".view";
+        });
+      });
+    });
+  });
+});

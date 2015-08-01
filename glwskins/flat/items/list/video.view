@@ -1,0 +1,129 @@
+#import "skin://theme.view"
+
+
+// Batman Begins    "#904018"
+// The Dark Knight  "#204e67"
+// Rises            "#f2e4b5"
+
+//90  40  18
+//$view.col = "#904018"
+
+$view.dominantcolor = translate($self.metadata.title, "#ffffff",
+                                "Batman Begins", "#904018",
+                                "The Dark Knight", "#204e67",
+                                "The Dark Knight Rises", "#f2e4b5");
+
+widget(container_z, {
+
+  height: 5em;
+
+  ListItemBevel();
+
+  widget(quad, {
+    color: $view.dominantcolor;
+    alpha: 0.0;
+  });
+
+  onEvent(activate, navOpen($self.url, void, $self, $parent.model, void, $parent.url));
+
+  onEvent(itemMenu, eventWithProp(videoInfo, $self));
+
+  focusable: true;
+
+  /*
+    widget(displacement, {
+
+    scaling: [1,1,1];
+
+    widget(fader, {
+
+    //      plane: [-1,0,0,0];
+    //      alphaFallOff: 1;
+
+    widget(backdrop, {
+    zoffset: -200;
+    //      alphaSelf: 0.5;
+    //      source: "showtime:pixmap:gradient:120,129,148:70,76,96";
+    //        source: "showtime:pixmap:gradient:242,228,181:87,38,30";
+    source: "showtime:pixmap:gradient: 32,78,103:14,50,74";
+    color: 0.5;
+    });
+    });
+    });
+  */
+
+  $view.txtcol = -0.2 + iir(!isNavFocused(), 4) * 0.8;
+
+  widget(container_x, {
+    style: "ListItem";
+
+    widget(image, {
+      style: "ListItemIcon";
+      source: $self.metadata.icon;
+    });
+
+
+    widget(container_y, {
+      weight: 1;
+      filterConstraintX: true;
+      padding: [0,0.5em];
+
+      widget(label, {
+        filterConstraintX: true;
+        caption: $self.metadata.title;
+//        font: "skin://fonts/RobotoCondensed-Regular.ttf";
+        color: $view.dominantcolor * 0.4 + $view.txtcol;
+      });
+
+      space(1);
+
+      widget(container_x, {
+        spacing: 1em;
+        widget(label, {
+
+          caption: value2duration($self.restartpos);
+
+          color: $view.dominantcolor * 0.4 + $view.txtcol;
+          shadow: iir(!isNavFocused(), 4);
+        });
+
+        widget(container_z, {
+//          width: 10em;
+
+          widget(container_y, {
+            align: center
+            widget(quad, {
+              height: 1;
+              alpha: 0.3;
+              additive: true;
+              color: $view.dominantcolor * 0.4 + $view.txtcol;
+            });
+          });
+
+          widget(container_y, {
+            align: center
+
+            widget(clip, {
+              clipping: [0, 0,
+                         1 - ($self.restartpos / $self.metadata.duration),
+                         0];
+              widget(quad, {
+                height: 3;
+                alpha: 0.7;
+                additive: true;
+                color: $view.dominantcolor * 0.4 + $view.txtcol;
+              });
+            });
+          });
+        });
+
+        widget(label, {
+          caption: value2duration($self.metadata.duration);
+          color: $view.dominantcolor * 0.4 + $view.txtcol;
+          shadow: iir(!isNavFocused(), 4);
+        });
+      });
+
+    });
+  });
+});

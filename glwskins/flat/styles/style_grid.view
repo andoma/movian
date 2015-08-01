@@ -1,0 +1,17 @@
+style(GridItemSeparatorLabel, {
+  font: "skin://fonts/RobotoCondensed-Light.ttf";
+  size: 1.5em;
+  alpha: 0.3;
+});
+
+
+style(GridItemLabel, {
+  align: center;
+  height: 2em;
+  color: iir(!isNavFocused(), 4);
+});
+
+style(GridItemIcon, {
+  margin: 0.5em;
+});
+

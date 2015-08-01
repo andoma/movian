@@ -1,0 +1,109 @@
+#import "common.view"
+
+onEvent(cancel, deliverEvent($self.eventSink));
+onEvent(back,   deliverEvent($self.eventSink, "cancel"));
+
+widget(container_x, {
+  space(0.2);
+
+  widget(container_y, {
+    align: center;
+    
+    popupGroup(
+      filterConstraintX: true;
+      
+      widget(container_y, {
+	spacing: 4;
+	widget(container_x, {
+	  spacing: 10;
+	  widget(icon, {
+	    source: "dataroot://res/svg/Lock.svg";
+	    sizeScale: 2;
+	  });
+
+	  widget(container_y, {
+	    widget(label, {
+	      align: left;
+	      caption: $self.source ?? $self.id;
+	    });
+	    widget(label, {
+	      align: left;
+	      caption: $self.reason;
+	    });
+	  });
+	});
+
+	widget(label, {
+	  hidden: $self.disableUsername;
+	  caption: _("Username");
+	});
+      
+	popupInputField(
+	  hidden: $self.disableUsername;
+ 	  widget(text, {
+	    description: _("Username");
+	    id: "username";
+	    focusable: true;
+	    bind($self.username);
+
+	    onEvent(enter, deliverEvent($self.eventSink, "Ok"),
+		   $self.username);
+	  });
+	);
+
+	widget(label, {
+	  hidden: $self.disablePassword;
+	  caption: _("Password");
+	});
+      
+	popupInputField(
+	  hidden: $self.disablePassword;
+	  widget(text, {
+	    description: _("Password");
+	    id: "password";
+	    focusable: true;
+	    password: true;
+	    bind($self.password);
+	    onEvent(enter, deliverEvent($self.eventSink, "Ok"),
+		   $self.username);
+	  });
+	);
+
+
+	widget(label, {
+          hidden: $self.disableDomain;
+	  caption: _("Domain");
+	});
+      
+	popupInputField(
+          hidden: $self.disableDomain;
+	  widget(text, {
+	    description: _("Domain");
+	    id: "domain";
+	    focusable: true;
+	    bind($self.domain);
+	    onEvent(enter, deliverEvent($self.eventSink, "Ok"),
+		    $self.domain);
+
+	  });
+	);
+
+
+	popupCheckbox($self.rememberMe, _("Remember me"), true,
+		      !$self.canRemember);
+
+	widget(container_x, {
+	  .align = center;
+	  .spacing = 20;
+	  .homogenous = true;
+
+	  popupButtonOK(deliverEvent($self.eventSink, "OK"),
+			true, false);
+	  popupButtonCancel(deliverEvent($self.eventSink, "Cancel"),
+			    true, false);
+	});
+      });
+    );
+  });
+  space(0.2);
+});

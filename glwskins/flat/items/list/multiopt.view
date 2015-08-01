@@ -1,0 +1,106 @@
+#include "skin://theme.view"
+
+$view.page = 0;
+
+
+widget(container_z, {
+
+  ListItemBevel();
+
+  widget(container_x, {
+    style: "ListItem";
+
+    widget(dummy, {
+      style: "ListItemIcon";
+    });
+
+    widget(container_y, {
+      align:top;
+      style: "ListItemLabelContainer";
+      widget(container_x, {
+        height: 2em;
+
+        widget(label, {
+          align: center;
+          caption: $self.metadata.title + ":";
+          style: "ListItemLabel";
+        });
+      });
+    });
+
+    widget(deck, {
+      filterConstraintX: true;
+      style: "MultioptSelection";
+
+      onEvent(LostFocus, {
+        $view.page = 0;
+      });
+
+      widget(container_y, {
+        focusable: true;
+
+        onEvent(activate, {
+          $view.page = 1;
+        });
+
+        align: center;
+
+        widget(container_x, {
+
+          widget(label, {
+            caption: $self.current.title;
+            style: "ListItemValue";
+          });
+
+          space(1);
+
+          widget(icon, {
+            style: "MultioptIcon";
+          });
+        });
+      });
+
+      widget(container_x, {
+        style: "ListMultioptContainer";
+        onEvent(cancel, { $view.page = 0; });
+        onEvent(back,   { $view.page = 0; });
+
+
+        widget(container_z, {
+
+          widget(quad, {
+            zoffset: -400;
+            color: 0;
+            alpha: 0.4;
+          });
+
+          widget(list_y, {
+
+            cloner($self.options, container_x, {
+              focusable: true;
+              style: "MultioptItem";
+
+              onEvent(activate, {
+                propSelect($self);
+                $view.page = 0;
+              });
+
+              widget(icon, {
+                style: select(propName($self) == $parent.value,
+                              "MultioptItemIconSelected",
+                              "MultioptItemIconUnselected");
+              });
+
+              widget(label, {
+                caption: $self.title;
+                style: "MultioptItemLabel";
+              });
+            });
+          });
+        });
+      });
+
+      page: $view.page;
+    });
+  });
+});

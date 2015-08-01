@@ -1,0 +1,73 @@
+
+#define OSD_ITEM(TITLE, ICON, PAGE) {
+  widget(container_y, {
+    width: 5em;
+
+    focusable: true;
+
+    onEvent(activate, {
+      $view.osdpage = PAGE;
+    });
+
+    widget(icon, {
+      size: 3em;
+      source: ICON;
+      color: 1 - isNavFocused();
+    });
+    widget(label, {
+      align: center;
+      caption: TITLE;
+      color: 1 - isNavFocused();
+    });
+  });
+}
+
+
+widget(container_z, {
+
+  height: 8em;
+
+  widget(quad, {
+    color: 0;
+    alpha: 0.8;
+    zoffset: -400;
+  });
+
+  widget(cursor, {
+
+    widget(container_x, {
+      padding: [4em, 1em];
+
+      filterConstraintX: true;
+      spacing: 1em;
+      widget(dummy, {
+        width: $view.iconWidth;
+      });
+
+      widget(container_y, {
+        filterConstraintX: true;
+        padding: [0, 3.5em, 0,0];
+
+        widget(container_x, {
+          OSD_ITEM(_("Subtitles"), "skin://icons/ic_subtitles_48px.svg", 3);
+          OSD_ITEM(_("Audio"),     "skin://icons/ic_speaker_48px.svg", 5);
+          OSD_ITEM(_("Settings"),  "dataroot://res/svg/Settings.svg", 4);
+          OSD_ITEM(_("Info"),      "skin://icons/ic_info_outline_48px.svg", 2);
+        });
+      });
+
+    });
+
+    widget(quad, {
+      zoffset: -100;
+      alpha: 0.6 * iir($ui.keyboard, 4);
+      additive: true;
+    });
+
+    widget(quad, {
+      zoffset: -100;
+      alpha: 0.1;
+      additive: true;
+    });
+  });
+});

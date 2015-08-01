@@ -1,0 +1,175 @@
+#import "skin://theme.view"
+
+#define SIDEBAR_SIZE() { 22 em }
+
+#define SIDEBAR_ACTION(CAPTION, ICON, EVENT) {
+  widget(container_z, {
+
+    height: 2em;
+    ListItemBevel();
+
+    focusable: true;
+    onEvent(activate, EVENT);
+
+    widget(container_x, {
+      style: "ListItem";
+
+      widget(icon, {
+        style: "ListItemIcon";
+        source: ICON;
+      });
+
+      widget(label, {
+        filterConstraintX: true;
+        caption: CAPTION;
+        style: "ActionLabel";
+      });
+    });
+  });
+}
+
+#define SEPARATOR(HIDDEN=false) {
+  widget(quad, {
+    hidden: HIDDEN;
+    height: 1;
+    color: 0.5;
+    additive: true;
+  });
+}
+
+$clone.haveSidebar = !getLayer();
+$view.sidebarFader = iir(delay($clone.showSidebar, 0, 0.25), 4);
+
+widget(container_z, {
+
+  onEvent(GainedFocus, {
+    $clone.showSidebar = true;
+  });
+
+  onEvent(LostFocus, {
+    $clone.showSidebar = false;
+  });
+
+#import "skin://styles/style_list.view"
+
+  alpha: $view.sidebarFader;
+  width: $view.sidebarFader * SIDEBAR_SIZE();
+
+  widget(quad, {
+    zoffset: -500;
+    color: 0;
+    alpha: 0.2;
+  });
+
+  widget(resizer, {
+    widget(container_y, {
+      width: SIDEBAR_SIZE();
+
+      /**
+       * Style overrides
+       */
+      style(ListItem, {
+        padding: 0;
+        spacing: 0;
+      });
+
+      newstyle(ListItemIcon, {
+        width: 2em;
+        align: center;
+        size: 1.5em;
+      });
+
+      style(ListItemValue, {
+        weight: 0.7;
+        padding: [1em, 0];
+      });
+
+      style(ListItemValueOn, {
+        weight: 0.7;
+        padding: [1em, 0];
+      });
+
+      style(ListItemValueOff, {
+        weight: 0.7;
+        padding: [1em, 0];
+      });
+
+      style(MultioptIcon, {
+        width: 1em;
+        size: 1em;
+      });
+
+      style(MultioptSelection, {
+        weight: 0.7;
+      });
+
+      style(MultioptItemIconSelected, {
+        width: 1em;
+        size: 1em;
+      });
+      style(MultioptItemIconUnselected, {
+        width: 1em;
+        size: 1em;
+      });
+
+
+      widget(label, {
+        alpha: iir(delay($clone.showSidebar, 0.25, 0.1), 4);
+        height: 3em;
+        align: center;
+        caption: _("Page settings");
+        size: 1.5em;
+      });
+
+      widget(list_y, {
+
+        id: "sidebar";
+
+        autoFocusLimit: true;
+
+        // --------------------------------------
+        // Bookmark on/off
+        // --------------------------------------
+
+        SIDEBAR_ACTION(select($self.bookmarked,
+                              _("Remove from home"),
+                              _("Add to home")),
+                       "dataroot://res/svg/Bookmark.svg",
+                       {
+	                 toggle($self.bookmarked);
+                       });
+
+        // --------------------------------------
+        //
+        // --------------------------------------
+
+        widget(loader, {
+          hidden: count($clone.settings.options) < 2;
+          .self <- $clone.settings;
+          source: "skin://items/list/multiopt.view";
+        });
+
+
+        // --------------------------------------
+        // Items from page model
+        // --------------------------------------
+
+        cloner($self.model.options, loader, {
+          time: 0.1;
+          effect: blend;
+	  alt: "skin://items/list/default.view";
+	  source: "skin://items/list/" + $self.type + ".view";
+        });
+
+
+        // --------------------------------------
+        // Generic items
+        // --------------------------------------
+        SIDEBAR_ACTION(_("Home"),
+                       "skin://icons/ic_home_48px.svg",
+                       navOpen("page:home"));
+
+      });
+    });
+  });
+});

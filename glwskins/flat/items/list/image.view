@@ -1,0 +1,17 @@
+#import "skin://theme.view"
+
+widget(container_z, {
+
+  ListItemBevel();
+
+  focusable: true;
+  onEvent(activate, navOpen($self.url, void, $self, $parent.model, void, $parent.url));
+
+  widget(container_x, {
+    height: 5em;
+    padding: 3;
+    widget(image, {
+      source: $self.url;
+    });
+  });
+});

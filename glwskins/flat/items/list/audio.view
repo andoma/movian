@@ -1,0 +1,40 @@
+#import "skin://theme.view"
+
+widget(container_x, {
+  padding: [0,0,1em,0];
+  spacing: 1em;
+  style: "ListItem";
+  focusable: true;
+
+  onEvent(activate, playTrackFromSource($self, $parent.model));
+
+  widget(icon, {
+    source: translate($self.media.playstatus,
+		      "skin://icons/ic_audiotrack_48px.svg",
+		      "play", "skin://icons/ic_play_arrow_48px.svg",
+		      "play", "skin://icons/ic_pause_arrow_48px.svg");
+    style: "ListItemIconMono";
+  });
+
+  widget(label, {
+    filterConstraintX: true;
+    caption: $self.metadata.title;
+    style: "ListItemLabel";
+  });
+
+  widget(label, {
+    weight: 0.6;
+    filterConstraintX: true;
+    caption: $self.metadata.artist;
+    style: "ListItemLabel";
+  });
+
+  widget(label, {
+    width: 5em;
+    align: right;
+    caption: value2duration($self.metadata.duration);
+    style: "ListItemLabel";
+
+  });
+
+});

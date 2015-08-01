@@ -1,0 +1,44 @@
+#import "skin://styles/style_grid.view"
+
+widget(container_y, {
+
+  widget(container_z, {
+
+    zoffset: 10;
+    widget(quad, {
+      color: 0;
+      alpha: 0.2;
+    });
+
+    widget(label, {
+      height: 3em;
+      padding: [4em, 0];
+      align: center;
+      caption: $self.model.metadata.title;
+      size: 1.5em;
+    });
+
+
+  });
+  widget(array, {
+
+    childTilesX: select($ui.aspect > 1, 5, 2);
+    childTilesY: 4;
+
+    navWrap: true;
+    chaseFocus: true;
+    alphaFallOff: 0.2;
+    blurFallOff: 0.01;
+    scrollThreshold: 2em;
+
+    $clone.focused <- focusedChild();
+
+    cloner($self.model.nodes, loader, {
+      time: 0.1;
+      effect: blend;
+      noInitialTransform: true;
+      alt: "skin://items/rect/default.view";
+      source: "skin://items/rect/" + $self.type + ".view";
+    });
+  });
+});

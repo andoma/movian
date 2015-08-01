@@ -1,0 +1,22 @@
+onEvent(LostFocus, {
+  $clone.menu = 0;
+});
+onEvent(cancel, {
+  $clone.menu = 0;
+});
+onEvent(back, {
+  $clone.menu = 0;
+});
+
+
+widget(container_y, {
+  spacing: 3;
+  cloner($self.options, loader, {
+    time: 0.1;
+    noInitialTransform: true;
+    effect: blend;
+    source: "skin://items/list/" + $self.type + ".view";
+    hidden: !$self.enabled;
+  });
+
+});

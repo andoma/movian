@@ -1,0 +1,39 @@
+#import "skin://theme.view"
+
+widget(container_z, {
+
+  height: 2em;
+  ListItemBevel();
+
+  focusable: true;
+  onEvent(activate, navOpen($self.url, void, $self, $parent.model, void, $parent.url));
+
+  widget(container_x, {
+    style: "ListItem";
+
+    widget(icon, {
+      source:
+      "skin://icons/" +
+        translate($self.type,  "ic_help_48px",
+		  "share",     "server",
+		  "directory", "ic_folder_48px"
+	         ) + ".svg";
+
+      style: "ListItemIcon";
+    });
+
+    widget(label, {
+      filterConstraintX: true;
+      caption: $self.metadata.title;
+      style: ["ListItemLabel", "ListItemLabelContainer"];
+    });
+
+    widget(label, {
+      align: right;
+      alpha: 0.2;
+      size: 0.7em;
+      caption: $self.type;
+    });
+
+  });
+});

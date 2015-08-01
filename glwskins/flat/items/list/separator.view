@@ -1,0 +1,7 @@
+height: 3em;
+
+widget(label, {
+  filterConstraintX: true;
+  caption: $self.metadata.title;
+  style: "ListItemSeparatorLabel";
+});

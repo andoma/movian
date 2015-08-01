@@ -1,0 +1,79 @@
+widget(container_z, {
+
+  height: 8em;
+
+  widget(quad, {
+    color: 0;
+    alpha: 0.8;
+    zoffset: -400;
+  });
+
+  widget(cursor, {
+
+    widget(container_x, {
+      padding: [4em, 1em];
+      widget(list_y, {
+        id: "list";
+        alphaFallOff: 0.3;
+        cloner(propSorter($self.media.metadata.subtitlestreams, sort, "node.score", true, false), container_x, {
+          onEvent(activate, selectSubtitleTrack($self.url));
+          focusable: true;
+
+          spacing: 0.5em;
+          widget(icon, {
+	    source: "dataroot://res/svg/Check.svg";
+	    shadow: true;
+	    alpha: iir($self.url == $parent.media.subtitle.current, 8);
+	  });
+
+	  widget(label, {
+            style: "OsdItem";
+	    weight: 4;
+	    caption: $self.title;
+	  });
+
+	  widget(label, {
+            style: "OsdItem";
+	    weight: 1;
+	    caption: $self.language;
+	  });
+
+	  widget(label, {
+            style: "OsdItem";
+	    weight: 0.5;
+	    caption: $self.format;
+	  });
+
+	  widget(label, {
+            style: "OsdItem";
+	    weight: 2;
+	    caption: $self.source;
+	  });
+
+        });
+      });
+      widget(slider_y, {
+        bind("list");
+        width: 4;
+        focusable: canScroll();
+        alpha: iir(canScroll(), 16);
+        widget(quad, {
+	  alpha: 1;
+        });
+      });
+    });
+
+
+    widget(quad, {
+      zoffset: -100;
+      alpha: 0.6 * iir($ui.keyboard, 4);
+      additive: true;
+    });
+
+    widget(quad, {
+      zoffset: -100;
+      alpha: 0.1;
+      additive: true;
+    });
+  });
+});

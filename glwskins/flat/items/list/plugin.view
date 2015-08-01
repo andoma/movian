@@ -1,0 +1,43 @@
+#import "skin://theme.view"
+
+
+widget(container_z, {
+
+  height: 5em;
+
+  ListItemBevel();
+
+  onEvent(activate, eventWithProp(pluginInfo, $self));
+  focusable: true;
+
+  widget(container_x, {
+    style: "ListItem";
+
+    widget(image, {
+      style: "ListItemIcon";
+      source: $self.metadata.icon;
+    });
+
+
+    widget(container_y, {
+      weight: 1;
+      filterConstraintX: true;
+      padding: [0,0.5em];
+
+      widget(label, {
+        style: "ListItemLabel";
+        caption: $self.metadata.title;
+      });
+      widget(label, {
+        style: "ListItemLabelDimmed";
+        caption: $self.metadata.synopsis;
+      });
+
+      space(1);
+      widget(label, {
+        style: "ListItemLabelDimmed";
+        caption: $self.metadata.version;
+      });
+    });
+  });
+});

@@ -1,0 +1,25 @@
+widget(container_z, {
+
+  widget(quad, {
+    color: 0;
+    alpha: 0.4;
+  });
+
+  widget(container_x, {
+    height: 5em;
+    spacing: 1em;
+
+    widget(image, {
+      aspectConstraint: true;
+      source: $self.metadata.icon;
+    });
+
+    widget(container_y, {
+      padding: [0, 0.5em];
+      widget(label, {
+        caption: $self.metadata.title;
+      });
+    });
+
+  });
+});

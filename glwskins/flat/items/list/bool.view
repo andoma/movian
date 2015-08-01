@@ -1,0 +1,30 @@
+#include "skin://theme.view"
+
+widget(container_z, {
+  ListItemBevel();
+  height: 2em;
+
+  widget(container_x, {
+    style: "ListItem";
+    widget(icon, {
+      style: "ListItemIcon";
+    });
+
+    widget(label, {
+      caption: $self.metadata.title + ":";
+      style: ["ListItemLabel", "ListItemLabelContainer"];
+    });
+
+    widget(label, {
+
+      focusable: true;
+
+      onEvent(activate, {
+        toggle($self.value);
+      });
+
+      style: select($self.value, "ListItemValueOn", "ListItemValueOff");
+      caption: select($self.value, _("On"), _("Off"));
+    });
+  });
+});

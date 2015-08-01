@@ -1,0 +1,10 @@
+divider:true;
+
+height: 3em;
+
+widget(label, {
+  align: bottom;
+  filterConstraintX: true;
+  caption: $self.metadata.title;
+  style: "GridItemSeparatorLabel";
+});

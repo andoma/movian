@@ -1,0 +1,15 @@
+widget(container_x, {
+  height: 2em;
+  style: "ListItem";
+
+  widget(icon, {
+    source: $self.metadata.icon;
+    style: "ListItemIcon";
+  });
+
+  widget(label, {
+    filterConstraintX: true;
+    caption: $self.metadata.title;
+    maxlines: 10;
+  });
+});

@@ -1,0 +1,23 @@
+#import "skin://theme.view"
+
+widget(container_z, {
+
+  GridItemBevel();
+
+  onEvent(activate, eventWithProp(pluginInfo, $self));
+  focusable: true;
+
+  widget(container_y, {
+    style: "GridItem";
+
+    widget(image, {
+      source: $self.metadata.icon;
+      style: "GridItemIcon";
+    });
+
+    widget(label, {
+      caption: $self.metadata.title;
+      style: "GridItemLabel";
+    });
+  });
+});

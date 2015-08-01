@@ -1,0 +1,140 @@
+setDefaultFont("skin://fonts/RobotoCondensed-Light.ttf");
+
+$ui.sizeOffset = 4;
+$ui.xmargin = select($ui.aspect > 1, $ui.width / 50, 0);
+
+onEvent(sysinfo, {
+  toggle($ui.sysinfo);
+});
+
+
+widget(container_z, {
+  widget(backdrop, {
+    zoffset: -1000;
+
+    source: "showtime:pixmap:gradient:40,40,40:80,80,80";
+//    source: "http://image.tmdb.org/t/p/original/jz1eErpJSx7ToDVDgV9HKFv4hAa.jpg";
+//    source: "http://image.tmdb.org/t/p/original/xyhrCEdB4XRkelfVsqXeUZ6rLHi.jpg";
+//    color: 0.3;
+    alpha: iir(1 - $ui.fullwindow, 4);
+  });
+
+  widget(underscan, {
+    widget(container_z, {
+
+      widget(container_y, {
+
+        widget(layer, {
+          filterConstraintY: true;
+	  alpha: iir(1 - $ui.screensaverActive, 8);
+          widget(playfield, {
+            effect: blend;
+            noInitialTransform: true;
+
+            $view.currentPageClone <- focusedClone();
+
+            cloner($nav.pages, container_z, {
+
+              widget(loader, {
+	        time: 0.05;
+                effect: flipVertical;
+	        noInitialTransform: true;
+	        source: "skin://pages/" + $self.model.type + ".view";
+              });
+
+            });
+          });
+	  cloner($core.popups, loader, {
+	    source: "popups/" + $self.type + ".view";
+	  });
+        });
+
+        widget(container_y, {
+          autofade: true;
+          expediteSubscriptions: true;
+
+          style(playdeckText, {
+            font: "skin://fonts/RobotoCondensed-Regular.ttf";
+          });
+
+          widget(loader, {
+
+            // meh...  implement autohide on loader widget instead
+            hidden: translate($core.media.current.type, true,
+                              "tracks", false);
+
+            source: translate($core.media.current.type, "",
+                              "tracks", "playdecks/tracks.view");
+          });
+
+          cloner($core.notifications.nodes, container_z, {
+            widget(quad, {
+              color: 0;
+              alpha: 0.2;
+            });
+
+            widget(label, {
+              padding: [2em, 0.5em];
+              caption: $self.text;
+              shadow: true;
+              font: "skin://fonts/RobotoCondensed-Regular.ttf";
+            });
+          });
+
+
+          widget(dummy, {
+            height: 0;
+          });
+        });
+      });
+
+
+
+      widget(container_y, {
+
+        alpha: iir($ui.pointerVisible, 4);
+        widget(container_x, {
+
+          height: 3em;
+          widget(container_y, {
+            width: 4em;
+            padding:[0, 0.5em];
+            widget(icon, {
+              clickable: $nav.canGoBack;
+              alpha: iir($nav.canGoBack, 4);
+              onEvent(activate, deliverEvent($ui.eventSink, "back"));
+              navFocusable: false;
+              color: 0.5 + iir(isHovered(), 4);
+              size: 2em;
+              source: "skin://icons/ic_chevron_left_48px.svg";
+            });
+          });
+          space(1);
+          widget(container_y, {
+            width: 4em;
+            padding:[0, 0.5em];
+
+            widget(icon, {
+              angle: iir($view.currentPageClone.showSidebar, 4) * -90;
+
+              clickable: $view.currentPageClone.haveSidebar;
+              alpha: iir($view.currentPageClone.haveSidebar, 4);
+
+              onEvent(activate, {
+                $view.currentPageClone.showSidebar = !$view.currentPageClone.showSidebar;
+              });
+
+              size: 2em;
+              navFocusable: false;
+              color: 0.5 + iir(isHovered(), 4);
+              source: "skin://icons/ic_menu_48px.svg";
+            });
+          });
+        });
+      });
+    });
+  });
+  widget(underscan, {
+#import "sysinfo.view"
+  });
+});

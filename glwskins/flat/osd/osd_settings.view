@@ -1,0 +1,51 @@
+widget(container_z, {
+
+  height: 8em;
+
+  widget(quad, {
+    color: 0;
+    alpha: 0.8;
+    zoffset: -400;
+  });
+
+  widget(cursor, {
+
+    widget(container_x, {
+      padding: [4em, 1em];
+      widget(list_y, {
+        id: "list";
+        alphaFallOff: 0.3;
+
+        cloner($self.media.video.settings.nodes, loader, {
+          hidden: !$self.enabled;
+          source: "skin://items/list/" + $self.type + ".view";
+          time: 0.3;
+          noInitialTransform: true;
+        });
+
+      });
+      widget(slider_y, {
+        bind("list");
+        width: 4;
+        focusable: canScroll();
+        alpha: iir(canScroll(), 16);
+        widget(quad, {
+	  alpha: 1;
+        });
+      });
+    });
+
+
+    widget(quad, {
+      zoffset: -100;
+      alpha: 0.6 * iir($ui.keyboard, 4);
+      additive: true;
+    });
+
+    widget(quad, {
+      zoffset: -100;
+      alpha: 0.1;
+      additive: true;
+    });
+  });
+});

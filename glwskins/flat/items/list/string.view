@@ -1,0 +1,36 @@
+#include "skin://theme.view"
+
+widget(container_z, {
+  ListItemBevel();
+  height: 2em;
+
+  widget(container_x, {
+    style: "ListItem";
+
+    onEvent(activate, deliverEvent($self.action));
+
+    widget(icon, {
+      style: "ListItemIcon";
+    });
+
+    widget(label, {
+      caption: $self.metadata.title + ":";
+      style: ["ListItemLabel", "ListItemLabelContainer"];
+    });
+
+    widget(container_z, {
+
+      filterConstraintX: true;
+      widget(quad, {
+        zoffset: -400;
+        color: 0;
+        alpha: 0.4;
+      });
+      widget(text, {
+        style: "ListItemValue";
+        focusable: true;
+        bind($self.value);
+      });
+    });
+  });
+});

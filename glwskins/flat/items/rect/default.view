@@ -1,0 +1,29 @@
+#import "skin://theme.view"
+
+widget(container_z, {
+
+  GridItemBevel();
+
+  focusable: true;
+  onEvent(activate, navOpen($self.url, void, $self, $parent.model, void, $parent.url));
+
+  widget(container_y, {
+    style: "GridItem";
+
+    widget(image, {
+      source:
+      "skin://icons/" +
+        translate($self.type,  "ic_help_48px",
+		  "share",     "server",
+		  "directory", "ic_folder_48px"
+	         ) + ".svg";
+
+      style: "GridItemIcon";
+    });
+
+    widget(label, {
+      caption: $self.metadata.title;
+      style: "GridItemLabel";
+    });
+  });
+});
