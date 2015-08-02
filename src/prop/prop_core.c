@@ -2570,8 +2570,8 @@ prop_req_move(prop_t *p, prop_t *before)
  *
  */
 static prop_t *
-prop_subfind(prop_t *p, const char **name, int follow_symlinks, int allow_indexing,
-	     prop_t **origin_chain)
+prop_subfind(prop_t *p, const char **name, int follow_symlinks,
+             int allow_indexing, prop_t **origin_chain)
 {
   prop_t *c;
   int ocnum = 0;
@@ -2587,7 +2587,8 @@ prop_subfind(prop_t *p, const char **name, int follow_symlinks, int allow_indexi
 
       if(p->hp_type != PROP_VOID) {
 	/* We don't want subscriptions to overwrite real values */
-        origin_chain[0] = NULL;
+        if(origin_chain)
+          origin_chain[0] = NULL;
 	return NULL;
       }
 
@@ -2606,7 +2607,8 @@ prop_subfind(prop_t *p, const char **name, int follow_symlinks, int allow_indexi
 	i--;
       }
       if(c == NULL) {
-        origin_chain[0] = NULL;
+        if(origin_chain)
+          origin_chain[0] = NULL;
 	return NULL;
       }
     } else {
