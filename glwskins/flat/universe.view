@@ -63,7 +63,7 @@ widget(container_z, {
 	  });
 
 	  widget(loader, {
-            hidden: !$ui.logwindow;
+            autohide: true;
 	    source: select($ui.logwindow, "log.view", "");
 	  });
         });
