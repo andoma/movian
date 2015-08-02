@@ -28,6 +28,8 @@ widget(cursor, {
 
   widget(container_y, {
 
+    style: "PageContainer";
+
     widget(array, {
       alphaFallOff: 0.3;
       blurFallOff: 0.1;
