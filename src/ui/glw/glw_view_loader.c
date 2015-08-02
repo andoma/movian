@@ -31,12 +31,14 @@ typedef struct glw_view_loader {
   struct prop *prop_self_override;
   struct prop *args;
 
+  rstr_t *url;
+  rstr_t *alt_url;
+
   float delta;
   float time;
 
   glw_transition_type_t efx_conf;
-  rstr_t *url;
-  rstr_t *alt_url;
+  char loaded;
 
 } glw_view_loader_t;
 
@@ -188,7 +190,7 @@ static void
 glw_view_loader_ctor(glw_t *w)
 {
   glw_view_loader_t *a = (void *)w;
-  a->time = 1.0;
+  a->time = 0.00001;
   a->args = prop_create_root("args");
   w->glw_flags2 |= GLW2_EXPEDITE_SUBSCRIPTIONS;
 }
@@ -210,13 +212,30 @@ glw_view_loader_dtor(glw_t *w)
  *
  */
 static void
+update_autohide(glw_view_loader_t *l)
+{
+  if(!(l->w.glw_flags2 & GLW2_AUTOHIDE))
+    return;
+
+  if(l->loaded) {
+    glw_unhide(&l->w);
+  } else {
+    glw_hide(&l->w);
+  }
+}
+
+
+/**
+ *
+ */
+static void
 set_source(glw_t *w, rstr_t *url, glw_style_t *origin)
 {
   glw_view_loader_t *a = (glw_view_loader_t *)w;
   glw_t *c;
-  
+
   if(w->glw_flags2 & GLW2_DEBUG)
-    TRACE(TRACE_DEBUG, "GLW", "Loader loading %s", 
+    TRACE(TRACE_DEBUG, "GLW", "Loader loading %s",
 	  rstr_get(url) ?: "(void)");
 
   if(!strcmp(rstr_get(url) ?: "", rstr_get(a->url) ?: ""))
@@ -241,8 +260,13 @@ set_source(glw_t *w, rstr_t *url, glw_style_t *origin)
                     a->prop_self_override ?: a->prop,
                     a->prop_parent_override ?: a->prop_parent, a->args,
                     a->prop_clone, NULL, 0);
+    a->loaded = 1;
+    update_autohide(a);
     return;
   }
+
+  a->loaded = 0;
+  update_autohide(a);
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
     itemdata(c)->vl_tgt = 1;
@@ -367,6 +391,22 @@ get_identity(glw_t *w, char *tmp, size_t tmpsize)
 /**
  *
  */
+static void
+mod_flags2(glw_t *w, int set, int clr)
+{
+  glw_view_loader_t *gvl = (glw_view_loader_t *)w;
+
+  if(set & GLW2_AUTOHIDE && !gvl->loaded)
+    glw_hide(w);
+
+  if(clr & GLW2_AUTOHIDE)
+    glw_unhide(w);
+}
+
+
+/**
+ *
+ */
 static glw_class_t glw_view_loader = {
   .gc_name = "loader",
   .gc_instance_size = sizeof(glw_view_loader_t),
@@ -384,6 +424,7 @@ static glw_class_t glw_view_loader = {
   .gc_set_source = set_source,
   .gc_get_identity = get_identity,
   .gc_set_alt = set_alt,
+  .gc_mod_flags2 = mod_flags2,
 };
 
 GLW_REGISTER_CLASS(glw_view_loader);
