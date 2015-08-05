@@ -314,8 +314,33 @@ audio_setup_spdif_muxer(audio_decoder_t *ad, AVCodec *codec)
 
 
 /**
- * Return 1 if packet should be retained (more data to be extracted)
  *
+ */
+static void
+update_abitrate(media_pipe_t *mp, media_queue_t *mq,
+		int size, audio_decoder_t *ad)
+{
+  int i;
+  int64_t sum;
+
+  ad->ad_frame_size[ad->ad_frame_size_ptr] = size;
+  ad->ad_frame_size_ptr = (ad->ad_frame_size_ptr + 1) & AD_FRAME_SIZE_MASK;
+
+  if(ad->ad_estimated_duration == 0 || (ad->ad_frame_size_ptr & 7) != 0)
+    return;
+
+  sum = 0;
+  for(i = 0; i < AD_FRAME_SIZE_LEN; i++)
+    sum += ad->ad_frame_size[i];
+
+  sum = 8000000LL * sum / AD_FRAME_SIZE_LEN / ad->ad_estimated_duration;
+  prop_set_int(mq->mq_prop_bitrate, sum / 1000);
+}
+
+
+
+/**
+ * Return 1 if packet should be retained (more data to be extracted)
  */
 static int
 audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
@@ -351,6 +376,8 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
       frame->linesize[0] = 0;
       r = mb->mb_size;
       got_frame = 1;
+
+      update_abitrate(mp, mq, mb->mb_size, ad);
 
     } else {
 
@@ -393,6 +420,7 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 	mb->mb_pts = AV_NOPTS_VALUE;
 	mb->mb_dts = AV_NOPTS_VALUE;
 	av_write_frame(ad->ad_spdif_muxer, &mb->mb_pkt);
+        update_abitrate(mp, mq, mb->mb_size, ad);
 	avio_flush(ad->ad_spdif_muxer->pb);
 	return 0;
       }
@@ -425,6 +453,7 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
       r = avcodec_decode_audio4(ctx, frame, &got_frame, &mb->mb_pkt);
       if(r < 0)
 	return 0;
+      update_abitrate(mp, mq, r, ad);
 
       if(frame->sample_rate == 0) {
 	frame->sample_rate = ctx->sample_rate;
@@ -544,13 +573,15 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 	  ac->ac_set_volume(ad, ad->ad_vol_scale);
 
       }
+      ad->ad_estimated_duration =
+        1000000LL * frame->nb_samples / frame->sample_rate;
+
       if(ad->ad_avr != NULL) {
 	avresample_convert(ad->ad_avr, NULL, 0, 0,
 			   frame->data, frame->linesize[0],
 			   frame->nb_samples);
       } else {
-	int delay = 1000000LL * frame->nb_samples / frame->sample_rate;
-	usleep(delay);
+	usleep(ad->ad_estimated_duration);
       }
     }
   }

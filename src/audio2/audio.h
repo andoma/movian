@@ -106,6 +106,16 @@ typedef struct audio_decoder {
   float ad_vol_scale;
   int ad_want_reconfig;
 
+  /**
+   * Bitrate computation
+   */
+#define AD_FRAME_SIZE_LEN 16
+#define AD_FRAME_SIZE_MASK (AD_FRAME_SIZE_LEN - 1)
+
+  int ad_frame_size[AD_FRAME_SIZE_LEN];
+  int ad_frame_size_ptr;
+  int ad_estimated_duration;
+  
 } audio_decoder_t;
 
 audio_class_t *audio_driver_init(struct prop *asettings, struct htsmsg *store);
