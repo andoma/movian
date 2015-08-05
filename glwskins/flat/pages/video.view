@@ -21,6 +21,10 @@ onEvent(cancel, {
   $view.osdpage = select($view.osdpage > 1, 1, 0);
 }, $view.osdpage);
 
+onEvent(MediaStats, {
+  $view.osdpage = select($view.osdpage == 2, 0, 2);
+});
+
 widget(container_z, {
 
   // --------------------------------------------

@@ -1,22 +1,40 @@
----------------
--- Most important
----------------
-
-Rework  $view.currentPageClone <- focusedClone();
-
-List items
-
-- Item menu for other items
+-------------------------------------------
+-- Most important before we can switch master
+--------------------------------------------
 
 Video playback
  - Settings
  - OSD
+
+-------------------------------------------
+--
+--------------------------------------------
+
+Fix search view
+
+Add scroll bar to list view
+
+Rework  $view.currentPageClone <- focusedClone();
+
+All list items
+
+Item menu for other items
 
 playdecks for audio playback
 
 screen saver
 
 polish top-level popups
+
+News
+
+Grid items
+
+Images
+
+Fix gravity of log view
+
+
 
 ---------------
 -- questions
