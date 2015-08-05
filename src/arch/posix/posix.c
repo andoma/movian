@@ -153,8 +153,6 @@ posix_init(void)
   decorate_trace = isatty(2);
 
   signal(SIGPIPE, SIG_IGN);
-  
-  TRACE(TRACE_INFO, "core", "Using %d CPU(s)", gconf.concurrency);
 
 #ifdef RLIMIT_AS
   do {
