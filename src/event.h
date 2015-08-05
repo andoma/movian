@@ -382,7 +382,7 @@ event_t *event_from_Fkey(unsigned int keynum, unsigned int mod);
 
 void event_to_ui(event_t *e);
 
-#if 0
+#if 1
 const char *event_sprint(const event_t *e);
 #endif
 

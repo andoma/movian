@@ -608,7 +608,7 @@ event_from_Fkey(unsigned int keynum, unsigned int mod)
   return event_create_action(a);
 }
 
-#if 0
+#if 1
 /**
  *
  */

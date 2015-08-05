@@ -4,8 +4,6 @@
 
 Rework  $view.currentPageClone <- focusedClone();
 
-Fix loader displaying same thing multiple times (log overlay, etc)
-
 List items
 
 - Item menu for other items
@@ -17,8 +15,6 @@ Video playback
 playdecks for audio playback
 
 screen saver
-
-log view (perhaps just copy it)
 
 polish top-level popups
 
