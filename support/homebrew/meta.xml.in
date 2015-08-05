@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<app version="1">
-  <name>Showtime</name>
-  <coder>Andreas Öman</coder>
-  <version>@@VERSION@@</version>
-  <short_description>Mediaplayer for Wii</short_description> 
-  <long_description>For more details, visit the project homepage at http://www.lonelycoder.com/hts/</long_description> 
-</app>
-

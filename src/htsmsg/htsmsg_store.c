@@ -55,7 +55,7 @@ typedef struct pending_store {
 static struct pending_store_list pending_stores;
 static callout_t pending_store_callout;
 static hts_mutex_t pending_store_mutex;
-static char *showtime_settings_path;
+static char *settings_path;
 
 /**
  *
@@ -83,7 +83,7 @@ pending_store_write(pending_store_t *ps)
   int ok;
 
   snprintf(fullpath, sizeof(fullpath), "%s/%s%s",
-	   showtime_settings_path, ps->ps_path,
+	   settings_path, ps->ps_path,
 	   RENAME_CANT_OVERWRITE ? "" : ".tmp");
 
   char *x = strrchr(fullpath, '/');
@@ -130,7 +130,7 @@ pending_store_write(pending_store_t *ps)
     return;
   }
 
-  snprintf(fullpath2, sizeof(fullpath2), "%s/%s", showtime_settings_path,
+  snprintf(fullpath2, sizeof(fullpath2), "%s/%s", settings_path,
            ps->ps_path);
 
   if(!RENAME_CANT_OVERWRITE && fa_rename(fullpath, fullpath2,
@@ -163,7 +163,7 @@ htsmsg_store_flush(void)
   hts_mutex_unlock(&pending_store_mutex);
 
 #ifdef STOS
-  arch_sync_path(showtime_settings_path);
+  arch_sync_path(settings_path);
 #endif
 }
 
@@ -193,7 +193,7 @@ htsmsg_store_init(void)
 
   snprintf(p1, sizeof(p1), "%s/settings", gconf.persistent_path);
 
-  showtime_settings_path = strdup(p1);
+  settings_path = strdup(p1);
 }
 
 
@@ -208,7 +208,7 @@ htsmsg_store_save(htsmsg_t *record, const char *pathfmt, ...)
   char *n;
   pending_store_t *ps;
 
-  if(showtime_settings_path == NULL)
+  if(settings_path == NULL)
     return;
 
   va_start(ap, pathfmt);
@@ -301,10 +301,10 @@ htsmsg_store_load_one(const char *filename)
 static int
 htsmsg_store_buildpath(char *dst, size_t dstsize, const char *fmt, va_list ap)
 {
-  if(showtime_settings_path == NULL)
+  if(settings_path == NULL)
      return -1;
 
-  snprintf(dst, dstsize, "%s/", showtime_settings_path);
+  snprintf(dst, dstsize, "%s/", settings_path);
 
   char *n = dst + strlen(dst);
   

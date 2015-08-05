@@ -51,7 +51,7 @@ arch_get_avtime(void)
 /**
  *
  */
-@interface Showtime : NSObject <NSFileManagerDelegate>
+@interface App : NSObject <NSFileManagerDelegate>
 {
   NSMenu *m_menubar;
 }
@@ -94,7 +94,7 @@ int
 main(int argc, char **argv)
 {
   NSApplication *app = [NSApplication sharedApplication];
-  Showtime *s = [Showtime new];
+  App *s = [App new];
 
   [NSApp setDelegate: s];
 
@@ -219,7 +219,7 @@ mainloop_courier_init(void)
 }
 
 
-@implementation Showtime
+@implementation App
 
 /**
  *
@@ -254,7 +254,7 @@ mainloop_courier_init(void)
   // Create the application (Apple) menu.
   NSMenu *menuApp = [[NSMenu alloc] initWithTitle: @"Apple Menu"];
 
-  menuitem = [[NSMenuItem alloc] initWithTitle:@"About Showtime"
+  menuitem = [[NSMenuItem alloc] initWithTitle:@"About " APPNAMEUSER
 					action:@selector(about:)
 				 keyEquivalent:@""];
   [menuitem setTarget: self];
@@ -275,7 +275,7 @@ mainloop_courier_init(void)
   // -----------------------------------------------------------
   [menuApp addItem: [NSMenuItem separatorItem]];
   // -----------------------------------------------------------
-  menuitem = [[NSMenuItem alloc] initWithTitle:@"Hide Showtime"
+  menuitem = [[NSMenuItem alloc] initWithTitle:@"Hide " APPNAMEUSER
 					action:@selector(hide:)
 				 keyEquivalent:@"h"];
   [menuitem setTarget: NSApp];

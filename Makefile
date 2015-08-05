@@ -1,5 +1,5 @@
 #
-#  Showtime mediacenter
+#  Movian
 #  Copyright (C) 2007-2011 Andreas Öman
 #
 #  This program is free software: you can redistribute it and/or modify
@@ -31,8 +31,8 @@ ALLDEPS += ${STAMPS}
 
 OPTFLAGS ?= -O${OPTLEVEL}
 
-PROG=${BUILDDIR}/showtime
-LIB=${BUILDDIR}/libshowtime
+PROG=${BUILDDIR}/movian
+LIB=${BUILDDIR}/libmovian
 
 include ${BUILDDIR}/config.mak
 
@@ -50,7 +50,7 @@ LDFLAGS += ${PGFLAGS}
 ##############################################################
 # Core
 ##############################################################
-SRCS += src/showtime.c \
+SRCS += src/main.c \
 	src/trace.c \
 	src/task.c \
 	src/runcontrol.c \
@@ -552,7 +552,7 @@ ${BUILDDIR}/ext/dvd/libdvdread/%.o : CFLAGS = ${OPTFLAGS} \
  -DHAVE_DVDCSS_DVDCSS_H -DDVDNAV_COMPILE -Wno-strict-aliasing  -Iext/dvd 
 
 ${BUILDDIR}/ext/dvd/dvdnav/%.o : CFLAGS = ${OPTFLAGS} \
- -DVERSION=\"showtime\" -DDVDNAV_COMPILE -Wno-strict-aliasing -Iext/dvd \
+ -DVERSION=\"movian\" -DDVDNAV_COMPILE -Wno-strict-aliasing -Iext/dvd \
  -Iext/dvd/dvdnav
 
 

@@ -51,8 +51,6 @@
 #include <sys/utsname.h>
 #endif
 
-extern char *showtime_bin;
-
 static HTS_MUTEX_DECL(upgrade_mutex);
 
 static const char *ctrlbase = "http://upgrade.movian.tv/upgrade/2";

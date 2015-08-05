@@ -960,14 +960,14 @@ main(int argc, char **argv)
  *
  */
 static image_t *
-be_showtime_pixmap_loader(const char *url, const image_meta_t *im,
-			  const char **vpaths, char *errbuf, size_t errlen,
-			  int *cache_control, cancellable_t *c)
+be_pixmap_loader(const char *url, const image_meta_t *im,
+                 const char **vpaths, char *errbuf, size_t errlen,
+                 int *cache_control, cancellable_t *c)
 {
   image_t *img;
   int w = im->im_req_width, h = im->im_req_height;
   const char *s;
-  if((s = mystrbegins(url, "showtime:pixmap:gradient:")) != NULL) {
+  if((s = mystrbegins(url, "pixmap:gradient:")) != NULL) {
     if(w == -1)
       w = 128;
     if(h == -1)
@@ -998,9 +998,9 @@ be_showtime_pixmap_loader(const char *url, const image_meta_t *im,
  *
  */
 static int
-be_showtime_pixmap_canhandle(const char *url)
+be_pixmap_canhandle(const char *url)
 {
-  if(!strncmp(url, "showtime:pixmap:", strlen("showtime:pixmap:")))
+  if(!strncmp(url, "pixmap:", strlen("pixmap:")))
     return 1;
   return 0;
 }
@@ -1008,9 +1008,9 @@ be_showtime_pixmap_canhandle(const char *url)
 /**
  *
  */
-static backend_t be_showtime_pixmap = {
-  .be_canhandle   = be_showtime_pixmap_canhandle,
-  .be_imageloader = be_showtime_pixmap_loader,
+static backend_t be_pixmap = {
+  .be_canhandle   = be_pixmap_canhandle,
+  .be_imageloader = be_pixmap_loader,
 };
 
-BE_REGISTER(showtime_pixmap);
+BE_REGISTER(pixmap);

@@ -1,4 +1,4 @@
-${APPDIR}/Contents/MacOS/showtime: ${APPPROG} \
+${APPDIR}/Contents/MacOS/$(APPNAME): ${APPPROG} \
 			${APPDIR}/Contents/Info.plist \
 			${APPDIR}/Contents/Resources/hts.icns \
 			${APPDIR}/Contents/Resources/MainMenu.nib
@@ -6,10 +6,10 @@ ${APPDIR}/Contents/MacOS/showtime: ${APPPROG} \
 	@mkdir -p $(dir $@)
 	@cp $< $@
 
-${APPDIR}/Contents/%.nib: support/Showtime.app/Contents/%.xib
+${APPDIR}/Contents/%.nib: support/$(APPNAME).app/Contents/%.xib
 	@mkdir -p $(dir $@)
 	@ibtool --compile $@ $<
 
-${APPDIR}/Contents/%: support/Showtime.app/Contents/%
+${APPDIR}/Contents/%: support/$(APPNAME).app/Contents/%
 	@mkdir -p $(dir $@)
 	@cp $< $@

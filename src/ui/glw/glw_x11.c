@@ -322,7 +322,7 @@ window_open(glw_x11_t *gx11, int fullscreen)
   XMapWindow(gx11->display, gx11->win);
 
   /* Set window title */
-  snprintf(buf, sizeof(buf), "Showtime");
+  snprintf(buf, sizeof(buf), APPNAMEUSER);
 
   text.value = (unsigned char *)buf;
   text.encoding = XA_STRING;
@@ -349,7 +349,7 @@ window_open(glw_x11_t *gx11, int fullscreen)
     if(strstr((const char *)glGetString(GL_VENDOR) ?: "", "NVIDIA")) {
       TRACE(TRACE_ERROR, "GLW", 
 	    "OpenGL on \"%s\" does not sync to vertical blank.\n"
-	    "This is required for Showtime's OpenGL interface to\n"
+	    "This is required for OpenGL interface to\n"
 	    "function property. Please fix this.\n",
 	    gx11->displayname_real);
       return 1;

@@ -277,8 +277,8 @@ typedef struct event_playurl_args {
  */
 typedef struct event_select_track {
   event_t h;
-  int manual;   /* Set iff it was initiated by user, 
-		   otherwise it was suggested by showtime itself */
+  int manual;   /* Set iff it was initiated by user,
+		   otherwise it was suggested automatically */
   char *id;
 } event_select_track_t;
 

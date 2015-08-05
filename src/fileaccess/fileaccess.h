@@ -64,7 +64,7 @@ typedef struct fa_fsinfo {
 typedef struct fa_stat {
   int64_t fs_size; // -1 if unknown (a pipe)
 
-  int fs_type; /* CONTENT_ .. types from showtime.h */
+  int fs_type; /* CONTENT_ .. types from metadata.h */
 
   time_t fs_mtime;
 
@@ -77,7 +77,7 @@ typedef struct fa_dir_entry {
   RB_ENTRY(fa_dir_entry) fde_link;
   rstr_t *fde_filename;
   rstr_t *fde_url;
-  int   fde_type; /* CONTENT_ .. types from showtime.h */
+  int   fde_type; /* CONTENT_ .. types from metadata.h */
   struct prop *fde_prop;
   struct prop *fde_metadata;
 

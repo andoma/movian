@@ -23,7 +23,7 @@ widget(container_y, {
   padding: [$ui.width / 6, 0];
   space(1);
   widget(backdrop, {
-    source: "showtime:pixmap:gradient:148,158,168:80,90,100";
+    source: "pixmap:gradient:148,158,168:80,90,100";
     cornerRadius: $ui.size / 4;
     widget(container_y, {
       padding: $ui.size;
@@ -43,7 +43,7 @@ widget(container_y, {
 	  weight: 10;
 	  filterConstraintX: true;
 	  filterConstraintY: true;
-	  source: "showtime:pixmap:gradient:30,30,30:50,50,60";
+	  source: "pixmap:gradient:30,30,30:50,50,60";
 	  cornerRadius: 4;
 	  widget(text, {
 	    password: $ui.osk.password;

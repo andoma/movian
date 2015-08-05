@@ -4,8 +4,8 @@
     filterConstraintX: true;
     filterConstraintY: true;
     source: select(isFocused(),
-		   "showtime:pixmap:gradient:180,200,255:80,90,100",
-		   "showtime:pixmap:gradient:255,255,255:180,180,180");
+		   "pixmap:gradient:180,200,255:80,90,100",
+		   "pixmap:gradient:255,255,255:180,180,180");
 	   
     focusable: FW;
     cornerRadius: 4;
@@ -36,10 +36,10 @@
     alpha: iir(select(ENABLED, 1.0, 0.3), 10);
     filterConstraintX: true;
     filterConstraintY: true;
-    source: select(LIT, "showtime:pixmap:gradient:200,255,200:150,200,150",
+    source: select(LIT, "pixmap:gradient:200,255,200:150,200,150",
 		   select(isFocused(),
-			  "showtime:pixmap:gradient:180,200,255:80,90,100",
-			  "showtime:pixmap:gradient:255,255,255:180,180,180"));
+			  "pixmap:gradient:180,200,255:80,90,100",
+			  "pixmap:gradient:255,255,255:180,180,180"));
 	   
     focusable: select(ENABLED, 0.5, 0);
     cornerRadius: 4;

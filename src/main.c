@@ -416,7 +416,7 @@ parse_opts(int argc, char **argv)
   argv++;
   argc--;
 
-  gconf.showtime_shell_fd = -1;
+  gconf.shell_fd = -1;
 
   while(argc > 0) {
     if(!strcmp(argv[0], "-h") || !strcmp(argv[0], "--help")) {
@@ -567,7 +567,7 @@ parse_opts(int argc, char **argv)
       mystrset(&gconf.upgrade_path, argv[1]);
       argc -= 2; argv += 2;
     } else if (!strcmp(argv[0], "--showtime-shell-fd") && argc > 1) {
-      gconf.showtime_shell_fd = atoi(argv[1]);
+      gconf.shell_fd = atoi(argv[1]);
       argc -= 2; argv += 2;
     } else if (!strcmp(argv[0], "--remote") && argc > 1) {
       gconf.remote_ui = argv[1];

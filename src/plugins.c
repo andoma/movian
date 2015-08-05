@@ -84,7 +84,7 @@ typedef struct plugin {
 
   char *pl_inst_ver;
   char *pl_repo_ver;
-  char *pl_showtime_min_version;
+  char *pl_app_min_version;
 
   prop_t *pl_status;
 
@@ -203,8 +203,8 @@ update_state(plugin_t *pl)
   rstr_t *status = NULL;
 
   int version_dep_ok =
-    pl->pl_showtime_min_version == NULL ||
-    parse_version_int(pl->pl_showtime_min_version) <=
+    pl->pl_app_min_version == NULL ||
+    parse_version_int(pl->pl_app_min_version) <=
     app_get_version_int();
 
   prop_set(pl->pl_status, "minver", PROP_SET_VOID);
@@ -215,7 +215,7 @@ update_state(plugin_t *pl)
     if(!version_dep_ok) {
       status = _("Not installable");
       prop_set(pl->pl_status, "minver", PROP_SET_STRING,
-               pl->pl_showtime_min_version);
+               pl->pl_app_min_version);
 
     } else {
 
@@ -239,7 +239,7 @@ update_state(plugin_t *pl)
 	if(!version_dep_ok) {
 	  status = _("Not upgradable");
           prop_set(pl->pl_status, "minver", PROP_SET_STRING,
-                   pl->pl_showtime_min_version);
+                   pl->pl_app_min_version);
 	  cantUpgrade = 1;
 	} else {
 	  status = _("Upgradable");
@@ -742,7 +742,7 @@ plugin_load_repo(void)
       pl->pl_mark = 0;
       plugin_prop_setup(pm, pl, NULL);
       mystrset(&pl->pl_repo_ver, htsmsg_get_str(pm, "version"));
-      mystrset(&pl->pl_showtime_min_version,
+      mystrset(&pl->pl_app_min_version,
 	       htsmsg_get_str(pm, "showtimeVersion"));
       update_state(pl);
 

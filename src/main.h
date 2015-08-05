@@ -295,7 +295,7 @@ typedef struct gconf {
   uint32_t log_server_ipv4;
   int log_server_port;
 
-  int showtime_shell_fd;
+  int shell_fd;
 
   char proxy_host[64];
   uint16_t proxy_port;

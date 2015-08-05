@@ -34,11 +34,6 @@ static int64_t last_activity;
 static int active_media;
 static callout_t autostandby_timer;
 
-extern int showtime_can_standby;
-extern int showtime_can_poweroff;
-extern int showtime_can_open_shell;
-extern int showtime_can_logout;
-
 static prop_sub_t *sleeptime_sub;
 static prop_t *sleeptime_prop;
 static int sleeptime;
@@ -235,7 +230,7 @@ static void
 set_ssh_server(void *opaque, int on)
 {
   char cmd = on ? 1 : 2;
-  if(write(gconf.showtime_shell_fd, &cmd, 1) != 1) {
+  if(write(gconf.shell_fd, &cmd, 1) != 1) {
     TRACE(TRACE_ERROR, "SSHD", "Unable to send cmd -- %s", strerror(errno));
   }
 }
@@ -294,7 +289,7 @@ runcontrol_init(void)
     settings_create_action(gconf.settings_general, _p("Quit"),
 			   do_exit, NULL, 0, NULL);
 
-  if(gconf.showtime_shell_fd > 0) {
+  if(gconf.shell_fd > 0) {
 
     settings_create_separator(gconf.settings_network, _p("SSH server"));
 

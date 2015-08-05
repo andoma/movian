@@ -25,20 +25,20 @@ DVDCSS_CFLAGS = -DDARWIN_DVD_IOCTL -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
 #
 # Install
 #
-.DEFAULT_GOAL := ${BUILDDIR}/Showtime.app/Contents/MacOS/showtime
+.DEFAULT_GOAL := ${BUILDDIR}/$(APPNAMEUSER).app/Contents/MacOS/$(APPNAME)
 
-APPDIR        := ${BUILDDIR}/Showtime.app
+APPDIR        := ${BUILDDIR}/$(APPNAMEUSER).app
 APPPROG       := ${PROG}
 include src/arch/osx/osx-stage.mk
 
-APPDIR        := ${BUILDDIR}/dist/Showtime.app
+APPDIR        := ${BUILDDIR}/dist/$(APPNAMEUSER).app
 APPPROG       := ${PROG}.osxapp
 include src/arch/osx/osx-stage.mk
 
 RESOUCES := ${APPDIR}/Contents/Resources
 
 .PHONY: dist
-dist: ${BUILDDIR}/dist/Showtime.app/Contents/MacOS/showtime
+dist: ${BUILDDIR}/dist/$(APPNAMEUSER).app/Contents/MacOS/$(APPNAME)
 
 	for bundle in ${BUNDLES}; do \
 		mkdir -p ${RESOUCES}/$$bundle ;\
@@ -46,7 +46,7 @@ dist: ${BUILDDIR}/dist/Showtime.app/Contents/MacOS/showtime
 	done
 
 	support/osx_checkbundlelink.sh ${APPPROG}
-	support/mkdmg ${APPDIR} Showtime support/Showtime.app/Contents/Resources/hts.icns ${BUILDDIR}/Showtime.dmg
+	support/mkdmg ${APPDIR} $(APPNAMEUSER) support/$(APPNAMEUSER).app/Contents/Resources/hts.icns ${BUILDDIR}/$(APPNAMEUSER).dmg
 
 #
 #

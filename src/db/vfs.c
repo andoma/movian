@@ -321,7 +321,7 @@ static sqlite3_vfs vfs = {
   sizeof(vfsfile_t),   /* szOsFile */
   PATH_MAX,      /* mxPathname */
   0,                 /* pNext */
-  "showtime",        /* zName */
+  APPNAME,        /* zName */
   0,                 /* pAppData */
 
   vfs_open,           /* xOpen */

@@ -175,7 +175,7 @@ posix_init(void)
 #endif
 
   if(gconf.trace_to_syslog)
-    openlog("showtime", 0, LOG_USER);
+    openlog(APPNAME, 0, LOG_USER);
 }
 
 

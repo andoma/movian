@@ -246,10 +246,10 @@ static prop_t *stored_nav;
   } else if(stored_nav != NULL) {
     gr->gr_prop_nav = stored_nav;
     stored_nav = NULL;
-    title = [[NSString alloc] initWithUTF8String: "Showtime"];
+    title = [[NSString alloc] initWithUTF8String: APPNAMEUSER];
   } else {
     gr->gr_prop_nav = nav_spawn();
-    title = [[NSString alloc] initWithUTF8String: "Showtime"];
+    title = [[NSString alloc] initWithUTF8String: APPNAMEUSER];
   }
 
   if(glw_init(gr)) {
