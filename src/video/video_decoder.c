@@ -134,7 +134,7 @@ update_vbitrate(media_pipe_t *mp, media_queue_t *mq,
   vd->vd_frame_size[vd->vd_frame_size_ptr] = size;
   vd->vd_frame_size_ptr = (vd->vd_frame_size_ptr + 1) & VD_FRAME_SIZE_MASK;
 
-  if(vd->vd_estimated_duration == 0 || !mp->mp_stats)
+  if(vd->vd_estimated_duration == 0 || (vd->vd_frame_size_ptr & 7) != 0)
     return;
 
   sum = 0;

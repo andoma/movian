@@ -294,8 +294,6 @@ mp_enqueue_event_locked(media_pipe_t *mp, event_t *e)
   } else if(event_is_action(e, ACTION_SEEK_FORWARD)) {
     mp_direct_seek(mp, mp->mp_seek_base + 1000000 *
                    video_settings.seek_fwd_step);
-  } else if(event_is_action(e, ACTION_SHOW_MEDIA_STATS)) {
-    prop_toggle_int(mp->mp_prop_stats);
   } else if(event_is_action(e, ACTION_SHUFFLE)) {
     prop_toggle_int(mp->mp_prop_shuffle);
   } else if(event_is_action(e, ACTION_REPEAT)) {

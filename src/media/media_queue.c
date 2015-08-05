@@ -339,15 +339,12 @@ mq_update_stats(media_pipe_t *mp, media_queue_t *mq, int force)
 
   mp_update_buffer_delay(mp);
 
-  if(mp->mp_stats) {
-    prop_set_int(mq->mq_prop_qlen_cur, mq->mq_packets_current);
-    prop_set_int(mp->mp_prop_buffer_current, mp->mp_buffer_current);
-    if(mp->mp_buffer_delay == INT32_MAX)
-      prop_set_void(mp->mp_prop_buffer_delay);
-    else
-      prop_set_float(mp->mp_prop_buffer_delay,
-		     mp->mp_buffer_delay / 1000000.0);
-  }
+  prop_set_int(mq->mq_prop_qlen_cur, mq->mq_packets_current);
+  prop_set_int(mp->mp_prop_buffer_current, mp->mp_buffer_current);
+  if(mp->mp_buffer_delay == INT32_MAX)
+    prop_set_void(mp->mp_prop_buffer_delay);
+  else
+    prop_set_float(mp->mp_prop_buffer_delay, mp->mp_buffer_delay / 1000000.0);
 }
 
 

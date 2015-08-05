@@ -456,9 +456,7 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 	}
       }
 
-      if(mp->mp_stats)
-	mp_set_mq_meta(mq, ctx->codec, ctx);
-
+      mp_set_mq_meta(mq, ctx->codec, ctx);
     }
 
     if(mb->mb_pts != PTS_UNSET) {

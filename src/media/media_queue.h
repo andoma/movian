@@ -61,6 +61,15 @@ typedef struct media_queue {
 
   struct media_pipe *mq_mp;
 
+  // Copies to avoid updating codec user facing info too often
+
+  int mq_meta_codec_id;
+  int mq_meta_profile;
+  int mq_meta_channels;
+  uint64_t mq_meta_channel_layout;
+  int mq_meta_width;
+  int mq_meta_height;
+
 } media_queue_t;
 
 

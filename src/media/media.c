@@ -218,8 +218,6 @@ mp_create(const char *name, int flags)
   mp->mp_prop_svdelta     = prop_create(mp->mp_prop_root, "svdelta");
   prop_set_float(mp->mp_prop_svdelta, 0);
 
-  mp->mp_prop_stats       = prop_create(mp->mp_prop_root, "stats");
-  prop_set_int(mp->mp_prop_stats, mp->mp_stats);
   mp->mp_prop_shuffle     = prop_create(mp->mp_prop_root, "shuffle");
   prop_set_int(mp->mp_prop_shuffle, 0);
   mp->mp_prop_repeat      = prop_create(mp->mp_prop_root, "repeat");
@@ -261,14 +259,6 @@ mp_create(const char *name, int flags)
                    PROP_TAG_LOCKMGR, mp_lockmgr,
                    PROP_TAG_MUTEX, mp,
 		   PROP_TAG_ROOT, mp->mp_prop_currenttime,
-		   NULL);
-
-  mp->mp_sub_stats =
-    prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
-		   PROP_TAG_SET_INT, &mp->mp_stats,
-                   PROP_TAG_LOCKMGR, mp_lockmgr,
-                   PROP_TAG_MUTEX, mp,
-		   PROP_TAG_ROOT, mp->mp_prop_stats,
 		   NULL);
 
   mp->mp_sub_eventsink =
@@ -331,7 +321,6 @@ mp_destroy(media_pipe_t *mp)
   hts_mutex_lock(&mp->mp_mutex);
 
   prop_unsubscribe(mp->mp_sub_currenttime);
-  prop_unsubscribe(mp->mp_sub_stats);
   prop_unsubscribe(mp->mp_sub_eventsink);
 
 #if ENABLE_MEDIA_SETTINGS

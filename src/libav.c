@@ -340,8 +340,7 @@ libav_decode_video(struct media_codec *mc, struct video_decoder *vd,
   t = avgtime_stop(&vd->vd_decode_time, mq->mq_prop_decode_avg,
 		   mq->mq_prop_decode_peak);
 
-  if(mp->mp_stats)
-    mp_set_mq_meta(mq, ctx->codec, ctx);
+  mp_set_mq_meta(mq, ctx->codec, ctx);
 
   if(got_pic == 0)
     return;
@@ -517,10 +516,6 @@ metadata_from_libav(char *dst, size_t dstlen,
     off += snprintf(dst + off, dstlen - off,
 		    ", %dx%d", avctx->width, avctx->height);
 
-  if(avctx->codec_type == AVMEDIA_TYPE_AUDIO && avctx->bit_rate)
-    off += snprintf(dst + off, dstlen - off,
-		    ", %d kb/s", avctx->bit_rate / 1000);
-
   if(avctx->hwaccel != NULL)
     off += snprintf(dst + off, dstlen - off, " (%s)",
                     avctx->hwaccel->name);
@@ -533,6 +528,21 @@ void
 mp_set_mq_meta(media_queue_t *mq, const AVCodec *codec,
 	       const AVCodecContext *avctx)
 {
+  if(mq->mq_meta_codec_id       == codec->id &&
+     mq->mq_meta_profile        == avctx->profile &&
+     mq->mq_meta_channels       == avctx->channels &&
+     mq->mq_meta_channel_layout == avctx->channel_layout &&
+     mq->mq_meta_width          == avctx->width &&
+     mq->mq_meta_height         == avctx->height)
+    return;
+
+  mq->mq_meta_codec_id       = codec->id;
+  mq->mq_meta_profile        = avctx->profile;
+  mq->mq_meta_channels       = avctx->channels;
+  mq->mq_meta_channel_layout = avctx->channel_layout;
+  mq->mq_meta_width          = avctx->width;
+  mq->mq_meta_height         = avctx->height;
+
   char buf[128];
   metadata_from_libav(buf, sizeof(buf), codec, avctx);
   prop_set_string(mq->mq_prop_codec, buf);
