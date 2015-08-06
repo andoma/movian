@@ -20,7 +20,7 @@
   
   ITEM(_("Reload current page"), {
     $clone.pageMenu = false;
-    fireEvent(event(ReloadData));
+    fireEvent(event("ReloadData"));
   });
 
   ITEM(select($ui.sysinfo, _("Hide system info"), _("Show system info")), {
@@ -29,10 +29,10 @@
 
   SEP(_("System"));
 
-  ITEM(fmt(_("Exit %s"), $core.app.name), event(Quit),
+  ITEM(fmt(_("Exit %s"), $core.app.name), event("Quit"),
        "dataroot://res/svg/Exit.svg", $core.runcontrol.canExit);
 
-  ITEM(_("Suspend"), event(Standby),
+  ITEM(_("Suspend"), event("Standby"),
        "dataroot://res/svg/Power.svg", $core.runcontrol.canStandby);
 
   ITEMSLIDER(_("Time until sleep"),
@@ -50,7 +50,7 @@
     $core.runcontrol.sleepTimer = !$core.runcontrol.sleepTimer;
   }, "dataroot://res/svg/Power.svg", $core.runcontrol.canStandby);
 
-  ITEM(_("Power off"), event(PowerOff),
+  ITEM(_("Power off"), event("PowerOff"),
        "dataroot://res/svg/Power.svg", $core.runcontrol.canPowerOff);
 
   ITEMSLIDER(_("Master volume"), -75, 12, 1,
