@@ -23,7 +23,7 @@ main(int argc, char **argv)
   char *x = strrchr(path, '/');
   if(x == NULL)
     exit(1);
-  strcpy(x + 1, "showtime.self");
+  strcpy(x + 1, "movian.self");
   sysProcessExitSpawn2(path, 0, 0, 0, 0, 1200, 0x70);
   exit(0);
 }
