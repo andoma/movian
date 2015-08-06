@@ -3648,7 +3648,7 @@ prop_set_float_exl(prop_t *p, prop_sub_t *skipme, float v, int how)
 {
   int forceupdate = !!how;
 
-  if(p->hp_type == PROP_PROXY) {
+  if(p != NULL && p->hp_type == PROP_PROXY) {
     prop_proxy_set_float(p, v);
     return;
   }
