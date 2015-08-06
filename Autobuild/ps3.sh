@@ -53,8 +53,9 @@ fi
     ${USE_CCACHE} \
     --downloadcache="${WORKINGDIR}/downloadcache"
 
+APPNAME=movian
 
 make ${JARGS} BUILD=${TARGET} pkg self
-artifact build.${TARGET}/showtime.self self application/octect-stream showtime.self
-artifact build.${TARGET}/showtime.pkg pkg application/octect-stream showtime.pkg
-artifact build.${TARGET}/showtime_geohot.pkg pkg application/octect-stream showtime-gh.pkg
+artifact build.${TARGET}/${APPNAME}.self self application/octect-stream ${APPNAME}.self
+artifact build.${TARGET}/${APPNAME}.pkg pkg application/octect-stream ${APPNAME}.pkg
+artifact build.${TARGET}/${APPNAME}_geohot.pkg pkg application/octect-stream ${APPNAME}-gh.pkg

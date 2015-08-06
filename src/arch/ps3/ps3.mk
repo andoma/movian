@@ -30,10 +30,10 @@ SFOXML          := $(TOPDIR)/support/sfo.xml
 
 EBOOT=${BUILDDIR}/EBOOT.BIN
 
-ELF=${BUILDDIR}/showtime.elf
-SELF=${BUILDDIR}/showtime.self
-SYMS=${BUILDDIR}/showtime.syms
-ZS=${BUILDDIR}/showtime.zs
+ELF=${BUILDDIR}/${APPNAME}.elf
+SELF=${BUILDDIR}/${APPNAME}.self
+SYMS=${BUILDDIR}/${APPNAME}.syms
+ZS=${BUILDDIR}/${APPNAME}.zs
 
 $(BUILDDIR)/PARAM.SFO: $(SFOXML)
 	$(SFO) --title "$(APPNAMEUSER)" --appid "$(APPID)" -f $< $@
@@ -44,11 +44,11 @@ ${EBOOT}: support/ps3/eboot.c src/arch/ps3/ps3.mk
 	${STRIP} $@
 	sprxlinker $@
 
-${ELF}: ${BUILDDIR}/showtime.ziptail src/arch/ps3/ps3.mk
+${ELF}: ${BUILDDIR}/${APPNAME}.ziptail src/arch/ps3/ps3.mk
 	${STRIP} -o $@ $<
 	sprxlinker $@
 
-${SYMS}: ${BUILDDIR}/showtime.ziptail src/arch/ps3/ps3.mk
+${SYMS}: ${BUILDDIR}/${APPNAME}.ziptail src/arch/ps3/ps3.mk
 	${OBJDUMP} -t -j .text $< | awk '{print $$1 " " $$NF}'|sort >$@
 
 ${ZS}:  ${BUILDDIR}/zipbundles/bundle.zip ${SYMS} src/arch/ps3/ps3.mk $(BUILDDIR)/PARAM.SFO ${ICON0}
@@ -60,42 +60,42 @@ ${SELF}: ${ELF} ${ZS} src/arch/ps3/ps3.mk
 	make_self $< $@
 	cat ${ZS} >>$@
 
-$(BUILDDIR)/pkg/USRDIR/showtime.self: ${SELF}  src/arch/ps3/ps3.mk
+$(BUILDDIR)/pkg/USRDIR/${APPNAME}.self: ${SELF}  src/arch/ps3/ps3.mk
 	cp $< $@
 
 $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN: ${EBOOT}  src/arch/ps3/ps3.mk
 	@mkdir -p $(BUILDDIR)/pkg/USRDIR
 	make_self_npdrm $< $@ $(CONTENTID)
 
-$(BUILDDIR)/showtime.pkg: $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN $(BUILDDIR)/pkg/USRDIR/showtime.self $(BUILDDIR)/PARAM.SFO
+$(BUILDDIR)/${APPNAME}.pkg: $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN $(BUILDDIR)/pkg/USRDIR/${APPNAME}.self $(BUILDDIR)/PARAM.SFO
 	cp $(ICON0) $(BUILDDIR)/pkg/ICON0.PNG
 	cp $(BUILDDIR)/PARAM.SFO $(BUILDDIR)/pkg/PARAM.SFO
 	$(PKG) --contentid $(CONTENTID) $(BUILDDIR)/pkg/ $@
 
-$(BUILDDIR)/showtime_geohot.pkg: $(BUILDDIR)/showtime.pkg  src/arch/ps3/ps3.mk
+$(BUILDDIR)/${APPNAME}_geohot.pkg: $(BUILDDIR)/${APPNAME}.pkg  src/arch/ps3/ps3.mk
 	cp $< $@
 	package_finalize $@
 
-pkg: $(BUILDDIR)/showtime.pkg $(BUILDDIR)/showtime_geohot.pkg
+pkg: $(BUILDDIR)/${APPNAME}.pkg $(BUILDDIR)/${APPNAME}_geohot.pkg
 self: ${SELF}
 
-install: $(BUILDDIR)/showtime.pkg
-	cp $< $(PS3INSTALL)/showtime.pkg
+install: $(BUILDDIR)/${APPNAME}.pkg
+	cp $< $(PS3INSTALL)/${APPNAME}.pkg
 	sync
 
-$(BUILDDIR)/dist/showtime-$(VERSION).self: ${SELF}
+$(BUILDDIR)/dist/${APPNAME}-$(VERSION).self: ${SELF}
 	@mkdir -p $(dir $@)
 	cp $< $@
 
-$(BUILDDIR)/dist/showtime-$(VERSION).pkg: $(BUILDDIR)/showtime.pkg
+$(BUILDDIR)/dist/${APPNAME}-$(VERSION).pkg: $(BUILDDIR)/${APPNAME}.pkg
 	@mkdir -p $(dir $@)
 	cp $< $@
 
-$(BUILDDIR)/dist/showtime_geohot-$(VERSION).pkg: $(BUILDDIR)/showtime_geohot.pkg
+$(BUILDDIR)/dist/${APPNAME}_geohot-$(VERSION).pkg: $(BUILDDIR)/${APPNAME}_geohot.pkg
 	@mkdir -p $(dir $@)
 	cp $< $@
 
-dist:  $(BUILDDIR)/dist/showtime-$(VERSION).self $(BUILDDIR)/dist/showtime-$(VERSION).pkg $(BUILDDIR)/dist/showtime_geohot-$(VERSION).pkg
+dist:  $(BUILDDIR)/dist/${APPNAME}-$(VERSION).self $(BUILDDIR)/dist/${APPNAME}-$(VERSION).pkg $(BUILDDIR)/dist/${APPNAME}_geohot-$(VERSION).pkg
 
 upgrade: ${SELF}
 	curl --data-binary @$< http://$(PS3HOST):42000/showtime/replace
