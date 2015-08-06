@@ -102,7 +102,9 @@ struct glw_style {
 #define GS_SET_HEIGHT       0x20
 #define GS_SET_SOURCE       0x40
 #define GS_SET_ALIGN        0x80
+#define GS_SET_HIDDEN       0x100
 
+  uint8_t gs_hidden;
 };
 
 static void gs_mod_flags2(struct glw *w, int set, int clr,
@@ -783,6 +785,27 @@ gs_set_align(struct glw *w, int v, glw_style_t *origin)
  *
  */
 static void
+gs_set_hidden(struct glw *w, int v, glw_style_t *origin)
+{
+  glw_style_t *gs = (glw_style_t *)w;
+
+  if(check_set_flags(gs, GS_SET_HIDDEN, origin))
+    return;
+
+  gs->gs_hidden = v;
+
+  glw_style_binding_t *gsb;
+  LIST_FOREACH(gsb, &gs->gs_bindings, gsb_style_link) {
+    glw_t *w = gsb->gsb_widget;
+    glw_set_hidden(w, v, gs);
+  }
+}
+
+
+/**
+ *
+ */
+static void
 gs_set_source(struct glw *w, rstr_t *r, glw_style_t *origin)
 {
   glw_style_t *gs = (glw_style_t *)w;
@@ -824,6 +847,7 @@ static glw_class_t glw_style = {
   .gc_set_height        = gs_set_height,
   .gc_set_source        = gs_set_source,
   .gc_set_align         = gs_set_align,
+  .gc_set_hidden        = gs_set_hidden,
 };
 
 
@@ -1143,6 +1167,9 @@ glw_style_insert(glw_t *w, glw_style_t *gs, glw_view_eval_context_t *ec)
 
   if(gs->gs_flags & GS_SET_ALIGN)
     glw_set_align(w, gs->w.glw_alignment, gs);
+
+  if(gs->gs_flags & GS_SET_HIDDEN)
+    glw_set_hidden(w, gs->gs_hidden, gs);
 
   if(gs->gs_flags & GS_SET_SOURCE)
     if(w->glw_class->gc_set_source != NULL)

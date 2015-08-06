@@ -605,6 +605,33 @@ glw_set_align(glw_t *w, int v, glw_style_t *origin)
   }
 }
 
+
+/**
+ *
+ */
+void
+glw_set_hidden(glw_t *w, int v, glw_style_t *origin)
+{
+  if(unlikely(w->glw_class->gc_set_hidden != NULL)) {
+    w->glw_class->gc_set_hidden(w, v, origin);
+    return;
+  }
+
+  if(v) {
+    if(w->glw_flags & GLW_HIDDEN)
+      return;
+
+    glw_hide(w);
+  } else {
+    if(!(w->glw_flags & GLW_HIDDEN))
+      return;
+    glw_unhide(w);
+  }
+  glw_need_refresh(w->glw_root, 0);
+  return;
+}
+
+
 /**
  *
  */
@@ -968,19 +995,7 @@ mod_hidden(glw_view_eval_context_t *ec, const token_attrib_t *a,
     return glw_view_seterr(ec->ei, t, "Invalid assignment for attribute %s",
 			    a->name);
 
-  glw_t *w = ec->w;
-
-  if(v) {
-    if(w->glw_flags & GLW_HIDDEN)
-      return 0;
-
-    glw_hide(w);
-  } else {
-    if(!(w->glw_flags & GLW_HIDDEN))
-      return 0;
-    glw_unhide(w);
-  }
-  glw_need_refresh(w->glw_root, 0);
+  glw_set_hidden(ec->w, v, NULL);
   return 0;
 }
 

@@ -677,6 +677,11 @@ typedef struct glw_class {
   /**
    *
    */
+  void (*gc_set_hidden)(struct glw *w, int v, glw_style_t *gs);
+
+  /**
+   *
+   */
   void (*gc_freeze)(struct glw *w);
 
   /**
@@ -1235,6 +1240,8 @@ void glw_set_width(glw_t *w, int v, glw_style_t *origin);
 void glw_set_height(glw_t *w, int v, glw_style_t *origin);
 
 void glw_set_align(glw_t *w, int v, glw_style_t *origin);
+
+void glw_set_hidden(glw_t *w, int v, glw_style_t *origin);
 
 void glw_set_divider(glw_t *w, int v);
 
