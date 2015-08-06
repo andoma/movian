@@ -2,13 +2,14 @@
 
 widget(container_z, {
 
+  ListItemBevel();
+  style: "ListItemOuter";
+
   focusable: true;
   onEvent(activate, select($self.action,
                            event($self.action),
                            deliverEvent($self.eventSink)));
 
-  height: 2em;
-  ListItemBevel();
 
   widget(container_x, {
     style: "ListItem";

@@ -39,9 +39,9 @@ widget(container_z, {
     widget(container_z, {
       widget(video, {
 	how: $self.how;
-	model: $self.openedFrom;
+	.model <- $self.openedFrom;
         parentUrl: $self.parentUrl;
-	origin: $self.origin;
+	.origin <- $self.origin;
 	primary: true;
 	source: $self.source;
 	focusable: true;

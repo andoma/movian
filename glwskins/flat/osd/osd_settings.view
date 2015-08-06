@@ -1,5 +1,13 @@
 widget(container_z, {
 
+  style(ListItemOuter, {
+    height: 1.5em;
+  });
+
+  style(ListItemIcon, {
+    hidden: true;
+  });
+
   height: 8em;
 
   widget(quad, {

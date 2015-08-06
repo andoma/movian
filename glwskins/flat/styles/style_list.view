@@ -1,5 +1,9 @@
 // --- List item styles
 
+style(ListItemOuter, {
+  height: 2em;
+});
+
 style(ListItem, {
   padding: [$ui.xmargin, 0];
   spacing: $ui.width / 50;

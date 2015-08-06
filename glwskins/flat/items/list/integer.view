@@ -2,7 +2,7 @@
 
 widget(container_z, {
 
-  height: 2em;
+  style: "ListItemOuter";
 
   ListItemBevel();
   widget(container_x, {

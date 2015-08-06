@@ -1,4 +1,4 @@
-height: 3em;
+height: select(isVoid($self.metadata.title), 1em, 3em);
 
 widget(label, {
   filterConstraintX: true;
