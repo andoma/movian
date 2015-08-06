@@ -326,14 +326,27 @@ update_abitrate(media_pipe_t *mp, media_queue_t *mq,
   ad->ad_frame_size[ad->ad_frame_size_ptr] = size;
   ad->ad_frame_size_ptr = (ad->ad_frame_size_ptr + 1) & AD_FRAME_SIZE_MASK;
 
-  if(ad->ad_estimated_duration == 0 || (ad->ad_frame_size_ptr & 7) != 0)
+  int d = ad->ad_estimated_duration;
+  if(d == 0) {
+
+    ad->ad_last_pts = ad->ad_saved_pts;
+    ad->ad_saved_pts = ad->ad_pts;
+
+    if(ad->ad_pts != PTS_UNSET && ad->ad_last_pts != PTS_UNSET) {
+      int64_t d64 = ad->ad_pts - ad->ad_last_pts;
+      if(d64 > 100 && d64 < 500000)
+        d = d64;
+    }
+  }
+
+  if(d == 0 || (ad->ad_frame_size_ptr & 7) != 0)
     return;
 
   sum = 0;
   for(i = 0; i < AD_FRAME_SIZE_LEN; i++)
     sum += ad->ad_frame_size[i];
 
-  sum = 8000000LL * sum / AD_FRAME_SIZE_LEN / ad->ad_estimated_duration;
+  sum = 8000000LL * sum / AD_FRAME_SIZE_LEN / d;
   prop_set_int(mq->mq_prop_bitrate, sum / 1000);
 }
 
@@ -414,13 +427,14 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 
       if(ad->ad_spdif_muxer != NULL) {
 	mb->mb_pkt.stream_index = 0;
-	ad->ad_pts = mb->mb_pts;
+        ad->ad_pts = mb->mb_pts;
 	ad->ad_epoch = mb->mb_epoch;
+
+        update_abitrate(mp, mq, mb->mb_size, ad);
 
 	mb->mb_pts = AV_NOPTS_VALUE;
 	mb->mb_dts = AV_NOPTS_VALUE;
 	av_write_frame(ad->ad_spdif_muxer, &mb->mb_pkt);
-        update_abitrate(mp, mq, mb->mb_size, ad);
 	avio_flush(ad->ad_spdif_muxer->pb);
 	return 0;
       }
@@ -684,6 +698,8 @@ audio_decode_thread(void *aux)
           hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
           continue;
         }
+
+        update_abitrate(mp, mq, mb->mb_size, ad);
       }
 
     } else {

@@ -115,7 +115,10 @@ typedef struct audio_decoder {
   int ad_frame_size[AD_FRAME_SIZE_LEN];
   int ad_frame_size_ptr;
   int ad_estimated_duration;
-  
+
+  int64_t ad_last_pts;
+  int64_t ad_saved_pts;
+
 } audio_decoder_t;
 
 audio_class_t *audio_driver_init(struct prop *asettings, struct htsmsg *store);
