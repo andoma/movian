@@ -1,4 +1,4 @@
-setDefaultFont("skin://fonts/RobotoCondensed-Light.ttf");
+setDefaultFont("skin://fonts/RobotoCondensed-Regular.ttf");
 
 $ui.sizeOffset = 4;
 $ui.xmargin = select($ui.aspect > 1, $ui.width / 50, 0);
