@@ -527,7 +527,7 @@ event_dispatch(event_t *e)
 	    event_is_action(e, ACTION_PLAYQUEUE) ||
 	    event_is_action(e, ACTION_RELOAD_DATA) ||
 	    event_is_type(e, EVENT_OPENURL)) {
-    event_to_prop(prop_get_by_name(PNVEC("global", "navigators", "nav", "eventSink"),
+    event_to_prop(prop_get_by_name(PNVEC("global", "navigators", "current", "eventSink"),
 				   1, NULL), e);
 
   } else if(event_is_action(e, ACTION_VOLUME_UP) ||
