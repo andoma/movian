@@ -1,9 +1,13 @@
 
+Local network view
+
 Fix search view
 
 Add scroll bar to list view
 
 Rework  $view.currentPageClone <- focusedClone();
+
+Improve upgrade view
 
 All list items
 

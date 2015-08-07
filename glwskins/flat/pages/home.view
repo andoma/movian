@@ -24,6 +24,48 @@
   });
 }
 
+
+#define NEWSSTAND() {
+  cloner($core.news, container_x, {
+    height: 2em;
+    divider: true;
+    spacing: 1em;
+    padding: [2em, 0];
+
+    widget(icon, {
+      source: "dataroot://res/svg/Alert.svg";
+      shadow: true;
+      sizeScale: 1;
+    });
+
+    widget(label, {
+      caption: $self.message;
+    });
+
+    space(1);
+
+    widget(label, {
+      padding: [1em, 0];
+      onEvent(activate, select(isVoid($self.location),
+                               deliverEvent($self.eventSink, $self.action),
+                               navOpen($self.location)));
+      focusable: 0.1;
+      caption: $self.caption;
+      color: iir(!isNavFocused(), 4);
+    });
+
+    widget(label, {
+      padding: [1em, 0];
+      onEvent(activate, deliverEvent($self.eventSink, "dismiss"));
+      focusable: 0.05;
+      caption: _("Dismiss");
+      color: iir(!isNavFocused(), 4);
+    });
+  });
+}
+
+
+
 widget(cursor, {
 
   widget(container_y, {
@@ -34,10 +76,11 @@ widget(cursor, {
       alphaFallOff: 0.3;
       blurFallOff: 0.1;
 
-      margin: [2em, 2em];
+      margin: [2em, 1em];
       childTilesX: 5;
       childTilesY: 4;
 
+      NEWSSTAND();
       SEARCHBAR();
 
       cloner($core.services.stable, container_y, {
