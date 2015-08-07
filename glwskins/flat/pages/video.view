@@ -151,7 +151,9 @@ widget(container_z, {
 #import "skin://osd/osd_main.view"
 #import "skin://osd/osd_info.view"
 #import "skin://osd/osd_subs.view"
-#import "skin://osd/osd_settings.view"
+#import "skin://osd/osd_settings_subs.view"
+#import "skin://osd/osd_settings_audio.view"
+#import "skin://osd/osd_settings_video.view"
 
       page: $view.osdpage;
     });

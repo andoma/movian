@@ -50,9 +50,11 @@ widget(container_z, {
 
         widget(container_x, {
           OSD_ITEM(_("Subtitles"), "skin://icons/ic_subtitles_48px.svg", 3);
-          OSD_ITEM(_("Audio"),     "skin://icons/ic_speaker_48px.svg", 5);
-          OSD_ITEM(_("Settings"),  "dataroot://res/svg/Settings.svg", 4);
           OSD_ITEM(_("Info"),      "skin://icons/ic_info_outline_48px.svg", 2);
+
+          OSD_ITEM(_("Subtitle Settings"),  "dataroot://res/svg/Settings.svg", 4);
+          OSD_ITEM(_("Audio Settings"),  "dataroot://res/svg/Settings.svg", 5);
+          OSD_ITEM(_("Video Settings"),  "dataroot://res/svg/Settings.svg", 6);
         });
       });
 

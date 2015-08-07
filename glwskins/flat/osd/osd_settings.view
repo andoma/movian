@@ -1,3 +1,4 @@
+#define OSD_SETTINGS_MENU(NODES) {
 widget(container_z, {
 
   style(ListItemOuter, {
@@ -24,7 +25,7 @@ widget(container_z, {
         id: "list";
         alphaFallOff: 0.3;
 
-        cloner($self.media.video.settings.nodes, loader, {
+        cloner(NODES /*$self.media.video.settings.nodes */, loader, {
           hidden: !$self.enabled;
           source: "skin://items/list/" + $self.type + ".view";
           time: 0.3;
@@ -57,3 +58,4 @@ widget(container_z, {
     });
   });
 });
+}
