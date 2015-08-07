@@ -985,8 +985,19 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
     return 0;
 
   } else {
-    if((right = token_resolve(ec, right)) == NULL) {
-      return -1;
+
+    if(left->type == TOKEN_RESOLVED_ATTRIBUTE &&
+       (left->t_attrib->flags & GLW_ATTRIB_FLAG_NO_SUBSCRIPTION)) {
+
+      if(right->type == TOKEN_PROPERTY_NAME)
+        if(resolve_property_name(ec, right, 0))
+          return -1;
+
+    } else {
+
+      if((right = token_resolve(ec, right)) == NULL) {
+        return -1;
+      }
     }
   }
 

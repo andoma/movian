@@ -232,6 +232,9 @@ void prop_destroy_first(prop_t *p);
 
 prop_t *prop_follow(prop_t *p);
 
+ // Resolve a PROP_PROP into what it's pointing to
+prop_t *prop_get_prop(prop_t *p);
+
 int prop_compare(const prop_t *a, const prop_t *b);
 
 void prop_move(prop_t *p, prop_t *before);

@@ -4659,6 +4659,24 @@ prop_follow(prop_t *p)
 /**
  *
  */
+prop_t *
+prop_get_prop(prop_t *p)
+{
+  hts_mutex_lock(&prop_mutex);
+
+  if(p->hp_type == PROP_PROP) {
+    p = prop_ref_inc(p->hp_prop);
+  } else {
+    p = prop_ref_inc(p);
+  }
+  hts_mutex_unlock(&prop_mutex);
+  return p;
+}
+
+
+/**
+ *
+ */
 int
 prop_compare(const prop_t *a, const prop_t *b)
 {

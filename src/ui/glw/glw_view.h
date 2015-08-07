@@ -281,6 +281,8 @@ typedef struct token_attrib {
 	     struct token *t);
   int attrib;
   void *fn;
+  int flags;
+#define GLW_ATTRIB_FLAG_NO_SUBSCRIPTION 0x1
 } token_attrib_t;
 
 
