@@ -1,0 +1,68 @@
+
+widget(cursor, {
+
+  widget(container_y, {
+
+    style: "PageContainer";
+
+    widget(array, {
+      alphaFallOff: 0.3;
+      blurFallOff: 0.1;
+
+      margin: [2em, 1em];
+      childTilesX: 5;
+      childTilesY: 4;
+
+
+      cloner($core.services.discovered, container_y, {
+
+        spacing: 0.5em;
+        padding: 0.5em;
+
+        focusable: true;
+        onEvent(activate, navOpen($self.url, void, $self));
+
+        widget(image, {
+          source: $self.icon ??
+	    "dataroot://res/svg/" +
+	    translate($self.type, "Folder",
+		      "music",    "Music",
+		      "video",    "Movie",
+		      "tv",       "Display",
+		      "usb",      "Usb",
+		      "dvd",      "Disc",
+		      "cd",       "Disc",
+		      "bluray",   "Disc",
+		      "network",  "Home",
+		      "setting",  "Settings",
+		      "plugin",   "Plugin",
+		      "photos",   "Pictures") + ".svg";
+
+          color:  select($self.icon, 1, iir(!isNavFocused(), 4));
+          shadow: select($self.icon, 0, iir(!isNavFocused(), 4));
+
+        });
+
+        widget(label, {
+          align: center;
+          caption: $self.title;
+          size: 1.2em;
+          font: "skin://fonts/RobotoCondensed-Regular.ttf";
+          color: iir(!isNavFocused(), 4);
+          shadow: iir(!isNavFocused(), 4);
+        });
+      });
+    });
+  });
+  widget(quad, {
+    zoffset: -100;
+    alpha: 0.6 * iir($ui.keyboard, 4);
+    additive: true;
+  });
+
+  widget(quad, {
+    zoffset: -100;
+    alpha: 0.1;
+    additive: true;
+  });
+});

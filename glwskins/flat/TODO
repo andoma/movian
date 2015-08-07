@@ -1,13 +1,9 @@
 
-Local network view
-
 Fix search view
 
 Add scroll bar to list view
 
 Rework  $view.currentPageClone <- focusedClone();
-
-Improve upgrade view
 
 All list items
 
@@ -26,6 +22,14 @@ Grid items
 Images
 
 Fix gravity of log view
+
+---------------
+-- Polish -----
+---------------
+
+Local network view
+
+Improve upgrade view
 
 
 
