@@ -77,11 +77,7 @@ widget(container_z, {
           });
 
           widget(loader, {
-
-            // meh...  implement autohide on loader widget instead
-            hidden: translate($core.media.current.type, true,
-                              "tracks", false);
-
+            autohide: true;
             source: translate($core.media.current.type, "",
                               "tracks", "playdecks/tracks.view");
           });
@@ -89,17 +85,14 @@ widget(container_z, {
           cloner($core.notifications.nodes, container_z, {
             widget(quad, {
               color: 0;
-              alpha: 0.2;
+              alpha: 0.8;
             });
 
             widget(label, {
               padding: [2em, 0.5em];
               caption: $self.text;
-              shadow: true;
-              font: "skin://fonts/RobotoCondensed-Regular.ttf";
             });
           });
-
 
           widget(dummy, {
             height: 0;
