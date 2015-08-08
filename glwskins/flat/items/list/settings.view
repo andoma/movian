@@ -14,8 +14,9 @@ widget(container_z, {
       source: $self.metadata.icon ??
         translate($self.subtype,
 		  "dataroot://res/svg/Settings.svg",
+		  "about", "skin://icons/ic_help_48px.svg",
 		  "sound", "dataroot://res/svg/Sound.svg",
-		  "audio", "dataroot://res/svgs/Music.svg",
+		  "audio", "dataroot://res/svg/Music.svg",
 		  "video", "dataroot://res/svg/Movie.svg",
 		  "bookmark", "dataroot://res/svg/Bookmark.svg",
 		  "display", "dataroot://res/svg/Display.svg",

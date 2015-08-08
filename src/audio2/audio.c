@@ -111,7 +111,7 @@ audio_init(void)
     store = htsmsg_create_map();
 
   prop_t *asettings =
-    settings_add_dir(NULL, _p("Audio settings"), NULL, NULL,
+    settings_add_dir(NULL, _p("Audio settings"), "sound", NULL,
                      _p("Setup audio output"),
                      "settings:audio");
 

@@ -1,0 +1,38 @@
+widget(container_y, {
+  padding: [0, 3em];
+
+  widget(label, {
+    caption: $core.app.name;
+    size: 3em;
+    align: center;
+  });
+
+  widget(label, {
+    caption: $core.app.version;
+    alpha: 0.5;
+    align: center;
+  });
+
+  widget(dummy, {
+    height: 2em;
+  });
+
+  widget(label, {
+    caption: $core.app.copyright;
+    alpha: 0.5;
+    align: center;
+  });
+
+  widget(dummy, {
+    height: 0.5em;
+  });
+
+  widget(label, {
+
+    caption: "https://twitter.com/movianplayer";
+    alpha: 0.5;
+    align: center;
+  });
+
+
+});

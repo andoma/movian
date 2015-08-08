@@ -1282,6 +1282,13 @@ settings_init(void)
   // Developer settings, only available via its URI
 
   init_dev_settings();
+
+  // About
+
+  settings_add_url(NULL,
+		   _p("About"), "about", NULL, NULL, "page:about",
+		   0);
+
 }
 
 
