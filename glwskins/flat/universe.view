@@ -153,6 +153,71 @@ widget(container_z, {
       });
     });
   });
+
+  widget(container_y, {
+
+    align: bottom;
+    spacing: 0.1em;
+    padding: [0,1em];
+
+    widget(container_z, {
+      height: 1.3em;
+
+      widget(container_x, {
+        alpha: iir($core.audio.mastermute, 7);
+
+        padding: [2em, 0];
+
+        widget(container_z, {
+          widget(quad, {
+            color: 0;
+            alpha: 0.8;
+          });
+          widget(label, {
+            padding: [1em, 0];
+            caption: _("Audio muted");
+            align: center;
+          });
+        });
+      });
+
+      widget(container_x, {
+        alpha: iir(changed($core.audio.mastervolume, 2, true), 7);
+        align: center;
+        widget(container_z, {
+          width: $ui.width / 2;
+
+          widget(quad, {
+            color: 0;
+            alpha: 0.8;
+          });
+
+          widget(container_x, {
+            padding: 0.1em;
+            weight: 0.87;
+            widget(bar, {
+              color1: [0.3, 0.3, 0.3];
+              color2: [0.7, 0.8, 0.5];
+              fill: ($core.audio.mastervolume + 75) / 75;
+            });
+
+            widget(bar, {
+              weight: 0.13;
+              color1: [0.7, 0.8, 0.5];
+              color2: [1.0, 0.8, 0.6];
+              fill: $core.audio.mastervolume / 12;
+            });
+          });
+
+          widget(label, {
+            caption: fmt(_("Master volume: %d dB"), $core.audio.mastervolume);
+            align: center;
+          });
+        });
+      });
+    });
+  });
+
   widget(underscan, {
 #import "sysinfo.view"
   });
