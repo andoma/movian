@@ -304,7 +304,8 @@ settings_create_action(prop_t *parent, prop_t *title,
   setting_t *s = setting_create_leaf(parent, title, "action", "action", flags);
   s->s_sub = prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
 			    PROP_TAG_CALLBACK, cb, opaque,
-			    PROP_TAG_ROOT, s->s_val,
+			    PROP_TAG_NAMED_ROOT, s->s_root, "node",
+                            PROP_TAG_NAME("node", "eventSink"),
 			    PROP_TAG_COURIER, pc,
 			    NULL);
   return s;
