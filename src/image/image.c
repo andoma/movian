@@ -268,6 +268,7 @@ image_decode_coded(const image_t *src, const image_meta_t *meta,
 
   image_t *new = image_create_from_pixmap(pm);
   new->im_origin_coded_type = icc->icc_type;
+  new->im_orientation = src->im_orientation;
   pixmap_release(pm);
   return new;
 }
