@@ -1,0 +1,17 @@
+#import "skin://theme.view"
+
+widget(container_z, {
+
+  GridItemBevel();
+
+  focusable: true;
+
+  widget(container_y, {
+    style: "GridItem";
+
+    widget(image, {
+      margin: 0.5em;
+      source: $self.url;
+    });
+  });
+});

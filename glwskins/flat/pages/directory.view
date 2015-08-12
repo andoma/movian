@@ -42,14 +42,14 @@ multiopt($view.path,
 	 translate($self.model.contents, void,
 		   "album",      makeUri(_("Album"),      "album.view"),
 		   "artist",     makeUri(_("Artist"),     "artist.view"),
-		   "tvchannels", makeUri(_("Tvchannels"), "tvchannels.view"),
-		   "images",     makeUri(_("Images"),     "images.view"),
-		   "searchresults", makeUri(_("Search results"), "searchresults.view")
-		    ),
+		   "tvchannels", makeUri(_("TV Channels"), "tvchannels.view"),
+//		   "images",     makeUri(_("Images"),     "images.view"),
+		   "searchresults", makeUri(_("Search results"), "searchresults.view")),
 
+/*
 	 select($self.model.contents == "images", 
 		makeUri(_("Slideshow"), "slideshow.view"), void),
-
+*/
 	 select($self.model.safeui, void,
 		vectorize($core.glw.views.standard.directory)),
 	 makeUri(_("List"), "list.view"),
