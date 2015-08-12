@@ -17,7 +17,7 @@ widget(container_x, {
 	widget(container_x, {
 	  spacing: 10;
 	  widget(icon, {
-	    source: "dataroot://res/svg/Lock.svg";
+	    source: "skin://icons/svg/ic_lock_48px.svg";
 	    sizeScale: 2;
 	  });
 

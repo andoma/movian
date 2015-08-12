@@ -24,23 +24,17 @@ widget(cursor, {
 
         widget(image, {
           source: $self.icon ??
-	    "dataroot://res/svg/" +
-	    translate($self.type, "Folder",
-		      "music",    "Music",
-		      "video",    "Movie",
-		      "tv",       "Display",
-		      "usb",      "Usb",
-		      "dvd",      "Disc",
-		      "cd",       "Disc",
-		      "bluray",   "Disc",
-		      "network",  "Home",
-		      "setting",  "Settings",
-		      "plugin",   "Plugin",
-		      "photos",   "Pictures") + ".svg";
+	    "skin://icons/" +
+	    translate($self.type, "ic_folder_48px",
+		      "tv",       "ic_tv_48px",
+		      "usb",      "ic_usb_48px",
+		      "cd",       "ic_album_48px",
+		      "dvd",      "ic_album_48px",
+		      "bluray",   "ic_album_48px",
+		      "setting",  "ic_settings_48px",
+		      "plugin",   "ic_extension_48px") + ".svg";
 
           color:  select($self.icon, 1, iir(!isNavFocused(), 4));
-          shadow: select($self.icon, 0, iir(!isNavFocused(), 4));
-
         });
 
         widget(label, {

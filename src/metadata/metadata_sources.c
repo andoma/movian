@@ -346,7 +346,7 @@ metadata_sources_init(void)
 
   hts_mutex_init(&metadata_sources_mutex);
 
-  s = settings_add_dir(NULL, _p("Metadata"), "settings", NULL,
+  s = settings_add_dir(NULL, _p("Metadata"), "metadata", NULL,
 		       _p("Metadata configuration and provider settings"),
 		       "settings:metadata");
 

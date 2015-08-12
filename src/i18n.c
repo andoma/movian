@@ -79,7 +79,7 @@ set_default_charset(void *opaque, const char *str)
 void
 i18n_init(void)
 {
-  prop_t *s = settings_add_dir(NULL, _p("Languages"), NULL, NULL,
+  prop_t *s = settings_add_dir(NULL, _p("Languages"), "i18n", NULL,
 			       _p("Preferred languages"),
 			       "settings:i18n");
   int i;

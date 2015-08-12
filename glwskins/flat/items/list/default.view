@@ -16,6 +16,7 @@ widget(container_z, {
       "skin://icons/" +
         translate($self.type,  "ic_help_48px",
 		  "share",     "server",
+		  "store",     "ic_shopping_cart_48px",
 		  "directory", "ic_folder_48px"
 	         ) + ".svg";
 

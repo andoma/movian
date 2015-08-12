@@ -13,17 +13,19 @@ widget(container_z, {
     widget(icon, {
       source: $self.metadata.icon ??
         translate($self.subtype,
-		  "dataroot://res/svg/Settings.svg",
-		  "about", "skin://icons/ic_help_48px.svg",
-		  "sound", "dataroot://res/svg/Sound.svg",
-		  "audio", "dataroot://res/svg/Music.svg",
-		  "video", "dataroot://res/svg/Movie.svg",
-		  "bookmark", "dataroot://res/svg/Bookmark.svg",
-		  "display", "dataroot://res/svg/Display.svg",
-		  "search", "dataroot://res/svg/Search.svg",
-		  "keymap", "dataroot://res/svg/Keyboard.svg",
-		  "subtitle", "dataroot://res/svg/Script.svg",
-                  "plugin", "dataroot://res/svg/Plugin.svg"
+		              "skin://icons/ic_settings_48px.svg",
+		  "about",    "skin://icons/ic_help_48px.svg",
+		  "sound",    "skin://icons/ic_speaker_48px.svg",
+		  "audio",    "skin://icons/ic_speaker_48px.svg",
+		  "video",    "skin://icons/ic_videocam_48px.svg",
+		  "bookmark", "skin://icons/ic_collections_bookmark_24px.svg",
+		  "display",  "skin://icons/ic_tv_48px.svg",
+		  "search",   "skin://icons/ic_search_48px.svg",
+		  "subtitle", "skin://icons/ic_subtitles_48px.svg",
+                  "i18n",     "skin://icons/ic_language_48px.svg",
+                  "metadata", "skin://icons/ic_description_48px.svg",
+                  "network",  "skin://icons/ic_settings_ethernet_48px.svg",
+                  "plugin",   "dataroot://res/svg/Plugin.svg"
 	         );
       style: "ListItemIcon";
     });

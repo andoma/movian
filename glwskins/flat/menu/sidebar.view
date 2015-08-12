@@ -134,7 +134,9 @@ widget(container_z, {
         SIDEBAR_ACTION(select($self.bookmarked,
                               _("Remove from home"),
                               _("Add to home")),
-                       "dataroot://res/svg/Bookmark.svg",
+                       select($self.bookmarked,
+                              "skin://icons/ic_bookmark_48px.svg",
+                              "skin://icons/ic_bookmark_border_48px.svg"),
                        {
 	                 toggle($self.bookmarked);
                        });

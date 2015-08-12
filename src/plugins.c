@@ -843,7 +843,7 @@ plugin_setup_start_model(void)
   prop_t *sta = prop_create_root(NULL);
   
   p = prop_create(sta, NULL);
-  prop_set_string(prop_create(p, "type"), "directory");
+  prop_set_string(prop_create(p, "type"), "store");
   prop_link(_p("Browse available plugins"),
 	    prop_create(prop_create(p, "metadata"), "title"));
   prop_set_string(prop_create(p, "url"), "plugin:repo");
