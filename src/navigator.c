@@ -1148,6 +1148,7 @@ bookmark_add(const char *title, const char *url, const char *type,
 
   settings_create_bound_string(m, _p("Title"), prop_create(md, "title"));
   settings_create_bound_string(m, _p("URL"), prop_create(md, "url"));
+  settings_create_bound_string(m, _p("Icon"), prop_create(md, "icon"));
 
   bm->bm_type_setting =
     setting_create(SETTING_MULTIOPT, m, SETTINGS_INITIAL_UPDATE,
