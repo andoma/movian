@@ -6198,8 +6198,8 @@ multiopt_add_link(glwf_multiopt_extra_t *x, token_t *d,
   if(mi == NULL) {
     mi = calloc(1, sizeof(multiopt_item_t));
     mi->mi_value = rstr_dup(d->t_uri);
+    TAILQ_INSERT_TAIL(&x->q, mi, mi_link);
   } else {
-    TAILQ_REMOVE(&x->q, mi, mi_link);
     mi->mi_mark = 0;
   }
 
@@ -6207,7 +6207,6 @@ multiopt_add_link(glwf_multiopt_extra_t *x, token_t *d,
 				   rstr_get(mi->mi_value)))
     *up = mi;
   rstr_set(&mi->mi_title, d->t_uri_title);
-  TAILQ_INSERT_TAIL(&x->q, mi, mi_link);
 }
 
 
