@@ -402,7 +402,7 @@ kv_prop_bind_create(prop_t *p, const char *url)
   if(db == NULL)
     return;
 
-  rc = db_prepare(db, &stmt, 
+  rc = db_prepare(db, &stmt,
 		  "SELECT id,key,value "
 		  "FROM url "
 		  "LEFT OUTER JOIN url_kv ON id = url_id "
@@ -470,7 +470,7 @@ kv_url_opt_get(void *db, const char *url, int domain, const char *key)
   if(db == NULL)
     return NULL;
 
-  rc = db_prepare(db, &stmt, 
+  rc = db_prepare(db, &stmt,
 		  "SELECT value "
 		  "FROM url, url_kv "
 		  "WHERE url=?1 "
@@ -836,7 +836,7 @@ kv_url_opt_set(const char *url, int domain, const char *key,
   db = kvstore_get();
   if(db == NULL)
     return;
-  
+
  again:
   if(db_begin(db)) {
     kvstore_close(db);
@@ -989,7 +989,7 @@ kv_url_opt_set_deferred(const char *url, int domain, const char *key,
       free(kw->kw_string);
   }
 
-  
+
   kw->kw_type = type & 0xff;
   kw->kw_unimportant = type & KVSTORE_UNIMPORTANT;
 
