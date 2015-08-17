@@ -1,0 +1,4 @@
+widget(image, {
+  delta($ui.fullwindow, isVisible());
+  source: $self.url;
+});
