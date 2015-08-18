@@ -315,7 +315,8 @@ image_decode(image_t *im, const image_meta_t *meta,
     r = image_decode_coded(im, meta, errbuf, errlen);
     if(r == NULL)
       break;
-    return image_decode(r, meta, errbuf, errlen);
+    r = image_decode(r, meta, errbuf, errlen);
+    break;
 
   case IMAGE_VECTOR:
     r = image_rasterize_ft(ic, im->im_width, im->im_height, im->im_margin);
