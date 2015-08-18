@@ -1,25 +1,27 @@
 #define SEARCHBAR() {
-  widget(container_z, {
-
+  widget(container_x, {
     divider: true;
+    padding: [2em, 0];
+    widget(container_z, {
 
-    filterConstraintX: true;
-    widget(quad, {
-      zoffset: -400;
-      color: 0;
-      alpha: 0.4;
-    });
-    widget(text, {
-      padding: [1em, 0.5em];
-      style: "ListItemValue";
-      size: 1.2em;
-      font: "skin://fonts/RobotoCondensed-Regular.ttf";
-      focusable: true;
-      bind($view.searchQuery);
-      onEvent(enter, navOpen("search:" + $view.searchQuery),
-	      $view.searchQuery);
-      onEvent(submit, navOpen("search:" + $view.searchQuery),
-	      $view.searchQuery);
+      filterConstraintX: true;
+      widget(quad, {
+        zoffset: -400;
+        color: 0;
+        alpha: 0.4;
+      });
+      widget(text, {
+        padding: [1em, 0.5em];
+        style: "ListItemValue";
+        size: 1.2em;
+        font: "skin://fonts/RobotoCondensed-Regular.ttf";
+        focusable: true;
+        bind($view.searchQuery);
+        onEvent(enter, navOpen("search:" + $view.searchQuery),
+	        $view.searchQuery);
+        onEvent(submit, navOpen("search:" + $view.searchQuery),
+	        $view.searchQuery);
+      });
     });
   });
 }
@@ -67,7 +69,7 @@
 
 widget(cursor, {
 
-  widget(container_y, {
+  widget(container_x, {
 
     style: "PageContainer";
 
@@ -113,6 +115,8 @@ widget(cursor, {
         });
       });
     });
+#import "skin://menu/sidebar.view"
+
   });
   widget(quad, {
     zoffset: -100;
