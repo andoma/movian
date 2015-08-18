@@ -112,8 +112,8 @@ widget(container_z, {
             width: 4em;
             padding:[0, 0.5em];
             widget(icon, {
-              clickable: $nav.canGoBack;
-              alpha: iir($nav.canGoBack, 4);
+              clickable: $nav.canGoBack || $ui.logwindow;
+              alpha: iir($nav.canGoBack || $ui.logwindow, 4);
               onEvent(activate, deliverEvent($ui.eventSink, "back"));
               navFocusable: false;
               color: 0.5 + iir(isHovered(), 4);

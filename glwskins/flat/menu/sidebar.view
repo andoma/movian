@@ -176,16 +176,6 @@ widget(container_z, {
                        navOpen("settings:"),
                        $nav.currentpage.url == "settings:");
 
-        SIDEBAR_ACTION(select($ui.sysinfo,
-                              _("Hide system info"),
-                              _("Show system info")),
-                       select($ui.sysinfo,
-                              "skin://icons/ic_info_48px.svg",
-                              "skin://icons/ic_info_outline_48px.svg"),
-                       {
-                         toggle($ui.sysinfo);
-                       });
-
         widget(dummy, {
           height: 1em;
         });
@@ -199,6 +189,26 @@ widget(container_z, {
                        "skin://icons/ic_power_settings_new_48px.svg",
                        event("Standby"),
                        !$core.runcontrol.canStandby);
+
+        widget(dummy, {
+          height: 1em;
+        });
+
+        SIDEBAR_ACTION(select($ui.sysinfo,
+                              _("Hide system info"),
+                              _("Show system info")),
+                       select($ui.sysinfo,
+                              "skin://icons/ic_info_48px.svg",
+                              "skin://icons/ic_info_outline_48px.svg"),
+                       {
+                         toggle($ui.sysinfo);
+                       });
+
+        SIDEBAR_ACTION(_("View log"),
+                       "skin://icons/ic_my_library_books_48px.svg",{
+                         $ui.logwindow = true;
+                       });
+
 
       });
     });
