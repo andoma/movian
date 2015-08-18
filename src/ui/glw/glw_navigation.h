@@ -29,3 +29,7 @@ int glw_navigate_step(glw_t *c, int count, int may_wrap);
 int glw_navigate_may_wrap(glw_t *w);
 
 int glw_navigate_matrix(struct glw *w, struct event *e);
+
+int glw_navigate_first(glw_t *parent);
+
+int glw_navigate_last(glw_t *parent);

@@ -26,7 +26,6 @@ widget(container_y, {
     childTilesY: 4;
 
     navWrap: true;
-    chaseFocus: true;
     alphaFallOff: 0.2;
     blurFallOff: 0.01;
     scrollThreshold: 2em;

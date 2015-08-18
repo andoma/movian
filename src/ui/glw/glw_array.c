@@ -714,11 +714,18 @@ glw_array_bubble_event(struct glw *w, struct event *e)
     return 0;
 
   const int may_wrap = glw_navigate_may_wrap(c);
+  const int current_col = glw_parent_data(c, glw_array_item_t)->col;
 
   if(event_is_action(e, ACTION_RIGHT)) {
+    if(current_col == a->xentries - 1)
+      return 0;
+
     return glw_navigate_step(c, 1, may_wrap);
 
   } else if(event_is_action(e, ACTION_LEFT)) {
+    if(current_col == 0)
+      return 0;
+
     return glw_navigate_step(c, -1, may_wrap);
 
   } else if(event_is_action(e, ACTION_UP)) {
@@ -738,6 +745,12 @@ glw_array_bubble_event(struct glw *w, struct event *e)
 
   } else if(event_is_action(e, ACTION_MOVE_UP)) {
     return glw_navigate_move(c, -a->xentries);
+
+  } else if(event_is_action(e, ACTION_TOP)) {
+    return glw_navigate_first(w);
+
+  } else if(event_is_action(e, ACTION_BOTTOM)) {
+    return glw_navigate_last(w);
   }
 
   return 0;

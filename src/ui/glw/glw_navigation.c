@@ -40,8 +40,8 @@ glw_step_widget(glw_t *c, int forward)
 /**
  *
  */
-static int
-glw_nav_first(glw_t *parent)
+int
+glw_navigate_first(glw_t *parent)
 {
   glw_t *c = glw_first_widget(parent);
 
@@ -61,8 +61,8 @@ glw_nav_first(glw_t *parent)
 /**
  *
  */
-static int
-glw_nav_last(glw_t *parent)
+int
+glw_navigate_last(glw_t *parent)
 {
   glw_t *c = glw_last_widget(parent);
 
@@ -113,9 +113,9 @@ glw_navigate_step(glw_t *c, int count, int may_wrap)
     return 1;
   } else if(may_wrap) {
     if(forward) {
-      return glw_nav_first(parent);
+      return glw_navigate_first(parent);
     } else {
-      return glw_nav_last(parent);
+      return glw_navigate_last(parent);
     }
   }
 
@@ -181,10 +181,10 @@ glw_navigate_vertical(struct glw *w, struct event *e)
     return glw_navigate_step(c, 10, 0);
 
   } else if(event_is_action(e, ACTION_TOP)) {
-    return glw_nav_first(w);
+    return glw_navigate_first(w);
 
   } else if(event_is_action(e, ACTION_BOTTOM)) {
-    return glw_nav_last(w);
+    return glw_navigate_last(w);
 
   } else if(event_is_action(e, ACTION_MOVE_DOWN)) {
     return glw_navigate_move(c, 1);
