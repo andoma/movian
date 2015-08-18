@@ -76,6 +76,7 @@ prop_linkselected_cb(void *opaque, prop_event_t event, ...)
     prop_ref_dec(lp->lp_target);
     prop_ref_dec(lp->lp_name);
     free(lp);
+    prop_unsubscribe(va_arg(ap, prop_sub_t *));
     break;
 
   case PROP_SELECT_CHILD:
