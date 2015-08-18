@@ -8,16 +8,17 @@ widget(container_x, {
 
   widget(container_y, {
     align: center;
-    
+    filterConstraintX: true;
+
     popupGroup(
-      filterConstraintX: true;
-      
+
       widget(container_y, {
+        filterConstraintX: true;
 	spacing: 4;
 	widget(container_x, {
 	  spacing: 10;
 	  widget(icon, {
-	    source: "skin://icons/svg/ic_lock_48px.svg";
+	    source: "skin://icons/ic_lock_48px.svg";
 	    sizeScale: 2;
 	  });
 
@@ -37,7 +38,7 @@ widget(container_x, {
 	  hidden: $self.disableUsername;
 	  caption: _("Username");
 	});
-      
+
 	popupInputField(
 	  hidden: $self.disableUsername;
  	  widget(text, {
@@ -55,7 +56,7 @@ widget(container_x, {
 	  hidden: $self.disablePassword;
 	  caption: _("Password");
 	});
-      
+
 	popupInputField(
 	  hidden: $self.disablePassword;
 	  widget(text, {
@@ -74,7 +75,7 @@ widget(container_x, {
           hidden: $self.disableDomain;
 	  caption: _("Domain");
 	});
-      
+
 	popupInputField(
           hidden: $self.disableDomain;
 	  widget(text, {
@@ -93,9 +94,9 @@ widget(container_x, {
 		      !$self.canRemember);
 
 	widget(container_x, {
-	  .align = center;
-	  .spacing = 20;
-	  .homogenous = true;
+	  align: center;
+	  spacing: 20;
+	  homogenous: true;
 
 	  popupButtonOK(deliverEvent($self.eventSink, "OK"),
 			true, false);

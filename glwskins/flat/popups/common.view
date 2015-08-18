@@ -1,10 +1,14 @@
 
 #define popupGroup(BODY) {
-  widget(backdrop, {
-    .source = "skin://graphics/blackdrop16.png";
-    .border = 7;
-    .alphaSelf = 0.8;
-    BODY;
+  widget(container_z, {
+    widget(quad, {
+      color: 0;
+      alpha: 0.6;
+    });
+    widget(container_x, {
+      padding: 1em;
+      BODY;
+    });
   });
 }
 
