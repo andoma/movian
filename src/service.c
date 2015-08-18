@@ -30,6 +30,7 @@
 #include "backend/backend.h"
 #include "htsmsg/htsmsg_store.h"
 #include "settings.h"
+#include "usage.h"
 
 LIST_HEAD(service_type_list, service_type);
 
@@ -38,6 +39,7 @@ static prop_t *all_services;
 struct service_list services;
 hts_mutex_t service_mutex;
 static hts_cond_t service_cond;
+static prop_t *discovered_nodes;
 
 /**
  *
@@ -107,7 +109,7 @@ service_init(void)
 		  "plugin", NULL, 0, 1, SVC_ORIGIN_SYSTEM);
 
   service_create0("showtime:discovered",
-		  NULL, _p("Local network"), "page:discovered",
+		  NULL, _p("Local network"), "discovered:",
 		  "network", NULL, 0, 1, SVC_ORIGIN_SYSTEM);
 
   service_create0("showtime:settings",
@@ -138,9 +140,9 @@ service_init(void)
 
   // $global.service.discovered
 
-  prop_t *discovered = prop_create(gs, "discovered");
+  discovered_nodes = prop_create(gs, "discovered");
 
-  pnf = prop_nf_create(discovered, all_services, NULL, 0);
+  pnf = prop_nf_create(discovered_nodes, all_services, NULL, 0);
 
   prop_nf_pred_str_add(pnf, "node.origin",
 		       PROP_NF_CMP_NEQ, "discovered", NULL, 
@@ -243,9 +245,12 @@ service_create0(const char *id,
   else
     prop_set_string(t, title);
 
-  prop_set_string(prop_create(p, "icon"), icon);
-  prop_set_string(prop_create(p, "url"), url);
-  prop_set_int(prop_create(p, "enabled"), enabled);
+  prop_t *metadata = prop_create(p, "metadata");
+  prop_link(t, prop_create(metadata, "title"));
+
+  prop_set(p, "icon", PROP_SET_STRING, icon);
+  prop_set(p, "url", PROP_SET_STRING, url);
+  prop_set(p, "enabled", PROP_SET_INT, enabled);
 
   s->s_prop_type = prop_create(p, "type");
   prop_set_string(s->s_prop_type, type);
@@ -255,7 +260,7 @@ service_create0(const char *id,
 
   s->s_prop_status_txt = prop_create(p, "statustxt");
 
-  prop_set_string(prop_create(p, "origin"), val2str(origin, origin_tab));
+  prop_set(p, "origin", PROP_SET_STRING, val2str(origin, origin_tab));
 
   if(prop_set_parent(s->s_root, all_services))
     abort();
@@ -509,3 +514,52 @@ service_probe_loop(void *aux)
   }
   return NULL;
 }
+
+
+
+
+/**
+ *
+ */
+static int
+discovered_open_url(prop_t *page, const char *url, int sync)
+{
+  usage_page_open(sync, "Discovered");
+
+  prop_t *model = prop_create_r(page, "model");
+
+  prop_link(_p("Discovered resources on local network"),
+	    prop_create(prop_create(model, "metadata"), "title"));
+
+  prop_set(model, "type",     PROP_SET_STRING, "directory");
+
+  prop_t *nodes = prop_create_r(model, "nodes");
+
+  prop_link(discovered_nodes, nodes);
+
+  prop_ref_dec(nodes);
+  prop_ref_dec(model);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+discovered_canhandle(const char *url)
+{
+  return !strcmp(url, "discovered:");
+}
+
+
+
+/**
+ *
+ */
+static backend_t be_discovered = {
+  .be_canhandle = discovered_canhandle,
+  .be_open = discovered_open_url,
+};
+
+BE_REGISTER(discovered);
