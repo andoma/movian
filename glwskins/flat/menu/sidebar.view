@@ -2,9 +2,9 @@
 
 #define SIDEBAR_SIZE() { 22 em }
 
-#define SIDEBAR_ACTION(CAPTION, ICON, EVENT) {
+#define SIDEBAR_ACTION(CAPTION, ICON, EVENT, HIDDEN=false) {
   widget(container_z, {
-
+    hidden: HIDDEN;
     height: 2em;
     ListItemBevel();
 
@@ -28,14 +28,6 @@
   });
 }
 
-#define SEPARATOR(HIDDEN=false) {
-  widget(quad, {
-    hidden: HIDDEN;
-    height: 1;
-    color: 0.5;
-    additive: true;
-  });
-}
 
 $clone.haveSidebar = !getLayer();
 $view.sidebarFader = iir(delay($clone.showSidebar, 0, 0.25), 2);
@@ -164,12 +156,49 @@ widget(container_z, {
         });
 
 
+        widget(dummy, {
+          height: 1em;
+        });
+
         // --------------------------------------
         // Generic items
         // --------------------------------------
+        SIDEBAR_ACTION(_("Reload page"),
+                       "skin://icons/ic_refresh_48px.svg",
+                       event("ReloadData"));
+
         SIDEBAR_ACTION(_("Home"),
                        "skin://icons/ic_home_48px.svg",
                        navOpen("page:home"));
+
+        SIDEBAR_ACTION(_("Settings"),
+                       "skin://icons/ic_settings_48px.svg",
+                       navOpen("settings:"),
+                       $nav.currentpage.url == "settings:");
+
+        SIDEBAR_ACTION(select($ui.sysinfo,
+                              _("Hide system info"),
+                              _("Show system info")),
+                       select($ui.sysinfo,
+                              "skin://icons/ic_info_48px.svg",
+                              "skin://icons/ic_info_outline_48px.svg"),
+                       {
+                         toggle($ui.sysinfo);
+                       });
+
+        widget(dummy, {
+          height: 1em;
+        });
+
+        SIDEBAR_ACTION(fmt(_("Exit %s"), $core.app.name),
+                       "skin://icons/ic_exit_to_app_48px.svg",
+                       event("Quit"),
+                       !$core.runcontrol.canExit);
+
+        SIDEBAR_ACTION(_("Suspend"),
+                       "skin://icons/ic_power_settings_new_48px.svg",
+                       event("Standby"),
+                       !$core.runcontrol.canStandby);
 
       });
     });
