@@ -562,9 +562,14 @@ ui_run(glw_root_t *gr, EGLDisplay dpy)
     exit(2);
   }
 
+  VC_DISPMANX_ALPHA_T alpha;
+  alpha.flags =
+    DISPMANX_FLAGS_ALPHA_FROM_SOURCE | DISPMANX_FLAGS_ALPHA_PREMULT;
+  alpha.opacity = 255;
+  alpha.mask = 0;
 
   u = vc_dispmanx_update_start(0);
- 
+
   dst_rect.x = 0;
   dst_rect.y = 0;
   dst_rect.width = screen_width;
@@ -573,11 +578,11 @@ ui_run(glw_root_t *gr, EGLDisplay dpy)
   src_rect.x = 0;
   src_rect.y = 0;
   src_rect.width = screen_width << 16;
-  src_rect.height = screen_height << 16;        
+  src_rect.height = screen_height << 16;
 
   de = vc_dispmanx_element_add(u, dispman_display, 10, &dst_rect, 0,
 			       &src_rect, DISPMANX_PROTECTION_NONE,
-			       NULL, NULL, 0);
+			       &alpha, NULL, 0);
 
   memset(&nw, 0, sizeof(nw));
   nw.element = de;
