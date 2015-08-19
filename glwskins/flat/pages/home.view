@@ -1,5 +1,6 @@
 #define SEARCHBAR() {
   widget(container_x, {
+    spacing: 1em;
     divider: true;
     padding: [2em, 0];
     widget(container_z, {
@@ -21,6 +22,19 @@
 	        $view.searchQuery);
         onEvent(submit, navOpen("search:" + $view.searchQuery),
 	        $view.searchQuery);
+      });
+    });
+    widget(container_z, {
+      widget(quad, {
+        zoffset: -400;
+        color: 0;
+        alpha: 0.4;
+      });
+
+      widget(label, {
+        align: center;
+        padding: [2em, 0];
+        caption: fmt("%02d:%02d", $core.clock.hour, $core.clock.minute);
       });
     });
   });

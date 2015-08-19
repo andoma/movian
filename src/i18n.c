@@ -24,6 +24,7 @@
 #include "settings.h"
 #include "i18n.h"
 #include "misc/str.h"
+#include "misc/callout.h"
 #include "fileaccess/fileaccess.h"
 #if ENABLE_HTTPSERVER
 #include "networking/http_server.h"
@@ -74,7 +75,15 @@ set_default_charset(void *opaque, const char *str)
   }
 }
 
-
+#ifdef STOS
+static void
+set_timezone(void *opaque, const char *timezone)
+{
+  setenv("TZ", timezone, 1);
+  tzset();
+  callout_update_clock_props();
+}
+#endif
 
 void
 i18n_init(void)
@@ -90,6 +99,13 @@ i18n_init(void)
 
   nls_init(s, store);
 
+#ifdef STOS
+  setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Timezone")),
+                 SETTING_CALLBACK(set_timezone, NULL),
+                 SETTING_HTSMSG("timezone", store, "i18n"),
+                 NULL);
+#endif
 
   settings_create_info(s, 
 		       NULL,

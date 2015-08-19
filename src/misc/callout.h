@@ -53,6 +53,8 @@ void callout_disarm(callout_t *c);
 
 void callout_init(void);
 
+void callout_update_clock_props(void);
+
 #define callout_isarmed(c) ((c)->c_callback != NULL)
 
 #endif /* CALLOUT_H__ */

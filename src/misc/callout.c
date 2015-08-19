@@ -164,11 +164,18 @@ static prop_t *prop_unixtime;
 static void
 set_global_clock(struct callout *c, void *aux)
 {
+  callout_update_clock_props();
+}
+
+
+void
+callout_update_clock_props(void)
+{
   time_t now;
   struct tm tm;
 
   time(&now);
-	
+
   prop_set_int(prop_unixtime, now);
 
   arch_localtime(&now, &tm);
