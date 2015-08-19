@@ -42,6 +42,7 @@ typedef struct glw_container {
 
   int16_t width;
   int16_t spacing_width;
+  int16_t padding_width;
   int16_t height;
   int16_t co_spacing;
   int16_t co_padding[4];
@@ -111,7 +112,8 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
 {
   glw_t *c;
   int height = 0;
-  int width = co->co_padding[0] + co->co_padding[2];
+  int padding_width = co->co_padding[0] + co->co_padding[2];
+  int width = 0;
   float weight = 0;
   int cflags = 0, f;
   int elements = 0;
@@ -192,15 +194,19 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
     width += numfix * co->co_biggest;
 
   int16_t spacing_width = elements > 0 ? (elements - 1) * co->co_spacing : 0;
+  if(co->w.glw_flags2 & GLW2_DEBUG)
+    printf("Total width: %d\n", width);
 
   if(co->weight_sum    != weight ||
      co->width         != width  ||
+     co->padding_width != padding_width  ||
      co->spacing_width != spacing_width  ||
      co->cflags        != cflags) {
 
     co->weight_sum = weight;
     co->width = width;
     co->spacing_width = spacing_width;
+    co->padding_width = padding_width;
     co->cflags = cflags;
     glw_need_refresh(co->w.glw_root, 0);
   }
@@ -210,7 +216,8 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
   if(unlikely(tab != NULL))
     table_recompute(tab);
 
-  glw_set_constraints(&co->w, width + spacing_width, height, 0, cflags);
+  glw_set_constraints(&co->w, width + spacing_width + padding_width,
+                      height, 0, cflags);
   return 1;
 }
 
@@ -238,7 +245,8 @@ glw_container_x_layout(glw_t *w, const glw_rctx_t *rc)
   rc0 = *rc;
 
   if(w->glw_flags2 & GLW2_DEBUG) {
-    printf("%d x %d\n", rc->rc_width, rc->rc_height);
+    printf("%d x %d tablemode:%s\n",
+           rc->rc_width, rc->rc_height, tab ? "yes" : "no");
   }
 
   rc0.rc_height = rc->rc_height - co->co_padding[1] - co->co_padding[3];
@@ -261,16 +269,16 @@ glw_container_x_layout(glw_t *w, const glw_rctx_t *rc)
            co->width, aspect_width, co->spacing_width);
   }
 
-  if(co->width + aspect_width + co->spacing_width > rc->rc_width) {
+  int space_pad = co->spacing_width + co->padding_width;
+  int wsum = co->width + aspect_width + space_pad;
+
+  if(wsum > rc->rc_width) {
     // Requested pixel size > available width, must scale
     weightavail = 0;
-    fixscale = (float)(rc->rc_width - aspect_width - co->spacing_width) /
-      co->width;
+    fixscale = (float)(rc->rc_width - aspect_width - space_pad) / co->width;
     pos = co->co_padding[0] * fixscale;
   } else {
     fixscale = 1;
-
-    int wsum = co->width + aspect_width + co->spacing_width;
 
     weightavail = rc->rc_width - wsum;
     // Pixels available for weighted childs
@@ -280,9 +288,9 @@ glw_container_x_layout(glw_t *w, const glw_rctx_t *rc)
     if(co->weight_sum == 0) {
 
       if(co->w.glw_alignment == LAYOUT_ALIGN_CENTER) {
-	pos = rc->rc_width / 2 - wsum / 2;
+	pos = rc->rc_width / 2 - (wsum - co->padding_width) / 2;
       } else if(co->w.glw_alignment == LAYOUT_ALIGN_RIGHT) {
-	pos = rc->rc_width - wsum;
+	pos = rc->rc_width - (wsum - co->padding_width);
       }
     }
   }
@@ -299,13 +307,15 @@ glw_container_x_layout(glw_t *w, const glw_rctx_t *rc)
 
     int f = glw_filter_constraints(c);
 
-    if(unlikely(tab != NULL)) {
-      cw = tab->gt_columns[i];
-    } else if(f & GLW_CONSTRAINT_X) {
-      if(co->w.glw_flags2 & GLW2_HOMOGENOUS)
+    if(f & GLW_CONSTRAINT_X) {
+      if(unlikely(tab != NULL)) {
+        cw = tab->gt_columns[i];
+      } else if(co->w.glw_flags2 & GLW2_HOMOGENOUS) {
 	cw = co->co_biggest * fixscale;
-      else
+      } else {
 	cw = c->glw_req_size_x * fixscale;
+      }
+
     } else {
       float w = (f & GLW_CONSTRAINT_W ? c->glw_req_weight : 1.0f);
       if(w == 0)
@@ -559,7 +569,7 @@ glw_container_z_constraints(glw_t *w, glw_t *skip)
     if(c->glw_flags & GLW_HIDDEN || c == skip)
       continue;
 
-    if(c->glw_flags & GLW_CONSTRAINT_FLAGS)
+    if(glw_filter_constraints(c))
       break;
   }
 
@@ -575,8 +585,19 @@ glw_container_z_constraints(glw_t *w, glw_t *skip)
     }
   }
 
-  if(c != NULL)
+  if(c != NULL) {
+    if(w->glw_flags2 & GLW2_DEBUG)
+      printf("Copy %c%c%c %d %d %f constraints from %s\n",
+             c->glw_flags & GLW_CONSTRAINT_X ? 'X' : ' ',
+             c->glw_flags & GLW_CONSTRAINT_Y ? 'Y' : ' ',
+             c->glw_flags & GLW_CONSTRAINT_W ? 'W' : ' ',
+             c->glw_req_size_x,
+             c->glw_req_size_y,
+             c->glw_req_weight,
+             glw_get_path(c)
+             );
     glw_copy_constraints(w, c);
+  }
   else
     glw_clear_constraints(w);
 

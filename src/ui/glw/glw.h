@@ -1173,16 +1173,6 @@ typedef struct glw {
 #endif
 } glw_t;
 
-
-#define glw_have_x_constraint(w) (((w)->glw_flags & GLW_CONSTRAINT_X) \
-                       && !((w)->glw_flags & GLW_CONSTRAINT_IGNORE_X))
-#define glw_have_y_constraint(w) (((w)->glw_flags & GLW_CONSTRAINT_Y) \
-                       && !((w)->glw_flags & GLW_CONSTRAINT_IGNORE_Y))
-#define glw_have_w_constraint(w) (((w)->glw_flags & GLW_CONSTRAINT_W) \
-                       && !((w)->glw_flags & GLW_CONSTRAINT_IGNORE_W))
-#define glw_have_f_constraint(w) (((w)->glw_flags & GLW_CONSTRAINT_F) \
-                       && !((w)->glw_flags & GLW_CONSTRAINT_IGNORE_F))
-
 static __inline int
 glw_filter_constraints(const glw_t *w)
 {

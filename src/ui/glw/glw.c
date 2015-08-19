@@ -1237,6 +1237,8 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how, const char *whom)
 #endif
 
   if(w != NULL) {
+    glw_need_refresh(gr, 0);
+
     GLW_TRACE("Focus set to %s:%d bt %s",
               rstr_get(w->glw_file), w->glw_line, whom);
 
@@ -2442,14 +2444,21 @@ glw_get_path_r(char *buf, size_t buflen, glw_t *w)
   if(ident == NULL)
     ident = rstr_get(w->glw_id_rstr);
 
-  snprintf(buf + strlen(buf), buflen - strlen(buf), "%s%s%s%s%s%s%s%s",
+  snprintf(buf + strlen(buf), buflen - strlen(buf), "%s[%s%s%s%s%s%s%s@%s:%d]",
 	   strlen(buf) ? "." : "", w->glw_class->gc_name,
 	   w->glw_flags & GLW_FOCUS_BLOCKED ? "<B>" : "",
 	   w->glw_flags & GLW_DESTROYING    ? "<D>" : "",
 	   w->glw_flags & GLW_HIDDEN        ? "<H>" : "",
 	   ident ? "(" : "",
 	   ident ?: "",
-	   ident ? ")" : "");
+	   ident ? ")" : "",
+#ifdef DEBUG
+           rstr_get(w->glw_file),
+           w->glw_line
+#else
+           "?", 0
+#endif
+           );
 }
 
 /**
