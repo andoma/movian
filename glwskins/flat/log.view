@@ -21,7 +21,7 @@ widget(container_y, {
 	caption: $self.prefix + $self.message;
 	ellipsize: true;
 	font: "dataroot://res/fonts/UbuntuMono-Regular.ttf";
-	sizeScale: 0.8;
+	size: 0.8em;
 
 	color: translate($self.severity, [1,1,1],
 			 "DEBUG", [0.5, 1, 0.5],

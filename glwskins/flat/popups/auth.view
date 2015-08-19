@@ -3,6 +3,7 @@
 onEvent(cancel, deliverEvent($self.eventSink));
 onEvent(back,   deliverEvent($self.eventSink, "cancel"));
 
+widget(cursor, {
 widget(container_x, {
   space(0.2);
 
@@ -10,92 +11,138 @@ widget(container_x, {
     align: center;
     filterConstraintX: true;
 
-    popupGroup(
+    widget(container_z, {
+
+      widget(quad, {
+        style: "popupBackdrop";
+      });
 
       widget(container_y, {
-        filterConstraintX: true;
-	spacing: 4;
-	widget(container_x, {
-	  spacing: 10;
-	  widget(icon, {
-	    source: "skin://icons/ic_lock_48px.svg";
-	    sizeScale: 2;
-	  });
+        style: "popupContainer";
 
-	  widget(container_y, {
-	    widget(label, {
-	      align: left;
-	      caption: $self.source ?? $self.id;
-	    });
-	    widget(label, {
-	      align: left;
-	      caption: $self.reason;
-	    });
-	  });
-	});
+        widget(table, {
+          widget(container_y, {
+            spacing: 0.25em;
 
-	widget(label, {
-	  hidden: $self.disableUsername;
-	  caption: _("Username");
-	});
+	    widget(container_x, {
+              tableMode: true;
+              style: "popupRow";
 
-	popupInputField(
-	  hidden: $self.disableUsername;
- 	  widget(text, {
-	    description: _("Username");
-	    id: "username";
-	    focusable: true;
-	    bind($self.username);
+	      widget(icon, {
+	        source: "skin://icons/ic_lock_48px.svg";
+                align: center;
+                size: 2em;
+	      });
 
-	    onEvent(enter, deliverEvent($self.eventSink, "Ok"),
-		   $self.username);
-	  });
-	);
+	      widget(container_y, {
+	        widget(label, {
+	          align: left;
+	          caption: $self.source ?? $self.id;
+	        });
+	        widget(label, {
+	          align: left;
+	          caption: $self.reason;
+	        });
+	      });
+            });
 
-	widget(label, {
-	  hidden: $self.disablePassword;
-	  caption: _("Password");
-	});
+            widget(container_x, {
+              tableMode: true;
+	      hidden: $self.disableUsername;
+              style: "popupRow";
 
-	popupInputField(
-	  hidden: $self.disablePassword;
-	  widget(text, {
-	    description: _("Password");
-	    id: "password";
-	    focusable: true;
-	    password: true;
-	    bind($self.password);
-	    onEvent(enter, deliverEvent($self.eventSink, "Ok"),
-		   $self.username);
-	  });
-	);
+	      widget(label, {
+	        caption: _("Username");
+                align: right;
+	      });
+
+ 	      widget(text, {
+                filterConstraintX: true;
+	        description: _("Username");
+	        id: "username";
+	        focusable: true;
+	        bind($self.username);
+
+	        onEvent(enter, deliverEvent($self.eventSink, "Ok"),
+		        $self.username);
+	      });
+            });
 
 
-	widget(label, {
-          hidden: $self.disableDomain;
-	  caption: _("Domain");
-	});
+            widget(container_x, {
+              style: "popupRow";
+	      hidden: $self.disablePassword;
+              tableMode: true;
 
-	popupInputField(
-          hidden: $self.disableDomain;
-	  widget(text, {
-	    description: _("Domain");
-	    id: "domain";
-	    focusable: true;
-	    bind($self.domain);
-	    onEvent(enter, deliverEvent($self.eventSink, "Ok"),
-		    $self.domain);
+	      widget(label, {
+	        caption: _("Password");
+                align: right;
+	      });
 
-	  });
-	);
+ 	      widget(text, {
+                filterConstraintX: true;
+	        description: _("Password");
+	        id: "password";
+	        focusable: true;
+	        password: true;
+	        bind($self.password);
+
+	        onEvent(enter, deliverEvent($self.eventSink, "Ok"),
+		        $self.password);
+	      });
+            });
+
+            widget(container_x, {
+              style: "popupRow";
+	      hidden: $self.disableDomain;
+              tableMode: true;
+
+	      widget(label, {
+	        caption: _("Domain");
+                align: right;
+	      });
+
+ 	      widget(text, {
+	        description: _("Domain");
+	        id: "domain";
+	        focusable: true;
+	        bind($self.domain);
+
+	        onEvent(enter, deliverEvent($self.eventSink, "Ok"),
+		        $self.domain);
+	      });
+            });
 
 
-	popupCheckbox($self.rememberMe, _("Remember me"), true,
-		      !$self.canRemember);
+            widget(container_x, {
+              style: "popupRow";
+	      hidden: !$self.canRemember;
+              tableMode: true;
+
+              focusable: true;
+              onEvent(activate, {
+                toggle($self.rememberMe);
+              });
+
+              widget(label, {
+                caption: _("Remember me");
+                align: right;
+              });
+
+              widget(icon, {
+                align: left;
+                source: select($self.rememberMe,
+                               "skin://icons/ic_check_box_48px.svg",
+                               "skin://icons/ic_check_box_outline_blank_48px.svg");
+              });
+            });
+          });
+        });
+
 
 	widget(container_x, {
 	  align: center;
-	  spacing: 20;
+	  spacing: 2em;
 	  homogenous: true;
 
 	  popupButtonOK(deliverEvent($self.eventSink, "OK"),
@@ -104,7 +151,20 @@ widget(container_x, {
 			    true, false);
 	});
       });
-    );
+    });
   });
   space(0.2);
+});
+  
+  widget(quad, {
+    zoffset: -100;
+    alpha: 0.6 * iir($ui.keyboard, 4);
+    additive: true;
+  });
+
+  widget(quad, {
+    zoffset: -100;
+    alpha: 0.1;
+    additive: true;
+  });
 });

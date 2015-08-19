@@ -4,6 +4,7 @@
     style: "ListItemBevel";
 
     filterConstraintY: true;
+    filterConstraintX: true;
     widget(quad, {
       height: 1;
       alpha: 0.15;

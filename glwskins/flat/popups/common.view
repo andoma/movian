@@ -1,3 +1,21 @@
+#import "skin://theme.view"
+
+
+
+style(popupBackdrop, {
+  alpha: 0.5;
+  color: 0;
+});
+
+style(popupContainer, {
+  padding: 1em;
+  filterConstraintX: true;
+});
+
+style(popupRow, {
+  padding: [1em, 0.25em];
+  spacing: 1em;
+});
 
 #define popupGroup(BODY) {
   widget(container_z, {
@@ -46,21 +64,21 @@
 
 #define popupButtonOK(EVENT, ENABLED, HIDDEN) {
 
-  widget(backdrop, {
-    source: "skin://graphics/border-tiny.png";
-    borderOnly: true;
-    border: 4;
-    padding: [0,0,$ui.size,0];
+  widget(container_z, {
+    height: 2em;
+
+    GridItemBevel();
+
     hidden: HIDDEN;
     focusable: ENABLED;
     onEvent(activate, EVENT);
 
-    alpha: select(isHovered() || isNavFocused(), 1, 0.5);
-
     widget(container_x, {
+      padding: [1em, 0];
       align: center;
+
       widget(icon, {
-	source: "dataroot://res/svg/Check.svg";
+	source: "skin://icons/ic_chevron_right_48px.svg";
       });
       widget(label, {
 	caption: _("OK");
@@ -71,22 +89,20 @@
 }
 
 #define popupButtonCancel(EVENT, ENABLED, HIDDEN) {
+  widget(container_z, {
+    height: 2em;
 
-  widget(backdrop, {
-    source: "skin://graphics/border-tiny.png";
-    borderOnly: true;
-    border: 4;
-    padding: [0,0,$ui.size,0];
+    GridItemBevel();
+
     hidden: HIDDEN;
     focusable: ENABLED;
     onEvent(activate, EVENT);
 
-    alpha: select(isHovered() || isFocused(), 1, 0.5);
-
     widget(container_x, {
-      align: center;
+      padding: [1em, 0];
+
       widget(icon, {
-	source: "dataroot://res/svg/Delete.svg";
+	source: "skin://icons/ic_cancel_48px.svg";
       });
       widget(label, {
 	caption: _("Cancel");
@@ -95,34 +111,3 @@
   });
 }
 
-#define popupCheckbox(STATE, CAPTION, ENABLED, HIDDEN) {
-
-  widget(container_x, {
-    .align = center;
-    .spacing = 5;
-    .hidden = HIDDEN;
-    .focusable = ENABLED;
-    .alpha = select(isHovered() || isFocused(), 1, 0.5);
-    onEvent(activate, {
-      (STATE) = !STATE;
-    });
-      
-
-    widget(backdrop, {
-      .width = $ui.size + 2;
-      .source = "skin://graphics/border-tiny.png";
-      .borderOnly = true;
-      .border = 4;
-      .padding = -3;
-      .color = 0.5;
-      widget(image, {
-	.source = "dataroot://res/svg/Check.svg";
-	.alpha = select(STATE, 1, 0);
-      });
-    });
-
-    widget(label, {
-      .caption = CAPTION;
-    });
-  });
-}

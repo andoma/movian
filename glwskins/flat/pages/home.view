@@ -36,7 +36,6 @@
 
     widget(icon, {
       source: "skin://icons/ic_info_outline_48px.svg";
-      sizeScale: 1;
     });
 
     widget(label, {
