@@ -91,13 +91,9 @@ static htsmsg_t *stos_artifacts;
  *   .status   upToDate
  *             checking
  *             canUpgrade
- *             prepare
  *             download
- *             patch
- *             installing
  *             upgradeError
  *             checkError
- *             countdown
  *   .errorstr
  *   .downloadSize
  *   .progress (in percent)
