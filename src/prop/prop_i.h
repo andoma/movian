@@ -543,6 +543,8 @@ void prop_suggest_focus0(prop_t *p);
 
 void prop_unsubscribe0(prop_sub_t *s);
 
+rstr_t *prop_get_name0(prop_t *p);
+
 void prop_notify_child2(prop_t *child, prop_t *parent, prop_t *sibling,
 			prop_event_t event, prop_sub_t *skipme, int flags);
 

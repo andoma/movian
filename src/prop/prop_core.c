@@ -117,14 +117,20 @@ propname(prop_t *p)
  *
  */
 rstr_t *
+prop_get_name0(prop_t *p)
+{
+  return p->hp_name ? rstr_alloc(p->hp_name) : NULL;
+}
+
+
+/**
+ *
+ */
+rstr_t *
 prop_get_name(prop_t *p)
 {
-  rstr_t *r;
   hts_mutex_lock(&prop_mutex);
-  if(p->hp_name != NULL)
-    r = rstr_alloc(p->hp_name);
-  else
-    r = NULL;
+  rstr_t *r = prop_get_name0(p);
   hts_mutex_unlock(&prop_mutex);
   return r;
 }

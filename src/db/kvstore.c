@@ -26,7 +26,7 @@
 
 #include "config.h"
 #include "main.h"
-#include "prop/prop.h"
+#include "prop/prop_i.h"
 #include "kvstore.h"
 #include "misc/callout.h"
 #include "misc/bytestream.h"
@@ -135,12 +135,16 @@ kvstore_init(void)
 
 
 typedef struct kv_prop_bind {
-  uint64_t kpb_id;  // ID of row in URL table
-  prop_sub_t *kpb_sub;
-  int kpb_init;
-  char *kpb_url;
-  rstr_t *kpb_name;
+  rstr_t *kpb_url;
+  uint64_t kpb_id;
 } kv_prop_bind_t;
+
+
+typedef struct kv_prop_bind_value {
+  rstr_t *kpbv_name;
+  rstr_t *kpbv_url;
+  uint64_t kpbv_id;  // ID of row in URL table
+} kv_prop_bind_value_t;
 
 
 /**
@@ -197,28 +201,36 @@ get_url(void *db, const char *url, uint64_t *id)
 }
 
 
+
+/**
+ *
+ */
+static void
+kpbv_destroy(kv_prop_bind_value_t *kpbv)
+{
+  rstr_release(kpbv->kpbv_name);
+  rstr_release(kpbv->kpbv_url);
+  free(kpbv);
+}
+
 /**
  *
  */
 static void
 kv_value_cb(void *opaque, prop_event_t event, ...)
 {
-  kv_prop_bind_t *kpb = opaque;
+  kv_prop_bind_value_t *kpbv = opaque;
   va_list ap, apx;
   void *db;
   sqlite3_stmt *stmt;
   int rc;
 
   va_start(ap, event);
-
   switch(event) {
-  case PROP_VALUE_PROP:
-    rstr_release(kpb->kpb_name);
-    kpb->kpb_name = prop_get_name(va_arg(apx, prop_t *));
-    break;
 
   case PROP_DESTROYED:
     prop_unsubscribe(va_arg(ap, prop_sub_t *));
+    kpbv_destroy(kpbv);
     break;
 
   case PROP_SET_VOID:
@@ -227,7 +239,7 @@ kv_value_cb(void *opaque, prop_event_t event, ...)
   case PROP_SET_INT:
   case PROP_SET_FLOAT:
 
-    if(kpb->kpb_name == NULL)
+    if(kpbv->kpbv_name == NULL)
       break;
 
     db = kvstore_get();
@@ -238,9 +250,9 @@ kv_value_cb(void *opaque, prop_event_t event, ...)
     if(db_begin(db))
       break;
 
-    if(kpb->kpb_id == -1) {
+    if(kpbv->kpbv_id == -1) {
 
-      rc = get_url(db, kpb->kpb_url, &kpb->kpb_id);
+      rc = get_url(db, rstr_get(kpbv->kpbv_url), &kpbv->kpbv_id);
       if(rc == SQLITE_LOCKED) {
         db_rollback_deadlock(db);
 	goto again;
@@ -274,7 +286,7 @@ kv_value_cb(void *opaque, prop_event_t event, ...)
       return;
     }
 
-    sqlite3_bind_int64(stmt, 1, kpb->kpb_id);
+    sqlite3_bind_int64(stmt, 1, kpbv->kpbv_id);
     sqlite3_bind_int(stmt, 4, KVSTORE_DOMAIN_PROP);
 
     va_copy(apx, ap);
@@ -300,7 +312,7 @@ kv_value_cb(void *opaque, prop_event_t event, ...)
       break;
     }
 
-    db_bind_rstr(stmt, 2, kpb->kpb_name);
+    db_bind_rstr(stmt, 2, kpbv->kpbv_name);
 
     rc = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
@@ -320,17 +332,17 @@ kv_value_cb(void *opaque, prop_event_t event, ...)
 }
 
 
+
 /**
  *
  */
 static void
 kpb_destroy(kv_prop_bind_t *kpb)
 {
-  prop_unsubscribe(kpb->kpb_sub);
-  rstr_release(kpb->kpb_name);
-  free(kpb->kpb_url);
+  rstr_release(kpb->kpb_url);
   free(kpb);
 }
+
 
 /**
  *
@@ -339,6 +351,7 @@ static void
 kv_cb(void *opaque, prop_event_t event, ...)
 {
   kv_prop_bind_t *kpb = opaque;
+  kv_prop_bind_value_t *kpbv;
   va_list ap;
   prop_t *p;
   prop_vec_t *pv;
@@ -350,25 +363,36 @@ kv_cb(void *opaque, prop_event_t event, ...)
   case PROP_ADD_CHILD:
   case PROP_ADD_CHILD_BEFORE:
     p = va_arg(ap, prop_t *);
+    kpbv = calloc(1, sizeof(kv_prop_bind_value_t));
+    kpbv->kpbv_id = kpb->kpb_id;
+    kpbv->kpbv_name = prop_get_name(p);
+    kpbv->kpbv_url = rstr_dup(kpb->kpb_url);
+
     prop_subscribe(PROP_SUB_TRACK_DESTROY,
-		   PROP_TAG_CALLBACK, kv_value_cb, kpb,
-		   PROP_TAG_ROOT, p,
-		   NULL);
+                   PROP_TAG_CALLBACK, kv_value_cb, kpbv,
+                   PROP_TAG_ROOT, p,
+                   NULL);
     break;
 
   case PROP_ADD_CHILD_VECTOR_DIRECT:
     pv = va_arg(ap, prop_vec_t *);
-    for(i = 0; i < prop_vec_len(pv); i++)
-      prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_NO_INITIAL_UPDATE |
-		     PROP_SUB_DONTLOCK,
-		     PROP_TAG_CALLBACK, kv_value_cb, kpb,
-		     PROP_TAG_ROOT, prop_vec_get(pv, i),
-		     NULL);
+    for(i = 0; i < prop_vec_len(pv); i++) {
+      p = prop_vec_get(pv, i);
+      kpbv = calloc(1, sizeof(kv_prop_bind_value_t));
+      kpbv->kpbv_id = kpb->kpb_id;
+      kpbv->kpbv_url = rstr_dup(kpb->kpb_url);
+      kpbv->kpbv_name = prop_get_name0(p);
+
+      prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_DONTLOCK,
+                     PROP_TAG_CALLBACK, kv_value_cb, kpbv,
+                     PROP_TAG_ROOT, p,
+                     NULL);
+    }
     break;
 
   case PROP_DEL_CHILD:
-  case PROP_MOVE_CHILD:
   case PROP_SET_VOID:
+  case PROP_MOVE_CHILD:
   case PROP_SET_DIR:
   case PROP_REQ_DELETE_VECTOR:
   case PROP_HAVE_MORE_CHILDS_YES:
@@ -377,6 +401,7 @@ kv_cb(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_DESTROYED:
+    prop_unsubscribe(va_arg(ap, prop_sub_t *));
     kpb_destroy(kpb);
     break;
 
@@ -446,13 +471,12 @@ kv_prop_bind_create(prop_t *p, const char *url)
 
   kv_prop_bind_t *kpb = calloc(1, sizeof(kv_prop_bind_t));
   kpb->kpb_id = id;
-  kpb->kpb_url = strdup(url);
+  kpb->kpb_url = rstr_alloc(url);
 
-  kpb->kpb_sub =
-    prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_DIRECT_UPDATE,
-		   PROP_TAG_CALLBACK, kv_cb, kpb,
-		   PROP_TAG_ROOT, p,
-		   NULL);
+  prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_DIRECT_UPDATE,
+                 PROP_TAG_CALLBACK, kv_cb, kpb,
+                 PROP_TAG_ROOT, p,
+                 NULL);
 }
 
 
