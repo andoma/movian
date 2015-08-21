@@ -5,6 +5,7 @@ widget(container_z, {
   GridItemBevel();
 
   focusable: true;
+  onEvent(activate, navOpen($self.url, void, $self, $parent.model, void, $parent.url));
 
   widget(container_y, {
     style: "GridItem";

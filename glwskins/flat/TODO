@@ -5,11 +5,7 @@ Add scroll bar to list view
 
 Rework  $view.currentPageClone <- focusedClone();
 
-All list items
-
 Item menu for other items
-
-playdecks for audio playback
 
 screen saver
 
@@ -21,10 +17,15 @@ Images
 
 Fix gravity of log view
 
+Sleep timer
+
+Master volume in sidebar
+
 ---------------
 -- Polish -----
 ---------------
 
+Audio playdeck
 
 ---------------
 -- questions

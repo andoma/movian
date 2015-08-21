@@ -1,9 +1,10 @@
+#import "skin://theme.view"
+
 widget(container_z, {
 
-  widget(quad, {
-    color: 0;
-    alpha: 0.4;
-  });
+  GridItemBevel();
+
+  focusable: true;
 
   widget(container_x, {
     height: 5em;
