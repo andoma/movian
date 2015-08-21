@@ -2,25 +2,33 @@
 
 widget(container_z, {
 
+  focusable: true;
+  onEvent(activate, navOpen($self.url, void, $self, $parent.model, void, $parent.url));
+
   GridItemBevel();
 
-  focusable: true;
+  widget(image, {
+    margin: 0.5em;
+    source: $self.metadata.icon;
+  });
 
-  widget(container_x, {
-    height: 5em;
-    spacing: 1em;
+  widget(container_y, {
+    align: bottom;
 
-    widget(image, {
-      aspectConstraint: true;
-      source: $self.metadata.icon;
-    });
+    widget(container_z, {
 
-    widget(container_y, {
-      padding: [0, 0.5em];
-      widget(label, {
-        caption: $self.metadata.title;
+      widget(quad, {
+        color: 0;
+        alpha: 0.5;
+      });
+
+      widget(container_y, {
+        padding: [0, 0.25em];
+        widget(label, {
+          caption: $self.metadata.title;
+          align: center;
+        });
       });
     });
-
   });
 });
