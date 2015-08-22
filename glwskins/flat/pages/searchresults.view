@@ -1,3 +1,4 @@
+#import "skin://theme.view"
 #import "skin://styles/style_list.view"
 
 widget(container_y, {
@@ -10,7 +11,13 @@ widget(container_y, {
     size: 2em;
   });
 
+  style(RectIcon, {
+    align: left;
+  });
+
   widget(list_y, {
+
+    $view.width = getWidth();
 
     spacing: 1em;
     padding: [2em, 0, 2em, 2em];
@@ -28,28 +35,54 @@ widget(container_y, {
         spacing: 1em;
 
         widget(label, {
-          filterConstraintX: true;
-          caption: $self.metadata.title;
-          size: 2em;
+          caption: fmt('%s <font size="2" color="#aaaaaa">- %s',
+                       $self.metadata.title,
+                       fmt(_("%d results"), $self.entries));
+          size: 1.5em;
         });
 
-        widget(label, {
-          caption: $self.entries;
-        });
+
 
       });
       widget(container_x, {
+
+        height: 5em;
         padding: [2em, 0];
-        spacing: 2em;
+        spacing: $view.width / 30;
 
         cloner(propWindow($self.nodes, 0, 3), loader, {
-//          weight: -3;
-          filterConstraintX: true;
-          time: 0.1;
-          effect: blend;
-          noInitialTransform: true;
+          width: $view.width / 6;
           alt: "skin://items/rect/default.view";
           source: "skin://items/rect/" + $self.type + ".view";
+        });
+
+        widget(container_z, {
+          hidden: $self.entries < 4;
+          width: $view.width / 6;
+          GridItemBevel();
+
+          focusable: true;
+          onEvent(activate, navOpen($self.url));
+
+          widget(container_y, {
+            align: bottom;
+
+            widget(container_z, {
+
+              widget(quad, {
+                color: 0;
+                alpha: 0.5;
+              });
+
+              widget(container_y, {
+                padding: [0.25em, 0.25em];
+                widget(label, {
+                  caption: _("Show more");
+                  align: center;
+                });
+              });
+            });
+          });
         });
       });
     });

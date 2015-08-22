@@ -8,7 +8,7 @@ widget(container_z, {
   GridItemBevel();
 
   widget(image, {
-    margin: 0.5em;
+    style: "RectIcon";
     source: $self.metadata.icon;
   });
 
@@ -19,11 +19,11 @@ widget(container_z, {
 
       widget(quad, {
         color: 0;
-        alpha: 0.5;
+        alpha: 0.8;
       });
 
       widget(container_y, {
-        padding: [0, 0.25em];
+        padding: [0.25em, 0.25em];
         widget(label, {
           caption: $self.metadata.title;
           align: center;

@@ -9,9 +9,9 @@ widget(container_z, {
 
   widget(container_y, {
     style: "GridItem";
+    padding: 0.25em;
 
     widget(image, {
-      margin: 0.5em;
       source: $self.url;
     });
   });

@@ -1,6 +1,4 @@
 
-Fix search view
-
 Add scroll bar to list view
 
 Rework  $view.currentPageClone <- focusedClone();
