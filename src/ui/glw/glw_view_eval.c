@@ -3995,13 +3995,23 @@ glwf_scurve_dtor(glw_root_t *gr, struct token *self)
  *
  */
 static int
-fmt_add_string(char *out, int len, const char *str)
+fmt_add_string(char *out, int len, const char *str, int out_is_rich,
+               int str_is_rich)
 {
   char c;
-  while((c = *str++)) {
-    if(out)
-      out[len] = c;
-    len++;
+
+  if(out_is_rich && !str_is_rich) {
+
+    len += html_enteties_escape(str, out ? out + len : NULL) - 1;
+
+  } else {
+
+    while((c = *str++)) {
+      if(out)
+        out[len] = c;
+      len++;
+    }
+
   }
   return len;
 }
@@ -4077,7 +4087,8 @@ fmt_add_float(char *out, int len, float v, int zeropad, int fl1, int fl2)
  * String formating internal
  */
 static size_t
-dofmt(char *out, const char *fmt, token_t **argv, unsigned int argc)
+dofmt(char *out, const char *fmt, token_t **argv, unsigned int argc,
+      int rich)
 {
   size_t len = 0;
   char c;
@@ -4175,13 +4186,15 @@ dofmt(char *out, const char *fmt, token_t **argv, unsigned int argc)
 	  len = fmt_add_float(out, len, arg->t_float, zeropad, fl1, fl2);
 	  break;
 	case TOKEN_RSTRING:
-	  len = fmt_add_string(out, len, rstr_get(arg->t_rstring));
+	  len = fmt_add_string(out, len, rstr_get(arg->t_rstring),
+                               rich, arg->t_rstrtype);
 	  break;
 	case TOKEN_CSTRING:
-	  len = fmt_add_string(out, len, arg->t_cstring);
+	  len = fmt_add_string(out, len, arg->t_cstring, rich, 0);
 	  break;
 	case TOKEN_URI:
-	  len = fmt_add_string(out, len, rstr_get(arg->t_uri_title));
+          len = fmt_add_string(out, len, rstr_get(arg->t_uri_title),
+                               rich, 0);
 	  break;
 	default:
 	  break;
@@ -4215,7 +4228,19 @@ glwf_fmt(glw_view_eval_context_t *ec, struct token *self,
   if((a = token_resolve(ec, a)) == NULL)
     return -1;
 
-  if((fmt = token_as_string(a)) == NULL) {
+  int rich = 0;
+  switch(a->type) {
+  case TOKEN_RSTRING:
+    fmt = rstr_get(a->t_rstring);
+    rich = a->t_rstrtype;
+    break;
+  case TOKEN_URI:
+    fmt = rstr_get(a->t_rstring);
+    break;
+  case TOKEN_CSTRING:
+    fmt = a->t_cstring;
+    break;
+  default:
     r = eval_alloc(self, ec, TOKEN_RSTRING);
     r->t_rstring = rstr_alloc("");
     eval_push(ec, r);
@@ -4233,10 +4258,11 @@ glwf_fmt(glw_view_eval_context_t *ec, struct token *self,
     res_args = NULL;
   }
 
-  size_t len = dofmt(NULL, fmt, res_args, num_res_args);
+  size_t len = dofmt(NULL, fmt, res_args, num_res_args, rich);
   r = eval_alloc(self, ec, TOKEN_RSTRING);
   r->t_rstring  = rstr_allocl(NULL, len);
-  dofmt(rstr_data(r->t_rstring), fmt, res_args, num_res_args);
+  r->t_rstrtype = rich;
+  dofmt(rstr_data(r->t_rstring), fmt, res_args, num_res_args, rich);
   eval_push(ec, r);
   return 0;
 }
