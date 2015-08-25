@@ -140,7 +140,7 @@ glw_view_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 	      while(1) {
 		t = p->next;
 		if(t->type == TOKEN_END)
-		  return glw_view_seterr(ei, t, "Unexpected end of input in "
+		  return glw_view_seterr(ei, p, "Unexpected end of input in "
 					 "macro invokation");
 		
 		if(t->type == TOKEN_RIGHT_PARENTHESIS && balance == 0)
@@ -185,7 +185,7 @@ glw_view_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 	      while(1) {
 		t = p->next;
 		if(t->type == TOKEN_END)
-		  return glw_view_seterr(ei, t, "Unexpected end of input in "
+		  return glw_view_seterr(ei, p, "Unexpected end of input in "
 					 "macro invokation");
 	      
 		if(t->type == TOKEN_RIGHT_PARENTHESIS && balance == 0) {
@@ -432,7 +432,7 @@ glw_view_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 	while(1) {
 	  t = p->next;
 	  if(t->type == TOKEN_END)
-	    return glw_view_seterr(ei, t, "Unexpected end of input in "
+	    return glw_view_seterr(ei, x->next, "Unexpected end of input in "
 				   "macro definition");
 	  
 	  if(t->type == TOKEN_BLOCK_CLOSE) {

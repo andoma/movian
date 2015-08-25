@@ -66,6 +66,12 @@ widget(container_z, {
             autohide: true;
 	    source: select($ui.logwindow, "log.view", "");
 	  });
+
+          widget(loader, {
+            autohide: true;
+	    source: select($ui.osk.show, "osk.view", "");
+	  });
+
         });
 
         widget(container_y, {

@@ -27,6 +27,7 @@ widget(container_y, {
       color: 0;
       alpha: 0.75;
     });
+
     widget(container_y, {
       padding: $ui.size;
       spacing: 4;
@@ -36,17 +37,17 @@ widget(container_y, {
 	caption: $ui.osk.title;
 	shadow: true;
       });
-      
+
       widget(container_x, {
 	spacing: 4;
 	height: $ui.size * 2;
 
-	widget(backdrop, {
+        widget(backdrop, {
 	  weight: 10;
 	  filterConstraintX: true;
 	  filterConstraintY: true;
-	  source: "pixmap:gradient:30,30,30:50,50,60";
-	  cornerRadius: 4;
+	  source: "skin://graphics/border-tiny.png";
+          border: 3;
 	  widget(text, {
 	    password: $ui.osk.password;
 	    oskPassword: true;
@@ -72,8 +73,8 @@ widget(container_y, {
       });
 
       widget(container_x, {
-        height: $ui.size * 2;
-        spacing: $ui.size;
+        height: 2em;
+        spacing: 1em;
 
         space(6);
 
@@ -81,12 +82,10 @@ widget(container_y, {
 	ACTION("→", targetedEvent("opt", Increase), 1, false, $view.canLayoutNext);
 
 
-        widget(container_y, {
+        widget(container_x, {
           weight: 6;
           filterConstraintX: true;
-
           widget(label, {
-            shadow: true;
             caption: _("Keyboard layout:");
           });
 
@@ -94,14 +93,11 @@ widget(container_y, {
             $view.canLayoutPrev = canSelectPrevious();
             $view.canLayoutNext = canSelectNext();
 
-            width: $ui.size * 8;
             id: "opt";
             effect: blend;
             time: 0.1;
 
             cloner($view.selopt.options, label, {
-              align: left;
-	      shadow: true;
 	      caption: $self.title;
             });
           });
