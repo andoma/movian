@@ -372,6 +372,7 @@ asyncio_dopoll(void)
       if(getsockopt(af->af_fd, SOL_SOCKET, SO_ERROR, (void *)&err, &errlen)) {
         TRACE(TRACE_ERROR, "ASYNCIO", "getsockopt failed for 0x%x -- %s",
               af->af_fd, strerror(errno));
+        af->af_callback(af, af->af_opaque, ASYNCIO_ERROR, ENOBUFS);
       } else {
         if(err) {
           af->af_callback(af, af->af_opaque, ASYNCIO_ERROR, err);
