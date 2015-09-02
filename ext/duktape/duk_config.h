@@ -551,6 +551,17 @@ static __inline__ unsigned long long duk_rdtsc(void) {
 #include <sys/param.h>
 #include <sys/time.h>
 #include <time.h>
+#elif defined(__PPU__)
+/* PS3 PPU */
+#define DUK_USE_DATE_NOW_GETTIMEOFDAY
+#define DUK_USE_DATE_TZO_GMTIME_R
+#define DUK_USE_DATE_PRS_STRPTIME
+#define DUK_USE_DATE_FMT_STRFTIME
+#include <sys/types.h>
+#include <limits.h>
+#include <sys/param.h>
+#include <sys/time.h>
+#include <time.h>
 #else
 /* Other UNIX, hopefully others */
 #define DUK_USE_DATE_NOW_GETTIMEOFDAY
