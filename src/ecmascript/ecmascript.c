@@ -343,7 +343,11 @@ es_modsearch(duk_context *ctx)
     if(m == NULL)
       duk_error(ctx, DUK_ERR_ERROR, "Can't find native module %s", id);
 
-    duk_put_function_list(ctx, 2, m->functions);
+    for(int i = 0; m->functions[i].key != NULL; i++) {
+      duk_push_c_lightfunc(ctx, m->functions[i].value,
+                           m->functions[i].nargs, 0, 0);
+      duk_put_prop_string(ctx, 2, m->functions[i].key);
+    }
     return 0;
   }
 
