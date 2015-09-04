@@ -122,7 +122,7 @@ mp_add_track(prop_t *parent,
 void
 mp_add_track_off(prop_t *prop, const char *url)
 {
-  mp_add_track(prop, "Off", url, NULL, NULL, NULL, NULL, NULL, 100000, 1);
+  mp_add_track(prop, "Off", url, NULL, NULL, NULL, NULL, NULL, 1000000, 1);
 }
 
 
