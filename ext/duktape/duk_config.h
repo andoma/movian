@@ -170,6 +170,11 @@ static __inline__ unsigned long long duk_rdtsc(void) {
 /* PowerPC */
 #if defined(__powerpc) || defined(__powerpc__) || defined(__PPC__)
 #define DUK_F_PPC
+#if defined(__PPC64__)
+#define DUK_F_PPC64
+#else
+#define DUK_F_PPC32
+#endif
 #endif
 
 /* Linux */
@@ -1508,8 +1513,8 @@ typedef struct duk_hthread duk_context;
 #define DUK_USE_PACKED_TVAL_POSSIBLE
 #endif
 
-/* PPC: packed always possible */
-#if !defined(DUK_USE_PACKED_TVAL_POSSIBLE) && defined(DUK_F_PPC)
+/* PPC32: packed always possible */
+#if !defined(DUK_USE_PACKED_TVAL_POSSIBLE) && defined(DUK_F_PPC32)
 #define DUK_USE_PACKED_TVAL_POSSIBLE
 #endif
 
@@ -2031,6 +2036,18 @@ typedef FILE duk_file;
 #define DUK_ALWAYS_INLINE  /*nop*/
 #endif
 
+/* Temporary workaround for GH-323: avoid inlining control when
+ * compiling from multiple sources, as it causes compiler trouble.
+ */
+#if !defined(DUK_SINGLE_FILE)
+#undef DUK_NOINLINE
+#undef DUK_INLINE
+#undef DUK_ALWAYS_INLINE
+#define DUK_NOINLINE       /*nop*/
+#define DUK_INLINE         /*nop*/
+#define DUK_ALWAYS_INLINE  /*nop*/
+#endif
+
 /*
  *  Symbol visibility macros
  *
@@ -2311,6 +2328,12 @@ typedef FILE duk_file;
 
 /* Use a sliding window for lexer; slightly larger footprint, slightly faster. */
 #define DUK_USE_LEXER_SLIDING_WINDOW
+
+/* Transparent JSON.stringify() fastpath. */
+#undef DUK_USE_JSON_STRINGIFY_FASTPATH
+#if defined(DUK_OPT_JSON_STRINGIFY_FASTPATH)
+#define DUK_USE_JSON_STRINGIFY_FASTPATH
+#endif
 
 /*
  *  Tagged type representation (duk_tval)
@@ -3013,7 +3036,6 @@ typedef FILE duk_file;
 #define DUK_USE_JSON_EATWHITE_FASTPATH
 #define DUK_USE_JSON_ENC_RECLIMIT 1000
 #define DUK_USE_JSON_QUOTESTRING_FASTPATH
-#undef DUK_USE_JSON_STRINGIFY_FASTPATH
 #undef DUK_USE_MARKANDSWEEP_FINALIZER_TORTURE
 #define DUK_USE_MARK_AND_SWEEP_RECLIMIT 256
 #define DUK_USE_NATIVE_CALL_RECLIMIT 1000
