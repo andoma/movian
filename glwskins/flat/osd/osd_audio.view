@@ -15,25 +15,25 @@ widget(container_z, {
       widget(list_y, {
         id: "list";
         alphaFallOff: 0.3;
-        cloner($self.media.subtitle.sorted, container_x, {
+        cloner($self.media.audio.sorted, container_x, {
 
 
           height: 1.5em;
 
-          onEvent(activate, selectSubtitleTrack($self.url));
+          onEvent(activate, selectAudioTrack($self.url));
           focusable: true;
 
           spacing: 0.5em;
 
           widget(icon, {
 	    source: "skin://icons/ic_favorite_48px.svg";
-	    alpha: iir($self.url == $parent.media.subtitle.current &&
-                       $parent.media.subtitle.manual, 4);
+	    alpha: iir($self.url == $parent.media.audio.current &&
+                       $parent.media.audio.manual, 4);
 	  });
 
           widget(icon, {
 	    source: "skin://icons/ic_check_48px.svg";
-	    alpha: iir($self.url == $parent.media.subtitle.current, 4);
+	    alpha: iir($self.url == $parent.media.audio.current, 4);
 	  });
 
 	  widget(label, {

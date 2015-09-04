@@ -809,6 +809,7 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
 	if(mp->mp_audio.mq_stream == -1) {
 	  mp->mp_audio.mq_stream = i;
 	  prop_set_stringf(mp->mp_prop_audio_track_current, "libav:%d", i);
+          prop_set_int(mp->mp_prop_audio_track_current_manual, 0);
 	}
 	break;
       default:

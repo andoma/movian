@@ -1,4 +1,6 @@
-#define OSD_SETTINGS_MENU(NODES) {
+#import "skin://theme.view"
+
+#define OSD_SETTINGS_MENU(NODES, FIXED_ITEM) {
 widget(container_z, {
 
   style(ListItemOuter, {
@@ -25,7 +27,9 @@ widget(container_z, {
         id: "list";
         alphaFallOff: 0.3;
 
-        cloner(NODES /*$self.media.video.settings.nodes */, loader, {
+        FIXED_ITEM;
+
+        cloner(NODES, loader, {
           hidden: !$self.enabled;
           source: "skin://items/list/" + $self.type + ".view";
           time: 0.3;

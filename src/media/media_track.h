@@ -18,20 +18,35 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 #pragma once
+
+#include "misc/redblack.h"
+
 TAILQ_HEAD(media_track_queue, media_track);
+RB_HEAD(media_track_tree, media_track);
+
 
 /**
  * Media pipe
  */
 typedef struct media_track_mgr {
 
+  prop_t *mtm_sorted_nodes;
+  prop_t *mtm_selector;
+
   prop_sub_t *mtm_node_sub;
   prop_sub_t *mtm_current_sub;
   prop_sub_t *mtm_url_sub;
+
   struct media_track_queue mtm_tracks;
+  struct media_track_tree mtm_sorted_tracks;
+
   struct media_track *mtm_suggested_track;
   struct media_track *mtm_current;
   struct media_pipe *mtm_mp;
+
+  char *mtm_current_url;
+  char *mtm_canonical_url;
+  rstr_t *mtm_user_pref;  // Configured by user
 
   enum {
     MEDIA_TRACK_MANAGER_AUDIO,
@@ -41,16 +56,13 @@ typedef struct media_track_mgr {
   int mtm_user_set; /* If set by user, and if so, we should not suggest
 		       anything */
 
-  char *mtm_current_url;
-  char *mtm_canonical_url;
-  rstr_t *mtm_user_pref;  // Configured by user
-
 } media_track_mgr_t;
 
 
 
 void mp_track_mgr_init(struct media_pipe *mp, media_track_mgr_t *mtm,
-                       prop_t *root, int type, prop_t *current);
+                       prop_t *root, int type, prop_t *current,
+                       prop_t *sorted_nodes);
 
 void mp_track_mgr_destroy(media_track_mgr_t *mtm);
 

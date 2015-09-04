@@ -162,6 +162,8 @@ mp_create(const char *name, int flags)
   mp->mp_setting_audio_root = prop_create(mp->mp_prop_audio, "settings");
   mq_init(&mp->mp_audio, mp->mp_prop_audio, &mp->mp_mutex, mp);
   mp->mp_prop_audio_track_current = prop_create(mp->mp_prop_audio, "current");
+  mp->mp_prop_audio_track_current_manual =
+    prop_create(mp->mp_prop_audio, "manual");
   mp->mp_prop_audio_tracks = prop_create(mp->mp_prop_metadata, "audiostreams");
   prop_set_string(mp->mp_prop_audio_track_current, "audio:off");
 
@@ -169,7 +171,8 @@ mp_create(const char *name, int flags)
                     &mp->mp_audio_track_mgr,
                     mp->mp_prop_audio_tracks,
                     MEDIA_TRACK_MANAGER_AUDIO,
-                    mp->mp_prop_audio_track_current);
+                    mp->mp_prop_audio_track_current,
+                    prop_create(mp->mp_prop_audio, "sorted"));
 
   //--------------------------------------------------
   // Subtitles
@@ -177,6 +180,7 @@ mp_create(const char *name, int flags)
   p = prop_create(mp->mp_prop_root, "subtitle");
   mp->mp_setting_subtitle_root = prop_create(p, "settings");
   mp->mp_prop_subtitle_track_current = prop_create(p, "current");
+  mp->mp_prop_subtitle_track_current_manual = prop_create(p, "manual");
   mp->mp_prop_subtitle_tracks = prop_create(mp->mp_prop_metadata,
 					    "subtitlestreams");
 
@@ -187,8 +191,8 @@ mp_create(const char *name, int flags)
                     &mp->mp_subtitle_track_mgr,
                     mp->mp_prop_subtitle_tracks,
                     MEDIA_TRACK_MANAGER_SUBTITLES,
-                    mp->mp_prop_subtitle_track_current);
-
+                    mp->mp_prop_subtitle_track_current,
+                    prop_create(p, "sorted"));
 
   //--------------------------------------------------
   // Buffer
@@ -297,9 +301,12 @@ mp_reset(media_pipe_t *mp)
   prop_destroy_childs(mp->mp_prop_subtitle_tracks);
 
   prop_set_void(mp->mp_prop_audio_track_current);
+  prop_set_int(mp->mp_prop_audio_track_current_manual, 0);
+
 
   mp_add_track_off(mp->mp_prop_subtitle_tracks, "sub:off");
   prop_set_string(mp->mp_prop_subtitle_track_current, "sub:off");
+  prop_set_int(mp->mp_prop_subtitle_track_current_manual, 0);
 }
 
 

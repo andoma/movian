@@ -443,6 +443,7 @@ get_packet_a(rtmp_t *r, uint8_t *data, int size, int64_t dts,
                  1);
 
     prop_set_string(mp->mp_prop_audio_track_current, "rtmp:1");
+    prop_set_int(mp->mp_prop_audio_track_current_manual, 0);
 
     r->acodec = media_codec_create(id, parse, NULL, NULL, &mcp, mp);
     return NULL;

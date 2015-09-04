@@ -24,6 +24,7 @@
 #include "misc/isolang.h"
 #include "i18n.h"
 #include "db/kvstore.h"
+#include "misc/minmax.h"
 
 #include "subtitles/ext_subtitles.h"
 #include "subtitles/dvdspu.h"
@@ -45,7 +46,7 @@ mp_add_trackr(prop_t *parent,
 	      rstr_t *isolang,
 	      rstr_t *source,
 	      prop_t *sourcep,
-	      int score,
+	      int basescore,
               int autosel)
 {
   prop_t *p = prop_create_root(NULL);
@@ -73,7 +74,7 @@ mp_add_trackr(prop_t *parent,
   }
 
   prop_set(p, "title", PROP_SET_RSTRING, title);
-  prop_set(p, "basescore", PROP_SET_INT, score);
+  prop_set(p, "basescore", PROP_SET_INT, basescore);
   prop_set(p, "autosel", PROP_SET_INT, autosel);
 
   if(prop_set_parent(p, parent))
@@ -94,7 +95,7 @@ mp_add_track(prop_t *parent,
 	     const char *isolang,
 	     const char *source,
 	     prop_t *sourcep,
-	     int score,
+	     int basescore,
              int autosel)
 {
   rstr_t *rtitle      = rstr_alloc(title);
@@ -104,7 +105,7 @@ mp_add_track(prop_t *parent,
   rstr_t *rsource     = rstr_alloc(source);
 
   prop_t *p = mp_add_trackr(parent, rtitle, url, rformat, rlongformat, risolang,
-                            rsource, sourcep, score, autosel);
+                            rsource, sourcep, basescore, autosel);
   prop_ref_dec(p);
   
   rstr_release(rtitle);
@@ -129,20 +130,28 @@ mp_add_track_off(prop_t *prop, const char *url)
 
 typedef struct media_track {
   TAILQ_ENTRY(media_track) mt_link;
+
+  RB_ENTRY(media_track) mt_sorted_link;
+
   prop_sub_t *mt_sub_url;
   char *mt_url;
 
   prop_sub_t *mt_sub_isolang;
-  int mt_isolang_score;
 
   prop_sub_t *mt_sub_basescore;
-  int mt_basescore;
 
   prop_sub_t *mt_sub_autosel;
-  int mt_autosel;
 
   media_track_mgr_t *mt_mtm;
   prop_t *mt_root;
+
+  prop_t *mt_sorted_node;
+
+  int mt_autosel;
+
+  int mt_isolang_score;
+  int mt_base_score;
+  int mt_final_score;
 
 } media_track_t;
 
@@ -175,24 +184,14 @@ mtm_send_sub_unload(media_pipe_t *mp)
   mb_enq(mp, &mp->mp_video, mb);
 }
 
+
 /**
  *
  */
 static void
-mtm_rethink(media_track_mgr_t *mtm)
+mtm_suggest(media_track_mgr_t *mtm)
 {
-  media_track_t *mt, *best = NULL;
-  int best_score = 0;
-
-  if (mtm->mtm_current_url) {
-    TAILQ_FOREACH(mt, &mtm->mtm_tracks, mt_link)
-      if(mt->mt_url != NULL && !strcmp(mt->mt_url, mtm->mtm_current_url))
-	break;
-  } else
-    mt = NULL;
-
-  if(mt != NULL)
-    prop_select_ex(mt->mt_root, NULL, mtm->mtm_node_sub);
+  media_track_t *mt;
 
   if(TAILQ_FIRST(&mtm->mtm_tracks) == NULL) {
     // All tracks deleted, clear the user-has-configured flag
@@ -209,56 +208,76 @@ mtm_rethink(media_track_mgr_t *mtm)
   if(mtm->mtm_user_set)
     return;
 
-  TAILQ_FOREACH(mt, &mtm->mtm_tracks, mt_link) {
-    if(mt->mt_url == NULL ||
-       mt->mt_basescore == -1 ||
-       mt->mt_autosel == -1 ||
-       mt->mt_isolang_score == -1)
+  RB_FOREACH(mt, &mtm->mtm_sorted_tracks, mt_sorted_link) {
+    if(mt->mt_url == NULL)
       continue;
-
-    if(mtm->mtm_user_pref != NULL && !strcmp(rstr_get(mtm->mtm_user_pref),
-					     mt->mt_url)) {
-
-      mtm->mtm_user_set = 1;
-      TRACE(TRACE_DEBUG, "media",
-            "Selecting track %s (previously selected by user)",
-            mt->mt_url);
-      event_t *e = event_create_select_track(mt->mt_url,
-					     mtm_event_type(mtm), 0);
-      mp_enqueue_event_locked(mtm->mtm_mp, e);
-      event_release(e);
-      return;
-    }
 
     if(!strcmp(mt->mt_url, "sub:off") || !strcmp(mt->mt_url, "audio:off"))
       continue;
 
     if(!mt->mt_autosel)
       continue;
-
-    int score = mt->mt_basescore + mt->mt_isolang_score;
-
-    if(score < 100000 && (best == NULL || score > best_score)) {
-      best = mt;
-      best_score = score;
-    }
+    break;
   }
 
-  if(best == mtm->mtm_suggested_track)
+  if(mt == mtm->mtm_suggested_track)
+    return;
+  mtm->mtm_suggested_track = mt;
+  if(mt == NULL)
     return;
 
-  mtm->mtm_suggested_track = best;
+  TRACE(TRACE_DEBUG, "media", "Selecting track %s, score %d",
+        mt->mt_url, mt->mt_final_score);
+
+  event_t *e = event_create_select_track(mt->mt_url, mtm_event_type(mtm), 0);
+  mp_enqueue_event_locked(mtm->mtm_mp, e);
+  event_release(e);
+  prop_set_string(mtm->mtm_selector, "score");
+}
 
 
-  if(best != NULL) {
+/**
+ *
+ */
+static int
+track_score_cmp(const media_track_t *a, const media_track_t *b)
+{
+  if(a->mt_final_score != b->mt_final_score)
+    return b->mt_final_score - a->mt_final_score;
+  int x = strcmp(a->mt_url ?: "", b->mt_url ?: "");
+  if(x)
+    return x;
+  return a < b ? 1 : -1;
+}
 
-    TRACE(TRACE_DEBUG, "media", "Selecting track %s, best score %d",
-          best->mt_url, best_score);
 
-    event_t *e = event_create_select_track(best->mt_url,
-					   mtm_event_type(mtm), 0);
-    mp_enqueue_event_locked(mtm->mtm_mp, e);
-    event_release(e);
+/**
+ *
+ */
+static void
+mt_resort(media_track_t *mt)
+{
+  media_track_mgr_t *mtm = mt->mt_mtm;
+
+  if(mt->mt_sorted_node)
+    RB_REMOVE(&mtm->mtm_sorted_tracks, mt, mt_sorted_link);
+
+  RB_INSERT_SORTED(&mtm->mtm_sorted_tracks, mt,
+                   mt_sorted_link, track_score_cmp);
+
+  media_track_t *next = RB_NEXT(mt, mt_sorted_link);
+
+  if(mt->mt_sorted_node == NULL) {
+    mt->mt_sorted_node = prop_create_root(NULL);
+    prop_link(mt->mt_root, mt->mt_sorted_node);
+
+    if(prop_set_parent_ex(mt->mt_sorted_node, mtm->mtm_sorted_nodes,
+                          next ? next->mt_sorted_node : NULL, 0))
+      abort();
+
+  } else {
+    assert(mt != next);
+    prop_move(mt->mt_sorted_node, next ? next->mt_sorted_node : NULL);
   }
 }
 
@@ -270,8 +289,51 @@ static void
 mt_set_url(void *opaque, const char *str)
 {
   media_track_t *mt = opaque;
+  media_track_mgr_t *mtm = mt->mt_mtm;
+
   mystrset(&mt->mt_url, str);
-  mtm_rethink(mt->mt_mtm);
+
+  mt_resort(mt);
+
+  if(mtm->mtm_user_pref != NULL && mt->mt_url != NULL &&
+     !strcmp(rstr_get(mtm->mtm_user_pref), mt->mt_url)) {
+
+    mtm->mtm_user_set = 1;
+    TRACE(TRACE_DEBUG, "media",
+          "Selecting track %s (previously selected by user)",
+          mt->mt_url);
+    event_t *e = event_create_select_track(mt->mt_url,
+                                           mtm_event_type(mtm), 0);
+    mp_enqueue_event_locked(mtm->mtm_mp, e);
+    event_release(e);
+    prop_set_string(mtm->mtm_selector, "user");
+    return;
+  }
+
+  mtm_suggest(mtm);
+}
+
+
+/**
+ *
+ */
+static void
+mt_update_score(media_track_t *mt)
+{
+
+  if(mt->mt_base_score < 0 || mt->mt_isolang_score < 0)
+    return;
+
+  int score = MAX(mt->mt_base_score + mt->mt_isolang_score, 0);
+
+  if(mt->mt_final_score == score)
+    return;
+
+  prop_set(mt->mt_root, "score", PROP_SET_INT, score);
+
+  mt->mt_final_score = score;
+  mt_resort(mt);
+  mtm_suggest(mt->mt_mtm);
 }
 
 
@@ -294,11 +356,8 @@ mt_set_isolang(void *opaque, const char *str)
     mt->mt_isolang_score = 0;
     break;
   }
-  if(mt->mt_basescore >= 0)
-    prop_set(mt->mt_root, "score", PROP_SET_INT,
-	     mt->mt_basescore + mt->mt_isolang_score);
 
-  mtm_rethink(mt->mt_mtm);
+  mt_update_score(mt);
 }
 
 
@@ -309,11 +368,9 @@ static void
 mt_set_basescore(void *opaque, int v)
 {
   media_track_t *mt = opaque;
-  mt->mt_basescore = v;
-  if(mt->mt_isolang_score >= 0)
-    prop_set(mt->mt_root, "score", PROP_SET_INT,
-	     mt->mt_basescore + mt->mt_isolang_score);
-  mtm_rethink(mt->mt_mtm);
+  mt->mt_base_score = v;
+
+  mt_update_score(mt);
 }
 
 
@@ -325,7 +382,7 @@ mt_set_autosel(void *opaque, int v)
 {
   media_track_t *mt = opaque;
   mt->mt_autosel = v;
-  mtm_rethink(mt->mt_mtm);
+  mtm_suggest(mt->mt_mtm);
 }
 
 
@@ -343,7 +400,8 @@ mtm_add_track(media_track_mgr_t *mtm, prop_t *root, media_track_t *before)
   mt->mt_root = prop_ref_inc(root);
 
   mt->mt_isolang_score = -1;
-  mt->mt_basescore = -1;
+  mt->mt_base_score = -1;
+  mt->mt_final_score = -1;
   mt->mt_autosel = -1;
 
   if(before) {
@@ -357,6 +415,15 @@ mtm_add_track(media_track_mgr_t *mtm, prop_t *root, media_track_t *before)
     prop_subscribe(0,
 		   PROP_TAG_NAME("node", "url"),
 		   PROP_TAG_CALLBACK_STRING, mt_set_url, mt,
+                   PROP_TAG_LOCKMGR, mp_lockmgr,
+                   PROP_TAG_MUTEX, mp,
+		   PROP_TAG_NAMED_ROOT, root, "node",
+		   NULL);
+
+  mt->mt_sub_autosel =
+    prop_subscribe(0,
+		   PROP_TAG_NAME("node", "autosel"),
+		   PROP_TAG_CALLBACK_INT, mt_set_autosel, mt,
                    PROP_TAG_LOCKMGR, mp_lockmgr,
                    PROP_TAG_MUTEX, mp,
 		   PROP_TAG_NAMED_ROOT, root, "node",
@@ -380,14 +447,6 @@ mtm_add_track(media_track_mgr_t *mtm, prop_t *root, media_track_t *before)
 		   PROP_TAG_NAMED_ROOT, root, "node",
 		   NULL);
 
-  mt->mt_sub_autosel =
-    prop_subscribe(0,
-		   PROP_TAG_NAME("node", "autosel"),
-		   PROP_TAG_CALLBACK_INT, mt_set_autosel, mt,
-                   PROP_TAG_LOCKMGR, mp_lockmgr,
-                   PROP_TAG_MUTEX, mp,
-		   PROP_TAG_NAMED_ROOT, root, "node",
-		   NULL);
 }
 
 
@@ -403,6 +462,10 @@ mt_destroy(media_track_mgr_t *mtm, media_track_t *mt)
   if(mtm->mtm_current == mt)
     mtm->mtm_current = NULL;
 
+  if(mt->mt_sorted_node) {
+    RB_REMOVE(&mtm->mtm_sorted_tracks, mt, mt_sorted_link);
+    prop_destroy(mt->mt_sorted_node);
+  }
   TAILQ_REMOVE(&mtm->mtm_tracks, mt, mt_link);
 
   prop_unsubscribe(mt->mt_sub_url);
@@ -455,7 +518,7 @@ mtm_update_tracks(void *opaque, prop_event_t event, ...)
 
   case PROP_DEL_CHILD:
     mt_destroy(mtm, prop_tag_clear(va_arg(ap, prop_t *), mtm));
-    mtm_rethink(mtm);
+    mtm_suggest(mtm);
     break;
 
   case PROP_MOVE_CHILD:
@@ -468,7 +531,7 @@ mtm_update_tracks(void *opaque, prop_event_t event, ...)
 
   case PROP_SET_VOID:
     mtm_clear(mtm);
-    mtm_rethink(mtm);
+    mtm_suggest(mtm);
     break;
 
   default:
@@ -485,7 +548,17 @@ mtm_set_current(void *opaque, const char *str)
 {
   media_track_mgr_t *mtm = opaque;
   mystrset(&mtm->mtm_current_url, str);
-  mtm_rethink(mtm);
+
+  if(str == NULL)
+    return;
+
+  media_track_t *mt;
+  TAILQ_FOREACH(mt, &mtm->mtm_tracks, mt_link) {
+    if(mt->mt_url != NULL && !strcmp(mt->mt_url, str)) {
+      mtm->mtm_current = mt;
+      return;
+    }
+  }
 }
 
 
@@ -495,11 +568,11 @@ mtm_set_current(void *opaque, const char *str)
 static void
 mtm_set_url(void *opaque, const char *str)
 {
-  rstr_t *r;
   media_track_mgr_t *mtm = opaque;
 
   mystrset(&mtm->mtm_canonical_url, str);
-  r = kv_url_opt_get_rstr(str, KVSTORE_DOMAIN_SYS, 
+  rstr_t *r;
+  r = kv_url_opt_get_rstr(str, KVSTORE_DOMAIN_SYS,
 			  mtm->mtm_type == MEDIA_TRACK_MANAGER_AUDIO ?
 			  "audioTrack" : "subtitleTrack");
   rstr_set(&mtm->mtm_user_pref, r);
@@ -511,11 +584,13 @@ mtm_set_url(void *opaque, const char *str)
  */
 void
 mp_track_mgr_init(media_pipe_t *mp, media_track_mgr_t *mtm, prop_t *root,
-                  int type, prop_t *current)
+                  int type, prop_t *current, prop_t *sorted)
 {
   TAILQ_INIT(&mtm->mtm_tracks);
   mtm->mtm_mp = mp;
   mtm->mtm_type = type;
+
+  mtm->mtm_sorted_nodes = sorted;
 
   mtm->mtm_node_sub =
     prop_subscribe(0,
@@ -567,10 +642,20 @@ mp_track_mgr_next_track(media_track_mgr_t *mtm)
 {
   media_track_t *mt;
 
-  mt = mtm->mtm_current ? TAILQ_NEXT(mtm->mtm_current, mt_link) : NULL;
-  
-  if(mt == NULL)
-    mt = TAILQ_FIRST(&mtm->mtm_tracks);
+  mt = mtm->mtm_current;
+
+  if(mt != NULL) {
+    if(mt->mt_sorted_node != NULL)
+      mt = RB_NEXT(mt, mt_sorted_link);
+    else
+      mt = TAILQ_NEXT(mt, mt_link);
+  }
+
+  if(mt == NULL) {
+    mt = RB_FIRST(&mtm->mtm_sorted_tracks);
+    if(mt == NULL)
+      mt = TAILQ_FIRST(&mtm->mtm_tracks);
+  }
 
   if(mt != mtm->mtm_current) {
     TRACE(TRACE_DEBUG, "media", "Selecting next track %s (cycle)",
@@ -610,6 +695,7 @@ mp_track_mgr_select_track(media_track_mgr_t *mtm, event_select_track_t *est)
     }
 
     prop_set_string(mp->mp_prop_audio_track_current, id);
+    prop_set_int(mp->mp_prop_audio_track_current_manual, est->manual);
 
   } else {
 
@@ -622,6 +708,7 @@ mp_track_mgr_select_track(media_track_mgr_t *mtm, event_select_track_t *est)
     mystrset(&mp->mp_subtitle_loader_url, NULL);
 
     prop_set_string(mp->mp_prop_subtitle_track_current, id);
+    prop_set_int(mp->mp_prop_subtitle_track_current_manual, est->manual);
     mp->mp_video.mq_stream2 = -1;
 
     if(mystrbegins(id, "sub:")) {

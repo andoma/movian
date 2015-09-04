@@ -1256,7 +1256,7 @@ be_htsp_open(prop_t *page, const char *url, int sync)
  *
  */
 static void
-htsp_set_subtitles(media_pipe_t *mp, const char *id)
+htsp_set_subtitles(media_pipe_t *mp, const char *id, int manual)
 {
   if(!strcmp(id, "off")) {
     mp->mp_video.mq_stream2 = -1;
@@ -1268,6 +1268,7 @@ htsp_set_subtitles(media_pipe_t *mp, const char *id)
     mp->mp_video.mq_stream2 = idx;
     prop_set_stringf(mp->mp_prop_subtitle_track_current, "sub:%d", idx);
   }
+  prop_set_int(mp->mp_prop_subtitle_track_current_manual, manual);
 }
 
 
@@ -1275,7 +1276,7 @@ htsp_set_subtitles(media_pipe_t *mp, const char *id)
  *
  */
 static void
-htsp_set_audio(media_pipe_t *mp, const char *id)
+htsp_set_audio(media_pipe_t *mp, const char *id, int by_user)
 {
   if(!strcmp(id, "off")) {
     mp->mp_audio.mq_stream = -1;
@@ -1287,6 +1288,7 @@ htsp_set_audio(media_pipe_t *mp, const char *id)
     mp->mp_audio.mq_stream = idx;
     prop_set_stringf(mp->mp_prop_audio_track_current, "audio:%d", idx);
   }
+  prop_set_int(mp->mp_prop_audio_track_current_manual, by_user);
 }
 
 
@@ -1533,13 +1535,13 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
       event_select_track_t *est = (event_select_track_t *)e;
 
       if(!strncmp(est->id, "sub:", strlen("sub:")))
-	htsp_set_subtitles(mp, est->id + strlen("sub:"));
+	htsp_set_subtitles(mp, est->id + strlen("sub:"), est->manual);
 
     } else if(event_is_type(e, EVENT_SELECT_AUDIO_TRACK)) {
       event_select_track_t *est = (event_select_track_t *)e;
 
       if(!strncmp(est->id, "audio:", strlen("audio:")))
-	htsp_set_audio(mp, est->id + strlen("audio:"));
+	htsp_set_audio(mp, est->id + strlen("audio:"), est->manual);
 
     } else if(event_is_type(e, EVENT_PLAYBACK_PRIORITY)) {
       event_int_t *ei = (event_int_t *)e;

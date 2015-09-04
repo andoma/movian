@@ -586,7 +586,7 @@ const static int action_from_fkey[13][2] = {
   { ACTION_LOGWINDOW,        ACTION_ENABLE_SCREENSAVER },
 
   { ACTION_RELOAD_UI,        ACTION_RELOAD_DATA },
-  { ACTION_SYSINFO, 0 },
+  { ACTION_SYSINFO,          ACTION_CYCLE_SUBTITLE },
   { 0,                        ACTION_SEEK_BACKWARD },
   { ACTION_STOP,              ACTION_PLAYPAUSE },
 

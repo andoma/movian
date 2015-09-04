@@ -1,3 +1,18 @@
 #import "osd_settings.view"
 
-OSD_SETTINGS_MENU($self.media.subtitle.settings.nodes);
+OSD_SETTINGS_MENU($self.media.subtitle.settings.nodes, widget(container_z, {
+  style: "ListItemOuter";
+  ListItemBevel();
+
+  focusable: true;
+  onEvent(activate, { $clone.osdpage = 6; });
+
+  widget(container_x, {
+    style: "ListItem";
+
+    widget(label, {
+      caption: _("Select subtitle track");
+      style: ["ListItemLabel", "ListItemLabelContainer"];
+    });
+  });
+}));

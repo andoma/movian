@@ -572,8 +572,8 @@ dvd_init_streams(dvd_player_t *dp, media_pipe_t *mp)
 /**
  *
  */
-static void 
-dvd_set_audio_stream(dvd_player_t *dp, const char *id)
+static void
+dvd_set_audio_stream(dvd_player_t *dp, const char *id, int user)
 {
   if(!strcmp(id, "off")) {
     dp->dp_audio_track = DP_AUDIO_DISABLE;
@@ -585,6 +585,7 @@ dvd_set_audio_stream(dvd_player_t *dp, const char *id)
   }
 
   prop_set_stringf(dp->dp_mp->mp_prop_audio_track_current,  "audio:%s", id);
+  prop_set_int(dp->dp_mp->mp_prop_audio_track_current_manual, user);
 }
 
 
@@ -592,7 +593,7 @@ dvd_set_audio_stream(dvd_player_t *dp, const char *id)
  *
  */
 static void 
-dvd_set_spu_stream(dvd_player_t *dp, const char *id)
+dvd_set_spu_stream(dvd_player_t *dp, const char *id, int manual)
 {
   if(!strcmp(id, "off")) {
     dp->dp_spu_track = DP_SPU_DISABLE;
@@ -603,6 +604,7 @@ dvd_set_spu_stream(dvd_player_t *dp, const char *id)
     dp->dp_spu_track = idx;
   }
   prop_set_stringf(dp->dp_mp->mp_prop_subtitle_track_current,  "sub:%s", id);
+  prop_set_int(dp->dp_mp->mp_prop_subtitle_track_current_manual, manual);
 }
 
 
@@ -792,12 +794,6 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
   dvdnav_set_readahead_flag(dp->dp_dvdnav, 1);
   dvdnav_set_PGC_positioning_flag(dp->dp_dvdnav, 1);
 
-  /**
-   * By default, follow DVD VM machine
-   */
-  dvd_set_audio_stream(dp, "auto");
-  dvd_set_spu_stream(dp, "auto");
-
   mp_become_primary(mp);
 
   /* Might wanna use deep buffering but it requires some modification
@@ -868,8 +864,8 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
       mp_send_cmd(mp, &mp->mp_video, MB_DVD_RESET_SPU);
       dvd_video_push(dp);
       dvd_release_codecs(dp);
-      dvd_set_audio_stream(dp, "auto");
-      dvd_set_spu_stream(dp, "auto");
+      dvd_set_audio_stream(dp, "auto", 0);
+      dvd_set_spu_stream(dp, "auto", 0);
       dp->dp_aspect_override = dvdnav_get_video_aspect(dp->dp_dvdnav) ? 2 : 1;
       dvdnav_get_video_res(dp->dp_dvdnav, &dp->dp_vwidth, &dp->dp_vheight);
       mp_bump_epoch(mp);
@@ -965,13 +961,13 @@ dvd_process_event(dvd_player_t *dp, event_t *e)
     event_select_track_t *est = (event_select_track_t *)e;
     
     if(!strncmp(est->id, "audio:", strlen("audio:")))
-      dvd_set_audio_stream(dp, est->id + strlen("audio:"));
+      dvd_set_audio_stream(dp, est->id + strlen("audio:"), est->manual);
 
   } else if(event_is_type(e, EVENT_SELECT_SUBTITLE_TRACK)) {
     event_select_track_t *est = (event_select_track_t *)e;
 
     if(!strncmp(est->id, "sub:", strlen("sub:")))
-      dvd_set_spu_stream(dp, est->id + strlen("sub:"));
+      dvd_set_spu_stream(dp, est->id + strlen("sub:"), est->manual);
 
   } else if(event_is_action(e, ACTION_ACTIVATE)) {
 
