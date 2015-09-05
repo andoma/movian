@@ -25,6 +25,7 @@
 #include "htsmsg/htsmsg_store.h"
 #include "backend/backend.h"
 #include "misc/str.h"
+#include "misc/minmax.h"
 #include "prop/prop_nodefilter.h"
 #include "prop/prop_concat.h"
 #include "notifications.h"
