@@ -1152,6 +1152,12 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	  }
 	  break;
 
+	case 8:
+	  glw_inject_event(&gx11->gr, event_create_action(ACTION_NAV_BACK));
+	  continue;
+	case 9:
+	  glw_inject_event(&gx11->gr, event_create_action(ACTION_NAV_FWD));
+	  continue;
 	default:
 	  continue;
 	}
