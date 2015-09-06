@@ -110,6 +110,19 @@ make_trampoline(const char *title, void *(*func)(void *), void *aux,
   return t;
 }
 
+
+static __thread const char *my_thread_name;
+
+/**
+ *
+ */
+const char *
+hts_thread_name(char *buf, size_t len)
+{
+  return my_thread_name ?: "no-name-set";
+}
+
+
 /**
  *
  */
@@ -121,6 +134,8 @@ thread_trampoline(void *aux)
 
   JNIEnv *jenv = NULL;
   (*JVM)->AttachCurrentThread(JVM, &jenv, NULL);
+
+  my_thread_name = t->title;
 
   r = t->func(t->aux);
 
