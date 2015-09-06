@@ -424,6 +424,11 @@ face_resolve(int uc, uint8_t style, const char *name, int font_domain,
 
     LIST_FOREACH(f, &dynamic_faces, link) {
       /*
+       * Faces that can't render our glyph is bad
+       */
+      if(!FT_Get_Char_Index(f->face, uc))
+	continue;
+      /*
        * Always want to match font domain here
        */
       if(f->font_domain != font_domain)
@@ -438,12 +443,6 @@ face_resolve(int uc, uint8_t style, const char *name, int font_domain,
        * other way around
        */
       if(f->style && style == 0)
-	continue;
-
-      /*
-       * Faces that can't render our glyph is not so good either :)
-       */
-      if(!FT_Get_Char_Index(f->face, uc))
 	continue;
 
       int score = 0;
