@@ -17,6 +17,7 @@ onEvent(back, {
   $clone.osdpage = translate($clone.osdpage, 1
                              , 1, 0  // Main -> No OSD
                              , 6, 3
+                             , 7, 4
                              );
 }, $clone.osdpage);
 
@@ -58,7 +59,7 @@ widget(container_z, {
     padding: [4em, 1em];
 
     alpha: iir(translate($clone.osdpage, 0,
-                         0, changed($self.media.seektime, 5, true),
+                         0, $ui.pointerVisible || changed($self.media.seektime, 5, true),
                          1, 1), 4);
 
     widget(label, {
@@ -108,19 +109,6 @@ widget(container_z, {
                     additive: true;
                   });
                 });
-
-                widget(clip, {
-
-                  clipping: [0, 0,
-                             1 - ($self.media.currenttime /
-                                  $self.media.metadata.duration),
-                             0];
-
-                  widget(quad, {
-                    alpha: 0.9;
-                    additive: true;
-                  });
-                });
               });
             });
 
@@ -128,8 +116,17 @@ widget(container_z, {
               focusable: 0.1;
               bind($self.media.currenttime);
               max: $self.media.metadata.duration;
-              widget(quad, {
-                // Add something clever here
+              widget(icon, {
+                source: "skin://icons/dot.png";
+              });
+              widget(container_y, {
+                space(1);
+                widget(quad, {
+                  height: 3;
+                  alpha: 0.9;
+                  additive: true;
+                });
+                space(1);
               });
             });
           });
