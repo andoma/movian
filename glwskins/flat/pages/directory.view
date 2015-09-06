@@ -13,7 +13,7 @@ onEvent(pluginInfo, {
 onEvent(itemMenu, { $clone.itemMenu = void; }, $clone.itemMenu);
 onEvent(back,     { $clone.itemMenu = void; }, $clone.itemMenu);
 onEvent(cancel,   { $clone.itemMenu = void; }, $clone.itemMenu);
-onEvent(menu,     { focus("sidebar");});
+onEvent(menu, { focus(select($clone.showSidebar, "main", "sidebar"));});
 
 onEvent(ChangeView, deliverEvent($clone.settings.options, "Cycle"));
 
@@ -63,6 +63,7 @@ widget(cursor, {
       style: "PageContainer";
 
       widget(loader, {
+        id: "main";
         filterConstraintX: true;
         noInitialTransform: true;
         time: 0.05;

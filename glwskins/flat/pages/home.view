@@ -79,6 +79,7 @@
 }
 
 
+onEvent(menu, { focus(select($clone.showSidebar, "main", "sidebar"));});
 
 widget(cursor, {
 
@@ -87,6 +88,8 @@ widget(cursor, {
     style: "PageContainer";
 
     widget(array, {
+      id: "main";
+
       alphaFallOff: 0.3;
       blurFallOff: 0.1;
 
