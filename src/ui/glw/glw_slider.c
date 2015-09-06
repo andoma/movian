@@ -108,7 +108,7 @@ glw_slider_layout(glw_t *w, const glw_rctx_t *rc)
   glw_rctx_t rc0;
   int f;
 
-  if((c = TAILQ_FIRST(&w->glw_childs)) == NULL || 
+  if((c = TAILQ_FIRST(&w->glw_childs)) == NULL ||
      rc->rc_width == 0 || rc->rc_height == 0)
     return;
 
@@ -150,7 +150,22 @@ glw_slider_layout(glw_t *w, const glw_rctx_t *rc)
     glw_lp(&s->knob_pos_px, w->glw_root, p, 0.25);
   else
     s->knob_pos_px = p;
-  
+
+  glw_layout0(c, &rc0);
+
+  if(w->glw_class != &glw_slider_x)
+    return;
+
+  c = TAILQ_NEXT(c, glw_parent_link);
+  if(c == NULL)
+    return;
+
+
+  rc0 = *rc;
+  glw_reposition(&rc0, 0,
+                 rc->rc_height,
+                 s->knob_pos_px,
+                 0);
   glw_layout0(c, &rc0);
 }
 
@@ -180,6 +195,17 @@ glw_slider_render_x(glw_t *w, const glw_rctx_t *rc)
 		 s->knob_pos_px + s->knob_size_px / 2,
 		 0);
 
+  glw_render0(c, &rc0);
+
+  c = TAILQ_NEXT(c, glw_parent_link);
+  if(c == NULL)
+    return;
+
+  rc0 = *rc;
+  glw_reposition(&rc0, 0,
+                 rc->rc_height,
+                 s->knob_pos_px,
+                 0);
   glw_render0(c, &rc0);
 }
 
@@ -400,11 +426,12 @@ glw_slider_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
     c = extra;
-    
-    if(w->glw_class == &glw_slider_y) {
-      glw_set_constraints(w, c->glw_req_size_x, 0, 0, GLW_CONSTRAINT_X);
-    } else {
-      glw_set_constraints(w, 0, c->glw_req_size_y, 0, GLW_CONSTRAINT_Y);
+    if(c == TAILQ_FIRST(&w->glw_childs)) {
+      if(w->glw_class == &glw_slider_y) {
+        glw_set_constraints(w, c->glw_req_size_x, 0, 0, GLW_CONSTRAINT_X);
+      } else {
+        glw_set_constraints(w, 0, c->glw_req_size_y, 0, GLW_CONSTRAINT_Y);
+      }
     }
     return 1;
 
