@@ -88,12 +88,12 @@ typedef struct glw_x11 {
   PFNGLXSWAPINTERVALSGIPROC glXSwapIntervalSGI;
 
   int fullwindow;
-  int autohide_counter;
   int req_width;
   int req_height;
   int fixed_window_size;
   int no_screensaver;
-  
+  int64_t hide_cursor_at;
+
   XIM im;
   XIC ic;
   Status status;
@@ -123,8 +123,6 @@ typedef struct glw_x11 {
 #endif
 
 } glw_x11_t;
-
-#define AUTOHIDE_TIMEOUT 100 // XXX: in frames.. bad
 
 
 /**
@@ -178,15 +176,17 @@ hide_cursor(glw_x11_t *gx11)
 static void
 autohide_cursor(glw_x11_t *gx11)
 {
+  if(!gx11->fullwindow)
+    return;
+
   if(gx11->cursor_hidden)
     return;
 
-  if(gx11->autohide_counter == 0)
+  if(gx11->gr.gr_time_usec > gx11->hide_cursor_at) {
     hide_cursor(gx11);
-  else if(gx11->gr.gr_pointer_grab == NULL)
-    gx11->autohide_counter--;
+  }
 }
-  
+
 
 /**
  *
@@ -194,10 +194,10 @@ autohide_cursor(glw_x11_t *gx11)
 static void
 show_cursor(glw_x11_t *gx11)
 {
+  gx11->hide_cursor_at = gx11->gr.gr_time_usec + GLW_CURSOR_AUTOHIDE_TIME;
   if(!gx11->cursor_hidden)
     return;
 
-  gx11->autohide_counter = AUTOHIDE_TIMEOUT;
   gx11->cursor_hidden = 0;
   XUndefineCursor(gx11->display, gx11->win);
 }
@@ -1002,9 +1002,8 @@ glw_x11_mainloop(glw_x11_t *gx11)
 
   while(gx11->running) {
 
-    if(gx11->fullwindow)
-      autohide_cursor(gx11);
-
+    autohide_cursor(gx11);
+    
     if(gx11->wm_flags && !gx11->no_screensaver) {
 
       if(gx11->fullwindow && gx11->sss == NULL)

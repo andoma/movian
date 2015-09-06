@@ -52,6 +52,8 @@
 #define NUM_CLIPPLANES 6
 #define NUM_FADERS 6
 
+#define GLW_CURSOR_AUTOHIDE_TIME 3000000
+
 struct event;
 
 typedef struct glw_style glw_style_t;
