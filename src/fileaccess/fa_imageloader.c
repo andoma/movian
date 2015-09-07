@@ -37,6 +37,7 @@
 #include <libavutil/mathematics.h>
 #endif
 #include "misc/callout.h"
+#include "misc/minmax.h"
 #include "image/pixmap.h"
 #include "image/jpeg.h"
 #include "backend/backend.h"
@@ -469,8 +470,26 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
   AVFrame *frame = av_frame_alloc();
   int got_pic;
 
+#define MAX_FRAME_SCAN 500
+
+  int cnt = MAX_FRAME_SCAN;
 
   AVStream *st = ifv_fctx->streams[ifv_stream];
+
+  if(sec == -1) {
+    // Automatically try to find a good frame
+
+    int duration_in_seconds = ifv_fctx->duration / 1000000;
+
+
+    sec = MAX(1, duration_in_seconds * 0.05); // 5% of duration
+    sec = MIN(sec, 150); // , buy no longer than 2:30 in
+
+    if(sec >= duration_in_seconds)
+      sec = duration_in_seconds - 1;
+  }
+
+
   int64_t ts = av_rescale(sec, st->time_base.den, st->time_base.num);
 
   if(av_seek_frame(ifv_fctx, ifv_stream, ts, AVSEEK_FLAG_BACKWARD) < 0) {
@@ -478,12 +497,9 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
     snprintf(errbuf, errlen, "Unable to seek to %"PRId64, ts);
     return NULL;
   }
-  
+
   avcodec_flush_buffers(ifv_ctx);
 
-#define MAX_FRAME_SCAN 500
-  
-  int cnt = MAX_FRAME_SCAN;
   while(1) {
     int r;
 
@@ -606,10 +622,15 @@ fa_image_from_video(const char *url0, const image_meta_t *im,
   char *tim = strchr(url, '#');
   const char *siz;
   *tim++ = 0;
-  int secs = atoi(tim);
+  int secs;
+
+  if(!strcmp(tim, "auto"))
+    secs = -1;
+  else
+    secs = atoi(tim);
 
   hts_mutex_lock(&image_from_video_mutex[0]);
-  
+
   if(strcmp(url, stated_url ?: "")) {
     free(stated_url);
     stated_url = NULL;
