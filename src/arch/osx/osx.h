@@ -46,7 +46,7 @@ void webpopup_init(void);
   CVDisplayLinkRef m_displayLink;
   CGLContextObj m_cgl_context;
   CGLPixelFormatObj m_cgl_pixel_format;
-
+  int64_t hide_cursor_at;
 }
 - (id)initWithFrame:(NSRect)frameRect :(struct glw_root *)gr :(bool)fs;
 - (void)stop;

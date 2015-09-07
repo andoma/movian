@@ -25,8 +25,6 @@
 #include "osx_c.h"
 #include "src/ui/glw/glw.h"
 
-#define AUTOHIDE_TIMEOUT 100 // In frames (Bad)
-
 @interface GLWView (hidden)
 
 - (CVReturn)getFrameForTime:(const CVTimeStamp *)ot;
@@ -147,10 +145,10 @@ glw_in_fullwindow(void *opaque, int val)
  */
 - (void)showCursor
 {
+  hide_cursor_at = gr->gr_time_usec + GLW_CURSOR_AUTOHIDE_TIME;
+
   if(!cursor_hidden)
     return;
-
-  autohide_counter = AUTOHIDE_TIMEOUT;
 
   cursor_hidden = NO;
   [NSCursor unhide];
@@ -162,13 +160,15 @@ glw_in_fullwindow(void *opaque, int val)
  */
 - (void)autoHideCursor
 {
+  if(!in_full_window)
+    return;
+
   if(cursor_hidden)
     return;
 
-  if(autohide_counter == 0)
+  if(gr->gr_time_usec > hide_cursor_at) {
     [self hideCursor];
-  else if(gr->gr_pointer_grab == NULL)
-    autohide_counter--;
+  }
 }
 
 
