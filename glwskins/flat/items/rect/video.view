@@ -8,9 +8,17 @@ widget(container_z, {
   GridItemBevel();
 
   widget(image, {
+    margin: [0.25em, 0];
     style: "RectIcon";
-    source: $self.metadata.icon;
+    source: $self.metadata.icon ?? ($self.url + "#auto");
   });
+
+
+  widget(image, {
+    alpha: 0.5 + iir(isNavFocused() || isHovered(), 4);
+    source: "skin://icons/ic_play_arrow_48px.svg";
+  });
+
 
   widget(container_y, {
     align: bottom;
