@@ -49,7 +49,7 @@ widget(container_z, {
     onEvent(down,  deliverEvent($self.media.eventSink, "VolumeDown"));
 
     onEvent(activate, {
-      $clone.osdpage = !$clone.osdpage;
+      toggle($clone.osdpage);
     });
   });
 
@@ -146,7 +146,10 @@ widget(container_z, {
 
     widget(loader, {
 
-      source: translate($clone.osdpage, "",
+      source: translate($clone.osdpage,
+                        select($ui.pointerVisible,
+                               "skin://osd/osd_main.view",
+                               ""),
                         1, "skin://osd/osd_main.view",
                         2, "skin://osd/osd_info.view",
                         3, "skin://osd/osd_settings_subs.view",
