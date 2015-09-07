@@ -33,6 +33,13 @@ widget(container_z, {
     alpha: iir(1 - $ui.fullwindow, 4);
   });
 
+  widget(loader, {
+    zoffset: -999;
+    alpha: iir($nav.currentpage.model.loading, 8);
+    source: selectedElement(vectorize($core.glw.views.standard.loading))
+      ?? "loading.view";
+  });
+
   widget(underscan, {
     widget(container_z, {
 

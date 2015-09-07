@@ -1,0 +1,51 @@
+widget(container_y, {
+  space(1);
+  widget(throbber, {
+  });
+
+  widget(container_y, {
+    weight: 1;
+    filterConstraintY: true;
+
+    align: center;
+
+    widget(label, {
+      align: center;
+      caption: $nav.currentpage.model.loadingStatus;
+      bold: true;
+    });
+
+    widget(container_x, {
+      spacing: 0.5em;
+      hidden: !$nav.currentpage.model.io.bitrateValid;
+
+      widget(label, {
+        filterConstraintX: true;
+        align: right;
+        color: 0.6;
+        caption: _("Bitrate:");
+      });
+
+      widget(label, {
+        filterConstraintX: true;
+        caption: fmt(_("%d kb/s"), $nav.currentpage.model.io.bitrate);
+      });
+    });
+
+    cloner($nav.currentpage.model.io.infoNodes, container_x, {
+      spacing: 0.5em;
+
+      widget(label, {
+        filterConstraintX: true;
+        align: right;
+        color: 0.6;
+        caption: $self.title + ":";
+      });
+
+      widget(label, {
+        filterConstraintX: true;
+        caption: $self.info;
+      });
+    });
+  });
+});
