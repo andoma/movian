@@ -457,7 +457,7 @@ video_analysis(deco_browse_t *db)
   deco_item_t *di;
   int reasonable_video_items = 0;
 
-  const int real_video_duration_threshold = 300;
+  const int real_video_duration_threshold = METADATA_DURATION_LIMIT;
 
   LIST_FOREACH(di, &db->db_items_per_ct[CONTENT_VIDEO], di_type_link) {
     if(di->di_duration > real_video_duration_threshold) {

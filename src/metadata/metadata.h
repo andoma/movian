@@ -26,6 +26,9 @@
       TRACE(TRACE_DEBUG, "METADATA", x, ##__VA_ARGS__);                 \
   } while(0)
 
+// Don't do lookups for anything shorter than 15 minutes
+#define METADATA_DURATION_LIMIT (60 * 15)
+
 struct prop;
 struct prop_sub;
 struct prop_vec;

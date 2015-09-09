@@ -485,8 +485,8 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
     sec = MAX(1, duration_in_seconds * 0.05); // 5% of duration
     sec = MIN(sec, 150); // , buy no longer than 2:30 in
 
-    if(sec >= duration_in_seconds)
-      sec = duration_in_seconds - 1;
+    sec = MAX(0, MIN(sec, duration_in_seconds - 1));
+    cnt = 1;
   }
 
 

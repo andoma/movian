@@ -818,7 +818,7 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
   /**
    * If duration is low skip this unless user have specified a custom query
    */
-  if(duration && duration < 300 && sq == NULL) {
+  if(duration < METADATA_DURATION_LIMIT && sq == NULL) {
     goto bad;
   }
 
