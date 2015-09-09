@@ -4,6 +4,7 @@ widget(container_z, {
 
   focusable: true;
   onEvent(activate, navOpen($self.url, void, $self, $parent.model, void, $parent.url));
+  onEvent(itemMenu, eventWithProp(videoInfo, $self));
 
   GridItemBevel();
 
