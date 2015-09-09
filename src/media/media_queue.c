@@ -138,14 +138,16 @@ mq_get_buffer_delay(media_queue_t *mq)
     return 0;
   }
 
-  int cnt = 10;
+  int cnt;
+
+  cnt = 20;
 
   while(f && f->mb_dts == PTS_UNSET && cnt > 0) {
     f = TAILQ_NEXT(f, mb_link);
     cnt--;
   }
 
-  cnt = 10;
+  cnt = 20;
   while(l && l->mb_dts == PTS_UNSET && cnt > 0) {
     l = TAILQ_PREV(l, media_buf_queue, mb_link);
     cnt--;
