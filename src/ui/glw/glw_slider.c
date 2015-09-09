@@ -316,6 +316,7 @@ pointer_event(glw_t *w, const glw_pointer_event_t *gpe)
   
   switch(gpe->type) {
   case GLW_POINTER_LEFT_PRESS:
+  case GLW_POINTER_TOUCH_START:
     if(w->glw_flags2 & GLW2_ALWAYS_GRAB_KNOB) {
       v = GLW_RESCALE(v0 + s->grab_delta,
 		      -1.0 + knob_size, 1.0 - knob_size);
@@ -340,6 +341,7 @@ pointer_event(glw_t *w, const glw_pointer_event_t *gpe)
     break;
 
   case GLW_POINTER_LEFT_RELEASE:
+  case GLW_POINTER_TOUCH_END:
     v = s->value;
     how = PROP_SET_COMMIT;
     break;

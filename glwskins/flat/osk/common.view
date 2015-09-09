@@ -4,7 +4,7 @@
     filterConstraintX: true;
     filterConstraintY: true;
     widget(quad, {
-      color: select(isFocused(), 0.5, 0.3);
+      color: select(isNavFocused(), 0.5, 0.3) + iir(isPressed(), 4, true);
     });
 
     focusable: FW;
@@ -16,7 +16,7 @@
       align: center;
       caption: CH;
       bold: true;
-      color: select(isFocused(), 0, 1);
+      color: select(isNavFocused(), 0, 1) - iir(isPressed(), 4, true);
     });
   });
 }
@@ -37,7 +37,7 @@
 
     widget(quad, {
       color: select(LIT, [0.4, 0.6, 0.3],
-		    select(isFocused(), 0.5, 0.3));
+		    select(isNavFocused(), 0.5, 0.3))  + iir(isPressed(), 4, true);
     });
 
     focusable: select(ENABLED, 0.5, 0);
@@ -46,7 +46,7 @@
       align: center;
       caption: CH;
       bold: true;
-      color: select(isFocused(), 0, 1);
+      color: select(isNavFocused(), 0, 1)  - iir(isPressed(), 4, true);
     });
   });
 }

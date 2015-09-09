@@ -1,5 +1,9 @@
 
-Add scroll bar to list view
+Focus search bar on home does not scroll correctly
+
+Add scroll bar to list views and multiopts
+
+Add bookmark button
 
 Rework  $view.currentPageClone <- focusedClone();
 

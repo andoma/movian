@@ -117,7 +117,7 @@ widget(container_z, {
 
       widget(container_y, {
 
-        alpha: iir($ui.pointerVisible, 4);
+        alpha: iir($ui.pointerVisible || $ui.touch, 4);
         widget(container_x, {
 
           height: 3em;

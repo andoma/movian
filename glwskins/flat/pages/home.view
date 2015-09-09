@@ -120,14 +120,14 @@ widget(cursor, {
 		      "setting",  "ic_settings_48px",
 		      "plugin",   "ic_extension_48px") + ".svg";
 
-          color:  select($self.icon, 1, iir(!isNavFocused(), 4));
+          color:  select($self.icon, 1, iir(!isNavFocused(), 4))  - iir(isPressed(), 4, true);
         });
 
         widget(label, {
           align: center;
           caption: $self.title;
           size: 1.2em;
-          color: iir(!isNavFocused(), 4);
+          color: iir(!isNavFocused(), 4) - iir(isPressed(), 4, true);;
         });
       });
     });

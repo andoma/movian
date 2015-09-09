@@ -166,20 +166,25 @@ Java_com_lonelycoder_mediaplayer_Core_glwStep(JNIEnv *env,
 
 JNIEXPORT void JNICALL
 Java_com_lonelycoder_mediaplayer_Core_glwMotion(JNIEnv *env,
-                                                       jobject obj,
-                                                       jint id,
-                                                       jint action,
-                                                       jint x,
-                                                       jint y)
+                                                jobject obj,
+                                                jint id,
+                                                jint source,
+                                                jint action,
+                                                jint x,
+                                                jint y,
+                                                jlong ts)
 {
   android_glw_root_t *agr = (android_glw_root_t *)id;
   glw_root_t *gr = &agr->gr;
   glw_pointer_event_t gpe = {0};
 
+  // source == 0x1002  == touch
+  gpe.ts = ts * 1000LL;
   switch(action) {
-  case 0: gpe.type = GLW_POINTER_LEFT_PRESS;    break;
-  case 1: gpe.type = GLW_POINTER_LEFT_RELEASE;  break;
-  case 2: gpe.type = GLW_POINTER_MOTION_UPDATE; break;
+  case 0: gpe.type = GLW_POINTER_TOUCH_START;  break;
+  case 1: gpe.type = GLW_POINTER_TOUCH_END;    break;
+  case 2: gpe.type = GLW_POINTER_TOUCH_MOVE;   break;
+  case 3: gpe.type = GLW_POINTER_TOUCH_CANCEL; break;
   default: return;
   }
 

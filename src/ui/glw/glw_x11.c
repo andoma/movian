@@ -162,7 +162,7 @@ hide_cursor(glw_x11_t *gx11)
 
   gx11->cursor_hidden = 1;
   XDefineCursor(gx11->display, gx11->win, gx11->blank_cursor);
- 
+
   gpe.type = GLW_POINTER_GONE;
   glw_lock(&gx11->gr);
   glw_pointer_event(&gx11->gr, &gpe);
@@ -209,7 +209,7 @@ static void
 fullscreen_grab(glw_x11_t *gx11)
 {
   XSync(gx11->display, False);
-    
+
   while( GrabSuccess !=
 	 XGrabPointer(gx11->display, gx11->win,
 		      True,
@@ -272,10 +272,10 @@ window_open(glw_x11_t *gx11, int fullscreen)
   winAttr.background_pixel  = 0;
   winAttr.border_pixel      = 0;
 
-  winAttr.colormap = gx11->colormap = 
+  winAttr.colormap = gx11->colormap =
     XCreateColormap(gx11->display, gx11->root,
 		    gx11->xvi->visual, AllocNone);
-  
+
   mask = CWBackPixmap | CWBorderPixel | CWColormap | CWEventMask;
 
   if(fullscreen) {
@@ -296,7 +296,7 @@ window_open(glw_x11_t *gx11, int fullscreen)
     h = gx11->req_height ?: 720;
   }
 
-  gx11->win = 
+  gx11->win =
     XCreateWindow(gx11->display,
 		  gx11->root,
 		  x, y, w, h,
@@ -328,7 +328,7 @@ window_open(glw_x11_t *gx11, int fullscreen)
   text.encoding = XA_STRING;
   text.format = 8;
   text.nitems = strlen(buf);
-  
+
   XSetWMName(gx11->display, gx11->win, &text);
 
   /* Create the window deletion atom */
@@ -347,7 +347,7 @@ window_open(glw_x11_t *gx11, int fullscreen)
   if(!gx11->working_vsync) {
 
     if(strstr((const char *)glGetString(GL_VENDOR) ?: "", "NVIDIA")) {
-      TRACE(TRACE_ERROR, "GLW", 
+      TRACE(TRACE_ERROR, "GLW",
 	    "OpenGL on \"%s\" does not sync to vertical blank.\n"
 	    "This is required for OpenGL interface to\n"
 	    "function property. Please fix this.\n",
@@ -355,7 +355,7 @@ window_open(glw_x11_t *gx11, int fullscreen)
       return 1;
     }
 
-    TRACE(TRACE_INFO, "GLW", 
+    TRACE(TRACE_INFO, "GLW",
 	  "OpenGL driver does not provide adequate vertical sync "
 	  "capabilities. Using soft timers");
   }
@@ -395,7 +395,7 @@ window_close(glw_x11_t *gx11)
     XDestroyIC(gx11->ic);
     gx11->ic = NULL;
   }
-  
+
   show_cursor(gx11);
   XDestroyWindow(gx11->display, gx11->win);
   glXDestroyContext(gx11->display, gx11->glxctx);
@@ -498,7 +498,7 @@ probe_wm(glw_x11_t *gx11)
 
   if(XGetWindowProperty(gx11->display, wm_window_id, NET_WM_NAME,
 			0, 16384, False, AnyPropertyType, &type, &format, &r,
-			&bytes_after, &prop_return) != Success || 
+			&bytes_after, &prop_return) != Success ||
      r == 0 || prop_return == NULL) {
     TRACE(TRACE_INFO, "GLW",
 	  "No window manager found (NET_WM_NAME not set on wm window)");
@@ -584,7 +584,7 @@ glw_x11_init(glw_x11_t *gx11)
 {
   int attribs[10];
   int na = 0;
-  
+
   int use_locales = XSupportsLocale() && XSetLocaleModifiers("@im=none") != NULL;
 
   if((gx11->display = XOpenDisplay(gx11->displayname_real)) == NULL) {
@@ -594,7 +594,7 @@ glw_x11_init(glw_x11_t *gx11)
   }
 
   if(!glXQueryExtension(gx11->display, NULL, NULL)) {
-    TRACE(TRACE_ERROR, "GLW", 
+    TRACE(TRACE_ERROR, "GLW",
 	  "OpenGL GLX extension not supported by display \"%s\"\n",
           gx11->displayname_real);
     return 1;
@@ -605,17 +605,17 @@ glw_x11_init(glw_x11_t *gx11)
   gx11->screen_width  = DisplayWidth(gx11->display, gx11->screen);
   gx11->screen_height = DisplayHeight(gx11->display, gx11->screen);
   gx11->root          = RootWindow(gx11->display, gx11->screen);
- 
+
   attribs[na++] = GLX_RGBA;
   attribs[na++] = GLX_RED_SIZE;
   attribs[na++] = 1;
   attribs[na++] = GLX_GREEN_SIZE;
   attribs[na++] = 1;
-  attribs[na++] = GLX_BLUE_SIZE; 
+  attribs[na++] = GLX_BLUE_SIZE;
   attribs[na++] = 1;
   attribs[na++] = GLX_DOUBLEBUFFER;
   attribs[na++] = None;
-  
+
   gx11->xvi = glXChooseVisual(gx11->display, gx11->screen, attribs);
 
   if(gx11->xvi == NULL) {
@@ -623,7 +623,7 @@ glw_x11_init(glw_x11_t *gx11)
           gx11->displayname_real);
     return 1;
   }
-  
+
   if(GLXExtensionSupported(gx11->display, "GLX_SGI_swap_control")) {
     TRACE(TRACE_DEBUG, "GLW", "GLX_SGI_swap_control extension is present");
     gx11->glXSwapIntervalSGI = (PFNGLXSWAPINTERVALSGIPROC)
@@ -636,7 +636,7 @@ glw_x11_init(glw_x11_t *gx11)
     gx11->im = XOpenIM(gx11->display, NULL, NULL, NULL);
 
 
-  gx11->atom_deletewindow = 
+  gx11->atom_deletewindow =
     XInternAtom(gx11->display, "WM_DELETE_WINDOW", 0);
 
 #if ENABLE_VDPAU
@@ -678,7 +678,7 @@ glw_x11_init(glw_x11_t *gx11)
   if(gx11->wm_flags == 0) {
     fs = 1; // No window manager, open in fullscreen mode
   } else {
-    /* If window manager cannot do fullscreen, ask window to open 
+    /* If window manager cannot do fullscreen, ask window to open
        in fullscreen mode */
     fs = gx11->want_fullscreen && !(gx11->wm_flags & GX11_WM_CAN_FULLSCREEN);
   }
@@ -705,7 +705,7 @@ window_change_fullscreen(glw_x11_t *gx11)
 
     wm_set_fullscreen(gx11, gx11->want_fullscreen);
     gx11->is_fullscreen = gx11->want_fullscreen;
-    
+
   } else {
 
     window_shutdown(gx11);
@@ -726,7 +726,7 @@ static const struct {
   int action2;
   int action3;
 } keysym2action[] = {
-  
+
   { XK_Left,         0,           ACTION_LEFT },
   { XK_Right,        0,           ACTION_RIGHT },
   { XK_Up,           0,           ACTION_UP },
@@ -744,7 +744,7 @@ static const struct {
 
   { XK_Left,         ShiftMask | ControlMask,   ACTION_SKIP_BACKWARD},
   { XK_Right,        ShiftMask | ControlMask,   ACTION_SKIP_FORWARD},
-  
+
   { XK_Prior,        0,            ACTION_PAGE_UP,   ACTION_PREV_CHANNEL, ACTION_SKIP_BACKWARD},
   { XK_Next,         0,            ACTION_PAGE_DOWN, ACTION_NEXT_CHANNEL, ACTION_SKIP_FORWARD},
 
@@ -801,10 +801,10 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
 			    str, sizeof(str),
 			    &keysym, &gx11->status);
   } else {
-    len = XLookupString(&event->xkey, str, sizeof(str), 
-			&keysym, &composestatus); 
+    len = XLookupString(&event->xkey, str, sizeof(str),
+			&keysym, &composestatus);
   }
-  
+
   if(len > 1) {
     buf[0] = 0;
     s = str;
@@ -824,12 +824,12 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
     c = str[0];
     switch(c) {
       /* Static key mappings, these cannot be changed */
-    case 8:          
+    case 8:
       e = event_create_action_multi(
 				    (const action_type_t[]){
 				      ACTION_BS, ACTION_NAV_BACK}, 2);
       break;
-    case 13:          
+    case 13:
       e = event_create_action_multi(
 				    (const action_type_t[]){
 				      ACTION_ACTIVATE, ACTION_ENTER}, 2);
@@ -870,7 +870,7 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
   if(e == NULL) {
 
     for(i = 0; i < sizeof(keysym2action) / sizeof(*keysym2action); i++) {
-      
+
       if(keysym2action[i].XK == keysym &&
 	 keysym2action[i].modifier == state) {
 
@@ -895,9 +895,9 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
 
   if(e == NULL
      && keysym != XK_Shift_L   && keysym != XK_Shift_R
-     && keysym != XK_Control_L && keysym != XK_Control_R 
-     && keysym != XK_Caps_Lock && keysym != XK_Shift_Lock 
-     && keysym != XK_Meta_L    && keysym != XK_Meta_R 
+     && keysym != XK_Control_L && keysym != XK_Control_R
+     && keysym != XK_Caps_Lock && keysym != XK_Shift_Lock
+     && keysym != XK_Meta_L    && keysym != XK_Meta_R
      && keysym != XK_Alt_L     && keysym != XK_Alt_R) {
 
     /* Construct a string representing the key */
@@ -990,7 +990,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
 
 #ifdef WITH_RECORDER
   if(gx11->record_file) {
-    gx11->recorder = glw_rec_init(gx11->record_file, 
+    gx11->recorder = glw_rec_init(gx11->record_file,
 				  gx11->gr.gr_width,
 				  gx11->gr.gr_height,
 				  30);
@@ -1000,15 +1000,18 @@ glw_x11_mainloop(glw_x11_t *gx11)
   }
 #endif
 
+  int mouse_is_touch = 0;
+  int left_button_is_pressed = 0;
+
   while(gx11->running) {
 
     autohide_cursor(gx11);
-    
+
     if(gx11->wm_flags && !gx11->no_screensaver) {
 
       if(gx11->fullwindow && gx11->sss == NULL)
 	gx11->sss = x11_screensaver_suspend(gx11->display);
-      
+
       if(!gx11->fullwindow && gx11->sss != NULL) {
 	x11_screensaver_resume(gx11->sss);
 	gx11->sss = NULL;
@@ -1023,7 +1026,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
 
       if(XFilterEvent(&event, gx11->win))
 	continue;
-      
+
       switch(event.type) {
       case Expose:
 	glw_lock(&gx11->gr);
@@ -1079,26 +1082,38 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	  app_shutdown(0);
 	}
 	break;
-	  
+
       case MotionNotify:
 	show_cursor(gx11);
 
-	gpe.x =  (2.0 * event.xmotion.x / gx11->gr.gr_width ) - 1;
-	gpe.y = -(2.0 * event.xmotion.y / gx11->gr.gr_height) + 1;
-	gpe.type = GLW_POINTER_MOTION_UPDATE;
+        if(left_button_is_pressed || !mouse_is_touch) {
 
-	glw_lock(&gx11->gr);
-	glw_pointer_event(&gx11->gr, &gpe);
-	glw_unlock(&gx11->gr);
+          gpe.x =  (2.0 * event.xmotion.x / gx11->gr.gr_width ) - 1;
+          gpe.y = -(2.0 * event.xmotion.y / gx11->gr.gr_height) + 1;
+          gpe.ts = event.xmotion.time * 1000LL;
+          if(mouse_is_touch) {
+            gpe.type = GLW_POINTER_TOUCH_MOVE;
+          } else {
+            gpe.type = GLW_POINTER_MOTION_UPDATE;
+          }
+          glw_lock(&gx11->gr);
+          glw_pointer_event(&gx11->gr, &gpe);
+          glw_unlock(&gx11->gr);
+        }
 	break;
-	  
+
       case ButtonRelease:
 	gpe.x =  (2.0 * event.xmotion.x / gx11->gr.gr_width ) - 1;
 	gpe.y = -(2.0 * event.xmotion.y / gx11->gr.gr_height) + 1;
+        gpe.ts = event.xmotion.time * 1000LL;
 
 	switch(event.xbutton.button) {
 	case 1:
-	  gpe.type = GLW_POINTER_LEFT_RELEASE;
+          left_button_is_pressed = 0;
+          if(mouse_is_touch)
+            gpe.type = GLW_POINTER_TOUCH_END;
+          else
+            gpe.type = GLW_POINTER_LEFT_RELEASE;
 	  break;
 	case 3:
 	  gpe.type = GLW_POINTER_RIGHT_RELEASE;
@@ -1115,12 +1130,16 @@ glw_x11_mainloop(glw_x11_t *gx11)
       case ButtonPress:
 	gpe.x =  (2.0 * event.xmotion.x / gx11->gr.gr_width ) - 1;
 	gpe.y = -(2.0 * event.xmotion.y / gx11->gr.gr_height) + 1;
-
+        gpe.ts = event.xmotion.time * 1000LL;
 
 	switch(event.xbutton.button) {
 	case 1:
 	  /* Left click */
-	  gpe.type = GLW_POINTER_LEFT_PRESS;
+          left_button_is_pressed = 1;
+          if(mouse_is_touch)
+            gpe.type = GLW_POINTER_TOUCH_START;
+          else
+            gpe.type = GLW_POINTER_LEFT_PRESS;
 	  break;
 	case 2:
 	  glw_inject_event(&gx11->gr, event_create_action(ACTION_MENU));
@@ -1144,13 +1163,15 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	  if(gx11->map_mouse_wheel_to_keys) {
 	    glw_inject_event(&gx11->gr, event_create_action(ACTION_DOWN));
 	    continue;
-	    
 	  } else {
 	    gpe.type = GLW_POINTER_SCROLL;
 	    gpe.delta_y = 0.2;
 	  }
 	  break;
 
+	case 7:
+	  glw_inject_event(&gx11->gr, event_create_action(ACTION_MENU));
+	  continue;
 	case 8:
 	  glw_inject_event(&gx11->gr, event_create_action(ACTION_NAV_BACK));
 	  continue;
@@ -1301,7 +1322,7 @@ glw_x11_thread(void *aux)
 
   if(glw_x11_init(gx11))
      return NULL;
-  
+
   if(glw_init(gr))
     return NULL;
 
@@ -1368,7 +1389,7 @@ glw_x11_start(struct prop *nav)
   gx11->gr.gr_prop_nav = nav ?: nav_spawn();
   gx11->running = 1;
 
-  hts_thread_create_joinable("glw", &gx11->thread, 
+  hts_thread_create_joinable("glw", &gx11->thread,
 			     glw_x11_thread, gx11, 0);
 
   return gx11;

@@ -246,6 +246,12 @@ typedef enum {
   GLW_POINTER_LEFT_RELEASE,
   GLW_POINTER_RIGHT_PRESS,
   GLW_POINTER_RIGHT_RELEASE,
+
+  GLW_POINTER_TOUCH_START,
+  GLW_POINTER_TOUCH_MOVE,
+  GLW_POINTER_TOUCH_END,
+  GLW_POINTER_TOUCH_CANCEL,
+
   GLW_POINTER_MOTION_UPDATE,  // Updated (mouse did really move)
   GLW_POINTER_MOTION_REFRESH, // GLW Internal refresh (every frame)
   GLW_POINTER_FOCUS_MOTION,
@@ -259,7 +265,7 @@ typedef struct glw_pointer_event {
   float delta_x;
   float delta_y;
   glw_pointer_event_type_t type;
-  int flags;
+  int64_t ts;
 } glw_pointer_event_t;
 
 
@@ -854,6 +860,8 @@ typedef struct glw_root {
   struct glw *gr_pointer_grab;
   struct glw *gr_pointer_hover;
   struct glw *gr_pointer_press;
+  float gr_pointer_press_x;
+  float gr_pointer_press_y;
   struct glw *gr_current_focus;
   struct glw *gr_last_focus;
   int gr_delayed_focus_leave;
