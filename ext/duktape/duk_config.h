@@ -2258,6 +2258,16 @@ typedef FILE duk_file;
 #endif
 
 /*
+ *  Target info string
+ */
+
+#if defined(DUK_OPT_TARGET_INFO)
+#define DUK_USE_TARGET_INFO DUK_OPT_TARGET_INFO
+#else
+#define DUK_USE_TARGET_INFO "unknown"
+#endif
+
+/*
  *  Long control transfer, setjmp/longjmp or alternatives
  *
  *  Signal mask is not saved (when that can be communicated to the platform)
@@ -2291,16 +2301,6 @@ typedef FILE duk_file;
 #define DUK_LONGJMP(jb)       longjmp((jb), DUK_LONGJMP_DUMMY_VALUE)
 #else
 #error internal error
-#endif
-
-/*
- *  Target info string
- */
-
-#if defined(DUK_OPT_TARGET_INFO)
-#define DUK_USE_TARGET_INFO DUK_OPT_TARGET_INFO
-#else
-#define DUK_USE_TARGET_INFO "unknown"
 #endif
 
 /*
@@ -2717,6 +2717,12 @@ typedef FILE duk_file;
 #undef DUK_USE_NONSTD_ARRAY_WRITE
 #endif
 
+/* Node.js Buffer and Khronos/ES6 typed array support. */
+#define DUK_USE_BUFFEROBJECT_SUPPORT
+#if defined(DUK_OPT_NO_BUFFEROBJECT_SUPPORT)
+#undef DUK_USE_BUFFEROBJECT_SUPPORT
+#endif
+
 /*
  *  Optional C API options
  */
@@ -2951,10 +2957,6 @@ typedef FILE duk_file;
 
 #define DUK_USE_PROVIDE_DEFAULT_ALLOC_FUNCTIONS
 #undef DUK_USE_EXPLICIT_NULL_INIT
-
-#if !defined(DUK_USE_PACKED_TVAL)
-#define DUK_USE_EXPLICIT_NULL_INIT
-#endif
 
 #define DUK_USE_ZERO_BUFFER_DATA
 #if defined(DUK_OPT_NO_ZERO_BUFFER_DATA)

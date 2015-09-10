@@ -5,7 +5,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 680f937d642b020c7bbc2e185c57f4ef320fc351 (v1.2.0-530-g680f937).
+ *  Git commit 507f786924c7632c5b66cb98adaee2bb8f5c179b (v1.2.0-589-g507f786).
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -216,7 +216,7 @@ struct duk_number_list_entry {
  * so that application code can easily log which Duktape snapshot was used.
  * Not available in the Ecmascript environment.
  */
-#define DUK_GIT_DESCRIBE                  "v1.2.0-530-g680f937"
+#define DUK_GIT_DESCRIBE                  "v1.2.0-589-g507f786"
 
 /* Duktape debug protocol version used by this build. */
 #define DUK_DEBUG_PROTOCOL_VERSION        1
@@ -551,6 +551,23 @@ DUK_EXTERNAL_DECL void *duk_push_buffer_raw(duk_context *ctx, duk_size_t size, d
 	duk_push_buffer_raw((ctx), (size), DUK_BUF_FLAG_DYNAMIC /*flags*/)
 #define duk_push_external_buffer(ctx) \
 	((void) duk_push_buffer_raw((ctx), 0, DUK_BUF_FLAG_DYNAMIC | DUK_BUF_FLAG_EXTERNAL))
+
+#define DUK_BUFOBJ_CREATE_ARRBUF       (1 << 4)  /* internal flag: create backing ArrayBuffer; keep in one byte */
+#define DUK_BUFOBJ_DUKTAPE_BUFFER      0
+#define DUK_BUFOBJ_NODEJS_BUFFER       1
+#define DUK_BUFOBJ_ARRAYBUFFER         2
+#define DUK_BUFOBJ_DATAVIEW            (3 | DUK_BUFOBJ_CREATE_ARRBUF)
+#define DUK_BUFOBJ_INT8ARRAY           (4 | DUK_BUFOBJ_CREATE_ARRBUF)
+#define DUK_BUFOBJ_UINT8ARRAY          (5 | DUK_BUFOBJ_CREATE_ARRBUF)
+#define DUK_BUFOBJ_UINT8CLAMPEDARRAY   (6 | DUK_BUFOBJ_CREATE_ARRBUF)
+#define DUK_BUFOBJ_INT16ARRAY          (7 | DUK_BUFOBJ_CREATE_ARRBUF)
+#define DUK_BUFOBJ_UINT16ARRAY         (8 | DUK_BUFOBJ_CREATE_ARRBUF)
+#define DUK_BUFOBJ_INT32ARRAY          (9 | DUK_BUFOBJ_CREATE_ARRBUF)
+#define DUK_BUFOBJ_UINT32ARRAY         (10 | DUK_BUFOBJ_CREATE_ARRBUF)
+#define DUK_BUFOBJ_FLOAT32ARRAY        (11 | DUK_BUFOBJ_CREATE_ARRBUF)
+#define DUK_BUFOBJ_FLOAT64ARRAY        (12 | DUK_BUFOBJ_CREATE_ARRBUF)
+
+DUK_EXTERNAL_DECL void duk_push_buffer_object(duk_context *ctx, duk_idx_t idx_buffer, duk_size_t byte_offset, duk_size_t byte_length, duk_uint_t flags);
 
 DUK_EXTERNAL_DECL duk_idx_t duk_push_heapptr(duk_context *ctx, void *ptr);
 
