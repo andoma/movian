@@ -93,8 +93,11 @@ avc_enq(JNIEnv *env, android_video_codec_t *avc, void *data, int size,
 
   void *bb_buf  = (*env)->GetDirectBufferAddress(env, bb);
   int   bb_size = (*env)->GetDirectBufferCapacity(env, bb);
-
-  assert(bb_size >= size);
+  if(bb_size < size) {
+    TRACE(TRACE_ERROR, "android", "Video packet buffer too small %d < %d",
+          bb_size, size);
+    return idx;
+  }
   memcpy(bb_buf, data, size);
 
   (*env)->CallVoidMethod(env, avc->avc_decoder, avc->avc_queueInputBuffer,

@@ -107,6 +107,48 @@
         "squashfs-tools"
       ],
       "buildcmd": "./Autobuild.sh -t ${TARGET} -j ${PARALLEL} -w ${WORKDIR}"
+    },
+
+    "android": {
+      "buildenv": "jessie-i386",
+      "submodules": ["android"],
+      "builddeps": {
+
+        "debs": [
+          "openjdk-7-jdk",
+          "git-core",
+          "build-essential",
+          "autoconf",
+          "bison",
+          "flex",
+          "libelf-dev",
+          "libtool",
+          "pkg-config",
+          "texinfo",
+          "libncurses5-dev",
+          "libz-dev",
+          "python-dev",
+          "libssl-dev",
+          "libgmp3-dev",
+          "ccache",
+          "zip",
+          "curl",
+          "wget",
+          "ant"
+        ],
+
+        "android-sdk": [
+          "platform-tools",
+          "android-22",
+          "android-17",
+          "build-tools-22.0.1",
+          "build-tools-17.0.0"
+        ],
+
+        "android-ndk": "http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86.bin"
+
+      },
+      "buildcmd": "./Autobuild.sh -t ${TARGET} -j ${PARALLEL} -w ${WORKDIR}"
     }
   }
 }

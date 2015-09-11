@@ -13,3 +13,6 @@
 [submodule "ext/gumbo-parser"]
 	path = ext/gumbo-parser
 	url = https://github.com/google/gumbo-parser
+[submodule "android"]
+	path = android
+	url = andoma@git.lonelycoder.com:movian-android.git

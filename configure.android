@@ -61,21 +61,25 @@ if [ ! -x "${SDK}/tools/ant" ]; then
 fi
 
 TOOLCHAIN=${TOPDIR}/build.android/toolchain/bin/arm-linux-androideabi-
+CC=${TOOLCHAIN}gcc
+CXX=${TOOLCHAIN}g++
 
-if [ ! -f "${TOOLCHAIN}gcc" ]; then
+setup_env "$@"
+
+echo "Using Android NDK at : ${NDK}"
+stat "${NDK}"
+echo
+
+if [ ! -f "${CC}" ]; then
     echo "Installing toolchain..."
+
+    stat "${NDK}/build/tools/make-standalone-toolchain.sh"
     if [ ! -f "${NDK}/build/tools/make-standalone-toolchain.sh" ]; then
         echo "NDK not found, either set NDK environment varable or specify --ndk=/path/to/ndk"
         die
     fi
     ${NDK}/build/tools/make-standalone-toolchain.sh --platform=${ANDROID_API} --install-dir=${TOPDIR}/build.android/toolchain --toolchain=${ANDROID_EABI}
 fi
-
-
-CC=${TOOLCHAIN}gcc
-CXX=${TOOLCHAIN}g++
-
-setup_env "$@"
 
 enable sqlite_internal
 enable glw_backend_opengl_es
