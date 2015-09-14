@@ -1,11 +1,11 @@
 /*
- *  Duktape public API for Duktape 1.2.99.
+ *  Duktape public API for Duktape 1.3.0.
  *  See the API reference for documentation on call semantics.
  *  The exposed API is inside the DUK_API_PUBLIC_H_INCLUDED
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 507f786924c7632c5b66cb98adaee2bb8f5c179b (v1.2.0-589-g507f786).
+ *  Git commit 675165f35ea3a5bac34ff4d0a58b007cc2f442dc (v1.3.0).
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -210,13 +210,13 @@ struct duk_number_list_entry {
  * have 99 for patch level (e.g. 0.10.99 would be a development version
  * after 0.10.0 but before the next official release).
  */
-#define DUK_VERSION                       10299L
+#define DUK_VERSION                       10300L
 
 /* Git describe for Duktape build.  Useful for non-official snapshot builds
  * so that application code can easily log which Duktape snapshot was used.
  * Not available in the Ecmascript environment.
  */
-#define DUK_GIT_DESCRIBE                  "v1.2.0-589-g507f786"
+#define DUK_GIT_DESCRIBE                  "v1.3.0"
 
 /* Duktape debug protocol version used by this build. */
 #define DUK_DEBUG_PROTOCOL_VERSION        1
@@ -616,7 +616,16 @@ DUK_EXTERNAL_DECL duk_bool_t duk_is_dynamic_buffer(duk_context *ctx, duk_idx_t i
 DUK_EXTERNAL_DECL duk_bool_t duk_is_fixed_buffer(duk_context *ctx, duk_idx_t index);
 DUK_EXTERNAL_DECL duk_bool_t duk_is_external_buffer(duk_context *ctx, duk_idx_t index);
 
-DUK_EXTERNAL_DECL duk_bool_t duk_is_primitive(duk_context *ctx, duk_idx_t index);
+#define duk_is_primitive(ctx,index) \
+	duk_check_type_mask((ctx), (index), DUK_TYPE_MASK_UNDEFINED | \
+	                                    DUK_TYPE_MASK_NULL | \
+	                                    DUK_TYPE_MASK_BOOLEAN | \
+	                                    DUK_TYPE_MASK_NUMBER | \
+	                                    DUK_TYPE_MASK_STRING | \
+	                                    DUK_TYPE_MASK_BUFFER | \
+	                                    DUK_TYPE_MASK_POINTER | \
+	                                    DUK_TYPE_MASK_LIGHTFUNC)
+
 #define duk_is_object_coercible(ctx,index) \
 	duk_check_type_mask((ctx), (index), DUK_TYPE_MASK_BOOLEAN | \
 	                                    DUK_TYPE_MASK_NUMBER | \
