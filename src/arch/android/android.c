@@ -30,6 +30,7 @@
 #include <jni.h>
 #include <sys/system_properties.h>
 #include <GLES2/gl2.h>
+#include <sys/mman.h>
 
 #include "arch/arch.h"
 #include "main.h"
@@ -39,13 +40,15 @@
 #include "prop/prop_jni.h"
 #include "android.h"
 #include "navigator.h"
-#include <sys/mman.h>
 #include "arch/halloc.h"
+#include "misc/md5.h"
+#include "misc/str.h"
 
 static char android_manufacturer[PROP_VALUE_MAX];
 static char android_model[PROP_VALUE_MAX];
 static char android_name[PROP_VALUE_MAX];
-static char system_type[256];
+static char android_version[PROP_VALUE_MAX];
+static char android_serialno[PROP_VALUE_MAX];
 
 JavaVM *JVM;
 jclass STCore;
@@ -217,13 +220,16 @@ JNI_OnLoad(JavaVM *vm, void *reserved)
 {
   JVM = vm;
 
-  __system_property_get("ro.product.manufacturer", android_manufacturer);
-  __system_property_get("ro.product.model",        android_model);
-  __system_property_get("ro.product.name",         android_name);
+  __system_property_get("ro.product.manufacturer",  android_manufacturer);
+  __system_property_get("ro.product.model",         android_model);
+  __system_property_get("ro.product.name",          android_name);
+  __system_property_get("ro.build.version.release", android_version);
+  __system_property_get("ro.serialno",              android_serialno);
 
-  snprintf(system_type, sizeof(system_type),
-           "android/%s/%s/%s", android_manufacturer,
-           android_model, android_name);
+  snprintf(gconf.os_info, sizeof(gconf.os_info), "%s", android_version);
+
+  snprintf(gconf.device_type, sizeof(gconf.device_type),
+           "%s %s", android_manufacturer, android_model);
 
   return JNI_VERSION_1_6;
 }
@@ -233,7 +239,7 @@ JNI_OnLoad(JavaVM *vm, void *reserved)
  *
  */
 JNIEXPORT void JNICALL
-Java_com_lonelycoder_mediaplayer_Core_coreInit(JNIEnv *env, jobject obj, jstring j_settings, jstring j_cachedir, jstring j_sdcard)
+Java_com_lonelycoder_mediaplayer_Core_coreInit(JNIEnv *env, jobject obj, jstring j_settings, jstring j_cachedir, jstring j_sdcard, jstring j_android_id)
 {
   char path[PATH_MAX];
   trace_arch(TRACE_INFO, "Core", "Native core initializing");
@@ -243,9 +249,10 @@ Java_com_lonelycoder_mediaplayer_Core_coreInit(JNIEnv *env, jobject obj, jstring
   gettimeofday(&tv, NULL);
   srand(tv.tv_usec);
 
-  const char *settings = (*env)->GetStringUTFChars(env, j_settings, 0);
-  const char *cachedir = (*env)->GetStringUTFChars(env, j_cachedir, 0);
-  const char *sdcard   = (*env)->GetStringUTFChars(env, j_sdcard, 0);
+  const char *settings   = (*env)->GetStringUTFChars(env, j_settings, 0);
+  const char *cachedir   = (*env)->GetStringUTFChars(env, j_cachedir, 0);
+  const char *sdcard     = (*env)->GetStringUTFChars(env, j_sdcard, 0);
+  const char *android_id = (*env)->GetStringUTFChars(env, j_android_id, 0);
 
   gconf.persistent_path = strdup(settings);
   gconf.cache_path      = strdup(cachedir);
@@ -256,9 +263,22 @@ Java_com_lonelycoder_mediaplayer_Core_coreInit(JNIEnv *env, jobject obj, jstring
   gconf.upgrade_path = strdup(path);
   unlink(gconf.upgrade_path);
 
+  uint8_t digest[16];
+
+  md5_decl(ctx);
+  md5_init(ctx);
+
+  md5_update(ctx, (const void *)android_id, strlen(android_id));
+  md5_update(ctx, (const void *)android_serialno, strlen(android_serialno));
+
+  md5_final(ctx, digest);
+  bin2hex(gconf.device_id, sizeof(gconf.device_id), digest, sizeof(digest));
+
+
   (*env)->ReleaseStringUTFChars(env, j_settings, settings);
   (*env)->ReleaseStringUTFChars(env, j_cachedir, cachedir);
   (*env)->ReleaseStringUTFChars(env, j_sdcard,   sdcard);
+  (*env)->ReleaseStringUTFChars(env, j_android_id, android_id);
 
 
   gconf.concurrency =   sysconf(_SC_NPROCESSORS_CONF);
