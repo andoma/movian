@@ -28,3 +28,5 @@ extern struct prop *android_nav; // We only have one navigator at all times on a
 void android_bitmap_destroy(JNIEnv *env, jobject bitmap);
 
 jobject android_bitmap_create(JNIEnv *env, int width, int height);
+
+int android_install_apk(const char *path);

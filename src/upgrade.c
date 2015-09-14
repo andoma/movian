@@ -51,6 +51,10 @@
 #include <sys/utsname.h>
 #endif
 
+#ifdef __ANDROID__
+#include "arch/android/android.h"
+#endif
+
 static HTS_MUTEX_DECL(upgrade_mutex);
 
 static const char *ctrlbase = "http://upgrade.movian.tv/upgrade/2";
@@ -1137,6 +1141,11 @@ install_locked(struct artifact_queue *aq)
       return;
   }
 
+#ifdef __ANDROID__
+  android_install_apk(gconf.upgrade_path);
+  return;
+#endif
+
   move_files_into_place(aq);
 
   TRACE(TRACE_INFO, "upgrade", "All done, restarting");
@@ -1267,6 +1276,11 @@ upgrade_init(void)
   archname = "ps3";
 #endif
 
+#ifdef __ANDROID__
+  artifact_type = "apk";
+  archname = "android";
+#endif
+
   if(artifact_type == NULL || archname == NULL)
     return;
 
@@ -1293,8 +1307,10 @@ upgrade_init(void)
                  SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Upgrade to releases from")),
                  SETTING_HTSMSG("track-4-10", store, "upgrade"),
+#ifndef __ANDROID__
                  SETTING_OPTION("stable",  _p("Stable")),
                  SETTING_OPTION("testing", _p("Testing")),
+#endif
                  SETTING_OPTION_CSTR("master", "Bleeding Edge (Very unstable)"),
                  SETTING_CALLBACK(set_upgrade_track, NULL),
                  SETTING_MUTEX(&upgrade_mutex),

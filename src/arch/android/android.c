@@ -24,6 +24,7 @@
 #include <limits.h>
 #include <syslog.h>
 #include <sys/vfs.h>
+#include <sys/stat.h>
 #include <signal.h>
 #include <android/log.h>
 #include <jni.h>
@@ -232,8 +233,9 @@ JNI_OnLoad(JavaVM *vm, void *reserved)
  *
  */
 JNIEXPORT void JNICALL
-Java_com_lonelycoder_mediaplayer_Core_coreInit(JNIEnv *env, jobject obj, jstring j_settings, jstring j_cachedir)
+Java_com_lonelycoder_mediaplayer_Core_coreInit(JNIEnv *env, jobject obj, jstring j_settings, jstring j_cachedir, jstring j_sdcard)
 {
+  char path[PATH_MAX];
   trace_arch(TRACE_INFO, "Core", "Native core initializing");
   gconf.trace_level = TRACE_DEBUG;
 
@@ -243,12 +245,21 @@ Java_com_lonelycoder_mediaplayer_Core_coreInit(JNIEnv *env, jobject obj, jstring
 
   const char *settings = (*env)->GetStringUTFChars(env, j_settings, 0);
   const char *cachedir = (*env)->GetStringUTFChars(env, j_cachedir, 0);
+  const char *sdcard   = (*env)->GetStringUTFChars(env, j_sdcard, 0);
 
   gconf.persistent_path = strdup(settings);
   gconf.cache_path      = strdup(cachedir);
 
+  snprintf(path, sizeof(path), "%s/Download", sdcard);
+  mkdir(path, 0770);
+  snprintf(path, sizeof(path), "%s/Download/movian_upgrade.apk", sdcard);
+  gconf.upgrade_path = strdup(path);
+  unlink(gconf.upgrade_path);
+
   (*env)->ReleaseStringUTFChars(env, j_settings, settings);
   (*env)->ReleaseStringUTFChars(env, j_cachedir, cachedir);
+  (*env)->ReleaseStringUTFChars(env, j_sdcard,   sdcard);
+
 
   gconf.concurrency =   sysconf(_SC_NPROCESSORS_CONF);
 
@@ -280,4 +291,30 @@ JNIEXPORT void JNICALL
 Java_com_lonelycoder_mediaplayer_Core_pollCourier(JNIEnv *env, jobject obj)
 {
   prop_jni_poll();
+}
+
+
+
+/**
+ *
+ */
+int
+android_install_apk(const char *path)
+{
+  JNIEnv *env;
+  int r = (*JVM)->GetEnv(JVM, (void **)&env, JNI_VERSION_1_6);
+
+  if(r) {
+    TRACE(TRACE_DEBUG, "Upgrade", "No JNI environment");
+    return -1;
+  }
+
+  jstring jstr = (*env)->NewStringUTF(env, path);
+  jmethodID upgrade_mid = (*env)->GetStaticMethodID(env, STCore, "Upgrade",
+                                                    "(Ljava/lang/String;)V");
+  assert(upgrade_mid != 0);
+
+  (*env)->CallStaticVoidMethod(env, STCore, upgrade_mid, jstr);
+
+  exit(0);
 }
