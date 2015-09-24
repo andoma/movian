@@ -153,10 +153,7 @@ callout_loop(void *aux)
 
 static callout_t callout_clock;
 
-static prop_t *prop_hour;
-static prop_t *prop_minute;
-static prop_t *prop_dayminute;
-static prop_t *prop_unixtime;
+static prop_t *prop_clock;
 
 /**
  *
@@ -175,14 +172,21 @@ callout_update_clock_props(void)
   struct tm tm;
 
   time(&now);
+  if(now < 1000000000) {
+    prop_set(prop_clock, "valid", PROP_SET_INT, 0);
+    callout_arm(&callout_clock, set_global_clock, NULL, 2);
+    return;
+  }
+  prop_set(prop_clock, "valid", PROP_SET_INT, 1);
 
-  prop_set_int(prop_unixtime, now);
+  prop_set(prop_clock, "unixtime", PROP_SET_INT, now);
 
   arch_localtime(&now, &tm);
 
-  prop_set_int(prop_hour, tm.tm_hour);
-  prop_set_int(prop_minute, tm.tm_min);
-  prop_set_int(prop_dayminute, tm.tm_hour * 60 + tm.tm_min);
+  prop_set(prop_clock, "hour",      PROP_SET_INT, tm.tm_hour);
+  prop_set(prop_clock, "minute",    PROP_SET_INT, tm.tm_min);
+  prop_set(prop_clock, "dayminute", PROP_SET_INT, tm.tm_hour * 60 + tm.tm_min);
+
   callout_arm(&callout_clock, set_global_clock, NULL, 61 - tm.tm_sec);
 }
 
@@ -193,7 +197,6 @@ callout_update_clock_props(void)
 void
 callout_init(void)
 {
-  prop_t *clock;
 
   hts_mutex_init(&callout_mutex);
   hts_cond_init(&callout_cond, &callout_mutex);
@@ -201,11 +204,6 @@ callout_init(void)
   hts_thread_create_detached("callout", callout_loop, NULL,
 			     THREAD_PRIO_BGTASK);
 
-  clock = prop_create(prop_get_global(), "clock");
-  prop_hour     = prop_create(clock, "hour");
-  prop_minute   = prop_create(clock, "minute");
-  prop_dayminute= prop_create(clock, "dayminute");
-  prop_unixtime = prop_create(clock, "unixtime");
-
+  prop_clock = prop_create(prop_get_global(), "clock");
   set_global_clock(NULL, NULL);
 }
