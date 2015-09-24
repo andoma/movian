@@ -126,22 +126,26 @@ video_deliver_frame(video_decoder_t *vd, const frame_info_t *info)
  */
 static void
 update_vbitrate(media_pipe_t *mp, media_queue_t *mq, 
-		int size, video_decoder_t *vd)
+		media_buf_t *mb, video_decoder_t *vd)
 {
   int i;
   int64_t sum;
 
+  int size = mb->mb_size;
+  int duration = mb->mb_duration;
+  if(duration == 0)
+    duration = vd->vd_estimated_duration;
   vd->vd_frame_size[vd->vd_frame_size_ptr] = size;
   vd->vd_frame_size_ptr = (vd->vd_frame_size_ptr + 1) & VD_FRAME_SIZE_MASK;
 
-  if(vd->vd_estimated_duration == 0 || (vd->vd_frame_size_ptr & 7) != 0)
+  if(duration == 0 || (vd->vd_frame_size_ptr & 7) != 0)
     return;
 
   sum = 0;
   for(i = 0; i < VD_FRAME_SIZE_LEN; i++)
     sum += vd->vd_frame_size[i];
 
-  sum = 8000000LL * sum / VD_FRAME_SIZE_LEN / vd->vd_estimated_duration;
+  sum = 8000000LL * sum / VD_FRAME_SIZE_LEN / duration;
   prop_set_int(mq->mq_prop_bitrate, sum / 1000);
 }
 
@@ -159,7 +163,6 @@ vd_thread(void *aux)
   media_codec_t *mc, *mc_current = NULL;
   int run = 1;
   int reqsize = -1;
-  int size;
   int reinit = 0;
 
   const media_buf_meta_t *mbm = NULL;
@@ -251,8 +254,6 @@ vd_thread(void *aux)
         hts_mutex_lock(&mp->mp_mutex);
       }
 
-      size = mb->mb_size;
-
       mq->mq_no_data_interest = 1;
       if(mc->decode_locked(mc, vd, mq, mb)) {
         cur = mb;
@@ -262,7 +263,7 @@ vd_thread(void *aux)
       mq->mq_no_data_interest = 0;
       cur = NULL;
 
-      update_vbitrate(mp, mq, size, vd);
+      update_vbitrate(mp, mq, mb, vd);
       media_buf_free_locked(mp, mb);
       continue;
     }
@@ -346,10 +347,8 @@ vd_thread(void *aux)
 	reinit = 0;
       }
 
-      size = mb->mb_size;
-
       mc->decode(mc, vd, mq, mb, reqsize);
-      update_vbitrate(mp, mq, size, vd);
+      update_vbitrate(mp, mq, mb, vd);
       reqsize = -1;
       break;
 
