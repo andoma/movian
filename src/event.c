@@ -170,6 +170,7 @@ static struct strtab actionnames[] = {
   { "Quit",                  ACTION_QUIT },
   { "Standby",               ACTION_STANDBY },
   { "PowerOff",              ACTION_POWER_OFF },
+  { "Reboot",                ACTION_REBOOT },
 
   { "Shuffle",               ACTION_SHUFFLE },
   { "Repeat",                ACTION_REPEAT },
@@ -520,6 +521,9 @@ event_dispatch(event_t *e)
 
   } else if(event_is_action(e, ACTION_POWER_OFF)) {
     app_shutdown(11);
+
+  } else if(event_is_action(e, ACTION_REBOOT)) {
+    app_shutdown(15);
 
   } else if(event_is_action(e, ACTION_NAV_BACK) ||
 	    event_is_action(e, ACTION_NAV_FWD) ||
