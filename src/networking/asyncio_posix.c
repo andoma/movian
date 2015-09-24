@@ -592,9 +592,9 @@ asyncio_thread(void *aux)
 
   asyncio_dns_worker = asyncio_add_worker(adr_deliver_cb);
 
-  init_group(INIT_GROUP_ASYNCIO);
-
   async_now = arch_get_ts();
+
+  init_group(INIT_GROUP_ASYNCIO);
 
   while(1)
     asyncio_dopoll();
