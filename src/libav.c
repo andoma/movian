@@ -28,6 +28,7 @@
 #include "libav.h"
 #include "fileaccess/fa_libav.h"
 #include "video/video_decoder.h"
+#include "video/video_settings.h"
 
 #if ENABLE_VDPAU
 #include "video/vdpau.h"
@@ -415,6 +416,11 @@ media_codec_create_lavc(media_codec_t *cw, const media_codec_params_t *mcp,
   if(codec->type == AVMEDIA_TYPE_VIDEO) {
 
     cw->get_buffer2 = &avcodec_default_get_buffer2;
+
+    // If we run with vdpau and h264 libav will crash when going
+    // back and forth between accelerated and non-accelerated mode
+    if(!(video_settings.vdpau && cw->codec_id == AV_CODEC_ID_H264))
+      cw->ctx->thread_count = gconf.concurrency;
 
     cw->ctx->opaque = cw;
     cw->ctx->refcounted_frames = 1;
