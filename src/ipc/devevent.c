@@ -38,6 +38,8 @@ typedef struct de_dev {
   int dd_qual;
 #define QUAL_LEFT_SHIFT  0x1
 #define QUAL_RIGHT_SHIFT 0x2
+#define QUAL_LEFT_ALT    0x4
+#define QUAL_RIGHT_ALT   0x8
 
 } de_dev_t;
 
@@ -220,10 +222,13 @@ dd_read(de_dev_t *dd)
   doqual(dd, &ie, KEY_LEFTSHIFT,  QUAL_LEFT_SHIFT);
   doqual(dd, &ie, KEY_RIGHTSHIFT, QUAL_RIGHT_SHIFT);
 
+  doqual(dd, &ie, KEY_LEFTALT,  QUAL_LEFT_ALT);
+  doqual(dd, &ie, KEY_RIGHTALT, QUAL_RIGHT_ALT);
+
   if(ie.value == 0)
     return 0; // release
 
-
+  int alt   = !!(dd->dd_qual & (QUAL_LEFT_ALT   | QUAL_RIGHT_ALT));
   int shift = !!(dd->dd_qual & (QUAL_LEFT_SHIFT | QUAL_RIGHT_SHIFT));
 
   for(i = 0; key_to_action[i][0]; i++) {
@@ -271,9 +276,27 @@ dd_read(de_dev_t *dd)
 
   default:
     if(ie.code < 128) {
-      int uc = shift ? keymap_shift[ie.code] : keymap[ie.code];
-      if(uc > ' ')
-	e = event_create_int(EVENT_UNICODE, uc);
+
+
+      if(alt) {
+        switch(keymap[ie.code]) {
+        case 'l':
+          e = event_create_action(ACTION_LOGWINDOW);
+          break;
+        case 'm':
+          e = event_create_action(ACTION_SHOW_MEDIA_STATS);
+          break;
+        case 's':
+          e = event_create_action(ACTION_SYSINFO);
+          break;
+        }
+
+      } else {
+
+        int uc = shift ? keymap_shift[ie.code] : keymap[ie.code];
+        if(uc > ' ')
+          e = event_create_int(EVENT_UNICODE, uc);
+      }
     }
     if(e == NULL)
       printf("Unmapped key %d\n", ie.code);
