@@ -345,22 +345,22 @@ msg: Пауза
 # ./glwskins/default/pages/upgrade.view
 #
 id: %s is up to date
-msg: %s является актуальной
+msg: Текущая версия %s является актуальной
 
 id: An error occured during download
 msg: Произошла ошибка во время загрузки
 
 id: Available version:
-msg: Доступные версии:
+msg: Доступная версия:
 
 id: Changelog for %s releases
 msg: Лог изменений для релиза %s
 
 id: Check for updates now
-msg: Проверить обновления сейчас
+msg: Проверить обновление сейчас
 
 id: Checking for updates...
-msg: Проверка обновлений...
+msg: Проверка обновления...
 
 id: Checking installed version of %s
 msg: Проверка установленной версии %s
@@ -1590,7 +1590,7 @@ id: %s version %s is available
 msg: %s версия %s доступна
 
 id: Notify about upgrades
-msg: Уведомлять об обновлениях
+msg: Уведомлять об обновлении
 
 id: Open download page
 msg: Открыть страницу загрузки
@@ -1599,7 +1599,7 @@ id: Software upgrade
 msg: Обновление ПО
 
 id: Upgrade to releases from
-msg: Обновление до релиза
+msg: Обновлять до релиза
 
 #
 # ./src/upnp/upnp_browse.c
