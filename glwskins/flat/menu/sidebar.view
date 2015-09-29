@@ -176,7 +176,7 @@ widget(container_z, {
         SIDEBAR_ACTION(_("Settings"),
                        "skin://icons/ic_settings_48px.svg",
                        navOpen("settings:"),
-                       $nav.currentpage.url == "settings:");
+                       $self.url == "settings:");
 
         widget(dummy, {
           height: 1em;
