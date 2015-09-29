@@ -175,11 +175,12 @@ glw_array_layout(glw_t *w, const glw_rctx_t *rc)
       yspacing += (e * yentries) / (yentries - 1);
       a->child_height_px = a->child_height_fixed;
     }
-      
+
+    /*
     if(a->num_visible_childs < a->child_tiles_x)
       xpos = (a->child_tiles_x - a->num_visible_childs) * 
 	(xspacing + a->child_width_px) / 2;
-
+    */
     rows = (a->num_visible_childs - 1) / a->child_tiles_x + 1;
 
     if(w->glw_alignment == LAYOUT_ALIGN_CENTER && rows < a->child_tiles_y)
