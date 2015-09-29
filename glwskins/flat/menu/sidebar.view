@@ -119,7 +119,7 @@ widget(container_z, {
 
         id: "sidebar";
 
-        autoFocusLimit: true;
+//        autoFocusLimit: true;
 
         // --------------------------------------
         // Bookmark on/off
