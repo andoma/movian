@@ -127,7 +127,7 @@ widget(cursor, {
           align: center;
           caption: $self.title;
           size: 1.2em;
-          color: iir(!isNavFocused(), 4) - iir(isPressed(), 4, true);;
+          color: iir(!isNavFocused(), 4) - iir(isPressed(), 4, true);
         });
       });
     });
