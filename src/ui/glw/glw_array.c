@@ -448,7 +448,7 @@ scroll_to_me(glw_array_t *a, glw_t *c)
 {
   glw_schedule_refresh(a->w.glw_root, 0);
 
-  while(c != NULL && glw_parent_data(c, glw_array_item_t)->col != 0)
+  while(c != NULL && glw_parent_data(c, glw_array_item_t)->col > 0)
     c = TAILQ_PREV(c, glw_queue, glw_parent_link);
 
   if(c == NULL)
