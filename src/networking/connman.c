@@ -770,8 +770,10 @@ set_wifi_enable(void *opaque, int enable)
 			   G_DBUS_CALL_FLAGS_NONE, -1, NULL, &err);
 
   if(v == NULL) {
-    TRACE(TRACE_ERROR, "CONNMAN", "Unable to set power %s -- %s",
-	  path, err->message);
+    if(err->code != 36)
+      TRACE(TRACE_ERROR, "CONNMAN", "Unable to set power %s -- %s",
+            path, err->message);
+    g_error_free(err);
   } else {
     g_variant_unref(v);
   }
@@ -845,7 +847,7 @@ connman_thread(void *aux)
 }
 
 
-#define MYURL "showtime:networkconnections"
+#define MYURL "settings:networkconnections"
 
 /**
  *
@@ -893,7 +895,9 @@ connman_init(void)
 static int
 be_netconf_canhandle(const char *url)
 {
-  return !strncmp(url, MYURL, strlen(MYURL));
+  if(!strcmp(url, MYURL))
+    return 20;
+  return 0;
 }
 
 
