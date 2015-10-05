@@ -299,7 +299,7 @@ glw_playfield_render(glw_t *w, const glw_rctx_t *rc)
       
 	v = GLW_S(v);
       
-	glw_LerpMatrix(rc0.rc_mtx, v, *d->glw_matrix, rc0.rc_mtx);
+	glw_LerpMatrix(&rc0.rc_mtx, v, d->glw_matrix, &rc0.rc_mtx);
       
 	if((dd = TAILQ_FIRST(&d->glw_childs)) != NULL) {
 

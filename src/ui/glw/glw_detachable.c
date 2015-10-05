@@ -99,7 +99,7 @@ glw_detach_get_rctx(glw_t *w, struct glw_rctx *rc)
 {
   glw_detachable_t *gd = (glw_detachable_t *)w;
 
-  memcpy(rc->rc_mtx, w->glw_matrix, sizeof(Mtx));
+  rc->rc_mtx = *w->glw_matrix;
   rc->rc_width = gd->width;
   rc->rc_height = gd->height;
 }

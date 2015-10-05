@@ -17,85 +17,61 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
-static __inline void
-glw_Translatef(glw_rctx_t *rc, float x, float y, float z)
-{
-  float *m = rc->rc_mtx;
 
-  m[12] += m[0]*x + m[4]*y +  m[8]*z;
-  m[13] += m[1]*x + m[5]*y +  m[9]*z;
-  m[14] += m[2]*x + m[6]*y + m[10]*z;
+
+typedef struct {
+  Vec4 c[4];
+} PMtx;
+
+static __inline void
+glw_pmtx_mul_prepare(PMtx *dst, const Mtx *src)
+{
+  // Transpose a matrix so it's faster to vectorize
+  for(int i = 0; i < 4 ; i++) {
+    dst->c[i][0] = src->r[0][i];
+    dst->c[i][1] = src->r[1][i];
+    dst->c[i][2] = src->r[2][i];
+    dst->c[i][3] = src->r[3][i];
+  }
 }
 
 
 static __inline void
-glw_Scalef(glw_rctx_t *rc, float x, float y, float z)
+glw_pmtx_mul_vec3(Vec3 dst, const PMtx *m, const Vec3 a)
 {
-  float *m = rc->rc_mtx;
-
-  m[0] *= x;
-  m[4] *= y;
-  m[8] *= z;
-
-  m[1] *= x;
-  m[5] *= y;
-  m[9] *= z;
-
-  m[2] *= x;
-  m[6] *= y;
-  m[10]*= z;
-}
-
-void glw_Rotatef(glw_rctx_t *rc, float a, float x, float y, float z);
-
-void glw_LoadIdentity(glw_rctx_t *rc);
-
-static __inline void 
-glw_LoadMatrixf(glw_rctx_t *rc, float *src)
-{
-  memcpy(rc->rc_mtx, src, sizeof(float) * 16);
+  dst[0] =
+    m->c[0][0] * a[0] + m->c[0][1] * a[1] + m->c[0][2] * a[2] + m->c[0][3];
+  dst[1] =
+    m->c[1][0] * a[0] + m->c[1][1] * a[1] + m->c[1][2] * a[2] + m->c[1][3];
+  dst[2] =
+    m->c[2][0] * a[0] + m->c[2][1] * a[1] + m->c[2][2] * a[2] + m->c[2][3];
 }
 
 
 static __inline void
-glw_LerpMatrix(Mtx out, float v, const Mtx a, const Mtx b)
+glw_pmtx_mul_vec4_i(Vec4 dst, const PMtx *m, const Vec4 a)
 {
-  int i;
-  for(i = 0; i < 16; i++)
-    out[i] = GLW_LERP(v, a[i], b[i]);
-}
-
-
-typedef const float *PMtx;
-
-#define glw_pmtx_mul_prepare(dst, src) dst = &src[0]
-
-static __inline void
-glw_pmtx_mul_vec3(Vec3 dst, const float *mt, const Vec3 a)
-{
-  dst[0] = mt[0] * a[0] + mt[4] * a[1] + mt[ 8] * a[2] + mt[12];
-  dst[1] = mt[1] * a[0] + mt[5] * a[1] + mt[ 9] * a[2] + mt[13];
-  dst[2] = mt[2] * a[0] + mt[6] * a[1] + mt[10] * a[2] + mt[14];
-}
-
-
-static __inline void
-glw_pmtx_mul_vec4_i(Vec4 dst, const float *mt, const Vec4 a)
-{
-  dst[0] = mt[0] * a[0] + mt[4] * a[1] + mt[ 8] * a[2] + mt[12];
-  dst[1] = mt[1] * a[0] + mt[5] * a[1] + mt[ 9] * a[2] + mt[13];
-  dst[2] = mt[2] * a[0] + mt[6] * a[1] + mt[10] * a[2] + mt[14];
+  dst[0] =
+    m->c[0][0] * a[0] + m->c[0][1] * a[1] + m->c[0][2] * a[2] + m->c[0][3];
+  dst[1] =
+    m->c[1][0] * a[0] + m->c[1][1] * a[1] + m->c[1][2] * a[2] + m->c[1][3];
+  dst[2] =
+    m->c[2][0] * a[0] + m->c[2][1] * a[1] + m->c[2][2] * a[2] + m->c[2][3];
   dst[3] = a[3];
 }
 
 
 static __inline void
-glw_pmtx_mul_vec4(Vec4 dst, const float *mt, const Vec4 a)
+glw_pmtx_mul_vec4(Vec4 dst, const PMtx *m, const Vec4 a)
 {
-  dst[0] = mt[0] * a[0] + mt[4] * a[1] + mt[ 8] * a[2] + mt[12] * a[3];
-  dst[1] = mt[1] * a[0] + mt[5] * a[1] + mt[ 9] * a[2] + mt[13] * a[3];
-  dst[2] = mt[2] * a[0] + mt[6] * a[1] + mt[10] * a[2] + mt[14] * a[3];
-  dst[3] = mt[3] * a[0] + mt[7] * a[1] + mt[11] * a[2] + mt[15] * a[3];
+  dst[0] =
+    m->c[0][0] * a[0] + m->c[0][1] * a[1] + m->c[0][2] * a[2] + m->c[0][3] * a[3];
+  dst[1] =
+    m->c[1][0] * a[0] + m->c[1][1] * a[1] + m->c[1][2] * a[2] + m->c[1][3] * a[3];
+  dst[2] =
+    m->c[2][0] * a[0] + m->c[2][1] * a[1] + m->c[2][2] * a[2] + m->c[2][3] * a[3];
+  dst[3] =
+    m->c[3][0] * a[0] + m->c[3][1] * a[1] + m->c[3][2] * a[2] + m->c[3][3] * a[3];
 }
 
 
@@ -105,20 +81,6 @@ glw_vec34_dot(const Vec3 A, const Vec4 B)
   return A[0] * B[0] + A[1] * B[1] + A[2] * B[2] + B[3];
 }
 
-static __inline void
-glw_vec2_lerp(Vec2 dst, float s, const Vec2 a, const Vec2 b)
-{
-  dst[0] = a[0] + s * (b[0] - a[0]);
-  dst[1] = a[1] + s * (b[1] - a[1]);
-}
-
-static __inline void
-glw_vec3_lerp(Vec3 dst, float s, const Vec3 a, const Vec3 b)
-{
-  dst[0] = a[0] + s * (b[0] - a[0]);
-  dst[1] = a[1] + s * (b[1] - a[1]);
-  dst[2] = a[2] + s * (b[2] - a[2]);
-}
 
 static __inline void
 glw_vec4_lerp(Vec4 dst, float s, const Vec4 a, const Vec4 b)
@@ -193,15 +155,15 @@ glw_vec3_dot(const Vec3 a, const Vec3 b)
 }
 
 static __inline void
-glw_mtx_trans_mul_vec4(Vec4 dst, const Mtx mt, const Vec4 v)
+glw_mtx_trans_mul_vec4(Vec4 dst, const Mtx *m, const Vec4 v)
 {
-  dst[0] = mt[ 0] * v[0] + mt[ 1] * v[1] + mt[ 2] * v[2] + mt[ 3] * v[3];
-  dst[1] = mt[ 4] * v[0] + mt[ 5] * v[1] + mt[ 6] * v[2] + mt[ 7] * v[3];
-  dst[2] = mt[ 8] * v[0] + mt[ 9] * v[1] + mt[10] * v[2] + mt[11] * v[3];
-  dst[3] = mt[12] * v[0] + mt[13] * v[1] + mt[14] * v[2] + mt[15] * v[3];
+  dst[0] = m->r[0][0] * v[0] + m->r[0][1] * v[1] + m->r[0][2] * v[2] + m->r[0][3] * v[3];
+  dst[1] = m->r[1][0] * v[0] + m->r[1][1] * v[1] + m->r[1][2] * v[2] + m->r[1][3] * v[3];
+  dst[2] = m->r[2][0] * v[0] + m->r[2][1] * v[1] + m->r[2][2] * v[2] + m->r[2][3] * v[3];
+  dst[3] = m->r[3][0] * v[0] + m->r[3][1] * v[1] + m->r[3][2] * v[2] + m->r[3][3] * v[3];
 }
 
-extern int glw_mtx_invert(Mtx dst, const Mtx src);
+extern int glw_mtx_invert(Mtx *dst, const Mtx *src);
 
 #define glw_vec2_extract(v, i) v[i]
 #define glw_vec3_extract(v, i) v[i]
@@ -214,12 +176,62 @@ extern int glw_mtx_invert(Mtx dst, const Mtx src);
 
 #define glw_vec4_set(v, i, s) v[i] = (s)
 
-#define glw_mtx_get(m) (m)
+#define glw_mtx_get(m) (const float *)(&(m))
 
 static __inline void
-glw_mtx_copy(Mtx dst, const Mtx src)
+glw_mtx_copy(Mtx *dst, const Mtx *src)
 {
   memcpy(dst, src, sizeof(Mtx));
 }
 
-void glw_mtx_mul(Mtx dst, Mtx a, Mtx b);
+void glw_mtx_mul(Mtx *dst, const Mtx *a, const Mtx *b);
+
+
+
+
+
+static __inline void
+glw_Translatef(glw_rctx_t *rc, float x, float y, float z)
+{
+  Mtx *m = &rc->rc_mtx;
+
+  m->r[3][0] += m->r[0][0]*x + m->r[1][0]*y + m->r[2][0]*z;
+  m->r[3][1] += m->r[0][1]*x + m->r[1][1]*y + m->r[2][1]*z;
+  m->r[3][2] += m->r[0][2]*x + m->r[1][2]*y + m->r[2][2]*z;
+}
+
+
+static __inline void
+glw_Scalef(glw_rctx_t *rc, float x, float y, float z)
+{
+  Mtx *m = &rc->rc_mtx;
+
+  m->r[0][0] *= x;
+  m->r[1][0] *= y;
+  m->r[2][0] *= z;
+  m->r[0][1] *= x;
+  m->r[1][1] *= y;
+  m->r[2][1] *= z;
+  m->r[0][2] *= x;
+  m->r[1][2] *= y;
+  m->r[2][2] *= z;
+}
+
+void glw_Rotatef(glw_rctx_t *rc, float a, float x, float y, float z);
+
+void glw_LoadIdentity(glw_rctx_t *rc);
+
+static __inline void
+glw_LoadMatrixf(glw_rctx_t *rc, const float *src)
+{
+  memcpy(&rc->rc_mtx, src, sizeof(float) * 16);
+}
+
+
+static __inline void
+glw_LerpMatrix(Mtx *out, float v, const Mtx *a, const Mtx *b)
+{
+  int i;
+  for(i = 0; i < 4; i++)
+    glw_vec4_lerp(out->r[i], v, a->r[i], b->r[i]);
+}

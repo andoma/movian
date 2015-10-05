@@ -84,25 +84,13 @@ TAILQ_HEAD(glw_view_load_request_queue, glw_view_load_request);
 
 // ------------------- Math mode -----------------
 
-// all supported apple devices should support SSE
-#if (defined(__x86_64) || defined(__APPLE__)) && !defined(__llvm__)
-#define ENABLE_GLW_MATH_SSE 0
-#else
-#define ENABLE_GLW_MATH_SSE 0
-#endif
-
-#if ENABLE_GLW_MATH_SSE
-#include <xmmintrin.h>
-typedef __m128 Mtx[4];
-typedef __m128 Vec4;
-typedef __m128 Vec3;
-typedef __m128 Vec2;
-#else
-typedef float Mtx[16];
 typedef float Vec4[4];
 typedef float Vec3[3];
-typedef float Vec2[2];
-#endif
+
+
+typedef struct {
+  Vec4 r[4];
+} Mtx;
 
 // ------------------ Helpers ----------------------------
 
@@ -1358,7 +1346,7 @@ const char *glw_get_path(glw_t *w);
 
 void glw_print_tree(glw_t *w);
 
-int glw_widget_unproject(Mtx m, float *xp, float *yp,
+int glw_widget_unproject(const Mtx *m, float *xp, float *yp,
 			 const Vec3 p, const Vec3 dir);
 
 glw_t *glw_create(glw_root_t *gr, const glw_class_t *class,
@@ -1564,7 +1552,7 @@ void glw_reset_screensaver(glw_root_t *gr);
 
 int glw_image_get_details(glw_t *w, char *path, size_t pathlen, float *alpha);
 
-void glw_project_matrix(glw_rect_t *r, const Mtx m, const glw_root_t *gr);
+void glw_project_matrix(glw_rect_t *r, const Mtx *m, const glw_root_t *gr);
 
 void glw_project(glw_rect_t *r, const glw_rctx_t *rc, const glw_root_t *gr);
 

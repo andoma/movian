@@ -261,10 +261,9 @@ glw_navigate_matrix_search(glw_t *w, navigate_matrix_aux_t *nma)
 
   glw_rect_t rect;
 
-  Mtx m;
-  memcpy(m, w->glw_matrix, sizeof(float) * 16);
+  Mtx m = *w->glw_matrix;
 
-  glw_project_matrix(&rect, m, w->glw_root);
+  glw_project_matrix(&rect, &m, w->glw_root);
 
 
   // Default current/target cordinates are center of focus
@@ -353,10 +352,7 @@ glw_navigate_matrix(struct glw *w, struct event *e)
 
   glw_rect_t rect;
 
-  Mtx m;
-  memcpy(m, cur->glw_matrix, sizeof(float) * 16);
-
-  glw_project_matrix(&rect, m, gr);
+  glw_project_matrix(&rect, cur->glw_matrix, gr);
 
   // Default current cordinates are center of focused area
 

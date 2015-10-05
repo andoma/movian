@@ -21,14 +21,17 @@
 
 
 int
-glw_mtx_invert(float *dst, const float *src)
+glw_mtx_invert(Mtx *dst_, const Mtx *src_)
 {
-  float det = 
-    src[0]*src[5]*src[10] + 
-    src[4]*src[9]*src[2] + 
+  float *dst = (float *)dst_;
+  const float *src = (const float *)src_;
+
+  float det =
+    src[0]*src[5]*src[10] +
+    src[4]*src[9]*src[2] +
     src[8]*src[1]*src[6] -
-    src[2]*src[5]*src[8] - 
-    src[1]*src[4]*src[10] - 
+    src[2]*src[5]*src[8] -
+    src[1]*src[4]*src[10] -
     src[0]*src[6]*src[9];
 
   if(det == 0)
@@ -71,7 +74,7 @@ glw_Rotatef(glw_rctx_t *rc, float a, float x, float y, float z)
   float t = 1.0 - c;
   float n = 1 / sqrtf(x*x + y*y + z*z);
   float m[16];
-  float *o = rc->rc_mtx;
+  float *o = (float *)&rc->rc_mtx;
   float p[16];
 
   x *= n;
@@ -124,17 +127,21 @@ void
 glw_LoadIdentity(glw_rctx_t *rc)
 {
   memset(&rc->rc_mtx, 0, sizeof(Mtx));
-  
-  rc->rc_mtx[0]  = 1;
-  rc->rc_mtx[5]  = 1;
-  rc->rc_mtx[10] = 1;
-  rc->rc_mtx[15] = 1;
+
+  rc->rc_mtx.r[0][0] = 1;
+  rc->rc_mtx.r[1][1] = 1;
+  rc->rc_mtx.r[2][2] = 1;
+  rc->rc_mtx.r[3][3] = 1;
 }
 
 
 void
-glw_mtx_mul(Mtx dst, Mtx a, Mtx b)
+glw_mtx_mul(Mtx *dst_, const Mtx *a_, const Mtx *b_)
 {
+  float *dst = (float *)dst_;
+  const float *a   = (const float *)a_;
+  const float *b   = (const float *)b_;
+
   dst[0] = a[0] * b[0] + a[4] * b[1] + a[8]  * b[2] + a[12] * b[3];
   dst[1] = a[1] * b[0] + a[5] * b[1] + a[9]  * b[2] + a[13] * b[3];
   dst[2] = a[2] * b[0] + a[6] * b[1] + a[10] * b[2] + a[14] * b[3];

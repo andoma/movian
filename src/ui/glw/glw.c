@@ -1736,7 +1736,7 @@ glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
 
   if(w->glw_matrix != NULL) {
 
-    if(glw_widget_unproject(*w->glw_matrix, &x, &y, p, dir) &&
+    if(glw_widget_unproject(w->glw_matrix, &x, &y, p, dir) &&
        x <= 1 && y <= 1 && x >= -1 && y >= -1) {
       gpe0 = alloca(sizeof(glw_pointer_event_t));
       gpe0->type = gpe->type;
@@ -1824,7 +1824,7 @@ touch_move_transfer_to_parent(glw_t *w, glw_pointer_event_t *gpe,
     if(w->glw_matrix == NULL)
       continue;
 
-    if(glw_widget_unproject(*w->glw_matrix, &x, &y, p, dir) &&
+    if(glw_widget_unproject(w->glw_matrix, &x, &y, p, dir) &&
        x <= 1 && y <= 1 && x >= -1 && y >= -1) {
       gpe0.ts = gpe->ts;
       gpe0.type = GLW_POINTER_TOUCH_START;
@@ -1884,7 +1884,7 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
         prop_set_int(gr->gr_pointer_visible, 1);
 
       if((w = gr->gr_pointer_grab) != NULL && w->glw_matrix != NULL) {
-        glw_widget_unproject(*w->glw_matrix, &x, &y, p, dir);
+        glw_widget_unproject(w->glw_matrix, &x, &y, p, dir);
         gpe0.type = GLW_POINTER_FOCUS_MOTION;
         gpe0.x = x;
         gpe0.y = y;
@@ -1893,7 +1893,7 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
 
         int loss_press = 0;
 
-        if(!glw_widget_unproject(*w->glw_matrix, &x, &y, p, dir) ||
+        if(!glw_widget_unproject(w->glw_matrix, &x, &y, p, dir) ||
            x < -1 || y < -1 || x > 1 || y > 1)
           loss_press = 1;
 
@@ -1925,7 +1925,7 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
   if((gpe->type == GLW_POINTER_LEFT_RELEASE ||
       gpe->type == GLW_POINTER_TOUCH_END) && gr->gr_pointer_grab != NULL) {
     w = gr->gr_pointer_grab;
-    glw_widget_unproject(*w->glw_matrix, &x, &y, p, dir);
+    glw_widget_unproject(w->glw_matrix, &x, &y, p, dir);
     gpe0.type = gpe->type;
     gpe0.x = x;
     gpe0.y = y;
@@ -2684,7 +2684,7 @@ glw_store_matrix(glw_t *w, const glw_rctx_t *rc)
   if(w->glw_matrix == NULL)
     w->glw_matrix = malloc(sizeof(Mtx));
 
-  memcpy(w->glw_matrix, rc->rc_mtx, sizeof(Mtx));
+  *w->glw_matrix = rc->rc_mtx;
 
   if(likely(!(w->glw_flags & (GLW_IN_FOCUS_PATH | GLW_IN_HOVER_PATH))))
     return;
@@ -2722,18 +2722,19 @@ glw_rctx_init(glw_rctx_t *rc, int width, int height, int overscan, int *zmax)
  * dir Mouse pointer direction vector
  */
 int
-glw_widget_unproject(Mtx m, float *xp, float *yp, const Vec3 p, const Vec3 dir)
+glw_widget_unproject(const Mtx *m, float *xp, float *yp,
+                     const Vec3 p, const Vec3 dir)
 {
   Vec3 u, v, n, w0, T0, T1, T2, out, I;
   Mtx inv;
   float b;
 
   PMtx tm;
-  glw_pmtx_mul_prepare(tm, m);
+  glw_pmtx_mul_prepare(&tm, m);
 
-  glw_pmtx_mul_vec3(T0, tm, glw_vec3_make(-1, -1, 0));
-  glw_pmtx_mul_vec3(T1, tm, glw_vec3_make( 1, -1, 0));
-  glw_pmtx_mul_vec3(T2, tm, glw_vec3_make( 1,  1, 0));
+  glw_pmtx_mul_vec3(T0, &tm, glw_vec3_make(-1, -1, 0));
+  glw_pmtx_mul_vec3(T1, &tm, glw_vec3_make( 1, -1, 0));
+  glw_pmtx_mul_vec3(T2, &tm, glw_vec3_make( 1,  1, 0));
 
   glw_vec3_sub(u, T1, T0);
   glw_vec3_sub(v, T2, T0);
@@ -2746,11 +2747,11 @@ glw_widget_unproject(Mtx m, float *xp, float *yp, const Vec3 p, const Vec3 dir)
 
   glw_vec3_addmul(I, p, dir, -glw_vec3_dot(n, w0) / b);
 
-  if(!glw_mtx_invert(inv, m))
+  if(!glw_mtx_invert(&inv, m))
     return 0;
 
-  glw_pmtx_mul_prepare(tm, inv);
-  glw_pmtx_mul_vec3(out, tm, I);
+  glw_pmtx_mul_prepare(&tm, &inv);
+  glw_pmtx_mul_vec3(out, &tm, I);
 
   *xp = glw_vec3_extract(out, 0);
   *yp = glw_vec3_extract(out, 1);
@@ -2889,7 +2890,7 @@ const static float projection[16] = {
  *
  */
 void
-glw_project_matrix(glw_rect_t *r, const Mtx m, const glw_root_t *gr)
+glw_project_matrix(glw_rect_t *r, const Mtx *m, const glw_root_t *gr)
 {
   Mtx tmp;
 
@@ -2897,15 +2898,15 @@ glw_project_matrix(glw_rect_t *r, const Mtx m, const glw_root_t *gr)
   Vec4 T0, T1;
   Vec4 V0, V1;
 
-  glw_pmtx_mul_prepare(tm,  m);
-  glw_pmtx_mul_vec4(T0, tm, glw_vec4_make(-1,  1, 0, 1));
-  glw_pmtx_mul_vec4(T1, tm, glw_vec4_make( 1, -1, 0, 1));
+  glw_pmtx_mul_prepare(&tm,  m);
+  glw_pmtx_mul_vec4(T0, &tm, glw_vec4_make(-1,  1, 0, 1));
+  glw_pmtx_mul_vec4(T1, &tm, glw_vec4_make( 1, -1, 0, 1));
 
-  memcpy(tmp, projection, sizeof(float) * 16);
-  glw_pmtx_mul_prepare(tp, tmp);
+  memcpy(&tmp, projection, sizeof(float) * 16);
+  glw_pmtx_mul_prepare(&tp, &tmp);
 
-  glw_pmtx_mul_vec4(V0, tp, T0);
-  glw_pmtx_mul_vec4(V1, tp, T1);
+  glw_pmtx_mul_vec4(V0, &tp, T0);
+  glw_pmtx_mul_vec4(V1, &tp, T1);
 
   float w;
 
@@ -2927,7 +2928,7 @@ glw_project_matrix(glw_rect_t *r, const Mtx m, const glw_root_t *gr)
 void
 glw_project(glw_rect_t *r, const glw_rctx_t *rc, const glw_root_t *gr)
 {
-  glw_project_matrix(r, rc->rc_mtx, gr);
+  glw_project_matrix(r, &rc->rc_mtx, gr);
 }
 
 

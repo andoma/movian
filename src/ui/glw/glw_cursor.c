@@ -54,7 +54,7 @@ glw_cursor_layout(glw_t *w, const glw_rctx_t *rc)
  *
  */
 static void
-render_focus_widget(glw_t *w, glw_cursor_t *gc, Mtx saved,
+render_focus_widget(glw_t *w, glw_cursor_t *gc, const Mtx *saved,
                     glw_rctx_t *rc0, const glw_rctx_t *rc,
                     int *zmax)
 {
@@ -68,30 +68,32 @@ render_focus_widget(glw_t *w, glw_cursor_t *gc, Mtx saved,
   if(f->glw_matrix != NULL) {
 
     Mtx a_inv;
-    glw_mtx_invert(a_inv, saved);
+    glw_mtx_invert(&a_inv, saved);
     Mtx *b = f->glw_matrix;
 
     if(0) {
       glw_rect_t focus_rect;
-      glw_project_matrix(&focus_rect, *b, gr);
+      glw_project_matrix(&focus_rect, b, gr);
       printf("Current focus: %d,%d - %d,%d\n",
              focus_rect.x1, focus_rect.y1,
              focus_rect.x2, focus_rect.y2);
     }
 
     Mtx x;
-    glw_mtx_mul(x, a_inv, *b);
+    glw_mtx_mul(&x, &a_inv, b);
 
     if (!gc->gc_initialized) {
-      glw_mtx_copy(gc->gc_mtx, x);
+      gc->gc_mtx = x;
       gc->gc_initialized = 1;
     } else {
-      for(int i = 0; i < 16; i++) {
-        glw_lp(&gc->gc_mtx[i], gr, x[i], 0.75);
-        /* printf("%2.3f%c", gc->gc_mtx[i], (i+1) & 3 ? '\t' : '\n'); */
+      for(int r = 0; r < 4; r++) {
+        for(int c = 0; c < 4; c++) {
+          glw_lp(&gc->gc_mtx.r[r][c], gr, x.r[r][c], 0.75);
+          /* printf("%2.3f%c", gc->gc_mtx[i], (i+1) & 3 ? '\t' : '\n'); */
+        }
       }
     }
-    glw_mtx_mul(gc->gc_cursor_rctx.rc_mtx, saved, gc->gc_mtx);
+    glw_mtx_mul(&gc->gc_cursor_rctx.rc_mtx, saved, &gc->gc_mtx);
   }
 
   glw_rect_t cursor_rect;
@@ -180,8 +182,8 @@ glw_cursor_render(glw_t *w, const glw_rctx_t *rc)
   if(c == NULL)
     return;
 
-  glw_mtx_copy(saved, rc->rc_mtx);
-
+  saved = rc->rc_mtx;
+  
   rc0 = *rc;
   rc0.rc_zmax = &zmax;
 
@@ -204,7 +206,7 @@ glw_cursor_render(glw_t *w, const glw_rctx_t *rc)
 
   c = TAILQ_NEXT(c, glw_parent_link);
   if(c != NULL) {
-    render_focus_widget(c, gc, saved, &rc0, rc, &zmax);
+    render_focus_widget(c, gc, &saved, &rc0, rc, &zmax);
 
     if(!gr->gr_keyboard_mode) {
       c = TAILQ_NEXT(c, glw_parent_link);
