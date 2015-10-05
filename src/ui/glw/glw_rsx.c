@@ -354,7 +354,7 @@ rsx_render_unlocked(glw_root_t *gr)
                                            rvp->rvp_u_modelview,
                                            4,
                                            rj->eyespace ? identitymtx :
-                                           rj->m);
+                                           (const float *)&rj->m);
 
     const float alpha = rj->alpha;
 
