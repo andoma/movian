@@ -31,6 +31,8 @@ typedef struct glw_event_map {
   void (*gem_fire)(glw_t *w, struct glw_event_map *gem, struct event *src);
   void (*gem_dtor)(glw_root_t *gr, struct glw_event_map *gem);
 
+  char gem_final;
+
 } glw_event_map_t;
 
 

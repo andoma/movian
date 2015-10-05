@@ -449,7 +449,7 @@ glw_event_map_intercept(glw_t *w, event_t *e)
           if(pattern_match(action_code2str(eav->actions[i]),
                            rstr_get(gem->gem_action))) {
             gem->gem_fire(w, gem, e);
-            return 1;
+            return gem->gem_final;
           }
         }
       }
@@ -475,7 +475,7 @@ glw_event_map_intercept(glw_t *w, event_t *e)
 
     if(pattern_match(str, rstr_get(gem->gem_action))) {
       gem->gem_fire(w, gem, e);
-      return 1;
+      return gem->gem_final;
     }
   }
   return 0;
@@ -493,7 +493,7 @@ glw_event_glw_action(glw_t *w, const char *action)
   LIST_FOREACH(gem, &w->glw_event_maps, gem_link) {
     if(!strcmp(rstr_get(gem->gem_action), action)) {
       gem->gem_fire(w, gem, NULL);
-      return 1;
+      return gem->gem_final;
     }
   }
   return 0;

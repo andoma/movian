@@ -3205,7 +3205,9 @@ glwf_onEvent(glw_view_eval_context_t *ec, struct token *self,
   token_t *a = argc > 0 ? argv[0] : NULL;  /* Source */
   token_t *b = argc > 1 ? argv[1] : NULL;  /* Target */
   token_t *c = argc > 2 ? argv[2] : NULL;  /* Enabled */
-  int enabled;
+  token_t *d = argc > 3 ? argv[3] : NULL;  /* Final */
+  int enabled = 1;
+  int final = 1;
   glw_t *w = ec->w;
   glw_event_map_t *gem;
 
@@ -3216,19 +3218,22 @@ glwf_onEvent(glw_view_eval_context_t *ec, struct token *self,
   if(a == NULL || b == NULL)
     return glw_view_seterr(ec->ei, self, "Missing operands");
 
+  if(c != NULL) {
+    if((c = token_resolve(ec, c)) == NULL)
+      return -1;
+    enabled = token2bool(c);
+  }
+
+  if(d != NULL) {
+    if((d = token_resolve(ec, d)) == NULL)
+      return -1;
+    final = token2bool(d);
+  }
+
   rstr_t *filter = token2rstr(a);
   if(filter == NULL)
     return glw_view_seterr(ec->ei, a, "Invalid source event type");
 
-  if(c != NULL) {
-    if((c = token_resolve(ec, c)) == NULL) {
-      rstr_release(filter);
-      return -1;
-    }
-    enabled = token2bool(c);
-  } else {
-    enabled = 1;
-  }
 
   if(enabled) {
 
@@ -3254,6 +3259,7 @@ glwf_onEvent(glw_view_eval_context_t *ec, struct token *self,
     }
 
     gem->gem_action = filter;
+    gem->gem_final = final;
     glw_event_map_add(w, gem);
     return 0;
   }
