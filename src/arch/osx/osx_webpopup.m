@@ -191,10 +191,10 @@ static webpopup_t *wp_current;
     [_window makeKeyAndOrderFront:nil];
 
 
-    [_webview setUIDelegate:self];
-    [_webview setPolicyDelegate:self];
-    [_webview setFrameLoadDelegate:self];
-    [_webview setResourceLoadDelegate:self];
+    [_webview setUIDelegate:(id)self];
+    [_webview setPolicyDelegate:(id)self];
+    [_webview setFrameLoadDelegate:(id)self];
+    [_webview setResourceLoadDelegate:(id)self];
 
     [[_webview mainFrame] loadRequest:[NSURLRequest requestWithURL:[NSURL
                                                                       URLWithString:url]]];
