@@ -137,9 +137,8 @@ GLW_REGISTER_CLASS(glw_clip);
 
 
 
+#if NUM_FADERS > 0
 
-
-  
 typedef struct glw_fade {
   glw_t w;
   int gf_run;
@@ -275,10 +274,12 @@ static glw_class_t glw_fader = {
 
 GLW_REGISTER_CLASS(glw_fader);
 
+#endif
 
 
+#if NUM_STENCILERS > 0
 
-  
+
 typedef struct glw_stencil {
   glw_t w;
 
@@ -477,3 +478,4 @@ static glw_class_t glw_stencil = {
 
 GLW_REGISTER_CLASS(glw_stencil);
  
+#endif

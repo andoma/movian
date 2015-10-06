@@ -249,6 +249,7 @@ emit_triangle(glw_root_t *gr,
 }
 
 
+#if NUM_FADERS > 0
 /**
  * Fade a triangle in eye space
  * This could just as well be done in the vertex shader
@@ -309,6 +310,9 @@ fader(glw_root_t *gr, glw_renderer_cache_t *grc,
   }
   emit_triangle(gr, v1, v2, v3, c1, c2, c3, T1, T2, T3);
 }
+#endif
+
+
 
 #include "misc/sha.h"
 
@@ -372,7 +376,11 @@ clipper(glw_root_t *gr, glw_renderer_cache_t *grc,
 
   while(1) {
     if(plane == NUM_CLIPPLANES) {
+#if NUM_FADERS > 0
       fader(gr, grc, V1, V2, V3, C1, C2, C3, T1, T2, T3, 0);
+#else
+      emit_triangle(gr, V1, V2, V3, C1, C2, C3, T1, T2, T3);
+#endif
       return;
     }
     if(grc->grc_active_clippers & (1 << plane))
@@ -485,6 +493,7 @@ clipper(glw_root_t *gr, glw_renderer_cache_t *grc,
   }
 }
 
+#if NUM_STENCILERS > 0
 
 /**
  * Stenciling
@@ -751,7 +760,7 @@ stenciler(glw_root_t *gr, glw_renderer_cache_t *grc,
   // outside
   stenciler(gr, grc, V1, V2, V3, C1, C2, C3, To1, To2, To3, plane);
 }
-
+#endif
 
 
 /**
@@ -771,13 +780,16 @@ glw_renderer_tesselate(glw_renderer_t *gr, glw_root_t *root,
   grc->grc_mtx = rc->rc_mtx;
 
   grc->grc_active_clippers  = root->gr_active_clippers;
+#if NUM_FADERS > 0
   grc->grc_active_faders    = root->gr_active_faders;
+#endif
   grc->grc_blurred = 0;
 
   for(i = 0; i < NUM_CLIPPLANES; i++)
     if((1 << i) & root->gr_active_clippers)
       memcpy(&grc->grc_clip[i], &root->gr_clip[i], sizeof(Vec4));
 
+#if NUM_STENCILERS > 0
   grc->grc_stencil_width = root->gr_stencil_width;
   if(grc->grc_stencil_width) {
     grc->grc_stencil_height = root->gr_stencil_height;
@@ -791,14 +803,18 @@ glw_renderer_tesselate(glw_renderer_t *gr, glw_root_t *root,
     for(i = 0; i < 4; i++)
       grc->grc_stencil_edge[i] = root->gr_stencil_edge[i];
   }
+#endif
 
-  for(i = 0; i < NUM_FADERS; i++)
+#if NUM_FADERS > 0
+  for(i = 0; i < NUM_FADERS; i++) {
     if((1 << i) & root->gr_active_faders) {
       memcpy(&grc->grc_fader[i], &root->gr_fader[i], sizeof(Vec4));
       grc->grc_fader_alpha[i] = root->gr_fader_alpha[i];
       grc->grc_fader_blur[i] = root->gr_fader_blur[i];
     }
-
+  }
+#endif
+  
   glw_pmtx_mul_prepare(&pmtx, &rc->rc_mtx);
 
   for(i = 0; i < gr->gr_num_triangles; i++) {
@@ -812,6 +828,7 @@ glw_renderer_tesselate(glw_renderer_t *gr, glw_root_t *root,
     glw_pmtx_mul_vec4_i(V2, &pmtx, glw_vec4_get(a + v2*VERTEX_SIZE));
     glw_pmtx_mul_vec4_i(V3, &pmtx, glw_vec4_get(a + v3*VERTEX_SIZE));
 
+#if NUM_STENCILERS > 0
     stenciler(root, grc,
 	      V1, V2, V3,
 	      glw_vec4_get(a + v1 * VERTEX_SIZE + 4),
@@ -821,6 +838,16 @@ glw_renderer_tesselate(glw_renderer_t *gr, glw_root_t *root,
 	      glw_vec4_get(a + v2 * VERTEX_SIZE + 8),
 	      glw_vec4_get(a + v3 * VERTEX_SIZE + 8),
 	      0);
+#else
+    clipper(root, grc, V1, V2, V3,
+            glw_vec4_get(a + v1 * VERTEX_SIZE + 4),
+            glw_vec4_get(a + v2 * VERTEX_SIZE + 4),
+            glw_vec4_get(a + v3 * VERTEX_SIZE + 4),
+            glw_vec4_get(a + v1 * VERTEX_SIZE + 8),
+            glw_vec4_get(a + v2 * VERTEX_SIZE + 8),
+            glw_vec4_get(a + v3 * VERTEX_SIZE + 8),
+            0);
+#endif
   }
 
   int size = root->gr_vtmp_cur * sizeof(float) * VERTEX_SIZE;
@@ -854,7 +881,7 @@ glw_renderer_clippers_cmp(glw_renderer_cache_t *grc, glw_root_t *root)
 }
 
 
-
+#if NUM_STENCILERS > 0
 /**
  *
  */
@@ -879,8 +906,9 @@ glw_renderer_stencilers_cmp(glw_renderer_cache_t *grc, glw_root_t *root)
   }
   return 0;
 }
+#endif
 
-
+#if NUM_FADERS > 0
 /**
  *
  */
@@ -900,7 +928,7 @@ glw_renderer_faders_cmp(glw_renderer_cache_t *grc, glw_root_t *root)
 	return 1;
   return 0;
 }
-
+#endif
 
 /**
  *
@@ -1067,15 +1095,26 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
   int flags =
     gr->gr_color_attributes ? GLW_RENDER_COLOR_ATTRIBUTES : 0;
 
-  if(root->gr_need_sw_clip || root->gr_active_faders ||
-     root->gr_stencil_width) {
+  if(root->gr_need_sw_clip
+#if NUM_FADERS > 0
+     || root->gr_active_faders
+#endif
+#if NUM_STENCILERS > 0
+     || root->gr_stencil_width
+#endif
+     ) {
     glw_renderer_cache_t *grc = glw_renderer_get_cache(root, gr);
 
     if(gr->gr_dirty ||
        memcmp(&grc->grc_mtx, &rc->rc_mtx, sizeof(Mtx)) ||
-       glw_renderer_clippers_cmp(grc, root) ||
-       glw_renderer_stencilers_cmp(grc, root) ||
-       glw_renderer_faders_cmp(grc, root)) {
+       glw_renderer_clippers_cmp(grc, root)
+#if NUM_STENCILERS > 0
+       || glw_renderer_stencilers_cmp(grc, root)
+#endif
+#if NUM_FADERS > 0
+       glw_renderer_faders_cmp(grc, root)
+#endif
+       ) {
       glw_renderer_tesselate(gr, root, rc, grc);
     }
 
@@ -1085,9 +1124,10 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
     if(grc->grc_colored)
       flags |= GLW_RENDER_COLOR_ATTRIBUTES;
 
+#if NUM_STENCILERS > 0
     if(root->gr_stencil_width)
       tex2 = root->gr_stencil_texture;
-
+#endif
     add_job(root, NULL, tex, tex2,
             rgb_mul, rgb_off, alpha, blur,
             grc->grc_vertices, grc->grc_num_vertices,
@@ -1191,6 +1231,7 @@ glw_clip_disable(glw_root_t *gr, int which)
 }
 
 
+#if NUM_STENCILERS > 0
 
 /**
  *
@@ -1240,8 +1281,9 @@ glw_stencil_disable(glw_root_t *gr)
   gr->gr_stencil_width = 0;
   gr->gr_stencil_texture = NULL;
 }
+#endif
 
-
+#if NUM_FADERS > 0
 /**
  *
  */
@@ -1288,7 +1330,7 @@ glw_fader_disable(glw_root_t *gr, int which)
 
   gr->gr_active_faders &= ~(1 << which);
 }
-
+#endif
 
 
 /**

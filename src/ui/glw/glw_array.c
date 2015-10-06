@@ -54,8 +54,6 @@ typedef struct glw_array {
 
   int16_t scroll_threshold;
 
-  char noclip;
-
   int num_visible_childs;
 
   float alpha_falloff;
@@ -314,9 +312,6 @@ glw_array_layout(glw_t *w, const glw_rctx_t *rc)
 }
 
 
-const static float top_plane[4] = {0,-1,0,1};
-const static float bottom_plane[4] = {0,1,0,1};
-
 /**
  *
  */
@@ -329,7 +324,6 @@ glw_array_render_one(glw_array_t *a, glw_t *c, int width, int height,
   const float y = cd->pos_fy - a->filtered_pos;
   int ct, cb, ft, fb;
   glw_root_t *gr = a->w.glw_root;
-  
   int ch = cd->height;
   int cw = a->child_width_px;
 
@@ -344,24 +338,12 @@ glw_array_render_one(glw_array_t *a, glw_t *c, int width, int height,
   }
 
   ct = cb = ft = fb = -1;
-  
-  if(a->noclip) {
-    if(y < 0) 
-      ft = glw_fader_enable(gr, rc0, top_plane,
-			    a->alpha_falloff, a->blur_falloff);
-    
-    if(y + ch > height)
-      ft = glw_fader_enable(gr, rc0, bottom_plane,
-			    a->alpha_falloff, a->blur_falloff);
-    
-  } else {
-    if(y < 0)
-      ct = glw_clip_enable(gr, rc0, GLW_CLIP_TOP, 0);
-    
-    if(y + ch > height)
-      cb = glw_clip_enable(gr, rc0, GLW_CLIP_BOTTOM, 0);
-  }
 
+  if(y < 0)
+    ct = glw_clip_enable(gr, rc0, GLW_CLIP_TOP, 0);
+
+  if(y + ch > height)
+    cb = glw_clip_enable(gr, rc0, GLW_CLIP_BOTTOM, 0);
 
   rc3 = *rc2;
   glw_reposition(&rc3,
@@ -376,10 +358,6 @@ glw_array_render_one(glw_array_t *a, glw_t *c, int width, int height,
     glw_clip_disable(gr, ct);
   if(cb != -1)
     glw_clip_disable(gr, cb);
-  if(ft != -1)
-    glw_fader_disable(gr, ft);
-  if(fb != -1)
-    glw_fader_disable(gr, fb);
 }
 
 /**
@@ -625,40 +603,6 @@ glw_array_set_int(glw_t *w, glw_attribute_t attrib, int value,
  *
  */
 static int
-glw_array_set_float(glw_t *w, glw_attribute_t attrib, float value,
-                    glw_style_t *gs)
-{
-  glw_array_t *a = (glw_array_t *)w;
-
-  switch(attrib) {
-
-  case GLW_ATTRIB_ALPHA_FALLOFF:
-    if(a->alpha_falloff == value)
-      return 0;
-
-    a->alpha_falloff = value;
-    a->noclip = 1;
-    break;
-
-  case GLW_ATTRIB_BLUR_FALLOFF:
-    if(a->blur_falloff == value)
-      return 0;
-
-    a->blur_falloff = value;
-    a->noclip = 1;
-    break;
-
-  default:
-    return -1;
-  }
-  return 1;
-}
-
-
-/**
- *
- */
-static int
 glw_array_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v,
                       glw_style_t *gs)
 {
@@ -769,7 +713,6 @@ static glw_class_t glw_array = {
   .gc_render = glw_array_render,
   .gc_ctor = glw_array_ctor,
   .gc_set_int = glw_array_set_int,
-  .gc_set_float = glw_array_set_float,
   .gc_signal_handler = glw_array_callback,
   .gc_set_int16_4 = glw_array_set_int16_4,
   .gc_layout = glw_array_layout,

@@ -50,7 +50,9 @@
 
 // Beware: If you bump these over 16 remember to fix bitmasks too
 #define NUM_CLIPPLANES 6
-#define NUM_FADERS 6
+
+#define NUM_FADERS 0
+#define NUM_STENCILERS 0
 
 #define GLW_CURSOR_AUTOHIDE_TIME 3000000
 
@@ -887,22 +889,26 @@ typedef struct glw_root {
   Vec4 gr_clip[NUM_CLIPPLANES];
   int gr_active_clippers;
 
+  char gr_need_sw_clip;          /* Set if software clipping is needed
+				    at the moment */
+
+
+#if NUM_STENCILERS > 0
   int16_t gr_stencil_border[4];
   float gr_stencil_edge[4];
   int16_t gr_stencil_width;
   int16_t gr_stencil_height;
   Vec4 gr_stencil[2];
   const struct glw_backend_texture *gr_stencil_texture;
-
+#endif
+  
+#if NUM_FADERS > 0
   Vec4 gr_fader[NUM_FADERS];
   float gr_fader_alpha[NUM_FADERS];
   float gr_fader_blur[NUM_FADERS];
-
   int gr_active_faders;
+#endif
 
-
-  char gr_need_sw_clip;          /* Set if software clipping is needed
-				    at the moment */
 
 
   void (*gr_set_hw_clipper)(const struct glw_rctx *rc, int which,
@@ -1297,16 +1303,20 @@ int glw_clip_enable(glw_root_t *gr, const glw_rctx_t *rc,
 
 void glw_clip_disable(glw_root_t *gr, int which);
 
+#if NUM_FADERS > 0
 int glw_fader_enable(glw_root_t *gr, const glw_rctx_t *rc, const float *plane,
 		     float alphafo, float blurfo);
 
 void glw_fader_disable(glw_root_t *gr, int which);
+#endif
 
+#if NUM_STENCILERS > 0
 void glw_stencil_enable(glw_root_t *gr, const glw_rctx_t *rc,
 			const struct glw_backend_texture *tex,
 			const int16_t *border);
 
 void glw_stencil_disable(glw_root_t *gr);
+#endif
 
 void glw_lp(float *v, glw_root_t *gr, float t, float alpha);
 
