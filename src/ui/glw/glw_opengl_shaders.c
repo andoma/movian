@@ -458,8 +458,7 @@ glw_program_set_uniform_color(glw_backend_root_t *gbr,
 
 
 #define SHADERPATH(FILENAME) \
-  snprintf(path, sizeof(path), "%s/src/ui/glw/glsl/%s", \
-	   app_dataroot(), FILENAME);
+  snprintf(path, sizeof(path), "dataroot://res/shaders/glsl/%s", FILENAME);
 
 /**
  *

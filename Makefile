@@ -465,8 +465,8 @@ SRCS-$(CONFIG_GLW_BACKEND_GX)     += src/ui/glw/glw_gxasm.S
 
 SRCS-$(CONFIG_NVCTRL)             += src/ui/linux/nvidia.c
 
-BUNDLES-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glsl
-BUNDLES-$(CONFIG_GLW_BACKEND_OPENGL_ES) += src/ui/glw/glsl
+BUNDLES-$(CONFIG_GLW_BACKEND_OPENGL)    += res/shaders/glsl
+BUNDLES-$(CONFIG_GLW_BACKEND_OPENGL_ES) += res/shaders/glsl
 
 ${BUILDDIR}/src/ui/glw/%.o : CFLAGS = ${OPTFLAGS} ${CFLAGS_std} -ffast-math
 

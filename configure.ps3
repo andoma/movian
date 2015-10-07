@@ -78,7 +78,7 @@ CFLAGS_cfg += -DPATH_MAX=512 -DPS3
 CFLAGS_cfg += -I${PSL1GHT}/target/include
 CFLAGS_cfg += -I${PS3DEV}/host/ppu/include
 CFLAGS_cfg += -I${PS3DEV}/host/ppu/include/freetype2
-BUNDLES+=src/ui/glw/rsx
+BUNDLES+=res/shaders/rsx
 SQLITE_PLATFORM_DEFINES += -DSQLITE_OS_OTHER=1
 EOF
 
