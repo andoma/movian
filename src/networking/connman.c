@@ -171,7 +171,7 @@ connman_service_connect(connman_service_t *cs)
   TRACE(TRACE_DEBUG, "CONNMAN", "User request connect to %s", cs->cs_path);
 
   g_dbus_proxy_call(cs->cs_proxy, "Connect", NULL,
-		    G_DBUS_CALL_FLAGS_NONE, -1, NULL,
+		    G_DBUS_CALL_FLAGS_NONE, 600 * 1000, NULL,
 		    connman_connect_cb, cs);
 }
 
