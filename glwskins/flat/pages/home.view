@@ -1,3 +1,5 @@
+#include "skin://theme.view"
+
 #define SEARCHBAR() {
   widget(container_x, {
     spacing: 1em;
@@ -9,7 +11,7 @@
       widget(quad, {
         zoffset: -400;
         color: 0;
-        alpha: 0.4;
+        alpha: 0.4 + $view.searchFocused();
       });
       widget(text, {
         padding: [1em, 0.5em];
@@ -17,6 +19,9 @@
         size: 1.2em;
         font: "skin://fonts/RobotoCondensed-Regular.ttf";
         focusable: true;
+
+        $view.searchFocused = isFocused();
+
         bind($view.searchQuery);
         onEvent(enter, navOpen("search:" + $view.searchQuery),
 	        $view.searchQuery);
@@ -58,91 +63,128 @@
 
     space(1);
 
-    widget(label, {
-      padding: [1em, 0];
+    widget(container_z, {
       onEvent(activate, select(isVoid($self.location),
                                deliverEvent($self.eventSink, $self.action),
                                navOpen($self.location)));
       focusable: 0.1;
-      caption: $self.caption;
-      color: iir(!isNavFocused(), 4);
+      GridItemHighlight();
+
+      widget(label, {
+        padding: [1em, 0];
+        caption: $self.caption;
+        color: iir(!isNavFocused(), 4);
+      });
     });
 
-    widget(label, {
-      padding: [1em, 0];
+    widget(container_z, {
       onEvent(activate, deliverEvent($self.eventSink, "dismiss"));
       focusable: 0.05;
-      caption: _("Dismiss");
-      color: iir(!isNavFocused(), 4);
+
+      focusable: 0.1;
+      GridItemHighlight();
+
+      widget(label, {
+        padding: [1em, 0];
+        caption: _("Dismiss");
+        color: iir(!isNavFocused(), 4);
+      });
     });
   });
 }
 
 
-onEvent(menu, { focus(select($clone.showSidebar, "main", "sidebar"));});
+onEvent(menu, { toggle($clone.showSidebar); });
 
-widget(cursor, {
+widget(container_z, {
 
-  widget(container_x, {
+  widget(layer, {
 
-    style: "PageContainer";
+    onEvent(right, {
+      $clone.showSidebar = true;
+    }, true, false);
 
-    widget(array, {
-      id: "main";
+    widget(clip, {
 
-      alphaFallOff: 0.3;
-      blurFallOff: 0.1;
+      rightPx: select($clone.showSidebar, 22em, 0);
+      blurOutside: 1;
+      alphaOutside: 0.05;
 
-      margin: [2em, 1em];
-      childTilesX: 5;
-      childTilesY: 4;
+      widget(array, {
+        id: "main";
 
-      NEWSSTAND();
-      SEARCHBAR();
+        margin: [2em, 1em];
+        childTilesX: 5;
+        childTilesY: 4;
 
-      cloner($core.services.stable, container_y, {
+        NEWSSTAND();
+        SEARCHBAR();
 
-        spacing: 0.5em;
-        padding: 0.5em;
+        cloner($core.services.stable, container_z, {
 
-        focusable: true;
-        onEvent(activate, navOpen($self.url, void, $self));
+          focusable: true;
+          GridItemHighlight();
+          onEvent(activate, navOpen($self.url, void, $self));
 
-        widget(image, {
-          source: $self.icon ??
-	    "skin://icons/" +
-	    translate($self.type, "ic_folder_48px",
-		      "tv",       "ic_tv_48px",
-		      "usb",      "ic_usb_48px",
-		      "cd",       "ic_album_48px",
-		      "dvd",      "ic_album_48px",
-		      "bluray",   "ic_album_48px",
-		      "setting",  "ic_settings_48px",
-		      "plugin",   "ic_extension_48px") + ".svg";
+          widget(container_y, {
 
-          color:  select($self.icon, 1, iir(!isNavFocused(), 4))  - iir(isPressed(), 4, true);
-        });
+            spacing: 0.5em;
+            padding: 0.5em;
 
-        widget(label, {
-          align: center;
-          caption: $self.title;
-          size: 1.2em;
-          color: iir(!isNavFocused(), 4) - iir(isPressed(), 4, true);
+            widget(image, {
+              source: $self.icon ??
+	        "skin://icons/" +
+	        translate($self.type, "ic_folder_48px",
+		          "tv",       "ic_tv_48px",
+		          "usb",      "ic_usb_48px",
+		          "cd",       "ic_album_48px",
+		          "dvd",      "ic_album_48px",
+		          "bluray",   "ic_album_48px",
+		          "setting",  "ic_settings_48px",
+		        "plugin",   "ic_extension_48px") + ".svg";
+
+              color:  select($self.icon, 1, iir(!isNavFocused(), 4)) - iir(isPressed(), 4, true);
+            });
+
+            widget(label, {
+              align: center;
+              caption: $self.title;
+              size: 1.2em;
+              color: iir(!isNavFocused(), 4) - iir(isPressed(), 4, true);
+            });
+          });
         });
       });
     });
-#import "skin://menu/sidebar.view"
+    widget(loader, {
+      hidden: !$clone.showSidebar;
+      filterConstraintX: true;
+      time: 0.05;
+      source: "skin://menu/sidebar.view";
+    });
+  });
 
-  });
-  widget(quad, {
-    zoffset: -100;
-    alpha: 0.6 * iir($ui.keyboard, 4);
-    additive: true;
+  widget(container_y, {
+
+    alpha: iir($ui.showTopIcons, 4);
+
+    widget(container_x, {
+      space(1);
+      padding: [1em, 0];
+      height: 3em;
+      widget(icon, {
+        clickable: true;
+        angle: iir($clone.showSidebar, 4) * -180;
+        onEvent(activate, {
+
+          toggle($clone.showSidebar);
+        });
+        navFocusable: false;
+        color: 0.5 + iir(isHovered(), 4);
+        size: 2em;
+        source: "skin://icons/ic_menu_48px.svg";
+      });
+    });
   });
 
-  widget(quad, {
-    zoffset: -100;
-    alpha: 0.1;
-    additive: true;
-  });
 });

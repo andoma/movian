@@ -6,6 +6,7 @@ widget(container_z, {
   height: 5em;
 
   ListItemBevel();
+  ListItemHighlight();
 
   onEvent(activate, eventWithProp(pluginInfo, $self));
   focusable: true;

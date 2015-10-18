@@ -1,14 +1,12 @@
 #import "skin://theme.view"
 
-#define SIDEBAR_SIZE() { 22 em }
-
 #define SIDEBAR_ACTION(CAPTION, ICON, EVENT, HIDDEN=false) {
   widget(container_z, {
     hidden: HIDDEN;
     height: 2em;
     ListItemBevel();
-
-    focusable: true;
+    ListItemHighlight();
+    focusable: 0.1;
     onEvent(activate, EVENT);
 
     widget(container_x, {
@@ -29,189 +27,194 @@
 }
 
 
-$clone.haveSidebar = !getLayer();
-$view.sidebarFader = iir(delay($clone.showSidebar, 0, 0.25), 2);
 
-widget(container_z, {
+widget(container_x, {
+  space(2);
+  widget(container_z, {
+    width: 22em;
+    filterConstraintY: true;
+    id: "sidebar";
 
-  id: "sidebar";
+    onEvent(back, {
+      $clone.showSidebar = false;
+    });
 
-  onEvent(GainedFocus, {
-    $clone.showSidebar = true;
-  });
+    onEvent(cancel, {
+      $clone.showSidebar = false;
+    });
 
-  onEvent(LostFocus, {
-    $clone.showSidebar = false;
-  });
+    onEvent(left, {
+      $clone.showSidebar = false;
+    }, true, false);
+
+    onEvent(LostFocus, {
+      $clone.showSidebar = false;
+    });
 
 #import "skin://styles/style_list.view"
 
-  alpha: $view.sidebarFader;
-  width: $view.sidebarFader * SIDEBAR_SIZE();
 
-  widget(quad, {
-    zoffset: -500;
-    color: 0;
-    alpha: 0.2;
-  });
+    widget(quad, {
+      zoffset: -500;
+      color: 0;
+      alpha: 0.2;
+    });
 
-  widget(resizer, {
-    widget(container_y, {
-      width: SIDEBAR_SIZE();
+    widget(resizer, {
+      widget(container_y, {
 
-      /**
-       * Style overrides
-       */
-      style(ListItem, {
-        padding: 0;
-        spacing: 0;
-      });
+        /**
+         * Style overrides
+         */
+        style(ListItem, {
+          padding: 0;
+          spacing: 0;
+        });
 
-      newstyle(ListItemIcon, {
-        width: 2em;
-        align: center;
-        size: 1.5em;
-      });
+        newstyle(ListItemIcon, {
+          width: 2em;
+          align: center;
+          size: 1.5em;
+        });
 
-      style(ListItemValue, {
-        weight: 0.7;
-        padding: [1em, 0];
-      });
+        style(ListItemValue, {
+          weight: 0.7;
+          padding: [1em, 0];
+        });
 
-      style(ListItemValueOn, {
-        weight: 0.7;
-        padding: [1em, 0];
-      });
+        style(ListItemValueOn, {
+          weight: 0.7;
+          padding: [1em, 0];
+        });
 
-      style(ListItemValueOff, {
-        weight: 0.7;
-        padding: [1em, 0];
-      });
+        style(ListItemValueOff, {
+          weight: 0.7;
+          padding: [1em, 0];
+        });
 
-      style(MultioptIcon, {
-        width: 1em;
-        size: 1em;
-      });
+        style(MultioptIcon, {
+          width: 1em;
+          size: 1em;
+        });
 
-      style(MultioptSelection, {
-        weight: 0.7;
-      });
+        style(MultioptSelection, {
+          weight: 0.7;
+        });
 
-      style(MultioptItemIconSelected, {
-        width: 1em;
-        size: 1em;
-      });
-      style(MultioptItemIconUnselected, {
-        width: 1em;
-        size: 1em;
-      });
-
-
-      widget(label, {
-        alpha: iir(delay($clone.showSidebar, 0.25, 0.1), 4);
-        height: 3em;
-        align: center;
-        caption: _("Page settings");
-        size: 1.5em;
-      });
-
-      widget(list_y, {
-
-        id: "sidebar";
-
-//        autoFocusLimit: true;
-
-        // --------------------------------------
-        // Bookmark on/off
-        // --------------------------------------
-
-        SIDEBAR_ACTION(select($self.bookmarked,
-                              _("Remove from home"),
-                              _("Add to home")),
-                       select($self.bookmarked,
-                              "skin://icons/ic_bookmark_48px.svg",
-                              "skin://icons/ic_bookmark_border_48px.svg"),
-                       {
-	                 toggle($self.bookmarked);
-                       });
-
-        // --------------------------------------
-        //
-        // --------------------------------------
-
-        widget(loader, {
-          hidden: count($clone.settings.options) < 2;
-          .self <- $clone.settings;
-          source: "skin://items/list/multiopt.view";
+        style(MultioptItemIconSelected, {
+          width: 1em;
+          size: 1em;
+        });
+        style(MultioptItemIconUnselected, {
+          width: 1em;
+          size: 1em;
         });
 
 
-        // --------------------------------------
-        // Items from page model
-        // --------------------------------------
-
-        cloner($self.model.options, loader, {
-          time: 0.1;
-          effect: blend;
-	  alt: "skin://items/list/default.view";
-	  source: "skin://items/list/" + $self.type + ".view";
+        widget(label, {
+          height: 3em;
+          align: center;
+          caption: _("Page settings");
+          size: 1.5em;
         });
 
+        widget(list_y, {
 
-        widget(dummy, {
-          height: 1em;
+          id: "sidebar";
+
+
+          // --------------------------------------
+          // Bookmark on/off
+          // --------------------------------------
+
+          SIDEBAR_ACTION(select($self.bookmarked,
+                                _("Remove from home"),
+                                _("Add to home")),
+                         select($self.bookmarked,
+                                "skin://icons/ic_bookmark_48px.svg",
+                                "skin://icons/ic_bookmark_border_48px.svg"),
+                         {
+	                   toggle($self.bookmarked);
+                         });
+
+          // --------------------------------------
+          //
+          // --------------------------------------
+
+          widget(loader, {
+            hidden: count($clone.settings.options) < 2;
+              .self <- $clone.settings;
+            source: "skin://items/list/multiopt.view";
+          });
+
+
+          // --------------------------------------
+          // Items from page model
+          // --------------------------------------
+
+          cloner($self.model.options, loader, {
+            time: 0.1;
+            effect: blend;
+	    alt: "skin://items/list/default.view";
+	    source: "skin://items/list/" + $self.type + ".view";
+          });
+
+
+          widget(dummy, {
+            height: 1em;
+          });
+
+          // --------------------------------------
+          // Generic items
+          // --------------------------------------
+          SIDEBAR_ACTION(_("Reload page"),
+                         "skin://icons/ic_refresh_48px.svg",
+                         event("ReloadData"));
+
+          SIDEBAR_ACTION(_("Home"),
+                         "skin://icons/ic_home_48px.svg",
+                         navOpen("page:home"));
+
+          SIDEBAR_ACTION(_("Settings"),
+                         "skin://icons/ic_settings_48px.svg",
+                         navOpen("settings:"),
+                         $self.url == "settings:");
+
+          widget(dummy, {
+            height: 1em;
+          });
+
+          SIDEBAR_ACTION(fmt(_("Exit %s"), $core.app.name),
+                         "skin://icons/ic_exit_to_app_48px.svg",
+                         event("Quit"),
+                         !$core.runcontrol.canExit);
+
+          SIDEBAR_ACTION(_("Suspend"),
+                         "skin://icons/ic_power_settings_new_48px.svg",
+                         event("Standby"),
+                         !$core.runcontrol.canStandby);
+
+          widget(dummy, {
+            height: 1em;
+          });
+
+          SIDEBAR_ACTION(select($ui.sysinfo,
+                                _("Hide system info"),
+                                _("Show system info")),
+                         select($ui.sysinfo,
+                                "skin://icons/ic_info_48px.svg",
+                                "skin://icons/ic_info_outline_48px.svg"),
+                         {
+                           toggle($ui.sysinfo);
+                         });
+
+          SIDEBAR_ACTION(_("View log"),
+                         "skin://icons/ic_my_library_books_48px.svg",{
+                           $ui.logwindow = true;
+                         });
+
+
         });
-
-        // --------------------------------------
-        // Generic items
-        // --------------------------------------
-        SIDEBAR_ACTION(_("Reload page"),
-                       "skin://icons/ic_refresh_48px.svg",
-                       event("ReloadData"));
-
-        SIDEBAR_ACTION(_("Home"),
-                       "skin://icons/ic_home_48px.svg",
-                       navOpen("page:home"));
-
-        SIDEBAR_ACTION(_("Settings"),
-                       "skin://icons/ic_settings_48px.svg",
-                       navOpen("settings:"),
-                       $self.url == "settings:");
-
-        widget(dummy, {
-          height: 1em;
-        });
-
-        SIDEBAR_ACTION(fmt(_("Exit %s"), $core.app.name),
-                       "skin://icons/ic_exit_to_app_48px.svg",
-                       event("Quit"),
-                       !$core.runcontrol.canExit);
-
-        SIDEBAR_ACTION(_("Suspend"),
-                       "skin://icons/ic_power_settings_new_48px.svg",
-                       event("Standby"),
-                       !$core.runcontrol.canStandby);
-
-        widget(dummy, {
-          height: 1em;
-        });
-
-        SIDEBAR_ACTION(select($ui.sysinfo,
-                              _("Hide system info"),
-                              _("Show system info")),
-                       select($ui.sysinfo,
-                              "skin://icons/ic_info_48px.svg",
-                              "skin://icons/ic_info_outline_48px.svg"),
-                       {
-                         toggle($ui.sysinfo);
-                       });
-
-        SIDEBAR_ACTION(_("View log"),
-                       "skin://icons/ic_my_library_books_48px.svg",{
-                         $ui.logwindow = true;
-                       });
-
-
       });
     });
   });

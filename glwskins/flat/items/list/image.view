@@ -3,6 +3,7 @@
 widget(container_z, {
 
   ListItemBevel();
+  ListItemHighlight();
 
   focusable: true;
   onEvent(activate, navOpen($self.url, void, $self, $parent.model, void, $parent.url));

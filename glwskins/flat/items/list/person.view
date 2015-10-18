@@ -4,6 +4,7 @@ widget(container_z, {
 
   height: 4em;
   ListItemBevel();
+  ListItemHighlight();
   focusable: 0.1;
 
   widget(container_x, {

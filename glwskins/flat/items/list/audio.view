@@ -3,6 +3,7 @@
 widget(container_z, {
   height: 2em;
   ListItemBevel();
+  ListItemHighlight();
   onEvent(activate, playTrackFromSource($self, $parent.model));
 
   widget(container_x, {

@@ -2,7 +2,7 @@ setDefaultFont("skin://fonts/RobotoCondensed-Regular.ttf");
 
 $ui.sizeOffset = 4;
 $ui.xmargin = select($ui.aspect > 1, $ui.width / 50, 0);
-
+$ui.showTopIcons = $ui.pointerVisible || $ui.touch;
 
 onEvent(sysinfo, {
   toggle($ui.sysinfo);
@@ -117,44 +117,21 @@ widget(container_z, {
 
       widget(container_y, {
 
-        alpha: iir($ui.pointerVisible || $ui.touch, 4);
-        widget(container_x, {
+        alpha: iir($ui.showTopIcons, 4);
 
+        widget(container_x, {
+          padding: [1em, 0];
           height: 3em;
-          widget(container_y, {
-            width: 4em;
-            padding:[0, 0.5em];
-            widget(icon, {
-              clickable: $nav.canGoBack || $ui.logwindow;
-              alpha: iir($nav.canGoBack || $ui.logwindow, 4);
-              onEvent(activate, deliverEvent($ui.eventSink, "back"));
-              navFocusable: false;
-              color: 0.5 + iir(isHovered(), 4);
-              size: 2em;
-              source: "skin://icons/ic_chevron_left_48px.svg";
-            });
+          widget(icon, {
+            clickable: $nav.canGoBack || $ui.logwindow;
+            alpha: iir($nav.canGoBack || $ui.logwindow, 4);
+            onEvent(activate, deliverEvent($ui.eventSink, "back"));
+            navFocusable: false;
+            color: 0.5 + iir(isHovered(), 4);
+            size: 2em;
+            source: "skin://icons/ic_chevron_left_48px.svg";
           });
           space(1);
-          widget(container_y, {
-            width: 4em;
-            padding:[0, 0.5em];
-
-            widget(icon, {
-              angle: iir($view.currentPageClone.showSidebar, 4) * -90;
-
-              clickable: $view.currentPageClone.haveSidebar;
-              alpha: iir($view.currentPageClone.haveSidebar, 4);
-
-              onEvent(activate, {
-                $view.currentPageClone.showSidebar = !$view.currentPageClone.showSidebar;
-              });
-
-              size: 2em;
-              navFocusable: false;
-              color: 0.5 + iir(isHovered(), 4);
-              source: "skin://icons/ic_menu_48px.svg";
-            });
-          });
         });
       });
     });

@@ -3,6 +3,7 @@
 widget(container_z, {
 
   GridItemBevel();
+  GridItemHighlight();
 
   onEvent(activate, eventWithProp(pluginInfo, $self));
   focusable: true;

@@ -2,6 +2,12 @@
 
 widget(container_z, {
   ListItemBevel();
+  ListItemHighlight();
+  clickable: true;
+  onEvent(activate, {
+    focus("textInput");
+  });
+
   height: 2em;
 
   widget(container_x, {
@@ -18,18 +24,26 @@ widget(container_z, {
       style: ["ListItemLabel", "ListItemLabelContainer"];
     });
 
-    widget(container_z, {
+    widget(container_y, {
+      align: center;
+      widget(container_z, {
+        height: 1em;
+        filterConstraintX: true;
 
-      filterConstraintX: true;
-      widget(quad, {
-        zoffset: -400;
-        color: 0;
-        alpha: 0.4;
-      });
-      widget(text, {
-        style: "ListItemValue";
-        focusable: true;
-        bind($self.value);
+        widget(quad, {
+          zoffset: -400;
+          color: 0;
+          alpha: 0.3 + $view.isFocused;
+        });
+
+        widget(text, {
+          padding: [1em, 0, 0, 0];
+          font: "skin://fonts/RobotoCondensed-Regular.ttf";
+          id: "textInput";
+          focusable: true;
+          $view.isFocused = isFocused();
+          bind($self.value);
+        });
       });
     });
   });

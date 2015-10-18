@@ -24,10 +24,7 @@ widget(container_y, {
 
     navWrap: true;
     chaseFocus: true;
-    alphaFallOff: 0.2;
-    blurFallOff: 0.01;
     scrollThreshold: 2em;
-
     cloner($self.model.nodes, loader, {
       time: 0.1;
       effect: blend;

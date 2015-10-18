@@ -5,6 +5,8 @@ widget(container_z, {
   style: "ListItemOuter";
 
   ListItemBevel();
+  ListItemHighlight();
+
   widget(container_x, {
     style: "ListItem";
 

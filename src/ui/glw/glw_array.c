@@ -56,9 +56,6 @@ typedef struct glw_array {
 
   int num_visible_childs;
 
-  float alpha_falloff;
-  float blur_falloff;
-
 } glw_array_t;
 
 typedef struct glw_array_item {

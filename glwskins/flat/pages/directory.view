@@ -13,7 +13,8 @@ onEvent(pluginInfo, {
 onEvent(itemMenu, { $clone.itemMenu = void; }, $clone.itemMenu);
 onEvent(back,     { $clone.itemMenu = void; }, $clone.itemMenu);
 onEvent(cancel,   { $clone.itemMenu = void; }, $clone.itemMenu);
-onEvent(menu, { focus(select($clone.showSidebar, "main", "sidebar"));});
+onEvent(menu,     { toggle($clone.showSidebar); },
+       isVoid($clone.itemMenu));
 
 onEvent(ChangeView, deliverEvent($clone.settings.options, "Cycle"));
 
@@ -53,23 +54,46 @@ multiopt($view.path,
 	 makeUri(_("Grid"), "grid.view")
 	);
 
+$view.overlay = translate($clone.itemMenu,
+                          select($clone.showSidebar, "sidebar", void),
+                          "video", "fullscreen",
+                          "plugin", "fullscreen");
 
-widget(cursor, {
+
+widget(container_z, {
 
   widget(layer, {
 
-    widget(container_x, {
+    style: "PageContainer";
 
-      style: "PageContainer";
+    widget(clip, {
 
+      rightPx: select($clone.showSidebar, 22em, 0);
+      blurOutside: 1;
+      alphaOutside: 0.05;
       widget(loader, {
+
+        alpha: iir(translate($view.overlay, 1,
+                             "sidebar", 0.3,
+                             "fullscreen", 0), 4);
+
+        onEvent(right, {
+          $clone.showSidebar = true;
+        }, true, false);
+
         id: "main";
         filterConstraintX: true;
         noInitialTransform: true;
         time: 0.05;
         source: $view.path;
       });
-#import "skin://menu/sidebar.view"
+    });
+
+    widget(loader, {
+      hidden: !$clone.showSidebar;
+      filterConstraintX: true;
+      time: 0.05;
+      source: "skin://menu/sidebar.view";
     });
 
     widget(loader, {
@@ -78,19 +102,33 @@ widget(cursor, {
       time: 0;
       noInitialTransform: true;
       source: "skin://ctxmenu/" + $clone.itemMenu + "_details.view";
-      .args <- $clone.itemData;
+        .args <- $clone.itemData;
     });
   });
 
-  widget(quad, {
-    zoffset: -100;
-    alpha: 0.6 * iir($ui.keyboard, 4);
-    additive: true;
+
+  widget(container_y, {
+
+    alpha: iir($ui.showTopIcons && isVoid($clone.itemMenu), 4);
+
+    widget(container_x, {
+      space(1);
+      padding: [1em, 0];
+      height: 3em;
+      widget(icon, {
+        clickable: isVoid($clone.itemMenu);
+        angle: iir($clone.showSidebar, 4) * -180;
+
+        onEvent(activate, {
+          toggle($clone.showSidebar);
+        });
+
+        navFocusable: false;
+        color: 0.5 + iir(isHovered(), 4);
+        size: 2em;
+        source: "skin://icons/ic_menu_48px.svg";
+      });
+    });
   });
 
-  widget(quad, {
-    zoffset: -100;
-    alpha: 0.1;
-    additive: true;
-  });
 });

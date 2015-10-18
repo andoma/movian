@@ -1,0 +1,76 @@
+
+#import "skin://theme.view"
+
+widget(container_z, {
+
+  height: 2em;
+  ListItemBevel();
+  ListItemHighlight();
+
+  focusable: true;
+
+   onEvent(activate, deliverEvent($self, "connect"));
+
+  widget(container_x, {
+    style: "ListItem";
+
+    widget(icon, {
+      color: select(isFocused(), 1.0, 0.6);
+      source: translate($self.metadata.type,
+			"dataroot://res/svg/Settings.svg",
+			"wifi", "dataroot://res/svg/Wifi.svg",
+			"ethernet", "skin://icons/ic_settings_ethernet_48px.svg"
+		 );
+      style: "ListItemIcon";
+    });
+
+    widget(icon, {
+      color: select(isFocused(), 1.0, 0.6);
+      source: translate($self.metadata.state,
+			"",
+			"failure",       "dataroot://res/svg/Alert.svg",
+			"association",   "dataroot://res/svg/Radio.svg",
+			"configuration", "dataroot://res/svg/Trafic.svg",
+			"ready",         "dataroot://res/svg/Link.svg",
+			"disconnect",    "dataroot://res/svg/Out.svg",
+			"online",        "dataroot://res/svg/Check.svg"
+		       );
+      size: 2em;
+    });
+
+    widget(label, {
+      filterConstraintX: true;
+      color: select(isFocused(), 1.0, 0.6);
+	
+      caption: $self.metadata.title;
+      sizeScale: 1.2;
+    });
+
+    widget(label, {
+      filterConstraintX: true;
+      color: select(isFocused(), 1.0, 0.6);
+      caption: select($self.metadata.state == "failure",
+		      $self.metadata.error,
+		      $self.metadata.ipv4.address);
+    });
+
+
+    widget(icon, {
+      color: select(isFocused(), 1.0, 0.6);
+      source: select(isVoid($self.metadata.security),
+		     "",
+		     "dataroot://res/svg/Lock.svg"
+		    );
+      size: 2em;
+    });
+
+    widget(icon, {
+      color: select(isFocused(), 1.0, 0.6);
+      source: select($self.metadata.favorite,
+		     "dataroot://res/svg/Favorite.svg",
+		     "");
+      size: 2em;
+    });
+  });
+});
+

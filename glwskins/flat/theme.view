@@ -53,3 +53,23 @@
     });
   });
 }
+
+
+#define ListItemHighlight(ALPHA=0.1 * isHovered() + 0.6 * isNavFocused()) {
+  widget(quad, {
+    zoffset: -10;
+    additive: true;
+    alpha: ALPHA;
+  });
+
+}
+
+#define GridItemHighlight(ALPHA=0.1 * isHovered() + 0.6 * isNavFocused()) {
+  widget(quad, {
+    zoffset: -10;
+    additive: true;
+    alpha: ALPHA;
+  });
+
+}
+

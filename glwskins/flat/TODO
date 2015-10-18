@@ -1,11 +1,11 @@
 
-Focus search bar on home does not scroll correctly
-
 Add scroll bar to list views and multiopts
 
-Add bookmark button
+Rework OSD
 
-Rework  $view.currentPageClone <- focusedClone();
+Rework notifications
+
+Add bookmark button
 
 Item menu for other items
 

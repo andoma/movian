@@ -3,9 +3,10 @@
 widget(container_z, {
 
   ListItemBevel();
+  ListItemHighlight();
   style: "ListItemOuter";
-
   focusable: true;
+
   onEvent(activate, select($self.action,
                            event($self.action),
                            deliverEvent($self.eventSink)));

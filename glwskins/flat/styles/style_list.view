@@ -67,7 +67,6 @@ style(ListMultioptContainer, {
 style(MultioptValue, {
   filterConstraintX: true;
   color: iir(!isNavFocused(), 4);
-  shadow: iir(!isNavFocused(), 4);
   font: "skin://fonts/RobotoCondensed-Regular.ttf";
 });
 
@@ -98,7 +97,6 @@ style(MultioptItemIconUnselected, {
 style(MultioptItemLabel, {
   font: "skin://fonts/RobotoCondensed-Regular.ttf";
   color: iir(!isNavFocused(), 4);
-  shadow: iir(!isNavFocused(), 4);
 });
 
 //

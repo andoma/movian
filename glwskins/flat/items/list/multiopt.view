@@ -7,47 +7,37 @@ widget(container_z, {
 
   ListItemBevel();
 
-  widget(container_x, {
-    style: "ListItem";
+  onEvent(LostFocus, {
+    $view.page = 0;
+  });
 
-    widget(dummy, {
-      style: "ListItemIcon";
-    });
+  widget(deck, {
+    time: 0;
+    // First page, when item is not expanded
 
-    widget(container_y, {
-      align:top;
-      style: "ListItemLabelContainer";
+    widget(container_z, {
+      ListItemHighlight();
+      focusable: true;
+      style: "ListItemOuter";
+
+      onEvent(activate, {
+        $view.page = 1;
+      });
+
       widget(container_x, {
-        height: 2em;
-
+        style: "ListItem";
+        widget(icon, {
+          style: "ListItemIcon";
+        });
         widget(label, {
-          align: center;
           caption: $self.metadata.title + ":";
-          style: "ListItemLabel";
+          style: ["ListItemLabel", "ListItemLabelContainer"];
         });
-      });
-    });
-
-    widget(deck, {
-      filterConstraintX: true;
-      style: "MultioptSelection";
-
-      onEvent(LostFocus, {
-        $view.page = 0;
-      });
-
-      widget(container_y, {
-        focusable: true;
-
-        onEvent(activate, {
-          $view.page = 1;
-        });
-
-        align: center;
 
         widget(container_x, {
-
+          filterConstraintX: true;
           widget(label, {
+            align: left;
             caption: $self.current.title;
             style: "ListItemValue";
           });
@@ -59,32 +49,52 @@ widget(container_z, {
           });
         });
       });
+    });
 
-      widget(container_x, {
-        style: "ListMultioptContainer";
-        onEvent(cancel, { $view.page = 0; });
-        onEvent(back,   { $view.page = 0; });
+    // Second page, when item is expanded
+
+    widget(container_x, {
+      style: "ListMultioptContainer";
+      onEvent(cancel, { $view.page = 0; });
+      onEvent(back,   { $view.page = 0; });
+
+      style: "ListItem";
+      widget(icon, {
+        style: "ListItemIcon";
+      });
 
 
-        widget(container_z, {
+      widget(container_y, {
+        style: "ListItemLabelContainer";
+        widget(label, {
+          height: 2em;
 
-          widget(quad, {
-            zoffset: -400;
-            color: 0;
-            alpha: 0.4;
-          });
+          caption: $self.metadata.title + ":";
+          style: "ListItemLabel";
+        });
+      });
 
-          widget(list_y, {
+      widget(container_z, {
 
-            cloner($self.options, container_x, {
-              focusable: true;
-              style: "MultioptItem";
+        widget(quad, {
+          zoffset: -400;
+          color: 0;
+          alpha: 0.4;
+        });
 
-              onEvent(activate, {
-                propSelect($self);
-                $view.page = 0;
-              });
+        widget(list_y, {
 
+          cloner($self.options, container_z, {
+            focusable: true;
+            ListItemHighlight();
+            style: "MultioptItem";
+
+            onEvent(activate, {
+              propSelect($self);
+              $view.page = 0;
+            });
+
+            widget(container_x, {
               widget(icon, {
                 style: select(propName($self) == $parent.value,
                               "MultioptItemIconSelected",
@@ -99,8 +109,8 @@ widget(container_z, {
           });
         });
       });
-
-      page: $view.page;
     });
+
+    page: $view.page;
   });
 });
