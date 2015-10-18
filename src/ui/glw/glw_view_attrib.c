@@ -1402,7 +1402,6 @@ static const token_attrib_t attribtab[] = {
   {"color2",          set_float3, GLW_ATTRIB_COLOR2},
 
   {"rotation",        set_float4, GLW_ATTRIB_ROTATION},
-  {"clipping",        set_float4, GLW_ATTRIB_CLIPPING},
   {"plane",           set_float4, GLW_ATTRIB_PLANE},
 
   {"padding",         set_int16_4, GLW_ATTRIB_PADDING},

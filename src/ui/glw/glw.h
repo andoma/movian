@@ -169,7 +169,6 @@ typedef enum {
   GLW_ATTRIB_SCALING,
   GLW_ATTRIB_TRANSLATION,
   GLW_ATTRIB_ROTATION,
-  GLW_ATTRIB_CLIPPING,
   GLW_ATTRIB_PLANE,
   GLW_ATTRIB_MARGIN,
   GLW_ATTRIB_BORDER,
@@ -887,6 +886,9 @@ typedef struct glw_root {
    * Rendering
    */
   Vec4 gr_clip[NUM_CLIPPLANES];
+  float gr_clip_alpha_out[NUM_CLIPPLANES];
+  float gr_clip_sharpness_out[NUM_CLIPPLANES];
+
   int gr_active_clippers;
 
   char gr_need_sw_clip;          /* Set if software clipping is needed
@@ -908,14 +910,6 @@ typedef struct glw_root {
   float gr_fader_blur[NUM_FADERS];
   int gr_active_faders;
 #endif
-
-
-
-  void (*gr_set_hw_clipper)(const struct glw_rctx *rc, int which,
-			    const Vec4 vec);
-  void (*gr_clr_hw_clipper)(int which);
-
-
 
   int gr_num_render_jobs;
   int gr_render_jobs_capacity;
@@ -1292,14 +1286,15 @@ int glw_focus_child(glw_t *w);
  * Clipping
  */
 typedef enum {
-  GLW_CLIP_TOP,
-  GLW_CLIP_BOTTOM,
   GLW_CLIP_LEFT,
+  GLW_CLIP_TOP,
   GLW_CLIP_RIGHT,
+  GLW_CLIP_BOTTOM,
 } glw_clip_boundary_t;
 
 int glw_clip_enable(glw_root_t *gr, const glw_rctx_t *rc,
-		    glw_clip_boundary_t gcb, float distance);
+		    glw_clip_boundary_t gcb, float distance,
+                    float alpha_out, float sharpness_out);
 
 void glw_clip_disable(glw_root_t *gr, int which);
 

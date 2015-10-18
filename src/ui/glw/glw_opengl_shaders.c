@@ -140,9 +140,6 @@ load_program(glw_root_t *gr,
 
     } else if(doblur) {
       gp = gbr->gbr_renderer_tex_blur;
-
-    } else if(!flags) {
-      gp = gbr->gbr_renderer_tex_simple;
     } else {
       gp = gbr->gbr_renderer_tex;
     }
@@ -522,11 +519,6 @@ glw_opengl_shaders_init(glw_root_t *gr, int delayed)
   SHADERPATH("f_tex.glsl");
   fs = glw_compile_shader(path, GL_FRAGMENT_SHADER, gr);
   gbr->gbr_renderer_tex = glw_link_program(gbr, "Texture", vs, fs);
-  glDeleteShader(fs);
-
-  SHADERPATH("f_tex_simple.glsl");
-  fs = glw_compile_shader(path, GL_FRAGMENT_SHADER, gr);
-  gbr->gbr_renderer_tex_simple = glw_link_program(gbr, "TextureSimple", vs, fs);
   glDeleteShader(fs);
 
   SHADERPATH("f_tex_stencil.glsl");

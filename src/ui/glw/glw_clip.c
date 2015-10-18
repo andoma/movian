@@ -19,35 +19,63 @@
  */
 #include "glw.h"
 #include "glw_texture.h"
- 
+
 typedef struct glw_clip {
   glw_t w;
 
   float gc_clipping[4];
+  float gc_pixel_clipping[4];
 
-  char gc_clip_change;
+  float gc_alpha_outside;
+  float gc_sharpness_outside;
 
 } glw_clip_t;
+
+
+
+static int
+setval(float *vp, float v)
+{
+  if(*vp == v)
+    return GLW_SET_NO_CHANGE;
+  *vp = v;
+  return GLW_SET_RERENDER_REQUIRED;
+}
 
 
 /**
  *
  */
 static int
-glw_clip_set_float4(glw_t *w, glw_attribute_t attrib, const float *v)
+glw_clip_set_float_unresolved(glw_t *w, const char *a, float value)
 {
   glw_clip_t *gc = (glw_clip_t *)w;
 
-  switch(attrib) {
-  case GLW_ATTRIB_CLIPPING:
-    if(!glw_attrib_set_float4(gc->gc_clipping, v))
-      return 0;
-    gc->gc_clip_change = 1;
+  if(!strcmp(a, "left"))
+    return setval(&gc->gc_clipping[0], value);
+  if(!strcmp(a, "top"))
+    return setval(&gc->gc_clipping[1], value);
+  if(!strcmp(a, "right"))
+    return setval(&gc->gc_clipping[2], value);
+  if(!strcmp(a, "bottom"))
+    return setval(&gc->gc_clipping[3], value);
 
-    return w->glw_flags & GLW_ACTIVE ? GLW_REFRESH_LAYOUT_ONLY : 0;
-  default:
-    return -1;
-  }
+  if(!strcmp(a, "leftPx"))
+    return setval(&gc->gc_pixel_clipping[0], value);
+  if(!strcmp(a, "topPx"))
+    return setval(&gc->gc_pixel_clipping[1], value);
+  if(!strcmp(a, "rightPx"))
+    return setval(&gc->gc_pixel_clipping[2], value);
+  if(!strcmp(a, "bottomPx"))
+    return setval(&gc->gc_pixel_clipping[3], value);
+
+  if(!strcmp(a, "alphaOutside"))
+    return setval(&gc->gc_alpha_outside, value);
+
+  if(!strcmp(a, "blurOutside"))
+    return setval(&gc->gc_alpha_outside, 1.0f - GLW_CLAMP(value, 0, 1));
+
+  return GLW_SET_NOT_RESPONDING;
 }
 
 
@@ -58,16 +86,9 @@ static void
 glw_clip_layout(glw_t *w, const glw_rctx_t *rc)
 {
   glw_t *c;
-  glw_clip_t *gc = (glw_clip_t *)w;
 
   if(w->glw_alpha < 0.01)
     return;
-
-  if(gc->gc_clip_change) {
-    glw_root_t *gr = w->glw_root;
-    glw_need_refresh(gr, 0);
-    gc->gc_clip_change = 0;
-  }
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
@@ -85,24 +106,30 @@ glw_clip_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_t *c;
   glw_clip_t *gc = (glw_clip_t *)w;
+  glw_root_t *gr = w->glw_root;
+  int clippers[4];
 
-  int l = gc->gc_clipping[0] >= 0 ? 
-    glw_clip_enable(w->glw_root, rc, GLW_CLIP_LEFT, gc->gc_clipping[0]) : -1;
-  int t = gc->gc_clipping[1] >= 0 ? 
-    glw_clip_enable(w->glw_root, rc, GLW_CLIP_TOP, gc->gc_clipping[1]) : -1;
-  int r = gc->gc_clipping[2] >= 0 ? 
-    glw_clip_enable(w->glw_root, rc, GLW_CLIP_RIGHT, gc->gc_clipping[2]) : -1;
-  int b = gc->gc_clipping[3] >= 0 ? 
-    glw_clip_enable(w->glw_root, rc, GLW_CLIP_BOTTOM, gc->gc_clipping[3]) : -1;
+  for(int i = 0; i < 4; i++) {
+    if(gc->gc_clipping[i] > 0)
+      clippers[i] = glw_clip_enable(gr, rc, i, gc->gc_clipping[i],
+                                    gc->gc_alpha_outside,
+                                    gc->gc_sharpness_outside);
+    else if(gc->gc_pixel_clipping[i] > 0) {
+      clippers[i] = glw_clip_enable(gr, rc, i, gc->gc_pixel_clipping[i] /
+                                    (i & 1 ? rc->rc_height: rc->rc_width),
+                                    gc->gc_alpha_outside,
+                                    gc->gc_sharpness_outside);
+    } else {
+      clippers[i] = -1;
+    }
+  }
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
     glw_render0(c, rc);
 
-  glw_clip_disable(w->glw_root, l);
-  glw_clip_disable(w->glw_root, r);
-  glw_clip_disable(w->glw_root, t);
-  glw_clip_disable(w->glw_root, b);
-
+  for(int i = 0; i < 4; i++) {
+    glw_clip_disable(w->glw_root, clippers[i]);
+  }
 }
 
 static int
@@ -127,7 +154,7 @@ static glw_class_t glw_clip = {
   .gc_layout = glw_clip_layout,
   .gc_render = glw_clip_render,
   .gc_signal_handler = glw_clip_callback,
-  .gc_set_float4 = glw_clip_set_float4,
+  .gc_set_float_unresolved = glw_clip_set_float_unresolved,
 };
 
 

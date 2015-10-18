@@ -340,10 +340,10 @@ glw_array_render_one(glw_array_t *a, glw_t *c, int width, int height,
   ct = cb = ft = fb = -1;
 
   if(y < 0)
-    ct = glw_clip_enable(gr, rc0, GLW_CLIP_TOP, 0);
+    ct = glw_clip_enable(gr, rc0, GLW_CLIP_TOP, 0, 0, 1);
 
   if(y + ch > height)
-    cb = glw_clip_enable(gr, rc0, GLW_CLIP_BOTTOM, 0);
+    cb = glw_clip_enable(gr, rc0, GLW_CLIP_BOTTOM, 0, 0, 1);
 
   rc3 = *rc2;
   glw_reposition(&rc3,

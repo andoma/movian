@@ -358,10 +358,10 @@ glw_list_y_render_one(glw_list_t *l, glw_t *c, int width, int height,
   ct = cb = ft = fb = -1;
 
   if(y < 0)
-    ct = glw_clip_enable(gr, rc0, GLW_CLIP_TOP, 0);
+    ct = glw_clip_enable(gr, rc0, GLW_CLIP_TOP, 0, 0, 1);
 
   if(y + cd->height > height)
-    cb = glw_clip_enable(gr, rc0, GLW_CLIP_BOTTOM, 0);
+    cb = glw_clip_enable(gr, rc0, GLW_CLIP_BOTTOM, 0, 0, 1);
 
   rc2 = *rc1;
   glw_reposition(&rc2,
@@ -466,10 +466,10 @@ glw_list_render_x(glw_t *w, const glw_rctx_t *rc)
     lc = rclip = lf = rf = -1;
 
     if(x < 0)
-      lc = glw_clip_enable(w->glw_root, &rc0, GLW_CLIP_LEFT, 0);
+      lc = glw_clip_enable(w->glw_root, &rc0, GLW_CLIP_LEFT, 0, 0, 1);
 
     if(x + cd->width > width)
-      rclip = glw_clip_enable(w->glw_root, &rc0, GLW_CLIP_RIGHT, 0);
+      rclip = glw_clip_enable(w->glw_root, &rc0, GLW_CLIP_RIGHT, 0, 0, 1);
 
     rc2 = rc1;
     glw_reposition(&rc2,

@@ -16,7 +16,6 @@ const mat4 projection = mat4(2.414213,0.000000,0.000000,0.000000,
 // The ordering of these are important to match the varying variables
 // in the fragment shaders.
 varying vec4 f_col_mul;
-varying vec4 f_col_mul2;
 varying vec4 f_col_off;
 varying vec4 f_tex;
 varying vec3 f_blur;
@@ -24,9 +23,8 @@ varying vec3 f_blur;
 void main()
 {
   gl_Position = projection * u_modelview * vec4(a_position.xyz, 1);
-  f_col_mul = a_color;
   f_col_off = u_color_offset;
-  f_col_mul2 =  clamp(u_color, 0.0, 1.0);
+  f_col_mul =  a_color * u_color;
   f_tex = a_texcoord;
   f_blur = vec3(u_blur.x + (1.0 - a_position.w), u_blur.yz);
 }

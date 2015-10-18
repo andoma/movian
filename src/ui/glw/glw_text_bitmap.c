@@ -214,51 +214,6 @@ glw_text_bitmap_layout(glw_t *w, const glw_rctx_t *rc)
       printf("  textbitmap: text_width:%d left:%d right:%d margin:%d\n",
              text_width, left, right, margin);
 
-    // Horizontal
-    if(text_width > right - left || ti->ti_flags & IMAGE_TEXT_TRUNCATED) {
-
-      // Oversized, must cut
-
-      text_width = right - left;
-
-      if(gtb->w.glw_flags2 & GLW2_DEBUG)
-        printf("  textbitmap: Oversized, must cut. Width is now %d\n",
-               text_width);
-
-      if(!(gtb->gtb_flags & GTB_ELLIPSIZE)) {
-	glw_renderer_vtx_col(&gtb->gtb_text_renderer, 0, 1,1,1,1+text_width/20);
-	glw_renderer_vtx_col(&gtb->gtb_text_renderer, 1, 1,1,1,0);
-	glw_renderer_vtx_col(&gtb->gtb_text_renderer, 2, 1,1,1,0);
-	glw_renderer_vtx_col(&gtb->gtb_text_renderer, 3, 1,1,1,1+text_width/20);
-      }
-
-    } else {
-
-      glw_renderer_vtx_col_reset(&gtb->gtb_text_renderer);
-
-      switch(w->glw_alignment) {
-      case LAYOUT_ALIGN_JUSTIFIED:
-      case LAYOUT_ALIGN_CENTER:
-      case LAYOUT_ALIGN_BOTTOM:
-      case LAYOUT_ALIGN_TOP:
-	left = (left + right - text_width) / 2;
-	right = left + text_width;
-	break;
-
-      case LAYOUT_ALIGN_LEFT:
-      case LAYOUT_ALIGN_TOP_LEFT:
-      case LAYOUT_ALIGN_BOTTOM_LEFT:
-	right = left + tex_width;
-	break;
-
-      case LAYOUT_ALIGN_RIGHT:
-      case LAYOUT_ALIGN_TOP_RIGHT:
-      case LAYOUT_ALIGN_BOTTOM_RIGHT:
-	left = right - tex_width;
-	break;
-      }
-    }
-
     // Vertical
     if(text_height > top - bottom) {
       // Oversized, must cut
@@ -287,10 +242,59 @@ glw_text_bitmap_layout(glw_t *w, const glw_rctx_t *rc)
       }
     }
 
-    x1 = -1.0f + 2.0f * left   / (float)rc->rc_width;
     y1 = -1.0f + 2.0f * bottom / (float)rc->rc_height;
-    x2 = -1.0f + 2.0f * right  / (float)rc->rc_width;
     y2 = -1.0f + 2.0f * top    / (float)rc->rc_height;
+
+
+
+    // Horizontal
+    if(text_width > right - left || ti->ti_flags & IMAGE_TEXT_TRUNCATED) {
+
+      // Oversized, must cut
+
+      text_width = right - left;
+
+      if(gtb->w.glw_flags2 & GLW2_DEBUG)
+        printf("  textbitmap: Oversized, must cut. Width is now %d\n",
+               text_width);
+#if 0
+      if(!(gtb->gtb_flags & GTB_ELLIPSIZE)) {
+	glw_renderer_vtx_col(&gtb->gtb_text_renderer, 0, 1,1,1,1+text_width/20);
+	glw_renderer_vtx_col(&gtb->gtb_text_renderer, 1, 1,1,1,0);
+	glw_renderer_vtx_col(&gtb->gtb_text_renderer, 2, 1,1,1,0);
+	glw_renderer_vtx_col(&gtb->gtb_text_renderer, 3, 1,1,1,1+text_width/20);
+      }
+#endif
+    } else {
+
+      glw_renderer_vtx_col_reset(&gtb->gtb_text_renderer);
+
+      switch(w->glw_alignment) {
+      case LAYOUT_ALIGN_JUSTIFIED:
+      case LAYOUT_ALIGN_CENTER:
+      case LAYOUT_ALIGN_BOTTOM:
+      case LAYOUT_ALIGN_TOP:
+	left = (left + right - text_width) / 2;
+	right = left + text_width;
+	break;
+
+      case LAYOUT_ALIGN_LEFT:
+      case LAYOUT_ALIGN_TOP_LEFT:
+      case LAYOUT_ALIGN_BOTTOM_LEFT:
+	right = left + tex_width;
+	break;
+
+      case LAYOUT_ALIGN_RIGHT:
+      case LAYOUT_ALIGN_TOP_RIGHT:
+      case LAYOUT_ALIGN_BOTTOM_RIGHT:
+	left = right - tex_width;
+	break;
+      }
+    }
+
+
+    x1 = -1.0f + 2.0f * left   / (float)rc->rc_width;
+    x2 = -1.0f + 2.0f * right  / (float)rc->rc_width;
 
 
     const float s = text_width  / (float)tex_width;

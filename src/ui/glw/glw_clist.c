@@ -164,12 +164,12 @@ render(glw_t *w, const glw_rctx_t *rc)
     }
 
     if(y < 0)
-      t = glw_clip_enable(w->glw_root, rc, GLW_CLIP_TOP, 0);
+      t = glw_clip_enable(w->glw_root, rc, GLW_CLIP_TOP, 0, 0, 1);
     else
       t = -1;
 
     if(y + cd->height > rc->rc_height)
-      b = glw_clip_enable(w->glw_root, rc, GLW_CLIP_BOTTOM, 0);
+      b = glw_clip_enable(w->glw_root, rc, GLW_CLIP_BOTTOM, 0, 0, 1);
     else
       b = -1;
 

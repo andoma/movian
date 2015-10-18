@@ -4,7 +4,7 @@ precision highp float;
 
 uniform sampler2D u_t0;
 
-varying vec4 f_col_mul2;
+varying vec4 f_col_mul;
 varying vec4 f_tex;
 
 void main()

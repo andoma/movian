@@ -225,8 +225,7 @@ glw_playfield_layout(glw_t *w, const glw_rctx_t *rc)
       glw_need_refresh(w->glw_root, 0);
     }
 
-    if((cd->amount > 0 && cd->amount < 2) ||
-       !w->glw_root->gr_reduce_cpu)
+    if(cd->amount > 0 && cd->amount < 2)
       glw_layout0(c, rc);
 
     if(cd->amount <= 1 && cd->detached)
