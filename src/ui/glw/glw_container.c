@@ -239,9 +239,6 @@ glw_container_x_layout(glw_t *w, const glw_rctx_t *rc)
   glw_rctx_t rc0;
   const glw_table_t *tab = co->co_table;
 
-  if(co->w.glw_alpha < 0.01f)
-    return;
-
   rc0 = *rc;
 
   if(w->glw_flags2 & GLW2_DEBUG) {
@@ -433,9 +430,7 @@ glw_container_y_layout(glw_t *w, const glw_rctx_t *rc)
   float pos;        // Current position
   float fixscale;   // Scaling to apply to fixed height requests
                     // Used if the available height < sum of requested height
-  
-  if(co->w.glw_alpha < 0.01f)
-    return;
+
 
   rc0.rc_width = rc->rc_width - co->co_padding[0] - co->co_padding[2];
 
@@ -612,9 +607,6 @@ static void
 glw_container_z_layout(glw_t *w, const glw_rctx_t *rc)
 {
   glw_t *c;
-
-  if(w->glw_alpha < 0.01f)
-    return;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
