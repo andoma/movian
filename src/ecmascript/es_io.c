@@ -60,6 +60,8 @@ typedef struct es_http_request {
 
   int ehr_error;
 
+  int ehr_http_status;
+
 } es_http_request_t;
 
 
@@ -176,6 +178,7 @@ es_http_do_request(es_http_request_t *ehr)
               FA_LOAD_MIN_EXPIRE(ehr->ehr_min_expire),
               FA_LOAD_REQUEST_HEADERS(&ehr->ehr_request_headers),
               FA_LOAD_RESPONSE_HEADERS(&ehr->ehr_response_headers),
+              FA_LOAD_PROTOCOL_CODE(&ehr->ehr_http_status),
               NULL);
 
     if(ehr->ehr_result == NULL)
@@ -193,6 +196,7 @@ es_http_do_request(es_http_request_t *ehr)
                HTTP_RESPONSE_HEADERS(&ehr->ehr_response_headers),
                HTTP_REQUEST_HEADERS(&ehr->ehr_request_headers),
                HTTP_METHOD(ehr->ehr_method),
+               HTTP_RESPONSE_CODE(&ehr->ehr_http_status),
                NULL);
 
     if(ehr->ehr_error)
@@ -235,6 +239,9 @@ es_http_push_result(duk_context *ctx, es_http_request_t *ehr)
 
   http_headers_free(&ehr->ehr_response_headers);
   duk_put_prop_string(ctx, res_idx, "responseheaders");
+
+  duk_push_int(ctx, ehr->ehr_http_status);
+  duk_put_prop_string(ctx, res_idx, "statuscode");
 }
 
 
@@ -256,7 +263,7 @@ ehr_task(void *aux)
 
   es_push_root(ctx, ehr);
 
-  if(ehr->ehr_error == 0) {
+  if(ehr->ehr_error == 0 || ehr->ehr_flags & FA_CONTENT_ON_ERROR) {
     duk_push_boolean(ctx, 0);
     es_http_push_result(ctx, ehr);
   } else {
@@ -295,6 +302,7 @@ es_http_req(duk_context *ctx)
   ehr->ehr_flags |= es_prop_is_true(ctx, 1, "noFollow")    * FA_NOFOLLOW;
   ehr->ehr_flags |= es_prop_is_true(ctx, 1, "compression") * FA_COMPRESSION;
   ehr->ehr_flags |= es_prop_is_true(ctx, 1, "noAuth")      * FA_DISABLE_AUTH;
+  ehr->ehr_flags |= es_prop_is_true(ctx, 1, "noFail")      * FA_CONTENT_ON_ERROR;
 
   ehr->ehr_headreq = es_prop_is_true(ctx, 1, "headRequest");
   ehr->ehr_min_expire = es_prop_to_int(ctx, 1, "cacheTime", 0);

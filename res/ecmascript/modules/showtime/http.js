@@ -2,13 +2,15 @@
 // Http response object
 // -------------------------------------------------------------------------
 
-function HttpResponse(bytes, headers) {
-  this.bytes = bytes;
+function HttpResponse(res) {
+  this.bytes = res.buffer;
+  var headers = res.responseheaders;
   this.allheaders = headers;
   this.headers = {};
   this.headers_lc = {};
   this.multiheaders = {};
   this.multiheaders_lc = {};
+  this.statuscode = res.statuscode;
 
   for(var i = 0; i < headers.length; i+=2) {
     var key = headers[i];
@@ -94,10 +96,10 @@ exports.request = function(url, ctrl, callback) {
       if(err)
         callback(err, null);
       else
-        callback(null, new HttpResponse(res.buffer, res.responseheaders));
+        callback(null, new HttpResponse(res));
     });
     return;
   }
   var res = io.httpReq(url, ctrl || {});
-  return new HttpResponse(res.buffer, res.responseheaders);
+  return new HttpResponse(res);
 }
