@@ -222,6 +222,11 @@ glw_video_overlay_layout(glw_video_t *gv,
       memset(l, 0, sizeof(layer_t));
       l->id = gvo->gvo_layer;
       LIST_INSERT_HEAD(&layers, l, link);
+
+      const int bd = gv->gv_bottom_overlay_displacement;
+      l->used_height[LAYOUT_ALIGN_BOTTOM] = bd;
+      l->used_height[LAYOUT_ALIGN_BOTTOM_LEFT] = bd;
+      l->used_height[LAYOUT_ALIGN_BOTTOM_RIGHT] = bd;
     }
 
     float scaling = 1;

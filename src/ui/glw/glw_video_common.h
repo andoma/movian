@@ -153,7 +153,7 @@ typedef struct glw_video {
   LIST_ENTRY(glw_video) gv_global_link;
 
   struct glw_video_overlay_list gv_overlays;
-
+  int gv_bottom_overlay_displacement;
 
   float gv_cmatrix_cur[16];
   float gv_cmatrix_tgt[16];

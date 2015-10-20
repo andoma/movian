@@ -971,6 +971,25 @@ glw_video_render(glw_t *w, const glw_rctx_t *rc)
 /**
  *
  */
+static int
+glw_video_set_int_unresolved(glw_t *w, const char *a, int value)
+{
+  glw_video_t *gv = (glw_video_t *)w;
+
+  if(!strcmp(a, "bottomOverlayDisplacement")) {
+    if(gv->gv_bottom_overlay_displacement == value)
+      return GLW_SET_NO_CHANGE;
+    gv->gv_bottom_overlay_displacement = value;
+    return GLW_SET_RERENDER_REQUIRED;
+  }
+
+  return GLW_SET_NOT_RESPONDING;
+}
+
+
+/**
+ *
+ */
 static glw_class_t glw_video = {
   .gc_name = "video",
   .gc_instance_size = sizeof(glw_video_t),
@@ -992,6 +1011,7 @@ static glw_class_t glw_video = {
   .gc_thaw = thaw,
   .gc_send_event = glw_video_widget_event,
   .gc_pointer_event = glw_video_pointer_event,
+  .gc_set_int_unresolved = glw_video_set_int_unresolved,
 };
 
 GLW_REGISTER_CLASS(glw_video);
