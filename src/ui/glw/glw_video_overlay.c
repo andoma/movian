@@ -31,7 +31,7 @@
  *
  */
 typedef struct glw_video_overlay {
-  
+
   LIST_ENTRY(glw_video_overlay) gvo_link;
 
   enum {
@@ -157,7 +157,7 @@ gvo_set_pts(glw_video_t *gv, int64_t pts)
       gvo_destroy(gv, gvo);
       continue;
     }
-    
+
     if(gvo->gvo_fadein) {
       a = GLW_RESCALE((double)pts, gvo->gvo_start,
 		      gvo->gvo_start + gvo->gvo_fadein);
@@ -278,7 +278,7 @@ glw_video_overlay_layout(glw_video_t *gv,
 
 
 /**
- * 
+ *
  */
 void
 glw_video_overlay_render(glw_video_t *gv, const glw_rctx_t *frc,
@@ -319,23 +319,23 @@ glw_video_overlay_render(glw_video_t *gv, const glw_rctx_t *frc,
 
     case GVO_BITMAP:
       if(gvo->gvo_alignment != 0) {
-      
+
 
 	int left   =                 gvo->gvo_padding_left;
 	int top    = rc0.rc_height - gvo->gvo_padding_top;
 	int right  = rc0.rc_width  - gvo->gvo_padding_right;
 	int bottom =                 gvo->gvo_padding_bottom;
-    
+
 	int width  = gvo->gvo_width;
 	int height = gvo->gvo_height;
-    
+
 	float x1, y1, x2, y2;
 
-	// Horizontal 
+	// Horizontal
 	if(width > right - left) {
 	  // Oversized, must cut
 	  width = right - left;
-	} else { 
+	} else {
 	  switch(gvo->gvo_alignment) {
 	  case 2:
 	  case 5:
@@ -357,12 +357,12 @@ glw_video_overlay_render(glw_video_t *gv, const glw_rctx_t *frc,
 	    break;
 	  }
 	}
-      
-	// Vertical 
+
+	// Vertical
 	if(height > top - bottom) {
 	  // Oversized, must cut
 	  height = top - bottom;
-	} else { 
+	} else {
 	  switch(gvo->gvo_alignment) {
 	  case 4 ... 6:
 	    bottom = (bottom + top - height) / 2;
@@ -378,7 +378,7 @@ glw_video_overlay_render(glw_video_t *gv, const glw_rctx_t *frc,
 	    break;
 	  }
 	}
-      
+
 	x1 = -1.0f + 2.0f * left   / (float)rc0.rc_width;
 	y1 = -1.0f + 2.0f * bottom / (float)rc0.rc_height;
 	x2 = -1.0f + 2.0f * right  / (float)rc0.rc_width;
@@ -399,7 +399,7 @@ glw_video_overlay_render(glw_video_t *gv, const glw_rctx_t *frc,
 	  w = gv->gv_width;
 	  h = gv->gv_height;
 	}
-      
+
 	glw_Scalef(&rc0, 2 / w, -2 / h, 1.0f);
 	glw_Translatef(&rc0, -w  / 2, -h / 2, 0.0f);
       }
@@ -453,13 +453,13 @@ glw_video_overlay_pointer_event(video_decoder_t *vd, int width, int height,
   pci = &vd->vd_pci;
   if(!pci->hli.hl_gi.hli_ss)
     return 0;
-  
+
   x = (0.5 +  0.5 * gpe->x) * (float)width;
   y = (0.5 + -0.5 * gpe->y) * (float)height;
 
   best = 0;
   dist = 0x08000000; /* >> than  (720*720)+(567*567); */
-  
+
   /* Loop through all buttons */
   for(button = 1; button <= pci->hli.hl_gi.btn_ns; button++) {
     btni_t *button_ptr = &(pci->hli.btnit[button-1]);
@@ -523,7 +523,7 @@ spu_repaint(glw_video_t *gv, dvdspu_t *d)
   if(width < 1 || height < 1)
     return;
 
-#if ENABLE_DVD  
+#if ENABLE_DVD
   video_decoder_t *vd = gv->gv_vd;
   int hi_palette[4];
   int hi_alpha[4];
@@ -532,14 +532,14 @@ spu_repaint(glw_video_t *gv, dvdspu_t *d)
   gv->gv_spu_in_menu = pci->hli.hl_gi.hli_ss;
 
   if(pci->hli.hl_gi.hli_ss &&
-     dvdnav_get_highlight_area(pci, vd->vd_spu_curbut, 0, &ha) 
+     dvdnav_get_highlight_area(pci, vd->vd_spu_curbut, 0, &ha)
      == DVDNAV_STATUS_OK) {
 
     hi_alpha[0] = (ha.palette >>  0) & 0xf;
     hi_alpha[1] = (ha.palette >>  4) & 0xf;
     hi_alpha[2] = (ha.palette >>  8) & 0xf;
     hi_alpha[3] = (ha.palette >> 12) & 0xf;
-     
+
     hi_palette[0] = (ha.palette >> 16) & 0xf;
     hi_palette[1] = (ha.palette >> 20) & 0xf;
     hi_palette[2] = (ha.palette >> 24) & 0xf;
@@ -577,13 +577,13 @@ spu_repaint(glw_video_t *gv, dvdspu_t *d)
 	{
 
 	if(d->d_alpha[i] == 0) {
-	  
+
 	  /* If it's 100% transparent, write RGB as zero too, or weird
 	     aliasing effect will occure when GL scales texture */
-	  
+
 	  *tmp = 0;
 	} else {
-	  *tmp = d->d_clut[d->d_palette[i] & 0xf] | 
+	  *tmp = d->d_clut[d->d_palette[i] & 0xf] |
 	    ((d->d_alpha[i] * 0x11) << 24);
 	}
       }
@@ -595,7 +595,7 @@ spu_repaint(glw_video_t *gv, dvdspu_t *d)
 
   gvo_flush_all(gv);
 
-  
+
   glw_video_overlay_t *gvo = gvo_create(PTS_UNSET, GVO_DVDSPU);
 
   gvo->gvo_canvas_width   = d->d_canvas_width;
@@ -610,16 +610,16 @@ spu_repaint(glw_video_t *gv, dvdspu_t *d)
   const float w = 1.0;
   const float h = 1.0;
   glw_renderer_t *r = &gvo->gvo_renderer;
-  
+
   glw_renderer_vtx_pos(r, 0, d->d_x1, d->d_y2, 0.0f);
   glw_renderer_vtx_st (r, 0, 0, h);
-  
+
   glw_renderer_vtx_pos(r, 1, d->d_x2, d->d_y2, 0.0f);
   glw_renderer_vtx_st (r, 1, w, h);
-  
+
   glw_renderer_vtx_pos(r, 2, d->d_x2, d->d_y1, 0.0f);
   glw_renderer_vtx_st (r, 2, w, 0);
-  
+
   glw_renderer_vtx_pos(r, 3, d->d_x1, d->d_y1, 0.0f);
   glw_renderer_vtx_st (r, 3, 0, 0);
 
@@ -706,9 +706,9 @@ gvo_create_from_vo_bitmap(glw_video_t *gv, video_overlay_t *vo)
 
   const float w = 1.0;
   const float h = 1.0;
-    
+
   glw_renderer_t *r = &gvo->gvo_renderer;
-    
+
   glw_renderer_vtx_st (r, 0, 0, h);
   glw_renderer_vtx_st (r, 1, w, h);
   glw_renderer_vtx_st (r, 2, w, 0);
@@ -765,7 +765,7 @@ gvo_padding_cmp(const glw_video_overlay_t *a, const glw_video_overlay_t *b)
 
   if(aa != ba)
     return aa - ba;
-  
+
   if(aa == 0)
     return a->gvo_padding_bottom - b->gvo_padding_bottom;
   if(aa == 2)
@@ -781,7 +781,7 @@ static void
 gvo_create_from_vo_text(glw_video_t *gv, video_overlay_t *vo)
 {
   const glw_class_t *gc = glw_class_find_by_name("label");
-  
+
   if(gc == NULL)
     return; // huh?
 
@@ -813,7 +813,7 @@ gvo_create_from_vo_text(glw_video_t *gv, video_overlay_t *vo)
     w->glw_alignment = LAYOUT_ALIGN_TOP_LEFT;
 
     LIST_INSERT_HEAD(&gv->gv_overlays, gvo, gvo_link);
-    
+
   } else {
 
     w->glw_alignment = vo->vo_alignment ?: LAYOUT_ALIGN_BOTTOM;
