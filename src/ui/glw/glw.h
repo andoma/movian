@@ -140,8 +140,6 @@ typedef enum {
   GLW_ATTRIB_CHILD_WIDTH,
   GLW_ATTRIB_CHILD_TILES_X,
   GLW_ATTRIB_CHILD_TILES_Y,
-  GLW_ATTRIB_PAGE,
-  GLW_ATTRIB_PAGE_BY_ID,
   GLW_ATTRIB_ALPHA_EDGES,
   GLW_ATTRIB_PRIORITY,
   GLW_ATTRIB_FILL,
@@ -435,8 +433,6 @@ typedef struct glw_class {
 
   int (*gc_bind_to_id)(struct glw *w, const char *id);
 
-  int (*gc_set_page_id)(struct glw *w, const char *id);
-
   int (*gc_set_float3)(struct glw *w, glw_attribute_t a, const float *vector,
                        glw_style_t *gs);
 
@@ -452,13 +448,14 @@ typedef struct glw_class {
    *
    * See comment above for return values (GLW_SET_*)
    */
-  int (*gc_set_int_unresolved)(struct glw *w, const char *a, int value);
+  int (*gc_set_int_unresolved)(struct glw *w, const char *a, int value,
+                               glw_style_t *gs);
 
-  int (*gc_set_float_unresolved)(struct glw *w, const char *a, float value);
+  int (*gc_set_float_unresolved)(struct glw *w, const char *a, float value,
+                                 glw_style_t *gs);
 
-  int (*gc_set_str_unresolved)(struct glw *w, const char *a, const char *value);
-
-
+  int (*gc_set_rstr_unresolved)(struct glw *w, const char *a, rstr_t *value,
+                                glw_style_t *gs);
 
   /**
    * Ask widget to render itself in the current render context

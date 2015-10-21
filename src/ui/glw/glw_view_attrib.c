@@ -1207,47 +1207,6 @@ set_propref(glw_view_eval_context_t *ec, const token_attrib_t *a,
  *
  */
 static int
-set_page(glw_view_eval_context_t *ec, const token_attrib_t *a,
-	   struct token *t)
-{
-  const char *str;
-  const glw_class_t *c = ec->w->glw_class;
-  switch(t->type) {
-  default:
-    if(c->gc_set_page_id)
-      c->gc_set_page_id(ec->w, NULL);
-    break;
-
-  case TOKEN_CSTRING:
-    if(c->gc_set_page_id)
-      c->gc_set_page_id(ec->w, t->t_cstring);
-    break;
-
-  case TOKEN_RSTRING:
-  case TOKEN_URI:
-    str = rstr_get(t->t_rstring);
-    if(c->gc_set_page_id)
-      c->gc_set_page_id(ec->w, str);
-    break;
-
-  case TOKEN_INT:
-    if(c->gc_set_int)
-      c->gc_set_int(ec->w, GLW_ATTRIB_PAGE, t->t_int, NULL);
-    break;
-
-  case TOKEN_FLOAT:
-    if(c->gc_set_int)
-      c->gc_set_int(ec->w, GLW_ATTRIB_PAGE, t->t_float, NULL);
-    break;
-  }
-  return 0;
-}
-
-
-/**
- *
- */
-static int
 set_style(glw_view_eval_context_t *ec, const token_attrib_t *a,
           struct token *t)
 {
@@ -1392,9 +1351,6 @@ static const token_attrib_t attribtab[] = {
   {"scrollThreshold", set_number, GLW_ATTRIB_SCROLL_THRESHOLD},
   {"cornerRadius",    set_number, GLW_ATTRIB_RADIUS},
 
-  {"page",            set_page,   0},
-
-
   {"color",           set_float3, GLW_ATTRIB_RGB},
   {"translation",     set_float3, GLW_ATTRIB_TRANSLATION},
   {"scaling",         set_float3, GLW_ATTRIB_SCALING},
@@ -1436,11 +1392,11 @@ unresolved_set_float(glw_t *w, const char *attrib, const token_t *t,
   int r;
 
   r = gc->gc_set_float_unresolved ?
-    gc->gc_set_float_unresolved(w, attrib, val) : -1;
+    gc->gc_set_float_unresolved(w, attrib, val, NULL) : -1;
 
   if(r == -1)
     r = gc->gc_set_int_unresolved ?
-      gc->gc_set_int_unresolved(w, attrib, val) : -1;
+      gc->gc_set_int_unresolved(w, attrib, val, NULL) : -1;
 
   if(r == -1) {
     respond_error(w, t, attrib);
@@ -1463,11 +1419,11 @@ unresolved_set_int(glw_t *w, const char *attrib, const token_t *t,
   int r;
 
   r = gc->gc_set_int_unresolved ?
-    gc->gc_set_int_unresolved(w, attrib, val) : -1;
+    gc->gc_set_int_unresolved(w, attrib, val, NULL) : -1;
 
   if(r == -1)
     r = gc->gc_set_float_unresolved ?
-      gc->gc_set_float_unresolved(w, attrib, val) : -1;
+      gc->gc_set_float_unresolved(w, attrib, val, NULL) : -1;
 
   if(r == -1) {
     respond_error(w, t, attrib);
@@ -1484,13 +1440,13 @@ unresolved_set_int(glw_t *w, const char *attrib, const token_t *t,
  */
 static void
 unresolved_set_str(glw_t *w, const char *attrib, const token_t *t,
-                   const char *val)
+                   rstr_t *val)
 {
   const glw_class_t *gc = w->glw_class;
   int r;
 
-  r = gc->gc_set_str_unresolved ?
-    gc->gc_set_str_unresolved(w, attrib, val) : -1;
+  r = gc->gc_set_rstr_unresolved ?
+    gc->gc_set_rstr_unresolved(w, attrib, val, NULL) : -1;
 
   if(r == -1) {
     respond_error(w, t, attrib);
@@ -1511,18 +1467,21 @@ glw_view_unresolved_attribute_set(glw_view_eval_context_t *ec,
                                   struct token *t)
 {
   glw_t *w = ec->w;
+  rstr_t *rstr;
 
   switch(t->type) {
   case TOKEN_VOID:
     break;
 
   case TOKEN_CSTRING:
-    unresolved_set_str(w, attrib, t, t->t_cstring);
+    rstr = rstr_alloc(t->t_cstring);
+    unresolved_set_str(w, attrib, t, rstr);
+    rstr_release(rstr);
     break;
 
   case TOKEN_RSTRING:
   case TOKEN_URI:
-    unresolved_set_str(w, attrib, t, rstr_get(t->t_rstring));
+    unresolved_set_str(w, attrib, t, t->t_rstring);
     break;
 
   case TOKEN_INT:

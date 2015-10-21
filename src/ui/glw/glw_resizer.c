@@ -102,7 +102,8 @@ glw_resizer_render(glw_t *w, const glw_rctx_t *rc)
  *
  */
 static int
-glw_resizer_set_int_unresolved(glw_t *w, const char *a, int value)
+glw_resizer_set_int_unresolved(glw_t *w, const char *a, int value,
+                               glw_style_t *gs)
 {
   if(!strcmp(a, "fixedWidth")) {
     //    r->fixedWidth = value;

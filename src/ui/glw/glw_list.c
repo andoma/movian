@@ -857,7 +857,8 @@ glw_list_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v,
  *
  */
 static int
-glw_list_set_int_unresolved(glw_t *w, const char *a, int value)
+glw_list_set_int_unresolved(glw_t *w, const char *a, int value,
+                            glw_style_t *gs)
 {
   glw_list_t *l = (glw_list_t *)w;
 

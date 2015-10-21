@@ -628,7 +628,8 @@ glw_slider_bind_id(glw_t *w, const char *id)
  *
  */
 static int
-glw_slider_set_int_unresolved(glw_t *w, const char *a, int value)
+glw_slider_set_int_unresolved(glw_t *w, const char *a, int value,
+                              glw_style_t *gs)
 {
   glw_slider_t *s = (glw_slider_t *)w;
 

@@ -886,7 +886,8 @@ glw_container_find_table(glw_t *w)
  *
  */
 static int
-glw_container_set_int_unresolved(glw_t *w, const char *a, int value)
+glw_container_set_int_unresolved(glw_t *w, const char *a, int value,
+                                 glw_style_t *gs)
 {
   glw_container_t *co = (glw_container_t *)w;
 

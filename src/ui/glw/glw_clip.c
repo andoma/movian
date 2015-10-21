@@ -47,7 +47,8 @@ setval(float *vp, float v)
  *
  */
 static int
-glw_clip_set_float_unresolved(glw_t *w, const char *a, float value)
+glw_clip_set_float_unresolved(glw_t *w, const char *a, float value,
+                              glw_style_t *gs)
 {
   glw_clip_t *gc = (glw_clip_t *)w;
 

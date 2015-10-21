@@ -37,9 +37,14 @@ typedef enum {
 
 typedef struct glw_style_attribute {
   LIST_ENTRY(glw_style_attribute) gsa_link;
-  glw_attribute_t gsa_attribute;
+
+  union {
+    glw_attribute_t gsa_attribute;
+    char *gsa_unresolved_attribute;
+  };
   gsa_type_t gsa_type;
-  int gsa_local; // Not inherited
+  char gsa_unresolved;
+  char gsa_local; // Not inherited
 
   union {
     int i32;
@@ -55,6 +60,8 @@ typedef struct glw_style_attribute {
   };
 
 } glw_style_attribute_t;
+
+
 
 
 /**
@@ -138,11 +145,25 @@ set_float_on_widget(glw_t *w, glw_style_attribute_t *gsa,
   const glw_class_t *gc = w->glw_class;
   int x;
 
-  x = gc->gc_set_float ? gc->gc_set_float(w, gsa->gsa_attribute,
+  if(gsa->gsa_unresolved) {
+
+    x = gc->gc_set_float_unresolved ?
+      gc->gc_set_float_unresolved(w, gsa->gsa_unresolved_attribute,
+                                  gsa->f, o) : -1;
+    if(x == -1)
+      x = gc->gc_set_int_unresolved ?
+        gc->gc_set_int_unresolved(w, gsa->gsa_unresolved_attribute,
+                                  gsa->f, o) : -1;
+
+  } else {
+
+    x = gc->gc_set_float ? gc->gc_set_float(w, gsa->gsa_attribute,
+                                            gsa->f, o) : -1;
+    if(x == -1)
+      x = gc->gc_set_int ? gc->gc_set_int(w, gsa->gsa_attribute,
                                           gsa->f, o) : -1;
-  if(x == -1)
-    x = gc->gc_set_int ? gc->gc_set_int(w, gsa->gsa_attribute,
-                                        gsa->f, o) : -1;
+  }
+
   return x;
 }
 
@@ -157,11 +178,51 @@ set_int_on_widget(glw_t *w, glw_style_attribute_t *gsa,
   const glw_class_t *gc = w->glw_class;
   int x;
 
-  x = gc->gc_set_int ? gc->gc_set_int(w, gsa->gsa_attribute,
-                                      gsa->i32, o) : -1;
-  if(x == -1)
-    x = gc->gc_set_float ? gc->gc_set_float(w, gsa->gsa_attribute,
-                                            gsa->i32, o) : -1;
+  if(gsa->gsa_unresolved) {
+
+    x = gc->gc_set_int_unresolved ?
+      gc->gc_set_int_unresolved(w, gsa->gsa_unresolved_attribute,
+                                gsa->i32, o) : -1;
+    if(x == -1)
+      x = gc->gc_set_float_unresolved ?
+        gc->gc_set_float_unresolved(w, gsa->gsa_unresolved_attribute,
+                                    gsa->i32, o) : -1;
+
+  } else {
+    x = gc->gc_set_int ? gc->gc_set_int(w, gsa->gsa_attribute,
+                                        gsa->i32, o) : -1;
+    if(x == -1)
+      x = gc->gc_set_float ? gc->gc_set_float(w, gsa->gsa_attribute,
+                                              gsa->i32, o) : -1;
+  }
+
+  return x;
+}
+
+
+
+/**
+ *
+ */
+static int
+set_rstr_on_widget(glw_t *w, glw_style_attribute_t *gsa,
+                   glw_style_t *o)
+{
+  const glw_class_t *gc = w->glw_class;
+  int x;
+
+  if(gsa->gsa_unresolved) {
+
+    x = gc->gc_set_rstr_unresolved ?
+      gc->gc_set_rstr_unresolved(w, gsa->gsa_unresolved_attribute,
+                                 gsa->rstr, o) : -1;
+
+  } else {
+
+    x = gc->gc_set_rstr ? gc->gc_set_rstr(w, gsa->gsa_attribute,
+                                          gsa->rstr, o) : -1;
+  }
+
   return x;
 }
 
@@ -207,25 +268,62 @@ glw_style_attribute_clean(glw_style_attribute_t *gsa)
  *
  */
 static glw_style_attribute_t *
+glw_style_attribute_create(glw_style_t *gs, char unresolved)
+{
+  glw_style_attribute_t *gsa = malloc(sizeof(glw_style_attribute_t));
+  gsa->gsa_unresolved = unresolved;
+  gsa->gsa_local = 0;
+  gsa->gsa_type = GSA_NONE;
+  LIST_INSERT_HEAD(&gs->gs_attributes, gsa, gsa_link);
+  return gsa;
+}
+
+
+/**
+ *
+ */
+static glw_style_attribute_t *
 glw_style_find_attribute(glw_style_t *gs, glw_attribute_t attrib, int *created)
 {
   glw_style_attribute_t *gsa;
   LIST_FOREACH(gsa, &gs->gs_attributes, gsa_link) {
-    if(gsa->gsa_attribute == attrib) {
+    if(!gsa->gsa_unresolved && gsa->gsa_attribute == attrib) {
       glw_style_attribute_clean(gsa);
       *created = 0;
       return gsa;
     }
   }
 
-  gsa = malloc(sizeof(glw_style_attribute_t));
-  gsa->gsa_local = 0;
+  gsa = glw_style_attribute_create(gs, 0);
+
   gsa->gsa_attribute = attrib;
-  gsa->gsa_type = GSA_NONE;
-  LIST_INSERT_HEAD(&gs->gs_attributes, gsa, gsa_link);
   *created = 1;
   return gsa;
 }
+
+
+/**
+ *
+ */
+static glw_style_attribute_t *
+glw_style_find_unresolved_attribute(glw_style_t *gs, const char *attrib,
+                                    int *created)
+{
+  glw_style_attribute_t *gsa;
+  LIST_FOREACH(gsa, &gs->gs_attributes, gsa_link) {
+    if(gsa->gsa_unresolved && !strcmp(gsa->gsa_unresolved_attribute, attrib)) {
+      glw_style_attribute_clean(gsa);
+      *created = 0;
+      return gsa;
+    }
+  }
+
+  gsa = glw_style_attribute_create(gs, 1);
+  gsa->gsa_unresolved_attribute = strdup(attrib);
+  *created = 1;
+  return gsa;
+}
+
 
 
 /**
@@ -284,6 +382,8 @@ glw_style_release(glw_style_t *gs)
   while((gsa = LIST_FIRST(&gs->gs_attributes)) != NULL) {
     glw_style_attribute_clean(gsa);
     LIST_REMOVE(gsa, gsa_link);
+    if(gsa->gsa_unresolved)
+      free(gsa->gsa_unresolved_attribute);
     free(gsa);
   }
 
@@ -338,6 +438,7 @@ gs_apply_float3(glw_style_t *gs, glw_style_attribute_t *gsa)
   glw_style_binding_t *gsb;
   LIST_FOREACH(gsb, &gs->gs_bindings, gsb_style_link) {
     glw_t *w = gsb->gsb_widget;
+    assert(gsa->gsa_unresolved == 0);
     setr(w->glw_class->gc_set_float3(w, gsa->gsa_attribute, gsa->fvec, gs), &r);
   }
   return r;
@@ -377,6 +478,7 @@ gs_apply_int16_4(glw_style_t *gs, glw_style_attribute_t *gsa)
   glw_style_binding_t *gsb;
   LIST_FOREACH(gsb, &gs->gs_bindings, gsb_style_link) {
     glw_t *w = gsb->gsb_widget;
+    assert(gsa->gsa_unresolved == 0);
     if(w->glw_class->gc_set_int16_4 != NULL)
       setr(w->glw_class->gc_set_int16_4(w, gsa->gsa_attribute,
                                         gsa->i16vec, gs), &r);
@@ -420,8 +522,7 @@ gs_apply_rstr(glw_style_t *gs, glw_style_attribute_t *gsa)
   glw_style_binding_t *gsb;
   LIST_FOREACH(gsb, &gs->gs_bindings, gsb_style_link) {
     glw_t *w = gsb->gsb_widget;
-    setr(w->glw_class->gc_set_rstr(w, gsa->gsa_attribute, gsa->rstr,
-                                   gs), &r);
+    setr(set_rstr_on_widget(w, gsa, gs), &r);
   }
   return r;
 }
@@ -446,6 +547,30 @@ gs_set_rstr(struct glw *w, glw_attribute_t a, rstr_t *rstr,
 
   gsa->gsa_type = GSA_RSTR;
   gsa->rstr = rstr_dup(rstr);
+  return gs_apply_rstr(gs, gsa);
+}
+
+
+/**
+ *
+ */
+static int
+gs_set_string_unresolved(struct glw *w, const char *a, rstr_t *value,
+                         glw_style_t *origin)
+{
+  glw_style_t *gs = (glw_style_t *)w;
+  int created;
+  glw_style_attribute_t *gsa =
+    glw_style_find_unresolved_attribute(gs, a, &created);
+
+  if(!created && rstr_eq(value, gsa->rstr))
+    return 0;
+
+  if(gsa_check_blocking(gsa, origin))
+    return 0;
+
+  gsa->gsa_type = GSA_RSTR;
+  gsa->rstr = rstr_dup(value);
   return gs_apply_rstr(gs, gsa);
 }
 
@@ -493,6 +618,30 @@ gs_set_int(struct glw *w, glw_attribute_t a, int i32,
  *
  */
 static int
+gs_set_int_unresolved(struct glw *w, const char *a, int i32,
+                      glw_style_t *origin)
+{
+  glw_style_t *gs = (glw_style_t *)w;
+  int created;
+  glw_style_attribute_t *gsa =
+    glw_style_find_unresolved_attribute(gs, a, &created);
+
+  if(!created && i32 == gsa->i32)
+    return 0;
+
+  if(gsa_check_blocking(gsa, origin))
+    return 0;
+
+  gsa->gsa_type = GSA_INT;
+  gsa->i32 = i32;
+  return gs_apply_int(gs, gsa);
+}
+
+
+/**
+ *
+ */
+static int
 gs_apply_float(glw_style_t *gs, glw_style_attribute_t *gsa)
 {
   int r = 0;
@@ -514,6 +663,30 @@ gs_set_float(struct glw *w, glw_attribute_t a, float f, glw_style_t *origin)
   glw_style_t *gs = (glw_style_t *)w;
   int created;
   glw_style_attribute_t *gsa = glw_style_find_attribute(gs, a, &created);
+
+  if(!created && f == gsa->f)
+    return 0;
+
+  if(gsa_check_blocking(gsa, origin))
+    return 0;
+
+  gsa->gsa_type = GSA_FLOAT;
+  gsa->f = f;
+  return gs_apply_float(gs, gsa);
+}
+
+
+/**
+ *
+ */
+static int
+gs_set_float_unresolved(struct glw *w, const char *a, float f,
+                        glw_style_t *origin)
+{
+  glw_style_t *gs = (glw_style_t *)w;
+  int created;
+  glw_style_attribute_t *gsa =
+    glw_style_find_unresolved_attribute(gs, a, &created);
 
   if(!created && f == gsa->f)
     return 0;
@@ -848,6 +1021,11 @@ static glw_class_t glw_style = {
   .gc_set_source        = gs_set_source,
   .gc_set_align         = gs_set_align,
   .gc_set_hidden        = gs_set_hidden,
+
+  .gc_set_float_unresolved  = gs_set_float_unresolved,
+  .gc_set_int_unresolved    = gs_set_int_unresolved,
+  .gc_set_rstr_unresolved = gs_set_string_unresolved,
+
 };
 
 
@@ -1115,9 +1293,7 @@ glw_style_insert(glw_t *w, glw_style_t *gs, glw_view_eval_context_t *ec)
       setr(set_float_on_widget(w, gsa, gs), &r);
       break;
     case GSA_RSTR:
-      if(w->glw_class->gc_set_rstr != NULL)
-        setr(w->glw_class->gc_set_rstr(w, gsa->gsa_attribute, gsa->rstr,
-                                       gs), &r);
+      setr(set_rstr_on_widget(w, gsa, gs), &r);
       break;
     case GSA_FVEC3:
       if(w->glw_class->gc_set_float3 != NULL)

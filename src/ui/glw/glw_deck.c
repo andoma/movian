@@ -112,7 +112,7 @@ deck_select_child(glw_t *w, glw_t *c, prop_t *origin)
     gd->v = 0;
 
   glw_signal0(w, GLW_SIGNAL_RESELECT_CHANGED, NULL);
-  return 1;
+  return GLW_SET_RERENDER_REQUIRED;
 }
 
 
@@ -275,9 +275,8 @@ set_page(glw_deck_t *gd, int n)
  *
  */
 static int
-glw_deck_set_page_by_id(glw_t *w, const char *str)
+set_page_by_id(glw_deck_t *gd, const char *str)
 {
-  glw_deck_t *gd = (glw_deck_t *)w;
   glw_t *c;
   if(str == NULL)
     return 1;
@@ -327,9 +326,6 @@ glw_deck_set_int(glw_t *w, glw_attribute_t attrib, int value,
       return 0;
     gd->efx_conf = value;
     break;
-  case GLW_ATTRIB_PAGE:
-    return set_page(gd, value);
-    break;
   default:
     return -1;
   }
@@ -356,6 +352,41 @@ glw_deck_set_float(glw_t *w, glw_attribute_t attrib, float value,
     return -1;
   }
   return 1;
+}
+
+
+
+
+/**
+ *
+ */
+static int
+glw_deck_set_int_unresolved(glw_t *w, const char *a, int value,
+                            glw_style_t *gs)
+{
+  glw_deck_t *gd = (glw_deck_t *)w;
+
+  if(!strcmp(a, "page"))
+    return set_page(gd, value);
+
+  return GLW_SET_NOT_RESPONDING;
+}
+
+
+
+/**
+ *
+ */
+static int
+glw_deck_set_str_unresolved(glw_t *w, const char *a, rstr_t *value,
+                            glw_style_t *gs)
+{
+  glw_deck_t *gd = (glw_deck_t *)w;
+
+  if(!strcmp(a, "page"))
+    return set_page_by_id(gd, rstr_get(value));
+
+  return GLW_SET_NOT_RESPONDING;
 }
 
 
@@ -390,7 +421,8 @@ static glw_class_t glw_deck = {
   .gc_render = glw_deck_render,
   .gc_set_int = glw_deck_set_int,
   .gc_set_float = glw_deck_set_float,
-  .gc_set_page_id = glw_deck_set_page_by_id,
+  .gc_set_int_unresolved = glw_deck_set_int_unresolved,
+  .gc_set_rstr_unresolved = glw_deck_set_str_unresolved,
   .gc_ctor = glw_deck_ctor,
   .gc_signal_handler = glw_deck_callback,
   .gc_select_child = deck_select_child,

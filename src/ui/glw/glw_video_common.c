@@ -972,7 +972,8 @@ glw_video_render(glw_t *w, const glw_rctx_t *rc)
  *
  */
 static int
-glw_video_set_int_unresolved(glw_t *w, const char *a, int value)
+glw_video_set_int_unresolved(glw_t *w, const char *a, int value,
+                             glw_style_t *gs)
 {
   glw_video_t *gv = (glw_video_t *)w;
 
