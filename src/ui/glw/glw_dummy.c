@@ -25,6 +25,8 @@
 static void
 glw_dummy_render(glw_t *w, const glw_rctx_t *rc)
 {
+  if(glw_is_focusable_or_clickable(w))
+    glw_store_matrix(w, rc);
 }
 
 
