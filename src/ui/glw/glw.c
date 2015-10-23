@@ -1331,8 +1331,19 @@ glw_focus_find_focusable(glw_t *w, glw_t *cur)
 {
   glw_t *c, *r;
 
-  c = cur ? TAILQ_NEXT(cur, glw_parent_link) : TAILQ_FIRST(&w->glw_childs);
+  if(w->glw_focused != NULL) {
+    c = w->glw_focused;
+    if(!(c->glw_flags & (GLW_DESTROYING | GLW_FOCUS_BLOCKED))) {
+      if(glw_is_focusable(c))
+        return c;
+      if(TAILQ_FIRST(&c->glw_childs)) {
+        if((r = glw_focus_find_focusable(c, NULL)) != NULL)
+          return r;
+      }
+    }
+  }
 
+  c = cur ? TAILQ_NEXT(cur, glw_parent_link) : TAILQ_FIRST(&w->glw_childs);
   for(;;c = TAILQ_NEXT(c, glw_parent_link)) {
     if(c == NULL) {
       if(cur == NULL)
