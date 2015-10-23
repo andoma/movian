@@ -2864,6 +2864,9 @@ glwf_widget(glw_view_eval_context_t *ec, struct token *self,
   if(c->gc_thaw != NULL)
     c->gc_thaw(n.w);
 
+  if(unlikely(n.w->glw_root->gr_pending_focus != NULL))
+    glw_focus_check_pending(n.w);
+
   return r ? -1 : 0;
 }
 
@@ -3260,11 +3263,14 @@ glwf_onEvent(glw_view_eval_context_t *ec, struct token *self,
 
     gem->gem_action = filter;
     gem->gem_final = final;
+    gem->gem_id = ++w->glw_root->gr_gem_id_tally;
+    self->t_extra_int = gem->gem_id;
     glw_event_map_add(w, gem);
     return 0;
   }
  disable:
-  glw_event_map_remove_by_action(w, rstr_get(filter));
+  if(self->t_extra_int)
+    glw_event_map_remove_by_id(w, self->t_extra_int);
   rstr_release(filter);
   return 0;
 }
@@ -6666,7 +6672,7 @@ glwf_focus(glw_view_eval_context_t *ec, struct token *self,
            token_t **argv, unsigned int argc)
 {
   token_t *a;
-
+  glw_root_t *gr = ec->w->glw_root;
   if((a = token_resolve(ec, argv[0])) == NULL)
     return -1;
 
@@ -6674,8 +6680,10 @@ glwf_focus(glw_view_eval_context_t *ec, struct token *self,
     glw_t *w = glw_find_neighbour(ec->w, rstr_get(a->t_rstring));
     w = glw_get_focusable_child(w);
     if(w != NULL) {
-      glw_focus_set(w->glw_root, w, GLW_FOCUS_SET_INTERACTIVE,
+      glw_focus_set(gr, w, GLW_FOCUS_SET_INTERACTIVE,
                     "FocusMethod");
+    } else {
+      rstr_set(&gr->gr_pending_focus, a->t_rstring);
     }
   }
   return 0;

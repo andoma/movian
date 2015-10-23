@@ -272,7 +272,7 @@ glw_event_map_add(glw_t *w, glw_event_map_t *gem)
   glw_event_map_t *o;
 
   LIST_FOREACH(o, &w->glw_event_maps, gem_link) {
-    if(!strcmp(rstr_get(o->gem_action), rstr_get(gem->gem_action))) {
+    if(o->gem_id == gem->gem_id) {
       LIST_REMOVE(o, gem_link);
       glw_event_map_destroy(w->glw_root, o);
       break;
@@ -286,17 +286,18 @@ glw_event_map_add(glw_t *w, glw_event_map_t *gem)
  *
  */
 void
-glw_event_map_remove_by_action(glw_t *w, const char *action)
+glw_event_map_remove_by_id(glw_t *w, int id)
 {
   glw_event_map_t *o;
 
   LIST_FOREACH(o, &w->glw_event_maps, gem_link) {
-    if(!strcmp(rstr_get(o->gem_action), action)) {
+    if(o->gem_id == id) {
       LIST_REMOVE(o, gem_link);
       glw_event_map_destroy(w->glw_root, o);
-      break;
+      return;
     }
   }
+  printf("Remove by id failed to remove %d\n", id);
 }
 
 

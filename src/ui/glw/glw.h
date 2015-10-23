@@ -724,6 +724,7 @@ typedef struct glw_root {
   pool_t *gr_token_pool;
   pool_t *gr_clone_pool;
   pool_t *gr_style_binding_pool;
+  int gr_gem_id_tally;
 
   int gr_frames;
 
@@ -858,6 +859,8 @@ typedef struct glw_root {
   struct glw *gr_current_cursor;
   void (*gr_cursor_focus_tracker)(struct glw *w, const struct glw_rctx *rc,
                                   struct glw *cursor);
+
+  rstr_t *gr_pending_focus;
 
   /**
    * Backend specifics
@@ -1253,8 +1256,10 @@ void glw_store_matrix(glw_t *w, const glw_rctx_t *rc);
 #define GLW_FOCUS_SET_INTERACTIVE  2
 #define GLW_FOCUS_SET_SUGGESTED    3
 
-void glw_focus_set(glw_root_t *gr, glw_t *w, int how,
-                   const char *whom);
+int glw_focus_set(glw_root_t *gr, glw_t *w, int how,
+                  const char *whom); // Return 1 if we managed to set focus
+
+void glw_focus_check_pending(glw_t *w);
 
 void glw_focus_open_path(glw_t *w);
 

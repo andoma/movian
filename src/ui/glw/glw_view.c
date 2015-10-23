@@ -204,6 +204,9 @@ eval_loaded_view(glw_root_t *gr, glw_cached_view_t *gcv, glw_view_t *view,
     glw_view_error(ec.w, ei.error, ei.file, ei.line);
   }
   glw_view_free_chain(gr, t);
+
+  if(unlikely(gr->gr_pending_focus != NULL))
+    glw_focus_check_pending(ec.w->glw_parent);
 }
 
 

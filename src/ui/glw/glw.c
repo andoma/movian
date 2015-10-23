@@ -280,6 +280,7 @@ glw_fini(glw_root_t *gr)
   free(gr->gr_render_order);
   free(gr->gr_vertex_buffer);
   free(gr->gr_skin);
+  rstr_release(gr->gr_pending_focus);
 }
 
 
@@ -1133,7 +1134,7 @@ check_autofocus_limit(glw_t *n, glw_t *o)
 /**
  *
  */
-void
+int
 glw_focus_set(glw_root_t *gr, glw_t *w, int how, const char *whom)
 {
   glw_t *x, *y, *com;
@@ -1141,7 +1142,7 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how, const char *whom)
   float weight = w ? w->glw_focus_weight : 0;
 
   if(gr->gr_focus_work)
-    return;
+    return 0;
 
   gr->gr_focus_work = 1;
 
@@ -1158,7 +1159,7 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how, const char *whom)
     if(how != GLW_FOCUS_SET_INTERACTIVE) {
       if(check_autofocus_limit(w, gr->gr_last_focus)) {
 	gr->gr_focus_work = 0;
-	return;
+	return 0;
       }
     }
 
@@ -1168,7 +1169,7 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how, const char *whom)
 	 (x->glw_flags & GLW_FOCUS_BLOCKED ||
 	  x->glw_flags & GLW_HIDDEN)) {
 	gr->gr_focus_work = 0;
-	return;
+	return 0;
       }
 
       if(x->glw_parent->glw_focused != x) {
@@ -1202,7 +1203,7 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how, const char *whom)
 	} else {
 	  /* Other path outranks our weight, stop now */
 	  gr->gr_focus_work = 0;
-	  return;
+	  return 0;
 	}
       }
     }
@@ -1210,7 +1211,7 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how, const char *whom)
 
   if(gr->gr_current_focus == w) {
     gr->gr_focus_work = 0;
-    return;
+    return 1;
   }
   com = find_common_ancestor(gr->gr_current_focus, w);
 
@@ -1262,7 +1263,25 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how, const char *whom)
     GLW_TRACE("Focus set to none by %s", whom);
   }
   gr->gr_focus_work = 0;
+  rstr_set(&gr->gr_pending_focus, NULL);
+  return 1;
 }
+
+
+
+/**
+ *
+ */
+void
+glw_focus_check_pending(glw_t *w)
+{
+  glw_root_t *gr = w->glw_root;
+  if(rstr_eq(gr->gr_pending_focus, w->glw_id_rstr)) {
+    w = glw_get_focusable_child(w);
+    glw_focus_set(gr, w, GLW_FOCUS_SET_INTERACTIVE, "FocusMethodDelayed");
+  }
+}
+
 
 /**
  *
@@ -1295,8 +1314,12 @@ static void
 glw_focus_init_widget(glw_t *w, float weight)
 {
   w->glw_focus_weight = weight;
-  int v = w->glw_flags2 & GLW2_AUTOREFOCUSABLE && was_interactive(w);
-  glw_focus_set(w->glw_root, w, v, "Init");
+  int how = GLW_FOCUS_SET_AUTOMATIC;
+
+  if(w->glw_flags2 & GLW2_AUTOREFOCUSABLE && was_interactive(w))
+    how = GLW_FOCUS_SET_INTERACTIVE;
+
+  glw_focus_set(w->glw_root, w, how, "Init");
 }
 
 
