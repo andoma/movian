@@ -3269,8 +3269,11 @@ glwf_onEvent(glw_view_eval_context_t *ec, struct token *self,
     return 0;
   }
  disable:
-  if(self->t_extra_int)
+  if(self->t_extra_int) {
     glw_event_map_remove_by_id(w, self->t_extra_int);
+    self->t_extra_int = 0;
+  }
+  
   rstr_release(filter);
   return 0;
 }
