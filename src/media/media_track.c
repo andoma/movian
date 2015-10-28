@@ -86,6 +86,38 @@ mp_add_trackr(prop_t *parent,
 /**
  *
  */
+static prop_t *
+mp_add_track_ex(prop_t *parent,
+                const char *title,
+                const char *url,
+                const char *format,
+                const char *longformat,
+                const char *isolang,
+                const char *source,
+                prop_t *sourcep,
+                int basescore,
+                int autosel)
+{
+  rstr_t *rtitle      = rstr_alloc(title);
+  rstr_t *rformat     = rstr_alloc(format);
+  rstr_t *rlongformat = rstr_alloc(longformat);
+  rstr_t *risolang    = rstr_alloc(isolang);
+  rstr_t *rsource     = rstr_alloc(source);
+
+  prop_t *p = mp_add_trackr(parent, rtitle, url, rformat, rlongformat, risolang,
+                            rsource, sourcep, basescore, autosel);
+  rstr_release(rtitle);
+  rstr_release(rformat);
+  rstr_release(rlongformat);
+  rstr_release(risolang);
+  rstr_release(rsource);
+  return p;
+}
+
+
+/**
+ *
+ */
 void
 mp_add_track(prop_t *parent,
 	     const char *title,
@@ -98,21 +130,10 @@ mp_add_track(prop_t *parent,
 	     int basescore,
              int autosel)
 {
-  rstr_t *rtitle      = rstr_alloc(title);
-  rstr_t *rformat     = rstr_alloc(format);
-  rstr_t *rlongformat = rstr_alloc(longformat);
-  rstr_t *risolang    = rstr_alloc(isolang);
-  rstr_t *rsource     = rstr_alloc(source);
 
-  prop_t *p = mp_add_trackr(parent, rtitle, url, rformat, rlongformat, risolang,
-                            rsource, sourcep, basescore, autosel);
+  prop_t *p = mp_add_track_ex(parent, title, url, format, longformat, isolang,
+                              source, sourcep, basescore, autosel);
   prop_ref_dec(p);
-  
-  rstr_release(rtitle);
-  rstr_release(rformat);
-  rstr_release(rlongformat);
-  rstr_release(risolang);
-  rstr_release(rsource);
 }
 
 
@@ -122,7 +143,12 @@ mp_add_track(prop_t *parent,
 void
 mp_add_track_off(prop_t *prop, const char *url)
 {
-  mp_add_track(prop, "Off", url, NULL, NULL, NULL, NULL, NULL, 1000000, 1);
+  prop_t *p =
+    mp_add_track_ex(prop, "Off", url, NULL, NULL, NULL, NULL, NULL, 1000000, 1);
+
+  prop_select(p);
+
+  prop_ref_dec(p);
 }
 
 
@@ -229,6 +255,7 @@ mtm_suggest(media_track_mgr_t *mtm)
   TRACE(TRACE_DEBUG, "media", "Selecting track %s, score %d",
         mt->mt_url, mt->mt_final_score);
 
+  prop_select_ex(mt->mt_root, NULL, mtm->mtm_node_sub);
   event_t *e = event_create_select_track(mt->mt_url, mtm_event_type(mtm), 0);
   mp_enqueue_event_locked(mtm->mtm_mp, e);
   event_release(e);
@@ -302,6 +329,7 @@ mt_set_url(void *opaque, const char *str)
     TRACE(TRACE_DEBUG, "media",
           "Selecting track %s (previously selected by user)",
           mt->mt_url);
+    prop_select_ex(mt->mt_root, NULL, mtm->mtm_node_sub);
     event_t *e = event_create_select_track(mt->mt_url,
                                            mtm_event_type(mtm), 0);
     mp_enqueue_event_locked(mtm->mtm_mp, e);
@@ -534,6 +562,9 @@ mtm_update_tracks(void *opaque, prop_event_t event, ...)
     mtm_suggest(mtm);
     break;
 
+  case PROP_SELECT_CHILD:
+    break;
+    
   default:
     abort();
   }
@@ -660,6 +691,7 @@ mp_track_mgr_next_track(media_track_mgr_t *mtm)
   if(mt != mtm->mtm_current) {
     TRACE(TRACE_DEBUG, "media", "Selecting next track %s (cycle)",
           mt->mt_url);
+    prop_select_ex(mt->mt_root, NULL, mtm->mtm_node_sub);
     event_t *e = event_create_select_track(mt->mt_url, mtm_event_type(mtm), 1);
     mp_enqueue_event_locked(mtm->mtm_mp, e);
     event_release(e);
