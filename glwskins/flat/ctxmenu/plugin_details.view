@@ -87,6 +87,15 @@ widget(list_y, {
       width: 6em;
       height: 2em;
       GridItemBevel();
+      GridItemHighlight();
+
+      focusable: true;
+      onEvent(activate,
+	      deliverEvent($args,
+		           select($args.status.canInstall, "install:"+($self.package ?? ""),
+			          select($args.status.canUpgrade, "upgrade",
+				         select($args.status.canUninstall, "uninstall",
+					        void)))));
 
       widget(label, {
         width: 10em;
@@ -95,14 +104,7 @@ widget(list_y, {
 			       select($args.status.canUninstall, _("Uninstall"),
 				      void)));
         font: "skin://fonts/RobotoCondensed-Bold.ttf";
-        focusable: true;
         align: center;
-        onEvent(activate,
-	        deliverEvent($args,
-		             select($args.status.canInstall, "install:"+($self.package ?? ""),
-			            select($args.status.canUpgrade, "upgrade",
-				     select($args.status.canUninstall, "uninstall",
-					    void)))));
       });
     });
   });
