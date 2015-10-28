@@ -74,10 +74,18 @@ onEvent(menu, {
 }, $clone.osdpage);
 
 
+
+// Auto close playdeck after 10 seconds
+/*
+$clone.showPlaydeck ?=
+  select(delay($clone.osdpage == 0 && $clone.showPlaydeck, 10, 0), 0, void);
+*/
+
 $view.showSeekBar =
   $ui.pointerVisible ||
   changed($self.media.seektime, 5, true) ||
-  $clone.showPlaydeck;
+  $clone.showPlaydeck ||
+  $self.media.playstatus == "pause";
 
 
 widget(container_z, {
@@ -248,7 +256,13 @@ widget(container_z, {
 
       widget(container_x, {
         spacing: 0.5em;
+        padding: [1em, 0];
 
+        widget(icon, {
+          source: "skin://icons/ic_pause_48px.svg";
+          alpha: iir(select($core.media.current.playstatus == "pause", 1, 0), 4);
+
+        });
         widget(label, {
           width: 3em;
           caption: value2duration($self.media.currenttime);
