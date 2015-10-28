@@ -1,64 +1,145 @@
 #include "skin://theme.view"
 
-widget(container_z, {
 
-  style: "ListItemOuter";
+widget(deck, {
 
-  ListItemBevel();
-  ListItemHighlight();
+  widget(container_z, {
 
-  widget(container_x, {
-    style: "ListItem";
+    id: "wide";
 
-    widget(icon, {
-      style: "ListItemIcon";
-    });
+    style: "ListItemOuter";
 
-    widget(label, {
-      caption: $self.metadata.title + ":";
-      style: ["ListItemLabel", "ListItemLabelContainer"];
-    });
+    $view.highlight = 0.1 * isHovered() + 0.6 * isNavFocused();
+
+    ListItemBevel();
+    ListItemHighlight($view.highlight);
 
     widget(container_x, {
-      widget(label, {
-        style: "ListItemValue";
-        width: 5em;
-        caption: fmt("%d %s", $self.value, $self.unit);
+      style: "ListItem";
+      widget(icon, {
+        style: "ListItemIcon";
       });
 
-      spacing: 1em;
-      filterConstraintX: true;
-      widget(container_z, {
-        widget(container_y, {
-          align: center;
-          widget(quad, {
-            height: 1;
-            color: 0;
-            alpha: 0.3;
-          });
-          widget(quad, {
-            height: 1;
-            alpha: 0.3;
-          });
+      widget(label, {
+        caption: $self.metadata.title + ":";
+        style: ["ListItemLabel", "ListItemLabelContainer"];
+      });
+
+      widget(container_x, {
+        spacing: 1em;
+        filterConstraintX: true;
+
+        widget(label, {
+          style: "ListItemValue";
+          width: 5em;
+          caption: fmt("%d %s", $self.value, $self.unit);
         });
 
-        widget(slider_x, {
-          focusable: true;
-          min: $self.min;
-          max: $self.max;
-          step: $self.step;
-          bind($self.value);
-
+        widget(container_z, {
           widget(container_y, {
             align: center;
             widget(quad, {
-              height: 0.5em;
-              color: select(isNavFocused(), 0.0, 0.77);
+              height: 1;
+              color: 0;
+              alpha: 0.3;
+            });
+            widget(quad, {
+              height: 1;
+              alpha: 0.3;
+            });
+          });
+
+          widget(slider_x, {
+            focusable: true;
+            min: $self.min;
+            max: $self.max;
+            step: $self.step;
+            bind($self.value);
+
+            widget(container_y, {
+              align: center;
+              widget(quad, {
+                height: 0.5em;
+                color: select(isNavFocused(), 0.0, 0.77);
+              });
+            });
+          });
+        });
+
+      });
+    });
+  });
+
+
+
+  widget(container_z, {
+
+    id: "narrow";
+
+    height: 3em;
+
+    ListItemBevel();
+
+    widget(container_y, {
+      align: center;
+      widget(container_x, {
+        style: "ListItem";
+        widget(icon, {
+          style: "ListItemIcon";
+        });
+
+        widget(label, {
+          caption: $self.metadata.title + ":";
+          style: ["ListItemLabel", "ListItemLabelContainer"];
+        });
+
+        widget(label, {
+          style: "ListItemValue";
+          caption: fmt("%d %s", $self.value, $self.unit);
+        });
+      });
+
+      widget(container_z, {
+        $view.highlight2 = 0.1 * isHovered() + 0.6 * isNavFocused();
+        ListItemHighlight($view.highlight2);
+        height: 1em;
+
+        widget(container_x, {
+          style: "ListItem";
+
+          widget(container_z, {
+            widget(container_y, {
+              align: center;
+              widget(quad, {
+                height: 1;
+                color: 0;
+                alpha: 0.3;
+              });
+              widget(quad, {
+                height: 1;
+                alpha: 0.3;
+              });
+            });
+
+            widget(slider_x, {
+              focusable: true;
+              min: $self.min;
+              max: $self.max;
+              step: $self.step;
+              bind($self.value);
+
+              widget(container_y, {
+                align: center;
+                widget(quad, {
+                  height: 0.5em;
+                  color: select(isNavFocused(), 0.0, 0.77);
+                });
+              });
             });
           });
         });
       });
-
     });
   });
+  style: "IntegerLayout";
 });

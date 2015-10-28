@@ -117,7 +117,7 @@ widget(container_z, {
       height: 3em;
       widget(icon, {
         clickable: isVoid($clone.itemMenu);
-        angle: iir($clone.showSidebar, 4) * -180;
+        angle: iir($clone.showSidebar, 4) * -90;
 
         onEvent(activate, {
           toggle($clone.showSidebar);

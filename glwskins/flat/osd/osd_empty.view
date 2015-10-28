@@ -1,0 +1,8 @@
+widget(dummy, {
+  clickable: true;
+  onEvent(activate, {
+    $clone.showPlaydeck = 0;
+    $clone.osdpage = 0;
+  });
+});
+

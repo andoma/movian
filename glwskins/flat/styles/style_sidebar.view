@@ -1,0 +1,52 @@
+style(ListItem, {
+  padding: [0.5em, 0];
+  spacing: 0;
+});
+
+newstyle(ListItemIcon, {
+  width: 2em;
+  align: center;
+  size: 1.5em;
+});
+
+style(ListItemValue, {
+  weight: 0.7;
+  padding: [1em, 0];
+});
+
+style(ListItemValueOn, {
+  weight: 0.7;
+  padding: [1em, 0];
+});
+
+style(ListItemValueOff, {
+  weight: 0.7;
+  padding: [1em, 0];
+});
+
+style(MultioptIcon, {
+  width: 1em;
+  size: 1em;
+});
+
+style(MultioptSelection, {
+  weight: 0.7;
+});
+
+style(MultioptItemIconSelected, {
+  width: 1em;
+  size: 1em;
+});
+style(MultioptItemIconUnselected, {
+  width: 1em;
+  size: 1em;
+});
+
+//
+// -- Integer --------------------------------------
+//
+
+style(IntegerLayout, {
+  page: "narrow";
+});
+

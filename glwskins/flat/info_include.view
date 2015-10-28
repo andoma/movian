@@ -1,0 +1,50 @@
+
+
+
+#define InfoLabel() {
+  shadow: true;
+  outline: true;
+  color: 0.6;
+}
+
+
+#define InfoLine(TITLE, VAL, HIDDEN=false) {
+  widget(container_x, {
+    tableMode: true;
+    hidden: HIDDEN;
+    spacing: 1em;
+    widget(label, {
+      InfoLabel();
+      align: right;
+      caption: TITLE + ":";
+    });
+    widget(label, {
+      caption: VAL;
+    });
+  });
+}
+
+#define InfoBar(TITLE, VAL) {
+  widget(container_x, {
+    spacing: 1em;
+    tableMode: true;
+    widget(label, {
+      InfoLabel();
+      align: right;
+      caption: TITLE + ":";
+    });
+
+    widget(container_z, {
+      width: 6em;
+      widget(quad, {
+        color: 0.4;
+      });
+      widget(bar, {
+        color1: 1;
+        color2: 1;
+	fill: VAL;
+      });
+    });
+  });
+}
+

@@ -1,64 +1,51 @@
 #import "skin://theme.view"
 
-#define OSD_SETTINGS_MENU(NODES, FIXED_ITEM) {
-widget(container_z, {
+#define OSD_SETTINGS_MENU(NODES, TITLE) {
 
-  style(ListItemOuter, {
-    height: 1.5em;
-  });
-
-  style(ListItemIcon, {
-    hidden: true;
-  });
-
-  height: 8em;
-
-  widget(quad, {
-    color: 0;
-    alpha: 0.8;
-    zoffset: -400;
-  });
-
-  widget(cursor, {
-
-    widget(container_x, {
-      padding: [4em, 1em];
-      widget(list_y, {
-        id: "list";
-        alphaFallOff: 0.3;
-
-        FIXED_ITEM;
-
-        cloner(NODES, loader, {
-          hidden: !$self.enabled;
-          source: "skin://items/list/" + $self.type + ".view";
-          time: 0.3;
-          noInitialTransform: true;
-        });
-
-      });
-      widget(slider_y, {
-        bind("list");
-        width: 4;
-        focusable: canScroll();
-        alpha: iir(canScroll(), 16);
-        widget(quad, {
-	  alpha: 1;
-        });
-      });
-    });
-
+widget(container_x, {
+#import "skin://styles/style_sidebar.view"
+  space(2);
+  widget(container_z, {
+    width: 22em;
+    filterConstraintY: true;
+    id: "sidebar";
 
     widget(quad, {
       zoffset: -100;
-      alpha: 0.6 * iir($ui.keyboard, 4);
-      additive: true;
+      color: 0;
+      alpha: 0.9;
     });
 
-    widget(quad, {
-      zoffset: -100;
-      alpha: 0.1;
-      additive: true;
+    widget(container_y, {
+      widget(label, {
+        height: 3em;
+        align: center;
+        caption: TITLE;
+        size: 1.5em;
+      });
+
+      widget(container_x, {
+        widget(list_y, {
+          id: "list";
+          alphaFallOff: 0.3;
+
+          cloner(NODES, loader, {
+            hidden: !$self.enabled;
+            source: "skin://items/list/" + $self.type + ".view";
+            time: 0.3;
+            noInitialTransform: true;
+          });
+        });
+        widget(slider_y, {
+          bind("list");
+          width: 4;
+          focusable: canScroll();
+          alpha: iir(canScroll(), 16);
+          widget(quad, {
+	    alpha: 1;
+          });
+        });
+      });
     });
   });
 });

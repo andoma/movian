@@ -1,109 +1,56 @@
-
-
-
-#define InfoLabel() {
-  shadow: true;
-  outline: true;
-  color: 0.6;
-}
-
-
-#define InfoLine(TITLE, VAL, HIDDEN=false) {
-  widget(container_x, {
-    tableMode: true;
-    hidden: HIDDEN;
-    spacing: 1em;
-    widget(label, {
-      InfoLabel();
-      align: right;
-      caption: TITLE + ":";
-    });
-    widget(label, {
-      caption: VAL;
-    });
-  });
-}
-
-#define InfoBar(TITLE, VAL) {
-  widget(container_x, {
-    spacing: 1em;
-    tableMode: true;
-    widget(label, {
-      InfoLabel();
-      align: right;
-      caption: TITLE + ":";
-    });
-
-    widget(container_z, {
-      width: 6em;
-      widget(quad, {
-        color: 0.4;
-      });
-      widget(bar, {
-        color1: 1;
-        color2: 1;
-	fill: VAL;
-      });
-    });
-  });
-}
-
+#import "info_include.view"
 
 widget(container_y, {
-  alpha: iir($ui.sysinfo, 6);
   widget(container_x, {
+    hidden: !$ui.sysinfo;
+    widget(container_z, {
+      widget(quad, {
+        alpha: 0.8;
+        color: 0;
+      });
+      widget(container_y, {
+        padding: 1em;
+        widget(table, {
 
-      widget(container_z, {
-        widget(quad, {
-          alpha: 0.8;
-          color: 0;
-        });
-        widget(container_y, {
-          padding: 1em;
-          widget(table, {
-            widget(container_y, {
-              spacing: 0.1em;
+          widget(container_y, {
 
-              widget(label, {
-	        caption: fmt("%s %s", $core.app.name, $core.app.version);
-	        align: center;
-              });
+            widget(loader, {
+              autohide: true;
+              source: select(isVoid($core.media.current.url), "",
+                             "mediainfo.view");
+            });
 
-              widget(quad, {
-                height: 1;
-                color: 1;
-                alpha: 0.3;
-              });
-        
-              InfoLine(_("Memory usage"),
-                       fmt("%d kB", $core.system.mem.activeMem));
-              InfoLine(_("System Total"),
-                       fmt("%d kB", $core.system.mem.systotal));
-              InfoLine(_("System Free"),
-                       fmt("%d kB", $core.system.mem.sysfree));
-              InfoLine(_("Fragmentation"),
-                       fmt("%d", $core.system.mem.unusedChunks),
-	               isVoid($core.system.mem.unusedChunks));
-              InfoLine(_("Inactive mem"),
-                       fmt("%d kB", $core.system.mem.inaciveMem),
-                       isVoid($core.system.mem.inaciveMem));
-              InfoLine(_("CPU Temp"),
-                       fmt("%d°C", $core.system.temp.cpu),
-	               isVoid($core.system.temp.cpu));
-              InfoLine(_("GPU Temp"),
-                       fmt("%d°C", $core.system.temp.gpu),
-	               isVoid($core.system.temp.gpu));
-              InfoLine(_("HDD Avail"),
-                       fmt("%.1f / %.1f GB", $core.system.hdd.avail,
-                           $core.system.hdd.size),
-	               isVoid($core.system.hdd.avail));
-              cloner($core.system.cpuinfo.cpus, container_z, {
-                InfoBar($self.name, $self.load)
-              });
+            InfoLine(_("Version"), $core.app.version);
+
+            InfoLine(_("Memory usage"),
+                     fmt("%d kB", $core.system.mem.activeMem));
+            InfoLine(_("System Total"),
+                     fmt("%d kB", $core.system.mem.systotal));
+            InfoLine(_("System Free"),
+                     fmt("%d kB", $core.system.mem.sysfree));
+            InfoLine(_("Fragmentation"),
+                     fmt("%d", $core.system.mem.unusedChunks),
+	             isVoid($core.system.mem.unusedChunks));
+            InfoLine(_("Inactive mem"),
+                     fmt("%d kB", $core.system.mem.inaciveMem),
+                     isVoid($core.system.mem.inaciveMem));
+            InfoLine(_("CPU Temp"),
+                     fmt("%d°C", $core.system.temp.cpu),
+	             isVoid($core.system.temp.cpu));
+            InfoLine(_("GPU Temp"),
+                     fmt("%d°C", $core.system.temp.gpu),
+	             isVoid($core.system.temp.gpu));
+            InfoLine(_("HDD Avail"),
+                     fmt("%.1f / %.1f GB", $core.system.hdd.avail,
+                         $core.system.hdd.size),
+	             isVoid($core.system.hdd.avail));
+            cloner($core.system.cpuinfo.cpus, container_z, {
+              InfoBar($self.name, $self.load)
             });
           });
         });
       });
+    });
     space(2);
   });
   space(1);

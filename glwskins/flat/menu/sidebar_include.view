@@ -1,0 +1,27 @@
+#define SIDEBAR_ACTION(CAPTION, ICON, EVENT, HIDDEN=false) {
+  widget(container_z, {
+    hidden: HIDDEN;
+    height: 2em;
+    ListItemBevel();
+    ListItemHighlight();
+    focusable: true;
+    onEvent(activate, EVENT);
+
+    widget(container_x, {
+      style: "ListItem";
+
+      widget(icon, {
+        style: "ListItemIcon";
+        source: ICON;
+      });
+
+      widget(label, {
+        filterConstraintX: true;
+        caption: CAPTION;
+        style: "ActionLabel";
+      });
+    });
+  });
+}
+
+

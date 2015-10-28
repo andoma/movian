@@ -29,6 +29,7 @@ style(ListItemLabelContainer, {
 });
 
 style(ListItemValue, {
+  filterConstraintX: true;
   padding: [1em, 0, 0, 0];
   color: iir(!isNavFocused(), 4);
   font: "skin://fonts/RobotoCondensed-Regular.ttf";
@@ -124,4 +125,11 @@ style(ActionLabel, {
   color: iir(!isNavFocused(), 4);
 });
 
+//
+// -- Integer --------------------------------------
+//
+
+style(IntegerLayout, {
+  page: "wide";
+});
 

@@ -1,88 +1,100 @@
-widget(container_z, {
+#import "skin://theme.view"
 
-  height: 8em;
 
-  widget(quad, {
-    color: 0;
-    alpha: 0.8;
-    zoffset: -400;
+widget(container_x, {
+#import "skin://styles/style_sidebar.view"
+
+  widget(dummy, {
+    clickable: true;
+    onEvent(activate, {
+      $clone.showPlaydeck = 0;
+      $clone.osdpage = 0;
+    });
   });
 
-  widget(cursor, {
-
-    widget(container_x, {
-      padding: [4em, 1em];
-      widget(list_y, {
-        id: "list";
-        alphaFallOff: 0.3;
-        cloner($self.media.audio.sorted, container_x, {
-
-
-          height: 1.5em;
-
-          onEvent(activate, selectAudioTrack($self.url));
-          focusable: true;
-
-          spacing: 0.5em;
-
-          widget(icon, {
-	    source: "skin://icons/ic_favorite_48px.svg";
-	    alpha: iir($self.url == $parent.media.audio.current &&
-                       $parent.media.audio.manual, 4);
-	  });
-
-          widget(icon, {
-	    source: "skin://icons/ic_check_48px.svg";
-	    alpha: iir($self.url == $parent.media.audio.current, 4);
-	  });
-
-	  widget(label, {
-            style: "OsdItem";
-	    weight: 4;
-	    caption: $self.title;
-	  });
-
-	  widget(label, {
-            style: "OsdItem";
-	    weight: 1;
-	    caption: $self.language;
-	  });
-
-	  widget(label, {
-            style: "OsdItem";
-	    weight: 0.5;
-	    caption: $self.format;
-	  });
-
-	  widget(label, {
-            style: "OsdItem";
-	    weight: 2;
-	    caption: $self.source;
-	  });
-        });
-      });
-      widget(slider_y, {
-        bind("list");
-        width: 4;
-        focusable: canScroll();
-        alpha: iir(canScroll(), 16);
-        widget(quad, {
-	  alpha: 1;
-        });
-      });
-    });
-
+  widget(container_z, {
+    width: 22em;
+    filterConstraintY: true;
+    id: "sidebar";
 
     widget(quad, {
       zoffset: -100;
-      alpha: 0.6 * iir($ui.keyboard, 4);
-      additive: true;
+      color: 0;
+      alpha: 0.9;
     });
 
-    widget(quad, {
-      zoffset: -100;
-      alpha: 0.1;
-      additive: true;
+    widget(container_y, {
+      widget(label, {
+        height: 3em;
+        align: center;
+        caption: _("Audio");
+        size: 1.5em;
+      });
+
+      widget(container_x, {
+        widget(list_y, {
+          id: "list";
+          alphaFallOff: 0.3;
+
+
+          cloner($self.media.audio.sorted, container_z, {
+            height: 1.5em;
+            focusable: true;
+            ListItemHighlight();
+            ListItemBevel();
+            onEvent(activate, selectAudioTrack($self.url));
+
+            widget(container_x, {
+              widget(icon, {
+	        source: "skin://icons/ic_favorite_48px.svg";
+	        alpha: iir($self.url == $parent.media.audio.current &&
+                           $parent.media.audio.manual, 4);
+                color: !isNavFocused();
+	      });
+
+              widget(icon, {
+	        source: "skin://icons/ic_check_48px.svg";
+	        alpha: iir($self.url == $parent.media.audio.current, 4);
+                color: !isNavFocused();
+	      });
+
+	      widget(label, {
+                filterConstraintX: true;
+	        weight: 2;
+	        caption: $self.title;
+                color: !isNavFocused();
+	      });
+
+	      widget(label, {
+                filterConstraintX: true;
+	        weight: 1;
+	        caption: $self.language;
+                color: !isNavFocused();
+	      });
+
+	      widget(label, {
+                filterConstraintX: true;
+	        weight: 0.5;
+	        caption: $self.format;
+                color: !isNavFocused();
+	      });
+            });
+          });
+        });
+        widget(slider_y, {
+          bind("list");
+          width: 4;
+          focusable: canScroll();
+          alpha: iir(canScroll(), 16);
+          widget(quad, {
+	    alpha: 1;
+          });
+        });
+      });
     });
   });
 });
+
+
+
+

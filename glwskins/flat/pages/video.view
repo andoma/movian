@@ -1,5 +1,38 @@
 #import "skin://styles/style_list.view"
 
+
+#define PLAYDECK_BUTTON(ICON, TITLE, EVENT, ENABLED, ROTATED = 0) {
+
+  widget(container_z, {
+    onEvent(activate, EVENT);
+    focusable: ENABLED;
+
+    widget(quad, {
+      additive: true;
+      alpha: 0.1 * isHovered() + 0.6 * isNavFocused();
+    });
+    widget(icon, {
+      angle: iir(ROTATED, 4) * -90;
+      size: 2em;
+      source: ICON;
+      color: select(isNavFocused(), 0, 1);
+      alpha: 0.7 * iir(ENABLED, 8) + 0.3;
+    });
+
+    widget(displacement, {
+      padding: [-4em, 0, -4em, -1em];
+      widget(label, {
+        alpha: iir(isNavFocused() || isHovered(), 4);
+        align: bottom;
+        shadow: true;
+        zoffset: 10;
+        caption: TITLE;
+      });
+    });
+  });
+}
+
+
 style(OsdItem, {
   filterConstraintX: true;
   color: iir(!isNavFocused(), 4);
@@ -13,18 +46,45 @@ $self.directClose = 1;
 $self.close = $self.media.playstatus == "stop";
 $clone.osdpage = 0;
 
+
+trace("OSDPAGE", $clone.osdpage);
+
 onEvent(back, {
-  $clone.osdpage = translate($clone.osdpage, 1
-                             , 1, 0  // Main -> No OSD
-                             , 6, 3
-                             , 7, 4
-                             );
+  $clone.showPlaydeck = 0;
+}, $clone.showPlaydeck && !$clone.osdpage);
+
+onEvent(back, {
+  $clone.osdpage = translate($clone.osdpage, 0,
+                             4, 1,
+                             5, 1,
+                             6, 1);
+}, $clone.osdpage);
+
+//---------------------------
+// Handle menu button
+//---------------------------
+
+onEvent(menu, {
+  $clone.showPlaydeck = 1;
+  focus("playdeck");
+}, !$clone.showPlaydeck);
+
+onEvent(menu, {
+  $clone.osdpage = 1;
+  focus("osd-menu-loader");
+}, $clone.showPlaydeck);
+
+onEvent(menu, {
+  $clone.osdpage = 0;
+  $clone.showPlaydeck = 0;
 }, $clone.osdpage);
 
 
-onEvent(MediaStats, {
-  $clone.osdpage = select($clone.osdpage == 2, 0, 2);
-});
+$view.showSeekBar =
+  $ui.pointerVisible ||
+  changed($self.media.seektime, 5, true) ||
+  $clone.showPlaydeck;
+
 
 widget(container_z, {
 
@@ -32,132 +92,282 @@ widget(container_z, {
   // --- Primary video display
   // --------------------------------------------
 
-  widget(video, {
-    zoffset: -500;
-    how: $self.how;
-    model: $self.openedFrom;
-    parentUrl: $self.parentUrl;
-    origin: $self.origin;
-    primary: true;
-    source: $self.source;
-    focusable: 0.1;
+  widget(layer, {
+    widget(video, {
+      zoffset: -500;
+      primary: true;
 
-    onEvent(left,  deliverEvent($self.media.eventSink, "SeekReverse"));
-    onEvent(right, deliverEvent($self.media.eventSink, "SeekForward"));
+      how: $self.how;
+      model: $self.openedFrom;
+      parentUrl: $self.parentUrl;
+      origin: $self.origin;
+      source: $self.source;
 
-    onEvent(up,    deliverEvent($self.media.eventSink, "VolumeUp"));
-    onEvent(down,  deliverEvent($self.media.eventSink, "VolumeDown"));
+      focusable: 0.1;
 
-    onEvent(activate, {
-      toggle($clone.osdpage);
+      onEvent(left,  deliverEvent($self.media.eventSink, "SeekReverse"));
+      onEvent(right, deliverEvent($self.media.eventSink, "SeekForward"));
+
+      onEvent(up,    deliverEvent($self.media.eventSink, "VolumeUp"));
+      onEvent(down,  deliverEvent($self.media.eventSink, "VolumeDown"));
+
+      onEvent(activate, {
+        toggle($clone.showPlaydeck);
+      });
+
+      bottomOverlayDisplacement: $clone.bottomOsdHeight;
+
+    });
+
+
+    widget(container_y, {
+
+      hidden: !$clone.showPlaydeck;
+
+      widget(loader, {
+        filterConstraintY: true;
+        id: "osd-menu-loader";
+        source: translate($clone.osdpage, "skin://osd/osd_empty.view",
+                          1, "skin://osd/osd_main.view",
+                          2, "skin://osd/osd_settings_subs.view",
+                          3, "skin://osd/osd_settings_audio.view",
+                          4, "skin://osd/osd_settings_video.view",
+                          100, "skin://osd/osd_subs.view",
+                          101, "skin://osd/osd_audio.view"
+                         );
+      });
+
+      // OSD buttons row
+
+      widget(container_z, {
+        height: 2.7em;
+        delta($clone.bottomOsdHeight, isVisible() * getHeight());
+
+        widget(quad, {
+          alpha: 0.9;
+          color: 0;
+        });
+
+        widget(container_x, {
+          id: "playdeck";
+          spacing: 1em;
+          padding: [3.5em, 0.1em];
+
+          PLAYDECK_BUTTON("skin://icons/ic_skip_previous_48px.svg",
+                          _("Previous"),
+                          event("PreviousTrack"),
+                          $core.media.current.canSkipBackward);
+
+          PLAYDECK_BUTTON(translate($core.media.current.playstatus,
+                                    "skin://icons/ic_pause_48px.svg",
+                                    "pause",
+                                    "skin://icons/ic_play_arrow_48px.svg"),
+                          _("Play/Pause"),
+                          event("PlayPause"),
+                          $core.media.current.canPause);
+
+          PLAYDECK_BUTTON("skin://icons/ic_skip_next_48px.svg",
+                          _("Next"),
+                          event("NextTrack"),
+                          $core.media.current.canSkipForward);
+
+          widget(dummy, {
+            width: 2em;
+          });
+
+          PLAYDECK_BUTTON("skin://icons/ic_subtitles_48px.svg",
+                          _("Subtitles"),
+                          {
+                            $clone.osdpage = select($clone.osdpage == 100, 0, 100);
+                            focus("osd-menu-loader");
+                          }, true);
+          PLAYDECK_BUTTON("skin://icons/ic_speaker_48px.svg",
+                          _("Audio tracks"),
+                          {
+                            $clone.osdpage = 101;
+                            focus("osd-menu-loader");
+                          }, true);
+
+          PLAYDECK_BUTTON("skin://icons/ic_menu_48px.svg",
+                          _("Settings"),
+                          {
+                            toggle($clone.osdpage);
+                            focus("osd-menu-loader");
+                          }, true,
+                          $clone.osdpage > 0 && $clone.osdpage < 100);
+
+        });
+      });
+      widget(dummy, {
+        height: 2em;
+      });
+    });
+  });
+
+  // Seekbar row
+
+  widget(container_y, {
+    hidden: !$view.showSeekBar;
+    align: bottom;
+    widget(container_z, {
+      delta($clone.bottomOsdHeight, isVisible() * getHeight());
+      height: 2em;
+      widget(quad, {
+        alpha: 0.9;
+        color: 0;
+      });
+
+      widget(container_x, {
+        spacing: 0.5em;
+
+        widget(label, {
+          width: 3em;
+          caption: value2duration($self.media.currenttime);
+          align: right;
+        });
+
+        widget(container_z, {
+          widget(container_y, {
+            align: center;
+            widget(container_z, {
+              height: 3;
+              widget(container_y, {
+                padding: 1;
+                widget(quad, {
+                  alpha: 0.3;
+                  additive: true;
+                });
+              });
+            });
+          });
+
+          widget(slider_x, {
+            clickable: true;
+            bind($self.media.currenttime);
+            max: $self.media.metadata.duration;
+            widget(icon, {
+              source: "skin://icons/dot.png";
+            });
+            widget(container_y, {
+              space(1);
+              widget(quad, {
+                height: 3;
+                alpha: 0.9;
+                additive: true;
+              });
+              space(1);
+            });
+          });
+        });
+        widget(label, {
+          width: 4em;
+          caption: value2duration($self.media.metadata.duration);
+        });
+      });
     });
   });
 
 
   widget(container_y, {
+    hidden: $clone.osdpage > 0;
+    padding: [$ui.xmargin, 2.5em];
 
-    padding: [4em, 1em];
 
-    alpha: iir(translate($clone.osdpage, 0,
-                         0, $ui.pointerVisible || changed($self.media.seektime, 5, true),
-                         1, 1), 4);
+    style(notifications, {
+      shadow: true;
+    });
 
-    widget(label, {
-      caption: $self.media.metadata.title;
+
+    
+    widget(container_x, {
+      spacing: 0.5em;
+      hidden: select($self.media.error, false, true);
+      widget(icon, {
+	source: "skin://icons/ic_error_48px.svg";
+      });
+      widget(label, {
+	caption: $self.media.error;
+        style: "notifications";
+      });
     });
 
     widget(container_x, {
-      height: 8em;
-
-      filterConstraintX: true;
-      spacing: 1em;
-      widget(container_y, {
-        width: 10em;
-
-        widget(image, {
-          align: topLeft;
-          height: 6em;
-          source: $self.media.metadata.icon;
-        });
+      spacing: 0.5em;
+      hidden: select($self.media.video.too_slow, false, true);
+      widget(icon, {
+	source: "skin://icons/ic_error_48px.svg";
       });
+      widget(label, {
+	caption: _("CPU is too slow to decode this video");
+        style: "notifications";
+      });
+    });
 
 
-      widget(container_y, {
-        filterConstraintX: true;
-        spacing: 3;
+    cloner($self.media.notifications, container_x, {
+      spacing: 0.5em;
+      widget(icon, {
+	source: "skin://icons/ic_error_48px.svg";
+	color: translate($self.type, [1,1,1],
+			 "info", [0.5, 1, 0.5],
+			 "warning",  [1, 1, 0.5],
+			 "error", [1, 0.5, 0.5]);
+      });
+      widget(label, {
+	caption: $self.text;
+        style: "notifications";
+	color: translate($self.type, [1,1,1],
+			 "info", [0.5, 1, 0.5],
+			 "warning",  [1, 1, 0.5],
+			 "error", [1, 0.5, 0.5]);
+      });
+    });
 
-        widget(container_x, {
-          spacing: 0.5em;
 
-          widget(label, {
-            width: 3em;
-            caption: value2duration($self.media.currenttime);
-            shadow: true;
-            align: right;
-          });
-
-          widget(container_z, {
-
-            widget(container_y, {
-              align: center;
-              widget(container_z, {
-                height: 3;
-                widget(container_y, {
-                  padding: 1;
-                  widget(quad, {
-                    alpha: 0.3;
-                    additive: true;
-                  });
-                });
-              });
-            });
-
-            widget(slider_x, {
-              focusable: 0.1;
-              bind($self.media.currenttime);
-              max: $self.media.metadata.duration;
-              widget(icon, {
-                source: "skin://icons/dot.png";
-              });
-              widget(container_y, {
-                space(1);
-                widget(quad, {
-                  height: 3;
-                  alpha: 0.9;
-                  additive: true;
-                });
-                space(1);
-              });
-            });
-          });
-          widget(label, {
-            width: 4em;
-            shadow: true;
-            caption: value2duration($self.media.metadata.duration);
-
-          });
+    widget(container_x, {
+      spacing: 0.5em;
+      hidden: !changed($self.media.audio.current, 5);
+      widget(icon, {
+        source: "dataroot://res/svg/Sound.svg";
+      });
+      widget(deck, {
+        effect: flipHorizontal;
+        time: 0.1;
+        cloner($self.media.metadata.audiostreams, label, {
+          style: "notifications";
+	  caption: join(" - ", $self.title, $self.language,
+                        $self.source, $self.longformat ?? $self.format);
         });
       });
     });
-    space(1);
-  });
 
-  widget(container_y, {
-
-    widget(loader, {
-
-      source: translate($clone.osdpage,
-                        select($ui.pointerVisible,
-                               "skin://osd/osd_main.view",
-                               ""),
-                        1, "skin://osd/osd_main.view",
-                        2, "skin://osd/osd_info.view",
-                        3, "skin://osd/osd_settings_subs.view",
-                        4, "skin://osd/osd_settings_audio.view",
-                        5, "skin://osd/osd_settings_video.view",
-                        6, "skin://osd/osd_subs.view",
-                        7, "skin://osd/osd_audio.view");
+    widget(container_x, {
+      hidden: !changed($self.media.ctrl.audiovolume, 2, true) || !$self.media.ctrl.audiovolume;
+      spacing: 0.5em;
+      widget(icon, {
+      });
+      widget(label, {
+        style: "notifications";
+        caption: fmt(_("Audio volume adjustment: %d dB"),
+                     $self.media.ctrl.audiovolume);
+      });
     });
-    space(1);
+
+
+    widget(container_x, {
+      spacing: 0.5em;
+      hidden: !changed($self.media.subtitle.current, 5);
+      widget(icon, {
+        source: "dataroot://res/svg/Script.svg";
+      });
+      widget(deck, {
+        effect: flipHorizontal;
+        time: 0.1;
+        cloner($self.media.metadata.subtitlestreams, label, {
+          style: "notifications";
+	  caption: join(" - ", $self.title, $self.language, $self.source, $self.format);
+        });
+      });
+    });
   });
 });
