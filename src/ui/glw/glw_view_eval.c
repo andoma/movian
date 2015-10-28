@@ -3263,8 +3263,10 @@ glwf_onEvent(glw_view_eval_context_t *ec, struct token *self,
 
     gem->gem_action = filter;
     gem->gem_final = final;
-    gem->gem_id = ++w->glw_root->gr_gem_id_tally;
-    self->t_extra_int = gem->gem_id;
+    if(!self->t_extra_int)
+      self->t_extra_int = ++w->glw_root->gr_gem_id_tally;
+
+    gem->gem_id = self->t_extra_int;
     glw_event_map_add(w, gem);
     return 0;
   }
