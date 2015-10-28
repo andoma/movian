@@ -51,10 +51,7 @@ onEvent(back, {
 }, $clone.showPlaydeck && !$clone.osdpage);
 
 onEvent(back, {
-  $clone.osdpage = translate($clone.osdpage, 0,
-                             4, 1,
-                             5, 1,
-                             6, 1);
+  $clone.osdpage = 0;
 }, $clone.osdpage);
 
 //---------------------------
@@ -123,7 +120,6 @@ widget(container_z, {
 
       widget(loader, {
         filterConstraintY: true;
-        id: "osd-menu-loader";
         source: translate($clone.osdpage, "skin://osd/osd_empty.view",
                           1, "skin://osd/osd_main.view",
                           2, "skin://osd/osd_settings_subs.view",
@@ -176,20 +172,20 @@ widget(container_z, {
                           _("Subtitles"),
                           {
                             $clone.osdpage = select($clone.osdpage == 100, 0, 100);
-                            focus("osd-menu-loader");
+                            focus("osd_subs");
                           }, true);
           PLAYDECK_BUTTON("skin://icons/ic_speaker_48px.svg",
                           _("Audio tracks"),
                           {
                             $clone.osdpage = 101;
-                            focus("osd-menu-loader");
+                            focus("osd_audio");
                           }, true);
 
           PLAYDECK_BUTTON("skin://icons/ic_menu_48px.svg",
                           _("Settings"),
                           {
                             toggle($clone.osdpage);
-                            focus("osd-menu-loader");
+                            focus("osd_main");
                           }, true,
                           $clone.osdpage > 0 && $clone.osdpage < 100);
 

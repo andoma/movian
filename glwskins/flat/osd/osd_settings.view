@@ -1,6 +1,6 @@
 #import "skin://theme.view"
 
-#define OSD_SETTINGS_MENU(NODES, TITLE) {
+#define OSD_SETTINGS_MENU(NODES, TITLE, ID) {
 
 widget(container_x, {
 #import "skin://styles/style_sidebar.view"
@@ -10,6 +10,12 @@ widget(container_x, {
     filterConstraintY: true;
     id: "sidebar";
 
+    onEvent(back, {
+      $clone.osdpage = 1;
+      focus("osd_main");
+    }, $clone.osdpage);
+
+
     widget(quad, {
       zoffset: -100;
       color: 0;
@@ -17,6 +23,8 @@ widget(container_x, {
     });
 
     widget(container_y, {
+      id: ID;
+
       widget(label, {
         height: 3em;
         align: center;

@@ -25,6 +25,8 @@ widget(container_x, {
     });
 
     widget(container_y, {
+      id: "osd_subs";
+
       widget(label, {
         height: 3em;
         align: center;

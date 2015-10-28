@@ -24,6 +24,8 @@ widget(container_x, {
     });
 
     widget(container_y, {
+      id: "osd_audio";
+
       widget(label, {
         height: 3em;
         align: center;
