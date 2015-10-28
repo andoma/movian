@@ -1263,7 +1263,8 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how, const char *whom)
     GLW_TRACE("Focus set to none by %s", whom);
   }
   gr->gr_focus_work = 0;
-  rstr_set(&gr->gr_pending_focus, NULL);
+  if(how == GLW_FOCUS_SET_INTERACTIVE)
+    rstr_set(&gr->gr_pending_focus, NULL);
   return 1;
 }
 
