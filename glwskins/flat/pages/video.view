@@ -46,9 +46,6 @@ $self.directClose = 1;
 $self.close = $self.media.playstatus == "stop";
 $clone.osdpage = 0;
 
-
-trace("OSDPAGE", $clone.osdpage);
-
 onEvent(back, {
   $clone.showPlaydeck = 0;
 }, $clone.showPlaydeck && !$clone.osdpage);
