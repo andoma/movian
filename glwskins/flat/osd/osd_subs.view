@@ -35,7 +35,6 @@ widget(container_x, {
       widget(container_x, {
         widget(list_y, {
           id: "list";
-          alphaFallOff: 0.3;
 
           cloner($self.media.subtitle.sorted, container_z, {
 

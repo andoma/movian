@@ -24,8 +24,6 @@ widget(container_y, {
     padding: [2em, 0, 2em, 2em];
     navWrap: true;
     chaseFocus: true;
-    alphaFallOff: 0.1;
-    blurFallOff: 0.3;
     scrollThreshold: 2em;
 
     &clone.focused = focusedChild();
