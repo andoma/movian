@@ -1278,7 +1278,8 @@ glw_focus_check_pending(glw_t *w)
   glw_root_t *gr = w->glw_root;
   if(rstr_eq(gr->gr_pending_focus, w->glw_id_rstr)) {
     w = glw_get_focusable_child(w);
-    glw_focus_set(gr, w, GLW_FOCUS_SET_INTERACTIVE, "FocusMethodDelayed");
+    if(w != NULL)
+      glw_focus_set(gr, w, GLW_FOCUS_SET_INTERACTIVE, "FocusMethodDelayed");
   }
 }
 
