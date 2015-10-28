@@ -118,16 +118,52 @@ widget(container_z, {
 
       hidden: !$clone.showPlaydeck;
 
-      widget(loader, {
+      widget(container_x, {
         filterConstraintY: true;
-        source: translate($clone.osdpage, "skin://osd/osd_empty.view",
-                          1, "skin://osd/osd_main.view",
-                          2, "skin://osd/osd_settings_subs.view",
-                          3, "skin://osd/osd_settings_audio.view",
-                          4, "skin://osd/osd_settings_video.view",
-                          100, "skin://osd/osd_subs.view",
-                          101, "skin://osd/osd_audio.view"
-                         );
+
+        widget(dummy, {
+          // A clickable zone that closes everything
+          clickable: true;
+          onEvent(activate, {
+            $clone.showPlaydeck = 0;
+            $clone.osdpage = 0;
+          });
+        });
+
+
+        widget(displacement, {
+          width: 22em;
+          translation: [1 - iir($clone.osdpage > 0, 4), 0, 0];
+          widget(container_z, {
+
+
+            widget(layer, {
+
+              widget(loader, {
+                autohide: true;
+                alpha: iir($clone.osdpage == 1, 4);
+                source: select($clone.osdpage, "skin://osd/osd_main.view", "");
+              });
+
+
+              widget(loader, {
+                autohide: true;
+                source: translate($clone.osdpage, "",
+                                  2, "skin://osd/osd_settings_subs.view",
+                                  3, "skin://osd/osd_settings_audio.view",
+                                  4, "skin://osd/osd_settings_video.view",
+                                  100, "skin://osd/osd_subs.view",
+                                  101, "skin://osd/osd_audio.view"
+                                 );
+              });
+            });
+            widget(quad, {
+              zoffset: -100;
+              color: 0;
+              alpha: iir($clone.osdpage > 0, 4) * 0.9;
+            });
+          });
+        });
       });
 
       // OSD buttons row

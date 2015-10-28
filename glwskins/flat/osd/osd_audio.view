@@ -1,95 +1,72 @@
 #import "skin://theme.view"
 
 
-widget(container_x, {
+widget(container_y, {
+  id: "osd_audio";
 #import "skin://styles/style_sidebar.view"
 
-  widget(dummy, {
-    clickable: true;
-    onEvent(activate, {
-      $clone.showPlaydeck = 0;
-      $clone.osdpage = 0;
-    });
+  widget(label, {
+    height: 3em;
+    align: center;
+    caption: _("Audio");
+    size: 1.5em;
   });
 
-  widget(container_z, {
-    width: 22em;
-    filterConstraintY: true;
-    id: "sidebar";
+  widget(container_x, {
+    widget(list_y, {
+      id: "list";
 
-    widget(quad, {
-      zoffset: -100;
-      color: 0;
-      alpha: 0.9;
-    });
+      cloner($self.media.audio.sorted, container_z, {
+        height: 1.5em;
+        focusable: true;
+        ListItemHighlight();
+        ListItemBevel();
+        onEvent(activate, selectAudioTrack($self.url));
 
-    widget(container_y, {
-      id: "osd_audio";
+        widget(container_x, {
+          widget(icon, {
+	    source: "skin://icons/ic_favorite_48px.svg";
+	    alpha: iir($self.url == $parent.media.audio.current &&
+                       $parent.media.audio.manual, 4);
+            color: !isNavFocused();
+	  });
 
-      widget(label, {
-        height: 3em;
-        align: center;
-        caption: _("Audio");
-        size: 1.5em;
+          widget(icon, {
+	    source: "skin://icons/ic_check_48px.svg";
+	    alpha: iir($self.url == $parent.media.audio.current, 4);
+            color: !isNavFocused();
+	  });
+
+	  widget(label, {
+            filterConstraintX: true;
+	    weight: 2;
+	    caption: $self.title;
+            color: !isNavFocused();
+	  });
+
+	  widget(label, {
+            filterConstraintX: true;
+	    weight: 1;
+	    caption: $self.language;
+            color: !isNavFocused();
+	  });
+
+	  widget(label, {
+            filterConstraintX: true;
+	    weight: 0.5;
+	    caption: $self.format;
+            color: !isNavFocused();
+	  });
+        });
       });
-
-      widget(container_x, {
-        widget(list_y, {
-          id: "list";
-
-          cloner($self.media.audio.sorted, container_z, {
-            height: 1.5em;
-            focusable: true;
-            ListItemHighlight();
-            ListItemBevel();
-            onEvent(activate, selectAudioTrack($self.url));
-
-            widget(container_x, {
-              widget(icon, {
-	        source: "skin://icons/ic_favorite_48px.svg";
-	        alpha: iir($self.url == $parent.media.audio.current &&
-                           $parent.media.audio.manual, 4);
-                color: !isNavFocused();
-	      });
-
-              widget(icon, {
-	        source: "skin://icons/ic_check_48px.svg";
-	        alpha: iir($self.url == $parent.media.audio.current, 4);
-                color: !isNavFocused();
-	      });
-
-	      widget(label, {
-                filterConstraintX: true;
-	        weight: 2;
-	        caption: $self.title;
-                color: !isNavFocused();
-	      });
-
-	      widget(label, {
-                filterConstraintX: true;
-	        weight: 1;
-	        caption: $self.language;
-                color: !isNavFocused();
-	      });
-
-	      widget(label, {
-                filterConstraintX: true;
-	        weight: 0.5;
-	        caption: $self.format;
-                color: !isNavFocused();
-	      });
-            });
-          });
-        });
-        widget(slider_y, {
-          bind("list");
-          width: 4;
-          focusable: canScroll();
-          alpha: iir(canScroll(), 16);
-          widget(quad, {
-	    alpha: 1;
-          });
-        });
+    });
+    widget(slider_y, {
+      bind("list");
+      width: 4;
+      focusable: canScroll();
+      alpha: iir(canScroll(), 16);
+      widget(quad, {
+	alpha: 1;
       });
     });
   });

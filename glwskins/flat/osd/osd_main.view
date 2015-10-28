@@ -15,87 +15,64 @@
   });
 }
 
-widget(container_x, {
-
-  widget(dummy, {
-    clickable: true;
-    onEvent(activate, {
-      $clone.showPlaydeck = 0;
-      $clone.osdpage = 0;
-    });
-  });
-
-  widget(container_z, {
-    width: 22em;
-    filterConstraintY: true;
-    id: "sidebar";
-
-    widget(quad, {
-      zoffset: -100;
-      color: 0;
-      alpha: 0.9;
-    });
-
-    widget(container_y, {
-
-      id: "osd_main";
+widget(container_y, {
+  width: 22em;
+  id: "osd_main";
 
 #import "skin://styles/style_sidebar.view"
 
-      widget(label, {
-        height: 3em;
-        align: center;
-        caption: _("Settings");
-        size: 1.5em;
-      });
+  widget(label, {
+    height: 3em;
+    align: center;
+    caption: _("Settings");
+    size: 1.5em;
+  });
 
-      widget(list_y, {
+  widget(list_y, {
 
-        id: "sidebar";
-
-
-        SIDEBAR_ACTION(_("Subtitle settings"),
-                       "skin://icons/ic_subtitles_48px.svg",
-                       {
-                         $clone.osdpage = 2;
-                         focus("osd_settings_subs");
-                       });
-
-        SIDEBAR_ACTION(_("Audio settings"),
-                       "skin://icons/ic_speaker_48px.svg",
-                       {
-                         $clone.osdpage = 3;
-                         focus("osd_settings_audio");
-                       });
-
-        SIDEBAR_ACTION(_("Video settings"),
-                       "skin://icons/ic_videocam_48px.svg",
-                       {
-                         $clone.osdpage = 4;
-                         focus("osd_settings_video");
-                       });
+    id: "sidebar";
 
 
-        widget(dummy, {
-          height: 1em;
-        });
+    SIDEBAR_ACTION(_("Subtitle settings"),
+                   "skin://icons/ic_subtitles_48px.svg",
+                   {
+                     $clone.osdpage = 2;
+                     focus("osd_settings_subs");
+                   });
 
-        SIDEBAR_ACTION(select($ui.sysinfo,
-                              _("Hide system info"),
-                              _("Show system info")),
-                       select($ui.sysinfo,
-                              "skin://icons/ic_info_48px.svg",
-                              "skin://icons/ic_info_outline_48px.svg"),
-                       {
-                         toggle($ui.sysinfo);
-                       });
+    SIDEBAR_ACTION(_("Audio settings"),
+                   "skin://icons/ic_speaker_48px.svg",
+                   {
+                     $clone.osdpage = 3;
+                     focus("osd_settings_audio");
+                   });
 
-        SIDEBAR_ACTION(_("View log"),
-                       "skin://icons/ic_my_library_books_48px.svg",{
-                         $ui.logwindow = true;
-                       });
-      });
+    SIDEBAR_ACTION(_("Video settings"),
+                   "skin://icons/ic_videocam_48px.svg",
+                   {
+                     $clone.osdpage = 4;
+                     focus("osd_settings_video");
+                   });
+
+
+    widget(dummy, {
+      height: 1em;
     });
+
+    SIDEBAR_ACTION(select($ui.sysinfo,
+                          _("Hide system info"),
+                          _("Show system info")),
+                   select($ui.sysinfo,
+                          "skin://icons/ic_info_48px.svg",
+                          "skin://icons/ic_info_outline_48px.svg"),
+                   {
+                     toggle($ui.sysinfo);
+                   });
+
+    SIDEBAR_ACTION(_("View log"),
+                   "skin://icons/ic_my_library_books_48px.svg",{
+                     $ui.logwindow = true;
+                   });
   });
 });
 
