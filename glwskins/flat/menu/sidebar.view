@@ -29,7 +29,14 @@
 
 
 widget(container_x, {
-  space(2);
+  widget(dummy, {
+    // A clickable zone that closes sidebar
+    clickable: true;
+    onEvent(activate, {
+      $clone.showSidebar = false;
+    });
+  });
+
   widget(container_z, {
     width: 22em;
     filterConstraintY: true;

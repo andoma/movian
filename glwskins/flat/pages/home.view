@@ -113,6 +113,8 @@ widget(container_z, {
       widget(array, {
         id: "main";
 
+        alpha: iir(select($clone.showSidebar, 0.3, 1), 4);
+
         margin: [2em, 1em];
         childTilesX: 5;
         childTilesY: 4;
@@ -174,7 +176,7 @@ widget(container_z, {
       height: 3em;
       widget(icon, {
         clickable: true;
-        angle: iir($clone.showSidebar, 4) * -180;
+        angle: iir($clone.showSidebar, 4) * -90;
         onEvent(activate, {
 
           toggle($clone.showSidebar);

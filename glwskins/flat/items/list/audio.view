@@ -5,12 +5,12 @@ widget(container_z, {
   ListItemBevel();
   ListItemHighlight();
   onEvent(activate, playTrackFromSource($self, $parent.model));
+  focusable: true;
 
   widget(container_x, {
     padding: [0,0,1em,0];
     spacing: 1em;
     style: "ListItem";
-    focusable: true;
 
 
     widget(icon, {

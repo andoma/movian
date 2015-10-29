@@ -17,25 +17,42 @@ widget(container_y, {
       caption: $self.model.metadata.title;
       size: 1.5em;
     });
-
-
   });
-  widget(array, {
 
-    childTilesX: select($ui.aspect > 1, 5, 2);
-    childTilesY: 4;
+  widget(container_z, {
 
-    navWrap: true;
-    scrollThreshold: 2em;
+    widget(array, {
+      id: "scrollable";
 
-    $clone.focused <- focusedChild();
+      childTilesX: select($ui.aspect > 1, 5, 2);
+      childTilesY: 4;
 
-    cloner($self.model.nodes, loader, {
-      time: 0.1;
-      effect: blend;
-      noInitialTransform: true;
-      alt: "skin://items/rect/default.view";
-      source: "skin://items/rect/" + $self.type + ".view";
+      navWrap: true;
+      scrollThreshold: 2em;
+
+      cloner($self.model.nodes, loader, {
+        time: 0.1;
+        effect: blend;
+        noInitialTransform: true;
+        alt: "skin://items/rect/default.view";
+        source: "skin://items/rect/" + $self.type + ".view";
+      });
+    });
+
+    widget(container_x, {
+      padding: [0,0,0.2em,0];
+
+      space(1);
+
+      widget(slider_y, {
+        bind("scrollable");
+        width: 0.2em;
+        focusable: canScroll();
+        alpha: iir(canScroll(), 16);
+        widget(quad, {
+	  alpha: 0.6 + isHovered();
+        });
+      });
     });
   });
 });

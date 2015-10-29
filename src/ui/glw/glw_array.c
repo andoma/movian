@@ -368,10 +368,12 @@ glw_array_render(glw_t *w, const glw_rctx_t *rc)
   glw_rctx_t rc0, rc1, rc2;
 
 
-  if(rc->rc_alpha < 0.01f)
+  rc0 = *rc;
+  rc0.rc_alpha *= w->glw_alpha;
+
+  if(rc0.rc_alpha < 0.01f)
     return;
 
-  rc0 = *rc;
   glw_reposition(&rc0, a->margin[0], rc->rc_height - a->margin[1],
 		 rc->rc_width  - a->margin[2], a->margin[3]);
 
