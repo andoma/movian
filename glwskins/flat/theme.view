@@ -55,20 +55,22 @@
 }
 
 
-#define ListItemHighlight(ALPHA=0.1 * isHovered() + 0.6 * isNavFocused()) {
+#define ListItemHighlight() {
   widget(quad, {
+    fhpSpill: true;
     zoffset: -10;
     additive: true;
-    alpha: ALPHA;
+    alpha: 0.1 * isHovered() + 0.6 * isNavFocused();
   });
 
 }
 
-#define GridItemHighlight(ALPHA=0.1 * isHovered() + 0.6 * isNavFocused()) {
+#define GridItemHighlight() {
   widget(quad, {
+    fhpSpill: true;
     zoffset: -10;
     additive: true;
-    alpha: ALPHA;
+    alpha: 0.1 * isHovered() + 0.6 * isNavFocused();
   });
 
 }

@@ -24,4 +24,74 @@
   });
 }
 
+#define SIDEBAR_INTEGER() {
+  widget(container_z, {
 
+    id: "narrow";
+
+    height: 3em;
+
+    ListItemBevel();
+
+    widget(container_y, {
+      align: center;
+      widget(container_x, {
+        style: "ListItem";
+        widget(icon, {
+          style: "ListItemIcon";
+        });
+
+        widget(label, {
+          caption: $self.metadata.title + ":";
+          style: ["ListItemLabel", "ListItemLabelContainer"];
+        });
+
+        widget(label, {
+          style: "ListItemValue";
+          caption: fmt("%d %s", $self.value, $self.unit);
+        });
+      });
+
+      widget(container_z, {
+        ListItemHighlight();
+        height: 1em;
+
+        widget(container_x, {
+          style: "ListItem";
+
+          widget(container_z, {
+            widget(container_y, {
+              align: center;
+              widget(quad, {
+                height: 1;
+                color: 0;
+                alpha: 0.3;
+              });
+              widget(quad, {
+                height: 1;
+                alpha: 0.3;
+              });
+            });
+
+            widget(slider_x, {
+              focusable: true;
+              min: $self.min;
+              max: $self.max;
+              step: $self.step;
+              bind($self.value);
+
+              widget(container_y, {
+                align: center;
+                widget(quad, {
+                  height: 0.5em;
+                  color: select(isNavFocused(), 0.0, 0.77);
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+  });
+
+}

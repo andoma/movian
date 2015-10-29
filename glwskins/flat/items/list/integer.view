@@ -9,10 +9,8 @@ widget(deck, {
 
     style: "ListItemOuter";
 
-    $view.highlight = 0.1 * isHovered() + 0.6 * isNavFocused();
-
     ListItemBevel();
-    ListItemHighlight($view.highlight);
+    ListItemHighlight();
 
     widget(container_x, {
       style: "ListItem";
@@ -100,8 +98,7 @@ widget(deck, {
       });
 
       widget(container_z, {
-        $view.highlight2 = 0.1 * isHovered() + 0.6 * isNavFocused();
-        ListItemHighlight($view.highlight2);
+        ListItemHighlight();
         height: 1em;
 
         widget(container_x, {
