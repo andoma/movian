@@ -168,7 +168,7 @@ widget(container_z, {
             widget(quad, {
               zoffset: -100;
               color: 0;
-              alpha: iir($clone.osdpage > 0, 4) * 0.9;
+              alpha: iir($clone.osdpage > 0, 4) * 0.8;
             });
           });
         });
