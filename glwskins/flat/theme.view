@@ -75,3 +75,22 @@
 
 }
 
+
+#define ScrollBar(TARGET="scrollable") {
+
+  widget(container_x, {
+    filterConstraintX: true;
+    filterConstraintY: true;
+    padding: [0,1,0.2em,1];
+    space(1);
+    widget(slider_y, {
+      bind(TARGET);
+      width: 0.2em;
+      focusable: canScroll();
+      alpha: iir(canScroll(), 16);
+      widget(quad, {
+	alpha: 0.6 + isHovered();
+      });
+    });
+  });
+}

@@ -1,3 +1,4 @@
+#import "skin://theme.view"
 #import "skin://styles/style_list.view"
 
 widget(container_y, {
@@ -35,20 +36,6 @@ widget(container_y, {
       });
     });
 
-    widget(container_x, {
-      padding: [0,0,0.2em,0];
-
-      space(1);
-
-      widget(slider_y, {
-        bind("scrollable");
-        width: 0.2em;
-        focusable: canScroll();
-        alpha: iir(canScroll(), 16);
-        widget(quad, {
-	  alpha: 0.6 + isHovered();
-        });
-      });
-    });
+    ScrollBar();
   });
 });

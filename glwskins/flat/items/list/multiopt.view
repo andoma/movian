@@ -82,7 +82,7 @@ widget(container_z, {
         });
 
         widget(list_y, {
-
+          id: "options";
           cloner($self.options, container_z, {
             focusable: true;
             ListItemHighlight();
@@ -107,6 +107,7 @@ widget(container_z, {
             });
           });
         });
+        ScrollBar("options");
       });
     });
 
