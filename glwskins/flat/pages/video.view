@@ -141,7 +141,7 @@ widget(container_z, {
 
         widget(displacement, {
           width: 22em;
-          translation: [1 - iir($clone.osdpage > 0, 4), 0, 0];
+          translation: [2 - 2 * iir($clone.osdpage > 0, 4), 0, 0];
           widget(container_z, {
 
 
