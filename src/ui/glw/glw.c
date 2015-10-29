@@ -944,6 +944,17 @@ glw_move(glw_t *w, glw_t *b)
   glw_signal0(p, GLW_SIGNAL_CHILD_MOVED, w);
 }
 
+/**
+ *
+ */
+static void
+glw_fhp_update(glw_t *w, int or, int and)
+{
+  w->glw_flags = (w->glw_flags | or) & and;
+  if(!(w->glw_flags & GLW_DESTROYING))
+    glw_signal0(w, GLW_SIGNAL_FHP_PATH_CHANGED, NULL);
+}
+
 
 /**
  *
@@ -955,9 +966,7 @@ glw_path_flood(glw_t *w, int or, int and)
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     glw_path_flood(c, or, and);
-    c->glw_flags = (c->glw_flags | or) & and;
-    if(!(c->glw_flags & GLW_DESTROYING))
-      glw_signal0(c, GLW_SIGNAL_FHP_PATH_CHANGED, NULL);
+    glw_fhp_update(c, or, and);
   }
 }
 
@@ -975,14 +984,21 @@ glw_path_modify(glw_t *w, int set, int clr, glw_t *stop)
   for(; w != NULL && w != stop; w = w->glw_parent) {
 
     int old_flags = w->glw_flags;
-
-    w->glw_flags = (w->glw_flags | set) & clr;
-    if(!(w->glw_flags & GLW_DESTROYING))
-      glw_signal0(w, GLW_SIGNAL_FHP_PATH_CHANGED, NULL);
+    glw_fhp_update(w, set, clr);
 
     if((old_flags ^ w->glw_flags) & GLW_IN_FOCUS_PATH)
       glw_event_glw_action(w, w->glw_flags & GLW_IN_FOCUS_PATH ?
                            "GainedFocus" : "LostFocus");
+
+    if(w->glw_flags & GLW_FHP_SPILL_TO_CHILDS) {
+      glw_t *c;
+      TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+        if(c->glw_flags2 & GLW2_FHP_SPILL) {
+          glw_fhp_update(c, set, clr);
+          glw_path_flood(c, set, clr);
+        }
+      }
+    }
   }
 }
 
@@ -2706,6 +2722,43 @@ glw_unhide(glw_t *w)
   glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_UNHIDDEN, w);
 }
 
+
+/**
+ *
+ */
+void
+glw_mod_flags2(glw_t *w, int set, int clr)
+{
+  const glw_class_t *gc = w->glw_class;
+
+  set &= ~w->glw_flags2;
+  w->glw_flags2 |= set;
+
+  clr &= w->glw_flags2;
+  w->glw_flags2 &= ~clr;
+
+  if(w->glw_parent != NULL) {
+    glw_t *p = w->glw_parent;
+    if(set & GLW2_FHP_SPILL) {
+      p->glw_flags |= GLW_FHP_SPILL_TO_CHILDS;
+    }
+
+    if(clr & GLW2_FHP_SPILL) {
+      glw_t *c;
+
+      p->glw_flags &= ~GLW_FHP_SPILL_TO_CHILDS;
+      TAILQ_FOREACH(c, &p->glw_childs, glw_parent_link) {
+        if(c->glw_flags2 & GLW2_FHP_SPILL) {
+          p->glw_flags |= GLW_FHP_SPILL_TO_CHILDS;
+          break;
+        }
+      }
+    }
+  }
+
+  if((set | clr) && gc->gc_mod_flags2 != NULL)
+    gc->gc_mod_flags2(w, set, clr);
+}
 
 
 /**

@@ -240,14 +240,7 @@ set_flags2_on_widget(glw_t *w, int set, int clr, glw_style_t *origin)
     return;
   }
 
-  set &= ~w->glw_flags2;
-  w->glw_flags2 |= set;
-
-  clr &= w->glw_flags2;
-  w->glw_flags2 &= ~clr;
-
-  if((set | clr) && gc->gc_mod_flags2 != NULL)
-    gc->gc_mod_flags2(w, set, clr);
+  glw_mod_flags2(w, set, clr);
 }
 
 

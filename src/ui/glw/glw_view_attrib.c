@@ -1011,14 +1011,8 @@ mod_flags2(glw_t *w, int set, int clr)
   if(gc->gc_mod_flags2_always != NULL)
     gc->gc_mod_flags2_always(w, set, clr, NULL);
 
-  set &= ~w->glw_flags2;
-  w->glw_flags2 |= set;
+  glw_mod_flags2(w, set, clr);
 
-  clr &= w->glw_flags2;
-  w->glw_flags2 &= ~clr;
-
-  if((set | clr) && gc->gc_mod_flags2 != NULL)
-    gc->gc_mod_flags2(w, set, clr);
   glw_need_refresh(w->glw_root, 0);
 }
 
@@ -1276,6 +1270,7 @@ static const token_attrib_t attribtab[] = {
   {"cursor",                mod_flag, GLW2_CURSOR,                 mod_flags2},
   {"navPositional",         mod_flag, GLW2_POSITIONAL_NAVIGATION,  mod_flags2},
   {"clickable",             mod_flag, GLW2_CLICKABLE,              mod_flags2},
+  {"fhpSpill",              mod_flag, GLW2_FHP_SPILL,              mod_flags2},
 
   {"fixedSize",       mod_flag, GLW_IMAGE_FIXED_SIZE,   mod_img_flags},
   {"bevelLeft",       mod_flag, GLW_IMAGE_BEVEL_LEFT,   mod_img_flags},

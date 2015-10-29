@@ -1117,7 +1117,7 @@ typedef struct glw {
 #define GLW_MARK                 0x8000
 
 #define GLW_CLIPPED              0x1000000
-
+#define GLW_FHP_SPILL_TO_CHILDS  0x4000000
 
 
 
@@ -1153,6 +1153,8 @@ typedef struct glw {
 #define GLW2_CURSOR                 0x800000
 #define GLW2_POSITIONAL_NAVIGATION  0x1000000
 #define GLW2_CLICKABLE              0x2000000 // Widget is clickable
+#define GLW2_FHP_SPILL              0x4000000
+
 
   float glw_alpha;                   /* Alpha set by user */
   float glw_sharpness;               /* 1-Blur set by user */
@@ -1515,6 +1517,8 @@ int glw_kill_screensaver(glw_root_t *gr);
 void glw_hide(glw_t *w);
 
 void glw_unhide(glw_t *w);
+
+void glw_mod_flags2(glw_t *w, int set, int clr);
 
 int glw_attrib_set_float3_clamped(float *dst, const float *src);
 
