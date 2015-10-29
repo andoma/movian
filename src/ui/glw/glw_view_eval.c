@@ -1146,6 +1146,7 @@ static uint8_t signal_to_eval_mask[GLW_SIGNAL_num] = {
 static __inline void
 run_dynamics(glw_t *w, glw_view_eval_context_t *ec, int mask)
 {
+  ec->mask = mask;
   ec->w = w;
   ec->gr = w->glw_root;
   ec->sublist = &w->glw_prop_subscriptions;
@@ -3888,20 +3889,27 @@ glwf_iir(glw_view_eval_context_t *ec, struct token *self,
   if(b == NULL || b->type != TOKEN_FLOAT)
     return glw_view_seterr(ec->ei, self, "Invalid second operand to iir()");
 
-  x = self->t_extra_float * 1000.;
 
-  if(springmode && f > self->t_extra_float)
+  if(ec->w->glw_flags & GLW_ACTIVE || !(ec->mask & GLW_VIEW_EVAL_ACTIVE)) {
+
+    x = self->t_extra_float * 1000.;
+
+    if(springmode && f > self->t_extra_float)
+      self->t_extra_float = f;
+    else
+      glw_lp(&self->t_extra_float, ec->w->glw_root, f, 1.0f / b->t_float);
+
+    y = self->t_extra_float * 1000.;
+    if(x != y)
+      ec->dynamic_eval |= GLW_VIEW_EVAL_LAYOUT | GLW_VIEW_EVAL_ACTIVE;
+    else
+      self->t_extra_float = f;
+
+  } else {
     self->t_extra_float = f;
-  else
-    glw_lp(&self->t_extra_float, ec->w->glw_root, f, 1.0f / b->t_float);
+  }
 
-  y = self->t_extra_float * 1000.;
   r = eval_alloc(self, ec, TOKEN_FLOAT);
-
-  if(x != y)
-    ec->dynamic_eval |= GLW_VIEW_EVAL_LAYOUT;
-  else
-    self->t_extra_float = f;
 
   r->t_float = self->t_extra_float;
   eval_push(ec, r);

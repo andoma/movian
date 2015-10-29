@@ -237,6 +237,7 @@ typedef struct glw_view_eval_context {
   uint16_t dynamic_eval;
   char debug;
   char passive_subscriptions;
+  char mask;
   uint8_t style_index_tally;
 
 } glw_view_eval_context_t;
