@@ -12,6 +12,6 @@ style(GridItemLabel, {
 });
 
 style(GridItemIcon, {
-  margin: 0.5em;
+  size: 3em;
 });
 

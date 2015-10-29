@@ -35,14 +35,14 @@ widget(container_z, {
         });
 
         widget(container_x, {
+          style: "MultioptSelection";
           filterConstraintX: true;
           widget(label, {
+            filterConstraintX: true;
             align: left;
             caption: $self.current.title;
             style: "ListItemValue";
           });
-
-          space(1);
 
           widget(icon, {
             style: "MultioptIcon";
@@ -54,15 +54,13 @@ widget(container_z, {
     // Second page, when item is expanded
 
     widget(container_x, {
-      style: "ListMultioptContainer";
+      style: ["ListItem", "ListMultioptContainer"];
       onEvent(cancel, { $view.page = 0; });
       onEvent(back,   { $view.page = 0; });
 
-      style: "ListItem";
       widget(icon, {
         style: "ListItemIcon";
       });
-
 
       widget(container_y, {
         style: "ListItemLabelContainer";
@@ -75,6 +73,7 @@ widget(container_z, {
       });
 
       widget(container_z, {
+        style: "MultioptSelection";
 
         widget(quad, {
           zoffset: -400;

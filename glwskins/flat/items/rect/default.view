@@ -8,25 +8,40 @@ widget(container_z, {
   focusable: true;
   onEvent(activate, navOpen($self.url, void, $self, $parent.model, void, $parent.url));
 
-  widget(container_y, {
-    style: "GridItem";
 
-    widget(image, {
-      source:
-      "skin://icons/" +
+
+  widget(container_y, {
+
+    widget(icon, {
+      filterConstraintY: true;
+      source: "skin://icons/" +
         translate($self.type,  "ic_help_48px",
 		  "server",    "server",
 		  "share",     "ic_folder_shared_48px",
 		  "store",     "ic_shopping_cart_48px",
-		  "directory", "ic_folder_48px"
+		  "directory", "ic_folder_48px",
+		  "dvd",       "ic_album_48px"
 	         ) + ".svg";
 
       style: "GridItemIcon";
     });
 
-    widget(label, {
-      caption: $self.metadata.title;
-      style: "GridItemLabel";
+
+
+    widget(container_z, {
+
+      widget(quad, {
+        color: 0;
+        alpha: 0.8;
+      });
+
+      widget(container_y, {
+        padding: [0.25em, 0.25em];
+        widget(label, {
+          caption: $self.metadata.title;
+          align: center;
+        });
+      });
     });
   });
 });
