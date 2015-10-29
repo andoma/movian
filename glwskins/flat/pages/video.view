@@ -65,7 +65,7 @@ onEvent(menu, {
 
 onEvent(menu, {
   $clone.osdpage = 1;
-  focus("osd-menu-loader");
+  focus("osd_main");
 }, $clone.showPlaydeck);
 
 onEvent(menu, {
