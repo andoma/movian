@@ -54,25 +54,7 @@ widget(container_y, {
                      focus("osd_settings_video");
                    });
 
-
-    widget(dummy, {
-      height: 1em;
-    });
-
-    SIDEBAR_ACTION(select($ui.sysinfo,
-                          _("Hide system info"),
-                          _("Show system info")),
-                   select($ui.sysinfo,
-                          "skin://icons/ic_info_48px.svg",
-                          "skin://icons/ic_info_outline_48px.svg"),
-                   {
-                     toggle($ui.sysinfo);
-                   });
-
-    SIDEBAR_ACTION(_("View log"),
-                   "skin://icons/ic_my_library_books_48px.svg",{
-                     $ui.logwindow = true;
-                   });
+#import "skin://menu/sidebar_common.view"
   });
 });
 
