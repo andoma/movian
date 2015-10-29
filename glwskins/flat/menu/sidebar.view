@@ -176,6 +176,25 @@ widget(container_x, {
                          event("Standby"),
                          !$core.runcontrol.canStandby);
 
+          SIDEBAR_INTEGER(_("Time until sleep"),
+                          void,
+                          0,
+                          $core.runcontrol.sleepTimeMax,
+                          $core.runcontrol.sleepTimeStep,
+                          $core.runcontrol.sleepTime,
+                          _("min"),
+                          !$core.runcontrol.sleepTimer);
+
+          SIDEBAR_ACTION(select($core.runcontrol.sleepTimer,
+                                _("Disable sleep timer"),
+                                _("Activate sleep timer")),
+                         select($core.runcontrol.sleepTimer,
+                                "skin://icons/ic_alarm_off_48px.svg",
+                                "skin://icons/ic_alarm_add_48px.svg"),
+                         {
+                           toggle($core.runcontrol.sleepTimer);
+                         }, !$core.runcontrol.canStandby);
+
           widget(dummy, {
             height: 1em;
           });

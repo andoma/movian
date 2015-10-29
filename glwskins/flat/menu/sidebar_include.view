@@ -24,10 +24,9 @@
   });
 }
 
-#define SIDEBAR_INTEGER() {
+#define SIDEBAR_INTEGER(CAPTION, ICON, MIN, MAX, STEP, VALUE, UNIT, HIDDEN) {
   widget(container_z, {
-
-    id: "narrow";
+    hidden: HIDDEN;
 
     height: 3em;
 
@@ -42,13 +41,13 @@
         });
 
         widget(label, {
-          caption: $self.metadata.title + ":";
+          caption: CAPTION + ":";
           style: ["ListItemLabel", "ListItemLabelContainer"];
         });
 
         widget(label, {
           style: "ListItemValue";
-          caption: fmt("%d %s", $self.value, $self.unit);
+          caption: fmt("%d %s", VALUE, UNIT);
         });
       });
 
@@ -75,10 +74,10 @@
 
             widget(slider_x, {
               focusable: true;
-              min: $self.min;
-              max: $self.max;
-              step: $self.step;
-              bind($self.value);
+              min: MIN;
+              max: MAX;
+              step: STEP;
+              bind(VALUE);
 
               widget(container_y, {
                 align: center;
