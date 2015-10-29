@@ -613,7 +613,7 @@ fa_buffered_open(const char *url, char *errbuf, size_t errsize, int flags,
     fap_release(fap);
     free(filename);
 
-    if(foe->foe_cancellable != NULL) {
+    if(foe != NULL && foe->foe_cancellable != NULL) {
       buffered_file_t *bf = (buffered_file_t *)fh;
       assert(bf->bf_inbound_cancellable == NULL);
       bf->bf_inbound_cancellable =
