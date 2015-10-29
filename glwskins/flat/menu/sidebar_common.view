@@ -35,6 +35,11 @@ widget(dummy, {
   height: 1em;
 });
 
+SIDEBAR_INTEGER(_("Master volume"),
+                "skin://icons/ic_speaker_48px.svg",
+                -75, 12, 1,
+                $core.audio.mastervolume, _("dB"));
+
 SIDEBAR_ACTION(select($ui.sysinfo,
                       _("Hide system info"),
                       _("Show system info")),

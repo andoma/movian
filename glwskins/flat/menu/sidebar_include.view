@@ -24,7 +24,7 @@
   });
 }
 
-#define SIDEBAR_INTEGER(CAPTION, ICON, MIN, MAX, STEP, VALUE, UNIT, HIDDEN) {
+#define SIDEBAR_INTEGER(CAPTION, ICON, MIN, MAX, STEP, VALUE, UNIT, HIDDEN=false) {
   widget(container_z, {
     hidden: HIDDEN;
 
