@@ -46,6 +46,8 @@ $self.directClose = 1;
 $self.close = $self.media.playstatus == "stop";
 $clone.osdpage = 0;
 
+$view.iconPad = select(isVoid($self.media.metadata.icon), 0, 8em);
+
 onEvent(back, {
   $clone.showPlaydeck = 0;
 }, $clone.showPlaydeck && !$clone.osdpage);
@@ -188,7 +190,7 @@ widget(container_z, {
         widget(container_x, {
           id: "playdeck";
           spacing: 1em;
-          padding: [3.5em, 0.1em];
+          padding: [3.5em + $view.iconPad, 0.1em, 3.6em, 0.1em];
 
           PLAYDECK_BUTTON("skin://icons/ic_skip_previous_48px.svg",
                           _("Previous"),
@@ -244,6 +246,7 @@ widget(container_z, {
   // Seekbar row
 
   widget(container_y, {
+    padding: [$view.iconPad, 0, 0, 0];
     hidden: !$view.showSeekBar;
     align: bottom;
     widget(container_z, {
@@ -412,5 +415,16 @@ widget(container_z, {
         });
       });
     });
+  });
+
+  widget(container_x, {
+    padding: 1em;
+    widget(image, {
+      alpha: iir($view.showSeekBar, 8);
+      align: bottom;
+      width: 6em;
+      source: $self.media.metadata.icon;
+    });
+    space(1);
   });
 });
