@@ -6757,6 +6757,73 @@ glwf_eventWithProp(glw_view_eval_context_t *ec, struct token *self,
 
 
 
+/**
+ *
+ */
+static int
+glwf_timeAgo(glw_view_eval_context_t *ec, struct token *self,
+             token_t **argv, unsigned int argc)
+{
+  token_t *a;
+
+  if((a = token_resolve(ec, argv[0])) == NULL)
+    return -1;
+
+  int seconds = token2int(ec, a);
+
+  rstr_t *fmt = NULL;
+  int v = 0;
+  if(seconds < 0) {
+    token_t *r = eval_alloc(self, ec, TOKEN_VOID);
+    eval_push(ec, r);
+    return 0;
+  }
+  if(seconds < 60) {
+    fmt = _("Just now");
+  } else if(seconds < 120) {
+    fmt = _("One minute ago");
+  } else if(seconds < 3600) {
+    fmt = _("%d minutes ago");
+    v = seconds / 60;
+  } else if(seconds < 7200) {
+    fmt = _("One hour ago");
+  } else if(seconds < 86400) {
+    fmt = _("%d hours ago");
+    v = seconds / 3600;
+  } else if(seconds < 86400 * 2) {
+    fmt = _("One day ago");
+  } else if(seconds < 86400 * 14) {
+    fmt = _("%d days ago");
+    v = seconds / 86400;
+  } else if(seconds < 86400 * 50) {
+    fmt = _("%d weeks ago");
+    v = seconds / 604800;
+  } else if(seconds < 86400 * 365) {
+    v = seconds / 2592000;
+    if(v == 1)
+      fmt = _("One month ago");
+    else
+      fmt = _("%d months ago");
+  } else {
+    fmt = _("%d years ago");
+    v = seconds / 31556736;
+  }
+
+  char tmp[64];
+  snprintf(tmp, sizeof(tmp), rstr_get(fmt), v);
+  rstr_release(fmt);
+
+  ec->dynamic_eval |= GLW_VIEW_EVAL_LAYOUT;
+  glw_root_t *gr = ec->w->glw_root;
+  glw_schedule_refresh(gr, gr->gr_frame_start + 30 * 1000000);
+  token_t *r = eval_alloc(self, ec, TOKEN_RSTRING);
+  r->t_rstring = rstr_alloc(tmp);
+  eval_push(ec, r);
+  return 0;
+}
+
+
+
 #ifndef NDEBUG
 /**
  *
@@ -6858,6 +6925,7 @@ static const token_func_t funcvec[] = {
   {"focus", 1, glwf_focus},
   {"toggle", 1, glwf_toggle},
   {"eventWithProp", 2, glwf_eventWithProp},
+  {"timeAgo", 1, glwf_timeAgo},
 #ifndef NDEBUG
   {"dumpDynamicStatements", 0, glwf_dumpdynamicstatements},
 #endif
