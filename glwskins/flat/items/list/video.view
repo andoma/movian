@@ -30,7 +30,7 @@ widget(container_z, {
         size: 1.2em;
         filterConstraintX: true;
         caption: $self.metadata.title;
-        color: !isNavFocused();
+        style: "ListItemLabel";
       });
       space(1);
 
@@ -41,15 +41,24 @@ widget(container_z, {
                             value2duration($self.restartpos),
                             value2duration($self.metadata.duration)),
                         value2duration($self.metadata.duration));
-        color: !isNavFocused();
+        style: "ListItemLabel";
       });
     });
 
     widget(container_y, {
       padding: [0,0.5em];
       widget(label, {
+        align: right;
         hidden: $self.playcount < 1;
 	caption: fmt(_pl("Seen %d times", "Seen %d time", $self.playcount), $self.playcount);
+        style: "ListItemLabelDimmed";
+      });
+
+      widget(label, {
+        align: right;
+        hidden: $self.playcount < 1;
+	caption: timeAgo($core.clock.unixtime - $self.lastplayed);
+        style: "ListItemLabelDimmed";
       });
 
     });
