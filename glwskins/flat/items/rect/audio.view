@@ -1,0 +1,44 @@
+#import "skin://theme.view"
+
+widget(container_z, {
+
+  focusable: true;
+  onEvent(activate, playTrackFromSource($self, $parent.model));
+
+  GridItemBevel();
+  GridItemHighlight();
+
+  widget(image, {
+    margin: [0.25em, 0];
+    style: "RectIcon";
+    source: $self.metadata.icon ?? "skin://icons/ic_audiotrack_48px.svg";
+  });
+
+
+  widget(image, {
+    alpha: 0.5 + iir(isNavFocused() || isHovered(), 4);
+    source: "skin://icons/ic_play_arrow_48px.svg";
+    color: 1 - iir(select(isPressed(), 1, 0), 4, true);
+  });
+
+
+  widget(container_y, {
+    align: bottom;
+
+    widget(container_z, {
+
+      widget(quad, {
+        color: 0;
+        alpha: 0.8;
+      });
+
+      widget(container_y, {
+        padding: [0.25em, 0.25em];
+        widget(label, {
+          caption: $self.metadata.title;
+          align: center;
+        });
+      });
+    });
+  });
+});
