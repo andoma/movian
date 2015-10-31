@@ -858,8 +858,7 @@ connman_init(void)
   TAILQ_INIT(&connman_services);
 
   netconf_model = prop_create_root(NULL);
-  prop_concat_t *pc = 
-    prop_concat_create(prop_create(netconf_model, "nodes"), 0);
+  prop_concat_t *pc = prop_concat_create(prop_create(netconf_model, "nodes"));
 
   net_state     = prop_create(netconf_model, "status");
   prop_set(netconf_model, "type", PROP_SET_STRING, "directory");
