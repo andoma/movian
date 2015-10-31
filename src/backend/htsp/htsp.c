@@ -29,6 +29,7 @@
 
 #include "main.h"
 #include "prop/prop_nodefilter.h"
+#include "prop/prop_concat.h"
 #include "networking/net.h"
 #include "navigator.h"
 #include "backend/backend.h"
@@ -107,12 +108,19 @@ typedef struct htsp_connection {
   atomic_t hc_seq_generator;
   atomic_t hc_sid_generator; /* Subscription ID */
 
+  prop_t *hc_server_name;
+  prop_t *hc_root_model;
+
   prop_t *hc_channels_model;
   prop_t *hc_channels_sorted;
   prop_t *hc_channels_nodes;
 
   prop_t *hc_tags_model;
   prop_t *hc_tags_nodes;
+
+  prop_t *hc_dvr_model;
+  prop_t *hc_dvr_sorted;
+  prop_t *hc_dvr_nodes;
 
   hts_mutex_t hc_rpc_mutex;
   hts_cond_t hc_rpc_cond;
@@ -364,7 +372,6 @@ htsp_login(htsp_connection_t *hc)
   const void *ch;
   size_t chlen;
   htsmsg_t *m;
-
   m = htsmsg_create_map();
   htsmsg_add_str(m, "clientname", APPNAMEUSER);
   htsmsg_add_u32(m, "htspversion", 1);
@@ -379,6 +386,8 @@ htsp_login(htsp_connection_t *hc)
     return -1;
   }
   memcpy(hc->hc_challenge, ch, 32);
+
+  prop_set_string(hc->hc_server_name, htsmsg_get_str(m, "servername"));
 
   htsmsg_release(m);
 
@@ -401,21 +410,33 @@ htsp_login(htsp_connection_t *hc)
  *
  */
 static void
+event_link_recstate(prop_t *event, prop_t *dvritem)
+{
+  prop_t *rs = prop_create_r(event, "recstate");
+  prop_t *dvritemrs = prop_create_r(dvritem, "recstate");
+
+  prop_link(dvritemrs, rs);
+  prop_ref_dec(rs);
+  prop_ref_dec(dvritemrs);
+}
+
+
+/**
+ *
+ */
+static void
 update_events(htsp_connection_t *hc, prop_t *metadata, int id, int next)
 {
-  int i;
-  htsmsg_t *m;
-  prop_t *events        = prop_create(metadata, "list");
+  prop_t *list          = prop_create(metadata, "list");
   prop_t *current_event = prop_create(metadata, "current");
   prop_t *next_event    = prop_create(metadata, "next");
   int linkstate = 0;
-  htsmsg_field_t *f;
 
   if(id == 0) {
 
     if(next == 0) {
       // No events at all
-      prop_destroy_childs(events);
+      prop_destroy_childs(list);
       return;
     }
 
@@ -423,42 +444,71 @@ update_events(htsp_connection_t *hc, prop_t *metadata, int id, int next)
     linkstate = 1;
   }
 
-  m = htsmsg_create_map();
+  htsmsg_t *m = htsmsg_create_map();
   htsmsg_add_str(m, "method", "getEvents");
   htsmsg_add_u32(m, "eventId", id);
   htsmsg_add_u32(m, "numFollowing", EPG_TAIL);
 
+  htsmsg_t *events = NULL;
+
   if((m = htsp_reqreply(hc, m)) != NULL) {
-
-    htsmsg_t *events = htsmsg_get_list(m, "events");
-    f = events ? TAILQ_FIRST(&events->hm_fields) : NULL;
-
-  } else {
-    f = NULL;
+    events = htsmsg_get_list(m, "events");
   }
 
+  prop_mark_childs(list);
 
-  for(i = 0; i < EPG_TAIL; i++) {
-    char buf[10];
-    uint32_t u32;
-    snprintf(buf, sizeof(buf), "%d", i);
+  if(events != NULL) {
+    htsmsg_field_t *f;
 
-    if(f != NULL && f->hmf_type != HMF_MAP)
-      f = NULL;
+    int cnt = 0;
+    HTSMSG_FOREACH(f, events)
+      cnt++;
 
-    if(f != NULL) {
+    prop_t **ordervec = alloca(sizeof(prop_t *) * cnt);
 
-      m = htsmsg_get_map_by_field(f);
+    cnt = 0;
+    HTSMSG_FOREACH(f, events) {
+      char eventId[32];
+      if(f->hmf_type != HMF_MAP)
+        continue;
 
-      prop_t *e = prop_create(events, buf);
-      prop_set_string(prop_create(e, "title"), htsmsg_get_str(m, "title"));
-      prop_set_string(prop_create(e, "description"),
-		      htsmsg_get_str(m, "description"));
-      if(!htsmsg_get_u32(m, "start", &u32))
-	prop_set_int(prop_create(e, "start"), u32);
+      htsmsg_t *map = htsmsg_get_map_by_field(f);
+      uint32_t u32;
 
-      if(!htsmsg_get_u32(m, "stop", &u32))
-	prop_set_int(prop_create(e, "stop"), u32);
+      if(htsmsg_get_u32(map, "eventId", &u32))
+        continue;
+
+      snprintf(eventId, sizeof(eventId), "%d", u32);
+      prop_t *e = prop_create(list, eventId);
+      prop_unmark(e);
+      ordervec[cnt++] = e;
+
+      prop_set(e, "type", PROP_SET_STRING, "event");
+      prop_t *m = prop_create(e, "metadata");
+      prop_set(m, "title", PROP_SET_STRING, htsmsg_get_str(map, "title"));
+      prop_set(m, "description", PROP_SET_STRING,
+               htsmsg_get_str(map, "description"));
+
+      prop_set(m, "subtitle", PROP_SET_STRING,
+               htsmsg_get_str(map, "subtitle"));
+
+      if(!htsmsg_get_u32(map, "start", &u32))
+        prop_set(m, "start", PROP_SET_INT, u32);
+
+      if(!htsmsg_get_u32(map, "stop", &u32))
+        prop_set(m, "stop", PROP_SET_INT, u32);
+
+
+      if(!htsmsg_get_u32(map, "dvrId", &u32)) {
+        char dvrpropname[32];
+        snprintf(dvrpropname, sizeof(dvrpropname), "%d", u32);
+        prop_t *dvritem = prop_create_r(hc->hc_dvr_nodes, dvrpropname);
+        event_link_recstate(e, dvritem);
+        prop_ref_dec(dvritem);
+      }
+
+      prop_set(m, "isCurrent", PROP_SET_INT, linkstate == 0);
+      prop_set(m, "isNext", PROP_SET_INT, linkstate == 1);
 
       switch(linkstate) {
       case 0:
@@ -469,21 +519,27 @@ update_events(htsp_connection_t *hc, prop_t *metadata, int id, int next)
 	break;
       }
       linkstate++;
-
-      f = TAILQ_NEXT(f, hmf_link);
-      continue;
     }
-    prop_destroy_by_name(events, buf);
 
-    switch(linkstate) {
-    case 0:
-      prop_unlink(current_event);
-      break;
-    case 1:
-      prop_unlink(next_event);
-      break;
+    prop_destroy_marked_childs(list);
+
+    if(cnt > 0) {
+      prop_move(ordervec[cnt - 1], NULL);
+      for(int i = cnt - 2; i >= 0; i--) {
+        prop_move(ordervec[i], ordervec[i + 1]);
+      }
     }
-    linkstate++;
+  } else {
+    prop_destroy_marked_childs(list);
+  }
+
+  switch(linkstate) {
+  case 0:
+    prop_unlink(current_event);
+    // FALLTHU
+  case 1:
+    prop_unlink(next_event);
+    break;
   }
 }
 
@@ -510,7 +566,11 @@ htsp_channel_get(htsp_connection_t *hc, int id, int create)
 
   snprintf(txt, sizeof(txt), "htsp://%s:%d/channel/%d",
 	   hc->hc_hostname, hc->hc_port, id);
-  prop_set_string(prop_create(ch->ch_root, "url"), txt);
+  prop_set(ch->ch_root, "url", PROP_SET_STRING, txt);
+
+  snprintf(txt, sizeof(txt), "htsp://%s:%d/events/%d",
+	   hc->hc_hostname, hc->hc_port, id);
+  prop_set(ch->ch_root, "eventUrl", PROP_SET_STRING, txt);
 
   prop_t *m = prop_create(p, "metadata");
   ch->ch_prop_icon = prop_create(m, "icon");
@@ -749,9 +809,13 @@ htsp_tagAddUpdate(htsp_connection_t *hc, htsmsg_t *m, int create)
 
     snprintf(url, sizeof(url), "htsp://%s:%d/channel/%" PRId64,
              hc->hc_hostname, hc->hc_port, f->hmf_s64);
+    prop_set(ch, "url", PROP_SET_STRING, url);
+
+    snprintf(url, sizeof(url), "htsp://%s:%d/events/%" PRId64,
+             hc->hc_hostname, hc->hc_port, f->hmf_s64);
+    prop_set(ch, "eventUrl", PROP_SET_STRING, url);
 
     prop_set(ch, "type", PROP_SET_STRING, "tvchannel");
-    prop_set(ch, "url", PROP_SET_STRING, url);
 
     prop_t *orig = prop_create(hc->hc_channels_nodes, txt);
 
@@ -817,6 +881,111 @@ tag_delete_all(htsp_connection_t *hc)
 
 /**
  *
+ */
+static void
+dvr_entry_create(htsp_connection_t *hc, htsmsg_t *m, int link_to_event)
+{
+  uint32_t u32;
+  int64_t s64;
+
+  uint32_t channelId;
+  int64_t id;
+  if(htsmsg_get_s64(m, "id", &id))
+    return;
+  char idstr[64];
+  char txt[1024];
+
+  snprintf(idstr, sizeof(idstr), "%"PRId64, id);
+
+  prop_t *item = prop_create_r(hc->hc_dvr_nodes, idstr);
+
+  snprintf(txt, sizeof(txt), "htsp://%s:%d/dvr/%s",
+	   hc->hc_hostname, hc->hc_port, idstr);
+  prop_set(item, "url", PROP_SET_STRING, txt);
+
+  prop_set(item, "type", PROP_SET_STRING, "event");
+
+  prop_t *rs = prop_create_r(item, "recstate");
+  prop_set(rs, "state", PROP_SET_STRING, htsmsg_get_str(m, "state"));
+
+  if(!htsmsg_get_s64(m, "dataSize", &s64))
+    prop_set(rs, "dataSize", PROP_SET_FLOAT, (float)s64);
+  else
+    prop_set(rs, "dataSize", PROP_SET_VOID);
+
+  prop_t *meta = prop_create_r(item, "metadata");
+
+  prop_set(meta, "title", PROP_SET_STRING, htsmsg_get_str(m, "title"));
+
+  prop_set(meta, "subtitle", PROP_SET_STRING, htsmsg_get_str(m, "subtitle"));
+
+  if(!htsmsg_get_u32(m, "start", &u32))
+    prop_set(meta, "start", PROP_SET_INT, u32);
+
+  if(!htsmsg_get_u32(m, "stop", &u32))
+    prop_set(meta, "stop", PROP_SET_INT, u32);
+
+  if(link_to_event &&
+     !htsmsg_get_s64(m, "eventId", &id) &&
+     !htsmsg_get_u32(m, "channel", &channelId)) {
+    snprintf(idstr, sizeof(idstr), "%"PRId64, id);
+
+    hts_mutex_lock(&hc->hc_meta_mutex);
+    htsp_channel_t *ch;
+    LIST_FOREACH(ch, &hc->hc_channels, ch_link) {
+      if(ch->ch_id == channelId) {
+        prop_t *event = prop_find(ch->ch_prop_events, "list", idstr, NULL);
+        if(event != NULL) {
+          event_link_recstate(event, item);
+        }
+        break;
+      }
+    }
+    hts_mutex_unlock(&hc->hc_meta_mutex);
+  }
+
+  prop_ref_dec(meta);
+  prop_ref_dec(item);
+  prop_ref_dec(rs);
+}
+
+
+/**
+ *
+ */
+static void
+htsp_dvrEntryUpdate(htsp_connection_t *hc, htsmsg_t *m)
+{
+  dvr_entry_create(hc, m, 0);
+}
+/**
+ *
+ */
+static void
+htsp_dvrEntryAdd(htsp_connection_t *hc, htsmsg_t *m)
+{
+  dvr_entry_create(hc, m, 1);
+}
+
+
+/**
+ *
+ */
+static void
+htsp_dvrEntryDelete(htsp_connection_t *hc, htsmsg_t *m)
+{
+  int64_t id;
+  if(htsmsg_get_s64(m, "id", &id))
+    return;
+  char idstr[64];
+  snprintf(idstr, sizeof(idstr), "%"PRId64, id);
+
+  prop_destroy_by_name(hc->hc_dvr_nodes, idstr);
+}
+
+
+/**
+ *
  * We keep another thread for dispatching unsolicited (asynchronous)
  * messages. Reason is that these messages may in turn cause additional
  * inqueries to the HTSP server and we don't want to block the main input
@@ -874,15 +1043,22 @@ htsp_worker_thread(void *aux)
 	htsp_queueStatus(hc, m);
       else if(!strcmp(method, "signalStatus"))
 	htsp_signalStatus(hc, m);
+      else if(!strcmp(method, "dvrEntryAdd"))
+	htsp_dvrEntryAdd(hc, m);
+      else if(!strcmp(method, "dvrEntryUpdate"))
+	htsp_dvrEntryUpdate(hc, m);
+      else if(!strcmp(method, "dvrEntryDelete"))
+	htsp_dvrEntryDelete(hc, m);
       else if(!strcmp(method, "timeshiftStatus")) {
 	/* nop for us */
       } else if(!strcmp(method, "initialSyncCompleted")) {
 	/* nop for us */
-      } else
+      } else {
 	TRACE(TRACE_INFO, "HTSP", "Unknown async method '%s' received",
-		method);
+              method);
+        htsmsg_print("HTSP INPUT", m);
+      }
     }
-
     htsmsg_release(m);
   }
   return NULL;
@@ -987,7 +1163,6 @@ htsp_thread(void *aux)
   while(1) {
 
     m = htsmsg_create_map();
-
     htsmsg_add_str(m, "method", "enableAsyncMetadata");
     m = htsp_reqreply(hc, m);
     if(m == NULL) {
@@ -1039,6 +1214,51 @@ htsp_thread(void *aux)
 }
 
 
+/**
+ *
+ */
+static void
+make_root_model(htsp_connection_t *hc)
+{
+  char txt[256];
+  hc->hc_root_model = prop_create_root(NULL);
+  prop_t *meta  = prop_create_r(hc->hc_root_model, "metadata");
+
+  prop_set(hc->hc_root_model, "type", PROP_SET_STRING, "directory");
+  prop_link(hc->hc_server_name, prop_create(meta, "title"));
+
+  prop_t *nodes = prop_create_r(hc->hc_root_model, "nodes");
+  prop_concat_t *pc = prop_concat_create(nodes);
+  prop_concat_add_source(pc, hc->hc_tags_nodes, NULL);
+
+  prop_t *extranodes = prop_create_r(hc->hc_root_model, "extranodes");
+
+  prop_t *recording = prop_create_r(extranodes, NULL);
+  prop_set(recording, "type", PROP_SET_STRING, "directory");
+  snprintf(txt, sizeof(txt), "htsp://%s:%d/recordings",
+	   hc->hc_hostname, hc->hc_port);
+  prop_set(recording, "url", PROP_SET_STRING, txt);
+
+  prop_t *tmp = prop_create_multi(recording, "metadata", "title", NULL);
+  prop_link(_p("Recorded shows"), tmp);
+  prop_ref_dec(tmp);
+  prop_ref_dec(recording);
+
+  prop_t *d = prop_create_root(NULL);
+  tmp = prop_create_multi(d, "metadata", "title", NULL);
+  prop_link(_p("Recorder"), tmp);
+  prop_set(d, "type", PROP_SET_STRING, "separator");
+  prop_ref_dec(tmp);
+  prop_concat_add_source(pc, extranodes, d);
+
+  prop_concat_release(pc);
+
+
+  prop_ref_dec(nodes);
+  prop_ref_dec(meta);
+}
+
+
 
 /**
  *
@@ -1050,8 +1270,9 @@ htsp_connection_find(const char *url, char *path, size_t pathlen,
   htsp_connection_t *hc;
   int port;
   char hostname[HOSTNAME_MAX];
-  prop_t *meta, *nodes;
+  prop_t *meta;
   tcpcon_t *tc;
+  struct prop_nf *nf;
 
   url_split(NULL, 0, NULL, 0, hostname, sizeof(hostname), &port,
 	    path, pathlen, url);
@@ -1083,28 +1304,45 @@ htsp_connection_find(const char *url, char *path, size_t pathlen,
 
   hc = calloc(1, sizeof(htsp_connection_t));
 
+  hc->hc_server_name = prop_create_root(NULL);
+
+  // ---------
+
   hc->hc_tags_model = prop_create_root(NULL);
   hc->hc_tags_nodes  = prop_create(hc->hc_tags_model, "nodes");
   prop_set_string(prop_create(hc->hc_tags_model, "type"), "directory");
   meta = prop_create(hc->hc_tags_model, "metadata");
   prop_set_string(prop_create(meta, "title"), "Channel groups");
 
+
+  // ---------
+
+  hc->hc_dvr_nodes  = prop_create_root(NULL);
+  hc->hc_dvr_model  = prop_create_root(NULL);
+  hc->hc_dvr_sorted = prop_create(hc->hc_dvr_model, "nodes");
+
+  nf = prop_nf_create(hc->hc_dvr_sorted,
+                      hc->hc_dvr_nodes,
+                      NULL,
+                      PROP_NF_AUTODESTROY);
+
+  prop_nf_sort(nf, "node.metadata.start", 1, 0, NULL, 0);
+  prop_nf_release(nf);
+
+  // ---------
+
   hc->hc_channels_nodes = prop_create_root(NULL);
 
-  nodes = prop_create(hc->hc_tags_model, "nodes");
-
-  hc->hc_channels_model = prop_create(nodes, NULL);
+  hc->hc_channels_model = prop_create_root(NULL);
   hc->hc_channels_sorted = prop_create(hc->hc_channels_model, "nodes");
 
-  struct prop_nf *nf =
-    prop_nf_create(hc->hc_channels_sorted,
-                   hc->hc_channels_nodes,
-                   NULL,
-                   PROP_NF_AUTODESTROY);
+  nf = prop_nf_create(hc->hc_channels_sorted,
+                      hc->hc_channels_nodes,
+                      NULL,
+                      PROP_NF_AUTODESTROY);
 
   prop_nf_sort(nf, "node.metadata.channelNumber", 0, 0, NULL, 0);
   prop_nf_release(nf);
-
 
   prop_set_string(prop_create(hc->hc_channels_model, "type"), "directory");
   meta = prop_create(hc->hc_channels_model, "metadata");
@@ -1138,6 +1376,9 @@ htsp_connection_find(const char *url, char *path, size_t pathlen,
 
   LIST_INSERT_HEAD(&htsp_connections, hc, hc_global_link);
 
+  // ---------
+  make_root_model(hc);
+
   htsp_login(hc);
 
   hts_thread_create_detached("HTSP main", htsp_thread, hc, THREAD_PRIO_DEMUXER);
@@ -1153,26 +1394,26 @@ htsp_connection_find(const char *url, char *path, size_t pathlen,
  *
  */
 static void
-make_model(prop_t *parent, const char *title, prop_t *nodes,
+make_model(prop_t *parent, prop_t *title, prop_t *nodes,
 	   const char *contents)
 {
   prop_t *model = prop_create(parent, "model");
   prop_t *meta;
   struct prop_nf *pnf;
 
-  prop_set_string(prop_create(model, "type"), "directory");
+  prop_set(model, "type", PROP_SET_STRING, "directory");
 
   pnf = prop_nf_create(prop_create(model, "nodes"),
 		       nodes,
 		       prop_create(model, "filter"),
 		       PROP_NF_AUTODESTROY);
-  prop_set_int(prop_create(model, "canFilter"), 1);
-  prop_set_string(prop_create(model, "contents"), contents);
+  prop_set(model, "canFilter", PROP_SET_INT, 1);
+  prop_set(model, "contents", PROP_SET_STRING, contents);
 
   prop_nf_release(pnf);
 
   meta = prop_create(model, "metadata");
-  prop_set_string(prop_create(meta, "title"), title);
+  prop_link(title, prop_create(meta, "title"));
 }
 
 
@@ -1186,20 +1427,70 @@ make_model2(prop_t *parent, prop_t *sourcemodel, const char *contents)
   prop_t *meta;
   struct prop_nf *pnf;
 
-  prop_set_string(prop_create(model, "type"), "directory");
+  prop_set(model, "type", PROP_SET_STRING, "directory");
 
   pnf = prop_nf_create(prop_create(model, "nodes"),
 		       prop_create(sourcemodel, "nodes"),
 		       prop_create(model, "filter"),
 		       PROP_NF_AUTODESTROY);
-  prop_set_int(prop_create(model, "canFilter"), 1);
-  prop_set_string(prop_create(model, "contents"), contents);
+  prop_set(model, "canFilter", PROP_SET_INT, 1);
+  prop_set(model, "contents", PROP_SET_STRING, contents);
 
   prop_nf_release(pnf);
 
   meta = prop_create(model, "metadata");
   prop_link(prop_create(prop_create(sourcemodel, "metadata"), "title"),
 	    prop_create(meta, "title"));
+}
+
+
+
+
+/**
+ *
+ */
+static int
+make_event_model(prop_t *page, htsp_connection_t *hc, const char *chidstr)
+{
+  htsp_channel_t *ch;
+
+  hts_mutex_lock(&hc->hc_meta_mutex);
+
+  if((ch = htsp_channel_get(hc, atoi(chidstr), 0)) == NULL) {
+    hts_mutex_unlock(&hc->hc_meta_mutex);
+    nav_open_errorf(page, _("No such channel"));
+    return 1;
+  }
+
+  prop_t *model = prop_create_r(page, "model");
+  prop_t *metadata = prop_create_r(model, "metadata");
+  prop_t *sourcelist = prop_create_r(ch->ch_prop_events, "list");
+  prop_t *sourcemeta = prop_create_r(ch->ch_root, "metadata");
+  struct prop_nf *pnf;
+
+  prop_set(model, "type", PROP_SET_STRING, "directory");
+
+  pnf = prop_nf_create(prop_create(model, "nodes"),
+                       sourcelist,
+		       prop_create(model, "filter"),
+		       PROP_NF_AUTODESTROY);
+
+  prop_set(model, "canFilter", PROP_SET_INT, 1);
+  prop_set(model, "contents", PROP_SET_STRING, "events");
+
+  prop_nf_release(pnf);
+
+  prop_link(prop_create(sourcemeta, "title"), prop_create(metadata, "title"));
+
+  prop_link(prop_create(sourcemeta, "icon"),  prop_create(metadata, "icon"));
+
+  hts_mutex_unlock(&hc->hc_meta_mutex);
+
+  prop_ref_dec(sourcemeta);
+  prop_ref_dec(sourcelist);
+  prop_ref_dec(model);
+  prop_ref_dec(metadata);
+  return 0;
 }
 
 
@@ -1229,10 +1520,19 @@ be_htsp_open(prop_t *page, const char *url, int sync)
     return backend_open_video(page, url, sync);
   }
 
+  if(!strncmp(path, "/events/", strlen("/events/"))) {
+    usage_page_open(sync, "HTSP Events");
+    return make_event_model(page, hc, path + strlen("/events/"));
+  }
+
   if(!strcmp(path, "/channels")) {
     usage_page_open(sync, "HTSP Channels");
 
-    make_model(page, "Channels", hc->hc_channels_sorted, "tvchannels");
+    make_model(page, _p("Channels"), hc->hc_channels_sorted, "tvchannels");
+
+  } else if(!strcmp(path, "/recordings")) {
+    usage_page_open(sync, "HTSP Recordings");
+    make_model(page, _p("Recorded shows"), hc->hc_dvr_sorted, NULL);
 
   } else if(!strncmp(path, "/tag/", strlen("/tag/"))) {
     usage_page_open(sync, "HTSP Tag");
@@ -1241,9 +1541,9 @@ be_htsp_open(prop_t *page, const char *url, int sync)
     make_model2(page, model, "tvchannels");
 
   } else if(!strcmp(path, "")) {
-    usage_page_open(sync, "HTSP Tags");
+    usage_page_open(sync, "HTSP Root");
 
-    make_model(page, "Tags", hc->hc_tags_nodes, NULL);
+    prop_link(hc->hc_root_model, prop_create(page, "model"));
 
   } else {
     nav_open_errorf(page, _("Invalid HTSP URL"));
@@ -1769,7 +2069,7 @@ static event_t *
 be_htsp_playdvr(const char *url, media_pipe_t *mp,
                 char *errbuf, size_t errlen,
                 video_queue_t *vq, htsp_connection_t *hc,
-                const char *remain, const video_args_t *va)
+                const char *remain, const video_args_t *va0)
 {
   char filename[64];
 
@@ -1791,7 +2091,17 @@ be_htsp_playdvr(const char *url, media_pipe_t *mp,
   htsmsg_get_s32(m, "id", &hf->hf_id);
   hf->hf_hc = hc;
 
-  return be_file_playvideo_fh(url, mp, errbuf, errlen, vq, &hf->h, va);
+  video_args_t va = *va0;
+  va.flags |= BACKEND_VIDEO_NO_SUBTITLE_SCAN;
+
+  prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 1);
+
+  mp_set_url(mp, va0->canonical_url, va0->parent_url, va0->parent_title);
+
+  if(!(va.flags & BACKEND_VIDEO_NO_AUDIO))
+    mp_become_primary(mp);
+
+  return be_file_playvideo_fh(url, mp, errbuf, errlen, vq, &hf->h, &va);
 }
 
 

@@ -35,7 +35,7 @@ multiopt($view.path,
 		   "album",      vectorize($core.glw.views.standard.album),
 		   "albums",     vectorize($core.glw.views.standard.albums),
 		   "artist",     vectorize($core.glw.views.standard.artist),
-		   "tvchannels", vectorize($core.glw.views.standard.tvchannels),
+//		   "tvchannels", vectorize($core.glw.views.standard.tvchannels),
 		   "images",     vectorize($core.glw.views.standard.images),
 		   "movies",     vectorize($core.glw.views.standard.movies)
 		    ),
@@ -44,7 +44,7 @@ multiopt($view.path,
 	 translate($self.model.contents, void,
 		   "album",      makeUri(_("Album"),      "album.view"),
 		   "artist",     makeUri(_("Artist"),     "artist.view"),
-		   "tvchannels", makeUri(_("TV Channels"), "tvchannels.view"),
+//		   "tvchannels", makeUri(_("TV Channels"), "tvchannels.view"),
 		   "images",     makeUri(_("Grid"),     "grid.view"),
 		   "searchresults", makeUri(_("Search results"), "searchresults.view")),
 
@@ -57,6 +57,7 @@ multiopt($view.path,
 $view.overlay = translate($clone.itemMenu,
                           select($clone.showSidebar, "sidebar", void),
                           "video", "fullscreen",
+                          "tvchannel", "fullscreen",
                           "plugin", "fullscreen");
 
 

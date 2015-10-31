@@ -1,0 +1,102 @@
+#import "skin://theme.view"
+
+
+widget(container_z, {
+
+  height: 5em;
+
+  ListItemBevel();
+  ListItemHighlight();
+
+  onEvent(activate, navOpen($self.url, void, $self, $parent.model, void, $parent.url));
+
+  onEvent(itemMenu, navOpen($self.eventUrl));
+
+  focusable: true;
+
+  widget(container_x, {
+    style: "ListItem";
+
+    widget(deck, {
+      width: 6em;
+
+      widget(label, {
+        align: center;
+        caption: $self.metadata.title;
+      });
+
+      widget(image, {
+        source: $self.metadata.icon;
+      });
+
+      page: select(isVoid($self.metadata.icon), 0, 1);
+    });
+
+
+    widget(container_y, {
+      filterConstraintX: true;
+      padding: [0,0.5em];
+      align: top;
+
+
+      widget(table, {
+        filterConstraintY: true;
+
+        widget(container_y, {
+
+          // Current event
+          widget(container_x, {
+            hidden: isVoid($self.metadata.events.current.metadata.start);
+            tableMode: true;
+            spacing: 1em;
+            widget(label, {
+              caption: strftime($self.metadata.events.current.metadata.start, "%H:%M");
+              style: "ListItemLabel";
+            });
+
+            widget(label, {
+              caption: $self.metadata.events.current.metadata.title;
+              style: "ListItemLabel";
+            });
+          });
+
+          widget(container_x, {
+            hidden: isVoid($self.metadata.events.current.metadata.start);
+            padding: [0.2em,0,0,0.5em];
+            widget(container_z, {
+              width: 6em;
+              widget(quad, {
+                color: 0;
+                alpha: 0.8;
+              });
+
+              widget(bar, {
+                height: 0.3em;
+                color1: 1;
+                color2: 1;
+	        fill: ($core.clock.unixtime - $self.metadata.events.current.metadata.start) /
+                  ($self.metadata.events.current.metadata.stop - $self.metadata.events.current.metadata.start);
+              });
+            });
+          });
+
+          // Next event
+          widget(container_x, {
+            tableMode: true;
+            spacing: 1em;
+
+            widget(label, {
+              caption: strftime($self.metadata.events.next.metadata.start, "%H:%M");
+              style: "ListItemLabelDimmed";
+            });
+
+            widget(label, {
+              caption: $self.metadata.events.next.metadata.title;
+              style: "ListItemLabelDimmed";
+            });
+          });
+        });
+      });
+    });
+  });
+});

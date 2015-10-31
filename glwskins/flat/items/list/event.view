@@ -1,0 +1,94 @@
+#import "skin://theme.view"
+
+widget(container_z, {
+  height: 4em;
+  ListItemBevel();
+  ListItemHighlight();
+  focusable: true;
+
+  onEvent(activate, navOpen($self.url, void, $self, $parent.model, void, $parent.url));
+
+
+  widget(container_x, {
+    style: "ListItem";
+
+    widget(container_y, {
+      padding: [0, 0.5em,0,0.3em];
+      spacing: 0.2em;
+      width: 6em;
+
+      widget(label, {
+        align: right;
+        caption: fmt("%s - %s",
+                     strftime($self.metadata.start, "%H:%M"),
+                     strftime($self.metadata.stop, "%H:%M"));
+        size: 1.2em;
+        style: "ListItemLabel";
+      });
+
+
+      widget(container_z, {
+        hidden: !$self.metadata.isCurrent;
+        widget(quad, {
+          color: 0;
+          alpha: 0.8;
+        });
+
+        widget(bar, {
+          height: 0.3em;
+          color1: 1;
+          color2: 1;
+	  fill: ($core.clock.unixtime - $self.metadata.start) /
+            ($self.metadata.stop - $self.metadata.start);
+        });
+      });
+      space(1);
+
+      widget(container_x, {
+        spacing: 0.5em;
+        widget(icon, {
+
+          source: translate($self.recstate.state, "",
+                            "completed", "skin://icons/ic_check_48px.svg",
+                            "scheduled", "skin://icons/ic_alarm_48px.svg",
+                            "missed", "skin://icons/ic_error_48px.svg",
+                            "recording", "skin://icons/dot.png");
+
+          color:  translate($self.recstate.state, 1,
+                            "missed", [1,0.3,0.3],
+                            "recording", [1,0.3,0.3]);
+        });
+        space(1);
+        widget(label, {
+          size: 0.8em;
+          caption: value2size($self.recstate.dataSize);
+          style: "ListItemLabelDimmed";
+        });
+      });
+    });
+
+    widget(container_y, {
+      filterConstraintX: true;
+      padding: [0, 0.5em, 0, 0.3em];
+      widget(container_x, {
+        spacing: 1em;
+
+        widget(label, {
+          size: 1.2em;
+          filterConstraintX: true;
+          caption: $self.metadata.title;
+          style: "ListItemLabel";
+        });
+
+      });
+      space(1);
+      widget(label, {
+        maxlines: 2;
+        filterConstraintX: true;
+        caption: $self.metadata.subtitle;
+        style: "ListItemLabelDimmed";
+      });
+
+    });
+  });
+});
