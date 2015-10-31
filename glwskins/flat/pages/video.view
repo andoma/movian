@@ -246,7 +246,6 @@ widget(container_z, {
   // Seekbar row
 
   widget(container_y, {
-    padding: [$view.iconPad, 0, 0, 0];
     hidden: !$view.showSeekBar;
     align: bottom;
     widget(container_z, {
@@ -259,8 +258,7 @@ widget(container_z, {
 
       widget(container_x, {
         spacing: 0.5em;
-        padding: [1em, 0];
-
+        padding: [$view.iconPad + 1em, 0];
         widget(icon, {
           source: "skin://icons/ic_pause_48px.svg";
           alpha: iir(select($core.media.current.playstatus == "pause", 1, 0), 4);
