@@ -866,7 +866,7 @@ subtitles_init(void)
                                _p("Generic settings for video subtitles"),
                                "settings:subtitles");
 
-  prop_concat_t *pc = prop_concat_create(prop_create(s, "nodes"), 0);
+  prop_concat_t *pc = prop_concat_create(prop_create(s, "nodes"));
 
   subtitles_init_providers(pc);
   subtitles_init_settings(pc);

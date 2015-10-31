@@ -1223,7 +1223,7 @@ settings_init(void)
 
   prop_concat_t *pc;
 
-  pc = prop_concat_create(prop_create(settings_model, "nodes"), 0);
+  pc = prop_concat_create(prop_create(settings_model, "nodes"));
 
   prop_concat_add_source(pc, s1, NULL);
 
@@ -1278,7 +1278,7 @@ settings_init(void)
 		     "settings:lookandfeel");
 
   gconf.settings_look_and_feel =
-    prop_concat_create(prop_create(lnf, "nodes"), 0);
+    prop_concat_create(prop_create(lnf, "nodes"));
 
   // Developer settings, only available via its URI
 

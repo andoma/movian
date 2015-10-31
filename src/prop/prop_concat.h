@@ -22,8 +22,8 @@
 
 typedef struct prop_concat prop_concat_t;
 
-#define PROP_CONCAT_TAKE_DST_OWNERSHIP 0x1
-
-prop_concat_t *prop_concat_create(prop_t *dst, int flags);
+prop_concat_t *prop_concat_create(prop_t *dst);
 
 void prop_concat_add_source(prop_concat_t *pc, prop_t *src, prop_t *header);
+
+void prop_concat_release(prop_concat_t *pc);

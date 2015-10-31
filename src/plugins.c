@@ -837,7 +837,7 @@ plugin_setup_start_model(void)
   prop_link(_p("Plugins"),
 	    prop_create(prop_create(plugin_start_model, "metadata"), "title"));
 
-  pc = prop_concat_create(prop_create(plugin_start_model, "nodes"), 0);
+  pc = prop_concat_create(prop_create(plugin_start_model, "nodes"));
 
   // Top items
 
@@ -884,7 +884,7 @@ plugin_setup_repo_model(void)
   prop_link(_p("Available plugins"),
 	    prop_create(prop_create(model, "metadata"), "title"));
 
-  pc = prop_concat_create(prop_create(model, "nodes"), 0);
+  pc = prop_concat_create(prop_create(model, "nodes"));
 
   // Create filters per category
 

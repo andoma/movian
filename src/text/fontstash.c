@@ -340,7 +340,7 @@ fontstash_init(void)
 
   fontstash_browse_nodes = prop_create_root(NULL);
 
-  pc = prop_concat_create(fontstash_browse_nodes, 0);
+  pc = prop_concat_create(fontstash_browse_nodes);
 
   prop_t *top = prop_create_root(NULL);
   settings_create_action(top, _p("Reset main font to default"),

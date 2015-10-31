@@ -350,7 +350,7 @@ metadata_sources_init(void)
 		       _p("Metadata configuration and provider settings"),
 		       "settings:metadata");
 
-  pc = prop_concat_create(prop_create(s, "nodes"), 0);
+  pc = prop_concat_create(prop_create(s, "nodes"));
 
   add_provider_class(pc, METADATA_TYPE_VIDEO, _p("Providers for Video"));
   add_provider_class(pc, METADATA_TYPE_MUSIC, _p("Providers for Music"));
