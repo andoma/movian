@@ -1937,7 +1937,8 @@ prop_create_multi(prop_t *p, ...)
 
   hts_mutex_lock(&prop_mutex);
 
-  if(p->hp_type != PROP_ZOMBIE) {
+  if(p->hp_type == PROP_ZOMBIE) {
+    p = prop_ref_inc(p);
     hts_mutex_unlock(&prop_mutex);
     return p;
   }
