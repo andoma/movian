@@ -8,6 +8,7 @@ widget(container_z, {
 
   focusable: true;
   onEvent(activate, navOpen($self.url, void, $self, $parent.model, void, $parent.url));
+  onEvent(itemMenu, eventWithProp(defaultInfo, $self));
 
   widget(container_x, {
     style: "ListItem";

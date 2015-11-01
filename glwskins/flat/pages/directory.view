@@ -9,6 +9,11 @@ onEvent(pluginInfo, {
   $clone.itemMenu = "plugin";
 });
 
+onEvent(defaultInfo, {
+  $clone.itemData <- $event;
+  $clone.itemMenu = "default";
+});
+
 
 onEvent(itemMenu, { $clone.itemMenu = void; }, $clone.itemMenu);
 onEvent(back,     { $clone.itemMenu = void; }, $clone.itemMenu);
@@ -44,7 +49,6 @@ multiopt($view.path,
 	 translate($self.model.contents, void,
 		   "album",      makeUri(_("Album"),      "album.view"),
 		   "artist",     makeUri(_("Artist"),     "artist.view"),
-//		   "tvchannels", makeUri(_("TV Channels"), "tvchannels.view"),
 		   "images",     makeUri(_("Grid"),     "grid.view"),
 		   "grid",       makeUri(_("Grid"),     "grid.view"),
 		   "searchresults", makeUri(_("Search results"), "searchresults.view")),
@@ -58,7 +62,7 @@ multiopt($view.path,
 $view.overlay = translate($clone.itemMenu,
                           select($clone.showSidebar, "sidebar", void),
                           "video", "fullscreen",
-                          "tvchannel", "fullscreen",
+                          "default", "popup",
                           "plugin", "fullscreen");
 
 
@@ -77,6 +81,7 @@ widget(container_z, {
 
         alpha: iir(translate($view.overlay, 1,
                              "sidebar", 0.3,
+                             "popup", 0.3,
                              "fullscreen", 0), 4);
 
         onEvent(right, {

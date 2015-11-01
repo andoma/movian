@@ -1,40 +1,35 @@
-#import "skin://styles/style_list.view"
+#import "skin://theme.view"
 
-#define ITEM(CAPTION, EVENT, ICON=void, ENABLED=true) {
-  widget(container_x, {
-    hidden: !ENABLED;
-    style: "ListItem";
-    focusable: true;
+widget(popup, {
 
-    onEvent(activate, EVENT);
+  clickable: true;
+  onEvent(activate, {
+    $clone.itemMenu = void;
+  }, true, false, true);
 
-    widget(icon, {
-      style: "ListItemIcon";
-      source: ICON;
+
+  widget(container_z, {
+    clickable: true;
+    widget(quad, {
+      alpha: 0.7;
+      color: 0;
     });
+    widget(container_y, {
 
-    widget(label, {
-      caption: CAPTION;
-      style: "ActionLabel";
+      widget(container_z, {
+        ListItemHighlight();
+        focusable: true;
+
+        onEvent(activate, {
+        });
+
+        widget(container_x, {
+          padding:[0.5em, 0];
+          widget(label, {
+            caption: "Bookmark";
+          });
+        });
+      });
     });
   });
-}
-
-
-
-
-
-
-
-widget(container_y, {
-  space(1);
-  widget(container_x, {
-    filterConstraintY: true;
-    space(1);
-    widget(list_y, {
-      filterConstraintX: true;
-    });
-    space(1);
-  });
-  space(1);
 });
