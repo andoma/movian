@@ -92,7 +92,9 @@ widget(container_z, {
           widget(loader, {
             autohide: true;
             source: translate($core.media.current.type, "",
-                              "tracks", "playdecks/tracks.view");
+                              "tracks", "playdecks/tracks.view",
+                              "radio", "playdecks/radio.view"
+                             );
           });
 
           cloner($core.notifications.nodes, container_z, {
