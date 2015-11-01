@@ -16,7 +16,7 @@ widget(container_z, {
 
 
   widget(image, {
-    alpha: 0.5 + iir(isNavFocused() || isHovered(), 4);
+    alpha: iir(isNavFocused() || isHovered(), 4);
     source: "skin://icons/ic_play_arrow_48px.svg";
     color: 1 - iir(select(isPressed(), 1, 0), 4, true);
   });
