@@ -516,14 +516,6 @@ typedef struct glw_class {
 
 
   /**
-   * Custom code for iterating of a widget's children when delivering
-   * pointer events
-   */ 
-  int (*gc_gpe_iterator)(struct glw_root *gr, struct glw *r, 
-			 glw_pointer_event_t *gpe, struct glw **hp,
-			 Vec3 p, Vec3 dir);
-
-  /**
    * Get a text representing the widget
    */
   const char *(*gc_get_text)(struct glw *w);
@@ -1390,8 +1382,10 @@ void glw_inject_event(glw_root_t *gr, event_t *e);
 
 void glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe);
 
-int glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe, 
+int glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
 		       glw_t **hp, Vec3 p, Vec3 dir);
+
+int glw_pointer_event_deliver(glw_t *w, glw_pointer_event_t *gpe);
 
 
 glw_t *glw_find_neighbour(glw_t *w, const char *id);

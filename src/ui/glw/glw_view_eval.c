@@ -3204,14 +3204,15 @@ glw_event_map_eval_block_create(glw_view_eval_context_t *ec,
 static int
 glwf_onEvent(glw_view_eval_context_t *ec, struct token *self,
 	     token_t **argv, unsigned int argc)
-
 {
   token_t *a = argc > 0 ? argv[0] : NULL;  /* Source */
   token_t *b = argc > 1 ? argv[1] : NULL;  /* Target */
   token_t *c = argc > 2 ? argv[2] : NULL;  /* Enabled */
   token_t *d = argc > 3 ? argv[3] : NULL;  /* Final */
+  token_t *e = argc > 4 ? argv[4] : NULL;  /* Early */
   int enabled = 1;
   int final = 1;
+  int early = 0;
   glw_t *w = ec->w;
   glw_event_map_t *gem;
 
@@ -3232,6 +3233,12 @@ glwf_onEvent(glw_view_eval_context_t *ec, struct token *self,
     if((d = token_resolve(ec, d)) == NULL)
       return -1;
     final = token2bool(d);
+  }
+
+  if(e != NULL) {
+    if((e = token_resolve(ec, e)) == NULL)
+      return -1;
+    early = token2bool(e);
   }
 
   rstr_t *filter = token2rstr(a);
@@ -3268,6 +3275,7 @@ glwf_onEvent(glw_view_eval_context_t *ec, struct token *self,
       self->t_extra_int = ++w->glw_root->gr_gem_id_tally;
 
     gem->gem_id = self->t_extra_int;
+    gem->gem_early = early;
     glw_event_map_add(w, gem);
     return 0;
   }

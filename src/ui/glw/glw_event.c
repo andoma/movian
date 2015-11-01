@@ -434,13 +434,15 @@ glw_event_map_internal_create(const char *target, action_type_t event,
  *
  */
 int
-glw_event_map_intercept(glw_t *w, event_t *e)
+glw_event_map_intercept(glw_t *w, event_t *e, char early)
 {
   glw_event_map_t *gem;
 
   LIST_FOREACH(gem, &w->glw_event_maps, gem_link) {
     const char *str;
 
+    if(gem->gem_early != early)
+      continue;
 
     switch(e->e_type) {
     case EVENT_ACTION_VECTOR:

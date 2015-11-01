@@ -33,6 +33,7 @@ typedef struct glw_event_map {
 
   int gem_id;
 
+  char gem_early; // Intercepts on event descent
   char gem_final;
 
 } glw_event_map_t;
@@ -47,7 +48,7 @@ void glw_event_map_add(glw_t *w, glw_event_map_t *gem);
 
 void glw_event_map_destroy(glw_root_t *gr, glw_event_map_t *gem);
 
-int glw_event_map_intercept(glw_t *w, struct event *e);
+int glw_event_map_intercept(glw_t *w, struct event *e, char early);
 
 
 glw_event_map_t *glw_event_map_playTrack_create(prop_t *track,
