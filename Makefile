@@ -435,6 +435,7 @@ SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
 			src/ui/glw/glw_primitives.c \
 			src/ui/glw/glw_math.c \
 			src/ui/glw/glw_underscan.c \
+			src/ui/glw/glw_popup.c \
 
 SRCS-$(CONFIG_GLW_SETTINGS) += 	  src/ui/glw/glw_settings.c
 
