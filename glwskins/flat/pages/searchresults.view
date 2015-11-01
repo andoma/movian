@@ -25,8 +25,6 @@ widget(container_y, {
     chaseFocus: true;
     scrollThreshold: 2em;
 
-    &clone.focused = focusedChild();
-
     cloner($self.model.nodes, container_y, {
 
       widget(container_x, {
@@ -38,8 +36,6 @@ widget(container_y, {
                        fmt(_("%d results"), $self.entries));
           size: 1.5em;
         });
-
-
 
       });
       widget(container_x, {
@@ -58,6 +54,7 @@ widget(container_y, {
           hidden: $self.entries < 4;
           width: $view.width / 6;
           GridItemBevel();
+          GridItemHighlight();
 
           focusable: true;
           onEvent(activate, navOpen($self.url));
@@ -75,6 +72,7 @@ widget(container_y, {
               widget(container_y, {
                 padding: [0.25em, 0.25em];
                 widget(label, {
+                  
                   caption: _("Show more");
                   align: center;
                 });
