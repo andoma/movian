@@ -223,7 +223,7 @@ widget(container_z, {
           PLAYDECK_BUTTON("skin://icons/ic_speaker_48px.svg",
                           _("Audio tracks"),
                           {
-                            $clone.osdpage = 101;
+                            $clone.osdpage = select($clone.osdpage == 101, 0, 101);
                             focus("osd_audio");
                           }, true);
 
