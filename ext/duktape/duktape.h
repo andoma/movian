@@ -1,11 +1,12 @@
 /*
- *  Duktape public API for Duktape 1.3.0.
+ *  Duktape public API for Duktape 1.3.99.
  *  See the API reference for documentation on call semantics.
  *  The exposed API is inside the DUK_API_PUBLIC_H_INCLUDED
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 675165f35ea3a5bac34ff4d0a58b007cc2f442dc (v1.3.0).
+ *  Git commit 29c9ac4a1b08f8bda95542a68862511496a7ca56 (v1.3.0-161-g29c9ac4).
+ *  Git branch master.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -210,13 +211,16 @@ struct duk_number_list_entry {
  * have 99 for patch level (e.g. 0.10.99 would be a development version
  * after 0.10.0 but before the next official release).
  */
-#define DUK_VERSION                       10300L
+#define DUK_VERSION                       10399L
 
-/* Git describe for Duktape build.  Useful for non-official snapshot builds
- * so that application code can easily log which Duktape snapshot was used.
- * Not available in the Ecmascript environment.
+/* Git commit, describe, and branch for Duktape build.  Useful for
+ * non-official snapshot builds so that application code can easily log
+ * which Duktape snapshot was used.  Not available in the Ecmascript
+ * environment.
  */
-#define DUK_GIT_DESCRIBE                  "v1.3.0"
+#define DUK_GIT_COMMIT                    "29c9ac4a1b08f8bda95542a68862511496a7ca56"
+#define DUK_GIT_DESCRIBE                  "v1.3.0-161-g29c9ac4"
+#define DUK_GIT_BRANCH                    "master"
 
 /* Duktape debug protocol version used by this build. */
 #define DUK_DEBUG_PROTOCOL_VERSION        1
@@ -1348,7 +1352,7 @@ typedef union duk_double_union duk_double_union;
  *
  *  When packed duk_tval is used, the NaN space is used to store pointers
  *  and other tagged values in addition to NaNs.  Actual NaNs are normalized
- *  to a specific format.  The macros below are used by the implementation
+ *  to a specific quiet NaN.  The macros below are used by the implementation
  *  to check and normalize NaN values when they might be created.  The macros
  *  are essentially NOPs when the non-packed duk_tval representation is used.
  *
@@ -1356,7 +1360,8 @@ typedef union duk_double_union duk_double_union;
  *  the packed duk_tval and works correctly for all NaNs except those that
  *  begin with 0x7ff0.  Since the 'normalized NaN' values used with packed
  *  duk_tval begin with 0x7ff8, the partial check is reliable when packed
- *  duk_tval is used.
+ *  duk_tval is used.  The 0x7ff8 prefix means the normalized NaN will be a
+ *  quiet NaN regardless of its remaining lower bits.
  *
  *  The ME variant below is specifically for ARM byte order, which has the
  *  feature that while doubles have a mixed byte order (32107654), unsigned
