@@ -1000,9 +1000,6 @@ glw_x11_mainloop(glw_x11_t *gx11)
   }
 #endif
 
-  int mouse_is_touch = 0;
-  int left_button_is_pressed = 0;
-
   while(gx11->running) {
 
     autohide_cursor(gx11);
@@ -1086,20 +1083,13 @@ glw_x11_mainloop(glw_x11_t *gx11)
       case MotionNotify:
 	show_cursor(gx11);
 
-        if(left_button_is_pressed || !mouse_is_touch) {
-
-          gpe.x =  (2.0 * event.xmotion.x / gx11->gr.gr_width ) - 1;
-          gpe.y = -(2.0 * event.xmotion.y / gx11->gr.gr_height) + 1;
-          gpe.ts = event.xmotion.time * 1000LL;
-          if(mouse_is_touch) {
-            gpe.type = GLW_POINTER_TOUCH_MOVE;
-          } else {
-            gpe.type = GLW_POINTER_MOTION_UPDATE;
-          }
-          glw_lock(&gx11->gr);
-          glw_pointer_event(&gx11->gr, &gpe);
-          glw_unlock(&gx11->gr);
-        }
+        gpe.x =  (2.0 * event.xmotion.x / gx11->gr.gr_width ) - 1;
+        gpe.y = -(2.0 * event.xmotion.y / gx11->gr.gr_height) + 1;
+        gpe.ts = event.xmotion.time * 1000LL;
+        gpe.type = GLW_POINTER_MOTION_UPDATE;
+        glw_lock(&gx11->gr);
+        glw_pointer_event(&gx11->gr, &gpe);
+        glw_unlock(&gx11->gr);
 	break;
 
       case ButtonRelease:
@@ -1109,11 +1099,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
 
 	switch(event.xbutton.button) {
 	case 1:
-          left_button_is_pressed = 0;
-          if(mouse_is_touch)
-            gpe.type = GLW_POINTER_TOUCH_END;
-          else
-            gpe.type = GLW_POINTER_LEFT_RELEASE;
+          gpe.type = GLW_POINTER_LEFT_RELEASE;
 	  break;
 	case 3:
 	  gpe.type = GLW_POINTER_RIGHT_RELEASE;
@@ -1135,11 +1121,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	switch(event.xbutton.button) {
 	case 1:
 	  /* Left click */
-          left_button_is_pressed = 1;
-          if(mouse_is_touch)
-            gpe.type = GLW_POINTER_TOUCH_START;
-          else
-            gpe.type = GLW_POINTER_LEFT_PRESS;
+          gpe.type = GLW_POINTER_LEFT_PRESS;
 	  break;
 	case 2:
 	  glw_inject_event(&gx11->gr, event_create_action(ACTION_MENU));

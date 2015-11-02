@@ -956,6 +956,8 @@ typedef struct glw_root {
 
   void *gr_private;
 
+  uint8_t gr_left_pressed; // For pointer -> touch converter
+  
 } glw_root_t;
 
 

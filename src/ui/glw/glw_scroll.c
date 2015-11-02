@@ -74,10 +74,9 @@ glw_scroll_handle_pointer_event(glw_scroll_control_t *gs,
       gr->gr_pointer_grab = NULL;
     return 1;
 
-  case GLW_POINTER_TOUCH_MOVE:
+  case GLW_POINTER_FOCUS_MOTION:
     if(!grabbed)
       return 0;
-
     gs->target_pos = (gpe->y - gs->initial_touch_y) * gs->page_size * 0.5 +
       gs->initial_pos;
 
@@ -92,7 +91,6 @@ glw_scroll_handle_pointer_event(glw_scroll_control_t *gs,
     gs->last_touch_y = gpe->y;
     break;
 
-    return 0;
   default:
     return 0;
   }

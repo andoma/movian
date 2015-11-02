@@ -27,7 +27,6 @@ typedef struct glw_scroll_control {
   int rounded_pos;     // Position rounded to pixels
 
   int total_size;
-
   int page_size;
 
   float initial_touch_x;

@@ -475,6 +475,10 @@ parse_opts(int argc, char **argv)
       gconf.debug_glw = 1;
       argc -= 1; argv += 1;
       continue;
+    } else if(!strcmp(argv[0], "--pointer-is-touch")) {
+      gconf.convert_pointer_to_touch = 1;
+      argc -= 1; argv += 1;
+      continue;
     } else if(!strcmp(argv[0], "--show-usage-events")) {
       gconf.show_usage_events = 1;
       argc -= 1; argv += 1;

@@ -225,6 +225,7 @@ typedef struct gconf {
   int disable_upnp;
   int disable_upgrades;
   int disable_sd;
+  int convert_pointer_to_touch;
 
   int disable_analytics;
   int enable_bin_replace;

@@ -1913,6 +1913,30 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
 
   Vec3 p, dir;
 
+  if(gconf.convert_pointer_to_touch) {
+    switch(gpe->type) {
+    case GLW_POINTER_LEFT_PRESS:
+      gr->gr_left_pressed = 1;
+      gpe->type = GLW_POINTER_TOUCH_START;
+      break;
+
+    case GLW_POINTER_LEFT_RELEASE:
+      gpe->type = GLW_POINTER_TOUCH_END;
+      gr->gr_left_pressed = 0;
+      break;
+
+    case GLW_POINTER_MOTION_UPDATE:
+      if(gr->gr_left_pressed) {
+        gpe->type = GLW_POINTER_TOUCH_MOVE;
+        break;
+      }
+      return;
+
+    default:
+      break;
+    }
+  }
+
   glw_vec3_copy(p, glw_vec3_make(gpe->x, gpe->y, -2.41));
   glw_vec3_sub(dir, p, glw_vec3_make(gpe->x * 42.38,
 				     gpe->y * 42.38,

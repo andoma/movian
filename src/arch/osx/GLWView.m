@@ -203,6 +203,8 @@ glw_in_fullwindow(void *opaque, int val)
     gpe.delta_y = -[event deltaY];
   }
 
+  gpe.ts = [event timestamp] * 1000000.0;
+
   if(type == GLW_POINTER_FINE_SCROLL) {
     NSPoint p = {[event deltaX], [event deltaY]};
     NSPoint p2 = [self convertPointToBacking:p];
