@@ -192,7 +192,15 @@ html_tag_to_code(char *s, uint32_t *output, int olen, int context, int flags)
   while(len > 0 && s[len-1] == ' ')
     s[len--] = 0;
 
-  if(!endtag && !strcasecmp(tag, "p")) {
+  if(!strcasecmp(tag, "ruby")) {
+    if(endtag)
+      c = TR_CODE_FONT_RESET;
+    else
+      c = TR_CODE_ITALIC_ON;
+  } else if(!strcasecmp(tag, "rt")) {
+    olen = add_one_code(TR_CODE_ITALIC_OFF, output, olen);
+    c = TR_CODE_START;
+  } else if(!endtag && !strcasecmp(tag, "p")) {
     c = TR_CODE_START;
   } else if(!endtag && !strcasecmp(tag, "br")) {
     c = TR_CODE_NEWLINE;
