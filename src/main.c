@@ -111,17 +111,22 @@ fflog(void *ptr, int level, const char *fmt, va_list vl)
 {
   static char line[1024];
   AVClass *avc = ptr ? *(AVClass**)ptr : NULL;
-  if(!gconf.libavlog)
-    return;
 
-  if(level < AV_LOG_WARNING)
+  if(level < AV_LOG_WARNING) {
     level = TRACE_ERROR;
-  else if(level < AV_LOG_DEBUG)
-    level = TRACE_INFO;
-  else
-    level = TRACE_DEBUG;
+  } else {
+    if(!gconf.libavlog)
+      return;
+
+    if(level < AV_LOG_DEBUG)
+      level = TRACE_INFO;
+    else
+      level = TRACE_DEBUG;
+  }
 
   vsnprintf(line + strlen(line), sizeof(line) - strlen(line), fmt, vl);
+  if(line[0] == 0)
+    return;
 
   if(line[strlen(line)-1] != '\n')
     return;
