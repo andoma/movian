@@ -157,7 +157,7 @@ init_abgr(glw_root_t *gr, glw_backend_texture_t *tex,
 	   );
 }
 
-#if 0
+
 /**
  *
  */
@@ -177,7 +177,7 @@ init_rgba(glw_root_t *gr, glw_backend_texture_t *tex,
 	   NV30_3D_TEX_SWIZZLE_S1_Z_W | NV30_3D_TEX_SWIZZLE_S1_W_X
 	   );
 }
-#endif
+
 
 /**
  *
@@ -250,6 +250,12 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
 	      pm->pm_width, pm->pm_height, repeat);
     break;
 
+  case PIXMAP_RGBA:
+    size = pm->pm_linesize * pm->pm_height;
+    init_rgba(gr, &glt->glt_texture, pm->pm_data, pm->pm_linesize,
+	      pm->pm_width, pm->pm_height, repeat);
+    break;
+
   case PIXMAP_RGB24:
     size = pm->pm_width * pm->pm_height * 4;
     init_rgb(gr, &glt->glt_texture, pm->pm_data, pm->pm_linesize,
@@ -289,6 +295,11 @@ glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex,
   case PIXMAP_BGR32:
     init_abgr(gr, tex, pm->pm_data, pm->pm_linesize,
 	     pm->pm_width, pm->pm_height, flags & GLW_TEX_REPEAT);
+    break;
+
+  case PIXMAP_RGBA:
+    init_rgba(gr, tex, pm->pm_data, pm->pm_linesize,
+              pm->pm_width, pm->pm_height, flags & GLW_TEX_REPEAT);
     break;
 
   default:

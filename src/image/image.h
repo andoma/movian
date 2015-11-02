@@ -202,6 +202,9 @@ extern struct pixmap *(*accel_image_decode)(image_coded_type_t type,
 image_t *svg_decode(struct buf *buf, const image_meta_t *im,
                     char *errbuf, size_t errlen);
 
+image_t * nanosvg_decode(struct buf *buf, const image_meta_t *im,
+                         char *errbuf, size_t errlen);
+
 
 
 /**

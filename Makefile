@@ -110,6 +110,7 @@ SRCS-$(CONFIG_HTTPSERVER) += src/prop/prop_http.c
 ##############################################################
 SRCS +=	src/image/image.c \
 	src/image/pixmap.c \
+	src/image/nanosvg.c \
 	src/image/svg.c \
 	src/image/rasterizer_ft.c \
 	src/image/jpeg.c \

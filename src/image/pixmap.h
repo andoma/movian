@@ -32,8 +32,9 @@
 typedef enum {
   PIXMAP_none,
   PIXMAP_NULL,
-  PIXMAP_BGR32,
-  PIXMAP_RGB24,
+  PIXMAP_BGR32,   // 32 bit, changes depending on endian
+  PIXMAP_RGB24,   // R G B 24 bit packed
+  PIXMAP_RGBA,    // R G B A  -- Always same byte order in RAM
   PIXMAP_IA,
   PIXMAP_I,
 } pixmap_type_t;
@@ -114,6 +115,7 @@ bytes_per_pixel(pixmap_type_t fmt)
 {
   switch(fmt) {
   case PIXMAP_BGR32:
+  case PIXMAP_RGBA:
     return 4;
 
   case PIXMAP_RGB24:

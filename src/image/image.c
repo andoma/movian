@@ -244,7 +244,7 @@ image_decode_coded(const image_t *src, const image_meta_t *meta,
   const image_component_coded_t *icc = &ic->coded;
 
   if(icc->icc_type == IMAGE_SVG)
-    return svg_decode(icc->icc_buf, meta,  errbuf, errlen);
+    return nanosvg_decode(icc->icc_buf, meta,  errbuf, errlen);
 
   pixmap_t *pm = NULL;
 
@@ -300,7 +300,6 @@ image_decode(image_t *im, const image_meta_t *meta,
 {
   image_t *r;
   const image_component_t *ic = &im->im_components[0];
-
   assert(im->im_num_components == 1); // We can only deal with one for now
 
   switch(ic->type) {

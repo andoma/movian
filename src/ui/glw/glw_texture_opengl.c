@@ -127,6 +127,7 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt, pixmap_t *pm)
 
 
   case PIXMAP_BGR32:
+  case PIXMAP_RGBA:
     glt->glt_format = GL_RGBA;
     size = pm->pm_width * pm->pm_height * 4;
     break;
@@ -175,6 +176,7 @@ glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex,
   
   switch(pm->pm_type) {
   case PIXMAP_BGR32:
+  case PIXMAP_RGBA:
     format     = GL_RGBA;
     break;
 

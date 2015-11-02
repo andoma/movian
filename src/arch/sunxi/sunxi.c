@@ -220,6 +220,7 @@ sunxi_set_bg(const char *path)
     bpp = 3;
     break;
   case PIXMAP_BGR32:
+  case PIXMAP_RGBA:
     bpp = 4;
     break;
   default:
