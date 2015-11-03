@@ -1046,8 +1046,7 @@ static void
 change_type(void *opaque, const char *string)
 {
   bookmark_t *bm = opaque;
-  prop_set_string(prop_create(prop_create(bm->bm_root, "metadata"),
-			      "svctype"), string);
+  prop_setv(bm->bm_root, "metadata", "svttype", NULL, PROP_SET_STRING, string);
 }
 
 
@@ -1098,7 +1097,7 @@ bookmark_add(const char *title, const char *url, const char *type,
   prop_t *p = prop_create_root(NULL);
   bm->bm_root = prop_ref_inc(p);
 
-  prop_set_string(prop_create(p, "type"), "settings");
+  prop_set(p, "type", PROP_SET_STRING, "settings");
 
   bm->bm_title = rstr_alloc(title);
   bm->bm_url   = rstr_alloc(url);
@@ -1134,14 +1133,15 @@ bookmark_add(const char *title, const char *url, const char *type,
 
   // Construct the settings page
 
-  prop_t *m = prop_create(p, "model");
-  prop_t *md = prop_create(p, "metadata");
-  rstr_t *r = backend_prop_make(m, NULL);
-  prop_set_rstring(prop_create(p, "url"), r);
-  rstr_release(r);
 
-  prop_set_string(prop_create(m, "type"), "settings");
-  prop_set_string(prop_create(m, "subtype"), "bookmark");
+  prop_t *m = prop_create(p, "model");
+
+  prop_set(p, "url", PROP_ADOPT_RSTRING, backend_prop_make(m, NULL));
+
+  prop_t *md = prop_create(p, "metadata");
+
+  prop_set(m, "type", PROP_SET_STRING, "settings");
+  prop_set(m, "subtype", PROP_SET_STRING, "bookmark");
 
   prop_link(prop_create(md, "title"),
 	    prop_create(prop_create(m, "metadata"), "title"));
@@ -1236,7 +1236,7 @@ bookmarks_init(void)
 				   "settings:bookmarks");
 
   bookmark_nodes = prop_create(bookmark_root, "nodes");
-  prop_set_int(prop_create(bookmark_root, "mayadd"), 1);
+  prop_set(bookmark_root, "mayadd", PROP_SET_INT, 1);
 
   prop_subscribe(0,
 		 PROP_TAG_CALLBACK, bookmarks_callback, NULL,
