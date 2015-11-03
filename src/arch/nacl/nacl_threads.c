@@ -118,6 +118,11 @@ typedef struct {
   int prio;
 } trampoline_t;
 
+const char *
+hts_thread_name(char *buf, size_t len)
+{
+  return "native thread";
+}
 
 /**
  *
@@ -171,8 +176,8 @@ hts_thread_create_detached(const char *title, void *(*func)(void *), void *aux,
 		 make_trampoline(title, func, aux, prio));
   pthread_attr_destroy(&attr);
   if(gconf.enable_thread_debug)
-    trace(TRACE_NO_PROP, TRACE_DEBUG,
-          "thread", "Created detached thread: %s", title);
+    tracelog(TRACE_NO_PROP, TRACE_DEBUG,
+             "thread", "Created detached thread: %s", title);
 
 }
 
@@ -188,6 +193,6 @@ hts_thread_create_joinable(const char *title, hts_thread_t *p,
   pthread_attr_destroy(&attr);
 
   if(gconf.enable_thread_debug)
-    trace(TRACE_NO_PROP, TRACE_DEBUG,
-          "thread", "Created thread: %s", title);
+    tracelog(TRACE_NO_PROP, TRACE_DEBUG,
+             "thread", "Created thread: %s", title);
 }

@@ -201,7 +201,7 @@ deliver_frames(nacl_video_codec_t *nvc, video_decoder_t *vd)
 
     fi.fi_pts         = mbm->mbm_pts;
     fi.fi_epoch       = mbm->mbm_epoch;
-    fi.fi_delta       = mbm->mbm_delta;
+    fi.fi_user_time   = mbm->mbm_user_time;
     fi.fi_drive_clock = mbm->mbm_drive_clock;
     fi.fi_type        = 'tex';
 

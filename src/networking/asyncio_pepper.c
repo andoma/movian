@@ -128,6 +128,18 @@ asyncio_wakeup_worker(int id)
 /**
  *
  */
+void
+asyncio_run_task(void (*fn)(void *aux), void *aux)
+{
+  ppb_messageloop->PostWork(asyncio_msgloop,
+                            (const struct PP_CompletionCallback) {
+                              (void *)fn, aux}, 0);
+}
+
+
+/**
+ *
+ */
 int64_t
 async_current_time(void)
 {
