@@ -258,15 +258,17 @@ widget(container_z, {
 
       widget(container_x, {
         spacing: 0.5em;
-        padding: [$view.iconPad + 1em, 0];
+        padding: [$view.iconPad + 1em, 0, 0, 0];
         widget(icon, {
           source: "skin://icons/ic_pause_48px.svg";
           alpha: iir(select($core.media.current.playstatus == "pause", 1, 0), 4);
 
         });
+
         widget(label, {
           width: 3em;
-          caption: value2duration($self.media.currenttime);
+          caption: value2duration($view.tentativeSeekPosition ??
+                                  $self.media.currenttime);
           align: right;
         });
 
@@ -286,6 +288,7 @@ widget(container_z, {
           });
 
           widget(slider_x, {
+            tentative: $view.tentativeSeekPosition;
             alwaysGrabKnob: true;
             clickable: true;
             bind($self.media.currenttime);

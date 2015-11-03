@@ -1371,6 +1371,8 @@ static const token_attrib_t attribtab[] = {
    GLW_ATTRIB_FLAG_NO_SUBSCRIPTION},
   {"origin",          set_propref, GLW_ATTRIB_PROP_ORIGIN, NULL,
    GLW_ATTRIB_FLAG_NO_SUBSCRIPTION},
+  {"tentative",       set_propref, GLW_ATTRIB_TENTATIVE_VALUE, NULL,
+   GLW_ATTRIB_FLAG_NO_SUBSCRIPTION},
 };
 
 

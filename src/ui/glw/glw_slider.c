@@ -26,24 +26,24 @@
 typedef struct {
   glw_t w;
 
+  prop_sub_t *sub;
+  prop_t *p;
+  prop_t *tentative_output;
+
+  glw_t *bound_widget;
+
   float knob_pos_px;
   float knob_size_fixed;
   float value;
 
   float min, max, step, step_i;
+  float grab_delta;
 
   int16_t knob_size_px;
   int16_t slider_size_px;
   char fixed_knob_size;
   char interpolate;
   char keystep;
-  prop_sub_t *sub;
-  prop_t *p;
-  float grab_delta;
-
-  glw_t *bound_widget;
-
-  int tentative_only;
 
 } glw_slider_t;
 
@@ -79,15 +79,22 @@ update_value_delta(glw_slider_t *s, float d)
  *
  */
 static void
-update_value(glw_slider_t *s, float v, int how)
+update_value(glw_slider_t *s, float v, int tentative)
 {
   v = GLW_MAX(0, GLW_MIN(1.0, v));
+  const float scaled = v * (s->max - s->min) + s->min;
+  s->value = v;
+  s->interpolate = 0;
 
-  if(s->p != NULL)
-    prop_set_float_ex(s->p, NULL, v * (s->max - s->min) + s->min, how);
-  else {
-    s->value = v;
-    s->interpolate = 0;
+  if(tentative && s->tentative_output != NULL) {
+    prop_set_float(s->tentative_output, scaled);
+    return;
+  }
+  prop_set_void(s->tentative_output);
+
+  if(s->p != NULL) {
+    prop_set_float(s->p, scaled);
+  } else {
     if(s->bound_widget != NULL) {
       glw_scroll_t gs;
       gs.value = s->value;
@@ -301,7 +308,7 @@ pointer_event(glw_t *w, const glw_pointer_event_t *gpe)
   float v = 0;
   float knob_pos;
   float knob_size = (float)s->knob_size_px / s->slider_size_px;
-  int how = PROP_SET_NORMAL;
+  int tentative = 0;
 
   if(w->glw_class == &glw_slider_x) {
     knob_pos = -1 + 2.0 * (float)s->knob_pos_px  / s->slider_size_px;
@@ -313,7 +320,7 @@ pointer_event(glw_t *w, const glw_pointer_event_t *gpe)
     hitpos = -1;
   else if(v0 > knob_pos + knob_size)
     hitpos = 1;
-  
+
   switch(gpe->type) {
   case GLW_POINTER_LEFT_PRESS:
   case GLW_POINTER_TOUCH_START:
@@ -329,27 +336,26 @@ pointer_event(glw_t *w, const glw_pointer_event_t *gpe)
       update_value_delta(s, hitpos * knob_size);
       return 0;
     }
-    how = PROP_SET_TENTATIVE;
+    tentative = 1;
     break;
 
   case GLW_POINTER_FOCUS_MOTION:
     if(knob_size == 1.0)
       break;
-    v = GLW_RESCALE(v0 + s->grab_delta, 
+    v = GLW_RESCALE(v0 + s->grab_delta,
 		    -1.0 + knob_size, 1.0 - knob_size);
-    how = PROP_SET_TENTATIVE;
+    tentative = 1;
     break;
 
   case GLW_POINTER_LEFT_RELEASE:
   case GLW_POINTER_TOUCH_END:
     v = s->value;
-    how = PROP_SET_COMMIT;
     break;
 
   default:
     return 0;
   }
-  update_value(s, v, how);
+  update_value(s, v, tentative);
   glw_need_refresh(s->w.glw_root, 0);
   return 0;
 }
@@ -453,7 +459,6 @@ prop_callback(void *opaque, prop_event_t event, ...)
   glw_slider_t *sl = opaque;
   glw_root_t *gr;
   float v;
-  int how = 0;
   int grabbed;
 
   if(sl == NULL)
@@ -473,11 +478,14 @@ prop_callback(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_SET_FLOAT:
+    if(grabbed)
+      return;
     v = va_arg(ap, double);
-    how = va_arg(ap, int);
     break;
 
   case PROP_SET_INT:
+    if(grabbed)
+      return;
     v = va_arg(ap, int);
     break;
 
@@ -488,19 +496,6 @@ prop_callback(void *opaque, prop_event_t event, ...)
 
   default:
     return;
-  }
-
-  switch(how) {
-  case PROP_SET_NORMAL:
-    if(sl->tentative_only)
-      return;
-    break;
-  case PROP_SET_TENTATIVE:
-    sl->tentative_only = 1;
-    break;
-  case PROP_SET_COMMIT:
-    sl->tentative_only = 0;
-    break;
   }
 
   if(sl->max - sl->min == 0)
@@ -640,6 +635,25 @@ glw_slider_set_int_unresolved(glw_t *w, const char *a, int value,
   return GLW_SET_NOT_RESPONDING;
 }
 
+/**
+ *
+ */
+static int
+glw_slider_set_prop(glw_t *w, glw_attribute_t attrib, prop_t *p)
+{
+  glw_slider_t *gs = (glw_slider_t *)w;
+
+  switch(attrib) {
+  case GLW_ATTRIB_TENTATIVE_VALUE:
+    prop_ref_dec(gs->tentative_output);
+    gs->tentative_output = prop_ref_inc(p);
+    return 0;
+
+  default:
+    return -1;
+  }
+  return 1;
+}
 
 
 static glw_class_t glw_slider_x = {
@@ -655,6 +669,7 @@ static glw_class_t glw_slider_x = {
   .gc_send_event = glw_slider_event_x,
   .gc_pointer_event = pointer_event,
   .gc_set_int_unresolved = glw_slider_set_int_unresolved,
+  .gc_set_prop = glw_slider_set_prop,
 };
 
 static glw_class_t glw_slider_y = {
@@ -670,6 +685,7 @@ static glw_class_t glw_slider_y = {
   .gc_send_event = glw_slider_event_y,
   .gc_pointer_event = pointer_event,
   .gc_set_int_unresolved = glw_slider_set_int_unresolved,
+  .gc_set_prop = glw_slider_set_prop,
 };
 
 GLW_REGISTER_CLASS(glw_slider_x);

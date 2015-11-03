@@ -172,6 +172,7 @@ typedef enum {
   GLW_ATTRIB_BORDER,
   GLW_ATTRIB_PADDING,
   GLW_ATTRIB_FONT,
+  GLW_ATTRIB_TENTATIVE_VALUE,
   GLW_ATTRIB_num,
 } glw_attribute_t;
 
