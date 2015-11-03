@@ -41,8 +41,8 @@
 TAILQ_HEAD(nav_page_queue, nav_page);
 LIST_HEAD(bookmark_list, bookmark);
 LIST_HEAD(navigator_list, navigator);
+LIST_HEAD(bookmark_query_list, bookmark_query);
 
-static prop_t *bookmark_root;
 static prop_t *bookmark_nodes;
 static prop_t *all_navigators;
 
@@ -53,8 +53,11 @@ static void bookmarks_save(void);
 
 static struct bookmark_list bookmarks;
 static struct navigator_list navigators;
+static struct bookmark_query_list bookmark_queries;
 
 static HTS_MUTEX_DECL(nav_mutex);
+
+
 
 /**
  *
@@ -80,8 +83,29 @@ typedef struct bookmark {
 
   prop_t *bm_info;
 
+  struct bookmark_query_list bm_queries;
 
 } bookmark_t;
+
+
+
+/**
+ *
+ */
+typedef struct bookmark_query {
+  LIST_ENTRY(bookmark_query) bq_global_link;
+
+  LIST_ENTRY(bookmark_query) bq_bookmark_link;
+  bookmark_t *bq_bm;
+
+  rstr_t *bq_key;
+
+  prop_t *bq_link;
+
+  prop_sub_t *bq_sub_key;
+
+
+} bookmark_query_t;
 
 /**
  *
@@ -938,6 +962,38 @@ bookmarks_save(void)
   htsmsg_release(m);
 }
 
+/**
+ *
+ */
+static void
+bookmark_unlink_queries(bookmark_t *bm)
+{
+  bookmark_query_t *bq;
+
+  while((bq = LIST_FIRST(&bm->bm_queries)) != NULL) {
+    LIST_REMOVE(bq, bq_bookmark_link);
+    bq->bq_bm = NULL;
+    prop_unlink(bq->bq_link);
+  }
+}
+
+
+/**
+ *
+ */
+static void
+bookmark_link_queries(bookmark_t *bm)
+{
+  bookmark_query_t *bq;
+  LIST_FOREACH(bq, &bookmark_queries, bq_global_link) {
+    if(rstr_eq(bm->bm_url, bq->bq_key) && bq->bq_bm == NULL) {
+      bq->bq_bm = bm;
+      LIST_INSERT_HEAD(&bm->bm_queries, bq, bq_bookmark_link);
+      prop_link(bm->bm_root, bq->bq_link);
+    }
+  }
+}
+
 
 /**
  *
@@ -953,6 +1009,8 @@ bookmark_destroyed(void *opaque, prop_event_t event, ...)
 
   if(event != PROP_DESTROYED)
     return;
+
+  bookmark_unlink_queries(bm);
 
   s = va_arg(ap, prop_sub_t *);
 
@@ -1005,10 +1063,12 @@ bm_set_url(void *opaque, rstr_t *str)
 {
   bookmark_t *bm = opaque;
 
+  bookmark_unlink_queries(bm);
   rstr_set(&bm->bm_url, str);
   service_set_url(bm->bm_service, str);
   bookmarks_save();
   nav_update_bookmarked();
+  bookmark_link_queries(bm);
 }
 
 
@@ -1046,7 +1106,7 @@ static void
 change_type(void *opaque, const char *string)
 {
   bookmark_t *bm = opaque;
-  prop_setv(bm->bm_root, "metadata", "svttype", NULL, PROP_SET_STRING, string);
+  prop_setv(bm->bm_root, "metadata", "svctype", NULL, PROP_SET_STRING, string);
 }
 
 
@@ -1062,7 +1122,7 @@ add_prop(prop_t *parent, const char *name, rstr_t *value,
 
   return prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
 			PROP_TAG_CALLBACK_RSTR, cb, bm,
-			PROP_TAG_ROOT, p, 
+			PROP_TAG_ROOT, p,
                         PROP_TAG_MUTEX, &nav_mutex,
 			NULL);
 }
@@ -1180,6 +1240,7 @@ bookmark_add(const char *title, const char *url, const char *type,
   if(prop_set_parent(p, bookmark_nodes))
     abort();
   nav_update_bookmarked();
+  bookmark_link_queries(bm);
 }
 
 
@@ -1221,6 +1282,132 @@ bookmark_load(htsmsg_t *o)
 	       htsmsg_get_str(o, "id"));
 }
 
+
+static void
+bookmark_query_set_key(void *aux, rstr_t *str)
+{
+  bookmark_query_t *bq = aux;
+  bookmark_t *bm;
+  rstr_set(&bq->bq_key, str);
+
+  if(bq->bq_bm != NULL)
+    LIST_REMOVE(bq, bq_bookmark_link);
+
+  LIST_FOREACH(bm, &bookmarks, bm_link) {
+    if(rstr_eq(bm->bm_url, bq->bq_key))
+      break;
+  }
+
+  bq->bq_bm = bm;
+  if(bm != NULL) {
+    LIST_INSERT_HEAD(&bm->bm_queries, bq, bq_bookmark_link);
+    prop_link(bm->bm_root, bq->bq_link);
+  } else {
+    prop_unlink(bq->bq_link);
+  }
+}
+
+
+/**
+ *
+ */
+static void
+bookmark_query_add(prop_t *p)
+{
+  bookmark_query_t *bq = calloc(1, sizeof(bookmark_query_t));
+
+  bq->bq_link = prop_create_r(p, "value");
+  LIST_INSERT_HEAD(&bookmark_queries, bq, bq_global_link);
+
+  prop_tag_set(p, &bookmark_queries, bq);
+
+  bq->bq_sub_key =
+    prop_subscribe(0,
+                   PROP_TAG_CALLBACK_RSTR, bookmark_query_set_key, bq,
+                   PROP_TAG_MUTEX, &nav_mutex,
+                   PROP_TAG_NAMED_ROOT, p, "node",
+                   PROP_TAG_NAME("node", "key"),
+                   NULL);
+}
+
+
+/**
+ *
+ */
+static void
+bookmark_query_del(prop_t *p)
+{
+  bookmark_query_t *bq = prop_tag_clear(p, &bookmark_queries);
+  prop_ref_dec(bq->bq_link);
+  if(bq->bq_bm != NULL)
+    LIST_REMOVE(bq, bq_bookmark_link);
+  LIST_REMOVE(bq, bq_global_link);
+  rstr_release(bq->bq_key);
+  prop_unsubscribe(bq->bq_sub_key);
+  free(bq);
+}
+
+
+/**
+ *
+ */
+static void
+bookmark_queries_callback(void *opaque, prop_event_t event, ...)
+{
+  va_list ap;
+  va_start(ap, event);
+
+  switch(event) {
+  default:
+    break;
+
+  case PROP_ADD_CHILD:
+  case PROP_ADD_CHILD_BEFORE:
+    bookmark_query_add(va_arg(ap, prop_t *));
+    break;
+
+  case PROP_DEL_CHILD:
+    bookmark_query_del(va_arg(ap, prop_t *));
+    break;
+  }
+}
+
+
+/**
+ *
+ */
+static void
+bookmark_eventsink(void *opaque, event_t *e)
+{
+  if(event_is_type(e, EVENT_PROPREF)) {
+    event_prop_t *ep = (event_prop_t *)e;
+    rstr_t *url   = prop_get_string(ep->p, "url", NULL);
+    rstr_t *title = prop_get_string(ep->p, "title", NULL);
+    rstr_t *icon  = prop_get_string(ep->p, "metadata", "icon", NULL);
+    bookmark_t *bm;
+    LIST_FOREACH(bm, &bookmarks, bm_link) {
+      if(rstr_eq(bm->bm_url, url)) {
+	notify_add(NULL, NOTIFY_INFO, NULL, 3, _("Removed bookmark: %s"),
+		   rstr_get(bm->bm_title));
+	prop_destroy(bm->bm_root);
+        break;
+      }
+    }
+
+    if(bm == NULL) {
+      bookmark_add(rstr_get(title), rstr_get(url), "other",
+                   rstr_get(icon), rstr_get(url));
+      notify_add(NULL, NOTIFY_INFO, NULL, 3, _("Added new bookmark: %s"),
+                 rstr_get(title));
+    }
+
+    rstr_release(url);
+    rstr_release(title);
+    rstr_release(icon);
+
+  }
+}
+
 /**
  *
  */
@@ -1230,13 +1417,13 @@ bookmarks_init(void)
   htsmsg_field_t *f;
   htsmsg_t *m;
 
-  bookmark_root = settings_add_dir(NULL, _p("Bookmarks"),
-				   "bookmark", NULL,
-				   _p("Add and remove items on homepage"),
-				   "settings:bookmarks");
+  prop_t *root = settings_add_dir(NULL, _p("Bookmarks"),
+                                  "bookmark", NULL,
+                                  _p("Add and remove items on homepage"),
+                                  "settings:bookmarks");
 
-  bookmark_nodes = prop_create(bookmark_root, "nodes");
-  prop_set(bookmark_root, "mayadd", PROP_SET_INT, 1);
+  bookmark_nodes = prop_create(root, "nodes");
+  prop_set(root, "mayadd", PROP_SET_INT, 1);
 
   prop_subscribe(0,
 		 PROP_TAG_CALLBACK, bookmarks_callback, NULL,
@@ -1270,4 +1457,19 @@ bookmarks_init(void)
     }
     htsmsg_release(m);
   }
+
+
+  prop_subscribe(0,
+                 PROP_TAG_CALLBACK, bookmark_queries_callback, NULL,
+                 PROP_TAG_NAME("global", "bookmarks", "queries"),
+                 PROP_TAG_MUTEX, &nav_mutex,
+		 NULL);
+
+
+  prop_subscribe(0,
+                 PROP_TAG_CALLBACK_EVENT, bookmark_eventsink, NULL,
+                 PROP_TAG_NAME("global", "bookmarks", "eventSink"),
+                 PROP_TAG_MUTEX, &nav_mutex,
+                 NULL);
+
 }

@@ -58,7 +58,6 @@
 #define ListItemHighlight() {
   widget(quad, {
     fhpSpill: true;
-    zoffset: -10;
     additive: true;
     alpha: 0.1 * isHovered() + 0.6 * isNavFocused();
   });
@@ -68,7 +67,6 @@
 #define GridItemHighlight() {
   widget(quad, {
     fhpSpill: true;
-    zoffset: -10;
     additive: true;
     alpha: 0.1 * isHovered() + 0.6 * isNavFocused();
   });

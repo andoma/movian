@@ -6656,6 +6656,51 @@ glwf_eventWithProp(glw_view_eval_context_t *ec, struct token *self,
 }
 
 
+/**
+ *
+ */
+static void
+glwf_lookup_dtor(glw_root_t *Gr, struct token *self)
+{
+  prop_ref_dec(self->t_extra);
+}
+
+
+/**
+ *
+ */
+static int
+glwf_lookup(glw_view_eval_context_t *ec, struct token *self,
+           token_t **argv, unsigned int argc)
+{
+  token_t *a, *b;
+
+  if((a = resolve_property_name2(ec, argv[0])) == NULL)
+    return -1;
+  if((b = token_resolve(ec, argv[1])) == NULL)
+    return -1;
+
+  if(a->type != TOKEN_PROPERTY_REF)
+    return glw_view_seterr(ec->ei, a, "lookup(): "
+                           "First argument is not a property");
+
+  rstr_t *key = token2rstr(b);
+  if(key == NULL)
+    return glw_view_seterr(ec->ei, b, "lookup(): Second arg is not a string");
+
+  if(self->t_extra == NULL)
+    self->t_extra = prop_create_r(a->t_prop, NULL);
+
+
+  prop_set(self->t_extra, "key", PROP_SET_RSTRING, key);
+
+  token_t *r = eval_alloc(self, ec, TOKEN_PROPERTY_REF);
+  r->t_prop = prop_create_r(self->t_extra, "value");
+  eval_push(ec, r);
+  return 0;
+}
+
+
 
 /**
  *
@@ -6824,6 +6869,7 @@ static const token_func_t funcvec[] = {
   {"toggle", 1, glwf_toggle},
   {"eventWithProp", 2, glwf_eventWithProp},
   {"timeAgo", 1, glwf_timeAgo},
+  {"lookup", 2, glwf_lookup, glwf_null_ctor, glwf_lookup_dtor},
 #ifndef NDEBUG
   {"dumpDynamicStatements", 0, glwf_dumpdynamicstatements},
 #endif

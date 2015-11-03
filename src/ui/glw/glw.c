@@ -965,6 +965,9 @@
    glw_t *c;
 
    TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+     if(c->glw_flags2 & GLW2_CLICKABLE ||
+        c->glw_focus_weight > 0)
+       continue;
      glw_path_flood(c, or, and);
      glw_fhp_update(c, or, and);
    }
@@ -1853,7 +1856,7 @@
        if(gpe->type < GLW_POINTER_MOTION_UPDATE)
          r = 1;
 
-      if(glw_is_focusable_or_clickable(w) && *hp == NULL)
+      if(glw_is_focusable_or_clickable(w))
 	*hp = w;
 
     } else {

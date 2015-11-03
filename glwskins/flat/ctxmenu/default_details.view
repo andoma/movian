@@ -1,12 +1,37 @@
 #import "skin://theme.view"
 
+$view.itemBookmark <- lookup($core.bookmarks.queries, $args.url);
+
+
+#define ITEM(CAPTION, ICON, EVENT) {
+  widget(container_z, {
+    ListItemHighlight();
+    focusable: true;
+
+    onEvent(activate, EVENT);
+
+    widget(container_x, {
+      spacing: 0.2em;
+      widget(icon, {
+        source: ICON;
+//        source: "skin://icons/ic_check_48px.svg";
+//        alpha: $view.itemBookmark.model.subtype == "bookmark";
+      });
+
+      widget(label, {
+        caption: CAPTION;
+      });
+    });
+  });
+
+}
+
 widget(popup, {
 
   clickable: true;
   onEvent(activate, {
     $clone.itemMenu = void;
-  }, true, false, true);
-
+  }, true, true, true);
 
   widget(container_z, {
     clickable: true;
@@ -16,18 +41,20 @@ widget(popup, {
     });
     widget(container_y, {
 
-      widget(container_z, {
-        ListItemHighlight();
-        focusable: true;
+      padding:[1em, 0.5em];
+      ITEM(_("Bookmarked"),
+           select($view.itemBookmark.model.subtype == "bookmark",
+                  "skin://icons/ic_check_48px.svg",
+                  ""), {
+                    fireEvent(deliverRef($core.bookmarks.eventSink, $args));
+                    $clone.itemMenu = void;
+                    });
 
-        onEvent(activate, {
-        });
-
-        widget(container_x, {
-          padding:[0.5em, 0];
-          widget(label, {
-            caption: "Bookmark";
-          });
+      cloner($core.itemhooks, container_z, {
+        hidden: !($self.itemtype == $args.type || $self.itemtype == void);
+        ITEM($self.metadata.title, $self.metadata.icon, {
+          fireEvent(deliverRef($self.eventSink, $args));
+          $clone.itemMenu = void;
         });
       });
     });
