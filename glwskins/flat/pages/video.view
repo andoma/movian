@@ -286,6 +286,7 @@ widget(container_z, {
           });
 
           widget(slider_x, {
+            alwaysGrabKnob: true;
             clickable: true;
             bind($self.media.currenttime);
             max: $self.media.metadata.duration;
