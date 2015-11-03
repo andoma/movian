@@ -261,11 +261,7 @@ void prop_set_cstring_ex(prop_t *p, prop_sub_t *skipme, const char *str);
 
 void prop_set_stringf_ex(prop_t *p, prop_sub_t *skipme, const char *fmt, ...);
 
-#define PROP_SET_NORMAL    0
-#define PROP_SET_TENTATIVE 1
-#define PROP_SET_COMMIT    2
-
-void prop_set_float_ex(prop_t *p, prop_sub_t *skipme, float v, int how);
+void prop_set_float_ex(prop_t *p, prop_sub_t *skipme, float v);
 
 void prop_set_float_clipping_range(prop_t *p, float min, float max);
 
@@ -293,7 +289,7 @@ void prop_set_uri_ex(prop_t *p, prop_sub_t *skipme, const char *title,
 
 #define prop_set_stringf(p, fmt, ...) prop_set_stringf_ex(p, NULL, fmt, ##__VA_ARGS__)
 
-#define prop_set_float(p, v) prop_set_float_ex(p, NULL, v, 0)
+#define prop_set_float(p, v) prop_set_float_ex(p, NULL, v)
 
 #define prop_add_float(p, v) prop_add_float_ex(p, NULL, v)
 

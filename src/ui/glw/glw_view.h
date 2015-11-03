@@ -187,7 +187,6 @@ typedef struct token {
 #define t_rstring         u.rstr.rstr
 #define t_rstrtype        u.rstr.type
 #define t_float           u.f.value
-#define t_float_how       u.f.how
 #define t_float_vector    u.float_vec
 #define t_int             u.ival
 #define t_func            u.func

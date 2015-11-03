@@ -131,7 +131,7 @@ mp_direct_seek(media_pipe_t *mp, int64_t ts)
   ts = MAX(ts, 0);
 
   prop_set_float_ex(mp->mp_prop_currenttime, mp->mp_sub_currenttime,
-		    ts / 1000000.0, 0);
+		    ts / 1000000.0);
 
   mp->mp_epoch++;
   mp->mp_seek_base = ts;
@@ -170,7 +170,6 @@ mp_seek_by_propchange(void *opaque, prop_event_t event, ...)
 {
   media_pipe_t *mp = opaque;
   int64_t t;
-  int how = 0;
   va_list ap;
   va_start(ap, event);
 
@@ -180,14 +179,10 @@ mp_seek_by_propchange(void *opaque, prop_event_t event, ...)
     break;
   case PROP_SET_FLOAT:
     t = va_arg(ap, double) * 1000000.0;
-    how = va_arg(ap, int);
     break;
   default:
     return;
   }
-
-  if(how == PROP_SET_TENTATIVE)
-    return;
 
   mp_direct_seek(mp, t);
 }

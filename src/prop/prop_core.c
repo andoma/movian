@@ -759,11 +759,9 @@ notify_invoke(prop_sub_t *s, prop_notify_t *n)
 
   case PROP_SET_FLOAT:
     if(pt != NULL)
-      pt(s, n->hpn_event, n->hpn_float,
-	 n->hpn_float_how, s->hps_user_int);
+      pt(s, n->hpn_event, n->hpn_float, s->hps_user_int);
     else
-      cb(s->hps_opaque, n->hpn_event, n->hpn_float,
-	 n->hpn_float_how, s->hps_user_int);
+      cb(s->hps_opaque, n->hpn_event, n->hpn_float, s->hps_user_int);
     break;
 
   case PROP_ADD_CHILD:
@@ -1192,8 +1190,7 @@ prop_get_notify(prop_sub_t *s)
  */
 static void
 prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
-			prop_t *p, struct prop_notify_queue *pnq,
-			int how)
+			prop_t *p, struct prop_notify_queue *pnq)
 {
   prop_notify_t *n;
 
@@ -1220,7 +1217,7 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
                 trail);
       break;
     case PROP_FLOAT:
-      PROPTRACE("float(%f) by %s%s <%d>", p->hp_float, origin, trail, how);
+      PROPTRACE("float(%f) by %s%s", p->hp_float, origin, trail);
       break;
     case PROP_INT:
       PROPTRACE("int(%d) by %s%s", p->hp_int, origin, trail);
@@ -1281,9 +1278,9 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
 
     case PROP_FLOAT:
       if(pt != NULL)
-	pt(s, PROP_SET_FLOAT, p->hp_float, how, s->hps_user_int);
+	pt(s, PROP_SET_FLOAT, p->hp_float, s->hps_user_int);
       else
-	cb(s->hps_opaque, PROP_SET_FLOAT, p->hp_float, how, s->hps_user_int);
+	cb(s->hps_opaque, PROP_SET_FLOAT, p->hp_float, s->hps_user_int);
       break;
 
     case PROP_INT:
@@ -1356,7 +1353,6 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
 
   case PROP_FLOAT:
     n->hpn_float = p->hp_float;
-    n->hpn_float_how = how;
     n->hpn_event = PROP_SET_FLOAT;
     break;
 
@@ -1450,22 +1446,20 @@ prop_notify_destroyed(prop_sub_t *s)
  *
  */
 static void
-prop_notify_value(prop_t *p, prop_sub_t *skipme, const char *origin,
-		  int how)
+prop_notify_value(prop_t *p, prop_sub_t *skipme, const char *origin)
 {
   prop_sub_t *s;
 
   LIST_FOREACH(s, &p->hp_value_subscriptions, hps_value_prop_link)
     if(s != skipme)
-      prop_build_notify_value(s, 0, origin, s->hps_value_prop, NULL,
-			      how);
+      prop_build_notify_value(s, 0, origin, s->hps_value_prop, NULL);
 
   if(p->hp_flags & PROP_MULTI_NOTIFY)
     while((p = p->hp_parent) != NULL)
       if(p->hp_flags & PROP_MULTI_SUB)
 	LIST_FOREACH(s, &p->hp_value_subscriptions, hps_value_prop_link)
 	  if(s->hps_flags & PROP_SUB_MULTI)
-	    prop_build_notify_value(s, 0, origin, p, NULL, 0);
+	    prop_build_notify_value(s, 0, origin, p, NULL);
 }
 
 
@@ -1794,7 +1788,7 @@ prop_make_dir(prop_t *p, prop_sub_t *skipme, const char *origin)
   p->hp_selected = NULL;
   p->hp_type = PROP_DIR;
   
-  prop_notify_value(p, skipme, origin, 0);
+  prop_notify_value(p, skipme, origin);
 }
 
 
@@ -2331,7 +2325,7 @@ prop_destroy_childs0(prop_t *p)
 
   p->hp_type = PROP_VOID;
   p->hp_selected = NULL;
-  prop_notify_value(p, NULL, "prop_destroy_childs0()", 0);
+  prop_notify_value(p, NULL, "prop_destroy_childs0()");
 
   for(c = TAILQ_FIRST(&childs); c != NULL; c = next) {
     next = TAILQ_NEXT(c, hp_parent_link);
@@ -2373,7 +2367,7 @@ prop_void_childs0(prop_t *p)
     if(prop_clean(p))
       return;
     p->hp_type = PROP_VOID;
-    prop_notify_value(p, NULL, "prop_void_childs()", 0);
+    prop_notify_value(p, NULL, "prop_void_childs()");
   }
 }
 
@@ -2603,7 +2597,7 @@ prop_subfind(prop_t *p, const char **name, int follow_symlinks,
       p->hp_selected = NULL;
       p->hp_type = PROP_DIR;
 
-      prop_notify_value(p, NULL, "prop_subfind()", 0);
+      prop_notify_value(p, NULL, "prop_subfind()");
     }
 
     if(allow_indexing && name[0][0] == '*') {
@@ -3140,8 +3134,8 @@ prop_subscribe_ex(const char *file, int line, int flags, ...)
 
       if(notify_now) {
 
-        prop_build_notify_value(s, direct, "prop_subscribe()", 
-                                s->hps_value_prop, NULL, 0);
+        prop_build_notify_value(s, direct, "prop_subscribe()",
+                                s->hps_value_prop, NULL);
 
         if(value->hp_type == PROP_DIR && !(s->hps_flags & PROP_SUB_MULTI)) {
 
@@ -3304,7 +3298,7 @@ prop_sub_reemit(prop_sub_t *s)
     return;
 
   hts_mutex_lock(&prop_mutex);
-  prop_build_notify_value(s, 0, "reemit", s->hps_value_prop, NULL, 0);
+  prop_build_notify_value(s, 0, "reemit", s->hps_value_prop, NULL);
   hts_mutex_unlock(&prop_mutex);
 }
 
@@ -3352,7 +3346,7 @@ prop_get_global(void)
 static void
 prop_set_epilogue(prop_sub_t *skipme, prop_t *p, const char *origin)
 {
-  prop_notify_value(p, skipme, origin, 0);
+  prop_notify_value(p, skipme, origin);
 
   hts_mutex_unlock(&prop_mutex);
 }
@@ -3385,7 +3379,7 @@ prop_set_string_exl(prop_t *p, prop_sub_t *skipme, const char *str,
   p->hp_type = PROP_RSTRING;
 
   p->hp_rstrtype = type;
-  prop_notify_value(p, skipme, "prop_set_string()", 0);
+  prop_notify_value(p, skipme, "prop_set_string()");
 }
 
 /**
@@ -3438,7 +3432,7 @@ prop_set_rstring_exl(prop_t *p, prop_sub_t *skipme, rstr_t *rstr,
   p->hp_rstring = rstr_dup(rstr);
   p->hp_type = PROP_RSTRING;
   p->hp_rstrtype = type;
-  prop_notify_value(p, skipme, "prop_set_rstring()", 0);
+  prop_notify_value(p, skipme, "prop_set_rstring()");
 }
 
 
@@ -3490,7 +3484,7 @@ prop_set_cstring_exl(prop_t *p, prop_sub_t *skipme, const char *cstr)
 
   p->hp_cstring = cstr;
   p->hp_type = PROP_CSTRING;
-  prop_notify_value(p, skipme, "prop_set_cstring()", 0);
+  prop_notify_value(p, skipme, "prop_set_cstring()");
 }
 
 
@@ -3621,15 +3615,13 @@ prop_float_to_int(prop_t *p)
  *
  */
 static prop_t *
-prop_get_float_locked(prop_t *p, int *forceupdate)
+prop_get_float_locked(prop_t *p)
 {
   if(p == NULL || p->hp_type == PROP_ZOMBIE)
     return NULL;
 
   if(p->hp_type == PROP_INT) {
     prop_int_to_float(p);
-    if(forceupdate != NULL)
-      *forceupdate = 1;
     return p;
   }
 
@@ -3638,8 +3630,6 @@ prop_get_float_locked(prop_t *p, int *forceupdate)
     if(prop_clean(p))
       return NULL;
 
-    if(forceupdate != NULL)
-      *forceupdate = 1;
     p->hp_float = 0;
     p->hp_type = PROP_FLOAT;
   }
@@ -3651,18 +3641,16 @@ prop_get_float_locked(prop_t *p, int *forceupdate)
  *
  */
 static void
-prop_set_float_exl(prop_t *p, prop_sub_t *skipme, float v, int how)
+prop_set_float_exl(prop_t *p, prop_sub_t *skipme, float v)
 {
-  int forceupdate = !!how;
-
   if(p != NULL && p->hp_type == PROP_PROXY) {
     prop_proxy_set_float(p, v);
     return;
   }
 
-  if((p = prop_get_float_locked(p, &forceupdate)) != NULL) {
+  if((p = prop_get_float_locked(p)) != NULL) {
 
-    if(forceupdate || p->hp_float != v) {
+    if(p->hp_float != v) {
 
       if(p->hp_flags & PROP_CLIPPED_VALUE) {
 	if(v > p->u.f.max)
@@ -3673,7 +3661,7 @@ prop_set_float_exl(prop_t *p, prop_sub_t *skipme, float v, int how)
 
       p->hp_float = v;
       
-      prop_notify_value(p, skipme, "prop_set_float_ex()", how);
+      prop_notify_value(p, skipme, "prop_set_float_ex()");
     }
   }
 }
@@ -3683,10 +3671,10 @@ prop_set_float_exl(prop_t *p, prop_sub_t *skipme, float v, int how)
  *
  */
 void
-prop_set_float_ex(prop_t *p, prop_sub_t *skipme, float v, int how)
+prop_set_float_ex(prop_t *p, prop_sub_t *skipme, float v)
 {
   hts_mutex_lock(&prop_mutex);
-  prop_set_float_exl(p, skipme, v, how);
+  prop_set_float_exl(p, skipme, v);
   hts_mutex_unlock(&prop_mutex);
 }
 
@@ -3699,7 +3687,7 @@ prop_add_float_ex(prop_t *p, prop_sub_t *skipme, float v)
 {
   hts_mutex_lock(&prop_mutex);
 
-  if((p = prop_get_float_locked(p, NULL)) != NULL) {
+  if((p = prop_get_float_locked(p)) != NULL) {
     float n = p->hp_float + v;
 
     if(p->hp_flags & PROP_CLIPPED_VALUE) {
@@ -3711,7 +3699,7 @@ prop_add_float_ex(prop_t *p, prop_sub_t *skipme, float v)
 
     if(p->hp_float != n) {
       p->hp_float = n;
-      prop_notify_value(p, skipme, "prop_add_float()", 0);
+      prop_notify_value(p, skipme, "prop_add_float()");
     }
   }
   hts_mutex_unlock(&prop_mutex);
@@ -3726,7 +3714,7 @@ prop_set_float_clipping_range(prop_t *p, float min, float max)
 {
   hts_mutex_lock(&prop_mutex);
 
-  if((p = prop_get_float_locked(p, NULL)) != NULL) {
+  if((p = prop_get_float_locked(p)) != NULL) {
 
     p->hp_flags |= PROP_CLIPPED_VALUE;
 
@@ -3742,7 +3730,7 @@ prop_set_float_clipping_range(prop_t *p, float min, float max)
 
     if(n != p->hp_float) {
       p->hp_float = n;
-      prop_notify_value(p, NULL, "prop_set_float_clipping_range()", 0);
+      prop_notify_value(p, NULL, "prop_set_float_clipping_range()");
     }
   }
 
@@ -3785,7 +3773,7 @@ prop_set_int_exl(prop_t *p, prop_sub_t *skipme, int v)
 
   p->hp_int = v;
 
-  prop_notify_value(p, skipme, "prop_set_int_exl()", 0);
+  prop_notify_value(p, skipme, "prop_set_int_exl()");
 }
 
 
@@ -3852,7 +3840,7 @@ prop_add_int_ex(prop_t *p, prop_sub_t *skipme, int v)
 
   if(n != p->hp_int) {
     p->hp_int = n;
-    prop_notify_value(p, skipme, "prop_add_int()", 0);
+    prop_notify_value(p, skipme, "prop_add_int()");
   }
   hts_mutex_unlock(&prop_mutex);
 }
@@ -3943,7 +3931,7 @@ prop_set_int_clipping_range(prop_t *p, int min, int max)
 
   if(n != p->hp_int) {
     p->hp_int = n;
-    prop_notify_value(p, NULL, "prop_set_int_clipping_range()", 0);
+    prop_notify_value(p, NULL, "prop_set_int_clipping_range()");
   }
 
   hts_mutex_unlock(&prop_mutex);
@@ -3970,7 +3958,7 @@ prop_set_void_exl(prop_t *p, prop_sub_t *skipme)
       return;
     
     p->hp_type = PROP_VOID;
-    prop_notify_value(p, skipme, "prop_set_void()", 0);
+    prop_notify_value(p, skipme, "prop_set_void()");
   }
 }
 
@@ -4013,7 +4001,7 @@ prop_set_prop_exl(prop_t *p, prop_sub_t *skipme, prop_t *target)
   p->hp_prop = prop_ref_inc(target);
   p->hp_type = PROP_PROP;
 
-  prop_notify_value(p, skipme, "prop_set_prop()", 0);
+  prop_notify_value(p, skipme, "prop_set_prop()");
 }
 
 /**
@@ -4035,7 +4023,7 @@ prop_copy_ex(prop_t *dst, prop_sub_t *skipme, prop_t *src)
       prop_set_int_exl(dst, skipme, src->hp_int);
       break;
     case PROP_FLOAT:
-      prop_set_float_exl(dst, skipme, src->hp_float, 0);
+      prop_set_float_exl(dst, skipme, src->hp_float);
       break;
     case PROP_RSTRING:
       prop_set_rstring_exl(dst, skipme, src->hp_rstring, 0);
@@ -4172,7 +4160,7 @@ retarget_subscription(prop_t *p, prop_sub_t *s, prop_sub_t *skipme,
     return; /* Unless it's to be skipped */
 
   s->hps_pending_unlink = pnq ? 1 : 0;
-  prop_build_notify_value(s, 0, origin, s->hps_value_prop, pnq, 0);
+  prop_build_notify_value(s, 0, origin, s->hps_value_prop, pnq);
 
   if(p->hp_type != PROP_DIR)
     return;
@@ -5337,7 +5325,7 @@ prop_seti(prop_sub_t *skipme, prop_t *p, va_list ap)
     prop_set_int_exl(p, skipme, va_arg(ap, int));
     break;
   case PROP_SET_FLOAT:
-    prop_set_float_exl(p, skipme, va_arg(ap, double), 0);
+    prop_set_float_exl(p, skipme, va_arg(ap, double));
     break;
   case PROP_SET_VOID:
     prop_set_void_exl(p, skipme);

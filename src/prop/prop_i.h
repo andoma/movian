@@ -110,7 +110,6 @@ typedef struct prop_notify {
 #define hpn_prop   u.p
 #define hpn_propv  u.pv
 #define hpn_float  u.f.f
-#define hpn_float_how  u.f.how
 #define hpn_int    u.i
 #define hpn_rstring u.rstr.rstr
 #define hpn_rstrtype u.rstr.type

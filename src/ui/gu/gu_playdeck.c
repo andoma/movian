@@ -221,7 +221,7 @@ slider_updated(GtkRange *range, GtkScrollType scroll,
   p = prop_get_by_name(PNVEC("global", "media", "current", "currenttime"),
 		       1, NULL);
   if(p != NULL) {
-    prop_set_float_ex(p, pd->sub_pos, value, 0);
+    prop_set_float_ex(p, pd->sub_pos, value);
     prop_ref_dec(p);
   }
   return FALSE;

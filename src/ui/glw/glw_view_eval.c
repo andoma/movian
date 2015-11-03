@@ -1812,8 +1812,6 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
     t = prop_callback_alloc_token(gr, gps, TOKEN_FLOAT);
     t->t_propsubr = gps;
     t->t_float = va_arg(ap, double);
-    (void)va_arg(ap, prop_t *); // vauleprop
-    t->t_float_how = va_arg(ap, int);
     rpn = gps->gps_rpn;
     break;
 
@@ -1993,7 +1991,6 @@ ve_cb(void *opaque, prop_event_t event, ...)
   case PROP_SET_FLOAT:
     t = prop_callback_alloc_token(gr, gps, TOKEN_FLOAT);
     t->t_float = va_arg(ap, double);
-    t->t_float_how = va_arg(ap, int);
     rpn = gps->gps_rpn;
     break;
 
@@ -2268,7 +2265,6 @@ prop_callback_vectorizer(void *opaque, prop_event_t event, ...)
     t = prop_callback_alloc_token(gr, gps, TOKEN_FLOAT);
     t->t_propsubr = gps;
     t->t_float = va_arg(ap, double);
-    t->t_float_how = va_arg(ap, int);
     rpn = gps->gps_rpn;
     break;
 
@@ -5789,110 +5785,6 @@ glwf_getHeight(glw_view_eval_context_t *ec, struct token *self,
 
 
 /**
- *
- */
-static int
-glwf_preferTentative(glw_view_eval_context_t *ec, struct token *self,
-		     token_t **argv, unsigned int argc)
-{
-  token_t *a = argv[0], *r;
-  int how;
-
-  if((a = token_resolve(ec, a)) == NULL)
-    return -1;
-
-  switch(a->type) {
-  case TOKEN_FLOAT:
-    how = a->t_float_how;
-    break;
-  default:
-    how = 0;
-    break;
-  }
-
-  switch(how) {
-  case PROP_SET_NORMAL:
-    r = self->t_extra ?: a;
-    break;
-
-  case PROP_SET_TENTATIVE:
-    if(self->t_extra != NULL)
-      glw_view_token_free(ec->gr, self->t_extra);
-    self->t_extra = r = glw_view_token_copy(ec->gr, a);
-    break;
-
-  case PROP_SET_COMMIT:
-    if(self->t_extra != NULL)
-      glw_view_token_free(ec->gr, self->t_extra);
-    self->t_extra = NULL;
-    r = a;
-    break;
-  default:
-    abort();
-  }
-
-  ec->dynamic_eval |= GLW_VIEW_EVAL_KEEP;
-  eval_push(ec, r);
-  return 0;
-}
-
-
-/**
- *
- */
-static void
-glwf_freetoken_dtor(glw_root_t *gr, struct token *self)
-{
-  if(self->t_extra != NULL)
-    glw_view_token_free(gr, self->t_extra);
-}
-
-
-
-/**
- *
- */
-static int
-glwf_ignoreTentative(glw_view_eval_context_t *ec, struct token *self,
-		     token_t **argv, unsigned int argc)
-{
-  token_t *a = argv[0], *r;
-  int how;
-
-  if((a = token_resolve(ec, a)) == NULL)
-    return -1;
-
-  switch(a->type) {
-  case TOKEN_FLOAT:
-    how = a->t_float_how;
-    break;
-  default:
-    how = 0;
-    break;
-  }
-
-  switch(how) {
-  case PROP_SET_NORMAL:
-  case PROP_SET_COMMIT:
-    if(self->t_extra != NULL)
-      glw_view_token_free(ec->gr, self->t_extra);
-    self->t_extra = r = glw_view_token_copy(ec->gr, a);
-    break;
-
-  case PROP_SET_TENTATIVE:
-    r = self->t_extra ?: a;
-    break;
-  default:
-    abort();
-  }
-
-  ec->dynamic_eval |= GLW_VIEW_EVAL_KEEP;
-  eval_push(ec, r);
-  return 0;
-}
-
-
-/**
  * Cast to int
  */
 static int
@@ -6911,8 +6803,6 @@ static const token_func_t funcvec[] = {
   {"getLayer", 0, glwf_getLayer},
   {"getWidth", 0, glwf_getWidth},
   {"getHeight", 0, glwf_getHeight},
-  {"preferTentative", 1, glwf_preferTentative, glwf_null_ctor, glwf_freetoken_dtor},
-  {"ignoreTentative", 1, glwf_ignoreTentative, glwf_null_ctor, glwf_freetoken_dtor},
   {"int", 1,glwf_int},
   {"clamp", 3, glwf_clamp},
   {"join", -1, glwf_join},
