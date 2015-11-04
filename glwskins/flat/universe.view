@@ -25,11 +25,7 @@ style(PageContainer, {
 widget(container_z, {
   widget(backdrop, {
     zoffset: -1000;
-
     source: "pixmap:gradient:30,30,30:60,60,60";
-//    source: "http://image.tmdb.org/t/p/original/jz1eErpJSx7ToDVDgV9HKFv4hAa.jpg";
-//    source: "http://image.tmdb.org/t/p/original/xyhrCEdB4XRkelfVsqXeUZ6rLHi.jpg";
-//    color: 0.3;
     alpha: iir(1 - $ui.fullwindow, 4);
   });
 
@@ -51,8 +47,6 @@ widget(container_z, {
           widget(playfield, {
             effect: blend;
             noInitialTransform: true;
-
-            $view.currentPageClone <- focusedClone();
 
             cloner($nav.pages, container_z, {
 
