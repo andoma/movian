@@ -5115,7 +5115,6 @@ glwf_trace(glw_view_eval_context_t *ec, struct token *self,
 #endif
 
   switch(b->type) {
-  case TOKEN_URI:
   case TOKEN_RSTRING:
   case TOKEN_IDENTIFIER:
     TRACE(TRACE_DEBUG, "GLW", "%s: %s", prefix, rstr_get(b->t_rstring));
@@ -5131,6 +5130,11 @@ glwf_trace(glw_view_eval_context_t *ec, struct token *self,
     break;
   case TOKEN_VOID:
     TRACE(TRACE_DEBUG, "GLW", "%s: (void)", prefix, b->t_int);
+    break;
+  case TOKEN_URI:
+    TRACE(TRACE_DEBUG, "GLW", "%s: %s (URI)", prefix,
+          rstr_get(b->t_uri_title),
+          rstr_get(b->t_uri));
     break;
   default:
     TRACE(TRACE_DEBUG, "GLW", "%s: %s", prefix, token2name(b));
