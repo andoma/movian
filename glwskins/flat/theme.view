@@ -70,7 +70,29 @@
     additive: true;
     alpha: 0.1 * isHovered() + 0.6 * isNavFocused();
   });
+}
 
+
+#define GridItemHighlight2() {
+  widget(quad, {
+    fhpSpill: true;
+    additive: true;
+    alpha: 0.1 * isHovered() + 0.6 * isNavFocused();
+  });
+  widget(container_x, {
+    filterConstraintX: true;
+    fhpSpill: true;
+    alpha: isHovered() * 0.5;
+    widget(quad, {
+      width: 1;
+      color: 0;
+    });
+    space(1);
+    widget(quad, {
+      width: 1;
+      color: 0;
+    });
+  });
 }
 
 

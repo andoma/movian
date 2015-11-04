@@ -8,8 +8,9 @@ widget(container_z, {
     navWrap: true;
     chaseFocus: true;
 
-    scrollThresholdTop: 3em;
     clipOffsetTop: 3em;
+    scrollThresholdTop: 3em;
+
     scrollThresholdBottom: $ui.universeBottomHeight;
     clipOffsetBottom: $ui.universeBottomHeight;
     clipAlpha: 0.2;

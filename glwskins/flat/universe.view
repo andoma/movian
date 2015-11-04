@@ -76,7 +76,9 @@ widget(container_z, {
       widget(container_y, {
         space(1);
         widget(container_y, {
+
           $ui.universeBottomHeight = getHeight();
+
           expediteSubscriptions: true;
 
           style(playdeckText, {
