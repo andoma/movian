@@ -87,7 +87,7 @@ glw_array_layout(glw_t *w, const glw_rctx_t *rc)
   int column = 0;
   float xspacing = 0, yspacing = 0;
   int height, width, rows;
-  int xpos = 0, ypos = 0;
+  int xpos = 0, ypos = a->gsc.scroll_threshold_pre;
 
   glw_reposition(&rc0,
 		 a->margin[0] + a->border[0],
