@@ -1312,7 +1312,7 @@ static const token_attrib_t attribtab[] = {
   {"maxlines",        set_number, GLW_ATTRIB_MAX_LINES},
   {"sizeScale",       set_number, GLW_ATTRIB_SIZE_SCALE},
   {"size",            set_number, GLW_ATTRIB_SIZE},
-  {"minSize",         set_number, GLW_ATTRIB_MIN_SIZE},
+  {"maxWidth",        set_number, GLW_ATTRIB_MAX_WIDTH},
   {"alphaSelf",       set_number, GLW_ATTRIB_ALPHA_SELF},
   {"saturation",      set_number, GLW_ATTRIB_SATURATION},
   {"time",            set_number, GLW_ATTRIB_TIME},

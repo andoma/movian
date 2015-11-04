@@ -90,7 +90,7 @@ typedef struct glw_text_bitmap {
   int16_t gtb_uc_size;
   int16_t gtb_maxlines;
   int16_t gtb_default_size;
-  int16_t gtb_min_size;
+  int16_t gtb_max_width;
 
   int16_t gtb_margin;
 
@@ -1049,11 +1049,11 @@ gtb_set_int(glw_t *w, glw_attribute_t a, int v, glw_style_t *origin)
     gtb->gtb_default_size = v;
     break;
 
-  case GLW_ATTRIB_MIN_SIZE:
-    if(gtb->gtb_min_size == v)
+  case GLW_ATTRIB_MAX_WIDTH:
+    if(gtb->gtb_max_width == v)
       return 0;
 
-    gtb->gtb_min_size = v;
+    gtb->gtb_max_width = v;
     break;
 
   case GLW_ATTRIB_MAX_LINES:
@@ -1113,16 +1113,17 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
 
   default_size = gtb->gtb_default_size ?: gr->gr_current_size;
   scale = gtb->gtb_size_scale;
-  min_size = gtb->gtb_min_size;
+  min_size = 0;
 
   flags = 0;
 
   if(no_output) {
-    max_width = gr->gr_width;
+    max_width = MIN(gtb->gtb_max_width, gr->gr_width);
     flags |= TR_RENDER_NO_OUTPUT;
   } else {
     max_width =
-      gtb->gtb_saved_width - gtb->gtb_padding[0] - gtb->gtb_padding[2];
+      MAX(gtb->gtb_max_width, gtb->gtb_saved_width) -
+      gtb->gtb_padding[0] - gtb->gtb_padding[2];
   }
   if(gtb->w.glw_flags2 & GLW2_DEBUG)
     printf("  Max_width=%d\n", max_width);
