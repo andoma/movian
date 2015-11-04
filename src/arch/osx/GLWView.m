@@ -198,18 +198,27 @@ glw_in_fullwindow(void *opaque, int val)
   gpe.y = (2.0 * loc.y / gr->gr_height) - 1;
   gpe.type = type;
 
-  if(type == GLW_POINTER_SCROLL) {
-    gpe.delta_x = -[event deltaX];
-    gpe.delta_y = -[event deltaY];
-  }
-
   gpe.ts = [event timestamp] * 1000000.0;
 
-  if(type == GLW_POINTER_FINE_SCROLL) {
-    NSPoint p = {[event deltaX], [event deltaY]};
-    NSPoint p2 = [self convertPointToBacking:p];
-    gpe.delta_x = p2.x * 4;
-    gpe.delta_y = p2.y * -4;
+  switch(type) {
+  case GLW_POINTER_SCROLL:
+    {
+      NSPoint p = {[event deltaX], [event deltaY]};
+      NSPoint p2 = [self convertPointToBacking:p];
+
+      gpe.delta_x = p2.x / 8;
+      gpe.delta_y = -p2.y / 8;
+      break;
+    }
+
+  case GLW_POINTER_FINE_SCROLL:
+    {
+      NSPoint p = {[event deltaX], [event deltaY]};
+      NSPoint p2 = [self convertPointToBacking:p];
+      gpe.delta_x = p2.x * 4;
+      gpe.delta_y = p2.y * -4;
+      break;
+    }
   }
 
   glw_lock(gr);

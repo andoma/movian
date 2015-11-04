@@ -1,26 +1,34 @@
 #import "skin://theme.view"
 #import "skin://styles/style_list.view"
 
-widget(container_y, {
+widget(container_z, {
 
-  PageHeader();
+  widget(list_y, {
+    id: "scrollable";
+    navWrap: true;
+    chaseFocus: true;
 
-  widget(container_z, {
+    scrollThresholdTop: 3em;
+    clipOffsetTop: 3em;
+    scrollThresholdBottom: $ui.universeBottomHeight;
+    clipOffsetBottom: $ui.universeBottomHeight;
+    clipAlpha: 0.2;
+    clipBlur: 1;
 
-    widget(list_y, {
-      id: "scrollable";
-      navWrap: true;
-      chaseFocus: true;
-      scrollThreshold: 2em;
-      cloner($self.model.nodes, loader, {
-        time: 0.1;
-        effect: blend;
-        noInitialTransform: true;
-        alt: "skin://items/list/default.view";
+    cloner($self.model.nodes, loader, {
+      time: 0.1;
+      effect: blend;
+      noInitialTransform: true;
+      alt: "skin://items/list/default.view";
         source: "skin://items/list/" + $self.type + ".view";
-      });
     });
-
-    ScrollBar();
   });
+
+  ScrollBar();
+
+  widget(container_y, {
+    align: top;
+    PageHeader();
+  });
+
 });

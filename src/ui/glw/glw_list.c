@@ -34,15 +34,10 @@ typedef struct glw_list {
   int16_t saved_height;
   int16_t saved_width;
   int16_t spacing;
-  int16_t scroll_threshold;
 
   int16_t padding[4];
 
-  float alpha_falloff;
-  float blur_falloff;
-
   int chase_focus;
-
 
   glw_scroll_control_t gsc;
 
@@ -65,14 +60,14 @@ glw_list_layout_y(glw_t *w, const glw_rctx_t *rc)
 {
   glw_list_t *l = (glw_list_t *)w;
   glw_t *c;
-  const int bd = l->scroll_threshold;
   int ypos;
 
   glw_rctx_t rc0 = *rc;
 
   glw_reposition(&rc0, l->padding[0], rc->rc_height - l->padding[1],
 		 rc->rc_width - l->padding[2], l->padding[3]);
-  int height0 = rc0.rc_height - bd * 2;
+
+  const int bottom_scroll_pos = rc0.rc_height - l->gsc.scroll_threshold_post;
 
   if(l->saved_height != rc0.rc_height) {
     l->saved_height = rc0.rc_height;
@@ -85,7 +80,7 @@ glw_list_layout_y(glw_t *w, const glw_rctx_t *rc)
 
   if(l->scroll_to_me != NULL) {
 
-    ypos = bd;
+    ypos = l->gsc.scroll_threshold_pre;
     TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
       if(c->glw_flags & GLW_HIDDEN)
         continue;
@@ -101,12 +96,15 @@ glw_list_layout_y(glw_t *w, const glw_rctx_t *rc)
 
       if(c == l->scroll_to_me) {
 
-        if(ypos - l->gsc.filtered_pos < bd) {
-          l->gsc.target_pos = ypos - bd;
+        int screen_pos = ypos - l->gsc.rounded_pos;
+        if(screen_pos < l->gsc.scroll_threshold_pre) {
+          l->gsc.target_pos = ypos - l->gsc.scroll_threshold_pre;
           l->w.glw_flags |= GLW_UPDATE_METRICS;
-        } else if(ypos - l->gsc.filtered_pos + height > height0) {
-          l->gsc.target_pos = ypos + height - height0;
+          glw_schedule_refresh(w->glw_root, 0);
+        } else if(screen_pos + height > bottom_scroll_pos) {
+          l->gsc.target_pos = ypos + height - bottom_scroll_pos;
           l->w.glw_flags |= GLW_UPDATE_METRICS;
+          glw_schedule_refresh(w->glw_root, 0);
         }
       }
 
@@ -116,9 +114,9 @@ glw_list_layout_y(glw_t *w, const glw_rctx_t *rc)
     l->scroll_to_me = NULL;
   }
 
-  glw_scroll_layout(&l->gsc, w, bd, rc->rc_height);
+  glw_scroll_layout(&l->gsc, w, rc->rc_height);
 
-  ypos = bd;
+  ypos = l->gsc.scroll_threshold_pre;
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
@@ -142,8 +140,8 @@ glw_list_layout_y(glw_t *w, const glw_rctx_t *rc)
 
     cd->height = rc0.rc_height;
 
-    if(ypos - l->gsc.rounded_pos > -height0 &&
-       ypos - l->gsc.rounded_pos <  height0 * 2)
+    if(ypos - l->gsc.rounded_pos > -rc->rc_height &&
+       ypos - l->gsc.rounded_pos <  rc->rc_height * 2)
       glw_layout0(c, &rc0);
 
     ypos += rc0.rc_height;
@@ -169,13 +167,14 @@ glw_list_layout_x(glw_t *w, const glw_rctx_t *rc)
 {
   glw_list_t *l = (glw_list_t *)w;
   glw_t *c;
-  const int bd = l->scroll_threshold;
-  int xpos = bd;
+  int xpos = l->gsc.scroll_threshold_pre;;
   glw_rctx_t rc0 = *rc;
 
   glw_reposition(&rc0, l->padding[0], rc->rc_height - l->padding[1],
 		 rc->rc_width - l->padding[2], l->padding[3]);
-  int width0 = rc0.rc_width - bd * 2;
+  int width0 = rc0.rc_width -
+    l->gsc.scroll_threshold_pre -
+    l->gsc.scroll_threshold_post;
 
   if(l->saved_width != rc0.rc_width) {
     l->saved_width = rc0.rc_width;
@@ -221,11 +220,11 @@ glw_list_layout_x(glw_t *w, const glw_rctx_t *rc)
 
     if(c == l->scroll_to_me) {
       l->scroll_to_me = NULL;
-      if(xpos - l->gsc.rounded_pos < bd) {
-	l->gsc.target_pos = xpos - bd;
+      if(xpos - l->gsc.rounded_pos < l->gsc.scroll_threshold_pre) {
+	l->gsc.target_pos = xpos - l->gsc.scroll_threshold_pre;
 	l->w.glw_flags |= GLW_UPDATE_METRICS;
       } else if(xpos - l->gsc.rounded_pos + rc0.rc_width > width0) {
-	l->gsc.target_pos = xpos + rc0.rc_width - width0 - bd;
+	l->gsc.target_pos = xpos + rc0.rc_width - width0;
 	l->w.glw_flags |= GLW_UPDATE_METRICS;
       }
     }
@@ -234,7 +233,7 @@ glw_list_layout_x(glw_t *w, const glw_rctx_t *rc)
     xpos += l->spacing;
   }
 
-  xpos += bd;
+  xpos += l->gsc.scroll_threshold_post;
 
   if(l->gsc.total_size != xpos) {
     l->gsc.total_size = xpos;
@@ -251,12 +250,12 @@ glw_list_layout_x(glw_t *w, const glw_rctx_t *rc)
  */
 static void
 glw_list_y_render_one(glw_list_t *l, glw_t *c, int width, int height,
-                      const glw_rctx_t *rc0, const glw_rctx_t *rc1)
+                      const glw_rctx_t *rc0, const glw_rctx_t *rc1,
+                      int clip_top, int clip_bottom)
 {
   glw_list_item_t *cd = glw_parent_data(c, glw_list_item_t);
 
   int ct, cb;
-  int ft, fb;
   glw_root_t *gr = l->w.glw_root;
   float y = cd->pos - l->gsc.rounded_pos;
   glw_rctx_t rc2;
@@ -268,13 +267,19 @@ glw_list_y_render_one(glw_list_t *l, glw_t *c, int width, int height,
     c->glw_flags &= ~GLW_CLIPPED;
   }
 
-  ct = cb = ft = fb = -1;
+  ct = cb = -1;
 
-  if(y < 0)
-    ct = glw_clip_enable(gr, rc0, GLW_CLIP_TOP, 0, 0, 1);
+  if(y < clip_top) {
+    const float k = (float)clip_top / rc0->rc_height;
+    ct = glw_clip_enable(gr, rc0, GLW_CLIP_TOP, k,
+                         l->gsc.clip_alpha, 1.0f - l->gsc.clip_blur);
+  }
 
-  if(y + cd->height > height)
-    cb = glw_clip_enable(gr, rc0, GLW_CLIP_BOTTOM, 0, 0, 1);
+  if(y + cd->height > rc0->rc_height - clip_bottom) {
+    const float k = (float)clip_bottom / rc0->rc_height;
+    cb = glw_clip_enable(gr, rc0, GLW_CLIP_BOTTOM, k,
+                         l->gsc.clip_alpha, 1.0f - l->gsc.clip_blur);
+  }
 
   rc2 = *rc1;
   glw_reposition(&rc2,
@@ -315,17 +320,17 @@ glw_list_render_y(glw_t *w, const glw_rctx_t *rc)
   if(rc->rc_alpha < 0.01f)
     return;
 
+  const int clip_top    = l->gsc.clip_offset_pre - 1;
+  const int clip_bottom = l->gsc.clip_offset_post - 1;
+
   glw_Translatef(&rc1, 0, 2.0f * l->gsc.rounded_pos / rc0.rc_height, 0);
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
-    if(w->glw_focused != c)
-      glw_list_y_render_one(l, c, rc0.rc_width, rc0.rc_height, &rc0, &rc1);
+    glw_list_y_render_one(l, c, rc0.rc_width, rc0.rc_height, &rc0, &rc1,
+                          clip_top, clip_bottom);
   }
-  if(w->glw_focused != NULL)
-    glw_list_y_render_one(l, w->glw_focused, rc0.rc_width, rc0.rc_height,
-                          &rc0, &rc1);
 }
 
 
@@ -607,12 +612,6 @@ glw_list_set_int(glw_t *w, glw_attribute_t attrib, int value,
     l->spacing = value;
     break;
 
-  case GLW_ATTRIB_SCROLL_THRESHOLD:
-    if(l->scroll_threshold == value)
-      return 0;
-    l->scroll_threshold = value;
-    break;
-
   default:
     return -1;
   }
@@ -626,7 +625,6 @@ static void
 glw_list_y_ctor(glw_t *w)
 {
   glw_list_t *l = (void *)w;
-  
   l->child_aspect = 20;
   l->suggest_cnt = 1;
   w->glw_flags |= GLW_FLOATING_FOCUS;
@@ -694,6 +692,19 @@ glw_list_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v,
  *
  */
 static int
+glw_list_set_float_unresolved(glw_t *w, const char *a, float value,
+                              glw_style_t *gs)
+{
+  glw_list_t *l = (glw_list_t *)w;
+
+  return glw_scroll_set_float_attributes(&l->gsc, a, value);
+
+}
+
+/**
+ *
+ */
+static int
 glw_list_set_int_unresolved(glw_t *w, const char *a, int value,
                             glw_style_t *gs)
 {
@@ -703,7 +714,8 @@ glw_list_set_int_unresolved(glw_t *w, const char *a, int value,
     l->chase_focus = value;
     return GLW_SET_NO_CHANGE;
   }
-  return GLW_SET_NOT_RESPONDING;
+
+  return glw_scroll_set_int_attributes(&l->gsc, a, value);
 }
 
 
@@ -733,6 +745,7 @@ static glw_class_t glw_list_y = {
   .gc_pointer_event = handle_pointer_event,
   .gc_bubble_event = glw_navigate_vertical,
   .gc_set_int_unresolved = glw_list_set_int_unresolved,
+  .gc_set_float_unresolved = glw_list_set_float_unresolved,
 };
 
 GLW_REGISTER_CLASS(glw_list_y);
@@ -755,6 +768,7 @@ static glw_class_t glw_list_x = {
   .gc_set_int16_4 = glw_list_set_int16_4,
   .gc_bubble_event = glw_navigate_horizontal,
   .gc_set_int_unresolved = glw_list_set_int_unresolved,
+  .gc_set_float_unresolved = glw_list_set_float_unresolved,
 };
 
 GLW_REGISTER_CLASS(glw_list_x);

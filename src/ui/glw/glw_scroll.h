@@ -29,6 +29,9 @@ typedef struct glw_scroll_control {
   int total_size;
   int page_size;
 
+  int scroll_threshold_pre;
+  int scroll_threshold_post;
+
   float initial_touch_x;
   float initial_touch_y;
   int initial_pos;
@@ -41,6 +44,11 @@ typedef struct glw_scroll_control {
 
   glw_slider_metrics_t metrics;
 
+  int16_t clip_offset_pre;
+  int16_t clip_offset_post;
+  float clip_alpha;
+  float clip_blur;
+
 } glw_scroll_control_t;
 
 
@@ -48,7 +56,13 @@ int glw_scroll_handle_pointer_event(glw_scroll_control_t *gsc,
                                     glw_t *w,
                                     const glw_pointer_event_t *gpe);
 
-void glw_scroll_layout(glw_scroll_control_t *gsc, glw_t *w, int bd,
+void glw_scroll_layout(glw_scroll_control_t *gsc, glw_t *w,
                        int height);
 
 void glw_scroll_update_metrics(glw_scroll_control_t *gsc, glw_t *w);
+
+int glw_scroll_set_float_attributes(glw_scroll_control_t *gsc, const char *a,
+                                    float value);
+
+int glw_scroll_set_int_attributes(glw_scroll_control_t *gsc, const char *a,
+                                  int value);

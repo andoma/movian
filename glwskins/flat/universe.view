@@ -39,44 +39,44 @@ widget(container_z, {
   widget(underscan, {
     widget(container_z, {
 
-      widget(container_y, {
+      widget(layer, {
+        filterConstraintY: true;
+	alpha: iir(1 - $ui.screensaverActive, 8);
+        widget(playfield, {
+          effect: blend;
+          noInitialTransform: true;
 
-        widget(layer, {
-          filterConstraintY: true;
-	  alpha: iir(1 - $ui.screensaverActive, 8);
-          widget(playfield, {
-            effect: blend;
-            noInitialTransform: true;
+          cloner($nav.pages, container_z, {
 
-            cloner($nav.pages, container_z, {
-
-              widget(loader, {
-	        time: 0.05;
-                effect: flipVertical;
-	        noInitialTransform: true;
-	        source: "skin://pages/" + $self.model.type + ".view";
-              });
-
+            widget(loader, {
+	      time: 0.05;
+              effect: flipVertical;
+	      noInitialTransform: true;
+	      source: "skin://pages/" + $self.model.type + ".view";
             });
+
           });
-	  cloner($core.popups, loader, {
-	    source: "popups/" + $self.type + ".view";
-	  });
-
-	  widget(loader, {
-            autohide: true;
-	    source: select($ui.logwindow, "log.view", "");
-	  });
-
-          widget(loader, {
-            autohide: true;
-	    source: select($ui.osk.show, "osk.view", "");
-	  });
-
         });
+	cloner($core.popups, loader, {
+	  source: "popups/" + $self.type + ".view";
+	});
 
+	widget(loader, {
+          autohide: true;
+	  source: select($ui.logwindow, "log.view", "");
+	});
+
+        widget(loader, {
+          autohide: true;
+	  source: select($ui.osk.show, "osk.view", "");
+	});
+
+      });
+
+      widget(container_y, {
+        space(1);
         widget(container_y, {
-          autofade: true;
+          $ui.universeBottomHeight = getHeight();
           expediteSubscriptions: true;
 
           style(playdeckText, {
@@ -94,7 +94,7 @@ widget(container_z, {
           cloner($core.notifications.nodes, container_z, {
             widget(quad, {
               color: 0;
-              alpha: 0.8;
+              alpha: 0.2;
             });
 
             widget(label, {

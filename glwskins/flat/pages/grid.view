@@ -1,29 +1,35 @@
 #import "skin://theme.view"
 #import "skin://styles/style_grid.view"
 
-widget(container_y, {
+widget(container_z, {
 
-  PageHeader();
+  widget(array, {
+    id: "scrollable";
 
-  widget(container_z, {
+    childTilesX: select($ui.aspect > 1, 5, 2);
+    childTilesY: 4;
 
-    widget(array, {
-      id: "scrollable";
+    navWrap: true;
 
-      childTilesX: select($ui.aspect > 1, 5, 2);
-      childTilesY: 4;
+    scrollThresholdTop: 3em;
+    clipOffsetTop: 3em;
+    scrollThresholdBottom: $ui.universeBottomHeight;
+    clipOffsetBottom: $ui.universeBottomHeight;
+    clipAlpha: 0.2;
+    clipBlur: 1;
 
-      navWrap: true;
-      scrollThreshold: 2em;
-
-      cloner($self.model.nodes, loader, {
-        time: 0.1;
-        effect: blend;
-        noInitialTransform: true;
-        alt: "skin://items/rect/default.view";
-        source: "skin://items/rect/" + $self.type + ".view";
-      });
+    cloner($self.model.nodes, loader, {
+      time: 0.1;
+      effect: blend;
+      noInitialTransform: true;
+      alt: "skin://items/rect/default.view";
+      source: "skin://items/rect/" + $self.type + ".view";
     });
-    ScrollBar();
+  });
+  ScrollBar();
+
+  widget(container_y, {
+    align: top;
+    PageHeader();
   });
 });

@@ -102,16 +102,16 @@ glw_scroll_handle_pointer_event(glw_scroll_control_t *gs,
  *
  */
 void
-glw_scroll_layout(glw_scroll_control_t *gsc, glw_t *w, int bd,
-                  int height)
+glw_scroll_layout(glw_scroll_control_t *gsc, glw_t *w, int height)
 {
+  const int max_value =
+    MAX(0, gsc->total_size - gsc->page_size + gsc->scroll_threshold_post);
+
   if(w->glw_root->gr_pointer_grab == w) {
 
     gsc->filtered_pos = gsc->target_pos;
 
-    gsc->filtered_pos =
-      GLW_MAX(0, GLW_MIN(gsc->filtered_pos,
-                         gsc->total_size - gsc->page_size + bd));
+    gsc->filtered_pos = GLW_CLAMP(gsc->filtered_pos, 0, max_value);
 
   } else if(gsc->kinetic_scroll) {
 
@@ -119,15 +119,11 @@ glw_scroll_layout(glw_scroll_control_t *gsc, glw_t *w, int bd,
     gsc->target_pos = gsc->filtered_pos;
     gsc->kinetic_scroll *= 0.95;
 
-    gsc->filtered_pos =
-      GLW_MAX(0, GLW_MIN(gsc->filtered_pos,
-                         gsc->total_size - gsc->page_size + bd));
+    gsc->filtered_pos = GLW_CLAMP(gsc->filtered_pos, 0, max_value);
 
   } else {
 
-    gsc->target_pos =
-      GLW_MAX(0, GLW_MIN(gsc->target_pos,
-                         gsc->total_size - gsc->page_size + bd));
+    gsc->target_pos = GLW_CLAMP(gsc->target_pos, 0, max_value);
 
     if(fabsf(gsc->target_pos - gsc->filtered_pos) > height * 2) {
       gsc->filtered_pos = gsc->target_pos;
@@ -180,4 +176,73 @@ glw_scroll_update_metrics(glw_scroll_control_t *gsc, glw_t *w)
   }
 
   glw_signal0(w, GLW_SIGNAL_SLIDER_METRICS, &gsc->metrics);
+}
+
+
+/**
+ *
+ */
+int
+glw_scroll_set_float_attributes(glw_scroll_control_t *gsc, const char *a,
+                                float value)
+{
+  if(!strcmp(a, "clipAlpha")) {
+    if(value == gsc->clip_alpha)
+      return GLW_SET_NO_CHANGE;
+
+    gsc->clip_alpha = value;
+    return GLW_SET_RERENDER_REQUIRED;
+  }
+
+  if(!strcmp(a, "clipBlur")) {
+    if(value == gsc->clip_blur)
+      return GLW_SET_NO_CHANGE;
+
+    gsc->clip_blur = value;
+    return GLW_SET_RERENDER_REQUIRED;
+  }
+  return GLW_SET_NOT_RESPONDING;
+}
+
+
+/**
+ *
+ */
+int
+glw_scroll_set_int_attributes(glw_scroll_control_t *gsc, const char *a,
+                              int value)
+{
+  if(!strcmp(a, "scrollThresholdTop")) {
+    if(gsc->scroll_threshold_pre == value)
+      return GLW_SET_NO_CHANGE;
+
+    gsc->scroll_threshold_pre = value;
+    return GLW_SET_RERENDER_REQUIRED;
+  }
+
+  if(!strcmp(a, "scrollThresholdBottom")) {
+    if(gsc->scroll_threshold_post == value)
+      return GLW_SET_NO_CHANGE;
+
+    gsc->scroll_threshold_post = value;
+    return GLW_SET_RERENDER_REQUIRED;
+  }
+
+  if(!strcmp(a, "clipOffsetTop")) {
+    if(gsc->clip_offset_pre == value)
+      return GLW_SET_NO_CHANGE;
+
+    gsc->clip_offset_pre = value;
+    return GLW_SET_RERENDER_REQUIRED;
+  }
+
+  if(!strcmp(a, "clipOffsetBottom")) {
+    if(gsc->clip_offset_post == value)
+      return GLW_SET_NO_CHANGE;
+
+    gsc->clip_offset_post = value;
+    return GLW_SET_RERENDER_REQUIRED;
+  }
+
+  return GLW_SET_NOT_RESPONDING;
 }

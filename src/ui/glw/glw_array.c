@@ -95,6 +95,8 @@ glw_array_layout(glw_t *w, const glw_rctx_t *rc)
 		 rc->rc_width - (a->margin[2] + a->border[2]),
 		 a->margin[3] + a->border[3]);
 
+  const int bottom_scroll_pos = rc0.rc_height - a->gsc.scroll_threshold_post;
+
   height = rc0.rc_height;
   width = rc0.rc_width;
 
@@ -180,7 +182,7 @@ glw_array_layout(glw_t *w, const glw_rctx_t *rc)
   }
 
 
-  glw_scroll_layout(&a->gsc, w, 0, rc->rc_height);
+  glw_scroll_layout(&a->gsc, w, rc->rc_height);
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
@@ -227,14 +229,17 @@ glw_array_layout(glw_t *w, const glw_rctx_t *rc)
       glw_layout0(c, &rc0);
 
     if(c == a->scroll_to_me) {
+      int screen_pos = ypos - a->gsc.rounded_pos;
+
       a->scroll_to_me = NULL;
-      if(ypos - a->gsc.filtered_pos < 0) {
-	a->current_pos = ypos;
-	a->w.glw_flags |= GLW_UPDATE_METRICS;
+
+      if(screen_pos < a->gsc.scroll_threshold_pre) {
+        a->gsc.target_pos = ypos - a->gsc.scroll_threshold_pre;
+        a->w.glw_flags |= GLW_UPDATE_METRICS;
         glw_schedule_refresh(w->glw_root, 0);
-      } else if(ypos - a->gsc.filtered_pos + rc0.rc_height > height) {
-	a->current_pos = ypos + rc0.rc_height - height;
-	a->w.glw_flags |= GLW_UPDATE_METRICS;
+      } else if(screen_pos + rc0.rc_height > bottom_scroll_pos) {
+        a->gsc.target_pos = ypos + rc0.rc_height - bottom_scroll_pos;
+        a->w.glw_flags |= GLW_UPDATE_METRICS;
         glw_schedule_refresh(w->glw_root, 0);
       }
     }
@@ -269,12 +274,13 @@ glw_array_layout(glw_t *w, const glw_rctx_t *rc)
  */
 static void
 glw_array_render_one(glw_array_t *a, glw_t *c, int width, int height,
-		     const glw_rctx_t *rc0, const glw_rctx_t *rc2)
+		     const glw_rctx_t *rc0, const glw_rctx_t *rc2,
+                     int clip_top, int clip_bottom)
 {
   glw_rctx_t rc3;
   glw_array_item_t *cd = glw_parent_data(c, glw_array_item_t);
   const float y = cd->pos_fy - a->gsc.rounded_pos;
-  int ct, cb, ft, fb;
+  int ct, cb;
   glw_root_t *gr = a->w.glw_root;
   int ch = cd->height;
   int cw = a->child_width_px;
@@ -289,14 +295,19 @@ glw_array_render_one(glw_array_t *a, glw_t *c, int width, int height,
     c->glw_flags &= ~GLW_CLIPPED;
   }
 
-  ct = cb = ft = fb = -1;
+  ct = cb = -1;
 
-  if(y < 0)
-    ct = glw_clip_enable(gr, rc0, GLW_CLIP_TOP, 0, 0, 1);
+  if(y < clip_top) {
+    const float k = (float)clip_top / rc0->rc_height;
+    ct = glw_clip_enable(gr, rc0, GLW_CLIP_TOP, k,
+                         a->gsc.clip_alpha, 1.0f - a->gsc.clip_blur);
+  }
 
-  if(y + ch > height)
-    cb = glw_clip_enable(gr, rc0, GLW_CLIP_BOTTOM, 0, 0, 1);
-
+  if(y + cd->height > rc0->rc_height - clip_bottom) {
+    const float k = (float)clip_bottom / rc0->rc_height;
+    cb = glw_clip_enable(gr, rc0, GLW_CLIP_BOTTOM, k,
+                         a->gsc.clip_alpha, 1.0f - a->gsc.clip_blur);
+  }
   rc3 = *rc2;
   glw_reposition(&rc3,
 		 cd->pos_fx,
@@ -343,20 +354,18 @@ glw_array_render(glw_t *w, const glw_rctx_t *rc)
   int height = rc1.rc_height;
 
   rc2 = rc1;
-  
+
+  const int clip_top    = a->gsc.clip_offset_pre - 1;
+  const int clip_bottom = a->gsc.clip_offset_post - 1;
+
   glw_Translatef(&rc2, 0, 2.0f * a->gsc.rounded_pos / height, 0);
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
-    if(w->glw_focused != c)
-      glw_array_render_one(a, c, width, height, &rc0, &rc2);
+    glw_array_render_one(a, c, width, height, &rc0, &rc2,
+                         clip_top, clip_bottom);
   }
-  
-  // Render the focused widget last so it stays on top
-  // until we have decent Z ordering
-  if(w->glw_focused)
-    glw_array_render_one(a, w->glw_focused, width, height, &rc0, &rc2);
 }
 
 
@@ -521,12 +530,6 @@ glw_array_set_int(glw_t *w, glw_attribute_t attrib, int value,
     a->yspacing = value;
     break;
 
-  case GLW_ATTRIB_SCROLL_THRESHOLD:
-    if(a->scroll_threshold == value)
-      return 0;
-    a->scroll_threshold = value;
-    break;
-
   default:
     return -1;
   }
@@ -641,6 +644,31 @@ glw_array_bubble_event(struct glw *w, struct event *e)
 /**
  *
  */
+static int
+glw_array_set_float_unresolved(glw_t *w, const char *a, float value,
+                              glw_style_t *gs)
+{
+  glw_array_t *l = (glw_array_t *)w;
+
+  return glw_scroll_set_float_attributes(&l->gsc, a, value);
+
+}
+
+/**
+ *
+ */
+static int
+glw_array_set_int_unresolved(glw_t *w, const char *a, int value,
+                            glw_style_t *gs)
+{
+  glw_array_t *l = (glw_array_t *)w;
+
+  return glw_scroll_set_int_attributes(&l->gsc, a, value);
+}
+
+/**
+ *
+ */
 static glw_class_t glw_array = {
   .gc_name = "array",
   .gc_instance_size = sizeof(glw_array_t),
@@ -654,6 +682,8 @@ static glw_class_t glw_array = {
   .gc_layout = glw_array_layout,
   .gc_pointer_event = glw_array_pointer_event,
   .gc_bubble_event = glw_array_bubble_event,
+  .gc_set_int_unresolved = glw_array_set_int_unresolved,
+  .gc_set_float_unresolved = glw_array_set_float_unresolved,
 };
 
 GLW_REGISTER_CLASS(glw_array);
