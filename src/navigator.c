@@ -1382,7 +1382,7 @@ bookmark_eventsink(void *opaque, event_t *e)
   if(event_is_type(e, EVENT_PROPREF)) {
     event_prop_t *ep = (event_prop_t *)e;
     rstr_t *url   = prop_get_string(ep->p, "url", NULL);
-    rstr_t *title = prop_get_string(ep->p, "title", NULL);
+    rstr_t *title = prop_get_string(ep->p, "metadata", "title", NULL);
     rstr_t *icon  = prop_get_string(ep->p, "metadata", "icon", NULL);
     bookmark_t *bm;
     LIST_FOREACH(bm, &bookmarks, bm_link) {
@@ -1397,6 +1397,7 @@ bookmark_eventsink(void *opaque, event_t *e)
     if(bm == NULL) {
       bookmark_add(rstr_get(title), rstr_get(url), "other",
                    rstr_get(icon), rstr_get(url));
+      bookmarks_save();
       notify_add(NULL, NOTIFY_INFO, NULL, 3, _("Added new bookmark: %s"),
                  rstr_get(title));
     }
