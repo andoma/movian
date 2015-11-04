@@ -5,6 +5,8 @@ widget(container_z, {
   ListItemBevel();
   ListItemHighlight();
   onEvent(activate, playTrackFromSource($self, $parent.model));
+  onEvent(itemMenu, eventWithProp(defaultInfo, $self));
+
   focusable: true;
 
   widget(container_x, {

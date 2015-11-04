@@ -3,23 +3,25 @@
 $view.itemBookmark <- lookup($core.bookmarks.queries, $args.url);
 
 
-#define ITEM(CAPTION, ICON, EVENT) {
+#define ITEM(CAPTION, ICON, EVENT, HIDDEN=false) {
   widget(container_z, {
+    hidden: HIDDEN;
     ListItemHighlight();
     focusable: true;
 
     onEvent(activate, EVENT);
 
     widget(container_x, {
-      spacing: 0.2em;
+      padding:[1em, 0.1em];
+      spacing: 0.5em;
       widget(icon, {
         source: ICON;
-//        source: "skin://icons/ic_check_48px.svg";
-//        alpha: $view.itemBookmark.model.subtype == "bookmark";
+        color: !isNavFocused();
       });
 
       widget(label, {
         caption: CAPTION;
+        color: !isNavFocused();
       });
     });
   });
@@ -39,9 +41,48 @@ widget(popup, {
       alpha: 0.7;
       color: 0;
     });
-    widget(container_y, {
 
-      padding:[1em, 0.5em];
+    widget(container_y, {
+      padding:[0.1em, 0.5em];
+
+      widget(container_x, {
+        padding:[1em, 0.1em];
+        spacing: 0.5em;
+        widget(icon, {
+          source: $args.metadata.icon ??
+            "skin://icons/" +
+            translate($args.type,  "ic_help_48px",
+		      "server",    "server",
+		      "share",     "ic_folder_shared_48px",
+		      "store",     "ic_shopping_cart_48px",
+		      "directory", "ic_folder_48px",
+		      "dvd",       "ic_album_48px",
+		      "tv",        "ic_tv_48px"
+	             ) + ".svg";
+        });
+
+        widget(label, {
+          maxWidth: 10em;
+          caption: $args.metadata.title;
+        });
+      });
+      widget(dummy, {
+        height: 0.1em;
+      });
+
+        widget(quad, {
+        height: 1;
+        color: 0;
+        alpha: 0.5;
+      });
+      widget(quad, {
+        height: 1;
+        alpha: 0.5;
+      });
+      widget(dummy, {
+        height: 0.1em;
+      });
+
       ITEM(_("Bookmarked"),
            select($view.itemBookmark.model.subtype == "bookmark",
                   "skin://icons/ic_check_48px.svg",
@@ -57,6 +98,12 @@ widget(popup, {
           $clone.itemMenu = void;
         });
       });
+      trace("artist", $args.metadata.artist);
+
+      ITEM($args.metadata.artist, "dataroot://res/svg/User.svg", {
+        fireEvent(navOpen($args.metadata.artist));
+        $clone.itemMenu = void;
+      }, !isLink($args.metadata.artist));
     });
   });
 });
