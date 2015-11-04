@@ -1514,4 +1514,8 @@ init_dev_settings(void)
 
   add_dev_bool(s, "Debug Bittorrent disk I/O",
 	       "btdiskio", &gconf.enable_torrent_diskio_debug);
+
+  add_dev_bool(s, "Debug input events",
+	       "inputevents", &gconf.enable_input_event_debug);
+
 }

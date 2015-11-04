@@ -212,32 +212,43 @@ const static action_type_t *btn_to_action[end_of_AKEYCODE] = {
   [AKEYCODE_MEDIA_FAST_FORWARD] = AVEC(ACTION_SEEK_FORWARD),
   [AKEYCODE_MEDIA_PLAY_PAUSE]   = AVEC(ACTION_PLAYPAUSE),
   [AKEYCODE_ENTER]           = AVEC(ACTION_ACTIVATE),
-  [AKEYCODE_DEL]             = AVEC(ACTION_NAV_BACK),
+  [AKEYCODE_DEL]             = AVEC(ACTION_NAV_BACK, ACTION_BS),
 };
 
 
 JNIEXPORT jboolean JNICALL
 Java_com_lonelycoder_mediaplayer_Core_glwKeyDown(JNIEnv *env,
-                                                        jobject obj,
-                                                        jint id,
-                                                        jint keycode)
+                                                 jobject obj,
+                                                 jint id,
+                                                 jint keycode,
+                                                 jint unicode)
 {
   android_glw_root_t *agr = (android_glw_root_t *)id;
   glw_root_t *gr = &agr->gr;
   event_t *e = NULL;
 
-  if(keycode == AKEYCODE_DPAD_CENTER) {
-    longpress_down(&agr->agr_dpad_center);
-    return 1;
-  }
+  if(gconf.enable_input_event_debug)
+    TRACE(TRACE_DEBUG, "KEYBOARD", "KeyDown: AndroidKey:%d Unicode:%d",
+          keycode, unicode);
 
-  if(keycode < end_of_AKEYCODE) {
-    const action_type_t *avec = btn_to_action[keycode];
-    if(avec) {
-      int i = 0;
-      while(avec[i] != 0)
-        i++;
-      e = event_create_action_multi(avec, i);
+  if(unicode != 0) {
+    e = event_create_int(EVENT_UNICODE, unicode);
+  } else {
+
+
+    if(keycode == AKEYCODE_DPAD_CENTER) {
+      longpress_down(&agr->agr_dpad_center);
+      return 1;
+    }
+
+    if(keycode < end_of_AKEYCODE) {
+      const action_type_t *avec = btn_to_action[keycode];
+      if(avec) {
+        int i = 0;
+        while(avec[i] != 0)
+          i++;
+        e = event_create_action_multi(avec, i);
+      }
     }
   }
 
@@ -257,6 +268,9 @@ Java_com_lonelycoder_mediaplayer_Core_glwKeyUp(JNIEnv *env,
 {
   android_glw_root_t *agr = (android_glw_root_t *)id;
   event_t *e = NULL;
+
+  if(gconf.enable_input_event_debug)
+    TRACE(TRACE_DEBUG, "KEYBOARD", "KeyUp: AndroidKey:%d", keycode);
 
   switch(keycode) {
   case AKEYCODE_DPAD_CENTER:
