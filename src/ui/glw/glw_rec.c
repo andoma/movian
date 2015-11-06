@@ -154,9 +154,12 @@ glw_rec_deliver_vframe(glw_rec_t *gr, struct pixmap *pm)
   if(r < 0 || !got_packet)
     return;
 
-  if(gr->v_ctx->coded_frame->pts != AV_NOPTS_VALUE)
-    pkt.pts = av_rescale_q(gr->v_ctx->coded_frame->pts,
-			   AV_TIME_BASE_Q, gr->v_st->time_base);
+  int64_t pts = gr->v_ctx->coded_frame->pts;
+  if(pts == AV_NOPTS_VALUE)
+    pts = frame.pts;
+
+  pkt.dts = pkt.pts = av_rescale_q(pts,
+                                   AV_TIME_BASE_Q, gr->v_st->time_base);
 
   if(gr->v_ctx->coded_frame->key_frame)
     pkt.flags |= AV_PKT_FLAG_KEY;
