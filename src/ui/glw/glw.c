@@ -1,1874 +1,1874 @@
- /*
-  *  Copyright (C) 2007-2015 Lonelycoder AB
-  *
-  *  This program is free software: you can redistribute it and/or modify
-  *  it under the terms of the GNU General Public License as published by
-  *  the Free Software Foundation, either version 3 of the License, or
-  *  (at your option) any later version.
-  *
-  *  This program is distributed in the hope that it will be useful,
-  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  *  GNU General Public License for more details.
-  *
-  *  You should have received a copy of the GNU General Public License
-  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-  *
-  *  This program is also available under a commercial proprietary license.
-  *  For more information, contact andreas@lonelycoder.com
-  */
- #include <stdlib.h>
- #include <string.h>
- #include <math.h>
- #include <errno.h>
- #include <assert.h>
+/*
+ *  Copyright (C) 2007-2015 Lonelycoder AB
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  This program is also available under a commercial proprietary license.
+ *  For more information, contact andreas@lonelycoder.com
+ */
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <errno.h>
+#include <assert.h>
 
- #include "arch/threads.h"
- #include "text/text.h"
+#include "arch/threads.h"
+#include "text/text.h"
 
- #include "glw.h"
- #include "glw_settings.h"
- #include "glw_text_bitmap.h"
- #include "glw_texture.h"
- #include "glw_view.h"
- #include "glw_event.h"
- #include "glw_style.h"
- #include "glw_navigation.h"
+#include "glw.h"
+#include "glw_settings.h"
+#include "glw_text_bitmap.h"
+#include "glw_texture.h"
+#include "glw_view.h"
+#include "glw_event.h"
+#include "glw_style.h"
+#include "glw_navigation.h"
 #include "glw_rec.h"
 
- #include "api/screenshot.h"
+#include "api/screenshot.h"
 
 
 
- static void glw_focus_init_widget(glw_t *w, float weight);
- static void glw_focus_leave(glw_t *w);
- static void glw_root_set_hover(glw_root_t *gr, glw_t *w);
- static void glw_eventsink(void *opaque, prop_event_t event, ...);
- static void glw_update_em(glw_root_t *gr);
- static int  glw_set_keyboard_mode(glw_root_t *gr, int on);
-
- glw_settings_t glw_settings;
+static void glw_focus_init_widget(glw_t *w, float weight);
+static void glw_focus_leave(glw_t *w);
+static void glw_root_set_hover(glw_root_t *gr, glw_t *w);
+static void glw_eventsink(void *opaque, prop_event_t event, ...);
+static void glw_update_em(glw_root_t *gr);
+static int  glw_set_keyboard_mode(glw_root_t *gr, int on);
+
+glw_settings_t glw_settings;
 
-
- const float glw_identitymtx[16] = {
-   1,0,0,0,
-   0,1,0,0,
-   0,0,1,0,
-   0,0,0,1};
+
+const float glw_identitymtx[16] = {
+  1,0,0,0,
+  0,1,0,0,
+  0,0,1,0,
+  0,0,0,1};
 
 
- static void glw_osk_open(glw_root_t *gr, const char *title, const char *input,
-                          glw_t *w, int password);
+static void glw_osk_open(glw_root_t *gr, const char *title, const char *input,
+                         glw_t *w, int password);
 
 
- /*
-  *
-  */
- void
- glw_cond_wait(glw_root_t *gr, hts_cond_t *c)
- {
-   hts_cond_wait(c, &gr->gr_mutex);
- }
+/*
+ *
+ */
+void
+glw_cond_wait(glw_root_t *gr, hts_cond_t *c)
+{
+  hts_cond_wait(c, &gr->gr_mutex);
+}
 
 
- /**
-  *
-  */
- static void
- glw_update_sizes(glw_root_t *gr)
- {
-   int val;
-   int bs1 = gr->gr_height / 35; // 35 is just something
-   //  int bs2 = gr->gr_width  / 65; // 65 is another value
+/**
+ *
+ */
+static void
+glw_update_sizes(glw_root_t *gr)
+{
+  int val;
+  int bs1 = gr->gr_height / 35; // 35 is just something
+  //  int bs2 = gr->gr_width  / 65; // 65 is another value
 
-   int base_size = bs1; // MIN(bs1, bs2);
+  int base_size = bs1; // MIN(bs1, bs2);
 
-   val = GLW_CLAMP(base_size + glw_settings.gs_size +
-                   gr->gr_skin_scale_adjustment, 8, 40);
+  val = GLW_CLAMP(base_size + glw_settings.gs_size +
+                  gr->gr_skin_scale_adjustment, 8, 40);
 
-   if(gr->gr_current_size != val) {
-     gr->gr_current_size = val;
-     prop_set(gr->gr_prop_ui, "size", PROP_SET_INT, val);
-     glw_text_flush(gr);
-     glw_icon_flush(gr);
-     glw_update_em(gr);
-     TRACE(TRACE_DEBUG, "GLW",
-           "UI size scale changed to %d (user adj: %d  skin adj: %d) ",
-           val, glw_settings.gs_size, gr->gr_skin_scale_adjustment);
-   }
+  if(gr->gr_current_size != val) {
+    gr->gr_current_size = val;
+    prop_set(gr->gr_prop_ui, "size", PROP_SET_INT, val);
+    glw_text_flush(gr);
+    glw_icon_flush(gr);
+    glw_update_em(gr);
+    TRACE(TRACE_DEBUG, "GLW",
+          "UI size scale changed to %d (user adj: %d  skin adj: %d) ",
+          val, glw_settings.gs_size, gr->gr_skin_scale_adjustment);
+  }
 
-   val = GLW_CLAMP(gr->gr_base_underscan_h + glw_settings.gs_underscan_h,
-                   0, 100);
+  val = GLW_CLAMP(gr->gr_base_underscan_h + glw_settings.gs_underscan_h,
+                  0, 100);
 
-   if(gr->gr_underscan_h != val) {
-     prop_set(gr->gr_prop_ui, "underscan_h", PROP_SET_INT, val);
-     gr->gr_underscan_h = val;
-   }
+  if(gr->gr_underscan_h != val) {
+    prop_set(gr->gr_prop_ui, "underscan_h", PROP_SET_INT, val);
+    gr->gr_underscan_h = val;
+  }
 
 
-   val = GLW_CLAMP(gr->gr_base_underscan_v + glw_settings.gs_underscan_v,
-                   0, 100);
+  val = GLW_CLAMP(gr->gr_base_underscan_v + glw_settings.gs_underscan_v,
+                  0, 100);
 
-   if(gr->gr_underscan_v != val) {
-     prop_set(gr->gr_prop_ui, "underscan_v", PROP_SET_INT, val);
-     gr->gr_underscan_v = val;
-   }
- }
+  if(gr->gr_underscan_v != val) {
+    prop_set(gr->gr_prop_ui, "underscan_v", PROP_SET_INT, val);
+    gr->gr_underscan_v = val;
+  }
+}
 
 
- static void
- glw_sizeoffset_callback(void *opaque, int value)
- {
-   glw_root_t *gr = opaque;
-   gr->gr_skin_scale_adjustment = value;
+static void
+glw_sizeoffset_callback(void *opaque, int value)
+{
+  glw_root_t *gr = opaque;
+  gr->gr_skin_scale_adjustment = value;
 
- }
+}
 
 
- /**
-  *
-  */
- int
- glw_init(glw_root_t *gr)
- {
-   return glw_init3(gr, &prop_courier_poll_timed, prop_courier_create_passive());
- }
+/**
+ *
+ */
+int
+glw_init(glw_root_t *gr)
+{
+  return glw_init3(gr, &prop_courier_poll_timed, prop_courier_create_passive());
+}
 
 
- /**
-  *
-  */
- int
- glw_init3(glw_root_t *gr,
-           void (*dispatcher)(prop_courier_t *pc, int timeout),
-           prop_courier_t *courier)
- {
-   char skinbuf[PATH_MAX];
-   const char *skin = gconf.skin;
-   prop_t *p;
-
-   if(gr->gr_prop_core == NULL)
-     gr->gr_prop_core = prop_get_global();
-
-   gr->gr_prop_dispatcher = dispatcher;
-   gr->gr_courier = courier;
-
-   gr->gr_prop_maxtime = -1;
-
-   assert(glw_settings.gs_settings != NULL);
-
-   p = prop_create(prop_get_global(), "userinterfaces");
-
-   if(prop_set_parent(gr->gr_prop_ui, p))
-     abort();
-
-   if(skin == NULL) {
-     snprintf(skinbuf, sizeof(skinbuf),
-              "%s/glwskins/"SHOWTIME_GLW_DEFAULT_SKIN, app_dataroot());
-     skin = skinbuf;
-   }
-   hts_mutex_init(&gr->gr_mutex);
-   gr->gr_token_pool = pool_create("glwtokens", sizeof(token_t), POOL_ZERO_MEM);
-   gr->gr_clone_pool = pool_create("glwclone", sizeof(glw_clone_t),
-                                   POOL_ZERO_MEM);
-   gr->gr_style_binding_pool = pool_create("glwstylebindings",
-                                           sizeof(glw_style_binding_t), 0);
-
-   gr->gr_skin = strdup(skin);
-
-   gr->gr_vpaths[0] = "skin";
-   gr->gr_vpaths[1] = gr->gr_skin;
-   gr->gr_vpaths[2] = NULL;
-
-   gr->gr_font_domain = freetype_get_context();
-
-   glw_text_bitmap_init(gr);
-
-   prop_setv(gr->gr_prop_ui, "skin", "path", NULL,
-             PROP_SET_STRING, gr->gr_skin);
-
-   gr->gr_pointer_visible    = prop_create(gr->gr_prop_ui, "pointerVisible");
-   gr->gr_is_fullscreen      = prop_create(gr->gr_prop_ui, "fullscreen");
-   gr->gr_screensaver_active = prop_create(gr->gr_prop_ui, "screensaverActive");
-   gr->gr_prop_width         = prop_create(gr->gr_prop_ui, "width");
-   gr->gr_prop_height        = prop_create(gr->gr_prop_ui, "height");
-   gr->gr_prop_aspect        = prop_create(gr->gr_prop_ui, "aspect");
-
-   prop_set_int(gr->gr_screensaver_active, 0);
-
-   gr->gr_evsub =
-     prop_subscribe(0,
-                    PROP_TAG_CALLBACK, glw_eventsink, gr,
-                    PROP_TAG_NAME("ui", "eventSink"),
-                    PROP_TAG_ROOT, gr->gr_prop_ui,
-                    PROP_TAG_COURIER, gr->gr_courier,
-                    NULL);
-
-   gr->gr_scalesub =
-     prop_subscribe(0,
-                    PROP_TAG_CALLBACK_INT, glw_sizeoffset_callback, gr,
-                    PROP_TAG_NAME("ui", "sizeOffset"),
-                    PROP_TAG_ROOT, gr->gr_prop_ui,
-                    PROP_TAG_COURIER, gr->gr_courier,
-                    NULL);
-
-   TAILQ_INIT(&gr->gr_destroyer_queue);
-
-   TAILQ_INIT(&gr->gr_view_load_requests);
-   TAILQ_INIT(&gr->gr_view_eval_requests);
-   hts_cond_init(&gr->gr_view_loader_cond, &gr->gr_mutex);
-
-   glw_tex_init(gr);
-
-   gr->gr_frontface = GLW_CCW;
-
-
-   gr->gr_framerate = 60;
-   gr->gr_frameduration = 1000000 / gr->gr_framerate;
-   gr->gr_ui_start = arch_get_ts();
-   gr->gr_frame_start = gr->gr_ui_start;
-   glw_reset_screensaver(gr);
-   gr->gr_open_osk = glw_osk_open;
-
-   return 0;
- }
-
-
- /**
-  *
-  */
- void
- glw_fini(glw_root_t *gr)
- {
-   if(gr->gr_osk_widget != NULL) {
-     glw_unref(gr->gr_osk_widget);
-     prop_unsubscribe(gr->gr_osk_text_sub);
-     prop_unsubscribe(gr->gr_osk_ev_sub);
-   }
-
-   gr->gr_view_loader_run = 0;
-   hts_cond_signal(&gr->gr_view_loader_cond);
-
-   glw_text_bitmap_fini(gr);
-   rstr_release(gr->gr_default_font);
-   glw_tex_fini(gr);
-   prop_unsubscribe(gr->gr_evsub);
-   prop_unsubscribe(gr->gr_scalesub);
-   prop_courier_destroy(gr->gr_courier);
-   hts_mutex_destroy(&gr->gr_mutex);
-
-   /*
-    * The view loader thread sometimes run with gr_mutex unlocked
-    * and when doing so it expects certain variables in glw_root to
-    * be available.
-    *
-    * gr_vpaths (indirectly gr_skin) must be intact
-    *
-    * It may also allocate items from gr_token_pool (although not while
-    * locked but after we've asked it to exit), thus we must not
-    * destroy the pool until after the thread has joined.
-    *
-    */
-
-   if(gr->gr_view_loader_thread)
-     hts_thread_join(&gr->gr_view_loader_thread);
-
-   glw_view_loader_flush(gr);
-
-   pool_destroy(gr->gr_token_pool);
-   pool_destroy(gr->gr_clone_pool);
-
-   free(gr->gr_vtmp_buffer);
-   free(gr->gr_render_jobs);
-   free(gr->gr_render_order);
-   free(gr->gr_vertex_buffer);
-   free(gr->gr_skin);
-   rstr_release(gr->gr_pending_focus);
- }
-
-
- /**
-  *
-  */
- void
- glw_unload_universe(glw_root_t *gr)
- {
-   glw_view_cache_flush(gr);
-
-   if(gr->gr_universe != NULL)
-     glw_destroy(gr->gr_universe);
-
-   glw_flush(gr);
- }
-
-
- /**
-  *
-  */
- void
- glw_load_universe(glw_root_t *gr)
- {
-   prop_t *page = prop_create(gr->gr_prop_ui, "root");
-   glw_unload_universe(gr);
-
-   rstr_t *universe = rstr_alloc("skin://universe.view");
-
-   gr->gr_universe = glw_view_create(gr,
-                                     universe, NULL, NULL, page,
-                                     NULL, NULL, NULL, NULL, 0);
-
-   rstr_release(universe);
- }
-
- /**
-  *
-  */
- static void
- update_in_path(glw_t *w)
- {
-   glw_root_t *gr = w->glw_root;
-   int f = 0;
-   glw_t *p;
-
-   for(p = w->glw_parent; p != NULL; p = p->glw_parent) {
-     if(p == gr->gr_current_focus) f |= GLW_IN_FOCUS_PATH;
-     if(p == gr->gr_pointer_hover) f |= GLW_IN_HOVER_PATH;
-     if(p == gr->gr_pointer_press) f |= GLW_IN_PRESSED_PATH;
-   }
-   w->glw_flags |= f;
- }
-
-
- /**
-  *
-  */
- void
- glw_layout0(glw_t *w, const glw_rctx_t *rc)
- {
-   glw_root_t *gr = w->glw_root;
-   LIST_REMOVE(w, glw_active_link);
-   LIST_INSERT_HEAD(&gr->gr_active_list, w, glw_active_link);
-   int mask = GLW_VIEW_EVAL_LAYOUT;
-
-   if(unlikely(!(w->glw_flags & GLW_ACTIVE))) {
-     w->glw_flags |= GLW_ACTIVE;
-     mask |= GLW_VIEW_EVAL_ACTIVE;
-     glw_signal0(w, GLW_SIGNAL_ACTIVE, NULL);
-   }
-
-   if(unlikely(w->glw_dynamic_eval & mask))
-     glw_view_eval_layout(w, rc, mask);
-
-   w->glw_class->gc_layout(w, rc);
- }
-
-
- /**
-  *
-  */
- void
- glw_render_zoffset(glw_t *w, const glw_rctx_t *rc)
- {
-   glw_rctx_t rc0 = *rc;
-   int zmax = 0;
-   rc0.rc_zmax = &zmax;
-   rc0.rc_zindex = w->glw_zoffset;
-   w->glw_class->gc_render(w, &rc0);
- }
-
-
- /**
-  *
-  */
- glw_t *
- glw_create(glw_root_t *gr, const glw_class_t *class,
-            glw_t *parent, glw_t *before, prop_t *originator,
-            rstr_t *file, int line)
- {
-   glw_t *w;
-
-    /* Common initializers */
-   w = calloc(1, class->gc_instance_size +
-              (parent ? parent->glw_class->gc_parent_data_size : 0));
-   w->glw_root = gr;
-   w->glw_class = class;
-   w->glw_alpha = 1.0f;
-   w->glw_sharpness = 1.0f;
-   w->glw_refcnt = 1;
-   w->glw_alignment = class->gc_default_alignment;
-   w->glw_flags2 = GLW2_ENABLED | GLW2_NAV_FOCUSABLE | GLW2_CURSOR;
- #ifdef DEBUG
-   w->glw_file = rstr_dup(file);
-   w->glw_line = line;
- #endif
-   if(likely(parent != NULL))
-     w->glw_styles = glw_styleset_retain(parent->glw_styles);
-
-   LIST_INSERT_HEAD(&gr->gr_active_dummy_list, w, glw_active_link);
-
-   if(class->gc_newframe != NULL)
-     LIST_INSERT_HEAD(&gr->gr_every_frame_list, w, glw_every_frame_link);
-
-   TAILQ_INIT(&w->glw_childs);
-
-   w->glw_originating_prop = prop_ref_inc(originator);
-
-   w->glw_parent = parent;
-   if(parent != NULL) {
-     update_in_path(w);
-
-     if(before != NULL)
-       TAILQ_INSERT_BEFORE(before, w, glw_parent_link);
-     else
-       TAILQ_INSERT_TAIL(&parent->glw_childs, w, glw_parent_link);
-
-     glw_signal0(parent, GLW_SIGNAL_CHILD_CREATED, w);
-   }
-
-   if(class->gc_ctor != NULL)
-     class->gc_ctor(w);
-
-    return w;
- }
-
-
- /**
-  *
-  */
- static void
- glw_signal_handler_clean(glw_t *w)
- {
-   glw_signal_handler_t *gsh;
-   while((gsh = LIST_FIRST(&w->glw_signal_handlers)) != NULL) {
-     LIST_REMOVE(gsh, gsh_link);
-     free(gsh);
-   }
- }
-
- /**
-  *
-  */
- static int
- glw_screensaver_is_active(const glw_root_t *gr)
- {
-   if(gr->gr_screensaver_force_enable)
-     return 1;
-
-   if(!gr->gr_is_fullscreen)
-     return 0;
-
-   int64_t d = glw_settings.gs_screensaver_delay;
-
-   if(!d)
-     return 0;
-
-   return gr->gr_frame_start > gr->gr_screensaver_reset_at + d * 60000000LL;
- }
-
-
- /**
-  *
-  */
- void
- glw_reap(glw_root_t *gr)
- {
-   glw_t *w;
-
-   LIST_MOVE(&gr->gr_active_flush_list, &gr->gr_active_list, glw_active_link);
-   LIST_INIT(&gr->gr_active_list);
-
-   glw_tex_purge(gr);
-
-   glw_tex_autoflush(gr);
-
-   while((w = TAILQ_FIRST(&gr->gr_destroyer_queue)) != NULL) {
-     TAILQ_REMOVE(&gr->gr_destroyer_queue, w, glw_parent_link);
-
-     if(w->glw_class->gc_dtor != NULL)
-       w->glw_class->gc_dtor(w);
-
-     glw_signal_handler_clean(w);
-     glw_unref(w);
-   }
- }
-
- /**
-  *
-  */
- void
- glw_idle(glw_root_t *gr)
- {
-   if(gr->gr_prop_dispatcher != NULL)
-     gr->gr_prop_dispatcher(gr->gr_courier, gr->gr_prop_maxtime);
-   glw_reap(gr);
- }
-
- /**
-  *
-  */
- void
- glw_prepare_frame(glw_root_t *gr, int flags)
- {
-   glw_t *w;
-
-   glw_update_sizes(gr);
-
-   gr->gr_frame_start        = arch_get_ts();
-   gr->gr_frame_start_avtime = arch_get_avtime();
-   gr->gr_time_usec          = gr->gr_frame_start - gr->gr_ui_start;
-   gr->gr_time_sec           = gr->gr_time_usec / 1000000.0f;
-
-   if(!(flags & GLW_NO_FRAMERATE_UPDATE)) {
-
-     if((gr->gr_frames & 0x7f) == 0) {
-
-       if(gr->gr_hz_sample) {
-         int64_t d = gr->gr_frame_start - gr->gr_hz_sample;
-
-         double hz = 128000000.0 / d;
-
-         prop_set_float(prop_create(gr->gr_prop_ui, "framerate"), hz);
-         gr->gr_framerate = hz;
-       }
-       gr->gr_hz_sample = gr->gr_frame_start;
-     }
-   }
-   gr->gr_frames++;
-
-   gr->gr_num_render_jobs = 0;
-   gr->gr_vertex_offset = 0;
-
-   prop_set_int(gr->gr_screensaver_active, glw_screensaver_is_active(gr));
-   prop_set_int(gr->gr_prop_width, gr->gr_width);
-   prop_set_int(gr->gr_prop_height, gr->gr_height);
-   prop_set_float(gr->gr_prop_aspect, (float)gr->gr_width / gr->gr_height);
-
-   if(gr->gr_prop_dispatcher != NULL)
-     gr->gr_prop_dispatcher(gr->gr_courier, gr->gr_prop_maxtime);
-
-   LIST_FOREACH(w, &gr->gr_every_frame_list, glw_every_frame_link)
-     w->glw_class->gc_newframe(w, flags);
-
-   if(gr->gr_need_refresh) {
-
-     while((w = LIST_FIRST(&gr->gr_active_flush_list)) != NULL) {
-       LIST_REMOVE(w, glw_active_link);
-       LIST_INSERT_HEAD(&gr->gr_active_dummy_list, w, glw_active_link);
-       w->glw_flags &= ~GLW_ACTIVE;
-       glw_signal0(w, GLW_SIGNAL_INACTIVE, NULL);
-     }
-
-     glw_reap(gr);
-   }
-
-   if(gr->gr_mouse_valid) {
-     glw_pointer_event_t gpe;
-
-     gpe.x = gr->gr_mouse_x;
-     gpe.y = gr->gr_mouse_y;
-     gpe.type = GLW_POINTER_MOTION_REFRESH;
-     glw_pointer_event(gr, &gpe);
-   }
-
-   if(gr->gr_delayed_focus_leave) {
-     if(--gr->gr_delayed_focus_leave == 0 && gr->gr_current_focus) {
-       glw_focus_leave(gr->gr_current_focus);
-     }
-   }
-
-   if(gr->gr_scheduled_refresh <= gr->gr_frame_start) {
-     gr->gr_need_refresh = GLW_REFRESH_FLAG_LAYOUT | GLW_REFRESH_FLAG_RENDER;
-     gr->gr_scheduled_refresh = INT64_MAX;
-   }
-
-   if(gr->gr_rec)
-     gr->gr_need_refresh = GLW_REFRESH_FLAG_LAYOUT | GLW_REFRESH_FLAG_RENDER;
-
-   glw_view_loader_eval(gr);
- }
-
-
- /**
-  *
-  */
- void
- glw_post_scene(glw_root_t *gr)
- {
-   glw_renderer_render(gr);
+/**
+ *
+ */
+int
+glw_init3(glw_root_t *gr,
+          void (*dispatcher)(prop_courier_t *pc, int timeout),
+          prop_courier_t *courier)
+{
+  char skinbuf[PATH_MAX];
+  const char *skin = gconf.skin;
+  prop_t *p;
+
+  if(gr->gr_prop_core == NULL)
+    gr->gr_prop_core = prop_get_global();
+
+  gr->gr_prop_dispatcher = dispatcher;
+  gr->gr_courier = courier;
+
+  gr->gr_prop_maxtime = -1;
+
+  assert(glw_settings.gs_settings != NULL);
+
+  p = prop_create(prop_get_global(), "userinterfaces");
+
+  if(prop_set_parent(gr->gr_prop_ui, p))
+    abort();
+
+  if(skin == NULL) {
+    snprintf(skinbuf, sizeof(skinbuf),
+             "%s/glwskins/"SHOWTIME_GLW_DEFAULT_SKIN, app_dataroot());
+    skin = skinbuf;
+  }
+  hts_mutex_init(&gr->gr_mutex);
+  gr->gr_token_pool = pool_create("glwtokens", sizeof(token_t), POOL_ZERO_MEM);
+  gr->gr_clone_pool = pool_create("glwclone", sizeof(glw_clone_t),
+                                  POOL_ZERO_MEM);
+  gr->gr_style_binding_pool = pool_create("glwstylebindings",
+                                          sizeof(glw_style_binding_t), 0);
+
+  gr->gr_skin = strdup(skin);
+
+  gr->gr_vpaths[0] = "skin";
+  gr->gr_vpaths[1] = gr->gr_skin;
+  gr->gr_vpaths[2] = NULL;
+
+  gr->gr_font_domain = freetype_get_context();
+
+  glw_text_bitmap_init(gr);
+
+  prop_setv(gr->gr_prop_ui, "skin", "path", NULL,
+            PROP_SET_STRING, gr->gr_skin);
+
+  gr->gr_pointer_visible    = prop_create(gr->gr_prop_ui, "pointerVisible");
+  gr->gr_is_fullscreen      = prop_create(gr->gr_prop_ui, "fullscreen");
+  gr->gr_screensaver_active = prop_create(gr->gr_prop_ui, "screensaverActive");
+  gr->gr_prop_width         = prop_create(gr->gr_prop_ui, "width");
+  gr->gr_prop_height        = prop_create(gr->gr_prop_ui, "height");
+  gr->gr_prop_aspect        = prop_create(gr->gr_prop_ui, "aspect");
+
+  prop_set_int(gr->gr_screensaver_active, 0);
+
+  gr->gr_evsub =
+    prop_subscribe(0,
+                   PROP_TAG_CALLBACK, glw_eventsink, gr,
+                   PROP_TAG_NAME("ui", "eventSink"),
+                   PROP_TAG_ROOT, gr->gr_prop_ui,
+                   PROP_TAG_COURIER, gr->gr_courier,
+                   NULL);
+
+  gr->gr_scalesub =
+    prop_subscribe(0,
+                   PROP_TAG_CALLBACK_INT, glw_sizeoffset_callback, gr,
+                   PROP_TAG_NAME("ui", "sizeOffset"),
+                   PROP_TAG_ROOT, gr->gr_prop_ui,
+                   PROP_TAG_COURIER, gr->gr_courier,
+                   NULL);
+
+  TAILQ_INIT(&gr->gr_destroyer_queue);
+
+  TAILQ_INIT(&gr->gr_view_load_requests);
+  TAILQ_INIT(&gr->gr_view_eval_requests);
+  hts_cond_init(&gr->gr_view_loader_cond, &gr->gr_mutex);
+
+  glw_tex_init(gr);
+
+  gr->gr_frontface = GLW_CCW;
+
+
+  gr->gr_framerate = 60;
+  gr->gr_frameduration = 1000000 / gr->gr_framerate;
+  gr->gr_ui_start = arch_get_ts();
+  gr->gr_frame_start = gr->gr_ui_start;
+  glw_reset_screensaver(gr);
+  gr->gr_open_osk = glw_osk_open;
+
+  return 0;
+}
+
+
+/**
+ *
+ */
+void
+glw_fini(glw_root_t *gr)
+{
+  if(gr->gr_osk_widget != NULL) {
+    glw_unref(gr->gr_osk_widget);
+    prop_unsubscribe(gr->gr_osk_text_sub);
+    prop_unsubscribe(gr->gr_osk_ev_sub);
+  }
+
+  gr->gr_view_loader_run = 0;
+  hts_cond_signal(&gr->gr_view_loader_cond);
+
+  glw_text_bitmap_fini(gr);
+  rstr_release(gr->gr_default_font);
+  glw_tex_fini(gr);
+  prop_unsubscribe(gr->gr_evsub);
+  prop_unsubscribe(gr->gr_scalesub);
+  prop_courier_destroy(gr->gr_courier);
+  hts_mutex_destroy(&gr->gr_mutex);
+
+  /*
+   * The view loader thread sometimes run with gr_mutex unlocked
+   * and when doing so it expects certain variables in glw_root to
+   * be available.
+   *
+   * gr_vpaths (indirectly gr_skin) must be intact
+   *
+   * It may also allocate items from gr_token_pool (although not while
+   * locked but after we've asked it to exit), thus we must not
+   * destroy the pool until after the thread has joined.
+   *
+   */
+
+  if(gr->gr_view_loader_thread)
+    hts_thread_join(&gr->gr_view_loader_thread);
+
+  glw_view_loader_flush(gr);
+
+  pool_destroy(gr->gr_token_pool);
+  pool_destroy(gr->gr_clone_pool);
+
+  free(gr->gr_vtmp_buffer);
+  free(gr->gr_render_jobs);
+  free(gr->gr_render_order);
+  free(gr->gr_vertex_buffer);
+  free(gr->gr_skin);
+  rstr_release(gr->gr_pending_focus);
+}
+
+
+/**
+ *
+ */
+void
+glw_unload_universe(glw_root_t *gr)
+{
+  glw_view_cache_flush(gr);
+
+  if(gr->gr_universe != NULL)
+    glw_destroy(gr->gr_universe);
+
+  glw_flush(gr);
+}
+
+
+/**
+ *
+ */
+void
+glw_load_universe(glw_root_t *gr)
+{
+  prop_t *page = prop_create(gr->gr_prop_ui, "root");
+  glw_unload_universe(gr);
+
+  rstr_t *universe = rstr_alloc("skin://universe.view");
+
+  gr->gr_universe = glw_view_create(gr,
+                                    universe, NULL, NULL, page,
+                                    NULL, NULL, NULL, NULL, 0);
+
+  rstr_release(universe);
+}
+
+/**
+ *
+ */
+static void
+update_in_path(glw_t *w)
+{
+  glw_root_t *gr = w->glw_root;
+  int f = 0;
+  glw_t *p;
+
+  for(p = w->glw_parent; p != NULL; p = p->glw_parent) {
+    if(p == gr->gr_current_focus) f |= GLW_IN_FOCUS_PATH;
+    if(p == gr->gr_pointer_hover) f |= GLW_IN_HOVER_PATH;
+    if(p == gr->gr_pointer_press) f |= GLW_IN_PRESSED_PATH;
+  }
+  w->glw_flags |= f;
+}
+
+
+/**
+ *
+ */
+void
+glw_layout0(glw_t *w, const glw_rctx_t *rc)
+{
+  glw_root_t *gr = w->glw_root;
+  LIST_REMOVE(w, glw_active_link);
+  LIST_INSERT_HEAD(&gr->gr_active_list, w, glw_active_link);
+  int mask = GLW_VIEW_EVAL_LAYOUT;
+
+  if(unlikely(!(w->glw_flags & GLW_ACTIVE))) {
+    w->glw_flags |= GLW_ACTIVE;
+    mask |= GLW_VIEW_EVAL_ACTIVE;
+    glw_signal0(w, GLW_SIGNAL_ACTIVE, NULL);
+  }
+
+  if(unlikely(w->glw_dynamic_eval & mask))
+    glw_view_eval_layout(w, rc, mask);
+
+  w->glw_class->gc_layout(w, rc);
+}
+
+
+/**
+ *
+ */
+void
+glw_render_zoffset(glw_t *w, const glw_rctx_t *rc)
+{
+  glw_rctx_t rc0 = *rc;
+  int zmax = 0;
+  rc0.rc_zmax = &zmax;
+  rc0.rc_zindex = w->glw_zoffset;
+  w->glw_class->gc_render(w, &rc0);
+}
+
+
+/**
+ *
+ */
+glw_t *
+glw_create(glw_root_t *gr, const glw_class_t *class,
+           glw_t *parent, glw_t *before, prop_t *originator,
+           rstr_t *file, int line)
+{
+  glw_t *w;
+
+  /* Common initializers */
+  w = calloc(1, class->gc_instance_size +
+             (parent ? parent->glw_class->gc_parent_data_size : 0));
+  w->glw_root = gr;
+  w->glw_class = class;
+  w->glw_alpha = 1.0f;
+  w->glw_sharpness = 1.0f;
+  w->glw_refcnt = 1;
+  w->glw_alignment = class->gc_default_alignment;
+  w->glw_flags2 = GLW2_ENABLED | GLW2_NAV_FOCUSABLE | GLW2_CURSOR;
+#ifdef DEBUG
+  w->glw_file = rstr_dup(file);
+  w->glw_line = line;
+#endif
+  if(likely(parent != NULL))
+    w->glw_styles = glw_styleset_retain(parent->glw_styles);
+
+  LIST_INSERT_HEAD(&gr->gr_active_dummy_list, w, glw_active_link);
+
+  if(class->gc_newframe != NULL)
+    LIST_INSERT_HEAD(&gr->gr_every_frame_list, w, glw_every_frame_link);
+
+  TAILQ_INIT(&w->glw_childs);
+
+  w->glw_originating_prop = prop_ref_inc(originator);
+
+  w->glw_parent = parent;
+  if(parent != NULL) {
+    update_in_path(w);
+
+    if(before != NULL)
+      TAILQ_INSERT_BEFORE(before, w, glw_parent_link);
+    else
+      TAILQ_INSERT_TAIL(&parent->glw_childs, w, glw_parent_link);
+
+    glw_signal0(parent, GLW_SIGNAL_CHILD_CREATED, w);
+  }
+
+  if(class->gc_ctor != NULL)
+    class->gc_ctor(w);
+
+  return w;
+}
+
+
+/**
+ *
+ */
+static void
+glw_signal_handler_clean(glw_t *w)
+{
+  glw_signal_handler_t *gsh;
+  while((gsh = LIST_FIRST(&w->glw_signal_handlers)) != NULL) {
+    LIST_REMOVE(gsh, gsh_link);
+    free(gsh);
+  }
+}
+
+/**
+ *
+ */
+static int
+glw_screensaver_is_active(const glw_root_t *gr)
+{
+  if(gr->gr_screensaver_force_enable)
+    return 1;
+
+  if(!gr->gr_is_fullscreen)
+    return 0;
+
+  int64_t d = glw_settings.gs_screensaver_delay;
+
+  if(!d)
+    return 0;
+
+  return gr->gr_frame_start > gr->gr_screensaver_reset_at + d * 60000000LL;
+}
+
+
+/**
+ *
+ */
+void
+glw_reap(glw_root_t *gr)
+{
+  glw_t *w;
+
+  LIST_MOVE(&gr->gr_active_flush_list, &gr->gr_active_list, glw_active_link);
+  LIST_INIT(&gr->gr_active_list);
+
+  glw_tex_purge(gr);
+
+  glw_tex_autoflush(gr);
+
+  while((w = TAILQ_FIRST(&gr->gr_destroyer_queue)) != NULL) {
+    TAILQ_REMOVE(&gr->gr_destroyer_queue, w, glw_parent_link);
+
+    if(w->glw_class->gc_dtor != NULL)
+      w->glw_class->gc_dtor(w);
+
+    glw_signal_handler_clean(w);
+    glw_unref(w);
+  }
+}
+
+/**
+ *
+ */
+void
+glw_idle(glw_root_t *gr)
+{
+  if(gr->gr_prop_dispatcher != NULL)
+    gr->gr_prop_dispatcher(gr->gr_courier, gr->gr_prop_maxtime);
+  glw_reap(gr);
+}
+
+/**
+ *
+ */
+void
+glw_prepare_frame(glw_root_t *gr, int flags)
+{
+  glw_t *w;
+
+  glw_update_sizes(gr);
+
+  gr->gr_frame_start        = arch_get_ts();
+  gr->gr_frame_start_avtime = arch_get_avtime();
+  gr->gr_time_usec          = gr->gr_frame_start - gr->gr_ui_start;
+  gr->gr_time_sec           = gr->gr_time_usec / 1000000.0f;
+
+  if(!(flags & GLW_NO_FRAMERATE_UPDATE)) {
+
+    if((gr->gr_frames & 0x7f) == 0) {
+
+      if(gr->gr_hz_sample) {
+        int64_t d = gr->gr_frame_start - gr->gr_hz_sample;
+
+        double hz = 128000000.0 / d;
+
+        prop_set_float(prop_create(gr->gr_prop_ui, "framerate"), hz);
+        gr->gr_framerate = hz;
+      }
+      gr->gr_hz_sample = gr->gr_frame_start;
+    }
+  }
+  gr->gr_frames++;
+
+  gr->gr_num_render_jobs = 0;
+  gr->gr_vertex_offset = 0;
+
+  prop_set_int(gr->gr_screensaver_active, glw_screensaver_is_active(gr));
+  prop_set_int(gr->gr_prop_width, gr->gr_width);
+  prop_set_int(gr->gr_prop_height, gr->gr_height);
+  prop_set_float(gr->gr_prop_aspect, (float)gr->gr_width / gr->gr_height);
+
+  if(gr->gr_prop_dispatcher != NULL)
+    gr->gr_prop_dispatcher(gr->gr_courier, gr->gr_prop_maxtime);
+
+  LIST_FOREACH(w, &gr->gr_every_frame_list, glw_every_frame_link)
+    w->glw_class->gc_newframe(w, flags);
+
+  if(gr->gr_need_refresh) {
+
+    while((w = LIST_FIRST(&gr->gr_active_flush_list)) != NULL) {
+      LIST_REMOVE(w, glw_active_link);
+      LIST_INSERT_HEAD(&gr->gr_active_dummy_list, w, glw_active_link);
+      w->glw_flags &= ~GLW_ACTIVE;
+      glw_signal0(w, GLW_SIGNAL_INACTIVE, NULL);
+    }
+
+    glw_reap(gr);
+  }
+
+  if(gr->gr_mouse_valid) {
+    glw_pointer_event_t gpe;
+
+    gpe.x = gr->gr_mouse_x;
+    gpe.y = gr->gr_mouse_y;
+    gpe.type = GLW_POINTER_MOTION_REFRESH;
+    glw_pointer_event(gr, &gpe);
+  }
+
+  if(gr->gr_delayed_focus_leave) {
+    if(--gr->gr_delayed_focus_leave == 0 && gr->gr_current_focus) {
+      glw_focus_leave(gr->gr_current_focus);
+    }
+  }
+
+  if(gr->gr_scheduled_refresh <= gr->gr_frame_start) {
+    gr->gr_need_refresh = GLW_REFRESH_FLAG_LAYOUT | GLW_REFRESH_FLAG_RENDER;
+    gr->gr_scheduled_refresh = INT64_MAX;
+  }
+
+  if(gr->gr_rec)
+    gr->gr_need_refresh = GLW_REFRESH_FLAG_LAYOUT | GLW_REFRESH_FLAG_RENDER;
+
+  glw_view_loader_eval(gr);
+}
+
+
+/**
+ *
+ */
+void
+glw_post_scene(glw_root_t *gr)
+{
+  glw_renderer_render(gr);
 
 #if CONFIG_GLW_REC
-   if(gr->gr_rec != NULL) {
-     pixmap_t *pm = gr->gr_br_read_pixels(gr);
-     glw_rec_deliver_vframe(gr->gr_rec, pm);
-     pixmap_release(pm);
-   }
+  if(gr->gr_rec != NULL) {
+    pixmap_t *pm = gr->gr_br_read_pixels(gr);
+    glw_rec_deliver_vframe(gr->gr_rec, pm);
+    pixmap_release(pm);
+  }
 #endif
- }
-
- /*
-  *
-  */
- void
- glw_unref(glw_t *w)
- {
-   if(w->glw_refcnt == 1) {
-     assert(w->glw_clone == NULL);
- #ifdef DEBUG
-     rstr_release(w->glw_file);
- #endif
-     free(w);
-   }
-   else
-     w->glw_refcnt--;
- }
+}
+
+/*
+ *
+ */
+void
+glw_unref(glw_t *w)
+{
+  if(w->glw_refcnt == 1) {
+    assert(w->glw_clone == NULL);
+#ifdef DEBUG
+    rstr_release(w->glw_file);
+#endif
+    free(w);
+  }
+  else
+    w->glw_refcnt--;
+}
 
 
- /**
-  *
-  */
- void
- glw_remove_from_parent(glw_t *w, glw_t *p)
- {
-   assert(w->glw_parent == p);
-   glw_focus_leave(w);
+/**
+ *
+ */
+void
+glw_remove_from_parent(glw_t *w, glw_t *p)
+{
+  assert(w->glw_parent == p);
+  glw_focus_leave(w);
 
-   if(p->glw_focused == w)
-     p->glw_focused = NULL;
+  if(p->glw_focused == w)
+    p->glw_focused = NULL;
 
-   assert(w->glw_root->gr_current_focus != w);
+  assert(w->glw_root->gr_current_focus != w);
 
-   if(p->glw_selected == w)
-     p->glw_selected = TAILQ_NEXT(w, glw_parent_link);
+  if(p->glw_selected == w)
+    p->glw_selected = TAILQ_NEXT(w, glw_parent_link);
 
-   TAILQ_REMOVE(&p->glw_childs, w, glw_parent_link);
-   w->glw_parent = NULL;
- }
+  TAILQ_REMOVE(&p->glw_childs, w, glw_parent_link);
+  w->glw_parent = NULL;
+}
 
 
- /**
-  *
-  */
- void
- glw_suspend_subscriptions(glw_t *w)
- {
-   glw_t *c;
-   glw_prop_subscription_suspend_list(&w->glw_prop_subscriptions);
+/**
+ *
+ */
+void
+glw_suspend_subscriptions(glw_t *w)
+{
+  glw_t *c;
+  glw_prop_subscription_suspend_list(&w->glw_prop_subscriptions);
 
-   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
-     glw_suspend_subscriptions(c);
- }
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
+    glw_suspend_subscriptions(c);
+}
 
 
- /**
-  *
-  */
- void
- glw_destroy(glw_t *w)
- {
-   glw_t *c, *p;
-   glw_root_t *gr = w->glw_root;
-   glw_event_map_t *gem;
+/**
+ *
+ */
+void
+glw_destroy(glw_t *w)
+{
+  glw_t *c, *p;
+  glw_root_t *gr = w->glw_root;
+  glw_event_map_t *gem;
 
-   if(gr->gr_last_focus == w)
-     gr->gr_last_focus = NULL;
+  if(gr->gr_last_focus == w)
+    gr->gr_last_focus = NULL;
 
-   w->glw_flags |= GLW_DESTROYING;
+  w->glw_flags |= GLW_DESTROYING;
 
-   if(w->glw_originating_prop != NULL)
-     prop_ref_dec(w->glw_originating_prop);
+  if(w->glw_originating_prop != NULL)
+    prop_ref_dec(w->glw_originating_prop);
 
-   if(gr->gr_pointer_grab == w)
-     gr->gr_pointer_grab = NULL;
+  if(gr->gr_pointer_grab == w)
+    gr->gr_pointer_grab = NULL;
 
-   if(gr->gr_pointer_hover == w)
-     glw_root_set_hover(gr, NULL);
+  if(gr->gr_pointer_hover == w)
+    glw_root_set_hover(gr, NULL);
 
-   if(gr->gr_pointer_press == w)
-     gr->gr_pointer_press = NULL;
+  if(gr->gr_pointer_press == w)
+    gr->gr_pointer_press = NULL;
 
-   glw_prop_subscription_destroy_list(gr, &w->glw_prop_subscriptions);
+  glw_prop_subscription_destroy_list(gr, &w->glw_prop_subscriptions);
 
-   while((gem = LIST_FIRST(&w->glw_event_maps)) != NULL) {
-     LIST_REMOVE(gem, gem_link);
-     glw_event_map_destroy(gr, gem);
-   }
-
-   free(w->glw_matrix);
-   w->glw_matrix = NULL;
+  while((gem = LIST_FIRST(&w->glw_event_maps)) != NULL) {
+    LIST_REMOVE(gem, gem_link);
+    glw_event_map_destroy(gr, gem);
+  }
+
+  free(w->glw_matrix);
+  w->glw_matrix = NULL;
 
-   if(w->glw_class->gc_newframe != NULL)
-     LIST_REMOVE(w, glw_every_frame_link);
+  if(w->glw_class->gc_newframe != NULL)
+    LIST_REMOVE(w, glw_every_frame_link);
 
-   LIST_REMOVE(w, glw_active_link);
+  LIST_REMOVE(w, glw_active_link);
 
-   while((c = TAILQ_FIRST(&w->glw_childs)) != NULL)
-     glw_destroy(c);
+  while((c = TAILQ_FIRST(&w->glw_childs)) != NULL)
+    glw_destroy(c);
 
-   glw_signal0(w, GLW_SIGNAL_DESTROY, NULL);
+  glw_signal0(w, GLW_SIGNAL_DESTROY, NULL);
 
-   if((p = w->glw_parent) != NULL) {
-     /* Some classes needs to do some stuff is a child is destroyed */
+  if((p = w->glw_parent) != NULL) {
+    /* Some classes needs to do some stuff is a child is destroyed */
 
-     if(!(p->glw_flags & GLW_DESTROYING))
-       glw_signal0(p, GLW_SIGNAL_CHILD_DESTROYED, w);
+    if(!(p->glw_flags & GLW_DESTROYING))
+      glw_signal0(p, GLW_SIGNAL_CHILD_DESTROYED, w);
 
-     glw_remove_from_parent(w, p);
-   }
+    glw_remove_from_parent(w, p);
+  }
 
-   glw_style_unbind_all(w);
+  glw_style_unbind_all(w);
 
-   glw_styleset_release(w->glw_styles);
+  glw_styleset_release(w->glw_styles);
 
-   rstr_release(w->glw_id_rstr);
+  rstr_release(w->glw_id_rstr);
 
-   TAILQ_INSERT_TAIL(&gr->gr_destroyer_queue, w, glw_parent_link);
+  TAILQ_INSERT_TAIL(&gr->gr_destroyer_queue, w, glw_parent_link);
 
-   glw_view_free_chain(gr, w->glw_dynamic_expressions);
- }
+  glw_view_free_chain(gr, w->glw_dynamic_expressions);
+}
 
 
- /**
-  *
-  */
- void
- glw_destroy_childs(glw_t *w)
- {
-   glw_t *c;
-   while((c = TAILQ_FIRST(&w->glw_childs)) != NULL)
-     glw_destroy(c);
- }
-
-
- /*
-  *
-  */
- void
- glw_signal_handler_register(glw_t *w, glw_callback_t *func, void *opaque)
- {
-   glw_signal_handler_t *gsh;
-
-   LIST_FOREACH(gsh, &w->glw_signal_handlers, gsh_link) {
-     if(gsh->gsh_func == func && gsh->gsh_opaque == opaque)
-       return;
-
-   }
-
-   gsh = malloc(sizeof(glw_signal_handler_t));
-   gsh->gsh_func   = func;
-   gsh->gsh_opaque = opaque;
-   gsh->gsh_defer_remove = 0;
-
-   LIST_INSERT_HEAD(&w->glw_signal_handlers, gsh, gsh_link);
- }
-
- /*
-  *
-  */
- void
- glw_signal_handler_unregister(glw_t *w, glw_callback_t *func, void *opaque)
- {
-   glw_signal_handler_t *gsh;
-
-   LIST_FOREACH(gsh, &w->glw_signal_handlers, gsh_link)
-     if(gsh->gsh_func == func && gsh->gsh_opaque == opaque)
-       break;
-
-   if(gsh != NULL) {
-     if(gsh->gsh_defer_remove) {
-       gsh->gsh_func = NULL;
-       gsh->gsh_opaque = NULL;
-
-     } else {
-       LIST_REMOVE(gsh, gsh_link);
-       free(gsh);
-     }
-   }
- }
-
-
- /**
-  *
-  */
- void
- glw_signal0(glw_t *w, glw_signal_t sig, void *extra)
- {
-   glw_signal_handler_t *x, *gsh = LIST_FIRST(&w->glw_signal_handlers);
-   int r;
-
-   if(w->glw_class->gc_signal_handler != NULL)
-     w->glw_class->gc_signal_handler(w, NULL, sig, extra);
-
-   glw_view_eval_signal(w, sig);
-
-   while(gsh != NULL) {
-     if(gsh->gsh_func != NULL) {
-       gsh->gsh_defer_remove = 1;
-
-       r = gsh->gsh_func(w, gsh->gsh_opaque, sig, extra);
-
-       if(gsh->gsh_func == NULL) {
-         /* Was inteded to be removed during call */
-
-         x = gsh;
-         gsh = LIST_NEXT(gsh, gsh_link);
-
-         LIST_REMOVE(x, gsh_link);
-         free(x);
-         continue;
-       }
-
-       if(r)
-         return;
-     }
-     gsh = LIST_NEXT(gsh, gsh_link);
-   }
- }
-
-
- /**
-  *
-  */
- glw_t *
- glw_get_prev_n(glw_t *c, int count)
- {
-   glw_t *t = c;
-   int i;
-   c = NULL;
-   for(i = 0; i < count; i++) {
-     if((t = TAILQ_PREV(t, glw_queue, glw_parent_link)) == NULL)
-       break;
-     if(t->glw_flags & GLW_HIDDEN)
-       i--;
-     else
-       c = t;
-   }
-   return c;
- }
-
-
- /**
-  *
-  */
- glw_t *
- glw_get_next_n(glw_t *c, int count)
- {
-   glw_t *t = c;
-   int i;
-
-   c = NULL;
-
-   for(i = 0; i < count; i++) {
-     if((t = TAILQ_NEXT(t, glw_parent_link)) == NULL)
-       break;
-     if(t->glw_flags & GLW_HIDDEN)
-       i--;
-     else
-       c = t;
-   }
-   return c;
- }
-
-
- /**
-  *
-  */
-
- static LIST_HEAD(, glw_gf_ctrl) ggcs;
-
- void
- glw_gf_register(glw_gf_ctrl_t *ggc)
- {
-   LIST_INSERT_HEAD(&ggcs, ggc, link);
- }
-
- void
- glw_gf_unregister(glw_gf_ctrl_t *ggc)
- {
-   LIST_REMOVE(ggc, link);
- }
-
- void
- glw_gf_do(void)
- {
-   glw_gf_ctrl_t *ggc;
-   LIST_FOREACH(ggc, &ggcs, link)
-     ggc->flush(ggc->opaque);
- }
-
-
-
-
- /**
-  *
-  */
- void
- glw_flush(glw_root_t *gr)
- {
-   glw_gf_do();
-   glw_tex_flush_all(gr);
-   glw_text_flush(gr);
- }
-
-
- /**
-  *
-  */
- void
- glw_retire_child(glw_t *w)
- {
-   glw_t *p = w->glw_parent;
-   if(p != NULL && p->glw_class->gc_retire_child != NULL) {
-     p->glw_class->gc_retire_child(p, w);
-     return;
-   }
-   glw_destroy(w);
- }
-
-
- /**
-  *
-  */
- void
- glw_move(glw_t *w, glw_t *b)
- {
-   glw_t *p = w->glw_parent;
-
-   int was_first = TAILQ_FIRST(&p->glw_childs) == w && w == p->glw_focused;
-
-   TAILQ_REMOVE(&p->glw_childs, w, glw_parent_link);
-
-   if(b == NULL) {
-     TAILQ_INSERT_TAIL(&p->glw_childs, w, glw_parent_link);
-   } else {
-     TAILQ_INSERT_BEFORE(b, w, glw_parent_link);
-   }
-   if(p->glw_flags & GLW_FLOATING_FOCUS) {
-     if(w == TAILQ_FIRST(&p->glw_childs)) {
-       glw_t *w2 = TAILQ_NEXT(w, glw_parent_link);
-       if(w2 != NULL && p->glw_focused == w2) {
-         glw_t *c = glw_focus_by_path(w);
-         glw_focus_set(c->glw_root, c, GLW_FOCUS_SET_AUTOMATIC_FF, "Move");
-       }
-     } else if(was_first) {
-       glw_t *w2 = TAILQ_FIRST(&p->glw_childs);
-       glw_t *c = glw_focus_by_path(w2);
-       glw_focus_set(c->glw_root, c, GLW_FOCUS_SET_AUTOMATIC_FF, "Move");
-     }
-   }
-   glw_signal0(p, GLW_SIGNAL_CHILD_MOVED, w);
- }
-
- /**
-  *
-  */
- static void
- glw_fhp_update(glw_t *w, int or, int and)
- {
-   w->glw_flags = (w->glw_flags | or) & and;
-   if(!(w->glw_flags & GLW_DESTROYING))
-     glw_signal0(w, GLW_SIGNAL_FHP_PATH_CHANGED, NULL);
- }
-
-
- /**
-  *
-  */
- static void
- glw_path_flood(glw_t *w, int or, int and)
- {
-   glw_t *c;
-
-   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
-     if(c->glw_flags2 & GLW2_CLICKABLE ||
-        c->glw_focus_weight > 0)
-       continue;
-     glw_path_flood(c, or, and);
-     glw_fhp_update(c, or, and);
-   }
- }
-
-
- /**
-  *
-  */
- static void
- glw_path_modify(glw_t *w, int set, int clr, glw_t *stop)
- {
-   clr = ~clr; // Invert so we can just AND it
-
-   glw_path_flood(w, set, clr);
-
-   for(; w != NULL && w != stop; w = w->glw_parent) {
-
-     int old_flags = w->glw_flags;
-     glw_fhp_update(w, set, clr);
-
-     if((old_flags ^ w->glw_flags) & GLW_IN_FOCUS_PATH)
-       glw_event_glw_action(w, w->glw_flags & GLW_IN_FOCUS_PATH ?
-                            "GainedFocus" : "LostFocus");
-
-     if(w->glw_flags & GLW_FHP_SPILL_TO_CHILDS) {
-       glw_t *c;
-       TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
-         if(c->glw_flags2 & GLW2_FHP_SPILL) {
-           glw_fhp_update(c, set, clr);
-           glw_path_flood(c, set, clr);
-         }
-       }
-     }
-   }
- }
-
-
- /**
-  *
-  */
- static glw_t *
- find_common_ancestor(glw_t *a, glw_t *b)
- {
-   glw_t *c;
-
-   if(a == NULL)
-     return NULL;
-
-   for(; b != NULL; b = b->glw_parent)
-     for(c = a; c != NULL; c = c->glw_parent)
-       if(c == b)
-         return b;
-   return NULL;
- }
-
-
- /**
-  *
-  */
- static void
- glw_root_set_hover(glw_root_t *gr, glw_t *w)
- {
-   glw_t *com;
-
-   if(gr->gr_pointer_hover == w)
-     return;
-
-   com = find_common_ancestor(gr->gr_pointer_hover, w);
-
-   if(gr->gr_pointer_hover != NULL)
-     glw_path_modify(gr->gr_pointer_hover, 0, GLW_IN_HOVER_PATH, com);
-
-   gr->gr_pointer_hover = w;
-   if(w != NULL)
-     glw_path_modify(w, GLW_IN_HOVER_PATH, 0, com);
-
-   glw_need_refresh(gr, 0);
- }
-
-
- /**
-  *
-  */
- void
- glw_set_focus_weight(glw_t *w, float f, glw_style_t *gs)
- {
-   if(w->glw_class->gc_set_focus_weight != NULL) {
-     w->glw_class->gc_set_focus_weight(w, f, gs);
-     return;
-   }
-
-   if(f == w->glw_focus_weight)
-     return;
-
-   if(w->glw_focus_weight > 0 && w->glw_root->gr_current_focus == w) {
-     w->glw_root->gr_delayed_focus_leave = 2;
-   }
-
-   if(f > 0)
-     glw_focus_init_widget(w, f);
-   else
-     w->glw_focus_weight = 0;
- }
-
- /**
-  *
-  */
- static int
- glw_path_in_focus(glw_t *w)
- {
-   return !!(w->glw_flags & GLW_IN_FOCUS_PATH);
- }
-
-
- /**
-  *
-  */
- glw_t *
- glw_focus_by_path(glw_t *w)
- {
-   while(w->glw_focused != NULL) {
-     if(w->glw_focused->glw_flags &
-        (GLW_FOCUS_BLOCKED | GLW_DESTROYING | GLW_HIDDEN))
-       return NULL;
-     w = w->glw_focused;
-   }
-
-   if(w->glw_focus_weight == 0)
-     return NULL;
-   return w;
- }
-
-
- /**
-  *
-  */
- static prop_t *
- get_originating_prop(glw_t *w)
- {
-   for(; w != NULL; w = w->glw_parent)
-     if(w->glw_originating_prop != NULL)
-       return w->glw_originating_prop;
-   return NULL;
- }
-
-
- /**
-  *
-  */
- static int
- check_autofocus_limit(glw_t *n, glw_t *o)
- {
-   int limit = 0;
-   glw_t *w, *x;
-
-   // Mark new tree
-   for(w = n; w != NULL; w = w->glw_parent)
-     w->glw_flags |= GLW_MARK;
-
-   // Scan old tree and try to find fork point
-   for(x = o; x != NULL; x = x->glw_parent) {
-     if(x->glw_flags & GLW_MARK)
-       break;
-   }
-
-   // Scan new tree up to intersection point
-   for(w = n; w != NULL && w != x; w = w->glw_parent) {
-     if(w->glw_flags2 & GLW2_AUTO_FOCUS_LIMIT) {
-       limit = 1;
-       break;
-     }
-   }
-
-   // Unmark
-   for(w = n; w != NULL; w = w->glw_parent)
-     w->glw_flags &= ~GLW_MARK;
-
-   return limit;
- }
-
-
- /**
-  *
-  */
- int
- glw_focus_set(glw_root_t *gr, glw_t *w, int how, const char *whom)
- {
-   glw_t *x, *y, *com;
-   glw_signal_t sig;
-   float weight = w ? w->glw_focus_weight : 0;
-
-   if(gr->gr_focus_work)
-     return 0;
-
-   gr->gr_focus_work = 1;
-
-   if(how == GLW_FOCUS_SET_AUTOMATIC ||
-      how == GLW_FOCUS_SET_AUTOMATIC_FF) {
-     sig = GLW_SIGNAL_FOCUS_CHILD_AUTOMATIC;
-   } else {
-     sig = GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE;
-   }
-
-   if(w != NULL) {
-
-
-     if(how != GLW_FOCUS_SET_INTERACTIVE) {
-       if(check_autofocus_limit(w, gr->gr_last_focus)) {
-         gr->gr_focus_work = 0;
-         return 0;
-       }
-     }
-
-     for(x = w; x->glw_parent != NULL; x = x->glw_parent) {
-
-       if(sig != GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE &&
-          (x->glw_flags & GLW_FOCUS_BLOCKED ||
-           x->glw_flags & GLW_HIDDEN)) {
-         gr->gr_focus_work = 0;
-         return 0;
-       }
-
-       if(x->glw_parent->glw_focused != x) {
-         /* Path switches */
-         glw_t *p = x->glw_parent;
-         y = glw_focus_by_path(p);
-
-         /* Handle floating focus
-          *
-          * Floating focus is when the first widget of a child currently
-          * has focus and we insert an entry with equal focus weight before
-          * it.
-          *
-          * This allows the focus to "stay" at the first entry even if we
-          * insert entries in random order
-          */
-         int ff = p->glw_flags & GLW_FLOATING_FOCUS &&
-           (x == TAILQ_FIRST(&p->glw_childs) ||
-            how == GLW_FOCUS_SET_AUTOMATIC_FF);
-
-         if(y == NULL || how == GLW_FOCUS_SET_INTERACTIVE ||
-            weight > y->glw_focus_weight ||
-            (ff && weight == y->glw_focus_weight)) {
-           x->glw_parent->glw_focused = x;
- #if 0
-           printf("Signal %s child %p focused %d %f %f %d\n",
-                  x->glw_parent->glw_class->gc_name,
-                  x, how, weight, w->glw_focus_weight, ff);
- #endif
-           glw_signal0(x->glw_parent, sig, x);
-         } else {
-           /* Other path outranks our weight, stop now */
-           gr->gr_focus_work = 0;
-           return 0;
-         }
-       }
-     }
-   }
-
-   if(gr->gr_current_focus == w) {
-     gr->gr_focus_work = 0;
-     return 1;
-   }
-   com = find_common_ancestor(gr->gr_current_focus, w);
-
-   glw_t *ww = gr->gr_current_focus;
-
-   if(ww != NULL)
-     glw_path_modify(ww, 0, GLW_IN_FOCUS_PATH, com);
-
-   gr->gr_current_focus = w;
-   gr->gr_delayed_focus_leave = 0;
- #if 0
-   glw_t *h = w;
-   while(h->glw_parent != NULL) {
-     printf("Verifying %p %p %p\n", h, h->glw_parent, h->glw_parent->glw_focused);
-     if(h->glw_parent->glw_focused != h) {
-       glw_t *f = h->glw_parent->glw_focused;
-       printf("Parent %p %s points to %p %s <%s> instead of %p %s <%s>\n",
-              h->glw_parent, h->glw_parent->glw_class->gc_name,
-              f, f->glw_class->gc_name, glw_get_a_name(f),
-              h, h->glw_class->gc_name, glw_get_a_name(h));
-     }
-     h = h->glw_parent;
-   }
- #endif
-
-   if(w != NULL) {
-     glw_need_refresh(gr, 0);
-
-     GLW_TRACE("Focus set to %s:%d bt %s",
-               rstr_get(w->glw_file), w->glw_line, whom);
-
-     gr->gr_last_focus = w;
-
-     glw_path_modify(w, GLW_IN_FOCUS_PATH, 0, com);
-
-
-     if(how) {
-       prop_t *p = get_originating_prop(w);
-
-       if(p != NULL) {
-
-         if(gr->gr_last_focused_interactive != NULL)
-           prop_ref_dec(gr->gr_last_focused_interactive);
-
-         gr->gr_last_focused_interactive = prop_ref_inc(p);
-       }
-     }
-   } else {
-     GLW_TRACE("Focus set to none by %s", whom);
-   }
-   gr->gr_focus_work = 0;
-   if(how == GLW_FOCUS_SET_INTERACTIVE)
-     rstr_set(&gr->gr_pending_focus, NULL);
-   return 1;
- }
-
-
-
- /**
-  *
-  */
- void
- glw_focus_check_pending(glw_t *w)
- {
-   glw_root_t *gr = w->glw_root;
-   if(rstr_eq(gr->gr_pending_focus, w->glw_id_rstr)) {
-     w = glw_get_focusable_child(w);
-     if(w != NULL)
-       glw_focus_set(gr, w, GLW_FOCUS_SET_INTERACTIVE, "FocusMethodDelayed");
-   }
- }
-
-
- /**
-  *
-  */
- static int
- was_interactive(glw_t *w)
- {
-   prop_t *last = w->glw_root->gr_last_focused_interactive;
-
-   if(last == NULL)
-     return 0;
-
-   if(w->glw_originating_prop == last)
-     return 1;
-
-   while((w = w->glw_parent) != NULL) {
-     if(w->glw_focus_weight)
-       return 0;
-     if(w->glw_originating_prop == last)
-       return 1;
-   }
-   return 0;
- }
-
-
- /**
-  *
-  */
- static void
- glw_focus_init_widget(glw_t *w, float weight)
- {
-   w->glw_focus_weight = weight;
-   int how = GLW_FOCUS_SET_AUTOMATIC;
-
-   if(w->glw_flags2 & GLW2_AUTOREFOCUSABLE && was_interactive(w))
-     how = GLW_FOCUS_SET_INTERACTIVE;
-
-   glw_focus_set(w->glw_root, w, how, "Init");
- }
-
-
- /**
-  *
-  */
- static glw_t *
- glw_focus_find_focusable(glw_t *w, glw_t *cur)
- {
-   glw_t *c, *r;
-
-   if(w->glw_focused != NULL) {
-     c = w->glw_focused;
-     if(!(c->glw_flags & (GLW_DESTROYING | GLW_FOCUS_BLOCKED))) {
-       if(glw_is_focusable(c))
-         return c;
-       if(TAILQ_FIRST(&c->glw_childs)) {
-         if((r = glw_focus_find_focusable(c, NULL)) != NULL)
-           return r;
-       }
-     }
-   }
-
-   c = cur ? TAILQ_NEXT(cur, glw_parent_link) : TAILQ_FIRST(&w->glw_childs);
-   for(;;c = TAILQ_NEXT(c, glw_parent_link)) {
-     if(c == NULL) {
-       if(cur == NULL)
-         return NULL;
-       c = TAILQ_FIRST(&w->glw_childs);
-     }
-
-     if(c == cur)
-       return NULL;
-     if(c->glw_flags & (GLW_DESTROYING | GLW_FOCUS_BLOCKED))
-       continue;
-     if(glw_is_focusable(c))
-       return c;
-     if(TAILQ_FIRST(&c->glw_childs)) {
-       if((r = glw_focus_find_focusable(c, NULL)) != NULL)
-         return r;
-     }
-   }
- }
-
-
- /**
-  *
-  */
- static void
- glw_focus_leave(glw_t *w)
- {
-   glw_t *r = NULL;
-
-   if(w->glw_root->gr_current_focus != w)
-     return;
-
-   while(w->glw_parent != NULL) {
-
-     assert(w->glw_parent->glw_focused == w);
-
-     if(!(w->glw_parent->glw_flags & GLW_DESTROYING)) {
-       r = glw_focus_find_focusable(w->glw_parent, w);
-       if(r != NULL)
-         break;
-     }
-     w = w->glw_parent;
-   }
-   glw_focus_set(w->glw_root, r, GLW_FOCUS_SET_INTERACTIVE, "FocusLeave");
- }
-
-
- /**
-  *
-  */
- static glw_t *
- glw_focus_crawl0(glw_t *w, glw_t *cur, int forward)
- {
-   glw_t *c, *r;
-
-   if(forward) {
-     c = cur ? TAILQ_NEXT(cur, glw_parent_link) : TAILQ_FIRST(&w->glw_childs);
-   } else {
-     c = cur ? TAILQ_PREV(cur, glw_queue, glw_parent_link) :
-       TAILQ_LAST(&w->glw_childs, glw_queue);
-   }
-
-   for(; c != NULL; c = forward ? TAILQ_NEXT(c, glw_parent_link) :
-         TAILQ_PREV(c, glw_queue, glw_parent_link)) {
-     if(c->glw_flags & (GLW_FOCUS_BLOCKED | GLW_HIDDEN))
-       continue;
-     if(glw_is_focusable(c))
-       return c;
-     if(TAILQ_FIRST(&c->glw_childs))
-       if((r = glw_focus_crawl0(c, NULL, forward)) != NULL)
-         return r;
-   }
-   return NULL;
- }
-
-
- /**
-  *
-  */
- static glw_t *
- glw_focus_crawl1(glw_t *w, int forward)
- {
-   glw_t *c, *r;
-
-   c = forward ? TAILQ_FIRST(&w->glw_childs) :
-     TAILQ_LAST(&w->glw_childs, glw_queue);
-
-   for(; c != NULL; c = forward ? TAILQ_NEXT(c, glw_parent_link) :
-         TAILQ_PREV(c, glw_queue, glw_parent_link)) {
-
-     if(!(c->glw_flags & (GLW_FOCUS_BLOCKED | GLW_HIDDEN))) {
-       if(glw_is_focusable(c))
-         return c;
-       if(TAILQ_FIRST(&c->glw_childs))
-         if((r = glw_focus_crawl1(c, forward)) != NULL)
-         return r;
-     }
-   }
-   return NULL;
- }
-
-
- /**
-  * Used to focus next (or previous) focusable widget.
-  */
- void
- glw_focus_crawl(glw_t *w, int forward, int interactive)
- {
-   glw_t *r = NULL;
-
-   while(w->glw_parent != NULL) {
-     if((r = glw_focus_crawl0(w->glw_parent, w, forward)) != NULL)
-       break;
-     w = w->glw_parent;
-   }
-
-   if(r == NULL)
-     r = glw_focus_crawl1(w, forward);
-
-   if(r != NULL)
-     glw_focus_set(w->glw_root, r,
-                   interactive ? GLW_FOCUS_SET_INTERACTIVE :
-                   GLW_FOCUS_SET_AUTOMATIC, "FocusCrawl");
- }
-
-
-
- /**
-  *
-  */
- void
- glw_focus_open_path_close_all_other(glw_t *w)
- {
-   glw_t *c;
-   glw_t *p = w->glw_parent;
-   int do_clear = 0;
-   TAILQ_FOREACH(c, &p->glw_childs, glw_parent_link) {
-     if(c == w)
-       continue;
-     c->glw_flags |= GLW_FOCUS_BLOCKED;
-     if(c->glw_flags & GLW_IN_FOCUS_PATH) {
-       do_clear = 1;
-     }
-   }
-
-   w->glw_flags &= ~GLW_FOCUS_BLOCKED;
-   c = glw_focus_by_path(w);
-
-   if(c != NULL) {
-     glw_focus_set(w->glw_root, c, GLW_FOCUS_SET_AUTOMATIC,
-                   "OpenCloseFound");
-     return;
-   } else if(p->glw_parent->glw_focused == p && do_clear) {
-     glw_t *r = glw_focus_crawl1(w, 1);
-     if(r != NULL) {
-       glw_focus_set(w->glw_root, r, GLW_FOCUS_SET_AUTOMATIC,
-                     "OpenCloseCrawlDown");
-       return;
-     }
-
-     while(w->glw_parent != NULL) {
-       if((r = glw_focus_find_focusable(w->glw_parent, w)) != NULL) {
-         glw_focus_set(w->glw_root, r, GLW_FOCUS_SET_AUTOMATIC,
-                       "OpenCloseCrawlUp");
-         return;
-       }
-       w = w->glw_parent;
-     }
-   }
-
-   if(do_clear)
-     glw_focus_set(w->glw_root, NULL, GLW_FOCUS_SET_AUTOMATIC,
-                   "OpenCloseNone");
-
- }
-
-
-
- /**
-  *
-  */
- void
- glw_focus_open_path(glw_t *w)
- {
-   glw_t *c;
-
-   if(!(w->glw_flags & GLW_FOCUS_BLOCKED))
-     return;
-
-   w->glw_flags &= ~GLW_FOCUS_BLOCKED;
-
-   c = glw_focus_by_path(w);
-   if(c != NULL)
-     glw_focus_set(w->glw_root, c, GLW_FOCUS_SET_AUTOMATIC,
-                   "OpenPath");
- }
-
-
- /**
-  *
-  */
- void
- glw_focus_close_path(glw_t *w)
- {
-   if(w->glw_flags & GLW_FOCUS_BLOCKED)
-     return;
-
-   w->glw_flags |= GLW_FOCUS_BLOCKED;
-
-   if(w->glw_parent->glw_focused != w)
-     return;
-
-   glw_focus_leave(w);
- }
-
-
- /**
-  *
-  */
- int
- glw_focus_step(glw_t *w, int forward)
- {
-   event_t *e;
-
-   if(!glw_path_in_focus(w))
-     return 0;
-
-   e = event_create_action(forward ? ACTION_DOWN : ACTION_UP);
-
-   while(w->glw_focused != NULL) {
-     w = w->glw_focused;
-     if(glw_is_focusable(w)) {
-       if(glw_event_to_widget(w, e))
-         break;
-     }
-   }
-   event_release(e);
-   return 1;
- }
-
-
- /**
-  *
-  */
- void
- glw_focus_suggest(glw_t *w)
- {
-   for(; w->glw_parent != NULL; w = w->glw_parent) {
-     if(w->glw_parent->glw_class->gc_suggest_focus != NULL) {
-       w->glw_parent->glw_class->gc_suggest_focus(w->glw_parent, w);
-       break;
-     }
-   }
- }
-
-
- /**
-  *
-  */
- int
- glw_is_child_focusable(glw_t *w)
- {
-   glw_t *c;
-   if(glw_is_focusable(w))
-     return 1;
-   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
-     if(glw_is_child_focusable(c))
-       return 1;
-   }
-   return 0;
- }
-
-
- /**
-  * Find a focusable child given a widget
-  *
-  * Initially we try to follow the current focus path otherwise
-  * we try to locate any focusable widget that's a child
-  *
-  */
- glw_t *
- glw_get_focusable_child(glw_t *w)
- {
-   if(w == NULL)
-     return NULL;
-
-   glw_t *c = glw_focus_by_path(w);
-
-   if(c == NULL)
-     c = glw_focus_crawl1(w, 1);
-
-   return c;
- }
-
-
- /**
-  *
-  */
- int
- glw_focus_child(glw_t *w)
- {
-   glw_t *c = glw_get_focusable_child(w);
-   if(c == NULL)
-     return 0;
-
-   glw_focus_set(w->glw_root, c, GLW_FOCUS_SET_INTERACTIVE, "FocusChild");
-   return 1;
- }
-
-
- /**
-  *
-  */
- int
- glw_root_event_handler(glw_root_t *gr, event_t *e)
- {
-   if(e->e_type == EVENT_KEYDESC)
-     return 0;
-
-   if(event_is_action(e, ACTION_ENABLE_SCREENSAVER)) {
-     gr->gr_screensaver_force_enable = 1;
-
-   } else if(event_is_action(e, ACTION_NAV_BACK) ||
-             event_is_action(e, ACTION_NAV_FWD) ||
-             event_is_action(e, ACTION_HOME) ||
-             event_is_action(e, ACTION_PLAYQUEUE) ||
-             event_is_action(e, ACTION_RELOAD_DATA) ||
-             event_is_type(e, EVENT_OPENURL)) {
-
-     prop_t *p = prop_get_by_name(PNVEC("nav", "eventSink"), 0,
-                                  PROP_TAG_NAMED_ROOT, gr->gr_prop_nav, "nav",
-                                  NULL);
-     prop_send_ext_event(p, e);
-     prop_ref_dec(p);
-   } else {
-     event_addref(e);
-     event_dispatch(e);
-   }
-   return 1;
- }
-
-
-
- /**
-  *
-  */
- int
- glw_event_to_widget(glw_t *w, event_t *e)
- {
-   glw_root_t *gr = w->glw_root;
-
-   // First, descend in the view hierarchy
-
-   while(1) {
-     if(!glw_path_in_focus(w))
-       break;
-
-     if(glw_event_map_intercept(w, e, 1))
-       return 1;
-
-     if(w->glw_flags2 & GLW2_POSITIONAL_NAVIGATION)
-       if(glw_navigate_matrix(w, e))
-         return 1;
-
-     if(glw_send_event2(w, e))
-       return 1;
-
-     if(w->glw_focused == NULL)
-       break;
-     w = w->glw_focused;
-   }
-
-   // Then ascend all the way up to root
-
-   while(w != NULL) {
-     w->glw_flags &= ~GLW_FLOATING_FOCUS; // Correct ??
-
-     if(glw_event_map_intercept(w, e, 0))
-       return 1;
-
-     if(glw_bubble_event2(w, e))
-       return 1;
-
-     w = w->glw_parent;
-   }
-
-   // Nothing grabbed the event, default it
-
-   return glw_root_event_handler(gr, e);
- }
-
-
- /**
-  *
-  */
- int
- glw_event(glw_root_t *gr, event_t *e)
- {
-   if(gr->gr_current_focus != NULL) {
-     if(event_is_action(e, ACTION_FOCUS_NEXT)) {
-       glw_focus_crawl(gr->gr_current_focus, 1, 1);
-       return 1;
-     }
-     if(event_is_action(e, ACTION_FOCUS_PREV)) {
-       glw_focus_crawl(gr->gr_current_focus, 0, 1);
-       return 1;
-     }
-   }
-   return glw_event_to_widget(gr->gr_universe, e);
- }
-
-
- /**
-  *
-  */
- int
- glw_pointer_event_deliver(glw_t *w, glw_pointer_event_t *gpe)
- {
-   glw_root_t *gr = w->glw_root;
-   event_t *e;
-
-   if(glw_send_pointer_event(w, gpe))
-     return 1;
-
-   if(!glw_is_focusable_or_clickable(w))
-     return 0;
-
-   int r;
-
-   switch(gpe->type) {
-
-   case GLW_POINTER_RIGHT_PRESS:
-     e = event_create_action(ACTION_ITEMMENU);
-     r = glw_event_to_widget(w, e);
-     event_release(e);
-     return r;
-
-   case GLW_POINTER_LEFT_PRESS:
-   case GLW_POINTER_TOUCH_START:
-     gr->gr_pointer_press = w;
-     glw_path_modify(w, GLW_IN_PRESSED_PATH, 0, NULL);
-     return 1;
-
-   case GLW_POINTER_LEFT_RELEASE:
-   case GLW_POINTER_TOUCH_END:
-     if(gr->gr_pointer_press == w) {
-       if(w->glw_flags2 & GLW2_FOCUS_ON_CLICK)
-         glw_focus_set(gr, w, GLW_FOCUS_SET_INTERACTIVE, "LeftPress");
-
-       glw_path_modify(w, 0, GLW_IN_PRESSED_PATH, NULL);
-       e = event_create_action(ACTION_ACTIVATE);
-       glw_event_to_widget(w, e);
-       event_release(e);
-       gr->gr_pointer_press = NULL;
-     }
-     return 1;
-
-   default:
-     break;
-   }
-   return 0;
- }
-
- /**
-  *
-  */
- int
- glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
-                    glw_t **hp, Vec3 p, Vec3 dir)
- {
-   glw_t *c;
-   float x, y;
-   glw_pointer_event_t *gpe0 = NULL;
-   int r = 0;
-   if(w->glw_flags & (GLW_FOCUS_BLOCKED | GLW_CLIPPED))
-     return 0;
-
-   if(w->glw_matrix != NULL) {
-
-     if(glw_widget_unproject(w->glw_matrix, &x, &y, p, dir) &&
-        x <= 1 && y <= 1 && x >= -1 && y >= -1) {
-       gpe0 = alloca(sizeof(glw_pointer_event_t));
-       gpe0->type = gpe->type;
-       gpe0->x = x;
-       gpe0->y = y;
-       gpe0->ts = gpe->ts;
-       gpe0->delta_y = gpe->delta_y;
-
-       if(gpe->type < GLW_POINTER_MOTION_UPDATE)
-         r = 1;
+/**
+ *
+ */
+void
+glw_destroy_childs(glw_t *w)
+{
+  glw_t *c;
+  while((c = TAILQ_FIRST(&w->glw_childs)) != NULL)
+    glw_destroy(c);
+}
+
+
+/*
+ *
+ */
+void
+glw_signal_handler_register(glw_t *w, glw_callback_t *func, void *opaque)
+{
+  glw_signal_handler_t *gsh;
+
+  LIST_FOREACH(gsh, &w->glw_signal_handlers, gsh_link) {
+    if(gsh->gsh_func == func && gsh->gsh_opaque == opaque)
+      return;
+
+  }
+
+  gsh = malloc(sizeof(glw_signal_handler_t));
+  gsh->gsh_func   = func;
+  gsh->gsh_opaque = opaque;
+  gsh->gsh_defer_remove = 0;
+
+  LIST_INSERT_HEAD(&w->glw_signal_handlers, gsh, gsh_link);
+}
+
+/*
+ *
+ */
+void
+glw_signal_handler_unregister(glw_t *w, glw_callback_t *func, void *opaque)
+{
+  glw_signal_handler_t *gsh;
+
+  LIST_FOREACH(gsh, &w->glw_signal_handlers, gsh_link)
+    if(gsh->gsh_func == func && gsh->gsh_opaque == opaque)
+      break;
+
+  if(gsh != NULL) {
+    if(gsh->gsh_defer_remove) {
+      gsh->gsh_func = NULL;
+      gsh->gsh_opaque = NULL;
+
+    } else {
+      LIST_REMOVE(gsh, gsh_link);
+      free(gsh);
+    }
+  }
+}
+
+
+/**
+ *
+ */
+void
+glw_signal0(glw_t *w, glw_signal_t sig, void *extra)
+{
+  glw_signal_handler_t *x, *gsh = LIST_FIRST(&w->glw_signal_handlers);
+  int r;
+
+  if(w->glw_class->gc_signal_handler != NULL)
+    w->glw_class->gc_signal_handler(w, NULL, sig, extra);
+
+  glw_view_eval_signal(w, sig);
+
+  while(gsh != NULL) {
+    if(gsh->gsh_func != NULL) {
+      gsh->gsh_defer_remove = 1;
+
+      r = gsh->gsh_func(w, gsh->gsh_opaque, sig, extra);
+
+      if(gsh->gsh_func == NULL) {
+        /* Was inteded to be removed during call */
+
+        x = gsh;
+        gsh = LIST_NEXT(gsh, gsh_link);
+
+        LIST_REMOVE(x, gsh_link);
+        free(x);
+        continue;
+      }
+
+      if(r)
+        return;
+    }
+    gsh = LIST_NEXT(gsh, gsh_link);
+  }
+}
+
+
+/**
+ *
+ */
+glw_t *
+glw_get_prev_n(glw_t *c, int count)
+{
+  glw_t *t = c;
+  int i;
+  c = NULL;
+  for(i = 0; i < count; i++) {
+    if((t = TAILQ_PREV(t, glw_queue, glw_parent_link)) == NULL)
+      break;
+    if(t->glw_flags & GLW_HIDDEN)
+      i--;
+    else
+      c = t;
+  }
+  return c;
+}
+
+
+/**
+ *
+ */
+glw_t *
+glw_get_next_n(glw_t *c, int count)
+{
+  glw_t *t = c;
+  int i;
+
+  c = NULL;
+
+  for(i = 0; i < count; i++) {
+    if((t = TAILQ_NEXT(t, glw_parent_link)) == NULL)
+      break;
+    if(t->glw_flags & GLW_HIDDEN)
+      i--;
+    else
+      c = t;
+  }
+  return c;
+}
+
+
+/**
+ *
+ */
+
+static LIST_HEAD(, glw_gf_ctrl) ggcs;
+
+void
+glw_gf_register(glw_gf_ctrl_t *ggc)
+{
+  LIST_INSERT_HEAD(&ggcs, ggc, link);
+}
+
+void
+glw_gf_unregister(glw_gf_ctrl_t *ggc)
+{
+  LIST_REMOVE(ggc, link);
+}
+
+void
+glw_gf_do(void)
+{
+  glw_gf_ctrl_t *ggc;
+  LIST_FOREACH(ggc, &ggcs, link)
+    ggc->flush(ggc->opaque);
+}
+
+
+
+
+/**
+ *
+ */
+void
+glw_flush(glw_root_t *gr)
+{
+  glw_gf_do();
+  glw_tex_flush_all(gr);
+  glw_text_flush(gr);
+}
+
+
+/**
+ *
+ */
+void
+glw_retire_child(glw_t *w)
+{
+  glw_t *p = w->glw_parent;
+  if(p != NULL && p->glw_class->gc_retire_child != NULL) {
+    p->glw_class->gc_retire_child(p, w);
+    return;
+  }
+  glw_destroy(w);
+}
+
+
+/**
+ *
+ */
+void
+glw_move(glw_t *w, glw_t *b)
+{
+  glw_t *p = w->glw_parent;
+
+  int was_first = TAILQ_FIRST(&p->glw_childs) == w && w == p->glw_focused;
+
+  TAILQ_REMOVE(&p->glw_childs, w, glw_parent_link);
+
+  if(b == NULL) {
+    TAILQ_INSERT_TAIL(&p->glw_childs, w, glw_parent_link);
+  } else {
+    TAILQ_INSERT_BEFORE(b, w, glw_parent_link);
+  }
+  if(p->glw_flags & GLW_FLOATING_FOCUS) {
+    if(w == TAILQ_FIRST(&p->glw_childs)) {
+      glw_t *w2 = TAILQ_NEXT(w, glw_parent_link);
+      if(w2 != NULL && p->glw_focused == w2) {
+        glw_t *c = glw_focus_by_path(w);
+        glw_focus_set(c->glw_root, c, GLW_FOCUS_SET_AUTOMATIC_FF, "Move");
+      }
+    } else if(was_first) {
+      glw_t *w2 = TAILQ_FIRST(&p->glw_childs);
+      glw_t *c = glw_focus_by_path(w2);
+      glw_focus_set(c->glw_root, c, GLW_FOCUS_SET_AUTOMATIC_FF, "Move");
+    }
+  }
+  glw_signal0(p, GLW_SIGNAL_CHILD_MOVED, w);
+}
+
+/**
+ *
+ */
+static void
+glw_fhp_update(glw_t *w, int or, int and)
+{
+  w->glw_flags = (w->glw_flags | or) & and;
+  if(!(w->glw_flags & GLW_DESTROYING))
+    glw_signal0(w, GLW_SIGNAL_FHP_PATH_CHANGED, NULL);
+}
+
+
+/**
+ *
+ */
+static void
+glw_path_flood(glw_t *w, int or, int and)
+{
+  glw_t *c;
+
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+    if(c->glw_flags2 & GLW2_CLICKABLE ||
+       c->glw_focus_weight > 0)
+      continue;
+    glw_path_flood(c, or, and);
+    glw_fhp_update(c, or, and);
+  }
+}
+
+
+/**
+ *
+ */
+static void
+glw_path_modify(glw_t *w, int set, int clr, glw_t *stop)
+{
+  clr = ~clr; // Invert so we can just AND it
+
+  glw_path_flood(w, set, clr);
+
+  for(; w != NULL && w != stop; w = w->glw_parent) {
+
+    int old_flags = w->glw_flags;
+    glw_fhp_update(w, set, clr);
+
+    if((old_flags ^ w->glw_flags) & GLW_IN_FOCUS_PATH)
+      glw_event_glw_action(w, w->glw_flags & GLW_IN_FOCUS_PATH ?
+                           "GainedFocus" : "LostFocus");
+
+    if(w->glw_flags & GLW_FHP_SPILL_TO_CHILDS) {
+      glw_t *c;
+      TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+        if(c->glw_flags2 & GLW2_FHP_SPILL) {
+          glw_fhp_update(c, set, clr);
+          glw_path_flood(c, set, clr);
+        }
+      }
+    }
+  }
+}
+
+
+/**
+ *
+ */
+static glw_t *
+find_common_ancestor(glw_t *a, glw_t *b)
+{
+  glw_t *c;
+
+  if(a == NULL)
+    return NULL;
+
+  for(; b != NULL; b = b->glw_parent)
+    for(c = a; c != NULL; c = c->glw_parent)
+      if(c == b)
+        return b;
+  return NULL;
+}
+
+
+/**
+ *
+ */
+static void
+glw_root_set_hover(glw_root_t *gr, glw_t *w)
+{
+  glw_t *com;
+
+  if(gr->gr_pointer_hover == w)
+    return;
+
+  com = find_common_ancestor(gr->gr_pointer_hover, w);
+
+  if(gr->gr_pointer_hover != NULL)
+    glw_path_modify(gr->gr_pointer_hover, 0, GLW_IN_HOVER_PATH, com);
+
+  gr->gr_pointer_hover = w;
+  if(w != NULL)
+    glw_path_modify(w, GLW_IN_HOVER_PATH, 0, com);
+
+  glw_need_refresh(gr, 0);
+}
+
+
+/**
+ *
+ */
+void
+glw_set_focus_weight(glw_t *w, float f, glw_style_t *gs)
+{
+  if(w->glw_class->gc_set_focus_weight != NULL) {
+    w->glw_class->gc_set_focus_weight(w, f, gs);
+    return;
+  }
+
+  if(f == w->glw_focus_weight)
+    return;
+
+  if(w->glw_focus_weight > 0 && w->glw_root->gr_current_focus == w) {
+    w->glw_root->gr_delayed_focus_leave = 2;
+  }
+
+  if(f > 0)
+    glw_focus_init_widget(w, f);
+  else
+    w->glw_focus_weight = 0;
+}
+
+/**
+ *
+ */
+static int
+glw_path_in_focus(glw_t *w)
+{
+  return !!(w->glw_flags & GLW_IN_FOCUS_PATH);
+}
+
+
+/**
+ *
+ */
+glw_t *
+glw_focus_by_path(glw_t *w)
+{
+  while(w->glw_focused != NULL) {
+    if(w->glw_focused->glw_flags &
+       (GLW_FOCUS_BLOCKED | GLW_DESTROYING | GLW_HIDDEN))
+      return NULL;
+    w = w->glw_focused;
+  }
+
+  if(w->glw_focus_weight == 0)
+    return NULL;
+  return w;
+}
+
+
+/**
+ *
+ */
+static prop_t *
+get_originating_prop(glw_t *w)
+{
+  for(; w != NULL; w = w->glw_parent)
+    if(w->glw_originating_prop != NULL)
+      return w->glw_originating_prop;
+  return NULL;
+}
+
+
+/**
+ *
+ */
+static int
+check_autofocus_limit(glw_t *n, glw_t *o)
+{
+  int limit = 0;
+  glw_t *w, *x;
+
+  // Mark new tree
+  for(w = n; w != NULL; w = w->glw_parent)
+    w->glw_flags |= GLW_MARK;
+
+  // Scan old tree and try to find fork point
+  for(x = o; x != NULL; x = x->glw_parent) {
+    if(x->glw_flags & GLW_MARK)
+      break;
+  }
+
+  // Scan new tree up to intersection point
+  for(w = n; w != NULL && w != x; w = w->glw_parent) {
+    if(w->glw_flags2 & GLW2_AUTO_FOCUS_LIMIT) {
+      limit = 1;
+      break;
+    }
+  }
+
+  // Unmark
+  for(w = n; w != NULL; w = w->glw_parent)
+    w->glw_flags &= ~GLW_MARK;
+
+  return limit;
+}
+
+
+/**
+ *
+ */
+int
+glw_focus_set(glw_root_t *gr, glw_t *w, int how, const char *whom)
+{
+  glw_t *x, *y, *com;
+  glw_signal_t sig;
+  float weight = w ? w->glw_focus_weight : 0;
+
+  if(gr->gr_focus_work)
+    return 0;
+
+  gr->gr_focus_work = 1;
+
+  if(how == GLW_FOCUS_SET_AUTOMATIC ||
+     how == GLW_FOCUS_SET_AUTOMATIC_FF) {
+    sig = GLW_SIGNAL_FOCUS_CHILD_AUTOMATIC;
+  } else {
+    sig = GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE;
+  }
+
+  if(w != NULL) {
+
+
+    if(how != GLW_FOCUS_SET_INTERACTIVE) {
+      if(check_autofocus_limit(w, gr->gr_last_focus)) {
+        gr->gr_focus_work = 0;
+        return 0;
+      }
+    }
+
+    for(x = w; x->glw_parent != NULL; x = x->glw_parent) {
+
+      if(sig != GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE &&
+         (x->glw_flags & GLW_FOCUS_BLOCKED ||
+          x->glw_flags & GLW_HIDDEN)) {
+        gr->gr_focus_work = 0;
+        return 0;
+      }
+
+      if(x->glw_parent->glw_focused != x) {
+        /* Path switches */
+        glw_t *p = x->glw_parent;
+        y = glw_focus_by_path(p);
+
+        /* Handle floating focus
+         *
+         * Floating focus is when the first widget of a child currently
+         * has focus and we insert an entry with equal focus weight before
+         * it.
+         *
+         * This allows the focus to "stay" at the first entry even if we
+         * insert entries in random order
+         */
+        int ff = p->glw_flags & GLW_FLOATING_FOCUS &&
+          (x == TAILQ_FIRST(&p->glw_childs) ||
+           how == GLW_FOCUS_SET_AUTOMATIC_FF);
+
+        if(y == NULL || how == GLW_FOCUS_SET_INTERACTIVE ||
+           weight > y->glw_focus_weight ||
+           (ff && weight == y->glw_focus_weight)) {
+          x->glw_parent->glw_focused = x;
+#if 0
+          printf("Signal %s child %p focused %d %f %f %d\n",
+                 x->glw_parent->glw_class->gc_name,
+                 x, how, weight, w->glw_focus_weight, ff);
+#endif
+          glw_signal0(x->glw_parent, sig, x);
+        } else {
+          /* Other path outranks our weight, stop now */
+          gr->gr_focus_work = 0;
+          return 0;
+        }
+      }
+    }
+  }
+
+  if(gr->gr_current_focus == w) {
+    gr->gr_focus_work = 0;
+    return 1;
+  }
+  com = find_common_ancestor(gr->gr_current_focus, w);
+
+  glw_t *ww = gr->gr_current_focus;
+
+  if(ww != NULL)
+    glw_path_modify(ww, 0, GLW_IN_FOCUS_PATH, com);
+
+  gr->gr_current_focus = w;
+  gr->gr_delayed_focus_leave = 0;
+#if 0
+  glw_t *h = w;
+  while(h->glw_parent != NULL) {
+    printf("Verifying %p %p %p\n", h, h->glw_parent, h->glw_parent->glw_focused);
+    if(h->glw_parent->glw_focused != h) {
+      glw_t *f = h->glw_parent->glw_focused;
+      printf("Parent %p %s points to %p %s <%s> instead of %p %s <%s>\n",
+             h->glw_parent, h->glw_parent->glw_class->gc_name,
+             f, f->glw_class->gc_name, glw_get_a_name(f),
+             h, h->glw_class->gc_name, glw_get_a_name(h));
+    }
+    h = h->glw_parent;
+  }
+#endif
+
+  if(w != NULL) {
+    glw_need_refresh(gr, 0);
+
+    GLW_TRACE("Focus set to %s:%d bt %s",
+              rstr_get(w->glw_file), w->glw_line, whom);
+
+    gr->gr_last_focus = w;
+
+    glw_path_modify(w, GLW_IN_FOCUS_PATH, 0, com);
+
+
+    if(how) {
+      prop_t *p = get_originating_prop(w);
+
+      if(p != NULL) {
+
+        if(gr->gr_last_focused_interactive != NULL)
+          prop_ref_dec(gr->gr_last_focused_interactive);
+
+        gr->gr_last_focused_interactive = prop_ref_inc(p);
+      }
+    }
+  } else {
+    GLW_TRACE("Focus set to none by %s", whom);
+  }
+  gr->gr_focus_work = 0;
+  if(how == GLW_FOCUS_SET_INTERACTIVE)
+    rstr_set(&gr->gr_pending_focus, NULL);
+  return 1;
+}
+
+
+
+/**
+ *
+ */
+void
+glw_focus_check_pending(glw_t *w)
+{
+  glw_root_t *gr = w->glw_root;
+  if(rstr_eq(gr->gr_pending_focus, w->glw_id_rstr)) {
+    w = glw_get_focusable_child(w);
+    if(w != NULL)
+      glw_focus_set(gr, w, GLW_FOCUS_SET_INTERACTIVE, "FocusMethodDelayed");
+  }
+}
+
+
+/**
+ *
+ */
+static int
+was_interactive(glw_t *w)
+{
+  prop_t *last = w->glw_root->gr_last_focused_interactive;
+
+  if(last == NULL)
+    return 0;
+
+  if(w->glw_originating_prop == last)
+    return 1;
+
+  while((w = w->glw_parent) != NULL) {
+    if(w->glw_focus_weight)
+      return 0;
+    if(w->glw_originating_prop == last)
+      return 1;
+  }
+  return 0;
+}
+
+
+/**
+ *
+ */
+static void
+glw_focus_init_widget(glw_t *w, float weight)
+{
+  w->glw_focus_weight = weight;
+  int how = GLW_FOCUS_SET_AUTOMATIC;
+
+  if(w->glw_flags2 & GLW2_AUTOREFOCUSABLE && was_interactive(w))
+    how = GLW_FOCUS_SET_INTERACTIVE;
+
+  glw_focus_set(w->glw_root, w, how, "Init");
+}
+
+
+/**
+ *
+ */
+static glw_t *
+glw_focus_find_focusable(glw_t *w, glw_t *cur)
+{
+  glw_t *c, *r;
+
+  if(w->glw_focused != NULL) {
+    c = w->glw_focused;
+    if(!(c->glw_flags & (GLW_DESTROYING | GLW_FOCUS_BLOCKED))) {
+      if(glw_is_focusable(c))
+        return c;
+      if(TAILQ_FIRST(&c->glw_childs)) {
+        if((r = glw_focus_find_focusable(c, NULL)) != NULL)
+          return r;
+      }
+    }
+  }
+
+  c = cur ? TAILQ_NEXT(cur, glw_parent_link) : TAILQ_FIRST(&w->glw_childs);
+  for(;;c = TAILQ_NEXT(c, glw_parent_link)) {
+    if(c == NULL) {
+      if(cur == NULL)
+        return NULL;
+      c = TAILQ_FIRST(&w->glw_childs);
+    }
+
+    if(c == cur)
+      return NULL;
+    if(c->glw_flags & (GLW_DESTROYING | GLW_FOCUS_BLOCKED))
+      continue;
+    if(glw_is_focusable(c))
+      return c;
+    if(TAILQ_FIRST(&c->glw_childs)) {
+      if((r = glw_focus_find_focusable(c, NULL)) != NULL)
+        return r;
+    }
+  }
+}
+
+
+/**
+ *
+ */
+static void
+glw_focus_leave(glw_t *w)
+{
+  glw_t *r = NULL;
+
+  if(w->glw_root->gr_current_focus != w)
+    return;
+
+  while(w->glw_parent != NULL) {
+
+    assert(w->glw_parent->glw_focused == w);
+
+    if(!(w->glw_parent->glw_flags & GLW_DESTROYING)) {
+      r = glw_focus_find_focusable(w->glw_parent, w);
+      if(r != NULL)
+        break;
+    }
+    w = w->glw_parent;
+  }
+  glw_focus_set(w->glw_root, r, GLW_FOCUS_SET_INTERACTIVE, "FocusLeave");
+}
+
+
+/**
+ *
+ */
+static glw_t *
+glw_focus_crawl0(glw_t *w, glw_t *cur, int forward)
+{
+  glw_t *c, *r;
+
+  if(forward) {
+    c = cur ? TAILQ_NEXT(cur, glw_parent_link) : TAILQ_FIRST(&w->glw_childs);
+  } else {
+    c = cur ? TAILQ_PREV(cur, glw_queue, glw_parent_link) :
+      TAILQ_LAST(&w->glw_childs, glw_queue);
+  }
+
+  for(; c != NULL; c = forward ? TAILQ_NEXT(c, glw_parent_link) :
+        TAILQ_PREV(c, glw_queue, glw_parent_link)) {
+    if(c->glw_flags & (GLW_FOCUS_BLOCKED | GLW_HIDDEN))
+      continue;
+    if(glw_is_focusable(c))
+      return c;
+    if(TAILQ_FIRST(&c->glw_childs))
+      if((r = glw_focus_crawl0(c, NULL, forward)) != NULL)
+        return r;
+  }
+  return NULL;
+}
+
+
+/**
+ *
+ */
+static glw_t *
+glw_focus_crawl1(glw_t *w, int forward)
+{
+  glw_t *c, *r;
+
+  c = forward ? TAILQ_FIRST(&w->glw_childs) :
+    TAILQ_LAST(&w->glw_childs, glw_queue);
+
+  for(; c != NULL; c = forward ? TAILQ_NEXT(c, glw_parent_link) :
+        TAILQ_PREV(c, glw_queue, glw_parent_link)) {
+
+    if(!(c->glw_flags & (GLW_FOCUS_BLOCKED | GLW_HIDDEN))) {
+      if(glw_is_focusable(c))
+        return c;
+      if(TAILQ_FIRST(&c->glw_childs))
+        if((r = glw_focus_crawl1(c, forward)) != NULL)
+          return r;
+    }
+  }
+  return NULL;
+}
+
+
+/**
+ * Used to focus next (or previous) focusable widget.
+ */
+void
+glw_focus_crawl(glw_t *w, int forward, int interactive)
+{
+  glw_t *r = NULL;
+
+  while(w->glw_parent != NULL) {
+    if((r = glw_focus_crawl0(w->glw_parent, w, forward)) != NULL)
+      break;
+    w = w->glw_parent;
+  }
+
+  if(r == NULL)
+    r = glw_focus_crawl1(w, forward);
+
+  if(r != NULL)
+    glw_focus_set(w->glw_root, r,
+                  interactive ? GLW_FOCUS_SET_INTERACTIVE :
+                  GLW_FOCUS_SET_AUTOMATIC, "FocusCrawl");
+}
+
+
+
+/**
+ *
+ */
+void
+glw_focus_open_path_close_all_other(glw_t *w)
+{
+  glw_t *c;
+  glw_t *p = w->glw_parent;
+  int do_clear = 0;
+  TAILQ_FOREACH(c, &p->glw_childs, glw_parent_link) {
+    if(c == w)
+      continue;
+    c->glw_flags |= GLW_FOCUS_BLOCKED;
+    if(c->glw_flags & GLW_IN_FOCUS_PATH) {
+      do_clear = 1;
+    }
+  }
+
+  w->glw_flags &= ~GLW_FOCUS_BLOCKED;
+  c = glw_focus_by_path(w);
+
+  if(c != NULL) {
+    glw_focus_set(w->glw_root, c, GLW_FOCUS_SET_AUTOMATIC,
+                  "OpenCloseFound");
+    return;
+  } else if(p->glw_parent->glw_focused == p && do_clear) {
+    glw_t *r = glw_focus_crawl1(w, 1);
+    if(r != NULL) {
+      glw_focus_set(w->glw_root, r, GLW_FOCUS_SET_AUTOMATIC,
+                    "OpenCloseCrawlDown");
+      return;
+    }
+
+    while(w->glw_parent != NULL) {
+      if((r = glw_focus_find_focusable(w->glw_parent, w)) != NULL) {
+        glw_focus_set(w->glw_root, r, GLW_FOCUS_SET_AUTOMATIC,
+                      "OpenCloseCrawlUp");
+        return;
+      }
+      w = w->glw_parent;
+    }
+  }
+
+  if(do_clear)
+    glw_focus_set(w->glw_root, NULL, GLW_FOCUS_SET_AUTOMATIC,
+                  "OpenCloseNone");
+
+}
+
+
+
+/**
+ *
+ */
+void
+glw_focus_open_path(glw_t *w)
+{
+  glw_t *c;
+
+  if(!(w->glw_flags & GLW_FOCUS_BLOCKED))
+    return;
+
+  w->glw_flags &= ~GLW_FOCUS_BLOCKED;
+
+  c = glw_focus_by_path(w);
+  if(c != NULL)
+    glw_focus_set(w->glw_root, c, GLW_FOCUS_SET_AUTOMATIC,
+                  "OpenPath");
+}
+
+
+/**
+ *
+ */
+void
+glw_focus_close_path(glw_t *w)
+{
+  if(w->glw_flags & GLW_FOCUS_BLOCKED)
+    return;
+
+  w->glw_flags |= GLW_FOCUS_BLOCKED;
+
+  if(w->glw_parent->glw_focused != w)
+    return;
+
+  glw_focus_leave(w);
+}
+
+
+/**
+ *
+ */
+int
+glw_focus_step(glw_t *w, int forward)
+{
+  event_t *e;
+
+  if(!glw_path_in_focus(w))
+    return 0;
+
+  e = event_create_action(forward ? ACTION_DOWN : ACTION_UP);
+
+  while(w->glw_focused != NULL) {
+    w = w->glw_focused;
+    if(glw_is_focusable(w)) {
+      if(glw_event_to_widget(w, e))
+        break;
+    }
+  }
+  event_release(e);
+  return 1;
+}
+
+
+/**
+ *
+ */
+void
+glw_focus_suggest(glw_t *w)
+{
+  for(; w->glw_parent != NULL; w = w->glw_parent) {
+    if(w->glw_parent->glw_class->gc_suggest_focus != NULL) {
+      w->glw_parent->glw_class->gc_suggest_focus(w->glw_parent, w);
+      break;
+    }
+  }
+}
+
+
+/**
+ *
+ */
+int
+glw_is_child_focusable(glw_t *w)
+{
+  glw_t *c;
+  if(glw_is_focusable(w))
+    return 1;
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+    if(glw_is_child_focusable(c))
+      return 1;
+  }
+  return 0;
+}
+
+
+/**
+ * Find a focusable child given a widget
+ *
+ * Initially we try to follow the current focus path otherwise
+ * we try to locate any focusable widget that's a child
+ *
+ */
+glw_t *
+glw_get_focusable_child(glw_t *w)
+{
+  if(w == NULL)
+    return NULL;
+
+  glw_t *c = glw_focus_by_path(w);
+
+  if(c == NULL)
+    c = glw_focus_crawl1(w, 1);
+
+  return c;
+}
+
+
+/**
+ *
+ */
+int
+glw_focus_child(glw_t *w)
+{
+  glw_t *c = glw_get_focusable_child(w);
+  if(c == NULL)
+    return 0;
+
+  glw_focus_set(w->glw_root, c, GLW_FOCUS_SET_INTERACTIVE, "FocusChild");
+  return 1;
+}
+
+
+/**
+ *
+ */
+int
+glw_root_event_handler(glw_root_t *gr, event_t *e)
+{
+  if(e->e_type == EVENT_KEYDESC)
+    return 0;
+
+  if(event_is_action(e, ACTION_ENABLE_SCREENSAVER)) {
+    gr->gr_screensaver_force_enable = 1;
+
+  } else if(event_is_action(e, ACTION_NAV_BACK) ||
+            event_is_action(e, ACTION_NAV_FWD) ||
+            event_is_action(e, ACTION_HOME) ||
+            event_is_action(e, ACTION_PLAYQUEUE) ||
+            event_is_action(e, ACTION_RELOAD_DATA) ||
+            event_is_type(e, EVENT_OPENURL)) {
+
+    prop_t *p = prop_get_by_name(PNVEC("nav", "eventSink"), 0,
+                                 PROP_TAG_NAMED_ROOT, gr->gr_prop_nav, "nav",
+                                 NULL);
+    prop_send_ext_event(p, e);
+    prop_ref_dec(p);
+  } else {
+    event_addref(e);
+    event_dispatch(e);
+  }
+  return 1;
+}
+
+
+
+/**
+ *
+ */
+int
+glw_event_to_widget(glw_t *w, event_t *e)
+{
+  glw_root_t *gr = w->glw_root;
+
+  // First, descend in the view hierarchy
+
+  while(1) {
+    if(!glw_path_in_focus(w))
+      break;
+
+    if(glw_event_map_intercept(w, e, 1))
+      return 1;
+
+    if(w->glw_flags2 & GLW2_POSITIONAL_NAVIGATION)
+      if(glw_navigate_matrix(w, e))
+        return 1;
+
+    if(glw_send_event2(w, e))
+      return 1;
+
+    if(w->glw_focused == NULL)
+      break;
+    w = w->glw_focused;
+  }
+
+  // Then ascend all the way up to root
+
+  while(w != NULL) {
+    w->glw_flags &= ~GLW_FLOATING_FOCUS; // Correct ??
+
+    if(glw_event_map_intercept(w, e, 0))
+      return 1;
+
+    if(glw_bubble_event2(w, e))
+      return 1;
+
+    w = w->glw_parent;
+  }
+
+  // Nothing grabbed the event, default it
+
+  return glw_root_event_handler(gr, e);
+}
+
+
+/**
+ *
+ */
+int
+glw_event(glw_root_t *gr, event_t *e)
+{
+  if(gr->gr_current_focus != NULL) {
+    if(event_is_action(e, ACTION_FOCUS_NEXT)) {
+      glw_focus_crawl(gr->gr_current_focus, 1, 1);
+      return 1;
+    }
+    if(event_is_action(e, ACTION_FOCUS_PREV)) {
+      glw_focus_crawl(gr->gr_current_focus, 0, 1);
+      return 1;
+    }
+  }
+  return glw_event_to_widget(gr->gr_universe, e);
+}
+
+
+/**
+ *
+ */
+int
+glw_pointer_event_deliver(glw_t *w, glw_pointer_event_t *gpe)
+{
+  glw_root_t *gr = w->glw_root;
+  event_t *e;
+
+  if(glw_send_pointer_event(w, gpe))
+    return 1;
+
+  if(!glw_is_focusable_or_clickable(w))
+    return 0;
+
+  int r;
+
+  switch(gpe->type) {
+
+  case GLW_POINTER_RIGHT_PRESS:
+    e = event_create_action(ACTION_ITEMMENU);
+    r = glw_event_to_widget(w, e);
+    event_release(e);
+    return r;
+
+  case GLW_POINTER_LEFT_PRESS:
+  case GLW_POINTER_TOUCH_START:
+    gr->gr_pointer_press = w;
+    glw_path_modify(w, GLW_IN_PRESSED_PATH, 0, NULL);
+    return 1;
+
+  case GLW_POINTER_LEFT_RELEASE:
+  case GLW_POINTER_TOUCH_END:
+    if(gr->gr_pointer_press == w) {
+      if(w->glw_flags2 & GLW2_FOCUS_ON_CLICK)
+        glw_focus_set(gr, w, GLW_FOCUS_SET_INTERACTIVE, "LeftPress");
+
+      glw_path_modify(w, 0, GLW_IN_PRESSED_PATH, NULL);
+      e = event_create_action(ACTION_ACTIVATE);
+      glw_event_to_widget(w, e);
+      event_release(e);
+      gr->gr_pointer_press = NULL;
+    }
+    return 1;
+
+  default:
+    break;
+  }
+  return 0;
+}
+
+/**
+ *
+ */
+int
+glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
+                   glw_t **hp, Vec3 p, Vec3 dir)
+{
+  glw_t *c;
+  float x, y;
+  glw_pointer_event_t *gpe0 = NULL;
+  int r = 0;
+  if(w->glw_flags & (GLW_FOCUS_BLOCKED | GLW_CLIPPED))
+    return 0;
+
+  if(w->glw_matrix != NULL) {
+
+    if(glw_widget_unproject(w->glw_matrix, &x, &y, p, dir) &&
+       x <= 1 && y <= 1 && x >= -1 && y >= -1) {
+      gpe0 = alloca(sizeof(glw_pointer_event_t));
+      gpe0->type = gpe->type;
+      gpe0->x = x;
+      gpe0->y = y;
+      gpe0->ts = gpe->ts;
+      gpe0->delta_y = gpe->delta_y;
+
+      if(gpe->type < GLW_POINTER_MOTION_UPDATE)
+        r = 1;
 
       if(glw_is_focusable_or_clickable(w))
 	*hp = w;
@@ -2783,7 +2783,7 @@ glw_hide(glw_t *w)
   w->glw_flags |= GLW_HIDDEN;
 
   if(unlikely(w->glw_parent == NULL))
-     return; // For style widgets
+    return; // For style widgets
 
   glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_HIDDEN, w);
 
@@ -2800,7 +2800,7 @@ glw_unhide(glw_t *w)
   w->glw_flags &= ~GLW_HIDDEN;
 
   if(unlikely(w->glw_parent == NULL))
-     return; // For style widgets
+    return; // For style widgets
 
   glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_UNHIDDEN, w);
 }
