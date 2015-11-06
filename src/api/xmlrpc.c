@@ -86,8 +86,13 @@ xmlrpc_parse_value(htsmsg_t *dst, htsmsg_field_t *g, const char *name,
     if(cdata != NULL)
       htsmsg_add_dbl(dst, name, my_str2double(cdata, NULL));
 
+  } else if(!strcmp(g->hmf_name, "int")) {
+    if(cdata != NULL)
+      htsmsg_add_s64(dst, name, atoll(cdata));
+
   } else {
-    snprintf(errbuf, errlen, "Unknown field type \"%s\"", g->hmf_name);
+    snprintf(errbuf, errlen, "Unknown field type \"%s\" %s = %s",
+             g->hmf_name, name, cdata);
     return -1;
   }
   return 0;
