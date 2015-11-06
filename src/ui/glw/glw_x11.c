@@ -52,8 +52,6 @@
 
 #include "arch/linux/linux.h"
 
-//#define WITH_RECORDER
-
 #include "glw_rec.h"
 
 typedef struct glw_x11 {
@@ -115,12 +113,6 @@ typedef struct glw_x11 {
 
   // Available video modes (see: ui/ui.h)
   int vmodes;
-
-  // Recording support
-#ifdef WITH_RECORDER
-  const char *record_file;
-  glw_rec_t *recorder;
-#endif
 
 } glw_x11_t;
 
@@ -756,6 +748,7 @@ static const struct {
   { XK_0,            ControlMask, ACTION_ZOOM_UI_RESET},
 
   { XK_F4,           Mod1Mask,    ACTION_QUIT},
+  { XK_F12,          Mod1Mask,    ACTION_RECORD_UI},
 
   { XF86XK_AudioPause,    0,    ACTION_PLAYPAUSE},
   { XF86XK_AudioPlay,     0,    ACTION_PLAYPAUSE},
@@ -966,10 +959,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
   int64_t start;
   int frame = 0;
   int pending_screensaver_kill = 0;
-  void *framecopy = NULL;
-#ifdef WITH_RECORDER
-  int rec_do_frame = 0;
-#endif
+
   clock_gettime(CLOCK_MONOTONIC, &tp);
   start = (int64_t)tp.tv_sec * 1000000LL + tp.tv_nsec / 1000;
 
@@ -987,18 +977,6 @@ glw_x11_mainloop(glw_x11_t *gx11)
 
   glw_set_fullscreen(&gx11->gr, gx11->is_fullscreen);
 
-
-#ifdef WITH_RECORDER
-  if(gx11->record_file) {
-    gx11->recorder = glw_rec_init(gx11->record_file,
-				  gx11->gr.gr_width,
-				  gx11->gr.gr_height,
-				  30);
-    gx11->fixed_window_size = 1;
-
-    framecopy = malloc(gx11->gr.gr_width * gx11->gr.gr_height * 4);
-  }
-#endif
 
   while(gx11->running) {
 
@@ -1232,24 +1210,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
     if(gx11->nvidia != NULL)
       nvidia_frame(gx11->nvidia);
 #endif
-
-#ifdef WITH_RECORDER
-    if(rec_do_frame == 0) {
-      if(framecopy != NULL) {
-	glReadPixels(0, 0, gx11->gr.gr_width,  gx11->gr.gr_height,
-		     GL_BGRA, GL_UNSIGNED_BYTE, framecopy);
-	glw_rec_deliver_vframe(gx11->recorder, framecopy);
-      }
-    }
-    rec_do_frame = !rec_do_frame;
-#endif
   }
-
-#ifdef WITH_RECORDER
-  if(gx11->recorder)
-    glw_rec_stop(gx11->recorder);
-#endif
-  free(framecopy);
 
   if(gx11->sss != NULL)
     x11_screensaver_resume(gx11->sss);

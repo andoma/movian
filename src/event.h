@@ -124,6 +124,8 @@ typedef enum {
 
   ACTION_SWITCH_UI,
 
+  ACTION_RECORD_UI,
+
   ACTION_mappable_end,
 
   ACTION_invalid = -1,

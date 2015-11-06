@@ -38,6 +38,7 @@ CONFIG_LIST="
  glw_backend_gx
  glw_backend_rsx
  glw_backend_opengl_es
+ glw_rec
  gu
  libogc
  lirc
@@ -369,7 +370,7 @@ libav_setup() {
 
     mkdir -p "${LIBAV_BUILD_DIR}"
 
-    LIBAV_COMMON_FLAGS="--disable-encoders --disable-bsfs --disable-filters --disable-muxers --disable-devices --disable-demuxer=rtp --disable-protocol=rtp --disable-bzlib --disable-decoder=twinvq --disable-decoder=snow --disable-decoder=cavs --enable-encoder=mjpeg --disable-avconv --disable-avprobe --disable-avfilter --enable-muxer=spdif --enable-encoder=ac3 --enable-encoder=eac3"
+    LIBAV_COMMON_FLAGS="--disable-encoders --disable-bsfs --disable-filters --disable-muxers --disable-devices --disable-demuxer=rtp --disable-protocol=rtp --disable-bzlib --disable-decoder=twinvq --disable-decoder=snow --disable-decoder=cavs --enable-encoder=mjpeg --disable-avconv --disable-avprobe --disable-avfilter --enable-muxer=spdif --enable-encoder=ac3 --enable-encoder=eac3 --enable-muxer=matroska --enable-encoder=ffvhuff"
 
     (cd ${LIBAV_BUILD_DIR} && ${TOPDIR}/ext/libav/configure ${LIBAV_ARCH_FLAGS} ${LIBAV_COMMON_FLAGS} --prefix=${EXT_INSTALL_DIR} --extra-cflags="${LIBAV_CFLAGS} ${EXTRA_CFLAGS}" --extra-ldflags="${LIBAV_LDFLAGS} ${EXTRA_LDFLAGS}" --cc="${CC}") || die
 

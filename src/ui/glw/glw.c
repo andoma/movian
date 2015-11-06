@@ -34,8 +34,11 @@
  #include "glw_event.h"
  #include "glw_style.h"
  #include "glw_navigation.h"
+#include "glw_rec.h"
 
  #include "api/screenshot.h"
+
+
 
  static void glw_focus_init_widget(glw_t *w, float weight);
  static void glw_focus_leave(glw_t *w);
@@ -578,6 +581,9 @@
      gr->gr_scheduled_refresh = INT64_MAX;
    }
 
+   if(gr->gr_rec)
+     gr->gr_need_refresh = GLW_REFRESH_FLAG_LAYOUT | GLW_REFRESH_FLAG_RENDER;
+
    glw_view_loader_eval(gr);
  }
 
@@ -589,6 +595,14 @@
  glw_post_scene(glw_root_t *gr)
  {
    glw_renderer_render(gr);
+
+#if CONFIG_GLW_REC
+   if(gr->gr_rec != NULL) {
+     pixmap_t *pm = gr->gr_br_read_pixels(gr);
+     glw_rec_deliver_vframe(gr->gr_rec, pm);
+     pixmap_release(pm);
+   }
+#endif
  }
 
  /*
@@ -2150,6 +2164,29 @@ glw_screenshot(glw_root_t *gr)
 /**
  *
  */
+#if CONFIG_GLW_REC
+static void
+glw_rec_toggle(glw_root_t *gr)
+{
+  if(gr->gr_rec != NULL) {
+    // Stop
+    TRACE(TRACE_DEBUG, "GLW", "Recording stopped");
+    glw_rec_stop(gr->gr_rec);
+    gr->gr_rec = NULL;
+  } else {
+    gr->gr_rec = glw_rec_init("capture.mkv", gr->gr_width, gr->gr_height, 60);
+    if(gr->gr_rec != NULL) {
+      TRACE(TRACE_DEBUG, "GLW", "Recording started");
+    }
+  }
+}
+
+
+#endif
+
+/**
+ *
+ */
 static void
 glw_dispatch_event(glw_root_t *gr, event_t *e)
 {
@@ -2166,6 +2203,13 @@ glw_dispatch_event(glw_root_t *gr, event_t *e)
     glw_screenshot(gr);
     return;
   }
+
+#if CONFIG_GLW_REC
+  if(event_is_action(e, ACTION_RECORD_UI)) {
+    glw_rec_toggle(gr);
+    return;
+  }
+#endif
 
   if(e->e_type == EVENT_KEYDESC) {
 

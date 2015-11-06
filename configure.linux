@@ -341,6 +341,7 @@ if enabled glw_frontend_x11; then
     fi
 
     enable glw_backend_opengl
+    enable glw_rec
     enable glw
 else
     disable vdpau

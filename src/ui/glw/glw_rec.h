@@ -17,15 +17,13 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
-#ifndef GLW_REC_H__
-#define GLW_REC_H__
+#pragma once
 
 typedef struct glw_rec glw_rec_t;
+struct pixmap;
 
 glw_rec_t *glw_rec_init(const char *filename, int width, int height, int fps);
 
-void glw_rec_deliver_vframe(glw_rec_t *gr, void *data);
+void glw_rec_deliver_vframe(glw_rec_t *gr, struct pixmap *pm);
 
 void glw_rec_stop(glw_rec_t *);
-
-#endif // GLW_REC_H__

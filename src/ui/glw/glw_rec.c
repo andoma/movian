@@ -21,6 +21,7 @@
 #include <libavutil/mathematics.h>
 
 #include "main.h"
+#include "image/pixmap.h"
 #include "glw_rec.h"
 
 struct glw_rec {
@@ -28,9 +29,6 @@ struct glw_rec {
   AVFormatContext *oc;
   AVCodecContext *v_ctx;
   AVStream *v_st;
-
-  void *vbuf_ptr;
-  size_t vbuf_size;
 
   int width;
   int height;
@@ -51,7 +49,7 @@ glw_rec_init(const char *filename, int width, int height, int fps)
   gr->width = width;
   gr->height = height;
   gr->fps = fps;
-  
+
   gr->fmt = av_guess_format(NULL, filename, NULL);
   if(gr->fmt == NULL) {
     TRACE(TRACE_ERROR, "GLWREC",
@@ -64,7 +62,10 @@ glw_rec_init(const char *filename, int width, int height, int fps)
   gr->oc->oformat = gr->fmt;
   snprintf(gr->oc->filename, sizeof(gr->oc->filename), "%s", filename);
 
-  gr->v_st = av_new_stream(gr->oc, 0);
+  gr->v_st = avformat_new_stream(gr->oc, 0);
+
+  gr->v_st->avg_frame_rate.num = fps;
+  gr->v_st->avg_frame_rate.den = 1;
 
   gr->v_ctx = gr->v_st->codec;
   gr->v_ctx->codec_type = AVMEDIA_TYPE_VIDEO;
@@ -77,18 +78,10 @@ glw_rec_init(const char *filename, int width, int height, int fps)
   gr->v_ctx->pix_fmt = PIX_FMT_RGB32;
   gr->v_ctx->coder_type = 1;
 
-  if(av_set_parameters(gr->oc, NULL) < 0) {
-    TRACE(TRACE_ERROR, "GLWREC",
-	  "Unable to record to %s -- Invalid output format parameters",
-	  filename);
-    return NULL;
-  }
-
-
-  dump_format(gr->oc, 0, filename, 1);
+  av_dump_format(gr->oc, 0, filename, 1);
 
   c = avcodec_find_encoder(gr->v_ctx->codec_id);
-  if(avcodec_open(gr->v_ctx, c)) {
+  if(avcodec_open2(gr->v_ctx, c, NULL)) {
     TRACE(TRACE_ERROR, "GLWREC",
 	  "Unable to record to %s -- Unable to open video codec",
 	  filename);
@@ -97,7 +90,7 @@ glw_rec_init(const char *filename, int width, int height, int fps)
 
   gr->v_ctx->thread_count = gconf.concurrency;
 
-  if(url_fopen(&gr->oc->pb, filename, URL_WRONLY) < 0) {
+  if(avio_open(&gr->oc->pb, filename, AVIO_FLAG_WRITE) < 0) {
     TRACE(TRACE_ERROR, "GLWREC",
 	  "Unable to record to %s -- Unable to open file for writing",
 	  filename);
@@ -105,10 +98,7 @@ glw_rec_init(const char *filename, int width, int height, int fps)
   }
 
   /* write the stream header, if any */
-  av_write_header(gr->oc);
-
-  gr->vbuf_size = 2000000;
-  gr->vbuf_ptr = av_malloc(gr->vbuf_size);
+  avformat_write_header(gr->oc, NULL);
   return gr;
 }
 
@@ -131,10 +121,9 @@ glw_rec_stop(glw_rec_t *gr)
     free(st);
   }
 
-  url_fclose(gr->oc->pb);
+  avio_close(gr->oc->pb);
   free(gr->oc);
 
-  free(gr->vbuf_ptr);
   free(gr);
 }
 
@@ -143,39 +132,37 @@ glw_rec_stop(glw_rec_t *gr)
  *
  */
 void
-glw_rec_deliver_vframe(glw_rec_t *gr, void *data)
+glw_rec_deliver_vframe(glw_rec_t *gr, struct pixmap *pm)
 {
   int r;
   AVPacket pkt;
-
   AVFrame frame;
-  int linesize = gr->width * 4;
 
   memset(&frame, 0, sizeof(frame));
 
-  frame.data[0] = data + linesize * (gr->height - 1);
-  frame.linesize[0] = -linesize;
+  frame.data[0] = pm->pm_data + pm->pm_linesize * (gr->height - 1);
+  frame.linesize[0] = -pm->pm_linesize;
   frame.pts = 1000000LL * gr->framenum / gr->fps;
-
   gr->framenum++;
 
-  r = avcodec_encode_video(gr->v_ctx, gr->vbuf_ptr, gr->vbuf_size, &frame);
+  av_init_packet(&pkt);
+  pkt.data = NULL;    // packet data will be allocated by the encoder
+  pkt.size = 0;
 
-  if(r == 0)
+  int got_packet;
+  r = avcodec_encode_video2(gr->v_ctx, &pkt, &frame, &got_packet);
+  if(r < 0 || !got_packet)
     return;
 
-  av_init_packet(&pkt);
-
   if(gr->v_ctx->coded_frame->pts != AV_NOPTS_VALUE)
-    pkt.pts = av_rescale_q(gr->v_ctx->coded_frame->pts, 
+    pkt.pts = av_rescale_q(gr->v_ctx->coded_frame->pts,
 			   AV_TIME_BASE_Q, gr->v_st->time_base);
-  
+
   if(gr->v_ctx->coded_frame->key_frame)
     pkt.flags |= AV_PKT_FLAG_KEY;
 
   pkt.stream_index = gr->v_st->index;
-  pkt.data = gr->vbuf_ptr;
-  pkt.size = r;
-
+  pkt.duration = av_rescale_q(1, (AVRational){1, gr->fps}, gr->v_st->time_base);
   av_interleaved_write_frame(gr->oc, &pkt);
+  av_free_packet(&pkt);
 }
