@@ -250,7 +250,7 @@ render_unlocked(glw_root_t *gr)
         glUniform1f(gp->gp_uniform_time, gr->gr_time_sec);
 
       if(gp->gp_uniform_resolution != -1)
-        glUniform2f(gp->gp_uniform_resolution, rj->width, rj->height);
+        glUniform3f(gp->gp_uniform_resolution, rj->width, rj->height, 1);
 
       if(gp->gp_uniform_blur != -1 && t0 != NULL)
         glUniform3f(gp->gp_uniform_blur, rj->blur,
@@ -401,8 +401,9 @@ glw_link_program(glw_backend_root_t *gbr, const char *title,
   gp->gp_uniform_blend      = glGetUniformLocation(p, "u_blend");
   gp->gp_uniform_color_offset= glGetUniformLocation(p, "u_color_offset");
   gp->gp_uniform_blur        = glGetUniformLocation(p, "u_blur");
-  gp->gp_uniform_time        = glGetUniformLocation(p, "time");
-  gp->gp_uniform_resolution  = glGetUniformLocation(p, "resolution");
+
+  gp->gp_uniform_time        = glGetUniformLocation(p, "iGlobalTime");
+  gp->gp_uniform_resolution  = glGetUniformLocation(p, "iResolution");
 
 #ifdef DEBUG_SHADERS
   printf("Loaded %s\n", title);
@@ -420,8 +421,16 @@ glw_link_program(glw_backend_root_t *gbr, const char *title,
 
   for(i = 0; i < 6; i++) {
     char name[8];
+
     snprintf(name, sizeof(name), "u_t%d", i);
-    gp->gp_uniform_t[i]         = glGetUniformLocation(p, name);
+    gp->gp_uniform_t[i]  = glGetUniformLocation(p, name);
+
+
+    if(gp->gp_uniform_t[i] == -1) {
+      snprintf(name, sizeof(name), "iChannel%d", i);
+      gp->gp_uniform_t[i]  = glGetUniformLocation(p, name);
+    }
+
     if(gp->gp_uniform_t[i] != -1)
       glUniform1i(gp->gp_uniform_t[i], i);
 #ifdef DEBUG_SHADERS
