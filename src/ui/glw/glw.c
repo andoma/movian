@@ -1870,7 +1870,7 @@ glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
       if(gpe->type < GLW_POINTER_MOTION_UPDATE)
         r = 1;
 
-      if(glw_is_focusable_or_clickable(w))
+      if(glw_is_focusable_or_clickable(w) && *hp == NULL)
 	*hp = w;
 
     } else {
@@ -1926,7 +1926,7 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
   glw_t *c, *w;
   glw_pointer_event_t gpe0;
   float x, y;
-  glw_t *hover = NULL;
+  glw_t *hover = gr->gr_pointer_grab;
 
   Vec3 p, dir;
 
