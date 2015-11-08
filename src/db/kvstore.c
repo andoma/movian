@@ -383,7 +383,8 @@ kv_cb(void *opaque, prop_event_t event, ...)
       kpbv->kpbv_url = rstr_dup(kpb->kpb_url);
       kpbv->kpbv_name = prop_get_name0(p);
 
-      prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_DONTLOCK,
+      prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_NO_INITIAL_UPDATE |
+                     PROP_SUB_DONTLOCK,
                      PROP_TAG_CALLBACK, kv_value_cb, kpbv,
                      PROP_TAG_ROOT, p,
                      NULL);
@@ -447,9 +448,8 @@ kv_prop_bind_create(prop_t *p, const char *url)
       id = sqlite3_column_int64(stmt, 0);
     if(sqlite3_column_type(stmt, 1) != SQLITE_TEXT)
       continue;
-
-    prop_t *c = prop_create(p, (const char *)sqlite3_column_text(stmt, 1));
-
+    const char *key = (const char *)sqlite3_column_text(stmt, 1);
+    prop_t *c = prop_create(p, key);
     switch(sqlite3_column_type(stmt, 2)) {
     case SQLITE_TEXT:
       prop_set_string(c, (const char *)sqlite3_column_text(stmt, 2));

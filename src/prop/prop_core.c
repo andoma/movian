@@ -2255,13 +2255,16 @@ prop_destroy0(prop_t *p)
 
   while((s = LIST_FIRST(&p->hp_value_subscriptions)) != NULL) {
 
+    if(!(s->hps_flags & (PROP_SUB_TRACK_DESTROY |
+                         PROP_SUB_TRACK_DESTROY_EXP))) {
 #ifdef PROP_SUB_RECORD_SOURCE
-    if(s->hps_flags & PROP_SUB_DEBUG) {
-      PROPTRACE("Sub %s:%d lost value prop",
-                s->hps_file, s->hps_line);
-    }
+      if(s->hps_flags & PROP_SUB_DEBUG) {
+        PROPTRACE("Sub %s:%d lost value prop",
+                  s->hps_file, s->hps_line);
+      }
 #endif
-    prop_notify_void(s);
+      prop_notify_void(s);
+    }
 
     LIST_REMOVE(s, hps_value_prop_link);
     s->hps_value_prop = NULL;
