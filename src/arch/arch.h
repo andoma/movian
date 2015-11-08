@@ -28,14 +28,18 @@ int arch_pipe(int pipefd[2]);
 
 void arch_sync_path(const char *path);
 
-// If arch_stop_req() returns non ozer it will not actually
-// schedule an exit of showtime but rather suspend the UI and turn off 
-// video output, etc
-//
-// Typically used on some targets where we want to enter a 
-// semi-standby state.
-
 int arch_stop_req(void);
+
+// Mainloop will stop
+#define ARCH_STOP_IS_PROGRESSING      0
+
+// Mainloop will suspend but app will continue (faked stop)
+// This can be used to fake shutdown and turn off TV, but still let
+// the app run in a "standby mode"
+#define ARCH_STOP_IS_NOT_HANDLED      1
+
+// Caller (shutdown thread) should do full exit procedure
+#define ARCH_STOP_CALLER_MUST_HANDLE  2
 
 void arch_localtime(const time_t *timep, struct tm *tm);
 

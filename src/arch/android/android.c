@@ -195,7 +195,7 @@ arch_exit(void)
 int
 arch_stop_req(void)
 {
-  return 0;
+  return ARCH_STOP_CALLER_MUST_HANDLE;
 }
 
 void

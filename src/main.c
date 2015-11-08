@@ -690,17 +690,22 @@ do_shutdown(void *aux)
 
   TRACE(TRACE_DEBUG, "core", "arch stop=%d", r);
 
-  if(!r) {
-    // If arch_stop_req() returns -1 it will not actually
-    // exit showtime but rather suspend the UI and turn off HDMI ,etc
-    // Typically used on some targets where we want to enter a 
-    // semi-standby state.
-    // So only do shutdown hooks if we are about to exit for real.
-
-    // Run early shutdown hooks (those must be fast since this
-    // function may be called from UI thread)
+  switch(r) {
+    // See arch.h for detailed meaning of those
+  case ARCH_STOP_IS_PROGRESSING:
     shutdown_hook_run(1);
+    break;
+
+  case ARCH_STOP_IS_NOT_HANDLED:
+    break;
+
+  case ARCH_STOP_CALLER_MUST_HANDLE:
+    shutdown_hook_run(1);
+    main_fini();
+    arch_exit();
+    break;
   }
+
   return NULL;
 }
 
