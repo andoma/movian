@@ -456,6 +456,8 @@ stream_radio(icecast_play_context_t *ipc, char *errbuf, size_t errlen)
 
   http_header_add(&ipc->ipc_request_headers, "Icy-MetaData", "1", 1);
 
+  int loading = 0;
+
   while(1) {
 
     /**
@@ -469,6 +471,9 @@ stream_radio(icecast_play_context_t *ipc, char *errbuf, size_t errlen)
           e = mp_dequeue_event(mp);
           goto handle_event;
         }
+
+        prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 1);
+        loading = 1;
 
         if(open_stream(ipc)) {
           e = mp_dequeue_event_deadline(mp, 1000);
@@ -559,6 +564,10 @@ stream_radio(icecast_play_context_t *ipc, char *errbuf, size_t errlen)
 
     } else if((e = mb_enqueue_with_events(mp, mq, mb)) == NULL) {
       mb = NULL; /* Enqueue succeeded */
+      if(loading) {
+        prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 0);
+        loading = 0;
+      }
       continue;
     }
 
