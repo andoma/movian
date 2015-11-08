@@ -74,5 +74,7 @@ nanosvg_decode(buf_t *buf, const image_meta_t *im,
 
   nsvgDeleteRasterizer(rast);
   nsvgDelete(image);
-  return image_create_from_pixmap(pm);
+  image_t *img = image_create_from_pixmap(pm);
+  pixmap_release(pm);
+  return img;
 }
