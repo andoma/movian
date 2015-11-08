@@ -101,15 +101,18 @@
   widget(container_x, {
     filterConstraintX: true;
     filterConstraintY: true;
-    padding: [0,1,0.2em,1];
+    padding: [0,1,0,1];
     space(1);
     widget(slider_y, {
       bind(TARGET);
-      width: 0.2em;
+      width: 0.6em;
       focusable: canScroll();
       alpha: iir(canScroll(), 16);
-      widget(quad, {
-	alpha: 0.6 + isHovered();
+      widget(container_x, {
+        padding: [0.2em,0,0.2em, 0];
+        widget(quad, {
+	  alpha: 0.6 + isHovered();
+        });
       });
     });
   });
