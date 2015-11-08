@@ -7,11 +7,5 @@ style(GridItemSeparatorLabel, {
 
 style(GridItemLabel, {
   align: center;
-  height: 2em;
   color: iir(!isNavFocused(), 4);
 });
-
-style(GridItemIcon, {
-  size: 3em;
-});
-
