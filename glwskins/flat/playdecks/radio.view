@@ -27,6 +27,9 @@ widget(container_z, {
                     event("NextTrack"),
                     $core.media.current.canSkipForward);
 
+    widget(dummy, {
+      width: 0.5em;
+    });
 
     widget(label, {
       caption: join(" • ",

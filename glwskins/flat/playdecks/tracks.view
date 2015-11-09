@@ -7,51 +7,98 @@ widget(container_z, {
     alpha: 0.2;
   });
 
-  widget(container_y, {
+  widget(container_x, {
     height: 2em;
-    widget(quad, {
-      height: 1;
-      color: 0;
+    filterConstraintY: true;
+    padding: [2em, 0, 2em, 1];
+
+    PLAYDECK_BUTTON("skin://icons/ic_skip_previous_48px.svg",
+                    event("PreviousTrack"),
+                    $core.media.current.canSkipBackward);
+
+    PLAYDECK_BUTTON(translate($core.media.current.playstatus,
+                              "skin://icons/ic_pause_48px.svg",
+                              "pause",
+                              "skin://icons/ic_play_arrow_48px.svg"),
+                    event("PlayPause"),
+                    $core.media.current.canPause);
+
+    PLAYDECK_BUTTON("skin://icons/ic_skip_next_48px.svg",
+                    event("NextTrack"),
+                    $core.media.current.canSkipForward);
+
+    widget(dummy, {
+      width: 0.5em;
     });
-    widget(container_x, {
-      filterConstraintY: true;
-      padding: [2em, 0, 2em, 1];
 
-      PLAYDECK_BUTTON("skin://icons/ic_skip_previous_48px.svg",
-                      event("PreviousTrack"),
-                      $core.media.current.canSkipBackward);
+    widget(label, {
+      maxWidth: $ui.width / 3;
+      caption: join(" • ",
+		    $core.media.current.metadata.artist,
+		    $core.media.current.metadata.title);
+      style: "playdeckText";
+    });
 
-      PLAYDECK_BUTTON(translate($core.media.current.playstatus,
-                                "skin://icons/ic_pause_48px.svg",
-                                "pause",
-                                "skin://icons/ic_play_arrow_48px.svg"),
-                      event("PlayPause"),
-                      $core.media.current.canPause);
 
-      PLAYDECK_BUTTON("skin://icons/ic_skip_next_48px.svg",
-                      event("NextTrack"),
-                      $core.media.current.canSkipForward);
+    widget(label, {
+      hidden: !$core.media.current.canSeek;
+      width: 4em;
+      caption: value2duration($view.tentativeSeekPosition ??
+                              $core.media.current.currenttime);
+      align: right;
+      padding:[0,0,0.5em,0];
+    });
 
-      widget(dummy, {
-        width: 0.5em;
-      });
-
-      widget(label, {
-        caption: join(" • ",
-		      $core.media.current.metadata.artist,
-		      $core.media.current.metadata.title);
-        style: "playdeckText";
-      });
-
-      space(1);
-
-      widget(container_x, {
-        width: 5em;
-        padding: [0, -4em, 0, 0];
-        widget(image, {
-          zoffset: 100;
-          source: $core.media.current.metadata.album_art;
+    widget(container_z, {
+      hidden: !$core.media.current.canSeek;
+      widget(container_y, {
+        align: center;
+        widget(container_z, {
+          height: 3;
+          widget(container_y, {
+            padding: 1;
+            widget(quad, {
+              alpha: 0.3;
+              additive: true;
+            });
+          });
         });
+      });
+
+      widget(slider_x, {
+        tentative: $view.tentativeSeekPosition;
+        alwaysGrabKnob: true;
+        clickable: true;
+        bind($core.media.current.currenttime);
+        max: $core.media.current.metadata.duration;
+        widget(icon, {
+          source: "skin://icons/dot.png";
+        });
+        widget(container_y, {
+          space(1);
+          widget(quad, {
+            height: 3;
+            alpha: 0.9;
+            additive: true;
+          });
+          space(1);
+        });
+      });
+    });
+
+    widget(label, {
+      hidden: !$core.media.current.canSeek;
+      width: 4em;
+      caption: value2duration($core.media.current.metadata.duration);
+      padding:[0.5em,0,0,0];
+    });
+
+    widget(container_x, {
+      width: 5em;
+      padding: [0, -4em, 0, 0];
+      widget(image, {
+        zoffset: 100;
+        source: $core.media.current.metadata.album_art;
       });
     });
   });
