@@ -9,36 +9,19 @@ widget(container_z, {
   GridItemBevel();
   GridItemHighlight();
 
-  widget(image, {
-    margin: [0.25em, 0];
-    style: "RectIcon";
-    source: $self.metadata.icon ?? ($self.url + "#auto");
-  });
-
-
-  widget(image, {
-    alpha: 0.5 + iir(isNavFocused() || isHovered(), 4);
-    source: "skin://icons/ic_play_arrow_48px.svg";
-  });
-
 
   widget(container_y, {
-    align: bottom;
+    style: "GridContainer";
 
-    widget(container_z, {
+    widget(image, {
+      margin: [0.25em, 0];
+      source: $self.metadata.icon ?? ($self.url + "#auto");
+    });
 
-      widget(quad, {
-        color: 0;
-        alpha: 0.8;
-      });
 
-      widget(container_y, {
-        padding: [0.25em, 0.25em];
-        widget(label, {
-          caption: $self.metadata.title;
-          align: center;
-        });
-      });
+    widget(label, {
+      caption: $self.metadata.title;
+      style: "GridItemLabel";
     });
   });
 });

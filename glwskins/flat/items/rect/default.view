@@ -8,9 +8,8 @@ widget(container_z, {
   focusable: true;
   onEvent(activate, navOpen($self.url, void, $self, $parent.model, void, $parent.url));
 
-
-
   widget(container_y, {
+    style: "GridContainer";
 
     widget(icon, {
       filterConstraintY: true;
@@ -28,20 +27,9 @@ widget(container_z, {
 
 
 
-    widget(container_z, {
-
-      widget(quad, {
-        color: 0;
-        alpha: 0.8;
-      });
-
-      widget(container_y, {
-        padding: [0.25em, 0.25em];
-        widget(label, {
-          caption: $self.metadata.title;
-          align: center;
-        });
-      });
+    widget(label, {
+      caption: $self.metadata.title;
+      style: "GridItemLabel";
     });
   });
 });

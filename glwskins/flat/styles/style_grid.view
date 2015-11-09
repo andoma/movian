@@ -9,3 +9,13 @@ style(GridItemLabel, {
   align: center;
   color: iir(!isNavFocused(), 4);
 });
+
+style(GridItemIcon, {
+  size: 4em;
+  color: iir(!isNavFocused(), 4);
+});
+
+style(GridContainer, {
+  padding: [0, 0.4em, 0, 0.2em];
+  spacing: 0.2em;
+});

@@ -1,5 +1,7 @@
 #import "skin://theme.view"
 
+
+
 widget(container_z, {
 
   focusable: true;
@@ -9,14 +11,20 @@ widget(container_z, {
   GridItemHighlight();
 
   widget(container_y, {
-    padding: [0, 0.4em, 0, 0.2em];
-    spacing: 0.2em;
+    style: "GridContainer";
 
     widget(container_z, {
       filterConstraintY: true;
       widget(image, {
         source: $self.metadata.icon;
         color: 1 - 0.7 * iir($self.media.loading, 8);
+        $view.iconLoaded = isLoaded();
+      });
+
+      widget(icon, {
+        hidden: $view.iconLoaded;
+        source: "skin://icons/ic_audiotrack_48px.svg";
+        style: "GridItemIcon";
       });
 
 

@@ -1,5 +1,5 @@
 #import "skin://theme.view"
-#import "skin://styles/style_list.view"
+#import "skin://styles/style_grid.view"
 
 widget(container_y, {
 

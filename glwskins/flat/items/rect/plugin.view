@@ -9,11 +9,12 @@ widget(container_z, {
   focusable: true;
 
   widget(container_y, {
-    style: "GridItem";
+
+    style: "GridContainer";
 
     widget(image, {
+      margin: [1em, 0];
       source: $self.metadata.icon;
-      style: "GridItemIcon";
     });
 
     widget(label, {
