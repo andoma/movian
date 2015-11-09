@@ -1,19 +1,4 @@
-#import "skin://theme.view"
-
-#define PLAYDECK_BUTTON(ICON, EVENT, ENABLED) {
-  widget(container_z, {
-    width: 2em;
-    onEvent(activate, EVENT);
-    clickable: ENABLED;
-
-    GridItemHighlight2();
-
-    widget(icon, {
-      source: ICON;
-      alpha: 0.7 * iir(ENABLED, 8) + 0.3;
-    });
-  });
-}
+#import "playdeck_include.view"
 
 widget(container_z, {
 
