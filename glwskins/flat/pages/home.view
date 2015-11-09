@@ -9,26 +9,36 @@
 
       filterConstraintX: true;
       widget(quad, {
+        fhpSpill: true;
         zoffset: -400;
         color: 0;
-        alpha: 0.4 + $view.searchFocused();
       });
-      widget(text, {
-        padding: [1em, 0.5em];
-        style: "ListItemValue";
-        size: 1.2em;
-        font: "skin://fonts/RobotoCondensed-Regular.ttf";
-        focusable: true;
 
-        $view.searchFocused = isFocused();
+      widget(container_x, {
+        padding: [0.5em, 0.5em];
+        spacing: 0.5em;
+        widget(icon, {
+          fhpSpill: true;
+          size: 1.2em;
+          source: "skin://icons/ic_search_48px.svg";
+          alpha: 0.4 + isFocused();
+        });
 
-        bind($view.searchQuery);
-        onEvent(enter, navOpen("search:" + $view.searchQuery),
-	        $view.searchQuery);
-        onEvent(submit, navOpen("search:" + $view.searchQuery),
-	        $view.searchQuery);
+        widget(text, {
+          style: "ListItemValue";
+          size: 1.2em;
+          font: "skin://fonts/RobotoCondensed-Regular.ttf";
+          focusable: true;
+
+          bind($view.searchQuery);
+          onEvent(enter, navOpen("search:" + $view.searchQuery),
+	          $view.searchQuery);
+          onEvent(submit, navOpen("search:" + $view.searchQuery),
+	          $view.searchQuery);
+        });
       });
     });
+
     widget(container_z, {
       widget(quad, {
         zoffset: -400;
