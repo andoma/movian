@@ -38,6 +38,7 @@
         style: "ListItem";
         widget(icon, {
           style: "ListItemIcon";
+          source: ICON;
         });
 
         widget(label, {
