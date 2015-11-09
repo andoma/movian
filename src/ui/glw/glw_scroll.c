@@ -89,6 +89,8 @@ glw_scroll_handle_pointer_event(glw_scroll_control_t *gs,
     gs->last_touch_time = gpe->ts;
     gs->last_touch_x = gpe->x;
     gs->last_touch_y = gpe->y;
+    w->glw_flags |= GLW_UPDATE_METRICS;
+    glw_schedule_refresh(w->glw_root, 0);
     break;
 
   default:
