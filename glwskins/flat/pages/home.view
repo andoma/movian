@@ -4,7 +4,7 @@
   widget(container_x, {
     spacing: 1em;
     divider: true;
-    padding: [2em, 0];
+    padding: [0, 1em, 2em, 0];
     widget(container_z, {
 
       filterConstraintX: true;
@@ -58,10 +58,10 @@
 
 #define NEWSSTAND() {
   cloner($core.news, container_x, {
-    height: 2em;
+    height: 3em;
     divider: true;
     spacing: 1em;
-    padding: [2em, 0];
+    padding: [2em, 1em, 2em, 0em];
 
     widget(icon, {
       source: "skin://icons/ic_info_outline_48px.svg";
@@ -124,9 +124,14 @@ widget(container_z, {
         widget(array, {
           id: "main";
 
+          scrollThresholdBottom: $ui.universeBottomHeight;
+          clipOffsetBottom: $ui.universeBottomHeight;
+          clipAlpha: 0.2;
+          clipBlur: 1;
+
           alpha: iir(select($clone.showSidebar, 0.3, 1), 4);
 
-          margin: [2em, 1em];
+          margin: [2em, 0em];
           childTilesX: 5;
           childTilesY: 4;
 
