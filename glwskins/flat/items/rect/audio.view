@@ -22,11 +22,12 @@ widget(container_z, {
       });
 
       widget(icon, {
-        hidden: $self.media.loading || ($view.iconLoaded && $self.media.playstatus != "play");
+        hidden: $self.media.loading || ($view.iconLoaded && $self.media.playstatus != "play" && $self.media.playstatus != "pause");
         style: "GridItemIcon";
-        source: select($self.media.playstatus == "play",
-		       "skin://icons/ic_play_arrow_48px.svg",
-                       "skin://icons/ic_audiotrack_48px.svg");
+        source: translate($self.media.playstatus,
+                          "skin://icons/ic_audiotrack_48px.svg",
+                          "play", "skin://icons/ic_play_arrow_48px.svg",
+                          "pause", "skin://icons/ic_pause_48px.svg");
       });
 
       widget(container_y, {

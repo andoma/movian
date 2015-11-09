@@ -24,13 +24,18 @@ widget(container_z, {
 
         widget(icon, {
           size: 1.5em;
-          source: "skin://icons/ic_play_arrow_48px.svg";
-          hidden: $self.media.playstatus != "play" || $self.media.loading;
+          source: translate($self.media.playstatus,
+                            "",
+                            "play", "skin://icons/ic_play_arrow_48px.svg",
+                            "pause", "skin://icons/ic_pause_48px.svg");
+          hidden: ($self.media.playstatus != "pause" &&
+                   $self.media.playstatus != "play") || $self.media.loading;
         });
 
       });
 
       widget(icon, {
+        hidden: isVoid($self.metadata.icon);
         source: $self.metadata.icon;
         width: 2.5em;
         size: 1.5em;
