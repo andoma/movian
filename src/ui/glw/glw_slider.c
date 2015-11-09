@@ -44,6 +44,7 @@ typedef struct {
   char fixed_knob_size;
   char interpolate;
   char keystep;
+  char knob_over_edges;
 
 } glw_slider_t;
 
@@ -142,13 +143,13 @@ glw_slider_layout(glw_t *w, const glw_rctx_t *rc)
 
   rc0 = *rc;
 
+  const int knobsize = s->knob_over_edges ? 0 : s->knob_size_px;
   if(w->glw_class == &glw_slider_x) {
-    p = s->value * (rc->rc_width - s->knob_size_px) + s->knob_size_px / 2;
+    p = s->value * (rc->rc_width - knobsize) + knobsize / 2;
     rc0.rc_width  = s->knob_size_px;
     s->slider_size_px = rc->rc_width;
   } else {
-    p = (1 - s->value) *
-      (rc->rc_height - s->knob_size_px) + s->knob_size_px / 2;
+    p = (1 - s->value) * (rc->rc_height - knobsize) + knobsize / 2;
     rc0.rc_height  = s->knob_size_px;
     s->slider_size_px = rc->rc_height;
   }
@@ -631,6 +632,12 @@ glw_slider_set_int_unresolved(glw_t *w, const char *a, int value,
   if(!strcmp(a, "keyStep")) {
     s->keystep = value;
     return GLW_SET_NO_CHANGE;
+  }
+  if(!strcmp(a, "knobOverEdges")) {
+    if(s->knob_over_edges == value)
+      return GLW_SET_NO_CHANGE;
+    s->knob_over_edges = value;
+    return GLW_SET_RERENDER_REQUIRED;
   }
   return GLW_SET_NOT_RESPONDING;
 }

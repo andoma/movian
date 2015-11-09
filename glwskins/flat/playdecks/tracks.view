@@ -66,6 +66,7 @@ widget(container_z, {
       });
 
       widget(slider_x, {
+        knobOverEdges: true;
         tentative: $view.tentativeSeekPosition;
         alwaysGrabKnob: true;
         clickable: true;
