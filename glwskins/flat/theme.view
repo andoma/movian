@@ -120,7 +120,7 @@
 }
 
 
-#define PageHeader() {
+#define PageHeader(TITLE=$self.model.metadata.title) {
   widget(container_z, {
     height: 3em;
     zoffset: 10;
@@ -133,7 +133,7 @@
       widget(label, {
         padding: [4em, 0];
         align: center;
-        caption: $self.model.metadata.title;
+        caption: TITLE;
         size: 1.5em;
       });
 

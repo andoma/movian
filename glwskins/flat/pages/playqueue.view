@@ -1,0 +1,36 @@
+#import "skin://theme.view"
+#import "skin://styles/style_list.view"
+
+widget(container_z, {
+
+  widget(list_y, {
+    id: "scrollable";
+    navWrap: true;
+    chaseFocus: true;
+
+    clipOffsetTop: 3em;
+    scrollThresholdTop: 3em;
+
+    scrollThresholdBottom: $ui.universeBottomHeight;
+    clipOffsetBottom: $ui.universeBottomHeight;
+    clipAlpha: 0.2;
+    clipBlur: 1;
+
+    cloner($core.playqueue.nodes, loader, {
+      time: 0.1;
+      effect: blend;
+      noInitialTransform: true;
+      alt: "skin://items/list/default.view";
+      source: "skin://items/list/" + $self.type + ".view";
+    });
+  });
+
+  ScrollBar("scrollable", 3em, $ui.universeBottomHeight);
+
+
+  widget(container_y, {
+    align: top;
+    PageHeader(_("Playqueue"));
+  });
+
+});

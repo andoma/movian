@@ -10,7 +10,11 @@ widget(container_z, {
   widget(container_x, {
     height: 2em;
     filterConstraintY: true;
-    padding: [2em, 0, 2em, 1];
+    padding: [0.5em, 0, 2em, 1];
+
+    PLAYDECK_BUTTON("skin://icons/ic_list_48px.svg",
+                    navOpen("playqueue:"),
+                    true);
 
     PLAYDECK_BUTTON("skin://icons/ic_skip_previous_48px.svg",
                     event("PreviousTrack"),
