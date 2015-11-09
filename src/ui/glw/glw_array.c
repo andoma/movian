@@ -25,8 +25,6 @@
 typedef struct glw_array {
   glw_t w;
 
-  int current_pos;
-
   glw_t *scroll_to_me;
 
   glw_slider_metrics_t metrics;
@@ -375,7 +373,7 @@ glw_array_render(glw_t *w, const glw_rctx_t *rc)
 static void
 glw_array_scroll(glw_array_t *a, glw_scroll_t *gs)
 {
-  a->current_pos = GLW_MAX(gs->value * (a->gsc.total_size - a->gsc.page_size), 0);
+  a->gsc.target_pos = GLW_MAX(gs->value * (a->gsc.total_size - a->gsc.page_size), 0);
   glw_schedule_refresh(a->w.glw_root, 0);
 }
 

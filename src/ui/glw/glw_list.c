@@ -460,8 +460,10 @@ find_visible_child(glw_list_t *l)
 static void
 glw_list_scroll(glw_list_t *l, glw_scroll_t *gs)
 {
-  int top = GLW_MAX(gs->value * (l->gsc.total_size - l->gsc.page_size), 0);
+  int top = GLW_MAX(gs->value * (l->gsc.total_size - l->gsc.page_size
+                                 + l->gsc.scroll_threshold_post), 0);
   l->gsc.target_pos = top;
+  glw_schedule_refresh(l->w.glw_root, 0);
 
   if(l->chase_focus == 0)
     return;
