@@ -26,7 +26,7 @@ widget(container_z, {
       source: "skin://items/rect/" + $self.type + ".view";
     });
   });
-  ScrollBar();
+  ScrollBar("scrollable", 3em, $ui.universeBottomHeight);
 
   widget(container_y, {
     align: top;

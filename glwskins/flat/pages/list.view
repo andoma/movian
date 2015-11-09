@@ -25,7 +25,8 @@ widget(container_z, {
     });
   });
 
-  ScrollBar();
+  ScrollBar("scrollable", 3em, $ui.universeBottomHeight);
+
 
   widget(container_y, {
     align: top;

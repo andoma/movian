@@ -96,12 +96,13 @@
 }
 
 
-#define ScrollBar(TARGET="scrollable") {
+#define ScrollBar(TARGET, TOP_PAD = 0, BOTTOM_PAD = 0) {
 
   widget(container_x, {
     filterConstraintX: true;
     filterConstraintY: true;
-    padding: [0,1,0,1];
+    padding: [0,TOP_PAD,0,BOTTOM_PAD];
+
     space(1);
     widget(slider_y, {
       bind(TARGET);
