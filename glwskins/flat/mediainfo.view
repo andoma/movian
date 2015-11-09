@@ -4,7 +4,7 @@ widget(container_y, {
   hidden: isVoid($core.media.current.url);
 
   InfoLine(_("Source"),
-           $core.media.current.metadata.format);
+           $core.media.current.metadata.format ?? $core.media.current.format);
 
   InfoLine(_("Video codec"),
            $core.media.current.video.codec,

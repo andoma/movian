@@ -38,7 +38,7 @@ fa_xmp_playfile(media_pipe_t *mp, FILE *f, char *errbuf, size_t errlen,
 {
   event_t *e = NULL;
   xmp_context ctx = xmp_create_context();
-  //  struct xmp_module_info mi;
+  struct xmp_module_info mi;
   struct xmp_frame_info fi;
   char *u = mystrdupa(url);
 
@@ -48,10 +48,16 @@ fa_xmp_playfile(media_pipe_t *mp, FILE *f, char *errbuf, size_t errlen,
   mp_become_primary(mp);
 
   if(xmp_load_modulef(ctx, f, u, size) >= 0) {
+    media_queue_t *mq = &mp->mp_audio;
+
+    xmp_get_module_info(ctx, &mi);
+
+    prop_set(mp->mp_prop_root, "format", PROP_SET_STRING, "XMP");
+    prop_set_string(mq->mq_prop_codec, mi.mod->type);
+
     if(xmp_start_player(ctx, 44100, 0) == 0) {
 
       media_buf_t *mb = NULL;
-      media_queue_t *mq = &mp->mp_audio;
 
       while(1) {
 

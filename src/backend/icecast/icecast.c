@@ -448,6 +448,8 @@ stream_radio(icecast_play_context_t *ipc, char *errbuf, size_t errlen)
   media_pipe_t *mp = ipc->ipc_mp;
   mq = &mp->mp_audio;
 
+  prop_set(mp->mp_prop_root, "format", PROP_SET_STRING, "Shoutcast");
+
   usage_event("Play audio", 1, USAGE_SEG("format", "icecast"));
 
   ipc->ipc_radio_info = prop_create(mp->mp_prop_root, "radioinfo");

@@ -222,6 +222,9 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   mp_become_primary(mp);
   mq = &mp->mp_audio;
 
+  prop_set(mp->mp_prop_root, "format", PROP_SET_STRING,
+           fctx->iformat->long_name);
+
   while(1) {
 
     /**

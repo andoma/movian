@@ -1150,6 +1150,8 @@ player_thread(void *aux)
     prop_unlink(m);
     prop_ref_dec(m);
 
+    prop_set(mp->mp_prop_root, "format", PROP_SET_VOID);
+
     if(e == NULL) {
       TRACE(TRACE_ERROR, "Playqueue", "Unable to play %s -- %s", pqe->pqe_url, errbuf);
       pqe = playqueue_advance(pqe, 0);
