@@ -15,3 +15,51 @@
   });
 }
 
+#define PLAYDECK_BUTTON2(ICON, EVENT, ENABLED) {
+  widget(container_z, {
+    width: 2em;
+    onEvent(activate, EVENT);
+    clickable: ENABLED;
+
+    GridItemHighlight2();
+
+    widget(icon, {
+      source: ICON;
+      alpha: iir(ENABLED, 4);
+    });
+  });
+}
+
+
+
+#define PLAYDECK_BUTTONS(ICON, EVENT, ENABLED) {
+  widget(deck, {
+    PLAYDECK_BUTTON2("skin://icons/ic_more_horiz_48px.svg",
+                     {
+                       $ui.showAllPlaydeckButtons = 1;
+                     }, $ui.showTopIcons);
+
+    widget(container_x, {
+      PLAYDECK_BUTTON("skin://icons/ic_list_48px.svg",
+                      navOpen("playqueue:"),
+                      true);
+
+      PLAYDECK_BUTTON("skin://icons/ic_skip_previous_48px.svg",
+                      event("PreviousTrack"),
+                      $core.media.current.canSkipBackward);
+
+      PLAYDECK_BUTTON(translate($core.media.current.playstatus,
+                                "skin://icons/ic_pause_48px.svg",
+                                "pause",
+                                "skin://icons/ic_play_arrow_48px.svg"),
+                      event("PlayPause"),
+                      $core.media.current.canPause);
+
+      PLAYDECK_BUTTON("skin://icons/ic_skip_next_48px.svg",
+                      event("NextTrack"),
+                      $core.media.current.canSkipForward);
+    });
+
+    page: $ui.showAllPlaydeckButtons;
+  });
+}
