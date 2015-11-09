@@ -6,6 +6,7 @@ style(GridItemSeparatorLabel, {
 
 
 style(GridItemLabel, {
+  padding: [0.3em, 0];
   align: center;
   color: iir(!isNavFocused(), 4);
 });

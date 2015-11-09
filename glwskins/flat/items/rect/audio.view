@@ -22,11 +22,12 @@ widget(container_z, {
       });
 
       widget(icon, {
-        hidden: $view.iconLoaded;
-        source: "skin://icons/ic_audiotrack_48px.svg";
+        hidden: $self.media.loading || ($view.iconLoaded && $self.media.playstatus != "play");
         style: "GridItemIcon";
+        source: select($self.media.playstatus == "play",
+		       "skin://icons/ic_play_arrow_48px.svg",
+                       "skin://icons/ic_audiotrack_48px.svg");
       });
-
 
       widget(container_y, {
         space(0.5);
