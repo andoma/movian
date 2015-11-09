@@ -1279,7 +1279,7 @@ glw_x11_thread(void *aux)
   gx11->settings_mouse_btn =
     setting_create(SETTING_BOOL, glw_settings.gs_settings,
                    SETTINGS_INITIAL_UPDATE,
-                   SETTING_TITLE(_p("Map mouse wheel to up/down")),
+                   SETTING_TITLE(_p("Emulate Up/Down buttons with mouse wheel")),
                    SETTING_HTSMSG("map_mouse_wheel_to_keys",
                                   glw_settings.gs_settings_store, "glw"),
                    SETTING_COURIER(gr->gr_courier),
