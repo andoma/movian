@@ -10,17 +10,33 @@ widget(container_z, {
   focusable: true;
 
   widget(container_x, {
-    padding: [0,0,1em,0];
-    spacing: 1em;
     style: "ListItem";
 
+    widget(container_x, {
+      width: 6em;
+      align: right;
 
-    widget(icon, {
-      source: translate($self.media.playstatus,
-		        "skin://icons/ic_audiotrack_48px.svg",
-		        "play", "skin://icons/ic_play_arrow_48px.svg",
-		        "play", "skin://icons/ic_pause_arrow_48px.svg");
-      style: "ListItemIconMono";
+      widget(container_z, {
+
+        widget(throbber, {
+          alpha: iir($self.media.loading, 8);
+        });
+
+        widget(icon, {
+          size: 1.5em;
+          source: "skin://icons/ic_play_arrow_48px.svg";
+          hidden: $self.media.playstatus != "play" || $self.media.loading;
+        });
+
+      });
+
+      widget(icon, {
+        source: $self.metadata.icon;
+        width: 2.5em;
+        size: 1.5em;
+        align: right;
+        margin: [0,1,1em,1];
+      });
     });
 
     widget(label, {
