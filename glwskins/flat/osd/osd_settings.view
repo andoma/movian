@@ -21,6 +21,7 @@
 
     widget(container_x, {
       widget(list_y, {
+        navWrap: true;
         id: "list";
 
         cloner(NODES, loader, {

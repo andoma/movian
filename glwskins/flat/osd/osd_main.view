@@ -31,6 +31,7 @@ widget(container_y, {
   widget(list_y, {
 
     id: "sidebar";
+    navWrap: true;
 
 
     SIDEBAR_ACTION(_("Subtitle settings"),

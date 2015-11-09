@@ -91,6 +91,7 @@ widget(container_x, {
 
 
     widget(list_y, {
+      navWrap: true;
 
       id: "sidebar";
 
