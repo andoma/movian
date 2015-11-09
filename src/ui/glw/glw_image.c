@@ -828,9 +828,10 @@ glw_image_layout(glw_t *w, const glw_rctx_t *rc)
 
         if(w->glw_class == &glw_icon) {
 
-          int ys = gi->gi_fixed_size;
+          ys = gi->gi_fixed_size;
           if(ys == 0)
             ys = gi->gi_size_scale * w->glw_root->gr_current_size;
+
           if(ys > rc->rc_height)
             ys = rc->rc_height;
 
