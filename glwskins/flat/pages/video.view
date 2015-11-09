@@ -18,17 +18,6 @@
       color: select(isNavFocused(), 0, 1);
       alpha: 0.7 * iir(ENABLED, 8) + 0.3;
     });
-
-    widget(displacement, {
-      padding: [-4em, 0, -4em, -1em];
-      widget(label, {
-        alpha: iir(isNavFocused() || isHovered(), 4);
-        align: bottom;
-        shadow: true;
-        zoffset: 10;
-        caption: TITLE;
-      });
-    });
   });
 }
 
@@ -238,6 +227,7 @@ widget(container_z, {
         });
       });
       widget(dummy, {
+        hidden: !$view.showSeekBar || !$self.media.canSeek;
         height: 2em;
       });
     });
@@ -246,7 +236,7 @@ widget(container_z, {
   // Seekbar row
 
   widget(container_y, {
-    hidden: !$view.showSeekBar;
+    hidden: !$view.showSeekBar || !$self.media.canSeek;
     align: bottom;
     widget(container_z, {
       delta($clone.bottomOsdHeight, isVisible() * getHeight());
