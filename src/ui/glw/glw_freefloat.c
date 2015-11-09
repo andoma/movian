@@ -189,7 +189,8 @@ glw_freefloat_layout(glw_t *w, const glw_rctx_t *rc)
       glw_layout0(c, rc);
     }
 
-    if(c->glw_class->gc_ready ? c->glw_class->gc_ready(c) : 1)
+    if(c->glw_class->gc_status ? (c->glw_class->gc_status(c) ==
+                                  GLW_STATUS_LOADED) : 1)
       cd->v += cd->s;
     cd->s += cd->s2;
   }

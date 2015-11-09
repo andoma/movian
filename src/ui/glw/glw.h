@@ -312,11 +312,11 @@ typedef enum {
   GLW_SIGNAL_FULLWINDOW_CONSTRAINT_CHANGED,
 
   /**
-   * Emitted when gc_ready will return something else than it just did.
+   * Emitted when gc_status will return something else than it just did.
    * (Ie, when the output of it changes)
    * Only done by widget classes that actually implements gc_ready
    */
-  GLW_SIGNAL_READINESS,
+  GLW_SIGNAL_STATUS_CHANGED,
 
 
   /**
@@ -366,6 +366,13 @@ typedef enum {
   GLW_ORIENTATION_HORIZONTAL,
   GLW_ORIENTATION_VERTICAL,
 } glw_orientation_t;
+
+typedef enum {
+  GLW_STATUS_IDLE,
+  GLW_STATUS_LOADING,
+  GLW_STATUS_LOADED,
+  GLW_STATUS_ERROR,
+} glw_widget_status_t;
 
 #define glw_parent_data(c, type) ((type *)((char *)c + (c)->glw_class->gc_instance_size))
 
@@ -486,7 +493,7 @@ typedef struct glw_class {
    * Return true if the widget is ready to be displayed
    * (ie, texture is loaded, etc)
    */
-  int (*gc_ready)(struct glw *w);
+  glw_widget_status_t (*gc_status)(struct glw *w);
 
   /**
    *

@@ -312,6 +312,7 @@ loader_thread(void *aux)
 
 	  glt->glt_state = GLT_STATE_ERROR;
 	  LIST_REMOVE(glt, glt_flush_link);
+          glw_need_refresh(gr, 0);
 	}
 
       } else {

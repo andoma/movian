@@ -1135,7 +1135,7 @@ static uint8_t signal_to_eval_mask[GLW_SIGNAL_num] = {
   [GLW_SIGNAL_FOCUS_CHILD_AUTOMATIC]         = GLW_VIEW_EVAL_OTHER,
   [GLW_SIGNAL_CAN_SCROLL_CHANGED]            = GLW_VIEW_EVAL_OTHER,
   [GLW_SIGNAL_FULLWINDOW_CONSTRAINT_CHANGED] = GLW_VIEW_EVAL_OTHER,
-  [GLW_SIGNAL_READINESS]                     = GLW_VIEW_EVAL_OTHER,
+  [GLW_SIGNAL_STATUS_CHANGED]                = GLW_VIEW_EVAL_OTHER,
   [GLW_SIGNAL_RESELECT_CHANGED]              = GLW_VIEW_EVAL_OTHER,
 };
 
@@ -5464,21 +5464,68 @@ glwf_delay_dtor(glw_root_t *gr, struct token *self)
 
 
 /**
- * Return 1 if the current widget is ready
+ * Return 1 if the current widget is loading
  */
 static int
-glwf_isReady(glw_view_eval_context_t *ec, struct token *self,
+glwf_isLoading(glw_view_eval_context_t *ec, struct token *self,
 	       token_t **argv, unsigned int argc)
 {
   token_t *r = eval_alloc(self, ec, TOKEN_INT);
   glw_t *w = ec->w;
+  const glw_class_t *gc = w->glw_class;
+
+  if(gc->gc_status == NULL) {
+    r->t_int = 0;
+  } else {
+    r->t_int = gc->gc_status(w) == GLW_STATUS_LOADING;
+  }
+  ec->dynamic_eval |= GLW_VIEW_EVAL_OTHER;
+  eval_push(ec, r);
+  return 0;
+}
 
 
-  if(w->glw_class->gc_ready == NULL || w->glw_class->gc_ready(w)) {
+/**
+ * Return 1 if the current widget is loaded
+ * If widget does not support the gc_status check we always say its loaded
+ */
+static int
+glwf_isLoaded(glw_view_eval_context_t *ec, struct token *self,
+              token_t **argv, unsigned int argc)
+{
+  token_t *r = eval_alloc(self, ec, TOKEN_INT);
+  glw_t *w = ec->w;
+  const glw_class_t *gc = w->glw_class;
+
+  if(gc->gc_status == NULL) {
     r->t_int = 1;
   } else {
-    r->t_int = 0;
+    r->t_int = gc->gc_status(w) == GLW_STATUS_LOADED;
   }
+  ec->dynamic_eval |= GLW_VIEW_EVAL_OTHER;
+  eval_push(ec, r);
+  return 0;
+}
+
+
+/**
+ * Return 1 if the current widget is in error
+ * If widget does not support the gc_status check we never say it's in error
+ */
+static int
+glwf_isError(glw_view_eval_context_t *ec, struct token *self,
+             token_t **argv, unsigned int argc)
+{
+  token_t *r = eval_alloc(self, ec, TOKEN_INT);
+  glw_t *w = ec->w;
+  const glw_class_t *gc = w->glw_class;
+
+  if(gc->gc_status == NULL) {
+    r->t_int = 0;
+  } else {
+    r->t_int = gc->gc_status(w) == GLW_STATUS_ERROR;
+  }
+
   ec->dynamic_eval |= GLW_VIEW_EVAL_OTHER;
   eval_push(ec, r);
   return 0;
@@ -6840,7 +6887,9 @@ static const token_func_t funcvec[] = {
   {"sinewave", 1, glwf_sinewave},
   {"monotime", 0, glwf_monotime},
   {"delay", 3, glwf_delay, glwf_delay_ctor, glwf_delay_dtor},
-  {"isReady", 0, glwf_isReady},
+  {"isLoading", 0, glwf_isLoading},
+  {"isLoaded", 0, glwf_isLoaded},
+  {"isError", 0, glwf_isError},
   {"suggestFocus", 1, glwf_suggestFocus},
   {"count", 1, glwf_count},
   {"vectorize", 1, glwf_vectorize},

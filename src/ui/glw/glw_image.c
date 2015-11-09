@@ -64,6 +64,8 @@ typedef struct glw_image {
 
   uint8_t gi_alpha_edge;
 
+  uint8_t gi_widget_status;
+
   uint8_t gi_is_ready : 1;
   uint8_t gi_update : 1;
   uint8_t gi_need_reload : 1;
@@ -124,6 +126,17 @@ static int8_t tex_transform[9][4] = {
 static void update_box(glw_image_t *gi);
 static void pick_source(glw_image_t *gi, int next);
 
+/**
+ *
+ */
+static void
+set_load_status(glw_image_t *gi, glw_widget_status_t status)
+{
+  if(gi->gi_widget_status == status)
+    return;
+  gi->gi_widget_status = status;
+  glw_signal0(&gi->w, GLW_SIGNAL_STATUS_CHANGED, NULL);
+}
 
 
 /**
@@ -852,12 +865,18 @@ glw_image_layout(glw_t *w, const glw_rctx_t *rc)
   if((glt = gi->gi_pending) != NULL) {
     glw_tex_layout(gr, glt);
 
+    if(gi->gi_current == NULL)
+      set_load_status(gi, GLW_STATUS_LOADING);
+
     if(glw_is_tex_inited(&glt->glt_texture) ||
        glt->glt_state == GLT_STATE_ERROR) {
       // Pending texture completed, ok or error: transfer to current
 
       if(gi->gi_current != NULL)
 	glw_tex_deref(w->glw_root, gi->gi_current);
+
+      if(glt->glt_state == GLT_STATE_ERROR)
+        set_load_status(gi, GLW_STATUS_ERROR);
 
       gi->gi_current = gi->gi_pending;
       gi->gi_pending = NULL;
@@ -866,28 +885,21 @@ glw_image_layout(glw_t *w, const glw_rctx_t *rc)
     }
   }
 
-  if((glt = gi->gi_current) == NULL)
+  if((glt = gi->gi_current) == NULL) {
     return;
+  }
 
   glw_lp(&gi->gi_autofade, w->glw_root, !gi->gi_loading_new_url, 0.25);
 
   glw_tex_layout(gr, glt);
 
   if(glt->glt_state == GLT_STATE_ERROR) {
-    if(!gi->gi_is_ready) {
-      gi->gi_is_ready = 1;
-      glw_signal0(w, GLW_SIGNAL_READINESS, NULL);
-    }
+    set_load_status(gi, GLW_STATUS_ERROR);
   } else if(glw_is_tex_inited(&glt->glt_texture)) {
 
     gr->gr_can_externalize = 0;
 
-    int r = !gi->gi_loading_new_url;
-
-    if(gi->gi_is_ready != r) {
-      gi->gi_is_ready = r;
-      glw_signal0(w, GLW_SIGNAL_READINESS, NULL);
-    }
+    set_load_status(gi, GLW_STATUS_LOADED);
 
     if(gi->gi_update) {
       gi->gi_update = 0;
@@ -985,11 +997,7 @@ glw_image_layout(glw_t *w, const glw_rctx_t *rc)
       }
     }
   } else {
-    if(gi->gi_is_ready) {
-      gi->gi_is_ready = 0;
-      glw_signal0(w, GLW_SIGNAL_READINESS, NULL);
-    }
-
+    set_load_status(gi, GLW_STATUS_LOADING);
   }
 
   glw_image_update_constraints(gi);
@@ -1458,11 +1466,11 @@ glw_image_set_int(glw_t *w, glw_attribute_t attrib, int value,
 /**
  *
  */
-static int
-glw_image_ready(glw_t *w)
+static glw_widget_status_t
+glw_image_status(glw_t *w)
 {
   glw_image_t *gi = (glw_image_t *)w;
-  return gi->gi_is_ready;
+  return gi->gi_widget_status;
 }
 
 
@@ -1532,7 +1540,7 @@ static glw_class_t glw_image = {
   .gc_set_int = glw_image_set_int,
   .gc_signal_handler = glw_image_callback,
   .gc_default_alignment = LAYOUT_ALIGN_CENTER,
-  .gc_ready = glw_image_ready,
+  .gc_status = glw_image_status,
   .gc_set_float3 = glw_image_set_float3,
   .gc_mod_image_flags = mod_image_flags,
   .gc_set_source = set_source,
