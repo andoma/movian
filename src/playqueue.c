@@ -892,8 +892,9 @@ playqueue_open(prop_t *page)
 
   model = prop_create_r(page, "model");
 
-  prop_set(model, "type", PROP_SET_STRING, "playqueue");
-  prop_setv(model, "metadata", "title", NULL, PROP_SET_STRING, "playqueue");
+  prop_set(model, "type", PROP_SET_STRING, "directory");
+  prop_setv(model, "metadata", "title", NULL, PROP_ADOPT_RSTRING,
+            _("Playqueue"));
 
   prop_t *nodes = prop_create_r(model, "nodes");
 
