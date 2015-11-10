@@ -1853,7 +1853,7 @@ glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
   float x, y;
   glw_pointer_event_t *gpe0 = NULL;
   int r = 0;
-  if(w->glw_flags & (GLW_FOCUS_BLOCKED | GLW_CLIPPED))
+  if(w->glw_flags & (GLW_FOCUS_BLOCKED | GLW_CLIPPED | GLW_HIDDEN))
     return 0;
 
   if(w->glw_matrix != NULL) {
