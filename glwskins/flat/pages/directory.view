@@ -56,7 +56,7 @@ multiopt($view.path,
 	 select($self.model.safeui, void,
 		vectorize($core.glw.views.standard.directory)),
 	 makeUri(_("List"), "list.view"),
-	 makeUri(_("Grid"), "grid.view")
+	 select($self.model.type == "settings", void, makeUri(_("Grid"), "grid.view"))
 	);
 
 $view.overlay = translate($clone.itemMenu,
