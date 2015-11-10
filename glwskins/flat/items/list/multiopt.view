@@ -83,6 +83,7 @@ widget(container_z, {
 
         widget(list_y, {
           id: "options";
+          navWrap: true;
           cloner($self.options, container_z, {
             focusable: true;
             ListItemHighlight();
