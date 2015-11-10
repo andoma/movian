@@ -1,3 +1,26 @@
+
+onEvent(videoInfo, {
+  $clone.itemData <- $event;
+  $clone.itemMenu = "video";
+});
+
+onEvent(pluginInfo, {
+  $clone.itemData <- $event;
+  $clone.itemMenu = "plugin";
+});
+
+onEvent(defaultInfo, {
+  $clone.itemData <- $event;
+  $clone.itemMenu = "default";
+});
+
+
+onEvent(itemMenu, { $clone.itemMenu = void; }, $clone.itemMenu);
+onEvent(back,     { $clone.itemMenu = void; }, $clone.itemMenu);
+onEvent(cancel,   { $clone.itemMenu = void; }, $clone.itemMenu);
+onEvent(menu,     { toggle($clone.showSidebar); },
+       isVoid($clone.itemMenu));
+
 onEvent(ChangeView, deliverEvent($clone.settings.options, "Cycle"));
 
 multiopt($view.path,
@@ -35,29 +58,6 @@ multiopt($view.path,
 	 makeUri(_("List"), "list.view"),
 	 makeUri(_("Grid"), "grid.view")
 	);
-
-
-onEvent(videoInfo, {
-  $clone.itemData <- $event;
-  $clone.itemMenu = "video";
-});
-
-onEvent(pluginInfo, {
-  $clone.itemData <- $event;
-  $clone.itemMenu = "plugin";
-});
-
-onEvent(defaultInfo, {
-  $clone.itemData <- $event;
-  $clone.itemMenu = "default";
-});
-
-
-onEvent(itemMenu, { $clone.itemMenu = void; }, $clone.itemMenu);
-onEvent(back,     { $clone.itemMenu = void; }, $clone.itemMenu);
-onEvent(cancel,   { $clone.itemMenu = void; }, $clone.itemMenu);
-onEvent(menu,     { toggle($clone.showSidebar); },
-       isVoid($clone.itemMenu));
 
 $view.overlay = translate($clone.itemMenu,
                           select($clone.showSidebar, "sidebar", void),
@@ -139,7 +139,3 @@ widget(container_z, {
   });
 
 });
-
-#import "menurig.view"
-
-MENURIG($view.path);
