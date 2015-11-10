@@ -1273,7 +1273,7 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how, const char *whom)
   if(w != NULL) {
     glw_need_refresh(gr, 0);
 
-    GLW_TRACE("Focus set to %s:%d bt %s",
+    GLW_TRACE("Focus set to %s:%d by %s",
               rstr_get(w->glw_file), w->glw_line, whom);
 
     gr->gr_last_focus = w;
