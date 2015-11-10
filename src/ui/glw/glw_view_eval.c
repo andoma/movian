@@ -6663,7 +6663,7 @@ glwf_toggle(glw_view_eval_context_t *ec, struct token *self,
 {
   token_t *a = argv[0];
 
-  if(resolve_property_name(ec, a, 0))
+  if(resolve_property_name(ec, a, 1))
     return -1;
 
   if(a->type == TOKEN_PROPERTY_REF)
