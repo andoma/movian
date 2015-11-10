@@ -12,6 +12,11 @@ widget(container_y, {
     size: 1.5em;
   });
 
+  onEvent(back, {
+    $clone.osdpage = 1;
+    focus("osd_main");
+  }, $clone.osdpage);
+
   widget(container_x, {
     widget(list_y, {
       id: "list";

@@ -1,38 +1,32 @@
 #import "skin://theme.view"
 #import "skin://menu/sidebar_include.view"
 
-#define PLAYDECK_BUTTON(ICON, EVENT, ENABLED) {
-  widget(container_z, {
-    width: 2em;
-    onEvent(activate, EVENT);
-    focusable: ENABLED * 0.1;
-
-    widget(icon, {
-      size: 2em;
-      source: ICON;
-      alpha: 0.7 * iir(ENABLED, 8) + 0.3;
-    });
-  });
-}
 
 widget(container_y, {
   width: 22em;
   id: "osd_main";
-
+  padding: [0,3em, 0, 0];
 #import "skin://styles/style_sidebar.view"
-
-  widget(label, {
-    height: 3em;
-    align: center;
-    caption: _("Settings");
-    size: 1.5em;
-  });
 
   widget(list_y, {
 
     id: "sidebar";
     navWrap: true;
 
+
+    SIDEBAR_ACTION(_("Subtitles"),
+                   "skin://icons/ic_subtitles_48px.svg",
+                   {
+                     $clone.osdpage = 100;
+                     focus("osd_subs");
+                   });
+
+    SIDEBAR_ACTION(_("Audio tracks"),
+                   "skin://icons/ic_speaker_48px.svg",
+                   {
+                     $clone.osdpage = 101;
+                     focus("osd_audio");
+                   });
 
     SIDEBAR_ACTION(_("Subtitle settings"),
                    "skin://icons/ic_subtitles_48px.svg",
