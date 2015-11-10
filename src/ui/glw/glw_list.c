@@ -316,6 +316,13 @@ glw_list_render_y(glw_t *w, const glw_rctx_t *rc)
   glw_store_matrix(w, &rc0);
 
   rc1 = rc0;
+  glw_reposition(&rc1, 0,
+                 rc1.rc_height - l->gsc.clip_offset_pre,
+		 rc1.rc_width,
+                 l->gsc.clip_offset_post);
+
+  glw_store_matrix(w, &rc1);
+
 
   if(rc->rc_alpha < 0.01f)
     return;
@@ -323,6 +330,7 @@ glw_list_render_y(glw_t *w, const glw_rctx_t *rc)
   const int clip_top    = l->gsc.clip_offset_pre - 1;
   const int clip_bottom = l->gsc.clip_offset_post - 1;
 
+  rc1 = rc0;
   glw_Translatef(&rc1, 0, 2.0f * l->gsc.rounded_pos / rc0.rc_height, 0);
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
@@ -355,6 +363,7 @@ glw_list_render_x(glw_t *w, const glw_rctx_t *rc)
 
   glw_reposition(&rc0, l->padding[0], rc->rc_height - l->padding[1],
 		 rc->rc_width  - l->padding[2], l->padding[3]);
+
   height = rc0.rc_height;
   width = rc0.rc_width;
 

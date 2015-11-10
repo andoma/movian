@@ -47,7 +47,6 @@ typedef struct glw_array {
   int16_t yspacing;
 
   int16_t margin[4];
-  int16_t border[4];
 
   int16_t scroll_threshold;
 
@@ -88,10 +87,10 @@ glw_array_layout(glw_t *w, const glw_rctx_t *rc)
   int xpos = 0, ypos = a->gsc.scroll_threshold_pre;
 
   glw_reposition(&rc0,
-		 a->margin[0] + a->border[0],
-		 rc->rc_height - (a->margin[1] + a->border[1]),
-		 rc->rc_width - (a->margin[2] + a->border[2]),
-		 a->margin[3] + a->border[3]);
+		 a->margin[0],
+		 rc->rc_height - a->margin[1],
+		 rc->rc_width - a->margin[2],
+		 a->margin[3]);
 
   const int bottom_scroll_pos = rc0.rc_height - a->gsc.scroll_threshold_post;
 
@@ -329,8 +328,7 @@ glw_array_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_array_t *a = (glw_array_t *)w;
   glw_t *c;
-  glw_rctx_t rc0, rc1, rc2;
-
+  glw_rctx_t rc0, rc1;
 
   rc0 = *rc;
   rc0.rc_alpha *= w->glw_alpha;
@@ -341,27 +339,29 @@ glw_array_render(glw_t *w, const glw_rctx_t *rc)
   glw_reposition(&rc0, a->margin[0], rc->rc_height - a->margin[1],
 		 rc->rc_width  - a->margin[2], a->margin[3]);
 
-  glw_store_matrix(w, &rc0);
   rc1 = rc0;
+  glw_reposition(&rc1, 0,
+                 rc1.rc_height - a->gsc.clip_offset_pre,
+		 rc1.rc_width,
+                 a->gsc.clip_offset_post);
 
-  glw_reposition(&rc1,
-		 a->border[0], rc0.rc_height - a->border[1],
-		 rc0.rc_width  - a->border[2], a->border[3]);
+  glw_store_matrix(w, &rc1);
+
+
+  rc1 = rc0;
 
   int width = rc1.rc_width;
   int height = rc1.rc_height;
 
-  rc2 = rc1;
-
   const int clip_top    = a->gsc.clip_offset_pre - 1;
   const int clip_bottom = a->gsc.clip_offset_post - 1;
 
-  glw_Translatef(&rc2, 0, 2.0f * a->gsc.rounded_pos / height, 0);
+  glw_Translatef(&rc1, 0, 2.0f * a->gsc.rounded_pos / height, 0);
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
-    glw_array_render_one(a, c, width, height, &rc0, &rc2,
+    glw_array_render_one(a, c, width, height, &rc0, &rc1,
                          clip_top, clip_bottom);
   }
 }
@@ -547,8 +547,6 @@ glw_array_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v,
   switch(attrib) {
   case GLW_ATTRIB_MARGIN:
     return glw_attrib_set_int16_4(a->margin, v);
-  case GLW_ATTRIB_BORDER:
-    return glw_attrib_set_int16_4(a->border, v);
   default:
     return -1;
   }
