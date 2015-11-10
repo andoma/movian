@@ -1229,16 +1229,33 @@ settings_init(void)
 
   // Applications and plugins
 
+  n = prop_create_root(NULL);
+
+  // About and stuff
+
+  settings_add_url(n,
+		   _p("About"), "about", NULL, NULL, "page:about",
+		   SETTINGS_RAW_NODES);
+
+  d = prop_create_root(NULL);
+  prop_set(d, "type", PROP_SET_STRING, "separator");
+  prop_concat_add_source(pc, n, d);
+
+
+  // Applications and plugins
+
   n = prop_create(gconf.settings_apps, "nodes");
 
   d = prop_create_root(NULL);
   set_title2(d, _p("Applications and installed plugins"));
-  prop_set_string(prop_create(d, "type"), "separator");
+  prop_set(d, "type", PROP_SET_STRING, "separator");
   prop_concat_add_source(pc, n, d);
+
+  // Discovered sources
 
   d = prop_create_root(NULL);
   set_title2(d, _p("Discovered media sources"));
-  prop_set_string(prop_create(d, "type"), "separator");
+  prop_set(d, "type", PROP_SET_STRING, "separator");
 
   n = prop_create(gconf.settings_sd, "nodes");
   prop_concat_add_source(pc, n, d);
@@ -1284,11 +1301,6 @@ settings_init(void)
 
   init_dev_settings();
 
-  // About
-
-  settings_add_url(NULL,
-		   _p("About"), "about", NULL, NULL, "page:about",
-		   0);
 
 }
 
