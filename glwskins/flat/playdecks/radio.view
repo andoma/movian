@@ -20,6 +20,11 @@ widget(container_z, {
     });
 
     widget(label, {
+      clickable: true;
+      onEvent(activate, {
+        $ui.showAllPlaydeckButtons = 0;
+      });
+
       caption: join(" • ",
 		    $core.media.current.metadata.title,
 		    $core.media.current.radioinfo),

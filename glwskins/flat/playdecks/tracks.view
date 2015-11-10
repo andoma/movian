@@ -19,6 +19,12 @@ widget(container_z, {
     });
 
     widget(label, {
+
+      clickable: true;
+      onEvent(activate, {
+        $ui.showAllPlaydeckButtons = 0;
+      });
+
       maxWidth: $ui.width / 3;
       caption: join(" • ",
 		    $core.media.current.metadata.artist,
