@@ -21,6 +21,7 @@ widget(container_z, {
 
     widget(label, {
       clickable: true;
+      focusOnClick: false;
       onEvent(activate, {
         $ui.showAllPlaydeckButtons = 0;
       });
