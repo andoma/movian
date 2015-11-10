@@ -30,6 +30,24 @@
   });
 }
 
+#define PLAYDECK_BUTTON_TOGGLE(ICON, VALUE, ENABLED) {
+  widget(container_z, {
+    width: 2em;
+    onEvent(activate, {
+      toggle(VALUE);
+    });
+
+    clickable: ENABLED;
+
+    GridItemHighlight2();
+
+    widget(icon, {
+      source: ICON;
+      color: select(VALUE, 1, 0);
+      alpha: 0.7 * iir(ENABLED, 8) + 0.3;
+    });
+  });
+}
 
 
 #define PLAYDECK_BUTTONS(ICON, EVENT, ENABLED) {
@@ -58,6 +76,14 @@
       PLAYDECK_BUTTON("skin://icons/ic_skip_next_48px.svg",
                       event("NextTrack"),
                       $core.media.current.canSkipForward);
+
+      PLAYDECK_BUTTON_TOGGLE("dataroot://res/svg/Repeat.svg",
+                             $core.media.current.repeat,
+                             $core.media.current.canRepeat);
+
+      PLAYDECK_BUTTON_TOGGLE("dataroot://res/svg/Shuffle.svg",
+                             $core.media.current.shuffle,
+                             $core.media.current.canShuffle);
     });
 
     page: $ui.showAllPlaydeckButtons;
