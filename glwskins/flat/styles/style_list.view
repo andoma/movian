@@ -121,7 +121,7 @@ style(SliderLabel, {
 style(ActionLabel, {
   align: left;
   filterConstraintX: true;
-  font: "skin://fonts/RobotoCondensed-Bold.ttf";
+  font: "skin://fonts/RobotoCondensed-Regular.ttf";
   color: iir(!isNavFocused(), 4);
 });
 

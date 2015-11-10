@@ -140,7 +140,9 @@ widget(container_x, {
 	alt: "skin://items/list/default.view";
 	source: "skin://items/list/" + $self.type + ".view";
       });
-
+      SIDEBAR_ACTION(_("Reload page"),
+                     "skin://icons/ic_refresh_48px.svg",
+                     event("ReloadData"));
 
       widget(dummy, {
         height: 1em;
@@ -149,21 +151,12 @@ widget(container_x, {
       // --------------------------------------
       // Generic items
       // --------------------------------------
-      SIDEBAR_ACTION(_("Reload page"),
-                     "skin://icons/ic_refresh_48px.svg",
-                     event("ReloadData"));
-
-      SIDEBAR_ACTION(_("Home"),
-                     "skin://icons/ic_home_48px.svg",
-                     navOpen("page:home"),
-                     $self.url == "page:home");
-
-
+/*
       SIDEBAR_ACTION(_("Settings"),
                      "skin://icons/ic_settings_48px.svg",
                      navOpen("settings:"),
                      $self.url == "settings:");
-
+*/
 #import "skin://menu/sidebar_common.view"
 
 
