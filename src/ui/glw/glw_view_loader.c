@@ -221,6 +221,11 @@ update_autohide(glw_view_loader_t *l)
     glw_unhide(&l->w);
   } else {
     glw_hide(&l->w);
+
+    glw_t *c;
+
+    while((c = TAILQ_FIRST(&l->w.glw_childs)) != NULL)
+      glw_destroy(c);
   }
 }
 
