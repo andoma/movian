@@ -1,42 +1,5 @@
-onEvent(ChangeView, deliverEvent($clone.settings.options, "Cycle"));
 
-multiopt($view.path,
-	 $clone.settings,
-	 _("Page layout"),
-	 $self.persistent.glwUserView,
-	 // List of view follows
-	 // First custom view set by model
-	 makeUri(_("Custom"), $self.model.metadata.glwview),
-
-	 // Optionally a list of custom views set by model
-	 vectorize($self.model.metadata.glwviews),
-
-	 // Then comes external views selected based on content
-	 translate($self.model.contents, void,
-		   "tracks",     vectorize($core.glw.views.standard.tracks),
-		   "album",      vectorize($core.glw.views.standard.album),
-		   "albums",     vectorize($core.glw.views.standard.albums),
-		   "artist",     vectorize($core.glw.views.standard.artist),
-//		   "tvchannels", vectorize($core.glw.views.standard.tvchannels),
-		   "images",     vectorize($core.glw.views.standard.images),
-		   "movies",     vectorize($core.glw.views.standard.movies)
-		    ),
-
-	 // Then comes internal views selected based on content
-	 translate($self.model.contents, void,
-		   "album",      makeUri(_("Album"),      "album.view"),
-		   "artist",     makeUri(_("Artist"),     "artist.view"),
-		   "images",     makeUri(_("Grid"),     "grid.view"),
-		   "grid",       makeUri(_("Grid"),     "grid.view"),
-		   "searchresults", makeUri(_("Search results"), "searchresults.view")),
-
-	 select($self.model.safeui, void,
-		vectorize($core.glw.views.standard.directory)),
-	 makeUri(_("List"), "list.view"),
-	 makeUri(_("Grid"), "grid.view")
-	);
-
-
+#define MENURIG(INNERVIEW) {
 onEvent(videoInfo, {
   $clone.itemData <- $event;
   $clone.itemMenu = "video";
@@ -92,7 +55,7 @@ widget(container_z, {
         filterConstraintX: true;
         noInitialTransform: true;
         time: 0.05;
-        source: $view.path;
+        source: INNERVIEW;
       });
     });
 
@@ -139,7 +102,4 @@ widget(container_z, {
   });
 
 });
-
-#import "menurig.view"
-
-MENURIG($view.path);
+}
