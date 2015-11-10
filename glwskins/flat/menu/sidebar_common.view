@@ -2,10 +2,60 @@ widget(dummy, {
   height: 1em;
 });
 
+
+
+
+widget(container_z, {
+
+  height: 2em;
+  ListItemBevel();
+
+  hidden: translate($core.media.current.type, true,
+                    "tracks", false,
+                    "radio", false
+                   );
+
+  widget(container_x, {
+    align: center;
+
+    SIDEBAR_BUTTON("skin://icons/ic_list_48px.svg",
+                   navOpen("playqueue:"),
+                   $core.playqueue.active);
+
+    SIDEBAR_BUTTON("skin://icons/ic_skip_previous_48px.svg",
+                   event("PreviousTrack"),
+                   $core.media.current.canSkipBackward);
+
+    SIDEBAR_BUTTON(translate($core.media.current.playstatus,
+                             "skin://icons/ic_pause_48px.svg",
+                             "pause",
+                             "skin://icons/ic_play_arrow_48px.svg"),
+                   event("PlayPause"),
+                   $core.media.current.canPause);
+
+    SIDEBAR_BUTTON("skin://icons/ic_skip_next_48px.svg",
+                   event("NextTrack"),
+                   $core.media.current.canSkipForward);
+
+    SIDEBAR_BUTTON_TOGGLE("dataroot://res/svg/Repeat.svg",
+                          $core.media.current.repeat,
+                          $core.media.current.canRepeat);
+
+    SIDEBAR_BUTTON_TOGGLE("dataroot://res/svg/Shuffle.svg",
+                          $core.media.current.shuffle,
+                          $core.media.current.canShuffle);
+  });
+});
+
+
 SIDEBAR_INTEGER(_("Master volume"),
                 "skin://icons/ic_speaker_48px.svg",
                 -75, 12, 1,
                 $core.audio.mastervolume, _("dB"));
+
+widget(dummy, {
+  height: 1em;
+});
 
 SIDEBAR_ACTION(select($ui.sysinfo,
                       _("Hide system info"),

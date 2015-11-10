@@ -1,3 +1,42 @@
+#define SIDEBAR_BUTTON(ICON, EVENT, ENABLED) {
+  widget(container_z, {
+    height: 2em;
+    width: 2em;
+    onEvent(activate, EVENT);
+    focusable: ENABLED;
+
+    GridItemHighlight2();
+
+    widget(icon, {
+      source: ICON;
+      style: "ListItemIcon";
+      alpha: 0.7 * iir(ENABLED, 8) + 0.3;
+    });
+  });
+}
+
+#define SIDEBAR_BUTTON_TOGGLE(ICON, VALUE, ENABLED) {
+  widget(container_z, {
+    height: 2em;
+    width: 2em;
+    onEvent(activate, {
+      toggle(VALUE);
+    });
+
+    focusable: ENABLED;
+
+    GridItemHighlight2();
+
+    widget(icon, {
+      source: ICON;
+      size: 1.5em;
+      color: select(VALUE, 1, 0);
+      alpha: 0.7 * iir(ENABLED, 8) + 0.3;
+    });
+  });
+}
+
+
 #define SIDEBAR_ACTION(CAPTION, ICON, EVENT, HIDDEN=false) {
   widget(container_z, {
     hidden: HIDDEN;
@@ -57,7 +96,7 @@
         height: 1em;
 
         widget(container_x, {
-          style: "ListItem";
+          padding: [1em, 0];
 
           widget(container_z, {
             widget(container_y, {

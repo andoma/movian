@@ -1,19 +1,5 @@
 #import "skin://theme.view"
 
-#define PLAYDECK_BUTTON(ICON, EVENT, ENABLED) {
-  widget(container_z, {
-    width: 2em;
-    onEvent(activate, EVENT);
-    clickable: ENABLED;
-
-    GridItemHighlight2();
-
-    widget(icon, {
-      source: ICON;
-      alpha: 0.7 * iir(ENABLED, 8) + 0.3;
-    });
-  });
-}
 
 #define PLAYDECK_BUTTON2(ICON, EVENT, ENABLED) {
   widget(container_z, {
@@ -26,6 +12,21 @@
     widget(icon, {
       source: ICON;
       alpha: iir(ENABLED, 4);
+    });
+  });
+}
+
+#define PLAYDECK_BUTTON(ICON, EVENT, ENABLED) {
+  widget(container_z, {
+    width: 2em;
+    onEvent(activate, EVENT);
+    clickable: ENABLED;
+
+    GridItemHighlight2();
+
+    widget(icon, {
+      source: ICON;
+      alpha: 0.7 * iir(ENABLED, 8) + 0.3;
     });
   });
 }
@@ -60,7 +61,7 @@
     widget(container_x, {
       PLAYDECK_BUTTON("skin://icons/ic_list_48px.svg",
                       navOpen("playqueue:"),
-                      true);
+                      $core.playqueue.active);
 
       PLAYDECK_BUTTON("skin://icons/ic_skip_previous_48px.svg",
                       event("PreviousTrack"),

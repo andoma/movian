@@ -1068,6 +1068,7 @@ player_thread(void *aux)
 	/* Nothing and media queues empty. */
 
 	TRACE(TRACE_DEBUG, "playqueue", "Nothing on queue, waiting");
+        prop_set(playqueue_root, "active", PROP_SET_INT, 0);
 	/* Make sure we no longer claim current playback focus */
 	mp_set_url(mp, NULL, NULL, NULL);
 	mp_shutdown(playqueue_mp);
@@ -1105,6 +1106,7 @@ player_thread(void *aux)
       continue;
     }
 
+    prop_set(playqueue_root, "active", PROP_SET_INT, 1);
     mp_reset(mp);
 
     prop_t *sm = prop_get_by_name(PNVEC("self", "metadata"), 1,
