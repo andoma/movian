@@ -30,6 +30,7 @@
 #include "audio2/audio_ext.h"
 #include "event.h"
 #include "playqueue.h"
+#include "prop/prop_linkselected.h"
 #include "backend/backend.h"
 #include "settings.h"
 #include "misc/minmax.h"
@@ -165,7 +166,11 @@ mp_create(const char *name, int flags)
   mp->mp_prop_audio_track_current_manual =
     prop_create(mp->mp_prop_audio, "manual");
   mp->mp_prop_audio_tracks = prop_create(mp->mp_prop_metadata, "audiostreams");
+  prop_linkselected_create(mp->mp_prop_audio_tracks,
+                           mp->mp_prop_audio, "active", NULL);
+
   prop_set_string(mp->mp_prop_audio_track_current, "audio:off");
+
 
   mp_track_mgr_init(mp,
                     &mp->mp_audio_track_mgr,
@@ -183,6 +188,8 @@ mp_create(const char *name, int flags)
   mp->mp_prop_subtitle_track_current_manual = prop_create(p, "manual");
   mp->mp_prop_subtitle_tracks = prop_create(mp->mp_prop_metadata,
 					    "subtitlestreams");
+  prop_linkselected_create(mp->mp_prop_subtitle_tracks, p, "active", NULL);
+
 
   prop_set_string(mp->mp_prop_subtitle_track_current, "sub:off");
   mp_add_track_off(mp->mp_prop_subtitle_tracks, "sub:off");

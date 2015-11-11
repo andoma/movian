@@ -48,7 +48,6 @@ onEvent(back, {
 
 
 onEvent(menu, {
-  trace("osdpage", $clone.osdpage);
   toggle($clone.osdpage);
 });
 
@@ -65,7 +64,6 @@ $view.showSeekBar =
   $clone.osdpage ||
   changed($self.media.seektime, 5, true) ||
   $self.media.playstatus == "pause";
-
 
 widget(container_z, {
 
@@ -236,15 +234,12 @@ widget(container_z, {
 
   widget(container_y, {
     hidden: $clone.osdpage > 0;
-    padding: [$ui.xmargin, 2.5em];
-
+    padding: [$ui.xmargin, 3.5em];
 
     style(notifications, {
       shadow: true;
     });
 
-
-    
     widget(container_x, {
       spacing: 0.5em;
       hidden: select($self.media.error, false, true);
@@ -292,18 +287,19 @@ widget(container_z, {
 
     widget(container_x, {
       spacing: 0.5em;
-      hidden: !changed($self.media.audio.current, 5);
+      hidden: !changed($self.media.audio.active.url, 5) ||
+        isVoid($self.media.audio.active.url);
       widget(icon, {
-        source: "dataroot://res/svg/Sound.svg";
+        source:  "skin://icons/ic_speaker_48px.svg";
       });
-      widget(deck, {
-        effect: flipHorizontal;
-        time: 0.1;
-        cloner($self.media.metadata.audiostreams, label, {
-          style: "notifications";
-	  caption: join(" - ", $self.title, $self.language,
-                        $self.source, $self.longformat ?? $self.format);
-        });
+      widget(label, {
+        style: "notifications";
+	caption: join(" - ",
+                      $self.media.audio.active.title,
+                      $self.media.audio.active.language,
+                      $self.media.audio.active.source,
+                      $self.media.audio.active.longformat ??
+                      $self.media.audio.active.format);
       });
     });
 
@@ -319,28 +315,30 @@ widget(container_z, {
       });
     });
 
-
     widget(container_x, {
       spacing: 0.5em;
-      hidden: !changed($self.media.subtitle.current, 5);
+      hidden: !changed($self.media.subtitle.active.url, 5) ||
+        isVoid($self.media.audio.subtitle.url);
       widget(icon, {
-        source: "dataroot://res/svg/Script.svg";
+        source: "skin://icons/ic_subtitles_48px.svg";
       });
-      widget(deck, {
-        effect: flipHorizontal;
-        time: 0.1;
-        cloner($self.media.metadata.subtitlestreams, label, {
-          style: "notifications";
-	  caption: join(" - ", $self.title, $self.language, $self.source, $self.format);
-        });
+      widget(label, {
+        style: "notifications";
+	caption: join(" - ",
+                      $self.media.subtitle.active.title,
+                      $self.media.subtitle.active.language,
+                      $self.media.subtitle.active.source,
+                      $self.media.subtitle.active.longformat ??
+                      $self.media.subtitle.active.format);
       });
     });
   });
 
+
   widget(container_x, {
     padding: 1em;
     widget(image, {
-      alpha: iir($view.showSeekBar, 8);
+      alpha: iir($view.showSeekBar || changed($self.media.metadata.icon, 5, true), 8);
       align: bottom;
       width: 6em;
       source: $self.media.metadata.icon;
@@ -349,7 +347,7 @@ widget(container_z, {
   });
 
   widget(container_y, {
-    alpha: iir($view.showSeekBar, 8);
+    alpha: iir($view.showSeekBar || changed($self.media.metadata.title, 5, true), 8);
     widget(container_z, {
       height: 3em;
       zoffset: 10;
@@ -370,7 +368,7 @@ widget(container_z, {
   });
 
   widget(container_y, {
-      zoffset: 20;
+    zoffset: 20;
 
     alpha: iir($ui.showTopIcons, 4);
 

@@ -18,5 +18,5 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 #pragma once
-void prop_linkselected_create(prop_t *dir, prop_t *p,
+void prop_linkselected_create(prop_t *dir, prop_t *root,
                               const char *target, const char *name);
