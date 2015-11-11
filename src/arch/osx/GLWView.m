@@ -85,7 +85,7 @@ static const struct {
   { '0',                      NSCommandKeyMask, ACTION_ZOOM_UI_RESET },
   { '+',                      NSCommandKeyMask, ACTION_ZOOM_UI_INCR },
   { '-',                      NSCommandKeyMask, ACTION_ZOOM_UI_DECR },
-  { 'f',                      NSCommandKeyMask, ACTION_FULLSCREEN_TOGGLE },
+  { _NSEnterKey,              NSCommandKeyMask, ACTION_FULLSCREEN_TOGGLE },
 
   { _NSBackspaceKey,          0,                ACTION_BS, ACTION_NAV_BACK },
   { _NSEnterKey,              0,                ACTION_ENTER, ACTION_ACTIVATE},
