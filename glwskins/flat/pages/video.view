@@ -350,7 +350,9 @@ widget(container_z, {
   });
 
   widget(container_y, {
-    alpha: iir($view.showSeekBar || changed($self.media.metadata.title, 5, true), 8);
+    alpha: iir($view.showSeekBar ||
+               changed($self.media.metadata.title, 5, true) ||
+               $self.media.error, 8);
     widget(container_z, {
       height: 3em;
       zoffset: 10;
