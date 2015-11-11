@@ -34,6 +34,9 @@ delta($ui.fullwindow, isVisible());
 
 $self.directClose = 1;
 $self.close = $self.media.playstatus == "stop";
+$self.model.loading = $self.media.loading;
+$self.model.io <- $self.media.io;
+
 $clone.osdpage = 0;
 
 $view.iconPad = select(isVoid($self.media.metadata.icon), 0, 8em);
