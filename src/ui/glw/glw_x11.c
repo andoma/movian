@@ -731,11 +731,19 @@ static const struct {
 
   { XK_ISO_Left_Tab, ShiftMask,   ACTION_FOCUS_PREV },
 
+
   { XK_Left,         Mod1Mask,    ACTION_NAV_BACK},
   { XK_Right,        Mod1Mask,    ACTION_NAV_FWD},
 
-  { XK_Left,         ShiftMask | ControlMask,   ACTION_SKIP_BACKWARD},
-  { XK_Right,        ShiftMask | ControlMask,   ACTION_SKIP_FORWARD},
+  { XK_Left,         ControlMask,    ACTION_SKIP_BACKWARD},
+  { XK_Right,        ControlMask,    ACTION_SKIP_FORWARD},
+  { XK_Up,           ControlMask,    ACTION_VOLUME_UP},
+  { XK_Down,         ControlMask,    ACTION_VOLUME_DOWN},
+
+  { XK_Down,         ShiftMask | ControlMask,   ACTION_VOLUME_MUTE_TOGGLE},
+  { XK_Left,         ShiftMask | ControlMask,   ACTION_SEEK_BACKWARD},
+  { XK_Right,        ShiftMask | ControlMask,   ACTION_SEEK_FORWARD},
+
 
   { XK_Prior,        0,            ACTION_PAGE_UP,   ACTION_PREV_CHANNEL, ACTION_SKIP_BACKWARD},
   { XK_Next,         0,            ACTION_PAGE_DOWN, ACTION_NEXT_CHANNEL, ACTION_SKIP_FORWARD},
