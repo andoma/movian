@@ -24,6 +24,7 @@
 #include "osx.h"
 #include "src/ui/glw/glw.h"
 #include "navigator.h"
+#include "htsmsg/htsmsg_store.h"
 
 #include "networking/net.h"
 #include "prop/prop_proxy.h"
@@ -93,7 +94,19 @@
 
   fullscreen = asfullscreen;
 
+  htsmsg_t *m = htsmsg_store_load("glwcocoa") ?: htsmsg_create_map();
+  htsmsg_delete_field(m, "fullscreen");
+  if(fullscreen)
+    htsmsg_add_u32(m, "fullscreen", 1);
+  htsmsg_store_save(m, "glwcocoa");
+  htsmsg_release(m);
+
   if(fullscreen) {
+
+    // Close all other windows
+    for (NSWindow *o in [NSApplication sharedApplication].windows) {
+      [o close];
+    }
 
     frame = [[NSScreen mainScreen] frame];
     window = [[GLWWindow alloc] initWithContentRect: frame
@@ -280,9 +293,16 @@ static prop_t *stored_nav;
 			 PROP_TAG_NAME("ui", "fullwindow"),
 			 PROP_TAG_ROOT, gr->gr_prop_ui,
 			 PROP_TAG_COURIER, mainloop_courier,
-			 NULL);
+                         NULL);
 
-  [self openWin:NO];
+  int fs = 0;
+  htsmsg_t *m = htsmsg_store_load("glwcocoa");
+  if(m != NULL) {
+    fs = htsmsg_get_u32_or_default(m, "fullscreen", 0);
+    htsmsg_release(m);
+  }
+
+  [self openWin:fs];
 
   glw_lock(gr);
   glw_load_universe(gr);
