@@ -321,7 +321,7 @@ widget(container_z, {
     widget(container_x, {
       spacing: 0.5em;
       hidden: !changed($self.media.subtitle.active.url, 5) ||
-        isVoid($self.media.audio.subtitle.url);
+        isVoid($self.media.subtitle.active.url);
       widget(icon, {
         source: "skin://icons/ic_subtitles_48px.svg";
       });
