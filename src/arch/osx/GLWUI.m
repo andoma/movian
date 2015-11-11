@@ -57,6 +57,11 @@
 
 @implementation GLWUI
 
+- (void) closeWindow: (NSNotification *)not
+{
+  [window close];
+}
+
 - (BOOL)windowShouldClose:(NSNotification *)notification {
   return YES;
 }
