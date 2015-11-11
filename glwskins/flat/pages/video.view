@@ -39,7 +39,11 @@ $self.model.io <- $self.media.io;
 
 $clone.osdpage = 0;
 
-$view.iconPad = select(isVoid($self.media.metadata.icon), 0, 8em);
+$view.iconPad = select(isVoid($self.media.metadata.icon), 0, 7em);
+
+onEvent(back, {
+  $clone.showPlaydeck = 0;
+}, $clone.showPlaydeck && !$clone.osdpage);
 
 onEvent(back, {
   $clone.osdpage = 0;
@@ -51,8 +55,20 @@ onEvent(back, {
 
 
 onEvent(menu, {
-  toggle($clone.osdpage);
-});
+  $clone.showPlaydeck = 1;
+  focus("playdeck");
+}, !$clone.showPlaydeck);
+
+onEvent(menu, {
+  $clone.osdpage = 1;
+  focus("osd_main");
+}, $clone.showPlaydeck);
+
+onEvent(menu, {
+  $clone.osdpage = 0;
+  $clone.showPlaydeck = 0;
+}, $clone.osdpage);
+
 
 
 
@@ -64,8 +80,9 @@ $clone.showPlaydeck ?=
 
 $view.showSeekBar =
   $ui.pointerVisible ||
-  $clone.osdpage ||
+  $clone.showPlaydeck ||
   changed($self.media.seektime, 5, true) ||
+  changed($self.url, 5, true) ||
   $self.media.playstatus == "pause";
 
 widget(container_z, {
@@ -94,7 +111,7 @@ widget(container_z, {
       onEvent(down,  deliverEvent($self.media.eventSink, "VolumeDown"));
 
       onEvent(activate, {
-        toggle($clone.osdpage);
+        toggle($clone.showPlaydeck);
       });
 
       bottomOverlayDisplacement: $clone.bottomOsdHeight;
@@ -102,11 +119,8 @@ widget(container_z, {
     });
 
 
-
-
     widget(container_y, {
-
-      hidden: $clone.osdpage == 0;
+      hidden: !$clone.showPlaydeck;
 
       widget(container_x, {
         filterConstraintY: true;
@@ -116,13 +130,14 @@ widget(container_z, {
           clickable: true;
           onEvent(activate, {
             $clone.osdpage = 0;
+            $clone.showPlaydeck = 0;
           });
         });
 
 
         widget(displacement, {
           width: 22em;
-          translation: [2 - 2 * iir($clone.osdpage > 0, 3), 0, 0];
+          translation: [0, -2 + 2 * iir($clone.osdpage > 0, 3), 0];
           widget(container_z, {
 
             onEvent(left, {
@@ -159,6 +174,76 @@ widget(container_z, {
         });
       });
 
+      // OSD buttons row
+
+      widget(container_z, {
+        height: 2.2em;
+        delta($clone.bottomOsdHeight, isVisible() * getHeight());
+
+        widget(quad, {
+          alpha: 0.8;
+          color: 0;
+        });
+
+        widget(container_x, {
+          id: "playdeck";
+          spacing: 1em;
+          padding: [1em + $view.iconPad, 0.1em, 2em, 0.1em];
+
+          PLAYDECK_BUTTON("skin://icons/ic_stop_48px.svg",
+                          _("Stop"),
+                          event("Stop"),
+                          true);
+
+          PLAYDECK_BUTTON("skin://icons/ic_skip_previous_48px.svg",
+                          _("Previous"),
+                          event("PreviousTrack"),
+                          $core.media.current.canSkipBackward);
+
+          PLAYDECK_BUTTON(translate($core.media.current.playstatus,
+                                    "skin://icons/ic_pause_48px.svg",
+                                    "pause",
+                                    "skin://icons/ic_play_arrow_48px.svg"),
+                          _("Play/Pause"),
+                          event("PlayPause"),
+                          $core.media.current.canPause);
+
+          PLAYDECK_BUTTON("skin://icons/ic_skip_next_48px.svg",
+                          _("Next"),
+                          event("NextTrack"),
+                          $core.media.current.canSkipForward);
+
+          space(0.25);
+
+          PLAYDECK_BUTTON("skin://icons/ic_subtitles_48px.svg",
+                          _("Subtitles"),
+                          {
+                            $clone.osdpage = select($clone.osdpage == 100, 0, 100);
+                            focus("osd_subs");
+                          }, true);
+          PLAYDECK_BUTTON("skin://icons/ic_speaker_48px.svg",
+                          _("Audio tracks"),
+                          {
+                            $clone.osdpage = select($clone.osdpage == 101, 0, 101);
+                            focus("osd_audio");
+                          }, true);
+
+          space(1);
+
+          PLAYDECK_BUTTON("skin://icons/ic_menu_48px.svg",
+                          _("Settings"),
+                          {
+                            toggle($clone.osdpage);
+                            focus("osd_main");
+                          }, true,
+                          $clone.osdpage > 0 && $clone.osdpage < 100);
+
+        });
+      });
+      widget(dummy, {
+        hidden: !$view.showSeekBar || !$self.media.canSeek;
+        height: 2em;
+      });
     });
   });
   // Seekbar row
@@ -170,7 +255,7 @@ widget(container_z, {
       delta($clone.bottomOsdHeight, isVisible() * getHeight());
       height: 2em;
       widget(quad, {
-        alpha: 0.9;
+        alpha: 0.8;
         color: 0;
       });
 
@@ -179,7 +264,8 @@ widget(container_z, {
         padding: [$view.iconPad + 1em, 0, 0, 0];
         widget(icon, {
           source: "skin://icons/ic_pause_48px.svg";
-          alpha: iir(select($core.media.current.playstatus == "pause", 1, 0), 4);
+          alpha: iir(select(!$clone.showPlaydeck &&
+                            $core.media.current.playstatus == "pause", 1, 0), 4);
 
         });
 
@@ -237,12 +323,21 @@ widget(container_z, {
 
   widget(container_y, {
     hidden: $clone.osdpage > 0;
-    padding: [$ui.xmargin, 3.5em];
+    padding: [2em, 0.5em];
 
     style(notifications, {
       shadow: true;
     });
 
+    widget(label, {
+      alpha: iir($view.showSeekBar ||
+                 changed($self.media.metadata.title, 5, true) ||
+                 $self.media.error, 8);
+
+      padding: [1.5em, 0];
+      caption: $self.media.metadata.title;
+      size: 2em;
+    });
     widget(container_x, {
       spacing: 0.5em;
       hidden: select($self.media.error, false, true);
@@ -290,8 +385,8 @@ widget(container_z, {
 
     widget(container_x, {
       spacing: 0.5em;
-      hidden: !changed($self.media.audio.active.url, 5) ||
-        isVoid($self.media.audio.active.url);
+      alpha: iir(changed($self.media.audio.active.url, 5) &&
+                 !isVoid($self.media.audio.active.url), 8);
       widget(icon, {
         source:  "skin://icons/ic_speaker_48px.svg";
       });
@@ -307,7 +402,8 @@ widget(container_z, {
     });
 
     widget(container_x, {
-      hidden: !changed($self.media.ctrl.audiovolume, 2, true) || !$self.media.ctrl.audiovolume;
+      hidden: !changed($self.media.ctrl.audiovolume, 2, true) ||
+        !$self.media.ctrl.audiovolume;
       spacing: 0.5em;
       widget(icon, {
       });
@@ -320,8 +416,9 @@ widget(container_z, {
 
     widget(container_x, {
       spacing: 0.5em;
-      hidden: !changed($self.media.subtitle.active.url, 5) ||
-        isVoid($self.media.subtitle.active.url);
+      alpha: iir(changed($self.media.subtitle.active.url, 5) &&
+                 !isVoid($self.media.subtitle.active.url), 8);
+
       widget(icon, {
         source: "skin://icons/ic_subtitles_48px.svg";
       });
@@ -348,54 +445,4 @@ widget(container_z, {
     });
     space(1);
   });
-
-  widget(container_y, {
-    alpha: iir($view.showSeekBar ||
-               changed($self.media.metadata.title, 5, true) ||
-               $self.media.error, 8);
-    widget(container_z, {
-      height: 3em;
-      zoffset: 10;
-      widget(quad, {
-        color: 0;
-        alpha: 0.9;
-      });
-
-      widget(label, {
-        padding: [4em, 0];
-        align: center;
-        caption: $self.media.metadata.title;
-        size: 1.5em;
-      });
-
-    });
-    space(1);
-  });
-
-  widget(container_y, {
-    zoffset: 20;
-
-    alpha: iir($ui.showTopIcons, 4);
-
-    widget(container_x, {
-      space(1);
-      padding: [1em, 0];
-      height: 3em;
-      widget(icon, {
-        angle: iir(select($clone.osdpage, 1, 0), 4) * -90;
-        clickable: true;
-        onEvent(activate, {
-          toggle($clone.osdpage);
-        });
-
-        navFocusable: false;
-        color: 0.5 + iir(isHovered(), 4);
-        size: 2em;
-        source: "skin://icons/ic_menu_48px.svg";
-      });
-    });
-  });
-
-
-
 });

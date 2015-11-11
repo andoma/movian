@@ -13,7 +13,7 @@ widget(container_y, {
     id: "sidebar";
     navWrap: true;
 
-
+/*
     SIDEBAR_ACTION(_("Subtitles"),
                    "skin://icons/ic_subtitles_48px.svg",
                    {
@@ -27,7 +27,7 @@ widget(container_y, {
                      $clone.osdpage = 101;
                      focus("osd_audio");
                    });
-
+*/
     SIDEBAR_ACTION(_("Subtitle settings"),
                    "skin://icons/ic_subtitles_48px.svg",
                    {
