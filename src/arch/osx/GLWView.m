@@ -71,11 +71,14 @@ static const struct {
   { NSLeftArrowFunctionKey,   NSAlternateKeyMask, ACTION_NAV_BACK },
   { NSRightArrowFunctionKey,  NSAlternateKeyMask, ACTION_NAV_FWD },
 
-  { NSLeftArrowFunctionKey,   NSCommandKeyMask, ACTION_SEEK_BACKWARD },
-  { NSRightArrowFunctionKey,  NSCommandKeyMask, ACTION_SEEK_FORWARD },
+  { NSLeftArrowFunctionKey,   NSControlKeyMask, ACTION_SKIP_BACKWARD },
+  { NSRightArrowFunctionKey,  NSControlKeyMask, ACTION_SKIP_FORWARD },
+  { NSUpArrowFunctionKey,     NSControlKeyMask, ACTION_VOLUME_UP },
+  { NSDownArrowFunctionKey,   NSControlKeyMask, ACTION_VOLUME_DOWN },
 
-  { NSLeftArrowFunctionKey,   NSShiftKeyMask|NSCommandKeyMask, ACTION_SKIP_BACKWARD },
-  { NSRightArrowFunctionKey,  NSShiftKeyMask|NSCommandKeyMask, ACTION_SKIP_FORWARD },
+  { NSLeftArrowFunctionKey,   NSControlKeyMask | NSShiftKeyMask, ACTION_SEEK_BACKWARD },
+  { NSRightArrowFunctionKey,  NSControlKeyMask | NSShiftKeyMask , ACTION_SEEK_FORWARD },
+  { NSDownArrowFunctionKey,   NSControlKeyMask | NSShiftKeyMask, ACTION_VOLUME_MUTE_TOGGLE },
 
   /* only used for fullscreen, in windowed mode we dont get events with
    * NSCommandKeyMask set */
@@ -339,8 +342,9 @@ glw_in_fullwindow(void *opaque, int val)
   unichar cim = [[event charactersIgnoringModifiers] characterAtIndex:0];
   /* only care for some modifier keys */
   int mod = [event modifierFlags] &
-  (NSShiftKeyMask | NSCommandKeyMask |
+  (NSShiftKeyMask | NSCommandKeyMask | NSControlKeyMask |
    NSFunctionKeyMask | NSAlternateKeyMask);
+
   event_t *e = NULL;
   action_type_t av[3];
   int i;
