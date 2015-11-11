@@ -1356,6 +1356,8 @@ const char *glw_get_a_name(glw_t *w);
 
 const char *glw_get_path(glw_t *w);
 
+char *glw_get_name(glw_t *w);
+
 void glw_print_tree(glw_t *w);
 
 int glw_widget_unproject(const Mtx *m, float *xp, float *yp,

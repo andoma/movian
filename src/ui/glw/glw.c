@@ -2577,6 +2577,31 @@ glw_register_class(glw_class_t *gc)
 }
 
 
+/**
+ *
+ */
+char *
+glw_get_name(glw_t *w)
+{
+  static char buf[1024];
+  snprintf(buf, sizeof(buf), "%s @ %s:%d",
+           w->glw_class->gc_name,
+#ifdef DEBUG
+           rstr_get(w->glw_file),
+           w->glw_line
+#else
+           "?", 0
+#endif
+           );
+  return buf;
+}
+
+
+
+
+
+
+
 #define GET_A_NAME_BUF 1024
 /**
  *
