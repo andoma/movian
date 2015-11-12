@@ -181,6 +181,12 @@ widget(container_z, {
         height: 2.2em;
         delta($clone.bottomOsdHeight, isVisible() * getHeight());
 
+        onEvent(up, {
+          $clone.osdpage = 0;
+          $clone.showPlaydeck = 0;
+        }, true, false);
+
+
         widget(quad, {
           alpha: 0.8;
           color: 0;
