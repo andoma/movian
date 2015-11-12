@@ -471,7 +471,6 @@ slideshow_nodes(void *opaque, prop_event_t event, ...)
     break;
 
   default:
-    printf("Cant handle event %d\n", event);
     abort();
   }
   va_end(ap);
