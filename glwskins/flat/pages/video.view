@@ -2,9 +2,10 @@
 #import "skin://styles/style_list.view"
 
 
-#define PLAYDECK_BUTTON(ICON, TITLE, EVENT, ENABLED, ROTATED = 0) {
+#define PLAYDECK_BUTTON(ICON, TITLE, EVENT, ENABLED, ID, ROTATED = 0) {
 
   widget(container_z, {
+    id: ID;
     onEvent(activate, EVENT);
     focusable: ENABLED;
 
@@ -56,7 +57,7 @@ onEvent(back, {
 
 onEvent(menu, {
   $clone.showPlaydeck = 1;
-  focus("playdeck");
+  focus("pause-btn");
 }, !$clone.showPlaydeck);
 
 onEvent(menu, {
@@ -113,6 +114,7 @@ widget(container_z, {
 
       onEvent(activate, {
         toggle($clone.showPlaydeck);
+        focus("pause-btn");
       });
 
       bottomOverlayDisplacement: $clone.bottomOsdHeight;
@@ -138,7 +140,10 @@ widget(container_z, {
 
         widget(displacement, {
           width: 22em;
-          translation: [0, -2 + 2 * iir($clone.osdpage > 0, 3), 0];
+          scaling: [1.2 - iir($clone.osdpage > 0, 3) * 0.2,
+                    1.2 - iir($clone.osdpage > 0, 3) * 0.2,
+                    1];
+
           widget(container_z, {
 
             onEvent(left, {
@@ -193,19 +198,28 @@ widget(container_z, {
         });
 
         widget(container_x, {
-          id: "playdeck";
           spacing: 1em;
           padding: [1em + $view.iconPad, 0.1em, 2em, 0.1em];
 
           PLAYDECK_BUTTON("skin://icons/ic_stop_48px.svg",
                           _("Stop"),
                           event("Stop"),
-                          true);
+                          true, "stop-btn");
+
+          space(1);
+
+          PLAYDECK_BUTTON("skin://icons/ic_subtitles_48px.svg",
+                          _("Subtitles"),
+                          {
+                            $clone.osdpage = select($clone.osdpage == 100, 0, 100);
+                            focus("osd_subs");
+                          }, true, "subtitles-btn");
 
           PLAYDECK_BUTTON("skin://icons/ic_skip_previous_48px.svg",
                           _("Previous"),
                           event("PreviousTrack"),
-                          $core.media.current.canSkipBackward);
+                          $core.media.current.canSkipBackward,
+                         "prev-btn");
 
           PLAYDECK_BUTTON(translate($core.media.current.playstatus,
                                     "skin://icons/ic_pause_48px.svg",
@@ -213,27 +227,21 @@ widget(container_z, {
                                     "skin://icons/ic_play_arrow_48px.svg"),
                           _("Play/Pause"),
                           event("PlayPause"),
-                          $core.media.current.canPause);
+                          $core.media.current.canPause,
+                         "pause-btn");
 
           PLAYDECK_BUTTON("skin://icons/ic_skip_next_48px.svg",
                           _("Next"),
                           event("NextTrack"),
-                          $core.media.current.canSkipForward);
+                          $core.media.current.canSkipForward,
+                         "next-btn");
 
-          space(0.25);
-
-          PLAYDECK_BUTTON("skin://icons/ic_subtitles_48px.svg",
-                          _("Subtitles"),
-                          {
-                            $clone.osdpage = select($clone.osdpage == 100, 0, 100);
-                            focus("osd_subs");
-                          }, true);
           PLAYDECK_BUTTON("skin://icons/ic_speaker_48px.svg",
                           _("Audio tracks"),
                           {
                             $clone.osdpage = select($clone.osdpage == 101, 0, 101);
                             focus("osd_audio");
-                          }, true);
+                          }, true, "audio-btn");
 
           space(1);
 
@@ -242,7 +250,7 @@ widget(container_z, {
                           {
                             toggle($clone.osdpage);
                             focus("osd_main");
-                          }, true,
+                          }, true, "menu-btn",
                           $clone.osdpage > 0 && $clone.osdpage < 100);
 
         });
