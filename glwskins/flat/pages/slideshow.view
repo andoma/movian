@@ -1,0 +1,19 @@
+widget(deck, {
+
+  delta($ui.fullwindow, isVisible());
+
+  keepLastActive: true;
+  keepNextActive: true;
+
+  focusable: true;
+  time: 0.3;
+  effect: blend;
+
+  onEvent(left,  deliverEvent($self.slideshow.eventSink, "SeekReverse"));
+  onEvent(right, deliverEvent($self.slideshow.eventSink, "SeekForward"));
+
+  cloner($self.model.nodes, image, {
+    height: 3em;
+    source: $self.url;
+  });
+});

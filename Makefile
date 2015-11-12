@@ -81,6 +81,7 @@ SRCS += src/main.c \
 	src/prop/prop_proxy.c \
 	src/metadata/playinfo.c \
 	src/db/kvstore.c \
+	src/backend/slideshow/slideshow.c \
 
 SRCS +=	src/media/media.c \
 	src/media/media_buf.c \

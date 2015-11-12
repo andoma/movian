@@ -6,7 +6,7 @@ widget(container_z, {
   ListItemHighlight();
 
   focusable: true;
-  onEvent(activate, navOpen($self.url, void, $self, $parent.model, void, $parent.url));
+  onEvent(activate, navOpen("slideshow:" + $self.url, void, $self, $parent.model, void, $parent.url));
   onEvent(itemMenu, eventWithProp(defaultInfo, $self));
 
   widget(container_x, {
