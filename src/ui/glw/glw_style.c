@@ -556,7 +556,7 @@ gs_set_string_unresolved(struct glw *w, const char *a, rstr_t *value,
   glw_style_attribute_t *gsa =
     glw_style_find_unresolved_attribute(gs, a, &created);
 
-  if(!created && rstr_eq(value, gsa->rstr))
+  if(!created && gsa->gsa_type == GSA_RSTR && rstr_eq(value, gsa->rstr))
     return 0;
 
   if(gsa_check_blocking(gsa, origin))
