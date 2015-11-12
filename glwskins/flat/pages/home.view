@@ -58,10 +58,10 @@
 
 #define NEWSSTAND() {
   cloner($core.news, container_x, {
-    height: 3em;
+    height: 2em;
     divider: true;
     spacing: 1em;
-    padding: [2em, 1em, 2em, 0em];
+    padding: [2em, 0em];
 
     widget(icon, {
       source: "skin://icons/ic_info_outline_48px.svg";
