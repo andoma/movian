@@ -23,6 +23,7 @@
 #include "config.h"
 #include "settings.h"
 #include "misc/cancellable.h"
+#include "misc/lockmgr.h"
 
 // -------------------------------------------------------------------
 
@@ -410,7 +411,7 @@ void mp_reset(media_pipe_t *mp);
  * Lockmgr to be passed to prop framework for prop callbacks into
  * a specific media_pipe
  */
-int mp_lockmgr(void *ptr, int op);
+int mp_lockmgr(void *ptr, lockmgr_op_t op);
 
 
 /**

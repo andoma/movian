@@ -111,16 +111,6 @@ typedef void (prop_callback_destroyed_t)(void *opaque, struct prop_sub *s);
 
 typedef void (prop_trampoline_t)(struct prop_sub *s, prop_event_t event, ...);
 
-typedef enum {
-  PROP_LOCK_UNLOCK,
-  PROP_LOCK_LOCK,
-  PROP_LOCK_TRY,
-  PROP_LOCK_RETAIN,
-  PROP_LOCK_RELEASE,
-} prop_lock_op_t;
-
-typedef int (prop_lockmgr_t)(void *ptr, prop_lock_op_t op);
-
 /**
  *
  */
@@ -413,11 +403,6 @@ prop_courier_t *prop_courier_create_notify(void (*notify)(void *opaque),
 					   void *opaque);
 
 prop_courier_t *prop_courier_create_waitable(void);
-
-prop_courier_t *prop_courier_create_lockmgr(const char *name, 
-					    prop_lockmgr_t *mgr, void *lock,
-					    void (*prologue)(void),
-					    void (*epilogue)(void));
 
 int prop_courier_wait(prop_courier_t *pc, struct prop_notify_queue *q,
 		      int timeout);

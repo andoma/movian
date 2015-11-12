@@ -47,25 +47,36 @@ calloutcmp(callout_t *a, callout_t *b)
  */
 static void
 callout_arm_abs(callout_t *d, callout_callback_t *callback, void *opaque,
-		uint64_t deadline, const char *file, int line)
+		uint64_t deadline, lockmgr_fn_t *lockmgr,
+                const char *file, int line)
 {
+  lockmgr_fn_t *retain = NULL;
   hts_mutex_lock(&callout_mutex);
 
-  if(d == NULL)
+  if(d == NULL) {
     d = malloc(sizeof(callout_t));
-  else if(d->c_callback != NULL)
-    LIST_REMOVE(d, c_link);
-    
+  } else {
+
+    if(d->c_callback != NULL) {
+      LIST_REMOVE(d, c_link);
+    } else {
+      retain = lockmgr;
+    }
+  }
+
   d->c_callback = callback;
   d->c_opaque = opaque;
   d->c_deadline = deadline;
   d->c_armed_by_file = file;
   d->c_armed_by_line = line;
-
+  d->c_lockmgr = lockmgr;
   LIST_INSERT_SORTED(&callouts, d, c_link, calloutcmp, callout_t);
   hts_cond_signal(&callout_cond);
   hts_mutex_unlock(&callout_mutex);
+  if(retain)
+    retain(opaque, LOCKMGR_RETAIN);
 }
+
 
 /**
  *
@@ -76,7 +87,7 @@ callout_arm_x(callout_t *d, callout_callback_t *callback,
               const char *file, int line)
 {
   uint64_t deadline = arch_get_ts() + delta * 1000000LL;
-  callout_arm_abs(d, callback, opaque, deadline, file, line);
+  callout_arm_abs(d, callback, opaque, deadline, NULL, file, line);
 }
 
 /**
@@ -88,21 +99,37 @@ callout_arm_hires_x(callout_t *d, callout_callback_t *callback,
                     const char *file, int line)
 {
   uint64_t deadline = arch_get_ts() + delta;
-  callout_arm_abs(d, callback, opaque, deadline, file, line);
+  callout_arm_abs(d, callback, opaque, deadline, NULL, file, line);
+}
+
+
+/**
+ *
+ */
+void
+callout_arm_managed_x(callout_t *d, callout_callback_t *callback,
+                      void *opaque, uint64_t delta, lockmgr_fn_t *lockmgr,
+                      const char *file, int line)
+{
+  uint64_t deadline = arch_get_ts() + delta;
+  callout_arm_abs(d, callback, opaque, deadline, lockmgr, file, line);
 }
 
 /**
  *
  */
 void
-callout_disarm(callout_t *d)
+callout_disarm(callout_t *c)
 {
   hts_mutex_lock(&callout_mutex);
-  if(d->c_callback) {
-    LIST_REMOVE(d, c_link);
-    d->c_callback = NULL;
+  lockmgr_fn_t *lm = c->c_lockmgr;
+  if(c->c_callback) {
+    LIST_REMOVE(c, c_link);
+    c->c_callback = NULL;
   }
   hts_mutex_unlock(&callout_mutex);
+  if(lm)
+    lm(c->c_opaque, LOCKMGR_RELEASE);
 }
 
 
@@ -126,10 +153,22 @@ callout_loop(void *aux)
       cc = c->c_callback;
       LIST_REMOVE(c, c_link);
       c->c_callback = NULL;
+      lockmgr_fn_t *lm = c->c_lockmgr;
       const char *file = c->c_armed_by_file;
       int line         = c->c_armed_by_line;
+      void *opaque     = c->c_opaque;
       hts_mutex_unlock(&callout_mutex);
-      cc(c, c->c_opaque);
+
+      if(lm != NULL)
+        lm(opaque, LOCKMGR_LOCK);
+
+      cc(c, opaque);
+
+      if(lm != NULL) {
+        lm(opaque, LOCKMGR_UNLOCK);
+        lm(opaque, LOCKMGR_RELEASE);
+      }
+
       hts_mutex_lock(&callout_mutex);
       int64_t ts = arch_get_ts();
       if(ts - now > 1000000)

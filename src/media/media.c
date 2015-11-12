@@ -41,6 +41,7 @@
 
 #include "media_track.h"
 #include "media_settings.h"
+#include "misc/lockmgr.h"
 
 atomic_t media_buffer_hungry; /* Set if we try to fill media buffers
                                  Code can check this and avoid doing IO
@@ -774,25 +775,25 @@ mp_configure(media_pipe_t *mp, int flags, int buffer_size, int64_t duration,
  *
  */
 int
-mp_lockmgr(void *ptr, int op)
+mp_lockmgr(void *ptr, lockmgr_op_t op)
 {
   media_pipe_t *mp = ptr;
 
   switch(op) {
-  case PROP_LOCK_UNLOCK:
+  case LOCKMGR_UNLOCK:
     hts_mutex_unlock(&mp->mp_mutex);
     return 0;
-  case PROP_LOCK_LOCK:
+  case LOCKMGR_LOCK:
     hts_mutex_lock(&mp->mp_mutex);
     return 0;
-  case PROP_LOCK_TRY:
+  case LOCKMGR_TRY:
     return hts_mutex_trylock(&mp->mp_mutex);
 
-  case PROP_LOCK_RETAIN:
+  case LOCKMGR_RETAIN:
     atomic_inc(&mp->mp_refcount);
     return 0;
 
-  case PROP_LOCK_RELEASE:
+  case LOCKMGR_RELEASE:
     mp_release(mp);
     return 0;
   }

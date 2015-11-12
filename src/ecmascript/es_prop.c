@@ -622,25 +622,25 @@ es_sub_cb(void *opaque, prop_event_t event, ...)
  *
  */
 static int
-es_prop_lockmgr(void *ptr, int op)
+es_prop_lockmgr(void *ptr, lockmgr_op_t op)
 {
   es_context_t *ec = ptr;
 
   switch(op) {
-  case PROP_LOCK_UNLOCK:
+  case LOCKMGR_UNLOCK:
     hts_mutex_unlock(&ec->ec_mutex);
     return 0;
-  case PROP_LOCK_LOCK:
+  case LOCKMGR_LOCK:
     hts_mutex_lock(&ec->ec_mutex);
     return 0;
-  case PROP_LOCK_TRY:
+  case LOCKMGR_TRY:
     return hts_mutex_trylock(&ec->ec_mutex);
 
-  case PROP_LOCK_RETAIN:
+  case LOCKMGR_RETAIN:
     atomic_inc(&ec->ec_refcount);
     return 0;
 
-  case PROP_LOCK_RELEASE:
+  case LOCKMGR_RELEASE:
     es_context_release(ec);
     return 0;
   }

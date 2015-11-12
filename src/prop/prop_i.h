@@ -27,6 +27,7 @@
 #include "prop.h"
 #include "misc/pool.h"
 #include "misc/redblack.h"
+#include "misc/lockmgr.h"
 
 extern hts_mutex_t prop_mutex;
 extern hts_mutex_t prop_tag_mutex;
@@ -56,7 +57,7 @@ struct prop_courier {
   struct prop_notify_queue pc_free_queue;
 
   void *pc_entry_lock;
-  prop_lockmgr_t *pc_lockmgr;
+  lockmgr_fn_t *pc_lockmgr;
 
   hts_cond_t pc_cond;
   int pc_has_cond;
@@ -428,7 +429,7 @@ struct prop_sub {
   /**
    * Function to call to obtain / release the lock.
    */
-  prop_lockmgr_t *hps_lockmgr;
+  lockmgr_fn_t *hps_lockmgr;
 
   /**
    * Linkage to property or proxy connection. Protected by global mutex

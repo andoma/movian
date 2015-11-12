@@ -195,21 +195,21 @@ prop_get_DN(prop_t *p, int compact)
  * Default lockmanager for normal mutexes
  */
 static int
-proplockmgr(void *ptr, prop_lock_op_t op)
+proplockmgr(void *ptr, lockmgr_op_t op)
 {
   hts_mutex_t *mtx = (hts_mutex_t *)ptr;
 
   switch(op) {
-  case PROP_LOCK_UNLOCK:
+  case LOCKMGR_UNLOCK:
     hts_mutex_unlock(mtx);
     break;
-  case PROP_LOCK_LOCK:
+  case LOCKMGR_LOCK:
     hts_mutex_lock(mtx);
     break;
-  case PROP_LOCK_TRY:
+  case LOCKMGR_TRY:
     return hts_mutex_trylock(mtx);
-  case PROP_LOCK_RETAIN:
-  case PROP_LOCK_RELEASE:
+  case LOCKMGR_RETAIN:
+  case LOCKMGR_RELEASE:
     break;
   }
   return 0;
@@ -434,7 +434,7 @@ prop_sub_ref_dec_locked(prop_sub_t *s)
 {
   if(atomic_dec(&s->hps_refcount))
     return;
-  s->hps_lockmgr(s->hps_lock, PROP_LOCK_RELEASE);
+  s->hps_lockmgr(s->hps_lock, LOCKMGR_RELEASE);
   pool_put(sub_pool, s);
 }
 
@@ -869,7 +869,7 @@ prop_dispatch_one(prop_notify_t *n, int lockmode)
 
   if(s->hps_lock != NULL) {
     if(s->hps_lockmgr(s->hps_lock, lockmode)) {
-      assert(lockmode == PROP_LOCK_TRY);
+      assert(lockmode == LOCKMGR_TRY);
       return 1;
     }
   }
@@ -909,7 +909,7 @@ prop_notify_dispatch(struct prop_notify_queue *q, const char *trace_name)
       snprintf(info, sizeof(info), "%p", n->hpn_sub);
 #endif
       int64_t ts = arch_get_ts();
-      prop_dispatch_one(n, PROP_LOCK_LOCK);
+      prop_dispatch_one(n, LOCKMGR_LOCK);
       ts = arch_get_ts() - ts;
       if(ts > 10000) {
         TRACE(ts > 100000 ? TRACE_INFO : TRACE_DEBUG,
@@ -920,7 +920,7 @@ prop_notify_dispatch(struct prop_notify_queue *q, const char *trace_name)
 
   } else {
     TAILQ_FOREACH(n, q, hpn_link)
-      prop_dispatch_one(n, PROP_LOCK_LOCK);
+      prop_dispatch_one(n, LOCKMGR_LOCK);
   }
 
   hts_mutex_lock(&prop_mutex);
@@ -1027,7 +1027,7 @@ prop_global_dispatch_thread(void *aux)
     assert(n != NULL);
 
     hts_mutex_unlock(&prop_mutex);
-    int r = prop_dispatch_one(n, PROP_LOCK_TRY);
+    int r = prop_dispatch_one(n, LOCKMGR_TRY);
     hts_mutex_lock(&prop_mutex);
 
     TAILQ_REMOVE(&prop_global_dispatch_dispatching_queue, psd, psd_link);
@@ -1060,7 +1060,7 @@ prop_global_dispatch_thread(void *aux)
         TAILQ_INSERT_TAIL(&prop_global_dispatch_dispatching_queue, psd,
                           psd_link);
         hts_mutex_unlock(&prop_mutex);
-        prop_dispatch_one(n, PROP_LOCK_LOCK);
+        prop_dispatch_one(n, LOCKMGR_LOCK);
         hts_mutex_lock(&prop_mutex);
         TAILQ_REMOVE(&prop_global_dispatch_dispatching_queue, psd, psd_link);
 
@@ -2798,7 +2798,7 @@ prop_subscribe_ex(const char *file, int line, int flags, ...)
   void *opaque = NULL;
   prop_courier_t *pc = NULL;
   void *lock = NULL;
-  prop_lockmgr_t *lockmgr = NULL;
+  lockmgr_fn_t *lockmgr = NULL;
   prop_root_t *pr;
   struct prop_root_list proproots;
   void *cb = NULL;
@@ -2950,7 +2950,7 @@ prop_subscribe_ex(const char *file, int line, int flags, ...)
       break;
 
     case PROP_TAG_LOCKMGR:
-      lockmgr = va_arg(ap, prop_lockmgr_t *);
+      lockmgr = va_arg(ap, lockmgr_fn_t *);
       break;
 
 #ifdef PROP_SUB_RECORD_SOURCE
@@ -3092,7 +3092,7 @@ prop_subscribe_ex(const char *file, int line, int flags, ...)
     s->hps_lockmgr = lockmgr;
   }
 
-  s->hps_lockmgr(s->hps_lock, PROP_LOCK_RETAIN);
+  s->hps_lockmgr(s->hps_lock, LOCKMGR_RETAIN);
 
   s->hps_canonical_prop = canonical;
   s->hps_value_prop = value;
@@ -5012,34 +5012,6 @@ prop_courier_create_waitable(void)
 }
 
 
-
-/**
- *
- */
-prop_courier_t *
-prop_courier_create_lockmgr(const char *name, prop_lockmgr_t *mgr, void *lock,
-			    void (*prologue)(void),
-			    void (*epilogue)(void))
-{
-  prop_courier_t *pc = prop_courier_create();
-  char buf[URL_MAX];
-  pc->pc_entry_lock = lock;
-  pc->pc_lockmgr = mgr;
-  pc->pc_prologue = prologue;
-  pc->pc_epilogue = epilogue;
-
-  snprintf(buf, sizeof(buf), "PC:%s", name);
-
-  pc->pc_has_cond = 1;
-  hts_cond_init(&pc->pc_cond, &prop_mutex);
-
-  pc->pc_run = 1;
-  hts_thread_create_joinable(buf, &pc->pc_thread, prop_courier, pc,
-			     THREAD_PRIO_MODEL);
-  return pc;
-}
-
-
 /**
  *
  */
@@ -5186,7 +5158,7 @@ prop_courier_poll_timed(prop_courier_t *pc, int maxtime)
   int64_t ts = arch_get_ts();
 
   while((n = TAILQ_FIRST(&pc->pc_dispatch_queue)) != NULL) {
-    prop_dispatch_one(n, PROP_LOCK_LOCK);
+    prop_dispatch_one(n, LOCKMGR_LOCK);
     TAILQ_REMOVE(&pc->pc_dispatch_queue, n, hpn_link);
     TAILQ_INSERT_TAIL(&pc->pc_free_queue, n, hpn_link);
     if(arch_get_ts() > ts + maxtime)
