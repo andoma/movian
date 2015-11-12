@@ -1137,7 +1137,6 @@ typedef struct glw {
 #define GLW2_CONSTRAINT_IGNORE_W    GLW_CONSTRAINT_W
 #define GLW2_CONSTRAINT_IGNORE_D    GLW_CONSTRAINT_D
 #define GLW2_ENABLED                0x10
-#define GLW2_ALWAYS_LAYOUT          0x20
 #define GLW2_ALWAYS_GRAB_KNOB       0x40
 #define GLW2_AUTOHIDE               0x80
 #define GLW2_SHADOW                 0x100

@@ -1258,7 +1258,6 @@ static const token_attrib_t attribtab[] = {
   {"navFocusable",          mod_flag, GLW2_NAV_FOCUSABLE,          mod_flags2},
   {"homogenous",            mod_flag, GLW2_HOMOGENOUS,             mod_flags2},
   {"enabled",               mod_flag, GLW2_ENABLED,                mod_flags2},
-  {"alwaysLayout",          mod_flag, GLW2_ALWAYS_LAYOUT,          mod_flags2},
   {"alwaysGrabKnob",        mod_flag, GLW2_ALWAYS_GRAB_KNOB,       mod_flags2},
   {"autohide",              mod_flag, GLW2_AUTOHIDE,               mod_flags2},
   {"shadow",                mod_flag, GLW2_SHADOW,                 mod_flags2},

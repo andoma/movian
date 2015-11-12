@@ -123,7 +123,6 @@ static void
 glw_deck_layout(glw_t *w, const glw_rctx_t *rc)
 {
   glw_deck_t *gd = (glw_deck_t *)w;
-  glw_t *c;
 
   gd->delta = 1 / (gd->time * (1000000 / w->glw_root->gr_frameduration));
 
@@ -139,11 +138,12 @@ glw_deck_layout(glw_t *w, const glw_rctx_t *rc)
   if(gd->v == 1)
     gd->prev = NULL;
 
-  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
-    if(c == w->glw_selected || c == gd->prev || 
-       c->glw_flags2 & GLW2_ALWAYS_LAYOUT)
-      glw_layout0(c, rc);
-  }
+
+  if(gd->prev != NULL)
+    glw_layout0(gd->prev, rc);
+
+  if(w->glw_selected != NULL && w->glw_selected != gd->prev)
+    glw_layout0(w->glw_selected, rc);
 }
 
 
