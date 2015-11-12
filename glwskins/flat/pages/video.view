@@ -139,6 +139,8 @@ widget(container_z, {
 
 
         widget(displacement, {
+          hidden: iir($clone.osdpage > 0, 3) < 0.01;
+
           width: 22em;
           scaling: [1.2 - iir($clone.osdpage > 0, 3) * 0.2,
                     1.2 - iir($clone.osdpage > 0, 3) * 0.2,
