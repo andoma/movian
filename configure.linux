@@ -115,9 +115,6 @@ for opt do
   ;;
   --arch=*) ARCH="$optval"
   ;;
-  --sanitize=*)
-          SANITIZE="$optval"
-  ;;
   --enable-all)
 	  enable libgme
   ;;
@@ -574,15 +571,6 @@ if enabled libgme; then
     check_header "gme/gme.h" || fatal "libgme" "Missing include file gme/gme.h"
     check_lib    "gme"       || fatal "libgme" "Unable to link with libgme"
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lgme"
-fi
-
-
-#
-# sanitize
-#
-if [ -n "$SANITIZE" ]; then
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -fsanitize=${SANITIZE}"
-    echo >>${CONFIG_MAK} "CFLAGS_cfg += -fsanitize=${SANITIZE}"
 fi
 
 
