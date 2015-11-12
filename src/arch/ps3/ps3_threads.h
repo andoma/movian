@@ -19,7 +19,7 @@
  */
 #pragma once
 #include <sys/queue.h>
-
+#include <stdlib.h>
 // #define PS3_LW_PRIMITIVES
 
 

@@ -75,7 +75,7 @@ prop_courier_poll_with_alarm(prop_courier_t *pc, int maxtime)
 
 
   while((n = TAILQ_FIRST(&pc->pc_dispatch_queue)) != NULL && !alarm_fired) {
-    prop_dispatch_one(n, PROP_LOCK_LOCK);
+    prop_dispatch_one(n, LOCKMGR_LOCK);
     TAILQ_REMOVE(&pc->pc_dispatch_queue, n, hpn_link);
     TAILQ_INSERT_TAIL(&pc->pc_free_queue, n, hpn_link);
   }
