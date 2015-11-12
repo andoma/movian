@@ -344,6 +344,12 @@ loader_thread(void *aux)
             glt->glt_origin_type   = img->im_origin_coded_type;
 	    glt->glt_orientation   = img->im_orientation;
 
+            if(gconf.enable_image_debug)
+              TRACE(TRACE_DEBUG, "GLW",
+                    "Loaded %s (%d x %d)",
+                    rstr_get(url), pm->pm_width, pm->pm_height);
+
+
 	    glt->glt_size          = glw_tex_backend_load(gr, glt, pm);
 	    glw_need_refresh(gr, 0);
 	  }
