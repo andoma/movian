@@ -258,7 +258,6 @@ widget(container_z, {
         });
       });
       widget(dummy, {
-        hidden: !$view.showSeekBar || !$self.media.canSeek;
         height: 2em;
       });
     });
