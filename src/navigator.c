@@ -128,8 +128,11 @@ typedef struct nav_page {
 
   prop_sub_t *np_direct_close_sub;
 
-  prop_t *np_opened_from;
-  prop_t *np_origin;
+  prop_t *np_item_model_src;
+  prop_t *np_item_model_dst;
+
+  prop_t *np_parent_model_src;
+  prop_t *np_parent_model_dst;
 
   // For bookmarking
 
@@ -174,7 +177,7 @@ static void nav_eventsink(void *opaque, event_t *e);
 static void nav_dtor_tracker(void *opaque, prop_event_t event, ...);
 
 static void nav_open0(navigator_t *nav, const char *url, const char *view,
-		      prop_t *origin, prop_t *model, const char *how,
+		      prop_t *item_model, prop_t *parent_model, const char *how,
                       const char *parent_url);
 
 static void page_redirect(nav_page_t *np, const char *url);
@@ -359,12 +362,20 @@ nav_close(nav_page_t *np, int with_prop)
   TAILQ_REMOVE(&nav->nav_history, np, np_history_link);
   TAILQ_REMOVE(&nav->nav_pages, np, np_global_link);
 
+  prop_unlink(np->np_item_model_dst);
+  prop_unlink(np->np_parent_model_dst);
+
   if(with_prop) {
     prop_destroy(np->np_prop_root);
     nav_update_cango(nav);
   }
-  prop_ref_dec(np->np_opened_from);
-  prop_ref_dec(np->np_origin);
+
+  prop_ref_dec(np->np_item_model_src);
+  prop_ref_dec(np->np_item_model_dst);
+
+  prop_ref_dec(np->np_parent_model_src);
+  prop_ref_dec(np->np_parent_model_dst);
+
   rstr_release(np->np_title);
   free(np->np_url);
   free(np->np_parent_url);
@@ -408,10 +419,10 @@ nav_fini(void)
  *
  */
 static void
-nav_select(navigator_t *nav, nav_page_t *np, prop_t *origin)
+nav_select(navigator_t *nav, nav_page_t *np, prop_t *item_model)
 {
   prop_link(np->np_prop_root, nav->nav_prop_curpage);
-  prop_select_ex(np->np_prop_root, origin, NULL);
+  prop_select_ex(np->np_prop_root, item_model, NULL);
   nav->nav_page_current = np;
   nav_update_cango(nav);
 }
@@ -421,7 +432,7 @@ nav_select(navigator_t *nav, nav_page_t *np, prop_t *origin)
  *
  */
 static void
-nav_insert_page(navigator_t *nav, nav_page_t *np, prop_t *origin)
+nav_insert_page(navigator_t *nav, nav_page_t *np, prop_t *item_model)
 {
   nav_page_t *np2;
 
@@ -443,7 +454,7 @@ nav_insert_page(navigator_t *nav, nav_page_t *np, prop_t *origin)
 
   TAILQ_INSERT_TAIL(&nav->nav_history, np, np_history_link);
 
-  nav_select(nav, np, origin);
+  nav_select(nav, np, item_model);
 
   /*
    * Kill off pages that's just previous to this page in history
@@ -591,21 +602,17 @@ nav_page_setup_prop(nav_page_t *np, const char *view)
   kv_prop_bind_create(prop_create(np->np_prop_root, "persistent"),
 		      np->np_url);
 
-  if(np->np_opened_from)
-    prop_set(np->np_prop_root, "openedFrom", PROP_SET_PROP, np->np_opened_from);
+  prop_t *prev = prop_create(np->np_prop_root, "previous");
+  
+  if(np->np_parent_model_src) {
+    np->np_parent_model_dst = prop_create_r(prev, "parentModel");
+    prop_link(np->np_parent_model_src, np->np_parent_model_dst);
+  }
 
-  if(np->np_origin)
-    prop_set(np->np_prop_root, "origin", PROP_SET_PROP, np->np_origin);
-  /*
-   * The following line does not work as it should due to bugs
-   * with prop unlinking, see #2419 so instead we just set a prop
-   * reference. Also notice that we used to do a
-   *
-   *     prop_unlink(prop_create(np->np_prop_root, "origin"));
-   *
-   * in nav_back() when we closed a page before this change
-   */
-  //    prop_link(np->np_origin, prop_create(np->np_prop_root, "origin"));
+  if(np->np_item_model_src) {
+    np->np_item_model_dst = prop_create_r(prev, "itemModel");
+    prop_link(np->np_item_model_src, np->np_item_model_dst);
+  }
 
   if(view != NULL)
     prop_set(np->np_prop_root, "requestedView", PROP_SET_STRING, view);
@@ -711,8 +718,9 @@ nav_open_backend(nav_page_t *np)
  *
  */
 static void
-nav_open0(navigator_t *nav, const char *url, const char *view, prop_t *origin,
-	  prop_t *model, const char *how, const char *parent_url)
+nav_open0(navigator_t *nav, const char *url, const char *view,
+          prop_t *item_model, prop_t *parent_model,
+          const char *how, const char *parent_url)
 {
   nav_page_t *np = calloc(1, sizeof(nav_page_t));
 
@@ -720,15 +728,15 @@ nav_open0(navigator_t *nav, const char *url, const char *view, prop_t *origin,
   np->np_nav = nav;
   np->np_url = strdup(url);
   np->np_parent_url = parent_url ? strdup(parent_url) : NULL;
-  np->np_opened_from = prop_ref_inc(model);
-  np->np_origin = prop_ref_inc(origin);
+  np->np_item_model_src   = prop_ref_inc(item_model);
+  np->np_parent_model_src = prop_ref_inc(parent_model);
   np->np_direct_close = 0;
   np->np_how = how ? strdup(how) : NULL;
   TAILQ_INSERT_TAIL(&nav->nav_pages, np, np_global_link);
 
   nav_page_setup_prop(np, view);
 
-  nav_insert_page(nav, np, origin);
+  nav_insert_page(nav, np, item_model);
   nav_open_backend(np);
 
 }
@@ -875,8 +883,9 @@ nav_eventsink(void *opaque, event_t *e)
   } else if(event_is_type(e, EVENT_OPENURL)) {
     ou = (event_openurl_t *)e;
     if(ou->url != NULL)
-      nav_open0(nav, ou->url, ou->view, ou->origin, ou->model, ou->how,
-                ou->parent_url);
+      nav_open0(nav, ou->url, ou->view,
+                ou->item_model, ou->parent_model,
+                ou->how, ou->parent_url);
     else
       TRACE(TRACE_INFO, "Navigator", "Tried to open NULL URL");
   }

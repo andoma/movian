@@ -438,14 +438,14 @@ glw_video_play(glw_video_t *gv)
   mystrset(&gv->gv_current_url, gv->gv_pending_url ?: "");
 
   e = event_create_playurl(
-      .url        = gv->gv_current_url,
-      .primary    = !!(gv->gv_flags & GLW_VIDEO_PRIMARY),
-      .priority   = gv->gv_priority,
-      .no_audio   = !!(gv->gv_flags & GLW_VIDEO_NO_AUDIO),
-      .model      = gv->gv_model,
-      .how        = gv->gv_how,
-      .origin     = gv->gv_origin,
-      .parent_url = rstr_get(gv->gv_parent_url_x)
+      .url          = gv->gv_current_url,
+      .primary      = !!(gv->gv_flags & GLW_VIDEO_PRIMARY),
+      .priority     = gv->gv_priority,
+      .no_audio     = !!(gv->gv_flags & GLW_VIDEO_NO_AUDIO),
+      .item_model   = gv->gv_item_model,
+      .how          = gv->gv_how,
+      .parent_model = gv->gv_parent_model,
+      .parent_url   = rstr_get(gv->gv_parent_url_x)
       );
 
   mp_enqueue_event(gv->gv_mp, e);
@@ -465,8 +465,8 @@ glw_video_dtor(glw_t *w)
 
   glw_renderer_free(&gv->gv_quad);
 
-  prop_ref_dec(gv->gv_model);
-  prop_ref_dec(gv->gv_origin);
+  prop_ref_dec(gv->gv_item_model);
+  prop_ref_dec(gv->gv_parent_model);
 
 #if ENABLE_MEDIA_SETTINGS
   prop_unsubscribe(gv->gv_vo_scaling_sub);
@@ -874,14 +874,14 @@ glw_video_set_prop(glw_t *w, glw_attribute_t attrib, prop_t *p)
   glw_video_t *gv = (glw_video_t *)w;
 
   switch(attrib) {
-  case GLW_ATTRIB_PROP_MODEL:
-    prop_ref_dec(gv->gv_model);
-    gv->gv_model = prop_ref_inc(p);
+  case GLW_ATTRIB_PROP_ITEM_MODEL:
+    prop_ref_dec(gv->gv_item_model);
+    gv->gv_item_model = prop_ref_inc(p);
     return 0;
 
-  case GLW_ATTRIB_PROP_ORIGIN:
-    prop_ref_dec(gv->gv_origin);
-    gv->gv_origin = prop_ref_inc(p);
+  case GLW_ATTRIB_PROP_PARENT_MODEL:
+    prop_ref_dec(gv->gv_parent_model);
+    gv->gv_parent_model = prop_ref_inc(p);
     return 0;
 
   default:

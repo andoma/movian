@@ -638,12 +638,12 @@ prop_proxy_send_event(prop_t *p, const event_t *e)
       const event_openurl_t *eo = (const event_openurl_t *)e;
       uint8_t flags = 0;
 
-      flags |= eo->url        ? 0x01 : 0;
-      flags |= eo->view       ? 0x02 : 0;
-      flags |= eo->origin     ? 0x04 : 0;
-      flags |= eo->model      ? 0x08 : 0;
-      flags |= eo->how        ? 0x10 : 0;
-      flags |= eo->parent_url ? 0x20 : 0;
+      flags |= eo->url          ? 0x01 : 0;
+      flags |= eo->view         ? 0x02 : 0;
+      flags |= eo->item_model   ? 0x04 : 0;
+      flags |= eo->parent_model ? 0x08 : 0;
+      flags |= eo->how          ? 0x10 : 0;
+      flags |= eo->parent_url   ? 0x20 : 0;
       htsbuf_append_byte(&q, flags);
 
       if(eo->url != NULL)
@@ -652,11 +652,11 @@ prop_proxy_send_event(prop_t *p, const event_t *e)
       if(eo->view != NULL)
         prop_proxy_send_str(eo->view, &q);
 
-      if(eo->origin != NULL)
-        prop_proxy_send_prop(eo->origin, &q);
+      if(eo->item_model != NULL)
+        prop_proxy_send_prop(eo->item_model, &q);
 
-      if(eo->model != NULL)
-        prop_proxy_send_prop(eo->model, &q);
+      if(eo->parent_model != NULL)
+        prop_proxy_send_prop(eo->parent_model, &q);
 
       if(eo->how != NULL)
         prop_proxy_send_str(eo->how, &q);

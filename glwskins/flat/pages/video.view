@@ -97,9 +97,10 @@ widget(container_z, {
       primary: true;
 
       how: $self.how;
-      model: $self.openedFrom;
+      itemModel: $self.previous.itemModel;
+      parentModel: $self.previous.parentModel;
+
       parentUrl: $self.parentUrl;
-      origin: $self.origin;
       source: $self.source;
 
       focusable: 0.1;

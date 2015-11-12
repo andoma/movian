@@ -3297,8 +3297,8 @@ glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
   const char *url;
   const char *view = NULL;
   const char *how = NULL;
-  prop_t *origin = NULL;
-  prop_t *model = NULL;
+  prop_t *item_model = NULL;
+  prop_t *parent_model = NULL;
   const char *purl = NULL;
 
   if(argc < 1 || argc > 6)
@@ -3338,8 +3338,8 @@ glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
 
     if(c->type != TOKEN_PROPERTY_REF)
       return glw_view_seterr(ec->ei, c, "navOpen(): "
-			     "Third argument is not a property");
-    origin = c->t_prop;
+			     "Third argument (itemModel) is not a property");
+    item_model = c->t_prop;
   }
 
   if(argc > 3  && argv[3]->type != TOKEN_VOID) {
@@ -3348,8 +3348,8 @@ glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
 
     if(d->type != TOKEN_PROPERTY_REF)
       return glw_view_seterr(ec->ei, d, "navOpen(): "
-			     "Fourth argument is not a property");
-    model = d->t_prop;
+			     "Fourth argument (parentModel) is not a property");
+    parent_model = d->t_prop;
   }
 
   if(argc > 4) {
@@ -3362,7 +3362,7 @@ glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
       how = rstr_get(e->t_rstring);
     else
       return glw_view_seterr(ec->ei, e, "navOpen(): "
-			     "Fifth argument is not a string or (void)");
+			     "Fifth argument (how) is not a string or (void)");
   }
 
 
@@ -3376,15 +3376,16 @@ glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
       purl = rstr_get(f->t_rstring);
     else
       return glw_view_seterr(ec->ei, f, "navOpen(): "
-			     "Sixth argument is not a string or (void)");
+			     "Sixth argument (parent url) is not a "
+                             "string or (void)");
   }
 
   r = eval_alloc(self, ec, TOKEN_EVENT);
 
   event_t *ev = event_create_openurl(.url = url,
                                      .view = view,
-                                     .origin = origin,
-                                     .model = model,
+                                     .item_model = item_model,
+                                     .parent_model = parent_model,
                                      .how = how,
                                      .parent_url = purl);
 

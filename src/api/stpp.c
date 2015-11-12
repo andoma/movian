@@ -763,11 +763,11 @@ stpp_binary_event(prop_t *p, event_type_t event,
         flags = 0;
 
       if(flags & 0x04 &&
-         (args.origin = decode_propref(stpp, &data, &len)) == NULL)
+         (args.item_model = decode_propref(stpp, &data, &len)) == NULL)
         flags = 0;
 
       if(flags & 0x08 &&
-         (args.model = decode_propref(stpp, &data, &len)) == NULL)
+         (args.parent_model = decode_propref(stpp, &data, &len)) == NULL)
         flags = 0;
 
       if(flags & 0x10 && (args.how = decode_string(&data, &len)) == NULL)
@@ -784,8 +784,8 @@ stpp_binary_event(prop_t *p, event_type_t event,
       free((void *)args.view);
       free((void *)args.how);
       free((void *)args.parent_url);
-      prop_ref_dec(args.origin);
-      prop_ref_dec(args.model);
+      prop_ref_dec(args.item_model);
+      prop_ref_dec(args.parent_model);
     }
     break;
 

@@ -674,7 +674,7 @@ video_player_idle(void *aux)
   int play_priority = 0;
   rstr_t *play_url = NULL;
   int force_continuous = 0;
-  prop_t *origin = NULL;
+  prop_t *item_model = NULL;
   rstr_t *parent_url = NULL;
   rstr_t *parent_title = NULL;
 
@@ -721,7 +721,7 @@ video_player_idle(void *aux)
 		     play_flags, play_priority,
 		     errbuf, sizeof(errbuf), vq,
                      rstr_get(parent_url), rstr_get(parent_title),
-                     origin, resume_mode);
+                     item_model, resume_mode);
       mp_bump_epoch(mp);
       prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 0);
       if(e == NULL) {
@@ -755,7 +755,7 @@ video_player_idle(void *aux)
 	play_flags_permanent |= BACKEND_VIDEO_NO_AUDIO;
       play_priority = ep->priority;
 
-      prop_ref_dec(origin);
+      prop_ref_dec(item_model);
       if(vq != NULL) {
 	video_queue_destroy(vq);
 	vq = NULL;
@@ -766,15 +766,16 @@ video_player_idle(void *aux)
 
       rstr_release(parent_title);
 
-      if(ep->model != NULL) {
-        parent_title = prop_get_string(ep->model, "metadata", "title", NULL);
+      if(ep->parent_model != NULL) {
+        parent_title = prop_get_string(ep->parent_model,
+                                       "metadata", "title", NULL);
       } else {
         parent_title = NULL;
       }
 
-      origin = prop_ref_inc(ep->origin);
-      if(ep->model != NULL && origin != NULL) {
-	vq = video_queue_create(ep->model);
+      item_model = prop_ref_inc(ep->item_model);
+      if(ep->parent_model != NULL && item_model != NULL) {
+	vq = video_queue_create(ep->parent_model);
       } else {
 	vq = NULL;
       }
@@ -809,20 +810,20 @@ video_player_idle(void *aux)
 	event_is_action(e, ACTION_SKIP_BACKWARD);
 
       if(vq && (video_settings.continuous_playback || force_continuous || skp))
-	next = video_queue_find_next(vq, origin,
+	next = video_queue_find_next(vq, item_model,
 				     event_is_action(e, ACTION_SKIP_BACKWARD),
 				     0);
 
-      prop_ref_dec(origin);
-      origin = NULL;
+      prop_ref_dec(item_model);
+      item_model = NULL;
 
       rstr_release(play_url);
 
       if(next != NULL) {
 	play_url = prop_get_string(next, "url", NULL);
-	origin = next;
+	item_model = next;
 
-        prop_suggest_focus(origin);
+        prop_suggest_focus(item_model);
 
       } else {
 	play_url = NULL;
@@ -840,7 +841,7 @@ video_player_idle(void *aux)
   rstr_release(play_url);
   if(vq != NULL)
     video_queue_destroy(vq);
-  prop_ref_dec(origin);
+  prop_ref_dec(item_model);
   prop_ref_dec(errprop);
   mp_shutdown(mp);
   mp_release(mp);

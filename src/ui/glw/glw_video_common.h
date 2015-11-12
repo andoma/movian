@@ -131,8 +131,8 @@ typedef struct glw_video {
 
   int gv_flags;
   int gv_priority;
-  prop_t *gv_model;
-  prop_t *gv_origin;
+  prop_t *gv_item_model;
+  prop_t *gv_parent_model;
   char gv_freezed;
 
   /**
