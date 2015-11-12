@@ -2581,75 +2581,30 @@ glw_register_class(glw_class_t *gc)
 /**
  *
  */
-char *
+const char *
 glw_get_name(glw_t *w)
 {
   static char buf[1024];
-  snprintf(buf, sizeof(buf), "%s @ %s:%d",
-           w->glw_class->gc_name,
+  const char *extra = NULL;
+  char tmp[512];
+  const glw_class_t *gc = w->glw_class;
+
+  if(gc->gc_get_identity != NULL)
+    extra = gc->gc_get_identity(w, tmp, sizeof(tmp));
+
+  if(extra == NULL && gc->gc_get_text != NULL)
+    extra = gc->gc_get_text(w);
+
+  snprintf(buf, sizeof(buf), "%s @ %s:%d%s%s",
+           gc->gc_name,
 #ifdef DEBUG
            rstr_get(w->glw_file),
-           w->glw_line
+           w->glw_line,
 #else
-           "?", 0
+           "?", 0,
 #endif
-           );
-  return buf;
-}
-
-
-
-
-
-
-
-#define GET_A_NAME_BUF 1024
-/**
- *
- */
-static void
-glw_get_a_name_r(glw_t *w, char *buf)
-{
-  glw_t *c;
-  const char *r = NULL;
-  char tmp[32];
-  if(w->glw_class->gc_get_text != NULL)
-    r = w->glw_class->gc_get_text(w);
-
-  if(r != NULL)
-    snprintf(buf + strlen(buf), GET_A_NAME_BUF - strlen(buf),
-	     "%s%s", buf[0] ? ", " : "", r);
-
-  r = NULL;
-  if(w->glw_class->gc_get_identity != NULL)
-    r = w->glw_class->gc_get_identity(w, tmp, sizeof(tmp));
-
-  if(r != NULL)
-    snprintf(buf + strlen(buf), GET_A_NAME_BUF - strlen(buf),
-	     "%s%s", buf[0] ? ", " : "", r);
-
-  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
-    glw_get_a_name_r(c, buf);
-}
-
-
-/**
- *
- */
-const char *
-glw_get_a_name(glw_t *w)
-{
-  if(w == NULL)
-    return "<null>";
-
-  if(w->glw_id_rstr != NULL)
-    return rstr_get(w->glw_id_rstr);
-
-  static char buf[1024];
-  buf[0] = 0;
-  glw_get_a_name_r(w, buf);
-  if(buf[0] == 0)
-    return "<no name>";
+           extra ? " " : "",
+           extra ? extra : "");
   return buf;
 }
 
