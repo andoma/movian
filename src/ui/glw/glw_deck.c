@@ -26,14 +26,18 @@
  */
 typedef struct {
   glw_t w;
-  glw_t *prev; // Widget we are transitioning from
+  glw_t *last; // Widget we are transitioning from
 
   glw_transition_type_t efx_conf;
   float time;
   float delta;
-  
+
   float v;
   char rev;
+
+  char keep_next_hot;
+  char keep_prev_hot;
+  char keep_last_hot;
 
 } glw_deck_t;
 
@@ -71,7 +75,7 @@ setprev(glw_deck_t *gd, glw_t *c)
   glw_t *p;
   int rev = 0;
 
-  gd->prev = l;
+  gd->last = l;
   if(c == NULL)
     return;
 
@@ -108,7 +112,7 @@ deck_select_child(glw_t *w, glw_t *c, prop_t *origin)
   }
 
   if(gd->efx_conf != GLW_TRANS_NONE &&
-     (gd->prev != NULL || !(w->glw_flags2 & GLW2_NO_INITIAL_TRANS)))
+     (gd->last != NULL || !(w->glw_flags2 & GLW2_NO_INITIAL_TRANS)))
     gd->v = 0;
 
   glw_signal0(w, GLW_SIGNAL_RESELECT_CHANGED, NULL);
@@ -135,15 +139,40 @@ glw_deck_layout(glw_t *w, const glw_rctx_t *rc)
     glw_need_refresh(w->glw_root, 0);
   }
 
-  if(gd->v == 1)
-    gd->prev = NULL;
+  if(gd->v == 1 && !gd->keep_last_hot)
+    gd->last = NULL;
 
+  if(gd->last != NULL)
+    glw_layout0(gd->last, rc);
 
-  if(gd->prev != NULL)
-    glw_layout0(gd->prev, rc);
+  if(w->glw_selected == NULL)
+    return;
 
-  if(w->glw_selected != NULL && w->glw_selected != gd->prev)
+  if(w->glw_selected != gd->last)
     glw_layout0(w->glw_selected, rc);
+
+  glw_t *p;
+
+  if(gd->keep_prev_hot) {
+    p = glw_prev_widget(w->glw_selected);
+    if(p == NULL)
+      p = glw_last_widget(w);
+
+    if(p != NULL && p != w->glw_selected && p != gd->last)
+      glw_layout0(p, rc);
+  } else {
+    p = NULL;
+  }
+
+  if(gd->keep_next_hot) {
+
+    glw_t *n = glw_next_widget(w->glw_selected);
+    if(n == NULL)
+      n = glw_first_widget(w);
+
+    if(n != NULL && n != w->glw_selected && n != gd->last && n != p)
+      glw_layout0(n, rc);
+  }
 }
 
 
@@ -168,8 +197,8 @@ glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     if(w->glw_selected == extra)
       clear_constraints(w);
 
-    if(gd->prev == extra)
-      gd->prev = NULL;
+    if(gd->last == extra)
+      gd->last = NULL;
 
   case GLW_SIGNAL_CHILD_CREATED:
     // Initially all pages are blocked from focus
@@ -249,8 +278,8 @@ glw_deck_render(glw_t *w, const glw_rctx_t *rc)
   if(w->glw_alpha < 0.01)
     return;
 
-  if(gd->prev != NULL)
-    deck_render(rc, gd, gd->prev, gd->v);
+  if(gd->last != NULL && gd->v < 1)
+    deck_render(rc, gd, gd->last, gd->v);
 
   if(w->glw_selected != NULL)
     deck_render(rc, gd, w->glw_selected, -1 + gd->v);
@@ -368,6 +397,19 @@ glw_deck_set_int_unresolved(glw_t *w, const char *a, int value,
 
   if(!strcmp(a, "page"))
     return set_page(gd, value);
+
+  if(!strcmp(a, "keepPreviousActive")) {
+    gd->keep_prev_hot = value;
+    return GLW_SET_LAYOUT_ONLY;
+  }
+  if(!strcmp(a, "keepNextActive")) {
+    gd->keep_next_hot = value;
+    return GLW_SET_LAYOUT_ONLY;
+  }
+  if(!strcmp(a, "keepLastActive")) {
+    gd->keep_last_hot = value;
+    return GLW_SET_LAYOUT_ONLY;
+  }
 
   return GLW_SET_NOT_RESPONDING;
 }
