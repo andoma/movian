@@ -49,6 +49,11 @@ typedef struct glw_scroll_control {
   float clip_alpha;
   float clip_blur;
 
+  int chase_focus;
+  glw_t *suggested;
+  int suggest_cnt;
+  glw_t *scroll_to_me;
+
 } glw_scroll_control_t;
 
 
@@ -66,3 +71,5 @@ int glw_scroll_set_float_attributes(glw_scroll_control_t *gsc, const char *a,
 
 int glw_scroll_set_int_attributes(glw_scroll_control_t *gsc, const char *a,
                                   int value);
+
+void glw_scroll_suggest_focus(glw_scroll_control_t *gsc, glw_t *w, glw_t *c);

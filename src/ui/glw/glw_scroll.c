@@ -214,6 +214,11 @@ int
 glw_scroll_set_int_attributes(glw_scroll_control_t *gsc, const char *a,
                               int value)
 {
+  if(!strcmp(a, "chaseFocus")) {
+    gsc->chase_focus = value;
+    return GLW_SET_NO_CHANGE;
+  }
+
   if(!strcmp(a, "scrollThresholdTop")) {
     if(gsc->scroll_threshold_pre == value)
       return GLW_SET_NO_CHANGE;
@@ -247,4 +252,28 @@ glw_scroll_set_int_attributes(glw_scroll_control_t *gsc, const char *a,
   }
 
   return GLW_SET_NOT_RESPONDING;
+}
+
+
+/**
+ *
+ */
+void
+glw_scroll_suggest_focus(glw_scroll_control_t *gsc, glw_t *w, glw_t *c)
+{
+  if(!glw_is_focused(w)) {
+    w->glw_focused = c;
+    glw_signal0(w, GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE, c);
+    gsc->scroll_to_me = c;
+    return;
+  }
+
+  if(gsc->suggested == w->glw_focused || gsc->suggest_cnt > 0) {
+    c = glw_focus_by_path(c);
+    if(c != NULL)
+      glw_focus_set(c->glw_root, c, GLW_FOCUS_SET_SUGGESTED, "Suggested");
+    gsc->suggest_cnt = 1;
+  }
+  gsc->suggested = c;
+  gsc->suggest_cnt++;
 }

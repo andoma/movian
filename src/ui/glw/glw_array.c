@@ -25,8 +25,6 @@
 typedef struct glw_array {
   glw_t w;
 
-  glw_t *scroll_to_me;
-
   glw_slider_metrics_t metrics;
 
   int child_width_fixed;
@@ -175,7 +173,7 @@ glw_array_layout(glw_t *w, const glw_rctx_t *rc)
     a->w.glw_flags |= GLW_UPDATE_METRICS;
 
     if(w->glw_focused != NULL)
-      a->scroll_to_me = w->glw_focused;
+      a->gsc.scroll_to_me = w->glw_focused;
   }
 
 
@@ -225,10 +223,10 @@ glw_array_layout(glw_t *w, const glw_rctx_t *rc)
        ypos - a->gsc.rounded_pos <  height * 2)
       glw_layout0(c, &rc0);
 
-    if(c == a->scroll_to_me) {
+    if(c == a->gsc.scroll_to_me) {
       int screen_pos = ypos - a->gsc.rounded_pos;
 
-      a->scroll_to_me = NULL;
+      a->gsc.scroll_to_me = NULL;
 
       if(screen_pos < a->gsc.scroll_threshold_pre) {
         a->gsc.target_pos = ypos - a->gsc.scroll_threshold_pre;
@@ -409,7 +407,7 @@ scroll_to_me(glw_array_t *a, glw_t *c)
       break;
     e = d;
   }
-  a->scroll_to_me = c;
+  a->gsc.scroll_to_me = c;
 }
 
 
@@ -429,8 +427,23 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
   case GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE:
     scroll_to_me(a, extra);
+    a->gsc.suggest_cnt = 0;
     w->glw_flags &= ~GLW_FLOATING_FOCUS;
     return 0;
+
+  case GLW_SIGNAL_CHILD_DESTROYED:
+    if(a->gsc.scroll_to_me == extra)
+      a->gsc.scroll_to_me = NULL;
+    if(a->gsc.suggested == extra)
+      a->gsc.suggested = NULL;
+
+    scroll_to_me(a, w->glw_focused);
+    a->num_visible_childs--;
+    break;
+
+  case GLW_SIGNAL_CHILD_HIDDEN:
+    a->num_visible_childs--;
+    break;
 
   case GLW_SIGNAL_CHILD_CREATED:
   case GLW_SIGNAL_CHILD_UNHIDDEN:
@@ -440,19 +453,17 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
 
-  case GLW_SIGNAL_CHILD_DESTROYED:
-    if(a->scroll_to_me == extra)
-      a->scroll_to_me = NULL;
-  case GLW_SIGNAL_CHILD_HIDDEN:
-    a->num_visible_childs--;
-    break;
-
   case GLW_SIGNAL_SCROLL:
     glw_array_scroll(a, extra);
     break;
 
   case GLW_SIGNAL_CHILD_MOVED:
     scroll_to_me(a, w->glw_focused);
+    break;
+
+  case GLW_SIGNAL_FHP_PATH_CHANGED:
+    if(!glw_is_focused(w))
+      a->gsc.suggest_cnt = 1;
     break;
 
   }
@@ -476,7 +487,9 @@ glw_array_pointer_event(glw_t *w, const glw_pointer_event_t *gpe)
 static void
 glw_array_ctor(glw_t *w)
 {
+  glw_array_t *a = (glw_array_t *)w;
   w->glw_flags |= GLW_FLOATING_FOCUS;
+  a->gsc.suggest_cnt = 1;
 }
 
 /**
@@ -662,6 +675,17 @@ glw_array_set_int_unresolved(glw_t *w, const char *a, int value,
   return glw_scroll_set_int_attributes(&l->gsc, a, value);
 }
 
+
+/**
+ *
+ */
+static void
+glw_array_suggest_focus(glw_t *w, glw_t *c)
+{
+  glw_array_t *a = (glw_array_t *)w;
+  glw_scroll_suggest_focus(&a->gsc, w, c);
+}
+
 /**
  *
  */
@@ -680,6 +704,7 @@ static glw_class_t glw_array = {
   .gc_bubble_event = glw_array_bubble_event,
   .gc_set_int_unresolved = glw_array_set_int_unresolved,
   .gc_set_float_unresolved = glw_array_set_float_unresolved,
+  .gc_suggest_focus = glw_array_suggest_focus,
 };
 
 GLW_REGISTER_CLASS(glw_array);

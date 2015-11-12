@@ -26,18 +26,11 @@ typedef struct glw_list {
 
   float child_aspect;
 
-  glw_t *scroll_to_me;
-  glw_t *suggested;
-
-  int suggest_cnt;
-
   int16_t saved_height;
   int16_t saved_width;
   int16_t spacing;
 
   int16_t padding[4];
-
-  int chase_focus;
 
   glw_scroll_control_t gsc;
 
@@ -75,10 +68,10 @@ glw_list_layout_y(glw_t *w, const glw_rctx_t *rc)
     l->w.glw_flags |= GLW_UPDATE_METRICS;
 
     if(w->glw_focused != NULL)
-      l->scroll_to_me = w->glw_focused;
+      l->gsc.scroll_to_me = w->glw_focused;
   }
 
-  if(l->scroll_to_me != NULL) {
+  if(l->gsc.scroll_to_me != NULL) {
 
     ypos = l->gsc.scroll_threshold_pre;
     TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
@@ -94,7 +87,7 @@ glw_list_layout_y(glw_t *w, const glw_rctx_t *rc)
         height = rc0.rc_width / 10;
       }
 
-      if(c == l->scroll_to_me) {
+      if(c == l->gsc.scroll_to_me) {
 
         int screen_pos = ypos - l->gsc.rounded_pos;
         if(screen_pos < l->gsc.scroll_threshold_pre) {
@@ -111,7 +104,7 @@ glw_list_layout_y(glw_t *w, const glw_rctx_t *rc)
       ypos += height;
       ypos += l->spacing;
     }
-    l->scroll_to_me = NULL;
+    l->gsc.scroll_to_me = NULL;
   }
 
   glw_scroll_layout(&l->gsc, w, rc->rc_height);
@@ -182,7 +175,7 @@ glw_list_layout_x(glw_t *w, const glw_rctx_t *rc)
     l->w.glw_flags |= GLW_UPDATE_METRICS;
 
     if(w->glw_focused != NULL)
-      l->scroll_to_me = w->glw_focused;
+      l->gsc.scroll_to_me = w->glw_focused;
   }
 
   l->gsc.target_pos = GLW_MAX(0, GLW_MIN(l->gsc.target_pos,
@@ -218,8 +211,8 @@ glw_list_layout_x(glw_t *w, const glw_rctx_t *rc)
       glw_layout0(c, &rc0);
     }
 
-    if(c == l->scroll_to_me) {
-      l->scroll_to_me = NULL;
+    if(c == l->gsc.scroll_to_me) {
+      l->gsc.scroll_to_me = NULL;
       if(xpos - l->gsc.rounded_pos < l->gsc.scroll_threshold_pre) {
 	l->gsc.target_pos = xpos - l->gsc.scroll_threshold_pre;
 	l->w.glw_flags |= GLW_UPDATE_METRICS;
@@ -420,10 +413,10 @@ glw_list_render_x(glw_t *w, const glw_rctx_t *rc)
  *
  */
 static void
-focus_child_when_list_not_focused(glw_list_t *l, glw_t *c)
+focus_child_when_widget_not_focused(glw_t *w, glw_t *c)
 {
-  l->w.glw_focused = c;
-  glw_signal0(&l->w, GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE, c);
+  w->glw_focused = c;
+  glw_signal0(w, GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE, c);
 }
 
 
@@ -474,7 +467,7 @@ glw_list_scroll(glw_list_t *l, glw_scroll_t *gs)
   l->gsc.target_pos = top;
   glw_schedule_refresh(l->w.glw_root, 0);
 
-  if(l->chase_focus == 0)
+  if(l->gsc.chase_focus == 0)
     return;
 
   glw_t *c = find_visible_child(l);
@@ -484,7 +477,7 @@ glw_list_scroll(glw_list_t *l, glw_scroll_t *gs)
   if(glw_is_focused(&l->w)) {
     glw_focus_set(c->glw_root, c, GLW_FOCUS_SET_SUGGESTED, "ListScroll");
   } else {
-    focus_child_when_list_not_focused(l, c);
+    focus_child_when_widget_not_focused(&l->w, c);
   }
 }
 
@@ -513,7 +506,7 @@ scroll_to_me(glw_list_t *l, glw_t *c)
       break;
     e = d;
   }
-  l->scroll_to_me = c;
+  l->gsc.scroll_to_me = c;
   glw_schedule_refresh(l->w.glw_root, 0);
 }
 
@@ -533,15 +526,15 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
   case GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE:
     scroll_to_me(l, extra);
-    l->suggest_cnt = 0;
+    l->gsc.suggest_cnt = 0;
     w->glw_flags &= ~GLW_FLOATING_FOCUS;
     return 0;
 
   case GLW_SIGNAL_CHILD_DESTROYED:
-    if(l->scroll_to_me == extra)
-      l->scroll_to_me = NULL;
-    if(l->suggested == extra)
-      l->suggested = NULL;
+    if(l->gsc.scroll_to_me == extra)
+      l->gsc.scroll_to_me = NULL;
+    if(l->gsc.suggested == extra)
+      l->gsc.suggested = NULL;
 
     scroll_to_me(l, w->glw_focused);
 
@@ -550,7 +543,7 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
       l->gsc.target_pos = 0;
       l->gsc.filtered_pos = 0;
       w->glw_flags |= GLW_FLOATING_FOCUS;
-      l->suggest_cnt = 1;
+      l->gsc.suggest_cnt = 1;
     }
     break;
 
@@ -574,7 +567,7 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
   case GLW_SIGNAL_FHP_PATH_CHANGED:
     if(!glw_is_focused(w)) 
-      l->suggest_cnt = 1;
+      l->gsc.suggest_cnt = 1;
     break;
   }
   return 0;
@@ -637,7 +630,7 @@ glw_list_y_ctor(glw_t *w)
 {
   glw_list_t *l = (void *)w;
   l->child_aspect = 20;
-  l->suggest_cnt = 1;
+  l->gsc.suggest_cnt = 1;
   w->glw_flags |= GLW_FLOATING_FOCUS;
 }
 
@@ -651,9 +644,10 @@ glw_list_x_ctor(glw_t *w)
   glw_list_t *l = (void *)w;
   
   l->child_aspect = 1;
-  l->suggest_cnt = 1;
+  l->gsc.suggest_cnt = 1;
   w->glw_flags |= GLW_FLOATING_FOCUS;
 }
+
 
 /**
  *
@@ -662,22 +656,7 @@ static void
 glw_list_suggest_focus(glw_t *w, glw_t *c)
 {
   glw_list_t *l = (glw_list_t *)w;
-
-  if(!glw_is_focused(w)) {
-    focus_child_when_list_not_focused(l, c);
-    l->scroll_to_me = c;
-    return;
-  }
-
-  if(l->suggested == w->glw_focused || l->suggest_cnt > 0) {
-    c = glw_focus_by_path(c);
-    if(c != NULL)
-      glw_focus_set(c->glw_root, c, GLW_FOCUS_SET_SUGGESTED,
-                    "ListSuggest");
-    l->suggest_cnt = 1;
-  }
-  l->suggested = c;
-  l->suggest_cnt++;
+  glw_scroll_suggest_focus(&l->gsc, w, c);
 }
 
 
@@ -720,11 +699,6 @@ glw_list_set_int_unresolved(glw_t *w, const char *a, int value,
                             glw_style_t *gs)
 {
   glw_list_t *l = (glw_list_t *)w;
-
-  if(!strcmp(a, "chaseFocus")) {
-    l->chase_focus = value;
-    return GLW_SET_NO_CHANGE;
-  }
 
   return glw_scroll_set_int_attributes(&l->gsc, a, value);
 }
