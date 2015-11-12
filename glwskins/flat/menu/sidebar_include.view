@@ -113,6 +113,7 @@
             });
 
             widget(slider_x, {
+              alwaysGrabKnob: true;
               focusable: true;
               min: MIN;
               max: MAX;

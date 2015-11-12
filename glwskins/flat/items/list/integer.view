@@ -48,6 +48,7 @@ widget(deck, {
           });
 
           widget(slider_x, {
+            alwaysGrabKnob: true;
             focusable: true;
             min: $self.min;
             max: $self.max;
@@ -119,6 +120,7 @@ widget(deck, {
             });
 
             widget(slider_x, {
+              alwaysGrabKnob: true;
               focusable: true;
               min: $self.min;
               max: $self.max;
