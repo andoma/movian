@@ -24,6 +24,7 @@
 #include <SLES/OpenSLES_Android.h>
 
 #include "audio2/audio.h"
+#include "misc/minmax.h"
 
 typedef struct decoder {
   audio_decoder_t ad;
@@ -35,6 +36,7 @@ typedef struct decoder {
 
   SLEngineItf d_eif;
   SLPlayItf d_pif;
+  SLVolumeItf d_vif;
   SLAndroidSimpleBufferQueueItf d_bif;
 
 
@@ -47,8 +49,13 @@ typedef struct decoder {
 
   int d_avail_buffers;
 
+  float d_gain;
+  float d_last_set_vol;
 
 } decoder_t;
+
+extern float audio_master_volume;
+extern int   audio_master_mute;
 
 static void buffer_callback(SLAndroidSimpleBufferQueueItf bq, void *context);
 
@@ -60,6 +67,8 @@ android_audio_init(audio_decoder_t *ad)
 {
   decoder_t *d = (decoder_t *)ad;
 
+  d->d_gain = 1.0f;
+  d->d_last_set_vol = 0;
 
   if(slCreateEngine(&d->d_engine, 0, NULL, 0, NULL, NULL)) {
     TRACE(TRACE_ERROR, "SLES", "Unable to create engine");
@@ -107,6 +116,7 @@ android_stop_player(decoder_t *d)
     d->d_player = NULL;
     d->d_eif = NULL;
     d->d_pif = NULL;
+    d->d_vif = NULL;
     d->d_bif = NULL;
   }
 }
@@ -195,6 +205,12 @@ android_audio_reconfig(audio_decoder_t *ad)
     return -1;
   }
 
+
+  if((*d->d_player)->GetInterface(d->d_player, SL_IID_VOLUME, &d->d_vif)) {
+    TRACE(TRACE_ERROR, "SLES", "Unable to get volume interface");
+    return -1;
+  }
+
   // get the buffer queue interface
   if((*d->d_player)->GetInterface(d->d_player, SL_IID_BUFFERQUEUE,
                                   &d->d_bif)) {
@@ -243,6 +259,17 @@ android_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
   decoder_t *d = (decoder_t *)ad;
   SLresult result;
 
+
+
+  float gain = audio_master_mute ? 0.0f : (d->d_gain * audio_master_volume);
+  if(gain != d->d_last_set_vol) {
+    d->d_last_set_vol = gain;
+
+    int mb = lroundf(2000.f * log10f(gain));
+    mb = MAX(mb, SL_MILLIBEL_MIN);
+    (*d->d_vif)->SetVolumeLevel(d->d_vif, mb);
+  }
+
   if(d->d_avail_buffers == 0)
     return 1;
 
@@ -282,6 +309,15 @@ android_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
 }
 
 
+/**
+ *
+ */
+static void
+android_set_volume(audio_decoder_t *ad, float scale)
+{
+  decoder_t *d = (decoder_t *)ad;
+  d->d_gain = scale;
+}
 
 /**
  *
@@ -292,6 +328,7 @@ static audio_class_t android_audio_class = {
   .ac_fini           = android_audio_fini,
   .ac_reconfig       = android_audio_reconfig,
   .ac_deliver_locked = android_audio_deliver,
+  .ac_set_volume     = android_set_volume,
 };
 
 
