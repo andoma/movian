@@ -113,7 +113,7 @@ widget(container_z, {
 
 
       widget(container_y, {
-
+        hidden: $ui.fullwindow;
         alpha: iir($ui.showTopIcons, 4);
 
         widget(container_x, {
