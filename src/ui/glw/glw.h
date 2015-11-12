@@ -1487,8 +1487,6 @@ void glw_gf_unregister(glw_gf_ctrl_t *ggc);
 
 void glw_gf_do(void);
 
-void glw_update_size(glw_root_t *gr);
-
 /**
  *
  */

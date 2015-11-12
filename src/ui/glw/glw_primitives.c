@@ -164,6 +164,41 @@ GLW_REGISTER_CLASS(glw_quad);
 
 
 
+/**
+ *
+ */
+static void
+glw_linebox_render(glw_t *w, const glw_rctx_t *rc)
+{
+  glw_rctx_t rc0 = *rc;
+  glw_reposition(&rc0, 1, rc->rc_height, rc->rc_width, 1);
+  glw_wirebox(w->glw_root, &rc0);
+}
+
+
+/**
+ *
+ */
+static void
+glw_linebox_layout(glw_t *w, const glw_rctx_t *rc)
+{
+}
+
+
+
+static glw_class_t glw_linebox = {
+  .gc_name = "linebox",
+  .gc_instance_size = sizeof(glw_t),
+  .gc_layout = glw_linebox_layout,
+  .gc_render = glw_linebox_render,
+};
+
+
+
+GLW_REGISTER_CLASS(glw_linebox);
+
+
+
 
 
 #if 0

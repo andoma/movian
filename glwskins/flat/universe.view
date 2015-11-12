@@ -131,6 +131,66 @@ widget(container_z, {
           space(1);
         });
       });
+
+      widget(container_z, {
+
+        hidden: !changed($ui.underscan_v, 5, true) &&
+          !changed($ui.underscan_h, 5, true);
+
+        widget(linebox, {});
+        widget(container_z, {
+
+          widget(container_x, {
+            widget(icon, {
+              source: "skin://icons/ic_chevron_left_48px.svg";
+              size: 5em;
+              align: left;
+            });
+            space(1);
+            widget(icon, {
+              source: "skin://icons/ic_chevron_right_48px.svg";
+              size: 5em;
+              align: right;
+            });
+          });
+
+          widget(container_y, {
+            widget(icon, {
+              source: "skin://icons/ic_expand_less_48px.svg";
+              size: 5em;
+              align: top;
+            });
+            space(1);
+            widget(icon, {
+              source: "skin://icons/ic_expand_more_48px.svg";
+              size: 5em;
+              align: bottom;
+            });
+
+          });
+
+          widget(container_y, {
+            space(4);
+            widget(container_x, {
+              space(0.3);
+              widget(container_z, {
+                widget(quad, {
+                  color: 0;
+                  alpha: 0.8;
+                });
+                widget(label, {
+                  padding: 0.5em;
+                  align: center;
+                  maxlines:2;
+                  caption: _("Overscan adjustment\nPosition border at screen edge");
+                });
+              });
+              space(0.3);
+            });
+            space(1);
+          });
+        });
+      });
     });
   });
 

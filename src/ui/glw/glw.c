@@ -75,27 +75,9 @@ glw_cond_wait(glw_root_t *gr, hts_cond_t *c)
  *
  */
 static void
-glw_update_sizes(glw_root_t *gr)
+glw_update_underscan(glw_root_t *gr)
 {
   int val;
-  int bs1 = gr->gr_height / 35; // 35 is just something
-  //  int bs2 = gr->gr_width  / 65; // 65 is another value
-
-  int base_size = bs1; // MIN(bs1, bs2);
-
-  val = GLW_CLAMP(base_size + glw_settings.gs_size +
-                  gr->gr_skin_scale_adjustment, 8, 40);
-
-  if(gr->gr_current_size != val) {
-    gr->gr_current_size = val;
-    prop_set(gr->gr_prop_ui, "size", PROP_SET_INT, val);
-    glw_text_flush(gr);
-    glw_icon_flush(gr);
-    glw_update_em(gr);
-    TRACE(TRACE_DEBUG, "GLW",
-          "UI size scale changed to %d (user adj: %d  skin adj: %d) ",
-          val, glw_settings.gs_size, gr->gr_skin_scale_adjustment);
-  }
 
   val = GLW_CLAMP(gr->gr_base_underscan_h + glw_settings.gs_underscan_h,
                   0, 100);
@@ -116,6 +98,38 @@ glw_update_sizes(glw_root_t *gr)
 }
 
 
+/**
+ *
+ */
+static void
+glw_update_size(glw_root_t *gr)
+{
+  int val;
+  int bs1 = gr->gr_height / 35; // 35 is just something
+  //  int bs2 = gr->gr_width  / 65; // 65 is another value
+
+  int base_size = bs1; // MIN(bs1, bs2);
+
+  val = GLW_CLAMP(base_size + glw_settings.gs_size +
+                  gr->gr_skin_scale_adjustment, 8, 40);
+
+  if(gr->gr_current_size != val) {
+    gr->gr_current_size = val;
+    prop_set(gr->gr_prop_ui, "size", PROP_SET_INT, val);
+    glw_text_flush(gr);
+    glw_icon_flush(gr);
+    glw_update_em(gr);
+    TRACE(TRACE_DEBUG, "GLW",
+          "UI size scale changed to %d (user adj: %d  skin adj: %d) ",
+          val, glw_settings.gs_size, gr->gr_skin_scale_adjustment);
+  }
+  glw_update_underscan(gr);
+}
+
+
+/**
+ *
+ */
 static void
 glw_sizeoffset_callback(void *opaque, int value)
 {
@@ -229,7 +243,7 @@ glw_init3(glw_root_t *gr,
   gr->gr_frame_start = gr->gr_ui_start;
   glw_reset_screensaver(gr);
   gr->gr_open_osk = glw_osk_open;
-
+  glw_update_underscan(gr);
   return 0;
 }
 
@@ -511,7 +525,7 @@ glw_prepare_frame(glw_root_t *gr, int flags)
 {
   glw_t *w;
 
-  glw_update_sizes(gr);
+  glw_update_size(gr);
 
   gr->gr_frame_start        = arch_get_ts();
   gr->gr_frame_start_avtime = arch_get_avtime();
