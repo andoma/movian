@@ -352,6 +352,7 @@ widget(container_z, {
 
       padding: [1.5em, 0];
       caption: $self.media.metadata.title;
+      shadow: true;
       size: 2em;
     });
     widget(container_x, {
