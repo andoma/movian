@@ -114,9 +114,16 @@ slideshow_advance(slideshow_t *ss, int reverse)
   }
 
   while(1) {
-    ssi = TAILQ_NEXT(ssi, ssi_link);
-    if(ssi == NULL)
-      ssi = TAILQ_FIRST(&ss->ss_items);
+    if(reverse) {
+      ssi = TAILQ_PREV(ssi, slideshow_item_queue, ssi_link);
+      if(ssi == NULL)
+        ssi = TAILQ_LAST(&ss->ss_items, slideshow_item_queue);
+
+    } else {
+      ssi = TAILQ_NEXT(ssi, ssi_link);
+      if(ssi == NULL)
+        ssi = TAILQ_FIRST(&ss->ss_items);
+    }
 
     if(ssi == ss->ss_current)
       return; // Wrapped around, don't advance
