@@ -256,6 +256,7 @@ widget(container_z, {
         });
       });
       widget(dummy, {
+        hidden: !$self.media.canSeek;
         height: 2em;
       });
     });
