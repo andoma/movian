@@ -434,8 +434,8 @@ ui_create(void)
   gr->gr_prop_ui = prop_create_root("ui");
   gr->gr_prop_nav = nav_spawn();
 
-  if(glw_init3(gr, &prop_courier_poll_with_alarm,
-               prop_courier_create_passive())) {
+  if(glw_init4(gr, &prop_courier_poll_with_alarm,
+               prop_courier_create_passive(), GLW_INIT_KEYBOARD_MODE)) {
     TRACE(TRACE_ERROR, "GLW", "Unable to init GLW");
     exit(1);
   }

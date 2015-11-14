@@ -1181,12 +1181,16 @@ glw_filter_constraints(const glw_t *w)
   return (w->glw_flags & ~w->glw_flags2) & GLW_CONSTRAINT_FLAGS;
 }
 
+#define GLW_INIT_KEYBOARD_MODE 0x1
 
 int glw_init(glw_root_t *gr);
 
-int glw_init3(glw_root_t *gr,
+int glw_init2(glw_root_t *gr, int flags);
+
+int glw_init4(glw_root_t *gr,
               void (*dispatcher)(prop_courier_t *pc, int timeout),
-              prop_courier_t *courier);
+              prop_courier_t *courier,
+              int flags);
 
 void glw_fini(glw_root_t *gr);
 

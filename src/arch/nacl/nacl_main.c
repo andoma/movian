@@ -263,7 +263,7 @@ init_thread(void *aux)
 
   prop_courier_t *pc = prop_courier_create_notify(ui_courier_notify, uiroot);
 
-  if(glw_init3(&uiroot->gr, NULL, pc))
+  if(glw_init4(&uiroot->gr, NULL, pc, 0))
     return NULL;
 
   TRACE(TRACE_DEBUG, "GLW", "GLW %p created", uiroot);

@@ -140,14 +140,23 @@ glw_sizeoffset_callback(void *opaque, int value)
 
 }
 
-
 /**
  *
  */
 int
 glw_init(glw_root_t *gr)
 {
-  return glw_init3(gr, &prop_courier_poll_timed, prop_courier_create_passive());
+  return glw_init2(gr, 0);
+}
+
+/**
+ *
+ */
+int
+glw_init2(glw_root_t *gr, int flags)
+{
+  return glw_init4(gr, &prop_courier_poll_timed, prop_courier_create_passive(),
+                   flags);
 }
 
 
@@ -155,9 +164,10 @@ glw_init(glw_root_t *gr)
  *
  */
 int
-glw_init3(glw_root_t *gr,
+glw_init4(glw_root_t *gr,
           void (*dispatcher)(prop_courier_t *pc, int timeout),
-          prop_courier_t *courier)
+          prop_courier_t *courier,
+          int flags)
 {
   char skinbuf[PATH_MAX];
   const char *skin = gconf.skin;
@@ -211,6 +221,9 @@ glw_init3(glw_root_t *gr,
   gr->gr_prop_aspect        = prop_create(gr->gr_prop_ui, "aspect");
 
   prop_set_int(gr->gr_screensaver_active, 0);
+
+  if(flags & GLW_INIT_KEYBOARD_MODE)
+    glw_set_keyboard_mode(gr, 1);
 
   gr->gr_evsub =
     prop_subscribe(0,

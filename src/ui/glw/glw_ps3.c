@@ -1157,7 +1157,7 @@ glw_ps3_start(void)
     gr->gr_base_underscan_v = 20;
   }
 
-  if(glw_init(gr))
+  if(glw_init2(gr, GLW_INIT_KEYBOARD_MODE))
     return 1;
 
 
