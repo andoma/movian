@@ -42,6 +42,7 @@ CONFIG_LIST="
  gu
  libogc
  lirc
+ libcec
  stdin
  release
  avahi
@@ -533,6 +534,10 @@ EOF
 
     if enabled libav; then
 	echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lavresample -lswscale -lavformat -lavcodec -lavutil"
+    fi
+
+    if enabled libcec; then
+	echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lcec"
     fi
 
     if enabled polarssl; then

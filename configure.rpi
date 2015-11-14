@@ -46,6 +46,7 @@ enable libfreetype
 enable stdin
 enable realpath
 enable bspatch
+enable libcec
 
 LIBAV_CFLAGS="-I${EXT_INSTALL_DIR}/include"
 LIBAV_LDFLAGS="-L${EXT_INSTALL_DIR}/lib"

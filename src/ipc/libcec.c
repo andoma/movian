@@ -1,0 +1,149 @@
+/*
+ *  Copyright (C) 2007-2015 Lonelycoder AB
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  This program is also available under a commercial proprietary license.
+ *  For more information, contact andreas@lonelycoder.com
+ */
+
+#include <libcec/cecc.h>
+
+#include "main.h"
+#include "event.h"
+
+static int
+log_message(void *lib, const cec_log_message message)
+{
+  int level;
+  switch (message.level) {
+  case CEC_LOG_ERROR:
+    level = TRACE_ERROR;
+    break;
+
+  case CEC_LOG_WARNING:
+  case CEC_LOG_NOTICE:
+    level = TRACE_INFO;
+    break;
+
+  default:
+    if(!gconf.enable_cec_debug)
+      return 1;
+    level = TRACE_DEBUG;
+    break;
+  }
+  TRACE(level, "CEC", "%s", message.message);
+  return 1;
+}
+
+
+#define AVEC(x...) (const action_type_t []){x, ACTION_NONE}
+const static action_type_t *btn_to_action[256] = {
+  [CEC_USER_CONTROL_CODE_SELECT]      = AVEC(ACTION_ACTIVATE),
+  [CEC_USER_CONTROL_CODE_LEFT]        = AVEC(ACTION_LEFT),
+  [CEC_USER_CONTROL_CODE_UP]          = AVEC(ACTION_UP),
+  [CEC_USER_CONTROL_CODE_RIGHT]       = AVEC(ACTION_RIGHT),
+  [CEC_USER_CONTROL_CODE_DOWN]        = AVEC(ACTION_DOWN),
+  [CEC_USER_CONTROL_CODE_EXIT]        = AVEC(ACTION_NAV_BACK),
+};
+
+static int
+keypress(void *aux, const cec_keypress kp)
+{
+  const action_type_t *avec = NULL;
+
+  if(gconf.enable_cec_debug)
+    TRACE(TRACE_DEBUG, "CEC", "Got keypress code=0x%x duration=0x%x",
+          kp.keycode, kp.duration);
+
+  if(kp.duration == 0) {
+    avec = btn_to_action[kp.keycode];
+  }
+
+  if(avec != NULL) {
+    int i = 0;
+    while(avec[i] != 0)
+      i++;
+    event_t *e = event_create_action_multi(avec, i);
+    e->e_flags |= EVENT_KEYPRESS;
+    event_to_ui(e);
+  }
+
+  return 1;
+}
+
+
+
+static ICECCallbacks g_callbacks = {
+  .CBCecLogMessage = log_message,
+  .CBCecKeyPress   = keypress,
+};
+
+static libcec_configuration cec_config;
+static libcec_connection_t *conn;
+
+static void *
+libcec_init_thread(void *aux)
+{
+  libcec_clear_configuration(&cec_config);
+  cec_config.callbacks = &g_callbacks;
+  snprintf(cec_config.strDeviceName, sizeof(cec_config.strDeviceName),
+           "%s", APPNAMEUSER);
+
+
+  cec_config.deviceTypes.types[0] = CEC_DEVICE_TYPE_RECORDING_DEVICE;
+
+  conn = libcec_initialise(&cec_config);
+  if(conn == NULL) {
+    TRACE(TRACE_ERROR, "CEC", "Unable to init libcec");
+    return NULL;
+  }
+
+  libcec_init_video_standalone(conn);
+
+  cec_adapter ca;
+  int num_adapters = libcec_find_adapters(conn, &ca, 1, NULL);
+  if(num_adapters < 1) {
+    libcec_destroy(conn);
+    TRACE(TRACE_ERROR, "CEC", "No adapters found");
+    return NULL;
+  }
+  TRACE(TRACE_DEBUG, "CEC", "Using adapter %s on %s",
+        ca.comm, ca.path);
+
+  if(!libcec_open(conn, ca.comm, 5000)) {
+    TRACE(TRACE_ERROR, "CEC", "Unable to open connection to %s",
+          ca.comm);
+    libcec_destroy(conn);
+    return NULL;
+  }
+  return NULL;
+}
+
+
+static void
+libcec_init(void)
+{
+  hts_thread_create_detached("cec", libcec_init_thread, NULL,
+                             THREAD_PRIO_BGTASK);
+}
+
+
+static void
+libcec_fini(void)
+{
+
+}
+
+INITME(INIT_GROUP_IPC, libcec_init, libcec_fini);

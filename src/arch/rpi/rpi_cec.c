@@ -794,5 +794,6 @@ cec_thread(void *aux)
 void
 rpi_cec_init(void)
 {
+  return;
   hts_thread_create_detached("cec", cec_thread, NULL, THREAD_PRIO_BGTASK);
 }

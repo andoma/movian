@@ -507,6 +507,7 @@ ${BUILDDIR}/src/ui/gu/%.o : CFLAGS = $(CFLAGS_GTK) ${OPTFLAGS} ${CFLAGS_std}
 # IPC
 ##############################################################
 SRCS-$(CONFIG_LIRC) +=  src/ipc/lirc.c
+SRCS-$(CONFIG_LIBCEC) +=  src/ipc/libcec.c
 SRCS-$(CONFIG_STDIN)+=  src/ipc/stdin.c
 
 ##############################################################

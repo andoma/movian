@@ -1478,10 +1478,10 @@ init_dev_settings(void)
 
   add_dev_bool(s, "Debug FTP Server",
 	       "ftpserverdebug", &gconf.enable_ftp_server_debug);
-
+#if CONFIG_LIBCEC
   add_dev_bool(s, "Debug CEC",
 	       "cecdebug", &gconf.enable_cec_debug);
-
+#endif
   add_dev_bool(s, "Debug directory listing",
 	       "fascannerdebug", &gconf.enable_fa_scanner_debug);
 
