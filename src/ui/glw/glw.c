@@ -395,16 +395,18 @@ void
 glw_layout0(glw_t *w, const glw_rctx_t *rc)
 {
   glw_root_t *gr = w->glw_root;
-  LIST_REMOVE(w, glw_active_link);
-  LIST_INSERT_HEAD(&gr->gr_active_list, w, glw_active_link);
   int mask = GLW_VIEW_EVAL_LAYOUT;
 
-  if(unlikely(!(w->glw_flags & GLW_ACTIVE))) {
-    w->glw_flags |= GLW_ACTIVE;
-    mask |= GLW_VIEW_EVAL_ACTIVE;
-    glw_signal0(w, GLW_SIGNAL_ACTIVE, NULL);
-  }
+  if(likely(!rc->rc_invisible)) {
+    LIST_REMOVE(w, glw_active_link);
+    LIST_INSERT_HEAD(&gr->gr_active_list, w, glw_active_link);
 
+    if(unlikely(!(w->glw_flags & GLW_ACTIVE))) {
+      w->glw_flags |= GLW_ACTIVE;
+      mask |= GLW_VIEW_EVAL_ACTIVE;
+      glw_signal0(w, GLW_SIGNAL_ACTIVE, NULL);
+    }
+  }
   if(unlikely(w->glw_dynamic_eval & mask))
     glw_view_eval_layout(w, rc, mask);
 

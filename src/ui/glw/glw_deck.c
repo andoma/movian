@@ -142,8 +142,11 @@ glw_deck_layout(glw_t *w, const glw_rctx_t *rc)
   if(gd->v == 1 && !gd->keep_last_hot)
     gd->last = NULL;
 
+  glw_rctx_t rc0 = *rc;
+  rc0.rc_invisible = 1;
+
   if(gd->last != NULL)
-    glw_layout0(gd->last, rc);
+    glw_layout0(gd->last, &rc0);
 
   if(w->glw_selected == NULL)
     return;
@@ -159,7 +162,7 @@ glw_deck_layout(glw_t *w, const glw_rctx_t *rc)
       p = glw_last_widget(w);
 
     if(p != NULL && p != w->glw_selected && p != gd->last)
-      glw_layout0(p, rc);
+      glw_layout0(p, &rc0);
   } else {
     p = NULL;
   }
@@ -171,7 +174,7 @@ glw_deck_layout(glw_t *w, const glw_rctx_t *rc)
       n = glw_first_widget(w);
 
     if(n != NULL && n != w->glw_selected && n != gd->last && n != p)
-      glw_layout0(n, rc);
+      glw_layout0(n, &rc0);
   }
 }
 

@@ -1000,6 +1000,10 @@ typedef struct glw_rctx {
 
   uint8_t rc_overscanning : 1;
 
+  uint8_t rc_invisible : 1;    /* Not really visible in UI
+                                * Set when items are preloaded, etc
+                                */
+
 } glw_rctx_t;
 
 
