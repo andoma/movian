@@ -28,7 +28,7 @@
           style: "ListItemValue";
           size: 1.2em;
           font: "skin://fonts/RobotoCondensed-Regular.ttf";
-          focusable: true;
+          focusable: 0.1;
 
           bind($view.searchQuery);
           onEvent(enter, navOpen("search:" + $view.searchQuery),
