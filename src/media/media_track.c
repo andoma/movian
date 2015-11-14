@@ -146,8 +146,6 @@ mp_add_track_off(prop_t *prop, const char *url)
   prop_t *p =
     mp_add_track_ex(prop, "Off", url, NULL, NULL, NULL, NULL, NULL, 1000000, 1);
 
-  prop_select(p);
-
   prop_ref_dec(p);
 }
 
