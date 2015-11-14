@@ -71,25 +71,39 @@ const static action_type_t *btn_to_action[256] = {
 static int
 keypress(void *aux, const cec_keypress kp)
 {
-  const action_type_t *avec = NULL;
-
+  event_t *e = NULL;
   if(gconf.enable_cec_debug)
     TRACE(TRACE_DEBUG, "CEC", "Got keypress code=0x%x duration=0x%x",
           kp.keycode, kp.duration);
 
-  if(kp.duration == 0) {
-    avec = btn_to_action[kp.keycode];
+  if(kp.keycode == CEC_USER_CONTROL_CODE_SELECT) {
+    if(kp.duration == 0)
+      return 0;
+
+    if(kp.duration < 500)
+      e = event_create_action(ACTION_ACTIVATE);
+    else
+      e = event_create_action(ACTION_ITEMMENU);
   }
 
-  if(avec != NULL) {
-    int i = 0;
-    while(avec[i] != 0)
-      i++;
-    event_t *e = event_create_action_multi(avec, i);
+  if(e == NULL) {
+    const action_type_t *avec = NULL;
+    if(kp.duration == 0) {
+      avec = btn_to_action[kp.keycode];
+    }
+
+    if(avec != NULL) {
+      int i = 0;
+      while(avec[i] != 0)
+        i++;
+      e = event_create_action_multi(avec, i);
+    }
+  }
+
+  if(e != NULL) {
     e->e_flags |= EVENT_KEYPRESS;
     event_to_ui(e);
   }
-
   return 1;
 }
 
