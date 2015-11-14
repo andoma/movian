@@ -31,7 +31,7 @@ widget(container_z, {
         filterConstraintX: true;
 
         widget(quad, {
-          zoffset: -400;
+          zoffset: 0;
           color: 0;
           alpha: 0.3 + $view.isFocused;
         });
