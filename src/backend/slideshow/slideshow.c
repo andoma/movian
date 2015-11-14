@@ -208,9 +208,7 @@ ss_timer(callout_t *c, void *opaque)
   slideshow_t *ss = opaque;
   if(!ss->ss_loaded) {
     ss->ss_loaded = 1;
-    TRACE(TRACE_DEBUG, "Slideshow", "Loaded");
   } else {
-    TRACE(TRACE_DEBUG, "Slideshow", "Advance");
     slideshow_advance(ss, 0);
   }
   slideshow_arm(ss);
