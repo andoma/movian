@@ -37,6 +37,7 @@ typedef struct slideshow {
   lockmgr_t ss_lockmgr;
   prop_sub_t *ss_node_sub;
   prop_sub_t *ss_event_sub;
+  prop_sub_t *ss_hold_sub;
 
   prop_t *ss_model;
   prop_t *ss_nodes;
@@ -48,6 +49,7 @@ typedef struct slideshow {
   struct slideshow_item *ss_current;
 
   int ss_loaded; // If we don't get any updates for 1 second we set this
+  int ss_hold;   // Hold by UI
 
   callout_t ss_callout;
 
@@ -192,6 +194,7 @@ slideshow_destroy(slideshow_t *ss)
   slideshow_clear(ss, 1);
   prop_unsubscribe(ss->ss_node_sub);
   prop_unsubscribe(ss->ss_event_sub);
+  prop_unsubscribe(ss->ss_hold_sub);
   prop_ref_dec(ss->ss_model);
   prop_ref_dec(ss->ss_nodes);
   callout_disarm(&ss->ss_callout);
@@ -222,7 +225,10 @@ ss_timer(callout_t *c, void *opaque)
 static void
 slideshow_arm(slideshow_t *ss)
 {
-  callout_arm_managed(&ss->ss_callout, ss_timer, ss, 5000000, lockmgr_handler);
+  if(ss->ss_hold)
+    return;
+  callout_arm_managed(&ss->ss_callout, ss_timer, ss,
+                      ss->ss_loaded ? 5000000 : 1000000, lockmgr_handler);
 }
 
 /**
@@ -364,7 +370,7 @@ slideshow_item_add(slideshow_t *ss, prop_t *p, slideshow_item_t *before)
 
   ssi->ssi_source = prop_ref_inc(p);
 
-  if(!ss->ss_loaded) {
+  if(!ss->ss_loaded && !ss->ss_hold) {
     callout_arm_managed(&ss->ss_callout, ss_timer, ss,
                         1000000, lockmgr_handler);
   }
@@ -508,6 +514,22 @@ slideshow_eventsink(void *opaque, event_t *e)
 /**
  *
  */
+static void
+slideshow_set_hold(void *opaque, int x)
+{
+  slideshow_t *ss = opaque;
+  ss->ss_hold = x;
+  if(ss->ss_hold) {
+    callout_disarm(&ss->ss_callout);
+  } else {
+    slideshow_arm(ss);
+  }
+}
+
+
+/**
+ *
+ */
 static int
 be_slideshow_open(prop_t *page, const char *url, int sync)
 {
@@ -552,6 +574,15 @@ be_slideshow_open(prop_t *page, const char *url, int sync)
                    PROP_TAG_MUTEX, ss,
                    PROP_TAG_NAMED_ROOT, page, "page",
                    PROP_TAG_NAME("page", "slideshow", "eventSink"),
+                   NULL);
+
+  ss->ss_hold_sub =
+    prop_subscribe(PROP_SUB_TRACK_DESTROY,
+                   PROP_TAG_CALLBACK_INT, slideshow_set_hold, ss,
+                   PROP_TAG_LOCKMGR, lockmgr_handler,
+                   PROP_TAG_MUTEX, ss,
+                   PROP_TAG_NAMED_ROOT, page, "page",
+                   PROP_TAG_NAME("page", "slideshow", "hold"),
                    NULL);
 
 

@@ -1,4 +1,6 @@
 
+delta($self.slideshow.hold, $view.loading);
+delta($self.model.loading,  $view.loading);
 
 widget(deck, {
 
@@ -16,7 +18,7 @@ widget(deck, {
   onEvent(right, deliverEvent($self.slideshow.eventSink, "SeekForward"));
 
   cloner($self.model.nodes, image, {
-    height: 3em;
     source: $self.url;
+    delta($view.loading, isLoading() && isVisible());
   });
 });
