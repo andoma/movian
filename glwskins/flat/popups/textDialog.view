@@ -8,26 +8,24 @@ widget(container_x, {
 
   widget(container_y, {
 
-    .weight = 1.0;
+    align: center;
 
-    .align = center;
-    
     popupGroup(
-      .filterConstraintX = true;
-      
+      filterConstraintX: true;
+
       widget(container_y, {
-	.spacing = 4;
+	spacing: 4;
 
 	widget(label, {
-	  .maxlines = 10;
-	  .align = center;
-	  .caption = $self.message;
+	  maxlines: 10;
+	  align: center;
+	  caption: $self.message;
 	});
 
         popupInputField(
  	  widget(text, {
-	    .id = "input";
-	    .focusable = true;
+	    id: "input";
+	    focusable: true;
 	    bind($self.input);
 
 	    onEvent(enter, deliverEvent($self.eventSink, "Ok"),
@@ -37,9 +35,9 @@ widget(container_x, {
 
 
 	widget(container_x, {
-	  .align = center;
-	  .spacing = 20;
-	  .homogenous = true;
+	  align: center;
+	  spacing: 1em;
+	  homogenous: true;
 
 	  popupButtonOK(deliverEvent($self.eventSink, _("OK")),
 			0.5, !$self.ok);

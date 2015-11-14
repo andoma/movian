@@ -21,7 +21,7 @@ style(popupRow, {
   widget(container_z, {
     widget(quad, {
       color: 0;
-      alpha: 0.6;
+      alpha: 0.9;
     });
     widget(container_x, {
       padding: 1em;
@@ -32,10 +32,10 @@ style(popupRow, {
 
 #define popupInputField(BODY) {
   widget(backdrop, {
-    .source = "skin://graphics/border-tiny.png";
-    .borderOnly = true;
-      .border = 4;
-    .color = 0.5;
+    source: "skin://graphics/border-tiny.png";
+    borderOnly: true;
+    border: 4;
+    color: 0.5;
     BODY;
   });
 }
@@ -68,18 +68,16 @@ style(popupRow, {
     height: 2em;
 
     GridItemBevel();
+    GridItemHighlight();
 
     hidden: HIDDEN;
     focusable: ENABLED;
     onEvent(activate, EVENT);
 
     widget(container_x, {
-      padding: [1em, 0];
+      padding: [2em, 0];
       align: center;
 
-      widget(icon, {
-	source: "skin://icons/ic_chevron_right_48px.svg";
-      });
       widget(label, {
 	caption: _("OK");
       });
@@ -93,17 +91,15 @@ style(popupRow, {
     height: 2em;
 
     GridItemBevel();
+    GridItemHighlight();
 
     hidden: HIDDEN;
     focusable: ENABLED;
     onEvent(activate, EVENT);
 
     widget(container_x, {
-      padding: [1em, 0];
+      padding: [2em, 0];
 
-      widget(icon, {
-	source: "skin://icons/ic_cancel_48px.svg";
-      });
       widget(label, {
 	caption: _("Cancel");
       });
