@@ -627,6 +627,21 @@ glw_array_bubble_event(struct glw *w, struct event *e)
   } else if(event_is_action(e, ACTION_DOWN)) {
     return glw_focus_child(glw_array_get_next_row(c, 0));
 
+  } else if(event_is_action(e, ACTION_PAGE_UP)) {
+    const int rows = MAX(1, a->child_tiles_y - 1);
+    for(int i = 0; i < rows; i++) {
+      c = glw_array_get_next_row(c, 1) ?: c;
+    }
+    return glw_focus_child(c);
+
+
+  } else if(event_is_action(e, ACTION_PAGE_DOWN)) {
+    const int rows = MAX(1, a->child_tiles_y - 1);
+    for(int i = 0; i < rows; i++) {
+      c = glw_array_get_next_row(c, 0) ?: c;
+    }
+    return glw_focus_child(c);
+
   } else if(event_is_action(e, ACTION_MOVE_RIGHT)) {
     return glw_navigate_move(c, 1);
 
