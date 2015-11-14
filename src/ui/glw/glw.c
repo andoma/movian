@@ -2015,7 +2015,8 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
 				     -100));
 
 
-  if(gpe->type != GLW_POINTER_MOTION_REFRESH) {
+  if(gpe->type != GLW_POINTER_MOTION_REFRESH &&
+     gpe->type != GLW_POINTER_GONE) {
     runcontrol_activity();
     glw_register_activity(gr);
     gr->gr_screensaver_force_enable = 0;
