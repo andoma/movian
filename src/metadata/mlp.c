@@ -817,10 +817,14 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
 
   /**
    * If duration is low skip this unless user have specified a custom query
+   * or if we have an IMDB ID
    */
-  if(duration < METADATA_DURATION_LIMIT && sq == NULL) {
+  if(duration < METADATA_DURATION_LIMIT &&
+     sq == NULL &&
+     rstr_get(imdb_id) == NULL) {
     goto bad;
   }
+
 
   if(!refresh) {
     /**
