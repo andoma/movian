@@ -777,9 +777,10 @@ typedef struct glw_root {
   int64_t gr_scheduled_refresh;
 
   /**
-   * Screensaver
+   * Screensaver / User activity
    */
 
+  int64_t gr_last_activity_at;
   int64_t gr_screensaver_reset_at;
 
   int gr_screensaver_force_enable;

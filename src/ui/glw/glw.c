@@ -46,7 +46,7 @@ static void glw_root_set_hover(glw_root_t *gr, glw_t *w);
 static void glw_eventsink(void *opaque, prop_event_t event, ...);
 static void glw_update_em(glw_root_t *gr);
 static int  glw_set_keyboard_mode(glw_root_t *gr, int on);
-static void glw_reset_screensaver(glw_root_t *gr);
+static void glw_register_activity(glw_root_t *gr);
 
 glw_settings_t glw_settings;
 
@@ -275,7 +275,7 @@ glw_init4(glw_root_t *gr,
   gr->gr_frameduration = 1000000 / gr->gr_framerate;
   gr->gr_ui_start = arch_get_ts();
   gr->gr_frame_start = gr->gr_ui_start;
-  glw_reset_screensaver(gr);
+  glw_register_activity(gr);
   gr->gr_open_osk = glw_osk_open;
   glw_update_underscan(gr);
   return 0;
@@ -2017,7 +2017,7 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
 
   if(gpe->type != GLW_POINTER_MOTION_REFRESH) {
     runcontrol_activity();
-    glw_reset_screensaver(gr);
+    glw_register_activity(gr);
     gr->gr_screensaver_force_enable = 0;
     glw_set_keyboard_mode(gr, 0);
   }
@@ -2194,7 +2194,7 @@ int
 glw_kill_screensaver(glw_root_t *gr)
 {
   int r = glw_screensaver_is_active(gr);
-  glw_reset_screensaver(gr);
+  glw_register_activity(gr);
   gr->gr_screensaver_force_enable = 0;
   return r;
 }
@@ -3080,9 +3080,10 @@ glw_osk_open(glw_root_t *gr, const char *title, const char *input,
  *
  */
 static void
-glw_reset_screensaver(glw_root_t *gr)
+glw_register_activity(glw_root_t *gr)
 {
   gr->gr_screensaver_reset_at = gr->gr_frame_start;
+  gr->gr_last_activity_at = gr->gr_frame_start;
 }
 
 
