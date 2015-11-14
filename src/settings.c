@@ -770,8 +770,12 @@ setting_create(int type, prop_t *model, int flags, ...)
       break;
 
     case SETTING_TAG_OPTION:
-      opt = prop_create(s->s_val, va_arg(ap, const char *));
-      prop_link(va_arg(ap, prop_t *), prop_create(opt, "title"));
+      str = va_arg(ap, const char *);
+      prop_t *opttitle = va_arg(ap, prop_t *);
+      if(str != NULL) {
+        opt = prop_create(s->s_val, str);
+        prop_link(opttitle, prop_create(opt, "title"));
+      }
       break;
 
     case SETTING_TAG_OPTION_CSTR:

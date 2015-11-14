@@ -105,9 +105,21 @@ i18n_init(void)
                  SETTING_CALLBACK(set_timezone, NULL),
                  SETTING_HTSMSG("timezone", store, "i18n"),
                  NULL);
+
 #endif
 
-  settings_create_info(s, 
+  setting_create(SETTING_MULTIOPT, s, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Time format")),
+                 SETTING_HTSMSG("timeformat", store, "i18n"),
+                 SETTING_WRITE_INT(&gconf.time_format),
+                 SETTING_OPTION(gconf.time_format_system ? "0" : NULL,
+                                _p("System default")),
+                 SETTING_OPTION("1", _p("24 Hour")),
+                 SETTING_OPTION("2", _p("12 Hour")),
+                 NULL);
+
+
+  settings_create_info(s,
 		       NULL,
 		       _p("Language codes should be configured as three character ISO codes, example (eng, swe, fra)"));
 

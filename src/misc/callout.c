@@ -17,6 +17,7 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
+#include <stdio.h>
 #include <time.h>
 #include "main.h"
 #include "prop/prop.h"
@@ -210,10 +211,12 @@ callout_update_clock_props(void)
   time_t now;
   struct tm tm;
 
+  callout_arm(&callout_clock, set_global_clock, NULL, 1);
+
   time(&now);
   if(now < 1000000000) {
     prop_set(prop_clock, "valid", PROP_SET_INT, 0);
-    callout_arm(&callout_clock, set_global_clock, NULL, 2);
+    prop_set(prop_clock, "localtimeofday", PROP_SET_STRING, "--:--");
     return;
   }
   prop_set(prop_clock, "valid", PROP_SET_INT, 1);
@@ -226,7 +229,17 @@ callout_update_clock_props(void)
   prop_set(prop_clock, "minute",    PROP_SET_INT, tm.tm_min);
   prop_set(prop_clock, "dayminute", PROP_SET_INT, tm.tm_hour * 60 + tm.tm_min);
 
-  callout_arm(&callout_clock, set_global_clock, NULL, 61 - tm.tm_sec);
+  char tmp[32];
+  int tf = gconf.time_format ? gconf.time_format : gconf.time_format_system;
+  if(tf == TIME_FORMAT_12) {
+
+    snprintf(tmp, sizeof(tmp), "%02d:%02d %cM",
+             tm.tm_hour == 12 ? 12 : (tm.tm_hour % 12), tm.tm_min,
+             tm.tm_hour >= 12 ? 'P' : 'A');
+  } else {
+    snprintf(tmp, sizeof(tmp), "%02d:%02d", tm.tm_hour, tm.tm_min);
+  }
+  prop_set(prop_clock, "localtimeofday", PROP_SET_STRING, tmp);
 }
 
 

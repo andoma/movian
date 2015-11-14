@@ -49,7 +49,7 @@
       widget(label, {
         align: center;
         padding: [2em, 0];
-        caption: fmt("%02d:%02d", $core.clock.hour, $core.clock.minute);
+        caption: $core.clock.localtimeofday;
       });
     });
   });

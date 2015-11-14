@@ -271,6 +271,12 @@ typedef struct gconf {
   char *ui;
   char *skin;
 
+#define TIME_FORMAT_UNSET 0
+#define TIME_FORMAT_24    1
+#define TIME_FORMAT_12    2
+
+  int time_format;
+  int time_format_system;
 
   struct prop *settings_apps;
   struct prop *settings_sd;

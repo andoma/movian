@@ -55,6 +55,8 @@
 #include "arch/halloc.h"
 #include "ps3.h"
 
+extern int sysUtilGetSystemParamInt(int, int *);
+
 static void replace_gamefile(const char *name);
 
 // #define EMERGENCY_EXIT_THREAD
@@ -586,6 +588,7 @@ typedef struct sys_event_queue_attr {
 int
 main(int argc, char **argv)
 {
+  int v;
   ps3_early_init(argc, argv);
 
   gconf.concurrency = 2;
@@ -597,6 +600,12 @@ main(int argc, char **argv)
 
   my_trace("The binary is: %s\n", gconf.binary);
   set_device_id();
+
+  // Time format
+  if(!sysUtilGetSystemParamInt(0x115, &v)) {
+    gconf.time_format_system = v ? TIME_FORMAT_24 : TIME_FORMAT_12;
+  }
+
   main_init();
 
   sysprop = prop_create(prop_get_global(), "system");
