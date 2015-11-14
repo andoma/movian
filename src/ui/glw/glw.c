@@ -85,6 +85,7 @@ glw_update_underscan(glw_root_t *gr)
   if(gr->gr_underscan_h != val) {
     prop_set(gr->gr_prop_ui, "underscan_h", PROP_SET_INT, val);
     gr->gr_underscan_h = val;
+    gr->gr_need_refresh = GLW_REFRESH_FLAG_LAYOUT | GLW_REFRESH_FLAG_RENDER;
   }
 
 
@@ -94,6 +95,7 @@ glw_update_underscan(glw_root_t *gr)
   if(gr->gr_underscan_v != val) {
     prop_set(gr->gr_prop_ui, "underscan_v", PROP_SET_INT, val);
     gr->gr_underscan_v = val;
+    gr->gr_need_refresh = GLW_REFRESH_FLAG_LAYOUT | GLW_REFRESH_FLAG_RENDER;
   }
 }
 
