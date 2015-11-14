@@ -1,7 +1,7 @@
 
 mkdir -p ${WORKINGDIR}
 
-STOSVERSION="stos-host-2.0.1.gb0b51"
+STOSVERSION="stos-host-2.2"
 
 TOOLCHAIN_URL=https://movian.tv/static/${STOSVERSION}.tar.bz2
 TOOLCHAIN="${WORKINGDIR}/${STOSVERSION}"
