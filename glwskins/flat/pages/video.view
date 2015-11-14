@@ -72,13 +72,10 @@ onEvent(menu, {
 }, $clone.osdpage);
 
 
+onInactivity(select($clone.showPlaydeck && $clone.osdpage == 0, 5, 0), {
+  $clone.showPlaydeck = 0;
+});
 
-
-// Auto close playdeck after 10 seconds
-/*
-$clone.showPlaydeck ?=
-  select(delay($clone.osdpage == 0 && $clone.showPlaydeck, 10, 0), 0, void);
-*/
 
 $view.showSeekBar =
   $ui.pointerVisible ||
