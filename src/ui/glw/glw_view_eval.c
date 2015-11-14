@@ -3380,7 +3380,6 @@ glwf_onInactivity(glw_view_eval_context_t *ec, struct token *self,
     // Inactivity time passed
 
     glw_need_refresh(gr, 0);
-    printf("Inactivity passed\n");
     if(!goe->trigged) {
       goe->trigged = 1;
 
