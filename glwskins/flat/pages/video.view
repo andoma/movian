@@ -32,6 +32,7 @@ style(OsdItem, {
 
 
 delta($ui.fullwindow, isVisible());
+delta($ui.disableScreensaver, isVisible());
 
 $self.directClose = 1;
 $self.close = $self.media.playstatus == "stop";

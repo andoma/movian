@@ -46,6 +46,7 @@ static void glw_root_set_hover(glw_root_t *gr, glw_t *w);
 static void glw_eventsink(void *opaque, prop_event_t event, ...);
 static void glw_update_em(glw_root_t *gr);
 static int  glw_set_keyboard_mode(glw_root_t *gr, int on);
+static void glw_reset_screensaver(glw_root_t *gr);
 
 glw_settings_t glw_settings;
 
@@ -137,7 +138,17 @@ glw_sizeoffset_callback(void *opaque, int value)
 {
   glw_root_t *gr = opaque;
   gr->gr_skin_scale_adjustment = value;
+}
 
+
+/**
+ *
+ */
+static void
+glw_dis_screensaver_callback(void *opaque, int value)
+{
+  glw_root_t *gr = opaque;
+  gr->gr_inhibit_screensaver = value;
 }
 
 /**
@@ -241,6 +252,14 @@ glw_init4(glw_root_t *gr,
                    PROP_TAG_COURIER, gr->gr_courier,
                    NULL);
 
+  gr->gr_disable_screensaver_sub =
+    prop_subscribe(0,
+                   PROP_TAG_CALLBACK_INT, glw_dis_screensaver_callback, gr,
+                   PROP_TAG_NAME("ui", "disableScreensaver"),
+                   PROP_TAG_ROOT, gr->gr_prop_ui,
+                   PROP_TAG_COURIER, gr->gr_courier,
+                   NULL);
+
   TAILQ_INIT(&gr->gr_destroyer_queue);
 
   TAILQ_INIT(&gr->gr_view_load_requests);
@@ -283,6 +302,7 @@ glw_fini(glw_root_t *gr)
   glw_tex_fini(gr);
   prop_unsubscribe(gr->gr_evsub);
   prop_unsubscribe(gr->gr_scalesub);
+  prop_unsubscribe(gr->gr_disable_screensaver_sub);
   prop_courier_destroy(gr->gr_courier);
   hts_mutex_destroy(&gr->gr_mutex);
 
@@ -478,10 +498,15 @@ glw_signal_handler_clean(glw_t *w)
  *
  */
 static int
-glw_screensaver_is_active(const glw_root_t *gr)
+glw_screensaver_is_active(glw_root_t *gr)
 {
   if(gr->gr_screensaver_force_enable)
     return 1;
+
+  if(gr->gr_inhibit_screensaver) {
+    gr->gr_screensaver_reset_at = gr->gr_frame_start;
+    return 0;
+  }
 
   if(!gr->gr_is_fullscreen)
     return 0;
@@ -624,7 +649,6 @@ void
 glw_post_scene(glw_root_t *gr)
 {
   glw_renderer_render(gr);
-
 #if CONFIG_GLW_REC
   if(gr->gr_rec != NULL) {
     pixmap_t *pm = gr->gr_br_read_pixels(gr);
@@ -3053,7 +3077,7 @@ glw_osk_open(glw_root_t *gr, const char *title, const char *input,
 /**
  *
  */
-void
+static void
 glw_reset_screensaver(glw_root_t *gr)
 {
   gr->gr_screensaver_reset_at = gr->gr_frame_start;

@@ -784,7 +784,9 @@ typedef struct glw_root {
 
   int gr_screensaver_force_enable;
   prop_t *gr_screensaver_active;
-
+  int gr_inhibit_screensaver;
+  prop_sub_t *gr_disable_screensaver_sub;
+  
   /**
    * View loader
    */
@@ -1564,8 +1566,6 @@ void glw_gtb_set_caption_raw(glw_t *w, uint32_t *uc, int len);
 extern const float glw_identitymtx[16];
 
 void glw_icon_flush(glw_root_t *gr);
-
-void glw_reset_screensaver(glw_root_t *gr);
 
 int glw_image_get_details(glw_t *w, char *path, size_t pathlen, float *alpha);
 

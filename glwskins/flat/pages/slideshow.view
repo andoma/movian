@@ -1,6 +1,9 @@
+
+
 widget(deck, {
 
   delta($ui.fullwindow, isVisible());
+  delta($ui.disableScreensaver, isVisible());
 
   keepLastActive: true;
   keepNextActive: true;

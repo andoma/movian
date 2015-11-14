@@ -107,8 +107,6 @@ glw_slideshow_layout(glw_t *w, const glw_rctx_t *rc)
   float delta, a;
   int r = 0;
 
-  glw_reset_screensaver(w->glw_root);
-
   delta = s->w.glw_root->gr_frameduration / (float)s->transition_time;
 
   if((c = s->w.glw_focused) == NULL) {
