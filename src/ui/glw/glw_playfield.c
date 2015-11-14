@@ -275,6 +275,7 @@ glw_playfield_render(glw_t *w, const glw_rctx_t *rc)
     return;
 
   rc0 = *rc;
+  rc0.rc_alpha *= w->glw_alpha;
   rc0.rc_zmax = &zmax;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
