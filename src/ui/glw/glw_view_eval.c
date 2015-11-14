@@ -1304,7 +1304,14 @@ clone_req_move(sub_cloner_t *sc, glw_t *w, glw_move_op_t *mop)
     }
   }
 
-  glw_clone_t *d = b ? b->glw_clone : NULL;
+  glw_clone_t *d = NULL;
+  if(b != NULL) {
+    d = b->glw_clone;
+    if(b != w->glw_clone->c_sc->sc_anchor) {
+      if(d == NULL)
+        return;
+    }
+  }
   prop_req_move(w->glw_clone->c_prop, d ? d->c_prop : NULL);
   mop->did_move = 1;
 }
