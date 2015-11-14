@@ -13,7 +13,7 @@ widget(container_z, {
     padding: 0.25em;
 
     widget(image, {
-      source: $self.url;
+      source: $self.metadata.icon ?? $self.url;
     });
   });
 });
