@@ -20,8 +20,13 @@
 
 #include <libcec/cecc.h>
 
+#include "settings.h"
+#include "htsmsg/htsmsg_store.h"
 #include "main.h"
 #include "event.h"
+
+//static int control_input;
+//static int auto_ui_shutdown;
 
 static int
 log_message(void *lib, const cec_log_message message)
@@ -115,11 +120,31 @@ static ICECCallbacks g_callbacks = {
 };
 
 static libcec_configuration cec_config;
-static libcec_connection_t *conn;
+static libcec_connection_t conn;
+
+static void
+set_activate_source(void *opaque, int value)
+{
+  cec_config.bActivateSource = value;
+  libcec_set_configuration(conn, &cec_config);
+  printf("CEC SET active source=%d\n", value);
+}
 
 static void *
 libcec_init_thread(void *aux)
 {
+  htsmsg_t *s = htsmsg_store_load("cec") ?: htsmsg_create_map();
+
+  prop_t *set;
+
+  set =
+    settings_add_dir(NULL, _p("TV Control"),
+		     "display", NULL,
+		     _p("Configure communications with your TV"),
+		     "settings:cec");
+
+
+
   libcec_clear_configuration(&cec_config);
   cec_config.callbacks = &g_callbacks;
   snprintf(cec_config.strDeviceName, sizeof(cec_config.strDeviceName),
@@ -145,6 +170,25 @@ libcec_init_thread(void *aux)
   }
   TRACE(TRACE_DEBUG, "CEC", "Using adapter %s on %s",
         ca.comm, ca.path);
+
+
+  setting_create(SETTING_BOOL, set,
+		 SETTINGS_INITIAL_UPDATE,
+		 SETTING_TITLE(_p("Switch TV input source")),
+                 SETTING_VALUE(1),
+		 SETTING_CALLBACK(set_activate_source, NULL),
+		 SETTING_HTSMSG("controlinput", s, "cec"),
+		 NULL);
+
+
+#if 0
+  setting_create(SETTING_BOOL, set,
+		 SETTINGS_INITIAL_UPDATE,
+		 SETTING_TITLE_CSTR("Shutdown UI when TV is off"),
+		 SETTING_WRITE_BOOL(&auto_ui_shutdown),
+		 SETTING_HTSMSG("auto_shutdown", s, "cec"),
+		 NULL);
+#endif
 
   if(!libcec_open(conn, ca.comm, 5000)) {
     TRACE(TRACE_ERROR, "CEC", "Unable to open connection to %s",
