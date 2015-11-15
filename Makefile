@@ -429,6 +429,7 @@ SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
 			src/ui/glw/glw_bloom.c \
 			src/ui/glw/glw_cube.c \
 			src/ui/glw/glw_displacement.c \
+			src/ui/glw/glw_coverflow.c \
 			src/ui/glw/glw_mirror.c \
 			src/ui/glw/glw_video_common.c \
 			src/ui/glw/glw_video_overlay.c \
