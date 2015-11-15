@@ -2178,6 +2178,9 @@ hls_play_extm3u(char *buf, const char *url, media_pipe_t *mp,
 
   prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 1);
 
+  mp->mp_audio.mq_demuxer_flags = 0;
+  mp->mp_video.mq_demuxer_flags = 0;
+
   hls_t h;
   memset(&h, 0, sizeof(h));
   hls_demuxer_init(&h.h_primary, &h, "primary");
