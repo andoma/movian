@@ -24,13 +24,6 @@
 }
 
 
-style(OsdItem, {
-  filterConstraintX: true;
-  color: iir(!isNavFocused(), 4);
-  shadow: iir(!isNavFocused(), 4);
-});
-
-
 delta($ui.fullwindow, isVisible());
 delta($ui.disableScreensaver, isVisible());
 
