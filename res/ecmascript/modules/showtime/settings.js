@@ -246,9 +246,9 @@ sp.createMultiOpt = function(id, title, options, callback, persistent) {
     if(type == 'selectchild') {
       var selected = prop.getName(a);
       group.setvalue(id, selected, persistent);
-      callback(selected);
       prop.link(a, model.current);
       model.value = id;
+      callback(selected);
     }
   }, {
     noInitialUpdate: true,
