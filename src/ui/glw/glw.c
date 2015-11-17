@@ -1310,26 +1310,20 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how, const char *whom)
 
   gr->gr_current_focus = w;
   gr->gr_delayed_focus_leave = 0;
-#if 0
-  glw_t *h = w;
-  while(h->glw_parent != NULL) {
-    printf("Verifying %p %p %p\n", h, h->glw_parent, h->glw_parent->glw_focused);
-    if(h->glw_parent->glw_focused != h) {
-      glw_t *f = h->glw_parent->glw_focused;
-      printf("Parent %p %s points to %p %s <%s> instead of %p %s <%s>\n",
-             h->glw_parent, h->glw_parent->glw_class->gc_name,
-             f, f->glw_class->gc_name, glw_get_a_name(f),
-             h, h->glw_class->gc_name, glw_get_a_name(h));
-    }
-    h = h->glw_parent;
-  }
-#endif
 
   if(w != NULL) {
     glw_need_refresh(gr, 0);
 
     GLW_TRACE("Focus set to %s:%d by %s",
               rstr_get(w->glw_file), w->glw_line, whom);
+
+#if 0
+    glw_t *t = w->glw_parent;
+    while(t != NULL) {
+      printf("Parent %s\n", glw_get_name(t));
+      t = t->glw_parent;
+    }
+#endif
 
     gr->gr_last_focus = w;
 
