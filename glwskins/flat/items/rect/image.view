@@ -12,8 +12,14 @@ widget(container_z, {
     style: "GridItem";
     padding: 0.25em;
 
-    widget(image, {
-      source: $self.metadata.icon ?? $self.url;
+    widget(displacement, {
+      scaling: [1,1,1] + [0.1, 0.1, 0] * $view.loading;
+      widget(image, {
+        $view.loading = iir(isLoading(), 4, true);
+        source: $self.metadata.icon ?? $self.url;
+        saturation: $view.loading;
+        alpha: 1 - $view.loading * 0.5;
+      });
     });
   });
 });
