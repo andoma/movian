@@ -1385,6 +1385,7 @@ glw_image_set_float(glw_t *w, glw_attribute_t attrib, float value,
   case GLW_ATTRIB_SATURATION:
     if(gi->gi_saturation == value)
       return 0;
+    gi->gi_saturation = value;
     compute_colors(gi);
     break;
 
