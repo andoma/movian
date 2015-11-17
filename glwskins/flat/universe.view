@@ -116,7 +116,7 @@ widget(container_z, {
 
 
       widget(container_y, {
-        hidden: $ui.fullwindow;
+        hidden: $ui.fullwindow && !$ui.pointerVisible;
         alpha: iir($ui.showTopIcons, 4);
 
         widget(container_x, {
