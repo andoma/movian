@@ -481,13 +481,13 @@ pulseaudio_audio_deliver(audio_decoder_t *ad, int samples,
     const pa_timing_info *ti = pa_stream_get_timing_info(d->s);
     if(ti != NULL) {
       mp->mp_audio_clock_avtime = 
-	ti->timestamp.tv_sec * 1000000LL + ti->timestamp.tv_usec;
+        ti->timestamp.tv_sec * 1000000LL + ti->timestamp.tv_usec;
 
       int64_t busec = pa_bytes_to_usec(ti->write_index - ti->read_index,
-				       &d->ss);
+                                       &d->ss);
 
-      int64_t delay = ti->sink_usec + busec + ti->transport_usec;
-      mp->mp_audio_clock = pts - delay;
+      ad->ad_delay = ti->sink_usec + busec + ti->transport_usec;
+      mp->mp_audio_clock = pts - ad->ad_delay;
       mp->mp_audio_clock_epoch = epoch;
     }
     hts_mutex_unlock(&mp->mp_clock_mutex);
