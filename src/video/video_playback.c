@@ -156,7 +156,8 @@ play_video(const char *url, struct media_pipe *mp,
 	   char *errbuf, size_t errlen,
 	   video_queue_t *vq,
            const char *parent_url, const char *parent_title,
-           prop_t *origin, int resume_mode)
+           prop_t *origin, int resume_mode,
+           int64_t load_request_timestamp)
 {
   htsmsg_t *subs, *sources;
   const char *str;
@@ -178,6 +179,7 @@ play_video(const char *url, struct media_pipe *mp,
   va.origin = origin;
   va.priority = priority;
   va.resume_mode = resume_mode;
+  va.load_request_timestamp = load_request_timestamp;
 
   LIST_INIT(&vsources);
 
@@ -202,7 +204,7 @@ play_video(const char *url, struct media_pipe *mp,
 	      url, rstr_get(r));
 	event_t *e = play_video(rstr_get(r), mp, flags, priority,
 				errbuf, errlen, vq, parent_title, parent_url,
-                                origin, resume_mode);
+                                origin, resume_mode, load_request_timestamp);
         prop_destroy(p);
 	rstr_release(r);
 	return e;
@@ -677,7 +679,7 @@ video_player_idle(void *aux)
   prop_t *item_model = NULL;
   rstr_t *parent_url = NULL;
   rstr_t *parent_title = NULL;
-
+  int64_t load_request_timestamp = 0;
   enum {
     RESUME_NO,
     RESUME_AS_GLOBAL_SETTING,
@@ -721,7 +723,7 @@ video_player_idle(void *aux)
 		     play_flags, play_priority,
 		     errbuf, sizeof(errbuf), vq,
                      rstr_get(parent_url), rstr_get(parent_title),
-                     item_model, resume_mode);
+                     item_model, resume_mode, load_request_timestamp);
       mp_bump_epoch(mp);
       prop_set(mp->mp_prop_root, "loading", PROP_SET_INT, 0);
       if(e == NULL) {
@@ -736,7 +738,7 @@ video_player_idle(void *aux)
       rstr_set(&play_url, NULL);
       e = mp_dequeue_event(mp);
     }
-
+    load_request_timestamp = e->e_timestamp;
     if(event_is_type(e, EVENT_EOF) && mp->mp_auto_standby) {
       app_shutdown(APP_EXIT_STANDBY);
       event_release(e);

@@ -2269,6 +2269,10 @@ hls_playvideo(const char *url, media_pipe_t *mp,
   buf = buf_make_writable(buf);
   char *s = buf_str(buf);
   event_t *e;
+
+  mp->mp_reset_time = va0->load_request_timestamp;
+  mp->mp_reset_epoch = mp->mp_epoch;
+
   if(s == NULL) {
     snprintf(errbuf, errlen, "Playlist contains no data");
     e = NULL;

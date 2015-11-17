@@ -298,6 +298,7 @@ mp_reset(media_pipe_t *mp)
 {
   mp_unhold(mp, MP_HOLD_PRE_BUFFERING | MP_HOLD_STREAM |  MP_HOLD_SYNC);
   cancellable_reset(mp->mp_cancellable);
+  prop_set(mp->mp_prop_root, "startLatency", PROP_SET_VOID);
 
   prop_set(mp->mp_prop_io, "bitrate", PROP_SET_VOID);
   prop_set(mp->mp_prop_io, "bitrateValid", PROP_SET_VOID);
