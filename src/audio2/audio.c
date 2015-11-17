@@ -37,7 +37,12 @@
 #include <libavutil/opt.h>
 #include <libavutil/mem.h>
 
+#if CONFIG_GLW_REC
+#include "ui/glw/glw_rec.h"
+#endif
+
 static audio_class_t *audio_class;
+static atomic_t audio_id_tally;
 
 float audio_master_volume = 1.0;
 int   audio_master_mute = 0;
@@ -176,7 +181,7 @@ audio_decoder_create(struct media_pipe *mp)
   ad->ad_pts = AV_NOPTS_VALUE;
   ad->ad_epoch = 0;
   ad->ad_vol_scale = 1.0f;
-
+  ad->ad_id = atomic_add_and_fetch(&audio_id_tally, 1);
   hts_thread_create_joinable("audio decoder", &ad->ad_tid,
                              audio_decode_thread, ad, THREAD_PRIO_AUDIO);
   return ad;
@@ -597,6 +602,9 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
       } else {
 	usleep(ad->ad_estimated_duration);
       }
+#if CONFIG_GLW_REC
+      glw_rec_audio_send(ad, frame, PTS_UNSET);
+#endif
     }
   }
 
@@ -775,6 +783,9 @@ audio_decode_thread(void *aux)
 
   hts_mutex_unlock(&mp->mp_mutex);
 
+#if CONFIG_GLW_REC
+  glw_rec_audio_send(ad, NULL, PTS_UNSET);
+#endif
   if(ac->ac_fini != NULL)
     ac->ac_fini(ad);
   return NULL;

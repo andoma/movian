@@ -21,9 +21,14 @@
 
 typedef struct glw_rec glw_rec_t;
 struct pixmap;
+struct AVFrame;
+struct audio_decoder;
 
 glw_rec_t *glw_rec_init(const char *filename, int width, int height, int fps);
 
 void glw_rec_deliver_vframe(glw_rec_t *gr, struct pixmap *pm);
 
 void glw_rec_stop(glw_rec_t *);
+
+void glw_rec_audio_send(struct audio_decoder *ad, struct AVFrame *frame,
+                        int64_t pts);

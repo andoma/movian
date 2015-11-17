@@ -66,6 +66,7 @@ typedef struct audio_decoder {
   hts_thread_t ad_tid;
 
   int ad_mode;
+  int ad_id;
 
   struct AVFrame *ad_frame;
   int64_t ad_pts;
