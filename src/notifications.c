@@ -524,8 +524,6 @@ load_site_news(void)
     return;
   }
 
-  printf("servertime=%d\n", (int)servertime);
-
   if(newsinfo == NULL)
     newsinfo = htsmsg_create_map();
 
