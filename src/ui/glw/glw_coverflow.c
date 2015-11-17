@@ -58,7 +58,7 @@ glw_coverflow_layout(glw_t *w, const glw_rctx_t *rc)
   rc0 = *rc;
   rc0.rc_width = rc->rc_height;
 
-  glw_lp(&gc->pos, gc->w.glw_root, gc->pos_target, 0.25);
+  glw_lp(&gc->pos, gc->w.glw_root, gc->pos_target, 0.2);
 
   TAILQ_FOREACH(c, &gc->w.glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
@@ -91,7 +91,7 @@ glw_coverflow_layout(glw_t *w, const glw_rctx_t *rc)
 static void
 renderone(glw_rctx_t *rc, glw_t *c, glw_coverflow_t *gc)
 {
-  float v, r, nv;
+  float v, r;
   glw_rctx_t rc0;
 
   if(c->glw_flags & GLW_HIDDEN)
@@ -100,10 +100,11 @@ renderone(glw_rctx_t *rc, glw_t *c, glw_coverflow_t *gc)
   glw_coverflow_item_t *cd = glw_parent_data(c, glw_coverflow_item_t);
   v = cd->pos;
 
-  nv = v * gc->xs;
-
-  if(nv < -1.5 || nv > 1.5)
+  if(v < -1.5 || v > 1.5)
     return;
+
+
+  //  nv = v * gc->xs;
 
   rc0 = *rc;
 
@@ -119,6 +120,7 @@ renderone(glw_rctx_t *rc, glw_t *c, glw_coverflow_t *gc)
 
   glw_Translatef(&rc0, v, 0.0, 0.0);
   glw_Rotatef(&rc0, -r, 0, 1.0, 0.0);
+  rc0.rc_zindex = -fabs(v);
 
   //  rc0.rc_alpha *= GLW_CLAMP(1 - fabs(nv), 0, 1);
 
