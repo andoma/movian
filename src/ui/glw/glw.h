@@ -767,8 +767,9 @@ typedef struct glw_root {
   int64_t gr_ui_start;        // Timestamp UI was initialized
   int64_t gr_frame_start;     // Timestamp when we started rendering frame
   int64_t gr_frame_start_avtime; // AVtime when start rendering frame
-  int64_t gr_hz_sample;
   prop_t *gr_is_fullscreen;   // Set if our window is in fullscreen
+
+  int64_t gr_framerate_avg[16];
 
   uint64_t gr_time_usec;
   double gr_time_sec;
