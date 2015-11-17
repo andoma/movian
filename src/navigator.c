@@ -145,6 +145,8 @@ typedef struct nav_page {
   prop_sub_t *np_icon_sub;
   rstr_t *np_icon;
 
+  prop_t *np_bookmark_notify_prop;
+
 } nav_page_t;
 
 
@@ -376,6 +378,8 @@ nav_close(nav_page_t *np, int with_prop)
   prop_ref_dec(np->np_parent_model_src);
   prop_ref_dec(np->np_parent_model_dst);
 
+  prop_ref_dec(np->np_bookmark_notify_prop);
+
   rstr_release(np->np_title);
   free(np->np_url);
   free(np->np_parent_url);
@@ -530,14 +534,15 @@ static void
 nav_page_bookmarked_set(void *opaque, int v)
 {
   nav_page_t *np = opaque;
-
+  prop_t *p = NULL;
   if(v) {
     if(nav_page_is_bookmarked(np))
       return;
 
     const char *title = rstr_get(np->np_title) ?: "<no title>";
 
-    notify_add(NULL, NOTIFY_INFO, NULL, 3, _("Added new bookmark: %s"), title);
+    p = notify_add(NULL, NOTIFY_INFO, NULL, -3,
+                   _("Added %s to home page"), title);
 
     bookmark_add(title, np->np_url, "other", rstr_get(np->np_icon), NULL);
 
@@ -545,13 +550,18 @@ nav_page_bookmarked_set(void *opaque, int v)
     bookmark_t *bm;
     LIST_FOREACH(bm, &bookmarks, bm_link) {
       if(!strcmp(rstr_get(bm->bm_url), np->np_url)) {
-	notify_add(NULL, NOTIFY_INFO, NULL, 3, _("Removed bookmark: %s"),
-		   rstr_get(bm->bm_title));
+        prop_ref_dec(p);
+	p = notify_add(NULL, NOTIFY_INFO, NULL, -3,
+                       _("Removed %s from homepage"), rstr_get(bm->bm_title));
 	prop_destroy(bm->bm_root);
       }
     }
   }
   bookmarks_save();
+
+  prop_destroy(np->np_bookmark_notify_prop);
+  prop_ref_dec(np->np_bookmark_notify_prop);
+  np->np_bookmark_notify_prop = p;
 }
 
 

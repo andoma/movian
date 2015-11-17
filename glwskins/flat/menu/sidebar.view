@@ -102,21 +102,6 @@ widget(container_x, {
 
 
       // --------------------------------------
-      // Bookmark on/off
-      // --------------------------------------
-
-      SIDEBAR_ACTION(select($self.bookmarked,
-                            _("Remove from home"),
-                            _("Add to home")),
-                     select($self.bookmarked,
-                            "skin://icons/ic_bookmark_48px.svg",
-                            "skin://icons/ic_bookmark_border_48px.svg"),
-                     {
-	               toggle($self.bookmarked);
-                     },
-                     $self.url == "page:home");
-
-      // --------------------------------------
       //
       // --------------------------------------
 
@@ -125,7 +110,6 @@ widget(container_x, {
           .self <- $clone.settings;
         source: "skin://items/list/multiopt.view";
       });
-
 
       // --------------------------------------
       // Items from page model
@@ -137,6 +121,24 @@ widget(container_x, {
 	alt: "skin://items/list/default.view";
 	source: "skin://items/list/" + $self.type + ".view";
       });
+
+
+
+      // --------------------------------------
+      // Bookmark on/off
+      // --------------------------------------
+
+      SIDEBAR_ACTION(select($self.bookmarked,
+                            _("Remove bookmark"),
+                            _("Bookmark page")),
+                     select($self.bookmarked,
+                            "skin://icons/ic_bookmark_48px.svg",
+                            "skin://icons/ic_bookmark_border_48px.svg"),
+                     {
+	               toggle($self.bookmarked);
+                     },
+                     $self.url == "page:home");
+
       SIDEBAR_ACTION(_("Reload page"),
                      "skin://icons/ic_refresh_48px.svg",
                      event("ReloadData"));

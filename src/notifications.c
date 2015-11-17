@@ -128,10 +128,15 @@ notify_add(prop_t *root, notify_type_t type, const char *icon, int delay,
 
   if(prop_set_parent(p, root ?: notify_prop_entries))
     prop_destroy(p);
-  
+
   if(delay != 0) {
+    prop_t *r = NULL;
+    if(delay < 0) {
+      r = prop_ref_inc(p);
+      delay = -delay;
+    }
     callout_arm(NULL, notify_timeout, p, delay);
-    return NULL;
+    return r;
   }
   return p;
 }
