@@ -1,0 +1,20 @@
+
+$view.background =
+  $nav.currentpage.model.metadata.background ??
+  $nav.currentpage.glw.background ??
+  $ui.background;
+
+$view.background_alpha =
+  iir(1 - ($ui.fullwindow || $ui.screensaverActive), 16) *
+  select(!isVoid($nav.currentpage.model.metadata.background),
+         $nav.currentpage.model.metadata.backgroundAlpha ?? 1,
+
+         select(!isVoid($nav.currentpage.glw.background),
+                $nav.currentpage.glw.backgroundAlpha ?? 1,
+
+                1));
+
+widget(backdrop, {
+  source: $view.background;
+  color: $view.background_alpha;
+});
