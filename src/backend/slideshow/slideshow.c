@@ -25,6 +25,7 @@
 #include "navigator.h"
 #include "misc/lockmgr.h"
 #include "misc/callout.h"
+#include "misc/minmax.h"
 #include "backend/backend.h"
 
 TAILQ_HEAD(slideshow_item_queue, slideshow_item);
@@ -41,6 +42,9 @@ typedef struct slideshow {
 
   prop_t *ss_model;
   prop_t *ss_nodes;
+
+  int ss_speed;  // Seconds between switches
+  prop_t *ss_speed_prop;
 
   struct slideshow_item_queue ss_items;
 
@@ -197,6 +201,7 @@ slideshow_destroy(slideshow_t *ss)
   prop_unsubscribe(ss->ss_hold_sub);
   prop_ref_dec(ss->ss_model);
   prop_ref_dec(ss->ss_nodes);
+  prop_ref_dec(ss->ss_speed_prop);
   callout_disarm(&ss->ss_callout);
   assert(ss->ss_start == NULL);
 }
@@ -228,7 +233,8 @@ slideshow_arm(slideshow_t *ss)
   if(ss->ss_hold)
     return;
   callout_arm_managed(&ss->ss_callout, ss_timer, ss,
-                      ss->ss_loaded ? 5000000 : 1000000, lockmgr_handler);
+                      ss->ss_loaded ? (ss->ss_speed * 1000000) : 1000000,
+                      lockmgr_handler);
 }
 
 /**
@@ -492,9 +498,33 @@ slideshow_nodes(void *opaque, prop_event_t event, ...)
  *
  */
 static void
+update_speed(slideshow_t *ss)
+{
+  prop_set_int(ss->ss_speed_prop, ss->ss_speed);
+  if(ss->ss_loaded && !ss->ss_hold)
+    callout_rearm(&ss->ss_callout, ss->ss_speed * 1000000);
+}
+
+
+/**
+ *
+ */
+static void
 slideshow_eventsink(void *opaque, event_t *e)
 {
   slideshow_t *ss = opaque;
+
+  if(event_is_action(e, ACTION_INCR)) {
+    ss->ss_speed = MIN(ss->ss_speed + 2, 9);
+    update_speed(ss);
+    return;
+  }
+
+  if(event_is_action(e, ACTION_DECR)) {
+    ss->ss_speed = MAX(ss->ss_speed - 2, 3);
+    update_speed(ss);
+    return;
+  }
 
   if(event_is_action(e, ACTION_LEFT) ||
      event_is_action(e, ACTION_SEEK_BACKWARD)) {
@@ -535,6 +565,10 @@ be_slideshow_open(prop_t *page, const char *url, int sync)
 {
   url += strlen("slideshow:");
   slideshow_t *ss = calloc(1, sizeof(slideshow_t));
+
+  ss->ss_speed = 5;
+  ss->ss_speed_prop = prop_create_multi(page, "slideshow", "speed", NULL);
+  prop_set_int(ss->ss_speed_prop, ss->ss_speed);
 
   ss->ss_model = prop_create_r(page, "model");
   ss->ss_nodes = prop_create_r(ss->ss_model, "nodes");

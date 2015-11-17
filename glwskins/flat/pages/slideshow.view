@@ -84,6 +84,9 @@ widget(container_z, {
       onEvent(left,  deliverEvent($self.slideshow.eventSink, "SeekReverse"));
       onEvent(right, deliverEvent($self.slideshow.eventSink, "SeekForward"));
 
+      onEvent(up,   deliverEvent($self.slideshow.eventSink, "Increase"));
+      onEvent(down, deliverEvent($self.slideshow.eventSink, "Decrease"));
+
       onEvent(activate, {
         toggle($clone.showPlaydeck);
         focus("pause-btn");
@@ -152,6 +155,24 @@ widget(container_z, {
                           $clone.showSidebar > 0);
 
         });
+      });
+    });
+  });
+
+  widget(container_y, {
+    padding: 1em;
+    spacing: 0.5em;
+    widget(container_x, {
+      widget(label, {
+        alpha: changed($self.slideshow.speed, 2, true);
+        caption: fmt(_("Interval: %ds"), $self.slideshow.speed);
+        size: 1.5em;
+        shadow: true;
+      });
+      space(1);
+      widget(icon, {
+        source: "skin://icons/ic_pause_48px.svg";
+        alpha: iir($view.paused, 8);
       });
     });
   });
