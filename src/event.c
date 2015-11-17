@@ -38,6 +38,7 @@ void *
 event_create(event_type_t type, size_t size)
 {
   event_t *e = malloc(size);
+  e->e_timestamp = arch_get_ts();
   e->e_nav = NULL;
   e->e_dtor = NULL;
   atomic_set(&e->e_refcount, 1);

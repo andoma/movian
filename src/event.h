@@ -177,14 +177,15 @@ TAILQ_HEAD(event_q, event);
  *
  */
 typedef struct event {
+  struct prop *e_nav;
+  void (*e_dtor)(struct event *e);
+  TAILQ_ENTRY(event) e_link;
+  int64_t e_timestamp;
   atomic_t e_refcount;
   int     e_flags;
 #define EVENT_MAPPED 0x1
 #define EVENT_KEYPRESS 0x2 // Came from user keypress
-  struct prop *e_nav;
   event_type_t e_type;
-  void (*e_dtor)(struct event *e);
-  TAILQ_ENTRY(event) e_link;
 } event_t;
 
 
