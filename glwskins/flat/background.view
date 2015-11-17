@@ -17,4 +17,5 @@ $view.background_alpha =
 widget(backdrop, {
   source: $view.background;
   color: $view.background_alpha;
+  zoffset: -1000;
 });
