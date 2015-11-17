@@ -281,6 +281,8 @@ glw_deck_render(glw_t *w, const glw_rctx_t *rc)
   if(w->glw_alpha < 0.01)
     return;
 
+  glw_store_matrix(w, rc);
+
   if(gd->last != NULL && gd->v < 1)
     deck_render(rc, gd, gd->last, gd->v);
 
