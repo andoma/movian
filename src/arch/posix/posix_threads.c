@@ -21,6 +21,7 @@
 #include <sys/prctl.h>
 #include <sys/resource.h>
 #include <unistd.h>
+#include <sys/syscall.h>
 #endif
 
 #include <sys/time.h>
@@ -168,8 +169,9 @@ thread_trampoline(void *aux)
   void *r;
 
 #if defined(linux)
-  if(posix_set_thread_priorities)
-    setpriority(PRIO_PROCESS, syscall(224), t->prio);
+  errno = 0;
+  long tid = syscall(SYS_gettid);
+  setpriority(PRIO_PROCESS, tid, t->prio);
   prctl(PR_SET_NAME, t->title, 0, 0, 0);
 #elif defined(APPLE)
   pthread_setname_np(t->title);
