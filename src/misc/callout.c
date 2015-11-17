@@ -47,9 +47,9 @@ calloutcmp(callout_t *a, callout_t *b)
  *
  */
 static void
-callout_arm_abs(callout_t *d, callout_callback_t *callback, void *opaque,
-		uint64_t deadline, lockmgr_fn_t *lockmgr,
-                const char *file, int line)
+callout_arm0(callout_t *d, callout_callback_t *callback, void *opaque,
+             int64_t delta, lockmgr_fn_t *lockmgr,
+             const char *file, int line)
 {
   lockmgr_fn_t *retain = NULL;
   hts_mutex_lock(&callout_mutex);
@@ -67,7 +67,8 @@ callout_arm_abs(callout_t *d, callout_callback_t *callback, void *opaque,
 
   d->c_callback = callback;
   d->c_opaque = opaque;
-  d->c_deadline = deadline;
+  d->c_delta = delta;
+  d->c_deadline = arch_get_ts() + delta;
   d->c_armed_by_file = file;
   d->c_armed_by_line = line;
   d->c_lockmgr = lockmgr;
@@ -87,8 +88,7 @@ callout_arm_x(callout_t *d, callout_callback_t *callback,
               void *opaque, int delta,
               const char *file, int line)
 {
-  uint64_t deadline = arch_get_ts() + delta * 1000000LL;
-  callout_arm_abs(d, callback, opaque, deadline, NULL, file, line);
+  callout_arm0(d, callback, opaque, delta * 1000000LL, NULL, file, line);
 }
 
 /**
@@ -96,11 +96,10 @@ callout_arm_x(callout_t *d, callout_callback_t *callback,
  */
 void
 callout_arm_hires_x(callout_t *d, callout_callback_t *callback,
-                    void *opaque, uint64_t delta,
+                    void *opaque, int64_t delta,
                     const char *file, int line)
 {
-  uint64_t deadline = arch_get_ts() + delta;
-  callout_arm_abs(d, callback, opaque, deadline, NULL, file, line);
+  callout_arm0(d, callback, opaque, delta, NULL, file, line);
 }
 
 
@@ -109,12 +108,31 @@ callout_arm_hires_x(callout_t *d, callout_callback_t *callback,
  */
 void
 callout_arm_managed_x(callout_t *d, callout_callback_t *callback,
-                      void *opaque, uint64_t delta, lockmgr_fn_t *lockmgr,
+                      void *opaque, int64_t delta, lockmgr_fn_t *lockmgr,
                       const char *file, int line)
 {
-  uint64_t deadline = arch_get_ts() + delta;
-  callout_arm_abs(d, callback, opaque, deadline, lockmgr, file, line);
+  callout_arm0(d, callback, opaque, delta, lockmgr, file, line);
 }
+
+
+/**
+ *
+ */
+void
+callout_rearm(callout_t *d, int64_t delta)
+{
+  hts_mutex_lock(&callout_mutex);
+
+  if(d->c_callback != NULL) {
+    d->c_deadline += delta - d->c_delta;
+    d->c_delta = delta;
+    LIST_REMOVE(d, c_link);
+    LIST_INSERT_SORTED(&callouts, d, c_link, calloutcmp, callout_t);
+  }
+
+  hts_mutex_unlock(&callout_mutex);
+}
+
 
 /**
  *

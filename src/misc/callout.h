@@ -32,6 +32,7 @@ typedef struct callout {
   lockmgr_fn_t *c_lockmgr;
   void *c_opaque;
   uint64_t c_deadline;
+  int64_t c_delta;
   const char *c_armed_by_file;
   int c_armed_by_line;
 
@@ -43,20 +44,21 @@ void callout_arm_x(callout_t *c, callout_callback_t *callback,
 #define callout_arm(a,b,c,d) callout_arm_x(a,b,c,d,__FILE__,__LINE__);
 
 void callout_arm_hires_x(callout_t *d, callout_callback_t *callback,
-                         void *opaque, uint64_t delta,
+                         void *opaque, int64_t delta,
                          const char *file, int line);
 
 #define callout_arm_hires(a,b,c,d) \
  callout_arm_hires_x(a,b,c,d,__FILE__,__LINE__);
 
 void callout_arm_managed_x(callout_t *d, callout_callback_t *callback,
-                           void *opaque, uint64_t delta,
+                           void *opaque, int64_t delta,
                            lockmgr_fn_t *lockmgr,
                            const char *file, int line);
 
 #define callout_arm_managed(a,b,c,d,e) \
   callout_arm_managed_x(a,b,c,d,e,__FILE__,__LINE__);
 
+void callout_rearm(callout_t *c, int64_t delta);
 
 void callout_disarm(callout_t *c);
 
