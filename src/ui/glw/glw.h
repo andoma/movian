@@ -850,6 +850,7 @@ typedef struct glw_root {
   struct glw *gr_pointer_grab;
   struct glw *gr_pointer_hover;
   struct glw *gr_pointer_press;
+  int64_t gr_pointer_press_time;
   float gr_pointer_press_x;
   float gr_pointer_press_y;
   struct glw *gr_current_focus;

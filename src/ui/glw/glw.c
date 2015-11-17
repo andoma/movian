@@ -47,6 +47,7 @@ static void glw_eventsink(void *opaque, prop_event_t event, ...);
 static void glw_update_em(glw_root_t *gr);
 static int  glw_set_keyboard_mode(glw_root_t *gr, int on);
 static void glw_register_activity(glw_root_t *gr);
+static void glw_touch_longpress(glw_root_t *gr);
 
 glw_settings_t glw_settings;
 
@@ -621,6 +622,14 @@ glw_prepare_frame(glw_root_t *gr, int flags)
     gpe.type = GLW_POINTER_MOTION_REFRESH;
     glw_pointer_event(gr, &gpe);
   }
+
+  if(unlikely(gr->gr_pointer_press != NULL) &&
+     gr->gr_pointer_press_time &&
+     gr->gr_frame_start > gr->gr_pointer_press_time + 500000) {
+    // touch longpress
+    glw_touch_longpress(gr);
+  }
+
 
   if(gr->gr_delayed_focus_leave) {
     if(--gr->gr_delayed_focus_leave == 0 && gr->gr_current_focus) {
@@ -1861,8 +1870,10 @@ glw_pointer_event_deliver(glw_t *w, glw_pointer_event_t *gpe)
     event_release(e);
     return r;
 
-  case GLW_POINTER_LEFT_PRESS:
   case GLW_POINTER_TOUCH_START:
+    gr->gr_pointer_press_time = gr->gr_frame_start;
+    // FALLTHRU
+  case GLW_POINTER_LEFT_PRESS:
     gr->gr_pointer_press = w;
     glw_path_modify(w, GLW_IN_PRESSED_PATH, 0, NULL);
     return 1;
@@ -1885,6 +1896,21 @@ glw_pointer_event_deliver(glw_t *w, glw_pointer_event_t *gpe)
     break;
   }
   return 0;
+}
+
+
+/**
+ *
+ */
+static void
+glw_touch_longpress(glw_root_t *gr)
+{
+  glw_t *w = gr->gr_pointer_press;
+  glw_path_modify(w, 0, GLW_IN_PRESSED_PATH, NULL);
+  event_t *e = event_create_action(ACTION_ITEMMENU);
+  glw_event_to_widget(w, e);
+  event_release(e);
+  gr->gr_pointer_press = NULL;
 }
 
 /**
