@@ -1,24 +1,158 @@
 
+style(sidebarBackdrop, {
+  color: 0;
+  alpha: 0.8;
+});
+
+#define PLAYDECK_BUTTON(ICON, TITLE, EVENT, ENABLED, ID, ROTATED = 0) {
+
+  widget(container_z, {
+    id: ID;
+    onEvent(activate, EVENT);
+    focusable: ENABLED;
+
+    widget(quad, {
+      additive: true;
+      alpha: 0.1 * isHovered() + 0.6 * isNavFocused();
+    });
+    widget(icon, {
+      angle: iir(ROTATED, 4) * -90;
+      size: 2em;
+      source: ICON;
+      color: select(isNavFocused(), 0, 1);
+      alpha: 0.7 * iir(ENABLED, 8) + 0.3;
+    });
+  });
+}
+
+onEvent(back, {
+  $clone.showPlaydeck = 0;
+}, $clone.showPlaydeck && !$clone.showSidebar);
+
+onEvent(back, {
+  $clone.showSidebar = 0;
+}, $clone.showSidebar);
+
+
+onEvent(menu, {
+  $clone.showPlaydeck = 1;
+  focus("pause-btn");
+}, !$clone.showPlaydeck);
+
+onEvent(menu, {
+  $clone.showSidebar = 1;
+  focus("sidebar");
+}, $clone.showPlaydeck);
+
+onEvent(menu, {
+  $clone.showSidebar = 0;
+  $clone.showPlaydeck = 0;
+}, $clone.showSidebar);
+
+$clone.showSidebar = 0;
+
+onInactivity(select($clone.showPlaydeck && $clone.showSidebar == 0, 5, 0), {
+  $clone.showPlaydeck = 0;
+});
+
+
 delta($self.slideshow.hold, $view.loading);
 delta($self.model.loading,  $view.loading);
 
-widget(deck, {
+delta($self.slideshow.hold, $view.paused);
 
-  delta($ui.fullwindow, isVisible());
-  delta($ui.disableScreensaver, isVisible());
 
-  keepLastActive: true;
-  keepNextActive: true;
+onEvent(stop, {
+  $self.close = 1;
+});
 
-  focusable: true;
-  time: 0.3;
-  effect: blend;
+widget(container_z, {
 
-  onEvent(left,  deliverEvent($self.slideshow.eventSink, "SeekReverse"));
-  onEvent(right, deliverEvent($self.slideshow.eventSink, "SeekForward"));
+  widget(layer, {
+    widget(deck, {
 
-  cloner($self.model.nodes, image, {
-    source: $self.url;
-    delta($view.loading, isLoading() && isVisible());
+      delta($ui.fullwindow, isVisible());
+      delta($ui.disableScreensaver, isVisible());
+
+      keepLastActive: true;
+      keepNextActive: true;
+
+      focusable: true;
+      time: 0.3;
+      effect: blend;
+
+      onEvent(left,  deliverEvent($self.slideshow.eventSink, "SeekReverse"));
+      onEvent(right, deliverEvent($self.slideshow.eventSink, "SeekForward"));
+
+      onEvent(activate, {
+        toggle($clone.showPlaydeck);
+        focus("pause-btn");
+      });
+
+      cloner($self.model.nodes, image, {
+        source: $self.url;
+        delta($view.loading, isLoading() && isVisible());
+      });
+    });
+
+
+
+    widget(container_y, {
+      hidden: !$clone.showPlaydeck;
+
+      widget(loader, {
+        filterConstraintX: true;
+        filterConstraintY: true;
+        source: select($clone.showSidebar, "skin://menu/sidebar.view", "");
+      });
+
+      // OSD buttons row
+
+      widget(container_z, {
+        height: 2.2em;
+        delta($clone.bottomOsdHeight, isVisible() * getHeight());
+
+        onEvent(up, {
+          $clone.showSidebar = 0;
+          $clone.showPlaydeck = 0;
+        }, true, false);
+
+
+        widget(quad, {
+          alpha: 0.8;
+          color: 0;
+        });
+
+        widget(container_x, {
+          spacing: 1em;
+          align: center;
+          PLAYDECK_BUTTON("skin://icons/ic_stop_48px.svg",
+                          _("Stop"),
+                          {
+                            $self.close = 1;
+                          },
+                          true, "stop-btn");
+
+          PLAYDECK_BUTTON(select($view.paused,
+                                 "skin://icons/ic_play_arrow_48px.svg",
+                                 "skin://icons/ic_pause_48px.svg"),
+                          _("Play/Pause"),
+                          {
+                            toggle($view.paused);
+                          },
+                          true,
+                         "pause-btn");
+
+          PLAYDECK_BUTTON("skin://icons/ic_menu_48px.svg",
+                          _("Settings"),
+                          {
+                            toggle($clone.showSidebar);
+                            focus("sidebar");
+                          }, true, "menu-btn",
+                          $clone.showSidebar > 0);
+
+        });
+      });
+    });
   });
 });

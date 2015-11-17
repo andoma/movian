@@ -15,7 +15,6 @@ widget(container_x, {
   widget(container_z, {
     width: 22em;
     filterConstraintY: true;
-    id: "sidebar";
 
     onEvent(back, {
       $clone.showSidebar = false;
@@ -36,9 +35,7 @@ widget(container_x, {
 #import "skin://styles/style_list.view"
 
     widget(quad, {
-      zoffset: -500;
-      color: 0;
-      alpha: 0.2;
+      style: "sidebarBackdrop";
     });
 
     /**

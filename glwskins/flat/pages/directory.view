@@ -15,6 +15,11 @@ onEvent(defaultInfo, {
 });
 
 
+style(sidebarBackdrop, {
+  color: 0;
+  alpha: 0.3;
+});
+
 onEvent(itemMenu, { $clone.itemMenu = void; }, $clone.itemMenu);
 onEvent(back,     { $clone.itemMenu = void; }, $clone.itemMenu);
 onEvent(cancel,   { $clone.itemMenu = void; }, $clone.itemMenu);
@@ -99,7 +104,6 @@ widget(container_z, {
     widget(loader, {
       hidden: !$clone.showSidebar;
       filterConstraintX: true;
-      time: 0.05;
       source: "skin://menu/sidebar.view";
     });
 

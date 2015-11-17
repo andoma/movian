@@ -1,5 +1,10 @@
 #include "skin://theme.view"
 
+style(sidebarBackdrop, {
+  color: 0;
+  alpha: 0.3;
+});
+
 #define SEARCHBAR() {
   widget(container_x, {
     spacing: 1em;
