@@ -304,10 +304,10 @@ glw_container_x_layout(glw_t *w, const glw_rctx_t *rc)
 
     int f = glw_filter_constraints(c);
 
-    if(f & GLW_CONSTRAINT_X) {
-      if(unlikely(tab != NULL)) {
-        cw = tab->gt_columns[i];
-      } else if(co->w.glw_flags2 & GLW2_HOMOGENOUS) {
+    if(unlikely(tab != NULL)) {
+      cw = tab->gt_columns[i];
+    } else if(f & GLW_CONSTRAINT_X) {
+      if(co->w.glw_flags2 & GLW2_HOMOGENOUS) {
 	cw = co->co_biggest * fixscale;
       } else {
 	cw = c->glw_req_size_x * fixscale;
