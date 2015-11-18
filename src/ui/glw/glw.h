@@ -688,6 +688,11 @@ typedef struct glw_class {
   const char *(*gc_get_identity)(struct glw *w, char *tmp, size_t tmpsize);
 
   /**
+   *
+   */
+  struct glw *(*gc_find_visible_child)(struct glw *w);
+
+  /**
    * Registration link
    */
   LIST_ENTRY(glw_class) gc_link;

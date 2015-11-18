@@ -277,3 +277,30 @@ glw_scroll_suggest_focus(glw_scroll_control_t *gsc, glw_t *w, glw_t *c)
   gsc->suggested = c;
   gsc->suggest_cnt++;
 }
+
+
+/**
+ *
+ */
+void
+glw_scroll_handle_scroll(glw_scroll_control_t *gsc, glw_t *w, glw_scroll_t *gs)
+{
+  int top = GLW_MAX(gs->value * (gsc->total_size - gsc->page_size
+                                 + gsc->scroll_threshold_post), 0);
+  gsc->target_pos = top;
+  glw_schedule_refresh(w->glw_root, 0);
+
+  if(gsc->chase_focus == 0)
+    return;
+
+  glw_t *c = w->glw_class->gc_find_visible_child(w);
+  if(c == NULL)
+    return;
+
+  if(glw_is_focused(w)) {
+    glw_focus_set(w->glw_root, c, GLW_FOCUS_SET_SUGGESTED, "Scroll");
+  } else {
+    w->glw_focused = c;
+    glw_signal0(w, GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE, c);
+  }
+}

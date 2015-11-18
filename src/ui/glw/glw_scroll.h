@@ -73,3 +73,6 @@ int glw_scroll_set_int_attributes(glw_scroll_control_t *gsc, const char *a,
                                   int value);
 
 void glw_scroll_suggest_focus(glw_scroll_control_t *gsc, glw_t *w, glw_t *c);
+
+void glw_scroll_handle_scroll(glw_scroll_control_t *gsc, glw_t *w,
+                              glw_scroll_t *gs);

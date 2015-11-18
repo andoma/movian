@@ -92,11 +92,13 @@ glw_list_layout_y(glw_t *w, const glw_rctx_t *rc)
         int screen_pos = ypos - l->gsc.rounded_pos;
         if(screen_pos < l->gsc.scroll_threshold_pre) {
           l->gsc.target_pos = ypos - l->gsc.scroll_threshold_pre;
-          l->w.glw_flags |= GLW_UPDATE_METRICS;
+          if(glw_is_focused(w))
+            l->w.glw_flags |= GLW_UPDATE_METRICS;
           glw_schedule_refresh(w->glw_root, 0);
         } else if(screen_pos + height > bottom_scroll_pos) {
           l->gsc.target_pos = ypos + height - bottom_scroll_pos;
-          l->w.glw_flags |= GLW_UPDATE_METRICS;
+          if(glw_is_focused(w))
+            l->w.glw_flags |= GLW_UPDATE_METRICS;
           glw_schedule_refresh(w->glw_root, 0);
         }
       }
@@ -215,10 +217,12 @@ glw_list_layout_x(glw_t *w, const glw_rctx_t *rc)
       l->gsc.scroll_to_me = NULL;
       if(xpos - l->gsc.rounded_pos < l->gsc.scroll_threshold_pre) {
 	l->gsc.target_pos = xpos - l->gsc.scroll_threshold_pre;
-	l->w.glw_flags |= GLW_UPDATE_METRICS;
+        if(glw_is_focused(w))
+          l->w.glw_flags |= GLW_UPDATE_METRICS;
       } else if(xpos - l->gsc.rounded_pos + rc0.rc_width > width0) {
 	l->gsc.target_pos = xpos + rc0.rc_width - width0;
-	l->w.glw_flags |= GLW_UPDATE_METRICS;
+        if(glw_is_focused(w))
+          l->w.glw_flags |= GLW_UPDATE_METRICS;
       }
     }
 
@@ -410,26 +414,16 @@ glw_list_render_x(glw_t *w, const glw_rctx_t *rc)
 
 
 /**
- *
- */
-static void
-focus_child_when_widget_not_focused(glw_t *w, glw_t *c)
-{
-  w->glw_focused = c;
-  glw_signal0(w, GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE, c);
-}
-
-
-
-/**
  * Try to find a child widget that's visible. This is used when scrolling
  * to maintain focus on screen
  */
 static glw_t *
-find_visible_child(glw_list_t *l)
+glw_list_find_visible_child(glw_t *w)
 {
-  const int top = l->gsc.target_pos;
-  const int bottom = l->gsc.target_pos + l->gsc.page_size;
+  glw_list_t *l = (glw_list_t *)w;
+  const int top = l->gsc.target_pos + l->gsc.scroll_threshold_pre;
+  const int bottom = l->gsc.target_pos + l->gsc.page_size -
+    l->gsc.scroll_threshold_pre;
   glw_t *c = l->w.glw_focused;
 
   if(c == NULL)
@@ -462,23 +456,7 @@ find_visible_child(glw_list_t *l)
 static void
 glw_list_scroll(glw_list_t *l, glw_scroll_t *gs)
 {
-  int top = GLW_MAX(gs->value * (l->gsc.total_size - l->gsc.page_size
-                                 + l->gsc.scroll_threshold_post), 0);
-  l->gsc.target_pos = top;
-  glw_schedule_refresh(l->w.glw_root, 0);
-
-  if(l->gsc.chase_focus == 0)
-    return;
-
-  glw_t *c = find_visible_child(l);
-  if(c == NULL)
-    return;
-
-  if(glw_is_focused(&l->w)) {
-    glw_focus_set(c->glw_root, c, GLW_FOCUS_SET_SUGGESTED, "ListScroll");
-  } else {
-    focus_child_when_widget_not_focused(&l->w, c);
-  }
+  glw_scroll_handle_scroll(&l->gsc, &l->w, gs);
 }
 
 
@@ -731,6 +709,7 @@ static glw_class_t glw_list_y = {
   .gc_bubble_event = glw_navigate_vertical,
   .gc_set_int_unresolved = glw_list_set_int_unresolved,
   .gc_set_float_unresolved = glw_list_set_float_unresolved,
+  .gc_find_visible_child = glw_list_find_visible_child,
 };
 
 GLW_REGISTER_CLASS(glw_list_y);

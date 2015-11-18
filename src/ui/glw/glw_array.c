@@ -230,11 +230,13 @@ glw_array_layout(glw_t *w, const glw_rctx_t *rc)
 
       if(screen_pos < a->gsc.scroll_threshold_pre) {
         a->gsc.target_pos = ypos - a->gsc.scroll_threshold_pre;
-        a->w.glw_flags |= GLW_UPDATE_METRICS;
+        if(glw_is_focused(w))
+          a->w.glw_flags |= GLW_UPDATE_METRICS;
         glw_schedule_refresh(w->glw_root, 0);
       } else if(screen_pos + rc0.rc_height > bottom_scroll_pos) {
         a->gsc.target_pos = ypos + rc0.rc_height - bottom_scroll_pos;
-        a->w.glw_flags |= GLW_UPDATE_METRICS;
+        if(glw_is_focused(w))
+          a->w.glw_flags |= GLW_UPDATE_METRICS;
         glw_schedule_refresh(w->glw_root, 0);
       }
     }
@@ -371,8 +373,7 @@ glw_array_render(glw_t *w, const glw_rctx_t *rc)
 static void
 glw_array_scroll(glw_array_t *a, glw_scroll_t *gs)
 {
-  a->gsc.target_pos = GLW_MAX(gs->value * (a->gsc.total_size - a->gsc.page_size), 0);
-  glw_schedule_refresh(a->w.glw_root, 0);
+  glw_scroll_handle_scroll(&a->gsc, &a->w, gs);
 }
 
 
@@ -701,6 +702,53 @@ glw_array_suggest_focus(glw_t *w, glw_t *c)
   glw_scroll_suggest_focus(&a->gsc, w, c);
 }
 
+
+/**
+ * Try to find a child widget that's visible. This is used when scrolling
+ * to maintain focus on screen
+ */
+static glw_t *
+glw_array_find_visible_child(glw_t *w)
+{
+  glw_array_t *l = (glw_array_t *)w;
+  const int top = l->gsc.target_pos + l->gsc.scroll_threshold_pre;
+  const int bottom = l->gsc.target_pos + l->gsc.page_size -
+    l->gsc.scroll_threshold_pre;
+  glw_t *c = l->w.glw_focused;
+
+  if(c == NULL)
+    return NULL;
+
+  if(glw_parent_data(c, glw_array_item_t)->pos_y < top) {
+
+    while(c != NULL && glw_parent_data(c, glw_array_item_t)->pos_y < top)
+      c = glw_next_widget(c);
+
+    if(c != NULL && glw_get_focusable_child(c) == NULL)
+      c = glw_next_widget(c);
+
+  } else if(glw_parent_data(c, glw_array_item_t)->pos_y > bottom) {
+
+    while(c != NULL && glw_parent_data(c, glw_array_item_t)->pos_y > bottom)
+      c = glw_prev_widget(c);
+
+    if(c != NULL && glw_get_focusable_child(c) == NULL)
+      c = glw_prev_widget(c);
+
+    while(c != NULL) {
+      glw_t *p = glw_prev_widget(c);
+      if(p == NULL)
+        break;
+      if(glw_parent_data(p, glw_array_item_t)->pos_y !=
+         glw_parent_data(c, glw_array_item_t)->pos_y)
+        break;
+      c = p;
+    }
+
+  }
+  return c;
+}
+
 /**
  *
  */
@@ -720,6 +768,7 @@ static glw_class_t glw_array = {
   .gc_set_int_unresolved = glw_array_set_int_unresolved,
   .gc_set_float_unresolved = glw_array_set_float_unresolved,
   .gc_suggest_focus = glw_array_suggest_focus,
+  .gc_find_visible_child = glw_array_find_visible_child,
 };
 
 GLW_REGISTER_CLASS(glw_array);
