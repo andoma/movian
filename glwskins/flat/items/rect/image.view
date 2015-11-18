@@ -17,7 +17,7 @@ widget(container_z, {
       scaling: [1,1,1] + [0.1, 0.1, 0] * $view.loading;
       widget(image, {
         $view.loading = iir(isLoading(), 4, true);
-        source: $self.metadata.icon ?? $self.url;
+        source: $self.metadata.icon ?? ("thumb://" + $self.url);
         saturation: $view.loading;
         alpha: 1 - $view.loading * 0.5;
       });
