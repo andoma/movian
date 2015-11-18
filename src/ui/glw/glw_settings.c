@@ -69,7 +69,7 @@ glw_settings_init(void)
 
   glw_settings.gs_setting_underscan_h =
     setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,
-                   SETTING_TITLE(_p("Horizontal underscan")),
+                   SETTING_TITLE(_p("Interface horizontal shrink")),
                    SETTING_RANGE(-100, 100),
                    SETTING_UNIT_CSTR("px"),
                    SETTING_WRITE_INT(&glw_settings.gs_underscan_h),
@@ -78,7 +78,7 @@ glw_settings_init(void)
 
   glw_settings.gs_setting_underscan_v =
     setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,
-                   SETTING_TITLE(_p("Vertical underscan")),
+                   SETTING_TITLE(_p("Interface vertical shrink")),
                    SETTING_RANGE(-100, 100),
                    SETTING_UNIT_CSTR("px"),
                    SETTING_WRITE_INT(&glw_settings.gs_underscan_v),

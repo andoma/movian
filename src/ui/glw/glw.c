@@ -81,6 +81,32 @@ glw_update_underscan(glw_root_t *gr)
 {
   int val;
 
+  if(gr->gr_init_flags & GLW_INIT_OVERSCAN) {
+    if(gr->gr_height >= 1080) {
+      gr->gr_base_underscan_h = 66;
+      gr->gr_base_underscan_v = 34;
+    } else if(gr->gr_height >= 720) {
+      gr->gr_base_underscan_h = 43;
+      gr->gr_base_underscan_v = 22;
+    } else {
+      gr->gr_base_underscan_h = 36;
+      gr->gr_base_underscan_v = 20;
+    }
+  }
+
+  if(glw_settings.gs_underscan_h != gr->gr_user_underscan_h ||
+     glw_settings.gs_underscan_v != gr->gr_user_underscan_v) {
+    gr->gr_user_underscan_h = glw_settings.gs_underscan_h;
+    gr->gr_user_underscan_v = glw_settings.gs_underscan_v;
+
+    if(gr->gr_user_underscan_changed > 0) {
+      // Don't send change first time
+      prop_set(gr->gr_prop_ui, "underscan_changes", PROP_SET_INT,
+               gr->gr_user_underscan_changed);
+    }
+    gr->gr_user_underscan_changed++;
+  }
+
   val = GLW_CLAMP(gr->gr_base_underscan_h + glw_settings.gs_underscan_h,
                   0, 100);
 
@@ -190,7 +216,7 @@ glw_init4(glw_root_t *gr,
 
   gr->gr_prop_dispatcher = dispatcher;
   gr->gr_courier = courier;
-
+  gr->gr_init_flags = flags;
   gr->gr_prop_maxtime = -1;
 
   assert(glw_settings.gs_settings != NULL);
@@ -211,6 +237,9 @@ glw_init4(glw_root_t *gr,
                                   POOL_ZERO_MEM);
   gr->gr_style_binding_pool = pool_create("glwstylebindings",
                                           sizeof(glw_style_binding_t), 0);
+
+  gr->gr_user_underscan_h = INT32_MIN;
+  gr->gr_user_underscan_v = INT32_MIN;
 
   gr->gr_skin = strdup(skin);
 
@@ -278,7 +307,6 @@ glw_init4(glw_root_t *gr,
   gr->gr_frame_start = gr->gr_ui_start;
   glw_register_activity(gr);
   gr->gr_open_osk = glw_osk_open;
-  glw_update_underscan(gr);
   return 0;
 }
 

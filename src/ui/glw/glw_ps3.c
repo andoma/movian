@@ -1146,18 +1146,7 @@ glw_ps3_start(void)
 
   glw_root_t *gr = &gp->gr;
 
-  if(gp->res.height >= 1080) {
-    gr->gr_base_underscan_h = 66;
-    gr->gr_base_underscan_v = 34;
-  } else if(gp->res.height >= 720) {
-    gr->gr_base_underscan_h = 43;
-    gr->gr_base_underscan_v = 22;
-  } else {
-    gr->gr_base_underscan_h = 36;
-    gr->gr_base_underscan_v = 20;
-  }
-
-  if(glw_init2(gr, GLW_INIT_KEYBOARD_MODE))
+  if(glw_init2(gr, GLW_INIT_KEYBOARD_MODE | GLW_INIT_OVERSCAN))
     return 1;
 
 

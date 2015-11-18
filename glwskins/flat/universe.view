@@ -137,8 +137,7 @@ widget(container_z, {
 
       widget(container_z, {
 
-        hidden: !changed($ui.underscan_v, 5, true) &&
-          !changed($ui.underscan_h, 5, true);
+        hidden: !changed($ui.underscan_changes, 5, true);
 
         widget(linebox, {});
         widget(container_z, {
@@ -185,7 +184,7 @@ widget(container_z, {
                   padding: 0.5em;
                   align: center;
                   maxlines:2;
-                  caption: _("Overscan adjustment\nPosition border at screen edge");
+                  caption: _("Overscan adjustment\nPosition border at screen edges");
                 });
               });
               space(0.3);
