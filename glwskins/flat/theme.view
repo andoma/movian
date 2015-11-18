@@ -105,6 +105,7 @@
 
     space(1);
     widget(slider_y, {
+      id: "scrollbar";
       bind(TARGET);
       width: 0.6em;
       focusable: canScroll();

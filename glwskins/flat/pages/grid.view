@@ -8,6 +8,7 @@ widget(container_z, {
 
     childTilesX: select($ui.aspect > 1, 5, 2);
     childTilesY: 4;
+    chaseFocus: true;
 
     navWrap: true;
 

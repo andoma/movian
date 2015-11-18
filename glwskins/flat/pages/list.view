@@ -9,9 +9,9 @@ widget(container_z, {
     chaseFocus: true;
 
     clipOffsetTop: 3em;
-    scrollThresholdTop: 3em;
+    scrollThresholdTop: 5em;
 
-    scrollThresholdBottom: $ui.universeBottomHeight;
+    scrollThresholdBottom: $ui.universeBottomHeight + 2em;
     clipOffsetBottom: $ui.universeBottomHeight;
     clipAlpha: 0.2;
     clipBlur: 1;
