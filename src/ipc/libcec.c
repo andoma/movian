@@ -25,8 +25,7 @@
 #include "main.h"
 #include "event.h"
 
-//static int control_input;
-//static int auto_ui_shutdown;
+static int longpress_select;
 
 static int
 log_message(void *lib, const cec_log_message message)
@@ -61,6 +60,8 @@ const static action_type_t *btn_to_action[256] = {
   [CEC_USER_CONTROL_CODE_RIGHT]       = AVEC(ACTION_RIGHT),
   [CEC_USER_CONTROL_CODE_DOWN]        = AVEC(ACTION_DOWN),
   [CEC_USER_CONTROL_CODE_EXIT]        = AVEC(ACTION_NAV_BACK),
+  [CEC_USER_CONTROL_CODE_DOT]         = AVEC(ACTION_ITEMMENU),
+  [CEC_USER_CONTROL_CODE_ROOT_MENU]   = AVEC(ACTION_MENU),
 
   [CEC_USER_CONTROL_CODE_PLAY]        = AVEC(ACTION_PLAYPAUSE),
   [CEC_USER_CONTROL_CODE_STOP]        = AVEC(ACTION_STOP),
@@ -83,14 +84,16 @@ keypress(void *aux, const cec_keypress kp)
     TRACE(TRACE_DEBUG, "CEC", "Got keypress code=0x%x duration=0x%x",
           kp.keycode, kp.duration);
 
-  if(kp.keycode == CEC_USER_CONTROL_CODE_SELECT) {
-    if(kp.duration == 0)
-      return 0;
+  if(longpress_select) {
+    if(kp.keycode == CEC_USER_CONTROL_CODE_SELECT) {
+      if(kp.duration == 0)
+        return 0;
 
-    if(kp.duration < 500)
-      e = event_create_action(ACTION_ACTIVATE);
-    else
-      e = event_create_action(ACTION_ITEMMENU);
+      if(kp.duration < 500)
+        e = event_create_action(ACTION_ACTIVATE);
+      else
+        e = event_create_action(ACTION_ITEMMENU);
+    }
   }
 
   if(e == NULL) {
@@ -124,14 +127,42 @@ static ICECCallbacks g_callbacks = {
 static libcec_configuration cec_config;
 static libcec_connection_t conn;
 
+
+/**
+ *
+ */
 static void
 set_activate_source(void *opaque, int value)
 {
   cec_config.bActivateSource = value;
   libcec_set_configuration(conn, &cec_config);
-  printf("CEC SET active source=%d\n", value);
 }
 
+
+/**
+ *
+ */
+static void
+set_stop_combo_mode(void *opaque, int value)
+{
+  cec_config.comboKey = value ? CEC_USER_CONTROL_CODE_STOP : 0xfe;
+  libcec_set_configuration(conn, &cec_config);
+}
+
+
+/**
+ *
+ */
+static void
+set_longpress_select(void *opaque, int value)
+{
+  longpress_select = value;
+}
+
+
+/**
+ *
+ */
 static void *
 libcec_init_thread(void *aux)
 {
@@ -180,6 +211,22 @@ libcec_init_thread(void *aux)
                  SETTING_VALUE(1),
 		 SETTING_CALLBACK(set_activate_source, NULL),
 		 SETTING_HTSMSG("controlinput", s, "cec"),
+		 NULL);
+
+  setting_create(SETTING_BOOL, set,
+		 SETTINGS_INITIAL_UPDATE,
+		 SETTING_TITLE(_p("Use STOP key for combo input")),
+                 SETTING_VALUE(1),
+		 SETTING_CALLBACK(set_stop_combo_mode, NULL),
+		 SETTING_HTSMSG("stopcombo", s, "cec"),
+		 NULL);
+
+  setting_create(SETTING_BOOL, set,
+		 SETTINGS_INITIAL_UPDATE,
+		 SETTING_TITLE(_p("Longpress SELECT for item menu")),
+                 SETTING_VALUE(1),
+		 SETTING_CALLBACK(set_longpress_select, NULL),
+		 SETTING_HTSMSG("longpress_select", s, "cec"),
 		 NULL);
 
 
