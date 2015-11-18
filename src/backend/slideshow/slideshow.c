@@ -18,6 +18,7 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 #include <unistd.h>
+#include <stdio.h>
 #include <assert.h>
 #include "main.h"
 #include "prop/prop_nodefilter.h"
