@@ -27,6 +27,7 @@
 #include "misc/callout.h"
 #include "misc/minmax.h"
 #include "backend/backend.h"
+#include "settings.h"
 
 TAILQ_HEAD(slideshow_item_queue, slideshow_item);
 
@@ -56,6 +57,8 @@ typedef struct slideshow {
   int ss_hold;   // Hold by UI
 
   callout_t ss_callout;
+
+  setting_t *ss_speed_setting;
 
 } slideshow_t;
 
@@ -195,6 +198,7 @@ slideshow_clear(slideshow_t *ss, int all)
 static void
 slideshow_destroy(slideshow_t *ss)
 {
+  setting_destroy(ss->ss_speed_setting);
   slideshow_clear(ss, 1);
   prop_unsubscribe(ss->ss_node_sub);
   prop_unsubscribe(ss->ss_event_sub);
@@ -513,16 +517,20 @@ static void
 slideshow_eventsink(void *opaque, event_t *e)
 {
   slideshow_t *ss = opaque;
-
+  char tmp[20];
   if(event_is_action(e, ACTION_INCR)) {
-    ss->ss_speed = MIN(ss->ss_speed + 2, 9);
+    ss->ss_speed = MIN(ss->ss_speed + 2, 7);
     update_speed(ss);
+    snprintf(tmp, sizeof(tmp), "%d", ss->ss_speed);
+    setting_set(ss->ss_speed_setting, SETTING_MULTIOPT, tmp);
     return;
   }
 
   if(event_is_action(e, ACTION_DECR)) {
     ss->ss_speed = MAX(ss->ss_speed - 2, 3);
     update_speed(ss);
+    snprintf(tmp, sizeof(tmp), "%d", ss->ss_speed);
+    setting_set(ss->ss_speed_setting, SETTING_MULTIOPT, tmp);
     return;
   }
 
@@ -554,6 +562,17 @@ slideshow_set_hold(void *opaque, int x)
   } else {
     slideshow_arm(ss);
   }
+}
+
+/**
+ *
+ */
+static void
+slideshow_set_speed(void *opaque, const char *v)
+{
+  slideshow_t *ss = opaque;
+  ss->ss_speed = atoi(v);
+  update_speed(ss);
 }
 
 
@@ -619,6 +638,20 @@ be_slideshow_open(prop_t *page, const char *url, int sync)
                    PROP_TAG_NAME("page", "slideshow", "hold"),
                    NULL);
 
+  prop_t *opts = prop_create_r(ss->ss_model, "options");
+
+  ss->ss_speed_setting =
+    setting_create(SETTING_MULTIOPT, opts,
+                   SETTINGS_INITIAL_UPDATE | SETTINGS_RAW_NODES,
+                   SETTING_TITLE(_p("Slideshow speed")),
+                   SETTING_VALUE("5"),
+                   SETTING_LOCKMGR(lockmgr_handler),
+                   SETTING_MUTEX(ss),
+                   SETTING_CALLBACK(slideshow_set_speed, ss),
+                   SETTING_OPTION("3", _p("3 seconds")),
+                   SETTING_OPTION("5", _p("5 seconds")),
+                   SETTING_OPTION("7", _p("7 seconds")),
+                   NULL);
 
   slideshow_release(ss);
   return 0;
