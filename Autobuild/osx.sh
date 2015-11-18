@@ -16,4 +16,4 @@ set -x
 
 set +x
 make ${JARGS} dist
-artifact build.osx/Showtime.dmg dmg application/octet-stream Showtime.dmg
+artifact build.osx/Movian.dmg dmg application/octet-stream Movian.dmg
