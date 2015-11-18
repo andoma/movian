@@ -828,7 +828,7 @@ typedef struct glw_root {
   LIST_HEAD(,  glw_image) gr_icons;
   hts_cond_t gr_tex_load_cond;
 
-#define LQ_SKIN      0
+#define LQ_SKIN       0
 #define LQ_TENTATIVE  1
 #define LQ_THUMBS     2
 #define LQ_OTHER      3
