@@ -99,7 +99,7 @@ main(int argc, char **argv)
   [NSApp setDelegate: s];
 
   gconf.binary = argv[0];
-
+  gconf.can_standby = 1;
   get_device_id();
 
   NSFileManager* fileManager = [NSFileManager defaultManager];
@@ -141,7 +141,12 @@ main(int argc, char **argv)
 void
 arch_exit(void)
 {
-  exit(gconf.exit_code);
+  if(gconf.exit_code == APP_EXIT_STANDBY) {
+    system("/usr/bin/pmset sleepnow");
+    exit(0);
+  }
+
+ exit(gconf.exit_code);
 }
 
 
@@ -238,6 +243,7 @@ mainloop_courier_init(void)
   app_flush_caches();
   shutdown_hook_run(1);
   main_fini();
+  arch_exit();
 }
 
 
