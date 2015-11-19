@@ -353,6 +353,8 @@ glw_fini(glw_root_t *gr)
 
   glw_view_loader_flush(gr);
 
+  glw_style_cleanup(gr);
+
   pool_destroy(gr->gr_token_pool);
   pool_destroy(gr->gr_clone_pool);
 

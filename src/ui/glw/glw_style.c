@@ -22,6 +22,8 @@
 
 static glw_class_t glw_style;
 
+static void glw_style_binding_destroy(glw_style_binding_t *gsb, glw_root_t *gr);
+
 LIST_HEAD(glw_style_attribute_list, glw_style_attribute);
 
 typedef enum {
@@ -330,18 +332,6 @@ glw_style_retain(glw_style_t *gs)
   return gs;
 }
 
-/**
- *
- */
-static void
-glw_style_binding_destroy(glw_style_binding_t *gsb, glw_root_t *gr)
-{
-  if(gsb->gsb_style != NULL)
-    LIST_REMOVE(gsb, gsb_style_link);
-  LIST_REMOVE(gsb, gsb_widget_link);
-  pool_put(gr->gr_style_binding_pool, gsb);
-}
-
 
 /**
  *
@@ -386,6 +376,21 @@ glw_style_release(glw_style_t *gs)
   rstr_release(gs->gs_source);
   rstr_release(gs->gs_file);
   free(gs);
+}
+
+
+/**
+ *
+ */
+static void
+glw_style_binding_destroy(glw_style_binding_t *gsb, glw_root_t *gr)
+{
+  if(gsb->gsb_style != NULL) {
+    LIST_REMOVE(gsb, gsb_style_link);
+    glw_style_release(gsb->gsb_style);
+  }
+  LIST_REMOVE(gsb, gsb_widget_link);
+  pool_put(gr->gr_style_binding_pool, gsb);
 }
 
 
@@ -1465,3 +1470,24 @@ glw_style_update_em(glw_root_t *gr)
 
 
 }
+
+
+/**
+ *
+ */
+void
+glw_style_cleanup(glw_root_t *gr)
+{
+  glw_style_t *gs;
+  LIST_FOREACH(gs, &gr->gr_all_styles, gs_link) {
+    printf("Style %s %s:%d still in use ancestor:%p refcnt=%d\n",
+           rstr_get(gs->gs_name),
+           rstr_get(gs->gs_file),
+           gs->gs_line,
+           gs->gs_ancestor,
+           gs->gs_refcount);
+    printf("Bindings:%p\n", LIST_FIRST(&gs->gs_bindings));
+  }
+  assert(LIST_FIRST(&gr->gr_all_styles) == NULL);
+}
+

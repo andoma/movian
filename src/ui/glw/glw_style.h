@@ -55,3 +55,5 @@ void glw_style_bind_ancestor(glw_style_t *gs, glw_style_t *ancestor);
 
 void glw_style_unbind_all(glw_t *w);
 
+void glw_style_cleanup(glw_root_t *gr);
+
