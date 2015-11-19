@@ -602,9 +602,43 @@ glw_in_fullwindow(void *opaque, int val)
   stopped = NO;
 
   CVDisplayLinkStart(m_displayLink);
+
+  [self registerForDraggedTypes:[NSArray arrayWithObjects:NSFilenamesPboardType,NSURLPboardType,nil]];
+
   return self;
 }
 
+
+
+- (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender
+{
+  return NSDragOperationLink;
+}
+
+- (BOOL)performDragOperation:(id)sender {
+  NSPasteboard *pb = [sender draggingPasteboard];
+
+  const char *u = NULL;
+
+  NSArray *filenames = [pb propertyListForType:@"NSFilenamesPboardType"];
+  if(filenames) {
+    NSString *path = [filenames objectAtIndex:0];
+    u = [path cStringUsingEncoding:NSUTF8StringEncoding];
+
+  } else if([[pb types] containsObject:NSURLPboardType]) {
+    NSArray *urls = [pb readObjectsForClasses:@[[NSURL class]] options:nil];
+    NSURL *url = [urls objectAtIndex:0];
+    u = [url.absoluteString cStringUsingEncoding:NSUTF8StringEncoding];
+
+  } else {
+    return NO;
+  }
+
+  event_t *e = event_create_openurl(u);
+  prop_send_ext_event(eventSink, e);
+  event_release(e);
+  return YES;
+}
 
 /**
  *
