@@ -1710,7 +1710,9 @@
  *
  * This module provides TCP/IP networking routines.
  */
+#ifndef __native_client__
 #define POLARSSL_NET_C
+#endif
 
 /**
  * \def POLARSSL_OID_C

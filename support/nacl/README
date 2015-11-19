@@ -1,4 +1,4 @@
-To run Showtime from this dir,
+To run Movian from this dir,
 
  Start a HTTP server serving files from this dir. I typically use:
 
@@ -14,5 +14,5 @@ On OS/X I run:
 Go fullscreen with F11
 
 For more key bindings see
- https://showtimemediacenter.com/projects/showtime/wiki/Key_mappings
+ https://movian.tv/projects/showtime/wiki/Key_mappings
 

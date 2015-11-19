@@ -293,7 +293,7 @@ unsigned long get_timer( struct hr_time *val, int reset )
     return( delta );
 }
 
-#if defined(INTEGRITY) || defined(__PPU__)
+#if defined(INTEGRITY) || defined(__PPU__) || defined(__native_client__)
 void m_sleep( int milliseconds )
 {
     usleep( milliseconds * 1000 );
