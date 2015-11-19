@@ -135,19 +135,22 @@ posix_init(void)
 #ifdef STOS
   gconf.cache_path = strdup("/stos/cache/showtime");
   gconf.persistent_path = strdup("/stos/persistent/showtime");
-#else
-  const char *homedir = getenv("HOME");
+#endif
 
+  const char *homedir = getenv("HOME");
   if(homedir != NULL) {
     char buf[PATH_MAX];
 
-    snprintf(buf, sizeof(buf), "%s/.cache/showtime", homedir);
-    gconf.cache_path = strdup(buf);
+    if(gconf.cache_path == NULL) {
+      snprintf(buf, sizeof(buf), "%s/.cache/%s", homedir, APPNAME);
+      gconf.cache_path = strdup(buf);
+    }
 
-    snprintf(buf, sizeof(buf), "%s/.hts/showtime", homedir);
-    gconf.persistent_path = strdup(buf);
+    if(gconf.persistent_path == NULL) {
+      snprintf(buf, sizeof(buf), "%s/.hts/showtime", homedir);
+      gconf.persistent_path = strdup(buf);
+    }
   }
-#endif
 
   setlocale(LC_ALL, "");
   decorate_trace = isatty(2);

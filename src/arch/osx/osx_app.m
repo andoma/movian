@@ -102,6 +102,15 @@ main(int argc, char **argv)
 
   get_device_id();
 
+  NSFileManager* fileManager = [NSFileManager defaultManager];
+ 
+  NSArray *urls = [fileManager URLsForDirectory:NSCachesDirectory inDomains:NSUserDomainMask];
+  if ([urls count] > 0) {
+    NSURL *cachedir = [[urls objectAtIndex:0] URLByAppendingPathComponent:@APPNAMEUSER];
+    const char *p = [cachedir.path cStringUsingEncoding:NSUTF8StringEncoding];
+    gconf.cache_path = strdup(p);
+}
+
   posix_init();
 
   parse_opts(argc, argv);
