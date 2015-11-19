@@ -144,5 +144,13 @@
 
       page: select(isVoid($self.model.metadata.icon), 0, 1);
     });
+
+
+    widget(label, {
+//      size: 1.5em;
+      align: right;
+      padding: [4em, 0];
+      caption: $core.clock.localtimeofday;
+    });
   });
 }

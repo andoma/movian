@@ -450,4 +450,15 @@ widget(container_z, {
     });
     space(1);
   });
+
+  widget(container_y, {
+    alpha: iir($view.showSeekBar, 4);
+    widget(label, {
+      height: 3em;
+      align: right;
+      padding: [4em, 0];
+      caption: $core.clock.localtimeofday;
+    });
+  });
+
 });

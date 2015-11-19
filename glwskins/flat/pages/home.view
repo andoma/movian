@@ -44,18 +44,10 @@ style(sidebarBackdrop, {
       });
     });
 
-    widget(container_z, {
-      widget(quad, {
-        zoffset: -400;
-        color: 0;
-        alpha: 0.4;
-      });
-
-      widget(label, {
-        align: center;
-        padding: [2em, 0];
-        caption: $core.clock.localtimeofday;
-      });
+    widget(label, {
+      align: topRight;
+//      padding: [2em, 0];
+      caption: $core.clock.localtimeofday;
     });
   });
 }
