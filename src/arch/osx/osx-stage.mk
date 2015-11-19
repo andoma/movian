@@ -5,10 +5,6 @@ ${APPDIR}/Contents/MacOS/$(APPNAME): ${APPPROG} \
 	@mkdir -p $(dir $@)
 	@cp $< $@
 
-${APPDIR}/Contents/%.nib: support/$(APPNAME).app/Contents/%.xib
-	@mkdir -p $(dir $@)
-	@ibtool --compile $@ $<
-
 ${APPDIR}/Contents/%: support/$(APPNAME).app/Contents/%
 	@mkdir -p $(dir $@)
 	@cp $< $@
