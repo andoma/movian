@@ -85,7 +85,6 @@ widget(container_z, {
 
   widget(layer, {
     widget(video, {
-      zoffset: -500;
       primary: true;
 
       how: $self.how;
@@ -144,6 +143,10 @@ widget(container_z, {
             }, true, false);
 
 
+            widget(quad, {
+              color: 0;
+              alpha: iir($clone.osdpage > 0, 4) * 0.8;
+            });
             widget(layer, {
 
               widget(loader, {
@@ -163,11 +166,6 @@ widget(container_z, {
                                   101, "skin://osd/osd_audio.view"
                                  );
               });
-            });
-            widget(quad, {
-              zoffset: -100;
-              color: 0;
-              alpha: iir($clone.osdpage > 0, 4) * 0.8;
             });
           });
         });
@@ -192,14 +190,14 @@ widget(container_z, {
 
         widget(container_x, {
           spacing: 1em;
-          padding: [1em + $view.iconPad, 0.1em, 2em, 0.1em];
+          padding: [1em + $view.iconPad, 0.1em];
 
+          align: center;
+          
           PLAYDECK_BUTTON("skin://icons/ic_stop_48px.svg",
                           _("Stop"),
                           event("Stop"),
                           true, "stop-btn");
-
-          space(1);
 
           PLAYDECK_BUTTON("skin://icons/ic_subtitles_48px.svg",
                           _("Subtitles"),
@@ -235,8 +233,6 @@ widget(container_z, {
                             $clone.osdpage = select($clone.osdpage == 101, 0, 101);
                             focus("osd_audio");
                           }, true, "audio-btn");
-
-          space(1);
 
           PLAYDECK_BUTTON("skin://icons/ic_menu_48px.svg",
                           _("Settings"),
@@ -447,7 +443,7 @@ widget(container_z, {
   widget(container_x, {
     padding: 1em;
     widget(image, {
-      alpha: iir($view.showSeekBar || changed($self.media.metadata.icon, 5, true), 8);
+      alpha: iir($view.showSeekBar || changed($self.media.metadata.icon, 5, true), 4);
       align: bottom;
       width: 6em;
       source: $self.media.metadata.icon;
