@@ -1,13 +1,18 @@
-To run Movian from this dir,
+To run Movian from source, first configure
 
- Start a HTTP server serving files from this dir. I typically use:
+
+   ./configure --pepper=/PATH/TO/PEPPER_xx
+
+   make
+
+Then in build.nacl/stage
 
    python -m SimpleHTTPServer
 
 Then start Chrome from commandline to allows NaCl from any websites and
 also allow full socket access. (The latter can only be done from command line)
 
-On OS/X I run:
+On OS/X:
 
    /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --allow-nacl-socket-api=localhost  --enable-logging=stderr --enable-nacl http://localhost:8000/index.html
 

@@ -4,8 +4,8 @@ and then in gdb:
 
 
 target remote localhost:4014
-remote get nexe /tmp/naclshowtime.nexe
-file /tmp/naclshowtime.nexe
+remote get nexe /tmp/app.nexe
+file /tmp/app.nexe
 remote get irt /tmp/naclirt
 nacl-irt /tmp/naclirt
 

@@ -31,27 +31,17 @@ You then have the option to disable that particular module/subsystem.
 Build the binary, after build the binary resides in `./build.linux/`.
 Thus, to start it, just type:
 
-	./build.linux/showtime
+	./build.linux/movian
 
 Settings are stored in `~/.hts/showtime`
 
 ## How to build for Mac OS X
 
-Install Xcode which includes Xcode IDE, gcc toolchain and much more. iPhone SDK also
-includes Xcode and toolchain.
+To build for Mac OS X you need Xcode and yasm. Xcode should be installed from Mac Appstore.
 
-Install [MacPorts](http://www.macports.org)
+To install yasm, install [Brew](http://brew.sh/) and then
 
-Install pkg-config using MacPorts
-
-	$ sudo port install pkgconfig
-
-Now there are two possible ways to get a build environment, the MacPorts way
-or the custome build scripts way. If you dont plan to build for different
-architectures or SDKs as you are current running, or dont plan to compile with
-fancy extensions, i would recommend the MacPorts way.
-
-If you choose the custome script way, please continue to read support/osx/README
+	$ brew install yasm
 
 Now run configure
 
@@ -67,23 +57,16 @@ If configured successfully run:
 
 Run Movian binary from build directory
 
-	$ build.osx/Showtime.app/Contents/MacOS/showtime
+	$ build.osx/Movian.app/Contents/MacOS/movian
 
-Run Movian application from build directory
+Note that in this case Movian loads all resources from current directory
+so this binary can't be run elsewhere.
 
-	$ open build.osx/Showtime.app
-
-Optionally you can build Showtime.dmg disk image. Note that you should
-configure with `--release` to embed theme files or else the binary will
-include paths to your local build tree.
+If you want a build that can be run as a normal Mac Application you shold do
 
 	$ make dist
 
-For more information read support/osx/README
-
-TODO: universal binary, cant be done i one step as libav does not
-build when using multiple arch arguments to gcc
-
+This will generate a DMG
 
 ## How to build for PS3 with PSL1GHT
 
@@ -100,3 +83,4 @@ $ ./Autobuild.sh -t rpi
 To update Movian on rpi with compiled one, enable Binreplace in settings:dev and issue:
 
 	curl --data-binary @build.rpi/showtime.sqfs http://rpi_ip_address:42000/showtime/replace
+
