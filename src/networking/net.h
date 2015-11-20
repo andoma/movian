@@ -35,6 +35,8 @@ typedef struct net_addr {
 
 } net_addr_t;
 
+#define NET_ADDR_V4_PORT(p) &(const net_addr_t){4, p}
+#define NET_ADDR_V4_ADDR(a,b,c,d) &(const net_addr_t){4, 0, {a,b,c,d}}
 
 struct cancellable;
 
@@ -93,18 +95,22 @@ void net_change_nonblocking(int fd, int on);
 void net_change_ndelay(int fd, int on);
 
 typedef struct netif {
-  uint32_t ipv4;
-  uint32_t maskv4;
   char ifname[16];
+  uint8_t ipv4_addr[4];
+  uint8_t ipv4_mask[4];
 } netif_t;
 
 
 netif_t *net_get_interfaces(void);
+
+int net_is_addr_in_netif(const netif_t *ni, const net_addr_t *addr);
 
 void net_fmt_host(char *dst, size_t dstlen, const net_addr_t *na);
 
 int net_addr_cmp(const net_addr_t *a, const net_addr_t *b);
 
 const char *net_addr_str(const net_addr_t *na);
+
+void net_refresh_network_status(void);
 
 #endif /* NET_H__ */

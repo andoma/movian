@@ -44,6 +44,14 @@ widget(container_y, {
                      fmt("%.1f / %.1f GB", $core.system.hdd.avail,
                          $core.system.hdd.size),
 	             isVoid($core.system.hdd.avail));
+            InfoLine(_("Network"),
+                     select($core.net.connectivity,
+                            _("Connected"),
+                            _("Not available")));
+            cloner($core.net.interfaces, container_z, {
+              InfoLine(_("IP Address"), fmt("%s - %s",
+                                            $self.ipv4_addr, $self.name));
+            });
             cloner($core.system.cpuinfo.cpus, container_z, {
               InfoBar($self.name, $self.load)
             });

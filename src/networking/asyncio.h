@@ -47,12 +47,21 @@ void asyncio_init_early(void);
 
 void asyncio_start(void);
 
+// Non-portable
+asyncio_fd_t *asyncio_add_fd(int fd, int events,
+                             asyncio_fd_callback_t *cb, void *opaque,
+                             const char *name);
+
 void asyncio_del_fd(asyncio_fd_t *af);
 
 void asyncio_run_task(void (*fn)(void *aux), void *aux);
 
 // Return current time, must be same time domain as arch_get_ts();
 int64_t async_current_time(void);
+
+void asyncio_register_for_network_changes(void (*cb)(const struct netif *ni));
+
+void asyncio_trig_network_change(void);
 
 /*************************************************************************
  * Workers
@@ -104,7 +113,7 @@ void asyncio_set_timeout_delta_sec(asyncio_fd_t *af, int seconds);
  *************************************************************************/
 
 asyncio_fd_t *asyncio_udp_bind(const char *name,
-			       int port,
+                               const net_addr_t *na,
 			       asyncio_udp_callback_t *cb,
 			       void *opaque,
 			       int bind_any_on_fail,
@@ -113,12 +122,14 @@ asyncio_fd_t *asyncio_udp_bind(const char *name,
 void asyncio_udp_send(asyncio_fd_t *af, const void *data, int size,
 		      const net_addr_t *remote_addr);
 
+int asyncio_udp_add_membership(asyncio_fd_t *af, const net_addr_t *group);
+
 /*************************************************************************
  * Timers
  *************************************************************************/
 
 void asyncio_timer_init(asyncio_timer_t *at, void (*fn)(void *opaque),
-			void *opque);
+			void *opaque);
 
 void asyncio_timer_arm_delta_sec(asyncio_timer_t *at, int seconds);
 

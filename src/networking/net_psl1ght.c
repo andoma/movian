@@ -351,8 +351,10 @@ net_get_interfaces(void)
   netif_t *ni = calloc(2, sizeof(netif_t));
 
   snprintf(ni[0].ifname, sizeof(ni[0].ifname), "eth");
-  ni[0].ipv4 = inet_addr(info.ip_address);
-  ni[0].maskv4 = inet_addr(info.netmask);
+  uint32_t a = inet_addr(info.ip_address);
+  memcpy(&ni[0].ipv4_addr, &a, 4);
+  uint32_t m = inet_addr(info.netmask);
+  memcpy(&ni[0].ipv4_mask, &m, 4);
   return ni;
 }
 

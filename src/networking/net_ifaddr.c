@@ -27,6 +27,8 @@
 #include "main.h"
 #include "net.h"
 
+#include "asyncio.h"
+
 
 /**
  *
@@ -42,30 +44,33 @@ net_get_interfaces(void)
     TRACE(TRACE_ERROR, "net", "getifaddrs failed: %s", strerror(errno));
     return NULL;
   }
-  
+
   for(ifa = ifa_list; ifa != NULL; ifa = ifa->ifa_next)
     num++;
 
   n = ni = calloc(1, sizeof(struct netif) * (num + 1));
-  
+
   for(ifa = ifa_list; ifa != NULL; ifa = ifa->ifa_next) {
-    if((ifa->ifa_flags & (IFF_UP | IFF_LOOPBACK | IFF_RUNNING)) != 
+    if((ifa->ifa_flags & (IFF_UP | IFF_LOOPBACK | IFF_RUNNING)) !=
        (IFF_UP | IFF_RUNNING) ||
        ifa->ifa_addr == NULL || ifa->ifa_addr->sa_family != AF_INET)
 	 continue;
 
-    n->ipv4 = ntohl(((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr);
-    if(n->ipv4 == 0)
+    memcpy(n->ipv4_addr, &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr, 4);
+    if(n->ipv4_addr[0] == 0 &&
+       n->ipv4_addr[1] == 0 &&
+       n->ipv4_addr[2] == 0 &&
+       n->ipv4_addr[3] == 0)
       continue;
-    n->maskv4 = ntohl(((struct sockaddr_in *)ifa->ifa_netmask)->sin_addr.s_addr);
+    memcpy(n->ipv4_mask, &((struct sockaddr_in *)ifa->ifa_netmask)->sin_addr, 4);
 
     snprintf(n->ifname, sizeof(n->ifname), "%s", ifa->ifa_name);
     n++;
   }
-  
+
   freeifaddrs(ifa_list);
 
-  if(ni->ipv4 == 0) {
+  if(ni->ifname[0] == 0) {
     free(ni);
     return NULL;
   }
@@ -73,3 +78,42 @@ net_get_interfaces(void)
   return ni;
 }
 
+
+
+
+#ifdef linux
+
+#include <linux/netlink.h>
+#include <linux/rtnetlink.h>
+#include <unistd.h>
+
+static int netlink_fd;
+
+static void
+routesocket_input(asyncio_fd_t *af, void *opaque, int event, int error)
+{
+  char buf[4096];
+
+  if(read(netlink_fd, buf, sizeof(buf))) {}
+  asyncio_trig_network_change();
+}
+
+
+static void
+routesocket_init(void)
+{
+  struct sockaddr_nl sa;
+
+  memset(&sa, 0, sizeof(sa));
+  sa.nl_family = AF_NETLINK;
+  sa.nl_groups = RTMGRP_LINK | RTMGRP_IPV4_IFADDR;
+
+  netlink_fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+  bind(netlink_fd, (struct sockaddr *) &sa, sizeof(sa));
+
+  asyncio_add_fd(netlink_fd, 0x1, routesocket_input, NULL, "netlink");
+}
+
+INITME(INIT_GROUP_ASYNCIO, routesocket_init, NULL);
+
+#endif

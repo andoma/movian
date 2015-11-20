@@ -460,7 +460,7 @@ asyncio_rem_events(asyncio_fd_t *af, int events)
 /**
  *
  */
-static asyncio_fd_t *
+asyncio_fd_t *
 asyncio_add_fd(int fd, int events, asyncio_fd_callback_t *cb, void *opaque,
 	       const char *name)
 {
@@ -1174,7 +1174,7 @@ asyncio_udp_event(asyncio_fd_t *af, void *opaque, int events, int error)
  */
 asyncio_fd_t *
 asyncio_udp_bind(const char *name,
-		 int port,
+                 const net_addr_t *na,
 		 asyncio_udp_callback_t *cb,
 		 void *opaque,
 		 int bind_any,
@@ -1193,13 +1193,17 @@ asyncio_udp_bind(const char *name,
   si.sin_family = AF_INET;
 
   setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(int));
+#if defined(SO_REUSEPORT)
+  setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &one, sizeof(int));
+#endif
 
   if(broadcast)
     setsockopt(fd, SOL_SOCKET, SO_BROADCAST, &one, sizeof(one));
 
-  if(port) {
+  if(na) {
 
-    si.sin_port = htons(port);
+    si.sin_port = htons(na->na_port);
+    memcpy(&si.sin_addr, na->na_addr, 4);
     if(bind(fd, (struct sockaddr *)&si, sizeof(struct sockaddr_in))) {
 
       if(!bind_any) {
@@ -1208,11 +1212,11 @@ asyncio_udp_bind(const char *name,
         close(fd);
         return NULL;
       } else {
-        port = 0;
+        na = NULL;
       }
     }
   }
-  if(!port) {
+  if(na == NULL) {
     si.sin_port = 0;
     if(bind(fd, (struct sockaddr *)&si, sizeof(struct sockaddr_in)) == -1) {
       TRACE(TRACE_ERROR, "TCP", "%s: Unable to bind -- %s", name,
@@ -1227,7 +1231,7 @@ asyncio_udp_bind(const char *name,
     close(fd);
     return NULL;
   }
-  port = ntohs(si.sin_port);
+  int port = ntohs(si.sin_port);
 
   TRACE(TRACE_INFO, "UDP", "%s: Listening on port %d", name, port);
 
@@ -1252,7 +1256,77 @@ asyncio_udp_send(asyncio_fd_t *af, const void *data, int size,
   sin.sin_family = AF_INET;
   sin.sin_port = htons(remote_addr->na_port);
   memcpy(&sin.sin_addr, remote_addr->na_addr, 4);
-  sendto(af->af_fd, data, size, 0, 
+  sendto(af->af_fd, data, size, 0,
 	 (const struct sockaddr *)&sin, sizeof(struct sockaddr_in));
 }
 
+
+#ifndef IP_ADD_MEMBERSHIP
+#define IP_ADD_MEMBERSHIP		12
+struct ip_mreq {
+  struct in_addr imr_multiaddr;
+  struct in_addr imr_interface;
+};
+#endif
+
+/**
+ *
+ */
+int
+asyncio_udp_add_membership(asyncio_fd_t *af, const net_addr_t *group)
+{
+  struct ip_mreq imr;
+  memset(&imr, 0, sizeof(imr));
+  memcpy(&imr.imr_multiaddr.s_addr, group->na_addr, 4);
+  return setsockopt(af->af_fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &imr,
+                    sizeof(struct ip_mreq));
+}
+
+/*************************************************************************
+ * Network interface changes
+ *************************************************************************/
+typedef struct netifchange {
+  void (*cb)(const struct netif *ni);
+  LIST_ENTRY(netifchange) link;
+} netifchange_t;
+
+static LIST_HEAD(, netifchange) netifchanges;
+
+
+void
+asyncio_register_for_network_changes(void (*cb)(const struct netif *ni))
+{
+  asyncio_verify_thread();
+  netifchange_t *nic = malloc(sizeof(netifchange_t));
+  nic->cb = cb;
+  LIST_INSERT_HEAD(&netifchanges, nic, link);
+  struct netif *ni = net_get_interfaces();
+  nic->cb(ni);
+  free(ni);
+}
+
+
+/**
+ *
+ */
+static void
+asyncio_do_network_change(void *aux)
+{
+  netifchange_t *nic;
+  struct netif *ni = net_get_interfaces();
+  LIST_FOREACH(nic, &netifchanges, link) {
+    nic->cb(ni);
+  }
+  free(ni);
+}
+
+
+/**
+ *
+ */
+void
+asyncio_trig_network_change(void)
+{
+  net_refresh_network_status();
+  asyncio_run_task(asyncio_do_network_change, NULL);
+}

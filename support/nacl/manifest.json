@@ -9,7 +9,7 @@
     "128": "st128.png"
   },
 
-  "minimum_chrome_version": "38",
+  "minimum_chrome_version": "44",
   "offline_enabled": true,
   "permissions": ["unlimitedStorage", "fullscreen",
                   {
@@ -18,7 +18,8 @@
                       "tcp-connect",
                       "resolve-host",
                       "udp-bind:*:*",
-                      "udp-send-to:*:*"
+                      "udp-send-to:*:*",
+                      "network-state"
                     ]
                   }
                  ],

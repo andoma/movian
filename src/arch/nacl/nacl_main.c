@@ -42,6 +42,8 @@
 #include "ppapi/c/ppb_instance.h"
 #include "ppapi/c/ppb_message_loop.h"
 #include "ppapi/c/ppb_messaging.h"
+#include "ppapi/c/ppb_network_monitor.h"
+#include "ppapi/c/ppb_network_list.h"
 #include "ppapi/c/ppb_graphics_3d.h"
 #include "ppapi/c/ppb_tcp_socket.h"
 #include "ppapi/c/ppb_udp_socket.h"
@@ -79,6 +81,8 @@ const PPB_KeyboardInputEvent *ppb_keyboardinputevent;
 const PPB_MouseInputEvent *ppb_mouseinputevent;
 const PPB_HostResolver *ppb_hostresolver;
 const PPB_NetAddress *ppb_netaddress;
+const PPB_NetworkMonitor *ppb_networkmonitor;
+const PPB_NetworkList *ppb_networklist;
 const PPB_TCPSocket *ppb_tcpsocket;
 const PPB_UDPSocket *ppb_udpsocket;
 const PPB_MessageLoop *ppb_messageloop;
@@ -911,6 +915,8 @@ PPP_InitializeModule(PP_Module a_module_id, PPB_GetInterface get_browser)
   ppb_mouseinputevent    = get_browser(PPB_MOUSE_INPUT_EVENT_INTERFACE);
   ppb_hostresolver       = get_browser(PPB_HOSTRESOLVER_INTERFACE);
   ppb_netaddress         = get_browser(PPB_NETADDRESS_INTERFACE);
+  ppb_networkmonitor     = get_browser(PPB_NETWORKMONITOR_INTERFACE);
+  ppb_networklist        = get_browser(PPB_NETWORKLIST_INTERFACE);
   ppb_tcpsocket          = get_browser(PPB_TCPSOCKET_INTERFACE);
   ppb_udpsocket          = get_browser(PPB_UDPSOCKET_INTERFACE);
   ppb_messageloop        = get_browser(PPB_MESSAGELOOP_INTERFACE);

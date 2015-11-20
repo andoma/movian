@@ -46,7 +46,7 @@ STAGEFILES = \
 .PHONY: stage dbgstage dist
 stage:	${STAGEFILES}
 
-dbgstage:	${STAGEFILES} ${BUILDDIR}/stage/showtime.bundle
+dbgstage:	${STAGEFILES} ${BUILDDIR}/stage/app.bundle
 
 VERSION := $(shell support/getver.sh)
 

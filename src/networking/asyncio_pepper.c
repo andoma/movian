@@ -31,6 +31,8 @@
 #include "ppapi/c/ppb_core.h"
 #include "ppapi/c/ppb_host_resolver.h"
 #include "ppapi/c/ppb_message_loop.h"
+#include "ppapi/c/ppb_network_monitor.h"
+#include "ppapi/c/ppb_network_list.h"
 #include "ppapi/c/ppb_tcp_socket.h"
 #include "ppapi/c/ppb_udp_socket.h"
 #include "ppapi/c/ppb_var.h"
@@ -84,6 +86,8 @@ extern PPB_TCPSocket *ppb_tcpsocket;
 extern PPB_UDPSocket *ppb_udpsocket;
 extern PPB_Var *ppb_var;
 extern const PPB_MessageLoop *ppb_messageloop;
+extern const PPB_NetworkMonitor *ppb_networkmonitor;
+extern const PPB_NetworkList *ppb_networklist;
 
 static PP_Resource asyncio_msgloop;
 
@@ -702,7 +706,7 @@ udp_do_recv(asyncio_fd_t *af)
  */
 asyncio_fd_t *
 asyncio_udp_bind(const char *name,
-                 int port,
+                 const net_addr_t *na,
                  asyncio_udp_callback_t *cb,
                  void *opaque,
                  int bind_any_on_fail,
@@ -721,9 +725,14 @@ asyncio_udp_bind(const char *name,
             name, pepper_errmsg(r));
   }
 
+  ppb_udpsocket->SetOption(sock, PP_UDPSOCKET_OPTION_ADDRESS_REUSE,
+                           PP_MakeBool(1), PP_BlockUntilComplete());
 
 
-  wr16_be((uint8_t *)&ipv4_addr.port, port);
+  if(na != NULL) {
+    wr16_be((uint8_t *)&ipv4_addr.port, na->na_port);
+    memcpy(&ipv4_addr.addr, na->na_addr, 4);
+  }
   addr = ppb_netaddress->CreateFromIPv4Address(g_Instance, &ipv4_addr);
 
   int r = ppb_udpsocket->Bind(sock, addr, PP_BlockUntilComplete());
@@ -750,6 +759,26 @@ asyncio_udp_bind(const char *name,
   udp_do_recv(af);
 
   return af;
+}
+
+
+/**
+ *
+ */
+int
+asyncio_udp_add_membership(asyncio_fd_t *af, const net_addr_t *group)
+{
+  PP_Resource g;
+  struct PP_NetAddress_IPv4 ipv4_addr = {};
+
+  memcpy(&ipv4_addr.addr, group->na_addr, 4);
+  g = ppb_netaddress->CreateFromIPv4Address(g_Instance, &ipv4_addr);
+
+  int r = ppb_udpsocket->JoinGroup(af->af_sock, g, PP_BlockUntilComplete());
+  ppb_core->ReleaseResource(g);
+  if(r)
+    return -1;
+  return 0;
 }
 
 /**
@@ -943,10 +972,160 @@ asyncio_courier_notify(void *opaque)
 /**
  *
  */
+typedef struct netifchange {
+  void (*cb)(const struct netif *ni);
+  LIST_ENTRY(netifchange) link;
+} netifchange_t;
+
+static LIST_HEAD(, netifchange) netifchanges;
+
+
+static PP_Resource network_list;
+static PP_Resource network_monitor;
+
+static HTS_MUTEX_DECL(netif_mutex);
+static struct netif *netif_current;
+static int num_netif;
+
+struct na_items {
+  PP_Resource *data;
+  int element_count;
+};
+
+static void *
+get_data_buf(void* user_data, uint32_t count, uint32_t size)
+{
+  struct na_items *output = (struct na_items *)user_data;
+  output->element_count = count;
+
+  if(size) {
+    output->data = malloc(count * size);
+    if(output->data == NULL)
+      output->element_count = 0;
+
+  } else {
+    output->data = NULL;
+  }
+  return output->data;
+}
+
+
+static void
+network_list_updated(void *aux, int val)
+{
+  if(val) {
+    TRACE(TRACE_DEBUG, "Network", "Unable to get list of networks -- %s",
+          pepper_errmsg(val));
+    return;
+  }
+
+  int count = ppb_networklist->GetCount(network_list);
+  TRACE(TRACE_DEBUG, "Network", "Got network update %d networks", count);
+
+  hts_mutex_lock(&netif_mutex);
+  free(netif_current);
+
+  netif_current = NULL;
+  num_netif = 0;
+
+  for(int i = 0; i < count; i++) {
+
+
+    struct PP_Var name = ppb_networklist->GetDisplayName(network_list, i);
+
+    uint32_t len;
+    const char *s = ppb_var->VarToUtf8(name, &len);
+    if(s == NULL) {
+      ppb_var->Release(name);
+      continue;
+    }
+    char *ifname = alloca(len + 1);
+    memcpy(ifname, s, len);
+    ifname[len] = 0;
+
+    ppb_var->Release(name);
+
+    const int state = ppb_networklist->GetState(network_list, i);
+    TRACE(TRACE_DEBUG, "Network", "%s - %s",
+          ifname, state == PP_NETWORKLIST_STATE_UP ? "Up" : "Down");
+
+    if(state != PP_NETWORKLIST_STATE_UP)
+      continue;
+
+    struct na_items array = {};
+    struct PP_ArrayOutput output = {&get_data_buf, &array};
+
+    ppb_networklist->GetIpAddresses(network_list, i, output);
+
+    int postfixcnt = 0;
+    for(int j = 0; j < array.element_count; j++) {
+
+      net_addr_t local = {0};
+      pepper_NetAddress_to_net_addr(&local, array.data[j]);
+
+      if(local.na_family == 4) {
+        TRACE(TRACE_DEBUG, "Network", "  Address %s",
+              net_addr_str(&local));
+
+        netif_current = realloc(netif_current,
+                                sizeof(netif_t) * (num_netif + 2));
+        memset(netif_current + num_netif + 1, 0, sizeof(netif_t));
+
+        netif_t *ni = netif_current + num_netif;
+
+
+        if(postfixcnt == 0)
+          snprintf(ni->ifname, sizeof(ni->ifname), "%s", ifname);
+        else
+          snprintf(ni->ifname, sizeof(ni->ifname), "%s:%d", ifname, postfixcnt);
+
+        memcpy(ni->ipv4_addr, local.na_addr, 4);
+
+        // Pepper does not provide this, so we just guess
+        ni->ipv4_mask[0] = 255;
+        ni->ipv4_mask[1] = 255;
+        ni->ipv4_mask[2] = 255;
+        ni->ipv4_mask[3] = 0;
+
+        postfixcnt++;
+        num_netif++;
+      }
+      ppb_core->ReleaseResource(array.data[j]);
+    }
+    free(array.data);
+  }
+
+  hts_mutex_unlock(&netif_mutex);
+
+  ppb_core->ReleaseResource(network_list);
+
+  ppb_networkmonitor->UpdateNetworkList(network_monitor, &network_list,
+                                        (const struct PP_CompletionCallback) {
+                                           network_list_updated, NULL});
+  TRACE(TRACE_DEBUG, "Network", "Total netifs: %d   %p",
+        num_netif, netif_current);
+
+  netifchange_t *nic;
+  LIST_FOREACH(nic, &netifchanges, link) {
+    nic->cb(netif_current);
+  }
+
+  net_refresh_network_status();
+}
+
+
+/**
+ *
+ */
 static void *
 asyncio_thread(void *aux)
 {
   ppb_messageloop->AttachToCurrentThread(asyncio_msgloop);
+
+  network_monitor = ppb_networkmonitor->Create(g_Instance);
+  ppb_networkmonitor->UpdateNetworkList(network_monitor, &network_list,
+                                        (const struct PP_CompletionCallback) {
+                                          network_list_updated, NULL});
   ppb_messageloop->Run(asyncio_msgloop);
   return NULL;
 }
@@ -986,4 +1165,37 @@ asyncio_start(void)
   ppb_messageloop->PostWork(asyncio_msgloop,
                             (const struct PP_CompletionCallback) {
                               asyncio_start_on_thread, NULL}, 0);
+}
+
+
+/**
+ *
+ */
+void
+asyncio_register_for_network_changes(void (*cb)(const struct netif *ni))
+{
+  netifchange_t *nic = malloc(sizeof(netifchange_t));
+  nic->cb = cb;
+  LIST_INSERT_HEAD(&netifchanges, nic, link);
+  struct netif *ni = net_get_interfaces();
+  nic->cb(ni);
+  free(ni);
+}
+
+
+netif_t *
+net_get_interfaces(void)
+{
+  hts_mutex_lock(&netif_mutex);
+
+  netif_t *ni;
+  if(num_netif == 0) {
+    ni = NULL;
+  } else {
+    size_t s = sizeof(netif_t) * (num_netif + 1);
+    ni = malloc(s);
+    memcpy(ni, netif_current, s);
+  }
+  hts_mutex_unlock(&netif_mutex);
+  return ni;
 }

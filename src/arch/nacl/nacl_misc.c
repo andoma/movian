@@ -33,8 +33,6 @@
 #include "arch/posix/posix.h"
 #include "arch/arch.h"
 
-#include "networking/net.h"
-
 #include "nacl.h"
 
 /**
@@ -151,13 +149,6 @@ void
 arch_localtime(const time_t *now, struct tm *tm)
 {
   localtime_r(now, tm);
-}
-
-
-netif_t *
-net_get_interfaces(void)
-{
-  return NULL;
 }
 
 

@@ -17,6 +17,7 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "misc/minmax.h"
@@ -25,6 +26,8 @@
 
 #include "main.h"
 #include "fileaccess/smb/nmb.h"
+
+#include "prop/prop.h"
 
 /**
  *
@@ -451,12 +454,10 @@ tcp_connect(const char *hostname, int port,
 
       netif_t *ni = net_get_interfaces();
 
-      const uint32_t v4addr = rd32_be(addr.na_addr);
       if(ni != NULL) {
-        for(int i = 0; ni[i].ipv4; i++) {
-          if((v4addr & ni[i].maskv4) == (ni[i].ipv4 & ni[i].maskv4)) {
+        for(int i = 0; ni[i].ifname[0]; i++) {
+          if(net_is_addr_in_netif(ni, &addr))
             goto connect;
-          }
         }
         free(ni);
       }
@@ -522,3 +523,63 @@ tcp_close(tcpcon_t *tc)
 
   free(tc);
 }
+
+
+int
+net_is_addr_in_netif(const netif_t *ni, const net_addr_t *na)
+{
+  uint32_t mask   = rd32_be(ni->ipv4_mask);
+  uint32_t ifaddr = rd32_be(ni->ipv4_addr);
+  uint32_t addr   = rd32_be(na->na_addr);
+
+  return (addr & mask) == (ifaddr & mask);
+}
+
+
+
+void
+net_refresh_network_status(void)
+{
+  netif_t *ni = net_get_interfaces();
+  char tmp[32];
+  prop_t *np = prop_create(prop_get_global(), "net");
+  prop_t *interfaces = prop_create(np, "interfaces");
+
+  if(ni == NULL) {
+    prop_set(np, "connectivity", PROP_SET_INT, 0);
+    prop_destroy_childs(interfaces);
+    return;
+  }
+
+  prop_set(np, "connectivity", PROP_SET_INT, 1);
+
+  prop_mark_childs(interfaces);
+
+  for(int i = 0; ni[i].ifname[0]; i++) {
+
+    prop_t *iface = prop_create_r(interfaces, ni[i].ifname);
+
+    prop_unmark(iface);
+
+    prop_set(iface, "name", PROP_SET_STRING, ni[i].ifname);
+
+    snprintf(tmp, sizeof(tmp), "%d.%d.%d.%d",
+           ni[i].ipv4_addr[0],
+           ni[i].ipv4_addr[1],
+           ni[i].ipv4_addr[2],
+           ni[i].ipv4_addr[3]);
+    prop_set(iface, "ipv4_addr", PROP_SET_STRING, tmp);
+
+    snprintf(tmp, sizeof(tmp), "%d.%d.%d.%d",
+           ni[i].ipv4_mask[0],
+           ni[i].ipv4_mask[1],
+           ni[i].ipv4_mask[2],
+           ni[i].ipv4_mask[3]);
+    prop_set(iface, "ipv4_mask", PROP_SET_STRING, tmp);
+    prop_ref_dec(iface);
+  }
+  free(ni);
+  prop_destroy_marked_childs(interfaces);
+}
+
+INITME(INIT_GROUP_NET, net_refresh_network_status, NULL);

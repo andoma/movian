@@ -19,13 +19,8 @@
  */
 #include <stdio.h>
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <unistd.h>
-#include <poll.h>
 #include <errno.h>
-
-
-#include <netinet/in.h>
 
 #include "main.h"
 #include "ssdp.h"
@@ -35,12 +30,14 @@
 
 #include "upnp/upnp.h"
 
+
+// This code executes on the asyncio thread / dispatch loop
+
 #define SSDP_NOTIFY   1
 #define SSDP_SEARCH   2
 #define SSDP_RESPONSE 3
 
 
-static int ssdp_fdm, ssdp_fdu, ssdp_run = 1;
 static char *ssdp_uuid;
 
 /**
@@ -79,24 +76,17 @@ ssdp_parse(char *buf, struct http_header_list *list)
   return r;
 }
 
+static net_addr_t ssdp_mcast_addr = {4, 1900, {239, 255, 255, 250}};
 
 /**
  *
  */
 static void
-ssdp_send_static(int fd, const char *str)
+ssdp_send_static(asyncio_fd_t *af, const char *str)
 {
-  struct sockaddr_in sin = {0};
-  int r;
-  sin.sin_family = AF_INET;
-  sin.sin_port = htons(1900);
-  sin.sin_addr.s_addr = htonl(0xeffffffa);
-
-  r = sendto(fd, str, strlen(str), 0, 
-	     (struct sockaddr *)&sin, sizeof(struct sockaddr_in));
-  if(r == -1)
-    TRACE(TRACE_INFO, "SSDP", "Unable to send: %s", strerror(errno));
+  asyncio_udp_send(af, str, strlen(str), &ssdp_mcast_addr);
 }
+
 
 /**
  *
@@ -128,7 +118,7 @@ ssdp_recv_notify(struct http_header_list *args)
 
   if(nts == NULL || url == NULL)
     return;
-  
+
   if(!strcasecmp(nts, "ssdp:alive") && type != NULL)
     upnp_add_device(url, type, ssdp_maxage(args));
 
@@ -145,7 +135,7 @@ ssdp_response(struct http_header_list *args)
 {
   const char *url  = http_header_get(args, "location");
   const char *type = http_header_get(args, "st");
-  
+
   if(url != NULL && type != NULL)
     upnp_add_device(url, type, ssdp_maxage(args));
 }
@@ -155,7 +145,7 @@ ssdp_response(struct http_header_list *args)
  *
  */
 static void
-ssdp_send(int fd, uint32_t myaddr, struct sockaddr_in *dst, 
+ssdp_send(asyncio_fd_t *af, const net_addr_t *myaddr, const net_addr_t *dst,
 	  const char *nt, const char *nts,
 	  const char *location, int incl_host, const char *usn_postfix)
 {
@@ -169,8 +159,6 @@ ssdp_send(int fd, uint32_t myaddr, struct sockaddr_in *dst,
   } else {
     date[0] = 0;
   }
-
-  struct sockaddr_in mcast;
 
   snprintf(buf, sizeof(buf),
 	   "%s\r\n"
@@ -190,75 +178,92 @@ ssdp_send(int fd, uint32_t myaddr, struct sockaddr_in *dst,
 	   htsversion, htsversion,
 	   *date ? "DATE: " : "", date, *date ? "\r\n" : "",
 	   dst ? "EXT:\r\n" : "",
-	   (uint8_t)(myaddr >> 24),
-	   (uint8_t)(myaddr >> 16),
-	   (uint8_t)(myaddr >> 8),
-	   (uint8_t)(myaddr),
+           myaddr->na_addr[0],
+           myaddr->na_addr[1],
+           myaddr->na_addr[2],
+           myaddr->na_addr[3],
 	   http_server_port,
 	   location,
 
 	   dst ? "ST" : "NT", nt,
 	   nts ? "NTS: " : "", nts ?: "", nts ? "\r\n" :"");
 
-  if(dst == NULL) {
-    memset(&mcast, 0, sizeof(mcast));
+  if(dst == NULL)
+    dst = &ssdp_mcast_addr;
 
-    mcast.sin_family = AF_INET;
-    mcast.sin_port = htons(1900);
-    mcast.sin_addr.s_addr = htonl(0xeffffffa);
-    dst = &mcast;
-  }
-  sendto(fd, buf, strlen(buf), 0, 
-	 (struct sockaddr *)dst, sizeof(struct sockaddr_in));
+  asyncio_udp_send(af, buf, strlen(buf), dst);
 }
 
-	  
 
 /**
  *
  */
 static void
-ssdp_send_all(int fd, uint32_t myaddr, struct sockaddr_in *dst, const char *nts)
+ssdp_send_all(asyncio_fd_t *af, const net_addr_t *myaddr,
+              const net_addr_t *dst, const char *nts)
 {
   char nt[100];
   snprintf(nt, sizeof(nt), "uuid:%s", ssdp_uuid);
 
   // Root device discovery
-  ssdp_send(fd, myaddr, dst,
+  ssdp_send(af, myaddr, dst,
 	    "upnp:rootdevice",
 	    nts, "/upnp/description.xml", 1,
 	    "::upnp:rootdevice");
-  
-  ssdp_send(fd, myaddr, dst,
+
+  ssdp_send(af, myaddr, dst,
 	    nt,
 	    nts, "/upnp/description.xml", 1,
 	    NULL);
-    
-  ssdp_send(fd, myaddr, dst,
+
+  ssdp_send(af, myaddr, dst,
 	    "urn:schemas-upnp-org:device:MediaRenderer:2",
 	    nts, "/upnp/description.xml", 1,
 	    "::urn:schemas-upnp-org:device:MediaRenderer:2");
 
   // Service discovery
 
-  ssdp_send(fd, myaddr, dst,
+  ssdp_send(af, myaddr, dst,
 	    "urn:schemas-upnp-org:service:ConnectionManager:2",
 	    nts, "/upnp/description.xml", 1,
 	    "::urn:schemas-upnp-org:service:ConnectionManager:2");
 
 
-  ssdp_send(fd, myaddr, dst,
+  ssdp_send(af, myaddr, dst,
 	    "urn:schemas-upnp-org:service:AVTransport:2",
 	    nts, "/upnp/description.xml", 1,
 	    "::urn:schemas-upnp-org:service:AVTransport:2");
 
 
-  ssdp_send(fd, myaddr, dst,
+  ssdp_send(af, myaddr, dst,
 	    "urn:schemas-upnp-org:service:RenderingControl:2",
 	    nts, "/upnp/description.xml", 1,
 	    "::urn:schemas-upnp-org:service:RenderingControl:2");
 
 }
+
+
+LIST_HEAD(ssdp_interface_list, ssdp_interface);
+
+static struct ssdp_interface_list ssdp_interfaces;
+
+typedef struct ssdp_interface {
+
+  LIST_ENTRY(ssdp_interface) si_link;
+
+  asyncio_fd_t *si_fd_mc;
+  asyncio_fd_t *si_fd_uc;
+
+  char si_ifname[32];
+
+  net_addr_t si_myaddr;
+
+  int si_mark;
+
+  asyncio_timer_t si_alive_timer;
+  asyncio_timer_t si_search_timer;
+
+} ssdp_interface_t;
 
 
 
@@ -268,71 +273,19 @@ ssdp_send_all(int fd, uint32_t myaddr, struct sockaddr_in *dst, const char *nts)
  * mc is set if packet arrived on our multicast listening socket
  */
 static void
-ssdp_input(int fd, int mc)
+ssdp_input(ssdp_interface_t *si, int mc, const uint8_t *input, int size,
+           const net_addr_t *remote_addr)
 {
-  char buf[2000];
-  int r, cmd, self;
+  int cmd, self;
   struct http_header_list args;
-  uint32_t myaddr;
   const char *usn;
-  struct sockaddr_in si;
 
-#if defined(IP_RECVDSTADDR)
-
-  struct msghdr msg;
-  struct cmsghdr *cmsg;
-  struct iovec iov;
-  char ctrl[500];
-
-  iov.iov_base = buf;
-  iov.iov_len = sizeof(buf);
-
-  msg.msg_name = (struct sockaddr *)&si;
-  msg.msg_namelen = sizeof(struct sockaddr_in);
-
-  msg.msg_iov = &iov;
-  msg.msg_iovlen = 1;
-
-  msg.msg_control = ctrl;
-  msg.msg_controllen = sizeof(ctrl);
-
-  r = recvmsg(fd, &msg, 0);
-  if(r < 1)
-    return;
-
-  buf[r] = 0;
-
-  myaddr = 0;
-
-  for(cmsg = CMSG_FIRSTHDR(&msg); cmsg; cmsg = CMSG_NXTHDR(&msg,cmsg)) {
-    if (cmsg->cmsg_level == IPPROTO_IP && cmsg->cmsg_type == IP_RECVDSTADDR) {
-      struct in_addr *ia = (struct in_addr *)CMSG_DATA(cmsg);
-      myaddr = ntohl(ia->s_addr);
-      break;
-    }
-  }
-
-#else
- 
-  socklen_t slen = sizeof(struct sockaddr_in);
-  netif_t *ni;
-
-  r = recvfrom(fd, buf, sizeof(buf)-1, 0, (struct sockaddr *)&si, &slen);
-  if(r < 1)
-    return;
-  buf[r] = 0;
-
-  ni = net_get_interfaces();
-  myaddr = ni ? ni[0].ipv4 : 0;
-  free(ni);
-
-#endif
-
-  if(!myaddr)
-    return;
 
   LIST_INIT(&args);
 
+  char *buf = malloc(size + 1);
+  buf[size] = 0;
+  memcpy(buf, input, size);
   cmd = ssdp_parse(buf, &args);
   usn = http_header_get(&args, "usn");
 
@@ -345,177 +298,188 @@ ssdp_input(int fd, int mc)
     if(cmd == SSDP_RESPONSE && !mc)
       ssdp_response(&args);
     if(cmd == SSDP_SEARCH && mc)
-      ssdp_send_all(ssdp_fdu, myaddr, &si, NULL);
+      ssdp_send_all(si->si_fd_uc, &si->si_myaddr, remote_addr, NULL);
   }
   http_headers_free(&args);
+  free(buf);
 }
 
 
 /**
  *
  */
-static const char *SEARCHREQ = 
+static const char *SEARCHREQ =
   "M-SEARCH * HTTP/1.1\r\n"
   "HOST: 239.255.255.250:1900\r\n"
   "MAN: \"ssdp:discover\"\r\n"
   "MX: 1\r\n"
   "ST: urn:schemas-upnp-org:service:ContentDirectory:1\r\n\r\n";
 
+/**
+ *
+ */
+static void
+ssdp_send_notify_on_interface(ssdp_interface_t *si, const char *nts)
+{
+  ssdp_send_all(si->si_fd_uc, &si->si_myaddr, NULL, nts);
+}
+
+
+static void
+ssdp_multicast_input(void *opaque, const void *data, int size,
+                     const net_addr_t *remote_addr)
+{
+  ssdp_input(opaque, 1, data, size, remote_addr);
+}
+
+
+static void
+ssdp_unicast_input(void *opaque, const void *data, int size,
+                   const net_addr_t *remote_addr)
+{
+  ssdp_input(opaque, 0, data, size, remote_addr);
+}
+
 
 /**
  *
  */
 static void
-ssdp_send_notify(const char *nts)
+ssdp_send_alive(void *opaque)
 {
-  int fd, i = 0;
-  netif_t *ni;
-  struct sockaddr_in sin;
-  
-  memset(&sin, 0, sizeof(sin));
-  sin.sin_family = AF_INET;
-  sin.sin_port = 0;
+  ssdp_interface_t *si = opaque;
+  ssdp_send_notify_on_interface(si, "ssdp:alive");
+  asyncio_timer_arm_delta_sec(&si->si_alive_timer, 15);
+}
 
-  if((ni = net_get_interfaces()) == NULL)
-    return;
 
-  while(ni[i].ifname[0]) {
+/**
+ *
+ */
+static void
+ssdp_send_search(void *opaque)
+{
+  ssdp_interface_t *si = opaque;
+  ssdp_send_static(si->si_fd_uc, SEARCHREQ);
+}
 
-    if((fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) != -1) {
-      sin.sin_addr.s_addr = htonl(ni[i].ipv4);
-      if(bind(fd, (struct sockaddr *)&sin, sizeof(sin)) != -1) {
-	ssdp_send_all(fd, ni[i].ipv4, NULL, nts);
+
+/**
+ *
+ */
+static void
+ssdp_netif_update(const struct netif *ni)
+{
+  ssdp_interface_t *si, *next;
+  LIST_FOREACH(si, &ssdp_interfaces, si_link)
+    si->si_mark = 1;
+
+  TRACE(TRACE_DEBUG, "SSDP", "Refresh status %p", ni);
+
+  for(int i = 0; ni != NULL && ni[i].ifname[0]; i++) {
+    LIST_FOREACH(si, &ssdp_interfaces, si_link) {
+      if(!memcmp(si->si_myaddr.na_addr, ni->ipv4_addr, 4))
+        break;
+    }
+
+    if(si == NULL) {
+
+      si = calloc(1, sizeof(ssdp_interface_t));
+      strcpy(si->si_ifname, ni->ifname);
+      si->si_myaddr.na_family = 4;
+      si->si_myaddr.na_port = 1900;
+      memcpy(si->si_myaddr.na_addr, ni->ipv4_addr, 4);
+      TRACE(TRACE_DEBUG, "SSDP", "Trying to start on %s", ni->ifname);
+      char name[32];
+      snprintf(name, sizeof(name), "SSDP/%s/multicast", ni->ifname);
+
+      si->si_fd_mc = asyncio_udp_bind(name, &si->si_myaddr, ssdp_multicast_input,
+                                      si, 0, 0);
+      if(si->si_fd_mc == NULL) {
+        TRACE(TRACE_ERROR, "SSDP", "Failed to bind multicast to %s on %s",
+              net_addr_str(&si->si_myaddr), ni->ifname);
+        free(si);
+        continue;
       }
-      close(fd);
+
+      if(asyncio_udp_add_membership(si->si_fd_mc, &ssdp_mcast_addr)) {
+        TRACE(TRACE_ERROR, "SSDP", "Failed to join multicast group %s on %s",
+              net_addr_str(&ssdp_mcast_addr), ni->ifname);
+        asyncio_del_fd(si->si_fd_mc);
+        free(si);
+        continue;
+      }
+
+      snprintf(name, sizeof(name), "SSDP/%s/unicast", ni->ifname);
+      si->si_myaddr.na_port = 0;
+      si->si_fd_uc = asyncio_udp_bind(name, &si->si_myaddr, ssdp_unicast_input,
+                                      si, 0, 0);
+      if(si->si_fd_uc == NULL) {
+        TRACE(TRACE_ERROR, "SSDP", "Failed to bind unicast to %s on %s",
+              net_addr_str(&si->si_myaddr), ni->ifname);
+        asyncio_del_fd(si->si_fd_mc);
+        free(si);
+        continue;
+      }
+      LIST_INSERT_HEAD(&ssdp_interfaces, si, si_link);
+
+      ssdp_send_static(si->si_fd_uc, SEARCHREQ);
+      ssdp_send_notify_on_interface(si, "ssdp:alive");
+      asyncio_timer_init(&si->si_alive_timer,  ssdp_send_alive, si);
+      asyncio_timer_init(&si->si_search_timer, ssdp_send_search, si);
+
+      asyncio_timer_arm_delta_sec(&si->si_alive_timer, 1);
+      asyncio_timer_arm_delta_sec(&si->si_search_timer, 1);
+
+      TRACE(TRACE_DEBUG, "SSDP", "SSDP started on %s", si->si_ifname);
+
+    } else {
+      si->si_mark = 0;
     }
-    i++;
   }
-  free(ni);
+
+  for(si = LIST_FIRST(&ssdp_interfaces); si != NULL; si = next) {
+    next = LIST_NEXT(si, si_link);
+
+    if(!si->si_mark)
+      continue;
+
+    TRACE(TRACE_DEBUG, "SSDP", "SSDP stopped on %s", si->si_ifname);
+
+    LIST_REMOVE(si, si_link);
+    asyncio_del_fd(si->si_fd_mc);
+    asyncio_del_fd(si->si_fd_uc);
+    asyncio_timer_disarm(&si->si_alive_timer);
+    asyncio_timer_disarm(&si->si_search_timer);
+    free(si);
+  }
 }
 
-
-#ifndef IP_ADD_MEMBERSHIP
-#define IP_ADD_MEMBERSHIP		12
-struct ip_mreq {
-	struct in_addr imr_multiaddr;
-	struct in_addr imr_interface;
-};
-#endif
 
 /**
  *
  */
-static int
-ssdp_loop(int log_fail)
+static void
+ssdp_do_shutdown(void *aux)
 {
-  struct sockaddr_in si = {0};
-  int fdm, fdu;
-  int one = 1, r;
-  int64_t next_send = 0;
-  struct pollfd fds[2];
-  struct ip_mreq imr;
-
-  fdm = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-
-  setsockopt(fdm, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(int));
-#if defined(SO_REUSEPORT)
-  setsockopt(fdm, SOL_SOCKET, SO_REUSEPORT, &one, sizeof(int));
-#endif
-
-#if defined(IP_RECVDSTADDR)
-  setsockopt(fdm, IPPROTO_IP, IP_RECVDSTADDR, &one, sizeof(int));
-#endif
-  si.sin_family = AF_INET;
-  si.sin_port = htons(1900);
-
-  if(bind(fdm, (struct sockaddr *)&si, sizeof(struct sockaddr_in)) == -1) {
-    if(log_fail)
-      TRACE(TRACE_ERROR, "SSDP", "Unable to bind -- %s", strerror(errno));
-    close(fdm);
-    return 1;
-  }
-
-  memset(&imr, 0, sizeof(imr));
-  imr.imr_multiaddr.s_addr = htonl(0xeffffffa); // 239.255.255.250
-  if(setsockopt(fdm, IPPROTO_IP, IP_ADD_MEMBERSHIP, &imr, 
-		sizeof(struct ip_mreq)) == -1) {
-    if(log_fail)
-      TRACE(TRACE_ERROR, "SSDP", "Unable to join 239.255.255.250: %s",
-            strerror(errno));
-    close(fdm);
-    return 1;
-  }
-
-  fdu = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-
-#if defined(IP_RECVDSTADDR)
-  setsockopt(fdu, IPPROTO_IP, IP_RECVDSTADDR, &one, sizeof(int));
-#endif
-
-  si.sin_family = AF_INET;
-  si.sin_port = 0;
-
-  if(bind(fdu, (struct sockaddr *)&si, sizeof(struct sockaddr_in)) == -1) {
-    if(log_fail)
-      TRACE(TRACE_ERROR, "SSDP", "Unable to bind -- %s", strerror(errno));
-    close(fdu);
-    close(fdm);
-    return 1;
-  }
-
-  ssdp_fdm = fdm;
-  ssdp_fdu = fdu;
-  
-  ssdp_send_static(fdu, SEARCHREQ);
-
-  fds[0].fd = fdm;
-  fds[0].events = POLLIN;
-  fds[1].fd = fdu;
-  fds[1].events = POLLIN;
-
-  TRACE(TRACE_DEBUG, "SSDP", "Running");
-
-  while(ssdp_run) {
-    
-    int64_t delta = next_send - arch_get_ts();
-    if(delta <= 0) {
-      delta = 15000000LL;
-      next_send = arch_get_ts() + delta;
-      ssdp_send_notify("ssdp:alive");
+  ssdp_interface_t *si;
+  LIST_FOREACH(si, &ssdp_interfaces, si_link) {
+    TRACE(TRACE_DEBUG, "SSDP", "Sending byebye on %s", si->si_ifname);
+    for(int i = 0; i < 3; i++) {
+      ssdp_send_notify_on_interface(si, "ssdp:byebye");
     }
-    r = poll(fds, 2, (delta / 1000) + 1);
-    if(r > 0 && fds[0].revents & POLLIN)
-      ssdp_input(fdm, 1);
-    if(r > 0 && fds[1].revents & POLLIN)
-      ssdp_input(fdu, 0);
   }
-  return 0;
+  ssdp_netif_update(NULL); // Turn off all
 }
 
 
 /**
  *
  */
-static void *
-ssdp_thread(void *aux)
-{
-  int log_fail = 1;
-  while(ssdp_run) {
-    log_fail = !ssdp_loop(log_fail);
-    sleep(1);
-  }
-  return NULL;
-}
-
-/**
- *
- */
-static void 
+static void
 ssdp_shutdown(void *opaque, int retcode)
 {
-  // Prevent SSDP from announcing any more, not waterproof but should work
-  ssdp_run = 0;
-  ssdp_send_notify("ssdp:byebye");
+  asyncio_run_task(ssdp_do_shutdown, NULL);
 }
 
 
@@ -527,6 +491,5 @@ ssdp_init(const char *uuid)
 {
   shutdown_hook_add(ssdp_shutdown, NULL, 1);
   ssdp_uuid = strdup(uuid);
-  hts_thread_create_detached("ssdp", ssdp_thread, NULL,
-			     THREAD_PRIO_BGTASK);
+  asyncio_register_for_network_changes(ssdp_netif_update);
 }

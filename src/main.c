@@ -274,21 +274,23 @@ main_init(void)
 
   gconf.exit_code = 1;
 
-  asyncio_init_early();
-  init_group(INIT_GROUP_NET);
-
   unicode_init();
-
 
   /* Initialize property tree */
   prop_init();
   init_global_info();
 
+  /* Callout framework */
+  callout_init();
+
+  /* Network init */
+  asyncio_init_early();
+  init_group(INIT_GROUP_NET);
+
+
   /* Initiailize logging */
   trace_init();
 
-  /* Callout framework */
-  callout_init();
   prop_init_late();
 
   /* Initialize htsmsg_store() */

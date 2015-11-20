@@ -85,7 +85,6 @@ enable glw_backend_opengl_es
 
 disable xmp
 disable ftpserver
-disable upnp
 disable netlog
 
 zlib_setup

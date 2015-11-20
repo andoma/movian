@@ -278,16 +278,15 @@ static int
 es_system_ip(duk_context *ctx)
 {
     netif_t *ni = net_get_interfaces();
-    if (NULL == ni)
-        return 0;
+    if(ni == NULL)
+      return 0;
 
-    uint32_t myaddr = ni[0].ipv4;
-    free(ni);
     duk_push_sprintf(ctx, "%d.%d.%d.%d",
-        (uint8_t)(myaddr >> 24),
-        (uint8_t)(myaddr >> 16),
-        (uint8_t)(myaddr >> 8),
-        (uint8_t)(myaddr));
+                     ni->ipv4_addr[0],
+                     ni->ipv4_addr[1],
+                     ni->ipv4_addr[2],
+                     ni->ipv4_addr[3]);
+    free(ni);
 
     return 1;
 }
