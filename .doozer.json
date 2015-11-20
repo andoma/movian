@@ -109,6 +109,11 @@
       "buildcmd": "./Autobuild.sh -t ${TARGET} -j ${PARALLEL} -w ${WORKDIR}"
     },
 
+    "osx": {
+      "buildenv": "osx",
+      "buildcmd": "./Autobuild.sh -t ${TARGET} -j ${PARALLEL} -w ${WORKDIR}"
+    },
+
     "android": {
       "buildenv": "jessie-i386",
       "submodules": ["android"],
