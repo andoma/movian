@@ -315,6 +315,17 @@ Java_com_lonelycoder_mediaplayer_Core_pollCourier(JNIEnv *env, jobject obj)
 }
 
 
+/**
+ *
+ */
+JNIEXPORT void JNICALL
+Java_com_lonelycoder_mediaplayer_Core_networkStatusChanged(JNIEnv *env, jobject obj)
+{
+  extern void asyncio_trig_network_change(void);
+  asyncio_trig_network_change();
+}
+
+
 
 /**
  *

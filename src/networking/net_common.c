@@ -545,9 +545,10 @@ net_refresh_network_status(void)
   prop_t *np = prop_create(prop_get_global(), "net");
   prop_t *interfaces = prop_create(np, "interfaces");
 
-  if(ni == NULL) {
+  if(ni == NULL || ni->ifname[0] == 0) {
     prop_set(np, "connectivity", PROP_SET_INT, 0);
     prop_destroy_childs(interfaces);
+    free(ni);
     return;
   }
 
