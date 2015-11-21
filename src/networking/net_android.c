@@ -19,12 +19,17 @@
  */
 #include "config.h"
 
-#include <sys/socket.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
 #include <net/if.h>
 #include <netinet/in.h>
+#include <stdio.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
 
 #include "main.h"
 #include "net.h"
+
 
 
 /**
@@ -33,7 +38,43 @@
 netif_t *
 net_get_interfaces(void)
 {
-  //  TRACE(TRACE_ERROR, "net", "net_get_interfaces not impemented");
-  return NULL;
+  char buf[4096];
+  struct ifconf ifc;
+  struct ifreq *ifr;
+  struct netif *ni, *n;
+
+  int s = socket(AF_INET, SOCK_DGRAM, 0);
+  if(s < 0)
+    return NULL;
+
+  ifc.ifc_len = sizeof(buf);
+  ifc.ifc_buf = buf;
+  if(ioctl(s, SIOCGIFCONF, &ifc) < 0) {
+    close(s);
+    return NULL;
+  }
+
+  int num = ifc.ifc_len / sizeof(struct ifreq);
+  n = ni = calloc(1, sizeof(struct netif) * (num + 1));
+
+  ifr = ifc.ifc_req;
+  for(int i = 0; i < num; i++, ifr++) {
+    struct sockaddr_in ipv4addr = *((struct sockaddr_in *)&ifr->ifr_addr);
+    if(ioctl(s, SIOCGIFFLAGS, ifr) < 0)
+      continue;
+    if((ifr->ifr_flags & (IFF_UP | IFF_LOOPBACK | IFF_RUNNING)) != 
+       (IFF_UP | IFF_RUNNING))
+      continue;
+    if(ioctl(s, SIOCGIFNETMASK, ifr) < 0)
+      continue;
+    struct sockaddr_in ipv4mask = *((struct sockaddr_in *)&ifr->ifr_addr);
+
+    memcpy(n->ipv4_mask, &ipv4mask.sin_addr, 4);
+    memcpy(n->ipv4_addr, &ipv4addr.sin_addr, 4);
+    snprintf(n->ifname, sizeof(n->ifname), "%s", ifr->ifr_name);
+    n++;
+  }
+  close(s);
+  return ni;
 }
 
