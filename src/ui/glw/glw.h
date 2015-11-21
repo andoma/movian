@@ -242,7 +242,7 @@ typedef enum {
   GLW_POINTER_MOTION_UPDATE,  // Updated (mouse did really move)
   GLW_POINTER_MOTION_REFRESH, // GLW Internal refresh (every frame)
   GLW_POINTER_FOCUS_MOTION,
-  GLW_POINTER_FINE_SCROLL,
+  GLW_POINTER_FINE_SCROLL,    // In pixels
   GLW_POINTER_SCROLL,
   GLW_POINTER_GONE,
 } glw_pointer_event_type_t;
