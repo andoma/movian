@@ -374,8 +374,6 @@ ssdp_netif_update(const struct netif *ni)
   LIST_FOREACH(si, &ssdp_interfaces, si_link)
     si->si_mark = 1;
 
-  TRACE(TRACE_DEBUG, "SSDP", "Refresh status %p", ni);
-
   for(int i = 0; ni != NULL && ni[i].ifname[0]; i++) {
     LIST_FOREACH(si, &ssdp_interfaces, si_link) {
       if(!memcmp(si->si_myaddr.na_addr, ni->ipv4_addr, 4))
