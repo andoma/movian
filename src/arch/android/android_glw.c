@@ -188,6 +188,15 @@ Java_com_lonelycoder_mediaplayer_Core_glwMotion(JNIEnv *env,
   default: return;
   }
 
+  if(gconf.enable_input_event_debug)
+    TRACE(TRACE_DEBUG, "Touch", "%6s [%d] @ %4d,%-4d  src=0x%x",
+          gpe.type == GLW_POINTER_TOUCH_START  ? "Start" :
+          gpe.type == GLW_POINTER_TOUCH_END    ? "End" :
+          gpe.type == GLW_POINTER_TOUCH_MOVE   ? "Move" :
+          gpe.type == GLW_POINTER_TOUCH_CANCEL ? "Cancel" : "?",
+          action,
+          x, y, source);
+
   glw_lock(gr);
   gpe.x =  (2.0f * x / gr->gr_width ) - 1.0f;
   gpe.y = -(2.0f * y / gr->gr_height) + 1.0f;
