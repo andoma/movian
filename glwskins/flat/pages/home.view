@@ -146,26 +146,30 @@ widget(container_z, {
               spacing: 0.5em;
               padding: 0.5em;
 
-              widget(image, {
-                source: $self.icon ??
-	          "skin://icons/" +
-	          translate($self.type, "ic_folder_48px",
-		            "tv",       "ic_tv_48px",
-		            "usb",      "ic_usb_48px",
-		            "cd",       "ic_album_48px",
-		            "dvd",      "ic_album_48px",
-		            "bluray",   "ic_album_48px",
-		            "setting",  "ic_settings_48px",
-		            "plugin",   "ic_extension_48px") + ".svg";
+              widget(displacement, {
+                scaling: [1,1,1] - [0.11,0.1,0] * iir(isPressed(), 4, true)
+                widget(image, {
+                  source: $self.icon ??
+	            "skin://icons/" +
+	            translate($self.type, "ic_folder_48px",
+		              "tv",       "ic_tv_48px",
+		              "usb",      "ic_usb_48px",
+		              "cd",       "ic_album_48px",
+		              "dvd",      "ic_album_48px",
+		              "bluray",   "ic_album_48px",
+		              "setting",  "ic_settings_48px",
+		              "plugin",   "ic_extension_48px") + ".svg";
 
-                color:  select($self.icon, 1, iir(!isNavFocused(), 4)) - iir(isPressed(), 4, true);
+                  color:  select($self.icon, 1, iir(!isNavFocused(), 4));
+                  saturation: iir(isPressed(), 4, true) * 0.66;
+                });
               });
 
               widget(label, {
                 align: center;
                 caption: $self.title;
                 size: 1.2em;
-                color: iir(!isNavFocused(), 4) - iir(isPressed(), 4, true);
+                color: iir(!isNavFocused(), 4) - 0.5 * iir(isPressed(), 4, true);
               });
             });
           });

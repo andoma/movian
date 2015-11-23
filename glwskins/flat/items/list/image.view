@@ -1,6 +1,7 @@
 #import "skin://theme.view"
 
 widget(container_z, {
+    height: 5em;
 
   ListItemBevel();
   ListItemHighlight();
@@ -10,10 +11,29 @@ widget(container_z, {
   onEvent(itemMenu, eventWithProp(defaultInfo, $self));
 
   widget(container_x, {
-    height: 5em;
-    padding: 1;
+    style: "ListItem";
     widget(image, {
+      style: "ListItemIcon";
       source: $self.metadata.icon ?? ("thumb://" + $self.url);
+    });
+    widget(container_y, {
+      filterConstraintX: true;
+      padding: [0,0.5em];
+
+
+      widget(label, {
+        caption: $self.metadata.title;
+        style: "ListItemLabel";
+      });
+      space(1);
+
+      widget(label, {
+        alpha: 0.66;
+        caption:  join(" • ",
+                       $self.metadata.manufacturer,
+                       $self.metadata.equipment);
+        style: "ListItemLabel";
+      });
     });
   });
 });

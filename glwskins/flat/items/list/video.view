@@ -29,7 +29,12 @@ widget(container_z, {
       widget(label, {
         size: 1.2em;
         filterConstraintX: true;
-        caption: $self.metadata.title;
+        caption: select($self.metadata.year,
+                        fmt('%s <font color="#aaa" size="2">(%d)',
+                            $self.metadata.title,
+                            $self.metadata.year),
+                        $self.metadata.title);
+
         style: "ListItemLabel";
       });
       space(1);
