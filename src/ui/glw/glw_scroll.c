@@ -100,7 +100,7 @@ glw_scroll_handle_pointer_event(glw_scroll_control_t *gs,
     gs->target_pos = (gpe->y - gs->initial_touch_y) * gs->page_size * 0.5 +
       gs->initial_pos;
 
-    if(abs(gs->target_pos - gs->initial_pos) > 5) {
+    if(abs(gs->target_pos - gs->initial_pos) > 15) {
       if(gr->gr_pointer_press != NULL) {
         glw_path_modify(gr->gr_pointer_press, 0, GLW_IN_PRESSED_PATH, NULL);
         gr->gr_pointer_press = NULL;
