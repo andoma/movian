@@ -35,6 +35,23 @@
 #include "android.h"
 #include "android_glw.h"
 
+
+static void
+dis_screensaver_callback(void *opaque, int value)
+{
+  android_glw_root_t *agr = opaque;
+  JNIEnv *env;
+  (*JVM)->GetEnv(JVM, (void **)&env, JNI_VERSION_1_6);
+
+  jclass class = (*env)->GetObjectClass(env, agr->agr_vrp);
+  jmethodID mid = (*env)->GetMethodID(env, class,
+                                      value ? "disableScreenSaver" :
+                                      "enableScreenSaver",
+                                      "()V");
+
+  (*env)->CallVoidMethod(env, agr->agr_vrp, mid);
+}
+
 JNIEXPORT jint JNICALL
 Java_com_lonelycoder_mediaplayer_Core_glwCreate(JNIEnv *env,
                                                        jobject obj,
@@ -52,6 +69,14 @@ Java_com_lonelycoder_mediaplayer_Core_glwCreate(JNIEnv *env,
   hts_cond_init(&agr->agr_runcond, &agr->gr.gr_mutex);
 
   agr->agr_vrp = (*env)->NewGlobalRef(env, vrp);
+
+  agr->agr_disable_screensaver_sub =
+    prop_subscribe(0,
+                   PROP_TAG_CALLBACK_INT, dis_screensaver_callback, agr,
+                   PROP_TAG_NAME("ui", "disableScreensaver"),
+                   PROP_TAG_ROOT, agr->gr.gr_prop_ui,
+                   PROP_TAG_COURIER, agr->gr.gr_courier,
+                   NULL);
 
   glw_load_universe(&agr->gr);
   return (intptr_t)agr;
@@ -91,11 +116,13 @@ Java_com_lonelycoder_mediaplayer_Core_glwFini(JNIEnv *env,
 
 JNIEXPORT void JNICALL
 Java_com_lonelycoder_mediaplayer_Core_glwDestroy(JNIEnv *env,
-                                                     jobject obj,
-                                                     jint id)
+                                                 jobject obj,
+                                                 jint id)
 {
   android_glw_root_t *agr = (android_glw_root_t *)id;
   glw_root_t *gr = &agr->gr;
+
+  prop_unsubscribe(agr->agr_disable_screensaver_sub);
 
   glw_lock(gr);
   while(agr->agr_running == 1)
