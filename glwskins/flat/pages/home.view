@@ -192,19 +192,21 @@ widget(container_z, {
 
     widget(container_x, {
       space(1);
-      padding: [1em, 0];
       height: 3em;
-      widget(icon, {
+      widget(container_y, {
+        align: center;
+        width: 4em;
         clickable: true;
-        angle: iir($clone.showSidebar, 4) * -90;
         onEvent(activate, {
-
           toggle($clone.showSidebar);
         });
         navFocusable: false;
-        color: 0.5 + iir(isHovered(), 4);
-        size: 2em;
-        source: "skin://icons/ic_menu_48px.svg";
+        widget(icon, {
+          angle: iir($clone.showSidebar, 4) * -90;
+          color: 0.5 + iir(isHovered(), 4);
+          size: 2em;
+          source: "skin://icons/ic_menu_48px.svg";
+        });
       });
     });
   });

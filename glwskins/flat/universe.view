@@ -120,16 +120,19 @@ widget(container_z, {
         alpha: iir($ui.showTopIcons, 4);
 
         widget(container_x, {
-          padding: [1em, 0];
           height: 3em;
-          widget(icon, {
+          widget(container_y, {
+            align: center;
+            width: 4em;
             clickable: $nav.canGoBack || $ui.logwindow;
             alpha: iir($nav.canGoBack || $ui.logwindow, 4);
             onEvent(activate, deliverEvent($ui.eventSink, "back"));
             navFocusable: false;
-            color: 0.5 + iir(isHovered(), 4);
-            size: 2em;
-            source: "skin://icons/ic_chevron_left_48px.svg";
+            widget(icon, {
+              color: 0.5 + iir(isHovered(), 4);
+              size: 2em;
+              source: "skin://icons/ic_chevron_left_48px.svg";
+            });
           });
           space(1);
         });

@@ -186,26 +186,26 @@ widget(container_z, {
 
   widget(container_y, {
 
-    alpha: iir($ui.showTopIcons && isVoid($clone.itemMenu), 4);
+    alpha: iir($ui.showTopIcons, 4);
 
     widget(container_x, {
       space(1);
-      padding: [1em, 0];
       height: 3em;
-      widget(icon, {
-        clickable: isVoid($clone.itemMenu);
-        angle: iir($clone.showSidebar, 4) * -90;
-
+      widget(container_y, {
+        align: center;
+        width: 4em;
+        clickable: true;
         onEvent(activate, {
           toggle($clone.showSidebar);
         });
-
         navFocusable: false;
-        color: 0.5 + iir(isHovered(), 4);
-        size: 2em;
-        source: "skin://icons/ic_menu_48px.svg";
+        widget(icon, {
+          angle: iir($clone.showSidebar, 4) * -90;
+          color: 0.5 + iir(isHovered(), 4);
+          size: 2em;
+          source: "skin://icons/ic_menu_48px.svg";
+        });
       });
     });
   });
-
 });
