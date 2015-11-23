@@ -1858,7 +1858,7 @@ glw_event_to_widget(glw_t *w, event_t *e)
 /**
  *
  */
-int
+static int
 glw_event(glw_root_t *gr, event_t *e)
 {
   if(gr->gr_current_focus != NULL) {
@@ -2279,8 +2279,6 @@ glw_rec_toggle(glw_root_t *gr)
 static void
 glw_dispatch_event(glw_root_t *gr, event_t *e)
 {
-  int r;
-
   runcontrol_activity();
 
   if(e->e_type == EVENT_REPAINT_UI) {
@@ -2372,12 +2370,7 @@ glw_dispatch_event(glw_root_t *gr, event_t *e)
 
   }
 
-  r = glw_event(gr, e);
-
-  if(!r) {
-    event_addref(e);
-    event_dispatch(e);
-  }
+  glw_event(gr, e);
 }
 
 /**
