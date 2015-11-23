@@ -61,6 +61,10 @@ int glw_scroll_handle_pointer_event(glw_scroll_control_t *gsc,
                                     glw_t *w,
                                     const glw_pointer_event_t *gpe);
 
+int glw_scroll_handle_pointer_event_filter(glw_scroll_control_t *gsc,
+                                           glw_t *w,
+                                           const glw_pointer_event_t *gpe);
+
 void glw_scroll_layout(glw_scroll_control_t *gsc, glw_t *w,
                        int height);
 

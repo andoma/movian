@@ -689,6 +689,12 @@ handle_pointer_event(struct glw *w, const glw_pointer_event_t *gpe)
   return glw_scroll_handle_pointer_event(&l->gsc, w, gpe);
 }
 
+static int
+handle_pointer_event_filter(struct glw *w, const glw_pointer_event_t *gpe)
+{
+  glw_list_t *l = (glw_list_t *)w;
+  return glw_scroll_handle_pointer_event_filter(&l->gsc, w, gpe);
+}
 
 
 
@@ -706,6 +712,7 @@ static glw_class_t glw_list_y = {
   .gc_suggest_focus = glw_list_suggest_focus,
   .gc_set_int16_4 = glw_list_set_int16_4,
   .gc_pointer_event = handle_pointer_event,
+  .gc_pointer_event_filter = handle_pointer_event_filter,
   .gc_bubble_event = glw_navigate_vertical,
   .gc_set_int_unresolved = glw_list_set_int_unresolved,
   .gc_set_float_unresolved = glw_list_set_float_unresolved,

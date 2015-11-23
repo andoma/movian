@@ -21,6 +21,46 @@
 #include "glw.h"
 #include "glw_scroll.h"
 
+/**
+ *
+ */
+int
+glw_scroll_handle_pointer_event_filter(glw_scroll_control_t *gs,
+                                       glw_t *w,
+                                       const glw_pointer_event_t *gpe)
+{
+  glw_root_t *gr = w->glw_root;
+  const int grabbed = gr->gr_pointer_grab_scroll == w;
+
+  switch(gpe->type) {
+  default:
+    return 0;
+  case GLW_POINTER_TOUCH_START:
+    gr->gr_pointer_grab_scroll = w;
+
+    gs->initial_pos = gs->target_pos;
+    gs->initial_touch_x = gpe->x;
+    gs->initial_touch_y = gpe->y;
+    gs->last_touch_x = gpe->x;
+    gs->last_touch_y = gpe->y;
+    gs->last_touch_time = gpe->ts;
+    gs->touch_velocity = 0;
+    gs->kinetic_scroll = 0;
+    return 0;
+
+  case GLW_POINTER_TOUCH_END:
+    if(fabsf(gs->touch_velocity) > 10)
+      gs->kinetic_scroll = gs->touch_velocity;
+
+    if(grabbed)
+      gr->gr_pointer_grab_scroll = NULL;
+    return 0;
+  }
+
+  return 0;
+}
+
+
 
 /**
  *
@@ -32,7 +72,7 @@ glw_scroll_handle_pointer_event(glw_scroll_control_t *gs,
 {
   glw_root_t *gr = w->glw_root;
   int64_t dt;
-  const int grabbed = gr->gr_pointer_grab == w;
+  const int grabbed = gr->gr_pointer_grab_scroll == w;
   float v;
   switch(gpe->type) {
 
@@ -48,42 +88,28 @@ glw_scroll_handle_pointer_event(glw_scroll_control_t *gs,
     glw_schedule_refresh(w->glw_root, 0);
     return 1;
 
-  case GLW_POINTER_TOUCH_START:
-    gr->gr_pointer_grab = w;
-
-    gs->initial_pos = gs->target_pos;
-    gs->initial_touch_x = gpe->x;
-    gs->initial_touch_y = gpe->y;
-    gs->last_touch_x = gpe->x;
-    gs->last_touch_y = gpe->y;
-    gs->last_touch_time = gpe->ts;
-    gs->touch_velocity = 0;
-    gs->kinetic_scroll = 0;
-    return 1;
-
-  case GLW_POINTER_TOUCH_END:
-    if(fabsf(gs->touch_velocity) > 10)
-      gs->kinetic_scroll = gs->touch_velocity;
-
-    if(grabbed)
-      gr->gr_pointer_grab = NULL;
-    return 1;
-
   case GLW_POINTER_TOUCH_CANCEL:
     if(grabbed)
-      gr->gr_pointer_grab = NULL;
+      gr->gr_pointer_grab_scroll = NULL;
     return 1;
 
   case GLW_POINTER_FOCUS_MOTION:
     if(!grabbed)
       return 0;
+
     gs->target_pos = (gpe->y - gs->initial_touch_y) * gs->page_size * 0.5 +
       gs->initial_pos;
+
+    if(abs(gs->target_pos - gs->initial_pos) > 5) {
+      if(gr->gr_pointer_press != NULL) {
+        glw_path_modify(gr->gr_pointer_press, 0, GLW_IN_PRESSED_PATH, NULL);
+        gr->gr_pointer_press = NULL;
+      }
+    }
 
     dt = gpe->ts - gs->last_touch_time;
     if(dt > 100) {
       v = 1000000.0 * (gpe->y - gs->last_touch_y) / dt;
-
       gs->touch_velocity = v * 10;
     }
     gs->last_touch_time = gpe->ts;
@@ -109,7 +135,7 @@ glw_scroll_layout(glw_scroll_control_t *gsc, glw_t *w, int height)
   const int max_value =
     MAX(0, gsc->total_size - gsc->page_size + gsc->scroll_threshold_post);
 
-  if(w->glw_root->gr_pointer_grab == w) {
+  if(w->glw_root->gr_pointer_grab_scroll == w) {
 
     gsc->filtered_pos = gsc->target_pos;
 

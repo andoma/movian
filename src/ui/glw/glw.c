@@ -1081,7 +1081,7 @@ glw_path_flood(glw_t *w, int or, int and)
 /**
  *
  */
-static void
+void
 glw_path_modify(glw_t *w, int set, int clr, glw_t *stop)
 {
   clr = ~clr; // Invert so we can just AND it
@@ -1776,7 +1776,7 @@ glw_focus_child(glw_t *w)
 /**
  *
  */
-int
+static int
 glw_root_event_handler(glw_root_t *gr, event_t *e)
 {
   if(e->e_type == EVENT_KEYDESC)
@@ -1801,7 +1801,7 @@ glw_root_event_handler(glw_root_t *gr, event_t *e)
     event_addref(e);
     event_dispatch(e);
   }
-  return 1;
+  return 0;
 }
 
 
@@ -1935,12 +1935,15 @@ glw_pointer_event_deliver(glw_t *w, glw_pointer_event_t *gpe)
 static void
 glw_touch_longpress(glw_root_t *gr)
 {
+  gr->gr_pointer_press_time = 0;
   glw_t *w = gr->gr_pointer_press;
-  glw_path_modify(w, 0, GLW_IN_PRESSED_PATH, NULL);
   event_t *e = event_create_action(ACTION_ITEMMENU);
-  glw_event_to_widget(w, e);
+  int r = glw_event_to_widget(w, e);
   event_release(e);
-  gr->gr_pointer_press = NULL;
+  if(r) {
+    glw_path_modify(w, 0, GLW_IN_PRESSED_PATH, NULL);
+    gr->gr_pointer_press = NULL;
+  }
 }
 
 /**
@@ -1954,6 +1957,7 @@ glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
   float x, y;
   glw_pointer_event_t *gpe0 = NULL;
   int r = 0;
+
   if(w->glw_flags & (GLW_FOCUS_BLOCKED | GLW_CLIPPED | GLW_HIDDEN))
     return 0;
 
@@ -1962,11 +1966,19 @@ glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
     if(glw_widget_unproject(w->glw_matrix, &x, &y, p, dir) &&
        x <= 1 && y <= 1 && x >= -1 && y >= -1) {
       gpe0 = alloca(sizeof(glw_pointer_event_t));
+
+      const glw_class_t *gc = w->glw_class;
+
       gpe0->type = gpe->type;
       gpe0->x = x;
       gpe0->y = y;
       gpe0->ts = gpe->ts;
       gpe0->delta_y = gpe->delta_y;
+      gpe0->delta_x = gpe->delta_x;
+
+      if(gc->gc_pointer_event_filter != NULL)
+        if(gc->gc_pointer_event_filter(w, gpe0))
+          return 1;
 
       if(gpe->type < GLW_POINTER_MOTION_UPDATE)
         r = 1;
@@ -1990,33 +2002,6 @@ glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
   return glw_pointer_event_deliver(w, gpe0) | r;
 }
 
-
-/**
- *
- */
-static void
-touch_move_transfer_to_parent(glw_t *w, glw_pointer_event_t *gpe,
-                              Vec3 p, Vec3 dir)
-{
-  float x, y;
-  glw_pointer_event_t gpe0;
-
-  // See if any parent widget want to snap on
-  while((w = w->glw_parent) != NULL) {
-    if(w->glw_matrix == NULL)
-      continue;
-
-    if(glw_widget_unproject(w->glw_matrix, &x, &y, p, dir) &&
-       x <= 1 && y <= 1 && x >= -1 && y >= -1) {
-      gpe0.ts = gpe->ts;
-      gpe0.type = GLW_POINTER_TOUCH_START;
-      gpe0.x = x;
-      gpe0.y = y;
-      if(glw_send_pointer_event(w, &gpe0))
-        break;
-    }
-  }
-}
 
 /**
  *
@@ -2097,6 +2082,13 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
         gpe0.y = y;
         gpe0.ts = gpe->ts;
         glw_send_pointer_event(w, &gpe0);
+      } else if((w = gr->gr_pointer_grab_scroll) != NULL && w->glw_matrix != NULL) {
+        glw_widget_unproject(w->glw_matrix, &x, &y, p, dir);
+        gpe0.type = GLW_POINTER_FOCUS_MOTION;
+        gpe0.x = x;
+        gpe0.y = y;
+        gpe0.ts = gpe->ts;
+        glw_send_pointer_event(w, &gpe0);
       } else if((w = gr->gr_pointer_press) != NULL && w->glw_matrix != NULL) {
 
         int loss_press = 0;
@@ -2105,26 +2097,10 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
            x < -1 || y < -1 || x > 1 || y > 1)
           loss_press = 1;
 
-        if(gpe->type == GLW_POINTER_TOUCH_MOVE) {
-          float dx = fabsf(gr->gr_pointer_press_x - gpe->x);
-          float dy = fabsf(gr->gr_pointer_press_y - gpe->y);
-          float d = dx * dx + dy * dy;
-          if(d > 0.001) {
-            loss_press = 1;
-          }
-        }
-
         if(loss_press) {
           // Moved outside button, release
           glw_path_modify(w, 0, GLW_IN_PRESSED_PATH, NULL);
           gr->gr_pointer_press = NULL;
-
-          if(gpe->type == GLW_POINTER_TOUCH_MOVE) {
-            gpe0.type = GLW_POINTER_TOUCH_CANCEL;
-
-            glw_send_pointer_event(w, &gpe0);
-            touch_move_transfer_to_parent(w, gpe, p, dir);
-          }
         }
       }
     }

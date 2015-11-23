@@ -511,10 +511,16 @@ typedef struct glw_class {
   int (*gc_bubble_event)(struct glw *w, struct event *e);
 
   /**
-   *
+   * These are sent to widgets when traversing the widgde tree downwards
+   * ie, more early in the process
+   */
+  int (*gc_pointer_event_filter)(struct glw *w, const glw_pointer_event_t *gpe);
+
+  /**
+   * These are sent to widget when traversing the widget tree upwards
+   * ie, later in the process
    */
   int (*gc_pointer_event)(struct glw *w, const glw_pointer_event_t *gpe);
-
 
   /**
    * Send a GLW_SIGNAL_... to all listeners
@@ -855,6 +861,8 @@ typedef struct glw_root {
   struct glw *gr_pointer_grab;
   struct glw *gr_pointer_hover;
   struct glw *gr_pointer_press;
+  struct glw *gr_pointer_grab_scroll;
+
   int64_t gr_pointer_press_time;
   float gr_pointer_press_x;
   float gr_pointer_press_y;
@@ -1315,6 +1323,8 @@ glw_t *glw_get_focusable_child(glw_t *w);
 
 int glw_focus_child(glw_t *w);
 
+void glw_path_modify(glw_t *w, int set, int clr, glw_t *stop);
+
 
 /**
  * Clipping
@@ -1411,8 +1421,6 @@ glw_t *glw_get_prev_n(glw_t *c, int count);
 glw_t *glw_get_next_n(glw_t *c, int count);
 
 int glw_event(glw_root_t *gr, struct event *e);
-
-int glw_root_event_handler(glw_root_t *gr, event_t *e);
 
 int glw_event_to_widget(glw_t *w, struct event *e);
 
