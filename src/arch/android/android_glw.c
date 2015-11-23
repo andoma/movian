@@ -149,6 +149,41 @@ Java_com_lonelycoder_mediaplayer_Core_glwStep(JNIEnv *env,
   glw_layout0(gr->gr_universe, &rc);
   glw_render0(gr->gr_universe, &rc);
 
+
+  if(gconf.enable_touch_debug) {
+    glw_line(gr, &rc,
+             gr->gr_touch_start_x, 1,
+             gr->gr_touch_start_x, -1,
+             1, 0, 0, 1);
+
+    glw_line(gr, &rc,
+             -1, gr->gr_touch_start_y,
+             1, gr->gr_touch_start_y,
+             1, 0, 0, 1);
+
+
+    glw_line(gr, &rc,
+             gr->gr_touch_move_x, 1,
+             gr->gr_touch_move_x, -1,
+             0, 1, 0, 1);
+
+    glw_line(gr, &rc,
+             -1, gr->gr_touch_move_y,
+             1, gr->gr_touch_move_y,
+             0, 1, 0, 1);
+
+
+    glw_line(gr, &rc,
+             gr->gr_touch_end_x, 1,
+             gr->gr_touch_end_x, -1,
+             0, 0, 1, 1);
+
+    glw_line(gr, &rc,
+             -1, gr->gr_touch_end_y,
+             1, gr->gr_touch_end_y,
+             0, 0, 1, 1);
+  }
+
   glw_unlock(gr);
 
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);

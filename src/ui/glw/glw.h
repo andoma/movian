@@ -864,8 +864,14 @@ typedef struct glw_root {
   struct glw *gr_pointer_grab_scroll;
 
   int64_t gr_pointer_press_time;
-  float gr_pointer_press_x;
-  float gr_pointer_press_y;
+
+  float gr_touch_start_x;
+  float gr_touch_start_y;
+  float gr_touch_move_x;
+  float gr_touch_move_y;
+  float gr_touch_end_x;
+  float gr_touch_end_y;
+
   struct glw *gr_current_focus;
   struct glw *gr_last_focus;
   int gr_delayed_focus_leave;
@@ -1483,6 +1489,10 @@ void glw_align_1(glw_rctx_t *rc, int a);
 void glw_align_2(glw_rctx_t *rc, int a);
 
 void glw_wirebox(glw_root_t *gr, const glw_rctx_t *rc);
+
+void glw_line(glw_root_t *root, const glw_rctx_t *rc,
+              float x1, float x2, float y1, float y2,
+              float r, float g, float b, float alpha);
 
 void glw_renderer_render(glw_root_t *gr);
 

@@ -1175,6 +1175,26 @@ glw_wirebox(glw_root_t *root, const glw_rctx_t *rc)
 /**
  *
  */
+void
+glw_line(glw_root_t *root, const glw_rctx_t *rc,
+         float x1, float y1, float x2, float y2,
+         float r, float g, float b, float alpha)
+{
+  float line_vertices[2][12] = {
+    { x1,y1, 0, 0, r, g, b, alpha},
+    { x2,y2, 0, 0, r, g, b, alpha},
+  };
+
+  add_job(root, &rc->rc_mtx, NULL, NULL, &white, NULL, 1, 0,
+          &line_vertices[0][0], 2,
+          NULL, 0,
+          0, NULL, rc, GLW_DRAW_LINE_LOOP, INT16_MAX);
+}
+
+
+/**
+ *
+ */
 static const float clip_planes[4][3] = {
   [GLW_CLIP_TOP]    = { 0.0, -1.0, 0.0},
   [GLW_CLIP_BOTTOM] = { 0.0,  1.0, 0.0},

@@ -1534,4 +1534,8 @@ init_dev_settings(void)
   add_dev_bool(s, "Debug input events",
 	       "inputevents", &gconf.enable_input_event_debug);
 
+#ifdef __ANDROID__
+  add_dev_bool(s, "Debug touch events",
+               "touchevents", &gconf.enable_touch_debug);
+#endif
 }

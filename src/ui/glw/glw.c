@@ -2055,9 +2055,19 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
   }
 
   if(gpe->type == GLW_POINTER_TOUCH_START) {
-    gr->gr_pointer_press_x = gpe->x;
-    gr->gr_pointer_press_y = gpe->y;
+    gr->gr_touch_start_x = gpe->x;
+    gr->gr_touch_start_y = gpe->y;
     prop_set(gr->gr_prop_ui, "touch", PROP_SET_INT, 1);
+  }
+
+  if(gpe->type == GLW_POINTER_TOUCH_MOVE) {
+    gr->gr_touch_move_x = gpe->x;
+    gr->gr_touch_move_y = gpe->y;
+  }
+
+  if(gpe->type == GLW_POINTER_TOUCH_END) {
+    gr->gr_touch_end_x = gpe->x;
+    gr->gr_touch_end_y = gpe->y;
   }
 
   /* If a widget has grabbed to pointer (such as when holding the button
