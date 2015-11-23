@@ -291,6 +291,24 @@ service_create(const char *id,
 }
 
 
+/**
+ *
+ */
+service_t *
+service_createp(const char *id,
+                prop_t *ptitle,
+                const char *url,
+                const char *type,
+                const char *icon,
+                int probe,
+                int enabled,
+                service_origin_t origin)
+{
+  return service_create0(id, NULL, ptitle, url, type,
+			 icon, probe, enabled, origin);
+}
+
+
 
 /**
  *

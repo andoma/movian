@@ -108,6 +108,15 @@ service_t *service_create(const char *id,
 			  int enabled,
 			  service_origin_t origin);
 
+service_t *service_createp(const char *id,
+                           prop_t *ptitle,
+                           const char *url,
+                           const char *type,
+                           const char *icon,
+                           int probe,
+                           int enabled,
+                           service_origin_t origin);
+
 service_t *service_create_managed(const char *id,
 				  const char *title,
 				  const char *url,
