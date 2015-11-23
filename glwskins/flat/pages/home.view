@@ -20,7 +20,8 @@ style(sidebarBackdrop, {
       });
 
       widget(container_x, {
-        padding: [0.5em, 0.5em];
+        height: 2em;
+        padding: [0.5em, 0];
         spacing: 0.5em;
         widget(icon, {
           fhpSpill: true;
@@ -30,6 +31,7 @@ style(sidebarBackdrop, {
         });
 
         widget(text, {
+          padding: [0, 0.5em];
           style: "ListItemValue";
           size: 1.2em;
           font: "skin://fonts/RobotoCondensed-Regular.ttf";
