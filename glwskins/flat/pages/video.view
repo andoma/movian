@@ -50,14 +50,10 @@ onEvent(back, {
 
 
 onEvent(menu, {
-  $clone.showPlaydeck = 1;
-  focus("pause-btn");
-}, !$clone.showPlaydeck);
-
-onEvent(menu, {
   $clone.osdpage = 1;
+  $clone.showPlaydeck = 1;
   focus("osd_main");
-}, $clone.showPlaydeck);
+}, !$clone.osdpage);
 
 onEvent(menu, {
   $clone.osdpage = 0;
