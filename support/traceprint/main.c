@@ -1,3 +1,5 @@
+#include <sys/time.h>
+#include <time.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -18,9 +20,12 @@ main(void)
   struct sockaddr_in sin;
   int fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   char buf[2000];
+  char tmp[100];
   memset(&sin, 0, sizeof(sin));
   sin.sin_family = AF_INET;
   sin.sin_port = htons(4000);
+
+  struct timeval tv;
 
   if(bind(fd, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
     perror("bind");
@@ -73,6 +78,17 @@ main(void)
     write(1, addr, strlen(addr));
     write(1, ": ", 2);
 
+    gettimeofday(&tv, NULL);
+    time_t now = tv.tv_sec;
+    struct tm *tm = localtime(&now);
+
+    snprintf(tmp, sizeof(tmp), "%02d:%02d:%02d.%03d: ",
+             tm->tm_hour,
+             tm->tm_min,
+             tm->tm_sec,
+             (int)tv.tv_usec / 1000);
+
+    write(1, tmp, strlen(tmp));
 
     write(1, pfx, strlen(pfx));
 
