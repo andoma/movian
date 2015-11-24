@@ -82,9 +82,9 @@ widget(list_y, {
 
 
   widget(container_x, {
-    padding: [8em, 0.1em];
+    padding: [7.5em, 0.1em, 0, 0];
+
     widget(container_z, {
-      width: 6em;
       height: 2em;
       GridItemBevel();
       GridItemHighlight();
@@ -98,13 +98,12 @@ widget(list_y, {
 					        void)))));
 
       widget(label, {
-        width: 10em;
+        padding: [0.5em, 0];
         caption: select($args.status.canInstall, _("Install"),
 		        select($args.status.canUpgrade, _("Upgrade"),
 			       select($args.status.canUninstall, _("Uninstall"),
 				      void)));
         font: "skin://fonts/RobotoCondensed-Bold.ttf";
-        align: center;
       });
     });
   });

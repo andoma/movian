@@ -1,4 +1,8 @@
-#import "playdeck_include.view"
+#import "skin://playdecks/playdeck_include.view"
+
+style(playdeckButtonContainer, {
+  width: 2em;
+});
 
 widget(container_z, {
 

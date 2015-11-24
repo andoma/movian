@@ -1,0 +1,53 @@
+#import "skin://playdecks/playdeck_include.view"
+
+style(playdeckButtonContainer, {
+  width: 2em;
+  height: 2em;
+});
+
+style(playdeckButtonIcon, {
+  size: 1.2em;
+});
+
+
+widget(container_z, {
+
+  widget(quad, {
+    color: 0.3;
+    alpha: 0.5;
+  });
+
+
+  widget(container_x, {
+    widget(image, {
+      aspectConstraint: true;
+      alpha: 0.5;
+      source: $core.media.current.metadata.album_art;
+    });
+    space(1);
+  });
+  widget(container_y, {
+    align: center;
+    height: 4em;
+    filterConstraintY: true;
+    padding: [0.5em, 0, 0.5em, 0.5em];
+
+    widget(container_x, {
+      align: center;
+      widget(dummy, {
+        width: 2em;
+      });
+      PLAYDECK_BUTTON_ROW();
+    });
+
+    widget(label, {
+      align: center;
+      maxWidth: $ui.width / 3;
+      caption: join(" • ",
+		    $core.media.current.metadata.title,
+		    $core.media.current.radioinfo),
+      style: "playdeckText";
+      shadow: true;
+    });
+  });
+});

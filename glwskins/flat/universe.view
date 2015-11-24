@@ -17,6 +17,7 @@ onEvent(back, {
 }, $ui.logwindow);
 
 
+$view.orientation = select($ui.aspect > 1, "landscape", "portrait");
 
 style(PageContainer, {
   alpha: 1 - iir(clamp(getLayer(), 0, 1), 4) * 0.9;
@@ -90,8 +91,8 @@ widget(container_z, {
           widget(loader, {
             autohide: true;
             source: translate($core.media.current.type, "",
-                              "tracks", "playdecks/tracks.view",
-                              "radio", "playdecks/radio.view"
+                              "tracks", "playdecks/" + $view.orientation + "/tracks.view",
+                              "radio",  "playdecks/" + $view.orientation + "/radio.view"
                              );
           });
 

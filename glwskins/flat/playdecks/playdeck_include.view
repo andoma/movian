@@ -3,13 +3,14 @@
 
 #define PLAYDECK_BUTTON2(ICON, EVENT, ENABLED) {
   widget(container_z, {
-    width: 2em;
+    style: "playdeckButtonContainer";
     onEvent(activate, EVENT);
     clickable: ENABLED;
 
     GridItemHighlight2();
 
     widget(icon, {
+      style: "playdeckButtonIcon";
       source: ICON;
       alpha: iir(ENABLED, 4);
     });
@@ -18,13 +19,14 @@
 
 #define PLAYDECK_BUTTON(ICON, EVENT, ENABLED) {
   widget(container_z, {
-    width: 2em;
+    style: "playdeckButtonContainer";
     onEvent(activate, EVENT);
     clickable: ENABLED;
 
     GridItemHighlight2();
 
     widget(icon, {
+      style: "playdeckButtonIcon";
       source: ICON;
       alpha: 0.7 * iir(ENABLED, 8) + 0.3;
     });
@@ -33,7 +35,7 @@
 
 #define PLAYDECK_BUTTON_TOGGLE(ICON, VALUE, ENABLED) {
   widget(container_z, {
-    width: 2em;
+    style: "playdeckButtonContainer";
     onEvent(activate, {
       toggle(VALUE);
     });
@@ -43,6 +45,7 @@
     GridItemHighlight2();
 
     widget(icon, {
+      style: "playdeckButtonIcon";
       source: ICON;
       color: select(VALUE, 1, 0);
       alpha: 0.7 * iir(ENABLED, 8) + 0.3;
@@ -50,15 +53,7 @@
   });
 }
 
-
-#define PLAYDECK_BUTTONS(ICON, EVENT, ENABLED) {
-  widget(deck, {
-    PLAYDECK_BUTTON2("skin://icons/ic_more_horiz_48px.svg",
-                     {
-                       $ui.showAllPlaydeckButtons = 1;
-                     }, $ui.showTopIcons);
-
-    widget(container_x, {
+#define PLAYDECK_BUTTON_ROW() {
       PLAYDECK_BUTTON("skin://icons/ic_list_48px.svg",
                       navOpen("playqueue:"),
                       $core.playqueue.active);
@@ -85,6 +80,18 @@
       PLAYDECK_BUTTON_TOGGLE("dataroot://res/svg/Shuffle.svg",
                              $core.media.current.shuffle,
                              $core.media.current.canShuffle);
+
+}
+
+#define PLAYDECK_BUTTONS() {
+  widget(deck, {
+    PLAYDECK_BUTTON2("skin://icons/ic_more_horiz_48px.svg",
+                     {
+                       $ui.showAllPlaydeckButtons = 1;
+                     }, $ui.showTopIcons);
+
+    widget(container_x, {
+      PLAYDECK_BUTTON_ROW();
     });
 
     page: $ui.showAllPlaydeckButtons;

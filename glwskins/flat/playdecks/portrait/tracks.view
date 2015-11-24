@@ -1,0 +1,111 @@
+#import "skin://playdecks/playdeck_include.view"
+
+style(playdeckButtonContainer, {
+  width: 2em;
+  height: 2em;
+});
+
+style(playdeckButtonIcon, {
+  size: 1.2em;
+});
+
+
+widget(container_z, {
+
+  widget(quad, {
+    color: 0.3;
+    alpha: 0.5;
+  });
+
+
+  widget(container_x, {
+    widget(image, {
+      aspectConstraint: true;
+      alpha: 0.5;
+      source: $core.media.current.metadata.album_art;
+    });
+    space(1);
+  });
+  widget(container_y, {
+    align: center;
+    height: 4em;
+    filterConstraintY: true;
+    padding: [0.5em, 0, 0.5em, 0.5em];
+
+    widget(container_x, {
+      align: center;
+      widget(dummy, {
+        width: 2em;
+      });
+      PLAYDECK_BUTTON_ROW();
+    });
+
+    widget(label, {
+      align: center;
+      maxWidth: $ui.width / 3;
+      caption: join(" • ",
+		    $core.media.current.metadata.artist,
+		    $core.media.current.metadata.title);
+      style: "playdeckText";
+      shadow: true;
+    });
+
+    widget(container_x, {
+      widget(label, {
+        hidden: !$core.media.current.canSeek;
+        width: 3em;
+        caption: value2duration($view.tentativeSeekPosition ??
+                                $core.media.current.currenttime);
+        align: right;
+        padding:[0,0,0.5em,0];
+        shadow: true;
+      });
+
+      widget(container_z, {
+        hidden: !$core.media.current.canSeek;
+        widget(container_y, {
+          align: center;
+          widget(container_z, {
+            height: 3;
+            widget(container_y, {
+              padding: 1;
+              widget(quad, {
+                alpha: 0.3;
+                additive: true;
+              });
+            });
+          });
+        });
+
+        widget(slider_x, {
+          knobOverEdges: true;
+          tentative: $view.tentativeSeekPosition;
+          alwaysGrabKnob: true;
+          clickable: true;
+          bind($core.media.current.currenttime);
+          max: $core.media.current.metadata.duration;
+          widget(icon, {
+            source: "skin://icons/dot.png";
+          });
+          widget(container_y, {
+            space(1);
+            widget(quad, {
+              height: 3;
+              alpha: 0.9;
+              additive: true;
+            });
+            space(1);
+          });
+        });
+      });
+
+      widget(label, {
+        hidden: !$core.media.current.canSeek;
+        width: 3em;
+        caption: value2duration($core.media.current.metadata.duration);
+        padding:[0.5em,0,0,0];
+        shadow: true;
+      });
+    });
+  });
+});
