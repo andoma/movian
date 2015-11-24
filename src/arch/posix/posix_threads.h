@@ -27,12 +27,19 @@
  * Mutexes
  */
 typedef pthread_mutex_t hts_mutex_t;
+typedef pthread_mutex_t hts_lwmutex_t;
 
 #define hts_mutex_init(m)            pthread_mutex_init((m), NULL)
 #define hts_mutex_lock(m)            pthread_mutex_lock(m)
 #define hts_mutex_unlock(m)          pthread_mutex_unlock(m)
 #define hts_mutex_destroy(m)         pthread_mutex_destroy(m)
 extern void hts_mutex_init_recursive(hts_mutex_t *m);
+
+#define hts_lwmutex_init(m)            pthread_mutex_init((m), NULL)
+#define hts_lwmutex_lock(m)            pthread_mutex_lock(m)
+#define hts_lwmutex_unlock(m)          pthread_mutex_unlock(m)
+#define hts_lwmutex_destroy(m)         pthread_mutex_destroy(m)
+#define hts_lwmutex_init_recursive(m)  hts_mutex_init_recursive(m)
 
 
 static inline void

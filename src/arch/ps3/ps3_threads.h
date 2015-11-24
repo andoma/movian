@@ -24,6 +24,7 @@
 
 
 #include <sys/thread.h>
+#include <psl1ght/lv2.h>
 
 /**
  * Mutexes
@@ -33,11 +34,35 @@
 
 #ifndef PS3_DEBUG_MUTEX
 
+typedef sys_lwmutex_t hts_lwmutex_t;
+
 #ifdef PS3_LW_PRIMITIVES
 typedef sys_lwmutex_t hts_mutex_t;
 #else
 typedef sys_mutex_t hts_mutex_t;
 #endif
+
+extern void hts_lwmutex_init(hts_lwmutex_t *m);
+extern void hts_lwmutex_init_recursive(hts_lwmutex_t *m);
+
+static inline void hts_lwmutex_lock(hts_lwmutex_t *m)
+{
+  sys_lwmutex_lock(m, 0);
+}
+
+static inline int hts_lwmutex_trylock(hts_lwmutex_t *m)
+{
+  return !!sys_lwmutex_trylock(m);
+}
+
+static inline void hts_lwmutex_unlock(hts_lwmutex_t *m)
+{
+  sys_lwmutex_unlock(m);
+}
+
+extern void hts_lwmutex_destroy(hts_lwmutex_t *m);
+
+
 
 extern void hts_mutex_init(hts_mutex_t *m);
 extern void hts_mutex_init_recursive(hts_mutex_t *m);

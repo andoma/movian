@@ -19,6 +19,7 @@
  */
 #include <unistd.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include <psl1ght/lv2.h>
 
@@ -334,6 +335,50 @@ hts_thread_current(void)
 
 
 #ifndef PS3_DEBUG_MUTEX
+
+void
+hts_lwmutex_init(hts_lwmutex_t *m)
+{
+  s32 r;
+
+  sys_lwmutex_attribute_t attr;
+  memset(&attr, 0, sizeof(attr));
+  attr.attr_protocol = MUTEX_PROTOCOL_PRIORITY;
+  attr.attr_recursive = MUTEX_NOT_RECURSIVE;
+  strcpy(attr.name, "mutex");
+  assert(((intptr_t)m & 7) == 0);
+  r = sys_lwmutex_create(m, &attr);
+  if(r)
+    panic("Failed to create mutex: error: 0x%x", r);
+}
+
+
+void
+hts_lwmutex_init_recursive(hts_lwmutex_t *m)
+{
+  s32 r;
+
+  sys_lwmutex_attribute_t attr;
+  memset(&attr, 0, sizeof(attr));
+  attr.attr_protocol = MUTEX_PROTOCOL_PRIORITY;
+  attr.attr_recursive = MUTEX_RECURSIVE;
+  strcpy(attr.name, "mutex");
+  assert(((intptr_t)m & 7) == 0);
+  r = sys_lwmutex_create(m, &attr);
+  if(r)
+    panic("Failed to create recursive mutex: error: 0x%x", r);
+}
+
+
+void
+hts_lwmutex_destroy(hts_lwmutex_t *m)
+{
+  int r = sys_lwmutex_destroy(m);
+  if(r)
+    panic("mutex_destroy(%p) failed 0x%x", m, r);
+}
+
+
 
 void
 hts_mutex_init(hts_mutex_t *m)

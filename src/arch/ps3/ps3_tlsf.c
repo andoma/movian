@@ -40,13 +40,13 @@ static int total_avail;
 static int memstats(http_connection_t *hc, const char *remain, void *opaque,
 		    http_cmd_t method);
 
-static hts_mutex_t mutex;
+static hts_lwmutex_t mutex;
 static tlsf_pool gpool;
 uint32_t heap_base;
 
 static void __attribute__((constructor)) mallocsetup(void)
 {
-  hts_mutex_init(&mutex);
+  hts_lwmutex_init(&mutex);
 
 #ifdef USE_VIRTUAL_MEM
 
@@ -146,9 +146,9 @@ struct mallinfo mallinfo(void)
   memstats_t ms = {0};
   mi.arena =  total_avail;
 
-  hts_mutex_lock(&mutex);
+  hts_lwmutex_lock(&mutex);
   tlsf_walk_heap(gpool, mywalker, &ms);
-  hts_mutex_unlock(&mutex);
+  hts_lwmutex_unlock(&mutex);
 
   mi.ordblks = ms.free_segs;
   mi.uordblks = ms.used;
@@ -161,9 +161,9 @@ static void
 memtrace(void)
 {
   memstats_t ms = {0};
-  hts_mutex_lock(&mutex);
+  hts_lwmutex_lock(&mutex);
   tlsf_walk_heap(gpool, mywalker, &ms);
-  hts_mutex_unlock(&mutex);
+  hts_lwmutex_unlock(&mutex);
 
   tracelog(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
         "Memory allocator status -- Used: %d (%d segs) Free: %d (%d segs)",
@@ -182,9 +182,9 @@ void *malloc(size_t bytes)
   if(bytes == 0)
     return NULL;
 
-  hts_mutex_lock(&mutex);
+  hts_lwmutex_lock(&mutex);
   r = tlsf_malloc(gpool, bytes);
-  hts_mutex_unlock(&mutex);
+  hts_lwmutex_unlock(&mutex);
   if(r == NULL) {
     memtrace();
     panic("OOM: malloc(%d)", (int)bytes);
@@ -226,9 +226,9 @@ void free(void *ptr)
       }
     }
   }
-  hts_mutex_lock(&mutex);
+  hts_lwmutex_lock(&mutex);
   tlsf_free(gpool, ptr);
-  hts_mutex_unlock(&mutex);
+  hts_lwmutex_unlock(&mutex);
 }
 
 
@@ -241,9 +241,9 @@ void *realloc(void *ptr, size_t bytes)
     return NULL;
   }
 
-  hts_mutex_lock(&mutex);
+  hts_lwmutex_lock(&mutex);
   r = tlsf_realloc(gpool, ptr, bytes);
-  hts_mutex_unlock(&mutex);
+  hts_lwmutex_unlock(&mutex);
   if(r == NULL) {
     memtrace();
     panic("OOM: realloc(%p, %d)", ptr, (int)bytes);
@@ -258,9 +258,9 @@ void *memalign(size_t align, size_t bytes)
   if(bytes == 0)
     return NULL;
 
-  hts_mutex_lock(&mutex);
+  hts_lwmutex_lock(&mutex);
   r = tlsf_memalign(gpool, align, bytes);
-  hts_mutex_unlock(&mutex);
+  hts_lwmutex_unlock(&mutex);
   if(r == NULL) {
     memtrace();
     panic("OOM: memalign(%d, %d)", (int)align, (int)bytes);
@@ -347,13 +347,13 @@ memstats(http_connection_t *hc, const char *remain, void *opaque,
   htsbuf_queue_t out;
   allsegs_t as = {};
 
-  hts_mutex_lock(&mutex);
+  hts_lwmutex_lock(&mutex);
   tlsf_walk_heap(gpool, list_all_segs_walk, &as);
   int size = as.count * sizeof(seginfo_t);
   as.ptr = halloc(size);
   as.count = 0;
   tlsf_walk_heap(gpool, list_all_segs_walk, &as);
-  hts_mutex_unlock(&mutex);
+  hts_lwmutex_unlock(&mutex);
 
   qsort(as.ptr, as.count, sizeof(seginfo_t), seginfo_cmp);
 
@@ -386,9 +386,9 @@ void verify_heap(void);
 void 
 verify_heap(void)
 {
-  hts_mutex_lock(&mutex);
+  hts_lwmutex_lock(&mutex);
   int r = tlsf_check_heap(gpool);
-  hts_mutex_unlock(&mutex);
+  hts_lwmutex_unlock(&mutex);
 
   if(r)
     tracelog(TRACE_NO_PROP, TRACE_ERROR, "HEAPCHECK", "Heap check verify failed");
@@ -403,9 +403,9 @@ mymalloc(size_t bytes)
   if(bytes == 0)
     return NULL;
 
-  hts_mutex_lock(&mutex);
+  hts_lwmutex_lock(&mutex);
   void *r = tlsf_malloc(gpool, bytes);
-  hts_mutex_unlock(&mutex);
+  hts_lwmutex_unlock(&mutex);
 
   if(r == NULL) {
     memtrace();
@@ -419,10 +419,10 @@ mymalloc(size_t bytes)
 void *
 myrealloc(void *ptr, size_t bytes)
 {
-  hts_mutex_lock(&mutex);
+  hts_lwmutex_lock(&mutex);
   void *r = tlsf_realloc(gpool, ptr, bytes);
 
-  hts_mutex_unlock(&mutex);
+  hts_lwmutex_unlock(&mutex);
   if(r == NULL) {
     memtrace();
     tracelog(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
@@ -452,9 +452,9 @@ void *mymemalign(size_t align, size_t bytes)
   if(bytes == 0)
     return NULL;
 
-  hts_mutex_lock(&mutex);
+  hts_lwmutex_lock(&mutex);
   void *r = tlsf_memalign(gpool, align, bytes);
-  hts_mutex_unlock(&mutex);
+  hts_lwmutex_unlock(&mutex);
   if(r == NULL) {
     memtrace();
     tracelog(TRACE_NO_PROP, TRACE_ERROR, "MEMORY",
@@ -471,9 +471,9 @@ void myfree(void *ptr)
 {
   if(ptr == NULL)
     return;
-  hts_mutex_lock(&mutex);
+  hts_lwmutex_lock(&mutex);
   tlsf_free(gpool, ptr);
-  hts_mutex_unlock(&mutex);
+  hts_lwmutex_unlock(&mutex);
 }
 
 

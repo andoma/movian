@@ -541,14 +541,14 @@ db_escape_path_query(char *dst, size_t dstlen, const char *src)
 /**
  * Sqlite mutex helpers
  */
-static hts_mutex_t static_mutexes[6];
+static hts_lwmutex_t static_mutexes[6];
 
 static int
 sqlite_mutex_init(void)
 {
   int i;
   for(i = 0; i < 6; i++)
-    hts_mutex_init(&static_mutexes[i]);
+    hts_lwmutex_init(&static_mutexes[i]);
   return SQLITE_OK;
 }
 
@@ -561,17 +561,17 @@ sqlite_mutex_end(void)
 static sqlite3_mutex *
 sqlite_mutex_alloc(int id)
 {
-  hts_mutex_t *m;
+  hts_lwmutex_t *m;
 
   switch(id) {
   case SQLITE_MUTEX_FAST:
-    m = malloc(sizeof(hts_mutex_t));
-    hts_mutex_init(m);
+    m = malloc(sizeof(hts_lwmutex_t));
+    hts_lwmutex_init(m);
     break;
 
   case SQLITE_MUTEX_RECURSIVE:
-    m = malloc(sizeof(hts_mutex_t));
-    hts_mutex_init_recursive(m);
+    m = malloc(sizeof(hts_lwmutex_t));
+    hts_lwmutex_init_recursive(m);
     break;
     
   case SQLITE_MUTEX_STATIC_MASTER: m=&static_mutexes[0]; break;
@@ -589,23 +589,23 @@ sqlite_mutex_alloc(int id)
 static void
 sqlite_mutex_free(sqlite3_mutex *M)
 {
-  hts_mutex_t *m = (hts_mutex_t *)M;
-  hts_mutex_destroy(m);
+  hts_lwmutex_t *m = (hts_lwmutex_t *)M;
+  hts_lwmutex_destroy(m);
   free(m);
 }
 
 static void
 sqlite_mutex_enter(sqlite3_mutex *M)
 {
-  hts_mutex_t *m = (hts_mutex_t *)M;
-  hts_mutex_lock(m);
+  hts_lwmutex_t *m = (hts_lwmutex_t *)M;
+  hts_lwmutex_lock(m);
 }
 
 static void
 sqlite_mutex_leave(sqlite3_mutex *M)
 {
-  hts_mutex_t *m = (hts_mutex_t *)M;
-  hts_mutex_unlock(m);
+  hts_lwmutex_t *m = (hts_lwmutex_t *)M;
+  hts_lwmutex_unlock(m);
 }
 
 static int
