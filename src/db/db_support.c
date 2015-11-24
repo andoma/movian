@@ -92,6 +92,8 @@ db_preparex(sqlite3 *db, sqlite3_stmt **ppStmt, const char *zSql,
 {
   int rc;
 
+
+
   while(SQLITE_LOCKED==(rc = sqlite3_prepare_v2(db, zSql, -1, ppStmt, NULL))) {
     rc = wait_for_unlock_notify(db);
     if( rc!=SQLITE_OK ) break;
@@ -100,6 +102,10 @@ db_preparex(sqlite3 *db, sqlite3_stmt **ppStmt, const char *zSql,
   if(rc != SQLITE_OK) {
     TRACE(TRACE_ERROR, "SQLITE", "SQL Error %d at %s:%d",
 	  rc, file, line);
+  } else {
+    if(0)
+      db_explain(*ppStmt);
+
   }
   return rc;
 }
@@ -534,7 +540,43 @@ db_escape_path_query(char *dst, size_t dstlen, const char *src)
 }
 
 
+/*
+** Argument pStmt is a prepared SQL statement. This function compiles
+** an EXPLAIN QUERY PLAN command to report on the prepared statement,
+** and prints the report to stdout using printf().
+*/
+int
+db_explain(sqlite3_stmt *pStmt)
+{
+  const char *zSql;               /* Input SQL */
+  char *zExplain;                 /* SQL with EXPLAIN QUERY PLAN prepended */
+  sqlite3_stmt *pExplain;         /* Compiled EXPLAIN QUERY PLAN command */
+  int rc;                         /* Return code from sqlite3_prepare_v2() */
 
+  zSql = sqlite3_sql(pStmt);
+  if( zSql==0 ) return SQLITE_ERROR;
+
+  TRACE(TRACE_DEBUG, "EXPLAIN", "%s", zSql);
+
+  zExplain = sqlite3_mprintf("EXPLAIN QUERY PLAN %s", zSql);
+  if( zExplain==0 ) return SQLITE_NOMEM;
+
+  rc = sqlite3_prepare_v2(sqlite3_db_handle(pStmt), zExplain, -1, &pExplain, 0);
+  sqlite3_free(zExplain);
+  if( rc!=SQLITE_OK ) return rc;
+
+  while( SQLITE_ROW==sqlite3_step(pExplain) ){
+    int iSelectid = sqlite3_column_int(pExplain, 0);
+    int iOrder = sqlite3_column_int(pExplain, 1);
+    int iFrom = sqlite3_column_int(pExplain, 2);
+    const char *zDetail = (const char *)sqlite3_column_text(pExplain, 3);
+
+    TRACE(TRACE_DEBUG, "EXPLAIN", "%d %d %d %s",
+          iSelectid, iOrder, iFrom, zDetail);
+  }
+
+  return sqlite3_finalize(pExplain);
+}
 
 #if ENABLE_SQLITE_LOCKING
 
