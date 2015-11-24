@@ -146,7 +146,7 @@ static int vfs_fs_CheckReservedLock(sqlite3_file *pFile, int *pResOut){
 }
 
 static int vfs_fs_FileControl(sqlite3_file *pFile, int op, void *pArg){
-  return SQLITE_OK;
+  return SQLITE_NOTFOUND;
 }
 
 static int vfs_fs_SectorSize(sqlite3_file *pFile){

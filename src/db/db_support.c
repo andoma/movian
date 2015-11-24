@@ -641,7 +641,6 @@ db_log(void *aux, int code, const char *str)
         "SQLITE", "%s (code: 0x%x)", str, code);
 }
 
-#if 0
 #include "misc/callout.h"
 
 static callout_t memlogger;
@@ -668,7 +667,6 @@ memlogger_fn(callout_t *co, void *aux)
         scr_current, scr_highwater);
 
 }
-#endif
 
 void
 db_init(void)
@@ -683,7 +681,6 @@ db_init(void)
 #ifdef PS3
   sqlite3_soft_heap_limit(10000000);
 #endif
-#if 0
-  callout_arm(&memlogger, memlogger_fn, NULL, 1);
-#endif
+  if(0)
+    callout_arm(&memlogger, memlogger_fn, NULL, 1);
 }
