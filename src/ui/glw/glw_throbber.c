@@ -72,8 +72,8 @@ glw_throbber3d_layout(glw_t *w, const glw_rctx_t *rc)
     return;
 
   gt->angle += 2;
-  if(gt->angle > 360)
-    gt->angle -= 360;
+  if(gt->angle > 3600)
+    gt->angle -= 3600;
   glw_need_refresh(w->glw_root, 0);
 }
 
