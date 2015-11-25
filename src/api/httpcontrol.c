@@ -658,6 +658,17 @@ hc_open_parameterized(http_connection_t *hc, const char *remain,
   return http_redirect(hc, "/");
 }
 
+/**
+ *
+ */
+static int
+hc_restart(http_connection_t *hc, const char *remain,
+                      void *opaque, http_cmd_t method)
+{
+  app_shutdown(13);
+  return HTTP_STATUS_OK;
+}
+
 
 /**
  *
@@ -681,6 +692,8 @@ httpcontrol_init(void)
   http_path_add("/", NULL, hc_root, 1);
   http_path_add("/favicon.ico", NULL, hc_favicon, 1);
   http_path_add("/api/static", NULL, hc_static, 0);
+  if(gconf.can_restart)
+    http_path_add("/api/restart", NULL, hc_restart, 1);
 }
 
 INITME(INIT_GROUP_API, httpcontrol_init, NULL);
