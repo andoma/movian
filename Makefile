@@ -141,6 +141,7 @@ SRCS +=	src/misc/ptrvec.c \
 	src/misc/big5.c \
 	src/misc/cancellable.c \
 	src/misc/lockmgr.c \
+	src/misc/prng.c \
 
 SRCS += ext/trex/trex.c
 

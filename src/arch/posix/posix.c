@@ -28,6 +28,8 @@
 #include <sys/statvfs.h>
 #include <sys/time.h>
 #include <signal.h>
+#include <fcntl.h>
+
 #include "text/text.h"
 #include "main.h"
 
@@ -241,19 +243,6 @@ arch_get_ts(void)
 }
 
 
-/**
- *
- */
-uint64_t
-arch_get_seed(void)
-{
-  uint64_t v = getpid();
-  v = (v << 16) ^ getppid();
-  v = (v << 32) ^ time(NULL);
-  return v;
-}
-
-
 #include <sys/mman.h>
 #include "arch/halloc.h"
 
@@ -318,3 +307,17 @@ mymemalign(size_t align, size_t size)
   return posix_memalign(&p, align, size) ? NULL : p;
 }
 
+
+static int devurandom;
+
+void
+arch_get_random_bytes(void *ptr, size_t size)
+{
+  ssize_t r = read(devurandom, ptr, size);
+  if(r != size)
+    abort();
+}
+
+INITIALIZER(opendevurandom) {
+  devurandom = open("/dev/urandom", O_RDONLY);
+};

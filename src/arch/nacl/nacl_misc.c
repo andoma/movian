@@ -18,6 +18,7 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 #include <malloc.h>
+#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/mman.h>
 
@@ -28,6 +29,7 @@
 #include "misc/callout.h"
 #include "misc/md5.h"
 #include "misc/str.h"
+#include "misc/prng.h"
 #include "prop/prop.h"
 
 #include "arch/posix/posix.h"
@@ -85,14 +87,29 @@ arch_get_avtime(void)
   return arch_get_ts();
 }
 
+static prng_t prng;
+
+INITIALIZER(initrandomizer) {
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  prng_init(&prng, tv.tv_sec, tv.tv_usec);
+};
+
 
 /**
  *
  */
-uint64_t
-arch_get_seed(void)
+void
+arch_get_random_bytes(void *ptr, size_t size)
 {
-  return 4;  // XXX: Inspired by Sony
+  uint32_t tmp;
+  while(size > 0) {
+    size_t copy = MIN(size, sizeof(tmp));
+    tmp = prng_get(&prng);
+    memcpy(ptr, &tmp, copy);
+    ptr += copy;
+    size -= copy;
+  }
 }
 
 

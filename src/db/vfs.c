@@ -31,15 +31,13 @@
 #include "misc/minmax.h"
 #include "fileaccess/fileaccess.h"
 
+#include "arch/arch.h"
 
 #if 0
 #define VFSTRACE(x...) TRACE(TRACE_DEBUG, "SQLITE_VFS", x)
 #else
 #define VFSTRACE(x...)
 #endif
-
-static uint64_t random_seed;
-
 
 typedef struct vfsfile {
   struct sqlite3_file hdr;
@@ -297,23 +295,8 @@ vfs_access(sqlite3_vfs *NotUsed, const char *zPath, int flags, int *pResOut)
 static int
 vfs_randomness(sqlite3_vfs *NotUsed, int nBuf, char *zBuf)
 {
-  sha1_decl(shactx);
-  uint8_t d[20];
-  int w;
-
-  while(nBuf > 0) {
-    sha1_init(shactx);
-    sha1_update(shactx, (void *)&random_seed, sizeof(uint64_t));
-    sha1_final(shactx, d);
-
-    w = MIN(20, nBuf);
-    memcpy(zBuf, d, w);
-
-    nBuf -= w;
-    zBuf += w;
-    memcpy(&random_seed, d, sizeof(uint64_t));
-  }
-  return SQLITE_OK;
+  arch_get_random_bytes(zBuf, nBuf);
+  return nBuf;
 }
 
 static sqlite3_vfs vfs = {
@@ -346,7 +329,6 @@ static sqlite3_vfs vfs = {
 int
 sqlite3_os_init(void)
 {
-  random_seed = arch_get_seed();
   sqlite3_vfs_register(&vfs, 1);
   return SQLITE_OK; 
 }

@@ -47,3 +47,5 @@ void stackdump(const char *logprefix);
 
 // Return size of allocation at 'ptr'
 size_t arch_malloc_size(void *ptr);
+
+void arch_get_random_bytes(void *ptr, size_t size);

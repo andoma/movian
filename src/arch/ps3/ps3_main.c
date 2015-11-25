@@ -19,6 +19,7 @@
  */
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/param.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -424,17 +425,6 @@ ps3_early_init(int argc, char **argv)
 /**
  *
  */
-uint64_t
-arch_get_seed(void)
-{
-  return mftb();
-}
-
-
-
-/**
- *
- */
 static void
 preload_fonts(void)
 {
@@ -452,6 +442,22 @@ arch_get_system_type(void)
   return "PS3";
 }
 
+
+/**
+ *
+ */
+void
+arch_get_random_bytes(void *ptr, size_t size)
+{
+  uint8_t tmp[0x10];
+  while(size > 0) {
+    size_t copy = MIN(size, sizeof(tmp));
+    Lv2Syscall2(984, (u64)&tmp[0], sizeof(tmp));
+    memcpy(ptr, tmp, copy);
+    ptr += copy;
+    size -= copy;
+  }
+}
 
 
 

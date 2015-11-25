@@ -49,8 +49,6 @@
 LIST_HEAD(http_request_inspector_list, http_request_inspector);
 static struct http_request_inspector_list http_request_inspectors;
 
-static uint8_t nonce[20];
-
 /**
  * If we are reading data as a constant pushed stream and we get a
  * seek request forward in the file it might be better to just
@@ -2277,13 +2275,6 @@ http_no_parking(fa_handle_t *fh)
 static void
 http_init(void)
 {
-  uint64_t v = arch_get_seed();
-
-  sha1_decl(ctx);
-  sha1_init(ctx);
-  sha1_update(ctx, (void *)&v, sizeof(v));
-  sha1_final(ctx, nonce);
-
   TAILQ_INIT(&http_connections);
   hts_mutex_init(&http_connections_mutex);
   hts_mutex_init(&http_redirects_mutex);

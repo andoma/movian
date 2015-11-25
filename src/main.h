@@ -88,8 +88,6 @@ extern int64_t arch_get_avtime(void);
 
 extern const char *arch_get_system_type(void);
 
-extern uint64_t arch_get_seed(void);
-
 /**
  *
  */

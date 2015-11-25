@@ -28,13 +28,14 @@
 #include "playqueue.h"
 #include "fileaccess/http_client.h"
 #include "misc/str.h"
-#include "misc/sha.h"
 
 #include "upnp.h"
 #include "upnp_scpd.h"
 #include "settings.h"
 #include "service.h"
 #include "backend/backend.h"
+
+#include "arch/arch.h"
 
 hts_mutex_t upnp_lock;
 hts_cond_t upnp_device_cond;
@@ -237,22 +238,13 @@ upnp_init(void)
   if(s != NULL) {
     upnp_uuid = strdup(s);
   } else {
-    sha1_decl(shactx);
-    uint64_t v;
     uint8_t d[20];
     char uuid[40];
 
     if(conf == NULL)
       conf = htsmsg_create_map();
-    
-    sha1_init(shactx);
-    v = arch_get_ts();
-    sha1_update(shactx, (void *)&v, sizeof(uint64_t));
 
-    v = arch_get_seed();
-    sha1_update(shactx, (void *)&v, sizeof(uint64_t));
-
-    sha1_final(shactx, d);
+    arch_get_random_bytes(d, sizeof(d));
 
     snprintf(uuid, sizeof(uuid),
 	     "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-"

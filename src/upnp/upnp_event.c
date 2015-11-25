@@ -24,13 +24,10 @@
 #include "fileaccess/http_client.h"
 #include "htsmsg/htsmsg_xml.h"
 #include "misc/str.h"
-#include "misc/sha.h"
 #include "api/soap.h"
+#include "arch/arch.h"
 
 #include "upnp.h"
-
-static uint64_t sidbase;
-static uint32_t sidtally;
 
 LIST_HEAD(send_event_list, send_event);
 
@@ -219,15 +216,7 @@ sub_gen_uuid(void)
 {
   char uuid[64];
   uint8_t d[20];
-  sha1_decl(shactx);
-  
-  sha1_init(shactx);
-  sha1_update(shactx, (void *)&sidbase, sizeof(uint64_t));
-  sidtally++;
-
-  sha1_update(shactx, (void *)&sidtally, sizeof(uint32_t));
-
-  sha1_final(shactx, d);
+  arch_get_random_bytes(d, sizeof(d));
 
   snprintf(uuid, sizeof(uuid),
 	   "uuid:%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-"
@@ -413,7 +402,6 @@ upnp_flush(callout_t *c, void *opaque)
 void
 upnp_event_init(void)
 {
-  sidtally = arch_get_seed();
   callout_arm(&upnp_flush_timer, upnp_flush, NULL, 60);
 }
 
