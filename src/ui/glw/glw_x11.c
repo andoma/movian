@@ -868,6 +868,10 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
   }
 #endif
 
+  if(keysym == XK_F12 && state & (ControlMask | ShiftMask)) {
+    e = event_create(EVENT_MAKE_SCREENSHOT, sizeof(event_t));
+  }
+
   if(e == NULL) {
 
     for(i = 0; i < sizeof(keysym2action) / sizeof(*keysym2action); i++) {

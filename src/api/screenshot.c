@@ -28,6 +28,7 @@
 #include "image/pixmap.h"
 #include "htsmsg/htsmsg_json.h"
 #include "fileaccess/http_client.h"
+#include "fileaccess/fileaccess.h"
 
 #include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
@@ -117,9 +118,9 @@ screenshot_response(const char *url, const char *errmsg)
  *
  */
 static buf_t *
-screenshot_compress(pixmap_t *pm)
+screenshot_compress(pixmap_t *pm, int codecid)
 {
-  AVCodec *codec = avcodec_find_encoder(AV_CODEC_ID_MJPEG);
+  AVCodec *codec = avcodec_find_encoder(codecid);
   if(codec == NULL)
     return NULL;
 
@@ -127,7 +128,7 @@ screenshot_compress(pixmap_t *pm)
   const int height = pm->pm_height;
 
   AVCodecContext *ctx = avcodec_alloc_context3(codec);
-  ctx->pix_fmt = AV_PIX_FMT_YUVJ420P;
+  ctx->pix_fmt = codec->pix_fmts[0];
   ctx->time_base.den = 1;
   ctx->time_base.num = 1;
   ctx->sample_aspect_ratio.num = 1;
@@ -191,10 +192,34 @@ screenshot_process(void *task)
   TRACE(TRACE_DEBUG, "Screenshot", "Processing image %d x %d",
         pm->pm_width, pm->pm_height);
 
-  buf_t *b = screenshot_compress(pm);
+  int codecid = AV_CODEC_ID_PNG;
+  if(screenshot_connection)
+    codecid = AV_CODEC_ID_MJPEG;
+
+  buf_t *b = screenshot_compress(pm, codecid);
   pixmap_release(pm);
   if(b == NULL) {
     screenshot_response(NULL, "Unable to compress image");
+    return;
+  }
+
+  if(!screenshot_connection) {
+    char path[512];
+    char errbuf[512];
+    snprintf(path, sizeof(path), "%s/screenshot.png",
+             gconf.cache_path);
+    fa_handle_t *fa = fa_open_ex(path, errbuf, sizeof(errbuf),
+                                 FA_WRITE, NULL);
+    if(fa == NULL) {
+      TRACE(TRACE_ERROR, "SCREENSHOT", "Unable to open %s -- %s",
+            path, errbuf);
+      buf_release(b);
+      return;
+    }
+    fa_write(fa, buf_data(b), buf_len(b));
+    fa_close(fa);
+    TRACE(TRACE_INFO, "SCREENSHOT", "Written to %s", path);
+    buf_release(b);
     return;
   }
 
