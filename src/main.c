@@ -580,9 +580,6 @@ parse_opts(int argc, char **argv)
     } else if (!strcmp(argv[0], "--showtime-shell-fd") && argc > 1) {
       gconf.shell_fd = atoi(argv[1]);
       argc -= 2; argv += 2;
-    } else if (!strcmp(argv[0], "--remote") && argc > 1) {
-      gconf.remote_ui = argv[1];
-      argc -= 2; argv += 2;
     } else if (!strcmp(argv[0], "--proxy") && argc > 1) {
       char *x = mystrdupa(argv[1]);
       char *pstr = strchr(x, ':');

@@ -29,6 +29,8 @@
 #include "misc/bytestream.h"
 #include "stpp.h"
 
+#include "backend/backend.h"
+
 RB_HEAD(stpp_subscription_tree, stpp_subscription);
 RB_HEAD(stpp_prop_tree, stpp_prop);
 LIST_HEAD(stpp_prop_list, stpp_prop);
@@ -331,7 +333,6 @@ stpp_sub_json(void *opaque, prop_event_t event, ...)
   va_end(ap);
 }
 
-
 /**
  * Binary output
  */
@@ -486,7 +487,6 @@ stpp_sub_binary(void *opaque, prop_event_t event, ...)
 
     if(LIST_FIRST(&ss->ss_value_props) != NULL &&
        LIST_FIRST(&ss->ss_value_props)->sp_prop == p) {
-      printf("Not sending same prop\n");
       return;
     }
 
@@ -999,3 +999,37 @@ ws_init(void)
 
 
 INITME(INIT_GROUP_API, ws_init, NULL);
+
+
+/**
+ *
+ */
+static int
+be_stpp_open(prop_t *page, const char *url, int sync)
+{
+  prop_t *model = prop_create_r(page, "model");
+  prop_set(model, "type", PROP_SET_STRING, "stpp");
+  prop_ref_dec(model);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+be_stpp_canhandle(const char *url)
+{
+  return !strncmp(url, "stpp://", strlen("stpp://"));
+}
+
+
+/**
+ *
+ */
+static backend_t be_stpp = {
+  .be_canhandle  = be_stpp_canhandle,
+  .be_open       = be_stpp_open,
+};
+
+BE_REGISTER(stpp);

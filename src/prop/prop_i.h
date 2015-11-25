@@ -567,4 +567,6 @@ int prop_dispatch_one(prop_notify_t *n, int lockmode);
 
 void prop_courier_enqueue(prop_sub_t *s, prop_notify_t *n);
 
+const char *prop_get_DN(prop_t *p, int compact);
+
 #endif // PROP_I_H__

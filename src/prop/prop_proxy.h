@@ -27,11 +27,7 @@ struct net_addr;
 struct prop_sub;
 struct event;
 
-struct prop *prop_proxy_connect(struct net_addr *addr);
-
-prop_proxy_connection_t *ppc_retain(prop_proxy_connection_t *ppc);
-
-void ppc_release(prop_proxy_connection_t *ppc);
+struct prop *prop_proxy_connect(const char *url, struct prop *statusy);
 
 struct prop *prop_proxy_create(struct prop *parent, const char *name);
 

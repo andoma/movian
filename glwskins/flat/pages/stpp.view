@@ -1,0 +1,24 @@
+coreAttach($self.url, {
+
+  widget(container_y, {
+
+    widget(layer, {
+      filterConstraintY: true;
+      alpha: iir(1 - $ui.screensaverActive, 8);
+      widget(playfield, {
+        effect: blend;
+        noInitialTransform: true;
+        alpha: 1 - iir(clamp(getLayer(), 0, 1), 7) * 0.66;
+
+        cloner($core.navigators.current.pages, container_z, {
+
+          widget(loader, {
+	    noInitialTransform: true;
+	    source: "skin://pages/" + $self.model.type + ".view";
+          });
+
+        });
+      });
+    });
+  });
+});

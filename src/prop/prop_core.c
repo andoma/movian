@@ -139,7 +139,7 @@ prop_get_name(prop_t *p)
 /**
  *
  */
-attribute_unused static const char *
+const char *
 prop_get_DN(prop_t *p, int compact)
 {
   static int idx;

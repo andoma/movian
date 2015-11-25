@@ -39,8 +39,10 @@
 struct prop_proxy_connection {
   atomic_t ppc_refcount;
   asyncio_fd_t *ppc_connection;
-  net_addr_t ppc_addr;
+  char *ppc_url;
+  prop_t *ppc_status;
   htsbuf_queue_t ppc_outq;
+
 
   struct prop_sub_list ppc_subs;
   int ppc_subscription_tally;
@@ -48,6 +50,8 @@ struct prop_proxy_connection {
   int ppc_websocket_open;
 
   websocket_state_t ppc_ws;
+
+  int ppc_port;
 };
 
 
@@ -65,10 +69,11 @@ ppc_del_fd(void *aux)
 /**
  *
  */
-prop_proxy_connection_t *
+static prop_proxy_connection_t *
 ppc_retain(prop_proxy_connection_t *ppc)
 {
   atomic_inc(&ppc->ppc_refcount);
+  printf("PPC RETAIN = %d\n", ppc->ppc_refcount.v);
   return ppc;
 }
 
@@ -89,16 +94,23 @@ ppc_disconnect(prop_proxy_connection_t *ppc)
 /**
  *
  */
-void
+static void
 ppc_release(prop_proxy_connection_t *ppc)
 {
+  printf("ppc refcount=%d\n", ppc->ppc_refcount.v);
+  prop_sub_t *s;
+  LIST_FOREACH(s, &ppc->ppc_subs, hps_value_prop_link) {
+    printf("ID %d\n", s->hps_proxy_subid);
+  }
   if(atomic_dec(&ppc->ppc_refcount))
     return;
 
   if(ppc->ppc_connection != NULL)
     asyncio_run_task(ppc_del_fd, ppc->ppc_connection);
   free(ppc->ppc_ws.packet);
+  free(ppc->ppc_url);
   free(ppc);
+  printf("PPC released\n");
 }
 
 
@@ -124,7 +136,7 @@ ppc_connected(void *aux, const char *err)
   char buf[1024];
   if(err != NULL) {
     TRACE(TRACE_ERROR, "REMOTE", "Unable to connect to %s -- %s",
-          net_addr_str(&ppc->ppc_addr), err);
+          ppc->ppc_url, err);
 
     ppc_disconnect(ppc);
     return;
@@ -179,6 +191,12 @@ prop_proxy_make(prop_proxy_connection_t *ppc, uint32_t id, prop_sub_t *s,
   atomic_set(&p->hp_refcount, 1);
   p->hp_xref = 1;
   p->hp_type = PROP_PROXY;
+  printf("Created prop @ %d pfx: ", id);
+  if(pfx != NULL)
+    for(int i = 0; pfx[i]; i++)
+      printf("%s ", pfx[i]);
+  printf("\n");
+  
   p->hp_proxy_ppc = ppc_retain(ppc);
   p->hp_proxy_pfx = pfx;
   return p;
@@ -214,6 +232,7 @@ void
 prop_proxy_destroy(struct prop *p)
 {
   ppc_release(p->hp_proxy_ppc);
+  printf("prop_proxy_destroy\n");
   if(p->hp_sub != NULL) {
     RB_REMOVE_NFL(&p->hp_sub->hps_prop_tree, p, hp_sub_link);
     p->hp_sub = NULL;
@@ -276,7 +295,7 @@ ppc_ws_input_notify(prop_proxy_connection_t *ppc, const uint8_t *data, int len)
 
   hts_mutex_lock(&prop_mutex);
 
-  // XXX .. this is slow
+  // XXX .. this is probably quite slow
   LIST_FOREACH(s, &ppc->ppc_subs, hps_value_prop_link) {
     if(s->hps_proxy_subid == subid)
       break;
@@ -362,6 +381,7 @@ ppc_ws_input_notify(prop_proxy_connection_t *ppc, const uint8_t *data, int len)
   case STPP_DEL_CHILD:
     if(len != 4)
       break;
+    printf("STPP INPUT DEL CHILD\n");
     n = prop_get_notify(s);
     n->hpn_event = PROP_DEL_CHILD;
     p = ppc_find_prop_on_sub(s, rd32_le(data));
@@ -487,12 +507,30 @@ ppc_input(void *opaque, htsbuf_queue_t *q)
  *
  */
 static void
-ppc_connect(void *aux)
+ppc_connect(void *aux, int status, const void *data)
 {
   prop_proxy_connection_t *ppc = aux;
   assert(ppc->ppc_connection == NULL);
-  printf("Connecting to %s\n", net_addr_str(&ppc->ppc_addr));
-  ppc->ppc_connection = asyncio_connect("stppclient", &ppc->ppc_addr,
+
+  net_addr_t na;
+  switch(status) {
+  case ASYNCIO_DNS_STATUS_COMPLETED:
+    na = *(const net_addr_t *)data;
+    break;
+
+  case ASYNCIO_DNS_STATUS_FAILED:
+    return;
+
+  default:
+    abort();
+  }
+
+
+  na.na_port = ppc->ppc_port;
+  TRACE(TRACE_DEBUG, "STPP", "Connecting to %s -> %s",
+        ppc->ppc_url, net_addr_str(&na));
+
+  ppc->ppc_connection = asyncio_connect("stppclient", &na,
                                         ppc_connected, ppc_input, ppc, 3000);
   ppc_release(ppc);
 }
@@ -517,13 +555,25 @@ ppc_send(void *aux)
  *
  */
 prop_t *
-prop_proxy_connect(net_addr_t *addr)
+prop_proxy_connect(const char *url, prop_t *status)
 {
   prop_proxy_connection_t *ppc;
   ppc = calloc(1, sizeof(prop_proxy_connection_t));
   htsbuf_queue_init(&ppc->ppc_outq, 0);
-  ppc->ppc_addr = *addr;
-  asyncio_run_task(ppc_connect, ppc_retain(ppc));
+
+  char protostr[64];
+  char hostname[256];
+
+  url_split(protostr, sizeof(protostr), NULL, 0,
+	    hostname, sizeof(hostname),
+            &ppc->ppc_port, NULL, 0, url);
+
+  if(ppc->ppc_port == -1)
+    ppc->ppc_port = 42000;
+
+  ppc->ppc_url = strdup(url);
+  ppc->ppc_status = prop_ref_inc(status); // Leak
+  asyncio_dns_lookup_host(hostname, ppc_connect, ppc_retain(ppc));
 
   return prop_proxy_make(ppc, 0 /* global */, NULL, NULL);
 }
@@ -780,6 +830,7 @@ prop_proxy_unsubscribe(prop_sub_t *s)
     s->hps_value_prop = NULL;
   }
 
+  ppc_destroy_props_on_sub(s);
   LIST_REMOVE(s, hps_value_prop_link);
   uint8_t *data = alloca(5);
   data[1] = STPP_CMD_UNSUBSCRIBE;
@@ -823,7 +874,20 @@ prop_proxy_set_string(struct prop *p, const char *str, int type)
 void
 prop_proxy_set_float(struct prop *p, float v)
 {
-  printf("%s not implemeted\n", __FUNCTION__);
+  prop_proxy_connection_t *ppc = p->hp_proxy_ppc;
+  htsbuf_queue_t q;
+
+  union {
+    float f;
+    uint32_t u32;
+  } u;
+  u.f = v;
+  htsbuf_queue_init(&q, 0);
+  htsbuf_append_byte(&q, STPP_CMD_SET);
+  prop_proxy_send_prop(p, &q);
+  htsbuf_append_byte(&q, STPP_SET_FLOAT);
+  htsbuf_append_le32(&q, u.u32);
+  prop_proxy_send_queue(ppc, &q);
 }
 
 

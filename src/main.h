@@ -317,8 +317,6 @@ typedef struct gconf {
 
   char device_type[64];
 
-  const char *remote_ui;
-
 } gconf_t;
 
 extern gconf_t gconf;
