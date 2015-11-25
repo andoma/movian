@@ -1919,6 +1919,12 @@ typedef FILE duk_file;
 		(void) (x); \
 	} while (0)
 
+/* Convert any input pointer into a "void *", losing a const qualifier.
+ * This is not fully portable because casting through duk_uintptr_t may
+ * not work on all architectures (e.g. those with long, segmented pointers).
+ */
+#define DUK_LOSE_CONST(src) ((void *) (duk_uintptr_t) (src))
+
 /*
  *  DUK_NORETURN: macro for declaring a 'noreturn' function.
  *  Unfortunately the noreturn declaration may appear in various
@@ -3068,10 +3074,12 @@ typedef FILE duk_file;
 #undef DUK_USE_MARKANDSWEEP_FINALIZER_TORTURE
 #define DUK_USE_MARK_AND_SWEEP_RECLIMIT 256
 #define DUK_USE_NATIVE_CALL_RECLIMIT 1000
+#undef DUK_USE_PARANOID_ERRORS
 #undef DUK_USE_REFZERO_FINALIZER_TORTURE
 #define DUK_USE_REGEXP_COMPILER_RECLIMIT 10000
 #define DUK_USE_REGEXP_EXECUTOR_RECLIMIT 10000
-#define DUK_USE_VERBOSE_PROP_ERRORS
+#undef DUK_USE_STRHASH_DENSE
+#define DUK_USE_STRHASH_SKIP_SHIFT 5
 
 /*
  *  Alternative customization header
