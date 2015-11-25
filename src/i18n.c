@@ -810,7 +810,7 @@ nls_init(prop_t *parent, htsmsg_t *store)
   lang_t *l;
 
 #if ENABLE_HTTPSERVER
-  http_path_add("/showtime/translation", NULL, upload_translation, 1);
+  http_path_add("/api/translation", NULL, upload_translation, 1);
 #endif
 
   if(fd == NULL) {

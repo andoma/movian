@@ -98,4 +98,7 @@ $(BUILDDIR)/dist/${APPNAME}_geohot-$(VERSION).pkg: $(BUILDDIR)/${APPNAME}_geohot
 dist:  $(BUILDDIR)/dist/${APPNAME}-$(VERSION).self $(BUILDDIR)/dist/${APPNAME}-$(VERSION).pkg $(BUILDDIR)/dist/${APPNAME}_geohot-$(VERSION).pkg
 
 upgrade: ${SELF}
+	curl --data-binary @$< http://$(PS3HOST):42000/api/replace
+
+upgrade-old: ${SELF}
 	curl --data-binary @$< http://$(PS3HOST):42000/showtime/replace

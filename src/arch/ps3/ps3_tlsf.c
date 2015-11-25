@@ -67,7 +67,7 @@ static void __attribute__((constructor)) mallocsetup(void)
 
   // Malloc is initialized now so we can safely do this
 
-  http_path_add("/showtime/memstats", NULL, memstats, 1);
+  http_path_add("/api/memstats", NULL, memstats, 1);
 }
 
 typedef struct {

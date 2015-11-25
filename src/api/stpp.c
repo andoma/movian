@@ -994,7 +994,7 @@ stpp_fini(http_connection_t *hc, void *opaque)
 static void
 ws_init(void)
 {
-  http_add_websocket("/showtime/stpp", stpp_init, stpp_input, stpp_fini);
+  http_add_websocket("/api/stpp", stpp_init, stpp_input, stpp_fini);
 }
 
 

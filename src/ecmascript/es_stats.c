@@ -104,7 +104,7 @@ dumpstats(http_connection_t *hc, const char *remain, void *opaque,
 static void
 ecmascript_stats_init(void)
 {
-  http_path_add("/showtime/ecmascript/stats", NULL, dumpstats, 1);
+  http_path_add("/api/ecmascript/stats", NULL, dumpstats, 1);
 }
 
 INITME(INIT_GROUP_API, ecmascript_stats_init, NULL);

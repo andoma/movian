@@ -56,7 +56,7 @@ hc_open(http_connection_t *hc, const char *remain, void *opaque,
 
   if(url != NULL) {
     event_to_ui(event_create_openurl(url));
-    return http_redirect(hc, "/showtime/open");
+    return http_redirect(hc, "/api/open");
   }
 
   htsbuf_queue_init(&out, 0);
@@ -93,7 +93,7 @@ diag_html(http_connection_t *hc, htsbuf_queue_t *out)
 
 
     htsbuf_qprintf(out,
-		   APPNAME"-%d.log (Last modified %s ago): <a href=\"/showtime/logfile/%d\">View</a> | <a href=\"/showtime/logfile/%d?mode=download\">Download</a>| <a href=\"/showtime/logfile/%d?mode=pastebin\">Pastebin</a><br>", i, timestr, i, i, i);
+		   APPNAME"-%d.log (Last modified %s ago): <a href=\"/api/logfile/%d\">View</a> | <a href=\"/api/logfile/%d?mode=download\">Download</a>| <a href=\"/api/logfile/%d?mode=pastebin\">Pastebin</a><br>", i, timestr, i, i, i);
   }
 }
 
@@ -130,8 +130,8 @@ hc_root_old(http_connection_t *hc)
   htsbuf_qprintf(&out, "<h3>Diagnostics</h3>"); 
 
   diag_html(hc, &out);
-  htsbuf_qprintf(&out, "<p><a href=\"/showtime/screenshot\">Upload screenshot to imgur</a></p>");
-  htsbuf_qprintf(&out, "<p><a href=\"/showtime/translation\">Upload and test new translation (.lang) file</a></p>");
+  htsbuf_qprintf(&out, "<p><a href=\"/api/screenshot\">Upload screenshot to imgur</a></p>");
+  htsbuf_qprintf(&out, "<p><a href=\"/api/translation\">Upload and test new translation (.lang) file</a></p>");
 
   htsbuf_qprintf(&out, "</body></html>");
 
@@ -665,22 +665,22 @@ hc_open_parameterized(http_connection_t *hc, const char *remain,
 static void
 httpcontrol_init(void)
 {
-  http_path_add("/showtime/done", NULL, hc_done, 0);
-  http_path_add("/showtime/image", NULL, hc_image, 0);
-  http_path_add("/showtime/open", NULL, hc_open, 1);
-  http_path_add("/showtime/openparameterized", NULL, hc_open_parameterized, 0);
-  http_path_add("/showtime/input/action", NULL, hc_action, 0);
-  http_path_add("/showtime/input/utf8", NULL, hc_utf8, 1);
-  http_path_add("/showtime/notifyuser", NULL, hc_notify_user, 1);
-  http_path_add("/showtime/diag", NULL, hc_diagnostics, 1);
-  http_path_add("/showtime/logfile", NULL, hc_logfile, 0);
-  http_path_add("/showtime/replace", NULL, hc_binreplace, 1);
-  http_add_websocket("/showtime/ws/echo",
+  http_path_add("/api/done", NULL, hc_done, 0);
+  http_path_add("/api/image", NULL, hc_image, 0);
+  http_path_add("/api/open", NULL, hc_open, 1);
+  http_path_add("/api/openparameterized", NULL, hc_open_parameterized, 0);
+  http_path_add("/api/input/action", NULL, hc_action, 0);
+  http_path_add("/api/input/utf8", NULL, hc_utf8, 1);
+  http_path_add("/api/notifyuser", NULL, hc_notify_user, 1);
+  http_path_add("/api/diag", NULL, hc_diagnostics, 1);
+  http_path_add("/api/logfile", NULL, hc_logfile, 0);
+  http_path_add("/api/replace", NULL, hc_binreplace, 1);
+  http_add_websocket("/api/ws/echo",
 		     hc_echo_init, hc_echo_data, hc_echo_fini);
 
   http_path_add("/", NULL, hc_root, 1);
   http_path_add("/favicon.ico", NULL, hc_favicon, 1);
-  http_path_add("/showtime/static", NULL, hc_static, 0);
+  http_path_add("/api/static", NULL, hc_static, 0);
 }
 
 INITME(INIT_GROUP_API, httpcontrol_init, NULL);

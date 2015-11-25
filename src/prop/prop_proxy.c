@@ -131,7 +131,7 @@ ppc_connected(void *aux, const char *err)
   }
 
   snprintf(buf, sizeof(buf),
-           "GET /showtime/stpp HTTP/1.1\r\n"
+           "GET /api/stpp HTTP/1.1\r\n"
            "Connection: Upgrade\r\n"
            "Upgrade: websocket\r\n"
            "Sec-WebSocket-Key: 1\r\n"

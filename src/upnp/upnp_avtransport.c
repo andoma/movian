@@ -308,7 +308,7 @@ build_didl(const char *myhost, int myport)
     const char *arturl;
 
     if(strncmp(upnp_current_album_art, "http://", strlen("http://"))) {
-      snprintf(url, sizeof(url), "http://%s:%d/showtime/image/%s",
+      snprintf(url, sizeof(url), "http://%s:%d/api/image/%s",
 	       myhost, myport, upnp_current_album_art);
       arturl = url;
     } else {

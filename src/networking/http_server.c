@@ -202,12 +202,17 @@ static const http_path_t *
 http_resolve(http_connection_t *hc, char **remainp, char **argsp)
 {
   http_path_t *hp;
-  char *v;
+  char *url = hc->hc_url;
+  if(!strncmp(url, "/showtime/", strlen("/showtime/"))) {
+    url += 5;
+    memcpy(url, "/api", 4);
+  }
 
   LIST_FOREACH(hp, &http_paths, hp_link) {
-    if(!strncmp(hc->hc_url, hp->hp_path, hp->hp_len)) {
-      if(hc->hc_url[hp->hp_len] == 0 || hc->hc_url[hp->hp_len] == '/' ||
-	 hc->hc_url[hp->hp_len] == '?')
+    if(!strncmp(url, hp->hp_path, hp->hp_len)) {
+      if(url[hp->hp_len] == 0 ||
+         url[hp->hp_len] == '/' ||
+	 url[hp->hp_len] == '?')
 	break;
     }
   }
@@ -215,7 +220,7 @@ http_resolve(http_connection_t *hc, char **remainp, char **argsp)
   if(hp == NULL)
     return NULL;
 
-  v = hc->hc_url + hp->hp_len;
+  char *v = url + hp->hp_len;
 
   *remainp = NULL;
   *argsp = NULL;

@@ -82,5 +82,5 @@ $ ./Autobuild.sh -t rpi
 
 To update Movian on rpi with compiled one, enable Binreplace in settings:dev and issue:
 
-	curl --data-binary @build.rpi/showtime.sqfs http://rpi_ip_address:42000/showtime/replace
+	curl --data-binary @build.rpi/showtime.sqfs http://rpi_ip_address:42000/api/replace
 

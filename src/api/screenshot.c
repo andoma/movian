@@ -288,7 +288,7 @@ static void
 screenshot_init(void)
 {
   hts_mutex_init(&screenshot_mutex);
-  http_path_add("/showtime/screenshot", NULL, hc_screenshot, 0);
+  http_path_add("/api/screenshot", NULL, hc_screenshot, 0);
 }
 
 INITME(INIT_GROUP_API, screenshot_init, NULL);

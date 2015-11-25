@@ -181,7 +181,7 @@ hc_prop(http_connection_t *hc, const char *remain, void *opaque,
 
           htsbuf_qprintf(&out, "<tr>\n");
 
-          htsbuf_qprintf(&out, "<td><a href=\"/showtime/prop/%s/%s\">",
+          htsbuf_qprintf(&out, "<td><a href=\"/api/prop/%s/%s\">",
                          remain, ref);
           htsbuf_append_and_escape_xml(&out, cname);
           htsbuf_qprintf(&out, "</a>\n");
@@ -271,7 +271,7 @@ hc_subtrack(http_connection_t *hc, const char *remain, void *opaque,
 static void
 prop_http_init(void)
 {
-  http_path_add("/showtime/prop", NULL, hc_prop, 0);
+  http_path_add("/api/prop", NULL, hc_prop, 0);
 #ifdef PROP_DEBUG
   http_path_add("/subtrack", NULL, hc_subtrack, 0);
 #endif
