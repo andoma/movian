@@ -436,7 +436,7 @@ typedef struct glw_class {
   int (*gc_set_prop)(struct glw *w, glw_attribute_t a, prop_t *p);
 
   void (*gc_set_roots)(struct glw *w, prop_t *self, prop_t *parent,
-                       prop_t *clone);
+                       prop_t *clone, prop_t *core);
 
   int (*gc_bind_to_id)(struct glw *w, const char *id);
 
@@ -611,7 +611,8 @@ typedef struct glw_class {
 			      const char **pname,
 			      prop_t *view,
 			      prop_t *args,
-			      prop_t *clone);
+			      prop_t *clone,
+                              prop_t *core);
 
   /**
    *
@@ -720,6 +721,7 @@ typedef struct glw_program glw_program_t;
 typedef struct glw_root {
   prop_t *gr_prop_ui;
   prop_t *gr_prop_nav;
+
   prop_t *gr_prop_core;
 
   void (*gr_prop_dispatcher)(prop_courier_t *pc, int timeout);
@@ -1371,7 +1373,7 @@ void glw_lp(float *v, glw_root_t *gr, float t, float alpha);
  */
 glw_t *glw_view_create(glw_root_t *gr, rstr_t *url, rstr_t *alturl,
                        glw_t *parent, prop_t *prop, prop_t *prop_parent,
-                       prop_t *args, prop_t *prop_clone,
+                       prop_t *args, prop_t *prop_clone, prop_t *prop_core,
                        rstr_t *file, int line);
 
 void glw_view_eval_signal(glw_t *w, glw_signal_t sig);

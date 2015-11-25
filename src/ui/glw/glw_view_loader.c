@@ -27,6 +27,7 @@ typedef struct glw_view_loader {
   struct prop *prop;
   struct prop *prop_parent;
   struct prop *prop_clone;
+  struct prop *prop_core;
   struct prop *prop_parent_override;
   struct prop *prop_self_override;
   struct prop *args;
@@ -264,7 +265,7 @@ set_source(glw_t *w, rstr_t *url, glw_style_t *origin)
     glw_view_create(w->glw_root, url, alt_url, w,
                     a->prop_self_override ?: a->prop,
                     a->prop_parent_override ?: a->prop_parent, a->args,
-                    a->prop_clone, NULL, 0);
+                    a->prop_clone, a->prop_core, NULL, 0);
     a->loaded = 1;
     update_autohide(a);
     return;
@@ -340,13 +341,15 @@ glw_view_loader_set_float(glw_t *w, glw_attribute_t attrib, float value,
  *
  */
 static void
-glw_view_loader_set_roots(glw_t *w, prop_t *self, prop_t *parent, prop_t *clone)
+glw_view_loader_set_roots(glw_t *w, prop_t *self, prop_t *parent, prop_t *clone,
+                          prop_t *core)
 {
   glw_view_loader_t *vl = (void *)w;
 
   vl->prop        = self;
   vl->prop_parent = parent;
   vl->prop_clone  = clone;
+  vl->prop_core   = core;
 }
 
 

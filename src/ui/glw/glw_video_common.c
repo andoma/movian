@@ -857,7 +857,8 @@ glw_video_set_int(glw_t *w, glw_attribute_t attrib, int value,
  *
  */
 static void
-glw_video_set_roots(glw_t *w, prop_t *self, prop_t *parent, prop_t *clone)
+glw_video_set_roots(glw_t *w, prop_t *self, prop_t *parent, prop_t *clone,
+                    prop_t *core)
 {
   glw_video_t *gv = (glw_video_t *)w;
   prop_link(gv->gv_mp->mp_prop_root, prop_create(self, "media"));

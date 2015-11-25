@@ -298,7 +298,8 @@ glw_slideshow_set_float(glw_t *w, glw_attribute_t attrib, float value,
  *
  */
 static void
-glw_slideshow_set_roots(glw_t *w, prop_t *self, prop_t *parent, prop_t *clone)
+glw_slideshow_set_roots(glw_t *w, prop_t *self, prop_t *parent, prop_t *clone,
+                        prop_t *core)
 {
   glw_slideshow_t *s = (glw_slideshow_t *)w;
 

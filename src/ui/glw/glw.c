@@ -395,7 +395,8 @@ glw_load_universe(glw_root_t *gr)
 
   gr->gr_universe = glw_view_create(gr,
                                     universe, NULL, NULL, page,
-                                    NULL, NULL, NULL, NULL, 0);
+                                    NULL, NULL, NULL, gr->gr_prop_core,
+                                    NULL, 0);
 
   rstr_release(universe);
 }

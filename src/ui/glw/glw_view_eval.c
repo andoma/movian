@@ -71,6 +71,7 @@ typedef struct glw_prop_sub {
   prop_t *gps_prop;
   prop_t *gps_prop_view;
   prop_t *gps_prop_clone;
+  prop_t *gps_prop_core;
 
   token_t *gps_rpn;
 
@@ -101,6 +102,7 @@ typedef struct sub_cloner {
 
   prop_t *sc_view_prop;
   prop_t *sc_view_args;
+  prop_t *sc_prop_core;
 
   glw_t *sc_anchor;
 
@@ -227,6 +229,9 @@ glw_prop_subscription_destroy_list(glw_root_t *gr, struct glw_prop_sub_list *l)
       if(sc->sc_view_prop)
 	prop_ref_dec(sc->sc_view_prop);
 
+      if(sc->sc_prop_core)
+	prop_ref_dec(sc->sc_prop_core);
+
       if(sc->sc_view_args)
 	prop_ref_dec(sc->sc_view_args);
       break;
@@ -241,6 +246,7 @@ glw_prop_subscription_destroy_list(glw_root_t *gr, struct glw_prop_sub_list *l)
     prop_ref_dec(gps->gps_prop);
     prop_ref_dec(gps->gps_prop_view);
     prop_ref_dec(gps->gps_prop_clone);
+    prop_ref_dec(gps->gps_prop_core);
     free(gps);
   }
 }
@@ -265,7 +271,8 @@ glw_prop_subscription_suspend_list(struct glw_prop_sub_list *l)
 
 
 static void eval_dynamic(glw_t *w, token_t *rpn, struct glw_rctx *rc,
-			 prop_t *prop, prop_t *view, prop_t *clone);
+			 prop_t *prop, prop_t *view, prop_t *clone,
+                         prop_t *core);
 
 static int glw_view_eval_rpn0(token_t *t0, glw_view_eval_context_t *ec);
 
@@ -830,9 +837,9 @@ resolve_property_name(glw_view_eval_context_t *ec, token_t *a,
 		       PROP_TAG_NAMED_ROOT, ec->prop_clone, "clone",
 		       PROP_TAG_NAMED_ROOT, ec->prop_args, "args",
 		       PROP_TAG_NAMED_ROOT, ec->prop_event, "event",
+		       PROP_TAG_NAMED_ROOT, ec->prop_core, "core",
 		       PROP_TAG_ROOT, ec->w->glw_root->gr_prop_ui,
 		       PROP_TAG_NAMED_ROOT, ec->w->glw_root->gr_prop_nav, "nav",
-		       PROP_TAG_NAMED_ROOT, ec->w->glw_root->gr_prop_core, "core",
 		       NULL);
 
   /* Transform TOKEN_PROPERTY_NAME -> TOKEN_PROPERTY */
@@ -953,6 +960,7 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
     n.prop_parent = ec->prop_parent;
     n.prop_view   = ec->prop_view;
     n.prop_clone  = ec->prop_clone;
+    n.prop_core   = ec->prop_core;
     n.prop_args   = ec->prop_args;
     n.prop_event  = ec->prop_event;
 
@@ -1101,7 +1109,7 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
  */
 static void
 eval_dynamic(glw_t *w, token_t *rpn, struct glw_rctx *rc,
-	     prop_t *prop, prop_t *view, prop_t *clone)
+	     prop_t *prop, prop_t *view, prop_t *clone, prop_t *core)
 {
   glw_view_eval_context_t ec;
 
@@ -1112,6 +1120,7 @@ eval_dynamic(glw_t *w, token_t *rpn, struct glw_rctx *rc,
   ec.prop_self = prop;
   ec.prop_view = view;
   ec.prop_clone = clone;
+  ec.prop_core = core;
 
   ec.sublist = &w->glw_prop_subscriptions;
 
@@ -1241,7 +1250,7 @@ clone_eval(glw_clone_t *c)
   n.prop_view   = sc->sc_view_prop;
   n.prop_clone  = c->c_clone_root;
   n.prop_args   = sc->sc_view_args;
-
+  n.prop_core   = sc->sc_prop_core;
   n.gr = c->c_w->glw_root;
 
   n.w = c->c_w;
@@ -1441,7 +1450,7 @@ cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
   if(c->c_w->glw_class->gc_set_roots != NULL) {
     c->c_w->glw_class->gc_set_roots(c->c_w,
                                     p, sc->sc_originating_prop,
-                                    c->c_clone_root);
+                                    c->c_clone_root, sc->sc_prop_core);
   }
 
   prop_tag_set(p, sc, c);
@@ -1769,7 +1778,7 @@ prop_callback_cloner(void *opaque, prop_event_t event, ...)
 
   if(rpn != NULL)
     eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop, gps->gps_prop_view,
-		 gps->gps_prop_clone);
+		 gps->gps_prop_clone, gps->gps_prop_core);
 }
 
 
@@ -1872,7 +1881,7 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
 
   if(rpn != NULL)
     eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop, gps->gps_prop_view,
-		 gps->gps_prop_clone);
+		 gps->gps_prop_clone, gps->gps_prop_core);
 }
 
 
@@ -1950,7 +1959,7 @@ prop_callback_counter(void *opaque, prop_event_t event, ...)
 
   if(rpn != NULL)
     eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop, gps->gps_prop_view,
-		 gps->gps_prop_clone);
+		 gps->gps_prop_clone, gps->gps_prop_core);
 }
 
 
@@ -2058,7 +2067,7 @@ ve_cb(void *opaque, prop_event_t event, ...)
 
   if(rpn != NULL)
     eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop, gps->gps_prop_view,
-		 gps->gps_prop_clone);
+		 gps->gps_prop_clone, gps->gps_prop_core);
 }
 
 
@@ -2150,7 +2159,7 @@ vectorizer_move_element(sub_vectorizer_t *sv, prop_t *p, prop_t *before,
   token_t *rpn = gps->gps_rpn;
   if(rpn != NULL)
     eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop, gps->gps_prop_view,
-		 gps->gps_prop_clone);
+		 gps->gps_prop_clone, gps->gps_prop_core);
 }
 
 
@@ -2186,7 +2195,7 @@ vectorizer_del_element(sub_vectorizer_t *sv, prop_t *p, glw_root_t *gr)
   token_t *rpn = gps->gps_rpn;
   if(rpn != NULL)
     eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop, gps->gps_prop_view,
-		 gps->gps_prop_clone);
+		 gps->gps_prop_clone, gps->gps_prop_core);
 }
 
 
@@ -2211,7 +2220,7 @@ vectorizer_select_element(sub_vectorizer_t *sv, prop_t *p, glw_root_t *gr)
   token_t *rpn = gps->gps_rpn;
   if(rpn != NULL)
     eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop, gps->gps_prop_view,
-		 gps->gps_prop_clone);
+		 gps->gps_prop_clone, gps->gps_prop_core);
 }
 
 
@@ -2359,7 +2368,7 @@ prop_callback_vectorizer(void *opaque, prop_event_t event, ...)
 
   if(rpn != NULL)
     eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop, gps->gps_prop_view,
-		 gps->gps_prop_clone);
+		 gps->gps_prop_clone, gps->gps_prop_core);
 }
 
 
@@ -2414,6 +2423,7 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
       sc->sc_originating_prop = prop_ref_inc(ec->prop_self);
       sc->sc_view_prop        = prop_ref_inc(ec->prop_view);
       sc->sc_view_args        = prop_ref_inc(ec->prop_args);
+      sc->sc_prop_core        = prop_ref_inc(ec->prop_core);
 
       TAILQ_INIT(&sc->sc_pending);
     } while(0);
@@ -2442,6 +2452,7 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
   gps->gps_prop = prop_ref_inc(ec->prop_self);
   gps->gps_prop_view = prop_ref_inc(ec->prop_view);
   gps->gps_prop_clone = prop_ref_inc(ec->prop_clone);
+  gps->gps_prop_core = prop_ref_inc(ec->prop_core);
 
   gps->gps_file = rstr_dup(self->file);
   gps->gps_line = self->line;
@@ -2478,9 +2489,9 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
 		       PROP_TAG_NAMED_ROOT, ec->prop_args, "args",
 		       PROP_TAG_NAMED_ROOT, ec->prop_clone, "clone",
 		       PROP_TAG_NAMED_ROOT, ec->prop_event, "event",
+		       PROP_TAG_NAMED_ROOT, ec->prop_core, "core",
 		       PROP_TAG_ROOT, w->glw_root->gr_prop_ui,
 		       PROP_TAG_NAMED_ROOT, w->glw_root->gr_prop_nav, "nav",
-		       PROP_TAG_NAMED_ROOT, w->glw_root->gr_prop_core, "core",
 #ifdef PROP_SUB_RECORD_SOURCE
                        PROP_TAG_SOURCE, rstr_get(self->file), self->line,
 #endif
@@ -2724,6 +2735,7 @@ glw_view_eval_rpn(token_t *t, glw_view_eval_context_t *pec, int *copyp)
   ec.prop_parent = pec->prop_parent;
   ec.prop_view   = pec->prop_view;
   ec.prop_clone  = pec->prop_clone;
+  ec.prop_core   = pec->prop_core;
   ec.prop_args   = pec->prop_args;
   ec.prop_event  = pec->prop_event;
 
@@ -2846,6 +2858,7 @@ glwf_widget(glw_view_eval_context_t *ec, struct token *self,
   n.prop_parent = ec->prop_parent;
   n.prop_view   = ec->prop_view;
   n.prop_clone  = ec->prop_clone;
+  n.prop_core   = ec->prop_core;
   n.prop_args   = ec->prop_args;
   n.prop_event  = ec->prop_event;
 
@@ -2859,7 +2872,7 @@ glwf_widget(glw_view_eval_context_t *ec, struct token *self,
 
   if(n.w->glw_class->gc_set_roots != NULL)
     n.w->glw_class->gc_set_roots(n.w, ec->prop_self, ec->prop_parent,
-                                 ec->prop_clone);
+                                 ec->prop_clone, ec->prop_core);
 
   n.sublist = &n.w->glw_prop_subscriptions;
 
@@ -3112,6 +3125,7 @@ typedef struct glw_captured_block {
   prop_t *prop_view;
   prop_t *prop_args;
   prop_t *prop_clone;
+  prop_t *prop_core;
 } glw_captured_block_t;
 
 
@@ -3127,6 +3141,7 @@ glw_captured_block_release(glw_root_t *gr, glw_captured_block_t *gcb)
   prop_ref_dec(gcb->prop_view);
   prop_ref_dec(gcb->prop_args);
   prop_ref_dec(gcb->prop_clone);
+  prop_ref_dec(gcb->prop_core);
 }
 
 
@@ -3144,6 +3159,7 @@ glw_captured_block_init(glw_captured_block_t *gcb,
   gcb->prop_view   = prop_ref_inc(ec->prop_view);
   gcb->prop_clone  = prop_ref_inc(ec->prop_clone);
   gcb->prop_args   = prop_ref_inc(ec->prop_args);
+  gcb->prop_core   = prop_ref_inc(ec->prop_core);
 }
 
 
@@ -3158,6 +3174,7 @@ glw_captured_block_prepare_invoke(glw_view_eval_context_t *ec,
   ec->prop_parent = gcb->prop_parent;
   ec->prop_view   = gcb->prop_view;
   ec->prop_clone  = gcb->prop_clone;
+  ec->prop_core   = gcb->prop_core;
   ec->prop_args   = gcb->prop_args;
 }
 
@@ -4726,9 +4743,9 @@ glwf_createchild(glw_view_eval_context_t *ec, struct token *self,
   p = prop_get_by_name(propname, 1,
 		       PROP_TAG_NAMED_ROOT, ec->prop_self, "self",
 		       PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
+		       PROP_TAG_NAMED_ROOT, ec->prop_core, "core",
 		       PROP_TAG_ROOT, ec->w->glw_root->gr_prop_ui,
 		       PROP_TAG_NAMED_ROOT, ec->w->glw_root->gr_prop_nav, "nav",
-		       PROP_TAG_NAMED_ROOT, ec->w->glw_root->gr_prop_core, "core",
 		       NULL);
 
   if(p != NULL) {
@@ -4977,7 +4994,7 @@ glwf_bind(glw_view_eval_context_t *ec, struct token *self,
       ec->w->glw_class->gc_bind_to_property(ec->w,
 					    ec->prop_self, propname,
 					    ec->prop_view, ec->prop_args,
-					    ec->prop_clone);
+					    ec->prop_clone, ec->prop_core);
 
   } else if(a != NULL && a->type == TOKEN_RSTRING) {
     ec->w->glw_class->gc_bind_to_id(ec->w, rstr_get(a->t_rstring));
@@ -4985,7 +5002,7 @@ glwf_bind(glw_view_eval_context_t *ec, struct token *self,
   } else {
     if(ec->w->glw_class->gc_bind_to_property != NULL)
       ec->w->glw_class->gc_bind_to_property(ec->w,
-					    NULL, NULL, NULL, NULL, NULL);
+					    NULL, NULL, NULL, NULL, NULL, NULL);
   }
   return 0;
 }

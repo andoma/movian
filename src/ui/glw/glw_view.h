@@ -225,6 +225,7 @@ typedef struct glw_view_eval_context {
   struct prop *prop_args;
   struct prop *prop_clone;
   struct prop *prop_event;
+  struct prop *prop_core;
 
   struct glw_root *gr;
   const struct glw_rctx *rc;

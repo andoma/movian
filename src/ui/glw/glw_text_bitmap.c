@@ -927,7 +927,8 @@ gtb_set_rstr(glw_t *w, glw_attribute_t a, rstr_t *str, glw_style_t *origin)
  */
 static void
 bind_to_property(glw_t *w, prop_t *p, const char **pname,
-		 prop_t *view, prop_t *args, prop_t *clone)
+		 prop_t *view, prop_t *args, prop_t *clone,
+                 prop_t *core)
 {
   glw_text_bitmap_t *gtb = (void *)w;
   gtb_unbind(gtb);
@@ -941,9 +942,9 @@ bind_to_property(glw_t *w, prop_t *p, const char **pname,
 		   PROP_TAG_NAMED_ROOT, view, "view",
 		   PROP_TAG_NAMED_ROOT, args, "args",
 		   PROP_TAG_NAMED_ROOT, clone, "clone",
+                   PROP_TAG_NAMED_ROOT, core, "core",
 		   PROP_TAG_ROOT, w->glw_root->gr_prop_ui,
 		   PROP_TAG_NAMED_ROOT, w->glw_root->gr_prop_nav, "nav",
-                   PROP_TAG_NAMED_ROOT, w->glw_root->gr_prop_core, "core",
 		   NULL);
 
   if(w->glw_flags2 & GLW2_AUTOHIDE)

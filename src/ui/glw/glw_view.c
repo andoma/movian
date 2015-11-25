@@ -172,7 +172,7 @@ gcv_release(glw_root_t *gr, glw_cached_view_t *gcv)
 static void
 eval_loaded_view(glw_root_t *gr, glw_cached_view_t *gcv, glw_view_t *view,
                  prop_t *prop_self, prop_t *prop_parent, prop_t *prop_args,
-                 prop_t *prop_clone)
+                 prop_t *prop_clone, prop_t *prop_core)
 {
   if(gcv->gcv_error) {
     glw_view_error(&view->w, gcv->gcv_error,
@@ -195,6 +195,7 @@ eval_loaded_view(glw_root_t *gr, glw_cached_view_t *gcv, glw_view_t *view,
   ec.prop_parent = prop_parent;
   ec.prop_args   = prop_args;
   ec.prop_clone  = prop_clone;
+  ec.prop_core   = prop_core;
   ec.prop_view   = view->viewprop;
   
   ec.sublist = &ec.w->glw_prop_subscriptions;
@@ -294,6 +295,7 @@ typedef struct glw_view_load_request {
   prop_t *prop_parent;
   prop_t *args;
   prop_t *prop_clone;
+  prop_t *prop_core;
   glw_cached_view_t *gcv;
 } glw_view_load_request_t;
 
@@ -313,6 +315,7 @@ gvlr_destroy(glw_root_t *gr, glw_view_load_request_t *r)
   prop_ref_dec(r->prop_parent);
   prop_ref_dec(r->args);
   prop_ref_dec(r->prop_clone);
+  prop_ref_dec(r->prop_core);
   gcv_release(gr, r->gcv);
   free(r);
 }
@@ -363,7 +366,8 @@ glw_view_loader_eval(glw_root_t *gr)
 
     if(!(r->w->glw_flags & GLW_DESTROYING))
       eval_loaded_view(gr, r->gcv, (glw_view_t *)r->w,
-                       r->prop, r->prop_parent, r->args, r->prop_clone);
+                       r->prop, r->prop_parent, r->args, r->prop_clone,
+                       r->prop_core);
 
     gvlr_destroy(gr, r);
   }
@@ -396,7 +400,7 @@ glw_view_loader_flush(glw_root_t *gr)
 glw_t *
 glw_view_create(glw_root_t *gr, rstr_t *url, rstr_t *alturl, glw_t *parent,
                 prop_t *prop, prop_t *prop_parent, prop_t *args,
-                prop_t *prop_clone, rstr_t *file, int line)
+                prop_t *prop_clone, prop_t *prop_core, rstr_t *file, int line)
 {
   glw_cached_view_t *gcv;
 
@@ -442,6 +446,7 @@ glw_view_create(glw_root_t *gr, rstr_t *url, rstr_t *alturl, glw_t *parent,
       r->prop_parent = prop_ref_inc(prop_parent);
       r->args        = prop_ref_inc(args);
       r->prop_clone  = prop_ref_inc(prop_clone);
+      r->prop_core   = prop_ref_inc(prop_core);
       r->gcv         = gcv;
 
       TAILQ_INSERT_TAIL(&gr->gr_view_load_requests, r, link);
@@ -467,7 +472,7 @@ glw_view_create(glw_root_t *gr, rstr_t *url, rstr_t *alturl, glw_t *parent,
   }
 
   eval_loaded_view(gr, gcv, (glw_view_t *)w,
-                   prop, prop_parent, args, prop_clone);
+                   prop, prop_parent, args, prop_clone, prop_core);
 
   return w;
 }
