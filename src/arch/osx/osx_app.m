@@ -17,6 +17,8 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
+#include <syslog.h>
+
 #import <AppKit/AppKit.h>
 #import <CoreAudio/HostTime.h>
 
@@ -32,6 +34,8 @@
 #include "htsmsg/htsmsg_store.h"
 #include "misc/md5.h"
 #include "misc/str.h"
+
+static int restart_pipe[2];
 
 prop_courier_t *mainloop_courier;
 
@@ -90,16 +94,69 @@ get_device_id(void)
 /**
  *
  */
+static void
+restarthelper(void)
+{
+  pid_t parent = getppid();
+  close(restart_pipe[1]);
+  setsid();
+  char r;
+  char *app = mystrdupa(gconf.binary);
+  char *x = strstr(app, "/Contents/");
+  if(x != NULL)
+    *x = 0;
+
+  openlog("Movian", LOG_PID | LOG_NDELAY, LOG_SYSLOG);
+  syslog(LOG_NOTICE, "Restart-helper is idle, app=%s", app);
+  if(read(restart_pipe[0], &r, 1) != 1)
+    exit(0);
+
+  syslog(LOG_NOTICE, "Restarting %s", app);
+
+  for(int i = 0; i < 100; i++) {
+    syslog(LOG_NOTICE, "checking...");
+    if(kill(parent, 0))
+      break;
+    syslog(LOG_NOTICE, "waiting...");
+    usleep(10000);
+  }
+  char tmp[PATH_MAX];
+  snprintf(tmp, sizeof(tmp), "open \"%s\"", app);
+  system(tmp);
+  syslog(LOG_NOTICE, "Restarting exiting");
+  exit(0);
+}
+
+
+/**
+ *
+ */
 int
 main(int argc, char **argv)
 {
+  gconf.binary = argv[0];
+
+  if(pipe(restart_pipe))
+    exit(1);
+
+  int r = fork();
+  if(r == -1)
+    exit(1);
+  if(r == 0) {
+    restarthelper();
+    exit(0);
+  }
+  close(restart_pipe[0]);
+
   NSApplication *app = [NSApplication sharedApplication];
   App *s = [App new];
 
   [NSApp setDelegate: s];
 
-  gconf.binary = argv[0];
   gconf.can_standby = 1;
+  gconf.upgrade_path = getenv("UPGRADE_BINARY_PATH");
+  gconf.can_restart = gconf.upgrade_path != NULL;
+
   get_device_id();
 
   NSFileManager* fileManager = [NSFileManager defaultManager];
@@ -146,7 +203,12 @@ arch_exit(void)
     exit(0);
   }
 
- exit(gconf.exit_code);
+  if(gconf.exit_code == APP_EXIT_RESTART) {
+    char r = 'r';
+    write(restart_pipe[1], &r, 1);
+    exit(0);
+  }
+  exit(gconf.exit_code);
 }
 
 

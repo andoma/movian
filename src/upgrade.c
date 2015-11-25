@@ -1281,6 +1281,13 @@ upgrade_init(void)
   archname = "android";
 #endif
 
+#ifdef __APPLE__
+  if(gconf.upgrade_path == NULL)
+    return;
+  artifact_type = "bin";
+  archname = "osx";
+#endif
+
   if(artifact_type == NULL || archname == NULL)
     return;
 
