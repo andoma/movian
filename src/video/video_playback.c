@@ -769,8 +769,9 @@ video_player_idle(void *aux)
       rstr_release(parent_title);
 
       if(ep->parent_model != NULL) {
-        parent_title = prop_get_string(ep->parent_model,
-                                       "metadata", "title", NULL);
+        prop_t *x = prop_follow(ep->parent_model);
+        parent_title = prop_get_string(x, "metadata", "title", NULL);
+        prop_ref_dec(x);
       } else {
         parent_title = NULL;
       }
