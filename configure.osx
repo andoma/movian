@@ -83,33 +83,13 @@ setup_env "$@"
 enable libpthread
 enable zlib
 
-#
-# Check SDK path and set target version
-#
-if [ "x$MACOSXSDK" != "x" ] ; then
-    if [ -d "$MACOSXSDK" ] ; then
-        SDKSETTINGS="$MACOSXSDK/SDKSettings"
-        if [ ! -e "$SDKSETTINGS.plist" ] ; then
-            echo "Could not find $SDKSETTINGS.plist"
-            die
-        fi
-        
-        MACOSXTARGET=`defaults read $SDKSETTINGS Version`
-        echo "Mac OS X SDK:          $MACOSXSDK"
-        echo "Mac OS X target:       $MACOSXTARGET"
-    else
-        echo "Mac OS X SDK directory $MACOSXSDK does not exist"
-        die
-    fi
-    
-    MACOSXSDK_CFLAGS="-mmacosx-version-min=$MACOSXTARGET -isysroot $MACOSXSDK"
-    MACOSXSDK_LDFLAGS="$MACOSXSDK_CFLAGS"
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg += $MACOSXSDK_LDFLAGS"
-    echo >>${CONFIG_MAK} "CFLAGS_cfg += $MACOSXSDK_CFLAGS"
-else
-    echo "Mac OS X SDK:          default"
-    echo "Mac OS X target:       default (`sw_vers -productVersion`)"
-fi
+MACOSXSDK_CFLAGS="-mmacosx-version-min=10.8"
+MACOSXSDK_LDFLAGS="$MACOSXSDK_CFLAGS"
+LIBAV_CFLAGS="$MACOSXSDK_CFLAGS"
+LIBAV_LDFLAGS="$MACOSXSDK_CFLAGS"
+echo >>${CONFIG_MAK} "LDFLAGS_cfg += $MACOSXSDK_LDFLAGS"
+echo >>${CONFIG_MAK} "CFLAGS_cfg += $MACOSXSDK_CFLAGS"
+echo >>${CONFIG_MAK} "CFLAGS_ext += $MACOSXSDK_CFLAGS"
 
 #
 # Standard Mac OS X frameworks
@@ -127,7 +107,10 @@ echo >>${CONFIG_MAK} "LDFLAGS_cfg += -weak_framework VideoDecodeAcceleration"
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework CoreAudio"
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework AudioToolBox"
 
+export CFLAGS="$MACOSXSDK_CFLAGS"
 freetype_setup
+export -n CFLAGS
+
 LIBAV_ARCH_FLAGS="--disable-shared --enable-static"
 libav_setup
 rtmpdump_setup

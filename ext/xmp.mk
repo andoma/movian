@@ -6,6 +6,7 @@ CFLAGS = ${OPTFLAGS} -g -funsigned-char -D_FILE_OFFSET_BITS=64
 CFLAGS += -Wno-unused-result
 CFLAGS += -I${C}/ext/xmp/include
 CFLAGS += -I${C}/ext/xmp/src
+CFLAGS += ${CFLAGS_ext}
 
 SRCS += \
 	ext/xmp/src/adlib.c \
