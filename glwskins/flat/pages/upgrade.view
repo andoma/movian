@@ -5,7 +5,7 @@
     align: center;
     widget(container_z, {
       GridItemBevel();
-
+      GridItemHighlight();
       widget(label, {
         padding: [1em, 0.5em];
 	focusable: true;
@@ -37,10 +37,19 @@
 }
 
 
+widget(container_x, {
 
-widget(cursor, {
+#import "skin://menu/navbar.view"
 
   widget(container_y, {
+    filterConstraintX: true;
+    onEvent(left, {
+      $view.showNavbar = true;
+      focus("navbardot");
+    }, true, false);
+
+    id: "main";
+
     spacing: 0.5em;
     padding: 1em;
 
@@ -173,48 +182,36 @@ widget(cursor, {
         spacing: $ui.size;
 
         cloner($core.upgrade.changelog, container_x, {
+          alpha: isFocused() + 0.6;
 	  spacing: $ui.size;
 	  focusable: 0.1;
-	  alpha: isFocused() + 0.6;
 
 	  widget(label, {
 	    weight: 0.4;
 	    filterConstraintX: true;
 	    align: topRight;
 	    caption: $self.version;
-            color: select(isNavFocused(), 0, 1);
 	  });
 
 	  widget(label, {
 	    filterConstraintX: true;
 	    maxlines: 10;
 	    caption: $self.text;
-            color: select(isNavFocused(), 0, 1);
 	  });
         });
       });
 
       widget(slider_y, {
+        id: "scrollbar";
         bind("list");
-        width: 4;
+        width: 0.6em;
         focusable: canScroll() * 0.01;
         alpha: iir(canScroll(), 16);
         widget(quad, {
+          GridItemHighlight();
 	  alpha: iir(0.3 + 0.3 * (isFocused() || isPressed()), 4) + isHovered();
         });
       });
     });
-  });
-
-  widget(quad, {
-    zoffset: -100;
-    alpha: 0.6 * iir($ui.keyboard, 4);
-    additive: true;
-  });
-
-  widget(quad, {
-    zoffset: -100;
-    alpha: 0.1;
-    additive: true;
   });
 });

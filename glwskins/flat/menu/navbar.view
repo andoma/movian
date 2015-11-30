@@ -1,0 +1,55 @@
+
+widget(expander_x, {
+  expansion: iir($view.showNavbar, 4);
+  alpha: iir($view.showNavbar, 4);
+
+  widget(container_y, {
+    width: 4em;
+    align: center;
+
+    widget(icon, {
+      align: right;
+      source: "skin://icons/ic_expand_less_48px.svg";
+      size: 2em;
+      alpha: 0.5;
+    });
+
+    widget(container_x, {
+
+      widget(icon, {
+        align: center;
+        source: "skin://icons/ic_chevron_left_48px.svg";
+        size: 2em;
+        alpha: 0.5;
+      });
+
+      widget(icon, {
+        id: "navbardot";
+        focusable: true;
+        align: center;
+        source: "skin://icons/dot.png";
+        size: 2em;
+        alpha: 0.4 + isFocused();
+        color: sinewave(1) * 0.25 + 0.75;
+        onEvent(right, {
+          $view.showNavbar = false;
+          focus("main");
+        });
+
+        onEvent(left, {
+          $self.close = true;
+        });
+
+        onEvent(up, targetedEvent("scrollbar", up));
+        onEvent(down, targetedEvent("scrollbar", down));
+      });
+    });
+
+    widget(icon, {
+      align: right;
+      source: "skin://icons/ic_expand_more_48px.svg";
+      alpha: 0.5;
+      size: 2em;
+    });
+  });
+});
