@@ -303,7 +303,7 @@ dd_read(de_dev_t *dd)
       }
     }
     if(e == NULL)
-      printf("Unmapped key %d (0x%x)\n", ie.code, ie.code);
+      TRACE(TRACE_DEBUG, "DE", "Unmapped key %d (0x%x)\n", ie.code, ie.code);
     break;
   }
 
