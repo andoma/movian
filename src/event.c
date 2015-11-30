@@ -518,13 +518,13 @@ event_dispatch(event_t *e)
     app_shutdown(0);
 
   } else if(event_is_action(e, ACTION_STANDBY)) {
-    app_shutdown(10);
+    app_shutdown(APP_EXIT_STANDBY);
 
   } else if(event_is_action(e, ACTION_POWER_OFF)) {
-    app_shutdown(11);
+    app_shutdown(APP_EXIT_POWEROFF);
 
   } else if(event_is_action(e, ACTION_REBOOT)) {
-    app_shutdown(15);
+    app_shutdown(APP_EXIT_REBOOT);
 
   } else if(event_is_action(e, ACTION_NAV_BACK) ||
 	    event_is_action(e, ACTION_NAV_FWD) ||
