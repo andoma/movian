@@ -120,10 +120,35 @@ keypress(void *aux, const cec_keypress kp)
 }
 
 
+static void
+source_activated(void *aux, const cec_logical_address la, const uint8_t on)
+{
+  TRACE(TRACE_INFO, "CEC", "Logical address %d is %s",
+        la, on ? "active" : "inactive");
+}
+
+
+static int
+handle_cec_command(void *aux, const cec_command cmd)
+{
+  switch(cmd.opcode) {
+  case CEC_OPCODE_STANDBY:
+    if(cmd.initiator == CECDEVICE_TV) {
+      TRACE(TRACE_INFO, "CEC", "TV STANDBY");
+    }
+    break;
+  default:
+    break;
+  }
+  return 1;
+}
+
 
 static ICECCallbacks g_callbacks = {
   .CBCecLogMessage = log_message,
   .CBCecKeyPress   = keypress,
+  .CBCecSourceActivated = source_activated,
+  .CBCecCommand = handle_cec_command,
 };
 
 static libcec_configuration cec_config;
