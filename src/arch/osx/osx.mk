@@ -76,5 +76,5 @@ osx-clean:
 
 
 ${BUILDDIR}/trampoline:	support/osx/trampoline.c
-	${CC} -Wall -o $@ $<
+	${CC} -mmacosx-version-min=10.8 -Wall -o $@ $<
 
