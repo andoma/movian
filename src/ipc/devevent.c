@@ -161,6 +161,10 @@ static int key_to_action[][3] = {
   {KEY_RECORD,             ACTION_RECORD},
   {KEY_SLEEP,              ACTION_STANDBY},
   {KEY_BACK,               ACTION_NAV_BACK},
+  {BTN_RIGHT,              ACTION_NAV_BACK},
+  {BTN_LEFT,               ACTION_ITEMMENU},
+  {KEY_COMPOSE,            ACTION_MENU},
+
 
   // These should be configurable
 
@@ -299,7 +303,7 @@ dd_read(de_dev_t *dd)
       }
     }
     if(e == NULL)
-      printf("Unmapped key %d\n", ie.code);
+      printf("Unmapped key %d (0x%x)\n", ie.code, ie.code);
     break;
   }
 
