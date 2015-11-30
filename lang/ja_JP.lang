@@ -95,7 +95,7 @@ id: Mark as unseen
 msg: 未再生にする
 
 id: Play from beginning
-msg: 始めから再生
+msg: 最初から再生
 
 id: Play until end of list
 msg: リストを最後まで再生
@@ -480,7 +480,7 @@ id: No, Start over
 msg: 始めから再生
 
 id: Resume %s from %s
-msg: %sをリジューム再生しますか？: 開始位置%s
+msg: リジューム再生しますか？ %s開始位置%s
 
 #
 # ./glwskins/default/screensaver.view
@@ -870,7 +870,7 @@ id: Show only supported files
 msg: 再生可能なファイルのみを表示する
 
 id: Sort folders first
-msg: フォルダを優先してソートする
+msg: フォルダを優先しソートする
 
 id: Sort on
 msg: 並べかえ
@@ -1077,7 +1077,7 @@ msg: メタデータモード
 # ./src/metadata/metadata.c
 #
 id: Embedded in file
-msg: 組み込みファイル
+msg: Embedded in file
 
 id: Track %d
 msg: トラック %d
@@ -1233,7 +1233,7 @@ id: Alternate plugin Repository URL
 msg: プラグインリポジトリのURL
 
 id: Automatically upgrade plugins
-msg: プラグインの自動アップグレードを有効にする
+msg: プラグイン自動アップグレードを有効にする
 
 id: Available plugins
 msg: 利用可能なプラグイン
@@ -1248,7 +1248,7 @@ id: Browse available plugins
 msg: 利用可能なプラグインを表示する
 
 id: Browsing
-msg: ブラウザ設定
+msg: 情報表示設定
 
 id: Cloud services
 msg: クラウドサービス
@@ -1377,7 +1377,7 @@ msg: 起動 / 終了設定
 # ./src/sd/sd.c
 #
 id: Enabled on home screen
-msg: ホームに表示します。
+msg: ホームに表示する
 
 id: Name
 msg: 名前
@@ -1398,7 +1398,7 @@ id: Developer settings
 msg: 開発者向け設定
 
 id: Discovered media sources
-msg: 接続された機器
+msg: 接続中のデバイス
 
 id: Fonts and user interface styling
 msg: フォントやインターフェースなどスタイリングに関する設定です。
@@ -1560,7 +1560,7 @@ id: Vertical underscan
 msg: 行間隔調整
 
 id: Wrap when reaching beginning/end of lists
-msg: カーソルがリストの先頭 / 最後尾に達した際ループさせる
+msg: リストの先頭 / 最後尾をループさせる
 
 #
 # ./src/ui/glw/glw_x11.c
