@@ -3,61 +3,62 @@
 onEvent(cancel, deliverEvent($self.eventSink));
 onEvent(back,   deliverEvent($self.eventSink, "cancel"));
 
-widget(cursor, {
-widget(container_x, {
-  space(0.2);
 
-  widget(container_y, {
-    align: center;
+widget(popup, {
+
+  widget(container_z, {
+
     filterConstraintX: true;
+    PopupBackdrop();
 
-    widget(container_z, {
+    widget(container_y, {
+      padding: 1em;
+      spacing: 2em;
 
-      widget(quad, {
-        style: "popupBackdrop";
-      });
+      widget(table, {
+        widget(container_y, {
+          spacing: 0.25em;
 
-      widget(container_y, {
-        style: "popupContainer";
+	  widget(container_x, {
+            tableMode: true;
+            style: "popupRow";
 
-        widget(table, {
-          widget(container_y, {
-            spacing: 0.25em;
+	    widget(icon, {
+	      source: "skin://icons/ic_lock_48px.svg";
+              align: center;
+              size: 2em;
+	    });
 
-	    widget(container_x, {
-              tableMode: true;
-              style: "popupRow";
-
-	      widget(icon, {
-	        source: "skin://icons/ic_lock_48px.svg";
-                align: center;
-                size: 2em;
-	      });
-
-	      widget(container_y, {
-	        widget(label, {
-	          align: left;
-	          caption: $self.source ?? $self.id;
-	        });
-	        widget(label, {
-	          align: left;
-	          caption: $self.reason;
-	        });
-	      });
-            });
-
-            widget(container_x, {
-              tableMode: true;
-	      hidden: $self.disableUsername;
-              style: "popupRow";
-
+	    widget(container_y, {
+              filterConstraintX: true;
 	      widget(label, {
-	        caption: _("Username");
-                align: right;
+	        align: left;
+	        caption: $self.source ?? $self.id;
 	      });
+	      widget(label, {
+	        align: left;
+	        caption: $self.reason;
+	      });
+	    });
+          });
 
+          widget(container_x, {
+            tableMode: true;
+	    hidden: $self.disableUsername;
+            style: "popupRow";
+
+	    widget(label, {
+	      caption: _("Username");
+              align: right;
+	    });
+
+            widget(container_z, {
+              filterConstraintX: true;
+              widget(quad, {
+                style: "textBackdrop";
+              });
  	      widget(text, {
-                filterConstraintX: true;
+                style: "textInput";
 	        description: _("Username");
 	        id: "username";
 	        focusable: true;
@@ -67,20 +68,26 @@ widget(container_x, {
 		        $self.username);
 	      });
             });
+          });
+
+          widget(container_x, {
+            style: "popupRow";
+	    hidden: $self.disablePassword;
+            tableMode: true;
+
+	    widget(label, {
+	      caption: _("Password");
+              align: right;
+	    });
 
 
-            widget(container_x, {
-              style: "popupRow";
-	      hidden: $self.disablePassword;
-              tableMode: true;
-
-	      widget(label, {
-	        caption: _("Password");
-                align: right;
-	      });
-
+            widget(container_z, {
+              filterConstraintX: true;
+              widget(quad, {
+                style: "textBackdrop";
+              });
  	      widget(text, {
-                filterConstraintX: true;
+                style: "textInput";
 	        description: _("Password");
 	        id: "password";
 	        focusable: true;
@@ -91,18 +98,25 @@ widget(container_x, {
 		        $self.password);
 	      });
             });
+          });
 
-            widget(container_x, {
-              style: "popupRow";
-	      hidden: $self.disableDomain;
-              tableMode: true;
+          widget(container_x, {
+            style: "popupRow";
+	    hidden: $self.disableDomain;
+            tableMode: true;
 
-	      widget(label, {
-	        caption: _("Domain");
-                align: right;
-	      });
+	    widget(label, {
+	      caption: _("Domain");
+              align: right;
+	    });
 
+            widget(container_z, {
+              filterConstraintX: true;
+              widget(quad, {
+                style: "textBackdrop";
+              });
  	      widget(text, {
+                style: "textInput";
 	        description: _("Domain");
 	        id: "domain";
 	        focusable: true;
@@ -112,21 +126,29 @@ widget(container_x, {
 		        $self.domain);
 	      });
             });
+          });
 
+          widget(container_x, {
+            style: "popupRow";
+	    hidden: !$self.canRemember;
+            tableMode: true;
 
-            widget(container_x, {
-              style: "popupRow";
-	      hidden: !$self.canRemember;
-              tableMode: true;
+            focusable: true;
+            onEvent(activate, {
+              toggle($self.rememberMe);
+            });
 
-              focusable: true;
-              onEvent(activate, {
-                toggle($self.rememberMe);
-              });
+            widget(label, {
+              caption: _("Remember me");
+              align: right;
+            });
 
-              widget(label, {
-                caption: _("Remember me");
-                align: right;
+            widget(container_z, {
+              filterConstraintX: true;
+              widget(quad, {
+                padding: -0.1em;
+                alpha: isNavFocused() + isHovered() * 0.2;
+                color: 0.5;
               });
 
               widget(icon, {
@@ -138,33 +160,19 @@ widget(container_x, {
             });
           });
         });
+      });
 
 
-	widget(container_x, {
-	  align: center;
-	  spacing: 2em;
-	  homogenous: true;
+      widget(container_x, {
+	align: center;
+	spacing: 2em;
+	homogenous: true;
 
-	  popupButtonOK(deliverEvent($self.eventSink, "OK"),
-			true, false);
-	  popupButtonCancel(deliverEvent($self.eventSink, "Cancel"),
-			    true, false);
-	});
+	popupButtonOK(deliverEvent($self.eventSink, "OK"),
+		      true, false);
+	popupButtonCancel(deliverEvent($self.eventSink, "Cancel"),
+			  true, false);
       });
     });
-  });
-  space(0.2);
-});
-  
-  widget(quad, {
-    zoffset: -100;
-    alpha: 0.6 * iir($ui.keyboard, 4);
-    additive: true;
-  });
-
-  widget(quad, {
-    zoffset: -100;
-    alpha: 0.1;
-    additive: true;
   });
 });

@@ -3,49 +3,49 @@
 onEvent(cancel, deliverEvent($self.eventSink));
 onEvent(back,   deliverEvent($self.eventSink, "cancel"));
 
-widget(container_x, {
-  space(0.2);
+widget(popup, {
 
-  widget(container_y, {
+  widget(container_z, {
 
-    align: center;
+    filterConstraintX: true;
+    PopupBackdrop();
 
-    popupGroup(
-      filterConstraintX: true;
+    widget(container_y, {
+      padding: 1em;
+      spacing: 2em;
 
-      widget(container_y, {
-	spacing: 4;
+      widget(label, {
+	maxlines: 10;
+	align: center;
+	caption: $self.message;
+      });
 
-	widget(label, {
-	  maxlines: 10;
-	  align: center;
-	  caption: $self.message;
-	});
-
-        popupInputField(
- 	  widget(text, {
-	    id: "input";
-	    focusable: true;
-	    bind($self.input);
-
-	    onEvent(enter, deliverEvent($self.eventSink, "Ok"),
-		   $self.input);
-	  });
-	);
-
-
-	widget(container_x, {
-	  align: center;
-	  spacing: 1em;
-	  homogenous: true;
-
-	  popupButtonOK(deliverEvent($self.eventSink, _("OK")),
-			0.5, !$self.ok);
-	  popupButtonCancel(deliverEvent($self.eventSink, _("Cancel")),
-			    1.0, !$self.cancel);
+      widget(container_z, {
+        filterConstraintX: true;
+        widget(quad, {
+          style: "textBackdrop";
+        });
+ 	widget(text, {
+          style: "textInput";
+	  description: _("Username");
+	  id: "input";
+	  focusable: true;
+	  bind($self.input);
+	  onEvent(enter, deliverEvent($self.eventSink, "Ok"),
+		  $self.username);
 	});
       });
-    );
+
+      widget(container_x, {
+	align: center;
+	spacing: 1em;
+	homogenous: true;
+
+	popupButtonOK(deliverEvent($self.eventSink, _("OK")),
+		      0.5, !$self.ok);
+	popupButtonCancel(deliverEvent($self.eventSink, _("Cancel")),
+			  1.0, !$self.cancel);
+      });
+    });
   });
-  space(0.2);
 });

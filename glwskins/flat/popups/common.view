@@ -1,21 +1,49 @@
 #import "skin://theme.view"
 
+#define PopupBackdrop() {
+  widget(container_x, {
+    filterConstraintX: true;
+    filterConstraintY: true;
 
 
-style(popupBackdrop, {
-  alpha: 0.5;
-  color: 0;
-});
+    widget(quad, {
+      width: 0.2em;
+      color: 0;
+    });
 
-style(popupContainer, {
-  padding: 1em;
-  filterConstraintX: true;
-});
+    widget(container_y, {
+      widget(quad, {
+        height: 0.2em;
+        color: 0;
+      });
+      widget(backdrop, {
+        source: "pixmap:gradient:40,40,40:60,60,60";
+        alpha 0.5;
+      });
+      widget(quad, {
+        height: 0.2em;
+        color: 0;
+      });
+    });
+
+    widget(quad, {
+      width: 0.2em;
+      color: 0;
+    });
+  });
+}
+
 
 style(popupRow, {
   padding: [1em, 0.25em];
   spacing: 1em;
 });
+
+style(textBackdrop, {
+  color: 0;
+  padding: [-0.1em, -0.1em];
+});
+
 
 #define popupGroup(BODY) {
   widget(container_z, {
@@ -27,16 +55,6 @@ style(popupRow, {
       padding: 1em;
       BODY;
     });
-  });
-}
-
-#define popupInputField(BODY) {
-  widget(backdrop, {
-    source: "skin://graphics/border-tiny.png";
-    borderOnly: true;
-    border: 4;
-    color: 0.5;
-    BODY;
   });
 }
 
@@ -58,9 +76,11 @@ style(popupRow, {
     widget(label, {
       align: center;
       caption: CAPTION;
+      color: !isNavFocused();
     });
   });
 }
+
 
 #define popupButtonOK(EVENT, ENABLED, HIDDEN) {
 
@@ -80,6 +100,7 @@ style(popupRow, {
 
       widget(label, {
 	caption: _("OK");
+        color: !isNavFocused();
       });
     });
   });
@@ -102,6 +123,7 @@ style(popupRow, {
 
       widget(label, {
 	caption: _("Cancel");
+        color: !isNavFocused();
       });
     });
   });

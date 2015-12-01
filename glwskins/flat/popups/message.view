@@ -3,42 +3,41 @@
 onEvent(cancel, deliverEvent($self.eventSink));
 onEvent(back,   deliverEvent($self.eventSink, "cancel"));
 
-widget(container_x, {
-  space(0.2);
 
-  widget(container_y, {
 
-    align: center;
-    
-    popupGroup(
-      filterConstraintX: true;
-      
-      widget(container_y, {
-	spacing: 4;
+widget(popup, {
 
-	widget(label, {
-	  maxlines:  10;
-	  align: center;
-	  caption: $self.message;
-	});
+  widget(container_z, {
 
-	widget(container_x, {
-	  align: center;
-	  spacing: 20;
-	  homogenous: true;
+    filterConstraintX: true;
 
-	  cloner($self.buttons, container_z, {
-	    popupButton(deliverEvent($parent.eventSink, $self.action),
-			0.1, false, $self.title);
-	  });
+    PopupBackdrop();
 
-	  popupButtonOK(deliverEvent($self.eventSink, "OK"),
-			0.5, !$self.ok);
-	  popupButtonCancel(deliverEvent($self.eventSink, "Cancel"),
-			    1.0, !$self.cancel);
-	});
+    widget(container_y, {
+      padding: 1em;
+      spacing: 2em;
+
+      widget(label, {
+	maxlines:  10;
+	align: center;
+	caption: $self.message;
       });
-    );
+
+      widget(container_x, {
+	align: center;
+	spacing: 1em;
+	homogenous: true;
+
+	cloner($self.buttons, container_z, {
+	  popupButton(deliverEvent($parent.eventSink, $self.action),
+		      0.1, false, $self.title);
+	});
+
+	popupButtonOK(deliverEvent($self.eventSink, "OK"),
+		      0.5, !$self.ok);
+	popupButtonCancel(deliverEvent($self.eventSink, "Cancel"),
+			  1.0, !$self.cancel);
+      });
+    });
   });
-  space(0.2);
 });
