@@ -105,6 +105,7 @@ CONFIG_LIST="
  glw_settings
  netlog
  gumbo
+ upgrade
 "
 
 
@@ -638,3 +639,4 @@ enable media_settings
 enable glw_settings
 enable netlog
 enable gumbo
+enable upgrade

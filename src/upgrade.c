@@ -28,6 +28,7 @@
 
 #include "main.h"
 #include "upgrade.h"
+#if ENABLE_UPGRADE
 #include "arch/arch.h"
 #include "arch/halloc.h"
 #include "fileaccess/fileaccess.h"
@@ -1413,3 +1414,24 @@ static backend_t be_upgrade = {
 };
 
 BE_REGISTER(upgrade);
+
+#else
+
+
+void
+upgrade_init(void)
+{}
+
+int
+upgrade_refresh(void)
+{
+  return 0;
+}
+
+char *
+upgrade_get_track(void)
+{
+  return NULL;
+}
+
+#endif

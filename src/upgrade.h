@@ -18,6 +18,7 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 #pragma once
+
 void upgrade_init(void);
 
 int upgrade_refresh(void);
