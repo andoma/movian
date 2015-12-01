@@ -25,6 +25,7 @@ LIST_HEAD(glw_container_list, glw_container);
 typedef struct glw_table {
   glw_t w;
   int gt_num_columns;
+  int gt_width_sum;
   int16_t *gt_columns;
   struct glw_container_list gt_rows;
 } glw_table_t;
@@ -90,14 +91,18 @@ table_recompute(glw_table_t *gt)
 
   int width_sum = 0;
   for(int i = 0; i < columns; i++) {
-    int w = 0;
+    int16_t w = INT16_MIN;
     LIST_FOREACH(co, &gt->gt_rows, co_table_link) {
-      if(i < co->co_num_columns)
+      if(i >= co->co_num_columns)
+        continue;
+      if(co->co_column_widths[i] >= 0)
         w = MAX(w, co->co_column_widths[i]);
     }
     gt->gt_columns[i] = w;
-    width_sum += w;
+    if(w >= 0)
+      width_sum += w;
   }
+  gt->gt_width_sum = width_sum;
   glw_mod_constraints(&gt->w,
                       width_sum + spacing_width, 0, 0,
                       GLW_CONSTRAINT_X, GLW_CONSTRAINT_X);
@@ -165,27 +170,36 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
     if(f & GLW_CONSTRAINT_Y)
       height = GLW_MAX(height, c->glw_req_size_y);
 
-    if(f & GLW_CONSTRAINT_X) {
-
-      if(co->w.glw_flags2 & GLW2_HOMOGENOUS) {
-	co->co_biggest = GLW_MAX(c->glw_req_size_x, co->co_biggest);
-	numfix++;
+    if(unlikely(tab != NULL)) {
+      if(f & GLW_CONSTRAINT_X) {
+        co->co_column_widths[i] = c->glw_req_size_x;
       } else {
-	width += c->glw_req_size_x;
-
-        if(unlikely(tab != NULL))
-          co->co_column_widths[i] = c->glw_req_size_x;
+        co->co_column_widths[i] = INT16_MIN;
+        weight += 1.0f;
       }
-    } else if(f & GLW_CONSTRAINT_W) {
-      if(c->glw_req_weight == 0)
-	continue;
-      if(c->glw_req_weight > 0)
-	weight += c->glw_req_weight;
-      else
-	co->co_using_aspect = 1;
 
     } else {
-      weight += 1.0f;
+
+      if(f & GLW_CONSTRAINT_X) {
+
+        if(co->w.glw_flags2 & GLW2_HOMOGENOUS) {
+          co->co_biggest = GLW_MAX(c->glw_req_size_x, co->co_biggest);
+          numfix++;
+        } else {
+          width += c->glw_req_size_x;
+        }
+      } else if(f & GLW_CONSTRAINT_W) {
+
+        if(c->glw_req_weight == 0)
+          continue;
+        if(c->glw_req_weight > 0)
+          weight += c->glw_req_weight;
+        else
+          co->co_using_aspect = 1;
+
+      } else {
+        weight += 1.0f;
+      }
     }
     elements++;
   }
@@ -267,7 +281,12 @@ glw_container_x_layout(glw_t *w, const glw_rctx_t *rc)
   }
 
   int space_pad = co->spacing_width + co->padding_width;
-  int wsum = co->width + aspect_width + space_pad;
+  int wsum = aspect_width + space_pad;
+  
+  if(tab != NULL)
+    wsum += tab->gt_width_sum;
+  else
+    wsum += co->width;
 
   if(wsum > rc->rc_width) {
     // Requested pixel size > available width, must scale
@@ -305,7 +324,11 @@ glw_container_x_layout(glw_t *w, const glw_rctx_t *rc)
     int f = glw_filter_constraints(c);
 
     if(unlikely(tab != NULL)) {
-      cw = tab->gt_columns[i];
+      if(tab->gt_columns[i] >= 0) {
+        cw = tab->gt_columns[i];
+      } else {
+	cw = weightavail / co->weight_sum;
+      }
     } else if(f & GLW_CONSTRAINT_X) {
       if(co->w.glw_flags2 & GLW2_HOMOGENOUS) {
 	cw = co->co_biggest * fixscale;
