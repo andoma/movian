@@ -112,3 +112,7 @@
 
 #endif
 
+#ifdef __APPLE__
+#include "TargetConditionals.h"
+#endif
+
