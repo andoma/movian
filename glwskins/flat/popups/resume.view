@@ -4,28 +4,39 @@ onEvent(cancel, deliverEvent($self.eventSink));
 onEvent(back,   deliverEvent($self.eventSink, "cancel"));
 
 
-widget(container_y, {
+widget(popup, {
 
-  align: center;
+  widget(container_z, {
 
-  widget(label, {
-    align: center;
-    caption: $self.title;
-  });
+    filterConstraintX: true;
+    PopupBackdrop();
 
-  widget(label, {
-    align: center;
-    caption: fmt(_("Resume from %s"),
-                 value2duration($self.position));
-  });
+    widget(container_y, {
+      padding: 1em;
+      spacing: 1.5em;
 
-  widget(container_x, {
-    align: center;
-    spacing: 20;
-    homogenous: true;
+      widget(label, {
+        align: center;
+        caption: $self.title;
+        size: 1.5em;
+      });
 
-    popupButton(deliverEvent($self.eventSink, "OK"), 1.0, false, _("Yes"));
-    popupButton(deliverEvent($self.eventSink, "cancel"), 0.5, false,
-                _("No, Start over"));
+      widget(label, {
+        align: center;
+        caption: fmt(_("Resume from %s"),
+                     value2duration($self.position));
+      });
+
+      widget(container_x, {
+        align: center;
+        spacing: 2em;
+        homogenous: true;
+
+        popupButton(deliverEvent($self.eventSink, "OK"), 1.0, false, _("Yes"));
+        popupButton(deliverEvent($self.eventSink, "cancel"), 0.5, false,
+                    _("No, Start over"));
+      });
+    });
   });
 });
+

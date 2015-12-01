@@ -62,70 +62,34 @@ style(textBackdrop, {
 
 #define popupButton(EVENT, ENABLED, HIDDEN, CAPTION) {
 
-  widget(backdrop, {
-    source: "skin://graphics/border-tiny.png";
-    borderOnly: true;
-    border: 4;
-    padding: [$ui.size,0];
+  widget(container_z, {
+    height: 2em;
+
+    GridItemBevel();
+    GridItemHighlight();
+
     hidden: HIDDEN;
     focusable: ENABLED;
     onEvent(activate, EVENT);
 
-    alpha: select(isHovered() || isNavFocused(), 1, 0.5);
-
-    widget(label, {
+    widget(container_x, {
+      padding: [2em, 0];
       align: center;
-      caption: CAPTION;
-      color: !isNavFocused();
+
+      widget(label, {
+	caption: CAPTION;
+        color: !isNavFocused();
+      });
     });
   });
 }
 
 
 #define popupButtonOK(EVENT, ENABLED, HIDDEN) {
-
-  widget(container_z, {
-    height: 2em;
-
-    GridItemBevel();
-    GridItemHighlight();
-
-    hidden: HIDDEN;
-    focusable: ENABLED;
-    onEvent(activate, EVENT);
-
-    widget(container_x, {
-      padding: [2em, 0];
-      align: center;
-
-      widget(label, {
-	caption: _("OK");
-        color: !isNavFocused();
-      });
-    });
-  });
-
+  popupButton(EVENT, ENABLED, HIDDEN, _("Ok"));
 }
 
 #define popupButtonCancel(EVENT, ENABLED, HIDDEN) {
-  widget(container_z, {
-    height: 2em;
-
-    GridItemBevel();
-    GridItemHighlight();
-
-    hidden: HIDDEN;
-    focusable: ENABLED;
-    onEvent(activate, EVENT);
-
-    widget(container_x, {
-      padding: [2em, 0];
-
-      widget(label, {
-	caption: _("Cancel");
-        color: !isNavFocused();
-      });
-    });
-  });
+  popupButton(EVENT, ENABLED, HIDDEN, _("Cancel"));
 }
 
