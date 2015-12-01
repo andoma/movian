@@ -117,7 +117,7 @@ tcp_ssl_open(tcpcon_t *tc, char *errbuf, size_t errlen, const char *hostname)
   OSStatus retValue = SSLHandshake(tc->ssl);
 
   if(retValue != noErr) {
-    snprintf(errbuf, errlen, "SSL: Error 0x%x", retValue);
+    snprintf(errbuf, errlen, "SSL: Error 0x%x", (int)retValue);
     return -1;
   }
   tc->read =  ssl_read;

@@ -585,13 +585,13 @@ nls_lang_metadata(const char *path, char *errbuf, size_t errlen,
     
     
     if((s2 = mystrbegins(s, "language:")) != NULL) {
-      while(*s2 <33 && *s2)
+      while((uint8_t)*s2 <33 && *s2)
 	s2++;
       snprintf(language, languagesize, "%s", s2);
     }
 
     if((s2 = mystrbegins(s, "native:")) != NULL) {
-      while(*s2 <33 && *s2)
+      while((uint8_t)*s2 <33 && *s2)
 	s2++;
       snprintf(native, nativesize, "%s", s2);
     }
