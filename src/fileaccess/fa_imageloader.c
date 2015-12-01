@@ -491,11 +491,18 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
 
 
   int64_t ts = av_rescale(sec, st->time_base.den, st->time_base.num);
+  int delayed_seek = 0;
 
-  if(av_seek_frame(ifv_fctx, ifv_stream, ts, AVSEEK_FLAG_BACKWARD) < 0) {
-    ifv_close();
-    snprintf(errbuf, errlen, "Unable to seek to %"PRId64, ts);
-    return NULL;
+  if(ifv_ctx->codec_id == AV_CODEC_ID_RV40 ||
+     ifv_ctx->codec_id == AV_CODEC_ID_RV30) {
+    // Must decode one frame
+    delayed_seek = 1;
+  } else {
+    if(av_seek_frame(ifv_fctx, ifv_stream, ts, AVSEEK_FLAG_BACKWARD) < 0) {
+      ifv_close();
+      snprintf(errbuf, errlen, "Unable to seek to %"PRId64, ts);
+      return NULL;
+    }
   }
 
   avcodec_flush_buffers(ifv_ctx);
@@ -530,9 +537,20 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
     int want_pic = pkt.pts >= ts || cnt <= 0;
 
     ifv_ctx->skip_frame = want_pic ? AVDISCARD_DEFAULT : AVDISCARD_NONREF;
-    
+
     avcodec_decode_video2(ifv_ctx, frame, &got_pic, &pkt);
     av_free_packet(&pkt);
+
+    if(delayed_seek) {
+      delayed_seek = 0;
+      if(av_seek_frame(ifv_fctx, ifv_stream, ts, AVSEEK_FLAG_BACKWARD) < 0) {
+        ifv_close();
+        break;
+      }
+      continue;
+    }
+
+
     if(got_pic == 0 || !want_pic) {
       continue;
     }
@@ -598,8 +616,10 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
     snprintf(errbuf, errlen, "Frame not found (scanned %d)", 
 	     MAX_FRAME_SCAN - cnt);
 
-  avcodec_flush_buffers(ifv_ctx);
-  callout_arm(&thumb_flush_callout, ifv_autoclose, NULL, 5);
+  if(ifv_ctx != NULL) {
+    avcodec_flush_buffers(ifv_ctx);
+    callout_arm(&thumb_flush_callout, ifv_autoclose, NULL, 5);
+  }
   return img;
 }
 
