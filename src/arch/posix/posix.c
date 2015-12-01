@@ -155,8 +155,13 @@ posix_init(void)
   }
 
   setlocale(LC_ALL, "");
-  decorate_trace = isatty(2);
 
+#if TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
+  decorate_trace = 0;
+#else
+  decorate_trace = isatty(2);
+#endif
+  
   signal(SIGPIPE, SIG_IGN);
 
 #ifdef RLIMIT_AS
