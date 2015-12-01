@@ -613,14 +613,13 @@ event_from_Fkey(unsigned int keynum, unsigned int mod)
   return event_create_action(a);
 }
 
-#if 1
 /**
  *
  */
 const char *
 event_sprint(const event_t *e)
 {
-  static __thread char buf[64];
+  static char buf[64];
 
   const event_payload_t *ep = (const event_payload_t *)e;
   const event_action_vector_t *eav = (const event_action_vector_t *)e;
@@ -649,5 +648,3 @@ event_sprint(const event_t *e)
   }
   return buf;
 }
-
-#endif
