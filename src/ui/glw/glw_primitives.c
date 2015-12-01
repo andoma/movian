@@ -28,6 +28,7 @@ typedef struct glw_quad {
   glw_renderer_t r;
   rstr_t *fs;
   int recompile;
+  int16_t q_padding[4];
   glw_program_args_t gpa;
 } glw_quad_t;
 
@@ -48,6 +49,9 @@ glw_quad_render(glw_t *w, const glw_rctx_t *rc)
     q->recompile = 0;
   }
 
+  glw_rctx_t rc0 = *rc;
+  glw_reposition(&rc0, q->q_padding[0], rc->rc_height - q->q_padding[1],
+		 rc->rc_width - q->q_padding[2], q->q_padding[3]);
 
   if(!glw_renderer_initialized(&q->r)) {
     glw_renderer_init_quad(&q->r);
@@ -57,7 +61,7 @@ glw_quad_render(glw_t *w, const glw_rctx_t *rc)
     glw_renderer_vtx_pos(&q->r, 3, -1,  1, 0);
   }
 
-  glw_renderer_draw(&q->r, w->glw_root, rc,
+  glw_renderer_draw(&q->r, w->glw_root, &rc0,
 		    NULL, NULL,
 		    &q->color, NULL, rc->rc_alpha * w->glw_alpha, 0,
 		    q->gpa.gpa_prog ? &q->gpa : NULL);
@@ -139,6 +143,25 @@ glw_quad_dtor(glw_t *w)
   glw_destroy_program(w->glw_root, q->gpa.gpa_prog);
 }
 
+/**
+ *
+ */
+static int
+quad_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v,
+                      glw_style_t *gs)
+{
+  glw_quad_t *q = (glw_quad_t *)w;
+
+  switch(attrib) {
+  case GLW_ATTRIB_PADDING:
+    if(!glw_attrib_set_int16_4(q->q_padding, v))
+      return 0;
+    return 1;
+  default:
+    return -1;
+  }
+}
+
 
 static glw_class_t glw_quad = {
   .gc_name = "quad",
@@ -150,6 +173,7 @@ static glw_class_t glw_quad = {
   .gc_set_float3 = glw_quad_set_float3,
   .gc_dtor = glw_quad_dtor,
   .gc_set_fs = glw_quad_set_fs,
+  .gc_set_int16_4 = quad_set_int16_4,
 };
 
 
