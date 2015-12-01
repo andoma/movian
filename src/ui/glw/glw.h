@@ -76,7 +76,7 @@ TAILQ_HEAD(glw_view_load_request_queue, glw_view_load_request);
 
 // ------------------- Backends -----------------
 
-#if CONFIG_GLW_BACKEND_OPENGL || CONFIG_GLW_BACKEND_OPENGL_ES
+#if CONFIG_GLW_BACKEND_OPENGL || ENABLE_GLW_BACKEND_OPENGL_ES
 #include "glw_opengl.h"
 #elif CONFIG_GLW_BACKEND_GX
 #include "glw_gx.h"
@@ -1213,7 +1213,7 @@ typedef struct glw {
 
   uint8_t glw_dynamic_eval;   // GLW_VIEW_EVAL_ -flags
 
-#ifdef DEBUG
+#ifndef NDEBUG
   rstr_t *glw_file;
   int glw_line;
 #endif
