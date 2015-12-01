@@ -595,6 +595,25 @@ glw_opengl_shaders_init(glw_root_t *gr)
   glDeleteShader(fs);
   glDeleteShader(vs);
 
+  // yc2rgb Video renderer
+  
+  SHADERPATH("yc2rgb_v.glsl");
+  vs = glw_compile_shader(path, GL_VERTEX_SHADER, gr);
+  
+  SHADERPATH("yc2rgb_1f_norm.glsl");
+  fs = glw_compile_shader(path, GL_FRAGMENT_SHADER, gr);
+  gbr->gbr_yc2rgb_1f = glw_link_program(gbr, "yc2rgb_1f_norm", vs, fs);
+  glDeleteShader(fs);
+  
+  SHADERPATH("yc2rgb_2f_norm.glsl");
+  fs = glw_compile_shader(path, GL_FRAGMENT_SHADER, gr);
+  gbr->gbr_yc2rgb_2f = glw_link_program(gbr, "yc2rgb_2f_norm", vs, fs);
+  glDeleteShader(fs);
+  glDeleteShader(vs);
+
+  
+  // --------
+  
   gr->gr_be_render_unlocked = render_unlocked;
   glGenBuffers(1, &gbr->gbr_vbo);
 

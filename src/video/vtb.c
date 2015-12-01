@@ -59,6 +59,7 @@ typedef struct vtb_decoder {
   int64_t vtbd_flush_to;
   int64_t vtbd_last_pts;
   int vtbd_estimated_duration;
+  int vtbd_pixel_format;
 } vtb_decoder_t;
 
 
@@ -124,32 +125,34 @@ emit_frame(vtb_decoder_t *vtbd, vtb_frame_t *vf, media_queue_t *mq)
 
   video_decoder_t *vd = vtbd->vtbd_vd;
   vd->vd_estimated_duration = fi.fi_duration; // For bitrate calculations
-#if 0
-  if(vtbd->vtbd_zero_copy) {
 
-    fi.fi_type = 'VTB';
-    fi.fi_data[0] = (void *)vf->vf_buf;
-    if(fi.fi_duration > 0)
-      video_deliver_frame(vd, &fi);
-  } else {
-#endif
+  switch(vtbd->vtbd_pixel_format) {
+    case kCVPixelFormatType_420YpCbCr8Planar:
+      fi.fi_type = 'YUVP';
 
-    fi.fi_type = 'YUVP';
+      CVPixelBufferLockBaseAddress(vf->vf_buf, 0);
+      
+      for(int i = 0; i < 3; i++ ) {
+        fi.fi_data[i]  = CVPixelBufferGetBaseAddressOfPlane(vf->vf_buf, i);
+        fi.fi_pitch[i] = CVPixelBufferGetBytesPerRowOfPlane(vf->vf_buf, i);
+      }
+      
+      if(fi.fi_duration > 0)
+        video_deliver_frame(vd, &fi);
+      
+      CVPixelBufferUnlockBaseAddress(vf->vf_buf, 0);
+      break;
 
-    CVPixelBufferLockBaseAddress(vf->vf_buf, 0);
+    case kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange:
+    case kCVPixelFormatType_420YpCbCr8BiPlanarFullRange:
+      fi.fi_type = 'CVPB';
+      fi.fi_data[0] = (void *)vf->vf_buf;
+      if(fi.fi_duration > 0)
+        video_deliver_frame(vd, &fi);
+      break;
+  }
+  
 
-    for(int i = 0; i < 3; i++ ) {
-      fi.fi_data[i] = CVPixelBufferGetBaseAddressOfPlane(vf->vf_buf, i);
-      fi.fi_pitch[i] = CVPixelBufferGetBytesPerRowOfPlane(vf->vf_buf, i);
-    }
-
-
-    if(fi.fi_duration > 0)
-      video_deliver_frame(vd, &fi);
-
-    CVPixelBufferUnlockBaseAddress(vf->vf_buf, 0);
-
-    //  }
 
   vtbd->vtbd_last_pts = vf->vf_mbm.mbm_pts;
 
@@ -397,6 +400,7 @@ video_vtb_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
                        extradata_dict);
   CFRelease(extradata_dict);
 
+#if !TARGET_OS_IPHONE
   // Enable and force HW accelration
   CFDictionarySetValue(config_dict,
                        kVTVideoDecoderSpecification_EnableHardwareAcceleratedVideoDecoder,
@@ -405,7 +409,7 @@ video_vtb_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   CFDictionarySetValue(config_dict,
                        kVTVideoDecoderSpecification_RequireHardwareAcceleratedVideoDecoder,
                        kCFBooleanTrue);
-
+#endif
 
   CMVideoFormatDescriptionRef fmt;
 
@@ -435,17 +439,30 @@ video_vtb_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 #endif
                        kCFBooleanTrue);
 
-  dict_set_int32(surface_dict,
-                 kCVPixelBufferPixelFormatTypeKey,
-                 kCVPixelFormatType_420YpCbCr8Planar);
-  //                 kCVPixelFormatType_420YpCbCr8BiPlanarFullRange);
+  vtb_decoder_t *vtbd = calloc(1, sizeof(vtb_decoder_t));
 
   dict_set_int32(surface_dict, kCVPixelBufferWidthKey, mcp->width);
   dict_set_int32(surface_dict, kCVPixelBufferHeightKey, mcp->height);
-  dict_set_int32(surface_dict, kCVPixelBufferBytesPerRowAlignmentKey,
-                       mcp->width << 1);
+  
+  if(1) {
+    vtbd->vtbd_pixel_format = kCVPixelFormatType_420YpCbCr8BiPlanarFullRange;
+  } else {
+    vtbd->vtbd_pixel_format = kCVPixelFormatType_420YpCbCr8Planar;
+  }
+  
+  dict_set_int32(surface_dict, kCVPixelBufferPixelFormatTypeKey,
+                 vtbd->vtbd_pixel_format);
 
-  vtb_decoder_t *vtbd = calloc(1, sizeof(vtb_decoder_t));
+  int linewidth = mcp->width;
+
+  switch(vtbd->vtbd_pixel_format) {
+    case kCVPixelFormatType_420YpCbCr8BiPlanarFullRange:
+    case kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange:
+      linewidth *= 2;
+      break;
+  }
+
+  dict_set_int32(surface_dict, kCVPixelBufferBytesPerRowAlignmentKey, linewidth);
 
   VTDecompressionOutputCallbackRecord cb = {
     .decompressionOutputCallback = picture_out,

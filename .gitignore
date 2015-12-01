@@ -14,3 +14,7 @@ debian/changelog
 android/Showtime/bin/
 android/Showtime/gen/
 android/Showtime/libs/
+*.xcuserstate
+project.xcworkspace/
+xcuserdata/
+InfoPlist.h

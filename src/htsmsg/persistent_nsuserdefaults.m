@@ -51,7 +51,7 @@ persistent_load(const char *group, const char *key, char *errbuf, size_t errlen)
 
   NSString *s = [[NSUserDefaults standardUserDefaults] stringForKey:[NSString stringWithUTF8String:k]];
 
-  const char *str = [s cString];
+  const char *str = [s UTF8String];
   if(str == NULL)
     return NULL;
   buf_t *b = buf_create_and_copy(strlen(str), str);

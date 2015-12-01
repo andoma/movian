@@ -16,3 +16,6 @@
 [submodule "android"]
 	path = android
 	url = andoma@git.lonelycoder.com:movian-android.git
+[submodule "ios/freetype2-ios"]
+	path = ios/freetype2-ios
+	url = https://github.com/andoma/freetype2-ios.git

@@ -151,7 +151,7 @@ hts_thread_name(char *buf, size_t len)
   prctl(PR_GET_NAME, tmp, 0, 0, 0);
   snprintf(buf, len, "%s", tmp);
   return buf;
-#elif defined(APPLE)
+#elif defined(__APPLE__)
   pthread_getname_np(pthread_self(), buf, len);
   return buf;
 #else
@@ -173,7 +173,7 @@ thread_trampoline(void *aux)
   long tid = syscall(SYS_gettid);
   setpriority(PRIO_PROCESS, tid, t->prio);
   prctl(PR_SET_NAME, t->title, 0, 0, 0);
-#elif defined(APPLE)
+#elif defined(__APPLE__)
   pthread_setname_np(t->title);
 #endif
 

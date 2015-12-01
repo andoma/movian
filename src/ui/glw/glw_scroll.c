@@ -49,9 +49,10 @@ glw_scroll_handle_pointer_event_filter(glw_scroll_control_t *gs,
     return 0;
 
   case GLW_POINTER_TOUCH_END:
-    if(fabsf(gs->touch_velocity) > 10)
+    if(fabsf(gs->touch_velocity) > 10) {
       gs->kinetic_scroll = gs->touch_velocity;
-
+      glw_schedule_refresh(w->glw_root, 0);
+    }
     if(grabbed)
       gr->gr_pointer_grab_scroll = NULL;
     return 0;
@@ -103,6 +104,10 @@ glw_scroll_handle_pointer_event(glw_scroll_control_t *gs,
     gs->target_pos = (gpe->y - gs->initial_touch_y) * gs->page_size * 0.5 +
       gs->initial_pos;
 
+    const int max_value =
+      MAX(0, gs->total_size - gs->page_size + gs->scroll_threshold_post);
+    gs->target_pos = GLW_CLAMP(gs->target_pos, 0, max_value);
+
     if(abs(gs->target_pos - gs->initial_pos) > 15) {
       if(gr->gr_pointer_press != NULL) {
         glw_path_modify(gr->gr_pointer_press, 0, GLW_IN_PRESSED_PATH, NULL);
@@ -144,16 +149,19 @@ glw_scroll_layout(glw_scroll_control_t *gsc, glw_t *w, int height)
 
     gsc->filtered_pos = GLW_CLAMP(gsc->filtered_pos, 0, max_value);
 
-  } else if(gsc->kinetic_scroll) {
+  } else if(fabsf(gsc->kinetic_scroll) > 0.5) {
 
     gsc->filtered_pos += gsc->kinetic_scroll;
-    gsc->target_pos = gsc->filtered_pos;
+    if(gsc->target_pos != gsc->filtered_pos) {
+      gsc->target_pos = gsc->filtered_pos;
+      glw_need_refresh(w->glw_root, 0);
+    }
     gsc->kinetic_scroll *= 0.95;
     gsc->bottom_anchored = 0;
-
     gsc->filtered_pos = GLW_CLAMP(gsc->filtered_pos, 0, max_value);
 
   } else {
+    gsc->kinetic_scroll = 0;
 
     if(gsc->bottom_gravity) {
 
