@@ -19,7 +19,8 @@
  */
 #include <assert.h>
 #include <AudioToolbox/AudioQueue.h>
-#include <CoreAudio/HostTime.h>
+
+#include <mach/mach_time.h>
 
 #include "main.h"
 #include "audio.h"
@@ -40,6 +41,7 @@ typedef struct decoder {
 } decoder_t;
 
 static CFRunLoopRef audio_run_loop;
+static mach_timebase_info_data_t timebase;
 
 
 static void
@@ -316,10 +318,13 @@ mac_audio_deliver(audio_decoder_t *ad, int samples,
   AudioTimeStamp ats;
   AudioQueueEnqueueBufferWithParameters(d->aq, b, 0, NULL,
                                         0, 0, 0, NULL, NULL, &ats);
-  
+
   if(ats.mFlags & kAudioTimeStampHostTimeValid &&
      pts != AV_NOPTS_VALUE) {
-    int64_t t = AudioConvertHostTimeToNanos(ats.mHostTime) / 1000LL;
+
+    const int64_t now = mach_absolute_time();
+    int64_t t = now * timebase.numer / (timebase.denom * 1000);
+
     ad->ad_delay = t - arch_get_avtime();
 
     media_pipe_t *mp = ad->ad_mp;
@@ -352,6 +357,7 @@ static audio_class_t mac_audio_class = {
 audio_class_t *
 audio_driver_init(struct prop *asettings, struct htsmsg *store)
 {
+  mach_timebase_info(&timebase);
   hts_thread_create_detached("audioloop", audio_thread, NULL, 0);
   while(1) {
 
