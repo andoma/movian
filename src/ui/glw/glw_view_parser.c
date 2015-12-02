@@ -472,7 +472,8 @@ parse_prep_expression(token_t *expr, errorinfo_t *ei, glw_root_t *gr)
 	/* Yep, try to resolve the identifier into a function */
 
 
-	if(!strcmp(rstr_get(t->t_rstring), "_") && 
+	if(!strcmp(rstr_get(t->t_rstring), "_") &&
+           // The _() function is special as it refers to i18n translations
 	   t1->next->type == TOKEN_RSTRING &&
 	   t1->next->next->type == TOKEN_RIGHT_PARENTHESIS) {
 
@@ -486,7 +487,7 @@ parse_prep_expression(token_t *expr, errorinfo_t *ei, glw_root_t *gr)
 	  t = t->next;
 
 	} else {
-
+          // Resolve as ordinary function
           token_t *n = glw_view_function_resolve(gr, ei, t);
 
           if(n == NULL)

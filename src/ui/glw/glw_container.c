@@ -971,6 +971,7 @@ glw_table_callback(glw_t *w, void *opaque, glw_signal_t signal,
  */
 static glw_class_t glw_container_x = {
   .gc_name = "container_x",
+  .gc_name2 = "hbox",
   .gc_instance_size = sizeof(glw_container_t),
   .gc_parent_data_size = sizeof(glw_container_item_t),
   .gc_flags = GLW_CAN_HIDE_CHILDS,
@@ -986,6 +987,7 @@ static glw_class_t glw_container_x = {
 
 static glw_class_t glw_container_y = {
   .gc_name = "container_y",
+  .gc_name2 = "vbox",
   .gc_instance_size = sizeof(glw_container_t),
   .gc_parent_data_size = sizeof(glw_container_item_t),
   .gc_flags = GLW_CAN_HIDE_CHILDS,
@@ -1001,6 +1003,7 @@ static glw_class_t glw_container_y = {
 
 static glw_class_t glw_container_z = {
   .gc_name = "container_z",
+  .gc_name2 = "zbox",
   .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_instance_size = sizeof(glw_t),
   .gc_layout = glw_container_z_layout,

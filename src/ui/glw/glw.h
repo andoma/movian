@@ -382,6 +382,7 @@ typedef enum {
 typedef struct glw_class {
 
   const char *gc_name;
+  const char *gc_name2;
   size_t gc_instance_size;
   size_t gc_parent_data_size;
 

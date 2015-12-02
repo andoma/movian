@@ -7131,8 +7131,9 @@ glw_view_function_resolve(glw_root_t *gr, errorinfo_t *ei, token_t *t)
 {
   int i;
   const char *fname = rstr_get(t->t_rstring);
+  const glw_class_t *gc;
 
-  for(i = 0; i < sizeof(funcvec) / sizeof(funcvec[0]); i++)
+  for(i = 0; i < sizeof(funcvec) / sizeof(funcvec[0]); i++) {
     if(!strcmp(funcvec[i].name, fname)) {
       rstr_release(t->t_rstring);
       t->t_func = &funcvec[i];
@@ -7145,6 +7146,19 @@ glw_view_function_resolve(glw_root_t *gr, errorinfo_t *ei, token_t *t)
       else
         return t->next->next;
     }
+  }
+
+  // Syntactic sugar:
+  // Check if we can resolve a function directly into a widget name
+
+  gc = glw_class_find_by_name(fname);
+  if(gc != NULL) {
+    rstr_release(t->t_rstring);
+    t->type = TOKEN_FUNCTION;
+    t->t_func = &funcvec[0];
+    t->t_func_arg = gc;
+    return t->next->next;
+  }
 
   glw_view_seterr(ei, t, "Unknown function: %s", fname);
   return NULL;

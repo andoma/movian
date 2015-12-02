@@ -2643,9 +2643,12 @@ glw_class_find_by_name(const char *name)
 {
   glw_class_t *gc;
 
-  LIST_FOREACH(gc, &glw_classes, gc_link)
+  LIST_FOREACH(gc, &glw_classes, gc_link) {
     if(!strcmp(gc->gc_name, name))
       break;
+    if(gc->gc_name2 != NULL && !strcmp(gc->gc_name2, name))
+      break;
+  }
   return gc;
 }
 
