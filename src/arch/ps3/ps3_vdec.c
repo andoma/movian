@@ -104,6 +104,7 @@ typedef struct vdec_decoder {
   char pending_flush;
 
   struct vdec_pic_list pictures;
+  int num_pictures;
 
   prop_t *metainfo;
   uint8_t level_major;
@@ -235,6 +236,7 @@ reset_active_pictures(vdec_decoder_t *vdd, const char *reason, int marked)
   hts_mutex_lock(&vdd->mtx);
   while((vp = LIST_FIRST(&vdd->pictures)) != NULL)
     release_picture(vp);
+  vdd->num_pictures = 0;
   hts_mutex_unlock(&vdd->mtx);
 }
 
@@ -339,7 +341,7 @@ picture_out(vdec_decoder_t *vdd)
 
   if(/* pi->status != 0 ||*/ pi->attr != 0 || pm->skip) {
     vdec_get_picture(vdd->handle, &picfmt, NULL);
-    reset_active_pictures(vdd, "pic err", 0);
+    reset_active_pictures(vdd, pm->skip ? "Skip" : "Error", 0);
     return;
   }
 
@@ -546,7 +548,7 @@ picture_out(vdec_decoder_t *vdd)
   hts_mutex_lock(&vdd->mtx);
 
   LIST_INSERT_SORTED(&vdd->pictures, vp, link, vp_cmp, vdec_pic_t);
-
+  vdd->num_pictures++;
   if(vdd->max_order != -1) {
     if(vp->order > vdd->max_order) {
       vdd->flush_to = vdd->max_order;
@@ -693,12 +695,20 @@ submit_au(vdec_decoder_t *vdd, struct vdec_au *au, void *data, size_t len,
     if(vdd->flush_to < vp->order && data != NULL)
       break;
     LIST_REMOVE(vp, link);
-
+    vdd->num_pictures--;
     hts_mutex_unlock(&vdd->mtx);
     emit_frame(vd, vp);
     hts_mutex_lock(&vdd->mtx);
     free(vp);
   }
+
+  while(vdd->num_pictures > 16) {
+    vp = LIST_FIRST(&vdd->pictures);
+    assert(vp != NULL);
+    release_picture(vp);
+    vdd->num_pictures--;
+  }
+
   hts_mutex_unlock(&vdd->mtx);
 }
 
