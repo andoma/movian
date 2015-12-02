@@ -848,15 +848,16 @@ main(int argc, char **argv)
 
   vcos_set_vlog_impl(my_vcos_log);
 
-  kill_framebuffer();
-
-  omx_init();
-
   gconf.binary = argv[0];
 
   posix_init();
 
   parse_opts(argc, argv);
+
+  if(gconf.shell_fd != -1)
+    kill_framebuffer();
+
+  omx_init();
 
   linux_init();
 
