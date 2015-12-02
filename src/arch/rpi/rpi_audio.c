@@ -114,6 +114,26 @@ static int hdmi_dts_mode;
 static int hdmi_8ch_mode;
 
 
+
+
+/**
+ *
+ */
+static void
+update_audio_clock(audio_decoder_t *ad, int epoch)
+{
+  media_pipe_t *mp = ad->ad_mp;
+  omx_component_t *c = omx_get_clock(mp);
+  if(c != NULL) {
+    int64_t ts = omx_get_media_time(c);
+    hts_mutex_lock(&mp->mp_clock_mutex);
+    mp->mp_audio_clock_avtime = arch_get_avtime();
+    mp->mp_audio_clock = ts;
+    mp->mp_audio_clock_epoch = epoch;
+    hts_mutex_unlock(&mp->mp_clock_mutex);
+  }
+}
+
 /**
  *
  */
@@ -594,11 +614,11 @@ rpi_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
   buf->nOffset = 0;
   buf->nFilledLen = r * d->d_bpf;
 
-  if(pts != PTS_UNSET)
+  if(pts != PTS_UNSET) {
     buf->nTimeStamp = omx_ticks_from_s64(pts);
-  else
+  } else {
     buf->nFlags |= OMX_BUFFERFLAG_TIME_UNKNOWN;
-
+  }
   if(d->d_master_volume != master_volume || d->d_master_mute != master_mute) {
     d->d_master_volume = master_volume;
     d->d_master_mute = master_mute;
@@ -607,6 +627,10 @@ rpi_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
 
 
   omxchk(OMX_EmptyThisBuffer(oc->oc_handle, buf));
+
+  if(pts != PTS_UNSET)
+    update_audio_clock(ad, epoch);
+
   hts_mutex_lock(&ad->ad_mp->mp_mutex);
 
   if(d->d_local_output != local_output)
@@ -825,14 +849,18 @@ rpi_audio_deliver_coded(audio_decoder_t *ad, const void *data, size_t size,
     ad->ad_discontinuity = 0;
   }
 
-  if(pts != PTS_UNSET)
+  if(pts != PTS_UNSET) {
     buf->nTimeStamp = omx_ticks_from_s64(pts);
-  else
+  } else {
     buf->nFlags |= OMX_BUFFERFLAG_TIME_UNKNOWN;
-
+  }
   buf->nFlags |= OMX_BUFFERFLAG_ENDOFFRAME;
 
   omxchk(OMX_EmptyThisBuffer(oc->oc_handle, buf));
+
+  if(pts != PTS_UNSET)
+    update_audio_clock(ad, epoch);
+
   hts_mutex_lock(&ad->ad_mp->mp_mutex);
 
   return 0;
