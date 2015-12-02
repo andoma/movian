@@ -85,6 +85,17 @@ glw_settings_init(void)
                    SETTING_HTSMSG("underscan_v", store, "glw"),
                    NULL);
 
+  glw_settings.gs_setting_wrap =
+    setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
+                   SETTING_TITLE(_p("Wrap when reaching beginning/end of lists")),
+                   SETTING_VALUE(1),
+                   SETTING_WRITE_BOOL(&glw_settings.gs_wrap),
+                   SETTING_HTSMSG("wrap", store, "glw"),
+                   NULL);
+
+
+  settings_create_separator(s, _p("Screensaver"));
+
   glw_settings.gs_setting_screensaver =
     setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,
                    SETTING_TITLE(_p("Screensaver delay")),
@@ -94,14 +105,6 @@ glw_settings_init(void)
                    SETTING_UNIT_CSTR("min"),
                    SETTING_WRITE_INT(&glw_settings.gs_screensaver_delay),
                    SETTING_HTSMSG("screensaver", store, "glw"),
-                   NULL);
-
-  glw_settings.gs_setting_wrap =
-    setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
-                   SETTING_TITLE(_p("Wrap when reaching beginning/end of lists")),
-                   SETTING_VALUE(1),
-                   SETTING_WRITE_BOOL(&glw_settings.gs_wrap),
-                   SETTING_HTSMSG("wrap", store, "glw"),
                    NULL);
 
   prop_t *p = prop_create(prop_get_global(), "glw");

@@ -255,7 +255,6 @@ glw_init4(glw_root_t *gr,
             PROP_SET_STRING, gr->gr_skin);
 
   gr->gr_pointer_visible    = prop_create(gr->gr_prop_ui, "pointerVisible");
-  gr->gr_is_fullscreen      = prop_create(gr->gr_prop_ui, "fullscreen");
   gr->gr_screensaver_active = prop_create(gr->gr_prop_ui, "screensaverActive");
   gr->gr_prop_width         = prop_create(gr->gr_prop_ui, "width");
   gr->gr_prop_height        = prop_create(gr->gr_prop_ui, "height");
@@ -542,8 +541,9 @@ glw_screensaver_is_active(glw_root_t *gr)
     return 0;
   }
 
-  if(!gr->gr_is_fullscreen)
+  if(!gr->gr_is_fullscreen) {
     return 0;
+  }
 
   int64_t d = glw_settings.gs_screensaver_delay;
 
@@ -2748,7 +2748,7 @@ glw_get_path(glw_t *w)
 void
 glw_set_fullscreen(glw_root_t *gr, int fullscreen)
 {
-  prop_set_int(gr->gr_is_fullscreen, !!fullscreen);
+  gr->gr_is_fullscreen = fullscreen;
 }
 
 
