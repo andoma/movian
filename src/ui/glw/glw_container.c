@@ -36,7 +36,7 @@ typedef struct glw_container {
 
   glw_table_t *co_table;
   LIST_ENTRY(glw_container) co_table_link;
-  uint16_t *co_column_widths;
+  int16_t *co_column_widths;
 
   int cflags;
   float weight_sum;
