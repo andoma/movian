@@ -339,7 +339,7 @@ check_subtitle_file(sub_scanner_t *ss,
  */
 static void
 fs_sub_scan_dir(sub_scanner_t *ss, const char *url, const char *video,
-                const char *descend_filter, unsigned int level,
+                int descend_all, unsigned int level,
                 const subtitle_provider_t *sp1,
                 const subtitle_provider_t *sp2)
 {
@@ -363,9 +363,12 @@ fs_sub_scan_dir(sub_scanner_t *ss, const char *url, const char *video,
       break;
 
     if(fde->fde_type == CONTENT_DIR || fde->fde_type == CONTENT_SHARE) {
-      if(descend_filter == NULL ||
-	 !strcasecmp(rstr_get(fde->fde_filename), descend_filter)) {
-	fs_sub_scan_dir(ss, rstr_get(fde->fde_url), video, descend_filter,
+
+      if(descend_all ||
+	 !strcasecmp(rstr_get(fde->fde_filename), "subs") ||
+         !strncasecmp(rstr_get(fde->fde_filename), "subs-", 5)) {
+
+	fs_sub_scan_dir(ss, rstr_get(fde->fde_url), video, descend_all,
 			level - 1, sp1, sp2);
       }
       continue;
@@ -375,7 +378,7 @@ fs_sub_scan_dir(sub_scanner_t *ss, const char *url, const char *video,
     if(postfix != NULL && !strcasecmp(postfix, ".zip")) {
       char zipurl[1024];
       snprintf(zipurl, sizeof(zipurl), "zip://%s", rstr_get(fde->fde_url));
-      fs_sub_scan_dir(ss, zipurl, video, descend_filter, level - 1, sp1, sp2);
+      fs_sub_scan_dir(ss, zipurl, video, descend_all, level - 1, sp1, sp2);
       continue;
     }
 
@@ -459,7 +462,7 @@ sub_scanner_thread(void *aux)
   if(!(ss->ss_beflags & BACKEND_VIDEO_NO_FS_SCAN)) {
     char parent[URL_MAX];
     if(!fa_parent(parent, sizeof(parent), ss->ss_url))
-      fs_sub_scan_dir(ss, parent, fname, "subs", 2,
+      fs_sub_scan_dir(ss, parent, fname, 0, 2,
 		      sp_same_filename, sp_any_filename);
   }
 
@@ -468,7 +471,7 @@ sub_scanner_thread(void *aux)
     const char *path = mystrdupa(central_path);
     hts_mutex_unlock(&subtitle_provider_mutex);
 
-    fs_sub_scan_dir(ss, path, fname, NULL, 2,
+    fs_sub_scan_dir(ss, path, fname, 1, 2,
                     sp_central_dir_same_filename,
                     sp_central_dir_any_filename);
 
