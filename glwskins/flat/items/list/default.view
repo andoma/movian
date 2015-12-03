@@ -22,6 +22,8 @@ widget(container_z, {
 		  "store",     "ic_shopping_cart_48px",
 		  "directory", "ic_folder_48px",
 		  "dvd",       "ic_album_48px",
+		  "album",     "ic_album_48px",
+		  "artist",    "ic_person_48px",
 		  "tv",        "ic_tv_48px"
 	         ) + ".svg";
 
