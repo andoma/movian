@@ -21,11 +21,7 @@
 #include <string.h>
 #include "isolang.h"
 
-static const struct {
-  char iso639_2[4];
-  char iso639_1[4];
-  const char *fullname;
-} langtable[] = {
+static const isolang_t langtable[] = {
   {"aar", "aa", "Afar, afar"},
   {"abk", "ab", "Abkhazian"},
   {"ace", "", "Achinese"},
@@ -501,47 +497,32 @@ static const struct {
 };
 
 
-// Convert ISO 639-2 (3 char code) to (english) language string
-const char *
-iso_639_2_lang(const char *code)
+// Find ISO 639-2 (2 or 3 char code) 
+const isolang_t *
+isolang_find(const char *code)
 {
   int i;
   char buf[3];
-  if(strlen(code) < 3)
-    return NULL;
+  if(strlen(code) == 3) {
 
-  // lowercase input code
-  buf[0] = code[0] | 0x20;
-  buf[1] = code[1] | 0x20;
-  buf[2] = code[2] | 0x20;
+    // lowercase input code
+    buf[0] = code[0] | 0x20;
+    buf[1] = code[1] | 0x20;
+    buf[2] = code[2] | 0x20;
 
-  for(i = 0; i < sizeof(langtable) / sizeof(langtable[0]); i++)
-    if(buf[0] == langtable[i].iso639_2[0] &&
-       buf[1] == langtable[i].iso639_2[1] &&
-       buf[2] == langtable[i].iso639_2[2])
-      return langtable[i].fullname;
-  return NULL;
-}
+    for(i = 0; i < sizeof(langtable) / sizeof(langtable[0]); i++)
+      if(!memcmp(buf, langtable[i].iso639_2, 3))
+        return &langtable[i];
 
 
+  } else if(strlen(code) == 2) {
+    buf[0] = code[0] | 0x20;
+    buf[1] = code[1] | 0x20;
 
+    for(i = 0; i < sizeof(langtable) / sizeof(langtable[0]); i++)
+      if(!memcmp(buf, langtable[i].iso639_1, 2))
+        return &langtable[i];
 
-// Convert ISO 639-1 (2 char code) to (english) language string
-const char *
-iso_639_1_lang(const char *code)
-{
-  int i;
-  char buf[2];
-  if(strlen(code) < 2)
-    return NULL;
-
-  // lowercase input code
-  buf[0] = code[0] | 0x20;
-  buf[1] = code[1] | 0x20;
-
-  for(i = 0; i < sizeof(langtable) / sizeof(langtable[0]); i++)
-    if(buf[0] == langtable[i].iso639_1[0] &&
-       buf[1] == langtable[i].iso639_1[1])
-      return langtable[i].fullname;
+  }
   return NULL;
 }

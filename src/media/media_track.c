@@ -56,20 +56,18 @@ mp_add_trackr(prop_t *parent,
   prop_set(p, "url", PROP_SET_STRING, url);
   prop_set(p, "format", PROP_SET_RSTRING, format);
   prop_set(p, "longformat", PROP_SET_RSTRING, longformat);
-  
+
   if(sourcep != NULL)
     prop_link(sourcep, s);
   else
     prop_set_rstring(s, source);
 
   if(isolang != NULL) {
-    prop_set(p, "isolang", PROP_SET_RSTRING, isolang);
-    
-    const char *language = iso_639_2_lang(rstr_get(isolang));
-    if(language) {
-      prop_set(p, "language", PROP_SET_STRING, language);
-    } else {
-      prop_set(p, "language", PROP_SET_RSTRING, isolang);
+    const isolang_t *il = isolang_find(rstr_get(isolang));
+
+    if(il != NULL) {
+      prop_set(p, "language", PROP_SET_STRING, il->fullname);
+      prop_set(p, "isolang", PROP_SET_STRING, il->iso639_2);
     }
   }
 

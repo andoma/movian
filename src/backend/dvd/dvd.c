@@ -611,14 +611,14 @@ dvd_set_spu_stream(dvd_player_t *dp, const char *id, int manual)
 /**
  *
  */
-static const char *
+static const isolang_t *
 dvdlang(uint16_t code)
 {
   char buf[3];
   buf[0] = code >> 8;
   buf[1] = code;
   buf[2] = 0;
-  return iso_639_1_lang(buf);
+  return isolang_find(buf);
 }
 
 /**
@@ -677,8 +677,14 @@ dvd_update_streams(dvd_player_t *dp)
 
       prop_set_string(prop_create(p, "format"), format);
 
-      if((lang = dvdnav_audio_stream_to_lang(dp->dp_dvdnav, i)) != 0xffff)
-	prop_set(p, "language", PROP_SET_STRING, dvdlang(lang));
+      if((lang = dvdnav_audio_stream_to_lang(dp->dp_dvdnav, i)) != 0xffff) {
+
+        const isolang_t *il = dvdlang(lang);
+        if(il != NULL) {
+          prop_set(p, "language", PROP_SET_STRING, il->fullname);
+          prop_set(p, "isolang", PROP_SET_STRING, il->iso639_2);
+        }
+      }
     }
   }
 

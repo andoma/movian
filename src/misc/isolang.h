@@ -18,6 +18,12 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 #pragma once
-const char *iso_639_1_lang(const char *code); // 2 character code
-const char *iso_639_2_lang(const char *code); // 3 character code
+
+typedef struct {
+  char iso639_2[4];  // Three letter code
+  char iso639_1[4];  // Two letter code
+  const char *fullname;
+} isolang_t;
+
+const isolang_t *isolang_find(const char *code);
 

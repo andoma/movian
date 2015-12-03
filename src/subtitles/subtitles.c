@@ -259,12 +259,13 @@ fs_sub_match(const char *video, const char *sub)
  */
 static void
 check_subtitle_file(sub_scanner_t *ss,
-                    const char * const sub_filename, const char * const sub_url,
+                    const char * const sub_filename,
+                    const char * const sub_url,
                     const char * const video_filename,
-                    int base_score, int match_result, int autosel)
+                    int base_score, int match_result, int autosel,
+                    const char *lang)
 {
   const char *postfix = strrchr(sub_filename, '.');
-  const char *lang = NULL;
   const char *type = NULL;
   if(postfix == NULL)
     return;
@@ -283,7 +284,9 @@ check_subtitle_file(sub_scanner_t *ss,
       char b[4];
       memcpy(b, postfix - 3, 3);
       b[3] = 0;
-      lang = iso_639_2_lang(b);
+      const isolang_t *il = isolang_find(b);
+      if(il != NULL)
+        lang = il->iso639_2;
     }
 
     type = "SRT";
@@ -293,7 +296,9 @@ check_subtitle_file(sub_scanner_t *ss,
       char b[4];
       memcpy(b, postfix - 3, 3);
       b[3] = 0;
-      lang = iso_639_2_lang(b);
+      const isolang_t *il = isolang_find(b);
+      if(il != NULL)
+        lang = il->iso639_2;
     }
 
     type = "ASS / SSA";
@@ -341,7 +346,8 @@ static void
 fs_sub_scan_dir(sub_scanner_t *ss, const char *url, const char *video,
                 int descend_all, unsigned int level,
                 const subtitle_provider_t *sp1,
-                const subtitle_provider_t *sp2)
+                const subtitle_provider_t *sp2,
+                const char *lang)
 {
   fa_dir_t *fd;
   fa_dir_entry_t *fde;
@@ -362,14 +368,21 @@ fs_sub_scan_dir(sub_scanner_t *ss, const char *url, const char *video,
     if(ss->ss_stop)
       break;
 
+    const char *filename = rstr_get(fde->fde_filename);
+
     if(fde->fde_type == CONTENT_DIR || fde->fde_type == CONTENT_SHARE) {
 
-      if(descend_all ||
-	 !strcasecmp(rstr_get(fde->fde_filename), "subs") ||
-         !strncasecmp(rstr_get(fde->fde_filename), "subs-", 5)) {
-
+      if(descend_all || !strcasecmp(filename, "subs")) {
 	fs_sub_scan_dir(ss, rstr_get(fde->fde_url), video, descend_all,
-			level - 1, sp1, sp2);
+			level - 1, sp1, sp2, lang);
+
+      } else if(!strncasecmp(filename, "subs-", 5)) {
+        const isolang_t *il = isolang_find(filename + 5);
+        if(il != NULL)
+          lang = il->iso639_2;
+
+        fs_sub_scan_dir(ss, rstr_get(fde->fde_url), video, descend_all,
+			level - 1, sp1, sp2, lang);
       }
       continue;
     }
@@ -378,20 +391,20 @@ fs_sub_scan_dir(sub_scanner_t *ss, const char *url, const char *video,
     if(postfix != NULL && !strcasecmp(postfix, ".zip")) {
       char zipurl[1024];
       snprintf(zipurl, sizeof(zipurl), "zip://%s", rstr_get(fde->fde_url));
-      fs_sub_scan_dir(ss, zipurl, video, descend_all, level - 1, sp1, sp2);
+      fs_sub_scan_dir(ss, zipurl, video, descend_all, level - 1, sp1, sp2,
+                      NULL);
       continue;
     }
 
-    const char *filename = rstr_get(fde->fde_filename);
     const char *url      = rstr_get(fde->fde_url);
 
     if(sp1->sp_enabled)
       check_subtitle_file(ss, filename, url, video, subtitle_score(sp1),
-                          1, sp1->sp_autosel);
+                          1, sp1->sp_autosel, lang);
 
     if(sp2->sp_enabled)
       check_subtitle_file(ss, filename, url, video, subtitle_score(sp2),
-                          0, sp2->sp_autosel);
+                          0, sp2->sp_autosel, lang);
   }
   fa_dir_free(fd);
 }
@@ -463,7 +476,7 @@ sub_scanner_thread(void *aux)
     char parent[URL_MAX];
     if(!fa_parent(parent, sizeof(parent), ss->ss_url))
       fs_sub_scan_dir(ss, parent, fname, 0, 2,
-		      sp_same_filename, sp_any_filename);
+		      sp_same_filename, sp_any_filename, NULL);
   }
 
   hts_mutex_lock(&subtitle_provider_mutex);
@@ -473,7 +486,7 @@ sub_scanner_thread(void *aux)
 
     fs_sub_scan_dir(ss, path, fname, 1, 2,
                     sp_central_dir_same_filename,
-                    sp_central_dir_any_filename);
+                    sp_central_dir_any_filename, NULL);
 
   } else {
     hts_mutex_unlock(&subtitle_provider_mutex);

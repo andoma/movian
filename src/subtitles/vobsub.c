@@ -114,7 +114,7 @@ vobsub_probe(const char *url, const char *filename,
       while(*p == ' ')
 	p++;
       if(strlen(p) >= 2) {
-	const char *lang = iso_639_1_lang(p);
+	const char *lang = p;
 
 	htsmsg_t *m = htsmsg_create_map();
 	htsmsg_add_str(m, "idx", url);
