@@ -225,13 +225,11 @@ ovd_render(glw_video_t *gv, glw_rctx_t *rc)
 
     conf.fullscreen = OMX_FALSE;
     conf.noaspect   = OMX_TRUE;
-    conf.alpha = rc->rc_alpha * 255;
     conf.set =
       OMX_DISPLAY_SET_DEST_RECT |
       OMX_DISPLAY_SET_FULLSCREEN |
-      OMX_DISPLAY_SET_NOASPECT |
-      OMX_DISPLAY_SET_ALPHA;
-    printf("alpha:%x\n", conf.alpha);
+      OMX_DISPLAY_SET_NOASPECT;
+
     conf.dest_rect.x_offset = ovd->ovd_pos.x1;
     conf.dest_rect.y_offset = ovd->ovd_pos.y1;
     conf.dest_rect.width    = ovd->ovd_pos.x2 - ovd->ovd_pos.x1;
@@ -249,14 +247,14 @@ ovd_render(glw_video_t *gv, glw_rctx_t *rc)
     conf.nPortIndex = 90;
 
     conf.alpha = rc->rc_alpha * 255;
+    if(conf.alpha < 5)
+      conf.alpha = 0;
     conf.set = OMX_DISPLAY_SET_ALPHA;
-    printf("alpha:%x\n", conf.alpha);
     omxchk(OMX_SetConfig(ovd->ovd_vrender->oc_handle,
                          OMX_IndexConfigDisplayRegion, &conf));
 
   }
 }
-
 
 
 /**
