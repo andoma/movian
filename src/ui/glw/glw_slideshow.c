@@ -140,13 +140,17 @@ glw_slideshow_layout(glw_t *w, const glw_rctx_t *rc)
   /**
    * Keep previous and next images 'hot' (ie, loaded into texture memory)
    */
+
+  glw_rctx_t rc0 = *rc;
+  rc0.rc_invisible = 1;
+
   p = glw_prev_widget(c);
   if(p == NULL)
     p = glw_last_widget(&s->w);
   if(p != NULL && p != c) {
     a = itemdata(p)->alpha;
     r |= update_parent_alpha(p, GLW_MAX(a - delta, 0.0f));
-    glw_layout0(p, rc);
+    glw_layout0(p, &rc0);
   }
 
   n = glw_next_widget(c);
@@ -155,7 +159,7 @@ glw_slideshow_layout(glw_t *w, const glw_rctx_t *rc)
   if(n != NULL && n != c) {
     a = itemdata(n)->alpha;
     r |= update_parent_alpha(n, GLW_MAX(a - delta, 0.0f));
-    glw_layout0(n, rc);
+    glw_layout0(n, &rc0);
   }
 
   if(r)
