@@ -26,6 +26,8 @@
 #include "event.h"
 
 static int longpress_select;
+static libcec_configuration cec_config;
+static libcec_connection_t conn;
 
 static int
 log_message(void *lib, const cec_log_message message)
@@ -100,7 +102,7 @@ keypress(void *aux, const cec_keypress kp)
 
   if(e == NULL) {
     const action_type_t *avec = NULL;
-    if(kp.duration == 0) {
+    if(kp.duration == 0 || kp.keycode == cec_config.comboKey) {
       avec = btn_to_action[kp.keycode];
     }
 
@@ -151,8 +153,6 @@ static ICECCallbacks g_callbacks = {
   .CBCecCommand = handle_cec_command,
 };
 
-static libcec_configuration cec_config;
-static libcec_connection_t conn;
 
 
 /**
