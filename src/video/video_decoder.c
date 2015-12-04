@@ -96,11 +96,14 @@ video_decoder_set_current_time(video_decoder_t *vd, int64_t user_time,
   if(pts == PTS_UNSET)
     return;
 
-  vd->vd_subpts = user_time - vd->vd_mp->mp_svdelta;
+  vd->vd_subpts_user_time = user_time - vd->vd_mp->mp_svdelta;
+  vd->vd_subpts_ts = pts - vd->vd_mp->mp_svdelta;
+
   pts -= vd->vd_mp->mp_svdelta;
 
   if(vd->vd_ext_subtitles != NULL)
-    subtitles_pick(vd->vd_ext_subtitles, vd->vd_subpts, pts, vd->vd_mp);
+    subtitles_pick(vd->vd_ext_subtitles, vd->vd_subpts_user_time,
+                   pts, vd->vd_mp);
 }
 
 
@@ -195,7 +198,7 @@ vd_thread(void *aux)
       TAILQ_REMOVE(&mq->mq_q_ctrl, ctrl, mb_link);
       mb = ctrl;
 
-    } else if(aux != NULL && aux->mb_pts < vd->vd_subpts + 1000000LL) {
+    } else if(aux != NULL && aux->mb_pts < vd->vd_subpts_ts + 1000000LL) {
 
       if(vd->vd_hold) {
 	hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);

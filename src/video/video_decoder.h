@@ -88,7 +88,8 @@ typedef struct video_decoder {
   /**
    * Video overlay and subtitles
    */
-  int64_t vd_subpts;
+  int64_t vd_subpts_user_time;
+  int64_t vd_subpts_ts;
   struct ext_subtitles *vd_ext_subtitles;
 
   /**
