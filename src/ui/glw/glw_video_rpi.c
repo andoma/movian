@@ -64,7 +64,7 @@ typedef struct omx_video_display {
   media_codec_t *ovd_mc; // Current media codec
 
   glw_rect_t ovd_pos;
-
+  float ovd_alpha;
   hts_mutex_t ovd_mutex;
 
 } omx_video_display_t;
@@ -78,6 +78,7 @@ ovd_init(glw_video_t *gv)
 {
   omx_video_display_t *ovd = calloc(1, sizeof(omx_video_display_t));
   ovd->ovd_pts = PTS_UNSET;
+  ovd->ovd_alpha = -1000;
   ovd->ovd_gv = gv;
   gv->gv_aux = ovd;
   hts_mutex_init(&ovd->ovd_mutex);
@@ -214,30 +215,46 @@ static void
 ovd_render(glw_video_t *gv, glw_rctx_t *rc)
 {
   omx_video_display_t *ovd = gv->gv_aux;
-  if(!memcmp(&ovd->ovd_pos, &gv->gv_rect, sizeof(glw_rect_t)))
-    return;
-
-  ovd->ovd_pos = gv->gv_rect;
-
   OMX_CONFIG_DISPLAYREGIONTYPE conf;
-  OMX_INIT_STRUCTURE(conf);
-  conf.nPortIndex = 90;
 
-  conf.fullscreen = OMX_FALSE;
-  conf.noaspect   = OMX_TRUE;
+  if(memcmp(&ovd->ovd_pos, &gv->gv_rect, sizeof(glw_rect_t))) {
+    ovd->ovd_pos = gv->gv_rect;
 
-  conf.set =
-    OMX_DISPLAY_SET_DEST_RECT |
-    OMX_DISPLAY_SET_FULLSCREEN |
-    OMX_DISPLAY_SET_NOASPECT;
+    OMX_INIT_STRUCTURE(conf);
+    conf.nPortIndex = 90;
 
-  conf.dest_rect.x_offset = ovd->ovd_pos.x1;
-  conf.dest_rect.y_offset = ovd->ovd_pos.y1;
-  conf.dest_rect.width    = ovd->ovd_pos.x2 - ovd->ovd_pos.x1;
-  conf.dest_rect.height   = ovd->ovd_pos.y2 - ovd->ovd_pos.y1;
+    conf.fullscreen = OMX_FALSE;
+    conf.noaspect   = OMX_TRUE;
+    conf.alpha = rc->rc_alpha * 255;
+    conf.set =
+      OMX_DISPLAY_SET_DEST_RECT |
+      OMX_DISPLAY_SET_FULLSCREEN |
+      OMX_DISPLAY_SET_NOASPECT |
+      OMX_DISPLAY_SET_ALPHA;
+    printf("alpha:%x\n", conf.alpha);
+    conf.dest_rect.x_offset = ovd->ovd_pos.x1;
+    conf.dest_rect.y_offset = ovd->ovd_pos.y1;
+    conf.dest_rect.width    = ovd->ovd_pos.x2 - ovd->ovd_pos.x1;
+    conf.dest_rect.height   = ovd->ovd_pos.y2 - ovd->ovd_pos.y1;
 
-  omxchk(OMX_SetConfig(ovd->ovd_vrender->oc_handle,
-		       OMX_IndexConfigDisplayRegion, &conf));
+    omxchk(OMX_SetConfig(ovd->ovd_vrender->oc_handle,
+                         OMX_IndexConfigDisplayRegion, &conf));
+  }
+
+
+  if(ovd->ovd_alpha != rc->rc_alpha) {
+    ovd->ovd_alpha = rc->rc_alpha;
+
+    OMX_INIT_STRUCTURE(conf);
+    conf.nPortIndex = 90;
+
+    conf.alpha = rc->rc_alpha * 255;
+    conf.set = OMX_DISPLAY_SET_ALPHA;
+    printf("alpha:%x\n", conf.alpha);
+    omxchk(OMX_SetConfig(ovd->ovd_vrender->oc_handle,
+                         OMX_IndexConfigDisplayRegion, &conf));
+
+  }
 }
 
 
