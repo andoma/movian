@@ -19,6 +19,7 @@ widget(deck, {
       });
 
       widget(label, {
+        fhpSpill: true;
         caption: $self.metadata.title + ":";
         style: ["ListItemLabel", "ListItemLabelContainer"];
       });
@@ -28,6 +29,7 @@ widget(deck, {
         filterConstraintX: true;
 
         widget(label, {
+          fhpSpill: true;
           style: "ListItemValue";
           width: 5em;
           caption: fmt("%d %s", $self.value, $self.unit);
