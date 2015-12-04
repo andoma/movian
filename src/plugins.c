@@ -59,8 +59,8 @@ static struct strtab catnames[] = {
 };
 
 
-
-static const char *plugin_repo_url = "http://plugins.movian.tv/repo/plugins-v1.json";
+static const char *plugin_repo_url =
+  "http://plugins.movian.tv/repo/plugins-v1.json";
 static char *plugin_alt_repo_url;
 static char *plugin_beta_passwords;
 static HTS_MUTEX_DECL(plugin_mutex);
@@ -113,6 +113,58 @@ static void plugins_view_add(plugin_t *pl, const char *uit, const char *class,
 static void plugin_unload_views(plugin_t *pl);
 
 static int autoupgrade;
+
+
+#define VERSION_ENCODE(a,b,c) ((a) * 10000000 + (b) * 100000 + (c))
+
+static const struct {
+  const char *id;
+  int version;
+} blacklist[] = {
+  { "oceanus",   VERSION_ENCODE(2,0,0) },
+  { "xperience", VERSION_ENCODE(1,0,0) }
+};
+
+/**
+ *
+ */
+static int
+is_plugin_blacklisted(const char *id, const char *version, rstr_t **reason)
+{
+  char tmp[512];
+  int verint = parse_version_int(version);
+  if(!strcmp(id, "custombg")) {
+    if(reason != NULL) {
+      *reason =
+        _("Custom backgrounds can now be set in Settings -> Look and Feel");
+    }
+    return 1;
+  }
+
+  for(int i = 0; i < ARRAYSIZE(blacklist); i++) {
+    if(strcmp(id, blacklist[i].id))
+      continue;
+
+    if(verint >= blacklist[i].version)
+      continue;
+
+    if(reason != NULL) {
+      rstr_t *f = _("Version %s is no longer compatible with Movian");
+      snprintf(tmp, sizeof(tmp), rstr_get(f), version);
+      rstr_release(f);
+      *reason = rstr_alloc(tmp);
+    }
+    return 1;
+  }
+  return 0;
+}
+
+
+
+
+
+
+
 
 /**
  *
@@ -478,7 +530,7 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int flags)
 
   const char *type = htsmsg_get_str(ctrl, "type");
   const char *id   = htsmsg_get_str(ctrl, "id");
-
+  const char *version = htsmsg_get_str(ctrl, "version");
   if(type == NULL) {
     snprintf(errbuf, errlen, "Missing \"type\" element in control file %s",
              ctrlfile);
@@ -492,6 +544,21 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int flags)
   }
 
   plugin_t *pl = plugin_find(id);
+
+
+  if(version != NULL) {
+    rstr_t *notifymsg;
+    if(is_plugin_blacklisted(id, version, &notifymsg)) {
+      const char *title = htsmsg_get_str(ctrl, "title") ?: id;
+      char tmp[512];
+      rstr_t *fmt = _("Plugin %s has been uninstalled - %s");
+      snprintf(tmp, sizeof(tmp), rstr_get(fmt), title, rstr_get(notifymsg));
+      rstr_release(notifymsg);
+      notify_add(NULL, NOTIFY_ERROR, NULL, 10, rstr_alloc(tmp));
+      plugin_remove(pl);
+      goto bad;
+    }
+  }
 
   if(!(flags & PLUGIN_LOAD_FORCE) && pl->pl_loaded) {
     snprintf(errbuf, errlen, "Plugin \"%s\" already loaded", id);
@@ -736,13 +803,20 @@ plugin_load_repo(void)
       const char *id = htsmsg_get_str(pm, "id");
       if(id == NULL)
 	continue;
+      const char *version = htsmsg_get_str(pm, "version");
+      if(id == NULL)
+	continue;
       const char *type = htsmsg_get_str(pm, "type");
       if(type != NULL && !strcmp(type, "javascript"))
         continue;
+
+      if(is_plugin_blacklisted(id, version, NULL))
+        continue;
+
       pl = plugin_find(id);
       pl->pl_mark = 0;
       plugin_prop_setup(pm, pl, NULL);
-      mystrset(&pl->pl_repo_ver, htsmsg_get_str(pm, "version"));
+      mystrset(&pl->pl_repo_ver, version);
       mystrset(&pl->pl_app_min_version,
 	       htsmsg_get_str(pm, "showtimeVersion"));
       update_state(pl);
