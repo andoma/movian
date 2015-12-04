@@ -26,7 +26,7 @@
 typedef struct glw_event_map {
   LIST_ENTRY(glw_event_map) gem_link;
 
-  rstr_t *gem_action;
+  rstr_t *gem_filter;
 
   void (*gem_fire)(glw_t *w, struct glw_event_map *gem, struct event *src);
   void (*gem_dtor)(glw_root_t *gr, struct glw_event_map *gem);
@@ -35,6 +35,9 @@ typedef struct glw_event_map {
 
   char gem_early; // Intercepts on event descent
   char gem_final;
+
+  rstr_t *gem_file;
+  int gem_line;
 
 } glw_event_map_t;
 

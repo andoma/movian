@@ -39,7 +39,8 @@ typedef struct glw_event_external {
 void
 glw_event_map_destroy(glw_root_t *gr, glw_event_map_t *gem)
 {
-  rstr_release(gem->gem_action);
+  rstr_release(gem->gem_filter);
+  rstr_release(gem->gem_file);
   gem->gem_dtor(gr, gem);
 }
 
@@ -233,8 +234,18 @@ glw_event_map_deliverEvent_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
   glw_event_deliverEvent_t *de = (glw_event_deliverEvent_t *)gem;
 
   if(de->action == NULL) {
-    if(src != NULL)
+    if(src != NULL) {
+      GLW_TRACE("Event-map at %s:%d relayed source event '%s'",
+                rstr_get(gem->gem_file),
+                gem->gem_line,
+                event_sprint(src));
       prop_send_ext_event(de->target, src);
+    } else {
+      TRACE(TRACE_ERROR, "GLW",
+            "Event-map at %s:%d failed -- No source event to relay",
+            rstr_get(gem->gem_file),
+            gem->gem_line);
+    }
     return;
   }
 
@@ -420,7 +431,7 @@ glw_event_map_internal_create(const char *target, action_type_t event,
 			      int uc)
 {
   glw_event_internal_t *g = calloc(1, sizeof(glw_event_internal_t));
-  
+
   g->target = target ? strdup(target) : NULL;
   g->event  = event;
   g->uc     = uc;
@@ -428,6 +439,24 @@ glw_event_map_internal_create(const char *target, action_type_t event,
   g->map.gem_dtor = glw_event_map_internal_dtor;
   g->map.gem_fire = glw_event_map_internal_fire;
   return &g->map;
+}
+
+
+static int
+gem_dispatch(glw_t *w, glw_event_map_t *gem, event_t *e, char early)
+{
+  GLW_TRACE("Event '%s' intercepted by event-map '%s' at %s:%d "
+            "during %s final=%s",
+            event_sprint(e),
+            rstr_get(gem->gem_filter),
+            rstr_get(gem->gem_file),
+            gem->gem_line,
+            early ? "descent" : "ascent",
+            gem->gem_final ? "yes" : "no");
+
+  gem->gem_fire(w, gem, e);
+
+  return gem->gem_final;
 }
 
 /**
@@ -445,14 +474,17 @@ glw_event_map_intercept(glw_t *w, event_t *e, char early)
       continue;
 
     switch(e->e_type) {
+    case EVENT_OPENURL:
+      str = "navOpen";
+      break;
+
     case EVENT_ACTION_VECTOR:
       {
         event_action_vector_t *eav = (event_action_vector_t *)e;
         for(int i = 0; i < eav->num; i++) {
           if(pattern_match(action_code2str(eav->actions[i]),
-                           rstr_get(gem->gem_action))) {
-            gem->gem_fire(w, gem, e);
-            return gem->gem_final;
+                           rstr_get(gem->gem_filter))) {
+            return gem_dispatch(w, gem, e, early);
           }
         }
       }
@@ -476,9 +508,8 @@ glw_event_map_intercept(glw_t *w, event_t *e, char early)
       continue;
     }
 
-    if(pattern_match(str, rstr_get(gem->gem_action))) {
-      gem->gem_fire(w, gem, e);
-      return gem->gem_final;
+    if(pattern_match(str, rstr_get(gem->gem_filter))) {
+      return gem_dispatch(w, gem, e, early);
     }
   }
   return 0;
@@ -494,7 +525,7 @@ glw_event_glw_action(glw_t *w, const char *action)
   glw_event_map_t *gem;
 
   LIST_FOREACH(gem, &w->glw_event_maps, gem_link) {
-    if(!strcmp(rstr_get(gem->gem_action), action)) {
+    if(!strcmp(rstr_get(gem->gem_filter), action)) {
       gem->gem_fire(w, gem, NULL);
       return gem->gem_final;
     }

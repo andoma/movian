@@ -3369,13 +3369,15 @@ glwf_onEvent(glw_view_eval_context_t *ec, struct token *self,
       return glw_view_seterr(ec->ei, a, "onEvent: Second arg is invalid");
     }
 
-    gem->gem_action = filter;
+    gem->gem_filter = filter;
     gem->gem_final = final;
     if(!self->t_extra_int)
       self->t_extra_int = ++w->glw_root->gr_gem_id_tally;
 
     gem->gem_id = self->t_extra_int;
     gem->gem_early = early;
+    gem->gem_file = rstr_dup(self->file);
+    gem->gem_line = self->line;
     glw_event_map_add(w, gem);
     return 0;
   }

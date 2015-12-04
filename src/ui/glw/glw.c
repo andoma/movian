@@ -1817,19 +1817,30 @@ glw_event_to_widget(glw_t *w, event_t *e)
 
   // First, descend in the view hierarchy
 
+  GLW_TRACE("Event '%s' route start at widget '%s'",
+            event_sprint(e), glw_get_name(w));
+
   while(1) {
     if(!glw_path_in_focus(w))
       break;
 
-    if(glw_event_map_intercept(w, e, 1))
+    if(glw_event_map_intercept(w, e, 1)) {
+      // glw_event_map_intercept() does GLW_TRACE() by itself
       return 1;
+    }
 
-    if(w->glw_flags2 & GLW2_POSITIONAL_NAVIGATION)
-      if(glw_navigate_matrix(w, e))
-        return 1;
-
-    if(glw_send_event2(w, e))
+    if(w->glw_flags2 & GLW2_POSITIONAL_NAVIGATION &&
+       glw_navigate_matrix(w, e)) {
+      GLW_TRACE("Event '%s' intercepted by matrix-nav at '%s' (descending)",
+                event_sprint(e), glw_get_name(w));
       return 1;
+    }
+
+    if(glw_send_event2(w, e)) {
+      GLW_TRACE("Event '%s' intercepted by widget '%s' (descending)",
+                event_sprint(e), glw_get_name(w));
+      return 1;
+    }
 
     if(w->glw_focused == NULL)
       break;
@@ -1844,13 +1855,18 @@ glw_event_to_widget(glw_t *w, event_t *e)
     if(glw_event_map_intercept(w, e, 0))
       return 1;
 
-    if(glw_bubble_event2(w, e))
+    if(glw_bubble_event2(w, e)) {
+      GLW_TRACE("Event '%s' intercepted by widget '%s' (ascending)",
+                event_sprint(e), glw_get_name(w));
       return 1;
-
+    }
     w = w->glw_parent;
   }
 
-  // Nothing grabbed the event, default it
+  GLW_TRACE("Event '%s' relayed to root handler",
+            event_sprint(e));
+
+      // Nothing grabbed the event, default it
 
   return glw_root_event_handler(gr, e);
 }
@@ -2673,6 +2689,8 @@ glw_get_name(glw_t *w)
   const char *extra = NULL;
   char tmp[512];
   const glw_class_t *gc = w->glw_class;
+  if(w == w->glw_root->gr_universe)
+    return "Universe";
 
   if(gc->gc_get_identity != NULL)
     extra = gc->gc_get_identity(w, tmp, sizeof(tmp));
