@@ -27,9 +27,10 @@
 #define GLW_TEX_CORNER_TOPRIGHT       GLW_IMAGE_CORNER_TOPRIGHT
 #define GLW_TEX_CORNER_BOTTOMLEFT     GLW_IMAGE_CORNER_BOTTOMLEFT
 #define GLW_TEX_CORNER_BOTTOMRIGHT    GLW_IMAGE_CORNER_BOTTOMRIGHT
-#define GLW_TEX_UNIMPORTANT           GLW_IMAGE_UNIMPORTANT
 
-#define GLW_TEX_REPEAT                0x80000000
+#define GLW_TEX_REPEAT                 0x80000000
+#define GLW_TEX_INTENSITY_ANALYSIS     0x40000000
+#define GLW_TEX_PRIMARY_COLOR_ANALYSIS 0x20000000
 
 typedef struct glw_loadable_texture {
 
@@ -83,6 +84,8 @@ typedef struct glw_loadable_texture {
   int16_t glt_shadow;
 
   int glt_size;
+
+  float glt_intensity;
 
 } glw_loadable_texture_t;
 

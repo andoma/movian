@@ -288,6 +288,10 @@ image_postprocess_pixmap(image_t *img, const image_meta_t *im)
   if(im->im_corner_radius)
     ic->pm = pixmap_rounded_corners(ic->pm, im->im_corner_radius,
 				    im->im_corner_selection);
+
+  if(im->im_intensity_analysis)
+    pixmap_intensity_analysis(ic->pm);
+
 }
 
 

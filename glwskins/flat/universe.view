@@ -23,15 +23,10 @@ style(PageContainer, {
   alpha: 1 - iir(clamp(getLayer(), 0, 1), 4) * 0.9;
 });
 
-$ui.background = "pixmap:gradient:20,20,20:60,60,60";
-
 widget(container_z, {
 
   widget(loader, {
-    source: selectedElement(vectorize($core.glw.views.standard.background))
-      ?? "background.view";
-    effect: blend;
-    time: 0.3;
+    source: "background.view";
   });
 
   widget(loader, {

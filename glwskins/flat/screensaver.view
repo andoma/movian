@@ -1,0 +1,11 @@
+widget(slideshow, {
+  alpha: $ui.screenSaverAlpha;
+
+  time: 10;
+  transitionTime: 2;
+
+  cloner($core.glw.screensaver.items, image, {
+    zoffset: -1400;
+    source: $self.url;
+  });
+});

@@ -923,6 +923,104 @@ pixmap_drop_shadow(pixmap_t *pm, int boxw, int boxh)
   free(tmp);
 }
 
+#if 0
+/**
+ *
+ */
+void
+pixmap_intensity_analysis(pixmap_t *pm)
+{
+  int sum = 0;
+
+  switch(pm->pm_type) {
+  case PIXMAP_RGB24:
+    for(int y = 0; y < pm->pm_height; y++) {
+      const uint8_t *src = pm_pixel(pm, 0, y);
+      int linesum = 0;
+      for(int x = 0; x < pm->pm_width; x++) {
+        unsigned int v = src[0] + src[1] + src[2];
+        linesum += v;
+        src+=3;
+      }
+      sum += linesum / (pm->pm_width * 3);
+    }
+    break;
+
+  case PIXMAP_BGR32:
+    for(int y = 0; y < pm->pm_height; y++) {
+      const uint32_t *src = pm_pixel(pm, 0, y);
+      int linesum = 0;
+      for(int x = 0; x < pm->pm_width; x++) {
+        unsigned int u32 = *src++;
+        unsigned int r = u32 & 0xff;
+        unsigned int g = (u32 >> 8) & 0xff;
+        unsigned int b = (u32 >> 16) & 0xff;
+        unsigned int v = r + g + b;
+        linesum += v;
+      }
+      sum += linesum / (pm->pm_width * 3);
+    }
+    break;
+
+  default:
+    printf("Cant do intensity analysis for pixfmt %d\n", pm->pm_type);
+  }
+  sum /= pm->pm_height;
+  pm->pm_intensity = pow(sum / 256.0f, 1 / 3.0f);
+}
+#endif
+
+
+/**
+ *
+ */
+void
+pixmap_intensity_analysis(pixmap_t *pm)
+{
+  int bin[256] = {0};
+
+  switch(pm->pm_type) {
+  case PIXMAP_RGB24:
+    for(int y = 0; y < pm->pm_height; y++) {
+      const uint8_t *src = pm_pixel(pm, 0, y);
+      for(int x = 0; x < pm->pm_width; x++) {
+        unsigned int v = (src[0] + src[1] + src[2]);
+        bin[v / 3]++;
+      }
+    }
+    break;
+
+  case PIXMAP_BGR32:
+    for(int y = 0; y < pm->pm_height; y++) {
+      const uint32_t *src = pm_pixel(pm, 0, y);
+      for(int x = 0; x < pm->pm_width; x++) {
+        unsigned int u32 = *src++;
+        unsigned int r = u32 & 0xff;
+        unsigned int g = (u32 >> 8) & 0xff;
+        unsigned int b = (u32 >> 16) & 0xff;
+        unsigned int v = r + g + b;
+        bin[v / 3]++;
+      }
+    }
+    break;
+
+  default:
+    printf("Cant do intensity analysis for pixfmt %d\n", pm->pm_type);
+  }
+
+  int pixels = pm->pm_width * pm->pm_height;
+  int limit = pixels * 0.95;
+  int i;
+  for(i = 255; i >= 0; i--) {
+    pixels -= bin[i];
+    if(pixels < limit)
+      break;
+  }
+  pm->pm_intensity = i / 255.0f;
+}
+
+
+
 
 
 

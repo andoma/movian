@@ -1,21 +1,21 @@
 
-$view.background =
-  $nav.currentpage.model.metadata.background ??
-  $nav.currentpage.glw.background ??
-  $ui.background;
+$ui.screenSaverAlpha = iir($ui.screensaverActive, 16);
 
-$view.background_alpha =
-  iir(1 - ($ui.fullwindow || $ui.screensaverActive), 16) *
-  select(!isVoid($nav.currentpage.model.metadata.background),
-         $nav.currentpage.model.metadata.backgroundAlpha ?? 1,
+widget(container_z, {
 
-         select(!isVoid($nav.currentpage.glw.background),
-                $nav.currentpage.glw.backgroundAlpha ?? 1,
+  widget(backdrop, {
+    source: $nav.currentpage.model.metadata.background ??
+      $nav.currentpage.glw.background ??
+      $core.glw.background ??
+      "pixmap:gradient:20,20,20:60,60,60";
 
-                1));
+    zoffset: -1500;
+    alpha: iir(1 - ($ui.fullwindow || $ui.screensaverActive), 16);
+    maxIntensity: 0.2;
+  });
 
-widget(backdrop, {
-  source: $view.background;
-  alpha: $view.background_alpha;
-  zoffset: -1000;
+  widget(loader, {
+    source: select($ui.screenSaverAlpha < 0.01, "",
+                   "screensaver.view");
+  });
 });

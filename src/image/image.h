@@ -35,11 +35,15 @@ typedef struct image_meta {
   int im_req_height;
   int im_max_width;
   int im_max_height;
-  char im_can_mono:1;
-  char im_no_decoding:1;
-  char im_32bit_swizzle:1; // can do full 32bit swizzle in hardware
-  char im_no_rgb24:1;
-  char im_want_thumb:1;
+
+  char im_can_mono : 1;
+  char im_no_decoding : 1;
+  char im_32bit_swizzle : 1; // can do full 32bit swizzle in hardware
+  char im_no_rgb24 : 1;
+  char im_want_thumb : 1;
+  char im_intensity_analysis : 1;
+  char im_primary_color_analysis : 1;
+
   uint8_t im_corner_selection;
   uint16_t im_corner_radius;
   uint16_t im_shadow;

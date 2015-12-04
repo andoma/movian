@@ -232,7 +232,7 @@ loader_thread(void *aux)
 
     TAILQ_REMOVE(glt->glt_q, glt, glt_work_link);
     glt->glt_state = GLT_STATE_LOADING;
-    
+
     if(glt->glt_refcnt > 1) {
       rstr_t *url = rstr_dup(glt->glt_url);
 
@@ -242,14 +242,23 @@ loader_thread(void *aux)
       im.im_max_height = gr->gr_height;
       im.im_can_mono = 1;
       im.im_corner_radius = glt->glt_radius;
-      im.im_corner_selection = glt->glt_flags & 0xf;
+
+      im.im_intensity_analysis =
+        !!(glt->glt_flags & GLW_TEX_INTENSITY_ANALYSIS);
+      im.im_primary_color_analysis =
+        !!(glt->glt_flags & GLW_TEX_PRIMARY_COLOR_ANALYSIS);
+
+      im.im_corner_selection = glt->glt_flags & (GLW_TEX_CORNER_TOPLEFT |
+                                                 GLW_TEX_CORNER_TOPRIGHT |
+                                                 GLW_TEX_CORNER_BOTTOMLEFT |
+                                                 GLW_TEX_CORNER_BOTTOMRIGHT);
       im.im_shadow = glt->glt_shadow;
       im.im_req_aspect = glt->glt_req_aspect;
 
       if(glt->glt_q == &gr->gr_tex_load_queue[LQ_TENTATIVE]) {
 	cache_control = 0;
 	ccptr = &cache_control;
-	
+
       } else if(glt->glt_q == &gr->gr_tex_load_queue[LQ_REFRESH]) {
 	ccptr = BYPASS_CACHE;
       } else {
@@ -343,6 +352,7 @@ loader_thread(void *aux)
 
             glt->glt_origin_type   = img->im_origin_coded_type;
 	    glt->glt_orientation   = img->im_orientation;
+            glt->glt_intensity     = pm->pm_intensity;
 
             if(gconf.enable_image_debug)
               TRACE(TRACE_DEBUG, "GLW",

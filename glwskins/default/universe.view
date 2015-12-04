@@ -28,16 +28,16 @@ widget(container_z, {
   });
 
   widget(loader, {
-    alpha: iir($nav.currentpage.model.loading, 8);
-    source: selectedElement(vectorize($core.glw.views.standard.loading))
-      ?? "loading.view";
-  });
-
-  widget(loader, {
     time: 0.3;
     effect: blend;
     source: select($ui.screensaverActive,
 		   selectedElement(vectorize($core.glw.views.standard.screensaver)) ?? "skin://screensaver.view", "");
+  });
+
+  widget(loader, {
+    alpha: iir($nav.currentpage.model.loading, 8);
+    source: selectedElement(vectorize($core.glw.views.standard.loading))
+      ?? "loading.view";
   });
 
   widget(underscan, {

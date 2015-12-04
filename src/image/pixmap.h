@@ -57,6 +57,8 @@ typedef struct pixmap {
   uint16_t pm_height;
   uint16_t pm_margin;
 
+  float pm_intensity;
+
 } pixmap_t;
 
 
@@ -106,6 +108,8 @@ void pixmap_drop_shadow(pixmap_t *pm, int boxw, int boxh);
 void pixmap_compute_rescale_dim(const image_meta_t *im,
 				int src_width, int src_height,
 				int *dst_width, int *dst_height);
+
+void pixmap_intensity_analysis(pixmap_t *pm);
 
 /**
  *

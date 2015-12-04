@@ -50,9 +50,9 @@ style(ListItemValueOff, {
 });
 
 style(ListItemSeparatorLabel, {
-  font: "skin://fonts/RobotoCondensed-Light.ttf";
+//  font: "skin://fonts/RobotoCondensed-Light.ttf";
   size: 1.5em;
-  alpha: 0.3;
+//  alpha: 0.3;
   align: bottom;
 });
 

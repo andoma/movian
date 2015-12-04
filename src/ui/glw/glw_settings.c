@@ -23,7 +23,110 @@
 #include "glw.h"
 #include "glw_settings.h"
 #include "htsmsg/htsmsg_store.h"
+#include "htsmsg/htsmsg_json.h"
 #include "db/kvstore.h"
+#include "fileaccess/fileaccess.h"
+
+static prop_t *screensaver_items;
+static int screensaver_items_loaded;
+
+/**
+ *
+ */
+static void
+populate_screensaver_items(void)
+{
+  char errbuf[256];
+  buf_t *b;
+
+  if(screensaver_items_loaded)
+    return;
+  
+  b = fa_load("http://screensaver.movian.tv/images.json",
+               FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
+               FA_LOAD_FLAGS(FA_DISABLE_AUTH | FA_COMPRESSION),
+               NULL);
+
+  if(b == NULL) {
+    TRACE(TRACE_ERROR, "Screensaver", "Unable to load images -- %s",
+          errbuf);
+    return;
+  }
+
+  htsmsg_t *doc = htsmsg_json_deserialize(buf_cstr(b));
+  buf_release(b);
+
+  if(doc == NULL) {
+    TRACE(TRACE_ERROR, "STOS", "Malformed JSON");
+    return;
+  }
+
+
+  htsmsg_t *list = htsmsg_get_list(doc, "images");
+  if(list != NULL) {
+    htsmsg_field_t *f;
+    HTSMSG_FOREACH(f, list) {
+    htsmsg_t *m = htsmsg_get_map_by_field(f);
+    if(m == NULL)
+      continue;
+
+    const char *s = htsmsg_get_str(m, "url");
+    if(s == NULL)
+      continue;
+
+    prop_t *item = prop_create_root(NULL);
+    prop_set(item, "url", PROP_SET_STRING, s);
+    if(prop_set_parent(item, screensaver_items))
+      prop_destroy(item);
+    }
+    screensaver_items_loaded++;
+  }
+  htsmsg_release(doc);
+}
+
+
+/**
+ *
+ */
+static void
+init_screensaver_items_load(void *opaque, prop_event_t event, ...)
+{
+  if(event == PROP_SUBSCRIPTION_MONITOR_ACTIVE) {
+    populate_screensaver_items();
+  }
+}
+
+/**
+ *
+ */
+static void
+init_screensaver_items(void)
+{
+  screensaver_items = prop_create_multi(prop_get_global(),
+                                        "glw", "screensaver", "items", NULL);
+
+  prop_subscribe(PROP_SUB_SUBSCRIPTION_MONITOR,
+                 PROP_TAG_CALLBACK, init_screensaver_items_load, NULL,
+                 PROP_TAG_ROOT, screensaver_items,
+                 NULL);
+}
+
+
+
+/**
+ *
+ */
+static void
+set_custom_bg(void *opaque, const char *str)
+{
+  prop_t *glw = prop_create(prop_get_global(), "glw");
+  if(str != NULL && *str == 0)
+    str = NULL;
+  // Maybe stat image?
+  prop_set(glw, "background", PROP_SET_STRING, str);
+}
+
+
 
 /**
  *
@@ -93,10 +196,18 @@ glw_settings_init(void)
                    SETTING_HTSMSG("wrap", store, "glw"),
                    NULL);
 
+  settings_create_separator(s, _p("Background"));
+
+  glw_settings.gs_setting_custom_bg =
+    setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE | SETTINGS_FILE,
+                   SETTING_TITLE(_p("Custom background image")),
+                   SETTING_HTSMSG("custom_bg", store, "glw"),
+                   SETTING_CALLBACK(set_custom_bg, NULL),
+                   NULL);
 
   settings_create_separator(s, _p("Screensaver"));
 
-  glw_settings.gs_setting_screensaver =
+  glw_settings.gs_setting_screensaver_timer =
     setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,
                    SETTING_TITLE(_p("Screensaver delay")),
                    SETTING_VALUE(10),
@@ -110,6 +221,8 @@ glw_settings_init(void)
   prop_t *p = prop_create(prop_get_global(), "glw");
   p = prop_create(p, "osk");
   kv_prop_bind_create(p, "showtime:glw:osk");
+
+  init_screensaver_items();
 }
 
 
@@ -119,11 +232,12 @@ glw_settings_init(void)
 void
 glw_settings_fini(void)
 {
-  setting_destroy(glw_settings.gs_setting_screensaver);
+  setting_destroy(glw_settings.gs_setting_screensaver_timer);
   setting_destroy(glw_settings.gs_setting_underscan_v);
   setting_destroy(glw_settings.gs_setting_underscan_h);
   setting_destroy(glw_settings.gs_setting_size);
   setting_destroy(glw_settings.gs_setting_wrap);
+  setting_destroy(glw_settings.gs_setting_custom_bg);
   prop_destroy(glw_settings.gs_settings);
   htsmsg_release(glw_settings.gs_settings_store);
 }
