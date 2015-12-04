@@ -76,9 +76,6 @@ typedef struct glw_x11 {
   int is_fullscreen;
   int want_fullscreen;
 
-  setting_t *settings_mouse_btn;
-  int map_mouse_wheel_to_keys;
-
   Colormap colormap;
   const char *displayname_real;
   const char *displayname_title;
@@ -1122,7 +1119,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	  break;
 	case 4:
 	  /* Scroll up */
-	  if(gx11->map_mouse_wheel_to_keys) {
+	  if(glw_settings.gs_map_mouse_wheel_to_keys) {
 	    glw_inject_event(&gx11->gr, event_create_action(ACTION_UP));
 	    continue;
 	  } else {
@@ -1132,7 +1129,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	  break;
 	case 5:
 	  /* Scroll down */
-	  if(gx11->map_mouse_wheel_to_keys) {
+	  if(glw_settings.gs_map_mouse_wheel_to_keys) {
 	    glw_inject_event(&gx11->gr, event_create_action(ACTION_DOWN));
 	    continue;
 	  } else {
@@ -1288,16 +1285,6 @@ glw_x11_thread(void *aux)
 			     gr->gr_courier);
 #endif
 
-  gx11->settings_mouse_btn =
-    setting_create(SETTING_BOOL, glw_settings.gs_settings,
-                   SETTINGS_INITIAL_UPDATE,
-                   SETTING_TITLE(_p("Emulate Up/Down buttons with mouse wheel")),
-                   SETTING_HTSMSG("map_mouse_wheel_to_keys",
-                                  glw_settings.gs_settings_store, "glw"),
-                   SETTING_COURIER(gr->gr_courier),
-                   SETTING_WRITE_BOOL(&gx11->map_mouse_wheel_to_keys),
-                   NULL);
-
   prop_sub_t *evsub =
     prop_subscribe(0,
 		   PROP_TAG_CALLBACK, eventsink, gx11,
@@ -1322,7 +1309,6 @@ glw_x11_thread(void *aux)
   glw_reap(gr);
   glw_reap(gr);
 
-  setting_destroy(gx11->settings_mouse_btn);
 
   prop_unsubscribe(evsub);
 

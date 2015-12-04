@@ -26,11 +26,13 @@ typedef struct glw_settings {
   int gs_underscan_v;
   int gs_screensaver_delay;
   int gs_wrap;
+  int gs_map_mouse_wheel_to_keys;
 
   struct setting *gs_setting_size;
   struct setting *gs_setting_underscan_v;
   struct setting *gs_setting_underscan_h;
   struct setting *gs_setting_wrap;
+  struct setting *gs_setting_wheel_mapping;
 
   struct setting *gs_setting_custom_bg;
 

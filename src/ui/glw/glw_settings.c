@@ -196,6 +196,15 @@ glw_settings_init(void)
                    SETTING_HTSMSG("wrap", store, "glw"),
                    NULL);
 
+#ifdef __linux__
+  glw_settings.gs_setting_wheel_mapping =
+    setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
+                   SETTING_TITLE(_p("Emulate Up/Down buttons with mouse wheel")),
+                   SETTING_HTSMSG("map_mouse_wheel_to_keys", store, "glw"),
+                   SETTING_WRITE_BOOL(&glw_settings.gs_map_mouse_wheel_to_keys),
+                   NULL);
+#endif
+
   settings_create_separator(s, _p("Background"));
 
   glw_settings.gs_setting_custom_bg =
@@ -237,6 +246,9 @@ glw_settings_fini(void)
   setting_destroy(glw_settings.gs_setting_underscan_h);
   setting_destroy(glw_settings.gs_setting_size);
   setting_destroy(glw_settings.gs_setting_wrap);
+#ifdef __linux__
+  setting_destroy(glw_settings.gs_setting_wheel_mapping);
+#endif
   setting_destroy(glw_settings.gs_setting_custom_bg);
   prop_destroy(glw_settings.gs_settings);
   htsmsg_release(glw_settings.gs_settings_store);
