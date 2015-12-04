@@ -436,7 +436,8 @@ ui_create(void)
 
   if(glw_init4(gr, &prop_courier_poll_with_alarm,
                prop_courier_create_passive(),
-               GLW_INIT_KEYBOARD_MODE | GLW_INIT_OVERSCAN)) {
+               GLW_INIT_KEYBOARD_MODE | GLW_INIT_OVERSCAN |
+               GLW_INIT_IN_FULLSCREEN)) {
     TRACE(TRACE_ERROR, "GLW", "Unable to init GLW");
     exit(1);
   }

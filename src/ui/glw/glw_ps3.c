@@ -1149,9 +1149,13 @@ glw_ps3_start(void)
 
   glw_root_t *gr = &gp->gr;
 
-  if(glw_init2(gr, GLW_INIT_KEYBOARD_MODE | GLW_INIT_OVERSCAN))
+  if(glw_init2(gr,
+               GLW_INIT_KEYBOARD_MODE |
+               GLW_INIT_OVERSCAN |
+               GLW_INIT_IN_FULLSCREEN))
     return 1;
 
+  settings_create_separator(glw_settings.gs_settings, _p("Dual-Shock Remote"));
 
   setting_create(SETTING_MULTIOPT, glw_settings.gs_settings,
                  SETTINGS_INITIAL_UPDATE,

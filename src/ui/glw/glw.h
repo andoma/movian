@@ -1225,6 +1225,7 @@ glw_filter_constraints(const glw_t *w)
 
 #define GLW_INIT_KEYBOARD_MODE 0x1
 #define GLW_INIT_OVERSCAN      0x2
+#define GLW_INIT_IN_FULLSCREEN 0x4
 
 int glw_init(glw_root_t *gr);
 

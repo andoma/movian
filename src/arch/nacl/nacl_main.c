@@ -539,6 +539,7 @@ handle_keydown(nacl_glw_root_t *ngr, PP_Resource input_event)
   if(code == KC_F11) {
     int fs = ppb_fullscreen->IsFullscreen(g_Instance);
     ppb_fullscreen->SetFullscreen(g_Instance, !fs);
+    glw_set_fullscreen(gr, fs);
     return 1;
   }
 

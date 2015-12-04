@@ -265,6 +265,9 @@ glw_init4(glw_root_t *gr,
   if(flags & GLW_INIT_KEYBOARD_MODE)
     glw_set_keyboard_mode(gr, 1);
 
+  if(flags & GLW_INIT_IN_FULLSCREEN)
+    gr->gr_is_fullscreen = 1;
+
   gr->gr_evsub =
     prop_subscribe(0,
                    PROP_TAG_CALLBACK, glw_eventsink, gr,
@@ -545,7 +548,7 @@ glw_screensaver_is_active(glw_root_t *gr)
     return 0;
   }
 
-  int64_t d = glw_settings.gs_screensaver_delay;
+  int d = glw_settings.gs_screensaver_delay;
 
   if(!d)
     return 0;
