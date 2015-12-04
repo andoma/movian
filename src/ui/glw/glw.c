@@ -176,6 +176,8 @@ glw_dis_screensaver_callback(void *opaque, int value)
 {
   glw_root_t *gr = opaque;
   gr->gr_inhibit_screensaver = value;
+  TRACE(TRACE_DEBUG, "GLW", "Screensaver %s",
+        value ? "inhibited" : "allowed");
 }
 
 /**
