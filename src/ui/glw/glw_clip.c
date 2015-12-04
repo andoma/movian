@@ -88,7 +88,7 @@ glw_clip_layout(glw_t *w, const glw_rctx_t *rc)
 {
   glw_t *c;
 
-  if(w->glw_alpha < 0.01)
+  if(w->glw_alpha < GLW_ALPHA_EPSILON)
     return;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
@@ -208,7 +208,7 @@ glw_fade_layout(glw_t *w, const glw_rctx_t *rc)
 {
   glw_t *c;
 
-  if(w->glw_alpha < 0.01)
+  if(w->glw_alpha < GLW_ALPHA_EPSILON)
     return;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
@@ -330,7 +330,7 @@ glw_stencil_layout(glw_t *w, const glw_rctx_t *rc)
   glw_stencil_t *gs = (glw_stencil_t *)w;
   glw_loadable_texture_t *glt = gs->gs_tex;
 
-  if(w->glw_alpha < 0.01)
+  if(w->glw_alpha < GLW_ALPHA_EPSILON)
     return;
 
   if(glt == NULL)

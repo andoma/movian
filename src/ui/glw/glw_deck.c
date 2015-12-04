@@ -130,7 +130,7 @@ glw_deck_layout(glw_t *w, const glw_rctx_t *rc)
 
   gd->delta = 1 / (gd->time * (1000000 / w->glw_root->gr_frameduration));
 
-  if(w->glw_alpha < 0.01)
+  if(w->glw_alpha < GLW_ALPHA_EPSILON)
     return;
 
   float v = GLW_MIN(gd->v + gd->delta, 1.0);
@@ -278,7 +278,7 @@ glw_deck_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_deck_t *gd = (glw_deck_t *)w;
 
-  if(w->glw_alpha < 0.01)
+  if(w->glw_alpha < GLW_ALPHA_EPSILON)
     return;
 
   glw_store_matrix(w, rc);

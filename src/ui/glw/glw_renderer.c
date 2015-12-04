@@ -332,7 +332,7 @@ clip_out(glw_root_t *gr, glw_renderer_cache_t *grc,
   Vec4 c1, c2, c3;
   const float alpha_out = gr->gr_clip_alpha_out[plane - 1];
   const float sharpness_out = gr->gr_clip_sharpness_out[plane - 1];
-  if(alpha_out < 0.01)
+  if(alpha_out < GLW_ALPHA_EPSILON)
     return;
 
   glw_vec4_copy(v1, V1);

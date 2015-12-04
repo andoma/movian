@@ -198,7 +198,7 @@ glw_playfield_layout(glw_t *w, const glw_rctx_t *rc)
   int v = 0;
   float s;
 
-  if(w->glw_alpha < 0.01)
+  if(w->glw_alpha < GLW_ALPHA_EPSILON)
     return;
 
   TAILQ_FOREACH_REVERSE(c, &w->glw_childs, glw_queue, glw_parent_link) {
@@ -271,7 +271,7 @@ glw_playfield_render(glw_t *w, const glw_rctx_t *rc)
   glw_t *c, *d;
   glw_rctx_t rc0, rc1;
 
-  if(w->glw_alpha < 0.01)
+  if(w->glw_alpha < GLW_ALPHA_EPSILON)
     return;
 
   rc0 = *rc;

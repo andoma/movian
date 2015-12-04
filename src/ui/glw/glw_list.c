@@ -321,7 +321,7 @@ glw_list_render_y(glw_t *w, const glw_rctx_t *rc)
   glw_store_matrix(w, &rc1);
 
 
-  if(rc->rc_alpha < 0.01f)
+  if(rc->rc_alpha < GLW_ALPHA_EPSILON)
     return;
 
   const int clip_top    = l->gsc.clip_offset_pre - 1;
@@ -366,7 +366,7 @@ glw_list_render_x(glw_t *w, const glw_rctx_t *rc)
 
   glw_store_matrix(w, &rc0);
 
-  if(rc->rc_alpha < 0.01f)
+  if(rc->rc_alpha < GLW_ALPHA_EPSILON)
     return;
 
   rc1 = rc0;

@@ -141,7 +141,7 @@ render(glw_t *w, const glw_rctx_t *rc)
   int t, b;
   float y;
 
-  if(rc->rc_alpha < 0.01f)
+  if(rc->rc_alpha < GLW_ALPHA_EPSILON)
     return;
 
   glw_store_matrix(w, rc);

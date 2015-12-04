@@ -56,6 +56,8 @@
 
 #define GLW_CURSOR_AUTOHIDE_TIME 3000000
 
+#define GLW_ALPHA_EPSILON (1.0f / 256.0f)
+
 struct event;
 
 typedef struct glw_style glw_style_t;

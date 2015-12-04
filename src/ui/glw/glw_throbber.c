@@ -68,7 +68,7 @@ static void
 glw_throbber3d_layout(glw_t *w, const glw_rctx_t *rc)
 {
   glw_throbber3d_t *gt = (glw_throbber3d_t *)w;
-  if(w->glw_alpha < 0.01)
+  if(w->glw_alpha < GLW_ALPHA_EPSILON)
     return;
 
   gt->angle += 2;
@@ -89,7 +89,7 @@ glw_throbber3d_render(glw_t *w, const glw_rctx_t *rc)
   int i;
   glw_root_t *gr = w->glw_root;
   float a0 = w->glw_alpha * rc->rc_alpha;
-  if(a0 < 0.01)
+  if(a0 < GLW_ALPHA_EPSILON)
     return;
 
   if(!glw_renderer_initialized(&gt->renderer)) {
@@ -169,7 +169,7 @@ static void
 glw_throbber_layout(glw_t *w, const glw_rctx_t *rc)
 {
   glw_throbber_t *gt = (glw_throbber_t *)w;
-  if(w->glw_alpha < 0.01)
+  if(w->glw_alpha < GLW_ALPHA_EPSILON)
     return;
 
   glw_need_refresh(w->glw_root, 0);
@@ -193,7 +193,7 @@ glw_throbber_render(glw_t *w, const glw_rctx_t *rc)
   float a0 = w->glw_alpha * rc->rc_alpha;
   int spokes = 16;
 
-  if(a0 < 0.01)
+  if(a0 < GLW_ALPHA_EPSILON)
     return;
 
   if(!glw_renderer_initialized(&gt->renderer)) {
@@ -300,7 +300,7 @@ static void
 glw_throbber_tri_layout(glw_t *w, const glw_rctx_t *rc)
 {
   glw_throbber_tri_t *gt = (glw_throbber_tri_t *)w;
-  if(w->glw_alpha < 0.01)
+  if(w->glw_alpha < GLW_ALPHA_EPSILON)
     return;
 
   glw_need_refresh(w->glw_root, 0);
@@ -322,7 +322,7 @@ glw_throbber_tri_render(glw_t *w, const glw_rctx_t *rc)
   glw_root_t *gr = w->glw_root;
   float a0 = w->glw_alpha * rc->rc_alpha;
 
-  if(a0 < 0.01)
+  if(a0 < GLW_ALPHA_EPSILON)
     return;
 
   if(!glw_renderer_initialized(&gt->renderer)) {

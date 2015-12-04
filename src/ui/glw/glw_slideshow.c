@@ -58,7 +58,7 @@ glw_slideshow_render(glw_t *w, const glw_rctx_t *rc)
     p = glw_last_widget(w);
   if(p != NULL && p != c) {
     float a = sa * glw_parent_data(p, glw_slideshow_item_t)->alpha;
-    if(a > 0.01) {
+    if(a > GLW_ALPHA_EPSILON) {
       rc0 = *rc;
       rc0.rc_alpha *= a;
       glw_render0(p, &rc0);
@@ -74,7 +74,7 @@ glw_slideshow_render(glw_t *w, const glw_rctx_t *rc)
     n = glw_first_widget(w);
   if(n != NULL && n != c) {
     float a = sa * glw_parent_data(n, glw_slideshow_item_t)->alpha;
-    if(a > 0.01) {
+    if(a > GLW_ALPHA_EPSILON) {
       rc0 = *rc;
       rc0.rc_alpha *= a;
       glw_render0(n, &rc0);

@@ -175,7 +175,7 @@ glw_cursor_render(glw_t *w, const glw_rctx_t *rc)
   glw_t *c;
   Mtx saved;
 
-  if(w->glw_alpha < 0.01)
+  if(w->glw_alpha < GLW_ALPHA_EPSILON)
     return;
 
   c = TAILQ_FIRST(&w->glw_childs);

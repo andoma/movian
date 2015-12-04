@@ -28,7 +28,7 @@ layout(glw_t *w, const glw_rctx_t *rc)
   glw_t *c;
   glw_rctx_t rc0 = *rc;
 
-  if(w->glw_alpha < 0.01f)
+  if(w->glw_alpha < GLW_ALPHA_EPSILON)
     return;
 
   if(rc0.rc_overscanning) {
@@ -56,7 +56,7 @@ render(glw_t *w, const glw_rctx_t *rc)
 
   glw_rctx_t rc0;
 
-  if(alpha < 0.01f)
+  if(alpha < GLW_ALPHA_EPSILON)
     return;
   rc0 = *rc;
   if(rc0.rc_overscanning) {

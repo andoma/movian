@@ -509,7 +509,7 @@ glw_container_y_layout(glw_t *w, const glw_rctx_t *rc)
       }
 
       glw_lp(&cd->fade, co->w.glw_root, 0, 0.25);
-      if(cd->fade < 0.01) {
+      if(cd->fade < GLW_ALPHA_EPSILON) {
 	cd->inited = 0;
 	continue;
       }
@@ -536,7 +536,7 @@ glw_container_y_layout(glw_t *w, const glw_rctx_t *rc)
       if(c->glw_flags & GLW_RETIRED) {
 
 	glw_lp(&cd->fade, co->w.glw_root, 0, 0.25);
-	if(cd->fade < 0.01) {
+	if(cd->fade < GLW_ALPHA_EPSILON) {
 	  glw_destroy(c);
 	  continue;
 	}
@@ -651,7 +651,7 @@ glw_container_y_render(glw_t *w, const glw_rctx_t *rc)
   glw_container_t *co = (glw_container_t *)w;
   glw_rctx_t rc0, rc1;
 
-  if(alpha < 0.01f)
+  if(alpha < GLW_ALPHA_EPSILON)
     return;
   
   if(glw_is_focusable_or_clickable(w))
@@ -671,7 +671,7 @@ glw_container_y_render(glw_t *w, const glw_rctx_t *rc)
 
     glw_container_item_t *cd = glw_parent_data(c, glw_container_item_t);
 
-    if(cd->fade < 0.01)
+    if(cd->fade < GLW_ALPHA_EPSILON)
       continue;
 
     rc0 = *rc;
@@ -700,7 +700,7 @@ glw_container_x_render(glw_t *w, const glw_rctx_t *rc)
   glw_container_t *co = (glw_container_t *)w;
   glw_rctx_t rc0, rc1;
 
-  if(alpha < 0.01f)
+  if(alpha < GLW_ALPHA_EPSILON)
     return;
 
   if(glw_is_focusable_or_clickable(w))
@@ -749,7 +749,7 @@ glw_container_z_render(glw_t *w, const glw_rctx_t *rc)
   int zmax = 0;
   glw_rctx_t rc0;
 
-  if(alpha < 0.01f)
+  if(alpha < GLW_ALPHA_EPSILON)
     return;
 
   if(glw_is_focusable_or_clickable(w))

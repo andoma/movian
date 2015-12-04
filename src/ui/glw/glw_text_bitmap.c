@@ -361,7 +361,7 @@ glw_text_bitmap_layout(glw_t *w, const glw_rctx_t *rc)
     gtb->gtb_flags & GTB_PERMANENT_CURSOR ||
     (w->glw_class == &glw_text && glw_is_focused(w));
 
-  if(gtb->gtb_paint_cursor && rc->rc_alpha > 0.01)
+  if(gtb->gtb_paint_cursor && rc->rc_alpha > GLW_ALPHA_EPSILON)
     glw_need_refresh(gr, 0);
 
   gtb->gtb_need_layout = 0;
@@ -396,7 +396,7 @@ glw_text_bitmap_render(glw_t *w, const glw_rctx_t *rc)
 
   alpha = rc->rc_alpha * w->glw_alpha;
 
-  if(alpha < 0.01f)
+  if(alpha < GLW_ALPHA_EPSILON)
     return;
 
   if(glw_is_tex_inited(&gtb->gtb_texture) && gtb->gtb_image != NULL) {

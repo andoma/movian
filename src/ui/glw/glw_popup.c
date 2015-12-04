@@ -75,7 +75,7 @@ popup_render(glw_t *w, const glw_rctx_t *rc)
   rc0 = *rc;
   rc0.rc_alpha *= w->glw_alpha;
 
-  if(rc0.rc_alpha < 0.01f)
+  if(rc0.rc_alpha < GLW_ALPHA_EPSILON)
     return;
 
   glw_t *c = TAILQ_FIRST(&w->glw_childs);

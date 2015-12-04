@@ -92,10 +92,10 @@ glw_bloom_render(glw_t *w, const glw_rctx_t *rc)
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
     glw_render0(c, &rc0);
 
-  if(b->b_glow < 0.01)
+  if(b->b_glow < GLW_ALPHA_EPSILON)
     return;
 
-  b->b_need_render = a > 0.01;
+  b->b_need_render = a > GLW_ALPHA_EPSILON;
 
   if(!b->b_need_render)
     return;
@@ -151,7 +151,7 @@ glw_bloom_layout(glw_t *w, const glw_rctx_t *rc)
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
     glw_layout0(c, rc);
   
-  if(b->b_glow < 0.01) {
+  if(b->b_glow < GLW_ALPHA_EPSILON) {
 
     if(b->b_width || b->b_height)
       bloom_destroy_rtt(gr, b);

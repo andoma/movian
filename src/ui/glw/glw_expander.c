@@ -74,7 +74,7 @@ glw_expander_layout(glw_t *w, const glw_rctx_t *rc)
   glw_t *c;
   glw_rctx_t rc0;
 
-  if(exp->expansion < 0.01)
+  if(exp->expansion < GLW_ALPHA_EPSILON)
     return;
 
   if((c = TAILQ_FIRST(&w->glw_childs)) == NULL)
@@ -136,7 +136,7 @@ glw_expander_render(glw_t *w, const glw_rctx_t *rc)
   if(c == NULL)
     return;
 
-  if(exp->expansion < 0.01)
+  if(exp->expansion < GLW_ALPHA_EPSILON)
     return;
 
   rc0 = *rc;

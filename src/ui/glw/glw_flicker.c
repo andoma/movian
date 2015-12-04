@@ -52,7 +52,7 @@ glw_flicker_render(glw_t *w, const glw_rctx_t *rc)
   float a = rc->rc_alpha * w->glw_alpha;
   float v;
 
-  if(a > 0.01) {
+  if(a > GLW_ALPHA_EPSILON) {
     v = 1.0 * gf->gf_phase + 0.25;
 
     glw_rgb_t rgb = {v,v,v};

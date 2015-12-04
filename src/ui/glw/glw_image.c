@@ -329,7 +329,7 @@ glw_image_render(glw_t *w, const glw_rctx_t *rc)
       glw_zinc(&rc0);
     }
 
-    if(alpha_self > 0.01f) {
+    if(alpha_self > GLW_ALPHA_EPSILON) {
 
       if(gi->gi_bitmap_flags & GLW_IMAGE_ADDITIVE)
 	glw_blendmode(w->glw_root, GLW_BLEND_ADDITIVE);
@@ -360,7 +360,8 @@ glw_image_render(glw_t *w, const glw_rctx_t *rc)
       glw_zinc(&rc0);
     }
 
-    if(glt && glw_is_tex_inited(&glt->glt_texture) && alpha_self > 0.01f) {
+    if(glt && glw_is_tex_inited(&glt->glt_texture) &&
+       alpha_self > GLW_ALPHA_EPSILON) {
 
       if(gi->gi_bitmap_flags & GLW_IMAGE_ADDITIVE)
 	glw_blendmode(w->glw_root, GLW_BLEND_ADDITIVE);

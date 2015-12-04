@@ -63,7 +63,7 @@ glw_bar_render(glw_t *w, const glw_rctx_t *rc)
      gb->gb_col2[2] < 0.001) {
     return;
   }
-  if(a > 0.01) {
+  if(a > GLW_ALPHA_EPSILON) {
     glw_renderer_draw(&gb->gb_gr, w->glw_root, rc,
 		      NULL, NULL, NULL, NULL, a, 0, NULL);
   }
@@ -79,7 +79,7 @@ glw_bar_layout(glw_t *w, const glw_rctx_t *rc)
   glw_bar_t *gb = (void *)w;
   float r, g, b, x;
 
-  if(w->glw_alpha < 0.01)
+  if(w->glw_alpha < GLW_ALPHA_EPSILON)
     return;
 
   if(!glw_renderer_initialized(&gb->gb_gr)) {

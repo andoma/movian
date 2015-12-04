@@ -58,7 +58,7 @@ glw_layer_layout(glw_t *w, const glw_rctx_t *rc)
   float z, a;
   int layer = 0;
 
-  if(w->glw_alpha < 0.01)
+  if(w->glw_alpha < GLW_ALPHA_EPSILON)
     return;
   rc0 = *rc;
 
@@ -95,7 +95,7 @@ glw_layer_layout(glw_t *w, const glw_rctx_t *rc)
 
     rc0.rc_layer = cd->layer + rc->rc_layer;
 
-    if(cd->alpha > 0.01)
+    if(cd->alpha > GLW_ALPHA_EPSILON)
       glw_layout0(c, &rc0);
   }
 }
@@ -155,7 +155,7 @@ glw_layer_render(glw_t *w, const glw_rctx_t *rc)
     glw_layer_item_t *cd = glw_parent_data(c, glw_layer_item_t);
 
     rc0.rc_alpha = rc->rc_alpha * cd->alpha * w->glw_alpha;
-    if(rc0.rc_alpha < 0.01)
+    if(rc0.rc_alpha < GLW_ALPHA_EPSILON)
       continue;
     rc0.rc_layer = cd->layer + rc->rc_layer;
     //    glw_Translatef(&rc0, 0, 0, cd->z);
