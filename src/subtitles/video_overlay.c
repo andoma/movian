@@ -53,7 +53,7 @@ video_subtitles_lavc(media_pipe_t *mp, media_buf_t *mb,
   avpkt.data = mb->mb_data;
   avpkt.size = mb->mb_size;
 
-  if(avcodec_decode_subtitle2(ctx, &sub, &got_sub, &avpkt) < 1 || !got_sub) 
+  if(avcodec_decode_subtitle2(ctx, &sub, &got_sub, &avpkt) < 1 || !got_sub)
     return;
 
   if(sub.num_rects == 0) {
@@ -89,7 +89,7 @@ video_subtitles_lavc(media_pipe_t *mp, media_buf_t *mb,
 
 	const uint8_t *src = r->pict.data[0];
 	const uint32_t *clut = (uint32_t *)r->pict.data[1];
-      
+
 	for(y = 0; y < r->h; y++) {
 	  uint32_t *dst = (uint32_t *)(vo->vo_pixmap->pm_data +
 				       y * vo->vo_pixmap->pm_linesize);
@@ -129,9 +129,9 @@ video_overlay_render_cleartext(const char *txt, int64_t start, int64_t stop,
   uint32_t *uc;
   int len, txt_len;
   video_overlay_t *vo;
-  
+
   txt_len = strlen(txt);
-  
+
   if(txt_len == 0) {
     vo = calloc(1, sizeof(video_overlay_t));
   } else {
@@ -164,7 +164,7 @@ video_overlay_render_cleartext(const char *txt, int64_t start, int64_t stop,
     stop = start + calculate_subtitle_duration(txt_len) * 1000000;
     vo->vo_stop_estimated = 1;
   }
-  
+
   vo->vo_start = start;
   vo->vo_stop = stop;
   return vo;
@@ -172,10 +172,10 @@ video_overlay_render_cleartext(const char *txt, int64_t start, int64_t stop,
 
 /**
  * Calculate the number of seconds a subtitle should be displayed.
- * Min 2 seconds, max 7 seconds. 
+ * Min 2 seconds, max 7 seconds.
  */
 int
-calculate_subtitle_duration(int txt_len) 
+calculate_subtitle_duration(int txt_len)
 {
   return 2 + (txt_len / 74.0F) * 5; //74 is the maximum amount of characters a subtitler may fit on 2 lines of text.
 }
@@ -184,11 +184,11 @@ calculate_subtitle_duration(int txt_len)
 /**
  *
  */
-void 
+void
 video_overlay_decode(media_pipe_t *mp, media_buf_t *mb)
 {
   media_codec_t *mc = mb->mb_cw;
-  
+
   if(mc == NULL) {
 
     int offset = 0;
@@ -220,8 +220,8 @@ video_overlay_decode(media_pipe_t *mp, media_buf_t *mb)
     free(str);
 
   } else {
-      
-    if(mc->decode) 
+
+    if(mc->decode)
       mc->decode(mc, NULL, NULL, mb, 0);
 #if ENABLE_LIBAV
     else
@@ -252,7 +252,7 @@ video_overlay_dup(video_overlay_t *src)
 {
   video_overlay_t *dst = malloc(sizeof(video_overlay_t));
   memcpy(dst, src, sizeof(video_overlay_t));
-  
+
   if(src->vo_pixmap)
     dst->vo_pixmap = pixmap_dup(src->vo_pixmap);
 
