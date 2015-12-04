@@ -185,6 +185,8 @@ typedef enum {
 #define GTB_OUTLINE       0x10
 #define GTB_PERMANENT_CURSOR 0x20
 #define GTB_OSK_PASSWORD     0x40   /* Password for on screen keyboard */
+#define GTB_FILE_REQUEST     0x80   /* Edit should ask for a file */
+#define GTB_DIR_REQUEST      0x100  /* Edit should ask for a directory */
 
 typedef struct glw_vertex {
   float x, y, z;

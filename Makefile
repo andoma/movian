@@ -225,6 +225,7 @@ SRCS += src/fileaccess/fileaccess.c \
 	src/fileaccess/fa_aes.c \
 	src/fileaccess/fa_data.c \
 	src/fileaccess/fa_imageloader.c \
+	src/fileaccess/fa_filepicker.c \
 
 SRCS-$(CONFIG_FTPCLIENT) += src/fileaccess/fa_ftp.c \
 			    src/fileaccess/ftpparse.c \

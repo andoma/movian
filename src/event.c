@@ -629,6 +629,12 @@ event_sprint(const event_t *e)
     return "(null)";
 
   switch(e->e_type) {
+  case EVENT_OPENURL:
+    {
+      const event_openurl_t *eo = (const event_openurl_t *)e;
+      snprintf(buf, sizeof(buf), "openurl(%s)", eo->url);
+      break;
+    }
   case EVENT_DYNAMIC_ACTION:
     return ep->payload;
   case EVENT_ACTION_VECTOR:

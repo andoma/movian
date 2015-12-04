@@ -1295,7 +1295,9 @@ static const token_attrib_t attribtab[] = {
   {"outline",         mod_flag,  GTB_OUTLINE, mod_text_flags},
   {"permanentCursor", mod_flag,  GTB_PERMANENT_CURSOR, mod_text_flags},
   {"oskPassword",     mod_flag,  GTB_OSK_PASSWORD, mod_text_flags},
-  
+  {"fileRequest",     mod_flag,  GTB_FILE_REQUEST, mod_text_flags},
+  {"dirRequest",      mod_flag,  GTB_DIR_REQUEST, mod_text_flags},
+
   {"primary",         mod_flag, GLW_VIDEO_PRIMARY, mod_video_flags},
   {"noAudio",         mod_flag, GLW_VIDEO_NO_AUDIO, mod_video_flags},
 

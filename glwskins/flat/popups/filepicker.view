@@ -1,0 +1,140 @@
+#import "skin://theme.view"
+#import "common.view"
+
+onEvent(cancel,  deliverEvent($self.eventSink));
+onEvent(back,    deliverEvent($self.eventSink));
+onEvent(navOpen, deliverEvent($self.eventSink));
+
+$view.dirmode = $self.dirmode;
+
+popup({
+
+  zbox({
+
+    filterConstraintX: true;
+    PopupBackdrop();
+
+    vbox({
+      padding: 1em;
+      spacing: 0.5em;
+      label({
+        caption: $self.title;
+        align: center;
+        size: 1.2em;
+      });
+
+      clip({
+        leftPx: 1;
+        rightPx: 1;
+
+        deck({
+          effect: slideHorizontal;
+          time: 0.15;
+          cloner($self.pages, vbox, {
+            spacing: 0.25em;
+            label({
+              padding: [3em, 0, 0, 0];
+              caption: $self.model.title;
+            });
+
+            zbox({
+              quad({ color: 0; alpha: 0.8; });
+
+              onEvent(left, event("Back"));
+
+              list_y({
+
+                padding: 0.5em;
+
+                zbox({
+                  focusable: 0.1;
+                  ListItemHighlight();
+                  onEvent(activate, event("Back"));
+
+                  hbox({
+                    padding: [0.5em, 0, 0, 0];
+                    spacing: 1em;
+                    icon({
+                      source: select($self.canGoBack,
+                                     "skin://icons/ic_chevron_left_48px.svg",
+                                     "skin://icons/ic_close_48px.svg");
+                      color: !isNavFocused();
+                    });
+                    label({
+                      caption: select($self.canGoBack,
+                                      _("Back"),
+                                      _("Close"));
+                      color: !isNavFocused();
+                      filterConstraintX: true;
+                    });
+                  });
+                });
+
+                quad({
+                  height: 5;
+                  padding: [0,2];
+                  color: 0.3;
+                });
+
+                cloner($self.model.nodes, hbox, {
+
+                  onEvent(right,
+                          navOpen($self.url, void, void, void, "descend"));
+                  spacing: 1;
+                  zbox({
+                    filterConstraintX: true;
+                    focusable: true;
+                    ListItemHighlight();
+                    onEvent(activate,
+                            navOpen($self.url));
+
+                    hbox({
+                      padding: [0.5em, 0, 0, 0];
+                      spacing: 1em;
+                      icon({
+                        source: "skin://icons/" +
+                          translate($self.type, "ic_file_48px",
+                                    "directory", "ic_folder_48px",
+		                    "share",     "ic_folder_shared_48px"
+                                   ) + ".svg";
+                        color: !isNavFocused();
+                      });
+                      label({
+                        caption: $self.name;
+                        color: !isNavFocused();
+                        filterConstraintX: true;
+                      });
+                    });
+                  });
+                  zbox({
+                    hidden: !($view.dirmode &&
+                              $ui.showTopIcons &&
+                              $self.dir);
+                    focusable: true;
+                    ListItemHighlight();
+                    onEvent(activate,
+                            navOpen($self.url, void, void, void, "descend"));
+                    icon({
+                      source: "skin://icons/ic_chevron_right_48px.svg";
+                      color: !isNavFocused();
+                    });
+                  });
+                });
+              });
+
+              throbber({
+                alpha: iir($self.model.loading, 4);
+              });
+            });
+          });
+        });
+      });
+
+      label({
+        hidden: !$self.dirmode;
+        align: center;
+        caption: _("Folder mode, press right to open folder");
+      });
+    });
+  });
+});

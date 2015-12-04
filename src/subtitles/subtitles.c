@@ -690,7 +690,7 @@ subtitles_init_settings(prop_concat_t *pc)
 
   settings_create_separator(s, _p("Central subtitle folder"));
 
-  setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE,
+  setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE | SETTINGS_DIR,
                  SETTING_TITLE(_p("Path to central folder")),
                  SETTING_CALLBACK(set_central_dir, NULL),
                  SETTING_HTSMSG("subtitlefolder", store, "subtitles"),

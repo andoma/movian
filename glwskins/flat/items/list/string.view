@@ -37,6 +37,11 @@ widget(container_z, {
         });
 
         widget(text, {
+          description: $self.metadata.title;
+          password: $self.password;
+          fileRequest: $self.fileRequest;
+          dirRequest: $self.dirRequest;
+
           padding: [1em, 0, 0, 0];
           font: "skin://fonts/RobotoCondensed-Regular.ttf";
           id: "textInput";

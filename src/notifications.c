@@ -213,6 +213,7 @@ popup_display(prop_t *p)
     prop_courier_wait_and_dispatch(pc);
 
   prop_unsubscribe(s);
+  prop_courier_destroy(pc);
   return e;
 }
 

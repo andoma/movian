@@ -27,6 +27,9 @@
 #define SETTINGS_FIRST          0x8 // Insert at head 
 #define SETTINGS_EMPTY_IS_DEFAULT 0x10 // Empty string makes it be default
 #define SETTINGS_DEBUG            0x20
+#define SETTINGS_FILE             0x40 // Want a path to a file
+#define SETTINGS_DIR              0x80 // Want a path to a dir
+
 
 typedef void (settings_saver_t)(void *opaque, htsmsg_t *htsmsg);
 

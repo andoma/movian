@@ -37,6 +37,7 @@
 #include "text/text.h"
 #include "event.h"
 #include "image/image.h"
+#include "fileaccess/fa_filepicker.h"
 
 /**
  *
@@ -653,14 +654,33 @@ glw_text_bitmap_event(glw_t *w, event_t *e)
     return 1;
 
   } else if(event_is_action(e, ACTION_ACTIVATE)) {
-    if(w->glw_root->gr_open_osk != NULL) {
 
-      gtb_caption_refresh(gtb);
-      w->glw_root->gr_open_osk(w->glw_root, gtb->gtb_description,
-			       gtb->gtb_caption, w,
-			       gtb->gtb_flags & GTB_PASSWORD);
-      return 1;
+    gtb_caption_refresh(gtb);
+
+
+    if(gtb->gtb_flags & (GTB_FILE_REQUEST | GTB_DIR_REQUEST)) {
+
+      if(gtb->gtb_p == NULL) {
+        TRACE(TRACE_ERROR, "GLW",
+              "File requests on unbound widgets is not supported");
+      } else {
+
+        int flags =
+          (gtb->gtb_flags & GTB_FILE_REQUEST ? FILEPICKER_FILES : 0) |
+          (gtb->gtb_flags & GTB_DIR_REQUEST  ? FILEPICKER_DIRECTORIES : 0);
+
+        filepicker_pick_to_prop(gtb->gtb_description,
+                                gtb->gtb_p, gtb->gtb_caption,
+                                flags);
+      }
+
+    } else {
+      w->glw_root->gr_open_osk(w->glw_root,
+                               gtb->gtb_description,
+                               gtb->gtb_caption, w,
+                               gtb->gtb_flags & GTB_PASSWORD);
     }
+    return 1;
   }
   return 0;
 }
