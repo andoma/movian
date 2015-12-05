@@ -57,6 +57,16 @@ widget(dummy, {
   height: 1em;
 });
 
+SIDEBAR_ACTION(select($ui.mediainfo,
+                      _("Hide media info"),
+                      _("Show media info")),
+               select($ui.mediainfo,
+                      "skin://icons/ic_info_48px.svg",
+                      "skin://icons/ic_info_outline_48px.svg"),
+               {
+                 toggle($ui.mediainfo);
+               });
+
 SIDEBAR_ACTION(select($ui.sysinfo,
                       _("Hide system info"),
                       _("Show system info")),

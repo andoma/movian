@@ -1,59 +1,69 @@
 #import "info_include.view"
 
-widget(container_y, {
-  hidden: isVoid($core.media.current.url);
 
-  InfoLine(_("Source"),
-           $core.media.current.metadata.format ?? $core.media.current.format);
 
-  InfoLine(_("Video codec"),
-           $core.media.current.video.codec,
-           isVoid($core.media.current.video.codec));
+widget(container_x, {
+  widget(container_z, {
+    widget(quad, {
+      alpha: 0.9;
+      color: 0;
+    });
+    widget(container_y, {
+      padding: 1em;
+      widget(label, {
+        hidden: !isVoid($core.media.current.url);
+        caption: _("No media loaded");
+      });
 
-  InfoLine(_("Video bitrate"),
-           fmt("%d kb/s", $core.media.current.video.bitrate),
-           isVoid($core.media.current.video.codec));
+      widget(table, {
 
-  InfoLine(_("Audio codec"),
-           $core.media.current.audio.codec);
+        hidden: isVoid($core.media.current.url);
 
-  InfoLine(_("Audio bitrate"),
-           fmt("%d kb/s", $core.media.current.audio.bitrate));
+        widget(container_y, {
+          InfoLine(_("Source"),
+                   $core.media.current.metadata.format ?? $core.media.current.format);
 
-  InfoLine(_("A/V diff"),
-           translate($core.media.current.avdiffError,
-		     fmt("%d ms", $core.media.current.avdiff * 1000),
-		     1, "Huge diff",
-		     2, "Epoch mismatch",
-		     3, fmt("%d ms holding",
-			    $core.media.current.avdiff * 1000),
-		     4, fmt("%d ms catching up",
-			    $core.media.current.avdiff * 1000)
-		    ),
-           isVoid($core.media.current.avdiffError));
+          InfoLine(_("Video codec"),
+                   $core.media.current.video.codec,
+                   isVoid($core.media.current.video.codec));
 
-  InfoBar(_("Buffer usage"),
-          $core.media.current.buffer.current /
-          $core.media.current.buffer.limit);
+          InfoLine(_("Video bitrate"),
+                   fmt("%d kb/s", $core.media.current.video.bitrate),
+                   isVoid($core.media.current.video.codec));
 
-  InfoLine(_("Remaining buffer"),
-           fmt("%ds", $core.media.current.buffer.delay));
+          InfoLine(_("Audio codec"),
+                   $core.media.current.audio.codec);
 
-  InfoLine(_("Video packets"),
-           $core.media.current.video.dqlen,
-           isVoid($core.media.current.video.codec));
+          InfoLine(_("Audio bitrate"),
+                   fmt("%d kb/s", $core.media.current.audio.bitrate));
 
-  InfoLine(_("Audio packets"),
-           $core.media.current.audio.dqlen);
+          InfoLine(_("A/V diff"),
+                   translate($core.media.current.avdiffError,
+		             fmt("%d ms", $core.media.current.avdiff * 1000),
+		             1, "Huge diff",
+		             2, "Epoch mismatch",
+		             3, fmt("%d ms holding",
+			            $core.media.current.avdiff * 1000),
+		             4, fmt("%d ms catching up",
+			            $core.media.current.avdiff * 1000)
+		            ),
+                   isVoid($core.media.current.avdiffError));
 
-  widget(quad, {
-    height: 1;
-    color: 0;
-    alpha: 0.7;
-  });
-  widget(quad, {
-    height: 1;
-    color: 1;
-    alpha: 0.7;
+          InfoBar(_("Buffer usage"),
+                  $core.media.current.buffer.current /
+                  $core.media.current.buffer.limit);
+
+          InfoLine(_("Remaining buffer"),
+                   fmt("%ds", $core.media.current.buffer.delay));
+
+          InfoLine(_("Video packets"),
+                   $core.media.current.video.dqlen,
+                   isVoid($core.media.current.video.codec));
+
+          InfoLine(_("Audio packets"),
+                   $core.media.current.audio.dqlen);
+        });
+      });
+    });
   });
 });

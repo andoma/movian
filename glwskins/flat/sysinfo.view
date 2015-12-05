@@ -1,65 +1,54 @@
 #import "info_include.view"
 
-widget(container_y, {
-  widget(container_x, {
-    hidden: !$ui.sysinfo;
-    widget(container_z, {
-      widget(quad, {
-        alpha: 0.8;
-        color: 0;
-      });
-      widget(container_y, {
-        padding: 1em;
-        widget(table, {
+widget(container_x, {
+  widget(container_z, {
+    widget(quad, {
+      alpha: 0.9;
+      color: 0;
+    });
+    widget(container_y, {
+      padding: 1em;
+      widget(table, {
 
-          widget(container_y, {
+        widget(container_y, {
 
-            widget(loader, {
-              autohide: true;
-              source: select(isVoid($core.media.current.url), "",
-                             "mediainfo.view");
-            });
+          InfoLine(_("Version"), $core.app.version);
 
-            InfoLine(_("Version"), $core.app.version);
-
-            InfoLine(_("Memory usage"),
-                     fmt("%d kB", $core.system.mem.activeMem));
-            InfoLine(_("System Total"),
-                     fmt("%d kB", $core.system.mem.systotal));
-            InfoLine(_("System Free"),
-                     fmt("%d kB", $core.system.mem.sysfree));
-            InfoLine(_("Fragmentation"),
-                     fmt("%d", $core.system.mem.unusedChunks),
-	             isVoid($core.system.mem.unusedChunks));
-            InfoLine(_("Inactive mem"),
-                     fmt("%d kB", $core.system.mem.inaciveMem),
-                     isVoid($core.system.mem.inaciveMem));
-            InfoLine(_("CPU Temp"),
-                     fmt("%d°C", $core.system.temp.cpu),
-	             isVoid($core.system.temp.cpu));
-            InfoLine(_("GPU Temp"),
-                     fmt("%d°C", $core.system.temp.gpu),
-	             isVoid($core.system.temp.gpu));
-            InfoLine(_("HDD Avail"),
-                     fmt("%.1f / %.1f GB", $core.system.hdd.avail,
-                         $core.system.hdd.size),
-	             isVoid($core.system.hdd.avail));
-            InfoLine(_("Network"),
-                     select($core.net.connectivity,
-                            _("Connected"),
-                            _("Not available")));
-            cloner($core.net.interfaces, container_z, {
-              InfoLine(_("IP Address"), fmt("%s - %s",
-                                            $self.ipv4_addr, $self.name));
-            });
-            cloner($core.system.cpuinfo.cpus, container_z, {
-              InfoBar($self.name, $self.load)
-            });
+          InfoLine(_("Memory usage"),
+                   fmt("%d kB", $core.system.mem.activeMem));
+          InfoLine(_("System Total"),
+                   fmt("%d kB", $core.system.mem.systotal));
+          InfoLine(_("System Free"),
+                   fmt("%d kB", $core.system.mem.sysfree));
+          InfoLine(_("Fragmentation"),
+                   fmt("%d", $core.system.mem.unusedChunks),
+	           isVoid($core.system.mem.unusedChunks));
+          InfoLine(_("Inactive mem"),
+                   fmt("%d kB", $core.system.mem.inaciveMem),
+                   isVoid($core.system.mem.inaciveMem));
+          InfoLine(_("CPU Temp"),
+                   fmt("%d°C", $core.system.temp.cpu),
+	           isVoid($core.system.temp.cpu));
+          InfoLine(_("GPU Temp"),
+                   fmt("%d°C", $core.system.temp.gpu),
+	           isVoid($core.system.temp.gpu));
+          InfoLine(_("HDD Avail"),
+                   fmt("%.1f / %.1f GB", $core.system.hdd.avail,
+                       $core.system.hdd.size),
+	           isVoid($core.system.hdd.avail));
+          InfoLine(_("Network"),
+                   select($core.net.connectivity,
+                          _("Connected"),
+                          _("Not available")));
+          cloner($core.net.interfaces, container_z, {
+            InfoLine(_("IP Address"), fmt("%s - %s",
+                                          $self.ipv4_addr, $self.name));
+          });
+          cloner($core.system.cpuinfo.cpus, container_z, {
+            InfoBar($self.name, $self.load)
           });
         });
       });
     });
-    space(2);
   });
-  space(1);
 });

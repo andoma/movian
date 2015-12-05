@@ -4,8 +4,13 @@ $ui.sizeOffset = 4;
 $ui.xmargin = select($ui.aspect > 1, $ui.width / 50, 0);
 $ui.showTopIcons = $ui.pointerVisible || $ui.touch;
 $ui.showAllPlaydeckButtons = 0;
+
 onEvent(sysinfo, {
   toggle($ui.sysinfo);
+});
+
+onEvent(mediastats, {
+  toggle($ui.mediainfo);
 });
 
 onEvent(logwindow, {
@@ -260,6 +265,24 @@ widget(container_z, {
   });
 
   widget(underscan, {
-#import "sysinfo.view"
+
+    widget(container_y, {
+      spacing: 0.5em;
+
+      widget(loader, {
+        time: 0.1;
+        effect: blend;
+        autohide: true;
+        source: select($ui.mediainfo, "mediainfo.view", "");
+      });
+
+      widget(loader, {
+        time: 0.1;
+        effect: blend;
+        autohide: true;
+        source: select($ui.sysinfo, "sysinfo.view", "");
+      });
+
+    });
   });
 });
