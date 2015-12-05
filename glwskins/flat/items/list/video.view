@@ -18,7 +18,7 @@ widget(container_z, {
 
     widget(image, {
       style: "ListItemIcon";
-      source: $self.metadata.icon ?? ($self.url + "#auto");
+      source: $self.metadata.icon ?? ($self.url + "#cover");
     });
 
 

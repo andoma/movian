@@ -15,7 +15,7 @@ widget(container_z, {
 
     widget(image, {
       margin: [0.25em, 0];
-      source: $self.metadata.icon ?? ($self.url + "#auto");
+      source: $self.metadata.icon ?? ($self.url + "#cover");
     });
 
 
