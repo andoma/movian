@@ -873,3 +873,31 @@ video_playback_destroy(media_pipe_t *mp)
   mp_enqueue_event(mp, e);
   event_release(e);
 }
+
+
+htsmsg_t *
+video_playback_info_create(const struct video_args *va)
+{
+  htsmsg_t *vpi = htsmsg_create_map();
+  htsmsg_add_str(vpi, "canonical_url", va->canonical_url);
+  htsmsg_add_str(vpi, "title", va->title);
+  return vpi;
+}
+
+
+static LIST_HEAD(, video_playback_info_handler) vpi_handlers;
+
+void
+register_video_playback_info_handler(video_playback_info_handler_t *vpih)
+{
+  LIST_INSERT_HEAD(&vpi_handlers, vpih, link);
+}
+
+
+void
+video_playback_info_invoke(vpi_op_t op, struct htsmsg *vpi, struct prop *p)
+{
+  video_playback_info_handler_t *vpih;
+  LIST_FOREACH(vpih, &vpi_handlers, link)
+    vpih->invoke(op, vpi, p);
+}

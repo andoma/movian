@@ -716,6 +716,7 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
     }
   }
 
+  htsmsg_t *vpi = video_playback_info_create(&va);
 
   /**
    * Init codec contexts
@@ -802,6 +803,14 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
       case AVMEDIA_TYPE_VIDEO:
 	if(mp->mp_video.mq_stream == -1) {
 	  mp->mp_video.mq_stream = i;
+          if(mcp.frame_rate_num && mcp.frame_rate_den) {
+            htsmsg_add_dbl(vpi, "framerate",
+                           (double)mcp.frame_rate_num / mcp.frame_rate_den);
+          }
+          if(mcp.width)
+            htsmsg_add_u32(vpi, "width", mcp.width);
+          if(mcp.height)
+            htsmsg_add_u32(vpi, "height", mcp.height);
 	}
 	break;
 
@@ -823,6 +832,7 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
   if(fctx->duration != PTS_UNSET)
     flags |= MP_CAN_SEEK;
 
+  video_playback_info_invoke(VPI_START, vpi, mp->mp_prop_root);
   // Start it
   mp_configure(mp, flags, MP_BUFFER_DEEP, fctx->duration, "video");
 
@@ -836,6 +846,9 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
   e = video_player_loop(fctx, cwvec, mp, va.flags, errbuf, errlen,
 			va.canonical_url, freetype_context, si, ci,
 			cwvec_size, fh, va.resume_mode, va.title);
+
+  video_playback_info_invoke(VPI_STOP, vpi, mp->mp_prop_root);
+  htsmsg_release(vpi);
 
   seek_index_destroy(si);
   seek_index_destroy(ci);

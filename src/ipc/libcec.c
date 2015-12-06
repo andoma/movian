@@ -24,6 +24,8 @@
 #include "htsmsg/htsmsg_store.h"
 #include "main.h"
 #include "event.h"
+#include "task.h"
+#include "video/video_playback.h"
 
 static int longpress_select;
 static libcec_configuration cec_config;
@@ -226,6 +228,7 @@ libcec_init_thread(void *aux)
   int num_adapters = libcec_find_adapters(conn, &ca, 1, NULL);
   if(num_adapters < 1) {
     libcec_destroy(conn);
+    conn = NULL;
     TRACE(TRACE_ERROR, "CEC", "No adapters found");
     return NULL;
   }
@@ -271,6 +274,7 @@ libcec_init_thread(void *aux)
     TRACE(TRACE_ERROR, "CEC", "Unable to open connection to %s",
           ca.comm);
     libcec_destroy(conn);
+    conn = NULL;
     return NULL;
   }
   return NULL;
@@ -291,4 +295,30 @@ libcec_fini(void)
 
 }
 
+
+
+
 INITME(INIT_GROUP_IPC, libcec_init, libcec_fini);
+
+
+
+static void
+activate_self(void *aux)
+{
+  libcec_set_active_source(conn, CEC_DEVICE_TYPE_RESERVED);
+}
+
+
+static void
+libcec_vpi(vpi_op_t op, struct htsmsg *info, struct prop *p)
+{
+  if(!conn)
+    return;
+
+  if(op == VPI_START) {
+    task_run(activate_self, NULL);
+  }
+}
+
+
+VPI_REGISTER(libcec_vpi)

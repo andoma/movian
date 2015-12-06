@@ -24,6 +24,12 @@ struct rstr;
 struct video_queue;
 struct vsource_list;
 struct prop;
+struct video_args;
+struct htsmsg;
+
+#include "compiler.h"
+#include "arch/atomic.h"
+#include "misc/queue.h"
 
 void video_playback_create(struct media_pipe *mp);
 
@@ -32,3 +38,31 @@ void video_playback_destroy(struct media_pipe *mp);
 struct prop *video_queue_find_next(struct video_queue *vq,
 				   struct prop *current, int reverse,
 				   int wrap);
+
+/**
+ * Video playback info
+ */
+
+struct htsmsg *video_playback_info_create(const struct video_args *va);
+
+
+typedef enum {
+  VPI_START,
+  VPI_STOP,
+} vpi_op_t;
+
+typedef struct video_playback_info_handler {
+  void (*invoke)(vpi_op_t op, struct htsmsg *info, struct prop *mp_root);
+  LIST_ENTRY(video_playback_info_handler) link;
+} video_playback_info_handler_t;
+
+void register_video_playback_info_handler(video_playback_info_handler_t *vpih);
+
+void video_playback_info_invoke(vpi_op_t op, struct htsmsg *vpi, struct prop *p);
+
+#define VPI_REGISTER(handler) \
+  video_playback_info_handler_t handler_ ## strct = { handler}; \
+  INITIALIZER(handler_ ## init) {                               \
+    register_video_playback_info_handler(&handler_ ## strct); }
+
+
