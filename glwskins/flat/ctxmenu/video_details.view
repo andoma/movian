@@ -6,7 +6,7 @@
     hidden: !ENABLED;
     height: 2em;
     ListItemBevel();
-
+    ListItemHighlight();
     focusable: true;
     onEvent(activate, EVENT);
 
