@@ -17,22 +17,18 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
-#ifndef VIDEO_PLAYBACK_H
-#define VIDEO_PLAYBACK_H
+#pragma once
 
-#include "media/media.h"
-
+struct media_pipe;
 struct rstr;
 struct video_queue;
 struct vsource_list;
 struct prop;
 
-void video_playback_create(media_pipe_t *mp);
+void video_playback_create(struct media_pipe *mp);
 
-void video_playback_destroy(media_pipe_t *mp);
+void video_playback_destroy(struct media_pipe *mp);
 
-struct prop *video_queue_find_next(struct video_queue *vq, 
+struct prop *video_queue_find_next(struct video_queue *vq,
 				   struct prop *current, int reverse,
 				   int wrap);
-
-#endif /* PLAY_VIDEO_H */
