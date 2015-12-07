@@ -116,12 +116,23 @@ magnet_parse(struct http_header_list *list, char *errbuf, size_t errlen)
     }
   }
 
+  http_header_t *hh;
+  int num_trackers = 0;
+  LIST_FOREACH(hh, list, hh_link) {
+    if(!strcmp(hh->hh_key, "tr")) {
+      num_trackers++;
+    }
+  }
+
+  if(num_trackers == 0) {
+    snprintf(errbuf, errlen, "Trackerless torrens is not supported");
+    return NULL;
+  }
   TRACE(TRACE_DEBUG, "MAGNET", "Opening magnet for hash %s -- %s",
 	hash, dn ?: "<unknown name>");
 
   torrent_t *to = torrent_create_from_hash(infohash, "magnet");
 
-  http_header_t *hh;
 
   LIST_FOREACH(hh, list, hh_link) {
     if(!strcmp(hh->hh_key, "tr")) {
