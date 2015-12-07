@@ -35,13 +35,5 @@ widget(container_z, {
       caption: $self.metadata.title;
       style: ["ListItemLabel", "ListItemLabelContainer"];
     });
-
-    widget(label, {
-      align: right;
-      alpha: 0.2;
-      size: 0.7em;
-      caption: $self.type;
-    });
-
   });
 });
