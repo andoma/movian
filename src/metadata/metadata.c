@@ -30,7 +30,6 @@
 #include "media/media.h"
 #include "htsmsg/htsmsg_json.h"
 #include "misc/str.h"
-#include "api/lastfm.h"
 
 #include "metadata.h"
 #include "metadata_sources.h"

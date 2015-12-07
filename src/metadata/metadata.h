@@ -306,7 +306,7 @@ const char *metadata_qtypestr(int qtype);
 
 typedef struct metadata_source_query_info {
   const struct metadata_source *msqi_ms;
-
+  int64_t msqi_id;
   int msqi_mark;
   int msqi_qtype;
   int msqi_status;
