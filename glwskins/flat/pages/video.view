@@ -176,8 +176,7 @@ widget(container_z, {
         onEvent(up, {
           $clone.osdpage = 0;
           $clone.showPlaydeck = 0;
-        }, true, false);
-
+        }, $clone.osdpage == 0);
 
         widget(quad, {
           alpha: 0.8;
