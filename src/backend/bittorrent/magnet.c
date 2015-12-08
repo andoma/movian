@@ -125,7 +125,7 @@ magnet_parse(struct http_header_list *list, char *errbuf, size_t errlen)
   }
 
   if(num_trackers == 0) {
-    snprintf(errbuf, errlen, "Trackerless torrens is not supported");
+    snprintf(errbuf, errlen, "Trackerless torrents is not supported");
     return NULL;
   }
   TRACE(TRACE_DEBUG, "MAGNET", "Opening magnet for hash %s -- %s",
