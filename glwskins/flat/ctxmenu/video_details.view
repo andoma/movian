@@ -110,6 +110,20 @@ widget(list_y, {
     $clone.itemMenu = void;
   }, "skin://icons/ic_play_arrow_48px.svg");
 
+
+
+  ITEM(_("Mark as unseen"), {
+    $args.playcount = false;
+    $clone.itemMenu = void;
+  }, void, $args.playcount > 0);
+
+  // Mark as seen (video)
+
+  ITEM(_("Mark as seen"), {
+    $args.playcount = true;
+    $clone.itemMenu = void;
+  }, void, $args.playcount < 1);
+
   cloner($args.options, loader, {
     time: 0.1;
     noInitialTransform: true;
