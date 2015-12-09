@@ -89,10 +89,72 @@ populate_screensaver_items(void)
  *
  */
 static void
+bing_images(int *cleared)
+{
+  char url[1024];
+  char errbuf[256];
+  buf_t *b;
+
+  b = fa_load("http://www.bing.com/HPImageArchive.aspx?format=js&idx=22&n=2",
+               FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
+               FA_LOAD_FLAGS(FA_DISABLE_AUTH | FA_COMPRESSION | FA_NO_COOKIES),
+               NULL);
+
+  if(b == NULL) {
+    TRACE(TRACE_ERROR, "Screensaver", "Unable to load images -- %s",
+          errbuf);
+    return;
+  }
+
+  htsmsg_t *doc = htsmsg_json_deserialize(buf_cstr(b));
+  buf_release(b);
+
+  if(doc == NULL) {
+    TRACE(TRACE_ERROR, "STOS", "Malformed JSON");
+    return;
+  }
+
+  htsmsg_t *list = htsmsg_get_list(doc, "images");
+  if(list != NULL) {
+    htsmsg_field_t *f;
+    HTSMSG_FOREACH(f, list) {
+    htsmsg_t *m = htsmsg_get_map_by_field(f);
+    if(m == NULL)
+      continue;
+
+    const char *s = htsmsg_get_str(m, "url");
+    if(s == NULL)
+      continue;
+    snprintf(url, sizeof(url), "%s%s", "http://www.bing.com", s);
+    prop_t *item = prop_create_root(NULL);
+    prop_set(item, "url", PROP_SET_STRING, url);
+    prop_set(item, "info", PROP_SET_STRING, htsmsg_get_str(m, "copyright"));
+
+    if(*cleared == 0) {
+      prop_destroy_childs(screensaver_items);
+      *cleared = 1;
+    }
+
+    if(prop_set_parent(item, screensaver_items))
+      prop_destroy(item);
+    }
+    screensaver_items_loaded++;
+  }
+
+  htsmsg_release(doc);
+}
+
+/**
+ *
+ */
+static void
 init_screensaver_items_load(void *opaque, prop_event_t event, ...)
 {
+  int cleared = 0;
   if(event == PROP_SUBSCRIPTION_MONITOR_ACTIVE) {
-    populate_screensaver_items();
+    if(0)
+      populate_screensaver_items();
+    bing_images(&cleared);
   }
 }
 

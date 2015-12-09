@@ -4,8 +4,23 @@ widget(slideshow, {
   time: 10;
   transitionTime: 2;
 
-  cloner($core.glw.screensaver.items, image, {
-    zoffset: -1400;
-    source: $self.url;
+  cloner($core.glw.screensaver.items, container_z, {
+
+    image({
+      zoffset: -1400;
+      source: $self.url;
+    });
+
+    underscan({
+      label({
+        font: "skin://fonts/RobotoCondensed-Light.ttf";
+        padding: [1em, 1em];
+        caption: $self.info;
+        shadow: true;
+        outline: true;
+        size: 0.8em;
+        align: bottomRight;
+      });
+    });
   });
 });
