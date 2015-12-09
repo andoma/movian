@@ -81,6 +81,7 @@ widget(container_z, {
 
   widget(layer, {
     widget(video, {
+      id: "videowidget";
       primary: true;
 
       how: $self.how;
@@ -191,7 +192,7 @@ widget(container_z, {
           
           PLAYDECK_BUTTON("skin://icons/ic_stop_48px.svg",
                           _("Stop"),
-                          event("Stop"),
+                          targetedEvent("videowidget", Stop),
                           true, "stop-btn");
 
           PLAYDECK_BUTTON("skin://icons/ic_subtitles_48px.svg",
@@ -203,8 +204,9 @@ widget(container_z, {
 
           PLAYDECK_BUTTON("skin://icons/ic_skip_previous_48px.svg",
                           _("Previous"),
-                          event("PreviousTrack"),
-                          $core.media.current.canSkipBackward,
+                          targetedEvent("videowidget", PreviousTrack),
+                          $self.media.canSkipBackward ||
+                          $self.media.canSeek,
                          "prev-btn");
 
           PLAYDECK_BUTTON(translate($core.media.current.playstatus,
@@ -212,14 +214,14 @@ widget(container_z, {
                                     "pause",
                                     "skin://icons/ic_play_arrow_48px.svg"),
                           _("Play/Pause"),
-                          event("PlayPause"),
-                          $core.media.current.canPause,
+                          targetedEvent("videowidget", PlayPause),
+                          $self.media.canPause,
                          "pause-btn");
 
           PLAYDECK_BUTTON("skin://icons/ic_skip_next_48px.svg",
                           _("Next"),
-                          event("NextTrack"),
-                          $core.media.current.canSkipForward,
+                          targetedEvent("videowidget", NextTrack),
+                          $self.media.canSkipForward,
                          "next-btn");
 
           PLAYDECK_BUTTON("skin://icons/ic_speaker_48px.svg",
@@ -264,7 +266,7 @@ widget(container_z, {
         widget(icon, {
           source: "skin://icons/ic_pause_48px.svg";
           alpha: iir(select(!$clone.showPlaydeck &&
-                            $core.media.current.playstatus == "pause", 1, 0), 4);
+                            $self.media.playstatus == "pause", 1, 0), 4);
 
         });
 

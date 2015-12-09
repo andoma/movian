@@ -40,14 +40,6 @@ static HTS_MUTEX_DECL(video_queue_mutex);
 TAILQ_HEAD(video_queue_entry_queue, video_queue_entry);
 
 
-/**
- *
- */
-struct video_queue {
-  prop_sub_t *vq_node_sub;
-  struct video_queue_entry_queue vq_entries;
-};
-
 
 /**
  *
@@ -59,7 +51,20 @@ typedef struct video_queue_entry {
   rstr_t *vqe_type;
   prop_sub_t *vqe_url_sub;
   prop_sub_t *vqe_type_sub;
+  struct video_queue *vqe_vq;
 } video_queue_entry_t;
+
+
+/**
+ *
+ */
+struct video_queue {
+  prop_sub_t *vq_node_sub;
+  struct video_queue_entry_queue vq_entries;
+  prop_t *vq_current_prop;
+  video_queue_entry_t *vq_current;
+  media_pipe_t *vq_mp;
+};
 
 
 LIST_HEAD(vsource_list, vsource);
@@ -400,6 +405,59 @@ vq_entry_destroy(video_queue_t *vq, video_queue_entry_t *vqe)
   free(vqe);
 }
 
+/**
+ *
+ */
+static void
+vq_update_metadata(video_queue_t *vq)
+{
+  video_queue_entry_t *vqe;
+
+  vqe = vq->vq_current;
+  if(vqe != NULL) {
+    while((vqe = TAILQ_NEXT(vqe, vqe_link)) != NULL) {
+      const char *t = rstr_get(vqe->vqe_type);
+      if(t != NULL && (!strcmp(t, "video") || !strcmp(t, "tvchannel")))
+        break;
+    }
+  }
+
+  prop_set_int(vq->vq_mp->mp_prop_canSkipForward, vqe != NULL);
+
+  vqe = vq->vq_current;
+  if(vqe != NULL) {
+    while((vqe = TAILQ_PREV(vqe, video_queue_entry_queue, vqe_link)) != NULL) {
+      const char *t = rstr_get(vqe->vqe_type);
+      if(t != NULL && (!strcmp(t, "video") || !strcmp(t, "tvchannel")))
+        break;
+    }
+  }
+
+  prop_set_int(vq->vq_mp->mp_prop_canSkipBackward, vqe != NULL);
+}
+
+/**
+ *
+ */
+static void
+vq_update_current(video_queue_t *vq)
+{
+  video_queue_entry_t *vqe = NULL;
+
+  if(vq->vq_current_prop != NULL) {
+    TAILQ_FOREACH(vqe, &vq->vq_entries, vqe_link) {
+      if(prop_compare(vqe->vqe_root, vq->vq_current_prop)) {
+        break;
+      }
+    }
+  }
+
+  if(vqe != NULL)
+    vq->vq_current = vqe;
+  else
+    vq->vq_current = NULL;
+  vq_update_metadata(vq);
+}
 
 
 /**
@@ -409,6 +467,7 @@ static void
 vqe_set_url(video_queue_entry_t *vqe, rstr_t *str)
 {
   rstr_set(&vqe->vqe_url, str);
+  vq_update_metadata(vqe->vqe_vq);
 }
 
 
@@ -419,6 +478,7 @@ static void
 vqe_set_type(video_queue_entry_t *vqe, rstr_t *str)
 {
   rstr_set(&vqe->vqe_type, str);
+  vq_update_metadata(vqe->vqe_vq);
 }
 
 
@@ -429,6 +489,8 @@ static void
 vq_add_node(video_queue_t *vq, prop_t *p, video_queue_entry_t *before)
 {
   video_queue_entry_t *vqe = calloc(1, sizeof(video_queue_entry_t));
+
+  vqe->vqe_vq = vq;
 
   prop_tag_set(p, vq, vqe);
 
@@ -455,6 +517,7 @@ vq_add_node(video_queue_t *vq, prop_t *p, video_queue_entry_t *before)
   } else {
     TAILQ_INSERT_TAIL(&vq->vq_entries, vqe, vqe_link);
   }
+  vq_update_current(vq);
 }
 
 
@@ -489,7 +552,10 @@ vq_add_nodes(video_queue_t *vq, prop_vec_t *pv, video_queue_entry_t *before)
 static void
 vq_del_node(video_queue_t *vq, video_queue_entry_t *vqe)
 {
+  if(vqe == vq->vq_current)
+    vq->vq_current = NULL;
   vq_entry_destroy(vq, vqe);
+  vq_update_metadata(vq);
 }
 
 
@@ -505,6 +571,8 @@ vq_clear(video_queue_t *vq)
     prop_tag_clear(vqe->vqe_root, vq);
     vq_entry_destroy(vq, vqe);
   }
+  vq->vq_current = NULL;
+  vq_update_metadata(vq);
 }
 
 
@@ -581,12 +649,12 @@ vq_entries_callback(void *opaque, prop_event_t event, ...)
  *
  */
 static video_queue_t *
-video_queue_create(prop_t *model)
+video_queue_create(prop_t *model, media_pipe_t *mp)
 {
   video_queue_t *vq = calloc(1, sizeof(video_queue_t));
   TAILQ_INIT(&vq->vq_entries);
-
-  vq->vq_node_sub = 
+  vq->vq_mp = mp;
+  vq->vq_node_sub =
     prop_subscribe(0,
 		   PROP_TAG_NAME("self", "nodes"),
 		   PROP_TAG_CALLBACK, vq_entries_callback, vq,
@@ -601,10 +669,27 @@ video_queue_create(prop_t *model)
  *
  */
 static void
+video_queue_set_current(video_queue_t *vq, prop_t *item)
+{
+  hts_mutex_lock(&video_queue_mutex);
+  prop_ref_dec(vq->vq_current_prop);
+  vq->vq_current_prop = prop_ref_inc(item);
+  vq_update_current(vq);
+  printf("Current set to\n");
+  prop_print_tree(item, 1);
+  hts_mutex_unlock(&video_queue_mutex);
+}
+
+
+/**
+ *
+ */
+static void
 video_queue_destroy(video_queue_t *vq)
 {
   hts_mutex_lock(&video_queue_mutex);
   prop_unsubscribe(vq->vq_node_sub);
+  prop_ref_dec(vq->vq_current_prop);
   vq_clear(vq);
   hts_mutex_unlock(&video_queue_mutex);
   free(vq);
@@ -719,6 +804,8 @@ video_player_idle(void *aux)
             resume_ctrl == RESUME_AS_GLOBAL_SETTING ? "" : " (overridden)");
 
       prop_set(mp->mp_prop_metadata, "title", PROP_SET_VOID);
+      if(vq != NULL)
+        video_queue_set_current(vq, item_model);
       e = play_video(rstr_get(play_url), mp,
 		     play_flags, play_priority,
 		     errbuf, sizeof(errbuf), vq,
@@ -778,7 +865,7 @@ video_player_idle(void *aux)
 
       item_model = prop_ref_inc(ep->item_model);
       if(ep->parent_model != NULL && item_model != NULL) {
-	vq = video_queue_create(ep->parent_model);
+	vq = video_queue_create(ep->parent_model, mp);
       } else {
 	vq = NULL;
       }
