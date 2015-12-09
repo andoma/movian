@@ -61,8 +61,8 @@ void register_video_playback_info_handler(video_playback_info_handler_t *vpih);
 void video_playback_info_invoke(vpi_op_t op, struct htsmsg *vpi, struct prop *p);
 
 #define VPI_REGISTER(handler) \
-  video_playback_info_handler_t handler_ ## strct = { handler}; \
-  INITIALIZER(handler_ ## init) {                               \
-    register_video_playback_info_handler(&handler_ ## strct); }
+  static video_playback_info_handler_t handler ## _strct = { handler}; \
+  INITIALIZER(handler ## _init) {                               \
+    register_video_playback_info_handler(&handler ## _strct); }
 
 
