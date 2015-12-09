@@ -222,7 +222,6 @@ static void
 set_screensaver_image_folder(void *opaque, const char *str)
 {
   mystrset(&screensaver_user_images, str);
-  printf("User images: %s\n", str);
 }
 
 

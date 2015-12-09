@@ -175,7 +175,6 @@ vfs_scandir(fa_protocol_t *fap, fa_dir_t *fd, const char *url,
     snprintf(errbuf, errlen, "No such file or directory");
     return -1;
   }
-  printf("Scandir %s\n", newpath);
   return fa_scandir2(fd, newpath, errbuf, errlen, flags);
 }
 
