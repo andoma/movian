@@ -167,6 +167,10 @@ screensaver_load_user_images(int *cleared)
     path = mystrdupa(screensaver_user_images);
 
   hts_mutex_unlock(&screensaver_mutex);
+
+  if(path == NULL)
+    return;
+
   fa_dir_t *fd = fa_scandir(path, NULL, 0);
   if(fd == NULL)
     return;
