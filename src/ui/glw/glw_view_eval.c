@@ -3806,7 +3806,7 @@ glwf_targetedEvent(glw_view_eval_context_t *ec, struct token *self,
     return -1;
 
   if(a->type != TOKEN_RSTRING)
-    return glw_view_seterr(ec->ei, a, "event(): "
+    return glw_view_seterr(ec->ei, a, "targetedEvent(): "
 			    "First argument is not a string");
 
   if(b->type == TOKEN_IDENTIFIER) {
