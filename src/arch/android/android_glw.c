@@ -271,6 +271,7 @@ Java_com_lonelycoder_mediaplayer_Core_glwMotion(JNIEnv *env,
 #define end_of_AKEYCODE (AKEYCODE_BUTTON_MODE+1)
 
 #define AVEC(x...) (const action_type_t []){x, ACTION_NONE}
+
 const static action_type_t *btn_to_action[end_of_AKEYCODE] = {
   [AKEYCODE_BACK]            = AVEC(ACTION_NAV_BACK),
   [AKEYCODE_DPAD_LEFT]       = AVEC(ACTION_LEFT),
@@ -286,13 +287,21 @@ const static action_type_t *btn_to_action[end_of_AKEYCODE] = {
   [AKEYCODE_DEL]             = AVEC(ACTION_NAV_BACK, ACTION_BS),
 };
 
+const static action_type_t *shift_btn_to_action[end_of_AKEYCODE] = {
+  [AKEYCODE_DPAD_LEFT]       = AVEC(ACTION_MOVE_LEFT),
+  [AKEYCODE_DPAD_UP]         = AVEC(ACTION_MOVE_UP),
+  [AKEYCODE_DPAD_RIGHT]      = AVEC(ACTION_MOVE_RIGHT),
+  [AKEYCODE_DPAD_DOWN]       = AVEC(ACTION_MOVE_DOWN),
+};
+
 
 JNIEXPORT jboolean JNICALL
 Java_com_lonelycoder_mediaplayer_Core_glwKeyDown(JNIEnv *env,
                                                  jobject obj,
                                                  jint id,
                                                  jint keycode,
-                                                 jint unicode)
+                                                 jint unicode,
+                                                 jboolean shift)
 {
   android_glw_root_t *agr = (android_glw_root_t *)id;
   glw_root_t *gr = &agr->gr;
@@ -313,7 +322,8 @@ Java_com_lonelycoder_mediaplayer_Core_glwKeyDown(JNIEnv *env,
     }
 
     if(keycode < end_of_AKEYCODE) {
-      const action_type_t *avec = btn_to_action[keycode];
+      const action_type_t *avec = shift ? shift_btn_to_action[keycode] :
+        btn_to_action[keycode];
       if(avec) {
         int i = 0;
         while(avec[i] != 0)
