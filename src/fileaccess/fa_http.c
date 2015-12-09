@@ -170,6 +170,8 @@ typedef struct http_file {
 
   char hf_no_retries;
 
+  char hf_no_cookies;
+
   char hf_req_compression;
 
   char *hf_original_url;
@@ -582,6 +584,9 @@ load_cookies(void)
 static void
 http_cookie_set(char *cookie, http_file_t *hf)
 {
+  if(hf->hf_no_cookies)
+    return;
+
   static callout_t cookie_persist_timer;
 
   const char *req_host = hf->hf_connection->hc_hostname;
@@ -664,10 +669,13 @@ http_cookie_set(char *cookie, http_file_t *hf)
  *
  */
 static void
-http_cookie_append(const char *req_host, const char *req_path,
+http_cookie_append(const char *req_host, http_file_t *hf,
 		   struct http_header_list *headers,
 		   struct http_header_list *extra_cookies)
 {
+  if(hf->hf_no_cookies)
+    return;
+  const char *req_path = hf->hf_path;
   http_header_t *hh;
   http_cookie_t *hc;
   htsbuf_queue_t hq;
@@ -1574,8 +1582,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
   if(http_request_inspect(&headers, &cookies, hf, "GET", NULL, errbuf, errlen))
     return -1;
 
-  http_cookie_append(hf->hf_connection->hc_hostname, hf->hf_path, &headers,
-		     &cookies);
+  http_cookie_append(hf->hf_connection->hc_hostname, hf, &headers, &cookies);
   http_headers_free(&cookies);
 
   HF_TRACE(hf, "Sending open request for %s (cid=%d)",
@@ -1688,6 +1695,7 @@ http_open_ex(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
     hf->hf_debug = !!(flags & FA_DEBUG) || gconf.enable_http_debug;
   hf->hf_streaming = !!(flags & FA_STREAMING);
   hf->hf_no_retries = !!(flags & FA_NO_RETRIES);
+  hf->hf_no_cookies = !!(flags & FA_NO_COOKIES);
   if(foe != NULL) {
     if(foe->foe_stats != NULL) {
       hf->hf_stats_speed = prop_create_r(foe->foe_stats, "bitrate");
@@ -1832,7 +1840,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
       if(range[0])
 	htsbuf_qprintf(&q, "Range: %s\r\n", range);
 
-      http_cookie_append(hc->hc_hostname, hf->hf_path, &headers, &cookies);
+      http_cookie_append(hc->hc_hostname, hf, &headers, &cookies);
       http_headers_free(&cookies);
       HF_TRACE(hf, "Read issuing new request for %s (cid=%d)",
                hf->hf_url, hf->hf_connection->hc_id);
@@ -2510,7 +2518,7 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
                             hf, "PROPFIND", NULL, errbuf, errlen))
       return -1;
 
-    http_cookie_append(hf->hf_connection->hc_hostname, hf->hf_path, &headers,
+    http_cookie_append(hf->hf_connection->hc_hostname, hf, &headers,
 		       &cookies);
     http_headers_free(&cookies);
 
@@ -3006,7 +3014,7 @@ http_req_do(http_req_aux_t *hra)
     }
   }
 
-  http_cookie_append(hc->hc_hostname, hf->hf_path, &headers, &cookies);
+  http_cookie_append(hc->hc_hostname, hf, &headers, &cookies);
   http_headers_free(&cookies);
 
   HF_TRACE(hf, "Sending request for %s (cid=%d)",
@@ -3409,6 +3417,7 @@ http_reqv(const char *url, va_list ap,
   if(!(hra->flags & FA_NO_DEBUG))
     hf->hf_debug = !!(hra->flags & FA_DEBUG) || gconf.enable_http_debug;
   hf->hf_req_compression = !!(hra->flags & FA_COMPRESSION);
+  hf->hf_no_cookies = !!(hra->flags & FA_NO_COOKIES);
   hf->hf_url = strdup(url);
 
   hra->hf = hf;
