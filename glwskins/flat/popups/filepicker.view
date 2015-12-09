@@ -120,11 +120,19 @@ popup({
                     });
                   });
                 });
+
+                hbox({
+                  height: 1em;
+                  padding: [0.5em, 0];
+                  align: left;
+                  throbber({
+                    width: 1em;
+                    alpha: iir($self.model.loading, 4);
+                  });
+                  space(1);
+                });
               });
 
-              throbber({
-                alpha: iir($self.model.loading, 4);
-              });
             });
           });
         });

@@ -82,7 +82,7 @@ popdir(filepicker_t *fp)
  *
  */
 static void
-filpicker_scandir(const char *path, prop_t *model, int flags)
+filepicker_scandir(const char *path, prop_t *model, int flags)
 {
   char errbuf[512];
   fa_dir_t *fd = fa_scandir(path, errbuf, sizeof(errbuf));
@@ -90,8 +90,6 @@ filpicker_scandir(const char *path, prop_t *model, int flags)
     prop_set(model, "error", PROP_SET_STRING, errbuf);
     return;
   }
-  prop_set(model, "loading", PROP_SET_INT, 0);
-
   prop_t *nodes = prop_create_r(model, "nodes");
   fa_dir_entry_t *fde;
 
@@ -112,9 +110,34 @@ filpicker_scandir(const char *path, prop_t *model, int flags)
     if(prop_set_parent(node, nodes))
       prop_destroy(node);
   }
+  prop_set(model, "loading", PROP_SET_INT, 0);
+  prop_ref_dec(nodes);
   fa_dir_free(fd);
 }
 
+
+/**
+ *
+ */
+typedef struct filpicker_scandir_op {
+  char *path;
+  prop_t *model;
+  int flags;
+} filepicker_scandir_op_t;
+
+
+/**
+ *
+ */
+static void
+filepicker_scandir_task(void *aux)
+{
+  filepicker_scandir_op_t *op = aux;
+  filepicker_scandir(op->path, op->model, op->flags);
+  free(op->path);
+  prop_ref_dec(op->model);
+  free(op);
+}
 
 /**
  *
@@ -150,8 +173,13 @@ filepicker_load_dir(filepicker_t *fp, const char *path, const char *title)
   prop_t *model = prop_create_r(fd->fd_root, "model");
   prop_set(model, "loading", PROP_SET_INT, 1);
   prop_set(model, "title", PROP_SET_STRING, title);
-  filpicker_scandir(path, model, fp->fp_flags);
-  prop_ref_dec(model);
+
+
+  filepicker_scandir_op_t *op = malloc(sizeof(filepicker_scandir_op_t));
+  op->path = strdup(path);
+  op->model = model; // Transfer refcount
+  op->flags = fp->fp_flags;
+  task_run(filepicker_scandir_task, op);
 }
 
 
@@ -162,18 +190,19 @@ filepicker_load_dir(filepicker_t *fp, const char *path, const char *title)
 static void
 pick_url(filepicker_t *fp, const char *url, const char *how)
 {
-  fa_stat_t fs;
-  char errbuf[512];
-  if(fa_stat(url, &fs, errbuf, sizeof(errbuf))) {
-    TRACE(TRACE_ERROR, "filepicker", "%s", errbuf);
-    return;
-  }
-
-  int do_descend = isdir(fs.fs_type);
-
-  if(fp->fp_flags & FILEPICKER_DIRECTORIES)
+  int do_descend;
+  if(fp->fp_flags & FILEPICKER_DIRECTORIES) {
     do_descend = how != NULL && !strcmp(how, "descend");
+  } else {
+    fa_stat_t fs;
+    char errbuf[512];
+    if(fa_stat(url, &fs, errbuf, sizeof(errbuf))) {
+      TRACE(TRACE_ERROR, "filepicker", "%s", errbuf);
+      return;
+    }
 
+    do_descend = isdir(fs.fs_type);
+  }
 
   if(do_descend) {
     filepicker_load_dir(fp, url, NULL);
