@@ -1,7 +1,7 @@
 widget(slideshow, {
   alpha: $ui.screenSaverAlpha;
 
-  time: 10;
+  time: 15;
   transitionTime: 2;
 
   cloner($core.glw.screensaver.items, container_z, {
@@ -12,14 +12,25 @@ widget(slideshow, {
     });
 
     underscan({
-      label({
-        font: "skin://fonts/RobotoCondensed-Light.ttf";
-        padding: [1em, 1em];
-        caption: $self.info;
-        shadow: true;
-        outline: true;
-        size: 0.8em;
-        align: bottomRight;
+      hidden: isVoid($self.info);
+      vbox({
+        padding: 0.5em;
+        space(1);
+        hbox({
+          space(1);
+          zbox({
+            quad({
+              color: 0;
+              alpha: 0.66;
+            });
+            label({
+              font: "skin://fonts/RobotoCondensed-Light.ttf";
+              padding: [0.5em, 0.25em];
+              caption: $self.info;
+              align: bottomRight;
+            });
+          });
+        });
       });
     });
   });
