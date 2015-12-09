@@ -28,8 +28,10 @@
 #include "fileaccess/fileaccess.h"
 
 static prop_t *screensaver_items;
-static int screensaver_items_loaded;
+static HTS_MUTEX_DECL(screensaver_mutex);
+static char *screensaver_user_images;
 
+#if 0
 /**
  *
  */
@@ -39,9 +41,7 @@ populate_screensaver_items(void)
   char errbuf[256];
   buf_t *b;
 
-  if(screensaver_items_loaded)
-    return;
-  
+
   b = fa_load("http://screensaver.movian.tv/images.json",
                FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
                FA_LOAD_FLAGS(FA_DISABLE_AUTH | FA_COMPRESSION),
@@ -83,6 +83,27 @@ populate_screensaver_items(void)
   }
   htsmsg_release(doc);
 }
+#endif
+
+/**
+ *
+ */
+static void
+screensaver_add_item(const char *url, const char *info, int *cleared)
+{
+  prop_t *item = prop_create_root(NULL);
+  prop_set(item, "url", PROP_SET_STRING, url);
+  prop_set(item, "info", PROP_SET_STRING, info);
+
+  if(*cleared == 0) {
+    prop_destroy_childs(screensaver_items);
+    *cleared = 1;
+  }
+
+  if(prop_set_parent(item, screensaver_items)) {
+    prop_destroy(item);
+  }
+}
 
 
 /**
@@ -118,27 +139,16 @@ bing_images(int *cleared)
   if(list != NULL) {
     htsmsg_field_t *f;
     HTSMSG_FOREACH(f, list) {
-    htsmsg_t *m = htsmsg_get_map_by_field(f);
-    if(m == NULL)
-      continue;
+      htsmsg_t *m = htsmsg_get_map_by_field(f);
+      if(m == NULL)
+        continue;
 
-    const char *s = htsmsg_get_str(m, "url");
-    if(s == NULL)
-      continue;
-    snprintf(url, sizeof(url), "%s%s", "http://www.bing.com", s);
-    prop_t *item = prop_create_root(NULL);
-    prop_set(item, "url", PROP_SET_STRING, url);
-    prop_set(item, "info", PROP_SET_STRING, htsmsg_get_str(m, "copyright"));
-
-    if(*cleared == 0) {
-      prop_destroy_childs(screensaver_items);
-      *cleared = 1;
+      const char *s = htsmsg_get_str(m, "url");
+      if(s == NULL)
+        continue;
+      snprintf(url, sizeof(url), "%s%s", "http://www.bing.com", s);
+      screensaver_add_item(url, htsmsg_get_str(m, "copyright"), cleared);
     }
-
-    if(prop_set_parent(item, screensaver_items))
-      prop_destroy(item);
-    }
-    screensaver_items_loaded++;
   }
 
   htsmsg_release(doc);
@@ -148,13 +158,40 @@ bing_images(int *cleared)
  *
  */
 static void
+screensaver_load_user_images(int *cleared)
+{
+  const char *path = NULL;
+
+  hts_mutex_lock(&screensaver_mutex);
+  if(screensaver_user_images != NULL && screensaver_user_images[0] != 0)
+    path = mystrdupa(screensaver_user_images);
+
+  hts_mutex_unlock(&screensaver_mutex);
+  fa_dir_t *fd = fa_scandir(path, NULL, 0);
+  if(fd == NULL)
+    return;
+
+  fa_dir_entry_t *fde;
+  RB_FOREACH(fde, &fd->fd_entries, fde_link) {
+    screensaver_add_item(rstr_get(fde->fde_url), NULL, cleared);
+  }
+  fa_dir_free(fd);
+}
+
+
+/**
+ *
+ */
+static void
 init_screensaver_items_load(void *opaque, prop_event_t event, ...)
 {
   int cleared = 0;
+
   if(event == PROP_SUBSCRIPTION_MONITOR_ACTIVE) {
-    if(0)
-      populate_screensaver_items();
-    bing_images(&cleared);
+    screensaver_load_user_images(&cleared);
+
+    if(glw_settings.gs_bing_image)
+      bing_images(&cleared);
   }
 }
 
@@ -171,6 +208,17 @@ init_screensaver_items(void)
                  PROP_TAG_CALLBACK, init_screensaver_items_load, NULL,
                  PROP_TAG_ROOT, screensaver_items,
                  NULL);
+}
+
+
+/**
+ *
+ */
+static void
+set_screensaver_image_folder(void *opaque, const char *str)
+{
+  mystrset(&screensaver_user_images, str);
+  printf("User images: %s\n", str);
 }
 
 
@@ -289,6 +337,22 @@ glw_settings_init(void)
                    SETTING_HTSMSG("screensaver", store, "glw"),
                    NULL);
 
+  glw_settings.gs_setting_bing_image =
+    setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
+                   SETTING_TITLE(_p("Use Bing images of the day")),
+                   SETTING_VALUE(1),
+                   SETTING_WRITE_BOOL(&glw_settings.gs_bing_image),
+                   SETTING_HTSMSG("bingimageoftheday", store, "glw"),
+                   NULL);
+
+  glw_settings.gs_setting_user_images =
+    setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE | SETTINGS_DIR,
+                   SETTING_TITLE(_p("Folder for screensaver images")),
+                   SETTING_CALLBACK(set_screensaver_image_folder, NULL),
+                   SETTING_HTSMSG("userscreensaverimages", store, "glw"),
+                   SETTING_MUTEX(&screensaver_mutex),
+                   NULL);
+
   prop_t *p = prop_create(prop_get_global(), "glw");
   p = prop_create(p, "osk");
   kv_prop_bind_create(p, "showtime:glw:osk");
@@ -303,7 +367,9 @@ glw_settings_init(void)
 void
 glw_settings_fini(void)
 {
+  setting_destroy(glw_settings.gs_setting_user_images);
   setting_destroy(glw_settings.gs_setting_screensaver_timer);
+  setting_destroy(glw_settings.gs_setting_bing_image);
   setting_destroy(glw_settings.gs_setting_underscan_v);
   setting_destroy(glw_settings.gs_setting_underscan_h);
   setting_destroy(glw_settings.gs_setting_size);

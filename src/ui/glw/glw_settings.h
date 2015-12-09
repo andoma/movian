@@ -24,9 +24,11 @@ typedef struct glw_settings {
   int gs_size;
   int gs_underscan_h;
   int gs_underscan_v;
-  int gs_screensaver_delay;
   int gs_wrap;
   int gs_map_mouse_wheel_to_keys;
+
+  int gs_screensaver_delay;
+  int gs_bing_image;
 
   struct setting *gs_setting_size;
   struct setting *gs_setting_underscan_v;
@@ -37,6 +39,8 @@ typedef struct glw_settings {
   struct setting *gs_setting_custom_bg;
 
   struct setting *gs_setting_screensaver_timer;
+  struct setting *gs_setting_bing_image;
+  struct setting *gs_setting_user_images;
 
   struct prop *gs_settings;
   struct htsmsg *gs_settings_store;
