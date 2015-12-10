@@ -675,8 +675,6 @@ video_queue_set_current(video_queue_t *vq, prop_t *item)
   prop_ref_dec(vq->vq_current_prop);
   vq->vq_current_prop = prop_ref_inc(item);
   vq_update_current(vq);
-  printf("Current set to\n");
-  prop_print_tree(item, 1);
   hts_mutex_unlock(&video_queue_mutex);
 }
 
