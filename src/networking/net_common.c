@@ -160,6 +160,37 @@ tcp_read_line(tcpcon_t *tc, char *buf,const size_t bufsize)
 /**
  *
  */
+char *
+tcp_read_line2(tcpcon_t *tc, size_t maxlen)
+{
+  int len;
+
+  while(1) {
+    len = htsbuf_find(&tc->spill, 0xa);
+
+    if(len == -1) {
+      if(tcp_read_into_spill(tc) < 0)
+	return NULL;
+      continue;
+    }
+
+    if(len >= maxlen)
+      return NULL;
+
+    char *buf = malloc(len + 1);
+    htsbuf_read(&tc->spill, buf, len);
+    buf[len] = 0;
+    while(len > 0 && buf[len - 1] < 32)
+      buf[--len] = 0;
+    htsbuf_drop(&tc->spill, 1); /* Drop the \n */
+    return buf;
+  }
+}
+
+
+/**
+ *
+ */
 int
 tcp_read_data(tcpcon_t *tc, void *buf, size_t bufsize,
 	      net_read_cb_t *cb, void *opaque)
