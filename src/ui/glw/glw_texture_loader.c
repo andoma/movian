@@ -28,6 +28,24 @@
 
 #include "backend/backend.h"
 
+
+#if 0
+/**
+ *
+ */
+static void
+glt_set_state0(glw_loadable_texture_t *glt, int state,
+               const char *file, int line)
+{
+  glt->glt_state = state;
+}
+
+#define glt_set_state(a, b) glt_set_state0(a, b, __FILE__, __LINE__)
+#endif
+
+#define glt_set_state(a, b) (a)->glt_state = b
+
+
 /**
  *
  */
@@ -66,8 +84,7 @@ glw_tex_purge_stash(glw_root_t *gr, int stash)
 
     glw_tex_backend_free_loader_resources(glt);
     glw_tex_backend_free_render_resources(gr, glt);
-    glt->glt_state = GLT_STATE_INACTIVE;
-
+    glt_set_state(glt, GLT_STATE_INACTIVE);
     if(glt->glt_refcnt == 0) {
 
       if(glt->glt_url != NULL) {
@@ -87,11 +104,10 @@ glw_tex_purge_stash(glw_root_t *gr, int stash)
 static int
 glw_tex_stash(glw_root_t *gr, glw_loadable_texture_t *glt, int unreferenced)
 {
-
   if(glt->glt_url == NULL)
     return 1;
 
-  glt->glt_state = GLT_STATE_STASHED;
+  glt_set_state(glt, GLT_STATE_STASHED);
 
   int stash = glt->glt_origin_type == IMAGE_JPEG;
 
@@ -125,23 +141,22 @@ glw_tex_autoflush(glw_root_t *gr)
 
   while((glt = LIST_FIRST(&gr->gr_tex_flush_list)) != NULL) {
     LIST_REMOVE(glt, glt_flush_link);
-
     switch(glt->glt_state) {
     case GLT_STATE_VALID:
       if(glw_tex_stash(gr, glt, 0)) {
         glw_tex_backend_free_render_resources(gr, glt);
-        glt->glt_state = GLT_STATE_INACTIVE;
+        glt_set_state(glt, GLT_STATE_INACTIVE);
       }
       break;
 
     case GLT_STATE_QUEUED:
-      glt->glt_state = GLT_STATE_INACTIVE;
+      glt_set_state(glt, GLT_STATE_INACTIVE);
       TAILQ_REMOVE(glt->glt_q, glt, glt_work_link);
       glw_tex_deref(gr, glt);  // beware! glt may be free'd here
       break;
 
     case GLT_STATE_LOADING:
-      glt->glt_state = GLT_STATE_LOAD_ABORT;
+      glt_set_state(glt, GLT_STATE_LOAD_ABORT);
       glt_cancel(glt);
       break;
 
@@ -202,7 +217,7 @@ glt_enqueue(glw_root_t *gr, glw_loadable_texture_t *glt, int q)
 
   glt->glt_q = &gr->gr_tex_load_queue[q];
   TAILQ_INSERT_TAIL(&gr->gr_tex_load_queue[q], glt, glt_work_link);
-  glt->glt_state = GLT_STATE_QUEUED;
+  glt_set_state(glt, GLT_STATE_QUEUED);
 
   if(q > LQ_TENTATIVE)
     hts_cond_broadcast(&gr->gr_tex_load_cond);
@@ -231,7 +246,7 @@ loader_thread(void *aux)
   while((glt = loader_get_work(la)) != NULL) {
 
     TAILQ_REMOVE(glt->glt_q, glt, glt_work_link);
-    glt->glt_state = GLT_STATE_LOADING;
+    glt_set_state(glt, GLT_STATE_LOADING);
 
     if(glt->glt_refcnt > 1) {
       rstr_t *url = rstr_dup(glt->glt_url);
@@ -293,11 +308,14 @@ loader_thread(void *aux)
         if(gconf.enable_image_debug)
           TRACE(TRACE_DEBUG, "GLW", "Load of %s was aborted", rstr_get(url));
 
-	glt->glt_state = GLT_STATE_INACTIVE;
+        glt_set_state(glt, GLT_STATE_INACTIVE);
       } else if(img == NULL) {
 
 	if(glt->glt_q == &gr->gr_tex_load_queue[LQ_TENTATIVE]) {
-	  glt_enqueue(gr, glt, LQ_OTHER);
+
+          if(glt->glt_state == GLT_STATE_LOADING)
+            glt_enqueue(gr, glt, LQ_OTHER);
+
 	} else if(glt->glt_q == &gr->gr_tex_load_queue[LQ_REFRESH]) {
 
           if(gconf.enable_image_debug)
@@ -305,7 +323,7 @@ loader_thread(void *aux)
                   "Unable to load image %s -- %s -- using cached copy",
                   rstr_get(url), errbuf);
 
-	  glt->glt_state = GLT_STATE_VALID;
+          glt_set_state(glt, GLT_STATE_VALID);
 	} else {
 	  // if glt->glt_url is NULL we have aborted so don't ERR log
 
@@ -319,7 +337,7 @@ loader_thread(void *aux)
                     rstr_get(url));
           }
 
-	  glt->glt_state = GLT_STATE_ERROR;
+          glt_set_state(glt, GLT_STATE_ERROR);
 	  LIST_REMOVE(glt, glt_flush_link);
           glw_need_refresh(gr, 0);
 	}
@@ -332,7 +350,7 @@ loader_thread(void *aux)
 	     cache_control == 1) {
 	    glt_enqueue(gr, glt, LQ_REFRESH);
 	  } else {
-	    glt->glt_state = GLT_STATE_VALID;
+            glt_set_state(glt, GLT_STATE_VALID);
 	  }
 
 	  if(img != NOT_MODIFIED) {
@@ -437,42 +455,42 @@ glw_tex_fini(glw_root_t *gr)
 void
 glw_tex_flush_all(glw_root_t *gr)
 {
-  glw_loadable_texture_t *glt;
-
-  LIST_FOREACH(glt, &gr->gr_tex_list, glt_global_link) {
+  glw_loadable_texture_t *glt, *next;
+  for(glt = LIST_FIRST(&gr->gr_tex_list); glt != NULL; glt = next) {
+    next = LIST_NEXT(glt, glt_global_link);
     switch(glt->glt_state) {
 
     case GLT_STATE_INACTIVE:
-      break;
+      continue;
 
     case GLT_STATE_STASHED:
       glw_tex_unstash(gr, glt);
-
-      if(0)
-    case GLT_STATE_VALID:
-        LIST_REMOVE(glt, glt_flush_link);
       glw_tex_backend_free_render_resources(gr, glt);
-      glt->glt_state = GLT_STATE_INACTIVE;
+      break;
+
+    case GLT_STATE_VALID:
+      LIST_REMOVE(glt, glt_flush_link);
+      glw_tex_backend_free_render_resources(gr, glt);
       break;
 
     case GLT_STATE_QUEUED:
       LIST_REMOVE(glt, glt_flush_link);
       TAILQ_REMOVE(glt->glt_q, glt, glt_work_link);
-      glt->glt_state = GLT_STATE_INACTIVE;
+      glt_set_state(glt, GLT_STATE_INACTIVE);
       glw_tex_deref(gr, glt);
-      break;
+      continue;
 
     case GLT_STATE_LOADING:
       LIST_REMOVE(glt, glt_flush_link);
-      glt->glt_state = GLT_STATE_INACTIVE;
       break;
 
     case GLT_STATE_ERROR:
     case GLT_STATE_LOAD_ABORT:
-      glt->glt_state = GLT_STATE_INACTIVE;
       break;
     }
+    glt_set_state(glt, GLT_STATE_INACTIVE);
   }
+
 }
 
 
@@ -569,7 +587,7 @@ glw_tex_create(glw_root_t *gr, rstr_t *filename, int flags, int xs, int ys,
     glt->glt_cancellable = cancellable_create();
     glt->glt_url = rstr_dup(filename);
     LIST_INSERT_HEAD(&gr->gr_tex_list, glt, glt_global_link);
-    glt->glt_state = GLT_STATE_INACTIVE;
+    glt_set_state(glt, GLT_STATE_INACTIVE);
     glt->glt_flags = flags;
     glt->glt_req_xs = xs;
     glt->glt_req_ys = ys;
@@ -618,7 +636,7 @@ glw_tex_layout(glw_root_t *gr, glw_loadable_texture_t *glt)
 
   case GLT_STATE_STASHED:
     glw_tex_unstash(gr, glt);
-    glt->glt_state = GLT_STATE_VALID;
+    glt_set_state(glt, GLT_STATE_VALID);
     break;
 
   case GLT_STATE_VALID:
