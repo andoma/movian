@@ -3279,10 +3279,11 @@ glw_need_refresh0(glw_root_t *gr, int how, const char *file, int line)
     return;
 
   gr->gr_need_refresh |= flags;
-  printf("%s%srefresh requested by %s:%d\n",
-         flags & GLW_REFRESH_FLAG_LAYOUT ? "layout " : "",
-         flags & GLW_REFRESH_FLAG_RENDER ? "render " : "",
-         file, line);
+  tracelog(TRACE_NO_PROP, TRACE_DEBUG,
+           "GLW", "%s%srefresh requested by %s:%d",
+           flags & GLW_REFRESH_FLAG_LAYOUT ? "layout " : "",
+           flags & GLW_REFRESH_FLAG_RENDER ? "render " : "",
+           file, line);
 }
 #endif
 
