@@ -35,6 +35,7 @@ widget(container_z, {
   });
 
   widget(loader, {
+    hidden: iir($nav.currentpage.model.loading, 8) < 0.001;
     zoffset: -999;
     alpha: iir($nav.currentpage.model.loading, 8);
     source: selectedElement(vectorize($core.glw.views.standard.loading))
