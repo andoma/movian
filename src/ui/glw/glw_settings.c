@@ -115,43 +115,51 @@ bing_images(int *cleared)
   char url[1024];
   char errbuf[256];
   buf_t *b;
+  int idx = 0;
+  while(1) {
 
-  b = fa_load("http://www.bing.com/HPImageArchive.aspx?format=js&idx=22&n=2",
-               FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
-               FA_LOAD_FLAGS(FA_DISABLE_AUTH | FA_COMPRESSION | FA_NO_COOKIES),
-               NULL);
+    snprintf(url, sizeof(url),
+             "http://www.bing.com/HPImageArchive.aspx?format=js&idx=%d&n=8",
+             idx);
 
-  if(b == NULL) {
-    TRACE(TRACE_ERROR, "Screensaver", "Unable to load images -- %s",
-          errbuf);
-    return;
-  }
-
-  htsmsg_t *doc = htsmsg_json_deserialize(buf_cstr(b));
-  buf_release(b);
-
-  if(doc == NULL) {
-    TRACE(TRACE_ERROR, "STOS", "Malformed JSON");
-    return;
-  }
-
-  htsmsg_t *list = htsmsg_get_list(doc, "images");
-  if(list != NULL) {
-    htsmsg_field_t *f;
-    HTSMSG_FOREACH(f, list) {
-      htsmsg_t *m = htsmsg_get_map_by_field(f);
-      if(m == NULL)
-        continue;
-
-      const char *s = htsmsg_get_str(m, "url");
-      if(s == NULL)
-        continue;
-      snprintf(url, sizeof(url), "%s%s", "http://www.bing.com", s);
-      screensaver_add_item(url, htsmsg_get_str(m, "copyright"), cleared);
+    b = fa_load(url,
+                FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
+                FA_LOAD_FLAGS(FA_DISABLE_AUTH | FA_COMPRESSION | FA_NO_COOKIES),
+                NULL);
+    idx += 8;
+    if(b == NULL) {
+      TRACE(TRACE_ERROR, "Screensaver", "Unable to load images -- %s",
+            errbuf);
+      return;
     }
-  }
 
-  htsmsg_release(doc);
+    htsmsg_t *doc = htsmsg_json_deserialize(buf_cstr(b));
+    buf_release(b);
+
+    if(doc == NULL)
+      break;
+
+    int got_something = 0;
+    htsmsg_t *list = htsmsg_get_list(doc, "images");
+    if(list != NULL) {
+      htsmsg_field_t *f;
+      HTSMSG_FOREACH(f, list) {
+        htsmsg_t *m = htsmsg_get_map_by_field(f);
+        if(m == NULL)
+          continue;
+
+        const char *s = htsmsg_get_str(m, "url");
+        if(s == NULL)
+          continue;
+        snprintf(url, sizeof(url), "%s%s", "http://www.bing.com", s);
+        screensaver_add_item(url, htsmsg_get_str(m, "copyright"), cleared);
+        got_something = 1;
+      }
+    }
+    htsmsg_release(doc);
+    if(!got_something)
+      break;
+  }
 }
 
 /**
