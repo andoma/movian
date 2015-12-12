@@ -160,7 +160,7 @@ glw_scroll_layout(glw_scroll_control_t *gsc, glw_t *w, int height)
     }
   }
 
-  gsc->rounded_pos = rintf(gsc->filtered_pos);
+  gsc->rounded_pos = rintf(gsc->filtered_pos * 5.0f) / 5.0f;
 }
 
 

@@ -24,7 +24,7 @@ typedef struct glw_scroll_control {
 
   int target_pos;      // This is where we want to go
   float filtered_pos;  // This is weher we are
-  int rounded_pos;     // Position rounded to pixels
+  float rounded_pos;     // Position rounded to pixels
 
   int total_size;
   int page_size;
