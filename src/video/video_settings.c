@@ -78,6 +78,14 @@ video_settings_init(void)
                  NULL);
 #endif
 
+#ifdef __ANDROID__
+  setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Hardware accelerated decoding")),
+                 SETTING_HTSMSG("videoaccel", store, "videoplayback"),
+                 SETTING_WRITE_BOOL(&video_settings.android_video_accel),
+                 NULL);
+#endif
+
   video_settings.vzoom_setting =
     setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,
                    SETTING_TITLE(_p("Video zoom")),

@@ -25,6 +25,7 @@
 
 #include "main.h"
 #include "video/video_decoder.h"
+#include "video/video_settings.h"
 #include "video/h264_annexb.h"
 
 extern JavaVM *JVM;
@@ -71,6 +72,8 @@ typedef struct android_video_codec {
   int avc_out_fmt;
 
   h264_annexb_ctx_t avc_annexb;
+
+  const char *avc_nicename;
 
 } android_video_codec_t;
 
@@ -123,7 +126,8 @@ getInteger(JNIEnv *env, jobject obj, const char *name)
  *
  */
 static void
-update_output_format(JNIEnv *env, android_video_codec_t *avc)
+update_output_format(JNIEnv *env, android_video_codec_t *avc,
+                     media_pipe_t *mp)
 {
   jmethodID mid;
 
@@ -139,6 +143,12 @@ update_output_format(JNIEnv *env, android_video_codec_t *avc)
   TRACE(TRACE_DEBUG, "VIDEO", "Output format changed to %d x %d [%d] colfmt:%d",
         avc->avc_out_width, avc->avc_out_height,
         avc->avc_out_stride, avc->avc_out_fmt);
+
+  char codec_info[64];
+  snprintf(codec_info, sizeof(codec_info), "%s %dx%d (Accelerated)",
+           avc->avc_nicename,
+           avc->avc_out_width, avc->avc_out_height);
+  prop_set_string(mp->mp_video.mq_prop_codec, codec_info);
 }
 
 
@@ -221,7 +231,7 @@ get_output(JNIEnv *env, android_video_codec_t *avc, int loop,
                              avc->avc_releaseOutputBuffer,
                              idx, 1);
     } else if(idx == -2) {
-      update_output_format(env, avc);
+      update_output_format(env, avc, vd->vd_mp);
       continue;
     } else if(idx == -3) {
       avc_get_output_buffers(env, avc);
@@ -433,25 +443,35 @@ android_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   jclass class;
   jmethodID mid;
   const char *type = NULL;
-
-  return 1;
+  const char *nicename = NULL;
+  if(!video_settings.android_video_accel)
+    return 1;
 
   switch(mc->codec_id) {
 
   case AV_CODEC_ID_H264:
     type = "video/avc";
+    nicename = "h264";
+    break;
+
+  case AV_CODEC_ID_HEVC:
+    type = "video/hevc";
+    nicename = "h265";
     break;
 
   case AV_CODEC_ID_H263:
     type = "video/3gpp";
+    nicename = "h263";
     break;
 
   case AV_CODEC_ID_MPEG4:
     type = "video/mp4v-es";
+    nicename = "mpeg4";
     break;
 
   case AV_CODEC_ID_VP8:
     type = "video/x-vnd.on2.vp8";
+    nicename = "vp8";
     break;
 
   default:
@@ -507,6 +527,7 @@ android_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
     avc->avc_height = 720;
   }
 
+  avc->avc_nicename = nicename;
   avc->avc_direct = 1;
   mc->opaque = avc;
   mc->close  = android_codec_close;
