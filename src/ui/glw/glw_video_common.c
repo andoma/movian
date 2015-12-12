@@ -121,6 +121,7 @@ glw_video_widget_event(glw_t *w, event_t *e)
   if(event_is_action(e, ACTION_PLAYPAUSE) ||
      event_is_action(e, ACTION_PLAY) ||
      event_is_action(e, ACTION_PAUSE) ||
+     event_is_action(e, ACTION_STOP) ||
      event_is_action(e, ACTION_SKIP_FORWARD) ||
      event_is_action(e, ACTION_SKIP_BACKWARD)) {
     mp_enqueue_event(mp, e);
