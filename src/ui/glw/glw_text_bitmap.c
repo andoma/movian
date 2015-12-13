@@ -39,6 +39,8 @@
 #include "image/image.h"
 #include "fileaccess/fa_filepicker.h"
 
+static glw_class_t glw_text;
+
 /**
  *
  */
@@ -583,6 +585,7 @@ static void
 gtb_unbind(glw_text_bitmap_t *gtb)
 {
   prop_unsubscribe(gtb->gtb_sub);
+  gtb->gtb_sub = NULL;
 
   if(gtb->gtb_p != NULL) {
     prop_ref_dec(gtb->gtb_p);
@@ -841,7 +844,7 @@ glw_text_bitmap_ctor(glw_t *w)
   glw_root_t *gr = w->glw_root;
 
   w->glw_flags2 |= GLW2_FOCUS_ON_CLICK;
-  gtb->gtb_edit_ptr = -1;
+  gtb->gtb_edit_ptr = 0;
   gtb->gtb_size_scale = 1.0;
   gtb->gtb_color.r = 1.0;
   gtb->gtb_color.g = 1.0;
@@ -1164,7 +1167,7 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
   if(gtb->gtb_flags & GTB_OUTLINE)
     flags |= TR_RENDER_OUTLINE;
 
-  if(gtb->gtb_edit_ptr >= 0)
+  if(gtb->w.glw_class == &glw_text)
     flags |= TR_RENDER_CHARACTER_POS;
 
   tr_align = TR_ALIGN_JUSTIFIED;

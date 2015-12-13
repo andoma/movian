@@ -358,6 +358,9 @@ osk_open(glw_root_t *gr, const char *title, const char *input, glw_t *w,
   if(title == NULL)
     title = "";
 
+  if(input == NULL)
+    input = "";
+
   void *title16;
   void *input16;
 
