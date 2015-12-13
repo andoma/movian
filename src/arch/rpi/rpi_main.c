@@ -327,6 +327,7 @@ backdrop_loader(void *aux)
   }
   if(backdrop_current)
     backdrop_release(backdrop_current);
+  backdrop_current = NULL;
   glw_unlock(gr);
   return NULL;
 }
