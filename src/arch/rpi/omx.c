@@ -286,7 +286,7 @@ omx_alloc_buffers(omx_component_t *oc, int port)
 
   omxchk(OMX_GetParameter(oc->oc_handle, OMX_IndexParamPortDefinition, &portdef));
   if(portdef.bEnabled != OMX_FALSE || portdef.nBufferCountActual == 0 || portdef.nBufferSize == 0)
-    exit(2);
+    exit(3);
 
   omxdbg("Allocating buffers for %s:%d\n", oc->oc_name, port);
   omxdbg("  buffer count = %d\n", (int)portdef.nBufferCountActual);

@@ -1543,3 +1543,20 @@ init_dev_settings(void)
                "touchevents", &gconf.enable_touch_debug);
 #endif
 }
+
+
+prop_t *
+setting_get_dir(const char *url)
+{
+  if(!strcmp(url, "settings:tv")) {
+    static prop_t *tvsettings;
+    if(tvsettings == NULL) {
+      tvsettings = settings_add_dir(NULL, _p("TV Control"),
+                                    "display", NULL,
+                                    _p("Configure communications with your TV"),
+                                    "settings:tv");
+    }
+    return tvsettings;
+  }
+  return NULL;
+}

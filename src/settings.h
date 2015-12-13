@@ -160,3 +160,5 @@ void setting_group_push_to_ancestor(struct setting_list *list,
                                     const char *ancestor);
 
 void setting_group_reset(struct setting_list *list);
+
+prop_t *setting_get_dir(const char *url);

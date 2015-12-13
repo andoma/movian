@@ -198,15 +198,7 @@ libcec_init_thread(void *aux)
 {
   htsmsg_t *s = htsmsg_store_load("cec") ?: htsmsg_create_map();
 
-  prop_t *set;
-
-  set =
-    settings_add_dir(NULL, _p("TV Control"),
-		     "display", NULL,
-		     _p("Configure communications with your TV"),
-		     "settings:cec");
-
-
+  prop_t *set = setting_get_dir("settings:tv");
 
   libcec_clear_configuration(&cec_config);
   cec_config.callbacks = &g_callbacks;
@@ -298,7 +290,7 @@ libcec_fini(void)
 
 
 
-INITME(INIT_GROUP_IPC, libcec_init, libcec_fini, 0);
+INITME(INIT_GROUP_IPC, libcec_init, libcec_fini, 10);
 
 
 

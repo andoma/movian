@@ -31,3 +31,5 @@ extern int cec_we_are_not_active;
 void rpi_cec_init(void);
 
 int rpi_is_codec_enabled(const char *id);
+
+int rpi_set_display_framerate(float fps, int width, int height);

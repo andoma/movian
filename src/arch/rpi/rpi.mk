@@ -6,6 +6,7 @@ SRCS += src/arch/rpi/rpi_main.c \
 	src/arch/rpi/rpi_audio.c \
 	src/arch/rpi/rpi_video.c \
 	src/arch/rpi/rpi_pixmap.c \
+	src/arch/rpi/rpi_tv.c \
 	src/ui/glw/glw_video_rpi.c \
 	src/prop/prop_posix.c \
 	src/prop/prop_glib_courier.c \

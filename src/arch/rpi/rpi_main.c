@@ -61,6 +61,8 @@ DISPMANX_DISPLAY_HANDLE_T dispman_display;
 
 int display_status = DISPLAY_STATUS_ON;
 int cec_we_are_not_active;
+int restart_ui;
+
 extern int auto_ui_shutdown;
 static int runmode;
 static int ctrlc;
@@ -548,6 +550,7 @@ ui_run(glw_root_t *gr, EGLDisplay dpy)
   // get an appropriate EGL frame buffer configuration
   result = eglBindAPI(EGL_OPENGL_ES_API);
   if(result == EGL_FALSE) {
+    TRACE(TRACE_ERROR, "RPI", "Unable to bind EGL API");
     exit(2);
   }
 
@@ -556,12 +559,14 @@ ui_run(glw_root_t *gr, EGLDisplay dpy)
 			     context_attributes);
 
   if(context == EGL_NO_CONTEXT) {
+    TRACE(TRACE_ERROR, "RPI", "Unable to create context");
     exit(2);
   }
 
   // create an EGL window surface
   success = graphics_get_display_size(0, &screen_width, &screen_height);
   if(success < 0) {
+    TRACE(TRACE_ERROR, "RPI", "Unable to get display size");
     exit(2);
   }
 
@@ -592,16 +597,18 @@ ui_run(glw_root_t *gr, EGLDisplay dpy)
   nw.width = screen_width;
   nw.height = screen_height;
   vc_dispmanx_update_submit_sync(u);
-      
 
   surface = eglCreateWindowSurface(dpy, config, &nw, NULL);
   if(surface == EGL_NO_SURFACE) {
+    TRACE(TRACE_ERROR, "EGL", "Unable to create %d x %d window surface -- 0x%x",
+          screen_width, screen_height, eglGetError());
     exit(2);
   }
 
   // connect the context to the surface
   result = eglMakeCurrent(dpy, surface, surface, context);
   if(result == EGL_FALSE) {
+    TRACE(TRACE_ERROR, "RPI", "Unable to make surface current context");
     exit(2);
   }
 
@@ -623,6 +630,11 @@ ui_run(glw_root_t *gr, EGLDisplay dpy)
 			     THREAD_PRIO_UI_WORKER_LOW);
 
   while(ui_should_run()) {
+
+    if(restart_ui) {
+      restart_ui = 0;
+      break;
+    }
 
     glw_lock(gr);
 
@@ -657,11 +669,12 @@ ui_run(glw_root_t *gr, EGLDisplay dpy)
       usleep(16666);
     }
   }
+  glw_lock(gr);
+
   glw_reap(gr);
   glw_reap(gr);
   glw_flush(gr);
 
-  glw_lock(gr);
   backdrop_loader_run = 0;
   hts_cond_signal(&backdrop_loader_cond);
   glw_unlock(gr);
@@ -684,13 +697,16 @@ static void
 rpi_mainloop(void)
 {
   EGLDisplay dpy = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-  if(dpy == EGL_NO_DISPLAY)
+  if(dpy == EGL_NO_DISPLAY) {
+    TRACE(TRACE_ERROR, "RPI", "Unable to get display");
     exit(2);
-  
+  }
   // initialize the EGL display connection
   int result = eglInitialize(dpy, NULL, NULL);
-  if(result == EGL_FALSE)
+  if(result == EGL_FALSE) {
+    TRACE(TRACE_ERROR, "RPI", "Unable initialize EGL");
     exit(2);
+  }
 
   dispman_display = vc_dispmanx_display_open(0);
 
@@ -702,6 +718,15 @@ rpi_mainloop(void)
     if(ui_should_run()) {
       swrefresh();
       ui_run(gr, dpy);
+      vc_dispmanx_display_close(dispman_display);
+
+      eglTerminate(dpy);
+      int result = eglInitialize(dpy, NULL, NULL);
+      if(result == EGL_FALSE) {
+        TRACE(TRACE_ERROR, "RPI", "Unable initialize EGL");
+        exit(2);
+      }
+      dispman_display = vc_dispmanx_display_open(0);
     } else {
       glw_lock(gr);
       glw_idle(gr);
@@ -767,8 +792,44 @@ tv_update_state(void)
 {
   TV_DISPLAY_STATE_T state = {};
   if(vc_tv_get_display_state(&state)) {
-    printf("failed to get state\n");
+    TRACE(TRACE_DEBUG, "TV", "Failed to get TV state");
     return;
+  }
+  TRACE(TRACE_DEBUG, "TV", "Statemask: 0x%08x", state.state);
+
+  int hdmi_live = (state.state & 0xf) == 0xa;
+
+  if(!hdmi_live) {
+    TRACE(TRACE_DEBUG, "TV", "HDMI not active");
+    return;
+  }
+
+  TRACE(TRACE_DEBUG, "TV", "HDMI current output: %dx%d @ %dfps",
+        state.display.hdmi.width,
+        state.display.hdmi.height,
+        state.display.hdmi.frame_rate);
+
+  HDMI_RES_GROUP_T prefer_group;
+  uint32_t prefer_mode;
+
+  int num_modes =
+    vc_tv_hdmi_get_supported_modes_new(HDMI_RES_GROUP_CEA, NULL, 0,
+                                       &prefer_group, &prefer_mode);
+
+  TRACE(TRACE_DEBUG, "TV", "number of modes: %d", num_modes);
+
+  TV_SUPPORTED_MODE_NEW_T *modes = alloca(sizeof(TV_SUPPORTED_MODE_NEW_T) *
+                                          num_modes);
+
+  num_modes =
+    vc_tv_hdmi_get_supported_modes_new(HDMI_RES_GROUP_CEA, modes, num_modes,
+                                       &prefer_group, &prefer_mode);
+
+  for(int i = 0; i < num_modes; i++) {
+    TV_SUPPORTED_MODE_NEW_T *m = modes + i;
+
+    TRACE(TRACE_DEBUG, "TV", "Supported mode %dx%d @ %d FPS",
+          m->width, m->height, m->frame_rate);
   }
 }
 
@@ -846,7 +907,7 @@ main(int argc, char **argv)
 
   bcm_host_init();
 
-
+  rpi_set_display_framerate(60, 0, 0);
 
   vcos_set_vlog_impl(my_vcos_log);
 
@@ -875,7 +936,7 @@ main(int argc, char **argv)
     char buf[512];
     
     snprintf(buf, sizeof(buf),
-	     "Showtime runs without realtime scheduling on your Raspberry Pi\n"
+	     APPNAMEUSER " runs without realtime scheduling on your Raspberry Pi\n"
 	     "This may impact performance during video playback.\n"
 	     "You have been warned! Please set SYS_CAP_NICE:\n"
 	     "  sudo setcap 'cap_sys_nice+ep %s'", gconf.binary);
