@@ -174,4 +174,4 @@ lirc_open(void)
 }
 
 
-INITME(INIT_GROUP_IPC, lirc_open, NULL);
+INITME(INIT_GROUP_IPC, lirc_open, NULL, 0);

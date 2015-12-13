@@ -614,4 +614,4 @@ net_refresh_network_status(void)
   prop_destroy_marked_childs(interfaces);
 }
 
-INITME(INIT_GROUP_NET, net_refresh_network_status, NULL);
+INITME(INIT_GROUP_NET, net_refresh_network_status, NULL, 0);

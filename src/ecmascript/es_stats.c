@@ -107,6 +107,6 @@ ecmascript_stats_init(void)
   http_path_add("/api/ecmascript/stats", NULL, dumpstats, 1);
 }
 
-INITME(INIT_GROUP_API, ecmascript_stats_init, NULL);
+INITME(INIT_GROUP_API, ecmascript_stats_init, NULL, 0);
 
 #endif // ENABLE_HTTPSERVER

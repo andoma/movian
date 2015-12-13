@@ -928,7 +928,7 @@ ecmascript_fini(void)
 }
 
 
-INITME(INIT_GROUP_API, ecmascript_init, ecmascript_fini);
+INITME(INIT_GROUP_API, ecmascript_init, ecmascript_fini, 0);
 
 /**
  *

@@ -69,7 +69,7 @@
 
 #include "fileaccess/fileaccess.h"
 
-inithelper_t *inithelpers;
+struct inithelper_list inithelpers;
 
 /**
  *
@@ -154,6 +154,17 @@ init_global_info(void)
   prop_set(s, "copyright", PROP_SET_STRING, "© 2006 - 2015 Lonelycoder AB");
 }
 
+
+/**
+ *
+ */
+int
+ihcmp(const inithelper_t *a, const inithelper_t *b)
+{
+  return a->prio - b->prio;
+}
+
+
 /**
  *
  */
@@ -161,7 +172,7 @@ void
 init_group(int group)
 {
   const inithelper_t *ih;
-  for(ih = inithelpers; ih != NULL; ih = ih->next) {
+  LIST_FOREACH(ih, &inithelpers, link) {
     if(ih->group == group)
       ih->init();
   }
@@ -175,7 +186,7 @@ void
 fini_group(int group)
 {
   const inithelper_t *ih;
-  for(ih = inithelpers; ih != NULL; ih = ih->next) {
+  LIST_FOREACH(ih, &inithelpers, link) {
     if(ih->group == group && ih->fini != NULL)
       ih->fini();
   }

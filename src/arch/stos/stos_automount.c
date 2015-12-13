@@ -471,4 +471,4 @@ stos_automount_stop(void)
   unmount_all("/stos/media");
 }
 
-INITME(INIT_GROUP_IPC, stos_automount_start, stos_automount_stop);
+INITME(INIT_GROUP_IPC, stos_automount_start, stos_automount_stop, 0);

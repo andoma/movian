@@ -277,4 +277,4 @@ prop_http_init(void)
 #endif
 }
 
-INITME(INIT_GROUP_API, prop_http_init, NULL);
+INITME(INIT_GROUP_API, prop_http_init, NULL, 0);

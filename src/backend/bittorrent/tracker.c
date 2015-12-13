@@ -243,4 +243,4 @@ tracker_init(void)
   tracker_new_torrent_signal = asyncio_add_worker(tracker_new_torrent);
 }
 
-INITME(INIT_GROUP_ASYNCIO, tracker_init, NULL);
+INITME(INIT_GROUP_ASYNCIO, tracker_init, NULL, 0);

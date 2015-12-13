@@ -199,4 +199,4 @@ torrent_stats_init(void)
   http_path_add("/api/torrents", NULL, torrent_dump_http, 1);
 }
 
-INITME(INIT_GROUP_API, torrent_stats_init, NULL);
+INITME(INIT_GROUP_API, torrent_stats_init, NULL, 0);

@@ -364,7 +364,7 @@ nmb_resolver_init(void)
 }
 
 
-INITME(INIT_GROUP_NET, nmb_resolver_init, NULL);
+INITME(INIT_GROUP_NET, nmb_resolver_init, NULL, 0);
 
 /**
  *
@@ -380,4 +380,4 @@ nmb_init(void)
   nmb_send_msb_query(NULL);
 }
 
-INITME(INIT_GROUP_ASYNCIO, nmb_init, NULL);
+INITME(INIT_GROUP_ASYNCIO, nmb_init, NULL, 0);

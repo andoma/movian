@@ -114,6 +114,6 @@ routesocket_init(void)
   asyncio_add_fd(netlink_fd, 0x1, routesocket_input, NULL, "netlink");
 }
 
-INITME(INIT_GROUP_ASYNCIO, routesocket_init, NULL);
+INITME(INIT_GROUP_ASYNCIO, routesocket_init, NULL, 0);
 
 #endif

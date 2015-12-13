@@ -206,4 +206,4 @@ webpopup_init(void)
   shutdown_hook_add(web_shutdown, NULL, 2);
 }
 
-INITME(INIT_GROUP_API, webpopup_init, NULL);
+INITME(INIT_GROUP_API, webpopup_init, NULL, 0);

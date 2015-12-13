@@ -696,4 +696,4 @@ httpcontrol_init(void)
     http_path_add("/api/restart", NULL, hc_restart, 1);
 }
 
-INITME(INIT_GROUP_API, httpcontrol_init, NULL);
+INITME(INIT_GROUP_API, httpcontrol_init, NULL, 0);

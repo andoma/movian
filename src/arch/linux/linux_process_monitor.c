@@ -181,4 +181,4 @@ linux_process_monitor_init(void)
   timercb(NULL, NULL);
 }
 
-INITME(INIT_GROUP_API, linux_process_monitor_init, NULL);
+INITME(INIT_GROUP_API, linux_process_monitor_init, NULL, 0);

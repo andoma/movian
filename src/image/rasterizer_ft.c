@@ -470,4 +470,4 @@ rasterizer_ft_init(void)
   }
 }
 
-INITME(INIT_GROUP_GRAPHICS, rasterizer_ft_init, NULL);
+INITME(INIT_GROUP_GRAPHICS, rasterizer_ft_init, NULL, 0);

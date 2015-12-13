@@ -414,7 +414,7 @@ fontstash_init(void)
   fa_dir_free(fd);
 }
 
-INITME(INIT_GROUP_GRAPHICS, fontstash_init, NULL);
+INITME(INIT_GROUP_GRAPHICS, fontstash_init, NULL, 0);
 
 
 /**

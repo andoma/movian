@@ -133,5 +133,5 @@ asyncio_http_init(void)
 }
 
 
-INITME(INIT_GROUP_ASYNCIO, asyncio_http_init, NULL);
+INITME(INIT_GROUP_ASYNCIO, asyncio_http_init, NULL, 0);
 

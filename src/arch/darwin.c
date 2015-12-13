@@ -185,4 +185,4 @@ darwin_init_cpu_monitor(void)
   callout_arm(&timer, timercb, NULL, 1);
 }
 
-INITME(INIT_GROUP_API, darwin_init_cpu_monitor, NULL);
+INITME(INIT_GROUP_API, darwin_init_cpu_monitor, NULL, 0);

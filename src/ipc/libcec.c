@@ -298,7 +298,7 @@ libcec_fini(void)
 
 
 
-INITME(INIT_GROUP_IPC, libcec_init, libcec_fini);
+INITME(INIT_GROUP_IPC, libcec_init, libcec_fini, 0);
 
 
 

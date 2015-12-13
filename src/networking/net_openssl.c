@@ -147,4 +147,4 @@ net_ssl_init(void)
 }
 
 
-INITME(INIT_GROUP_NET, net_ssl_init, NULL);
+INITME(INIT_GROUP_NET, net_ssl_init, NULL, 0);

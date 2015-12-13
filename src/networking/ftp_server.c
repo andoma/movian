@@ -1062,4 +1062,4 @@ ftp_server_init(void)
                  NULL);
 }
 
-INITME(INIT_GROUP_ASYNCIO, ftp_server_init, NULL);
+INITME(INIT_GROUP_ASYNCIO, ftp_server_init, NULL, 0);

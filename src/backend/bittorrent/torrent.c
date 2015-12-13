@@ -1654,7 +1654,7 @@ torrent_early_init(void)
   hts_cond_init(&torrent_metainfo_available_cond, &bittorrent_mutex);
 }
 
-INITME(INIT_GROUP_NET, torrent_early_init, NULL);
+INITME(INIT_GROUP_NET, torrent_early_init, NULL, 0);
 
 
 /**
@@ -1669,4 +1669,4 @@ torrent_asyncio_init(void)
 
 }
 
-INITME(INIT_GROUP_ASYNCIO, torrent_asyncio_init, NULL);
+INITME(INIT_GROUP_ASYNCIO, torrent_asyncio_init, NULL, 0);

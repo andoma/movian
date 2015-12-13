@@ -291,4 +291,4 @@ screenshot_init(void)
   http_path_add("/api/screenshot", NULL, hc_screenshot, 0);
 }
 
-INITME(INIT_GROUP_API, screenshot_init, NULL);
+INITME(INIT_GROUP_API, screenshot_init, NULL, 0);

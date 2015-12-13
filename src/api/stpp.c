@@ -998,7 +998,7 @@ ws_init(void)
 }
 
 
-INITME(INIT_GROUP_API, ws_init, NULL);
+INITME(INIT_GROUP_API, ws_init, NULL, 0);
 
 
 /**

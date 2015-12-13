@@ -26,6 +26,7 @@
 
 #include "arch/threads.h"
 #include "misc/rstr.h"
+#include "misc/queue.h"
 
 #include "compiler.h"
 
@@ -326,8 +327,13 @@ extern const char *htsversion;
 extern const char *htsversion_full;
 
 
+LIST_HEAD(inithelper_list, inithelper) inithelper;
+
 typedef struct inithelper {
-  struct inithelper *next;
+  LIST_ENTRY(inithelper) link;
+  void (*init)(void);
+  void (*fini)(void);
+  int prio;
   enum {
     INIT_GROUP_NET,
     INIT_GROUP_API,
@@ -335,23 +341,25 @@ typedef struct inithelper {
     INIT_GROUP_ASYNCIO,
     INIT_GROUP_GRAPHICS,
   } group;
-  void (*init)(void);
-  void (*fini)(void);
 } inithelper_t;
 
-extern inithelper_t *inithelpers;
+extern struct inithelper_list inithelpers;
 
-#define INITME(group_, init_, fini_)                               \
+extern int ihcmp(const inithelper_t *a, const inithelper_t *b);
+
+
+// Lower prio == init earlier
+#define INITME(group_, init_, fini_, prio_)                        \
   static inithelper_t HTS_JOIN(inithelper, __LINE__) = {	   \
     .group = group_,						   \
     .init = init_,                                                 \
-    .fini = fini_                                                  \
+    .fini = fini_,                                                 \
+    .prio = prio_,                                                 \
   };								   \
   INITIALIZER(HTS_JOIN(inithelperctor, __LINE__))                  \
   {								   \
     inithelper_t *ih = &HTS_JOIN(inithelper, __LINE__);		   \
-    ih->next = inithelpers;					   \
-    inithelpers = ih;						   \
+    LIST_INSERT_SORTED(&inithelpers, ih, link, ihcmp, inithelper_t);\
   }
 
 void init_group(int group);

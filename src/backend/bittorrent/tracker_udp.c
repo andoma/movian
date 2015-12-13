@@ -357,4 +357,4 @@ tracker_udp_init(void)
 				    0, tracker_udp_input, NULL, 0, 0);
 }
 
-INITME(INIT_GROUP_ASYNCIO, tracker_udp_init, NULL);
+INITME(INIT_GROUP_ASYNCIO, tracker_udp_init, NULL, 0);
