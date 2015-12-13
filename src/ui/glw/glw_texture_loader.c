@@ -37,14 +37,15 @@ static void
 glt_set_state0(glw_loadable_texture_t *glt, int state,
                const char *file, int line)
 {
+  printf("%p goes from %d to %d by %s:%d\n", glt, glt->glt_state, state,
+         file, line);
   glt->glt_state = state;
 }
 
 #define glt_set_state(a, b) glt_set_state0(a, b, __FILE__, __LINE__)
-#endif
-
+#else
 #define glt_set_state(a, b) (a)->glt_state = b
-
+#endif
 
 /**
  *
@@ -484,8 +485,10 @@ glw_tex_flush_all(glw_root_t *gr)
       LIST_REMOVE(glt, glt_flush_link);
       break;
 
-    case GLT_STATE_ERROR:
     case GLT_STATE_LOAD_ABORT:
+      continue;
+
+    case GLT_STATE_ERROR:
       break;
     }
     glt_set_state(glt, GLT_STATE_INACTIVE);
