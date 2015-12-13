@@ -299,27 +299,27 @@ traphandler(int sig, siginfo_t *si, void *UC)
   TRAPMSG("Loaded libraries: %s ", libs);
 
 #if defined(__arm__) 
-  TRAPMSG("   trap_no = %08lx", uc->uc_mcontext.trap_no);
-  TRAPMSG("error_code = %08lx", uc->uc_mcontext.error_code);
-  TRAPMSG("   oldmask = %08lx", uc->uc_mcontext.oldmask);
-  TRAPMSG("        R0 = %08lx", uc->uc_mcontext.arm_r0);
-  TRAPMSG("        R1 = %08lx", uc->uc_mcontext.arm_r1);
-  TRAPMSG("        R2 = %08lx", uc->uc_mcontext.arm_r2);
-  TRAPMSG("        R3 = %08lx", uc->uc_mcontext.arm_r3);
-  TRAPMSG("        R4 = %08lx", uc->uc_mcontext.arm_r4);
-  TRAPMSG("        R5 = %08lx", uc->uc_mcontext.arm_r5);
-  TRAPMSG("        R6 = %08lx", uc->uc_mcontext.arm_r6);
-  TRAPMSG("        R7 = %08lx", uc->uc_mcontext.arm_r7);
-  TRAPMSG("        R8 = %08lx", uc->uc_mcontext.arm_r8);
-  TRAPMSG("        R9 = %08lx", uc->uc_mcontext.arm_r9);
-  TRAPMSG("       R10 = %08lx", uc->uc_mcontext.arm_r10);
-  TRAPMSG("        FP = %08lx", uc->uc_mcontext.arm_fp);
-  TRAPMSG("        IP = %08lx", uc->uc_mcontext.arm_ip);
-  TRAPMSG("        SP = %08lx", uc->uc_mcontext.arm_sp);
-  TRAPMSG("        LR = %08lx", uc->uc_mcontext.arm_lr);
-  TRAPMSG("        PC = %08lx", uc->uc_mcontext.arm_pc);
-  TRAPMSG("      CPSR = %08lx", uc->uc_mcontext.arm_cpsr);
-  TRAPMSG("fault_addr = %08lx", uc->uc_mcontext.fault_address);
+  TRAPMSG("   trap_no = 0x%08lx", uc->uc_mcontext.trap_no);
+  TRAPMSG("error_code = 0x%08lx", uc->uc_mcontext.error_code);
+  TRAPMSG("   oldmask = 0x%08lx", uc->uc_mcontext.oldmask);
+  TRAPMSG("        R0 = 0x%08lx", uc->uc_mcontext.arm_r0);
+  TRAPMSG("        R1 = 0x%08lx", uc->uc_mcontext.arm_r1);
+  TRAPMSG("        R2 = 0x%08lx", uc->uc_mcontext.arm_r2);
+  TRAPMSG("        R3 = 0x%08lx", uc->uc_mcontext.arm_r3);
+  TRAPMSG("        R4 = 0x%08lx", uc->uc_mcontext.arm_r4);
+  TRAPMSG("        R5 = 0x%08lx", uc->uc_mcontext.arm_r5);
+  TRAPMSG("        R6 = 0x%08lx", uc->uc_mcontext.arm_r6);
+  TRAPMSG("        R7 = 0x%08lx", uc->uc_mcontext.arm_r7);
+  TRAPMSG("        R8 = 0x%08lx", uc->uc_mcontext.arm_r8);
+  TRAPMSG("        R9 = 0x%08lx", uc->uc_mcontext.arm_r9);
+  TRAPMSG("       R10 = 0x%08lx", uc->uc_mcontext.arm_r10);
+  TRAPMSG("        FP = 0x%08lx", uc->uc_mcontext.arm_fp);
+  TRAPMSG("        IP = 0x%08lx", uc->uc_mcontext.arm_ip);
+  TRAPMSG("        SP = 0x%08lx", uc->uc_mcontext.arm_sp);
+  TRAPMSG("        LR = 0x%08lx", uc->uc_mcontext.arm_lr);
+  TRAPMSG("        PC = 0x%08lx", uc->uc_mcontext.arm_pc);
+  TRAPMSG("      CPSR = 0x%08lx", uc->uc_mcontext.arm_cpsr);
+  TRAPMSG("fault_addr = 0x%08lx", uc->uc_mcontext.fault_address);
 
 #else
   char tmpbuf[1024];
