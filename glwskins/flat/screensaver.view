@@ -11,13 +11,17 @@ widget(slideshow, {
       source: $self.url;
     });
 
+    label({
+      caption: $ui.universeBottomHeight;
+    });
+
     underscan({
       hidden: isVoid($self.info);
       vbox({
-        padding: 0.5em;
+        padding: [0, 0.5em, 0.5em, 0.5em + $ui.universeBottomHeight];
+
         space(1);
         hbox({
-          space(1);
           zbox({
             quad({
               color: 0;
@@ -25,11 +29,11 @@ widget(slideshow, {
             });
             label({
               font: "skin://fonts/RobotoCondensed-Light.ttf";
-              padding: [0.5em, 0.25em];
+              padding: [2em, 0.25em, 0.5em, 0.25em];
               caption: $self.info;
-              align: bottomRight;
             });
           });
+          space(1);
         });
       });
     });
