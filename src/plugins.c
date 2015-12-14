@@ -932,7 +932,7 @@ plugin_setup_start_model(void)
   prop_set_string(prop_create(p, "type"), "store");
   prop_link(_p("Browse available plugins"),
 	    prop_create(prop_create(p, "metadata"), "title"));
-  prop_set_string(prop_create(p, "url"), "plugin:repo");
+  prop_set_string(prop_create(p, "url"), "plugin:repo:categories");
 
   prop_concat_add_source(pc, sta, NULL);
 
@@ -949,6 +949,55 @@ plugin_setup_start_model(void)
   prop_set_string(prop_create(d, "type"), "separator");
   prop_concat_add_source(pc, inst, d);
 }
+
+
+/**
+ *
+ */
+static void
+plugin_category_set_title_in_model(prop_t *model, int category)
+{
+  prop_t *gn = NULL;
+  switch(category) {
+  case PLUGIN_CAT_TV:
+    gn = _p("Online TV");
+    break;
+
+  case PLUGIN_CAT_VIDEO:
+    gn = _p("Video streaming");
+    break;
+
+  case PLUGIN_CAT_MUSIC:
+    gn = _p("Music streaming");
+    break;
+
+  case PLUGIN_CAT_CLOUD:
+    gn = _p("Cloud services");
+    break;
+
+  case PLUGIN_CAT_GLWVIEW:
+    gn = _p("User interface extensions");
+    break;
+
+  case PLUGIN_CAT_GLWOSK:
+    gn = _p("On Screen Keyboards");
+    break;
+
+  case PLUGIN_CAT_SUBTITLES:
+    gn = _p("Subtitles");
+    break;
+
+  default:
+    gn = _p("Uncategorized");
+    break;
+  }
+
+  prop_t *tgt = prop_create_multi(model, "metadata", "title", NULL);
+  prop_link(gn, tgt);
+  prop_ref_dec(tgt);
+}
+
+
 
 /**
  *
@@ -990,43 +1039,8 @@ plugin_setup_repo_model(void)
 
     prop_t *header = prop_create_root(NULL);
     prop_set(header, "type", PROP_SET_STRING, "separator");
+    plugin_category_set_title_in_model(header, i);
 
-    prop_t *gn = NULL;
-    switch(i) {
-    case PLUGIN_CAT_TV:
-      gn = _p("Online TV");
-      break;
-
-    case PLUGIN_CAT_VIDEO:
-      gn = _p("Video streaming");
-      break;
-
-    case PLUGIN_CAT_MUSIC:
-      gn = _p("Music streaming");
-      break;
-
-    case PLUGIN_CAT_CLOUD:
-      gn = _p("Cloud services");
-      break;
-
-    case PLUGIN_CAT_GLWVIEW:
-      gn = _p("User interface extensions");
-      break;
-
-    case PLUGIN_CAT_GLWOSK:
-      gn = _p("On Screen Keyboards");
-      break;
-
-    case PLUGIN_CAT_SUBTITLES:
-      gn = _p("Subtitles");
-      break;
-
-    default:
-      gn = _p("Uncategorized");
-      break;
-    }
-
-    prop_link(gn, prop_create(prop_create(header, "metadata"), "title"));
     prop_concat_add_source(pc, cat, header);
   }
 
@@ -1174,16 +1188,6 @@ plugins_reload_dev_plugin(void)
 /**
  *
  */
-static int
-plugin_canhandle(const char *url)
-{
-  return !strncmp(url, "plugin:", strlen("plugin:"));
-}
-
-
-/**
- *
- */
 static void
 plugin_remove(plugin_t *pl)
 {
@@ -1325,6 +1329,59 @@ plugin_install(plugin_t *pl, const char *package)
   return 0;
 }
 
+/**
+ *
+ */
+static void
+open_category_page(prop_t *model, const char *category)
+{
+  prop_set(model, "type", PROP_SET_STRING, "directory");
+  prop_set(model, "contents", PROP_SET_STRING, "grid");
+  plugin_category_set_title_in_model(model, str2val(category, catnames));
+  prop_t *n = prop_create_r(model, "nodes");
+  prop_link(prop_create(plugin_repo_model, category), n);
+  prop_ref_dec(n);
+}
+
+/**
+ *
+ */
+static void
+add_category(prop_t *model, int category, const char *subtype)
+{
+  char url[128];
+  snprintf(url, sizeof(url), "plugin:repo:%s", val2str(category, catnames));
+  prop_t *item = prop_create_r(model, NULL);
+  prop_set(item, "type", PROP_SET_STRING, "directory");
+  prop_set(item, "url", PROP_SET_STRING, url);
+  prop_set(item, "subtype", PROP_SET_STRING, subtype);
+  plugin_category_set_title_in_model(item, category);
+  prop_ref_dec(item);
+}
+
+
+/**
+ *
+ */
+static void
+open_categories(prop_t *model)
+{
+  prop_set(model, "type", PROP_SET_STRING, "directory");
+  prop_set(model, "contents", PROP_SET_STRING, "grid");
+  prop_setv(model, "metadata", "title", NULL, PROP_ADOPT_RSTRING,
+            _("Plugin categories"));
+
+  prop_t *nodes = prop_create_r(model, "nodes");
+  add_category(nodes, PLUGIN_CAT_TV, "tv");
+  add_category(nodes, PLUGIN_CAT_VIDEO, "movie");
+  add_category(nodes, PLUGIN_CAT_MUSIC, "audiotrack");
+  add_category(nodes, PLUGIN_CAT_SUBTITLES, "subtitles");
+#if !defined(PS3)
+  add_category(nodes, PLUGIN_CAT_GLWOSK, NULL);
+#endif
+  prop_ref_dec(nodes);
+}
+
 
 /**
  *
@@ -1333,9 +1390,22 @@ static int
 plugin_open_url(prop_t *page, const char *url, int sync)
 {
   prop_t *model = prop_create_r(page, "model");
+  const char *x;
   if(!strcmp(url, "plugin:start")) {
     usage_page_open(sync, "Plugins installed");
     prop_link(plugin_start_model, model);
+
+  } else if((x = mystrbegins(url, "plugin:repo:")) != NULL) {
+    char usage[64];
+    snprintf(usage, sizeof(usage), "Plugins %s", x);
+    usage_page_open(sync, usage);
+
+    if(!strcmp(x, "categories")) {
+      open_categories(model);
+    } else {
+      open_category_page(model, x);
+      plugins_upgrade_check();
+    }
   } else if(!strcmp(url, "plugin:repo")) {
     usage_page_open(sync, "Plugins repo");
     prop_link(plugin_repo_model, model);
@@ -1371,12 +1441,21 @@ plugin_search(struct prop *model, const char *query, prop_t *loading)
     }
     prop_set_int(entries, results);
 
-    prop_print_tree(classnodes, 1);
     prop_ref_dec(entries);
     prop_ref_dec(nodes);
     hts_mutex_unlock(&plugin_mutex);
   }
   prop_ref_dec(classnodes);
+}
+
+
+/**
+ *
+ */
+static int
+plugin_canhandle(const char *url)
+{
+  return !strncmp(url, "plugin:", strlen("plugin:"));
 }
 
 
