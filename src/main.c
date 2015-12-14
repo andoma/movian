@@ -69,7 +69,7 @@
 
 #include "fileaccess/fileaccess.h"
 
-struct inithelper_list inithelpers;
+static LIST_HEAD(, inithelper) inithelpers;
 
 /**
  *
@@ -158,10 +158,20 @@ init_global_info(void)
 /**
  *
  */
-int
+static int
 ihcmp(const inithelper_t *a, const inithelper_t *b)
 {
   return a->prio - b->prio;
+}
+
+
+/**
+ *
+ */
+void
+inithelper_register(inithelper_t *ih)
+{
+  LIST_INSERT_SORTED(&inithelpers, ih, link, ihcmp, inithelper_t);
 }
 
 

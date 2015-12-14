@@ -326,9 +326,6 @@ extern gconf_t gconf;
 extern const char *htsversion;
 extern const char *htsversion_full;
 
-
-LIST_HEAD(inithelper_list, inithelper) inithelper;
-
 typedef struct inithelper {
   LIST_ENTRY(inithelper) link;
   void (*init)(void);
@@ -343,10 +340,9 @@ typedef struct inithelper {
   } group;
 } inithelper_t;
 
-extern struct inithelper_list inithelpers;
 
-extern int ihcmp(const inithelper_t *a, const inithelper_t *b);
 
+extern void inithelper_register(inithelper_t *ih);
 
 // Lower prio == init earlier
 #define INITME(group_, init_, fini_, prio_)                        \
@@ -358,8 +354,7 @@ extern int ihcmp(const inithelper_t *a, const inithelper_t *b);
   };								   \
   INITIALIZER(HTS_JOIN(inithelperctor, __LINE__))                  \
   {								   \
-    inithelper_t *ih = &HTS_JOIN(inithelper, __LINE__);		   \
-    LIST_INSERT_SORTED(&inithelpers, ih, link, ihcmp, inithelper_t);\
+    inithelper_register(&HTS_JOIN(inithelper, __LINE__));          \
   }
 
 void init_group(int group);
