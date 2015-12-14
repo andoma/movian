@@ -105,7 +105,7 @@ arch_cache_avail_bytes(void)
 size_t
 arch_malloc_size(void *ptr)
 {
-  return malloc_usable_size(ptr);
+  return 0;
 }
 
 
