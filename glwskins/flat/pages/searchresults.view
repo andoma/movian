@@ -1,43 +1,31 @@
 #import "skin://theme.view"
 #import "skin://styles/style_grid.view"
 
-widget(container_y, {
-
-  widget(label, {
-    height: 3em;
-    padding: [4em, 0];
-    align: center;
-    caption: $self.model.metadata.title;
-    size: 2em;
-  });
-
-  style(RectIcon, {
-    align: left;
-  });
+widget(container_z, {
 
   widget(list_y, {
+    id: "scrollable";
 
     $view.width = getWidth();
 
-    spacing: 1em;
-    padding: [2em, 0, 2em, 2em];
-    navWrap: true;
-    chaseFocus: true;
-    scrollThreshold: 2em;
+    clipOffsetTop: 3em;
+    scrollThresholdTop: 5em;
 
+    scrollThresholdBottom: $ui.universeBottomHeight + 2em;
+    clipOffsetBottom: $ui.universeBottomHeight;
+    clipAlpha: 0.2;
+    clipBlur: 1;
+    spacing: 1em;
     cloner($self.model.nodes, container_y, {
 
-      widget(container_x, {
-        spacing: 1em;
-
-        widget(label, {
-          caption: fmt('%s <font size="2" color="#aaaaaa">- %s',
-                       $self.metadata.title,
-                       fmt(_("%d results"), $self.entries));
-          size: 1.5em;
-        });
-
+      widget(label, {
+        padding: [1em, 0];
+        caption: fmt('%s <font size="2" color="#aaaaaa">- %s',
+                     $self.metadata.title,
+                     fmt(_pl("%d hits", "%d hit", $self.entires), $self.entries));
+        size: 1.5em;
       });
+
       widget(container_x, {
 
         height: 5em;
@@ -83,4 +71,13 @@ widget(container_y, {
       });
     });
   });
+
+  ScrollBar("scrollable", 3em, $ui.universeBottomHeight);
+
+
+  widget(container_y, {
+    align: top;
+    PageHeader();
+  });
+
 });
