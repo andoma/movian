@@ -32,6 +32,7 @@
 #include "misc/strtab.h"
 #include "arch/arch.h"
 #include "usage.h"
+#include "backend/search.h"
 
 #include "ecmascript/ecmascript.h"
 
@@ -93,13 +94,13 @@ typedef struct plugin {
 
   struct plugin_view_entry_list pl_views;
 
-  void (*pl_enable_cb)(int enabled);
-
   char pl_loaded;
   char pl_installed;
   char pl_can_upgrade;
   char pl_new_version_avail;
   char pl_mark;
+
+  prop_t *pl_repo_model;
 
 } plugin_t;
 
@@ -401,6 +402,9 @@ plugin_fill_prop(struct htsmsg *pm, struct prop *p,
   prop_set(metadata, "version", PROP_SET_STRING,
            htsmsg_get_str(pm, "version"));
 
+  prop_set(metadata, "popularity", PROP_SET_INT,
+           htsmsg_get_u32_or_default(pm, "popularity", 0));
+
   if(icon != NULL) {
     if(basepath != NULL) {
       char url[512];
@@ -468,8 +472,13 @@ plugin_prop_setup(htsmsg_t *pm, plugin_t *pl, const char *basepath)
   prop_t *p;
   hts_mutex_assert(&plugin_mutex);
   p = prop_create(plugin_root_list, pl->pl_id);
+  mystrset(&pl->pl_title, htsmsg_get_str(pm, "title") ?: pl->pl_id);
   prop_set(p, "type", PROP_SET_STRING, "plugin");
   plugin_fill_prop(pm, p, basepath, pl);
+  if(basepath == NULL) {
+    prop_ref_dec(pl->pl_repo_model);
+    pl->pl_repo_model = prop_ref_inc(p);
+  }
 }
 
 
@@ -832,8 +841,10 @@ plugin_load_repo(void)
     for(pl = LIST_FIRST(&plugins); pl != NULL; pl = next) {
       next = LIST_NEXT(pl, pl_link);
       prop_set(pl->pl_status, "inRepo", PROP_SET_INT, !pl->pl_mark);
-      if(pl->pl_mark && !pl->pl_enable_cb) {
-	pl->pl_mark = 0;
+      if(pl->pl_mark) {
+        prop_ref_dec(pl->pl_repo_model);
+        pl->pl_repo_model = NULL;
+        pl->pl_mark = 0;
       }
     }
   }
@@ -973,7 +984,8 @@ plugin_setup_repo_model(void)
     prop_nf_pred_int_add(pnf, "node.status.inRepo",
 			 PROP_NF_CMP_NEQ, 1, NULL,
 			 PROP_NF_MODE_EXCLUDE);
-    prop_nf_sort(pnf, "node.metadata.title", 0, 0, NULL, 1);
+    //    prop_nf_sort(pnf, "node.metadata.title", 0, 0, NULL, 1);
+    prop_nf_sort(pnf, "node.metadata.popularity", 1, 0, NULL, 1);
     prop_nf_release(pnf);
 
     prop_t *header = prop_create_root(NULL);
@@ -1320,20 +1332,52 @@ plugin_install(plugin_t *pl, const char *package)
 static int
 plugin_open_url(prop_t *page, const char *url, int sync)
 {
+  prop_t *model = prop_create_r(page, "model");
   if(!strcmp(url, "plugin:start")) {
     usage_page_open(sync, "Plugins installed");
-    prop_link(plugin_start_model, prop_create(page, "model"));
+    prop_link(plugin_start_model, model);
   } else if(!strcmp(url, "plugin:repo")) {
     usage_page_open(sync, "Plugins repo");
-    prop_link(plugin_repo_model, prop_create(page, "model"));
+    prop_link(plugin_repo_model, model);
     plugins_upgrade_check();
   } else {
     nav_open_error(page, "Invalid URI");
   }
+  prop_ref_dec(model);
   return 0;
 }
 
 
+/**
+ *
+ */
+static void
+plugin_search(struct prop *model, const char *query, prop_t *loading)
+{
+  plugin_t *pl;
+  prop_t *classnodes = prop_create_r(model, "nodes");
+  prop_t *nodes;
+  prop_t *entries;
+  int results = 0;
+
+  if(!search_class_create(classnodes, &nodes, &entries, "Plugins", NULL)) {
+    hts_mutex_lock(&plugin_mutex);
+    LIST_FOREACH(pl, &plugins, pl_link) {
+      if(pl->pl_repo_model == NULL || !mystrstr(pl->pl_title, query))
+        continue;
+
+      results++;
+      prop_link(pl->pl_repo_model, prop_create(nodes, NULL));
+    }
+    prop_set_int(entries, results);
+
+    prop_print_tree(classnodes, 1);
+    prop_ref_dec(entries);
+    prop_ref_dec(nodes);
+    hts_mutex_unlock(&plugin_mutex);
+  }
+  prop_ref_dec(classnodes);
+}
 
 
 /**
@@ -1342,6 +1386,7 @@ plugin_open_url(prop_t *page, const char *url, int sync)
 static backend_t be_plugin = {
   .be_canhandle = plugin_canhandle,
   .be_open = plugin_open_url,
+  .be_search = plugin_search,
 };
 
 BE_REGISTER(plugin);
