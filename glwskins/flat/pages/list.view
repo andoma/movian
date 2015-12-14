@@ -21,7 +21,7 @@ widget(container_z, {
       effect: blend;
       noInitialTransform: true;
       alt: "skin://items/list/default.view";
-        source: "skin://items/list/" + $self.type + ".view";
+      source: "skin://items/list/" + $self.type + ".view";
     });
   });
 
