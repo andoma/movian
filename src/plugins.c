@@ -60,8 +60,7 @@ static struct strtab catnames[] = {
 };
 
 
-static const char *plugin_repo_url =
-  "http://plugins.movian.tv/repo/plugins-v1.json";
+static const char *plugin_repo_url = PLUGINREPO;
 static char *plugin_alt_repo_url;
 static char *plugin_beta_passwords;
 static HTS_MUTEX_DECL(plugin_mutex);
