@@ -1,5 +1,5 @@
 
-$ui.screenSaverAlpha = iir($ui.screensaverActive, 16);
+$ui.screenSaverAlpha = iir($ui.screensaverActive, 4);
 
 widget(container_z, {
 
@@ -10,8 +10,8 @@ widget(container_z, {
       "pixmap:gradient:20,20,20:60,60,60";
 
     zoffset: -1500;
-    alpha: iir(1 - ($ui.fullwindow || $ui.screensaverActive), 16);
-    maxIntensity: 0.2;
+    alpha: iir(1 - ($ui.fullwindow || $ui.screensaverActive), 4);
+    maxIntensity: 0.4;
   });
 
   widget(loader, {
