@@ -42,6 +42,7 @@
 #include "ppapi/c/ppb_instance.h"
 #include "ppapi/c/ppb_message_loop.h"
 #include "ppapi/c/ppb_messaging.h"
+#include "ppapi/c/ppb_mouse_cursor.h"
 #include "ppapi/c/ppb_network_monitor.h"
 #include "ppapi/c/ppb_network_list.h"
 #include "ppapi/c/ppb_graphics_3d.h"
@@ -79,6 +80,7 @@ const PPB_Graphics3D *ppb_graphics3d;
 const PPB_InputEvent *ppb_inputevent;
 const PPB_KeyboardInputEvent *ppb_keyboardinputevent;
 const PPB_MouseInputEvent *ppb_mouseinputevent;
+const PPB_MouseCursor *ppb_mousecursor;
 const PPB_WheelInputEvent *ppb_wheelinputevent;
 const PPB_HostResolver *ppb_hostresolver;
 const PPB_NetAddress *ppb_netaddress;
@@ -121,6 +123,10 @@ typedef struct nacl_glw_root {
   float mouse_x;
   float mouse_y;
 
+  int cursor_hidden;
+  int full_window;
+  int64_t hide_cursor_at;
+
 } nacl_glw_root_t;
 
 PP_Resource nacl_3d_context;
@@ -128,6 +134,7 @@ PP_Resource nacl_3d_context;
 static nacl_glw_root_t *uiroot;
 
 static void mainloop(nacl_glw_root_t *ngr);
+static void autohide_cursor(nacl_glw_root_t *ngr);
 
 /**
  *
@@ -245,6 +252,17 @@ ui_courier_notify(void *opaque)
 /**
  *
  */
+static void
+glw_in_fullwindow(void *opaque, int val)
+{
+  nacl_glw_root_t *ngr = opaque;
+  ngr->full_window = val;
+}
+
+
+/**
+ *
+ */
 static void *
 init_thread(void *aux)
 {
@@ -274,6 +292,14 @@ init_thread(void *aux)
 
   if(glw_init4(&uiroot->gr, NULL, pc, 0))
     return NULL;
+
+  prop_subscribe(0,
+                 PROP_TAG_NAME("ui", "fullwindow"),
+                 PROP_TAG_COURIER, pc,
+                 PROP_TAG_CALLBACK_INT, glw_in_fullwindow, uiroot,
+                 PROP_TAG_ROOT, uiroot->gr.gr_prop_ui,
+                 NULL);
+
 
   TRACE(TRACE_DEBUG, "GLW", "GLW %p created", uiroot);
 
@@ -391,6 +417,8 @@ mainloop(nacl_glw_root_t *ngr)
   int zmax = 0;
   glw_rctx_t rc;
 
+  autohide_cursor(ngr);
+
   glw_lock(gr);
   glw_prepare_frame(gr, 0);
 
@@ -456,6 +484,61 @@ static PP_Bool
 Instance_HandleDocumentLoad(PP_Instance instance, PP_Resource url_loader)
 {
   return PP_FALSE;
+}
+
+
+
+/**
+ *
+ */
+static void
+hide_cursor(nacl_glw_root_t *ngr)
+{
+  glw_pointer_event_t gpe = {0};
+
+  if(ngr->cursor_hidden)
+    return;
+
+  ngr->cursor_hidden = 1;
+
+  ppb_mousecursor->SetCursor(g_Instance, PP_MOUSECURSOR_TYPE_NONE, 0, NULL);
+  gpe.type = GLW_POINTER_GONE;
+  glw_lock(&ngr->gr);
+  glw_pointer_event(&ngr->gr, &gpe);
+  glw_unlock(&ngr->gr);
+}
+
+
+/**
+ *
+ */
+static void
+autohide_cursor(nacl_glw_root_t *ngr)
+{
+  if(!ngr->full_window)
+    return;
+
+  if(ngr->cursor_hidden)
+    return;
+
+  if(ngr->gr.gr_time_usec > ngr->hide_cursor_at) {
+    hide_cursor(ngr);
+  }
+}
+
+
+/**
+ *
+ */
+static void
+show_cursor(nacl_glw_root_t *ngr)
+{
+  ngr->hide_cursor_at = ngr->gr.gr_time_usec + GLW_CURSOR_AUTOHIDE_TIME;
+  if(!ngr->cursor_hidden)
+    return;
+
+  ngr->cursor_hidden = 0;
+  ppb_mousecursor->SetCursor(g_Instance, PP_MOUSECURSOR_TYPE_POINTER, 0, NULL);
 }
 
 
@@ -529,6 +612,7 @@ static const struct {
 static int
 handle_keydown(nacl_glw_root_t *ngr, PP_Resource input_event)
 {
+
   glw_root_t *gr = &ngr->gr;
 
   action_type_t av[10];
@@ -536,12 +620,15 @@ handle_keydown(nacl_glw_root_t *ngr, PP_Resource input_event)
   uint32_t mod  = ppb_inputevent->GetModifiers(input_event) & 0xf;
   event_t *e = NULL;
 
+
   if(code == KC_F11) {
     int fs = ppb_fullscreen->IsFullscreen(g_Instance);
     ppb_fullscreen->SetFullscreen(g_Instance, !fs);
     glw_set_fullscreen(gr, fs);
+    hide_cursor(ngr);
     return 1;
   }
+  hide_cursor(ngr);
 
   for(int i = 0; i < sizeof(keysym2action) / sizeof(*keysym2action); i++) {
 
@@ -583,6 +670,8 @@ handle_keydown(nacl_glw_root_t *ngr, PP_Resource input_event)
 static int
 handle_char(nacl_glw_root_t *ngr, PP_Resource input_event)
 {
+  hide_cursor(ngr);
+
   glw_root_t *gr = &ngr->gr;
   event_t *e  = NULL;
   struct PP_Var v = ppb_keyboardinputevent->GetCharacterText(input_event);
@@ -659,6 +748,7 @@ handle_mouse_event(nacl_glw_root_t *ngr, PP_Resource mouse_event,
     }
     break;
   case PP_INPUTEVENT_TYPE_MOUSEMOVE:
+    show_cursor(ngr);
   case PP_INPUTEVENT_TYPE_MOUSEENTER:
     gpe.type = GLW_POINTER_MOTION_UPDATE;
     break;
@@ -986,6 +1076,7 @@ PPP_InitializeModule(PP_Module a_module_id, PPB_GetInterface get_browser)
   ppb_inputevent         = get_browser(PPB_INPUT_EVENT_INTERFACE);
   ppb_keyboardinputevent = get_browser(PPB_KEYBOARD_INPUT_EVENT_INTERFACE);
   ppb_mouseinputevent    = get_browser(PPB_MOUSE_INPUT_EVENT_INTERFACE);
+  ppb_mousecursor        = get_browser(PPB_MOUSECURSOR_INTERFACE);
   ppb_wheelinputevent    = get_browser(PPB_WHEEL_INPUT_EVENT_INTERFACE);
   ppb_hostresolver       = get_browser(PPB_HOSTRESOLVER_INTERFACE);
   ppb_netaddress         = get_browser(PPB_NETADDRESS_INTERFACE);
