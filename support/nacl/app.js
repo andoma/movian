@@ -79,6 +79,7 @@ function handleMessage(e) {
 
   case 'running':
     document.getElementById("loader").parentNode.removeChild(loader);
+    document.body.style.background = "#000";
     clearTimeout(loadtimeout);
     break;
   }
