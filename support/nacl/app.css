@@ -4,6 +4,7 @@ html,body {
     padding:0;
     width: 100vw;
     height: 100vh;
+    background: linear-gradient(#141414, #3c3c3c);
 }
 
 
@@ -19,7 +20,7 @@ embed {
 
 #loader {
     display:none;
-    z-index: -999;
+    z-index: 999;
     width: 600px;
     height: 400px;
     position: absolute;
@@ -36,4 +37,21 @@ embed {
     line-height: 30px;
     color: #fff;
     text-align: center;
+}
+
+#loader img {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 128px;
+    animation: rot 6s infinite ease-in-out;
+}
+
+
+@keyframes rot {
+  0% {
+    transform: perspective(500px) rotateX(0deg);
+  } 100% {
+    transform: perspective(500px) rotateX(-360deg);
+  }
 }
