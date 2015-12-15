@@ -691,7 +691,7 @@ handle_wheel_event(nacl_glw_root_t *ngr, PP_Resource wheel_event)
   gpe.x = ngr->mouse_x;
   gpe.y = ngr->mouse_y;
   gpe.delta_x = pos.x;
-  gpe.delta_y = pos.y;
+  gpe.delta_y = -pos.y;
 
   gpe.type = GLW_POINTER_FINE_SCROLL;
   glw_lock(&ngr->gr);
