@@ -102,7 +102,9 @@ static void init_dev_settings(void);
 static void
 set_title2(prop_t *root, prop_t *title)
 {
-  prop_link(title, prop_create(prop_create(root, "metadata"), "title"));
+  prop_t *t = prop_create_multi(root, "metadata", "title", NULL);
+  prop_link(title, t);
+  prop_ref_dec(t);
 }
 
 
@@ -142,8 +144,8 @@ setting_add(prop_t *parent, prop_t *title, const char *type, int flags)
   prop_t *p = setting_get(parent, flags);
   if(title != NULL)
     set_title2(p, title);
-  prop_set_string(prop_create(p, "type"), type);
-  prop_set_int(prop_create(p, "enabled"), 1);
+  prop_set(p, "type", PROP_SET_STRING, type);
+  prop_set(p, "enabled", PROP_SET_INT, 1);
   return p;
 }
 
@@ -155,8 +157,8 @@ static prop_t *
 setting_add_cstr(prop_t *parent, const char *title, const char *type, int flags)
 {
   prop_t *p = setting_get(parent, flags);
-  prop_set_string(prop_create(prop_create(p, "metadata"), "title"), title);
-  prop_set_string(prop_create(p, "type"), type);
+  prop_setv(p, "metadata", "title", NULL, PROP_SET_STRING, title);
+  prop_set(p, "type", PROP_SET_STRING, type);
   return p;
 }
 
@@ -169,16 +171,11 @@ settings_add_dir_sup(prop_t *root,
 		     const char *url, const char *icon,
 		     const char *subtype)
 {
-  rstr_t *url2 = backend_prop_make(root, url);
-  prop_set_rstring(prop_create(root, "url"), url2);
-  rstr_release(url2);
-
-  prop_t *metadata = prop_create(root, "metadata");
-
-  prop_set_string(prop_create(root, "subtype"), subtype);
+  prop_set(root, "url", PROP_ADOPT_RSTRING, backend_prop_make(root, url));
+  prop_set(root, "subtype", PROP_SET_STRING, subtype);
 
   if(icon != NULL)
-    prop_set_string(prop_create(metadata, "icon"), icon);
+    prop_setv(root, "metadata", "icon", NULL, PROP_SET_STRING, icon);
 }
 
 
@@ -192,10 +189,12 @@ settings_add_dir(prop_t *parent, prop_t *title, const char *subtype,
 		 const char *url)
 {
   prop_t *p = setting_add(parent, title, "settings", 0);
-  prop_t *metadata = prop_create(p, "metadata");
 
-  if(shortdesc != NULL)
-    prop_link(shortdesc, prop_create(metadata, "shortdesc"));
+  if(shortdesc != NULL) {
+    prop_t *tgt = prop_create_multi(p, "metadata", "shortdesc", NULL);
+    prop_link(shortdesc, tgt);
+    prop_ref_dec(tgt);
+  }
 
   settings_add_dir_sup(p, url, icon, subtype);
   return p;
@@ -212,16 +211,18 @@ settings_add_url(prop_t *parent, prop_t *title,
 		 int flags)
 {
   prop_t *p = setting_add(parent, title, "settings", flags);
-  prop_t *metadata = prop_create(p, "metadata");
 
-  if(shortdesc != NULL)
-    prop_link(shortdesc, prop_create(metadata, "shortdesc"));
+  if(shortdesc != NULL) {
+    prop_t *tgt = prop_create_multi(p, "metadata", "shortdesc", NULL);
+    prop_link(shortdesc, tgt);
+    prop_ref_dec(tgt);
+  }
 
-  prop_set_string(prop_create(p, "url"), url);
-  prop_set_string(prop_create(p, "subtype"), subtype);
+  prop_set(p, "url",     PROP_SET_STRING, url);
+  prop_set(p, "subtype", PROP_SET_STRING, subtype);
 
   if(icon != NULL)
-    prop_set_string(prop_create(metadata, "icon"), icon);
+    prop_setv(p, "metadata", "icon", NULL, PROP_SET_STRING, icon);
   return p;
 }
 
@@ -235,9 +236,9 @@ settings_add_dir_cstr(prop_t *parent, const char *title, const char *subtype,
 		      const char *url)
 {
   prop_t *p = setting_add_cstr(parent, title, "settings", 0);
-  prop_t *metadata = prop_create(p, "metadata");
 
-  prop_set_string(prop_create(metadata, "shortdesc"), shortdesc);
+  if(shortdesc != NULL)
+    prop_setv(p, "metadata", "shortdesc", NULL, PROP_SET_STRING, shortdesc);
 
   settings_add_dir_sup(p, url, icon, subtype);
   return p;
@@ -279,7 +280,7 @@ settings_create_info(prop_t *parent, const char *image,
   prop_t *r = setting_add(parent, NULL, "info", 0);
   prop_link(description, prop_create(r, "description"));
   if(image != NULL)
-    prop_set_string(prop_create(r, "image"), image);
+    prop_set(r, "image", PROP_SET_STRING, image);
 }
 
 
