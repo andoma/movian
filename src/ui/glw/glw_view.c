@@ -221,8 +221,6 @@ gcv_load(glw_root_t *gr, glw_cached_view_t *gcv, int may_unlock)
   buf_t *buf;
   errorinfo_t ei;
 
-  gcv->gcv_loaded = 1; // A view is also "loaded" when there is an error
-
   if(may_unlock)
     glw_unlock(gr);
 
@@ -242,6 +240,8 @@ gcv_load(glw_root_t *gr, glw_cached_view_t *gcv, int may_unlock)
 
   if(may_unlock)
     glw_lock(gr);
+
+  gcv->gcv_loaded = 1; // A view is also "loaded" when there is an error
 
   if(buf == NULL) {
     char errmsg[1024];
