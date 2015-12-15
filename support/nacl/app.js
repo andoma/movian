@@ -65,6 +65,14 @@ function handleMessage(e) {
     fileReader.readAsArrayBuffer(chunk);
     break;
 
+  case 'getrnd':
+    var array = new Uint8Array(e.data.bytes);
+    window.crypto.getRandomValues(array);
+    stelem.postMessage({msgtype:'rpcreply',
+                        data: array.buffer,
+                        reqid: e.data.reqid});
+    break;
+
   case 'fsinfo':
     var fn = e.data.fs == 'cache' ? navigator.webkitTemporaryStorage :
       navigator.webkitPersistentStorage;

@@ -87,31 +87,6 @@ arch_get_avtime(void)
   return arch_get_ts();
 }
 
-static prng_t prng;
-
-INITIALIZER(initrandomizer) {
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  prng_init(&prng, tv.tv_sec, tv.tv_usec);
-};
-
-
-/**
- *
- */
-void
-arch_get_random_bytes(void *ptr, size_t size)
-{
-  uint32_t tmp;
-  while(size > 0) {
-    size_t copy = MIN(size, sizeof(tmp));
-    tmp = prng_get(&prng);
-    memcpy(ptr, &tmp, copy);
-    ptr += copy;
-    size -= copy;
-  }
-}
-
 
 /**
  *
