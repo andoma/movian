@@ -50,7 +50,7 @@ dbgstage:	${STAGEFILES} ${BUILDDIR}/stage/app.bundle
 
 VERSION := $(shell support/getver.sh)
 
-DISTARCHIVE := ${BUILDDIR}/showtime-${VERSION}.zip
+DISTARCHIVE := ${BUILDDIR}/${APPNAMEUSER}-${VERSION}.zip
 
 ${DISTARCHIVE}: ${STAGEFILES}
 	rm -f ${DISTARCHIVE}
