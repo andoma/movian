@@ -176,7 +176,7 @@ usage_init(void)
 void
 usage_start(void)
 {
-  if(gconf.disable_analytics || gconf.device_id[0] == 0)
+  if(gconf.disable_analytics)
     return;
   task_run(try_send, NULL);
 }

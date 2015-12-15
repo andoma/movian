@@ -281,6 +281,42 @@ swrefresh(void)
 }
 
 
+/**
+ *
+ */
+static void
+generate_device_id(void)
+{
+  if(gconf.device_id[0] == 0) {
+    htsmsg_t *conf = htsmsg_store_load("deviceid");
+    const char *s = conf ? htsmsg_get_str(conf, "deviceid") : NULL;
+    if(s != NULL) {
+      snprintf(gconf.device_id, sizeof(gconf.device_id), "%s" ,s);
+    } else {
+      uint8_t d[20];
+      char uuid[40];
+
+      if(conf == NULL)
+        conf = htsmsg_create_map();
+
+      arch_get_random_bytes(d, sizeof(d));
+
+      snprintf(uuid, sizeof(uuid),
+               "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
+               "%02x%02x%02x%02x%02x%02x",
+               d[0x0], d[0x1], d[0x2], d[0x3],
+               d[0x4], d[0x5], d[0x6], d[0x7],
+               d[0x8], d[0x9], d[0xa], d[0xb],
+               d[0xc], d[0xd], d[0xe], d[0xf]);
+
+      snprintf(gconf.device_id, sizeof(gconf.device_id), "%s", uuid);
+      htsmsg_add_str(conf, "deviceid", uuid);
+      htsmsg_store_save(conf, "deviceid");
+    }
+    htsmsg_release(conf);
+  }
+}
+
 
 /**
  *
@@ -403,6 +439,12 @@ main_init(void)
   /* Initialize plugin manager */
   plugins_init(gconf.devplugins);
 
+  if(gconf.device_id[0] == 0)
+    generate_device_id();
+  TRACE(TRACE_DEBUG, "SYSTEM", "Hashed device ID: %s", gconf.device_id);
+  if(gconf.device_type[0])
+    TRACE(TRACE_DEBUG, "SYSTEM", "Device type: %s", gconf.device_type);
+
   /* Start software installer thread (plugins, upgrade, etc) */
   hts_thread_create_detached("swinst", swthread, NULL, THREAD_PRIO_BGTASK);
 
@@ -427,9 +469,6 @@ main_init(void)
 
   runcontrol_init();
 
-  TRACE(TRACE_DEBUG, "SYSTEM", "Hashed device ID: %s", gconf.device_id);
-  if(gconf.device_type[0])
-    TRACE(TRACE_DEBUG, "SYSTEM", "Device type: %s", gconf.device_type);
 }
 
 
