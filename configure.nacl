@@ -93,11 +93,15 @@ freetype_setup --host=i686-none-nacl
 libav_setup
 bzip2_setup
 
-cat >> ${CONFIG_MAK} <<EOF
+if enabled release; then
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -L${PEPPER}/lib/pnacl/Release"
+else
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -L${PEPPER}/lib/pnacl/Debug"
+fi
 
+cat >> ${CONFIG_MAK} <<EOF
 FINALIZE = ${FINALIZE}
 CFLAGS_cfg += -I${PEPPER}/include
-LDFLAGS_cfg += -L${PEPPER}/lib/pnacl/Debug
 LDFLAGS_cfg += -lppapi_gles2 -lppapi -lpthread
 EOF
 
