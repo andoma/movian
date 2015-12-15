@@ -19,7 +19,8 @@
                       "resolve-host",
                       "udp-bind:*:*",
                       "udp-send-to:*:*",
-                      "network-state"
+                      "network-state",
+                      "udp-multicast-membership"
                     ]
                   }
                  ],
