@@ -22,7 +22,7 @@ function handleDrop(e) {
     return;
   }
 
-  if(types[0] == 'text/uri-list') {
+  if(types[0] == 'text/uri-list' || types[0] == 'text/plain') {
     items[0].getAsString(function(url) {
       stelem.postMessage({msgtype:'openurl', url: url});
     });
