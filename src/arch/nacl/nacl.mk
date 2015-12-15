@@ -27,7 +27,7 @@ ${BUILDDIR}/stage/app.bundle: ${PROG}.bundle
 	@mkdir -p $(dir $@)
 	cp $< $@
 
-${BUILDDIR}/stage/manifest.json: support/nacl/manifest.json
+${BUILDDIR}/stage/manifest.json: support/nacl/manifest.json ${BUILDDIR}/buildversion.h
 	@mkdir -p $(dir $@)
 	sed <$< >$@ -e "s/__VERSION__/$(shell git describe | sed -e 's/-g.*//' -e 's/-/./g')/"
 
