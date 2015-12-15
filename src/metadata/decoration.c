@@ -1185,7 +1185,7 @@ decorated_browse_create(prop_t *model, struct prop_nf *pnf, prop_t *items,
   db->db_title = rstr_dup(title);
   db->db_flags = flags;
 
-  prop_t *options = prop_create(model, "options");
+  prop_t *options = prop_create_r(model, "options");
 
   db->db_setting_mode =
     setting_create(SETTING_MULTIOPT, options,
@@ -1223,7 +1223,7 @@ decorated_browse_create(prop_t *model, struct prop_nf *pnf, prop_t *items,
                    SETTING_COURIER(deco_courier),
                    SETTING_CALLBACK(erase_playinfo, db),
                    NULL);
-
+  prop_ref_dec(options);
   hts_mutex_unlock(&deco_mutex);
   return db;
 }
