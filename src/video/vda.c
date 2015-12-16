@@ -330,6 +330,7 @@ vda_close(struct media_codec *mc)
   VDADecoderFlush(vdad->vdad_decoder, 0);
   VDADecoderDestroy(vdad->vdad_decoder);
   destroy_frames(vdad);
+  free(vdad);
 }
 
 
