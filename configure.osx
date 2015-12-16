@@ -102,6 +102,8 @@ echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework IOKit"
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework OpenGL"
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework CoreVideo"
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -weak_framework VideoDecodeAcceleration"
+echo >>${CONFIG_MAK} "LDFLAGS_cfg += -weak_framework VideoToolbox"
+echo >>${CONFIG_MAK} "LDFLAGS_cfg += -weak_framework CoreMedia"
 
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework CoreAudio"
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework AudioToolBox"
