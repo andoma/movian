@@ -455,7 +455,12 @@ open_news(void *opaque, prop_event_t event, ...)
 
 	dismis_news(ep->payload);
         char url[512];
+#ifdef PS3
+        // PS3 browser is really bad when it comes to HTTPS
         snprintf(url, sizeof(url), "http://www2.movian.tv/news/%s", id);
+#else
+        snprintf(url, sizeof(url), "https://movian.tv/news/%s", id);
+#endif
         TRACE(TRACE_DEBUG, "NEWS", "Opening %s", url);
         webbrowser_open(url, APPNAMEUSER);
       }
