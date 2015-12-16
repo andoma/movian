@@ -14,12 +14,17 @@ widget(container_x, {
 
           InfoLine(_("Version"), $core.app.version);
 
+          InfoLine(_("Framerate"),
+                   fmt("%2.2f Hz", $ui.framerate));
           InfoLine(_("Memory usage"),
-                   fmt("%d kB", $core.system.mem.activeMem));
+                   fmt("%d kB", $core.system.mem.activeMem),
+                   isVoid($core.system.mem.activeMem));
           InfoLine(_("System Total"),
-                   fmt("%d kB", $core.system.mem.systotal));
+                   fmt("%d kB", $core.system.mem.systotal),
+                   isVoid($core.system.mem.systotal));
           InfoLine(_("System Free"),
-                   fmt("%d kB", $core.system.mem.sysfree));
+                   fmt("%d kB", $core.system.mem.sysfree),
+                   isVoid($core.system.mem.sysfree));
           InfoLine(_("Fragmentation"),
                    fmt("%d", $core.system.mem.unusedChunks),
 	           isVoid($core.system.mem.unusedChunks));
