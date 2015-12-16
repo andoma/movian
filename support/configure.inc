@@ -74,7 +74,6 @@ CONFIG_LIST="
  sqlite_locking
  sqlite_internal
  libav
- vda
  tlsf
  airplay
  webpopup

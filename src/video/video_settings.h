@@ -45,8 +45,7 @@ struct video_settings {
   int vdpau_deinterlace;
   int vdpau_deinterlace_resolution_limit;
   int continuous_playback;
-  int vda;
-  int android_video_accel;
+  int video_accel;
 
   int seek_back_step;
   int seek_fwd_step;

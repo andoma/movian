@@ -312,7 +312,6 @@ SRCS += src/video/video_playback.c \
 	src/video/h264_annexb.c \
 
 SRCS-$(CONFIG_VDPAU)    += src/video/vdpau.c
-SRCS-$(CONFIG_VDA)      += src/video/vda.c
 
 SRCS-$(CONFIG_CEDAR) += \
 	src/ui/glw/glw_video_sunxi.c \

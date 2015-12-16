@@ -50,7 +50,6 @@ enable realpath
 enable polarssl
 enable librtmp
 enable dvd
-enable vda
 enable fsevents
 enable webpopup
 

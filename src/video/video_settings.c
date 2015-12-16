@@ -70,19 +70,16 @@ video_settings_init(void)
                  NULL);
 #endif
 
-#if ENABLE_VDA
-  setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
-                 SETTING_TITLE(_p("Enable VDA")),
-                 SETTING_HTSMSG("vda", store, "videoplayback"),
-                 SETTING_WRITE_BOOL(&video_settings.vda),
-                 NULL);
-#endif
-
-#ifdef __ANDROID__
+#if defined(__APPLE__) || defined(__ANDROID__)
   setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Hardware accelerated decoding")),
                  SETTING_HTSMSG("videoaccel", store, "videoplayback"),
-                 SETTING_WRITE_BOOL(&video_settings.android_video_accel),
+#if defined(__APPLE__)
+                 SETTING_VALUE(1),
+#else
+                 SETTING_VALUE(0),
+#endif
+                 SETTING_WRITE_BOOL(&video_settings.video_accel),
                  NULL);
 #endif
 
