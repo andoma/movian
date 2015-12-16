@@ -1,0 +1,10 @@
+#import "skin://theme.view"
+
+widget(container_y, {
+
+  widget(container_x, {
+    height: 3em;
+    BackButton();
+  });
+  space(1);
+});

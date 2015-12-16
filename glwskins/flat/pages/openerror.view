@@ -1,6 +1,14 @@
+#import "skin://theme.view"
+
 widget(container_z, {
 
+  widget(container_y, {
+    align: top;
+    PageHeader($self.model.metadata.title);
+  });
+
   widget(image, {
+    margin: 3em;
     source: "skin://icons/ic_error_48px.svg";
     alpha: 0.1;
   });

@@ -36,182 +36,193 @@
   });
 }
 
+zbox({
 
-widget(container_x, {
+  widget(container_x, {
 
 #import "skin://menu/navbar.view"
 
-  widget(container_y, {
-    filterConstraintX: true;
-    onEvent(left, {
-      $view.showNavbar = true;
-      focus("navbardot");
-    }, true, false);
+    widget(container_y, {
+      filterConstraintX: true;
+      onEvent(left, {
+        $view.showNavbar = true;
+        focus("navbardot");
+      }, true, false);
 
-    id: "main";
+      id: "main";
 
-    spacing: 0.5em;
-    padding: 1em;
+      spacing: 0.5em;
+      padding: 1em;
 
-    widget(container_x, {
-      spacing: 1em;
+      widget(container_x, {
+        spacing: 1em;
+        widget(label, {
+          filterConstraintX: true;
+          caption: _("Current version:");
+          align: right;
+        });
+
+        widget(label, {
+          filterConstraintX: true;
+          caption: $core.app.version;
+        });
+      });
+
+      widget(container_x, {
+        spacing: 1em;
+        widget(label, {
+          filterConstraintX: true;
+          caption: _("Available version:");
+          align: right;
+        });
+
+        widget(label, {
+          filterConstraintX: true;
+          caption: $core.upgrade.availableVersion ?? _("No upgrade available");
+        });
+      });
+
+
+      widget(deck, {
+        filterConstraintY: true;
+
+        widget(label, {
+          id: "checking";
+          caption: _("Checking for updates");
+          align: center;
+        });
+
+        widget(container_y, {
+          id: "canUpgrade";
+          spacing: $ui.size;
+          align: center;
+          widget(label, {
+	    caption: fmt(_("New version %s is available for download"),
+		         $core.upgrade.availableVersion);
+	    align: center;
+          });
+          BTN(_("Download and install"), "install");
+        });
+
+
+        widget(container_y, {
+          id: "upgradeError";
+          spacing: $ui.size;
+          align: center;
+          widget(label, {
+	    caption: fmt(_("An error occured during download"));
+	    align: center;
+          });
+          widget(label, {
+	    caption: $core.upgrade.error;
+	    align: center;
+          });
+          BTN(_("Retry"), "install");
+        });
+
+
+        widget(container_y, {
+          id: "checkError";
+          spacing: $ui.size;
+          align: center;
+          widget(label, {
+	    caption: fmt(_("Unable to query for new version"));
+	    align: center;
+          });
+          widget(label, {
+	    caption: $core.upgrade.error;
+	    align: center;
+          });
+          BTN(_("Retry"), "checkUpdates");
+        });
+
+
+        widget(container_y, {
+          id: "upToDate";
+          spacing: $ui.size;
+          align: center;
+          widget(label, {
+	    caption: fmt(_("%s is up to date"), $core.app.name);
+	    align: center;
+          });
+          BTN(_("Check for updates now"), "checkUpdates");
+        });
+
+        widget(container_y, {
+          id: "download";
+          align: center;
+
+          widget(label, {
+	    caption: fmt(_("Downloading %s"), $core.upgrade.task);
+	    align: center;
+          });
+          BAR();
+        });
+
+        page: $core.upgrade.status;
+      });
+
+
       widget(label, {
-        filterConstraintX: true;
-        caption: _("Current version:");
-        align: right;
-      });
-
-      widget(label, {
-        filterConstraintX: true;
-        caption: $core.app.version;
-      });
-    });
-
-    widget(container_x, {
-      spacing: 1em;
-      widget(label, {
-        filterConstraintX: true;
-        caption: _("Available version:");
-        align: right;
-      });
-
-      widget(label, {
-        filterConstraintX: true;
-        caption: $core.upgrade.availableVersion ?? _("No upgrade available");
-      });
-    });
-
-
-    widget(deck, {
-      filterConstraintY: true;
-
-      widget(label, {
-        id: "checking";
-        caption: _("Checking for updates");
+        caption: fmt(_("Changelog for %s releases"),
+		     translate($core.upgrade.track, $core.upgrade.track,
+			       "testing", _("Testing"),
+			       "stable", _("Stable")));
         align: center;
       });
 
-      widget(container_y, {
-        id: "canUpgrade";
-        spacing: $ui.size;
-        align: center;
-        widget(label, {
-	  caption: fmt(_("New version %s is available for download"),
-		       $core.upgrade.availableVersion);
-	  align: center;
-        });
-        BTN(_("Download and install"), "install");
+
+      widget(quad, {
+        height: 1;
       });
 
+      widget(container_x, {
+        weight: 2;
+        widget(list_y, {
+          id: "list";
+          spacing: $ui.size;
 
-      widget(container_y, {
-        id: "upgradeError";
-        spacing: $ui.size;
-        align: center;
-        widget(label, {
-	  caption: fmt(_("An error occured during download"));
-	  align: center;
+          cloner($core.upgrade.changelog, container_x, {
+            alpha: isFocused() + 0.6;
+	    spacing: $ui.size;
+	    focusable: 0.1;
+
+	    widget(label, {
+	      weight: 0.4;
+	      filterConstraintX: true;
+	      align: topRight;
+	      caption: $self.version;
+	    });
+
+	    widget(label, {
+	      filterConstraintX: true;
+	      maxlines: 10;
+	      caption: $self.text;
+	    });
+          });
         });
-        widget(label, {
-	  caption: $core.upgrade.error;
-	  align: center;
-        });
-        BTN(_("Retry"), "install");
-      });
 
-
-      widget(container_y, {
-        id: "checkError";
-        spacing: $ui.size;
-        align: center;
-        widget(label, {
-	  caption: fmt(_("Unable to query for new version"));
-	  align: center;
-        });
-        widget(label, {
-	  caption: $core.upgrade.error;
-	  align: center;
-        });
-        BTN(_("Retry"), "checkUpdates");
-      });
-
-
-      widget(container_y, {
-        id: "upToDate";
-        spacing: $ui.size;
-        align: center;
-        widget(label, {
-	  caption: fmt(_("%s is up to date"), $core.app.name);
-	  align: center;
-        });
-        BTN(_("Check for updates now"), "checkUpdates");
-      });
-
-      widget(container_y, {
-        id: "download";
-        align: center;
-
-        widget(label, {
-	  caption: fmt(_("Downloading %s"), $core.upgrade.task);
-	  align: center;
-        });
-        BAR();
-      });
-
-      page: $core.upgrade.status;
-    });
-
-
-    widget(label, {
-      caption: fmt(_("Changelog for %s releases"),
-		   translate($core.upgrade.track, $core.upgrade.track,
-			     "testing", _("Testing"),
-			     "stable", _("Stable")));
-      align: center;
-    });
-
-
-    widget(quad, {
-      height: 1;
-    });
-
-    widget(container_x, {
-      weight: 2;
-      widget(list_y, {
-        id: "list";
-        spacing: $ui.size;
-
-        cloner($core.upgrade.changelog, container_x, {
-          alpha: isFocused() + 0.6;
-	  spacing: $ui.size;
-	  focusable: 0.1;
-
-	  widget(label, {
-	    weight: 0.4;
-	    filterConstraintX: true;
-	    align: topRight;
-	    caption: $self.version;
-	  });
-
-	  widget(label, {
-	    filterConstraintX: true;
-	    maxlines: 10;
-	    caption: $self.text;
-	  });
-        });
-      });
-
-      widget(slider_y, {
-        id: "scrollbar";
-        bind("list");
-        width: 0.6em;
-        focusable: canScroll() * 0.01;
-        alpha: iir(canScroll(), 16);
-        widget(quad, {
-          GridItemHighlight();
-	  alpha: iir(0.3 + 0.3 * (isFocused() || isPressed()), 4) + isHovered();
+        widget(slider_y, {
+          id: "scrollbar";
+          bind("list");
+          width: 0.6em;
+          focusable: canScroll() * 0.01;
+          alpha: iir(canScroll(), 16);
+          widget(quad, {
+            GridItemHighlight();
+	    alpha: iir(0.3 + 0.3 * (isFocused() || isPressed()), 4) + isHovered();
+          });
         });
       });
     });
   });
+  widget(container_y, {
+
+    widget(container_x, {
+      height: 3em;
+      BackButton();
+    });
+    space(1);
+  });
+
 });

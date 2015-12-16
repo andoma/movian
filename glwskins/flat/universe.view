@@ -116,30 +116,6 @@ widget(container_z, {
       });
 
 
-
-      widget(container_y, {
-        hidden: $ui.fullwindow && !$ui.pointerVisible;
-        alpha: iir($ui.showTopIcons, 4);
-
-        widget(container_x, {
-          height: 3em;
-          widget(container_y, {
-            align: center;
-            width: 4em;
-            clickable: $nav.canGoBack || $ui.logwindow;
-            alpha: iir($nav.canGoBack || $ui.logwindow, 4);
-            onEvent(activate, deliverEvent($ui.eventSink, "back"));
-            navFocusable: false;
-            widget(icon, {
-              color: 0.5 + iir(isHovered(), 4);
-              size: 2em;
-              source: "skin://icons/ic_chevron_left_48px.svg";
-            });
-          });
-          space(1);
-        });
-      });
-
       widget(container_z, {
 
         hidden: !changed($ui.underscan_changes, 5, true);

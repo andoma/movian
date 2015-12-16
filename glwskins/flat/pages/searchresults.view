@@ -77,7 +77,7 @@ widget(container_z, {
 
   widget(container_y, {
     align: top;
-    PageHeader();
+    PageHeader($self.model.metadata.title);
   });
 
 });

@@ -1,6 +1,19 @@
 coreAttach($self.url, {
 
+
   widget(container_y, {
+
+    zbox({
+      height: 3em;
+      quad({
+        color: [0.04, 0.13, 0.4];
+      });
+      label({
+        size: 1.2em;
+        align: center;
+        caption: fmt(_("Remote controlling %s"), "Movian");
+      });
+    });
 
     widget(layer, {
       filterConstraintY: true;
@@ -10,11 +23,16 @@ coreAttach($self.url, {
         noInitialTransform: true;
         alpha: 1 - iir(clamp(getLayer(), 0, 1), 7) * 0.66;
 
+        onEvent(navOpen, deliverEvent($core.navigators.current.eventSink));
+        onEvent(back, deliverEvent($core.navigators.current.eventSink));
+
         cloner($core.navigators.current.pages, container_z, {
 
           widget(loader, {
 	    noInitialTransform: true;
-	    source: "skin://pages/" + $self.model.type + ".view";
+	    source: select(isVoid($self.model.type),
+                           "skin://pages/back.view",
+                           "skin://pages/" + $self.model.type + ".view");
           });
 
         });

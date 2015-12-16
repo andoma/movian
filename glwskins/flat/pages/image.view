@@ -1,4 +1,17 @@
-widget(image, {
-  delta($ui.fullwindow, isVisible());
-  source: $self.url;
+#import "skin://theme.view"
+
+widget(container_z, {
+
+  widget(image, {
+    delta($ui.fullwindow, isVisible());
+    source: $self.url;
+  });
+
+  widget(container_y, {
+    widget(container_x, {
+      height: 3em;
+      BackButton();
+    });
+    space(1);
+  });
 });
