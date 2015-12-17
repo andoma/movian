@@ -315,6 +315,8 @@ Java_com_lonelycoder_mediaplayer_Core_coreInit(JNIEnv *env, jobject obj, jstring
   (*env)->ReleaseStringUTFChars(env, j_pictures, pictures);
   (*env)->ReleaseStringUTFChars(env, j_movies, movies);
 
+  service_createp("androidstorage", _p("Android Storage"), "file:///storage",
+                  "other", NULL, 0, 1, SVC_ORIGIN_SYSTEM);
 
   android_nav = nav_spawn();
 }
