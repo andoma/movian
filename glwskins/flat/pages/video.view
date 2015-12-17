@@ -462,7 +462,7 @@ widget(container_z, {
     align: top;
     widget(container_x, {
       height: 3em;
-      BackButton();
+      BackButton($clone.showPlaydeck);
     });
   });
 });

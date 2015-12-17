@@ -121,12 +121,12 @@
 }
 
 
-#define BackButton() {
+#define BackButton(ENABLED=true) {
   widget(container_y, {
     align: center;
     width: 4em;
-    clickable: $ui.pointerVisible;
-    alpha: iir($ui.pointerVisible, 4);
+    clickable: $ui.pointerVisible || ($ui.touch && ENABLED);
+    alpha: iir($ui.pointerVisible || ($ui.touch && ENABLED), 4);
     onEvent(activate, event("back"));
     navFocusable: false;
     widget(icon, {

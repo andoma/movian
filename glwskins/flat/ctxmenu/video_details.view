@@ -27,121 +27,130 @@
 }
 
 
-widget(list_y, {
+widget(container_z, {
+  widget(list_y, {
 
-
-
-  widget(label, {
-    height: 3em;
-    align: center;
-    caption: $args.metadata.title;
-    size: 1.5em;
-  });
-
-  widget(container_x, {
-    style: "ListItem";
-
-    height: 14em;
-    widget(image, {
-      align: top;
-      width: 7em;
-      source: $args.metadata.icon;
+    widget(label, {
+      height: 3em;
+      align: center;
+      caption: $args.metadata.title;
+      size: 1.5em;
     });
 
-    widget(container_y, {
+    widget(container_x, {
+      style: "ListItem";
+
+      height: 14em;
+      widget(image, {
+        align: top;
+        width: 7em;
+        source: $args.metadata.icon;
+      });
+
+      widget(container_y, {
+        filterConstraintX: true;
+        widget(label, {
+          autohide: true;
+          size: 1.5em;
+          caption: $args.metadata.tagline;
+          padding: [0,0,0,1em];
+        });
+
+
+        widget(label, {
+          autohide: true;
+          maxlines: 5;
+          caption: $args.metadata.description;
+          padding: [0,0,0,1em];
+        });
+
+
+        cloner($args.metadata.videostreams, container_x, {
+          spacing: 0.5em;
+          widget(icon, {
+            source: "skin://icons/ic_videocam_48px.svg";
+          });
+
+          widget(label, {
+            caption: $self.longformat;
+          });
+        });
+
+        cloner($args.metadata.audiostreams, container_x, {
+          spacing: 0.5em;
+          widget(icon, {
+            source: "skin://icons/ic_speaker_48px.svg";
+          });
+
+          widget(label, {
+            caption: $self.longformat;
+          });
+        });
+
+
+
+      });
+    });
+
+
+    ITEM(_("Play from beginning"),  {
+      fireEvent(navOpen($args.url, void, $args, $self.model, "beginning", $self.url));
+      $clone.itemMenu = void;
+    }, "skin://icons/ic_play_arrow_48px.svg");
+
+    ITEM(fmt(_("Continue from %s"), value2duration($args.restartpos)),  {
+      fireEvent(navOpen($args.url, void, $args, $self.model, "resume", $self.url));
+      $clone.itemMenu = void;
+    }, "skin://icons/ic_play_arrow_48px.svg");
+
+
+    ITEM(_("Play until end of list"), {
+      fireEvent(navOpen($args.url, void, $args, $self.model, "continuous", $self.url));
+      $clone.itemMenu = void;
+    }, "skin://icons/ic_play_arrow_48px.svg");
+
+
+
+    ITEM(_("Mark as unseen"), {
+      $args.playcount = false;
+      $clone.itemMenu = void;
+    }, void, $args.playcount > 0);
+
+    // Mark as seen (video)
+
+    ITEM(_("Mark as seen"), {
+      $args.playcount = true;
+      $clone.itemMenu = void;
+    }, void, $args.playcount < 1);
+
+    cloner($args.options, loader, {
+      time: 0.1;
+      noInitialTransform: true;
+      effect: blend;
+      source: "skin://items/list/" + $self.type + ".view";
+      hidden: !$self.enabled;
+      onEvent("item.*", deliverEvent($args));
+    });
+
+    widget(label, {
+      height: 3em;
       filterConstraintX: true;
-      widget(label, {
-        autohide: true;
-        size: 1.5em;
-        caption: $args.metadata.tagline;
-        padding: [0,0,0,1em];
-      });
+      caption: _("Video Cast");
+      style: "ListItemSeparatorLabel";
+    });
 
-
-      widget(label, {
-        autohide: true;
-        maxlines: 5;
-        caption: $args.metadata.description;
-        padding: [0,0,0,1em];
-      });
-
-
-      cloner($args.metadata.videostreams, container_x, {
-        spacing: 0.5em;
-        widget(icon, {
-          source: "skin://icons/ic_videocam_48px.svg";
-        });
-
-        widget(label, {
-          caption: $self.longformat;
-        });
-      });
-
-      cloner($args.metadata.audiostreams, container_x, {
-        spacing: 0.5em;
-        widget(icon, {
-          source: "skin://icons/ic_speaker_48px.svg";
-        });
-
-        widget(label, {
-          caption: $self.longformat;
-        });
-      });
-
-
-
+    cloner($args.metadata.cast, loader, {
+      noInitialTransform: true;
+      source: "skin://items/list/person.view";
     });
   });
 
-
-  ITEM(_("Play from beginning"),  {
-    fireEvent(navOpen($args.url, void, $args, $self.model, "beginning", $self.url));
-    $clone.itemMenu = void;
-  }, "skin://icons/ic_play_arrow_48px.svg");
-
-  ITEM(fmt(_("Continue from %s"), value2duration($args.restartpos)),  {
-    fireEvent(navOpen($args.url, void, $args, $self.model, "resume", $self.url));
-    $clone.itemMenu = void;
-  }, "skin://icons/ic_play_arrow_48px.svg");
-
-
-  ITEM(_("Play until end of list"), {
-    fireEvent(navOpen($args.url, void, $args, $self.model, "continuous", $self.url));
-    $clone.itemMenu = void;
-  }, "skin://icons/ic_play_arrow_48px.svg");
-
-
-
-  ITEM(_("Mark as unseen"), {
-    $args.playcount = false;
-    $clone.itemMenu = void;
-  }, void, $args.playcount > 0);
-
-  // Mark as seen (video)
-
-  ITEM(_("Mark as seen"), {
-    $args.playcount = true;
-    $clone.itemMenu = void;
-  }, void, $args.playcount < 1);
-
-  cloner($args.options, loader, {
-    time: 0.1;
-    noInitialTransform: true;
-    effect: blend;
-    source: "skin://items/list/" + $self.type + ".view";
-    hidden: !$self.enabled;
-    onEvent("item.*", deliverEvent($args));
+  widget(container_y, {
+    align: top;
+    widget(container_x, {
+      height: 3em;
+      BackButton();
+    });
   });
 
-  widget(label, {
-    height: 3em;
-    filterConstraintX: true;
-    caption: _("Video Cast");
-    style: "ListItemSeparatorLabel";
-  });
-
-  cloner($args.metadata.cast, loader, {
-    noInitialTransform: true;
-    source: "skin://items/list/person.view";
-  });
 });
