@@ -268,19 +268,12 @@ glw_settings_adj_size(int delta)
 void
 glw_settings_init(void)
 {
-  glw_settings.gs_settings_store = htsmsg_store_load("glw");
-
-  if(glw_settings.gs_settings_store == NULL)
-    glw_settings.gs_settings_store = htsmsg_create_map();
-
-
   glw_settings.gs_settings = prop_create_root(NULL);
   prop_concat_add_source(gconf.settings_look_and_feel,
 			 prop_create(glw_settings.gs_settings, "nodes"),
 			 NULL);
 
   prop_t *s = glw_settings.gs_settings;
-  htsmsg_t *store = glw_settings.gs_settings_store;
 
   glw_settings.gs_setting_size =
     setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,
@@ -288,7 +281,7 @@ glw_settings_init(void)
                    SETTING_RANGE(-10, 30),
                    SETTING_UNIT_CSTR("px"),
                    SETTING_WRITE_INT(&glw_settings.gs_size),
-                   SETTING_HTSMSG("size", store, "glw"),
+                   SETTING_STORE("glw", "size"),
                    NULL);
 
   glw_settings.gs_setting_underscan_h =
@@ -297,7 +290,7 @@ glw_settings_init(void)
                    SETTING_RANGE(-100, 100),
                    SETTING_UNIT_CSTR("px"),
                    SETTING_WRITE_INT(&glw_settings.gs_underscan_h),
-                   SETTING_HTSMSG("underscan_h", store, "glw"),
+                   SETTING_STORE("glw", "underscan_h"),
                    NULL);
 
   glw_settings.gs_setting_underscan_v =
@@ -306,7 +299,7 @@ glw_settings_init(void)
                    SETTING_RANGE(-100, 100),
                    SETTING_UNIT_CSTR("px"),
                    SETTING_WRITE_INT(&glw_settings.gs_underscan_v),
-                   SETTING_HTSMSG("underscan_v", store, "glw"),
+                   SETTING_STORE("glw", "underscan_v"),
                    NULL);
 
   glw_settings.gs_setting_wrap =
@@ -314,14 +307,14 @@ glw_settings_init(void)
                    SETTING_TITLE(_p("Wrap when reaching beginning/end of lists")),
                    SETTING_VALUE(1),
                    SETTING_WRITE_BOOL(&glw_settings.gs_wrap),
-                   SETTING_HTSMSG("wrap", store, "glw"),
+                   SETTING_STORE("glw", "wrap"),
                    NULL);
 
 #ifdef __linux__
   glw_settings.gs_setting_wheel_mapping =
     setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
                    SETTING_TITLE(_p("Emulate Up/Down buttons with mouse wheel")),
-                   SETTING_HTSMSG("map_mouse_wheel_to_keys", store, "glw"),
+                   SETTING_STORE("glw", "map_mouse_wheel_to_keys"),
                    SETTING_WRITE_BOOL(&glw_settings.gs_map_mouse_wheel_to_keys),
                    NULL);
 #endif
@@ -331,7 +324,7 @@ glw_settings_init(void)
   glw_settings.gs_setting_custom_bg =
     setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE | SETTINGS_FILE,
                    SETTING_TITLE(_p("Custom background image")),
-                   SETTING_HTSMSG("custom_bg", store, "glw"),
+                   SETTING_STORE("glw", "custom_bg"),
                    SETTING_CALLBACK(set_custom_bg, NULL),
                    NULL);
 
@@ -345,7 +338,7 @@ glw_settings_init(void)
 		   SETTING_ZERO_TEXT(_p("Off")),
                    SETTING_UNIT_CSTR("min"),
                    SETTING_WRITE_INT(&glw_settings.gs_screensaver_delay),
-                   SETTING_HTSMSG("screensaver", store, "glw"),
+                   SETTING_STORE("glw", "screensaver"),
                    NULL);
 
   glw_settings.gs_setting_bing_image =
@@ -353,14 +346,14 @@ glw_settings_init(void)
                    SETTING_TITLE(_p("Use Bing images of the day")),
                    SETTING_VALUE(1),
                    SETTING_WRITE_BOOL(&glw_settings.gs_bing_image),
-                   SETTING_HTSMSG("bingimageoftheday", store, "glw"),
+                   SETTING_STORE("glw", "bingimageoftheday"),
                    NULL);
 
   glw_settings.gs_setting_user_images =
     setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE | SETTINGS_DIR,
                    SETTING_TITLE(_p("Folder for screensaver images")),
                    SETTING_CALLBACK(set_screensaver_image_folder, NULL),
-                   SETTING_HTSMSG("userscreensaverimages", store, "glw"),
+                   SETTING_STORE("glw", "userscreensaverimages"),
                    SETTING_MUTEX(&screensaver_mutex),
                    NULL);
 
@@ -390,5 +383,4 @@ glw_settings_fini(void)
 #endif
   setting_destroy(glw_settings.gs_setting_custom_bg);
   prop_destroy(glw_settings.gs_settings);
-  htsmsg_release(glw_settings.gs_settings_store);
 }

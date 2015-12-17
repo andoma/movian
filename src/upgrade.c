@@ -1302,19 +1302,13 @@ upgrade_init(void)
 
   prop_set_string(upgrade_status, "upToDate");
 
-
-  htsmsg_t *store;
-
-  if((store = htsmsg_store_load("upgrade")) == NULL)
-    store = htsmsg_create_map();
-
   settings_create_separator(gconf.settings_general,
 			  _p("Software upgrade"));
 
   setting_create(SETTING_MULTIOPT, gconf.settings_general,
                  SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Upgrade to releases from")),
-                 SETTING_HTSMSG("track-4-10", store, "upgrade"),
+                 SETTING_STORE("upgrade", "track-4-10"),
 #ifndef __ANDROID__
                  SETTING_OPTION("stable",  _p("Stable")),
                  SETTING_OPTION("testing", _p("Testing")),
@@ -1328,7 +1322,7 @@ upgrade_init(void)
   setting_create(SETTING_BOOL, gconf.settings_general, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Notify about upgrades")),
                  SETTING_VALUE(1),
-                 SETTING_HTSMSG("check", store, "upgrade"),
+                 SETTING_STORE("upgrade", "check"),
                  SETTING_WRITE_BOOL(&notify_upgrades),
                  SETTING_MUTEX(&upgrade_mutex),
                  NULL);

@@ -87,11 +87,18 @@ struct setting {
   int s_flags;
   char s_type;
 
+  char s_store_type;
+
   char s_enable_writeback : 1;
-  char s_kvstore          : 1;
   char s_on_group_list    : 1;
   char s_value_set        : 1;
 };
+
+#define SETTING_STORETYPE_NOTE          0
+#define SETTING_STORETYPE_SIMPLE        1
+#define SETTING_STORETYPE_CUSTOM_HTSMSG 2
+#define SETTING_STORETYPE_KVSTORE       3
+
 
 static void init_dev_settings(void);
 
@@ -204,7 +211,7 @@ settings_add_dir(prop_t *parent, prop_t *title, const char *subtype,
 /**
  *
  */
-prop_t *
+void
 settings_add_url(prop_t *parent, prop_t *title,
 		 const char *subtype, const char *icon,
 		 prop_t *shortdesc, const char *url,
@@ -223,7 +230,6 @@ settings_add_url(prop_t *parent, prop_t *title,
 
   if(icon != NULL)
     prop_setv(p, "metadata", "icon", NULL, PROP_SET_STRING, icon);
-  return p;
 }
 
 
@@ -263,7 +269,7 @@ setting_create_leaf(prop_t *parent, prop_t *title, const char *type,
 /**
  *
  */
-void 
+void
 settings_add_int(setting_t *s, int delta)
 {
   prop_add_int(s->s_val, delta);
@@ -287,10 +293,10 @@ settings_create_info(prop_t *parent, const char *image,
 /**
  *
  */
-prop_t *
+void
 settings_create_separator(prop_t *parent, prop_t *caption)
 {
-  return setting_add(parent, caption, "separator", 0);
+  setting_add(parent, caption, "separator", 0);
 }
 
 
@@ -317,12 +323,11 @@ settings_create_action(prop_t *parent, prop_t *title,
 /**
  *
  */
-prop_t *
+void
 settings_create_bound_string(prop_t *parent, prop_t *title, prop_t *value)
 {
   prop_t *p = setting_add(parent, title, "string", 0);
   prop_link(value, prop_create(p, "value"));
-  return p;
 }
 
 
@@ -418,8 +423,6 @@ settings_get_type(const setting_t *s)
 static void
 setting_save_htsmsg(setting_t *s)
 {
-  if(s->s_store_name != NULL)
-    htsmsg_store_save(s->s_store, s->s_store_name);
   if(s->s_saver)
     s->s_saver(s->s_saver_opaque, s->s_store);
 }
@@ -447,15 +450,21 @@ settings_int_callback_ng(void *opaque, int v)
   if(!s->s_enable_writeback)
     return;
 
-  if(s->s_store) {
+  switch(s->s_store_type) {
+  case SETTING_STORETYPE_SIMPLE:
+    htsmsg_store_set(s->s_store_name, s->s_id, HMF_S64, (int64_t)v);
+    break;
+
+  case SETTING_STORETYPE_CUSTOM_HTSMSG:
     htsmsg_delete_field(s->s_store, s->s_id);
     htsmsg_add_s32(s->s_store, s->s_id, v);
     setting_save_htsmsg(s);
-  }
+    break;
 
-  if(s->s_kvstore) {
+  case SETTING_STORETYPE_KVSTORE:
     kv_url_opt_set_deferred(s->s_store_name, KVSTORE_DOMAIN_SETTING,
                             s->s_id, KVSTORE_SET_INT, v);
+    break;
   }
 
   prop_set_string(s->s_current_origin, s->s_origin);
@@ -511,11 +520,11 @@ settings_string_callback_ng(void *opaque, rstr_t *rstr)
 
   rstr_t *outval = rstr;
 
-  if((rstr == NULL || rstr_get(rstr)[0] == 0) &&
-     (s->s_flags & SETTINGS_EMPTY_IS_DEFAULT))
+  if((rstr == NULL || rstr_get(rstr)[0] == 0))
     outval = s->s_default_str;
 
-  if(cb) cb(s->s_opaque, rstr_get(outval));
+  if(cb != NULL)
+    cb(s->s_opaque, rstr_get(outval));
 
   if(s->s_ext_value)
     prop_set_rstring(s->s_ext_value, outval);
@@ -523,17 +532,24 @@ settings_string_callback_ng(void *opaque, rstr_t *rstr)
   if(!s->s_enable_writeback)
     return;
 
-  if(s->s_store) {
+  switch(s->s_store_type) {
+  case SETTING_STORETYPE_SIMPLE:
+    htsmsg_store_set(s->s_store_name, s->s_id, HMF_STR, rstr_get(rstr));
+    break;
+
+  case SETTING_STORETYPE_CUSTOM_HTSMSG:
     htsmsg_delete_field(s->s_store, s->s_id);
     if(rstr != NULL)
       htsmsg_add_str(s->s_store, s->s_id, rstr_get(rstr));
     setting_save_htsmsg(s);
-  }
+    break;
 
-  if(s->s_kvstore)
+  case SETTING_STORETYPE_KVSTORE:
     kv_url_opt_set_deferred(s->s_store_name, KVSTORE_DOMAIN_SETTING, s->s_id,
                             rstr ? KVSTORE_SET_STRING : KVSTORE_SET_VOID,
                             rstr_get(rstr));
+    break;
+  }
 }
 
 
@@ -576,18 +592,24 @@ settings_multiopt_callback_ng(void *opaque, prop_event_t event, ...)
 
     if(s->s_enable_writeback) {
 
-      if(s->s_store) {
+      switch(s->s_store_type) {
+      case SETTING_STORETYPE_SIMPLE:
+        htsmsg_store_set(s->s_store_name, s->s_id, HMF_STR, rstr_get(name));
+        break;
+
+      case SETTING_STORETYPE_CUSTOM_HTSMSG:
 	htsmsg_delete_field(s->s_store, s->s_id);
 	if(name != NULL)
 	  htsmsg_add_str(s->s_store, s->s_id, rstr_get(name));
 	setting_save_htsmsg(s);
-      }
+        break;
 
-      if(s->s_kvstore)
+      case SETTING_STORETYPE_KVSTORE:
 	kv_url_opt_set_deferred(s->s_store_name, KVSTORE_DOMAIN_SETTING,
 				s->s_id,
 				name ? KVSTORE_SET_STRING : KVSTORE_SET_VOID,
 				rstr_get(name));
+      }
     }
 
     rstr_release(name);
@@ -726,15 +748,14 @@ setting_create(int type, prop_t *model, int flags, ...)
       lockmgr = va_arg(ap, void *);
       break;
 
-    case SETTING_TAG_HTSMSG:
-      assert(!s->s_kvstore);
-      mystrset(&s->s_id, va_arg(ap, const char *));
-      s->s_store = va_arg(ap, htsmsg_t *);
+    case SETTING_TAG_STORE:
+      s->s_store_type = SETTING_STORETYPE_SIMPLE;
       mystrset(&s->s_store_name, va_arg(ap, const char *));
+      mystrset(&s->s_id, va_arg(ap, const char *));
       break;
 
     case SETTING_TAG_HTSMSG_CUSTOM_SAVER:
-      assert(!s->s_kvstore);
+      s->s_store_type = SETTING_STORETYPE_CUSTOM_HTSMSG;
       mystrset(&s->s_id, va_arg(ap, const char *));
       s->s_store        = va_arg(ap, htsmsg_t *);
       s->s_saver        = va_arg(ap, settings_saver_t *);
@@ -821,10 +842,9 @@ setting_create(int type, prop_t *model, int flags, ...)
       break;
 
     case SETTING_TAG_KVSTORE:
-      assert(s->s_store == NULL);
+      s->s_store_type = SETTING_STORETYPE_KVSTORE;
       mystrset(&s->s_store_name, va_arg(ap, const char *));
       mystrset(&s->s_id, va_arg(ap, const char *));
-      s->s_kvstore = 1;
       break;
 
     case SETTING_TAG_PROP_ENABLER:
@@ -870,6 +890,8 @@ setting_create(int type, prop_t *model, int flags, ...)
                [SETTING_SEPARATOR]= "separator",
                }[type]);
 
+  rstr_t *r = NULL;
+
   switch(type) {
 
   case SETTING_INT:
@@ -881,12 +903,21 @@ setting_create(int type, prop_t *model, int flags, ...)
 
     i32 = INT32_MIN;
 
-    if(s->s_store != NULL)
-      i32 = htsmsg_get_s32_or_default(s->s_store, s->s_id, INT32_MIN);
 
-    if(s->s_kvstore)
+    switch(s->s_store_type) {
+    case SETTING_STORETYPE_SIMPLE:
+      i32 = htsmsg_store_get_int(s->s_store_name, s->s_id, INT32_MIN);
+      break;
+
+    case SETTING_STORETYPE_CUSTOM_HTSMSG:
+      i32 = htsmsg_get_s32_or_default(s->s_store, s->s_id, INT32_MIN);
+      break;
+
+    case SETTING_STORETYPE_KVSTORE:
       i32 = kv_url_opt_get_int(s->s_store_name, KVSTORE_DOMAIN_SETTING,
                                s->s_id, INT32_MIN);
+      break;
+    }
 
     if(i32 == INT32_MIN)
       i32 = initial_int;
@@ -955,24 +986,28 @@ setting_create(int type, prop_t *model, int flags, ...)
       prop_set(s->s_root, "dirRequest", PROP_SET_INT, 1);
 
     s->s_default_str = rstr_alloc(initial_str);
+    prop_set(s->s_root, "defaultValue", PROP_SET_RSTRING, s->s_default_str);
 
     rstr_t *initial = NULL;
 
-    if(s->s_store != NULL) {
-      const char *v = htsmsg_get_str(s->s_store, s->s_id);
-      if(v != NULL && (!(flags & SETTINGS_EMPTY_IS_DEFAULT) || v[0] != 0)) {
-	initial = rstr_alloc(v);
-      }
+    switch(s->s_store_type) {
+    case SETTING_STORETYPE_SIMPLE:
+      initial = htsmsg_store_get_str(s->s_store_name, s->s_id);
+      break;
+
+    case SETTING_STORETYPE_CUSTOM_HTSMSG:
+      initial = rstr_alloc(htsmsg_get_str(s->s_store, s->s_id));
+      break;
+
+    case SETTING_STORETYPE_KVSTORE:
+      initial = kv_url_opt_get_rstr(s->s_store_name, KVSTORE_DOMAIN_SETTING,
+                                    s->s_id);
+      break;
     }
 
-    if(initial == NULL)
-      initial = rstr_dup(s->s_default_str);
-
-    if(s->s_kvstore) {
-      rstr_t *r = kv_url_opt_get_rstr(s->s_store_name, KVSTORE_DOMAIN_SETTING,
-                                      s->s_id);
-      if(r != NULL)
-        rstr_set(&initial, r);
+    if(initial != NULL && rstr_get(initial)[0] == 0) {
+      rstr_release(initial);
+      initial = NULL;
     }
 
     prop_set_rstring(s->s_val, initial);
@@ -994,17 +1029,26 @@ setting_create(int type, prop_t *model, int flags, ...)
 
 
   case SETTING_MULTIOPT:
-    if(s->s_store != NULL)
-      initial_str = htsmsg_get_str(s->s_store, s->s_id) ?: initial_str;
+
+
+    switch(s->s_store_type) {
+    case SETTING_STORETYPE_SIMPLE:
+      r = htsmsg_store_get_str(s->s_store_name, s->s_id);
+      break;
+
+    case SETTING_STORETYPE_CUSTOM_HTSMSG:
+      r = rstr_alloc(htsmsg_get_str(s->s_store, s->s_id));
+      break;
+
+    case SETTING_STORETYPE_KVSTORE:
+      r = kv_url_opt_get_rstr(s->s_store_name, KVSTORE_DOMAIN_SETTING,
+                              s->s_id);
+      break;
+    }
 
     prop_t *o = NULL;
-
-    if(s->s_kvstore) {
-      rstr_t *r = kv_url_opt_get_rstr(s->s_store_name, KVSTORE_DOMAIN_SETTING,
-                                      s->s_id);
-      if(r != NULL) {
-        o = prop_find(s->s_val, rstr_get(r), NULL);
-      }
+    if(r != NULL) {
+      o = prop_find(s->s_val, rstr_get(r), NULL);
     }
 
     if(o == NULL && initial_str != NULL)
@@ -1107,11 +1151,7 @@ setting_set(setting_t *s, int type, ...)
     break;
 
   case SETTING_STRING:
-    str = va_arg(ap, const char *);
-    if((str == NULL || *str == 0) && (s->s_flags & SETTINGS_EMPTY_IS_DEFAULT))
-      prop_set_rstring(s->s_val, s->s_default_str);
-    else
-      prop_set_string(s->s_val, str);
+    abort();
     break;
 
   case SETTING_MULTIOPT:
@@ -1134,14 +1174,21 @@ setting_reset(setting_t *s)
 
   s->s_value_set = 0;
 
-  if(s->s_store) {
+  switch(s->s_store_type) {
+  case SETTING_STORETYPE_SIMPLE:
+    htsmsg_store_set(s->s_store_name, s->s_id, -1);
+    break;
+
+  case SETTING_STORETYPE_CUSTOM_HTSMSG:
     htsmsg_delete_field(s->s_store, s->s_id);
     setting_save_htsmsg(s);
-  }
+    break;
 
-  if(s->s_kvstore)
+  case SETTING_STORETYPE_KVSTORE:
     kv_url_opt_set_deferred(s->s_store_name, KVSTORE_DOMAIN_SETTING, s->s_id,
                             KVSTORE_SET_VOID);
+    break;
+  }
 
   prop_sub_reemit(s->s_inherited_value_sub);
   prop_sub_reemit(s->s_inherited_origin_sub);
@@ -1284,14 +1331,12 @@ settings_init(void)
 
   // Add configurable system name
 
-  htsmsg_t *s = htsmsg_store_load("netinfo") ?: htsmsg_create_map();
-
   setting_create(SETTING_STRING, gconf.settings_network,
-		 SETTINGS_INITIAL_UPDATE | SETTINGS_EMPTY_IS_DEFAULT,
+		 SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("System name")),
 		 SETTING_VALUE(APPNAME),
                  SETTING_CALLBACK(set_system_name, NULL),
-                 SETTING_HTSMSG("sysname", s, "netinfo"),
+                 SETTING_STORE("netinfo", "sysname"),
                  NULL);
 
 
@@ -1369,17 +1414,18 @@ makesep(prop_t *title)
  *
  */
 static void
-add_dev_bool(htsmsg_t *s, const char *title, const char *id, int *val)
+add_dev_bool(const char *title, const char *id, int *val)
 {
   setting_create(SETTING_BOOL, gconf.settings_dev, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE_CSTR(title),
                  SETTING_WRITE_BOOL(val),
-                 SETTING_HTSMSG(id, s, "dev"),
+                 SETTING_STORE("dev", id),
                  NULL);
-
+#if 0
   if(htsmsg_get_u32_or_default(s, id, 0))
     TRACE(TRACE_DEBUG, "DEV", "Developer setting '%s' is enabled",
           title, id);
+#endif
 }
 
 
@@ -1420,8 +1466,6 @@ set_netlog(void *opaque, const char *str)
 static void
 init_dev_settings(void)
 {
-  htsmsg_t *s = htsmsg_store_load("dev") ?: htsmsg_create_map();
-
   gconf.settings_dev = settings_add_dir(prop_create_root(NULL),
 				  _p("Developer settings"), NULL, NULL,
 				  _p("Settings useful for developers"),
@@ -1431,25 +1475,25 @@ init_dev_settings(void)
   prop_set_string(prop_create(r, "description"),
 		  "Settings for developers. If you don't know what this is, don't touch it");
 
-  add_dev_bool(s, "Various experimental features (Use at own risk)",
+  add_dev_bool("Various experimental features (Use at own risk)",
 	       "experimental", &gconf.enable_experimental);
 
-  add_dev_bool(s, "Enable binreplace",
+  add_dev_bool("Enable binreplace",
 	       "binreplace", &gconf.enable_bin_replace);
 
-  add_dev_bool(s, "Enable omnigrade",
+  add_dev_bool("Enable omnigrade",
 	       "omnigrade", &gconf.enable_omnigrade);
 
 #ifndef NDEBUG
-  add_dev_bool(s, "Disable analytics",
+  add_dev_bool("Disable analytics",
 	       "disableanalytics", &gconf.disable_analytics);
 #endif
 
-  add_dev_bool(s, "Always close pages when pressing back",
+  add_dev_bool("Always close pages when pressing back",
 	       "navalwaysclose", &gconf.enable_nav_always_close);
 
 #ifndef PS3
-  add_dev_bool(s, "Disable HTTP connection reuse",
+  add_dev_bool("Disable HTTP connection reuse",
 	       "nohttpreuse", &gconf.disable_http_reuse);
 #endif
 
@@ -1457,7 +1501,7 @@ init_dev_settings(void)
   setting_create(SETTING_STRING, gconf.settings_dev, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE_CSTR("Network log destination"),
                  SETTING_CALLBACK(set_netlog, NULL),
-                 SETTING_HTSMSG("netlogdest", s, "dev"),
+                 SETTING_STORE("dev", "netlogdest"),
                  NULL);
 #endif
 
@@ -1466,81 +1510,81 @@ init_dev_settings(void)
   setting_add_cstr(gconf.settings_dev,
                    "Debug log filtering", "separator", 0);
 
-  add_dev_bool(s, "Debug all HTTP requests",
+  add_dev_bool("Debug all HTTP requests",
 	       "httpdebug", &gconf.enable_http_debug);
 
-  add_dev_bool(s, "Debug various ecmascript engine things",
+  add_dev_bool("Debug various ecmascript engine things",
 	       "ecmascriptdebug", &gconf.enable_ecmascript_debug);
 
-  add_dev_bool(s, "Log AV-diff stats",
+  add_dev_bool("Log AV-diff stats",
 	       "detailedavdiff", &gconf.enable_detailed_avdiff);
 #ifdef PS3
-  add_dev_bool(s, "Log memory usage",
+  add_dev_bool("Log memory usage",
 	       "memdebug", &gconf.enable_mem_debug);
 #endif
 
-  add_dev_bool(s, "Debug HLS",
+  add_dev_bool("Debug HLS",
 	       "hlsdebug", &gconf.enable_hls_debug);
 
-  add_dev_bool(s, "Debug FTP Client",
+  add_dev_bool("Debug FTP Client",
 	       "ftpdebug", &gconf.enable_ftp_client_debug);
 
-  add_dev_bool(s, "Debug FTP Server",
+  add_dev_bool("Debug FTP Server",
 	       "ftpserverdebug", &gconf.enable_ftp_server_debug);
 #if CONFIG_LIBCEC
-  add_dev_bool(s, "Debug CEC",
+  add_dev_bool("Debug CEC",
 	       "cecdebug", &gconf.enable_cec_debug);
 #endif
-  add_dev_bool(s, "Debug directory listing",
+  add_dev_bool("Debug directory listing",
 	       "fascannerdebug", &gconf.enable_fa_scanner_debug);
 
-  add_dev_bool(s, "Debug SMB/CIFS (Windows File Sharing)",
+  add_dev_bool("Debug SMB/CIFS (Windows File Sharing)",
 	       "smbdebug", &gconf.enable_smb_debug);
 
-  add_dev_bool(s, "Debug read/writes to URL key/value store",
+  add_dev_bool("Debug read/writes to URL key/value store",
 	       "kvstoredebug", &gconf.enable_kvstore_debug);
 
-  add_dev_bool(s, "Debug icecast streaming",
+  add_dev_bool("Debug icecast streaming",
 	       "icecastdebug", &gconf.enable_icecast_debug);
 
-  add_dev_bool(s, "Debug image loading and decoding",
+  add_dev_bool("Debug image loading and decoding",
 	       "imagedebug", &gconf.enable_image_debug);
 
-  add_dev_bool(s, "Debug metadata lookups",
+  add_dev_bool("Debug metadata lookups",
 	       "metadatadebug", &gconf.enable_metadata_debug);
 
-  add_dev_bool(s, "Debug settings store/load from disk",
+  add_dev_bool("Debug settings store/load from disk",
 	       "settingsdebug", &gconf.enable_settings_debug);
 
-  add_dev_bool(s, "Debug threads",
+  add_dev_bool("Debug threads",
 	       "threadsdebug", &gconf.enable_thread_debug);
 
-  add_dev_bool(s, "Debug UPNP",
+  add_dev_bool("Debug UPNP",
 	       "upnp", &gconf.enable_upnp_debug);
 
-  add_dev_bool(s, "Debug Bittorrent general events",
+  add_dev_bool("Debug Bittorrent general events",
 	       "bt", &gconf.enable_torrent_debug);
 
-  add_dev_bool(s, "Debug Bittorrent tracker communication",
+  add_dev_bool("Debug Bittorrent tracker communication",
 	       "bttracker", &gconf.enable_torrent_tracker_debug);
 
-  add_dev_bool(s, "Debug Bittorrent peer connections",
+  add_dev_bool("Debug Bittorrent peer connections",
 	       "btpeercon", &gconf.enable_torrent_peer_connection_debug);
 
-  add_dev_bool(s, "Debug Bittorrent peer downloading",
+  add_dev_bool("Debug Bittorrent peer downloading",
 	       "btpeerdl", &gconf.enable_torrent_peer_download_debug);
 
-  add_dev_bool(s, "Debug Bittorrent peer uploading",
+  add_dev_bool("Debug Bittorrent peer uploading",
 	       "btpeerul", &gconf.enable_torrent_peer_upload_debug);
 
-  add_dev_bool(s, "Debug Bittorrent disk I/O",
+  add_dev_bool("Debug Bittorrent disk I/O",
 	       "btdiskio", &gconf.enable_torrent_diskio_debug);
 
-  add_dev_bool(s, "Debug input events",
+  add_dev_bool("Debug input events",
 	       "inputevents", &gconf.enable_input_event_debug);
 
 #ifdef __ANDROID__
-  add_dev_bool(s, "Debug touch events",
+  add_dev_bool("Debug touch events",
                "touchevents", &gconf.enable_touch_debug);
 #endif
 }

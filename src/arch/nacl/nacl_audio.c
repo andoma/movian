@@ -245,7 +245,7 @@ static audio_class_t nacl_audio_class = {
  *
  */
 audio_class_t *
-audio_driver_init(struct prop *asettings, struct htsmsg *store)
+audio_driver_init(struct prop *asettings)
 {
   return &nacl_audio_class;
 }

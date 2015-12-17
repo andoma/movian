@@ -368,7 +368,7 @@ service_create_managed(const char *id0,
 
   s->s_setting_title =
     setting_create(SETTING_STRING, s->s_settings,
-		   SETTINGS_INITIAL_UPDATE | SETTINGS_EMPTY_IS_DEFAULT,
+		   SETTINGS_INITIAL_UPDATE,
 		   SETTING_TITLE(_p("Name")),
 		   SETTING_VALUE(title),
 		   SETTING_WRITE_PROP(prop_create(s->s_root, "title")),

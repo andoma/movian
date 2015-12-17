@@ -31,26 +31,23 @@ struct video_settings video_settings;
 void
 video_settings_init(void)
 {
-  htsmsg_t *store;
   prop_t *s;
 
   s = settings_add_dir(NULL, _p("Video playback"), "video", NULL,
 		       _p("Video acceleration and display behaviour"),
 		       "settings:video");
 
-  if((store = htsmsg_store_load("videoplayback")) == NULL)
-    store = htsmsg_create_map();
 #if ENABLE_VDPAU
   setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Enable VDPAU")),
                  SETTING_VALUE(1),
                  SETTING_WRITE_BOOL(&video_settings.vdpau),
-                 SETTING_HTSMSG("vdpau", store, "videoplayback"),
+                 SETTING_STORE("videoplayback", "vdpau"),
                  NULL);
 
   setting_create(SETTING_MULTIOPT, s, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Preferred VDPAU deinterlacer method")),
-                 SETTING_HTSMSG("vdpau_deinterlace", store, "videoplayback"),
+                 SETTING_STORE("videoplayback", "vdpau_deinterlace"),
                  SETTING_WRITE_INT(&video_settings.vdpau_deinterlace),
                  SETTING_OPTION("2", _p("Temporal/Spatial")),
                  SETTING_OPTION("1", _p("Temporal")),
@@ -59,8 +56,8 @@ video_settings_init(void)
 
   setting_create(SETTING_MULTIOPT, s, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Maximum resolution for deinterlacer")),
-                 SETTING_HTSMSG("vdpau_deinterlace_resolution_limit",
-                                store, "videoplayback"),
+                 SETTING_STORE("videoplayback",
+                                "vdpau_deinterlace_resolution_limit"),
                  SETTING_WRITE_INT(&video_settings.
                                    vdpau_deinterlace_resolution_limit),
                  SETTING_OPTION     ("0", _p("No limit")),
@@ -73,7 +70,7 @@ video_settings_init(void)
 #if defined(__APPLE__) || defined(__ANDROID__)
   setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Hardware accelerated decoding")),
-                 SETTING_HTSMSG("videoaccel", store, "videoplayback"),
+                 SETTING_STORE("videoplayback", "videoaccel"),
 #if defined(__APPLE__)
                  SETTING_VALUE(1),
 #else
@@ -89,7 +86,7 @@ video_settings_init(void)
                    SETTING_UNIT_CSTR("%"),
                    SETTING_RANGE(50, 200),
                    SETTING_VALUE(100),
-                   SETTING_HTSMSG("vzoom", store, "videoplayback"),
+                   SETTING_STORE("videoplayback", "vzoom"),
                    SETTING_VALUE_ORIGIN("global"),
                    NULL);
 
@@ -99,7 +96,7 @@ video_settings_init(void)
                    SETTING_UNIT_CSTR("%"),
                    SETTING_RANGE(-100, 100),
                    SETTING_VALUE(0),
-                   SETTING_HTSMSG("horizontalpan", store, "videoplayback"),
+                   SETTING_STORE("videoplayback", "horizontalpan"),
                    SETTING_VALUE_ORIGIN("global"),
                    NULL);
 
@@ -109,7 +106,7 @@ video_settings_init(void)
                    SETTING_UNIT_CSTR("%"),
                    SETTING_RANGE(-100, 100),
                    SETTING_VALUE(0),
-                   SETTING_HTSMSG("verticalpan", store, "videoplayback"),
+                   SETTING_STORE("videoplayback", "verticalpan"),
                    SETTING_VALUE_ORIGIN("global"),
                    NULL);
 
@@ -119,7 +116,7 @@ video_settings_init(void)
                    SETTING_UNIT_CSTR("%"),
                    SETTING_RANGE(10, 300),
                    SETTING_VALUE(100),
-                   SETTING_HTSMSG("horizontalscale", store, "videoplayback"),
+                   SETTING_STORE("videoplayback", "horizontalscale"),
                    SETTING_VALUE_ORIGIN("global"),
                    NULL);
 
@@ -129,21 +126,21 @@ video_settings_init(void)
                    SETTING_UNIT_CSTR("%"),
                    SETTING_RANGE(10, 300),
                    SETTING_VALUE(100),
-                   SETTING_HTSMSG("verticalscale", store, "videoplayback"),
+                   SETTING_STORE("videoplayback", "verticalscale"),
                    SETTING_VALUE_ORIGIN("global"),
                    NULL);
 
   video_settings.stretch_horizontal_setting =
     setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
                    SETTING_TITLE(_p("Stretch video to widescreen")),
-                   SETTING_HTSMSG("stretch_horizontal", store, "videoplayback"),
+                   SETTING_STORE("videoplayback", "stretch_horizontal"),
                    SETTING_VALUE_ORIGIN("global"),
                    NULL);
 
   video_settings.stretch_fullscreen_setting =
     setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
                    SETTING_TITLE(_p("Stretch video to fullscreen")),
-                   SETTING_HTSMSG("stretch_fullscreen", store, "videoplayback"),
+                   SETTING_STORE("videoplayback", "stretch_fullscreen"),
                    SETTING_VALUE_ORIGIN("global"),
                    NULL);
 
@@ -151,7 +148,7 @@ video_settings_init(void)
   video_settings.vinterpolate_setting =
     setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
                    SETTING_TITLE(_p("Video frame interpolation")),
-                   SETTING_HTSMSG("vinterpolate", store, "videoplayback"),
+                   SETTING_STORE("videoplayback", "vinterpolate"),
                    SETTING_VALUE_ORIGIN("global"),
                    SETTING_VALUE(1),
                    NULL);
@@ -160,7 +157,7 @@ video_settings_init(void)
   setting_create(SETTING_MULTIOPT, s, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Resume video playback")),
                  SETTING_WRITE_INT(&video_settings.resume_mode),
-                 SETTING_HTSMSG("resumemode", store, "videoplayback"),
+                 SETTING_STORE("videoplayback", "resumemode"),
                  SETTING_OPTION("2", _p("Ask")),
                  SETTING_OPTION("1", _p("Always")),
                  SETTING_OPTION("0", _p("Never")),
@@ -172,19 +169,19 @@ video_settings_init(void)
                  SETTING_RANGE(1, 100),
                  SETTING_UNIT_CSTR("%"),
                  SETTING_WRITE_INT(&video_settings.played_threshold),
-                 SETTING_HTSMSG("played_threshold", store, "videoplayback"),
+                 SETTING_STORE("videoplayback", "played_threshold"),
                  NULL);
 
   setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Automatically play next video in list")),
-                 SETTING_HTSMSG("continuous_playback", store, "videoplayback"),
+                 SETTING_STORE("videoplayback", "continuous_playback"),
                  SETTING_WRITE_BOOL(&video_settings.continuous_playback),
                  NULL);
 
   setting_create(SETTING_MULTIOPT, s, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Up / Down during video playback controls")),
                  SETTING_WRITE_INT(&video_settings.dpad_up_down_mode),
-                 SETTING_HTSMSG("dpad_up_down_mode", store, "videoplayback"),
+                 SETTING_STORE("videoplayback", "dpad_up_down_mode"),
                  SETTING_OPTION("0", _p("Master volume")),
                  SETTING_OPTION("1", _p("Per-file volume")),
                  NULL);
@@ -196,7 +193,7 @@ video_settings_init(void)
                  SETTING_RANGE(3, 60),
                  SETTING_UNIT_CSTR("s"),
                  SETTING_WRITE_INT(&video_settings.seek_back_step),
-                 SETTING_HTSMSG("seekbackstep", store, "videoplayback"),
+                 SETTING_STORE("videoplayback", "seekbackstep"),
                  NULL);
 
   setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,
@@ -205,7 +202,7 @@ video_settings_init(void)
                  SETTING_RANGE(3, 60),
                  SETTING_UNIT_CSTR("s"),
                  SETTING_WRITE_INT(&video_settings.seek_fwd_step),
-                 SETTING_HTSMSG("seekfwdstep", store, "videoplayback"),
+                 SETTING_STORE("videoplayback", "seekfwdstep"),
                  NULL);
 
 

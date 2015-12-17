@@ -686,14 +686,12 @@ subtitles_init_settings(prop_concat_t *pc)
 
   //----------------------------------------------------------
 
-  htsmsg_t *store = htsmsg_store_load("subtitles") ?: htsmsg_create_map();
-
   settings_create_separator(s, _p("Central subtitle folder"));
 
   setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE | SETTINGS_DIR,
                  SETTING_TITLE(_p("Path to central folder")),
                  SETTING_CALLBACK(set_central_dir, NULL),
-                 SETTING_HTSMSG("subtitlefolder", store, "subtitles"),
+                 SETTING_STORE("subtitles", "subtitlefolder"),
                  NULL);
 
   settings_create_separator(s, _p("Subtitle size and positioning"));
@@ -705,20 +703,20 @@ subtitles_init_settings(prop_concat_t *pc)
                    SETTING_RANGE(30, 500),
                    SETTING_STEP(5),
                    SETTING_UNIT_CSTR("%"),
-                   SETTING_HTSMSG("scale", store, "subtitles"),
+                   SETTING_STORE("subtitles", "scale"),
                    SETTING_VALUE_ORIGIN("global"),
                    NULL);
 
   subtitle_settings.align_on_video_setting =
     setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
                    SETTING_TITLE(_p("Force subtitles to reside on video frame")),
-                   SETTING_HTSMSG("subonvideoframe", store, "subtitles"),
+                   SETTING_STORE("subtitles", "subonvideoframe"),
                    SETTING_VALUE_ORIGIN("global"),
                    NULL);
 
   setting_create(SETTING_MULTIOPT, s, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Subtitle position")),
-                 SETTING_HTSMSG("align", store, "subtitles"),
+                 SETTING_STORE("subtitles", "align"),
                  SETTING_WRITE_INT(&subtitle_settings.alignment),
                  SETTING_OPTION("2", _p("Center")),
                  SETTING_OPTION("1", _p("Left")),
@@ -733,7 +731,7 @@ subtitles_init_settings(prop_concat_t *pc)
                    SETTING_STEP(5),
                    SETTING_UNIT_CSTR("px"),
                    SETTING_UNIT_CSTR("px"),
-                   SETTING_HTSMSG("vdisplace", store, "subtitles"),
+                   SETTING_STORE("subtitles", "vdisplace"),
                    SETTING_VALUE_ORIGIN("global"),
                    NULL);
 
@@ -744,21 +742,21 @@ subtitles_init_settings(prop_concat_t *pc)
                    SETTING_STEP(5),
                    SETTING_UNIT_CSTR("px"),
                    SETTING_UNIT_CSTR("px"),
-                   SETTING_HTSMSG("hdisplace", store, "subtitles"),
+                   SETTING_STORE("subtitles", "hdisplace"),
                    SETTING_VALUE_ORIGIN("global"),
                    NULL);
 
   setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Color")),
                  SETTING_VALUE("FFFFFF"),
-                 SETTING_HTSMSG("color", store, "subtitles"),
+                 SETTING_STORE("subtitles", "color"),
                  SETTING_CALLBACK(set_subtitle_color, NULL),
                  NULL);
 
   setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Shadow color")),
                  SETTING_VALUE("000000"),
-                 SETTING_HTSMSG("shadowcolor", store, "subtitles"),
+                 SETTING_STORE("subtitles", "shadowcolor"),
                  SETTING_CALLBACK(set_subtitle_shadow_color, NULL),
                  NULL);
 
@@ -768,14 +766,14 @@ subtitles_init_settings(prop_concat_t *pc)
                  SETTING_RANGE(0, 10),
                  SETTING_STEP(1),
                  SETTING_UNIT_CSTR("px"),
-                 SETTING_HTSMSG("shadowcolorsize", store, "subtitles"),
+                 SETTING_STORE("subtitles", "shadowcolorsize"),
                  SETTING_WRITE_INT(&subtitle_settings.shadow_displacement),
                  NULL);
 
   setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Outline color")),
                  SETTING_VALUE("000000"),
-                 SETTING_HTSMSG("outlinecolor", store, "subtitles"),
+                 SETTING_STORE("subtitles", "outlinecolor"),
                  SETTING_CALLBACK(set_subtitle_outline_color, NULL),
                  NULL);
 
@@ -785,13 +783,13 @@ subtitles_init_settings(prop_concat_t *pc)
                  SETTING_RANGE(0, 4),
                  SETTING_STEP(1),
                  SETTING_UNIT_CSTR("px"),
-                 SETTING_HTSMSG("shadowoutlinesize", store, "subtitles"),
+                 SETTING_STORE("subtitles", "shadowoutlinesize"),
                  SETTING_WRITE_INT(&subtitle_settings.outline_size),
                  NULL);
 
   setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Ignore embedded styling")),
-                 SETTING_HTSMSG("styleoverride", store, "subtitles"),
+                 SETTING_STORE("subtitles", "styleoverride"),
                  SETTING_WRITE_BOOL(&subtitle_settings.style_override),
                  NULL);
 }

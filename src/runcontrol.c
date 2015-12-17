@@ -23,7 +23,6 @@
 
 #include "misc/callout.h"
 #include "htsmsg/htsmsg.h"
-#include "htsmsg/htsmsg_store.h"
 
 #include "main.h"
 #include "settings.h"
@@ -39,8 +38,6 @@ static prop_t *sleeptime_prop;
 static int sleeptime;
 static int sleeptimer_enabled;
 static callout_t sleep_timer;
-static htsmsg_t *rcstore;
-
 
 
 /**
@@ -98,7 +95,7 @@ init_autostandby(void)
 {
   setting_create(SETTING_INT, gconf.settings_general, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Automatic standby")),
-                 SETTING_HTSMSG("autostandby", rcstore, "runcontrol"),
+                 SETTING_STORE("runcontrol", "autostandby"),
                  SETTING_WRITE_INT(&standby_delay),
                  SETTING_RANGE(0, 60),
                  SETTING_STEP(5),
@@ -261,8 +258,6 @@ runcontrol_init(void)
        !gconf.can_not_exit))
     return;
 
-  rcstore = htsmsg_store_load("runcontrol") ?: htsmsg_create_map();
-
   settings_create_separator(gconf.settings_general,
 			  _p("Starting and stopping"));
 
@@ -297,7 +292,7 @@ runcontrol_init(void)
 		   SETTING_TITLE(_p("Enable SSH server")),
 		   SETTING_VALUE(0),
 		   SETTING_CALLBACK(set_ssh_server, NULL),
-		   SETTING_HTSMSG("sshserver", rcstore, "runcontrol"),
+		   SETTING_STORE("runcontrol", "sshserver"),
 		   NULL);
   }
 }

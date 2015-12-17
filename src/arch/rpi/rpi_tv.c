@@ -239,14 +239,12 @@ static void
 rpi_tv_init(void)
 {
   prop_t *set = setting_get_dir("settings:tv");
-  htsmsg_t *s = htsmsg_store_load("rpitv") ?: htsmsg_create_map();
-
   setting_create(SETTING_BOOL, set,
 		 SETTINGS_INITIAL_UPDATE,
 		 SETTING_TITLE(_p("Match display and content framerate")),
                  SETTING_VALUE(0),
 		 SETTING_CALLBACK(set_framerate, NULL),
-		 SETTING_HTSMSG("setframerate", s, "rpitv"),
+		 SETTING_STORE("rpitv", "setframerate"),
 		 NULL);
 
 

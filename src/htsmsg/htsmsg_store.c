@@ -29,16 +29,18 @@
 #include "arch/arch.h"
 #include "fileaccess/fileaccess.h"
 
-#define SETTINGS_STORE_DELAY 2 // seconds
+#define SETTINGS_CACHE_DELAY 2000000 // micro seconds
 
-LIST_HEAD(pending_store_list, pending_store);
+LIST_HEAD(loaded_msg_list, loaded_msg);
 
-
-typedef struct pending_store {
-  LIST_ENTRY(pending_store) ps_link;
-  htsmsg_t *ps_msg;
-  char *ps_path;
-} pending_store_t;
+typedef struct loaded_msg {
+  LIST_ENTRY(loaded_msg) lm_link;
+  htsmsg_t *lm_msg;
+  char *lm_key;
+  callout_t lm_timer;
+  atomic_t lm_refcount;
+  char lm_dirty;
+} loaded_msg_t;
 
 #define SETTINGS_TRACE(fmt, ...) do {            \
   if(gconf.enable_settings_debug) \
@@ -52,20 +54,46 @@ typedef struct pending_store {
 #define RENAME_CANT_OVERWRITE 0
 #endif
 
-static struct pending_store_list pending_stores;
-static callout_t pending_store_callout;
-static hts_mutex_t pending_store_mutex;
+static struct loaded_msg_list loaded_msgs;
+static hts_mutex_t loaded_msg_mutex;
+
 static char *settings_path;
 
 /**
  *
  */
 static void
-pending_store_destroy(pending_store_t *ps)
+loaded_msg_release(loaded_msg_t *lm)
 {
-  htsmsg_release(ps->ps_msg);
-  free(ps->ps_path);
-  free(ps);
+  if(atomic_dec(&lm->lm_refcount))
+    return;
+  htsmsg_release(lm->lm_msg);
+  free(lm->lm_key);
+  free(lm);
+}
+
+
+/**
+ *
+ */
+static int
+htsmsg_store_buildpath(char *dst, size_t dstsize, const char *path)
+{
+  if(settings_path == NULL)
+     return -1;
+
+  snprintf(dst, dstsize, "%s/", settings_path);
+
+  char *n = dst + strlen(dst);
+
+  snprintf(n, dstsize - strlen(dst), "%s", path);
+
+  while(*n) {
+    if(*n == ':' || *n == '?' || *n == '*' || *n > 127 || *n < 32)
+      *n = '_';
+    n++;
+  }
+  return 0;
 }
 
 
@@ -73,7 +101,7 @@ pending_store_destroy(pending_store_t *ps)
  *
  */
 static void
-pending_store_write(pending_store_t *ps)
+loaded_msg_write(loaded_msg_t *lm)
 {
   char fullpath[1024];
   char fullpath2[1024];
@@ -83,7 +111,7 @@ pending_store_write(pending_store_t *ps)
   int ok;
 
   snprintf(fullpath, sizeof(fullpath), "%s/%s%s",
-	   settings_path, ps->ps_path,
+	   settings_path, lm->lm_key,
 	   RENAME_CANT_OVERWRITE ? "" : ".tmp");
 
   char *x = strrchr(fullpath, '/');
@@ -107,7 +135,7 @@ pending_store_write(pending_store_t *ps)
   ok = 1;
 
   htsbuf_queue_init(&hq, 0);
-  htsmsg_json_serialize(ps->ps_msg, &hq, 1);
+  htsmsg_json_serialize(lm->lm_msg, &hq, 1);
 
   int bytes = 0;
 
@@ -131,7 +159,7 @@ pending_store_write(pending_store_t *ps)
   }
 
   snprintf(fullpath2, sizeof(fullpath2), "%s/%s", settings_path,
-           ps->ps_path);
+           lm->lm_key);
 
   if(!RENAME_CANT_OVERWRITE && fa_rename(fullpath, fullpath2,
                                          errbuf, sizeof(errbuf))) {
@@ -145,22 +173,33 @@ pending_store_write(pending_store_t *ps)
 }
 
 
+
+/**
+ *
+ */
+static void
+lm_destroy(loaded_msg_t *lm)
+{
+  if(lm->lm_dirty)
+    loaded_msg_write(lm);
+  LIST_REMOVE(lm, lm_link);
+  callout_disarm(&lm->lm_timer);
+  loaded_msg_release(lm);
+}
+
+
 /**
  *
  */
 void
 htsmsg_store_flush(void)
 {
-  pending_store_t *ps;
-  hts_mutex_lock(&pending_store_mutex);
-  while((ps = LIST_FIRST(&pending_stores)) != NULL) {
-    LIST_REMOVE(ps, ps_link);
-    hts_mutex_unlock(&pending_store_mutex);
-    pending_store_write(ps);
-    pending_store_destroy(ps);
-    hts_mutex_lock(&pending_store_mutex);
-  }
-  hts_mutex_unlock(&pending_store_mutex);
+  loaded_msg_t *lm;
+  hts_mutex_lock(&loaded_msg_mutex);
+  while((lm = LIST_FIRST(&loaded_msgs)) != NULL)
+    lm_destroy(lm);
+
+  hts_mutex_unlock(&loaded_msg_mutex);
 
 #ifdef STOS
   arch_sync_path(settings_path);
@@ -168,14 +207,6 @@ htsmsg_store_flush(void)
 }
 
 
-/**
- *
- */
-static void
-pending_store_fire(struct callout *c, void *opaque)
-{
-  htsmsg_store_flush();
-}
 
 
 /**
@@ -186,7 +217,7 @@ htsmsg_store_init(void)
 {
   char p1[1024];
 
-  hts_mutex_init(&pending_store_mutex);
+  hts_mutex_init(&loaded_msg_mutex);
 
   if(gconf.persistent_path == NULL)
     return;
@@ -200,169 +231,145 @@ htsmsg_store_init(void)
 /**
  *
  */
-void
-htsmsg_store_save(htsmsg_t *record, const char *pathfmt, ...)
+static void
+htsmsg_store_timer_cb(struct callout *c, void *ptr)
 {
-  char path[1024];
-  va_list ap;
-  char *n;
-  pending_store_t *ps;
-
-  if(settings_path == NULL)
-    return;
-
-  va_start(ap, pathfmt);
-  vsnprintf(path, sizeof(path), pathfmt, ap);
-  va_end(ap);
-
-  n = path;
-
-  while(*n) {
-    if(*n == ':' || *n == '?' || *n == '*' || *n > 127 || *n < 32)
-      *n = '_';
-    n++;
-  }
-
-  hts_mutex_lock(&pending_store_mutex);
-
-
-
-  LIST_FOREACH(ps, &pending_stores, ps_link)
-    if(!strcmp(ps->ps_path, path))
-      break;
-  
-  if(!callout_isarmed(&pending_store_callout))
-    callout_arm(&pending_store_callout, pending_store_fire, NULL,
-		SETTINGS_STORE_DELAY);
-
-  if(ps == NULL) {
-    ps = malloc(sizeof(pending_store_t));
-    ps->ps_path = strdup(path);
-    LIST_INSERT_HEAD(&pending_stores, ps, ps_link);
-  } else {
-    htsmsg_release(ps->ps_msg);
-  }
-
-  ps->ps_msg = htsmsg_copy(record);
-
-  hts_mutex_unlock(&pending_store_mutex);
+  loaded_msg_t *lm = ptr;
+  lm_destroy(lm);
 }
 
-
-/**
- *
- */
-static htsmsg_t *
-htsmsg_store_load_one(const char *filename)
-{
-  char errbuf[512];
-  char *mem;
-  htsmsg_t *r;
-  int n;
-  pending_store_t *ps;
-
-  LIST_FOREACH(ps, &pending_stores, ps_link)
-    if(!strcmp(ps->ps_path, filename))
-      return htsmsg_copy(ps->ps_msg);
-
-  fa_handle_t *fh = fa_open(filename, errbuf, sizeof(errbuf));
-  if(fh == NULL) {
-    SETTINGS_TRACE("Unable to open %s -- %s", filename, errbuf);
-    return NULL;
-  }
-
-  int64_t size = fa_fsize(fh);
-
-  mem = malloc(size + 1);
-  if(mem == NULL) {
-    fa_close(fh);
-    return NULL;
-  }
-
-  n = fa_read(fh, mem, size);
-
-  fa_close(fh);
-  if(n == size)
-    r = htsmsg_json_deserialize(mem);
-  else
-    r = NULL;
-
-  SETTINGS_TRACE(
-	"Read %s -- %d bytes. File %s", filename, n, r ? "OK" : "corrupted");
-
-  free(mem);
-
-  return r;
-}
 
 /**
  *
  */
 static int
-htsmsg_store_buildpath(char *dst, size_t dstsize, const char *fmt, va_list ap)
+htsmsg_store_lockmgr(void *ptr, lockmgr_op_t op)
 {
-  if(settings_path == NULL)
-     return -1;
+  loaded_msg_t *lm = ptr;
 
-  snprintf(dst, dstsize, "%s/", settings_path);
-
-  char *n = dst + strlen(dst);
-  
-  vsnprintf(dst + strlen(dst), dstsize - strlen(dst), fmt, ap);
-
-  while(*n) {
-    if(*n == ':' || *n == '?' || *n == '*' || *n > 127 || *n < 32)
-      *n = '_';
-    n++;
+  switch(op) {
+  case LOCKMGR_UNLOCK:
+    hts_mutex_unlock(&loaded_msg_mutex);
+    return 0;
+  case LOCKMGR_LOCK:
+    hts_mutex_lock(&loaded_msg_mutex);
+    return 0;
+  case LOCKMGR_TRY:
+    return hts_mutex_trylock(&loaded_msg_mutex);
+  case LOCKMGR_RETAIN:
+    atomic_inc(&lm->lm_refcount);
+    return 0;
+  case LOCKMGR_RELEASE:
+    loaded_msg_release(lm);
+    return 0;
   }
-  return 0;
+  abort();
+
 }
+
+
+
+/**
+ *
+ */
+void
+htsmsg_store_save(htsmsg_t *record, const char *key)
+{
+  char path[1024];
+  loaded_msg_t *lm;
+
+  if(htsmsg_store_buildpath(path, sizeof(path), key))
+    return;
+
+  hts_mutex_lock(&loaded_msg_mutex);
+
+  LIST_FOREACH(lm, &loaded_msgs, lm_link)
+    if(!strcmp(lm->lm_key, key))
+      break;
+
+  if(lm == NULL) {
+    lm = calloc(1, sizeof(loaded_msg_t));
+    atomic_set(&lm->lm_refcount, 1);
+    lm->lm_key = strdup(key);
+    LIST_INSERT_HEAD(&loaded_msgs, lm, lm_link);
+  } else {
+    htsmsg_release(lm->lm_msg);
+  }
+
+  lm->lm_msg = htsmsg_copy(record);
+
+  lm->lm_dirty = 1;
+  callout_arm_managed(&lm->lm_timer, htsmsg_store_timer_cb, lm,
+                      SETTINGS_CACHE_DELAY, htsmsg_store_lockmgr);
+
+  hts_mutex_unlock(&loaded_msg_mutex);
+}
+
+
+/**
+ *
+ */
+static loaded_msg_t *
+htsmsg_store_obtain(const char *path, int create)
+{
+  char fullpath[1024];
+  char errbuf[512];
+  htsmsg_t *r = NULL;
+  loaded_msg_t *lm;
+
+  if(htsmsg_store_buildpath(fullpath, sizeof(fullpath), path) < 0)
+    return NULL;
+
+  LIST_FOREACH(lm, &loaded_msgs, lm_link)
+    if(!strcmp(lm->lm_key, path))
+      return lm;
+
+  buf_t *b = fa_load(fullpath,
+                     FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
+                     NULL);
+  if(b == NULL) {
+    if(!create) {
+      SETTINGS_TRACE("Unable to open %s -- %s", fullpath, errbuf);
+      return NULL;
+    }
+  } else {
+    r = htsmsg_json_deserialize(buf_cstr(b));
+    buf_release(b);
+
+    SETTINGS_TRACE("Read %s -- File %s", fullpath, r ? "OK" : "corrupted");
+
+    if(r == NULL && !create)
+      return NULL;
+  }
+  if(r == NULL)
+    r = htsmsg_create_map();
+
+  lm = calloc(1, sizeof(loaded_msg_t));
+  atomic_set(&lm->lm_refcount, 1);
+  lm->lm_key = strdup(path);
+  LIST_INSERT_HEAD(&loaded_msgs, lm, lm_link);
+  lm->lm_msg = r;
+
+  callout_arm_managed(&lm->lm_timer, htsmsg_store_timer_cb, lm,
+                      SETTINGS_CACHE_DELAY, htsmsg_store_lockmgr);
+
+  return lm;
+}
+
 
 /**
  *
  */
 htsmsg_t *
-htsmsg_store_load(const char *pathfmt, ...)
+htsmsg_store_load(const char *path)
 {
-  char fullpath[1024];
-  va_list ap;
-  struct fa_stat st;
-  htsmsg_t *r, *c;
+  htsmsg_t *r;
 
-  va_start(ap, pathfmt);
-  if(htsmsg_store_buildpath(fullpath, sizeof(fullpath), pathfmt, ap) < 0)
-    return NULL;
+  hts_mutex_lock(&loaded_msg_mutex);
 
-  hts_mutex_lock(&pending_store_mutex);
-
-  if(fa_stat(fullpath, &st, NULL, 0) == 0 && st.fs_type == CONTENT_DIR) {
-
-    fa_dir_t *fd = fa_scandir(fullpath, NULL, 0);
-    fa_dir_entry_t *fde;
-    if(fd == NULL) {
-      hts_mutex_unlock(&pending_store_mutex);
-      return NULL;
-    }
-
-    r = htsmsg_create_map();
-
-    RB_FOREACH(fde, &fd->fd_entries, fde_link) {
-      const char *filename = rstr_get(fde->fde_filename);
-      if(filename[0] == '.')
-	continue;
-
-      c = htsmsg_store_load_one(rstr_get(fde->fde_url));
-      if(c != NULL)
-	htsmsg_add_msg(r, rstr_get(fde->fde_filename), c);
-
-    }
-    fa_dir_free(fd);
-
-  } else {
-    r = htsmsg_store_load_one(fullpath);
-  }
-
-  hts_mutex_unlock(&pending_store_mutex);
+  loaded_msg_t *lm = htsmsg_store_obtain(path, 0);
+  r = lm != NULL ? htsmsg_copy(lm->lm_msg) : NULL;
+  hts_mutex_unlock(&loaded_msg_mutex);
 
   return r;
 }
@@ -371,29 +378,92 @@ htsmsg_store_load(const char *pathfmt, ...)
  *
  */
 void
-htsmsg_store_remove(const char *pathfmt, ...)
+htsmsg_store_remove(const char *path)
 {
   char fullpath[1024];
-  va_list ap;
+  loaded_msg_t *lm;
 
-  va_start(ap, pathfmt);
-  if(!htsmsg_store_buildpath(fullpath, sizeof(fullpath), pathfmt, ap)) {
+  if(htsmsg_store_buildpath(fullpath, sizeof(fullpath), path))
+    return;
 
-    pending_store_t *ps;
+  hts_mutex_lock(&loaded_msg_mutex);
 
-    hts_mutex_lock(&pending_store_mutex);
+  LIST_FOREACH(lm, &loaded_msgs, lm_link)
+    if(!strcmp(lm->lm_key, path))
+      break;
 
-    LIST_FOREACH(ps, &pending_stores, ps_link)
-      if(!strcmp(ps->ps_path, fullpath))
-	break;
-    
-    if(ps != NULL) {
-      LIST_REMOVE(ps, ps_link);
-      pending_store_destroy(ps);
-    }
-
-    fa_unlink(fullpath, NULL, 0);
-    hts_mutex_unlock(&pending_store_mutex);
+  if(lm != NULL) {
+    lm->lm_dirty = 0;
+    lm_destroy(lm);
   }
+
+  fa_unlink(fullpath, NULL, 0);
+  hts_mutex_unlock(&loaded_msg_mutex);
+}
+
+
+/**
+ *
+ */
+void
+htsmsg_store_set(const char *store, const char *key, int value_type, ...)
+{
+  va_list ap;
+  va_start(ap, value_type);
+
+  hts_mutex_lock(&loaded_msg_mutex);
+  loaded_msg_t *lm = htsmsg_store_obtain(store, 1);
+
+  htsmsg_delete_field(lm->lm_msg, key);
+
+  switch(value_type) {
+  case -1:
+    break;
+  case HMF_MAP:
+  case HMF_LIST:
+    htsmsg_add_msg(lm->lm_msg, key, va_arg(ap, htsmsg_t *));
+    break;
+  case HMF_S64:
+    htsmsg_add_s64(lm->lm_msg, key, va_arg(ap, int64_t));
+    break;
+  case HMF_STR:
+    htsmsg_add_str(lm->lm_msg, key, va_arg(ap, const char *));
+    break;
+  default:
+    abort();
+  }
+  lm->lm_dirty = 1;
+  callout_arm_managed(&lm->lm_timer, htsmsg_store_timer_cb, lm,
+                      SETTINGS_CACHE_DELAY, htsmsg_store_lockmgr);
+  hts_mutex_unlock(&loaded_msg_mutex);
   va_end(ap);
 }
+
+
+/**
+ *
+ */
+int
+htsmsg_store_get_int(const char *store, const char *key, int def)
+{
+  hts_mutex_lock(&loaded_msg_mutex);
+  loaded_msg_t *lm = htsmsg_store_obtain(store, 1);
+  int r = htsmsg_get_s32_or_default(lm->lm_msg, key, def);
+  hts_mutex_unlock(&loaded_msg_mutex);
+  return r;
+}
+
+
+/**
+ *
+ */
+rstr_t *
+htsmsg_store_get_str(const char *store, const char *key)
+{
+  hts_mutex_lock(&loaded_msg_mutex);
+  loaded_msg_t *lm = htsmsg_store_obtain(store, 1);
+  rstr_t *r = rstr_alloc(htsmsg_get_str(lm->lm_msg, key));
+  hts_mutex_unlock(&loaded_msg_mutex);
+  return r;
+}
+

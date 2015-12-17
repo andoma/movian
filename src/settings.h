@@ -24,11 +24,10 @@
 #define SETTINGS_INITIAL_UPDATE 0x1
 #define SETTINGS_PASSWORD       0x2 // Make a password entry (hidden display)
 #define SETTINGS_RAW_NODES      0x4
-#define SETTINGS_FIRST          0x8 // Insert at head 
-#define SETTINGS_EMPTY_IS_DEFAULT 0x10 // Empty string makes it be default
-#define SETTINGS_DEBUG            0x20
-#define SETTINGS_FILE             0x40 // Want a path to a file
-#define SETTINGS_DIR              0x80 // Want a path to a dir
+#define SETTINGS_FIRST          0x8 // Insert at head
+#define SETTINGS_DEBUG          0x10
+#define SETTINGS_FILE           0x20 // Want a path to a file
+#define SETTINGS_DIR            0x40 // Want a path to a dir
 
 
 typedef void (settings_saver_t)(void *opaque, htsmsg_t *htsmsg);
@@ -45,12 +44,12 @@ prop_t *settings_add_dir_cstr(prop_t *parent, const char *title,
 			      const char *subtype, const char *icon,
 			      const char *shortdesc, const char *url);
 
-prop_t *settings_add_url(prop_t *parent, prop_t *title,
-			 const char *subtype, const char *icon,
-			 prop_t *shortdesc, const char *url,
-			 int flags);
+void settings_add_url(prop_t *parent, prop_t *title,
+                      const char *subtype, const char *icon,
+                      prop_t *shortdesc, const char *url,
+                      int flags);
 
-prop_t *settings_create_separator(prop_t *parent, prop_t *caption);
+void settings_create_separator(prop_t *parent, prop_t *caption);
 
 void settings_add_int(setting_t *s, int delta);
 
@@ -72,8 +71,8 @@ void settings_create_info(prop_t *parent, const char *image,
 			  prop_t *description);
 
 
-prop_t *settings_create_bound_string(prop_t *parent, prop_t *title,
-				     prop_t *value);
+void settings_create_bound_string(prop_t *parent, prop_t *title,
+                                  prop_t *value);
 
 prop_t *makesep(prop_t *title);
 
@@ -85,7 +84,7 @@ enum {
   SETTING_TAG_VALUE,
   SETTING_TAG_CALLBACK,
   SETTING_TAG_COURIER,
-  SETTING_TAG_HTSMSG,
+  SETTING_TAG_STORE,
   SETTING_TAG_HTSMSG_CUSTOM_SAVER,
   SETTING_TAG_RANGE,
   SETTING_TAG_STEP,
@@ -110,7 +109,7 @@ enum {
 #define SETTING_VALUE(a)                        SETTING_TAG_VALUE, a
 #define SETTING_CALLBACK(a, b)                  SETTING_TAG_CALLBACK, a, b
 #define SETTING_COURIER(a)                      SETTING_TAG_COURIER, a
-#define SETTING_HTSMSG(a, b, c)                 SETTING_TAG_HTSMSG, a, b, c
+#define SETTING_STORE(a, b)                     SETTING_TAG_STORE, a, b
 #define SETTING_HTSMSG_CUSTOM_SAVER(a, b, c, d) \
    SETTING_TAG_HTSMSG_CUSTOM_SAVER, a, b, c, d
 #define SETTING_RANGE(a, b)                     SETTING_TAG_RANGE, a, b

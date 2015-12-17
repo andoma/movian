@@ -1052,7 +1052,6 @@ plugin_setup_repo_model(void)
 static void
 plugins_setup_root_props(void)
 {
-  htsmsg_t *store = htsmsg_store_load("pluginconf") ?: htsmsg_create_map();
   prop_t *parent = prop_create(prop_get_global(), "plugins");
 
   plugin_root_list = prop_create(parent, "nodes");
@@ -1067,7 +1066,7 @@ plugins_setup_root_props(void)
 
   setting_create(SETTING_STRING, gconf.settings_general,
                  SETTINGS_INITIAL_UPDATE,
-                 SETTING_HTSMSG("alt_repo", store, "pluginconf"),
+                 SETTING_STORE("pluginconf", "alt_repo"),
                  SETTING_TITLE(_p("Alternate plugin Repository URL")),
                  SETTING_CALLBACK(set_alt_repo_url, NULL),
                  SETTING_MUTEX(&plugin_mutex),
@@ -1075,14 +1074,14 @@ plugins_setup_root_props(void)
 
   setting_create(SETTING_STRING, gconf.settings_general,
                  SETTINGS_INITIAL_UPDATE,
-                 SETTING_HTSMSG("betapasswords", store, "pluginconf"),
+                 SETTING_STORE("pluginconf", "betapasswords"),
                  SETTING_TITLE(_p("Beta testing passwords")),
                  SETTING_CALLBACK(set_beta_passwords, NULL),
                  SETTING_MUTEX(&plugin_mutex),
                  NULL);
 
   setting_create(SETTING_BOOL, gconf.settings_general, SETTINGS_INITIAL_UPDATE,
-                 SETTING_HTSMSG("autoupgrade", store, "pluginconf"),
+                 SETTING_STORE("pluginconf", "autoupgrade"),
                  SETTING_TITLE(_p("Automatically upgrade plugins")),
                  SETTING_VALUE(1),
                  SETTING_CALLBACK(set_autoupgrade, NULL),
@@ -1195,12 +1194,15 @@ plugin_remove(plugin_t *pl)
   usage_event("Plugin remove", 1,
               USAGE_SEG("plugin", pl->pl_id));
 
+  TRACE(TRACE_DEBUG, "plugin", "Uninstalling %s", pl->pl_id);
+
   snprintf(path, sizeof(path), "%s/installedplugins/%s.zip",
 	   gconf.persistent_path, pl->pl_id);
   fa_unlink(path, NULL, 0);
 
-  TRACE(TRACE_DEBUG, "plugin", "Uninstalling %s", pl->pl_id);
-  htsmsg_store_remove("plugins/%s", pl->pl_id);
+  snprintf(path, sizeof(path), "%s/plugins/%s",
+	   gconf.persistent_path, pl->pl_id);
+  fa_unlink_recursive(path, NULL, 0, 0);
 
   plugin_unload(pl);
 
@@ -1556,8 +1558,7 @@ pvs_cb(void *opaque, const char *str)
  *
  */
 static void
-add_view_type(htsmsg_t *store, prop_t *p,
-              const char *type, const char *class, prop_t *title)
+add_view_type(prop_t *p, const char *type, const char *class, prop_t *title)
 {
   char id[256];
   plugin_view_t *pv = calloc(1, sizeof(plugin_view_t));
@@ -1568,7 +1569,7 @@ add_view_type(htsmsg_t *store, prop_t *p,
   pv->pv_s =
     setting_create(SETTING_MULTIOPT, p, SETTINGS_INITIAL_UPDATE,
                    SETTING_TITLE(title),
-                   SETTING_HTSMSG(id, store, "selectedviews"),
+                   SETTING_STORE("selectedviews", id),
                    SETTING_CALLBACK(pvs_cb, pv),
                    SETTING_OPTION("default", _p("Default")),
                    SETTING_MUTEX(&plugin_mutex),
@@ -1591,27 +1592,25 @@ plugins_view_settings_init(void)
 {
   prop_t *p = prop_create_root(NULL);
 
-  htsmsg_t *s = htsmsg_store_load("selectedviews") ?: htsmsg_create_map();
-
   prop_concat_add_source(gconf.settings_look_and_feel,
 			 prop_create(p, "nodes"),
 			 makesep(_p("Preferred views from plugins")));
 
-  add_view_type(s, p, "standard", "background",  _p("Background"));
-  add_view_type(s, p, "standard", "loading",     _p("Loading screen"));
-  add_view_type(s, p, "standard", "screensaver", _p("Screen saver"));
-  add_view_type(s, p, "standard", "home",        _p("Home page"));
-  add_view_type(s, p, "standard", "osk",         _p("On Screen Keyboards"));
+  add_view_type(p, "standard", "background",  _p("Background"));
+  add_view_type(p, "standard", "loading",     _p("Loading screen"));
+  add_view_type(p, "standard", "screensaver", _p("Screen saver"));
+  add_view_type(p, "standard", "home",        _p("Home page"));
+  add_view_type(p, "standard", "osk",         _p("On Screen Keyboards"));
 
   settings_create_separator(p, _p("Browsing"));
 
-  add_view_type(s, p, "standard", "tracks",     _p("Audio tracks"));
-  add_view_type(s, p, "standard", "album",      _p("Album"));
-  add_view_type(s, p, "standard", "albums",     _p("List of albums"));
-  add_view_type(s, p, "standard", "artist",     _p("Artist"));
-  add_view_type(s, p, "standard", "tvchannels", _p("TV channels"));
-  add_view_type(s, p, "standard", "images",     _p("Images"));
-  add_view_type(s, p, "standard", "movies",     _p("Movies"));
+  add_view_type(p, "standard", "tracks",     _p("Audio tracks"));
+  add_view_type(p, "standard", "album",      _p("Album"));
+  add_view_type(p, "standard", "albums",     _p("List of albums"));
+  add_view_type(p, "standard", "artist",     _p("Artist"));
+  add_view_type(p, "standard", "tvchannels", _p("TV channels"));
+  add_view_type(p, "standard", "images",     _p("Images"));
+  add_view_type(p, "standard", "movies",     _p("Movies"));
 }
 
 

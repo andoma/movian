@@ -414,14 +414,13 @@ locatedb_search(prop_t *model, const char *query, prop_t *loading)
 static int
 locatedb_init(void)
 {
-  htsmsg_t *store = htsmsg_store_load("locatedb") ?: htsmsg_create_map();
   prop_t *s = search_get_settings();
 
   setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Search using Unix locatedb")),
                  SETTING_VALUE(1),
                  SETTING_WRITE_BOOL(&locatedb_enabled),
-                 SETTING_HTSMSG("enable", store, "locatedb"),
+                 SETTING_STORE("locatedb", "enable"),
                  NULL);
 
   return 0;

@@ -122,7 +122,7 @@ typedef struct audio_decoder {
 
 } audio_decoder_t;
 
-audio_class_t *audio_driver_init(struct prop *asettings, struct htsmsg *store);
+audio_class_t *audio_driver_init(struct prop *asettings);
 
 void audio_test_init(struct prop *asettings);
 

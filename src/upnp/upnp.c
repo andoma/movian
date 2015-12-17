@@ -437,7 +437,7 @@ add_content_directory(upnp_service_t *us, const char *hostname, int port)
 
   us->us_setting_title =
     setting_create(SETTING_STRING, us->us_settings,
-		   SETTINGS_INITIAL_UPDATE | SETTINGS_EMPTY_IS_DEFAULT,
+		   SETTINGS_INITIAL_UPDATE,
                    SETTING_TITLE(_p("Name")),
                    SETTING_VALUE(title),
 		   SETTING_WRITE_PROP(prop_create(root, "title")),

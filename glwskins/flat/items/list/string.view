@@ -36,6 +36,14 @@ widget(container_z, {
           alpha: 0.3 + $view.isFocused;
         });
 
+        widget(label, {
+          hidden: select($self.value, true, false);
+          caption: $self.defaultValue;
+          padding: [1em, 0, 0, 0];
+          font: "skin://fonts/RobotoCondensed-Regular.ttf";
+          color: 0.5;
+        });
+
         widget(text, {
           description: $self.metadata.title;
           password: $self.password;

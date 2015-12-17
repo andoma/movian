@@ -53,7 +53,6 @@ set_torrent_free_percentage(void *opaque, int v)
 void
 torrent_settings_init(void)
 {
-  htsmsg_t *store = htsmsg_store_load("bittorrent") ?: htsmsg_create_map();
   prop_t *s = gconf.settings_bittorrent;
 
   char defpath[1024];
@@ -71,7 +70,7 @@ torrent_settings_init(void)
                  SETTING_MUTEX(&bittorrent_mutex),
                  SETTING_WRITE_BOOL(&btg.btg_enabled),
                  SETTING_VALUE(1),
-                 SETTING_HTSMSG("enable", store, "bittorrent"),
+                 SETTING_STORE("bittorrent", "enable"),
                  NULL);
 
   setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,
@@ -81,7 +80,7 @@ torrent_settings_init(void)
                  SETTING_VALUE(freespace),
                  SETTING_RANGE(1, 90),
                  SETTING_UNIT_CSTR("%"),
-                 SETTING_HTSMSG("freepercentage", store, "bittorrent"),
+                 SETTING_STORE("bittorrent", "freepercentage"),
                  NULL);
 
   setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE,
@@ -89,7 +88,7 @@ torrent_settings_init(void)
                  SETTING_MUTEX(&bittorrent_mutex),
                  SETTING_CALLBACK(set_torrent_cache_path, NULL),
                  SETTING_VALUE(defpath),
-                 SETTING_HTSMSG("path", store, "bittorrent"),
+                 SETTING_STORE("bittorrent", "path"),
                  NULL);
 
   setting_create(SETTING_ACTION, s, 0,

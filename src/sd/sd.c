@@ -135,7 +135,7 @@ sd_add_service(service_instance_t *si, const char *title,
 
   si->si_setting_title =
     setting_create(SETTING_STRING, si->si_settings,
-		   SETTINGS_INITIAL_UPDATE | SETTINGS_EMPTY_IS_DEFAULT,
+		   SETTINGS_INITIAL_UPDATE,
 		   SETTING_TITLE(_p("Name")),
 		   SETTING_VALUE(title),
 		   SETTING_WRITE_PROP(prop_create(r, "title")),

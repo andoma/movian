@@ -279,15 +279,13 @@ spotlight_search(prop_t *model, const char *query, prop_t *loading)
 static int
 spotlight_init(void)
 {
-  htsmsg_t *store = htsmsg_store_load("spotlight") ?: htsmsg_create_map();
   prop_t *s = search_get_settings();
-
 
   setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Search using spotlight")),
                  SETTING_VALUE(1),
                  SETTING_WRITE_BOOL(&spotlight_enabled),
-                 SETTING_HTSMSG("enable", store, "spotlight"),
+                 SETTING_STORE("spotlight", "enable"),
                  NULL);
 
   return 0;

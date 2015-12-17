@@ -532,7 +532,7 @@ cookie_persist(struct callout *c, void *aux)
     htsmsg_add_msg(m, NULL, c);
   }
   hts_mutex_unlock(&http_cookies_mutex);
-  htsmsg_store_save(m, "httpcookies", NULL);
+  htsmsg_store_save(m, "httpcookies");
   htsmsg_release(m);
 }
 

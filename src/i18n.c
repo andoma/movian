@@ -29,11 +29,10 @@
 #if ENABLE_HTTPSERVER
 #include "networking/http_server.h"
 #endif
-#include "htsmsg/htsmsg_store.h"
 
 static HTS_MUTEX_DECL(nls_mutex);
 
-static void nls_init(prop_t *parent, htsmsg_t *store);
+static void nls_init(prop_t *parent);
 
 
 
@@ -93,24 +92,20 @@ i18n_init(void)
 			       "settings:i18n");
   int i;
 
-  htsmsg_t *store = htsmsg_store_load("i18n");
-  if(store == NULL)
-    store = htsmsg_create_map();
-
-  nls_init(s, store);
+  nls_init(s);
 
 #ifdef STOS
   setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Timezone")),
                  SETTING_CALLBACK(set_timezone, NULL),
-                 SETTING_HTSMSG("timezone", store, "i18n"),
+                 SETTING_STORE("timezone", store, "i18n"),
                  NULL);
 
 #endif
 
   setting_create(SETTING_MULTIOPT, s, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Time format")),
-                 SETTING_HTSMSG("timeformat", store, "i18n"),
+                 SETTING_STORE("i18n", "timeformat"),
                  SETTING_WRITE_INT(&gconf.time_format),
                  SETTING_OPTION(gconf.time_format_system ? "0" : NULL,
                                 _p("System default")),
@@ -126,38 +121,38 @@ i18n_init(void)
   setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Primary audio language code")),
                  SETTING_CALLBACK(set_lang, &lang_audio[0]),
-                 SETTING_HTSMSG("audio1", store, "i18n"),
+                 SETTING_STORE("i18n", "audio1"),
                  NULL);
 
   setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Secondary audio language code")),
                  SETTING_CALLBACK(set_lang, &lang_audio[1]),
-                 SETTING_HTSMSG("audio2", store, "i18n"),
+                 SETTING_STORE("i18n", "audio2"),
                  NULL);
 
   setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Tertiary audio language code")),
                  SETTING_CALLBACK(set_lang, &lang_audio[2]),
-                 SETTING_HTSMSG("audio3", store, "i18n"),
+                 SETTING_STORE("i18n", "audio3"),
                  NULL);
 
 
   setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Primary subtitle language code")),
                  SETTING_CALLBACK(&set_lang, &lang_subtitle[0]),
-                 SETTING_HTSMSG("subtitle1", store, "i18n"),
+                 SETTING_STORE("i18n", "subtitle1"),
                  NULL);
 
   setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Secondary subtitle language code")),
                  SETTING_CALLBACK(&set_lang, &lang_subtitle[1]),
-                 SETTING_HTSMSG("subtitle2", store, "i18n"),
+                 SETTING_STORE("i18n", "subtitle2"),
                  NULL);
 
   setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Tertiary subtitle language code")),
                  SETTING_CALLBACK(&set_lang, &lang_subtitle[2]),
-                 SETTING_HTSMSG("subtitle3", store, "i18n"),
+                 SETTING_STORE("i18n", "subtitle3"),
                  NULL);
 
   const char **optlist = NULL;
@@ -177,14 +172,14 @@ i18n_init(void)
 
   setting_create(SETTING_MULTIOPT, s, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Default character set")),
-                 SETTING_HTSMSG("default_charset", store, "i18n"),
+                 SETTING_STORE("i18n", "default_charset"),
                  SETTING_CALLBACK(set_default_charset, NULL),
                  SETTING_OPTION_LIST(optlist),
                  NULL);
 
   setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Ignore 'The' at beginning of words when sorting")),
-                 SETTING_HTSMSG("skipthe", store, "i18n"),
+                 SETTING_STORE("i18n", "skipthe"),
                  SETTING_WRITE_BOOL(&gconf.ignore_the_prefix),
                  NULL);
 }
@@ -796,7 +791,7 @@ langcmp(lang_t *a, lang_t *b)
  *
  */
 static void
-nls_init(prop_t *parent, htsmsg_t *store)
+nls_init(prop_t *parent)
 {
   char buf[200];
   char buf2[200];
@@ -867,7 +862,7 @@ nls_init(prop_t *parent, htsmsg_t *store)
 
   setting_create(SETTING_MULTIOPT, parent, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Language")),
-                 SETTING_HTSMSG("language", store, "i18n"),
+                 SETTING_STORE("i18n", "language"),
                  SETTING_CALLBACK(set_language, NULL),
                  SETTING_OPTION_LIST(optlist),
                  NULL);

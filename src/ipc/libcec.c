@@ -196,8 +196,6 @@ set_longpress_select(void *opaque, int value)
 static void *
 libcec_init_thread(void *aux)
 {
-  htsmsg_t *s = htsmsg_store_load("cec") ?: htsmsg_create_map();
-
   prop_t *set = setting_get_dir("settings:tv");
 
   libcec_clear_configuration(&cec_config);
@@ -233,7 +231,7 @@ libcec_init_thread(void *aux)
 		 SETTING_TITLE(_p("Switch TV input source")),
                  SETTING_VALUE(1),
 		 SETTING_CALLBACK(set_activate_source, NULL),
-		 SETTING_HTSMSG("controlinput", s, "cec"),
+		 SETTING_STORE("cec", "controlinput"),
 		 NULL);
 
   setting_create(SETTING_BOOL, set,
@@ -241,7 +239,7 @@ libcec_init_thread(void *aux)
 		 SETTING_TITLE(_p("Use STOP key for combo input")),
                  SETTING_VALUE(1),
 		 SETTING_CALLBACK(set_stop_combo_mode, NULL),
-		 SETTING_HTSMSG("stopcombo", s, "cec"),
+		 SETTING_STORE("cec", "stopcombo"),
 		 NULL);
 
   setting_create(SETTING_BOOL, set,
@@ -249,7 +247,7 @@ libcec_init_thread(void *aux)
 		 SETTING_TITLE(_p("Longpress SELECT for item menu")),
                  SETTING_VALUE(1),
 		 SETTING_CALLBACK(set_longpress_select, NULL),
-		 SETTING_HTSMSG("longpress_select", s, "cec"),
+		 SETTING_STORE("cec", "longpress_select"),
 		 NULL);
 
 
@@ -258,7 +256,7 @@ libcec_init_thread(void *aux)
 		 SETTINGS_INITIAL_UPDATE,
 		 SETTING_TITLE_CSTR("Shutdown UI when TV is off"),
 		 SETTING_WRITE_BOOL(&auto_ui_shutdown),
-		 SETTING_HTSMSG("auto_shutdown", s, "cec"),
+		 SETTING_STORE("cec", "auto_shutdown"),
 		 NULL);
 #endif
 

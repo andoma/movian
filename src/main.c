@@ -287,33 +287,28 @@ swrefresh(void)
 static void
 generate_device_id(void)
 {
-  if(gconf.device_id[0] == 0) {
-    htsmsg_t *conf = htsmsg_store_load("deviceid");
-    const char *s = conf ? htsmsg_get_str(conf, "deviceid") : NULL;
-    if(s != NULL) {
-      snprintf(gconf.device_id, sizeof(gconf.device_id), "%s" ,s);
-    } else {
-      uint8_t d[20];
-      char uuid[40];
+  if(gconf.device_id[0] != 0)
+    return;
 
-      if(conf == NULL)
-        conf = htsmsg_create_map();
+  rstr_t *s = htsmsg_store_get_str("deviceid", "deviceid");
+  if(s != NULL) {
+    snprintf(gconf.device_id, sizeof(gconf.device_id), "%s", rstr_get(s));
+  } else {
+    uint8_t d[20];
+    char uuid[40];
 
-      arch_get_random_bytes(d, sizeof(d));
+    arch_get_random_bytes(d, sizeof(d));
 
-      snprintf(uuid, sizeof(uuid),
-               "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
-               "%02x%02x%02x%02x%02x%02x",
-               d[0x0], d[0x1], d[0x2], d[0x3],
-               d[0x4], d[0x5], d[0x6], d[0x7],
-               d[0x8], d[0x9], d[0xa], d[0xb],
-               d[0xc], d[0xd], d[0xe], d[0xf]);
+    snprintf(uuid, sizeof(uuid),
+             "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
+             "%02x%02x%02x%02x%02x%02x",
+             d[0x0], d[0x1], d[0x2], d[0x3],
+             d[0x4], d[0x5], d[0x6], d[0x7],
+             d[0x8], d[0x9], d[0xa], d[0xb],
+             d[0xc], d[0xd], d[0xe], d[0xf]);
 
-      snprintf(gconf.device_id, sizeof(gconf.device_id), "%s", uuid);
-      htsmsg_add_str(conf, "deviceid", uuid);
-      htsmsg_store_save(conf, "deviceid");
-    }
-    htsmsg_release(conf);
+    snprintf(gconf.device_id, sizeof(gconf.device_id), "%s", uuid);
+    htsmsg_store_set("deviceid", "deviceid", HMF_STR, uuid);
   }
 }
 

@@ -533,11 +533,9 @@ tvdb_init(void)
   if(tvdb == NULL)
     return;
 
-  htsmsg_t *store = htsmsg_store_load("tvdb") ?: htsmsg_create_map();
-
   setting_create(SETTING_STRING, tvdb->ms_settings, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Language (ISO 639-1 code)")),
-                 SETTING_HTSMSG("language", store, "tvdb"),
+                 SETTING_STORE("tvdb", "language"),
                  SETTING_CALLBACK(set_lang, NULL),
                  NULL);
 }

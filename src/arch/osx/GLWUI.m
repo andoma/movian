@@ -93,13 +93,7 @@
   NSRect frame;
 
   fullscreen = asfullscreen;
-
-  htsmsg_t *m = htsmsg_store_load("glwcocoa") ?: htsmsg_create_map();
-  htsmsg_delete_field(m, "fullscreen");
-  if(fullscreen)
-    htsmsg_add_u32(m, "fullscreen", 1);
-  htsmsg_store_save(m, "glwcocoa");
-  htsmsg_release(m);
+  htsmsg_store_set("glwcocoa", "fullscreen", HMF_S64, (int64_t)fullscreen);
 
   if(fullscreen) {
 
@@ -276,13 +270,7 @@ static prop_t *stored_nav;
 			 PROP_TAG_COURIER, mainloop_courier,
                          NULL);
 
-  int fs = 0;
-  htsmsg_t *m = htsmsg_store_load("glwcocoa");
-  if(m != NULL) {
-    fs = htsmsg_get_u32_or_default(m, "fullscreen", 0);
-    htsmsg_release(m);
-  }
-
+  int fs = htsmsg_store_get_int("glwcocoa", "fullscreen", 0);
   [self openWin:fs];
 
   glw_lock(gr);

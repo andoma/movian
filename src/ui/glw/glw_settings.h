@@ -43,7 +43,6 @@ typedef struct glw_settings {
   struct setting *gs_setting_user_images;
 
   struct prop *gs_settings;
-  struct htsmsg *gs_settings_store;
 
 } glw_settings_t;
 

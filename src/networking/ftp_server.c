@@ -1023,15 +1023,13 @@ set_password(void *opauqe, const char *str)
 static void
 ftp_server_init(void)
 {
-  htsmsg_t *s = htsmsg_store_load("ftpserver") ?: htsmsg_create_map();
-
   settings_create_separator(gconf.settings_network, _p("FTP server"));
 
   setting_create(SETTING_BOOL, gconf.settings_network, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Enable FTP server")),
                  SETTING_VALUE(0),
                  SETTING_CALLBACK(set_enable, NULL),
-                 SETTING_HTSMSG("enable", s, "ftpserver"),
+                 SETTING_STORE("ftpserver", "enable"),
                  SETTING_COURIER(asyncio_courier),
                  NULL);
 
@@ -1040,7 +1038,7 @@ ftp_server_init(void)
                  SETTING_TITLE(_p("Server TCP port")),
                  SETTING_VALUE("2121"),
                  SETTING_CALLBACK(set_port, NULL),
-                 SETTING_HTSMSG("port", s, "ftpserver"),
+                 SETTING_STORE("ftpserver", "port"),
                  SETTING_COURIER(asyncio_courier),
                  NULL);
 
@@ -1048,7 +1046,7 @@ ftp_server_init(void)
                  SETTING_TITLE(_p("Username")),
                  SETTING_VALUE(""),
                  SETTING_CALLBACK(set_username, NULL),
-                 SETTING_HTSMSG("username", s, "ftpserver"),
+                 SETTING_STORE("ftpserver", "username"),
                  SETTING_COURIER(asyncio_courier),
                  NULL);
 
@@ -1057,7 +1055,7 @@ ftp_server_init(void)
                  SETTING_TITLE(_p("Password")),
                  SETTING_VALUE(""),
                  SETTING_CALLBACK(set_password, NULL),
-                 SETTING_HTSMSG("password", s, "ftpserver"),
+                 SETTING_STORE("ftpserver", "password"),
                  SETTING_COURIER(asyncio_courier),
                  NULL);
 }

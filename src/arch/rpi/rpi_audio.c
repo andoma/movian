@@ -905,7 +905,7 @@ set_mastermute(void *opaque, int value)
 
 
 audio_class_t *
-audio_driver_init(struct prop *asettings, struct htsmsg *store)
+audio_driver_init(struct prop *asettings)
 {
 #if 0
   omx_enable_flac   = rpi_is_codec_enabled("FLAC");
@@ -914,7 +914,7 @@ audio_driver_init(struct prop *asettings, struct htsmsg *store)
 
   setting_create(SETTING_MULTIOPT, asettings, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Audio output port")),
-                 SETTING_HTSMSG("outputport", store, "audio2"),
+                 SETTING_STORE("audio2", "outputport"),
                  SETTING_WRITE_INT(&local_output),
                  SETTING_OPTION("0", _p("HDMI")),
                  SETTING_OPTION("1", _p("Analog")),
@@ -922,7 +922,7 @@ audio_driver_init(struct prop *asettings, struct htsmsg *store)
 
   setting_create(SETTING_MULTIOPT, asettings, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("8 Channel PCM")),
-                 SETTING_HTSMSG("8chmode", store, "audio2"),
+                 SETTING_STORE("audio2", "8chmode"),
                  SETTING_WRITE_INT(&hdmi_8ch_mode),
                  SETTING_OPTION("0", _p("Autodetect")),
                  SETTING_OPTION("1", _p("Off")),
@@ -931,7 +931,7 @@ audio_driver_init(struct prop *asettings, struct htsmsg *store)
 
   setting_create(SETTING_MULTIOPT, asettings, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("AC3 Pass-Through")),
-                 SETTING_HTSMSG("ac3mode", store, "audio2"),
+                 SETTING_STORE("audio2", "ac3mode"),
                  SETTING_WRITE_INT(&hdmi_ac3_mode),
                  SETTING_OPTION("0", _p("Autodetect")),
                  SETTING_OPTION("1", _p("Off")),
@@ -940,7 +940,7 @@ audio_driver_init(struct prop *asettings, struct htsmsg *store)
 
   setting_create(SETTING_MULTIOPT, asettings, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("DTS Pass-Through")),
-                 SETTING_HTSMSG("dtsmode", store, "audio2"),
+                 SETTING_STORE("audio2", "dtsmode"),
                  SETTING_WRITE_INT(&hdmi_dts_mode),
                  SETTING_OPTION("0", _p("Autodetect")),
                  SETTING_OPTION("1", _p("Off")),

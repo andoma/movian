@@ -17,20 +17,24 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
-#ifndef HTSMSG_STORE_H__
-#define HTSMSG_STORE_H__
+#pragma once
 
 #include "htsmsg/htsmsg.h"
 #include <stdarg.h>
 
 void htsmsg_store_init(void);
 
-void htsmsg_store_save(htsmsg_t *record, const char *pathfmt, ...);
+void htsmsg_store_save(htsmsg_t *record, const char *pathfmt);
 
-htsmsg_t *htsmsg_store_load(const char *pathfmt, ...);
+htsmsg_t *htsmsg_store_load(const char *pathfmt);
 
-void htsmsg_store_remove(const char *pathfmt, ...);
+void htsmsg_store_remove(const char *pathfmt);
 
 void htsmsg_store_flush(void);
 
-#endif /* HTSMSG_STORE_H__ */ 
+void htsmsg_store_set(const char *store, const char *key, int value_type, ...);
+
+int htsmsg_store_get_int(const char *store, const char *key, int def);
+
+rstr_t *htsmsg_store_get_str(const char *store, const char *key);
+

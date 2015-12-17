@@ -793,8 +793,6 @@ connman_thread(void *aux)
   GMainLoop *mainloop = g_main_loop_new(ctx, FALSE);
   connman_courier = glib_courier_create(ctx);
 
-  htsmsg_t *s = htsmsg_store_load("connman") ?: htsmsg_create_map();
-
   g_main_context_push_thread_default(ctx);
 
  again:
@@ -838,7 +836,7 @@ connman_thread(void *aux)
     setting_create(SETTING_BOOL, connman_settings, SETTINGS_INITIAL_UPDATE,
 		   SETTING_TITLE(_p("Enable Wi-Fi")),
 		   SETTING_CALLBACK(set_wifi_enable, NULL),
-		   SETTING_HTSMSG("enable_wifi", s, "connman"),
+		   SETTING_STORE("connman", "enable_wifi"),
 		   NULL);
   }
 
