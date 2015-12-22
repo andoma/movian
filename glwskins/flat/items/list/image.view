@@ -29,7 +29,8 @@ widget(container_z, {
 
       widget(label, {
         alpha: 0.66;
-        caption:  join(" • ",
+        caption:  join("  •  ",
+                       strftime($self.metadata.timestamp, "%F"),
                        $self.metadata.manufacturer,
                        $self.metadata.equipment);
         style: "ListItemLabel";
