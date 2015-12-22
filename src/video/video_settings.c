@@ -113,6 +113,26 @@ video_settings_init(void)
                    SETTING_VALUE_ORIGIN("global"),
                    NULL);
 
+  video_settings.scale_horizontal_setting =
+    setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,
+                   SETTING_TITLE(_p("Horizontal scale")),
+                   SETTING_UNIT_CSTR("%"),
+                   SETTING_RANGE(10, 300),
+                   SETTING_VALUE(100),
+                   SETTING_HTSMSG("horizontalscale", store, "videoplayback"),
+                   SETTING_VALUE_ORIGIN("global"),
+                   NULL);
+
+  video_settings.scale_vertical_setting =
+    setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,
+                   SETTING_TITLE(_p("Vertical scale")),
+                   SETTING_UNIT_CSTR("%"),
+                   SETTING_RANGE(10, 300),
+                   SETTING_VALUE(100),
+                   SETTING_HTSMSG("verticalscale", store, "videoplayback"),
+                   SETTING_VALUE_ORIGIN("global"),
+                   NULL);
+
   video_settings.stretch_horizontal_setting =
     setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
                    SETTING_TITLE(_p("Stretch video to widescreen")),

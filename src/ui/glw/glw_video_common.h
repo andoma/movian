@@ -213,6 +213,8 @@ typedef struct glw_video {
   prop_sub_t *gv_vzoom_sub;
   prop_sub_t *gv_pan_horizontal_sub;
   prop_sub_t *gv_pan_vertical_sub;
+  prop_sub_t *gv_scale_horizontal_sub;
+  prop_sub_t *gv_scale_vertical_sub;
   prop_sub_t *gv_hstretch_sub;
   prop_sub_t *gv_fstretch_sub;
   prop_sub_t *gv_vinterpolate_sub;
@@ -224,6 +226,8 @@ typedef struct glw_video {
   int gv_vzoom;
   int gv_pan_horizontal;
   int gv_pan_vertical;
+  int gv_scale_horizontal;
+  int gv_scale_vertical;
   int gv_hstretch;
   int gv_fstretch;
   int gv_vinterpolate;

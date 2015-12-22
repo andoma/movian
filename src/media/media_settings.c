@@ -275,6 +275,38 @@ mp_settings_init(media_pipe_t *mp, const char *url, const char *dir_url,
                  SETTING_INHERIT(p),
                  NULL);
 
+  p = make_dir_setting(SETTING_INT, "scalehorizontal", &mp->mp_settings_video_dir,
+                       dir_url, video_settings.scale_horizontal_setting, mp);
+
+  setting_create(SETTING_INT, mp->mp_setting_video_root,
+                 SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Horizontal scale")),
+                 SETTING_RANGE(10, 300),
+                 SETTING_UNIT_CSTR("%"),
+                 SETTING_MUTEX(mp),
+                 SETTING_LOCKMGR(mp_lockmgr),
+                 SETTING_WRITE_PROP(prop_create(c, "scalehorizontal")),
+                 SETTING_KVSTORE(url, "scalehorizontal"),
+                 SETTING_GROUP(&mp->mp_settings_video),
+                 SETTING_INHERIT(p),
+                 NULL);
+
+  p = make_dir_setting(SETTING_INT, "scalevertical", &mp->mp_settings_video_dir,
+                       dir_url, video_settings.scale_vertical_setting, mp);
+
+  setting_create(SETTING_INT, mp->mp_setting_video_root,
+                 SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Vertical scale")),
+                 SETTING_RANGE(10, 300),
+                 SETTING_UNIT_CSTR("%"),
+                 SETTING_MUTEX(mp),
+                 SETTING_LOCKMGR(mp_lockmgr),
+                 SETTING_WRITE_PROP(prop_create(c, "scalevertical")),
+                 SETTING_KVSTORE(url, "scalevertical"),
+                 SETTING_GROUP(&mp->mp_settings_video),
+                 SETTING_INHERIT(p),
+                 NULL);
+
   p = make_dir_setting(SETTING_BOOL, "hstretch", &mp->mp_settings_video_dir,
                        dir_url, video_settings.stretch_horizontal_setting, mp);
 
