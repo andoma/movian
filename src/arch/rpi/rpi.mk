@@ -1,7 +1,6 @@
 .DEFAULT_GOAL := ${PROG}.stripped
 
 SRCS += src/arch/rpi/rpi_main.c \
-	src/arch/rpi/rpi_cec.c \
 	src/arch/rpi/omx.c \
 	src/arch/rpi/rpi_audio.c \
 	src/arch/rpi/rpi_video.c \
