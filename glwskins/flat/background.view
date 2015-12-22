@@ -7,7 +7,7 @@ widget(container_z, {
     source: $nav.currentpage.model.metadata.background ??
       $nav.currentpage.glw.background ??
       $core.glw.background ??
-      "pixmap:gradient:10,10,10:30,30,30";
+      "pixmap:gradient:30,30,30:10,10,10";
 
     zoffset: -1500;
     alpha: iir(1 - ($ui.fullwindow || $ui.screensaverActive), 4);
