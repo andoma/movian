@@ -159,6 +159,7 @@ widget(container_z, {
 		              "cd",       "ic_album_48px",
 		              "dvd",      "ic_album_48px",
 		              "bluray",   "ic_album_48px",
+		              "network",  "ic_device_hub_24px",
 		              "setting",  "ic_settings_48px",
 		              "plugin",   "ic_extension_48px") + ".svg";
 
