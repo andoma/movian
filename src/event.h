@@ -183,8 +183,8 @@ typedef struct event {
   int64_t e_timestamp;
   atomic_t e_refcount;
   int     e_flags;
-#define EVENT_MAPPED 0x1
-#define EVENT_KEYPRESS 0x2 // Came from user keypress
+#define EVENT_KEYPRESS 0x1 // Came from user keypress
+#define EVENT_MOUSE    0x2 // Came from mouse input
   event_type_t e_type;
 } event_t;
 

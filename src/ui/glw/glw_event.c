@@ -74,7 +74,6 @@ glw_event_map_t *
 glw_event_map_external_create(event_t *e)
 {
   glw_event_external_t *gee = calloc(1, sizeof(glw_event_external_t));
-  e->e_flags |= EVENT_MAPPED;
   gee->e = e;
   gee->map.gem_dtor = glw_event_map_external_dtor;
   gee->map.gem_fire = glw_event_map_external_fire;
@@ -118,7 +117,6 @@ glw_event_map_playTrack_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
   glw_event_playTrack_t *g = (glw_event_playTrack_t *)gem;
   event_t *e = event_create_playtrack(g->track, g->source, g->mode);
 
-  e->e_flags |= EVENT_MAPPED;
   glw_event_to_widget(w, e);
   event_release(e);
 }
@@ -178,7 +176,6 @@ glw_event_map_propref_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
     e->e_nav = prop_ref_inc(w->glw_root->gr_prop_nav);
     prop_send_ext_event(g->target, e);
   } else {
-    e->e_flags |= EVENT_MAPPED;
     glw_event_to_widget(w, e);
   }
   event_release(e);
@@ -404,7 +401,6 @@ glw_event_map_internal_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
     e = event_create_int(EVENT_UNICODE, g->uc);
   else
     e = event_create_action(g->event);
-  e->e_flags |= EVENT_MAPPED;
   e->e_nav = prop_ref_inc(w->glw_root->gr_prop_nav);
 
   if(g->target != NULL) {

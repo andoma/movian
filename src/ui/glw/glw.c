@@ -1913,11 +1913,12 @@ glw_pointer_event_deliver(glw_t *w, glw_pointer_event_t *gpe)
     return 0;
 
   int r;
-
+  int flags = 0;
   switch(gpe->type) {
 
   case GLW_POINTER_RIGHT_PRESS:
     e = event_create_action(ACTION_ITEMMENU);
+    e->e_flags |= EVENT_MOUSE;
     r = glw_event_to_widget(w, e);
     event_release(e);
     return r;
@@ -1931,6 +1932,8 @@ glw_pointer_event_deliver(glw_t *w, glw_pointer_event_t *gpe)
     return 1;
 
   case GLW_POINTER_LEFT_RELEASE:
+    flags = EVENT_MOUSE;
+    // FALLTHRU
   case GLW_POINTER_TOUCH_END:
     if(gr->gr_pointer_press == w) {
       if(w->glw_flags2 & GLW2_FOCUS_ON_CLICK)
@@ -1938,6 +1941,7 @@ glw_pointer_event_deliver(glw_t *w, glw_pointer_event_t *gpe)
 
       glw_path_modify(w, 0, GLW_IN_PRESSED_PATH, NULL);
       e = event_create_action(ACTION_ACTIVATE);
+      e->e_flags |= flags;
       glw_event_to_widget(w, e);
       event_release(e);
       gr->gr_pointer_press = NULL;

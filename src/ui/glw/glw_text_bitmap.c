@@ -656,10 +656,10 @@ glw_text_bitmap_event(glw_t *w, event_t *e)
     }
     return 1;
 
-  } else if(event_is_action(e, ACTION_ACTIVATE)) {
-
+  } else if(event_is_action(e, ACTION_ACTIVATE) ||
+            event_is_action(e, ACTION_ITEMMENU)) {
+    
     gtb_caption_refresh(gtb);
-
 
     if(gtb->gtb_flags & (GTB_FILE_REQUEST | GTB_DIR_REQUEST)) {
 
@@ -678,6 +678,10 @@ glw_text_bitmap_event(glw_t *w, event_t *e)
       }
 
     } else {
+
+      if(event_is_action(e, ACTION_ACTIVATE) && e->e_flags & EVENT_MOUSE)
+        return 1;
+
       w->glw_root->gr_open_osk(w->glw_root,
                                gtb->gtb_description,
                                gtb->gtb_caption, w,
