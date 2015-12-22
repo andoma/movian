@@ -98,7 +98,7 @@ i18n_init(void)
   setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Timezone")),
                  SETTING_CALLBACK(set_timezone, NULL),
-                 SETTING_STORE("timezone", store, "i18n"),
+                 SETTING_STORE("i18n", "timezone"),
                  NULL);
 
 #endif

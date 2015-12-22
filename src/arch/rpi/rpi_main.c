@@ -63,7 +63,6 @@ int display_status = DISPLAY_STATUS_ON;
 int cec_we_are_not_active;
 int restart_ui;
 
-extern int auto_ui_shutdown;
 static int runmode;
 static int ctrlc;
 
@@ -482,9 +481,6 @@ ui_should_run(void)
 
   if(ctrlc)
     return 0;
-
-  if(!auto_ui_shutdown)
-    return 1;
 
   if(cec_we_are_not_active)
     return 0;
@@ -927,8 +923,6 @@ main(int argc, char **argv)
   main_init();
 
   tv_init();
-
-  rpi_cec_init();
 
   extern int posix_set_thread_priorities;
 
