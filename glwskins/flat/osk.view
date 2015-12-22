@@ -1,4 +1,5 @@
 #import "skin://osk/common.view"
+#import "skin://popups/common.view"
 
 // On screen keyboard
 
@@ -15,22 +16,20 @@ multiopt($view.path,
          makeUri(_("Default"), "skin://osk/default.view")
          );
 
-widget(container_y, {
-  navPositional: true;
+widget(popup, {
 
-  onEvent(cancel, deliverEvent($ui.osk.eventSink, "Cancel"));
-  onEvent(back,   deliverEvent($ui.osk.eventSink, "Cancel"));
-  padding: [$ui.width / 6, 0];
-  space(1);
+
   widget(container_z, {
-    widget(quad, {
-      color: 0;
-      alpha: 0.75;
-    });
-
+    PopupBackdrop();
+    width: 30em;
+    
     widget(container_y, {
-      padding: $ui.size;
-      spacing: 4;
+      onEvent(cancel, deliverEvent($ui.osk.eventSink, "Cancel"));
+      onEvent(back,   deliverEvent($ui.osk.eventSink, "Cancel"));
+      navPositional: true;
+
+      padding: 1em;
+      spacing: 0.1em;
 
       widget(label, {
 	sizeScale: 1.5;
@@ -39,32 +38,38 @@ widget(container_y, {
       });
 
       widget(container_x, {
-	spacing: 4;
-	height: $ui.size * 2;
+	spacing: 0.1em;
+	height: 2em;
 
-        widget(backdrop, {
+        widget(container_z, {
 	  weight: 10;
 	  filterConstraintX: true;
 	  filterConstraintY: true;
-	  source: "skin://graphics/border-tiny.png";
-          border: 3;
+          widget(quad, {
+            color: 0;
+          });
 	  widget(text, {
 	    password: $ui.osk.password;
 	    oskPassword: true;
-	    padding: [$ui.size, 0];
+	    padding: [1em, 0];
 	    bind($ui.osk.text);
 	    sizeScale: 1.5;
 	    permanentCursor: true;
 	    id: "input";
 	  });
-	});
-	ACTION("←", targetedEvent("input", Left));
-	ACTION("→", targetedEvent("input", Right));
-	ACTION(_("Clear"), {
+        });
+	ACTION_ICON("skin://icons/ic_chevron_left_48px.svg",
+                    targetedEvent("input", Left));
+
+	ACTION_ICON("skin://icons/ic_chevron_right_48px.svg",
+                    targetedEvent("input", Right));
+	ACTION_ICON("skin://icons/ic_skip_previous_48px.svg", {
 	  $ui.osk.text = void;
 	}, 1.5);
-	ACTION(_("Cancel"), deliverEvent($ui.osk.eventSink, "Cancel"), 1.5);
-	ACTION(_("OK"), deliverEvent($ui.osk.eventSink, "Ok"), 1.5);
+	ACTION_ICON("skin://icons/ic_cancel_48px.svg",
+                    deliverEvent($ui.osk.eventSink, "Cancel"), 1.5);
+	ACTION_ICON("skin://icons/ic_check_48px.svg",
+                    deliverEvent($ui.osk.eventSink, "Ok"), 1.5);
       });
 
       widget(loader, {
@@ -105,5 +110,4 @@ widget(container_y, {
       });
     });
   });
-  space(1);
 });

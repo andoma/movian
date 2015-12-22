@@ -50,3 +50,24 @@
     });
   });
 }
+
+#define ACTION_ICON(ICON, EV, W=1, LIT=false, ENABLED=true) {
+  widget(container_z, {
+    weight: W;
+    alpha: iir(select(ENABLED, 1.0, 0.3), 10);
+    filterConstraintX: true;
+    filterConstraintY: true;
+
+    widget(quad, {
+      color: select(LIT, [0.4, 0.6, 0.3],
+		    select(isNavFocused(), 0.5, 0.3))  + iir(isPressed(), 4, true);
+    });
+
+    focusable: select(ENABLED, 0.5, 0);
+    onEvent(activate, EV);
+    widget(icon, {
+      source: ICON;
+      color: select(isNavFocused(), 0, 1)  - iir(isPressed(), 4, true);
+    });
+  });
+}
