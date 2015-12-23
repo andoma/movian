@@ -1586,6 +1586,9 @@ init_dev_settings(void)
 #ifdef __ANDROID__
   add_dev_bool("Debug touch events",
                "touchevents", &gconf.enable_touch_debug);
+
+  add_dev_bool("Debug MediaCodec",
+               "androidMediaCodec", &gconf.enable_MediaCodec_debug);
 #endif
 }
 

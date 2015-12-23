@@ -30,9 +30,23 @@
 
 extern JavaVM *JVM;
 
+#define AVC_TRACE(x, ...) do {                                          \
+    if(gconf.enable_MediaCodec_debug)                                   \
+      TRACE(TRACE_DEBUG, "MediaCodec", x, ##__VA_ARGS__);		\
+  } while(0)
+
 #define PTS_IS_REORDER_INDEX
 
-#define CHECKEXCEPTION()    if((*env)->ExceptionOccurred(env)) do { TRACE(TRACE_ERROR, "VIDEO", "Exception occured"); exit(1); } while(0)
+static int
+check_exception(JNIEnv *env, const char *what)
+{
+  if((*env)->ExceptionOccurred(env)) {
+    (*env)->ExceptionClear(env);
+    TRACE(TRACE_ERROR, "VIDEO", "Exception occured at %s", what);
+    return 1;
+  }
+  return 0;
+}
 
 /**
  *
@@ -75,6 +89,12 @@ typedef struct android_video_codec {
 
   const char *avc_nicename;
 
+  int avc_slot_issues;
+
+  int64_t avc_ts1;
+  int64_t avc_ts2;
+
+  int avc_decode_time;
 } android_video_codec_t;
 
 
@@ -87,9 +107,11 @@ avc_enq(JNIEnv *env, android_video_codec_t *avc, void *data, int size,
 {
   int idx = (*env)->CallIntMethod(env, avc->avc_decoder,
                                   avc->avc_dequeueInputBuffer, timeout);
+  if(check_exception(env, "dequeueInputBuffer"))
+    return -2;
 
   if(idx < 0)
-    return idx;
+    return -1;
 
   jobject bb =
     (*env)->GetObjectArrayElement(env, avc->avc_input_buffers, idx);
@@ -105,6 +127,7 @@ avc_enq(JNIEnv *env, android_video_codec_t *avc, void *data, int size,
 
   (*env)->CallVoidMethod(env, avc->avc_decoder, avc->avc_queueInputBuffer,
                          idx, 0, size, pts, flags);
+  check_exception(env, "queueInputBuffer");
   return idx;
 }
 
@@ -162,6 +185,7 @@ avc_get_output_buffers(JNIEnv *env, android_video_codec_t *avc)
     (*env)->GetMethodID(env, avc->avc_MediaCodec, "getOutputBuffers",
                         "()[Ljava/nio/ByteBuffer;");
   jobject obj = (*env)->CallObjectMethod(env, avc->avc_decoder, mid);
+  check_exception(env, "getOutputBuffers");
   if(avc->avc_output_buffers)
     (*env)->DeleteGlobalRef(env, avc->avc_output_buffers);
 
@@ -181,6 +205,7 @@ get_output(JNIEnv *env, android_video_codec_t *avc, int loop,
                                     avc->avc_dequeueOutputBuffer,
                                     avc->avc_buffer_info,
                                     (jlong) 0);
+    check_exception(env, "dequeueOutputBuffer");
 
     if(idx >= 0) {
 
@@ -189,18 +214,21 @@ get_output(JNIEnv *env, android_video_codec_t *avc, int loop,
       jfieldID f_pts = (*env)->GetFieldID(env, class,
                                           "presentationTimeUs", "J");
 
-      jlong slot = (*env)->GetLongField(env, avc->avc_buffer_info, f_pts);
-
+      jlong pts = (*env)->GetLongField(env, avc->avc_buffer_info, f_pts);
       frame_info_t fi = {};
       // We only support square pixels here
       fi.fi_dar_num = avc->avc_out_width;
       fi.fi_dar_den = avc->avc_out_height;
 
 #ifdef PTS_IS_REORDER_INDEX
+      int slot = pts & VIDEO_DECODER_REORDER_MASK;
       const media_buf_meta_t *mbm = &vd->vd_reorder[slot];
       fi.fi_pts = mbm->mbm_pts;
       fi.fi_epoch = mbm->mbm_epoch;
+      fi.fi_user_time = mbm->mbm_user_time;
       fi.fi_drive_clock = mbm->mbm_drive_clock;
+      AVC_TRACE("Dequeue buffer reorderslot:0x%lx -> %d PTS=%"PRId64,
+                (long)pts, slot, fi.fi_pts);
 #else
       fi.fi_pts = slot;
       fi.fi_epoch = 1;
@@ -208,7 +236,16 @@ get_output(JNIEnv *env, android_video_codec_t *avc, int loop,
 #endif
       if(avc->avc_direct) {
         fi.fi_type = 'SURF';
+
+        if(gconf.enable_MediaCodec_debug) {
+          avc->avc_ts1 = arch_get_ts();
+          if(avc->avc_ts2)
+            avc->avc_decode_time = avc->avc_ts1 - avc->avc_ts2;
+        }
         video_deliver_frame(vd, &fi);
+        if(gconf.enable_MediaCodec_debug)
+          avc->avc_ts2 = arch_get_ts();
+
       } else {
         jobject buf =
           (*env)->GetObjectArrayElement(env, avc->avc_output_buffers, idx);
@@ -221,15 +258,19 @@ get_output(JNIEnv *env, android_video_codec_t *avc, int loop,
         fi.fi_pitch[0] = avc->avc_out_width * 2;
         fi.fi_width  = avc->avc_out_width;
         fi.fi_height = avc->avc_out_height;
-        fi.fi_type = 'XXXX';
+        fi.fi_type = 'YUVP';
         video_deliver_frame(vd, &fi);
       }
 
-
+      AVC_TRACE("Timings Decode:%-5d Display:%-5d Total:%-5d",
+                avc->avc_decode_time,
+                (int)(avc->avc_ts2 - avc->avc_ts1),
+                (int)(avc->avc_ts2 - avc->avc_ts1) + avc->avc_decode_time);
 
       (*env)->CallVoidMethod(env, avc->avc_decoder,
                              avc->avc_releaseOutputBuffer,
                              idx, 1);
+      check_exception(env, "releaseOutputBuffer");
     } else if(idx == -2) {
       update_output_format(env, avc, vd->vd_mp);
       continue;
@@ -270,6 +311,7 @@ android_codec_decode(struct media_codec *mc, struct video_decoder *vd,
       (*env)->CallStaticObjectMethod(env, MediaFormat, mid,
                                      (*env)->NewStringUTF(env, avc->avc_mime),
                                      avc->avc_width, avc->avc_height);
+    check_exception(env, "createVideoFormat");
 
     jclass ByteBuffer = (*env)->FindClass(env, "java/nio/ByteBuffer");
 
@@ -294,6 +336,7 @@ android_codec_decode(struct media_codec *mc, struct video_decoder *vd,
       jobject bb = (*env)->CallStaticObjectMethod(env, ByteBuffer,
                                                   mid,
                                                   extradata_size);
+      check_exception(env, "allocateDirect");
 
       uint8_t *ptr = (*env)->GetDirectBufferAddress(env, bb);
 
@@ -303,12 +346,14 @@ android_codec_decode(struct media_codec *mc, struct video_decoder *vd,
                                 "(I)Ljava/nio/Buffer;");
 
       (*env)->CallObjectMethod(env, bb, mid, extradata_size);
+      check_exception(env, "limit");
 
       mid = (*env)->GetMethodID(env, MediaFormat, "setByteBuffer",
                                 "(Ljava/lang/String;Ljava/nio/ByteBuffer;)V");
 
       (*env)->CallVoidMethod(env, format, mid,
                              (*env)->NewStringUTF(env, "csd-0"), bb);
+      check_exception(env, "setByteBuffer");
     }
     // ------------------------------------------------
 
@@ -325,9 +370,11 @@ android_codec_decode(struct media_codec *mc, struct video_decoder *vd,
 
     (*env)->CallVoidMethod(env, avc->avc_decoder, mid, format,
                            surface, NULL, 0);
+    check_exception(env, "MediaCodec.configure");
 
     mid = (*env)->GetMethodID(env, avc->avc_MediaCodec, "start", "()V");
     (*env)->CallVoidMethod(env, avc->avc_decoder, mid);
+    check_exception(env, "MediaCodec.start");
 
     // -----------------------------------------------------------
 
@@ -335,6 +382,7 @@ android_codec_decode(struct media_codec *mc, struct video_decoder *vd,
                               "()[Ljava/nio/ByteBuffer;");
 
     obj = (*env)->CallObjectMethod(env, avc->avc_decoder, mid);
+    check_exception(env, "MediaCodec.getInputBuffers");
     avc->avc_input_buffers = (*env)->NewGlobalRef(env, obj);
 
     // -----------------------------------------------------------
@@ -381,7 +429,9 @@ android_codec_decode(struct media_codec *mc, struct video_decoder *vd,
 #ifdef PTS_IS_REORDER_INDEX
   media_buf_meta_t *mbm = &vd->vd_reorder[vd->vd_reorder_ptr];
   copy_mbm_from_mb(mbm, mb);
-  pts = vd->vd_reorder_ptr;
+  pts = vd->vd_reorder_ptr | 0x010c0000;
+  AVC_TRACE("Enqueue buffer reorderslot:%d PTS=%"PRId64,
+            vd->vd_reorder_ptr, mbm->mbm_pts);
   vd->vd_reorder_ptr = (vd->vd_reorder_ptr + 1) & VIDEO_DECODER_REORDER_MASK;
 #else
   pts = mb->mb_pts;
@@ -392,7 +442,10 @@ android_codec_decode(struct media_codec *mc, struct video_decoder *vd,
   while(1) {
     int idx = avc_enq(env, avc, data, size, pts, flags, timeout);
 
-    if(idx < 0) {
+    if(idx == -2)
+      break;
+
+    if(idx == -1) {
       get_output(env, avc, timeout > 0, vd);
       timeout = 1000;
       continue;
@@ -428,6 +481,7 @@ android_codec_close(struct media_codec *mc)
 
   mid = (*env)->GetMethodID(env, avc->avc_MediaCodec, "release", "()V");
   (*env)->CallVoidMethod(env, avc->avc_decoder, mid);
+  check_exception(env, "MediaCodec.release");
 
   (*env)->PopLocalFrame(env, NULL);
 }
@@ -453,22 +507,6 @@ android_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
     type = "video/avc";
     nicename = "h264";
     break;
-
-  case AV_CODEC_ID_HEVC:
-    type = "video/hevc";
-    nicename = "h265";
-    break;
-
-  case AV_CODEC_ID_H263:
-    type = "video/3gpp";
-    nicename = "h263";
-    break;
-
-  case AV_CODEC_ID_MPEG4:
-    type = "video/mp4v-es";
-    nicename = "mpeg4";
-    break;
-
   case AV_CODEC_ID_VP8:
     type = "video/x-vnd.on2.vp8";
     nicename = "vp8";
@@ -491,6 +529,11 @@ android_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 
   jstring jtype = (*env)->NewStringUTF(env, type);
   jobject decoder = (*env)->CallStaticObjectMethod(env, class, mid, jtype);
+  if(check_exception(env, "MediaCodec.createDecoderByType")) {
+    TRACE(TRACE_DEBUG, "Video", "Unable to create Android decoder for %s",
+          type);
+    return 1;
+  }
   if(decoder == 0) {
     TRACE(TRACE_DEBUG, "Video", "Unable to create Android decoder for %s",
           type);
