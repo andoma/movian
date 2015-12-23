@@ -546,7 +546,7 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
 
 	memset(&p, 0, sizeof(p));
 
-	TRACE(TRACE_DEBUG, "RTMP", "Reconnecting stream at pos %ld", 
+	TRACE(TRACE_DEBUG, "RTMP", "Reconnecting stream at pos %"PRId64,
 	      restartpos);
 
 	if(!RTMP_SetupURL(r->r, url)) {

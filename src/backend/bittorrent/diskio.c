@@ -108,7 +108,7 @@ update_disk_usage(void)
   if(gconf.enable_torrent_diskio_debug) {
     TRACE(TRACE_DEBUG, "BITTORRENT",
           "Disk usage %"PRId64" MB / %"PRId64" MB (%d%%)",
-          sum, btg.btg_cache_limit, sum * 100 / btg.btg_cache_limit);
+          sum, btg.btg_cache_limit, (int)(sum * 100 / btg.btg_cache_limit));
   }
 
   rstr_t *r = _("Cached torrents use %d MB out of allowed %d MB. Total free space on volume: %d MB");

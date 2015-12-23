@@ -139,7 +139,7 @@ image_dump(const image_t *im, const char *prefix)
 
     case IMAGE_CODED:
       tracelog(TRACE_NO_PROP, TRACE_DEBUG, prefix,
-            "IMG", "[%d]: Coded", i);
+            "[%d]: Coded", i);
       break;
 
   case IMAGE_VECTOR:

@@ -534,7 +534,7 @@ hc_echo_data(http_connection_t *hc, int opcode,
 	     uint8_t *data, size_t len, void *opaque)
 {
   websocket_send(hc, opcode, data, len);
-  TRACE(TRACE_DEBUG, "WS", "Echoing %d bytes (opcode:%d)", len, opcode);
+  TRACE(TRACE_DEBUG, "WS", "Echoing %zd bytes (opcode:%d)", len, opcode);
   return 0;
 }
 

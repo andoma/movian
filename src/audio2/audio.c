@@ -305,8 +305,7 @@ audio_setup_spdif_muxer(audio_decoder_t *ad, AVCodec *codec)
   }
   
   if(avformat_write_header(fctx, NULL)) {
-    TRACE(TRACE_ERROR, "audio", "Unable to open SPDIF muxer",
-	  codec->name);
+    TRACE(TRACE_ERROR, "audio", "Unable to open SPDIF muxer");
     goto bad;
   }
   ad->ad_spdif_muxer = fctx;
@@ -494,7 +493,8 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
           if(!ad->ad_channel_layout_fail) {
             ad->ad_channel_layout_fail = 1;
               TRACE(TRACE_ERROR, "Audio",
-                    "Unable to map %d channels to channel layout");
+                    "Unable to map %d channels to channel layout",
+                    ctx->channels);
           }
 	  return 0;
 	}

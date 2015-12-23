@@ -106,7 +106,8 @@ void trace_init(void);
 
 void trace_fini(void);
 
-void tracelog(int flags, int level, const char *subsys, const char *fmt, ...);
+void tracelog(int flags, int level, const char *subsys, const char *fmt, ...)
+    attribute_printf(4,5);
 
 void tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap);
 

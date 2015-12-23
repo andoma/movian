@@ -56,7 +56,7 @@ bonjour_resolve_callback(CFNetServiceRef theService,
   addresses = CFNetServiceGetAddressing(theService);
 
   TRACE(TRACE_DEBUG, "Bonjour", "Resolve service \"%s\" with %d addresses",
-        name, CFArrayGetCount(addresses));
+        name, (int)CFArrayGetCount(addresses));
 
   for(i = 0; i < CFArrayGetCount(addresses); i++) {
     addr = (struct sockaddr* )
@@ -211,7 +211,7 @@ bonjour_browser_callback(CFNetServiceBrowserRef browser,
     if(!CFNetServiceResolveWithTimeout(rservice, duration, &rerror)) {
       TRACE(TRACE_ERROR, "Bonjour", 
             "CFNetServiceResolveWithTimeout (domain=%d, error=%ld)\n",
-            rerror.domain, rerror.error);
+            (int)rerror.domain, (long)rerror.error);
       
       CFNetServiceUnscheduleFromRunLoop(rservice, CFRunLoopGetCurrent(),
                                         kCFRunLoopCommonModes);
@@ -249,7 +249,7 @@ bonjour_type_add(const char *typename, int type)
                                            &error)) {
     TRACE(TRACE_ERROR, "Bonjour", 
           "CFNetServiceBrowserSearchForServices (domain=%d, error=%ld)\n",
-          error.domain, error.error);
+          (int)error.domain, (long)error.error);
 
     CFNetServiceBrowserUnscheduleFromRunLoop(browser, CFRunLoopGetCurrent(), 
                                              kCFRunLoopCommonModes);

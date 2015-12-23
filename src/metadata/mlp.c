@@ -639,7 +639,7 @@ query_by_filename_or_dirname(void *db, const metadata_lazy_video_t *mlv,
 
       METADATA_TRACE(
 	    "Performing search lookup for %s without year, based on filename",
-	    rstr_get(title), year);
+	    rstr_get(title));
 
       rval = msf->query_by_title_and_year(db, rstr_get(mlv->mlv_url),
 					  rstr_get(title), 0,

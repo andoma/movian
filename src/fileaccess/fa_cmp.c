@@ -119,7 +119,7 @@ cmp_read(fa_handle_t *handle, void *buf, size_t size)
 
   if(r1 != r2) {
     TRACE(TRACE_ERROR, "FACMP",
-	  "read(%d) @ %"PRId64" failed fa:%"PRId64" local:%"PRId64,
+	  "read(%d) @ %"PRId64" failed fa:%d local:%d",
 	  (int)size, pos, r1, r2);
     exit(1);
   }

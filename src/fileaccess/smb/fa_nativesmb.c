@@ -849,7 +849,7 @@ smb_dispatch(void *aux)
   nbt_req_t *nr;
 
   SMBTRACE("%s:%d Read thread running %lx",
-	   cc->cc_hostname, cc->cc_port, hts_thread_current());
+	   cc->cc_hostname, cc->cc_port, (long)hts_thread_current());
 
   while(1) {
     if(nbt_read(cc, &buf, &len))
@@ -906,9 +906,9 @@ smb_dispatch(void *aux)
 
         if(seg_count > len - sizeof(TRANS2_reply_t)) {
           TRACE(TRACE_ERROR, "SMB",
-                "%s:%d malformed trans2, %d > %d",
+                "%s:%d malformed trans2, %d > %zd",
                 cc->cc_hostname, cc->cc_port,
-                seg_count, len - sizeof(TRANS2_reply_t));
+                seg_count, (size_t)len - sizeof(TRANS2_reply_t));
           goto bad_trans2;
         }
 
@@ -1144,7 +1144,7 @@ nbt_async_req(cifs_connection_t *cc, void *request, int request_len,
 
   LIST_INSERT_HEAD(&cc->cc_pending_nbt_requests, nr, nr_link);
   SMBTRACE("%s:%d %s sent mid=%d on thread %lx", cc->cc_hostname, cc->cc_port,
-           info, nr->nr_mid, hts_thread_current());
+           info, nr->nr_mid, (long)hts_thread_current());
   return nr;
 }
 

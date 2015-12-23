@@ -229,7 +229,7 @@ add_item(htsmsg_t *item, prop_t *root, const char *trackid, prop_t **trackptr,
     prop_set_string(prop_create(c, "url"), url);
     make_imageItem(c, m, item);
   } else {
-    UPNP_TRACE("UPNP", "Cant handle upnp:class %s (%s)", cls, url);
+    UPNP_TRACE("Cant handle upnp:class %s (%s)", cls, url);
     prop_destroy(c);
     return;
   }

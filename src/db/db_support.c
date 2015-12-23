@@ -229,7 +229,7 @@ db_upgrade_schema(sqlite3 *db, const char *schemadir, const char *dbname,
              "ATTACH DATABASE '%s' AS %s", extra_db_path, extra_db);
     snprintf(detach, sizeof(detach), "DETACH DATABASE %s", extra_db);
     if(db_one_statement(db, tmp, NULL)) {
-      TRACE(TRACE_ERROR, "DB", "%s: Unable to %s", tmp);
+      TRACE(TRACE_ERROR, "DB", "%s: Unable to %s", dbname, tmp);
       return -1;
     }
   } else {
