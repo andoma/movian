@@ -37,88 +37,96 @@
 
 }
 
+widget(container_z, {
 
-widget(list_y, {
-  spacing: 0.3em;
-  padding: [$ui.xmargin, 0];
+  widget(list_y, {
+    spacing: 0.3em;
+    padding: [$ui.xmargin, 0];
 
-  widget(label, {
-    height: 3em;
-    align: center;
-    size: 1.6em;
-    caption: $args.metadata.title;
-  });
-  widget(container_x, {
-    spacing: 1em;
-
-    widget(image, {
-      align: top;
-      width: 7em;
-      source: $args.metadata.icon;
+    widget(label, {
+      height: 3em;
+      align: center;
+      size: 1.6em;
+      caption: $args.metadata.title;
     });
-
-    widget(container_y, {
-      filterConstraintX: true;
+    widget(container_x, {
       spacing: 1em;
-      widget(label, {
-        caption: $args.metadata.synopsis;
-        maxlines: 3;
+
+      widget(image, {
+        align: top;
+        width: 7em;
+        source: $args.metadata.icon;
       });
-      widget(label, {
-        caption: $args.metadata.description;
-        color: 0.7;
-        maxlines: 7;
-      });
-    });
-  });
 
-
-  INFOROW(_("Status:"), $args.status.statustxt);
-  INFOROW(_("Author:"), $args.metadata.author);
-  INFOROW(_("Installed version:"), $args.status.installedVersion,
-          !$args.status.installedVersion);
-  INFOROW(_("Available version:"), $args.status.availableVersion,
-          !$args.status.availableVersion);
-
-
-  widget(container_x, {
-    padding: [7.5em, 0.1em, 0, 0];
-
-    widget(container_z, {
-      height: 2em;
-      GridItemBevel();
-      GridItemHighlight();
-
-      focusable: true;
-      onEvent(activate,
-	      deliverEvent($args,
-		           select($args.status.canInstall, "install:"+($self.package ?? ""),
-			          select($args.status.canUpgrade, "upgrade",
-				         select($args.status.canUninstall, "uninstall",
-					        void)))));
-
-      widget(label, {
-        padding: [0.5em, 0];
-        caption: select($args.status.canInstall, _("Install"),
-		        select($args.status.canUpgrade, _("Upgrade"),
-			       select($args.status.canUninstall, _("Uninstall"),
-				      void)));
-        font: "skin://fonts/RobotoCondensed-Bold.ttf";
+      widget(container_y, {
+        filterConstraintX: true;
+        spacing: 1em;
+        widget(label, {
+          caption: $args.metadata.synopsis;
+          maxlines: 3;
+        });
+        widget(label, {
+          caption: $args.metadata.description;
+          color: 0.7;
+          maxlines: 7;
+        });
       });
     });
+
+
+    INFOROW(_("Status:"), $args.status.statustxt);
+    INFOROW(_("Author:"), $args.metadata.author);
+    INFOROW(_("Installed version:"), $args.status.installedVersion,
+            !$args.status.installedVersion);
+    INFOROW(_("Available version:"), $args.status.availableVersion,
+            !$args.status.availableVersion);
+
+
+    widget(container_x, {
+      padding: [7.5em, 0.1em, 0, 0];
+
+      widget(container_z, {
+        height: 2em;
+        GridItemBevel();
+        GridItemHighlight();
+
+        focusable: true;
+        onEvent(activate,
+	        deliverEvent($args,
+		             select($args.status.canInstall, "install:"+($self.package ?? ""),
+			            select($args.status.canUpgrade, "upgrade",
+				           select($args.status.canUninstall, "uninstall",
+					          void)))));
+
+        widget(label, {
+          padding: [0.5em, 0];
+          caption: select($args.status.canInstall, _("Install"),
+		          select($args.status.canUpgrade, _("Upgrade"),
+			         select($args.status.canUninstall, _("Uninstall"),
+				        void)));
+          font: "skin://fonts/RobotoCondensed-Bold.ttf";
+        });
+      });
+    });
+
+
+    /*
+      widget(label, {
+      caption: _("Changelog");
+      style: "ListItemSeparatorLabel";
+      });
+
+      chlog("2.0", "Added some new stuff");
+      chlog("1.1", "Fix some minor bugs");
+      chlog("1.0", "Initial version");
+    */
+
   });
-
-
-  /*
-  widget(label, {
-    caption: _("Changelog");
-    style: "ListItemSeparatorLabel";
+  widget(container_y, {
+    align: top;
+    widget(container_x, {
+      height: 3em;
+      BackButton();
+    });
   });
-
-  chlog("2.0", "Added some new stuff");
-  chlog("1.1", "Fix some minor bugs");
-  chlog("1.0", "Initial version");
-  */
-
 });
-
