@@ -384,8 +384,8 @@ asyncio_dopoll(void)
       socklen_t errlen = sizeof(int);
 
       if(getsockopt(af->af_fd, SOL_SOCKET, SO_ERROR, (void *)&err, &errlen)) {
-        TRACE(TRACE_ERROR, "ASYNCIO", "getsockopt failed for 0x%x -- %s",
-              af->af_fd, strerror(errno));
+        TRACE(TRACE_ERROR, "ASYNCIO", "getsockopt failed for %s 0x%x -- %s",
+              af->af_name, af->af_fd, strerror(errno));
         af->af_callback(af, af->af_opaque, ASYNCIO_ERROR, ENOBUFS);
       } else {
         if(err) {
@@ -665,7 +665,8 @@ asyncio_tcp_accept(asyncio_fd_t *af, void *opaque, int events, int error)
   net_change_nonblocking(fd, 0);
 
   if(fd == -1) {
-    TRACE(TRACE_ERROR, "TCP", "%s: Accept error: %s", strerror(errno));
+    TRACE(TRACE_ERROR, "TCP", "%s: Accept error: %s",
+          af->af_name, strerror(errno));
     sleep(1);
     return;
   }
@@ -882,8 +883,8 @@ asyncio_tcp_connected(asyncio_fd_t *af, void *opaque, int events, int error)
     socklen_t errlen = sizeof(int);
 
     if(getsockopt(af->af_fd, SOL_SOCKET, SO_ERROR, (void *)&err, &errlen)) {
-      TRACE(TRACE_ERROR, "ASYNCIO", "getsockopt failed for 0x%x -- %d",
-            af->af_fd, errno);
+      TRACE(TRACE_ERROR, "ASYNCIO", "getsockopt failed for %s 0x%x -- %d",
+            af->af_name, af->af_fd, errno);
       return;
     }
 
