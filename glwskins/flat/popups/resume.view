@@ -8,7 +8,6 @@ widget(popup, {
 
   widget(container_z, {
 
-    filterConstraintX: true;
     PopupBackdrop();
 
     widget(container_y, {
