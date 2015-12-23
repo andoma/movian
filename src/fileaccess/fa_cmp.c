@@ -91,7 +91,7 @@ cmp_fsize(fa_handle_t *handle)
   if(st.st_size != r1) {
     TRACE(TRACE_ERROR, "FACMP",
 	  "fsize() failed fa:%"PRId64" local:%"PRId64,
-	  r1, st.st_size);
+	  r1, (int64_t)st.st_size);
     exit(1);
   }
   return r1;

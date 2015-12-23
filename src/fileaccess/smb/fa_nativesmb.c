@@ -886,7 +886,7 @@ smb_dispatch(void *aux)
     if(nr != NULL) {
       SMBTRACE("%s:%d Got response for mid=%d (err:0x%08x len:%d%s)",
                cc->cc_hostname, cc->cc_port, mid,
-               letoh_32(h->errorcode), len,
+               (int)letoh_32(h->errorcode), len,
                nr->nr_is_trans2 ? ", TRANS2" : "");
 
       if(nr->nr_is_trans2 && h->errorcode == 0 &&

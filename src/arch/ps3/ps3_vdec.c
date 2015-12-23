@@ -215,7 +215,7 @@ free_picture_list(struct vdec_pic_list *l)
   vdec_pic_t *vp;
   while((vp = LIST_FIRST(l)) != NULL) {
     TRACE(TRACE_DEBUG, "VDEC", "Free picture %p", vp);
-    TRACE(TRACE_DEBUG, "VDEC", "Free RSX mem %x +%d", 
+    TRACE(TRACE_DEBUG, "VDEC", "Free RSX mem %p +%d", 
 	  vp->vp_offset, vp->vp_size);
     release_picture(vp);
   }

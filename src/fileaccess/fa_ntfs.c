@@ -369,8 +369,8 @@ ntfs_log(const char *function, const char *file, int line,
   char buf[1024];
   vsnprintf(buf, sizeof(buf), format, args);
   tracelog(TRACE_NO_PROP, TRACE_DEBUG, "NTFS", "[%x]: %s: %s:%d %s",
-	hts_thread_current(),
-	function, file, line, buf);
+           (int)hts_thread_current(),
+           function, file, line, buf);
   return 0;
 }
 

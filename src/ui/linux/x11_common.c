@@ -259,7 +259,7 @@ init_with_ximage(video_output_t *vo)
 
   vo->vo_depth = attr.depth;
 
-  TRACE(TRACE_DEBUG, "X11", "Ximage: Using visual 0x%x (%d bpp)", 
+  TRACE(TRACE_DEBUG, "X11", "Ximage: Using visual 0x%lx (%d bpp)", 
 	vo->vo_visualinfo.visualid, vo->vo_depth);
 
   return 1;
@@ -633,7 +633,7 @@ xi_video_frame_deliver(const frame_info_t *fi, void *opaque)
 
     if((vo->vo_pix_fmt = get_pix_fmt(vo)) == -1)
       TRACE(TRACE_ERROR, "X11", 
-	    "No pixel format for visual: %08x %08x %08x %dbpp",
+	    "No pixel format for visual: %08lx %08lx %08lx %dbpp",
 	    vo->vo_visualinfo.red_mask,
 	    vo->vo_visualinfo.green_mask,
 	    vo->vo_visualinfo.blue_mask,

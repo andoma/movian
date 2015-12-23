@@ -110,7 +110,7 @@ thread_dump(void)
     return;
   }
 
-  TRACE(TRACE_EMERG, "THREAD", "%d threads", ids_num);
+  TRACE(TRACE_EMERG, "THREAD", "%d threads", (int)ids_num);
 
 
   for(int i = 0; i < ids_num; i++) {
@@ -119,7 +119,7 @@ thread_dump(void)
     r = Lv2Syscall3(910, (intptr_t)(tmpbuf + i * 2), (intptr_t)&lti, tid);
     if(r) {
       TRACE(TRACE_EMERG, "THREAD",
-	    "Unable to figure status for thread %x", tid);
+	    "Unable to figure status for thread %x", (int)tid);
       continue;
     }
 
@@ -148,11 +148,11 @@ thread_dump(void)
 
 
       for(int r = 0; r < 32; r++) {
-	TRACE(TRACE_EMERG, "THREAD", " r%-2d: 0x%016llx", r,
+	TRACE(TRACE_EMERG, "THREAD", " r%-2d: 0x%016lx", r,
 	    get_reg2(tidp, 0x3, r));
       }
 
-      TRACE(TRACE_EMERG, "THREAD", " CTR: 0x%016llx", get_reg2(tidp, 2, 0));
+      TRACE(TRACE_EMERG, "THREAD", " CTR: 0x%016lx", get_reg2(tidp, 2, 0));
 
 #if 0
       for(int j = 0; j < 16; j++) {
@@ -285,7 +285,7 @@ start_thread(const char *name, hts_thread_t *p,
   
   if(gconf.enable_thread_debug)
     tracelog(TRACE_NO_PROP, TRACE_DEBUG,
-             "THREADS", "Created thread %s (0x%x)", name, *p);
+             "THREADS", "Created thread %s (0x%lx)", name, (long)*p);
 
 }
 
@@ -313,10 +313,10 @@ void
 hts_thread_join(hts_thread_t *id)
 {
   if(gconf.enable_thread_debug)
-    TRACE(TRACE_DEBUG, "THREADS", "Waiting for thread 0x%x", *id);
+    TRACE(TRACE_DEBUG, "THREADS", "Waiting for thread 0x%lx", (long)*id);
   sys_ppu_thread_join(*id, NULL);
   if(gconf.enable_thread_debug)
-    TRACE(TRACE_DEBUG, "THREADS", "Thread 0x%x joined", *id);
+    TRACE(TRACE_DEBUG, "THREADS", "Thread 0x%lx joined", (long)*id);
 }
 
 
@@ -872,6 +872,6 @@ mutex_dump_info(sys_mutex_t lock)
     return;
 
   TRACE(TRACE_DEBUG, "MUTEX", "  Owner:0x%x lock:%d condref:%d, wait_threads:%d",
-	info.owner, info.lock_counter, info.cond_ref_counter,
-	info.wait_threads_num);
+	(int)info.owner, (int)info.lock_counter, (int)info.cond_ref_counter,
+	(int)info.wait_threads_num);
 }

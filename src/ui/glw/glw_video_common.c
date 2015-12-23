@@ -243,7 +243,7 @@ glw_video_compute_avdiff(glw_root_t *gr, media_pipe_t *mp,
   if(gconf.enable_detailed_avdiff) {
     static int64_t lastpts, lastaclock, lastclock;
 
-    TRACE(TRACE_DEBUG, "AVDIFF", "VE:%d AE:%d %10f %10d %15"PRId64":a:%-8"PRId64" %15"PRId64":v:%-8"PRId64" %15"PRId64" %15"PRId64" %s %lld",
+    TRACE(TRACE_DEBUG, "AVDIFF", "VE:%d AE:%d %10f %10d %15"PRId64":a:%-8"PRId64" %15"PRId64":v:%-8"PRId64" %15"PRId64" %15"PRId64" %s %"PRId64,
 	  epoch,
 	  mp->mp_audio_clock_epoch,
 	  gv->gv_avdiff_x,

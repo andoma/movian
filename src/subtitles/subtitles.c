@@ -519,7 +519,7 @@ sub_scanner_create(const char *url, prop_t *proproot,
 
   TRACE(TRACE_DEBUG, "Subscanner",
         "%s subtitle scan for %s (imdbid:%s) "
-        "year:%d season:%d episode:%d duration:%d opensubhash:%016llx",
+        "year:%d season:%d episode:%d duration:%d opensubhash:%016"PRIx64,
         noscan ? "No" : "Starting",
         va->title ?: "<unknown>",
         va->imdb ?: "<unknown>",

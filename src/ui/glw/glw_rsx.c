@@ -66,7 +66,7 @@ load_vp(const char *filename)
                   FA_LOAD_ERRBUF(errmsg, sizeof(errmsg)),
                   NULL)) == NULL) {
     TRACE(TRACE_ERROR, "glw", "Unable to load shader %s -- %s\n",
-	  url, log);
+	  url, errmsg);
     return NULL;
   }
 
@@ -143,7 +143,7 @@ load_fp(glw_root_t *gr, const char *filename)
   if((b = fa_load(url, FA_LOAD_ERRBUF(errmsg, sizeof(errmsg)),
                    NULL)) == NULL) {
     TRACE(TRACE_ERROR, "glw", "Unable to load shader %s -- %s\n",
-	  url, log);
+	  url, errmsg);
     return NULL;
   }
 
