@@ -77,12 +77,14 @@ glw_scroll_handle_pointer_event(glw_scroll_control_t *gs,
   switch(gpe->type) {
 
   case GLW_POINTER_SCROLL:
+    gs->bottom_anchored = 0;
     gs->target_pos += gs->page_size * gpe->delta_y;
     w->glw_flags |= GLW_UPDATE_METRICS;
     glw_schedule_refresh(w->glw_root, 0);
     return 1;
 
   case GLW_POINTER_FINE_SCROLL:
+    gs->bottom_anchored = 0;
     gs->target_pos += gpe->delta_y;
     w->glw_flags |= GLW_UPDATE_METRICS;
     glw_schedule_refresh(w->glw_root, 0);
@@ -97,6 +99,7 @@ glw_scroll_handle_pointer_event(glw_scroll_control_t *gs,
     if(!grabbed)
       return 0;
 
+    gs->bottom_anchored = 0;
     gs->target_pos = (gpe->y - gs->initial_touch_y) * gs->page_size * 0.5 +
       gs->initial_pos;
 
@@ -146,10 +149,21 @@ glw_scroll_layout(glw_scroll_control_t *gsc, glw_t *w, int height)
     gsc->filtered_pos += gsc->kinetic_scroll;
     gsc->target_pos = gsc->filtered_pos;
     gsc->kinetic_scroll *= 0.95;
+    gsc->bottom_anchored = 0;
 
     gsc->filtered_pos = GLW_CLAMP(gsc->filtered_pos, 0, max_value);
 
   } else {
+
+    if(gsc->bottom_gravity) {
+
+      if(gsc->target_pos == max_value) {
+        gsc->bottom_anchored = 1;
+      }
+      if(gsc->bottom_anchored) {
+        gsc->target_pos = max_value;
+      }
+    }
 
     gsc->target_pos = GLW_CLAMP(gsc->target_pos, 0, max_value);
 
@@ -182,21 +196,20 @@ glw_scroll_update_metrics(glw_scroll_control_t *gsc, glw_t *w)
     do_update = 1;
     gsc->metrics.knob_size = v;
   }
-  
+
   v = GLW_MAX(0, (float)gsc->target_pos / (gsc->total_size - gsc->page_size + gsc->scroll_threshold_post));
 
   if(v != gsc->metrics.position) {
     do_update = 1;
     gsc->metrics.position = v;
   }
-  
   if(!do_update)
     return;
 
   if(gsc->total_size > gsc->page_size && !(w->glw_flags & GLW_CAN_SCROLL)) {
     w->glw_flags |= GLW_CAN_SCROLL;
     glw_signal0(w, GLW_SIGNAL_CAN_SCROLL_CHANGED, NULL);
-    
+
   } else if(gsc->total_size <= gsc->page_size &&
 	    w->glw_flags & GLW_CAN_SCROLL) {
     w->glw_flags &= ~GLW_CAN_SCROLL;
@@ -277,6 +290,14 @@ glw_scroll_set_int_attributes(glw_scroll_control_t *gsc, const char *a,
     return GLW_SET_RERENDER_REQUIRED;
   }
 
+  if(!strcmp(a, "bottomGravity")) {
+    if(gsc->bottom_gravity == !!value)
+      return GLW_SET_NO_CHANGE;
+
+    gsc->bottom_gravity = !!value;
+    return GLW_SET_RERENDER_REQUIRED;
+  }
+
   return GLW_SET_NOT_RESPONDING;
 }
 
@@ -311,6 +332,7 @@ glw_scroll_suggest_focus(glw_scroll_control_t *gsc, glw_t *w, glw_t *c)
 void
 glw_scroll_handle_scroll(glw_scroll_control_t *gsc, glw_t *w, glw_scroll_t *gs)
 {
+  gsc->bottom_anchored = 0;
   int top = GLW_MAX(gs->value * (gsc->total_size - gsc->page_size
                                  + gsc->scroll_threshold_post), 0);
   gsc->target_pos = top;

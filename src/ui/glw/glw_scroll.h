@@ -22,6 +22,9 @@
 
 typedef struct glw_scroll_control {
 
+  glw_t *suggested;
+  glw_t *scroll_to_me;
+
   int target_pos;      // This is where we want to go
   float filtered_pos;  // This is weher we are
   float rounded_pos;     // Position rounded to pixels
@@ -50,9 +53,10 @@ typedef struct glw_scroll_control {
   float clip_blur;
 
   int chase_focus;
-  glw_t *suggested;
   int suggest_cnt;
-  glw_t *scroll_to_me;
+
+  int bottom_anchored;
+  int bottom_gravity;
 
 } glw_scroll_control_t;
 

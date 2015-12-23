@@ -1,22 +1,19 @@
+#import "skin://theme.view"
 
-widget(container_y, {
-  padding: [1em, 1em, 1em, 0];
-  spacing: 0.2em;
-
-  widget(label, {
-    caption: _("System log");
-    size: 1.5em;
-    align: center;
-  });
-
-  widget(quad, {
-    height: 1;
-  });
+widget(container_z, {
 
   widget(container_x, {
     padding: [4,0];
     widget(list_y, {
-      id: "list";
+      id: "scrollable";
+      bottomGravity: true;
+      clipOffsetTop: 3em;
+      scrollThresholdTop: 5em;
+      scrollThresholdBottom: $ui.universeBottomHeight + 2em;
+      clipOffsetBottom: $ui.universeBottomHeight;
+      clipAlpha: 0.2;
+      clipBlur: 1;
+
       cloner($core.logbuffer, label, {
 	caption: $self.prefix + $self.message;
 	ellipsize: true;
@@ -29,16 +26,35 @@ widget(container_y, {
 			 "ERROR", [1, 0.5, 0.5]);
       });
     });
+  });
+  ScrollBar("scrollable", 3em, $ui.universeBottomHeight);
 
-    widget(slider_y, {
-      bind("list");
-      width: 4;
-      focusable: canScroll();
-      alpha: iir(canScroll(), 16);
-
+  widget(container_y, {
+    align: top;
+    widget(container_z, {
+      height: 3em;
+      zoffset: 10;
       widget(quad, {
-	alpha: iir(0.3 + 0.3 * (isFocused() || isPressed()), 4) + isHovered();
+        color: 0;
+        alpha: 0.2;
+      });
+
+      widget(container_x, {
+        BackButton();
+
+        widget(label, {
+          filterConstraintX: true;
+          padding: [4em, 0];
+          align: center;
+          caption: _("System log");
+          size: 1.5em;
+        });
+      });
+
+      widget(dummy, {
+        width: 4em;
       });
     });
   });
+
 });
