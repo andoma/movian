@@ -161,6 +161,7 @@ widget(container_z, {
 		              "bluray",   "ic_album_48px",
 		              "network",  "ic_device_hub_24px",
 		              "setting",  "ic_settings_48px",
+                              "storage",  "ic_sd_storage_48px",
 		              "plugin",   "ic_extension_48px") + ".svg";
 
                   color:  select($self.icon, 1, iir(!isNavFocused(), 4));
