@@ -227,8 +227,10 @@ get_output(JNIEnv *env, android_video_codec_t *avc, int loop,
       fi.fi_epoch = mbm->mbm_epoch;
       fi.fi_user_time = mbm->mbm_user_time;
       fi.fi_drive_clock = mbm->mbm_drive_clock;
-      AVC_TRACE("Dequeue buffer reorderslot:0x%lx -> %d PTS=%"PRId64,
-                (long)pts, slot, fi.fi_pts);
+      fi.fi_duration = mbm->mbm_duration;
+      AVC_TRACE("Dequeue buffer reorderslot:0x%lx -> %d "
+                "PTS=%"PRId64" duration=%d",
+                (long)pts, slot, fi.fi_pts, fi.fi_duration);
 #else
       fi.fi_pts = slot;
       fi.fi_epoch = 1;
