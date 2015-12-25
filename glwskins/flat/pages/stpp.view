@@ -1,5 +1,6 @@
-coreAttach($self.url, {
+#import "skin://theme.view"
 
+coreAttach($self.url, {
 
   widget(container_y, {
 
@@ -8,10 +9,33 @@ coreAttach($self.url, {
       quad({
         color: [0.04, 0.13, 0.4];
       });
-      label({
-        size: 1.2em;
-        align: center;
-        caption: fmt(_("Remote controlling %s"), "Movian");
+      widget(container_x, {
+        widget(container_z, {
+          width: 4em;
+
+          GridItemHighlight();
+          focusable: 0.1;
+          onEvent(activate, {
+            $self.close = 1;
+          });
+
+
+          widget(icon, {
+            source: "skin://icons/ic_cancel_48px.svg";
+            align: center;
+          });
+        });
+
+        label({
+          filterConstraintX: true;
+          size: 1.2em;
+          align: center;
+          caption: fmt(_("Remote controlling %s"), "Movian");
+        });
+
+        widget(dummy, {
+          width: 4em;
+        });
       });
     });
 
