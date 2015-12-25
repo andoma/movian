@@ -59,6 +59,11 @@ glw_quad_render(glw_t *w, const glw_rctx_t *rc)
     glw_renderer_vtx_pos(&q->r, 1,  1, -1, 0);
     glw_renderer_vtx_pos(&q->r, 2,  1,  1, 0);
     glw_renderer_vtx_pos(&q->r, 3, -1,  1, 0);
+
+    glw_renderer_vtx_st(&q->r, 0,  0,  1);
+    glw_renderer_vtx_st(&q->r, 1,  1,  1);
+    glw_renderer_vtx_st(&q->r, 2,  1,  0);
+    glw_renderer_vtx_st(&q->r, 3,  0,  0);
   }
 
   glw_renderer_draw(&q->r, w->glw_root, &rc0,
