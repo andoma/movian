@@ -534,6 +534,23 @@ id: Use original title
 msg: 使用原标题
 
 #
+# ./src/arch/android/android.c
+#
+id: Android Storage
+# Missing translation
+msg: 
+
+id: Movies
+msg: 电影
+
+id: Music
+msg: 音乐
+
+id: Pictures
+# Missing translation
+msg: 
+
+#
 # ./src/arch/linux/pulseaudio.c
 #
 id: Unable to initialize audio system %s -- %s
@@ -600,13 +617,11 @@ id: On
 msg: 启用
 
 #
-# ./src/arch/rpi/rpi_cec.c
+# ./src/arch/rpi/rpi_tv.c
 #
-id: Configure communications with your TV
-msg: 配置和电视的通讯
-
-id: Consumer Electronics Control
-msg: 消费型电子产品控制
+id: Match display and content framerate
+# Missing translation
+msg: 
 
 #
 # ./src/audio2/audio.c
@@ -740,8 +755,24 @@ msg: 补充
 #
 # ./src/backend/htsp/htsp.c
 #
+id: Channels
+# Missing translation
+msg: 
+
 id: Invalid HTSP URL
 msg: 非法的HTSP URL
+
+id: No such channel
+# Missing translation
+msg: 
+
+id: Recorded shows
+# Missing translation
+msg: 
+
+id: Recorder
+# Missing translation
+msg: 
 
 #
 # ./src/backend/search.c
@@ -753,70 +784,23 @@ id: Search result for: %s
 msg: "%s"的查询结果
 
 #
-# ./src/backend/spotify/spotify.c
+# ./src/backend/slideshow/slideshow.c
 #
-id: Albums
-msg: 专辑
+id: 3 seconds
+# Missing translation
+msg: 
 
-id: Automatic login on start
-msg: 启动时自动登录
+id: 5 seconds
+# Missing translation
+msg: 
 
-id: Collaborative
-msg: 协作
+id: 7 seconds
+# Missing translation
+msg: 
 
-id: Compilations
-msg: 选集
-
-id: Forget me
-msg: 忘记我
-
-id: Friends
-msg: 朋友
-
-id: High bitrate
-msg: 高比特率
-
-id: Inbox
-msg: 收件箱
-
-id: New albums on Spotify
-msg: Spotify新专辑
-
-id: New releases
-msg: 最新发布
-
-id: Offline
-msg: 离线
-
-id: Offline sync in 96kbps
-msg: 离线同步(96kbs)
-
-id: Playlists
-msg: 播放列表
-
-id: Relogin (switch user)
-msg: 重新登录(切换用户)
-
-id: Search result
-msg: 搜索结果
-
-id: Singles
-msg: 单曲
-
-id: Spotify friends
-msg: Spotify上的朋友
-
-id: Spotify music service
-msg: Spotify音乐服务
-
-id: Spotify playlists
-msg: Spotify播放列表
-
-id: Spotify: Connection error: %s
-msg: Spotify: 连接错误：%s
-
-id: Starred
-msg: 已加星
+id: Slideshow speed
+# Missing translation
+msg: 
 
 #
 # ./src/blobcache_file.c
@@ -840,6 +824,13 @@ id: Unable to open file: %s
 msg: 无法打开文件%s
 
 #
+# ./src/fileaccess/fa_filepicker.c
+#
+id: Select a file
+# Missing translation
+msg: 
+
+#
 # ./src/fileaccess/fa_locatedb.c
 #
 id: Search using Unix locatedb
@@ -848,14 +839,11 @@ msg: 使用Unix locatedb搜索
 #
 # ./src/fileaccess/fa_scanner.c
 #
+id: Albums
+msg: 专辑
+
 id: Artists
 msg: 歌手
-
-id: Date (newest first)
-msg: 日期（新的优先）
-
-id: Date (oldest first)
-msg: 日期（老的优先）
 
 id: Deleted %s
 msg: 删除%s
@@ -865,6 +853,14 @@ msg: 文件名
 
 id: Indexed mode
 msg: 索引方式
+
+id: Newest first
+# Missing translation
+msg: 
+
+id: Oldest first
+# Missing translation
+msg: 
 
 id: Show only supported files
 msg: 只显示支持的文件
@@ -941,6 +937,14 @@ msg: 对象名不存在
 #
 # ./src/i18n.c
 #
+id: 12 Hour
+# Missing translation
+msg: 
+
+id: 24 Hour
+# Missing translation
+msg: 
+
 id: Default character set
 msg: 默认字符集
 
@@ -971,20 +975,38 @@ msg: 音频次选语言代码
 id: Secondary subtitle language code
 msg: 字幕次选语言代码
 
+id: System default
+# Missing translation
+msg: 
+
 id: Tertiary audio language code
 msg: 音频第三语言代码
 
 id: Tertiary subtitle language code
 msg: 字幕第三语言代码
 
-#
-# ./src/keymapper.c
-#
-id: Configure mapping of keyboard and remote controller keys
-msg: 设置键盘和遥控器按键映射
+id: Time format
+# Missing translation
+msg: 
 
-id: Keymapper
-msg: 按键映射
+id: Timezone
+# Missing translation
+msg: 
+
+#
+# ./src/ipc/libcec.c
+#
+id: Longpress SELECT for item menu
+# Missing translation
+msg: 
+
+id: Switch TV input source
+# Missing translation
+msg: 
+
+id: Use STOP key for combo input
+# Missing translation
+msg: 
 
 #
 # ./src/keyring.c
@@ -998,17 +1020,30 @@ msg: 记住已删除密码
 #
 # ./src/media/media_settings.c
 #
-id: Align subtitles on video frame
-msg: 字幕显示在视频帧内
+id: Align on video frame
+# Missing translation
+msg: 
 
 id: Audio volume
 msg: 音量
+
+id: Delay
+# Missing translation
+msg: 
 
 id: Go to standby after video ends
 msg: 视频播放结束后自动关机
 
 id: Horizontal pan
 msg: 水平位移
+
+id: Horizontal position
+# Missing translation
+msg: 
+
+id: Horizontal scale
+# Missing translation
+msg: 
 
 id: Reset defaults for folder '%s'
 msg: 恢复文件夹'%s'的默认设置
@@ -1019,26 +1054,26 @@ msg: 保存为文件夹'%s'的默认设置
 id: Save as global default
 msg: 保存为全局默认设置
 
+id: Scaling
+# Missing translation
+msg: 
+
 id: Stretch video to fullscreen
 msg: 拉升视频至全屏
 
 id: Stretch video to widescreen
 msg: 拉伸视频至宽屏
 
-id: Subtitle delay
-msg: 字幕延迟
-
-id: Subtitle horizontal displacement
-msg: 字幕水平移位
-
-id: Subtitle scaling
-msg: 字幕缩放
-
-id: Subtitle vertical displacement
-msg: 字幕垂直移位
-
 id: Vertical pan
 msg: 垂直位移
+
+id: Vertical position
+# Missing translation
+msg: 
+
+id: Vertical scale
+# Missing translation
+msg: 
 
 id: Video frame interpolation
 msg: 视频帧插值
@@ -1124,11 +1159,9 @@ msg: 自定义标题
 id: IMDb ID
 msg: IMDb ID
 
-id: Metadata loaded from '%s' using %s
-msg: 已从'%s'使用%s下载元信息
-
-id: Metadata search
-msg: 元信息搜索
+id: Metadata loaded from <b>%s</b> based on %s
+# Missing translation
+msg: 
 
 id: Metadata source
 msg: 元信息源
@@ -1172,14 +1205,19 @@ msg: 目录名
 id: Add and remove items on homepage
 msg: 在首页添加或删除图标
 
+id: Added %s to home page
+# Missing translation
+msg: 
+
 id: Added new bookmark: %s
 msg: 添加新书签：%s
 
 id: Bookmarks
 msg: 收藏夹
 
-id: Music
-msg: 音乐
+id: Icon
+# Missing translation
+msg: 
 
 id: No handler for URL
 msg: 无法处理URL
@@ -1189,6 +1227,10 @@ msg: 其它
 
 id: Photos
 msg: 照片
+
+id: Removed %s from homepage
+# Missing translation
+msg: 
 
 id: Removed bookmark: %s
 msg: 删除书签: %s
@@ -1256,6 +1298,10 @@ msg: 云服务
 id: Corrupt plugin bundle
 msg: 损坏的插件包
 
+id: Custom backgrounds can now be set in Settings -> Look and Feel
+# Missing translation
+msg: 
+
 id: Disk write error
 msg: 磁盘写入错误
 
@@ -1283,9 +1329,6 @@ msg: 专辑列表
 id: Loading screen
 msg: 载入屏幕显示
 
-id: Movies
-msg: 电影
-
 id: Music streaming
 msg: 音乐流
 
@@ -1306,6 +1349,14 @@ msg: 在线电视
 
 id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
 msg: 由于可能引起问题，插件%s %s已被卸载。\n您可以尝试手工安装此插件的其它版本。
+
+id: Plugin %s has been uninstalled - %s
+# Missing translation
+msg: 
+
+id: Plugin categories
+# Missing translation
+msg: 
 
 id: Plugins
 msg: 插件
@@ -1339,6 +1390,10 @@ msg: 插件%s已更新到版本%s
 
 id: User interface extensions
 msg: 用户界面扩展
+
+id: Version %s is no longer compatible with Movian
+# Missing translation
+msg: 
 
 id: Video streaming
 msg: 视频流
@@ -1391,8 +1446,15 @@ msg: 本地网络
 #
 # ./src/settings.c
 #
+id: About
+# Missing translation
+msg: 
+
 id: Applications and installed plugins
 msg: 程序和已安装的插件
+
+id: Configure communications with your TV
+msg: 配置和电视的通讯
 
 id: Developer settings
 msg: 开发者设置
@@ -1426,6 +1488,10 @@ msg: 系统名称
 
 id: System related settings
 msg: 系统相关设置
+
+id: TV Control
+# Missing translation
+msg: 
 
 #
 # ./src/subtitles/subtitles.c
@@ -1484,6 +1550,9 @@ msg: 阴影颜色
 id: Shadow offset
 msg: 阴影偏移
 
+id: Subtitle horizontal displacement
+msg: 字幕水平移位
+
 id: Subtitle position
 msg: 字幕位置
 
@@ -1492,6 +1561,9 @@ msg: 字幕大小
 
 id: Subtitle size and positioning
 msg: 字幕大小和位置
+
+id: Subtitle vertical displacement
+msg: 字幕垂直移位
 
 id: Subtitles embedded in video file
 msg: 视频内嵌字幕
@@ -1538,6 +1610,10 @@ msg: 用户界面
 #
 # ./src/ui/glw/glw_ps3.c
 #
+id: Dual-Shock Remote
+# Missing translation
+msg: 
+
 id: Seek using L2 and R2 button
 msg: 使用L2/R2快速进退
 
@@ -1547,26 +1623,89 @@ msg: 使用Select按键确认
 #
 # ./src/ui/glw/glw_settings.c
 #
+id: Custom background image
+# Missing translation
+msg: 
+
+id: Emulate Up/Down buttons with mouse wheel
+# Missing translation
+msg: 
+
+id: Folder for screensaver images
+# Missing translation
+msg: 
+
 id: Font and icon size
 msg: 字体和图标大小
 
-id: Horizontal underscan
-msg: 水平欠扫描
+id: Interface horizontal shrink
+# Missing translation
+msg: 
+
+id: Interface vertical shrink
+# Missing translation
+msg: 
+
+id: Screensaver
+# Missing translation
+msg: 
 
 id: Screensaver delay
 msg: 屏幕保护延迟
 
-id: Vertical underscan
-msg: 垂直欠扫描
+id: Use Bing images of the day
+# Missing translation
+msg: 
 
 id: Wrap when reaching beginning/end of lists
 msg: 列表浏览开始结尾循环
 
 #
-# ./src/ui/glw/glw_x11.c
+# ./src/ui/glw/glw_view_eval.c
 #
-id: Map mouse wheel to up/down
-msg: 将鼠标滚轮映射到上/下按键
+id: %d days ago
+# Missing translation
+msg: 
+
+id: %d hours ago
+# Missing translation
+msg: 
+
+id: %d minutes ago
+# Missing translation
+msg: 
+
+id: %d months ago
+# Missing translation
+msg: 
+
+id: %d weeks ago
+# Missing translation
+msg: 
+
+id: %d years ago
+# Missing translation
+msg: 
+
+id: Just now
+# Missing translation
+msg: 
+
+id: One day ago
+# Missing translation
+msg: 
+
+id: One hour ago
+# Missing translation
+msg: 
+
+id: One minute ago
+# Missing translation
+msg: 
+
+id: One month ago
+# Missing translation
+msg: 
 
 #
 # ./src/ui/linux/nvidia.c
@@ -1604,6 +1743,12 @@ msg: 更新选择
 #
 # ./src/upnp/upnp_browse.c
 #
+id: Date (newest first)
+msg: 日期（新的优先）
+
+id: Date (oldest first)
+msg: 日期（老的优先）
+
 id: Device not found
 msg: 未发现设备
 
@@ -1631,11 +1776,12 @@ msg: 文件播放结束时自动播放列表中的下一个文件
 id: Count video as played when reaching
 msg: 将视频视为已播放当播放进度达到
 
-id: Enable VDA
-msg: 启用VDA
-
 id: Enable VDPAU
 msg: 启用VDPAU
+
+id: Hardware accelerated decoding
+# Missing translation
+msg: 
 
 id: Maximum resolution for deinterlacer
 msg: 去隔行化使用最大可能的分辨率

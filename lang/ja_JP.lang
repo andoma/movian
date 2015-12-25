@@ -363,7 +363,7 @@ id: Checking for updates...
 msg: アップデートを確認中です...
 
 id: Checking installed version of %s
-msg:  %sの現在のバージョンを確認
+msg: %sの現在のバージョンを確認
 
 id: Current version:
 msg: 現在のバージョン:
@@ -534,10 +534,27 @@ id: Use original title
 msg: 元のタイトルを使用
 
 #
+# ./src/arch/android/android.c
+#
+id: Android Storage
+# Missing translation
+msg: 
+
+id: Movies
+msg: ムービー
+
+id: Music
+msg: ミュージック
+
+id: Pictures
+# Missing translation
+msg: 
+
+#
 # ./src/arch/linux/pulseaudio.c
 #
 id: Unable to initialize audio system %s -- %s
-msg:  オーディオシステムを初期化できません。 %s -- %s
+msg: オーディオシステムを初期化できません。 %s -- %s
 
 #
 # ./src/arch/ps3/ps3_main.c
@@ -600,13 +617,11 @@ id: On
 msg: オン
 
 #
-# ./src/arch/rpi/rpi_cec.c
+# ./src/arch/rpi/rpi_tv.c
 #
-id: Configure communications with your TV
-msg: テレビとの通信設定
-
-id: Consumer Electronics Control
-msg: Consumer Electronics Control
+id: Match display and content framerate
+# Missing translation
+msg: 
 
 #
 # ./src/audio2/audio.c
@@ -740,8 +755,24 @@ msg: サプリメンタリ
 #
 # ./src/backend/htsp/htsp.c
 #
+id: Channels
+# Missing translation
+msg: 
+
 id: Invalid HTSP URL
 msg: 無効なHTSP URLです。
+
+id: No such channel
+# Missing translation
+msg: 
+
+id: Recorded shows
+# Missing translation
+msg: 
+
+id: Recorder
+# Missing translation
+msg: 
 
 #
 # ./src/backend/search.c
@@ -753,70 +784,23 @@ id: Search result for: %s
 msg: 検索結果: %s
 
 #
-# ./src/backend/spotify/spotify.c
+# ./src/backend/slideshow/slideshow.c
 #
-id: Albums
-msg: アルバム
+id: 3 seconds
+# Missing translation
+msg: 
 
-id: Automatic login on start
-msg: 起動時に自動的にログインする
+id: 5 seconds
+# Missing translation
+msg: 
 
-id: Collaborative
-msg: コラボレーション
+id: 7 seconds
+# Missing translation
+msg: 
 
-id: Compilations
-msg: コンピレーション
-
-id: Forget me
-msg: Forget me
-
-id: Friends
-msg: フレンド
-
-id: High bitrate
-msg: ハイビットレート
-
-id: Inbox
-msg: 受信ボックス
-
-id: New albums on Spotify
-msg: Spotifyのニューアルバム
-
-id: New releases
-msg: ニューリリース
-
-id: Offline
-msg: オフライン
-
-id: Offline sync in 96kbps
-msg: オフラインファイルの同期: 96kbps
-
-id: Playlists
-msg: プレイリスト
-
-id: Relogin (switch user)
-msg: 別のユーザーでログイン
-
-id: Search result
-msg: 検索結果
-
-id: Singles
-msg: シングル
-
-id: Spotify friends
-msg: Spotifyのフレンド
-
-id: Spotify music service
-msg: Spotify music service
-
-id: Spotify playlists
-msg: Spotifyのプレイリスト
-
-id: Spotify: Connection error: %s
-msg: Spotify: 接続エラー: %s
-
-id: Starred
-msg: スター付き
+id: Slideshow speed
+# Missing translation
+msg: 
 
 #
 # ./src/blobcache_file.c
@@ -840,6 +824,13 @@ id: Unable to open file: %s
 msg: ファイルを開けません。: %s
 
 #
+# ./src/fileaccess/fa_filepicker.c
+#
+id: Select a file
+# Missing translation
+msg: 
+
+#
 # ./src/fileaccess/fa_locatedb.c
 #
 id: Search using Unix locatedb
@@ -848,14 +839,11 @@ msg: Unix locatedb を使用して検索
 #
 # ./src/fileaccess/fa_scanner.c
 #
+id: Albums
+msg: アルバム
+
 id: Artists
 msg: アーティスト
-
-id: Date (newest first)
-msg: 作成日時順 (降順)
-
-id: Date (oldest first)
-msg: 作成日時順 (昇順)
 
 id: Deleted %s
 msg: %sを削除しました。
@@ -865,6 +853,14 @@ msg: ファイル名順
 
 id: Indexed mode
 msg: インデックスモード
+
+id: Newest first
+# Missing translation
+msg: 
+
+id: Oldest first
+# Missing translation
+msg: 
 
 id: Show only supported files
 msg: 再生可能なファイルのみを表示する
@@ -941,6 +937,14 @@ msg: オブジェクトが見つかりません。
 #
 # ./src/i18n.c
 #
+id: 12 Hour
+# Missing translation
+msg: 
+
+id: 24 Hour
+# Missing translation
+msg: 
+
 id: Default character set
 msg: デフォルト文字コード
 
@@ -971,20 +975,38 @@ msg: セカンダリオーディオの言語コード
 id: Secondary subtitle language code
 msg: セカンダリ字幕の言語コード
 
+id: System default
+# Missing translation
+msg: 
+
 id: Tertiary audio language code
 msg: ターシャリオーディオの言語コード
 
 id: Tertiary subtitle language code
 msg: ターシャリ字幕の言語コード
 
-#
-# ./src/keymapper.c
-#
-id: Configure mapping of keyboard and remote controller keys
-msg: キーボードやリモートコントローラのキー割り当てを設定します。
+id: Time format
+# Missing translation
+msg: 
 
-id: Keymapper
-msg: キーマッピング設定
+id: Timezone
+# Missing translation
+msg: 
+
+#
+# ./src/ipc/libcec.c
+#
+id: Longpress SELECT for item menu
+# Missing translation
+msg: 
+
+id: Switch TV input source
+# Missing translation
+msg: 
+
+id: Use STOP key for combo input
+# Missing translation
+msg: 
 
 #
 # ./src/keyring.c
@@ -998,17 +1020,30 @@ msg: パスワードを消去しました。
 #
 # ./src/media/media_settings.c
 #
-id: Align subtitles on video frame
-msg: ビデオに字幕を合わせる
+id: Align on video frame
+# Missing translation
+msg: 
 
 id: Audio volume
 msg: 音量調整
+
+id: Delay
+# Missing translation
+msg: 
 
 id: Go to standby after video ends
 msg: 再生終了後にスタンバイモードへ移行
 
 id: Horizontal pan
 msg: 水平位置調整
+
+id: Horizontal position
+# Missing translation
+msg: 
+
+id: Horizontal scale
+# Missing translation
+msg: 
 
 id: Reset defaults for folder '%s'
 msg: フォルダ'%s'の設定をデフォルトに戻す
@@ -1019,26 +1054,26 @@ msg: フォルダ'%s'の設定をデフォルトとして保存
 id: Save as global default
 msg: デフォルトとして保存する
 
+id: Scaling
+# Missing translation
+msg: 
+
 id: Stretch video to fullscreen
 msg: フルスクリーン表示を有効化
 
 id: Stretch video to widescreen
 msg: ワイドスクリーン表示を有効化
 
-id: Subtitle delay
-msg: 字幕ディレイ設定
-
-id: Subtitle horizontal displacement
-msg: 字幕の水平位置調整
-
-id: Subtitle scaling
-msg: 字幕サイズ調整
-
-id: Subtitle vertical displacement
-msg: 字幕の垂直位置調整
-
 id: Vertical pan
 msg: 垂直位置調整
+
+id: Vertical position
+# Missing translation
+msg: 
+
+id: Vertical scale
+# Missing translation
+msg: 
 
 id: Video frame interpolation
 msg: フレーム補間を有効にする
@@ -1124,11 +1159,9 @@ msg: タイトルを変更する
 id: IMDb ID
 msg: IMDb ID
 
-id: Metadata loaded from '%s' using %s
-msg: '%s'からメタデータを読み込みます。: %sを使用
-
-id: Metadata search
-msg: メタデータを検索
+id: Metadata loaded from <b>%s</b> based on %s
+# Missing translation
+msg: 
 
 id: Metadata source
 msg: メタデータのソース
@@ -1172,14 +1205,19 @@ msg: フォルダ名
 id: Add and remove items on homepage
 msg: ホームにブックマークを登録 / 削除します。
 
+id: Added %s to home page
+# Missing translation
+msg: 
+
 id: Added new bookmark: %s
 msg: 新規ブックマークを追加: %s
 
 id: Bookmarks
 msg: ブックマーク設定
 
-id: Music
-msg: ミュージック
+id: Icon
+# Missing translation
+msg: 
 
 id: No handler for URL
 msg: URL向けのハンドラがありません。
@@ -1189,6 +1227,10 @@ msg: その他
 
 id: Photos
 msg: フォト
+
+id: Removed %s from homepage
+# Missing translation
+msg: 
 
 id: Removed bookmark: %s
 msg: ブックマークを削除: %s
@@ -1256,6 +1298,10 @@ msg: クラウドサービス
 id: Corrupt plugin bundle
 msg: プラグイン・バンドルが破損しています。
 
+id: Custom backgrounds can now be set in Settings -> Look and Feel
+# Missing translation
+msg: 
+
 id: Disk write error
 msg: 書き込み中にエラーが発生しました。
 
@@ -1283,9 +1329,6 @@ msg: アルバムリスト
 id: Loading screen
 msg: ロード画面
 
-id: Movies
-msg: ムービー
-
 id: Music streaming
 msg: 音楽ストリーミング
 
@@ -1306,6 +1349,14 @@ msg: オンラインTV
 
 id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
 msg: プラグイン%s %sは問題を引き起こす可能性があるためアンインストールされました。\n手動で別のバージョンをインストールしてください。
+
+id: Plugin %s has been uninstalled - %s
+# Missing translation
+msg: 
+
+id: Plugin categories
+# Missing translation
+msg: 
 
 id: Plugins
 msg: プラグイン設定
@@ -1340,6 +1391,10 @@ msg: %sプラグインはバージョン%sへ更新されました。
 id: User interface extensions
 msg: ユーザーインターフェース
 
+id: Version %s is no longer compatible with Movian
+# Missing translation
+msg: 
+
 id: Video streaming
 msg: ビデオストリーミング
 
@@ -1356,7 +1411,7 @@ id: Logout
 msg: ログアウト
 
 id: Open shell
-msg:shellを開く
+msg: shellを開く
 
 id: Power off system
 msg: システムの電源を切る
@@ -1391,8 +1446,15 @@ msg: ローカルネットワーク
 #
 # ./src/settings.c
 #
+id: About
+# Missing translation
+msg: 
+
 id: Applications and installed plugins
 msg: アプリケーションとインストール済みのプラグイン
+
+id: Configure communications with your TV
+msg: テレビとの通信設定
 
 id: Developer settings
 msg: 開発者向け設定
@@ -1426,6 +1488,10 @@ msg: 機器名称
 
 id: System related settings
 msg: システム全般の設定をします。
+
+id: TV Control
+# Missing translation
+msg: 
 
 #
 # ./src/subtitles/subtitles.c
@@ -1484,6 +1550,9 @@ msg: ドロップシャドウの色
 id: Shadow offset
 msg: ドロップシャドウのオフセット
 
+id: Subtitle horizontal displacement
+msg: 字幕の水平位置調整
+
 id: Subtitle position
 msg: 字幕の位置
 
@@ -1492,6 +1561,9 @@ msg: 字幕のサイズ
 
 id: Subtitle size and positioning
 msg: 字幕のサイズと位置設定
+
+id: Subtitle vertical displacement
+msg: 字幕の垂直位置調整
 
 id: Subtitles embedded in video file
 msg: 字幕を有効化する
@@ -1538,6 +1610,10 @@ msg: ユーザーインターフェース
 #
 # ./src/ui/glw/glw_ps3.c
 #
+id: Dual-Shock Remote
+# Missing translation
+msg: 
+
 id: Seek using L2 and R2 button
 msg: L2 / R2ボタンをシークに割り当てる
 
@@ -1547,26 +1623,89 @@ msg: はい (w/セレクトボタン)
 #
 # ./src/ui/glw/glw_settings.c
 #
+id: Custom background image
+# Missing translation
+msg: 
+
+id: Emulate Up/Down buttons with mouse wheel
+# Missing translation
+msg: 
+
+id: Folder for screensaver images
+# Missing translation
+msg: 
+
 id: Font and icon size
 msg: フォントとアイコンのサイズを変更
 
-id: Horizontal underscan
-msg: 文字間隔調整
+id: Interface horizontal shrink
+# Missing translation
+msg: 
+
+id: Interface vertical shrink
+# Missing translation
+msg: 
+
+id: Screensaver
+# Missing translation
+msg: 
 
 id: Screensaver delay
 msg: スクリーンセーバーが起動するまでの時間
 
-id: Vertical underscan
-msg: 行間隔調整
+id: Use Bing images of the day
+# Missing translation
+msg: 
 
 id: Wrap when reaching beginning/end of lists
 msg: リストの先頭 / 最後尾をループさせる
 
 #
-# ./src/ui/glw/glw_x11.c
+# ./src/ui/glw/glw_view_eval.c
 #
-id: Map mouse wheel to up/down
-msg: マウスホイールの機能割り当て
+id: %d days ago
+# Missing translation
+msg: 
+
+id: %d hours ago
+# Missing translation
+msg: 
+
+id: %d minutes ago
+# Missing translation
+msg: 
+
+id: %d months ago
+# Missing translation
+msg: 
+
+id: %d weeks ago
+# Missing translation
+msg: 
+
+id: %d years ago
+# Missing translation
+msg: 
+
+id: Just now
+# Missing translation
+msg: 
+
+id: One day ago
+# Missing translation
+msg: 
+
+id: One hour ago
+# Missing translation
+msg: 
+
+id: One minute ago
+# Missing translation
+msg: 
+
+id: One month ago
+# Missing translation
+msg: 
 
 #
 # ./src/ui/linux/nvidia.c
@@ -1604,6 +1743,12 @@ msg: 適用するアップグレードのバージョン
 #
 # ./src/upnp/upnp_browse.c
 #
+id: Date (newest first)
+msg: 作成日時順 (降順)
+
+id: Date (oldest first)
+msg: 作成日時順 (昇順)
+
 id: Device not found
 msg: デバイスがありません。
 
@@ -1631,11 +1776,12 @@ msg: リスト連続再生を有効化する
 id: Count video as played when reaching
 msg: 再生済みをカウントする位置
 
-id: Enable VDA
-msg: VDAを有効にする
-
 id: Enable VDPAU
 msg: VDPAUを有効にする
+
+id: Hardware accelerated decoding
+# Missing translation
+msg: 
 
 id: Maximum resolution for deinterlacer
 msg: デインターレース時の最大解像度

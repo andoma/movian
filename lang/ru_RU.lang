@@ -534,6 +534,23 @@ id: Use original title
 msg: Использовать оригинальное название
 
 #
+# ./src/arch/android/android.c
+#
+id: Android Storage
+# Missing translation
+msg: 
+
+id: Movies
+msg: Фильмы
+
+id: Music
+msg: Музыка
+
+id: Pictures
+# Missing translation
+msg: 
+
+#
 # ./src/arch/linux/pulseaudio.c
 #
 id: Unable to initialize audio system %s -- %s
@@ -600,13 +617,11 @@ id: On
 msg: Вкл
 
 #
-# ./src/arch/rpi/rpi_cec.c
+# ./src/arch/rpi/rpi_tv.c
 #
-id: Configure communications with your TV
-msg: Настройка связи с телевизором
-
-id: Consumer Electronics Control
-msg: Управление бытовой электроникой
+id: Match display and content framerate
+# Missing translation
+msg: 
 
 #
 # ./src/audio2/audio.c
@@ -740,8 +755,24 @@ msg: Дополнительный
 #
 # ./src/backend/htsp/htsp.c
 #
+id: Channels
+# Missing translation
+msg: 
+
 id: Invalid HTSP URL
 msg: Недопустимый HTSP URL
+
+id: No such channel
+# Missing translation
+msg: 
+
+id: Recorded shows
+# Missing translation
+msg: 
+
+id: Recorder
+# Missing translation
+msg: 
 
 #
 # ./src/backend/search.c
@@ -753,70 +784,23 @@ id: Search result for: %s
 msg: Результаты поиска для: %s
 
 #
-# ./src/backend/spotify/spotify.c
+# ./src/backend/slideshow/slideshow.c
 #
-id: Albums
-msg: Альбомы
+id: 3 seconds
+# Missing translation
+msg: 
 
-id: Automatic login on start
-msg: Автологин при запуске
+id: 5 seconds
+# Missing translation
+msg: 
 
-id: Collaborative
-msg: Совместный
+id: 7 seconds
+# Missing translation
+msg: 
 
-id: Compilations
-msg: Сборник
-
-id: Forget me
-msg: Забыть меня
-
-id: Friends
-msg: Друзья
-
-id: High bitrate
-msg: Высокий битрейт
-
-id: Inbox
-msg: Входящие
-
-id: New albums on Spotify
-msg: Новые альбомы на Spotify
-
-id: New releases
-msg: Новые релизы
-
-id: Offline
-msg: Оффлайн
-
-id: Offline sync in 96kbps
-msg: Оффлайн синхронизация в 96кб/с
-
-id: Playlists
-msg: Плейлисты
-
-id: Relogin (switch user)
-msg: Перелогиниться (смена пользователя)
-
-id: Search result
-msg: Результат поиска
-
-id: Singles
-msg: Синглы
-
-id: Spotify friends
-msg: Друзья на Spotify
-
-id: Spotify music service
-msg: Музыкальный сервис Spotify
-
-id: Spotify playlists
-msg: Плейлисты Spotify
-
-id: Spotify: Connection error: %s
-msg: Spotify: Ошибка подключения: %s
-
-id: Starred
-msg: С отметками
+id: Slideshow speed
+# Missing translation
+msg: 
 
 #
 # ./src/blobcache_file.c
@@ -840,6 +824,13 @@ id: Unable to open file: %s
 msg: He удaлocь oткpыть фaйл: %s
 
 #
+# ./src/fileaccess/fa_filepicker.c
+#
+id: Select a file
+# Missing translation
+msg: 
+
+#
 # ./src/fileaccess/fa_locatedb.c
 #
 id: Search using Unix locatedb
@@ -848,14 +839,11 @@ msg: Поиск с использованием Unix locatedb
 #
 # ./src/fileaccess/fa_scanner.c
 #
+id: Albums
+msg: Альбомы
+
 id: Artists
 msg: Артисты
-
-id: Date (newest first)
-msg: Дата (сперва новые)
-
-id: Date (oldest first)
-msg: Дата (сперва старые)
 
 id: Deleted %s
 msg: Удалено: %s
@@ -865,6 +853,14 @@ msg: Имя файла
 
 id: Indexed mode
 msg: Индексированный режим
+
+id: Newest first
+# Missing translation
+msg: 
+
+id: Oldest first
+# Missing translation
+msg: 
 
 id: Show only supported files
 msg: Показывать только поддерживаемые файлы
@@ -941,6 +937,14 @@ msg: Название объекта не найдено
 #
 # ./src/i18n.c
 #
+id: 12 Hour
+# Missing translation
+msg: 
+
+id: 24 Hour
+# Missing translation
+msg: 
+
 id: Default character set
 msg: Набор символов по умолчанию
 
@@ -971,20 +975,38 @@ msg: Код второго языка аудио
 id: Secondary subtitle language code
 msg: Код второго языка субтитров
 
+id: System default
+# Missing translation
+msg: 
+
 id: Tertiary audio language code
 msg: Код третьего языка аудио
 
 id: Tertiary subtitle language code
 msg: Код третьего языка субтитров
 
-#
-# ./src/keymapper.c
-#
-id: Configure mapping of keyboard and remote controller keys
-msg: Настройка клавиатуры и кнопок ДУ
+id: Time format
+# Missing translation
+msg: 
 
-id: Keymapper
-msg: Настройка кнопок
+id: Timezone
+# Missing translation
+msg: 
+
+#
+# ./src/ipc/libcec.c
+#
+id: Longpress SELECT for item menu
+# Missing translation
+msg: 
+
+id: Switch TV input source
+# Missing translation
+msg: 
+
+id: Use STOP key for combo input
+# Missing translation
+msg: 
 
 #
 # ./src/keyring.c
@@ -998,17 +1020,30 @@ msg: Сохранённые пароли удалены
 #
 # ./src/media/media_settings.c
 #
-id: Align subtitles on video frame
-msg: Выравнивание субтитров в кадре
+id: Align on video frame
+# Missing translation
+msg: 
 
 id: Audio volume
 msg: Громкость
+
+id: Delay
+# Missing translation
+msg: 
 
 id: Go to standby after video ends
 msg: Отключить систему по окончании видео
 
 id: Horizontal pan
 msg: Горизонтальное панорамирование
+
+id: Horizontal position
+# Missing translation
+msg: 
+
+id: Horizontal scale
+# Missing translation
+msg: 
 
 id: Reset defaults for folder '%s'
 msg: Сброс настроек по умолчанию для папки '%s'
@@ -1019,26 +1054,26 @@ msg: Сохранить как настройки по умолчанию для
 id: Save as global default
 msg: Сохранить как главные настройки по умолчанию 
 
+id: Scaling
+# Missing translation
+msg: 
+
 id: Stretch video to fullscreen
 msg: Растянуть видео во весь экран
 
 id: Stretch video to widescreen
 msg: Растянуть видео на широкий экран
 
-id: Subtitle delay
-msg: Задержка субтитров
-
-id: Subtitle horizontal displacement
-msg: Горизонтальное смещение субтитров
-
-id: Subtitle scaling
-msg: Масштаб субтитров
-
-id: Subtitle vertical displacement
-msg: Вертикальное смещение субтитров
-
 id: Vertical pan
 msg: Вертикальное панорамирование
+
+id: Vertical position
+# Missing translation
+msg: 
+
+id: Vertical scale
+# Missing translation
+msg: 
 
 id: Video frame interpolation
 msg: Интерполяция видео кадра
@@ -1124,11 +1159,9 @@ msg: Ввести название
 id: IMDb ID
 msg: IMDb ID
 
-id: Metadata loaded from '%s' using %s
-msg: Метаданные загружаются из '%s' с использованием %s
-
-id: Metadata search
-msg: Поиск метаданных
+id: Metadata loaded from <b>%s</b> based on %s
+# Missing translation
+msg: 
 
 id: Metadata source
 msg: Источник метаданных
@@ -1172,14 +1205,19 @@ msg: имя папки
 id: Add and remove items on homepage
 msg: Добавление и удаление элементов на главном экране
 
+id: Added %s to home page
+# Missing translation
+msg: 
+
 id: Added new bookmark: %s
 msg: Добавлены новые закладки: %s
 
 id: Bookmarks
 msg: Закладки
 
-id: Music
-msg: Музыка
+id: Icon
+# Missing translation
+msg: 
 
 id: No handler for URL
 msg: Нет обработчика для URL
@@ -1189,6 +1227,10 @@ msg: Прочее
 
 id: Photos
 msg: Фото
+
+id: Removed %s from homepage
+# Missing translation
+msg: 
 
 id: Removed bookmark: %s
 msg: Удалить закладки: %s
@@ -1256,6 +1298,10 @@ msg: Облачные сервисы
 id: Corrupt plugin bundle
 msg: Поврежденный пакет плагина
 
+id: Custom backgrounds can now be set in Settings -> Look and Feel
+# Missing translation
+msg: 
+
 id: Disk write error
 msg: Ошибка записи на диск
 
@@ -1283,9 +1329,6 @@ msg: Список альбомов
 id: Loading screen
 msg: Загрузочный экран
 
-id: Movies
-msg: Фильмы
-
 id: Music streaming
 msg: Потоковая музыка
 
@@ -1306,6 +1349,14 @@ msg: Онлайн-ТВ
 
 id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
 msg: Плагин %s %s был удален, потому что он вызывает проблемы.\nПопробуйте переустановить вручную другую версию.
+
+id: Plugin %s has been uninstalled - %s
+# Missing translation
+msg: 
+
+id: Plugin categories
+# Missing translation
+msg: 
 
 id: Plugins
 msg: Плагины
@@ -1339,6 +1390,10 @@ msg: Плагин %s обновлен до версии %s
 
 id: User interface extensions
 msg: Расширения пользовательского интерфейса
+
+id: Version %s is no longer compatible with Movian
+# Missing translation
+msg: 
 
 id: Video streaming
 msg: Потоковое видео
@@ -1391,8 +1446,15 @@ msg: Локальная сеть
 #
 # ./src/settings.c
 #
+id: About
+# Missing translation
+msg: 
+
 id: Applications and installed plugins
 msg: Приложения и установленные плагины
+
+id: Configure communications with your TV
+msg: Настройка связи с телевизором
 
 id: Developer settings
 msg: Настройки для разработчиков
@@ -1426,6 +1488,10 @@ msg: Имя системы
 
 id: System related settings
 msg: Системные настройки
+
+id: TV Control
+# Missing translation
+msg: 
 
 #
 # ./src/subtitles/subtitles.c
@@ -1484,6 +1550,9 @@ msg: Цвет тени
 id: Shadow offset
 msg: Смещение тени
 
+id: Subtitle horizontal displacement
+msg: Горизонтальное смещение субтитров
+
 id: Subtitle position
 msg: Позиция субтитров
 
@@ -1492,6 +1561,9 @@ msg: Размер субтитров
 
 id: Subtitle size and positioning
 msg: Размер и позиция субтитров
+
+id: Subtitle vertical displacement
+msg: Вертикальное смещение субтитров
 
 id: Subtitles embedded in video file
 msg: Субтитры, встроенные в видеофайл
@@ -1538,6 +1610,10 @@ msg: Пользовательский интерфейс
 #
 # ./src/ui/glw/glw_ps3.c
 #
+id: Dual-Shock Remote
+# Missing translation
+msg: 
+
 id: Seek using L2 and R2 button
 msg: Перемотка видео кнопками L2 и R2
 
@@ -1547,26 +1623,89 @@ msg: С нажатой кнопкой Select
 #
 # ./src/ui/glw/glw_settings.c
 #
+id: Custom background image
+# Missing translation
+msg: 
+
+id: Emulate Up/Down buttons with mouse wheel
+# Missing translation
+msg: 
+
+id: Folder for screensaver images
+# Missing translation
+msg: 
+
 id: Font and icon size
 msg: Размер шрифта и значков
 
-id: Horizontal underscan
-msg: Горизонтальное сжатие
+id: Interface horizontal shrink
+# Missing translation
+msg: 
+
+id: Interface vertical shrink
+# Missing translation
+msg: 
+
+id: Screensaver
+# Missing translation
+msg: 
 
 id: Screensaver delay
 msg: Задержка скринсейвера
 
-id: Vertical underscan
-msg: Вертикальное сжатие
+id: Use Bing images of the day
+# Missing translation
+msg: 
 
 id: Wrap when reaching beginning/end of lists
 msg: Переход при достижении начала/конца списка
 
 #
-# ./src/ui/glw/glw_x11.c
+# ./src/ui/glw/glw_view_eval.c
 #
-id: Map mouse wheel to up/down
-msg: Настройка колесика мыши вверх/вниз
+id: %d days ago
+# Missing translation
+msg: 
+
+id: %d hours ago
+# Missing translation
+msg: 
+
+id: %d minutes ago
+# Missing translation
+msg: 
+
+id: %d months ago
+# Missing translation
+msg: 
+
+id: %d weeks ago
+# Missing translation
+msg: 
+
+id: %d years ago
+# Missing translation
+msg: 
+
+id: Just now
+# Missing translation
+msg: 
+
+id: One day ago
+# Missing translation
+msg: 
+
+id: One hour ago
+# Missing translation
+msg: 
+
+id: One minute ago
+# Missing translation
+msg: 
+
+id: One month ago
+# Missing translation
+msg: 
 
 #
 # ./src/ui/linux/nvidia.c
@@ -1604,6 +1743,12 @@ msg: Обновление до релиза
 #
 # ./src/upnp/upnp_browse.c
 #
+id: Date (newest first)
+msg: Дата (сперва новые)
+
+id: Date (oldest first)
+msg: Дата (сперва старые)
+
 id: Device not found
 msg: Устройство не найдено
 
@@ -1631,11 +1776,12 @@ msg: Автоматически проигрывать следующее вид
 id: Count video as played when reaching
 msg: Считать видео проигранным при достижении
 
-id: Enable VDA
-msg: Включить VDA
-
 id: Enable VDPAU
 msg: Включить VDPAU
+
+id: Hardware accelerated decoding
+# Missing translation
+msg: 
 
 id: Maximum resolution for deinterlacer
 msg: Максимальное разрешение для деинтерлейсинга
@@ -1675,3 +1821,4 @@ msg: Ускорение видео и поведение изображения
 
 id: Video playback
 msg: Воспроизведение видео
+

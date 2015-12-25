@@ -235,11 +235,13 @@ msg: Знайти / Відкрити URL
 #
 # ./glwskins/default/pages/iteminfo/image.view
 #
-id: Camera:
-msg: Камера:
+id: Camera: 
+# Missing translation
+msg: 
 
-id: Date:
-msg: Дата:
+id: Date: 
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/iteminfo/plugin.view
@@ -247,14 +249,17 @@ msg: Дата:
 id: %s %s or newer is required
 msg: Необхідно %s %s або новійше
 
-id: Author:
-msg: Автор:
+id: Author: 
+# Missing translation
+msg: 
 
-id: Available version:
-msg: Доступна версія:
+id: Available version: 
+# Missing translation
+msg: 
 
-id: Installed version:
-msg: Встановлена версія:
+id: Installed version: 
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/iteminfo/video.view
@@ -534,6 +539,23 @@ id: Use original title
 msg: Використовувати оригінальну назву
 
 #
+# ./src/arch/android/android.c
+#
+id: Android Storage
+# Missing translation
+msg: 
+
+id: Movies
+msg: Фільми
+
+id: Music
+msg: Музика
+
+id: Pictures
+# Missing translation
+msg: 
+
+#
 # ./src/arch/linux/pulseaudio.c
 #
 id: Unable to initialize audio system %s -- %s
@@ -600,13 +622,11 @@ id: On
 msg: Увімкно
 
 #
-# ./src/arch/rpi/rpi_cec.c
+# ./src/arch/rpi/rpi_tv.c
 #
-id: Configure communications with your TV
-msg: Налаштування зв'язку з ТВ
-
-id: Consumer Electronics Control
-msg: Керування побутовою електронікою
+id: Match display and content framerate
+# Missing translation
+msg: 
 
 #
 # ./src/audio2/audio.c
@@ -740,8 +760,24 @@ msg: Додатковий
 #
 # ./src/backend/htsp/htsp.c
 #
+id: Channels
+# Missing translation
+msg: 
+
 id: Invalid HTSP URL
 msg: Невірний HTSP URL
+
+id: No such channel
+# Missing translation
+msg: 
+
+id: Recorded shows
+# Missing translation
+msg: 
+
+id: Recorder
+# Missing translation
+msg: 
 
 #
 # ./src/backend/search.c
@@ -753,70 +789,23 @@ id: Search result for: %s
 msg: Результати пошуку для: %s
 
 #
-# ./src/backend/spotify/spotify.c
+# ./src/backend/slideshow/slideshow.c
 #
-id: Albums
-msg: Альбоми
+id: 3 seconds
+# Missing translation
+msg: 
 
-id: Automatic login on start
-msg: Автоматичний вхід при запуску
+id: 5 seconds
+# Missing translation
+msg: 
 
-id: Collaborative
-msg: Спільний
+id: 7 seconds
+# Missing translation
+msg: 
 
-id: Compilations
-msg: Підбірки
-
-id: Forget me
-msg: Забути мене
-
-id: Friends
-msg: Друзі
-
-id: High bitrate
-msg: Високий бітрейт
-
-id: Inbox
-msg: Вхідні
-
-id: New albums on Spotify
-msg: Нові альбоми на Spotify
-
-id: New releases
-msg: Нові релізи
-
-id: Offline
-msg: Офлайн
-
-id: Offline sync in 96kbps
-msg: Офлайн синхронізація в 96кб/с
-
-id: Playlists
-msg: Плейлісти
-
-id: Relogin (switch user)
-msg: Перезайти (змінити користувача)
-
-id: Search result
-msg: Результат пошуку
-
-id: Singles
-msg: Сінгли
-
-id: Spotify friends
-msg: Друзі на Spotify
-
-id: Spotify music service
-msg: Музичний сервіс Spotify
-
-id: Spotify playlists
-msg: Плейлісти Spotify
-
-id: Spotify: Connection error: %s
-msg: Spotify: Помилка підключення: %s
-
-id: Starred
-msg: З позначками
+id: Slideshow speed
+# Missing translation
+msg: 
 
 #
 # ./src/blobcache_file.c
@@ -840,6 +829,13 @@ id: Unable to open file: %s
 msg: Heвдалось відкрити фaйл: %s
 
 #
+# ./src/fileaccess/fa_filepicker.c
+#
+id: Select a file
+# Missing translation
+msg: 
+
+#
 # ./src/fileaccess/fa_locatedb.c
 #
 id: Search using Unix locatedb
@@ -848,14 +844,11 @@ msg: Пошук з використанням Unix locatedb
 #
 # ./src/fileaccess/fa_scanner.c
 #
+id: Albums
+msg: Альбоми
+
 id: Artists
 msg: Артисти
-
-id: Date (newest first)
-msg: Дата (з початку нові)
-
-id: Date (oldest first)
-msg: Дата (з початку старі)
 
 id: Deleted %s
 msg: Видалено: %s
@@ -865,6 +858,14 @@ msg: Ім'я файлу
 
 id: Indexed mode
 msg: Індексований режим
+
+id: Newest first
+# Missing translation
+msg: 
+
+id: Oldest first
+# Missing translation
+msg: 
 
 id: Show only supported files
 msg: Показувати тільки підтримувані файли
@@ -941,6 +942,14 @@ msg: Ім'я об'єкту не знайдено
 #
 # ./src/i18n.c
 #
+id: 12 Hour
+# Missing translation
+msg: 
+
+id: 24 Hour
+# Missing translation
+msg: 
+
 id: Default character set
 msg: Набір символів по замовчуванню
 
@@ -971,20 +980,38 @@ msg: Код другої мови для звуку
 id: Secondary subtitle language code
 msg: Код другої мови для субтитрів
 
+id: System default
+# Missing translation
+msg: 
+
 id: Tertiary audio language code
 msg: Код третьої мови для звуку
 
 id: Tertiary subtitle language code
 msg: Код третьої мови для субтитрів
 
-#
-# ./src/keymapper.c
-#
-id: Configure mapping of keyboard and remote controller keys
-msg: Налаштування кнопок клавіатури та дистанціного пульта управління
+id: Time format
+# Missing translation
+msg: 
 
-id: Keymapper
-msg: Налаштування кнопок
+id: Timezone
+# Missing translation
+msg: 
+
+#
+# ./src/ipc/libcec.c
+#
+id: Longpress SELECT for item menu
+# Missing translation
+msg: 
+
+id: Switch TV input source
+# Missing translation
+msg: 
+
+id: Use STOP key for combo input
+# Missing translation
+msg: 
 
 #
 # ./src/keyring.c
@@ -998,17 +1025,30 @@ msg: Паролі які запам'ятовувались видалено
 #
 # ./src/media/media_settings.c
 #
-id: Align subtitles on video frame
-msg: Вирівнювання субтитрів у відеокадрі
+id: Align on video frame
+# Missing translation
+msg: 
 
 id: Audio volume
 msg: Гучність звуку
+
+id: Delay
+# Missing translation
+msg: 
 
 id: Go to standby after video ends
 msg: Перейти в режим очікування після закінчення відео
 
 id: Horizontal pan
 msg: Горизонтальне панорамування
+
+id: Horizontal position
+# Missing translation
+msg: 
+
+id: Horizontal scale
+# Missing translation
+msg: 
 
 id: Reset defaults for folder '%s'
 msg: Скинути налаштування по замовчуванню для теки '%s'
@@ -1019,26 +1059,26 @@ msg: Зберегти налаштування по замовчуванню д�
 id: Save as global default
 msg: Зберегти як глобальні налаштування по замовчуванню
 
+id: Scaling
+# Missing translation
+msg: 
+
 id: Stretch video to fullscreen
 msg: Розтягнути відео на цілий екран
 
 id: Stretch video to widescreen
 msg: Розтягнути відео на широкий екран
 
-id: Subtitle delay
-msg: Затримка субтитрів
-
-id: Subtitle horizontal displacement
-msg: Зміщення субтитрів по горизонталі
-
-id: Subtitle scaling
-msg: Масштаб субтитрів
-
-id: Subtitle vertical displacement
-msg: Вертикальне зміщення субтитрів
-
 id: Vertical pan
 msg: Вертикальне панорамування
+
+id: Vertical position
+# Missing translation
+msg: 
+
+id: Vertical scale
+# Missing translation
+msg: 
 
 id: Video frame interpolation
 msg: Інтерполяція відеокадру
@@ -1124,11 +1164,9 @@ msg: Задати назву
 id: IMDb ID
 msg: IMDb ID
 
-id: Metadata loaded from '%s' using %s
-msg: Метадані завантажено з '%s' використовуючи %s
-
-id: Metadata search
-msg: Пошук метаданих
+id: Metadata loaded from <b>%s</b> based on %s
+# Missing translation
+msg: 
 
 id: Metadata source
 msg: Джерело метаданих
@@ -1172,14 +1210,19 @@ msg: ім'я теки
 id: Add and remove items on homepage
 msg: Додати і видалити елементи на головному екрані
 
+id: Added %s to home page
+# Missing translation
+msg: 
+
 id: Added new bookmark: %s
 msg: Додано нову закладку: %s
 
 id: Bookmarks
 msg: Закладки
 
-id: Music
-msg: Музика
+id: Icon
+# Missing translation
+msg: 
 
 id: No handler for URL
 msg: Нема обробника для URL
@@ -1189,6 +1232,10 @@ msg: Інше
 
 id: Photos
 msg: Фото
+
+id: Removed %s from homepage
+# Missing translation
+msg: 
 
 id: Removed bookmark: %s
 msg: Видалено закладку: %s
@@ -1256,6 +1303,10 @@ msg: Хмарні сервіси
 id: Corrupt plugin bundle
 msg: Пакет додатку пошкоджено
 
+id: Custom backgrounds can now be set in Settings -> Look and Feel
+# Missing translation
+msg: 
+
 id: Disk write error
 msg: Помилка запису на диск
 
@@ -1283,9 +1334,6 @@ msg: Список альбомів
 id: Loading screen
 msg: Екран завантаження
 
-id: Movies
-msg: Фільми
-
 id: Music streaming
 msg: Потокова музика
 
@@ -1306,6 +1354,14 @@ msg: Онлайн ТБ
 
 id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
 msg: Додаток %s %s було видалено, тому що він викликає проблеми.\nСпробуйте переінсталювати іншу версію вручну.
+
+id: Plugin %s has been uninstalled - %s
+# Missing translation
+msg: 
+
+id: Plugin categories
+# Missing translation
+msg: 
 
 id: Plugins
 msg: Додатки
@@ -1339,6 +1395,10 @@ msg: Додаток %s оновлений до версії %s
 
 id: User interface extensions
 msg: Розширення інтерфейсу користувача
+
+id: Version %s is no longer compatible with Movian
+# Missing translation
+msg: 
 
 id: Video streaming
 msg: Потокове відео
@@ -1391,8 +1451,15 @@ msg: Локальна мережа
 #
 # ./src/settings.c
 #
+id: About
+# Missing translation
+msg: 
+
 id: Applications and installed plugins
 msg: Встановлені додатки (плагіни)
+
+id: Configure communications with your TV
+msg: Налаштування зв'язку з ТВ
 
 id: Developer settings
 msg: Налаштування для розробників
@@ -1426,6 +1493,10 @@ msg: Ім'я системи
 
 id: System related settings
 msg: Налаштування системи
+
+id: TV Control
+# Missing translation
+msg: 
 
 #
 # ./src/subtitles/subtitles.c
@@ -1484,6 +1555,9 @@ msg: Колір тіні
 id: Shadow offset
 msg: Зміщення тіні
 
+id: Subtitle horizontal displacement
+msg: Зміщення субтитрів по горизонталі
+
 id: Subtitle position
 msg: Позиція субтитрів
 
@@ -1492,6 +1566,9 @@ msg: Розмір субтитрів
 
 id: Subtitle size and positioning
 msg: Розмір и позиція субтитрів
+
+id: Subtitle vertical displacement
+msg: Вертикальне зміщення субтитрів
 
 id: Subtitles embedded in video file
 msg: Субтитри, вбудовані у відеофайл
@@ -1538,6 +1615,10 @@ msg: Інтерфейс користувача
 #
 # ./src/ui/glw/glw_ps3.c
 #
+id: Dual-Shock Remote
+# Missing translation
+msg: 
+
 id: Seek using L2 and R2 button
 msg: Перемотка відео кнопками L2 та R2
 
@@ -1547,26 +1628,89 @@ msg: З натиснутою кнопкою Select
 #
 # ./src/ui/glw/glw_settings.c
 #
+id: Custom background image
+# Missing translation
+msg: 
+
+id: Emulate Up/Down buttons with mouse wheel
+# Missing translation
+msg: 
+
+id: Folder for screensaver images
+# Missing translation
+msg: 
+
 id: Font and icon size
 msg: Розмір шрифтів та іконок
 
-id: Horizontal underscan
-msg: Горизонтальна розгортка
+id: Interface horizontal shrink
+# Missing translation
+msg: 
+
+id: Interface vertical shrink
+# Missing translation
+msg: 
+
+id: Screensaver
+# Missing translation
+msg: 
 
 id: Screensaver delay
 msg: Затримка екранної заставки
 
-id: Vertical underscan
-msg: Вертикальна розгортка
+id: Use Bing images of the day
+# Missing translation
+msg: 
 
 id: Wrap when reaching beginning/end of lists
 msg: Переносити курсор при досягненні початку/кінця списку
 
 #
-# ./src/ui/glw/glw_x11.c
+# ./src/ui/glw/glw_view_eval.c
 #
-id: Map mouse wheel to up/down
-msg: Використовувати колесо миші для навігації вгору/вниз
+id: %d days ago
+# Missing translation
+msg: 
+
+id: %d hours ago
+# Missing translation
+msg: 
+
+id: %d minutes ago
+# Missing translation
+msg: 
+
+id: %d months ago
+# Missing translation
+msg: 
+
+id: %d weeks ago
+# Missing translation
+msg: 
+
+id: %d years ago
+# Missing translation
+msg: 
+
+id: Just now
+# Missing translation
+msg: 
+
+id: One day ago
+# Missing translation
+msg: 
+
+id: One hour ago
+# Missing translation
+msg: 
+
+id: One minute ago
+# Missing translation
+msg: 
+
+id: One month ago
+# Missing translation
+msg: 
 
 #
 # ./src/ui/linux/nvidia.c
@@ -1604,6 +1748,12 @@ msg: Оновлення до релізу
 #
 # ./src/upnp/upnp_browse.c
 #
+id: Date (newest first)
+msg: Дата (з початку нові)
+
+id: Date (oldest first)
+msg: Дата (з початку старі)
+
 id: Device not found
 msg: Пристрій не знайдено
 
@@ -1631,11 +1781,12 @@ msg: Автоматично відтворювати наступне відео
 id: Count video as played when reaching
 msg: Рахувати відео переглянутим при досягненні
 
-id: Enable VDA
-msg: Увімкнути VDA
-
 id: Enable VDPAU
 msg: Увімкнути VDPAU
+
+id: Hardware accelerated decoding
+# Missing translation
+msg: 
 
 id: Maximum resolution for deinterlacer
 msg: Максимальна роздільна здатність для деінтерлейсера

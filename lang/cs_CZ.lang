@@ -595,6 +595,24 @@ id: Use original title
 msg: 
 
 #
+# ./src/arch/android/android.c
+#
+id: Android Storage
+# Missing translation
+msg: 
+
+id: Movies
+# Missing translation
+msg: 
+
+id: Music
+msg: Hudba
+
+id: Pictures
+# Missing translation
+msg: 
+
+#
 # ./src/arch/linux/pulseaudio.c
 #
 id: Unable to initialize audio system %s -- %s
@@ -672,13 +690,9 @@ id: On
 msg: 
 
 #
-# ./src/arch/rpi/rpi_cec.c
+# ./src/arch/rpi/rpi_tv.c
 #
-id: Configure communications with your TV
-# Missing translation
-msg: 
-
-id: Consumer Electronics Control
+id: Match display and content framerate
 # Missing translation
 msg: 
 
@@ -845,8 +859,24 @@ msg:
 #
 # ./src/backend/htsp/htsp.c
 #
+id: Channels
+# Missing translation
+msg: 
+
 id: Invalid HTSP URL
 msg: Neplatný HTSP URL
+
+id: No such channel
+# Missing translation
+msg: 
+
+id: Recorded shows
+# Missing translation
+msg: 
+
+id: Recorder
+# Missing translation
+msg: 
 
 #
 # ./src/backend/search.c
@@ -858,74 +888,23 @@ id: Search result for: %s
 msg: Výsledky hledání pro: %s
 
 #
-# ./src/backend/spotify/spotify.c
+# ./src/backend/slideshow/slideshow.c
 #
-id: Albums
+id: 3 seconds
 # Missing translation
 msg: 
 
-id: Automatic login on start
+id: 5 seconds
 # Missing translation
 msg: 
 
-id: Collaborative
-msg: Spolupráce
-
-id: Compilations
+id: 7 seconds
 # Missing translation
 msg: 
 
-id: Forget me
-msg: Nepamatovat si mě 
-
-id: Friends
-msg: Přátelé
-
-id: High bitrate
-msg: Vysoký bitrate
-
-id: Inbox
-msg: Inbox
-
-id: New albums on Spotify
-msg: Nová alba na Spotify
-
-id: New releases
-msg: Nové verze
-
-id: Offline
-msg: Offline
-
-id: Offline sync in 96kbps
-msg: Offline synchronizace na 96kbps
-
-id: Playlists
-msg: Seznamy skladeb
-
-id: Relogin (switch user)
-msg: Nové přihlášení (přepnout uživatele)
-
-id: Search result
-msg: Výsledky hledání
-
-id: Singles
+id: Slideshow speed
 # Missing translation
 msg: 
-
-id: Spotify friends
-msg: Spotify přátele
-
-id: Spotify music service
-msg: Spotify hudební služby
-
-id: Spotify playlists
-msg: Spotyfy seznamy skladeb
-
-id: Spotify: Connection error: %s
-msg: Spotify: Chyba připojení: %s
-
-id: Starred
-msg: S hvězdičkou
 
 #
 # ./src/blobcache_file.c
@@ -950,6 +929,13 @@ id: Unable to open file: %s
 msg: Nejde otevřít soubor: %s
 
 #
+# ./src/fileaccess/fa_filepicker.c
+#
+id: Select a file
+# Missing translation
+msg: 
+
+#
 # ./src/fileaccess/fa_locatedb.c
 #
 id: Search using Unix locatedb
@@ -958,15 +944,11 @@ msg: Pro hledání použít Unix locatedb
 #
 # ./src/fileaccess/fa_scanner.c
 #
+id: Albums
+# Missing translation
+msg: 
+
 id: Artists
-# Missing translation
-msg: 
-
-id: Date (newest first)
-# Missing translation
-msg: 
-
-id: Date (oldest first)
 # Missing translation
 msg: 
 
@@ -978,6 +960,14 @@ id: Filename
 msg: Název souboru
 
 id: Indexed mode
+# Missing translation
+msg: 
+
+id: Newest first
+# Missing translation
+msg: 
+
+id: Oldest first
 # Missing translation
 msg: 
 
@@ -1065,6 +1055,14 @@ msg:
 #
 # ./src/i18n.c
 #
+id: 12 Hour
+# Missing translation
+msg: 
+
+id: 24 Hour
+# Missing translation
+msg: 
+
 id: Default character set
 # Missing translation
 msg: 
@@ -1097,20 +1095,38 @@ msg: Druhý jazyk zvuku
 id: Secondary subtitle language code
 msg: Druhý jazyk titulků
 
+id: System default
+# Missing translation
+msg: 
+
 id: Tertiary audio language code
 msg: Třetí jazyk zvuku
 
 id: Tertiary subtitle language code
 msg: Třetí jazyk titulků
 
-#
-# ./src/keymapper.c
-#
-id: Configure mapping of keyboard and remote controller keys
-msg: Nastavení klávesnice a dálkového ovládání
+id: Time format
+# Missing translation
+msg: 
 
-id: Keymapper
-msg: Ovládání
+id: Timezone
+# Missing translation
+msg: 
+
+#
+# ./src/ipc/libcec.c
+#
+id: Longpress SELECT for item menu
+# Missing translation
+msg: 
+
+id: Switch TV input source
+# Missing translation
+msg: 
+
+id: Use STOP key for combo input
+# Missing translation
+msg: 
 
 #
 # ./src/keyring.c
@@ -1124,10 +1140,15 @@ msg: Uložená hesla vymazána
 #
 # ./src/media/media_settings.c
 #
-id: Align subtitles on video frame
-msg: Zarovnat titulky do obrazu
+id: Align on video frame
+# Missing translation
+msg: 
 
 id: Audio volume
+# Missing translation
+msg: 
+
+id: Delay
 # Missing translation
 msg: 
 
@@ -1136,6 +1157,14 @@ id: Go to standby after video ends
 msg: 
 
 id: Horizontal pan
+# Missing translation
+msg: 
+
+id: Horizontal position
+# Missing translation
+msg: 
+
+id: Horizontal scale
 # Missing translation
 msg: 
 
@@ -1151,27 +1180,25 @@ id: Save as global default
 # Missing translation
 msg: 
 
+id: Scaling
+# Missing translation
+msg: 
+
 id: Stretch video to fullscreen
 msg: Roztáhnout video na celou obrazovku
 
 id: Stretch video to widescreen
 msg: Roztáhnout video na šířku 
 
-id: Subtitle delay
-msg: Zpoždění titulků
-
-id: Subtitle horizontal displacement
-# Missing translation
-msg: 
-
-id: Subtitle scaling
-msg: Velikost titulků
-
-id: Subtitle vertical displacement
-# Missing translation
-msg: 
-
 id: Vertical pan
+# Missing translation
+msg: 
+
+id: Vertical position
+# Missing translation
+msg: 
+
+id: Vertical scale
 # Missing translation
 msg: 
 
@@ -1271,11 +1298,9 @@ msg:
 id: IMDb ID
 msg: IMDb ID
 
-id: Metadata loaded from '%s' using %s
-msg: Metadata získána z '%s' pomocí %s
-
-id: Metadata search
-msg: Hledání metadat
+id: Metadata loaded from <b>%s</b> based on %s
+# Missing translation
+msg: 
 
 id: Metadata source
 msg: Zdroj metadat
@@ -1323,14 +1348,19 @@ id: Add and remove items on homepage
 # Missing translation
 msg: 
 
+id: Added %s to home page
+# Missing translation
+msg: 
+
 id: Added new bookmark: %s
 msg: Přidána záložka: %s
 
 id: Bookmarks
 msg: Oblíbené
 
-id: Music
-msg: Hudba
+id: Icon
+# Missing translation
+msg: 
 
 id: No handler for URL
 msg: Nelze zpracovat URL
@@ -1340,6 +1370,10 @@ msg: Ostatní
 
 id: Photos
 msg: Snimky
+
+id: Removed %s from homepage
+# Missing translation
+msg: 
 
 id: Removed bookmark: %s
 msg: Odstraněna záložka: %s
@@ -1418,6 +1452,10 @@ msg:
 id: Corrupt plugin bundle
 msg: Svazek poškozených pluginů
 
+id: Custom backgrounds can now be set in Settings -> Look and Feel
+# Missing translation
+msg: 
+
 id: Disk write error
 msg: Chyba při zápisu na disk
 
@@ -1450,10 +1488,6 @@ id: Loading screen
 # Missing translation
 msg: 
 
-id: Movies
-# Missing translation
-msg: 
-
 id: Music streaming
 # Missing translation
 msg: 
@@ -1476,6 +1510,14 @@ id: Online TV
 msg: 
 
 id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
+# Missing translation
+msg: 
+
+id: Plugin %s has been uninstalled - %s
+# Missing translation
+msg: 
+
+id: Plugin categories
 # Missing translation
 msg: 
 
@@ -1514,6 +1556,10 @@ id: Upgraded plugin %s to version %s
 msg: Plugin %s upgradován na verzi %s
 
 id: User interface extensions
+# Missing translation
+msg: 
+
+id: Version %s is no longer compatible with Movian
 # Missing translation
 msg: 
 
@@ -1574,8 +1620,16 @@ msg: Místní síť
 #
 # ./src/settings.c
 #
+id: About
+# Missing translation
+msg: 
+
 id: Applications and installed plugins
 msg: Aplikace a nainstalované doplňky
+
+id: Configure communications with your TV
+# Missing translation
+msg: 
 
 id: Developer settings
 msg: Nastavení pro vývojáře
@@ -1614,6 +1668,10 @@ msg:
 
 id: System related settings
 msg: Systémová nastavení
+
+id: TV Control
+# Missing translation
+msg: 
 
 #
 # ./src/subtitles/subtitles.c
@@ -1678,6 +1736,10 @@ msg: Barva stínu
 id: Shadow offset
 msg: Posun stínu
 
+id: Subtitle horizontal displacement
+# Missing translation
+msg: 
+
 id: Subtitle position
 msg: Pozice titulků
 
@@ -1686,6 +1748,10 @@ msg: Velikost titulků
 
 id: Subtitle size and positioning
 msg: Velikost a pozice titulků
+
+id: Subtitle vertical displacement
+# Missing translation
+msg: 
 
 id: Subtitles embedded in video file
 # Missing translation
@@ -1745,6 +1811,10 @@ msg:
 #
 # ./src/ui/glw/glw_ps3.c
 #
+id: Dual-Shock Remote
+# Missing translation
+msg: 
+
 id: Seek using L2 and R2 button
 # Missing translation
 msg: 
@@ -1756,17 +1826,38 @@ msg:
 #
 # ./src/ui/glw/glw_settings.c
 #
+id: Custom background image
+# Missing translation
+msg: 
+
+id: Emulate Up/Down buttons with mouse wheel
+# Missing translation
+msg: 
+
+id: Folder for screensaver images
+# Missing translation
+msg: 
+
 id: Font and icon size
 # Missing translation
 msg: 
 
-id: Horizontal underscan
-msg: Horizontální podscan
+id: Interface horizontal shrink
+# Missing translation
+msg: 
+
+id: Interface vertical shrink
+# Missing translation
+msg: 
+
+id: Screensaver
+# Missing translation
+msg: 
 
 id: Screensaver delay
 msg: Zpoždění spořiče
 
-id: Vertical underscan
+id: Use Bing images of the day
 # Missing translation
 msg: 
 
@@ -1775,10 +1866,51 @@ id: Wrap when reaching beginning/end of lists
 msg: 
 
 #
-# ./src/ui/glw/glw_x11.c
+# ./src/ui/glw/glw_view_eval.c
 #
-id: Map mouse wheel to up/down
-msg: Kolečko myši posouvá nahoru/dolů
+id: %d days ago
+# Missing translation
+msg: 
+
+id: %d hours ago
+# Missing translation
+msg: 
+
+id: %d minutes ago
+# Missing translation
+msg: 
+
+id: %d months ago
+# Missing translation
+msg: 
+
+id: %d weeks ago
+# Missing translation
+msg: 
+
+id: %d years ago
+# Missing translation
+msg: 
+
+id: Just now
+# Missing translation
+msg: 
+
+id: One day ago
+# Missing translation
+msg: 
+
+id: One hour ago
+# Missing translation
+msg: 
+
+id: One minute ago
+# Missing translation
+msg: 
+
+id: One month ago
+# Missing translation
+msg: 
 
 #
 # ./src/ui/linux/nvidia.c
@@ -1817,6 +1949,14 @@ msg: Upgradovat na vydání z
 #
 # ./src/upnp/upnp_browse.c
 #
+id: Date (newest first)
+# Missing translation
+msg: 
+
+id: Date (oldest first)
+# Missing translation
+msg: 
+
 id: Device not found
 msg: Zařízení nebylo nalezeno
 
@@ -1846,11 +1986,12 @@ msg: Automaticky přehrát další video v seznamu
 id: Count video as played when reaching
 msg: Považovat video za přehrané po dosažení
 
-id: Enable VDA
-msg: Povolit VDA
-
 id: Enable VDPAU
 msg: Povolit VDPAU
+
+id: Hardware accelerated decoding
+# Missing translation
+msg: 
 
 id: Maximum resolution for deinterlacer
 msg: Maximální rozlišení pro deinterlacer

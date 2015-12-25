@@ -421,7 +421,7 @@ id: Download speed:
 msg: Vitesse de téléchargement:
 
 id: Packet buffer:
-msg:  Mémoire tampon de paquets 
+msg: Mémoire tampon de paquets 
 
 id: Playback status
 msg: Status de la lecture
@@ -538,6 +538,23 @@ id: Use original title
 msg: Utiliser le titre d'origine
 
 #
+# ./src/arch/android/android.c
+#
+id: Android Storage
+# Missing translation
+msg: 
+
+id: Movies
+msg: Films
+
+id: Music
+msg: Musique
+
+id: Pictures
+# Missing translation
+msg: 
+
+#
 # ./src/arch/linux/pulseaudio.c
 #
 id: Unable to initialize audio system %s -- %s
@@ -608,13 +625,11 @@ id: On
 msg: 
 
 #
-# ./src/arch/rpi/rpi_cec.c
+# ./src/arch/rpi/rpi_tv.c
 #
-id: Configure communications with your TV
-msg: Configurer les communications avec votre téléviseur
-
-id: Consumer Electronics Control
-msg: Consumer Electronics Control (CEC)
+id: Match display and content framerate
+# Missing translation
+msg: 
 
 #
 # ./src/audio2/audio.c
@@ -750,8 +765,24 @@ msg: Supplémentaire
 #
 # ./src/backend/htsp/htsp.c
 #
+id: Channels
+# Missing translation
+msg: 
+
 id: Invalid HTSP URL
 msg: URL HTSP invalide
+
+id: No such channel
+# Missing translation
+msg: 
+
+id: Recorded shows
+# Missing translation
+msg: 
+
+id: Recorder
+# Missing translation
+msg: 
 
 #
 # ./src/backend/search.c
@@ -763,70 +794,23 @@ id: Search result for: %s
 msg: Résultat de la recherche pour : %s
 
 #
-# ./src/backend/spotify/spotify.c
+# ./src/backend/slideshow/slideshow.c
 #
-id: Albums
-msg: Albums
+id: 3 seconds
+# Missing translation
+msg: 
 
-id: Automatic login on start
-msg: Connexion automatique au démarrage
+id: 5 seconds
+# Missing translation
+msg: 
 
-id: Collaborative
-msg: En collaboration
+id: 7 seconds
+# Missing translation
+msg: 
 
-id: Compilations
-msg: Compilations
-
-id: Forget me
-msg: Oublie moi
-
-id: Friends
-msg: Amis
-
-id: High bitrate
-msg: Haut taux d'échantillonnage
-
-id: Inbox
-msg: Boîte de réception
-
-id: New albums on Spotify
-msg: Nouveaux albums sur Spotify
-
-id: New releases
-msg: Nouveautés
-
-id: Offline
-msg: Déconnecté
-
-id: Offline sync in 96kbps
-msg: Synchro déconnecté en 96kbps
-
-id: Playlists
-msg: Listes de lecture
-
-id: Relogin (switch user)
-msg: S'authentifier à nouveau (changer d'utilisateur)
-
-id: Search result
-msg: Résultat de la recherche
-
-id: Singles
-msg: Singles
-
-id: Spotify friends
-msg: Amis de Spotify
-
-id: Spotify music service
-msg: Service musical de Spotify
-
-id: Spotify playlists
-msg: Listes de lecture Spotify
-
-id: Spotify: Connection error: %s
-msg: Spotify : Erreur de connection : %s
-
-id: Starred
-msg: Noté
+id: Slideshow speed
+# Missing translation
+msg: 
 
 #
 # ./src/blobcache_file.c
@@ -850,6 +834,13 @@ id: Unable to open file: %s
 msg: Impossible d'ouvrir le fichier : %s
 
 #
+# ./src/fileaccess/fa_filepicker.c
+#
+id: Select a file
+# Missing translation
+msg: 
+
+#
 # ./src/fileaccess/fa_locatedb.c
 #
 id: Search using Unix locatedb
@@ -858,14 +849,11 @@ msg: Chercher via Unix locatedb
 #
 # ./src/fileaccess/fa_scanner.c
 #
+id: Albums
+msg: Albums
+
 id: Artists
 msg: Artistes
-
-id: Date (newest first)
-msg: Date (plus récent en premier)
-
-id: Date (oldest first)
-msg: Date (plus ancien en premier)
 
 id: Deleted %s
 msg: Suppression de %s
@@ -875,6 +863,14 @@ msg: Nom du fichier
 
 id: Indexed mode
 msg: Mode indexé
+
+id: Newest first
+# Missing translation
+msg: 
+
+id: Oldest first
+# Missing translation
+msg: 
 
 id: Show only supported files
 msg: N'afficher que les fichiers supportés
@@ -948,10 +944,17 @@ msg: Impossible de se connecter
 id: Object name not found
 msg: Nom de l'objet introuvable
 
-
 #
 # ./src/i18n.c
 #
+id: 12 Hour
+# Missing translation
+msg: 
+
+id: 24 Hour
+# Missing translation
+msg: 
+
 id: Default character set
 msg: Jeu de caractères par défaut
 
@@ -982,20 +985,38 @@ msg: Code secondaire de la langue pour la piste audio
 id: Secondary subtitle language code
 msg: Code secondaire de la langue pour les sous-titres
 
+id: System default
+# Missing translation
+msg: 
+
 id: Tertiary audio language code
 msg: Code tertiaire de la langue pour la piste audio
 
 id: Tertiary subtitle language code
 msg: Code tertiaire de la langue pour les sous-titres
 
-#
-# ./src/keymapper.c
-#
-id: Configure mapping of keyboard and remote controller keys
-msg: Configurer l'affectation des touches du clavier et les touches du contrôleur distant
+id: Time format
+# Missing translation
+msg: 
 
-id: Keymapper
-msg: Affecteur des touches
+id: Timezone
+# Missing translation
+msg: 
+
+#
+# ./src/ipc/libcec.c
+#
+id: Longpress SELECT for item menu
+# Missing translation
+msg: 
+
+id: Switch TV input source
+# Missing translation
+msg: 
+
+id: Use STOP key for combo input
+# Missing translation
+msg: 
 
 #
 # ./src/keyring.c
@@ -1009,17 +1030,30 @@ msg: Mots de passe effacés
 #
 # ./src/media/media_settings.c
 #
-id: Align subtitles on video frame
-msg: Faire correspondre les sous-titres avec l'image vidéo
+id: Align on video frame
+# Missing translation
+msg: 
 
 id: Audio volume
 msg: Volume Audio
+
+id: Delay
+# Missing translation
+msg: 
 
 id: Go to standby after video ends
 msg: Mettre en veille à la fin de la vidéo
 
 id: Horizontal pan
 msg: Panoramique horizontal
+
+id: Horizontal position
+# Missing translation
+msg: 
+
+id: Horizontal scale
+# Missing translation
+msg: 
 
 id: Reset defaults for folder '%s'
 msg: Réinitialiser les paramètres par défaut du répertoire '%s'
@@ -1030,26 +1064,26 @@ msg: Sauvegarder les paramètres par défaut du répertoire '%s'
 id: Save as global default
 msg: Sauvegarder comme paramètres par défaut
 
+id: Scaling
+# Missing translation
+msg: 
+
 id: Stretch video to fullscreen
 msg: Étirer la vidéo en plein écran
 
 id: Stretch video to widescreen
 msg: Étirer la vidéo pour les écrans large
 
-id: Subtitle delay
-msg: Délai des sous-titres
-
-id: Subtitle horizontal displacement
-msg: Déplacement horizontal des sous titres
-
-id: Subtitle scaling
-msg: Échelle des sous-titres
-
-id: Subtitle vertical displacement
-msg: Déplacement vertical des sous titres
-
 id: Vertical pan
 msg: Panoramique vertical
+
+id: Vertical position
+# Missing translation
+msg: 
+
+id: Vertical scale
+# Missing translation
+msg: 
 
 id: Video frame interpolation
 msg: Interpolation de trames vidéo
@@ -1135,11 +1169,9 @@ msg: Titre personnalisé
 id: IMDb ID
 msg: IMDb ID
 
-id: Metadata loaded from '%s' using %s
-msg: Métadonnées téléchargées depuis '%s' en utilisant %s
-
-id: Metadata search
-msg: Recherche des métadonnées
+id: Metadata loaded from <b>%s</b> based on %s
+# Missing translation
+msg: 
 
 id: Metadata source
 msg: Fournisseur de métadonnées
@@ -1183,14 +1215,19 @@ msg: Nom du répertoire
 id: Add and remove items on homepage
 msg: Ajouter et supprimer des éléments de la page principale
 
+id: Added %s to home page
+# Missing translation
+msg: 
+
 id: Added new bookmark: %s
 msg: Ajouter un favori: %s
 
 id: Bookmarks
 msg: Favoris
 
-id: Music
-msg: Musique
+id: Icon
+# Missing translation
+msg: 
 
 id: No handler for URL
 msg: Pas de prise en charge pour cette URL
@@ -1200,6 +1237,10 @@ msg: Autre
 
 id: Photos
 msg: Photos
+
+id: Removed %s from homepage
+# Missing translation
+msg: 
 
 id: Removed bookmark: %s
 msg: Favori supprimé: %s
@@ -1267,6 +1308,10 @@ msg: Services de cloud
 id: Corrupt plugin bundle
 msg: Package d'extension corrompue
 
+id: Custom backgrounds can now be set in Settings -> Look and Feel
+# Missing translation
+msg: 
+
 id: Disk write error
 msg: Erreur d'écriture
 
@@ -1294,9 +1339,6 @@ msg: Liste des albums
 id: Loading screen
 msg: Écran de chargement
 
-id: Movies
-msg: Films
-
 id: Music streaming
 msg: Musique en streaming
 
@@ -1317,6 +1359,14 @@ msg: TV en ligne
 
 id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
 msg: Le plugin %s %s a été désintallé car il peut causer des problèmes.\nVous devriez essayer d'installer une version différente manuellement.
+
+id: Plugin %s has been uninstalled - %s
+# Missing translation
+msg: 
+
+id: Plugin categories
+# Missing translation
+msg: 
 
 id: Plugins
 msg: Extensions
@@ -1350,6 +1400,10 @@ msg: Mise à jour de l'extension %s vers %s
 
 id: User interface extensions
 msg: Extensions de l'interface utilisateur
+
+id: Version %s is no longer compatible with Movian
+# Missing translation
+msg: 
 
 id: Video streaming
 msg: Streaming vidéo
@@ -1402,8 +1456,15 @@ msg: Réseau local
 #
 # ./src/settings.c
 #
+id: About
+# Missing translation
+msg: 
+
 id: Applications and installed plugins
 msg: Applications et extensions installées
+
+id: Configure communications with your TV
+msg: Configurer les communications avec votre téléviseur
 
 id: Developer settings
 msg: Paramètres avancés (développeur)
@@ -1437,6 +1498,10 @@ msg: Nom du système
 
 id: System related settings
 msg: Paramètres liés au système
+
+id: TV Control
+# Missing translation
+msg: 
 
 #
 # ./src/subtitles/subtitles.c
@@ -1495,6 +1560,9 @@ msg: Couleur de l'ombre
 id: Shadow offset
 msg: Décalage de l'ombre
 
+id: Subtitle horizontal displacement
+msg: Déplacement horizontal des sous titres
+
 id: Subtitle position
 msg: Position des sous-titres
 
@@ -1503,6 +1571,9 @@ msg: Taille des sous-titres
 
 id: Subtitle size and positioning
 msg: Taille et position des sous-titres
+
+id: Subtitle vertical displacement
+msg: Déplacement vertical des sous titres
 
 id: Subtitles embedded in video file
 msg: Sous-titres intégrés à la vidéo
@@ -1549,6 +1620,10 @@ msg: Interface utilisateur
 #
 # ./src/ui/glw/glw_ps3.c
 #
+id: Dual-Shock Remote
+# Missing translation
+msg: 
+
 id: Seek using L2 and R2 button
 msg: Rechercher avec les boutons L2 et R2
 
@@ -1558,26 +1633,89 @@ msg: Valider avec le bouton Select
 #
 # ./src/ui/glw/glw_settings.c
 #
+id: Custom background image
+# Missing translation
+msg: 
+
+id: Emulate Up/Down buttons with mouse wheel
+# Missing translation
+msg: 
+
+id: Folder for screensaver images
+# Missing translation
+msg: 
+
 id: Font and icon size
 msg: Taille de police et d'icône
 
-id: Horizontal underscan
-msg: Underscan horizontal
+id: Interface horizontal shrink
+# Missing translation
+msg: 
+
+id: Interface vertical shrink
+# Missing translation
+msg: 
+
+id: Screensaver
+# Missing translation
+msg: 
 
 id: Screensaver delay
 msg: Délai avant l'économiseur d'écran
 
-id: Vertical underscan
-msg: Underscan Vertical
+id: Use Bing images of the day
+# Missing translation
+msg: 
 
 id: Wrap when reaching beginning/end of lists
 msg: Bouclez quand le début/fin de la liste est atteint
 
 #
-# ./src/ui/glw/glw_x11.c
+# ./src/ui/glw/glw_view_eval.c
 #
-id: Map mouse wheel to up/down
-msg: Lier la roue de la souris à haut/bas
+id: %d days ago
+# Missing translation
+msg: 
+
+id: %d hours ago
+# Missing translation
+msg: 
+
+id: %d minutes ago
+# Missing translation
+msg: 
+
+id: %d months ago
+# Missing translation
+msg: 
+
+id: %d weeks ago
+# Missing translation
+msg: 
+
+id: %d years ago
+# Missing translation
+msg: 
+
+id: Just now
+# Missing translation
+msg: 
+
+id: One day ago
+# Missing translation
+msg: 
+
+id: One hour ago
+# Missing translation
+msg: 
+
+id: One minute ago
+# Missing translation
+msg: 
+
+id: One month ago
+# Missing translation
+msg: 
 
 #
 # ./src/ui/linux/nvidia.c
@@ -1615,6 +1753,12 @@ msg: Mise à jour depuis
 #
 # ./src/upnp/upnp_browse.c
 #
+id: Date (newest first)
+msg: Date (plus récent en premier)
+
+id: Date (oldest first)
+msg: Date (plus ancien en premier)
+
 id: Device not found
 msg: Appareil non trouvé
 
@@ -1642,11 +1786,12 @@ msg: Jouer la vidéo suivante automatiquement
 id: Count video as played when reaching
 msg: Compter la vidéo comme vue quand la lecture atteint
 
-id: Enable VDA
-msg: Activer VDA
-
 id: Enable VDPAU
 msg: Activer VDPAU
+
+id: Hardware accelerated decoding
+# Missing translation
+msg: 
 
 id: Maximum resolution for deinterlacer
 msg: Résolution maximale pour désentrelacer

@@ -585,6 +585,23 @@ id: Use original title
 msg: Originele titel gebruiken
 
 #
+# ./src/arch/android/android.c
+#
+id: Android Storage
+# Missing translation
+msg: 
+
+id: Movies
+msg: Films
+
+id: Music
+msg: Muziek
+
+id: Pictures
+# Missing translation
+msg: 
+
+#
 # ./src/arch/linux/pulseaudio.c
 #
 id: Unable to initialize audio system %s -- %s
@@ -662,13 +679,9 @@ id: On
 msg: 
 
 #
-# ./src/arch/rpi/rpi_cec.c
+# ./src/arch/rpi/rpi_tv.c
 #
-id: Configure communications with your TV
-# Missing translation
-msg: 
-
-id: Consumer Electronics Control
+id: Match display and content framerate
 # Missing translation
 msg: 
 
@@ -835,8 +848,24 @@ msg:
 #
 # ./src/backend/htsp/htsp.c
 #
+id: Channels
+# Missing translation
+msg: 
+
 id: Invalid HTSP URL
 msg: Ongeldige HTSP-URL
+
+id: No such channel
+# Missing translation
+msg: 
+
+id: Recorded shows
+# Missing translation
+msg: 
+
+id: Recorder
+# Missing translation
+msg: 
 
 #
 # ./src/backend/search.c
@@ -848,71 +877,23 @@ id: Search result for: %s
 msg: Zoekresultaat voor: %s
 
 #
-# ./src/backend/spotify/spotify.c
+# ./src/backend/slideshow/slideshow.c
 #
-id: Albums
-msg: Albums
-
-id: Automatic login on start
+id: 3 seconds
 # Missing translation
 msg: 
 
-id: Collaborative
-msg: Gezamenlijk
+id: 5 seconds
+# Missing translation
+msg: 
 
-id: Compilations
-msg: Verzamelalbums
+id: 7 seconds
+# Missing translation
+msg: 
 
-id: Forget me
-msg: Vergeet mij
-
-id: Friends
-msg: Vrienden
-
-id: High bitrate
-msg: Hoge bitsnelheid
-
-id: Inbox
-msg: Postvak IN
-
-id: New albums on Spotify
-msg: Nieuwe albums op Spotify
-
-id: New releases
-msg: Nieuwe uitgaves
-
-id: Offline
-msg: Offline
-
-id: Offline sync in 96kbps
-msg: Offline synchroniseren in 96kbps
-
-id: Playlists
-msg: Afspeellijsten
-
-id: Relogin (switch user)
-msg: Opnieuw inloggen (gebruiker verwisselen)
-
-id: Search result
-msg: Zoekresultaat
-
-id: Singles
-msg: Singles
-
-id: Spotify friends
-msg: Spotify-vrienden
-
-id: Spotify music service
-msg: Spotify-muziekservice
-
-id: Spotify playlists
-msg: Spotify-afspeellijsten
-
-id: Spotify: Connection error: %s
-msg: Spotify: Verbindingsfout: %s
-
-id: Starred
-msg: Favorieten
+id: Slideshow speed
+# Missing translation
+msg: 
 
 #
 # ./src/blobcache_file.c
@@ -937,6 +918,13 @@ id: Unable to open file: %s
 msg: Het bestand kon niet worden geopend: %s
 
 #
+# ./src/fileaccess/fa_filepicker.c
+#
+id: Select a file
+# Missing translation
+msg: 
+
+#
 # ./src/fileaccess/fa_locatedb.c
 #
 id: Search using Unix locatedb
@@ -945,14 +933,11 @@ msg: Zoeken via Unix-locatedb
 #
 # ./src/fileaccess/fa_scanner.c
 #
+id: Albums
+msg: Albums
+
 id: Artists
 msg: Artiesten
-
-id: Date (newest first)
-msg: Datum (nieuwste eerst)
-
-id: Date (oldest first)
-msg: Datum (oudste eerst)
 
 id: Deleted %s
 # Missing translation
@@ -963,6 +948,14 @@ msg: Bestandsnaam
 
 id: Indexed mode
 msg: Geïndexeerde modus
+
+id: Newest first
+# Missing translation
+msg: 
+
+id: Oldest first
+# Missing translation
+msg: 
 
 id: Show only supported files
 msg: Alleen ondersteunde bestanden weergeven
@@ -1048,6 +1041,14 @@ msg:
 #
 # ./src/i18n.c
 #
+id: 12 Hour
+# Missing translation
+msg: 
+
+id: 24 Hour
+# Missing translation
+msg: 
+
 id: Default character set
 # Missing translation
 msg: 
@@ -1080,20 +1081,38 @@ msg: Secondaire audiotaal
 id: Secondary subtitle language code
 msg: Secondaire ondertitelingstaal
 
+id: System default
+# Missing translation
+msg: 
+
 id: Tertiary audio language code
 msg: Tertiaire audiotaal
 
 id: Tertiary subtitle language code
 msg: Tertiaire audiotaal
 
-#
-# ./src/keymapper.c
-#
-id: Configure mapping of keyboard and remote controller keys
-msg: Configureer de toetsenbordindeling en afstandbedieningstoetsen
+id: Time format
+# Missing translation
+msg: 
 
-id: Keymapper
-msg: Toetsindeling
+id: Timezone
+# Missing translation
+msg: 
+
+#
+# ./src/ipc/libcec.c
+#
+id: Longpress SELECT for item menu
+# Missing translation
+msg: 
+
+id: Switch TV input source
+# Missing translation
+msg: 
+
+id: Use STOP key for combo input
+# Missing translation
+msg: 
 
 #
 # ./src/keyring.c
@@ -1107,10 +1126,15 @@ msg: Onthouden wachtwoorden verwijderd
 #
 # ./src/media/media_settings.c
 #
-id: Align subtitles on video frame
-msg: Ondertiteling op videoframe aanpassen
+id: Align on video frame
+# Missing translation
+msg: 
 
 id: Audio volume
+# Missing translation
+msg: 
+
+id: Delay
 # Missing translation
 msg: 
 
@@ -1119,6 +1143,14 @@ id: Go to standby after video ends
 msg: 
 
 id: Horizontal pan
+# Missing translation
+msg: 
+
+id: Horizontal position
+# Missing translation
+msg: 
+
+id: Horizontal scale
 # Missing translation
 msg: 
 
@@ -1134,27 +1166,25 @@ id: Save as global default
 # Missing translation
 msg: 
 
+id: Scaling
+# Missing translation
+msg: 
+
 id: Stretch video to fullscreen
 msg: Video uitrekken naar volledig scherm
 
 id: Stretch video to widescreen
 msg: Video uitrekken naar breedbeeld
 
-id: Subtitle delay
-msg: Ondertitelingsvertaging
-
-id: Subtitle horizontal displacement
-# Missing translation
-msg: 
-
-id: Subtitle scaling
-msg: Ondertitelingsgrootte
-
-id: Subtitle vertical displacement
-# Missing translation
-msg: 
-
 id: Vertical pan
+# Missing translation
+msg: 
+
+id: Vertical position
+# Missing translation
+msg: 
+
+id: Vertical scale
 # Missing translation
 msg: 
 
@@ -1249,11 +1279,9 @@ msg: Aangepaste titel
 id: IMDb ID
 msg: IMDb-ID
 
-id: Metadata loaded from '%s' using %s
-msg: Metadata geladen van '%s' via %s
-
-id: Metadata search
-msg: Metadata zoeken
+id: Metadata loaded from <b>%s</b> based on %s
+# Missing translation
+msg: 
 
 id: Metadata source
 msg: Bron metadata
@@ -1297,14 +1325,19 @@ msg: mapnaam
 id: Add and remove items on homepage
 msg: Items toevoegen en verwijderen aan thuispagina
 
+id: Added %s to home page
+# Missing translation
+msg: 
+
 id: Added new bookmark: %s
 msg: Nieuwe bladwijzer toevoegen: %s
 
 id: Bookmarks
 msg: Bladwijzers
 
-id: Music
-msg: Muziek
+id: Icon
+# Missing translation
+msg: 
 
 id: No handler for URL
 msg: Geen handler voor URL
@@ -1314,6 +1347,10 @@ msg: Overige
 
 id: Photos
 msg: Foto's
+
+id: Removed %s from homepage
+# Missing translation
+msg: 
 
 id: Removed bookmark: %s
 msg: Bladwijzer verwijderd: %s
@@ -1388,6 +1425,10 @@ msg: Cloudservices
 id: Corrupt plugin bundle
 msg: Beschadigde pluginbundel
 
+id: Custom backgrounds can now be set in Settings -> Look and Feel
+# Missing translation
+msg: 
+
 id: Disk write error
 msg: Schrijffout
 
@@ -1416,9 +1457,6 @@ msg: Lijst van albums
 id: Loading screen
 msg: Laadscherm
 
-id: Movies
-msg: Films
-
 id: Music streaming
 msg: Muziek streaming
 
@@ -1439,6 +1477,14 @@ id: Online TV
 msg: Online tv
 
 id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
+# Missing translation
+msg: 
+
+id: Plugin %s has been uninstalled - %s
+# Missing translation
+msg: 
+
+id: Plugin categories
 # Missing translation
 msg: 
 
@@ -1474,6 +1520,10 @@ msg: Plugin %s is bijgewerkt naar versie %s
 
 id: User interface extensions
 msg: Gebruikersinterface-extensies
+
+id: Version %s is no longer compatible with Movian
+# Missing translation
+msg: 
 
 id: Video streaming
 msg: Video's streamen
@@ -1531,8 +1581,16 @@ msg: Lokaal netwerk
 #
 # ./src/settings.c
 #
+id: About
+# Missing translation
+msg: 
+
 id: Applications and installed plugins
 msg: Applicaties en geïnstalleerde plugins
+
+id: Configure communications with your TV
+# Missing translation
+msg: 
 
 id: Developer settings
 msg: Ontwikkelaarsinstellingen
@@ -1569,6 +1627,10 @@ msg:
 
 id: System related settings
 msg: Systeemgerelateerde instellingen
+
+id: TV Control
+# Missing translation
+msg: 
 
 #
 # ./src/subtitles/subtitles.c
@@ -1633,6 +1695,10 @@ msg: Schaduwkleur
 id: Shadow offset
 msg: Schaduwafstand
 
+id: Subtitle horizontal displacement
+# Missing translation
+msg: 
+
 id: Subtitle position
 msg: Ondertitelingspositie
 
@@ -1641,6 +1707,10 @@ msg: Ondertitelingsgrootte
 
 id: Subtitle size and positioning
 msg: Ondertitelingsgrootte en -positionering
+
+id: Subtitle vertical displacement
+# Missing translation
+msg: 
 
 id: Subtitles embedded in video file
 # Missing translation
@@ -1691,6 +1761,10 @@ msg: Gebruikersinterface
 #
 # ./src/ui/glw/glw_ps3.c
 #
+id: Dual-Shock Remote
+# Missing translation
+msg: 
+
 id: Seek using L2 and R2 button
 # Missing translation
 msg: 
@@ -1702,17 +1776,38 @@ msg:
 #
 # ./src/ui/glw/glw_settings.c
 #
+id: Custom background image
+# Missing translation
+msg: 
+
+id: Emulate Up/Down buttons with mouse wheel
+# Missing translation
+msg: 
+
+id: Folder for screensaver images
+# Missing translation
+msg: 
+
 id: Font and icon size
 # Missing translation
 msg: 
 
-id: Horizontal underscan
-msg: Horizontale underscan
+id: Interface horizontal shrink
+# Missing translation
+msg: 
+
+id: Interface vertical shrink
+# Missing translation
+msg: 
+
+id: Screensaver
+# Missing translation
+msg: 
 
 id: Screensaver delay
 msg: Vertraging schermbeveiliging
 
-id: Vertical underscan
+id: Use Bing images of the day
 # Missing translation
 msg: 
 
@@ -1721,10 +1816,51 @@ id: Wrap when reaching beginning/end of lists
 msg: 
 
 #
-# ./src/ui/glw/glw_x11.c
+# ./src/ui/glw/glw_view_eval.c
 #
-id: Map mouse wheel to up/down
-msg: Muiswiel naar boven/onder indelen
+id: %d days ago
+# Missing translation
+msg: 
+
+id: %d hours ago
+# Missing translation
+msg: 
+
+id: %d minutes ago
+# Missing translation
+msg: 
+
+id: %d months ago
+# Missing translation
+msg: 
+
+id: %d weeks ago
+# Missing translation
+msg: 
+
+id: %d years ago
+# Missing translation
+msg: 
+
+id: Just now
+# Missing translation
+msg: 
+
+id: One day ago
+# Missing translation
+msg: 
+
+id: One hour ago
+# Missing translation
+msg: 
+
+id: One minute ago
+# Missing translation
+msg: 
+
+id: One month ago
+# Missing translation
+msg: 
 
 #
 # ./src/ui/linux/nvidia.c
@@ -1763,6 +1899,12 @@ msg: Type updates
 #
 # ./src/upnp/upnp_browse.c
 #
+id: Date (newest first)
+msg: Datum (nieuwste eerst)
+
+id: Date (oldest first)
+msg: Datum (oudste eerst)
+
 id: Device not found
 msg: Apparaat niet gevonden
 
@@ -1792,11 +1934,12 @@ msg: De volgende video in de lijst automatisch afspelen
 id: Count video as played when reaching
 msg: Video als afgespeeld rekenen bij nadering
 
-id: Enable VDA
-msg: VDA inschakelen
-
 id: Enable VDPAU
 msg: VDPAU inschakelen
+
+id: Hardware accelerated decoding
+# Missing translation
+msg: 
 
 id: Maximum resolution for deinterlacer
 msg: Maximale resolutie voor deinterlacer

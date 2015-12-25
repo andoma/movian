@@ -556,6 +556,23 @@ id: Use original title
 msg: Brug orginaltitel
 
 #
+# ./src/arch/android/android.c
+#
+id: Android Storage
+# Missing translation
+msg: 
+
+id: Movies
+msg: Film
+
+id: Music
+msg: Musik
+
+id: Pictures
+# Missing translation
+msg: 
+
+#
 # ./src/arch/linux/pulseaudio.c
 #
 id: Unable to initialize audio system %s -- %s
@@ -627,14 +644,11 @@ id: On
 msg: 
 
 #
-# ./src/arch/rpi/rpi_cec.c
+# ./src/arch/rpi/rpi_tv.c
 #
-id: Configure communications with your TV
+id: Match display and content framerate
 # Missing translation
 msg: 
-
-id: Consumer Electronics Control
-msg: Consumer Electronics Control
 
 #
 # ./src/audio2/audio.c
@@ -770,8 +784,24 @@ msg:
 #
 # ./src/backend/htsp/htsp.c
 #
+id: Channels
+# Missing translation
+msg: 
+
 id: Invalid HTSP URL
 msg: Ugyldig HTSP URL
+
+id: No such channel
+# Missing translation
+msg: 
+
+id: Recorded shows
+# Missing translation
+msg: 
+
+id: Recorder
+# Missing translation
+msg: 
 
 #
 # ./src/backend/search.c
@@ -783,71 +813,23 @@ id: Search result for: %s
 msg: Søgeresultat for: %s
 
 #
-# ./src/backend/spotify/spotify.c
+# ./src/backend/slideshow/slideshow.c
 #
-id: Albums
-msg: Album
-
-id: Automatic login on start
+id: 3 seconds
 # Missing translation
 msg: 
 
-id: Collaborative
-msg: Samarbejde
+id: 5 seconds
+# Missing translation
+msg: 
 
-id: Compilations
-msg: Samlinger
+id: 7 seconds
+# Missing translation
+msg: 
 
-id: Forget me
-msg: Glem mig
-
-id: Friends
-msg: Venner
-
-id: High bitrate
-msg: Høj bithastighet
-
-id: Inbox
-msg: Indbakke
-
-id: New albums on Spotify
-msg: Nye album på Spotify
-
-id: New releases
-msg: Nye opdateringer
-
-id: Offline
-msg: Offline
-
-id: Offline sync in 96kbps
-msg: Offline sync i 96 kbps
-
-id: Playlists
-msg: Afspilningslister
-
-id: Relogin (switch user)
-msg: Login på ny (skift bruger)
-
-id: Search result
-msg: Søgeresultat
-
-id: Singles
-msg: Singler
-
-id: Spotify friends
-msg: Spotify venner
-
-id: Spotify music service
-msg: Spotify musiktjeneste
-
-id: Spotify playlists
-msg: Spotyfy afspilningslister
-
-id: Spotify: Connection error: %s
-msg: Spotify: Forbindelsesfejl: %s
-
-id: Starred
-msg: Medvirkende
+id: Slideshow speed
+# Missing translation
+msg: 
 
 #
 # ./src/blobcache_file.c
@@ -871,6 +853,13 @@ id: Unable to open file: %s
 msg: Kan ikke åbne filen: %s
 
 #
+# ./src/fileaccess/fa_filepicker.c
+#
+id: Select a file
+# Missing translation
+msg: 
+
+#
 # ./src/fileaccess/fa_locatedb.c
 #
 id: Search using Unix locatedb
@@ -879,14 +868,11 @@ msg: Søg via Unix locatedb
 #
 # ./src/fileaccess/fa_scanner.c
 #
+id: Albums
+msg: Album
+
 id: Artists
 msg: Artister
-
-id: Date (newest first)
-msg: Dato(nyeste først)
-
-id: Date (oldest first)
-msg: Dato(ældste først)
 
 id: Deleted %s
 msg: Slettet %s
@@ -896,6 +882,14 @@ msg: Filnavn
 
 id: Indexed mode
 msg: Indekseret tilstand
+
+id: Newest first
+# Missing translation
+msg: 
+
+id: Oldest first
+# Missing translation
+msg: 
 
 id: Show only supported files
 msg: Vis kun supporterede filer
@@ -973,6 +967,14 @@ msg:
 #
 # ./src/i18n.c
 #
+id: 12 Hour
+# Missing translation
+msg: 
+
+id: 24 Hour
+# Missing translation
+msg: 
+
 id: Default character set
 msg: Standard karaktersæt
 
@@ -1003,20 +1005,38 @@ msg: Sekundær sprog for lyd
 id: Secondary subtitle language code
 msg: Sekundær sprog for undertekster
 
+id: System default
+# Missing translation
+msg: 
+
 id: Tertiary audio language code
 msg: Tertiær sprog for lyd
 
 id: Tertiary subtitle language code
 msg: Tertiær sprog for undertekster
 
-#
-# ./src/keymapper.c
-#
-id: Configure mapping of keyboard and remote controller keys
-msg: Indstillinger af tastatur og knapper til fjerbetjening
+id: Time format
+# Missing translation
+msg: 
 
-id: Keymapper
-msg: Tastatur mapning
+id: Timezone
+# Missing translation
+msg: 
+
+#
+# ./src/ipc/libcec.c
+#
+id: Longpress SELECT for item menu
+# Missing translation
+msg: 
+
+id: Switch TV input source
+# Missing translation
+msg: 
+
+id: Use STOP key for combo input
+# Missing translation
+msg: 
 
 #
 # ./src/keyring.c
@@ -1030,17 +1050,30 @@ msg: Gemte kodeord er slettet
 #
 # ./src/media/media_settings.c
 #
-id: Align subtitles on video frame
-msg: Juster undertekster efter videobillede
+id: Align on video frame
+# Missing translation
+msg: 
 
 id: Audio volume
 msg: Lydstyrke
+
+id: Delay
+# Missing translation
+msg: 
 
 id: Go to standby after video ends
 msg: Gå i standby efter slut af video
 
 id: Horizontal pan
 msg: Vandret pan
+
+id: Horizontal position
+# Missing translation
+msg: 
+
+id: Horizontal scale
+# Missing translation
+msg: 
 
 id: Reset defaults for folder '%s'
 msg: Nulstil standarder for mappe '%s'
@@ -1051,26 +1084,26 @@ msg: Gem som standard for mappe '%s'
 id: Save as global default
 msg: Gem som global standard
 
+id: Scaling
+# Missing translation
+msg: 
+
 id: Stretch video to fullscreen
 msg: Stræk video til hele skærmen
 
 id: Stretch video to widescreen
 msg: Stræk video horisontalt
 
-id: Subtitle delay
-msg: Undertekster forsinkelse
-
-id: Subtitle horizontal displacement
-msg: Horisontal visning af undertekster
-
-id: Subtitle scaling
-msg: Skalering af undertekster
-
-id: Subtitle vertical displacement
-msg: Vertikal visning af undertekster
-
 id: Vertical pan
 msg: Lodret pan
+
+id: Vertical position
+# Missing translation
+msg: 
+
+id: Vertical scale
+# Missing translation
+msg: 
 
 id: Video frame interpolation
 msg: Video billede interpolation
@@ -1157,11 +1190,9 @@ msg: Egen titel
 id: IMDb ID
 msg: IMDb ID
 
-id: Metadata loaded from '%s' using %s
-msg: Metadata hentet fra '%s' ved hjælp af %s
-
-id: Metadata search
-msg: Metadata søgning
+id: Metadata loaded from <b>%s</b> based on %s
+# Missing translation
+msg: 
 
 id: Metadata source
 msg: Metadata kilde 
@@ -1205,14 +1236,19 @@ msg: mappenavn
 id: Add and remove items on homepage
 msg: Tilføj og fjern ting på startsiden
 
+id: Added %s to home page
+# Missing translation
+msg: 
+
 id: Added new bookmark: %s
 msg: Nyt bogmærke tilføjet: %s
 
 id: Bookmarks
 msg: Bogmærker
 
-id: Music
-msg: Musik
+id: Icon
+# Missing translation
+msg: 
 
 id: No handler for URL
 msg: Ingen håndtering af URL
@@ -1222,6 +1258,10 @@ msg: Andre
 
 id: Photos
 msg: Billeder
+
+id: Removed %s from homepage
+# Missing translation
+msg: 
 
 id: Removed bookmark: %s
 msg: Slettet bogmærke: %s
@@ -1291,6 +1331,10 @@ msg: Cloudtjenester
 id: Corrupt plugin bundle
 msg: Korrupt plugin bundt
 
+id: Custom backgrounds can now be set in Settings -> Look and Feel
+# Missing translation
+msg: 
+
 id: Disk write error
 msg: Kunne ikke skrive til disken
 
@@ -1319,9 +1363,6 @@ msg: Liste over albums
 id: Loading screen
 msg: Downloading skærm
 
-id: Movies
-msg: Film
-
 id: Music streaming
 msg: Musik streaming
 
@@ -1342,6 +1383,14 @@ msg: Online TV
 
 id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
 msg: Plugin %s %s er blevet afinstalleret da det kan skabe problemer.\nDu kan manuelt prøve at installere en anden version.
+
+id: Plugin %s has been uninstalled - %s
+# Missing translation
+msg: 
+
+id: Plugin categories
+# Missing translation
+msg: 
 
 id: Plugins
 msg: Plugins
@@ -1375,6 +1424,10 @@ msg: Opdateret plugin %s to version %s
 
 id: User interface extensions
 msg: Brugergrænseflade
+
+id: Version %s is no longer compatible with Movian
+# Missing translation
+msg: 
 
 id: Video streaming
 msg: Video streaming
@@ -1429,8 +1482,16 @@ msg: Lokale netværk
 #
 # ./src/settings.c
 #
+id: About
+# Missing translation
+msg: 
+
 id: Applications and installed plugins
 msg: Aplikationer og installerede plugins
+
+id: Configure communications with your TV
+# Missing translation
+msg: 
 
 id: Developer settings
 msg: Udvikler indstillinger
@@ -1464,6 +1525,10 @@ msg: Systemnavn
 
 id: System related settings
 msg: Systemrelaterede indstillinger
+
+id: TV Control
+# Missing translation
+msg: 
 
 #
 # ./src/subtitles/subtitles.c
@@ -1522,6 +1587,9 @@ msg: Farve på skygge
 id: Shadow offset
 msg: Skyggens forskydning
 
+id: Subtitle horizontal displacement
+msg: Horisontal visning af undertekster
+
 id: Subtitle position
 msg: Position på undertekster
 
@@ -1530,6 +1598,9 @@ msg: Størrelse på undertekster
 
 id: Subtitle size and positioning
 msg: Størrelse på undertekster og position
+
+id: Subtitle vertical displacement
+msg: Vertikal visning af undertekster
 
 id: Subtitles embedded in video file
 msg: Undertekster indeholdt i videofilen 
@@ -1576,6 +1647,10 @@ msg: Brugergrænseflade
 #
 # ./src/ui/glw/glw_ps3.c
 #
+id: Dual-Shock Remote
+# Missing translation
+msg: 
+
 id: Seek using L2 and R2 button
 msg: Søg ved at bruge L2 og R2 knap
 
@@ -1585,26 +1660,89 @@ msg: Ja med Select knap
 #
 # ./src/ui/glw/glw_settings.c
 #
+id: Custom background image
+# Missing translation
+msg: 
+
+id: Emulate Up/Down buttons with mouse wheel
+# Missing translation
+msg: 
+
+id: Folder for screensaver images
+# Missing translation
+msg: 
+
 id: Font and icon size
 msg: Skrift og ikon størrelse
 
-id: Horizontal underscan
-msg: Vandret underscanning
+id: Interface horizontal shrink
+# Missing translation
+msg: 
+
+id: Interface vertical shrink
+# Missing translation
+msg: 
+
+id: Screensaver
+# Missing translation
+msg: 
 
 id: Screensaver delay
 msg: Pauseskærm forsinkelse
 
-id: Vertical underscan
-msg: Lodret underscanning
+id: Use Bing images of the day
+# Missing translation
+msg: 
 
 id: Wrap when reaching beginning/end of lists
 msg: Wrap når starten/slutningen af listen nåes
 
 #
-# ./src/ui/glw/glw_x11.c
+# ./src/ui/glw/glw_view_eval.c
 #
-id: Map mouse wheel to up/down
-msg: Tildel musens scrollhjul til op/ned taster
+id: %d days ago
+# Missing translation
+msg: 
+
+id: %d hours ago
+# Missing translation
+msg: 
+
+id: %d minutes ago
+# Missing translation
+msg: 
+
+id: %d months ago
+# Missing translation
+msg: 
+
+id: %d weeks ago
+# Missing translation
+msg: 
+
+id: %d years ago
+# Missing translation
+msg: 
+
+id: Just now
+# Missing translation
+msg: 
+
+id: One day ago
+# Missing translation
+msg: 
+
+id: One hour ago
+# Missing translation
+msg: 
+
+id: One minute ago
+# Missing translation
+msg: 
+
+id: One month ago
+# Missing translation
+msg: 
 
 #
 # ./src/ui/linux/nvidia.c
@@ -1643,6 +1781,12 @@ msg: Opdatere til udgivelser fra
 #
 # ./src/upnp/upnp_browse.c
 #
+id: Date (newest first)
+msg: Dato(nyeste først)
+
+id: Date (oldest first)
+msg: Dato(ældste først)
+
 id: Device not found
 msg: Enhed findes ikke
 
@@ -1672,11 +1816,12 @@ msg: Afspil automatisk næste video i listen
 id: Count video as played when reaching
 msg: Marker video som vist når den når
 
-id: Enable VDA
-msg: Aktiver VDA
-
 id: Enable VDPAU
 msg: Aktiver VDPAU
+
+id: Hardware accelerated decoding
+# Missing translation
+msg: 
 
 id: Maximum resolution for deinterlacer
 msg: Maksimal opløsning af deinterlacer

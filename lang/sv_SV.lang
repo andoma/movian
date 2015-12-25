@@ -534,6 +534,23 @@ id: Use original title
 msg: Använd orginaltitel
 
 #
+# ./src/arch/android/android.c
+#
+id: Android Storage
+# Missing translation
+msg: 
+
+id: Movies
+msg: Filmer
+
+id: Music
+msg: Musik
+
+id: Pictures
+# Missing translation
+msg: 
+
+#
 # ./src/arch/linux/pulseaudio.c
 #
 id: Unable to initialize audio system %s -- %s
@@ -600,13 +617,11 @@ id: On
 msg: På
 
 #
-# ./src/arch/rpi/rpi_cec.c
+# ./src/arch/rpi/rpi_tv.c
 #
-id: Configure communications with your TV
-msg: Konfigurera kommunikation med din TV
-
-id: Consumer Electronics Control
-msg: Consumer Electronics Control
+id: Match display and content framerate
+# Missing translation
+msg: 
 
 #
 # ./src/audio2/audio.c
@@ -740,8 +755,24 @@ msg: Extra
 #
 # ./src/backend/htsp/htsp.c
 #
+id: Channels
+# Missing translation
+msg: 
+
 id: Invalid HTSP URL
 msg: Ogiltligt HTSP URL
+
+id: No such channel
+# Missing translation
+msg: 
+
+id: Recorded shows
+# Missing translation
+msg: 
+
+id: Recorder
+# Missing translation
+msg: 
 
 #
 # ./src/backend/search.c
@@ -753,70 +784,23 @@ id: Search result for: %s
 msg: Sökresultat för: %s
 
 #
-# ./src/backend/spotify/spotify.c
+# ./src/backend/slideshow/slideshow.c
 #
-id: Albums
-msg: Album
+id: 3 seconds
+# Missing translation
+msg: 
 
-id: Automatic login on start
-msg: Automatiskt login vid start
+id: 5 seconds
+# Missing translation
+msg: 
 
-id: Collaborative
-msg: Kollaborativ
+id: 7 seconds
+# Missing translation
+msg: 
 
-id: Compilations
-msg: Samlingar
-
-id: Forget me
-msg: Glöm mig
-
-id: Friends
-msg: Vänner
-
-id: High bitrate
-msg: Hög bithastighet
-
-id: Inbox
-msg: Inkorg
-
-id: New albums on Spotify
-msg: Nya album på Spotify
-
-id: New releases
-msg: Nya släpp
-
-id: Offline
-msg: Offline
-
-id: Offline sync in 96kbps
-msg: Offlink synk i 96kbps
-
-id: Playlists
-msg: Spellistor
-
-id: Relogin (switch user)
-msg: Logga in igen (byt användare)
-
-id: Search result
-msg: Sökresultat
-
-id: Singles
-msg: Singlar
-
-id: Spotify friends
-msg: Vänner på Spotify
-
-id: Spotify music service
-msg: Spotify musiktjänst
-
-id: Spotify playlists
-msg: Spotyfyspellistor
-
-id: Spotify: Connection error: %s
-msg: Spotify: Problem att ansluta: %s
-
-id: Starred
-msg: Stjärnor
+id: Slideshow speed
+# Missing translation
+msg: 
 
 #
 # ./src/blobcache_file.c
@@ -840,6 +824,13 @@ id: Unable to open file: %s
 msg: Kan ej öppna fil: %s
 
 #
+# ./src/fileaccess/fa_filepicker.c
+#
+id: Select a file
+# Missing translation
+msg: 
+
+#
 # ./src/fileaccess/fa_locatedb.c
 #
 id: Search using Unix locatedb
@@ -848,14 +839,11 @@ msg: Sök mha. Unix locatedb
 #
 # ./src/fileaccess/fa_scanner.c
 #
+id: Albums
+msg: Album
+
 id: Artists
 msg: Artister
-
-id: Date (newest first)
-msg: Datum (nyast först)
-
-id: Date (oldest first)
-msg: Datum (äldst först)
 
 id: Deleted %s
 msg: Tog bort %s
@@ -865,6 +853,14 @@ msg: Filnamn
 
 id: Indexed mode
 msg: Indexerat läge
+
+id: Newest first
+# Missing translation
+msg: 
+
+id: Oldest first
+# Missing translation
+msg: 
 
 id: Show only supported files
 msg: Visa bara spelbara filer
@@ -941,6 +937,14 @@ msg: Objektets namn ej funnet
 #
 # ./src/i18n.c
 #
+id: 12 Hour
+# Missing translation
+msg: 
+
+id: 24 Hour
+# Missing translation
+msg: 
+
 id: Default character set
 msg: Standardteckensätt
 
@@ -971,20 +975,38 @@ msg: Sekundärt språk för ljud
 id: Secondary subtitle language code
 msg: Sekundärt språk för undertexter
 
+id: System default
+# Missing translation
+msg: 
+
 id: Tertiary audio language code
 msg: Tertiärt språk för ljud
 
 id: Tertiary subtitle language code
 msg: Tertiärt språk för undertexter
 
-#
-# ./src/keymapper.c
-#
-id: Configure mapping of keyboard and remote controller keys
-msg: Inställningar av tangentbord och fjärrkontroller
+id: Time format
+# Missing translation
+msg: 
 
-id: Keymapper
-msg: Tangent- och knapp-hanterare
+id: Timezone
+# Missing translation
+msg: 
+
+#
+# ./src/ipc/libcec.c
+#
+id: Longpress SELECT for item menu
+# Missing translation
+msg: 
+
+id: Switch TV input source
+# Missing translation
+msg: 
+
+id: Use STOP key for combo input
+# Missing translation
+msg: 
 
 #
 # ./src/keyring.c
@@ -998,17 +1020,30 @@ msg: Ihågkommna lösenord bortglömda
 #
 # ./src/media/media_settings.c
 #
-id: Align subtitles on video frame
-msg: Justera undertexter till videons storlek
+id: Align on video frame
+# Missing translation
+msg: 
 
 id: Audio volume
 msg: Volym
+
+id: Delay
+# Missing translation
+msg: 
 
 id: Go to standby after video ends
 msg: Gå till standby efter videon är slut
 
 id: Horizontal pan
 msg: Horisontal justering
+
+id: Horizontal position
+# Missing translation
+msg: 
+
+id: Horizontal scale
+# Missing translation
+msg: 
 
 id: Reset defaults for folder '%s'
 msg: Återställ standardinställnigar för katalog '%s'
@@ -1019,26 +1054,26 @@ msg: Spara som standardinställningar för katalog '%s'
 id: Save as global default
 msg: Spara som globala standardinstallningar
 
+id: Scaling
+# Missing translation
+msg: 
+
 id: Stretch video to fullscreen
 msg: Sträck ut videon över hela skärmen
 
 id: Stretch video to widescreen
 msg: Sträck ut videon horisontellt 
 
-id: Subtitle delay
-msg: Undertexterdelay
-
-id: Subtitle horizontal displacement
-msg: Horisontell position för undertexter
-
-id: Subtitle scaling
-msg: Storlek på undertexter
-
-id: Subtitle vertical displacement
-msg: Vertikal positiono för undertexter
-
 id: Vertical pan
 msg: Vertikal justering
+
+id: Vertical position
+# Missing translation
+msg: 
+
+id: Vertical scale
+# Missing translation
+msg: 
 
 id: Video frame interpolation
 msg: Interpolera videobilder
@@ -1124,11 +1159,9 @@ msg: Egen titel
 id: IMDb ID
 msg: IMDb ID
 
-id: Metadata loaded from '%s' using %s
-msg: Metadata laddat från '%s', använde %s
-
-id: Metadata search
-msg: Metadatasök
+id: Metadata loaded from <b>%s</b> based on %s
+# Missing translation
+msg: 
 
 id: Metadata source
 msg: Metadatakälla
@@ -1172,14 +1205,19 @@ msg: katalognamn
 id: Add and remove items on homepage
 msg: Lägg till och ta bort saker på hemsidan
 
+id: Added %s to home page
+# Missing translation
+msg: 
+
 id: Added new bookmark: %s
 msg: La till nytt bokmärke: %s
 
 id: Bookmarks
 msg: Bokmärken
 
-id: Music
-msg: Musik
+id: Icon
+# Missing translation
+msg: 
 
 id: No handler for URL
 msg: Ingen hanterare för URLen
@@ -1189,6 +1227,10 @@ msg: Annat
 
 id: Photos
 msg: Foton
+
+id: Removed %s from homepage
+# Missing translation
+msg: 
 
 id: Removed bookmark: %s
 msg: Tog bort bokmärke: %s
@@ -1256,6 +1298,10 @@ msg: Molntjänster
 id: Corrupt plugin bundle
 msg: Pluginfilen är korrupt
 
+id: Custom backgrounds can now be set in Settings -> Look and Feel
+# Missing translation
+msg: 
+
 id: Disk write error
 msg: Kunde ej skriva till disk
 
@@ -1283,9 +1329,6 @@ msg: Lista av album
 id: Loading screen
 msg: Laddskärm
 
-id: Movies
-msg: Filmer
-
 id: Music streaming
 msg: Musikstreaming
 
@@ -1306,6 +1349,14 @@ msg: OnlineTV
 
 id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
 msg: Plugin %s %s har blivit avinstallerad eftersom den kan orsaka problem.\nDu kan prova installera en nyare version manuellt.
+
+id: Plugin %s has been uninstalled - %s
+# Missing translation
+msg: 
+
+id: Plugin categories
+# Missing translation
+msg: 
 
 id: Plugins
 msg: Plugin
@@ -1339,6 +1390,10 @@ msg: Upgraderade plugin %s till version %s
 
 id: User interface extensions
 msg: Användargränsnitt
+
+id: Version %s is no longer compatible with Movian
+# Missing translation
+msg: 
 
 id: Video streaming
 msg: Videoströmning
@@ -1391,8 +1446,15 @@ msg: Lokala nätverket
 #
 # ./src/settings.c
 #
+id: About
+# Missing translation
+msg: 
+
 id: Applications and installed plugins
 msg: Applikationer och installerade plugins
+
+id: Configure communications with your TV
+msg: Konfigurera kommunikation med din TV
 
 id: Developer settings
 msg: Utvecklarinställningar
@@ -1426,6 +1488,10 @@ msg: Systemnamn
 
 id: System related settings
 msg: Systemrelaterade inställningar
+
+id: TV Control
+# Missing translation
+msg: 
 
 #
 # ./src/subtitles/subtitles.c
@@ -1484,6 +1550,9 @@ msg: Färg på skuggor
 id: Shadow offset
 msg: Skuggoffset
 
+id: Subtitle horizontal displacement
+msg: Horisontell position för undertexter
+
 id: Subtitle position
 msg: Position på undertexter
 
@@ -1492,6 +1561,9 @@ msg: Storlek på undertexter
 
 id: Subtitle size and positioning
 msg: Storlek och position för undertexter
+
+id: Subtitle vertical displacement
+msg: Vertikal positiono för undertexter
 
 id: Subtitles embedded in video file
 msg: Undertexter inbäddade i videofilen
@@ -1538,6 +1610,10 @@ msg: Användargränsnitt
 #
 # ./src/ui/glw/glw_ps3.c
 #
+id: Dual-Shock Remote
+# Missing translation
+msg: 
+
 id: Seek using L2 and R2 button
 msg: Sök med L2 och R2 knapparna
 
@@ -1547,26 +1623,89 @@ msg: Ja, med selectknappen
 #
 # ./src/ui/glw/glw_settings.c
 #
+id: Custom background image
+# Missing translation
+msg: 
+
+id: Emulate Up/Down buttons with mouse wheel
+# Missing translation
+msg: 
+
+id: Folder for screensaver images
+# Missing translation
+msg: 
+
 id: Font and icon size
 msg: Storlek på font och ikoner
 
-id: Horizontal underscan
-msg: Horisontell underskanning
+id: Interface horizontal shrink
+# Missing translation
+msg: 
+
+id: Interface vertical shrink
+# Missing translation
+msg: 
+
+id: Screensaver
+# Missing translation
+msg: 
 
 id: Screensaver delay
 msg: Skärmsläckartid
 
-id: Vertical underscan
-msg: Vertikal underskanning
+id: Use Bing images of the day
+# Missing translation
+msg: 
 
 id: Wrap when reaching beginning/end of lists
 msg: Gå runt när man når början/slutet av listor
 
 #
-# ./src/ui/glw/glw_x11.c
+# ./src/ui/glw/glw_view_eval.c
 #
-id: Map mouse wheel to up/down
-msg: Tolka musens scrollhjul som upp- och ned-knappar
+id: %d days ago
+# Missing translation
+msg: 
+
+id: %d hours ago
+# Missing translation
+msg: 
+
+id: %d minutes ago
+# Missing translation
+msg: 
+
+id: %d months ago
+# Missing translation
+msg: 
+
+id: %d weeks ago
+# Missing translation
+msg: 
+
+id: %d years ago
+# Missing translation
+msg: 
+
+id: Just now
+# Missing translation
+msg: 
+
+id: One day ago
+# Missing translation
+msg: 
+
+id: One hour ago
+# Missing translation
+msg: 
+
+id: One minute ago
+# Missing translation
+msg: 
+
+id: One month ago
+# Missing translation
+msg: 
 
 #
 # ./src/ui/linux/nvidia.c
@@ -1604,6 +1743,12 @@ msg: Uppgradera till släppta mjukvaror från
 #
 # ./src/upnp/upnp_browse.c
 #
+id: Date (newest first)
+msg: Datum (nyast först)
+
+id: Date (oldest first)
+msg: Datum (äldst först)
+
 id: Device not found
 msg: Kan ej hitta enhet
 
@@ -1631,11 +1776,12 @@ msg: Spela nästa video i listan automatiskt
 id: Count video as played when reaching
 msg: Räkna videon som spelad när den nått
 
-id: Enable VDA
-msg: Slå på VDA
-
 id: Enable VDPAU
 msg: Aktivera VDPAU
+
+id: Hardware accelerated decoding
+# Missing translation
+msg: 
 
 id: Maximum resolution for deinterlacer
 msg: Maximal upplösning för deinterlacing

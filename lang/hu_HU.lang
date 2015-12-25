@@ -534,6 +534,23 @@ id: Use original title
 msg: Eredeti cím használata
 
 #
+# ./src/arch/android/android.c
+#
+id: Android Storage
+# Missing translation
+msg: 
+
+id: Movies
+msg: Filmek
+
+id: Music
+msg: Zene
+
+id: Pictures
+# Missing translation
+msg: 
+
+#
 # ./src/arch/linux/pulseaudio.c
 #
 id: Unable to initialize audio system %s -- %s
@@ -600,13 +617,11 @@ id: On
 msg: Be
 
 #
-# ./src/arch/rpi/rpi_cec.c
+# ./src/arch/rpi/rpi_tv.c
 #
-id: Configure communications with your TV
-msg: Kommunikáció konfigurálása a TV-vel
-
-id: Consumer Electronics Control
-msg: Consumer Electronics Control
+id: Match display and content framerate
+# Missing translation
+msg: 
 
 #
 # ./src/audio2/audio.c
@@ -740,8 +755,24 @@ msg: Másodlagos
 #
 # ./src/backend/htsp/htsp.c
 #
+id: Channels
+# Missing translation
+msg: 
+
 id: Invalid HTSP URL
 msg: Hibás HTSP URL
+
+id: No such channel
+# Missing translation
+msg: 
+
+id: Recorded shows
+# Missing translation
+msg: 
+
+id: Recorder
+# Missing translation
+msg: 
 
 #
 # ./src/backend/search.c
@@ -753,70 +784,23 @@ id: Search result for: %s
 msg: Keresés eredménye a: %s
 
 #
-# ./src/backend/spotify/spotify.c
+# ./src/backend/slideshow/slideshow.c
 #
-id: Albums
-msg: Albumok
+id: 3 seconds
+# Missing translation
+msg: 
 
-id: Automatic login on start
-msg: Automatikus belépés indulásnál
+id: 5 seconds
+# Missing translation
+msg: 
 
-id: Collaborative
-msg: Együttműködés
+id: 7 seconds
+# Missing translation
+msg: 
 
-id: Compilations
-msg: Összeállítások
-
-id: Forget me
-msg: Felejts el
-
-id: Friends
-msg: Barátok
-
-id: High bitrate
-msg: Magas bitráta
-
-id: Inbox
-msg: Bejövő
-
-id: New albums on Spotify
-msg: Új albumok a Spotify-on
-
-id: New releases
-msg: Új kiadások
-
-id: Offline
-msg: Offline
-
-id: Offline sync in 96kbps
-msg: Offlink szinkronizáció 96kbps-al
-
-id: Playlists
-msg: Lejátszási lista
-
-id: Relogin (switch user)
-msg: Belépés újra (felhasználóváltás)
-
-id: Search result
-msg: Keresés eredménye
-
-id: Singles
-msg: Egyedül
-
-id: Spotify friends
-msg: Spotify barátok
-
-id: Spotify music service
-msg: Spotify zene szolgáltatás
-
-id: Spotify playlists
-msg: Spotyfy lejátszási listák
-
-id: Spotify: Connection error: %s
-msg: Spotify: Csatlakozási hiba: %s
-
-id: Starred
-msg: Megjelölt
+id: Slideshow speed
+# Missing translation
+msg: 
 
 #
 # ./src/blobcache_file.c
@@ -840,6 +824,13 @@ id: Unable to open file: %s
 msg: A %s nem nyitható meg
 
 #
+# ./src/fileaccess/fa_filepicker.c
+#
+id: Select a file
+# Missing translation
+msg: 
+
+#
 # ./src/fileaccess/fa_locatedb.c
 #
 id: Search using Unix locatedb
@@ -848,14 +839,11 @@ msg: Keresés Unix locatedb segítségével
 #
 # ./src/fileaccess/fa_scanner.c
 #
+id: Albums
+msg: Albumok
+
 id: Artists
 msg: Előadok
-
-id: Date (newest first)
-msg: Dátum (újabb először)
-
-id: Date (oldest first)
-msg: Dátum (régebbi először)
 
 id: Deleted %s
 msg: Törölve %s
@@ -865,6 +853,14 @@ msg: Fájlnév
 
 id: Indexed mode
 msg: Indexelt mód
+
+id: Newest first
+# Missing translation
+msg: 
+
+id: Oldest first
+# Missing translation
+msg: 
 
 id: Show only supported files
 msg: Csak a támogatott fájltípusok megjelenítése
@@ -941,6 +937,14 @@ msg: Objektumnév nem található
 #
 # ./src/i18n.c
 #
+id: 12 Hour
+# Missing translation
+msg: 
+
+id: 24 Hour
+# Missing translation
+msg: 
+
 id: Default character set
 msg: Alapértelmezett karakterkészlet
 
@@ -971,20 +975,38 @@ msg: Másodlagos audió nyelv kódja
 id: Secondary subtitle language code
 msg: Másodlagos felirat nyelv kódja
 
+id: System default
+# Missing translation
+msg: 
+
 id: Tertiary audio language code
 msg: Harmadlagos audió nyelv kódja
 
 id: Tertiary subtitle language code
 msg: Harmadlagos felirat nyelv kódja
 
-#
-# ./src/keymapper.c
-#
-id: Configure mapping of keyboard and remote controller keys
-msg: A billentyűzet és a távirányító gombjainak beállítása
+id: Time format
+# Missing translation
+msg: 
 
-id: Keymapper
-msg: Billentyű kiosztás
+id: Timezone
+# Missing translation
+msg: 
+
+#
+# ./src/ipc/libcec.c
+#
+id: Longpress SELECT for item menu
+# Missing translation
+msg: 
+
+id: Switch TV input source
+# Missing translation
+msg: 
+
+id: Use STOP key for combo input
+# Missing translation
+msg: 
 
 #
 # ./src/keyring.c
@@ -998,17 +1020,30 @@ msg: Megjegyzett jelszavak törölve
 #
 # ./src/media/media_settings.c
 #
-id: Align subtitles on video frame
-msg: Felirat elhelyezése a videó képkockán
+id: Align on video frame
+# Missing translation
+msg: 
 
 id: Audio volume
 msg: Hangerő
+
+id: Delay
+# Missing translation
+msg: 
 
 id: Go to standby after video ends
 msg: Készenléti állapot miután a videó véget ér
 
 id: Horizontal pan
 msg: Vízszintes helyzet
+
+id: Horizontal position
+# Missing translation
+msg: 
+
+id: Horizontal scale
+# Missing translation
+msg: 
 
 id: Reset defaults for folder '%s'
 msg: Alapértelmezések visszaállítása a '%s' mappában
@@ -1019,26 +1054,26 @@ msg: Alapértelmezések mentése a '%s' mappában
 id: Save as global default
 msg: Elmentés mint globális alapértelmezés
 
+id: Scaling
+# Missing translation
+msg: 
+
 id: Stretch video to fullscreen
 msg: Videó teljes kijelzőre nyújtása
 
 id: Stretch video to widescreen
 msg: Videó szélesvásznú kijelzőre nyújtása 
 
-id: Subtitle delay
-msg: Felirat késleltetés
-
-id: Subtitle horizontal displacement
-msg: Felirat vízszintes elhelyezkedése
-
-id: Subtitle scaling
-msg: Felirat méret
-
-id: Subtitle vertical displacement
-msg: Felirat függőleges elhelyezkedése
-
 id: Vertical pan
 msg: Függőleges helyzet
+
+id: Vertical position
+# Missing translation
+msg: 
+
+id: Vertical scale
+# Missing translation
+msg: 
 
 id: Video frame interpolation
 msg: Videó interpoláció
@@ -1124,11 +1159,9 @@ msg: Saját cím
 id: IMDb ID
 msg: IMDb ID
 
-id: Metadata loaded from '%s' using %s
-msg: Metadata betöltve a '%s'-ból, %s használatával
-
-id: Metadata search
-msg: Metadata keresés
+id: Metadata loaded from <b>%s</b> based on %s
+# Missing translation
+msg: 
 
 id: Metadata source
 msg: Metadata forrása
@@ -1172,14 +1205,19 @@ msg: Mappa név
 id: Add and remove items on homepage
 msg: Kezdőképernyő tartalmak hozzáadása vagy törlése
 
+id: Added %s to home page
+# Missing translation
+msg: 
+
 id: Added new bookmark: %s
 msg: Új könyvjelző hozzáadva: %s
 
 id: Bookmarks
 msg: Könyvjelzők
 
-id: Music
-msg: Zene
+id: Icon
+# Missing translation
+msg: 
 
 id: No handler for URL
 msg: Nincs kezelő az URL-hez
@@ -1189,6 +1227,10 @@ msg: Egyéb
 
 id: Photos
 msg: Fotók
+
+id: Removed %s from homepage
+# Missing translation
+msg: 
 
 id: Removed bookmark: %s
 msg: Törölt könyvjelző: %s
@@ -1256,6 +1298,10 @@ msg: Felhő szolgáltatások
 id: Corrupt plugin bundle
 msg: Hibás plugin lista
 
+id: Custom backgrounds can now be set in Settings -> Look and Feel
+# Missing translation
+msg: 
+
 id: Disk write error
 msg: Lemez írási hiba
 
@@ -1283,9 +1329,6 @@ msg: Albumok listája
 id: Loading screen
 msg: Betöltő képernyő
 
-id: Movies
-msg: Filmek
-
 id: Music streaming
 msg: Zene streamelés
 
@@ -1306,6 +1349,14 @@ msg: Online TV
 
 id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
 msg: A plugin %s %s törlésre került, mert problémákat okozhat.\nProbáljon meg egy másik verziót telepíteni manuálisan.
+
+id: Plugin %s has been uninstalled - %s
+# Missing translation
+msg: 
+
+id: Plugin categories
+# Missing translation
+msg: 
 
 id: Plugins
 msg: Pluginok
@@ -1340,6 +1391,10 @@ msg: A %s plugin frissítve a %s verzióra
 id: User interface extensions
 msg: Felhasználói felület kiegészítések
 
+id: Version %s is no longer compatible with Movian
+# Missing translation
+msg: 
+
 id: Video streaming
 msg: Video streamelés
 
@@ -1351,7 +1406,7 @@ msg: Automatikus készenlét
 
 id: Enable SSH server
 msg: SSH szerver aktiválása
- 
+
 id: Logout
 msg: Kijelentkezés
 
@@ -1391,8 +1446,15 @@ msg: Helyi hálozat
 #
 # ./src/settings.c
 #
+id: About
+# Missing translation
+msg: 
+
 id: Applications and installed plugins
 msg: Alkalmazások és telepített pluginok
+
+id: Configure communications with your TV
+msg: Kommunikáció konfigurálása a TV-vel
 
 id: Developer settings
 msg: Fejlesztői beállítások
@@ -1426,6 +1488,10 @@ msg: Rendszer neve
 
 id: System related settings
 msg: Rendszerrel kapcsolatos beállítások
+
+id: TV Control
+# Missing translation
+msg: 
 
 #
 # ./src/subtitles/subtitles.c
@@ -1484,6 +1550,9 @@ msg: Árnyék színe
 id: Shadow offset
 msg: Árnyék helye
 
+id: Subtitle horizontal displacement
+msg: Felirat vízszintes elhelyezkedése
+
 id: Subtitle position
 msg: Felirat pozíciója
 
@@ -1492,6 +1561,9 @@ msg: Felirat mérete
 
 id: Subtitle size and positioning
 msg: Felirat méret és pozíció
+
+id: Subtitle vertical displacement
+msg: Felirat függőleges elhelyezkedése
 
 id: Subtitles embedded in video file
 msg: Videóba ágyazott feliratok
@@ -1538,6 +1610,10 @@ msg: Felhasználói felület
 #
 # ./src/ui/glw/glw_ps3.c
 #
+id: Dual-Shock Remote
+# Missing translation
+msg: 
+
 id: Seek using L2 and R2 button
 msg: Tekerés a L2 és az R2 gombbal
 
@@ -1547,26 +1623,89 @@ msg: Igen, a select gombbal
 #
 # ./src/ui/glw/glw_settings.c
 #
+id: Custom background image
+# Missing translation
+msg: 
+
+id: Emulate Up/Down buttons with mouse wheel
+# Missing translation
+msg: 
+
+id: Folder for screensaver images
+# Missing translation
+msg: 
+
 id: Font and icon size
 msg: Betű és ikonméret
 
-id: Horizontal underscan
-msg: Vízszintes kép fixálás
+id: Interface horizontal shrink
+# Missing translation
+msg: 
+
+id: Interface vertical shrink
+# Missing translation
+msg: 
+
+id: Screensaver
+# Missing translation
+msg: 
 
 id: Screensaver delay
 msg: Képernyőkímélő késleltetése
 
-id: Vertical underscan
-msg: Függőleges kép fixálás
+id: Use Bing images of the day
+# Missing translation
+msg: 
 
 id: Wrap when reaching beginning/end of lists
 msg: Visszaugrás mikor eléri a lista elejét/végét
 
 #
-# ./src/ui/glw/glw_x11.c
+# ./src/ui/glw/glw_view_eval.c
 #
-id: Map mouse wheel to up/down
-msg: Egérgörgő beállítása a fel/le-re
+id: %d days ago
+# Missing translation
+msg: 
+
+id: %d hours ago
+# Missing translation
+msg: 
+
+id: %d minutes ago
+# Missing translation
+msg: 
+
+id: %d months ago
+# Missing translation
+msg: 
+
+id: %d weeks ago
+# Missing translation
+msg: 
+
+id: %d years ago
+# Missing translation
+msg: 
+
+id: Just now
+# Missing translation
+msg: 
+
+id: One day ago
+# Missing translation
+msg: 
+
+id: One hour ago
+# Missing translation
+msg: 
+
+id: One minute ago
+# Missing translation
+msg: 
+
+id: One month ago
+# Missing translation
+msg: 
 
 #
 # ./src/ui/linux/nvidia.c
@@ -1604,6 +1743,12 @@ msg: Frissítés kiadásokra a
 #
 # ./src/upnp/upnp_browse.c
 #
+id: Date (newest first)
+msg: Dátum (újabb először)
+
+id: Date (oldest first)
+msg: Dátum (régebbi először)
+
 id: Device not found
 msg: Eszköz nem található
 
@@ -1631,11 +1776,12 @@ msg: Automatikusan lejátssza a következő videót a listában
 id: Count video as played when reaching
 msg: Lejátszottnak számítsa a videót mikor eléri a
 
-id: Enable VDA
-msg: VDA engedélyezése
-
 id: Enable VDPAU
 msg: VDPAU engedélyezése
+
+id: Hardware accelerated decoding
+# Missing translation
+msg: 
 
 id: Maximum resolution for deinterlacer
 msg: Deinterlace maximum felbontása
