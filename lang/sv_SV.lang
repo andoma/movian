@@ -537,8 +537,7 @@ msg: Använd orginaltitel
 # ./src/arch/android/android.c
 #
 id: Android Storage
-# Missing translation
-msg: 
+msg: Android Storage
 
 id: Movies
 msg: Filmer
@@ -547,8 +546,7 @@ id: Music
 msg: Musik
 
 id: Pictures
-# Missing translation
-msg: 
+msg: Bilder
 
 #
 # ./src/arch/linux/pulseaudio.c
@@ -620,8 +618,7 @@ msg: På
 # ./src/arch/rpi/rpi_tv.c
 #
 id: Match display and content framerate
-# Missing translation
-msg: 
+msg: Justera uppdateringsfrekvens på TVn
 
 #
 # ./src/audio2/audio.c
@@ -756,23 +753,19 @@ msg: Extra
 # ./src/backend/htsp/htsp.c
 #
 id: Channels
-# Missing translation
-msg: 
+msg: Kanaler
 
 id: Invalid HTSP URL
 msg: Ogiltligt HTSP URL
 
 id: No such channel
-# Missing translation
-msg: 
+msg: Ingen sådan kanal
 
 id: Recorded shows
-# Missing translation
-msg: 
+msg: Inspelade program
 
 id: Recorder
-# Missing translation
-msg: 
+msg: Inspelare
 
 #
 # ./src/backend/search.c
@@ -787,20 +780,16 @@ msg: Sökresultat för: %s
 # ./src/backend/slideshow/slideshow.c
 #
 id: 3 seconds
-# Missing translation
-msg: 
+msg: 3 sekunder
 
 id: 5 seconds
-# Missing translation
-msg: 
+msg: 5 sekunder
 
 id: 7 seconds
-# Missing translation
-msg: 
+msg: 7 sekunder
 
 id: Slideshow speed
-# Missing translation
-msg: 
+msg: Hastighet
 
 #
 # ./src/blobcache_file.c
@@ -827,8 +816,7 @@ msg: Kan ej öppna fil: %s
 # ./src/fileaccess/fa_filepicker.c
 #
 id: Select a file
-# Missing translation
-msg: 
+msg: Välj en fil
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -855,12 +843,10 @@ id: Indexed mode
 msg: Indexerat läge
 
 id: Newest first
-# Missing translation
-msg: 
+msg: Nyast först
 
 id: Oldest first
-# Missing translation
-msg: 
+msg: Äldst först
 
 id: Show only supported files
 msg: Visa bara spelbara filer
@@ -938,12 +924,10 @@ msg: Objektets namn ej funnet
 # ./src/i18n.c
 #
 id: 12 Hour
-# Missing translation
-msg: 
+msg: 12 Timmar
 
 id: 24 Hour
-# Missing translation
-msg: 
+msg: 24 Timmar
 
 id: Default character set
 msg: Standardteckensätt
@@ -976,8 +960,7 @@ id: Secondary subtitle language code
 msg: Sekundärt språk för undertexter
 
 id: System default
-# Missing translation
-msg: 
+msg: Systemets standard
 
 id: Tertiary audio language code
 msg: Tertiärt språk för ljud
@@ -986,27 +969,22 @@ id: Tertiary subtitle language code
 msg: Tertiärt språk för undertexter
 
 id: Time format
-# Missing translation
-msg: 
+msg: Tidsformat
 
 id: Timezone
-# Missing translation
-msg: 
+msg: Tidzon
 
 #
 # ./src/ipc/libcec.c
 #
 id: Longpress SELECT for item menu
-# Missing translation
-msg: 
+msg: Håll in SELECT för detaljmeny
 
 id: Switch TV input source
-# Missing translation
-msg: 
+msg: Väl ingångkälla på TVn
 
 id: Use STOP key for combo input
-# Missing translation
-msg: 
+msg: Håll in STOP för kombinerad inmatning
 
 #
 # ./src/keyring.c
@@ -1021,15 +999,13 @@ msg: Ihågkommna lösenord bortglömda
 # ./src/media/media_settings.c
 #
 id: Align on video frame
-# Missing translation
-msg: 
+msg: Anpassa på videon
 
 id: Audio volume
 msg: Volym
 
 id: Delay
-# Missing translation
-msg: 
+msg: Tidsjustering
 
 id: Go to standby after video ends
 msg: Gå till standby efter videon är slut
@@ -1038,12 +1014,10 @@ id: Horizontal pan
 msg: Horisontal justering
 
 id: Horizontal position
-# Missing translation
-msg: 
+msg: Horisontal position
 
 id: Horizontal scale
-# Missing translation
-msg: 
+msg: Horisontal skala
 
 id: Reset defaults for folder '%s'
 msg: Återställ standardinställnigar för katalog '%s'
@@ -1055,8 +1029,7 @@ id: Save as global default
 msg: Spara som globala standardinstallningar
 
 id: Scaling
-# Missing translation
-msg: 
+msg: Skala
 
 id: Stretch video to fullscreen
 msg: Sträck ut videon över hela skärmen
@@ -1068,12 +1041,10 @@ id: Vertical pan
 msg: Vertikal justering
 
 id: Vertical position
-# Missing translation
-msg: 
+msg: Vertical position
 
 id: Vertical scale
-# Missing translation
-msg: 
+msg: Vertikal skala
 
 id: Video frame interpolation
 msg: Interpolera videobilder
@@ -1160,8 +1131,7 @@ id: IMDb ID
 msg: IMDb ID
 
 id: Metadata loaded from <b>%s</b> based on %s
-# Missing translation
-msg: 
+msg: Metadata laddad från <b>%s</b> med hjälp av %s
 
 id: Metadata source
 msg: Metadatakälla
@@ -1206,8 +1176,7 @@ id: Add and remove items on homepage
 msg: Lägg till och ta bort saker på hemsidan
 
 id: Added %s to home page
-# Missing translation
-msg: 
+msg: Lägg till %s på hemsidan
 
 id: Added new bookmark: %s
 msg: La till nytt bokmärke: %s
@@ -1216,8 +1185,7 @@ id: Bookmarks
 msg: Bokmärken
 
 id: Icon
-# Missing translation
-msg: 
+msg: Ikon
 
 id: No handler for URL
 msg: Ingen hanterare för URLen
@@ -1229,8 +1197,7 @@ id: Photos
 msg: Foton
 
 id: Removed %s from homepage
-# Missing translation
-msg: 
+msg: Tog bort %s från hemsidan
 
 id: Removed bookmark: %s
 msg: Tog bort bokmärke: %s
@@ -1299,8 +1266,7 @@ id: Corrupt plugin bundle
 msg: Pluginfilen är korrupt
 
 id: Custom backgrounds can now be set in Settings -> Look and Feel
-# Missing translation
-msg: 
+msg: Egen bakgrund kan nu ställas in i Instlälningar -> Utseende och stil
 
 id: Disk write error
 msg: Kunde ej skriva till disk
@@ -1351,12 +1317,10 @@ id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may tr
 msg: Plugin %s %s har blivit avinstallerad eftersom den kan orsaka problem.\nDu kan prova installera en nyare version manuellt.
 
 id: Plugin %s has been uninstalled - %s
-# Missing translation
-msg: 
+msg: Plugin %s har blivit avinstallerad - %s
 
 id: Plugin categories
-# Missing translation
-msg: 
+msg: Pluginkategorier
 
 id: Plugins
 msg: Plugin
@@ -1392,8 +1356,7 @@ id: User interface extensions
 msg: Användargränsnitt
 
 id: Version %s is no longer compatible with Movian
-# Missing translation
-msg: 
+msg: Version %s är inte längre möjligt att köra
 
 id: Video streaming
 msg: Videoströmning
@@ -1447,8 +1410,7 @@ msg: Lokala nätverket
 # ./src/settings.c
 #
 id: About
-# Missing translation
-msg: 
+msg: Om
 
 id: Applications and installed plugins
 msg: Applikationer och installerade plugins
@@ -1490,8 +1452,7 @@ id: System related settings
 msg: Systemrelaterade inställningar
 
 id: TV Control
-# Missing translation
-msg: 
+msg: TVkontroll
 
 #
 # ./src/subtitles/subtitles.c
@@ -1611,8 +1572,7 @@ msg: Användargränsnitt
 # ./src/ui/glw/glw_ps3.c
 #
 id: Dual-Shock Remote
-# Missing translation
-msg: 
+msg: Dual-Shock Kontroller
 
 id: Seek using L2 and R2 button
 msg: Sök med L2 och R2 knapparna
@@ -1624,38 +1584,31 @@ msg: Ja, med selectknappen
 # ./src/ui/glw/glw_settings.c
 #
 id: Custom background image
-# Missing translation
-msg: 
+msg: Egen bakgrundsbild
 
 id: Emulate Up/Down buttons with mouse wheel
-# Missing translation
-msg: 
+msg: Emulera Upp/Ner-knabbar med skrollhjulet
 
 id: Folder for screensaver images
-# Missing translation
-msg: 
+msg: Mapp för skärmsläckarbilder
 
 id: Font and icon size
 msg: Storlek på font och ikoner
 
 id: Interface horizontal shrink
-# Missing translation
-msg: 
+msg: Minska gränssnitt horisontellt
 
 id: Interface vertical shrink
-# Missing translation
-msg: 
+msg: Minska gränssnitt vertikalt
 
 id: Screensaver
-# Missing translation
-msg: 
+msg: Skärmsläckare
 
 id: Screensaver delay
 msg: Skärmsläckartid
 
 id: Use Bing images of the day
-# Missing translation
-msg: 
+msg: Använd dagens Bing-bild
 
 id: Wrap when reaching beginning/end of lists
 msg: Gå runt när man når början/slutet av listor
@@ -1664,48 +1617,37 @@ msg: Gå runt när man når början/slutet av listor
 # ./src/ui/glw/glw_view_eval.c
 #
 id: %d days ago
-# Missing translation
-msg: 
+msg: %d dagar sedan
 
 id: %d hours ago
-# Missing translation
-msg: 
+msg: %d timmar sedan
 
 id: %d minutes ago
-# Missing translation
-msg: 
+msg: %d minuter sedan
 
 id: %d months ago
-# Missing translation
-msg: 
+msg: %d månader sedan
 
 id: %d weeks ago
-# Missing translation
-msg: 
+msg: %d veckor sedan
 
 id: %d years ago
-# Missing translation
-msg: 
+msg: %d år sedan
 
 id: Just now
-# Missing translation
-msg: 
+msg: Just nu
 
 id: One day ago
-# Missing translation
-msg: 
+msg: En dag sedan
 
 id: One hour ago
-# Missing translation
-msg: 
+msg: En timme sedan
 
 id: One minute ago
-# Missing translation
-msg: 
+msg: En minut sedan
 
 id: One month ago
-# Missing translation
-msg: 
+msg: En månad sedan
 
 #
 # ./src/ui/linux/nvidia.c
@@ -1780,8 +1722,7 @@ id: Enable VDPAU
 msg: Aktivera VDPAU
 
 id: Hardware accelerated decoding
-# Missing translation
-msg: 
+msg: Hårdvaruaccelererad avkodning
 
 id: Maximum resolution for deinterlacer
 msg: Maximal upplösning för deinterlacing
