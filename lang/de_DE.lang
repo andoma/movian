@@ -480,7 +480,7 @@ msg: Benutzername
 # ./glwskins/default/popups/resume.view
 #
 id: No, Start over
-msg: Nein, Start drüber
+msg: Nein, zum Anfang
 
 id: Resume %s from %s
 msg: Fortsetzen %s von %s
