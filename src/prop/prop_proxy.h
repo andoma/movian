@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include "prop_defs.h"
+
 typedef struct prop_proxy_connection prop_proxy_connection_t;
 struct prop_sub;
 struct prop;

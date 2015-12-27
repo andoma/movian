@@ -22,6 +22,9 @@
 #include "arch/threads.h"
 #include "misc/queue.h"
 
+#ifndef NDEBUG
+#define POOL_DEBUG
+#endif
 
 LIST_HEAD(pool_segment_list, pool_segment);
 

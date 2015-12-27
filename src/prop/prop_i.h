@@ -20,9 +20,6 @@
 #ifndef PROP_I_H__
 #define PROP_I_H__
 
-#define PROP_MAGIC 0xdeadf00d
-
-// #define PROP_SUB_STATS
 
 #include "prop.h"
 #include "misc/pool.h"

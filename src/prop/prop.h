@@ -28,12 +28,9 @@
 #include "arch/threads.h"
 #include "misc/queue.h"
 #include "misc/rstr.h"
+#include "prop_defs.h"
 #include "compiler.h"
 
-#ifndef NDEBUG
-#define PROP_DEBUG
-#define PROP_SUB_RECORD_SOURCE
-#endif
 
 
 typedef struct prop_courier prop_courier_t;
