@@ -540,8 +540,7 @@ msg: Originaltitel benutzen
 # ./src/arch/android/android.c
 #
 id: Android Storage
-# Missing translation
-msg: 
+msg: Android Speicher
 
 id: Movies
 msg: Filme
@@ -789,20 +788,16 @@ msg: Suchergebnis für: %s
 # ./src/backend/slideshow/slideshow.c
 #
 id: 3 seconds
-# Missing translation
-msg: 
+msg: 3 Sekunden
 
 id: 5 seconds
-# Missing translation
-msg: 
+msg: 5 Sekunden
 
 id: 7 seconds
-# Missing translation
-msg: 
+msg: 7 Sekunden
 
 id: Slideshow speed
-# Missing translation
-msg: 
+msg: Slideshow Geschwindigkeit
 
 #
 # ./src/blobcache_file.c
@@ -940,12 +935,10 @@ msg: Objektname nicht gefunden
 # ./src/i18n.c
 #
 id: 12 Hour
-# Missing translation
-msg: 
+msg: 12 Stunden
 
 id: 24 Hour
-# Missing translation
-msg: 
+msg: 24 Stunden
 
 id: Default character set
 msg: Standard Zeichensatz
@@ -978,8 +971,7 @@ id: Secondary subtitle language code
 msg: Zweite Untertitel-Sprache
 
 id: System default
-# Missing translation
-msg: 
+msg: Systemstandard
 
 id: Tertiary audio language code
 msg: Dritte Audio-Sprache
@@ -988,12 +980,10 @@ id: Tertiary subtitle language code
 msg: Dritte Untertitel-Sprache
 
 id: Time format
-# Missing translation
-msg: 
+msg: Zeitformat
 
 id: Timezone
-# Missing translation
-msg: 
+msg: Zeitzone
 
 #
 # ./src/ipc/libcec.c
@@ -1044,8 +1034,7 @@ id: Horizontal position
 msg: 
 
 id: Horizontal scale
-# Missing translation
-msg: 
+msg: Horizontale Größe
 
 id: Reset defaults for folder '%s'
 msg: Standards für Ordner '%s' wieder herstellen
@@ -1074,11 +1063,10 @@ id: Vertical position
 msg: 
 
 id: Vertical scale
-# Missing translation
-msg: 
+msg: Vertikale Größe
 
 id: Video frame interpolation
-msg: Bildraten Interpolation 
+msg: Bildraten Interpolation
 
 id: Video zoom
 msg: Videozoom
@@ -1209,8 +1197,7 @@ id: Add and remove items on homepage
 msg: Dateien auf Startseite hinzufügen/entfernen
 
 id: Added %s to home page
-# Missing translation
-msg: 
+msg: %s zur Startseite hinzugefügt
 
 id: Added new bookmark: %s
 msg: Neues Lesezeichen hinzugefügt
@@ -1219,8 +1206,7 @@ id: Bookmarks
 msg: Lesezeichen
 
 id: Icon
-# Missing translation
-msg: 
+msg: Icon
 
 id: No handler for URL
 msg: kann URL nicht verarbeiten
@@ -1232,8 +1218,7 @@ id: Photos
 msg: Foto
 
 id: Removed %s from homepage
-# Missing translation
-msg: 
+msg: %s von Startseite entfernt
 
 id: Removed bookmark: %s
 msg: Lesezeichen %s entfernt
@@ -1354,12 +1339,10 @@ id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may tr
 msg: Plugin %s %s wurde deinstalliert, da es evtl. Probleme verursacht.\nSie können versuchen manuell eine andere Version zu installieren.
 
 id: Plugin %s has been uninstalled - %s
-# Missing translation
-msg: 
+msg: Plugin %s wurde deinstalliert - %s
 
 id: Plugin categories
-# Missing translation
-msg: 
+msg: Plugin Kategorien
 
 id: Plugins
 msg: Plugins
@@ -1395,8 +1378,7 @@ id: User interface extensions
 msg: Benutzeroberflächen-Erweiterungen
 
 id: Version %s is no longer compatible with Movian
-# Missing translation
-msg: 
+msg: Version %s ist nicht länger mit Movian kompatibel
 
 id: Video streaming
 msg: Video streaming
@@ -1450,8 +1432,7 @@ msg: Lokales Netzwerk
 # ./src/settings.c
 #
 id: About
-# Missing translation
-msg: 
+msg: Über
 
 id: Applications and installed plugins
 msg: Anwendungen und installierte Plugins
@@ -1627,38 +1608,31 @@ msg: JA mit Selct-Knopf
 # ./src/ui/glw/glw_settings.c
 #
 id: Custom background image
-# Missing translation
-msg: 
+msg: Benutzerdefiniertes Hintergrundbild
 
 id: Emulate Up/Down buttons with mouse wheel
-# Missing translation
-msg: 
+msg: Hoch/Runter Buttons mit Mausrad emulieren
 
 id: Folder for screensaver images
-# Missing translation
-msg: 
+msg: Verzeichnis für Bildschirmschoner Bilder
 
 id: Font and icon size
 msg: Schrift und Icon Größe
 
 id: Interface horizontal shrink
-# Missing translation
-msg: 
+msg: Horizontale Oberflächenverkleinerung
 
 id: Interface vertical shrink
-# Missing translation
-msg: 
+msg: Vertikale Oberflächenverkleinerung
 
 id: Screensaver
-# Missing translation
-msg: 
+msg: Bildschirmschoner
 
 id: Screensaver delay
 msg: Bildschirmschonerverzögerung
 
 id: Use Bing images of the day
-# Missing translation
-msg: 
+msg: Benutze Bing Bilder des Tages
 
 id: Wrap when reaching beginning/end of lists
 msg: Endlose Bewegung durch Listen
@@ -1667,48 +1641,37 @@ msg: Endlose Bewegung durch Listen
 # ./src/ui/glw/glw_view_eval.c
 #
 id: %d days ago
-# Missing translation
-msg: 
+msg: Vor %d Tagen
 
 id: %d hours ago
-# Missing translation
-msg: 
+msg: Vor %d Stunden
 
 id: %d minutes ago
-# Missing translation
-msg: 
+msg: Vor %d Minuten
 
 id: %d months ago
-# Missing translation
-msg: 
+msg: Vor %d Monaten
 
 id: %d weeks ago
-# Missing translation
-msg: 
+msg: Vor %d Wochen
 
 id: %d years ago
-# Missing translation
-msg: 
+msg: Vor %d Jahren
 
 id: Just now
-# Missing translation
-msg: 
+msg: Gerade eben
 
 id: One day ago
-# Missing translation
-msg: 
+msg: Vor einem Tag
 
 id: One hour ago
-# Missing translation
-msg: 
+msg: Vor einer Stunde
 
 id: One minute ago
-# Missing translation
-msg: 
+msg: Vor einer Minute
 
 id: One month ago
-# Missing translation
-msg: 
+msg: Vor einem Monat
 
 #
 # ./src/ui/linux/nvidia.c
@@ -1783,8 +1746,7 @@ id: Enable VDPAU
 msg: VDPAU aktivieren
 
 id: Hardware accelerated decoding
-# Missing translation
-msg: 
+msg: Hardwarebeschleunigte Dekodierung
 
 id: Maximum resolution for deinterlacer
 msg: Maximale Auflösung für Deinterlacer
