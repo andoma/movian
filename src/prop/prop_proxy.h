@@ -33,8 +33,20 @@ struct prop *prop_proxy_connect(const char *url, struct prop *statusy);
 
 struct prop *prop_proxy_create(struct prop *parent, const char *name);
 
+#ifdef PROP_DEBUG
+struct prop *prop_proxy_make0(prop_proxy_connection_t *ppc, uint32_t id,
+                              struct prop_sub *s, struct prop *owner,
+                              char **pfx,
+                              const char *file, int line);
+
+#define prop_proxy_make(ppc, id, s, p, pfx)              \
+  prop_proxy_make0(ppc, id, s, p, pfx, __FILE__, __LINE__)
+#else
+
 struct prop *prop_proxy_make(prop_proxy_connection_t *ppc, uint32_t id,
-                             struct prop_sub *s, char **pfx);
+                             struct prop_sub *s, struct prop *owner,
+                             char **pfx);
+#endif
 
 void prop_proxy_subscribe(prop_proxy_connection_t *ppc, struct prop_sub *s,
                           struct prop *p, const char **name);

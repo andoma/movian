@@ -29,6 +29,7 @@
 #include "task.h"
 #include "api/stpp.h"
 #include "misc/str.h"
+#include "misc/pool.h"
 
 #include <unistd.h>
 #include <stdio.h>
@@ -63,6 +64,7 @@ ppc_del_fd(void *aux)
 {
   asyncio_fd_t *fd = aux;
   asyncio_del_fd(fd);
+  TRACE(TRACE_DEBUG, "STPP", "Disconnected from server");
 }
 
 
@@ -73,7 +75,6 @@ static prop_proxy_connection_t *
 ppc_retain(prop_proxy_connection_t *ppc)
 {
   atomic_inc(&ppc->ppc_refcount);
-  printf("PPC RETAIN = %d\n", ppc->ppc_refcount.v);
   return ppc;
 }
 
@@ -97,11 +98,6 @@ ppc_disconnect(prop_proxy_connection_t *ppc)
 static void
 ppc_release(prop_proxy_connection_t *ppc)
 {
-  printf("ppc refcount=%d\n", ppc->ppc_refcount.v);
-  prop_sub_t *s;
-  LIST_FOREACH(s, &ppc->ppc_subs, hps_value_prop_link) {
-    printf("ID %d\n", s->hps_proxy_subid);
-  }
   if(atomic_dec(&ppc->ppc_refcount))
     return;
 
@@ -110,7 +106,6 @@ ppc_release(prop_proxy_connection_t *ppc)
   free(ppc->ppc_ws.packet);
   free(ppc->ppc_url);
   free(ppc);
-  printf("PPC released\n");
 }
 
 
@@ -165,22 +160,33 @@ prop_id_cmp(const prop_t *a, const prop_t *b)
 /**
  *
  */
+#ifdef PROP_DEBUG
+prop_t *
+prop_proxy_make0(prop_proxy_connection_t *ppc, uint32_t id, prop_sub_t *s,
+                 prop_t *owner, char **pfx, const char *file, int line)
+#else
 prop_t *
 prop_proxy_make(prop_proxy_connection_t *ppc, uint32_t id, prop_sub_t *s,
-                char **pfx)
+                 prop_t *owner, char **pfx)
+#endif
+
 {
   prop_t *p = pool_get(prop_pool);
   memset(p, 0, sizeof(prop_t));
 #ifdef PROP_DEBUG
   p->hp_magic = PROP_MAGIC;
+  p->hp_file = file;
+  p->hp_line = line;
   SIMPLEQ_INIT(&p->hp_ref_trace);
 #endif
 
   p->hp_proxy_id = id;
 
   if(s != NULL) {
-    p->hp_sub = s;
-    if(RB_INSERT_SORTED_NFL(&s->hps_prop_tree, p, hp_sub_link, prop_id_cmp)) {
+    assert(owner == NULL);
+    p->hp_owner_sub = s;
+    if(RB_INSERT_SORTED_NFL(&s->hps_prop_tree, p, hp_owner_sub_link,
+                            prop_id_cmp)) {
       printf("HELP Unable to insert node %d, collision detected\n", id);
       pool_put(prop_pool, p);
       strvec_free(pfx);
@@ -188,15 +194,21 @@ prop_proxy_make(prop_proxy_connection_t *ppc, uint32_t id, prop_sub_t *s,
     }
   }
 
+  if(owner != NULL) {
+    LIST_INSERT_HEAD(&owner->hp_owned, p, hp_owned_prop_link);
+    p->hp_flags |= PROP_PROXY_OWNED_BY_PROP;
+  }
+
   atomic_set(&p->hp_refcount, 1);
   p->hp_xref = 1;
   p->hp_type = PROP_PROXY;
+#if 0
   printf("Created prop @ %d pfx: ", id);
   if(pfx != NULL)
     for(int i = 0; pfx[i]; i++)
       printf("%s ", pfx[i]);
   printf("\n");
-  
+#endif
   p->hp_proxy_ppc = ppc_retain(ppc);
   p->hp_proxy_pfx = pfx;
   return p;
@@ -222,7 +234,8 @@ prop_proxy_create(struct prop *parent, const char *name)
     pfx = NULL;
     strvec_addp(&pfx, name);
   }
-  return prop_proxy_make(parent->hp_proxy_ppc, parent->hp_proxy_id, NULL, pfx);
+  return prop_proxy_make(parent->hp_proxy_ppc, parent->hp_proxy_id, NULL,
+                         parent, pfx);
 }
 
 /**
@@ -231,12 +244,27 @@ prop_proxy_create(struct prop *parent, const char *name)
 void
 prop_proxy_destroy(struct prop *p)
 {
-  ppc_release(p->hp_proxy_ppc);
-  printf("prop_proxy_destroy\n");
-  if(p->hp_sub != NULL) {
-    RB_REMOVE_NFL(&p->hp_sub->hps_prop_tree, p, hp_sub_link);
-    p->hp_sub = NULL;
+
+  prop_t *owned;
+  while((owned = LIST_FIRST(&p->hp_owned)) != NULL) {
+    assert(owned->hp_flags & PROP_PROXY_OWNED_BY_PROP);
+
+    LIST_REMOVE(owned, hp_owned_prop_link);
+    owned->hp_flags &= ~PROP_PROXY_OWNED_BY_PROP;
+    prop_destroy0(owned);
   }
+
+  ppc_release(p->hp_proxy_ppc);
+  if(p->hp_owner_sub != NULL) {
+    RB_REMOVE_NFL(&p->hp_owner_sub->hps_prop_tree, p, hp_owner_sub_link);
+    p->hp_owner_sub = NULL;
+  }
+
+  if(p->hp_flags & PROP_PROXY_OWNED_BY_PROP) {
+    LIST_REMOVE(p, hp_owned_prop_link);
+    p->hp_flags &= ~PROP_PROXY_OWNED_BY_PROP;
+  }
+
   strvec_free(p->hp_proxy_pfx);
 }
 
@@ -249,9 +277,9 @@ ppc_destroy_props_on_sub(prop_sub_t *s)
 {
   prop_t *p;
   while((p = s->hps_prop_tree.root) != NULL) {
-    if(p->hp_sub != NULL) {
-      RB_REMOVE_NFL(&s->hps_prop_tree, p, hp_sub_link);
-      p->hp_sub = NULL;
+    if(p->hp_owner_sub != NULL) {
+      RB_REMOVE_NFL(&s->hps_prop_tree, p, hp_owner_sub_link);
+      p->hp_owner_sub = NULL;
     }
     prop_destroy0(p);
   }
@@ -266,7 +294,8 @@ ppc_find_prop_on_sub(prop_sub_t *s, int id)
 {
   prop_t skel;
   skel.hp_proxy_id = id;
-  prop_t *p = RB_FIND(&s->hps_prop_tree, &skel, hp_sub_link, prop_id_cmp);
+  prop_t *p = RB_FIND(&s->hps_prop_tree, &skel,
+                      hp_owner_sub_link, prop_id_cmp);
   assert(p != NULL);
   return p;
 }
@@ -354,7 +383,7 @@ ppc_ws_input_notify(prop_proxy_connection_t *ppc, const uint8_t *data, int len)
     cnt = len / 4;
     pv = prop_vec_create(cnt);
     for(int i = 0; i < cnt; i++) {
-      p = prop_proxy_make(ppc, rd32_le(data + i * 4), s, NULL);
+      p = prop_proxy_make(ppc, rd32_le(data + i * 4), s, NULL, NULL);
       pv = prop_vec_append(pv, p);
     }
     n = prop_get_notify(s);
@@ -368,7 +397,7 @@ ppc_ws_input_notify(prop_proxy_connection_t *ppc, const uint8_t *data, int len)
     cnt = len / 4 - 1;
     pv = prop_vec_create(cnt);
     for(int i = 0; i < cnt; i++) {
-      p = prop_proxy_make(ppc, rd32_le(data + 4 + i * 4), s, NULL);
+      p = prop_proxy_make(ppc, rd32_le(data + 4 + i * 4), s, NULL, NULL);
       pv = prop_vec_append(pv, p);
     }
 
@@ -381,7 +410,6 @@ ppc_ws_input_notify(prop_proxy_connection_t *ppc, const uint8_t *data, int len)
   case STPP_DEL_CHILD:
     if(len != 4)
       break;
-    printf("STPP INPUT DEL CHILD\n");
     n = prop_get_notify(s);
     n->hpn_event = PROP_DEL_CHILD;
     p = ppc_find_prop_on_sub(s, rd32_le(data));
@@ -415,7 +443,7 @@ ppc_ws_input_notify(prop_proxy_connection_t *ppc, const uint8_t *data, int len)
     if(len != 4)
       break;
 
-    p = prop_proxy_make(ppc, rd32_le(data), s, NULL);
+    p = prop_proxy_make(ppc, rd32_le(data), s, NULL, NULL);
     n = prop_get_notify(s);
     n->hpn_event = PROP_ADD_CHILD;
     n->hpn_flags = PROP_ADD_SELECTED;
@@ -429,7 +457,7 @@ ppc_ws_input_notify(prop_proxy_connection_t *ppc, const uint8_t *data, int len)
     if(s->hps_value_prop != NULL)
       prop_destroy0(s->hps_value_prop);
 
-    s->hps_value_prop = prop_proxy_make(ppc, rd32_le(data), NULL, NULL);
+    s->hps_value_prop = prop_proxy_make(ppc, rd32_le(data), NULL, NULL, NULL);
     n = prop_get_notify(s);
     n->hpn_event = PROP_VALUE_PROP;
     n->hpn_prop = prop_ref_inc(s->hps_value_prop);
@@ -575,7 +603,7 @@ prop_proxy_connect(const char *url, prop_t *status)
   ppc->ppc_status = prop_ref_inc(status); // Leak
   asyncio_dns_lookup_host(hostname, ppc_connect, ppc_retain(ppc));
 
-  return prop_proxy_make(ppc, 0 /* global */, NULL, NULL);
+  return prop_proxy_make(ppc, 0 /* global */, NULL, NULL, NULL);
 }
 
 
@@ -945,3 +973,22 @@ prop_proxy_set_void(struct prop *p)
   printf("%s not implemeted\n", __FUNCTION__);
 }
 
+
+static void
+prop_proxy_check_items(void *ptr, void *pc)
+{
+  prop_t *p = ptr;
+  if(p->hp_type != PROP_PROXY)
+    return;
+  printf("Item %p  created by %s:%d\n", p, p->hp_file, p->hp_line);
+}
+
+
+void prop_proxy_check(void);
+
+void
+prop_proxy_check(void)
+{
+  printf("Scanning prop pool\n");
+  pool_foreach(prop_pool, prop_proxy_check_items, NULL);
+}

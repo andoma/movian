@@ -379,8 +379,18 @@ void prop_destroy_childs(prop_t *parent);
 
 void prop_void_childs(prop_t *parent);
 
+#ifdef PROP_DEBUG
+prop_t *prop_get_by_name0(const char *file, int line,
+                          const char **name, int follow_symlinks, ...)
+  attribute_null_sentinel;
+
+#define prop_get_by_name(a, b, ...) \
+  prop_get_by_name0(__FILE__, __LINE__, a, b, ##__VA_ARGS__)
+#else
 prop_t *prop_get_by_name(const char **name, int follow_symlinks, ...)
-                              attribute_null_sentinel;
+  attribute_null_sentinel;
+
+#endif
 
 void prop_request_new_child(prop_t *p);
 

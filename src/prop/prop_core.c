@@ -2678,8 +2678,14 @@ prop_resolve_tree(const char *name, struct prop_root_list *prl)
 /**
  *
  */
+#ifdef PROP_DEBUG
+prop_t *
+prop_get_by_name0(const char *file, int line,
+                  const char **name, int follow_symlinks, ...)
+#else
 prop_t *
 prop_get_by_name(const char **name, int follow_symlinks, ...)
+#endif
 {
   prop_t *p;
   prop_root_t *pr;
@@ -2750,8 +2756,12 @@ prop_get_by_name(const char **name, int follow_symlinks, ...)
       vec[len++] = strdup(name[i]);
     vec[len] = NULL;
 
-    p = prop_proxy_make(p->hp_proxy_ppc, p->hp_proxy_id, NULL, vec);
-
+#ifdef PROP_DEBUG
+    p = prop_proxy_make0(p->hp_proxy_ppc, p->hp_proxy_id, NULL, p, vec,
+                         file, line);
+#else
+    p = prop_proxy_make(p->hp_proxy_ppc, p->hp_proxy_id, NULL, p, vec);
+#endif
     if(follow_symlinks)
       p->hp_flags |= PROP_PROXY_FOLLOW_SYMLINK;
 
@@ -5055,10 +5065,10 @@ debug_check_courier(void *ptr, void *pc)
   prop_sub_t *hps = ptr;
   if(hps->hps_dispatch == pc) {
 #ifdef PROP_SUB_RECORD_SOURCE
-    trace(TRACE_NO_PROP, TRACE_ERROR, "prop",
-          "Subscription at %s:%d lingering", hps->hps_file, hps->hps_line);
+    tracelog(TRACE_NO_PROP, TRACE_ERROR, "prop",
+             "Subscription at %s:%d lingering", hps->hps_file, hps->hps_line);
 #else
-    trace(TRACE_NO_PROP, TRACE_ERROR, "prop",
+    tracelog(TRACE_NO_PROP, TRACE_ERROR, "prop",
           "Subscription at %p lingering", hps);
 #endif
   }

@@ -184,8 +184,20 @@ struct prop {
 
     // When hp_type == PROP_PROXY
     struct {
-      RB_ENTRY(prop) hp_sub_link;
-      struct prop_sub *hp_sub;
+      struct prop_list hp_owned;
+
+      union {
+      // if PROP_PROXY_OWNED_BY_PROP is NOT set
+        struct {
+          RB_ENTRY(prop) hp_owner_sub_link;
+          struct prop_sub *hp_owner_sub;
+        };
+
+      // if PROP_PROXY_OWNED_BY_PROP is set
+        struct {
+          LIST_ENTRY(prop) hp_owned_prop_link;
+        };
+      };
     };
   };
 
@@ -286,6 +298,14 @@ struct prop {
 #define PROP_PROXY_FOLLOW_SYMLINK 0x400
 
   /**
+   * Set if a prop proxy is owned by a property. This basically means
+   * that when the owning proprty is destroyed, this property should be
+   * destroyed as well
+   */
+#define PROP_PROXY_OWNED_BY_PROP  0x800
+
+
+  /**
    * Tags. Protected by prop_tag_mutex
    */
   struct prop_tag *hp_tags;
@@ -342,6 +362,8 @@ struct prop {
 
 #ifdef PROP_DEBUG
   SIMPLEQ_HEAD(, prop_ref_trace) hp_ref_trace;
+  const char *hp_file;
+  int hp_line;
 #endif
 
 };
