@@ -105,6 +105,7 @@ ppc_release(prop_proxy_connection_t *ppc)
     asyncio_run_task(ppc_del_fd, ppc->ppc_connection);
   free(ppc->ppc_ws.packet);
   free(ppc->ppc_url);
+  prop_ref_dec(ppc->ppc_status);
   free(ppc);
 }
 
@@ -618,7 +619,7 @@ prop_proxy_connect(const char *url, prop_t *status)
     ppc->ppc_port = 42000;
 
   ppc->ppc_url = strdup(url);
-  ppc->ppc_status = prop_ref_inc(status); // Leak
+  ppc->ppc_status = prop_ref_inc(status);
   asyncio_dns_lookup_host(hostname, ppc_connect, ppc_retain(ppc));
 
   return prop_proxy_make(ppc, 0 /* global */, NULL, NULL, NULL);
