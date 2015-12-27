@@ -992,6 +992,8 @@ prop_proxy_set_void(struct prop *p)
 }
 
 
+#ifdef POOL_DEBUG
+
 static void
 prop_proxy_check_items(void *ptr, void *pc)
 {
@@ -1010,3 +1012,5 @@ prop_proxy_check(void)
   printf("Scanning prop pool\n");
   pool_foreach(prop_pool, prop_proxy_check_items, NULL);
 }
+
+#endif
