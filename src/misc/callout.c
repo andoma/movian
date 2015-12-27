@@ -141,10 +141,13 @@ void
 callout_disarm(callout_t *c)
 {
   hts_mutex_lock(&callout_mutex);
-  lockmgr_fn_t *lm = c->c_lockmgr;
+  lockmgr_fn_t *lm;
   if(c->c_callback) {
+    lm = c->c_lockmgr;
     LIST_REMOVE(c, c_link);
     c->c_callback = NULL;
+  } else {
+    lm = NULL;
   }
   hts_mutex_unlock(&callout_mutex);
   if(lm)
