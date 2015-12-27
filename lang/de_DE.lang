@@ -248,13 +248,13 @@ id: %s %s or newer is required
 msg: %s %s oder neuer ist nötig
 
 id: Author: 
-msg: Author:
+msg: Author: 
 
 id: Available version: 
-msg: Verfügbare Version:
+msg: Verfügbare Version: 
 
 id: Installed version: 
-msg: Installierte Version:
+msg: Installierte Version: 
 
 #
 # ./glwskins/default/pages/iteminfo/video.view
@@ -550,8 +550,7 @@ id: Music
 msg: Musik
 
 id: Pictures
-# Missing translation
-msg: 
+msg: Bilder
 
 #
 # ./src/arch/linux/pulseaudio.c
@@ -681,7 +680,7 @@ id: Surround Left
 msg: Surround Links
 
 id: Surround Right
-msg: Surround Right
+msg: Surround Rechts
 
 id: Test signal type
 msg: Test Signal Typ
@@ -705,7 +704,7 @@ msg: Zwischengelagerte Torrents benutzen %d MB von den erlaubten %d MB. Verfügb
 # ./src/backend/bittorrent/fa_torrent.c
 #
 id: Connected peers
-msg: Veerbundene Peers
+msg: Verbundene Peers
 
 id: Known peers
 msg: Bekannte Peers
