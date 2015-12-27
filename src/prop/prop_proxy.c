@@ -171,7 +171,25 @@ prop_proxy_make(prop_proxy_connection_t *ppc, uint32_t id, prop_sub_t *s,
 #endif
 
 {
-  prop_t *p = pool_get(prop_pool);
+  prop_t *p;
+  if(owner != NULL) {
+    assert(pfx != NULL);
+
+    LIST_FOREACH(p, &owner->hp_owned, hp_owned_prop_link) {
+      for(int i = 0; ; i++) {
+        if(pfx[i] == NULL && p->hp_proxy_pfx[i] == NULL) {
+          strvec_free(pfx);
+          return p;
+        }
+        if(pfx[i] == NULL || p->hp_proxy_pfx[i] == NULL)
+          break;
+        if(strcmp(pfx[i], p->hp_proxy_pfx[i]))
+          break;
+      }
+    }
+  }
+
+  p = pool_get(prop_pool);
   memset(p, 0, sizeof(prop_t));
 #ifdef PROP_DEBUG
   p->hp_magic = PROP_MAGIC;
