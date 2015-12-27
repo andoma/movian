@@ -67,7 +67,6 @@ loaded_msg_release(loaded_msg_t *lm)
 {
   if(atomic_dec(&lm->lm_refcount))
     return;
-  htsmsg_release(lm->lm_msg);
   free(lm->lm_key);
   free(lm);
 }
@@ -182,6 +181,8 @@ lm_destroy(loaded_msg_t *lm)
 {
   if(lm->lm_dirty)
     loaded_msg_write(lm);
+  htsmsg_release(lm->lm_msg);
+  lm->lm_msg = NULL;
   LIST_REMOVE(lm, lm_link);
   callout_disarm(&lm->lm_timer);
   loaded_msg_release(lm);
