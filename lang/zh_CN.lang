@@ -537,8 +537,7 @@ msg: 使用原标题
 # ./src/arch/android/android.c
 #
 id: Android Storage
-# Missing translation
-msg: 
+msg: Android存储
 
 id: Movies
 msg: 电影
@@ -547,8 +546,7 @@ id: Music
 msg: 音乐
 
 id: Pictures
-# Missing translation
-msg: 
+msg: 图片
 
 #
 # ./src/arch/linux/pulseaudio.c
@@ -620,8 +618,7 @@ msg: 启用
 # ./src/arch/rpi/rpi_tv.c
 #
 id: Match display and content framerate
-# Missing translation
-msg: 
+msg: 同步显示和内容帧速
 
 #
 # ./src/audio2/audio.c
@@ -756,23 +753,19 @@ msg: 补充
 # ./src/backend/htsp/htsp.c
 #
 id: Channels
-# Missing translation
-msg: 
+msg: 频道
 
 id: Invalid HTSP URL
 msg: 非法的HTSP URL
 
 id: No such channel
-# Missing translation
-msg: 
+msg: 无此频道
 
 id: Recorded shows
-# Missing translation
-msg: 
+msg: 录制的表演
 
 id: Recorder
-# Missing translation
-msg: 
+msg: 录像机
 
 #
 # ./src/backend/search.c
@@ -787,20 +780,16 @@ msg: "%s"的查询结果
 # ./src/backend/slideshow/slideshow.c
 #
 id: 3 seconds
-# Missing translation
-msg: 
+msg: 3秒
 
 id: 5 seconds
-# Missing translation
-msg: 
+msg: 5秒
 
 id: 7 seconds
-# Missing translation
-msg: 
+msg: 7秒
 
 id: Slideshow speed
-# Missing translation
-msg: 
+msg: 幻灯片播放速度
 
 #
 # ./src/blobcache_file.c
@@ -827,8 +816,7 @@ msg: 无法打开文件%s
 # ./src/fileaccess/fa_filepicker.c
 #
 id: Select a file
-# Missing translation
-msg: 
+msg: 选择文件
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -855,12 +843,10 @@ id: Indexed mode
 msg: 索引方式
 
 id: Newest first
-# Missing translation
-msg: 
+msg: 最新优先
 
 id: Oldest first
-# Missing translation
-msg: 
+msg: 最老优先
 
 id: Show only supported files
 msg: 只显示支持的文件
@@ -938,12 +924,10 @@ msg: 对象名不存在
 # ./src/i18n.c
 #
 id: 12 Hour
-# Missing translation
-msg: 
+msg: 12小时
 
 id: 24 Hour
-# Missing translation
-msg: 
+msg: 24小时
 
 id: Default character set
 msg: 默认字符集
@@ -976,8 +960,7 @@ id: Secondary subtitle language code
 msg: 字幕次选语言代码
 
 id: System default
-# Missing translation
-msg: 
+msg: 系统默认
 
 id: Tertiary audio language code
 msg: 音频第三语言代码
@@ -986,27 +969,22 @@ id: Tertiary subtitle language code
 msg: 字幕第三语言代码
 
 id: Time format
-# Missing translation
-msg: 
+msg: 时间格式
 
 id: Timezone
-# Missing translation
-msg: 
+msg: 时区
 
 #
 # ./src/ipc/libcec.c
 #
 id: Longpress SELECT for item menu
-# Missing translation
-msg: 
+msg: 长按SELECT显示项目菜单
 
 id: Switch TV input source
-# Missing translation
-msg: 
+msg: 切换电视输入源
 
 id: Use STOP key for combo input
-# Missing translation
-msg: 
+msg: 组合输入使用STOP键
 
 #
 # ./src/keyring.c
@@ -1021,15 +999,13 @@ msg: 记住已删除密码
 # ./src/media/media_settings.c
 #
 id: Align on video frame
-# Missing translation
-msg: 
+msg: 对齐视频帧
 
 id: Audio volume
 msg: 音量
 
 id: Delay
-# Missing translation
-msg: 
+msg: 延迟
 
 id: Go to standby after video ends
 msg: 视频播放结束后自动关机
@@ -1038,12 +1014,10 @@ id: Horizontal pan
 msg: 水平位移
 
 id: Horizontal position
-# Missing translation
-msg: 
+msg: 水平位置
 
 id: Horizontal scale
-# Missing translation
-msg: 
+msg: 水平方向缩放比例
 
 id: Reset defaults for folder '%s'
 msg: 恢复文件夹'%s'的默认设置
@@ -1055,8 +1029,7 @@ id: Save as global default
 msg: 保存为全局默认设置
 
 id: Scaling
-# Missing translation
-msg: 
+msg: 等比例缩放
 
 id: Stretch video to fullscreen
 msg: 拉升视频至全屏
@@ -1068,12 +1041,10 @@ id: Vertical pan
 msg: 垂直位移
 
 id: Vertical position
-# Missing translation
-msg: 
+msg: 垂直位置
 
 id: Vertical scale
-# Missing translation
-msg: 
+msg: 垂直方向缩放比例
 
 id: Video frame interpolation
 msg: 视频帧插值
@@ -1160,11 +1131,10 @@ id: IMDb ID
 msg: IMDb ID
 
 id: Metadata loaded from <b>%s</b> based on %s
-# Missing translation
-msg: 
+msg: 从<b>%s</b>载入元数据，基于%s
 
 id: Metadata source
-msg: 元信息源
+msg: 元数据信息源
 
 id: Movie
 msg: 影片
@@ -1206,8 +1176,7 @@ id: Add and remove items on homepage
 msg: 在首页添加或删除图标
 
 id: Added %s to home page
-# Missing translation
-msg: 
+msg: %s已加入首页
 
 id: Added new bookmark: %s
 msg: 添加新书签：%s
@@ -1216,8 +1185,7 @@ id: Bookmarks
 msg: 收藏夹
 
 id: Icon
-# Missing translation
-msg: 
+msg: 图标
 
 id: No handler for URL
 msg: 无法处理URL
@@ -1229,8 +1197,7 @@ id: Photos
 msg: 照片
 
 id: Removed %s from homepage
-# Missing translation
-msg: 
+msg: %s已从首页移除
 
 id: Removed bookmark: %s
 msg: 删除书签: %s
@@ -1299,8 +1266,7 @@ id: Corrupt plugin bundle
 msg: 损坏的插件包
 
 id: Custom backgrounds can now be set in Settings -> Look and Feel
-# Missing translation
-msg: 
+msg: 现在可以从设置->外观中自定义设置背景图片
 
 id: Disk write error
 msg: 磁盘写入错误
@@ -1351,12 +1317,10 @@ id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may tr
 msg: 由于可能引起问题，插件%s %s已被卸载。\n您可以尝试手工安装此插件的其它版本。
 
 id: Plugin %s has been uninstalled - %s
-# Missing translation
-msg: 
+msg: 插件%s已经卸载 - %s
 
 id: Plugin categories
-# Missing translation
-msg: 
+msg: 插件类别
 
 id: Plugins
 msg: 插件
@@ -1392,8 +1356,7 @@ id: User interface extensions
 msg: 用户界面扩展
 
 id: Version %s is no longer compatible with Movian
-# Missing translation
-msg: 
+msg: 版本%s已经和Movian不兼容
 
 id: Video streaming
 msg: 视频流
@@ -1447,8 +1410,7 @@ msg: 本地网络
 # ./src/settings.c
 #
 id: About
-# Missing translation
-msg: 
+msg: 关于
 
 id: Applications and installed plugins
 msg: 程序和已安装的插件
@@ -1490,8 +1452,7 @@ id: System related settings
 msg: 系统相关设置
 
 id: TV Control
-# Missing translation
-msg: 
+msg: 电视控制
 
 #
 # ./src/subtitles/subtitles.c
@@ -1611,8 +1572,7 @@ msg: 用户界面
 # ./src/ui/glw/glw_ps3.c
 #
 id: Dual-Shock Remote
-# Missing translation
-msg: 
+msg: Dual-Shock遥控器
 
 id: Seek using L2 and R2 button
 msg: 使用L2/R2快速进退
@@ -1624,38 +1584,31 @@ msg: 使用Select按键确认
 # ./src/ui/glw/glw_settings.c
 #
 id: Custom background image
-# Missing translation
-msg: 
+msg: 自定义背景图片
 
 id: Emulate Up/Down buttons with mouse wheel
-# Missing translation
-msg: 
+msg: 鼠标滚轮模拟上下键
 
 id: Folder for screensaver images
-# Missing translation
-msg: 
+msg: 屏幕保护图片目录
 
 id: Font and icon size
 msg: 字体和图标大小
 
 id: Interface horizontal shrink
-# Missing translation
-msg: 
+msg: 界面水平收缩
 
 id: Interface vertical shrink
-# Missing translation
-msg: 
+msg: 界面垂直收缩
 
 id: Screensaver
-# Missing translation
-msg: 
+msg: 屏幕保护
 
 id: Screensaver delay
-msg: 屏幕保护延迟
+msg: 屏幕保护启动延迟时间
 
 id: Use Bing images of the day
-# Missing translation
-msg: 
+msg: 使用Bing的当日图片
 
 id: Wrap when reaching beginning/end of lists
 msg: 列表浏览开始结尾循环
@@ -1664,48 +1617,37 @@ msg: 列表浏览开始结尾循环
 # ./src/ui/glw/glw_view_eval.c
 #
 id: %d days ago
-# Missing translation
-msg: 
+msg: %d天前
 
 id: %d hours ago
-# Missing translation
-msg: 
+msg: %d小时前
 
 id: %d minutes ago
-# Missing translation
-msg: 
+msg: %d分钟前
 
 id: %d months ago
-# Missing translation
-msg: 
+msg: %d个月前
 
 id: %d weeks ago
-# Missing translation
-msg: 
+msg: %d个星期前
 
 id: %d years ago
-# Missing translation
-msg: 
+msg: %d年前
 
 id: Just now
-# Missing translation
-msg: 
+msg: 刚刚
 
 id: One day ago
-# Missing translation
-msg: 
+msg: 1天前
 
 id: One hour ago
-# Missing translation
-msg: 
+msg: 1小时前
 
 id: One minute ago
-# Missing translation
-msg: 
+msg: 1分钟前
 
 id: One month ago
-# Missing translation
-msg: 
+msg: 1个月前
 
 #
 # ./src/ui/linux/nvidia.c
@@ -1780,8 +1722,7 @@ id: Enable VDPAU
 msg: 启用VDPAU
 
 id: Hardware accelerated decoding
-# Missing translation
-msg: 
+msg: 硬件加速解码
 
 id: Maximum resolution for deinterlacer
 msg: 去隔行化使用最大可能的分辨率
