@@ -821,6 +821,7 @@ ftp_stat(struct fa_protocol *fap, const char *url, struct fa_stat *fs,
 
       if(ftp_read_line(fc, resp, sizeof(resp)) < 0)
         goto bad;
+      ftp_file_release(ff, 0);
       return rval;
     } else {
       FTP_TRACE("[%d]: Server does not undestand MLST, not using that anymore",
@@ -870,7 +871,6 @@ ftp_stat(struct fa_protocol *fap, const char *url, struct fa_stat *fs,
 
     *fs = fde->fde_stat;
     fa_dir_free(fd);
-    return FAP_OK;
   }
   ftp_file_release(ff, 0);
   return FAP_OK;
