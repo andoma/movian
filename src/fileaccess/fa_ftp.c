@@ -631,13 +631,13 @@ ftp_read(fa_handle_t *fh, void *buf, size_t size0)
     return 0;
 
   if(ff->ff_xfer == NULL) {
+    ff->ff_xfer = ftp_open_data_transfer(ff->ff_fc);
+    if(ff->ff_xfer == NULL)
+      return -1;
+
     fc_write(ff->ff_fc, "REST %"PRId64"\n", ff->ff_fpos);
     int r = fc_read_result(ff->ff_fc, NULL, 0);
     if(r != 350)
-      return -1;
-
-    ff->ff_xfer = ftp_open_data_transfer(ff->ff_fc);
-    if(ff->ff_xfer == NULL)
       return -1;
 
     fc_write(ff->ff_fc, "RETR %s\n", ff->ff_pathx);
