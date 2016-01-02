@@ -161,6 +161,9 @@ glw_scroll_layout(glw_scroll_control_t *gsc, glw_t *w, int height)
         gsc->bottom_anchored = 1;
       }
       if(gsc->bottom_anchored) {
+        if(gsc->target_pos != max_value) {
+          w->glw_flags |= GLW_UPDATE_METRICS;
+        }
         gsc->target_pos = max_value;
       }
     }
@@ -295,6 +298,7 @@ glw_scroll_set_int_attributes(glw_scroll_control_t *gsc, const char *a,
       return GLW_SET_NO_CHANGE;
 
     gsc->bottom_gravity = !!value;
+    gsc->bottom_anchored = gsc->bottom_gravity;
     return GLW_SET_RERENDER_REQUIRED;
   }
 
