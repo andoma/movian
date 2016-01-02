@@ -59,6 +59,18 @@ static hts_mutex_t loaded_msg_mutex;
 
 static char *settings_path;
 
+
+/**
+ *
+ */
+static void
+htsmsg_sync(void)
+{
+#ifdef STOS
+  arch_sync_path(settings_path);
+#endif
+}
+
 /**
  *
  */
@@ -176,16 +188,23 @@ loaded_msg_write(loaded_msg_t *lm)
 /**
  *
  */
-static void
-lm_destroy(loaded_msg_t *lm)
+static int
+lm_destroy(loaded_msg_t *lm, int dosync)
 {
-  if(lm->lm_dirty)
+  int x = 0;
+  if(lm->lm_dirty) {
     loaded_msg_write(lm);
+    if(dosync)
+      htsmsg_sync();
+    else
+      x = 1;
+  }
   htsmsg_release(lm->lm_msg);
   lm->lm_msg = NULL;
   LIST_REMOVE(lm, lm_link);
   callout_disarm(&lm->lm_timer);
   loaded_msg_release(lm);
+  return x;
 }
 
 
@@ -196,15 +215,14 @@ void
 htsmsg_store_flush(void)
 {
   loaded_msg_t *lm;
+  int sync_needed = 0;
   hts_mutex_lock(&loaded_msg_mutex);
   while((lm = LIST_FIRST(&loaded_msgs)) != NULL)
-    lm_destroy(lm);
+    sync_needed |= lm_destroy(lm, 0);
 
   hts_mutex_unlock(&loaded_msg_mutex);
-
-#ifdef STOS
-  arch_sync_path(settings_path);
-#endif
+  if(sync_needed)
+    htsmsg_sync();
 }
 
 
@@ -236,7 +254,7 @@ static void
 htsmsg_store_timer_cb(struct callout *c, void *ptr)
 {
   loaded_msg_t *lm = ptr;
-  lm_destroy(lm);
+  lm_destroy(lm, 1);
 }
 
 
@@ -395,7 +413,8 @@ htsmsg_store_remove(const char *path)
 
   if(lm != NULL) {
     lm->lm_dirty = 0;
-    lm_destroy(lm);
+    lm_destroy(lm, 0);
+    htsmsg_sync();
   }
 
   fa_unlink(fullpath, NULL, 0);
