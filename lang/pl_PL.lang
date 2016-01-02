@@ -537,8 +537,7 @@ msg: Użyj oryginalnego tytułu
 # ./src/arch/android/android.c
 #
 id: Android Storage
-# Missing translation
-msg: 
+msg: Pamięć urządzenia
 
 id: Movies
 msg: Filmy
@@ -547,8 +546,7 @@ id: Music
 msg: Muzyka
 
 id: Pictures
-# Missing translation
-msg: 
+msg: Zdjęcia
 
 #
 # ./src/arch/linux/pulseaudio.c
@@ -620,8 +618,7 @@ msg: Włączony
 # ./src/arch/rpi/rpi_tv.c
 #
 id: Match display and content framerate
-# Missing translation
-msg: 
+msg: Dopasuj do wyświetlacza i materiału
 
 #
 # ./src/audio2/audio.c
@@ -756,23 +753,19 @@ msg: Dodatkowy
 # ./src/backend/htsp/htsp.c
 #
 id: Channels
-# Missing translation
-msg: 
+msg: Kanały
 
 id: Invalid HTSP URL
 msg: Nieprawidłowy adres HTSP
 
 id: No such channel
-# Missing translation
-msg: 
+msg: Nie ma takiego kanału
 
 id: Recorded shows
-# Missing translation
-msg: 
+msg: Nagrane programy
 
 id: Recorder
-# Missing translation
-msg: 
+msg: Nagrywarka
 
 #
 # ./src/backend/search.c
@@ -787,20 +780,16 @@ msg: Wyniki wyszukiwania dla: %s
 # ./src/backend/slideshow/slideshow.c
 #
 id: 3 seconds
-# Missing translation
-msg: 
+msg: 3 sekundy
 
 id: 5 seconds
-# Missing translation
-msg: 
+msg: 5 sekund
 
 id: 7 seconds
-# Missing translation
-msg: 
+msg: 7 sekund
 
 id: Slideshow speed
-# Missing translation
-msg: 
+msg: Prędkość pokazu slajdów
 
 #
 # ./src/blobcache_file.c
@@ -827,8 +816,7 @@ msg: Nie można otworzyć pliku: %s
 # ./src/fileaccess/fa_filepicker.c
 #
 id: Select a file
-# Missing translation
-msg: 
+msg: Wybierz plik
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -855,12 +843,10 @@ id: Indexed mode
 msg: Tryb indeksowania
 
 id: Newest first
-# Missing translation
-msg: 
+msg: Najnowsze na początku
 
 id: Oldest first
-# Missing translation
-msg: 
+msg: Najstarsze na początku
 
 id: Show only supported files
 msg: Pokazuj tylko obsługiwane formaty
@@ -938,12 +924,10 @@ msg: Nazwa obiektu nie znaleziona
 # ./src/i18n.c
 #
 id: 12 Hour
-# Missing translation
-msg: 
+msg: 12 godzinny
 
 id: 24 Hour
-# Missing translation
-msg: 
+msg: 24 godzinny
 
 id: Default character set
 msg: Domyślny zestaw znaków
@@ -976,8 +960,7 @@ id: Secondary subtitle language code
 msg: Drugi język napisów
 
 id: System default
-# Missing translation
-msg: 
+msg: Domyślne dla systemu
 
 id: Tertiary audio language code
 msg: Trzeci język audio
@@ -986,27 +969,22 @@ id: Tertiary subtitle language code
 msg: Trzeci język napisów
 
 id: Time format
-# Missing translation
-msg: 
+msg: Format czasu
 
 id: Timezone
-# Missing translation
-msg: 
+msg: Strefa czasowa
 
 #
 # ./src/ipc/libcec.c
 #
 id: Longpress SELECT for item menu
-# Missing translation
-msg: 
+msg: Przytrzymaj SELECT dla menu
 
 id: Switch TV input source
-# Missing translation
-msg: 
+msg: Zmiana źródła sygnału w TV
 
 id: Use STOP key for combo input
-# Missing translation
-msg: 
+msg: STOP włącza kombinacje klawiszy
 
 #
 # ./src/keyring.c
@@ -1021,15 +999,13 @@ msg: Usunięto zapamiętane hasła
 # ./src/media/media_settings.c
 #
 id: Align on video frame
-# Missing translation
-msg: 
+msg: Zgraj z klatką obrazu
 
 id: Audio volume
 msg: Głośność
 
 id: Delay
-# Missing translation
-msg: 
+msg: Opóźnienie
 
 id: Go to standby after video ends
 msg: Przejdź w stan czuwania po zakończonym video
@@ -1038,12 +1014,10 @@ id: Horizontal pan
 msg: Przesunięcie poziome
 
 id: Horizontal position
-# Missing translation
-msg: 
+msg: Pozycja w poziomie
 
 id: Horizontal scale
-# Missing translation
-msg: 
+msg: Skalowanie w poziomie
 
 id: Reset defaults for folder '%s'
 msg: Przywróć ustawienia domyślne dla folderu '%s'
@@ -1055,8 +1029,7 @@ id: Save as global default
 msg: Zapisz jako domyślne ustawienia globalne
 
 id: Scaling
-# Missing translation
-msg: 
+msg: Skalowanie
 
 id: Stretch video to fullscreen
 msg: Rozciągnij obraz do pełnego ekranu
@@ -1068,12 +1041,10 @@ id: Vertical pan
 msg: Przesunięcie pionowe
 
 id: Vertical position
-# Missing translation
-msg: 
+msg: Pozycja w pionie
 
 id: Vertical scale
-# Missing translation
-msg: 
+msg: Skalowanie w pionie
 
 id: Video frame interpolation
 msg: Interpolacja klatek Video
@@ -1160,8 +1131,7 @@ id: IMDb ID
 msg: Identyfikator IMDb
 
 id: Metadata loaded from <b>%s</b> based on %s
-# Missing translation
-msg: 
+msg: Metada załadowane z <b>%s</b> w oparciu o %s
 
 id: Metadata source
 msg: Źródło metadanych
@@ -1206,8 +1176,7 @@ id: Add and remove items on homepage
 msg: Dodaj/Usuń elementy ze strony głównej
 
 id: Added %s to home page
-# Missing translation
-msg: 
+msg: %s dodano do ekranu głównego
 
 id: Added new bookmark: %s
 msg: Dodano nową zakładkę: %s
@@ -1216,8 +1185,7 @@ id: Bookmarks
 msg: Zakładki
 
 id: Icon
-# Missing translation
-msg: 
+msg: Ikona
 
 id: No handler for URL
 msg: Brak wsparcia dla URL
@@ -1230,7 +1198,7 @@ msg: Zdjęcia
 
 id: Removed %s from homepage
 # Missing translation
-msg: 
+msg: %s usunięty z ekranu głównego
 
 id: Removed bookmark: %s
 msg: Usunięto zakładkę: %s
@@ -1299,8 +1267,7 @@ id: Corrupt plugin bundle
 msg: Uszkodzony pakiet wtyczki
 
 id: Custom backgrounds can now be set in Settings -> Look and Feel
-# Missing translation
-msg: 
+msg: Tło może być zmienione w Ustawienia -> Wygląd i odczucia
 
 id: Disk write error
 msg: Błąd zapisu na dysku
@@ -1351,12 +1318,10 @@ id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may tr
 msg: Wtyczka %s %s została odinstalowana gdyż może powodować problemy.\nRęczna instalacja innej wersji może rozwiązać ten problem.
 
 id: Plugin %s has been uninstalled - %s
-# Missing translation
-msg: 
+msg: Wtyczka %s została odinstalowana - %s
 
 id: Plugin categories
-# Missing translation
-msg: 
+msg: Kategorie wtyczek
 
 id: Plugins
 msg: Wtyczki
@@ -1392,8 +1357,7 @@ id: User interface extensions
 msg: Rozszerzenia interfejsu użytkownika
 
 id: Version %s is no longer compatible with Movian
-# Missing translation
-msg: 
+msg: Ta wersja %s jest niekompatybilna z Movianem
 
 id: Video streaming
 msg: Strumieniowanie Video
@@ -1447,8 +1411,7 @@ msg: Sieć lokalna
 # ./src/settings.c
 #
 id: About
-# Missing translation
-msg: 
+msg: O programie
 
 id: Applications and installed plugins
 msg: Aplikacje i zainstalowane wtyczki
@@ -1490,8 +1453,7 @@ id: System related settings
 msg: Ustawienia związane z systemem
 
 id: TV Control
-# Missing translation
-msg: 
+msg: Kontrola TV
 
 #
 # ./src/subtitles/subtitles.c
@@ -1624,38 +1586,33 @@ msg: Przycisk Select jako Tak
 # ./src/ui/glw/glw_settings.c
 #
 id: Custom background image
-# Missing translation
-msg: 
+msg: Niestandardowe tło
 
 id: Emulate Up/Down buttons with mouse wheel
-# Missing translation
-msg: 
+msg: Emuluj klawisze Góra/Dół używając scrolla myszli
 
 id: Folder for screensaver images
 # Missing translation
-msg: 
+msg: Folder obrazów dla wygaszacza ekranu
 
 id: Font and icon size
 msg: Czcionka i rozmiar ikon
 
 id: Interface horizontal shrink
-# Missing translation
-msg: 
+msg: Poziome zmniejszenie interfejsu
 
 id: Interface vertical shrink
 # Missing translation
-msg: 
+msg: Pionowe zmniejszenie interfejsu
 
 id: Screensaver
-# Missing translation
-msg: 
+msg: Wygaszacz ekranu
 
 id: Screensaver delay
 msg: Opóźnienie wygaszacza ekranu
 
 id: Use Bing images of the day
-# Missing translation
-msg: 
+msg: Używaj kategorii 'obraz dnia' z Bing
 
 id: Wrap when reaching beginning/end of lists
 msg: Zawiń listę po osiągnięciu końca/początku
@@ -1664,48 +1621,37 @@ msg: Zawiń listę po osiągnięciu końca/początku
 # ./src/ui/glw/glw_view_eval.c
 #
 id: %d days ago
-# Missing translation
-msg: 
+msg: %d dni temu
 
 id: %d hours ago
-# Missing translation
-msg: 
+msg: %d godzin temu
 
 id: %d minutes ago
-# Missing translation
-msg: 
+msg: %d minut temu
 
 id: %d months ago
-# Missing translation
-msg: 
+msg: %d miesięcy temu
 
 id: %d weeks ago
-# Missing translation
-msg: 
+msg: %d tygodni temu
 
 id: %d years ago
-# Missing translation
-msg: 
+msg: %d lat temu
 
 id: Just now
-# Missing translation
-msg: 
+msg: Przed chwilą
 
 id: One day ago
-# Missing translation
-msg: 
+msg: Dzień temu
 
 id: One hour ago
-# Missing translation
-msg: 
+msg: Godzinę temu
 
 id: One minute ago
-# Missing translation
-msg: 
+msg: Minutę temu
 
 id: One month ago
-# Missing translation
-msg: 
+msg: Miesiąc temu
 
 #
 # ./src/ui/linux/nvidia.c
@@ -1744,7 +1690,7 @@ msg: Aktualizuj do wersji z
 # ./src/upnp/upnp_browse.c
 #
 id: Date (newest first)
-msg: Data (nowe na początku)
+msg: Data (nowsze na początku)
 
 id: Date (oldest first)
 msg: Data (starsze na początku)
@@ -1780,8 +1726,7 @@ id: Enable VDPAU
 msg: Włącz VDPAU
 
 id: Hardware accelerated decoding
-# Missing translation
-msg: 
+msg: Sprzętowe dekodowanie
 
 id: Maximum resolution for deinterlacer
 msg: Maks. rozdzielczość przy usuwaniu przeplotu
