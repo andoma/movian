@@ -62,6 +62,11 @@ widget(container_x, {
 
           InfoLine(_("Audio packets"),
                    $core.media.current.audio.dqlen);
+
+          cloner($core.media.current.io.infoNodes, container_z, {
+            InfoLine($self.title, $self.info);
+          });
+
         });
       });
     });
