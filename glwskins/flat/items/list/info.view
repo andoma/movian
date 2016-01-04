@@ -1,5 +1,4 @@
 widget(container_x, {
-  height: 2em;
   style: "ListItem";
 
   widget(icon, {
@@ -9,7 +8,7 @@ widget(container_x, {
 
   widget(label, {
     filterConstraintX: true;
-    caption: $self.metadata.title;
+    caption: $self.description;
     maxlines: 10;
   });
 });
