@@ -11,10 +11,6 @@ widget(slideshow, {
       source: $self.url;
     });
 
-    label({
-      caption: $ui.universeBottomHeight;
-    });
-
     underscan({
       hidden: isVoid($self.info);
       vbox({
