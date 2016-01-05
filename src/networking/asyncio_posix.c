@@ -795,7 +795,7 @@ do_write(asyncio_fd_t *af)
     if(r == 0)
       break;
 
-    if(r == -1 && (errno == EAGAIN))
+    if(r == -1 && (errno == EAGAIN || errno == EWOULDBLOCK || errno == ENOBUFS))
       break;
 
     if(r == -1) {
@@ -871,12 +871,12 @@ asyncio_tcp_connected(asyncio_fd_t *af, void *opaque, int events, int error)
 
   if(events & ASYNCIO_WRITE) {
 
-    af->af_timeout = 0;
-
     if(af->af_connected) {
       do_write(af);
       return;
     }
+
+    af->af_timeout = 0;
 
     asyncio_rem_events(af, ASYNCIO_WRITE);
     int err;
