@@ -5,7 +5,7 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit e1ab8d4918ce7518815ce017ed5f35c090240786 (v1.3.0-291-ge1ab8d4).
+ *  Git commit 9eb8c17c577710f769eb285aa47400af2083f812 (v1.3.0-426-g9eb8c17).
  *  Git branch master.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
@@ -71,6 +71,7 @@
  *  * Legimet <legimet.calc@gmail.com>
  *  * Karl Skomski <karl@skomski.com>
  *  * Bruce Pascoe <fatcerberus1@gmail.com>
+ *  * Ren\u00e9 Hollander <rene@rene8888.at>
  *  
  *  Other contributions
  *  ===================
@@ -107,6 +108,7 @@
  *  * https://github.com/sstruchtrup
  *  * Michael Drake (https://github.com/tlsa)
  *  * https://github.com/chris-y
+ *  * Laurent Zubiaur (https://github.com/lzubiaur)
  *  
  *  If you are accidentally missing from this list, send me an e-mail
  *  (``sami.vaarala@iki.fi``) and I'll fix the omission.
@@ -218,8 +220,8 @@ struct duk_number_list_entry {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "e1ab8d4918ce7518815ce017ed5f35c090240786"
-#define DUK_GIT_DESCRIBE                  "v1.3.0-291-ge1ab8d4"
+#define DUK_GIT_COMMIT                    "9eb8c17c577710f769eb285aa47400af2083f812"
+#define DUK_GIT_DESCRIBE                  "v1.3.0-426-g9eb8c17"
 #define DUK_GIT_BRANCH                    "master"
 
 /* Duktape debug protocol version used by this build. */
@@ -556,7 +558,7 @@ DUK_EXTERNAL_DECL duk_idx_t duk_push_error_object_va_raw(duk_context *ctx, duk_e
 DUK_EXTERNAL_DECL void *duk_push_buffer_raw(duk_context *ctx, duk_size_t size, duk_small_uint_t flags);
 
 #define duk_push_buffer(ctx,size,dynamic) \
-	duk_push_buffer_raw((ctx), (size), (dynamic) ? DUK_BUF_FLAG_DYNAMIC : 0);
+	duk_push_buffer_raw((ctx), (size), (dynamic) ? DUK_BUF_FLAG_DYNAMIC : 0)
 #define duk_push_fixed_buffer(ctx,size) \
 	duk_push_buffer_raw((ctx), (size), 0 /*flags*/)
 #define duk_push_dynamic_buffer(ctx,size) \
@@ -1231,13 +1233,13 @@ DUK_EXTERNAL_DECL void duk_debugger_cooperate(duk_context *ctx);
 union duk_double_union {
 	double d;
 	float f[2];
-#ifdef DUK_USE_64BIT_OPS
+#if defined(DUK_USE_64BIT_OPS)
 	duk_uint64_t ull[1];
 #endif
 	duk_uint32_t ui[2];
 	duk_uint16_t us[4];
 	duk_uint8_t uc[8];
-#ifdef DUK_USE_PACKED_TVAL_POSSIBLE
+#if defined(DUK_USE_PACKED_TVAL)
 	void *vp[2];  /* used by packed duk_tval, assumes sizeof(void *) == 4 */
 #endif
 };
