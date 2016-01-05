@@ -168,6 +168,7 @@ static struct strtab actionnames[] = {
   { "ZoomUIReset",           ACTION_ZOOM_UI_RESET },
   { "ReloadUI",              ACTION_RELOAD_UI },
 
+  { "Restart",               ACTION_RESTART },
   { "Quit",                  ACTION_QUIT },
   { "Standby",               ACTION_STANDBY },
   { "PowerOff",              ACTION_POWER_OFF },
@@ -522,6 +523,9 @@ event_dispatch(event_t *e)
 
   } else if(event_is_action(e, ACTION_POWER_OFF)) {
     app_shutdown(APP_EXIT_POWEROFF);
+
+  } else if(event_is_action(e, ACTION_RESTART)) {
+    app_shutdown(APP_EXIT_RESTART);
 
   } else if(event_is_action(e, ACTION_REBOOT)) {
     app_shutdown(APP_EXIT_REBOOT);

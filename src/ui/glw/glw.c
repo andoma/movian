@@ -2350,6 +2350,7 @@ glw_dispatch_event(glw_root_t *gr, event_t *e)
        event_is_action(e, ACTION_VOLUME_DOWN) ||
        event_is_action(e, ACTION_VOLUME_MUTE_TOGGLE) ||
        event_is_action(e, ACTION_POWER_OFF) ||
+       event_is_action(e, ACTION_RESTART) ||
        event_is_action(e, ACTION_STANDBY) ||
        event_is_type(e, EVENT_SELECT_AUDIO_TRACK) ||
        event_is_type(e, EVENT_SELECT_SUBTITLE_TRACK))) {
