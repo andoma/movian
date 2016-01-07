@@ -324,7 +324,7 @@ msg: アップグレード
 # ./glwskins/default/pages/openerror.view
 #
 id: Unable to open %s
-msg: %sを開けません。
+msg: %s を開けません。
 
 id: resource
 msg: リソース
@@ -345,7 +345,7 @@ msg: ポーズ
 # ./glwskins/default/pages/upgrade.view
 #
 id: %s is up to date
-msg: %sは最新です。
+msg: %s は最新です。
 
 id: An error occured during download
 msg: ダウンロード中にエラーが発生しました。
@@ -354,7 +354,7 @@ id: Available version:
 msg: 利用可能なバージョン:
 
 id: Changelog for %s releases
-msg: %sのアップデート内容
+msg: %s のアップデート内容
 
 id: Check for updates now
 msg: 最新のアップデートを確認する
@@ -363,7 +363,7 @@ id: Checking for updates...
 msg: アップデートを確認中です...
 
 id: Checking installed version of %s
-msg: %sの現在のバージョンを確認
+msg: %s の現在のバージョンを確認
 
 id: Current version:
 msg: 現在のバージョン:
@@ -375,7 +375,7 @@ id: Downloading %s
 msg: ダウンロード中 %s
 
 id: New version %s is available for download
-msg: %sの最新版をダウンロードできます。
+msg: %s の最新版をダウンロードできます。
 
 id: No upgrade available
 msg: 更新はありません。
@@ -480,7 +480,7 @@ id: No, Start over
 msg: 始めから再生
 
 id: Resume %s from %s
-msg: リジューム再生しますか？ %s開始位置%s
+msg: リジューム再生しますか？ %s 開始位置 %s
 
 #
 # ./glwskins/default/screensaver.view
@@ -537,8 +537,7 @@ msg: 元のタイトルを使用
 # ./src/arch/android/android.c
 #
 id: Android Storage
-# Missing translation
-msg: 
+msg: アンドロイド端末
 
 id: Movies
 msg: ムービー
@@ -547,8 +546,7 @@ id: Music
 msg: ミュージック
 
 id: Pictures
-# Missing translation
-msg: 
+msg: 画像
 
 #
 # ./src/arch/linux/pulseaudio.c
@@ -575,13 +573,13 @@ id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break vide
 msg: Cell-h264: レベル%dのコンテンツにレベル4.2を強制します。%d このコンテンツは正しく再生されない可能性があります。.
 
 id: Unable to accelerate %s, library not loaded.
-msg: %sにアクセラレーターが適用できません。 ライブラリはロードされません。
+msg: %s にアクセラレーターが適用できません。ライブラリはロードされません。
 
 id: Unable to open Cell codec. Error 0x%x
 msg: Cellコーデックが開けません。 エラー 0x%x
 
 id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
-msg: Cellコーデックが開けません。RAMに%dバイト割り当てできません。
+msg: Cellコーデックが開けません。RAMに %d バイト割り当てできません。
 
 id: Unable to query Cell codec. Error 0x%x
 msg: Cellコーデックが照会できません。 エラー 0x%x
@@ -590,7 +588,7 @@ msg: Cellコーデックが照会できません。 エラー 0x%x
 # ./src/arch/rpi/rpi_audio.c
 #
 id: 8 Channel PCM
-msg: 8 ch PCM
+msg: 8ch PCM
 
 id: AC3 Pass-Through
 msg: AC3パススルー
@@ -620,8 +618,7 @@ msg: オン
 # ./src/arch/rpi/rpi_tv.c
 #
 id: Match display and content framerate
-# Missing translation
-msg: 
+msg: ディスプレイとコンテンツのフレームレートを一致
 
 #
 # ./src/audio2/audio.c
@@ -756,23 +753,19 @@ msg: サプリメンタリ
 # ./src/backend/htsp/htsp.c
 #
 id: Channels
-# Missing translation
-msg: 
+msg: チャンネル
 
 id: Invalid HTSP URL
 msg: 無効なHTSP URLです。
 
 id: No such channel
-# Missing translation
-msg: 
+msg: チャンネルがありません。
 
 id: Recorded shows
-# Missing translation
-msg: 
+msg: 録画
 
 id: Recorder
-# Missing translation
-msg: 
+msg: レコーダー
 
 #
 # ./src/backend/search.c
@@ -787,20 +780,16 @@ msg: 検索結果: %s
 # ./src/backend/slideshow/slideshow.c
 #
 id: 3 seconds
-# Missing translation
-msg: 
+msg: 3秒
 
 id: 5 seconds
-# Missing translation
-msg: 
+msg: 5秒
 
 id: 7 seconds
-# Missing translation
-msg: 
+msg: 7秒
 
 id: Slideshow speed
-# Missing translation
-msg: 
+msg: スライドショーの速さ
 
 #
 # ./src/blobcache_file.c
@@ -827,8 +816,7 @@ msg: ファイルを開けません。: %s
 # ./src/fileaccess/fa_filepicker.c
 #
 id: Select a file
-# Missing translation
-msg: 
+msg: ファイルを選択
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -846,7 +834,7 @@ id: Artists
 msg: アーティスト
 
 id: Deleted %s
-msg: %sを削除しました。
+msg: %s を削除しました。
 
 id: Filename
 msg: ファイル名順
@@ -855,12 +843,10 @@ id: Indexed mode
 msg: インデックスモード
 
 id: Newest first
-# Missing translation
-msg: 
+msg: 作成日時順（降順）
 
 id: Oldest first
-# Missing translation
-msg: 
+msg: 作成日時順（昇順）
 
 id: Show only supported files
 msg: 再生可能なファイルのみを表示する
@@ -872,7 +858,7 @@ id: Sort on
 msg: 並べかえ
 
 id: Unable to delete %s\n%s
-msg: %sを削除できません。\n%s
+msg: %s を削除できません。\n%s
 
 #
 # ./src/fileaccess/fa_spotlight.c
@@ -938,12 +924,10 @@ msg: オブジェクトが見つかりません。
 # ./src/i18n.c
 #
 id: 12 Hour
-# Missing translation
-msg: 
+msg: 12時間
 
 id: 24 Hour
-# Missing translation
-msg: 
+msg: 24時間
 
 id: Default character set
 msg: デフォルト文字コード
@@ -976,8 +960,7 @@ id: Secondary subtitle language code
 msg: セカンダリ字幕の言語コード
 
 id: System default
-# Missing translation
-msg: 
+msg: システム初期設定
 
 id: Tertiary audio language code
 msg: ターシャリオーディオの言語コード
@@ -986,27 +969,22 @@ id: Tertiary subtitle language code
 msg: ターシャリ字幕の言語コード
 
 id: Time format
-# Missing translation
-msg: 
+msg: 時刻表時
 
 id: Timezone
-# Missing translation
-msg: 
+msg: タイムゾーン
 
 #
 # ./src/ipc/libcec.c
 #
 id: Longpress SELECT for item menu
-# Missing translation
-msg: 
+msg: セレクト長押しでアイテムメニューへ移動
 
 id: Switch TV input source
-# Missing translation
-msg: 
+msg: TV入力ソースを切り替える
 
 id: Use STOP key for combo input
-# Missing translation
-msg: 
+msg: 停止キーを設定
 
 #
 # ./src/keyring.c
@@ -1021,15 +999,13 @@ msg: パスワードを消去しました。
 # ./src/media/media_settings.c
 #
 id: Align on video frame
-# Missing translation
-msg: 
+msg: ビデオフレームを基準にアライメント
 
 id: Audio volume
 msg: 音量調整
 
 id: Delay
-# Missing translation
-msg: 
+msg: ディレイ
 
 id: Go to standby after video ends
 msg: 再生終了後にスタンバイモードへ移行
@@ -1038,12 +1014,10 @@ id: Horizontal pan
 msg: 水平位置調整
 
 id: Horizontal position
-# Missing translation
-msg: 
+msg: 位置（水平方向）
 
 id: Horizontal scale
-# Missing translation
-msg: 
+msg: サイズ（水平方向）
 
 id: Reset defaults for folder '%s'
 msg: フォルダ'%s'の設定をデフォルトに戻す
@@ -1055,8 +1029,7 @@ id: Save as global default
 msg: デフォルトとして保存する
 
 id: Scaling
-# Missing translation
-msg: 
+msg: スケーリング
 
 id: Stretch video to fullscreen
 msg: フルスクリーン表示を有効化
@@ -1068,12 +1041,10 @@ id: Vertical pan
 msg: 垂直位置調整
 
 id: Vertical position
-# Missing translation
-msg: 
+msg: 位置（垂直方向）
 
 id: Vertical scale
-# Missing translation
-msg: 
+msg: サイズ（垂直方向）
 
 id: Video frame interpolation
 msg: フレーム補間を有効にする
@@ -1160,8 +1131,7 @@ id: IMDb ID
 msg: IMDb ID
 
 id: Metadata loaded from <b>%s</b> based on %s
-# Missing translation
-msg: 
+msg: メタデータを読み込んでいます。 <b>%s</b> based on %s
 
 id: Metadata source
 msg: メタデータのソース
@@ -1203,11 +1173,10 @@ msg: フォルダ名
 # ./src/navigator.c
 #
 id: Add and remove items on homepage
-msg: ホームにブックマークを登録 / 削除します。
+msg: ホームにブックマークを登録/削除します。
 
 id: Added %s to home page
-# Missing translation
-msg: 
+msg: ホームページに　%s　を追加
 
 id: Added new bookmark: %s
 msg: 新規ブックマークを追加: %s
@@ -1216,8 +1185,7 @@ id: Bookmarks
 msg: ブックマーク設定
 
 id: Icon
-# Missing translation
-msg: 
+msg: アイコン
 
 id: No handler for URL
 msg: URL向けのハンドラがありません。
@@ -1229,8 +1197,7 @@ id: Photos
 msg: フォト
 
 id: Removed %s from homepage
-# Missing translation
-msg: 
+msg: ホームページから %s を削除
 
 id: Removed bookmark: %s
 msg: ブックマークを削除: %s
@@ -1299,8 +1266,7 @@ id: Corrupt plugin bundle
 msg: プラグイン・バンドルが破損しています。
 
 id: Custom backgrounds can now be set in Settings -> Look and Feel
-# Missing translation
-msg: 
+msg: 壁紙は設定から変更が可能です。 -> ルックアンドフィール
 
 id: Disk write error
 msg: 書き込み中にエラーが発生しました。
@@ -1351,12 +1317,10 @@ id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may tr
 msg: プラグイン%s %sは問題を引き起こす可能性があるためアンインストールされました。\n手動で別のバージョンをインストールしてください。
 
 id: Plugin %s has been uninstalled - %s
-# Missing translation
-msg: 
+msg: プラグイン %s はアンインストールされています。 - %s
 
 id: Plugin categories
-# Missing translation
-msg: 
+msg: プラグインのカテゴリー
 
 id: Plugins
 msg: プラグイン設定
@@ -1386,14 +1350,13 @@ id: Upgradable
 msg: アップグレード
 
 id: Upgraded plugin %s to version %s
-msg: %sプラグインはバージョン%sへ更新されました。
+msg: %s プラグインはバージョン %s へ更新されました。
 
 id: User interface extensions
 msg: ユーザーインターフェース
 
 id: Version %s is no longer compatible with Movian
-# Missing translation
-msg: 
+msg: バージョン %s はMovianと互換性がありません。
 
 id: Video streaming
 msg: ビデオストリーミング
@@ -1447,8 +1410,7 @@ msg: ローカルネットワーク
 # ./src/settings.c
 #
 id: About
-# Missing translation
-msg: 
+msg: About
 
 id: Applications and installed plugins
 msg: アプリケーションとインストール済みのプラグイン
@@ -1490,8 +1452,7 @@ id: System related settings
 msg: システム全般の設定をします。
 
 id: TV Control
-# Missing translation
-msg: 
+msg: TVコントロール
 
 #
 # ./src/subtitles/subtitles.c
@@ -1551,7 +1512,7 @@ id: Shadow offset
 msg: ドロップシャドウのオフセット
 
 id: Subtitle horizontal displacement
-msg: 字幕の水平位置調整
+msg: 字幕の位置を調整（水平方向）
 
 id: Subtitle position
 msg: 字幕の位置
@@ -1563,7 +1524,7 @@ id: Subtitle size and positioning
 msg: 字幕のサイズと位置設定
 
 id: Subtitle vertical displacement
-msg: 字幕の垂直位置調整
+msg: 字幕の位置を調整（垂直方向）
 
 id: Subtitles embedded in video file
 msg: 字幕を有効化する
@@ -1611,11 +1572,10 @@ msg: ユーザーインターフェース
 # ./src/ui/glw/glw_ps3.c
 #
 id: Dual-Shock Remote
-# Missing translation
-msg: 
+msg: デュアルショックリモート
 
 id: Seek using L2 and R2 button
-msg: L2 / R2ボタンをシークに割り当てる
+msg: L2/R2 ボタンをシークに割り当てる
 
 id: Yes with Select button
 msg: はい (w/セレクトボタン)
@@ -1624,38 +1584,31 @@ msg: はい (w/セレクトボタン)
 # ./src/ui/glw/glw_settings.c
 #
 id: Custom background image
-# Missing translation
-msg: 
+msg: 壁紙の変更
 
 id: Emulate Up/Down buttons with mouse wheel
-# Missing translation
-msg: 
+msg: Up/Down ボタンをマウスホイールに割り当てる
 
 id: Folder for screensaver images
-# Missing translation
-msg: 
+msg: スクリーンセーバーの参照フォルダ
 
 id: Font and icon size
 msg: フォントとアイコンのサイズを変更
 
 id: Interface horizontal shrink
-# Missing translation
-msg: 
+msg: インターフェースを横方向に縮小
 
 id: Interface vertical shrink
-# Missing translation
-msg: 
+msg: インターフェースを縦方向に縮小
 
 id: Screensaver
-# Missing translation
-msg: 
+msg: スクリーンセーバー
 
 id: Screensaver delay
 msg: スクリーンセーバーが起動するまでの時間
 
 id: Use Bing images of the day
-# Missing translation
-msg: 
+msg: Bingのトップ写真を使う
 
 id: Wrap when reaching beginning/end of lists
 msg: リストの先頭 / 最後尾をループさせる
@@ -1664,48 +1617,37 @@ msg: リストの先頭 / 最後尾をループさせる
 # ./src/ui/glw/glw_view_eval.c
 #
 id: %d days ago
-# Missing translation
-msg: 
+msg: %d日前
 
 id: %d hours ago
-# Missing translation
-msg: 
+msg: %d時間前
 
 id: %d minutes ago
-# Missing translation
-msg: 
+msg: %d分前
 
 id: %d months ago
-# Missing translation
-msg: 
+msg: %dヶ月前
 
 id: %d weeks ago
-# Missing translation
-msg: 
+msg: %d週間前
 
 id: %d years ago
-# Missing translation
-msg: 
+msg: %d年前
 
 id: Just now
-# Missing translation
-msg: 
+msg: 現在
 
 id: One day ago
-# Missing translation
-msg: 
+msg: 昨日
 
 id: One hour ago
-# Missing translation
-msg: 
+msg: 1時間前
 
 id: One minute ago
-# Missing translation
-msg: 
+msg: 1分前
 
 id: One month ago
-# Missing translation
-msg: 
+msg: 1ヶ月前
 
 #
 # ./src/ui/linux/nvidia.c
@@ -1726,7 +1668,7 @@ msg: ビデオのモード
 # ./src/upgrade.c
 #
 id: %s version %s is available
-msg: %s バージョン%sが利用可能です。
+msg: %s バージョン %s が利用可能です。
 
 id: Notify about upgrades
 msg: アップグレード通知を受け取る
@@ -1780,8 +1722,7 @@ id: Enable VDPAU
 msg: VDPAUを有効にする
 
 id: Hardware accelerated decoding
-# Missing translation
-msg: 
+msg: ハードウェアアクセラレーションを有効化
 
 id: Maximum resolution for deinterlacer
 msg: デインターレース時の最大解像度
