@@ -234,7 +234,7 @@ gv_surface_pixmap_upload(glw_video_surface_t *gvs, const glw_video_t *gv)
 #ifdef GL_UNPACK_ROW_LENGTH
   glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 #endif
-  
+
   gvs->gvs_tex_width = (float)gvs->gvs_width[0] / (float)f->linesize[0];
 
   av_frame_free(&gvs->gvs_frame);
@@ -266,7 +266,7 @@ gv_surface_pixmap_release(glw_video_t *gv, glw_video_surface_t *gvs,
 static const float cmatrix_ITUR_BT_601[16] = {
   1.164400,   1.164400, 1.164400, 0,
   0.000000,  -0.391800, 2.017200, 0,
-  1.596000,  -0.813000, 0.000000, 0, 
+  1.596000,  -0.813000, 0.000000, 0,
  -0.874190,   0.531702,-1.085616, 1
 };
 
@@ -461,7 +461,7 @@ yuvp_deliver(const frame_info_t *fi, glw_video_t *gv, glw_video_engine_t *gve)
     f->width = fi->fi_width;
     f->height = fi->fi_height;
     av_frame_get_buffer(f, 32);
-    
+
     for(int y = 0; y < fi->fi_height; y++) {
       memcpy(f->data[0] + y * f->linesize[0],
              fi->fi_data[0] + fi->fi_pitch[0] * y,
@@ -473,7 +473,7 @@ yuvp_deliver(const frame_info_t *fi, glw_video_t *gv, glw_video_engine_t *gve)
              fi->fi_data[1] + fi->fi_pitch[1] * y,
              f->linesize[1]);
     }
-    
+
     for(int y = 0; y < fi->fi_height / 2; y++) {
       memcpy(f->data[2] + y * f->linesize[2],
              fi->fi_data[2] + fi->fi_pitch[2] * y,
@@ -488,13 +488,13 @@ yuvp_deliver(const frame_info_t *fi, glw_video_t *gv, glw_video_engine_t *gve)
   } else {
 
     int duration = fi->fi_duration / 2;
-    
+
     s->gvs_frame = av_frame_clone(f);
     for(int i = 0; i < 3; i++) {
       s->gvs_frame->linesize[i] *= 2;
     }
     glw_video_put_surface(gv, s, pts, fi->fi_epoch, duration, 1, !fi->fi_tff);
-  
+
     if((s = glw_video_get_surface(gv, wvec, hvec)) == NULL) {
       av_frame_free(&created);
       return -1;
