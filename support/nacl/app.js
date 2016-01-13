@@ -1,5 +1,8 @@
+
 var stelem;
 var droppedfile;
+var running = false;
+var loaded = false;
 
 var loadtimeout = setTimeout(function() {
    document.getElementById('loader').style.display='block';
@@ -86,6 +89,7 @@ function handleMessage(e) {
     break;
 
   case 'running':
+    running = true;
     document.getElementById("loader").parentNode.removeChild(loader);
     document.body.style.background = "#000";
     clearTimeout(loadtimeout);
@@ -93,16 +97,57 @@ function handleMessage(e) {
   }
 }
 
+function cleanup() {
+    document.body.style.background = "#fff";
+    if(!running)
+      document.getElementById('loader').style.display='none';
+    document.getElementById('appcontainer').style.display='none';
+    document.getElementById('crash').style.display='block';
+}
+
+
+var appversion = "development";
+
+if(typeof chrome.runtime['getManifest'] == 'function') {
+  var manifest = chrome.runtime.getManifest();
+  appversion = manifest.version;
+}
+
+function displaycrash(reason) {
+  cleanup();
+
+  var dbginfo = "Version: " + appversion + "\nEvent: " + reason + "\nLoaded: " + (loaded ? "yes": "no") +"\nRunning: " + (running ? "yes" : "no") + "\nBrowser: " + navigator.userAgent + "\nLastError: " + stelem.lastError;
+
+  document.getElementById('crashinfo').innerText = dbginfo;
+}
+
 
 function launch() {
-  document.getElementById('appcontainer').innerHTML = '<embed id="app" src="app.nmf" type="application/x-pnacl"/>';
 
-  stelem = document.getElementById('app')
+  stelem = document.createElement('embed');
+
+  stelem.src = 'app.nmf';
+  stelem.type = 'application/x-pnacl';
+  stelem.id = 'app';
 
   stelem.addEventListener('dragover', handleDragOver, false);
   stelem.addEventListener('drop', handleDrop, false);
   stelem.addEventListener('message', handleMessage, true);
 
+  stelem.addEventListener('crash', function(event) {
+    displaycrash('crash');
+  });
+
+  stelem.addEventListener('load', function(event) {
+    console.log("Load event fired");
+    loaded = true;
+  });
+
+  stelem.addEventListener('error', function(event) {
+    displaycrash('error');
+  });
+
+  document.getElementById('appcontainer').appendChild(stelem);
 }
 
 navigator.webkitPersistentStorage.requestQuota(128*1024*1024, function(bytes) {
@@ -112,8 +157,6 @@ navigator.webkitPersistentStorage.requestQuota(128*1024*1024, function(bytes) {
 }, function(e) {
   alert('Failed to allocate disk space, Movian will not start')
 });
-
-
 
 document.addEventListener('visibilitychange', function() {
   stelem.postMessage({msgtype: document.hidden ? 'hidden' : 'visible'});
