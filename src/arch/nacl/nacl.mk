@@ -32,7 +32,6 @@ ${BUILDDIR}/stage/manifest.json: support/nacl/manifest.json ${BUILDDIR}/buildver
 	sed <$< >$@ -e "s/__VERSION__/$(shell git describe | sed -e 's/-g.*//' -e 's/-/./g')/"
 
 STAGEFILES = \
-	${BUILDDIR}/stage/app.pexe \
 	${BUILDDIR}/stage/index.html \
 	${BUILDDIR}/stage/app.css \
 	${BUILDDIR}/stage/app.js \
@@ -44,15 +43,18 @@ STAGEFILES = \
 
 
 .PHONY: stage dbgstage dist
-stage:	${STAGEFILES}
+stage:	${STAGEFILES} ${BUILDDIR}/stage/app.pexe
+	rm -f ${BUILDDIR}/stage/app.bundle
 
 dbgstage:	${STAGEFILES} ${BUILDDIR}/stage/app.bundle
+	rm -f ${BUILDDIR}/stage/app.pexe
 
 VERSION := $(shell support/getver.sh)
 
 DISTARCHIVE := ${BUILDDIR}/${APPNAMEUSER}-${VERSION}.zip
 
-${DISTARCHIVE}: ${STAGEFILES}
+${DISTARCHIVE}: ${STAGEFILES} ${BUILDDIR}/stage/app.pexe
+	rm -f ${BUILDDIR}/stage/app.bundle
 	rm -f ${DISTARCHIVE}
 	zip -j ${DISTARCHIVE} ${BUILDDIR}/stage/*
 

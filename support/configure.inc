@@ -386,7 +386,9 @@ libav_setup() {
 
     mkdir -p "${LIBAV_BUILD_DIR}"
 
-    LIBAV_COMMON_FLAGS="--disable-encoders --disable-bsfs --disable-filters --disable-muxers --disable-devices --disable-demuxer=rtp --disable-protocol=rtp --disable-bzlib --disable-decoder=twinvq --disable-decoder=snow --disable-decoder=cavs --enable-encoder=mjpeg --enable-encoder=png --disable-programs --disable-avfilter --enable-muxer=spdif --enable-encoder=ac3 --enable-encoder=eac3 --enable-muxer=matroska --enable-encoder=ffvhuff --enable-encoder=pcm_s16le"
+    #LIBAV_COMMON_FLAGS="--disable-parsers --disable-decoders --disable-demuxers"
+
+    LIBAV_COMMON_FLAGS="${LIBAV_COMMON_FLAGS} --disable-encoders --disable-bsfs --disable-filters --disable-muxers --disable-devices --disable-demuxer=rtp --disable-protocol=rtp --disable-bzlib --disable-decoder=twinvq --disable-decoder=snow --disable-decoder=cavs --disable-programs --disable-avfilter --enable-decoder=png --enable-decoder=mjpeg --enable-encoder=mjpeg --enable-encoder=png --enable-muxer=spdif --enable-encoder=ac3 --enable-encoder=eac3 --enable-muxer=matroska --enable-encoder=ffvhuff --enable-encoder=pcm_s16le"
 
     (cd ${LIBAV_BUILD_DIR} && ${TOPDIR}/ext/libav/configure ${LIBAV_ARCH_FLAGS} ${LIBAV_COMMON_FLAGS} --prefix=${EXT_INSTALL_DIR} --extra-cflags="${LIBAV_CFLAGS} ${EXTRA_CFLAGS}" --extra-ldflags="${LIBAV_LDFLAGS} ${EXTRA_LDFLAGS}" --cc="${CC}") || die
 
