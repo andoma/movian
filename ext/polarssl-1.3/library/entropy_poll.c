@@ -105,25 +105,17 @@ int platform_entropy_poll( void *data,
     return( 0 );
 }
 
-#elif defined(__PPU__)
+#elif 1
 
-#include <psl1ght/lv2.h>
-#include "misc/minmax.h"
 
 int platform_entropy_poll( void *data,
                            unsigned char *output, size_t len, size_t *olen )
 {
-    char buf[16];
-    *olen = len;
-    while(len > 0) {
-        int rval = Lv2Syscall2(984, (u64)buf, 16);
-        if(rval)
-            return POLARSSL_ERR_ENTROPY_SOURCE_FAILED;
-        memcpy(output, buf, MIN(16, len));
-        output += 16;
-        len -= MIN(16, len);
-    }
-    return 0;
+  extern void arch_get_random_bytes(void *ptr, size_t size);
+
+  arch_get_random_bytes(output, len);
+  *olen = len;
+  return 0;
 }
 
 #else /* HAVE_GETRANDOM */
