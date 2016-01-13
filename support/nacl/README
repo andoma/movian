@@ -21,3 +21,10 @@ Go fullscreen with F11
 For more key bindings see
  https://movian.tv/projects/showtime/wiki/Key_mappings
 
+To debug, add these flags to chrome:
+
+   --enable-nacl-debug --no-sandbox --disable-hang-monitor
+
+And start gdb like:
+
+ pepper_xx/toolchain/linux_arm_glibc/bin/i686-nacl-gdb -x gdb-script.txt

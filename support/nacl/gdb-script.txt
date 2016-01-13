@@ -1,11 +1,6 @@
-Add these flags to chrome: --enable-nacl-debug --no-sandbox --disable-hang-monitor
-
-and then in gdb:
-
-
+set confirm off
 target remote localhost:4014
 remote get nexe /tmp/app.nexe
 file /tmp/app.nexe
 remote get irt /tmp/naclirt
 nacl-irt /tmp/naclirt
-
