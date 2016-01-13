@@ -222,13 +222,19 @@ gv_surface_pixmap_upload(glw_video_surface_t *gvs, const glw_video_t *gv)
     glBindTexture(GL_TEXTURE_2D, gv_tex_get(gvs, i));
     gv_set_tex_meta();
 
-
+#ifdef GL_UNPACK_ROW_LENGTH
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, f->linesize[i]);
+#endif
     glTexImage2D(GL_TEXTURE_2D, 0, gv->gv_tex_internal_format,
                  f->linesize[i], gvs->gvs_height[i],
                  0, gv->gv_tex_format, gv->gv_tex_type,
                  f->data[i]);
   }
 
+#ifdef GL_UNPACK_ROW_LENGTH
+  glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+#endif
+  
   gvs->gvs_tex_width = (float)gvs->gvs_width[0] / (float)f->linesize[0];
 
   av_frame_free(&gvs->gvs_frame);
@@ -447,8 +453,65 @@ yuvp_deliver(const frame_info_t *fi, glw_video_t *gv, glw_video_engine_t *gve)
   if((s = glw_video_get_surface(gv, wvec, hvec)) == NULL)
     return -1;
 
-  s->gvs_frame = av_frame_clone(fi->fi_avframe);
-  glw_video_put_surface(gv, s, pts, fi->fi_epoch, fi->fi_duration, 0, 0);
+  struct AVFrame *f = fi->fi_avframe;
+  struct AVFrame *created = NULL;
+  if(f == NULL) {
+    created = f = av_frame_alloc();
+    f->format = AV_PIX_FMT_YUV420P;
+    f->width = fi->fi_width;
+    f->height = fi->fi_height;
+    av_frame_get_buffer(f, 32);
+    
+    for(int y = 0; y < fi->fi_height; y++) {
+      memcpy(f->data[0] + y * f->linesize[0],
+             fi->fi_data[0] + fi->fi_pitch[0] * y,
+             f->linesize[0]);
+    }
+
+    for(int y = 0; y < fi->fi_height / 2; y++) {
+      memcpy(f->data[1] + y * f->linesize[1],
+             fi->fi_data[1] + fi->fi_pitch[1] * y,
+             f->linesize[1]);
+    }
+    
+    for(int y = 0; y < fi->fi_height / 2; y++) {
+      memcpy(f->data[2] + y * f->linesize[2],
+             fi->fi_data[2] + fi->fi_pitch[2] * y,
+             f->linesize[2]);
+    }
+  }
+
+  if(!fi->fi_interlaced) {
+    s->gvs_frame = av_frame_clone(f);
+    glw_video_put_surface(gv, s, pts, fi->fi_epoch, fi->fi_duration, 0, 0);
+
+  } else {
+
+    int duration = fi->fi_duration / 2;
+    
+    s->gvs_frame = av_frame_clone(f);
+    for(int i = 0; i < 3; i++) {
+      s->gvs_frame->linesize[i] *= 2;
+    }
+    glw_video_put_surface(gv, s, pts, fi->fi_epoch, duration, 1, !fi->fi_tff);
+  
+    if((s = glw_video_get_surface(gv, wvec, hvec)) == NULL) {
+      av_frame_free(&created);
+      return -1;
+    }
+
+    s->gvs_frame = av_frame_clone(f);
+    for(int i = 0; i < 3; i++) {
+      s->gvs_frame->data[i] += s->gvs_frame->linesize[i];
+      s->gvs_frame->linesize[i] *= 2;
+    }
+
+    if(pts != PTS_UNSET)
+      pts += duration;
+
+    glw_video_put_surface(gv, s, pts, fi->fi_epoch, duration, 1, fi->fi_tff);
+  }
+  av_frame_free(&created);
   return 0;
 }
 
