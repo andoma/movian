@@ -61,6 +61,8 @@ static void update_interest(torrent_t *to);
 
 static void torrent_piece_destroy(torrent_t *to, torrent_piece_t *tp);
 
+static void torrent_output_timer(void *aux);
+
 //----------------------------------------------------------------
 
 static void
@@ -157,10 +159,13 @@ torrent_create(const uint8_t *info_hash, const char *initiator)
   TAILQ_INIT(&to->to_files);
   TAILQ_INIT(&to->to_root);
   TAILQ_INIT(&to->to_active_pieces);
+  TAILQ_INIT(&to->to_have_sendreq_peers);
 
   to->to_title = malloc(41);
   bin2hex(to->to_title, 41, info_hash, 20);
   to->to_title[40] = 0;
+
+  asyncio_timer_init(&to->to_output_rate_timer, torrent_output_timer, to);
 
   usage_event("Open Torrent", 1,
               USAGE_SEG("initiator", initiator));
@@ -319,6 +324,8 @@ static void
 torrent_destroy(torrent_t *to)
 {
   torrent_trace(to, "Torrent destroyed");
+
+  asyncio_timer_disarm(&to->to_output_rate_timer);
 
   // Clean up files
 
@@ -752,21 +759,11 @@ torrent_piece_enqueue_requests(torrent_t *to, torrent_piece_t *tp)
 /**
  *
  */
-static torrent_piece_t *
-torrent_piece_find(torrent_t *to, int piece_index)
+torrent_piece_t *
+torrent_piece_create(torrent_t *to, int piece_index)
 {
-  torrent_piece_t *tp;
-  TAILQ_FOREACH(tp, &to->to_active_pieces, tp_link) {
-    if(tp->tp_index == piece_index) {
-      TAILQ_REMOVE(&to->to_active_pieces, tp, tp_link);
-      TAILQ_INSERT_TAIL(&to->to_active_pieces, tp, tp_link);
-      return tp;
-    }
-  }
-
-
   to->to_num_active_pieces++;
-  tp = calloc(1, sizeof(torrent_piece_t));
+  torrent_piece_t *tp = calloc(1, sizeof(torrent_piece_t));
   tp->tp_refcount = 1;
   tp->tp_index = piece_index;
   TAILQ_INSERT_TAIL(&to->to_active_pieces, tp, tp_link);
@@ -783,6 +780,26 @@ torrent_piece_find(torrent_t *to, int piece_index)
   }
   to->to_active_pieces_mem += tp->tp_piece_length;
 
+  return tp;
+}
+
+
+/**
+ *
+ */
+static torrent_piece_t *
+torrent_piece_find(torrent_t *to, int piece_index)
+{
+  torrent_piece_t *tp;
+  TAILQ_FOREACH(tp, &to->to_active_pieces, tp_link) {
+    if(tp->tp_index == piece_index) {
+      TAILQ_REMOVE(&to->to_active_pieces, tp, tp_link);
+      TAILQ_INSERT_TAIL(&to->to_active_pieces, tp, tp_link);
+      return tp;
+    }
+  }
+
+  tp = torrent_piece_create(to, piece_index);
 
   if(to->to_cachefile_piece_map[piece_index] != -1) {
     // We have this piece on disk, signal that we want to load it
@@ -894,7 +911,7 @@ static void
 add_request(torrent_block_t *tb, peer_t *p, int64_t now)
 {
   torrent_request_t *tr;
-  LIST_FOREACH(tr, &p->p_requests, tr_peer_link) {
+  LIST_FOREACH(tr, &p->p_download_requests, tr_peer_link) {
     if(tr->tr_block == tb)
       return; // Request already sent
   }
@@ -917,10 +934,10 @@ add_request(torrent_block_t *tb, peer_t *p, int64_t now)
   tr->tr_peer = p;
   tr->tr_qdepth = p->p_active_requests;
 
-  if(LIST_FIRST(&p->p_requests) == NULL)
+  if(LIST_FIRST(&p->p_download_requests) == NULL)
     p->p_torrent->to_peers_with_outstanding_requests++;
 
-  LIST_INSERT_HEAD(&p->p_requests, tr, tr_peer_link);
+  LIST_INSERT_HEAD(&p->p_download_requests, tr, tr_peer_link);
   p->p_active_requests++;
 
   p->p_last_send = now;
@@ -1193,6 +1210,7 @@ torrent_piece_destroy(torrent_t *to, torrent_piece_t *tp)
   assert(LIST_FIRST(&tp->tp_active_fh) == NULL);
   assert(LIST_FIRST(&tp->tp_waiting_blocks) == NULL);
   assert(LIST_FIRST(&tp->tp_sent_blocks) == NULL);
+  assert(LIST_FIRST(&tp->tp_sendreqs) == NULL);
   to->to_active_pieces_mem -= tp->tp_piece_length;
   to->to_num_active_pieces--;
 
@@ -1227,6 +1245,10 @@ flush_active_pieces(torrent_t *to)
       continue;
 
     if(LIST_FIRST(&tp->tp_sent_blocks) != NULL)
+      continue;
+
+    if(LIST_FIRST(&tp->tp_sendreqs) != NULL &&
+       to->to_active_pieces_mem <= 64 * 1024 * 1024)
       continue;
 
     torrent_piece_destroy(to, tp);
@@ -1264,6 +1286,44 @@ torrent_send_have(torrent_t *to)
 }
 
 
+
+
+/**
+ *
+ */
+static int
+candidate_for_unchoke(torrent_t *to, peer_t *p)
+{
+  if(btg.btg_max_send_speed == 0)
+    return 0;
+
+  if(!p->p_peer_interested)
+    return 0;
+
+  if(p->p_num_pieces_have == to->to_num_pieces)
+    return 0;
+  return 1;
+}
+
+
+/**
+ *
+ */
+static int
+peer_unchoke_sort_cmp(const void *A, const void *B)
+{
+  const peer_t *a = *(const peer_t **)A;
+  const peer_t *b = *(const peer_t **)B;
+
+  if(a->p_bytes_received != b->p_bytes_received) {
+    if(a->p_bytes_received < b->p_bytes_received)
+      return 1;
+    else
+      return -1;
+  }
+  return 0;
+}
+
 /**
  *
  */
@@ -1271,15 +1331,35 @@ static void
 torrent_unchoke_peers(torrent_t *to)
 {
   peer_t *p;
+  int num_candidates = 0;
+
   LIST_FOREACH(p, &to->to_running_peers, p_running_link) {
+    if(candidate_for_unchoke(to, p)) {
+      num_candidates++;
+    } else {
+      peer_choke(p, 1);
+    }
+  }
 
-    int choke = 1;
+  peer_t **pv = malloc(sizeof(peer_t *) * num_candidates);
+  int i = 0;
+  LIST_FOREACH(p, &to->to_running_peers, p_running_link) {
+    if(candidate_for_unchoke(to, p))
+      pv[i++] = p;
+  }
 
-    if(p->p_num_pieces_have != to->to_num_pieces &&
-       p->p_peer_interested)
-      choke = 0;
+  qsort(pv, num_candidates, sizeof(peer_t *), peer_unchoke_sort_cmp);
 
-    peer_choke(p, choke);
+  int max_unchoked = 5;
+
+  for(int i = 0; i < num_candidates; i++) {
+    peer_t *p = pv[i];
+    if(max_unchoked) {
+      peer_choke(p, 0);
+      max_unchoked--;
+    } else {
+      peer_choke(p, 1);
+    }
   }
 }
 
@@ -1360,19 +1440,98 @@ torrent_reload_corrupt_pieces(torrent_t *to)
 /**
  *
  */
+void
+torrent_sendreq_destroy(torrent_sendreq_t *ts)
+{
+  peer_t *p = ts->ts_peer;
+  TAILQ_REMOVE(&p->p_sendreqs, ts, ts_peer_link);
+  if(TAILQ_FIRST(&p->p_sendreqs) == NULL) {
+    torrent_t *to = p->p_torrent;
+    TAILQ_REMOVE(&to->to_have_sendreq_peers, p, p_have_sendreq_link);
+  }
+
+  LIST_REMOVE(ts, ts_piece_link);
+  free(ts);
+}
+
+
+/**
+ *
+ */
 static void
 torrent_reload_loadfail_pieces(torrent_t *to)
 {
   torrent_piece_t *tp;
+  torrent_sendreq_t *ts;
 
   TAILQ_FOREACH(tp, &to->to_active_pieces, tp_link) {
     if(tp->tp_loadfail) {
       tp->tp_loadfail = 0;
+
+      while((ts = LIST_FIRST(&tp->tp_sendreqs)) != NULL) {
+        peer_send_reject(ts->ts_peer, tp->tp_index,
+                         ts->ts_offset, ts->ts_length);
+        torrent_sendreq_destroy(ts);
+      }
+
       torrent_piece_enqueue_requests(to, tp);
     }
   }
 }
 
+/**
+ * Serve any pending sendreqs (peer that want to download from us)
+ */
+static void
+torrent_serve_sendreqs(torrent_t *to)
+{
+  peer_t *p;
+  int cnt = 4;
+  while((p = TAILQ_FIRST(&to->to_have_sendreq_peers)) != NULL) {
+    TAILQ_REMOVE(&to->to_have_sendreq_peers, p, p_have_sendreq_link);
+    TAILQ_INSERT_TAIL(&to->to_have_sendreq_peers, p, p_have_sendreq_link);
+
+    torrent_sendreq_t *ts = TAILQ_FIRST(&p->p_sendreqs);
+    assert(ts != NULL); /* Peer should not be on sendreq_peers if
+                           this queue is empty */
+    torrent_piece_t *tp = ts->ts_piece;
+
+    if(!tp->tp_hash_computed)
+      break;
+    if(tp->tp_hash_ok) {
+      if(to->to_output_rate_tokens < ts->ts_length) {
+        if(!asyncio_timer_is_armed(&to->to_output_rate_timer))
+          asyncio_timer_arm(&to->to_output_rate_timer,
+                            to->to_output_rate_refill_time + 100000);
+        break;
+      }
+
+      to->to_output_rate_tokens -= ts->ts_length;
+      peer_send_piece(ts->ts_peer, tp, ts->ts_offset, ts->ts_length);
+    } else {
+      peer_send_reject(ts->ts_peer, tp->tp_index, ts->ts_offset, ts->ts_length);
+    }
+    torrent_sendreq_destroy(ts);
+    cnt--;
+    if(cnt == 0)
+      break;
+  }
+}
+
+
+/**
+ *
+ */
+static void
+torrent_output_timer(void *aux)
+{
+  torrent_t *to = aux;
+  to->to_output_rate_refill_time = async_current_time();
+  to->to_output_rate_tokens =
+    MIN(to->to_output_rate_tokens + btg.btg_max_send_speed,
+        btg.btg_max_send_speed * 2);
+  torrent_serve_sendreqs(to);
+}
 
 /**
  *
@@ -1388,6 +1547,7 @@ torrent_check_pendings(void)
     if(to->to_new_valid_piece) {
       to->to_new_valid_piece = 0;
       torrent_send_have(to);
+      torrent_serve_sendreqs(to);
     }
 
     if(to->to_need_updated_interest) {
@@ -1447,6 +1607,7 @@ torrent_periodic_one(torrent_t *to, int second)
     to->to_last_unchoke_check = second;
     torrent_unchoke_peers(to);
   }
+  torrent_serve_sendreqs(to);
 }
 
 
@@ -1639,7 +1800,7 @@ torrent_wakeup_for_metadata_requests(void)
 static void
 torrent_early_init(void)
 {
-  btg.btg_max_peers_global = 200;
+  btg.btg_max_peers_global = 60;
   btg.btg_max_peers_torrent = 50;
 
   asyncio_timer_init(&torrent_periodic_timer, torrent_periodic, NULL);

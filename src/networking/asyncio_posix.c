@@ -258,7 +258,7 @@ at_compar(const asyncio_timer_t *a, const asyncio_timer_t *b)
 /**
  *
  */
-static void
+void
 asyncio_timer_arm(asyncio_timer_t *at, int64_t expire)
 {
   asyncio_verify_thread();

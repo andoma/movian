@@ -49,6 +49,13 @@ set_torrent_free_percentage(void *opaque, int v)
     torrent_diskio_scan(0);
 }
 
+static void
+set_torrent_upload_speed(void *opaque, int v)
+{
+  // How many bytes we should refill send limiter for every tenth second
+  btg.btg_max_send_speed = v * (1000000 / 8 / 10);
+}
+
 
 void
 torrent_settings_init(void)
@@ -71,6 +78,16 @@ torrent_settings_init(void)
                  SETTING_WRITE_BOOL(&btg.btg_enabled),
                  SETTING_VALUE(1),
                  SETTING_STORE("bittorrent", "enable"),
+                 NULL);
+
+  setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Max upload speed")),
+                 SETTING_MUTEX(&bittorrent_mutex),
+                 SETTING_CALLBACK(set_torrent_upload_speed, NULL),
+                 SETTING_VALUE(5),
+                 SETTING_RANGE(0, 100),
+                 SETTING_UNIT_CSTR("Mbit/s"),
+                 SETTING_STORE("bittorrent", "uploadspeed"),
                  NULL);
 
   setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,

@@ -131,6 +131,8 @@ int asyncio_udp_add_membership(asyncio_fd_t *af, const net_addr_t *group);
 void asyncio_timer_init(asyncio_timer_t *at, void (*fn)(void *opaque),
 			void *opaque);
 
+void asyncio_timer_arm(asyncio_timer_t *at, int64_t ts);
+
 void asyncio_timer_arm_delta_sec(asyncio_timer_t *at, int seconds);
 
 void asyncio_timer_disarm(asyncio_timer_t *at);

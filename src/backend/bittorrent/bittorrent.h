@@ -49,6 +49,8 @@ TAILQ_HEAD(torrent_request_queue, torrent_request);
 TAILQ_HEAD(torrent_piece_queue, torrent_piece);
 LIST_HEAD(torrent_block_list, torrent_block);
 LIST_HEAD(torrent_piece_list, torrent_piece);
+LIST_HEAD(torrent_sendreq_list, torrent_sendreq);
+TAILQ_HEAD(torrent_sendreq_queue, torrent_sendreq);
 LIST_HEAD(piece_peer_list, piece_peer);
 LIST_HEAD(metainfo_request_list, metainfo_request);
 
@@ -66,6 +68,7 @@ typedef struct bt_global {
   prop_t *btg_disk_status;
 
   int btg_free_space_percentage;
+  int btg_max_send_speed;
 
   uint64_t btg_total_bytes_inactive;
   uint64_t btg_total_bytes_active;
@@ -166,11 +169,14 @@ typedef struct peer {
   LIST_ENTRY(peer) p_running_link;
   LIST_ENTRY(peer) p_unchoked_link;
 
+  TAILQ_ENTRY(peer) p_have_sendreq_link;
+
   char *p_name;
   net_addr_t p_addr;
 
   struct asyncio_timer p_timer;
-  
+  uint64_t p_choked_time;
+
   asyncio_fd_t *p_connection;
 
   int p_connect_fail;
@@ -188,7 +194,9 @@ typedef struct peer {
     PEER_STATE_DISCONNECTED,
     PEER_STATE_DESTROYED,
     PEER_STATE_num,
-  } p_state;
+  } p_state_;
+
+  uint64_t p_state_change_time;
 
   char p_am_choking : 1;
   char p_am_interested : 1;
@@ -212,13 +220,15 @@ typedef struct peer {
   uint8_t *p_pending_bitfield;
   int p_pending_bitfield_size;
 
-  struct torrent_request_list p_requests;
+  struct torrent_request_list p_download_requests;
+  struct torrent_sendreq_queue p_sendreqs;
 
   int p_active_requests;
 
   uint64_t p_last_send;
 
   uint64_t p_bytes_received;
+  uint64_t p_bytes_sent;
 
   int p_block_delay;
 
@@ -286,6 +296,7 @@ typedef struct torrent_piece {
 
   struct torrent_block_list tp_waiting_blocks;
   struct torrent_block_list tp_sent_blocks;
+  struct torrent_sendreq_list tp_sendreqs;
 
   uint8_t *tp_data;
 
@@ -354,6 +365,29 @@ typedef struct torrent_request {
 } torrent_request_t;
 
 
+
+
+
+/**
+ * Represent an upload request received from a peer.
+ * If a piece is loaded into memory we can satisfy the request immediately
+ * otherwise we need to load it in, during that load, this struct
+ * holds the request
+ */
+typedef struct torrent_sendreq {
+
+  TAILQ_ENTRY(torrent_sendreq) ts_peer_link;
+  peer_t *ts_peer;
+
+  LIST_ENTRY(torrent_sendreq) ts_piece_link;
+  torrent_piece_t *ts_piece;
+
+  uint32_t ts_offset;
+  uint32_t ts_length;
+
+} torrent_sendreq_t;
+
+
 /**
  *
  */
@@ -383,6 +417,7 @@ typedef struct torrent {
   struct peer_queue to_inactive_peers;
   struct peer_queue to_disconnected_peers;
   struct peer_queue to_connect_failed_peers;
+  struct peer_queue to_have_sendreq_peers;
 
   int to_last_unchoke_check;
   int to_piece_length;
@@ -423,6 +458,10 @@ typedef struct torrent {
   int32_t *to_cachefile_piece_map_inv;
   int to_next_disk_block;
   int to_total_disk_blocks;
+
+  struct asyncio_timer to_output_rate_timer;
+  int64_t to_output_rate_refill_time;
+  int to_output_rate_tokens;
 
 } torrent_t;
 
@@ -498,6 +537,8 @@ void torrent_release(torrent_t *t);
 
 void torrent_retain(torrent_t *t);
 
+torrent_piece_t *torrent_piece_create(torrent_t *to, int piece_index);
+
 void torrent_piece_release(torrent_piece_t *tp);
 
 int torrent_load(torrent_t *to, void *buf, uint64_t offset, size_t size,
@@ -528,6 +569,11 @@ void peer_connect(peer_t *p);
 const char *peer_state_txt(unsigned int state);
 
 void peer_cancel_request(torrent_request_t *tr);
+
+void peer_send_reject(peer_t *p, uint32_t piece, uint32_t offset, uint32_t length);
+
+void peer_send_piece(peer_t *p, torrent_piece_t *tp,
+                     uint32_t offset, uint32_t length);
 
 void peer_send_request(peer_t *p, const torrent_block_t *tb);
 
@@ -588,6 +634,8 @@ void torrent_settings_init(void);
 void torrent_piece_peer_destroy(piece_peer_t *pp);
 
 torrent_t *torrent_open_url(const char **urlp, char *errbuf, size_t errlen);
+
+void torrent_sendreq_destroy(torrent_sendreq_t *ts);
 
 /**
  * Magnet

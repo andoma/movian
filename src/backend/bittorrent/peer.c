@@ -83,12 +83,15 @@ peer_trace(const peer_t *p, int type, const char *msg, ...)
   case PEER_DBG_CONN:
     if(!gconf.enable_torrent_peer_connection_debug)
       return;
+    break;
   case PEER_DBG_DOWNLOAD:
     if(!gconf.enable_torrent_peer_download_debug)
       return;
+    break;
   case PEER_DBG_UPLOAD:
     if(!gconf.enable_torrent_peer_upload_debug)
       return;
+    break;
   }
 
   va_list ap;
@@ -98,6 +101,14 @@ peer_trace(const peer_t *p, int type, const char *msg, ...)
   va_end(ap);
 
   TRACE(TRACE_DEBUG, "BITTORRENT", "%s: %s", p->p_name, buf);
+}
+
+
+static void
+peer_set_state(peer_t *p, int state)
+{
+  p->p_state_ = state;
+  p->p_state_change_time = async_current_time();
 }
 
 
@@ -176,16 +187,21 @@ static void
 peer_abort_requests(peer_t *p)
 {
   torrent_request_t *tr;
+  torrent_sendreq_t *ts;
 
-  if(p->p_state != PEER_STATE_RUNNING)
+  if(p->p_state_ != PEER_STATE_RUNNING)
     return;
 
   asyncio_timer_disarm(&p->p_data_recv_timer);
 
-  if(LIST_FIRST(&p->p_requests) != NULL)
+  if(LIST_FIRST(&p->p_download_requests) != NULL)
     p->p_torrent->to_peers_with_outstanding_requests--;
 
-  while((tr = LIST_FIRST(&p->p_requests)) != NULL) {
+  while((ts = TAILQ_FIRST(&p->p_sendreqs)) != NULL) {
+    torrent_sendreq_destroy(ts);
+  }
+
+  while((tr = LIST_FIRST(&p->p_download_requests)) != NULL) {
     torrent_block_t *tb = tr->tr_block;
 
     assert(tr->tr_peer == p);
@@ -214,7 +230,7 @@ peer_abort_requests(peer_t *p)
  *
  */
 static void
-peer_error_cb(void *opaque, const char *error)
+peer_connect_cb(void *opaque, const char *error)
 {
   peer_t *p = opaque;
 
@@ -228,14 +244,15 @@ peer_error_cb(void *opaque, const char *error)
 
     send_handshake(p);
     asyncio_set_timeout_delta_sec(p->p_connection, 15);
-    p->p_state = PEER_STATE_WAIT_HANDSHAKE;
+    peer_set_state(p, PEER_STATE_WAIT_HANDSHAKE);
+    p->p_choked_time = p->p_state_change_time;
     peer_trace(p, PEER_DBG_CONN, "Connected");
   } else {
 
     peer_trace(p, PEER_DBG_CONN, "%s in state %s",
-               error, peer_state_txt(p->p_state));
+               error, peer_state_txt(p->p_state_));
 
-    peer_shutdown(p, p->p_state == PEER_STATE_RUNNING ?
+    peer_shutdown(p, p->p_state_ == PEER_STATE_RUNNING ?
                   PEER_STATE_DISCONNECTED :
                   PEER_STATE_CONNECT_FAIL, 1);
   }
@@ -287,7 +304,7 @@ peer_destroy_request(torrent_request_t *tr)
   p->p_active_requests--;
   LIST_REMOVE(tr, tr_peer_link);
 
-  if(LIST_FIRST(&p->p_requests) == NULL)
+  if(LIST_FIRST(&p->p_download_requests) == NULL)
     p->p_torrent->to_peers_with_outstanding_requests--;
 
   free(tr);
@@ -302,7 +319,7 @@ peer_shutdown(peer_t *p, int next_state, int resched)
 {
   torrent_t *to = p->p_torrent;
 
-  if(p->p_state != PEER_STATE_INACTIVE) {
+  if(p->p_state_ != PEER_STATE_INACTIVE) {
     to->to_active_peers--;
     btg.btg_active_peers--;
     if(resched)
@@ -327,7 +344,7 @@ peer_shutdown(peer_t *p, int next_state, int resched)
 
   // Do stuff depending on current (old) state
 
-  switch(p->p_state) {
+  switch(p->p_state_) {
 
   case PEER_STATE_DISCONNECTED:
     TAILQ_REMOVE(&to->to_disconnected_peers, p, p_queue_link);
@@ -355,19 +372,18 @@ peer_shutdown(peer_t *p, int next_state, int resched)
     break;
 
   default:
-    printf("Cant shutdown peer in state %d\n", p->p_state);
+    printf("Cant shutdown peer in state %d\n", p->p_state_);
     abort();
   }
 
   peer_abort_requests(p);
 
-  p->p_state = next_state;
-
+  peer_set_state(p, next_state);
 
   // Do stuff depending on next (new) state
-  switch(p->p_state) {
+  switch(p->p_state_) {
   default:
-    printf("Can't shutdown peer to state %d\n", p->p_state);
+    printf("Can't shutdown peer to state %d\n", p->p_state_);
     abort();
 
   case PEER_STATE_CONNECT_FAIL:
@@ -514,6 +530,7 @@ peer_have_piece(peer_t *p, uint32_t pid)
     return;
   p->p_piece_flags[pid] |= PIECE_HAVE;
   p->p_num_pieces_have++;
+  assert(p->p_num_pieces_have <= p->p_torrent->to_num_pieces);
 }
 
 
@@ -531,6 +548,7 @@ parse_bitfield(peer_t *p, const uint8_t *data, unsigned int len)
   if(p->p_piece_flags == NULL)
     p->p_piece_flags = calloc(1, to->to_num_pieces);
 
+  p->p_num_pieces_have = 0;
   for(int i = 0; i < to->to_num_pieces; i++) {
     if(data[i / 8] & (0x80 >> (i & 0x7)))
       peer_have_piece(p, i);
@@ -672,7 +690,7 @@ recv_piece(peer_t *p, const uint8_t *buf, size_t len)
 
   torrent_request_t *tr;
 
-  LIST_FOREACH(tr, &p->p_requests, tr_peer_link) {
+  LIST_FOREACH(tr, &p->p_download_requests, tr_peer_link) {
     if(tr->tr_piece == index && tr->tr_begin  == begin &&  tr->tr_length == len)
       break;
   }
@@ -740,7 +758,7 @@ recv_reject(peer_t *p, const uint8_t *buf, size_t len)
 
   torrent_request_t *tr;
 
-  LIST_FOREACH(tr, &p->p_requests, tr_peer_link) {
+  LIST_FOREACH(tr, &p->p_download_requests, tr_peer_link) {
     if(tr->tr_piece  == piece &&
        tr->tr_begin  == offset &&
        tr->tr_length == length)
@@ -790,6 +808,51 @@ recv_reject(peer_t *p, const uint8_t *buf, size_t len)
 }
 
 
+
+/**
+ *
+ */
+void
+peer_send_piece(peer_t *p, torrent_piece_t *tp, uint32_t offset, uint32_t length)
+{
+  uint8_t out[13];
+
+  wr32_be(out, 9 + length);
+  out[4] = BT_MSGID_PIECE;
+  wr32_be(out + 5, tp->tp_index);
+  wr32_be(out + 9, offset);
+
+  p->p_torrent->to_uploaded_bytes += length;
+  p->p_bytes_sent += length;
+
+  asyncio_send(p->p_connection, out, sizeof(out), 1);
+  asyncio_send(p->p_connection, tp->tp_data + offset, length, 0);
+}
+
+
+/**
+ *
+ */
+void
+peer_send_reject(peer_t *p, uint32_t piece, uint32_t offset, uint32_t length)
+{
+  uint8_t buf[17] = {0,0,0,13,BT_MSGID_REJECT,
+                     piece >> 24,
+                     piece >> 16,
+                     piece >> 8,
+                     piece,
+                     offset >> 24,
+                     offset >> 16,
+                     offset >> 8,
+                     offset,
+                     length >> 24,
+                     length >> 16,
+                     length >> 8,
+                     length};
+  asyncio_send(p->p_connection, buf, sizeof(buf), 0);
+}
+
+
 /**
  *
  */
@@ -815,15 +878,24 @@ recv_request(peer_t *p, const uint8_t *buf, size_t len)
     if(tp->tp_index == piece)
       break;
 
-  if(tp == NULL) {
-    peer_trace(p, PEER_DBG_UPLOAD,
-               "Got request for piece %d:0x%x+0x%x WE DONT HAVE IT LOADED",
-               piece, offset, length);
-    return 0;
-  }
+  if(p->p_am_choking)
+    return 0; // Don't send to peer which we have choked
 
-  if(!tp->tp_hash_ok)
-    return 0;
+  if(tp == NULL) {
+
+    if(to->to_cachefile_piece_map[piece] != -1) {
+
+      tp = torrent_piece_create(to, piece);
+      tp->tp_load_req = 1;
+      torrent_diskio_wakeup();
+
+    } else {
+      peer_trace(p, PEER_DBG_UPLOAD,
+                 "Got request for piece %d:0x%x+0x%x -- Not in cache",
+                 piece, offset, length);
+      return 0;
+    }
+  }
 
   if(offset + length > tp->tp_piece_length) {
     peer_disconnect(p, "Request piece %d:0x%x+0x%x out of range",
@@ -831,17 +903,34 @@ recv_request(peer_t *p, const uint8_t *buf, size_t len)
     return 1;
   }
 
-  uint8_t out[13];
+  int delay_xmit = 0;
+  if(to->to_output_rate_tokens < length) {
+    if(!asyncio_timer_is_armed(&to->to_output_rate_timer))
+      asyncio_timer_arm(&to->to_output_rate_timer,
+                        to->to_output_rate_refill_time + 100000);
+    delay_xmit = 1;
+  } else {
+    delay_xmit = !tp->tp_hash_ok;
+  }
 
-  wr32_be(out, 13 + length);
-  out[4] = BT_MSGID_PIECE;
-  wr32_be(out + 5, piece);
-  wr32_be(out + 9, offset);
+  if(delay_xmit) {
 
-  to->to_uploaded_bytes += length;
+    torrent_sendreq_t *ts = calloc(1, sizeof(torrent_sendreq_t));
 
-  asyncio_send(p->p_connection, out, sizeof(out), 1);
-  asyncio_send(p->p_connection, tp->tp_data + offset, length, 0);
+    if(TAILQ_FIRST(&p->p_sendreqs) == NULL)
+      TAILQ_INSERT_TAIL(&to->to_have_sendreq_peers, p, p_have_sendreq_link);
+
+    TAILQ_INSERT_TAIL(&p->p_sendreqs, ts, ts_peer_link);
+    ts->ts_peer = p;
+    LIST_INSERT_HEAD(&tp->tp_sendreqs, ts, ts_piece_link);
+    ts->ts_piece = tp;
+
+    ts->ts_offset = offset;
+    ts->ts_length = length;
+    return 0;
+  }
+  to->to_output_rate_tokens -= length;
+  peer_send_piece(p, tp, offset, length);
   return 0;
 }
 
@@ -902,7 +991,7 @@ peer_connect(peer_t *p)
 
   assert(p->p_connection == NULL);
 
-  p->p_state = PEER_STATE_CONNECTING;
+  peer_set_state(p, PEER_STATE_CONNECTING);
 
   to->to_active_peers++;
   btg.btg_active_peers++;
@@ -911,7 +1000,7 @@ peer_connect(peer_t *p)
   snprintf(name, sizeof(name), "BT Peer %s", net_addr_str(&p->p_addr));
 
   p->p_connection = asyncio_connect(name, &p->p_addr,
-				    peer_error_cb,
+				    peer_connect_cb,
 				    peer_read_cb,
 				    p, 5000);
 }
@@ -990,6 +1079,7 @@ recv_message(peer_t *p, htsbuf_queue_t *q)
                "Choked us, we are %sinterested",
                p->p_am_interested ? "" : "not ");
     p->p_peer_choking = 1;
+    p->p_choked_time = async_current_time();
     LIST_REMOVE(p, p_unchoked_link);
     peer_abort_requests(p);
     torrent_io_do_requests(p->p_torrent);
@@ -1056,7 +1146,7 @@ peer_read_cb(void *opaque, htsbuf_queue_t *q)
 
   hts_mutex_lock(&bittorrent_mutex);
 
-  switch(p->p_state) {
+  switch(p->p_state_) {
 
   default:
     abort();
@@ -1065,7 +1155,7 @@ peer_read_cb(void *opaque, htsbuf_queue_t *q)
     if(recv_handshake(p, q))
       break;
     LIST_INSERT_HEAD(&p->p_torrent->to_running_peers, p, p_running_link);
-    p->p_state = PEER_STATE_RUNNING;
+    peer_set_state(p, PEER_STATE_RUNNING);
     // FALLTHRU
     p->p_connect_fail = 0;
     p->p_disconnected = 0;
@@ -1113,7 +1203,7 @@ peer_update_interest(torrent_t *to, peer_t *p)
     break;
   }
 
-  if(p->p_state != PEER_STATE_RUNNING)
+  if(p->p_state_ != PEER_STATE_RUNNING)
     return;
 
   if(p->p_am_interested != interested) {
@@ -1144,7 +1234,7 @@ static void
 peer_cancel_orphaned_requests(peer_t *p, torrent_request_t *skip)
 {
   torrent_request_t *tr, *next;
-  for(tr = LIST_FIRST(&p->p_requests); tr != NULL; tr = next) {
+  for(tr = LIST_FIRST(&p->p_download_requests); tr != NULL; tr = next) {
     next = LIST_NEXT(tr, tr_peer_link);
 
     if(tr->tr_block != NULL || tr == skip)
@@ -1291,11 +1381,13 @@ peer_add(torrent_t *to, const net_addr_t *na)
   p->p_name = strdup(net_addr_str(na));
   asyncio_timer_init(&p->p_ka_send_timer, peer_send_keepalive, p);
 
+  TAILQ_INIT(&p->p_sendreqs);
+
   LIST_INSERT_HEAD(&to->to_peers, p, p_link);
   if(to->to_active_peers  >= btg.btg_max_peers_torrent ||
      btg.btg_active_peers >= btg.btg_max_peers_global) {
 
-    p->p_state = PEER_STATE_INACTIVE;
+    peer_set_state(p, PEER_STATE_INACTIVE);
     TAILQ_INSERT_TAIL(&to->to_inactive_peers, p, p_queue_link);
     return;
   }

@@ -195,7 +195,7 @@ process_timers(int64_t now)
 /**
  *
  */
-static void
+void
 asyncio_timer_arm(asyncio_timer_t *at, int64_t expire)
 {
   if(at->at_expire)
