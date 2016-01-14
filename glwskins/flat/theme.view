@@ -59,7 +59,7 @@
   widget(quad, {
     fhpSpill: true;
     additive: true;
-    alpha: 0.1 * isHovered() + 0.6 * isNavFocused();
+    alpha: 0.1 * isHovered() + 0.2 * isNavFocused();
   });
 
 }
@@ -68,7 +68,7 @@
   widget(quad, {
     fhpSpill: true;
     additive: true;
-    alpha: 0.1 * isHovered() + 0.6 * isNavFocused();
+    alpha: 0.1 * isHovered() + 0.2 * iir(isNavFocused(), 4, true);
   });
 }
 
@@ -77,7 +77,7 @@
   widget(quad, {
     fhpSpill: true;
     additive: true;
-    alpha: 0.1 * isHovered() + 0.6 * isNavFocused();
+    alpha: 0.1 * isHovered() + 0.2 * isNavFocused();
   });
   widget(container_x, {
     filterConstraintX: true;

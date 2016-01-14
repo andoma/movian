@@ -82,7 +82,6 @@ style(sidebarBackdrop, {
       widget(label, {
         padding: [1em, 0];
         caption: $self.caption;
-        color: iir(!isNavFocused(), 4);
       });
     });
 
@@ -96,7 +95,6 @@ style(sidebarBackdrop, {
       widget(label, {
         padding: [1em, 0];
         caption: _("Dismiss");
-        color: iir(!isNavFocused(), 4);
       });
     });
   });
@@ -164,7 +162,6 @@ widget(container_z, {
                               "storage",  "ic_sd_storage_48px",
 		              "plugin",   "ic_extension_48px") + ".svg";
 
-                  color:  select($self.icon, 1, iir(!isNavFocused(), 4));
                   saturation: iir(isPressed(), 4, true) * 0.66;
                 });
               });
@@ -173,7 +170,6 @@ widget(container_z, {
                 align: center;
                 caption: $self.title;
                 size: 1.2em;
-                color: iir(!isNavFocused(), 4) - 0.5 * iir(isPressed(), 4, true);
               });
             });
           });

@@ -17,11 +17,11 @@ style(ListItemIcon, {
 });
 
 style(ListItemLabel, {
-  color: iir(!isNavFocused(), 4);
+//  color: iir(!isNavFocused(), 4);
 });
 
 style(ListItemLabelDimmed, {
-  color: iir(select(isNavFocused(), 0, 0.7), 4);
+  color: 0.7; //iir(select(isNavFocused(), 0, 0.7), 4);
 });
 
 style(ListItemLabelContainer, {
@@ -31,21 +31,21 @@ style(ListItemLabelContainer, {
 style(ListItemValue, {
   filterConstraintX: true;
   padding: [1em, 0, 0, 0];
-  color: iir(!isNavFocused(), 4);
+//  color: iir(!isNavFocused(), 4);
   font: "skin://fonts/RobotoCondensed-Regular.ttf";
 });
 
 style(ListItemValueOn, {
   padding: [1em, 0, 0, 0];
   filterConstraintX: true;
-  color: iir(!isNavFocused(), 4) * [0.8, 1.0, 0.8];
+  color: [0.8, 1.0, 0.8];
   font: "skin://fonts/RobotoCondensed-Bold.ttf";
 });
 
 style(ListItemValueOff, {
   padding: [1em, 0, 0, 0];
   filterConstraintX: true;
-  color: iir(!isNavFocused(), 4) * [1.0, 0.8, 0.8];
+  color: [1.0, 0.8, 0.8];
   font: "skin://fonts/RobotoCondensed-Light.ttf";
 });
 
@@ -67,7 +67,7 @@ style(ListMultioptContainer, {
 
 style(MultioptValue, {
   filterConstraintX: true;
-  color: iir(!isNavFocused(), 4);
+//  color: iir(!isNavFocused(), 4);
   font: "skin://fonts/RobotoCondensed-Regular.ttf";
 });
 
@@ -97,7 +97,7 @@ style(MultioptItemIconUnselected, {
 
 style(MultioptItemLabel, {
   font: "skin://fonts/RobotoCondensed-Regular.ttf";
-  color: iir(!isNavFocused(), 4);
+//  color: iir(!isNavFocused(), 4);
 });
 
 //
@@ -122,7 +122,7 @@ style(ActionLabel, {
   align: left;
   filterConstraintX: true;
   font: "skin://fonts/RobotoCondensed-Regular.ttf";
-  color: iir(!isNavFocused(), 4);
+//  color: iir(!isNavFocused(), 4);
 });
 
 //

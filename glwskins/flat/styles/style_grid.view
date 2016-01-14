@@ -8,12 +8,12 @@ style(GridItemSeparatorLabel, {
 style(GridItemLabel, {
   padding: [0.3em, 0];
   align: center;
-  color: iir(!isNavFocused(), 4);
+//  color: iir(!isNavFocused(), 4);
 });
 
 style(GridItemIcon, {
   size: 4em;
-  color: iir(!isNavFocused(), 4);
+//  color: iir(!isNavFocused(), 4);
 });
 
 style(GridContainer, {
