@@ -431,6 +431,47 @@ yuvp_blackout(glw_video_t *gv)
 /**
  *
  */
+static AVFrame *
+make_avframe_from_frameinfo(const frame_info_t *fi, int half_y, int shift)
+{
+  const int h = fi->fi_height >> half_y;
+
+  AVFrame *f = av_frame_alloc();
+  f->format = AV_PIX_FMT_YUV420P;
+  f->width = fi->fi_width;
+  f->height = h;
+  av_frame_get_buffer(f, 32);
+
+
+  // Chrome linesize must be exactly half of Luma linesize or the
+  // texture cordinates won't scale correctly
+  f->linesize[2] = f->linesize[1] = f->linesize[0] / 2;
+  assert(f->linesize[2] >= fi->fi_pitch[2]);
+
+  const int p0 = fi->fi_pitch[0] << half_y;
+  const int p1 = fi->fi_pitch[1] << half_y;
+  const int p2 = fi->fi_pitch[2] << half_y;
+
+  const void *s0 = fi->fi_data[0] + shift * fi->fi_pitch[0];
+  const void *s1 = fi->fi_data[1] + shift * fi->fi_pitch[1];
+  const void *s2 = fi->fi_data[2] + shift * fi->fi_pitch[2];
+
+  for(int y = 0; y < h; y++)
+    memcpy(f->data[0] + y * f->linesize[0], s0 + p0 * y, fi->fi_pitch[0]);
+
+  for(int y = 0; y < h / 2; y++)
+    memcpy(f->data[1] + y * f->linesize[1], s1 + p1 * y, fi->fi_pitch[1]);
+
+  for(int y = 0; y < h / 2; y++)
+    memcpy(f->data[2] + y * f->linesize[2], s2 + p2 * y, fi->fi_pitch[2]);
+
+  return f;
+}
+
+
+/**
+ *
+ */
 static int
 yuvp_deliver(const frame_info_t *fi, glw_video_t *gv, glw_video_engine_t *gve)
 {
@@ -438,13 +479,18 @@ yuvp_deliver(const frame_info_t *fi, glw_video_t *gv, glw_video_engine_t *gve)
   int hshift = fi->fi_hshift, vshift = fi->fi_vshift;
   glw_video_surface_t *s;
   int64_t pts = fi->fi_pts;
+  int variable_linesize = 0;
+  int interlaced = fi->fi_interlaced;
+#ifdef GL_UNPACK_ROW_LENGTH
+  variable_linesize = 1;
+#endif
 
   wvec[0] = fi->fi_width;
   wvec[1] = fi->fi_width >> hshift;
   wvec[2] = fi->fi_width >> hshift;
-  hvec[0] = fi->fi_height >> fi->fi_interlaced;
-  hvec[1] = fi->fi_height >> (vshift + fi->fi_interlaced);
-  hvec[2] = fi->fi_height >> (vshift + fi->fi_interlaced);
+  hvec[0] = fi->fi_height >> interlaced;
+  hvec[1] = fi->fi_height >> (vshift + interlaced);
+  hvec[2] = fi->fi_height >> (vshift + interlaced);
 
   glw_video_configure(gv, gve);
 
@@ -453,65 +499,45 @@ yuvp_deliver(const frame_info_t *fi, glw_video_t *gv, glw_video_engine_t *gve)
   if((s = glw_video_get_surface(gv, wvec, hvec)) == NULL)
     return -1;
 
-  struct AVFrame *f = fi->fi_avframe;
-  struct AVFrame *created = NULL;
-  if(f == NULL) {
-    created = f = av_frame_alloc();
-    f->format = AV_PIX_FMT_YUV420P;
-    f->width = fi->fi_width;
-    f->height = fi->fi_height;
-    av_frame_get_buffer(f, 32);
 
-    for(int y = 0; y < fi->fi_height; y++) {
-      memcpy(f->data[0] + y * f->linesize[0],
-             fi->fi_data[0] + fi->fi_pitch[0] * y,
-             f->linesize[0]);
-    }
-
-    for(int y = 0; y < fi->fi_height / 2; y++) {
-      memcpy(f->data[1] + y * f->linesize[1],
-             fi->fi_data[1] + fi->fi_pitch[1] * y,
-             f->linesize[1]);
-    }
-
-    for(int y = 0; y < fi->fi_height / 2; y++) {
-      memcpy(f->data[2] + y * f->linesize[2],
-             fi->fi_data[2] + fi->fi_pitch[2] * y,
-             f->linesize[2]);
-    }
+  if(!interlaced) {
+    s->gvs_frame = fi->fi_avframe ? av_frame_clone(fi->fi_avframe) :
+      make_avframe_from_frameinfo(fi, 0, 0);
+    glw_video_put_surface(gv, s, pts, fi->fi_epoch, fi->fi_duration, 0, 0);
+    return 0;
   }
 
-  if(!fi->fi_interlaced) {
-    s->gvs_frame = av_frame_clone(f);
-    glw_video_put_surface(gv, s, pts, fi->fi_epoch, fi->fi_duration, 0, 0);
+  int duration = fi->fi_duration / 2;
 
+  if(fi->fi_avframe == NULL || !variable_linesize) {
+    s->gvs_frame = make_avframe_from_frameinfo(fi, 1, 0);
   } else {
-
-    int duration = fi->fi_duration / 2;
-
-    s->gvs_frame = av_frame_clone(f);
+    s->gvs_frame = av_frame_clone(fi->fi_avframe);
     for(int i = 0; i < 3; i++) {
       s->gvs_frame->linesize[i] *= 2;
     }
-    glw_video_put_surface(gv, s, pts, fi->fi_epoch, duration, 1, !fi->fi_tff);
+  }
 
-    if((s = glw_video_get_surface(gv, wvec, hvec)) == NULL) {
-      av_frame_free(&created);
-      return -1;
-    }
+  glw_video_put_surface(gv, s, pts, fi->fi_epoch, duration, 1, !fi->fi_tff);
 
-    s->gvs_frame = av_frame_clone(f);
+  if((s = glw_video_get_surface(gv, wvec, hvec)) == NULL) {
+    return -1;
+  }
+
+  if(fi->fi_avframe == NULL || !variable_linesize) {
+    s->gvs_frame = make_avframe_from_frameinfo(fi, 1, 1);
+  } else {
+    s->gvs_frame = av_frame_clone(fi->fi_avframe);
     for(int i = 0; i < 3; i++) {
       s->gvs_frame->data[i] += s->gvs_frame->linesize[i];
       s->gvs_frame->linesize[i] *= 2;
     }
-
-    if(pts != PTS_UNSET)
-      pts += duration;
-
-    glw_video_put_surface(gv, s, pts, fi->fi_epoch, duration, 1, fi->fi_tff);
   }
-  av_frame_free(&created);
+
+  if(pts != PTS_UNSET)
+    pts += duration;
+
+  glw_video_put_surface(gv, s, pts, fi->fi_epoch, duration, 1, fi->fi_tff);
   return 0;
 }
 
