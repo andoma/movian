@@ -890,7 +890,7 @@ setting_create(int type, prop_t *model, int flags, ...)
                [SETTING_SEPARATOR]= "separator",
                }[type]);
 
-  rstr_t *r = NULL;
+  rstr_t *curstr = NULL;
 
   switch(type) {
 
@@ -1033,22 +1033,23 @@ setting_create(int type, prop_t *model, int flags, ...)
 
     switch(s->s_store_type) {
     case SETTING_STORETYPE_SIMPLE:
-      r = htsmsg_store_get_str(s->s_store_name, s->s_id);
+      curstr = htsmsg_store_get_str(s->s_store_name, s->s_id);
       break;
 
     case SETTING_STORETYPE_CUSTOM_HTSMSG:
-      r = rstr_alloc(htsmsg_get_str(s->s_store, s->s_id));
+      curstr = rstr_alloc(htsmsg_get_str(s->s_store, s->s_id));
       break;
 
     case SETTING_STORETYPE_KVSTORE:
-      r = kv_url_opt_get_rstr(s->s_store_name, KVSTORE_DOMAIN_SETTING,
-                              s->s_id);
+      curstr = kv_url_opt_get_rstr(s->s_store_name, KVSTORE_DOMAIN_SETTING,
+                                   s->s_id);
       break;
     }
 
     prop_t *o = NULL;
-    if(r != NULL) {
-      o = prop_find(s->s_val, rstr_get(r), NULL);
+    if(curstr != NULL) {
+      o = prop_find(s->s_val, rstr_get(curstr), NULL);
+      rstr_release(curstr);
     }
 
     if(o == NULL && initial_str != NULL)

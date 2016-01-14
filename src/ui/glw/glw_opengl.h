@@ -153,6 +153,8 @@ typedef struct glw_backend_texture {
 
 int glw_opengl_init_context(struct glw_root *gr);
 
+void glw_opengl_fini_context(struct glw_root *gr);
+
 /**
  * Render to texture support
  */
@@ -192,9 +194,9 @@ void glw_program_set_uniform_color(glw_backend_root_t *gbr,
 				   float r, float g, float b, float a);
 
 
-int glw_opengl_ff_init(struct glw_root *gr);
+int glw_opengl_shaders_init(struct glw_root *gr);
 
-int glw_opengl_shaders_init(struct glw_root *gr, int delayed);
+void glw_opengl_shaders_fini(struct glw_root *gr);
 
 void glw_stencil_quad(struct glw_root *gr, const struct glw_rctx *rc);
 

@@ -385,6 +385,8 @@ window_close(glw_x11_t *gx11)
     gx11->ic = NULL;
   }
 
+  glw_opengl_fini_context(&gx11->gr);
+
   show_cursor(gx11);
   XDestroyWindow(gx11->display, gx11->win);
   glXDestroyContext(gx11->display, gx11->glxctx);

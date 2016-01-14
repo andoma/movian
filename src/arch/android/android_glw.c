@@ -108,6 +108,7 @@ Java_com_lonelycoder_mediaplayer_Core_glwFini(JNIEnv *env,
   glw_reap(gr);
   glw_reap(gr);
   glw_flush(gr);
+  glw_opengl_fini_context(gr);
   agr->agr_running = 0;
   hts_cond_signal(&agr->agr_runcond);
   glw_unlock(gr);

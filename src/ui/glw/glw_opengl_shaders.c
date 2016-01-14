@@ -516,7 +516,7 @@ glw_destroy_program(struct glw_root *gr, struct glw_program *gp)
  *
  */
 int
-glw_opengl_shaders_init(glw_root_t *gr, int delayed)
+glw_opengl_shaders_init(glw_root_t *gr)
 {
   glw_backend_root_t *gbr = &gr->gr_be;
   char path[512];
@@ -617,6 +617,26 @@ glw_opengl_shaders_init(glw_root_t *gr, int delayed)
 }
 
 
+/**
+ *
+ */
+void
+glw_opengl_shaders_fini(glw_root_t *gr)
+{
+  glw_backend_root_t *gbr = &gr->gr_be;
+
+  glw_destroy_program(gr, gbr->gbr_yuv2rgb_1f);
+  glw_destroy_program(gr, gbr->gbr_yuv2rgb_2f);
+  glw_destroy_program(gr, gbr->gbr_rgb2rgb_1f);
+  glw_destroy_program(gr, gbr->gbr_rgb2rgb_2f);
+
+  glw_destroy_program(gr, gbr->gbr_renderer_tex);
+  glw_destroy_program(gr, gbr->gbr_renderer_tex_stencil);
+  glw_destroy_program(gr, gbr->gbr_renderer_tex_blur);
+  glw_destroy_program(gr, gbr->gbr_renderer_tex_stencil_blur);
+  glw_destroy_program(gr, gbr->gbr_renderer_flat);
+  glw_destroy_program(gr, gbr->gbr_renderer_flat_stencil);
+}
 
 /**
  *

@@ -670,6 +670,7 @@ ui_run(glw_root_t *gr, EGLDisplay dpy)
   glw_reap(gr);
   glw_reap(gr);
   glw_flush(gr);
+  glw_opengl_fini_context(gr);
 
   backdrop_loader_run = 0;
   hts_cond_signal(&backdrop_loader_cond);

@@ -152,5 +152,15 @@ glw_opengl_init_context(glw_root_t *gr)
 
   gr->gr_br_read_pixels = opengl_read_pixels;
 
-  return glw_opengl_shaders_init(gr, 0);
+  return glw_opengl_shaders_init(gr);
+}
+
+
+/**
+ *
+ */
+void
+glw_opengl_fini_context(glw_root_t *gr)
+{
+  glw_opengl_shaders_fini(gr);
 }
