@@ -112,6 +112,7 @@ if(typeof chrome.runtime['getManifest'] == 'function') {
   var manifest = chrome.runtime.getManifest();
   appversion = manifest.version;
 }
+console.log("Running version: " + appversion);
 
 function displaycrash(reason) {
   cleanup();
