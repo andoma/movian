@@ -41,6 +41,12 @@ typedef struct de_dev {
 #define QUAL_LEFT_ALT    0x4
 #define QUAL_RIGHT_ALT   0x8
 
+  enum {
+    DD_TYPE_UNKNOWN,
+    DD_TYPE_FULL_KEYBOARD,
+    DD_TYPE_DPAD,
+  } dd_type;
+
 } de_dev_t;
 
 #define DE_MAXDEVS 16
@@ -63,7 +69,7 @@ update_fds(devevent_t *de)
   int i, j = 0;
   for(i = 0; i < DE_MAXDEVS; i++) {
     de_dev_t *dd = &de->de_devs[i];
-    if(!dd->dd_present) 
+    if(!dd->dd_present)
       continue;
 
     de->de_fds[j].events = POLLIN | POLLERR;
@@ -85,7 +91,7 @@ rescan(devevent_t *de)
   char name[80];
   for(i = 0; i < DE_MAXDEVS; i++) {
     de_dev_t *dd = &de->de_devs[i];
-    
+
     snprintf(path, sizeof(path), "/dev/input/event%d", i);
     if(dd->dd_present) {
       if(!access(path, O_RDWR))
@@ -94,9 +100,9 @@ rescan(devevent_t *de)
       TRACE(TRACE_INFO, "DE", "Device %s disconnected", path);
       close(dd->dd_fd);
       dd->dd_present = 0;
-      
+
     } else {
-      
+
       dd->dd_fd = open(path, O_RDWR);
       if(dd->dd_fd == -1)
 	continue;
@@ -104,9 +110,10 @@ rescan(devevent_t *de)
       name[sizeof(name) - 1] = 0;
       if(ioctl(dd->dd_fd, EVIOCGNAME(sizeof(name) - 1), &name) < 1)
 	strcpy(name, "???");
-	
+
       TRACE(TRACE_INFO, "DE", "Found %s on %s", name, path);
       dd->dd_present = 1;
+      dd->dd_type = DD_TYPE_UNKNOWN;
     }
   }
   update_fds(de);
@@ -126,7 +133,7 @@ dd_from_fd(devevent_t *de, int fd)
   return NULL;
 }
 
-static const wchar_t keymap[128] = 
+static const wchar_t keymap[128] =
  //0123456789
  L"  12345678"
   "90-=  qwer"
@@ -135,7 +142,7 @@ static const wchar_t keymap[128] =
   "ä   zxcvbn"
   "m,.-";
 
-static const wchar_t keymap_shift[128] = 
+static const wchar_t keymap_shift[128] =
  //0123456789
  L"  !\"#¤%&/("
   ")=?   QWER"
@@ -173,8 +180,8 @@ static int key_to_action[][3] = {
   {KEY_PROG1,              ACTION_LOGWINDOW},
   {KEY_PROG2,              ACTION_SHOW_MEDIA_STATS},
   {KEY_PROG3,              ACTION_SYSINFO},
-  
-  
+
+
   {0,0}
 };
 
@@ -214,7 +221,7 @@ dd_read(de_dev_t *dd)
 	e = event_create_action(action);
         e->e_flags |= EVENT_KEYPRESS;
 	event_to_ui(e);
-	
+
       }
     }
     return 0;
@@ -250,8 +257,13 @@ dd_read(de_dev_t *dd)
     break;
 
   case KEY_ENTER:
-    e = event_create_action_multi((const action_type_t[]){
-	ACTION_ACTIVATE, ACTION_ENTER}, 2);
+    if(dd->dd_type == DD_TYPE_FULL_KEYBOARD) {
+      e = event_create_action_multi((const action_type_t[]){
+          ACTION_ACTIVATE, ACTION_ENTER}, 2);
+    } else {
+      e = event_create_action_multi((const action_type_t[]){
+          ACTION_ACTIVATE}, 1);
+    }
     break;
 
   case KEY_PAGEUP:
@@ -280,7 +292,8 @@ dd_read(de_dev_t *dd)
 
   default:
     if(ie.code < 128) {
-
+      if(dd->dd_type == DD_TYPE_UNKNOWN)
+        dd->dd_type = DD_TYPE_FULL_KEYBOARD;
 
       if(alt) {
         switch(keymap[ie.code]) {
@@ -346,7 +359,7 @@ devevent_thread(void *aux)
       rescan(de);
       continue;
     }
-    
+
     for(i = 0; i < de->de_nfds && n > 0; i++) {
       if(!de->de_fds[i].revents)
 	continue;
