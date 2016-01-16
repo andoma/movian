@@ -488,9 +488,11 @@ backend_open(prop_t *page, const char *url, int sync)
   if(be == NULL)
     return 1;
 
-  if(be->be_normalize != NULL && 
+  if(be->be_normalize != NULL &&
      !be->be_normalize(url, urlbuf, sizeof(urlbuf)))
     url = urlbuf;
+
+  prop_set(page, "url", PROP_SET_STRING, url);
 
   be->be_open(page, url, sync);
   return 0;
