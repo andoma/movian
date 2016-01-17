@@ -381,6 +381,7 @@ nav_close(nav_page_t *np, int with_prop)
   prop_ref_dec(np->np_bookmark_notify_prop);
 
   rstr_release(np->np_title);
+  rstr_release(np->np_icon);
   free(np->np_url);
   free(np->np_parent_url);
   free(np->np_how);
