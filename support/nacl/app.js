@@ -11,12 +11,15 @@ if(typeof chrome.runtime['getManifest'] == 'function') {
   var manifest = chrome.runtime.getManifest();
   appversion = manifest.version;
 }
+
+
 console.log("Running version: " + appversion);
 console.log("Browser version: " + navigator.userAgent);
 
 
 
 var loadtimeout = setTimeout(function() {
+  document.getElementById('vertag').innerText = appversion;
    document.getElementById('loader').style.display='block';
 
 }, 1000);
