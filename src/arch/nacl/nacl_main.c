@@ -166,10 +166,12 @@ static int initialized;
  *
  */
 static void
-send_running(void)
+send_msg(const char *type, const char *reason)
 {
   struct PP_Var req = ppb_vardict->Create();
-  nacl_dict_set_str(req, "msgtype", "running");
+  nacl_dict_set_str(req, "msgtype", type);
+  if(reason != NULL)
+    nacl_dict_set_str(req, "reason", reason);
   ppb_messaging->PostMessage(g_Instance, req);
   ppb_var->Release(req);
 }
@@ -206,20 +208,25 @@ init_ui(void *data, int flags)
   };
 
   nacl_3d_context = ppb_graphics3d->Create(g_Instance, 0, attrib_list);
+  if(nacl_3d_context == 0) {
+    panic("Unable to create 3D-graphics context");
+    return;
+  }
 
   if(!ppb_instance->BindGraphics(g_Instance, nacl_3d_context)) {
-    TRACE(TRACE_DEBUG, "NACL", "Unable to bind 3d context");
-    glSetCurrentContextPPAPI(0);
+    panic("Unable to bind 3D-graphics context");
     return;
   }
 
   glSetCurrentContextPPAPI(nacl_3d_context);
   TRACE(TRACE_DEBUG, "NACL", "Current 3d context set");
 
-  send_running();
 
   glw_opengl_init_context(&ngr->gr);
+
   glClearColor(0,0,0,0);
+
+  send_msg("running", NULL);
 
   mainloop(ngr);
 }
@@ -290,9 +297,10 @@ init_thread(void *aux)
 
   prop_courier_t *pc = prop_courier_create_notify(ui_courier_notify, uiroot);
 
-  if(glw_init4(&uiroot->gr, NULL, pc, 0))
+  if(glw_init4(&uiroot->gr, NULL, pc, 0)) {
+    panic("GLW failed to initialize");
     return NULL;
-
+  }
   prop_subscribe(0,
                  PROP_TAG_NAME("ui", "fullwindow"),
                  PROP_TAG_COURIER, pc,
@@ -300,8 +308,6 @@ init_thread(void *aux)
                  PROP_TAG_ROOT, uiroot->gr.gr_prop_ui,
                  NULL);
 
-
-  TRACE(TRACE_DEBUG, "GLW", "GLW %p created", uiroot);
 
   glw_lock(&uiroot->gr);
   glw_load_universe(&uiroot->gr);
@@ -383,9 +389,9 @@ panic(const char *fmt, ...)
   vsnprintf(buf, sizeof(buf), fmt, ap);
   va_end(ap);
   trace_arch(TRACE_EMERG, "Panic", buf);
-  while(1) {
-    sleep(100);
-  }
+  send_msg("panic", buf);
+  sleep(2);
+  exit(1);
 }
 
 
