@@ -105,7 +105,7 @@ tcp_read(tcpcon_t *tc, void *buf, size_t len, int all,
 tcpcon_t *
 tcp_from_fd(int fd)
 {
-  TRACE(TRACE_DEBUG, "NET", "%s NOT IMPLEMENTED", __FUNCTION__);
+  //  TRACE(TRACE_DEBUG, "NET", "%s NOT IMPLEMENTED", __FUNCTION__);
   return NULL;
 }
 
@@ -269,7 +269,7 @@ tcp_shutdown(tcpcon_t *tc)
 void
 tcp_huge_buffer(tcpcon_t *tc)
 {
-  TRACE(TRACE_DEBUG, "NET", "%s NOT IMPLEMENTED", __FUNCTION__);
+  //  TRACE(TRACE_DEBUG, "NET", "%s NOT IMPLEMENTED", __FUNCTION__);
 }
 
 
@@ -279,7 +279,7 @@ tcp_huge_buffer(tcpcon_t *tc)
 void
 tcp_set_read_timeout(tcpcon_t *tc, int ms)
 {
-  TRACE(TRACE_DEBUG, "NET", "%s NOT IMPLEMENTED", __FUNCTION__);
+  //  TRACE(TRACE_DEBUG, "NET", "%s NOT IMPLEMENTED", __FUNCTION__);
 }
 
 
@@ -289,7 +289,7 @@ tcp_set_read_timeout(tcpcon_t *tc, int ms)
 void
 net_change_nonblocking(int fd, int on)
 {
-  TRACE(TRACE_DEBUG, "NET", "%s NOT IMPLEMENTED", __FUNCTION__);
+  //  TRACE(TRACE_DEBUG, "NET", "%s NOT IMPLEMENTED", __FUNCTION__);
 }
 
 
@@ -299,7 +299,7 @@ net_change_nonblocking(int fd, int on)
 void
 net_change_ndelay(int fd, int on)
 {
-  TRACE(TRACE_DEBUG, "NET", "%s NOT IMPLEMENTED", __FUNCTION__);
+  //  TRACE(TRACE_DEBUG, "NET", "%s NOT IMPLEMENTED", __FUNCTION__);
 }
 
 
