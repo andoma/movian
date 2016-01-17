@@ -49,6 +49,7 @@ coreAttach($self.url, {
 
         onEvent(navOpen, deliverEvent($core.navigators.current.eventSink));
         onEvent(back, deliverEvent($core.navigators.current.eventSink));
+        onEvent(playTrackFromSource, deliverEvent($core.playqueue.eventSink));
 
         cloner($core.navigators.current.pages, container_z, {
 

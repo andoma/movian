@@ -789,6 +789,29 @@ stpp_binary_event(prop_t *p, event_type_t event,
     }
     break;
 
+  case EVENT_PLAYTRACK:
+    {
+      if(len < 1)
+        break;
+      uint8_t flags = data[0];
+      data++;
+      len--;
+
+      prop_t *track = decode_propref(stpp, &data, &len);
+      prop_t *model = NULL;
+      if(flags & 0x01)
+        model = decode_propref(stpp, &data, &len);
+
+      int mode = len > 0 ? data[0] : 0;
+
+      e = event_create_playtrack(track, model, mode);
+      prop_ref_dec(track);
+      prop_ref_dec(model);
+
+    }
+    break;
+
+
   default:
     TRACE(TRACE_ERROR, "STPP", "Can't handle event type %d", event);
     return;

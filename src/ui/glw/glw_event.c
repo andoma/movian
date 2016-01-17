@@ -474,6 +474,10 @@ glw_event_map_intercept(glw_t *w, event_t *e, char early)
       str = "navOpen";
       break;
 
+    case EVENT_PLAYTRACK:
+      str = "playTrackFromSource";
+      break;
+
     case EVENT_ACTION_VECTOR:
       {
         event_action_vector_t *eav = (event_action_vector_t *)e;

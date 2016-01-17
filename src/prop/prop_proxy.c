@@ -763,7 +763,23 @@ prop_proxy_send_event(prop_t *p, const event_t *e)
     }
     break;
 
+  case EVENT_PLAYTRACK:
+    {
+      const event_playtrack_t *ep = (event_playtrack_t *)e;
 
+      uint8_t flags = 0;
+
+      flags |= ep->source       ? 0x01 : 0;
+      htsbuf_append_byte(&q, flags);
+
+      prop_proxy_send_prop(ep->track, &q);
+
+      if(ep->source != NULL)
+        prop_proxy_send_prop(ep->source, &q);
+
+      htsbuf_append_byte(&q, ep->mode);
+    }
+    break;
 
   default:
     printf("Can't serialize event %d\n", e->e_type);
