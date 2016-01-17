@@ -4612,6 +4612,12 @@ prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard, int debug)
     prop_proxy_link(src, dst);
   } else if(src->hp_type == PROP_PROXY || dst->hp_type == PROP_PROXY) {
     printf("Linking a proxied property with a non-proxied one is mind-boggling difficult, giving up\n");
+    printf("SRC\n");
+    prop_print_tree0(src, 0, 1);
+    printf("DST\n");
+    prop_print_tree0(dst, 0, 1);
+
+    abort();
   } else {
     prop_link0(src, dst, skipme, hard, debug);
   }
