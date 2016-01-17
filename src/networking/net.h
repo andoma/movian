@@ -96,8 +96,9 @@ void net_change_nonblocking(int fd, int on);
 
 void net_change_ndelay(int fd, int on);
 
+#define NET_IFNAME_SIZE 64
 typedef struct netif {
-  char ifname[16];
+  char ifname[NET_IFNAME_SIZE];
   uint8_t ipv4_addr[4];
   uint8_t ipv4_mask[4];
 } netif_t;

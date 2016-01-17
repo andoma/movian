@@ -254,7 +254,7 @@ typedef struct ssdp_interface {
   asyncio_fd_t *si_fd_mc;
   asyncio_fd_t *si_fd_uc;
 
-  char si_ifname[32];
+  char si_ifname[NET_IFNAME_SIZE];
 
   net_addr_t si_myaddr;
 
