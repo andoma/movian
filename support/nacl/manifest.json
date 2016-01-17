@@ -11,6 +11,11 @@
 
   "minimum_chrome_version": "44",
   "offline_enabled": true,
+  "requirements": {
+    "3D": {
+      "features": ["webgl"]
+    }
+  },
   "permissions": ["unlimitedStorage", "fullscreen",
                   {
                     "socket": [
