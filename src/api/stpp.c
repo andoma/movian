@@ -423,7 +423,7 @@ stpp_sub_binary(void *opaque, prop_event_t event, ...)
     wr32_le(buf + 6,  sp_get(before, ss)->sp_id);
     wr32_le(buf + 10, stpp_property_export_from_sub(ss, p,
                                                     &ss->ss_dir_props)->sp_id);
-    buf[1] = STPP_ADD_CHILDS;
+    buf[1] = STPP_ADD_CHILDS_BEFORE;
     break;
 
   case PROP_ADD_CHILD_VECTOR:
@@ -450,7 +450,7 @@ stpp_sub_binary(void *opaque, prop_event_t event, ...)
               stpp_property_export_from_sub(ss, prop_vec_get(pv, i),
                                             &ss->ss_dir_props)->sp_id);
     }
-    buf[1] = STPP_ADD_CHILDS;
+    buf[1] = STPP_ADD_CHILDS_BEFORE;
     break;
 
   case PROP_DEL_CHILD:
@@ -499,6 +499,19 @@ stpp_sub_binary(void *opaque, prop_event_t event, ...)
             stpp_property_export_from_sub(ss, p,
                                           &ss->ss_value_props)->sp_id);
     buf[1] = STPP_VALUE_PROP;
+    break;
+
+  case PROP_WANT_MORE_CHILDS:
+    return;
+
+  case PROP_HAVE_MORE_CHILDS_YES:
+    buf = alloca(buflen);
+    buf[1] = STPP_HAVE_MORE_CHILDS_YES;
+    break;
+
+  case PROP_HAVE_MORE_CHILDS_NO:
+    buf = alloca(buflen);
+    buf[1] = STPP_HAVE_MORE_CHILDS_NO;
     break;
 
   default:
@@ -567,6 +580,21 @@ stpp_cmd_unsub(stpp_t *stpp, unsigned int id)
   if((ss = RB_FIND(&stpp->stpp_subscriptions, &s, ss_link, ss_cmp)) == NULL)
     return;
   ss_destroy(stpp, ss);
+}
+
+
+/**
+ *
+ */
+static void
+stpp_cmd_want_more_childs(stpp_t *stpp, unsigned int id)
+{
+  stpp_subscription_t s, *ss;
+  s.ss_id = id;
+
+  if((ss = RB_FIND(&stpp->stpp_subscriptions, &s, ss_link, ss_cmp)) == NULL)
+    return;
+  prop_want_more_childs(ss->ss_sub);
 }
 
 
@@ -811,6 +839,10 @@ stpp_binary_event(prop_t *p, event_type_t event,
     }
     break;
 
+  case EVENT_DYNAMIC_ACTION:
+    e = event_create_action_str((const char *)data);
+    break;
+
 
   default:
     TRACE(TRACE_ERROR, "STPP", "Can't handle event type %d", event);
@@ -864,37 +896,20 @@ stpp_binary(stpp_t *stpp, const uint8_t *data, int len)
     stpp_cmd_unsub(stpp, rd32_le(data));
     break;
 
+
   case STPP_CMD_EVENT:
     {
-      if(len < 5)
-        return -1;
-      char **name = NULL;
-
-      prop_t *p = resolve_propref(stpp, rd32_le(data));
+      prop_t *p = decode_propref(stpp, &data, &len);
       if(p == NULL)
         return -1;
 
-      data += 4;
-      len -= 4;
-      int x = decode_string_vector(&name, data, len);
-      data += x;
-      len -= x;
-
-      if(len < 1) {
-        strvec_free(name);
-        return -1;
-      }
-
-      prop_t *p2 = prop_findv(p, name);
-      strvec_free(name);
-
-      if(p2 != NULL) {
+      if(p != NULL) {
         int event = data[0];
         data++;
         len--;
-        stpp_binary_event(p2, event, data, len, stpp);
+        stpp_binary_event(p, event, data, len, stpp);
       }
-      prop_ref_dec(p2);
+      prop_ref_dec(p);
     }
     break;
 
@@ -945,6 +960,12 @@ stpp_binary(stpp_t *stpp, const uint8_t *data, int len)
         before = resolve_propref(stpp, rd32_le(data + 4));
       prop_req_move(p, before);
     }
+    break;
+
+  case STPP_CMD_WANT_MORE_CHILDS:
+    if(len != 4)
+      return -1;
+    stpp_cmd_want_more_childs(stpp, rd32_le(data));
     break;
 
   default:

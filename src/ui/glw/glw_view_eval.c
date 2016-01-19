@@ -995,8 +995,9 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
 
   } else {
 
-    if(left->type == TOKEN_RESOLVED_ATTRIBUTE &&
-       (left->t_attrib->flags & GLW_ATTRIB_FLAG_NO_SUBSCRIPTION)) {
+    if(how == 3 ||
+       (left->type == TOKEN_RESOLVED_ATTRIBUTE &&
+        (left->t_attrib->flags & GLW_ATTRIB_FLAG_NO_SUBSCRIPTION))) {
 
       if(right->type == TOKEN_PROPERTY_NAME)
         if(resolve_property_name(ec, right, 0))
@@ -1010,10 +1011,12 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
     }
   }
 
-  if(left->type == TOKEN_PROPERTY_NAME)
+  if(left->type == TOKEN_PROPERTY_NAME) {
     if(resolve_property_name(ec, left,
-                             !(left->t_flags & TOKEN_F_CANONICAL_PATH)))
+                             !(left->t_flags & TOKEN_F_CANONICAL_PATH))) {
       return -1;
+    }
+  }
 
   // Conditional assignment: rvalue of (void) results in doing nothing
   if(how == 1 && right->type == TOKEN_VOID) {
@@ -1069,15 +1072,7 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
       ec->dynamic_eval |= GLW_VIEW_EVAL_EM;
       break;
     case TOKEN_PROPERTY_REF:
-      if(right->t_prop != left->t_prop) {
-        TRACE(TRACE_INFO, "GLW",
-              "%s:%d: Prop linking via assignment is deprecated",
-              rstr_get(self->file), self->line);
-	prop_link_ex(right->t_prop, left->t_prop,
-                     NULL, PROP_LINK_NORMAL, how == 2);
-        left->t_flags |= TOKEN_F_PROP_LINK;
-      }
-
+      prop_set_prop(left->t_prop, right->t_prop);
       break;
     case TOKEN_VOID:
       if(left->t_flags & TOKEN_F_PROP_LINK) {
@@ -2702,6 +2697,11 @@ glw_view_eval_rpn0(token_t *t0, glw_view_eval_context_t *ec)
 
     case TOKEN_DEBUG_ASSIGNMENT:
       if(eval_assign(ec, t, 2))
+	return -1;
+      break;
+
+    case TOKEN_REF_ASSIGNMENT:
+      if(eval_assign(ec, t, 3))
 	return -1;
       break;
 

@@ -28,10 +28,11 @@
 #define STPP_CMD_NOTIFY      4
 #define STPP_CMD_EVENT       5
 #define STPP_CMD_REQ_MOVE    6
+#define STPP_CMD_WANT_MORE_CHILDS 7
 
 
 // Notify types (First byte in STPP_CMD_NOTIFY message)
-// These things are sent over the wire so no changes here please
+// These things are sent over the wire so no changes (just additions) here
 
 #define STPP_SET_VOID           0
 #define STPP_SET_INT            1
@@ -47,3 +48,5 @@
 #define STPP_ADD_CHILD_SELECTED 11
 #define STPP_VALUE_PROP         12
 #define STPP_TOGGLE_INT         13
+#define STPP_HAVE_MORE_CHILDS_YES 14
+#define STPP_HAVE_MORE_CHILDS_NO  15

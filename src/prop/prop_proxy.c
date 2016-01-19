@@ -206,16 +206,20 @@ prop_proxy_make(prop_proxy_connection_t *ppc, uint32_t id, prop_sub_t *s,
     p->hp_owner_sub = s;
     if(RB_INSERT_SORTED_NFL(&s->hps_prop_tree, p, hp_owner_sub_link,
                             prop_id_cmp)) {
-      printf("HELP Unable to insert node %d, collision detected\n", id);
-      pool_put(prop_pool, p);
-      strvec_free(pfx);
-      return NULL;
+#ifdef PROP_DEBUG
+      printf("%s called from %s:%d\n", __FUNCTION__, file, line);
+#endif
+      printf("HELP Unable to insert node %d on sub %d, collision detected\n",
+             id, s->hps_proxy_subid);
+      abort();
     }
   }
 
   if(owner != NULL) {
     LIST_INSERT_HEAD(&owner->hp_owned, p, hp_owned_prop_link);
     p->hp_flags |= PROP_PROXY_OWNED_BY_PROP;
+    if(owner->hp_flags & PROP_PROXY_FOLLOW_SYMLINK)
+      p->hp_flags |= PROP_PROXY_FOLLOW_SYMLINK;
   }
 
   atomic_set(&p->hp_refcount, 1);
@@ -482,6 +486,15 @@ ppc_ws_input_notify(prop_proxy_connection_t *ppc, const uint8_t *data, int len)
     n->hpn_prop = prop_ref_inc(s->hps_value_prop);
     break;
 
+  case STPP_HAVE_MORE_CHILDS_YES:
+    n = prop_get_notify(s);
+    n->hpn_event = PROP_HAVE_MORE_CHILDS_YES;
+    break;
+
+  case STPP_HAVE_MORE_CHILDS_NO:
+    n = prop_get_notify(s);
+    n->hpn_event = PROP_HAVE_MORE_CHILDS_NO;
+    break;
 
   default:
     printf("WARNING: STPP input can't handle op %d\n", setop);
@@ -723,8 +736,6 @@ prop_proxy_send_event(prop_t *p, const event_t *e)
     }
     break;
   case EVENT_DYNAMIC_ACTION:
-  case EVENT_SELECT_AUDIO_TRACK:
-  case EVENT_SELECT_SUBTITLE_TRACK:
     {
       const event_payload_t *ep = (const event_payload_t *)e;
       htsbuf_append(&q, ep->payload, strlen(ep->payload));
@@ -896,7 +907,7 @@ prop_proxy_unsubscribe(prop_sub_t *s)
   ppc_destroy_props_on_sub(s);
   LIST_REMOVE(s, hps_value_prop_link);
   uint8_t *data = alloca(5);
-  data[1] = STPP_CMD_UNSUBSCRIBE;
+  data[0] = STPP_CMD_UNSUBSCRIBE;
   wr32_le(data + 1, s->hps_proxy_subid);
   prop_proxy_send_data(ppc, data, 5);
 }
@@ -997,6 +1008,20 @@ prop_proxy_toggle_int(struct prop *p)
   prop_proxy_send_queue(ppc, &q);
 }
 
+
+/**
+ *
+ */
+void
+prop_proxy_want_more_childs(struct prop_sub *s)
+{
+  prop_proxy_connection_t *ppc = s->hps_ppc;
+
+  uint8_t *data = alloca(5);
+  data[0] = STPP_CMD_WANT_MORE_CHILDS;
+  wr32_le(data + 1, s->hps_proxy_subid);
+  prop_proxy_send_data(ppc, data, 5);
+}
 
 
 /**

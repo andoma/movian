@@ -76,6 +76,7 @@ glw_view_token_free(glw_root_t *gr, token_t *t)
   case TOKEN_HASH:
   case TOKEN_ASSIGNMENT:
   case TOKEN_COND_ASSIGNMENT:
+  case TOKEN_REF_ASSIGNMENT:
   case TOKEN_DEBUG_ASSIGNMENT:
   case TOKEN_LINK_ASSIGNMENT:
   case TOKEN_END_OF_EXPR:
@@ -221,6 +222,7 @@ glw_view_token_copy(glw_root_t *gr, token_t *src)
   case TOKEN_HASH:
   case TOKEN_ASSIGNMENT:
   case TOKEN_COND_ASSIGNMENT:
+  case TOKEN_REF_ASSIGNMENT:
   case TOKEN_DEBUG_ASSIGNMENT:
   case TOKEN_LINK_ASSIGNMENT:
   case TOKEN_END_OF_EXPR:

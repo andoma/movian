@@ -1029,7 +1029,7 @@ void
 glw_move(glw_t *w, glw_t *b)
 {
   glw_t *p = w->glw_parent;
-
+  glw_root_t *gr = w->glw_root;
   int was_first = TAILQ_FIRST(&p->glw_childs) == w && w == p->glw_focused;
 
   TAILQ_REMOVE(&p->glw_childs, w, glw_parent_link);
@@ -1044,12 +1044,12 @@ glw_move(glw_t *w, glw_t *b)
       glw_t *w2 = TAILQ_NEXT(w, glw_parent_link);
       if(w2 != NULL && p->glw_focused == w2) {
         glw_t *c = glw_focus_by_path(w);
-        glw_focus_set(c->glw_root, c, GLW_FOCUS_SET_AUTOMATIC_FF, "Move");
+        glw_focus_set(gr, c, GLW_FOCUS_SET_AUTOMATIC_FF, "Move");
       }
     } else if(was_first) {
       glw_t *w2 = TAILQ_FIRST(&p->glw_childs);
       glw_t *c = glw_focus_by_path(w2);
-      glw_focus_set(c->glw_root, c, GLW_FOCUS_SET_AUTOMATIC_FF, "Move");
+      glw_focus_set(gr, c, GLW_FOCUS_SET_AUTOMATIC_FF, "Move");
     }
   }
   glw_signal0(p, GLW_SIGNAL_CHILD_MOVED, w);

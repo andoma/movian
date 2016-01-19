@@ -48,6 +48,7 @@ coreAttach($self.url, {
         alpha: 1 - iir(clamp(getLayer(), 0, 1), 7) * 0.66;
 
         onEvent(navOpen, deliverEvent($core.navigators.current.eventSink));
+        onEvent(reloadData, deliverEvent($core.navigators.current.eventSink));
         onEvent(back, deliverEvent($core.navigators.current.eventSink));
         onEvent(playTrackFromSource, deliverEvent($core.playqueue.eventSink));
 

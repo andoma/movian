@@ -264,6 +264,8 @@ void prop_set_int_clipping_range(prop_t *p, int min, int max);
 
 void prop_set_void_ex(prop_t *p, prop_sub_t *skipme);
 
+void prop_set_prop_ex(prop_t *p, prop_sub_t *skipme, prop_t *x);
+
 void prop_set_uri_ex(prop_t *p, prop_sub_t *skipme, const char *title,
                      const char *url);
 
@@ -293,6 +295,8 @@ void prop_set_uri_ex(prop_t *p, prop_sub_t *skipme, const char *title,
 #define prop_set_rstring(p, rstr) prop_set_rstring_ex(p, NULL, rstr, 0)
 
 #define prop_set_cstring(p, cstr) prop_set_cstring_ex(p, NULL, cstr)
+
+#define prop_set_prop(p, x) prop_set_prop_ex(p, NULL, x)
 
 void prop_copy_ex(prop_t *dst, prop_sub_t *skipme, prop_t *src);
 

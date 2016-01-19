@@ -4021,6 +4021,21 @@ prop_set_prop_exl(prop_t *p, prop_sub_t *skipme, prop_t *target)
  *
  */
 void
+prop_set_prop_ex(prop_t *p, prop_sub_t *skipme, prop_t *x)
+{
+  if(p == NULL)
+    return;
+
+  hts_mutex_lock(&prop_mutex);
+  prop_set_prop_exl(p, skipme, x);
+  hts_mutex_unlock(&prop_mutex);
+}
+
+
+/**
+ *
+ */
+void
 prop_copy_ex(prop_t *dst, prop_sub_t *skipme, prop_t *src)
 {
   if(dst == NULL)
@@ -5494,7 +5509,7 @@ void
 prop_want_more_childs0(prop_sub_t *s)
 {
   if(s->hps_proxy) {
-    printf("prop_want_more_childs0 on proxy sub\n");
+    prop_proxy_want_more_childs(s);
   } else {
     prop_send_event(s->hps_value_prop, PROP_WANT_MORE_CHILDS);
   }

@@ -72,3 +72,5 @@ void prop_proxy_add_int(struct prop *p, int v);
 void prop_proxy_toggle_int(struct prop *p);
 
 void prop_proxy_set_void(struct prop *p);
+
+void prop_proxy_want_more_childs(struct prop_sub *s);

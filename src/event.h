@@ -364,7 +364,7 @@ event_t *event_create_playtrack(struct prop *track,
 				struct prop *psource,
 				int mode);
 
-event_t *event_create_select_track(const char *id, event_type_t type, 
+event_t *event_create_select_track(const char *id, event_type_t type,
 				   int manual);
 
 event_t *event_create_prop(event_type_t type, struct prop *p);

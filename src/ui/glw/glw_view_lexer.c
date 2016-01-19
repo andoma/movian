@@ -261,6 +261,12 @@ glw_view_lexer(glw_root_t *gr, const char *src, errorinfo_t *ei,
       continue;
     }
 
+    if(src[0] == ':' && src[1] == '=') {
+      prev = lexer_add_token_simple(gr, prev, f, line, TOKEN_REF_ASSIGNMENT);
+      src+=2;
+      continue;
+    }
+
     if(src[0] == '_' && src[1] == '=' && src[2] == '_') {
       prev = lexer_add_token_simple(gr, prev, f, line, TOKEN_DEBUG_ASSIGNMENT);
       src+=3;

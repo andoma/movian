@@ -135,7 +135,7 @@ glw_loader_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     return 1;
 
   case GLW_SIGNAL_DESTROY:
-    prop_destroy(a->args);
+    prop_ref_dec(a->args);
     prop_ref_dec(a->prop_parent_override);
     prop_ref_dec(a->prop_self_override);
     break;
@@ -192,7 +192,6 @@ glw_view_loader_ctor(glw_t *w)
 {
   glw_view_loader_t *a = (void *)w;
   a->time = 0.00001;
-  a->args = prop_create_root("args");
   w->glw_flags2 |= GLW2_EXPEDITE_SUBSCRIPTIONS;
 }
 
@@ -364,7 +363,9 @@ glw_view_loader_set_prop(glw_t *w, glw_attribute_t attrib, prop_t *p)
 
   switch(attrib) {
   case GLW_ATTRIB_ARGS:
-    prop_link_ex(p, vl->args, NULL, PROP_LINK_XREFED_IF_ORPHANED, 0);
+    //    prop_link_ex(p, vl->args, NULL, PROP_LINK_XREFED_IF_ORPHANED, 0);
+    prop_ref_dec(vl->args);
+    vl->args = prop_ref_inc(p);
     return 0;
 
   case GLW_ATTRIB_PROP_PARENT:

@@ -37,6 +37,7 @@ typedef enum {
   TOKEN_HASH,                  // #
   TOKEN_ASSIGNMENT,            // =
   TOKEN_COND_ASSIGNMENT,       // ?=
+  TOKEN_REF_ASSIGNMENT,        // :=
   TOKEN_DEBUG_ASSIGNMENT,      // _=_
   TOKEN_LINK_ASSIGNMENT,       // <-
   TOKEN_END_OF_EXPR,           // ; (end of expression)

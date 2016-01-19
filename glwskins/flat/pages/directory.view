@@ -1,16 +1,16 @@
 
 onEvent(videoInfo, {
-  $clone.itemData <- $event;
+  $clone.itemData := $event;
   $clone.itemMenu = "video";
 });
 
 onEvent(pluginInfo, {
-  $clone.itemData <- $event;
+  $clone.itemData := $event;
   $clone.itemMenu = "plugin";
 });
 
 onEvent(defaultInfo, {
-  $clone.itemData <- $event;
+  $clone.itemData := $event;
   $clone.itemMenu = "default";
 });
 
@@ -120,12 +120,12 @@ widget(container_z, {
     });
 
     widget(loader, {
+      args: $clone.itemData;
       // Hide if itemMenu is 0 or if we shouldn't show it at all
       hidden: isVoid($clone.itemMenu);
       time: 0;
       noInitialTransform: true;
       source: "skin://ctxmenu/" + $clone.itemMenu + "_details.view";
-        .args <- $clone.itemData;
     });
   });
 

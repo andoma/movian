@@ -87,6 +87,7 @@ tokenstack_pop(token_t **s)
 static const int tokenprecedence[TOKEN_num] = {
   [TOKEN_ASSIGNMENT]    = 1,
   [TOKEN_COND_ASSIGNMENT]    = 1,
+  [TOKEN_REF_ASSIGNMENT]    = 1,
   [TOKEN_DEBUG_ASSIGNMENT]    = 1,
   [TOKEN_LINK_ASSIGNMENT]    = 1,
   [TOKEN_NULL_COALESCE] = 2,
@@ -178,6 +179,7 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei, glw_root_t *gr)
     case TOKEN_BOOLEAN_XOR:
     case TOKEN_ASSIGNMENT:
     case TOKEN_COND_ASSIGNMENT:
+    case TOKEN_REF_ASSIGNMENT:
     case TOKEN_DEBUG_ASSIGNMENT:
     case TOKEN_LINK_ASSIGNMENT:
     case TOKEN_EQ:
