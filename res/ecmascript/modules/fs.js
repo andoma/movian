@@ -4,7 +4,7 @@ exports.writeFileSync = function(filename, data, opts) {
   var fs = require('native/fs');
   var fd = fs.open(filename, 'w');
   try {
-    fs.write(fd, data, 0, data.length, 0);
+    fs.write(fd, data, 0, null, 0);
   }
   finally {
     Core.resourceDestroy(fd);
