@@ -203,9 +203,14 @@ es_file_write(duk_context *ctx)
   es_fd_t *efd = es_fd_get(ctx, 0);
   duk_size_t bufsize;
   char *buf = duk_to_buffer(ctx, 1, &bufsize);
+  int len;
 
   const int offset = duk_to_int(ctx, 2);
-  int len = duk_to_int(ctx, 3);
+  if(duk_is_null(ctx, 3)) {
+    len = bufsize;
+  } else {
+    len = duk_to_int(ctx, 3);
+  }
 
   // Don't read past buffer end
   if(offset + len > bufsize)
