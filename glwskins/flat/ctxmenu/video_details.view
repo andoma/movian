@@ -1,9 +1,9 @@
 #import "skin://theme.view"
 #import "skin://styles/style_list.view"
 
-#define ITEM(CAPTION, EVENT, ICON=void, ENABLED=true) {
+#define ITEM(CAPTION, EVENT, ICON=void, HIDDEN=false) {
   widget(container_z, {
-    hidden: !ENABLED;
+    hidden: HIDDEN;
     height: 2em;
     ListItemBevel();
     ListItemHighlight();
@@ -110,18 +110,21 @@ widget(container_z, {
     }, "skin://icons/ic_play_arrow_48px.svg");
 
 
+    ITEM(_("Delete"), {
+      delete($args);
+      $clone.itemMenu = void;
+    }, "skin://icons/ic_delete_48px.svg",
+         !($self.model.canDelete || $args.canDelete));
 
     ITEM(_("Mark as unseen"), {
       $args.playcount = false;
       $clone.itemMenu = void;
-    }, void, $args.playcount > 0);
-
-    // Mark as seen (video)
+    }, void, !($args.playcount > 0));
 
     ITEM(_("Mark as seen"), {
       $args.playcount = true;
       $clone.itemMenu = void;
-    }, void, $args.playcount < 1);
+    }, void, !($args.playcount < 1));
 
     cloner($args.options, loader, {
       time: 0.1;

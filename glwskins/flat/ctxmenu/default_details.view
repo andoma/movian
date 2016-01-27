@@ -3,7 +3,7 @@
 $view.itemBookmark <- lookup($core.bookmarks.queries, $args.url);
 
 
-#define ITEM(CAPTION, ICON, EVENT, HIDDEN=false) {
+#define ITEM(CAPTION, EVENT, ICON, HIDDEN=false) {
   widget(container_z, {
     hidden: HIDDEN;
     ListItemHighlight();
@@ -83,27 +83,32 @@ widget(popup, {
         height: 0.1em;
       });
 
-      ITEM(_("Bookmarked"),
-           select($view.itemBookmark.model.subtype == "bookmark",
-                  "skin://icons/ic_check_48px.svg",
-                  ""), {
-                    fireEvent(deliverRef($core.bookmarks.eventSink, $args));
-                    $clone.itemMenu = void;
-                    });
+      ITEM(_("Bookmarked"), {
+        fireEvent(deliverRef($core.bookmarks.eventSink, $args));
+        $clone.itemMenu = void;
+      }, select($view.itemBookmark.model.subtype == "bookmark",
+                "skin://icons/ic_check_48px.svg",
+                ""));
+
+      ITEM(_("Delete"), {
+        delete($args);
+        $clone.itemMenu = void;
+      }, "skin://icons/ic_delete_48px.svg",
+           !($self.model.canDelete || $args.canDelete));
 
       cloner($core.itemhooks, container_z, {
         hidden: !($self.itemtype == $args.type || $self.itemtype == void);
-        ITEM($self.metadata.title, $self.metadata.icon, {
+        ITEM($self.metadata.title, {
           fireEvent(deliverRef($self.eventSink, $args));
           $clone.itemMenu = void;
-        });
+        }, $self.metadata.icon);
       });
-      trace("artist", $args.metadata.artist);
 
-      ITEM($args.metadata.artist, "dataroot://res/svg/User.svg", {
+      ITEM($args.metadata.artist, {
         fireEvent(navOpen($args.metadata.artist));
         $clone.itemMenu = void;
-      }, !isLink($args.metadata.artist));
+      }, "dataroot://res/svg/User.svg",
+           !isLink($args.metadata.artist));
     });
   });
 });
