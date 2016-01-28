@@ -1,6 +1,6 @@
 language: Portuguese
 native: Português
-maintainer: andreus sebes
+maintainer: Bruno Guerreiro
 #
 # ./glwskins/default/cmdmenu.view
 #
@@ -1272,7 +1272,7 @@ msg: Porta TCP do servidor
 # ./src/plugins.c
 #
 id: Alternate plugin Repository URL
-msg: Repositótio de plugins alternativo
+msg: Repositório de plugins alternativo
 
 id: Automatically upgrade plugins
 msg: Atualizar automaticamente os plugins
@@ -1386,7 +1386,7 @@ id: Upgradable
 msg: Pode ser atualizado
 
 id: Upgraded plugin %s to version %s
-msg: Plusgin %s atualizado para a versão %s
+msg: Plugin %s atualizado para a versão %s
 
 id: User interface extensions
 msg: Extensões de interface de utilizador
