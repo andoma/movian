@@ -790,6 +790,7 @@ static void
 delete_items(scanner_t *s, prop_vec_t *pv)
 {
   char errbuf[256];
+  TRACE(TRACE_DEBUG, "FA", "About to delete %d items", prop_vec_len(pv));
   for(int i = 0, c = prop_vec_len(pv); i < c; i++) {
     fa_dir_entry_t *fde;
     RB_FOREACH(fde, &s->s_fd->fd_entries, fde_link) {
@@ -799,6 +800,8 @@ delete_items(scanner_t *s, prop_vec_t *pv)
     if(fde == NULL)
       continue;
 
+    TRACE(TRACE_DEBUG, "FA", "About to delete %s",
+          rstr_get(fde->fde_url));
 
     if(fa_unlink_recursive(rstr_get(fde->fde_url),
                            errbuf, sizeof(errbuf), 1) < 0) {
