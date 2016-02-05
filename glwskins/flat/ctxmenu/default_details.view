@@ -33,7 +33,7 @@ widget(popup, {
   clickable: true;
   onEvent(activate, {
     $clone.itemMenu = void;
-  }, true, true, true);
+  }, true, true);
 
   widget(container_z, {
     clickable: true;
