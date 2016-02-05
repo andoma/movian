@@ -2725,29 +2725,12 @@ glw_view_eval_rpn0(token_t *t0, glw_view_eval_context_t *ec)
 int
 glw_view_eval_rpn(token_t *t, glw_view_eval_context_t *pec, int *copyp)
 {
-  glw_view_eval_context_t ec;
+  glw_view_eval_context_t ec = *pec;
   int r;
 
-  memset(&ec, 0, sizeof(ec));
-  ec.debug = pec->debug;
-  ec.ei = pec->ei;
-
-  ec.prop_self  = pec->prop_self;
-  ec.prop_parent = pec->prop_parent;
-  ec.prop_view   = pec->prop_view;
-  ec.prop_clone  = pec->prop_clone;
-  ec.prop_core   = pec->prop_core;
-  ec.prop_args   = pec->prop_args;
-  ec.prop_event  = pec->prop_event;
-
-  ec.w = pec->w;
   ec.rpn = t;
-  ec.gr = pec->gr;
-  ec.rc = pec->rc;
-  ec.passive_subscriptions = pec->passive_subscriptions;
-  ec.sublist = pec->sublist;
-  ec.event = pec->event;
-  ec.tgtprop = pec->tgtprop;
+  ec.alloc = NULL;
+  ec.stack = NULL;
 
   r = glw_view_eval_rpn0(t, &ec);
 
@@ -2756,6 +2739,39 @@ glw_view_eval_rpn(token_t *t, glw_view_eval_context_t *pec, int *copyp)
   return r;
 }
 
+/**
+ *
+ */
+static int
+glw_view_eval_static_block(token_t *t, glw_view_eval_context_t *ec)
+{
+  int copy;
+  for(; t != NULL; t = t->next) {
+    switch(t->type) {
+    case TOKEN_NOP:
+      break;
+    case TOKEN_RPN:
+    case TOKEN_PURE_RPN:
+      if(glw_view_eval_rpn(t, ec, &copy))
+	return -1;
+      break;
+    case TOKEN_FLOAT:
+    case TOKEN_INT:
+    case TOKEN_VECTOR_FLOAT:
+    case TOKEN_VOID:
+    case TOKEN_CSTRING:
+    case TOKEN_RSTRING:
+    case TOKEN_IDENTIFIER:
+    case TOKEN_MOD_FLAGS:
+      if(t->t_attrib->set(ec, t->t_attrib, t))
+        return -1;
+      break;
+    default:
+      abort();
+    }
+  }
+  return 0;
+}
 
 /**
  *
@@ -3264,7 +3280,7 @@ glw_event_map_eval_block_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
   n.event = src;
 
   body = glw_view_clone_chain(n.gr, b->capture.block, NULL);
-  glw_view_eval_block(body, &n, NULL);
+  glw_view_eval_static_block(body, &n);
   glw_prop_subscription_destroy_list(w->glw_root, &l);
   glw_view_free_chain(n.gr, body);
 }
@@ -3358,7 +3374,7 @@ glwf_onEvent(glw_view_eval_context_t *ec, struct token *self,
       break;
 
     case TOKEN_BLOCK:
-      gem = glw_event_map_eval_block_create(ec, b);
+      gem = glw_event_map_eval_block_create(ec, b->child);
       break;
 
     case TOKEN_VOID:

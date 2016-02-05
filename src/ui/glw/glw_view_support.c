@@ -451,9 +451,10 @@ glw_view_print_tree(token_t *f, int indent)
   token_t *c = f;
 
   while(c != NULL) {
-    printf("%*.s%s %p (%s:%d)\n", indent, "", token2name(c), c,
+    TRACE(TRACE_DEBUG, "GLW",
+          "%*.s%s %p (%s:%d)\n", indent, "", token2name(c), c,
            rstr_get(c->file), c->line);
-    
+
     if(c->child != NULL) {
       glw_view_print_tree(c->child, indent + 4);
     }
