@@ -224,6 +224,33 @@ es_gumbo_node_attributes(duk_context *ctx)
   return 1;
 }
 
+static int
+es_gumbo_node_textContent_r(duk_context *ctx, const GumboNode *node)
+{
+  int sum = 0;
+  if(node->type == GUMBO_NODE_ELEMENT || node->type == GUMBO_NODE_TEMPLATE) {
+    const GumboElement *e = &node->v.element;
+    for(int i = 0; i < e->children.length; i++) {
+      GumboNode *child = e->children.data[i];
+
+      switch(child->type) {
+      case GUMBO_NODE_TEXT:
+      case GUMBO_NODE_CDATA:
+      case GUMBO_NODE_COMMENT:
+        duk_push_string(ctx, child->v.text.text);
+        sum++;
+        break;
+      case GUMBO_NODE_ELEMENT:
+      case GUMBO_NODE_TEMPLATE:
+        sum += es_gumbo_node_textContent_r(ctx, child);
+        break;
+      default:
+        break;
+      }
+    }
+  }
+  return sum;
+}
 
 /**
  *
@@ -233,20 +260,7 @@ es_gumbo_node_textContent(duk_context *ctx)
 {
   es_gumbo_node_t *egn = es_get_native_obj(ctx, 0, &es_native_gumbo_node);
   const GumboNode *node = egn->node;
-  int num = 0;
-
-  if(node->type == GUMBO_NODE_ELEMENT || node->type == GUMBO_NODE_TEMPLATE) {
-    const GumboElement *e = &node->v.element;
-    for(int i = 0; i < e->children.length; i++) {
-      GumboNode *child = e->children.data[i];
-      if(child->type == GUMBO_NODE_TEXT ||
-         child->type == GUMBO_NODE_CDATA ||
-         child->type == GUMBO_NODE_COMMENT) {
-        duk_push_string(ctx, child->v.text.text);
-        num++;
-      }
-    }
-  }
+  int num = es_gumbo_node_textContent_r(ctx, node);
   if(num == 0)
     return 0;
   duk_concat(ctx, num);
