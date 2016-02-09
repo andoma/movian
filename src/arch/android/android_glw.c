@@ -134,7 +134,7 @@ Java_com_lonelycoder_mediaplayer_Core_glwDestroy(JNIEnv *env,
 
   glw_unload_universe(gr);
   glw_fini(gr);
-  free(gr);
+  glw_release_root(gr);
 }
 
 

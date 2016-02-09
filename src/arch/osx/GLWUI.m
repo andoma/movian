@@ -303,7 +303,7 @@ static prop_t *stored_nav;
     prop_destroy(stored_nav);
   stored_nav = gr->gr_prop_nav;
 
-  free(gr);
+  glw_release_root(gr);
 
   [title release];
 

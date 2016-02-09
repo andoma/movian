@@ -213,6 +213,8 @@ glw_init4(glw_root_t *gr,
   const char *skin = gconf.skin;
   prop_t *p;
 
+  atomic_set(&gr->gr_refcount, 1);
+
   if(gr->gr_prop_core == NULL)
     gr->gr_prop_core = prop_get_global();
 
@@ -337,7 +339,6 @@ glw_fini(glw_root_t *gr)
   prop_unsubscribe(gr->gr_scalesub);
   prop_unsubscribe(gr->gr_disable_screensaver_sub);
   prop_courier_destroy(gr->gr_courier);
-  hts_mutex_destroy(&gr->gr_mutex);
 
   /*
    * The view loader thread sometimes run with gr_mutex unlocked
@@ -371,6 +372,18 @@ glw_fini(glw_root_t *gr)
   rstr_release(gr->gr_pending_focus);
 }
 
+/**
+ *
+ */
+void
+glw_release_root(glw_root_t *gr)
+{
+  if(atomic_dec(&gr->gr_refcount))
+    return;
+
+  hts_mutex_destroy(&gr->gr_mutex);
+  free(gr);
+}
 
 /**
  *

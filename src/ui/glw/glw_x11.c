@@ -1350,7 +1350,7 @@ glw_x11_stop(void *aux)
   gx11->running = 0;
   hts_thread_join(&gx11->thread);
   prop_destroy(gr->gr_prop_ui);
-  free(gx11);
+  glw_release_root(gr);
   return nav;
 }
 

@@ -732,6 +732,8 @@ typedef struct glw_root {
   void (*gr_prop_dispatcher)(prop_courier_t *pc, int timeout);
   int gr_prop_maxtime;
 
+  atomic_t gr_refcount;
+
   int gr_keyboard_mode;
   int gr_skin_scale_adjustment;
   int gr_reduce_cpu;
@@ -1239,6 +1241,8 @@ int glw_init4(glw_root_t *gr,
               int flags);
 
 void glw_fini(glw_root_t *gr);
+
+void glw_release_root(glw_root_t *tr);
 
 void glw_load_universe(glw_root_t *gr);
 
