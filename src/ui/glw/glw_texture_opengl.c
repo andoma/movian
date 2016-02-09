@@ -81,10 +81,11 @@ glw_tex_backend_layout(glw_root_t *gr, glw_loadable_texture_t *glt)
 
   if(glt->glt_tex_width && glt->glt_tex_height) {
 
-    glTexImage2D(m, 0, glt->glt_format, glt->glt_tex_width, glt->glt_tex_height,
+    glTexImage2D(m, 0, glt->glt_internal_format,
+                 glt->glt_tex_width, glt->glt_tex_height,
 		 0, glt->glt_format, GL_UNSIGNED_BYTE, NULL);
 
-    glTexSubImage2D(m, 0, 0, 0, 
+    glTexSubImage2D(m, 0, 0, 0,
 		    glt->glt_xs, glt->glt_ys, 
 		    glt->glt_format, GL_UNSIGNED_BYTE,
 		    p);
@@ -96,7 +97,7 @@ glw_tex_backend_layout(glw_root_t *gr, glw_loadable_texture_t *glt)
     glt->glt_s = 1;
     glt->glt_t = 1;
 
-    glTexImage2D(m, 0, glt->glt_format, 
+    glTexImage2D(m, 0, glt->glt_internal_format, 
 		 glt->glt_xs, glt->glt_ys,
 		 0, glt->glt_format,
 		 GL_UNSIGNED_BYTE, p);
@@ -122,23 +123,32 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt, pixmap_t *pm)
 
   case PIXMAP_RGB24:
     glt->glt_format = GL_RGB;
+    glt->glt_internal_format = GL_RGB;
     size = pm->pm_width * pm->pm_height * 4;
     break;
-
 
   case PIXMAP_BGR32:
   case PIXMAP_RGBA:
     glt->glt_format = GL_RGBA;
+    glt->glt_internal_format = GL_RGBA;
     size = pm->pm_width * pm->pm_height * 4;
     break;
-    
+
+  case PIXMAP_BGRA:
+    glt->glt_format = GL_BGRA;
+    glt->glt_internal_format = GL_RGBA;
+    size = pm->pm_width * pm->pm_height * 4;
+    break;
+
   case PIXMAP_IA:
     glt->glt_format = GL_LUMINANCE_ALPHA;
+    glt->glt_internal_format = GL_LUMINANCE_ALPHA;
     size = pm->pm_width * pm->pm_height * 2;
     break;
 
   case PIXMAP_I:
     glt->glt_format = GL_LUMINANCE;
+    glt->glt_internal_format = GL_LUMINANCE;
     size = pm->pm_width * pm->pm_height;
     break;
   }
@@ -158,7 +168,7 @@ void
 glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex, 
 	       const pixmap_t *pm, int flags)
 {
-  int format;
+  int format, int_format;
   int m = GL_TEXTURE_2D;
 
   if(tex->textures[0] == 0) {
@@ -173,19 +183,24 @@ glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex,
   } else {
     glBindTexture(m, tex->textures[0]);
   }
-  
+
   switch(pm->pm_type) {
   case PIXMAP_BGR32:
   case PIXMAP_RGBA:
-    format     = GL_RGBA;
+    int_format = format = GL_RGBA;
+    break;
+
+  case PIXMAP_BGRA:
+    format = GL_BGRA;
+    int_format = GL_RGBA;
     break;
 
   case PIXMAP_RGB24:
-    format     = GL_RGB;
+    int_format = format = GL_RGB;
     break;
 
   case PIXMAP_IA:
-    format     = GL_LUMINANCE_ALPHA;
+    int_format = format = GL_LUMINANCE_ALPHA;
     break;
 
   default:
@@ -195,7 +210,7 @@ glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex,
   tex->width  = pm->pm_width;
   tex->height = pm->pm_height;
 
-  glTexImage2D(m, 0, format, pm->pm_width, pm->pm_height,
+  glTexImage2D(m, 0, int_format, pm->pm_width, pm->pm_height,
 	       0, format, GL_UNSIGNED_BYTE, pm->pm_data);
 }
 

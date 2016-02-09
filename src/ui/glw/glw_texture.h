@@ -75,6 +75,7 @@ typedef struct glw_loadable_texture {
   uint8_t glt_origin_type;
 
   int glt_format;
+  int glt_internal_format;
 
   float glt_s, glt_t;
   int16_t glt_tex_width;
