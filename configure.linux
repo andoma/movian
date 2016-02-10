@@ -105,6 +105,7 @@ enable timegm
 enable inotify
 enable realpath
 enable webkit
+enable librtmp
 #enable airplay -- not functional yet
 #enable libxrandr  -- code does not really work yet
 
@@ -509,7 +510,6 @@ fi
 # polarssl
 #
 if enabled polarssl; then
-    enable librtmp
     disable openssl
 fi
 
@@ -529,8 +529,6 @@ if enabled openssl; then
 	echo "To build with built-in version of polarssl, configure with --enable-polarssl"
 	die
     fi
-
-    enable librtmp
 fi
 
 
