@@ -580,7 +580,7 @@ tmdb_query_by_title_and_year0(void *db, const char *item_url,
 /**
  *
  */
-static const char *
+ __attribute__((unused)) static const char *
 result_to_str(int64_t rval, int cache_info)
 {
   switch(rval) {
