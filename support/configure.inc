@@ -437,6 +437,14 @@ gumbo_setup() {
 }
 
 
+ext_setup() {
+    libav_setup
+    rtmpdump_setup
+    xmp_setup
+    gumbo_setup
+}
+
+
 #
 #
 #

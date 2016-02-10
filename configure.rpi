@@ -6,10 +6,27 @@ CONFIGURE_POSTFIX="rpi"
 
 source support/configure.inc
 
+enable sqlite_internal
+enable glw_backend_opengl_es
+enable glw
+enable polarssl
+enable librtmp
+enable httpserver
+enable dvd
+enable libfreetype
+enable stdin
+enable realpath
+enable bspatch
+enable libcec
+enable avahi
+enable connman
+
 show_help(){
   common_help
   exit 1
 }
+
+[ -f project.config ] && source project.config
 
 for opt do
   optval="${opt#*=}"
@@ -34,19 +51,6 @@ CXX=${TOOLCHAIN}g++
 
 setup_env "$@"
 
-
-enable sqlite_internal
-enable glw_backend_opengl_es
-enable glw
-enable polarssl
-enable librtmp
-enable httpserver
-enable dvd
-enable libfreetype
-enable stdin
-enable realpath
-enable bspatch
-enable libcec
 
 LIBAV_CFLAGS="-I${EXT_INSTALL_DIR}/include"
 LIBAV_LDFLAGS="-L${EXT_INSTALL_DIR}/lib"
@@ -78,14 +82,13 @@ if [ -n "$SYSROOT" ]; then
     echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags gio-2.0`
     echo "Using gio:             `pkg-config --modversion gio-2.0`"
 
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs avahi-client`
-    echo >>${CONFIG_MAK} "CFLAGS_AVAHI += "`pkg-config --cflags avahi-client`
-    echo "Using AVAHI client:    `pkg-config --modversion avahi-client`"
-    enable avahi
+    if enabled avahi; then
+        echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs avahi-client`
+        echo >>${CONFIG_MAK} "CFLAGS_AVAHI += "`pkg-config --cflags avahi-client`
+        echo "Using AVAHI client:    `pkg-config --modversion avahi-client`"
+    fi
 
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lbz2"
-
-    enable connman
 
     if [ -z "$VCROOT" ]; then
 	VCROOT="${SYSROOT}/usr"
@@ -97,11 +100,7 @@ else
     freetype_setup --host=arm-linux-gnueabihf
 fi
 
-
-libav_setup
-rtmpdump_setup
-xmp_setup
-gumbo_setup
+ext_setup
 
 cat >> ${CONFIG_MAK} <<EOF
 CFLAGS_std +=  -fgnu89-inline

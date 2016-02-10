@@ -52,6 +52,10 @@ enable librtmp
 enable dvd
 enable fsevents
 enable webpopup
+enable libpthread
+enable zlib
+
+[ -f project.config ] && source project.config
 
 for opt do
   optval="${opt#*=}"
@@ -78,9 +82,6 @@ done
 
 
 setup_env "$@"
-
-enable libpthread
-enable zlib
 
 MACOSXSDK_CFLAGS="-mmacosx-version-min=10.8"
 MACOSXSDK_LDFLAGS="$MACOSXSDK_CFLAGS"
@@ -113,10 +114,7 @@ freetype_setup
 export -n CFLAGS
 
 LIBAV_ARCH_FLAGS="--disable-shared --enable-static"
-libav_setup
-rtmpdump_setup
-xmp_setup
-gumbo_setup
+ext_setup
 
 #
 # Some compatibility defines

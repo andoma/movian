@@ -29,6 +29,17 @@ show_help(){
   exit 1
 }
 
+enable sqlite_internal
+enable glw_backend_opengl_es
+enable glw
+#enable librtmp
+enable httpserver
+enable libfreetype
+enable stdin
+enable openssl
+
+[ -f project.config ] && source project.config
+
 for opt do
   optval="${opt#*=}"
   case "$opt" in
@@ -81,14 +92,6 @@ if [ ! -f "${CC}" ]; then
     ${NDK}/build/tools/make-standalone-toolchain.sh --platform=${ANDROID_API} --install-dir=${TOPDIR}/build.android/toolchain --toolchain=${ANDROID_EABI}
 fi
 
-enable sqlite_internal
-enable glw_backend_opengl_es
-enable glw
-#enable librtmp
-enable httpserver
-enable libfreetype
-enable stdin
-enable openssl
 
 bzip2_setup
 freetype_setup --host=arm-linux-gnueabihf
@@ -100,11 +103,8 @@ LIBAV_CFLAGS="-I${EXT_INSTALL_DIR}/include ${ARCH_CFLAGS}"
 LIBAV_LDFLAGS="-L${EXT_INSTALL_DIR}/lib  ${ARCH_LDFLAGS}"
 LIBAV_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=armv7 --target-os=android --enable-shared --disable-static"
 
-libav_setup
-rtmpdump_setup
-xmp_setup
+ext_setup
 libyuv_setup
-gumbo_setup
 
 cat >> ${CONFIG_MAK} <<EOF
 CFLAGS_arch = ${ARCH_CFLAGS}

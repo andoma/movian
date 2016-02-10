@@ -26,6 +26,25 @@ show_help(){
   exit 1
 }
 
+
+enable sqlite_internal
+enable libfreetype
+enable trex
+enable emu_thread_specifics
+enable glw
+enable polarssl
+enable httpserver
+enable sqlite_vfs
+enable sqlite_locking
+enable glw_backend_opengl_es
+
+
+disable xmp
+disable ftpserver
+disable netlog
+
+[ -f project.config ] && source project.config
+
 for opt do
   optval="${opt#*=}"
   case "$opt" in
@@ -70,22 +89,6 @@ setup_env "$@"
 LIBAV_CFLAGS="-I${EXT_INSTALL_DIR}/include"
 LIBAV_LDFLAGS="-L${EXT_INSTALL_DIR}/lib"
 LIBAV_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=i686 --target-os=linux --disable-asm --disable-inline-asm --disable-programs --disable-ssse3 --disable-mmx --disable-mmxext --disable-amd3dnow --disable-amd3dnowext"
-
-enable sqlite_internal
-enable libfreetype
-enable trex
-enable emu_thread_specifics
-enable glw
-enable polarssl
-enable httpserver
-enable sqlite_vfs
-enable sqlite_locking
-enable glw_backend_opengl_es
-
-
-disable xmp
-disable ftpserver
-disable netlog
 
 zlib_setup
 bzip2_setup
