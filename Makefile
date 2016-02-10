@@ -750,6 +750,12 @@ SRCS-$(CONFIG_GUMBO) += \
 ${BUILDDIR}/ext/gumbo-parser/%.o : CFLAGS = -Wall ${OPTFLAGS} -fstrict-aliasing -std=c99 -Wno-unused-variable
 
 ##############################################################
+# Dataroot
+##############################################################
+
+${BUILDDIR}/support/dataroot/%.o : CFLAGS = -O2
+
+##############################################################
 ##############################################################
 ##############################################################
 
@@ -785,7 +791,7 @@ MKBUNDLE = $(C)/support/mkbundle
 
 ifndef V
 ECHO   = printf "$(1)\t%s\n" $(2)
-BRIEF  = CC MKBUNDLE CXX STRIP
+BRIEF  = CC LINKER MKBUNDLE CXX STRIP
 MSG    = $@
 $(foreach VAR,$(BRIEF), \
     $(eval $(VAR) = @$$(call ECHO,$(VAR),$$(MSG)); $($(VAR))))
@@ -793,20 +799,17 @@ endif
 
 .PHONY:	clean distclean makever build-%
 
-${PROG}: $(OBJS) $(ALLDEPS)  support/dataroot/wd.c
-	$(CC) -o $@ $(OBJS) support/dataroot/wd.c $(LDFLAGS) ${LDFLAGS_cfg}
+${PROG}: $(OBJS) $(ALLDEPS)  ${BUILDDIR}/support/dataroot/wd.o
+	$(LINKER) -o $@ $(OBJS) ${BUILDDIR}/support/dataroot/wd.o $(LDFLAGS) ${LDFLAGS_cfg}
 
-${PROG}.bundle: $(OBJS) $(BUNDLE_OBJS) $(ALLDEPS)  support/dataroot/bundle.c
-	$(CC) -o $@ $(OBJS) support/dataroot/bundle.c $(BUNDLE_OBJS) $(LDFLAGS) ${LDFLAGS_cfg}
+${PROG}.bundle: $(OBJS) $(BUNDLE_OBJS) $(ALLDEPS) ${BUILDDIR}/support/dataroot/bundle.o
+	$(LINKER) -o $@ $(OBJS) ${BUILDDIR}/support/dataroot/bundle.o $(BUNDLE_OBJS) $(LDFLAGS) ${LDFLAGS_cfg}
 
-${PROG}.datadir: $(OBJS) $(ALLDEPS)  support/dataroot/datadir.c
-	$(CC) -o $@ $(OBJS) -iquote${BUILDDIR} support/dataroot/datadir.c $(LDFLAGS) ${LDFLAGS_cfg}
-
-${PROG}.osxapp: $(OBJS) $(ALLDEPS) support/dataroot/osxapp.c
-	$(CC) -o $@ $(OBJS) support/dataroot/osxapp.c $(LDFLAGS) ${LDFLAGS_cfg}
+${PROG}.datadir: $(OBJS) $(ALLDEPS) ${BUILDDIR}/support/dataroot/datadir.o
+	$(LINKER) -o $@ $(OBJS) ${BUILDDIR}/support/dataroot/datadir.o $(LDFLAGS) ${LDFLAGS_cfg}
 
 ${LIB}.so: $(OBJS) $(BUNDLE_OBJS) $(ALLDEPS)  support/dataroot/bundle.c
-	$(CC) -shared -o $@ $(OBJS) support/dataroot/bundle.c $(BUNDLE_OBJS) ${LDFLAGS_cfg}
+	$(LINKER) -shared -o $@ $(OBJS) support/dataroot/bundle.c $(BUNDLE_OBJS) ${LDFLAGS_cfg}
 
 .PHONY: ${BUILDDIR}/zipbundles/bundle.zip
 

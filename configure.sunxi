@@ -28,6 +28,7 @@ done
 [ -z "$TOOLCHAIN" ] && die_cause "--toolchain not specified"
 
 CC=${TOOLCHAIN}gcc
+LINKER=${TOOLCHAIN}gcc
 CXX=${TOOLCHAIN}g++
 
 setup_env "$@"

@@ -18,6 +18,7 @@ CONFIGURE_POSTFIX="ps3"
 source support/configure.inc
 TOOLCHAIN="${PS3DEV}/host/ppu/bin/ppu-"
 CC=${TOOLCHAIN}gcc
+LINKER=${TOOLCHAIN}gcc
 
 LIBAV_CFLAGS="-mminimal-toc -I${PSL1GHT}/target/include -B${PSL1GHT}/target/lib -B${PS3DEV}/host/ppu/lib -I${PS3DEV}/host/ppu/include -include ${TOPDIR}/support/nostrictansi.h"
 
