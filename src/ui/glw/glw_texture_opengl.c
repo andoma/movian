@@ -135,8 +135,13 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt, pixmap_t *pm)
     break;
 
   case PIXMAP_BGRA:
+#ifdef GL_EXT_texture_format_BGRA8888
+    glt->glt_format = GL_BGRA_EXT;
+    glt->glt_internal_format = GL_BGRA_EXT;
+#else
     glt->glt_format = GL_BGRA;
     glt->glt_internal_format = GL_RGBA;
+#endif
     size = pm->pm_width * pm->pm_height * 4;
     break;
 
@@ -191,8 +196,13 @@ glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex,
     break;
 
   case PIXMAP_BGRA:
+#ifdef GL_EXT_texture_format_BGRA8888
+    format = GL_BGRA_EXT;
+    int_format = GL_BGRA_EXT;
+#else
     format = GL_BGRA;
     int_format = GL_RGBA;
+#endif
     break;
 
   case PIXMAP_RGB24:
