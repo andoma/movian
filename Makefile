@@ -348,8 +348,6 @@ SRCS-$(CONFIG_AUDIOTEST) += src/audio2/audio_test.c
 # DVD
 ##############################################################
 SRCS-$(CONFIG_DVD)       += src/backend/dvd/dvd.c
-SRCS-$(CONFIG_DVD_LINUX) += src/backend/dvd/linux_dvd.c
-SRCS-$(CONFIG_DVD_WII)   += src/backend/dvd/wii_dvd.c
 
 ##############################################################
 # Bittorrent

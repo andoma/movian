@@ -28,8 +28,6 @@ CONFIG_LIST="
  libpthread
  zlib
  dvd
- dvd_linux
- dvd_wii
  glw
  glw_frontend_x11
  glw_frontend_wii

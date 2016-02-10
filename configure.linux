@@ -87,7 +87,6 @@ fatal() {
 enable libpthread
 enable zlib
 enable dvd
-enable dvd_linux
 enable libfreetype
 enable libfontconfig
 enable libpulse
