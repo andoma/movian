@@ -104,8 +104,8 @@ xmp_setup
 gumbo_setup
 
 cat >> ${CONFIG_MAK} <<EOF
-CFLAGS_cfg +=  -fgnu89-inline
-CFLAGS_cfg += -funwind-tables
+CFLAGS_std +=  -fgnu89-inline
+CFLAGS_std += -funwind-tables
 CFLAGS_cfg += -DOMX_SKIP64BIT
 CFLAGS_cfg += -DRPISTOS -DSTOS
 CFLAGS_cfg  += -I${VCROOT}/include
