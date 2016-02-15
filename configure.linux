@@ -120,6 +120,8 @@ for opt do
   ;;
   --cc=*) CC="$optval"
   ;;
+  --linker=*) LINKER="$optval"
+  ;;
   --arch=*) ARCH="$optval"
   ;;
   --glw-frontend=*) GLWFRONTEND="$optval"

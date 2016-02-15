@@ -44,7 +44,7 @@ CFLAGS = ${CFLAGS_std} ${OPTFLAGS}
 #PGFLAGS ?= -pg
 
 OPTFLAGS += ${PGFLAGS}
-LDFLAGS += ${PGFLAGS}
+LDFLAGS += ${PGFLAGS} ${OPTFLAGS}
 
 
 ##############################################################
