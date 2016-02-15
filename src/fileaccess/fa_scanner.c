@@ -228,7 +228,8 @@ static struct strtab postfixtab[] = {
   { "ttf",             CONTENT_FONT },
   { "otf",             CONTENT_FONT },
 
-  { "pdf",             CONTENT_UNKNOWN },
+  { "pdf",             CONTENT_DOCUMENT },
+
   { "nfo",             CONTENT_UNKNOWN },
   { "gz",              CONTENT_UNKNOWN },
   { "txt",             CONTENT_UNKNOWN },

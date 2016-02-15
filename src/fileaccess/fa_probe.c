@@ -90,6 +90,7 @@ static const uint8_t isosig[8] = {0x1, 0x43, 0x44, 0x30, 0x30, 0x31, 0x1, 0x0};
 static const uint8_t gifsig[6] = {'G', 'I', 'F', '8', '9', 'a'};
 static const uint8_t ttfsig[5] = {0,1,0,0,0};
 static const uint8_t otfsig[4] = {'O', 'T', 'T', 'O'};
+static const uint8_t pdfsig[] = {'%', 'P', 'D', 'F', '-'};
 
 
 /**
@@ -360,6 +361,12 @@ fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh,
   if(!memcmp(buf, pngsig, 8)) {
     /* PNG */
     md->md_contenttype = CONTENT_IMAGE;
+    return 1;
+  }
+
+  if(!memcmp(buf, pdfsig, sizeof(pdfsig))) {
+    /* PDF */
+    md->md_contenttype = CONTENT_DOCUMENT;
     return 1;
   }
 

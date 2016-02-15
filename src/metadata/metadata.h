@@ -73,6 +73,7 @@ typedef enum {
   CONTENT_PLUGIN      = 10,
   CONTENT_FONT        = 11,
   CONTENT_SHARE       = 12,
+  CONTENT_DOCUMENT    = 13,  // PDF etc
   CONTENT_num
 } contenttype_t;
 

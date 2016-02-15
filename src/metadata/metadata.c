@@ -163,6 +163,7 @@ static const char *types[] = {
   [CONTENT_PLUGIN]   = "plugin",
   [CONTENT_FONT]     = "font",
   [CONTENT_SHARE]    = "share",
+  [CONTENT_DOCUMENT] = "document",
 };
 
 
