@@ -18,6 +18,9 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 #pragma once
+
+#include "config.h"
+#if ENABLE_PLUGINS
 struct prop;
 
 void plugins_init(char **devplugins);
@@ -32,13 +35,5 @@ void plugins_reload_dev_plugin(void);
 
 void plugin_props_from_file(struct prop *prop, const char *zipfile);
 
-void plugin_add_static(const char *id, const char *category,
-		       const char *title, const char *icon,
-		       const char *synopsis,
-		       const char *description,
-		       void (*cb)(int enabled));
-
 void plugin_select_view(const char *plugin_id, const char *filename);
-
-struct htsmsg;
-struct htsmsg *plugins_get_installed_list(void);
+#endif

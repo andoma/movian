@@ -291,7 +291,7 @@ es_system_ip(duk_context *ctx)
     return 1;
 }
 
-
+#if ENABLE_PLUGINS
 /**
  *
  */
@@ -303,6 +303,7 @@ es_select_view(duk_context *ctx)
   plugin_select_view(rstr_get(ec->ec_id), filename);
   return 0;
 }
+#endif
 
 
 /**
@@ -312,7 +313,9 @@ static const duk_function_list_entry fnlist_misc[] = {
   { "cachePut",              es_cachePut, 4},
   { "cacheGet",              es_cacheGet, 2},
   { "systemIpAddress",       es_system_ip, 0},
+#if ENABLE_PLUGINS
   { "selectView",            es_select_view, 1},
+#endif
   { NULL, NULL, 0}
 };
 

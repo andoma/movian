@@ -104,6 +104,7 @@ CONFIG_LIST="
  netlog
  gumbo
  upgrade
+ plugins
 "
 
 
@@ -653,3 +654,4 @@ enable glw_settings
 enable netlog
 enable gumbo
 enable upgrade
+enable plugins

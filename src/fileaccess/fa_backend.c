@@ -226,10 +226,12 @@ file_open_file(prop_t *page, const char *url, fa_stat_t *fs,
     meta = NULL;
     break;
 
+#if ENABLE_PLUGINS
   case CONTENT_PLUGIN:
     prop_set_int(loading, 0);
     plugin_open_file(page, url);
     break;
+#endif
 
   default:
     nav_open_errorf(page, _("Can't handle content type %d"),

@@ -316,11 +316,11 @@ deep_probe(fa_dir_entry_t *fde, scanner_t *s)
 
       if(meta != NULL) {
         switch(fde->fde_type) {
-
+#if ENABLE_PLUGINS
         case CONTENT_PLUGIN:
           plugin_props_from_file(fde->fde_prop, rstr_get(fde->fde_url));
           break;
-	  
+#endif
         case CONTENT_FONT:
           fontstash_props_from_title(fde->fde_prop, rstr_get(fde->fde_url),
                                      rstr_get(fde->fde_filename));

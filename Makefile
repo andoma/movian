@@ -64,7 +64,6 @@ SRCS += src/main.c \
 	src/settings.c \
 	src/service.c \
 	src/notifications.c \
-	src/plugins.c \
 	src/upgrade.c \
 	src/blobcache_file.c \
 	src/i18n.c \
@@ -89,6 +88,8 @@ SRCS +=	src/media/media.c \
 	src/media/media_queue.c \
 	src/media/media_codec.c \
 	src/media/media_event.c \
+
+SRCS-${CONFIG_PLUGINS} += src/plugins.c
 
 SRCS-${CONFIG_MEDIA_SETTINGS} += src/media/media_settings.c
 

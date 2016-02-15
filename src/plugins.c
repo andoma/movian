@@ -1704,29 +1704,3 @@ plugin_unload_views(plugin_t *pl)
     free(pve);
   }
 }
-
-
-/**
- *
- */
-htsmsg_t *
-plugins_get_installed_list(void)
-{
-  htsmsg_t *m = htsmsg_create_map();
-  plugin_t *pl;
-
-  hts_mutex_lock(&plugin_mutex);
-
-  LIST_FOREACH(pl, &plugins, pl_link) {
-    if(!pl->pl_installed)
-      continue;
-
-    htsmsg_t *p = htsmsg_create_map();
-    if(pl->pl_inst_ver != NULL)
-      htsmsg_add_str(p, "v", pl->pl_inst_ver);
-    htsmsg_add_msg(m, pl->pl_id, p);
-  }
-
-  hts_mutex_unlock(&plugin_mutex);
-  return m;
-}

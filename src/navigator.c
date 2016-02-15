@@ -811,7 +811,9 @@ nav_reload_current(navigator_t *nav)
   if((np = nav->nav_page_current) == NULL)
     return;
 
+#if ENABLE_PLUGINS
   plugins_reload_dev_plugin();
+#endif
 
   TRACE(TRACE_INFO, "navigator", "Reloading %s", np->np_url);
 
