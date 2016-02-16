@@ -182,6 +182,23 @@ static int key_to_action[][3] = {
   {KEY_PROG3,              ACTION_SYSINFO},
 
 
+  // Ps3 controller  ( != https://movian.tv/projects/movian/wiki/Key_Mappings )
+  {BTN_TOP2,               ACTION_UP,               ACTION_MOVE_UP},
+  {BTN_BASE,               ACTION_DOWN,             ACTION_MOVE_DOWN},
+  {BTN_PINKIE,             ACTION_RIGHT,            ACTION_MOVE_RIGHT},
+  {BTN_BASE2,              ACTION_LEFT,             ACTION_MOVE_LEFT},
+  {BTN_TOP,                ACTION_RECORD},      // not mapped as in ps3 console
+  {BTN_BASE5,              ACTION_SKIP_BACKWARD},
+  {BTN_BASE6,              ACTION_SKIP_FORWARD},
+  {BTN_DEAD,               ACTION_ITEMMENU},
+  {BTN_THUMB,              ACTION_SYSINFO},
+  {BTN_THUMB2,             ACTION_SHOW_MEDIA_STATS},
+  {BTN_BASE4,              ACTION_VOLUME_UP},  // not mapped as in ps3 console
+  {BTN_BASE3,              ACTION_VOLUME_DOWN},// not mapped as in ps3 console
+  {BTN_TRIGGER_HAPPY1,     ACTION_HOME},       // new
+  {BTN_TRIGGER,            ACTION_STOP},       // not mapped as in ps3 console
+  {300,                    ACTION_MENU},
+  {302,                    ACTION_ACTIVATE},
   {0,0}
 };
 
@@ -288,6 +305,11 @@ dd_read(de_dev_t *dd)
 
   case KEY_F1 ... KEY_F10:
     e = event_from_Fkey(1 + ie.code - KEY_F1, shift);
+    break;
+
+  case 301: // PS3 controller
+    e = event_create_action_multi((const action_type_t[]){
+        ACTION_BS, ACTION_NAV_BACK}, 2);
     break;
 
   default:
