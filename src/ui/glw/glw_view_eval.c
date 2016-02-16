@@ -56,11 +56,13 @@ typedef struct glw_prop_sub_pending {
 TAILQ_HEAD(glw_prop_sub_pending_queue, glw_prop_sub_pending);
 
 
-#define GPS_VALUE   2
-#define GPS_CLONER  3
-#define GPS_COUNTER 4
-#define GPS_VECTORIZER 5
-#define GPS_EVENT_INJECTOR 6
+enum {
+  GPS_VALUE,
+  GPS_CLONER,
+  GPS_COUNTER,
+  GPS_VECTORIZER,
+  GPS_EVENT_INJECTOR,
+};
 
 /**
  *
