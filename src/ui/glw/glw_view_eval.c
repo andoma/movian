@@ -60,6 +60,7 @@ TAILQ_HEAD(glw_prop_sub_pending_queue, glw_prop_sub_pending);
 #define GPS_CLONER  3
 #define GPS_COUNTER 4
 #define GPS_VECTORIZER 5
+#define GPS_EVENT_INJECTOR 6
 
 /**
  *
@@ -217,6 +218,7 @@ glw_prop_subscription_destroy_list(glw_root_t *gr, struct glw_prop_sub_list *l)
     switch(gps->gps_type) {
     case GPS_VALUE:
     case GPS_COUNTER:
+    case GPS_EVENT_INJECTOR:
       break;
 
     case GPS_CLONER:
@@ -2368,7 +2370,21 @@ prop_callback_vectorizer(void *opaque, prop_event_t event, ...)
 }
 
 
+/**
+ * Special prop callback that receive events and forward it to current widget
+ */
+static void
+prop_callback_event_injector(void *opaque, prop_event_t event, ...)
+{
+  glw_prop_sub_t *gps = opaque;
+  va_list ap;
 
+  if(event == PROP_EXT_EVENT) {
+    va_start(ap, event);
+    glw_event_to_widget(gps->gps_widget, va_arg(ap, event_t *));
+    va_end(ap);
+  }
+}
 /**
  * Transform a property reference (a chain of names) into
  * a resolved subscription.
@@ -2439,6 +2455,12 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
     TAILQ_INIT(&sv->sv_elements);
     cb = prop_callback_vectorizer;
     break;
+
+  case GPS_EVENT_INJECTOR:
+    gps = calloc(1, sizeof(glw_prop_sub_t));
+    cb = prop_callback_event_injector;
+    break;
+
 
   default:
     abort();
@@ -7028,6 +7050,22 @@ glwf_timeAgo(glw_view_eval_context_t *ec, struct token *self,
 }
 
 
+/**
+ *
+ */
+static int
+glwf_inject_events(glw_view_eval_context_t *ec, struct token *self,
+                   token_t **argv, unsigned int argc)
+{
+  token_t *a = argv[0];
+  if((a = token_resolve_ex(ec, a, GPS_EVENT_INJECTOR)) == NULL)
+    return -1;
+  eval_push(ec, a);
+  return 0;
+}
+
+
+
 
 #ifndef NDEBUG
 /**
@@ -7134,6 +7172,7 @@ static const token_func_t funcvec[] = {
   {"eventWithProp", 2, glwf_eventWithProp},
   {"timeAgo", 1, glwf_timeAgo},
   {"lookup", 2, glwf_lookup, glwf_null_ctor, glwf_lookup_dtor},
+  {"injectEventsFrom", 1, glwf_inject_events},
 #ifndef NDEBUG
   {"dumpDynamicStatements", 0, glwf_dumpdynamicstatements},
 #endif
