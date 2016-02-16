@@ -81,7 +81,6 @@ fi
 TOOLCHAIN=${PEPPER}/toolchain/${HOSTENV}_pnacl/bin/pnacl-
 
 CC=${TOOLCHAIN}clang
-LINKER=${TOOLCHAIN}clang
 FINALIZE=${TOOLCHAIN}finalize
 CXX=${TOOLCHAIN}clang++
 

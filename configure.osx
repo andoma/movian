@@ -22,7 +22,6 @@ ARCH=`uname -m`
 MACOSXTARGET=""
 MACOSXSDK=""
 CC=cc
-LINKER=cc
 CXX=c++
 
 show_help(){
