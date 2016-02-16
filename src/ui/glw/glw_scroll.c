@@ -356,3 +356,23 @@ glw_scroll_handle_scroll(glw_scroll_control_t *gsc, glw_t *w, glw_scroll_t *gs)
     glw_signal0(w, GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE, c);
   }
 }
+
+
+/**
+ *
+ */
+int
+glw_scroll_handle_event(glw_scroll_control_t *gs,
+                        glw_t *w, event_t *e)
+{
+  if(event_is_type(e, EVENT_SCROLL)) {
+    event_scroll_t *es = (event_scroll_t *)e;
+
+    gs->bottom_anchored = 0;
+    gs->target_pos += es->dY;
+    w->glw_flags |= GLW_UPDATE_METRICS;
+    glw_schedule_refresh(w->glw_root, 0);
+    return 1;
+  }
+  return 0;
+}
