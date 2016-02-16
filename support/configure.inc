@@ -536,8 +536,8 @@ finalize() {
 
     cat >>${CONFIG_MAK} <<EOF
 CC=$CC
-LINKER=$LINKER
 CXX=$CXX
+LINKER:=$LINKER
 CFLAGS_cfg  += -I${EXT_INSTALL_DIR}/include
 LDFLAGS_cfg += -L${EXT_INSTALL_DIR}/lib
 STRIP=${TOOLCHAIN}strip
