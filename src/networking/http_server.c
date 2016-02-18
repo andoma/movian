@@ -37,7 +37,7 @@
 #include "upnp/upnp.h"
 
 static LIST_HEAD(, http_path) http_paths;
-LIST_HEAD(http_connection_list, http_connection); 
+LIST_HEAD(http_connection_list, http_connection);
 int http_server_port;
 
 /**
@@ -85,7 +85,7 @@ struct http_connection {
 
   char *hc_url;
   char *hc_url_orig;
-  
+
   char hc_keep_alive;
   char hc_no_output;
 
@@ -192,7 +192,7 @@ http_add_websocket(const char *path,
   hp->hp_ws_fini = fini;
   hp->hp_leaf = 2;
   LIST_INSERT_HEAD(&http_paths, hp, hp_link);
-  return hp;  
+  return hp;
 }
 
 /**
@@ -282,8 +282,8 @@ http_rc2str(int code)
  * Transmit a HTTP reply
  */
 static void
-http_send_header(http_connection_t *hc, int rc, const char *content, 
-		 int contentlen, const char *encoding, const char *location, 
+http_send_header(http_connection_t *hc, int rc, const char *content,
+		 int contentlen, const char *encoding, const char *location,
 		 int maxage, const char *range)
 {
   htsbuf_queue_t hdrs;
@@ -295,7 +295,7 @@ http_send_header(http_connection_t *hc, int rc, const char *content,
 
   htsbuf_queue_init(&hdrs, 0);
 
-  htsbuf_qprintf(&hdrs, "%s %d %s\r\n", 
+  htsbuf_qprintf(&hdrs, "%s %d %s\r\n",
 		 val2str(hc->hc_version, HTTP_versiontab),
 		 rc, http_rc2str(rc));
 
@@ -315,11 +315,11 @@ http_send_header(http_connection_t *hc, int rc, const char *content,
 
     htsbuf_qprintf(&hdrs, "Expires: %s\r\n",
 		   http_asctime(t, date, sizeof(date)));
-      
+
     htsbuf_qprintf(&hdrs, "Cache-Control: max-age=%d\r\n", maxage);
   }
 
-  htsbuf_qprintf(&hdrs, "Connection: %s\r\n", 
+  htsbuf_qprintf(&hdrs, "Connection: %s\r\n",
 		 hc->hc_keep_alive ? "Keep-Alive" : "Close");
 
   if(encoding != NULL)
@@ -335,9 +335,9 @@ http_send_header(http_connection_t *hc, int rc, const char *content,
 
   LIST_FOREACH(hh, &hc->hc_response_headers, hh_link)
     htsbuf_qprintf(&hdrs, "%s: %s\r\n", hh->hh_key, hh->hh_value);
-  
+
   htsbuf_qprintf(&hdrs, "\r\n");
-  
+
   htsbuf_appendq(&hc->hc_output, &hdrs);
 }
 
@@ -357,7 +357,7 @@ http_send_raw(http_connection_t *hc, int rc, const char *rctxt,
 #endif
   htsbuf_queue_init(&hdrs, 0);
 
-  htsbuf_qprintf(&hdrs, "%s %d %s\r\n", 
+  htsbuf_qprintf(&hdrs, "%s %d %s\r\n",
 		 val2str(hc->hc_version, HTTP_versiontab),
 		 rc, rctxt);
 
@@ -368,7 +368,7 @@ http_send_raw(http_connection_t *hc, int rc, const char *rctxt,
   }
 
   htsbuf_qprintf(&hdrs, "\r\n");
-  
+
   htsbuf_appendq(&hc->hc_output, &hdrs);
 
   if(output != NULL) {
@@ -385,7 +385,7 @@ http_send_raw(http_connection_t *hc, int rc, const char *rctxt,
  * Transmit a HTTP reply
  */
 int
-http_send_reply(http_connection_t *hc, int rc, const char *content, 
+http_send_reply(http_connection_t *hc, int rc, const char *content,
 		const char *encoding, const char *location, int maxage,
 		htsbuf_queue_t *output)
 {
@@ -430,7 +430,7 @@ http_error(http_connection_t *hc, int error, const char *fmt, ...)
 	*extra ? " -- " : "", extra),
 
 
-    htsbuf_qprintf(&hq, 
+    htsbuf_qprintf(&hq,
 		   "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\r\n"
 		   "<HTML><HEAD>\r\n"
 		   "<TITLE>%d %s</TITLE>\r\n"
@@ -593,7 +593,7 @@ http_cmd_start_websocket(http_connection_t *hc, const http_path_t *hp)
 
   http_send_raw(hc, 101, "Switching Protocols", &headers, NULL);
   hc->hc_state = HCS_WEBSOCKET;
- 
+
   hc->hc_path = hp;
   return 0;
 }
@@ -771,7 +771,7 @@ http_handle_request(http_connection_t *hc, htsbuf_queue_t *q)
   default:
     http_error(hc, HTTP_NOT_IMPLEMENTED, NULL);
     return 0;
-    
+
   case HTTP_CMD_POST:
     return http_cmd_post(hc, q);
 
