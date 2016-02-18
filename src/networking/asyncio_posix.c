@@ -34,11 +34,6 @@
 #include "prop/prop.h"
 #include "misc/minmax.h"
 
-#define ASYNCIO_READ            0x1
-#define ASYNCIO_WRITE           0x2
-#define ASYNCIO_ERROR           0x4
-#define ASYNCIO_TIMEOUT         0x8
-
 LIST_HEAD(asyncio_fd_list, asyncio_fd);
 LIST_HEAD(asyncio_worker_list, asyncio_worker);
 LIST_HEAD(asyncio_timer_list, asyncio_timer);
@@ -310,6 +305,20 @@ af_release(asyncio_fd_t *af)
   free(af);
 }
 
+
+/**
+ *
+ */
+static int
+events_to_poll(int events)
+{
+  return
+    (events & ASYNCIO_READ  ? POLLIN            : 0) |
+    (events & ASYNCIO_WRITE ? POLLOUT           : 0) |
+    (events & ASYNCIO_ERROR ? (POLLHUP|POLLERR) : 0);
+}
+
+
 /**
  *
  */
@@ -346,9 +355,14 @@ asyncio_dopoll(void)
       }
       timeout = MIN(timeout, (af->af_timeout - async_now + 999) / 1000);
     }
-  
+
     fds[n].fd = af->af_fd;
-    fds[n].events = af->af_poll_events;
+    if(af->af_ext_events & ASYNCIO_DYNAMIC) {
+      fds[n].events = events_to_poll(af->af_callback(af, af->af_opaque,
+                                                     ASYNCIO_DYNAMIC, 0));
+    } else {
+      fds[n].events = af->af_poll_events;
+    }
     fds[n].revents = 0;
     afds[n] = af;
 
@@ -430,10 +444,7 @@ asyncio_set_events(asyncio_fd_t *af, int events)
   asyncio_verify_thread();
   af->af_ext_events = events;
 
-  af->af_poll_events =
-    (events & ASYNCIO_READ  ? POLLIN            : 0) |
-    (events & ASYNCIO_WRITE ? POLLOUT           : 0) |
-    (events & ASYNCIO_ERROR ? (POLLHUP|POLLERR) : 0);
+  af->af_poll_events = events_to_poll(events);
 }
 
 
@@ -512,16 +523,16 @@ asyncio_set_timeout_delta_sec(asyncio_fd_t *af, int delta)
 /**
  *
  */
-static void
+static int
 asyncio_handle_pipe(asyncio_fd_t *af, void *opaque, int event, int error)
 {
   char x;
   if(read(asyncio_pipe[0], &x, 1) != 1)
-    return;
+    return 0;
 
   if(x == 0) {
     prop_courier_poll(opaque);
-    return;
+    return 0;
   }
 
   if(x == 1) {
@@ -538,7 +549,7 @@ asyncio_handle_pipe(asyncio_fd_t *af, void *opaque, int event, int error)
       at->at_fn(at->at_aux);
       free(at);
     }
-    return;
+    return 0;
   }
 
   asyncio_worker_t *aw;
@@ -552,6 +563,7 @@ asyncio_handle_pipe(asyncio_fd_t *af, void *opaque, int event, int error)
 
   if(aw != NULL)
     aw->fn();
+  return 0;
 }
 
 
@@ -652,7 +664,7 @@ asyncio_run_task(void (*fn)(void *aux), void *aux)
 /**
  *
  */
-static void
+static int
 asyncio_tcp_accept(asyncio_fd_t *af, void *opaque, int events, int error)
 {
   assert(events & ASYNCIO_READ);
@@ -668,7 +680,7 @@ asyncio_tcp_accept(asyncio_fd_t *af, void *opaque, int events, int error)
     TRACE(TRACE_ERROR, "TCP", "%s: Accept error: %s",
           af->af_name, strerror(errno));
     sleep(1);
-    return;
+    return 0;
   }
 
   val = 1;
@@ -702,6 +714,7 @@ asyncio_tcp_accept(asyncio_fd_t *af, void *opaque, int events, int error)
   net_remote_addr_from_fd(&remote, fd);
 
   af->af_accept_callback(af->af_opaque, fd, &local, &remote);
+  return 0;
 }
 
 
@@ -847,12 +860,12 @@ do_read(asyncio_fd_t *af)
 /**
  *
  */
-static void
+static int
 asyncio_tcp_connected(asyncio_fd_t *af, void *opaque, int events, int error)
 {
   if(events & ASYNCIO_TIMEOUT) {
     af->af_error_callback(af->af_opaque, "Connection timed out");
-    return;
+    return 0;
   }
 
   if(events & ASYNCIO_ERROR) {
@@ -860,20 +873,20 @@ asyncio_tcp_connected(asyncio_fd_t *af, void *opaque, int events, int error)
     snprintf(buf, sizeof(buf), "%s", strerror(error));
     af->af_timeout = 0;
     af->af_error_callback(af->af_opaque, buf);
-    return;
+    return 0;
   }
 
   if(events & ASYNCIO_READ) {
     af->af_timeout = 0;
     do_read(af);
-    return;
+    return 0;
   }
 
   if(events & ASYNCIO_WRITE) {
 
     if(af->af_connected) {
       do_write(af);
-      return;
+      return 0;
     }
 
     af->af_timeout = 0;
@@ -885,7 +898,7 @@ asyncio_tcp_connected(asyncio_fd_t *af, void *opaque, int events, int error)
     if(getsockopt(af->af_fd, SOL_SOCKET, SO_ERROR, (void *)&err, &errlen)) {
       TRACE(TRACE_ERROR, "ASYNCIO", "getsockopt failed for %s 0x%x -- %d",
             af->af_name, af->af_fd, errno);
-      return;
+      return 0;
     }
 
     if(err) {
@@ -898,6 +911,7 @@ asyncio_tcp_connected(asyncio_fd_t *af, void *opaque, int events, int error)
       do_write(af);
     }
   }
+  return 0;
 }
 
 
@@ -1148,7 +1162,7 @@ static uint8_t udp_recv_buf[8192];
 /**
  *
  */
-static void
+static int
 asyncio_udp_event(asyncio_fd_t *af, void *opaque, int events, int error)
 {
   assert(events & ASYNCIO_READ);
@@ -1160,13 +1174,14 @@ asyncio_udp_event(asyncio_fd_t *af, void *opaque, int events, int error)
   int r = recvfrom(af->af_fd, &udp_recv_buf, sizeof(udp_recv_buf), 0,
 		   (struct sockaddr *)&sin, &sl);
   if(r <= 0)
-    return;
+    return 0;
   net_addr_t na = {0};
 
   na.na_family = 4;
   na.na_port = ntohs(sin.sin_port);
   memcpy(na.na_addr, &sin.sin_addr, 4);
   af->af_udp_callback(opaque, udp_recv_buf, r, &na);
+  return 0;
 }
 
 

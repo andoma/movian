@@ -89,13 +89,14 @@ net_get_interfaces(void)
 
 static int netlink_fd;
 
-static void
+static int
 routesocket_input(asyncio_fd_t *af, void *opaque, int event, int error)
 {
   char buf[4096];
 
   if(read(netlink_fd, buf, sizeof(buf))) {}
   asyncio_trig_network_change();
+  return 0;
 }
 
 
@@ -111,7 +112,7 @@ routesocket_init(void)
   netlink_fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
   bind(netlink_fd, (struct sockaddr *) &sa, sizeof(sa));
 
-  asyncio_add_fd(netlink_fd, 0x1, routesocket_input, NULL, "netlink");
+  asyncio_add_fd(netlink_fd, ASYNCIO_READ, routesocket_input, NULL, "netlink");
 }
 
 INITME(INIT_GROUP_ASYNCIO, routesocket_init, NULL, 0);

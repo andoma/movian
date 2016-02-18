@@ -33,8 +33,8 @@ extern struct prop_courier *asyncio_courier;
 
 typedef struct asyncio_fd asyncio_fd_t;
 
-typedef void (asyncio_fd_callback_t)(asyncio_fd_t *af, void *opaque, int event,
-				     int error);
+typedef int (asyncio_fd_callback_t)(asyncio_fd_t *af, void *opaque, int event,
+                                    int error);
 
 typedef void (asyncio_udp_callback_t)(void *opaque,
 				      const void *data,
@@ -47,10 +47,23 @@ void asyncio_init_early(void);
 
 void asyncio_start(void);
 
-// Non-portable
+/*************************************************************************
+ * Non portable API for direct manipulation of fds
+ *************************************************************************/
+#define ASYNCIO_READ            0x1
+#define ASYNCIO_WRITE           0x2
+#define ASYNCIO_ERROR           0x4
+#define ASYNCIO_TIMEOUT         0x8
+#define ASYNCIO_DYNAMIC         0x10 // Use callback to get events to wait for
+
 asyncio_fd_t *asyncio_add_fd(int fd, int events,
                              asyncio_fd_callback_t *cb, void *opaque,
                              const char *name);
+
+
+/*************************************************************************
+ *
+ *************************************************************************/
 
 void asyncio_del_fd(asyncio_fd_t *af);
 

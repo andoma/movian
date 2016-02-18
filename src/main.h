@@ -310,6 +310,9 @@ typedef struct gconf {
   char proxy_host[64];
   uint16_t proxy_port;
 
+  const char *http_server_ssl_key;
+  const char *http_server_ssl_crt;
+
   char system_name[64];
 
   char device_id[64];
