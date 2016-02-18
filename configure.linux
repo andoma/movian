@@ -26,7 +26,6 @@ mandir="\${prefix}/share/man"
 datadir="\${prefix}/share/showtime"
 libdir="\${prefix}/lib/showtime"
 CC=cc
-LINKER=cc
 CXX=c++
 
 show_help(){
@@ -119,8 +118,6 @@ for opt do
   --help) show_help
   ;;
   --cc=*) CC="$optval"
-  ;;
-  --linker=*) LINKER="$optval"
   ;;
   --arch=*) ARCH="$optval"
   ;;

@@ -73,7 +73,6 @@ fi
 
 TOOLCHAIN=${TOPDIR}/build.android/toolchain/bin/arm-linux-androideabi-
 CC=${TOOLCHAIN}gcc
-LINKER=${TOOLCHAIN}gcc
 CXX=${TOOLCHAIN}g++
 
 setup_env "$@"
