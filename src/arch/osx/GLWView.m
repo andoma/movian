@@ -163,9 +163,6 @@ glw_in_fullwindow(void *opaque, int val)
  */
 - (void)autoHideCursor
 {
-  if(!in_full_window)
-    return;
-
   if(cursor_hidden)
     return;
 
@@ -532,6 +529,10 @@ glw_in_fullwindow(void *opaque, int val)
 - (void) resignKeyWindow {
   is_key_window = NO;
   [self showCursor];
+
+  glw_pointer_event_t gpe = {0};
+  gpe.type = GLW_POINTER_GONE;
+  glw_pointer_event(gr, &gpe);
 }
 
 /**
