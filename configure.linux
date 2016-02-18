@@ -119,6 +119,8 @@ for opt do
   ;;
   --cc=*) CC="$optval"
   ;;
+  --cxx=*) CXX="$optval"
+  ;;
   --arch=*) ARCH="$optval"
   ;;
   --glw-frontend=*) GLWFRONTEND="$optval"
