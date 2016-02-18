@@ -17,9 +17,5 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
-#ifndef SSDP_H__
-#define SSDP_H__
-
-void ssdp_init(const char *uuid);
-
-#endif // SSDP_H__
+#pragma once
+void ssdp_init(const char *uuid, int http_server_port);

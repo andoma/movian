@@ -226,7 +226,7 @@ send_cm_scpd(http_connection_t *hc, const char *remain, void *opaque,
  *
  */
 void
-upnp_init(void)
+upnp_init(int http_server_port)
 {
   extern upnp_local_service_t upnp_AVTransport_2;
   extern upnp_local_service_t upnp_RenderingControl_2;
@@ -283,7 +283,7 @@ upnp_init(void)
 		&upnp_AVTransport_2, upnp_subscribe, 1);
 
 
-  ssdp_init(upnp_uuid);
+  ssdp_init(upnp_uuid, http_server_port);
 
   upnp_event_init();
 }

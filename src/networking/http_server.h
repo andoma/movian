@@ -17,8 +17,7 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
-#ifndef HTTP_SERVER_H__
-#define HTTP_SERVER_H__
+#pragma once
 
 #include "main.h"
 #include "htsmsg/htsbuf.h"
@@ -85,7 +84,3 @@ void http_set_response_hdr(http_connection_t *hc, const char *name,
 			   const char *value);
 
 void http_req_args_fill_htsmsg(http_connection_t* hc, htsmsg_t* msg);
-
-extern int http_server_port; // XXX
-
-#endif // HTTP_SERVER_H__

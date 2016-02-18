@@ -39,6 +39,7 @@
 
 
 static char *ssdp_uuid;
+static int http_server_port;
 
 /**
  *
@@ -485,8 +486,9 @@ ssdp_shutdown(void *opaque, int retcode)
  *
  */
 void
-ssdp_init(const char *uuid)
+ssdp_init(const char *uuid, int http_server_port0)
 {
+  http_server_port = http_server_port0;
   shutdown_hook_add(ssdp_shutdown, NULL, 1);
   ssdp_uuid = strdup(uuid);
   asyncio_register_for_network_changes(ssdp_netif_update);

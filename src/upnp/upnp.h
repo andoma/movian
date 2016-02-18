@@ -140,7 +140,7 @@ typedef struct upnp_local_service {
 
 
 
-void upnp_init(void);
+void upnp_init(int http_server_port);
 
 void upnp_add_device(const char *url, const char *type, int maxage);
 
