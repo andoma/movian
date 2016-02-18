@@ -510,21 +510,22 @@ ppc_ws_input_notify(prop_proxy_connection_t *ppc, const uint8_t *data, int len)
 /**
  *
  */
-static void
+static int
 ppc_ws_input(void *opaque, int opcode, uint8_t *data, int len)
 {
   prop_proxy_connection_t *ppc = opaque;
 
   if(opcode != 2)
-    return;
+    return 1;
 
   if(len < 1)
-    return;
+    return 1;
   switch(data[0]) {
   case STPP_CMD_NOTIFY:
     ppc_ws_input_notify(ppc, data + 1, len - 1);
     break;
   }
+  return 0;
 }
 
 
@@ -551,15 +552,8 @@ ppc_input(void *opaque, htsbuf_queue_t *q)
     free(line);
   }
 
-  while(1) {
-    int r = websocket_parse(q, ppc_ws_input, ppc, &ppc->ppc_ws);
-    if(r == 1) { // Bad data
-      ppc_disconnect(ppc);
-      break;
-    }
-    if(r == 0)
-      break;
-  }
+  if(websocket_parse(q, ppc_ws_input, ppc, &ppc->ppc_ws))
+    ppc_disconnect(ppc);
 }
 
 

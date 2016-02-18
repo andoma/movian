@@ -28,7 +28,13 @@ typedef struct websocket_state {
 
 void websocket_append_hdr(struct htsbuf_queue *q, int opcode, size_t len);
 
+
+/**
+ * Return-values
+ *  0 - Not enough data in input buffer, call again when more is available
+ *  1 - Fatal error, disconnect
+ */
 int websocket_parse(struct htsbuf_queue *q,
-                    void (*cb)(void *opaque, int opcode,
-                               uint8_t *data, int len),
+                    int (*cb)(void *opaque, int opcode,
+                              uint8_t *data, int len),
                     void *opaque, websocket_state_t *state);

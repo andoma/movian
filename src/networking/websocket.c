@@ -59,81 +59,87 @@ websocket_append_hdr(htsbuf_queue_t *q, int opcode, size_t len)
  */
 int
 websocket_parse(htsbuf_queue_t *q,
-                void (*cb)(void *opaque, int opcode, uint8_t *data, int len),
+                int (*cb)(void *opaque, int opcode, uint8_t *data, int len),
                 void *opaque, websocket_state_t *ws)
 {
   uint8_t hdr[14]; // max header length
-  int p = htsbuf_peek(q, &hdr, 14);
-  const uint8_t *m;
+  while(1) {
+    int p = htsbuf_peek(q, &hdr, 14);
+    const uint8_t *m;
 
-  if(p < 2)
-    return 0;
-  uint8_t fin = hdr[0] & 0x80;
-  int opcode  = hdr[0] & 0xf;
-  int64_t len = hdr[1] & 0x7f;
-  int hoff = 2;
-  if(len == 126) {
-    if(p < 4)
+    if(p < 2)
       return 0;
-    len = hdr[2] << 8 | hdr[3];
-    hoff = 4;
-  } else if(len == 127) {
-    if(p < 10)
+    uint8_t fin = hdr[0] & 0x80;
+    int opcode  = hdr[0] & 0xf;
+    int64_t len = hdr[1] & 0x7f;
+    int hoff = 2;
+    if(len == 126) {
+      if(p < 4)
+        return 0;
+      len = hdr[2] << 8 | hdr[3];
+      hoff = 4;
+    } else if(len == 127) {
+      if(p < 10)
+        return 0;
+      len = rd64_be(hdr + 2);
+      hoff = 10;
+    }
+
+    if(hdr[1] & 0x80) {
+      if(p < hoff + 4)
+        return 0;
+      m = hdr + hoff;
+
+      hoff += 4;
+    } else {
+      m = NULL;
+    }
+
+    if(q->hq_size < hoff + len)
       return 0;
-    len = rd64_be(hdr + 2);
-    hoff = 10;
-  }
 
-  if(hdr[1] & 0x80) {
-    if(p < hoff + 4)
-      return 0;
-    m = hdr + hoff;
+    htsbuf_drop(q, hoff);
 
-    hoff += 4;
-  } else {
-    m = NULL;
-  }
+    if(opcode & 0x8) {
+      // Ctrl frame
+      uint8_t *p = mymalloc(len);
+      if(p == NULL)
+        return 1;
 
-  if(q->hq_size < hoff + len)
-    return 0;
+      htsbuf_read(q, p, len);
+      if(m != NULL) for(int i = 0; i < len; i++) p[i] ^= m[i&3];
 
-  htsbuf_drop(q, hoff);
+      int err = cb(opaque, opcode, p, len);
+      free(p);
+      if(!err)
+        continue;
+      return 1;
+    }
 
-  if(opcode & 0x8) {
-    // Ctrl frame
-    uint8_t *p = mymalloc(len);
-    if(p == NULL)
+    ws->packet = myrealloc(ws->packet, ws->packet_size + len+1);
+    if(ws->packet == NULL)
       return 1;
 
-    htsbuf_read(q, p, len);
-    if(m != NULL) for(int i = 0; i < len; i++) p[i] ^= m[i&3];
+    uint8_t *d = ws->packet + ws->packet_size;
+    d[len] = 0;
+    htsbuf_read(q, d, len);
 
-    cb(opaque, opcode, p, len);
-    free(p);
-    return -1;
-  }
+    if(m != NULL) for(int i = 0; i < len; i++) d[i] ^= m[i&3];
 
-  ws->packet = myrealloc(ws->packet, ws->packet_size + len+1);
-  if(ws->packet == NULL)
-    return 1;
+    if(opcode != 0)
+      ws->opcode = opcode;
 
-  uint8_t *d = ws->packet + ws->packet_size;
-  d[len] = 0;
-  htsbuf_read(q, d, len);
+    ws->packet_size += len;
 
+    if(!fin)
+      continue;
 
-  if(m != NULL) for(int i = 0; i < len; i++) d[i] ^= m[i&3];
-
-  if(opcode != 0)
-    ws->opcode = opcode;
-
-  ws->packet_size += len;
-
-  if(fin) {
-    cb(opaque, ws->opcode, ws->packet, ws->packet_size);
+    int err = cb(opaque, ws->opcode, ws->packet, ws->packet_size);
     ws->packet_size = 0;
+    if(!err)
+      continue;
+    return 1;
   }
-  return -1;
 }
 
 

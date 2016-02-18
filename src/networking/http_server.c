@@ -845,14 +845,21 @@ websocket_sendq(http_connection_t *hc, int opcode, htsbuf_queue_t *hq)
 /**
  *
  */
-static void
+static int
 websocket_input(void *opaque, int opcode, uint8_t *data, int len)
 {
   http_connection_t *hc = opaque;
-  if(opcode == 9)
+
+  switch(opcode) {
+  case 8:
+    return 1;
+  case 9:
     websocket_send(hc, 10, data, len);
-  else
+    return 0;
+  default:
     hc->hc_path->hp_ws_data(hc, opcode, data, len, hc->hc_opaque);
+    return 0;
+  }
 }
 
 /**
@@ -863,7 +870,7 @@ http_handle_input(http_connection_t *hc, htsbuf_queue_t *q)
 {
   char *buf;
   char *argv[3], *c;
-  int n, r;
+  int n;
 
   while(1) {
 
@@ -953,9 +960,7 @@ http_handle_input(http_connection_t *hc, htsbuf_queue_t *q)
       break;
 
     case HCS_WEBSOCKET:
-      if((r = websocket_parse(q, websocket_input, hc, &hc->hc_ws)) != -1)
-	return r;
-      break;
+      return websocket_parse(q, websocket_input, hc, &hc->hc_ws);
     }
   }
 }
@@ -1232,7 +1237,7 @@ ssl_cb(asyncio_fd_t *af, void *opaque, int event, int error)
 {
   http_connection_t *hc = opaque;
 
-  if(error) {
+  if(event & ASYNCIO_ERROR) {
     http_close(hc);
     return 0;
   }
