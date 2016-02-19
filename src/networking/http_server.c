@@ -1197,35 +1197,36 @@ http_ssl_get_poll_state(http_connection_t *hc)
 static void
 ssl_input(http_connection_t *hc)
 {
-  char buf[4096];
-  if(hc->hc_write_status == SSL_ERROR_WANT_READ) {
-    return;
+  while(1) {
+    char buf[4096];
+    if(hc->hc_write_status == SSL_ERROR_WANT_READ) {
+      return;
+    }
+
+    hc->hc_read_status = 0;
+    int r = SSL_read(hc->hc_ssl, buf, sizeof(buf));
+    int err = SSL_get_error(hc->hc_ssl, r);
+    switch(err) {
+    case SSL_ERROR_NONE:
+      htsbuf_append(&hc->hc_input, buf, r);
+      break;
+
+    default:
+      http_close(hc);
+      return;
+
+    case SSL_ERROR_WANT_READ:
+    case SSL_ERROR_WANT_WRITE:
+      hc->hc_read_status = err;
+      return;
+    }
+
+    if(http_handle_input(hc, &hc->hc_input)) {
+      http_close(hc);
+      return;
+    }
+    http_write(hc);
   }
-
-  hc->hc_read_status = 0;
-
-  int r = SSL_read(hc->hc_ssl, buf, sizeof(buf));
-  int err = SSL_get_error(hc->hc_ssl, r);
-  switch(err) {
-  case SSL_ERROR_NONE:
-    htsbuf_append(&hc->hc_input, buf, r);
-    break;
-
-  default:
-    http_close(hc);
-    return;
-
-  case SSL_ERROR_WANT_READ:
-  case SSL_ERROR_WANT_WRITE:
-    hc->hc_read_status = err;
-    return;
-  }
-
-  if(http_handle_input(hc, &hc->hc_input)) {
-    http_close(hc);
-    return;
-  }
-  http_write(hc);
 }
 
 
