@@ -438,7 +438,6 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     if(a->gsc.suggested == extra)
       a->gsc.suggested = NULL;
 
-    scroll_to_me(a, w->glw_focused);
     a->num_visible_childs--;
     break;
 
@@ -453,13 +452,8 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     glw_parent_data(c, glw_array_item_t)->inst = 1;
     break;
 
-
   case GLW_SIGNAL_SCROLL:
     glw_array_scroll(a, extra);
-    break;
-
-  case GLW_SIGNAL_CHILD_MOVED:
-    scroll_to_me(a, w->glw_focused);
     break;
 
   case GLW_SIGNAL_FHP_PATH_CHANGED:

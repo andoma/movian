@@ -514,8 +514,6 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     if(l->gsc.suggested == extra)
       l->gsc.suggested = NULL;
 
-    scroll_to_me(l, w->glw_focused);
-
     if(extra == TAILQ_FIRST(&w->glw_childs) && glw_next_widget(extra) == NULL) {
       // Last item went away, make sure to reset
       l->gsc.target_pos = 0;
@@ -533,18 +531,10 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   case GLW_SIGNAL_CHILD_UNHIDDEN:
     c = extra;
     glw_parent_data(c, glw_list_item_t)->inst = 1;
-  case GLW_SIGNAL_CHILD_MOVED:
-    scroll_to_me(l, w->glw_focused);
-    break;
-
-  case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
-    if(w->glw_focused == extra) {
-      scroll_to_me(l, extra);
-    }
     break;
 
   case GLW_SIGNAL_FHP_PATH_CHANGED:
-    if(!glw_is_focused(w)) 
+    if(!glw_is_focused(w))
       l->gsc.suggest_cnt = 1;
     break;
   }
