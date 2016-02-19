@@ -70,7 +70,7 @@ fulhack(const AVPicture *pict, int src_w, int src_h,
   AVPicture pict2 = {};
   pict2.data[0] = pm_pixel(pm, 0, 0);
   pict2.linesize[0] = pm->pm_linesize;
-  pixmap_t *pm2 = pixmap_rescale_swscale(&pict2, PIX_FMT_RGB24,
+  pixmap_t *pm2 = pixmap_rescale_swscale(&pict2, AV_PIX_FMT_RGB24,
                                          src_w, src_h, dst_w, dst_h,
                                          with_alpha, margin);
   pixmap_release(pm);
@@ -95,15 +95,15 @@ pixmap_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
   pixmap_t *pm;
 
   switch(src_pix_fmt) {
-  case PIX_FMT_Y400A:
-  case PIX_FMT_BGRA:
-  case PIX_FMT_RGBA:
-  case PIX_FMT_ABGR:
-  case PIX_FMT_ARGB:
+  case AV_PIX_FMT_Y400A:
+  case AV_PIX_FMT_BGRA:
+  case AV_PIX_FMT_RGBA:
+  case AV_PIX_FMT_ABGR:
+  case AV_PIX_FMT_ARGB:
 #ifdef __PPC__
     return NULL;
 #endif
-    dst_pix_fmt = PIX_FMT_BGR32;
+    dst_pix_fmt = AV_PIX_FMT_BGR32;
     break;
 
   case AV_PIX_FMT_YUVA444P:
@@ -112,10 +112,10 @@ pixmap_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
   default:
 #ifndef __ANDROID__
     if(!with_alpha)
-      dst_pix_fmt = PIX_FMT_RGB24;
+      dst_pix_fmt = AV_PIX_FMT_RGB24;
     else
 #endif
-      dst_pix_fmt = PIX_FMT_BGR32;
+      dst_pix_fmt = AV_PIX_FMT_BGR32;
     break;
   }
 
@@ -144,7 +144,7 @@ pixmap_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
   strides[3] = pict->linesize[3];
 
   switch(dst_pix_fmt) {
-  case PIX_FMT_RGB24:
+  case AV_PIX_FMT_RGB24:
     pm = pixmap_create(dst_w, dst_h, PIXMAP_RGB24, margin);
     break;
 
@@ -201,7 +201,7 @@ pixmap_32bit_swizzle(AVPicture *pict, int pix_fmt, int w, int h, int m)
   void (*fn)(uint32_t *dst, const uint32_t *src, int len);
   // go to BGR32 which is ABGR on big endian.
   switch(pix_fmt) {
-  case PIX_FMT_ARGB:
+  case AV_PIX_FMT_ARGB:
     fn = swizzle_xwzy;
     break;
   default:
@@ -230,7 +230,7 @@ pixmap_32bit_swizzle(AVPicture *pict, int pix_fmt, int w, int h, int m)
  *
  */
 static pixmap_t *
-pixmap_from_avpic(AVPicture *pict, int pix_fmt, 
+pixmap_from_avpic(AVPicture *pict, int pix_fmt,
 		  int src_w, int src_h,
 		  int req_w0, int req_h0,
 		  const image_meta_t *im)
@@ -249,18 +249,18 @@ pixmap_from_avpic(AVPicture *pict, int pix_fmt,
     need_format_conv = 1;
     break;
 
-  case PIX_FMT_RGB24:
+  case AV_PIX_FMT_RGB24:
     if(im->im_no_rgb24 || im->im_corner_radius)
       need_format_conv = 1;
     else
       fmt = PIXMAP_RGB24;
     break;
 
-  case PIX_FMT_BGR32:
+  case AV_PIX_FMT_BGR32:
     fmt = PIXMAP_BGR32;
     break;
     
-  case PIX_FMT_Y400A:
+  case AV_PIX_FMT_Y400A:
     if(!im->im_can_mono) {
       need_format_conv = 1;
       break;
@@ -269,7 +269,7 @@ pixmap_from_avpic(AVPicture *pict, int pix_fmt,
     fmt = PIXMAP_IA;
     break;
 
-  case PIX_FMT_GRAY8:
+  case AV_PIX_FMT_GRAY8:
     if(!im->im_can_mono) {
       need_format_conv = 1;
       break;
@@ -278,7 +278,7 @@ pixmap_from_avpic(AVPicture *pict, int pix_fmt,
     fmt = PIXMAP_I;
     break;
 
-  case PIX_FMT_PAL8:
+  case AV_PIX_FMT_PAL8:
     palette = (uint32_t *)pict->data[1];
 
     for(i = 0; i < 256; i++) {

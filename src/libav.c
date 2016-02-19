@@ -200,13 +200,13 @@ libav_deliver_frame(video_decoder_t *vd,
   vd->vd_sws =
     sws_getCachedContext(vd->vd_sws,
                          frame->width, frame->height, frame->format,
-                         frame->width, frame->height, PIX_FMT_YUV420P,
+                         frame->width, frame->height, AV_PIX_FMT_YUV420P,
                          0, NULL, NULL, NULL);
 
   if(vd->vd_sws == NULL) {
     TRACE(TRACE_ERROR, "Video", "Unable to convert from %s to %s",
 	  av_get_pix_fmt_name(frame->format),
-	  av_get_pix_fmt_name(PIX_FMT_YUV420P));
+	  av_get_pix_fmt_name(AV_PIX_FMT_YUV420P));
     return;
   }
 
@@ -219,12 +219,12 @@ libav_deliver_frame(video_decoder_t *vd,
     vd->vd_convert_height = frame->height;
     vd->vd_convert_pixfmt = frame->format;
 
-    avpicture_alloc(&vd->vd_convert, PIX_FMT_YUV420P, frame->width,
+    avpicture_alloc(&vd->vd_convert, AV_PIX_FMT_YUV420P, frame->width,
                     frame->height);
 
     TRACE(TRACE_DEBUG, "Video", "Converting from %s to %s",
 	  av_get_pix_fmt_name(frame->format),
-	  av_get_pix_fmt_name(PIX_FMT_YUV420P));
+	  av_get_pix_fmt_name(AV_PIX_FMT_YUV420P));
   }
 
   sws_scale(vd->vd_sws, (void *)frame->data, frame->linesize, 0,
@@ -239,7 +239,7 @@ libav_deliver_frame(video_decoder_t *vd,
   fi.fi_pitch[2] = vd->vd_convert.linesize[2];
 
   fi.fi_type = 'LAVC';
-  fi.fi_pix_fmt = PIX_FMT_YUV420P;
+  fi.fi_pix_fmt = AV_PIX_FMT_YUV420P;
   fi.fi_avframe = NULL;
   video_deliver_frame(vd, &fi);
 }
@@ -356,8 +356,8 @@ libav_decode_video(struct media_codec *mc, struct video_decoder *vd,
 /**
  *
  */
-static enum PixelFormat
-libav_get_format(struct AVCodecContext *ctx, const enum PixelFormat *fmt)
+static enum AVPixelFormat
+libav_get_format(struct AVCodecContext *ctx, const enum AVPixelFormat *fmt)
 {
   media_codec_t *mc = ctx->opaque;
   if(mc->close != NULL) {

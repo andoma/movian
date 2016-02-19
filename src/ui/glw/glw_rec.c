@@ -299,7 +299,7 @@ rec_thread(void *aux)
   gr->v_ctx->height = gr->height;
   gr->v_ctx->time_base.den = gr->fps;
   gr->v_ctx->time_base.num = 1;
-  gr->v_ctx->pix_fmt = PIX_FMT_RGB32;
+  gr->v_ctx->pix_fmt = AV_PIX_FMT_RGB32;
   gr->v_ctx->coder_type = 0;
 
   AVCodec *c = avcodec_find_encoder(gr->v_ctx->codec_id);

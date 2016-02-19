@@ -543,8 +543,8 @@ xv_video_frame_deliver(const frame_info_t *fi, void *opaque)
 const static struct {
   int rm, gm, bm, depth, pixfmt;
 } visual2pixfmt[] = {
-  {0x00ff0000, 0x0000ff00, 0x000000ff, 24, PIX_FMT_RGB32},
-  {0x0000f800, 0x000007e0, 0x0000001f, 16, PIX_FMT_RGB565},
+  {0x00ff0000, 0x0000ff00, 0x000000ff, 24, AV_PIX_FMT_RGB32},
+  {0x0000f800, 0x000007e0, 0x0000001f, 16, AV_PIX_FMT_RGB565},
 };
 
 /**

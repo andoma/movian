@@ -532,7 +532,7 @@ picture_out(vdec_decoder_t *vdd)
 
   prop_set_string(vdd->metainfo, metainfo);
 
-  vp->fi.fi_pix_fmt = PIX_FMT_YUV420P;
+  vp->fi.fi_pix_fmt = AV_PIX_FMT_YUV420P;
   vp->fi.fi_pts = pts;
   
   vp->fi.fi_epoch = pm->epoch;

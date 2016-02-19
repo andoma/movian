@@ -1297,16 +1297,16 @@ video_deliver_lavc(const frame_info_t *fi, glw_video_t *gv,
   frame_info_t nfi = *fi;
 
   switch(fi->fi_pix_fmt) {
-  case PIX_FMT_YUV420P:
-  case PIX_FMT_YUV422P:
-  case PIX_FMT_YUV444P:
-  case PIX_FMT_YUV410P:
-  case PIX_FMT_YUV411P:
-  case PIX_FMT_YUV440P:
-  case PIX_FMT_YUVJ420P:
-  case PIX_FMT_YUVJ422P:
-  case PIX_FMT_YUVJ444P:
-  case PIX_FMT_YUVJ440P:
+  case AV_PIX_FMT_YUV420P:
+  case AV_PIX_FMT_YUV422P:
+  case AV_PIX_FMT_YUV444P:
+  case AV_PIX_FMT_YUV410P:
+  case AV_PIX_FMT_YUV411P:
+  case AV_PIX_FMT_YUV440P:
+  case AV_PIX_FMT_YUVJ420P:
+  case AV_PIX_FMT_YUVJ422P:
+  case AV_PIX_FMT_YUVJ444P:
+  case AV_PIX_FMT_YUVJ440P:
     av_pix_fmt_get_chroma_sub_sample(nfi.fi_pix_fmt, &nfi.fi_hshift,
                                      &nfi.fi_vshift);
 

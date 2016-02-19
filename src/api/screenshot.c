@@ -149,7 +149,7 @@ screenshot_compress(pixmap_t *pm, int codecid)
   int strides[4] = {-pm->pm_linesize};
 
   struct SwsContext *sws;
-  sws = sws_getContext(width, height, PIX_FMT_RGB32,
+  sws = sws_getContext(width, height, AV_PIX_FMT_RGB32,
                        width, height, ctx->pix_fmt, SWS_BILINEAR,
                        NULL, NULL, NULL);
 
