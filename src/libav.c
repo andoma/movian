@@ -479,34 +479,31 @@ void
 metadata_from_libav(char *dst, size_t dstlen,
 		    const AVCodec *codec, const AVCodecContext *avctx)
 {
-  char *n;
-  int off = snprintf(dst, dstlen, "%s", codec->name);
+  const char *name = codec->name;
+  const char *profile = av_get_profile_name(codec, avctx->profile);
 
-  n = dst;
-  while(*n) {
-    *n = toupper((int)*n);
-    n++;
-  }
+  if(codec->id == AV_CODEC_ID_DTS && profile != NULL)
+    name = NULL;
 
-  if(codec->id  == AV_CODEC_ID_H264) {
-    const char *p;
-    switch(avctx->profile) {
-    case FF_PROFILE_H264_BASELINE:  p = "Baseline";  break;
-    case FF_PROFILE_H264_MAIN:      p = "Main";      break;
-    case FF_PROFILE_H264_EXTENDED:  p = "Extended";  break;
-    case FF_PROFILE_H264_HIGH:      p = "High";      break;
-    case FF_PROFILE_H264_HIGH_10:   p = "High 10";   break;
-    case FF_PROFILE_H264_HIGH_422:  p = "High 422";  break;
-    case FF_PROFILE_H264_HIGH_444:  p = "High 444";  break;
-    case FF_PROFILE_H264_CAVLC_444: p = "CAVLC 444"; break;
-    default:                        p = NULL;        break;
+  int off = 0;
+
+  if(name) {
+    off = snprintf(dst, dstlen, "%s", codec->name);
+    char *n = dst;
+    while(*n) {
+      *n = toupper((int)*n);
+      n++;
     }
-
-    if(p != NULL && avctx->level != FF_LEVEL_UNKNOWN)
-      off += snprintf(dst + off, dstlen - off,
-		      ", %s (Level %d.%d)",
-		      p, avctx->level / 10, avctx->level % 10);
   }
+
+  if(profile != NULL)
+    off += snprintf(dst + off, dstlen - off,
+                    "%s%s", off ? " " : "", profile);
+
+  if(codec->id == AV_CODEC_ID_H264 && avctx->level != FF_LEVEL_UNKNOWN)
+    off += snprintf(dst + off, dstlen - off,
+                    " (Level %d.%d)",
+                    avctx->level / 10, avctx->level % 10);
 
   if(avctx->codec_type == AVMEDIA_TYPE_AUDIO) {
     char buf[64];
