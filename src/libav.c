@@ -22,6 +22,7 @@
 #include <libavutil/audioconvert.h>
 #include <libswscale/swscale.h>
 #include <libavutil/pixdesc.h>
+#include <libavutil/channel_layout.h>
 
 #include "main.h"
 #include "media/media.h"

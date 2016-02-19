@@ -91,6 +91,10 @@ text_render(const uint32_t *uc, int len, int flags, int default_size,
 #if ENABLE_LIBFREETYPE
 
 struct fa_handle;
+struct buf;
+
+void *freetype_load_dynamic_font_buf(struct buf *b, int font_domain,
+                                     char *errbuf, size_t errlen);
 
 void *freetype_load_dynamic_font_fh(struct fa_handle *fh, const char *url,
 				    int font_domain,

@@ -402,10 +402,28 @@ write_thumb(const AVCodecContext *src, const AVFrame *sframe,
   av_frame_free(&oframe);
 }
 
+
 /**
  *
  */
-static image_t *
+attribute_unused static image_t *
+thumb_from_buf(buf_t *buf, char *errbuf, size_t errlen,
+               const char *cacheid, time_t mtime)
+{
+  image_t *img = fa_imageloader_buf(buf, errbuf, errlen);
+
+  if(img != NULL)
+    blobcache_put(cacheid, "videothumb", buf, INT32_MAX, NULL, mtime, 0);
+
+  buf_release(buf);
+  return img;
+}
+
+
+/**
+ *
+ */
+attribute_unused static image_t *
 thumb_from_attachment(const char *url, int64_t offset, int size,
                       char *errbuf, size_t errlen, const char *cacheid,
                       time_t mtime)
@@ -420,15 +438,9 @@ thumb_from_attachment(const char *url, int64_t offset, int size,
     snprintf(errbuf, errlen, "Load error");
     return NULL;
   }
-  image_t *img = fa_imageloader_buf(buf, errbuf, errlen);
-
-  if(img != NULL) {
-    blobcache_put(cacheid, "videothumb", buf, INT32_MAX, NULL, mtime, 0);
-  }
-
-  buf_release(buf);
-  return img;
+  return thumb_from_buf(buf, errbuf, errlen, cacheid, mtime);
 }
+
 
 /**
  *
@@ -484,11 +496,23 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
         if(sec == -1 && mt != NULL &&
            (!strcmp(mt->value, "image/jpeg") ||
             !strcmp(mt->value, "image/png"))) {
+#if ENABLE_LIBAV_ATTACHMENT_POINTER
           int64_t offset = st->attached_offset;
           int size = st->attached_size;
-          fa_libav_close_format(fctx);
+          fa_libav_close_format(fctx);  /* Close here because it will be parked
+                                         * by fa_buffer (and thus reused)
+                                         */
           return thumb_from_attachment(url, offset, size, errbuf, errlen,
                                        cacheid, mtime);
+#else
+          buf_t *b = buf_create_and_adopt(st->codec->extradata_size,
+                                          st->codec->extradata,
+                                          (void *)&av_free);
+          st->codec->extradata = NULL;
+          st->codec->extradata_size = 0;
+          fa_libav_close_format(fctx);
+          return thumb_from_buf(b, errbuf, errlen, cacheid, mtime);
+#endif
         }
         break;
 

@@ -85,7 +85,7 @@ typedef struct face {
   struct glyph_list glyphs;
   int prio;
   int refcount;
-
+  buf_t *buf;  // Used when faces are loaded from memory
   // For glyph caching
 
   char *lookup_name;
@@ -191,6 +191,7 @@ face_destroy(face_t *f)
   TRACE(TRACE_DEBUG, "Freetype", "Unloading '%s' [%s] originally from %s",
 	f->face->family_name, f->face->style_name, f->url);
   LIST_REMOVE(f, link);
+  buf_release(f->buf);
   free(f->url);
   free(f->family);
   free(f->fullname);
@@ -360,6 +361,33 @@ face_create_from_fh(fa_handle_t *fh, const char *url,
   }
 
   return face_create_epilogue(face, url, faces, prio, font_domain);
+}
+
+
+/**
+ *
+ */
+static face_t *
+face_create_from_mem(buf_t *b, char *errbuf, size_t errlen,
+		    struct face_list *faces, int prio, int font_domain)
+{
+  FT_Open_Args oa = {0};
+  FT_Error err;
+  face_t *face;
+
+  face = calloc(1, sizeof(face_t));
+  oa.flags = FT_OPEN_MEMORY;
+  oa.memory_base = (const void *)buf_cstr(b);
+  oa.memory_size = buf_len(b);
+
+  if((err = FT_Open_Face(text_library, &oa, 0, &face->face)) != 0) {
+    snprintf(errbuf, errlen, "Unable to open face: %d", err);
+    free(face);
+    return NULL;
+  }
+
+  face->buf = buf_retain(b);
+  return face_create_epilogue(face, "memory", faces, prio, font_domain);
 }
 
 
@@ -1516,6 +1544,25 @@ freetype_load_dynamic_font_fh(fa_handle_t *fh, const char *url, int font_domain,
 
   face_t *f = face_create_from_fh(fh, url, errbuf, errlen,
 				  &dynamic_faces, 0, font_domain);
+  if(f != NULL)
+    f->refcount++;
+
+  hts_mutex_unlock(&text_mutex);
+  return f;
+}
+
+
+/**
+ *
+ */
+void *
+freetype_load_dynamic_font_buf(buf_t *b, int font_domain,
+                               char *errbuf, size_t errlen)
+{
+  hts_mutex_lock(&text_mutex);
+
+  face_t *f = face_create_from_mem(b, errbuf, errlen,
+                                   &dynamic_faces, 0, font_domain);
   if(f != NULL)
     f->refcount++;
 

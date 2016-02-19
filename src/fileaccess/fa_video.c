@@ -71,9 +71,12 @@ typedef struct attachment {
   void *opaque;
 } attachment_t;
 
-static void attachment_load(struct attachment_list *alist,
-			    const char *url, int64_t offset, 
-			    int size, int font_domain, const char *source);
+static void attachment_load_slice(struct attachment_list *alist,
+                                  const char *url, int64_t offset,
+                                  int size, int font_domain, const char *source);
+
+static void attachment_load_buf(struct attachment_list *alist, buf_t *b,
+                                int font_domain, const char *source);
 
 static void attachment_unload_all(struct attachment_list *alist);
 
@@ -777,11 +780,30 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
       TRACE(TRACE_DEBUG, "Video", "         filename: %s mimetype: %s size: %d",
 	    fn ? fn->value : "<unknown>",
 	    mt ? mt->value : "<unknown>",
-	    st->attached_size);
+#if ENABLE_LIBAV_ATTACHMENT_POINTER
+            st->attached_size
+#else
+            st->codec->extradata_size
+#endif
+            );
 
+#if ENABLE_LIBAV_ATTACHMENT_POINTER
       if(st->attached_size)
 	attachment_load(&alist, url, st->attached_offset, st->attached_size,
 			freetype_context, fn ? fn->value : "<unknown>");
+#else
+      if(st->codec->extradata_size) {
+        buf_t *b = buf_create_and_adopt(st->codec->extradata_size,
+                                        st->codec->extradata,
+                                        (void *)&av_free);
+        st->codec->extradata = NULL;
+        st->codec->extradata_size = 0;
+	attachment_load_buf(&alist, b, freetype_context,
+                            fn ? fn->value : "<unknown>");
+        buf_release(b);
+      }
+#endif
+
       break;
 
     default:
@@ -896,9 +918,10 @@ attachment_add_dtor(struct attachment_list *alist,
 /**
  *
  */
-static void
-attachment_load(struct attachment_list *alist, const char *url, int64_t offset, 
-		int size, int font_domain, const char *source)
+attribute_unused static void
+attachment_load_slice(struct attachment_list *alist,
+                      const char *url, int64_t offset,
+                      int size, int font_domain, const char *source)
 {
   char errbuf[256];
   if(size < 20)
@@ -913,6 +936,21 @@ attachment_load(struct attachment_list *alist, const char *url, int64_t offset,
   fh = fa_slice_open(fh, offset, size);
 
   void *h = freetype_load_dynamic_font_fh(fh, url, font_domain, NULL, 0);
+  if(h != NULL)
+     attachment_add_dtor(alist, freetype_unload_font, h);
+}
+
+/**
+ *
+ */
+attribute_unused static void
+attachment_load_buf(struct attachment_list *alist, buf_t *b,
+                    int font_domain, const char *source)
+{
+  if(buf_size(b) < 20)
+    return;
+
+  void *h = freetype_load_dynamic_font_buf(b, font_domain, NULL, 0);
   if(h != NULL)
      attachment_add_dtor(alist, freetype_unload_font, h);
 }
