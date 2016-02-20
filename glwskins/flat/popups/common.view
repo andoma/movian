@@ -64,7 +64,6 @@ style(textBackdrop, {
 
   widget(container_z, {
     height: 2em;
-
     GridItemBevel();
     GridItemHighlight();
 
@@ -73,7 +72,7 @@ style(textBackdrop, {
     onEvent(activate, EVENT);
 
     widget(container_x, {
-      padding: [2em, 0];
+      padding: [1em, 0];
       align: center;
 
       widget(label, {
