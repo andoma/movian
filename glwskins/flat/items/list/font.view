@@ -1,0 +1,49 @@
+#include "skin://theme.view"
+
+widget(container_z, {
+
+  ListItemBevel();
+  ListItemHighlight();
+  style: "ListItemOuter";
+  focusable: true;
+
+  onEvent(activate, deliverEvent($self, "use:" + $self.url));
+
+  widget(container_x, {
+    style: "ListItem";
+
+    widget(icon, {
+      style: "ListItemIcon";
+      source: "dataroot://res/svg/Font.svg";
+    });
+
+    widget(label, {
+      style: "ListItemLabel";
+      filterConstraintX: true;
+      caption: $self.metadata.title;
+    });
+
+    widget(label, {
+      style: "ListItemLabel";
+      hidden: !$self.status.mainfont;
+      caption: _("User interface");
+    });
+
+    widget(label, {
+      style: "ListItemLabel";
+      hidden: !$self.status.condfont;
+      caption: _("Condensed");
+    });
+
+    widget(label, {
+      style: "ListItemLabel";
+      hidden: !$self.status.subfont;
+      caption: _("Subtitles");
+    });
+
+    widget(icon, {
+      source: select($self.status.installed,
+                     "skin://icons/ic_check_48px.svg", "");
+    });
+  });
+});
