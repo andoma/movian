@@ -1,0 +1,28 @@
+#include "skin://theme.view"
+
+widget(container_z, {
+
+  ListItemBevel();
+  ListItemHighlight();
+  style: "ListItemOuter";
+  focusable: true;
+
+  onEvent(activate, {
+    createChild($self.model.nodes);
+  });
+
+  widget(container_x, {
+    style: "ListItem";
+
+    widget(icon, {
+      style: "ListItemIcon";
+      source: "skin://icons/ic_add_48px.svg";
+    });
+
+    widget(label, {
+      caption: _("Add new entry");
+      style: "ActionLabel";
+    });
+  });
+});
+

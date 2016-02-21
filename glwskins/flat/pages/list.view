@@ -23,6 +23,12 @@ widget(container_z, {
       alt: "skin://items/list/default.view";
       source: "skin://items/list/" + $self.type + ".view";
     });
+
+    widget(loader, {
+      autohide: true;
+      noInitialTransform: true;
+      source: select($self.model.mayadd, "skin://items/list/add.view", "");
+    });
   });
 
   ScrollBar("scrollable", 3em, $ui.universeBottomHeight);
