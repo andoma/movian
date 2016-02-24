@@ -91,7 +91,7 @@ static const uint8_t gifsig[6] = {'G', 'I', 'F', '8', '9', 'a'};
 static const uint8_t ttfsig[5] = {0,1,0,0,0};
 static const uint8_t otfsig[4] = {'O', 'T', 'T', 'O'};
 static const uint8_t pdfsig[] = {'%', 'P', 'D', 'F', '-'};
-
+static const uint8_t offsig[8] ={0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1};
 
 /**
  *
@@ -366,6 +366,12 @@ fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh,
 
   if(!memcmp(buf, pdfsig, sizeof(pdfsig))) {
     /* PDF */
+    md->md_contenttype = CONTENT_DOCUMENT;
+    return 1;
+  }
+
+  if(!memcmp(buf, offsig, sizeof(offsig))) {
+    /* MS OFFICE */
     md->md_contenttype = CONTENT_DOCUMENT;
     return 1;
   }
