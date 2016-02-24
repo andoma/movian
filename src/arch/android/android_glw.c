@@ -308,6 +308,10 @@ Java_com_lonelycoder_mediaplayer_Core_glwKeyDown(JNIEnv *env,
   glw_root_t *gr = &agr->gr;
   event_t *e = NULL;
 
+  // along with AKEYCODE_ENTER usually passed Line Feed char - 10
+  if(keycode == AKEYCODE_ENTER)
+    unicode = 0;
+
   if(gconf.enable_input_event_debug)
     TRACE(TRACE_DEBUG, "KEYBOARD", "KeyDown: AndroidKey:%d Unicode:%d",
           keycode, unicode);
