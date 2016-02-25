@@ -1954,7 +1954,8 @@ glw_pointer_event_deliver(glw_t *w, glw_pointer_event_t *gpe)
         glw_focus_set(gr, w, GLW_FOCUS_SET_INTERACTIVE, "LeftPress");
 
       glw_path_modify(w, 0, GLW_IN_PRESSED_PATH, NULL);
-      e = event_create_action(ACTION_ACTIVATE);
+      e = event_create_action_multi((const action_type_t[]){
+          ACTION_CLICK, ACTION_ACTIVATE}, 2);
       e->e_flags |= flags;
       glw_event_to_widget(w, e);
       event_release(e);

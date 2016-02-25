@@ -31,12 +31,11 @@ $view.itemBookmark <- lookup($core.bookmarks.queries, $args.url);
 widget(popup, {
 
   clickable: true;
-  onEvent(activate, {
+  onEvent(click, {
     $clone.itemMenu = void;
-  }, true, true);
+  }, true, true, true);
 
   widget(container_z, {
-    clickable: true;
     widget(quad, {
       alpha: 0.7;
       color: 0;

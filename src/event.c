@@ -107,6 +107,7 @@ static struct strtab actionnames[] = {
   { "Left",                  ACTION_LEFT },
   { "Right",                 ACTION_RIGHT },
   { "Activate",              ACTION_ACTIVATE },
+  { "Click",                 ACTION_CLICK },
   { "Enter",                 ACTION_ENTER },
   { "Submit",                ACTION_SUBMIT },
   { "Ok",                    ACTION_OK },
