@@ -16,12 +16,10 @@ $view.itemBookmark <- lookup($core.bookmarks.queries, $args.url);
       spacing: 0.5em;
       widget(icon, {
         source: ICON;
-        color: !isNavFocused();
       });
 
       widget(label, {
         caption: CAPTION;
-        color: !isNavFocused();
       });
     });
   });

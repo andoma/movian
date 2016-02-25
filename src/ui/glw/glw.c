@@ -1992,7 +1992,7 @@ glw_touch_longpress(glw_root_t *gr)
  */
 int
 glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
-                   glw_t **hp, Vec3 p, Vec3 dir)
+                   glw_t **hoverp, Vec3 p, Vec3 dir)
 {
   glw_t *c;
   float x, y;
@@ -2024,8 +2024,8 @@ glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
       if(gpe->type < GLW_POINTER_MOTION_UPDATE)
         r = 1;
 
-      if(glw_is_focusable_or_clickable(w) && *hp == NULL)
-	*hp = w;
+      if(glw_is_focusable_or_clickable(w))
+	*hoverp = w;
 
     } else {
       return 0;
@@ -2033,7 +2033,7 @@ glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
   }
 
   TAILQ_FOREACH_REVERSE(c, &w->glw_childs, glw_queue, glw_parent_link) {
-    if(glw_pointer_event0(gr, c, gpe, hp, p, dir))
+    if(glw_pointer_event0(gr, c, gpe, hoverp, p, dir))
       return 1;
   }
 
