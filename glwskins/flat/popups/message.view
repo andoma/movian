@@ -7,7 +7,11 @@ onEvent(back,   deliverEvent($self.eventSink, "cancel"));
 
 widget(popup, {
 
+  clickable: true;
+  onEvent(click, deliverEvent($self.eventSink, "Cancel"), true, true, true);
+
   widget(container_z, {
+    clickable: true;
 
     PopupBackdrop();
 

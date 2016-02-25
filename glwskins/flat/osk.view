@@ -18,11 +18,14 @@ multiopt($view.path,
 
 widget(popup, {
 
+  clickable: true;
+  onEvent(click, deliverEvent($ui.osk.eventSink, "Cancel"), true, true, true);
 
   widget(container_z, {
+    clickable: true;
     PopupBackdrop();
     width: 30em;
-    
+
     widget(container_y, {
       onEvent(cancel, deliverEvent($ui.osk.eventSink, "Cancel"));
       onEvent(back,   deliverEvent($ui.osk.eventSink, "Cancel"));

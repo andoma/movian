@@ -5,8 +5,11 @@ onEvent(back,   deliverEvent($self.eventSink, "cancel"));
 
 widget(popup, {
 
-  widget(container_z, {
+  clickable: true;
+  onEvent(click, deliverEvent($self.eventSink, "Cancel"), true, true, true);
 
+  widget(container_z, {
+    clickable: true;
     filterConstraintX: true;
     PopupBackdrop();
 
