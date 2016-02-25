@@ -109,7 +109,7 @@ video_seek(AVFormatContext *fctx, media_pipe_t *mp, media_buf_t **mbp,
 {
   pos = FFMAX(0, FFMIN(fctx->duration, pos)) + fctx->start_time;
 
-  TRACE(TRACE_DEBUG, "Video", "seek %s to %.2f (%"PRId64" - %"PRId64")", txt, 
+  TRACE(TRACE_DEBUG, "Video", "seek %s to %.2f (%"PRId64" - %"PRId64")", txt,
 	(pos - fctx->start_time) / 1000000.0,
 	pos, fctx->start_time);
 
@@ -121,7 +121,7 @@ video_seek(AVFormatContext *fctx, media_pipe_t *mp, media_buf_t **mbp,
   mp->mp_audio.mq_seektarget = pos;
 
   mp_flush(mp);
-  
+
   if(*mbp != NULL && *mbp != MB_SPECIAL_EOF)
     media_buf_free_unlocked(mp, *mbp);
   *mbp = NULL;
@@ -144,7 +144,7 @@ update_seek_index(seek_index_t *si, int sec)
     for(i = 0; i < si->si_nitems; j = i, i++)
       if(si->si_items[i].si_start > sec)
 	break;
-    
+
     if(si->si_current != &si->si_items[j]) {
       si->si_current = &si->si_items[j];
       prop_suggest_focus(si->si_current->si_prop);
@@ -206,7 +206,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 
       mp->mp_eof = 0;
 
-      fa_deadline(fh, mp->mp_buffer_delay != INT32_MAX ? 
+      fa_deadline(fh, mp->mp_buffer_delay != INT32_MAX ?
 		  mp->mp_buffer_delay / 3 : 0);
 
       r = av_read_frame(fctx, &pkt);
@@ -326,7 +326,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 	  restartpos_last = sec;
 	  playinfo_set_restartpos(canonical_url, ets->ts / 1000, 1);
 	}
-      
+
 	if(sec != lastsec) {
 	  lastsec = sec;
 	  update_seek_index(sidx, sec);
@@ -396,7 +396,7 @@ build_index(media_pipe_t *mp, AVFormatContext *fctx, const char *url)
 
   seek_index_t *si = mymalloc(sizeof(seek_index_t) +
 			      sizeof(seek_item_t) * items);
-  if(si == NULL) 
+  if(si == NULL)
     return NULL;
 
   si->si_root = prop_create(mp->mp_prop_root, "seekindex");
@@ -457,7 +457,7 @@ build_chapters(media_pipe_t *mp, AVFormatContext *fctx, const char *url)
   int i;
   for(i = 0; i < items; i++) {
     const AVChapter *avc = fctx->chapters[i];
-  
+
     seek_item_t *item = &si->si_items[i];
 
     prop_t *p = prop_create_root(NULL);
@@ -474,7 +474,7 @@ build_chapters(media_pipe_t *mp, AVFormatContext *fctx, const char *url)
     prop_set_float(prop_create(p, "end"), end / 1000000.0);
 
     AVDictionaryEntry *tag;
-    
+
     tag = av_dict_get(avc->metadata, "title", NULL, AV_DICT_IGNORE_SUFFIX);
     if(tag != NULL && utf8_verify(tag->value))
       prop_set(p, "title", PROP_SET_STRING, tag->value);
@@ -689,7 +689,7 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
 
     if(md->md_parent &&
        md->md_parent->md_type == METADATA_TYPE_SEASON &&
-       md->md_parent->md_parent && 
+       md->md_parent->md_parent &&
        md->md_parent->md_parent->md_type == METADATA_TYPE_SERIES) {
 
       va.episode = md->md_idx;
@@ -726,7 +726,7 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
    */
   media_codec_t **cwvec = alloca(fctx->nb_streams * sizeof(void *));
   memset(cwvec, 0, sizeof(void *) * fctx->nb_streams);
-  
+
   int cwvec_size = fctx->nb_streams;
   media_format_t *fw = media_format_create(fctx);
 
@@ -744,7 +744,7 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
     AVStream *st = fctx->streams[i];
     AVCodecContext *ctx = st->codec;
     AVDictionaryEntry *fn, *mt;
-    
+
     avcodec_string(str, sizeof(str), ctx, 0);
     TRACE(TRACE_DEBUG, "Video", " Stream #%d: %s", i, str);
 
