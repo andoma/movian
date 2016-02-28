@@ -586,10 +586,13 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
   }
 
   avcodec_flush_buffers(ifv_ctx);
-
+  
+  int i = 0;
   while(1) {
     int r;
 
+    i++;
+    
     r = av_read_frame(ifv_fctx, &pkt);
 
     if(r == AVERROR(EAGAIN))
@@ -630,6 +633,11 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
       continue;
     }
 
+    // libav seems to have problems seeking on AVC videos encoded with Baseline@L4.0, 1 Ref Frame, (Variable Framerate?), prevent slowdown by endless loop.
+    if (i >= 100){
+      TRACE(TRACE_DEBUG, "Thumb", "Couldn't generate thumbnail for %s", url);
+      break;
+    }
 
     if(got_pic == 0 || !want_pic) {
       continue;
