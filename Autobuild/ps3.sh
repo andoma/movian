@@ -1,3 +1,4 @@
+SCRIPT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 TOOLCHAIN_URL=https://github.com/andoma/ps3toolchain/tarball/481515bbfbfbe22f775ff5d42095be75eccc7373
 TOOLCHAIN_HASH=`echo ${TOOLCHAIN_URL} | sha1sum  | awk '{print $1}'`
 TOOLCHAIN="${WORKINGDIR}/${TOOLCHAIN_HASH}"
@@ -26,6 +27,8 @@ else
 	cd ${TOOLCHAIN}
 	curl -L "${TOOLCHAIN_URL}" | tar xfz -
 	cd *
+	sed -i 's/make /make MAKEINFO=true /g' ./scripts/*
+	cat ${SCRIPT_DIR}/patch_gcc.patch >> ./patches/gcc-4.5.2-PS3.patch
 	PARALLEL=${JARGS} ./toolchain.sh 1 2 3 4 5 11 12
     )
 
