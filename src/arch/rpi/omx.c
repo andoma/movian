@@ -209,7 +209,7 @@ omx_component_create(const char *name, hts_mutex_t *mtx,
     }
 
     for(int j = 0; j < ports.nPorts; j++)
-      omx_send_command(oc, OMX_CommandPortDisable, ports.nStartPortNumber + j, NULL, 0);
+      omx_send_command(oc, OMX_CommandPortDisable, ports.nStartPortNumber + j, NULL, 1);
 
   }
 
