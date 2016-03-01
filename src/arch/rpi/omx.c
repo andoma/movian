@@ -201,7 +201,7 @@ omx_component_create(const char *name, hts_mutex_t *mtx,
     ports.nVersion.nVersion = OMX_VERSION;
 
     omxchk(OMX_GetParameter(oc->oc_handle, types[i], &ports));
-    omxdbg("%s: type:%d: ports: %ld +%ld\n", name, i, ports.nStartPortNumber, ports.nPorts);
+    omxdbg("%s: type:%d: ports: %d +%d\n", name, i, ports.nStartPortNumber, ports.nPorts);
 
     if(ports.nPorts > 0) {
       oc->oc_inport = ports.nStartPortNumber;
