@@ -15,16 +15,16 @@ widget(slideshow, {
       hidden: isVoid($self.info);
       vbox({
         padding: [0, 0.5em, 0.5em, 0.5em + $ui.universeBottomHeight];
+        alpha: iir(delay(isVisible(), 3, 0), 16);
 
         space(1);
         hbox({
           zbox({
             quad({
               color: 0;
-              alpha: 0.66;
+              alpha: 0.8;
             });
             label({
-              font: "skin://fonts/RobotoCondensed-Light.ttf";
               padding: [2em, 0.25em, 0.5em, 0.25em];
               caption: $self.info;
             });
