@@ -755,7 +755,7 @@ mp_configure(media_pipe_t *mp, int flags, int buffer_size, int64_t duration,
     break;
 
   case MP_BUFFER_DEEP:
-    mp->mp_buffer_limit = 32 * 1024 * 1024;
+    mp->mp_buffer_limit = 64 * 1024 * 1024;
     break;
   }
 
