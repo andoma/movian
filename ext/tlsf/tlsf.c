@@ -163,6 +163,8 @@ typedef struct pool_t
 
 	/* Head of free lists. */
 	block_header_t* blocks[FL_INDEX_COUNT][SL_INDEX_COUNT];
+
+        size_t used;
 } pool_t;
 
 /* A type used for casting when doing pointer arithmetic. */
@@ -581,6 +583,7 @@ static void* block_prepare_used(pool_t* pool, block_header_t* block, size_t size
 	{
 		block_trim_free(pool, block, size);
 		block_mark_as_used(block);
+                pool->used += size;
 		p = block_to_ptr(block);
 	}
 	return p;
@@ -910,6 +913,7 @@ void tlsf_free(tlsf_pool tlsf, void* ptr)
 	{
 		pool_t* pool = tlsf_cast(pool_t*, tlsf);
 		block_header_t* block = block_from_ptr(ptr);
+                pool->used -= block_size(block);
 		block_mark_as_free(block);
 		block = block_merge_prev(pool, block);
 		block = block_merge_next(pool, block);
@@ -970,6 +974,8 @@ void* tlsf_realloc(tlsf_pool tlsf, void* ptr, size_t size)
 		}
 		else
 		{
+                        pool->used -= block_size(block);
+                        pool->used += adjust;
 			/* Do we need to expand to the next block? */
 			if (adjust > cursize)
 			{
@@ -984,4 +990,11 @@ void* tlsf_realloc(tlsf_pool tlsf, void* ptr, size_t size)
 	}
 
 	return p;
+}
+
+
+size_t tlsf_used(tlsf_pool tlsf)
+{
+	pool_t* pool = tlsf_cast(pool_t*, tlsf);
+        return pool->used;
 }

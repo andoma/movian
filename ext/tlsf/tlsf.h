@@ -45,6 +45,8 @@ size_t tlsf_block_size(void* ptr);
 /* Overhead of per-pool internal structures. */
 size_t tlsf_overhead(void);
 
+size_t tlsf_used(tlsf_pool pool);
+
 #if defined(__cplusplus)
 };
 #endif

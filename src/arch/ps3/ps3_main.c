@@ -85,12 +85,29 @@ static prop_t *hddprop;
 #define LOW_MEM_LOW_WATER  5 * 1024 * 1024
 #define LOW_MEM_HIGH_WATER 15 * 1024 * 1024
 
-extern void vm_stat_log(void);
+
+typedef struct {
+  uint64_t page_fault_ppu;
+  uint64_t page_fault_spu;
+  uint64_t page_in;
+  uint64_t page_out;
+  uint32_t pmem_total;
+  uint32_t pmem_used;
+  uint64_t time;
+} vm_statistics;
+
+
+
 
 static void
 memlogger_fn(callout_t *co, void *aux)
 {
   static int low_mem_warning;
+  static int pagein_history[4];
+  static int pageout_history[4];
+  static int historyptr;
+  int pagein;
+  int pageout;
 
   callout_arm(&memlogger, memlogger_fn, NULL, 1);
 
@@ -99,21 +116,43 @@ memlogger_fn(callout_t *co, void *aux)
     uint32_t avail;
   } meminfo;
 
+  vm_statistics vs;
+  extern uint32_t heap_base;
+
+  Lv2Syscall2(312, heap_base, (uint64_t)&vs);
+#if 0
+  TRACE(TRACE_DEBUG, "VM",
+	"pfppu=%"PRId64" pfspu=%"PRId64" pin=%"PRId64" pout=%"PRId64" "
+	"pmem=%d kB/%d kB",
+	vs.page_fault_ppu,
+	vs.page_fault_spu,
+	vs.page_in,
+	vs.page_out,
+	vs.pmem_used / 1024,
+	vs.pmem_total / 1024);
+#endif
+  pagein  = vs.page_in  - pagein_history[historyptr];
+  pageout = vs.page_out - pageout_history[historyptr];
+
+  pagein_history[historyptr] = vs.page_in;
+  pageout_history[historyptr] = vs.page_out;
+
+  historyptr = (historyptr + 1) & 3;
 
   Lv2Syscall1(352, (uint64_t) &meminfo);
 
-  prop_set_int(prop_create(memprop, "systotal"), meminfo.total / 1024);
-  prop_set_int(prop_create(memprop, "sysfree"), meminfo.avail / 1024);
+  prop_set(memprop, "systotal", PROP_SET_INT, meminfo.total / 1024);
+  prop_set(memprop, "sysfree",  PROP_SET_INT, meminfo.avail / 1024);
 
   struct mallinfo mi = mallinfo();
-  prop_set_int(prop_create(memprop, "arena"), (mi.hblks + mi.arena) / 1024);
-  prop_set_int(prop_create(memprop, "unusedChunks"), mi.ordblks);
-  prop_set_int(prop_create(memprop, "activeMem"), mi.uordblks / 1024);
-  prop_set_int(prop_create(memprop, "inactiveMem"), mi.fordblks / 1024);
+  prop_set(memprop, "arena",        PROP_SET_INT, mi.arena / 1024);
+  prop_set(memprop, "activeMem",    PROP_SET_INT, mi.uordblks / 1024);
+  prop_set(memprop, "inactiveMem",  PROP_SET_INT, mi.fordblks / 1024);
 
+  prop_set(memprop, "pagein", PROP_SET_INT, pagein / 4);
+  prop_set(memprop, "pageout", PROP_SET_INT, pageout / 4);
 
   if(gconf.enable_mem_debug) {
-    vm_stat_log();
 
     TRACE(TRACE_DEBUG, "MEM",
           "SysTotal: %d kB, "
@@ -616,6 +655,7 @@ main(int argc, char **argv)
 
   sysprop = prop_create(prop_get_global(), "system");
   memprop = prop_create(sysprop, "mem");
+  prop_set(memprop, "vmstat", PROP_SET_INT, 1);
   tempprop = prop_create(sysprop, "temp");
   hddprop = prop_create(sysprop, "hdd");
   callout_arm(&memlogger, memlogger_fn, NULL, 1);

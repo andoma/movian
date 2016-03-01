@@ -70,45 +70,6 @@ static void __attribute__((constructor)) mallocsetup(void)
   http_path_add("/api/memstats", NULL, memstats, 1);
 }
 
-typedef struct {
-  uint64_t page_fault_ppu;
-  uint64_t page_fault_spu;
-  uint64_t page_in;
-  uint64_t page_out;
-  uint32_t pmem_total;
-  uint32_t pmem_used;
-  uint64_t time;
-} vm_statistics;
-
-void vm_stat_log(void);
-
-void vm_stat_log(void)
-{
-#ifdef USE_VIRTUAL_MEM
-  vm_statistics vs;
-
-  Lv2Syscall2(312, heap_base, (uint64_t)&vs);
-  TRACE(TRACE_DEBUG, "VM",
-	"pfppu=%"PRId64" pfspu=%"PRId64" pin=%"PRId64" pout=%"PRId64" "
-	"pmem=%d kB/%d kB",
-	vs.page_fault_ppu,
-	vs.page_fault_spu,
-	vs.page_in,
-	vs.page_out,
-	vs.pmem_used / 1024,
-	vs.pmem_total / 1024);
-#endif
-}
-
-
-
-
-
-
-
-
-
-
 
 typedef struct memstats {
   int used;
@@ -143,16 +104,11 @@ mywalker(void *ptr, size_t size, int used, void *user)
 struct mallinfo mallinfo(void)
 {
   struct mallinfo mi;
-  memstats_t ms = {0};
   mi.arena =  total_avail;
-
   hts_lwmutex_lock(&mutex);
-  tlsf_walk_heap(gpool, mywalker, &ms);
+  mi.uordblks = tlsf_used(gpool);
   hts_lwmutex_unlock(&mutex);
-
-  mi.ordblks = ms.free_segs;
-  mi.uordblks = ms.used;
-  mi.fordblks = ms.free;
+  mi.fordblks = mi.arena - mi.uordblks;
   return mi;
 }
 
@@ -200,7 +156,6 @@ void free(void *ptr)
   if(ptr == NULL)
     return;
   const int bs = tlsf_block_size(ptr);
-
 
   if(bs >= 65536) {
     const int p = (intptr_t)ptr;
