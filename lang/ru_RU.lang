@@ -537,8 +537,7 @@ msg: Использовать оригинальное название
 # ./src/arch/android/android.c
 #
 id: Android Storage
-# Missing translation
-msg: 
+msg: Память Android
 
 id: Movies
 msg: Фильмы
@@ -547,8 +546,7 @@ id: Music
 msg: Музыка
 
 id: Pictures
-# Missing translation
-msg: 
+msg: Изображения
 
 #
 # ./src/arch/linux/pulseaudio.c
@@ -620,8 +618,7 @@ msg: Вкл
 # ./src/arch/rpi/rpi_tv.c
 #
 id: Match display and content framerate
-# Missing translation
-msg: 
+msg: Подогнать частоту кадров контента и экрана
 
 #
 # ./src/audio2/audio.c
@@ -756,23 +753,19 @@ msg: Дополнительный
 # ./src/backend/htsp/htsp.c
 #
 id: Channels
-# Missing translation
-msg: 
+msg: Каналы
 
 id: Invalid HTSP URL
 msg: Недопустимый HTSP URL
 
 id: No such channel
-# Missing translation
-msg: 
+msg: Канал отсутствует
 
 id: Recorded shows
-# Missing translation
-msg: 
+msg: Записанные передачи
 
 id: Recorder
-# Missing translation
-msg: 
+msg: Рекордер
 
 #
 # ./src/backend/search.c
@@ -787,20 +780,16 @@ msg: Результаты поиска для: %s
 # ./src/backend/slideshow/slideshow.c
 #
 id: 3 seconds
-# Missing translation
-msg: 
+msg: 3 секунды
 
 id: 5 seconds
-# Missing translation
-msg: 
+msg: 5 секунд
 
 id: 7 seconds
-# Missing translation
-msg: 
+msg: 7 секунд
 
 id: Slideshow speed
-# Missing translation
-msg: 
+msg: Скорость показа слайдов
 
 #
 # ./src/blobcache_file.c
@@ -827,8 +816,7 @@ msg: He удaлocь oткpыть фaйл: %s
 # ./src/fileaccess/fa_filepicker.c
 #
 id: Select a file
-# Missing translation
-msg: 
+msg: Выберите файл
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -855,12 +843,10 @@ id: Indexed mode
 msg: Индексированный режим
 
 id: Newest first
-# Missing translation
-msg: 
+msg: Сначала новые
 
 id: Oldest first
-# Missing translation
-msg: 
+msg: Сначала старые
 
 id: Show only supported files
 msg: Показывать только поддерживаемые файлы
@@ -938,12 +924,10 @@ msg: Название объекта не найдено
 # ./src/i18n.c
 #
 id: 12 Hour
-# Missing translation
-msg: 
+msg: 12 Часов
 
 id: 24 Hour
-# Missing translation
-msg: 
+msg: 24 Часа
 
 id: Default character set
 msg: Набор символов по умолчанию
@@ -976,8 +960,7 @@ id: Secondary subtitle language code
 msg: Код второго языка субтитров
 
 id: System default
-# Missing translation
-msg: 
+msg: Настройки по-умолчанию
 
 id: Tertiary audio language code
 msg: Код третьего языка аудио
@@ -986,27 +969,22 @@ id: Tertiary subtitle language code
 msg: Код третьего языка субтитров
 
 id: Time format
-# Missing translation
-msg: 
+msg: Формат времени
 
 id: Timezone
-# Missing translation
-msg: 
+msg: Часовой пояс
 
 #
 # ./src/ipc/libcec.c
 #
 id: Longpress SELECT for item menu
-# Missing translation
-msg: 
+msg: Удерживайте SELECT для входа в меню
 
 id: Switch TV input source
-# Missing translation
-msg: 
+msg: Изменить источник ТВ сигнала
 
 id: Use STOP key for combo input
-# Missing translation
-msg: 
+msg: Используйте кнопку STOP для комбинированного ввода
 
 #
 # ./src/keyring.c
@@ -1021,15 +999,13 @@ msg: Сохранённые пароли удалены
 # ./src/media/media_settings.c
 #
 id: Align on video frame
-# Missing translation
-msg: 
+msg: Выравнивание по размеру видео
 
 id: Audio volume
 msg: Громкость
 
 id: Delay
-# Missing translation
-msg: 
+msg: Задержка
 
 id: Go to standby after video ends
 msg: Отключить систему по окончании видео
@@ -1038,12 +1014,10 @@ id: Horizontal pan
 msg: Горизонтальное панорамирование
 
 id: Horizontal position
-# Missing translation
-msg: 
+msg: Горизонтальное положение
 
 id: Horizontal scale
-# Missing translation
-msg: 
+msg: Горизонтальный масштаб
 
 id: Reset defaults for folder '%s'
 msg: Сброс настроек по умолчанию для папки '%s'
@@ -1055,8 +1029,7 @@ id: Save as global default
 msg: Сохранить как главные настройки по умолчанию 
 
 id: Scaling
-# Missing translation
-msg: 
+msg: Масштаб
 
 id: Stretch video to fullscreen
 msg: Растянуть видео во весь экран
@@ -1068,12 +1041,10 @@ id: Vertical pan
 msg: Вертикальное панорамирование
 
 id: Vertical position
-# Missing translation
-msg: 
+msg: Вертикальное положение
 
 id: Vertical scale
-# Missing translation
-msg: 
+msg: Вертикальный масштаб
 
 id: Video frame interpolation
 msg: Интерполяция видео кадра
@@ -1160,8 +1131,7 @@ id: IMDb ID
 msg: IMDb ID
 
 id: Metadata loaded from <b>%s</b> based on %s
-# Missing translation
-msg: 
+msg: Метаданныее загружаются из <b>%s</b> на основе %s
 
 id: Metadata source
 msg: Источник метаданных
@@ -1206,8 +1176,7 @@ id: Add and remove items on homepage
 msg: Добавление и удаление элементов на главном экране
 
 id: Added %s to home page
-# Missing translation
-msg: 
+msg: %s добавлено на главный экран
 
 id: Added new bookmark: %s
 msg: Добавлены новые закладки: %s
@@ -1216,8 +1185,7 @@ id: Bookmarks
 msg: Закладки
 
 id: Icon
-# Missing translation
-msg: 
+msg: Иконка
 
 id: No handler for URL
 msg: Нет обработчика для URL
@@ -1229,8 +1197,7 @@ id: Photos
 msg: Фото
 
 id: Removed %s from homepage
-# Missing translation
-msg: 
+msg: %s удалено с главного экрана
 
 id: Removed bookmark: %s
 msg: Удалить закладки: %s
@@ -1299,8 +1266,7 @@ id: Corrupt plugin bundle
 msg: Поврежденный пакет плагина
 
 id: Custom backgrounds can now be set in Settings -> Look and Feel
-# Missing translation
-msg: 
+msg: Пользовательские фоны можно задать в Настройки -> Внешний вид 
 
 id: Disk write error
 msg: Ошибка записи на диск
@@ -1351,12 +1317,10 @@ id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may tr
 msg: Плагин %s %s был удален, потому что он вызывает проблемы.\nПопробуйте переустановить вручную другую версию.
 
 id: Plugin %s has been uninstalled - %s
-# Missing translation
-msg: 
+msg: Плагин %s был удален - %s
 
 id: Plugin categories
-# Missing translation
-msg: 
+msg: Категории плагинов
 
 id: Plugins
 msg: Плагины
@@ -1392,8 +1356,7 @@ id: User interface extensions
 msg: Расширения пользовательского интерфейса
 
 id: Version %s is no longer compatible with Movian
-# Missing translation
-msg: 
+msg: Версия %s больше не совместима с Movian
 
 id: Video streaming
 msg: Потоковое видео
@@ -1447,8 +1410,7 @@ msg: Локальная сеть
 # ./src/settings.c
 #
 id: About
-# Missing translation
-msg: 
+msg: О программе
 
 id: Applications and installed plugins
 msg: Приложения и установленные плагины
@@ -1472,7 +1434,7 @@ id: Global settings
 msg: Главные настройки
 
 id: Look and feel
-msg: Внешний вид интерфейса
+msg: Внешний вид
 
 id: Network services, etc
 msg: Сетевые услуги и т.п.
@@ -1490,8 +1452,7 @@ id: System related settings
 msg: Системные настройки
 
 id: TV Control
-# Missing translation
-msg: 
+msg: Контроль ТВ
 
 #
 # ./src/subtitles/subtitles.c
@@ -1624,38 +1585,31 @@ msg: С нажатой кнопкой Select
 # ./src/ui/glw/glw_settings.c
 #
 id: Custom background image
-# Missing translation
-msg: 
+msg: Пользовательский фон
 
 id: Emulate Up/Down buttons with mouse wheel
-# Missing translation
-msg: 
+msg: Эмулировать кнопки Вверх/Вниз с помощью колеса прокрутки 
 
 id: Folder for screensaver images
-# Missing translation
-msg: 
+msg: Папка с изображениями заставки
 
 id: Font and icon size
 msg: Размер шрифта и значков
 
 id: Interface horizontal shrink
-# Missing translation
-msg: 
+msg: Горизонтальное сжатие интерфейса
 
 id: Interface vertical shrink
-# Missing translation
-msg: 
+msg: Вертикальное сжатие интерфейска
 
 id: Screensaver
-# Missing translation
-msg: 
+msg: Экранная заставка
 
 id: Screensaver delay
-msg: Задержка скринсейвера
+msg: Задержка заставки
 
 id: Use Bing images of the day
-# Missing translation
-msg: 
+msg: Испозовать изображения дня из Bing
 
 id: Wrap when reaching beginning/end of lists
 msg: Переход при достижении начала/конца списка
@@ -1664,48 +1618,37 @@ msg: Переход при достижении начала/конца спис
 # ./src/ui/glw/glw_view_eval.c
 #
 id: %d days ago
-# Missing translation
-msg: 
+msg: %d дней назад
 
 id: %d hours ago
-# Missing translation
-msg: 
+msg: %d часов назад
 
 id: %d minutes ago
-# Missing translation
-msg: 
+msg: %d минут назад
 
 id: %d months ago
-# Missing translation
-msg: 
+msg: %d месяцев назад
 
 id: %d weeks ago
-# Missing translation
-msg: 
+msg: %d недель назад
 
 id: %d years ago
-# Missing translation
-msg: 
+msg: %d лет назад
 
 id: Just now
-# Missing translation
-msg: 
+msg: Только что
 
 id: One day ago
-# Missing translation
-msg: 
+msg: Один день назад
 
 id: One hour ago
-# Missing translation
-msg: 
+msg: Один час назад
 
 id: One minute ago
-# Missing translation
-msg: 
+msg: Одну минуту назад
 
 id: One month ago
-# Missing translation
-msg: 
+msg: Один месяц назад
 
 #
 # ./src/ui/linux/nvidia.c
@@ -1780,8 +1723,7 @@ id: Enable VDPAU
 msg: Включить VDPAU
 
 id: Hardware accelerated decoding
-# Missing translation
-msg: 
+msg: Аппаратное ускорение декодирования
 
 id: Maximum resolution for deinterlacer
 msg: Максимальное разрешение для деинтерлейсинга
