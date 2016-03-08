@@ -41,6 +41,7 @@ widget(container_z, {
     });
 
     widget(label, {
+      autohide: true;
       caption: $self.metadata.title;
       style: "GridItemLabel";
     });
