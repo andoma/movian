@@ -1,0 +1,6 @@
+loader({
+  noInitialTransform: true;
+  effect: blend;
+  time: 0.2;
+  source: $self.model.metadata.glwview;
+});
