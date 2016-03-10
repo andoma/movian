@@ -83,6 +83,13 @@ done
 
 setup_env "$@"
 
+if enabled openssl; then
+    # Assumes installed from brew or equivivalent
+    disable polarssl
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -L/usr/local/opt/openssl/lib -lssl -lcrypto"
+    echo >>${CONFIG_MAK} "CFLAGS_cfg += -I/usr/local/opt/openssl/include"
+fi
+
 MACOSXSDK_CFLAGS="-mmacosx-version-min=10.8"
 MACOSXSDK_LDFLAGS="$MACOSXSDK_CFLAGS"
 LIBAV_CFLAGS="$MACOSXSDK_CFLAGS"
