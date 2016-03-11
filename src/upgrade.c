@@ -79,7 +79,7 @@ static int inhibit_checks = 1;
 static prop_t *news_ref;
 
 #if STOS
-static const char *ctrlbase_stos = "http://upgrade.movian.tv/stos/1";
+static const char *ctrlbase_stos = "http://upgrade.movian.tv/stos/2";
 static int stos_upgrade_needed;
 static int stos_current_version;
 static int stos_req_version;
