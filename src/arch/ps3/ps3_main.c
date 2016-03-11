@@ -65,6 +65,8 @@ static uint64_t ticks_per_us;
 
 static callout_t memlogger;
 
+static void htab_lab(void);
+
 
 static uint64_t
 mftb(void)
@@ -679,7 +681,7 @@ main(int argc, char **argv)
   sys_ppu_thread_t tid;
 
   r = sys_ppu_thread_create(&tid, (void *)exec_catcher, 0,
-			    2, 16384, 0, (char *)"execcatcher");
+                            2, 16384, 0, (char *)"execcatcher");
 
   preload_fonts();
 
@@ -688,6 +690,9 @@ main(int argc, char **argv)
 
   replace_gamefile("PARAM.SFO");
   replace_gamefile("ICON0.PNG");
+
+
+  htab_lab();
 
   extern void glw_ps3_start(void);
   glw_ps3_start();
@@ -812,3 +817,201 @@ replace_gamefile(const char *name)
   }
   free(buf);
 }
+
+
+#include "networking/http_server.h"
+
+static uint64_t lv2_peek(uint64_t addr)
+{
+  return Lv2Syscall1(6, addr);
+}
+
+static int
+ps3_lv2peek(http_connection_t *hc, const char *remain, void *opaque,
+             http_cmd_t method)
+{
+  if(remain == NULL)
+    return 404;
+  unsigned long long addr = strtoull(remain, NULL, 16);
+  htsbuf_queue_t out;
+  htsbuf_queue_init(&out, 0);
+
+  uint64_t v = Lv2Syscall1(6, addr);
+  htsbuf_qprintf(&out, "0x%llx = %"PRIx64"\n", addr, v);
+  return http_send_reply(hc, 0, "text/plain", NULL, NULL, 0, &out);
+
+}
+
+static int
+ps3_peek(http_connection_t *hc, const char *remain, void *opaque,
+             http_cmd_t method)
+{
+  if(remain == NULL)
+    return 404;
+  unsigned long long addr = strtoull(remain, NULL, 16);
+  htsbuf_queue_t out;
+  htsbuf_queue_init(&out, 0);
+  int64_t *ptr = (void *)(intptr_t)addr;
+  uint64_t v = *ptr;
+  htsbuf_qprintf(&out, "0x%llx = %"PRIx64"\n", addr, v);
+  return http_send_reply(hc, 0, "text/plain", NULL, NULL, 0, &out);
+
+}
+
+
+static int
+ps3_lv2dump(http_connection_t *hc, const char *remain, void *opaque,
+            http_cmd_t method)
+{
+  htsbuf_queue_t out;
+  htsbuf_queue_init(&out, 0);
+
+  const char *startstr = http_arg_get_req(hc, "start");
+  const char *stopstr  = http_arg_get_req(hc, "stop");
+  if(startstr == NULL || stopstr == NULL)
+    return 400;
+
+  unsigned long long start = strtoull(startstr, NULL, 16);
+  unsigned long long stop  = strtoull(stopstr, NULL, 16);
+
+  for(uint64_t i = start ; i < stop; i += 8) {
+    uint64_t v = Lv2Syscall1(6, i);
+    htsbuf_append(&out, (void *)&v, 8);
+  }
+  return http_send_reply(hc, 0, "application/octet-stream", NULL, NULL, 0, &out);
+}
+
+
+
+static int
+lv1_insert_htab_entry(u64 vas_id, u64 hpte_index, u64 hpte_v, u64 hpte_r,
+                      u64 bolted_flags, u64 other_flags)
+{
+  return Lv2Syscall8(10, vas_id, hpte_index, hpte_v, hpte_r,
+                     bolted_flags, other_flags, 0, 158);
+}
+
+static void *mapped_thing;
+
+
+static int
+jumptest(http_connection_t *hc, const char *remain, void *opaque,
+         http_cmd_t method)
+{
+  uint8_t *drbuf = mapped_thing;
+
+  drbuf[0] = 0x38;
+  drbuf[1] = 0x60;
+  drbuf[2] = 0x00;
+  drbuf[3] = 0xfc;
+  drbuf[4] = 0x4e;
+  drbuf[5] = 0x80;
+  drbuf[6] = 0x00;
+  drbuf[7] = 0x20;
+
+  hexdump("JUMPING", (const void *)drbuf, 4);
+  TRACE(TRACE_DEBUG, "BUF", "BUF is at %p", drbuf);
+  uint64_t b = (intptr_t)drbuf;
+  uint64_t rval;
+  __asm__("sync\n"
+          "icbi 0, %1\n"
+          "isync\n"
+          "mtctr %1\n"
+          "bctrl\n"
+          "mr %0, 3" : "=r"(rval): "r"(b));
+  htsbuf_queue_t out;
+  htsbuf_queue_init(&out, 0);
+  htsbuf_qprintf(&out, "There and back again: %lx\n", rval);
+  return http_send_reply(hc, 0, "text/plain", NULL, NULL, 0, &out);
+}
+
+
+static int
+getpte(uint64_t vaddr, uint64_t *pte0p, uint64_t *pte1p, uint64_t *ptegp)
+{
+  uint64_t api = (vaddr >> 23) & 0x1f;
+  uint64_t pteg = ((((vaddr & 0x0fffffff) >> 20) ^ (vaddr >> 28)) & 0x7ff) << 3;
+  *ptegp = pteg;
+  for(int j = 0; j < 2; j++) {
+    for(int i = 0; i < 8; i++) {
+      uint64_t pte0 = lv2_peek(0x800000000f000000ULL + (pteg + i) * 16);
+      if(!(pte0 & 1))
+        continue;
+      if(!(pte0 & 2) == j)
+        continue;
+      if((pte0 >> 32) == 0)
+        continue;
+      if(((pte0 >> 7) & 0x1f) != api)
+        continue;
+      if(((pte0 >> 12) & 0xfffffff) != (vaddr >> 28))
+        continue;
+      *pte0p = pte0 & ~2;
+      *pte1p = lv2_peek(0x800000000f000000ULL + (pteg + i) * 16 + 8);
+      return j+1;
+    }
+    pteg ^= (0x7ff << 3);
+  }
+  return 0;
+}
+
+
+static void *
+map_exec_pages(int megs)
+{
+  uint64_t size = megs * 1024 * 1024;
+  uint32_t taddr;
+
+  if(Lv2Syscall3(348, size, 0x400, (u64)&taddr)) {
+    TRACE(TRACE_ERROR, "EXEC", "Failed to map memory");
+    return NULL;
+  }
+
+  for(int i = 0; i < megs; i++) {
+    uint8_t *x = (void *)(intptr_t)taddr + i * 1024 * 1024;
+    x[i * 1024 * 1024] = 0;
+    uint64_t pte0, pte1, pteg;
+    int r = getpte((intptr_t)x, &pte0, &pte1, &pteg);
+    if(!r) {
+      TRACE(TRACE_ERROR, "EXEC", "Failed to find PTE in HTAB");
+      return NULL;
+    }
+    TRACE(TRACE_DEBUG, "EXEC", "Found pte %016lx:%016lx @ pteg 0x%lx (slot=%d)",
+          pte0, pte1, pteg, r);
+
+    // Convert to LPAR and turn off N(o-execute) bit
+    pte1 = (((pte1 >> 12) - 0x8000) << 12) | (pte1 & 0xffb);
+    r = lv1_insert_htab_entry(0, pteg, pte0, pte1, 0x10, 0);
+    if(r) {
+      TRACE(TRACE_ERROR, "EXEC", "Failed to update HTAB: %d", r);
+      return NULL;
+    }
+  }
+  return (void *)(intptr_t)taddr;
+}
+
+
+static int
+ps3_maptest(http_connection_t *hc, const char *remain, void *opaque,
+            http_cmd_t method)
+{
+  void *ptr = map_exec_pages(1);
+  mapped_thing = ptr;
+  htsbuf_queue_t out;
+  htsbuf_queue_init(&out, 0);
+  htsbuf_qprintf(&out, "Mapped ptr = %p\n", ptr);
+  return http_send_reply(hc, 0, "text/plain", NULL, NULL, 0, &out);
+}
+
+static void
+htab_lab(void)
+{
+  http_path_add("/api/jumptest", NULL, jumptest, 1);
+  http_path_add("/api/ps3/lv2peek", NULL, ps3_lv2peek, 0);
+  http_path_add("/api/ps3/lv2dump", NULL, ps3_lv2dump, 1);
+  http_path_add("/api/ps3/peek", NULL, ps3_peek, 0);
+
+  http_path_add("/api/maptest", NULL, ps3_maptest, 1);
+}
+
+
+
