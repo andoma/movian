@@ -934,7 +934,7 @@ stos_add_artifacts(struct artifact_queue *aq)
     char *postfix = strrchr(n, '.');
     if(postfix == NULL)
       continue;
-    char *dash = strchr(n, '-');
+    char *dash = strrchr(n, '-');
     if(dash == NULL)
       continue;
 
