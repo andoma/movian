@@ -55,7 +55,7 @@ extern char *showtime_bin;
 
 static HTS_MUTEX_DECL(upgrade_mutex);
 
-static const char *ctrlbase = "http://upgrade.movian.tv/upgrade/2";
+static const char *ctrlbase = "http://upgrade.movian.tv/upgrade/3";
 static const char *artifact_type;
 static const char *archname;
 
@@ -76,7 +76,7 @@ static int inhibit_checks = 1;
 static prop_t *news_ref;
 
 #if STOS
-static const char *ctrlbase_stos = "http://upgrade.movian.tv/stos/1";
+static const char *ctrlbase_stos = "http://upgrade.movian.tv/stos/2";
 static int stos_upgrade_needed;
 static int stos_current_version;
 static int stos_req_version;
@@ -935,7 +935,7 @@ stos_add_artifacts(struct artifact_queue *aq)
     char *postfix = strrchr(n, '.');
     if(postfix == NULL)
       continue;
-    char *dash = strchr(n, '-');
+    char *dash = strrchr(n, '-');
     if(dash == NULL)
       continue;
 
