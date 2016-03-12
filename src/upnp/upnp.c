@@ -447,7 +447,7 @@ add_content_directory(upnp_service_t *us, const char *hostname, int port)
                                                us),
                    NULL);
 
-  const char *contents = "other";
+  const char *contents = "server";
 
   us->us_setting_type =
     setting_create(SETTING_STRING, us->us_settings, SETTINGS_INITIAL_UPDATE,
