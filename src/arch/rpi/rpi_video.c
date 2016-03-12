@@ -454,7 +454,8 @@ rpi_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 
   OMX_PARAM_BRCMVIDEODECODEERRORCONCEALMENTTYPE ec;
   OMX_INIT_STRUCTURE(ec);
-  ec.bStartWithValidFrame = OMX_FALSE;
+
+  ec.bStartWithValidFrame = OMX_TRUE;
   omxchk(OMX_SetParameter(d->oc_handle,
 			  OMX_IndexParamBrcmVideoDecodeErrorConcealment, &ec));
 
