@@ -144,8 +144,7 @@ xmlrpc_parse_array(htsmsg_t *dst, htsmsg_t *m,
   htsmsg_field_t *f, *g;
 
   if((m = htsmsg_get_map(m, "data")) == NULL) {
-    snprintf(errbuf, errlen, "Missing data tags in array\n");
-    return -1;
+    return 0; // Empty array
   }
 
   HTSMSG_FOREACH(f, m) {
