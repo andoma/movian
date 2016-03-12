@@ -32,41 +32,42 @@ widget(container_y, {
         onEvent(activate, selectSubtitleTrack($self.url));
 
         widget(container_x, {
-          spacing: 0.5em;
+          padding: [0.5em, 0];
 
           widget(icon, {
 	    source: "skin://icons/ic_favorite_48px.svg";
 	    alpha: iir($self.url == $parent.media.subtitle.current &&
                        $parent.media.subtitle.manual, 4);
-            color: !isNavFocused();
+            style: "NavSelectedText";
 	  });
 
           widget(icon, {
 	    source: "skin://icons/ic_check_48px.svg";
 	    alpha: iir($self.url == $parent.media.subtitle.current, 4);
-            color: !isNavFocused();
+            style: "NavSelectedText";
 	  });
 
           widget(container_y, {
+            padding: [0.5em, 0, 0, 0];
             align: center;
 
 	    widget(label, {
               filterConstraintX: true;
               caption: $self.title;
-              color: !isNavFocused();
+              style: "NavSelectedText";
             });
 
             widget(container_x, {
 	      widget(label, {
                 filterConstraintX: true;
                 caption: $self.language;
-                color: !isNavFocused() * 0.66;
+                style: "NavSelectedTextSecondary";
               });
 
 	      widget(label, {
                 filterConstraintX: true;
                 caption: $self.source;
-                color: !isNavFocused() * 0.66;
+                style: "NavSelectedTextSecondary";
               });
             });
           });

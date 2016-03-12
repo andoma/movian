@@ -11,7 +11,7 @@
 	focusable: true;
 	caption: TITLE;
 	onEvent(activate, deliverEvent($core.upgrade.eventSink, EVENT));
-        color: select(isNavFocused(), 0, 1);
+        style: "NavSelectedText";
       });
     });
   });

@@ -29,38 +29,40 @@ widget(container_y, {
         onEvent(activate, selectAudioTrack($self.url));
 
         widget(container_x, {
+          padding: [0.5em, 0];
+
           widget(icon, {
 	    source: "skin://icons/ic_favorite_48px.svg";
 	    alpha: iir($self.url == $parent.media.audio.current &&
                        $parent.media.audio.manual, 4);
-            color: !isNavFocused();
+            style: "NavSelectedText";
 	  });
 
           widget(icon, {
 	    source: "skin://icons/ic_check_48px.svg";
 	    alpha: iir($self.url == $parent.media.audio.current, 4);
-            color: !isNavFocused();
+            style: "NavSelectedText";
 	  });
 
 	  widget(label, {
             filterConstraintX: true;
 	    weight: 2;
 	    caption: $self.title;
-            color: !isNavFocused();
+            style: "NavSelectedText";
 	  });
 
 	  widget(label, {
             filterConstraintX: true;
 	    weight: 1;
 	    caption: $self.language;
-            color: !isNavFocused();
+            style: "NavSelectedText";
 	  });
 
 	  widget(label, {
             filterConstraintX: true;
 	    weight: 0.5;
 	    caption: $self.format;
-            color: !isNavFocused();
+            style: "NavSelectedText";
 	  });
         });
       });

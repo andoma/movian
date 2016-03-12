@@ -1,7 +1,6 @@
+
 #define ListItemBevel() {
   widget(container_y, {
-
-    style: "ListItemBevel";
 
     filterConstraintY: true;
     filterConstraintX: true;
@@ -22,8 +21,6 @@
 #define GridItemBevel() {
   widget(container_y, {
 
-    style: "GridItemBevel";
-
     filterConstraintY: true;
     widget(quad, {
       height: 1;
@@ -37,8 +34,6 @@
     });
   });
   widget(container_x, {
-
-    style: "GridItemBevel";
 
     filterConstraintX: true;
     widget(quad, {
