@@ -231,7 +231,7 @@ typedef struct glw_view_eval_context {
   struct glw_root *gr;
   const struct glw_rctx *rc;
   token_t *rpn;
-  struct glw_prop_sub_list *sublist;
+  struct glw_prop_sub_slist *sublist;
   struct event *event;
   prop_t *tgtprop;
 
@@ -332,11 +332,11 @@ token_t *glw_view_clone_chain(glw_root_t *gr, token_t *src, token_t **lp);
 
 void glw_view_cache_flush(glw_root_t *gr);
 
-struct glw_prop_sub_list;
-void glw_prop_subscription_destroy_list(glw_root_t *gr, 
-					struct glw_prop_sub_list *l);
+struct glw_prop_sub_slist;
+void glw_prop_subscription_destroy_list(glw_root_t *gr,
+					struct glw_prop_sub_slist *l);
 
-void glw_prop_subscription_suspend_list(struct glw_prop_sub_list *l);
+void glw_prop_subscription_suspend_list(struct glw_prop_sub_slist *l);
 
 void glw_view_loader_eval(glw_root_t *gr);
 

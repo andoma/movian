@@ -68,7 +68,7 @@ enum {
  *
  */
 typedef struct glw_prop_sub {
-  LIST_ENTRY(glw_prop_sub) gps_link;
+  SLIST_ENTRY(glw_prop_sub) gps_link;
   glw_t *gps_widget;
 
   prop_sub_t *gps_sub;
@@ -202,20 +202,19 @@ vectorizer_clean(glw_root_t *gr, sub_vectorizer_t *sv)
  *
  */
 void
-glw_prop_subscription_destroy_list(glw_root_t *gr, struct glw_prop_sub_list *l)
+glw_prop_subscription_destroy_list(glw_root_t *gr, struct glw_prop_sub_slist *l)
 {
-  glw_prop_sub_t *gps;
+  glw_prop_sub_t *gps, *next;
   sub_cloner_t *sc;
   sub_vectorizer_t *sv;
 
-  while((gps = LIST_FIRST(l)) != NULL) {
+  for(gps = SLIST_FIRST(l); gps != NULL; gps = next) {
+    next = SLIST_NEXT(gps, gps_link);
 
     prop_unsubscribe(gps->gps_sub);
 
     if(gps->gps_token != NULL)
       glw_view_token_free(gr, gps->gps_token);
-
-    LIST_REMOVE(gps, gps_link);
 
     switch(gps->gps_type) {
     case GPS_VALUE:
@@ -254,6 +253,7 @@ glw_prop_subscription_destroy_list(glw_root_t *gr, struct glw_prop_sub_list *l)
     prop_ref_dec(gps->gps_prop_core);
     free(gps);
   }
+  SLIST_INIT(l);
 }
 
 
@@ -261,11 +261,11 @@ glw_prop_subscription_destroy_list(glw_root_t *gr, struct glw_prop_sub_list *l)
  *
  */
 void
-glw_prop_subscription_suspend_list(struct glw_prop_sub_list *l)
+glw_prop_subscription_suspend_list(struct glw_prop_sub_slist *l)
 {
   glw_prop_sub_t *gps;
 
-  LIST_FOREACH(gps, l, gps_link) {
+  SLIST_FOREACH(gps, l, gps_link) {
     if(gps->gps_sub != NULL) {
       prop_unsubscribe(gps->gps_sub);
       gps->gps_sub = NULL;
@@ -2519,7 +2519,7 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
   }
 
   gps->gps_sub = s;
-  LIST_INSERT_HEAD(ec->sublist, gps, gps_link);
+  SLIST_INSERT_HEAD(ec->sublist, gps, gps_link);
 
   gps->gps_rpn = ec->passive_subscriptions ? NULL : ec->rpn;
 
@@ -3285,9 +3285,9 @@ glw_event_map_eval_block_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
   glw_event_map_eval_block_t *b = (glw_event_map_eval_block_t *)gem;
   token_t *body;
   glw_view_eval_context_t n;
-  struct glw_prop_sub_list l;
+  struct glw_prop_sub_slist l;
 
-  LIST_INIT(&l);
+  SLIST_INIT(&l);
 
   memset(&n, 0, sizeof(n));
   glw_captured_block_prepare_invoke(&n, &b->capture);
@@ -3491,9 +3491,9 @@ glwf_onInactivity(glw_view_eval_context_t *ec, struct token *self,
       goe->trigged = 1;
 
       glw_view_eval_context_t n = {};
-      struct glw_prop_sub_list l;
+      struct glw_prop_sub_slist l;
       glw_captured_block_prepare_invoke(&n, &goe->capture);
-      LIST_INIT(&l);
+      SLIST_INIT(&l);
       n.gr = w->glw_root;
       n.w = w;
       n.passive_subscriptions = 1;

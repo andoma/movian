@@ -67,7 +67,7 @@ typedef struct glw_program_args glw_program_args_t;
 TAILQ_HEAD(glw_queue, glw);
 LIST_HEAD(glw_head, glw);
 LIST_HEAD(glw_event_map_list, glw_event_map);
-LIST_HEAD(glw_prop_sub_list, glw_prop_sub);
+SLIST_HEAD(glw_prop_sub_slist, glw_prop_sub);
 LIST_HEAD(glw_loadable_texture_list, glw_loadable_texture);
 TAILQ_HEAD(glw_loadable_texture_queue, glw_loadable_texture);
 LIST_HEAD(glw_video_list, glw_video);
@@ -1117,7 +1117,7 @@ typedef struct glw {
 
   struct glw_event_map_list glw_event_maps;
 
-  struct glw_prop_sub_list glw_prop_subscriptions;
+  struct glw_prop_sub_slist glw_prop_subscriptions;
 
   struct token *glw_dynamic_expressions;
 
