@@ -26,8 +26,6 @@ widget(container_y, {
     chaseFocus: true;
     scrollThreshold: 2em;
 
-    &clone.focused = focusedChild();
-
     cloner($self.model.nodes, container_x, {
 
       padding: [0,0,1em,0];
