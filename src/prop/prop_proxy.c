@@ -126,6 +126,26 @@ ppc_sendq(prop_proxy_connection_t *ppc)
  *
  */
 static void
+ppc_send_hello(prop_proxy_connection_t *ppc)
+{
+  int hellomsglen = 3;
+  uint8_t hellomsg[hellomsglen];
+  hellomsg[0] = STPP_CMD_HELLO;
+  hellomsg[1] = STPP_VERSION;
+  hellomsg[2] = 0;
+
+  htsbuf_queue_t q;
+  htsbuf_queue_init(&q, 0);
+  websocket_append_hdr(&q, 2, hellomsglen);
+  htsbuf_append(&q, hellomsg, hellomsglen);
+  asyncio_sendq(ppc->ppc_connection, &q, 0);
+}
+
+
+/**
+ *
+ */
+static void
 ppc_connected(void *aux, const char *err)
 {
   prop_proxy_connection_t *ppc = aux;
@@ -511,6 +531,30 @@ ppc_ws_input_notify(prop_proxy_connection_t *ppc, const uint8_t *data, int len)
  *
  */
 static int
+ppc_ws_input_hello(prop_proxy_connection_t *ppc, const uint8_t *data, int len)
+{
+  if(len < 17)
+    return -1;
+
+  if(data[0] != STPP_VERSION) {
+    TRACE(TRACE_ERROR, "STPP", "Incompatible version %d", data[0]);
+    return -1;
+  }
+
+  if(!memcmp(data + 1, gconf.running_instance, 16)) {
+    TRACE(TRACE_ERROR, "STPP", "Refusing connection to myself");
+    return -1;
+  }
+
+  ppc->ppc_websocket_open = 2;
+  ppc_sendq(ppc);
+  return 0;
+}
+
+/**
+ *
+ */
+static int
 ppc_ws_input(void *opaque, int opcode, uint8_t *data, int len)
 {
   prop_proxy_connection_t *ppc = opaque;
@@ -524,6 +568,8 @@ ppc_ws_input(void *opaque, int opcode, uint8_t *data, int len)
   case STPP_CMD_NOTIFY:
     ppc_ws_input_notify(ppc, data + 1, len - 1);
     break;
+  case STPP_CMD_HELLO:
+    return ppc_ws_input_hello(ppc, data + 1, len - 1);
   }
   return 0;
 }
@@ -546,8 +592,7 @@ ppc_input(void *opaque, htsbuf_queue_t *q)
     }
     if(*line == 0) {
       ppc->ppc_websocket_open = 1;
-      ppc_sendq(ppc);
-      // Done
+      ppc_send_hello(ppc);
     }
     free(line);
   }
@@ -598,7 +643,7 @@ ppc_send(void *aux)
 {
   prop_proxy_connection_t *ppc = aux;
 
-  if(ppc->ppc_websocket_open)
+  if(ppc->ppc_websocket_open == 2)
     ppc_sendq(ppc);
 
   ppc_release(ppc);

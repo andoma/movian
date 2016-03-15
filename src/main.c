@@ -292,6 +292,8 @@ swrefresh(void)
 static void
 generate_device_id(void)
 {
+  arch_get_random_bytes(gconf.running_instance, sizeof(gconf.running_instance));
+
   if(gconf.device_id[0] != 0)
     return;
 
@@ -441,8 +443,7 @@ main_init(void)
   plugins_init(gconf.devplugins);
 #endif
 
-  if(gconf.device_id[0] == 0)
-    generate_device_id();
+  generate_device_id();
   TRACE(TRACE_DEBUG, "SYSTEM", "Hashed device ID: %s", gconf.device_id);
   if(gconf.device_type[0])
     TRACE(TRACE_DEBUG, "SYSTEM", "Device type: %s", gconf.device_type);

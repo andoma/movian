@@ -20,8 +20,11 @@
 
 #pragma once
 
+#define STPP_VERSION 1
+
 // These things are sent over the wire so no changes here please
 
+#define STPP_CMD_HELLO       0
 #define STPP_CMD_SUBSCRIBE   1
 #define STPP_CMD_UNSUBSCRIBE 2
 #define STPP_CMD_SET         3

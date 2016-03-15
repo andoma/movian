@@ -43,6 +43,7 @@ typedef struct stpp {
   struct stpp_subscription_tree stpp_subscriptions;
   struct stpp_prop_tree stpp_props;
   int stpp_prop_tally;
+  int stpp_helloed_ok;
 } stpp_t;
 
 
@@ -868,6 +869,18 @@ stpp_binary_event(prop_t *p, event_type_t event,
   event_release(e);
 }
 
+static void
+stpp_send_hello(stpp_t *stpp)
+{
+  int buflen = 1 + 1 + 16;
+  uint8_t *buf = alloca(buflen);
+  buf[0] = STPP_CMD_HELLO;
+  buf[1] = STPP_VERSION;
+  memcpy(buf + 2, gconf.running_instance, 16);
+  websocket_send(stpp->stpp_hc, 2, buf, buflen);
+
+}
+
 /**
  * Websocket server always pad frame with a zero byte at the end
  * (Not included in len). So it's safe to just use strings at end
@@ -888,6 +901,23 @@ stpp_binary(stpp_t *stpp, const uint8_t *data, int len)
   const uint8_t cmd = data[0];
   data++;
   len--;
+
+  if(cmd == STPP_CMD_HELLO) {
+    if(len < 2)
+      return -1;
+#if 0
+    uint8_t version = data[0];
+    uint8_t flags = data[1];
+    char *id = NULL;
+    char *version = NULL;
+#endif
+    stpp_send_hello(stpp);
+    stpp->stpp_helloed_ok = 1;
+    return 0;
+  }
+
+  if(!stpp->stpp_helloed_ok)
+    return -1;
 
   switch(cmd) {
   case STPP_CMD_SUBSCRIBE:

@@ -323,6 +323,8 @@ typedef struct gconf {
 
   char device_type[64];
 
+  uint8_t running_instance[16];
+
 } gconf_t;
 
 extern gconf_t gconf;
