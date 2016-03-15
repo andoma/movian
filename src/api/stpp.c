@@ -843,7 +843,20 @@ stpp_binary_event(prop_t *p, event_type_t event,
     e = event_create_action_str((const char *)data);
     break;
 
-
+  case EVENT_SELECT_AUDIO_TRACK:
+  case EVENT_SELECT_SUBTITLE_TRACK:
+    {
+      if(len < 1)
+        break;
+      uint8_t flags = data[0];
+      data++;
+      len--;
+      char *id = decode_string(&data, &len);
+      if(id != NULL)
+        e = event_create_select_track(id, event, flags & 1);
+      free(id);
+    }
+    break;
   default:
     TRACE(TRACE_ERROR, "STPP", "Can't handle event type %d", event);
     return;

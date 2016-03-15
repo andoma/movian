@@ -786,8 +786,17 @@ prop_proxy_send_event(prop_t *p, const event_t *e)
     }
     break;
 
+  case EVENT_SELECT_AUDIO_TRACK:
+  case EVENT_SELECT_SUBTITLE_TRACK:
+    {
+      const event_select_track_t *est = (event_select_track_t *)e;
+      htsbuf_append_byte(&q, est->manual ? 0x01 : 0);
+      prop_proxy_send_str(est->id, &q);
+    }
+    break;
+
   default:
-    printf("Can't serialize event %d\n", e->e_type);
+    printf("%s: Can't serialize event %d\n", __FUNCTION__, e->e_type);
     htsbuf_queue_flush(&q);
     return;
   }
