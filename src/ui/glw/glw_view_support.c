@@ -468,24 +468,22 @@ glw_view_print_tree(token_t *f, int indent)
 int
 glw_view_seterr(errorinfo_t *ei, token_t *b, const char *fmt, ...)
 {
-  char buf[PATH_MAX];
+  if(ei == NULL)
+    ei = alloca(sizeof(errorinfo_t));
 
   va_list ap;
   va_start(ap, fmt);
 
   assert(b != NULL);
 
-  if(ei == NULL) {
-    snprintf(buf, sizeof(buf), "GLW: %s:%d", rstr_get(b->file), b->line);
-    tracev(TRACE_NO_PROP, TRACE_ERROR, buf, fmt, ap);
-    return -1;
-  }
-
   vsnprintf(ei->error, sizeof(ei->error), fmt, ap);
   va_end(ap);
 
   snprintf(ei->file,  sizeof(ei->file),  "%s", rstr_get(b->file));
   ei->line = b->line;
+  tracelog(TRACE_NO_PROP, TRACE_ERROR, "GLW", "Error %s:%d: %s",
+           rstr_get(b->file), b->line, ei->error);
+
   return -1;
 }
 
