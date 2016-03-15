@@ -113,10 +113,8 @@ glw_view_error(glw_t *parent, const char *error, const char *file, int line)
   char buf[256];
 
   if(file != NULL) {
-    TRACE(TRACE_ERROR, "GLW", "%s:%d %s", file, line, error);
     snprintf(buf, sizeof(buf), "GLW %s:%d: Error: %s", file, line, error);
   } else {
-    TRACE(TRACE_ERROR, "GLW", "%s", error);
     snprintf(buf, sizeof(buf), "Error: %s", error);
   }
 
