@@ -128,6 +128,10 @@ glw_view_token_free(glw_root_t *gr, token_t *t)
     glw_event_map_destroy(gr, t->t_gem);
     break;
 
+  case TOKEN_EVENT:
+    event_release(t->t_event);
+    break;
+
   case TOKEN_URI:
     rstr_release(t->t_uri_title);
     rstr_release(t->t_uri);
@@ -264,6 +268,7 @@ glw_view_token_copy(glw_root_t *gr, token_t *src)
 
   case TOKEN_VECTOR_FLOAT:
   case TOKEN_GEM:
+  case TOKEN_EVENT:
   case TOKEN_VECTOR:
   case TOKEN_num:
     abort();

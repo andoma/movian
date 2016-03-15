@@ -2391,7 +2391,14 @@ prop_callback_event_injector(void *opaque, prop_event_t event, ...)
 
   if(event == PROP_EXT_EVENT) {
     va_start(ap, event);
-    glw_event_to_widget(gps->gps_widget, va_arg(ap, event_t *));
+    event_t *e = va_arg(ap, event_t *);
+
+    if(glw_send_event2(gps->gps_widget, e)) {
+      GLW_TRACE("Event '%s' intercepted by widget '%s' (start)",
+                event_sprint(e), glw_get_name(gps->gps_widget));
+    } else {
+      glw_event_to_widget(gps->gps_widget, e);
+    }
     va_end(ap);
   }
 }
@@ -3430,6 +3437,11 @@ glwf_onEvent(glw_view_eval_context_t *ec, struct token *self,
       gem = b->t_gem;
       break;
 
+    case TOKEN_EVENT:
+      event_addref(b->t_event);
+      gem = glw_event_map_external_create(b->t_event);
+      break;
+
     case TOKEN_BLOCK:
       gem = glw_event_map_eval_block_create(ec, b->child);
       break;
@@ -3459,7 +3471,7 @@ glwf_onEvent(glw_view_eval_context_t *ec, struct token *self,
     glw_event_map_remove_by_id(w, self->t_extra_int);
     self->t_extra_int = 0;
   }
-  
+
   rstr_release(filter);
   return 0;
 }
@@ -3645,16 +3657,15 @@ glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
                              "string or (void)");
   }
 
-  r = eval_alloc(self, ec, TOKEN_GEM);
+  r = eval_alloc(self, ec, TOKEN_EVENT);
 
-  event_t *ev = event_create_openurl(.url = url,
-                                     .view = view,
-                                     .item_model = item_model,
-                                     .parent_model = parent_model,
-                                     .how = how,
-                                     .parent_url = purl);
-
-  r->t_gem = glw_event_map_external_create(ev);
+  r->t_event = event_create_openurl(.url = url,
+                                    .view = view,
+                                    .item_model = item_model,
+                                    .parent_model = parent_model,
+                                    .how = how,
+                                    .parent_url = purl);
+  r->t_event->e_nav = prop_ref_inc(ec->w->glw_root->gr_prop_nav);
   eval_push(ec, r);
   return 0;
 }
@@ -3697,7 +3708,7 @@ glwf_deliverEvent(glw_view_eval_context_t *ec, struct token *self,
 		  token_t **argv, unsigned int argc)
 {
   token_t *a, *b, *r;
-  rstr_t *action = NULL;
+  event_t *event = NULL;
 
  if(argc < 1 || argc > 2)
     return glw_view_seterr(ec->ei, self,
@@ -3719,25 +3730,32 @@ glwf_deliverEvent(glw_view_eval_context_t *ec, struct token *self,
     case TOKEN_IDENTIFIER:
     case TOKEN_RSTRING:
     case TOKEN_URI:
-      action = rstr_dup(b->t_rstring);
+      event = event_create_action_str(rstr_get(b->t_rstring));
+      event->e_nav = prop_ref_inc(ec->w->glw_root->gr_prop_nav);
       break;
     case TOKEN_CSTRING:
-      action = rstr_alloc(b->t_cstring);
+      event = event_create_action_str(b->t_cstring);
+      event->e_nav = prop_ref_inc(ec->w->glw_root->gr_prop_nav);
       break;
     case TOKEN_INT:
       snprintf(tmp, sizeof(tmp), "%d", b->t_int);
-      action = rstr_alloc(tmp);
+      event = event_create_action_str(tmp);
+      event->e_nav = prop_ref_inc(ec->w->glw_root->gr_prop_nav);
+      break;
+    case TOKEN_EVENT:
+      event = b->t_event;
+      event_addref(event);
       break;
     default:
-      action = NULL;
+      event = NULL;
       break;
     }
   }
 
+
   r = eval_alloc(self, ec, TOKEN_GEM);
-  r->t_gem = glw_event_map_deliverEvent_create(a->t_prop, action);
+  r->t_gem = glw_event_map_deliverEvent_create(a->t_prop, event);
   eval_push(ec, r);
-  rstr_release(action);
   return 0;
 }
 
@@ -3815,9 +3833,9 @@ glwf_selectTrack(glw_view_eval_context_t *ec, struct token *self,
     return 0;
   }
 
-  r = eval_alloc(self, ec, TOKEN_GEM);
-  event_t *ev = event_create_select_track(str, type, 1);
-  r->t_gem = glw_event_map_external_create(ev);
+  r = eval_alloc(self, ec, TOKEN_EVENT);
+  r->t_event = event_create_select_track(str, type, 1);
+  r->t_event->e_nav = prop_ref_inc(ec->w->glw_root->gr_prop_nav);
   eval_push(ec, r);
   return 0;
 }
@@ -3852,15 +3870,23 @@ glwf_fireEvent(glw_view_eval_context_t *ec, struct token *self,
 	       token_t **argv, unsigned int argc)
 {
   token_t *a = argv[0];       /* Event */
-  if(a->type != TOKEN_GEM)
+
+  switch(a->type) {
+  case TOKEN_GEM:
+    a->type = TOKEN_NOP; // Steal event
+    glw_event_map_t *gem = a->t_gem;
+    gem->gem_fire(ec->w, gem, NULL);
+    return 0;
+
+  case TOKEN_EVENT:
+    glw_event_to_widget(ec->w, a->t_event);
+    return 0;
+
+  default:
     return glw_view_seterr(ec->ei, a, "fireEvent(): "
-			    "First argument is not an event");
-
-  a->type = TOKEN_NOP; // Steal event
-  glw_event_map_t *gem = a->t_gem;
-
-  gem->gem_fire(ec->w, gem, NULL);
-  return 0;
+                           "Invalid first argument (%s)",
+                           token2name(a));
+  }
 }
 
 
@@ -3922,9 +3948,9 @@ glwf_event(glw_view_eval_context_t *ec, struct token *self,
   if(action == NULL) {
     r = eval_alloc(self, ec, TOKEN_VOID);
   } else {
-    event_t *e = event_create_action_str(action);
-    r = eval_alloc(self, ec, TOKEN_GEM);
-    r->t_gem = glw_event_map_external_create(e);
+    r = eval_alloc(self, ec, TOKEN_EVENT);
+    r->t_event = event_create_action_str(action);
+    r->t_event->e_nav = prop_ref_inc(ec->w->glw_root->gr_prop_nav);
   }
   eval_push(ec, r);
   return 0;
@@ -6963,11 +6989,9 @@ glwf_eventWithProp(glw_view_eval_context_t *ec, struct token *self,
     return glw_view_seterr(ec->ei, b, "eventWithProp(): "
                            "Second argument is not a property");
 
-  token_t *r = eval_alloc(self, ec, TOKEN_GEM);
-
-  event_t *ev = event_create_prop_action(b->t_prop, name);
-
-  r->t_gem = glw_event_map_external_create(ev);
+  token_t *r = eval_alloc(self, ec, TOKEN_EVENT);
+  r->t_event = event_create_prop_action(b->t_prop, name);
+  r->t_event->e_nav = prop_ref_inc(ec->w->glw_root->gr_prop_nav);
   eval_push(ec, r);
   rstr_release(name);
   return 0;
@@ -7144,9 +7168,10 @@ static const token_func_t funcvec[] = {
   {"enqueuetrack", 1, glwf_enqueueTrack},
   {"selectAudioTrack", 1, glwf_selectAudioTrack},
   {"selectSubtitleTrack", 1, glwf_selectSubtitleTrack},
-  {"targetedEvent", 2, glwf_targetedEvent},
   {"fireEvent", 1, glwf_fireEvent},
   {"event", 1, glwf_event},
+
+  {"targetedEvent", 2, glwf_targetedEvent},
   {"deliverEvent", -1, glwf_deliverEvent},
   {"deliverRef", 2, glwf_deliverRef},
 

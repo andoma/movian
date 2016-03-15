@@ -26,7 +26,8 @@ widget(container_y, {
         focusable: true;
         ListItemHighlight();
         ListItemBevel();
-        onEvent(activate, selectAudioTrack($self.url));
+        onEvent(activate, deliverEvent($parent.control,
+                                       selectAudioTrack($self.url));
 
         widget(container_x, {
           padding: [0.5em, 0];

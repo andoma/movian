@@ -117,13 +117,14 @@ glw_video_widget_event(glw_t *w, event_t *e)
   media_pipe_t *mp = gv->gv_mp;
 
   // Intercept media events
-
   if(event_is_action(e, ACTION_PLAYPAUSE) ||
      event_is_action(e, ACTION_PLAY) ||
      event_is_action(e, ACTION_PAUSE) ||
      event_is_action(e, ACTION_STOP) ||
      event_is_action(e, ACTION_SKIP_FORWARD) ||
-     event_is_action(e, ACTION_SKIP_BACKWARD)) {
+     event_is_action(e, ACTION_SKIP_BACKWARD) ||
+     event_is_type(e, EVENT_SELECT_AUDIO_TRACK) ||
+     event_is_type(e, EVENT_SELECT_SUBTITLE_TRACK)) {
     mp_enqueue_event(mp, e);
     return 1;
   }

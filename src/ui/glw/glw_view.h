@@ -90,6 +90,7 @@ typedef enum {
   TOKEN_BLOCK,
   TOKEN_NOP,
   TOKEN_VECTOR_FLOAT,
+  TOKEN_EVENT,
   TOKEN_GEM,
   TOKEN_URI,                   // A link with title and url
   TOKEN_VECTOR,                // List of tokens
@@ -160,6 +161,7 @@ typedef struct token {
     };
 
     struct glw_event_map *gem;
+    struct event *event;
 
     struct prop *prop;
 
@@ -194,6 +196,7 @@ typedef struct token {
 #define t_func            u.func
 #define t_func_arg        u.farg
 #define t_gem             u.gem
+#define t_event           u.event
 #define t_prop            u.prop
 #define t_uri_title       u.uri.title
 #define t_uri             u.uri.uri

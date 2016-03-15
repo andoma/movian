@@ -205,7 +205,7 @@ glw_event_map_propref_create(prop_t *prop, prop_t *target)
 typedef struct glw_event_deliverEvent {
   glw_event_map_t map;
   prop_t *target;
-  rstr_t *action;
+  event_t *event;
 } glw_event_deliverEvent_t;
 
 
@@ -215,11 +215,12 @@ typedef struct glw_event_deliverEvent {
 static void
 glw_event_map_deliverEvent_dtor(glw_root_t *gr, glw_event_map_t *gem)
 {
-  glw_event_deliverEvent_t *g = (glw_event_deliverEvent_t *)gem;
+  glw_event_deliverEvent_t *de = (glw_event_deliverEvent_t *)gem;
 
-  rstr_release(g->action);
-  prop_ref_dec(g->target);
-  free(g);
+  if(de->event != NULL)
+    event_release(de->event);
+  prop_ref_dec(de->target);
+  free(de);
 }
 
 /**
@@ -229,8 +230,7 @@ static void
 glw_event_map_deliverEvent_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
 {
   glw_event_deliverEvent_t *de = (glw_event_deliverEvent_t *)gem;
-
-  if(de->action == NULL) {
+  if(de->event == NULL) {
     if(src != NULL) {
       GLW_TRACE("Event-map at %s:%d relayed source event '%s'",
                 rstr_get(gem->gem_file),
@@ -245,11 +245,7 @@ glw_event_map_deliverEvent_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
     }
     return;
   }
-
-  event_t *e = event_create_action_str(rstr_get(de->action));
-  e->e_nav = prop_ref_inc(w->glw_root->gr_prop_nav);
-  prop_send_ext_event(de->target, e);
-  event_release(e);
+  prop_send_ext_event(de->target, de->event);
 }
 
 
@@ -257,12 +253,12 @@ glw_event_map_deliverEvent_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
  *
  */
 glw_event_map_t *
-glw_event_map_deliverEvent_create(prop_t *target, rstr_t *action)
+glw_event_map_deliverEvent_create(prop_t *target, event_t *event)
 {
   glw_event_deliverEvent_t *de = calloc(1, sizeof(glw_event_deliverEvent_t));
-  
+
   de->target = prop_ref_inc(target);
-  de->action = rstr_dup(action);
+  de->event = event;
 
   de->map.gem_dtor = glw_event_map_deliverEvent_dtor;
   de->map.gem_fire = glw_event_map_deliverEvent_fire;
