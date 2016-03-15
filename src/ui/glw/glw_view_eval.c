@@ -3423,9 +3423,9 @@ glwf_onEvent(glw_view_eval_context_t *ec, struct token *self,
 
     switch(b->type) {
 
-    case TOKEN_EVENT:
+    case TOKEN_GEM:
       b->type = TOKEN_NOP; /* Steal 'gem' pointer from this token.
-			      It's okay since TOKEN_EVENT are always
+			      It's okay since TOKEN_GEM are always
 			      generated dynamically. */
       gem = b->t_gem;
       break;
@@ -3645,7 +3645,7 @@ glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
                              "string or (void)");
   }
 
-  r = eval_alloc(self, ec, TOKEN_EVENT);
+  r = eval_alloc(self, ec, TOKEN_GEM);
 
   event_t *ev = event_create_openurl(.url = url,
                                      .view = view,
@@ -3682,7 +3682,7 @@ glwf_deliverRef(glw_view_eval_context_t *ec, struct token *self,
     return glw_view_seterr(ec->ei, a, "deliverRef(): "
                            "Second argument is not a property");
 
-  r = eval_alloc(self, ec, TOKEN_EVENT);
+  r = eval_alloc(self, ec, TOKEN_GEM);
   r->t_gem = glw_event_map_propref_create(b->t_prop, a->t_prop);
   eval_push(ec, r);
   return 0;
@@ -3734,7 +3734,7 @@ glwf_deliverEvent(glw_view_eval_context_t *ec, struct token *self,
     }
   }
 
-  r = eval_alloc(self, ec, TOKEN_EVENT);
+  r = eval_alloc(self, ec, TOKEN_GEM);
   r->t_gem = glw_event_map_deliverEvent_create(a->t_prop, action);
   eval_push(ec, r);
   rstr_release(action);
@@ -3762,7 +3762,7 @@ glwf_playTrackFromSource(glw_view_eval_context_t *ec, struct token *self,
     dontskip = token2bool(c);
   }
 
-  r = eval_alloc(self, ec, TOKEN_EVENT);
+  r = eval_alloc(self, ec, TOKEN_GEM);
   r->t_gem = glw_event_map_playTrack_create(a->t_prop, b->t_prop, dontskip);
   eval_push(ec, r);
   return 0;
@@ -3781,7 +3781,7 @@ glwf_enqueueTrack(glw_view_eval_context_t *ec, struct token *self,
   if((a = resolve_property_name2(ec, argv[0])) == NULL)
     return -1;
 
-  r = eval_alloc(self, ec, TOKEN_EVENT);
+  r = eval_alloc(self, ec, TOKEN_GEM);
 
   r->t_gem = glw_event_map_playTrack_create(a->t_prop, NULL, 0);
   eval_push(ec, r);
@@ -3815,7 +3815,7 @@ glwf_selectTrack(glw_view_eval_context_t *ec, struct token *self,
     return 0;
   }
 
-  r = eval_alloc(self, ec, TOKEN_EVENT);
+  r = eval_alloc(self, ec, TOKEN_GEM);
   event_t *ev = event_create_select_track(str, type, 1);
   r->t_gem = glw_event_map_external_create(ev);
   eval_push(ec, r);
@@ -3852,7 +3852,7 @@ glwf_fireEvent(glw_view_eval_context_t *ec, struct token *self,
 	       token_t **argv, unsigned int argc)
 {
   token_t *a = argv[0];       /* Event */
-  if(a->type != TOKEN_EVENT)
+  if(a->type != TOKEN_GEM)
     return glw_view_seterr(ec->ei, a, "fireEvent(): "
 			    "First argument is not an event");
 
@@ -3898,7 +3898,7 @@ glwf_targetedEvent(glw_view_eval_context_t *ec, struct token *self,
 			   "targetedEvent(): Invalid second argument");
   }
 
-  r = eval_alloc(self, ec, TOKEN_EVENT);
+  r = eval_alloc(self, ec, TOKEN_GEM);
   r->t_gem = glw_event_map_internal_create(rstr_get(a->t_rstring), action,
 					   uc);
   eval_push(ec, r);
@@ -3923,7 +3923,7 @@ glwf_event(glw_view_eval_context_t *ec, struct token *self,
     r = eval_alloc(self, ec, TOKEN_VOID);
   } else {
     event_t *e = event_create_action_str(action);
-    r = eval_alloc(self, ec, TOKEN_EVENT);
+    r = eval_alloc(self, ec, TOKEN_GEM);
     r->t_gem = glw_event_map_external_create(e);
   }
   eval_push(ec, r);
@@ -6963,7 +6963,7 @@ glwf_eventWithProp(glw_view_eval_context_t *ec, struct token *self,
     return glw_view_seterr(ec->ei, b, "eventWithProp(): "
                            "Second argument is not a property");
 
-  token_t *r = eval_alloc(self, ec, TOKEN_EVENT);
+  token_t *r = eval_alloc(self, ec, TOKEN_GEM);
 
   event_t *ev = event_create_prop_action(b->t_prop, name);
 
@@ -7125,14 +7125,20 @@ glwf_dumpdynamicstatements(glw_view_eval_context_t *ec, struct token *self,
  *
  */
 static const token_func_t funcvec[] = {
+
+  // Fundamentals
+
   {"widget", 1, glwf_widget, NULL, NULL, glwf_resolve_widget_class},
   {"cloner", 3, glwf_cloner},
   {"coreAttach", 2, glwf_coreAttach, glwf_null_ctor, glwf_coreAttach_dtor},
   {"style", 2, glwf_style},
   {"newstyle", 2, glwf_newstyle},
   {"space", 1, glwf_space},
+
+
+  // Events
+
   {"onEvent", -1, glwf_onEvent},
-  {"onInactivity", 2, glwf_onInactivity, glwf_null_ctor,glwf_onInactivity_dtor},
   {"navOpen", -1, glwf_navOpen},
   {"playTrackFromSource", -1, glwf_playTrackFromSource},
   {"enqueuetrack", 1, glwf_enqueueTrack},
@@ -7141,6 +7147,11 @@ static const token_func_t funcvec[] = {
   {"targetedEvent", 2, glwf_targetedEvent},
   {"fireEvent", 1, glwf_fireEvent},
   {"event", 1, glwf_event},
+  {"deliverEvent", -1, glwf_deliverEvent},
+  {"deliverRef", 2, glwf_deliverRef},
+
+
+  {"onInactivity", 2, glwf_onInactivity, glwf_null_ctor,glwf_onInactivity_dtor},
   {"changed", -1, glwf_changed, glwf_changed_ctor, glwf_changed_dtor},
   {"iir", -1, glwf_iir},
   {"scurve", -1, glwf_scurve, glwf_scurve_ctor, glwf_scurve_dtor},
@@ -7178,8 +7189,6 @@ static const token_func_t funcvec[] = {
   {"suggestFocus", 1, glwf_suggestFocus},
   {"count", 1, glwf_count},
   {"vectorize", 1, glwf_vectorize},
-  {"deliverEvent", -1, glwf_deliverEvent},
-  {"deliverRef", 2, glwf_deliverRef},
   {"propGrouper", 2, glwf_propGrouper, glwf_null_ctor, glwf_propGrouper_dtor},
   {"propSorter", -1, glwf_propSorter, glwf_null_ctor, glwf_propSorter_dtor},
   {"propWindow", 3, glwf_propWindow, glwf_null_ctor, glwf_propWindow_dtor},

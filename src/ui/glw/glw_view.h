@@ -90,7 +90,7 @@ typedef enum {
   TOKEN_BLOCK,
   TOKEN_NOP,
   TOKEN_VECTOR_FLOAT,
-  TOKEN_EVENT,
+  TOKEN_GEM,
   TOKEN_URI,                   // A link with title and url
   TOKEN_VECTOR,                // List of tokens
   TOKEN_MOD_FLAGS,

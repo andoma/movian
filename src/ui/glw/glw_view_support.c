@@ -124,7 +124,7 @@ glw_view_token_free(glw_root_t *gr, token_t *t)
       rstr_release(t->t_pnvec[i]);
     break;
 
-  case TOKEN_EVENT:
+  case TOKEN_GEM:
     glw_event_map_destroy(gr, t->t_gem);
     break;
 
@@ -263,7 +263,7 @@ glw_view_token_copy(glw_root_t *gr, token_t *src)
     break;
 
   case TOKEN_VECTOR_FLOAT:
-  case TOKEN_EVENT:
+  case TOKEN_GEM:
   case TOKEN_VECTOR:
   case TOKEN_num:
     abort();
