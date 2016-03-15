@@ -112,6 +112,7 @@ emit_frame(vtb_decoder_t *vtbd, vtb_frame_t *vf, media_queue_t *mq)
   fi.fi_color_space = -1;
   fi.fi_epoch = vf->vf_mbm.mbm_epoch;
   fi.fi_drive_clock = vf->vf_mbm.mbm_drive_clock;
+  fi.fi_user_time = vf->vf_mbm.mbm_user_time;
   fi.fi_vshift = 1;
   fi.fi_hshift = 1;
   fi.fi_duration = vf->vf_mbm.mbm_duration > 10000 ? vf->vf_mbm.mbm_duration : vtbd->vtbd_estimated_duration;
