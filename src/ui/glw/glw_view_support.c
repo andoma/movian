@@ -488,3 +488,20 @@ glw_view_seterr(errorinfo_t *ei, token_t *b, const char *fmt, ...)
   ei->line = b->line;
   return -1;
 }
+
+
+/**
+ *
+ */
+void
+glw_propname_to_array(const char *pname[16], const token_t *a)
+{
+  const token_t *t;
+  int i, j;
+  for(i = 0, t = a; t != NULL && i < 16 - 1; t = t->child)
+    for(j = 0; j < t->t_elements && i < 16 - 1; j++)
+      pname[i++]  = rstr_get(t->t_pnvec[j]);
+  pname[i] = NULL;
+}
+
+

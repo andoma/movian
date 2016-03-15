@@ -137,6 +137,7 @@ typedef struct token {
   union {
     const struct token_attrib *t_attrib;
     struct glw_prop_sub *t_propsubr;
+    int t_prop_name_id;
   };
 
 #define TOKEN_PROPERTY_NAME_VEC_SIZE (16 / __SIZEOF_POINTER__)
@@ -232,6 +233,7 @@ typedef struct glw_view_eval_context {
   const struct glw_rctx *rc;
   token_t *rpn;
   struct glw_prop_sub_slist *sublist;
+  struct glw_prop_sub_slist sublist_rpnlocal;
   struct event *event;
   prop_t *tgtprop;
 
@@ -341,5 +343,7 @@ void glw_prop_subscription_suspend_list(struct glw_prop_sub_slist *l);
 void glw_view_loader_eval(glw_root_t *gr);
 
 void glw_view_loader_flush(glw_root_t *gr);
+
+void glw_propname_to_array(const char *pname[16], const token_t *a);
 
 #endif /* GLW_VIEW_H */

@@ -354,6 +354,69 @@ optimize_attribute_assignment(token_t *t, token_t *prev, glw_root_t *gr)
  *
  */
 static int
+propnamecmp(const char *a[16], const char *b[16])
+{
+  for(int i = 0; i < 16; i++) {
+    if(a[i] == NULL && b[i] == NULL)
+      return 1;
+    if(a[i] == NULL || b[i] == NULL)
+      return 0;
+
+    if(strcmp(a[i], b[i]))
+      return 0;
+  }
+  abort();
+}
+
+
+
+/**
+ * Within each RPN, assign an local id to each distinct property name
+ *
+ * This is so we later can merge subscriptions referring to same property
+ * name within the same RPN. see subscribe_prop() in glw_view_eval.c
+ */
+static void
+scan_prop_names(token_t *rpn, token_t *prev, glw_root_t *gr)
+{
+  int idcnt = 0;
+  token_t *t, *u;
+  if(rpn->type != TOKEN_RPN)
+    return;
+
+  for(t = rpn->child; t != NULL; t = t->next) {
+    if(t->type == TOKEN_PROPERTY_NAME) {
+      const char *tname[16];
+      int tname_is_set = 0; // Call propname_to_array lazy
+
+      for(u = rpn->child; u != t; u = u->next) {
+        if(u->type == TOKEN_PROPERTY_NAME) {
+          if(!tname_is_set) {
+            glw_propname_to_array(tname, t);
+            tname_is_set = 1;
+          }
+
+          const char *uname[16];
+          glw_propname_to_array(uname, u);
+          if(propnamecmp(tname, uname))
+            break;
+        }
+      }
+      if(u == t) {
+
+        t->t_prop_name_id = ++idcnt;
+      } else {
+        t->t_prop_name_id = u->t_prop_name_id;
+      }
+    }
+  }
+}
+
+
+/**
+ *
+ */
+static int
 parse_prep_expression(token_t *expr, errorinfo_t *ei, glw_root_t *gr)
 
 {
@@ -545,6 +608,7 @@ parse_one_expression(token_t *prev, token_t *first, errorinfo_t *ei,
         return -1;
 
       optimize_attribute_assignment(t, prev, gr);
+      scan_prop_names(t, prev, gr);
       return 0;
 
     case TOKEN_BLOCK_CLOSE:

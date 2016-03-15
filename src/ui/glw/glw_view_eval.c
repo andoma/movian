@@ -58,6 +58,7 @@ TAILQ_HEAD(glw_prop_sub_pending_queue, glw_prop_sub_pending);
 
 enum {
   GPS_VALUE,
+  GPS_VALUE_SLAVE,
   GPS_CLONER,
   GPS_COUNTER,
   GPS_VECTORIZER,
@@ -69,6 +70,7 @@ enum {
  */
 typedef struct glw_prop_sub {
   SLIST_ENTRY(glw_prop_sub) gps_link;
+  SLIST_ENTRY(glw_prop_sub) gps_rpn_link;  // Temporary during rpn eval
   glw_t *gps_widget;
 
   prop_sub_t *gps_sub;
@@ -78,10 +80,15 @@ typedef struct glw_prop_sub {
   prop_t *gps_prop_core;
 
   token_t *gps_rpn;
+  struct glw_prop_sub_slist gps_slaves;
 
-  token_t *gps_token;
+  union {
+    token_t *gps_token;
+    struct glw_prop_sub *gps_master;
+  };
 
   rstr_t *gps_file;
+  int gps_prop_name_id;
   uint16_t gps_line;
   uint16_t gps_type;
 
@@ -211,46 +218,51 @@ glw_prop_subscription_destroy_list(glw_root_t *gr, struct glw_prop_sub_slist *l)
   for(gps = SLIST_FIRST(l); gps != NULL; gps = next) {
     next = SLIST_NEXT(gps, gps_link);
 
-    prop_unsubscribe(gps->gps_sub);
 
-    if(gps->gps_token != NULL)
-      glw_view_token_free(gr, gps->gps_token);
+    if(gps->gps_type != GPS_VALUE_SLAVE) {
 
-    switch(gps->gps_type) {
-    case GPS_VALUE:
-    case GPS_COUNTER:
-    case GPS_EVENT_INJECTOR:
-      break;
+      prop_unsubscribe(gps->gps_sub);
 
-    case GPS_CLONER:
-      sc = (sub_cloner_t *)gps;
+      if(gps->gps_token != NULL)
+        glw_view_token_free(gr, gps->gps_token);
 
-      cloner_cleanup(gr, sc);
+      switch(gps->gps_type) {
+      case GPS_VALUE:
+      case GPS_COUNTER:
+      case GPS_EVENT_INJECTOR:
+        break;
 
-      if(sc->sc_originating_prop)
-	prop_ref_dec(sc->sc_originating_prop);
+      case GPS_CLONER:
+        sc = (sub_cloner_t *)gps;
 
-      if(sc->sc_view_prop)
-	prop_ref_dec(sc->sc_view_prop);
+        cloner_cleanup(gr, sc);
 
-      if(sc->sc_prop_core)
-	prop_ref_dec(sc->sc_prop_core);
+        if(sc->sc_originating_prop)
+          prop_ref_dec(sc->sc_originating_prop);
 
-      if(sc->sc_view_args)
-	prop_ref_dec(sc->sc_view_args);
-      break;
+        if(sc->sc_view_prop)
+          prop_ref_dec(sc->sc_view_prop);
 
-    case GPS_VECTORIZER:
-      sv = (sub_vectorizer_t *)gps;
-      vectorizer_clean(gr, sv);
-      break;
+        if(sc->sc_prop_core)
+          prop_ref_dec(sc->sc_prop_core);
 
+        if(sc->sc_view_args)
+          prop_ref_dec(sc->sc_view_args);
+        break;
+
+      case GPS_VECTORIZER:
+        sv = (sub_vectorizer_t *)gps;
+        vectorizer_clean(gr, sv);
+        break;
+      }
+      prop_ref_dec(gps->gps_prop);
+      prop_ref_dec(gps->gps_prop_view);
+      prop_ref_dec(gps->gps_prop_clone);
+      prop_ref_dec(gps->gps_prop_core);
+    } else {
+      glw_prop_subscription_destroy_list(gr, &gps->gps_slaves);
     }
     rstr_release(gps->gps_file);
-    prop_ref_dec(gps->gps_prop);
-    prop_ref_dec(gps->gps_prop_view);
-    prop_ref_dec(gps->gps_prop_clone);
-    prop_ref_dec(gps->gps_prop_core);
     free(gps);
   }
   SLIST_INIT(l);
@@ -338,11 +350,22 @@ token_resolve_ex(glw_view_eval_context_t *ec, token_t *t, int type)
       t->type == TOKEN_PROPERTY_REF) && subscribe_prop(ec, t, type))
     return NULL;
 
-  if(t->type == TOKEN_PROPERTY_SUBSCRIPTION) {
-    ec->dynamic_eval |= GLW_VIEW_EVAL_PROP;
-    t = t->t_propsubr->gps_token ?: eval_alloc(t, ec, TOKEN_VOID);
+  if(t->type != TOKEN_PROPERTY_SUBSCRIPTION)
+    return t;
+
+  glw_prop_sub_t *gps = t->t_propsubr;
+  token_t *r;
+  ec->dynamic_eval |= GLW_VIEW_EVAL_PROP;
+  if(gps->gps_type == GPS_VALUE_SLAVE) {
+    r = gps->gps_master->gps_token;
+  } else {
+    r = gps->gps_token;
   }
-  return t;
+
+  if(r == NULL)
+    r = eval_alloc(t, ec, TOKEN_VOID);
+
+  return r;
 }
 
 
@@ -810,21 +833,6 @@ eval_null_coalesce(glw_view_eval_context_t *ec, struct token *self)
 /**
  *
  */
-static void
-propname_to_array(const char *pname[], const token_t *a)
-{
-  const token_t *t;
-  int i, j;
-  for(i = 0, t = a; t != NULL && i < 15; t = t->child)
-    for(j = 0; j < t->t_elements && i < 15; j++)
-      pname[i++]  = rstr_get(t->t_pnvec[j]);
-  pname[i] = NULL;
-}
-
-
-/**
- *
- */
 static int
 resolve_property_name(glw_view_eval_context_t *ec, token_t *a,
                       int follow_symlinks)
@@ -833,7 +841,7 @@ resolve_property_name(glw_view_eval_context_t *ec, token_t *a,
   prop_t *p;
   int j;
 
-  propname_to_array(pname, a);
+  glw_propname_to_array(pname, a);
 
   p = prop_get_by_name(pname, follow_symlinks,
 		       PROP_TAG_NAMED_ROOT, ec->prop_self, "self",
@@ -2406,9 +2414,29 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
     return glw_view_seterr(ec->ei, self,
 			    "Properties can not be mapped in this scope");
 
+
+  if(type == GPS_VALUE && self->type == TOKEN_PROPERTY_NAME) {
+    SLIST_FOREACH(gps, &ec->sublist_rpnlocal, gps_rpn_link) {
+      if(gps->gps_prop_name_id == self->t_prop_name_id) {
+        //        glw_view_print_tree(gps->gps_rpn, 1);
+
+        glw_prop_sub_t *slave = calloc(1, sizeof(glw_prop_sub_t));
+        slave->gps_type = GPS_VALUE_SLAVE;
+        slave->gps_file = rstr_dup(self->file);
+        slave->gps_line = self->line;
+        slave->gps_widget = w;
+
+        slave->gps_master = gps;
+        SLIST_INSERT_HEAD(&gps->gps_slaves, slave, gps_link);
+        gps = slave;
+        goto done;
+      }
+    }
+  }
+
   switch(self->type) {
   case TOKEN_PROPERTY_NAME:
-    propname_to_array(propname, self);
+    glw_propname_to_array(propname, self);
     break;
 
   case TOKEN_PROPERTY_REF:
@@ -2521,8 +2549,12 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
   gps->gps_sub = s;
   SLIST_INSERT_HEAD(ec->sublist, gps, gps_link);
 
+  gps->gps_prop_name_id = self->t_prop_name_id;
+  if(type == GPS_VALUE)
+    SLIST_INSERT_HEAD(&ec->sublist_rpnlocal, gps, gps_rpn_link);
   gps->gps_rpn = ec->passive_subscriptions ? NULL : ec->rpn;
 
+ done:
   if(self->type == TOKEN_PROPERTY_NAME) {
     for(j = 0; j < self->t_elements; j++)
       rstr_release(self->t_pnvec[j]);
@@ -2755,6 +2787,7 @@ glw_view_eval_rpn(token_t *t, glw_view_eval_context_t *pec, int *copyp)
   ec.rpn = t;
   ec.alloc = NULL;
   ec.stack = NULL;
+  SLIST_INIT(&ec.sublist_rpnlocal);
 
   r = glw_view_eval_rpn0(t, &ec);
 
@@ -3683,6 +3716,7 @@ glwf_deliverEvent(glw_view_eval_context_t *ec, struct token *self,
       return -1;
 
     switch(b->type) {
+    case TOKEN_IDENTIFIER:
     case TOKEN_RSTRING:
     case TOKEN_URI:
       action = rstr_dup(b->t_rstring);
@@ -4828,7 +4862,7 @@ glwf_createchild(glw_view_eval_context_t *ec, struct token *self,
   if(a->type != TOKEN_PROPERTY_NAME)
     return 0;
 
-  propname_to_array(propname, a);
+  glw_propname_to_array(propname, a);
 
   p = prop_get_by_name(propname, 1,
 		       PROP_TAG_NAMED_ROOT, ec->prop_self, "self",
@@ -5078,7 +5112,7 @@ glwf_bind(glw_view_eval_context_t *ec, struct token *self,
 
   if(a != NULL && a->type == TOKEN_PROPERTY_NAME) {
 
-    propname_to_array(propname, a);
+    glw_propname_to_array(propname, a);
 
     if(ec->w->glw_class->gc_bind_to_property != NULL)
       ec->w->glw_class->gc_bind_to_property(ec->w,
