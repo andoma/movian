@@ -252,10 +252,10 @@ metadata_to_proptree(const metadata_t *md, prop_t *proproot,
   int ac = 0, vc = 0, sc = 0, *pc;
 
   if(md->md_title != NULL)
-    prop_set_rstring(prop_create(proproot, "title"), md->md_title);
+    prop_set(proproot, "title", PROP_SET_RSTRING, md->md_title);
 
   if(md->md_artist) {
-    prop_set_rstring(prop_create(proproot, "artist"), md->md_artist);
+    prop_set(proproot, "artist", PROP_SET_RSTRING, md->md_artist);
 
     metadata_bind_artistpics(prop_create(proproot, "artist_images"),
 			     md->md_artist);
@@ -264,7 +264,7 @@ metadata_to_proptree(const metadata_t *md, prop_t *proproot,
   prop_set(proproot, "icon", PROP_SET_RSTRING, md->md_icon);
 
   if(md->md_album) {
-    prop_set_rstring(prop_create(proproot, "album"),  md->md_album);
+    prop_set(proproot, "album", PROP_SET_RSTRING, md->md_album);
 
     if(md->md_artist != NULL)
       metadata_bind_albumart(prop_create(proproot, "album_art"),
@@ -304,25 +304,31 @@ metadata_to_proptree(const metadata_t *md, prop_t *proproot,
   }
 
   if(md->md_format != NULL)
-    prop_set_rstring(prop_create(proproot, "format"), md->md_format);
+    prop_set(proproot, "format", PROP_SET_RSTRING, md->md_format);
 
   if(md->md_duration)
-    prop_set_float(prop_create(proproot, "duration"), md->md_duration);
+    prop_set(proproot, "duration", PROP_SET_FLOAT, md->md_duration);
 
   if(md->md_tracks)
-    prop_set_int(prop_create(proproot, "tracks"), md->md_tracks);
+    prop_set(proproot, "tracks", PROP_SET_INT, md->md_tracks);
 
-  if(md->md_track )
-    prop_set_int(prop_create(proproot, "track"), md->md_track );
+  if(md->md_track)
+    prop_set(proproot, "track", PROP_SET_INT, md->md_track);
 
   if(md->md_time)
-    prop_set_int(prop_create(proproot, "timestamp"), md->md_time);
+    prop_set(proproot, "timestamp", PROP_SET_INT, md->md_time);
 
   if(md->md_manufacturer != NULL)
-    prop_set_rstring(prop_create(proproot, "manufacturer"), md->md_manufacturer);
+    prop_set(proproot, "manufacturer", PROP_SET_RSTRING, md->md_manufacturer);
 
   if(md->md_equipment != NULL)
-    prop_set_rstring(prop_create(proproot, "equipment"), md->md_equipment);
+    prop_set(proproot, "equipment", PROP_SET_RSTRING, md->md_equipment);
+
+  if(md->md_tagline != NULL)
+    prop_set(proproot, "tagline", PROP_SET_RSTRING, md->md_tagline);
+
+  if(md->md_description != NULL)
+    prop_set(proproot, "description", PROP_SET_RSTRING, md->md_description);
 }
 
 
