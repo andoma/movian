@@ -32,6 +32,7 @@
 #define STPP_CMD_EVENT       5
 #define STPP_CMD_REQ_MOVE    6
 #define STPP_CMD_WANT_MORE_CHILDS 7
+#define STPP_CMD_SELECT      8
 
 
 // Notify types (First byte in STPP_CMD_NOTIFY message)

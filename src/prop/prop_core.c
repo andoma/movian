@@ -4737,6 +4737,12 @@ prop_select_ex(prop_t *p, prop_t *extra, prop_sub_t *skipme)
     return;
   }
 
+  if(p->hp_type == PROP_PROXY) {
+    prop_proxy_select(p);
+    hts_mutex_unlock(&prop_mutex);
+    return;
+  }
+
   parent = p->hp_parent;
 
   if(parent != NULL) {

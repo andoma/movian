@@ -1101,6 +1101,18 @@ prop_proxy_set_void(struct prop *p)
 }
 
 
+void
+prop_proxy_select(struct prop *p)
+{
+  prop_proxy_connection_t *ppc = p->hp_proxy_ppc;
+  htsbuf_queue_t q;
+  htsbuf_queue_init(&q, 0);
+  htsbuf_append_byte(&q, STPP_CMD_SELECT);
+  prop_proxy_send_prop(p, &q);
+  prop_proxy_send_queue(ppc, &q);
+}
+
+
 #ifdef POOL_DEBUG
 
 static void

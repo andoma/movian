@@ -1011,7 +1011,18 @@ stpp_binary(stpp_t *stpp, const uint8_t *data, int len)
     stpp_cmd_want_more_childs(stpp, rd32_le(data));
     break;
 
+  case STPP_CMD_SELECT:
+    {
+      prop_t *p = decode_propref(stpp, &data, &len);
+      if(p == NULL)
+        break;
+
+      prop_select(p);
+    }
+    break;
+
   default:
+    TRACE(TRACE_ERROR, "STPP", "Received bad command 0x%x", cmd);
     return -1;
   }
   return 0;
