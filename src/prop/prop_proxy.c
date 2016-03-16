@@ -41,7 +41,7 @@ struct prop_proxy_connection {
   atomic_t ppc_refcount;
   asyncio_fd_t *ppc_connection;
   char *ppc_url;
-  prop_t *ppc_status;
+  prop_t *ppc_error;
   htsbuf_queue_t ppc_outq;
 
 
@@ -105,7 +105,7 @@ ppc_release(prop_proxy_connection_t *ppc)
     asyncio_run_task(ppc_del_fd, ppc->ppc_connection);
   free(ppc->ppc_ws.packet);
   free(ppc->ppc_url);
-  prop_ref_dec(ppc->ppc_status);
+  prop_ref_dec(ppc->ppc_error);
   free(ppc);
 }
 
@@ -151,7 +151,8 @@ ppc_connected(void *aux, const char *err)
   prop_proxy_connection_t *ppc = aux;
   char buf[1024];
   if(err != NULL) {
-    TRACE(TRACE_ERROR, "REMOTE", "Unable to connect to %s -- %s",
+    prop_set_string(ppc->ppc_error, err);
+    TRACE(TRACE_ERROR, "STPP", "Connection to %s failed -- %s",
           ppc->ppc_url, err);
 
     ppc_disconnect(ppc);
@@ -533,19 +534,28 @@ ppc_ws_input_notify(prop_proxy_connection_t *ppc, const uint8_t *data, int len)
 static int
 ppc_ws_input_hello(prop_proxy_connection_t *ppc, const uint8_t *data, int len)
 {
-  if(len < 17)
+  if(len < 1)
     return -1;
 
   if(data[0] != STPP_VERSION) {
-    TRACE(TRACE_ERROR, "STPP", "Incompatible version %d", data[0]);
+    prop_set_stringf(ppc->ppc_error, "Incompatible version %d", data[0]);
     return -1;
   }
+  data++;
+  len--;
+  if(len < 16)
+    return -1;
 
-  if(!memcmp(data + 1, gconf.running_instance, 16)) {
-    TRACE(TRACE_ERROR, "STPP", "Refusing connection to myself");
+  if(!memcmp(data, gconf.running_instance, 16)) {
+    prop_set_string(ppc->ppc_error, "Refusing connection to myself");
     return -1;
   }
+  data += 16;
+  len -= 16;
+  if(len < 1)
+    return -1;
 
+  //  uint8_t flags = data[0];
   ppc->ppc_websocket_open = 2;
   ppc_sendq(ppc);
   return 0;
@@ -587,6 +597,7 @@ ppc_input(void *opaque, htsbuf_queue_t *q)
     if(line == NULL)
       return; // Not full line yet
     if(line == (void *)-1) {
+      prop_set_string(ppc->ppc_error, "Read error");
       ppc_disconnect(ppc);
       return;
     }
@@ -618,6 +629,8 @@ ppc_connect(void *aux, int status, const void *data)
     break;
 
   case ASYNCIO_DNS_STATUS_FAILED:
+    prop_set_string(ppc->ppc_error, data);
+    ppc_release(ppc);
     return;
 
   default:
@@ -671,7 +684,7 @@ prop_proxy_connect(const char *url, prop_t *status)
     ppc->ppc_port = 42000;
 
   ppc->ppc_url = strdup(url);
-  ppc->ppc_status = prop_ref_inc(status);
+  ppc->ppc_error = prop_create_r(status, "error");
   asyncio_dns_lookup_host(hostname, ppc_connect, ppc_retain(ppc));
 
   return prop_proxy_make(ppc, 0 /* global */, NULL, NULL, NULL);

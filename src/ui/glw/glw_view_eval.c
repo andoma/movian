@@ -2930,29 +2930,33 @@ glwf_coreAttach(glw_view_eval_context_t *ec, struct token *self,
 {
   int r;
   glw_view_eval_context_t n;
-  token_t *a = argv[0];
-  token_t *b = argv[1];
+  token_t *a1 = argv[0];
+  token_t *a2 = argv[1];
+  token_t *a3 = argv[2];
 
-  if((a = token_resolve(ec, a)) == NULL)
+  if((a1 = token_resolve(ec, a1)) == NULL)
     return -1;
 
-  if(a->type != TOKEN_RSTRING)
+  if(a1->type != TOKEN_RSTRING)
     return glw_view_seterr(ec->ei, self,
                            "coreAttach: Frist arg is not a string");
 
-  if(b->type != TOKEN_BLOCK)
+  if((a2 = resolve_property_name2(ec, a2)) == NULL)
+    return -1;
+
+  if(a3->type != TOKEN_BLOCK)
     return glw_view_seterr(ec->ei, self,
-                           "coreAttach: Invalid second argument, "
+                           "coreAttach: Invalid third argument, "
                            "expected block");
 
   if(self->t_extra == NULL) {
-    self->t_extra = prop_proxy_connect(rstr_get(a->t_rstring), NULL);
+    self->t_extra = prop_proxy_connect(rstr_get(a1->t_rstring), a2->t_prop);
   }
 
   n = *ec;
   n.prop_core = self->t_extra;
   n.dynamic_eval = 0;
-  r = glw_view_eval_block(b, &n, NULL);
+  r = glw_view_eval_block(a3, &n, NULL);
   ec->dynamic_eval |= n.dynamic_eval;
   return r ? -1 : 0;
 }
@@ -7154,7 +7158,7 @@ static const token_func_t funcvec[] = {
 
   {"widget", 1, glwf_widget, NULL, NULL, glwf_resolve_widget_class},
   {"cloner", 3, glwf_cloner},
-  {"coreAttach", 2, glwf_coreAttach, glwf_null_ctor, glwf_coreAttach_dtor},
+  {"coreAttach", 3, glwf_coreAttach, glwf_null_ctor, glwf_coreAttach_dtor},
   {"style", 2, glwf_style},
   {"newstyle", 2, glwf_newstyle},
   {"space", 1, glwf_space},

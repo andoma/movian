@@ -872,13 +872,13 @@ stpp_binary_event(prop_t *p, event_type_t event,
 static void
 stpp_send_hello(stpp_t *stpp)
 {
-  int buflen = 1 + 1 + 16;
+  int buflen = 1 + 1 + 16 + 1;
   uint8_t *buf = alloca(buflen);
   buf[0] = STPP_CMD_HELLO;
   buf[1] = STPP_VERSION;
   memcpy(buf + 2, gconf.running_instance, 16);
+  buf[18] = 0x0; // Flags
   websocket_send(stpp->stpp_hc, 2, buf, buflen);
-
 }
 
 /**

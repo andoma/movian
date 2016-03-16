@@ -1244,6 +1244,8 @@ static void
 set_system_name(void *opaque, const char *str)
 {
   snprintf(gconf.system_name, sizeof(gconf.system_name), "%s", str);
+  prop_setv(prop_get_global(), "app", "systemname", NULL,
+            PROP_SET_STRING, str);
 #if STOS && ENABLE_AVAHI
   extern void avahi_update_hostname(void);
   avahi_update_hostname();

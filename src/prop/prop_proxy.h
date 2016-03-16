@@ -29,7 +29,7 @@ struct net_addr;
 struct prop_sub;
 struct event;
 
-struct prop *prop_proxy_connect(const char *url, struct prop *statusy);
+struct prop *prop_proxy_connect(const char *url, struct prop *status);
 
 struct prop *prop_proxy_create(struct prop *parent, const char *name);
 

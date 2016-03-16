@@ -1,13 +1,15 @@
 #import "skin://theme.view"
 
-coreAttach($self.url, {
+coreAttach($self.url, $view.stppstatus, {
 
   widget(container_y, {
 
     zbox({
       height: 3em;
       quad({
-        color: [0.04, 0.13, 0.4];
+        color: select($view.stppstatus.error,
+                      [0.4, 0.04, 0.04],
+                      [0.04, 0.13, 0.4]);
       });
       widget(container_x, {
         widget(container_z, {
@@ -20,7 +22,7 @@ coreAttach($self.url, {
           });
 
 
-          widget(icon, {
+          icon({
             source: "skin://icons/ic_cancel_48px.svg";
             align: center;
           });
@@ -30,7 +32,9 @@ coreAttach($self.url, {
           filterConstraintX: true;
           size: 1.2em;
           align: center;
-          caption: fmt(_("Remote controlling %s"), "Movian");
+          caption: select($view.stppstatus.error,
+                          fmt(_("Remote control - %s"), $view.stppstatus.error),
+                          fmt(_("Remote controlling %s"), $core.app.systemname));
         });
 
         widget(dummy, {
@@ -40,6 +44,7 @@ coreAttach($self.url, {
     });
 
     widget(layer, {
+      hidden: select($view.stppstatus.error, true, false);
       filterConstraintY: true;
       alpha: iir(1 - $ui.screensaverActive, 8);
       widget(playfield, {
