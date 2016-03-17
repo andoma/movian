@@ -1066,6 +1066,7 @@ glw_move(glw_t *w, glw_t *b)
     }
   }
   glw_signal0(p, GLW_SIGNAL_CHILD_MOVED, w);
+  glw_need_refresh(gr, 0);
 }
 
 /**
