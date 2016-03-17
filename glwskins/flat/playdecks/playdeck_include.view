@@ -47,7 +47,7 @@
     widget(icon, {
       style: "playdeckButtonIcon";
       source: ICON;
-      color: select(VALUE, 1, 0);
+      color: select(VALUE, 1, 0.3);
       alpha: 0.7 * iir(ENABLED, 8) + 0.3;
     });
   });
@@ -59,18 +59,18 @@
                       $core.playqueue.active);
 
       PLAYDECK_BUTTON("skin://icons/ic_skip_previous_48px.svg",
-                      event("PreviousTrack"),
+                      deliverEvent($core.media.current.eventSink, "PreviousTrack"),
                       $core.media.current.canSkipBackward);
 
       PLAYDECK_BUTTON(translate($core.media.current.playstatus,
                                 "skin://icons/ic_pause_48px.svg",
                                 "pause",
                                 "skin://icons/ic_play_arrow_48px.svg"),
-                      event("PlayPause"),
+                      deliverEvent($core.media.current.eventSink, "PlayPause"),
                       $core.media.current.canPause);
 
       PLAYDECK_BUTTON("skin://icons/ic_skip_next_48px.svg",
-                      event("NextTrack"),
+                      deliverEvent($core.media.current.eventSink, "NextTrack"),
                       $core.media.current.canSkipForward);
 
       PLAYDECK_BUTTON_TOGGLE("dataroot://res/svg/Repeat.svg",

@@ -23,18 +23,18 @@ widget(container_z, {
                    $core.playqueue.active);
 
     SIDEBAR_BUTTON("skin://icons/ic_skip_previous_48px.svg",
-                   event("PreviousTrack"),
+                   deliverEvent($core.media.current.eventSink, "PreviousTrack"),
                    $core.media.current.canSkipBackward);
 
     SIDEBAR_BUTTON(translate($core.media.current.playstatus,
                              "skin://icons/ic_pause_48px.svg",
                              "pause",
                              "skin://icons/ic_play_arrow_48px.svg"),
-                   event("PlayPause"),
+                   deliverEvent($core.media.current.eventSink, "PlayPause"),
                    $core.media.current.canPause);
 
     SIDEBAR_BUTTON("skin://icons/ic_skip_next_48px.svg",
-                   event("NextTrack"),
+                   deliverEvent($core.media.current.eventSink, "NextTrack"),
                    $core.media.current.canSkipForward);
 
     SIDEBAR_BUTTON_TOGGLE("dataroot://res/svg/Repeat.svg",
@@ -109,11 +109,11 @@ SIDEBAR_ACTION(select($core.runcontrol.sleepTimer,
 
 SIDEBAR_ACTION(_("Suspend"),
                "skin://icons/ic_power_settings_new_48px.svg",
-               event("Standby"),
+               deliverEvent($core.eventSink, "Standby"),
                !$core.runcontrol.canStandby);
 
 SIDEBAR_ACTION(fmt(_("Exit %s"), $core.app.name),
                "skin://icons/ic_exit_to_app_48px.svg",
-               event("Quit"),
+               deliverEvent($core.eventSink, "Quit"),
                !$core.runcontrol.canExit);
 

@@ -236,12 +236,40 @@ set_ssh_server(void *opaque, int on)
 /**
  *
  */
+static void
+runcontrol_global_eventsink(void *opaque, event_t *e)
+{
+  if(event_is_action(e, ACTION_QUIT)) {
+    app_shutdown(0);
+
+  } else if(event_is_action(e, ACTION_STANDBY)) {
+    app_shutdown(APP_EXIT_STANDBY);
+
+  } else if(event_is_action(e, ACTION_POWER_OFF)) {
+    app_shutdown(APP_EXIT_POWEROFF);
+
+  } else if(event_is_action(e, ACTION_RESTART)) {
+    app_shutdown(APP_EXIT_RESTART);
+
+  } else if(event_is_action(e, ACTION_REBOOT)) {
+    app_shutdown(APP_EXIT_REBOOT);
+  }
+}
+
+/**
+ *
+ */
 void
 runcontrol_init(void)
 {
   prop_t *rc;
 
   rc = prop_create(prop_get_global(), "runcontrol");
+
+  prop_subscribe(0,
+		 PROP_TAG_NAME("global", "eventSink"),
+		 PROP_TAG_CALLBACK_EVENT, runcontrol_global_eventsink, NULL,
+		 NULL);
 
   prop_set(rc, "canStandby",   PROP_SET_INT,  !!gconf.can_standby);
   prop_set(rc, "canPowerOff",  PROP_SET_INT,  !!gconf.can_poweroff);
