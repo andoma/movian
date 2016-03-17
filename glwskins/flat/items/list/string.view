@@ -14,6 +14,7 @@ widget(container_z, {
     style: "ListItem";
 
     onEvent(activate, deliverEvent($self.action));
+    onEvent(itemMenu, deliverEvent($self.value, "reset"));
 
     widget(icon, {
       style: "ListItemIcon";

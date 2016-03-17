@@ -79,6 +79,7 @@ struct setting {
   prop_t *s_current_value;
 
   rstr_t *s_default_str;
+  int s_default_int;
 
   char s_origin[10];
 
@@ -432,14 +433,14 @@ setting_save_htsmsg(setting_t *s)
  *
  */
 static void
-settings_int_callback_ng(void *opaque, int v)
+settings_int_set_value(setting_t *s, int v)
 {
-  setting_t *s = opaque;
   prop_callback_int_t *cb = s->s_callback;
 
   s->s_value_set = 1;
 
-  if(cb) cb(s->s_opaque, v);
+  if(cb != NULL)
+    cb(s->s_opaque, v);
 
   if(s->s_ext_value)
     prop_set_int(s->s_ext_value, v);
@@ -468,6 +469,36 @@ settings_int_callback_ng(void *opaque, int v)
   }
 
   prop_set_string(s->s_current_origin, s->s_origin);
+}
+
+
+/**
+ *
+ */
+static void
+settings_int_callback(void *opaque, prop_event_t event, ...)
+{
+  setting_t *s = opaque;
+  event_t *e;
+  va_list ap;
+  va_start(ap, event);
+
+  switch(event) {
+  case PROP_SET_INT:
+    settings_int_set_value(s, va_arg(ap, int));
+    break;
+  case PROP_SET_FLOAT:
+    settings_int_set_value(s, va_arg(ap, double));
+    break;
+  case PROP_EXT_EVENT:
+    e = va_arg(ap, event_t *);
+    if(event_is_action(e, ACTION_RESET))
+      setting_reset(s);
+    break;
+  default:
+    break;
+  }
+  va_end(ap);
 }
 
 
@@ -513,9 +544,8 @@ settings_int_inherited_origin(void *opaque, rstr_t *origin)
  *
  */
 static void
-settings_string_callback_ng(void *opaque, rstr_t *rstr)
+settings_string_set_value(setting_t *s, rstr_t *rstr)
 {
-  setting_t *s = opaque;
   prop_callback_string_t *cb = s->s_callback;
 
   rstr_t *outval = rstr;
@@ -550,6 +580,33 @@ settings_string_callback_ng(void *opaque, rstr_t *rstr)
                             rstr_get(rstr));
     break;
   }
+}
+
+
+/**
+ *
+ */
+static void
+settings_string_callback(void *opaque, prop_event_t event, ...)
+{
+  setting_t *s = opaque;
+  event_t *e;
+  va_list ap;
+  va_start(ap, event);
+
+  switch(event) {
+  case PROP_SET_RSTRING:
+    settings_string_set_value(s, va_arg(ap, rstr_t *));
+    break;
+  case PROP_EXT_EVENT:
+    e = va_arg(ap, event_t *);
+    if(event_is_action(e, ACTION_RESET))
+      setting_reset(s);
+    break;
+  default:
+    break;
+  }
+  va_end(ap);
 }
 
 
@@ -901,6 +958,8 @@ setting_create(int type, prop_t *model, int flags, ...)
     // FALLTHRU
   case SETTING_BOOL:
 
+    s->s_default_int = initial_int;
+
     i32 = INT32_MIN;
 
 
@@ -943,12 +1002,12 @@ setting_create(int type, prop_t *model, int flags, ...)
       prop_set_string(s->s_current_origin, s->s_origin);
       prop_set_int(s->s_val, i32);
       if(flags & SETTINGS_INITIAL_UPDATE)
-        settings_int_callback_ng(s, i32);
+        settings_int_set_value(s, i32);
     }
 
     s->s_sub =
       prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_IGNORE_VOID,
-                     PROP_TAG_CALLBACK_INT, settings_int_callback_ng, s,
+                     PROP_TAG_CALLBACK, settings_int_callback, s,
                      PROP_TAG_ROOT, s->s_val,
                      PROP_TAG_COURIER, pc,
                      PROP_TAG_MUTEX, mtx,
@@ -1013,13 +1072,13 @@ setting_create(int type, prop_t *model, int flags, ...)
     prop_set_rstring(s->s_val, initial);
 
     if(flags & SETTINGS_INITIAL_UPDATE)
-      settings_string_callback_ng(s, initial);
+      settings_string_set_value(s, initial);
 
     rstr_release(initial);
 
     s->s_sub =
       prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_IGNORE_VOID,
-                     PROP_TAG_CALLBACK_RSTR, settings_string_callback_ng, s,
+                     PROP_TAG_CALLBACK, settings_string_callback, s,
                      PROP_TAG_ROOT, s->s_val,
                      PROP_TAG_COURIER, pc,
                      PROP_TAG_MUTEX, mtx,
@@ -1065,7 +1124,7 @@ setting_create(int type, prop_t *model, int flags, ...)
 
       if(flags & SETTINGS_INITIAL_UPDATE) {
         rstr_t *name = prop_get_name(o);
-        settings_string_callback_ng(s, name);
+        settings_string_set_value(s, name);
         rstr_release(name);
       }
       s->s_current_value = o;
@@ -1170,9 +1229,6 @@ setting_set(setting_t *s, int type, ...)
 void
 setting_reset(setting_t *s)
 {
-  if(s->s_parent == NULL)
-    return;
-
   s->s_value_set = 0;
 
   switch(s->s_store_type) {
@@ -1191,8 +1247,39 @@ setting_reset(setting_t *s)
     break;
   }
 
-  prop_sub_reemit(s->s_inherited_value_sub);
-  prop_sub_reemit(s->s_inherited_origin_sub);
+  if(s->s_parent == NULL) {
+
+    switch(s->s_type) {
+    case SETTING_STRING:
+      prop_set_void(s->s_val);
+      if(s->s_callback != NULL) {
+        prop_callback_string_t *cb = s->s_callback;
+        cb(s->s_opaque, rstr_get(s->s_default_str));
+      }
+
+      if(s->s_ext_value)
+        prop_set_rstring(s->s_ext_value, s->s_default_str);
+
+      break;
+    case SETTING_INT:
+    case SETTING_BOOL:
+      prop_set_int(s->s_val, s->s_default_int);
+      if(s->s_callback != NULL) {
+        prop_callback_int_t *cb = s->s_callback;
+        cb(s->s_opaque, s->s_default_int);
+      }
+      if(s->s_ext_value != NULL)
+        prop_set_int(s->s_ext_value, s->s_default_int);
+      break;
+    default:
+      printf("Can't reset type %d\n", s->s_type);
+      break;
+    }
+
+  } else {
+    prop_sub_reemit(s->s_inherited_value_sub);
+    prop_sub_reemit(s->s_inherited_origin_sub);
+  }
 }
 
 

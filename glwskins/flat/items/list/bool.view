@@ -8,6 +8,7 @@ widget(container_z, {
   onEvent(activate, {
     toggle($self.value);
   });
+  onEvent(itemMenu, deliverEvent($self.value, "reset"));
 
   style: "ListItemOuter";
 

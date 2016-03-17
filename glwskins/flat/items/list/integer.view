@@ -57,11 +57,12 @@ widget(deck, {
             step: $self.step;
             bind($self.value);
 
+            onEvent(itemMenu, deliverEvent($self.value, "reset"));
+
             widget(container_y, {
               align: center;
               widget(quad, {
                 height: 0.5em;
-//                color: select(isNavFocused(), 0.0, 0.77);
               });
             });
           });
