@@ -329,6 +329,7 @@ widget(container_z, {
 
     style(notifications, {
       shadow: true;
+      filterConstraintX: true;
     });
 
     widget(label, {

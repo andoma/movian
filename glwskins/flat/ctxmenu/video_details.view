@@ -72,6 +72,7 @@ widget(container_z, {
           });
 
           widget(label, {
+            filterConstraintX: true;
             caption: $self.longformat;
           });
         });
@@ -83,12 +84,10 @@ widget(container_z, {
           });
 
           widget(label, {
+            filterConstraintX: true;
             caption: $self.longformat;
           });
         });
-
-
-
       });
     });
 
