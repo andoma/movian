@@ -43,29 +43,69 @@ coreAttach($self.url, $view.stppstatus, {
       });
     });
 
-    widget(layer, {
+    widget(container_z, {
       hidden: select($view.stppstatus.error, true, false);
       filterConstraintY: true;
-      alpha: iir(1 - $ui.screensaverActive, 8);
-      widget(playfield, {
-        effect: blend;
-        noInitialTransform: true;
-        alpha: 1 - iir(clamp(getLayer(), 0, 1), 7) * 0.66;
+      widget(layer, {
+        alpha: iir(1 - $ui.screensaverActive, 8);
+        widget(playfield, {
+          effect: blend;
+          noInitialTransform: true;
+          alpha: 1 - iir(clamp(getLayer(), 0, 1), 7) * 0.66;
 
-        onEvent(navOpen, deliverEvent($core.navigators.current.eventSink));
-        onEvent(reloadData, deliverEvent($core.navigators.current.eventSink));
-        onEvent(back, deliverEvent($core.navigators.current.eventSink));
-        onEvent(playTrackFromSource, deliverEvent($core.playqueue.eventSink));
+          onEvent(navOpen, deliverEvent($core.navigators.current.eventSink));
+          onEvent(reloadData, deliverEvent($core.navigators.current.eventSink));
+          onEvent(back, deliverEvent($core.navigators.current.eventSink));
+          onEvent(playTrackFromSource, deliverEvent($core.playqueue.eventSink));
 
-        cloner($core.navigators.current.pages, container_z, {
+          cloner($core.navigators.current.pages, container_z, {
 
-          widget(loader, {
-	    noInitialTransform: true;
-	    source: select(isVoid($self.model.type),
-                           "skin://pages/back.view",
-                           "skin://pages/" + $self.model.type + ".view");
+            widget(loader, {
+	      noInitialTransform: true;
+	      source: translate($self.model.type,
+                                select(isVoid($self.model.type),
+                                       "skin://pages/back.view",
+                                       "skin://pages/" + $self.model.type + ".view"),
+                                "video", "skin://pages/stppvideo.view");
+            });
+          });
+        });
+      });
+
+      widget(container_y, {
+        space(1);
+        widget(container_y, {
+          delta($ui.universeBottomHeight, getHeight());
+
+          expediteSubscriptions: true;
+
+          style(playdeckText, {
+            font: "skin://fonts/RobotoCondensed-Regular.ttf";
           });
 
+          widget(loader, {
+            autohide: true;
+            source: translate($core.media.current.type, "",
+                              "tracks", "skin://playdecks/" + $ui.orientation + "/tracks.view",
+                              "radio",  "skin://playdecks/" + $ui.orientation + "/radio.view"
+                             );
+          });
+
+          cloner($core.notifications.nodes, container_z, {
+            widget(quad, {
+              color: 0;
+              alpha: 0.2;
+            });
+
+            widget(label, {
+              padding: [2em, 0.5em];
+              caption: $self.text;
+            });
+          });
+
+          widget(dummy, {
+            height: 0;
+          });
         });
       });
     });

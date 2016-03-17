@@ -6,7 +6,6 @@ widget(container_y, {
   width: 22em;
   id: "osd_main";
   padding: [0,3em, 0, 0];
-#import "skin://styles/style_sidebar.view"
 
   widget(list_y, {
 

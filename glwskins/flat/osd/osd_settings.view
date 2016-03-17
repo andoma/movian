@@ -4,10 +4,10 @@
 
 
   widget(container_y, {
-#import "skin://styles/style_sidebar.view"
     id: ID;
 
     widget(label, {
+      style: "osdsettingtitle";
       height: 3em;
       align: center;
       caption: TITLE;

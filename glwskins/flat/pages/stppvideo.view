@@ -1,0 +1,333 @@
+#import "skin://theme.view"
+#import "skin://styles/style_list.view"
+
+
+#define PLAYDECK_BUTTON(ICON, TITLE, EVENT, ENABLED, ID, ROTATED = 0) {
+
+  widget(container_z, {
+    id: ID;
+    onEvent(activate, EVENT);
+    focusable: ENABLED;
+
+    widget(quad, {
+      additive: true;
+      alpha: 0.1 * isHovered() + 0.6 * isNavFocused();
+    });
+    widget(icon, {
+      angle: iir(ROTATED, 4) * -90;
+      size: 2em;
+      source: ICON;
+      color: select(isNavFocused(), 0, 1);
+      alpha: 0.7 * iir(ENABLED, 8) + 0.3;
+    });
+  });
+}
+
+$clone.osdpage = 0;
+
+onEvent(back, {
+  $clone.osdpage = 0;
+}, $clone.osdpage);
+
+
+onEvent(menu, {
+  $clone.osdpage = 1;
+  focus("osd_main");
+}, !$clone.osdpage);
+
+onEvent(menu, {
+  $clone.osdpage = 0;
+}, $clone.osdpage);
+
+
+widget(container_z, {
+
+  style(osdsettingtitle, {
+    alpha: 0;
+  });
+
+  widget(layer, {
+
+
+      widget(container_y, {
+        alpha: 1 - iir(clamp(getLayer(), 0, 1), 7);
+        padding: [0, 3.5em, 0, 0];
+        style(notifications, {
+          shadow: true;
+          filterConstraintX: true;
+        });
+
+        widget(container_x, {
+          spacing: 0.5em;
+          hidden: select($self.media.error, false, true);
+          widget(icon, {
+	    source: "skin://icons/ic_error_48px.svg";
+          });
+          widget(label, {
+	    caption: $self.media.error;
+            style: "notifications";
+          });
+        });
+
+        widget(container_x, {
+          spacing: 0.5em;
+          hidden: select($self.media.video.too_slow, false, true);
+          widget(icon, {
+	    source: "skin://icons/ic_error_48px.svg";
+          });
+          widget(label, {
+	    caption: _("CPU is too slow to decode this video");
+            style: "notifications";
+          });
+        });
+
+
+        cloner($self.media.notifications, container_x, {
+          spacing: 0.5em;
+          widget(icon, {
+	    source: "skin://icons/ic_error_48px.svg";
+	    color: translate($self.type, [1,1,1],
+			     "info", [0.5, 1, 0.5],
+			     "warning",  [1, 1, 0.5],
+			     "error", [1, 0.5, 0.5]);
+          });
+          widget(label, {
+	    caption: $self.text;
+            style: "notifications";
+	    color: translate($self.type, [1,1,1],
+			     "info", [0.5, 1, 0.5],
+			     "warning",  [1, 1, 0.5],
+			     "error", [1, 0.5, 0.5]);
+          });
+        });
+
+        widget(container_x, {
+          style: "ListItem";
+
+          height: 14em;
+          widget(image, {
+            align: top;
+            width: 7em;
+            source: $self.media.metadata.icon;
+          });
+
+          widget(container_y, {
+            filterConstraintX: true;
+
+            widget(label, {
+              autohide: true;
+              size: 1.5em;
+              caption: $self.media.metadata.tagline;
+              padding: [0,0,0,1em];
+            });
+
+            widget(label, {
+              autohide: true;
+              maxlines: 5;
+              caption: $self.media.metadata.description;
+              padding: [0,0,0,1em];
+            });
+
+            cloner($self.media.metadata.videostreams, container_x, {
+              spacing: 0.5em;
+              widget(icon, {
+                source: "skin://icons/ic_videocam_48px.svg";
+              });
+
+              widget(label, {
+                filterConstraintX: true;
+                caption: $self.longformat;
+              });
+            });
+
+            widget(container_x, {
+              spacing: 0.5em;
+              widget(icon, {
+                source:  "skin://icons/ic_speaker_48px.svg";
+              });
+              widget(label, {
+                style: "notifications";
+	        caption: join(" - ",
+                              $self.media.audio.active.title,
+                              $self.media.audio.active.language,
+                              $self.media.audio.active.source,
+                              $self.media.audio.active.longformat ??
+                              $self.media.audio.active.format);
+              });
+            });
+            widget(container_x, {
+              spacing: 0.5em;
+              widget(icon, {
+                source: "skin://icons/ic_subtitles_48px.svg";
+              });
+              widget(label, {
+                style: "notifications";
+	        caption: join(" - ",
+                              $self.media.subtitle.active.title,
+                              $self.media.subtitle.active.language,
+                              $self.media.subtitle.active.source,
+                              $self.media.subtitle.active.longformat ??
+                              $self.media.subtitle.active.format);
+              });
+            });
+
+            widget(container_x, {
+              hidden: !changed($self.media.ctrl.audiovolume, 2, true) ||
+                !$self.media.ctrl.audiovolume;
+              spacing: 0.5em;
+              widget(icon, {
+              });
+              widget(label, {
+                style: "notifications";
+                caption: fmt(_("Audio volume adjustment: %d dB"),
+                             $self.media.ctrl.audiovolume);
+              });
+            });
+          });
+        });
+        space(1);
+
+        // OSD buttons row
+
+
+        widget(container_x, {
+          height: 2.2em;
+          spacing: 1em;
+          padding: [1em, 0.1em];
+
+            align: center;
+            PLAYDECK_BUTTON("skin://icons/ic_stop_48px.svg",
+                            _("Stop"),
+                            deliverEvent($self.control, Stop),
+                            true, "stop-btn");
+
+            PLAYDECK_BUTTON("skin://icons/ic_subtitles_48px.svg",
+                            _("Subtitles"),
+                            {
+                              $clone.osdpage = select($clone.osdpage == 100, 0, 100);
+                              focus("osd_subs");
+                            }, true, "subtitles-btn");
+
+            PLAYDECK_BUTTON("skin://icons/ic_skip_previous_48px.svg",
+                            _("Previous"),
+                            deliverEvent($self.control, PreviousTrack),
+                            $self.media.canSkipBackward ||
+                            $self.media.canSeek,
+                            "prev-btn");
+
+            PLAYDECK_BUTTON(translate($core.media.current.playstatus,
+                                      "skin://icons/ic_pause_48px.svg",
+                                      "pause",
+                                      "skin://icons/ic_play_arrow_48px.svg"),
+                            _("Play/Pause"),
+                            deliverEvent($self.control, PlayPause),
+                            $self.media.canPause,
+                            "pause-btn");
+
+            PLAYDECK_BUTTON("skin://icons/ic_skip_next_48px.svg",
+                            _("Next"),
+                            deliverEvent($self.control, NextTrack),
+                            $self.media.canSkipForward,
+                            "next-btn");
+
+            PLAYDECK_BUTTON("skin://icons/ic_speaker_48px.svg",
+                            _("Audio tracks"),
+                            {
+                              $clone.osdpage = select($clone.osdpage == 101, 0, 101);
+                              focus("osd_audio");
+                            }, true, "audio-btn");
+
+            PLAYDECK_BUTTON("skin://icons/ic_menu_48px.svg",
+                            _("Settings"),
+                            {
+                              toggle($clone.osdpage);
+                              focus("osd_main");
+                            }, true, "menu-btn",
+                            $clone.osdpage > 0 && $clone.osdpage < 100);
+
+        });
+
+        widget(container_x, {
+          height: 2em;
+          spacing: 0.5em;
+          padding: [1em, 0, 0, 0];
+
+          widget(label, {
+            width: 3em;
+            caption: value2duration($view.tentativeSeekPosition ??
+                                    $self.media.currenttime);
+            align: right;
+          });
+
+          widget(container_z, {
+            widget(container_y, {
+              align: center;
+              widget(container_z, {
+                height: 3;
+                widget(container_y, {
+                  padding: 1;
+                  widget(quad, {
+                    alpha: 0.3;
+                    additive: true;
+                  });
+                });
+              });
+            });
+
+            widget(slider_x, {
+              knobOverEdges: true;
+              tentative: $view.tentativeSeekPosition;
+              alwaysGrabKnob: true;
+              clickable: true;
+              bind($self.media.currenttime);
+              max: $self.media.metadata.duration;
+              widget(icon, {
+                source: "skin://icons/dot.png";
+              });
+              widget(container_y, {
+                space(1);
+                widget(quad, {
+                  height: 3;
+                  alpha: 0.9;
+                  additive: true;
+                });
+                space(1);
+              });
+            });
+            });
+          widget(label, {
+            width: 4em;
+            caption: value2duration($self.media.metadata.duration);
+          });
+        });
+      });
+
+    widget(loader, {
+      autohide: true;
+      alpha: iir($clone.osdpage == 1, 4);
+      source: select($clone.osdpage, "skin://osd/osd_main.view", "");
+    });
+
+
+    widget(loader, {
+      autohide: true;
+      source: translate($clone.osdpage, "",
+                        2, "skin://osd/osd_settings_subs.view",
+                        3, "skin://osd/osd_settings_audio.view",
+                        4, "skin://osd/osd_settings_video.view",
+                        100, "skin://osd/osd_subs.view",
+                        101, "skin://osd/osd_audio.view"
+                       );
+    });
+
+  });
+
+  widget(container_y, {
+    align: top;
+    PageHeader(join(" - ",
+                    $self.media.metadata.title,
+                    translate($clone.osdpage, void,
+                              100, _("Subtitles"),
+                              101, _("Audio"))));
+  });
+});

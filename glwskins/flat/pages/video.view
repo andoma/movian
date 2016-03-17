@@ -146,6 +146,7 @@ widget(container_z, {
               alpha: iir($clone.osdpage > 0, 4) * 0.8;
             });
             widget(layer, {
+#import "skin://styles/style_sidebar.view"
 
               widget(loader, {
                 autohide: true;

@@ -3,9 +3,9 @@
 
 widget(container_y, {
   id: "osd_audio";
-#import "skin://styles/style_sidebar.view"
 
   widget(label, {
+    style: "osdsettingtitle";
     height: 3em;
     align: center;
     caption: _("Audio");
