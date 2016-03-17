@@ -3,6 +3,8 @@
 
 widget(deck, {
 
+  onEvent(itemMenu, deliverEvent($self.value, "reset"));
+
   widget(container_z, {
 
     id: "wide";
@@ -56,8 +58,6 @@ widget(deck, {
             max: $self.max;
             step: $self.step;
             bind($self.value);
-
-            onEvent(itemMenu, deliverEvent($self.value, "reset"));
 
             widget(container_y, {
               align: center;
