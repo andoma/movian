@@ -120,12 +120,12 @@ audio_init(void)
   audio_class = audio_driver_init(asettings);
 
   settings_create_separator(asettings,
-			    _p("Audio settings during video playback"));
+			    _p("Video playback"));
 
   gconf.setting_av_volume =
     setting_create(SETTING_INT, asettings,
                    SETTINGS_INITIAL_UPDATE,
-                   SETTING_TITLE(_p("Audio gain adjustment during video playback")),
+                   SETTING_TITLE(_p("Audio gain")),
                    SETTING_RANGE(-12, 12),
                    SETTING_UNIT_CSTR("dB"),
                    SETTING_STORE("audio2", "videovolume"),
