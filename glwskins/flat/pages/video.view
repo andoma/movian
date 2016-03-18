@@ -245,7 +245,7 @@ widget(container_z, {
       });
       widget(dummy, {
         hidden: !$self.media.canSeek;
-        height: 2em;
+        height: 2em + $ui.universeBottomHeight;
       });
     });
   });
@@ -254,6 +254,7 @@ widget(container_z, {
   widget(container_y, {
     hidden: !$view.showSeekBar || !$self.media.canSeek;
     align: bottom;
+    padding: [0,0,0,$ui.universeBottomHeight];
     widget(container_z, {
       delta($clone.bottomOsdHeight, isVisible() * getHeight());
       height: 2em;
