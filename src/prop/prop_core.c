@@ -2639,16 +2639,16 @@ prop_subfind(prop_t *p, const char **name, int follow_symlinks,
 }
 
 
-LIST_HEAD(prop_root_list, prop_root);
+LIST_HEAD(prop_root_node_list, prop_root_node);
 
 /**
  *
  */
-typedef struct prop_root {
+typedef struct prop_root_node {
   prop_t *p;
   const char *name;
-  LIST_ENTRY(prop_root) link;
-} prop_root_t;
+  LIST_ENTRY(prop_root_node) link;
+} prop_root_node_t;
 
 
 
@@ -2656,21 +2656,25 @@ typedef struct prop_root {
  *
  */
 static prop_t *
-prop_resolve_tree(const char *name, struct prop_root_list *prl)
+prop_resolve_tree(const char *name, struct prop_root_node_list *prl,
+                  struct prop_root *prv, int prvlen)
 {
-  prop_t *p;
-  prop_root_t *pr;
-  
-  if(!strcmp(name, "global")) {
-    p = prop_global;
-    return p->hp_type == PROP_ZOMBIE ? NULL : p;
+  prop_root_node_t *pr;
+
+  if(!strcmp(name, "global"))
+    return prop_global;
+
+  for(int i = 0; i < prvlen; i++, prv++) {
+    if(prv->p != NULL && !strcmp(prv->name, name))
+      return prv->p;
   }
+
   LIST_FOREACH(pr, prl, link) {
-    p = pr->p;
+    prop_t *p = pr->p;
     if(p->hp_name != NULL && !strcmp(name, p->hp_name))
-      return p->hp_type == PROP_ZOMBIE ? NULL : p;
-    if(pr->name != NULL   && !strcmp(name, pr->name))
-      return p->hp_type == PROP_ZOMBIE ? NULL : p;
+      return p;
+    if(pr->name != NULL && !strcmp(name, pr->name))
+      return p;
   }
   return NULL;
 }
@@ -2688,10 +2692,12 @@ prop_get_by_name(const char **name, int follow_symlinks, ...)
 #endif
 {
   prop_t *p;
-  prop_root_t *pr;
-  struct prop_root_list proproots;
+  prop_root_node_t *pr;
+  struct prop_root_node_list proproots;
   int tag;
   va_list ap;
+  prop_root_t *prv = NULL;
+  int prvlen = 0;
 
   va_start(ap, follow_symlinks);
 
@@ -2702,7 +2708,7 @@ prop_get_by_name(const char **name, int follow_symlinks, ...)
     switch(tag) {
 
     case PROP_TAG_ROOT:
-      pr = alloca(sizeof(prop_root_t));
+      pr = alloca(sizeof(prop_root_node_t));
       pr->p = va_arg(ap, prop_t *);
       pr->name = NULL;
       if(pr->p != NULL)
@@ -2710,11 +2716,16 @@ prop_get_by_name(const char **name, int follow_symlinks, ...)
       break;
 
     case PROP_TAG_NAMED_ROOT:
-      pr = alloca(sizeof(prop_root_t));
+      pr = alloca(sizeof(prop_root_node_t));
       pr->p = va_arg(ap, prop_t *);
       pr->name = va_arg(ap, const char *);
       if(pr->p != NULL && pr->name != NULL)
 	LIST_INSERT_HEAD(&proproots, pr, link);
+      break;
+
+    case PROP_TAG_ROOT_VECTOR:
+      prv = va_arg(ap, prop_root_t *);
+      prvlen = va_arg(ap, int);
       break;
 
     case PROP_TAG_END:
@@ -2724,12 +2735,12 @@ prop_get_by_name(const char **name, int follow_symlinks, ...)
       abort();
     }
   } while(tag);
-  
+
   va_end(ap);
 
-  p = prop_resolve_tree(name[0], &proproots);
+  p = prop_resolve_tree(name[0], &proproots, prv, prvlen);
 
-  if(p == NULL)
+  if(p == NULL || p->hp_type == PROP_ZOMBIE)
     return NULL;
 
   name++;
@@ -2799,7 +2810,7 @@ prop_subscribe_ex(const char *file, int line, int flags, ...)
   prop_subscribe(int flags, ...)
 #endif
 {
-  prop_t *p, *value, *canonical, *c;
+  prop_t *value, *canonical, *c;
   prop_sub_t *s, *t;
   int direct = !!(flags & (PROP_SUB_DIRECT_UPDATE | PROP_SUB_INTERNAL));
   int notify_now = !(flags & PROP_SUB_NO_INITIAL_UPDATE);
@@ -2809,8 +2820,8 @@ prop_subscribe_ex(const char *file, int line, int flags, ...)
   prop_courier_t *pc = NULL;
   void *lock = NULL;
   lockmgr_fn_t *lockmgr = NULL;
-  prop_root_t *pr;
-  struct prop_root_list proproots;
+  prop_root_node_t *pr;
+  struct prop_root_node_list proproots;
   void *cb = NULL;
   prop_trampoline_t *trampoline = NULL;
   int dolock = !(flags & PROP_SUB_DONTLOCK);
@@ -2823,6 +2834,9 @@ prop_subscribe_ex(const char *file, int line, int flags, ...)
   origin_chain[0] = NULL;
 
   struct prop_proxy_connection *ppc = NULL;
+
+  prop_root_t *prv = NULL;
+  int prvlen = 0;
 
   LIST_INIT(&proproots);
 
@@ -2940,7 +2954,7 @@ prop_subscribe_ex(const char *file, int line, int flags, ...)
       break;
 
     case PROP_TAG_ROOT:
-      pr = alloca(sizeof(prop_root_t));
+      pr = alloca(sizeof(prop_root_node_t));
       pr->p = va_arg(ap, prop_t *);
       pr->name = NULL;
       if(pr->p != NULL)
@@ -2948,11 +2962,16 @@ prop_subscribe_ex(const char *file, int line, int flags, ...)
       break;
 
     case PROP_TAG_NAMED_ROOT:
-      pr = alloca(sizeof(prop_root_t));
+      pr = alloca(sizeof(prop_root_node_t));
       pr->p = va_arg(ap, prop_t *);
       pr->name = va_arg(ap, const char *);
       if(pr->p != NULL && pr->name != NULL)
 	LIST_INSERT_HEAD(&proproots, pr, link);
+      break;
+
+    case PROP_TAG_ROOT_VECTOR:
+      prv = va_arg(ap, prop_root_t *);
+      prvlen = va_arg(ap, int);
       break;
 
     case PROP_TAG_MUTEX:
@@ -2977,7 +2996,6 @@ prop_subscribe_ex(const char *file, int line, int flags, ...)
       abort();
     }
   } while(tag);
-  
 
   va_end(ap);
 
@@ -2996,18 +3014,18 @@ prop_subscribe_ex(const char *file, int line, int flags, ...)
     }
 
   } else {
-
+    prop_t *p;
     if(flags & PROP_SUB_ALT_PATH) {
       p = LIST_FIRST(&proproots) ? LIST_FIRST(&proproots)->p : NULL;
     } else {
-      p = prop_resolve_tree(name[0], &proproots);
+      p = prop_resolve_tree(name[0], &proproots, prv, prvlen);
       name++;
     }
 
     if(dolock)
       hts_mutex_lock(&prop_mutex);
 
-    if(p == NULL) {
+    if(p == NULL || p->hp_type == PROP_ZOMBIE) {
       canonical = value = NULL;
 
     } else if(p->hp_type == PROP_PROXY) {

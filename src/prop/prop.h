@@ -144,6 +144,10 @@ void prop_init_late(void);
 #define PROP_SUB_ALT_PATH             0x80000
 
 
+typedef struct prop_root {
+  prop_t *p;
+  const char *name;
+} prop_root_t;
 
 enum {
   PROP_TAG_END = 0,
@@ -161,6 +165,7 @@ enum {
   PROP_TAG_COURIER,
   PROP_TAG_ROOT,
   PROP_TAG_NAMED_ROOT,
+  PROP_TAG_ROOT_VECTOR,
   PROP_TAG_MUTEX,
   PROP_TAG_LOCKMGR,
   PROP_TAG_NAMESTR,
