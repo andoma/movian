@@ -607,8 +607,8 @@ parse_one_expression(token_t *prev, token_t *first, errorinfo_t *ei,
       if(parse_prep_expression(t, ei, gr))
         return -1;
 
-      optimize_attribute_assignment(t, prev, gr);
       scan_prop_names(t, prev, gr);
+      optimize_attribute_assignment(t, prev, gr);
       return 0;
 
     case TOKEN_BLOCK_CLOSE:
