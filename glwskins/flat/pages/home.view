@@ -9,7 +9,7 @@ style(sidebarBackdrop, {
   widget(container_x, {
     spacing: 1em;
     divider: true;
-    padding: [0, 1em, 2em, 0];
+    padding: 1em;
     widget(container_z, {
 
       filterConstraintX: true;
@@ -44,12 +44,6 @@ style(sidebarBackdrop, {
 	          $view.searchQuery);
         });
       });
-    });
-
-    widget(label, {
-      align: topRight;
-//      padding: [2em, 0];
-      caption: $core.clock.localtimeofday;
     });
   });
 }
@@ -121,6 +115,9 @@ widget(container_z, {
         widget(array, {
           id: "main";
 
+          clipOffsetTop: 3em;
+          scrollThresholdTop: 3em;
+
           scrollThresholdBottom: $ui.universeBottomHeight;
           clipOffsetBottom: $ui.universeBottomHeight;
           clipAlpha: 0.2;
@@ -182,6 +179,11 @@ widget(container_z, {
       time: 0.05;
       source: "skin://menu/sidebar.view";
     });
+  });
+
+  widget(container_y, {
+    align: top;
+    PageHeader(select($clone.showSidebar, "", _("Home")));
   });
 
   widget(container_y, {

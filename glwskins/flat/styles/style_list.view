@@ -9,8 +9,17 @@ style(ListItem, {
   spacing: $ui.width / 50;
 });
 
-style(ListItemIcon, {
+style(ListItemIcon_narrow, {
+  width: 2.5em;
+});
+
+style(ListItemIcon_wide, {
   width: 6em;
+});
+
+
+style(ListItemIcon, {
+  style: select($ui.aspect > 1, "ListItemIcon_wide", "ListItemIcon_narrow");
   size: 1.5em;
   align: right;
   margin: [0,1,1em,1];
@@ -130,6 +139,6 @@ style(ActionLabel, {
 //
 
 style(IntegerLayout, {
-  page: "wide";
+  page: select($ui.aspect < 1, "narrow", "wide");
 });
 

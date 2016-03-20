@@ -1,76 +1,76 @@
 #import "skin://styles/style_list.view"
+#import "skin://theme.view"
 
-widget(container_y, {
-
-  widget(container_x, {
-    padding: [6em, 0];
-
-    widget(icon, {
-      size: 4em;
-      source: $self.model.metadata.icon;
-    });
-
-
-    widget(label, {
-      align: center;
-      caption: "Album: " + $self.model.metadata.title;
-      size: 2em;
-    });
-  });
+widget(container_z, {
 
   widget(list_y, {
 
-    spacing: 0.3em;
-    padding: [2em, 0, 2em, 2em];
+    id: "scrollable";
     navWrap: true;
     chaseFocus: true;
-    scrollThreshold: 2em;
 
-    cloner($self.model.nodes, container_x, {
+    clipOffsetTop: 3em;
+    scrollThresholdTop: 5em;
 
-      padding: [0,0,1em,0];
-      spacing: 1em;
-      style: "ListItem";
+    scrollThresholdBottom: $ui.universeBottomHeight + 2em;
+    clipOffsetBottom: $ui.universeBottomHeight;
+    clipAlpha: 0.2;
+    clipBlur: 1;
+
+    cloner($self.model.nodes, container_z, {
+      height: 2em;
+      ListItemBevel();
+      ListItemHighlight();
+      onEvent(activate, playTrackFromSource($self, $parent.model));
       focusable: true;
 
-      onEvent(activate, playTrackFromSource($self, $parent.model));
+      widget(container_x, {
+        style: "ListItem";
 
-      widget(icon, {
-        source: translate($self.media.playstatus,
-		          "skin://icons/ic_audiotrack_48px.svg",
-		          "play", "skin://icons/ic_play_arrow_48px.svg",
-		          "play", "skin://icons/ic_pause_arrow_48px.svg");
-        style: "ListItemIconMono";
-      });
+        widget(icon, {
+          source: translate($self.media.playstatus, "",
+		            "play", "skin://icons/ic_play_arrow_48px.svg",
+		            "pause", "skin://icons/ic_pause_48px.svg");
+          style: "ListItemIconMono";
+        });
 
-      widget(label, {
-        width: 2em;
-        align: right;
-        caption: $self.metadata.track;
-        color: iir(!isNavFocused(), 4);
-        shadow: iir(!isNavFocused(), 4);
-      });
+        widget(label, {
+          width: 1.5em;
+          align: right;
+          caption: $self.metadata.track;
+          color: iir(!isNavFocused(), 4);
+          shadow: iir(!isNavFocused(), 4);
+        });
 
-      widget(label, {
-        filterConstraintX: true;
-        caption: $self.metadata.title;
-        style: "ListItemLabel";
-      });
+        widget(label, {
+          filterConstraintX: true;
+          caption: $self.metadata.title;
+          style: "ListItemLabel";
+        });
 
-      widget(label, {
-        weight: 0.6;
-        filterConstraintX: true;
-        caption: $self.metadata.artist;
-        style: "ListItemLabel";
-      });
+        widget(label, {
+          weight: 0.6;
+          filterConstraintX: true;
+          caption: $self.metadata.artist;
+          style: "ListItemLabel";
+        });
 
-      widget(label, {
-        width: 5em;
-        align: right;
-        caption: value2duration($self.metadata.duration);
-        style: "ListItemLabel";
+        widget(label, {
+          width: 5em;
+          align: right;
+          caption: value2duration($self.metadata.duration);
+          style: "ListItemLabel";
+        });
       });
     });
   });
+
+  ScrollBar("scrollable", 3em, $ui.universeBottomHeight);
+
+  widget(container_y, {
+    align: top;
+    PageHeader($self.model.metadata.title);
+  });
+
 });
 

@@ -33,7 +33,7 @@ $self.model.loading = $self.media.loading;
 $self.model.io <- $self.media.io;
 
 $clone.osdpage = 0;
-
+delta($ui.showClock, $clone.osdpage || $clone.showPlaydeck);
 $view.iconPad = select(isVoid($self.media.metadata.icon), 0, 7em);
 
 onEvent(back, {
@@ -450,16 +450,6 @@ widget(container_z, {
       source: $self.media.metadata.icon;
     });
     space(1);
-  });
-
-  widget(container_y, {
-    alpha: iir($view.showSeekBar, 4);
-    widget(label, {
-      height: 3em;
-      align: right;
-      padding: [4em, 0];
-      caption: $core.clock.localtimeofday;
-    });
   });
 
   widget(container_y, {
