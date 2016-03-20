@@ -224,13 +224,7 @@ typedef struct glw_view_eval_context {
   token_t *alloc;
   struct glw *w;
 
-  struct prop *prop_self;
-  struct prop *prop_parent;
-  struct prop *prop_view;
-  struct prop *prop_args;
-  struct prop *prop_clone;
-  struct prop *prop_event;
-  struct prop *prop_core;
+  glw_scope_t *scope;
 
   struct glw_root *gr;
   const struct glw_rctx *rc;

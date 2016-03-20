@@ -74,11 +74,8 @@ typedef struct glw_prop_sub {
   glw_t *gps_widget;
 
   prop_sub_t *gps_sub;
-  prop_t *gps_prop;
-  prop_t *gps_prop_view;
-  prop_t *gps_prop_clone;
-  prop_t *gps_prop_core;
 
+  glw_scope_t *gps_scope;
   token_t *gps_rpn;
   struct glw_prop_sub_slist gps_slaves;
 
@@ -110,10 +107,6 @@ typedef struct sub_cloner {
   int sc_entries;
 
   prop_t *sc_originating_prop;
-
-  prop_t *sc_view_prop;
-  prop_t *sc_view_args;
-  prop_t *sc_prop_core;
 
   glw_t *sc_anchor;
 
@@ -240,14 +233,6 @@ glw_prop_subscription_destroy_list(glw_root_t *gr, struct glw_prop_sub_slist *l)
         if(sc->sc_originating_prop)
           prop_ref_dec(sc->sc_originating_prop);
 
-        if(sc->sc_view_prop)
-          prop_ref_dec(sc->sc_view_prop);
-
-        if(sc->sc_prop_core)
-          prop_ref_dec(sc->sc_prop_core);
-
-        if(sc->sc_view_args)
-          prop_ref_dec(sc->sc_view_args);
         break;
 
       case GPS_VECTORIZER:
@@ -255,11 +240,7 @@ glw_prop_subscription_destroy_list(glw_root_t *gr, struct glw_prop_sub_slist *l)
         vectorizer_clean(gr, sv);
         break;
       }
-      prop_ref_dec(gps->gps_prop);
-      prop_ref_dec(gps->gps_prop_view);
-      prop_ref_dec(gps->gps_prop_clone);
-      prop_ref_dec(gps->gps_prop_core);
-    } else {
+      glw_scope_release(gps->gps_scope);
       glw_prop_subscription_destroy_list(gr, &gps->gps_slaves);
     }
     rstr_release(gps->gps_file);
@@ -288,8 +269,7 @@ glw_prop_subscription_suspend_list(struct glw_prop_sub_slist *l)
 
 
 static void eval_dynamic(glw_t *w, token_t *rpn, struct glw_rctx *rc,
-			 prop_t *prop, prop_t *view, prop_t *clone,
-                         prop_t *core);
+                         glw_scope_t *scope);
 
 static int glw_view_eval_rpn0(token_t *t0, glw_view_eval_context_t *ec);
 
@@ -844,13 +824,8 @@ resolve_property_name(glw_view_eval_context_t *ec, token_t *a,
   glw_propname_to_array(pname, a);
 
   p = prop_get_by_name(pname, follow_symlinks,
-		       PROP_TAG_NAMED_ROOT, ec->prop_self, "self",
-		       PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
-		       PROP_TAG_NAMED_ROOT, ec->prop_view, "view",
-		       PROP_TAG_NAMED_ROOT, ec->prop_clone, "clone",
-		       PROP_TAG_NAMED_ROOT, ec->prop_args, "args",
-		       PROP_TAG_NAMED_ROOT, ec->prop_event, "event",
-		       PROP_TAG_NAMED_ROOT, ec->prop_core, "core",
+                       PROP_TAG_ROOT_VECTOR,
+                       ec->scope->gs_roots, ec->scope->gs_num_roots,
 		       PROP_TAG_ROOT, ec->w->glw_root->gr_prop_ui,
 		       PROP_TAG_NAMED_ROOT, ec->w->glw_root->gr_prop_nav, "nav",
 		       NULL);
@@ -969,13 +944,7 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
 
     memset(&n, 0, sizeof(n));
     n.w = ec->w;
-    n.prop_self   = ec->prop_self;
-    n.prop_parent = ec->prop_parent;
-    n.prop_view   = ec->prop_view;
-    n.prop_clone  = ec->prop_clone;
-    n.prop_core   = ec->prop_core;
-    n.prop_args   = ec->prop_args;
-    n.prop_event  = ec->prop_event;
+    n.scope = ec->scope;
 
     n.ei = ec->ei;
     n.gr = ec->gr;
@@ -1116,8 +1085,7 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int how)
  *
  */
 static void
-eval_dynamic(glw_t *w, token_t *rpn, struct glw_rctx *rc,
-	     prop_t *prop, prop_t *view, prop_t *clone, prop_t *core)
+eval_dynamic(glw_t *w, token_t *rpn, struct glw_rctx *rc, glw_scope_t *scope)
 {
   glw_view_eval_context_t ec;
 
@@ -1125,10 +1093,7 @@ eval_dynamic(glw_t *w, token_t *rpn, struct glw_rctx *rc,
   ec.w = w;
   ec.gr = w->glw_root;
   ec.rc = rc;
-  ec.prop_self = prop;
-  ec.prop_view = view;
-  ec.prop_clone = clone;
-  ec.prop_core = core;
+  ec.scope = scope;
 
   ec.sublist = &w->glw_prop_subscriptions;
 
@@ -1241,7 +1206,7 @@ static void cloner_resequence(sub_cloner_t *sc);
  *
  */
 static void
-clone_eval(glw_clone_t *c)
+clone_eval(glw_clone_t *c, glw_scope_t *scope)
 {
   sub_cloner_t *sc = c->c_sc;
   glw_view_eval_context_t n;
@@ -1253,12 +1218,7 @@ clone_eval(glw_clone_t *c)
     gc->gc_freeze(c->c_w);
 
   memset(&n, 0, sizeof(n));
-  n.prop_self   = c->c_prop;
-  n.prop_parent = sc->sc_originating_prop;
-  n.prop_view   = sc->sc_view_prop;
-  n.prop_clone  = c->c_clone_root;
-  n.prop_args   = sc->sc_view_args;
-  n.prop_core   = sc->sc_prop_core;
+  n.scope = scope;
   n.gr = c->c_w->glw_root;
 
   n.w = c->c_w;
@@ -1448,18 +1408,24 @@ cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
 
   sc->sc_entries++;
 
-  c->c_clone_root = prop_create_root("clone");
+  c->c_clone_root = prop_create_root(NULL);
 
   c->c_w = glw_create(gr, sc->sc_cloner_class, parent, b, p,
                       sc->sc_cloner_body->file,
                       sc->sc_cloner_body->line);
   c->c_w->glw_clone = c;
 
-  if(c->c_w->glw_class->gc_set_roots != NULL) {
-    c->c_w->glw_class->gc_set_roots(c->c_w,
-                                    p, sc->sc_originating_prop,
-                                    c->c_clone_root, sc->sc_prop_core);
-  }
+  glw_scope_t *scope = glw_scope_dup(sc->sc_sub.gps_scope,
+                                     (1 << GLW_ROOT_SELF) |
+                                     (1 << GLW_ROOT_PARENT) |
+                                     (1 << GLW_ROOT_CLONE));
+
+  scope->gs_roots[GLW_ROOT_SELF].p   = prop_ref_inc(c->c_prop);
+  scope->gs_roots[GLW_ROOT_PARENT].p = prop_ref_inc(sc->sc_originating_prop);
+  scope->gs_roots[GLW_ROOT_CLONE].p  = prop_ref_inc(c->c_clone_root);
+
+  if(c->c_w->glw_class->gc_set_scope != NULL)
+    c->c_w->glw_class->gc_set_scope(c->c_w, scope);
 
   prop_tag_set(p, sc, c);
 
@@ -1468,7 +1434,10 @@ cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
   if(flags & PROP_ADD_SELECTED && parent->glw_class->gc_select_child != NULL)
     parent->glw_class->gc_select_child(parent, c->c_w, NULL);
 
-  clone_eval(c);
+  clone_eval(c, scope);
+
+  glw_scope_release(scope);
+
 }
 
 
@@ -1785,8 +1754,7 @@ prop_callback_cloner(void *opaque, prop_event_t event, ...)
   }
 
   if(rpn != NULL)
-    eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop, gps->gps_prop_view,
-		 gps->gps_prop_clone, gps->gps_prop_core);
+    eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_scope);
 }
 
 
@@ -1888,8 +1856,7 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
   }
 
   if(rpn != NULL)
-    eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop, gps->gps_prop_view,
-		 gps->gps_prop_clone, gps->gps_prop_core);
+    eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_scope);
 }
 
 
@@ -1966,8 +1933,7 @@ prop_callback_counter(void *opaque, prop_event_t event, ...)
   gps->gps_token = t;
 
   if(rpn != NULL)
-    eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop, gps->gps_prop_view,
-		 gps->gps_prop_clone, gps->gps_prop_core);
+    eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_scope);
 }
 
 
@@ -2074,8 +2040,7 @@ ve_cb(void *opaque, prop_event_t event, ...)
   }
 
   if(rpn != NULL)
-    eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop, gps->gps_prop_view,
-		 gps->gps_prop_clone, gps->gps_prop_core);
+    eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_scope);
 }
 
 
@@ -2166,8 +2131,7 @@ vectorizer_move_element(sub_vectorizer_t *sv, prop_t *p, prop_t *before,
 
   token_t *rpn = gps->gps_rpn;
   if(rpn != NULL)
-    eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop, gps->gps_prop_view,
-		 gps->gps_prop_clone, gps->gps_prop_core);
+    eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_scope);
 }
 
 
@@ -2202,8 +2166,7 @@ vectorizer_del_element(sub_vectorizer_t *sv, prop_t *p, glw_root_t *gr)
 
   token_t *rpn = gps->gps_rpn;
   if(rpn != NULL)
-    eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop, gps->gps_prop_view,
-		 gps->gps_prop_clone, gps->gps_prop_core);
+    eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_scope);
 }
 
 
@@ -2227,8 +2190,7 @@ vectorizer_select_element(sub_vectorizer_t *sv, prop_t *p, glw_root_t *gr)
 
   token_t *rpn = gps->gps_rpn;
   if(rpn != NULL)
-    eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop, gps->gps_prop_view,
-		 gps->gps_prop_clone, gps->gps_prop_core);
+    eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_scope);
 }
 
 
@@ -2375,8 +2337,7 @@ prop_callback_vectorizer(void *opaque, prop_event_t event, ...)
   }
 
   if(rpn != NULL)
-    eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop, gps->gps_prop_view,
-		 gps->gps_prop_clone, gps->gps_prop_core);
+    eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_scope);
 }
 
 
@@ -2469,10 +2430,8 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
 
       sc->sc_have_more = 2;
 
-      sc->sc_originating_prop = prop_ref_inc(ec->prop_self);
-      sc->sc_view_prop        = prop_ref_inc(ec->prop_view);
-      sc->sc_view_args        = prop_ref_inc(ec->prop_args);
-      sc->sc_prop_core        = prop_ref_inc(ec->prop_core);
+      sc->sc_originating_prop =
+        prop_ref_inc(ec->scope->gs_roots[GLW_ROOT_SELF].p);
 
       TAILQ_INIT(&sc->sc_pending);
     } while(0);
@@ -2504,10 +2463,7 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
   }
 
   gps->gps_type = type;
-  gps->gps_prop = prop_ref_inc(ec->prop_self);
-  gps->gps_prop_view = prop_ref_inc(ec->prop_view);
-  gps->gps_prop_clone = prop_ref_inc(ec->prop_clone);
-  gps->gps_prop_core = prop_ref_inc(ec->prop_core);
+  gps->gps_scope = glw_scope_retain(ec->scope);
 
   gps->gps_file = rstr_dup(self->file);
   gps->gps_line = self->line;
@@ -2538,13 +2494,8 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
 		       PROP_TAG_CALLBACK, cb, gps,
 		       PROP_TAG_NAME_VECTOR, propname,
 		       PROP_TAG_COURIER, w->glw_root->gr_courier,
-		       PROP_TAG_NAMED_ROOT, ec->prop_self, "self",
-		       PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
-		       PROP_TAG_NAMED_ROOT, ec->prop_view, "view",
-		       PROP_TAG_NAMED_ROOT, ec->prop_args, "args",
-		       PROP_TAG_NAMED_ROOT, ec->prop_clone, "clone",
-		       PROP_TAG_NAMED_ROOT, ec->prop_event, "event",
-		       PROP_TAG_NAMED_ROOT, ec->prop_core, "core",
+                       PROP_TAG_ROOT_VECTOR,
+                       ec->scope->gs_roots, ec->scope->gs_num_roots,
 		       PROP_TAG_ROOT, w->glw_root->gr_prop_ui,
 		       PROP_TAG_NAMED_ROOT, w->glw_root->gr_prop_nav, "nav",
 #ifdef PROP_SUB_RECORD_SOURCE
@@ -2954,10 +2905,15 @@ glwf_coreAttach(glw_view_eval_context_t *ec, struct token *self,
   }
 
   n = *ec;
-  n.prop_core = self->t_extra;
+
+  glw_scope_t *scope = glw_scope_dup(ec->scope, (1 << GLW_ROOT_CORE));
+
+  scope->gs_roots[GLW_ROOT_CORE].p = prop_ref_inc(self->t_extra);
+  n.scope = scope;
   n.dynamic_eval = 0;
   r = glw_view_eval_block(a3, &n, NULL);
   ec->dynamic_eval |= n.dynamic_eval;
+  glw_scope_release(scope);
   return r ? -1 : 0;
 }
 
@@ -2986,13 +2942,7 @@ glwf_widget(glw_view_eval_context_t *ec, struct token *self,
   c = self->t_func_arg;
 
   memset(&n, 0, sizeof(n));
-  n.prop_self   = ec->prop_self;
-  n.prop_parent = ec->prop_parent;
-  n.prop_view   = ec->prop_view;
-  n.prop_clone  = ec->prop_clone;
-  n.prop_core   = ec->prop_core;
-  n.prop_args   = ec->prop_args;
-  n.prop_event  = ec->prop_event;
+  n.scope = ec->scope;
 
   n.ei = ec->ei;
   n.gr = ec->gr;
@@ -3002,9 +2952,8 @@ glwf_widget(glw_view_eval_context_t *ec, struct token *self,
   if(c->gc_freeze != NULL)
     c->gc_freeze(n.w);
 
-  if(n.w->glw_class->gc_set_roots != NULL)
-    n.w->glw_class->gc_set_roots(n.w, ec->prop_self, ec->prop_parent,
-                                 ec->prop_clone, ec->prop_core);
+  if(n.w->glw_class->gc_set_scope != NULL)
+    n.w->glw_class->gc_set_scope(n.w, n.scope);
 
   n.sublist = &n.w->glw_prop_subscriptions;
 
@@ -3165,12 +3114,7 @@ glwf_style0(glw_view_eval_context_t *ec, struct token *self,
                            "expected block");
 
   memset(&n, 0, sizeof(n));
-  n.prop_self   = ec->prop_self;
-  n.prop_parent = ec->prop_parent;
-  n.prop_view   = ec->prop_view;
-  n.prop_clone  = ec->prop_clone;
-  n.prop_args   = ec->prop_args;
-  n.prop_event  = ec->prop_event;
+  n.scope = ec->scope;
 
   n.ei = ec->ei;
   n.gr = ec->gr;
@@ -3252,12 +3196,7 @@ glwf_space(glw_view_eval_context_t *ec, struct token *self,
  */
 typedef struct glw_captured_block {
   token_t *block;
-  prop_t *prop_self;
-  prop_t *prop_parent;
-  prop_t *prop_view;
-  prop_t *prop_args;
-  prop_t *prop_clone;
-  prop_t *prop_core;
+  glw_scope_t *scope;
 } glw_captured_block_t;
 
 
@@ -3268,12 +3207,7 @@ static void
 glw_captured_block_release(glw_root_t *gr, glw_captured_block_t *gcb)
 {
   glw_view_free_chain(gr, gcb->block);
-  prop_ref_dec(gcb->prop_self);
-  prop_ref_dec(gcb->prop_parent);
-  prop_ref_dec(gcb->prop_view);
-  prop_ref_dec(gcb->prop_args);
-  prop_ref_dec(gcb->prop_clone);
-  prop_ref_dec(gcb->prop_core);
+  glw_scope_release(gcb->scope);
 }
 
 
@@ -3286,12 +3220,7 @@ glw_captured_block_init(glw_captured_block_t *gcb,
                         token_t *block)
 {
   gcb->block = glw_view_clone_chain(ec->gr, block, NULL);
-  gcb->prop_self   = prop_ref_inc(ec->prop_self);
-  gcb->prop_parent = prop_ref_inc(ec->prop_parent);
-  gcb->prop_view   = prop_ref_inc(ec->prop_view);
-  gcb->prop_clone  = prop_ref_inc(ec->prop_clone);
-  gcb->prop_args   = prop_ref_inc(ec->prop_args);
-  gcb->prop_core   = prop_ref_inc(ec->prop_core);
+  gcb->scope = glw_scope_retain(ec->scope);
 }
 
 
@@ -3302,12 +3231,7 @@ static void
 glw_captured_block_prepare_invoke(glw_view_eval_context_t *ec,
                                   glw_captured_block_t *gcb)
 {
-  ec->prop_self   = gcb->prop_self;
-  ec->prop_parent = gcb->prop_parent;
-  ec->prop_view   = gcb->prop_view;
-  ec->prop_clone  = gcb->prop_clone;
-  ec->prop_core   = gcb->prop_core;
-  ec->prop_args   = gcb->prop_args;
+  ec->scope = gcb->scope;
 }
 
 
@@ -3334,12 +3258,15 @@ glw_event_map_eval_block_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
   SLIST_INIT(&l);
 
   memset(&n, 0, sizeof(n));
-  glw_captured_block_prepare_invoke(&n, &b->capture);
 
   if(src != NULL && src->e_type == EVENT_PROP_ACTION) {
     event_prop_action_t *epa = (event_prop_action_t *)src;
-    n.prop_event = epa->p;
+    n.scope = glw_scope_dup(b->capture.scope, (1 << GLW_ROOT_EVENT));
+    n.scope->gs_roots[GLW_ROOT_EVENT].p = prop_ref_inc(epa->p);
+  } else {
+    n.scope = glw_scope_retain(b->capture.scope);
   }
+
 
   n.gr = w->glw_root;
   n.w = w;
@@ -3351,6 +3278,7 @@ glw_event_map_eval_block_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
   glw_view_eval_static_block(body, &n);
   glw_prop_subscription_destroy_list(w->glw_root, &l);
   glw_view_free_chain(n.gr, body);
+  glw_scope_release(n.scope);
 }
 
 
@@ -4895,9 +4823,8 @@ glwf_createchild(glw_view_eval_context_t *ec, struct token *self,
   glw_propname_to_array(propname, a);
 
   p = prop_get_by_name(propname, 1,
-		       PROP_TAG_NAMED_ROOT, ec->prop_self, "self",
-		       PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
-		       PROP_TAG_NAMED_ROOT, ec->prop_core, "core",
+                       PROP_TAG_ROOT_VECTOR,
+                       ec->scope->gs_roots, ec->scope->gs_num_roots,
 		       PROP_TAG_ROOT, ec->w->glw_root->gr_prop_ui,
 		       PROP_TAG_NAMED_ROOT, ec->w->glw_root->gr_prop_nav, "nav",
 		       NULL);
@@ -5145,18 +5072,14 @@ glwf_bind(glw_view_eval_context_t *ec, struct token *self,
     glw_propname_to_array(propname, a);
 
     if(ec->w->glw_class->gc_bind_to_property != NULL)
-      ec->w->glw_class->gc_bind_to_property(ec->w,
-					    ec->prop_self, propname,
-					    ec->prop_view, ec->prop_args,
-					    ec->prop_clone, ec->prop_core);
+      ec->w->glw_class->gc_bind_to_property(ec->w, ec->scope, propname);
 
   } else if(a != NULL && a->type == TOKEN_RSTRING) {
     ec->w->glw_class->gc_bind_to_id(ec->w, rstr_get(a->t_rstring));
 
   } else {
     if(ec->w->glw_class->gc_bind_to_property != NULL)
-      ec->w->glw_class->gc_bind_to_property(ec->w,
-					    NULL, NULL, NULL, NULL, NULL, NULL);
+      ec->w->glw_class->gc_bind_to_property(ec->w, NULL, NULL);
   }
   return 0;
 }

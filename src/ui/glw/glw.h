@@ -124,7 +124,6 @@ typedef enum {
   GLW_ATTRIB_END = 0,
   GLW_ATTRIB_VALUE,
   GLW_ATTRIB_ARGS,
-  GLW_ATTRIB_PROP_PARENT,
   GLW_ATTRIB_PROP_SELF,
   GLW_ATTRIB_PROP_ITEM_MODEL,
   GLW_ATTRIB_PROP_PARENT_MODEL,
@@ -259,6 +258,34 @@ typedef struct glw_pointer_event {
   int64_t ts;
 } glw_pointer_event_t;
 
+
+
+
+/**
+ *
+ */
+typedef struct glw_scope {
+  int gs_refcount;
+  int gs_num_roots;
+
+#define GLW_ROOT_SELF   0
+#define GLW_ROOT_PARENT 1
+#define GLW_ROOT_VIEW   2
+#define GLW_ROOT_ARGS   3
+#define GLW_ROOT_CLONE  4
+#define GLW_ROOT_EVENT  5
+#define GLW_ROOT_CORE   6
+#define GLW_ROOT_static 7
+
+  prop_root_t gs_roots[GLW_ROOT_static];
+
+} glw_scope_t;
+
+glw_scope_t *glw_scope_dup(const glw_scope_t *src, int retain_mask);
+
+glw_scope_t *glw_scope_retain(glw_scope_t *gvs) attribute_unused_result;
+
+void glw_scope_release(glw_scope_t *gvs);
 
 
 /**
@@ -440,8 +467,7 @@ typedef struct glw_class {
 
   int (*gc_set_prop)(struct glw *w, glw_attribute_t a, prop_t *p);
 
-  void (*gc_set_roots)(struct glw *w, prop_t *self, prop_t *parent,
-                       prop_t *clone, prop_t *core);
+  void (*gc_set_scope)(struct glw *w, glw_scope_t *scope);
 
   int (*gc_bind_to_id)(struct glw *w, const char *id);
 
@@ -611,13 +637,8 @@ typedef struct glw_class {
   /**
    *
    */
-  void (*gc_bind_to_property)(struct glw *w,
-			      prop_t *p,
-			      const char **pname,
-			      prop_t *view,
-			      prop_t *args,
-			      prop_t *clone,
-                              prop_t *core);
+  void (*gc_bind_to_property)(struct glw *w, glw_scope_t *scope,
+			      const char **pname);
 
   /**
    *
@@ -1377,13 +1398,11 @@ void glw_stencil_disable(glw_root_t *gr);
 
 void glw_lp(float *v, glw_root_t *gr, float t, float alpha);
 
-
 /**
  * Views
  */
 glw_t *glw_view_create(glw_root_t *gr, rstr_t *url, rstr_t *alturl,
-                       glw_t *parent, prop_t *prop, prop_t *prop_parent,
-                       prop_t *args, prop_t *prop_clone, prop_t *prop_core,
+                       glw_t *parent, glw_scope_t *scope,
                        rstr_t *file, int line);
 
 void glw_view_eval_signal(glw_t *w, glw_signal_t sig);

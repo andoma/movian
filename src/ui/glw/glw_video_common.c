@@ -877,10 +877,10 @@ glw_video_set_int(glw_t *w, glw_attribute_t attrib, int value,
  *
  */
 static void
-glw_video_set_roots(glw_t *w, prop_t *self, prop_t *parent, prop_t *clone,
-                    prop_t *core)
+glw_video_set_scope(glw_t *w, glw_scope_t *scope)
 {
   glw_video_t *gv = (glw_video_t *)w;
+  prop_t *self = scope->gs_roots[GLW_ROOT_SELF].p;
   prop_link(gv->gv_mp->mp_prop_root, prop_create(self, "media"));
 }
 
@@ -1020,7 +1020,7 @@ static glw_class_t glw_video = {
   .gc_instance_size = sizeof(glw_video_t),
   .gc_set_int = glw_video_set_int,
   .gc_set_float = glw_video_set_float,
-  .gc_set_roots = glw_video_set_roots,
+  .gc_set_scope = glw_video_set_scope,
   .gc_set_prop = glw_video_set_prop,
   .gc_set_rstr = glw_video_set_rstr,
   .gc_ctor = glw_video_ctor,

@@ -29,7 +29,6 @@ typedef struct glw_slideshow {
   int hold;
   int display_time;
   int transition_time;
-  prop_t *playstatus;
 
 } glw_slideshow_t;
 
@@ -177,7 +176,7 @@ glw_slideshow_update_playstatus(glw_slideshow_t *s)
   s->deadline = s->hold ? INT64_MAX : 0;
   glw_need_refresh(s->w.glw_root, 0);
 
-  prop_set_string(s->playstatus, s->hold ? "pause" : "play");
+  //  prop_set_string(s->playstatus, s->hold ? "pause" : "play");
 }
 
 
@@ -225,7 +224,7 @@ glw_slideshow_event(glw_t *w, event_t *e)
 
   } else if(event_is_action(e, ACTION_STOP)) {
 
-    prop_set_string(s->playstatus, "stop");
+    //    prop_set_string(s->playstatus, "stop");
 
   } else
     return 0;
@@ -303,19 +302,6 @@ glw_slideshow_set_float(glw_t *w, glw_attribute_t attrib, float value,
 /**
  *
  */
-static void
-glw_slideshow_set_roots(glw_t *w, prop_t *self, prop_t *parent, prop_t *clone,
-                        prop_t *core)
-{
-  glw_slideshow_t *s = (glw_slideshow_t *)w;
-
-  s->playstatus = prop_create(prop_create(self, "slideshow"), "playstatus");
-}
-
-
-/**
- *
- */
 static glw_class_t glw_slideshow = {
   .gc_name = "slideshow",
   .gc_instance_size = sizeof(glw_slideshow_t),
@@ -323,7 +309,6 @@ static glw_class_t glw_slideshow = {
   .gc_flags = GLW_CAN_HIDE_CHILDS,
   .gc_ctor = glw_slideshow_ctor,
   .gc_set_float = glw_slideshow_set_float,
-  .gc_set_roots = glw_slideshow_set_roots,
   .gc_layout = glw_slideshow_layout,
   .gc_render = glw_slideshow_render,
   .gc_signal_handler = glw_slideshow_callback,

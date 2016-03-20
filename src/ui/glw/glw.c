@@ -406,17 +406,19 @@ glw_unload_universe(glw_root_t *gr)
 void
 glw_load_universe(glw_root_t *gr)
 {
-  prop_t *page = prop_create(gr->gr_prop_ui, "root");
   glw_unload_universe(gr);
 
   rstr_t *universe = rstr_alloc("skin://universe.view");
 
-  gr->gr_universe = glw_view_create(gr,
-                                    universe, NULL, NULL, page,
-                                    NULL, NULL, NULL, gr->gr_prop_core,
+  glw_scope_t *scope = glw_scope_dup(NULL, 0);
+
+  scope->gs_roots[GLW_ROOT_CORE].p = prop_ref_inc(gr->gr_prop_core);
+
+  gr->gr_universe = glw_view_create(gr, universe, NULL, NULL, scope,
                                     NULL, 0);
 
   rstr_release(universe);
+  glw_scope_release(scope);
 }
 
 /**

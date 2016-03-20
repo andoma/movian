@@ -543,10 +543,8 @@ glw_slider_ctor(glw_t *w)
 /**
  *
  */
-static void 
-bind_to_property(glw_t *w, prop_t *p, const char **pname,
-		 prop_t *view, prop_t *args, prop_t *clone,
-                 prop_t *core)
+static void
+bind_to_property(glw_t *w, glw_scope_t *scope, const char **pname)
 {
   glw_slider_t *s = (glw_slider_t *)w;
   slider_unbind(s);
@@ -554,12 +552,9 @@ bind_to_property(glw_t *w, prop_t *p, const char **pname,
   s->sub = prop_subscribe(PROP_SUB_DIRECT_UPDATE | PROP_SUB_SEND_VALUE_PROP,
 			  PROP_TAG_NAME_VECTOR, pname,
 			  PROP_TAG_CALLBACK, prop_callback, s,
-			  PROP_TAG_COURIER, w->glw_root->gr_courier, 
-			  PROP_TAG_NAMED_ROOT, p, "self",
-			  PROP_TAG_NAMED_ROOT, view, "view",
-			  PROP_TAG_NAMED_ROOT, args, "args",
-			  PROP_TAG_NAMED_ROOT, clone, "clone",
-                          PROP_TAG_NAMED_ROOT, core, "core",
+			  PROP_TAG_COURIER, w->glw_root->gr_courier,
+                          PROP_TAG_ROOT_VECTOR,
+                          scope->gs_roots, scope->gs_num_roots,
 			  PROP_TAG_ROOT, w->glw_root->gr_prop_ui,
 			  PROP_TAG_NAMED_ROOT, w->glw_root->gr_prop_nav, "nav",
 			  NULL);
