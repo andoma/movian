@@ -772,8 +772,7 @@ typedef struct glw_root {
 
   LIST_HEAD(, glw_cached_view) gr_views;
 
-  const char *gr_vpaths[5];
-  char *gr_skin;
+  struct fa_resolver *gr_fa_resolver;
 
   hts_thread_t gr_thread;
   hts_mutex_t gr_mutex;

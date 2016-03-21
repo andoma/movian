@@ -184,7 +184,7 @@ bg_refresh_element(int force_flush)
  *
  */
 static void
-set_bg_image(rstr_t *url, const char **vpaths, glw_root_t *gr)
+set_bg_image(rstr_t *url, struct fa_resolver *far, glw_root_t *gr)
 {
   char errbuf[256];
   image_meta_t im = {0};
@@ -198,7 +198,7 @@ set_bg_image(rstr_t *url, const char **vpaths, glw_root_t *gr)
   im.im_req_height = h;
 
   image_t *img;
-  img = backend_imageloader(url, &im, vpaths, errbuf, sizeof(errbuf),
+  img = backend_imageloader(url, &im, far, errbuf, sizeof(errbuf),
 			   NULL, NULL);
   glw_lock(gr);
 
@@ -324,7 +324,7 @@ backdrop_loader(void *aux)
     backdrop_pending = NULL;
 
     TRACE(TRACE_DEBUG, "RPI", "Backdrop loading %s", rstr_get(tgt));
-    set_bg_image(tgt, gr->gr_vpaths, gr);
+    set_bg_image(tgt, gr->gr_fa_resolver, gr);
   }
   if(backdrop_current)
     backdrop_release(backdrop_current);

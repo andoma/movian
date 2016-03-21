@@ -88,7 +88,7 @@ fap_retain(fa_protocol_t *fap)
  */
 char *
 fa_resolve_proto(const char *url, fa_protocol_t **p,
-		 const char **vpaths, char *errbuf, size_t errsize)
+		 fa_resolver_t *far, char *errbuf, size_t errsize)
 {
   struct fa_stat fs;
   fa_protocol_t *fap;
@@ -129,16 +129,12 @@ fa_resolve_proto(const char *url, fa_protocol_t **p,
     return fa_resolve_proto(buf, p, NULL, errbuf, errsize);
   }
 
-  if(vpaths != NULL) {
-    
-    while(*vpaths != NULL) {
-      if(!strcmp(vpaths[0], buf)) {
-	const char *pfx = vpaths[1];
-	snprintf(buf, sizeof(buf), "%s%s%s", 
-		 pfx, pfx[strlen(pfx) - 1] == '/' ? "" : "/", url);
-	return fa_resolve_proto(buf, p, NULL, errbuf, errsize);
-      }
-      vpaths += 2;
+  for(; far != NULL; far = far->far_next) {
+    const char *pfx = far->far_vpath(far, buf);
+    if(pfx != NULL) {
+      snprintf(buf, sizeof(buf), "%s%s%s",
+               pfx, pfx[strlen(pfx) - 1] == '/' ? "" : "/", url);
+      return fa_resolve_proto(buf, p, NULL, errbuf, errsize);
     }
   }
 
@@ -267,15 +263,15 @@ fa_open_ex(const char *url, char *errbuf, size_t errsize, int flags,
  *
  */
 void *
-fa_open_vpaths(const char *url, const char **vpaths,
-	       char *errbuf, size_t errsize, int flags,
-               fa_open_extra_t *foe)
+fa_open_resolver(const char *url, fa_resolver_t *far,
+                 char *errbuf, size_t errsize, int flags,
+                 fa_open_extra_t *foe)
 {
   fa_protocol_t *fap;
   char *filename;
   fa_handle_t *fh;
 
-  if((filename = fa_resolve_proto(url, &fap, vpaths, errbuf, errsize)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, far, errbuf, errsize)) == NULL)
     return NULL;
 
   fh = fap->fap_open(fap, filename, errbuf, errsize, flags, foe);
@@ -1484,7 +1480,6 @@ typedef struct loadarg {
 buf_t *
 fa_load(const char *url, ...)
 {
-  const char **vpaths = NULL;
   char *errbuf = NULL;
   size_t errlen = 0;
   int *cache_control = NULL;
@@ -1509,6 +1504,7 @@ fa_load(const char *url, ...)
   char **locationptr = NULL;
   int *cache_info_ptr = NULL;
   int *protocol_code = NULL;
+  fa_resolver_t *far = NULL;
 
   va_list ap;
   va_start(ap, url);
@@ -1540,8 +1536,8 @@ fa_load(const char *url, ...)
       c = va_arg(ap, cancellable_t *);
       break;
 
-    case FA_LOAD_TAG_VPATHS:
-      vpaths = va_arg(ap, const char **);
+    case FA_LOAD_TAG_RESOLVER:
+      far = va_arg(ap, struct fa_resolver *);
       break;
 
     case FA_LOAD_TAG_QUERY_ARG:
@@ -1621,7 +1617,7 @@ fa_load(const char *url, ...)
   if(locationptr != NULL)
     *locationptr = strdup(url);
 
-  if((filename = fa_resolve_proto(url, &fap, vpaths, errbuf, errlen)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, far, errbuf, errlen)) == NULL)
     return NULL;
 
   if(fap->fap_load != NULL) {
@@ -2064,3 +2060,32 @@ fa_sanitize_filename(char *f)
     f++;
   }
 }
+
+
+/**
+ *
+ */
+void
+far_release(fa_resolver_t *far)
+{
+  if(atomic_dec(&far->far_refcount))
+    return;
+
+  if(far->far_next)
+    far_release(far->far_next);
+  far->far_cleanup(far);
+  free(far);
+}
+
+
+/**
+ *
+ */
+fa_resolver_t *
+far_retain(fa_resolver_t *far)
+{
+  atomic_inc(&far->far_refcount);
+  return far;
+}
+
+

@@ -211,7 +211,7 @@ prune_image_cache(void)
  */
 image_t *
 backend_imageloader(rstr_t *url0, const image_meta_t *im0,
-		    const char **vpaths, char *errbuf, size_t errlen,
+		    struct fa_resolver *far, char *errbuf, size_t errlen,
 		    int *cache_control, cancellable_t *c)
 {
   const char *url = rstr_get(url0);
@@ -333,7 +333,7 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im0,
   hts_mutex_unlock(&imageloader_mutex);
 
   if(img == NULL) {
-    img = nb->be_imageloader(url, &im, vpaths, errbuf,
+    img = nb->be_imageloader(url, &im, far, errbuf,
                              errlen, cache_control, c);
   }
   if(cancellable_is_cancelled(c)) {

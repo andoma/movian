@@ -221,14 +221,14 @@ gcv_load(glw_root_t *gr, glw_cached_view_t *gcv, int may_unlock)
 
   rstr_t *file = gcv->gcv_url;
   buf = fa_load(rstr_get(gcv->gcv_url),
-              FA_LOAD_VPATHS(gr->gr_vpaths),
+              FA_LOAD_RESOLVER(gr->gr_fa_resolver),
               FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
               NULL);
 
   if(buf == NULL && gcv->gcv_alturl != NULL) {
     file = gcv->gcv_alturl;
     buf = fa_load(rstr_get(gcv->gcv_alturl),
-                  FA_LOAD_VPATHS(gr->gr_vpaths),
+                  FA_LOAD_RESOLVER(gr->gr_fa_resolver),
                   FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
                   NULL);
   }

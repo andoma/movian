@@ -25,6 +25,7 @@
 struct pixmap;
 struct rstr;
 struct prop;
+struct fa_resolver;
 
 #define FONT_DOMAIN_FALLBACK 0
 #define FONT_DOMAIN_DEFAULT  1
@@ -85,7 +86,7 @@ struct image *
 text_render(const uint32_t *uc, int len, int flags, int default_size,
 	    float scale, int alignment,
 	    int max_width, int max_lines, const char *font_family,
-	    int font_domain, int min_size, const char **vpaths);
+	    int font_domain, int min_size, struct fa_resolver *far);
 
 
 #if ENABLE_LIBFREETYPE

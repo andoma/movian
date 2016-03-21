@@ -145,14 +145,14 @@ fa_imageloader_buf(buf_t *buf, char *errbuf, size_t errlen)
  * Faster than open+read+close.
  */
 static image_t *
-fa_imageloader2(const char *url, const char **vpaths,
+fa_imageloader2(const char *url, fa_resolver_t *far,
 		char *errbuf, size_t errlen, int *cache_control,
                 cancellable_t *c)
 {
   buf_t *buf;
 
   buf = fa_load(url,
-                FA_LOAD_VPATHS(vpaths),
+                FA_LOAD_RESOLVER(far),
                 FA_LOAD_ERRBUF(errbuf, errlen),
                 FA_LOAD_CACHE_CONTROL(cache_control),
                 FA_LOAD_CANCELLABLE(c),
@@ -184,7 +184,7 @@ jpeginfo_reader(void *handle, void *buf, int64_t offset, size_t size)
  */
 image_t *
 fa_imageloader(const char *url, const struct image_meta *im,
-	       const char **vpaths, char *errbuf, size_t errlen,
+	       fa_resolver_t *far, char *errbuf, size_t errlen,
 	       int *cache_control, cancellable_t *c)
 {
   uint8_t p[16];
@@ -200,14 +200,14 @@ fa_imageloader(const char *url, const struct image_meta *im,
 #endif
 
   if(!im->im_want_thumb)
-    return fa_imageloader2(url, vpaths, errbuf, errlen, cache_control, c);
+    return fa_imageloader2(url, far, errbuf, errlen, cache_control, c);
 
   fa_open_extra_t foe = {
     .foe_cancellable = c
   };
 
-  if((fh = fa_open_vpaths(url, vpaths, errbuf, errlen,
-			  FA_BUFFERED_SMALL, &foe)) == NULL)
+  if((fh = fa_open_resolver(url, far, errbuf, errlen,
+                            FA_BUFFERED_SMALL, &foe)) == NULL)
     return NULL;
 
   if(ONLY_CACHED(cache_control)) {

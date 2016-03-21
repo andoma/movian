@@ -239,7 +239,7 @@ typedef struct fa_protocol {
 
 
 char *fa_resolve_proto(const char *url, fa_protocol_t **p,
-                       const char **vpaths, char *errbuf, size_t errsize);
+                       fa_resolver_t *resolvers, char *errbuf, size_t errsize);
 
 void fap_release(fa_protocol_t *fap);
 

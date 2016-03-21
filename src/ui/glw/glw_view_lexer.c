@@ -403,7 +403,7 @@ glw_view_load1(glw_root_t *gr, rstr_t *url, errorinfo_t *ei, token_t *prev,
     glw_unlock(gr);
 
   buf_t *b = fa_load(rstr_get(p),
-                     FA_LOAD_VPATHS(gr->gr_vpaths),
+                     FA_LOAD_RESOLVER(gr->gr_fa_resolver),
                      FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
                      NULL);
 

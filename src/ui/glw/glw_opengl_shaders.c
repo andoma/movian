@@ -321,7 +321,7 @@ glw_compile_shader(const char *path, int type, glw_root_t *gr)
   buf_t *b;
 
   if((b = fa_load(path,
-                   FA_LOAD_VPATHS(gr->gr_vpaths),
+                   FA_LOAD_RESOLVER(gr->gr_fa_resolver),
                    FA_LOAD_ERRBUF(log, sizeof(log)),
                    NULL)) == NULL) {
     TRACE(TRACE_ERROR, "glw", "Unable to load shader %s -- %s",

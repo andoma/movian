@@ -1059,7 +1059,7 @@ main(int argc, char **argv)
  */
 static image_t *
 be_pixmap_loader(const char *url, const image_meta_t *im,
-                 const char **vpaths, char *errbuf, size_t errlen,
+                 struct fa_resolver *far, char *errbuf, size_t errlen,
                  int *cache_control, cancellable_t *c)
 {
   image_t *img;

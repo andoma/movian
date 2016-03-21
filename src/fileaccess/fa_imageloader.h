@@ -25,7 +25,7 @@ struct image_meta;
 void fa_imageloader_init(void);
 
 struct image *fa_imageloader(const char *url, const struct image_meta *im,
-                             const char **vpaths, char *errbuf, size_t errlen,
+                             fa_resolver_t *far, char *errbuf, size_t errlen,
                              int *cache_control, cancellable_t *c);
 
 
