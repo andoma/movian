@@ -550,7 +550,7 @@ kv_url_opt_get_rstr(const char *url, int domain, const char *key)
   if(err == 0 && size > 0) {
 
     rstr_t *rval = rstr_allocl(data, size);
-
+    free(data);
     if(gconf.enable_kvstore_debug)
       TRACE(TRACE_DEBUG, "kvstore",
             "GET XA url=%s key=%s domain=%d value=%s",
