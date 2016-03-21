@@ -268,6 +268,8 @@ typedef struct glw_scope {
   int gs_refcount;
   int gs_num_roots;
 
+  struct fa_resolver *gs_far;
+
 #define GLW_ROOT_SELF   0
 #define GLW_ROOT_PARENT 1
 #define GLW_ROOT_VIEW   2
@@ -280,6 +282,8 @@ typedef struct glw_scope {
   prop_root_t gs_roots[GLW_ROOT_static];
 
 } glw_scope_t;
+
+glw_scope_t *glw_scope_create(struct fa_resolver *far);
 
 glw_scope_t *glw_scope_dup(const glw_scope_t *src, int retain_mask);
 
@@ -466,8 +470,6 @@ typedef struct glw_class {
                      glw_style_t *gs);
 
   int (*gc_set_prop)(struct glw *w, glw_attribute_t a, prop_t *p);
-
-  void (*gc_set_scope)(struct glw *w, glw_scope_t *scope);
 
   int (*gc_bind_to_id)(struct glw *w, const char *id);
 
@@ -1117,6 +1119,7 @@ typedef struct glw_style_binding {
 typedef struct glw {
   const glw_class_t *glw_class;
   glw_root_t *glw_root;
+  glw_scope_t *glw_scope;
   prop_t *glw_originating_prop;  /* Source prop we spawned from */
 
   LIST_ENTRY(glw) glw_active_link;
@@ -1436,7 +1439,7 @@ int glw_widget_unproject(const Mtx *m, float *xp, float *yp,
 
 glw_t *glw_create(glw_root_t *gr, const glw_class_t *class,
                   glw_t *parent, glw_t *before, prop_t *originator,
-                  rstr_t *file, int line);
+                  glw_scope_t *scope, rstr_t *file, int line);
 
 #define glw_lock_assert() glw_lock_check(__FILE__, __LINE__)
 

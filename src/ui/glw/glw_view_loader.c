@@ -89,7 +89,6 @@ static int
 glw_loader_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   glw_t *c, *n;
-  glw_view_loader_t *a = (void *)w;
 
   switch(signal) {
   default:
@@ -127,11 +126,6 @@ glw_loader_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     if(c == TAILQ_FIRST(&w->glw_childs))
       glw_copy_constraints(w, c);
     return 1;
-
-  case GLW_SIGNAL_DESTROY:
-    glw_scope_release(a->scope);
-    break;
-
   }
   return 0;
 }
@@ -179,11 +173,12 @@ glw_view_loader_retire_child(glw_t *w, glw_t *c)
 /**
  *
  */
-static void 
+static void
 glw_view_loader_ctor(glw_t *w)
 {
-  glw_view_loader_t *a = (void *)w;
-  a->time = 0.00001;
+  glw_view_loader_t *vl = (glw_view_loader_t *)w;
+  vl->time = 0.00001;
+  vl->scope = glw_scope_retain(w->glw_scope);
   w->glw_flags2 |= GLW2_EXPEDITE_SUBSCRIPTIONS;
 }
 
@@ -191,12 +186,13 @@ glw_view_loader_ctor(glw_t *w)
 /**
  *
  */
-static void 
+static void
 glw_view_loader_dtor(glw_t *w)
 {
-  glw_view_loader_t *a = (void *)w;
-  rstr_release(a->url);
-  rstr_release(a->alt_url);
+  glw_view_loader_t *vl = (void *)w;
+  glw_scope_release(vl->scope);
+  rstr_release(vl->url);
+  rstr_release(vl->alt_url);
 }
 
 
@@ -328,19 +324,6 @@ glw_view_loader_set_float(glw_t *w, glw_attribute_t attrib, float value,
 /**
  *
  */
-static void
-glw_view_loader_set_scope(glw_t *w, glw_scope_t *scope)
-{
-  glw_view_loader_t *vl = (void *)w;
-  assert(vl->scope == NULL);
-  vl->scope = glw_scope_retain(scope);
-}
-
-
-
-/**
- *
- */
 static int
 glw_view_loader_set_prop(glw_t *w, glw_attribute_t attrib, prop_t *p)
 {
@@ -409,7 +392,6 @@ static glw_class_t glw_view_loader = {
   .gc_set_int = glw_view_loader_set_int,
   .gc_set_float = glw_view_loader_set_float,
   .gc_set_prop = glw_view_loader_set_prop,
-  .gc_set_scope = glw_view_loader_set_scope,
   .gc_layout = glw_loader_layout,
   .gc_render = glw_view_loader_render,
   .gc_retire_child = glw_view_loader_retire_child,

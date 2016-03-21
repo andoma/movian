@@ -611,9 +611,6 @@ glw_video_ctor(glw_t *w)
 
   kalman_init(&gv->gv_avfilter);
 
-  //  gv->gv_cfg_req.gvc_engine = &glw_video_blank;
-  //  gv->gv_cfg_cur.gvc_engine = &glw_video_blank;
-
   TAILQ_INIT(&gv->gv_avail_queue);
   TAILQ_INIT(&gv->gv_parked_queue);
   TAILQ_INIT(&gv->gv_displaying_queue);
@@ -639,6 +636,10 @@ glw_video_ctor(glw_t *w)
   video_playback_create(gv->gv_mp);
 
   gv->gv_vzoom = 100;
+
+  prop_t *self = w->glw_scope->gs_roots[GLW_ROOT_SELF].p;
+  prop_link(gv->gv_mp->mp_prop_root, prop_create(self, "media"));
+
 
 #if ENABLE_MEDIA_SETTINGS
   prop_t *c = gv->gv_mp->mp_prop_ctrl;
@@ -876,19 +877,6 @@ glw_video_set_int(glw_t *w, glw_attribute_t attrib, int value,
 /**
  *
  */
-static void
-glw_video_set_scope(glw_t *w, glw_scope_t *scope)
-{
-  glw_video_t *gv = (glw_video_t *)w;
-  prop_t *self = scope->gs_roots[GLW_ROOT_SELF].p;
-  prop_link(gv->gv_mp->mp_prop_root, prop_create(self, "media"));
-}
-
-
-
-/**
- *
- */
 static int
 glw_video_set_prop(glw_t *w, glw_attribute_t attrib, prop_t *p)
 {
@@ -1020,7 +1008,6 @@ static glw_class_t glw_video = {
   .gc_instance_size = sizeof(glw_video_t),
   .gc_set_int = glw_video_set_int,
   .gc_set_float = glw_video_set_float,
-  .gc_set_scope = glw_video_set_scope,
   .gc_set_prop = glw_video_set_prop,
   .gc_set_rstr = glw_video_set_rstr,
   .gc_ctor = glw_video_ctor,

@@ -108,7 +108,8 @@ static glw_class_t glw_view = {
  *
  */
 static void
-glw_view_error(glw_t *parent, const char *error, const char *file, int line)
+glw_view_error(glw_t *parent, const char *error, const char *file, int line,
+               glw_scope_t *scope)
 {
   char buf[256];
 
@@ -119,7 +120,7 @@ glw_view_error(glw_t *parent, const char *error, const char *file, int line)
   }
 
   glw_t *w = glw_create(parent->glw_root, glw_class_find_by_name("label"),
-                        parent, NULL, NULL, NULL, 0);
+                        parent, NULL, NULL, scope, NULL, 0);
   w->glw_class->gc_set_caption(w, buf, 0);
 }
 
@@ -173,7 +174,7 @@ eval_loaded_view(glw_root_t *gr, glw_cached_view_t *gcv, glw_view_t *view,
 {
   if(gcv->gcv_error) {
     glw_view_error(&view->w, gcv->gcv_error,
-                   gcv->gcv_error_file, gcv->gcv_error_line);
+                   gcv->gcv_error_file, gcv->gcv_error_line, scope);
     return;
   }
 
@@ -195,7 +196,7 @@ eval_loaded_view(glw_root_t *gr, glw_cached_view_t *gcv, glw_view_t *view,
 
   if(glw_view_eval_block(t, &ec, NULL)) {
     glw_destroy_childs(ec.w);
-    glw_view_error(ec.w, ei.error, ei.file, ei.line);
+    glw_view_error(ec.w, ei.error, ei.file, ei.line, scope);
   }
   glw_view_free_chain(gr, t);
 
@@ -394,7 +395,7 @@ glw_view_create(glw_root_t *gr, rstr_t *url, rstr_t *alturl, glw_t *parent,
     alturl = NULL;
   }
 
-  glw_t *w = glw_create(gr, &glw_view, parent, NULL, NULL, file, line);
+  glw_t *w = glw_create(gr, &glw_view, parent, NULL, NULL, scope, file, line);
 
   LIST_FOREACH(gcv, &gr->gr_views, gcv_link) {
     if(rstr_eq(gcv->gcv_url, url) && rstr_eq(gcv->gcv_alturl, alturl))

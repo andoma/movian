@@ -32,6 +32,8 @@
 #define GLW_TEX_INTENSITY_ANALYSIS     0x40000000
 #define GLW_TEX_PRIMARY_COLOR_ANALYSIS 0x20000000
 
+struct fa_resolver;
+
 typedef struct glw_loadable_texture {
 
   LIST_ENTRY(glw_loadable_texture) glt_global_link;
@@ -58,6 +60,7 @@ typedef struct glw_loadable_texture {
 
   glw_backend_texture_t glt_texture;
 
+  struct fa_resolver *glt_far;
   rstr_t *glt_url;
 
   pixmap_t *glt_pixmap;
@@ -98,7 +101,8 @@ glw_loadable_texture_t *glw_tex_create(glw_root_t *gr, rstr_t *url,
 				       int flags, int xs, int ys,
 				       int corner_radius,
                                        int drop_shadow,
-                                       float aspect);
+                                       float aspect,
+                                       struct fa_resolver *far);
 
 void glw_tex_deref(glw_root_t *gr, glw_loadable_texture_t *ht);
 

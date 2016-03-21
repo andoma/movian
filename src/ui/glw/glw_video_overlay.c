@@ -803,7 +803,8 @@ gvo_create_from_vo_text(glw_video_t *gv, video_overlay_t *vo)
   gvo->gvo_y              = vo->vo_y;
   gvo->gvo_abspos         = vo->vo_abspos;
 
-  glw_t *w = glw_create(gv->w.glw_root, gc, NULL, NULL, NULL, NULL, 0);
+  glw_t *w = glw_create(gv->w.glw_root, gc, NULL, NULL, NULL,
+                        gv->w.glw_scope, NULL, 0);
 
   gvo->gvo_widget = w;
 

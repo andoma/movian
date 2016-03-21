@@ -1132,6 +1132,7 @@ run_dynamics(glw_t *w, glw_view_eval_context_t *ec, int mask)
   ec->w = w;
   ec->gr = w->glw_root;
   ec->sublist = &w->glw_prop_subscriptions;
+  ec->scope = w->glw_scope;
 
   token_t *t = w->glw_dynamic_expressions;
   uint8_t all_flags = 0;
@@ -1410,11 +1411,6 @@ cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
 
   c->c_clone_root = prop_create_root(NULL);
 
-  c->c_w = glw_create(gr, sc->sc_cloner_class, parent, b, p,
-                      sc->sc_cloner_body->file,
-                      sc->sc_cloner_body->line);
-  c->c_w->glw_clone = c;
-
   glw_scope_t *scope = glw_scope_dup(sc->sc_sub.gps_scope,
                                      (1 << GLW_ROOT_SELF) |
                                      (1 << GLW_ROOT_PARENT) |
@@ -1424,8 +1420,12 @@ cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
   scope->gs_roots[GLW_ROOT_PARENT].p = prop_ref_inc(sc->sc_originating_prop);
   scope->gs_roots[GLW_ROOT_CLONE].p  = prop_ref_inc(c->c_clone_root);
 
-  if(c->c_w->glw_class->gc_set_scope != NULL)
-    c->c_w->glw_class->gc_set_scope(c->c_w, scope);
+
+  c->c_w = glw_create(gr, sc->sc_cloner_class, parent, b, p,
+                      scope,
+                      sc->sc_cloner_body->file,
+                      sc->sc_cloner_body->line);
+  c->c_w->glw_clone = c;
 
   prop_tag_set(p, sc, c);
 
@@ -2947,13 +2947,11 @@ glwf_widget(glw_view_eval_context_t *ec, struct token *self,
   n.ei = ec->ei;
   n.gr = ec->gr;
   n.rc = ec->rc;
-  n.w = glw_create(ec->gr, c, ec->w, NULL, NULL, self->file, self->line);
+  n.w = glw_create(ec->gr, c, ec->w, NULL, NULL, ec->scope,
+                   self->file, self->line);
 
   if(c->gc_freeze != NULL)
     c->gc_freeze(n.w);
-
-  if(n.w->glw_class->gc_set_scope != NULL)
-    n.w->glw_class->gc_set_scope(n.w, n.scope);
 
   n.sublist = &n.w->glw_prop_subscriptions;
 
@@ -3051,7 +3049,7 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
       dummy = glw_class_find_by_name("dummy");
 
     self->t_extra = glw_create(ec->gr, dummy, parent, NULL, NULL,
-                               self->file, self->line);
+                               ec->scope, self->file, self->line);
 
     glw_hide(self->t_extra);
   }
@@ -3185,7 +3183,7 @@ glwf_space(glw_view_eval_context_t *ec, struct token *self,
     dummy = glw_class_find_by_name("dummy");
 
   glw_t *w = glw_create(ec->gr, dummy, ec->w, NULL, NULL,
-                        self->file, self->line);
+                        ec->scope, self->file, self->line);
   glw_conf_constraints(w, 0, 0, token2float(ec, a), GLW_CONSTRAINT_CONF_W);
   return 0;
 }

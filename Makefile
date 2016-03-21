@@ -392,6 +392,7 @@ SRCS-$(CONFIG_ICECAST)  += src/backend/icecast/icecast.c \
 ##############################################################
 SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
 			src/ui/glw/glw_style.c \
+			src/ui/glw/glw_scope.c \
 			src/ui/glw/glw_renderer.c \
 			src/ui/glw/glw_event.c \
 			src/ui/glw/glw_view.c \

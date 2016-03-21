@@ -452,7 +452,7 @@ glw_load_universe(glw_root_t *gr)
 
   rstr_t *universe = rstr_alloc("skin://universe.view");
 
-  glw_scope_t *scope = glw_scope_dup(NULL, 0);
+  glw_scope_t *scope = glw_scope_create(gr->gr_fa_resolver);
 
   scope->gs_roots[GLW_ROOT_CORE].p = prop_ref_inc(gr->gr_prop_core);
 
@@ -528,7 +528,7 @@ glw_render_zoffset(glw_t *w, const glw_rctx_t *rc)
 glw_t *
 glw_create(glw_root_t *gr, const glw_class_t *class,
            glw_t *parent, glw_t *before, prop_t *originator,
-           rstr_t *file, int line)
+           glw_scope_t *scope, rstr_t *file, int line)
 {
   glw_t *w;
 
@@ -569,6 +569,8 @@ glw_create(glw_root_t *gr, const glw_class_t *class,
 
     glw_signal0(parent, GLW_SIGNAL_CHILD_CREATED, w);
   }
+
+  w->glw_scope = glw_scope_retain(scope);
 
   if(class->gc_ctor != NULL)
     class->gc_ctor(w);
@@ -765,15 +767,16 @@ glw_post_scene(glw_root_t *gr)
 void
 glw_unref(glw_t *w)
 {
-  if(w->glw_refcnt == 1) {
-    assert(w->glw_clone == NULL);
-#ifdef DEBUG
-    rstr_release(w->glw_file);
-#endif
-    free(w);
-  }
-  else
+  if(w->glw_refcnt > 1) {
     w->glw_refcnt--;
+    return;
+  }
+  assert(w->glw_clone == NULL);
+#ifdef DEBUG
+  rstr_release(w->glw_file);
+#endif
+  glw_scope_release(w->glw_scope);
+  free(w);
 }
 
 
