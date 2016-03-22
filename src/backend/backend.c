@@ -293,11 +293,6 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im0,
   image_t *img = NULL;
 
   im.im_margin = MAX(im.im_shadow * 2, im.im_margin);
-  backend_t *nb = backend_canhandle(url);
-  if(nb == NULL || nb->be_imageloader == NULL) {
-    snprintf(errbuf, errlen, "No backend for URL");
-    goto out;
-  }
 
   hts_mutex_lock(&imageloader_mutex);
 
@@ -333,8 +328,14 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im0,
   hts_mutex_unlock(&imageloader_mutex);
 
   if(img == NULL) {
-    img = nb->be_imageloader(url, &im, far, errbuf,
-                             errlen, cache_control, c);
+    backend_t *nb = backend_canhandle(url);
+    if(nb == NULL || nb->be_imageloader == NULL) {
+      snprintf(errbuf, errlen, "No backend for URL");
+      img = NULL;
+    } else {
+      img = nb->be_imageloader(url, &im, far, errbuf,
+                               errlen, cache_control, c);
+    }
   }
   if(cancellable_is_cancelled(c)) {
     snprintf(errbuf, errlen, "Cancelled");
@@ -378,7 +379,6 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im0,
 
   hts_mutex_unlock(&imageloader_mutex);
 
- out:
   if(m)
     htsmsg_release(m);
   return img;
