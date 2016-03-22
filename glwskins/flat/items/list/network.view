@@ -24,24 +24,45 @@ widget(container_z, {
       style: "ListItemIcon";
     });
 
-    widget(icon, {
-      color: select(isFocused(), 1.0, 0.6);
-      source: translate($self.metadata.state,
-			"",
-			"failure",       "dataroot://res/svg/Alert.svg",
-			"association",   "dataroot://res/svg/Radio.svg",
-			"configuration", "dataroot://res/svg/Trafic.svg",
-			"ready",         "dataroot://res/svg/Link.svg",
-			"disconnect",    "dataroot://res/svg/Out.svg",
-			"online",        "dataroot://res/svg/Check.svg"
-		       );
-      size: 2em;
+    widget(deck, {
+      space(1);
+      width: 3em;
+      widget(container_y, {
+        padding: [0, 0.25em];
+        widget(throbber, {
+          color: select(isFocused(), 1.0, 0.6);
+        });
+      });
+
+      widget(icon, {
+        color: select(isFocused(), 1.0, 0.6);
+        source: "skin://icons/ic_check_48px.svg";
+      });
+
+      widget(icon, {
+        color: select(isFocused(), 1.0, 0.6);
+        source: "skin://icons/ic_check_box_48px.svg";
+      });
+
+      widget(icon, {
+        color: select(isFocused(), 1.0, 0.6);
+        source: "skin://icons/ic_error_48px.svg";
+      });
+
+      page: translate($self.metadata.state,
+                      0,
+		      "failure",       4,
+		      "association",   1,
+		      "configuration", 1,
+		      "ready",         2,
+		      "disconnect",    4,
+		      "online",        3
+		     );
     });
 
     widget(label, {
       filterConstraintX: true;
       color: select(isFocused(), 1.0, 0.6);
-	
       caption: $self.metadata.title;
       sizeScale: 1.2;
     });
