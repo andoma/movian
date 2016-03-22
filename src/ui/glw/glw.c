@@ -1671,7 +1671,8 @@ glw_focus_open_path_close_all_other(glw_t *w)
     if(c == w)
       continue;
     c->glw_flags |= GLW_FOCUS_BLOCKED;
-    if(c->glw_flags & GLW_IN_FOCUS_PATH) {
+
+    if(c->glw_flags & GLW_IN_FOCUS_PATH && p->glw_focused == c) {
       do_clear = 1;
     }
   }
@@ -1884,8 +1885,9 @@ glw_event_to_widget(glw_t *w, event_t *e)
 
   // First, descend in the view hierarchy
 
-  GLW_TRACE("Event '%s' route start at widget '%s'",
-            event_sprint(e), glw_get_name(w));
+  GLW_TRACE("Event '%s' route start at widget '%s'%s",
+            event_sprint(e), glw_get_name(w),
+            gr->gr_current_focus == NULL ? ", Nothing is focused" : "");
 
   while(1) {
     if(!glw_path_in_focus(w))
