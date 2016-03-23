@@ -192,12 +192,12 @@ connman_service_event(void *opaque, event_t *e)
 /**
  *
  */
-static void 
+static void
 connman_svc_signal(GDBusProxy *proxy,
 		   gchar      *sender_name,
 		   gchar      *signal_name,
 		   GVariant   *parameters,
-		   gpointer    user_data)   
+		   gpointer    user_data)
 {
   connman_service_t *cs = user_data;
   TRACE(TRACE_DEBUG, "CONNMAN", "Service-signal %s %s from %s",
@@ -302,7 +302,7 @@ agent_request_input(connman_service_t *cs, GVariant *req,
 		    GDBusMethodInvocation *inv)
 {
   TRACE(TRACE_INFO, "CONNMAN", "Requesting credentials for %s", cs->cs_path);
-  
+
   TRACE(TRACE_DEBUG, "CONNMAN", "RequestInput: %s",
 	g_variant_print(req, TRUE));
 
@@ -312,7 +312,7 @@ agent_request_input(connman_service_t *cs, GVariant *req,
   prop_set(p, "id",     PROP_SET_STRING, cs->cs_path);
   prop_set(p, "source", PROP_SET_STRING, "Network");
 
-  
+
   GVariant *prev = g_variant_lookup_value(req, "PreviousPassphrase", NULL);
 
   if(prev) {
@@ -325,13 +325,13 @@ agent_request_input(connman_service_t *cs, GVariant *req,
 
   cs->cs_input_req_want_identity = identity != NULL;
   prop_set(p, "disableUsername", PROP_SET_INT, !cs->cs_input_req_want_identity);
-    
+
   prop_set(p, "disableDomain", PROP_SET_INT, 1);
 
   prop_t *r = prop_create(p, "eventSink");
 
   cs->cs_input_req_sub =
-    prop_subscribe(0, 
+    prop_subscribe(0,
 		   PROP_TAG_CALLBACK_EVENT, input_req_event, cs,
 		   PROP_TAG_NAMED_ROOT, r, "popup",
 		   PROP_TAG_COURIER, connman_courier,
@@ -344,7 +344,7 @@ agent_request_input(connman_service_t *cs, GVariant *req,
     /* popuproot is a zombie, this is an error */
     abort();
   }
-  
+
   cs->cs_input_req_inv = inv;
   g_object_ref(G_OBJECT(inv));
 
@@ -388,9 +388,9 @@ update_service(GVariant *v, const char *path, connman_service_t *after)
     } else {
       TAILQ_INSERT_AFTER(&connman_services, after, cs, cs_link);
     }
-    
+
     connman_service_t *next = TAILQ_NEXT(cs, cs_link);
-    
+
     cs->cs_prop = prop_create_root(path);
     cs->cs_path = strdup(path);
 
@@ -403,10 +403,10 @@ update_service(GVariant *v, const char *path, connman_service_t *after)
 
     g_signal_connect(G_OBJECT(cs->cs_proxy), "g-signal",
 		     G_CALLBACK(connman_svc_signal), cs);
- 
+
     // Insert at correct position
 
-    if(prop_set_parent_ex(cs->cs_prop, service_nodes, 
+    if(prop_set_parent_ex(cs->cs_prop, service_nodes,
 			  next ? next->cs_prop : NULL, NULL))
       abort();
 
@@ -427,7 +427,7 @@ update_service(GVariant *v, const char *path, connman_service_t *after)
     }
 
     connman_service_t *next = TAILQ_NEXT(cs, cs_link);
-   
+
     prop_move(cs->cs_prop, next ? next->cs_prop : NULL);
   }
 
@@ -482,12 +482,12 @@ services_changed(GVariant *params)
 /**
  *
  */
-static void 
+static void
 connman_mgr_signal(GDBusProxy *proxy,
 		   gchar      *sender_name,
 		   gchar      *signal_name,
 		   GVariant   *parameters,
-		   gpointer    user_data)   
+		   gpointer    user_data)
 {
   TRACE(TRACE_DEBUG, "CONNMAN", "Manager-signal %s from %s",
 	signal_name, sender_name);
@@ -561,7 +561,7 @@ connman_gettechnologies(GDBusProxy *connman)
 
   TRACE(TRACE_DEBUG, "CONNMAN", "Technologies: %s",
 	g_variant_print(v, TRUE));
-  
+
   GVariant *list = g_variant_get_child_value(v, 0);
   if(list != NULL) {
     int num_tech = g_variant_n_children(list);
@@ -619,7 +619,7 @@ connman_getpropreties(GDBusProxy *connman)
 static connman_service_t *
 connman_service_from_params(GVariant *param)
 {
-  const char *path = 
+  const char *path =
     g_variant_get_string(g_variant_get_child_value(param, 0), NULL);
 
   connman_service_t *cs = path ? connman_service_find(path) : NULL;
@@ -640,7 +640,7 @@ handle_method_call(GDBusConnection *connection, const gchar *sender,
   if(!strcmp(method_name, "ReportError")) {
     connman_service_t *cs = connman_service_from_params(param);
 
-    const char *msg = 
+    const char *msg =
       g_variant_get_string(g_variant_get_child_value(param, 1), NULL);
 
     notify_add(NULL, NOTIFY_ERROR, NULL, 3,
@@ -657,7 +657,7 @@ handle_method_call(GDBusConnection *connection, const gchar *sender,
 						    "Unknown service");
       return;
     }
-    
+
     agent_request_input(cs, g_variant_get_child_value(param, 1), inv);
 
   } else {
@@ -871,16 +871,16 @@ connman_init(void)
 
   // settings
   connman_settings = prop_create_root(NULL);
-  
+
   prop_t *delim = prop_create_root(NULL);
   prop_set_string(prop_create(delim, "type"), "separator");
   prop_concat_add_source(pc, prop_create(connman_settings, "nodes"), delim);
- 
+
   settings_add_url(gconf.settings_network,
 		   _p("Network connections"), NULL, NULL, NULL, MYURL,
 		   SETTINGS_FIRST);
 
-  hts_thread_create_detached("connman", connman_thread, NULL, 
+  hts_thread_create_detached("connman", connman_thread, NULL,
 			     THREAD_PRIO_BGTASK);
 }
 
