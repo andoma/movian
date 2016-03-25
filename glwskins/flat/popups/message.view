@@ -20,8 +20,9 @@ widget(popup, {
       spacing: 2em;
 
       widget(label, {
+        width: select($ui.aspect > 1, $ui.width / 2, $ui.width - 4em);
+        align: center;
 	maxlines:  10;
-	align: center;
 	caption: $self.message;
       });
 
