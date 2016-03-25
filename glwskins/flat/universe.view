@@ -276,11 +276,12 @@ widget(container_z, {
 
     widget(container_y, {
       widget(label, {
-        alpha: iir((!$ui.showTopIcons && !$ui.fullwindow) || $ui.showClock, 4);
+        alpha: iir(!$ui.showTopIcons && !$ui.hideClock, 4);
         padding: [1em, 0];
         height: 3em;
         align: right;
         caption: $core.clock.localtimeofday;
+        shadow: true;
       });
     });
   });

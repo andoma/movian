@@ -33,7 +33,7 @@ $self.model.loading = $self.media.loading;
 $self.model.io <- $self.media.io;
 
 $clone.osdpage = 0;
-delta($ui.showClock, $clone.osdpage || $clone.showPlaydeck);
+delta($ui.hideClock, isVisible() && !$core.clock.showDuringVideo &&!($clone.osdpage || $clone.showPlaydeck));
 $view.iconPad = select(isVoid($self.media.metadata.icon), 0, 7em);
 
 onEvent(back, {

@@ -187,6 +187,15 @@ video_settings_init(void)
                  NULL);
 
 
+
+  setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Show clock during playback")),
+                 SETTING_STORE("videoplayback", "show_clock"),
+                 SETTING_WRITE_PROP(prop_create(prop_create(prop_get_global(),
+                                                            "clock"),
+                                                "showDuringVideo")),
+                 NULL);
+
   setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Step when seeking backward")),
                  SETTING_VALUE(15),
