@@ -353,7 +353,8 @@ es_modsearch(duk_context *ctx)
 
 
   if(ec->ec_path != NULL) {
-    snprintf(path, sizeof(path), "%s/%s.js", ec->ec_path, id);
+    fa_pathjoin(path, sizeof(path)-4, ec->ec_path, id);
+    strcat(path, ".js");
     if(tryload(ctx, path, id, ec))
       return 1;
   }
