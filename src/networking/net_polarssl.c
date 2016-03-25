@@ -133,6 +133,7 @@ tcp_ssl_open(tcpcon_t *tc, char *errbuf, size_t errlen, const char *hostname)
     ssl_set_hostname(tc->ssl, hostname);
 
   ssl_set_min_version(tc->ssl, SSL_MAJOR_VERSION_3, SSL_MINOR_VERSION_1);
+  ssl_set_max_version(tc->ssl, SSL_MAJOR_VERSION_3, SSL_MINOR_VERSION_3); /* added TLSv1.2 */
   ssl_set_arc4_support(tc->ssl, SSL_ARC4_DISABLED );
 
   ssl_set_rng(tc->ssl, ctr_drbg_random, tc->rndstate);
