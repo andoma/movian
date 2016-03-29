@@ -232,7 +232,6 @@ static void
 set_framerate(void *aux, int x)
 {
   respond = x;
-  printf("respond=%d\n", x);
 }
 
 static void
