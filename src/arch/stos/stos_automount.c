@@ -386,6 +386,7 @@ automount_thread(void *aux)
   struct pollfd fds[2];
 
   mkdir(fsinfodir, 0755);
+  mkdir("/stos/media", 0755);
 
   unmount_all("/stos/media");
 
@@ -431,6 +432,8 @@ automount_thread(void *aux)
       if(e->len == 0)
         break;
 
+      TRACE(TRACE_DEBUG, "Automount", "Got notification");
+
       if(e->mask & IN_DELETE)
         remove_fs(e->name);
 
@@ -441,6 +444,7 @@ automount_thread(void *aux)
       n   -= sizeof(struct inotify_event) + e->len;
     }
   }
+  TRACE(TRACE_DEBUG, "Automount", "Stopping automounter");
   close(automount_pipe[0]);
   return NULL;
 }
