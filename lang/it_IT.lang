@@ -629,14 +629,15 @@ msg:
 id: Audio delay
 msg: Ritardo audio
 
-id: Audio gain adjustment during video playback
-msg: Regolazione del guadagno audio durante la riproduzione video
-
-id: Audio settings during video playback
-msg: Impostazioni audio durante la riproduzione video
+id: Audio gain
+# Missing translation
+msg: 
 
 id: Setup audio output
 msg: Imposta uscita audio
+
+id: Video playback
+msg: Riproduzione video
 
 #
 # ./src/audio2/audio_test.c
@@ -724,6 +725,10 @@ msg: Pulisci cache
 
 id: Enable bittorrent
 msg: Abilita bittorent
+
+id: Max upload speed
+# Missing translation
+msg: 
 
 id: Max usage of free space for caching torrents
 msg: Uso massimo dello spazio libero per la cache dei torrent
@@ -1801,6 +1806,10 @@ msg: Metodo di deinterlacciamento VDPAU preferito
 id: Resume video playback
 msg: Riprendi riproduzione del video
 
+id: Show clock during playback
+# Missing translation
+msg: 
+
 id: Step when seeking backward
 msg: Passo ricerca indietro
 
@@ -1818,7 +1827,4 @@ msg: Tasti Sù / Giù durante la riproduzione video
 
 id: Video acceleration and display behaviour
 msg: Accelerazione video e comportamento schermo
-
-id: Video playback
-msg: Riproduzione video
 

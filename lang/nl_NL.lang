@@ -691,17 +691,16 @@ msg:
 id: Audio delay
 msg: Geluidsvertaging
 
-id: Audio gain adjustment during video playback
-# Missing translation
-msg: 
-
-id: Audio settings during video playback
+id: Audio gain
 # Missing translation
 msg: 
 
 id: Setup audio output
 # Missing translation
 msg: 
+
+id: Video playback
+msg: Videoweergave
 
 #
 # ./src/audio2/audio_test.c
@@ -810,6 +809,10 @@ id: Clear cache
 msg: 
 
 id: Enable bittorrent
+# Missing translation
+msg: 
+
+id: Max upload speed
 # Missing translation
 msg: 
 
@@ -1961,6 +1964,10 @@ msg: Voorkeursmethode voor VDPAU-deinterlacer
 id: Resume video playback
 msg: Videoweergave hervatten
 
+id: Show clock during playback
+# Missing translation
+msg: 
+
 id: Step when seeking backward
 # Missing translation
 msg: 
@@ -1981,7 +1988,4 @@ msg:
 
 id: Video acceleration and display behaviour
 msg: Videoversnelling en weergavegedrag
-
-id: Video playback
-msg: Videoweergave
 

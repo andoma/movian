@@ -702,17 +702,16 @@ msg:
 id: Audio delay
 msg: Zpoždění zvuku
 
-id: Audio gain adjustment during video playback
-# Missing translation
-msg: 
-
-id: Audio settings during video playback
+id: Audio gain
 # Missing translation
 msg: 
 
 id: Setup audio output
 # Missing translation
 msg: 
+
+id: Video playback
+msg: Přehrávání videa
 
 #
 # ./src/audio2/audio_test.c
@@ -821,6 +820,10 @@ id: Clear cache
 msg: 
 
 id: Enable bittorrent
+# Missing translation
+msg: 
+
+id: Max upload speed
 # Missing translation
 msg: 
 
@@ -2013,6 +2016,10 @@ msg: Preferovaná metoda VDPAU deinterlaceru
 id: Resume video playback
 msg: Obnovit přehrávání
 
+id: Show clock during playback
+# Missing translation
+msg: 
+
 id: Step when seeking backward
 # Missing translation
 msg: 
@@ -2033,7 +2040,4 @@ msg:
 
 id: Video acceleration and display behaviour
 msg: Video akcelerace a nastavení displeje
-
-id: Video playback
-msg: Přehrávání videa
 

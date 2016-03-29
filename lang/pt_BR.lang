@@ -686,17 +686,16 @@ msg:
 id: Audio delay
 msg: Atraso de áudio
 
-id: Audio gain adjustment during video playback
-# Missing translation
-msg: 
-
-id: Audio settings during video playback
+id: Audio gain
 # Missing translation
 msg: 
 
 id: Setup audio output
 # Missing translation
 msg: 
+
+id: Video playback
+msg: Reprodução de vídeo
 
 #
 # ./src/audio2/audio_test.c
@@ -805,6 +804,10 @@ id: Clear cache
 msg: 
 
 id: Enable bittorrent
+# Missing translation
+msg: 
+
+id: Max upload speed
 # Missing translation
 msg: 
 
@@ -1958,6 +1961,10 @@ msg: Método de desentrelaçamento de imagem VDPAU preferido
 id: Resume video playback
 msg: Resumir execução de vídeo
 
+id: Show clock during playback
+# Missing translation
+msg: 
+
 id: Step when seeking backward
 # Missing translation
 msg: 
@@ -1978,7 +1985,4 @@ msg:
 
 id: Video acceleration and display behaviour
 msg: Acelaração de vídeo e comportamento da visualização
-
-id: Video playback
-msg: Reprodução de vídeo
 

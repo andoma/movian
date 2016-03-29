@@ -629,14 +629,15 @@ msg:
 id: Audio delay
 msg: Retraso de audio
 
-id: Audio gain adjustment during video playback
-msg: Incremento en el volumen durante la reproducción del vídeo
-
-id: Audio settings during video playback
-msg: Ajustes del audio durante la reproducción del vídeo
+id: Audio gain
+# Missing translation
+msg: 
 
 id: Setup audio output
 msg: Ajustar la salida de audio
+
+id: Video playback
+msg: Reproducción de Vídeo
 
 #
 # ./src/audio2/audio_test.c
@@ -724,6 +725,10 @@ msg: Limpiar caché
 
 id: Enable bittorrent
 msg: Habilitar bittorrent
+
+id: Max upload speed
+# Missing translation
+msg: 
 
 id: Max usage of free space for caching torrents
 msg: Uso de Max de espacio libre para los torrentes de almacenamiento en caché
@@ -1801,6 +1806,10 @@ msg: Método preferido para VDPAU deinterlacer
 id: Resume video playback
 msg: Continuar reproducción de vídeo
 
+id: Show clock during playback
+# Missing translation
+msg: 
+
 id: Step when seeking backward
 msg: Cantidad de segundos en la búsqueda hacia atrás
 
@@ -1818,7 +1827,4 @@ msg: Arriba / abajo durante la reproducción de vídeo controlará el
 
 id: Video acceleration and display behaviour
 msg: Aceleración de vídeo y comportamiento de pantalla
-
-id: Video playback
-msg: Reproducción de Vídeo
 

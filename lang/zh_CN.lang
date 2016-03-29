@@ -626,14 +626,15 @@ msg: 同步显示和内容帧速
 id: Audio delay
 msg: 音频延迟
 
-id: Audio gain adjustment during video playback
-msg: 视频播放时的音频增益调节
-
-id: Audio settings during video playback
-msg: 视频播放时的音频设置
+id: Audio gain
+# Missing translation
+msg: 
 
 id: Setup audio output
 msg: 设置音频输出
+
+id: Video playback
+msg: 视频播放
 
 #
 # ./src/audio2/audio_test.c
@@ -721,6 +722,10 @@ msg: 清除缓存
 
 id: Enable bittorrent
 msg: 启用bittorrent
+
+id: Max upload speed
+# Missing translation
+msg: 
 
 id: Max usage of free space for caching torrents
 msg: 种子缓存最大空间使用率：
@@ -1742,6 +1747,10 @@ msg: 优先使用VDPAU去隔行化方式
 id: Resume video playback
 msg: 从上次结束位置开始播放
 
+id: Show clock during playback
+# Missing translation
+msg: 
+
 id: Step when seeking backward
 msg: 快退步速
 
@@ -1759,7 +1768,4 @@ msg: 视频播放时上/下键控制
 
 id: Video acceleration and display behaviour
 msg: 视频加速及显示方式
-
-id: Video playback
-msg: 视频播放
 

@@ -656,14 +656,15 @@ msg:
 id: Audio delay
 msg: Lyd forsinkelse
 
-id: Audio gain adjustment during video playback
-msg: Lyd er blever justeret under videoafspilning
-
-id: Audio settings during video playback
-msg: Lydindstillinger under videoafspilning
+id: Audio gain
+# Missing translation
+msg: 
 
 id: Setup audio output
 msg: Opsæt lydudgang
+
+id: Video playback
+msg: Videoafspilning
 
 #
 # ./src/audio2/audio_test.c
@@ -751,6 +752,10 @@ msg: Tøm cache
 
 id: Enable bittorrent
 msg: Aktivere bittorrent
+
+id: Max upload speed
+# Missing translation
+msg: 
 
 id: Max usage of free space for caching torrents
 msg: Maks. forbrug af ledig plads til lagrede torrents
@@ -1842,6 +1847,10 @@ msg: Foretrukket VDPAU deinterlacer metode
 id: Resume video playback
 msg: Fortsæt video afspilning
 
+id: Show clock during playback
+# Missing translation
+msg: 
+
 id: Step when seeking backward
 msg: Trin ved søgning tilbage
 
@@ -1859,7 +1868,4 @@ msg: Op / Ned under videoafspilning kontrol
 
 id: Video acceleration and display behaviour
 msg: Videoacceleration og skærmpræsentation
-
-id: Video playback
-msg: Videoafspilning
 

@@ -629,14 +629,15 @@ msg:
 id: Audio delay
 msg: Äänen viive
 
-id: Audio gain adjustment during video playback
-msg: Äänen korotus videotoiston aikana
-
-id: Audio settings during video playback
-msg: Ääniasetukset videotoiston aikana
+id: Audio gain
+# Missing translation
+msg: 
 
 id: Setup audio output
 msg: Aseta äänen ulostulo
+
+id: Video playback
+msg: Videotoisto
 
 #
 # ./src/audio2/audio_test.c
@@ -724,6 +725,10 @@ msg: Tyhjennä välimuisti
 
 id: Enable bittorrent
 msg: Mahdollista bittorrent
+
+id: Max upload speed
+# Missing translation
+msg: 
 
 id: Max usage of free space for caching torrents
 msg: Maksimiraja torrenteille varatuille tilalle
@@ -1801,6 +1806,10 @@ msg: Haluttu VDPAU lomituksen korjaukselle
 id: Resume video playback
 msg: Palaa videotoistoon
 
+id: Show clock during playback
+# Missing translation
+msg: 
+
 id: Step when seeking backward
 msg: Askellus kun kelataan taaksepäin
 
@@ -1818,7 +1827,4 @@ msg: YLÖS/ALAS toiminnot videotoiston aikana
 
 id: Video acceleration and display behaviour
 msg: Videon kiihdytys ja näyttöasetukset
-
-id: Video playback
-msg: Videotoisto
 

@@ -630,14 +630,15 @@ msg:
 id: Audio delay
 msg: Audioverzögerung
 
-id: Audio gain adjustment during video playback
-msg: Lautstärke anpassen während der Videowiedergabe
-
-id: Audio settings during video playback
-msg: Toneinstellungen während Videowiedergabe
+id: Audio gain
+# Missing translation
+msg: 
 
 id: Setup audio output
 msg: Audioausgang einstellen
+
+id: Video playback
+msg: Videowiedergabe
 
 #
 # ./src/audio2/audio_test.c
@@ -725,6 +726,10 @@ msg: Cache löschen
 
 id: Enable bittorrent
 msg: Aktiviere BitTorrent
+
+id: Max upload speed
+# Missing translation
+msg: 
 
 id: Max usage of free space for caching torrents
 msg: Maximale Nutzung des freien Speicherplatzes für das caschen von Torrents
@@ -1766,6 +1771,10 @@ msg: Bevorzugte VDPAU Deinterlacer-Methode
 id: Resume video playback
 msg: Wiedergabe von letzter Position
 
+id: Show clock during playback
+# Missing translation
+msg: 
+
 id: Step when seeking backward
 msg: Schritt beim Zurückspulen
 
@@ -1783,7 +1792,4 @@ msg: Hoch / Runter während Videoabspielens kontrolliert
 
 id: Video acceleration and display behaviour
 msg: Videobeschleunigungs- und Wiedergabeeinstellungen
-
-id: Video playback
-msg: Videowiedergabe
 

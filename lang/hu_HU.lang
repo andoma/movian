@@ -629,14 +629,15 @@ msg:
 id: Audio delay
 msg: Hang késleltetés
 
-id: Audio gain adjustment during video playback
-msg: Hang szabályozása videó lejátszás közben
-
-id: Audio settings during video playback
-msg: Hang beállítások videó lejátszás közben
+id: Audio gain
+# Missing translation
+msg: 
 
 id: Setup audio output
 msg: Hang kimenet beállítása
+
+id: Video playback
+msg: Videó lejátszás
 
 #
 # ./src/audio2/audio_test.c
@@ -724,6 +725,10 @@ msg: Cache ürítése
 
 id: Enable bittorrent
 msg: Bittorent engedélyezése
+
+id: Max upload speed
+# Missing translation
+msg: 
 
 id: Max usage of free space for caching torrents
 msg: Maximum felhasználható szabadhely a torrentek előtöltésére
@@ -1801,6 +1806,10 @@ msg: Előnyben részesített VDPAU deinterlace
 id: Resume video playback
 msg: Videó lejátszás folytatása
 
+id: Show clock during playback
+# Missing translation
+msg: 
+
 id: Step when seeking backward
 msg: Lépés visszatekerésnél
 
@@ -1818,7 +1827,4 @@ msg: Le / fel videó lejátszás közben
 
 id: Video acceleration and display behaviour
 msg: Videó gyorsítás és képernyő megjelenítés
-
-id: Video playback
-msg: Videó lejátszás
 

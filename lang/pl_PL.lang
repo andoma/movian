@@ -626,14 +626,15 @@ msg: Dopasuj do wyświetlacza i materiału
 id: Audio delay
 msg: Opóźnienie audio
 
-id: Audio gain adjustment during video playback
-msg: Automatyczna kontrola dźwięku w czasie odtwarzania
-
-id: Audio settings during video playback
-msg: Ustawienia audio w czasie odtwarzania
+id: Audio gain
+# Missing translation
+msg: 
 
 id: Setup audio output
 msg: Ustawienia wyjścia audio
+
+id: Video playback
+msg: Odtwarzanie Video
 
 #
 # ./src/audio2/audio_test.c
@@ -721,6 +722,10 @@ msg: Wyczyść pamięć podręczną
 
 id: Enable bittorrent
 msg: Włącz BitTorrent
+
+id: Max upload speed
+# Missing translation
+msg: 
 
 id: Max usage of free space for caching torrents
 msg: Maks. użycie miejsca dla buforowanych torrentów
@@ -1197,7 +1202,6 @@ id: Photos
 msg: Zdjęcia
 
 id: Removed %s from homepage
-# Missing translation
 msg: %s usunięty z ekranu głównego
 
 id: Removed bookmark: %s
@@ -1592,7 +1596,6 @@ id: Emulate Up/Down buttons with mouse wheel
 msg: Emuluj klawisze Góra/Dół używając scrolla myszli
 
 id: Folder for screensaver images
-# Missing translation
 msg: Folder obrazów dla wygaszacza ekranu
 
 id: Font and icon size
@@ -1602,7 +1605,6 @@ id: Interface horizontal shrink
 msg: Poziome zmniejszenie interfejsu
 
 id: Interface vertical shrink
-# Missing translation
 msg: Pionowe zmniejszenie interfejsu
 
 id: Screensaver
@@ -1746,6 +1748,10 @@ msg: Preferowana metoda usuwania przeplotu dla VDPAU
 id: Resume video playback
 msg: Wznów odtwarzanie Video
 
+id: Show clock during playback
+# Missing translation
+msg: 
+
 id: Step when seeking backward
 msg: Krok przy przewijaniu do tyłu
 
@@ -1763,7 +1769,4 @@ msg: Góra/Dół w trakcie odtwarzania by kontrolować
 
 id: Video acceleration and display behaviour
 msg: Akceleracja Video i zachowanie wyświetlacza
-
-id: Video playback
-msg: Odtwarzanie Video
 

@@ -626,14 +626,15 @@ msg: ディスプレイとコンテンツのフレームレートを一致
 id: Audio delay
 msg: オーディオディレイ
 
-id: Audio gain adjustment during video playback
-msg: ビデオ再生時のオーディオゲイン
-
-id: Audio settings during video playback
-msg: ビデオ再生中の設定
+id: Audio gain
+# Missing translation
+msg: 
 
 id: Setup audio output
 msg: 音声出力について設定します。
+
+id: Video playback
+msg: ビデオ再生設定
 
 #
 # ./src/audio2/audio_test.c
@@ -721,6 +722,10 @@ msg: キャッシュをクリアする
 
 id: Enable bittorrent
 msg: ビットトレントを有効化
+
+id: Max upload speed
+# Missing translation
+msg: 
 
 id: Max usage of free space for caching torrents
 msg: トレントのキャッシュ最大使用量
@@ -1742,6 +1747,10 @@ msg: VDPAUデインターレース方式設定
 id: Resume video playback
 msg: リジューム再生設定
 
+id: Show clock during playback
+# Missing translation
+msg: 
+
 id: Step when seeking backward
 msg: 巻き戻しシーク
 
@@ -1759,7 +1768,4 @@ msg: ビデオ再生中の音量調整
 
 id: Video acceleration and display behaviour
 msg: アクセラレーションとディスプレイ表示の設定をします。
-
-id: Video playback
-msg: ビデオ再生設定
 

@@ -626,14 +626,15 @@ msg: Подогнать частоту кадров контента и экра
 id: Audio delay
 msg: Задержка звука
 
-id: Audio gain adjustment during video playback
-msg: Регулировка усиления звука во время воспроизведения видео
-
-id: Audio settings during video playback
-msg: Настройки звука во время воспроизведения видео
+id: Audio gain
+# Missing translation
+msg: 
 
 id: Setup audio output
 msg: Настройка аудиовыхода
+
+id: Video playback
+msg: Воспроизведение видео
 
 #
 # ./src/audio2/audio_test.c
@@ -721,6 +722,10 @@ msg: Очистка кэша
 
 id: Enable bittorrent
 msg: Включить битторрент
+
+id: Max upload speed
+# Missing translation
+msg: 
 
 id: Max usage of free space for caching torrents
 msg: Максимальное использование свободного пространства для кэширования торрентов
@@ -1743,6 +1748,10 @@ msg: Предпочтительный метод VPDAU деинтерлейси�
 id: Resume video playback
 msg: Boзoбнoвить вocпpoизвeдeниe видeo
 
+id: Show clock during playback
+# Missing translation
+msg: 
+
 id: Step when seeking backward
 msg: Шаг при поиске назад
 
@@ -1760,7 +1769,4 @@ msg: Контроль вверх/вниз во время воспроизвед
 
 id: Video acceleration and display behaviour
 msg: Ускорение видео и поведение изображения
-
-id: Video playback
-msg: Воспроизведение видео
 

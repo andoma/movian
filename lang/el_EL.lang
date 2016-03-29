@@ -629,14 +629,15 @@ msg:
 id: Audio delay
 msg: Καθυστέρηση ήχου
 
-id: Audio gain adjustment during video playback
-msg: Προσαρμογή ενύσχισης ήχου κατά την διαρκεια αναπαραγωγής video
-
-id: Audio settings during video playback
-msg: Ρυθμίσεις ήχου κατά την διαρκεια αναπαραγωγής video
+id: Audio gain
+# Missing translation
+msg: 
 
 id: Setup audio output
 msg: Ρύθμιση εξόδου ήχου
+
+id: Video playback
+msg: Αναπαραγωγή Βίντεο
 
 #
 # ./src/audio2/audio_test.c
@@ -724,6 +725,10 @@ msg: Καθαρισμός προσωρινής μνήμης
 
 id: Enable bittorrent
 msg: Ενεργοποίηση bittorrent
+
+id: Max upload speed
+# Missing translation
+msg: 
 
 id: Max usage of free space for caching torrents
 msg: Μέγιστη ελεύθερη μνήμη για προσωρινη αποθήκευση torrent(s)
@@ -1802,6 +1807,10 @@ msg: Προτιμώμενη μέθοδος απόπλεξης
 id: Resume video playback
 msg: Συνέχιση αναπαραγωγής βίντεο
 
+id: Show clock during playback
+# Missing translation
+msg: 
+
 id: Step when seeking backward
 msg: Βήμα κατα την αναζήτηση προς τα πίσω
 
@@ -1819,7 +1828,4 @@ msg: Πάνω / Κάτω κατά την αναπαραγωγή video
 
 id: Video acceleration and display behaviour
 msg: Επιτάχυνση βίντεο και ρυθμίσεις αναπαραγωγής
-
-id: Video playback
-msg: Αναπαραγωγή Βίντεο
 
