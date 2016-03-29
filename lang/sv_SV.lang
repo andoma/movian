@@ -627,8 +627,7 @@ id: Audio delay
 msg: Ljuddelay
 
 id: Audio gain
-# Missing translation
-msg: 
+msg: Ljudvolym
 
 id: Setup audio output
 msg: Ställ in ljudutgång
@@ -724,8 +723,7 @@ id: Enable bittorrent
 msg: Använd svärmar
 
 id: Max upload speed
-# Missing translation
-msg: 
+msg: Maximal hastighet för uppladdning
 
 id: Max usage of free space for caching torrents
 msg: Maximalt utrymme för att spara svärmar
@@ -1748,8 +1746,7 @@ id: Resume video playback
 msg: Återuppta videouppspelning
 
 id: Show clock during playback
-# Missing translation
-msg: 
+msg: Visa klockan vid videouppspelning
 
 id: Step when seeking backward
 msg: Steg vid sökning bakåt
