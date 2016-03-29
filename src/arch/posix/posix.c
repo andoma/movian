@@ -204,29 +204,32 @@ trace_arch(int level, const char *prefix, const char *str)
   default:          sgr = "\033[35m"; break;
   }
 
-  if(!decorate_trace) {
-    sgr = "";
-    sgroff = "";
+  if(gconf.trace_to_syslog) {
+
+    syslog(prio, "%s %s", prefix, str);
+
   } else {
-    sgroff = "\033[0m";
+
+    if(!decorate_trace) {
+      sgr = "";
+      sgroff = "";
+    } else {
+      sgroff = "\033[0m";
+    }
+
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+
+    struct tm tm;
+    localtime_r(&tv.tv_sec, &tm);
+    fprintf(stderr, "%s%02d:%02d:%02d.%03d: %s %s%s\n", sgr,
+            tm.tm_hour,
+            tm.tm_min,
+            tm.tm_sec,
+            (int)tv.tv_usec / 1000,
+            prefix, str, sgroff);
   }
 
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-
-  struct tm tm;
-  localtime_r(&tv.tv_sec, &tm);
-
-
-  fprintf(stderr, "%s%02d:%02d:%02d.%03d: %s %s%s\n", sgr,
-          tm.tm_hour,
-          tm.tm_min,
-          tm.tm_sec,
-          (int)tv.tv_usec / 1000,
-          prefix, str, sgroff);
-
-  if(gconf.trace_to_syslog)
-    syslog(prio, "%s %s", prefix, str);
 }
 
 
