@@ -426,7 +426,7 @@ mtm_add_track(media_track_mgr_t *mtm, prop_t *root, media_track_t *before)
   mt->mt_isolang_score = -1;
   mt->mt_base_score = -1;
   mt->mt_final_score = -1;
-  mt->mt_autosel = -1;
+  mt->mt_autosel = 0;
 
   if(before) {
     TAILQ_INSERT_BEFORE(before, mt, mt_link);
