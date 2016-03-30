@@ -975,7 +975,6 @@ void* tlsf_realloc(tlsf_pool tlsf, void* ptr, size_t size)
 		else
 		{
                         pool->used -= block_size(block);
-                        pool->used += adjust;
 			/* Do we need to expand to the next block? */
 			if (adjust > cursize)
 			{
@@ -985,6 +984,7 @@ void* tlsf_realloc(tlsf_pool tlsf, void* ptr, size_t size)
 
 			/* Trim the resulting block and return the original pointer. */
 			block_trim_used(pool, block, adjust);
+                        pool->used += block_size(block);
 			p = ptr;
 		}
 	}
