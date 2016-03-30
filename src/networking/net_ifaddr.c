@@ -110,7 +110,16 @@ routesocket_init(void)
   sa.nl_groups = RTMGRP_LINK | RTMGRP_IPV4_IFADDR;
 
   netlink_fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
-  bind(netlink_fd, (struct sockaddr *) &sa, sizeof(sa));
+  if(netlink_fd == -1) {
+    TRACE(TRACE_DEBUG, "Netlink", "Failed to open netlink socket -- %s",
+          strerror(errno));
+    return;
+  }
+  if(bind(netlink_fd, (struct sockaddr *) &sa, sizeof(sa)) == -1) {
+    TRACE(TRACE_DEBUG, "Netlink", "Failed to bind netlink socket -- %s",
+          strerror(errno));
+    return;
+  }
 
   asyncio_add_fd(netlink_fd, ASYNCIO_READ, routesocket_input, NULL, "netlink");
 }
