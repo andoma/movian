@@ -608,6 +608,8 @@ asyncio_thread(void *aux)
 
   init_group(INIT_GROUP_ASYNCIO);
 
+  asyncio_trig_network_change();
+
   while(1)
     asyncio_dopoll();
   return NULL;
