@@ -1,0 +1,21 @@
+
+Steps when bumping stable version
+
+- Change version sfo.xml
+- Fix "Upgrade to released from" -setting in upgrade.c
+
+Commit change and set tag on master.
+
+Write note in changelog:
+
+$ support/chlog add
+$ support/chlog push
+
+$ git push --tags
+
+Verify build in master
+
+pust to testing and release/x.y
+
+
+

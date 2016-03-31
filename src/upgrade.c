@@ -1308,11 +1308,9 @@ upgrade_init(void)
   setting_create(SETTING_MULTIOPT, gconf.settings_general,
                  SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Upgrade to releases from")),
-                 SETTING_STORE("upgrade", "track-4-10"),
-#ifndef __ANDROID__
+                 SETTING_STORE("upgrade", "track-5-0"),
                  SETTING_OPTION("stable",  _p("Stable")),
                  SETTING_OPTION("testing", _p("Testing")),
-#endif
                  SETTING_OPTION_CSTR("master", "Bleeding Edge (Very unstable)"),
                  SETTING_CALLBACK(set_upgrade_track, NULL),
                  SETTING_MUTEX(&upgrade_mutex),
