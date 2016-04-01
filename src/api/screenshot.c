@@ -277,7 +277,7 @@ screenshot_process(void *task)
 void
 screenshot_deliver(pixmap_t *pm)
 {
-  task_run(screenshot_process, pixmap_dup(pm));
+  task_run(screenshot_process, pm ? pixmap_dup(pm) : NULL);
 }
 
 
