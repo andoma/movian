@@ -169,6 +169,21 @@ rsx_free(int pos, int size)
 }
 
 
+/**
+ *
+ */
+static pixmap_t *
+rsx_read_pixels(glw_root_t *gr)
+{
+  glw_ps3_t *gp = (glw_ps3_t *)gr;
+
+  pixmap_t *pm = pixmap_create(gr->gr_width, gr->gr_height, PIXMAP_RGBA, 0);
+
+  memcpy(pm->pm_data, rsx_to_ppu(gp->framebuffer[0]),
+         pm->pm_linesize * pm->pm_height);
+  return pm;
+}
+
 
 /**
  *
@@ -256,6 +271,8 @@ init_screen(glw_ps3_t *gp)
 		      gp->framebuffer_pitch, gp->res.width, gp->res.height);
   gcmSetDisplayBuffer(1, gp->framebuffer[1],
 		      gp->framebuffer_pitch, gp->res.width, gp->res.height);
+
+  gp->gr.gr_br_read_pixels = rsx_read_pixels;
 
   gcmResetFlipStatus();
   flip(gp, 1);

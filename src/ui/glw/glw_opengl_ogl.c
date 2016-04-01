@@ -117,6 +117,7 @@ opengl_read_pixels(glw_root_t *gr)
 
   glReadPixels(0, 0, gr->gr_width, gr->gr_height,
                GL_BGRA, GL_UNSIGNED_BYTE, pm->pm_data);
+  pm->pm_flags |= PIXMAP_VFLIP;
   return pm;
 }
 

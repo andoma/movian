@@ -57,7 +57,8 @@ typedef struct pixmap {
   uint16_t pm_width;
   uint16_t pm_height;
   uint16_t pm_margin;
-
+  uint16_t pm_flags;
+#define PIXMAP_VFLIP 0x1   // Pixmap is flipped vertically
   float pm_intensity;
 
 } pixmap_t;

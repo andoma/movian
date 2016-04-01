@@ -145,9 +145,16 @@ screenshot_compress(pixmap_t *pm, int codecid)
 
   avpicture_alloc((AVPicture *)oframe, ctx->pix_fmt, width, height);
 
-  const uint8_t *ptr[4] = {pm->pm_data + pm->pm_linesize * (height - 1)};
-  int strides[4] = {-pm->pm_linesize};
+  const uint8_t *ptr[4] = {};
+  int strides[4] = {0};
 
+  if(pm->pm_flags & PIXMAP_VFLIP) {
+    ptr[0] = pm->pm_data + pm->pm_linesize * (height - 1);
+    strides[0] = -pm->pm_linesize;
+  } else {
+    ptr[0] = pm->pm_data;
+    strides[0] = pm->pm_linesize;
+  }
   struct SwsContext *sws;
   sws = sws_getContext(width, height, AV_PIX_FMT_RGB32,
                        width, height, ctx->pix_fmt, SWS_BILINEAR,
