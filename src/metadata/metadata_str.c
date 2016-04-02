@@ -161,7 +161,7 @@ metadata_filename_to_title(const char *filename, int *yearp, rstr_t **titlep)
   int i = strlen(s);
 
   while(i > 0) {
-    
+
     if(i > 5 && s[i-5] == '.' &&
        isnum(s[i-4]) && isnum(s[i-3]) && isnum(s[i-2]) && isnum(s[i-1])) {
       year = atoi(s + i - 4);
@@ -170,7 +170,7 @@ metadata_filename_to_title(const char *filename, int *yearp, rstr_t **titlep)
       continue;
     }
 
-    if(i > 7 && s[i-7] == ' ' && s[i-6] == '(' && 
+    if(i > 7 && s[i-7] == ' ' && s[i-6] == '(' &&
        isnum(s[i-5]) && isnum(s[i-4]) && isnum(s[i-3]) && isnum(s[i-2]) &&
        s[i-1] == ')') {
       year = atoi(s + i - 5);
@@ -190,7 +190,7 @@ metadata_filename_to_title(const char *filename, int *yearp, rstr_t **titlep)
 	break;
       }
     }
-    
+
     if(stopstrings[j] != NULL)
       continue;
 
@@ -214,7 +214,7 @@ metadata_filename_to_title(const char *filename, int *yearp, rstr_t **titlep)
       s[i] = ' ';
     }
   }
- 
+
   if(yearp != NULL)
     *yearp = year;
 
@@ -240,7 +240,7 @@ metadata_filename_to_episode(const char *s,
       int o = 3+i;
       if(s[o] == '.')
 	o++;
-  
+
       if((s[o] == 'e' || s[o] == 'E') && isnum(s[o+1]) && isnum(s[o+2])) {
 	season = atoi(s+i+1);
 	episode = atoi(s+o+1);
@@ -248,7 +248,7 @@ metadata_filename_to_episode(const char *s,
       }
     }
   }
-  
+
 
   if(season == -1 || episode == -1)
     return -1;

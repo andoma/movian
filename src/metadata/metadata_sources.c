@@ -73,7 +73,7 @@ ms_set_enable(void *opaque, int value)
 
   void *db = metadb_get();
 
-  int rc = db_prepare(db, &stmt, 
+  int rc = db_prepare(db, &stmt,
 		      "UPDATE datasource "
 		      "SET enabled = ?2 "
 		      "WHERE id = ?1");
@@ -85,7 +85,7 @@ ms_set_enable(void *opaque, int value)
 
   sqlite3_bind_int(stmt, 1, ms->ms_id);
   sqlite3_bind_int(stmt, 2, ms->ms_enabled);
-  
+
   rc = db_step(stmt);
   sqlite3_finalize(stmt);
   metadb_close(db);
@@ -114,11 +114,11 @@ metadata_add_source(const char *name, const char *description,
 
   rc = db_prepare(db, &stmt,
 		  "SELECT id,prio,enabled FROM datasource WHERE name=?1");
-  
+
   if(rc != SQLITE_OK) {
     goto err;
   }
-  
+
   sqlite3_bind_text(stmt, 1, name, -1, SQLITE_STATIC);
 
   rc = db_step(stmt);
@@ -180,7 +180,7 @@ metadata_add_source(const char *name, const char *description,
   ms->ms_complete_props = complete;
 
 
-  ms->ms_settings = 
+  ms->ms_settings =
     settings_add_dir_cstr(metadata_sources_settings[type],
 			  ms->ms_description, NULL, NULL, NULL, NULL);
 
@@ -251,7 +251,7 @@ class_handle_move(metadata_source_t *ms, metadata_source_t *before)
     } else {
       sqlite3_bind_int(stmt, 1, ms->ms_prio);
       sqlite3_bind_int(stmt, 2, ms->ms_id);
-      
+
       db_step(stmt);
       sqlite3_finalize(stmt);
     }
@@ -291,7 +291,7 @@ provider_class_node_sub(void *opaque, prop_event_t event, ...)
  */
 static void
 add_provider_class(prop_concat_t *pc,
-		   metadata_type_t type, 
+		   metadata_type_t type,
 		   prop_t *title)
 {
   prop_t *c = prop_create_root(NULL);

@@ -207,9 +207,9 @@ static void
 mlp_add_artist_to_prop(void *opaque, const char *url, int width, int height)
 {
   prop_t *p = prop_create_root(NULL);
-  
+
   prop_set_string(prop_create(p, "url"), url);
-  
+
   if(prop_set_parent(p, opaque))
     prop_destroy(p);
 }
@@ -288,7 +288,7 @@ metadata_bind_artistpics(prop_t *prop, rstr_t *artist)
 
   mla->mla_prop = prop_ref_inc(prop);
   mla->mla_artist = rstr_spn(artist, ";:,-[", 1);
-  mla->mla_sub = 
+  mla->mla_sub =
     prop_subscribe(PROP_SUB_TRACK_DESTROY_EXP | PROP_SUB_SUBSCRIPTION_MONITOR,
 		   PROP_TAG_CALLBACK_USER_INT, mlp_sub_cb, mla,
 		   METADATA_PROP_ARTIST_PICTURES,
@@ -374,7 +374,7 @@ metadata_bind_albumart(prop_t *prop, rstr_t *artist, rstr_t *album)
   mla->mla_prop = prop_ref_inc(prop);
   mla->mla_artist = rstr_spn(artist, ";:,-[", 1);
   mla->mla_album  = rstr_spn(album, "[(", 1);
-  mla->mla_sub = 
+  mla->mla_sub =
     prop_subscribe(PROP_SUB_TRACK_DESTROY_EXP | PROP_SUB_SUBSCRIPTION_MONITOR,
 		   PROP_TAG_CALLBACK_USER_INT, mlp_sub_cb, mla,
 		   METADATA_PROP_ALBUM_ART,
@@ -423,7 +423,7 @@ struct metadata_lazy_video {
   rstr_t *mlv_custom_title;
   prop_t *mlv_custom_title_opt;
   prop_sub_t *mlv_custom_title_sub;
- 
+
   prop_sub_t *mlv_options_monitor_sub;
 
   // Triggers
@@ -486,11 +486,11 @@ mlv_unbind(metadata_lazy_video_t *mlv, int cleanup)
 /**
  *
  */
-static void 
+static void
 build_info_text(metadata_lazy_video_t *mlv, const metadata_t *md)
 {
   rstr_t *txt;
-  
+
   if(md == NULL) {
     txt = _("No data found");
   } else {
@@ -576,10 +576,10 @@ query_by_filename_or_dirname(void *db, const metadata_lazy_video_t *mlv,
   int year;
   rstr_t *title;
   int64_t rval;
-  
+
   int season, episode;
 
-  if(!metadata_filename_to_episode(rstr_get(mlv->mlv_filename), 
+  if(!metadata_filename_to_episode(rstr_get(mlv->mlv_filename),
 				   &season, &episode, &title)) {
 
     if(msf->query_by_episode == NULL)
@@ -592,7 +592,7 @@ query_by_filename_or_dirname(void *db, const metadata_lazy_video_t *mlv,
 
       if(title == NULL) {
 	METADATA_TRACE(
-	      "Unable to figure out name of series from %s", 
+	      "Unable to figure out name of series from %s",
 	      rstr_get(mlv->mlv_filename));
 	return METADATA_PERMANENT_ERROR;
       }
@@ -622,7 +622,7 @@ query_by_filename_or_dirname(void *db, const metadata_lazy_video_t *mlv,
   if(is_reasonable_movie_name(rstr_get(mlv->mlv_filename))) {
 
     metadata_filename_to_title(rstr_get(mlv->mlv_filename), &year, &title);
-  
+
     METADATA_TRACE(
 	  "Performing search lookup for %s year:%d, based on filename",
 	  rstr_get(title), year);
@@ -857,7 +857,7 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
       const metadata_source_funcs_t *msf = ms->ms_funcs;
 
       /* If we have a fixed datasource (requested by user)
-       * skip all other datasources 
+       * skip all other datasources
        */
       if(fixed_ds && fixed_ds != ms->ms_id)
 	continue;
@@ -1033,7 +1033,7 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
      (ms = metadata_source_get(mlv->mlv_type, md->md_dsid)) != NULL &&
      ms->ms_funcs->query_by_id != NULL &&
      (mlv->mlv_mlp.mlp_req_items & ms->ms_complete_props)) {
-    
+
     METADATA_TRACE(
 	  "Performing additional query for %s : %s", ms->ms_name,
 	  rstr_get(md->md_ext_id));
@@ -1093,7 +1093,7 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
       prop_set(mlv->mlv_m, "rating_count",
                md->md_rating_count >= 0 ? PROP_SET_INT : PROP_SET_VOID,
                md->md_rating_count);
-      
+
       set_cast_n_crew(mlv->mlv_m, md);
 
       metadata_t *season = NULL;
@@ -1434,7 +1434,7 @@ mlv_sub_actions(void *opaque, prop_event_t event, ...)
 			 "metacustomquery", KVSTORE_SET_VOID);
       }
     }
-      
+
     break;
 
   default:
@@ -1599,7 +1599,7 @@ mlv_sub(metadata_lazy_video_t *mlv, prop_t *m,
   vec[2] = 0;
   mlv->mlv_mlp.mlp_refcount++;
 
-  prop_sub_t *s = 
+  prop_sub_t *s =
     prop_subscribe(PROP_SUB_TRACK_DESTROY_EXP | PROP_SUB_SUBSCRIPTION_MONITOR,
 		   PROP_TAG_CALLBACK_USER_INT, mlp_sub_cb, mlv, id,
 		   PROP_TAG_MUTEX, &metadata_mutex,
@@ -1707,8 +1707,8 @@ mlv_add_options(metadata_lazy_video_t *mlv)
   prop_link(_p("Custom search query"),
 	    prop_create(prop_create(p, "metadata"), "title"));
 
- 
-  mlv->mlv_custom_query_sub = 
+
+  mlv->mlv_custom_query_sub =
     prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_NO_INITIAL_UPDATE,
 		   PROP_TAG_NAME("option", "value"),
 		   PROP_TAG_CALLBACK, mlv_custom_query_cb, mlv,
@@ -1718,7 +1718,7 @@ mlv_add_options(metadata_lazy_video_t *mlv)
   mlv->mlv_mlp.mlp_refcount++;
 
   pv = prop_vec_append(pv, p);
-    
+
   // -------------------------------------------------------------------
   // Metadata refresh
 
@@ -1731,7 +1731,7 @@ mlv_add_options(metadata_lazy_video_t *mlv)
   prop_link(_p("Refresh metadata"),
 	    prop_create(prop_create(p, "metadata"), "title"));
 
-  mlv->mlv_refresh_sub = 
+  mlv->mlv_refresh_sub =
     prop_subscribe(PROP_SUB_TRACK_DESTROY,
 		   PROP_TAG_CALLBACK, mlv_sub_actions, mlv,
 		   PROP_TAG_MUTEX, &metadata_mutex,
@@ -1754,7 +1754,7 @@ mlv_add_options(metadata_lazy_video_t *mlv)
   prop_link(_p("Custom title"),
 	    prop_create(prop_create(p, "metadata"), "title"));
 
-  mlv->mlv_custom_title_sub = 
+  mlv->mlv_custom_title_sub =
     prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_NO_INITIAL_UPDATE,
 		   PROP_TAG_NAME("option", "value"),
 		   PROP_TAG_CALLBACK, mlv_custom_title_cb, mlv,
@@ -1844,7 +1844,7 @@ metadata_bind_video_info(rstr_t *url, rstr_t *filename,
 
   mlv->mlv_custom_title = metadb_item_get_user_title(rstr_get(mlv->mlv_url));
   mlv->mlv_custom_query = kv_url_opt_get_rstr(rstr_get(mlv->mlv_url),
-					      KVSTORE_DOMAIN_SYS, 
+					      KVSTORE_DOMAIN_SYS,
 					      "metacustomquery");
 
   hts_mutex_lock(&metadata_mutex);
@@ -1858,7 +1858,7 @@ metadata_bind_video_info(rstr_t *url, rstr_t *filename,
 
   mlv->mlv_mlp.mlp_refcount++;
 
-  mlv->mlv_options_monitor_sub = 
+  mlv->mlv_options_monitor_sub =
     prop_subscribe(PROP_SUB_SUBSCRIPTION_MONITOR | PROP_SUB_TRACK_DESTROY,
 		   PROP_TAG_NAME("node", "options"),
 		   PROP_TAG_CALLBACK, mlv_options_cb, mlv,
