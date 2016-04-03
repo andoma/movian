@@ -218,6 +218,7 @@ void *fa_open_resolver(const char *url, fa_resolver_t *far,
                      struct fa_open_extra *foe);
 
 void fa_close(void *fh);
+void fa_close_with_park(fa_handle_t *fh, int park);
 int fa_read(void *fh, void *buf, size_t size);
 void fa_deadline(void *fh_, int deadline);
 int fa_write(void *fh, const void *buf, size_t size);

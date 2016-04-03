@@ -212,11 +212,14 @@ fa_libav_close(AVIOContext *avio)
  *
  */
 void
-fa_libav_close_format(AVFormatContext *fctx)
+fa_libav_close_format(AVFormatContext *fctx, int park)
 {
   AVIOContext *avio = fctx->pb;
   avformat_close_input(&fctx);
-  fa_libav_close(avio);
+
+  fa_close_with_park(avio->opaque, park);
+  av_free(avio->buffer);
+  av_free(avio);
 }
 
 

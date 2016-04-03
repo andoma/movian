@@ -181,7 +181,7 @@ unpack_audio(const char *url, pcm_sound_t *out)
   }
   av_frame_free(&frame);
   avcodec_close(ctx);
-  fa_libav_close_format(fctx);
+  fa_libav_close_format(fctx, 0);
   return 0;
 }
 

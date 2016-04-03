@@ -247,18 +247,18 @@ fab_destroy(buffered_file_t *bf)
 }
 
 
+#ifdef FILE_PARKING
 
 /**
  *
  */
 static void
-fab_close(fa_handle_t *handle)
+fab_park(fa_handle_t *handle)
 {
   buffered_file_t *bf = (buffered_file_t *)handle;
   cancellable_unbind(bf->bf_inbound_cancellable, bf);
   bf->bf_inbound_cancellable = NULL;
 
-#ifdef FILE_PARKING
   buffered_file_t *closeme = NULL;
   fa_handle_t *src = bf->bf_src;
 
@@ -274,16 +274,27 @@ fab_close(fa_handle_t *handle)
   hts_mutex_lock(&buffered_global_mutex);
   if(parked)
     closeme = parked;
-
+  printf("%s parked\n", bf->bf_url);
   parked = bf;
   time(&parked->bf_park_time);
   hts_mutex_unlock(&buffered_global_mutex);
 
   if(closeme)
     fab_destroy(closeme);
-#else
-  fab_destroy(bf);
+}
 #endif
+
+
+/**
+ *
+ */
+static void
+fab_close(fa_handle_t *handle)
+{
+  buffered_file_t *bf = (buffered_file_t *)handle;
+  cancellable_unbind(bf->bf_inbound_cancellable, bf);
+  bf->bf_inbound_cancellable = NULL;
+  fab_destroy(bf);
 }
 
 
@@ -541,6 +552,10 @@ fab_set_read_timeout(fa_handle_t *handle, int ms)
 static fa_protocol_t fa_protocol_buffered = {
   .fap_name  = "buffer",
   .fap_close = fab_close,
+#ifdef FILE_PARKING
+  .fap_park = fab_park,
+#endif
+
 #if BF_CHK
   .fap_read  = fab_read_chk,
 #else

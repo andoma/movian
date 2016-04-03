@@ -318,7 +318,7 @@ ifv_close(void)
   }
 
   if(ifv_fctx != NULL) {
-    fa_libav_close_format(ifv_fctx);
+    fa_libav_close_format(ifv_fctx, 0);
     ifv_fctx = NULL;
   }
 }
@@ -499,9 +499,9 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
 #if ENABLE_LIBAV_ATTACHMENT_POINTER
           int64_t offset = st->attached_offset;
           int size = st->attached_size;
-          fa_libav_close_format(fctx);  /* Close here because it will be parked
-                                         * by fa_buffer (and thus reused)
-                                         */
+          fa_libav_close_format(fctx, 0);/* Close here because it will be parked
+                                          * by fa_buffer (and thus reused)
+                                          */
           return thumb_from_attachment(url, offset, size, errbuf, errlen,
                                        cacheid, mtime);
 #else
@@ -510,7 +510,7 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
                                           (void *)&av_free);
           st->codec->extradata = NULL;
           st->codec->extradata_size = 0;
-          fa_libav_close_format(fctx);
+          fa_libav_close_format(fctx, 0);
           return thumb_from_buf(b, errbuf, errlen, cacheid, mtime);
 #endif
         }
@@ -521,19 +521,19 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
       }
     }
     if(ctx == NULL) {
-      fa_libav_close_format(fctx);
+      fa_libav_close_format(fctx, 0);
       return NULL;
     }
 
     AVCodec *codec = avcodec_find_decoder(ctx->codec_id);
     if(codec == NULL) {
-      fa_libav_close_format(fctx);
+      fa_libav_close_format(fctx, 0);
       snprintf(errbuf, errlen, "Unable to find codec");
       return NULL;
     }
 
     if(avcodec_open2(ctx, codec, NULL) < 0) {
-      fa_libav_close_format(fctx);
+      fa_libav_close_format(fctx, 0);
       snprintf(errbuf, errlen, "Unable to open codec");
       return NULL;
     }

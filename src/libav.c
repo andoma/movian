@@ -467,7 +467,7 @@ media_format_deref(media_format_t *fw)
 {
   if(atomic_dec(&fw->refcount))
     return;
-  fa_libav_close_format(fw->fctx);
+  fa_libav_close_format(fw->fctx, 0);
   free(fw);
 }
 

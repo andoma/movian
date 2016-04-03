@@ -301,6 +301,19 @@ fa_close(void *fh_)
 /**
  *
  */
+void
+fa_close_with_park(fa_handle_t *fh, int park)
+{
+  if(park && fh->fh_proto->fap_park != NULL)
+    fh->fh_proto->fap_park(fh);
+  else
+    fh->fh_proto->fap_close(fh);
+}
+
+
+/**
+ *
+ */
 int
 fa_read(void *fh_, void *buf, size_t size)
 {
