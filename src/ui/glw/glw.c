@@ -542,10 +542,9 @@ glw_create(glw_root_t *gr, const glw_class_t *class,
   w->glw_refcnt = 1;
   w->glw_alignment = class->gc_default_alignment;
   w->glw_flags2 = GLW2_ENABLED | GLW2_NAV_FOCUSABLE | GLW2_CURSOR;
-#ifdef DEBUG
   w->glw_file = rstr_dup(file);
   w->glw_line = line;
-#endif
+
   if(likely(parent != NULL))
     w->glw_styles = glw_styleset_retain(parent->glw_styles);
 
@@ -772,9 +771,7 @@ glw_unref(glw_t *w)
     return;
   }
   assert(w->glw_clone == NULL);
-#ifdef DEBUG
   rstr_release(w->glw_file);
-#endif
   glw_scope_release(w->glw_scope);
   free(w);
 }
@@ -2775,12 +2772,8 @@ glw_get_name(glw_t *w)
 
   snprintf(buf, sizeof(buf), "%s @ %s:%d%s%s",
            gc->gc_name,
-#ifdef DEBUG
            rstr_get(w->glw_file),
            w->glw_line,
-#else
-           "?", 0,
-#endif
            extra ? " " : "",
            extra ? extra : "");
   return buf;
@@ -2810,12 +2803,8 @@ glw_get_path_r(char *buf, size_t buflen, glw_t *w)
 	   ident ? "(" : "",
 	   ident ?: "",
 	   ident ? ")" : "",
-#ifdef DEBUG
            rstr_get(w->glw_file),
            w->glw_line
-#else
-           "?", 0
-#endif
            );
 }
 

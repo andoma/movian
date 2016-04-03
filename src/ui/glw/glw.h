@@ -1238,10 +1238,8 @@ typedef struct glw {
 
   uint8_t glw_dynamic_eval;   // GLW_VIEW_EVAL_ -flags
 
-#ifndef NDEBUG
   rstr_t *glw_file;
   int glw_line;
-#endif
 } glw_t;
 
 static __inline int
