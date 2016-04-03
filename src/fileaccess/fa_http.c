@@ -84,16 +84,21 @@ static int http_tokenize(char *buf, char **vec, int vecsize, int delimiter);
 /**
  * Connection parking
  */
-TAILQ_HEAD(http_connection_queue , http_connection);
+TAILQ_HEAD(http_connection_queue ,http_connection);
 
-static struct http_connection_queue http_connections;
-static int http_parked_connections;
+static struct http_connection_queue http_parked_connections;
+static struct http_connection_queue http_active_connections;
+static int http_num_parked_connections;
+
 static hts_mutex_t http_connections_mutex;
+static hts_cond_t http_connections_cond;
 static atomic_t http_connection_tally;
 static atomic_t http_file_tally;
 
 typedef struct http_connection {
-  char hc_hostname[HOSTNAME_MAX];
+  atomic_t hc_refcount;
+
+  char *hc_hostname;
   int hc_port;
   int hc_id;
   tcpcon_t *hc_tc;
@@ -103,7 +108,7 @@ typedef struct http_connection {
   char hc_ssl;
   char hc_reused;
 
-  time_t hc_reuse_before;
+  callout_t hc_callout;
 
 } http_connection_t;
 
@@ -237,6 +242,48 @@ trace_request(htsbuf_queue_t *hq, http_file_t *hf)
 }
 
 
+
+/**
+ *
+ */
+static void
+http_connection_release(http_connection_t *hc)
+{
+  if(atomic_dec(&hc->hc_refcount))
+    return;
+  free(hc->hc_hostname);
+  free(hc);
+}
+
+
+/**
+ *
+ */
+static int
+http_connection_lockmgr(void *ptr, lockmgr_op_t op)
+{
+  http_connection_t *hc = ptr;
+
+  switch(op) {
+  case LOCKMGR_UNLOCK:
+    hts_mutex_unlock(&http_connections_mutex);
+    return 0;
+  case LOCKMGR_LOCK:
+    hts_mutex_lock(&http_connections_mutex);
+    return 0;
+  case LOCKMGR_TRY:
+    return hts_mutex_trylock(&http_connections_mutex);
+  case LOCKMGR_RETAIN:
+    atomic_inc(&hc->hc_refcount);
+    return 0;
+  case LOCKMGR_RELEASE:
+    http_connection_release(hc);
+    return 0;
+  }
+  abort();
+}
+
+
 /**
  *
  */
@@ -246,7 +293,8 @@ http_connection_destroy(http_connection_t *hc, int dbg, const char *reason)
   HTTP_TRACE(dbg, "Disconnected from %s:%d (cid=%d) %s",
 	     hc->hc_hostname, hc->hc_port, hc->hc_id, reason);
   tcp_close(hc->hc_tc);
-  free(hc);
+  hc->hc_tc = NULL;
+  http_connection_release(hc);
 }
 
 
@@ -257,10 +305,31 @@ http_connection_destroy(http_connection_t *hc, int dbg, const char *reason)
 static http_connection_t *
 http_connection_get(const char *hostname, int port, int ssl,
 		    char *errbuf, int errlen, int dbg, int timeout,
-                    cancellable_t *c, int allow_reuse)
+                    cancellable_t *c, int allow_reuse,
+                    int max_concurrent)
 {
-  http_connection_t *hc, *next;
+  http_connection_t *hc;
   tcpcon_t *tc;
+
+  hts_mutex_lock(&http_connections_mutex);
+
+  if(max_concurrent) {
+
+    while(1) {
+      int num_concurrent = 0;
+      TAILQ_FOREACH(hc, &http_active_connections, hc_link) {
+        if(!strcmp(hc->hc_hostname, hostname) &&
+           hc->hc_port == port &&
+           hc->hc_ssl == ssl) {
+          num_concurrent++;
+        }
+      }
+      if(num_concurrent < max_concurrent)
+        break;
+
+      hts_cond_wait(&http_connections_cond, &http_connections_mutex);
+    }
+  }
 
   if(allow_reuse) {
 
@@ -268,22 +337,14 @@ http_connection_get(const char *hostname, int port, int ssl,
 
     time(&now);
 
-    hts_mutex_lock(&http_connections_mutex);
-
-    for(hc = TAILQ_FIRST(&http_connections); hc != NULL; hc = next) {
-      next = TAILQ_NEXT(hc, hc_link);
-
-      if(now >= hc->hc_reuse_before) {
-        TAILQ_REMOVE(&http_connections, hc, hc_link);
-        http_parked_connections--;
-        http_connection_destroy(hc, dbg, "Keep alive expired");
-        continue;
-      }
+    TAILQ_FOREACH(hc, &http_parked_connections, hc_link) {
 
       if(!strcmp(hc->hc_hostname, hostname) && hc->hc_port == port &&
          hc->hc_ssl == ssl) {
-        TAILQ_REMOVE(&http_connections, hc, hc_link);
-        http_parked_connections--;
+        TAILQ_REMOVE(&http_parked_connections, hc, hc_link);
+        http_num_parked_connections--;
+        TAILQ_INSERT_TAIL(&http_active_connections, hc, hc_link);
+        callout_disarm(&hc->hc_callout);
         hts_mutex_unlock(&http_connections_mutex);
         HTTP_TRACE(dbg, "Reusing connection to %s:%d (cid=%d)",
                    hc->hc_hostname, hc->hc_port, hc->hc_id);
@@ -292,8 +353,17 @@ http_connection_get(const char *hostname, int port, int ssl,
         return hc;
       }
     }
-    hts_mutex_unlock(&http_connections_mutex);
   }
+
+
+  hc = calloc(1, sizeof(http_connection_t));
+  atomic_set(&hc->hc_refcount, 1);
+  hc->hc_hostname = strdup(hostname);
+  hc->hc_port = port;
+  hc->hc_ssl = ssl;
+  TAILQ_INSERT_TAIL(&http_active_connections, hc, hc_link);
+
+  hts_mutex_unlock(&http_connections_mutex);
 
   const int id = atomic_add_and_fetch(&http_connection_tally, 1);
 
@@ -303,7 +373,6 @@ http_connection_get(const char *hostname, int port, int ssl,
     errlen = sizeof(xerrbuf);
   }
 
-
   int tcp_connect_flags = 0;
   if(dbg)
     tcp_connect_flags |= TCP_DEBUG;
@@ -312,29 +381,48 @@ http_connection_get(const char *hostname, int port, int ssl,
 
   HTTP_TRACE(dbg, "Connecting to %s:%d", hostname, port);
 
+  if(ssl)
+    TRACE(TRACE_INFO, "HTTP", "Connect to %s:%d",
+          hostname, port);
+
   if((tc = tcp_connect(hostname, port, errbuf, errlen,
                        timeout, tcp_connect_flags, c)) == NULL) {
     HTTP_TRACE(dbg, "Connection to %s:%d failed -- %s%s",
                hostname, port, errbuf,
                cancellable_is_cancelled(c) ? ", Cancelled by user" : "");
-    return NULL;
+    goto bad;
   }
   if(cancellable_is_cancelled(c)) {
     snprintf(errbuf, errlen, "Cancelled");
     tcp_close(tc);
-    return NULL;
+    goto bad;
   }
 
   HTTP_TRACE(dbg, "Connected to %s:%d (cid=%d)", hostname, port, id);
 
-  hc = malloc(sizeof(http_connection_t));
-  snprintf(hc->hc_hostname, sizeof(hc->hc_hostname), "%s", hostname);
-  hc->hc_port = port;
-  hc->hc_ssl = ssl;
   hc->hc_tc = tc;
-  hc->hc_reused = 0;
   hc->hc_id = id;
   return hc;
+
+
+ bad:
+
+  hts_mutex_lock(&http_connections_mutex);
+  hts_cond_broadcast(&http_connections_cond);
+  TAILQ_REMOVE(&http_active_connections, hc, hc_link);
+  hts_mutex_unlock(&http_connections_mutex);
+  free(hc);
+  return NULL;
+}
+
+
+static void
+http_connection_ka_expired(struct callout *c, void *opaque)
+{
+  http_connection_t *hc = opaque;
+  TAILQ_REMOVE(&http_parked_connections, hc, hc_link);
+  http_connection_destroy(hc, gconf.enable_http_debug, "Keep alive expired");
+  http_num_parked_connections--;
 }
 
 
@@ -342,43 +430,35 @@ http_connection_get(const char *hostname, int port, int ssl,
  *
  */
 static void
-http_connection_park(http_connection_t *hc, int dbg, int max_age, const char *reason)
+http_connection_park(http_connection_t *hc, int dbg, int max_age,
+                     const char *reason)
 {
   time_t now;
-  http_connection_t *next;
 
   time(&now);
 
   tcp_set_read_timeout(hc->hc_tc, 0);
   tcp_set_cancellable(hc->hc_tc, NULL);
 
-  HTTP_TRACE(dbg, "Parking connection to %s:%d (cid=%d) -- %s",
-	     hc->hc_hostname, hc->hc_port, hc->hc_id, reason);
-
-  hc->hc_reuse_before = now + max_age;
+  HTTP_TRACE(dbg, "Parking connection to %s:%d (cid=%d) (expire in %ds) -- %s",
+	     hc->hc_hostname, hc->hc_port, hc->hc_id, max_age, reason);
 
   hts_mutex_lock(&http_connections_mutex);
-  TAILQ_INSERT_TAIL(&http_connections, hc, hc_link);
-  http_parked_connections++;
 
-  if(http_parked_connections > 5) {
-    for(hc = TAILQ_FIRST(&http_connections); hc != NULL; hc = next) {
-      next = TAILQ_NEXT(hc, hc_link);
+  callout_arm_managed(&hc->hc_callout, http_connection_ka_expired,
+                      hc, max_age * 1000000LL, http_connection_lockmgr);
 
-      if(now >= hc->hc_reuse_before) {
-	TAILQ_REMOVE(&http_connections, hc, hc_link);
-	http_parked_connections--;
-	http_connection_destroy(hc, dbg, "Keep alive expired");
-      }
-    }
-  }
+  TAILQ_REMOVE(&http_active_connections, hc, hc_link);
+  hts_cond_broadcast(&http_connections_cond);
+  TAILQ_INSERT_TAIL(&http_parked_connections, hc, hc_link);
 
-  while(http_parked_connections > 5) {
-    hc = TAILQ_FIRST(&http_connections);
+  while(http_num_parked_connections > 5) {
+    hc = TAILQ_FIRST(&http_parked_connections);
     assert(hc != NULL);
-    TAILQ_REMOVE(&http_connections, hc, hc_link);
+    TAILQ_REMOVE(&http_parked_connections, hc, hc_link);
     http_connection_destroy(hc, dbg, "Too many idle connections");
-    http_parked_connections--;
+    http_num_parked_connections--;
+    callout_disarm(&hc->hc_callout);
   }
 
   hts_mutex_unlock(&http_connections_mutex);
@@ -1177,7 +1257,7 @@ http_read_response(http_file_t *hf, struct http_header_list *headers)
   hf->hf_chunked_transfer = 0;
   free(hf->hf_content_type);
   hf->hf_content_type = NULL;
-  hf->hf_max_age = 30;
+  hf->hf_max_age = 5;
 
   int first_line = 1;
   char *line = NULL;
@@ -1334,6 +1414,10 @@ http_detach(http_file_t *hf, int reusable, const char *reason)
      !cancellable_is_cancelled(hf->hf_cancellable)) {
     http_connection_park(hf->hf_connection, hf->hf_debug, hf->hf_max_age, reason);
   } else {
+    hts_mutex_lock(&http_connections_mutex);
+    TAILQ_REMOVE(&http_active_connections, hf->hf_connection, hc_link);
+    hts_cond_broadcast(&http_connections_cond);
+    hts_mutex_unlock(&http_connections_mutex);
     http_connection_destroy(hf->hf_connection, hf->hf_debug, reason);
   }
   hf->hf_connection = NULL;
@@ -1486,7 +1570,8 @@ http_set_read_timeout(fa_handle_t *fh, int ms)
  *
  */
 static int
-http_connect(http_file_t *hf, char *errbuf, int errlen, int allow_reuse)
+http_connect(http_file_t *hf, char *errbuf, int errlen, int allow_reuse,
+             int max_concurrent)
 {
   char hostname[HOSTNAME_MAX];
   char proto[16];
@@ -1533,7 +1618,8 @@ http_connect(http_file_t *hf, char *errbuf, int errlen, int allow_reuse)
 
   hf->hf_connection = http_connection_get(hostname, port, ssl, errbuf, errlen,
 					  hf->hf_debug, timeout,
-                                          hf->hf_cancellable, allow_reuse);
+                                          hf->hf_cancellable, allow_reuse,
+                                          max_concurrent);
 
   if(hf->hf_read_timeout != 0 && hf->hf_connection != NULL)
     tcp_set_read_timeout(hf->hf_connection->hc_tc, hf->hf_read_timeout);
@@ -1559,7 +1645,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
   hf->hf_filesize = -1;
 
-  if(http_connect(hf, errbuf, errlen, 1))
+  if(http_connect(hf, errbuf, errlen, 1, 0))
     return -1;
 
   if(!probe && hf->hf_filesize != -1)
@@ -1785,7 +1871,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
       if(hf->hf_no_retries)
         return -1;
 
-      if(http_connect(hf, NULL, 0, 1))
+      if(http_connect(hf, NULL, 0, 1, 0))
 	return -1;
       hc = hf->hf_connection;
     }
@@ -2284,8 +2370,10 @@ http_no_parking(fa_handle_t *fh)
 static void
 http_init(void)
 {
-  TAILQ_INIT(&http_connections);
+  TAILQ_INIT(&http_active_connections);
+  TAILQ_INIT(&http_parked_connections);
   hts_mutex_init(&http_connections_mutex);
+  hts_cond_init(&http_connections_cond, &http_connections_mutex);
   hts_mutex_init(&http_redirects_mutex);
   hts_mutex_init(&http_cookies_mutex);
   hts_mutex_init(&http_auth_caches_mutex);
@@ -2501,7 +2589,7 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
   for(i = 0; i < 5; i++) {
 
     if(hf->hf_connection == NULL) 
-      if(http_connect(hf, errbuf, errlen, 1))
+      if(http_connect(hf, errbuf, errlen, 1, 0))
 	return -1;
 
     htsbuf_queue_init(&q, 0);
@@ -2863,8 +2951,12 @@ http_recv_chunked(http_file_t *hf, http_req_aux_t *hra)
       return -2;
 
     remain = strtol(chunkheader, NULL, 16);
-    if(remain == 0)
+    if(remain == 0) {
+      // Trailing \r\n -line
+      if(tcp_read_line(hc->hc_tc, chunkheader, sizeof(chunkheader)) < 0)
+        return -2;
       break;
+    }
 
     while(remain > 0) {
       int rsize = MIN(remain, HTTP_TMP_SIZE);
@@ -2952,7 +3044,7 @@ http_req_do(http_req_aux_t *hra)
 
  retry:
 
-  http_connect(hf, hra->errbuf, hra->errlen, !hra->post);
+  http_connect(hf, hra->errbuf, hra->errlen, !hra->post, 2);
   if(hf->hf_connection == NULL)
     goto cleanup;
 
