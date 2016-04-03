@@ -1186,14 +1186,6 @@ set_propref(glw_view_eval_context_t *ec, const token_attrib_t *a,
 			   "Attribute '%s' expects a property ref, got %s",
 			   a->name, token2name(t));
 
-  if(t->t_prop == NULL) {
-    TRACE(TRACE_ERROR, "GLW",
-          "assigning null prop to %s in widget %s at %s:%d",
-          a->name, ec->w->glw_class->gc_name,
-          rstr_get(ec->w->glw_file),
-          ec->w->glw_line);
-  }
-
   prop_t *p = prop_get_prop(t->t_prop);
   ec->w->glw_class->gc_set_prop(ec->w, a->attrib, p);
   prop_ref_dec(p);
