@@ -160,8 +160,6 @@ fa_libav_open_format(AVIOContext *avio, const char *url,
 
   fctx = avformat_alloc_context();
   fctx->pb = avio;
-  if(max_analyze_duration != -1)
-    fctx->max_analyze_duration = max_analyze_duration;
 
   if((err = avformat_open_input(&fctx, url, fmt, NULL)) != 0) {
     if(mimetype != NULL) {
@@ -177,6 +175,9 @@ fa_libav_open_format(AVIOContext *avio, const char *url,
 
   if(fps_probe_frames != -1)
     fctx->fps_probe_size = fps_probe_frames;
+
+  if(max_analyze_duration != -1)
+    fctx->max_analyze_duration = max_analyze_duration;
 
   if(avformat_find_stream_info(fctx, NULL) < 0) {
     avformat_close_input(&fctx);
