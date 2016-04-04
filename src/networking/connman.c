@@ -256,8 +256,6 @@ input_req_event(void *opaque, event_t *e)
 
   if(event_is_action(e, ACTION_OK)) {
 
-    prop_print_tree(cs->cs_input_req_prop, 1);
-
     rstr_t *username = prop_get_string(cs->cs_input_req_prop, "username", NULL);
     rstr_t *password = prop_get_string(cs->cs_input_req_prop, "password", NULL);
 
