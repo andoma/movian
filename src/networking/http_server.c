@@ -36,13 +36,6 @@
 #include "websocket.h"
 #include "upnp/upnp.h"
 
-#if ENABLE_OPENSSL
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <openssl/x509v3.h>
-static SSL_CTX *http_server_ssl_ctx;
-#endif
-
 static LIST_HEAD(, http_path) http_paths;
 LIST_HEAD(http_connection_list, http_connection);
 int http_server_port;
@@ -107,15 +100,6 @@ struct http_connection {
   const http_path_t *hc_path;
   void *hc_opaque;
 
-#if ENABLE_OPENSSL
-
-  int hc_read_status;
-  int hc_write_status;
-  int hc_accepted;
-  SSL *hc_ssl;
-  htsbuf_queue_t hc_input;
-#endif
-
   char hc_my_addr[128]; // hc_local_addr as text
 
   websocket_state_t hc_ws;
@@ -147,9 +131,6 @@ static struct strtab HTTP_versiontab[] = {
 static asyncio_fd_t *http_server_fd;
 
 static int http_write(http_connection_t *hc);
-#if ENABLE_OPENSSL
-static void http_ssl_write_try(http_connection_t *hc);
-#endif
 
 /**
  *
@@ -972,12 +953,6 @@ http_handle_input(http_connection_t *hc, htsbuf_queue_t *q)
 static int
 http_write(http_connection_t *hc)
 {
-#if ENABLE_OPENSSL
-  if(hc->hc_ssl != NULL) {
-    http_ssl_write_try(hc);
-    return 0;
-  }
-#endif
   asyncio_sendq(hc->hc_afd, &hc->hc_output, 0);
   return 0;
 }
@@ -1002,14 +977,6 @@ http_close(http_connection_t *hc)
 
   if(hc->hc_path != NULL && hc->hc_path->hp_ws_fini != NULL)
     hc->hc_path->hp_ws_fini(hc, hc->hc_opaque);
-
-#if ENABLE_OPENSSL
-  if(hc->hc_ssl != NULL) {
-    htsbuf_queue_flush(&hc->hc_input);
-    SSL_shutdown(hc->hc_ssl);
-    SSL_free(hc->hc_ssl);
-  }
-#endif
 
   free(hc);
 }
@@ -1071,256 +1038,11 @@ http_accept(void *opaque, int fd, const net_addr_t *local_addr,
 {
   http_connection_t *hc = calloc(1, sizeof(http_connection_t));
   hc->hc_afd = asyncio_attach("HTTP connection", fd,
-                              http_io_error, http_io_read, hc);
+                              http_io_error, http_io_read, hc, opaque);
   htsbuf_queue_init(&hc->hc_output, 0);
 
   hc->hc_local_addr  = *local_addr;
 }
-
-
-
-#if ENABLE_OPENSSL
-/**
- *
- */
-static void
-http_ssl_write_try(http_connection_t *hc)
-{
-  assert(hc->hc_accepted == 1);
-
-  htsbuf_data_t *hd;
-  htsbuf_queue_t *q = &hc->hc_output;
-  int len;
-
-  hc->hc_write_status = 0;
-
-  while((hd = TAILQ_FIRST(&q->hq_q)) != NULL) {
-
-    len = hd->hd_data_len - hd->hd_data_off;
-    assert(len > 0);
-
-    int r = SSL_write(hc->hc_ssl, hd->hd_data + hd->hd_data_off, len);
-    int err = SSL_get_error(hc->hc_ssl, r);
-
-    switch(err) {
-    case SSL_ERROR_NONE:
-      hd->hd_data_off += r;
-
-      assert(hd->hd_data_off <= hd->hd_data_len);
-
-      if(hd->hd_data_off == hd->hd_data_len) {
-        TAILQ_REMOVE(&q->hq_q, hd, hd_link);
-        free(hd->hd_data);
-        free(hd);
-      }
-      continue;
-
-    case SSL_ERROR_WANT_READ:
-    case SSL_ERROR_WANT_WRITE:
-      hc->hc_write_status = err;
-      return;
-
-    default:
-      return;
-    }
-  }
-
-}
-
-/**
- *
- */
-static void
-http_handshake_try(http_connection_t *hc)
-{
-  assert(hc->hc_accepted == 0);
-  int r = SSL_do_handshake(hc->hc_ssl);
-  int err = SSL_get_error(hc->hc_ssl, r);
-
-  switch(err) {
-
-  case SSL_ERROR_WANT_READ:
-  case SSL_ERROR_WANT_WRITE:
-    hc->hc_read_status = err;
-    break;
-
-  case SSL_ERROR_NONE:
-    hc->hc_read_status = 0;
-    hc->hc_accepted = 1;
-    break;
-
-  default:
-    TRACE(TRACE_ERROR, "HTTPSRV", "SSL: Unable to accept, err:%d r:%d errno:%d",
-          err, r, errno);
-
-    unsigned long e;
-    while((e = ERR_get_error()) != 0) {
-      char errbuf[512];
-      ERR_error_string_n(e, errbuf, sizeof(errbuf));
-      TRACE(TRACE_ERROR, "HTTPSRV", "SSL: %s", errbuf);
-    }
-    http_close(hc);
-    break;
-  }
-}
-
-
-/**
- *
- */
-static int
-http_ssl_get_poll_state(http_connection_t *hc)
-{
-  int events = 0;
-
-  if(hc->hc_read_status == SSL_ERROR_WANT_WRITE) {
-    events |= ASYNCIO_WRITE;
-  } else {
-    events |= ASYNCIO_READ;
-    if(hc->hc_accepted) {
-      http_ssl_write_try(hc);
-    }
-  }
-
-  if(hc->hc_write_status == SSL_ERROR_WANT_WRITE) {
-    events |= ASYNCIO_WRITE;
-  } else if(hc->hc_write_status == SSL_ERROR_WANT_READ) {
-    events |= ASYNCIO_READ;
-  }
-  return events;
-}
-
-
-/**
- *
- */
-static void
-ssl_input(http_connection_t *hc)
-{
-  while(1) {
-    char buf[4096];
-    if(hc->hc_write_status == SSL_ERROR_WANT_READ) {
-      return;
-    }
-
-    hc->hc_read_status = 0;
-    int r = SSL_read(hc->hc_ssl, buf, sizeof(buf));
-    int err = SSL_get_error(hc->hc_ssl, r);
-    switch(err) {
-    case SSL_ERROR_NONE:
-      htsbuf_append(&hc->hc_input, buf, r);
-      break;
-
-    default:
-      http_close(hc);
-      return;
-
-    case SSL_ERROR_WANT_READ:
-    case SSL_ERROR_WANT_WRITE:
-      hc->hc_read_status = err;
-      return;
-    }
-
-    if(http_handle_input(hc, &hc->hc_input)) {
-      http_close(hc);
-      return;
-    }
-    http_write(hc);
-  }
-}
-
-
-/**
- *
- */
-static int
-ssl_cb(asyncio_fd_t *af, void *opaque, int event, int error)
-{
-  http_connection_t *hc = opaque;
-
-  if(event & ASYNCIO_ERROR) {
-    http_close(hc);
-    return 0;
-  }
-
-  if(event == ASYNCIO_DYNAMIC)
-    return http_ssl_get_poll_state(hc);
-
-  if(!hc->hc_accepted) {
-    http_handshake_try(hc);
-  } else {
-    if(event & ASYNCIO_READ)
-      ssl_input(hc);
-  }
-
-  return 0;
-}
-
-/**
- *
- */
-static void
-http_accept_ssl(void *opaque, int fd, const net_addr_t *local_addr,
-                const net_addr_t *remote_addr)
-{
-  http_connection_t *hc = calloc(1, sizeof(http_connection_t));
-  hc->hc_ssl = SSL_new(http_server_ssl_ctx);
-  assert(hc->hc_ssl != NULL);
-
-  htsbuf_queue_init(&hc->hc_input, 0);
-
-  if(SSL_set_fd(hc->hc_ssl, fd) == 0) {
-    TRACE(TRACE_ERROR, "HTTPSRV", "SSL: Unable to set FD");
-  }
-  hc->hc_afd = asyncio_add_fd(fd, ASYNCIO_DYNAMIC, ssl_cb, hc, "http-ssl");
-
-  SSL_set_accept_state(hc->hc_ssl);
-
-  htsbuf_queue_init(&hc->hc_output, 0);
-  hc->hc_local_addr  = *local_addr;
-}
-
-
-/**
- *
- */
-static void
-http_server_ssl_init(void)
-{
-  int r;
-
-  if(gconf.http_server_ssl_key == NULL || gconf.http_server_ssl_crt == NULL)
-    return;
-
-  http_server_ssl_ctx = SSL_CTX_new(TLSv1_server_method());
-
-  r = SSL_CTX_use_PrivateKey_file(http_server_ssl_ctx,
-                                  gconf.http_server_ssl_key,
-                                  SSL_FILETYPE_PEM);
-  if(r != 1) {
-    TRACE(TRACE_ERROR, "HTTPSRV", "Unable to load private key file %s",
-          gconf.http_server_ssl_key);
-    return;
-  }
-  r = SSL_CTX_use_certificate_file(http_server_ssl_ctx,
-                                   gconf.http_server_ssl_crt,
-                                   SSL_FILETYPE_PEM);
-  if(r != 1) {
-    TRACE(TRACE_ERROR, "HTTPSRV", "Unable to load certificate file %s",
-          gconf.http_server_ssl_crt);
-    return;
-  }
-
-  r = SSL_CTX_check_private_key(http_server_ssl_ctx);
-  if(r != 1) {
-    TRACE(TRACE_ERROR, "HTTPSRV", "Certificate/private key file mismatch");
-    return;
-  }
-
-  asyncio_listen("http-server-ssl", 42443, http_accept_ssl, NULL, 1);
-}
-
-#endif
 
 
 /**
@@ -1329,12 +1051,15 @@ http_server_ssl_init(void)
 static void
 http_server_init(void)
 {
-#if ENABLE_OPENSSL
-  http_server_ssl_init();
-#endif
-
   http_server_fd = asyncio_listen("http-server", 42000,
                                   http_accept, NULL, 1);
+
+  if(gconf.http_server_ssl_key != NULL && gconf.http_server_ssl_crt != NULL) {
+    void *ctx = asyncio_ssl_create_server(gconf.http_server_ssl_key,
+                                          gconf.http_server_ssl_crt);
+    if(ctx != NULL)
+      asyncio_listen("http-server", 42443, http_accept, ctx, 1);
+  }
 
 #if STOS
   asyncio_listen("http-server", 80, http_accept, NULL, 1);

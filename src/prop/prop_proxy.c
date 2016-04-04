@@ -643,7 +643,8 @@ ppc_connect(void *aux, int status, const void *data)
         ppc->ppc_url, net_addr_str(&na));
 
   ppc->ppc_connection = asyncio_connect("stppclient", &na,
-                                        ppc_connected, ppc_input, ppc, 3000);
+                                        ppc_connected, ppc_input, ppc, 3000,
+                                        NULL, NULL);
   ppc_release(ppc);
 }
 

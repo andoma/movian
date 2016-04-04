@@ -54,7 +54,6 @@ void asyncio_start(void);
 #define ASYNCIO_WRITE           0x2
 #define ASYNCIO_ERROR           0x4
 #define ASYNCIO_TIMEOUT         0x8
-#define ASYNCIO_DYNAMIC         0x10 // Use callback to get events to wait for
 
 asyncio_fd_t *asyncio_add_fd(int fd, int events,
                              asyncio_fd_callback_t *cb, void *opaque,
@@ -88,6 +87,11 @@ void asyncio_wakeup_worker(int id);
  * TCP
  *************************************************************************/
 
+void *asyncio_ssl_create_server(const char *privatekeyfile,
+                                const char *certfile);
+
+void *asyncio_ssl_create_client(void);
+
 typedef void (asyncio_accept_callback_t)(void *opaque,
                                          int fd,
                                          const net_addr_t *local_addr,
@@ -106,12 +110,15 @@ asyncio_fd_t *asyncio_connect(const char *name,
 			      asyncio_error_callback_t *connect_cb,
 			      asyncio_read_callback_t *read_cb,
 			      void *opaque,
-			      int timeout);
+			      int timeout,
+                              void *tls,
+                              const char *hostname);
 
 asyncio_fd_t *asyncio_attach(const char *name, int fd,
                              asyncio_error_callback_t *error_cb,
                              asyncio_read_callback_t *read_cb,
-                             void *opaque);
+                             void *opaque,
+                             void *tls);
 
 void asyncio_send(asyncio_fd_t *af, const void *buf, size_t len, int cork);
 

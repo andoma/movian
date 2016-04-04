@@ -34,6 +34,26 @@
 #include "prop/prop.h"
 #include "misc/minmax.h"
 
+
+/**
+ *
+ */
+#if ENABLE_OPENSSL
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#include <openssl/x509v3.h>
+
+#include "net_openssl.h"
+
+static void asyncio_ssl_write(asyncio_fd_t *af);
+static void asyncio_ssl_read(asyncio_fd_t *af);
+static int asyncio_ssl_events(asyncio_fd_t *af);
+static void asyncio_ssl_handshake(asyncio_fd_t *af);
+
+#endif
+
+
+
 LIST_HEAD(asyncio_fd_list, asyncio_fd);
 LIST_HEAD(asyncio_worker_list, asyncio_worker);
 LIST_HEAD(asyncio_timer_list, asyncio_timer);
@@ -110,6 +130,16 @@ struct asyncio_fd {
   uint16_t af_port;
   uint16_t af_ext_events;
   uint8_t af_connected;
+
+  char *af_hostname;
+
+#if ENABLE_OPENSSL
+  int af_ssl_read_status;
+  int af_ssl_write_status;
+  int af_ssl_established;
+  SSL *af_ssl;
+#endif
+
 };
 
 
@@ -121,6 +151,8 @@ typedef struct asyncio_task {
   void (*at_fn)(void *aux);
   void *at_aux;
 } asyncio_task_t;
+
+
 
 
 /**
@@ -302,6 +334,13 @@ af_release(asyncio_fd_t *af)
   htsbuf_queue_flush(&af->af_recvq);
   htsbuf_queue_flush(&af->af_sendq);
   free(af->af_name);
+  free(af->af_hostname);
+#if ENABLE_OPENSSL
+  if(af->af_ssl != NULL) {
+    SSL_shutdown(af->af_ssl);
+    SSL_free(af->af_ssl);
+  }
+#endif
   free(af);
 }
 
@@ -317,7 +356,6 @@ events_to_poll(int events)
     (events & ASYNCIO_WRITE ? POLLOUT           : 0) |
     (events & ASYNCIO_ERROR ? (POLLHUP|POLLERR) : 0);
 }
-
 
 /**
  *
@@ -357,12 +395,14 @@ asyncio_dopoll(void)
     }
 
     fds[n].fd = af->af_fd;
-    if(af->af_ext_events & ASYNCIO_DYNAMIC) {
-      fds[n].events = events_to_poll(af->af_callback(af, af->af_opaque,
-                                                     ASYNCIO_DYNAMIC, 0));
-    } else {
+
+#if ENABLE_OPENSSL
+    if(af->af_ssl != NULL)
+      fds[n].events = asyncio_ssl_events(af);
+    else
+#endif
       fds[n].events = af->af_poll_events;
-    }
+
     fds[n].revents = 0;
     afds[n] = af;
 
@@ -501,6 +541,15 @@ void
 asyncio_del_fd(asyncio_fd_t *af)
 {
   asyncio_verify_thread();
+
+#if ENABLE_OPENSSL
+  if(af->af_ssl != NULL) {
+    SSL_shutdown(af->af_ssl);
+    SSL_free(af->af_ssl);
+    af->af_ssl = NULL;
+  }
+#endif
+
   if(af->af_fd != -1)
     close(af->af_fd);
   af->af_fd = -1;
@@ -784,14 +833,19 @@ asyncio_listen(const char *name, int port, asyncio_accept_callback_t *cb,
   return af;
 }
 
-
-
 /**
  *
  */
 static void
 do_write(asyncio_fd_t *af)
 {
+#if ENABLE_OPENSSL
+  if(af->af_ssl != NULL) {
+    asyncio_ssl_write(af);
+    return;
+  }
+#endif
+
   char tmp[1024];
 
   while(1) {
@@ -880,6 +934,12 @@ asyncio_tcp_connected(asyncio_fd_t *af, void *opaque, int events, int error)
 
   if(events & ASYNCIO_READ) {
     af->af_timeout = 0;
+#if ENABLE_OPENSSL
+    if(af->af_ssl != NULL) {
+      asyncio_ssl_read(af);
+      return 0;
+    }
+#endif
     do_read(af);
     return 0;
   }
@@ -887,6 +947,12 @@ asyncio_tcp_connected(asyncio_fd_t *af, void *opaque, int events, int error)
   if(events & ASYNCIO_WRITE) {
 
     if(af->af_connected) {
+#if ENABLE_OPENSSL
+      if(af->af_ssl != NULL) {
+        asyncio_ssl_write(af);
+        return 0;
+      }
+#endif
       do_write(af);
       return 0;
     }
@@ -908,7 +974,22 @@ asyncio_tcp_connected(asyncio_fd_t *af, void *opaque, int events, int error)
       snprintf(buf, sizeof(buf), "%s", strerror(errno));
       af->af_error_callback(af->af_opaque, buf);
     } else {
+
+
+#if ENABLE_OPENSSL
+      if(af->af_ssl != NULL) {
+        if(SSL_set_fd(af->af_ssl, af->af_fd) == 0) {
+          TRACE(TRACE_ERROR, "ASYNCIO", "SSL: Unable to set FD");
+        }
+        SSL_set_connect_state(af->af_ssl);
+        asyncio_ssl_handshake(af);
+        af->af_connected = 2;
+        return 0;
+      }
+#endif
+
       af->af_connected = 1;
+
       af->af_error_callback(af->af_opaque, NULL);
       do_write(af);
     }
@@ -952,7 +1033,8 @@ asyncio_fd_t *
 asyncio_connect(const char *name, const net_addr_t *addr,
 		asyncio_error_callback_t *error_cb,
 		asyncio_read_callback_t *read_cb,
-		void *opaque, int timeout)
+		void *opaque, int timeout,
+                void *tlsctx, const char *hostname)
 {
   struct sockaddr_in si = {0};
   int fd;
@@ -977,6 +1059,15 @@ asyncio_connect(const char *name, const net_addr_t *addr,
   af->af_error_callback = error_cb;
   af->af_read_callback  = read_cb;
   af->af_timeout = arch_get_ts() + timeout * 1000;
+  af->af_hostname = hostname ? strdup(hostname) : NULL;
+
+#if ENABLE_OPENSSL
+  if(tlsctx != NULL) {
+    af->af_ssl = SSL_new(tlsctx);
+    if(hostname != NULL)
+      SSL_set_tlsext_host_name(af->af_ssl, hostname);
+  }
+#endif
 
   int r = connect(fd, (struct sockaddr *)&si, sizeof(struct sockaddr_in));
   if(r == -1) {
@@ -1000,9 +1091,10 @@ asyncio_connect(const char *name, const net_addr_t *addr,
  */
 asyncio_fd_t *
 asyncio_attach(const char *name, int fd,
-		asyncio_error_callback_t *error_cb,
-		asyncio_read_callback_t *read_cb,
-		void *opaque)
+               asyncio_error_callback_t *error_cb,
+               asyncio_read_callback_t *read_cb,
+               void *opaque,
+               void *tlsctx)
 {
   no_sigpipe(fd);
   net_change_nonblocking(fd, 1);
@@ -1011,6 +1103,15 @@ asyncio_attach(const char *name, int fd,
   asyncio_fd_t *af = asyncio_add_fd(fd, ASYNCIO_READ | ASYNCIO_ERROR,
 				    asyncio_tcp_connected, opaque,
                                     name);
+#if ENABLE_OPENSSL
+  if(tlsctx != NULL) {
+    af->af_ssl = SSL_new(tlsctx);
+    if(SSL_set_fd(af->af_ssl, fd) == 0) {
+      TRACE(TRACE_ERROR, "ASYNCIO", "SSL: Unable to set FD");
+    }
+    SSL_set_accept_state(af->af_ssl);
+  }
+#endif
 
   af->af_connected = 1;
   af->af_fd = fd;
@@ -1348,3 +1449,225 @@ asyncio_trig_network_change(void)
   net_refresh_network_status();
   asyncio_run_task(asyncio_do_network_change, NULL);
 }
+
+
+
+
+
+#if ENABLE_OPENSSL
+
+
+/**
+ *
+ */
+static void
+asyncio_ssl_handshake(asyncio_fd_t *af)
+{
+  char errbuf[512];
+
+  int r = SSL_do_handshake(af->af_ssl);
+  int err = SSL_get_error(af->af_ssl, r);
+  switch(err) {
+
+  case SSL_ERROR_WANT_READ:
+  case SSL_ERROR_WANT_WRITE:
+    af->af_ssl_read_status = err;
+    break;
+
+  case SSL_ERROR_NONE:
+    af->af_ssl_read_status = 0;
+    af->af_ssl_established = 1;
+
+    if(af->af_connected == 2) {
+      if(openssl_verify_connection(af->af_ssl, af->af_hostname,
+                                   errbuf, sizeof(errbuf))) {
+        af->af_error_callback(af->af_opaque, errbuf);
+        return;
+      }
+      af->af_connected = 1;
+      af->af_error_callback(af->af_opaque, NULL);
+    }
+    break;
+
+  default:
+    TRACE(TRACE_ERROR, "ASYNCIO",
+          "SSL: Unable to handshake, err:%d r:%d errno:%d",
+          err, r, errno);
+
+    unsigned long e;
+    while((e = ERR_get_error()) != 0) {
+      ERR_error_string_n(e, errbuf, sizeof(errbuf));
+      TRACE(TRACE_ERROR, "ASYNCIO", "SSL: %s", errbuf);
+    }
+    af->af_error_callback(af->af_opaque, "SSL Handshake error");
+    break;
+  }
+}
+
+static int
+asyncio_ssl_events(asyncio_fd_t *af)
+{
+  int events = 0;
+
+  if(!af->af_connected)
+    return POLLOUT;
+
+  if(af->af_ssl_read_status == SSL_ERROR_WANT_WRITE) {
+    events |= POLLOUT;
+  } else {
+    events |= POLLIN;
+    if(af->af_ssl_established) {
+      asyncio_ssl_write(af);
+    }
+  }
+
+  if(af->af_ssl_write_status == SSL_ERROR_WANT_WRITE) {
+    events |= POLLOUT;
+  } else if(af->af_ssl_write_status == SSL_ERROR_WANT_READ) {
+    events |= POLLIN;
+  }
+  return events;
+}
+
+
+static void
+asyncio_ssl_write(asyncio_fd_t *af)
+{
+  if(!af->af_ssl_established) {
+    asyncio_ssl_handshake(af);
+    return;
+  }
+
+  htsbuf_data_t *hd;
+  htsbuf_queue_t *q = &af->af_sendq;
+  int len;
+
+  af->af_ssl_write_status = 0;
+
+  while((hd = TAILQ_FIRST(&q->hq_q)) != NULL) {
+
+    len = hd->hd_data_len - hd->hd_data_off;
+    assert(len > 0);
+
+    int r = SSL_write(af->af_ssl, hd->hd_data + hd->hd_data_off, len);
+    int err = SSL_get_error(af->af_ssl, r);
+
+    switch(err) {
+    case SSL_ERROR_NONE:
+      hd->hd_data_off += r;
+
+      assert(hd->hd_data_off <= hd->hd_data_len);
+
+      if(hd->hd_data_off == hd->hd_data_len) {
+        TAILQ_REMOVE(&q->hq_q, hd, hd_link);
+        free(hd->hd_data);
+        free(hd);
+      }
+      continue;
+
+    case SSL_ERROR_WANT_READ:
+    case SSL_ERROR_WANT_WRITE:
+      af->af_ssl_write_status = err;
+      return;
+
+    default:
+      return;
+    }
+  }
+}
+
+/**
+ *
+ */
+static void
+asyncio_ssl_read(asyncio_fd_t *af)
+{
+  if(!af->af_ssl_established) {
+    asyncio_ssl_handshake(af);
+    return;
+  }
+
+
+  while(af->af_ssl != NULL) {
+    char buf[4096];
+    if(af->af_ssl_write_status == SSL_ERROR_WANT_READ) {
+      return;
+    }
+
+    af->af_ssl_read_status = 0;
+    int r = SSL_read(af->af_ssl, buf, sizeof(buf));
+    int err = SSL_get_error(af->af_ssl, r);
+    switch(err) {
+    case SSL_ERROR_NONE:
+      htsbuf_append(&af->af_recvq, buf, r);
+      break;
+
+    default:
+      af->af_error_callback(af->af_opaque, "SSL Error");
+      return;
+
+    case SSL_ERROR_WANT_READ:
+    case SSL_ERROR_WANT_WRITE:
+      af->af_ssl_read_status = err;
+      return;
+    }
+    af->af_read_callback(af->af_opaque, &af->af_recvq);
+  }
+}
+
+
+void *
+asyncio_ssl_create_server(const char *privkeyfile, const char *certfile)
+{
+  SSL_CTX *ctx = SSL_CTX_new(TLSv1_server_method());
+
+  int r = SSL_CTX_use_PrivateKey_file(ctx, privkeyfile, SSL_FILETYPE_PEM);
+  if(r != 1) {
+    TRACE(TRACE_ERROR, "ASYNCIO", "Unable to load private key file %s",
+          privkeyfile);
+    return NULL;
+  }
+  r = SSL_CTX_use_certificate_file(ctx, certfile, SSL_FILETYPE_PEM);
+  if(r != 1) {
+    TRACE(TRACE_ERROR, "ASYNCIO", "Unable to load certificate file %s",
+          certfile);
+    return NULL;
+  }
+
+  r = SSL_CTX_check_private_key(ctx);
+  if(r != 1) {
+    TRACE(TRACE_ERROR, "ASYNCIO", "Certificate/private key file mismatch");
+    return NULL;
+  }
+  return ctx;
+}
+
+
+void *
+asyncio_ssl_create_client(void)
+{
+  SSL_CTX *ctx = SSL_CTX_new(TLSv1_client_method());
+
+  if(!SSL_CTX_load_verify_locations(ctx, NULL, "/etc/ssl/certs")) {
+    return NULL;
+  }
+
+  return ctx;
+}
+
+#else
+
+
+void *
+asyncio_ssl_create_server(const char *privkeyfile, const char *certfile)
+{
+  return NULL;
+}
+
+void *
+asyncio_ssl_create_client(void)
+{
+  return NULL;
+}
+
+#endif

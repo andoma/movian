@@ -477,7 +477,7 @@ asyncio_connect(const char *name,
                 asyncio_error_callback_t *error_cb,
                 asyncio_read_callback_t *read_cb,
                 void *opaque,
-                int timeout)
+                int timeout, void *tls, const char *hostname)
 {
   PP_Resource sock = ppb_tcpsocket->Create(g_Instance);
   PP_Resource addr;
@@ -533,7 +533,8 @@ asyncio_fd_t *
 asyncio_attach(const char *name, int fd,
                asyncio_error_callback_t *error_cb,
                asyncio_read_callback_t *read_cb,
-               void *opaque)
+               void *opaque,
+               void *tls)
 {
   asyncio_fd_t *af = asyncio_fd_create(name, fd, opaque);
   af->af_error_callback = error_cb;
@@ -1198,4 +1199,16 @@ net_get_interfaces(void)
   }
   hts_mutex_unlock(&netif_mutex);
   return ni;
+}
+
+void *
+asyncio_ssl_create_server(const char *privkeyfile, const char *certfile)
+{
+  return NULL;
+}
+
+void *
+asyncio_ssl_create_client(void)
+{
+  return NULL;
 }

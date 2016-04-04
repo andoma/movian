@@ -21,7 +21,9 @@
 
 #include "main.h"
 #include "net_i.h"
+#include "net_openssl.h"
 
+#include <openssl/x509v3.h>
 
 static SSL_CTX *app_ssl_ctx;
 static pthread_mutex_t *ssl_locks;
@@ -125,6 +127,98 @@ tcp_ssl_close(tcpcon_t *tc)
 {
   SSL_shutdown(tc->ssl);
   SSL_free(tc->ssl);
+}
+
+
+/**
+ *
+ */
+static int
+verify_hostname(const char *hostname, X509 *cert, char *errbuf, size_t errlen)
+{
+  int i;
+  /* domainname is the "domain" we wan't to access (actually hostname
+   * with first part of the DNS name removed) */
+  const char *domainname = strchr(hostname, '.');
+  if(domainname != NULL) {
+      domainname++;
+      if(strlen(domainname) == 0)
+        domainname = NULL;
+  }
+
+
+  // First check commonName
+
+  X509_NAME *subjectName;
+  char commonName[256];
+
+  subjectName = X509_get_subject_name(cert);
+  if(X509_NAME_get_text_by_NID(subjectName, NID_commonName,
+                               commonName, sizeof(commonName)) != -1) {
+    if(!strcmp(commonName, hostname))
+      return 0;
+  }
+
+  // Then check altNames
+
+  GENERAL_NAMES *names = X509_get_ext_d2i( cert, NID_subject_alt_name, 0, 0);
+  if(names == NULL) {
+    snprintf(errbuf, errlen, "SSL: No subjectAltName extension");
+    return -1;
+  }
+
+  const int num_names = sk_GENERAL_NAME_num(names);
+
+  for(i = 0; i < num_names; ++i ) {
+    GENERAL_NAME *name = sk_GENERAL_NAME_value(names, i);
+    unsigned char *dns;
+    int match;
+
+    if(name->type != GEN_DNS)
+      continue;
+
+    ASN1_STRING_to_UTF8(&dns, name->d.dNSName);
+    if(dns[0] == '*' && dns[1] == '.') {
+      match = domainname != NULL && !strcasecmp((char *)dns+2, domainname);
+    } else {
+      match = !strcasecmp((char *)dns, hostname);
+    }
+
+    OPENSSL_free(dns);
+    if(match)
+      return 0;
+  }
+  snprintf(errbuf, errlen, "SSL: Hostname mismatch");
+  return -1;
+}
+
+int
+openssl_verify_connection(SSL *ssl, const char *hostname,
+                          char *errbuf, size_t errlen)
+{
+  X509 *peer = SSL_get_peer_certificate(ssl);
+  if(peer == NULL) {
+    snprintf(errbuf, errlen, "No certificate");
+    return -1;
+  }
+
+  int err = SSL_get_verify_result(ssl);
+  if(err != X509_V_OK) {
+    snprintf(errbuf, errlen, "Certificate error: %s",
+             X509_verify_cert_error_string(err));
+    goto bad;
+  }
+
+  if(verify_hostname(hostname, peer, errbuf, errlen)) {
+    goto bad;
+  }
+
+  X509_free(peer);
+  return 0;
+
+ bad:
+  X509_free(peer);
+  return -1;
 }
 
 

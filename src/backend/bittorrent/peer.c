@@ -1002,7 +1002,7 @@ peer_connect(peer_t *p)
   p->p_connection = asyncio_connect(name, &p->p_addr,
 				    peer_connect_cb,
 				    peer_read_cb,
-				    p, 5000);
+				    p, 5000, NULL, NULL);
 }
 
 
