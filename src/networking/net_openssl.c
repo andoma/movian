@@ -194,7 +194,8 @@ verify_hostname(const char *hostname, X509 *cert, char *errbuf, size_t errlen)
 
 int
 openssl_verify_connection(SSL *ssl, const char *hostname,
-                          char *errbuf, size_t errlen)
+                          char *errbuf, size_t errlen,
+                          int allow_future_cert)
 {
   X509 *peer = SSL_get_peer_certificate(ssl);
   if(peer == NULL) {
@@ -203,6 +204,9 @@ openssl_verify_connection(SSL *ssl, const char *hostname,
   }
 
   int err = SSL_get_verify_result(ssl);
+  if(allow_future_cert && err == X509_V_ERR_CERT_NOT_YET_VALID)
+    err = X509_V_OK;
+
   if(err != X509_V_OK) {
     snprintf(errbuf, errlen, "Certificate error: %s",
              X509_verify_cert_error_string(err));

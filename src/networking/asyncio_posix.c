@@ -1480,7 +1480,7 @@ asyncio_ssl_handshake(asyncio_fd_t *af)
 
     if(af->af_connected == 2) {
       if(openssl_verify_connection(af->af_ssl, af->af_hostname,
-                                   errbuf, sizeof(errbuf))) {
+                                   errbuf, sizeof(errbuf), 1)) {
         af->af_error_callback(af->af_opaque, errbuf);
         return;
       }
