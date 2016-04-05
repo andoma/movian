@@ -627,8 +627,7 @@ id: Audio delay
 msg: 音频延迟
 
 id: Audio gain
-# Missing translation
-msg: 
+msg: 音频增益
 
 id: Setup audio output
 msg: 设置音频输出
@@ -724,8 +723,7 @@ id: Enable bittorrent
 msg: 启用bittorrent
 
 id: Max upload speed
-# Missing translation
-msg: 
+msg: 最大上传速度
 
 id: Max usage of free space for caching torrents
 msg: 种子缓存最大空间使用率：
@@ -1748,8 +1746,7 @@ id: Resume video playback
 msg: 从上次结束位置开始播放
 
 id: Show clock during playback
-# Missing translation
-msg: 
+msg: 播放时显示时钟
 
 id: Step when seeking backward
 msg: 快退步速
