@@ -639,7 +639,7 @@ main(int argc, char **argv)
   gconf.concurrency = 2;
   gconf.can_standby = 1;
   gconf.trace_level = TRACE_DEBUG;
-  gconf.disable_http_reuse = 0;
+  gconf.disable_http_reuse = 1;
 
   load_syms();
 
