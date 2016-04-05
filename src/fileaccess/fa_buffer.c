@@ -589,7 +589,7 @@ fa_buffered_open(const char *url, char *errbuf, size_t errsize, int flags,
   fa_protocol_t *fap;
   char *filename;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, errbuf, errsize)) == NULL)
     return NULL;
 
   if(!(fap->fap_flags & FAP_ALLOW_CACHE)) {

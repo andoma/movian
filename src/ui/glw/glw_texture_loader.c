@@ -54,7 +54,6 @@ static void
 glt_destroy(glw_loadable_texture_t *glt)
 {
   cancellable_release(glt->glt_cancellable);
-  far_release(glt->glt_far);
   free(glt);
 }
 
@@ -285,7 +284,7 @@ loader_thread(void *aux)
       cancellable_reset(glt->glt_cancellable);
 
       glw_unlock(gr);
-      img = backend_imageloader(url, &im, glt->glt_far,
+      img = backend_imageloader(url, &im,
                                 errbuf, sizeof(errbuf),
                                 ccptr, glt->glt_cancellable);
 
@@ -570,7 +569,7 @@ glw_tex_deref(glw_root_t *gr, glw_loadable_texture_t *glt)
  */
 glw_loadable_texture_t *
 glw_tex_create(glw_root_t *gr, rstr_t *filename, int flags, int xs, int ys,
-	       int radius, int shadow, float aspect, struct fa_resolver *far)
+	       int radius, int shadow, float aspect)
 {
   glw_loadable_texture_t *glt;
 
@@ -584,8 +583,7 @@ glw_tex_create(glw_root_t *gr, rstr_t *filename, int flags, int xs, int ys,
        glt->glt_req_ys == ys &&
        glt->glt_radius == radius &&
        glt->glt_shadow == shadow &&
-       glt->glt_req_aspect == aspect &&
-       glt->glt_far == far)
+       glt->glt_req_aspect == aspect)
       break;
 
   if(glt == NULL) {
@@ -600,7 +598,6 @@ glw_tex_create(glw_root_t *gr, rstr_t *filename, int flags, int xs, int ys,
     glt->glt_radius = radius;
     glt->glt_shadow = shadow;
     glt->glt_req_aspect = aspect;
-    glt->glt_far = far_retain(far);
   }
 
   glt->glt_refcnt++;

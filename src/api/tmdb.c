@@ -771,7 +771,7 @@ be_tmdb_canhandle(const char *url)
  */
 static image_t *
 be_tmdb_imageloader(const char *url, const image_meta_t *im,
-		    struct fa_resolver *far, char *errbuf, size_t errlen,
+		    char *errbuf, size_t errlen,
 		    int *cache_control, cancellable_t *c)
 {
   tmdb_image_size_t *s;
@@ -810,7 +810,7 @@ be_tmdb_imageloader(const char *url, const image_meta_t *im,
 
   rstr_t *rstr = htsmsg_json_serialize_to_rstr(m, "imageset:");
   htsmsg_release(m);
-  image_t *img = backend_imageloader(rstr, im, far, errbuf, errlen,
+  image_t *img = backend_imageloader(rstr, im, errbuf, errlen,
 				     cache_control, c);
   rstr_release(rstr);
   if(img != NULL && img != NOT_MODIFIED)

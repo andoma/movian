@@ -268,8 +268,6 @@ typedef struct glw_scope {
   int gs_refcount;
   int gs_num_roots;
 
-  struct fa_resolver *gs_far;
-
 #define GLW_ROOT_SELF   0
 #define GLW_ROOT_PARENT 1
 #define GLW_ROOT_VIEW   2
@@ -283,7 +281,7 @@ typedef struct glw_scope {
 
 } glw_scope_t;
 
-glw_scope_t *glw_scope_create(struct fa_resolver *far);
+glw_scope_t *glw_scope_create(void);
 
 glw_scope_t *glw_scope_dup(const glw_scope_t *src, int retain_mask);
 
@@ -774,7 +772,7 @@ typedef struct glw_root {
 
   LIST_HEAD(, glw_cached_view) gr_views;
 
-  struct fa_resolver *gr_fa_resolver;
+  char *gr_skin;
 
   hts_thread_t gr_thread;
   hts_mutex_t gr_mutex;
@@ -1635,6 +1633,8 @@ void glw_gtb_set_caption_raw(glw_t *w, uint32_t *uc, int len);
 extern const float glw_identitymtx[16];
 
 void glw_icon_flush(glw_root_t *gr);
+
+rstr_t *glw_resolve_path(rstr_t *filename, rstr_t *at, glw_root_t *gr);
 
 int glw_image_get_details(glw_t *w, char *path, size_t pathlen, float *alpha);
 

@@ -200,51 +200,6 @@ glw_init2(glw_root_t *gr, int flags)
 }
 
 
-typedef struct skin_resolver {
-  fa_resolver_t super;
-  char *path;
-
-} skin_resolver_t;
-
-
-/**
- *
- */
-static void
-skin_resolver_cleanup(fa_resolver_t *super)
-{
-  skin_resolver_t *sr = (skin_resolver_t *)super;
-  free(sr->path);
-}
-
-
-/**
- *
- */
-static const char *
-skin_resolver_vpath(fa_resolver_t *super, const char *proto)
-{
-  skin_resolver_t *sr = (skin_resolver_t *)super;
-  if(!strcmp(proto, "skin"))
-    return sr->path;
-  return NULL;
-}
-
-
-
-/**
- *
- */
-static fa_resolver_t *
-create_skin_resolver(const char *skin)
-{
-  skin_resolver_t *sr = calloc(1, sizeof(skin_resolver_t));
-  sr->path = strdup(skin);
-  atomic_set(&sr->super.far_refcount, 1);
-  sr->super.far_cleanup = skin_resolver_cleanup;
-  sr->super.far_vpath = skin_resolver_vpath;
-  return &sr->super;
-}
 
 /**
  *
@@ -291,7 +246,7 @@ glw_init4(glw_root_t *gr,
   gr->gr_user_underscan_h = INT32_MIN;
   gr->gr_user_underscan_v = INT32_MIN;
 
-  gr->gr_fa_resolver = create_skin_resolver(skin);
+  gr->gr_skin = strdup(skin);
 
   gr->gr_font_domain = freetype_get_context();
 
@@ -410,7 +365,6 @@ glw_fini(glw_root_t *gr)
   free(gr->gr_render_jobs);
   free(gr->gr_render_order);
   free(gr->gr_vertex_buffer);
-  far_release(gr->gr_fa_resolver);
   rstr_release(gr->gr_pending_focus);
 }
 
@@ -448,11 +402,14 @@ glw_unload_universe(glw_root_t *gr)
 void
 glw_load_universe(glw_root_t *gr)
 {
+  char buf[PATH_MAX];
   glw_unload_universe(gr);
 
-  rstr_t *universe = rstr_alloc("skin://universe.view");
+  fa_pathjoin(buf, sizeof(buf), gr->gr_skin, "universe.view");
 
-  glw_scope_t *scope = glw_scope_create(gr->gr_fa_resolver);
+  rstr_t *universe = rstr_alloc(buf);
+
+  glw_scope_t *scope = glw_scope_create();
 
   scope->gs_roots[GLW_ROOT_CORE].p = prop_ref_inc(gr->gr_prop_core);
 

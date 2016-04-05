@@ -33,6 +33,28 @@
 /**
  *
  */
+rstr_t *
+glw_resolve_path(rstr_t *filename, rstr_t *at, glw_root_t *gr)
+{
+  if(filename == NULL)
+    return NULL;
+
+  const char *x = mystrbegins(rstr_get(filename), "skin://");
+  if(x != NULL) {
+    char buf[PATH_MAX];
+    fa_pathjoin(buf, sizeof(buf), gr->gr_skin, x);
+    return rstr_alloc(buf);
+  }
+
+  return fa_absolute_path(filename, at);
+}
+
+
+
+
+/**
+ *
+ */
 static void
 respond_error(glw_t *w, const token_t *t, const char *name)
 {
@@ -201,9 +223,9 @@ set_font(glw_view_eval_context_t *ec, const token_attrib_t *a,
   else
     str = NULL;
 
-  str = str ? fa_absolute_path(str, t->file) : NULL;
-
   glw_t *w = ec->w;
+
+  str = glw_resolve_path(str, t->file, w->glw_root);
 
   if(w->glw_class->gc_set_rstr != NULL)
     w->glw_class->gc_set_rstr(w, GLW_ATTRIB_FONT, str, NULL);
@@ -227,10 +249,12 @@ set_fs(glw_view_eval_context_t *ec, const token_attrib_t *a,
   else
     str = NULL;
 
-  str = str ? fa_absolute_path(str, t->file) : NULL;
+  glw_t *w = ec->w;
 
-  if(ec->w->glw_class->gc_set_fs != NULL)
-    ec->w->glw_class->gc_set_fs(ec->w, str);
+  str = glw_resolve_path(str, t->file, w->glw_root);
+
+  if(w->glw_class->gc_set_fs != NULL)
+    w->glw_class->gc_set_fs(ec->w, str);
   rstr_release(str);
   return 0;
 }
@@ -1098,7 +1122,7 @@ set_alt(glw_view_eval_context_t *ec, const token_attrib_t *a,
     break;
   }
 
-  r = fa_absolute_path(r, t->file);
+  r = glw_resolve_path(r, t->file, w->glw_root);
 
   if(w->glw_class->gc_set_alt != NULL)
     w->glw_class->gc_set_alt(w, r);
@@ -1137,7 +1161,7 @@ set_source(glw_view_eval_context_t *ec, const token_attrib_t *a,
     break;
   }
 
-  r = fa_absolute_path(r, t->file);
+  r = glw_resolve_path(r, t->file, w->glw_root);
 
   if(w->glw_class->gc_set_source != NULL)
     w->glw_class->gc_set_source(w, r, NULL);

@@ -766,8 +766,7 @@ glw_image_tex_load(glw_image_t *gi, rstr_t *url, int width, int height)
     flags |= GLW_TEX_INTENSITY_ANALYSIS;
 
   return glw_tex_create(gi->w.glw_root, url, flags, width, height,
-                        gi->gi_radius, gi->gi_shadow, gi->gi_aspect,
-                        gi->w.glw_scope->gs_far);
+                        gi->gi_radius, gi->gi_shadow, gi->gi_aspect);
 }
 
 

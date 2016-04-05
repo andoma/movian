@@ -29,7 +29,6 @@ struct media_pipe;
 struct navigator;
 struct event;
 struct vsource_list;
-struct fa_resolver;
 typedef struct video_queue video_queue_t;
 
 typedef void (be_load_cb_t)(void *opaque, int loaded, int total);
@@ -112,7 +111,6 @@ typedef struct backend {
 				 const char *mimetype);
 
   struct image *(*be_imageloader)(const char *url, const struct image_meta *im,
-                                  struct fa_resolver *far,
                                   char *errbuf, size_t errlen,
                                   int *cache_control,
                                   cancellable_t *c);
@@ -154,7 +152,6 @@ struct event *backend_play_audio(const char *url, struct media_pipe *mp,
 
 
 struct image *backend_imageloader(rstr_t *url, const struct image_meta *im,
-                                  struct fa_resolver *far,
                                   char *errbuf, size_t errlen,
                                   int *cache_control,
                                   cancellable_t *c)

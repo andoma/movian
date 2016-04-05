@@ -157,26 +157,6 @@ typedef struct fa_open_extra {
 } fa_open_extra_t;
 
 
-/**
- *
- */
-typedef struct fa_resolver {
-  struct fa_resolver *far_next;
-  void (*far_cleanup)(struct fa_resolver *far);
-  const char *(*far_vpath)(struct fa_resolver *far, const char *proto);
-
-  buf_t *(*far_load)(struct fa_resolver *far, const char *url,
-                      char *errbuf, size_t errlen);
-
-  atomic_t far_refcount;
-
-} fa_resolver_t;
-
-
-void far_release(fa_resolver_t *far);
-
-fa_resolver_t *far_retain(fa_resolver_t *far) attribute_unused_result;
-
 
 /**
  *
@@ -213,9 +193,8 @@ fa_dir_t *fa_get_parts(const char *url, char *errbuf, size_t errsize);
 void *fa_open_ex(const char *url, char *errbuf, size_t errsize, int flags,
 		 struct fa_open_extra *foe);
 
-void *fa_open_resolver(const char *url, fa_resolver_t *far,
-		     char *errbuf, size_t errsize, int flags,
-                     struct fa_open_extra *foe);
+void *fa_open_resolver(const char *url, char *errbuf, size_t errsize,
+                       int flags, struct fa_open_extra *foe);
 
 void fa_close(void *fh);
 void fa_close_with_park(fa_handle_t *fh, int park);
@@ -317,7 +296,6 @@ enum {
   FA_LOAD_TAG_FLAGS,
   FA_LOAD_TAG_PROGRESS_CALLBACK,
   FA_LOAD_TAG_CANCELLABLE,
-  FA_LOAD_TAG_RESOLVER,
   FA_LOAD_TAG_QUERY_ARG,
   FA_LOAD_TAG_QUERY_ARGVEC,
   FA_LOAD_TAG_MIN_EXPIRE,
@@ -333,7 +311,6 @@ enum {
 #define FA_LOAD_FLAGS(a)                FA_LOAD_TAG_FLAGS, a
 #define FA_LOAD_PROGRESS_CALLBACK(a, b) FA_LOAD_TAG_PROGRESS_CALLBACK, a, b
 #define FA_LOAD_CANCELLABLE(a)          FA_LOAD_TAG_CANCELLABLE, a
-#define FA_LOAD_RESOLVER(a)             FA_LOAD_TAG_RESOLVER, a
 #define FA_LOAD_QUERY_ARG(a, b)         FA_LOAD_TAG_QUERY_ARG, a, b
 #define FA_LOAD_QUERY_ARGVEC(a)         FA_LOAD_TAG_QUERY_ARGVEC, a
 #define FA_LOAD_MIN_EXPIRE(a)           FA_LOAD_TAG_MIN_EXPIRE, a

@@ -101,8 +101,7 @@ glw_loadable_texture_t *glw_tex_create(glw_root_t *gr, rstr_t *url,
 				       int flags, int xs, int ys,
 				       int corner_radius,
                                        int drop_shadow,
-                                       float aspect,
-                                       struct fa_resolver *far);
+                                       float aspect);
 
 void glw_tex_deref(glw_root_t *gr, glw_loadable_texture_t *ht);
 

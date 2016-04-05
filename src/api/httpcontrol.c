@@ -174,7 +174,7 @@ hc_image(http_connection_t *hc, const char *remain, void *opaque,
     url = rstr_alloc(remain);
   }
 
-  img = backend_imageloader(url, &im, NULL, errbuf, sizeof(errbuf), NULL,
+  img = backend_imageloader(url, &im, errbuf, sizeof(errbuf), NULL,
                             NULL);
   rstr_release(url);
   if(img == NULL)

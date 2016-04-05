@@ -395,8 +395,8 @@ face_create_from_mem(buf_t *b, char *errbuf, size_t errlen,
  *
  */
 static face_t *
-face_create_from_uri(const char *path, fa_resolver_t *far,
-		     struct face_list *faces, int prio, int font_domain)
+face_create_from_uri(const char *path, struct face_list *faces,
+                     int prio, int font_domain)
 {
   char errbuf[256];
   face_t *face;
@@ -407,7 +407,7 @@ face_create_from_uri(const char *path, fa_resolver_t *far,
     }
   }
 
-  fa_handle_t *fh = fa_open_resolver(path, far, errbuf, sizeof(errbuf), 0,
+  fa_handle_t *fh = fa_open_resolver(path, errbuf, sizeof(errbuf), 0,
                                      NULL);
   if(fh == NULL) {
     TRACE(TRACE_ERROR, "Freetype", "Unable to load font: %s -- %s",
@@ -430,14 +430,13 @@ face_create_from_uri(const char *path, fa_resolver_t *far,
  *
  */
 static face_t *
-face_resolve(int uc, uint8_t style, const char *name, int font_domain,
-	     fa_resolver_t *far)
+face_resolve(int uc, uint8_t style, const char *name, int font_domain)
 {
   face_t *f;
   if(name != NULL) {
 
     if(fa_can_handle(name, NULL, 0)) {
-      f = face_create_from_uri(name, far, &dynamic_faces, 0, font_domain);
+      f = face_create_from_uri(name, &dynamic_faces, 0, font_domain);
       if(f != NULL && FT_Get_Char_Index(f->face, uc))
 	return f;
     }
@@ -517,7 +516,7 @@ face_resolve(int uc, uint8_t style, const char *name, int font_domain,
 #if ENABLE_LIBFONTCONFIG
   char url[URL_MAX];
   if(!fontconfig_resolve(uc, style, name, url, sizeof(url))) {
-    f = face_create_from_uri(url, NULL, &dynamic_faces, 0, font_domain);
+    f = face_create_from_uri(url, &dynamic_faces, 0, font_domain);
     if(f != NULL)
       return f;
   }
@@ -535,10 +534,9 @@ face_resolve(int uc, uint8_t style, const char *name, int font_domain,
  *
  */
 static face_t *
-face_find(int uc, uint8_t style, const char *name, int font_domain,
-	  fa_resolver_t *far)
+face_find(int uc, uint8_t style, const char *name, int font_domain)
 {
-  face_t *f = face_resolve(uc, style, name, font_domain, far);
+  face_t *f = face_resolve(uc, style, name, font_domain);
 #if 0
   printf("Resolv %c (0x%x) [style=0x%x, font: %s] -> %s\n",
 	 uc, uc, style, name ?: "<unset>",
@@ -580,7 +578,7 @@ face_set_size(face_t *f, int size)
  */
 static glyph_t *
 glyph_get(int uc, int size, uint8_t style, const char *font,
-	  int font_domain, fa_resolver_t *far)
+	  int font_domain)
 {
   int err, hash = (uc ^ size ^ style) & GLYPH_HASH_MASK;
   glyph_t *g;
@@ -599,10 +597,10 @@ glyph_get(int uc, int size, uint8_t style, const char *font,
     face_t *f;
     FT_UInt gi = 0;
 
-    f = face_find(uc, style, font, font_domain, far);
+    f = face_find(uc, style, font, font_domain);
 
     if(f == NULL) {
-      f = face_find(uc, 0, font, font_domain, far);
+      f = face_find(uc, 0, font, font_domain);
       if(f == NULL)
 	return NULL;
     }
@@ -926,7 +924,7 @@ text_render0(const uint32_t *uc, const int len,
 	     int flags, int default_size, float scale,
 	     int global_alignment, int max_width, int max_lines,
 	     const char *default_font, int default_domain,
-	     int min_size, fa_resolver_t *far)
+	     int min_size)
 {
   FT_UInt prev = 0;
   FT_BBox bbox = {0};
@@ -1157,8 +1155,8 @@ text_render0(const uint32_t *uc, const int len,
     if(li->start == -1)
       li->start = out;
 
-    if((g = glyph_get(uc[i], current_size, style, current_font, current_domain,
-		      far)) == NULL)
+    if((g = glyph_get(uc[i], current_size, style, current_font,
+                      current_domain)) == NULL)
       continue;
 
     if(FT_HAS_KERNING(g->face->face) && g->gi && prev) {
@@ -1265,8 +1263,7 @@ text_render0(const uint32_t *uc, const int len,
 
 	if(flags & TR_RENDER_ELLIPSIZE) {
 	  glyph_t *eg = glyph_get(HORIZONTAL_ELLIPSIS_UNICODE, g->size, 0,
-				  g->face->url, g->face->font_domain,
-				  far);
+				  g->face->url, g->face->font_domain);
 	  if(w > max_width - eg->adv_x) {
 
 	    while(j > 0 && items[li->start + j - 1].code == ' ') {
@@ -1468,16 +1465,14 @@ text_render0(const uint32_t *uc, const int len,
 struct image *
 text_render(const uint32_t *uc, const int len, int flags, int default_size,
 	    float scale, int alignment, int max_width, int max_lines,
-	    const char *family, int context, int min_size,
-            fa_resolver_t *far)
+	    const char *family, int context, int min_size)
 {
   struct image *im;
 
   hts_mutex_lock(&text_mutex);
 
   im = text_render0(uc, len, flags, default_size, scale, alignment,
-		    max_width, max_lines, family, context, min_size,
-		    far);
+		    max_width, max_lines, family, context, min_size);
   while(num_glyphs > 512)
     glyph_flush_one();
 
@@ -1496,7 +1491,7 @@ void
 freetype_load_default_font(const char *url, int prio)
 {
   hts_mutex_lock(&text_mutex);
-  face_create_from_uri(url, NULL, &static_faces, prio, 0);
+  face_create_from_uri(url, &static_faces, prio, 0);
   hts_mutex_unlock(&text_mutex);
 }
 

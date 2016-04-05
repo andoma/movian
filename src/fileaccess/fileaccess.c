@@ -88,7 +88,7 @@ fap_retain(fa_protocol_t *fap)
  */
 char *
 fa_resolve_proto(const char *url, fa_protocol_t **p,
-		 fa_resolver_t *far, char *errbuf, size_t errsize)
+		 char *errbuf, size_t errsize)
 {
   struct fa_stat fs;
   fa_protocol_t *fap;
@@ -124,18 +124,9 @@ fa_resolve_proto(const char *url, fa_protocol_t **p,
 
   if(!strcmp("dataroot", buf)) {
     const char *pfx = app_dataroot();
-    snprintf(buf, sizeof(buf), "%s%s%s", 
+    snprintf(buf, sizeof(buf), "%s%s%s",
 	     pfx, pfx[strlen(pfx) - 1] == '/' ? "" : "/", url);
-    return fa_resolve_proto(buf, p, NULL, errbuf, errsize);
-  }
-
-  for(; far != NULL; far = far->far_next) {
-    const char *pfx = far->far_vpath(far, buf);
-    if(pfx != NULL) {
-      snprintf(buf, sizeof(buf), "%s%s%s",
-               pfx, pfx[strlen(pfx) - 1] == '/' ? "" : "/", url);
-      return fa_resolve_proto(buf, p, NULL, errbuf, errsize);
-    }
+    return fa_resolve_proto(buf, p, errbuf, errsize);
   }
 
 
@@ -170,11 +161,7 @@ fa_can_handle(const char *url, char *errbuf, size_t errsize)
   fa_protocol_t *fap;
   char *filename;
 
-  // XXX: Not good, should send vpaths in here instead
-  if(!strncmp(url, "skin://", strlen("skin://")))
-    return 1;
-
-  if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, errbuf, errsize)) == NULL)
     return 0;
   fap_release(fap);
   free(filename);
@@ -210,7 +197,7 @@ fa_normalize(const char *url, char *dst, size_t dstlen)
   char *filename;
   int r;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, NULL, 0)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, NULL, 0)) == NULL)
     return -1;
 
   r = fap->fap_normalize ? fap->fap_normalize(fap, filename, dst, dstlen) : -1;
@@ -238,7 +225,7 @@ fa_open_ex(const char *url, char *errbuf, size_t errsize, int flags,
       return fa_buffered_open(url, errbuf, errsize, flags, foe);
   }
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, errbuf, errsize)) == NULL)
     return NULL;
 
   if(flags & FA_WRITE && fap->fap_write == NULL) {
@@ -263,15 +250,14 @@ fa_open_ex(const char *url, char *errbuf, size_t errsize, int flags,
  *
  */
 void *
-fa_open_resolver(const char *url, fa_resolver_t *far,
-                 char *errbuf, size_t errsize, int flags,
+fa_open_resolver(const char *url, char *errbuf, size_t errsize, int flags,
                  fa_open_extra_t *foe)
 {
   fa_protocol_t *fap;
   char *filename;
   fa_handle_t *fh;
 
-  if((filename = fa_resolve_proto(url, &fap, far, errbuf, errsize)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, errbuf, errsize)) == NULL)
     return NULL;
 
   fh = fap->fap_open(fap, filename, errbuf, errsize, flags, foe);
@@ -420,7 +406,7 @@ fa_stat_ex(const char *url, struct fa_stat *buf, char *errbuf, size_t errsize,
   char *filename;
   int r;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, errbuf, errsize)) == NULL)
     return -1;
 
   int non_interactive = !!(flags & FA_NON_INTERACTIVE);
@@ -443,7 +429,7 @@ fa_scandir(const char *url, char *errbuf, size_t errsize)
   fa_dir_t *fd;
   char *filename;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, errbuf, errsize)) == NULL)
     return NULL;
 
   if(fap->fap_scan != NULL) {
@@ -473,7 +459,7 @@ fa_scandir2(fa_dir_t *fd, const char *url, char *errbuf, size_t errsize,
   char *filename;
   int rval = 0;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, errbuf, errsize)) == NULL)
     return -1;
 
   if(fap->fap_scan != NULL) {
@@ -500,7 +486,7 @@ fa_get_parts(const char *url, char *errbuf, size_t errsize)
   fa_dir_t *fd;
   char *filename;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, errbuf, errsize)) == NULL)
     return NULL;
 
   if(fap->fap_get_parts != NULL) {
@@ -556,7 +542,7 @@ fa_reference(const char *url)
   char *filename;
   fa_handle_t *fh;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, NULL, 0)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, NULL, 0)) == NULL)
     return NULL;
 
   fh = fap->fap_reference != NULL ? fap->fap_reference(fap, filename) : NULL;
@@ -591,7 +577,7 @@ fa_notify_start(const char *url, void *opaque,
   fa_protocol_t *fap;
   char *filename;
   fa_handle_t *fh;
-  if((filename = fa_resolve_proto(url, &fap, NULL, NULL, 0)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, NULL, 0)) == NULL)
     return NULL;
 
   if(fap->fap_notify_start == NULL) {
@@ -878,7 +864,7 @@ unlink_items(const struct delscan_item_queue *diq)
 
   TAILQ_FOREACH(di, diq, link) {
 
-    if((filename = fa_resolve_proto(rstr_get(di->url), &fap, NULL,
+    if((filename = fa_resolve_proto(rstr_get(di->url), &fap,
 				    errbuf, sizeof(errbuf))) == NULL) {
       TRACE(TRACE_ERROR, "FS", "Unable to resolve %s -- %s",
 	    rstr_get(di->url), errbuf);
@@ -996,7 +982,7 @@ fa_unlink_recursive(const char *url, char *errbuf, size_t errsize, int verify)
   struct delscan_item_queue diq;
   TAILQ_INIT(&diq);
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, errbuf, errsize)) == NULL)
     return -1;
 
   if(fap->fap_stat(fap, filename, &st, errbuf, errsize, 0))
@@ -1181,7 +1167,7 @@ fa_makedirs(const char *url, char *errbuf, size_t errsize)
   char *filename;
   int r;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, errbuf, errsize)) == NULL)
     return -1;
 
   if(fap->fap_makedir == NULL) {
@@ -1206,7 +1192,7 @@ fa_makedir(const char *url)
   char *filename;
   int r;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, NULL, 0)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, NULL, 0)) == NULL)
     return FAP_NOENT;
 
   if(fap->fap_makedir == NULL) {
@@ -1230,7 +1216,7 @@ fa_unlink(const char *url, char *errbuf, size_t errsize)
   char *filename;
   int r;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, errbuf, errsize)) == NULL)
     return -1;
 
   if(fap->fap_unlink == NULL) {
@@ -1255,7 +1241,7 @@ fa_rmdir(const char *url, char *errbuf, size_t errsize)
   char *filename;
   int r;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, errbuf, errsize)) == NULL)
     return -1;
 
   if(fap->fap_rmdir == NULL) {
@@ -1283,11 +1269,11 @@ fa_rename(const char *old, const char *new, char *errbuf, size_t errsize)
   int r;
 
   if((old_filename = fa_resolve_proto(old, &old_fap,
-                                      NULL, errbuf, errsize)) == NULL)
+                                      errbuf, errsize)) == NULL)
     return -1;
 
   if((new_filename = fa_resolve_proto(new, &new_fap,
-                                      NULL, errbuf, errsize)) == NULL) {
+                                      errbuf, errsize)) == NULL) {
 
     fap_release(old_fap);
     free(old_filename);
@@ -1326,7 +1312,7 @@ fa_set_xattr(const char *url, const char *name, const void *data, size_t len)
   char *filename;
   int r;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, NULL, 0)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, NULL, 0)) == NULL)
     return FAP_NOT_SUPPORTED;
 
   if(fap->fap_set_xattr == NULL) {
@@ -1350,7 +1336,7 @@ fa_get_xattr(const char *url, const char *name, void **datap, size_t *lenp)
   char *filename;
   int r;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, NULL, 0)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, NULL, 0)) == NULL)
     return FAP_NOT_SUPPORTED;
 
   if(fap->fap_get_xattr == NULL) {
@@ -1374,7 +1360,7 @@ fa_fsinfo(const char *url, fa_fsinfo_t *ffi)
   char *filename;
   int r;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, NULL, 0)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, NULL, 0)) == NULL)
     return FAP_NOT_SUPPORTED;
 
   if(fap->fap_fsinfo == NULL) {
@@ -1517,7 +1503,6 @@ fa_load(const char *url, ...)
   char **locationptr = NULL;
   int *cache_info_ptr = NULL;
   int *protocol_code = NULL;
-  fa_resolver_t *far = NULL;
 
   va_list ap;
   va_start(ap, url);
@@ -1547,10 +1532,6 @@ fa_load(const char *url, ...)
 
     case FA_LOAD_TAG_CANCELLABLE:
       c = va_arg(ap, cancellable_t *);
-      break;
-
-    case FA_LOAD_TAG_RESOLVER:
-      far = va_arg(ap, struct fa_resolver *);
       break;
 
     case FA_LOAD_TAG_QUERY_ARG:
@@ -1630,7 +1611,7 @@ fa_load(const char *url, ...)
   if(locationptr != NULL)
     *locationptr = strdup(url);
 
-  if((filename = fa_resolve_proto(url, &fap, far, errbuf, errlen)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, errbuf, errlen)) == NULL)
     return NULL;
 
   if(fap->fap_load != NULL) {
@@ -1827,7 +1808,7 @@ fa_check_url(const char *url, char *errbuf, size_t errlen, int timeout_ms)
   int r;
   struct fa_stat fs;
 
-  if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errlen)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, errbuf, errlen)) == NULL)
     return BACKEND_PROBE_NO_HANDLER;
 
   
@@ -1918,7 +1899,7 @@ fa_url_get_last_component(char *dst, size_t dstlen, const char *url)
   if(dstlen == 0)
     return;
 
-  filename = fa_resolve_proto(url, &fap, NULL, NULL, 0);
+  filename = fa_resolve_proto(url, &fap, NULL, 0);
   fa_url_get_last_component_i(fap, filename, dst, dstlen, url);
   free(filename);
   if(fap != NULL)
@@ -1937,7 +1918,7 @@ fa_get_title(const char *url)
   fa_protocol_t *fap;
   char *filename;
 
-  filename = fa_resolve_proto(url, &fap, NULL, NULL, 0);
+  filename = fa_resolve_proto(url, &fap, NULL, 0);
 
   if(fap != NULL && fap->fap_title != NULL) {
 
@@ -2073,32 +2054,3 @@ fa_sanitize_filename(char *f)
     f++;
   }
 }
-
-
-/**
- *
- */
-void
-far_release(fa_resolver_t *far)
-{
-  if(atomic_dec(&far->far_refcount))
-    return;
-
-  if(far->far_next)
-    far_release(far->far_next);
-  far->far_cleanup(far);
-  free(far);
-}
-
-
-/**
- *
- */
-fa_resolver_t *
-far_retain(fa_resolver_t *far)
-{
-  atomic_inc(&far->far_refcount);
-  return far;
-}
-
-

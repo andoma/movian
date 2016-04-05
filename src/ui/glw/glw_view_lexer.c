@@ -397,13 +397,12 @@ glw_view_load1(glw_root_t *gr, rstr_t *url, errorinfo_t *ei, token_t *prev,
   token_t *last;
   char errbuf[256];
 
-  rstr_t *p = fa_absolute_path(url, prev->file);
+  rstr_t *p = glw_resolve_path(url, prev->file, gr);
 
   if(may_unlock)
     glw_unlock(gr);
 
   buf_t *b = fa_load(rstr_get(p),
-                     FA_LOAD_RESOLVER(gr->gr_fa_resolver),
                      FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
                      NULL);
 
