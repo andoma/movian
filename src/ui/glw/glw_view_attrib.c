@@ -36,15 +36,12 @@
 static void
 respond_error(glw_t *w, const token_t *t, const char *name)
 {
-    const glw_class_t *gc = w->glw_class;
-    TRACE(TRACE_DEBUG, "GLW",
-          "Widget %s "
-          "(%s:%d) "
-          "assignment at %s:%d does not respond "
-          "to attribute %s",
-          gc->gc_name,
-          rstr_get(w->glw_file), w->glw_line,
-          rstr_get(t->file), t->line, name);
+  const glw_class_t *gc = w->glw_class;
+  TRACE(TRACE_DEBUG, "GLW", "Widget %s (%s:%d) "
+        "assignment at %s:%d does not respond to attribute %s",
+        gc->gc_name,
+        rstr_get(w->glw_file), w->glw_line,
+        rstr_get(t->file), t->line, name);
 }
 
 
