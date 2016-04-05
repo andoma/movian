@@ -271,9 +271,11 @@ SRCS += 		src/api/xmlrpc.c \
 SRCS-$(CONFIG_HTTPSERVER) += \
 	src/api/httpcontrol.c \
 	src/api/screenshot.c \
-	src/api/stpp.c \
 
 SRCS-$(CONFIG_AIRPLAY) += src/api/airplay.c
+
+SRCS-$(CONFIG_STPP) += src/api/stpp.c
+
 
 ##############################################################
 # Networking

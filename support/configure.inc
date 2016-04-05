@@ -107,6 +107,7 @@ CONFIG_LIST="
  gumbo
  upgrade
  plugins
+ stpp
 "
 
 
@@ -657,3 +658,4 @@ enable netlog
 enable gumbo
 enable upgrade
 enable plugins
+enable stpp
