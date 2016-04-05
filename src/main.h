@@ -325,6 +325,9 @@ typedef struct gconf {
 
   uint8_t running_instance[16];
 
+  void (*arch_dev_opts)(void (*addopt)(const char *title, const char *id,
+                                       int *valp));
+
 } gconf_t;
 
 extern gconf_t gconf;

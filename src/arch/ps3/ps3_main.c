@@ -627,6 +627,15 @@ typedef struct sys_event_queue_attr {
   char name[8];
 } sys_event_queue_attribute_t;
 
+
+static int no_sfo_overwrite;
+
+static void
+ps3_dev_opts(void (*addopt)(const char *title, const char *id, int *valp))
+{
+  addopt("Don't overwrite SFO file", "no_sfo_overwrite", &no_sfo_overwrite);
+}
+
 /**
  *
  */
@@ -640,6 +649,7 @@ main(int argc, char **argv)
   gconf.can_standby = 1;
   gconf.trace_level = TRACE_DEBUG;
   gconf.disable_http_reuse = 1;
+  gconf.arch_dev_opts = ps3_dev_opts;
 
   load_syms();
 
@@ -686,8 +696,10 @@ main(int argc, char **argv)
   static callout_t co;
   scan_root_fs(&co, NULL);
 
-  replace_gamefile("PARAM.SFO");
-  replace_gamefile("ICON0.PNG");
+  if(!no_sfo_overwrite) {
+    replace_gamefile("PARAM.SFO");
+    replace_gamefile("ICON0.PNG");
+  }
 
   extern void glw_ps3_start(void);
   glw_ps3_start();
