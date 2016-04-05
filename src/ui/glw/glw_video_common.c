@@ -775,7 +775,7 @@ set_how(glw_t *w, const char *how)
  *
  */
 static void
-set_source(glw_t *w, rstr_t *url, glw_style_t *origin)
+set_source(glw_t *w, rstr_t *url, int flags, glw_style_t *origin)
 {
   glw_video_t *gv = (glw_video_t *)w;
 

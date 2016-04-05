@@ -30,9 +30,33 @@
 #include "api/stpp.h"
 #include "misc/str.h"
 #include "misc/pool.h"
+#include "misc/minmax.h"
+#include "backend/backend.h"
+#include "image/image.h"
 
 #include <unistd.h>
 #include <stdio.h>
+
+LIST_HEAD(prop_proxy_imagereq_list, prop_proxy_imagereq);
+
+/**
+ *
+ */
+typedef struct prop_proxy_imagereq {
+  uint32_t ppi_id;
+
+  image_t *ppi_image;
+
+  int ppi_done;
+
+  char *ppi_errbuf;
+  size_t ppi_errlen;
+
+  LIST_ENTRY(prop_proxy_imagereq) ppi_link;
+  struct prop_proxy_connection *ppi_ppc;
+
+} prop_proxy_imagereq_t;
+
 
 /**
  *
@@ -41,7 +65,10 @@ struct prop_proxy_connection {
   atomic_t ppc_refcount;
   asyncio_fd_t *ppc_connection;
   char *ppc_url;
+
   prop_t *ppc_error;
+  prop_t *ppc_root;
+
   htsbuf_queue_t ppc_outq;
 
 
@@ -49,10 +76,15 @@ struct prop_proxy_connection {
   int ppc_subscription_tally;
 
   int ppc_websocket_open;
+  int ppc_http_state;
 
   websocket_state_t ppc_ws;
 
   int ppc_port;
+
+  hts_cond_t ppc_image_cond;
+  struct prop_proxy_imagereq_list ppc_image_requests;
+  atomic_t ppc_image_req_id_generator;
 };
 
 
@@ -71,8 +103,8 @@ ppc_del_fd(void *aux)
 /**
  *
  */
-static prop_proxy_connection_t *
-ppc_retain(prop_proxy_connection_t *ppc)
+prop_proxy_connection_t *
+prop_proxy_retain(prop_proxy_connection_t *ppc)
 {
   atomic_inc(&ppc->ppc_refcount);
   return ppc;
@@ -88,15 +120,24 @@ ppc_disconnect(prop_proxy_connection_t *ppc)
   asyncio_del_fd(ppc->ppc_connection);
   ppc->ppc_connection = NULL;
   ppc->ppc_websocket_open = 0;
-  // Umh.. Reconnect ?
+
+  hts_mutex_lock(&prop_mutex);
+  prop_proxy_imagereq_t *ppi;
+  LIST_FOREACH(ppi, &ppc->ppc_image_requests, ppi_link) {
+    ppi->ppi_done = 1;
+    snprintf(ppi->ppi_errbuf, ppi->ppi_errlen, "Connection lost");
+  }
+
+  hts_cond_broadcast(&ppc->ppc_image_cond);
+  hts_mutex_unlock(&prop_mutex);
 }
 
 
 /**
  *
  */
-static void
-ppc_release(prop_proxy_connection_t *ppc)
+void
+prop_proxy_release(prop_proxy_connection_t *ppc)
 {
   if(atomic_dec(&ppc->ppc_refcount))
     return;
@@ -106,6 +147,9 @@ ppc_release(prop_proxy_connection_t *ppc)
   free(ppc->ppc_ws.packet);
   free(ppc->ppc_url);
   prop_ref_dec(ppc->ppc_error);
+
+  hts_cond_destroy(&ppc->ppc_image_cond);
+
   free(ppc);
 }
 
@@ -253,7 +297,7 @@ prop_proxy_make(prop_proxy_connection_t *ppc, uint32_t id, prop_sub_t *s,
       printf("%s ", pfx[i]);
   printf("\n");
 #endif
-  p->hp_proxy_ppc = ppc_retain(ppc);
+  p->hp_proxy_ppc = prop_proxy_retain(ppc);
   p->hp_proxy_pfx = pfx;
   return p;
 }
@@ -298,7 +342,7 @@ prop_proxy_destroy(struct prop *p)
     prop_destroy0(owned);
   }
 
-  ppc_release(p->hp_proxy_ppc);
+  prop_proxy_release(p->hp_proxy_ppc);
   if(p->hp_owner_sub != NULL) {
     RB_REMOVE_NFL(&p->hp_owner_sub->hps_prop_tree, p, hp_owner_sub_link);
     p->hp_owner_sub = NULL;
@@ -561,6 +605,70 @@ ppc_ws_input_hello(prop_proxy_connection_t *ppc, const uint8_t *data, int len)
   return 0;
 }
 
+
+/**
+ *
+ */
+static int
+ppc_ws_input_image_reply(prop_proxy_connection_t *ppc,
+                         const uint8_t *data, int len)
+{
+  if(len < 13)
+    return -1;
+  uint32_t id = rd32_le(data);
+  hts_mutex_lock(&prop_mutex);
+  prop_proxy_imagereq_t *ppi;
+  LIST_FOREACH(ppi, &ppc->ppc_image_requests, ppi_link)
+    if(ppi->ppi_id == id)
+      break;
+
+  if(ppi != NULL && ppi->ppi_done == 0) {
+    void *buf;
+    image_t *im = image_coded_alloc(&buf, len - 13, data[11]);
+    im->im_width  = rd16_le(data + 4);
+    im->im_height = rd16_le(data + 6);
+    im->im_flags  = rd16_le(data + 8);
+    im->im_color_planes = data[10];
+    im->im_origin_coded_type = data[11];
+    im->im_orientation = data[12];
+    memcpy(buf, data + 13, len - 13);
+    ppi->ppi_image = im;
+    ppi->ppi_done = 1;
+    hts_cond_broadcast(&ppc->ppc_image_cond);
+  }
+  hts_mutex_unlock(&prop_mutex);
+  return 0;
+}
+
+
+
+/**
+ *
+ */
+static int
+ppc_ws_input_image_fail(prop_proxy_connection_t *ppc,
+                        const uint8_t *data, int len)
+{
+  if(len < 4)
+    return -1;
+
+  uint32_t id = rd32_le(data);
+  hts_mutex_lock(&prop_mutex);
+  prop_proxy_imagereq_t *ppi;
+  LIST_FOREACH(ppi, &ppc->ppc_image_requests, ppi_link)
+    if(ppi->ppi_id == id)
+      break;
+
+  if(ppi != NULL && ppi->ppi_done == 0) {
+    snprintf(ppi->ppi_errbuf, ppi->ppi_errlen, "%s", (const char *)data);
+    ppi->ppi_done = 1;
+    hts_cond_broadcast(&ppc->ppc_image_cond);
+  }
+  hts_mutex_unlock(&prop_mutex);
+  return 0;
+}
+
+
 /**
  *
  */
@@ -568,7 +676,6 @@ static int
 ppc_ws_input(void *opaque, int opcode, uint8_t *data, int len)
 {
   prop_proxy_connection_t *ppc = opaque;
-
   if(opcode != 2)
     return 1;
 
@@ -580,6 +687,10 @@ ppc_ws_input(void *opaque, int opcode, uint8_t *data, int len)
     break;
   case STPP_CMD_HELLO:
     return ppc_ws_input_hello(ppc, data + 1, len - 1);
+  case STPP_CMD_IMAGE_REPLY:
+    return ppc_ws_input_image_reply(ppc, data + 1, len - 1);
+  case STPP_CMD_IMAGE_FAIL:
+    return ppc_ws_input_image_fail(ppc, data + 1, len - 1);
   }
   return 0;
 }
@@ -601,6 +712,15 @@ ppc_input(void *opaque, htsbuf_queue_t *q)
       ppc_disconnect(ppc);
       return;
     }
+    if(ppc->ppc_http_state == 0) {
+      if(mystrbegins(line, "HTTP/1.1 101 ") == NULL) {
+        prop_set_string(ppc->ppc_error, "No websocket endpoint");
+        ppc_disconnect(ppc);
+        return;
+      }
+
+    }
+    ppc->ppc_http_state++;
     if(*line == 0) {
       ppc->ppc_websocket_open = 1;
       ppc_send_hello(ppc);
@@ -630,7 +750,7 @@ ppc_connect(void *aux, int status, const void *data)
 
   case ASYNCIO_DNS_STATUS_FAILED:
     prop_set_string(ppc->ppc_error, data);
-    ppc_release(ppc);
+    prop_proxy_release(ppc);
     return;
 
   default:
@@ -645,7 +765,7 @@ ppc_connect(void *aux, int status, const void *data)
   ppc->ppc_connection = asyncio_connect("stppclient", &na,
                                         ppc_connected, ppc_input, ppc, 3000,
                                         NULL, NULL);
-  ppc_release(ppc);
+  prop_proxy_release(ppc);
 }
 
 
@@ -660,18 +780,21 @@ ppc_send(void *aux)
   if(ppc->ppc_websocket_open == 2)
     ppc_sendq(ppc);
 
-  ppc_release(ppc);
+  prop_proxy_release(ppc);
 }
 
 
 /**
  *
  */
-prop_t *
+prop_proxy_connection_t *
 prop_proxy_connect(const char *url, prop_t *status)
 {
   prop_proxy_connection_t *ppc;
   ppc = calloc(1, sizeof(prop_proxy_connection_t));
+  atomic_set(&ppc->ppc_refcount, 1);
+  hts_cond_init(&ppc->ppc_image_cond, &prop_mutex);
+
   htsbuf_queue_init(&ppc->ppc_outq, 0);
 
   char protostr[64];
@@ -686,10 +809,44 @@ prop_proxy_connect(const char *url, prop_t *status)
 
   ppc->ppc_url = strdup(url);
   ppc->ppc_error = prop_create_r(status, "error");
-  asyncio_dns_lookup_host(hostname, ppc_connect, ppc_retain(ppc));
+  asyncio_dns_lookup_host(hostname, ppc_connect, prop_proxy_retain(ppc));
 
-  return prop_proxy_make(ppc, 0 /* global */, NULL, NULL, NULL);
+  ppc->ppc_root = prop_proxy_make(ppc, 0 /* global */, NULL, NULL, NULL);
+  return ppc;
 }
+
+
+/**
+ *
+ */
+void
+prop_proxy_close(prop_proxy_connection_t *ppc)
+{
+  prop_destroy(ppc->ppc_root);
+  prop_proxy_release(ppc);
+}
+
+
+/**
+ *
+ */
+prop_t *
+prop_proxy_get_root(prop_proxy_connection_t *ppc)
+{
+  return prop_ref_inc(ppc->ppc_root);
+}
+
+
+
+/**
+ *
+ */
+static void
+prop_proxy_backend_destroy(backend_t *be)
+{
+  prop_proxy_release(be->be_opaque);
+}
+
 
 
 /**
@@ -700,7 +857,7 @@ prop_proxy_send_data(prop_proxy_connection_t *ppc,
                      const uint8_t *data, int len)
 {
   if(TAILQ_FIRST(&ppc->ppc_outq.hq_q) == NULL)
-    asyncio_run_task(ppc_send, ppc_retain(ppc));
+    asyncio_run_task(ppc_send, prop_proxy_retain(ppc));
 
   websocket_append_hdr(&ppc->ppc_outq, 2, len);
   htsbuf_append(&ppc->ppc_outq, data, len);
@@ -714,11 +871,97 @@ static void
 prop_proxy_send_queue(prop_proxy_connection_t *ppc, htsbuf_queue_t *q)
 {
   if(TAILQ_FIRST(&ppc->ppc_outq.hq_q) == NULL)
-    asyncio_run_task(ppc_send, ppc_retain(ppc));
+    asyncio_run_task(ppc_send, prop_proxy_retain(ppc));
 
   websocket_append_hdr(&ppc->ppc_outq, 2, q->hq_size);
   htsbuf_appendq(&ppc->ppc_outq, q);
 }
+
+
+/**
+ *
+ */
+static void
+prop_proxy_imgload_cancel(void *opaque)
+{
+  prop_proxy_imagereq_t *ppi = opaque;
+
+  hts_mutex_lock(&prop_mutex);
+  ppi->ppi_done = 1;
+  snprintf(ppi->ppi_errbuf, ppi->ppi_errlen, "Cancelled");
+  hts_cond_broadcast(&ppi->ppi_ppc->ppc_image_cond);
+
+  uint8_t cmd[5];
+  cmd[0] = STPP_CMD_IMAGE_CANCEL;
+  wr32_le(cmd + 1, ppi->ppi_id);
+  prop_proxy_send_data(ppi->ppi_ppc, cmd, sizeof(cmd));
+
+  hts_mutex_unlock(&prop_mutex);
+}
+
+/**
+ *
+ */
+static image_t *
+prop_proxy_image_loader(const char *url, const struct image_meta *im,
+                        char *errbuf, size_t errlen,
+                        int *cache_control,
+                        cancellable_t *c,
+                        struct backend *be)
+{
+  if(im->im_force_local_load) {
+    return NULL;
+  }
+  prop_proxy_connection_t *ppc = be->be_opaque;
+
+  prop_proxy_imagereq_t ppi = {
+    .ppi_errbuf = errbuf,
+    .ppi_errlen = errlen,
+    .ppi_ppc = ppc,
+  };
+
+  htsbuf_queue_t q;
+  htsbuf_queue_init(&q, 0);
+  htsbuf_append_byte(&q, STPP_CMD_IMAGE_LOAD);
+
+  ppi.ppi_id = atomic_add_and_fetch(&ppc->ppc_image_req_id_generator, 1);
+  htsbuf_append_le32(&q, ppi.ppi_id);
+  htsbuf_append_le32(&q, im->im_req_width);
+  htsbuf_append_le32(&q, im->im_req_height);
+  htsbuf_append_le32(&q, im->im_want_thumb ? 1 : 0);
+  htsbuf_append(&q, url, strlen(url));
+  hts_mutex_lock(&prop_mutex);
+  c = cancellable_bind(c, prop_proxy_imgload_cancel, &ppi);
+  LIST_INSERT_HEAD(&ppc->ppc_image_requests, &ppi, ppi_link);
+  prop_proxy_send_queue(ppc, &q);
+
+  while(!ppi.ppi_done) {
+    hts_cond_wait(&ppc->ppc_image_cond, &prop_mutex);
+  }
+  LIST_REMOVE(&ppi, ppi_link);
+  cancellable_unbind(c, &ppi);
+  hts_mutex_unlock(&prop_mutex);
+  return ppi.ppi_image;
+}
+
+
+/**
+ *
+ */
+backend_t *
+prop_proxy_get_backend(prop_proxy_connection_t *ppc)
+{
+  backend_t *be = calloc(1, sizeof(backend_t));
+  atomic_set(&be->be_refcount, 1);
+  be->be_flags = BACKEND_DYNAMIC;
+
+  be->be_opaque = prop_proxy_retain(ppc);
+  be->be_destroy = prop_proxy_backend_destroy;
+  be->be_imageloader = prop_proxy_image_loader;
+
+  return be;
+}
+
 
 /**
  *
@@ -948,7 +1191,6 @@ prop_proxy_subscribe(prop_proxy_connection_t *ppc, prop_sub_t *s,
     }
   }
 
-  //  hexdump("SUBSEND", data, datalen);
   prop_proxy_send_data(ppc, data, datalen);
 }
 
@@ -1112,6 +1354,10 @@ prop_proxy_select(struct prop *p)
   prop_proxy_send_prop(p, &q);
   prop_proxy_send_queue(ppc, &q);
 }
+
+
+
+
 
 
 #ifdef POOL_DEBUG

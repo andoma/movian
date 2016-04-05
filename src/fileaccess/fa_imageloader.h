@@ -21,12 +21,14 @@
 #define FA_IMAGELOADER_H
 
 struct image_meta;
+struct backend;
 
 void fa_imageloader_init(void);
 
 struct image *fa_imageloader(const char *url, const struct image_meta *im,
                              char *errbuf, size_t errlen,
-                             int *cache_control, cancellable_t *c);
+                             int *cache_control, cancellable_t *c,
+                             struct backend *be);
 
 
 #endif /* FA_IMAGELOADER_H */

@@ -32,7 +32,7 @@
 #define GLW_TEX_INTENSITY_ANALYSIS     0x40000000
 #define GLW_TEX_PRIMARY_COLOR_ANALYSIS 0x20000000
 
-struct fa_resolver;
+struct backend;
 
 typedef struct glw_loadable_texture {
 
@@ -42,6 +42,8 @@ typedef struct glw_loadable_texture {
   struct glw_loadable_texture_queue *glt_q;
 
   int glt_flags;
+
+  int glt_source_flags; // GLW_SOURCE_FLAGS_*
 
   enum {
     GLT_STATE_INACTIVE,
@@ -91,6 +93,8 @@ typedef struct glw_loadable_texture {
 
   float glt_intensity;
 
+  struct backend *glt_backend;
+
 } glw_loadable_texture_t;
 
 void glw_tex_init(glw_root_t *gr);
@@ -101,7 +105,9 @@ glw_loadable_texture_t *glw_tex_create(glw_root_t *gr, rstr_t *url,
 				       int flags, int xs, int ys,
 				       int corner_radius,
                                        int drop_shadow,
-                                       float aspect);
+                                       float aspect,
+                                       int source_flags,
+                                       struct backend *be);
 
 void glw_tex_deref(glw_root_t *gr, glw_loadable_texture_t *ht);
 

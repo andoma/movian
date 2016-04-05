@@ -88,8 +88,11 @@ typedef struct backend {
 
   LIST_ENTRY(backend) be_global_link;
 
+  atomic_t be_refcount;
+
   int be_flags;
 #define BACKEND_OPEN_CHECKS_URI 0x1
+#define BACKEND_DYNAMIC         0x2 // refcounted
 
   int (*be_init)(void);
 
@@ -113,7 +116,8 @@ typedef struct backend {
   struct image *(*be_imageloader)(const char *url, const struct image_meta *im,
                                   char *errbuf, size_t errlen,
                                   int *cache_control,
-                                  cancellable_t *c);
+                                  cancellable_t *c,
+                                  struct backend *be);
 
   int (*be_normalize)(const char *url, char *dst, size_t dstlen);
 
@@ -123,8 +127,12 @@ typedef struct backend {
 
   int (*be_resolve_item)(const char *url, prop_t *item);
 
-} backend_t;
+  // Only called for BACKEND_DYNAMIC instances
+  void (*be_destroy)(struct backend *be);
 
+  void *be_opaque;
+
+} backend_t;
 
 
 /**
@@ -133,6 +141,10 @@ typedef struct backend {
 void backend_init(void);
 
 void backend_fini(void);
+
+backend_t *backend_retain(backend_t *be) attribute_unused_result;
+
+void backend_release(backend_t *be);
 
 int backend_open(struct prop *page, const char *url, int sync)
      attribute_unused_result;
@@ -154,7 +166,7 @@ struct event *backend_play_audio(const char *url, struct media_pipe *mp,
 struct image *backend_imageloader(rstr_t *url, const struct image_meta *im,
                                   char *errbuf, size_t errlen,
                                   int *cache_control,
-                                  cancellable_t *c)
+                                  cancellable_t *c, backend_t *be)
      attribute_unused_result;
 
 backend_t *backend_canhandle(const char *url)

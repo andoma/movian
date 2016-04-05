@@ -397,7 +397,7 @@ glw_view_load1(glw_root_t *gr, rstr_t *url, errorinfo_t *ei, token_t *prev,
   token_t *last;
   char errbuf[256];
 
-  rstr_t *p = glw_resolve_path(url, prev->file, gr);
+  rstr_t *p = glw_resolve_path(url, prev->file, gr, NULL);
 
   if(may_unlock)
     glw_unlock(gr);

@@ -28,8 +28,21 @@ struct prop;
 struct net_addr;
 struct prop_sub;
 struct event;
+struct buf;
 
-struct prop *prop_proxy_connect(const char *url, struct prop *status);
+prop_proxy_connection_t *prop_proxy_retain(prop_proxy_connection_t *ppc);
+
+void prop_proxy_release(prop_proxy_connection_t *ppc);
+
+prop_proxy_connection_t *prop_proxy_connect(const char *url,
+                                            struct prop *status);
+
+void prop_proxy_close(prop_proxy_connection_t *ppc);
+
+struct prop *prop_proxy_get_root(prop_proxy_connection_t *ppc);
+
+struct backend *prop_proxy_get_backend(prop_proxy_connection_t *ppc);
+
 
 struct prop *prop_proxy_create(struct prop *parent, const char *name);
 
@@ -76,3 +89,6 @@ void prop_proxy_set_void(struct prop *p);
 void prop_proxy_want_more_childs(struct prop_sub *s);
 
 void prop_proxy_select(struct prop *p);
+
+struct buf *prop_proxy_load(prop_proxy_connection_t *ppc, const char *url,
+                            char *errbuf, size_t errlen);

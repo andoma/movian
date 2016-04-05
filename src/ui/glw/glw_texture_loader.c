@@ -258,7 +258,8 @@ loader_thread(void *aux)
       im.im_max_height = gr->gr_height;
       im.im_can_mono = 1;
       im.im_corner_radius = glt->glt_radius;
-
+      im.im_force_local_load =
+        !!(glt->glt_source_flags & GLW_SOURCE_FLAG_ALWAYS_LOCAL);
       im.im_intensity_analysis =
         !!(glt->glt_flags & GLW_TEX_INTENSITY_ANALYSIS);
       im.im_primary_color_analysis =
@@ -286,7 +287,8 @@ loader_thread(void *aux)
       glw_unlock(gr);
       img = backend_imageloader(url, &im,
                                 errbuf, sizeof(errbuf),
-                                ccptr, glt->glt_cancellable);
+                                ccptr, glt->glt_cancellable,
+                                glt->glt_backend);
 
       glw_lock(gr);
 
@@ -569,7 +571,8 @@ glw_tex_deref(glw_root_t *gr, glw_loadable_texture_t *glt)
  */
 glw_loadable_texture_t *
 glw_tex_create(glw_root_t *gr, rstr_t *filename, int flags, int xs, int ys,
-	       int radius, int shadow, float aspect)
+	       int radius, int shadow, float aspect, int source_flags,
+               struct backend *be)
 {
   glw_loadable_texture_t *glt;
 
@@ -583,7 +586,9 @@ glw_tex_create(glw_root_t *gr, rstr_t *filename, int flags, int xs, int ys,
        glt->glt_req_ys == ys &&
        glt->glt_radius == radius &&
        glt->glt_shadow == shadow &&
-       glt->glt_req_aspect == aspect)
+       glt->glt_req_aspect == aspect &&
+       glt->glt_source_flags == source_flags &&
+       glt->glt_backend == be)
       break;
 
   if(glt == NULL) {
@@ -598,6 +603,8 @@ glw_tex_create(glw_root_t *gr, rstr_t *filename, int flags, int xs, int ys,
     glt->glt_radius = radius;
     glt->glt_shadow = shadow;
     glt->glt_req_aspect = aspect;
+    glt->glt_source_flags = source_flags;
+    glt->glt_backend = backend_retain(be);
   }
 
   glt->glt_refcnt++;
@@ -614,11 +621,10 @@ gl_tex_req_load(glw_root_t *gr, glw_loadable_texture_t *glt)
 {
   int q;
 
-  if(!strncmp(rstr_get(glt->glt_url), "skin://", strlen("skin://"))) {
+  if(glt->glt_source_flags & GLW_SOURCE_FLAG_ALWAYS_LOCAL)
     q = LQ_SKIN;
-  } else {
+  else
     q = LQ_TENTATIVE;
-  }
 
   glt_enqueue(gr, glt, q);
 }

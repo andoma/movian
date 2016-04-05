@@ -89,7 +89,7 @@ gu_pixbuf_get_internal(rstr_t *url, int *sizep,
   im.im_req_width  = req_width;
   im.im_req_height = req_height;
   
-  image_t *img = backend_imageloader(url, &im, NULL, 0, NULL, NULL);
+  image_t *img = backend_imageloader(url, &im, NULL, 0, NULL, NULL, NULL);
 
   if(img == NULL)
     return NULL;

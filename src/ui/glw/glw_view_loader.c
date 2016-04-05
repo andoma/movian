@@ -222,7 +222,7 @@ update_autohide(glw_view_loader_t *l)
  *
  */
 static void
-set_source(glw_t *w, rstr_t *url, glw_style_t *origin)
+set_source(glw_t *w, rstr_t *url, int flags, glw_style_t *origin)
 {
   glw_view_loader_t *a = (glw_view_loader_t *)w;
   glw_t *c;

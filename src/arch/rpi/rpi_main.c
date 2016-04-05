@@ -198,7 +198,7 @@ set_bg_image(rstr_t *url, glw_root_t *gr)
   im.im_req_height = h;
 
   image_t *img;
-  img = backend_imageloader(url, &im, errbuf, sizeof(errbuf), NULL, NULL);
+  img = backend_imageloader(url, &im, errbuf, sizeof(errbuf), NULL, NULL, NULL);
   glw_lock(gr);
 
   if(img == NULL) {

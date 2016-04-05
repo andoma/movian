@@ -86,6 +86,7 @@ struct glw_style {
   LIST_ENTRY(glw_style) gs_link;
 
   rstr_t *gs_source;
+  int gs_source_flags;
 
   int gs_refcount;
 
@@ -977,7 +978,7 @@ gs_set_hidden(struct glw *w, int v, glw_style_t *origin)
  *
  */
 static void
-gs_set_source(struct glw *w, rstr_t *r, glw_style_t *origin)
+gs_set_source(struct glw *w, rstr_t *r, int flags, glw_style_t *origin)
 {
   glw_style_t *gs = (glw_style_t *)w;
 
@@ -985,12 +986,13 @@ gs_set_source(struct glw *w, rstr_t *r, glw_style_t *origin)
     return;
 
   rstr_set(&gs->gs_source, r);
+  gs->gs_source_flags = flags;
 
   glw_style_binding_t *gsb;
   LIST_FOREACH(gsb, &gs->gs_bindings, gsb_style_link) {
     glw_t *w = gsb->gsb_widget;
     if(w->glw_class->gc_set_source != NULL)
-      w->glw_class->gc_set_source(w, r, gs);
+      w->glw_class->gc_set_source(w, r, flags, gs);
   }
 }
 
@@ -1347,7 +1349,7 @@ glw_style_insert(glw_t *w, glw_style_t *gs, glw_view_eval_context_t *ec)
 
   if(gs->gs_flags & GS_SET_SOURCE)
     if(w->glw_class->gc_set_source != NULL)
-      w->glw_class->gc_set_source(w, gs->gs_source, gs);
+      w->glw_class->gc_set_source(w, gs->gs_source, gs->gs_source_flags, gs);
 
   return r;
 }

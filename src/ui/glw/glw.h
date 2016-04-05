@@ -268,6 +268,8 @@ typedef struct glw_scope {
   int gs_refcount;
   int gs_num_roots;
 
+  struct backend *gs_backend;
+
 #define GLW_ROOT_SELF   0
 #define GLW_ROOT_PARENT 1
 #define GLW_ROOT_VIEW   2
@@ -643,7 +645,9 @@ typedef struct glw_class {
   /**
    *
    */
-  void (*gc_set_source)(struct glw *w, rstr_t *url, glw_style_t *gs);
+  void (*gc_set_source)(struct glw *w, rstr_t *url, int flags, glw_style_t *gs);
+
+#define GLW_SOURCE_FLAG_ALWAYS_LOCAL 0x1
 
   /**
    *
@@ -1634,7 +1638,8 @@ extern const float glw_identitymtx[16];
 
 void glw_icon_flush(glw_root_t *gr);
 
-rstr_t *glw_resolve_path(rstr_t *filename, rstr_t *at, glw_root_t *gr);
+rstr_t *glw_resolve_path(rstr_t *filename, rstr_t *at, glw_root_t *gr,
+                         int *source_flags);
 
 int glw_image_get_details(glw_t *w, char *path, size_t pathlen, float *alpha);
 

@@ -183,7 +183,8 @@ jpeginfo_reader(void *handle, void *buf, int64_t offset, size_t size)
 image_t *
 fa_imageloader(const char *url, const struct image_meta *im,
 	       char *errbuf, size_t errlen,
-	       int *cache_control, cancellable_t *c)
+	       int *cache_control, cancellable_t *c,
+               backend_t *be)
 {
   uint8_t p[16];
   int r;

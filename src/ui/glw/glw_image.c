@@ -31,6 +31,8 @@ typedef struct glw_image {
   float gi_aspect;
 
   rstr_t *gi_pending_url;
+  int gi_pending_url_flags;
+
   glw_loadable_texture_t *gi_current;
   glw_loadable_texture_t *gi_pending;
 
@@ -766,7 +768,9 @@ glw_image_tex_load(glw_image_t *gi, rstr_t *url, int width, int height)
     flags |= GLW_TEX_INTENSITY_ANALYSIS;
 
   return glw_tex_create(gi->w.glw_root, url, flags, width, height,
-                        gi->gi_radius, gi->gi_shadow, gi->gi_aspect);
+                        gi->gi_radius, gi->gi_shadow, gi->gi_aspect,
+                        gi->gi_pending_url_flags,
+                        gi->w.glw_scope->gs_backend);
 }
 
 
@@ -1250,12 +1254,12 @@ get_curname(glw_image_t *gi)
  *
  */
 static void
-set_pending(glw_image_t *gi, rstr_t *filename)
+set_pending(glw_image_t *gi, rstr_t *filename, int flags)
 {
   if(gi->gi_pending_url != NULL)
     rstr_release(gi->gi_pending_url);
   gi->gi_pending_url = filename ? rstr_dup(filename) : rstr_alloc("");
-
+  gi->gi_pending_url_flags = flags;
 }
 
 
@@ -1275,7 +1279,7 @@ mod_flags2(glw_t *w, int set, int clr)
     if(gi->gi_current || gi->gi_pending) {
       rstr_t *curname = get_curname(gi);
       if(curname != NULL)
-        set_pending(gi, curname);
+        set_pending(gi, curname, gi->gi_pending_url_flags);
     }
   }
 }
@@ -1285,7 +1289,7 @@ mod_flags2(glw_t *w, int set, int clr)
  *
  */
 static void
-set_path(glw_image_t *gi, rstr_t *filename)
+set_path(glw_image_t *gi, rstr_t *filename, int flags)
 {
   const rstr_t *curname = get_curname(gi);
 
@@ -1293,7 +1297,7 @@ set_path(glw_image_t *gi, rstr_t *filename)
 						    rstr_get(curname)))
     return;
 
-  set_pending(gi, filename);
+  set_pending(gi, filename, flags);
 }
 
 
@@ -1301,10 +1305,10 @@ set_path(glw_image_t *gi, rstr_t *filename)
  *
  */
 static void
-set_source(glw_t *w, rstr_t *filename, glw_style_t *gs)
+set_source(glw_t *w, rstr_t *filename, int flags, glw_style_t *gs)
 {
   glw_image_t *gi = (glw_image_t *)w;
-  set_path(gi, filename);
+  set_path(gi, filename, flags);
 }
 
 
@@ -1316,7 +1320,7 @@ pick_source(glw_image_t *gi, int next)
 {
   const rstr_t *curname = get_curname(gi);
   if(curname == NULL) {
-    set_pending(gi, gi->gi_sources[0]);
+    set_pending(gi, gi->gi_sources[0], 0);
   } else {
 
     int i;
@@ -1326,12 +1330,12 @@ pick_source(glw_image_t *gi, int next)
 	found = i;
     }
     if(found == -1) {
-      set_pending(gi, gi->gi_sources[0]);
+      set_pending(gi, gi->gi_sources[0], 0);
     } else if(next) {
       if(gi->gi_sources[found+1] == NULL) {
-	set_pending(gi, gi->gi_sources[0]);
+	set_pending(gi, gi->gi_sources[0], 0);
       } else {
-	set_pending(gi, gi->gi_sources[found+1]);
+	set_pending(gi, gi->gi_sources[found+1], 0);
       }
     }
   }

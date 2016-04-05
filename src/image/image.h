@@ -43,6 +43,7 @@ typedef struct image_meta {
   char im_want_thumb : 1;
   char im_intensity_analysis : 1;
   char im_primary_color_analysis : 1;
+  char im_force_local_load : 1;
 
   uint8_t im_corner_selection;
   uint16_t im_corner_radius;
@@ -64,15 +65,16 @@ typedef enum image_component_type {
 
 
 /**
- *
+ * The values in this enum can be sent over wire in STPP so they
+ * must not be changed (or STPP protocol version must be bumped)
  */
 typedef enum image_coded_type {
   IMAGE_coded_none,
-  IMAGE_PNG,
-  IMAGE_JPEG,
-  IMAGE_GIF,
-  IMAGE_SVG,
-  IMAGE_BMP,
+  IMAGE_PNG = 1,
+  IMAGE_JPEG = 2,
+  IMAGE_GIF = 3,
+  IMAGE_SVG = 4,
+  IMAGE_BMP = 5,
 } image_coded_type_t;
 
 
@@ -140,6 +142,10 @@ typedef struct image {
   uint16_t im_margin;
   uint16_t im_num_components;
 
+  /*
+   * These flags are sent over the wire in STPP so they
+   * must not be changed (or STPP protocol version must be bumped)
+   */
   uint16_t im_flags;
 #define IMAGE_THUMBNAIL   0x1
 #define IMAGE_PROGRESSIVE 0x2

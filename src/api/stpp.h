@@ -20,7 +20,7 @@
 
 #pragma once
 
-#define STPP_VERSION 1
+#define STPP_VERSION 2
 
 // These things are sent over the wire so no changes here please
 
@@ -33,6 +33,10 @@
 #define STPP_CMD_REQ_MOVE    6
 #define STPP_CMD_WANT_MORE_CHILDS 7
 #define STPP_CMD_SELECT      8
+#define STPP_CMD_IMAGE_LOAD  9
+#define STPP_CMD_IMAGE_REPLY 10
+#define STPP_CMD_IMAGE_FAIL  11
+#define STPP_CMD_IMAGE_CANCEL 12
 
 
 // Notify types (First byte in STPP_CMD_NOTIFY message)

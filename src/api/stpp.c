@@ -30,10 +30,14 @@
 #include "stpp.h"
 
 #include "backend/backend.h"
+#include "image/image.h"
+#include "fileaccess/fileaccess.h"
+#include "task.h"
 
 RB_HEAD(stpp_subscription_tree, stpp_subscription);
 RB_HEAD(stpp_prop_tree, stpp_prop);
 LIST_HEAD(stpp_prop_list, stpp_prop);
+LIST_HEAD(stpp_imagereq_list, stpp_imagereq);
 
 /**
  *
@@ -44,6 +48,7 @@ typedef struct stpp {
   struct stpp_prop_tree stpp_props;
   int stpp_prop_tally;
   int stpp_helloed_ok;
+  struct stpp_imagereq_list stpp_imagereqs;
 } stpp_t;
 
 
@@ -881,6 +886,96 @@ stpp_send_hello(stpp_t *stpp)
   websocket_send(stpp->stpp_hc, 2, buf, buflen);
 }
 
+typedef struct stpp_imagereq {
+  rstr_t *sir_url;
+  uint32_t sir_id;
+  uint32_t sir_req_width;
+  uint32_t sir_req_height;
+  uint32_t sir_flags;
+
+  image_t *sir_image;
+
+  LIST_ENTRY(stpp_imagereq) sir_link;
+  stpp_t *sir_stpp;
+
+  cancellable_t *sir_cancellable;
+
+  char sir_errstr[256];
+
+} stpp_imagereq_t;
+
+
+static void
+stpp_imagereq_send(void *aux)
+{
+  stpp_imagereq_t *sir = aux;
+  stpp_t *stpp = sir->sir_stpp;
+  if(stpp != NULL) {
+
+    if(!cancellable_is_cancelled(sir->sir_cancellable)) {
+
+      htsbuf_queue_t hq;
+      htsbuf_queue_init(&hq, 0);
+      image_t *im = sir->sir_image;
+      if(im != NULL) {
+        assert(im->im_num_components == 1);
+        assert(im->im_components[0].type == IMAGE_CODED);
+        buf_t *b = im->im_components[0].coded.icc_buf;
+
+        uint8_t header[1 + 4 + 2 + 2 + 2 + 1 + 1 + 1];
+        header[0] = STPP_CMD_IMAGE_REPLY;
+        wr32_le(header + 1, sir->sir_id);
+        wr16_le(header + 5, im->im_width);
+        wr16_le(header + 7, im->im_height);
+        wr16_le(header + 9, im->im_flags);
+        header[11] = im->im_color_planes;
+        header[12] = im->im_components[0].coded.icc_type;
+        header[13] = im->im_orientation;
+
+        htsbuf_append(&hq, header, sizeof(header));
+        htsbuf_append_buf(&hq, b);
+
+      } else {
+        uint8_t header[5];
+
+        header[0] = STPP_CMD_IMAGE_FAIL;
+        wr32_le(header + 1, sir->sir_id);
+        htsbuf_append(&hq, header, 5);
+        htsbuf_append(&hq, sir->sir_errstr, strlen(sir->sir_errstr));
+      }
+
+      websocket_sendq(stpp->stpp_hc, 2, &hq);
+    }
+    LIST_REMOVE(sir, sir_link);
+  }
+  image_release(sir->sir_image);
+  rstr_release(sir->sir_url);
+  cancellable_release(sir->sir_cancellable);
+  free(sir);
+}
+
+
+static void
+stpp_imagereq_do(void *aux)
+{
+  stpp_imagereq_t *sir = aux;
+  struct image_meta im = {
+
+    .im_req_width = sir->sir_req_width,
+    .im_req_height = sir->sir_req_height,
+    .im_want_thumb = sir->sir_flags & 1,
+    .im_no_decoding = 1,
+  };
+
+  sir->sir_image = backend_imageloader(sir->sir_url, &im,
+                                       sir->sir_errstr, sizeof(sir->sir_errstr),
+                                       NULL, sir->sir_cancellable, NULL);
+  asyncio_run_task(stpp_imagereq_send, sir);
+}
+
+
+
+
 /**
  * Websocket server always pad frame with a zero byte at the end
  * (Not included in len). So it's safe to just use strings at end
@@ -1021,6 +1116,44 @@ stpp_binary(stpp_t *stpp, const uint8_t *data, int len)
     }
     break;
 
+  case STPP_CMD_IMAGE_LOAD:
+    {
+      if(len < 4 * sizeof(uint32_t))
+        return -1;
+      uint32_t id = rd32_le(data + 0);
+      uint32_t flags = rd32_le(data + 4);
+      uint32_t req_width = rd32_le(data + 8);
+      uint32_t req_height = rd32_le(data + 12);
+      data += 16;
+      len -= 16;
+
+      stpp_imagereq_t *sir = calloc(1, sizeof(stpp_imagereq_t));
+      sir->sir_cancellable = cancellable_create();
+      sir->sir_url = rstr_alloc((const char *)data);
+      sir->sir_id = id;
+      sir->sir_req_width = req_width;
+      sir->sir_req_height = req_height;
+      sir->sir_flags = flags;
+      sir->sir_stpp = stpp;
+      LIST_INSERT_HEAD(&stpp->stpp_imagereqs, sir, sir_link);
+      task_run(stpp_imagereq_do, sir);
+    }
+    break;
+
+  case STPP_CMD_IMAGE_CANCEL:
+    {
+      if(len < sizeof(uint32_t))
+        return -1;
+      uint32_t id = rd32_le(data + 0);
+      stpp_imagereq_t *sir;
+      LIST_FOREACH(sir, &stpp->stpp_imagereqs, sir_link) {
+        if(sir->sir_id == id) {
+          cancellable_cancel(sir->sir_cancellable);
+        }
+      }
+    }
+    break;
+
   default:
     TRACE(TRACE_ERROR, "STPP", "Received bad command 0x%x", cmd);
     return -1;
@@ -1076,11 +1209,17 @@ static void
 stpp_fini(http_connection_t *hc, void *opaque)
 {
   stpp_t *stpp = opaque;
-  
+
   while(stpp->stpp_subscriptions.root != NULL)
     ss_destroy(stpp, stpp->stpp_subscriptions.root);
 
   assert(stpp->stpp_props.root == NULL);
+
+  stpp_imagereq_t *sir;
+  while((sir = LIST_FIRST(&stpp->stpp_imagereqs)) != NULL) {
+    LIST_REMOVE(sir, sir_link);
+    sir->sir_stpp = NULL;
+  }
 
   free(stpp);
 }

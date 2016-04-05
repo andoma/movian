@@ -2868,7 +2868,8 @@ glw_view_eval_block(token_t *t, glw_view_eval_context_t *ec, token_t **nonpure)
 static void
 glwf_coreAttach_dtor(glw_root_t *gr, struct token *self)
 {
-  prop_destroy(self->t_extra);
+  if(self->t_extra != NULL)
+    prop_proxy_close(self->t_extra);
 }
 
 
@@ -2907,8 +2908,11 @@ glwf_coreAttach(glw_view_eval_context_t *ec, struct token *self,
   n = *ec;
 
   glw_scope_t *scope = glw_scope_dup(ec->scope, (1 << GLW_ROOT_CORE));
+  scope->gs_roots[GLW_ROOT_CORE].p = prop_proxy_get_root(self->t_extra);
 
-  scope->gs_roots[GLW_ROOT_CORE].p = prop_ref_inc(self->t_extra);
+  backend_release(scope->gs_backend);
+  scope->gs_backend = prop_proxy_get_backend(self->t_extra);
+
   n.scope = scope;
   n.dynamic_eval = 0;
   r = glw_view_eval_block(a3, &n, NULL);
@@ -6720,7 +6724,7 @@ glwf_setDefaultFont(glw_view_eval_context_t *ec, struct token *self,
     return -1;
 
   glw_root_t *gr = ec->w->glw_root;
-  rstr_t *r = glw_resolve_path(token2rstr(a), a->file, gr);
+  rstr_t *r = glw_resolve_path(token2rstr(a), a->file, gr, NULL);
   rstr_set(&gr->gr_default_font, r);
   rstr_release(r);
   glw_text_flush(ec->w->glw_root);

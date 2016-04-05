@@ -34,7 +34,7 @@
  *
  */
 rstr_t *
-glw_resolve_path(rstr_t *filename, rstr_t *at, glw_root_t *gr)
+glw_resolve_path(rstr_t *filename, rstr_t *at, glw_root_t *gr, int *flags)
 {
   if(filename == NULL)
     return NULL;
@@ -43,7 +43,16 @@ glw_resolve_path(rstr_t *filename, rstr_t *at, glw_root_t *gr)
   if(x != NULL) {
     char buf[PATH_MAX];
     fa_pathjoin(buf, sizeof(buf), gr->gr_skin, x);
+    if(flags != NULL)
+      *flags = GLW_SOURCE_FLAG_ALWAYS_LOCAL;
     return rstr_alloc(buf);
+  }
+
+  if(flags != NULL) {
+    const char *x = mystrbegins(rstr_get(filename), "dataroot://");
+    if(x != NULL) {
+      *flags = GLW_SOURCE_FLAG_ALWAYS_LOCAL;
+    }
   }
 
   return fa_absolute_path(filename, at);
@@ -225,7 +234,7 @@ set_font(glw_view_eval_context_t *ec, const token_attrib_t *a,
 
   glw_t *w = ec->w;
 
-  str = glw_resolve_path(str, t->file, w->glw_root);
+  str = glw_resolve_path(str, t->file, w->glw_root, NULL);
 
   if(w->glw_class->gc_set_rstr != NULL)
     w->glw_class->gc_set_rstr(w, GLW_ATTRIB_FONT, str, NULL);
@@ -251,7 +260,7 @@ set_fs(glw_view_eval_context_t *ec, const token_attrib_t *a,
 
   glw_t *w = ec->w;
 
-  str = glw_resolve_path(str, t->file, w->glw_root);
+  str = glw_resolve_path(str, t->file, w->glw_root, NULL);
 
   if(w->glw_class->gc_set_fs != NULL)
     w->glw_class->gc_set_fs(ec->w, str);
@@ -1122,7 +1131,7 @@ set_alt(glw_view_eval_context_t *ec, const token_attrib_t *a,
     break;
   }
 
-  r = glw_resolve_path(r, t->file, w->glw_root);
+  r = glw_resolve_path(r, t->file, w->glw_root, NULL);
 
   if(w->glw_class->gc_set_alt != NULL)
     w->glw_class->gc_set_alt(w, r);
@@ -1145,7 +1154,7 @@ set_source(glw_view_eval_context_t *ec, const token_attrib_t *a,
   switch(t->type) {
   default:
     if(w->glw_class->gc_set_source != NULL)
-      w->glw_class->gc_set_source(w, NULL, NULL);
+      w->glw_class->gc_set_source(w, NULL, 0, NULL);
     return 0;
 
   case TOKEN_VECTOR:
@@ -1161,10 +1170,11 @@ set_source(glw_view_eval_context_t *ec, const token_attrib_t *a,
     break;
   }
 
-  r = glw_resolve_path(r, t->file, w->glw_root);
+  int flags = 0;
+  r = glw_resolve_path(r, t->file, w->glw_root, &flags);
 
   if(w->glw_class->gc_set_source != NULL)
-    w->glw_class->gc_set_source(w, r, NULL);
+    w->glw_class->gc_set_source(w, r, flags, NULL);
 
   glw_need_refresh(w->glw_root, 0);
   rstr_release(r);

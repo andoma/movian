@@ -175,7 +175,7 @@ hc_image(http_connection_t *hc, const char *remain, void *opaque,
   }
 
   img = backend_imageloader(url, &im, errbuf, sizeof(errbuf), NULL,
-                            NULL);
+                            NULL, NULL);
   rstr_release(url);
   if(img == NULL)
     return http_error(hc, 404, "Unable to load image %s : %s",
