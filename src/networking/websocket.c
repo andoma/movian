@@ -42,11 +42,7 @@ websocket_append_hdr(htsbuf_queue_t *q, int opcode, size_t len)
     hlen = 4;
   } else {
     hdr[1] = 127;
-    uint64_t u64 = len;
-#if defined(__LITTLE_ENDIAN__)
-    u64 = __builtin_bswap64(u64);
-#endif
-    memcpy(hdr + 2, &u64, sizeof(uint64_t));
+    wr64_be(hdr + 2, len);
     hlen = 10;
   }
 
