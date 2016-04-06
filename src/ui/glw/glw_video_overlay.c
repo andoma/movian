@@ -308,7 +308,7 @@ glw_video_overlay_render(glw_video_t *gv, const glw_rctx_t *frc,
     // Never do user displacement if in DVD menu, it will fail
     if(!gv->gv_spu_in_menu) {
 
-      int ypos = gv->gv_vo_displace_y - gv->gv_bottom_overlay_displacement;
+      int ypos = gv->gv_vo_displace_y + gv->gv_bottom_overlay_displacement;
 
       glw_Translatef(&rc0,
 		     gv->gv_vo_displace_x * 2.0f / rc0.rc_width,
