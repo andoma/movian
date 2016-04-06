@@ -1,0 +1,3 @@
+Fix problem when adjusting subtitle vertical position when then OSD display is also visible
+
+Fixes #3029
