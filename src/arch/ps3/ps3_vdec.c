@@ -858,6 +858,8 @@ video_ps3_vdec_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 
   case AV_CODEC_ID_H264:
     if(mcp != NULL) {
+      TRACE(TRACE_DEBUG, "VDEC", "H264: Profile:%d Level:%d",
+            mcp->profile, mcp->level);
 
       if(mcp->profile != FF_PROFILE_H264_CONSTRAINED_BASELINE &&
          mcp->profile >= FF_PROFILE_H264_HIGH_10) {

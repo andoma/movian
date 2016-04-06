@@ -647,12 +647,13 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
             "Unable to compute opensub hash, stream probably not seekable");
   }
 
+  int strategy = fa_libav_get_strategy_for_file(fh);
   AVIOContext *avio = fa_libav_reopen(fh, 0);
   va.filesize = avio_size(avio);
 
   AVFormatContext *fctx;
   if((fctx = fa_libav_open_format(avio, url, errbuf, errlen,
-				  va.mimetype, 65536, 1, 2)) == NULL) {
+				  va.mimetype, strategy)) == NULL) {
     fa_libav_close(avio);
     return NULL;
   }

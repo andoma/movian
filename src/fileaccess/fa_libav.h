@@ -31,8 +31,12 @@ struct AVFormatContext *fa_libav_open_format(AVIOContext *avio,
 					     const char *url,
 					     char *errbuf, size_t errlen,
 					     const char *mimetype,
-                                             int probe_size,
-                                             int max_analyze_duration,
-					     int fps_probe_frames);
+                                             int strategy);
+
+#define FA_LIBAV_OPEN_STRATEGY_AUDIO              1
+#define FA_LIBAV_OPEN_STRATEGY_VIDEO_NON_SEEKABLE 2
+#define FA_LIBAV_OPEN_STRATEGY_VIDEO_SEEKABLE     3
 
 void fa_libav_close_format(struct AVFormatContext *fctx, int park);
+
+int fa_libav_get_strategy_for_file(fa_handle_t *fh);

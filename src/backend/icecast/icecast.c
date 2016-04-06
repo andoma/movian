@@ -355,7 +355,7 @@ open_stream(icecast_play_context_t *ipc)
   const char *ct = http_header_get(&ipc->ipc_response_headers, "content-type");
 
   if((fctx = fa_libav_open_format(avio, url, errbuf, sizeof(errbuf), ct,
-                                  4096, 0, -1)) == NULL) {
+                                  FA_LIBAV_OPEN_STRATEGY_AUDIO)) == NULL) {
 
     if(!cancellable_is_cancelled(ipc->ipc_mp->mp_cancellable)) {
       TRACE(TRACE_ERROR, "Radio", "Unable to open %s -- %s",

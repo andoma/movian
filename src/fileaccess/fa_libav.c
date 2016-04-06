@@ -124,8 +124,7 @@ static const struct {
 AVFormatContext *
 fa_libav_open_format(AVIOContext *avio, const char *url,
 		     char *errbuf, size_t errlen, const char *mimetype,
-                     int probe_size, int max_analyze_duration,
-		     int fps_probe_frames)
+                     int strategy)
 {
   AVInputFormat *fmt = NULL;
   AVFormatContext *fctx;
@@ -146,6 +145,16 @@ fa_libav_open_format(AVIOContext *avio, const char *url,
 	    url, mimetype);
   }
 
+  int probe_size = 0;
+  switch(strategy) {
+  case FA_LIBAV_OPEN_STRATEGY_AUDIO:
+    probe_size = 4096;
+    break;
+  case FA_LIBAV_OPEN_STRATEGY_VIDEO_NON_SEEKABLE:
+    probe_size = 65536;
+    break;
+  }
+
   if(fmt == NULL) {
     if((err = av_probe_input_buffer(avio, &fmt, url, NULL, 0, probe_size)) != 0)
       return fa_libav_open_error(errbuf, errlen,
@@ -158,6 +167,14 @@ fa_libav_open_format(AVIOContext *avio, const char *url,
     TRACE(TRACE_DEBUG, "probe", "%s: Probed as %s", url, fmt->name);
   }
 
+  TRACE(TRACE_DEBUG, "probe", "%s: Opening with strategy %s",
+        url,
+        strategy == FA_LIBAV_OPEN_STRATEGY_AUDIO ? "audio" :
+        strategy == FA_LIBAV_OPEN_STRATEGY_VIDEO_NON_SEEKABLE ? "video-ns" :
+        strategy == FA_LIBAV_OPEN_STRATEGY_VIDEO_SEEKABLE ? "video-seekable" :
+        "???");
+
+
   fctx = avformat_alloc_context();
   fctx->pb = avio;
 
@@ -166,18 +183,23 @@ fa_libav_open_format(AVIOContext *avio, const char *url,
       TRACE(TRACE_DEBUG, "libav",
             "Unable to open using mimetype %s, retrying with probe",
             mimetype);
-      return fa_libav_open_format(avio, url, errbuf, errlen, NULL, probe_size,
-                                  max_analyze_duration, fps_probe_frames);
+      return fa_libav_open_format(avio, url, errbuf, errlen, NULL,
+                                  strategy);
     }
     return fa_libav_open_error(errbuf, errlen,
 			       "Unable to open file as input format", err);
   }
 
-  if(fps_probe_frames != -1)
-    fctx->fps_probe_size = fps_probe_frames;
-
-  if(max_analyze_duration != -1)
-    fctx->max_analyze_duration = max_analyze_duration;
+  switch(strategy) {
+  case FA_LIBAV_OPEN_STRATEGY_AUDIO:
+    fctx->fps_probe_size = 0;
+    fctx->max_analyze_duration = 0;
+    break;
+  case FA_LIBAV_OPEN_STRATEGY_VIDEO_NON_SEEKABLE:
+    fctx->fps_probe_size = 2;
+    fctx->max_analyze_duration = 1;
+    break;
+  }
 
   if(avformat_find_stream_info(fctx, NULL) < 0) {
     avformat_close_input(&fctx);
@@ -185,8 +207,8 @@ fa_libav_open_format(AVIOContext *avio, const char *url,
       TRACE(TRACE_DEBUG, "libav",
             "Unable to find stream info using mimetype %s, retrying with probe",
             mimetype);
-      return fa_libav_open_format(avio, url, errbuf, errlen, NULL, probe_size,
-                                  max_analyze_duration, fps_probe_frames);
+      return fa_libav_open_format(avio, url, errbuf, errlen, NULL,
+                                  strategy);
     }
     return fa_libav_open_error(errbuf, errlen,
 			       "Unable to handle file contents", err);
@@ -234,3 +256,17 @@ if(av_strerror(err, errbuf, errlen))
     snprintf(errbuf, errlen, "libav error %d", err);
 }
 
+
+
+/**
+ *
+ */
+int
+fa_libav_get_strategy_for_file(fa_handle_t *fh)
+{
+  if(fa_fsize(fh) == -1) {
+    return FA_LIBAV_OPEN_STRATEGY_VIDEO_NON_SEEKABLE;
+  } else {
+    return FA_LIBAV_OPEN_STRATEGY_VIDEO_SEEKABLE;
+  }
+}

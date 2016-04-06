@@ -116,7 +116,7 @@ unpack_audio(const char *url, pcm_sound_t *out)
   AVIOContext *avio = fa_libav_reopen(fh, 0);
 
   if((fctx = fa_libav_open_format(avio, url, errbuf, sizeof(errbuf), NULL,
-                                  0, -1, -1)) == NULL) {
+                                  FA_LIBAV_OPEN_STRATEGY_AUDIO)) == NULL) {
     fa_libav_close(avio);
     goto fail;
   }

@@ -184,7 +184,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   }
 
   if((fctx = fa_libav_open_format(avio, url, errbuf, errlen, mimetype,
-                                  0, -1, -1)) == NULL) {
+                                  FA_LIBAV_OPEN_STRATEGY_AUDIO)) == NULL) {
     fa_libav_close(avio);
     return NULL;
   }

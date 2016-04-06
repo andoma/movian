@@ -734,10 +734,12 @@ fa_probe_metadata(const char *url, char *errbuf, size_t errsize,
     return md;
   }
 
+  int strategy = fa_libav_get_strategy_for_file(fh);
+
   AVIOContext *avio = fa_libav_reopen(fh, 0);
 
   if((fctx = fa_libav_open_format(avio, url, errbuf, errsize,
-                                  NULL, 65536, 1, 2)) == NULL) {
+                                  NULL, strategy)) == NULL) {
     fa_libav_close(avio);
     metadata_destroy(md);
     return NULL;
