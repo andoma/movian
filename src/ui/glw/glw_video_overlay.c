@@ -310,7 +310,7 @@ glw_video_overlay_render(glw_video_t *gv, const glw_rctx_t *frc,
 
     glw_zinc(&rc0);
 
-    // Never to user displacement if in DVD menu, it will fail
+    // Never do user displacement if in DVD menu, it will fail
     if(!gv->gv_spu_in_menu)
       glw_Translatef(&rc0,
 		     gv->gv_vo_displace_x * 2.0f / rc0.rc_width,
