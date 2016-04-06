@@ -93,8 +93,10 @@ static struct strtab rpirevisions[] = {
   {"-1 Model B+ 512MB", 0x10},
   {"-1 Compute Module 512MB", 0x11},
   {"-1 Model A+ 512MB", 0x12},
-  {"-2 Model B (Sony) 1GB", 0xa01041},
+  {"-2 Model B (Sony) 1GB",   0xa01041},
   {"-2 Model B (Embest) 1GB", 0xa21041},
+  {"-Zero (Sony) 512MB",      0x900092},
+  {"-3 Model B (Sony) 1GB",   0xa02082},
 };
 
 static void
