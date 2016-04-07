@@ -2894,8 +2894,7 @@ glwf_coreAttach(glw_view_eval_context_t *ec, struct token *self,
     return -1;
 
   if(a1->type != TOKEN_RSTRING)
-    return glw_view_seterr(ec->ei, self,
-                           "coreAttach: Frist arg is not a string");
+    return 0;
 
   if((a2 = resolve_property_name2(ec, a2)) == NULL)
     return -1;
@@ -2907,6 +2906,8 @@ glwf_coreAttach(glw_view_eval_context_t *ec, struct token *self,
 
   if(self->t_extra == NULL) {
     self->t_extra = prop_proxy_connect(rstr_get(a1->t_rstring), a2->t_prop);
+  } else {
+    return 0;
   }
 
   n = *ec;
