@@ -24,7 +24,8 @@ widget(container_z, {
 		  "dvd",       "ic_album_48px",
 		  "album",     "ic_album_48px",
 		  "artist",    "ic_person_48px",
-		  "tv",        "ic_tv_48px"
+		  "tv",        "ic_tv_48px",
+		  "movian",    "movian"
 	         ) + ".svg";
 
       style: "ListItemIcon";

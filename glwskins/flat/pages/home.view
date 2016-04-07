@@ -157,7 +157,9 @@ widget(container_z, {
 		              "network",  "ic_device_hub_24px",
 		              "setting",  "ic_settings_48px",
                               "storage",  "ic_sd_storage_48px",
-		              "plugin",   "ic_extension_48px") + ".svg";
+		              "plugin",   "ic_extension_48px",
+		              "movian",    "movian"
+                             ) + ".svg";
 
                   saturation: iir(isPressed(), 4, true) * 0.66;
                 });

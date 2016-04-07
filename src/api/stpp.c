@@ -34,6 +34,13 @@
 #include "fileaccess/fileaccess.h"
 #include "task.h"
 
+#include "htsmsg/htsmsg_store.h"
+#include "arch/arch.h"
+#include "service.h"
+
+#include "usage.h"
+#include "settings.h"
+
 RB_HEAD(stpp_subscription_tree, stpp_subscription);
 RB_HEAD(stpp_prop_tree, stpp_prop);
 LIST_HEAD(stpp_prop_list, stpp_prop);
@@ -1241,12 +1248,91 @@ INITME(INIT_GROUP_API, ws_init, NULL, 0);
 /**
  *
  */
+typedef struct stpp_controllee {
+  LIST_ENTRY(stpp_controllee) sc_link;
+  uint8_t sc_id[16];
+  asyncio_timer_t sc_timeout;
+  char sc_name[33];
+  char sc_type[33];
+  service_t *sc_service;
+  net_addr_t sc_addr;
+} stpp_controllee_t;
+
+LIST_HEAD(stpp_controllee_list, stpp_controllee);
+
+static struct stpp_controllee_list stpp_controllees;
+
+static HTS_MUTEX_DECL(stpp_controllees_mutex);
+
+
+
+/**
+ *
+ */
 static int
 be_stpp_open(prop_t *page, const char *url, int sync)
 {
-  prop_t *model = prop_create_r(page, "model");
-  prop_set(model, "type", PROP_SET_STRING, "stpp");
-  prop_ref_dec(model);
+  prop_t *model  = NULL;
+  url += strlen("stpp:");
+  /*
+  if(!strcmp(url, "browser")) {
+    usage_page_open(sync, "STPP Browse");
+
+    prop_t *model = prop_create_r(page, "model");
+
+    prop_link(_p("Movians for remote control"),
+              prop_create(prop_create(model, "metadata"), "title"));
+
+    prop_set(model, "type", PROP_SET_STRING, "directory");
+
+    prop_t *nodes = prop_create_r(model, "nodes");
+
+    prop_link(stpp_controlleee_nodes, nodes);
+    prop_ref_dec(nodes);
+    prop_ref_dec(model);
+
+  } else */
+  if(!strncmp(url, "url:", 4)) {
+    model = prop_create_r(page, "model");
+    prop_set(model, "remoteurl", PROP_SET_STRING, url + 4);
+
+  } if(!strncmp(url, "id:", 3)) {
+    uint8_t id[16];
+
+    if(hex2bin(id, sizeof(id), url + 3) != sizeof(id)) {
+      nav_open_error(page, "Bad URL");
+      return 0;
+    }
+
+    hts_mutex_lock(&stpp_controllees_mutex);
+    stpp_controllee_t *sc;
+    LIST_FOREACH(sc, &stpp_controllees, sc_link) {
+      if(!memcmp(sc->sc_id, id, sizeof(sc->sc_id)))
+        break;
+    }
+
+    if(sc == NULL) {
+      nav_open_errorf(page, _("Device not available"));
+    } else {
+      char url[64];
+
+      model = prop_create_r(page, "model");
+      snprintf(url, sizeof(url), "stpp://%d.%d.%d.%d:%d",
+               sc->sc_addr.na_addr[0],
+               sc->sc_addr.na_addr[1],
+               sc->sc_addr.na_addr[2],
+               sc->sc_addr.na_addr[3],
+               sc->sc_addr.na_port);
+      prop_set(model, "remoteurl", PROP_SET_STRING, url);
+     }
+    hts_mutex_unlock(&stpp_controllees_mutex);
+  }
+
+
+  if(model != NULL) {
+    prop_set(model, "type", PROP_SET_STRING, "stpp");
+    prop_ref_dec(model);
+  }
   return 0;
 }
 
@@ -1257,7 +1343,7 @@ be_stpp_open(prop_t *page, const char *url, int sync)
 static int
 be_stpp_canhandle(const char *url)
 {
-  return !strncmp(url, "stpp://", strlen("stpp://"));
+  return !strncmp(url, "stpp:", strlen("stpp:"));
 }
 
 
@@ -1270,3 +1356,392 @@ static backend_t be_stpp = {
 };
 
 BE_REGISTER(stpp);
+
+
+
+LIST_HEAD(stpp_interface_list, stpp_interface);
+
+static struct stpp_interface_list stpp_interfaces;
+
+typedef struct stpp_interface {
+  LIST_ENTRY(stpp_interface) si_link;
+  asyncio_fd_t *si_fd;
+  char si_ifname[NET_IFNAME_SIZE];
+  net_addr_t si_myaddr;
+  int si_mark;
+  asyncio_timer_t si_periodic_timer;
+} stpp_interface_t;
+
+static asyncio_fd_t *stpp_fd_mc;
+static uint8_t stpp_id[16];
+static rstr_t *stpp_system_name;
+
+#define STPP_ROLE_CONTROLLER 0x1
+#define STPP_ROLE_CONTROLLEE 0x2
+
+static int stpp_controller = 1;
+static int stpp_controllee = 1;
+
+
+typedef struct stppmsg {
+  uint8_t magic[4];      // STPP
+  uint8_t deviceid[16];
+  uint8_t version;
+  uint8_t role;
+  uint8_t port[2];
+  char name[32];
+  char type[32];
+} __attribute__((packed)) stppmsg_t;
+
+
+//static service_t *stpp_browser_service;
+
+/**
+ *
+ */
+static int
+build_msg(stppmsg_t *msg)
+{
+  extern int http_server_port;
+  if(stpp_system_name == NULL)
+    return -1;
+  strncpy(msg->name, rstr_get(stpp_system_name), sizeof(msg->name));
+  strncpy(msg->type, arch_get_system_type(), sizeof(msg->type));
+  memcpy(msg->magic, "STPP", 4);
+  memcpy(msg->deviceid, stpp_id, sizeof(msg->deviceid));
+  msg->version = STPP_VERSION;
+  wr16_be(msg->port, http_server_port);
+  msg->role =
+    (stpp_controller ? STPP_ROLE_CONTROLLER : 0) |
+    (stpp_controllee ? STPP_ROLE_CONTROLLEE : 0);
+  return 0;
+}
+
+static net_addr_t stpp_mcast_addr = {4, 42000, {239, 255, 255, 250}};
+
+
+/**
+ *
+ */
+static int
+stpp_send(asyncio_fd_t *fd, const net_addr_t *dst)
+{
+  stppmsg_t msg;
+  if(build_msg(&msg))
+    return -1;
+  asyncio_udp_send(fd, &msg, sizeof(msg), dst ?: &stpp_mcast_addr);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static void
+stpp_periodic(void *opaque)
+{
+  stpp_interface_t *si = opaque;
+  stpp_send(si->si_fd, NULL);
+  if(stpp_controllee) // Keep announcing
+    asyncio_timer_arm_delta_sec(&si->si_periodic_timer, 20);
+}
+
+
+/**
+ *
+ */
+static void
+stpp_broadcast(int count)
+{
+  stppmsg_t msg;
+  if(build_msg(&msg))
+    return;
+
+  for(int i = 0; i < count; i++) {
+    stpp_interface_t *si;
+    LIST_FOREACH(si, &stpp_interfaces, si_link) {
+      asyncio_udp_send(si->si_fd, &msg, sizeof(msg), &stpp_mcast_addr);
+    }
+  }
+}
+
+
+/**
+ *
+ */
+static int
+stpp_verify_packet(const stppmsg_t *msg, int size)
+{
+  return size < sizeof(stppmsg_t) ||
+    memcmp(msg->magic, "STPP", 4) ||
+    !memcmp(msg->deviceid, stpp_id, sizeof(stpp_id));
+}
+
+
+/**
+ *
+ */
+static void
+stpp_controllee_destroy(stpp_controllee_t *sc)
+{
+  service_destroy(sc->sc_service);
+  LIST_REMOVE(sc, sc_link);
+  asyncio_timer_disarm(&sc->sc_timeout);
+  free(sc);
+}
+
+
+/**
+ *
+ */
+static void
+stpp_controllee_timeout(void *aux)
+{
+  hts_mutex_lock(&stpp_controllees_mutex);
+  stpp_controllee_destroy(aux);
+  hts_mutex_unlock(&stpp_controllees_mutex);
+}
+
+
+/**
+ *
+ */
+static void
+stpp_udp_input(const stppmsg_t *msg, const net_addr_t *remote_addr)
+{
+  stpp_controllee_t *sc;
+
+  hts_mutex_lock(&stpp_controllees_mutex);
+
+  LIST_FOREACH(sc, &stpp_controllees, sc_link) {
+    if(!memcmp(sc->sc_id, msg->deviceid, sizeof(sc->sc_id)))
+      break;
+  }
+
+  if(!(msg->role & STPP_ROLE_CONTROLLEE)) {
+    // Not a controllee
+
+    if(sc != NULL)
+      stpp_controllee_destroy(sc);
+
+  } else {
+
+    if(sc == NULL) {
+      sc = calloc(1, sizeof(stpp_controllee_t));
+      memcpy(sc->sc_id, msg->deviceid, sizeof(sc->sc_id));
+      LIST_INSERT_HEAD(&stpp_controllees, sc, sc_link);
+      asyncio_timer_init(&sc->sc_timeout, stpp_controllee_timeout, sc);
+    }
+
+    memcpy(sc->sc_name, msg->name, sizeof(msg->name));
+    memcpy(sc->sc_type, msg->type, sizeof(msg->type));
+    sc->sc_addr = *remote_addr;
+    sc->sc_addr.na_port = rd16_be(msg->port);
+
+    if(sc->sc_service == NULL) {
+      char url[64];
+      snprintf(url, sizeof(url), "stpp:id:");
+      bin2hex(url + 8, sizeof(url) - 8, sc->sc_id, sizeof(sc->sc_id));
+      sc->sc_service = service_create_managed(url, sc->sc_name, url,
+                                              "movian", NULL, 0, 0,
+                                              SVC_ORIGIN_DISCOVERED,
+                                              NULL);
+    } else {
+      rstr_t *r = rstr_alloc(sc->sc_name);
+      service_set_title(sc->sc_service, r);
+      rstr_release(r);
+    }
+    asyncio_timer_arm_delta_sec(&sc->sc_timeout, 60);
+  }
+  hts_mutex_unlock(&stpp_controllees_mutex);
+}
+
+
+/**
+ *
+ */
+static void
+stpp_multicast_input(void *opaque, const void *data, int size,
+                     const net_addr_t *remote_addr)
+{
+  const stppmsg_t *msg = data;
+  if(stpp_verify_packet(msg, size))
+    return;
+  if(msg->role & STPP_ROLE_CONTROLLER && stpp_controllee) {
+    stpp_send(stpp_fd_mc, remote_addr);
+  }
+  stpp_udp_input(msg, remote_addr);
+}
+
+
+/**
+ *
+ */
+static void
+stpp_unicast_input(void *opaque, const void *data, int size,
+                   const net_addr_t *remote_addr)
+{
+  const stppmsg_t *msg = data;
+  if(stpp_verify_packet(msg, size))
+    return;
+  stpp_udp_input(msg, remote_addr);
+}
+
+
+static void
+stpp_set_systemname(void *opaque, rstr_t *name)
+{
+  rstr_set(&stpp_system_name, name);
+  stpp_broadcast(1);
+}
+
+
+/**
+ *
+ */
+static void
+stpp_netif_update(const struct netif *ni)
+{
+  if(stpp_fd_mc == NULL) {
+
+    net_addr_t addr = {.na_family = 4, .na_port = 42000};
+
+    stpp_fd_mc = asyncio_udp_bind("STPP Discovery input", &addr,
+                                  stpp_multicast_input,
+                                  NULL, 0, 0);
+    if(stpp_fd_mc == NULL) {
+      TRACE(TRACE_ERROR, "STPP", "Failed to bind multicast to %s on %s",
+            net_addr_str(&addr), ni->ifname);
+    } else {
+
+      addr.na_addr[0] = 239;
+      addr.na_addr[1] = 255;
+      addr.na_addr[2] = 255;
+      addr.na_addr[3] = 250;
+
+      if(asyncio_udp_add_membership(stpp_fd_mc, &addr, NULL)) {
+        asyncio_del_fd(stpp_fd_mc);
+        stpp_fd_mc = NULL;
+        TRACE(TRACE_ERROR, "STPP", "Failed to join multicast to %s on %s",
+              net_addr_str(&addr), ni->ifname);
+      }
+    }
+  }
+
+  stpp_interface_t *si, *next;
+
+  LIST_FOREACH(si, &stpp_interfaces, si_link)
+    si->si_mark = 1;
+
+  for(int i = 0; ni != NULL && ni->ifname[0]; i++, ni++) {
+    LIST_FOREACH(si, &stpp_interfaces, si_link) {
+      if(!memcmp(si->si_myaddr.na_addr, ni->ipv4_addr, 4))
+        break;
+    }
+
+    if(si == NULL) {
+
+      si = calloc(1, sizeof(stpp_interface_t));
+      strcpy(si->si_ifname, ni->ifname);
+      si->si_myaddr.na_family = 4;
+      si->si_myaddr.na_port = 1900;
+      memcpy(si->si_myaddr.na_addr, ni->ipv4_addr, 4);
+
+      TRACE(TRACE_DEBUG, "STPP", "Trying to start on %s", ni->ifname);
+      char name[32];
+      snprintf(name, sizeof(name), "STPP/%s/multicast", ni->ifname);
+
+
+
+      snprintf(name, sizeof(name), "STPP/%s/unicast", ni->ifname);
+      si->si_myaddr.na_port = 0;
+      si->si_fd = asyncio_udp_bind(name, &si->si_myaddr, stpp_unicast_input,
+                                   si, 0, 0);
+      if(si->si_fd == NULL) {
+        TRACE(TRACE_ERROR, "STPP", "Failed to bind unicast to %s on %s",
+              net_addr_str(&si->si_myaddr), ni->ifname);
+        free(si);
+        continue;
+      }
+      LIST_INSERT_HEAD(&stpp_interfaces, si, si_link);
+
+      stpp_send(si->si_fd, NULL);
+
+      asyncio_timer_init(&si->si_periodic_timer, stpp_periodic, si);
+      asyncio_timer_arm_delta_sec(&si->si_periodic_timer, 1);
+
+      TRACE(TRACE_DEBUG, "STPP", "STPP started on '%s'", si->si_ifname);
+    } else {
+      si->si_mark = 0;
+    }
+  }
+
+  for(si = LIST_FIRST(&stpp_interfaces); si != NULL; si = next) {
+    next = LIST_NEXT(si, si_link);
+
+    if(!si->si_mark)
+      continue;
+
+    TRACE(TRACE_DEBUG, "STPP", "STPP stopped on %s", si->si_ifname);
+
+    LIST_REMOVE(si, si_link);
+    asyncio_del_fd(si->si_fd);
+    asyncio_timer_disarm(&si->si_periodic_timer);
+    free(si);
+  }
+}
+
+
+static void
+stpp_set_controllee(void *opaque, int on)
+{
+  stpp_controllee = on;
+  stpp_broadcast(1);
+}
+
+
+static void
+stpp_discover_init(void)
+{
+  rstr_t *id = htsmsg_store_get_str("stpp", "id");
+  if(id == NULL) {
+    arch_get_random_bytes(stpp_id, sizeof(stpp_id));
+    char id[33];
+    bin2hex(id, sizeof(id), stpp_id, sizeof(stpp_id));
+    htsmsg_store_set("stpp", "id", HMF_STR, id);
+  } else {
+    hex2bin(stpp_id, sizeof(stpp_id), rstr_get(id));
+    rstr_release(id);
+  }
+
+  prop_subscribe(0,
+                 PROP_TAG_NAME("global", "app", "systemname"),
+                 PROP_TAG_CALLBACK_RSTR, stpp_set_systemname, NULL,
+                 PROP_TAG_COURIER, asyncio_courier,
+                 NULL);
+
+  settings_create_separator(gconf.settings_network, _p("Remote control"));
+
+  setting_create(SETTING_BOOL, gconf.settings_network, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Allow remote control")),
+                 SETTING_VALUE(1),
+                 SETTING_CALLBACK(stpp_set_controllee, NULL),
+                 SETTING_COURIER(asyncio_courier),
+                 SETTING_STORE("stpp", "enablecontrollee"),
+                 NULL);
+
+
+  asyncio_register_for_network_changes(stpp_netif_update);
+}
+
+
+static void
+stpp_discover_fini(void)
+{
+  stpp_controllee = 0;
+  stpp_controller = 0;
+  stpp_broadcast(2);
+}
+
+
+INITME(INIT_GROUP_ASYNCIO, stpp_discover_init, stpp_discover_fini, 10);

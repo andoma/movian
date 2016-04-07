@@ -1066,7 +1066,6 @@ http_server_init(void)
 #endif
 
   if(http_server_fd != NULL) {
-    int http_server_port __attribute__((unused));
     http_server_port = asyncio_get_port(http_server_fd);
 
 #if ENABLE_UPNP

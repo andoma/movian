@@ -665,6 +665,23 @@ asyncio_thread(void *aux)
 }
 
 
+static void
+asyncio_do_shutdown(void *aux)
+{
+  fini_group(INIT_GROUP_ASYNCIO);
+}
+
+
+/**
+ *
+ */
+static void
+asyncio_shutdown(void *opaque, int retcode)
+{
+  asyncio_run_task(asyncio_do_shutdown, NULL);
+}
+
+
 /**
  *
  */
@@ -691,6 +708,8 @@ asyncio_start(void)
 {
   hts_thread_create_detached("asyncio", asyncio_thread,
                              NULL, THREAD_PRIO_MODEL);
+
+  shutdown_hook_add(asyncio_shutdown, NULL, 1);
 }
 
 /**

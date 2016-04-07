@@ -26,6 +26,7 @@ widget(container_z, {
                   "i18n",     "skin://icons/ic_language_48px.svg",
                   "metadata", "skin://icons/ic_description_48px.svg",
                   "network",  "skin://icons/ic_settings_ethernet_48px.svg",
+		  "movian",   "skin://icons/movian.svg",
                   "plugin",   "dataroot://res/svg/Plugin.svg"
 	         );
       style: "ListItemIcon";
