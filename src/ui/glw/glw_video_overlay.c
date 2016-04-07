@@ -222,6 +222,11 @@ glw_video_overlay_layout(glw_video_t *gv,
       memset(l, 0, sizeof(layer_t));
       l->id = gvo->gvo_layer;
       LIST_INSERT_HEAD(&layers, l, link);
+
+      const int bd = gv->gv_bottom_overlay_displacement;
+      l->used_height[LAYOUT_ALIGN_BOTTOM] = bd;
+      l->used_height[LAYOUT_ALIGN_BOTTOM_LEFT] = bd;
+      l->used_height[LAYOUT_ALIGN_BOTTOM_RIGHT] = bd;
     }
 
     float scaling = 1;
@@ -306,14 +311,10 @@ glw_video_overlay_render(glw_video_t *gv, const glw_rctx_t *frc,
     glw_zinc(&rc0);
 
     // Never do user displacement if in DVD menu, it will fail
-    if(!gv->gv_spu_in_menu) {
-
-      int ypos = gv->gv_vo_displace_y + gv->gv_bottom_overlay_displacement;
-
+    if(!gv->gv_spu_in_menu)
       glw_Translatef(&rc0,
 		     gv->gv_vo_displace_x * 2.0f / rc0.rc_width,
-		     ypos * 2.0f / rc0.rc_height, 0);
-    }
+		     gv->gv_vo_displace_y * 2.0f / rc0.rc_height, 0);
 
     switch(gvo->gvo_type) {
     case GVO_DVDSPU:
