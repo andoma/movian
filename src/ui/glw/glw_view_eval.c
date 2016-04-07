@@ -37,6 +37,7 @@
 #include "fileaccess/fileaccess.h"
 #include "glw_text_bitmap.h"
 #include "prop/prop_window.h"
+#include "glw_texture.h"
 
 LIST_HEAD(clone_list, glw_clone);
 TAILQ_HEAD(vectorizer_element_queue, vectorizer_element);
@@ -2870,6 +2871,9 @@ glwf_coreAttach_dtor(glw_root_t *gr, struct token *self)
 {
   if(self->t_extra != NULL)
     prop_proxy_close(self->t_extra);
+
+  // Flush all textures which may have references to backend
+  glw_tex_flush_all(gr);
 }
 
 

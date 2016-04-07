@@ -54,6 +54,8 @@ static void
 glt_destroy(glw_loadable_texture_t *glt)
 {
   cancellable_release(glt->glt_cancellable);
+  if(glt->glt_backend)
+    backend_release(glt->glt_backend);
   free(glt);
 }
 
@@ -465,7 +467,7 @@ glw_tex_flush_all(glw_root_t *gr)
     switch(glt->glt_state) {
 
     case GLT_STATE_INACTIVE:
-      continue;
+      break;
 
     case GLT_STATE_STASHED:
       glw_tex_unstash(gr, glt);
@@ -495,8 +497,16 @@ glw_tex_flush_all(glw_root_t *gr)
       break;
     }
     glt_set_state(glt, GLT_STATE_INACTIVE);
-  }
 
+    if(glt->glt_refcnt == 0) {
+      if(glt->glt_url != NULL) {
+        rstr_release(glt->glt_url);
+        glt->glt_url = NULL;
+        LIST_REMOVE(glt, glt_global_link);
+      }
+      glt_destroy(glt);
+    }
+  }
 }
 
 
