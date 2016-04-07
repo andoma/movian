@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007-2015 Lonelycoder AB
+ *  Copyright (C) 2006-2016 Lonelycoder AB
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -151,7 +151,7 @@ init_global_info(void)
   prop_set(s, "name", PROP_SET_STRING, APPNAMEUSER);
   prop_set(s, "version", PROP_SET_STRING, htsversion);
   prop_set(s, "fullversion", PROP_SET_STRING, htsversion_full);
-  prop_set(s, "copyright", PROP_SET_STRING, "© 2006 - 2015 Lonelycoder AB");
+  prop_set(s, "copyright", PROP_SET_STRING, "© 2006 - 2016 Lonelycoder AB");
 }
 
 
@@ -491,7 +491,7 @@ parse_opts(int argc, char **argv)
   while(argc > 0) {
     if(!strcmp(argv[0], "-h") || !strcmp(argv[0], "--help")) {
       printf(APPNAMEUSER" %s\n"
-	     "Copyright (C) 2007-2015 Lonelycoder AB\n"
+	     "Copyright (C) 2006-2016 Lonelycoder AB\n"
 	     "\n"
 	     "Usage: %s [options] [<url>]\n"
 	     "\n"
