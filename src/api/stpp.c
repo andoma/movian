@@ -1205,6 +1205,12 @@ stpp_init(http_connection_t *hc)
   stpp_t *stpp = calloc(1, sizeof(stpp_t));
   stpp->stpp_hc = hc;
   http_set_opaque(hc, stpp);
+
+  prop_t *p = prop_create_multi(prop_get_global(),
+                                "stpp", "remoteControlled", NULL);
+  prop_add_int(p, 1);
+  prop_ref_dec(p);
+
   return 0;
 }
 
@@ -1229,6 +1235,11 @@ stpp_fini(http_connection_t *hc, void *opaque)
   }
 
   free(stpp);
+
+  prop_t *p = prop_create_multi(prop_get_global(),
+                                "stpp", "remoteControlled", NULL);
+  prop_add_int(p, -1);
+  prop_ref_dec(p);
 }
 
 

@@ -5,6 +5,8 @@ $ui.xmargin = select($ui.aspect > 1, $ui.width / 50, 0);
 $ui.showTopIcons = $ui.pointerVisible || $ui.touch;
 $ui.showAllPlaydeckButtons = 0;
 
+delta($ui.disableScreensaver, $core.stpp.remoteControlled);
+
 onEvent(sysinfo, {
   toggle($ui.sysinfo);
 });
