@@ -120,8 +120,10 @@ ssdp_recv_notify(struct http_header_list *args)
   if(nts == NULL || url == NULL)
     return;
 
+  int maxage = ssdp_maxage(args);
+
   if(!strcasecmp(nts, "ssdp:alive") && type != NULL)
-    upnp_add_device(url, type, ssdp_maxage(args));
+    upnp_add_device(url, type, maxage);
 
   if(!strcasecmp(nts, "ssdp:byebye"))
     upnp_del_device(url);
@@ -372,6 +374,7 @@ static void
 ssdp_netif_update(const struct netif *ni)
 {
   ssdp_interface_t *si, *next;
+  int single_interface_mode = 0;
   LIST_FOREACH(si, &ssdp_interfaces, si_link)
     si->si_mark = 1;
 
@@ -388,11 +391,15 @@ ssdp_netif_update(const struct netif *ni)
       si->si_myaddr.na_family = 4;
       si->si_myaddr.na_port = 1900;
       memcpy(si->si_myaddr.na_addr, ni->ipv4_addr, 4);
+
       TRACE(TRACE_DEBUG, "SSDP", "Trying to start on %s", ni->ifname);
       char name[32];
       snprintf(name, sizeof(name), "SSDP/%s/multicast", ni->ifname);
 
-      si->si_fd_mc = asyncio_udp_bind(name, &si->si_myaddr, ssdp_multicast_input,
+
+      net_addr_t bindaddr = {.na_family = 4, .na_port = 1900};
+      si->si_fd_mc = asyncio_udp_bind(name, &bindaddr,
+                                      ssdp_multicast_input,
                                       si, 0, 0);
       if(si->si_fd_mc == NULL) {
         TRACE(TRACE_ERROR, "SSDP", "Failed to bind multicast to %s on %s",
@@ -401,12 +408,23 @@ ssdp_netif_update(const struct netif *ni)
         continue;
       }
 
-      if(asyncio_udp_add_membership(si->si_fd_mc, &ssdp_mcast_addr)) {
-        TRACE(TRACE_ERROR, "SSDP", "Failed to join multicast group %s on %s",
-              net_addr_str(&ssdp_mcast_addr), ni->ifname);
-        asyncio_del_fd(si->si_fd_mc);
-        free(si);
-        continue;
+
+      if(asyncio_udp_add_membership(si->si_fd_mc, &ssdp_mcast_addr,
+                                    &si->si_myaddr)) {
+
+        /* Failed to join for a speicific interface, try joining for all
+         * interfaces. If this works we can't really tell on which interface
+         * multicast arrives so we can only run on a single interface
+         */
+
+        if(asyncio_udp_add_membership(si->si_fd_mc, &ssdp_mcast_addr, NULL)) {
+          TRACE(TRACE_ERROR, "SSDP", "Failed to join multicast group %s on %s",
+                net_addr_str(&ssdp_mcast_addr), ni->ifname);
+          asyncio_del_fd(si->si_fd_mc);
+          free(si);
+          continue;
+        }
+        single_interface_mode = 1;
       }
 
       snprintf(name, sizeof(name), "SSDP/%s/unicast", ni->ifname);
@@ -430,8 +448,10 @@ ssdp_netif_update(const struct netif *ni)
       asyncio_timer_arm_delta_sec(&si->si_alive_timer, 1);
       asyncio_timer_arm_delta_sec(&si->si_search_timer, 1);
 
-      TRACE(TRACE_DEBUG, "SSDP", "SSDP started on %s", si->si_ifname);
-
+      TRACE(TRACE_DEBUG, "SSDP", "SSDP started on '%s'%s", si->si_ifname,
+            single_interface_mode ? ", Single interface mode" : "");
+      if(single_interface_mode)
+        break;
     } else {
       si->si_mark = 0;
     }

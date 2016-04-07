@@ -1392,11 +1392,13 @@ struct ip_mreq {
  *
  */
 int
-asyncio_udp_add_membership(asyncio_fd_t *af, const net_addr_t *group)
+asyncio_udp_add_membership(asyncio_fd_t *af, const net_addr_t *group,
+                           const net_addr_t *interface)
 {
-  struct ip_mreq imr;
-  memset(&imr, 0, sizeof(imr));
+  struct ip_mreq imr = {};
   memcpy(&imr.imr_multiaddr.s_addr, group->na_addr, 4);
+  if(interface != NULL)
+    memcpy(&imr.imr_interface.s_addr, interface->na_addr, 4);
   return setsockopt(af->af_fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &imr,
                     sizeof(struct ip_mreq));
 }

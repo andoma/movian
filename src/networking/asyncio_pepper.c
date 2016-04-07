@@ -767,8 +767,12 @@ asyncio_udp_bind(const char *name,
  *
  */
 int
-asyncio_udp_add_membership(asyncio_fd_t *af, const net_addr_t *group)
+asyncio_udp_add_membership(asyncio_fd_t *af, const net_addr_t *group,
+                           const net_addr_t *interface)
 {
+  if(interface != NULL)
+    return -1;
+
   PP_Resource g;
   struct PP_NetAddress_IPv4 ipv4_addr = {};
 
