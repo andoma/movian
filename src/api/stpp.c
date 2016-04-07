@@ -1365,7 +1365,7 @@ static struct stpp_interface_list stpp_interfaces;
 
 typedef struct stpp_interface {
   LIST_ENTRY(stpp_interface) si_link;
-  asyncio_fd_t *si_fd;
+  asyncio_fd_t *si_af;
   char si_ifname[NET_IFNAME_SIZE];
   net_addr_t si_myaddr;
   int si_mark;
@@ -1441,7 +1441,7 @@ static void
 stpp_periodic(void *opaque)
 {
   stpp_interface_t *si = opaque;
-  stpp_send(si->si_fd, NULL);
+  stpp_send(si->si_af, NULL);
   if(stpp_controllee) // Keep announcing
     asyncio_timer_arm_delta_sec(&si->si_periodic_timer, 20);
 }
@@ -1460,7 +1460,7 @@ stpp_broadcast(int count)
   for(int i = 0; i < count; i++) {
     stpp_interface_t *si;
     LIST_FOREACH(si, &stpp_interfaces, si_link) {
-      asyncio_udp_send(si->si_fd, &msg, sizeof(msg), &stpp_mcast_addr);
+      asyncio_udp_send(si->si_af, &msg, sizeof(msg), &stpp_mcast_addr);
     }
   }
 }
@@ -1655,9 +1655,9 @@ stpp_netif_update(const struct netif *ni)
 
       snprintf(name, sizeof(name), "STPP/%s/unicast", ni->ifname);
       si->si_myaddr.na_port = 0;
-      si->si_fd = asyncio_udp_bind(name, &si->si_myaddr, stpp_unicast_input,
+      si->si_af = asyncio_udp_bind(name, &si->si_myaddr, stpp_unicast_input,
                                    si, 0, 0);
-      if(si->si_fd == NULL) {
+      if(si->si_af == NULL) {
         TRACE(TRACE_ERROR, "STPP", "Failed to bind unicast to %s on %s",
               net_addr_str(&si->si_myaddr), ni->ifname);
         free(si);
@@ -1665,7 +1665,7 @@ stpp_netif_update(const struct netif *ni)
       }
       LIST_INSERT_HEAD(&stpp_interfaces, si, si_link);
 
-      stpp_send(si->si_fd, NULL);
+      stpp_send(si->si_af, NULL);
 
       asyncio_timer_init(&si->si_periodic_timer, stpp_periodic, si);
       asyncio_timer_arm_delta_sec(&si->si_periodic_timer, 1);
@@ -1685,7 +1685,7 @@ stpp_netif_update(const struct netif *ni)
     TRACE(TRACE_DEBUG, "STPP", "STPP stopped on %s", si->si_ifname);
 
     LIST_REMOVE(si, si_link);
-    asyncio_del_fd(si->si_fd);
+    asyncio_del_fd(si->si_af);
     asyncio_timer_disarm(&si->si_periodic_timer);
     free(si);
   }
