@@ -7,10 +7,19 @@ widget(container_y, {
     BackButton();
   });
 
-  widget(label, {
-    caption: $core.app.name;
-    size: 3em;
+
+  widget(container_x, {
     align: center;
+    spacing: 1em;
+
+    widget(icon, {
+      size: 3em;
+      source: "skin://icons/movian.svg";
+    });
+    widget(label, {
+      caption: $core.app.name;
+      size: 3em;
+    });
   });
 
   widget(label, {
@@ -34,7 +43,16 @@ widget(container_y, {
   });
 
   widget(label, {
+    caption: "https://movian.tv";
+    alpha: 0.5;
+    align: center;
+  });
 
+  widget(dummy, {
+    height: 0.5em;
+  });
+
+  widget(label, {
     caption: "https://twitter.com/movianplayer";
     alpha: 0.5;
     align: center;
