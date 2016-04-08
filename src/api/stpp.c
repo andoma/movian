@@ -1316,8 +1316,8 @@ be_stpp_open(prop_t *page, const char *url, int sync)
 
   } if(!strncmp(url, "id:", 3)) {
     uint8_t id[16];
-
-    if(hex2bin(id, sizeof(id), url + 3) != sizeof(id)) {
+    url += 3;
+    if(hex2bin(id, sizeof(id), url) != sizeof(id)) {
       nav_open_error(page, "Bad URL");
       return 0;
     }
@@ -1332,16 +1332,18 @@ be_stpp_open(prop_t *page, const char *url, int sync)
     if(sc == NULL) {
       nav_open_errorf(page, _("Device not available"));
     } else {
-      char url[64];
+      char newurl[64];
 
       model = prop_create_r(page, "model");
-      snprintf(url, sizeof(url), "stpp://%d.%d.%d.%d:%d",
+      snprintf(newurl, sizeof(newurl), "stpp://%d.%d.%d.%d:%d",
                sc->sc_addr.na_addr[0],
                sc->sc_addr.na_addr[1],
                sc->sc_addr.na_addr[2],
                sc->sc_addr.na_addr[3],
                sc->sc_addr.na_port);
-      prop_set(model, "remoteurl", PROP_SET_STRING, url);
+      prop_set(model, "remoteurl", PROP_SET_STRING, newurl);
+      TRACE(TRACE_DEBUG, "STPP", "%s (%s) resolved to %s",
+            url, sc->sc_name, newurl);
      }
     hts_mutex_unlock(&stpp_controllees_mutex);
   }

@@ -759,7 +759,7 @@ ppc_connect(void *aux, int status, const void *data)
 
 
   na.na_port = ppc->ppc_port;
-  TRACE(TRACE_DEBUG, "STPP", "Connecting to %s -> %s",
+  TRACE(TRACE_DEBUG, "STPP", "Connecting to %s (%s)",
         ppc->ppc_url, net_addr_str(&na));
 
   ppc->ppc_connection = asyncio_connect("stppclient", &na,
