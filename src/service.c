@@ -58,7 +58,7 @@ static struct strtab status_tab[] = {
 static struct strtab origin_tab[] = {
 
   { "system",     SVC_ORIGIN_SYSTEM },
-  { "bookmark",   SVC_ORIGIN_BOOKMARK }, 
+  { "bookmark",   SVC_ORIGIN_BOOKMARK },
   { "discovered", SVC_ORIGIN_DISCOVERED },
   { "app",        SVC_ORIGIN_APP },
   { "media",      SVC_ORIGIN_MEDIA },
@@ -78,7 +78,7 @@ static void *service_probe_loop(void *aux);
 
 
 /**
- * 
+ *
  *  $global.services. ..
  *
  *     all - All services
@@ -123,7 +123,7 @@ service_init(void)
 
   pnf = prop_nf_create(enabled, all_services, NULL, 0);
   prop_nf_pred_int_add(pnf, "node.enabled",
-		       PROP_NF_CMP_EQ, 0, NULL, 
+		       PROP_NF_CMP_EQ, 0, NULL,
 		       PROP_NF_MODE_EXCLUDE);
 
   // $global.service.stable
@@ -132,7 +132,7 @@ service_init(void)
 
   pnf = prop_nf_create(tmp, all_services, NULL, 0);
   prop_nf_pred_int_add(pnf, "node.enabled",
-		       PROP_NF_CMP_EQ, 0, NULL, 
+		       PROP_NF_CMP_EQ, 0, NULL,
 		       PROP_NF_MODE_EXCLUDE);
 
   prop_t *stable = prop_create(gs, "stable");
@@ -145,7 +145,7 @@ service_init(void)
   pnf = prop_nf_create(discovered_nodes, all_services, NULL, 0);
 
   prop_nf_pred_str_add(pnf, "node.origin",
-		       PROP_NF_CMP_NEQ, "discovered", NULL, 
+		       PROP_NF_CMP_NEQ, "discovered", NULL,
 		       PROP_NF_MODE_EXCLUDE);
 }
 
@@ -153,7 +153,7 @@ service_init(void)
 /**
  *
  */
-void 
+void
 service_destroy(service_t *s)
 {
   hts_mutex_lock(&service_mutex);
@@ -176,7 +176,7 @@ service_destroy(service_t *s)
     setting_destroy(s->s_setting_vfs);
 
   prop_destroy(s->s_settings);
-  
+
 
 
   LIST_REMOVE(s, s_link);
@@ -264,7 +264,7 @@ service_create0(const char *id,
 
   if(prop_set_parent(s->s_root, all_services))
     abort();
-  
+
   hts_mutex_lock(&service_mutex);
   LIST_INSERT_HEAD(&services, s, s_link);
   s->s_need_probe = s->s_do_probe = probe;
@@ -343,7 +343,7 @@ service_create_managed(const char *id0,
 				 icon, probe, enabled, origin);
 
   s->s_title = strdup(title);
-  
+
   char tmp[100];
 
   snprintf(tmp, sizeof(tmp), "managed_service2/%s", id);
@@ -416,7 +416,7 @@ service_get_statustxt_prop(service_t *s)
 /**
  *
  */
-void 
+void
 service_set_type(service_t *s, rstr_t *type)
 {
   prop_set_rstring(s->s_prop_type, type);
@@ -492,7 +492,7 @@ service_probe_loop(void *aux)
   hts_mutex_lock(&service_mutex);
 
   while(1) {
-    
+
     LIST_FOREACH(s, &services, s_link) {
       if(s->s_need_probe)
 	break;
