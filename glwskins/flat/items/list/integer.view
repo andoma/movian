@@ -34,7 +34,9 @@ widget(deck, {
           fhpSpill: true;
           style: "ListItemValue";
           width: 5em;
-          caption: fmt("%d %s", $self.value, $self.unit);
+	  caption: select(!isVoid($self.zerotext) && !$self.value,
+                          $self.zerotext,
+                          fmt("%d %s", $self.value, $self.unit));
         });
 
         widget(container_z, {
