@@ -48,7 +48,7 @@ typedef struct service {
   int s_do_probe;
   int s_need_probe;
 
-  /** 
+  /**
    * Stuff for, so called, managed service follows
    */
 
@@ -58,13 +58,8 @@ typedef struct service {
   prop_t *s_settings;
 
   struct setting *s_setting_enabled;
-
   struct setting *s_setting_title;
   struct setting *s_setting_type;
-  struct setting *s_setting_vfs;
-
-  int s_vfs_id;
-
 
 } service_t;
 

@@ -172,8 +172,6 @@ service_destroy(service_t *s)
     setting_destroy(s->s_setting_title);
   if(s->s_setting_type != NULL)
     setting_destroy(s->s_setting_type);
-  if(s->s_setting_vfs != NULL)
-    setting_destroy(s->s_setting_vfs);
 
   prop_destroy(s->s_settings);
 
