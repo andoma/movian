@@ -419,7 +419,11 @@ service_get_statustxt_prop(service_t *s)
 void
 service_set_type(service_t *s, rstr_t *type)
 {
-  prop_set_rstring(s->s_prop_type, type);
+  if(s->s_setting_type != NULL) {
+    // TODO, propagate thru setting
+  } else {
+    prop_set_rstring(s->s_prop_type, type);
+  }
 }
 
 
@@ -429,7 +433,11 @@ service_set_type(service_t *s, rstr_t *type)
 void
 service_set_title(service_t *s, rstr_t *title)
 {
-  prop_set_rstring(prop_create(s->s_root, "title"), title);
+  if(s->s_setting_title != NULL) {
+    // TODO, propagate thru setting
+  } else {
+    prop_set(s->s_root, "title", PROP_SET_RSTRING, title);
+  }
 }
 
 
@@ -439,7 +447,7 @@ service_set_title(service_t *s, rstr_t *title)
 void
 service_set_icon(service_t *s, rstr_t *icon)
 {
-  prop_set_rstring(prop_create(s->s_root, "icon"), icon);
+  prop_set(s->s_root, "icon", PROP_SET_RSTRING, icon);
 }
 
 
@@ -449,7 +457,11 @@ service_set_icon(service_t *s, rstr_t *icon)
 void
 service_set_enabled(service_t *s, int v)
 {
-  prop_set_int(prop_create(s->s_root, "enabled"), v);
+  if(s->s_setting_enabled != NULL) {
+    // TODO, propagate thru setting
+  } else {
+    prop_set(s->s_root, "enabled", PROP_SET_INT, v);
+  }
 }
 
 
@@ -459,7 +471,7 @@ service_set_enabled(service_t *s, int v)
 void
 service_set_url(service_t *s, rstr_t *url)
 {
-  prop_set_rstring(prop_create(s->s_root, "url"), url);
+  prop_set(s->s_root, "url", PROP_SET_RSTRING, url);
 
   hts_mutex_lock(&service_mutex);
   seturl(s, rstr_get(url));
