@@ -242,6 +242,9 @@ static struct strtab postfixtab[] = {
   { "exe",             CONTENT_UNKNOWN },
   { "tmp",             CONTENT_UNKNOWN },
   { "db",              CONTENT_UNKNOWN },
+  { "pkg",             CONTENT_UNKNOWN },
+  { "elf",             CONTENT_UNKNOWN },
+  { "self",            CONTENT_UNKNOWN },
 };
 
 
