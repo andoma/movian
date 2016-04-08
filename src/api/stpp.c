@@ -1291,7 +1291,6 @@ static int
 be_stpp_open(prop_t *page, const char *url, int sync)
 {
   prop_t *model  = NULL;
-  url += strlen("stpp:");
   /*
   if(!strcmp(url, "browser")) {
     usage_page_open(sync, "STPP Browse");
@@ -1310,13 +1309,13 @@ be_stpp_open(prop_t *page, const char *url, int sync)
     prop_ref_dec(model);
 
   } else */
-  if(!strncmp(url, "url:", 4)) {
+  if(!strncmp(url, "stpp://", 7)) {
     model = prop_create_r(page, "model");
-    prop_set(model, "remoteurl", PROP_SET_STRING, url + 4);
+    prop_set(model, "remoteurl", PROP_SET_STRING, url);
 
-  } if(!strncmp(url, "id:", 3)) {
+  } if(!strncmp(url + 5, "id:", 3)) {
     uint8_t id[16];
-    url += 3;
+    url += 8;
     if(hex2bin(id, sizeof(id), url) != sizeof(id)) {
       nav_open_error(page, "Bad URL");
       return 0;
