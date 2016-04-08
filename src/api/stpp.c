@@ -41,6 +41,10 @@
 #include "usage.h"
 #include "settings.h"
 
+static int stpp_controller = 1;
+static int stpp_controllee = 1;
+
+
 RB_HEAD(stpp_subscription_tree, stpp_subscription);
 RB_HEAD(stpp_prop_tree, stpp_prop);
 LIST_HEAD(stpp_prop_list, stpp_prop);
@@ -1202,6 +1206,9 @@ stpp_input(http_connection_t *hc, int opcode,
 static int
 stpp_init(http_connection_t *hc)
 {
+  if(!stpp_controllee)
+    return 403;
+
   stpp_t *stpp = calloc(1, sizeof(stpp_t));
   stpp->stpp_hc = hc;
   http_set_opaque(hc, stpp);
@@ -1390,8 +1397,6 @@ static rstr_t *stpp_system_name;
 #define STPP_ROLE_CONTROLLER 0x1
 #define STPP_ROLE_CONTROLLEE 0x2
 
-static int stpp_controller = 1;
-static int stpp_controllee = 1;
 
 
 typedef struct stppmsg {
