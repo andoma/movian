@@ -672,25 +672,47 @@ ppc_ws_input_image_fail(prop_proxy_connection_t *ppc,
 /**
  *
  */
+static void
+ppc_send_pong(prop_proxy_connection_t *ppc,
+              const uint8_t *data, int len)
+{
+  htsbuf_queue_t q;
+  htsbuf_queue_init(&q, 0);
+  websocket_append_hdr(&q, 10, len);
+  htsbuf_append(&q, data, len);
+  asyncio_sendq(ppc->ppc_connection, &q, 0);
+}
+
+
+/**
+ *
+ */
 static int
 ppc_ws_input(void *opaque, int opcode, uint8_t *data, int len)
 {
   prop_proxy_connection_t *ppc = opaque;
-  if(opcode != 2)
-    return 1;
 
-  if(len < 1)
-    return 1;
-  switch(data[0]) {
-  case STPP_CMD_NOTIFY:
-    ppc_ws_input_notify(ppc, data + 1, len - 1);
-    break;
-  case STPP_CMD_HELLO:
-    return ppc_ws_input_hello(ppc, data + 1, len - 1);
-  case STPP_CMD_IMAGE_REPLY:
-    return ppc_ws_input_image_reply(ppc, data + 1, len - 1);
-  case STPP_CMD_IMAGE_FAIL:
-    return ppc_ws_input_image_fail(ppc, data + 1, len - 1);
+
+  switch(opcode) {
+  case 2:
+    if(len < 1)
+      return 1;
+    switch(data[0]) {
+    case STPP_CMD_NOTIFY:
+      ppc_ws_input_notify(ppc, data + 1, len - 1);
+      return 0;
+    case STPP_CMD_HELLO:
+      return ppc_ws_input_hello(ppc, data + 1, len - 1);
+    case STPP_CMD_IMAGE_REPLY:
+      return ppc_ws_input_image_reply(ppc, data + 1, len - 1);
+    case STPP_CMD_IMAGE_FAIL:
+      return ppc_ws_input_image_fail(ppc, data + 1, len - 1);
+    default:
+      return 1;
+    }
+  case 9:
+    ppc_send_pong(ppc, data, len);
+    return 0;
   }
   return 0;
 }

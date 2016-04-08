@@ -20,7 +20,7 @@
 
 #pragma once
 
-#define STPP_VERSION 2
+#define STPP_VERSION 3
 
 // These things are sent over the wire so no changes here please
 

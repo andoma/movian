@@ -103,6 +103,9 @@ struct http_connection {
   char hc_my_addr[128]; // hc_local_addr as text
 
   websocket_state_t hc_ws;
+
+  asyncio_timer_t hc_ws_timeout;
+  int hc_ws_missing_ping;
 };
 
 
@@ -131,6 +134,8 @@ static struct strtab HTTP_versiontab[] = {
 static asyncio_fd_t *http_server_fd;
 
 static int http_write(http_connection_t *hc);
+
+static void http_ws_send_ping(void *aux);
 
 /**
  *
@@ -595,6 +600,9 @@ http_cmd_start_websocket(http_connection_t *hc, const http_path_t *hp)
   http_send_raw(hc, 101, "Switching Protocols", &headers, NULL);
   hc->hc_state = HCS_WEBSOCKET;
 
+  asyncio_timer_init(&hc->hc_ws_timeout, http_ws_send_ping, hc);
+  asyncio_timer_arm_delta_sec(&hc->hc_ws_timeout, 5);
+
   hc->hc_path = hp;
   return 0;
 }
@@ -837,11 +845,16 @@ websocket_input(void *opaque, int opcode, uint8_t *data, int len)
   case 9:
     websocket_send(hc, 10, data, len);
     return 0;
+  case 10:
+    hc->hc_ws_missing_ping = 0;
+    return 0;
+
   default:
     hc->hc_path->hp_ws_data(hc, opcode, data, len, hc->hc_opaque);
     return 0;
   }
 }
+
 
 /**
  *
@@ -978,7 +991,28 @@ http_close(http_connection_t *hc)
   if(hc->hc_path != NULL && hc->hc_path->hp_ws_fini != NULL)
     hc->hc_path->hp_ws_fini(hc, hc->hc_opaque);
 
+  asyncio_timer_disarm(&hc->hc_ws_timeout);
+
   free(hc);
+}
+
+
+/**
+ *
+ */
+static void
+http_ws_send_ping(void *aux)
+{
+  http_connection_t *hc = aux;
+  hc->hc_ws_missing_ping++;
+  if(hc->hc_ws_missing_ping == 2) {
+    TRACE(TRACE_DEBUG, "HTTP", "Websocket connection timed out");
+    http_close(hc);
+    return;
+  }
+  char pingmsg[4] = {0};
+  websocket_send(hc, 9, pingmsg, sizeof(pingmsg));
+  asyncio_timer_arm_delta_sec(&hc->hc_ws_timeout, 5);
 }
 
 

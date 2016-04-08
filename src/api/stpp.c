@@ -1492,6 +1492,7 @@ stpp_verify_packet(const stppmsg_t *msg, int size)
 {
   return size < sizeof(stppmsg_t) ||
     memcmp(msg->magic, "STPP", 4) ||
+    msg->version != STPP_VERSION ||
     !memcmp(msg->deviceid, stpp_id, sizeof(stpp_id));
 }
 
