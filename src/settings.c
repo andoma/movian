@@ -95,10 +95,9 @@ struct setting {
   char s_value_set        : 1;
 };
 
-#define SETTING_STORETYPE_NOTE          0
+#define SETTING_STORETYPE_NONE          0
 #define SETTING_STORETYPE_SIMPLE        1
-#define SETTING_STORETYPE_CUSTOM_HTSMSG 2
-#define SETTING_STORETYPE_KVSTORE       3
+#define SETTING_STORETYPE_KVSTORE       2
 
 
 static void init_dev_settings(void);
@@ -422,17 +421,6 @@ settings_get_type(const setting_t *s)
  *
  */
 static void
-setting_save_htsmsg(setting_t *s)
-{
-  if(s->s_saver)
-    s->s_saver(s->s_saver_opaque, s->s_store);
-}
-
-
-/**
- *
- */
-static void
 settings_int_set_value(setting_t *s, int v)
 {
   prop_callback_int_t *cb = s->s_callback;
@@ -454,12 +442,6 @@ settings_int_set_value(setting_t *s, int v)
   switch(s->s_store_type) {
   case SETTING_STORETYPE_SIMPLE:
     htsmsg_store_set(s->s_store_name, s->s_id, HMF_S64, (int64_t)v);
-    break;
-
-  case SETTING_STORETYPE_CUSTOM_HTSMSG:
-    htsmsg_delete_field(s->s_store, s->s_id);
-    htsmsg_add_s32(s->s_store, s->s_id, v);
-    setting_save_htsmsg(s);
     break;
 
   case SETTING_STORETYPE_KVSTORE:
@@ -567,13 +549,6 @@ settings_string_set_value(setting_t *s, rstr_t *rstr)
     htsmsg_store_set(s->s_store_name, s->s_id, HMF_STR, rstr_get(rstr));
     break;
 
-  case SETTING_STORETYPE_CUSTOM_HTSMSG:
-    htsmsg_delete_field(s->s_store, s->s_id);
-    if(rstr != NULL)
-      htsmsg_add_str(s->s_store, s->s_id, rstr_get(rstr));
-    setting_save_htsmsg(s);
-    break;
-
   case SETTING_STORETYPE_KVSTORE:
     kv_url_opt_set_deferred(s->s_store_name, KVSTORE_DOMAIN_SETTING, s->s_id,
                             rstr ? KVSTORE_SET_STRING : KVSTORE_SET_VOID,
@@ -652,13 +627,6 @@ settings_multiopt_callback_ng(void *opaque, prop_event_t event, ...)
       switch(s->s_store_type) {
       case SETTING_STORETYPE_SIMPLE:
         htsmsg_store_set(s->s_store_name, s->s_id, HMF_STR, rstr_get(name));
-        break;
-
-      case SETTING_STORETYPE_CUSTOM_HTSMSG:
-	htsmsg_delete_field(s->s_store, s->s_id);
-	if(name != NULL)
-	  htsmsg_add_str(s->s_store, s->s_id, rstr_get(name));
-	setting_save_htsmsg(s);
         break;
 
       case SETTING_STORETYPE_KVSTORE:
@@ -811,14 +779,6 @@ setting_create(int type, prop_t *model, int flags, ...)
       mystrset(&s->s_id, va_arg(ap, const char *));
       break;
 
-    case SETTING_TAG_HTSMSG_CUSTOM_SAVER:
-      s->s_store_type = SETTING_STORETYPE_CUSTOM_HTSMSG;
-      mystrset(&s->s_id, va_arg(ap, const char *));
-      s->s_store        = va_arg(ap, htsmsg_t *);
-      s->s_saver        = va_arg(ap, settings_saver_t *);
-      s->s_saver_opaque = va_arg(ap, void *);
-      break;
-
     case SETTING_TAG_VALUE:
       switch(type) {
       case SETTING_INT:
@@ -968,10 +928,6 @@ setting_create(int type, prop_t *model, int flags, ...)
       i32 = htsmsg_store_get_int(s->s_store_name, s->s_id, INT32_MIN);
       break;
 
-    case SETTING_STORETYPE_CUSTOM_HTSMSG:
-      i32 = htsmsg_get_s32_or_default(s->s_store, s->s_id, INT32_MIN);
-      break;
-
     case SETTING_STORETYPE_KVSTORE:
       i32 = kv_url_opt_get_int(s->s_store_name, KVSTORE_DOMAIN_SETTING,
                                s->s_id, INT32_MIN);
@@ -1054,10 +1010,6 @@ setting_create(int type, prop_t *model, int flags, ...)
       initial = htsmsg_store_get_str(s->s_store_name, s->s_id);
       break;
 
-    case SETTING_STORETYPE_CUSTOM_HTSMSG:
-      initial = rstr_alloc(htsmsg_get_str(s->s_store, s->s_id));
-      break;
-
     case SETTING_STORETYPE_KVSTORE:
       initial = kv_url_opt_get_rstr(s->s_store_name, KVSTORE_DOMAIN_SETTING,
                                     s->s_id);
@@ -1093,10 +1045,6 @@ setting_create(int type, prop_t *model, int flags, ...)
     switch(s->s_store_type) {
     case SETTING_STORETYPE_SIMPLE:
       curstr = htsmsg_store_get_str(s->s_store_name, s->s_id);
-      break;
-
-    case SETTING_STORETYPE_CUSTOM_HTSMSG:
-      curstr = rstr_alloc(htsmsg_get_str(s->s_store, s->s_id));
       break;
 
     case SETTING_STORETYPE_KVSTORE:
@@ -1234,11 +1182,6 @@ setting_reset(setting_t *s)
   switch(s->s_store_type) {
   case SETTING_STORETYPE_SIMPLE:
     htsmsg_store_set(s->s_store_name, s->s_id, -1);
-    break;
-
-  case SETTING_STORETYPE_CUSTOM_HTSMSG:
-    htsmsg_delete_field(s->s_store, s->s_id);
-    setting_save_htsmsg(s);
     break;
 
   case SETTING_STORETYPE_KVSTORE:

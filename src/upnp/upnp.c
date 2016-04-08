@@ -78,8 +78,6 @@ us_destroy(upnp_service_t *us)
   prop_destroy(us->us_settings);
   service_destroy(us->us_service);
 
-  free(us->us_settings_path);
-  htsmsg_release(us->us_settings_store);
   free(us);
 }
 
@@ -380,19 +378,6 @@ remove_bad_chars(char *s)
 }
 
 
-
-
-/**
- *
- */
-static void
-upnp_settings_saver(void *opaque, htsmsg_t *msg)
-{
-  upnp_service_t *us = opaque;
-  htsmsg_store_save(msg, us->us_settings_path);
-}
-
-
 /**
  *
  */
@@ -407,9 +392,6 @@ add_content_directory(upnp_service_t *us, const char *hostname, int port)
 	   "upnp/upnp:%s:%s:0", ud->ud_uuid, us->us_id);
   us->us_local_url = strdup(svcid + 5);
   remove_bad_chars(svcid);
-
-  us->us_settings_path = strdup(svcid);
-  us->us_settings_store = htsmsg_store_load(svcid) ?: htsmsg_create_map();
 
   const char *title = ud->ud_friendlyName ?: "UPnP content directory";
 
@@ -429,10 +411,7 @@ add_content_directory(upnp_service_t *us, const char *hostname, int port)
                    SETTING_TITLE(_p("Enabled on home screen")),
                    SETTING_VALUE(0),
 		   SETTING_WRITE_PROP(prop_create(root, "enabled")),
-                   SETTING_HTSMSG_CUSTOM_SAVER("enabled",
-                                               us->us_settings_store,
-                                               upnp_settings_saver,
-                                               us),
+                   SETTING_STORE(svcid, "enabled"),
                    NULL);
 
   us->us_setting_title =
@@ -441,10 +420,7 @@ add_content_directory(upnp_service_t *us, const char *hostname, int port)
                    SETTING_TITLE(_p("Name")),
                    SETTING_VALUE(title),
 		   SETTING_WRITE_PROP(prop_create(root, "title")),
-                   SETTING_HTSMSG_CUSTOM_SAVER("title",
-                                               us->us_settings_store,
-                                               upnp_settings_saver,
-                                               us),
+                   SETTING_STORE(svcid, "title"),
                    NULL);
 
   const char *contents = "server";
@@ -454,10 +430,7 @@ add_content_directory(upnp_service_t *us, const char *hostname, int port)
                    SETTING_TITLE(_p("Type")),
                    SETTING_VALUE(contents),
 		   SETTING_WRITE_PROP(prop_create(root, "type")),
-                   SETTING_HTSMSG_CUSTOM_SAVER("type",
-                                               us->us_settings_store,
-                                               upnp_settings_saver,
-                                               us),
+                   SETTING_STORE(svcid, "type"),
                    NULL);
 }
 

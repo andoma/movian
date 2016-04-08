@@ -39,8 +39,6 @@ typedef struct service_instance {
   char *si_url;
 
   prop_t *si_settings;
-  char *si_settings_path;
-  struct htsmsg *si_settings_store;
 
   struct setting *si_setting_enabled;
   struct setting *si_setting_title;

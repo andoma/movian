@@ -62,14 +62,11 @@ typedef struct upnp_service {
   char *us_local_url;
   char *us_icon_url;
 
-  char *us_settings_path;
-  struct htsmsg *us_settings_store;
-
   struct prop *us_settings;
   struct setting *us_setting_enabled;
   struct setting *us_setting_title;
   struct setting *us_setting_type;
-  
+
   struct service *us_service;
 
 } upnp_service_t;

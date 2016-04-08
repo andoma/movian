@@ -68,8 +68,6 @@ si_destroy(service_instance_t *si)
   setting_destroy(si->si_setting_type);
 
   prop_destroy(si->si_settings);
-  free(si->si_settings_path);
-  htsmsg_release(si->si_settings_store);
 
   LIST_REMOVE(si, si_link);
 
@@ -78,15 +76,6 @@ si_destroy(service_instance_t *si)
   free(si);
 }
 
-/**
- *
- */
-static void
-sd_settings_saver(void *opaque, htsmsg_t *msg)
-{
-  service_instance_t *si = opaque;
-  htsmsg_store_save(msg, si->si_settings_path);
-}
 
 
 /**
@@ -102,15 +91,12 @@ sd_add_service(service_instance_t *si, const char *title,
   if(si->si_settings != NULL)
     return;
 
-  char tmp[100];
+  char store[512];
 
   si->si_url = strdup(url);
-    
-  snprintf(tmp, sizeof(tmp), "sd/%s", url);
-  str_cleanup(tmp + 3, "/:");
 
-  si->si_settings_path = strdup(tmp);
-  si->si_settings_store = htsmsg_store_load(tmp) ?: htsmsg_create_map();
+  snprintf(store, sizeof(store), "sd/%s", url);
+  str_cleanup(store + 3, "/:");
 
   si->si_settings = settings_add_dir_cstr(gconf.settings_sd,
 					  title, NULL, NULL,
@@ -127,10 +113,7 @@ sd_add_service(service_instance_t *si, const char *title,
 		   SETTING_TITLE(_p("Enabled on home screen")),
 		   SETTING_VALUE(0),
 		   SETTING_WRITE_PROP(prop_create(r, "enabled")),
-		   SETTING_HTSMSG_CUSTOM_SAVER("enabled",
-					       si->si_settings_store,
-					       sd_settings_saver,
-					       si),
+		   SETTING_STORE(store, "enabled"),
 		   NULL);
 
   si->si_setting_title =
@@ -139,10 +122,7 @@ sd_add_service(service_instance_t *si, const char *title,
 		   SETTING_TITLE(_p("Name")),
 		   SETTING_VALUE(title),
 		   SETTING_WRITE_PROP(prop_create(r, "title")),
-		   SETTING_HTSMSG_CUSTOM_SAVER("title",
-					       si->si_settings_store,
-					       sd_settings_saver,
-					       si),
+		   SETTING_STORE(store, "title"),
 		   NULL);
 
 
@@ -151,10 +131,7 @@ sd_add_service(service_instance_t *si, const char *title,
 		   SETTING_TITLE(_p("Type")),
 		   SETTING_VALUE(contents),
 		   SETTING_WRITE_PROP(prop_create(r, "type")),
-		   SETTING_HTSMSG_CUSTOM_SAVER("type",
-					       si->si_settings_store,
-					       sd_settings_saver,
-					       si),
+		   SETTING_STORE(store, "type"),
 		   NULL);
 }
 

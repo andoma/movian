@@ -52,9 +52,6 @@ typedef struct service {
    * Stuff for, so called, managed service follows
    */
 
-  char *s_settings_path;
-  struct htsmsg *s_settings_store;
-
   prop_t *s_settings;
 
   struct setting *s_setting_enabled;

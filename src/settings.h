@@ -85,7 +85,6 @@ enum {
   SETTING_TAG_CALLBACK,
   SETTING_TAG_COURIER,
   SETTING_TAG_STORE,
-  SETTING_TAG_HTSMSG_CUSTOM_SAVER,
   SETTING_TAG_RANGE,
   SETTING_TAG_STEP,
   SETTING_TAG_UNIT_CSTR,
@@ -110,8 +109,6 @@ enum {
 #define SETTING_CALLBACK(a, b)                  SETTING_TAG_CALLBACK, a, b
 #define SETTING_COURIER(a)                      SETTING_TAG_COURIER, a
 #define SETTING_STORE(a, b)                     SETTING_TAG_STORE, a, b
-#define SETTING_HTSMSG_CUSTOM_SAVER(a, b, c, d) \
-   SETTING_TAG_HTSMSG_CUSTOM_SAVER, a, b, c, d
 #define SETTING_RANGE(a, b)                     SETTING_TAG_RANGE, a, b
 #define SETTING_STEP(a)                         SETTING_TAG_STEP, a
 #define SETTING_UNIT_CSTR(a)                    SETTING_TAG_UNIT_CSTR, a

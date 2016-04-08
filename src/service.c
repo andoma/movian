@@ -161,11 +161,6 @@ service_destroy(service_t *s)
   free(s->s_url);
   free(s->s_title);
 
-  free(s->s_settings_path);
-
-  if(s->s_settings_store != NULL)
-    htsmsg_release(s->s_settings_store);
-
   if(s->s_setting_enabled != NULL)
     setting_destroy(s->s_setting_enabled);
   if(s->s_setting_title != NULL)
@@ -307,18 +302,6 @@ service_createp(const char *id,
 }
 
 
-
-/**
- *
- */
-static void
-service_settings_saver(void *opaque, htsmsg_t *msg)
-{
-  service_t *s = opaque;
-  htsmsg_store_save(msg, s->s_settings_path);
-}
-
-
 /**
  *
  */
@@ -341,12 +324,9 @@ service_create_managed(const char *id0,
 
   s->s_title = strdup(title);
 
-  char tmp[100];
+  char store[100];
 
-  snprintf(tmp, sizeof(tmp), "managed_service2/%s", id);
-
-  s->s_settings_path = strdup(tmp);
-  s->s_settings_store = htsmsg_store_load(tmp) ?: htsmsg_create_map();
+  snprintf(store, sizeof(store), "managed_service2/%s", id);
 
   s->s_settings = settings_add_dir(gconf.settings_sd,
                                    prop_create(s->s_root, "title"),
@@ -357,10 +337,7 @@ service_create_managed(const char *id0,
 		   SETTING_TITLE(_p("Enabled on home screen")),
 		   SETTING_VALUE(enabled),
 		   SETTING_WRITE_PROP(prop_create(s->s_root, "enabled")),
-		   SETTING_HTSMSG_CUSTOM_SAVER("enabled",
-					       s->s_settings_store,
-					       service_settings_saver,
-					       s),
+                   SETTING_STORE(store, "enabled"),
 		   NULL);
 
   s->s_setting_title =
@@ -369,10 +346,7 @@ service_create_managed(const char *id0,
 		   SETTING_TITLE(_p("Name")),
 		   SETTING_VALUE(title),
 		   SETTING_WRITE_PROP(prop_create(s->s_root, "title")),
-		   SETTING_HTSMSG_CUSTOM_SAVER("title",
-					       s->s_settings_store,
-					       service_settings_saver,
-					       s),
+                   SETTING_STORE(store, "title"),
 		   NULL);
 
 
@@ -381,10 +355,7 @@ service_create_managed(const char *id0,
                      SETTING_TITLE(_p("Type")),
 		     SETTING_VALUE(type),
 		     SETTING_WRITE_PROP(prop_create(s->s_root, "type")),
-                     SETTING_HTSMSG_CUSTOM_SAVER("type",
-                                                 s->s_settings_store,
-                                                 service_settings_saver,
-                                                 s),
+                     SETTING_STORE(store, "type"),
                      NULL);
 
   return s;
