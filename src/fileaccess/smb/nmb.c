@@ -187,7 +187,7 @@ query_master_browser(void *a)
       snprintf(url, sizeof(url), "smb://%s", name);
 
       ns->ns_service = service_create_managed(id, name, url, "server", NULL,
-                                              0, 0, SVC_ORIGIN_DISCOVERED, 0);
+                                              0, 0, SVC_ORIGIN_DISCOVERED);
     } else {
       ns->ns_mark = 0;
     }

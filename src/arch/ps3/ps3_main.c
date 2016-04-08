@@ -286,7 +286,7 @@ scan_root_fs(callout_t *co, void *aux)
       }
 
       rfn->service = service_create_managed(name, name, fname, type, NULL, 0, 1,
-					    SVC_ORIGIN_MEDIA, name);
+					    SVC_ORIGIN_MEDIA);
       LIST_INSERT_HEAD(&rootfsnodes, rfn, link);
     }
     rfn->mark = 0;

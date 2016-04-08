@@ -124,8 +124,7 @@ service_t *service_create_managed(const char *id,
 				  const char *icon,
 				  int probe,
 				  int enabled,
-				  service_origin_t origin,
-				  const char *description);
+				  service_origin_t origin);
 
 void service_set_type(service_t *svc, rstr_t *type);
 

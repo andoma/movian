@@ -1560,8 +1560,7 @@ stpp_udp_input(const stppmsg_t *msg, const net_addr_t *remote_addr)
       bin2hex(url + 8, sizeof(url) - 8, sc->sc_id, sizeof(sc->sc_id));
       sc->sc_service = service_create_managed(url, sc->sc_name, url,
                                               "movian", NULL, 0, 0,
-                                              SVC_ORIGIN_DISCOVERED,
-                                              NULL);
+                                              SVC_ORIGIN_DISCOVERED);
     } else {
       rstr_t *r = rstr_alloc(sc->sc_name);
       service_set_title(sc->sc_service, r);

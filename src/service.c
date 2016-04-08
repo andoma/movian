@@ -332,8 +332,7 @@ service_create_managed(const char *id0,
 		       const char *icon,
 		       int probe,
 		       int enabled,
-		       service_origin_t origin,
-		       const char *description)
+		       service_origin_t origin)
 {
 
   char *id = mystrdupa(id0);
@@ -351,9 +350,9 @@ service_create_managed(const char *id0,
   s->s_settings_path = strdup(tmp);
   s->s_settings_store = htsmsg_store_load(tmp) ?: htsmsg_create_map();
 
-  s->s_settings = settings_add_dir_cstr(gconf.settings_sd,
-					title, type, icon,
-					description, NULL);
+  s->s_settings = settings_add_dir(gconf.settings_sd,
+                                   prop_create(s->s_root, "title"),
+                                   type, icon, NULL, NULL);
 
   s->s_setting_enabled =
     setting_create(SETTING_BOOL, s->s_settings, SETTINGS_INITIAL_UPDATE,
@@ -389,6 +388,7 @@ service_create_managed(const char *id0,
                                                  service_settings_saver,
                                                  s),
                      NULL);
+
   return s;
 }
 

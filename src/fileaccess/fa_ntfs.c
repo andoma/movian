@@ -354,8 +354,7 @@ ntfs_periodic(struct callout *c, void *opaque)
       snprintf(url, sizeof(url), "%s://", d->mounts[j].name);
       d->services[j] = service_create_managed(url, d->mounts[j].name,
 					      url, "usb", NULL, 0, 1, 
-					      SVC_ORIGIN_MEDIA,
-					      "External NTFS volume");
+					      SVC_ORIGIN_MEDIA);
     }
   }
   callout_arm(&ntfs_callout, ntfs_periodic, NULL, 1);
