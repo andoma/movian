@@ -157,7 +157,7 @@ try_mount(void)
                                             "usb",
                                             NULL,
                                             0, 1,
-					    SVC_ORIGIN_MEDIA, NULL);
+					    SVC_ORIGIN_MEDIA);
   }
 }
 
