@@ -952,8 +952,10 @@ prop_proxy_image_loader(const char *url, const struct image_meta *im,
   htsbuf_append_le32(&q, im->im_req_height);
   htsbuf_append_le32(&q, im->im_want_thumb ? 1 : 0);
   htsbuf_append(&q, url, strlen(url));
-  hts_mutex_lock(&prop_mutex);
+
   c = cancellable_bind(c, prop_proxy_imgload_cancel, &ppi);
+
+  hts_mutex_lock(&prop_mutex);
   LIST_INSERT_HEAD(&ppc->ppc_image_requests, &ppi, ppi_link);
   prop_proxy_send_queue(ppc, &q);
 
@@ -961,8 +963,10 @@ prop_proxy_image_loader(const char *url, const struct image_meta *im,
     hts_cond_wait(&ppc->ppc_image_cond, &prop_mutex);
   }
   LIST_REMOVE(&ppi, ppi_link);
-  cancellable_unbind(c, &ppi);
   hts_mutex_unlock(&prop_mutex);
+
+  cancellable_unbind(c, &ppi);
+
   return ppi.ppi_image;
 }
 
