@@ -151,6 +151,7 @@ fa_imageloader2(const char *url, char *errbuf, size_t errlen,
   buf_t *buf;
 
   buf = fa_load(url,
+                FA_LOAD_FLAGS(FA_NON_INTERACTIVE),
                 FA_LOAD_ERRBUF(errbuf, errlen),
                 FA_LOAD_CACHE_CONTROL(cache_control),
                 FA_LOAD_CANCELLABLE(c),
@@ -206,7 +207,8 @@ fa_imageloader(const char *url, const struct image_meta *im,
   };
 
   if((fh = fa_open_resolver(url, errbuf, errlen,
-                            FA_BUFFERED_SMALL, &foe)) == NULL)
+                            FA_BUFFERED_SMALL | FA_NON_INTERACTIVE,
+                            &foe)) == NULL)
     return NULL;
 
   if(ONLY_CACHED(cache_control)) {
@@ -427,7 +429,7 @@ thumb_from_attachment(const char *url, int64_t offset, int size,
                       char *errbuf, size_t errlen, const char *cacheid,
                       time_t mtime)
 {
-  fa_handle_t *fh = fa_open(url, errbuf, errlen);
+  fa_handle_t *fh = fa_open_ex(url, errbuf, errlen, FA_NON_INTERACTIVE, NULL);
   if(fh == NULL)
     return NULL;
 
@@ -455,7 +457,9 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
     // Need to open
     int i;
     AVFormatContext *fctx;
-    fa_handle_t *fh = fa_open_ex(url, errbuf, errlen, FA_BUFFERED_BIG, NULL);
+    fa_handle_t *fh = fa_open_ex(url, errbuf, errlen,
+                                 FA_BUFFERED_BIG | FA_NON_INTERACTIVE,
+                                 NULL);
 
     if(fh == NULL)
       return NULL;
@@ -743,7 +747,7 @@ fa_image_from_video(const char *url0, const image_meta_t *im,
   if(strcmp(url, stated_url ?: "")) {
     free(stated_url);
     stated_url = NULL;
-    if(fa_stat(url, &fs, errbuf, errlen)) {
+    if(fa_stat_ex(url, &fs, errbuf, errlen, FA_NON_INTERACTIVE)) {
       hts_mutex_unlock(&image_from_video_mutex[0]);
       return NULL;
     }

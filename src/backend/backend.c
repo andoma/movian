@@ -333,6 +333,13 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im0,
     if(be != NULL) {
       img = be->be_imageloader(url, &im, errbuf, errlen,
                                cache_control, c, be);
+      if(cancellable_is_cancelled(c)) {
+        snprintf(errbuf, errlen, "Cancelled");
+        if(img != NOT_MODIFIED)
+          image_release(img);
+        img = NULL;
+        goto done;
+      }
     }
 
     if(img == NULL) {
@@ -364,7 +371,7 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im0,
     }
 
   }
-
+ done:
   hts_mutex_lock(&imageloader_mutex);
   li->li_waiters--;
   li->li_done = 1;
