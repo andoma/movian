@@ -55,9 +55,7 @@ typedef struct loaded_msg {
 #endif
 
 static struct loaded_msg_list loaded_msgs;
-static hts_mutex_t loaded_msg_mutex;
-
-static char *settings_path;
+static HTS_MUTEX_DECL(loaded_msg_mutex);
 
 
 /**
@@ -67,7 +65,8 @@ static void
 htsmsg_sync(void)
 {
 #ifdef STOS
-  arch_sync_path(settings_path);
+  if(gconf.persistent_path)
+    arch_sync_path(gconf.persistent_path);
 #endif
 }
 
@@ -90,10 +89,11 @@ loaded_msg_release(loaded_msg_t *lm)
 static int
 htsmsg_store_buildpath(char *dst, size_t dstsize, const char *path)
 {
-  if(settings_path == NULL)
+  if(gconf.persistent_path == NULL)
      return -1;
 
-  snprintf(dst, dstsize, "%s/", settings_path);
+  snprintf(dst, dstsize, "%s/settings/",
+           gconf.persistent_path);
 
   char *n = dst + strlen(dst);
 
@@ -121,8 +121,11 @@ loaded_msg_write(loaded_msg_t *lm)
   htsbuf_data_t *hd;
   int ok;
 
-  snprintf(fullpath, sizeof(fullpath), "%s/%s%s",
-	   settings_path, lm->lm_key,
+  if(gconf.persistent_path == NULL)
+    return;
+
+  snprintf(fullpath, sizeof(fullpath), "%s/settings/%s%s",
+	   gconf.persistent_path, lm->lm_key,
 	   RENAME_CANT_OVERWRITE ? "" : ".tmp");
 
   char *x = strrchr(fullpath, '/');
@@ -169,7 +172,8 @@ loaded_msg_write(loaded_msg_t *lm)
     return;
   }
 
-  snprintf(fullpath2, sizeof(fullpath2), "%s/%s", settings_path,
+  snprintf(fullpath2, sizeof(fullpath2), "%s/settings/%s",
+           gconf.persistent_path,
            lm->lm_key);
 
   if(!RENAME_CANT_OVERWRITE && fa_rename(fullpath, fullpath2,
@@ -223,27 +227,6 @@ htsmsg_store_flush(void)
   hts_mutex_unlock(&loaded_msg_mutex);
   if(sync_needed)
     htsmsg_sync();
-}
-
-
-
-
-/**
- *
- */
-void
-htsmsg_store_init(void)
-{
-  char p1[1024];
-
-  hts_mutex_init(&loaded_msg_mutex);
-
-  if(gconf.persistent_path == NULL)
-    return;
-
-  snprintf(p1, sizeof(p1), "%s/settings", gconf.persistent_path);
-
-  settings_path = strdup(p1);
 }
 
 

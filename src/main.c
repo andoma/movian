@@ -352,9 +352,6 @@ main_init(void)
 
   prop_init_late();
 
-  /* Initialize htsmsg_store() */
-  htsmsg_store_init();
-
   /* Notification framework */
   notifications_init();
 

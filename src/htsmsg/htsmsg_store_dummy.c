@@ -26,14 +26,6 @@
  *
  */
 void
-htsmsg_store_init(const char *programname, const char *path)
-{
-}
-
-/**
- *
- */
-void
 htsmsg_store_save(htsmsg_t *record, const char *pathfmt, ...)
 {
 

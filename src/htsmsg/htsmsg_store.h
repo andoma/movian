@@ -22,8 +22,6 @@
 #include "htsmsg/htsmsg.h"
 #include <stdarg.h>
 
-void htsmsg_store_init(void);
-
 void htsmsg_store_save(htsmsg_t *record, const char *pathfmt);
 
 htsmsg_t *htsmsg_store_load(const char *pathfmt);
