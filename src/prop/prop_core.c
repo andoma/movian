@@ -3467,7 +3467,6 @@ prop_set_rstring_exl(prop_t *p, prop_sub_t *skipme, rstr_t *rstr,
 }
 
 
-
 /**
  *
  */
@@ -3486,6 +3485,26 @@ prop_set_rstring_ex(prop_t *p, prop_sub_t *skipme, rstr_t *rstr,
   hts_mutex_lock(&prop_mutex);
   prop_set_rstring_exl(p, skipme, rstr, type);
   hts_mutex_unlock(&prop_mutex);
+}
+
+
+/**
+ *
+ */
+void
+prop_adopt_rstring_ex(prop_t *p, prop_sub_t *skipme, rstr_t *rstr,
+                      prop_str_type_t type)
+{
+  if(p != NULL) {
+    if(rstr == NULL) {
+      prop_set_void_ex(p, skipme);
+    } else {
+      hts_mutex_lock(&prop_mutex);
+      prop_set_rstring_exl(p, skipme, rstr, type);
+      hts_mutex_unlock(&prop_mutex);
+    }
+  }
+  rstr_release(rstr);
 }
 
 
