@@ -49,7 +49,7 @@ typedef struct decoder {
   pthread_mutex_t mutex;
   pthread_cond_t cond;
 
-  int16_t *samples;  // SLOTS * 2 * sizeof(uint16_t) * ad_tile_size
+  float *samples;  // SLOTS * channels * sizeof(float) * ad_tile_size
 
   int rdptr;
   int wrptr;
@@ -73,7 +73,19 @@ audio_cb(void *sample_buffer, uint32_t buffer_size_in_bytes,
   pthread_mutex_lock(&d->mutex);
 
   int off = (d->rdptr & SLOTMASK) * 2 * d->ad.ad_tile_size;
-  memcpy(sample_buffer, d->samples + off, buffer_size_in_bytes);
+
+  int16_t *out = sample_buffer;
+  const float *src = d->samples + off;
+  float s = audio_master_mute ? 0 : audio_master_volume * d->ad.ad_vol_scale;
+
+  for(int i = 0; i < buffer_size_in_bytes / sizeof(uint16_t); i++) {
+    float x = src[i] * s;
+    if(x < -1.0f)
+      x = -1.0f;
+    else if(x > 1.0f)
+      x = 1.0f;
+    out[i] = x * 32767.0f;
+  }
 
   d->rdptr++;
 
@@ -135,12 +147,12 @@ nacl_audio_reconfig(audio_decoder_t *ad)
                                                  sample_rate,
                                                  tile_size);
 
-  ad->ad_out_sample_format = AV_SAMPLE_FMT_S16;
+  ad->ad_out_sample_format = AV_SAMPLE_FMT_FLT;
   ad->ad_out_sample_rate = sample_rate;
   ad->ad_out_channel_layout = AV_CH_LAYOUT_STEREO;
   ad->ad_tile_size = tile_size;
 
-  d->samples = calloc(1, SLOTS * 2 * sizeof(uint16_t) * ad->ad_tile_size);
+  d->samples = calloc(1, SLOTS * 2 * sizeof(float) * ad->ad_tile_size);
 
   d->player = ppb_audio->Create(g_Instance, d->config, audio_cb, ad);
   ppb_audio->StartPlayback(d->player);
@@ -170,7 +182,7 @@ nacl_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
 
   pthread_mutex_unlock(&d->mutex);
 
-  int off = (d->wrptr & SLOTMASK) * 2 * d->ad.ad_tile_size;
+  int off = (d->wrptr & SLOTMASK) * 2 /* channels */ * d->ad.ad_tile_size;
 
   uint8_t *data[8] = {0};
   data[0] = (uint8_t *)(d->samples + off);
