@@ -479,7 +479,7 @@ ssdp_netif_update(const struct netif *ni)
  *
  */
 static void
-ssdp_do_shutdown(void *aux)
+ssdp_shutdown(void)
 {
   ssdp_interface_t *si;
   LIST_FOREACH(si, &ssdp_interfaces, si_link) {
@@ -492,15 +492,6 @@ ssdp_do_shutdown(void *aux)
 }
 
 
-/**
- *
- */
-static void
-ssdp_shutdown(void *opaque, int retcode)
-{
-  asyncio_run_task(ssdp_do_shutdown, NULL);
-}
-
 
 /**
  *
@@ -509,7 +500,8 @@ void
 ssdp_init(const char *uuid, int http_server_port0)
 {
   http_server_port = http_server_port0;
-  shutdown_hook_add(ssdp_shutdown, NULL, 1);
   ssdp_uuid = strdup(uuid);
   asyncio_register_for_network_changes(ssdp_netif_update);
 }
+
+INITME(INIT_GROUP_ASYNCIO, NULL, ssdp_shutdown, 10);

@@ -705,10 +705,7 @@ main(int argc, char **argv)
   glw_ps3_start();
 
   main_fini();
-
   arch_exit();
-
-
 }
 
 

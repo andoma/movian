@@ -397,7 +397,8 @@ void
 net_change_ndelay(int fd, int on)
 {
   int val = on;
-  setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &val, sizeof(val));
+  if(setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &val, sizeof(val)))
+    TRACE(TRACE_ERROR, "NET", "Unable to set ndelay on %x", fd);
 }
 
 

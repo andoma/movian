@@ -67,6 +67,7 @@ struct prop_proxy_connection {
   char *ppc_url;
 
   prop_t *ppc_error;
+  prop_t *ppc_closepage;
   prop_t *ppc_root;
 
   htsbuf_queue_t ppc_outq;
@@ -96,7 +97,6 @@ ppc_del_fd(void *aux)
 {
   asyncio_fd_t *fd = aux;
   asyncio_del_fd(fd);
-  TRACE(TRACE_DEBUG, "STPP", "Disconnected from server");
 }
 
 
@@ -115,7 +115,7 @@ prop_proxy_retain(prop_proxy_connection_t *ppc)
  *
  */
 static void
-ppc_disconnect(prop_proxy_connection_t *ppc)
+ppc_disconnect(prop_proxy_connection_t *ppc, int reconnect)
 {
   asyncio_del_fd(ppc->ppc_connection);
   ppc->ppc_connection = NULL;
@@ -147,8 +147,11 @@ prop_proxy_release(prop_proxy_connection_t *ppc)
   free(ppc->ppc_ws.packet);
   free(ppc->ppc_url);
   prop_ref_dec(ppc->ppc_error);
+  prop_ref_dec(ppc->ppc_closepage);
 
   hts_cond_destroy(&ppc->ppc_image_cond);
+
+  TRACE(TRACE_DEBUG, "STPP", "Connection destroyed");
 
   free(ppc);
 }
@@ -199,7 +202,7 @@ ppc_connected(void *aux, const char *err)
     TRACE(TRACE_ERROR, "STPP", "Connection to %s failed -- %s",
           ppc->ppc_url, err);
 
-    ppc_disconnect(ppc);
+    ppc_disconnect(ppc, 0);
     return;
   }
 
@@ -683,6 +686,41 @@ ppc_send_pong(prop_proxy_connection_t *ppc,
   asyncio_sendq(ppc->ppc_connection, &q, 0);
 }
 
+/**
+ *
+ */
+static void
+ppc_close(prop_proxy_connection_t *ppc, const uint8_t *data, int len)
+{
+  rstr_t *msg = NULL;
+  int errcode = 1005; // No code present
+
+  if(len > 2)
+    msg = rstr_allocl((const char *)data + 2, len - 2);
+
+  if(len >= 2)
+    errcode = rd16_be(data);
+
+  if(msg == NULL) {
+    switch(errcode) {
+    case 4000:
+      msg = _("Restarting");
+      break;
+    default:
+      msg = _("Remote exited");
+      break;
+    }
+  }
+
+  if(errcode == 1001)
+    prop_set_int(ppc->ppc_closepage, 1);
+  else
+    prop_set_rstring(ppc->ppc_error, msg);
+
+  rstr_release(msg);
+
+  ppc_disconnect(ppc, errcode == 4000);
+}
 
 /**
  *
@@ -713,6 +751,9 @@ ppc_ws_input(void *opaque, int opcode, uint8_t *data, int len)
   case 9:
     ppc_send_pong(ppc, data, len);
     return 0;
+  case 8:
+    ppc_close(ppc, data, len);
+    return 0;
   }
   return 0;
 }
@@ -731,13 +772,13 @@ ppc_input(void *opaque, htsbuf_queue_t *q)
       return; // Not full line yet
     if(line == (void *)-1) {
       prop_set_string(ppc->ppc_error, "Read error");
-      ppc_disconnect(ppc);
+      ppc_disconnect(ppc, 0);
       return;
     }
     if(ppc->ppc_http_state == 0) {
       if(mystrbegins(line, "HTTP/1.1 101 ") == NULL) {
         prop_set_string(ppc->ppc_error, "No websocket endpoint");
-        ppc_disconnect(ppc);
+        ppc_disconnect(ppc, 0);
         return;
       }
 
@@ -750,8 +791,10 @@ ppc_input(void *opaque, htsbuf_queue_t *q)
     free(line);
   }
 
-  if(websocket_parse(q, ppc_ws_input, ppc, &ppc->ppc_ws))
-    ppc_disconnect(ppc);
+  if(websocket_parse(q, ppc_ws_input, ppc, &ppc->ppc_ws)) {
+    prop_set_string(ppc->ppc_error, "Websocket protocol error");
+    ppc_disconnect(ppc, 0);
+  }
 }
 
 
@@ -831,6 +874,7 @@ prop_proxy_connect(const char *url, prop_t *status)
 
   ppc->ppc_url = strdup(url);
   ppc->ppc_error = prop_create_r(status, "error");
+  ppc->ppc_closepage = prop_create_r(status, "close");
   asyncio_dns_lookup_host(hostname, ppc_connect, prop_proxy_retain(ppc));
 
   ppc->ppc_root = prop_proxy_make(ppc, 0 /* global */, NULL, NULL, NULL);

@@ -183,7 +183,7 @@ init_group(int group)
 {
   const inithelper_t *ih;
   LIST_FOREACH(ih, &inithelpers, link) {
-    if(ih->group == group)
+    if(ih->group == group && ih->init != NULL)
       ih->init();
   }
 }
@@ -721,6 +721,7 @@ app_flush_caches(void)
   htsmsg_store_flush();
 }
 
+
 /**
  * To avoid hang on exit we launch a special thread that will force
  * exit after 5 seconds
@@ -739,11 +740,7 @@ shutdown_eject(void *aux)
 static void *
 do_shutdown(void *aux)
 {
-  shutdown_hook_run(2);
-
   event_dispatch(event_create_action(ACTION_STOP));
-  prop_destroy_by_name(prop_get_global(), "popups");
-
   app_flush_caches();
 
   TRACE(TRACE_DEBUG, "core", "Caches flushed");
@@ -755,14 +752,12 @@ do_shutdown(void *aux)
   switch(r) {
     // See arch.h for detailed meaning of those
   case ARCH_STOP_IS_PROGRESSING:
-    shutdown_hook_run(1);
     break;
 
   case ARCH_STOP_IS_NOT_HANDLED:
     break;
 
   case ARCH_STOP_CALLER_MUST_HANDLE:
-    shutdown_hook_run(1);
     main_fini();
     arch_exit();
     break;
@@ -799,6 +794,7 @@ app_shutdown(int retcode)
 void
 main_fini(void)
 {
+  shutdown_hook_run(1);
   prop_destroy_by_name(prop_get_global(), "popups");
   fini_group(INIT_GROUP_API);
   TRACE(TRACE_DEBUG, "core", "API group finished");

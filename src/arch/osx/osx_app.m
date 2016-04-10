@@ -303,7 +303,6 @@ mainloop_courier_init(void)
 - (void) applicationWillTerminate: (NSNotification *)not;
 {
   app_flush_caches();
-  shutdown_hook_run(1);
   main_fini();
   arch_exit();
 }

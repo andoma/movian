@@ -950,7 +950,6 @@ main(int argc, char **argv)
   stos_stop_splash();
 
   rpi_mainloop();
-  shutdown_hook_run(1);
   main_fini();
   arch_exit();
 }

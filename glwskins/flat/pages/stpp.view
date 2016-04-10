@@ -1,5 +1,7 @@
 #import "skin://theme.view"
 
+$self.close ?= $view.stppstatus.close;
+
 coreAttach($self.model.remoteurl, $view.stppstatus, {
 
   widget(container_y, {

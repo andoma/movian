@@ -425,7 +425,7 @@ eventHandle(u64 status, u64 param, void *userdata)
   glw_ps3_t *gp = userdata;
   switch(status) {
   case 0x11:
-    TRACE(TRACE_INFO, "XMB", "PS3 System suspend due to idle");
+    TRACE(TRACE_INFO, "XMB", "Got close request from XMB");
     break;
   case EVENT_REQUEST_EXITAPP:
     gp->gp_stop = 1;

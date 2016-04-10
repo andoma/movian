@@ -35,6 +35,7 @@
 #include "asyncio.h"
 #include "websocket.h"
 #include "upnp/upnp.h"
+#include "misc/bytestream.h"
 
 static LIST_HEAD(, http_path) http_paths;
 LIST_HEAD(http_connection_list, http_connection);
@@ -62,6 +63,8 @@ typedef struct http_path {
 struct http_connection {
 
   asyncio_fd_t *hc_afd;
+
+  LIST_ENTRY(http_connection) hc_link;
 
   int hc_state;
 #define HCS_COMMAND   0
@@ -108,6 +111,7 @@ struct http_connection {
   int hc_ws_missing_ping;
 };
 
+static struct http_connection_list http_connections;
 
 
 /**
@@ -993,6 +997,7 @@ http_close(http_connection_t *hc)
 
   asyncio_timer_disarm(&hc->hc_ws_timeout);
 
+  LIST_REMOVE(hc, hc_link);
   free(hc);
 }
 
@@ -1071,6 +1076,9 @@ http_accept(void *opaque, int fd, const net_addr_t *local_addr,
             const net_addr_t *remote_addr)
 {
   http_connection_t *hc = calloc(1, sizeof(http_connection_t));
+
+  LIST_INSERT_HEAD(&http_connections, hc, hc_link);
+
   hc->hc_afd = asyncio_attach("HTTP connection", fd,
                               http_io_error, http_io_read, hc, opaque);
   htsbuf_queue_init(&hc->hc_output, 0);
@@ -1113,6 +1121,53 @@ http_server_init(void)
 /**
  *
  */
+static void
+http_server_fini(void)
+{
+  http_connection_t *hc;
+  TRACE(TRACE_DEBUG, "HTTPSERVER", "Shutdown");
+
+  rstr_t *msg;
+
+  int wserrcode = 1001;
+  switch(gconf.exit_code) {
+  case APP_EXIT_STANDBY:
+    msg = _("Standby");
+    break;
+  case APP_EXIT_POWEROFF:
+    msg = _("Power Off");
+    break;
+  case APP_EXIT_RESTART:
+    msg = _("Restarting");
+    wserrcode = 4000;
+    break;
+  case APP_EXIT_REBOOT:
+    msg = _("Rebooting");
+    wserrcode = 4000;
+    break;
+  default:
+    msg = NULL;
+  }
+
+  int msglen = msg ? strlen(rstr_get(msg)) : 0;
+  uint8_t *closemsg = alloca(msglen + 2);
+  wr16_be(closemsg, wserrcode);
+
+  if(msg != NULL)
+    memcpy(closemsg + 2, rstr_get(msg), msglen + 2);
+
+  LIST_FOREACH(hc, &http_connections, hc_link) {
+    if(hc->hc_state == HCS_WEBSOCKET) {
+      websocket_send(hc, 8, closemsg, msglen + 2);
+    }
+  }
+  rstr_release(msg);
+}
+
+
+/**
+ *
+ */
 void
 http_req_args_fill_htsmsg(http_connection_t *hc, htsmsg_t *msg)
 {
@@ -1122,4 +1177,5 @@ http_req_args_fill_htsmsg(http_connection_t *hc, htsmsg_t *msg)
     htsmsg_add_str(msg, hh->hh_key, hh->hh_value);
 }
 
-INITME(INIT_GROUP_ASYNCIO, http_server_init, NULL, 0);
+
+INITME(INIT_GROUP_ASYNCIO, http_server_init, http_server_fini, 0);

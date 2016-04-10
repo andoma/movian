@@ -678,6 +678,7 @@ asyncio_do_shutdown(void *aux)
 static void
 asyncio_shutdown(void *opaque, int retcode)
 {
+  TRACE(TRACE_DEBUG, "ASYNCIO", "Shutdown");
   asyncio_run_task(asyncio_do_shutdown, NULL);
 }
 
