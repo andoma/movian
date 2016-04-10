@@ -112,7 +112,7 @@ fa_resolve_proto(const char *url, fa_protocol_t **p,
     /* No protocol specified, assume a plain file */
     if(native_fap == NULL ||
        (url0[0] != '/' &&
-        native_fap->fap_stat(native_fap, url0, &fs, NULL, 0, 0))) {
+        native_fap->fap_stat(native_fap, url0, &fs, 0, NULL, 0))) {
       snprintf(errbuf, errsize, "File not found");
       return NULL;
     }
@@ -409,9 +409,7 @@ fa_stat_ex(const char *url, struct fa_stat *buf, char *errbuf, size_t errsize,
   if((filename = fa_resolve_proto(url, &fap, errbuf, errsize)) == NULL)
     return -1;
 
-  int non_interactive = !!(flags & FA_NON_INTERACTIVE);
-
-  r = fap->fap_stat(fap, filename, buf, errbuf, errsize, non_interactive);
+  r = fap->fap_stat(fap, filename, buf, flags, errbuf, errsize);
   fap_release(fap);
   free(filename);
 
@@ -985,7 +983,7 @@ fa_unlink_recursive(const char *url, char *errbuf, size_t errsize, int verify)
   if((filename = fa_resolve_proto(url, &fap, errbuf, errsize)) == NULL)
     return -1;
 
-  if(fap->fap_stat(fap, filename, &st, errbuf, errsize, 0))
+  if(fap->fap_stat(fap, filename, &st, 0, errbuf, errsize))
     goto bad;
 
   if(st.fs_type == CONTENT_FILE) {
@@ -1119,7 +1117,7 @@ fa_makedir_p(fa_protocol_t *fap, const char *path)
   char *p;
   int l, r;
 
-  if(!fap->fap_stat(fap, path, &fs, NULL, 0, 0) &&
+  if(!fap->fap_stat(fap, path, &fs, 0, NULL, 0) &&
      fs.fs_type == CONTENT_DIR)
     return 0; /* Dir already there */
 
@@ -1812,7 +1810,7 @@ fa_check_url(const char *url, char *errbuf, size_t errlen, int timeout_ms)
     return BACKEND_PROBE_NO_HANDLER;
 
   
-  r = fap->fap_stat(fap, filename, &fs, errbuf, errlen, 1);
+  r = fap->fap_stat(fap, filename, &fs, FA_NON_INTERACTIVE, errbuf, errlen);
   fap_release(fap);
   free(filename);
 

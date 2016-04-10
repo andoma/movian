@@ -1400,7 +1400,7 @@ smb_tree_connect_andX(cifs_connection_t *cc, const char *share,
  */
 static int
 cifs_resolve(const char *url, char *filename, size_t filenamesize,
-	     char *errbuf, size_t errlen, int non_interactive,
+	     char *errbuf, size_t errlen, int fa_flags,
 	     cifs_tree_t **p_ct, cifs_connection_t **p_cc,
              int need_file)
 {
@@ -1410,6 +1410,8 @@ cifs_resolve(const char *url, char *filename, size_t filenamesize,
   cifs_connection_t *cc;
   cifs_tree_t *ct;
   char *fn = NULL, *p;
+
+  const int non_interactive = !!(fa_flags & FA_NON_INTERACTIVE);
 
   assert(p_ct != NULL);
 
@@ -2191,8 +2193,7 @@ smb_scandir(fa_protocol_t *fap, fa_dir_t *fa, const char *url,
   cifs_connection_t *cc;
   int r;
   r = cifs_resolve(url, filename, sizeof(filename), errbuf, errlen,
-                   flags & FA_NON_INTERACTIVE ? 1 : 0,
-		   &ct, &cc, 0);
+                   flags, &ct, &cc, 0);
   switch(r) {
   default:
     return -1;
@@ -2235,7 +2236,7 @@ smb_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
   const SMB_NTCREATE_ANDX_resp_t *resp;
   smb_file_t *sf;
 
-  int r = cifs_resolve(url, filename, sizeof(filename), errbuf, errlen, 0,
+  int r = cifs_resolve(url, filename, sizeof(filename), errbuf, errlen, flags,
 		       &ct, NULL, 1);
   if(r != CIFS_RESOLVE_TREE)
     return NULL;
@@ -2481,14 +2482,14 @@ smb_fsize(fa_handle_t *fh)
  */
 static int
 smb_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
-	 char *errbuf, size_t errlen, int non_interactive)
+	 int flags, char *errbuf, size_t errlen)
 {
   char filename[512];
   int r;
   cifs_tree_t *ct;
   cifs_connection_t *cc;
   r = cifs_resolve(url, filename, sizeof(filename), errbuf, errlen,
-		   non_interactive, &ct, &cc, 0);
+		   flags, &ct, &cc, 0);
 
   switch(r) {
   default:
@@ -2563,7 +2564,8 @@ smb_set_xattr(struct fa_protocol *fap, const char *url,
   if(data == NULL)
     data_len = 0;
 
-  r = cifs_resolve(url, filename, sizeof(filename), NULL, 0, 0, &ct, NULL, 1);
+  r = cifs_resolve(url, filename, sizeof(filename), NULL, 0,
+                   FA_NON_INTERACTIVE, &ct, NULL, 1);
 
   if(r != CIFS_RESOLVE_TREE)
     return -1;
@@ -2627,7 +2629,8 @@ smb_get_xattr(struct fa_protocol *fap, const char *url,
   cifs_tree_t *ct;
   const int name_len = strlen(name);
 
-  r = cifs_resolve(url, filename, sizeof(filename), NULL, 0, 0, &ct, NULL, 1);
+  r = cifs_resolve(url, filename, sizeof(filename), NULL, 0,
+                   FA_NON_INTERACTIVE, &ct, NULL, 1);
 
   if(r != CIFS_RESOLVE_TREE)
     return -1;

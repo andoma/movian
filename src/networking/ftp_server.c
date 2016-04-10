@@ -76,7 +76,8 @@ static int
 ftp_server_stat(const char *url, struct fa_stat *fs,
                 char *errbuf, size_t errlen)
 {
-  return fa_protocol_vfs.fap_stat(&fa_protocol_vfs, url, fs, errbuf, errlen, 1);
+  return fa_protocol_vfs.fap_stat(&fa_protocol_vfs, url, fs,
+                                  FA_NON_INTERACTIVE, errbuf, errlen);
 }
 
 

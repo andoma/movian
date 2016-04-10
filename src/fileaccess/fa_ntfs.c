@@ -194,7 +194,7 @@ ntfs_fsize(fa_handle_t *fh0)
  */
 static int
 ntfs_stat(struct fa_protocol *fap, const char *url, struct fa_stat *fs,
-	  char *errbuf, size_t errsize, int non_interactive)
+	  int flags, char *errbuf, size_t errsize)
 {
   struct stat st;
   if(ps3ntfs_stat(url, &st)) {

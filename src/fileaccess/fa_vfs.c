@@ -230,7 +230,7 @@ vfs_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
  */
 static int
 vfs_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
-	char *errbuf, size_t errlen, int non_interactive)
+         int flags, char *errbuf, size_t errlen)
 {
   char newpath[1024];
 
@@ -255,8 +255,7 @@ vfs_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
     snprintf(errbuf, errlen, "No such file or directory");
     return -1;
   }
-  return fa_stat_ex(newpath, fs, errbuf, errlen,
-                    non_interactive ? FA_NON_INTERACTIVE : 0);
+  return fa_stat_ex(newpath, fs, errbuf, errlen, flags);
 }
 
 

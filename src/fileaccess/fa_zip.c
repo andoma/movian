@@ -853,7 +853,7 @@ zip_fsize(fa_handle_t *handle)
  */
 static int
 zip_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
-	 char *errbuf, size_t errlen, int non_interactive)
+	 int flags, char *errbuf, size_t errlen)
 {
   zip_file_t *zf;
 

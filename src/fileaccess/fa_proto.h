@@ -98,12 +98,9 @@ typedef struct fa_protocol {
 
   /**
    * stat(2) file
-   *
-   * If non_interactive is set, this is probe request and it must not
-   * ask for any user input (access credentials, etc)
    */
   int (*fap_stat)(struct fa_protocol *fap, const char *url, struct fa_stat *buf,
-		  char *errbuf, size_t errsize, int non_interactive);
+		  int flags, char *errbuf, size_t errsize);
 
   /**
    * unlink (ie, delete) file

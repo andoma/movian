@@ -120,7 +120,7 @@ gmefile_scandir(fa_protocol_t *fap, fa_dir_t *fd, const char *url,
  */
 static int
 gmefile_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
-	     char *errbuf, size_t errlen, int non_interactive)
+	     int flags, char *errbuf, size_t errlen)
 {
   char *p = strrchr(url, '/');
   

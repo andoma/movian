@@ -315,7 +315,7 @@ b_scandir(fa_protocol_t *fap, fa_dir_t *fd, const char *url,
  */
 static int
 b_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
-       char *errbuf, size_t errlen, int non_interactive)
+       int flags, char *errbuf, size_t errlen)
 {
   const struct filebundle_entry *fbe;
 
@@ -327,8 +327,7 @@ b_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
     return FAP_OK;
   }
 
-  if(b_scandir(fap, NULL, url, errbuf, errlen,
-               non_interactive ? FA_NON_INTERACTIVE : 0))
+  if(b_scandir(fap, NULL, url, errbuf, errlen, flags))
     return FAP_ERROR;
 
   fs->fs_type = CONTENT_DIR;
@@ -407,7 +406,7 @@ mf_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
  */
 static int
 mf_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
-	char *errbuf, size_t errlen, int non_interactive)
+	int flags, char *errbuf, size_t errlen)
 {
   const memfile_t *mf = find_memfile(url);
   memset(fs, 0, sizeof(struct fa_stat));

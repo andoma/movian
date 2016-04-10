@@ -1809,7 +1809,10 @@ static fa_handle_t *
 http_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
 	  int flags, struct fa_open_extra *foe)
 {
-  return http_open_ex(fap, url, errbuf, errlen, NULL, flags, foe);
+  int statcode = -1;
+  return http_open_ex(fap, url, errbuf, errlen,
+                      flags & FA_NON_INTERACTIVE ? &statcode : NULL,
+                      flags, foe);
 }
 
 
@@ -2184,14 +2187,14 @@ http_fsize(fa_handle_t *handle)
  */
 static int
 http_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
-	  char *errbuf, size_t errlen, int non_interactive)
+	  int flags, char *errbuf, size_t errlen)
 {
   fa_handle_t *handle;
   http_file_t *hf;
   int statcode = -1;
 
   if((handle = http_open_ex(fap, url, errbuf, errlen,
-			    non_interactive ? &statcode : NULL, 0,
+			    flags & FA_NON_INTERACTIVE ? &statcode : NULL, 0,
 			    NULL)) == NULL)
     return statcode;
  
@@ -2681,7 +2684,7 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
  */
 static int
 dav_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
-	 char *errbuf, size_t errlen, int non_interactive)
+	 int flags, char *errbuf, size_t errlen)
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   int statcode = -1;
@@ -2691,8 +2694,8 @@ dav_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
   hf->hf_version = 1;
   hf->hf_url = strdup(url);
 
-  if(dav_propfind(hf, NULL, errbuf, errlen, 
-		  non_interactive ? &statcode : NULL)) {
+  if(dav_propfind(hf, NULL, errbuf, errlen,
+                  flags & FA_NON_INTERACTIVE ? &statcode : NULL)) {
     http_destroy(hf);
     return statcode;
   }
@@ -3176,9 +3179,14 @@ http_req_do(http_req_aux_t *hra)
     goto retry;
 
   case 401:
-    if(authenticate(hf, hra->errbuf, hra->errlen, NULL, !no_content))
-      goto cleanup;
-    goto retry;
+    {
+      int statcode;
+      if(authenticate(hf, hra->errbuf, hra->errlen,
+                      hra->flags & FA_NON_INTERACTIVE ? &statcode : NULL,
+                      !no_content))
+        goto cleanup;
+      goto retry;
+    }
 
   case 206:
     /* We got "Partial Content" without asking for it.  Some servers

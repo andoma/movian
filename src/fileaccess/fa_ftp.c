@@ -764,9 +764,9 @@ mkint(const char *s, int len)
  */
 static int
 ftp_stat(struct fa_protocol *fap, const char *url, struct fa_stat *fs,
-         char *errbuf, size_t errsize, int non_interactive)
+         int flags, char *errbuf, size_t errsize)
 {
-
+  int non_interactive = flags & FA_NON_INTERACTIVE ? 1 : 0;
   ftp_file_t *ff = ftp_file_init(url, errbuf, errsize, non_interactive);
 
   if(ff == NULL)

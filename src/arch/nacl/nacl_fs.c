@@ -336,7 +336,7 @@ fs_fsize(fa_handle_t *fh)
  */
 static int
 fs_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
-	char *errbuf, size_t errlen, int non_interactive)
+	int flags, char *errbuf, size_t errlen)
 {
   check_main_thread();
   PP_Resource file_res = get_res(fap, url);

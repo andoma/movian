@@ -292,7 +292,7 @@ torrent_fsize(fa_handle_t *fh)
  */
 static int
 torrent_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
-             char *errbuf, size_t errlen, int non_interactive)
+             int flags, char *errbuf, size_t errlen)
 {
   torrent_file_t *tf = torrent_resolve_file(url, errbuf, errlen);
   if(tf == NULL) {
