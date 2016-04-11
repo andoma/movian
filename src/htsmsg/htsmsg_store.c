@@ -26,7 +26,6 @@
 #include "htsmsg_json.h"
 #include "htsmsg_store.h"
 #include "misc/callout.h"
-#include "arch/arch.h"
 #include "persistent.h"
 
 #define SETTINGS_CACHE_DELAY 2000000 // micro seconds

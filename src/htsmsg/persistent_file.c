@@ -22,6 +22,8 @@
 #include "fileaccess/fileaccess.h"
 #include "persistent.h"
 
+#include "arch/arch.h"
+
 #ifdef PS3
 #define RENAME_CANT_OVERWRITE 1
 #else
