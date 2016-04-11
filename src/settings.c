@@ -1194,7 +1194,7 @@ setting_reset(setting_t *s)
 
     switch(s->s_type) {
     case SETTING_STRING:
-      prop_set_void(s->s_val);
+      prop_set_void_ex(s->s_val, s->s_sub);
       if(s->s_callback != NULL) {
         prop_callback_string_t *cb = s->s_callback;
         cb(s->s_opaque, rstr_get(s->s_default_str));
@@ -1206,7 +1206,7 @@ setting_reset(setting_t *s)
       break;
     case SETTING_INT:
     case SETTING_BOOL:
-      prop_set_int(s->s_val, s->s_default_int);
+      prop_set_int_ex(s->s_val, s->s_sub, s->s_default_int);
       if(s->s_callback != NULL) {
         prop_callback_int_t *cb = s->s_callback;
         cb(s->s_opaque, s->s_default_int);
