@@ -23,6 +23,7 @@
 #include "fileaccess.h"
 #include "fa_proto.h"
 #include "misc/minmax.h"
+#include "misc/callout.h"
 
 #define FILE_PARKING 1
 
@@ -44,8 +45,6 @@ typedef struct buffered_zone {
  */
 typedef struct buffered_file {
   fa_handle_t h;
-
-  time_t bf_park_time;
 
   fa_handle_t *bf_src;
   cancellable_t *bf_outbound_cancellable;
@@ -78,6 +77,7 @@ typedef struct buffered_file {
 
 
 static buffered_file_t *parked;
+static callout_t parked_callout;
 
 #ifdef DEBUG
 /**
@@ -249,6 +249,22 @@ fab_destroy(buffered_file_t *bf)
 
 #ifdef FILE_PARKING
 
+
+static void
+close_parked_file(struct callout *c, void *aux)
+{
+  buffered_file_t *closeme;
+
+  hts_mutex_lock(&buffered_global_mutex);
+  closeme = parked;
+  parked = NULL;
+  hts_mutex_unlock(&buffered_global_mutex);
+
+  if(closeme != NULL) {
+    fab_destroy(closeme);
+  }
+}
+
 /**
  *
  */
@@ -274,10 +290,9 @@ fab_park(fa_handle_t *handle)
   hts_mutex_lock(&buffered_global_mutex);
   if(parked)
     closeme = parked;
-  printf("%s parked\n", bf->bf_url);
   parked = bf;
-  time(&parked->bf_park_time);
   hts_mutex_unlock(&buffered_global_mutex);
+  callout_arm(&parked_callout, close_parked_file, NULL, 5);
 
   if(closeme)
     fab_destroy(closeme);
@@ -584,7 +599,6 @@ fa_handle_t *
 fa_buffered_open(const char *url, char *errbuf, size_t errsize, int flags,
                  struct fa_open_extra *foe)
 {
-  buffered_file_t *closeme = NULL;
   fa_handle_t *fh;
   fa_protocol_t *fap;
   char *filename;
@@ -602,17 +616,6 @@ fa_buffered_open(const char *url, char *errbuf, size_t errsize, int flags,
   fh = NULL;
   hts_mutex_lock(&buffered_global_mutex);
 
-  if(parked) {
-    // Flush too old parked files
-    time_t now;
-    time(&now);
-    if(now - parked->bf_park_time > 10) {
-      closeme = parked;
-      parked = NULL;
-    }
-  }
-
-
   if(parked && !strcmp(parked->bf_url, url)) {
     parked->bf_fpos = 0;
     fh = (fa_handle_t *)parked;
@@ -620,9 +623,6 @@ fa_buffered_open(const char *url, char *errbuf, size_t errsize, int flags,
   }
 
   hts_mutex_unlock(&buffered_global_mutex);
-
-  if(closeme != NULL)
-    fab_destroy(closeme);
 
   if(fh != NULL) {
     fap_release(fap);
