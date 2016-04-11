@@ -27,7 +27,7 @@
 #include "htsmsg_store.h"
 #include "misc/callout.h"
 #include "arch/arch.h"
-#include "fileaccess/fileaccess.h"
+#include "persistent.h"
 
 #define SETTINGS_CACHE_DELAY 2000000 // micro seconds
 
@@ -42,33 +42,10 @@ typedef struct loaded_msg {
   char lm_dirty;
 } loaded_msg_t;
 
-#define SETTINGS_TRACE(fmt, ...) do {            \
-  if(gconf.enable_settings_debug) \
-    TRACE(TRACE_DEBUG, "Settings", fmt, ##__VA_ARGS__); \
-} while(0)
-
-
-#ifdef PS3
-#define RENAME_CANT_OVERWRITE 1
-#else
-#define RENAME_CANT_OVERWRITE 0
-#endif
 
 static struct loaded_msg_list loaded_msgs;
 static HTS_MUTEX_DECL(loaded_msg_mutex);
 
-
-/**
- *
- */
-static void
-htsmsg_sync(void)
-{
-#ifdef STOS
-  if(gconf.persistent_path)
-    arch_sync_path(gconf.persistent_path);
-#endif
-}
 
 /**
  *
@@ -86,105 +63,12 @@ loaded_msg_release(loaded_msg_t *lm)
 /**
  *
  */
-static int
-htsmsg_store_buildpath(char *dst, size_t dstsize, const char *path)
-{
-  if(gconf.persistent_path == NULL)
-     return -1;
-
-  snprintf(dst, dstsize, "%s/settings/",
-           gconf.persistent_path);
-
-  char *n = dst + strlen(dst);
-
-  snprintf(n, dstsize - strlen(dst), "%s", path);
-
-  while(*n) {
-    if(*n == ':' || *n == '?' || *n == '*' || *n > 127 || *n < 32)
-      *n = '_';
-    n++;
-  }
-  return 0;
-}
-
-
-/**
- *
- */
 static void
 loaded_msg_write(loaded_msg_t *lm)
 {
-  char fullpath[1024];
-  char fullpath2[1024];
-  char errbuf[512];
-  htsbuf_queue_t hq;
-  htsbuf_data_t *hd;
-  int ok;
-
-  if(gconf.persistent_path == NULL)
-    return;
-
-  snprintf(fullpath, sizeof(fullpath), "%s/settings/%s%s",
-	   gconf.persistent_path, lm->lm_key,
-	   RENAME_CANT_OVERWRITE ? "" : ".tmp");
-
-  char *x = strrchr(fullpath, '/');
-  if(x != NULL) {
-    *x = 0;
-    if(fa_makedirs(fullpath, errbuf, sizeof(errbuf))) {
-      TRACE(TRACE_ERROR, "Settings", "Unable to create dir %s -- %s",
-            fullpath, errbuf);
-    }
-    *x = '/';
-  }
-
-  fa_handle_t *fh =
-    fa_open_ex(fullpath, errbuf, sizeof(errbuf), FA_WRITE, NULL);
-  if(fh == NULL) {
-    TRACE(TRACE_ERROR, "Settings", "Unable to create \"%s\" - %s",
-	    fullpath, errbuf);
-    return;
-  }
-
-  ok = 1;
-
-  htsbuf_queue_init(&hq, 0);
-  htsmsg_json_serialize(lm->lm_msg, &hq, 1);
-
-  int bytes = 0;
-
-  TAILQ_FOREACH(hd, &hq.hq_q, hd_link) {
-    if(fa_write(fh, hd->hd_data + hd->hd_data_off, hd->hd_data_len) !=
-       hd->hd_data_len) {
-      TRACE(TRACE_ERROR, "Settings", "Failed to write file %s",
-	      fullpath);
-      ok = 0;
-      break;
-    }
-    bytes += hd->hd_data_len;
-  }
-  htsbuf_queue_flush(&hq);
-  //  fsync(fd);
-  fa_close(fh);
-
-  if(!ok) {
-    fa_unlink(fullpath, NULL, 0);
-    return;
-  }
-
-  snprintf(fullpath2, sizeof(fullpath2), "%s/settings/%s",
-           gconf.persistent_path,
-           lm->lm_key);
-
-  if(!RENAME_CANT_OVERWRITE && fa_rename(fullpath, fullpath2,
-                                         errbuf, sizeof(errbuf))) {
-
-    TRACE(TRACE_ERROR, "Settings", "Failed to rename \"%s\" -> \"%s\" - %s",
-	  fullpath, fullpath2, errbuf);
-  } else {
-    SETTINGS_TRACE("Wrote %d bytes to \"%s\"",
-	  bytes, fullpath2);
-  }
+  char *data = htsmsg_json_serialize_to_str(lm->lm_msg, 1);
+  persistent_write("settings", lm->lm_key, data, strlen(data));
+  free(data);
 }
 
 
@@ -199,7 +83,7 @@ lm_destroy(loaded_msg_t *lm, int dosync)
   if(lm->lm_dirty) {
     loaded_msg_write(lm);
     if(dosync)
-      htsmsg_sync();
+      persistent_store_sync();
     else
       x = 1;
   }
@@ -226,7 +110,7 @@ htsmsg_store_flush(void)
 
   hts_mutex_unlock(&loaded_msg_mutex);
   if(sync_needed)
-    htsmsg_sync();
+    persistent_store_sync();
 }
 
 
@@ -277,11 +161,7 @@ htsmsg_store_lockmgr(void *ptr, lockmgr_op_t op)
 void
 htsmsg_store_save(htsmsg_t *record, const char *key)
 {
-  char path[1024];
   loaded_msg_t *lm;
-
-  if(htsmsg_store_buildpath(path, sizeof(path), key))
-    return;
 
   hts_mutex_lock(&loaded_msg_mutex);
 
@@ -307,38 +187,28 @@ htsmsg_store_save(htsmsg_t *record, const char *key)
   hts_mutex_unlock(&loaded_msg_mutex);
 }
 
-
 /**
  *
  */
 static loaded_msg_t *
-htsmsg_store_obtain(const char *path, int create)
+htsmsg_store_obtain(const char *key, int create)
 {
-  char fullpath[1024];
   char errbuf[512];
   htsmsg_t *r = NULL;
   loaded_msg_t *lm;
 
-  if(htsmsg_store_buildpath(fullpath, sizeof(fullpath), path) < 0)
-    return NULL;
-
   LIST_FOREACH(lm, &loaded_msgs, lm_link)
-    if(!strcmp(lm->lm_key, path))
+    if(!strcmp(lm->lm_key, key))
       return lm;
 
-  buf_t *b = fa_load(fullpath,
-                     FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
-                     NULL);
+  buf_t *b = persistent_load("settings", key, errbuf, sizeof(errbuf));
   if(b == NULL) {
     if(!create) {
-      SETTINGS_TRACE("Unable to open %s -- %s", fullpath, errbuf);
       return NULL;
     }
   } else {
     r = htsmsg_json_deserialize(buf_cstr(b));
     buf_release(b);
-
-    SETTINGS_TRACE("Read %s -- File %s", fullpath, r ? "OK" : "corrupted");
 
     if(r == NULL && !create)
       return NULL;
@@ -348,7 +218,7 @@ htsmsg_store_obtain(const char *path, int create)
 
   lm = calloc(1, sizeof(loaded_msg_t));
   atomic_set(&lm->lm_refcount, 1);
-  lm->lm_key = strdup(path);
+  lm->lm_key = strdup(key);
   LIST_INSERT_HEAD(&loaded_msgs, lm, lm_link);
   lm->lm_msg = r;
 
@@ -376,31 +246,29 @@ htsmsg_store_load(const char *path)
   return r;
 }
 
+
 /**
  *
  */
 void
-htsmsg_store_remove(const char *path)
+htsmsg_store_remove(const char *key)
 {
-  char fullpath[1024];
   loaded_msg_t *lm;
-
-  if(htsmsg_store_buildpath(fullpath, sizeof(fullpath), path))
-    return;
 
   hts_mutex_lock(&loaded_msg_mutex);
 
   LIST_FOREACH(lm, &loaded_msgs, lm_link)
-    if(!strcmp(lm->lm_key, path))
+    if(!strcmp(lm->lm_key, key))
       break;
 
   if(lm != NULL) {
     lm->lm_dirty = 0;
     lm_destroy(lm, 0);
-    htsmsg_sync();
+    persistent_store_sync();
   }
 
-  fa_unlink(fullpath, NULL, 0);
+  persistent_remove("settings", key);
+
   hts_mutex_unlock(&loaded_msg_mutex);
 }
 

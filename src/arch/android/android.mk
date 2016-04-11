@@ -15,6 +15,8 @@ SRCS += src/arch/android/android.c \
 	src/arch/linux/linux_process_monitor.c \
 	src/ui/longpress.c \
 
+SRCS += src/htsmsg/persistent_file.c
+
 ${BUILDDIR}/src/arch/android/%.o : CFLAGS = ${OPTFLAGS} \
 	-Wall -Werror -Wwrite-strings -Wno-deprecated-declarations \
 			-Wno-multichar -std=gnu99

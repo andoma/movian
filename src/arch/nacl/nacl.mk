@@ -12,6 +12,8 @@ SRCS += src/arch/nacl/nacl_main.c \
 	src/ui/glw/glw_video_yuvp.c \
 	src/ui/glw/glw_video_tex.c \
 
+SRCS += src/htsmsg/persistent_file.c
+
 ${PROG}.pexe: ${PROG}.bundle
 	${FINALIZE} -o $@ $<
 

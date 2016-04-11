@@ -15,6 +15,8 @@ SRCS += src/arch/ps3/ps3_main.c \
 	src/fileaccess/fa_funopen.c \
 	src/fileaccess/fa_fs.c \
 
+SRCS += src/htsmsg/persistent_file.c
+
 #
 # Install
 #

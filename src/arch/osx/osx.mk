@@ -17,6 +17,7 @@ SRCS += src/arch/osx/osx_app.m \
 	src/video/vda.c \
 	src/video/vtb.c \
 
+SRCS += src/htsmsg/persistent_file.c
 
 SRCS-$(CONFIG_WEBPOPUP) += src/arch/osx/osx_webpopup.m
 

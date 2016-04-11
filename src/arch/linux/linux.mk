@@ -17,6 +17,8 @@ SRCS += src/arch/linux/linux_main.c \
 	src/prop/prop_glib_courier.c \
 	src/arch/linux/linux_process_monitor.c \
 
+SRCS += src/htsmsg/persistent_file.c
+
 SRCS-$(CONFIG_LIBPULSE)  += src/arch/linux/pulseaudio.c
 SRCS-$(CONFIG_LIBASOUND) += src/audio2/alsa.c src/audio2/alsa_default.c 
 SRCS-$(CONFIG_WEBPOPUP) += src/arch/linux/linux_webpopup.c

@@ -23,6 +23,8 @@ SRCS += src/arch/linux/linux_misc.c \
 	src/ipc/devevent.c \
 	src/arch/stos/stos_automount.c \
 
+SRCS += src/htsmsg/persistent_file.c
+
 #
 # OS specific sources and flags
 #
