@@ -206,15 +206,15 @@ fa_imageloader(const char *url, const struct image_meta *im,
     .foe_cancellable = c
   };
 
-  if((fh = fa_open_resolver(url, errbuf, errlen,
-                            FA_BUFFERED_SMALL | FA_NON_INTERACTIVE,
-                            &foe)) == NULL)
-    return NULL;
-
   if(ONLY_CACHED(cache_control)) {
     snprintf(errbuf, errlen, "Not cached");
     return NULL;
   }
+
+  if((fh = fa_open_resolver(url, errbuf, errlen,
+                            FA_BUFFERED_SMALL | FA_NON_INTERACTIVE,
+                            &foe)) == NULL)
+    return NULL;
 
   if(fa_read(fh, p, sizeof(p)) != sizeof(p)) {
     snprintf(errbuf, errlen, "File too short");
