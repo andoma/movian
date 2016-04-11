@@ -1451,6 +1451,7 @@ add_dev_bool(const char *title, const char *id, int *val)
 {
   setting_create(SETTING_BOOL, gconf.settings_dev, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE_CSTR(title),
+                 SETTING_VALUE(*val),
                  SETTING_WRITE_BOOL(val),
                  SETTING_STORE("dev", id),
                  NULL);
@@ -1523,10 +1524,10 @@ init_dev_settings(void)
 
   add_dev_bool("Always close pages when pressing back",
 	       "navalwaysclose", &gconf.enable_nav_always_close);
-#ifndef PS3
+
   add_dev_bool("Disable HTTP connection reuse",
 	       "nohttpreuse", &gconf.disable_http_reuse);
-#endif
+
 
   if(gconf.arch_dev_opts)
     gconf.arch_dev_opts(&add_dev_bool);

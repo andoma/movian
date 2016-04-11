@@ -648,7 +648,6 @@ main(int argc, char **argv)
   gconf.concurrency = 2;
   gconf.can_standby = 1;
   gconf.trace_level = TRACE_DEBUG;
-  gconf.disable_http_reuse = 1;
   gconf.arch_dev_opts = ps3_dev_opts;
 
   load_syms();
