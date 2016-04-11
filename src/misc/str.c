@@ -1207,7 +1207,21 @@ char *
 url_resolve_relative(const char *proto, const char *hostname, int port,
 		     const char *path, const char *ref)
 {
-  if(strstr(ref, "://"))
+  const char *s = ref;
+
+  // Check if ref starts with a valid scheme
+  while(1) {
+    if((*s >= 'a' && *s <= 'z') ||
+       (*s >= 'A' && *s <= 'Z') ||
+       (*s >= '0' && *s <= '9') ||
+       *s == '+' || *s == '.' || *s == '-') {
+      s++;
+      continue;
+    }
+    break;
+  }
+
+  if(!strncmp(s, "://", 3))
     return strdup(ref);
 
   int pathlen = 0;
