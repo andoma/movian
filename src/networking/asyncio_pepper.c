@@ -624,8 +624,12 @@ asyncio_sendq(asyncio_fd_t *af, htsbuf_queue_t *q, int cork)
 int
 asyncio_get_port(asyncio_fd_t *af)
 {
-  TRACE(TRACE_DEBUG, "ASYNCIO", "%s NOT IMPLEMENTED", __FUNCTION__);
-  return 0;
+  net_addr_t local = {0};
+
+  pepper_NetAddress_to_net_addr(&local,
+                                ppb_tcpsocket->GetLocalAddress(af->af_sock));
+
+  return local.na_port;
 }
 
 /**
