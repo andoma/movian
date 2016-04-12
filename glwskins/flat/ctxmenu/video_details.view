@@ -1,6 +1,16 @@
 #import "skin://theme.view"
 #import "skin://styles/style_list.view"
 
+/*
+ * This is a workaround for subscriptions in event blocks when used
+ * with proxy properties. When the block is evaluated it will subscribe
+ * and thus when the events are fired it will still wait for the update
+ * from remote side which just takes a while.
+ * Some better fix is needed but this will work for now.
+ */
+$view.url = $args.url;
+$view.pageurl = $self.url;
+
 #define ITEM(CAPTION, EVENT, ICON=void, HIDDEN=false) {
   widget(container_z, {
     hidden: HIDDEN;
@@ -93,18 +103,18 @@ widget(container_z, {
 
 
     ITEM(_("Play from beginning"),  {
-      fireEvent(navOpen($args.url, void, $args, $self.model, "beginning", $self.url));
+      fireEvent(navOpen($view.url, void, $args, $self.model, "beginning", $view.pageurl));
       $clone.itemMenu = void;
     }, "skin://icons/ic_play_arrow_48px.svg");
 
     ITEM(fmt(_("Continue from %s"), value2duration($args.restartpos)),  {
-      fireEvent(navOpen($args.url, void, $args, $self.model, "resume", $self.url));
+      fireEvent(navOpen($view.url, void, $args, $self.model, "resume", $view.pageurl));
       $clone.itemMenu = void;
     }, "skin://icons/ic_play_arrow_48px.svg");
 
 
     ITEM(_("Play until end of list"), {
-      fireEvent(navOpen($args.url, void, $args, $self.model, "continuous", $self.url));
+      fireEvent(navOpen($view.url, void, $args, $self.model, "continuous", $view.pageurl));
       $clone.itemMenu = void;
     }, "skin://icons/ic_play_arrow_48px.svg");
 
