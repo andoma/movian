@@ -446,11 +446,11 @@ image_decode_libav(image_coded_type_t type,
   int r = avcodec_decode_video2(ctx, frame, &got_pic, &avpkt);
 
   if(r < 0 || ctx->width == 0 || ctx->height == 0) {
+    snprintf(errbuf, errlen, "Unable to decode image of size (%d x %d)",
+             ctx->width, ctx->height);
     avcodec_close(ctx);
     av_free(ctx);
     av_frame_free(&frame);
-    snprintf(errbuf, errlen, "Unable to decode image of size (%d x %d)",
-             ctx->width, ctx->height);
     return NULL;
   }
 
