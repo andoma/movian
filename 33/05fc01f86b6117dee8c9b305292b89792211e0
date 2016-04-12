@@ -1,0 +1,6 @@
+Screensaver: Scan all sub folders of folder configured in settings
+
+When user specifies a folder for screensaver images (Settings -> Look and feel)
+Movian now also scan all its sub folders
+
+Fixes issue #2959 and #3043
