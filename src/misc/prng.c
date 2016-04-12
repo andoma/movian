@@ -28,3 +28,14 @@ prng_init(prng_t *x, uint32_t b, uint32_t c)
     prng_get(x);
   }
 }
+
+#include "arch/arch.h"
+
+void
+prng_init2(prng_t *x)
+{
+  arch_get_random_bytes(x, sizeof(prng_t));
+  for(int i=0; i<20; i++) {
+    prng_get(x);
+  }
+}

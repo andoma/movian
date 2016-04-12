@@ -6,3 +6,4 @@ uint32_t prng_get(prng_t *x);
 
 void prng_init(prng_t *x, uint32_t a, uint32_t b);
 
+void prng_init2(prng_t *x);
