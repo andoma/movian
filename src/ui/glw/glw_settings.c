@@ -26,83 +26,86 @@
 #include "htsmsg/htsmsg_json.h"
 #include "db/kvstore.h"
 #include "fileaccess/fileaccess.h"
+#include "misc/prng.h"
 
 static prop_t *screensaver_items;
 static HTS_MUTEX_DECL(screensaver_mutex);
 static char *screensaver_user_images;
 
-#if 0
+
+typedef struct screensaver_item {
+  rstr_t *url;
+  rstr_t *info;
+  prop_t *root;
+
+} screensaver_item_t;
+
+typedef struct screensaver_scanner {
+
+  int num_scanned;
+  int max_output;
+
+  prng_t rng;
+
+  screensaver_item_t *output;
+
+} screensaver_scanner_t;
+
+
+
 /**
  *
  */
 static void
-populate_screensaver_items(void)
+screensaver_emit_items(screensaver_scanner_t *ss)
 {
-  char errbuf[256];
-  buf_t *b;
-
-
-  b = fa_load("http://screensaver.movian.tv/images.json",
-               FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
-               FA_LOAD_FLAGS(FA_DISABLE_AUTH | FA_COMPRESSION),
-               NULL);
-
-  if(b == NULL) {
-    TRACE(TRACE_ERROR, "Screensaver", "Unable to load images -- %s",
-          errbuf);
-    return;
+  assert(ss->num_scanned <= ss->max_output);
+  for(int i = 0; i < ss->num_scanned; i++) {
+    int r = prng_get(&ss->rng) % ss->num_scanned;
+    screensaver_item_t tmp = ss->output[i];
+    ss->output[i] = ss->output[r];
+    ss->output[r] = tmp;
   }
 
-  htsmsg_t *doc = htsmsg_json_deserialize(buf_cstr(b));
-  buf_release(b);
+  prop_destroy_childs(screensaver_items);
 
-  if(doc == NULL) {
-    TRACE(TRACE_ERROR, "STOS", "Malformed JSON");
-    return;
-  }
-
-
-  htsmsg_t *list = htsmsg_get_list(doc, "images");
-  if(list != NULL) {
-    htsmsg_field_t *f;
-    HTSMSG_FOREACH(f, list) {
-    htsmsg_t *m = htsmsg_get_map_by_field(f);
-    if(m == NULL)
-      continue;
-
-    const char *s = htsmsg_get_str(m, "url");
-    if(s == NULL)
-      continue;
-
+  for(int i = 0; i < ss->num_scanned; i++) {
+    screensaver_item_t *si = ss->output + i;
     prop_t *item = prop_create_root(NULL);
-    prop_set(item, "url", PROP_SET_STRING, s);
-    if(prop_set_parent(item, screensaver_items))
+    prop_set(item, "url", PROP_SET_RSTRING, si->url);
+    prop_set(item, "info", PROP_SET_RSTRING, si->info);
+    if(prop_set_parent(item, screensaver_items)) {
       prop_destroy(item);
+    } else {
+      si->root = item;
     }
-    screensaver_items_loaded++;
   }
-  htsmsg_release(doc);
 }
-#endif
+
 
 /**
  *
  */
 static void
-screensaver_add_item(const char *url, const char *info, int *cleared)
+screensaver_add_item(rstr_t *url, rstr_t *info,
+                     screensaver_scanner_t *ss)
 {
-  prop_t *item = prop_create_root(NULL);
-  prop_set(item, "url", PROP_SET_STRING, url);
-  prop_set(item, "info", PROP_SET_STRING, info);
+  if(ss->num_scanned < ss->max_output) {
+    ss->output[ss->num_scanned].url  = rstr_dup(url);
+    ss->output[ss->num_scanned].info = rstr_dup(info);
 
-  if(*cleared == 0) {
-    prop_destroy_childs(screensaver_items);
-    *cleared = 1;
+    ss->num_scanned++;
+    if(ss->num_scanned == ss->max_output)
+      screensaver_emit_items(ss);
+    return;
   }
 
-  if(prop_set_parent(item, screensaver_items)) {
-    prop_destroy(item);
+  int j = prng_get(&ss->rng) % ss->num_scanned;
+  if(j < ss->max_output) {
+    rstr_set(&ss->output[j].url, url);
+    rstr_set(&ss->output[j].info, info);
   }
+  ss->num_scanned++;
 }
 
 
@@ -110,7 +113,7 @@ screensaver_add_item(const char *url, const char *info, int *cleared)
  *
  */
 static void
-bing_images(int *cleared)
+bing_images(screensaver_scanner_t *ss)
 {
   char url[1024];
   char errbuf[256];
@@ -138,7 +141,6 @@ bing_images(int *cleared)
 
     if(doc == NULL)
       break;
-
     int got_something = 0;
     htsmsg_t *list = htsmsg_get_list(doc, "images");
     if(list != NULL) {
@@ -152,7 +154,9 @@ bing_images(int *cleared)
         if(s == NULL)
           continue;
         snprintf(url, sizeof(url), "%s%s", "http://www.bing.com", s);
-        screensaver_add_item(url, htsmsg_get_str(m, "copyright"), cleared);
+        screensaver_add_item(rstr_alloc(url),
+                             rstr_alloc(htsmsg_get_str(m, "copyright")),
+                             ss);
         got_something = 1;
       }
     }
@@ -162,11 +166,65 @@ bing_images(int *cleared)
   }
 }
 
+
+static int
+is_probably_image(const char *filename)
+{
+  const char *e = strrchr(filename, '.');
+  if(e == NULL)
+    return 0;
+  e++;
+
+  return
+    !strcasecmp(e, "png") ||
+    !strcasecmp(e, "bmp") ||
+    !strcasecmp(e, "gif") ||
+    !strcasecmp(e, "jpg") ||
+    !strcasecmp(e, "jpeg");
+}
+
+
+static void
+screensaver_load_path(screensaver_scanner_t *ss, const char *path)
+{
+  fa_dir_t *fd = fa_scandir(path, NULL, 0);
+  if(fd == NULL)
+    return;
+
+  if(fd->fd_count > 0) {
+
+    fa_dir_entry_t *fde = RB_FIRST(&fd->fd_entries);
+
+    int skip = prng_get(&ss->rng) % fd->fd_count;
+    for(int i = 0; i < skip; i++) {
+      fde = RB_NEXT(fde, fde_link);
+    }
+    for(int i = 0; i < fd->fd_count; i++) {
+      if(fde == NULL)
+        fde = RB_FIRST(&fd->fd_entries);
+
+      if(content_dirish(fde->fde_type)) {
+        screensaver_load_path(ss, rstr_get(fde->fde_url));
+      } else {
+
+        if(is_probably_image(rstr_get(fde->fde_url))) {
+          screensaver_add_item(fde->fde_url, NULL, ss);
+        }
+      }
+
+      fde = RB_NEXT(fde, fde_link);
+    }
+  }
+  fa_dir_free(fd);
+}
+
+
+
 /**
  *
  */
 static void
-screensaver_load_user_images(int *cleared)
+screensaver_load_user_images(screensaver_scanner_t *ss)
 {
   const char *path = NULL;
 
@@ -175,19 +233,12 @@ screensaver_load_user_images(int *cleared)
     path = mystrdupa(screensaver_user_images);
 
   hts_mutex_unlock(&screensaver_mutex);
-
   if(path == NULL)
     return;
 
-  fa_dir_t *fd = fa_scandir(path, NULL, 0);
-  if(fd == NULL)
-    return;
+  TRACE(TRACE_DEBUG, "GLW", "Scanning %s for screen saver images", path);
 
-  fa_dir_entry_t *fde;
-  RB_FOREACH(fde, &fd->fd_entries, fde_link) {
-    screensaver_add_item(rstr_get(fde->fde_url), NULL, cleared);
-  }
-  fa_dir_free(fd);
+  screensaver_load_path(ss, path);
 }
 
 
@@ -197,14 +248,39 @@ screensaver_load_user_images(int *cleared)
 static void
 init_screensaver_items_load(void *opaque, prop_event_t event, ...)
 {
-  int cleared = 0;
+  if(event != PROP_SUBSCRIPTION_MONITOR_ACTIVE)
+    return;
 
-  if(event == PROP_SUBSCRIPTION_MONITOR_ACTIVE) {
-    screensaver_load_user_images(&cleared);
+  screensaver_scanner_t ss;
+  prng_init2(&ss.rng);
+  ss.num_scanned = 0;
+  ss.max_output = 200;
+  ss.output = calloc(ss.max_output, sizeof(screensaver_item_t));
 
-    if(glw_settings.gs_bing_image)
-      bing_images(&cleared);
+  if(glw_settings.gs_bing_image)
+    bing_images(&ss);
+
+  screensaver_load_user_images(&ss);
+
+  if(ss.num_scanned < ss.max_output) {
+    screensaver_emit_items(&ss);
+  } else {
+
+    // Don't overwrite first item as it's already displaying
+    for(int i = 1; i < ss.max_output; i++) {
+      screensaver_item_t *si = ss.output + i;
+      prop_set(si->root, "url", PROP_SET_RSTRING, si->url);
+      prop_set(si->root, "info", PROP_SET_RSTRING, si->info);
+    }
   }
+
+  for(int i = 0; i < ss.max_output; i++) {
+    screensaver_item_t *si = ss.output + i;
+    rstr_release(si->url);
+    rstr_release(si->info);
+  }
+
+  free(ss.output);
 }
 
 /**
