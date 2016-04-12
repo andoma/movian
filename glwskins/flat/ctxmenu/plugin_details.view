@@ -93,7 +93,7 @@ widget(container_z, {
         focusable: true;
         onEvent(activate,
 	        deliverEvent($args,
-		             select($args.status.canInstall, "install:"+($self.package ?? ""),
+		             select($args.status.canInstall, "install:"+($args.package ?? ""),
 			            select($args.status.canUpgrade, "upgrade",
 				           select($args.status.canUninstall, "uninstall",
 					          void)))));

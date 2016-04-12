@@ -280,6 +280,7 @@ update_state(plugin_t *pl)
     status = _("Up to date");
     canUninstall = 1;
   } else {
+    status = _("Installed");
     canUninstall = 1;
 
     if(pl->pl_repo_ver != NULL) {
