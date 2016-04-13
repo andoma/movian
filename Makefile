@@ -59,6 +59,7 @@ SRCS += src/main.c \
 	src/backend/backend.c \
 	src/backend/backend_prop.c \
 	src/backend/search.c \
+	src/backend/playlist.c \
 	src/event.c \
 	src/keyring.c \
 	src/settings.c \

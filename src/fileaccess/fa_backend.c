@@ -37,6 +37,7 @@
 #include "plugins.h"
 #include "usage.h"
 
+static backend_t be_file;
 
 /**
  *
@@ -193,9 +194,18 @@ file_open_file(prop_t *page, const char *url, fa_stat_t *fs,
     return;
   }
 
-  if(md->md_redirect != NULL)
+  if(md->md_redirect != NULL) {
     url = md->md_redirect;
-
+    backend_t *newbe = backend_canhandle(url);
+    if(newbe == NULL) {
+      nav_open_errorf(page, _("Invalid URL from redirect"));
+      return;
+    }
+    if(newbe != &be_file) {
+      nav_redirect(page, url);
+      return;
+    }
+  }
   prop_t *meta = prop_create_root("metadata");
 
   metadata_to_proptree(md, meta, 0);
@@ -203,6 +213,7 @@ file_open_file(prop_t *page, const char *url, fa_stat_t *fs,
   switch(md->md_contenttype) {
   case CONTENT_ARCHIVE:
   case CONTENT_ALBUM:
+  case CONTENT_PLAYLIST:
     file_open_browse(page, url, fs->fs_mtime, model);
     break;
 
@@ -292,7 +303,7 @@ be_file_open(prop_t *page, const char *url, int sync)
 /**
  *
  */
-backend_t be_file = {
+static backend_t be_file = {
   .be_init = fileaccess_init,
   .be_canhandle = be_file_canhandle,
   .be_imageloader = fa_imageloader,

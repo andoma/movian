@@ -409,11 +409,20 @@ fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh,
     return 1;
   }
 
-  if(l > 16 && mystrbegins((const char *)buf, "#EXTM3U") &&
-     (strstr((const char *)buf, "#EXT-X-STREAM-INF:") ||
-      strstr((const char *)buf, "#EXT-X-TARGETDURATION:") ||
-      strstr((const char *)buf, "#EXT-X-MEDIA-SEQUENCE:"))) {
-    md->md_contenttype = CONTENT_VIDEO;
+  if(l > 16 && mystrbegins((const char *)buf, "#EXTM3U")) {
+
+
+
+    if(strstr((const char *)buf, "#EXT-X-STREAM-INF:") ||
+       strstr((const char *)buf, "#EXT-X-TARGETDURATION:") ||
+       strstr((const char *)buf, "#EXT-X-MEDIA-SEQUENCE:")) {
+      // Top level HLS playlist
+      md->md_contenttype = CONTENT_VIDEO;
+      return 1;
+    }
+
+    metdata_set_redirect(md, "playlist:%s", url);
+    md->md_contenttype = CONTENT_PLAYLIST;
     return 1;
   }
   return 0;
@@ -696,13 +705,26 @@ metadata_t *
 fa_probe_metadata(const char *url, char *errbuf, size_t errsize,
 		  const char *filename, prop_t *stats)
 {
+  const char *postfix = strrchr(url, '.');
+  if(postfix != NULL) {
+    // Some files can just be figured out by the file ending
+    if(!strcmp(postfix, ".m3u")) {
+      metadata_t *md = metadata_create();
+      metdata_set_redirect(md, "playlist:%s", url);
+      md->md_contenttype = CONTENT_PLAYLIST;
+      return md;
+    }
+  }
+
+
   AVFormatContext *fctx;
   int park = 1;
   fa_open_extra_t foe = {
     .foe_stats = stats
   };
 
-  fa_handle_t *fh = fa_open_ex(url, errbuf, errsize, FA_BUFFERED_SMALL, &foe);
+  fa_handle_t *fh = fa_open_ex(url, errbuf, errsize,
+                               FA_BUFFERED_SMALL, &foe);
 
   if(fh == NULL)
     return NULL;

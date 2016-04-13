@@ -42,4 +42,6 @@ int nav_open_error(prop_t *root, const char *msg);
 
 int nav_open_errorf(prop_t *root, rstr_t *fmt, ...);
 
+void nav_redirect(prop_t *root, const char *url);
+
 #endif /* NAVIGATOR_H__ */

@@ -80,7 +80,8 @@ typedef enum {
 
 static inline int content_dirish(contenttype_t ct)
 {
-  return ct == CONTENT_DIR || ct == CONTENT_SHARE || ct == CONTENT_ARCHIVE;
+  return ct == CONTENT_DIR || ct == CONTENT_SHARE || ct == CONTENT_ARCHIVE ||
+    ct == CONTENT_PLAYLIST;
 }
 
 /**

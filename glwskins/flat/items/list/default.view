@@ -21,6 +21,7 @@ widget(container_z, {
 		  "share",     "ic_folder_shared_48px",
 		  "store",     "ic_shopping_cart_48px",
 		  "directory", "ic_folder_48px",
+		  "file",      "ic_file_48px",
 		  "dvd",       "ic_album_48px",
 		  "album",     "ic_album_48px",
 		  "artist",    "ic_person_48px",

@@ -928,6 +928,20 @@ nav_dtor_tracker(void *opaque, prop_event_t event, ...)
 /**
  *
  */
+void
+nav_redirect(prop_t *root, const char *url)
+{
+  event_t *e = event_create_str(EVENT_REDIRECT, url);
+  prop_t *p = prop_create_r(root, "eventSink");
+  prop_send_ext_event(p, e);
+  prop_ref_dec(p);
+  event_release(e);
+}
+
+
+/**
+ *
+ */
 int
 nav_open_error(prop_t *root, const char *msg)
 {

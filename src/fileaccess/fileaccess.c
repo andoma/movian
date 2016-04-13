@@ -1918,7 +1918,7 @@ fa_get_title(const char *url)
 
   filename = fa_resolve_proto(url, &fap, NULL, 0);
 
-  if(fap != NULL && fap->fap_title != NULL) {
+  if(filename != NULL && fap->fap_title != NULL) {
 
     rstr_t *r = fap->fap_title(fap, filename);
 
