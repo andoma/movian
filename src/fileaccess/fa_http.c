@@ -2194,8 +2194,8 @@ http_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
   int statcode = -1;
 
   if((handle = http_open_ex(fap, url, errbuf, errlen,
-			    flags & FA_NON_INTERACTIVE ? &statcode : NULL, 0,
-			    NULL)) == NULL)
+			    flags & FA_NON_INTERACTIVE ? &statcode : NULL,
+                            flags, NULL)) == NULL)
     return statcode;
  
   memset(fs, 0, sizeof(struct fa_stat));
