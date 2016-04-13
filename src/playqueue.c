@@ -170,7 +170,7 @@ pqe_unref(playqueue_entry_t *pqe)
 {
   if(atomic_dec(&pqe->pqe_refcount))
     return;
-
+  assert(pqe_current != pqe);
   assert(pqe->pqe_linked == 0);
   assert(pqe->pqe_originator == NULL);
   assert(pqe->pqe_urlsub == NULL);
@@ -1152,6 +1152,10 @@ player_thread(void *aux)
     // Unlink $self.media
     prop_unlink(m);
     prop_ref_dec(m);
+
+    hts_mutex_lock(&playqueue_mutex);
+    pqe_current = NULL;
+    hts_mutex_unlock(&playqueue_mutex);
 
     prop_set(mp->mp_prop_root, "format", PROP_SET_VOID);
 
