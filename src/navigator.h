@@ -17,18 +17,13 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
-#ifndef NAVIGATOR_H__
-#define NAVIGATOR_H__
+#pragma once
 
 #include "prop/prop.h"
 #include "misc/rstr.h"
 
 #define NAV_HOME "page:home"
 
-
-/**
- *
- */
 void nav_init(void);
 
 void nav_fini(void);
@@ -37,11 +32,8 @@ prop_t *nav_spawn(void);
 
 void nav_open(const char *url, const char *view);
 
-
 int nav_open_error(prop_t *root, const char *msg);
 
 int nav_open_errorf(prop_t *root, rstr_t *fmt, ...);
 
 void nav_redirect(prop_t *root, const char *url);
-
-#endif /* NAVIGATOR_H__ */
