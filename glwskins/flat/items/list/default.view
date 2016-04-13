@@ -26,6 +26,7 @@ widget(container_z, {
 		  "album",     "ic_album_48px",
 		  "artist",    "ic_person_48px",
 		  "tv",        "ic_tv_48px",
+		  "playlist",  "ic_list_48px",
 		  "movian",    "movian"
 	         ) + ".svg";
 
