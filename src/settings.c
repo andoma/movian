@@ -47,6 +47,7 @@
 static prop_t *settings_model;
 static prop_t *settings_nodes;
 
+static hts_mutex_t settings_mutex;
 
 /**
  *
@@ -1293,6 +1294,8 @@ settings_init(void)
   prop_t *n, *d;
   prop_t *s1;
 
+  hts_mutex_init(&settings_mutex);
+
   prop_t *settings_root = prop_create(prop_get_global(), "settings");
   settings_model = prop_create(settings_root, "model");
 
@@ -1631,6 +1634,8 @@ init_dev_settings(void)
 prop_t *
 setting_get_dir(const char *url)
 {
+  prop_t *r = NULL;
+  hts_mutex_lock(&settings_mutex);
   if(!strcmp(url, "settings:tv")) {
     static prop_t *tvsettings;
     if(tvsettings == NULL) {
@@ -1639,7 +1644,8 @@ setting_get_dir(const char *url)
                                     _p("Configure communications with your TV"),
                                     "settings:tv");
     }
-    return tvsettings;
+    r = tvsettings;
   }
-  return NULL;
+  hts_mutex_unlock(&settings_mutex);
+  return r;
 }
