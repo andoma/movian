@@ -165,11 +165,11 @@ fa_probe_playlist(metadata_t *md, const char *url, uint8_t *pb, size_t pbsize)
   while(*t && *t != '.')
     tmp1[i++] = *t++;
   tmp1[i] = 0;
-  
+
   md->md_title = rstr_alloc(tmp1);
-  
+
   t = strstr((char *)pb, "NumberOfEntries=");
-  
+
   if(t != NULL)
     md->md_tracks = atoi(t + 16);
 }
@@ -207,7 +207,7 @@ fa_probe_spc(metadata_t *md, const uint8_t *pb, const char *filename)
 /**
  *
  */
-static void 
+static void
 fa_probe_psid(metadata_t *md, uint8_t *pb)
 {
   md->md_title = rstr_from_bytes_len((char *)pb + 0x16, 32, NULL, 0);
@@ -216,7 +216,7 @@ fa_probe_psid(metadata_t *md, uint8_t *pb)
 
 
 /**
- * 
+ *
  */
 static void
 metdata_set_redirect(metadata_t *md, const char *fmt, ...)
@@ -249,12 +249,12 @@ fa_probe_exif(metadata_t *md, const char *url, uint8_t *pb, fa_handle_t *fh,
 {
   jpeginfo_t ji;
 
-  if(jpeg_info(&ji, jpeginfo_reader, fh, 
+  if(jpeg_info(&ji, jpeginfo_reader, fh,
 	       JPEG_INFO_DIMENSIONS | JPEG_INFO_ORIENTATION |
 	       JPEG_INFO_METADATA,
 	       pb, buflen, NULL, 0))
     return;
-  
+
   md->md_time = ji.ji_time;
   md->md_manufacturer = rstr_dup(ji.ji_manufacturer);
   md->md_equipment    = rstr_dup(ji.ji_equipment);
@@ -275,7 +275,7 @@ fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh,
   int l = fa_read(fh, buf, sizeof(buf) - 1);
   if(l < 8)
     return 0;
-  
+
   buf[l] = 0;
 
   if(l >= 256 && !memcmp(buf, "SNES-SPC700 Sound File Data", 27)) {
@@ -285,7 +285,7 @@ fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh,
   }
 
   if(l >= 256 && (!memcmp(buf, "PSID", 4) || !memcmp(buf, "RSID", 4))) {
-    fa_probe_psid(md, buf); 
+    fa_probe_psid(md, buf);
     md->md_contenttype = CONTENT_ALBUM;
     metdata_set_redirect(md, "sidfile://%s/", url);
     return 1;
@@ -678,7 +678,7 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx,
 			  stream->disposition,
 			  tn, avctx->channels);
     }
-  
+
     md->md_contenttype = CONTENT_FILE;
     if(has_video) {
       md->md_contenttype = CONTENT_VIDEO;
@@ -687,7 +687,7 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx,
     }
   }
 }
-  
+
 
 /**
  *
@@ -704,7 +704,7 @@ fa_probe_metadata(const char *url, char *errbuf, size_t errsize,
 
   fa_handle_t *fh = fa_open_ex(url, errbuf, errsize, FA_BUFFERED_SMALL, &foe);
 
-  if(fh == NULL) 
+  if(fh == NULL)
     return NULL;
 
   metadata_t *md = metadata_create();
@@ -758,7 +758,7 @@ metadata_t *
 fa_metadata_from_fctx(AVFormatContext *fctx)
 {
   metadata_t *md = metadata_create();
-  
+
   fa_lavf_load_meta(md, fctx, NULL);
   return md;
 }
@@ -787,6 +787,6 @@ fa_probe_dir(const char *url)
     md->md_contenttype = CONTENT_DVD;
     return md;
   }
-  
+
   return md;
 }
