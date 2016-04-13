@@ -114,14 +114,21 @@ vobsub_probe(const char *url, const char *filename,
       while(*p == ' ')
 	p++;
       if(strlen(p) >= 2) {
-	const char *lang = p;
+	char *lang = mystrdupa(p);
 
 	htsmsg_t *m = htsmsg_create_map();
 	htsmsg_add_str(m, "idx", url);
 	htsmsg_add_str(m, "sub", subfile);
 
-	if((p = strstr(p, "index:")) != NULL)
-	  htsmsg_add_u32(m, "index", atoi(p + strlen("index:")));
+        char *x;
+	if((x = strstr(lang, "index:")) != NULL) {
+	  htsmsg_add_u32(m, "index", atoi(x + strlen("index:")));
+          *x = 0;
+        }
+
+        x = strchr(lang, ',');
+        if(x)
+          *x = 0;
 
 	rstr_t *u = htsmsg_json_serialize_to_rstr(m, "vobsub:");
 
