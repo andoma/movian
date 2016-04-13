@@ -41,6 +41,7 @@ typedef struct glw_settings {
   struct setting *gs_setting_screensaver_timer;
   struct setting *gs_setting_bing_image;
   struct setting *gs_setting_user_images;
+  struct setting *gs_setting_per_image_timeout;
 
   struct prop *gs_settings;
 

@@ -1,7 +1,7 @@
 widget(slideshow, {
   alpha: $ui.screenSaverAlpha;
 
-  time: 15;
+  time: $core.glw.screensaver.imageDuration;
   transitionTime: 2;
 
   cloner($core.glw.screensaver.items, container_z, {
@@ -9,6 +9,10 @@ widget(slideshow, {
     image({
       zoffset: -1400;
       source: $self.url;
+    });
+
+    label({
+      caption: $core.glw.screensaver.imageDuration;
     });
 
     underscan({

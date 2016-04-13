@@ -433,6 +433,19 @@ glw_settings_init(void)
                    SETTING_MUTEX(&screensaver_mutex),
                    NULL);
 
+  prop_t *id = prop_create_multi(prop_get_global(), "glw", "screensaver",
+                                 "imageDuration", NULL);
+
+  glw_settings.gs_setting_per_image_timeout =
+    setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,
+                   SETTING_TITLE(_p("Seconds per image")),
+                   SETTING_WRITE_PROP(id),
+                   SETTING_VALUE(15),
+                   SETTING_RANGE(5, 60),
+                   SETTING_STORE("glw", "screensaverimageduration"),
+                   NULL);
+  prop_ref_dec(id);
+
   prop_t *p = prop_create(prop_get_global(), "glw");
   p = prop_create(p, "osk");
   kv_prop_bind_create(p, "showtime:glw:osk");
@@ -449,6 +462,7 @@ glw_settings_fini(void)
 {
   setting_destroy(glw_settings.gs_setting_user_images);
   setting_destroy(glw_settings.gs_setting_screensaver_timer);
+  setting_destroy(glw_settings.gs_setting_per_image_timeout);
   setting_destroy(glw_settings.gs_setting_bing_image);
   setting_destroy(glw_settings.gs_setting_underscan_v);
   setting_destroy(glw_settings.gs_setting_underscan_h);
