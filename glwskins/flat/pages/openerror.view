@@ -36,7 +36,6 @@ widget(container_z, {
     widget(label, {
       align: center;
       caption: $self.model.error;
-      scale: 1.5em;
       maxlines: 10;
       font: "skin://fonts/RobotoCondensed-Bold.ttf";
       shadow: true;
