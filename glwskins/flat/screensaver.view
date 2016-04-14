@@ -11,10 +11,6 @@ widget(slideshow, {
       source: $self.url;
     });
 
-    label({
-      caption: $core.glw.screensaver.imageDuration;
-    });
-
     underscan({
       hidden: isVoid($self.info);
       vbox({
