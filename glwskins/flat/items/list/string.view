@@ -7,14 +7,12 @@ widget(container_z, {
   onEvent(activate, {
     focus("textInput");
   });
+  onEvent(itemMenu, deliverEvent($self.value, "reset"));
 
   height: 2em;
 
   widget(container_x, {
     style: "ListItem";
-
-    onEvent(activate, deliverEvent($self.action));
-    onEvent(itemMenu, deliverEvent($self.value, "reset"));
 
     widget(icon, {
       style: "ListItemIcon";
