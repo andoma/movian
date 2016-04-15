@@ -506,13 +506,12 @@ prop_notify_free_payload(prop_notify_t *n)
     prop_vec_release(n->hpn_propv);
     break;
 
-  case PROP_SET_STRING:
+  case PROP_INVALID_EVENTS:
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
   case PROP_WANT_MORE_CHILDS:
   case PROP_HAVE_MORE_CHILDS_YES:
   case PROP_HAVE_MORE_CHILDS_NO:
   case PROP_DESTROYED:
-  case PROP_ADOPT_RSTRING:
   case PROP_VALUE_PROP:
     break;
   }
@@ -849,8 +848,8 @@ notify_invoke(prop_sub_t *s, prop_notify_t *n)
     prop_ref_dec(n->hpn_prop);
     break;
 
-  case PROP_SET_STRING:
-  case PROP_ADOPT_RSTRING:
+  case PROP_INVALID_EVENTS:
+    abort();
     break;
   }
 }
@@ -4643,20 +4642,33 @@ prop_link0(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard, int debug)
     prop_print_tree0(src, 0, 7);
     printf("\n\n\n");
   }
-
 }
 
 
 /**
  *
  */
-void
-prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard, int debug)
+static void
+prop_unlink_exl(prop_t *p, prop_sub_t *skipme)
 {
-  if(src == NULL || dst == NULL)
-    return;
+  assert(p->hp_type != PROP_PROXY);
 
-  hts_mutex_lock(&prop_mutex);
+  if(p->hp_type != PROP_ZOMBIE && p->hp_originator != NULL)
+    prop_unlink0(p, skipme, "prop_unlink()/childs", NULL);
+}
+
+
+/**
+ *
+ */
+static void
+prop_link_exl(prop_t *src, prop_t *dst, prop_sub_t *skipme,
+              int hard, int debug)
+{
+  if(src == NULL) {
+    prop_unlink_exl(dst, skipme);
+    return;
+  }
 
 
   if(src->hp_type == PROP_PROXY && dst->hp_type == PROP_PROXY) {
@@ -4673,7 +4685,21 @@ prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard, int debug)
   } else {
     prop_link0(src, dst, skipme, hard, debug);
   }
-  
+}
+
+
+/**
+ *
+ */
+void
+prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme,
+             int hard, int debug)
+{
+  if(dst == NULL)
+    return;
+
+  hts_mutex_lock(&prop_mutex);
+  prop_link_exl(src, dst, skipme, hard, debug);
   hts_mutex_unlock(&prop_mutex);
 }
 
@@ -4690,17 +4716,7 @@ prop_unlink_ex(prop_t *p, prop_sub_t *skipme)
     return;
 
   hts_mutex_lock(&prop_mutex);
-
-  assert(p->hp_type != PROP_PROXY);
-
-  if(p->hp_type == PROP_ZOMBIE) {
-    hts_mutex_unlock(&prop_mutex);
-    return;
-  }
-
-  if(p->hp_originator != NULL)
-    prop_unlink0(p, skipme, "prop_unlink()/childs", NULL);
-
+  prop_unlink_exl(p, skipme);
   hts_mutex_unlock(&prop_mutex);
 }
 
@@ -5381,6 +5397,9 @@ prop_seti(prop_sub_t *skipme, prop_t *p, va_list ap)
     break;
   case PROP_SET_PROP:
     prop_set_prop_exl(p, skipme, va_arg(ap, prop_t *));
+    break;
+  case PROP_SET_LINK:
+    prop_link_exl(va_arg(ap, prop_t *), p, skipme, 0, 0);
     break;
  default:
    fprintf(stderr, "Unable to handle event: %d\n", ev);
