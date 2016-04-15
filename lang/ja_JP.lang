@@ -627,8 +627,7 @@ id: Audio delay
 msg: オーディオディレイ
 
 id: Audio gain
-# Missing translation
-msg: 
+msg: オーディオゲイン
 
 id: Setup audio output
 msg: 音声出力について設定します。
@@ -724,11 +723,10 @@ id: Enable bittorrent
 msg: ビットトレントを有効化
 
 id: Max upload speed
-# Missing translation
-msg: 
+msg: 最大アップロード速度
 
 id: Max usage of free space for caching torrents
-msg: トレントのキャッシュ最大使用量
+msg: トレントキャッシュの最大使用量
 
 id: Status
 msg: ステータス
@@ -1748,8 +1746,7 @@ id: Resume video playback
 msg: リジューム再生設定
 
 id: Show clock during playback
-# Missing translation
-msg: 
+msg: 再生中にクロックを表示
 
 id: Step when seeking backward
 msg: 巻き戻しシーク
