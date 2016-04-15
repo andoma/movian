@@ -527,8 +527,8 @@ discovered_open_url(prop_t *page, const char *url, int sync)
 
   prop_t *model = prop_create_r(page, "model");
 
-  prop_link(_p("Local network"),
-	    prop_create(prop_create(model, "metadata"), "title"));
+  prop_setv(model, "metadata", "title", NULL,
+            PROP_SET_LINK, _p("Local network"));
 
   prop_set(model, "type",     PROP_SET_STRING, "directory");
 
