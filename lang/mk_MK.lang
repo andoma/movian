@@ -1,0 +1,1765 @@
+language: Macedonian
+native: Македонски
+maintainer: Gocilius <gocilius1@yahoo.de> 
+#
+# ./glwskins/default/cmdmenu.view
+#
+id: Add current page to bookmarks
+msg: Додади во обележувачи
+
+id: Open settings
+msg: Отвори подесувања
+
+id: Remove current page from bookmarks
+msg: Отстрани од обележувачи
+
+#
+# ./glwskins/default/cmdmenu/cmdmenu_common.view
+#
+id: Activate sleep timer
+msg: Активирај автоматско исклучување
+
+id: Disable sleep timer
+msg: Деактивирај автоматско исклучување
+
+id: Exit %s
+msg: Затвори го %s 
+
+id: Go to Home screen
+msg: Оди на почетен екран
+
+id: Hide system info
+msg: Скриј системско инфо
+
+id: Master volume
+msg: Главна јачина на звук
+
+id: Navigation
+msg: Навигација
+
+id: Open Settings
+msg: Отвори подесувања 
+
+id: Playqueue
+msg: Плејлиста
+
+id: Power off
+msg: Исклучи
+
+id: Reload current page
+msg: Актуализирај ја страната
+
+id: Show system info
+msg: Покажи системско инфо
+
+id: Suspend
+msg: Исклучи го системот
+
+id: System
+msg: Систем
+
+id: Time until sleep
+msg: Време до исклучување
+
+id: dB
+msg: dB
+
+id: min
+msg: min
+
+#
+# ./glwskins/default/cmdmenu/cmdmenu_dir.view
+#
+id: Add '%s' to home screen
+msg:Додади го %s на почетниот екран
+
+id: Remove '%s' from home screen
+msg:Избриши го %s од почетниот екран
+
+#
+# ./glwskins/default/cmdmenu/cmdmenu_item.view
+#
+id: Continue from %s
+msg: Продолжи од %s
+
+id: Continue playback here
+msg: Продолжи од тука
+
+id: Delete
+msg: Избриши
+
+id: Mark as seen
+msg: Означи како: "гледано"
+
+id: Mark as unseen
+msg: Означи како: "негледано"
+
+id: Play from beginning
+msg: Пушти од почеток
+
+id: Play until end of list
+msg: Пушти до крај на листата
+
+id: Queue
+msg: Колона
+
+id: Star
+msg: Маркирај
+
+id: Unstar
+msg: Отстрани маркирање
+
+#
+# ./glwskins/default/cmdmenu/cmdmenu_video.view
+#
+id: Audio
+msg: Звук
+
+id: Audio settings
+msg: Подесување на звук
+
+id: Audio tracks
+msg: Аудио
+
+id: Chapters
+msg: Поглавја
+
+id: Seek by time
+msg: Барање по време
+
+id: Settings
+msg: Подесувања
+
+id: Subtitle settings
+msg: Подесување на преводи
+
+id: Subtitle tracks
+msg: Преводи
+
+id: Subtitles
+msg: Преводи
+
+id: Video
+msg: Видео
+
+id: Video menu
+msg: Видео мени
+
+id: Video settings
+msg: Подесување на слика
+
+#
+# ./glwskins/default/loading.view
+#
+id: %d kb/s
+msg: %d kb/s
+
+id: Bitrate:
+msg: Брзина:
+
+#
+# ./glwskins/default/log.view
+#
+id: System log
+msg: Системски лог
+
+#
+# ./glwskins/default/osk.view
+#
+id: Cancel
+msg: Откажи
+
+id: Clear
+msg: Испразни
+
+id: Default
+msg: Стандарден
+
+id: Keyboard layout:
+msg: Тастатура
+
+id: OK
+msg: Во ред
+
+#
+# ./glwskins/default/pages/directory.view
+#
+id: Album
+msg: Албум
+
+id: Artist
+msg: Уметник
+
+id: Custom
+msg: Прилагодено
+
+id: Images
+msg: Слики
+
+id: List
+msg: Листа 
+
+id: Slideshow
+msg: Слајдови/Презентација
+
+id: Tvchannels
+msg: ТВ-канали
+
+id: View
+msg: Преглед
+
+#
+# ./glwskins/default/pages/discovered.view
+#
+id: Discovered resources on local network
+msg: Откриени ресурси на локалната мрежа
+
+#
+# ./glwskins/default/pages/home.view
+#
+id: Tiled
+msg: Плочки 
+
+#
+# ./glwskins/default/pages/home_clist.view
+#
+id: Apps
+msg: Апликации
+
+id: Dismiss
+msg: Откажи
+
+id: Search / Open URL
+msg: Барај / Отвори URL
+
+#
+# ./glwskins/default/pages/iteminfo/image.view
+#
+id: Camera: 
+msg: Камера:
+
+id: Date: 
+msg: Датум: 
+
+#
+# ./glwskins/default/pages/iteminfo/plugin.view
+#
+id: %s %s or newer is required
+msg: потребна е %s %s или понова 
+
+id: Author: 
+msg: Автор: 
+
+id: Available version: 
+msg: Достапна верзија: 
+
+id: Installed version: 
+msg: Инсталирана верзија: 
+
+#
+# ./glwskins/default/pages/iteminfo/video.view
+#
+id: Duration:
+msg: Траење:
+
+id: File date:
+msg: Датум на датотека:
+
+id: Genre:
+msg: Жанр:
+
+id: Metadata from
+msg: Информации од
+
+id: Rating:
+msg: Популарност: 
+
+id: Year:
+msg: Година:
+
+id: Seen %d times
+msg[0]: %d пати гледано
+msg[1]: %d пат гледано
+
+#
+# ./glwskins/default/pages/listitems/add.view
+#
+id: Add new entry
+msg: Додај нов запис
+
+#
+# ./glwskins/default/pages/listitems/bool.view
+#
+id: No
+msg: Не
+
+id: Yes
+msg: Да 
+
+#
+# ./glwskins/default/pages/listitems/font.view
+#
+id: Condensed
+msg: Компримирано
+
+id: Main
+msg: Главно
+
+id: Subs
+msg: Преводи
+
+#
+# ./glwskins/default/pages/listitems/plugin.view
+#
+id: Install
+msg: Инсталирај
+
+id: Uninstall
+msg: Деинсталирај
+
+id: Upgrade
+msg: Ажурирај
+
+#
+# ./glwskins/default/pages/openerror.view
+#
+id: Unable to open %s
+msg: Не може да се отвори %s 
+
+id: resource
+msg: ресурси
+
+#
+# ./glwskins/default/pages/playqueue.view
+#
+id: Track %d / %d
+msg: Наслов/Песна %d / %d
+
+#
+# ./glwskins/default/pages/slideshow.view
+#
+id: Paused
+msg: Паузирано
+
+#
+# ./glwskins/default/pages/upgrade.view
+#
+id: %s is up to date
+msg: %s е актуелна верзија
+
+id: An error occured during download
+msg: Грешка при превземање
+
+id: Available version:
+msg: Достапна верзија:
+
+id: Changelog for %s releases
+msg: Измени за %s
+
+id: Check for updates now
+msg: Провери ажурирања
+
+id: Checking for updates...
+msg: Проверувам ажурирања...
+
+id: Checking installed version of %s
+msg: Проверувам инсталирана верзија на %s
+
+id: Current version:
+msg: Актуелна верзија:
+
+id: Download and install...
+msg: Превземи и инсталирај...
+
+id: Downloading %s
+msg: %s се превзема 
+
+id: New version %s is available for download
+msg: Нова верзија %s е достапна
+
+id: No upgrade available
+msg: Нема понова верзија
+
+id: Patching %s
+msg: Закрпува %s
+
+id: Restarting %s in %d seconds...
+msg: Нов старт %s за %d секунди...
+
+id: Retry...
+msg: Пробај поново...
+
+id: Stable
+msg: Стабилна верзија
+
+id: Testing
+msg: Тест верзија
+
+id: Unable to query for new version
+msg: Не може да се провери понова верзија
+
+#
+# ./glwskins/default/pages/video.view
+#
+id: A/V diff:
+msg: A/V раѕлика:
+
+id: Audio codec:
+msg: Аудио кодек:
+
+id: Audio queue len:
+msg: Должина на аудио колона
+
+id: Audio volume adjustment: %d dB
+msg: Прилагодување на звук: %d dB
+
+id: CPU is too slow to decode this video
+msg: CPU е преслаб ѕа да го декодира видеото
+
+id: Download speed:
+msg: Download брзина:
+
+id: Packet buffer:
+msg: Пакет бафер:
+
+id: Playback status
+msg: Статус на репродукција
+
+id: Remaining buffer:
+msg: Преостанат бафер:
+
+id: Remote queue drops:
+msg: Губење на далечна колона
+
+id: Remote queue len:
+msg: Должина на далечна колона
+
+id: Source:
+msg: Извор:
+
+id: Video bitrate:
+msg: Видео брзина:
+
+id: Video codec:
+msg: Видео кодек:
+
+id: Video decode time:
+msg: Време на декодирање на видеото:
+
+id: Video queue len:
+msg: Видео колона:
+
+#
+# ./glwskins/default/playdecks/dvd.view
+#
+id: Chapter: %d
+msg: Поглавје: %d
+
+id: Title: %d
+msg: Наслов: %d
+
+#
+# ./glwskins/default/popups/auth.view
+#
+id: Domain
+msg: Домен
+
+id: Password
+msg: Лозинка
+
+id: Remember me
+msg: Запамти го името
+
+id: Username
+msg: Корисничко име
+
+#
+# ./glwskins/default/popups/resume.view
+#
+id: No, Start over
+msg: Не, од почеток
+
+id: Resume %s from %s
+msg: Продолжи %s од %s
+
+#
+# ./glwskins/default/screensaver.view
+#
+id: No media loaded
+msg: Нема вчитан медиум
+
+#
+# ./glwskins/default/sysinfo.view
+#
+id: CPU Temp
+msg: CPU Температура
+
+id: Fragmentation
+msg: Фрагментација
+
+id: GPU Temp
+msg: GPU Температура
+
+id: HDD Avail
+msg: HDD на располагање
+
+id: Inactive mem
+msg: Слободна мем
+
+id: Memory usage
+msg: Искористена мем
+
+id: System Free
+msg: Слободно за системот
+
+id: System Total
+msg: Тотално
+
+#
+# ./glwskins/default/universe.view
+#
+id: Audio muted
+msg: Без тон
+
+id: Master volume: %d dB
+msg: Јачина: %d dB
+
+#
+# ./src/api/tmdb.c
+#
+id: Language (ISO 639-1 code)
+msg: Јазик (ISO 639-1 code)
+
+id: Use original title
+msg: Користи го оригиналниот наслов
+
+#
+# ./src/arch/android/android.c
+#
+id: Android Storage
+msg: Меморија на андроид
+
+id: Movies
+msg: Филмови
+
+id: Music
+msg: Музика
+
+id: Pictures
+msg: Слики
+
+#
+# ./src/arch/linux/pulseaudio.c
+#
+id: Unable to initialize audio system %s -- %s
+msg: Аудио системот %s -- %s не може да се стартува
+
+#
+# ./src/arch/ps3/ps3_main.c
+#
+id: System is low on memory (%d kB RAM available)
+msg: Малку меморија (%d kb RAM слободни)
+
+#
+# ./src/arch/ps3/ps3_vdec.c
+#
+id: Cell-h264: %d Ref-frames for %d content is incompatible with PS3 HW decoder. Disabling acceleration
+msg: Cell-h264: %d Ref-Frames за %d не е компатибилен со PS3 HW декодерот. Се деактивира забрзување
+
+id: Cell-h264: Broken headers, Disabling acceleration
+msg: Cell-h264: Хедерот е расипан, Се деактивира забрзување
+
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+msg: Cell-h264: Присилувам Level 4.2 за содржината во Level %d.%d \nОва може да ја прекине репродукцијата.
+
+id: Unable to accelerate %s, library not loaded.
+msg: Не може да се забрза %s, библиотеката не е вчитана.
+
+id: Unable to open Cell codec. Error 0x%x
+msg: Cell кодекот не може да се отвори. Грешка 0x%x.
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+msg: Cell кодекот не може да се отвори. \nНе може да се додели %d бајти меморија.
+
+id: Unable to query Cell codec. Error 0x%x
+msg: Cell кодекот не може да се пронајде. Грешка 0x%x
+
+#
+# ./src/arch/rpi/rpi_audio.c
+#
+id: 8 Channel PCM
+msg: 8 Канали PCM
+
+id: AC3 Pass-Through
+msg: AC3 Пропуштање /Pass-Through
+
+id: Analog
+msg: Аналогно
+
+id: Audio output port
+msg: Аудио излез
+
+id: Autodetect
+msg: Автоматско препознавање
+
+id: DTS Pass-Through
+msg: DTS Пропуштање
+
+id: HDMI
+msg: HDMI
+
+id: Off
+msg: Исклучено
+
+id: On
+msg: Вклучено
+
+#
+# ./src/arch/rpi/rpi_tv.c
+#
+id: Match display and content framerate
+msg: Синхронизирај ја брзината на сликата со содржината
+
+#
+# ./src/audio2/audio.c
+#
+id: Audio delay
+msg: Аудио доцнење
+
+id: Audio gain adjustment during video playback
+msg: Јачина на звук за време на репродукција на видеото
+
+id: Audio settings during video playback
+msg: Подесување на звукот за време на репродукција на видеото
+
+id: Setup audio output
+msg: Подеси аудио излез
+
+#
+# ./src/audio2/audio_test.c
+#
+id: 440Hz sinewave -12dB
+msg: 440Hz Синус фреквенција -12dB
+
+id: Audio test
+msg: Тестирај звук
+
+id: Center
+msg: Централен
+
+id: Front Left
+msg: Напред лев
+
+id: Front Right
+msg: Напред десен
+
+id: LFE
+msg: LFE
+
+id: Pink noise
+msg: Розова бучава
+
+id: Play test signal
+msg: Пушти тест сигнал
+
+id: Rear Left
+msg: Позади лев
+
+id: Rear Right
+msg: Позади десен
+
+id: Speaker position
+msg: Позиција на звучници
+
+id: Surround Left
+msg: Опкружувачки лев
+
+id: Surround Right
+msg: Опкружувачки десен
+
+id: Test signal type
+msg: Тест сигнал тип
+
+#
+# ./src/backend/bittorrent/bt_backend.c
+#
+id: No files in torrent
+msg: Торентот е празен
+
+id: Unable to open torrent: %s
+msg: Торентот: %s не може да се отвори
+
+#
+# ./src/backend/bittorrent/diskio.c
+#
+id: Cached torrents use %d MB out of allowed %d MB. Total free space on volume: %d MB
+msg: Кешираните торенти косистат %d MB од дозволените %d MB. Слободно место на дискот: %d MB
+
+#
+# ./src/backend/bittorrent/fa_torrent.c
+#
+id: Connected peers
+msg: Поврзани пирови
+
+id: Known peers
+msg: Познати пирови
+
+id: Receiving from
+msg: Прима од
+
+id: Torrent leechers
+msg: Торент личери
+
+id: Torrent seeders
+msg: Торент сидери
+
+#
+# ./src/backend/bittorrent/torrent_settings.c
+#
+id: Clear cache
+msg: Испразни кеш
+
+id: Enable bittorrent
+msg: Активирај Битторент
+
+id: Max usage of free space for caching torrents
+msg: Макс. искористеност на слободниот простор
+
+id: Status
+msg: Статус
+
+id: Torrent cache path
+msg: Пат на торент кешот
+
+#
+# ./src/backend/dvd/dvd.c
+#
+id: DVD
+msg: DVD
+
+id: DVD read error, restarting disc
+msg: DVD не може да се прочита, се рестартира дискот
+
+#
+# ./src/backend/hls/hls.c
+#
+id: Primary
+msg: Основен
+
+id: Supplementary
+msg: Додатен
+
+#
+# ./src/backend/htsp/htsp.c
+#
+id: Channels
+msg: Канали
+
+id: Invalid HTSP URL
+msg: Неправилен HTSP URL
+
+id: No such channel
+msg: Не постои таков канал
+
+id: Recorded shows
+msg: Снимани емисии
+
+id: Recorder
+msg:Снимач 
+
+#
+# ./src/backend/search.c
+#
+id: Search
+msg: Барај
+
+id: Search result for: %s
+msg: Резултат за: %s
+
+#
+# ./src/backend/slideshow/slideshow.c
+#
+id: 3 seconds
+msg: 3 секунди
+
+id: 5 seconds
+msg: 5 секунди
+
+id: 7 seconds
+msg: 7 секунди
+
+id: Slideshow speed
+msg: Брзина на презентација
+
+#
+# ./src/blobcache_file.c
+#
+id: Cache cleared
+msg: Кешот е испразнет
+
+id: Clear cached files
+msg: Испразни кеширани датотеки
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+msg: Содржината за %D не може да се преработи
+
+id: Checking file contents
+msg: Содржината се проверува
+
+id: Unable to open file: %s
+msg: Датотеката: %d не може да се отвори
+
+#
+# ./src/fileaccess/fa_filepicker.c
+#
+id: Select a file
+msg: Одбери датотека 
+
+#
+# ./src/fileaccess/fa_locatedb.c
+#
+id: Search using Unix locatedb
+msg: Барај преку Unix Locatedb
+
+#
+# ./src/fileaccess/fa_scanner.c
+#
+id: Albums
+msg: Албуми
+
+id: Artists
+msg: Изведувач
+
+id: Deleted %s
+msg: %s е иѕбришан
+
+id: Filename
+msg: Име на датотека
+
+id: Indexed mode
+msg: Режим на индексирање
+
+id: Newest first
+msg: Почни од најновите
+
+id: Oldest first
+msg: Почни од најстарите 
+
+id: Show only supported files
+msg: Покажи ги само подржаните датотеки
+
+id: Sort folders first
+msg: Подреди ги прво папките
+
+id: Sort on
+msg: Подреди по
+
+id: Unable to delete %s\n%s
+msg: %s\n%s не може да се избрише
+
+#
+# ./src/fileaccess/fa_spotlight.c
+#
+id: Search using spotlight
+msg: Барај преку Spotlight
+
+#
+# ./src/fileaccess/fileaccess.c
+#
+id: Are you sure you want to delete:
+msg: Дали сакаш да го избришиш:
+
+id: BitTorrent
+msg: BitTorrent
+
+id: Browse archives as folders
+msg: Пребарувај ги архивите како папки
+
+id: Enable file deletion from item menu
+msg: Овозможи бришење датотеки директно од менито
+
+id: File browsing
+msg: Пребарување датотеки
+
+id: Show filename extensions
+msg: Покажи го типот на датотеката
+
+id: Store per-file settings in filesystem
+msg: Сними ги поставките за секоја датотека посебно
+
+id: %d archive parts
+msg[0]: %d делови
+msg[1]: %d дел
+
+id: %d directories
+msg[0]: %d Директориуми
+msg[1]: %d Директориум
+
+id: %d files
+msg[0]: %d датотеки
+msg[1]: %d датотека
+
+#
+# ./src/fileaccess/smb/fa_nativesmb.c
+#
+id: Access denied
+msg: Одбиен пристап
+
+id: Account restricted
+msg: Сметката е ограничена
+
+id: Bad network share name
+msg: Погрешно име на мрежа
+
+id: Logon failure
+msg: Грешка во пристапување
+
+id: Object name not found
+msg: Објектот не е најден
+
+#
+# ./src/i18n.c
+#
+id: 12 Hour
+msg: 12 часа
+
+id: 24 Hour
+msg: 24 часа
+
+id: Default character set
+msg: Стандарден сет на знаци
+
+id: Ignore 'The' at beginning of words when sorting
+msg: Игнорирај го 'The' на почетокот при сортирање
+
+id: Language
+msg: Јазик
+
+id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+msg: Јазичните кодови треба да бидат во ISO 639-2/B -кодови, пример.: mac,eng,deu
+
+id: Languages
+msg: Јазици
+
+id: Preferred languages
+msg: Претпочитани јазици
+
+id: Primary audio language code
+msg: Претпочитан аудио јазик
+
+id: Primary subtitle language code
+msg: Претпочитан јазик на превод
+
+id: Secondary audio language code
+msg: Втор аудио јазик
+
+id: Secondary subtitle language code
+msg: Втор јазик на превод
+
+id: System default
+msg: Стандарден
+
+id: Tertiary audio language code
+msg: Трет аудио јазик
+
+id: Tertiary subtitle language code
+msg: Трет јазик на превод
+
+id: Time format
+msg: Временски формат
+
+id: Timezone
+msg: Временска зона
+
+#
+# ./src/ipc/libcec.c
+#
+id: Longpress SELECT for item menu
+msg: Долго притисни SELECT за да отвориш мени
+
+id: Switch TV input source
+msg: Префрли го влезниот извор на TV
+
+id: Use STOP key for combo input
+msg: Користи го STOP копчето за комбинирани команди
+
+#
+# ./src/keyring.c
+#
+id: Forget remembered passwords
+msg: Избриши ги запамтените лозинки
+
+id: Rembered passwords erased
+msg: Запамтените лозинки се избришани
+
+#
+# ./src/media/media_settings.c
+#
+id: Align on video frame
+msg: Усогласи со видео кадрите
+
+id: Audio volume
+msg: Јачина на звук
+
+id: Delay
+msg: Доцнење
+
+id: Go to standby after video ends
+msg: Оди во режим на мирување после крајот на филмот
+
+id: Horizontal pan
+msg: Хоризонтално подмрднување
+
+id: Horizontal position
+msg: Хоризонтална позиција
+
+id: Horizontal scale
+msg: Хоризонтална големина
+
+id: Reset defaults for folder '%s'
+msg: Ресетирај стандардно за '%s' папката
+
+id: Save as defaults for folder '%s'
+msg: Сними како стандардно за '%s' папката
+
+id: Save as global default
+msg: Сними како стандардно
+
+id: Scaling
+msg: Скалирање 
+
+id: Stretch video to fullscreen
+msg: Развлечи на цел екран
+
+id: Stretch video to widescreen
+msg: Развлечи на ширина на екран
+
+id: Vertical pan
+msg: Вертикално подмрднување
+
+id: Vertical position
+msg: Вертикална позиција
+
+id: Vertical scale
+msg: Вертикална големина
+
+id: Video frame interpolation
+msg: Вертикална интерполација
+
+id: Video zoom
+msg: Зголемување на видео
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+msg: Индексирање
+
+#
+# ./src/metadata/decoration.c
+#
+id: Automatic
+msg: Автоматски
+
+id: Erase all playback info
+msg: Избриши ја историјата на пуштање
+
+id: Manual
+msg: Рачно
+
+id: Mark all as seen
+msg: Означи ги сите како гледани
+
+id: Mark all as unseen
+msg: Означи ги сите како негледани
+
+id: Metadata mode
+msg: Режим на метаподатоци
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+msg: вградена во датотеката
+
+id: Track %d
+msg: Аудио %d
+
+#
+# ./src/metadata/metadata_sources.c
+#
+id: Enabled
+msg: Вклучено
+
+id: Metadata
+msg: Метаподатоци
+
+id: Metadata configuration and provider settings
+msg: Избери извор за метаподатоци
+
+id: Providers for Music
+msg: Музички провајдери
+
+id: Providers for Video
+msg: Видео провајдери
+
+#
+# ./src/metadata/metadb.c
+#
+id: %d items deleted
+msg: %d записи се избришани
+
+id: Clear all metadata
+msg: Отстрани ги сите метаподатоци 
+
+id: Clearing all metadata means losing <b>all</b> metadata cached from external sources such as themoviedb.org, etc\n\nInformation about resume-points, playcount, etc will be saved.\nAre you sure you proceed?
+msg: Отстранување на сите метаподатоци значи <b>губење<b> на метаподатоците од надворешни извори како што се themoviedb.org, итн\n\nИнформациите за точки на продолжување, пати гледано и слично, ќе останат зачувани.\nДали сакаш да продолжиш?
+
+#
+# ./src/metadata/mlp.c
+#
+id: Custom search query
+msg: Прилагодено пребарување
+
+id: Custom title
+msg: Прилагоден наслов
+
+id: IMDb ID
+msg: IMDb ID
+
+id: Metadata loaded from <b>%s</b> based on %s
+msg: Метаподатоците се вчитани од <b>%s</b> базирани на %s
+
+id: Metadata source
+msg: Извор на метаподатоци
+
+id: Movie
+msg: Филм
+
+id: Movie title
+msg: Наслов на филмот
+
+id: No data found
+msg: Податоците не се пронајдени
+
+id: None
+msg: Ништо
+
+id: Refresh metadata
+msg: Актуализирај метаподатоци
+
+id: Title, Season, Episode
+msg: Наслов, Сезона, Епизода
+
+id: custom IMDb ID
+msg: прилагоден IMDb ID
+
+id: custom query
+msg: прилагодено пребарување
+
+id: filename
+msg: име на датотека
+
+id: filename as TV episode
+msg: Име на датотека како ТВ серија
+
+id: folder name
+msg: Име на папка
+
+#
+# ./src/navigator.c
+#
+id: Add and remove items on homepage
+msg: Додади/отстрани елементи на почетниот екран
+
+id: Added %s to home page
+msg: %s е додаден на почетниот екран
+
+id: Added new bookmark: %s
+msg: Додадена е нов обележувач за: %s
+
+id: Bookmarks
+msg: Обележувачи
+
+id: Icon
+msg: Икона
+
+id: No handler for URL
+msg: URL не може да се преработи
+
+id: Other
+msg: Друго
+
+id: Photos
+msg: Слики
+
+id: Removed %s from homepage
+msg: %s е избришан од почетниот екран
+
+id: Removed bookmark: %s
+msg: Обележувачот за %s е избришан
+
+id: TV
+msg: ТВ
+
+id: Title
+msg: Наслов
+
+id: Type
+msg: Тип
+
+id: URL
+msg: URL
+
+#
+# ./src/networking/connman.c
+#
+id: Enable Wi-Fi
+msg: Активирај Wi-Fi
+
+id: Network connections
+msg: Мрежни поврзувања
+
+#
+# ./src/networking/ftp_server.c
+#
+id: Enable FTP server
+msg: Активирај FTP сервер
+
+id: FTP server
+msg: FTP сервер
+
+id: Server TCP port
+msg: Порта на TCP сервер
+
+#
+# ./src/plugins.c
+#
+id: Alternate plugin Repository URL
+msg: Алтернативен URL за додатоци
+
+id: Automatically upgrade plugins
+msg: Автоматско ажурирање на податоци
+
+id: Available plugins
+msg: Достапни додатоци
+
+id: Background
+msg: Позадина
+
+id: Beta testing passwords
+msg: Лозинка за бета тестирање
+
+id: Browse available plugins
+msg: Пребарај достапни додатоци
+
+id: Browsing
+msg: Пребарувај
+
+id: Cloud services
+msg: Cloud сервиси
+
+id: Corrupt plugin bundle
+msg: Дефектен додаток
+
+id: Custom backgrounds can now be set in Settings -> Look and Feel
+msg: Прилагодени позадини може да се постават во Прилагодувања -> Изглед
+
+id: Disk write error
+msg: Главно при снимање на дискот
+
+id: Downloading
+msg: Превземање
+
+id: File open error
+msg: Датотеката не може да се отвори
+
+id: Home page
+msg: Почетен екран
+
+id: Installed plugins
+msg: Инсталирани додатоци
+
+id: Installed version higher than available
+msg: Инсталираната верзија е понова
+
+id: Installing
+msg: Се инсталира
+
+id: List of albums
+msg: Листа на албуми
+
+id: Loading screen
+msg: Вчитување на екран
+
+id: Music streaming
+msg: Аудио стриминг
+
+id: Not installable
+msg: Не може да се инсталира
+
+id: Not installed
+msg: Не е инсталирано
+
+id: Not upgradable
+msg: Не може да се ажурира
+
+id: On Screen Keyboards
+msg: Тастатура на екранот
+
+id: Online TV
+msg: Онлајн TV
+
+id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
+msg: Додатокот %s %s е деинсталиран бидејки предизвикува проблеми.\nПробај рачно да инсталираш друга верзија.
+
+id: Plugin %s has been uninstalled - %s
+msg: Додатокот %s е деинсталиран - %s
+
+id: Plugin categories
+msg: Категории на додатоци
+
+id: Plugins
+msg: Додатоци
+
+id: Preferred views from plugins
+msg: Претпочитан изглед на додатоци
+
+id: Screen saver
+msg: Чувар на екран
+
+id: TV channels
+msg: ТВ Канали
+
+id: Unable to load plugin.json: %s
+msg: Додатокот.json: %s не може да се вчита
+
+id: Unable to load plugin.json: Malformed JSON
+msg: Додатокот .json не може да се вчита: JSON е неисправен
+
+id: Uncategorized
+msg: Некатегоризирано
+
+id: Up to date
+msg: Најнова верзија
+
+id: Upgradable
+msg: Достапно ажурирање
+
+id: Upgraded plugin %s to version %s
+msg: Додатокот е ажуриран од верзија %s во %s 
+
+id: User interface extensions
+msg: Додатоци на кориснички интерфејс
+
+id: Version %s is no longer compatible with Movian
+msg: Верзијата %s не е повеќе компитабилна со Movian
+
+id: Video streaming
+msg: Видео стриминг
+
+#
+# ./src/runcontrol.c
+#
+id: Automatic standby
+msg: Автоматски режим на спиење
+
+id: Enable SSH server
+msg: Активирај SSH сервер
+
+id: Logout
+msg: Одјави се
+
+id: Open shell
+msg: Отвори Shell
+
+id: Power off system
+msg: Изгаси го системот
+
+id: Quit
+msg: Откажи
+
+id: SSH server
+msg: SSH сервер
+
+id: Standby
+msg: Во мирување
+
+id: Starting and stopping
+msg: Пуштање и гаснење
+
+#
+# ./src/sd/sd.c
+#
+id: Enabled on home screen
+msg: Овозможено на почетниот екран
+
+id: Name
+msg: Име
+
+#
+# ./src/service.c
+#
+id: Local network
+msg: Локална мрежа
+
+#
+# ./src/settings.c
+#
+id: About
+msg: За
+
+id: Applications and installed plugins
+msg: Апликации и инсталирани додатоци
+
+id: Configure communications with your TV
+msg: Конфигурирај ги врските со вашиот ТВ
+
+id: Developer settings
+msg: Поставки за развивачи
+
+id: Discovered media sources
+msg: Пронајдени медиумски извори
+
+id: Fonts and user interface styling
+msg: Фонт и изглед на интерфејсот
+
+id: General
+msg: Општо
+
+id: Global settings
+msg: Општи поставки
+
+id: Look and feel
+msg: Изглед и управување
+
+id: Network services, etc
+msg: Мрежни сервиси, итн.
+
+id: Network settings
+msg: Мрежни поставки
+
+id: Settings useful for developers
+msg: Поставки корисни за развивачи
+
+id: System name
+msg: Име на системот
+
+id: System related settings
+msg: Системски поставки
+
+id: TV Control
+msg: Контрола на ТВ
+
+#
+# ./src/subtitles/subtitles.c
+#
+id: Any subtitle in central folder
+msg: Било кој превод во централна папка
+
+id: Any subtitle in same folder as video
+msg: Било кој превод во иста папка со видеото
+
+id: Auto
+msg: Автоматско
+
+id: Automatically select from this source
+msg: Одбери автоматски од овој извор
+
+id: Central subtitle folder
+msg: Централна папка за преводи
+
+id: Color
+msg: Боја
+
+id: External file
+msg: Надворешна датотека
+
+id: Force subtitles to reside on video frame
+msg: Присили ги преводите со видео кадрите
+
+id: Generic settings for video subtitles
+msg: Општи поставки за преводи
+
+id: Ignore embedded styling
+msg: Игнорирај го вградениот стил
+
+id: Left
+msg: Лев
+
+id: Outline color
+msg: Боја на контура
+
+id: Outline size
+msg: Големина на контура
+
+id: Path to central folder
+msg: Пат до централната папка
+
+id: Providers for Subtitles
+msg: Провајдер за преводи
+
+id: Right
+msg: Десно
+
+id: Shadow color
+msg: Боја на сенка
+
+id: Shadow offset
+msg: Поместување на сенка
+
+id: Subtitle horizontal displacement
+msg: Хоризонтално поместување на преводот
+
+id: Subtitle position
+msg: Позиција на преводот
+
+id: Subtitle size
+msg: Големина на преводот
+
+id: Subtitle size and positioning
+msg: Големина и позиција на преводот
+
+id: Subtitle vertical displacement
+msg: Вертикално поместување на преводот
+
+id: Subtitles embedded in video file
+msg: Преводи вградени во датотеката
+
+id: Subtitles with matching filename in central folder
+msg: Преводи со совпаѓачко име во централната папка
+
+id: Subtitles with matching filename in same folder as video
+msg: Преводи со совпаѓачко име во истата папка како видеото
+
+#
+# ./src/text/fontstash.c
+#
+id: Defaults
+msg: Стандардно
+
+id: Fonts
+msg: Фонтови
+
+id: Installed fonts
+msg: Инсталирани фонтови
+
+id: Narrow text
+msg: Збиен текст
+
+id: Reset main font to default
+msg: Ресетирај го главниот фонт во стандардно
+
+id: Reset narrow font to default
+msg: Ресетирај го збиениот фонт во стандардно
+
+id: Reset subtitle font to default
+msg: Ресетирај го фонтот на преводи во стандардно
+
+id: Unable to install font: %s
+msg: Фонтот: %s не може да се инсталира
+
+id: Use font %s for
+msg: Користи го фонтот %s за
+
+id: User interface
+msg: Кориснички интерфејс
+
+#
+# ./src/ui/glw/glw_ps3.c
+#
+id: Dual-Shock Remote
+msg: Dual-Shock контролер
+
+id: Seek using L2 and R2 button
+msg: Пребарувај користејќи  ги L2 и R2 копчињата
+
+id: Yes with Select button
+msg: Потврди со Select
+
+#
+# ./src/ui/glw/glw_settings.c
+#
+id: Custom background image
+msg: Прилагодена позадина
+
+id: Emulate Up/Down buttons with mouse wheel
+msg: Емулирај ги нагоре/надолу копчињата со глувчето
+
+id: Folder for screensaver images
+msg: Папка со слики за позадини
+
+id: Font and icon size
+msg: Големина на фонтот и иконите
+
+id: Interface horizontal shrink
+msg: Хоризонтално намалување на интерфејсот
+
+id: Interface vertical shrink
+msg: Вертикално намалување на интерфејсот
+
+id: Screensaver
+msg: Чувар на екран
+
+id: Screensaver delay
+msg: Одложување на чувар на екран
+
+id: Use Bing images of the day
+msg: Користи ги сликите на денот од Bing
+
+id: Wrap when reaching beginning/end of lists
+msg: Бесконечно листање
+
+#
+# ./src/ui/glw/glw_view_eval.c
+#
+id: %d days ago
+msg: пред %d дена
+
+id: %d hours ago
+msg: пред %d часа
+
+id: %d minutes ago
+msg: пред %d минути
+
+id: %d months ago
+msg: пред %d месеци
+
+id: %d weeks ago
+msg: пред %d недели
+
+id: %d years ago
+msg: пред %d години
+
+id: Just now
+msg: пред малку
+
+id: One day ago
+msg: пред еден ден
+
+id: One hour ago
+msg: пред еден час
+
+id: One minute ago
+msg: пред една минута
+
+id: One month ago
+msg: пред еден месец
+
+#
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+msg: Автоматски вклучи го овој режим
+
+id: DVI-Video color range
+msg: DVI-видео распон на бои
+
+id: Switch to this mode now
+msg: Смени во овој режим
+
+id: Video modes
+msg: Видео режими
+
+#
+# ./src/upgrade.c
+#
+id: %s version %s is available
+msg: достапна е %s верзија %s
+
+id: Notify about upgrades
+msg: Обавести ме за достапни надградувања
+
+id: Open download page
+msg: Отвори ја страната за превземање
+
+id: Software upgrade
+msg: Надградување на софтвер
+
+id: Upgrade to releases from
+msg: Надгради од
+
+#
+# ./src/upnp/upnp_browse.c
+#
+id: Date (newest first)
+msg: Датум (новите најгоре)
+
+id: Date (oldest first)
+msg: Датум (старите најгоре)
+
+id: Device not found
+msg: Уредот не е пронајден
+
+id: Malformed URI after device
+msg: Неисправен URI после уредот
+
+id: Malformed URI after service
+msg: Неисправен URI после сервисот
+
+id: Service not found
+msg: Сервисот не е пронајден
+
+#
+# ./src/video/video_settings.c
+#
+id: Always
+msg: Секогаш 
+
+id: Ask
+msg: Прашај
+
+id: Automatically play next video in list
+msg: Автоматски пушти го следното видео во листата
+
+id: Count video as played when reaching
+msg: Означи го видеото како гледано после
+
+id: Enable VDPAU
+msg: Активирај VDPAU
+
+id: Hardware accelerated decoding
+msg: Декодирање со хардверско забрзување
+
+id: Maximum resolution for deinterlacer
+msg: Максимална резолуција за деинтерлејсер
+
+id: Never
+msg: Никогаш
+
+id: No limit
+msg: Без ограничување
+
+id: Per-file volume
+msg: Јачина на звук по датотека
+
+id: Preferred VDPAU deinterlacer method
+msg: Претпочитан метод VDPAU на деинтерлејсер
+
+id: Resume video playback
+msg: Продолжи од последната позиција
+
+id: Step when seeking backward
+msg: Чекори за прескокнување назад
+
+id: Step when seeking forward
+msg: Чекори на прескокнување напред
+
+id: Temporal
+msg: Временски
+
+id: Temporal/Spatial
+msg: Временски/Просторно
+
+id: Up / Down during video playback controls
+msg: Горе / Долу за време на репродукција контролира
+
+id: Video acceleration and display behaviour
+msg: Видео запамтените и поставки на иѕглед
+
+id: Video playback
+msg: Репродукција
+
