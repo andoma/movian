@@ -97,7 +97,11 @@ typedef struct cifs_connection {
 
   char *cc_hostname;
   int cc_port;
-  int cc_as_guest;
+  int cc_flags;
+
+#define CC_F_AS_GUEST        0x1
+#define CC_F_NON_INTERACTIVE 0x2
+#define CC_F_ANONYMOUS       0x4
 
   uint16_t cc_mid_generator;
 
@@ -597,7 +601,7 @@ smb_neg_proto(cifs_connection_t *cc, char *errbuf, size_t errlen)
  */
 static int
 smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
-	       int non_interactive, int as_guest)
+               int flags)
 {
   SMB_SETUP_ANDX_req_t *req;
   SMB_SETUP_ANDX_reply_t *reply;
@@ -629,11 +633,12 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
   domain = strdup(cc->cc_domain[0] ? (char *)cc->cc_domain : "WORKGROUP");
   char *password_cleartext;
 
-  if(cc->cc_security_mode & SECURITY_USER_LEVEL && !as_guest) {
+  if(cc->cc_security_mode & SECURITY_USER_LEVEL &&
+     !(flags & CC_F_AS_GUEST)) {
     char id[256];
     char name[256];
 
-    if(retry_reason && non_interactive) {
+    if(retry_reason && flags & CC_F_NON_INTERACTIVE) {
       free(domain);
       return -2;
     }
@@ -666,7 +671,7 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
 
     assert(r == 0);
 
-  } else if(as_guest == 2) {
+  } else if(flags & CC_F_ANONYMOUS) {
     // Anonymous
     username = NULL;
     password_cleartext = NULL;
@@ -770,7 +775,7 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
     smberr_write(reason, sizeof(reason), errcode);
     retry_reason = reason;
     free(rbuf);
-    if(as_guest) {
+    if(flags & CC_F_AS_GUEST) {
       snprintf(errbuf, errlen, "Guest login failed");
       return -1;
     }
@@ -809,12 +814,13 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
            cc->cc_primary_domain ? cc->cc_primary_domain : "<unset>");
 
 
-  if(guest && !as_guest && cc->cc_security_mode & SECURITY_USER_LEVEL) {
+  if(guest && !(flags & CC_F_AS_GUEST) &&
+     cc->cc_security_mode & SECURITY_USER_LEVEL) {
     retry_reason = "Login attempt failed";
     goto again;
   }
 
-  if(as_guest != 2)
+  if(!(flags & CC_F_ANONYMOUS))
     usage_event("SMB connect", 1, NULL);
 
   return 0;
@@ -1035,21 +1041,29 @@ get_tree_no_create(const char *hostname, int port, const char *share)
  *
  */
 static cifs_connection_t *
-cifs_get_connection(const char *hostname, int port, char *errbuf, size_t errlen,
-		    int non_interactive, int as_guest)
+cifs_get_connection(const char *hostname, int port,
+                    char *errbuf, size_t errlen, int flags)
 {
   cifs_connection_t *cc;
 
   hts_mutex_lock(&smb_global_mutex);
-
-  if(!non_interactive) {
-    LIST_FOREACH(cc, &cifs_connections, cc_link)
-      if(!strcmp(cc->cc_hostname, hostname) && cc->cc_port == port &&
-	 cc->cc_as_guest == as_guest &&
-	 !cc->cc_broken && cc->cc_status < CC_ERROR)
-	break;
-  } else {
-    cc = NULL;
+#if 0
+  LIST_FOREACH(cc, &cifs_connections, cc_link) {
+    SMBTRACE("Connections %20s:%d flags=0x%x broken=%d status=%d ref=%d",
+             cc->cc_hostname, cc->cc_port,
+             cc->cc_flags,
+             cc->cc_broken,
+             cc->cc_status,
+             cc->cc_refcount);
+  }
+#endif
+  LIST_FOREACH(cc, &cifs_connections, cc_link) {
+    if(!strcmp(cc->cc_hostname, hostname) &&
+       cc->cc_port == port &&
+       cc->cc_flags == flags &&
+       !cc->cc_broken && cc->cc_status < CC_ERROR) {
+      break;
+    }
   }
 
   if(cc == NULL) {
@@ -1059,7 +1073,7 @@ cifs_get_connection(const char *hostname, int port, char *errbuf, size_t errlen,
     cc->cc_status = CC_CONNECTING;
     cc->cc_port = port;
     cc->cc_hostname = strdup(hostname);
-    cc->cc_as_guest = as_guest;
+    cc->cc_flags = flags;
 
     hts_cond_init(&cc->cc_cond, &smb_global_mutex);
 
@@ -1084,8 +1098,7 @@ cifs_get_connection(const char *hostname, int port, char *errbuf, size_t errlen,
 	SMBTRACE("%s:%d Protocol negotiated", hostname, port);
 
 	int r;
-	r = smb_setup_andX(cc, cc->cc_errbuf, sizeof(cc->cc_errbuf),
-			   non_interactive, as_guest);
+	r = smb_setup_andX(cc, cc->cc_errbuf, sizeof(cc->cc_errbuf), flags);
 
 	if(r) {
 	  if(r == -2) {
@@ -1192,6 +1205,9 @@ nbt_async_req_reply_ex(cifs_connection_t *cc,
 static void
 cifs_release_tree(cifs_tree_t *ct, int full)
 {
+  if(ct->ct_cc->cc_flags & CC_F_NON_INTERACTIVE)
+    full = 1;
+
   ct->ct_cc->cc_auto_close = 0;
   assert(ct->ct_refcount > 0);
   ct->ct_refcount--;
@@ -1234,7 +1250,7 @@ cifs_disconnect(cifs_connection_t *cc)
  */
 static cifs_tree_t *
 smb_tree_connect_andX(cifs_connection_t *cc, const char *share,
-		      char *errbuf, size_t errlen, int non_interactive)
+		      char *errbuf, size_t errlen)
 {
   SMB_TREE_CONNECT_ANDX_req_t *req;
   SMB_TREE_CONNECT_ANDX_reply_t *reply;
@@ -1248,6 +1264,8 @@ smb_tree_connect_andX(cifs_connection_t *cc, const char *share,
   const char *retry_reason = NULL;
 
   cc->cc_auto_close = 0;
+
+  const int non_interactive = cc->cc_flags & CC_F_NON_INTERACTIVE;
 
   if(!non_interactive) {
     LIST_FOREACH(ct, &cc->cc_trees, ct_link) {
@@ -1411,7 +1429,7 @@ cifs_resolve(const char *url, char *filename, size_t filenamesize,
   cifs_tree_t *ct;
   char *fn = NULL, *p;
 
-  const int non_interactive = !!(fa_flags & FA_NON_INTERACTIVE);
+  const int flags = fa_flags & FA_NON_INTERACTIVE ? CC_F_NON_INTERACTIVE : 0;
 
   assert(p_ct != NULL);
 
@@ -1438,14 +1456,13 @@ cifs_resolve(const char *url, char *filename, size_t filenamesize,
     }
 
     if((cc = cifs_get_connection(hostname, port, errbuf, errlen,
-				 non_interactive, 1)) != NULL) {
+				 flags | CC_F_AS_GUEST)) != NULL) {
       assert(cc != SAMBA_NEED_AUTH);
       *p_cc = cc;
       return CIFS_RESOLVE_CONNECTION;
     }
 
-    cc = cifs_get_connection(hostname, port, errbuf, errlen,
-			     non_interactive, 0);
+    cc = cifs_get_connection(hostname, port, errbuf, errlen, flags);
 
     if(cc == SAMBA_NEED_AUTH)
       return CIFS_RESOLVE_NEED_AUTH;
@@ -1479,13 +1496,13 @@ cifs_resolve(const char *url, char *filename, size_t filenamesize,
   }
 
   if((cc = cifs_get_connection(hostname, port, errbuf, errlen,
-			       non_interactive, 1)) != NULL) {
+			       flags | CC_F_AS_GUEST)) != NULL) {
     assert(cc != SAMBA_NEED_AUTH); /* Should not happen if we just try to
 				      login as guest */
 
     int security_mode = cc->cc_security_mode;
 
-    ct = smb_tree_connect_andX(cc, p, errbuf, errlen, non_interactive);
+    ct = smb_tree_connect_andX(cc, p, errbuf, errlen);
     if(!(security_mode & SECURITY_USER_LEVEL) || ct != NULL) {
       if(ct == SAMBA_NEED_AUTH)
         return CIFS_RESOLVE_NEED_AUTH;
@@ -1499,14 +1516,14 @@ cifs_resolve(const char *url, char *filename, size_t filenamesize,
   }
 
   if((cc = cifs_get_connection(hostname, port, errbuf, errlen,
-			       non_interactive, 0)) == NULL) {
+			       flags)) == NULL) {
     return CIFS_RESOLVE_ERROR;
   }
 
   if(cc == SAMBA_NEED_AUTH)
     return CIFS_RESOLVE_NEED_AUTH;
 
-  ct = smb_tree_connect_andX(cc, p, errbuf, errlen, non_interactive);
+  ct = smb_tree_connect_andX(cc, p, errbuf, errlen);
   if(ct == NULL)
     return CIFS_RESOLVE_ERROR;
 
@@ -1922,7 +1939,7 @@ cifs_enum_shares(cifs_connection_t *cc, fa_dir_t *fd,
 {
   cifs_tree_t *ct;
 
-  ct = smb_tree_connect_andX(cc, "IPC$", errbuf, errlen, 0);
+  ct = smb_tree_connect_andX(cc, "IPC$", errbuf, errlen);
   if(ct == NULL)
     return -1;
 
@@ -2842,7 +2859,10 @@ smb_enum_servers(const char *hostname)
   cifs_connection_t *cc;
   int port = 445;
 
-  cc = cifs_get_connection(hostname, port, errbuf, sizeof(errbuf), 1, 2);
+  cc = cifs_get_connection(hostname, port, errbuf, sizeof(errbuf),
+                           CC_F_AS_GUEST |
+                           CC_F_NON_INTERACTIVE |
+                           CC_F_ANONYMOUS);
   if(cc == SAMBA_NEED_AUTH)
     return NULL;
   if(cc == NULL) {
@@ -2853,7 +2873,7 @@ smb_enum_servers(const char *hostname)
 
   cifs_tree_t *ct;
 
-  ct = smb_tree_connect_andX(cc, "IPC$", errbuf, sizeof(errbuf), 1);
+  ct = smb_tree_connect_andX(cc, "IPC$", errbuf, sizeof(errbuf));
   if(ct == SAMBA_NEED_AUTH || ct == NULL)
     return NULL;
 
