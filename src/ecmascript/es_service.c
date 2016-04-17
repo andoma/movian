@@ -21,7 +21,8 @@
 
 #include "ecmascript.h"
 #include "service.h"
-
+#include "plugins.h"
+#include "task.h"
 
 typedef struct es_service {
   es_resource_t super;
@@ -30,6 +31,7 @@ typedef struct es_service {
   char *title;
   char *url;
   int enabled;
+  prop_sub_t *delete_sub;
 } es_service_t;
 
 
@@ -43,6 +45,7 @@ es_service_destroy(es_resource_t *er)
   if(es->s == NULL)
     return;
 
+  prop_unsubscribe(es->delete_sub);
   service_destroy(es->s);
   es->s = NULL;
   free(es->title);
@@ -76,6 +79,28 @@ static const es_resource_class_t es_resource_service = {
 
 
 
+static void
+uninstall_plugin(void *aux)
+{
+#if ENABLE_PLUGINS
+  plugin_uninstall(rstr_get(aux));
+#endif
+  rstr_release(aux);
+}
+
+/**
+ *
+ */
+static void
+es_service_delete_req(void *opaque, prop_event_t event)
+{
+  es_service_t *es = opaque;
+
+  if(event == PROP_REQ_DELETE)
+    task_run(uninstall_plugin, rstr_dup(es->super.er_ctx->ec_id));
+}
+
+
 /**
  *
  */
@@ -100,6 +125,18 @@ es_service_create(duk_context *ctx)
                          title, url, type, icon, 0, enabled,
                          SVC_ORIGIN_APP);
   es->enabled = enabled;
+
+  if(ec->ec_flags & ECMASCRIPT_PLUGIN) {
+    prop_set(es->s->s_root, "deleteText", PROP_SET_LINK, _p("Uninstall"));
+
+    es->delete_sub =
+      prop_subscribe(0,
+                     PROP_TAG_ROOT, es->s->s_root,
+                     PROP_TAG_LOCKMGR, ecmascript_context_lockmgr,
+                     PROP_TAG_MUTEX, ec,
+                     PROP_TAG_CALLBACK, es_service_delete_req, es,
+                     NULL);
+  }
 
   es_resource_push(ctx, &es->super);
   return 1;

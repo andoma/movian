@@ -209,12 +209,14 @@ set_autoupgrade(void *opaque, int value)
  *
  */
 static plugin_t *
-plugin_find(const char *id)
+plugin_find(const char *id, int create)
 {
   plugin_t *pl;
   LIST_FOREACH(pl, &plugins, pl_link)
     if(!strcmp(pl->pl_id, id))
       return pl;
+  if(!create)
+    return NULL;
   
   pl = calloc(1, sizeof(plugin_t));
   pl->pl_id = strdup(id);
@@ -449,7 +451,7 @@ plugin_props_from_file(prop_t *prop, const char *zipfile)
 
   if(id != NULL) {
     hts_mutex_lock(&plugin_mutex);
-    plugin_t *pl = plugin_find(id);
+    plugin_t *pl = plugin_find(id, 1);
 
 
     snprintf(path, sizeof(path), "zip://%s", zipfile);
@@ -552,7 +554,7 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int flags)
     goto bad;
   }
 
-  plugin_t *pl = plugin_find(id);
+  plugin_t *pl = plugin_find(id, 1);
 
 
   if(version != NULL) {
@@ -822,7 +824,7 @@ plugin_load_repo(void)
       if(is_plugin_blacklisted(id, version, NULL))
         continue;
 
-      pl = plugin_find(id);
+      pl = plugin_find(id, 1);
       pl->pl_mark = 0;
       plugin_prop_setup(pm, pl, NULL);
       mystrset(&pl->pl_repo_ver, version);
@@ -1503,7 +1505,7 @@ plugin_open_file(prop_t *page, const char *url)
 
   if(id != NULL) {
     hts_mutex_lock(&plugin_mutex);
-    plugin_t *pl = plugin_find(id);
+    plugin_t *pl = plugin_find(id, 1);
     plugin_install(pl, url);
     hts_mutex_unlock(&plugin_mutex);
   } else {
@@ -1704,4 +1706,19 @@ plugin_unload_views(plugin_t *pl)
     prop_ref_dec(pve->pve_type_prop);
     free(pve);
   }
+}
+
+
+/**
+ *
+ */
+void
+plugin_uninstall(const char *id)
+{
+  hts_mutex_lock(&plugin_mutex);
+  plugin_t *pl = plugin_find(id, 0);
+  if(pl != NULL) {
+    plugin_remove(pl);
+  }
+  hts_mutex_unlock(&plugin_mutex);
 }

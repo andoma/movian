@@ -21,6 +21,7 @@
 #include "main.h"
 #include "ext/duktape/duktape.h"
 #include "misc/queue.h"
+#include "misc/lockmgr.h"
 #include "arch/threads.h"
 #include "arch/atomic.h"
 #include "compiler.h"
@@ -73,6 +74,8 @@ typedef struct es_context {
   char ec_debug;
   char ec_bypass_file_acl_write;
   char ec_bypass_file_acl_read;
+
+  int ec_flags;
 
   int ec_linked;
 
@@ -197,6 +200,8 @@ es_context_t **ecmascript_get_all_contexts(void);
 
 void ecmascript_release_context_vector(es_context_t **v);
 
+int ecmascript_context_lockmgr(void *ptr, lockmgr_op_t op);
+
 
 /**
  * Plugin interface
@@ -215,6 +220,7 @@ int ecmascript_plugin_load(const char *id, const char *fullpath,
 #define ECMASCRIPT_DEBUG                 0x1
 #define ECMASCRIPT_FILE_BYPASS_ACL_READ  0x2
 #define ECMASCRIPT_FILE_BYPASS_ACL_WRITE 0x4
+#define ECMASCRIPT_PLUGIN                0x8
 
 void ecmascript_plugin_unload(const char *id);
 

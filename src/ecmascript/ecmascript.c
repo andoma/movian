@@ -35,6 +35,37 @@ static LIST_HEAD(, ecmascript_module) modules;
 
 ES_NATIVE_CLASS(resource, &es_resource_release);
 
+
+/**
+ *
+ */
+int
+ecmascript_context_lockmgr(void *ptr, lockmgr_op_t op)
+{
+  es_context_t *ec = ptr;
+
+  switch(op) {
+  case LOCKMGR_UNLOCK:
+    hts_mutex_unlock(&ec->ec_mutex);
+    return 0;
+  case LOCKMGR_LOCK:
+    hts_mutex_lock(&ec->ec_mutex);
+    return 0;
+  case LOCKMGR_TRY:
+    return hts_mutex_trylock(&ec->ec_mutex);
+
+  case LOCKMGR_RETAIN:
+    atomic_inc(&ec->ec_refcount);
+    return 0;
+
+  case LOCKMGR_RELEASE:
+    es_context_release(ec);
+    return 0;
+  }
+  abort();
+}
+
+
 /**
  *
  */
@@ -516,6 +547,7 @@ es_context_create(const char *id, int flags, const char *url,
   if(storage != NULL)
     ec->ec_storage = strdup(storage);
 
+  ec->ec_flags = flags;
   ec->ec_debug  = !!(flags & ECMASCRIPT_DEBUG) ||
     gconf.enable_ecmascript_debug;
   ec->ec_bypass_file_acl_read  = !!(flags & ECMASCRIPT_FILE_BYPASS_ACL_READ);
@@ -732,7 +764,8 @@ ecmascript_plugin_load(const char *id, const char *url,
   snprintf(storage, sizeof(storage),
            "%s/plugins/%s", gconf.persistent_path, id);
 
-  es_context_t *ec = es_context_create(id, flags, url, storage);
+  es_context_t *ec = es_context_create(id, flags | ECMASCRIPT_PLUGIN,
+                                       url, storage);
 
   es_context_begin(ec);
 

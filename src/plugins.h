@@ -36,4 +36,7 @@ void plugins_reload_dev_plugin(void);
 void plugin_props_from_file(struct prop *prop, const char *zipfile);
 
 void plugin_select_view(const char *plugin_id, const char *filename);
+
+void plugin_uninstall(const char *id);
+
 #endif
