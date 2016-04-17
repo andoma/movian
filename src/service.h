@@ -57,6 +57,7 @@ typedef struct service {
   struct setting *s_setting_enabled;
   struct setting *s_setting_title;
   struct setting *s_setting_type;
+  prop_sub_t *s_req_del_sub;
 
 } service_t;
 

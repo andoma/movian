@@ -1,5 +1,10 @@
 #include "skin://theme.view"
 
+onEvent(homeInfo, {
+  $clone.itemData := $event;
+  $clone.itemMenu = "home";
+});
+
 style(sidebarBackdrop, {
   color: 0;
   alpha: 0.3;
@@ -95,7 +100,11 @@ style(sidebarBackdrop, {
 }
 
 
-onEvent(menu, { toggle($clone.showSidebar); });
+onEvent(itemMenu, { $clone.itemMenu = void; }, $clone.itemMenu);
+onEvent(back,     { $clone.itemMenu = void; }, $clone.itemMenu);
+onEvent(cancel,   { $clone.itemMenu = void; }, $clone.itemMenu);
+onEvent(menu,     { toggle($clone.showSidebar); },
+       isVoid($clone.itemMenu));
 
 widget(container_z, {
 
@@ -112,6 +121,9 @@ widget(container_z, {
       alphaOutside: 0.05;
 
       widget(container_z, {
+
+        alpha: iir(select($clone.itemMenu, 0.3, 1), 4);
+
         widget(array, {
           id: "main";
 
@@ -137,6 +149,8 @@ widget(container_z, {
             focusable: true;
             GridItemHighlight();
             onEvent(activate, navOpen($self.url, void, $self));
+
+            onEvent(itemMenu, eventWithProp(homeInfo, $self));
 
             widget(container_y, {
 
@@ -180,6 +194,15 @@ widget(container_z, {
       filterConstraintX: true;
       time: 0.05;
       source: "skin://menu/sidebar.view";
+    });
+
+    widget(loader, {
+      args: $clone.itemData;
+      // Hide if itemMenu is 0 or if we shouldn't show it at all
+      hidden: isVoid($clone.itemMenu);
+      time: 0;
+      noInitialTransform: true;
+      source: "skin://ctxmenu/" + $clone.itemMenu + "_details.view";
     });
   });
 

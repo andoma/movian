@@ -69,7 +69,7 @@ typedef struct bookmark {
   prop_sub_t *bm_url_sub;
   prop_sub_t *bm_type_sub;
   prop_sub_t *bm_icon_sub;
-
+  prop_sub_t *bm_del_req_sub;
   rstr_t *bm_id;
   rstr_t *bm_title;
   rstr_t *bm_url;
@@ -1054,6 +1054,7 @@ bookmark_destroyed(void *opaque, prop_event_t event, ...)
   prop_unsubscribe(bm->bm_url_sub);
   prop_unsubscribe(bm->bm_type_sub);
   prop_unsubscribe(bm->bm_icon_sub);
+  prop_unsubscribe(bm->bm_del_req_sub);
 
   rstr_release(bm->bm_id);
   rstr_release(bm->bm_title);
@@ -1074,6 +1075,20 @@ bookmark_destroyed(void *opaque, prop_event_t event, ...)
   bookmarks_save();
   prop_unsubscribe(s);
   nav_update_bookmarked();
+}
+
+
+/**
+ *
+ */
+static void
+bookmark_delete_request(void *opaque, prop_event_t event)
+{
+  bookmark_t *bm = opaque;
+
+  if(event != PROP_REQ_DELETE)
+    return;
+  prop_destroy(bm->bm_root);
 }
 
 
@@ -1226,6 +1241,16 @@ bookmark_add(const char *title, const char *url, const char *type,
 		 PROP_TAG_ROOT, p,
                  PROP_TAG_MUTEX, &nav_mutex,
 		 NULL);
+
+  prop_set(bm->bm_service->s_root, "deleteText",
+           PROP_SET_LINK, _p("Remove bookmark"));
+
+  bm->bm_del_req_sub =
+    prop_subscribe(PROP_SUB_TRACK_DESTROY,
+                   PROP_TAG_CALLBACK, bookmark_delete_request, bm,
+                   PROP_TAG_ROOT, bm->bm_service->s_root,
+                   PROP_TAG_MUTEX, &nav_mutex,
+                   NULL);
 
   // Construct the settings page
 
