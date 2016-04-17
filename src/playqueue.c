@@ -607,6 +607,7 @@ siblings_populate(void *opaque, prop_event_t event, ...)
   case PROP_HAVE_MORE_CHILDS_NO:
   case PROP_EXT_EVENT:
   case PROP_REQ_MOVE_CHILD:
+  case PROP_REQ_DELETE:
     break;
 
   default:

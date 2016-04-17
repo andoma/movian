@@ -1739,6 +1739,7 @@ prop_callback_cloner(void *opaque, prop_event_t event, ...)
   case PROP_WANT_MORE_CHILDS:
   case PROP_REQ_MOVE_CHILD:
   case PROP_VALUE_PROP:
+  case PROP_REQ_DELETE:
     break;
 
   case PROP_INVALID_EVENTS:
@@ -1834,6 +1835,7 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
   case PROP_SELECT_CHILD:
   case PROP_REQ_NEW_CHILD:
   case PROP_REQ_DELETE_VECTOR:
+  case PROP_REQ_DELETE:
   case PROP_DESTROYED:
   case PROP_EXT_EVENT:
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
@@ -1911,6 +1913,7 @@ prop_callback_counter(void *opaque, prop_event_t event, ...)
   case PROP_SELECT_CHILD:
   case PROP_REQ_NEW_CHILD:
   case PROP_REQ_DELETE_VECTOR:
+  case PROP_REQ_DELETE:
   case PROP_DESTROYED:
   case PROP_EXT_EVENT:
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
@@ -2008,6 +2011,7 @@ ve_cb(void *opaque, prop_event_t event, ...)
   case PROP_SELECT_CHILD:
   case PROP_REQ_NEW_CHILD:
   case PROP_REQ_DELETE_VECTOR:
+  case PROP_REQ_DELETE:
   case PROP_DESTROYED:
   case PROP_EXT_EVENT:
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
@@ -2325,6 +2329,7 @@ prop_callback_vectorizer(void *opaque, prop_event_t event, ...)
   case PROP_HAVE_MORE_CHILDS_NO:
   case PROP_REQ_NEW_CHILD:
   case PROP_REQ_DELETE_VECTOR:
+  case PROP_REQ_DELETE:
   case PROP_DESTROYED:
   case PROP_EXT_EVENT:
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:

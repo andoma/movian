@@ -285,11 +285,6 @@ src_cb(void *opaque, prop_event_t event, ...)
     pg_del_node(pg, prop_tag_clear(va_arg(ap, prop_t *), pg));
     break;
 
-  case PROP_MOVE_CHILD:
-    break;
-
-  case PROP_SET_DIR:
-    break;
 
   case PROP_SET_VOID:
     pg_clear(pg);
@@ -297,6 +292,9 @@ src_cb(void *opaque, prop_event_t event, ...)
 
   case PROP_REQ_DELETE_VECTOR:
   case PROP_WANT_MORE_CHILDS:
+  case PROP_MOVE_CHILD:
+  case PROP_SET_DIR:
+  case PROP_REQ_DELETE:
     break;
 
   default:

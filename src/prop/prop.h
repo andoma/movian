@@ -72,7 +72,8 @@ typedef enum {
   PROP_MOVE_CHILD,
   PROP_SELECT_CHILD,
   PROP_REQ_NEW_CHILD,
-  PROP_REQ_DELETE_VECTOR,
+  PROP_REQ_DELETE_VECTOR, // Delete list of props, sent to props parent widget
+  PROP_REQ_DELETE,        // Delete this specific property
   PROP_DESTROYED,
   PROP_VALUE_PROP,
   PROP_EXT_EVENT,

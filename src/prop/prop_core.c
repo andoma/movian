@@ -513,6 +513,7 @@ prop_notify_free_payload(prop_notify_t *n)
   case PROP_HAVE_MORE_CHILDS_NO:
   case PROP_DESTROYED:
   case PROP_VALUE_PROP:
+  case PROP_REQ_DELETE:
     break;
   }
 }
@@ -797,6 +798,7 @@ notify_invoke(prop_sub_t *s, prop_notify_t *n)
     break;
  
   case PROP_DESTROYED:
+  case PROP_REQ_DELETE:
     if(pt != NULL)
       pt(s, n->hpn_event, s, s->hps_user_int);
     else
@@ -1412,6 +1414,27 @@ prop_notify_void(prop_sub_t *s)
   n->hpn_event = PROP_SET_VOID;
   n->hpn_prop_extra = NULL;
   prop_courier_enqueue(s, n);
+}
+
+
+/**
+ *
+ */
+static void
+prop_notify_simple(prop_t *p, prop_sub_t *skipme, const char *origin,
+                   prop_event_t e)
+{
+  prop_sub_t *s;
+
+  LIST_FOREACH(s, &p->hp_value_subscriptions, hps_value_prop_link) {
+    if(s == skipme)
+      continue;
+
+    prop_notify_t *n = prop_get_notify(s);
+    n->hpn_event = e;
+    courier_enqueue0(s, n, s->hps_flags & (PROP_SUB_EXPEDITE |
+                                           PROP_SUB_TRACK_DESTROY_EXP));
+  }
 }
 
 
@@ -4997,10 +5020,18 @@ prop_request_delete(prop_t *c)
   prop_t *p;
   hts_mutex_lock(&prop_mutex);
 
+  if(c->hp_type == PROP_PROXY) {
+
+    hts_mutex_unlock(&prop_mutex);
+    return;
+  }
+
   if(c->hp_type != PROP_ZOMBIE) {
     p = c->hp_parent;
 
-    if(p->hp_type == PROP_DIR) {
+    prop_notify_simple(c, NULL, "prop_req_delete", PROP_REQ_DELETE);
+
+    if(p->hp_type == PROP_DIR) { // Must handle PROP_PROXY here
       prop_vec_t *pv = prop_vec_create(1);
       pv = prop_vec_append(pv, c);
       prop_notify_childv(pv, p, PROP_REQ_DELETE_VECTOR, NULL, NULL);
