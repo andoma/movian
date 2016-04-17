@@ -248,7 +248,7 @@ id: %s %s or newer is required
 msg: %s %s oder neuer ist nötig
 
 id: Author: 
-msg: Author: 
+msg: Autor: 
 
 id: Available version: 
 msg: Verfügbare Version: 
@@ -631,8 +631,7 @@ id: Audio delay
 msg: Audioverzögerung
 
 id: Audio gain
-# Missing translation
-msg: 
+msg: Audioverstärkung
 
 id: Setup audio output
 msg: Audioausgang einstellen
@@ -1772,8 +1771,7 @@ id: Resume video playback
 msg: Wiedergabe von letzter Position
 
 id: Show clock during playback
-# Missing translation
-msg: 
+msg: Zeige Uhr während der Wiedergabe an
 
 id: Step when seeking backward
 msg: Schritt beim Zurückspulen
