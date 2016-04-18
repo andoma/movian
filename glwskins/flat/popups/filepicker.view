@@ -43,7 +43,7 @@ popup({
               onEvent(left, event("Back"));
 
               list_y({
-
+                navWrap: true;
                 padding: 0.5em;
 
                 zbox({
