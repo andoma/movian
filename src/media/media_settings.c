@@ -207,6 +207,9 @@ mp_settings_init(media_pipe_t *mp, const char *url, const char *dir_url,
   if(url == NULL || !(mp->mp_flags & MP_VIDEO))
     return;
 
+  if(parent_title == NULL)
+    dir_url = NULL;
+
   TRACE(TRACE_DEBUG, "media",
         "Settings initialized for URL %s in folder: %s [%s]",
         url, parent_title ?: "<unset>", dir_url ?: "<unset>");
