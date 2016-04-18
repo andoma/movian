@@ -26,6 +26,7 @@ CONFIG_LIST="
  libasound
  libpulse
  libfreetype
+ libjpeg
  libpthread
  zlib
  dvd
@@ -556,6 +557,10 @@ EOF
 
     if enabled libcec; then
 	echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lcec"
+    fi
+
+    if enabled libjpeg; then
+	echo >>${CONFIG_MAK} "LDFLAGS_cfg += -ljpeg"
     fi
 
     if enabled polarssl; then

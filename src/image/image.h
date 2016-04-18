@@ -25,6 +25,8 @@
 #include "compiler.h"
 
 struct buf;
+struct pixmap;
+struct fa_handle;
 
 /**
  * Control struct for loading images
@@ -49,6 +51,10 @@ typedef struct image_meta {
   uint16_t im_corner_radius;
   uint16_t im_shadow;
   uint16_t im_margin;
+
+  void *im_opaque;
+  void (*im_incremental)(void *opaque, struct pixmap *pm);
+
 } image_meta_t;
 
 
@@ -205,6 +211,11 @@ extern struct pixmap *(*accel_image_decode)(image_coded_type_t type,
 					    char *errbuf, size_t errlen,
                                             const image_t *img);
 
+#if ENABLE_LIBJPEG
+struct pixmap *libjpeg_decode(struct fa_handle *fh,
+                              const image_meta_t *meta,
+                              char *errbuf, size_t errlen);
+#endif
 
 /***************************************************************************
  * SVG Parser

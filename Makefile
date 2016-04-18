@@ -121,6 +121,8 @@ SRCS +=	src/image/image.c \
 	src/image/image_decoder_libav.c \
 	src/image/dominantcolor.c \
 
+SRCS-${CONFIG_LIBJPEG} += src/image/libjpeg.c
+
 ##############################################################
 # Misc support
 ##############################################################

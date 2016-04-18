@@ -94,6 +94,7 @@ typedef struct glw_loadable_texture {
   float glt_intensity;
 
   struct backend *glt_backend;
+  struct glw_root *glt_gr;
 
 } glw_loadable_texture_t;
 

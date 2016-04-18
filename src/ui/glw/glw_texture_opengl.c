@@ -61,7 +61,7 @@ glw_tex_backend_layout(glw_root_t *gr, glw_loadable_texture_t *glt)
   void *p;
   int m = GL_TEXTURE_2D;
 
-  if(glt->glt_texture.textures[0] != 0)
+  if(glt->glt_pixmap == NULL)
     return;
 
   p = glt->glt_pixmap->pm_data;

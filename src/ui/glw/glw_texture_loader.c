@@ -232,6 +232,34 @@ glt_enqueue(glw_root_t *gr, glw_loadable_texture_t *glt, int q)
 /**
  *
  */
+static void
+glt_incremental_update(void *opaque, pixmap_t *pm)
+{
+  glw_loadable_texture_t *glt = opaque;
+  glw_root_t *gr = glt->glt_gr;
+  glw_lock(gr);
+
+  glt->glt_aspect        = pm->pm_aspect;
+  glt->glt_margin        = pm->pm_margin;
+  glt->glt_xs            = pm->pm_width;
+  glt->glt_ys            = pm->pm_height;
+
+  //  glt->glt_origin_type   = img->im_origin_coded_type;
+  //  glt->glt_orientation   = img->im_orientation;
+  glt->glt_intensity     = pm->pm_intensity;
+
+  glt->glt_size          = glw_tex_backend_load(gr, glt, pm);
+  glw_need_refresh(gr, 0);
+
+  glw_unlock(gr);
+}
+
+
+
+
+/**
+ *
+ */
 static void *
 loader_thread(void *aux)
 {
@@ -273,6 +301,9 @@ loader_thread(void *aux)
                                                  GLW_TEX_CORNER_BOTTOMRIGHT);
       im.im_shadow = glt->glt_shadow;
       im.im_req_aspect = glt->glt_req_aspect;
+
+      im.im_incremental = glt_incremental_update;
+      im.im_opaque = glt;
 
       if(glt->glt_q == &gr->gr_tex_load_queue[LQ_TENTATIVE]) {
 	cache_control = 0;
@@ -603,6 +634,7 @@ glw_tex_create(glw_root_t *gr, rstr_t *filename, int flags, int xs, int ys,
 
   if(glt == NULL) {
     glt = calloc(1, sizeof(glw_loadable_texture_t));
+    glt->glt_gr = gr;
     glt->glt_cancellable = cancellable_create();
     glt->glt_url = rstr_dup(filename);
     LIST_INSERT_HEAD(&gr->gr_tex_list, glt, glt_global_link);
