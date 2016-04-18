@@ -525,6 +525,25 @@ id: Master volume: %d dB
 msg: Volume generale: %d dB
 
 #
+# ./src/api/stpp.c
+#
+id: Allow remote control
+# Missing translation
+msg: 
+
+id: Device not available
+# Missing translation
+msg: 
+
+id: Movians for remote control
+# Missing translation
+msg: 
+
+id: Remote control
+# Missing translation
+msg: 
+
+#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -537,16 +556,6 @@ msg: Usa titolo originale
 # ./src/arch/android/android.c
 #
 id: Android Storage
-# Missing translation
-msg: 
-
-id: Movies
-msg: Film
-
-id: Music
-msg: Musica
-
-id: Pictures
 # Missing translation
 msg: 
 
@@ -780,6 +789,13 @@ id: Recorder
 msg: 
 
 #
+# ./src/backend/playlist.c
+#
+id: Unable to open playlist
+# Missing translation
+msg: 
+
+#
 # ./src/backend/search.c
 #
 id: Search
@@ -824,6 +840,10 @@ msg: Impossibile gestire questo tipo di contenuti %d
 
 id: Checking file contents
 msg: Verificando il contenuto del file
+
+id: Invalid URL from redirect
+# Missing translation
+msg: 
 
 id: Unable to open file: %s
 msg: Impossibile aprire il file: %s
@@ -1224,6 +1244,9 @@ id: Icon
 # Missing translation
 msg: 
 
+id: Music
+msg: Musica
+
 id: No handler for URL
 msg: Nessun handler per URL
 
@@ -1232,6 +1255,10 @@ msg: Altro
 
 id: Photos
 msg: Foto
+
+id: Remove bookmark
+# Missing translation
+msg: 
 
 id: Removed %s from homepage
 # Missing translation
@@ -1272,6 +1299,24 @@ msg: Server FTP
 
 id: Server TCP port
 msg: Porta TCP del server
+
+#
+# ./src/networking/http_server.c
+#
+id: Power Off
+# Missing translation
+msg: 
+
+id: Rebooting
+# Missing translation
+msg: 
+
+id: Restarting
+# Missing translation
+msg: 
+
+id: Standby
+msg: Standby
 
 #
 # ./src/plugins.c
@@ -1319,6 +1364,10 @@ msg: Errore d'apertura del file
 id: Home page
 msg: Pagina Iniziale
 
+id: Installed
+# Missing translation
+msg: 
+
 id: Installed plugins
 msg: Plugin installati
 
@@ -1333,6 +1382,9 @@ msg: Elenco degli album
 
 id: Loading screen
 msg: Schermata di caricamento
+
+id: Movies
+msg: Film
 
 id: Music streaming
 msg: Streaming di musica
@@ -1404,6 +1456,13 @@ id: Video streaming
 msg: Streaming video
 
 #
+# ./src/prop/prop_proxy.c
+#
+id: Remote exited
+# Missing translation
+msg: 
+
+#
 # ./src/runcontrol.c
 #
 id: Automatic standby
@@ -1427,9 +1486,6 @@ msg: Esci
 id: SSH server
 msg: Server SSH
 
-id: Standby
-msg: Standby
-
 id: Starting and stopping
 msg: Avvio e arresto
 
@@ -1447,6 +1503,10 @@ msg: Nome
 #
 id: Local network
 msg: Rete locale
+
+id: Remove from homepage
+# Missing translation
+msg: 
 
 #
 # ./src/settings.c
@@ -1657,6 +1717,10 @@ msg:
 
 id: Screensaver delay
 msg: Attesa prima dello screensaver
+
+id: Seconds per image
+# Missing translation
+msg: 
 
 id: Use Bing images of the day
 # Missing translation

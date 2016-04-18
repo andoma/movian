@@ -525,6 +525,25 @@ id: Master volume: %d dB
 msg: 主音量: %d dB
 
 #
+# ./src/api/stpp.c
+#
+id: Allow remote control
+# Missing translation
+msg: 
+
+id: Device not available
+# Missing translation
+msg: 
+
+id: Movians for remote control
+# Missing translation
+msg: 
+
+id: Remote control
+# Missing translation
+msg: 
+
+#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -538,15 +557,6 @@ msg: 使用原标题
 #
 id: Android Storage
 msg: Android存储
-
-id: Movies
-msg: 电影
-
-id: Music
-msg: 音乐
-
-id: Pictures
-msg: 图片
 
 #
 # ./src/arch/linux/pulseaudio.c
@@ -771,6 +781,13 @@ id: Recorder
 msg: 录像机
 
 #
+# ./src/backend/playlist.c
+#
+id: Unable to open playlist
+# Missing translation
+msg: 
+
+#
 # ./src/backend/search.c
 #
 id: Search
@@ -811,6 +828,10 @@ msg: 无法处理内容类型%d
 
 id: Checking file contents
 msg: 正在检查文件内容
+
+id: Invalid URL from redirect
+# Missing translation
+msg: 
 
 id: Unable to open file: %s
 msg: 无法打开文件%s
@@ -1190,6 +1211,9 @@ msg: 收藏夹
 id: Icon
 msg: 图标
 
+id: Music
+msg: 音乐
+
 id: No handler for URL
 msg: 无法处理URL
 
@@ -1198,6 +1222,10 @@ msg: 其它
 
 id: Photos
 msg: 照片
+
+id: Remove bookmark
+# Missing translation
+msg: 
 
 id: Removed %s from homepage
 msg: %s已从首页移除
@@ -1237,6 +1265,24 @@ msg: FTP服务器
 
 id: Server TCP port
 msg: 服务器TCP端口
+
+#
+# ./src/networking/http_server.c
+#
+id: Power Off
+# Missing translation
+msg: 
+
+id: Rebooting
+# Missing translation
+msg: 
+
+id: Restarting
+# Missing translation
+msg: 
+
+id: Standby
+msg: 关机
 
 #
 # ./src/plugins.c
@@ -1283,6 +1329,10 @@ msg: 打开文件错误
 id: Home page
 msg: 首页
 
+id: Installed
+# Missing translation
+msg: 
+
 id: Installed plugins
 msg: 已安装插件
 
@@ -1297,6 +1347,9 @@ msg: 专辑列表
 
 id: Loading screen
 msg: 载入屏幕显示
+
+id: Movies
+msg: 电影
 
 id: Music streaming
 msg: 音乐流
@@ -1365,6 +1418,13 @@ id: Video streaming
 msg: 视频流
 
 #
+# ./src/prop/prop_proxy.c
+#
+id: Remote exited
+# Missing translation
+msg: 
+
+#
 # ./src/runcontrol.c
 #
 id: Automatic standby
@@ -1388,9 +1448,6 @@ msg: 退出
 id: SSH server
 msg: SSH服务器
 
-id: Standby
-msg: 关机
-
 id: Starting and stopping
 msg: 启动和关闭
 
@@ -1408,6 +1465,10 @@ msg: 名称
 #
 id: Local network
 msg: 本地网络
+
+id: Remove from homepage
+# Missing translation
+msg: 
 
 #
 # ./src/settings.c
@@ -1609,6 +1670,10 @@ msg: 屏幕保护
 
 id: Screensaver delay
 msg: 屏幕保护启动延迟时间
+
+id: Seconds per image
+# Missing translation
+msg: 
 
 id: Use Bing images of the day
 msg: 使用Bing的当日图片

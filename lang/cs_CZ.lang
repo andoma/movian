@@ -584,6 +584,25 @@ id: Master volume: %d dB
 msg: Hlasitost: %d dB
 
 #
+# ./src/api/stpp.c
+#
+id: Allow remote control
+# Missing translation
+msg: 
+
+id: Device not available
+# Missing translation
+msg: 
+
+id: Movians for remote control
+# Missing translation
+msg: 
+
+id: Remote control
+# Missing translation
+msg: 
+
+#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -598,17 +617,6 @@ msg:
 # ./src/arch/android/android.c
 #
 id: Android Storage
-# Missing translation
-msg: 
-
-id: Movies
-# Missing translation
-msg: 
-
-id: Music
-msg: Hudba
-
-id: Pictures
 # Missing translation
 msg: 
 
@@ -882,6 +890,13 @@ id: Recorder
 msg: 
 
 #
+# ./src/backend/playlist.c
+#
+id: Unable to open playlist
+# Missing translation
+msg: 
+
+#
 # ./src/backend/search.c
 #
 id: Search
@@ -925,6 +940,10 @@ id: Can't handle content type %d
 msg: Nelze zpracovat %d
 
 id: Checking file contents
+# Missing translation
+msg: 
+
+id: Invalid URL from redirect
 # Missing translation
 msg: 
 
@@ -1365,6 +1384,9 @@ id: Icon
 # Missing translation
 msg: 
 
+id: Music
+msg: Hudba
+
 id: No handler for URL
 msg: Nelze zpracovat URL
 
@@ -1373,6 +1395,10 @@ msg: Ostatní
 
 id: Photos
 msg: Snimky
+
+id: Remove bookmark
+# Missing translation
+msg: 
 
 id: Removed %s from homepage
 # Missing translation
@@ -1416,6 +1442,25 @@ id: FTP server
 msg: 
 
 id: Server TCP port
+# Missing translation
+msg: 
+
+#
+# ./src/networking/http_server.c
+#
+id: Power Off
+# Missing translation
+msg: 
+
+id: Rebooting
+# Missing translation
+msg: 
+
+id: Restarting
+# Missing translation
+msg: 
+
+id: Standby
 # Missing translation
 msg: 
 
@@ -1472,6 +1517,10 @@ id: Home page
 # Missing translation
 msg: 
 
+id: Installed
+# Missing translation
+msg: 
+
 id: Installed plugins
 # Missing translation
 msg: 
@@ -1488,6 +1537,10 @@ id: List of albums
 msg: 
 
 id: Loading screen
+# Missing translation
+msg: 
+
+id: Movies
 # Missing translation
 msg: 
 
@@ -1571,6 +1624,13 @@ id: Video streaming
 msg: 
 
 #
+# ./src/prop/prop_proxy.c
+#
+id: Remote exited
+# Missing translation
+msg: 
+
+#
 # ./src/runcontrol.c
 #
 id: Automatic standby
@@ -1597,10 +1657,6 @@ id: SSH server
 # Missing translation
 msg: 
 
-id: Standby
-# Missing translation
-msg: 
-
 id: Starting and stopping
 # Missing translation
 msg: 
@@ -1619,6 +1675,10 @@ msg: Název
 #
 id: Local network
 msg: Místní síť
+
+id: Remove from homepage
+# Missing translation
+msg: 
 
 #
 # ./src/settings.c
@@ -1859,6 +1919,10 @@ msg:
 
 id: Screensaver delay
 msg: Zpoždění spořiče
+
+id: Seconds per image
+# Missing translation
+msg: 
 
 id: Use Bing images of the day
 # Missing translation

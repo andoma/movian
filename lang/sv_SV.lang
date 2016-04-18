@@ -525,6 +525,25 @@ id: Master volume: %d dB
 msg: Huvudvolym: %d dB
 
 #
+# ./src/api/stpp.c
+#
+id: Allow remote control
+# Missing translation
+msg: 
+
+id: Device not available
+# Missing translation
+msg: 
+
+id: Movians for remote control
+# Missing translation
+msg: 
+
+id: Remote control
+# Missing translation
+msg: 
+
+#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -538,15 +557,6 @@ msg: Använd orginaltitel
 #
 id: Android Storage
 msg: Android Storage
-
-id: Movies
-msg: Filmer
-
-id: Music
-msg: Musik
-
-id: Pictures
-msg: Bilder
 
 #
 # ./src/arch/linux/pulseaudio.c
@@ -771,6 +781,13 @@ id: Recorder
 msg: Inspelare
 
 #
+# ./src/backend/playlist.c
+#
+id: Unable to open playlist
+# Missing translation
+msg: 
+
+#
 # ./src/backend/search.c
 #
 id: Search
@@ -811,6 +828,10 @@ msg: Kan inte hantera fil innehåll av typen %d
 
 id: Checking file contents
 msg: Kontrollerar filens innehåll
+
+id: Invalid URL from redirect
+# Missing translation
+msg: 
 
 id: Unable to open file: %s
 msg: Kan ej öppna fil: %s
@@ -1190,6 +1211,9 @@ msg: Bokmärken
 id: Icon
 msg: Ikon
 
+id: Music
+msg: Musik
+
 id: No handler for URL
 msg: Ingen hanterare för URLen
 
@@ -1198,6 +1222,10 @@ msg: Annat
 
 id: Photos
 msg: Foton
+
+id: Remove bookmark
+# Missing translation
+msg: 
 
 id: Removed %s from homepage
 msg: Tog bort %s från hemsidan
@@ -1237,6 +1265,24 @@ msg: FTP tjänst
 
 id: Server TCP port
 msg: Servern's TCP port
+
+#
+# ./src/networking/http_server.c
+#
+id: Power Off
+# Missing translation
+msg: 
+
+id: Rebooting
+# Missing translation
+msg: 
+
+id: Restarting
+# Missing translation
+msg: 
+
+id: Standby
+msg: Viloläge
 
 #
 # ./src/plugins.c
@@ -1283,6 +1329,10 @@ msg: Kunde ej öppna fil
 id: Home page
 msg: Hemsida
 
+id: Installed
+# Missing translation
+msg: 
+
 id: Installed plugins
 msg: Installerade plugins
 
@@ -1297,6 +1347,9 @@ msg: Lista av album
 
 id: Loading screen
 msg: Laddskärm
+
+id: Movies
+msg: Filmer
 
 id: Music streaming
 msg: Musikstreaming
@@ -1365,6 +1418,13 @@ id: Video streaming
 msg: Videoströmning
 
 #
+# ./src/prop/prop_proxy.c
+#
+id: Remote exited
+# Missing translation
+msg: 
+
+#
 # ./src/runcontrol.c
 #
 id: Automatic standby
@@ -1388,9 +1448,6 @@ msg: Avlusta
 id: SSH server
 msg: SSH server
 
-id: Standby
-msg: Viloläge
-
 id: Starting and stopping
 msg: Starta och stanna
 
@@ -1408,6 +1465,10 @@ msg: Namn
 #
 id: Local network
 msg: Lokala nätverket
+
+id: Remove from homepage
+# Missing translation
+msg: 
 
 #
 # ./src/settings.c
@@ -1609,6 +1670,10 @@ msg: Skärmsläckare
 
 id: Screensaver delay
 msg: Skärmsläckartid
+
+id: Seconds per image
+# Missing translation
+msg: 
 
 id: Use Bing images of the day
 msg: Använd dagens Bing-bild

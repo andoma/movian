@@ -525,6 +525,25 @@ id: Master volume: %d dB
 msg: Volumen principal: %d dB
 
 #
+# ./src/api/stpp.c
+#
+id: Allow remote control
+# Missing translation
+msg: 
+
+id: Device not available
+# Missing translation
+msg: 
+
+id: Movians for remote control
+# Missing translation
+msg: 
+
+id: Remote control
+# Missing translation
+msg: 
+
+#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -537,16 +556,6 @@ msg: Usar título original
 # ./src/arch/android/android.c
 #
 id: Android Storage
-# Missing translation
-msg: 
-
-id: Movies
-msg: Películas
-
-id: Music
-msg: Música
-
-id: Pictures
 # Missing translation
 msg: 
 
@@ -780,6 +789,13 @@ id: Recorder
 msg: 
 
 #
+# ./src/backend/playlist.c
+#
+id: Unable to open playlist
+# Missing translation
+msg: 
+
+#
 # ./src/backend/search.c
 #
 id: Search
@@ -824,6 +840,10 @@ msg: No se puede manejar contenido tipo %s
 
 id: Checking file contents
 msg: Verificar el contenido del archivo
+
+id: Invalid URL from redirect
+# Missing translation
+msg: 
 
 id: Unable to open file: %s
 msg: No se puede abrir archivo: %s
@@ -1224,6 +1244,9 @@ id: Icon
 # Missing translation
 msg: 
 
+id: Music
+msg: Música
+
 id: No handler for URL
 msg: Sin soporte para URL
 
@@ -1232,6 +1255,10 @@ msg: Otros
 
 id: Photos
 msg: Fotos
+
+id: Remove bookmark
+# Missing translation
+msg: 
 
 id: Removed %s from homepage
 # Missing translation
@@ -1272,6 +1299,24 @@ msg: Servidor FTP
 
 id: Server TCP port
 msg: Puerto TCP del servidor
+
+#
+# ./src/networking/http_server.c
+#
+id: Power Off
+# Missing translation
+msg: 
+
+id: Rebooting
+# Missing translation
+msg: 
+
+id: Restarting
+# Missing translation
+msg: 
+
+id: Standby
+msg: Apagar
 
 #
 # ./src/plugins.c
@@ -1319,6 +1364,10 @@ msg: Error al abrir archivo
 id: Home page
 msg: Página Principal
 
+id: Installed
+# Missing translation
+msg: 
+
 id: Installed plugins
 msg: Plugins instalados
 
@@ -1333,6 +1382,9 @@ msg: Lista de albums
 
 id: Loading screen
 msg: Cargando pantalla
+
+id: Movies
+msg: Películas
 
 id: Music streaming
 msg: Transmisión de música
@@ -1404,6 +1456,13 @@ id: Video streaming
 msg: Transmisión de Vídeo
 
 #
+# ./src/prop/prop_proxy.c
+#
+id: Remote exited
+# Missing translation
+msg: 
+
+#
 # ./src/runcontrol.c
 #
 id: Automatic standby
@@ -1427,9 +1486,6 @@ msg: Dejar
 id: SSH server
 msg: Servidor SSH
 
-id: Standby
-msg: Apagar
-
 id: Starting and stopping
 msg: Inicio y detención
 
@@ -1447,6 +1503,10 @@ msg: Nombre
 #
 id: Local network
 msg: Red local
+
+id: Remove from homepage
+# Missing translation
+msg: 
 
 #
 # ./src/settings.c
@@ -1657,6 +1717,10 @@ msg:
 
 id: Screensaver delay
 msg: Espera del protector de pantalla
+
+id: Seconds per image
+# Missing translation
+msg: 
 
 id: Use Bing images of the day
 # Missing translation

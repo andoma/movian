@@ -525,6 +525,25 @@ id: Master volume: %d dB
 msg: Общая громкость: %d дБ
 
 #
+# ./src/api/stpp.c
+#
+id: Allow remote control
+# Missing translation
+msg: 
+
+id: Device not available
+# Missing translation
+msg: 
+
+id: Movians for remote control
+# Missing translation
+msg: 
+
+id: Remote control
+# Missing translation
+msg: 
+
+#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -538,15 +557,6 @@ msg: Использовать оригинальное название
 #
 id: Android Storage
 msg: Память Android
-
-id: Movies
-msg: Фильмы
-
-id: Music
-msg: Музыка
-
-id: Pictures
-msg: Изображения
 
 #
 # ./src/arch/linux/pulseaudio.c
@@ -773,6 +783,13 @@ id: Recorder
 msg: Рекордер
 
 #
+# ./src/backend/playlist.c
+#
+id: Unable to open playlist
+# Missing translation
+msg: 
+
+#
 # ./src/backend/search.c
 #
 id: Search
@@ -813,6 +830,10 @@ msg: Нeизвecтный тип кoнтeнтa %d
 
 id: Checking file contents
 msg: Проверка содержимого файла
+
+id: Invalid URL from redirect
+# Missing translation
+msg: 
 
 id: Unable to open file: %s
 msg: He удaлocь oткpыть фaйл: %s
@@ -1192,6 +1213,9 @@ msg: Закладки
 id: Icon
 msg: Иконка
 
+id: Music
+msg: Музыка
+
 id: No handler for URL
 msg: Нет обработчика для URL
 
@@ -1200,6 +1224,10 @@ msg: Прочее
 
 id: Photos
 msg: Фото
+
+id: Remove bookmark
+# Missing translation
+msg: 
 
 id: Removed %s from homepage
 msg: %s удалено с главного экрана
@@ -1239,6 +1267,24 @@ msg: FTP-сервер
 
 id: Server TCP port
 msg: TCP-порт сервера
+
+#
+# ./src/networking/http_server.c
+#
+id: Power Off
+# Missing translation
+msg: 
+
+id: Rebooting
+# Missing translation
+msg: 
+
+id: Restarting
+# Missing translation
+msg: 
+
+id: Standby
+msg: Режим ожидания
 
 #
 # ./src/plugins.c
@@ -1285,6 +1331,10 @@ msg: Ошибка при открытии файла
 id: Home page
 msg: Главный экран
 
+id: Installed
+# Missing translation
+msg: 
+
 id: Installed plugins
 msg: Установленные плагины
 
@@ -1299,6 +1349,9 @@ msg: Список альбомов
 
 id: Loading screen
 msg: Загрузочный экран
+
+id: Movies
+msg: Фильмы
 
 id: Music streaming
 msg: Потоковая музыка
@@ -1367,6 +1420,13 @@ id: Video streaming
 msg: Потоковое видео
 
 #
+# ./src/prop/prop_proxy.c
+#
+id: Remote exited
+# Missing translation
+msg: 
+
+#
 # ./src/runcontrol.c
 #
 id: Automatic standby
@@ -1390,9 +1450,6 @@ msg: Выход
 id: SSH server
 msg: SSH-сервер
 
-id: Standby
-msg: Режим ожидания
-
 id: Starting and stopping
 msg: Запуск и остановка
 
@@ -1410,6 +1467,10 @@ msg: Имя
 #
 id: Local network
 msg: Локальная сеть
+
+id: Remove from homepage
+# Missing translation
+msg: 
 
 #
 # ./src/settings.c
@@ -1612,6 +1673,10 @@ msg: Экранная заставка
 
 id: Screensaver delay
 msg: Задержка заставки
+
+id: Seconds per image
+# Missing translation
+msg: 
 
 id: Use Bing images of the day
 msg: Испозовать изображения дня из Bing

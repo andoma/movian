@@ -525,6 +525,25 @@ id: Master volume: %d dB
 msg: Fő hangerő: %d dB
 
 #
+# ./src/api/stpp.c
+#
+id: Allow remote control
+# Missing translation
+msg: 
+
+id: Device not available
+# Missing translation
+msg: 
+
+id: Movians for remote control
+# Missing translation
+msg: 
+
+id: Remote control
+# Missing translation
+msg: 
+
+#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -537,16 +556,6 @@ msg: Eredeti cím használata
 # ./src/arch/android/android.c
 #
 id: Android Storage
-# Missing translation
-msg: 
-
-id: Movies
-msg: Filmek
-
-id: Music
-msg: Zene
-
-id: Pictures
 # Missing translation
 msg: 
 
@@ -780,6 +789,13 @@ id: Recorder
 msg: 
 
 #
+# ./src/backend/playlist.c
+#
+id: Unable to open playlist
+# Missing translation
+msg: 
+
+#
 # ./src/backend/search.c
 #
 id: Search
@@ -824,6 +840,10 @@ msg: A %d típusú tartalom nem kezelhető
 
 id: Checking file contents
 msg: Fájl tartalmának ellenőrzése
+
+id: Invalid URL from redirect
+# Missing translation
+msg: 
 
 id: Unable to open file: %s
 msg: A %s nem nyitható meg
@@ -1224,6 +1244,9 @@ id: Icon
 # Missing translation
 msg: 
 
+id: Music
+msg: Zene
+
 id: No handler for URL
 msg: Nincs kezelő az URL-hez
 
@@ -1232,6 +1255,10 @@ msg: Egyéb
 
 id: Photos
 msg: Fotók
+
+id: Remove bookmark
+# Missing translation
+msg: 
 
 id: Removed %s from homepage
 # Missing translation
@@ -1272,6 +1299,24 @@ msg: FTP szerver
 
 id: Server TCP port
 msg: Szerver TCP port
+
+#
+# ./src/networking/http_server.c
+#
+id: Power Off
+# Missing translation
+msg: 
+
+id: Rebooting
+# Missing translation
+msg: 
+
+id: Restarting
+# Missing translation
+msg: 
+
+id: Standby
+msg: Készenlét
 
 #
 # ./src/plugins.c
@@ -1319,6 +1364,10 @@ msg: Fájl megnyitási hiba
 id: Home page
 msg: Kezdőoldal
 
+id: Installed
+# Missing translation
+msg: 
+
 id: Installed plugins
 msg: Telepített pluginok
 
@@ -1333,6 +1382,9 @@ msg: Albumok listája
 
 id: Loading screen
 msg: Betöltő képernyő
+
+id: Movies
+msg: Filmek
 
 id: Music streaming
 msg: Zene streamelés
@@ -1404,6 +1456,13 @@ id: Video streaming
 msg: Video streamelés
 
 #
+# ./src/prop/prop_proxy.c
+#
+id: Remote exited
+# Missing translation
+msg: 
+
+#
 # ./src/runcontrol.c
 #
 id: Automatic standby
@@ -1427,9 +1486,6 @@ msg: Kilépés
 id: SSH server
 msg: SSH szerver
 
-id: Standby
-msg: Készenlét
-
 id: Starting and stopping
 msg: Indulás és leállás
 
@@ -1447,6 +1503,10 @@ msg: Név
 #
 id: Local network
 msg: Helyi hálozat
+
+id: Remove from homepage
+# Missing translation
+msg: 
 
 #
 # ./src/settings.c
@@ -1657,6 +1717,10 @@ msg:
 
 id: Screensaver delay
 msg: Képernyőkímélő késleltetése
+
+id: Seconds per image
+# Missing translation
+msg: 
 
 id: Use Bing images of the day
 # Missing translation

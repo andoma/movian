@@ -528,6 +528,25 @@ id: Master volume: %d dB
 msg: Lautstärke: %d dB
 
 #
+# ./src/api/stpp.c
+#
+id: Allow remote control
+# Missing translation
+msg: 
+
+id: Device not available
+# Missing translation
+msg: 
+
+id: Movians for remote control
+# Missing translation
+msg: 
+
+id: Remote control
+# Missing translation
+msg: 
+
+#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -541,15 +560,6 @@ msg: Originaltitel benutzen
 #
 id: Android Storage
 msg: Android Speicher
-
-id: Movies
-msg: Filme
-
-id: Music
-msg: Musik
-
-id: Pictures
-msg: Bilder
 
 #
 # ./src/arch/linux/pulseaudio.c
@@ -780,6 +790,13 @@ id: Recorder
 msg: 
 
 #
+# ./src/backend/playlist.c
+#
+id: Unable to open playlist
+# Missing translation
+msg: 
+
+#
 # ./src/backend/search.c
 #
 id: Search
@@ -820,6 +837,10 @@ msg: Kann Inhalt %D nicht verarbeiten
 
 id: Checking file contents
 msg: Datei Inhalt überprüfen
+
+id: Invalid URL from redirect
+# Missing translation
+msg: 
 
 id: Unable to open file: %s
 msg: Kann Datei: %d nicht öffnen
@@ -1212,6 +1233,9 @@ msg: Lesezeichen
 id: Icon
 msg: Icon
 
+id: Music
+msg: Musik
+
 id: No handler for URL
 msg: kann URL nicht verarbeiten
 
@@ -1220,6 +1244,10 @@ msg: Andere
 
 id: Photos
 msg: Foto
+
+id: Remove bookmark
+# Missing translation
+msg: 
 
 id: Removed %s from homepage
 msg: %s von Startseite entfernt
@@ -1259,6 +1287,24 @@ msg: FTP-Server
 
 id: Server TCP port
 msg: Server TCP-Port
+
+#
+# ./src/networking/http_server.c
+#
+id: Power Off
+# Missing translation
+msg: 
+
+id: Rebooting
+# Missing translation
+msg: 
+
+id: Restarting
+# Missing translation
+msg: 
+
+id: Standby
+msg: Standby
 
 #
 # ./src/plugins.c
@@ -1306,6 +1352,10 @@ msg: Fehler beim öffnen der Datei
 id: Home page
 msg: Startseite
 
+id: Installed
+# Missing translation
+msg: 
+
 id: Installed plugins
 msg: Installierte Plugins
 
@@ -1320,6 +1370,9 @@ msg: Liste der Alben
 
 id: Loading screen
 msg: Ladebildschirm
+
+id: Movies
+msg: Filme
 
 id: Music streaming
 msg: Musik streaming
@@ -1388,6 +1441,13 @@ id: Video streaming
 msg: Video streaming
 
 #
+# ./src/prop/prop_proxy.c
+#
+id: Remote exited
+# Missing translation
+msg: 
+
+#
 # ./src/runcontrol.c
 #
 id: Automatic standby
@@ -1411,9 +1471,6 @@ msg: Beenden
 id: SSH server
 msg: SSH-Server
 
-id: Standby
-msg: Standby
-
 id: Starting and stopping
 msg: Starten und stoppen
 
@@ -1431,6 +1488,10 @@ msg: Name
 #
 id: Local network
 msg: Lokales Netzwerk
+
+id: Remove from homepage
+# Missing translation
+msg: 
 
 #
 # ./src/settings.c
@@ -1634,6 +1695,10 @@ msg: Bildschirmschoner
 
 id: Screensaver delay
 msg: Bildschirmschonerverzögerung
+
+id: Seconds per image
+# Missing translation
+msg: 
 
 id: Use Bing images of the day
 msg: Benutze Bing Bilder des Tages

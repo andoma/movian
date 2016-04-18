@@ -525,6 +525,25 @@ id: Master volume: %d dB
 msg: 主音量: %d dB
 
 #
+# ./src/api/stpp.c
+#
+id: Allow remote control
+# Missing translation
+msg: 
+
+id: Device not available
+# Missing translation
+msg: 
+
+id: Movians for remote control
+# Missing translation
+msg: 
+
+id: Remote control
+# Missing translation
+msg: 
+
+#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -538,15 +557,6 @@ msg: 元のタイトルを使用
 #
 id: Android Storage
 msg: アンドロイド端末
-
-id: Movies
-msg: ムービー
-
-id: Music
-msg: ミュージック
-
-id: Pictures
-msg: 画像
 
 #
 # ./src/arch/linux/pulseaudio.c
@@ -771,6 +781,13 @@ id: Recorder
 msg: レコーダー
 
 #
+# ./src/backend/playlist.c
+#
+id: Unable to open playlist
+# Missing translation
+msg: 
+
+#
 # ./src/backend/search.c
 #
 id: Search
@@ -811,6 +828,10 @@ msg: コンテンツタイプ%dを処理できません。
 
 id: Checking file contents
 msg: ファイル内容を確認します。
+
+id: Invalid URL from redirect
+# Missing translation
+msg: 
 
 id: Unable to open file: %s
 msg: ファイルを開けません。: %s
@@ -1190,6 +1211,9 @@ msg: ブックマーク設定
 id: Icon
 msg: アイコン
 
+id: Music
+msg: ミュージック
+
 id: No handler for URL
 msg: URL向けのハンドラがありません。
 
@@ -1198,6 +1222,10 @@ msg: その他
 
 id: Photos
 msg: フォト
+
+id: Remove bookmark
+# Missing translation
+msg: 
 
 id: Removed %s from homepage
 msg: ホームページから %s を削除
@@ -1237,6 +1265,24 @@ msg: FTPサーバー設定
 
 id: Server TCP port
 msg: TCPポート
+
+#
+# ./src/networking/http_server.c
+#
+id: Power Off
+# Missing translation
+msg: 
+
+id: Rebooting
+# Missing translation
+msg: 
+
+id: Restarting
+# Missing translation
+msg: 
+
+id: Standby
+msg: スタンバイ
 
 #
 # ./src/plugins.c
@@ -1283,6 +1329,10 @@ msg: ファイルを開けません。
 id: Home page
 msg: ホームページ
 
+id: Installed
+# Missing translation
+msg: 
+
 id: Installed plugins
 msg: インストール済みのプラグイン
 
@@ -1297,6 +1347,9 @@ msg: アルバムリスト
 
 id: Loading screen
 msg: ロード画面
+
+id: Movies
+msg: ムービー
 
 id: Music streaming
 msg: 音楽ストリーミング
@@ -1365,6 +1418,13 @@ id: Video streaming
 msg: ビデオストリーミング
 
 #
+# ./src/prop/prop_proxy.c
+#
+id: Remote exited
+# Missing translation
+msg: 
+
+#
 # ./src/runcontrol.c
 #
 id: Automatic standby
@@ -1388,9 +1448,6 @@ msg: 終了
 id: SSH server
 msg: SSHサーバー
 
-id: Standby
-msg: スタンバイ
-
 id: Starting and stopping
 msg: 起動 / 終了設定
 
@@ -1408,6 +1465,10 @@ msg: 名前
 #
 id: Local network
 msg: ローカルネットワーク
+
+id: Remove from homepage
+# Missing translation
+msg: 
 
 #
 # ./src/settings.c
@@ -1609,6 +1670,10 @@ msg: スクリーンセーバー
 
 id: Screensaver delay
 msg: スクリーンセーバーが起動するまでの時間
+
+id: Seconds per image
+# Missing translation
+msg: 
 
 id: Use Bing images of the day
 msg: Bingのトップ写真を使う

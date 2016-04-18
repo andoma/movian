@@ -530,6 +530,25 @@ id: Master volume: %d dB
 msg: Загальна гучність: %d дБ
 
 #
+# ./src/api/stpp.c
+#
+id: Allow remote control
+# Missing translation
+msg: 
+
+id: Device not available
+# Missing translation
+msg: 
+
+id: Movians for remote control
+# Missing translation
+msg: 
+
+id: Remote control
+# Missing translation
+msg: 
+
+#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -542,16 +561,6 @@ msg: Використовувати оригінальну назву
 # ./src/arch/android/android.c
 #
 id: Android Storage
-# Missing translation
-msg: 
-
-id: Movies
-msg: Фільми
-
-id: Music
-msg: Музика
-
-id: Pictures
 # Missing translation
 msg: 
 
@@ -785,6 +794,13 @@ id: Recorder
 msg: 
 
 #
+# ./src/backend/playlist.c
+#
+id: Unable to open playlist
+# Missing translation
+msg: 
+
+#
 # ./src/backend/search.c
 #
 id: Search
@@ -829,6 +845,10 @@ msg: Невідомий тип контенту %d
 
 id: Checking file contents
 msg: Перевірка змісту файлу
+
+id: Invalid URL from redirect
+# Missing translation
+msg: 
 
 id: Unable to open file: %s
 msg: Heвдалось відкрити фaйл: %s
@@ -1229,6 +1249,9 @@ id: Icon
 # Missing translation
 msg: 
 
+id: Music
+msg: Музика
+
 id: No handler for URL
 msg: Нема обробника для URL
 
@@ -1237,6 +1260,10 @@ msg: Інше
 
 id: Photos
 msg: Фото
+
+id: Remove bookmark
+# Missing translation
+msg: 
 
 id: Removed %s from homepage
 # Missing translation
@@ -1277,6 +1304,24 @@ msg: FTP-сервер
 
 id: Server TCP port
 msg: TCP-порт сервера
+
+#
+# ./src/networking/http_server.c
+#
+id: Power Off
+# Missing translation
+msg: 
+
+id: Rebooting
+# Missing translation
+msg: 
+
+id: Restarting
+# Missing translation
+msg: 
+
+id: Standby
+msg: Режим очікування
 
 #
 # ./src/plugins.c
@@ -1324,6 +1369,10 @@ msg: Помилка відкриття файлу
 id: Home page
 msg: Головний екран
 
+id: Installed
+# Missing translation
+msg: 
+
 id: Installed plugins
 msg: Встановлені плагіни
 
@@ -1338,6 +1387,9 @@ msg: Список альбомів
 
 id: Loading screen
 msg: Екран завантаження
+
+id: Movies
+msg: Фільми
 
 id: Music streaming
 msg: Потокова музика
@@ -1409,6 +1461,13 @@ id: Video streaming
 msg: Потокове відео
 
 #
+# ./src/prop/prop_proxy.c
+#
+id: Remote exited
+# Missing translation
+msg: 
+
+#
 # ./src/runcontrol.c
 #
 id: Automatic standby
@@ -1432,9 +1491,6 @@ msg: Вихід
 id: SSH server
 msg: SSH сервер
 
-id: Standby
-msg: Режим очікування
-
 id: Starting and stopping
 msg: Запуск і зупинка
 
@@ -1452,6 +1508,10 @@ msg: Ім'я
 #
 id: Local network
 msg: Локальна мережа
+
+id: Remove from homepage
+# Missing translation
+msg: 
 
 #
 # ./src/settings.c
@@ -1662,6 +1722,10 @@ msg:
 
 id: Screensaver delay
 msg: Затримка екранної заставки
+
+id: Seconds per image
+# Missing translation
+msg: 
 
 id: Use Bing images of the day
 # Missing translation

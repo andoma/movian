@@ -71,10 +71,10 @@ msg: min
 # ./glwskins/default/cmdmenu/cmdmenu_dir.view
 #
 id: Add '%s' to home screen
-msg:Додади го %s на почетниот екран
+msg: Додади го %s на почетниот екран
 
 id: Remove '%s' from home screen
-msg:Избриши го %s од почетниот екран
+msg: Избриши го %s од почетниот екран
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_item.view
@@ -525,6 +525,25 @@ id: Master volume: %d dB
 msg: Јачина: %d dB
 
 #
+# ./src/api/stpp.c
+#
+id: Allow remote control
+# Missing translation
+msg: 
+
+id: Device not available
+# Missing translation
+msg: 
+
+id: Movians for remote control
+# Missing translation
+msg: 
+
+id: Remote control
+# Missing translation
+msg: 
+
+#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -538,15 +557,6 @@ msg: Користи го оригиналниот наслов
 #
 id: Android Storage
 msg: Меморија на андроид
-
-id: Movies
-msg: Филмови
-
-id: Music
-msg: Музика
-
-id: Pictures
-msg: Слики
 
 #
 # ./src/arch/linux/pulseaudio.c
@@ -626,14 +636,15 @@ msg: Синхронизирај ја брзината на сликата со �
 id: Audio delay
 msg: Аудио доцнење
 
-id: Audio gain adjustment during video playback
-msg: Јачина на звук за време на репродукција на видеото
-
-id: Audio settings during video playback
-msg: Подесување на звукот за време на репродукција на видеото
+id: Audio gain
+# Missing translation
+msg: 
 
 id: Setup audio output
 msg: Подеси аудио излез
+
+id: Video playback
+msg: Репродукција
 
 #
 # ./src/audio2/audio_test.c
@@ -722,6 +733,10 @@ msg: Испразни кеш
 id: Enable bittorrent
 msg: Активирај Битторент
 
+id: Max upload speed
+# Missing translation
+msg: 
+
 id: Max usage of free space for caching torrents
 msg: Макс. искористеност на слободниот простор
 
@@ -765,7 +780,14 @@ id: Recorded shows
 msg: Снимани емисии
 
 id: Recorder
-msg:Снимач 
+msg: Снимач 
+
+#
+# ./src/backend/playlist.c
+#
+id: Unable to open playlist
+# Missing translation
+msg: 
 
 #
 # ./src/backend/search.c
@@ -808,6 +830,10 @@ msg: Содржината за %D не може да се преработи
 
 id: Checking file contents
 msg: Содржината се проверува
+
+id: Invalid URL from redirect
+# Missing translation
+msg: 
 
 id: Unable to open file: %s
 msg: Датотеката: %d не може да се отвори
@@ -1187,6 +1213,9 @@ msg: Обележувачи
 id: Icon
 msg: Икона
 
+id: Music
+msg: Музика
+
 id: No handler for URL
 msg: URL не може да се преработи
 
@@ -1195,6 +1224,10 @@ msg: Друго
 
 id: Photos
 msg: Слики
+
+id: Remove bookmark
+# Missing translation
+msg: 
 
 id: Removed %s from homepage
 msg: %s е избришан од почетниот екран
@@ -1234,6 +1267,24 @@ msg: FTP сервер
 
 id: Server TCP port
 msg: Порта на TCP сервер
+
+#
+# ./src/networking/http_server.c
+#
+id: Power Off
+# Missing translation
+msg: 
+
+id: Rebooting
+# Missing translation
+msg: 
+
+id: Restarting
+# Missing translation
+msg: 
+
+id: Standby
+msg: Во мирување
 
 #
 # ./src/plugins.c
@@ -1280,6 +1331,10 @@ msg: Датотеката не може да се отвори
 id: Home page
 msg: Почетен екран
 
+id: Installed
+# Missing translation
+msg: 
+
 id: Installed plugins
 msg: Инсталирани додатоци
 
@@ -1294,6 +1349,9 @@ msg: Листа на албуми
 
 id: Loading screen
 msg: Вчитување на екран
+
+id: Movies
+msg: Филмови
 
 id: Music streaming
 msg: Аудио стриминг
@@ -1362,6 +1420,13 @@ id: Video streaming
 msg: Видео стриминг
 
 #
+# ./src/prop/prop_proxy.c
+#
+id: Remote exited
+# Missing translation
+msg: 
+
+#
 # ./src/runcontrol.c
 #
 id: Automatic standby
@@ -1385,9 +1450,6 @@ msg: Откажи
 id: SSH server
 msg: SSH сервер
 
-id: Standby
-msg: Во мирување
-
 id: Starting and stopping
 msg: Пуштање и гаснење
 
@@ -1405,6 +1467,10 @@ msg: Име
 #
 id: Local network
 msg: Локална мрежа
+
+id: Remove from homepage
+# Missing translation
+msg: 
 
 #
 # ./src/settings.c
@@ -1607,6 +1673,10 @@ msg: Чувар на екран
 id: Screensaver delay
 msg: Одложување на чувар на екран
 
+id: Seconds per image
+# Missing translation
+msg: 
+
 id: Use Bing images of the day
 msg: Користи ги сликите на денот од Bing
 
@@ -1742,6 +1812,10 @@ msg: Претпочитан метод VDPAU на деинтерлејсер
 id: Resume video playback
 msg: Продолжи од последната позиција
 
+id: Show clock during playback
+# Missing translation
+msg: 
+
 id: Step when seeking backward
 msg: Чекори за прескокнување назад
 
@@ -1759,7 +1833,4 @@ msg: Горе / Долу за време на репродукција конт�
 
 id: Video acceleration and display behaviour
 msg: Видео запамтените и поставки на иѕглед
-
-id: Video playback
-msg: Репродукција
 

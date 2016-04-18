@@ -525,6 +525,25 @@ id: Master volume: %d dB
 msg: Ήχος εξόδου: %d dB
 
 #
+# ./src/api/stpp.c
+#
+id: Allow remote control
+# Missing translation
+msg: 
+
+id: Device not available
+# Missing translation
+msg: 
+
+id: Movians for remote control
+# Missing translation
+msg: 
+
+id: Remote control
+# Missing translation
+msg: 
+
+#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -537,16 +556,6 @@ msg: Χρησιμοποίηση πρωτότυπου τίτλου
 # ./src/arch/android/android.c
 #
 id: Android Storage
-# Missing translation
-msg: 
-
-id: Movies
-msg: Ταινίες
-
-id: Music
-msg: Μουσική
-
-id: Pictures
 # Missing translation
 msg: 
 
@@ -781,6 +790,13 @@ id: Recorder
 msg: 
 
 #
+# ./src/backend/playlist.c
+#
+id: Unable to open playlist
+# Missing translation
+msg: 
+
+#
 # ./src/backend/search.c
 #
 id: Search
@@ -825,6 +841,10 @@ msg: Αδυναμία χειρισμού τύπων περιεχομένου %d
 
 id: Checking file contents
 msg: Έλεγχος περιεχόμενων αρχείου
+
+id: Invalid URL from redirect
+# Missing translation
+msg: 
 
 id: Unable to open file: %s
 msg: Αδυναμία ανοίγματος του αρχείου: %s
@@ -1225,6 +1245,9 @@ id: Icon
 # Missing translation
 msg: 
 
+id: Music
+msg: Μουσική
+
 id: No handler for URL
 msg: Δεν υπάρχει κρατημένο URL
 
@@ -1233,6 +1256,10 @@ msg: Άλλα
 
 id: Photos
 msg: Φωτογραφίες
+
+id: Remove bookmark
+# Missing translation
+msg: 
 
 id: Removed %s from homepage
 # Missing translation
@@ -1273,6 +1300,24 @@ msg: FTP-Server
 
 id: Server TCP port
 msg: Θύρα Server TCP 
+
+#
+# ./src/networking/http_server.c
+#
+id: Power Off
+# Missing translation
+msg: 
+
+id: Rebooting
+# Missing translation
+msg: 
+
+id: Restarting
+# Missing translation
+msg: 
+
+id: Standby
+msg: Λειτουργία Αναμονής
 
 #
 # ./src/plugins.c
@@ -1320,6 +1365,10 @@ msg: Σφάλμα κατά το άνοιγμα αρχείου
 id: Home page
 msg: Αρχική Σελίδα
 
+id: Installed
+# Missing translation
+msg: 
+
 id: Installed plugins
 msg: Εγκατεστημένες επεκτάσεις
 
@@ -1334,6 +1383,9 @@ msg: Λίστες Άλμπουμ
 
 id: Loading screen
 msg: Οθόνη Φόρτωσης
+
+id: Movies
+msg: Ταινίες
 
 id: Music streaming
 msg: Streaming Μουσικής
@@ -1405,6 +1457,13 @@ id: Video streaming
 msg: Streaming Βίντεο
 
 #
+# ./src/prop/prop_proxy.c
+#
+id: Remote exited
+# Missing translation
+msg: 
+
+#
 # ./src/runcontrol.c
 #
 id: Automatic standby
@@ -1428,9 +1487,6 @@ msg: Έξοδος
 id: SSH server
 msg: SSH-Server
 
-id: Standby
-msg: Λειτουργία Αναμονής
-
 id: Starting and stopping
 msg: Ξεκίνημα και σταμάτημα
 
@@ -1448,6 +1504,10 @@ msg: Όνομα
 #
 id: Local network
 msg: Τοπικό Δίκτυο
+
+id: Remove from homepage
+# Missing translation
+msg: 
 
 #
 # ./src/settings.c
@@ -1658,6 +1718,10 @@ msg:
 
 id: Screensaver delay
 msg: Καθυστέρηση προφύλαξης οθόνης
+
+id: Seconds per image
+# Missing translation
+msg: 
 
 id: Use Bing images of the day
 # Missing translation

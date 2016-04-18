@@ -525,6 +525,25 @@ id: Master volume: %d dB
 msg: Głośność: %d dB
 
 #
+# ./src/api/stpp.c
+#
+id: Allow remote control
+# Missing translation
+msg: 
+
+id: Device not available
+# Missing translation
+msg: 
+
+id: Movians for remote control
+# Missing translation
+msg: 
+
+id: Remote control
+# Missing translation
+msg: 
+
+#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -538,15 +557,6 @@ msg: Użyj oryginalnego tytułu
 #
 id: Android Storage
 msg: Pamięć urządzenia
-
-id: Movies
-msg: Filmy
-
-id: Music
-msg: Muzyka
-
-id: Pictures
-msg: Zdjęcia
 
 #
 # ./src/arch/linux/pulseaudio.c
@@ -773,6 +783,13 @@ id: Recorder
 msg: Nagrywarka
 
 #
+# ./src/backend/playlist.c
+#
+id: Unable to open playlist
+# Missing translation
+msg: 
+
+#
 # ./src/backend/search.c
 #
 id: Search
@@ -813,6 +830,10 @@ msg: Nieobsługiwana zawartość: %d
 
 id: Checking file contents
 msg: Sprawdzanie zawartości pliku
+
+id: Invalid URL from redirect
+# Missing translation
+msg: 
 
 id: Unable to open file: %s
 msg: Nie można otworzyć pliku: %s
@@ -1192,6 +1213,9 @@ msg: Zakładki
 id: Icon
 msg: Ikona
 
+id: Music
+msg: Muzyka
+
 id: No handler for URL
 msg: Brak wsparcia dla URL
 
@@ -1200,6 +1224,10 @@ msg: Inne
 
 id: Photos
 msg: Zdjęcia
+
+id: Remove bookmark
+# Missing translation
+msg: 
 
 id: Removed %s from homepage
 msg: %s usunięty z ekranu głównego
@@ -1239,6 +1267,24 @@ msg: Serwer FTP
 
 id: Server TCP port
 msg: Port TCP serwera
+
+#
+# ./src/networking/http_server.c
+#
+id: Power Off
+# Missing translation
+msg: 
+
+id: Rebooting
+# Missing translation
+msg: 
+
+id: Restarting
+# Missing translation
+msg: 
+
+id: Standby
+msg: Tryb oczekiwania
 
 #
 # ./src/plugins.c
@@ -1285,6 +1331,10 @@ msg: Błąd otwierania pliku
 id: Home page
 msg: Strona główna
 
+id: Installed
+# Missing translation
+msg: 
+
 id: Installed plugins
 msg: Zainstalowane wtyczki
 
@@ -1299,6 +1349,9 @@ msg: Lista albumów
 
 id: Loading screen
 msg: Ekran ładowania
+
+id: Movies
+msg: Filmy
 
 id: Music streaming
 msg: Strumieniowanie Muzyki
@@ -1367,6 +1420,13 @@ id: Video streaming
 msg: Strumieniowanie Video
 
 #
+# ./src/prop/prop_proxy.c
+#
+id: Remote exited
+# Missing translation
+msg: 
+
+#
 # ./src/runcontrol.c
 #
 id: Automatic standby
@@ -1390,9 +1450,6 @@ msg: Zakończ
 id: SSH server
 msg: Serwer SSH
 
-id: Standby
-msg: Tryb oczekiwania
-
 id: Starting and stopping
 msg: Uruchamianie i zatrzymywanie
 
@@ -1410,6 +1467,10 @@ msg: Nazwa
 #
 id: Local network
 msg: Sieć lokalna
+
+id: Remove from homepage
+# Missing translation
+msg: 
 
 #
 # ./src/settings.c
@@ -1612,6 +1673,10 @@ msg: Wygaszacz ekranu
 
 id: Screensaver delay
 msg: Opóźnienie wygaszacza ekranu
+
+id: Seconds per image
+# Missing translation
+msg: 
 
 id: Use Bing images of the day
 msg: Używaj kategorii 'obraz dnia' z Bing
