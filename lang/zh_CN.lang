@@ -528,20 +528,16 @@ msg: 主音量: %d dB
 # ./src/api/stpp.c
 #
 id: Allow remote control
-# Missing translation
-msg: 
+msg: 允许远程控制
 
 id: Device not available
-# Missing translation
-msg: 
+msg: 设备不可用
 
 id: Movians for remote control
-# Missing translation
-msg: 
+msg: 可供远程控制的Movian
 
 id: Remote control
-# Missing translation
-msg: 
+msg: 远程控制
 
 #
 # ./src/api/tmdb.c
@@ -784,8 +780,7 @@ msg: 录像机
 # ./src/backend/playlist.c
 #
 id: Unable to open playlist
-# Missing translation
-msg: 
+msg: 无法打开播放列表
 
 #
 # ./src/backend/search.c
@@ -830,8 +825,7 @@ id: Checking file contents
 msg: 正在检查文件内容
 
 id: Invalid URL from redirect
-# Missing translation
-msg: 
+msg: 无效的重定向URL
 
 id: Unable to open file: %s
 msg: 无法打开文件%s
@@ -1224,8 +1218,7 @@ id: Photos
 msg: 照片
 
 id: Remove bookmark
-# Missing translation
-msg: 
+msg: 移除书签
 
 id: Removed %s from homepage
 msg: %s已从首页移除
@@ -1270,16 +1263,13 @@ msg: 服务器TCP端口
 # ./src/networking/http_server.c
 #
 id: Power Off
-# Missing translation
-msg: 
+msg: 关机
 
 id: Rebooting
-# Missing translation
-msg: 
+msg: 正在重启
 
 id: Restarting
-# Missing translation
-msg: 
+msg: 正在重启
 
 id: Standby
 msg: 关机
@@ -1330,8 +1320,7 @@ id: Home page
 msg: 首页
 
 id: Installed
-# Missing translation
-msg: 
+msg: 已安装
 
 id: Installed plugins
 msg: 已安装插件
@@ -1421,8 +1410,7 @@ msg: 视频流
 # ./src/prop/prop_proxy.c
 #
 id: Remote exited
-# Missing translation
-msg: 
+msg: 远程已退出
 
 #
 # ./src/runcontrol.c
@@ -1467,8 +1455,7 @@ id: Local network
 msg: 本地网络
 
 id: Remove from homepage
-# Missing translation
-msg: 
+msg: 从首页移除
 
 #
 # ./src/settings.c
@@ -1672,8 +1659,7 @@ id: Screensaver delay
 msg: 屏幕保护启动延迟时间
 
 id: Seconds per image
-# Missing translation
-msg: 
+msg: 秒/图片
 
 id: Use Bing images of the day
 msg: 使用Bing的当日图片
