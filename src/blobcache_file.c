@@ -590,7 +590,7 @@ blobcache_get(const char *key, const char *stash, int pad,
       fa_close(fh);
       return NULL;
     }
-
+    b->b_size = p->bi_size; // Get rid of padding in reported length
     if(p->bi_content_type_len) {
       b->b_content_type = rstr_allocl(NULL, p->bi_content_type_len);
       if(fa_read(fh, rstr_data(b->b_content_type), p->bi_content_type_len) !=
