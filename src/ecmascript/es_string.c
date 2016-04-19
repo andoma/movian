@@ -164,10 +164,9 @@ es_entitydecode(duk_context *ctx)
 /**
  *
  */
-static int
-es_queryStringSplit(duk_context *ctx)
+static void
+es_queryStringSplit_internal(duk_context *ctx, const char *str)
 {
-  const char *str = duk_safe_to_string(ctx, 0);
   char *s0, *s;
   duk_push_object(ctx);
 
@@ -197,6 +196,16 @@ es_queryStringSplit(duk_context *ctx)
     free(v);
   }
   free(s0);
+}
+
+
+/**
+ *
+ */
+static int
+es_queryStringSplit(duk_context *ctx)
+{
+  es_queryStringSplit_internal(ctx, duk_safe_to_string(ctx, 0));
   return 1;
 }
 
@@ -269,9 +278,85 @@ es_parseTime(duk_context *ctx)
     duk_error(ctx, DUK_ERR_ERROR, "Invalid time: %s", str);
   duk_push_number(ctx, t * 1000ULL); // Convert to ms
   return 1;
-
 }
 
+
+/**
+ *
+ */
+static int
+es_parseURL(duk_context *ctx)
+{
+  const char *str = duk_require_string(ctx, 0);
+  int parseq = duk_get_boolean(ctx, 1);
+
+  char proto[64];
+  char auth[512];
+  char hostname[512];
+  int port = -1;
+  char path[8192];
+  url_split(proto, sizeof(proto)-1,
+            auth, sizeof(auth),
+            hostname, sizeof(hostname),
+            &port,
+            path, sizeof(path), str);
+
+  duk_push_object(ctx);
+
+  strcat(proto, ":");
+  duk_push_string(ctx, proto);
+  duk_put_prop_string(ctx, -2, "protocol");
+
+  duk_push_string(ctx, hostname);
+  duk_put_prop_string(ctx, -2, "hostname");
+
+  if(*auth) {
+    duk_push_string(ctx, auth);
+    duk_put_prop_string(ctx, -2, "auth");
+  }
+
+  if(port != -1) {
+    duk_push_int(ctx, port);
+    duk_put_prop_string(ctx, -2, "port");
+  }
+
+  char *hash = strrchr(path, '#');
+  if(hash != NULL) {
+    *hash = 0;
+    duk_push_string(ctx, hash + 1);
+    duk_put_prop_string(ctx, -2, "hash");
+  }
+
+  duk_push_string(ctx, path);
+  duk_put_prop_string(ctx, -2, "path");
+
+  char *query = strchr(path, '?');
+  if(query != NULL) {
+    duk_push_string(ctx, query);
+    duk_put_prop_string(ctx, -2, "search");
+    *query++ = 0;
+
+    if(parseq) {
+      es_queryStringSplit_internal(ctx, query);
+    } else {
+      duk_push_object(ctx);
+    }
+    duk_put_prop_string(ctx, -2, "query");
+  } else {
+
+    if(parseq) {
+      duk_push_object(ctx);
+      duk_put_prop_string(ctx, -2, "query");
+      duk_push_string(ctx, "");
+      duk_put_prop_string(ctx, -2, "search");
+    }
+  }
+
+  duk_push_string(ctx, path);
+  duk_put_prop_string(ctx, -2, "pathname");
+
+  return 1;
+}
 
 
 
@@ -284,6 +369,7 @@ static const duk_function_list_entry fnlist_string[] = {
   { "paramEscape",           es_paramEscape,           1 },
   { "durationToString",      es_durationtostring,      1 },
   { "parseTime",             es_parseTime,             1 },
+  { "parseURL",              es_parseURL,              2 },
   { NULL, NULL, 0}
 };
 
