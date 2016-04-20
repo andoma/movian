@@ -23,7 +23,7 @@ id: Disable sleep timer
 msg: Elalvás időzítő kikapcsolása
 
 id: Exit %s
-msg: Kilépés %s
+msg: Kilépés a %s-ból
 
 id: Go to Home screen
 msg: Visszatérés a főképernyőre
@@ -357,10 +357,10 @@ id: Changelog for %s releases
 msg: Változás lista a %s kiadáshoz
 
 id: Check for updates now
-msg: Frissités keresése most
+msg: Frissítés keresése most
 
 id: Checking for updates...
-msg: Frissitések keresése...
+msg: Frissítésék keresése...
 
 id: Checking installed version of %s
 msg: %s telepített verziójának elellenőrzése
@@ -375,7 +375,7 @@ id: Downloading %s
 msg: %s letöltése
 
 id: New version %s is available for download
-msg: A %s új verziója elérhető
+msg: A %s verzió elérhető
 
 id: No upgrade available
 msg: Frissítés nem található
@@ -519,7 +519,7 @@ msg: Össz. ram
 # ./glwskins/default/universe.view
 #
 id: Audio muted
-msg: Hang némitva
+msg: Hang némítva
 
 id: Master volume: %d dB
 msg: Fő hangerő: %d dB
@@ -528,20 +528,16 @@ msg: Fő hangerő: %d dB
 # ./src/api/stpp.c
 #
 id: Allow remote control
-# Missing translation
-msg: 
+msg: Távvezérlés engedélyezése
 
 id: Device not available
-# Missing translation
-msg: 
+msg: Eszköz nem elérhető
 
 id: Movians for remote control
-# Missing translation
-msg: 
+msg: Távvezérelt Movian-ok
 
 id: Remote control
-# Missing translation
-msg: 
+msg: Távvezérlés
 
 #
 # ./src/api/tmdb.c
@@ -556,8 +552,7 @@ msg: Eredeti cím használata
 # ./src/arch/android/android.c
 #
 id: Android Storage
-# Missing translation
-msg: 
+msg: Android Tárhely
 
 #
 # ./src/arch/linux/pulseaudio.c
@@ -629,8 +624,7 @@ msg: Be
 # ./src/arch/rpi/rpi_tv.c
 #
 id: Match display and content framerate
-# Missing translation
-msg: 
+msg: Tartalom és képernyő képkockasebességének összeegyeztetése
 
 #
 # ./src/audio2/audio.c
@@ -639,8 +633,7 @@ id: Audio delay
 msg: Hang késleltetés
 
 id: Audio gain
-# Missing translation
-msg: 
+msg: Hang erősítés
 
 id: Setup audio output
 msg: Hang kimenet beállítása
@@ -736,8 +729,7 @@ id: Enable bittorrent
 msg: Bittorent engedélyezése
 
 id: Max upload speed
-# Missing translation
-msg: 
+msg: Maximális feltöltési sebesség
 
 id: Max usage of free space for caching torrents
 msg: Maximum felhasználható szabadhely a torrentek előtöltésére
@@ -770,30 +762,25 @@ msg: Másodlagos
 # ./src/backend/htsp/htsp.c
 #
 id: Channels
-# Missing translation
-msg: 
+msg: Csatornák
 
 id: Invalid HTSP URL
 msg: Hibás HTSP URL
 
 id: No such channel
-# Missing translation
-msg: 
+msg: Nincs ilyen csatorna
 
 id: Recorded shows
-# Missing translation
-msg: 
+msg: Rögzittet adások
 
 id: Recorder
-# Missing translation
-msg: 
+msg: Rögzítő
 
 #
 # ./src/backend/playlist.c
 #
 id: Unable to open playlist
-# Missing translation
-msg: 
+msg: Lejátszási lista nem megnyitható
 
 #
 # ./src/backend/search.c
@@ -808,20 +795,16 @@ msg: Keresés eredménye a: %s
 # ./src/backend/slideshow/slideshow.c
 #
 id: 3 seconds
-# Missing translation
-msg: 
+msg: 3 másodperc
 
 id: 5 seconds
-# Missing translation
-msg: 
+msg: 5 másodperc
 
 id: 7 seconds
-# Missing translation
-msg: 
+msg: 7 másodperc
 
 id: Slideshow speed
-# Missing translation
-msg: 
+msg: Diavetítés sebbesége
 
 #
 # ./src/blobcache_file.c
@@ -830,7 +813,7 @@ id: Cache cleared
 msg: Cache törölve
 
 id: Clear cached files
-msg: Előtöltött fájlok törtlése
+msg: Előtöltött fájlok törlése
 
 #
 # ./src/fileaccess/fa_backend.c
@@ -842,8 +825,7 @@ id: Checking file contents
 msg: Fájl tartalmának ellenőrzése
 
 id: Invalid URL from redirect
-# Missing translation
-msg: 
+msg: Hibás URL
 
 id: Unable to open file: %s
 msg: A %s nem nyitható meg
@@ -852,8 +834,7 @@ msg: A %s nem nyitható meg
 # ./src/fileaccess/fa_filepicker.c
 #
 id: Select a file
-# Missing translation
-msg: 
+msg: Válasszon fájlt
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -880,15 +861,13 @@ id: Indexed mode
 msg: Indexelt mód
 
 id: Newest first
-# Missing translation
-msg: 
+msg: Újabb előre
 
 id: Oldest first
-# Missing translation
-msg: 
+msg: Régebbi előre
 
 id: Show only supported files
-msg: Csak a támogatott fájltípusok megjelenítése
+msg: Csak támogatott fájltípusok megjelenítése
 
 id: Sort folders first
 msg: Először a mappák
@@ -963,12 +942,10 @@ msg: Objektumnév nem található
 # ./src/i18n.c
 #
 id: 12 Hour
-# Missing translation
-msg: 
+msg: 12 Óra
 
 id: 24 Hour
-# Missing translation
-msg: 
+msg: 24 Óra
 
 id: Default character set
 msg: Alapértelmezett karakterkészlet
@@ -1001,8 +978,7 @@ id: Secondary subtitle language code
 msg: Másodlagos felirat nyelv kódja
 
 id: System default
-# Missing translation
-msg: 
+msg: Rendszer alapérték
 
 id: Tertiary audio language code
 msg: Harmadlagos audió nyelv kódja
@@ -1011,27 +987,22 @@ id: Tertiary subtitle language code
 msg: Harmadlagos felirat nyelv kódja
 
 id: Time format
-# Missing translation
-msg: 
+msg: Idő formátum
 
 id: Timezone
-# Missing translation
-msg: 
+msg: Időzóna
 
 #
 # ./src/ipc/libcec.c
 #
 id: Longpress SELECT for item menu
-# Missing translation
-msg: 
+msg: Hosszan a SELECT-et az eszköz menühöz
 
 id: Switch TV input source
-# Missing translation
-msg: 
+msg: Tv forrás váltása
 
 id: Use STOP key for combo input
-# Missing translation
-msg: 
+msg: Használja a STOP gombot több forráshoz
 
 #
 # ./src/keyring.c
@@ -1046,15 +1017,13 @@ msg: Megjegyzett jelszavak törölve
 # ./src/media/media_settings.c
 #
 id: Align on video frame
-# Missing translation
-msg: 
+msg: Videó képkockára illesztés
 
 id: Audio volume
 msg: Hangerő
 
 id: Delay
-# Missing translation
-msg: 
+msg: Késleltetés
 
 id: Go to standby after video ends
 msg: Készenléti állapot miután a videó véget ér
@@ -1063,12 +1032,10 @@ id: Horizontal pan
 msg: Vízszintes helyzet
 
 id: Horizontal position
-# Missing translation
-msg: 
+msg: Vízszintes pozíció
 
 id: Horizontal scale
-# Missing translation
-msg: 
+msg: Vízszintes méret
 
 id: Reset defaults for folder '%s'
 msg: Alapértelmezések visszaállítása a '%s' mappában
@@ -1080,8 +1047,7 @@ id: Save as global default
 msg: Elmentés mint globális alapértelmezés
 
 id: Scaling
-# Missing translation
-msg: 
+msg: Méretezés
 
 id: Stretch video to fullscreen
 msg: Videó teljes kijelzőre nyújtása
@@ -1093,12 +1059,10 @@ id: Vertical pan
 msg: Függőleges helyzet
 
 id: Vertical position
-# Missing translation
-msg: 
+msg: Függőleges pozíció
 
 id: Vertical scale
-# Missing translation
-msg: 
+msg: Függőleges méret
 
 id: Video frame interpolation
 msg: Videó interpoláció
@@ -1116,7 +1080,7 @@ msg: Indexelés
 # ./src/metadata/decoration.c
 #
 id: Automatic
-msg: Autómata
+msg: Automatikus
 
 id: Erase all playback info
 msg: Minden lejátszási információ törlése
@@ -1185,8 +1149,7 @@ id: IMDb ID
 msg: IMDb ID
 
 id: Metadata loaded from <b>%s</b> based on %s
-# Missing translation
-msg: 
+msg: Metaadat betöltve a <b>%s</b>-ból a %s-n alapulva
 
 id: Metadata source
 msg: Metadata forrása
@@ -1231,8 +1194,7 @@ id: Add and remove items on homepage
 msg: Kezdőképernyő tartalmak hozzáadása vagy törlése
 
 id: Added %s to home page
-# Missing translation
-msg: 
+msg: %s hozzáadva a főoldalhoz
 
 id: Added new bookmark: %s
 msg: Új könyvjelző hozzáadva: %s
@@ -1241,8 +1203,7 @@ id: Bookmarks
 msg: Könyvjelzők
 
 id: Icon
-# Missing translation
-msg: 
+msg: Ikon
 
 id: Music
 msg: Zene
@@ -1257,12 +1218,10 @@ id: Photos
 msg: Fotók
 
 id: Remove bookmark
-# Missing translation
-msg: 
+msg: Könyvjelző törlése
 
 id: Removed %s from homepage
-# Missing translation
-msg: 
+msg: %s törölve a főoldalról
 
 id: Removed bookmark: %s
 msg: Törölt könyvjelző: %s
@@ -1304,16 +1263,13 @@ msg: Szerver TCP port
 # ./src/networking/http_server.c
 #
 id: Power Off
-# Missing translation
-msg: 
+msg: Leállítás
 
 id: Rebooting
-# Missing translation
-msg: 
+msg: Újraindítás
 
 id: Restarting
-# Missing translation
-msg: 
+msg: Lágy újraindítás
 
 id: Standby
 msg: Készenlét
@@ -1349,8 +1305,7 @@ id: Corrupt plugin bundle
 msg: Hibás plugin lista
 
 id: Custom backgrounds can now be set in Settings -> Look and Feel
-# Missing translation
-msg: 
+msg: Egyedi háttér mostantól beállítható a Beállítások -> Kinézet menüben
 
 id: Disk write error
 msg: Lemez írási hiba
@@ -1365,8 +1320,7 @@ id: Home page
 msg: Kezdőoldal
 
 id: Installed
-# Missing translation
-msg: 
+msg: Telepítve
 
 id: Installed plugins
 msg: Telepített pluginok
@@ -1408,12 +1362,10 @@ id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may tr
 msg: A plugin %s %s törlésre került, mert problémákat okozhat.\nProbáljon meg egy másik verziót telepíteni manuálisan.
 
 id: Plugin %s has been uninstalled - %s
-# Missing translation
-msg: 
+msg: A(z) %s plugin törlésre került - %s
 
 id: Plugin categories
-# Missing translation
-msg: 
+msg: Plugin kategóriák
 
 id: Plugins
 msg: Pluginok
@@ -1449,8 +1401,7 @@ id: User interface extensions
 msg: Felhasználói felület kiegészítések
 
 id: Version %s is no longer compatible with Movian
-# Missing translation
-msg: 
+msg: A %s verzió nem kompatibilis a Movian-al
 
 id: Video streaming
 msg: Video streamelés
@@ -1459,8 +1410,7 @@ msg: Video streamelés
 # ./src/prop/prop_proxy.c
 #
 id: Remote exited
-# Missing translation
-msg: 
+msg: A távoli kiszolgáló kilépett
 
 #
 # ./src/runcontrol.c
@@ -1478,7 +1428,7 @@ id: Open shell
 msg: Parancssor megnyitása
 
 id: Power off system
-msg: Renszer leállítása
+msg: Rendszer leállítása
 
 id: Quit
 msg: Kilépés
@@ -1505,15 +1455,13 @@ id: Local network
 msg: Helyi hálozat
 
 id: Remove from homepage
-# Missing translation
-msg: 
+msg: Törlés a főoldalról
 
 #
 # ./src/settings.c
 #
 id: About
-# Missing translation
-msg: 
+msg: Névjegy
 
 id: Applications and installed plugins
 msg: Alkalmazások és telepített pluginok
@@ -1540,7 +1488,7 @@ id: Look and feel
 msg: Kinézet
 
 id: Network services, etc
-msg: Hálozati szolgáltatások, stb
+msg: Hálózati szolgáltatások, stb
 
 id: Network settings
 msg: Hálózati beállítások
@@ -1555,8 +1503,7 @@ id: System related settings
 msg: Rendszerrel kapcsolatos beállítások
 
 id: TV Control
-# Missing translation
-msg: 
+msg: TV irányítás
 
 #
 # ./src/subtitles/subtitles.c
@@ -1583,7 +1530,7 @@ id: External file
 msg: Külső fájl
 
 id: Force subtitles to reside on video frame
-msg: Felirat kényszerítése a videóra
+msg: Felirat kényszerítése a videó képre
 
 id: Generic settings for video subtitles
 msg: Videó feliratok beállításai
@@ -1655,13 +1602,13 @@ id: Narrow text
 msg: Keskeny szöveg
 
 id: Reset main font to default
-msg: Alap betűstílus visszaállítása
+msg: Alap betűkészlet visszaállítása
 
 id: Reset narrow font to default
-msg: Keskeny szöveg visszaállítása
+msg: Keskeny betűkészlet visszaállítása
 
 id: Reset subtitle font to default
-msg: Alap felirat betűstílus visszaállítása
+msg: Alap felirat betűkészlet visszaállítása
 
 id: Unable to install font: %s
 msg: A következő betűkészlet nem telíthető: %s
@@ -1676,8 +1623,7 @@ msg: Felhasználói felület
 # ./src/ui/glw/glw_ps3.c
 #
 id: Dual-Shock Remote
-# Missing translation
-msg: 
+msg: Dual-Shock Kar
 
 id: Seek using L2 and R2 button
 msg: Tekerés a L2 és az R2 gombbal
@@ -1689,42 +1635,34 @@ msg: Igen, a select gombbal
 # ./src/ui/glw/glw_settings.c
 #
 id: Custom background image
-# Missing translation
-msg: 
+msg: Egyedi háttér
 
 id: Emulate Up/Down buttons with mouse wheel
-# Missing translation
-msg: 
+msg: Fől/Le gombok emulálása az egérgörgővel
 
 id: Folder for screensaver images
-# Missing translation
-msg: 
+msg: Képernyőkímélő képek mappája
 
 id: Font and icon size
 msg: Betű és ikonméret
 
 id: Interface horizontal shrink
-# Missing translation
-msg: 
+msg: Interfész vízszintes levágása
 
 id: Interface vertical shrink
-# Missing translation
-msg: 
+msg: Interfész függőleges levágása
 
 id: Screensaver
-# Missing translation
-msg: 
+msg: Képernyőkímélő
 
 id: Screensaver delay
 msg: Képernyőkímélő késleltetése
 
 id: Seconds per image
-# Missing translation
-msg: 
+msg: Másodperc per kép
 
 id: Use Bing images of the day
-# Missing translation
-msg: 
+msg: Használja a Bing nap képét
 
 id: Wrap when reaching beginning/end of lists
 msg: Visszaugrás mikor eléri a lista elejét/végét
@@ -1733,48 +1671,37 @@ msg: Visszaugrás mikor eléri a lista elejét/végét
 # ./src/ui/glw/glw_view_eval.c
 #
 id: %d days ago
-# Missing translation
-msg: 
+msg: %d napja
 
 id: %d hours ago
-# Missing translation
-msg: 
+msg: %d órája
 
 id: %d minutes ago
-# Missing translation
-msg: 
+msg: %d perce
 
 id: %d months ago
-# Missing translation
-msg: 
+msg: %d hónapja
 
 id: %d weeks ago
-# Missing translation
-msg: 
+msg: %d hete
 
 id: %d years ago
-# Missing translation
-msg: 
+msg: %d éve
 
 id: Just now
-# Missing translation
-msg: 
+msg: épp most
 
 id: One day ago
-# Missing translation
-msg: 
+msg: Egy napja
 
 id: One hour ago
-# Missing translation
-msg: 
+msg: Egy órája
 
 id: One minute ago
-# Missing translation
-msg: 
+msg: Egy perce
 
 id: One month ago
-# Missing translation
-msg: 
+msg: Egy hónapja
 
 #
 # ./src/ui/linux/nvidia.c
@@ -1807,7 +1734,7 @@ id: Software upgrade
 msg: Szoftver frissítés
 
 id: Upgrade to releases from
-msg: Frissítés kiadásokra a
+msg: Frissítési kiadás
 
 #
 # ./src/upnp/upnp_browse.c
@@ -1849,8 +1776,7 @@ id: Enable VDPAU
 msg: VDPAU engedélyezése
 
 id: Hardware accelerated decoding
-# Missing translation
-msg: 
+msg: Hardveresen gyorsított dekódolás
 
 id: Maximum resolution for deinterlacer
 msg: Deinterlace maximum felbontása
@@ -1871,8 +1797,7 @@ id: Resume video playback
 msg: Videó lejátszás folytatása
 
 id: Show clock during playback
-# Missing translation
-msg: 
+msg: Óra megjelenítése lejátszás közben
 
 id: Step when seeking backward
 msg: Lépés visszatekerésnél
@@ -1887,7 +1812,7 @@ id: Temporal/Spatial
 msg: Időbeli/Térbeli
 
 id: Up / Down during video playback controls
-msg: Le / fel videó lejátszás közben
+msg: Le / fel gomb videó lejátszás közben
 
 id: Video acceleration and display behaviour
 msg: Videó gyorsítás és képernyő megjelenítés
