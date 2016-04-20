@@ -717,11 +717,11 @@ handle_mouse_event(nacl_glw_root_t *ngr, PP_Resource mouse_event,
 
   struct PP_Point pos = ppb_mouseinputevent->GetPosition(mouse_event);
 
-  gpe.x =  (2.0 * pos.x / ngr->gr.gr_width ) - 1;
-  gpe.y = -(2.0 * pos.y / ngr->gr.gr_height) + 1;
+  gpe.screen_x =  (2.0 * pos.x / ngr->gr.gr_width ) - 1;
+  gpe.screen_y = -(2.0 * pos.y / ngr->gr.gr_height) + 1;
 
-  ngr->mouse_x = gpe.x;
-  ngr->mouse_y = gpe.y;
+  ngr->mouse_x = gpe.screen_x;
+  ngr->mouse_y = gpe.screen_y;
 
   PP_InputEvent_MouseButton ppbtn =
     ppb_mouseinputevent->GetButton(mouse_event);
@@ -784,8 +784,8 @@ handle_wheel_event(nacl_glw_root_t *ngr, PP_Resource wheel_event)
   struct PP_FloatPoint pos = ppb_wheelinputevent->GetDelta(wheel_event);
   //  int pagemode = ppb_wheelinputevent->GetScrollByPage(wheel_event);
 
-  gpe.x = ngr->mouse_x;
-  gpe.y = ngr->mouse_y;
+  gpe.screen_x = ngr->mouse_x;
+  gpe.screen_y = ngr->mouse_y;
   gpe.delta_x = pos.x;
   gpe.delta_y = -pos.y;
 

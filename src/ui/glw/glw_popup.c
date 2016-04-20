@@ -83,10 +83,10 @@ popup_render(glw_t *w, const glw_rctx_t *rc)
     return;
 
   int x1 = rc->rc_width / 2 - p->width / 2;
-  int x2 = rc->rc_width / 2 + p->width / 2;
+  int x2 = x1 + p->width;
 
   int y1 = rc->rc_height / 2 - p->height / 2;
-  int y2 = rc->rc_height / 2 + p->height / 2;
+  int y2 = y1 + p->height;
 
   glw_reposition(&rc0, x1, y2, x2, y1);
 

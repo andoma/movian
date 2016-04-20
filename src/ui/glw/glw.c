@@ -669,8 +669,8 @@ glw_prepare_frame(glw_root_t *gr, int flags)
   if(gr->gr_mouse_valid) {
     glw_pointer_event_t gpe;
     gpe.ts = 0;
-    gpe.x = gr->gr_mouse_x;
-    gpe.y = gr->gr_mouse_y;
+    gpe.screen_x = gr->gr_mouse_x;
+    gpe.screen_y = gr->gr_mouse_y;
     gpe.type = GLW_POINTER_MOTION_REFRESH;
     glw_pointer_event(gr, &gpe);
   }
@@ -1936,7 +1936,9 @@ glw_pointer_event_deliver(glw_t *w, glw_pointer_event_t *gpe)
 
   case GLW_POINTER_RIGHT_PRESS:
     e = event_create_action(ACTION_ITEMMENU);
-    e->e_flags |= EVENT_MOUSE;
+    e->e_flags |= EVENT_MOUSE | EVENT_SCREEN_POSITION;
+    e->e_screen_x = gpe->screen_x;
+    e->e_screen_y = gpe->screen_y;
     r = glw_event_to_widget(w, e);
     event_release(e);
     return r;
@@ -1960,7 +1962,9 @@ glw_pointer_event_deliver(glw_t *w, glw_pointer_event_t *gpe)
       glw_path_modify(w, 0, GLW_IN_PRESSED_PATH, NULL);
       e = event_create_action_multi((const action_type_t[]){
           ACTION_CLICK, ACTION_ACTIVATE}, 2);
-      e->e_flags |= flags;
+      e->e_flags |= flags | EVENT_SCREEN_POSITION;
+      e->e_screen_x = gpe->screen_x;
+      e->e_screen_y = gpe->screen_y;
       glw_event_to_widget(w, e);
       event_release(e);
       gr->gr_pointer_press = NULL;
@@ -2013,13 +2017,9 @@ glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
       gpe0 = alloca(sizeof(glw_pointer_event_t));
 
       const glw_class_t *gc = w->glw_class;
-
-      gpe0->type = gpe->type;
-      gpe0->x = x;
-      gpe0->y = y;
-      gpe0->ts = gpe->ts;
-      gpe0->delta_y = gpe->delta_y;
-      gpe0->delta_x = gpe->delta_x;
+      *gpe0 = *gpe;
+      gpe0->local_x = x;
+      gpe0->local_y = y;
 
       if(gc->gc_pointer_event_filter != NULL)
         if(gc->gc_pointer_event_filter(w, gpe0))
@@ -2085,9 +2085,9 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
     }
   }
 
-  glw_vec3_copy(p, glw_vec3_make(gpe->x, gpe->y, -2.41));
-  glw_vec3_sub(dir, p, glw_vec3_make(gpe->x * 42.38,
-				     gpe->y * 42.38,
+  glw_vec3_copy(p, glw_vec3_make(gpe->screen_x, gpe->screen_y, -2.41));
+  glw_vec3_sub(dir, p, glw_vec3_make(gpe->screen_x * 42.38,
+				     gpe->screen_y * 42.38,
 				     -100));
 
 
@@ -2100,27 +2100,27 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
   }
 
   if(gpe->type == GLW_POINTER_TOUCH_START) {
-    gr->gr_touch_start_x = gpe->x;
-    gr->gr_touch_start_y = gpe->y;
+    gr->gr_touch_start_x = gpe->screen_x;
+    gr->gr_touch_start_y = gpe->screen_y;
     prop_set(gr->gr_prop_ui, "touch", PROP_SET_INT, 1);
   }
 
   if(gpe->type == GLW_POINTER_TOUCH_MOVE) {
-    gr->gr_touch_move_x = gpe->x;
-    gr->gr_touch_move_y = gpe->y;
+    gr->gr_touch_move_x = gpe->screen_x;
+    gr->gr_touch_move_y = gpe->screen_y;
   }
 
   if(gpe->type == GLW_POINTER_TOUCH_END) {
-    gr->gr_touch_end_x = gpe->x;
-    gr->gr_touch_end_y = gpe->y;
+    gr->gr_touch_end_x = gpe->screen_x;
+    gr->gr_touch_end_y = gpe->screen_y;
   }
 
   /* If a widget has grabbed to pointer (such as when holding the button
      on a slider), dispatch events there */
 
-  if(gpe->x != gr->gr_mouse_x || gpe->y != gr->gr_mouse_y) {
-    gr->gr_mouse_x = gpe->x;
-    gr->gr_mouse_y = gpe->y;
+  if(gpe->screen_x != gr->gr_mouse_x || gpe->screen_y != gr->gr_mouse_y) {
+    gr->gr_mouse_x = gpe->screen_x;
+    gr->gr_mouse_y = gpe->screen_y;
     gr->gr_mouse_valid = 1;
 
     if(gpe->type == GLW_POINTER_MOTION_UPDATE ||
@@ -2132,17 +2132,17 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
 
       if((w = gr->gr_pointer_grab) != NULL && w->glw_matrix != NULL) {
         glw_widget_unproject(w->glw_matrix, &x, &y, p, dir);
+        gpe0 = *gpe;
         gpe0.type = GLW_POINTER_FOCUS_MOTION;
-        gpe0.x = x;
-        gpe0.y = y;
-        gpe0.ts = gpe->ts;
+        gpe0.local_x = x;
+        gpe0.local_y = y;
         glw_send_pointer_event(w, &gpe0);
       } else if((w = gr->gr_pointer_grab_scroll) != NULL && w->glw_matrix != NULL) {
         glw_widget_unproject(w->glw_matrix, &x, &y, p, dir);
+        gpe0 = *gpe;
         gpe0.type = GLW_POINTER_FOCUS_MOTION;
-        gpe0.x = x;
-        gpe0.y = y;
-        gpe0.ts = gpe->ts;
+        gpe0.local_x = x;
+        gpe0.local_y = y;
         glw_send_pointer_event(w, &gpe0);
       } else if((w = gr->gr_pointer_press) != NULL && w->glw_matrix != NULL) {
 
@@ -2165,9 +2165,9 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
       gpe->type == GLW_POINTER_TOUCH_END) && gr->gr_pointer_grab != NULL) {
     w = gr->gr_pointer_grab;
     glw_widget_unproject(w->glw_matrix, &x, &y, p, dir);
-    gpe0.type = gpe->type;
-    gpe0.x = x;
-    gpe0.y = y;
+    gpe0 = *gpe;
+    gpe0.local_x = x;
+    gpe0.local_y = y;
 
     glw_send_pointer_event(w, &gpe0);
     gr->gr_pointer_grab = NULL;

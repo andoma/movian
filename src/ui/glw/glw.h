@@ -251,7 +251,10 @@ typedef enum {
 } glw_pointer_event_type_t;
 
 typedef struct glw_pointer_event {
-  float x, y;
+  float screen_x;
+  float screen_y;
+  float local_x;
+  float local_y;
   float delta_x;
   float delta_y;
   glw_pointer_event_type_t type;

@@ -194,8 +194,8 @@ glw_in_fullwindow(void *opaque, int val)
   NSPoint loc = [self convertPointToBacking:[event locationInWindow]];
   glw_pointer_event_t gpe;
 
-  gpe.x = (2.0 * loc.x / gr->gr_width) - 1;
-  gpe.y = (2.0 * loc.y / gr->gr_height) - 1;
+  gpe.screen_x = (2.0 * loc.x / gr->gr_width) - 1;
+  gpe.screen_y = (2.0 * loc.y / gr->gr_height) - 1;
   gpe.type = type;
 
   gpe.ts = [event timestamp] * 1000000.0;

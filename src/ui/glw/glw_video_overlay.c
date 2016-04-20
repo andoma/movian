@@ -459,8 +459,8 @@ glw_video_overlay_pointer_event(video_decoder_t *vd, int width, int height,
   if(!pci->hli.hl_gi.hli_ss)
     return 0;
 
-  x = (0.5 +  0.5 * gpe->x) * (float)width;
-  y = (0.5 + -0.5 * gpe->y) * (float)height;
+  x = (0.5 +  0.5 * gpe->local_x) * (float)width;
+  y = (0.5 + -0.5 * gpe->local_y) * (float)height;
 
   best = 0;
   dist = 0x08000000; /* >> than  (720*720)+(567*567); */

@@ -261,8 +261,8 @@ Java_com_lonelycoder_mediaplayer_Core_glwMotion(JNIEnv *env,
           x, y, source);
 
   glw_lock(gr);
-  gpe.x =  (2.0f * x / gr->gr_width ) - 1.0f;
-  gpe.y = -(2.0f * y / gr->gr_height) + 1.0f;
+  gpe.screen_x =  (2.0f * x / gr->gr_width ) - 1.0f;
+  gpe.screen_y = -(2.0f * y / gr->gr_height) + 1.0f;
   glw_pointer_event(gr, &gpe);
   glw_unlock(gr);
 }

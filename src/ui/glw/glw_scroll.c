@@ -39,10 +39,10 @@ glw_scroll_handle_pointer_event_filter(glw_scroll_control_t *gs,
     gr->gr_pointer_grab_scroll = w;
 
     gs->initial_pos = gs->target_pos;
-    gs->initial_touch_x = gpe->x;
-    gs->initial_touch_y = gpe->y;
-    gs->last_touch_x = gpe->x;
-    gs->last_touch_y = gpe->y;
+    gs->initial_touch_x = gpe->local_x;
+    gs->initial_touch_y = gpe->local_y;
+    gs->last_touch_x = gpe->local_x;
+    gs->last_touch_y = gpe->local_y;
     gs->last_touch_time = gpe->ts;
     gs->touch_velocity = 0;
     gs->kinetic_scroll = 0;
@@ -101,8 +101,8 @@ glw_scroll_handle_pointer_event(glw_scroll_control_t *gs,
       return 0;
 
     gs->bottom_anchored = 0;
-    gs->target_pos = (gpe->y - gs->initial_touch_y) * gs->page_size * 0.5 +
-      gs->initial_pos;
+    gs->target_pos = (gpe->local_y - gs->initial_touch_y) *
+        gs->page_size * 0.5 + gs->initial_pos;
 
     const int max_value =
       MAX(0, gs->total_size - gs->page_size + gs->scroll_threshold_post);
@@ -117,12 +117,12 @@ glw_scroll_handle_pointer_event(glw_scroll_control_t *gs,
 
     dt = gpe->ts - gs->last_touch_time;
     if(dt > 100) {
-      v = 1000000.0 * (gpe->y - gs->last_touch_y) / dt;
+      v = 1000000.0 * (gpe->local_y - gs->last_touch_y) / dt;
       gs->touch_velocity = v * 10;
     }
     gs->last_touch_time = gpe->ts;
-    gs->last_touch_x = gpe->x;
-    gs->last_touch_y = gpe->y;
+    gs->last_touch_x = gpe->local_x;
+    gs->last_touch_y = gpe->local_y;
     w->glw_flags |= GLW_UPDATE_METRICS;
     glw_schedule_refresh(w->glw_root, 0);
     break;

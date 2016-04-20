@@ -221,8 +221,8 @@
   const int height = [[self view] bounds].size.height;
   const int width  = [[self view] bounds].size.width;
   
-  gpe.x =  (2.0 * point->x / width)  - 1;
-  gpe.y = -(2.0 * point->y / height) + 1;
+  gpe.screen_x =  (2.0 * point->x / width)  - 1;
+  gpe.screen_y = -(2.0 * point->y / height) + 1;
   gpe.ts = ts * 1000000.0;
   gpe.type = type;
   glw_pointer_event(gr, &gpe);

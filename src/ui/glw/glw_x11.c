@@ -1072,8 +1072,8 @@ glw_x11_mainloop(glw_x11_t *gx11)
       case MotionNotify:
 	show_cursor(gx11);
 
-        gpe.x =  (2.0 * event.xmotion.x / gx11->gr.gr_width ) - 1;
-        gpe.y = -(2.0 * event.xmotion.y / gx11->gr.gr_height) + 1;
+        gpe.screen_x =  (2.0 * event.xmotion.x / gx11->gr.gr_width ) - 1;
+        gpe.screen_y = -(2.0 * event.xmotion.y / gx11->gr.gr_height) + 1;
         gpe.ts = event.xmotion.time * 1000LL;
         gpe.type = GLW_POINTER_MOTION_UPDATE;
         glw_lock(&gx11->gr);
@@ -1082,8 +1082,8 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	break;
 
       case ButtonRelease:
-	gpe.x =  (2.0 * event.xmotion.x / gx11->gr.gr_width ) - 1;
-	gpe.y = -(2.0 * event.xmotion.y / gx11->gr.gr_height) + 1;
+	gpe.screen_x =  (2.0 * event.xmotion.x / gx11->gr.gr_width ) - 1;
+	gpe.screen_y = -(2.0 * event.xmotion.y / gx11->gr.gr_height) + 1;
         gpe.ts = event.xmotion.time * 1000LL;
 
 	switch(event.xbutton.button) {
@@ -1103,8 +1103,8 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	break;
 
       case ButtonPress:
-	gpe.x =  (2.0 * event.xmotion.x / gx11->gr.gr_width ) - 1;
-	gpe.y = -(2.0 * event.xmotion.y / gx11->gr.gr_height) + 1;
+	gpe.screen_x =  (2.0 * event.xmotion.x / gx11->gr.gr_width ) - 1;
+	gpe.screen_y = -(2.0 * event.xmotion.y / gx11->gr.gr_height) + 1;
         gpe.ts = event.xmotion.time * 1000LL;
 
 	switch(event.xbutton.button) {
