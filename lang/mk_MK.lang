@@ -423,7 +423,7 @@ id: Packet buffer:
 msg: Пакет бафер:
 
 id: Playback status
-msg: Статус на репродукција
+msg: Статус на емитување
 
 id: Remaining buffer:
 msg: Преостанат бафер:
@@ -528,20 +528,16 @@ msg: Јачина: %d dB
 # ./src/api/stpp.c
 #
 id: Allow remote control
-# Missing translation
-msg: 
+msg: Дозволи далечно управување
 
 id: Device not available
-# Missing translation
-msg: 
+msg: Уредот не е достапен
 
 id: Movians for remote control
-# Missing translation
-msg: 
+msg: Достапни Movian-и за далечно управување
 
 id: Remote control
-# Missing translation
-msg: 
+msg: Далечински управувач
 
 #
 # ./src/api/tmdb.c
@@ -580,7 +576,7 @@ id: Cell-h264: Broken headers, Disabling acceleration
 msg: Cell-h264: Хедерот е расипан, Се деактивира забрзување
 
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
-msg: Cell-h264: Присилувам Level 4.2 за содржината во Level %d.%d \nОва може да ја прекине репродукцијата.
+msg: Cell-h264: Присилувам Level 4.2 за содржината во Level %d.%d \nОва може да го прекине емитувањето.
 
 id: Unable to accelerate %s, library not loaded.
 msg: Не може да се забрза %s, библиотеката не е вчитана.
@@ -637,14 +633,13 @@ id: Audio delay
 msg: Аудио доцнење
 
 id: Audio gain
-# Missing translation
-msg: 
+msg: Појачување на звук
 
 id: Setup audio output
 msg: Подеси аудио излез
 
 id: Video playback
-msg: Репродукција
+msg: Аудио емитување
 
 #
 # ./src/audio2/audio_test.c
@@ -734,11 +729,10 @@ id: Enable bittorrent
 msg: Активирај Битторент
 
 id: Max upload speed
-# Missing translation
-msg: 
+msg: Макс. брзина на качување
 
 id: Max usage of free space for caching torrents
-msg: Макс. искористеност на слободниот простор
+msg: Макс. искористеност на слободниот простор за торенти
 
 id: Status
 msg: Статус
@@ -786,8 +780,7 @@ msg: Снимач
 # ./src/backend/playlist.c
 #
 id: Unable to open playlist
-# Missing translation
-msg: 
+msg: Листата не може да се отвори
 
 #
 # ./src/backend/search.c
@@ -832,8 +825,7 @@ id: Checking file contents
 msg: Содржината се проверува
 
 id: Invalid URL from redirect
-# Missing translation
-msg: 
+msg: Невалидна адреса од пренасочувач
 
 id: Unable to open file: %s
 msg: Датотеката: %d не може да се отвори
@@ -965,7 +957,7 @@ id: Language
 msg: Јазик
 
 id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
-msg: Јазичните кодови треба да бидат во ISO 639-2/B -кодови, пример.: mac,eng,deu
+msg: Јазичните кодови треба да бидат во ISO 639-2/B -кодови, пример.: mac, eng, ger
 
 id: Languages
 msg: Јазици
@@ -1136,7 +1128,7 @@ msg: Видео провајдери
 # ./src/metadata/metadb.c
 #
 id: %d items deleted
-msg: %d записи се избришани
+msg: %d елементи се избришани
 
 id: Clear all metadata
 msg: Отстрани ги сите метаподатоци 
@@ -1205,7 +1197,7 @@ id: Added %s to home page
 msg: %s е додаден на почетниот екран
 
 id: Added new bookmark: %s
-msg: Додадена е нов обележувач за: %s
+msg: Додаден е нов обележувач за: %s
 
 id: Bookmarks
 msg: Обележувачи
@@ -1226,8 +1218,7 @@ id: Photos
 msg: Слики
 
 id: Remove bookmark
-# Missing translation
-msg: 
+msg: Избриши обележувач
 
 id: Removed %s from homepage
 msg: %s е избришан од почетниот екран
@@ -1272,16 +1263,13 @@ msg: Порта на TCP сервер
 # ./src/networking/http_server.c
 #
 id: Power Off
-# Missing translation
-msg: 
+msg: Исклучи
 
 id: Rebooting
-# Missing translation
-msg: 
+msg: Повторно подигање
 
 id: Restarting
-# Missing translation
-msg: 
+msg: Се рестартира
 
 id: Standby
 msg: Во мирување
@@ -1332,8 +1320,7 @@ id: Home page
 msg: Почетен екран
 
 id: Installed
-# Missing translation
-msg: 
+msg: Инсталирано
 
 id: Installed plugins
 msg: Инсталирани додатоци
@@ -1423,8 +1410,7 @@ msg: Видео стриминг
 # ./src/prop/prop_proxy.c
 #
 id: Remote exited
-# Missing translation
-msg: 
+msg: Исклучен од далечина
 
 #
 # ./src/runcontrol.c
@@ -1469,8 +1455,7 @@ id: Local network
 msg: Локална мрежа
 
 id: Remove from homepage
-# Missing translation
-msg: 
+msg: Отстрани од почетниот екран
 
 #
 # ./src/settings.c
@@ -1674,8 +1659,7 @@ id: Screensaver delay
 msg: Одложување на чувар на екран
 
 id: Seconds per image
-# Missing translation
-msg: 
+msg: Секунди по слика
 
 id: Use Bing images of the day
 msg: Користи ги сликите на денот од Bing
@@ -1813,8 +1797,7 @@ id: Resume video playback
 msg: Продолжи од последната позиција
 
 id: Show clock during playback
-# Missing translation
-msg: 
+msg: Покажи го часовникот за време на емитување
 
 id: Step when seeking backward
 msg: Чекори за прескокнување назад
@@ -1829,7 +1812,7 @@ id: Temporal/Spatial
 msg: Временски/Просторно
 
 id: Up / Down during video playback controls
-msg: Горе / Долу за време на репродукција контролира
+msg: Горе / Долу за време на емитување контролира
 
 id: Video acceleration and display behaviour
 msg: Видео запамтените и поставки на иѕглед
