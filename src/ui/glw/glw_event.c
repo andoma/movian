@@ -33,6 +33,23 @@ typedef struct glw_event_external {
 } glw_event_external_t;
 
 
+
+/**
+ *
+ */
+static void
+glw_event_map_send_to_widget(glw_t *w, event_t *src, event_t *origin)
+{
+  event_t *clone = origin ? event_clone(src) : NULL;
+  if(clone == NULL) {
+    glw_event_to_widget(w, src);
+    return;
+  }
+  event_apply_metadata(clone, origin);
+  glw_event_to_widget(w, clone);
+  event_release(clone);
+}
+
 /**
  *
  */
@@ -63,7 +80,7 @@ static void
 glw_event_map_external_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
 {
   glw_event_external_t *gee = (glw_event_external_t *)gem;
-  glw_event_to_widget(w, gee->e);
+  glw_event_map_send_to_widget(w, gee->e, src);
 }
 
 
@@ -116,7 +133,7 @@ glw_event_map_playTrack_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
 {
   glw_event_playTrack_t *g = (glw_event_playTrack_t *)gem;
   event_t *e = event_create_playtrack(g->track, g->source, g->mode);
-
+  event_apply_metadata(e, src);
   glw_event_to_widget(w, e);
   event_release(e);
 }
@@ -176,6 +193,7 @@ glw_event_map_propref_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
     e->e_nav = prop_ref_inc(w->glw_root->gr_prop_nav);
     prop_send_ext_event(g->target, e);
   } else {
+    event_apply_metadata(e, src);
     glw_event_to_widget(w, e);
   }
   event_release(e);
@@ -408,6 +426,7 @@ glw_event_map_internal_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
         glw_bubble_event2(t, e);
     }
   } else {
+    event_apply_metadata(e, src);
     glw_event_to_widget(w, e);
   }
   event_release(e);

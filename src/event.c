@@ -209,6 +209,35 @@ action_str2code(const char *str)
 /**
  *
  */
+void
+event_apply_metadata(event_t *dst, const event_t *src)
+{
+  if(src == NULL)
+    return;
+  dst->e_timestamp = src->e_timestamp;
+  if(src->e_flags & EVENT_SCREEN_POSITION) {
+    dst->e_flags |= EVENT_SCREEN_POSITION;
+    dst->e_screen_x = src->e_screen_x;
+    dst->e_screen_y = src->e_screen_y;
+  }
+}
+
+/**
+ *
+ */
+event_t *
+event_clone(const event_t *src)
+{
+  if(src->e_clone == NULL) {
+    fprintf(stderr, "Event %s is not clonable\n", event_sprint(src));
+    return NULL;
+  }
+  return src->e_clone(src);
+}
+
+/**
+ *
+ */
 event_t *
 event_create_str(event_type_t et, const char *str)
 {
@@ -464,6 +493,17 @@ event_prop_action_dtor(event_t *e)
 /**
  *
  */
+static event_t *
+event_prop_action_clone(const event_t *src)
+{
+  const event_prop_action_t *epa = (const event_prop_action_t *)src;
+  return event_create_prop_action(epa->p, epa->action);
+}
+
+
+/**
+ *
+ */
 event_t *
 event_create_prop_action(prop_t *p, rstr_t *action)
 {
@@ -472,6 +512,7 @@ event_create_prop_action(prop_t *p, rstr_t *action)
   e->p = prop_ref_inc(p);
   e->action = rstr_dup(action);
   e->h.e_dtor = event_prop_action_dtor;
+  e->h.e_clone = event_prop_action_clone;
   return &e->h;
 }
 
@@ -633,6 +674,11 @@ event_sprint(const event_t *e)
       snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "%s%s",
                i == 0 ? "" : ", ", action_code2str(eav->actions[i]));
     break;
+  case EVENT_PROP_ACTION:
+    {
+      const event_prop_action_t *epa = (const event_prop_action_t *)e;
+      return rstr_get(epa->action);
+    }
   default:
     snprintf(buf, sizeof(buf), "event<%d>", e->e_type);
     break;

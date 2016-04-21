@@ -183,6 +183,7 @@ TAILQ_HEAD(event_q, event);
 typedef struct event {
   struct prop *e_nav;
   void (*e_dtor)(struct event *e);
+  struct event *(*e_clone)(const struct event *src);
   TAILQ_ENTRY(event) e_link;
   int64_t e_timestamp;
   float e_screen_x;  // Only valid if EVENT_SCREEN_POSITION is set
@@ -352,6 +353,10 @@ typedef struct event_scroll {
 void event_generic_dtor(event_t *e);
 
 void *event_create(event_type_t type, size_t size);
+
+event_t *event_clone(const event_t *src);
+
+void event_apply_metadata(event_t *dst, const event_t *src);
 
 event_t *event_create_action(action_type_t action);
 
