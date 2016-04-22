@@ -80,7 +80,7 @@ msg: '%s' をホームから削除
 # ./glwskins/default/cmdmenu/cmdmenu_item.view
 #
 id: Continue from %s
-msg: %sから再生
+msg: %s から再生
 
 id: Continue playback here
 msg: ここから再生
@@ -212,7 +212,7 @@ msg: 表示形式
 # ./glwskins/default/pages/discovered.view
 #
 id: Discovered resources on local network
-msg: ローカルネットワーク上にリソースを検出しました。
+msg: ローカルネットワーク上のリソース
 
 #
 # ./glwskins/default/pages/home.view
@@ -480,7 +480,7 @@ id: No, Start over
 msg: 始めから再生
 
 id: Resume %s from %s
-msg: リジューム再生しますか？ %s 開始位置 %s
+msg: リジューム再生 %s 開始位置 %s
 
 #
 # ./glwskins/default/screensaver.view
@@ -528,7 +528,7 @@ msg: 主音量: %d dB
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
-msg: 使用言語 (ISO 639-1 コード)
+msg: 使用言語(ISO 639-1 コード)
 
 id: Use original title
 msg: 元のタイトルを使用
@@ -570,7 +570,7 @@ id: Cell-h264: Broken headers, Disabling acceleration
 msg: Cell-h264: データが壊れています。アクセラレーションを無効化します。
 
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
-msg: Cell-h264: レベル%dのコンテンツにレベル4.2を強制します。%d このコンテンツは正しく再生されない可能性があります。.
+msg: Cell-h264: レベル %d のコンテンツにレベル 4.2 を強制します。このコンテンツ %d は正しく再生されない可能性があります。
 
 id: Unable to accelerate %s, library not loaded.
 msg: %s にアクセラレーターが適用できません。ライブラリはロードされません。
@@ -780,13 +780,13 @@ msg: 検索結果: %s
 # ./src/backend/slideshow/slideshow.c
 #
 id: 3 seconds
-msg: 3秒
+msg: 3 秒
 
 id: 5 seconds
-msg: 5秒
+msg: 5 秒
 
 id: 7 seconds
-msg: 7秒
+msg: 7 秒
 
 id: Slideshow speed
 msg: スライドショーの速さ
@@ -843,10 +843,10 @@ id: Indexed mode
 msg: インデックスモード
 
 id: Newest first
-msg: 作成日時順（降順）
+msg: 作成日時順(降順)
 
 id: Oldest first
-msg: 作成日時順（昇順）
+msg: 作成日時順(昇順)
 
 id: Show only supported files
 msg: 再生可能なファイルのみを表示する
@@ -924,10 +924,10 @@ msg: オブジェクトが見つかりません。
 # ./src/i18n.c
 #
 id: 12 Hour
-msg: 12時間
+msg: 12 時間
 
 id: 24 Hour
-msg: 24時間
+msg: 24 時間
 
 id: Default character set
 msg: デフォルト文字コード
@@ -1014,10 +1014,10 @@ id: Horizontal pan
 msg: 水平位置調整
 
 id: Horizontal position
-msg: 位置（水平方向）
+msg: 位置(水平方向)
 
 id: Horizontal scale
-msg: サイズ（水平方向）
+msg: サイズ(水平方向)
 
 id: Reset defaults for folder '%s'
 msg: フォルダ'%s'の設定をデフォルトに戻す
@@ -1041,10 +1041,10 @@ id: Vertical pan
 msg: 垂直位置調整
 
 id: Vertical position
-msg: 位置（垂直方向）
+msg: 位置(垂直方向)
 
 id: Vertical scale
-msg: サイズ（垂直方向）
+msg: サイズ(垂直方向)
 
 id: Video frame interpolation
 msg: フレーム補間を有効にする
@@ -1110,7 +1110,7 @@ msg: ビデオプロバイダ
 # ./src/metadata/metadb.c
 #
 id: %d items deleted
-msg: %dを削除しました。
+msg: %d を削除しました。
 
 id: Clear all metadata
 msg: すべてのメタデータを削除する
@@ -1173,7 +1173,7 @@ msg: フォルダ名
 # ./src/navigator.c
 #
 id: Add and remove items on homepage
-msg: ホームにブックマークを登録/削除します。
+msg: ホームにブックマークを登録 / 削除します。
 
 id: Added %s to home page
 msg: ホームページに　%s　を追加
@@ -1314,7 +1314,7 @@ id: Online TV
 msg: オンラインTV
 
 id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
-msg: プラグイン%s %sは問題を引き起こす可能性があるためアンインストールされました。\n手動で別のバージョンをインストールしてください。
+msg: プラグイン %s %s は問題を引き起こす可能性があるためアンインストールされました。\n手動で別のバージョンをインストールしてください。
 
 id: Plugin %s has been uninstalled - %s
 msg: プラグイン %s はアンインストールされています。 - %s
@@ -1338,7 +1338,7 @@ id: Unable to load plugin.json: %s
 msg: plugin.jsonを読み込めません。: %s
 
 id: Unable to load plugin.json: Malformed JSON
-msg: plugin.jsonを読み込めません。: JSON 形式が不正です。
+msg: plugin.jsonを読み込めません。: JSON形式が不正です。
 
 id: Uncategorized
 msg: 未分類
@@ -1461,7 +1461,7 @@ id: Any subtitle in central folder
 msg: 字幕フォルダの全ての字幕
 
 id: Any subtitle in same folder as video
-msg: ビデオと同じフォルダ内の字幕
+msg: ビデオと同じフォルダ内の全ての字幕
 
 id: Auto
 msg: 自動
@@ -1512,7 +1512,7 @@ id: Shadow offset
 msg: ドロップシャドウのオフセット
 
 id: Subtitle horizontal displacement
-msg: 字幕の位置を調整（水平方向）
+msg: 字幕の位置を調整(水平方向)
 
 id: Subtitle position
 msg: 字幕の位置
@@ -1524,16 +1524,16 @@ id: Subtitle size and positioning
 msg: 字幕のサイズと位置設定
 
 id: Subtitle vertical displacement
-msg: 字幕の位置を調整（垂直方向）
+msg: 字幕の位置を調整(垂直方向)
 
 id: Subtitles embedded in video file
-msg: 字幕を有効化する
+msg: ビデオに字幕を埋め込む
 
 id: Subtitles with matching filename in central folder
-msg: 字幕フォルダ内にある同名の字幕
+msg: 字幕フォルダ内にある同じファイル名の字幕
 
 id: Subtitles with matching filename in same folder as video
-msg: ビデオと同じフォルダ内にある同名の字幕
+msg: ビデオと同じフォルダ内にある同じファイル名の字幕
 
 #
 # ./src/text/fontstash.c
@@ -1560,10 +1560,10 @@ id: Reset subtitle font to default
 msg: 字幕用フォントをデフォルトに戻す
 
 id: Unable to install font: %s
-msg: %sフォントはインストールできません。
+msg: %s フォントはインストールできません。
 
 id: Use font %s for
-msg: %sフォントを使用してください。: 
+msg: %s フォントを使用してください。: 
 
 id: User interface
 msg: ユーザーインターフェース
@@ -1575,7 +1575,7 @@ id: Dual-Shock Remote
 msg: デュアルショックリモート
 
 id: Seek using L2 and R2 button
-msg: L2/R2 ボタンをシークに割り当てる
+msg: L2 / R2 ボタンをシークに割り当てる
 
 id: Yes with Select button
 msg: はい (w/セレクトボタン)
@@ -1617,22 +1617,22 @@ msg: リストの先頭 / 最後尾をループさせる
 # ./src/ui/glw/glw_view_eval.c
 #
 id: %d days ago
-msg: %d日前
+msg: %d 日前
 
 id: %d hours ago
-msg: %d時間前
+msg: %d 時間前
 
 id: %d minutes ago
-msg: %d分前
+msg: %d 分前
 
 id: %d months ago
-msg: %dヶ月前
+msg: %d ヶ月前
 
 id: %d weeks ago
-msg: %d週間前
+msg: %d 週間前
 
 id: %d years ago
-msg: %d年前
+msg: %d 年前
 
 id: Just now
 msg: 現在
@@ -1641,13 +1641,13 @@ id: One day ago
 msg: 昨日
 
 id: One hour ago
-msg: 1時間前
+msg: 1 時間前
 
 id: One minute ago
-msg: 1分前
+msg: 1 分前
 
 id: One month ago
-msg: 1ヶ月前
+msg: 1 ヶ月前
 
 #
 # ./src/ui/linux/nvidia.c
@@ -1686,10 +1686,10 @@ msg: 適用するアップグレードのバージョン
 # ./src/upnp/upnp_browse.c
 #
 id: Date (newest first)
-msg: 作成日時順 (降順)
+msg: 作成日時順(降順)
 
 id: Date (oldest first)
-msg: 作成日時順 (昇順)
+msg: 作成日時順(昇順)
 
 id: Device not found
 msg: デバイスがありません。
