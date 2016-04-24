@@ -58,17 +58,15 @@ glw_tex_backend_free_loader_resources(glw_loadable_texture_t *glt)
 void
 glw_tex_backend_layout(glw_root_t *gr, glw_loadable_texture_t *glt)
 {
-  void *p;
   int m = GL_TEXTURE_2D;
 
   if(glt->glt_pixmap == NULL)
     return;
 
-  p = glt->glt_pixmap->pm_data;
+  if(glt->glt_texture.textures[0] == 0)
+    glGenTextures(1, glt->glt_texture.textures);
 
-  glGenTextures(1, glt->glt_texture.textures);
   glBindTexture(m, glt->glt_texture.textures[0]);
-
   glt->glt_texture.width  = glt->glt_xs;
   glt->glt_texture.height = glt->glt_ys;
 
@@ -78,6 +76,8 @@ glw_tex_backend_layout(glw_root_t *gr, glw_loadable_texture_t *glt)
   int wrapmode = glt->glt_flags & GLW_TEX_REPEAT ? GL_REPEAT : GL_CLAMP_TO_EDGE;
   glTexParameteri(m, GL_TEXTURE_WRAP_S, wrapmode);
   glTexParameteri(m, GL_TEXTURE_WRAP_T, wrapmode);
+
+  const void *p = glt->glt_pixmap->pm_data;
 
   if(glt->glt_tex_width && glt->glt_tex_height) {
 
