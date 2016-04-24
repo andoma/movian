@@ -186,6 +186,21 @@ static backend_t be_page = {
 BE_REGISTER(page);
 
 
+
+/**
+ *
+ */
+static void
+prune_image_cache_item(loading_image_t *li)
+{
+  num_cached_images--;
+  TAILQ_REMOVE(&cached_images, li, li_cache_link);
+  image_release(li->li_image);
+  LIST_REMOVE(li, li_link);
+  free(li);
+}
+
+
 /**
  *
  */
@@ -197,12 +212,7 @@ prune_image_cache(void)
     assert(li->li_waiters == 0);
     assert(li->li_done == 1);
     assert(li->li_image != NULL);
-
-    num_cached_images--;
-    TAILQ_REMOVE(&cached_images, li, li_cache_link);
-    image_release(li->li_image);
-    LIST_REMOVE(li, li_link);
-    free(li);
+    prune_image_cache_item(li);
   }
 }
 
@@ -319,9 +329,16 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im0,
     while(li->li_done == 0)
       hts_cond_wait(&imageloader_cond, &imageloader_mutex);
 
-    if(li->li_image != NULL && im.im_want_thumb == 0) {
-      img = image_retain(li->li_image);
+    if(cache_control == BYPASS_CACHE) {
+      image_release(li->li_image);
+      li->li_image = NULL;
+      // Need to bypass all caches, so flush it from imageloader's cache
+    } else {
+      if(li->li_image != NULL && im.im_want_thumb == 0) {
+        img = image_retain(li->li_image);
+      }
     }
+
 
   }
   li->li_done = 0;
