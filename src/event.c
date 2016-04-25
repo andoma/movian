@@ -41,6 +41,7 @@ event_create(event_type_t type, size_t size)
   e->e_timestamp = arch_get_ts();
   e->e_nav = NULL;
   e->e_dtor = NULL;
+  e->e_clone = NULL;
   atomic_set(&e->e_refcount, 1);
   e->e_flags = 0;
   e->e_type = type;
@@ -76,10 +77,12 @@ event_create_int3(event_type_t type, int v1, int v2, int v3)
 /**
  *
  */
-void
+event_t *
 event_addref(event_t *e)
 {
-  atomic_inc(&e->e_refcount);
+  if(e != NULL)
+    atomic_inc(&e->e_refcount);
+  return e;
 }
 
 
@@ -89,6 +92,8 @@ event_addref(event_t *e)
 void
 event_release(event_t *e)
 {
+  if(e == NULL)
+    return;
   if(atomic_dec(&e->e_refcount))
     return;
   if(e->e_dtor != NULL)
@@ -229,7 +234,6 @@ event_t *
 event_clone(const event_t *src)
 {
   if(src->e_clone == NULL) {
-    fprintf(stderr, "Event %s is not clonable\n", event_sprint(src));
     return NULL;
   }
   return src->e_clone(src);

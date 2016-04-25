@@ -231,7 +231,6 @@ typedef struct glw_view_eval_context {
   token_t *rpn;
   struct glw_prop_sub_slist *sublist;
   struct glw_prop_sub_slist sublist_rpnlocal;
-  struct event *event;
   prop_t *tgtprop;
 
   uint16_t dynamic_eval;

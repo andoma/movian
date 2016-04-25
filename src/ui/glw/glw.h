@@ -272,15 +272,15 @@ typedef struct glw_scope {
   int gs_num_roots;
 
   struct backend *gs_backend;
+  struct event *gs_event; // Captured event that trigged code
 
 #define GLW_ROOT_SELF   0
 #define GLW_ROOT_PARENT 1
 #define GLW_ROOT_VIEW   2
 #define GLW_ROOT_ARGS   3
 #define GLW_ROOT_CLONE  4
-#define GLW_ROOT_EVENT  5
-#define GLW_ROOT_CORE   6
-#define GLW_ROOT_static 7
+#define GLW_ROOT_CORE   5
+#define GLW_ROOT_static 6
 
   prop_root_t gs_roots[GLW_ROOT_static];
 

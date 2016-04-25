@@ -327,8 +327,8 @@ token_resolve_ex(glw_view_eval_context_t *ec, token_t *t, int type)
     return NULL;
   }
 
-  if((t->type == TOKEN_PROPERTY_NAME ||
-      t->type == TOKEN_PROPERTY_REF) && subscribe_prop(ec, t, type))
+  if((t->type == TOKEN_PROPERTY_NAME || t->type == TOKEN_PROPERTY_REF) &&
+     subscribe_prop(ec, t, type))
     return NULL;
 
   if(t->type != TOKEN_PROPERTY_SUBSCRIPTION)
@@ -3279,23 +3279,15 @@ glw_event_map_eval_block_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
   struct glw_prop_sub_slist l;
 
   SLIST_INIT(&l);
-
   memset(&n, 0, sizeof(n));
-
-  if(src != NULL && src->e_type == EVENT_PROP_ACTION) {
-    event_prop_action_t *epa = (event_prop_action_t *)src;
-    n.scope = glw_scope_dup(b->capture.scope, (1 << GLW_ROOT_EVENT));
-    n.scope->gs_roots[GLW_ROOT_EVENT].p = prop_ref_inc(epa->p);
-  } else {
-    n.scope = glw_scope_retain(b->capture.scope);
-  }
-
+  n.scope = glw_scope_dup(b->capture.scope, 0);
+  event_release(n.scope->gs_event);
+  n.scope->gs_event = event_addref(src);
 
   n.gr = w->glw_root;
   n.w = w;
   n.passive_subscriptions = 1;
   n.sublist = &l;
-  n.event = src;
 
   body = glw_view_clone_chain(n.gr, b->capture.block, NULL);
   glw_view_eval_static_block(body, &n);
@@ -3843,6 +3835,42 @@ glwf_fireEvent(glw_view_eval_context_t *ec, struct token *self,
                            token2name(a));
   }
 }
+
+
+
+/**
+ *
+ */
+static int
+glwf_currentEvent(glw_view_eval_context_t *ec, struct token *self,
+                  token_t **argv, unsigned int argc)
+{
+  const char *s = token_as_string(argv[0]);
+  token_t *r = NULL;
+  event_t *e = ec->scope->gs_event;
+  if(s != NULL && e != NULL) {
+    if(!strcmp(s, "screenX") && e->e_flags & EVENT_SCREEN_POSITION) {
+      r = eval_alloc(self, ec, TOKEN_FLOAT);
+      r->t_float = e->e_screen_x;
+    } else if(!strcmp(s, "screenY") && e->e_flags & EVENT_SCREEN_POSITION) {
+      r = eval_alloc(self, ec, TOKEN_FLOAT);
+      r->t_float = e->e_screen_y;
+    } else if(!strcmp(s, "prop") && e->e_type == EVENT_PROP_ACTION) {
+      event_prop_action_t *epa = (event_prop_action_t *)e;
+      r = eval_alloc(self, ec, TOKEN_PROPERTY_REF);
+      r->t_prop = prop_ref_inc(epa->p);
+    }
+
+  }
+
+  if(r == NULL)
+    r = eval_alloc(self, ec, TOKEN_VOID);
+
+  eval_push(ec, r);
+  return 0;
+
+}
+
 
 
 /**
@@ -7125,7 +7153,7 @@ static const token_func_t funcvec[] = {
   {"targetedEvent", 2, glwf_targetedEvent},
   {"deliverEvent", -1, glwf_deliverEvent},
   {"deliverRef", 2, glwf_deliverRef},
-
+  {"currentEvent", 1, glwf_currentEvent},
 
   {"onInactivity", 2, glwf_onInactivity, glwf_null_ctor,glwf_onInactivity_dtor},
   {"changed", -1, glwf_changed, glwf_changed_ctor, glwf_changed_dtor},

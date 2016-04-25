@@ -373,7 +373,7 @@ void *event_create_int3(event_type_t type, int val1, int val2, int val3);
 
 void event_release(event_t *e);
 
-void event_addref(event_t *e);
+event_t *event_addref(event_t *e); // Rename to event_retain()
 
 event_t *event_create_str(event_type_t et, const char *url);
 

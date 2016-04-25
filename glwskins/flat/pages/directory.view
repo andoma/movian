@@ -1,16 +1,18 @@
 
 onEvent(videoInfo, {
-  $clone.itemData := $event;
+  $clone.itemData := currentEvent("prop");
   $clone.itemMenu = "video";
 });
 
 onEvent(pluginInfo, {
-  $clone.itemData := $event;
+  $clone.itemData := currentEvent("prop");
   $clone.itemMenu = "plugin";
 });
 
 onEvent(defaultInfo, {
-  $clone.itemData := $event;
+  $clone.itemData := currentEvent("prop");
+  $clone.popupScreenX = currentEvent("screenX");
+  $clone.popupScreenY = currentEvent("screenY");
   $clone.itemMenu = "default";
 });
 

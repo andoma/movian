@@ -27,6 +27,11 @@ typedef struct glw_popup {
   int16_t width;
   int16_t height;
 
+  float screen_x;
+  float screen_y;
+
+  int screen_cord_set;
+
 } glw_popup_t;
 
 /**
@@ -82,15 +87,68 @@ popup_render(glw_t *w, const glw_rctx_t *rc)
   if(c == NULL || c->glw_flags & GLW_HIDDEN)
     return;
 
-  int x1 = rc->rc_width / 2 - p->width / 2;
-  int x2 = x1 + p->width;
+  Vec3 point, dir;
 
-  int y1 = rc->rc_height / 2 - p->height / 2;
+  glw_vec3_copy(point, glw_vec3_make(p->screen_x, p->screen_y, -2.41));
+  glw_vec3_sub(dir, point, glw_vec3_make(p->screen_x * 42.38,
+                                         p->screen_y * 42.38,
+                                         -100));
+  float x, y;
+
+  glw_widget_unproject(w->glw_matrix, &x, &y, point, dir);
+
+  int x1, y1;
+
+  if(p->screen_cord_set) {
+    x1 = (x + 1.0f) * 0.5f * rc->rc_width;
+    y1 = (y + 1.0f) * 0.5f * rc->rc_height - p->height;
+  } else {
+    x1 = rc->rc_width / 2 - p->width / 2;
+    y1 = rc->rc_height / 2 - p->height / 2;
+  }
+
+  int x2 = x1 + p->width;
   int y2 = y1 + p->height;
 
+
+  if(x2 > rc->rc_width) {
+    int spill = x2 - rc->rc_width;
+    x1 -= spill;
+    x2 -= spill;
+  }
+
+  if(y1 < 0) {
+    y2 -= y1;
+    y1 -= y1;
+  }
   glw_reposition(&rc0, x1, y2, x2, y1);
 
   glw_render0(c, &rc0);
+}
+
+
+/**
+ *
+ */
+static int
+glw_popup_set_float_unresolved(glw_t *w, const char *a, float value,
+                              glw_style_t *gs)
+{
+  glw_popup_t *p = (glw_popup_t *)w;
+
+  if(!strcmp(a, "screenPositionX")) {
+    p->screen_x = value;
+    p->screen_cord_set = 1;
+    return GLW_SET_RERENDER_REQUIRED;
+  }
+
+  if(!strcmp(a, "screenPositionY")) {
+    p->screen_y = value;
+    p->screen_cord_set = 1;
+    return GLW_SET_RERENDER_REQUIRED;
+  }
+
+  return GLW_SET_NOT_RESPONDING;
 }
 
 
@@ -99,6 +157,7 @@ static glw_class_t glw_popup = {
   .gc_instance_size = sizeof(glw_popup_t),
   .gc_layout = popup_layout,
   .gc_render = popup_render,
+  .gc_set_float_unresolved = glw_popup_set_float_unresolved,
 };
 
 GLW_REGISTER_CLASS(glw_popup);

@@ -27,6 +27,8 @@ $view.itemBookmark <- lookup($core.bookmarks.queries, $args.url);
 }
 
 widget(popup, {
+  .screenPositionX ?=  $clone.popupScreenX;
+  .screenPositionY ?=  $clone.popupScreenY;
 
   clickable: true;
   onEvent(click, {
@@ -80,7 +82,8 @@ widget(popup, {
         height: 0.1em;
       });
 
-      ITEM(_("Bookmarked"), {
+      ITEM(select($view.itemBookmark.model.subtype == "bookmark",
+                  _("Bookmarked"), _("Bookmark")), {
         fireEvent(deliverRef($core.bookmarks.eventSink, $args));
         $clone.itemMenu = void;
       }, select($view.itemBookmark.model.subtype == "bookmark",

@@ -1,7 +1,9 @@
 #include "skin://theme.view"
 
 onEvent(homeInfo, {
-  $clone.itemData := $event;
+  $clone.itemData := currentEvent("prop");
+  $clone.popupScreenX = currentEvent("screenX");
+  $clone.popupScreenY = currentEvent("screenY");
   $clone.itemMenu = "home";
 });
 
@@ -122,7 +124,7 @@ widget(container_z, {
 
       widget(container_z, {
 
-        alpha: iir(select($clone.itemMenu, 0.3, 1), 4);
+        alpha: iir(select($clone.itemMenu, 0.4, 1), 4);
 
         widget(array, {
           id: "main";

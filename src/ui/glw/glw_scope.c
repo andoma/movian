@@ -32,6 +32,7 @@ glw_scope_dup(const glw_scope_t *src, int retain_mask)
 
   memcpy(o, src, sizeof(glw_scope_t));
   o->gs_backend = backend_retain(src->gs_backend);
+  o->gs_event = event_addref(src->gs_event);
 
   for(int i = 0; i < src->gs_num_roots; i++) {
     if(!((1 << i) & retain_mask))
@@ -55,7 +56,6 @@ glw_scope_create(void)
   o->gs_roots[GLW_ROOT_VIEW].name   = "view";
   o->gs_roots[GLW_ROOT_ARGS].name   = "args";
   o->gs_roots[GLW_ROOT_CLONE].name  = "clone";
-  o->gs_roots[GLW_ROOT_EVENT].name  = "event";
   o->gs_roots[GLW_ROOT_CORE].name   = "core";
   o->gs_num_roots = GLW_ROOT_static;
   o->gs_refcount = 1;
@@ -71,6 +71,8 @@ glw_scope_release(glw_scope_t *gs)
     return;
 
   backend_release(gs->gs_backend);
+
+  event_release(gs->gs_event);
 
   for(int i = 0; i < gs->gs_num_roots; i++)
     prop_ref_dec(gs->gs_roots[i].p);

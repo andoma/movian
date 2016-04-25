@@ -1,4 +1,5 @@
 #import "skin://theme.view"
+#import "skin://popups/common.view"
 
 
 
@@ -27,19 +28,19 @@
 
 widget(popup, {
 
+  .screenPositionX ?=  $clone.popupScreenX;
+  .screenPositionY ?=  $clone.popupScreenY;
+
   clickable: true;
   onEvent(click, {
     $clone.itemMenu = void;
   }, true, true, true);
 
   widget(container_z, {
-    widget(quad, {
-      alpha: 0.7;
-      color: 0;
-    });
+    PopupBackdrop();
 
     widget(container_y, {
-      padding:[0.1em, 0.5em];
+      padding: 0.5em;
 
       widget(container_x, {
         padding:[1em, 0.1em];

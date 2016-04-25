@@ -40,7 +40,7 @@ typedef struct glw_event_external {
 static void
 glw_event_map_send_to_widget(glw_t *w, event_t *src, event_t *origin)
 {
-  event_t *clone = origin ? event_clone(src) : NULL;
+  event_t *clone = src ? event_clone(src) : NULL;
   if(clone == NULL) {
     glw_event_to_widget(w, src);
     return;
