@@ -71,13 +71,11 @@ surface_release_buffers(glw_video_surface_t *gvs)
   for(int i = 0; i < 2; i++) {
     if(gvs->gvs_data[i] != NULL) {
       CFRelease(gvs->gvs_data[i]);
-      printf("CF release on texture %p\n", gvs->gvs_data[i]);
       gvs->gvs_data[i] = NULL;
     }
   }
   if(gvs->gvs_opaque != NULL) {
     CFRelease(gvs->gvs_opaque);
-    printf("CF release on src image %p\n", gvs->gvs_opaque);
     gvs->gvs_opaque = NULL;
   }
 }
@@ -330,8 +328,6 @@ upload_texture(glw_video_t *gv, glw_video_surface_t *gvs)
   gvs->gvs_texture.gltype      = GL_TEXTURE_2D;
   gvs->gvs_texture.textures[0] = CVOpenGLESTextureGetName(gvs->gvs_data[0]);
   gvs->gvs_texture.textures[1] = CVOpenGLESTextureGetName(gvs->gvs_data[1]);
-
-  printf("Textures %d %d\n", gvs->gvs_texture.textures[0], gvs->gvs_texture.textures[1]);
   
   glBindTexture(GL_TEXTURE_2D, gvs->gvs_texture.textures[0]);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
