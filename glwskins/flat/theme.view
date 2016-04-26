@@ -116,13 +116,13 @@
 }
 
 
-#define BackButton(ENABLED=true) {
+#define BackButton(ENABLED=true, EVENT=event("back")) {
   widget(container_y, {
     align: center;
     width: 4em;
     clickable: $ui.pointerVisible || ($ui.touch && ENABLED);
     alpha: iir($ui.pointerVisible || ($ui.touch && ENABLED), 4);
-    onEvent(activate, event("back"));
+    onEvent(activate, EVENT);
     navFocusable: false;
     widget(icon, {
       color: 0.5 + iir(isHovered(), 4);

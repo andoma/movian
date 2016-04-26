@@ -456,7 +456,9 @@ widget(container_z, {
     align: top;
     widget(container_x, {
       height: 3em;
-      BackButton($clone.showPlaydeck);
+      BackButton($clone.showPlaydeck, {
+        $self.close = true;
+      });
     });
   });
 });
