@@ -319,6 +319,7 @@
 		6A35C2CB1C104A5400D8EA86 /* osxapp.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCF601B306BC00099FB5A /* osxapp.c */; };
 		6A35C2CD1C104A9100D8EA86 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 6A35C2CC1C104A9100D8EA86 /* libz.tbd */; };
 		6A35C2CF1C104A9900D8EA86 /* libbz2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 6A35C2CE1C104A9900D8EA86 /* libbz2.tbd */; };
+		6A374FB11CCBA9EF007B8E30 /* prng.c in Sources */ = {isa = PBXBuildFile; fileRef = 6A374FB01CCBA9EF007B8E30 /* prng.c */; };
 		6A669FDE1C5035430042819C /* stpp.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCF191B304EFE0099FB5A /* stpp.c */; };
 		6A6AD6CE1C0E293000931F45 /* upgrade.c in Sources */ = {isa = PBXBuildFile; fileRef = 6A6AD6CB1C0E293000931F45 /* upgrade.c */; };
 		6A6AD6CF1C0E293000931F45 /* usage.c in Sources */ = {isa = PBXBuildFile; fileRef = 6A6AD6CD1C0E293000931F45 /* usage.c */; };
@@ -686,6 +687,7 @@
 		6A2DC23A1CAD1EC7005CD9F3 /* glw_scope.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = glw_scope.c; path = ../src/ui/glw/glw_scope.c; sourceTree = "<group>"; };
 		6A35C2CC1C104A9100D8EA86 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		6A35C2CE1C104A9900D8EA86 /* libbz2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libbz2.tbd; path = usr/lib/libbz2.tbd; sourceTree = SDKROOT; };
+		6A374FB01CCBA9EF007B8E30 /* prng.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = prng.c; sourceTree = "<group>"; };
 		6A6AD6CB1C0E293000931F45 /* upgrade.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = upgrade.c; path = ../src/upgrade.c; sourceTree = "<group>"; };
 		6A6AD6CC1C0E293000931F45 /* upgrade.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = upgrade.h; path = ../src/upgrade.h; sourceTree = "<group>"; };
 		6A6AD6CD1C0E293000931F45 /* usage.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = usage.c; path = ../src/usage.c; sourceTree = "<group>"; };
@@ -1333,6 +1335,7 @@
 		6ADCCC6D1B3000CC0099FB5A /* misc */ = {
 			isa = PBXGroup;
 			children = (
+				6A374FB01CCBA9EF007B8E30 /* prng.c */,
 				6ADCCC6E1B3000CC0099FB5A /* average.c */,
 				6ADCCC6F1B3000CC0099FB5A /* average.h */,
 				6ADCCC701B3000CC0099FB5A /* avgtime.h */,
@@ -2285,6 +2288,7 @@
 				6ADBF62F1B9A443D00A21726 /* screenshot.c in Sources */,
 				6ADCCCB41B3000CC0099FB5A /* unicode_composition.c in Sources */,
 				6ADCCFE71B30785D0099FB5A /* glw_slideshow.c in Sources */,
+				6A374FB11CCBA9EF007B8E30 /* prng.c in Sources */,
 				6ADCCDBC1B3016110099FB5A /* string_buffer.c in Sources */,
 				6ADCCD371B30135B0099FB5A /* navigator.c in Sources */,
 				6ADCCECD1B304DFA0099FB5A /* db_support.c in Sources */,
