@@ -889,3 +889,8 @@ $(BUILDDIR)/stamps/%.stamp: build-%
 
 build-%:
 	${MAKE} -f ${C}/ext/$*.mk build
+
+include support/mklicense.mk
+
+license: ${BUILDDIR}/LICENSE
+licensepdf: ${BUILDDIR}/LICENSE.pdf
