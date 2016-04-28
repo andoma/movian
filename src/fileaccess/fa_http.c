@@ -157,7 +157,7 @@ typedef struct http_file {
   char hf_isdir;
 
   char hf_auth_failed;
-  
+  char hf_ext_auth;
 
   char hf_debug;
 
@@ -1025,9 +1025,11 @@ http_request_inspect(struct http_header_list *headers,
   hri.hri_errbuf = errbuf;
   hri.hri_errlen = errlen;
   hri.hri_force_fail = 0;
+  hri.hri_auth_has_failed = hf->hf_auth_failed;
 
   LIST_FOREACH(x, &http_request_inspectors, link) {
     if(!x->check(hf->hf_url, &hri)) {
+      hf->hf_ext_auth = 1;
       if(hri.hri_force_fail) {
         http_headers_free(cookies);
         return 1;
@@ -1496,7 +1498,14 @@ authenticate(http_file_t *hf, char *errbuf, size_t errlen, int *non_interactive,
     *non_interactive = FAP_NEED_AUTH;
     return -1;
   }
-  
+
+  if(hf->hf_ext_auth) {
+    /* This request is handled by an external inspector, so
+       don't popup any requests or anything, just retry */
+    hf->hf_auth_failed++;
+    return 0;
+  }
+
   snprintf(buf1, sizeof(buf1), "%s @ %s", hf->hf_auth_realm, 
 	   hf->hf_connection->hc_hostname);
 

@@ -87,6 +87,7 @@ typedef struct http_request_inspection {
   char *hri_errbuf;
   size_t hri_errlen;
   int hri_force_fail;
+  int hri_auth_has_failed;
 
 } http_request_inspection_t;
 
