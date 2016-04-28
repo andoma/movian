@@ -299,6 +299,10 @@ play_video(const char *url, struct media_pipe *mp,
       flags |= BACKEND_VIDEO_SET_TITLE;
     }
 
+    if((str = htsmsg_get_str(m, "icon")) != NULL) {
+      prop_set(mp->mp_prop_metadata, "icon", PROP_SET_STRING, str);
+    }
+
     uint32_t u32;
     if(!htsmsg_get_u32(m, "year", &u32)) {
       prop_set(mp->mp_prop_metadata, "year", PROP_SET_INT, u32);
