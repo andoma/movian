@@ -92,6 +92,8 @@ void *asyncio_ssl_create_server(const char *privatekeyfile,
 
 void *asyncio_ssl_create_client(void);
 
+void asyncio_ssl_free(void *ctx);
+
 typedef void (asyncio_accept_callback_t)(void *opaque,
                                          int fd,
                                          const net_addr_t *local_addr,

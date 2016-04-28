@@ -1677,6 +1677,12 @@ asyncio_ssl_create_client(void)
   return ctx;
 }
 
+void
+asyncio_ssl_free(void *ctx)
+{
+  SSL_CTX_free(ctx);
+}
+
 #else
 
 
@@ -1690,6 +1696,11 @@ void *
 asyncio_ssl_create_client(void)
 {
   return NULL;
+}
+
+void
+asyncio_ssl_free(void *)
+{
 }
 
 #endif

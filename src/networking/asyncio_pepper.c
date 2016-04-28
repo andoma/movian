@@ -1220,3 +1220,9 @@ asyncio_ssl_create_client(void)
 {
   return NULL;
 }
+
+void
+asyncio_ssl_free(void *)
+{
+}
+
