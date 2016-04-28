@@ -598,21 +598,20 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int flags)
 
     int version = htsmsg_get_u32_or_default(ctrl, "apiversion", 1);
 
-    int flags = 0;
+    int pflags = 0;
     if(htsmsg_get_u32_or_default(ctrl, "debug", 0) || flags & PLUGIN_LOAD_DEBUG)
-      flags |= ECMASCRIPT_DEBUG;
+      pflags |= ECMASCRIPT_DEBUG;
 
     htsmsg_t *e = htsmsg_get_map(ctrl, "entitlements");
     if(e != NULL) {
       if(htsmsg_get_u32_or_default(e, "bypassFileACLRead", 0))
-        flags |= ECMASCRIPT_FILE_BYPASS_ACL_READ;
+        pflags |= ECMASCRIPT_FILE_BYPASS_ACL_READ;
       if(htsmsg_get_u32_or_default(e, "bypassFileACLWrite", 0))
-        flags |= ECMASCRIPT_FILE_BYPASS_ACL_WRITE;
+        pflags |= ECMASCRIPT_FILE_BYPASS_ACL_WRITE;
     }
-
     hts_mutex_unlock(&plugin_mutex);
     r = ecmascript_plugin_load(id, fullpath, errbuf, errlen, version,
-                               buf_cstr(b), flags);
+                               buf_cstr(b), pflags);
     hts_mutex_lock(&plugin_mutex);
     if(!r)
       pl->pl_unload = plugin_unload_ecmascript;
