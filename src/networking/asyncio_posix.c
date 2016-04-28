@@ -651,8 +651,6 @@ asyncio_thread(void *aux)
   asyncio_add_fd(asyncio_pipe[0], ASYNCIO_READ, asyncio_handle_pipe,
                  asyncio_courier, "Pipe");
 
-  asyncio_dns_worker = asyncio_add_worker(adr_deliver_cb);
-
   async_now = arch_get_ts();
 
   init_group(INIT_GROUP_ASYNCIO);
@@ -699,6 +697,8 @@ asyncio_init_early(void)
   hts_mutex_init(&asyncio_task_mutex);
 
   arch_pipe(asyncio_pipe);
+
+  asyncio_dns_worker = asyncio_add_worker(adr_deliver_cb);
 }
 
 /**
