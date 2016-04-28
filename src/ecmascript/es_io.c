@@ -428,6 +428,9 @@ es_http_req(duk_context *ctx)
 
 
 
+
+
+
 LIST_HEAD(es_http_inspector_list, es_http_inspector);
 
 typedef struct es_http_inspector {
@@ -436,13 +439,49 @@ typedef struct es_http_inspector {
   char *ehi_pattern;
   hts_regex_t ehi_regex;
   int ehi_prio;
+  int ehi_async;
 } es_http_inspector_t;
+
+
+typedef struct es_http_inspection {
+  atomic_t refcount;
+  http_request_inspection_t *hri;
+  es_http_inspector_t *ehi;
+  char *url;
+  int done;
+  int rval;
+} es_http_inspection_t;
+
+
+/**
+ *
+ */
+static void
+es_http_inspection_release(es_http_inspection_t *insp)
+{
+  if(atomic_dec(&insp->refcount))
+    return;
+
+  es_resource_release(&insp->ehi->super);
+  free(insp->url);
+  free(insp);
+}
+
+ES_NATIVE_CLASS(http_inspection, &es_http_inspection_release);
+
 
 static struct es_http_inspector_list http_inspectors;
 
-static HTS_MUTEX_DECL(http_inspector_mutex);
+static hts_mutex_t http_inspector_mutex;
+static hts_cond_t http_inspector_cond;
 
-#define HRINAME "\xff""hri"
+INITIALIZER(http_inspector_init)
+{
+  hts_mutex_init(&http_inspector_mutex);
+  hts_cond_init(&http_inspector_cond, &http_inspector_mutex);
+}
+
+
 
 /**
  *
@@ -504,6 +543,7 @@ static int
 es_http_inspector_create(duk_context *ctx)
 {
   const char *str = duk_safe_to_string(ctx, 0);
+  int async = duk_get_boolean(ctx, 2);
 
   if(str[0] != '^') {
     int l = strlen(str);
@@ -530,6 +570,7 @@ es_http_inspector_create(duk_context *ctx)
 
   ehi->ehi_pattern = strdup(str);
   ehi->ehi_prio = strlen(str);
+  ehi->ehi_async = async;
 
   es_debug(ec, "Adding HTTP insepction for pattern %s", str);
 
@@ -546,19 +587,32 @@ es_http_inspector_create(duk_context *ctx)
   return 1;
 }
 
-
+#define HRINAME "hri"
 
 /**
  *
  */
-static http_request_inspection_t *
-get_hri(duk_context *ctx)
+static es_http_inspection_t *
+get_insp(duk_context *ctx)
 {
   duk_push_this(ctx);
   duk_get_prop_string(ctx, -1, HRINAME);
-  http_request_inspection_t *hri = duk_get_pointer(ctx, -1);
+  es_http_inspection_t *insp =
+    es_get_native_obj(ctx, -1, &es_native_http_inspection);
   duk_pop_2(ctx);
-  return hri;
+
+  return insp;
+}
+
+
+static void
+es_http_inspector_done(es_http_inspection_t *insp, int rval)
+{
+  hts_mutex_lock(&http_inspector_mutex);
+  insp->rval = rval;
+  insp->done = 1;
+  hts_cond_broadcast(&http_inspector_cond);
+  hts_mutex_unlock(&http_inspector_mutex);
 }
 
 
@@ -569,10 +623,45 @@ static int
 es_http_inspector_fail(duk_context *ctx)
 {
   es_context_t *ec = es_get(ctx);
-  http_request_inspection_t *hri = get_hri(ctx);
+  es_http_inspection_t *insp = get_insp(ctx);
+  http_request_inspection_t *hri = insp->hri;
+  if(hri == NULL)
+    duk_error(ctx, DUK_ERR_ERROR, "HTTP request no longer valid");
+
   const char *reason = duk_safe_to_string(ctx, 0);
   es_debug(ec, "Inspector failing request -- %s", reason);
   http_client_fail_req(hri, duk_safe_to_string(ctx, 0));
+  es_http_inspector_done(insp, 0);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+es_http_inspector_proceed(duk_context *ctx)
+{
+  es_http_inspection_t *insp = get_insp(ctx);
+  http_request_inspection_t *hri = insp->hri;
+  if(hri == NULL)
+    duk_error(ctx, DUK_ERR_ERROR, "HTTP request no longer valid");
+  es_http_inspector_done(insp, 0);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+es_http_inspector_ignore(duk_context *ctx)
+{
+  es_http_inspection_t *insp = get_insp(ctx);
+  http_request_inspection_t *hri = insp->hri;
+  if(hri == NULL)
+    duk_error(ctx, DUK_ERR_ERROR, "HTTP request no longer valid");
+  es_http_inspector_done(insp, 1);
   return 0;
 }
 
@@ -584,7 +673,11 @@ static int
 es_http_inspector_set_header(duk_context *ctx)
 {
   es_context_t *ec = es_get(ctx);
-  http_request_inspection_t *hri = get_hri(ctx);
+  es_http_inspection_t *insp = get_insp(ctx);
+  http_request_inspection_t *hri = insp->hri;
+  if(hri == NULL)
+    duk_error(ctx, DUK_ERR_ERROR, "HTTP request no longer valid");
+
   const char *key = duk_safe_to_string(ctx, 0);
   const char *value = duk_safe_to_string(ctx, 1);
   es_debug(ec, "Inspector adding header %s = %s",
@@ -601,7 +694,11 @@ static int
 es_http_inspector_set_cookie(duk_context *ctx)
 {
   es_context_t *ec = es_get(ctx);
-  http_request_inspection_t *hri = get_hri(ctx);
+  es_http_inspection_t *insp = get_insp(ctx);
+  http_request_inspection_t *hri = insp->hri;
+  if(hri == NULL)
+    duk_error(ctx, DUK_ERR_ERROR, "HTTP request no longer valid");
+
   const char *key = duk_safe_to_string(ctx, 0);
   const char *value = duk_get_string(ctx, 1);
   if(value) {
@@ -619,10 +716,73 @@ es_http_inspector_set_cookie(duk_context *ctx)
  */
 const static duk_function_list_entry fnlist_inspector[] = {
   { "fail",              es_http_inspector_fail,        1 },
+  { "proceed",           es_http_inspector_proceed,     0 },
+  { "ignore",            es_http_inspector_ignore,      0 },
   { "setHeader",         es_http_inspector_set_header,  2 },
   { "setCookie",         es_http_inspector_set_cookie,  2 },
   { NULL, NULL, 0}
 };
+
+
+
+static void
+es_http_inspector_run(void *aux)
+{
+  es_http_inspection_t *insp = aux;
+  es_http_inspector_t *ehi = insp->ehi;
+  http_request_inspection_t *hri = insp->hri;
+
+  es_context_t *ec = ehi->super.er_ctx;
+  es_context_begin(ec);
+
+  es_debug(ec, "Inspecting %s using %s", insp->url, ehi->ehi_pattern);
+
+  duk_context *ctx = ec->ec_duk;
+
+
+  // Setup object to pass to callback
+
+  int obj_idx = duk_push_object(ctx);
+
+  duk_put_function_list(ctx, obj_idx, fnlist_inspector);
+
+  atomic_inc(&insp->refcount);
+  es_push_native_obj(ctx, &es_native_http_inspection, insp);
+  duk_put_prop_string(ctx, obj_idx, HRINAME);
+
+  duk_push_string(ctx, insp->url);
+  duk_put_prop_string(ctx, obj_idx, "url");
+
+  duk_push_boolean(ctx, hri->hri_auth_has_failed);
+  duk_put_prop_string(ctx, obj_idx, "authFailed");
+
+  // Push callback function
+  es_push_root(ctx, ehi);
+  duk_dup(ctx, obj_idx);
+
+  int rval;
+  int rc = duk_pcall(ctx, 1);
+  if(rc) {
+    es_dump_err(ctx);
+    rval = 1;
+  } else {
+    rval = duk_get_boolean(ctx, -1);
+  }
+
+  duk_pop_2(ctx);
+
+  if(!ehi->ehi_async && insp->done == 0) {
+    hts_mutex_lock(&http_inspector_mutex);
+    insp->rval = rval;
+    insp->done = 1;
+    hts_cond_broadcast(&http_inspector_cond);
+    hts_mutex_unlock(&http_inspector_mutex);
+  }
+
+  es_context_end(ec, 1);
+
+  es_http_inspection_release(insp);
+}
 
 
 /**
@@ -648,50 +808,26 @@ es_http_inspect(const char *url, http_request_inspection_t *hri)
 
   es_resource_retain(&ehi->super);
 
+  es_http_inspection_t *insp = calloc(1, sizeof(es_http_inspection_t));
+  insp->ehi = ehi;
+  insp->hri = hri;
+  insp->url = strdup(url);
+  atomic_set(&insp->refcount, 2);
+
+  task_run(es_http_inspector_run, insp);
+
+  while(!insp->done) {
+    hts_cond_wait(&http_inspector_cond, &http_inspector_mutex);
+  }
+  insp->hri = NULL;
+
   hts_mutex_unlock(&http_inspector_mutex);
 
-  es_context_t *ec = ehi->super.er_ctx;
-  es_context_begin(ec);
-
-  es_debug(ec, "Inspecting %s using %s", url, ehi->ehi_pattern);
-
-  duk_context *ctx = ec->ec_duk;
-
-
-  // Setup object to pass to callback
-
-  int obj_idx = duk_push_object(ctx);
-
-  duk_put_function_list(ctx, obj_idx, fnlist_inspector);
-
-  duk_push_pointer(ctx, hri);
-  duk_put_prop_string(ctx, obj_idx, HRINAME);
-
-  duk_push_string(ctx, url);
-  duk_put_prop_string(ctx, obj_idx, "url");
-
-
-  // Push callback function
-  es_push_root(ctx, ehi);
-  duk_dup(ctx, obj_idx);
-
-  int rval;
-  int rc = duk_pcall(ctx, 1);
-  if(rc) {
-    es_dump_err(ctx);
-    rval = 1;
-  } else {
-    rval = duk_get_boolean(ctx, -1);
-  }
-
-  duk_del_prop_string(ctx, obj_idx, HRINAME);
-  duk_pop_2(ctx);
-
-  es_context_end(ec, 1);
-  es_resource_release(&ehi->super);
-
+  int rval = insp->rval;
+  es_http_inspection_release(insp);
   return rval;
 }
+
 
 
 REGISTER_HTTP_REQUEST_INSPECTOR(es_http_inspect);
@@ -755,7 +891,7 @@ es_xmlrpc(duk_context *ctx)
 
 static const duk_function_list_entry fnlist_io[] = {
   { "httpReq",              es_http_req,              3 },
-  { "httpInspectorCreate",  es_http_inspector_create, 2 },
+  { "httpInspectorCreate",  es_http_inspector_create, 3 },
   { "probe",                es_probe,                 2 },
   { "xmlrpc",               es_xmlrpc,                DUK_VARARGS },
   { NULL, NULL, 0}
