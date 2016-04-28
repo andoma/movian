@@ -626,6 +626,28 @@ trampoline_float_set(prop_sub_t *s, prop_event_t event, ...)
 /**
  *
  */
+static void
+trampoline_rstr_set(prop_sub_t *s, prop_event_t event, ...)
+{
+  rstr_t **ptr = (rstr_t **)s->hps_opaque;
+  va_list ap;
+  va_start(ap, event);
+
+  if(event == PROP_SET_RSTRING) {
+    rstr_set(ptr, va_arg(ap, rstr_t *));
+  } else if(event == PROP_SET_CSTRING) {
+    rstr_release(*ptr);
+    *ptr = rstr_alloc(va_arg(ap, const char *));
+  } else {
+    rstr_set(ptr, NULL);
+  }
+  va_end(ap);
+}
+
+
+/**
+ *
+ */
 static void 
 trampoline_string(prop_sub_t *s, prop_event_t event, ...)
 {
@@ -2968,6 +2990,12 @@ prop_subscribe_ex(const char *file, int line, int flags, ...)
     case PROP_TAG_SET_FLOAT:
       cb = NULL;
       trampoline = trampoline_float_set;
+      opaque = va_arg(ap, void *);
+      break;
+
+    case PROP_TAG_SET_RSTR:
+      cb = NULL;
+      trampoline = trampoline_rstr_set;
       opaque = va_arg(ap, void *);
       break;
 
