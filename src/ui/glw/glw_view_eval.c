@@ -4856,6 +4856,58 @@ glwf_value2size(glw_view_eval_context_t *ec, struct token *self,
 }
 
 
+/**
+ * Int to string
+ */
+static int
+glwf_value2quantity(glw_view_eval_context_t *ec, struct token *self,
+                    token_t **argv, unsigned int argc)
+{
+  token_t *a = argv[0];
+  token_t *r;
+  char tmp[30];
+  const char *str = NULL;
+  double s = 0;
+
+  a = token_resolve(ec, a);
+
+  if(a == NULL) {
+    str = "";
+  } else {
+    switch(a->type) {
+    case TOKEN_RSTRING:
+      str = rstr_get(a->t_rstring);
+      break;
+    case TOKEN_FLOAT:
+      s = a->t_float;
+      break;
+    case TOKEN_INT:
+      s = a->t_int;
+      break;
+    default:
+      str = "";
+      break;
+    }
+
+    if(str == NULL) {
+      if(s > 1000 * 1000) {
+	snprintf(tmp, sizeof(tmp), "%.1fM", s / 1000000.0);
+      } else if(s > 1000) {
+	snprintf(tmp, sizeof(tmp), "%.1fk", s / 1000.0);
+      } else {
+	snprintf(tmp, sizeof(tmp), "%d", (int)s);
+      }
+      str = tmp;
+    }
+  }
+
+  r = eval_alloc(self, ec, TOKEN_RSTRING);
+  r->t_rstring = rstr_alloc(str);
+  eval_push(ec, r);
+  return 0;
+}
+
+
 
 /**
  * Create a new child under the given property
@@ -7165,6 +7217,7 @@ static const token_func_t funcvec[] = {
   {"isVoid", 1, glwf_isvoid},
   {"value2duration", -1, glwf_value2duration},
   {"value2size", 1, glwf_value2size},
+  {"value2quantity", 1, glwf_value2quantity},
   {"createChild", 1, glwf_createchild},
   {"delete", 1, glwf_delete},
   {"isFocused", 0, glwf_isFocused},
