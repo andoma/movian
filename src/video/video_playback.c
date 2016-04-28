@@ -203,38 +203,72 @@ play_video(const char *url, struct media_pipe *mp,
 	return NULL;
       }
 
-      rstr_t *r = prop_get_string(p, "source", NULL);
-      if(r != NULL) {
-	TRACE(TRACE_DEBUG, "vp", "Page %s redirects to video source %s\n",
-	      url, rstr_get(r));
-	event_t *e = play_video(rstr_get(r), mp, flags, priority,
-				errbuf, errlen, vq, parent_title, parent_url,
-                                origin, resume_mode, load_request_timestamp);
-        prop_destroy(p);
-	rstr_release(r);
-	return e;
+      rstr_t *type  = prop_get_string(p, "model", "type", NULL);
+      rstr_t *source = NULL;
+      event_t *e = NULL;
+
+      if(type != NULL && !strcmp(rstr_get(type), "video")) {
+	TRACE(TRACE_DEBUG, "vp",
+              "Page %s is a video page. Waiting for source\n", url);
+
+        prop_courier_t *pc = prop_courier_create_waitable();
+
+        prop_sub_t *s1 =
+          prop_subscribe(0,
+                         PROP_TAG_SET_RSTR, &source,
+                         PROP_TAG_NAMED_ROOT, p, "self",
+                         PROP_TAG_NAME("self", "source"),
+                         PROP_TAG_COURIER, pc,
+                         NULL);
+
+        prop_sub_t *s2 =
+          prop_subscribe(0,
+                         PROP_TAG_SET_RSTR, &type,
+                         PROP_TAG_NAMED_ROOT, p, "self",
+                         PROP_TAG_NAME("self", "model", "type"),
+                         PROP_TAG_COURIER, pc,
+                         NULL);
+        int64_t deadline = arch_get_ts() + 10000000;
+
+        while(type != NULL && !strcmp(rstr_get(type), "video") &&
+              source == NULL && arch_get_ts() < deadline) {
+          struct prop_notify_queue q;
+          prop_courier_wait(pc, &q, 1000);
+          prop_notify_dispatch(&q, 0);
+        }
+
+        prop_unsubscribe(s1);
+        prop_unsubscribe(s2);
+        prop_courier_destroy(pc);
+        if(source != NULL) {
+          e = play_video(rstr_get(source), mp, flags, priority,
+                         errbuf, errlen, vq, parent_title, parent_url,
+                         origin, resume_mode, load_request_timestamp);
+          goto done;
+        }
       }
 
-      rstr_t *type  = prop_get_string(p, "model", "type", NULL);
-      rstr_t *err   = prop_get_string(p, "model", "error", NULL);
-      rstr_t *title = prop_get_string(p, "model", "metadata", "title", NULL);
-
       if(type != NULL && !strcmp(rstr_get(type), "openerror")) {
+
+        rstr_t *err   = prop_get_string(p, "model", "error", NULL);
+        rstr_t *title = prop_get_string(p, "model", "metadata", "title", NULL);
 
         prop_set(mp->mp_prop_metadata, "title", PROP_SET_RSTRING, title);
         snprintf(errbuf, errlen, "%s",
                  err ? rstr_get(err) : "Unable to open URL");
 
+        rstr_release(err);
+        rstr_release(title);
+
       } else {
         snprintf(errbuf, errlen,
                  "Page model for '%s' does not provide sufficient data", url);
       }
+    done:
       rstr_release(type);
-      rstr_release(err);
-      rstr_release(title);
+      rstr_release(source);
       prop_destroy(p);
-      return NULL;
-
+      return e;
     }
 
     va.canonical_url = canonical_url = url;
