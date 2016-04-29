@@ -114,6 +114,8 @@ typedef struct es_resource_class {
 
   void (*erc_info)(struct es_resource *er, char *buf, size_t buflen);
 
+  void (*erc_finalizer)(struct es_resource *er);
+
 } es_resource_class_t;
 
 

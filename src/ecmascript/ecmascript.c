@@ -210,6 +210,8 @@ es_resource_release(es_resource_t *er)
   if(atomic_dec(&er->er_refcount))
     return;
   es_context_release(er->er_ctx);
+  if(er->er_class->erc_finalizer != NULL)
+    er->er_class->erc_finalizer(er);
   free(er);
 }
 
