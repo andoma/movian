@@ -141,22 +141,19 @@
       alpha: 0.2;
     });
 
-    widget(container_x, {
-
-      widget(deck, {
-        filterConstraintX: true;
-        widget(label, {
-          padding: [3em, 0];
-          align: center;
-          caption: TITLE;
-          size: 1.5em;
-        });
-
-        widget(image, {
-          source: $self.model.metadata.icon;
-        });
-        page: select(isVoid($self.model.metadata.icon), 0, 1);
+    hbox({
+      padding: [4em, 0.5em];
+      image({
+        align: left;
+        source: $self.model.metadata.icon;
       });
+    });
+
+    widget(label, {
+      padding: [3em, 0];
+      align: center;
+      caption: TITLE;
+      size: 1.5em;
     });
 
     widget(container_x, {

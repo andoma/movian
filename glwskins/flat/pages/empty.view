@@ -1,0 +1,34 @@
+#import "skin://theme.view"
+
+widget(container_z, {
+
+  widget(container_y, {
+    align: top;
+    PageHeader($self.model.metadata.title);
+  });
+
+    widget(label, {
+      filterConstraintY: true;
+      align: center;
+      caption: _("No contents");
+      size: 1.5em;
+      font: "skin://fonts/RobotoCondensed-Bold.ttf";
+    });
+
+
+  widget(container_y, {
+
+    space(3);
+
+    widget(displacement, {
+      translation: [0, 0, 3 - iir(delay(3, 3, 0), 16)];
+      widget(image, {
+        alphaEdges: 2;
+        alpha: iir(delay(1, 3, 0), 16);
+        source: "skin://graphics/sadpanda.png";
+      });
+    });
+
+    space(1);
+  });
+});

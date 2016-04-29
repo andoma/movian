@@ -13,7 +13,8 @@ widget(container_z, {
 
     widget(icon, {
       filterConstraintY: true;
-      source: "skin://icons/" +
+      source: $self.metadata.icon ?? (
+        "skin://icons/" +
         select($self.subtype,
                "ic_" + $self.subtype + "_48px",
                translate($self.type,  "ic_help_48px",
@@ -28,7 +29,7 @@ widget(container_z, {
 		         "tv",        "ic_tv_48px",
 		         "playlist",  "ic_list_48px",
 	                 "movian",    "movian"
-	                )) + ".svg";
+	                )) + ".svg");
 
       style: "GridItemIcon";
     });

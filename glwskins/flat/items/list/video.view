@@ -25,6 +25,7 @@ widget(container_z, {
     widget(container_y, {
       filterConstraintX: true;
       padding: [0,0.5em];
+      spacing: 0.3em;
 
       widget(label, {
         size: 1.2em;
@@ -37,7 +38,6 @@ widget(container_z, {
 
         style: "ListItemLabel";
       });
-      space(1);
 
       widget(label, {
         filterConstraintX: true;
@@ -46,22 +46,69 @@ widget(container_z, {
                             value2duration($self.restartpos),
                             value2duration($self.metadata.duration)),
                         value2duration($self.metadata.duration));
-        style: "ListItemLabel";
+        style: "ListItemLabelDimmed";
       });
+
+      hbox({
+        padding: [-0.3em, 0, 0, 0];
+        hbox({
+          hidden: $self.metadata.viewCount < 1;
+          width: 5em;
+          spacing: 0.5em;
+          icon({
+            source: "skin://icons/ic_play_arrow_48px.svg";
+            style: "ListItemLabelDimmed";
+          });
+          label({
+            caption: value2quantity($self.metadata.viewCount);
+            style: "ListItemLabelDimmed";
+          });
+        });
+
+        hbox({
+          hidden: $self.metadata.likeCount < 1;
+          width: 5em;
+          spacing: 0.5em;
+          icon({
+            size: 0.8em;
+            source: "skin://icons/ic_thumb_up_48px.svg";
+            style: "ListItemLabelDimmed";
+          });
+          label({
+            caption: value2quantity($self.metadata.likeCount);
+            style: "ListItemLabelDimmed";
+          });
+        });
+
+        hbox({
+          hidden: $self.metadata.dislikeCount < 1;
+          width: 5em;
+          spacing: 0.5em;
+          icon({
+            size: 0.8em;
+            source: "skin://icons/ic_thumb_down_48px.svg";
+            style: "ListItemLabelDimmed";
+          });
+          label({
+            caption: value2quantity($self.metadata.dislikeCount);
+            style: "ListItemLabelDimmed";
+          });
+        });
+      });
+
     });
 
     widget(container_y, {
+      hidden: $self.playcount < 1;
       padding: [0,0.5em];
       widget(label, {
         align: right;
-        hidden: $self.playcount < 1;
 	caption: fmt(_pl("Seen %d times", "Seen %d time", $self.playcount), $self.playcount);
         style: "ListItemLabelDimmed";
       });
 
       widget(label, {
         align: right;
-        hidden: $self.playcount < 1;
 	caption: timeAgo($core.clock.unixtime - $self.lastplayed);
         style: "ListItemLabelDimmed";
       });
