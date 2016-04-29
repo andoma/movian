@@ -18,16 +18,23 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 
+#include "misc/prng.h"
+
 struct htsbuf_queue;
 
 typedef struct websocket_state {
   uint8_t opcode;
   int packet_size;
   void *packet;
+  prng_t maskgen;
 } websocket_state_t;
 
-void websocket_append_hdr(struct htsbuf_queue *q, int opcode, size_t len);
+void websocket_append_hdr(struct htsbuf_queue *q, int opcode, size_t len,
+                          const uint8_t *mask);
 
+void websocket_append(struct htsbuf_queue *q, int opcode,
+                      uint8_t *data, size_t len,
+                      websocket_state_t *state);
 
 /**
  * Return-values
@@ -38,3 +45,6 @@ int websocket_parse(struct htsbuf_queue *q,
                     int (*cb)(void *opaque, int opcode,
                               uint8_t *data, int len),
                     void *opaque, websocket_state_t *state);
+
+
+#define WS_STATUS_ABNORMAL_CLOSE 1006

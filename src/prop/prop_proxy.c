@@ -183,7 +183,7 @@ ppc_send_hello(prop_proxy_connection_t *ppc)
 
   htsbuf_queue_t q;
   htsbuf_queue_init(&q, 0);
-  websocket_append_hdr(&q, 2, hellomsglen);
+  websocket_append_hdr(&q, 2, hellomsglen, NULL);
   htsbuf_append(&q, hellomsg, hellomsglen);
   asyncio_sendq(ppc->ppc_connection, &q, 0);
 }
@@ -681,7 +681,7 @@ ppc_send_pong(prop_proxy_connection_t *ppc,
 {
   htsbuf_queue_t q;
   htsbuf_queue_init(&q, 0);
-  websocket_append_hdr(&q, 10, len);
+  websocket_append_hdr(&q, 10, len, NULL);
   htsbuf_append(&q, data, len);
   asyncio_sendq(ppc->ppc_connection, &q, 0);
 }
@@ -925,7 +925,7 @@ prop_proxy_send_data(prop_proxy_connection_t *ppc,
   if(TAILQ_FIRST(&ppc->ppc_outq.hq_q) == NULL)
     asyncio_run_task(ppc_send, prop_proxy_retain(ppc));
 
-  websocket_append_hdr(&ppc->ppc_outq, 2, len);
+  websocket_append_hdr(&ppc->ppc_outq, 2, len, NULL);
   htsbuf_append(&ppc->ppc_outq, data, len);
 }
 
@@ -939,7 +939,7 @@ prop_proxy_send_queue(prop_proxy_connection_t *ppc, htsbuf_queue_t *q)
   if(TAILQ_FIRST(&ppc->ppc_outq.hq_q) == NULL)
     asyncio_run_task(ppc_send, prop_proxy_retain(ppc));
 
-  websocket_append_hdr(&ppc->ppc_outq, 2, q->hq_size);
+  websocket_append_hdr(&ppc->ppc_outq, 2, q->hq_size, NULL);
   htsbuf_appendq(&ppc->ppc_outq, q);
 }
 

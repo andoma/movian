@@ -817,7 +817,7 @@ void
 websocket_send(http_connection_t *hc, int opcode, const void *data,
 	       size_t len)
 {
-  websocket_append_hdr(&hc->hc_output, opcode, len);
+  websocket_append_hdr(&hc->hc_output, opcode, len, NULL);
   htsbuf_append(&hc->hc_output, data, len);
   http_write(hc);
 }
@@ -829,7 +829,7 @@ websocket_send(http_connection_t *hc, int opcode, const void *data,
 void
 websocket_sendq(http_connection_t *hc, int opcode, htsbuf_queue_t *hq)
 {
-  websocket_append_hdr(&hc->hc_output, opcode, hq->hq_size);
+  websocket_append_hdr(&hc->hc_output, opcode, hq->hq_size, NULL);
   htsbuf_appendq(&hc->hc_output, hq);
   http_write(hc);
 }

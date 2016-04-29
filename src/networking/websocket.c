@@ -27,7 +27,8 @@
  *
  */
 void
-websocket_append_hdr(htsbuf_queue_t *q, int opcode, size_t len)
+websocket_append_hdr(htsbuf_queue_t *q, int opcode, size_t len,
+                     const uint8_t *mask)
 {
   uint8_t hdr[14]; // max header length
   int hlen;
@@ -46,8 +47,38 @@ websocket_append_hdr(htsbuf_queue_t *q, int opcode, size_t len)
     hlen = 10;
   }
 
+  if(mask != NULL) {
+    hdr[1] |= 0x80;
+    memcpy(hdr + hlen, mask, 4);
+    hlen += 4;
+  }
+
   htsbuf_append(q, hdr, hlen);
 }
+
+
+/**
+ *
+ */
+void
+websocket_append(htsbuf_queue_t *q, int opcode, uint8_t *data, size_t len,
+                 websocket_state_t *state)
+{
+  union {
+    uint32_t u32;
+    uint8_t mask[4];
+  } mask;
+
+  mask.u32 = prng_get(&state->maskgen);
+
+  websocket_append_hdr(q, opcode, len, &mask.mask[0]);
+
+  for(size_t i = 0; i < len; i++)
+    data[i] ^= mask.mask[i&3];
+
+  htsbuf_append(q, data, len);
+}
+
 
 
 /**
