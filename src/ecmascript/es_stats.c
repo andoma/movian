@@ -62,7 +62,7 @@ dump_context(htsbuf_queue_t *out, es_context_t *ec)
 
   htsbuf_qprintf(out, "  Loaded from %s\n", ec->ec_path);
 
-  htsbuf_qprintf(out, "  Memory usage, current: %zd bytes, max: %zd\n",
+  htsbuf_qprintf(out, "  Memory usage, current: %zd bytes, peak: %zd\n",
                  ec->ec_mem_active, ec->ec_mem_peak);
 
   htsbuf_qprintf(out, "  Attached permanent resources:\n");
