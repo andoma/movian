@@ -713,6 +713,7 @@ SRCS += ext/duktape/duktape.c \
 	src/ecmascript/es_searcher.c \
 	src/ecmascript/es_prop.c \
 	src/ecmascript/es_io.c \
+	src/ecmascript/es_websocket.c \
 	src/ecmascript/es_fs.c \
 	src/ecmascript/es_misc.c \
 	src/ecmascript/es_crypto.c \
