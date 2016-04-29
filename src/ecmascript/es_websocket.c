@@ -351,6 +351,7 @@ es_websocket_client_input_ws(void *opaque, int opcode, uint8_t *data, int len)
     t->ewc = ewc;
     t->buf = malloc(len);
     t->bufsize = len;
+    t->opcode = opcode;
     memcpy(t->buf, data, len);
 
     task_run_in_group(es_websocket_client_input_task_fn, t,
