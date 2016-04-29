@@ -18,7 +18,16 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 #pragma once
+
+typedef struct task_group task_group_t;
+
 typedef void (task_fn_t)(void *opaque);
 
 void task_run(task_fn_t *fn, void *opaque);
+
+task_group_t *task_group_create(void);
+
+void task_group_destroy(task_group_t *tg);
+
+void task_run_in_group(task_fn_t *fn, void *opaque, task_group_t *tg);
 
