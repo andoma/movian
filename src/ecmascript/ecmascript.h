@@ -270,6 +270,14 @@ int es_hook_invoke(const char *type,
                    void *opaque);
 
 /**
+ * Create a new context, load and execute script given by url
+ *
+ * flags are ECMASCRIPT_ -flags
+ */
+void ecmascript_load(const char *ctxid, int flags, const char *url,
+                     const char *storage);
+
+/**
  *
  */
 #define es_debug(ec, fmt, ...) do {                                     \

@@ -967,6 +967,23 @@ ecmascript_fini(void)
 
 INITME(INIT_GROUP_API, ecmascript_init, ecmascript_fini, 0);
 
+
+/**
+ *
+ */
+void
+ecmascript_load(const char *ctxid, int flags, const char *url,
+                const char *storage)
+{
+  es_context_t *ec = es_context_create(ctxid, flags, url, storage);
+  es_context_begin(ec);
+  es_exec(ec, url);
+  es_context_end(ec, 1);
+  es_context_release(ec);
+}
+
+
+
 /**
  *
  */
