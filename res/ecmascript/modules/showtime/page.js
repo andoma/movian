@@ -59,12 +59,13 @@ Item.prototype.addOptAction = function(title, action) {
 }
 
 
-Item.prototype.addOptURL = function(title, url) {
+Item.prototype.addOptURL = function(title, url, subtype) {
   var node = prop.createRoot();
   node.type = 'location';
   node.metadata.title = title;
   node.enabled = true;
   node.url = url;
+  node.subtype = subtype
 
   prop.setParent(node, this.root.options);
 }
