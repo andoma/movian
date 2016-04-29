@@ -621,27 +621,28 @@ es_context_begin(es_context_t *ec)
 void
 es_context_end(es_context_t *ec, int do_gc)
 {
-  if(do_gc)
-    duk_gc(ec->ec_duk, 0);
+  if(ec->ec_duk != NULL) {
+    if(do_gc)
+      duk_gc(ec->ec_duk, 0);
 
-  if(LIST_FIRST(&ec->ec_resources_permanent) == NULL) {
-    // No more permanent resources, attached. Terminate context
+    if(LIST_FIRST(&ec->ec_resources_permanent) == NULL) {
+      // No more permanent resources, attached. Terminate context
 
-    es_resource_t *er;
-    while((er = LIST_FIRST(&ec->ec_resources_volatile)) != NULL) {
-      assert(er->er_zombie == 0);
-      es_resource_destroy(er);
+      es_resource_t *er;
+      while((er = LIST_FIRST(&ec->ec_resources_volatile)) != NULL) {
+        assert(er->er_zombie == 0);
+        es_resource_destroy(er);
+      }
+
+      duk_destroy_heap(ec->ec_duk);
+      ec->ec_duk = NULL;
+
+      prop_vec_destroy_entries(ec->ec_prop_unload_destroy);
+      prop_vec_release(ec->ec_prop_unload_destroy);
+
+      TRACE(TRACE_DEBUG, rstr_get(ec->ec_id), "Unloaded");
     }
-
-    duk_destroy_heap(ec->ec_duk);
-    ec->ec_duk = NULL;
-
-    prop_vec_destroy_entries(ec->ec_prop_unload_destroy);
-    prop_vec_release(ec->ec_prop_unload_destroy);
-
-    TRACE(TRACE_DEBUG, rstr_get(ec->ec_id), "Unloaded");
   }
-
   hts_mutex_unlock(&ec->ec_mutex);
   es_context_release(ec);
 }
