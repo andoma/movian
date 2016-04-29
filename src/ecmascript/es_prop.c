@@ -125,7 +125,8 @@ es_prop_print_duk(duk_context *ctx)
 static int
 es_prop_create_duk(duk_context *ctx)
 {
-  es_stprop_push(ctx, prop_create_root(NULL));
+  const char *str = duk_get_string(ctx, 0);
+  es_stprop_push(ctx, prop_create_root(str));
   return 1;
 }
 
@@ -875,7 +876,7 @@ static const duk_function_list_entry fnlist_prop[] = {
 
   { "print",               es_prop_print_duk,             1 },
   { "release",             es_prop_release_duk,           1 },
-  { "create",              es_prop_create_duk,            0 },
+  { "create",              es_prop_create_duk,            1 },
   { "getValue",            es_prop_get_value_duk,         1 },
   { "getName",             es_prop_get_name_duk,          1 },
   { "getChild",            es_prop_get_child_duk,         2 },

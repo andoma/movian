@@ -94,8 +94,8 @@ exports.__proto__ = np;
 exports.global = makeProp(np.global());
 exports.makeProp = makeProp;
 
-exports.createRoot = function() {
-  return makeProp(np.create());
+exports.createRoot = function(name) {
+  return makeProp(np.create(name));
 }
 
 exports.subscribeValue = function(prop, callback, ctrl) {
