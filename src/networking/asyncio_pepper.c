@@ -1222,7 +1222,7 @@ asyncio_ssl_create_client(void)
 }
 
 void
-asyncio_ssl_free(void *)
+asyncio_ssl_free(void *ctx)
 {
 }
 
