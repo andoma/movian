@@ -312,11 +312,11 @@ exports.kvstoreSettings = function(nodes, url, domain) {
 
   this.nodes = nodes;
 
+  var kvstore = require('native/kvstore');
+
   this.getvalue = function(id, def, type, persistent) {
     if(!persistent)
       return def;
-
-    var kvstore = require('native/kvstore');
 
     if(type == 'int')
       return kvstore.getInteger(url, domain, id, def);
