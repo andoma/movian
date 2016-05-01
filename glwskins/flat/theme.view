@@ -163,3 +163,56 @@
     });
   });
 }
+
+
+#define SearchBar(URLPREFIX, TEXT=void, ICON=void) {
+  widget(container_x, {
+    style: "ListItem";
+    divider: true;
+    widget(container_z, {
+
+      filterConstraintX: true;
+      widget(quad, {
+        color: 0;
+      });
+
+      widget(container_x, {
+        height: 2em;
+        padding: [0.5em, 0];
+        spacing: 0.5em;
+        widget(icon, {
+          fhpSpill: true;
+          size: 1.2em;
+          source: "skin://icons/ic_search_48px.svg";
+          alpha: 0.4 + isFocused();
+        });
+
+        zbox({
+          filterConstraintX: true;
+          label({
+            hidden: select($view.searchQuery, true, false);
+            caption: TEXT;
+            size: 1.2em;
+            font: "skin://fonts/RobotoCondensed-Regular.ttf";
+            color: 0.5;
+          });
+
+          widget(text, {
+            filterConstraintX: true;
+            padding: [0, 0.4em];
+            size: 1.2em;
+            font: "skin://fonts/RobotoCondensed-Regular.ttf";
+            focusable: 0.1;
+
+            bind($view.searchQuery);
+            onEvent(enter, navOpen(URLPREFIX + $view.searchQuery),
+	            $view.searchQuery);
+            onEvent(submit, navOpen(URLPREFIX + $view.searchQuery),
+	            $view.searchQuery);
+          });
+        });
+      });
+    });
+  });
+}
+
