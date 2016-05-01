@@ -36,11 +36,25 @@ es_console_log(duk_context *ctx)
   return 0;
 }
 
+/**
+ *
+ */
+static int
+es_console_error(duk_context *ctx)
+{
+  es_context_t *ec = es_get(ctx);
+
+  const char *msg = duk_to_string(ctx, 0);
+  TRACE(TRACE_ERROR, rstr_get(ec->ec_id), "%s", msg);
+  return 0;
+}
+
 
 /**
  * Showtime object exposed functions
  */
 const duk_function_list_entry es_fnlist_console[] = {
   { "log",                      es_console_log,           1 },
+  { "error",                    es_console_error,         1 },
   { NULL, NULL, 0}
 };
