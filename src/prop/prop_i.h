@@ -306,6 +306,14 @@ struct prop {
 
 
   /**
+   * These two are used to carry the have_more_childs information
+   * to subscriptions that arrive after the call to
+   * have_more_childs() call have been made.
+   */
+#define PROP_HAVE_MORE               0x1000
+#define PROP_HAVE_MORE_YES           0x2000
+
+  /**
    * Tags. Protected by prop_tag_mutex
    */
   struct prop_tag *hp_tags;

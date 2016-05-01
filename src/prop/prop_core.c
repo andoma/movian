@@ -3239,6 +3239,13 @@ prop_subscribe_ex(const char *file, int line, int flags, ...)
               prop_build_notify_child(s, c, PROP_ADD_CHILD, direct,
                                       gen_add_flags(c, value));
           }
+
+          if(value->hp_flags & PROP_HAVE_MORE) {
+            prop_notify_t *n = prop_get_notify(s);
+            n->hpn_event = value->hp_flags & PROP_HAVE_MORE_YES ?
+              PROP_HAVE_MORE_CHILDS_YES : PROP_HAVE_MORE_CHILDS_NO;
+            prop_courier_enqueue(s, n);
+          }
         }
       }
 
@@ -5655,6 +5662,7 @@ prop_want_more_childs(prop_sub_t *s)
 void
 prop_have_more_childs0(prop_t *p, int yes)
 {
+  p->hp_flags |= PROP_HAVE_MORE | (yes ? PROP_HAVE_MORE_YES : 0);
   prop_send_event(p,
                   yes ? PROP_HAVE_MORE_CHILDS_YES : PROP_HAVE_MORE_CHILDS_NO);
 }

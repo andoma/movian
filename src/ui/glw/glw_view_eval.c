@@ -2445,7 +2445,7 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
       sub_cloner_t *sc = calloc(1, sizeof(sub_cloner_t));
       gps = &sc->sc_sub;
 
-      sc->sc_have_more = 2;
+      sc->sc_pending_more = 1;
 
       sc->sc_originating_prop =
         prop_ref_inc(ec->scope->gs_roots[GLW_ROOT_SELF].p);
