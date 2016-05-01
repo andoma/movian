@@ -145,6 +145,7 @@ widget(container_z, {
     });
 
     widget(label, {
+      hidden: count($args.metadata.cast) < 1;
       height: 3em;
       filterConstraintX: true;
       caption: _("Video Cast");
