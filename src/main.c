@@ -206,16 +206,25 @@ fini_group(int group)
 /**
  *
  */
+static void
+navigator_can_start(void)
+{
+  hts_mutex_lock(&gconf.state_mutex);
+  gconf.navigator_can_start = 1;
+  hts_cond_broadcast(&gconf.state_cond);
+  hts_mutex_unlock(&gconf.state_mutex);
+}
+
+
+/**
+ *
+ */
 static void *
 swthread(void *aux)
 {
 #if ENABLE_PLUGINS
   plugins_init2();
 #endif
-  hts_mutex_lock(&gconf.state_mutex);
-  gconf.state_plugins_loaded = 1;
-  hts_cond_broadcast(&gconf.state_cond);
-  hts_mutex_unlock(&gconf.state_mutex);
 
   upgrade_init();
 
@@ -227,11 +236,13 @@ swthread(void *aux)
     for(int i = 0; i < 10; i++) {
       if(!plugins_upgrade_check())
         break;
+      navigator_can_start();
       TRACE(TRACE_DEBUG, "plugins",
             "Failed to update repo, retrying in %d seconds", i + 1);
       sleep(i + i);
     }
 #endif
+    navigator_can_start();
 
     for(int i = 0; i < 10; i++) {
       if(!upgrade_refresh())
@@ -240,6 +251,8 @@ swthread(void *aux)
       TRACE(TRACE_DEBUG, "upgrade",
             "Failed to check for app upgrade, retrying in %d seconds", i + 1);
     }
+  } else {
+    navigator_can_start();
   }
 
   load_site_news();

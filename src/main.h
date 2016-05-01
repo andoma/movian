@@ -294,7 +294,7 @@ typedef struct gconf {
   hts_mutex_t state_mutex;
   hts_cond_t state_cond;
 
-  int state_plugins_loaded;
+  int navigator_can_start;
 
   int fa_allow_delete;
   int fa_kvstore_as_xattr;

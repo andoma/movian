@@ -266,7 +266,7 @@ nav_create(void)
      gconf.initial_url != NULL) {
 
     hts_mutex_lock(&gconf.state_mutex);
-    while(gconf.state_plugins_loaded == 0)
+    while(gconf.navigator_can_start == 0)
       hts_cond_wait(&gconf.state_cond, &gconf.state_mutex);
     hts_mutex_unlock(&gconf.state_mutex);
 
