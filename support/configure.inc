@@ -19,7 +19,7 @@ GLW_DEFAULT_SKIN="flat"
 DEFAULT_LOGTARGET=""
 APPNAME="Movian"
 OPTLEVEL=2
-PLUGINREPO="http://plugins.movian.tv/repo/plugins-v1.json"
+PLUGINREPO="https://movian.tv/plugins/plugins-v1.json"
 LINKER="\${CC}" # Default is to link with c-compiler
 
 CONFIG_LIST="
