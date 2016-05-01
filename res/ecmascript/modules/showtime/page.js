@@ -169,6 +169,14 @@ function Page(root, sync, flat) {
     entries: {
       get: function()  { return root.entries; },
       set: function(v) { root.entries = v; }
+    },
+
+    paginator: {
+      get: function()  { return this.paginator_; },
+      set: function(v) {
+        this.paginator_ = v;
+        this.haveMore(true);
+      }
     }
 
   });
