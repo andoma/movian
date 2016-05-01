@@ -3241,10 +3241,22 @@ prop_subscribe_ex(const char *file, int line, int flags, ...)
           }
 
           if(value->hp_flags & PROP_HAVE_MORE) {
-            prop_notify_t *n = prop_get_notify(s);
-            n->hpn_event = value->hp_flags & PROP_HAVE_MORE_YES ?
+            const prop_event_t e = value->hp_flags & PROP_HAVE_MORE_YES ?
               PROP_HAVE_MORE_CHILDS_YES : PROP_HAVE_MORE_CHILDS_NO;
-            prop_courier_enqueue(s, n);
+
+            if(direct || s->hps_flags & PROP_SUB_INTERNAL) {
+              prop_callback_t *cb = s->hps_callback;
+              prop_trampoline_t *pt = s->hps_trampoline;
+              if(pt != NULL)
+                pt(s, e, s->hps_user_int);
+              else
+                cb(s->hps_opaque, e, s->hps_user_int);
+
+            } else {
+              prop_notify_t *n = prop_get_notify(s);
+              n->hpn_event = e;
+              prop_courier_enqueue(s, n);
+            }
           }
         }
       }
