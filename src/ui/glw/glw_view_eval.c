@@ -3531,17 +3531,14 @@ glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
   if((a = token_resolve(ec, argv[0])) == NULL)
     return -1;
 
-  if(a->type == TOKEN_VOID)
-    url = NULL;
-  else if(a->type == TOKEN_RSTRING)
+  if(a->type == TOKEN_RSTRING)
     url = rstr_get(a->t_rstring);
   else if(a->type == TOKEN_CSTRING)
     url = a->t_cstring;
   else if(a->type == TOKEN_URI)
     url = rstr_get(a->t_uri);
   else
-    return glw_view_seterr(ec->ei, a, "navOpen(): "
-			    "First argument is not a string, link or (void)");
+    url = NULL;
 
   if(argc > 1) {
     if((b = token_resolve(ec, argv[1])) == NULL)
