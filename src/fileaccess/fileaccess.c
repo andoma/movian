@@ -1839,6 +1839,8 @@ fa_check_url(const char *url, char *errbuf, size_t errlen, int timeout_ms)
 void
 fa_pathjoin(char *dst, size_t dstlen, const char *p1, const char *p2)
 {
+  while(!strncmp(p2, "./", 2))
+    p2 += 2;
   int l1 = strlen(p1);
   int sep = l1 > 0 && p1[l1 - 1] == '/';
   snprintf(dst, dstlen, "%s%s%s", p1, sep ? "" : "/", p2);
