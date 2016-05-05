@@ -610,8 +610,10 @@ es_http_inspector_done(es_http_inspection_t *insp, int rval)
 {
   hts_mutex_lock(&http_inspector_mutex);
   insp->rval = rval;
-  insp->done = 1;
-  hts_cond_broadcast(&http_inspector_cond);
+  if(insp->ehi->ehi_async) {
+    hts_cond_broadcast(&http_inspector_cond);
+    insp->done = 1;
+  }
   hts_mutex_unlock(&http_inspector_mutex);
 }
 
@@ -770,13 +772,8 @@ es_http_inspector_run(void *aux)
   }
 
   duk_pop_2(ctx);
-
-  if(!ehi->ehi_async && insp->done == 0) {
-    hts_mutex_lock(&http_inspector_mutex);
+  if(!ehi->ehi_async) {
     insp->rval = rval;
-    insp->done = 1;
-    hts_cond_broadcast(&http_inspector_cond);
-    hts_mutex_unlock(&http_inspector_mutex);
   }
 
   es_context_end(ec, 1);
@@ -814,15 +811,18 @@ es_http_inspect(const char *url, http_request_inspection_t *hri)
   insp->url = strdup(url);
   atomic_set(&insp->refcount, 2);
 
-  task_run(es_http_inspector_run, insp);
+  if(ehi->ehi_async) {
+    task_run(es_http_inspector_run, insp);
+    while(!insp->done) {
+      hts_cond_wait(&http_inspector_cond, &http_inspector_mutex);
+    }
+    insp->hri = NULL;
 
-  while(!insp->done) {
-    hts_cond_wait(&http_inspector_cond, &http_inspector_mutex);
+    hts_mutex_unlock(&http_inspector_mutex);
+  } else {
+    hts_mutex_unlock(&http_inspector_mutex);
+    es_http_inspector_run(insp);
   }
-  insp->hri = NULL;
-
-  hts_mutex_unlock(&http_inspector_mutex);
-
   int rval = insp->rval;
   es_http_inspection_release(insp);
   return rval;
