@@ -3220,7 +3220,7 @@ prop_subscribe_ex(const char *file, int line, int flags, ...)
 
         if(value->hp_type == PROP_DIR && !(s->hps_flags & PROP_SUB_MULTI)) {
 
-          if(value->hp_selected == NULL && direct) {
+          if(value->hp_selected == NULL) {
 
             int cnt = 0;
             TAILQ_FOREACH(c, &value->hp_childs, hp_parent_link)
@@ -3230,8 +3230,10 @@ prop_subscribe_ex(const char *file, int line, int flags, ...)
             TAILQ_FOREACH(c, &value->hp_childs, hp_parent_link)
               pv = prop_vec_append(pv, c);
 
-            prop_build_notify_childv(s, pv, PROP_ADD_CHILD_VECTOR_DIRECT,
-                                     NULL, 1);
+            prop_build_notify_childv(s, pv,
+                                     direct ? PROP_ADD_CHILD_VECTOR_DIRECT :
+                                     PROP_ADD_CHILD_VECTOR,
+                                     NULL, direct);
             prop_vec_release(pv);
 
           } else {

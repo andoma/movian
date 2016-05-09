@@ -524,7 +524,7 @@ mtm_update_tracks(void *opaque, prop_event_t event, ...)
 {
   media_track_mgr_t *mtm = opaque;
   prop_t *p1, *p2;
-
+  prop_vec_t *pv;
   va_list ap;
   va_start(ap, event);
 
@@ -532,6 +532,13 @@ mtm_update_tracks(void *opaque, prop_event_t event, ...)
 
   case PROP_ADD_CHILD:
     mtm_add_track(mtm, va_arg(ap, prop_t *), NULL);
+    break;
+
+  case PROP_ADD_CHILD_VECTOR:
+    pv = va_arg(ap, prop_vec_t *);
+    for(int i = 0; i < prop_vec_len(pv); i++) {
+      mtm_add_track(mtm, prop_vec_get(pv, i), NULL);
+    }
     break;
 
   case PROP_ADD_CHILD_BEFORE:
