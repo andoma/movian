@@ -103,7 +103,7 @@ static int
 es_utf8_from_bytes_duk(duk_context *duk)
 {
   duk_size_t size;
-  const void *bytes = duk_require_buffer(duk, 0, &size);
+  const void *bytes = duk_require_buffer_data(duk, 0, &size);
 
   if(!duk_is_string(duk, 1)) {
 

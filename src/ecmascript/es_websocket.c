@@ -584,8 +584,8 @@ es_websocket_client_send(duk_context *ctx)
   duk_size_t bufsize;
   const void *buf;
   int opcode;
-  if(duk_is_buffer(ctx, 1)) {
-    buf = duk_get_buffer(ctx, 1, &bufsize);
+  buf = duk_get_buffer_data(ctx, 1, &bufsize);
+  if(buf != NULL) {
     opcode = 2; // binary
   } else {
     buf = duk_to_string(ctx, 1);

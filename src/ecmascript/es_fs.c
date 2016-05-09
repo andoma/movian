@@ -170,7 +170,7 @@ es_file_read(duk_context *ctx)
 {
   es_fd_t *efd = es_fd_get(ctx, 0);
   duk_size_t bufsize;
-  char *buf = duk_require_buffer(ctx, 1, &bufsize);
+  char *buf = duk_require_buffer_data(ctx, 1, &bufsize);
 
   const int offset = duk_to_int(ctx, 2);
   const int len = duk_to_int(ctx, 3);
