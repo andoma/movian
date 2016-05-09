@@ -321,12 +321,26 @@ es_timestamp(duk_context *ctx)
 }
 
 
+static int
+es_random_bytes(duk_context *ctx)
+{
+  int len = duk_get_int(ctx, 0);
+  if(len > 65536)
+    duk_error(ctx, DUK_ERR_ERROR, "Too many bytes requested");
+
+  void *ptr = duk_push_fixed_buffer(ctx, len);
+  arch_get_random_bytes(ptr, len);
+  return 1;
+}
+
+
 
 static const duk_function_list_entry fnlist_core[] = {
   { "compile",                 es_compile,              1 },
   { "resourceDestroy",         es_resource_destroy_duk, 1 },
   { "sleep",                   es_sleep,                1 },
   { "timestamp",               es_timestamp,            0 },
+  { "randomBytes",             es_random_bytes,         1 },
   { NULL, NULL, 0}
 };
 
