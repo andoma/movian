@@ -938,6 +938,50 @@ es_prop_set_clip_range(duk_context *ctx)
   return 0;
 }
 
+
+/**
+ *
+ */
+static int
+es_prop_tag_set(duk_context *ctx)
+{
+  es_prop_sub_t *eps = es_resource_get(ctx, 0, &es_resource_prop_sub);
+  prop_t *a = es_stprop_get(ctx, 1);
+  void *v = malloc(1);
+  prop_tag_set(a, eps, v);
+  es_root_register(ctx, 2, v);
+  return 0;
+}
+
+/**
+ *
+ */
+static int
+es_prop_tag_clear(duk_context *ctx)
+{
+  es_prop_sub_t *eps = es_resource_get(ctx, 0, &es_resource_prop_sub);
+  prop_t *a = es_stprop_get(ctx, 1);
+  void *v = prop_tag_clear(a, eps);
+  es_push_root(ctx, v);
+  es_root_unregister(ctx, v);
+  free(v);
+  return 1;
+}
+
+/**
+ *
+ */
+static int
+es_prop_tag_get(duk_context *ctx)
+{
+  es_prop_sub_t *eps = es_resource_get(ctx, 0, &es_resource_prop_sub);
+  prop_t *a = es_stprop_get(ctx, 1);
+  void *v = prop_tag_get(a, eps);
+  es_push_root(ctx, v);
+  return 1;
+}
+
+
 static const duk_function_list_entry fnlist_prop[] = {
 
   { "print",               es_prop_print_duk,             1 },
@@ -969,6 +1013,9 @@ static const duk_function_list_entry fnlist_prop[] = {
   { "unloadDestroy",       es_prop_unload_destroy,        1 },
   { "isZombie",            es_prop_is_zombie,             1 },
   { "setClipRange",        es_prop_set_clip_range,        3 },
+  { "tagSet",              es_prop_tag_set,               3 },
+  { "tagClear",            es_prop_tag_clear,             2 },
+  { "tagGet",              es_prop_tag_get,               2 },
   { NULL, NULL, 0}
 };
 
