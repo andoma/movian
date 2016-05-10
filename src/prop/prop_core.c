@@ -367,6 +367,10 @@ prop_ref_dec(prop_t *p)
     return;
   assert(p->hp_type == PROP_ZOMBIE);
   assert(p->hp_tags == NULL);
+
+  if(!(p->hp_flags & PROP_NAME_NOT_ALLOCATED))
+    free((void *)p->hp_name);
+
 #ifdef PROP_DEBUG
   assert(p->hp_magic == PROP_MAGIC);
   memset(p, 0xdd, sizeof(prop_t));
@@ -387,6 +391,10 @@ prop_ref_dec_locked(prop_t *p)
     return;
   assert(p->hp_type == PROP_ZOMBIE);
   assert(p->hp_tags == NULL);
+
+  if(!(p->hp_flags & PROP_NAME_NOT_ALLOCATED))
+    free((void *)p->hp_name);
+
 #ifdef PROP_DEBUG
   assert(p->hp_magic == PROP_MAGIC);
   memset(p, 0xdd, sizeof(prop_t));
@@ -2379,9 +2387,6 @@ prop_destroy0(prop_t *p)
   }
 
  finale:
-  if(!(p->hp_flags & PROP_NAME_NOT_ALLOCATED))
-    free((void *)p->hp_name);
-  p->hp_name = NULL;
 
   prop_ref_dec_locked(p);
   return 1;
