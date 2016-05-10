@@ -142,6 +142,7 @@ void prop_init_late(void);
 #define PROP_SUB_TRACK_DESTROY_EXP    0x80
 #define PROP_SUB_SEND_VALUE_PROP      0x100
 #define PROP_SUB_NO_INITIAL_UPDATE    0x200
+#define PROP_SUB_EARLY_DEL_CHILD      0x400
 // Remember that flags field is uint16_t in prop_i.h so don't go above 0x8000
 // for persistent flags
 

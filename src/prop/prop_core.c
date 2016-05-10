@@ -2260,7 +2260,8 @@ recursive_unlink(prop_t *p)
 int
 prop_destroy0(prop_t *p)
 {
-  prop_t *c, *next, *parent;
+  prop_t *parent = p->hp_parent;
+  prop_t *c, *next;
   prop_sub_t *s;
 
 #ifdef PROP_DEBUG
@@ -2285,6 +2286,11 @@ prop_destroy0(prop_t *p)
     return 0;
 
   recursive_unlink(p);
+
+  if(parent != NULL)
+    LIST_FOREACH(s, &parent->hp_value_subscriptions, hps_value_prop_link)
+      if(s->hps_flags & PROP_SUB_EARLY_DEL_CHILD)
+        prop_build_notify_child(s, p, PROP_DEL_CHILD, 0, 0);
 
   switch(p->hp_type) {
   case PROP_ZOMBIE:
@@ -2359,9 +2365,11 @@ prop_destroy0(prop_t *p)
 	   p->hp_parent);
 #endif
 
-  if(p->hp_parent != NULL) {
-    prop_notify_child(p, p->hp_parent, PROP_DEL_CHILD, NULL, 0);
-    parent = p->hp_parent;
+  if(parent != NULL) {
+
+    LIST_FOREACH(s, &parent->hp_value_subscriptions, hps_value_prop_link)
+      if(!(s->hps_flags & PROP_SUB_EARLY_DEL_CHILD))
+        prop_build_notify_child(s, p, PROP_DEL_CHILD, 0, 0);
 
     TAILQ_REMOVE(&parent->hp_childs, p, hp_parent_link);
     p->hp_parent = NULL;
@@ -2401,6 +2409,7 @@ static void
 prop_destroy_childs0(prop_t *p)
 {
   prop_t *c, *next;
+  prop_sub_t *s;
 
   struct prop_queue childs;
   TAILQ_MOVE(&childs, &p->hp_childs, hp_parent_link);
@@ -2412,8 +2421,17 @@ prop_destroy_childs0(prop_t *p)
 
   for(c = TAILQ_FIRST(&childs); c != NULL; c = next) {
     next = TAILQ_NEXT(c, hp_parent_link);
+
+    LIST_FOREACH(s, &p->hp_value_subscriptions, hps_value_prop_link)
+      if(s->hps_flags & PROP_SUB_EARLY_DEL_CHILD)
+        prop_build_notify_child(s, c, PROP_DEL_CHILD, 0, 0);
+
     c->hp_parent = NULL;
     prop_destroy0(c);
+
+    LIST_FOREACH(s, &p->hp_value_subscriptions, hps_value_prop_link)
+      if(!(s->hps_flags & PROP_SUB_EARLY_DEL_CHILD))
+        prop_build_notify_child(s, c, PROP_DEL_CHILD, 0, 0);
   }
 
 }
