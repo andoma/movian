@@ -647,11 +647,12 @@ es_prop_subscribe(duk_context *ctx)
 
   eps->eps_sub =
       prop_subscribe(flags,
-                   PROP_TAG_ROOT, p,
-                   PROP_TAG_LOCKMGR, ecmascript_context_lockmgr,
-                   PROP_TAG_MUTEX, ec,
-                   PROP_TAG_CALLBACK, es_sub_cb, eps,
-                   NULL);
+                     PROP_TAG_ROOT, p,
+                     PROP_TAG_LOCKMGR, ecmascript_context_lockmgr,
+                     PROP_TAG_MUTEX, ec,
+                     PROP_TAG_CALLBACK, es_sub_cb, eps,
+                     PROP_TAG_DISPATCH_GROUP, ec->ec_prop_dispatch_group,
+                     NULL);
 
   es_resource_push(ctx, &eps->eps_super);
   return 1;

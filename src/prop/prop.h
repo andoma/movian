@@ -171,6 +171,7 @@ enum {
   PROP_TAG_SET_FLOAT,
   PROP_TAG_SET_RSTR,
   PROP_TAG_COURIER,
+  PROP_TAG_DISPATCH_GROUP,
   PROP_TAG_ROOT,
   PROP_TAG_NAMED_ROOT,
   PROP_TAG_ROOT_VECTOR,
@@ -495,6 +496,11 @@ void prop_unmark(prop_t *p);
 int prop_is_marked(prop_t *p);
 
 void prop_destroy_marked_childs(prop_t *p);
+
+
+void *prop_dispatch_group_create(void);
+
+void prop_dispatch_group_destroy(void *group);
 
 /**
  * Property tags

@@ -100,6 +100,8 @@ typedef struct es_context {
 
   struct prop_vec *ec_prop_unload_destroy;
 
+  void *ec_prop_dispatch_group;
+
 } es_context_t;
 
 

@@ -574,6 +574,8 @@ es_context_create(const char *id, int flags, const char *url,
 
   ec->ec_prop_unload_destroy = prop_vec_create(16);
 
+  ec->ec_prop_dispatch_group = prop_dispatch_group_create();
+
   ec->ec_duk = duk_create_heap(es_mem_alloc, es_mem_realloc, es_mem_free,
                                ec, NULL);
 
@@ -653,6 +655,8 @@ es_context_end(es_context_t *ec, int do_gc)
 
       prop_vec_destroy_entries(ec->ec_prop_unload_destroy);
       prop_vec_release(ec->ec_prop_unload_destroy);
+
+      prop_dispatch_group_destroy(ec->ec_prop_dispatch_group);
 
       TRACE(TRACE_DEBUG, rstr_get(ec->ec_id), "Unloaded");
     }
