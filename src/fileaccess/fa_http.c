@@ -108,6 +108,8 @@ typedef struct http_connection {
   char hc_ssl;
   char hc_reused;
 
+  atomic_t hc_inspecting;
+
   callout_t hc_callout;
 
 } http_connection_t;
@@ -320,7 +322,8 @@ http_connection_get(const char *hostname, int port, int ssl,
       TAILQ_FOREACH(hc, &http_active_connections, hc_link) {
         if(!strcmp(hc->hc_hostname, hostname) &&
            hc->hc_port == port &&
-           hc->hc_ssl == ssl) {
+           hc->hc_ssl == ssl &&
+           atomic_get(&hc->hc_inspecting) == 0) {
           num_concurrent++;
         }
       }
@@ -1001,7 +1004,7 @@ http_headers_send(htsbuf_queue_t *q, struct http_header_list *def,
 
 
 /**
- *
+ * We should really not hold on to a connection during inspection
  */
 static int attribute_unused_result
 http_request_inspect(struct http_header_list *headers,
@@ -1027,17 +1030,21 @@ http_request_inspect(struct http_header_list *headers,
   hri.hri_force_fail = 0;
   hri.hri_auth_has_failed = hf->hf_auth_failed;
 
+  atomic_inc(&hf->hf_connection->hc_inspecting);
+
   LIST_FOREACH(x, &http_request_inspectors, link) {
     if(!x->check(hf->hf_url, &hri)) {
       hf->hf_ext_auth = 1;
-      if(hri.hri_force_fail) {
+
+      if(hri.hri_force_fail)
         http_headers_free(cookies);
-        return 1;
-      }
-      return 0;
+
+      atomic_dec(&hf->hf_connection->hc_inspecting);
+      return hri.hri_force_fail;
     }
   }
 
+  atomic_dec(&hf->hf_connection->hc_inspecting);
 
   if(hf->hf_auth != NULL) {
     http_header_add(headers, "Authorization", hf->hf_auth, 0);
