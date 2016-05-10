@@ -263,7 +263,8 @@ ehr_task(void *aux)
 
   es_push_root(ctx, ehr);
 
-  if(ehr->ehr_error == 0 || ehr->ehr_flags & FA_CONTENT_ON_ERROR) {
+  if(ehr->ehr_error == 0 ||
+     (ehr->ehr_flags & FA_CONTENT_ON_ERROR && ehr->ehr_http_status)) {
     duk_push_boolean(ctx, 0);
     es_http_push_result(ctx, ehr);
   } else {
