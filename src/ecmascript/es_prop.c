@@ -474,6 +474,7 @@ es_sub_cb(void *opaque, prop_event_t event, ...)
   int destroy = 0;
   const  event_t *e;
   prop_t *p1, *p2;
+  prop_vec_t *pv;
   duk_context *ctx = ec->ec_duk;
 
   es_push_root(ctx, eps);
@@ -557,6 +558,67 @@ es_sub_cb(void *opaque, prop_event_t event, ...)
       duk_push_null(ctx);
     }
     break;
+
+  case PROP_ADD_CHILD:
+    duk_push_string(ctx, "addchild");
+    p1 = va_arg(ap, prop_t *);
+    nargs = 2;
+    es_stprop_push(ctx, p1);
+    break;
+
+  case PROP_ADD_CHILD_BEFORE:
+    duk_push_string(ctx, "addchildbefore");
+    p1 = va_arg(ap, prop_t *);
+    p2 = va_arg(ap, prop_t *);
+    nargs = 3;
+    es_stprop_push(ctx, p1);
+    es_stprop_push(ctx, p2);
+    break;
+
+  case PROP_ADD_CHILD_VECTOR:
+  case PROP_ADD_CHILD_VECTOR_DIRECT:
+    duk_push_string(ctx, "addchilds");
+
+    pv = va_arg(ap, prop_vec_t *);
+    duk_push_array(ctx);
+
+    for(int i = 0; i < prop_vec_len(pv); i++) {
+      es_stprop_push(ctx, prop_vec_get(pv, i));
+      duk_put_prop_index(ctx, -2, i);
+    }
+    nargs = 2;
+    break;
+
+  case PROP_ADD_CHILD_VECTOR_BEFORE:
+    duk_push_string(ctx, "addchildsbefore");
+
+    pv = va_arg(ap, prop_vec_t *);
+    p2 = va_arg(ap, prop_t *);
+    duk_push_array(ctx);
+    for(int i = 0; i < prop_vec_len(pv); i++) {
+      es_stprop_push(ctx, prop_vec_get(pv, i));
+      duk_put_prop_index(ctx, -2, i);
+    }
+    es_stprop_push(ctx, p2);
+    nargs = 3;
+    break;
+
+  case PROP_DEL_CHILD:
+    duk_push_string(ctx, "delchild");
+    p1 = va_arg(ap, prop_t *);
+    es_stprop_push(ctx, p1);
+    nargs = 2;
+    break;
+
+  case PROP_MOVE_CHILD:
+    duk_push_string(ctx, "movechild");
+    p1 = va_arg(ap, prop_t *);
+    p2 = va_arg(ap, prop_t *);
+    es_stprop_push(ctx, p1);
+    es_stprop_push(ctx, p2);
+    nargs = 3;
+    break;
+
 
   case PROP_EXT_EVENT:
     e = va_arg(ap, const event_t *);
