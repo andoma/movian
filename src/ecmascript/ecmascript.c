@@ -638,6 +638,9 @@ void
 es_context_end(es_context_t *ec, int do_gc)
 {
   if(ec->ec_duk != NULL) {
+
+    duk_set_top(ec->ec_duk, 0);
+
     if(do_gc)
       duk_gc(ec->ec_duk, 0);
 
