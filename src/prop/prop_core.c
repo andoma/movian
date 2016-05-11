@@ -2433,10 +2433,6 @@ prop_destroy_childs0(prop_t *p)
 
     c->hp_parent = NULL;
     prop_destroy0(c);
-
-    LIST_FOREACH(s, &p->hp_value_subscriptions, hps_value_prop_link)
-      if(!(s->hps_flags & PROP_SUB_EARLY_DEL_CHILD))
-        prop_build_notify_child(s, c, PROP_DEL_CHILD, 0, 0);
   }
 
 }
