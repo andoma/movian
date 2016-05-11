@@ -88,6 +88,14 @@ widget(popup, {
         height: 0.1em;
       });
 
+      // Enqueue track
+
+      ITEM(_("Queue"),  {
+        fireEvent(enqueuetrack($args));
+        $clone.itemMenu = void;
+      }, "dataroot://res/svg/Enqueue.svg",
+           $args.type != "audio");
+
       ITEM(select($view.itemBookmark.model.subtype == "bookmark",
                   _("Bookmarked"), _("Bookmark")), {
         fireEvent(deliverRef($core.bookmarks.eventSink, $args));
