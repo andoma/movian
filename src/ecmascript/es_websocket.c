@@ -210,7 +210,7 @@ es_websocket_client_input_task_fn(void *aux)
     duk_pop(ctx);
   }
 
-  es_context_end(ec, 1);
+  es_context_end(ec, 0);
   es_resource_release(&ewc->super);
 
   free(t->buf);
