@@ -46,11 +46,17 @@ int http_server_port;
  */
 typedef struct http_path {
   LIST_ENTRY(http_path) hp_link;
-  const char *hp_path;
+  char *hp_path;
   void *hp_opaque;
   http_callback_t *hp_callback;
   int hp_len;
-  int hp_leaf;
+  int hp_mode;
+
+#define HTTP_PATH_MODE_NORMAL    0
+#define HTTP_PATH_MODE_LEAF      1
+#define HTTP_PATH_MODE_WEBSOCKET 2
+
+
   websocket_callback_init_t *hp_ws_init;
   websocket_callback_data_t *hp_ws_data;
   websocket_callback_fini_t *hp_ws_fini;
@@ -178,7 +184,7 @@ http_path_add(const char *path, void *opaque, http_callback_t *callback,
   hp->hp_path = strdup(path);
   hp->hp_opaque = opaque;
   hp->hp_callback = callback;
-  hp->hp_leaf = leaf;
+  hp->hp_mode = !!leaf;
   LIST_INSERT_SORTED(&http_paths, hp, hp_link, hp_cmp, http_path_t);
   return hp;
 }
@@ -200,7 +206,7 @@ http_add_websocket(const char *path,
   hp->hp_ws_init = init;
   hp->hp_ws_data = data;
   hp->hp_ws_fini = fini;
-  hp->hp_leaf = 2;
+  hp->hp_mode = HTTP_PATH_MODE_WEBSOCKET;
   LIST_INSERT_HEAD(&http_paths, hp, hp_link);
   return hp;
 }
@@ -623,7 +629,7 @@ http_cmd_get(http_connection_t *hc, http_cmd_t method)
   char *args;
 
   hp = http_resolve(hc, &remain, &args);
-  if(hp == NULL || (hp->hp_leaf && remain != NULL)) {
+  if(hp == NULL || (hp->hp_mode && remain != NULL)) {
     http_error(hc, HTTP_STATUS_NOT_FOUND, NULL);
     return 0;
   }
@@ -635,14 +641,14 @@ http_cmd_get(http_connection_t *hc, http_cmd_t method)
   const char *u = http_header_get(&hc->hc_request_headers, "Upgrade");
 
   if(c && u && !strcasecmp(c, "Upgrade") && !strcasecmp(u, "websocket")) {
-    if(hp->hp_leaf != 2) {
+    if(hp->hp_mode != HTTP_PATH_MODE_WEBSOCKET) {
       http_error(hc, HTTP_STATUS_METHOD_NOT_ALLOWED, NULL);
       return 0;
     }
     return http_cmd_start_websocket(hc, hp);
   }
 
-  if(hp->hp_leaf == 2) {
+  if(hp->hp_mode == HTTP_PATH_MODE_WEBSOCKET) {
     // Websocket endpoint don't wanna deal with normal HTTP requests
     http_error(hc, HTTP_STATUS_METHOD_NOT_ALLOWED, NULL);
     return 0;
