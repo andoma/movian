@@ -382,7 +382,17 @@ static int
 es_faprovider_readRespond(duk_context *ctx)
 {
   es_fa_handle_t *fah = es_get_native_obj(ctx, 0, &es_native_fah);
-  fah_ok_val(fah, duk_get_int(ctx, 1));
+  int size = duk_get_int(ctx, 1);
+  if(size < 0) {
+    hts_mutex_lock(&es_fa_mutex);
+    if(fah->fah_status == ES_FA_WORKING) {
+      fah->fah_status = ES_FA_ERROR;
+      hts_cond_broadcast(&es_fa_cond);
+    }
+    hts_mutex_unlock(&es_fa_mutex);
+  } else {
+    fah_ok_val(fah, duk_get_int(ctx, 1));
+  }
   return 0;
 }
 
