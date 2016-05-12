@@ -124,6 +124,10 @@ typedef struct es_fa_handle {
   int64_t fah_size;
   int64_t fah_fpos;
 
+
+  int fah_type;
+  int fah_mtime;
+
 } es_fa_handle_t;
 
 
@@ -153,10 +157,12 @@ fah_fail(es_fa_handle_t *fah, duk_context *ctx)
 {
   const char *msg = duk_get_string(ctx, -1);
   hts_mutex_lock(&es_fa_mutex);
-  snprintf(fah->fah_errbuf, fah->fah_errsize, "%s",
-           msg ? msg : "No message in JS exception");
-  fah->fah_status = ES_FA_ERROR;
-  hts_cond_broadcast(&es_fa_cond);
+  if(fah->fah_status == ES_FA_WORKING) {
+    snprintf(fah->fah_errbuf, fah->fah_errsize, "%s",
+             msg ? msg : "No message in JS exception");
+    fah->fah_status = ES_FA_ERROR;
+    hts_cond_broadcast(&es_fa_cond);
+  }
   hts_mutex_unlock(&es_fa_mutex);
 }
 
@@ -172,8 +178,10 @@ static void
 fah_ok(es_fa_handle_t *fah)
 {
   hts_mutex_lock(&es_fa_mutex);
-  fah->fah_status = ES_FA_OK;
-  hts_cond_broadcast(&es_fa_cond);
+  if(fah->fah_status == ES_FA_WORKING) {
+    fah->fah_status = ES_FA_OK;
+    hts_cond_broadcast(&es_fa_cond);
+  }
   hts_mutex_unlock(&es_fa_mutex);
 }
 
@@ -182,9 +190,11 @@ static void
 fah_ok_val(es_fa_handle_t *fah, int val)
 {
   hts_mutex_lock(&es_fa_mutex);
-  fah->fah_status = ES_FA_OK;
-  fah->fah_return_value = val;
-  hts_cond_broadcast(&es_fa_cond);
+  if(fah->fah_status == ES_FA_WORKING) {
+    fah->fah_status = ES_FA_OK;
+    fah->fah_return_value = val;
+    hts_cond_broadcast(&es_fa_cond);
+  }
   hts_mutex_unlock(&es_fa_mutex);
 }
 
@@ -241,7 +251,6 @@ es_fap_open(struct fa_protocol *fap, const char *url,
 
   atomic_set(&fah->fah_refcount, 2); // One to return, one for task
 
-
   hts_mutex_lock(&es_fa_mutex);
   fah->fah_status = ES_FA_WORKING;
 
@@ -249,6 +258,9 @@ es_fap_open(struct fa_protocol *fap, const char *url,
 
   while(fah->fah_status == ES_FA_WORKING)
     hts_cond_wait(&es_fa_cond, &es_fa_mutex);
+
+  fah->fah_errbuf = NULL;
+  fah->fah_errsize = 0;
 
   hts_mutex_unlock(&es_fa_mutex);
 
@@ -374,6 +386,7 @@ es_faprovider_readRespond(duk_context *ctx)
   return 0;
 }
 
+
 static void
 es_fa_close(void *aux)
 {
@@ -433,6 +446,9 @@ es_faprovider_closeRespond(duk_context *ctx)
 
 
 
+
+
+
 static int
 es_faprovider_setSize(duk_context *ctx)
 {
@@ -442,9 +458,6 @@ es_faprovider_setSize(duk_context *ctx)
 }
 
 
-/**
- * Seek in file
- */
 static int64_t
 es_fap_seek(fa_handle_t *handle, int64_t pos, int whence, int lazy)
 {
@@ -478,6 +491,122 @@ es_fap_seek(fa_handle_t *handle, int64_t pos, int whence, int lazy)
 }
 
 
+static int64_t
+es_fap_fsize(fa_handle_t *handle)
+{
+  es_fa_handle_t *fah = (es_fa_handle_t *)handle;
+  return fah->fah_size;
+}
+
+
+
+
+
+
+
+static void
+es_fa_stat(void *aux)
+{
+  es_fa_handle_t *fah = aux;
+  es_fap_t *ef = fah->fah_ef;
+  es_context_t *ec = ef->super.er_ctx;
+  duk_context *ctx = ec->ec_duk;
+
+  es_context_begin(ec);
+
+  duk_set_top(ctx, 0);
+
+  es_push_root(ctx, ef);
+  duk_get_prop_string(ctx, -1, "stat");
+  es_push_native_obj(ctx, &es_native_fah, fah_retain(fah));
+  duk_push_string(ctx, fah->fah_url);
+
+  int rc = duk_pcall(ctx, 2);
+  if(rc) {
+    fah_exception(fah, ctx);
+    es_dump_err(ctx);
+  }
+
+  es_context_end(ec, 0);
+  fah_release(fah);
+}
+
+
+
+static int
+es_fap_stat(struct fa_protocol *fap, const char *url,
+            struct fa_stat *buf,
+            int flags, char *errbuf, size_t errsize)
+{
+  es_fa_handle_t *fah = calloc(1, sizeof(es_fa_handle_t));
+  es_fap_t *ef = fap->fap_opaque;
+
+  fah->fah_url = strdup(url);
+
+  fah->fh.fh_proto = fap;
+  fah->fah_ef = ef;
+  es_resource_retain(&ef->super);
+
+  atomic_set(&fah->fah_refcount, 2);
+
+  fah->fah_errbuf = errbuf;
+  fah->fah_errsize = errsize;
+  fah->fah_status = ES_FA_WORKING;
+  task_run(es_fa_stat, fah);
+
+  hts_mutex_lock(&es_fa_mutex);
+
+  while(fah->fah_status == ES_FA_WORKING)
+    hts_cond_wait(&es_fa_cond, &es_fa_mutex);
+
+  fah->fah_errbuf = NULL;
+  fah->fah_errsize = 0;
+
+  hts_mutex_unlock(&es_fa_mutex);
+
+  int r = fah->fah_return_value;
+  if(!r) {
+    buf->fs_size = fah->fah_size;
+    buf->fs_type = fah->fah_type;
+    buf->fs_mtime = fah->fah_mtime;
+  }
+
+  fah_release(fah);
+  return r;
+}
+
+
+static int
+es_faprovider_statRespond(duk_context *ctx)
+{
+  es_fa_handle_t *fah = es_get_native_obj(ctx, 0, &es_native_fah);
+
+
+  if(duk_get_boolean(ctx, 1)) {
+    hts_mutex_lock(&es_fa_mutex);
+    if(fah->fah_status == ES_FA_WORKING) {
+      fah->fah_status = ES_FA_OK;
+      fah->fah_return_value = 0;
+
+      fah->fah_size = duk_get_number(ctx, 2);
+      fah->fah_type = CONTENT_FILE;
+
+      const char *type = duk_get_string(ctx, 3);
+      if(type) {
+        if(!strcmp(type, "dir"))
+          fah->fah_type = CONTENT_DIR;
+      }
+      fah->fah_mtime = duk_get_number(ctx, 4);
+      hts_cond_broadcast(&es_fa_cond);
+    }
+    hts_mutex_unlock(&es_fa_mutex);
+  } else {
+    fah_fail(fah, ctx);
+  }
+  return 0;
+}
+
+
 
 
 static int
@@ -489,11 +618,13 @@ es_faprovider_register(duk_context *ctx)
   es_fap_t *ef = es_resource_alloc(&es_resource_fap);
 
   ef->fap.fap_opaque = ef;
-  ef->fap.fap_fini = es_fap_fini;
-  ef->fap.fap_open = es_fap_open;
-  ef->fap.fap_seek = es_fap_seek;
-  ef->fap.fap_read = es_fap_read;
+  ef->fap.fap_fini  = es_fap_fini;
+  ef->fap.fap_open  = es_fap_open;
+  ef->fap.fap_seek  = es_fap_seek;
+  ef->fap.fap_read  = es_fap_read;
   ef->fap.fap_close = es_fap_close;
+  ef->fap.fap_fsize = es_fap_fsize;
+  ef->fap.fap_stat  = es_fap_stat;
 
 
   ef->name = strdup(name);
@@ -515,6 +646,7 @@ static const duk_function_list_entry fnlist_faprovider[] = {
   { "openRespond",  es_faprovider_openRespond,  3 },
   { "readRespond",  es_faprovider_readRespond,  2 },
   { "closeRespond", es_faprovider_closeRespond, 1 },
+  { "statRespond",  es_faprovider_statRespond,  5 },
   { "setSize",      es_faprovider_setSize,      2 },
   { NULL, NULL, 0}
 };
