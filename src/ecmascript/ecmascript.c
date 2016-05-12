@@ -944,7 +944,12 @@ ecmascript_init(void)
   if(gconf.load_ecmascript == NULL)
     return;
 
-  es_context_t *ec = es_context_create("cmdline", ECMASCRIPT_DEBUG,
+  int flags =
+    ECMASCRIPT_DEBUG |
+    ECMASCRIPT_FILE_BYPASS_ACL_READ |
+    ECMASCRIPT_FILE_BYPASS_ACL_WRITE;
+
+  es_context_t *ec = es_context_create("cmdline", flags,
                                        gconf.load_ecmascript, "/tmp");
   es_context_begin(ec);
 
