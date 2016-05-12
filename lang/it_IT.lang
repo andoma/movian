@@ -528,20 +528,16 @@ msg: Volume generale: %d dB
 # ./src/api/stpp.c
 #
 id: Allow remote control
-# Missing translation
-msg: 
+msg: Permetti controllo remoto
 
 id: Device not available
-# Missing translation
-msg: 
+msg: Dispositivo non disponibile
 
 id: Movians for remote control
-# Missing translation
-msg: 
+msg: Movians per controllo remoto
 
 id: Remote control
-# Missing translation
-msg: 
+msg: Controllo remoto
 
 #
 # ./src/api/tmdb.c
@@ -556,8 +552,7 @@ msg: Usa titolo originale
 # ./src/arch/android/android.c
 #
 id: Android Storage
-# Missing translation
-msg: 
+msg: Android Storage
 
 #
 # ./src/arch/linux/pulseaudio.c
@@ -629,8 +624,7 @@ msg: Attiva
 # ./src/arch/rpi/rpi_tv.c
 #
 id: Match display and content framerate
-# Missing translation
-msg: 
+msg: Confronta framerate schermo e contenuto
 
 #
 # ./src/audio2/audio.c
@@ -639,8 +633,7 @@ id: Audio delay
 msg: Ritardo audio
 
 id: Audio gain
-# Missing translation
-msg: 
+msg: Guadagno audio
 
 id: Setup audio output
 msg: Imposta uscita audio
@@ -736,8 +729,7 @@ id: Enable bittorrent
 msg: Abilita bittorent
 
 id: Max upload speed
-# Missing translation
-msg: 
+msg: Massima velocità di upload
 
 id: Max usage of free space for caching torrents
 msg: Uso massimo dello spazio libero per la cache dei torrent
@@ -770,30 +762,25 @@ msg: Supplementare
 # ./src/backend/htsp/htsp.c
 #
 id: Channels
-# Missing translation
-msg: 
+msg: Canali
 
 id: Invalid HTSP URL
 msg: URL HTSP non valido
 
 id: No such channel
-# Missing translation
-msg: 
+msg: Nessun canale trovato
 
 id: Recorded shows
-# Missing translation
-msg: 
+msg: Shows registrati
 
 id: Recorder
-# Missing translation
-msg: 
+msg: Registratore
 
 #
 # ./src/backend/playlist.c
 #
 id: Unable to open playlist
-# Missing translation
-msg: 
+msg: Impossibile aprire la playlist
 
 #
 # ./src/backend/search.c
@@ -808,20 +795,16 @@ msg: Risultati della ricerca per: %s
 # ./src/backend/slideshow/slideshow.c
 #
 id: 3 seconds
-# Missing translation
-msg: 
+msg: 3 secondi
 
 id: 5 seconds
-# Missing translation
-msg: 
+msg: 5 secondi
 
 id: 7 seconds
-# Missing translation
-msg: 
+msg: 7 secondi
 
 id: Slideshow speed
-# Missing translation
-msg: 
+msg: Velocità presentazione
 
 #
 # ./src/blobcache_file.c
@@ -842,8 +825,7 @@ id: Checking file contents
 msg: Verificando il contenuto del file
 
 id: Invalid URL from redirect
-# Missing translation
-msg: 
+msg: URL invalida da redirezionamento
 
 id: Unable to open file: %s
 msg: Impossibile aprire il file: %s
@@ -852,8 +834,7 @@ msg: Impossibile aprire il file: %s
 # ./src/fileaccess/fa_filepicker.c
 #
 id: Select a file
-# Missing translation
-msg: 
+msg: Seleziona un file
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -880,12 +861,10 @@ id: Indexed mode
 msg: Modalità indicizzata
 
 id: Newest first
-# Missing translation
-msg: 
+msg: Prima il più nuovo
 
 id: Oldest first
-# Missing translation
-msg: 
+msg: Prima il più vecchio
 
 id: Show only supported files
 msg: Mostra solo file supportati
@@ -967,8 +946,7 @@ id: 12 Hour
 msg: 
 
 id: 24 Hour
-# Missing translation
-msg: 
+msg: 24 Ore
 
 id: Default character set
 msg: Carattere predefinito
@@ -1001,8 +979,7 @@ id: Secondary subtitle language code
 msg: Codice lingua secondario per i sottotitoli
 
 id: System default
-# Missing translation
-msg: 
+msg: Predefinito di sistema
 
 id: Tertiary audio language code
 msg: Codice lingua terziario per l'audio
@@ -1011,27 +988,22 @@ id: Tertiary subtitle language code
 msg: Codice lingua terziario per i sottotitoli
 
 id: Time format
-# Missing translation
-msg: 
+msg: Formato ora
 
 id: Timezone
-# Missing translation
-msg: 
+msg: Fuso orario
 
 #
 # ./src/ipc/libcec.c
 #
 id: Longpress SELECT for item menu
-# Missing translation
-msg: 
+msg: Premi a lungo SELECT per le voci del menù
 
 id: Switch TV input source
-# Missing translation
-msg: 
+msg: Scambia sorgente input TV
 
 id: Use STOP key for combo input
-# Missing translation
-msg: 
+msg: Usa il tasto STOP per l'ingresso combo
 
 #
 # ./src/keyring.c
@@ -1046,15 +1018,13 @@ msg: Password salvate eliminate.
 # ./src/media/media_settings.c
 #
 id: Align on video frame
-# Missing translation
-msg: 
+msg: Allinea il fotogramma video
 
 id: Audio volume
 msg: Volume audio
 
 id: Delay
-# Missing translation
-msg: 
+msg: Ritardo
 
 id: Go to standby after video ends
 msg: Vai in standby dopo la fine del video
@@ -1063,12 +1033,10 @@ id: Horizontal pan
 msg: Pan orizzontale
 
 id: Horizontal position
-# Missing translation
-msg: 
+msg: Posizione orizzontale
 
 id: Horizontal scale
-# Missing translation
-msg: 
+msg: Scala orizzontale
 
 id: Reset defaults for folder '%s'
 msg: Ripristina impostazioni di default per la cartella '%s' 
@@ -1080,8 +1048,7 @@ id: Save as global default
 msg: Salva impostazioni come di default per tutto
 
 id: Scaling
-# Missing translation
-msg: 
+msg: Scalando
 
 id: Stretch video to fullscreen
 msg: Adatta video a Schermo Pieno
@@ -1093,12 +1060,10 @@ id: Vertical pan
 msg: Pan verticale
 
 id: Vertical position
-# Missing translation
-msg: 
+msg: Posizione verticale
 
 id: Vertical scale
-# Missing translation
-msg: 
+msg: Scala verticale
 
 id: Video frame interpolation
 msg: Interpolazione dei frame video
@@ -1185,8 +1150,7 @@ id: IMDb ID
 msg: ID IMDb
 
 id: Metadata loaded from <b>%s</b> based on %s
-# Missing translation
-msg: 
+msg: Metadata caricati da <b>%s</b> basati su %s
 
 id: Metadata source
 msg: Sorgente metadata
@@ -1231,8 +1195,7 @@ id: Add and remove items on homepage
 msg: Aggiungi e rimuovi oggetti sulla homepage
 
 id: Added %s to home page
-# Missing translation
-msg: 
+msg: Aggiungi %s alla home page
 
 id: Added new bookmark: %s
 msg: Aggiunto nuovo segnalibro: %s
@@ -1241,8 +1204,7 @@ id: Bookmarks
 msg: Segnalibri
 
 id: Icon
-# Missing translation
-msg: 
+msg: Icona
 
 id: Music
 msg: Musica
@@ -1257,12 +1219,11 @@ id: Photos
 msg: Foto
 
 id: Remove bookmark
-# Missing translation
-msg: 
+msg: Rimuovi segnalibro
 
 id: Removed %s from homepage
 # Missing translation
-msg: 
+msg: Rimosso %s dalla homepage
 
 id: Removed bookmark: %s
 msg: Segnalibro rimosso: %s
@@ -1304,16 +1265,13 @@ msg: Porta TCP del server
 # ./src/networking/http_server.c
 #
 id: Power Off
-# Missing translation
-msg: 
+msg: Spegni
 
 id: Rebooting
-# Missing translation
-msg: 
+msg: Riavvio
 
 id: Restarting
-# Missing translation
-msg: 
+msg: Riavvio
 
 id: Standby
 msg: Standby
@@ -1349,8 +1307,7 @@ id: Corrupt plugin bundle
 msg: Bundle di plugin corrotto
 
 id: Custom backgrounds can now be set in Settings -> Look and Feel
-# Missing translation
-msg: 
+msg: Sfondi personalizzati possono essere impostati in Settaggi -> Aspetto
 
 id: Disk write error
 msg: Errore di scrittura su disco
@@ -1365,8 +1322,7 @@ id: Home page
 msg: Pagina Iniziale
 
 id: Installed
-# Missing translation
-msg: 
+msg: Installato
 
 id: Installed plugins
 msg: Plugin installati
@@ -1375,7 +1331,7 @@ id: Installed version higher than available
 msg: La versione installata è più recente di quella disponibile
 
 id: Installing
-msg: Installato
+msg: Installando
 
 id: List of albums
 msg: Elenco degli album
@@ -1408,12 +1364,10 @@ id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may tr
 msg: Il plugin %s %s è stato disinstallato perché potrebbe causare problemi.\nPuoi provare a reinstallare una versione diversa manualmente.
 
 id: Plugin %s has been uninstalled - %s
-# Missing translation
-msg: 
+msg: Il plugin %s è stato disinstallato - %s
 
 id: Plugin categories
-# Missing translation
-msg: 
+msg: Categorie plugin
 
 id: Plugins
 msg: Plugins
@@ -1449,8 +1403,7 @@ id: User interface extensions
 msg: Estensioni per l'interfaccia utente
 
 id: Version %s is no longer compatible with Movian
-# Missing translation
-msg: 
+msg: La versione %s non è più compatibile con Movian
 
 id: Video streaming
 msg: Streaming video
@@ -1459,8 +1412,7 @@ msg: Streaming video
 # ./src/prop/prop_proxy.c
 #
 id: Remote exited
-# Missing translation
-msg: 
+msg: Uscita dal controllo remoto
 
 #
 # ./src/runcontrol.c
@@ -1505,15 +1457,13 @@ id: Local network
 msg: Rete locale
 
 id: Remove from homepage
-# Missing translation
-msg: 
+msg: Rimuovi dalla homepage
 
 #
 # ./src/settings.c
 #
 id: About
-# Missing translation
-msg: 
+msg: Informazioni
 
 id: Applications and installed plugins
 msg: Applicazioni e plugin installati
@@ -1555,8 +1505,7 @@ id: System related settings
 msg: Impostazioni relative al sistema
 
 id: TV Control
-# Missing translation
-msg: 
+msg: Controllo TV
 
 #
 # ./src/subtitles/subtitles.c
@@ -1676,8 +1625,7 @@ msg: Interfaccia utente
 # ./src/ui/glw/glw_ps3.c
 #
 id: Dual-Shock Remote
-# Missing translation
-msg: 
+msg: Telecomando Dual-Shock
 
 id: Seek using L2 and R2 button
 msg: Cercare usando i tasti L2 e R2
@@ -1689,42 +1637,34 @@ msg: Si con il tasto Select
 # ./src/ui/glw/glw_settings.c
 #
 id: Custom background image
-# Missing translation
-msg: 
+msg: Immagine sfondo personalizzato
 
 id: Emulate Up/Down buttons with mouse wheel
-# Missing translation
-msg: 
+msg: Emula tasti Sù/Giù con la rotella del mouse
 
 id: Folder for screensaver images
-# Missing translation
-msg: 
+msg: Cartella per immagini del salvaschermo
 
 id: Font and icon size
 msg: Dimensione carattere e icona
 
 id: Interface horizontal shrink
-# Missing translation
-msg: 
+msg: Limite interfaccia orizzontale
 
 id: Interface vertical shrink
-# Missing translation
-msg: 
+msg: Limite interfaccia orizzontale
 
 id: Screensaver
-# Missing translation
-msg: 
+msg: Salvaschermo
 
 id: Screensaver delay
 msg: Attesa prima dello screensaver
 
 id: Seconds per image
-# Missing translation
-msg: 
+msg: Secondi per immagine
 
 id: Use Bing images of the day
-# Missing translation
-msg: 
+msg: Usa immagine Bing del giorno
 
 id: Wrap when reaching beginning/end of lists
 msg: Ricominciare quando si raggiunge l'inizio/la fine degli elenchi
@@ -1733,48 +1673,37 @@ msg: Ricominciare quando si raggiunge l'inizio/la fine degli elenchi
 # ./src/ui/glw/glw_view_eval.c
 #
 id: %d days ago
-# Missing translation
-msg: 
+msg: %d giorni fa
 
 id: %d hours ago
-# Missing translation
-msg: 
+msg: %d ore fa
 
 id: %d minutes ago
-# Missing translation
-msg: 
+msg: %d minuti fa
 
 id: %d months ago
-# Missing translation
-msg: 
+msg: %d mesi fa
 
 id: %d weeks ago
-# Missing translation
-msg: 
+msg: %d settimane fa
 
 id: %d years ago
-# Missing translation
-msg: 
+msg: %d anni fa
 
 id: Just now
-# Missing translation
-msg: 
+msg: Adesso
 
 id: One day ago
-# Missing translation
-msg: 
+msg: Un giorno fa
 
 id: One hour ago
-# Missing translation
-msg: 
+msg: Un ora fa
 
 id: One minute ago
-# Missing translation
-msg: 
+msg: Un minuto fa
 
 id: One month ago
-# Missing translation
-msg: 
+msg: Un mese fa
 
 #
 # ./src/ui/linux/nvidia.c
@@ -1849,8 +1778,7 @@ id: Enable VDPAU
 msg: Attiva VDPAU
 
 id: Hardware accelerated decoding
-# Missing translation
-msg: 
+msg: Decodifica accelerazione hardware
 
 id: Maximum resolution for deinterlacer
 msg: Risoluzione massima per il deinterlacciatore
@@ -1871,8 +1799,7 @@ id: Resume video playback
 msg: Riprendi riproduzione del video
 
 id: Show clock during playback
-# Missing translation
-msg: 
+msg: Mostra orologio durante la riproduzione
 
 id: Step when seeking backward
 msg: Passo ricerca indietro
