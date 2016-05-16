@@ -628,6 +628,9 @@ es_faprovider_register(duk_context *ctx)
   es_fap_t *ef = es_resource_alloc(&es_resource_fap);
 
   ef->fap.fap_opaque = ef;
+  if(es_prop_is_true(ctx, 1, "cachable"))
+    ef->fap.fap_flags |= FAP_ALLOW_CACHE,
+
   ef->fap.fap_fini  = es_fap_fini;
   ef->fap.fap_open  = es_fap_open;
   ef->fap.fap_seek  = es_fap_seek;
