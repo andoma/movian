@@ -146,6 +146,45 @@ es_dumpstack(duk_context *ctx)
 
 
 
+#define BUFNAME "\xff""ptr"
+
+/**
+ *
+ */
+static int
+ecmascript_buf_finalizer(duk_context *ctx)
+{
+  duk_get_prop_string(ctx, 0, BUFNAME);
+
+  if(duk_is_pointer(ctx, -1)) {
+    buf_release(duk_get_pointer(ctx, -1));
+  }
+  return 0;
+}
+
+
+/**
+ *
+ */
+void
+ecmascript_push_buf(duk_context *ctx, buf_t *b)
+{
+  duk_push_external_buffer(ctx);
+  duk_config_buffer(ctx, -1, (void *)buf_data(b), buf_len(b));
+
+  duk_push_buffer_object(ctx, -1, 0, buf_len(b), DUK_BUFOBJ_UINT8ARRAY);
+
+  duk_push_pointer(ctx, buf_retain(b));
+  duk_put_prop_string(ctx, -2, BUFNAME);
+
+  duk_push_c_function(ctx, ecmascript_buf_finalizer, 1);
+  duk_set_finalizer(ctx, -2);
+
+  duk_swap_top(ctx, -2);
+  duk_pop(ctx);
+}
+
+
 /**
  *
  */

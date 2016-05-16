@@ -30,6 +30,7 @@ struct es_resource;
 struct rstr;
 struct prop;
 struct prop_vec;
+struct buf;
 
 #define ST_ERROR_PROP_ZOMBIE 0x8000
 #define ST_ERROR_SQLITE_BASE 0x10000
@@ -239,6 +240,8 @@ int es_prop_to_int(duk_context *ctx, int obj_idx, const char *id, int def);
 struct rstr *es_prop_to_rstr(duk_context *ctx, int obj_idx, const char *id);
 
 struct prop *es_stprop_get(duk_context *ctx, int val_index);
+
+void ecmascript_push_buf(duk_context *ctx, struct buf *b);
 
 
 /**
