@@ -180,7 +180,7 @@ void es_resource_unlink(es_resource_t *er);
 void *es_resource_create(es_context_t *ec, const es_resource_class_t *erc,
                          int permanent);
 
-void es_resource_push(duk_context *ctx, es_resource_t *er);
+int es_resource_push(duk_context *ctx, es_resource_t *er);
 
 void *es_resource_get(duk_context *ctx, int obj_idx,
                       const es_resource_class_t *erc);

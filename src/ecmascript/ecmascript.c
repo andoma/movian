@@ -282,11 +282,11 @@ es_resource_unlink(es_resource_t *er)
 /**
  *
  */
-void
+int
 es_resource_push(duk_context *ctx, es_resource_t *er)
 {
   es_resource_retain(er);
-  es_push_native_obj(ctx, &es_native_resource, er);
+  return es_push_native_obj(ctx, &es_native_resource, er);
 }
 
 
