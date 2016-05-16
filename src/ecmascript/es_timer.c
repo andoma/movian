@@ -150,14 +150,13 @@ timer_thread(void *aux)
 
     duk_pop(ctx);
 
-    es_resource_release(&et->super);
-
     if(destroy)
       es_resource_destroy(&et->super);
 
     es_context_end(ec, 0);
 
     hts_mutex_lock(&timer_mutex);
+    es_resource_release(&et->super);
   }
   thread_running = 0;
   hts_mutex_unlock(&timer_mutex);
