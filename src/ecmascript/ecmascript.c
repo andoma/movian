@@ -712,7 +712,8 @@ es_context_end(es_context_t *ec, int do_gc)
  *
  */
 void
-es_dump_err(duk_context *ctx)
+es_dump_err_ex(duk_context *ctx, const char *native_func,
+               const char *native_file, int native_line)
 {
   es_context_t *ec = es_get(ctx);
 
@@ -738,10 +739,18 @@ es_dump_err(duk_context *ctx)
   duk_get_prop_string(ctx, -5, "stack");
   const char *stack = duk_get_string(ctx, -1);
 
-  TRACE(TRACE_ERROR, rstr_get(ec->ec_id), "%s (%s) at %s:%d",
-        name, message, filename, line_no);
-
+  if(filename) {
+    TRACE(TRACE_ERROR, rstr_get(ec->ec_id), "%s (%s) at %s:%d",
+          name, message, filename, line_no);
+  } else {
+    TRACE(TRACE_ERROR, rstr_get(ec->ec_id), "%s (%s)",
+          name, message);
+  }
   TRACE(TRACE_ERROR, rstr_get(ec->ec_id), "STACK DUMP: %s", stack);
+
+  TRACE(TRACE_ERROR, rstr_get(ec->ec_id), "Native callsite %s() at %s:%d",
+        native_func, native_file, native_line);
+
   duk_pop_n(ctx, 5);
 }
 

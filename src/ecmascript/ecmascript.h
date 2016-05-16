@@ -139,7 +139,10 @@ es_context_t *es_get(duk_context *ctx);
 
 void es_dumpstack(duk_context *ctx);
 
-void es_dump_err(duk_context *ctx);
+void es_dump_err_ex(duk_context *ctx, const char *func,
+                    const char *file, int line);
+
+#define es_dump_err(ctx) es_dump_err_ex(ctx, __FUNCTION__, __FILE__, __LINE__)
 
 int es_get_err_code(duk_context *ctx);
 
