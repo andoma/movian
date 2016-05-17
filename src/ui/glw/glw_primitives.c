@@ -23,7 +23,7 @@
 
 typedef struct glw_quad {
   glw_t w;
-  
+
   glw_rgb_t color;
   glw_renderer_t r;
   rstr_t *fs;
@@ -42,7 +42,7 @@ static void
 glw_quad_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_quad_t *q = (glw_quad_t *)w;
-  
+
   if(q->recompile) {
     glw_destroy_program(w->glw_root, q->gpa.gpa_prog);
     q->gpa.gpa_prog = glw_make_program(w->glw_root, NULL, rstr_get(q->fs));
@@ -96,7 +96,7 @@ glw_quad_callback(glw_t *w, void *opaque, glw_signal_t signal,
 /**
  *
  */
-static void 
+static void
 glw_quad_init(glw_t *w)
 {
   glw_quad_t *q = (void *)w;
@@ -126,7 +126,7 @@ glw_quad_set_float3(glw_t *w, glw_attribute_t attrib, const float *vector,
 /**
  *
  */
-static void 
+static void
 glw_quad_set_fs(glw_t *w, rstr_t *vs)
 {
   glw_quad_t *q = (glw_quad_t *)w;
