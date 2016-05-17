@@ -53,7 +53,9 @@ extern const char *app_dataroot(void);
 
 #define BYPASS_CACHE  ((int *)-1)
 #define DISABLE_CACHE ((int *)-2)
-#define NOT_MODIFIED ((void *)-1)
+
+#define NOT_MODIFIED   ((void *)-1)
+#define NO_LOAD_METHOD ((void *)-2)
 
 
 #define ONLY_CACHED(p) ((p) != BYPASS_CACHE && (p) != NULL)
