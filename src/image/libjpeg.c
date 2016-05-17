@@ -76,9 +76,6 @@ libjpeg_decode(fa_handle_t *fh, const image_meta_t *im,
 
   jpeg_read_header(&cinfo, TRUE);
 
-  printf("wat\n");
-
-
   cinfo.buffered_image = 1;
   jpeg_start_decompress(&cinfo);
 
@@ -88,7 +85,6 @@ libjpeg_decode(fa_handle_t *fh, const image_meta_t *im,
 
       if(im->im_incremental != NULL)
         im->im_incremental(im->im_opaque, pm);
-      sleep(1);
       pixmap_release(pm);
     }
 
