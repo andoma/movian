@@ -4966,7 +4966,7 @@ prop_unselect_ex(prop_t *parent, prop_sub_t *skipme)
   hts_mutex_lock(&prop_mutex);
 
   if(parent->hp_type == PROP_DIR) {
-    prop_notify_child(NULL, parent, PROP_SELECT_CHILD, skipme, 0);
+    prop_notify_child2(NULL, parent, NULL, PROP_SELECT_CHILD, skipme, 0);
     parent->hp_selected = NULL;
   }
 
@@ -4988,7 +4988,7 @@ prop_select_by_value_ex(prop_t *p, const char *name, prop_sub_t *skipme)
       if(c->hp_name != NULL && !strcmp(c->hp_name, name))
         break;
 
-    prop_notify_child(c, p, PROP_SELECT_CHILD, skipme, 0);
+    prop_notify_child2(c, p, NULL, PROP_SELECT_CHILD, skipme, 0);
     p->hp_selected = c;
   }
   hts_mutex_unlock(&prop_mutex);
