@@ -5853,6 +5853,39 @@ glwf_isError(glw_view_eval_context_t *ec, struct token *self,
 
 
 /**
+ * Return primary color for a widget (only works on image widgets)
+ */
+static int
+glwf_primary_color(glw_view_eval_context_t *ec, struct token *self,
+                   token_t **argv, unsigned int argc)
+{
+  token_t *r;
+  glw_t *w = ec->w;
+  const glw_class_t *gc = w->glw_class;
+
+  if(gc->gc_primary_color == NULL) {
+    r = eval_alloc(self, ec, TOKEN_VOID);
+  } else {
+    float rgb[3];
+    int valid = gc->gc_primary_color(w, rgb);
+    if(valid && rgb[0] && rgb[1] && rgb[2]) {
+      r = eval_alloc(self, ec, TOKEN_VECTOR_FLOAT);
+      r->t_elements = 3;
+      r->t_float_vector[0] = rgb[0];
+      r->t_float_vector[1] = rgb[1];
+      r->t_float_vector[2] = rgb[2];
+    } else {
+      r = eval_alloc(self, ec, TOKEN_VOID);
+    }
+    ec->dynamic_eval |= GLW_VIEW_EVAL_OTHER;
+  }
+
+  eval_push(ec, r);
+  return 0;
+}
+
+
+/**
  *
  */
 static int
@@ -7153,6 +7186,30 @@ glwf_inject_events(glw_view_eval_context_t *ec, struct token *self,
 }
 
 
+static int
+glwf_rgb_to_string(glw_view_eval_context_t *ec, struct token *self,
+                   token_t **argv, unsigned int argc)
+{
+  token_t *a = argv[0];
+  token_t *r;
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
+
+  if(a->type == TOKEN_VECTOR_FLOAT) {
+    char output[32];
+    snprintf(output, sizeof(output), "#%02x%02x%02x",
+             (int)(a->t_float_vector[0] * 255.0f),
+             (int)(a->t_float_vector[1] * 255.0f),
+             (int)(a->t_float_vector[2] * 255.0f));
+    r = eval_alloc(self, ec, TOKEN_RSTRING);
+    r->t_rstring = rstr_alloc(output);
+  } else {
+    r = eval_alloc(self, ec, TOKEN_VOID);
+  }
+  eval_push(ec, r);
+  return 0;
+}
+
 
 
 #ifndef NDEBUG
@@ -7240,6 +7297,7 @@ static const token_func_t funcvec[] = {
   {"isLoading", 0, glwf_isLoading},
   {"isLoaded", 0, glwf_isLoaded},
   {"isError", 0, glwf_isError},
+  {"primaryColor", 0, glwf_primary_color},
   {"suggestFocus", 1, glwf_suggestFocus},
   {"count", 1, glwf_count},
   {"vectorize", 1, glwf_vectorize},
@@ -7272,6 +7330,8 @@ static const token_func_t funcvec[] = {
   {"timeAgo", 1, glwf_timeAgo},
   {"lookup", 2, glwf_lookup, glwf_null_ctor, glwf_lookup_dtor},
   {"injectEventsFrom", 1, glwf_inject_events},
+  {"RGBToString", 1, glwf_rgb_to_string},
+
 #ifndef NDEBUG
   {"dumpDynamicStatements", 0, glwf_dumpdynamicstatements},
 #endif

@@ -532,6 +532,11 @@ typedef struct glw_class {
   glw_widget_status_t (*gc_status)(struct glw *w);
 
   /**
+   * Return 1 if color is known, 0 othersize
+   */
+  int (*gc_primary_color)(struct glw *w, float *rgb);
+
+  /**
    *
    */
   void (*gc_suggest_focus)(struct glw *w, struct glw *c);

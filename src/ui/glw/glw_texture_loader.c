@@ -408,6 +408,9 @@ loader_thread(void *aux)
             glt->glt_origin_type   = img->im_origin_coded_type;
 	    glt->glt_orientation   = img->im_orientation;
             glt->glt_intensity     = pm->pm_intensity;
+            glt->glt_primary_color[0] = pm->pm_primary_color[0];
+            glt->glt_primary_color[1] = pm->pm_primary_color[1];
+            glt->glt_primary_color[2] = pm->pm_primary_color[2];
 
             if(gconf.enable_image_debug)
               TRACE(TRACE_DEBUG, "GLW",

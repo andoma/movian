@@ -292,6 +292,9 @@ image_postprocess_pixmap(image_t *img, const image_meta_t *im)
   if(im->im_intensity_analysis)
     pixmap_intensity_analysis(ic->pm);
 
+  if(im->im_primary_color_analysis)
+    dominant_color(ic->pm);
+
 }
 
 

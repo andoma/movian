@@ -22,7 +22,8 @@
 #include "pixmap.h"
 
 
-#define LOW_THRESHOLD 60
+#define LOW_THRESHOLD  60
+#define HIGH_THRESHOLD 220
 
 typedef struct centroid {
   int r, g, b;
@@ -76,7 +77,7 @@ extract_pixels_bgr32(pixel_t *out, const pixmap_t *pm)
       if(pA < 128)
         continue;
 
-      if(pR > 250 && pG > 250 && pB > 250)
+      if(pR > HIGH_THRESHOLD && pG > HIGH_THRESHOLD && pB > HIGH_THRESHOLD)
         continue;
 
       if(pR < LOW_THRESHOLD && pG < LOW_THRESHOLD && pB < LOW_THRESHOLD)
@@ -111,7 +112,7 @@ extract_pixels_rgb24(pixel_t *out, const pixmap_t *pm)
       const int pG = *src++;
       const int pB = *src++;
 
-      if(pR > 250 && pG > 250 && pB > 250)
+      if(pR > HIGH_THRESHOLD && pG > HIGH_THRESHOLD && pB > HIGH_THRESHOLD)
         continue;
 
       if(pR < LOW_THRESHOLD && pG < LOW_THRESHOLD && pB < LOW_THRESHOLD)
@@ -136,7 +137,7 @@ extract_pixels_rgb24(pixel_t *out, const pixmap_t *pm)
  *
  */
 void
-dominant_color(const pixmap_t *pm)
+dominant_color(pixmap_t *pm)
 {
   int K = 8;
   int num_pixels;
@@ -159,7 +160,6 @@ dominant_color(const pixmap_t *pm)
   default:
     return;
   }
-  printf("Starting\n");
   randomize_centroids(centroids, K);
 
   while(1) {
@@ -215,11 +215,6 @@ dominant_color(const pixmap_t *pm)
       if(c->r != c->or ||
          c->g != c->og ||
          c->b != c->ob) {
-        printf("Centroids %d moved from %d,%d,%d to %d,%d,%d (%d)\n",
-               j,
-               c->or, c->og, c->ob,
-               c->r,  c->g,  c->b,
-               c->num_pixels);
         move = 1;
       }
     }
@@ -227,13 +222,16 @@ dominant_color(const pixmap_t *pm)
       break;
   }
 
-  printf("Final centroids\n");
+  const centroid_t *best = NULL;
   for(int j = 0; j < K; j++) {
     const centroid_t *c = centroids + j;
-    printf("%2d: %3d %3d %3d   [%f,%f,%f] (%d pixels contributed)\n",
-           j,
-           c->r, c->g, c->b,
-           c->r / 255.0f, c->g / 255.0f, c->b / 255.0f,
-           c->num_pixels);
+    if(best == NULL || c->num_pixels > best->num_pixels)
+      best = c;
   }
+  if(best) {
+    pm->pm_primary_color[0] = best->r / 255.0f;
+    pm->pm_primary_color[1] = best->g / 255.0f;
+    pm->pm_primary_color[2] = best->b / 255.0f;
+  }
+  free(pixels);
 }

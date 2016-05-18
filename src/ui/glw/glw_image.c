@@ -75,6 +75,7 @@ typedef struct glw_image {
   uint8_t gi_recompile : 1;
   uint8_t gi_externalized : 1;
   uint8_t gi_saturated : 1;
+  uint8_t gi_want_primary_color : 1;
 
   int16_t gi_fixed_size;
   int16_t gi_radius;
@@ -766,6 +767,9 @@ glw_image_tex_load(glw_image_t *gi, rstr_t *url, int width, int height)
 
   if(unlikely(gi->gi_max_intensity < 1.0))
     flags |= GLW_TEX_INTENSITY_ANALYSIS;
+
+  if(unlikely(gi->gi_want_primary_color))
+    flags |= GLW_TEX_PRIMARY_COLOR_ANALYSIS;
 
   return glw_tex_create(gi->w.glw_root, url, flags, width, height,
                         gi->gi_radius, gi->gi_shadow, gi->gi_aspect,
@@ -1572,6 +1576,21 @@ glw_image_get_details(glw_t *w, char *path, size_t pathlen, float *alpha)
 /**
  *
  */
+static int
+glw_image_primary_color(glw_t *w, float *rgb)
+{
+  glw_image_t *gi = (glw_image_t *)w;
+  gi->gi_want_primary_color = 1;
+  if(gi->gi_current != NULL) {
+    memcpy(rgb, gi->gi_current->glt_primary_color, 3 * sizeof(float));
+    return 1;
+  }
+  return 0;
+}
+
+/**
+ *
+ */
 static glw_class_t glw_image = {
   .gc_name = "image",
   .gc_instance_size = sizeof(glw_image_t),
@@ -1584,6 +1603,7 @@ static glw_class_t glw_image = {
   .gc_signal_handler = glw_image_callback,
   .gc_default_alignment = LAYOUT_ALIGN_CENTER,
   .gc_status = glw_image_status,
+  .gc_primary_color = glw_image_primary_color,
   .gc_set_float3 = glw_image_set_float3,
   .gc_mod_image_flags = mod_image_flags,
   .gc_set_source = set_source,
@@ -1613,6 +1633,8 @@ static glw_class_t glw_icon = {
   .gc_set_int = glw_image_set_int,
   .gc_signal_handler = glw_image_callback,
   .gc_default_alignment = LAYOUT_ALIGN_CENTER,
+  .gc_status = glw_image_status,
+  .gc_primary_color = glw_image_primary_color,
   .gc_set_float3 = glw_image_set_float3,
   .gc_mod_image_flags = mod_image_flags,
   .gc_set_source = set_source,
@@ -1641,6 +1663,8 @@ static glw_class_t glw_backdrop = {
   .gc_set_int = glw_image_set_int,
   .gc_signal_handler = glw_image_callback,
   .gc_default_alignment = LAYOUT_ALIGN_CENTER,
+  .gc_status = glw_image_status,
+  .gc_primary_color = glw_image_primary_color,
   .gc_set_float3 = glw_image_set_float3,
   .gc_set_int16_4 = image_set_int16_4,
   .gc_mod_image_flags = mod_image_flags,
@@ -1669,6 +1693,8 @@ static glw_class_t glw_frontdrop = {
   .gc_set_float = glw_image_set_float,
   .gc_set_int = glw_image_set_int,
   .gc_signal_handler = glw_image_callback,
+  .gc_status = glw_image_status,
+  .gc_primary_color = glw_image_primary_color,
   .gc_default_alignment = LAYOUT_ALIGN_CENTER,
   .gc_set_float3 = glw_image_set_float3,
   .gc_set_int16_4 = image_set_int16_4,
@@ -1698,6 +1724,8 @@ static glw_class_t glw_repeatedimage = {
   .gc_set_float = glw_image_set_float,
   .gc_set_int = glw_image_set_int,
   .gc_signal_handler = glw_image_callback,
+  .gc_status = glw_image_status,
+  .gc_primary_color = glw_image_primary_color,
   .gc_default_alignment = LAYOUT_ALIGN_CENTER,
   .gc_set_float3 = glw_image_set_float3,
   .gc_mod_image_flags = mod_image_flags,

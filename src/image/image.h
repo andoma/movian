@@ -246,4 +246,4 @@ image_find_component(image_t *img, image_component_type_t type)
 /**
  * Dominant color computation
  */
-void dominant_color(const struct pixmap *pm);
+void dominant_color(struct pixmap *pm);
