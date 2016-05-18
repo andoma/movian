@@ -928,9 +928,15 @@ stpp_imagereq_send(void *aux)
       htsbuf_queue_t hq;
       htsbuf_queue_init(&hq, 0);
       image_t *im = sir->sir_image;
+      if(im != NULL &&
+         (im->im_num_components != 1 ||
+          im->im_components[0].type != IMAGE_CODED)) {
+        snprintf(sir->sir_errstr, sizeof(sir->sir_errstr),
+                 "Unable to transmit unencoded image");
+        im = NULL;
+      }
+
       if(im != NULL) {
-        assert(im->im_num_components == 1);
-        assert(im->im_components[0].type == IMAGE_CODED);
         buf_t *b = im->im_components[0].coded.icc_buf;
 
         uint8_t header[1 + 4 + 2 + 2 + 2 + 1 + 1 + 1];
