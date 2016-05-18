@@ -36,6 +36,7 @@ typedef struct audio_class {
   int (*ac_init)(struct audio_decoder *ad);
   void (*ac_fini)(struct audio_decoder *ad);
   int (*ac_reconfig)(struct audio_decoder *ad);
+  void (*ac_reconfigure)(struct audio_decoder *ad);
   int (*ac_deliver_unlocked)(struct audio_decoder *ad, int samples,
 			     int64_t pts, int epoch);
   int (*ac_deliver_locked)(struct audio_decoder *ad, int samples,

@@ -138,9 +138,12 @@ void
 omx_wait_command(omx_component_t *oc)
 {
   hts_mutex_lock(oc->oc_mtx);
-  while(!oc->oc_cmd_done)
-    if(hts_cond_wait_timeout(&oc->oc_event_cond, oc->oc_mtx, 250))
+  while(!oc->oc_cmd_done) {
+    if(hts_cond_wait_timeout(&oc->oc_event_cond, oc->oc_mtx, 250)) {
+      TRACE(TRACE_ERROR, "OMX", "OMX timeout");
       break;
+    }
+  }
   hts_mutex_unlock(oc->oc_mtx);
 }
 
@@ -154,7 +157,7 @@ omx_send_command(omx_component_t *oc, OMX_COMMANDTYPE cmd, int v, void *p,
 {
   oc->oc_cmd_done = 0;
 
-  //  omxdbg("%s: CMD(0x%x, 0x%x, %p)\n", oc->oc_name, cmd, v, p);
+  omxdbg("%s: CMD(0x%x, 0x%x, %p)\n", oc->oc_name, cmd, v, p);
 
   omxchk(OMX_SendCommand(oc->oc_handle, cmd, v, p));
 
@@ -262,8 +265,7 @@ omx_set_state(omx_component_t *oc, OMX_STATETYPE reqstate)
             oc->oc_name, state, reqstate, r);
     }
 
-    // When transitioning to loaded the component will no longer respond
-    if(reqstate != OMX_StateLoaded)
+    if(reqstate == OMX_StateExecuting)
       omx_wait_command(oc);
 
     return;
@@ -427,8 +429,11 @@ void
 omx_tunnel_destroy(omx_tunnel_t *ot)
 {
   omxdbg("Destroying tunnel %s\n", ot->ot_name);
-  omx_send_command(ot->ot_src, OMX_CommandPortDisable, ot->ot_srcport, NULL, 1);
-  omx_send_command(ot->ot_dst, OMX_CommandPortDisable, ot->ot_dstport, NULL, 1);
+  omx_send_command(ot->ot_src, OMX_CommandPortDisable, ot->ot_srcport, NULL, 0);
+  omx_send_command(ot->ot_dst, OMX_CommandPortDisable, ot->ot_dstport, NULL, 0);
+
+  omx_wait_command(ot->ot_src);
+  omx_wait_command(ot->ot_dst);
 
   omxchk(OMX_SetupTunnel(ot->ot_src->oc_handle, ot->ot_srcport, NULL, 0));
   free(ot);

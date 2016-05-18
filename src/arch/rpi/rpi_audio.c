@@ -290,12 +290,27 @@ static void
 rpi_audio_port_settings_changed(omx_component_t *oc)
 {
   decoder_t *d = oc->oc_opaque;
+  media_pipe_t *mp = d->ad.ad_mp;
+  hts_mutex_lock(&mp->mp_mutex);
+  media_buf_t *mb = media_buf_alloc_locked(mp, 0);
+  mb->mb_data_type = MB_CTRL_RECONFIGURE;
+  mb->mb_dtor = media_buf_dtor_frame_info;
+  mb_enq(mp, &mp->mp_audio, mb);
+  hts_mutex_unlock(&mp->mp_mutex);
+}
+
+
+
+static void
+rpi_audio_port_reconfigure(audio_decoder_t *ad)
+{
+  decoder_t *d = (decoder_t *)ad;
 
   if(d->d_render_tun != NULL) {
     omx_tunnel_destroy(d->d_render_tun);
     d->d_render_tun = NULL;
   }
- 
+
   if(d->d_mixer_tun != NULL) {
     omx_tunnel_destroy(d->d_mixer_tun);
     d->d_mixer_tun = NULL;
@@ -882,6 +897,7 @@ static audio_class_t rpi_audio_class = {
   .ac_set_volume     = rpi_set_volume,
   .ac_get_mode       = rpi_get_mode,
   .ac_deliver_coded_locked = rpi_audio_deliver_coded,
+  .ac_reconfigure = rpi_audio_port_reconfigure,
 };
 
 /**

@@ -764,6 +764,11 @@ audio_decode_thread(void *aux)
 	run = 0;
 	break;
 
+      case MB_CTRL_RECONFIGURE:
+        if(ac->ac_reconfigure != NULL)
+          ac->ac_reconfigure(ad);
+        break;
+
       default:
 	abort();
       }
