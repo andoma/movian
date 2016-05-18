@@ -27,9 +27,6 @@ typedef struct glw_array {
 
   glw_slider_metrics_t metrics;
 
-  int child_width_fixed;
-  int child_height_fixed;
-
   int child_tiles_x;
   int child_tiles_y;
 
@@ -62,12 +59,71 @@ typedef struct glw_array_item {
   float pos_fx;
   float pos_fy;
 
+  uint16_t width;
   uint16_t height;
 
-  uint8_t inst;
+  uint8_t just_inserted;
   int8_t col;
 
 } glw_array_item_t;
+
+
+/**
+ *
+ */
+static int
+grid_layout_row(glw_array_t *a, glw_rctx_t *rc,
+                glw_t **rowvector, int *num_columnsp,
+                int *req_row_heightp, int height)
+{
+  const int cols = *num_columnsp;
+  if(cols == 0)
+    return 0;
+
+  int rh = *req_row_heightp;
+  if(rh == INT32_MAX)
+    rh = a->child_height_px;
+
+  assert(rh >= 0);
+
+  for(int i = 0; i < cols; i++) {
+    glw_t *c = rowvector[i];
+
+    glw_array_item_t *cd = glw_parent_data(c, glw_array_item_t);
+
+    cd->height = rh;
+
+    if(c == a->gsc.scroll_to_me) {
+      const int ypos = cd->pos_y;
+      const int screen_pos = ypos - a->gsc.rounded_pos;
+      const int bottom_scroll_pos = height - a->gsc.scroll_threshold_post;
+
+
+      a->gsc.scroll_to_me = NULL;
+      if(screen_pos < a->gsc.scroll_threshold_pre) {
+        a->gsc.target_pos = ypos - a->gsc.scroll_threshold_pre;
+        if(glw_is_focused(&a->w))
+          a->w.glw_flags |= GLW_UPDATE_METRICS;
+        glw_schedule_refresh(a->w.glw_root, 0);
+      } else if(screen_pos + rh > bottom_scroll_pos) {
+        a->gsc.target_pos = ypos + rh - bottom_scroll_pos;
+        if(glw_is_focused(&a->w))
+          a->w.glw_flags |= GLW_UPDATE_METRICS;
+        glw_schedule_refresh(a->w.glw_root, 0);
+      }
+    }
+
+    if(cd->pos_fy - a->gsc.rounded_pos > -height &&
+       cd->pos_fy - a->gsc.rounded_pos <  height * 2) {
+      rc->rc_width = cd->width;
+      rc->rc_height = cd->height;
+      glw_layout0(c, rc);
+    }
+  }
+  *num_columnsp = 0;
+  *req_row_heightp = 0;
+  return rh;
+}
 
 
 /**
@@ -79,9 +135,8 @@ glw_array_layout(glw_t *w, const glw_rctx_t *rc)
   glw_array_t *a = (glw_array_t *)w;
   glw_t *c;
   glw_rctx_t rc0 = *rc;
-  int column = 0;
   float xspacing = 0, yspacing = 0;
-  int height, width, rows;
+  int rows;
   int xpos = 0, ypos = a->gsc.scroll_threshold_pre;
 
   glw_reposition(&rc0,
@@ -90,10 +145,8 @@ glw_array_layout(glw_t *w, const glw_rctx_t *rc)
 		 rc->rc_width - a->margin[2],
 		 a->margin[3]);
 
-  const int bottom_scroll_pos = rc0.rc_height - a->gsc.scroll_threshold_post;
-
-  height = rc0.rc_height;
-  width = rc0.rc_width;
+  const int height = rc0.rc_height;
+  const int width = rc0.rc_width;
 
   if(a->child_tiles_x && a->child_tiles_y) {
 
@@ -115,23 +168,6 @@ glw_array_layout(glw_t *w, const glw_rctx_t *rc)
     a->child_height_px = (rc0.rc_height - (yentries - 1) * yspacing) /
       (yentries ?: 1);
 
-    if(a->child_width_fixed && a->child_width_px > a->child_width_fixed) {
-      int e = a->child_width_px - a->child_width_fixed;
-      xspacing += (e * a->xentries) / (a->xentries - 1);
-      a->child_width_px = a->child_width_fixed;
-    }
-
-    if(a->child_height_fixed && a->child_height_px > a->child_height_fixed) {
-      int e = a->child_height_px - a->child_height_fixed;
-      yspacing += (e * yentries) / (yentries - 1);
-      a->child_height_px = a->child_height_fixed;
-    }
-
-    /*
-    if(a->num_visible_childs < a->child_tiles_x)
-      xpos = (a->child_tiles_x - a->num_visible_childs) * 
-	(xspacing + a->child_width_px) / 2;
-    */
     rows = (a->num_visible_childs - 1) / a->child_tiles_x + 1;
 
     if(w->glw_alignment == LAYOUT_ALIGN_CENTER && rows < a->child_tiles_y)
@@ -151,8 +187,8 @@ glw_array_layout(glw_t *w, const glw_rctx_t *rc)
 
   } else {
 
-    int width  = a->child_width_fixed  ?: 100;
-    int height = a->child_height_fixed ?: 100;
+    int width  = 100;
+    int height = 100;
 
     a->xentries = GLW_MAX(1, rc0.rc_width  / width);
     int yentries = GLW_MAX(1, rc0.rc_height / height);
@@ -179,6 +215,10 @@ glw_array_layout(glw_t *w, const glw_rctx_t *rc)
 
   glw_scroll_layout(&a->gsc, w, rc->rc_height);
 
+  glw_t **rowvector = alloca(a->xentries * sizeof(glw_t *));
+  int column = 0;
+  int req_row_height = 0;
+
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
@@ -186,75 +226,63 @@ glw_array_layout(glw_t *w, const glw_rctx_t *rc)
     glw_array_item_t *cd = glw_parent_data(c, glw_array_item_t);
 
     if(c->glw_flags & GLW_CONSTRAINT_D) {
-      if(column != 0) {
-	ypos += rc0.rc_height + yspacing;
-	column = 0;
-      }
+      ypos += grid_layout_row(a, &rc0, rowvector, &column,
+                              &req_row_height, height);
 
-      rc0.rc_width  = width;
+      cd->width = width;
+      if(c->glw_flags & GLW_CONSTRAINT_Y)
+	req_row_height = c->glw_req_size_y;
 
-      if(c->glw_flags & GLW_CONSTRAINT_Y) {
-	rc0.rc_height = c->glw_req_size_y;
-      } else {
-	rc0.rc_height = a->child_height_px;
-      }
       cd->col = -1;
 
     } else {
-      rc0.rc_width  = a->child_width_px;
-      rc0.rc_height = a->child_height_px;
+
+      if(column == a->xentries) {
+
+        ypos += a->yspacing + grid_layout_row(a, &rc0, rowvector, &column,
+                                              &req_row_height, height);
+        req_row_height = 0;
+        column = 0;
+      }
+
+      cd->width = a->child_width_px;
       cd->col = column;
+
+      if(c->glw_flags & GLW_CONSTRAINT_Y) {
+        req_row_height = GLW_MAX(req_row_height, c->glw_req_size_y);
+      } else if(c->glw_flags & GLW_CONSTRAINT_W && c->glw_req_weight < 0) {
+        const int h = a->child_width_px / -c->glw_req_weight;
+        req_row_height = GLW_MAX(req_row_height, h);
+      } else {
+        req_row_height = INT32_MAX;
+      }
     }
 
     cd->pos_y = ypos;
     cd->pos_x = column * (xspacing + a->child_width_px) + xpos;
     cd->height = rc0.rc_height;
 
-    if(cd->inst) {
+    if(cd->just_inserted) {
       cd->pos_fy = cd->pos_y;
       cd->pos_fx = cd->pos_x;
-      cd->inst = 0;
+      cd->just_inserted = 0;
     } else {
       glw_lp(&cd->pos_fy, w->glw_root, cd->pos_y, 0.25);
       glw_lp(&cd->pos_fx, w->glw_root, cd->pos_x, 0.25);
     }
 
-    if(ypos - a->gsc.rounded_pos > -height &&
-       ypos - a->gsc.rounded_pos <  height * 2)
-      glw_layout0(c, &rc0);
-
-    if(c == a->gsc.scroll_to_me) {
-      int screen_pos = ypos - a->gsc.rounded_pos;
-
-      a->gsc.scroll_to_me = NULL;
-
-      if(screen_pos < a->gsc.scroll_threshold_pre) {
-        a->gsc.target_pos = ypos - a->gsc.scroll_threshold_pre;
-        if(glw_is_focused(w))
-          a->w.glw_flags |= GLW_UPDATE_METRICS;
-        glw_schedule_refresh(w->glw_root, 0);
-      } else if(screen_pos + rc0.rc_height > bottom_scroll_pos) {
-        a->gsc.target_pos = ypos + rc0.rc_height - bottom_scroll_pos;
-        if(glw_is_focused(w))
-          a->w.glw_flags |= GLW_UPDATE_METRICS;
-        glw_schedule_refresh(w->glw_root, 0);
-      }
-    }
+    rowvector[column] = c;
+    column++;
 
     if(c->glw_flags & GLW_CONSTRAINT_D) {
-      ypos += rc0.rc_height + yspacing;
-      column = 0;
-    } else {
-      column++;
-      if(column == a->xentries) {
-	ypos += a->child_height_px + yspacing;
-	column = 0;
-      }
+      ypos += grid_layout_row(a, &rc0, rowvector, &column,
+                              &req_row_height, height);
     }
+
   }
 
-  if(column != 0)
-    ypos += a->child_height_px;
+  ypos += grid_layout_row(a, &rc0, rowvector, &column,
+                          &req_row_height, height);
 
   if(a->gsc.total_size != ypos) {
     a->gsc.total_size = ypos;
@@ -280,10 +308,7 @@ glw_array_render_one(glw_array_t *a, glw_t *c, int width, int height,
   int ct, cb;
   glw_root_t *gr = a->w.glw_root;
   int ch = cd->height;
-  int cw = a->child_width_px;
-
-  if(c->glw_flags & GLW_CONSTRAINT_D)
-    cw = width;
+  int cw = cd->width;
 
   if(y + ch * 2 < 0 || y - ch > height) {
     c->glw_flags |= GLW_CLIPPED;
@@ -449,7 +474,7 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   case GLW_SIGNAL_CHILD_UNHIDDEN:
     c = extra;
     a->num_visible_childs++;
-    glw_parent_data(c, glw_array_item_t)->inst = 1;
+    glw_parent_data(c, glw_array_item_t)->just_inserted = 1;
     break;
 
   case GLW_SIGNAL_SCROLL:
@@ -505,18 +530,6 @@ glw_array_set_int(glw_t *w, glw_attribute_t attrib, int value,
   glw_array_t *a = (glw_array_t *)w;
 
   switch(attrib) {
-
-  case GLW_ATTRIB_CHILD_HEIGHT:
-    if(a->child_height_fixed == value)
-      return 0;
-    a->child_height_fixed = value;
-    break;
-
-  case GLW_ATTRIB_CHILD_WIDTH:
-    if(a->child_width_fixed == value)
-      return 0;
-    a->child_width_fixed  = value;
-    break;
 
   case GLW_ATTRIB_CHILD_TILES_X:
     if(a->child_tiles_x == value)

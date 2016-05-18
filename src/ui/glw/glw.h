@@ -137,8 +137,6 @@ typedef enum {
   GLW_ATTRIB_TRANSITION_EFFECT,
   GLW_ATTRIB_EXPANSION,
   GLW_ATTRIB_CHILD_ASPECT,
-  GLW_ATTRIB_CHILD_HEIGHT,
-  GLW_ATTRIB_CHILD_WIDTH,
   GLW_ATTRIB_CHILD_TILES_X,
   GLW_ATTRIB_CHILD_TILES_Y,
   GLW_ATTRIB_ALPHA_EDGES,
@@ -1536,6 +1534,11 @@ void glw_line(glw_root_t *root, const glw_rctx_t *rc,
 void glw_renderer_render(glw_root_t *gr);
 
 void glw_render_zoffset(glw_t *w, const glw_rctx_t *rc);
+
+static inline int glw_debug(glw_t *w)
+{
+  return w->glw_flags2 & GLW2_DEBUG;
+}
 
 static inline void glw_render0(glw_t *w, const glw_rctx_t *rc)
 {

@@ -24,8 +24,6 @@
 typedef struct glw_list {
   glw_t w;
 
-  float child_aspect;
-
   int16_t saved_height;
   int16_t saved_width;
   int16_t spacing;
@@ -546,30 +544,6 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
  *
  */
 static int
-glw_list_set_float(glw_t *w, glw_attribute_t attrib, float value,
-                   glw_style_t *gs)
-{
-  glw_list_t *l = (glw_list_t *)w;
-  switch(attrib) {
-
-  case GLW_ATTRIB_CHILD_ASPECT:
-    if(l->child_aspect == value)
-      return 0;
-
-    l->child_aspect = value;
-    break;
-
-  default:
-    return -1;
-  }
-  return 1;
-}
-
-
-/**
- *
- */
-static int
 glw_list_set_int(glw_t *w, glw_attribute_t attrib, int value,
                  glw_style_t *gs)
 {
@@ -594,24 +568,9 @@ glw_list_set_int(glw_t *w, glw_attribute_t attrib, int value,
  *
  */
 static void
-glw_list_y_ctor(glw_t *w)
+glw_list_ctor(glw_t *w)
 {
   glw_list_t *l = (void *)w;
-  l->child_aspect = 20;
-  l->gsc.suggest_cnt = 1;
-  w->glw_flags |= GLW_FLOATING_FOCUS;
-}
-
-
-/**
- *
- */
-static void
-glw_list_x_ctor(glw_t *w)
-{
-  glw_list_t *l = (void *)w;
-  
-  l->child_aspect = 1;
   l->gsc.suggest_cnt = 1;
   w->glw_flags |= GLW_FLOATING_FOCUS;
 }
@@ -696,8 +655,7 @@ static glw_class_t glw_list_y = {
   .gc_layout = glw_list_layout_y,
   .gc_render = glw_list_render_y,
   .gc_set_int = glw_list_set_int,
-  .gc_set_float = glw_list_set_float,
-  .gc_ctor = glw_list_y_ctor,
+  .gc_ctor = glw_list_ctor,
   .gc_signal_handler = glw_list_callback,
   .gc_suggest_focus = glw_list_suggest_focus,
   .gc_set_int16_4 = glw_list_set_int16_4,
@@ -722,8 +680,7 @@ static glw_class_t glw_list_x = {
   .gc_layout = glw_list_layout_x,
   .gc_render = glw_list_render_x,
   .gc_set_int = glw_list_set_int,
-  .gc_set_float = glw_list_set_float,
-  .gc_ctor = glw_list_x_ctor,
+  .gc_ctor = glw_list_ctor,
   .gc_signal_handler = glw_list_callback,
   .gc_suggest_focus = glw_list_suggest_focus,
   .gc_set_int16_4 = glw_list_set_int16_4,

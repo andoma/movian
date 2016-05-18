@@ -247,13 +247,6 @@ glw_clist_set_int(glw_t *w, glw_attribute_t attrib, int value,
     l->spacing = value;
     break;
 
-  case GLW_ATTRIB_CHILD_HEIGHT:
-    if(l->child_height == value)
-      return 0;
-
-    l->child_height = value;
-    break;
-
   default:
     return -1;
   }
