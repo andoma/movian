@@ -1042,7 +1042,8 @@ typedef struct glw_root {
   struct glw *gr_externalized[GLW_MAX_EXTERNALIZED];
 
   void *gr_private;
-
+  void *gr_window;
+  
   uint8_t gr_left_pressed; // For pointer -> touch converter
 
   struct glw_rec *gr_rec;
