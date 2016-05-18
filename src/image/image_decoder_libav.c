@@ -119,17 +119,17 @@ pixmap_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
     break;
   }
 
-  const int swscale_debug = 1;
 
-  if(swscale_debug)
-    TRACE(TRACE_DEBUG, "info", "Converting %d x %d [%s] to %d x %d [%s]",
+  if(gconf.enable_image_debug)
+    TRACE(TRACE_DEBUG, "swscale", "Converting %d x %d [%s] to %d x %d [%s]",
 	  src_w, src_h, av_get_pix_fmt_name(src_pix_fmt),
 	  dst_w, dst_h, av_get_pix_fmt_name(dst_pix_fmt));
   
   sws = sws_getContext(src_w, src_h, src_pix_fmt, 
 		       dst_w, dst_h, dst_pix_fmt,
 		       SWS_LANCZOS | 
-		       (swscale_debug ? SWS_PRINT_INFO : 0), NULL, NULL, NULL);
+		       (gconf.enable_image_debug ? SWS_PRINT_INFO : 0),
+                       NULL, NULL, NULL);
   if(sws == NULL)
     return NULL;
 
