@@ -68,22 +68,20 @@ typedef struct glw_renderer_cache {
  * Renderer
  */
 typedef struct glw_renderer {
+  float *gr_vertices;
+  uint16_t *gr_indices;
+#define GLW_RENDERER_CACHES 2
+  glw_renderer_cache_t *gr_cache[GLW_RENDERER_CACHES];
+
+
   uint16_t gr_num_vertices;
   uint16_t gr_num_triangles;
 
-  float *gr_vertices;
-  uint16_t *gr_indices;
-
-  char gr_static_indices;
-  char gr_dirty;
-  char gr_color_attributes;
   unsigned char gr_framecmp;
   unsigned char gr_cacheptr;
-
-
-#define GLW_RENDERER_CACHES 4
-
-  glw_renderer_cache_t *gr_cache[GLW_RENDERER_CACHES];
+  char gr_static_indices : 1;
+  char gr_dirty : 1;
+  char gr_color_attributes : 1;
 
 } glw_renderer_t;
 
