@@ -47,43 +47,48 @@ static glw_class_t glw_text;
 typedef struct glw_text_bitmap {
   struct glw w;
 
-  int16_t gtb_saved_width;
-  int16_t gtb_saved_height;
-
-  char *gtb_caption;
-  rstr_t *gtb_font;
-  prop_str_type_t gtb_type;
-
-  glw_backend_texture_t gtb_texture;
-
-
-  glw_renderer_t gtb_text_renderer;
-  glw_renderer_t gtb_cursor_renderer;
-
   TAILQ_ENTRY(glw_text_bitmap) gtb_workq_link;
   LIST_ENTRY(glw_text_bitmap) gtb_global_link;
 
   image_t *gtb_image;
 
-   enum {
-     GTB_IDLE,
-     GTB_QUEUED_FOR_DIMENSIONING,
-     GTB_DIMENSIONING,
-     GTB_NEED_RENDER,
-     GTB_QUEUED_FOR_RENDERING,
-     GTB_RENDERING,
-     GTB_VALID
+  char *gtb_caption;
+  rstr_t *gtb_font;
+  prop_sub_t *gtb_sub;
+  prop_t *gtb_p;
+  char *gtb_description;
+
+  prop_str_type_t gtb_caption_type;
+
+  glw_backend_texture_t gtb_texture;
+
+  glw_renderer_t gtb_text_renderer;
+  glw_renderer_t gtb_cursor_renderer;
+  glw_renderer_t gtb_background_renderer;
+
+
+  uint32_t *gtb_uc_buffer; /* unicode buffer */
+  float gtb_cursor_alpha;
+  float gtb_background_alpha;
+  float gtb_size_scale;
+  glw_rgb_t gtb_color;
+  glw_rgb_t gtb_background_color;
+
+  int gtb_flags;
+
+
+  enum {
+    GTB_IDLE,
+    GTB_QUEUED_FOR_DIMENSIONING,
+    GTB_DIMENSIONING,
+    GTB_NEED_RENDER,
+    GTB_QUEUED_FOR_RENDERING,
+    GTB_RENDERING,
+    GTB_VALID
   } gtb_state;
 
-  uint8_t gtb_frozen;
-  uint8_t gtb_pending_updates;
-#define GTB_UPDATE_REALIZE      2
-
-  uint8_t gtb_paint_cursor;
-  uint8_t gtb_update_cursor;
-  uint8_t gtb_need_layout;
-  uint8_t gtb_deferred_realize;
-  uint8_t gtb_caption_dirty;
+  int16_t gtb_saved_width;
+  int16_t gtb_saved_height;
 
   int16_t gtb_edit_ptr;
 
@@ -97,19 +102,15 @@ typedef struct glw_text_bitmap {
 
   int16_t gtb_margin;
 
-  uint32_t *gtb_uc_buffer; /* unicode buffer */
-  float gtb_cursor_alpha;
+  uint8_t gtb_pending_updates;
+#define GTB_UPDATE_REALIZE      2
 
-  float gtb_size_scale;
-
-  glw_rgb_t gtb_color;
-
-  prop_sub_t *gtb_sub;
-  prop_t *gtb_p;
-
-  int gtb_flags;
-
-  char *gtb_description;
+  uint8_t gtb_frozen : 1;
+  uint8_t gtb_paint_cursor : 1;
+  uint8_t gtb_update_cursor : 1;
+  uint8_t gtb_need_layout : 1;
+  uint8_t gtb_deferred_realize : 1;
+  uint8_t gtb_caption_dirty : 1;
 
 } glw_text_bitmap_t;
 
@@ -133,13 +134,21 @@ glw_text_bitmap_layout(glw_t *w, const glw_rctx_t *rc)
 
   // Initialize renderers
 
-  if(!glw_renderer_initialized(&gtb->gtb_text_renderer))
+  if(unlikely(!glw_renderer_initialized(&gtb->gtb_text_renderer)))
     glw_renderer_init_quad(&gtb->gtb_text_renderer);
 
   if(w->glw_class == &glw_text &&
-     !glw_renderer_initialized(&gtb->gtb_cursor_renderer))
+     unlikely(!glw_renderer_initialized(&gtb->gtb_cursor_renderer)))
     glw_renderer_init_quad(&gtb->gtb_cursor_renderer);
 
+  if(gtb->gtb_background_alpha > GLW_ALPHA_EPSILON &&
+     unlikely(!glw_renderer_initialized(&gtb->gtb_cursor_renderer))) {
+    glw_renderer_init_quad(&gtb->gtb_background_renderer);
+    glw_renderer_vtx_pos(&gtb->gtb_background_renderer, 0, -1, -1, 0);
+    glw_renderer_vtx_pos(&gtb->gtb_background_renderer, 1,  1, -1, 0);
+    glw_renderer_vtx_pos(&gtb->gtb_background_renderer, 2,  1,  1, 0);
+    glw_renderer_vtx_pos(&gtb->gtb_background_renderer, 3, -1,  1, 0);
+  }
 
   // Upload texture
 
@@ -392,6 +401,7 @@ glw_text_bitmap_render(glw_t *w, const glw_rctx_t *rc)
   glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
   float alpha;
   float blur = 1 - (rc->rc_sharpness * w->glw_sharpness);
+  glw_rctx_t rc0 = *rc;
 
   if(glw_is_focusable_or_clickable(w))
     glw_store_matrix(w, rc);
@@ -401,8 +411,16 @@ glw_text_bitmap_render(glw_t *w, const glw_rctx_t *rc)
   if(alpha < GLW_ALPHA_EPSILON)
     return;
 
+  if(gtb->gtb_background_alpha > GLW_ALPHA_EPSILON) {
+    glw_renderer_draw(&gtb->gtb_background_renderer, w->glw_root, &rc0,
+		      NULL, NULL,
+		      &gtb->gtb_background_color, NULL,
+                      gtb->gtb_background_alpha * alpha, blur, NULL);
+    glw_zinc(&rc0);
+  }
+
   if(glw_is_tex_inited(&gtb->gtb_texture) && gtb->gtb_image != NULL) {
-    glw_renderer_draw(&gtb->gtb_text_renderer, w->glw_root, rc,
+    glw_renderer_draw(&gtb->gtb_text_renderer, w->glw_root, &rc0,
 		      &gtb->gtb_texture, NULL,
 		      &gtb->gtb_color, NULL, alpha, blur, NULL);
   }
@@ -411,7 +429,6 @@ glw_text_bitmap_render(glw_t *w, const glw_rctx_t *rc)
     glw_root_t *gr = w->glw_root;
     float a = cos((gr->gr_frames & 2047) * (360.0f / 2048.0f)) * 0.5f + 0.5f;
 
-    glw_rctx_t rc0 = *rc;
     glw_zinc(&rc0);
 
     glw_renderer_draw(&gtb->gtb_cursor_renderer, w->glw_root, &rc0,
@@ -442,6 +459,7 @@ glw_text_bitmap_dtor(glw_t *w)
 
   glw_renderer_free(&gtb->gtb_text_renderer);
   glw_renderer_free(&gtb->gtb_cursor_renderer);
+  glw_renderer_free(&gtb->gtb_background_renderer);
 
   switch(gtb->gtb_state) {
   case GTB_IDLE:
@@ -732,14 +750,14 @@ caption_set_internal(glw_text_bitmap_t *gtb, const char *str, int type)
   gtb_caption_refresh(gtb);
 
   if(gtb->gtb_caption && !strcmp(str ?: "", gtb->gtb_caption) &&
-     type == gtb->gtb_type)
+     type == gtb->gtb_caption_type)
     return;
 
   free(gtb->gtb_caption);
   gtb->gtb_caption = strdup(str ?: "");
-  gtb->gtb_type = type;
+  gtb->gtb_caption_type = type;
 
-  assert(gtb->gtb_type == 0 || gtb->gtb_type == 1);
+  assert(gtb->gtb_caption_type == 0 || gtb->gtb_caption_type == 1);
 
   if(gtb->w.glw_flags2 & GLW2_AUTOHIDE) {
     if(str == NULL || *str == 0)
@@ -748,7 +766,7 @@ caption_set_internal(glw_text_bitmap_t *gtb, const char *str, int type)
       glw_unhide(&gtb->w);
   }
 
-  if(gtb->gtb_type == PROP_STR_RICH)
+  if(gtb->gtb_caption_type == PROP_STR_RICH)
     flags |= TEXT_PARSE_HTML_TAGS | TEXT_PARSE_HTML_ENTITIES;
 
   free(gtb->gtb_uc_buffer);
@@ -871,6 +889,8 @@ glw_text_bitmap_set_float3(glw_t *w, glw_attribute_t attrib, const float *rgb,
   switch(attrib) {
   case GLW_ATTRIB_RGB:
     return glw_attrib_set_rgb(&gtb->gtb_color, rgb);
+  case GLW_ATTRIB_BACKGROUND_COLOR:
+    return glw_attrib_set_rgb(&gtb->gtb_background_color, rgb);
   default:
     return -1;
   }
@@ -1045,6 +1065,12 @@ gtb_set_float(glw_t *w, glw_attribute_t a, float v, glw_style_t *origin)
 
   case GLW_ATTRIB_SIZE_SCALE:
     return gtb_set_em(w, GLW_ATTRIB_SIZE, v);
+
+  case GLW_ATTRIB_BACKGROUND_ALPHA:
+    if(gtb->gtb_background_alpha == v)
+      return 0;
+    gtb->gtb_background_alpha = v;
+    return 1;
 
   default:
     return -1;
@@ -1339,7 +1365,7 @@ gtb_caption_refresh(glw_text_bitmap_t *gtb)
   int len = 0, i;
   char *s;
 
-  if(gtb->gtb_caption_dirty == 0)
+  if(!gtb->gtb_caption_dirty)
     return;
 
   for(i = 0; i < gtb->gtb_uc_len; i++)
