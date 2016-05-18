@@ -2,24 +2,33 @@
 
 widget(container_z, {
 
-  GridItemBevel();
-  GridItemHighlight();
 
   onEvent(activate, eventWithProp(pluginInfo, $self));
   focusable: true;
 
+  widget(quad, {
+    hidden: !$clone.primaryColor;
+    color: $clone.primaryColor;
+  });
+
+  widget(image, {
+    margin: [1em, 0];
+    source: $self.metadata.icon;
+    $clone.primaryColor = RGBToString(primaryColor() * 0.3);
+    filterConstraintY: true;
+  });
+
   widget(container_y, {
-
-    style: "GridContainer";
-
-    widget(image, {
-      margin: [1em, 0];
-      source: $self.metadata.icon;
-    });
-
+    filterConstraintY: true;
+    align: bottom;
     widget(label, {
+      style: "GridLabel";
       caption: $self.metadata.title;
-      style: "GridItemLabel";
     });
   });
+
+  widget(border, {
+    style: "GridBorder";
+  });
+
 });

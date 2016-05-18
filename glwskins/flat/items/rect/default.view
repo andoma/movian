@@ -1,20 +1,29 @@
 #import "skin://theme.view"
 
 widget(container_z, {
-
-  GridItemBevel();
-  GridItemHighlight();
-
   focusable: true;
   onEvent(activate, navOpen($self.url, void, $self, $parent.model, void, $parent.url));
 
-  widget(container_y, {
-    style: "GridContainer";
+  widget(quad, {
+    hidden: !$clone.primaryColor;
+    color: $clone.primaryColor;
+  });
 
-    widget(icon, {
-      filterConstraintY: true;
-      source: $self.metadata.icon ?? (
-        "skin://icons/" +
+  widget(image, {
+    source: $self.metadata.backdrop;
+    style: "GridBackdrop";
+  });
+
+  widget(image, {
+    hidden: select($self.metadata.backdrop, true, false);
+
+    $clone.primaryColor = RGBToString(primaryColor() * 0.3);
+
+    margin: select($self.metadata.icon, 0, [0, 0.5em, 0, 1.8em]);
+    filterConstraintY: true;
+
+    source: $self.metadata.icon ?? (
+      "skin://icons/" +
         select($self.subtype,
                "ic_" + $self.subtype + "_48px",
                translate($self.type,  "ic_help_48px",
@@ -30,15 +39,19 @@ widget(container_z, {
 		         "playlist",  "ic_list_48px",
 	                 "movian",    "movian"
 	                )) + ".svg");
+  });
 
-      style: "GridItemIcon";
-    });
-
-
-
+  widget(container_y, {
+    filterConstraintY: true;
+    align: bottom;
     widget(label, {
+      style: "GridLabel";
       caption: $self.metadata.title;
-      style: "GridItemLabel";
     });
   });
+
+  widget(border, {
+    style: "GridBorder";
+  });
+
 });

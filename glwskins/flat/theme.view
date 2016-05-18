@@ -29,7 +29,7 @@
     space(1);
     widget(quad, {
       height: 1;
-      color: 0;
+      color: 0.6;
       alpha: 0.15;
     });
   });
@@ -43,7 +43,7 @@
     space(1);
     widget(quad, {
       width: 1;
-      color: 0;
+      color: 0.6;
       alpha: 0.15;
     });
   });

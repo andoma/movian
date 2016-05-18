@@ -7,43 +7,50 @@ widget(container_z, {
   focusable: true;
   onEvent(activate, playTrackFromSource($self, $parent.model));
 
-  GridItemBevel();
-  GridItemHighlight();
+  widget(quad, {
+    hidden: !$clone.primaryColor;
+    color: $clone.primaryColor;
+  });
+
+  widget(image, {
+    source: $self.metadata.icon;
+    color: 1 - 0.7 * iir($self.media.loading, 8);
+    $view.iconLoaded = isLoaded();
+    $clone.primaryColor = RGBToString(primaryColor() * 0.3);
+//    style: "GridBackdrop";
+  });
+
 
   widget(container_y, {
-    style: "GridContainer";
-
-    widget(container_z, {
-      filterConstraintY: true;
-      widget(image, {
-        source: $self.metadata.icon;
-        color: 1 - 0.7 * iir($self.media.loading, 8);
-        $view.iconLoaded = isLoaded();
-      });
-
-      widget(icon, {
-        hidden: $self.media.loading || ($view.iconLoaded && $self.media.playstatus != "play" && $self.media.playstatus != "pause");
-        style: "GridItemIcon";
-        source: translate($self.media.playstatus,
-                          "skin://icons/ic_audiotrack_48px.svg",
-                          "play", "skin://icons/ic_play_arrow_48px.svg",
-                          "pause", "skin://icons/ic_pause_48px.svg");
-      });
-
-      widget(container_y, {
-        space(0.5);
-        widget(throbber, {
-          alpha: iir($self.media.loading, 8);
-        });
-        space(0.5);
-      });
-
+    space(0.5);
+    widget(throbber, {
+      alpha: iir($self.media.loading, 8);
     });
+    space(0.5);
+  });
 
+
+  widget(icon, {
+    filterConstraintY: true;
+    hidden: $self.media.loading || ($view.iconLoaded && $self.media.playstatus != "play" && $self.media.playstatus != "pause");
+    style: "GridItemIcon";
+    source: translate($self.media.playstatus,
+                      "skin://icons/ic_audiotrack_48px.svg",
+                      "play", "skin://icons/ic_play_arrow_48px.svg",
+                      "pause", "skin://icons/ic_pause_48px.svg");
+  });
+
+
+  widget(container_y, {
+    filterConstraintY: true;
+    align: bottom;
     widget(label, {
-      autohide: true;
+      style: "GridLabel";
       caption: $self.metadata.title;
-      style: "GridItemLabel";
     });
+  });
+
+  widget(border, {
+    style: "GridBorder";
   });
 });

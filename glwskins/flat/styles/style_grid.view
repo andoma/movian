@@ -4,19 +4,29 @@ style(GridItemSeparatorLabel, {
   alpha: 0.3;
 });
 
-
-style(GridItemLabel, {
-  padding: [0.3em, 0];
-  align: center;
-//  color: iir(!isNavFocused(), 4);
-});
-
 style(GridItemIcon, {
   size: 4em;
-//  color: iir(!isNavFocused(), 4);
 });
 
 style(GridContainer, {
-  padding: [0, 0.4em, 0, 0.2em];
+  padding: [0, 0.2em, 0, 0.2em];
   spacing: 0.2em;
+});
+
+style(GridBackdrop, {
+  color: 0.8 + iir(isNavFocused() + isHovered(), 4) * 0.4;
+  aspectConstraint: true;
+});
+
+style(GridBorder, {
+  border: 0.1em;
+  color: iir(isNavFocused() + isHovered(), 4);
+  alpha: 0.8;
+});
+
+style(GridLabel, {
+  padding: [0, 0.15em];
+  align: bottom;
+  autohide: true;
+  bgalpha: 0.75;
 });

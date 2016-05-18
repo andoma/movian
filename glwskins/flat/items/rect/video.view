@@ -6,22 +6,27 @@ widget(container_z, {
   onEvent(activate, navOpen($self.url, void, $self, $parent.model, void, $parent.url));
   onEvent(itemMenu, eventWithProp(videoInfo, $self));
 
-  GridItemBevel();
-  GridItemHighlight();
+  widget(quad, {
+    hidden: !$clone.primaryColor;
+    color: $clone.primaryColor;
+  });
 
+  widget(image, {
+    source: $self.metadata.icon ?? ($self.url + "#cover");
+    style: "GridBackdrop";
+  });
 
   widget(container_y, {
-    style: "GridContainer";
-
-    widget(image, {
-      margin: [0.25em, 0];
-      source: $self.metadata.icon ?? ($self.url + "#cover");
-    });
-
-
+    filterConstraintY: true;
+    align: bottom;
     widget(label, {
+      style: "GridLabel";
       caption: $self.metadata.title;
-      style: "GridItemLabel";
     });
   });
+
+  widget(border, {
+    style: "GridBorder";
+  });
+
 });
