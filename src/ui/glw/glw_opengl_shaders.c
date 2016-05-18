@@ -37,21 +37,23 @@ typedef struct render_state {
   const struct glw_backend_texture *t0;
   const struct glw_backend_texture *t1;
   int texload_skips;
+  int program_switches;
 } render_state_t;
-
 
 /**
  *
  */
 static void
-use_program(glw_backend_root_t *gbr, glw_program_t *gp)
+use_program(glw_backend_root_t *gbr, glw_program_t *gp, render_state_t *rs)
 {
   if(gbr->gbr_current == gp)
     return;
 
   gbr->gbr_current = gp;
   glUseProgram(gp ? gp->gp_program : 0);
+  rs->program_switches++;
 }
+
 
 
 /**
@@ -96,7 +98,7 @@ load_program(glw_root_t *gr,
       }
     }
 
-    use_program(gbr, gpa->gpa_prog);
+    use_program(gbr, gpa->gpa_prog, rs);
 
     if(gpa->gpa_load_uniforms != NULL)
       gpa->gpa_load_uniforms(gr, gpa->gpa_prog, gpa->gpa_aux, rj);
@@ -151,7 +153,7 @@ load_program(glw_root_t *gr,
       rs->texload_skips++;
     }
   }
-  use_program(gbr, gp);
+  use_program(gbr, gp, rs);
   return gp;
 }
 
@@ -164,10 +166,11 @@ render_unlocked(glw_root_t *gr)
 {
   glw_backend_root_t *gbr = &gr->gr_be;
   render_state_t rs = {0};
-
   int64_t ts = arch_get_ts();
-
+  int uni_calls = 0;
+  int saved_calls = 0;
   int current_blendmode = GLW_BLEND_NORMAL;
+
   glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA,
 		      GL_ONE_MINUS_DST_ALPHA, GL_ONE);
 
@@ -240,28 +243,59 @@ render_unlocked(glw_root_t *gr)
 
     } else {
 
-      glUniform4f(gp->gp_uniform_color_offset,
-                  rj->rgb_off.r, rj->rgb_off.g, rj->rgb_off.b, 0);
+      if(!glw_rgb_cmp(&gp->gp_current_color_offset, &rj->rgb_off)) {
+        glw_rgb_cpy(&gp->gp_current_color_offset, &rj->rgb_off);
+        glUniform4f(gp->gp_uniform_color_offset,
+                    rj->rgb_off.r, rj->rgb_off.g, rj->rgb_off.b, 0);
+        uni_calls++;
+      } else {
+        saved_calls++;
+      }
 
-      glUniform4f(gbr->gbr_current->gp_uniform_color,
-                  rj->rgb_mul.r, rj->rgb_mul.g, rj->rgb_mul.b, rj->alpha);
+      if(!glw_rgb_cmp(&gp->gp_current_color_mul, &rj->rgb_mul) ||
+         gp->gp_current_alpha != rj->alpha) {
+        glw_rgb_cpy(&gp->gp_current_color_mul, &rj->rgb_mul);
+        gp->gp_current_alpha = rj->alpha;
+        glUniform4f(gbr->gbr_current->gp_uniform_color,
+                    rj->rgb_mul.r, rj->rgb_mul.g, rj->rgb_mul.b, rj->alpha);
+        uni_calls++;
+      } else {
+        saved_calls++;
+      }
 
-      if(gp->gp_uniform_time != -1)
+
+      if(gp->gp_uniform_time != -1) {
         glUniform1f(gp->gp_uniform_time, gr->gr_time_sec);
+        uni_calls++;
+      }
 
-      if(gp->gp_uniform_resolution != -1)
+      if(gp->gp_uniform_resolution != -1) {
         glUniform3f(gp->gp_uniform_resolution, rj->width, rj->height, 1);
+        uni_calls++;
+      }
 
-      if(gp->gp_uniform_blur != -1 && t0 != NULL)
+      if(gp->gp_uniform_blur != -1 && t0 != NULL) {
         glUniform3f(gp->gp_uniform_blur, rj->blur,
                     1.5 / t0->width, 1.5 / t0->height);
+        uni_calls++;
+      }
 
       if(rj->eyespace) {
-        glUniformMatrix4fv(gp->gp_uniform_modelview, 1, 0, glw_identitymtx);
+
+        if(!gp->gp_identity_mvm) {
+          glUniformMatrix4fv(gp->gp_uniform_modelview, 1, 0, glw_identitymtx);
+          gp->gp_identity_mvm = 1;
+          uni_calls++;
+        } else {
+          saved_calls++;
+        }
       } else {
+        gp->gp_identity_mvm = 0;
         glUniformMatrix4fv(gp->gp_uniform_modelview, 1, 0, glw_mtx_get(rj->m));
+        uni_calls++;
       }
     }
+
     if(unlikely(current_blendmode != rj->blendmode)) {
       current_blendmode = rj->blendmode;
       switch(current_blendmode) {
@@ -284,27 +318,44 @@ render_unlocked(glw_root_t *gr)
       glFrontFace(current_frontface == GLW_CW ? GL_CW : GL_CCW);
     }
 
-    glDrawArrays(rj->primitive_type, rj->vertex_offset, rj->num_vertices);
+    glDrawElements(rj->primitive_type,
+                   rj->num_indices,
+                   GL_UNSIGNED_SHORT,
+                   gr->gr_index_buffer + rj->index_offset);
   }
+
   if(current_blendmode != GLW_BLEND_NORMAL) {
     glBlendFuncSeparate(GL_SRC_COLOR, GL_ONE,
 			GL_ONE_MINUS_DST_ALPHA, GL_ONE);
   }
-  ts = arch_get_ts() - ts;
+  int64_t tse = arch_get_ts();
+  ts  = tse - ts;
   static int hold;
   
   hold++;
   if(hold < 20)
     return;
+
 #if 0
   static int cnt;
-  static int64_t tssum;
+  static int avg;
+  static int acc[16];
 
-  tssum += ts;
+  avg -= acc[cnt & 0xf];
+  acc[cnt & 0xf] = ts;
+  avg += acc[cnt & 0xf];
   cnt++;
 
-  printf("%16d (%d) %d saved texloads\n", (int)ts, (int)(tssum/cnt),
-         rs.texload_skips);
+  int t = avg/16;
+
+  printf("tt:%-5d  jobs:%-4d vertices:%-4d ps:%-3d uniforms:%-4d (%-4d) tpv:%2.2f\n",
+         t,
+         gr->gr_num_render_jobs,
+         gr->gr_vertex_offset,
+         rs.program_switches,
+         uni_calls,
+         saved_calls,
+         (float)t / gr->gr_vertex_offset);
 #endif
 }
 
@@ -437,6 +488,8 @@ glw_link_program(glw_backend_root_t *gbr, const char *title,
 #endif
   }
 
+  LIST_INSERT_HEAD(&gbr->gbr_programs, gp, gp_link);
+
   return gp;
 }
 
@@ -475,7 +528,6 @@ glw_make_program(glw_root_t *gr,
 {
   GLuint vs, fs;
   char path[512];
-  glw_program_t *p;
 
 
   SHADERPATH("v1.glsl");
@@ -488,7 +540,7 @@ glw_make_program(glw_root_t *gr,
     return NULL;
   }
 
-  p = glw_link_program(&gr->gr_be, "user shader", vs, fs);
+  glw_program_t *p = glw_link_program(&gr->gr_be, "user shader", vs, fs);
   glDeleteShader(vs);
   glDeleteShader(fs);
 
@@ -505,6 +557,7 @@ glw_destroy_program(struct glw_root *gr, struct glw_program *gp)
 {
   if(gp == NULL)
     return;
+  LIST_REMOVE(gp, gp_link);
   free(gp->gp_title);
   glDeleteProgram(gp->gp_program);
   free(gp);
@@ -642,18 +695,10 @@ void
 glw_opengl_shaders_fini(glw_root_t *gr)
 {
   glw_backend_root_t *gbr = &gr->gr_be;
+  glw_program_t *gp;
 
-  glw_destroy_program(gr, gbr->gbr_yuv2rgb_1f);
-  glw_destroy_program(gr, gbr->gbr_yuv2rgb_2f);
-  glw_destroy_program(gr, gbr->gbr_rgb2rgb_1f);
-  glw_destroy_program(gr, gbr->gbr_rgb2rgb_2f);
-
-  glw_destroy_program(gr, gbr->gbr_renderer_tex);
-  glw_destroy_program(gr, gbr->gbr_renderer_tex_stencil);
-  glw_destroy_program(gr, gbr->gbr_renderer_tex_blur);
-  glw_destroy_program(gr, gbr->gbr_renderer_tex_stencil_blur);
-  glw_destroy_program(gr, gbr->gbr_renderer_flat);
-  glw_destroy_program(gr, gbr->gbr_renderer_flat_stencil);
+  while((gp = LIST_FIRST(&gbr->gbr_programs)) != NULL)
+    glw_destroy_program(gr, gp);
 }
 
 /**

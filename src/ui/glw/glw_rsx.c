@@ -419,10 +419,11 @@ rsx_render_unlocked(glw_root_t *gr)
 
     realityVertexBegin(ctx, rj->primitive_type);
 
-    const float *v = &vertices[rj->vertex_offset * VERTEX_SIZE];
+    const uint16_t *idx = gr->gr_index_buffer + rj->index_offset;
 
+    for(int i = 0; i < rj->num_indices; i++) {
 
-    for(int i = 0; i < rj->num_vertices; i++) {
+      const float *v = &vertices[idx[i] * VERTEX_SIZE];
 
       realityAttr4f(ctx,  rvp->rvp_a_texcoord,  v[8], v[9], v[10], v[11]);
 
@@ -430,8 +431,6 @@ rsx_render_unlocked(glw_root_t *gr)
         realityAttr4f(ctx, rvp->rvp_a_color, v[4], v[5], v[6], v[7]);
 
       realityVertex4f(ctx, v[0], v[1], v[2], v[3]);
-
-      v+= VERTEX_SIZE;
     }
     realityVertexEnd(ctx);
   }

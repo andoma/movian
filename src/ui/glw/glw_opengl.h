@@ -56,17 +56,19 @@
 #endif
 
 
-struct glw_rgb;
 struct glw_rctx;
 struct glw_root;
 struct glw_backend_root;
 struct glw_renderer;
 struct glw_backend_texture;
 
+LIST_HEAD(glw_program_list, glw_program);
+
 /**
  * OpenGL shader program
  */
 struct glw_program {
+  LIST_ENTRY(glw_program) gp_link;
   char *gp_title;
   GLuint gp_program;
 
@@ -86,6 +88,13 @@ struct glw_program {
   GLint  gp_uniform_resolution;
 
   GLint  gp_uniform_t[6];
+
+  glw_rgb_t gp_current_color_offset;
+  glw_rgb_t gp_current_color_mul;
+  float gp_current_alpha;
+
+  char gp_identity_mvm;
+
 };
 
 
@@ -96,6 +105,8 @@ typedef struct glw_backend_root {
   struct glw_program *gbr_current;
 
   int gbr_use_stencil_buffer;
+
+  struct glw_program_list gbr_programs;
 
   /**
    * Video renderer
@@ -138,6 +149,7 @@ typedef struct glw_backend_root {
 
 #define GLW_DRAW_TRIANGLES GL_TRIANGLES
 #define GLW_DRAW_LINE_LOOP GL_LINE_LOOP
+#define GLW_DRAW_LINES     GL_LINES
 
 /**
  *

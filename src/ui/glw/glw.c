@@ -365,6 +365,7 @@ glw_fini(glw_root_t *gr)
   free(gr->gr_render_jobs);
   free(gr->gr_render_order);
   free(gr->gr_vertex_buffer);
+  free(gr->gr_index_buffer);
   rstr_release(gr->gr_pending_focus);
 }
 
@@ -642,6 +643,7 @@ glw_prepare_frame(glw_root_t *gr, int flags)
 
   gr->gr_num_render_jobs = 0;
   gr->gr_vertex_offset = 0;
+  gr->gr_index_offset = 0;
 
   prop_set_int(gr->gr_screensaver_active, glw_screensaver_is_active(gr));
   prop_set_int(gr->gr_prop_width, gr->gr_width);

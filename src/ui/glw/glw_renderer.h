@@ -109,7 +109,9 @@ typedef struct glw_render_job {
   float alpha;
   float blur;
   int vertex_offset;
+  int index_offset;
   int16_t num_vertices;
+  int16_t num_indices;
   int16_t width;
   int16_t height;
   int16_t primitive_type;

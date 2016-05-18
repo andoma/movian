@@ -74,6 +74,33 @@ LIST_HEAD(glw_video_list, glw_video);
 LIST_HEAD(glw_style_list, glw_style);
 TAILQ_HEAD(glw_view_load_request_queue, glw_view_load_request);
 
+
+typedef struct glw_vertex {
+  float x, y, z;
+} glw_vertex_t;
+
+typedef struct glw_rgb {
+  float r, g, b;
+} glw_rgb_t;
+
+static inline int glw_rgb_cmp(const glw_rgb_t *x, const glw_rgb_t *y)
+{
+  return x->r == y->r && x->g == y->g && x->b == y->b;
+}
+
+static inline void glw_rgb_cpy(glw_rgb_t *x, const glw_rgb_t *y)
+{
+  x->r = y->r;
+  x->g = y->g;
+  x->b = y->b;
+}
+
+typedef struct glw_rect {
+  int x1, x2;
+  int y1, y2;
+} glw_rect_t;
+
+
 // ------------------- Backends -----------------
 
 #if CONFIG_GLW_BACKEND_OPENGL || ENABLE_GLW_BACKEND_OPENGL_ES
@@ -188,19 +215,6 @@ typedef enum {
 #define GTB_OSK_PASSWORD     0x40   /* Password for on screen keyboard */
 #define GTB_FILE_REQUEST     0x80   /* Edit should ask for a file */
 #define GTB_DIR_REQUEST      0x100  /* Edit should ask for a directory */
-
-typedef struct glw_vertex {
-  float x, y, z;
-} glw_vertex_t;
-
-typedef struct glw_rgb {
-  float r, g, b;
-} glw_rgb_t;
-
-typedef struct glw_rect {
-  int x1, x2;
-  int y1, y2;
-} glw_rect_t;
 
 /**
  * Image flags
@@ -990,6 +1004,10 @@ typedef struct glw_root {
   float *gr_vertex_buffer;
   int gr_vertex_buffer_capacity;
   int gr_vertex_offset;
+
+  uint16_t *gr_index_buffer;
+  int gr_index_buffer_capacity;
+  int gr_index_offset;
 
   int gr_blendmode;
   int gr_frontface;

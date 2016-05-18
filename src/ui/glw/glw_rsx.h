@@ -31,6 +31,7 @@ struct glw_backend_texture;
 
 #define GLW_DRAW_TRIANGLES REALITY_TRIANGLES
 #define GLW_DRAW_LINE_LOOP REALITY_LINE_LOOP
+#define GLW_DRAW_LINES     REALITY_LINES
 
 
 /**
