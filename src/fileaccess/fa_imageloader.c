@@ -249,15 +249,17 @@ fa_imageloader(const char *url, const struct image_meta *im,
     }
 
 #if ENABLE_LIBJPEG
-    pixmap_t *pm = libjpeg_decode(fh, im, errbuf, errlen);
-    if(pm != NULL) {
-      image_t *im = image_create_from_pixmap(pm);
-      im->im_origin_coded_type = IMAGE_JPEG;
-      im->im_origin_coded_type = ji.ji_orientation;
-      pixmap_release(pm);
-      return im;
-    } else {
-      return NULL;
+    if(!im->im_no_decoding) {
+      pixmap_t *pm = libjpeg_decode(fh, im, errbuf, errlen);
+      if(pm != NULL) {
+        image_t *im = image_create_from_pixmap(pm);
+        im->im_origin_coded_type = IMAGE_JPEG;
+        im->im_origin_coded_type = ji.ji_orientation;
+        pixmap_release(pm);
+        return im;
+      } else {
+        return NULL;
+      }
     }
 #endif
 
