@@ -590,7 +590,7 @@ glw_container_z_constraints(glw_t *w, glw_t *skip)
     if(glw_filter_constraints(c))
       break;
   }
-
+  /*
   if(c == NULL) {
 
     TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
@@ -602,22 +602,26 @@ glw_container_z_constraints(glw_t *w, glw_t *skip)
         break;
     }
   }
+  */
 
   if(c != NULL) {
     if(w->glw_flags2 & GLW2_DEBUG)
-      printf("Copy %c%c%c %d %d %f constraints from %s\n",
+      printf("Copy %c%c%c (filter=%c%c%c) %d %d %f constraints from %s\n",
              c->glw_flags & GLW_CONSTRAINT_X ? 'X' : ' ',
              c->glw_flags & GLW_CONSTRAINT_Y ? 'Y' : ' ',
              c->glw_flags & GLW_CONSTRAINT_W ? 'W' : ' ',
+             c->glw_flags2 & GLW_CONSTRAINT_X ? 'X' : ' ',
+             c->glw_flags2 & GLW_CONSTRAINT_Y ? 'Y' : ' ',
+             c->glw_flags2 & GLW_CONSTRAINT_W ? 'W' : ' ',
              c->glw_req_size_x,
              c->glw_req_size_y,
              c->glw_req_weight,
              glw_get_path(c)
              );
     glw_copy_constraints(w, c);
-  }
-  else
+  } else {
     glw_clear_constraints(w);
+  }
 
   return 1;
 }

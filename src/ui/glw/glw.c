@@ -2674,7 +2674,7 @@ glw_copy_constraints(glw_t *w, glw_t *src)
 		      src->glw_req_size_x,
 		      src->glw_req_size_y,
 		      src->glw_req_weight,
-		      src->glw_flags & GLW_CONSTRAINT_FLAGS);
+		      glw_filter_constraints(src));
 }
 
 
