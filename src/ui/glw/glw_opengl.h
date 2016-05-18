@@ -156,9 +156,10 @@ typedef struct glw_backend_root {
  */
 typedef struct glw_backend_texture {
   GLuint textures[3];
+  int gltype;
   uint16_t width;
   uint16_t height;
-  int gltype;
+  uint8_t opaque;
 } glw_backend_texture_t;
 
 #define glw_tex_width(gbt) ((gbt)->width)

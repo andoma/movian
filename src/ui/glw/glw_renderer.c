@@ -288,7 +288,6 @@ fader(glw_root_t *gr, glw_renderer_cache_t *grc,
 
 
     if(ar > 0) {
-      grc->grc_colored = 1;
       glw_vec4_mul_c3(c1, 1 + D1 / ar);
       glw_vec4_mul_c3(c2, 1 + D2 / ar);
       glw_vec4_mul_c3(c3, 1 + D3 / ar);
@@ -982,6 +981,7 @@ add_job(glw_root_t *gr,
         int16_t primitive_type,
         int zoffset)
 {
+
   if(gr->gr_num_render_jobs >= gr->gr_render_jobs_capacity) {
     // Need more space
     glw_render_job_t *old_jobs = gr->gr_render_jobs;
@@ -1043,7 +1043,6 @@ add_job(glw_root_t *gr,
 
   if(rgb_off != NULL) {
     rj->rgb_off = *rgb_off;
-    flags |= GLW_RENDER_COLOR_OFFSET;
   } else {
     rj->rgb_off.r = 0;
     rj->rgb_off.g = 0;
@@ -1126,8 +1125,7 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
 {
   rgb_mul = rgb_mul ?: &white;
 
-  int flags =
-    gr->gr_color_attributes ? GLW_RENDER_COLOR_ATTRIBUTES : 0;
+  int flags = 0;
 
   if(root->gr_need_sw_clip
 #if NUM_FADERS > 0
@@ -1154,9 +1152,6 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
 
     if(grc->grc_blurred)
       flags |= GLW_RENDER_BLUR_ATTRIBUTE;
-
-    if(grc->grc_colored)
-      flags |= GLW_RENDER_COLOR_ATTRIBUTES;
 
 #if NUM_STENCILERS > 0
     if(root->gr_stencil_width)

@@ -69,6 +69,7 @@ glw_tex_backend_layout(glw_root_t *gr, glw_loadable_texture_t *glt)
   glBindTexture(m, glt->glt_texture.textures[0]);
   glt->glt_texture.width  = glt->glt_xs;
   glt->glt_texture.height = glt->glt_ys;
+  glt->glt_texture.opaque = glt->glt_opaque;
 
   glTexParameteri(m, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(m, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -219,6 +220,7 @@ glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex,
 
   tex->width  = pm->pm_width;
   tex->height = pm->pm_height;
+  tex->opaque = !!(pm->pm_flags & PIXMAP_OPAQUE);
 
   glTexImage2D(m, 0, int_format, pm->pm_width, pm->pm_height,
 	       0, format, GL_UNSIGNED_BYTE, pm->pm_data);

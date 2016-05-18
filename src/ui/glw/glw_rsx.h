@@ -132,6 +132,7 @@ typedef struct {
 
   int grtt_width;
   int grtt_height;
+  char grtt_opaque;
 
 } glw_rtt_t;
 

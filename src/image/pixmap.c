@@ -1080,6 +1080,7 @@ be_pixmap_loader(const char *url, const image_meta_t *im,
     }
 
     pixmap_t *pm = pixmap_create(w, h, PIXMAP_BGR32, im->im_margin);
+    pm->pm_flags |= PIXMAP_OPAQUE;
     pixmap_horizontal_gradient(pm, t, b);
     img = image_create_from_pixmap(pm);
     pixmap_release(pm);

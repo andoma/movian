@@ -78,6 +78,7 @@ typedef struct glw_loadable_texture {
   uint8_t glt_orientation;
   uint8_t glt_stash;
   uint8_t glt_origin_type;
+  uint8_t glt_opaque;
 
   int glt_format;
   int glt_internal_format;

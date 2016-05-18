@@ -411,6 +411,7 @@ loader_thread(void *aux)
             glt->glt_primary_color[0] = pm->pm_primary_color[0];
             glt->glt_primary_color[1] = pm->pm_primary_color[1];
             glt->glt_primary_color[2] = pm->pm_primary_color[2];
+            glt->glt_opaque = !!(pm->pm_flags & PIXMAP_OPAQUE);
 
             if(gconf.enable_image_debug)
               TRACE(TRACE_DEBUG, "GLW",

@@ -160,6 +160,7 @@ setup_tunnel(rpi_pixmap_decoder_t *rpd)
   pm->pm_type     = PIXMAP_BGR32;
   pm->pm_data     = mymemalign(portdef.nBufferAlignment, portdef.nBufferSize);
   pm->pm_aspect   = (float)pm->pm_width / (float)pm->pm_height;
+  pm->pm_flags   |= PIXMAP_OPAQUE;
 
   omxchk(OMX_UseBuffer(rpd->rpd_resizer->oc_handle, &rpd->rpd_buf,
 		       rpd->rpd_resizer->oc_outport,

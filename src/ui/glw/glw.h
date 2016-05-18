@@ -1012,16 +1012,6 @@ typedef struct glw_root {
   int gr_blendmode;
   int gr_frontface;
 
-#define GLW_RENDER_COLOR_ATTRIBUTES 0x1 /* set if the color attributes
-					   are != [1,1,1,1] */
-
-#define GLW_RENDER_BLUR_ATTRIBUTE   0x2 /* set if pos.w != 1 (sharpness)
-					 * ie, the triangle should be blurred
-					 */
-
-#define GLW_RENDER_COLOR_OFFSET     0x4
-
-
   float *gr_vtmp_buffer;  // temporary buffer for emitting vertices
   int gr_vtmp_cur;
   int gr_vtmp_capacity;

@@ -18,6 +18,17 @@
  *  For more information, contact andreas@lonelycoder.com
  */
 #pragma once
+
+
+#define GLW_RENDER_BLUR_ATTRIBUTE   0x1 /* set if pos.w != 1 (sharpness)
+					 * ie, the triangle should be blurred
+					 */
+
+#define GLW_RENDER_OPAQUE           0x2 // Can be rendered without blending
+
+#define GLW_RENDER_DEBUG            0x4 // Turn on various debug
+
+
 #define VERTEX_SIZE 12 // Number of floats per vertex
 
 /**
@@ -58,7 +69,6 @@ typedef struct glw_renderer_cache {
   float grc_fader_blur[NUM_FADERS];
 
   char grc_blurred;
-  char grc_colored;
   uint16_t grc_num_vertices;
 
   float *grc_vertices;
@@ -116,9 +126,10 @@ typedef struct glw_render_job {
   int16_t height;
   int16_t primitive_type;
   char blendmode;
-  char frontface;
-  char eyespace;
   char flags;
+  char eyespace : 1;
+  char frontface : 1;
+  char opaque ;
 } glw_render_job_t;
 
 

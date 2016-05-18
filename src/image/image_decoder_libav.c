@@ -93,6 +93,11 @@ pixmap_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
   const uint8_t *ptr[4];
   int strides[4];
   pixmap_t *pm;
+  int outflags = 0;
+
+  const AVPixFmtDescriptor *desc = av_pix_fmt_desc_get(src_pix_fmt);
+  if(desc && !(desc->flags & AV_PIX_FMT_FLAG_ALPHA))
+    outflags |= PIXMAP_OPAQUE;
 
   switch(src_pix_fmt) {
   case AV_PIX_FMT_Y400A:
@@ -110,16 +115,11 @@ pixmap_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
     return fulhack(pict, src_w, src_h, dst_w, dst_h, with_alpha, margin);
 
   default:
-#ifndef __ANDROID__
-    if(!with_alpha)
-      dst_pix_fmt = AV_PIX_FMT_RGB24;
-    else
-#endif
-      dst_pix_fmt = AV_PIX_FMT_BGR32;
+    dst_pix_fmt = AV_PIX_FMT_BGR32;
     break;
   }
 
-  const int swscale_debug = 0;
+  const int swscale_debug = 1;
 
   if(swscale_debug)
     TRACE(TRACE_DEBUG, "info", "Converting %d x %d [%s] to %d x %d [%s]",
@@ -179,6 +179,7 @@ pixmap_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
 #endif
 
   sws_freeContext(sws);
+  pm->pm_flags |= outflags;
   return pm;
 }
 
@@ -250,7 +251,7 @@ pixmap_from_avpic(AVPicture *pict, int pix_fmt,
     break;
 
   case AV_PIX_FMT_RGB24:
-    if(im->im_no_rgb24 || im->im_corner_radius)
+    if(im->im_corner_radius)
       need_format_conv = 1;
     else
       fmt = PIXMAP_RGB24;
@@ -295,7 +296,7 @@ pixmap_from_avpic(AVPicture *pict, int pix_fmt,
   want_rescale = req_w != src_w || req_h != src_h;
 
   if(want_rescale || need_format_conv) {
-    int want_alpha = im->im_no_rgb24 || im->im_corner_radius;
+    int want_alpha = im->im_corner_radius;
 
     pm = pixmap_rescale_swscale(pict, pix_fmt, src_w, src_h, req_w, req_h,
 				want_alpha, im->im_margin);
