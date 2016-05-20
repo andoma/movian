@@ -47,6 +47,7 @@ typedef struct tcpcon tcpcon_t;
 #define TCP_SSL      0x1
 #define TCP_DEBUG    0x2
 #define TCP_NO_PROXY 0x4
+#define TCP_SSL_VERIFY 0x8
 
 tcpcon_t *tcp_connect(const char *hostname, int port, char *errbuf,
 		      size_t errbufsize, int timeout, int flags,

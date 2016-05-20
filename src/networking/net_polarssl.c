@@ -98,7 +98,8 @@ printdbg(void *aux, int level, const char *txt)
  *
  */
 int
-tcp_ssl_open(tcpcon_t *tc, char *errbuf, size_t errlen, const char *hostname)
+tcp_ssl_open(tcpcon_t *tc, char *errbuf, size_t errlen, const char *hostname,
+             int verify)
 {
   int ret;
   entropy_context entropy;

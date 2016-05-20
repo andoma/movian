@@ -38,3 +38,4 @@
 #define FA_CONTENT_ON_ERROR     0x10000
 #define FA_NON_INTERACTIVE      0x20000 // No auth popups, etc
 #define FA_NO_COOKIES           0x40000
+#define FA_SSL_VERIFY           0x80000

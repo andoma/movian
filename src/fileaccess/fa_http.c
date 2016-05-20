@@ -163,6 +163,8 @@ typedef struct http_file {
 
   char hf_debug;
 
+  char hf_ssl_verify;
+
   char hf_no_ranges; // Server does not accept range queries
 
   char hf_want_close;
@@ -308,7 +310,7 @@ static http_connection_t *
 http_connection_get(const char *hostname, int port, int ssl,
 		    char *errbuf, int errlen, int dbg, int timeout,
                     cancellable_t *c, int allow_reuse,
-                    int max_concurrent)
+                    int max_concurrent, int verify_ssl)
 {
   http_connection_t *hc;
   tcpcon_t *tc;
@@ -381,6 +383,8 @@ http_connection_get(const char *hostname, int port, int ssl,
     tcp_connect_flags |= TCP_DEBUG;
   if(ssl)
     tcp_connect_flags |= TCP_SSL;
+  if(verify_ssl)
+    tcp_connect_flags |= TCP_SSL_VERIFY;
 
   HTTP_TRACE(dbg, "Connecting to %s:%d", hostname, port);
 
@@ -1635,7 +1639,8 @@ http_connect(http_file_t *hf, char *errbuf, int errlen, int allow_reuse,
   hf->hf_connection = http_connection_get(hostname, port, ssl, errbuf, errlen,
 					  hf->hf_debug, timeout,
                                           hf->hf_cancellable, allow_reuse,
-                                          max_concurrent);
+                                          max_concurrent,
+                                          hf->hf_ssl_verify);
 
   if(hf->hf_read_timeout != 0 && hf->hf_connection != NULL)
     tcp_set_read_timeout(hf->hf_connection->hc_tc, hf->hf_read_timeout);
@@ -1799,6 +1804,8 @@ http_open_ex(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
   hf->hf_streaming = !!(flags & FA_STREAMING);
   hf->hf_no_retries = !!(flags & FA_NO_RETRIES);
   hf->hf_no_cookies = !!(flags & FA_NO_COOKIES);
+  hf->hf_ssl_verify = !!(flags & FA_SSL_VERIFY);
+
   if(foe != NULL) {
     if(foe->foe_stats != NULL) {
       hf->hf_stats_speed = prop_create_r(foe->foe_stats, "bitrate");
@@ -3535,6 +3542,7 @@ http_reqv(const char *url, va_list ap,
     hf->hf_debug = !!(hra->flags & FA_DEBUG) || gconf.enable_http_debug;
   hf->hf_req_compression = !!(hra->flags & FA_COMPRESSION);
   hf->hf_no_cookies = !!(hra->flags & FA_NO_COOKIES);
+  hf->hf_ssl_verify = !!(hra->flags & FA_SSL_VERIFY);
   hf->hf_url = strdup(url);
 
   hra->hf = hf;

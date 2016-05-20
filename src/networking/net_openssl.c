@@ -85,7 +85,8 @@ ssl_write(tcpcon_t *tc, const void *data, size_t len)
 
 
 int
-tcp_ssl_open(tcpcon_t *tc, char *errbuf, size_t errlen, const char *hostname)
+tcp_ssl_open(tcpcon_t *tc, char *errbuf, size_t errlen, const char *hostname,
+             int verify)
 {
   if(app_ssl_ctx == NULL) {
     snprintf(errbuf, errlen, "SSL not initialized");
@@ -110,6 +111,11 @@ tcp_ssl_open(tcpcon_t *tc, char *errbuf, size_t errlen, const char *hostname)
     ERR_error_string(ERR_get_error(), errmsg);
     snprintf(errbuf, errlen, "SSL connect: %s", errmsg);
     return -1;
+  }
+
+  if(verify) {
+    if(openssl_verify_connection(tc->ssl, hostname, errbuf, errlen, 1))
+      return -1;
   }
 
   SSL_set_mode(tc->ssl, SSL_MODE_AUTO_RETRY);
@@ -208,6 +214,7 @@ openssl_verify_connection(SSL *ssl, const char *hostname,
     err = X509_V_OK;
 
   if(err != X509_V_OK) {
+    //    X509_print_fp(stdout, peer);
     snprintf(errbuf, errlen, "Certificate error: %s",
              X509_verify_cert_error_string(err));
     goto bad;
@@ -235,6 +242,8 @@ net_ssl_init(void)
   SSL_library_init();
   SSL_load_error_strings();
   app_ssl_ctx = SSL_CTX_new(TLSv1_2_client_method()); /* added TLSv1.2 */
+
+  SSL_CTX_load_verify_locations(app_ssl_ctx, NULL, "/etc/ssl/certs");
 
   int i, n = CRYPTO_num_locks();
   ssl_locks = malloc(sizeof(pthread_mutex_t) * n);

@@ -528,7 +528,7 @@ tcp_connect(const char *hostname, int port,
  connected:
   if(flags & TCP_SSL) {
 
-    if(tcp_ssl_open(tc, errbuf, errlen, hostname)) {
+    if(tcp_ssl_open(tc, errbuf, errlen, hostname, flags & TCP_SSL_VERIFY)) {
       tcp_close(tc);
       return NULL;
     }

@@ -304,6 +304,7 @@ es_http_req(duk_context *ctx)
   ehr->ehr_flags |= es_prop_is_true(ctx, 1, "compression") * FA_COMPRESSION;
   ehr->ehr_flags |= es_prop_is_true(ctx, 1, "noAuth")      * FA_DISABLE_AUTH;
   ehr->ehr_flags |= es_prop_is_true(ctx, 1, "noFail")      * FA_CONTENT_ON_ERROR;
+  ehr->ehr_flags |= es_prop_is_true(ctx, 1, "verifySSL")   * FA_SSL_VERIFY;
 
   ehr->ehr_headreq = es_prop_is_true(ctx, 1, "headRequest");
   ehr->ehr_min_expire = es_prop_to_int(ctx, 1, "cacheTime", 0);

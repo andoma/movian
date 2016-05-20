@@ -96,7 +96,8 @@ ssl_write_func(SSLConnectionRef connection, const void *data, size_t *len)
  *
  */
 int
-tcp_ssl_open(tcpcon_t *tc, char *errbuf, size_t errlen, const char *hostname)
+tcp_ssl_open(tcpcon_t *tc, char *errbuf, size_t errlen, const char *hostname,
+             int verify)
 {
   tc->ssl = SSLCreateContext(NULL, kSSLClientSide, kSSLStreamType);
 

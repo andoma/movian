@@ -74,6 +74,6 @@ tcpcon_t *tcp_connect_arch(const net_addr_t *addr, char *errbuf,
 void tcp_close_arch(tcpcon_t *tc);
 
 int tcp_ssl_open(tcpcon_t *tc, char *errbuf, size_t errlen,
-                 const char *hostname);
+                 const char *hostname, int verify);
 
 void tcp_ssl_close(tcpcon_t *tc);
