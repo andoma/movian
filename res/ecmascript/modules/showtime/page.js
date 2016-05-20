@@ -48,14 +48,26 @@ Item.prototype.disable = function() {
   this.root.enabled = false;
 }
 
-Item.prototype.addOptAction = function(title, action) {
+Item.prototype.destroyOption = function(item) {
+  prop.destroy(item);
+}
+
+Item.prototype.addOptAction = function(title, func, subtype) {
   var node = prop.createRoot();
   node.type = 'action';
   node.metadata.title = title;
   node.enabled = true;
-  node.action = action;
+  node.subtype = subtype;
 
+  prop.subscribe(node.eventSink, function(type, val) {
+    if(type == "action" && val.indexOf('Activate') != -1)
+      func();
+  }, {
+    autoDestroy: true,
+    actionAsArray: true,
+  });
   prop.setParent(node, this.root.options);
+  return node;
 }
 
 

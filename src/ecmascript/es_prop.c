@@ -31,6 +31,7 @@ typedef struct es_prop_sub {
   es_resource_t eps_super;
   prop_sub_t *eps_sub;
   char eps_autodestry;
+  char eps_action_as_array;
 } es_prop_sub_t;
 
 static void
@@ -627,14 +628,30 @@ es_sub_cb(void *opaque, prop_event_t event, ...)
       const event_payload_t *ep = (const event_payload_t *)e;
       nargs = 2;
       duk_push_string(ctx, "action");
-      duk_push_string(ctx, ep->payload);
+
+      if(eps->eps_action_as_array) {
+        duk_push_array(ctx);
+        duk_push_string(ctx, ep->payload);
+        duk_put_prop_index(ctx, -2, 0);
+      } else {
+        duk_push_string(ctx, ep->payload);
+      }
 
     } else if(e->e_type == EVENT_ACTION_VECTOR) {
       const event_action_vector_t *eav = (const event_action_vector_t *)e;
       assert(eav->num > 0);
       nargs = 2;
       duk_push_string(ctx, "action");
-      duk_push_string(ctx, action_code2str(eav->actions[0]));
+
+      if(eps->eps_action_as_array) {
+        duk_push_array(ctx);
+        for(int i = 0; i < eav->num; i++) {
+          duk_push_string(ctx, action_code2str(eav->actions[i]));
+          duk_put_prop_index(ctx, -2, i);
+        }
+      } else {
+        duk_push_string(ctx, action_code2str(eav->actions[0]));
+      }
 
     } else if(e->e_type == EVENT_UNICODE) {
       const event_int_t *eu = (const event_int_t *)e;
@@ -709,6 +726,9 @@ es_prop_subscribe(duk_context *ctx)
 
   if(es_prop_is_true(ctx, 2, "earlyChildDelete"))
     flags |= PROP_SUB_EARLY_DEL_CHILD;
+
+  if(es_prop_is_true(ctx, 2, "actionAsArray"))
+    eps->eps_action_as_array = 1;
 
   eps->eps_sub =
       prop_subscribe(flags,

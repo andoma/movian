@@ -17,6 +17,7 @@ widget(container_z, {
 
     widget(icon, {
       style: "ListItemIcon";
+      source: "skin://icons/ic_" + $self.subtype + "_48px.svg";
     });
 
     widget(label, {
