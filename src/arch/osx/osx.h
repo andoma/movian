@@ -48,7 +48,7 @@ void webpopup_init(void);
   CGLPixelFormatObj m_cgl_pixel_format;
   int64_t hide_cursor_at;
 }
-- (id)initWithFrame:(NSRect)frameRect :(struct glw_root *)gr :(bool)fs;
+- (id)initWithFrame:(NSRect)frameRect :(struct glw_root *)gr;
 - (void)stop;
 
 @end
@@ -62,7 +62,6 @@ void webpopup_init(void);
   struct glw_root *gr;
   NSWindow *window;
   GLWView *view;
-  bool fullscreen;
   bool minimized;
 
   CFRunLoopTimerRef timer;
@@ -73,4 +72,11 @@ void webpopup_init(void);
   prop_sub_t *fwsub;  // Full window
   NSString *title;
 }
+
+- (void)openWin;
+- (void)toggleFullscreen;
+- (void)setFullWindow:(BOOL)on;
+- (void)windowWillEnterFullScreen:(NSNotification *)notification;
+- (void)windowWillExitFullScreen:(NSNotification *)notification;
+
 @end

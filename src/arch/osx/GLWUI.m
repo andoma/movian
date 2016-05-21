@@ -46,15 +46,6 @@
 @end
 
 
-@interface GLWUI (hidden)
-
-- (void)openWin;
-- (void)toggleFullscreen;
-- (void)setFullWindow:(BOOL)on;
-
-@end
-
-
 
 @implementation GLWUI
 
@@ -83,50 +74,55 @@
   minimized = NO;
 }
 
+- (void)windowWillEnterFullScreen:(NSNotification *)notification
+{
+  htsmsg_store_set("glwcocoa", "fullscreen", HMF_S64, (int64_t)1);
+  glw_set_fullscreen(gr, 1);
+}
+
+- (void)windowWillExitFullScreen:(NSNotification *)notification
+{
+  htsmsg_store_set("glwcocoa", "fullscreen", HMF_S64, (int64_t)0);
+  glw_set_fullscreen(gr, 0);
+}
+
 
 
 /**
  *
  */
-- (void)openWin:(BOOL)asfullscreen
+- (void)openWin
 {
   NSRect frame;
+  int fullscreen = htsmsg_store_get_int("glwcocoa", "fullscreen", 0);
 
-  fullscreen = asfullscreen;
-  htsmsg_store_set("glwcocoa", "fullscreen", HMF_S64, (int64_t)fullscreen);
+  //  htsmsg_store_set("glwcocoa", "fullscreen", HMF_S64, (int64_t)fullscreen);
 
-  if(fullscreen) {
-
+  /*
     // Close all other windows
     for (NSWindow *o in [NSApplication sharedApplication].windows) {
       [o close];
     }
+  */
 
-    frame = [[NSScreen mainScreen] frame];
-    window = [[GLWWindow alloc] initWithContentRect: frame
-					    styleMask:NSBorderlessWindowMask
-					      backing:NSBackingStoreBuffered
-						defer:NO];
+  frame = NSMakeRect( 100., 100., 1280./1.5, 720./1.5 );
 
-    [window setLevel:NSMainMenuWindowLevel+1];
-    [window setOpaque:YES];
-    [window setHidesOnDeactivate:YES];
-
-  } else {
-
-    frame = NSMakeRect( 100., 100., 1280./1.5, 720./1.5 );
-
-    window = [[GLWWindow alloc]
+  window = [[GLWWindow alloc]
 			 initWithContentRect:frame
 				   styleMask:NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask
 				     backing:NSBackingStoreBuffered
 				       defer:NO];
 
-     [window setTitle:title];
-     [window setFrameAutosaveName:@"main"];
-  }
+  [window setTitle:title];
+  [window setFrameAutosaveName:@"main"];
 
-  view = [[GLWView alloc] initWithFrame:frame:gr:fullscreen];
+
+  if(fullscreen) {
+    [window toggleFullScreen:self];
+    glw_set_fullscreen(gr, 1);
+  }
+  
+  view = [[GLWView alloc] initWithFrame:frame:gr];
   [window setContentView:view];
   [window setDelegate:self];
   [window makeKeyAndOrderFront:nil];
@@ -142,11 +138,7 @@
  */
 - (void)toggleFullscreen
 {
-  [self retain]; // Closing window will release but we want to live on
-  [view stop];
-  [window close];
-  [view release];
-  [self openWin:!fullscreen];
+  [window toggleFullScreen:self];
 }
 
 
@@ -270,8 +262,7 @@ static prop_t *stored_nav;
 			 PROP_TAG_COURIER, mainloop_courier,
                          NULL);
 
-  int fs = htsmsg_store_get_int("glwcocoa", "fullscreen", 0);
-  [self openWin:fs];
+  [self openWin];
 
   glw_lock(gr);
   glw_load_universe(gr);
