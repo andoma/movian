@@ -135,6 +135,14 @@ widget(container_z, {
       $clone.itemMenu = void;
     }, void, !($args.playcount < 1));
 
+    cloner($core.itemhooks, container_z, {
+      hidden: !($self.itemtype == $args.type || $self.itemtype == void);
+      ITEM($self.metadata.title, {
+        fireEvent(deliverRef($self.eventSink, $args));
+        $view.close = true;
+      }, $self.metadata.icon);
+    });
+
     cloner($args.options, loader, {
       time: 0.1;
       noInitialTransform: true;
