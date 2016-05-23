@@ -1387,8 +1387,9 @@ open_categories(prop_t *model)
   add_category(nodes, PLUGIN_CAT_VIDEO, "movie");
   add_category(nodes, PLUGIN_CAT_MUSIC, "audiotrack");
   add_category(nodes, PLUGIN_CAT_SUBTITLES, "subtitles");
+  add_category(nodes, PLUGIN_CAT_OTHER, "other");
 #if !defined(PS3)
-  add_category(nodes, PLUGIN_CAT_GLWOSK, NULL);
+  add_category(nodes, PLUGIN_CAT_GLWOSK, "keyboard");
 #endif
   prop_ref_dec(nodes);
 }
