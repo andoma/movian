@@ -658,6 +658,16 @@ glw_text_bitmap_event(glw_t *w, event_t *e)
       gtb_notify(gtb);
     return 1;
 
+  } else if(event_is_type(e, EVENT_INSERT_STRING)) {
+    event_payload_t *ep = (event_payload_t *)e;
+    const char *str = ep->payload;
+    int uc;
+    while((uc = utf8_get(&str)) != 0) {
+      insert_char(gtb, uc);
+    }
+    gtb_notify(gtb);
+    return 1;
+
   } else if(event_is_action(e, ACTION_LEFT)) {
 
     if(gtb->gtb_edit_ptr > 0) {

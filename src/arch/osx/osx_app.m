@@ -432,6 +432,35 @@ mainloop_courier_init(void)
 /**
  *
  */
+- (void)initEditMenu
+{
+  NSMenuItem *menuitem;
+  NSMenu *menuApp = [[NSMenu alloc] initWithTitle: @"Edit"];
+
+  // -----------------------------------------------------------
+  menuitem = [[NSMenuItem alloc] initWithTitle:@"Paste"
+					action:@selector(paste:)
+				 keyEquivalent:@"v"];
+  //  [menuitem setTarget: self];
+  [menuApp addItem: menuitem];
+  [menuitem release];
+
+  // -----------------------------------------------------------
+
+  NSMenuItem *dummyItem = [[NSMenuItem alloc] initWithTitle:@""
+						     action:nil
+					      keyEquivalent:@""];
+  [dummyItem setSubmenu:menuApp];
+  [m_menubar addItem:dummyItem];
+  [dummyItem release];
+
+  [menuApp release];
+}
+
+
+/**
+ *
+ */
 - (void) initMenues
 {
   m_menubar = [[NSMenu alloc] initWithTitle: @""];
@@ -439,6 +468,7 @@ mainloop_courier_init(void)
 
   [self initAppleMenu];
   [self initFileMenu];
+  [self initEditMenu];
 }
 
 

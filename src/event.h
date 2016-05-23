@@ -170,6 +170,7 @@ typedef enum {
   EVENT_MAKE_SCREENSHOT               = 28,
   EVENT_PROP_ACTION                   = 29,
   EVENT_SCROLL                        = 30,
+  EVENT_INSERT_STRING                 = 31,
 } event_type_t;
 
 
