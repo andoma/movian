@@ -1112,7 +1112,7 @@ glw_path_modify(glw_t *w, int set, int clr, glw_t *stop)
 
   glw_path_flood(w, set, clr);
 
-  for(; w != NULL && w != stop; w = w->glw_parent) {
+  for(; w != NULL; w = w->glw_parent) {
 
     int old_flags = w->glw_flags;
     glw_fhp_update(w, set, clr);
@@ -1130,6 +1130,8 @@ glw_path_modify(glw_t *w, int set, int clr, glw_t *stop)
         }
       }
     }
+    if(w == stop)
+      break;
   }
 }
 
