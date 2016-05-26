@@ -113,7 +113,7 @@ typedef struct prop_nf_pred {
   int pnp_id;
 
   char pnp_enabled;
-  
+
   char *pnp_str;
   int pnp_int;
 
@@ -293,12 +293,12 @@ nf_egress_cmp(const nfnode_t *a, const nfnode_t *b)
 
     if(a->sortkey_type[i] != b->sortkey_type[i])
       return a->sortkey_type[i] - b->sortkey_type[i];
-    
+
     switch(a->sortkey_type[i]) {
     case SORTKEY_RSTR:
       r = dictcmp(rstr_get(a->sk[i].rstr), rstr_get(b->sk[i].rstr));
       break;
-      
+
     case SORTKEY_CSTR:
       r = dictcmp(a->sk[i].cstr, b->sk[i].cstr);
       break;
@@ -356,7 +356,7 @@ nf_insert_node(prop_nf_t *nf, nfnode_t *nfn)
   } else {
 
     b = TAILQ_NEXT(nfn, in_link);
-    
+
     while(b != NULL && b->inserted == 0)
       b = TAILQ_NEXT(b, in_link);
 
@@ -539,14 +539,14 @@ nfn_insert_pred(prop_nf_t *nf, nfnode_t *nfn, prop_nf_pred_t *pnp)
   LIST_INSERT_HEAD(&nfn->preds, nfnp, nfnp_link);
 
   if(pnp->pnp_str != NULL) {
-    nfnp->nfnp_sub = 
+    nfnp->nfnp_sub =
       prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_DONTLOCK,
 		     PROP_TAG_CALLBACK_STRING, nfnp_update_str, nfnp,
 		     PROP_TAG_NAMED_ROOT, nfn->in, "node",
 		     PROP_TAG_NAME_VECTOR, pnp->pnp_path,
 		     NULL);
   } else {
-    nfnp->nfnp_sub = 
+    nfnp->nfnp_sub =
       prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_DONTLOCK,
 		     PROP_TAG_CALLBACK_INT, nfnp_update_int, nfnp,
 		     PROP_TAG_NAMED_ROOT, nfn->in, "node",
@@ -685,13 +685,13 @@ nf_update_order_x(prop_nf_t *nf, nfnode_t *nfn, int x)
       rstr_release(nfn->sk[x].rstr);
     nfn->sortkey_type[x] = SORTKEY_NONE;
 
-    nf_insert_node(nf, nfn);      
+    nf_insert_node(nf, nfn);
 
   } else {
     nfn->sortsub[x] =
       prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_DONTLOCK |
 		     PROP_SUB_DIRECT_UPDATE,
-		     PROP_TAG_CALLBACK, 
+		     PROP_TAG_CALLBACK,
 		     x == 0 ? nf_set_sortkey_0 :
 		     x == 1 ? nf_set_sortkey_1 :
 		     x == 2 ? nf_set_sortkey_2 :
@@ -807,7 +807,7 @@ nf_del_node(prop_nf_t *nf, nfnode_t *nfn)
 
   while((nfnp = LIST_FIRST(&nfn->preds)) != NULL)
     nfnp_destroy(nfnp);
-  
+
   for(i = 0; i < MAX_SORT_KEYS; i++)
     if(nfn->sortkey_type[i] == SORTKEY_RSTR)
       rstr_release(nfn->sk[i].rstr);
@@ -1064,7 +1064,7 @@ nf_translate_req_move_child(prop_nf_t *nf, prop_t *p, prop_t *before)
 {
   if(nf->sortkey[0] || nf->sortkey[1] || nf->sortkey[2] || nf->sortkey[3])
     return;
-  
+
   if(nf->filter != NULL)
     return;
 
@@ -1150,7 +1150,7 @@ nf_set_filter(void *opaque, const char *str)
 struct prop_nf *
 prop_nf_create(prop_t *dst, prop_t *src, prop_t *filter, int flags)
 {
-  
+
   prop_nf_t *nf = calloc(1, sizeof(prop_nf_t));
   nf->flags = flags;
   TAILQ_INIT(&nf->in);
@@ -1173,8 +1173,8 @@ prop_nf_create(prop_t *dst, prop_t *src, prop_t *filter, int flags)
 			      PROP_TAG_ROOT, nf->dst,
 			      NULL);
 
-  nf->srcsub = prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_DONTLOCK | 
-			      (flags & PROP_NF_AUTODESTROY ? 
+  nf->srcsub = prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_DONTLOCK |
+			      (flags & PROP_NF_AUTODESTROY ?
 			       PROP_SUB_TRACK_DESTROY : 0),
 			      PROP_TAG_CALLBACK, prop_nf_src_cb, nf,
 			      PROP_TAG_ROOT, src,
@@ -1254,7 +1254,7 @@ prop_nf_pred_add(struct prop_nf *nf,
   LIST_INSERT_HEAD(&nf->preds, pnp, pnp_link);
 
   if(enable != NULL) {
-    pnp->pnp_enable_sub = 
+    pnp->pnp_enable_sub =
       prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_DONTLOCK,
 		     PROP_TAG_CALLBACK_INT, pnp_set_enable, pnp,
 		     PROP_TAG_ROOT, enable,
@@ -1365,7 +1365,7 @@ prop_nf_sort(struct prop_nf *nf, const char *path, int desc, unsigned int idx,
   int m = desc ? -1 : 1;
 
   hts_mutex_lock(&prop_mutex);
-  
+
   assert(idx < MAX_SORT_KEYS);
 
   if(nf->sortkey[idx]) {
