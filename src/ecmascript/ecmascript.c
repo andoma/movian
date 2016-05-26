@@ -191,12 +191,9 @@ ecmascript_push_buf(duk_context *ctx, buf_t *b)
 es_context_t *
 es_get(duk_context *ctx)
 {
-  duk_push_global_stash(ctx);
-  duk_get_prop_string(ctx, -1, "esctx");
-  es_context_t *es = duk_get_pointer(ctx, -1);
-  duk_pop_2(ctx);
-  assert(es != NULL);
-  return es;
+  duk_memory_functions fns;
+  duk_get_memory_functions(ctx, &fns);
+  return fns.udata;
 }
 
 
@@ -463,9 +460,6 @@ es_create_env(es_context_t *ec, const char *loaddir, const char *storage)
   duk_context *ctx = ec->ec_duk;
 
   duk_push_global_stash(ctx);
-
-  duk_push_pointer(ctx, ec);
-  duk_put_prop_string(ctx, -2, "esctx");
 
   duk_push_object(ctx);
   duk_put_prop_string(ctx, -2, "roots");
