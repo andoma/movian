@@ -20,7 +20,6 @@ enable bspatch
 enable libcec
 enable avahi
 enable connman
-enable libjpeg
 
 show_help(){
   common_help

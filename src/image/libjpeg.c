@@ -71,12 +71,13 @@ libjpeg_decode(fa_handle_t *fh, const image_meta_t *im,
 
 
   jpeg_create_decompress(&cinfo);
-  //  jpeg_mem_src(&cinfo, (void *)buf_cstr(b), buf_len(b));
   jpeg_stdio_src(&cinfo, f);
 
   jpeg_read_header(&cinfo, TRUE);
 
   cinfo.buffered_image = 1;
+  cinfo.out_color_space = JCS_RGB;
+  cinfo.output_components = 3;
   jpeg_start_decompress(&cinfo);
 
   while(!jpeg_input_complete(&cinfo)) {
