@@ -39,6 +39,9 @@ es_root_register(duk_context *ctx, int obj_idx, void *ptr)
 
   duk_put_prop_string(ctx, -2, name);
   duk_pop_2(ctx);
+
+  es_context_t *ec = es_get(ctx);
+  ec->ec_rooted_objects++;
 }
 
 
@@ -57,6 +60,9 @@ es_root_unregister(duk_context *ctx, void *ptr)
 
   duk_del_prop_string(ctx, -1, name);
   duk_pop_2(ctx);
+
+  es_context_t *ec = es_get(ctx);
+  ec->ec_rooted_objects--;
 }
 
 

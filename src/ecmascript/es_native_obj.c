@@ -20,13 +20,12 @@
 #include <assert.h>
 
 #include "prop/prop.h"
-#include "htsmsg/htsmsg.h"
 #include "ecmascript.h"
 
 #define PTRNAME "\xff""ptr"
 
 
-static ecmascript_native_class_t *native_classes[16];
+static ecmascript_native_class_t *native_classes[ECMASCRIPT_MAX_NATIVE_CLASSES];
 
 void
 ecmascript_register_native_class(ecmascript_native_class_t *c)
@@ -111,28 +110,22 @@ es_get_native_obj_nothrow(duk_context *ctx, int obj_idx,
 /**
  *
  */
-static void
-call_finalizer(int type, void *ptr)
-{
-  native_classes[type]->release(ptr);
-}
-
-
-/**
- *
- */
 static int
 es_native_finalizer(duk_context *ctx)
 {
   int type = duk_get_current_magic(ctx);
+  assert(type < ECMASCRIPT_MAX_NATIVE_CLASSES);
 
   duk_get_prop_string(ctx, 0, PTRNAME);
 
   if(duk_is_pointer(ctx, -1)) {
     void *ptr = duk_get_pointer(ctx, -1);
     duk_del_prop_string(ctx, 0, PTRNAME);
-    call_finalizer(type, ptr);
+    native_classes[type]->release(ptr);
+
     duk_pop(ctx);
+    es_context_t *ec = es_get(ctx);
+    ec->ec_native_instances[type]--;
   }
   return 0;
 }
@@ -146,7 +139,7 @@ es_push_native_obj(duk_context *ctx, ecmascript_native_class_t *class,
                    void *ptr)
 {
   int obj_idx = duk_push_object(ctx);
-
+  
   duk_push_pointer(ctx, ptr);
   duk_put_prop_string(ctx, obj_idx, PTRNAME);
 
@@ -154,6 +147,19 @@ es_push_native_obj(duk_context *ctx, ecmascript_native_class_t *class,
   duk_set_magic(ctx, -1, class->id);
   duk_set_finalizer(ctx, obj_idx);
 
+  es_context_t *ec = es_get(ctx);
+  ec->ec_native_instances[class->id]++;
+
   return obj_idx;
 }
 
+
+
+const char *
+ecmascript_native_class_name(int id)
+{
+  assert(id < ECMASCRIPT_MAX_NATIVE_CLASSES);
+  if(native_classes[id] == NULL)
+    return NULL;
+  return native_classes[id]->name;
+}

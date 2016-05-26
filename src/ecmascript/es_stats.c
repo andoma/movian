@@ -64,6 +64,21 @@ dump_context(htsbuf_queue_t *out, es_context_t *ec)
 
   htsbuf_qprintf(out, "  Memory usage, current: %zd bytes, peak: %zd\n",
                  ec->ec_mem_active, ec->ec_mem_peak);
+  htsbuf_qprintf(out, "  Rooted Ecmascript objects: %d\n",
+                 ec->ec_rooted_objects);
+
+  htsbuf_qprintf(out, "  Native objects referenced:\n",
+                 ec->ec_rooted_objects);
+  for(int i = 0; i < ECMASCRIPT_MAX_NATIVE_CLASSES; i++) {
+    if(ec->ec_native_instances[i] != 0) {
+      const char *name = ecmascript_native_class_name(i);
+      if(name)
+        htsbuf_qprintf(out, "    %s: %d active\n",
+                       name, ec->ec_native_instances[i]);
+
+    }
+  }
+
 
   htsbuf_qprintf(out, "  Attached permanent resources:\n");
   dump_resource_list(out, &ec->ec_resources_permanent);
