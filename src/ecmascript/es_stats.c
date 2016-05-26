@@ -113,6 +113,37 @@ dumpstats(http_connection_t *hc, const char *remain, void *opaque,
 }
 
 
+
+/**
+ *
+ */
+static int
+dogc(http_connection_t *hc, const char *remain, void *opaque,
+     http_cmd_t method)
+{
+  int i;
+
+  htsbuf_queue_t out;
+  htsbuf_queue_init(&out, 0);
+
+  es_context_t **vec = ecmascript_get_all_contexts();
+
+  for(i = 0; vec[i] != NULL; i++) {
+    es_context_t *ec = vec[i];
+    hts_mutex_lock(&ec->ec_mutex);
+    duk_gc(ec->ec_duk, 0);
+    hts_mutex_unlock(&ec->ec_mutex);
+  }
+
+  ecmascript_release_context_vector(vec);
+
+  htsbuf_qprintf(&out, "OK\n");
+
+  return http_send_reply(hc, 0,
+                         "text/plain; charset=utf-8", NULL, NULL, 0, &out);
+}
+
+
 /**
  *
  */
@@ -120,6 +151,7 @@ static void
 ecmascript_stats_init(void)
 {
   http_path_add("/api/ecmascript/stats", NULL, dumpstats, 1);
+  http_path_add("/api/ecmascript/gc", NULL, dogc, 1);
 }
 
 INITME(INIT_GROUP_API, ecmascript_stats_init, NULL, 0);
