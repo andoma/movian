@@ -311,7 +311,7 @@ es_prop_enum_duk(duk_context *ctx)
 
   for(int i = 0; i < cnt; i++) {
     if(names[i])
-      duk_push_string(ctx, c->hp_name);
+      duk_push_string(ctx, names[i]);
     else
       duk_push_int(ctx, i);
     free(names[i]);
