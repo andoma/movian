@@ -35,7 +35,7 @@
 
 
 style(popupRow, {
-  padding: [1em, 0.25em];
+  padding: [0.5em, 0.25em];
   spacing: 1em;
 });
 
@@ -71,14 +71,11 @@ style(textBackdrop, {
     focusable: ENABLED;
     onEvent(activate, EVENT);
 
-    widget(container_x, {
-      padding: [1em, 0];
+    widget(label, {
+      padding: [0.5em, 0];
       align: center;
-
-      widget(label, {
-	caption: CAPTION;
-        color: !isNavFocused();
-      });
+      caption: CAPTION;
+      color: !isNavFocused();
     });
   });
 }

@@ -5,7 +5,7 @@ onEvent(back,   deliverEvent($self.eventSink, "cancel"));
 
 
 widget(popup, {
-
+  aspect: 2;
   clickable: true;
   onEvent(click, deliverEvent($self.eventSink, "Cancel"), true, true, true);
 
@@ -16,7 +16,7 @@ widget(popup, {
     PopupBackdrop();
 
     widget(container_y, {
-      padding: 1em;
+      padding: [$ui.xmargin, 1em];
       spacing: 2em;
 
       widget(table, {

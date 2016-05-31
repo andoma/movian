@@ -29,6 +29,7 @@ typedef struct glw_popup {
 
   float screen_x;
   float screen_y;
+  float aspect;
 
   int screen_cord_set;
 
@@ -47,16 +48,24 @@ popup_layout(glw_t *w, const glw_rctx_t *rc)
   if(c == NULL || c->glw_flags & GLW_HIDDEN)
     return;
 
-  int f = glw_filter_constraints(c);
-  if(f & GLW_CONSTRAINT_X)
-    p->width = MIN(c->glw_req_size_x, rc->rc_width);
-  else
-    p->width = rc->rc_width / 2;
-
-  if(f & GLW_CONSTRAINT_Y)
-    p->height = MIN(c->glw_req_size_y, rc->rc_height);
-  else
+  if(p->aspect > 0) {
     p->height = rc->rc_height / 2;
+    p->width = p->height * p->aspect;
+    p->width = MIN(p->height * p->aspect, rc->rc_width);
+  } else {
+
+
+    int f = glw_filter_constraints(c);
+    if(f & GLW_CONSTRAINT_X)
+      p->width = MIN(c->glw_req_size_x, rc->rc_width);
+    else
+      p->width = rc->rc_width / 2;
+
+    if(f & GLW_CONSTRAINT_Y)
+      p->height = MIN(c->glw_req_size_y, rc->rc_height);
+    else
+      p->height = rc->rc_height / 2;
+  }
 
   rc0 = *rc;
   rc0.rc_width  = p->width;
@@ -127,6 +136,30 @@ popup_render(glw_t *w, const glw_rctx_t *rc)
 }
 
 
+
+/**
+ *
+ */
+static int
+glw_popup_set_float(glw_t *w, glw_attribute_t attrib, float value,
+                    glw_style_t *gs)
+{
+  glw_popup_t *p = (glw_popup_t *)w;
+
+  switch(attrib) {
+  case GLW_ATTRIB_ASPECT:
+    if(p->aspect == value)
+      return 0;
+    p->aspect = value;
+    break;
+
+  default:
+    return -1;
+  }
+  return 1;
+}
+
+
 /**
  *
  */
@@ -158,6 +191,7 @@ static glw_class_t glw_popup = {
   .gc_layout = popup_layout,
   .gc_render = popup_render,
   .gc_set_float_unresolved = glw_popup_set_float_unresolved,
+  .gc_set_float = glw_popup_set_float,
 };
 
 GLW_REGISTER_CLASS(glw_popup);
