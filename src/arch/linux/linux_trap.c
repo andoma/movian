@@ -430,6 +430,10 @@ stackdump(const char *fac)
 
 #else
 
+#include "main.h"
+#include "linux.h"
+#include "arch/arch.h"
+
 void
 stackdump(const char *fac)
 {
@@ -437,7 +441,7 @@ stackdump(const char *fac)
 
 
 void
-trap_init(void)
+linux_trap_init(void)
 {
 
 }
