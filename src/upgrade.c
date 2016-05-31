@@ -1265,11 +1265,8 @@ upgrade_init(void)
 
 #if STOS
   stos_get_current_version();
-#endif
-
-#if RPISTOS
   artifact_type = "sqfs";
-  archname = "rpi";
+  archname = PLATFORM;
 #endif
 
 #if PS3

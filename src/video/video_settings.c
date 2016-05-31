@@ -144,7 +144,7 @@ video_settings_init(void)
                    SETTING_VALUE_ORIGIN("global"),
                    NULL);
 
-#if !(defined(RPISTOS))
+#ifdef PLATFORM_RPI
   video_settings.vinterpolate_setting =
     setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
                    SETTING_TITLE(_p("Video frame interpolation")),

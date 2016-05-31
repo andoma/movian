@@ -11,7 +11,7 @@
 # Copyright (c) 2005-2008 Mans Rullgard
 #
 
-OS="linux"
+PLATFORM="linux"
 DEFAULT_UI="glw"
 GLWFRONTEND="x11"
 CONFIGURE_POSTFIX="linux"

@@ -11,7 +11,7 @@
 # Copyright (c) 2005-2008 Mans Rullgard
 #
 
-OS="ps3"
+PLATFORM="ps3"
 DEFAULT_UI="glw"
 CONFIGURE_POSTFIX="ps3"
 

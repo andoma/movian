@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OS="rpi"
+PLATFORM="rpi"
 DEFAULT_UI="glw"
 CONFIGURE_POSTFIX="rpi"
 
@@ -106,7 +106,7 @@ cat >> ${CONFIG_MAK} <<EOF
 CFLAGS_std +=  -fgnu89-inline
 CFLAGS_std += -funwind-tables
 CFLAGS_cfg += -DOMX_SKIP64BIT
-CFLAGS_cfg += -DRPISTOS -DSTOS
+CFLAGS_cfg += -DSTOS
 CFLAGS_cfg  += -I${VCROOT}/include
 CFLAGS_cfg  += -I${VCROOT}/include/IL
 CFLAGS_cfg  += -I${VCROOT}/include/interface/vcos/pthreads/

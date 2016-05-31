@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OS="android"
+PLATFORM="android"
 DEFAULT_UI="glw"
 CONFIGURE_POSTFIX="android"
 
