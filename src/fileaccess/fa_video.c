@@ -168,7 +168,8 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 		  int cwvec_size,
 		  fa_handle_t *fh,
                   int resume_mode,
-                  const char *title)
+                  const char *title,
+                  htsmsg_t *vpi)
 {
   media_buf_t *mb = NULL;
   media_queue_t *mq = NULL;
@@ -193,8 +194,14 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
             start / 1000000.0f);
       mp->mp_seek_base = start;
       video_seek(fctx, mp, &mb, start, "restart position");
+      htsmsg_add_dbl(vpi, "resumeposition", start);
     }
   }
+
+  if(fctx->duration != AV_NOPTS_VALUE)
+    htsmsg_add_dbl(vpi, "duration", fctx->duration / 1000000.0);
+
+  video_playback_info_invoke(VPI_START, vpi, mp->mp_prop_root);
 
   const int64_t offset = fctx->start_time != PTS_UNSET ? fctx->start_time : 0;
 
@@ -366,6 +373,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
             "Playback reached %d%%, counting as played (%s)",
             spp, canonical_url);
     } else if(last_timestamp_presented != PTS_UNSET) {
+      htsmsg_add_dbl(vpi, "stopposition", last_timestamp_presented / 1000000.0f);
       playinfo_set_restartpos(canonical_url, last_timestamp_presented / 1000,
                               0);
     }
@@ -855,7 +863,6 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
   if(fctx->duration != PTS_UNSET)
     flags |= MP_CAN_SEEK;
 
-  video_playback_info_invoke(VPI_START, vpi, mp->mp_prop_root);
   // Start it
   mp_configure(mp, flags, MP_BUFFER_DEEP, fctx->duration, "video");
 
@@ -868,7 +875,7 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
   event_t *e;
   e = video_player_loop(fctx, cwvec, mp, va.flags, errbuf, errlen,
 			va.canonical_url, freetype_context, si, ci,
-			cwvec_size, fh, va.resume_mode, va.title);
+			cwvec_size, fh, va.resume_mode, va.title, vpi);
 
   video_playback_info_invoke(VPI_STOP, vpi, mp->mp_prop_root);
   htsmsg_release(vpi);

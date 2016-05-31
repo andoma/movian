@@ -1002,8 +1002,25 @@ htsmsg_t *
 video_playback_info_create(const struct video_args *va)
 {
   htsmsg_t *vpi = htsmsg_create_map();
+
+  rstr_t *id = get_random_string();
+  htsmsg_add_str(vpi, "id", rstr_get(id));
+  rstr_release(id);
+
   htsmsg_add_str(vpi, "canonical_url", va->canonical_url);
-  htsmsg_add_str(vpi, "title", va->title);
+  if(va->title != NULL)
+    htsmsg_add_str(vpi, "title", va->title);
+  if(va->mimetype != NULL)
+    htsmsg_add_str(vpi, "mimetype", va->mimetype);
+  if(va->imdb != NULL)
+    htsmsg_add_str(vpi, "imdbid", va->imdb);
+
+  if(va->season > 0)
+    htsmsg_add_u32(vpi, "season", va->season);
+  if(va->episode > 0)
+    htsmsg_add_u32(vpi, "episode", va->episode);
+  if(va->year > 0)
+    htsmsg_add_u32(vpi, "year", va->year);
   return vpi;
 }
 

@@ -46,8 +46,8 @@ es_htsmsg_create_from_xml_duk(duk_context *ctx)
 /**
  *
  */
-static void
-push_htsmsg_field(duk_context *ctx, const htsmsg_field_t *f)
+void
+es_push_htsmsg_field(duk_context *ctx, const htsmsg_field_t *f)
 {
   switch(f->hmf_type) {
   case HMF_STR:
@@ -119,7 +119,7 @@ es_htsmsg_get_value_duk(duk_context *ctx)
     duk_put_prop_string(ctx, res_idx, "msg");
   }
 
-  push_htsmsg_field(ctx, f);
+  es_push_htsmsg_field(ctx, f);
   duk_put_prop_string(ctx, res_idx, "value");
   return 1;
 }

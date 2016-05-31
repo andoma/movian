@@ -251,6 +251,9 @@ struct prop *es_stprop_get(duk_context *ctx, int val_index);
 
 void ecmascript_push_buf(duk_context *ctx, struct buf *b);
 
+struct htsmsg_field;
+void es_push_htsmsg_field(duk_context *ctx, const struct htsmsg_field *f);
+
 
 /**
  * Rooted objects
