@@ -189,7 +189,22 @@ openosk(struct glw_root *gr,
                                            selector:@selector(keyboardWillBeHidden:)
                                                name:UIKeyboardWillHideNotification object:nil];
 
+  [[NSNotificationCenter defaultCenter] addObserver:self
+                                           selector:@selector(becomeActive)
+                                               name:@"appDidBecomeActive"
+                                             object:nil];
+
+  [[NSNotificationCenter defaultCenter] addObserver:self
+                                           selector:@selector(resignActive)
+                                               name:@"appDidResignActive"
+                                             object:nil];
+  
+  self.pauseOnWillResignActive = NO;
+  self.resumeOnDidBecomeActive = NO;
+  
 }
+
+
 
 - (void)dealloc
 {    
@@ -418,7 +433,6 @@ denormal_ftz(void)
   glw_root_t *gr = self.gr;
 
   denormal_ftz();
-  
   glw_lock(gr);
   
   gr->gr_width  = (int)view.drawableWidth;
@@ -428,6 +442,7 @@ denormal_ftz(void)
 
   int refresh = gr->gr_need_refresh;
   gr->gr_need_refresh = 0;
+
   if(gr->gr_width > 1 && gr->gr_height > 1 && gr->gr_universe) {
     
     if(refresh) {
@@ -457,8 +472,18 @@ denormal_ftz(void)
     e->e_flags |= EVENT_KEYPRESS;
     glw_inject_event(gr, e);
   }
+}
 
 
+- (void)becomeActive
+{
+  glw_need_refresh(self.gr, 0);
+  self.paused = NO;
+}
+
+- (void)resignActive
+{
+  self.paused = YES;
 }
 
 
