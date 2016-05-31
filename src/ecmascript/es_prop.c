@@ -1036,7 +1036,7 @@ es_prop_node_filter_add_pred(duk_context *ctx)
   }
 
   const char *modestr = duk_require_string(ctx, 5);
-  prop_nf_cmp_t mode;
+  prop_nf_mode_t mode;
   if(!strcmp(modestr, "include")) {
     mode = PROP_NF_MODE_INCLUDE;
   } else if(!strcmp(modestr, "exclude")) {
