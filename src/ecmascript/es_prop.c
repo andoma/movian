@@ -20,6 +20,7 @@
 #include <assert.h>
 
 #include "prop/prop_i.h"
+#include "prop/prop_nodefilter.h"
 #include "ecmascript.h"
 #include "backend/backend_prop.h"
 
@@ -41,6 +42,7 @@ es_prop_ref_dec(prop_t *p)
 }
 
 ES_NATIVE_CLASS(prop, es_prop_ref_dec);
+ES_NATIVE_CLASS(propnf, prop_nf_release);
 
 /**
  *
@@ -1002,6 +1004,73 @@ es_prop_tag_get(duk_context *ctx)
 }
 
 
+/**
+ *
+ */
+static int
+es_prop_node_filter_create(duk_context *ctx)
+{
+  es_push_native_obj(ctx, &es_native_propnf,
+                     prop_nf_create(es_stprop_get(ctx, 0),
+                                    es_stprop_get(ctx, 1),
+                                    NULL, 0));
+  return 1;
+}
+
+
+static int
+es_prop_node_filter_add_pred(duk_context *ctx)
+{
+  struct prop_nf *pnf = es_get_native_obj(ctx, 0, &es_native_propnf);
+  const char *path = duk_require_string(ctx, 1);
+  prop_t *enable = es_get_native_obj_nothrow(ctx, 4, &es_native_prop);
+
+  const char *cfstr = duk_require_string(ctx, 2);
+  prop_nf_cmp_t cf;
+  if(!strcmp(cfstr, "eq")) {
+    cf = PROP_NF_CMP_EQ;
+  } else if(!strcmp(cfstr, "neq")) {
+    cf = PROP_NF_CMP_NEQ;
+  } else {
+    duk_error(ctx, DUK_ERR_ERROR, "Bad comparison function");
+  }
+
+  const char *modestr = duk_require_string(ctx, 5);
+  prop_nf_cmp_t mode;
+  if(!strcmp(modestr, "include")) {
+    mode = PROP_NF_MODE_INCLUDE;
+  } else if(!strcmp(modestr, "exclude")) {
+    mode = PROP_NF_MODE_EXCLUDE;
+  } else {
+    duk_error(ctx, DUK_ERR_ERROR, "Bad filter mode");
+  }
+
+  int r;
+  if(duk_is_string(ctx, 3)) {
+    r = prop_nf_pred_str_add(pnf, path, cf, duk_to_string(ctx, 3),
+                             enable, mode);
+  } else if(duk_is_number(ctx, 3)) {
+    r = prop_nf_pred_int_add(pnf, path, cf, duk_to_number(ctx, 3),
+                             enable, mode);
+  } else {
+    duk_error(ctx, DUK_ERR_ERROR, "Predicate is not a string or number");
+  }
+  duk_push_int(ctx, r);
+  return 1;
+}
+
+
+
+static int
+es_prop_node_filter_del_pred(duk_context *ctx)
+{
+  struct prop_nf *pnf = es_get_native_obj(ctx, 0, &es_native_propnf);
+  int predid = duk_require_number(ctx, 1);
+  prop_nf_pred_remove(pnf, predid);
+  return 0;
+}
+
+
 static const duk_function_list_entry fnlist_prop[] = {
 
   { "print",               es_prop_print_duk,             1 },
@@ -1036,6 +1105,13 @@ static const duk_function_list_entry fnlist_prop[] = {
   { "tagSet",              es_prop_tag_set,               3 },
   { "tagClear",            es_prop_tag_clear,             2 },
   { "tagGet",              es_prop_tag_get,               2 },
+
+  { "nodeFilterCreate",    es_prop_node_filter_create,    2 },
+  { "nodeFilterAddPred",   es_prop_node_filter_add_pred,  6 },
+  { "nodeFilterDelPred",   es_prop_node_filter_del_pred,  2 },
+
+
+
   { NULL, NULL, 0}
 };
 

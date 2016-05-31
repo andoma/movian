@@ -411,7 +411,7 @@ nf_update_egress(prop_nf_t *nf, nfnode_t *nfn)
 
   if(en) {
     assert(nfn->out == NULL);
-    nfn->out = prop_make(NULL, 0, NULL);
+    nfn->out = prop_make(nfn->in->hp_name, 1, NULL);
     prop_link0(nfn->in, nfn->out, NULL, 0, 0);
 
     b = nfn;
