@@ -10,8 +10,8 @@
  */
 
 
-var page = require('showtime/page');
-var http = require('showtime/http');
+var page = require('movian/page');
+var http = require('movian/http');
 
 new page.Route("devplug:webtest", function(page) {
 

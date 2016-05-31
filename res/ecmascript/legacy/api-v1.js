@@ -1,4 +1,4 @@
-var prop    = require('showtime/prop');
+var prop    = require('movian/prop');
 
 var cryptodigest = function(algo, str) {
   var crypto = require('native/crypto');
@@ -29,7 +29,7 @@ showtime = {
     for(var p in ctrl)
       c[p] = ctrl[p];
 
-    return require('showtime/http').request(url, c);
+    return require('movian/http').request(url, c);
   },
 
   currentVersionInt: Core.currentVersionInt,
@@ -37,7 +37,7 @@ showtime = {
   deviceId: Core.deviceId,
 
   httpReq: function(url, ctrl, cb) {
-    return require('showtime/http').request(url, ctrl, cb);
+    return require('movian/http').request(url, ctrl, cb);
   },
 
   entityDecode: string.entityDecode,
@@ -80,7 +80,7 @@ showtime = {
       a.push(arguments[i]);
     var json = JSON.stringify(a);
     var x = require('native/io').xmlrpc(arguments[0], arguments[1], json);
-    return require('showtime/xml').htsmsg(x);
+    return require('movian/xml').htsmsg(x);
   },
 
   sleep: function(x) {
@@ -102,20 +102,20 @@ showtime.RichText.prototype.toRichString = function(x) {
 var plugin = {
 
   createService: function(title, url, type, enabled, icon) {
-    return require('showtime/service').create(title, url, type, enabled, icon);
+    return require('movian/service').create(title, url, type, enabled, icon);
   },
 
   createStore: function(name) {
-    return require('showtime/store').create(name);
+    return require('movian/store').create(name);
   },
 
   addURI: function(re, callback) {
-    var page = require('showtime/page');
+    var page = require('movian/page');
     return new page.Route(re, callback);
   },
 
   addSearcher: function(title, icon, cb) {
-    var page = require('showtime/page');
+    var page = require('movian/page');
     return new page.Searcher(title, icon,cb);
   },
 
@@ -136,7 +136,7 @@ var plugin = {
   selectView: misc.selectView,
 
   createSettings: function(title, icon, description) {
-    var settings = require('showtime/settings');
+    var settings = require('movian/settings');
     return new settings.globalSettings(Plugin.id, title, icon, description);
   },
 
@@ -155,7 +155,7 @@ var plugin = {
   properties: prop.global.plugin[Plugin.id],
 
   addItemHook: function(conf) {
-    require('showtime/itemhook').create(conf);
+    require('movian/itemhook').create(conf);
   },
 
   addSubtitleProvider: function(fn) {

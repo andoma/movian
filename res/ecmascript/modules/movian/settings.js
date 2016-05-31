@@ -1,5 +1,5 @@
-var prop  = require('showtime/prop');
-var store = require('showtime/store');
+var prop  = require('movian/prop');
+var store = require('movian/store');
 
 
 function createSetting(group, type, id, title) {

@@ -1,4 +1,4 @@
-var prop = require('showtime/prop');
+var prop = require('movian/prop');
 
 exports.create = function(conf) {
 

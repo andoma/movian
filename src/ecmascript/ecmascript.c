@@ -433,6 +433,11 @@ es_modsearch(duk_context *ctx)
     }
     return 0;
   }
+  const char *compatname = mystrbegins(id, "showtime/");
+  if(compatname != NULL) {
+    char *x = mystrdupa(id);
+    id = memcpy(x + 2, "movian", strlen("movian"));
+  }
 
 
   if(ec->ec_path != NULL) {

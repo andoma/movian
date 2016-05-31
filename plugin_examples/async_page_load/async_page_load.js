@@ -1,4 +1,4 @@
-var page = require('showtime/page');
+var page = require('movian/page');
 
 
 new page.Route('asyncPageLoad:test:(.*)', function(page, arg1) {

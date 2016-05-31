@@ -1,5 +1,5 @@
-var prop = require('showtime/prop');
-var settings = require('showtime/settings');
+var prop = require('movian/prop');
+var settings = require('movian/settings');
 
 // ---------------------------------------------------------------
 // The Item object
