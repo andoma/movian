@@ -17,18 +17,19 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
+#include <sys/time.h>
+
 #include "main.h"
 #include "alsa.h"
-
 /**
  *
  */
 int64_t
 arch_get_avtime(void)
 {
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  return (int64_t)tv.tv_sec * 1000000LL + tv.tv_usec;
+  struct timespec tv;
+  clock_gettime(CLOCK_MONOTONIC, &tv);
+  return (int64_t)tv.tv_sec * 1000000LL + (tv.tv_nsec / 1000);
 }
 
 const char *alsa_get_devicename(void)

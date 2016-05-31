@@ -24,6 +24,7 @@
 #include "audio.h"
 #include "media/media.h"
 #include "alsa.h"
+#include "misc/minmax.h"
 
 typedef struct decoder {
   audio_decoder_t ad;
@@ -97,13 +98,22 @@ alsa_audio_reconfig(audio_decoder_t *ad)
   snd_pcm_hw_params_get_rate(hwp, &val, 0);
   ad->ad_out_sample_rate = val;
 
-  snd_pcm_hw_params_get_period_size(hwp, &psize, 0);
-  ad->ad_tile_size = psize * 2;
-
   snd_pcm_hw_params_get_buffer_size(hwp, &bsize);
   d->max_frames_per_write = bsize;
-  
-  TRACE(TRACE_DEBUG, "ALSA", "Opened %s", dev);
+
+  snd_pcm_hw_params_get_period_size(hwp, &psize, 0);
+  ad->ad_tile_size = MAX(psize, bsize / 4);
+
+  snd_pcm_sw_params_t *swp;
+
+  snd_pcm_sw_params_alloca(&swp);
+  snd_pcm_sw_params_current(h, swp);
+
+  snd_pcm_sw_params_set_avail_min(h, swp, ad->ad_tile_size);
+  snd_pcm_sw_params(h, swp);
+
+  TRACE(TRACE_DEBUG, "ALSA", "Opened %s  tile_size=%d, frames_per_write=%d", dev,
+        ad->ad_tile_size, d->max_frames_per_write);
 
   ad->ad_out_sample_format = AV_SAMPLE_FMT_S16;
   ad->ad_out_sample_rate = 48000;
@@ -143,11 +153,12 @@ alsa_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
   }
 
   c = MIN(d->max_frames_per_write, c);
+  c = MIN(samples, c);
 
   uint8_t *planes[8] = {0};
   planes[0] = d->tmp;
+
   c = avresample_read(ad->ad_avr, planes, c);
-  
   snd_pcm_status_t *status;
   int err;
   snd_pcm_status_alloca(&status);
