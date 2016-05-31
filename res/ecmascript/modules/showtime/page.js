@@ -296,15 +296,24 @@ Page.prototype.appendItem = function(url, type, metadata) {
   return item;
 }
 
-Page.prototype.appendAction = function(type, data, enabled, metadata) {
+Page.prototype.appendAction = function(title, func, subtype) {
   var item = new Item(this);
 
   var root = item.root;
-  root.enabled = enabled;
-  root.type = type;
-  root.data = data;
-  root.metadata = metadata;
-  prop.setParent(root, this.model.actions);
+  root.type = "action";
+  root.metadata.title = title;
+  root.enabled = true;
+  root.subtype = subtype;
+
+  prop.subscribe(root.eventSink, function(type, val) {
+    if(type == "action" && val.indexOf('Activate') != -1)
+      func();
+  }, {
+    autoDestroy: true,
+    actionAsArray: true,
+  });
+  prop.setParent(root, this.model.nodes);
+
   return item;
 }
 
