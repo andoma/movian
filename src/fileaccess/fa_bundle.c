@@ -198,6 +198,9 @@ b_scandir(fa_protocol_t *fap, fa_dir_t *fd, const char *url,
   char *s;
   int ok = 0;
 
+  while(*url == '/')
+    url++;
+
   if(*url == 0) {
     if(fd != NULL) {
       for(fb = filebundles; fb != NULL; fb = fb->next) {
@@ -218,11 +221,15 @@ b_scandir(fa_protocol_t *fap, fa_dir_t *fd, const char *url,
     return 0;
   }
 
-  while(*url == '/')
-    url++;
+  char *x = mystrdupa(url);
+  int l = strlen(x);
+  url = x;
+  while(l > 0 && x[l - 1] == '/') {
+    x[l - 1] = 0;
+    l--;
+  }
 
   for(fb = filebundles; fb != NULL; fb = fb->next) {
-
     if(!strncmp(url, fb->prefix, strlen(url))) {
 
       if(fb->prefix[strlen(url)] == '/') {
