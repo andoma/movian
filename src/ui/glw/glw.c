@@ -459,25 +459,60 @@ glw_layout0(glw_t *w, const glw_rctx_t *rc)
       glw_signal0(w, GLW_SIGNAL_ACTIVE, NULL);
     }
   }
+
   if(unlikely(w->glw_dynamic_eval & mask))
     glw_view_eval_layout(w, rc, mask);
 
-  w->glw_class->gc_layout(w, rc);
+  if(unlikely(w->glw_flags & GLW_HAVE_MARGINS)) {
+    glw_rctx_t rc0 = *rc;
+    glw_reposition(&rc0,
+                   w->glw_margin[0],
+                   rc->rc_height - w->glw_margin[1],
+                   rc->rc_width - w->glw_margin[2],
+                   w->glw_margin[3]);
+    w->glw_class->gc_layout(w, &rc0);
+  } else {
+    w->glw_class->gc_layout(w, rc);
+  }
 }
 
 
-/**
- *
- */
 void
-glw_render_zoffset(glw_t *w, const glw_rctx_t *rc)
+glw_render0(glw_t *w, const glw_rctx_t *rc)
 {
-  glw_rctx_t rc0 = *rc;
-  int zmax = 0;
-  rc0.rc_zmax = &zmax;
-  rc0.rc_zindex = w->glw_zoffset;
-  w->glw_class->gc_render(w, &rc0);
+  if(unlikely(w->glw_zoffset)) {
+    glw_rctx_t rc0 = *rc;
+    int zmax = 0;
+    rc0.rc_zmax = &zmax;
+    rc0.rc_zindex = w->glw_zoffset;
+
+
+    if(unlikely(w->glw_flags & GLW_HAVE_MARGINS)) {
+      glw_reposition(&rc0,
+                     w->glw_margin[0],
+                     rc->rc_height - w->glw_margin[1],
+                     rc->rc_width - w->glw_margin[2],
+                     w->glw_margin[3]);
+    }
+    w->glw_class->gc_render(w, &rc0);
+
+  } else if(unlikely(w->glw_flags & GLW_HAVE_MARGINS)) {
+    glw_rctx_t rc0 = *rc;
+    glw_reposition(&rc0,
+                   w->glw_margin[0],
+                   rc->rc_height - w->glw_margin[1],
+                   rc->rc_width - w->glw_margin[2],
+                   w->glw_margin[3]);
+
+    w->glw_class->gc_render(w, &rc0);
+  } else {
+    w->glw_class->gc_render(w, rc);
+  }
+
+  if(unlikely(w->glw_flags2 & GLW2_DEBUG))
+    glw_wirebox(w->glw_root, rc);
 }
+
 
 
 /**
@@ -2675,8 +2710,8 @@ void
 glw_copy_constraints(glw_t *w, glw_t *src)
 {
   glw_set_constraints(w,
-		      src->glw_req_size_x,
-		      src->glw_req_size_y,
+		      glw_req_width(src),
+		      glw_req_height(src),
 		      src->glw_req_weight,
 		      glw_filter_constraints(src));
 }

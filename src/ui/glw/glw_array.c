@@ -41,8 +41,6 @@ typedef struct glw_array {
   int16_t xspacing;
   int16_t yspacing;
 
-  int16_t margin[4];
-
   int16_t scroll_threshold;
 
   int num_visible_childs;
@@ -139,12 +137,6 @@ glw_array_layout(glw_t *w, const glw_rctx_t *rc)
   int rows;
   int xpos = 0, ypos = a->gsc.scroll_threshold_pre;
 
-  glw_reposition(&rc0,
-		 a->margin[0],
-		 rc->rc_height - a->margin[1],
-		 rc->rc_width - a->margin[2],
-		 a->margin[3]);
-
   const int height = rc0.rc_height;
   const int width = rc0.rc_width;
 
@@ -231,7 +223,7 @@ glw_array_layout(glw_t *w, const glw_rctx_t *rc)
 
       cd->width = width;
       if(c->glw_flags & GLW_CONSTRAINT_Y)
-	req_row_height = c->glw_req_size_y;
+	req_row_height = glw_req_height(c);
 
       cd->col = -1;
 
@@ -249,7 +241,8 @@ glw_array_layout(glw_t *w, const glw_rctx_t *rc)
       cd->col = column;
 
       if(c->glw_flags & GLW_CONSTRAINT_Y) {
-        req_row_height = GLW_MAX(req_row_height, c->glw_req_size_y);
+        const int rh = glw_req_height(c);
+        req_row_height = GLW_MAX(req_row_height, rh);
       } else if(c->glw_flags & GLW_CONSTRAINT_W && c->glw_req_weight < 0) {
         const int h = a->child_width_px / -c->glw_req_weight;
         req_row_height = GLW_MAX(req_row_height, h);
@@ -360,9 +353,6 @@ glw_array_render(glw_t *w, const glw_rctx_t *rc)
 
   if(rc0.rc_alpha < GLW_ALPHA_EPSILON)
     return;
-
-  glw_reposition(&rc0, a->margin[0], rc->rc_height - a->margin[1],
-		 rc->rc_width  - a->margin[2], a->margin[3]);
 
   rc1 = rc0;
   glw_reposition(&rc1, 0,
@@ -565,22 +555,6 @@ glw_array_set_int(glw_t *w, glw_attribute_t attrib, int value,
 }
 
 
-/**
- *
- */
-static int
-glw_array_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v,
-                      glw_style_t *gs)
-{
-  glw_array_t *a = (glw_array_t *)w;
-  switch(attrib) {
-  case GLW_ATTRIB_MARGIN:
-    return glw_attrib_set_int16_4(a->margin, v);
-  default:
-    return -1;
-  }
-}
-
 
 /**
  *
@@ -776,7 +750,6 @@ static glw_class_t glw_array = {
   .gc_ctor = glw_array_ctor,
   .gc_set_int = glw_array_set_int,
   .gc_signal_handler = glw_array_callback,
-  .gc_set_int16_4 = glw_array_set_int16_4,
   .gc_layout = glw_array_layout,
   .gc_pointer_event = glw_array_pointer_event,
   .gc_pointer_event_filter = handle_pointer_event_filter,

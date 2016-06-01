@@ -89,7 +89,7 @@ glw_clist_layout(glw_t *w, const glw_rctx_t *rc)
     int f = glw_filter_constraints(c);
 	
     if(f & GLW_CONSTRAINT_Y) {
-      itemh = c->glw_req_size_y;
+      itemh = glw_req_height(c);
     } else {
       itemh = itemh0;
     }

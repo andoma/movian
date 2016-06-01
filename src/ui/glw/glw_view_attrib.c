@@ -662,6 +662,43 @@ glw_set_hidden(glw_t *w, int v, glw_style_t *origin)
  *
  */
 void
+glw_set_margin(glw_t *w, const int16_t *v, glw_style_t *origin)
+{
+  if(unlikely(w->glw_class->gc_set_margin != NULL)) {
+    w->glw_class->gc_set_margin(w, v, origin);
+    return;
+  }
+
+  int ch = 0;
+
+  if(v[0] != w->glw_margin[0] || v[2] != w->glw_margin[2]) {
+    w->glw_margin[0] = v[0];
+    w->glw_margin[2] = v[2];
+    if(glw_filter_constraints(w) & GLW_CONSTRAINT_X)
+      ch = 1;
+  }
+
+  if(v[1] != w->glw_margin[1] || v[3] != w->glw_margin[3]) {
+    w->glw_margin[1] = v[1];
+    w->glw_margin[3] = v[3];
+    if(glw_filter_constraints(w) & (GLW_CONSTRAINT_Y | GLW_CONSTRAINT_W))
+      ch = 1;
+  }
+  w->glw_flags |= GLW_HAVE_MARGINS;
+
+  if(ch) {
+    glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED, w);
+    glw_need_refresh(w->glw_root, 0);
+  }
+  return;
+}
+
+
+
+/**
+ *
+ */
+void
 glw_set_divider(glw_t *w, int v)
 {
   glw_conf_constraints(w, 0, 0, 0, GLW_CONSTRAINT_CONF_D);
@@ -904,6 +941,70 @@ set_int16_4(glw_view_eval_context_t *ec, const token_attrib_t *a,
   if(r)
     attr_need_refresh(w->glw_root, t, a->name, r);
 
+  return 0;
+}
+
+
+
+/**
+ *
+ */
+static int
+set_margin(glw_view_eval_context_t *ec, const token_attrib_t *a, 
+	   struct token *t)
+{
+  int16_t v[4];
+  glw_t *w = ec->w;
+
+  switch(t->type) {
+  case TOKEN_VECTOR_FLOAT:
+
+    switch(t->t_elements) {
+
+    case 4:
+      v[0] = t->t_float_vector[0];
+      v[1] = t->t_float_vector[1];
+      v[2] = t->t_float_vector[2];
+      v[3] = t->t_float_vector[3];
+      break;
+
+    case 2:
+      v[0] = t->t_float_vector[0];
+      v[1] = t->t_float_vector[1];
+      v[2] = t->t_float_vector[0];
+      v[3] = t->t_float_vector[1];
+      break;
+
+    default:
+      return glw_view_seterr(ec->ei, t,
+			     "Attribute '%s': invalid vector size %d",
+			     a->name, t->t_elements);
+    }
+    break;
+
+  case TOKEN_EM:
+    ec->dynamic_eval |= GLW_VIEW_EVAL_EM;
+    v[0] = v[1] = v[2] = v[3] = t->t_float * w->glw_root->gr_current_size;
+    break;
+
+  case TOKEN_FLOAT:
+    v[0] = v[1] = v[2] = v[3] = t->t_float;
+    break;
+
+  case TOKEN_INT:
+    v[0] = v[1] = v[2] = v[3] = t->t_int;
+    break;
+
+  case TOKEN_VOID:
+    v[0] = v[1] = v[2] = v[3] = 0;
+    break;
+
+  default:
+    return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a vec4, got %s",
+			   a->name, token2name(t));
+  }
+
+  glw_set_margin(w, v, NULL);
   return 0;
 }
 
@@ -1289,7 +1390,6 @@ static const token_attrib_t attribtab[] = {
   {"autohide",              mod_flag, GLW2_AUTOHIDE,               mod_flags2},
   {"shadow",                mod_flag, GLW2_SHADOW,                 mod_flags2},
   {"autofade",              mod_flag, GLW2_AUTOFADE,               mod_flags2},
-  {"automargin",            mod_flag, GLW2_AUTOMARGIN,             mod_flags2},
   {"expediteSubscriptions", mod_flag, GLW2_EXPEDITE_SUBSCRIPTIONS, mod_flags2},
   {"navWrap",               mod_flag, GLW2_NAV_WRAP,               mod_flags2},
   {"autoFocusLimit",        mod_flag, GLW2_AUTO_FOCUS_LIMIT,       mod_flags2},
@@ -1383,7 +1483,7 @@ static const token_attrib_t attribtab[] = {
 
   {"padding",         set_int16_4, GLW_ATTRIB_PADDING},
   {"border",          set_int16_4, GLW_ATTRIB_BORDER},
-  {"margin",          set_int16_4, GLW_ATTRIB_MARGIN},
+  {"margin",          set_margin},
 
   {"align",           set_align,  0},
   {"effect",          set_transition_effect,  0},

@@ -38,7 +38,8 @@ get_width(glw_t *w, const glw_rctx_t *rc)
   glw_t *c = TAILQ_FIRST(&w->glw_childs);
   if(c == NULL)
     return rc->rc_width;
-  return MAX(c->glw_req_size_x, rc->rc_width);
+  int rw = glw_req_width(c);
+  return MAX(rw, rc->rc_width);
 }
 
 
@@ -51,7 +52,8 @@ get_height(glw_t *w, const glw_rctx_t *rc)
   glw_t *c = TAILQ_FIRST(&w->glw_childs);
   if(c == NULL)
     return rc->rc_height;
-  return MAX(c->glw_req_size_y, rc->rc_height);
+  int rh = glw_req_height(c);
+  return MAX(rh, rc->rc_height);
 }
 
 

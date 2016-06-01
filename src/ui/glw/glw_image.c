@@ -38,14 +38,8 @@ typedef struct glw_image {
 
   int16_t gi_border[4];
   int16_t gi_padding[4];
-  int16_t gi_margin[4];
 
-  int16_t gi_automargin_left;
-  int16_t gi_automargin_right;
-  int16_t gi_automargin_top;
-  int16_t gi_automargin_bottom;
-
-  // gi_box_ is (gi_border_ + gi_padding_ + gi_margin_)
+  // gi_box_ is (gi_border_ + gi_padding_ )
   int16_t gi_box_left;
   int16_t gi_box_right;
   int16_t gi_box_top;
@@ -235,10 +229,10 @@ render_child_autocentered(glw_image_t *gi, const glw_rctx_t *rc)
   rc0 = *rc;
 
   glw_reposition(&rc0,
-		 gi->gi_box_left + gi->gi_automargin_left,
-		 rc->rc_height - gi->gi_box_top - gi->gi_automargin_top,
-		 rc->rc_width  - gi->gi_box_right - gi->gi_automargin_right,
-		 gi->gi_box_bottom + gi->gi_automargin_bottom);
+		 gi->gi_box_left,
+		 rc->rc_height - gi->gi_box_top,
+		 rc->rc_width  - gi->gi_box_right,
+		 gi->gi_box_bottom);
 
   rc0.rc_alpha *= gi->w.glw_alpha;
   glw_render0(c, &rc0);
@@ -312,11 +306,11 @@ glw_image_render(glw_t *w, const glw_rctx_t *rc)
           ys = rc->rc_height;
 
         extra_y_margin = MAX(rc->rc_height - ys, 0) / 2;
+        glw_reposition(&rc0, 0,
+                       rc0.rc_height - extra_y_margin,
+                       rc0.rc_width,
+                       extra_y_margin);
       }
-      glw_reposition(&rc0, gi->gi_margin[0],
-                     rc0.rc_height - gi->gi_margin[1] - extra_y_margin,
-                     rc0.rc_width - gi->gi_margin[2],
-                     gi->gi_margin[3] + extra_y_margin);
       glw_scale_to_aspect(&rc0, glt->glt_aspect);
     }
     if(gi->gi_angle != 0)
@@ -394,85 +388,8 @@ glw_image_layout_tesselated(glw_root_t *gr, const glw_rctx_t *rc,
   float tex[4][2];
   float vex[4][2];
 
-  int x, y, i = 0, BL, BR;
+  int x, y, i = 0;
 
-  if(gi->w.glw_flags2 & GLW2_AUTOMARGIN) {
-
-    gi->gi_automargin_left = 0;
-    gi->gi_automargin_top = 0;
-    gi->gi_automargin_right = 0;
-    gi->gi_automargin_bottom = 0;
-
-    glw_t *c = TAILQ_FIRST(&gi->w.glw_childs);
-
-    if(c != NULL && (c->glw_flags & (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y)) ==
-		     (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y)) {
-
-      int hspill = rc->rc_width - c->glw_req_size_x -
-	gi->gi_box_left - gi->gi_box_right;
-
-      if(hspill > 0) {
-	gi->gi_automargin_left = hspill / 2 + (hspill & 1);
-	gi->gi_automargin_right = hspill / 2;
-      }
-
-      int vspill = rc->rc_height - c->glw_req_size_y -
-	gi->gi_box_top - gi->gi_box_bottom;
-
-      if(vspill > 0) {
-	gi->gi_automargin_top = vspill / 2 + (vspill & 1);
-	gi->gi_automargin_bottom = vspill / 2;
-      }
-
-    } else if(c != NULL && c->glw_flags & GLW_CONSTRAINT_W &&
-	      c->glw_req_weight < 0) {
-      float aspect = -c->glw_req_weight;
-
-      float cw = rc->rc_width - gi->gi_box_left - gi->gi_box_right;
-      float ch = rc->rc_height - gi->gi_box_top - gi->gi_box_bottom;
-
-      float myaspect = cw / ch;
-
-      if(myaspect > aspect) {
-	// We are wider than our child wants
-
-	int cwidth = ch * aspect;
-	int hspill = cw - cwidth;
-
-	if(hspill > 0) {
-	  gi->gi_automargin_left = hspill / 2 + (hspill & 1);
-	  gi->gi_automargin_right = hspill / 2;
-	}
-      } else {
-	int cheight = cw / aspect;
-	int vspill = ch - cheight;
-
-	if(vspill > 0) {
-	  gi->gi_automargin_top = vspill / 2 + (vspill & 1);
-	  gi->gi_automargin_bottom = vspill / 2;
-	}
-      }
-    } else if(gi->gi_child_aspect > 0) {
-
-      int px = rc->rc_height * gi->gi_child_aspect;
-      int hspill = rc->rc_width - px - gi->gi_box_left - gi->gi_box_right;
-
-      if(hspill > 0) {
-	gi->gi_automargin_left = hspill / 2 + (hspill & 1);
-	gi->gi_automargin_right = hspill / 2;
-      }
-
-    }
-    if(gi->w.glw_flags2 & GLW2_DEBUG)
-      printf("Automargin %d,%d,%d,%d\n",
-	     gi->gi_automargin_left,
-	     gi->gi_automargin_top,
-	     gi->gi_automargin_right,
-	     gi->gi_automargin_bottom);
-
-
-    update_box(gi);
-  }
 
   tex[1][0] = 0.0f + (float)gi->gi_border[0]  / glt->glt_xs;
   tex[2][0] = glt->glt_s - (float)gi->gi_border[2] / glt->glt_xs;
@@ -484,19 +401,16 @@ glw_image_layout_tesselated(glw_root_t *gr, const glw_rctx_t *rc,
   tex[2][1] = glt->glt_t - (float)gi->gi_border[3] / glt->glt_ys;
   tex[3][1] = glt->glt_t;
 
-  BL = gi->gi_border[0];
-  BR = gi->gi_border[2];
 
+  vex[0][0] = -1.0;
+  vex[1][0] = GLW_MIN(-1.0f + 2.0f * gi->gi_border[0] / rc->rc_width, 0.0f);
+  vex[2][0] = GLW_MAX( 1.0f - 2.0f * gi->gi_border[2] / rc->rc_width, 0.0f);
+  vex[3][0] = 1.0;
 
-  vex[0][0] = GLW_MIN(-1.0f + 2.0f * (gi->gi_margin[0] + gi->gi_automargin_left)  / rc->rc_width, 0.0f);
-  vex[1][0] = GLW_MIN(-1.0f + 2.0f * (BL + gi->gi_margin[0] + gi->gi_automargin_left)  / rc->rc_width, 0.0f);
-  vex[2][0] = GLW_MAX( 1.0f - 2.0f * (BR + gi->gi_margin[2] + gi->gi_automargin_right) / rc->rc_width, 0.0f);
-  vex[3][0] = GLW_MAX( 1.0f - 2.0f * (gi->gi_margin[2] + gi->gi_automargin_right) / rc->rc_width, 0.0f);
-
-  vex[0][1] = GLW_MAX( 1.0f - 2.0f * (gi->gi_margin[1] + gi->gi_automargin_top)  / rc->rc_height, 0.0f);
-  vex[1][1] = GLW_MAX( 1.0f - 2.0f * (gi->gi_border[1] + gi->gi_margin[1] + gi->gi_automargin_top)  / rc->rc_height, 0.0f);
-  vex[2][1] = GLW_MIN(-1.0f + 2.0f * (gi->gi_border[3] + gi->gi_margin[3] + gi->gi_automargin_bottom) / rc->rc_height, 0.0f);
-  vex[3][1] = GLW_MIN(-1.0f + 2.0f * (gi->gi_margin[3] + gi->gi_automargin_bottom) / rc->rc_height, 0.0f);
+  vex[0][1] = -1.0f;
+  vex[1][1] = GLW_MAX( 1.0f - 2.0f * gi->gi_border[1] / rc->rc_height, 0.0f);
+  vex[2][1] = GLW_MIN(-1.0f + 2.0f * gi->gi_border[3] / rc->rc_height, 0.0f);
+  vex[3][1] = 1.0f;
 
   for(y = 0; y < 4; y++) {
     for(x = 0; x < 4; x++) {
@@ -657,18 +571,15 @@ glw_image_update_constraints(glw_image_t *gi)
 
     if(c != NULL) {
       glw_set_constraints(&gi->w,
-			  c->glw_req_size_x +
+			  glw_req_width(c) +
 			  gi->gi_box_left + gi->gi_box_right,
-			  c->glw_req_size_y +
+			  glw_req_height(c) +
 			  gi->gi_box_top + gi->gi_box_bottom,
 			  c->glw_req_weight,
 			  c->glw_flags & GLW_CONSTRAINT_FLAGS);
 
-      if(gi->w.glw_flags2 & GLW2_AUTOMARGIN)
-	gi->gi_update = 1;
-
       if(gi->w.glw_flags2 & GLW2_DEBUG)
-	printf("Req size: %d,%d\n", c->glw_req_size_x, c->glw_req_size_y);
+	printf("Req size: %d,%d\n", glw_req_width(c), glw_req_height(c));
 
 
     } else if(glt != NULL) {
@@ -686,11 +597,11 @@ glw_image_update_constraints(glw_image_t *gi)
       glw_set_constraints(&gi->w, 0, 0, -glt->glt_aspect, GLW_CONSTRAINT_W);
     } else if(gi->w.glw_flags & GLW_CONSTRAINT_CONF_X) {
 
-      int ys = gi->w.glw_req_size_x / glt->glt_aspect;
+      int ys = glw_req_width(&gi->w) / glt->glt_aspect;
       glw_set_constraints(&gi->w, 0, ys, 0, GLW_CONSTRAINT_Y);
     } else if(gi->w.glw_flags & GLW_CONSTRAINT_CONF_Y) {
 
-      int xs = gi->w.glw_req_size_y * glt->glt_aspect;
+      int xs = glw_req_height(&gi->w) * glt->glt_aspect;
       glw_set_constraints(&gi->w, xs, 0, 0, GLW_CONSTRAINT_X);
     }
   }
@@ -1030,11 +941,8 @@ glw_image_layout(glw_t *w, const glw_rctx_t *rc)
 	     rc0.rc_height, (gi->gi_box_top + gi->gi_box_bottom),
 	     rc0.rc_height - (gi->gi_box_top + gi->gi_box_bottom));
 
-    rc0.rc_width  -= gi->gi_box_left + gi->gi_box_right +
-      gi->gi_automargin_left + gi->gi_automargin_right;
-    rc0.rc_height -= gi->gi_box_top  + gi->gi_box_bottom +
-      gi->gi_automargin_top + gi->gi_automargin_bottom;
-
+    rc0.rc_width  -= gi->gi_box_left + gi->gi_box_right;
+    rc0.rc_height -= gi->gi_box_top  + gi->gi_box_bottom;
 
     if(rc0.rc_height >= 0 && rc0.rc_width >= 0)
       glw_layout0(c, &rc0);
@@ -1164,10 +1072,10 @@ glw_image_set_float3(glw_t *w, glw_attribute_t attrib, const float *rgb,
 static void
 update_box(glw_image_t *gi)
 {
-  gi->gi_box_left   = gi->gi_margin[0] + gi->gi_border[0] + gi->gi_padding[0];
-  gi->gi_box_top    = gi->gi_margin[1] + gi->gi_border[1] + gi->gi_padding[1];
-  gi->gi_box_right  = gi->gi_margin[2] + gi->gi_border[2] + gi->gi_padding[2];
-  gi->gi_box_bottom = gi->gi_margin[3] + gi->gi_border[3] + gi->gi_padding[3];
+  gi->gi_box_left   = gi->gi_border[0] + gi->gi_padding[0];
+  gi->gi_box_top    = gi->gi_border[1] + gi->gi_padding[1];
+  gi->gi_box_right  = gi->gi_border[2] + gi->gi_padding[2];
+  gi->gi_box_bottom = gi->gi_border[3] + gi->gi_padding[3];
 
   if(gi->w.glw_flags2 & GLW2_DEBUG)
     printf("Box: %d,%d,%d,%d == %d,%d\n",
@@ -1198,11 +1106,6 @@ image_set_int16_4(glw_t *w, glw_attribute_t attrib, const int16_t *v,
 
   case GLW_ATTRIB_PADDING:
     if(!glw_attrib_set_int16_4(gi->gi_padding, v))
-      return 0;
-    break;
-
-  case GLW_ATTRIB_MARGIN:
-    if(!glw_attrib_set_int16_4(gi->gi_margin, v))
       return 0;
     break;
 

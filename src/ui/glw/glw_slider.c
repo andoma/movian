@@ -130,9 +130,9 @@ glw_slider_layout(glw_t *w, const glw_rctx_t *rc)
     }
 
   } else if(f & GLW_CONSTRAINT_X && w->glw_class == &glw_slider_x) {
-    s->knob_size_px = c->glw_req_size_x;
+    s->knob_size_px = glw_req_width(c);
   } else if(f & GLW_CONSTRAINT_Y && w->glw_class == &glw_slider_y) {
-    s->knob_size_px = c->glw_req_size_y;
+    s->knob_size_px = glw_req_height(c);
   } else if(w->glw_class == &glw_slider_x) {
     s->knob_size_px = rc->rc_height;
   } else {
@@ -437,9 +437,9 @@ glw_slider_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     c = extra;
     if(c == TAILQ_FIRST(&w->glw_childs)) {
       if(w->glw_class == &glw_slider_y) {
-        glw_set_constraints(w, c->glw_req_size_x, 0, 0, GLW_CONSTRAINT_X);
+        glw_set_constraints(w, glw_req_width(c), 0, 0, GLW_CONSTRAINT_X);
       } else {
-        glw_set_constraints(w, 0, c->glw_req_size_y, 0, GLW_CONSTRAINT_Y);
+        glw_set_constraints(w, 0, glw_req_height(c), 0, GLW_CONSTRAINT_Y);
       }
     }
     return 1;

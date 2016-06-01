@@ -43,12 +43,12 @@ update_constraints(glw_expander_t *exp)
   int f = c ? glw_filter_constraints(c) : 0;
 
   if(exp->w.glw_class == &glw_expander_x) {
-    e = exp->expansion * (c != NULL ? c->glw_req_size_x : 0);
-    o =                  (c != NULL ? c->glw_req_size_y : 0);
+    e = exp->expansion * (c != NULL ? glw_req_width(c) : 0);
+    o =                  (c != NULL ? glw_req_height(c) : 0);
     f &= GLW_CONSTRAINT_Y;
   } else {
-    e = exp->expansion * (c != NULL ? c->glw_req_size_y : 0);
-    o =                  (c != NULL ? c->glw_req_size_x : 0);
+    e = exp->expansion * (c != NULL ? glw_req_height(c) : 0);
+    o =                  (c != NULL ? glw_req_width(c) : 0);
     f &= GLW_CONSTRAINT_X;
   }
 
@@ -82,7 +82,7 @@ glw_expander_layout(glw_t *w, const glw_rctx_t *rc)
   rc0 = *rc;
 
   if(exp->w.glw_class == &glw_expander_x) {
-    rc0.rc_width = c->glw_req_size_x;
+    rc0.rc_width = glw_req_width(c);
 
     if(rc0.rc_width == 0)
       rc0.rc_width = exp->last;
@@ -90,7 +90,7 @@ glw_expander_layout(glw_t *w, const glw_rctx_t *rc)
       exp->last = rc0.rc_width;
 
   } else {
-    rc0.rc_height = c->glw_req_size_y;
+    rc0.rc_height = glw_req_height(c);
 
     if(rc0.rc_height == 0)
       rc0.rc_height = exp->last;
@@ -148,9 +148,9 @@ glw_expander_render(glw_t *w, const glw_rctx_t *rc)
    */
 
   if(w->glw_class == &glw_expander_x)
-    rc0.rc_width = c->glw_req_size_x;
+    rc0.rc_width = glw_req_width(c);
   else
-    rc0.rc_height = c->glw_req_size_y;
+    rc0.rc_height = glw_req_height(c);
   glw_render0(c, &rc0);
 }
 

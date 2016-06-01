@@ -193,7 +193,6 @@ typedef enum {
   GLW_ATTRIB_TRANSLATION,
   GLW_ATTRIB_ROTATION,
   GLW_ATTRIB_PLANE,
-  GLW_ATTRIB_MARGIN,
   GLW_ATTRIB_BORDER,
   GLW_ATTRIB_PADDING,
   GLW_ATTRIB_FONT,
@@ -734,6 +733,11 @@ typedef struct glw_class {
   /**
    *
    */
+  void (*gc_set_margin)(struct glw *w, const int16_t *v, glw_style_t *gs);
+
+  /**
+   *
+   */
   void (*gc_freeze)(struct glw *w);
 
   /**
@@ -1173,6 +1177,9 @@ typedef struct glw {
   glw_styleset_t *glw_styles; // List of available styles
   struct glw_style_binding_list glw_style_bindings; // Bound styles
 
+  rstr_t *glw_file;
+  int glw_line;
+
   int glw_refcnt;
 
   /**
@@ -1181,6 +1188,8 @@ typedef struct glw {
   int16_t glw_req_size_x;
   int16_t glw_req_size_y;
   float glw_req_weight;
+
+  int16_t glw_margin[4];
 
   int glw_flags;
 
@@ -1207,6 +1216,8 @@ typedef struct glw {
 #define GLW_CAN_SCROLL           0x4000
 #define GLW_MARK                 0x8000
 
+#define GLW_HAVE_MARGINS         0x10000
+
 #define GLW_CLIPPED              0x1000000
 #define GLW_FHP_SPILL_TO_CHILDS  0x4000000
 
@@ -1230,7 +1241,6 @@ typedef struct glw {
 #define GLW2_SHADOW                 0x100
 #define GLW2_AUTOFADE               0x200
 #define GLW2_EXPEDITE_SUBSCRIPTIONS 0x400
-#define GLW2_AUTOMARGIN             0x800
 #define GLW2_NO_INITIAL_TRANS       0x2000
 #define GLW2_FOCUS_ON_CLICK         0x4000
 #define GLW2_AUTOREFOCUSABLE        0x8000
@@ -1257,14 +1267,24 @@ typedef struct glw {
 
   uint8_t glw_dynamic_eval;   // GLW_VIEW_EVAL_ -flags
 
-  rstr_t *glw_file;
-  int glw_line;
 } glw_t;
 
 static __inline int
 glw_filter_constraints(const glw_t *w)
 {
   return (w->glw_flags & ~w->glw_flags2) & GLW_CONSTRAINT_FLAGS;
+}
+
+static __inline int
+glw_req_width(const glw_t *w)
+{
+  return w->glw_req_size_x + w->glw_margin[0] + w->glw_margin[2];
+}
+
+static __inline int
+glw_req_height(const glw_t *w)
+{
+  return w->glw_req_size_y + w->glw_margin[1] + w->glw_margin[3];
 }
 
 #define GLW_INIT_KEYBOARD_MODE 0x1
@@ -1328,6 +1348,8 @@ void glw_set_height(glw_t *w, int v, glw_style_t *origin);
 void glw_set_align(glw_t *w, int v, glw_style_t *origin);
 
 void glw_set_hidden(glw_t *w, int v, glw_style_t *origin);
+
+void glw_set_margin(glw_t *w, const int16_t *v, glw_style_t *origin);
 
 void glw_set_divider(glw_t *w, int v);
 
@@ -1551,17 +1573,7 @@ static inline int glw_debug(glw_t *w)
   return w->glw_flags2 & GLW2_DEBUG;
 }
 
-static inline void glw_render0(glw_t *w, const glw_rctx_t *rc)
-{
-  if(unlikely(w->glw_zoffset != 0)) {
-    glw_render_zoffset(w, rc);
-  } else {
-    w->glw_class->gc_render(w, rc);
-  }
-
-  if(unlikely(w->glw_flags2 & GLW2_DEBUG))
-    glw_wirebox(w->glw_root, rc);
-}
+void glw_render0(glw_t *w, const glw_rctx_t *rc);
 
 static inline void glw_zinc(glw_rctx_t *rc)
 {

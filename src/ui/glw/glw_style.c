@@ -113,6 +113,7 @@ struct glw_style {
 #define GS_SET_SOURCE       0x40
 #define GS_SET_ALIGN        0x80
 #define GS_SET_HIDDEN       0x100
+#define GS_SET_MARGIN       0x200
 
   uint8_t gs_hidden;
 };
@@ -978,6 +979,27 @@ gs_set_hidden(struct glw *w, int v, glw_style_t *origin)
  *
  */
 static void
+gs_set_margin(struct glw *w, const int16_t *v, glw_style_t *origin)
+{
+  glw_style_t *gs = (glw_style_t *)w;
+
+  if(check_set_flags(gs, GS_SET_MARGIN, origin))
+    return;
+
+  memcpy(w->glw_margin, v, sizeof(int16_t) * 4);
+
+  glw_style_binding_t *gsb;
+  LIST_FOREACH(gsb, &gs->gs_bindings, gsb_style_link) {
+    glw_t *w = gsb->gsb_widget;
+    glw_set_margin(w, v, gs);
+  }
+}
+
+
+/**
+ *
+ */
+static void
 gs_set_source(struct glw *w, rstr_t *r, int flags, glw_style_t *origin)
 {
   glw_style_t *gs = (glw_style_t *)w;
@@ -1021,6 +1043,7 @@ static glw_class_t glw_style = {
   .gc_set_source        = gs_set_source,
   .gc_set_align         = gs_set_align,
   .gc_set_hidden        = gs_set_hidden,
+  .gc_set_margin        = gs_set_margin,
 
   .gc_set_float_unresolved  = gs_set_float_unresolved,
   .gc_set_int_unresolved    = gs_set_int_unresolved,
@@ -1325,6 +1348,9 @@ glw_style_insert(glw_t *w, glw_style_t *gs, glw_view_eval_context_t *ec)
 
   if(gs->gs_flags & GS_SET_FOCUS_WEIGHT)
     glw_set_focus_weight(w, gs->w.glw_focus_weight, gs);
+
+  if(gs->gs_flags & GS_SET_MARGIN)
+    glw_set_margin(w, gs->w.glw_margin, gs);
 
   if(gs->gs_flags & GS_SET_ALPHA)
     glw_set_alpha(w, gs->w.glw_alpha, gs);

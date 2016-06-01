@@ -163,16 +163,17 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
 	     f & GLW_CONSTRAINT_X ? 'X' : ' ',
 	     f & GLW_CONSTRAINT_Y ? 'Y' : ' ',
 	     f & GLW_CONSTRAINT_W ? 'W' : ' ',
-	     c->glw_req_size_x,
-	     c->glw_req_size_y,
+	     glw_req_width(c),
+	     glw_req_height(c),
 	     c->glw_req_weight);
 
-    if(f & GLW_CONSTRAINT_Y)
-      height = GLW_MAX(height, c->glw_req_size_y);
-
+    if(f & GLW_CONSTRAINT_Y) {
+      const int rh = glw_req_height(c);
+      height = GLW_MAX(height, rh);
+    }
     if(unlikely(tab != NULL)) {
       if(f & GLW_CONSTRAINT_X) {
-        co->co_column_widths[i] = c->glw_req_size_x;
+        co->co_column_widths[i] = glw_req_width(c);
       } else {
         co->co_column_widths[i] = INT16_MIN;
         weight += 1.0f;
@@ -181,12 +182,13 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
     } else {
 
       if(f & GLW_CONSTRAINT_X) {
+        const int rw = glw_req_width(c);
 
         if(co->w.glw_flags2 & GLW2_HOMOGENOUS) {
-          co->co_biggest = GLW_MAX(c->glw_req_size_x, co->co_biggest);
+          co->co_biggest = GLW_MAX(rw, co->co_biggest);
           numfix++;
         } else {
-          width += c->glw_req_size_x;
+          width += rw;
         }
       } else if(f & GLW_CONSTRAINT_W) {
 
@@ -333,7 +335,7 @@ glw_container_x_layout(glw_t *w, const glw_rctx_t *rc)
       if(co->w.glw_flags2 & GLW2_HOMOGENOUS) {
 	cw = co->co_biggest * fixscale;
       } else {
-	cw = c->glw_req_size_x * fixscale;
+	cw = glw_req_width(c) * fixscale;
       }
 
     } else {
@@ -397,17 +399,19 @@ glw_container_y_constraints(glw_container_t *co, glw_t *skip)
 	     f & GLW_CONSTRAINT_X ? 'X' : ' ',
 	     f & GLW_CONSTRAINT_Y ? 'Y' : ' ',
 	     f & GLW_CONSTRAINT_W ? 'W' : ' ',
-	     c->glw_req_size_x,
-	     c->glw_req_size_y,
+	     glw_req_width(c),
+	     glw_req_height(c),
 	     c->glw_req_weight);
 
     cflags |= f & (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y);
 
-    if(f & GLW_CONSTRAINT_X)
-      width = GLW_MAX(width, c->glw_req_size_x);
+    if(f & GLW_CONSTRAINT_X) {
+      int rw = glw_req_width(c);
+      width = GLW_MAX(width, rw);
+    }
 
     if(f & GLW_CONSTRAINT_Y) {
-      height += c->glw_req_size_y;
+      height += glw_req_height(c);
     } else if(f & GLW_CONSTRAINT_W) {
       if(c->glw_req_weight > 0)
 	weight += c->glw_req_weight;
@@ -518,7 +522,7 @@ glw_container_y_layout(glw_t *w, const glw_rctx_t *rc)
     int f = glw_filter_constraints(c);
 
     if(f & GLW_CONSTRAINT_Y) {
-      cw = fixscale * c->glw_req_size_y;
+      cw = fixscale * glw_req_height(c);
     } else {
       float w = (f & GLW_CONSTRAINT_W ? c->glw_req_weight : 1.0f);
       if(w > 0)
@@ -613,8 +617,8 @@ glw_container_z_constraints(glw_t *w, glw_t *skip)
              c->glw_flags2 & GLW_CONSTRAINT_X ? 'X' : ' ',
              c->glw_flags2 & GLW_CONSTRAINT_Y ? 'Y' : ' ',
              c->glw_flags2 & GLW_CONSTRAINT_W ? 'W' : ' ',
-             c->glw_req_size_x,
-             c->glw_req_size_y,
+             glw_req_width(c),
+             glw_req_height(c),
              c->glw_req_weight,
              glw_get_path(c)
              );
@@ -953,7 +957,7 @@ glw_table_callback(glw_t *w, void *opaque, glw_signal_t signal,
     src = extra;
     glw_mod_constraints(w,
                         0,
-                        src->glw_req_size_y,
+                        glw_req_height(src),
                         src->glw_req_weight,
                         (src->glw_flags & (GLW_CONSTRAINT_FLAGS)),
                         GLW_CONSTRAINT_Y | GLW_CONSTRAINT_W | GLW_CONSTRAINT_D);

@@ -80,7 +80,7 @@ glw_list_layout_y(glw_t *w, const glw_rctx_t *rc)
       int height;
 
       if(f & GLW_CONSTRAINT_Y) {
-        height = c->glw_req_size_y;
+        height = glw_req_height(c);
       } else {
         height = rc0.rc_width / 10;
       }
@@ -117,7 +117,7 @@ glw_list_layout_y(glw_t *w, const glw_rctx_t *rc)
     int f = glw_filter_constraints(c);
 
     if(f & GLW_CONSTRAINT_Y) {
-      rc0.rc_height = c->glw_req_size_y;
+      rc0.rc_height = glw_req_height(c);
     } else {
       rc0.rc_height = rc0.rc_width / 10;
     }
@@ -196,7 +196,7 @@ glw_list_layout_x(glw_t *w, const glw_rctx_t *rc)
     int f = glw_filter_constraints(c);
 
     if(f & GLW_CONSTRAINT_X) {
-      rc0.rc_width = c->glw_req_size_x;
+      rc0.rc_width = glw_req_width(c);
     } else {
       rc0.rc_width = rc0.rc_height;
     }

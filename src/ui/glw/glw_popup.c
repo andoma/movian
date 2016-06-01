@@ -56,15 +56,18 @@ popup_layout(glw_t *w, const glw_rctx_t *rc)
 
 
     int f = glw_filter_constraints(c);
-    if(f & GLW_CONSTRAINT_X)
-      p->width = MIN(c->glw_req_size_x, rc->rc_width);
-    else
+    if(f & GLW_CONSTRAINT_X) {
+      const int rw = glw_req_width(c);
+      p->width = MIN(rw, rc->rc_width);
+    } else {
       p->width = rc->rc_width / 2;
-
-    if(f & GLW_CONSTRAINT_Y)
-      p->height = MIN(c->glw_req_size_y, rc->rc_height);
-    else
+    }
+    if(f & GLW_CONSTRAINT_Y) {
+      const int rh = glw_req_height(c);
+      p->height = MIN(rh, rc->rc_height);
+    } else {
       p->height = rc->rc_height / 2;
+    }
   }
 
   rc0 = *rc;
