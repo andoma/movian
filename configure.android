@@ -117,10 +117,3 @@ ADB = ${SDK}/platform-tools/adb
 EOF
 
 finalize
-
-echo
-echo "NOTE: Support for Android is still experimental"
-echo "NOTE: Video playback does not work at all"
-echo "NOTE: A lot of other things are probably broken as well"
-echo "NOTE: You have been warned"
-echo
