@@ -5,15 +5,13 @@ style(playdeckButtonContainer, {
 });
 
 widget(container_z, {
-
   widget(quad, {
     color: 0;
-    alpha: 0.2;
+    alpha: 0.8;
   });
 
   widget(container_x, {
     height: 2em;
-    filterConstraintY: true;
     padding: [0.5em, 0, 2em, 1];
 
     PLAYDECK_BUTTONS();
