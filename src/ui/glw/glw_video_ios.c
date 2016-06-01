@@ -47,6 +47,8 @@ typedef struct gvv_aux {
 typedef struct reap_task {
   glw_video_reap_task_t hdr;
   GLuint tex[2];
+  void *data[2];
+  void *opaque;
 } reap_task_t;
 
 extern CVEAGLContext ios_get_gles_context(glw_root_t *gr);
@@ -59,6 +61,18 @@ do_reap(glw_video_t *gv, reap_task_t *t)
 {
   if(t->tex[0] != 0)
     glDeleteTextures(2, t->tex);
+
+
+  for(int i = 0; i < 2; i++) {
+    if(t->data[i] != NULL) {
+      CFRelease(t->data[i]);
+    }
+  }
+
+  if(t->opaque != NULL) {
+    CFRelease(t->opaque);
+  }
+
 }
 
 
@@ -90,7 +104,15 @@ surface_reset(glw_video_t *gv, glw_video_surface_t *gvs)
   reap_task_t *t = glw_video_add_reap_task(gv, sizeof(reap_task_t), do_reap);
   t->tex[0] = gvs->gvs_texture.textures[0];
   t->tex[1] = gvs->gvs_texture.textures[1];
-  surface_release_buffers(gvs);
+
+  t->opaque = gvs->gvs_opaque;
+  gvs->gvs_opaque = NULL;
+  
+  t->data[0] = gvs->gvs_data[0];
+  t->data[1] = gvs->gvs_data[1];
+  
+  gvs->gvs_data[0] = NULL;
+  gvs->gvs_data[1] = NULL;
 }
 
 
