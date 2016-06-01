@@ -186,20 +186,22 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
   mp->mp_seek_base = 0;
   mp->mp_video.mq_seektarget = AV_NOPTS_VALUE;
   mp->mp_audio.mq_seektarget = AV_NOPTS_VALUE;
-
+  int64_t start = 0;
   if(mp->mp_flags & MP_CAN_SEEK) {
-    int64_t start = playinfo_get_restartpos(canonical_url, title, resume_mode) * 1000;
+    start = playinfo_get_restartpos(canonical_url, title, resume_mode) * 1000;
     if(start) {
       TRACE(TRACE_DEBUG, "VIDEO", "Attempting to resume from %.2f seconds",
             start / 1000000.0f);
       mp->mp_seek_base = start;
       video_seek(fctx, mp, &mb, start, "restart position");
-      htsmsg_add_dbl(vpi, "resumeposition", start);
     }
   }
 
+  prop_set_float_ex(mp->mp_prop_currenttime, mp->mp_sub_currenttime,
+		    start / 1000000.0);
+
   if(fctx->duration != AV_NOPTS_VALUE)
-    htsmsg_add_dbl(vpi, "duration", fctx->duration / 1000000.0);
+    htsmsg_add_dbl(vpi, "duration", fctx->duration / 1000000.0f);
 
   video_playback_info_invoke(VPI_START, vpi, mp->mp_prop_root);
 

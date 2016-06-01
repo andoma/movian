@@ -48,12 +48,12 @@ var videoscrobbler = require('movian/videoscrobbler');
 var vs = new videoscrobbler.VideoScrobbler();
 
 vs.onstart = function(data, prop) {
-  print("Started playback session: " + data.id);
+  print("Started playback session: " + data.id + " at position " + prop.currenttime + " (seconds)");
   print(JSON.stringify(data, null, 4));
 }
 
 vs.onstop = function(data, prop) {
-  print("Stopped playback session: " + data.id);
+  print("Stopped playback session: " + data.id + " at position " + prop.currenttime + " (seconds)");
   print(JSON.stringify(data, null, 4));
 }
 
@@ -63,6 +63,6 @@ vs.onpause = function(data, prop) {
 }
 
 vs.onresume = function(data, prop) {
-  print("Resumed playback session: " + data.id);
+  print("Resumed playback session: " + data.id + " at position " + prop.currenttime + " (seconds)");
   print(JSON.stringify(data, null, 4));
 }
