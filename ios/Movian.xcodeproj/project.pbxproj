@@ -348,6 +348,8 @@
 		6AD574F61C15FED600FCA17D /* res in Resources */ = {isa = PBXBuildFile; fileRef = 6A83852F1B427E0C002816FB /* res */; };
 		6AD574F71C15FED800FCA17D /* lang in Resources */ = {isa = PBXBuildFile; fileRef = 6A8385381B42811B002816FB /* lang */; };
 		6AD574F81C15FEDB00FCA17D /* glwskins in Resources */ = {isa = PBXBuildFile; fileRef = 6A8385371B42811B002816FB /* glwskins */; };
+		6AD9A4C91D00305D003BE227 /* slideshow.c in Sources */ = {isa = PBXBuildFile; fileRef = 6AD9A4C81D00305D003BE227 /* slideshow.c */; };
+		6AD9A4CC1D0030A1003BE227 /* lockmgr.c in Sources */ = {isa = PBXBuildFile; fileRef = 6AD9A4CA1D0030A1003BE227 /* lockmgr.c */; };
 		6ADBF62F1B9A443D00A21726 /* screenshot.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADBF62D1B9A443D00A21726 /* screenshot.c */; };
 		6ADCCCA21B3000CC0099FB5A /* average.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCC6E1B3000CC0099FB5A /* average.c */; };
 		6ADCCCA31B3000CC0099FB5A /* big5.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCC711B3000CC0099FB5A /* big5.c */; };
@@ -717,6 +719,9 @@
 		6AC9386E1C0E443E00D54769 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		6AC938701C0E443E00D54769 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		6AC938721C0E443E00D54769 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		6AD9A4C81D00305D003BE227 /* slideshow.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = slideshow.c; path = slideshow/slideshow.c; sourceTree = "<group>"; };
+		6AD9A4CA1D0030A1003BE227 /* lockmgr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = lockmgr.c; sourceTree = "<group>"; };
+		6AD9A4CB1D0030A1003BE227 /* lockmgr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = lockmgr.h; sourceTree = "<group>"; };
 		6ADBF62D1B9A443D00A21726 /* screenshot.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = screenshot.c; sourceTree = "<group>"; };
 		6ADBF62E1B9A443D00A21726 /* screenshot.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = screenshot.h; sourceTree = "<group>"; };
 		6ADCCC6C1B30007A0099FB5A /* main.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = main.h; path = ../src/main.h; sourceTree = "<group>"; };
@@ -1272,6 +1277,14 @@
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
+		6AD9A4C61D003050003BE227 /* slideshow */ = {
+			isa = PBXGroup;
+			children = (
+				6AD9A4C81D00305D003BE227 /* slideshow.c */,
+			);
+			name = slideshow;
+			sourceTree = "<group>";
+		};
 		6ADCCC0A1B2FFF090099FB5A /* src */ = {
 			isa = PBXGroup;
 			children = (
@@ -1335,6 +1348,8 @@
 		6ADCCC6D1B3000CC0099FB5A /* misc */ = {
 			isa = PBXGroup;
 			children = (
+				6AD9A4CA1D0030A1003BE227 /* lockmgr.c */,
+				6AD9A4CB1D0030A1003BE227 /* lockmgr.h */,
 				6A374FB01CCBA9EF007B8E30 /* prng.c */,
 				6ADCCC6E1B3000CC0099FB5A /* average.c */,
 				6ADCCC6F1B3000CC0099FB5A /* average.h */,
@@ -1723,6 +1738,7 @@
 		6ADCCE881B304DC80099FB5A /* backend */ = {
 			isa = PBXGroup;
 			children = (
+				6AD9A4C61D003050003BE227 /* slideshow */,
 				6ADCCE891B304DC80099FB5A /* backend.c */,
 				6ADCCE8A1B304DC80099FB5A /* backend.h */,
 				6ADCCE8B1B304DC80099FB5A /* backend_prop.c */,
@@ -2199,6 +2215,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6ADCCDC11B3016110099FB5A /* utf8.c in Sources */,
+				6AD9A4CC1D0030A1003BE227 /* lockmgr.c in Sources */,
 				6ADCCEB91B304DC80099FB5A /* torrent_stats.c in Sources */,
 				6AB9264E1C0743CD002D59A6 /* mac_audio.c in Sources */,
 				6ADCCD901B3015C90099FB5A /* media.c in Sources */,
@@ -2282,6 +2299,7 @@
 				6ADCCCA51B3000CC0099FB5A /* buf.c in Sources */,
 				6ADCCCAC1B3000CC0099FB5A /* gz.c in Sources */,
 				6ADCCDFF1B30165E0099FB5A /* fa_bundle.c in Sources */,
+				6AD9A4C91D00305D003BE227 /* slideshow.c in Sources */,
 				6ADCCE0A1B30165E0099FB5A /* fa_libav.c in Sources */,
 				6ADCCFFB1B30785D0099FB5A /* glw_video_yuvp.c in Sources */,
 				6ADCCD691B30154E0099FB5A /* es_misc.c in Sources */,
