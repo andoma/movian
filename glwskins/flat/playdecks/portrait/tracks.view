@@ -29,7 +29,6 @@ widget(container_z, {
   widget(container_y, {
     align: center;
     height: 4em;
-    filterConstraintY: true;
     padding: [0.5em, 0, 0.5em, 0.5em];
 
     widget(container_x, {

@@ -1,7 +1,7 @@
 setDefaultFont("skin://fonts/RobotoCondensed-Regular.ttf");
 
 $ui.sizeOffset = 4;
-$ui.xmargin = select($ui.aspect > 1, $ui.width / 50, 0);
+$ui.xmargin = select($ui.aspect > 1, $ui.width / 50, 0.2em);
 $ui.showTopIcons = $ui.pointerVisible || $ui.touch;
 $ui.showAllPlaydeckButtons = 0;
 

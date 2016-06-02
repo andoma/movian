@@ -34,7 +34,8 @@ $self.model.io <- $self.media.io;
 
 $clone.osdpage = 0;
 delta($ui.hideClock, isVisible() && !$core.clock.showDuringVideo &&!($clone.osdpage || $clone.showPlaydeck));
-$view.iconPad = select(isVoid($self.media.metadata.icon), 0, 7em);
+$view.iconPad = select($ui.aspect < 1 ||
+                       isVoid($self.media.metadata.icon), 0, 7em);
 
 onEvent(back, {
   $clone.showPlaydeck = 0;
@@ -74,6 +75,11 @@ $view.showSeekBar =
   $self.media.playstatus == "pause";
 
 widget(container_z, {
+  clickable: true;
+  onEvent(activate, {
+    toggle($clone.showPlaydeck);
+    focus("pause-btn");
+  });
 
   // --------------------------------------------
   // --- Primary video display
@@ -99,11 +105,6 @@ widget(container_z, {
 
       onEvent(up,    deliverEvent($self.media.eventSink, "VolumeUp"));
       onEvent(down,  deliverEvent($self.media.eventSink, "VolumeDown"));
-
-      onEvent(activate, {
-        toggle($clone.showPlaydeck);
-        focus("pause-btn");
-      });
 
       bottomOverlayDisplacement: $clone.bottomOsdHeight;
 
@@ -265,16 +266,10 @@ widget(container_z, {
 
       widget(container_x, {
         spacing: 0.5em;
-        padding: [$view.iconPad + 1em, 0, 0, 0];
-        widget(icon, {
-          source: "skin://icons/ic_pause_48px.svg";
-          alpha: iir(select(!$clone.showPlaydeck &&
-                            $self.media.playstatus == "pause", 1, 0), 4);
-
-        });
+        padding: [$view.iconPad, 0, 0, 0];
 
         widget(label, {
-          width: 3em;
+          width: 4em;
           caption: value2duration($view.tentativeSeekPosition ??
                                   $self.media.currenttime);
           align: right;
@@ -442,6 +437,7 @@ widget(container_z, {
 
 
   widget(container_x, {
+    hidden: $ui.aspect < 1;
     padding: 1em;
     widget(image, {
       alpha: iir($view.showSeekBar || changed($self.media.metadata.icon, 5, true), 4);
