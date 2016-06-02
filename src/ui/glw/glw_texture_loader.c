@@ -624,6 +624,9 @@ glw_tex_create(glw_root_t *gr, rstr_t *filename, int flags, int xs, int ys,
   assert(xs == -1 || xs > 0);
   assert(ys == -1 || ys > 0);
 
+  if(mystrbegins(rstr_get(filename), "pixmap:"))
+    be = NULL;
+
   LIST_FOREACH(glt, &gr->gr_tex_list, glt_global_link)
     if(!strcmp(rstr_get(glt->glt_url), rstr_get(filename)) &&
        glt->glt_flags == flags &&
