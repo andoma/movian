@@ -127,11 +127,18 @@ struct asyncio_fd {
   int af_poll_events;
   int af_pending_errno;
 
-  uint16_t af_port;
   uint16_t af_ext_events;
   uint8_t af_connected;
 
   char *af_hostname;
+  
+  net_addr_t af_bind_addr;
+
+  void (*af_resume)(struct asyncio_fd *af);
+  
+  int af_suspended : 1;
+  int af_bind_any : 1;
+  int af_broadcast : 1;
 
 #if ENABLE_OPENSSL
   int af_ssl_read_status;
@@ -394,6 +401,10 @@ asyncio_dopoll(void)
       timeout = MIN(timeout, (af->af_timeout - async_now + 999) / 1000);
     }
 
+    if(af->af_fd == -1) {
+      continue;
+    }
+    
     fds[n].fd = af->af_fd;
 
 #if ENABLE_OPENSSL
@@ -409,8 +420,6 @@ asyncio_dopoll(void)
     af->af_refcount++;
     n++;
   }
-
-  assert(n == asyncio_num_fds);
 
   if((at = LIST_FIRST(&asyncio_timers)) != NULL)
     timeout = MIN(timeout, (at->at_expire - async_now + 999) / 1000);
@@ -789,20 +798,16 @@ asyncio_tcp_accept(asyncio_fd_t *af, void *opaque, int events, int error)
 }
 
 
-/**
- *
- */
-asyncio_fd_t *
-asyncio_listen(const char *name, int port, asyncio_accept_callback_t *cb,
-               void *opaque, int bind_any)
+
+static int
+asyncio_tcp_bind_socket(int bind_any, int port, const char *name)
 {
   struct sockaddr_in si = {0};
-  socklen_t sl = sizeof(struct sockaddr_in);
   int one = 1;
   int fd;
 
   if((fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1)
-    return NULL;
+    return -1;
 
   no_sigpipe(fd);
 
@@ -811,14 +816,14 @@ asyncio_listen(const char *name, int port, asyncio_accept_callback_t *cb,
   setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(int));
 
   if(port) {
-
+  
     si.sin_port = htons(port);
     if(bind(fd, (struct sockaddr *)&si, sizeof(struct sockaddr_in))) {
       if(!bind_any) {
         TRACE(TRACE_ERROR, "TCP", "%s: Bind failed -- %s", name,
               strerror(errno));
         close(fd);
-        return NULL;
+        return -1;
       } else {
         port = 0;
       }
@@ -830,26 +835,54 @@ asyncio_listen(const char *name, int port, asyncio_accept_callback_t *cb,
       TRACE(TRACE_ERROR, "TCP", "%s: Unable to bind -- %s", name,
             strerror(errno));
       close(fd);
-      return NULL;
+      return -1;
     }
   }
 
-  if(getsockname(fd, (struct sockaddr *)&si, &sl) == -1) {
-    TRACE(TRACE_ERROR, "TCP", "%s: Unable to figure local port", name);
-    close(fd);
-    return NULL;
-  }
-  port = ntohs(si.sin_port);
-
   listen(fd, 100);
+  return fd;
+}
 
-  TRACE(TRACE_INFO, "TCP", "%s: Listening on port %d", name, port);
 
+/**
+ *
+ */
+static void
+asyncio_tcp_resume(asyncio_fd_t *af)
+{
+  int fd = asyncio_tcp_bind_socket(af->af_bind_any, af->af_bind_addr.na_port,
+                                   af->af_name);
+  if(fd == -1)
+    return;
+
+  net_change_nonblocking(fd, 1);
+  af->af_fd = fd;
+  asyncio_set_events(af, ASYNCIO_READ);
+  af->af_suspended = 0;
+  TRACE(TRACE_INFO, "TCP", "%s: Resumed listening on port %d", af->af_name, asyncio_get_port(af));
+}
+
+
+/**
+ *
+ */
+asyncio_fd_t *
+asyncio_listen(const char *name, int port, asyncio_accept_callback_t *cb,
+               void *opaque, int bind_any)
+{
+  int fd = asyncio_tcp_bind_socket(bind_any, port, name);
+  if(fd == -1)
+    return NULL;
+  
   asyncio_fd_t *af = asyncio_add_fd(fd, ASYNCIO_READ,
                                     asyncio_tcp_accept, opaque, name);
-
+  af->af_bind_any = bind_any;
+  af->af_bind_addr.na_port = port;
+  
+  TRACE(TRACE_INFO, "TCP", "%s: Listening on port %d", name, asyncio_get_port(af));
+  
   af->af_accept_callback = cb;
-  af->af_port = port;
+  af->af_resume = asyncio_tcp_resume;
   return af;
 }
 
@@ -1145,7 +1178,13 @@ asyncio_attach(const char *name, int fd,
 int
 asyncio_get_port(asyncio_fd_t *af)
 {
-  return af->af_port;
+  struct sockaddr_in si = {0};
+  socklen_t sl = sizeof(struct sockaddr_in);
+
+  if(getsockname(af->af_fd, (struct sockaddr *)&si, &sl) == -1)
+    return -1;
+
+  return ntohs(si.sin_port);
 }
 
 
@@ -1280,7 +1319,80 @@ asyncio_dns_cancel(asyncio_dns_req_t *adr)
  * UDP
  *************************************************************************/
 
-static uint8_t udp_recv_buf[8192];
+
+
+
+static int
+asyncio_udp_bind_socket(int bind_any, int broadcast, const net_addr_t *na,
+                        const char *name)
+{
+  int fd;
+  int one = 1;
+  struct sockaddr_in si = {0};
+  
+  if((fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
+    return -1;
+  
+  no_sigpipe(fd);
+  
+  si.sin_family = AF_INET;
+
+  setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(int));
+#if defined(SO_REUSEPORT)
+  setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &one, sizeof(int));
+#endif
+  
+  if(broadcast)
+    setsockopt(fd, SOL_SOCKET, SO_BROADCAST, &one, sizeof(one));
+
+  if(na) {
+  
+    si.sin_port = htons(na->na_port);
+    memcpy(&si.sin_addr, na->na_addr, 4);
+    if(bind(fd, (struct sockaddr *)&si, sizeof(struct sockaddr_in))) {
+      
+      if(!bind_any) {
+        TRACE(TRACE_ERROR, "UDP", "%s: Bind failed -- %s", name,
+              strerror(errno));
+        close(fd);
+        return -1;
+      } else {
+        na = NULL;
+      }
+    }
+  }
+  if(na == NULL) {
+    si.sin_port = 0;
+    if(bind(fd, (struct sockaddr *)&si, sizeof(struct sockaddr_in)) == -1) {
+      TRACE(TRACE_ERROR, "UDP", "%s: Unable to bind -- %s", name,
+            strerror(errno));
+      close(fd);
+      return -1;
+    }
+  }
+  return fd;
+}
+
+
+/**
+ *
+ */
+static void
+asyncio_udp_resume(asyncio_fd_t *af)
+{
+  int fd = asyncio_udp_bind_socket(af->af_bind_any, af->af_broadcast,
+                                   af->af_bind_addr.na_family ?
+                                   &af->af_bind_addr : NULL, af->af_name);
+  if(fd == -1)
+    return;
+
+  net_change_nonblocking(fd, 1);
+  af->af_fd = fd;
+  asyncio_set_events(af, af->af_ext_events);
+  af->af_suspended = 0;
+  TRACE(TRACE_INFO, "UDP", "%s: Resumed listening on port %d", af->af_name, asyncio_get_port(af));
+}
+
 
 /**
  *
@@ -1288,6 +1400,15 @@ static uint8_t udp_recv_buf[8192];
 static int
 asyncio_udp_event(asyncio_fd_t *af, void *opaque, int events, int error)
 {
+  static uint8_t udp_recv_buf[8192];
+
+  if(events & ASYNCIO_ERROR) {
+    close(af->af_fd);
+    af->af_fd = -1;
+    af->af_suspended = 1;
+    return 0;
+  }
+
   assert(events & ASYNCIO_READ);
 
   struct sockaddr_in sin;
@@ -1319,65 +1440,20 @@ asyncio_udp_bind(const char *name,
 		 int bind_any,
                  int broadcast)
 {
-  struct sockaddr_in si = {0};
-  socklen_t sl = sizeof(struct sockaddr_in);
-  int one = 1;
-  int fd;
-
-  if((fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
+  int fd = asyncio_udp_bind_socket(bind_any, broadcast, na, name);
+  if(fd == -1)
     return NULL;
-
-  no_sigpipe(fd);
-
-  si.sin_family = AF_INET;
-
-  setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(int));
-#if defined(SO_REUSEPORT)
-  setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &one, sizeof(int));
-#endif
-
-  if(broadcast)
-    setsockopt(fd, SOL_SOCKET, SO_BROADCAST, &one, sizeof(one));
-
-  if(na) {
-
-    si.sin_port = htons(na->na_port);
-    memcpy(&si.sin_addr, na->na_addr, 4);
-    if(bind(fd, (struct sockaddr *)&si, sizeof(struct sockaddr_in))) {
-
-      if(!bind_any) {
-        TRACE(TRACE_ERROR, "TCP", "%s: Bind failed -- %s", name,
-              strerror(errno));
-        close(fd);
-        return NULL;
-      } else {
-        na = NULL;
-      }
-    }
-  }
-  if(na == NULL) {
-    si.sin_port = 0;
-    if(bind(fd, (struct sockaddr *)&si, sizeof(struct sockaddr_in)) == -1) {
-      TRACE(TRACE_ERROR, "TCP", "%s: Unable to bind -- %s", name,
-            strerror(errno));
-      close(fd);
-      return NULL;
-    }
-  }
-
-  if(getsockname(fd, (struct sockaddr *)&si, &sl) == -1) {
-    TRACE(TRACE_ERROR, "TCP", "%s: Unable to figure local port", name);
-    close(fd);
-    return NULL;
-  }
-  int port = ntohs(si.sin_port);
-
-  TRACE(TRACE_INFO, "UDP", "%s: Listening on port %d", name, port);
 
   asyncio_fd_t *af = asyncio_add_fd(fd, ASYNCIO_READ,
                                     asyncio_udp_event, opaque, name);
   af->af_udp_callback = cb;
-  af->af_port = port;
+  af->af_bind_any = bind_any;
+  af->af_broadcast = broadcast;
+  if(na != NULL)
+    af->af_bind_addr = *na;
+  
+  af->af_resume = asyncio_udp_resume;
+  TRACE(TRACE_INFO, "UDP", "%s: Listening on port %d", name, asyncio_get_port(af));
   return af;
 }
 
@@ -1473,6 +1549,63 @@ asyncio_trig_network_change(void)
 }
 
 
+/**
+ *
+ */
+static void
+asyncio_do_suspend(void *aux)
+{
+  netifchange_t *nic;
+  LIST_FOREACH(nic, &netifchanges, link) {
+    nic->cb(NULL);
+  }
+  
+  asyncio_fd_t *af;
+  LIST_FOREACH(af, &asyncio_fds, af_link) {
+    if(af->af_resume == NULL)
+      continue; // Socket can't be resumed, skip
+    
+    if(af->af_fd == -1)
+      continue;
+    af->af_suspended = 1;
+    close(af->af_fd);
+    af->af_fd = -1;
+  }
+}
+
+/**
+ *
+ */
+static void
+asyncio_do_resume(void *aux)
+{
+  asyncio_fd_t *af;
+  LIST_FOREACH(af, &asyncio_fds, af_link) {
+    if(af->af_suspended) {
+      af->af_resume(af);
+    }
+  }
+  asyncio_do_network_change(NULL);
+}
+
+
+/**
+ *
+ */
+void
+asyncio_suspend(void)
+{
+  asyncio_run_task(asyncio_do_suspend, NULL);
+}
+
+/**
+ *
+ */
+void
+asyncio_resume(void)
+{
+  asyncio_run_task(asyncio_do_resume, NULL);
+}
 
 
 

@@ -47,6 +47,11 @@ void asyncio_init_early(void);
 
 void asyncio_start(void);
 
+void asyncio_suspend(void);
+
+void asyncio_resume(void);
+
+
 /*************************************************************************
  * Non portable API for direct manipulation of fds
  *************************************************************************/
