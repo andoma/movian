@@ -40,10 +40,11 @@ onEvent(menu, {
 }, $clone.osdpage);
 
 
+
 widget(container_z, {
 
-  style(osdsettingtitle, {
-    alpha: 0;
+  style(info, {
+    color: 0.75;
   });
 
   widget(layer, {
@@ -104,8 +105,8 @@ widget(container_z, {
         widget(container_x, {
           style: "ListItem";
 
-          height: 14em;
           widget(image, {
+            hidden: $ui.aspect < 1;
             align: top;
             width: 7em;
             source: $self.media.metadata.icon;
@@ -116,14 +117,16 @@ widget(container_z, {
 
             widget(label, {
               autohide: true;
-              size: 1.5em;
               caption: $self.media.metadata.tagline;
+              size: 1.25em;
+              maxlines: 2;
               padding: [0,0,0,1em];
             });
 
             widget(label, {
+              style: "info";
               autohide: true;
-              maxlines: 5;
+              maxlines: 10;
               caption: $self.media.metadata.description;
               padding: [0,0,0,1em];
             });
@@ -131,22 +134,26 @@ widget(container_z, {
             cloner($self.media.metadata.videostreams, container_x, {
               spacing: 0.5em;
               widget(icon, {
+                style: "info";
                 source: "skin://icons/ic_videocam_48px.svg";
               });
 
               widget(label, {
+                style: "info";
                 filterConstraintX: true;
                 caption: $self.longformat;
               });
             });
 
             widget(container_x, {
+              margin: [0,0.25em,0,0];
               spacing: 0.5em;
               widget(icon, {
+                style: "info";
                 source:  "skin://icons/ic_speaker_48px.svg";
               });
               widget(label, {
-                style: "notifications";
+                style: "info";
 	        caption: join(" - ",
                               $self.media.audio.active.title,
                               $self.media.audio.active.language,
@@ -156,12 +163,14 @@ widget(container_z, {
               });
             });
             widget(container_x, {
+              margin: [0,0.25em,0,0];
               spacing: 0.5em;
               widget(icon, {
+                style: "info";
                 source: "skin://icons/ic_subtitles_48px.svg";
               });
               widget(label, {
-                style: "notifications";
+                style: "info";
 	        caption: join(" - ",
                               $self.media.subtitle.active.title,
                               $self.media.subtitle.active.language,
