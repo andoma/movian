@@ -52,6 +52,9 @@
 		6A08CDDC1C06FEE000387E87 /* libFreetype2.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6A08CDDB1C06FD8300387E87 /* libFreetype2.a */; };
 		6A08CDED1C07000F00387E87 /* glw_scroll.c in Sources */ = {isa = PBXBuildFile; fileRef = 6A08CDEB1C07000F00387E87 /* glw_scroll.c */; };
 		6A08CDF01C07006500387E87 /* nanosvg.c in Sources */ = {isa = PBXBuildFile; fileRef = 6A08CDEF1C07006500387E87 /* nanosvg.c */; };
+		6A29300C1D0053F4008CDD3F /* lockmgr.c in Sources */ = {isa = PBXBuildFile; fileRef = 6AD9A4CA1D0030A1003BE227 /* lockmgr.c */; };
+		6A29300D1D0053F7008CDD3F /* prng.c in Sources */ = {isa = PBXBuildFile; fileRef = 6A374FB01CCBA9EF007B8E30 /* prng.c */; };
+		6A29300E1D005404008CDD3F /* slideshow.c in Sources */ = {isa = PBXBuildFile; fileRef = 6AD9A4C81D00305D003BE227 /* slideshow.c */; };
 		6A2DC23B1CAD1EC7005CD9F3 /* glw_scope.c in Sources */ = {isa = PBXBuildFile; fileRef = 6A2DC23A1CAD1EC7005CD9F3 /* glw_scope.c */; };
 		6A2DC23D1CAD1EDE005CD9F3 /* glw_scope.c in Sources */ = {isa = PBXBuildFile; fileRef = 6A2DC23A1CAD1EC7005CD9F3 /* glw_scope.c */; };
 		6A35C1B61C1040B600D8EA86 /* sqlite3.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCF4E1B3065CE0099FB5A /* sqlite3.c */; };
@@ -2581,12 +2584,14 @@
 				6A35C20C1C1041FC00D8EA86 /* glw_container.c in Sources */,
 				6A35C1D31C10419700D8EA86 /* ecmascript.c in Sources */,
 				6A35C27A1C10426F00D8EA86 /* net_ifaddr.c in Sources */,
+				6A29300E1D005404008CDD3F /* slideshow.c in Sources */,
 				6A35C1F51C1041C000D8EA86 /* fa_http.c in Sources */,
 				6A35C1E01C10419700D8EA86 /* es_root.c in Sources */,
 				6A35C1CB1C10417B00D8EA86 /* posix.c in Sources */,
 				6A35C2521C10423D00D8EA86 /* media_event.c in Sources */,
 				6A35C2C51C10489F00D8EA86 /* hls.c in Sources */,
 				6A35C2761C10426F00D8EA86 /* http.c in Sources */,
+				6A29300D1D0053F7008CDD3F /* prng.c in Sources */,
 				6A35C1EE1C1041C000D8EA86 /* fa_bundle.c in Sources */,
 				6A35C2861C10427C00D8EA86 /* prop_nodefilter.c in Sources */,
 				6A35C1FF1C1041C000D8EA86 /* fa_zip.c in Sources */,
@@ -2750,6 +2755,7 @@
 				6A35C1B71C1040B900D8EA86 /* attribute.c in Sources */,
 				6A35C2621C10425D00D8EA86 /* callout.c in Sources */,
 				6A35C20B1C1041FC00D8EA86 /* glw_clist.c in Sources */,
+				6A29300C1D0053F4008CDD3F /* lockmgr.c in Sources */,
 				6A35C2CB1C104A5400D8EA86 /* osxapp.c in Sources */,
 				6A35C1F31C1041C000D8EA86 /* fa_ftp.c in Sources */,
 				6A35C2971C10429200D8EA86 /* task.c in Sources */,
@@ -2910,6 +2916,7 @@
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = NO;
+				GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS = NO;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
@@ -2963,6 +2970,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = NO;
+				GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS = NO;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
@@ -3081,7 +3089,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = NO;
 				INFOPLIST_FILE = "Movian-tvOS/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				OTHER_CFLAGS = (
@@ -3119,7 +3127,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = NO;
 				INFOPLIST_FILE = "Movian-tvOS/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				OTHER_CFLAGS = (

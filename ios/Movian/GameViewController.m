@@ -73,6 +73,8 @@
   [self becomeFirstResponder];
 }
 
+#if TARGET_OS_IOS == 1
+
 - (void)keyboardWasShown:(NSNotification*)aNotification
 {
   NSDictionary* info = [aNotification userInfo];
@@ -91,6 +93,7 @@
 {
   self.oskscroll = 0;
 }
+#endif
 
 @end
 
@@ -169,8 +172,9 @@ glw_in_fullwindow(void *opaque, int val)
   glw_init2(gr, flags);
 
   
+#if TARGET_OS_IOS == 1
   gr->gr_open_osk = openosk;
-
+#endif
   
   glw_opengl_init_context(gr);
 
@@ -198,6 +202,7 @@ glw_in_fullwindow(void *opaque, int val)
   [self.view addGestureRecognizer:r];
 #endif
   
+#if TARGET_OS_IOS == 1
   [[NSNotificationCenter defaultCenter] addObserver:self.view
                                            selector:@selector(keyboardWasShown:)
                                                name:UIKeyboardDidShowNotification object:nil];
@@ -206,6 +211,8 @@ glw_in_fullwindow(void *opaque, int val)
                                            selector:@selector(keyboardWillBeHidden:)
                                                name:UIKeyboardWillHideNotification object:nil];
 
+#endif
+  
   [[NSNotificationCenter defaultCenter] addObserver:self
                                            selector:@selector(becomeActive)
                                                name:@"appDidBecomeActive"
@@ -215,10 +222,9 @@ glw_in_fullwindow(void *opaque, int val)
                                            selector:@selector(resignActive)
                                                name:@"appDidResignActive"
                                              object:nil];
-  
+
   self.pauseOnWillResignActive = NO;
   self.resumeOnDidBecomeActive = NO;
-  
 }
 
 
