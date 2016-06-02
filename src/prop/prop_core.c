@@ -3126,8 +3126,17 @@ prop_subscribe_ex(const char *file, int line, int flags, ...)
     if(dolock)
       hts_mutex_lock(&prop_mutex);
 
-    if(value != NULL && value->hp_type == PROP_PROXY) {
-      ppc = value->hp_proxy_ppc;
+    if(value != NULL) {
+      if(value->hp_type == PROP_PROXY) {
+        ppc = value->hp_proxy_ppc;
+      } else {
+        int ocnum = 0;
+        while(value->hp_originator != NULL) {
+          origin_chain[ocnum++] = value;
+          value = value->hp_originator;
+        }
+        origin_chain[ocnum] = NULL;
+      }
     }
 
   } else {
