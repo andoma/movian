@@ -60,19 +60,19 @@ coreAttach($self.model.remoteurl, $view.stppstatus, {
           onEvent(back, deliverEvent($core.navigators.current.eventSink));
           onEvent(playTrackFromSource, deliverEvent($core.playqueue.eventSink));
 
-          cloner($core.navigators.current.pages, container_z, {
-
-            widget(loader, {
-	      noInitialTransform: true;
-	      source: translate($self.model.type,
-                                select(isVoid($self.model.type),
-                                       "skin://pages/back.view",
-                                       "skin://pages/" + $self.model.type + ".view"),
-                                "video", "skin://pages/stppvideo.view",
-                                "stpp", "skin://pages/stppstpp.view");
-            });
+          cloner($core.navigators.current.pages, loader, {
+	    noInitialTransform: true;
+	    source: translate($self.model.type,
+                              select(isVoid($self.model.type),
+                                     "skin://pages/back.view",
+                                     "skin://pages/" + $self.model.type + ".view"),
+                              "video", "skin://pages/stppvideo.view",
+                              "stpp", "skin://pages/stppstpp.view");
           });
         });
+	cloner($core.popups, loader, {
+	  source: "skin://popups/" + $self.type + ".view";
+	});
       });
 
       widget(container_y, {
