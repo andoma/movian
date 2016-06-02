@@ -113,6 +113,15 @@ openosk(struct glw_root *gr,
   [view openOSKforWidget:w position:&r];
 }
 
+static void
+glw_in_fullwindow(void *opaque, int val)
+{
+  [UIApplication sharedApplication].idleTimerDisabled = val ? YES : NO;
+}
+
+
+
+
 
 
 
@@ -144,6 +153,14 @@ openosk(struct glw_root *gr,
   gr->gr_window = (__bridge void *)view;
   
   view.eventSink = prop_create(gr->gr_prop_ui, "eventSink");
+  
+  prop_subscribe(0,
+                 PROP_TAG_NAME("ui", "fullwindow"),
+                 PROP_TAG_COURIER, gr->gr_courier,
+                 PROP_TAG_CALLBACK_INT, glw_in_fullwindow, NULL,
+                 PROP_TAG_ROOT, gr->gr_prop_ui,
+                 NULL);
+
 
   int flags = 0;
 #if TARGET_OS_TV
