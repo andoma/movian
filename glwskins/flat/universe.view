@@ -288,10 +288,4 @@ widget(container_z, {
       });
     });
   });
-
-  label({
-    hidden: true;
-    size: 1em;
-    caption: $ui.aspect;
-  });
 });
