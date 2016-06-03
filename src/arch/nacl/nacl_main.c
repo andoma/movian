@@ -224,7 +224,7 @@ init_ui(void *data, int flags)
 
   glw_opengl_init_context(&ngr->gr);
 
-  glClearColor(0,0,0,0);
+  glClearColor(0,0,0,1);
 
   send_msg("running", NULL);
 
