@@ -39,12 +39,19 @@
 #include "prop/prop_linkselected.h"
 
 TAILQ_HEAD(nav_page_queue, nav_page);
-LIST_HEAD(bookmark_list, bookmark);
 LIST_HEAD(navigator_list, navigator);
+static prop_t *all_navigators;
+static struct navigator_list navigators;
+
+static HTS_MUTEX_DECL(nav_mutex);
+
+#if ENABLE_BOOKMARKS
+
+LIST_HEAD(bookmark_list, bookmark);
 LIST_HEAD(bookmark_query_list, bookmark_query);
 
 static prop_t *bookmark_nodes;
-static prop_t *all_navigators;
+static struct bookmark_query_list bookmark_queries;
 
 static void bookmarks_init(void);
 static void bookmark_add(const char *title, const char *url, const char *type,
@@ -52,10 +59,7 @@ static void bookmark_add(const char *title, const char *url, const char *type,
 static void bookmarks_save(void);
 
 static struct bookmark_list bookmarks;
-static struct navigator_list navigators;
-static struct bookmark_query_list bookmark_queries;
 
-static HTS_MUTEX_DECL(nav_mutex);
 
 
 
@@ -107,6 +111,9 @@ typedef struct bookmark_query {
 
 } bookmark_query_t;
 
+#endif
+
+
 /**
  *
  */
@@ -120,7 +127,7 @@ typedef struct nav_page {
   char *np_url;
   char *np_parent_url;
   char *np_how;
-  
+
   int np_direct_close;
 
   prop_sub_t *np_close_sub;
@@ -134,8 +141,7 @@ typedef struct nav_page {
   prop_t *np_parent_model_src;
   prop_t *np_parent_model_dst;
 
-  // For bookmarking
-
+#if ENABLE_BOOKMARKS
   prop_sub_t *np_bookmarked_sub;
   prop_t *np_bookmarked;
 
@@ -146,6 +152,7 @@ typedef struct nav_page {
   rstr_t *np_icon;
 
   prop_t *np_bookmark_notify_prop;
+#endif
 
 } nav_page_t;
 
@@ -184,6 +191,7 @@ static void nav_open0(navigator_t *nav, const char *url, const char *view,
 
 static void page_redirect(nav_page_t *np, const char *url);
 
+#if ENABLE_BOOKMARKS
 /**
  *
  */
@@ -214,6 +222,8 @@ nav_update_bookmarked(void)
     }
   }
 }
+
+#endif
 
 
 
@@ -300,8 +310,9 @@ nav_spawn(void)
 void
 nav_init(void)
 {
+#if ENABLE_BOOKMARKS
   bookmarks_init();
-
+#endif
   prop_t *navs = prop_create(prop_get_global(), "navigators");
 
   all_navigators = prop_create(navs, "nodes");
@@ -341,10 +352,12 @@ page_unsub(nav_page_t *np)
 {
   prop_unsubscribe(np->np_close_sub);
   prop_unsubscribe(np->np_direct_close_sub);
+  prop_unsubscribe(np->np_eventsink_sub);
+#if ENABLE_BOOKMARKS
   prop_unsubscribe(np->np_bookmarked_sub);
   prop_unsubscribe(np->np_title_sub);
   prop_unsubscribe(np->np_icon_sub);
-  prop_unsubscribe(np->np_eventsink_sub);
+#endif
 }
 
 
@@ -378,10 +391,11 @@ nav_close(nav_page_t *np, int with_prop)
   prop_ref_dec(np->np_parent_model_src);
   prop_ref_dec(np->np_parent_model_dst);
 
+#if ENABLE_BOOKMARKS
   prop_ref_dec(np->np_bookmark_notify_prop);
-
   rstr_release(np->np_title);
   rstr_release(np->np_icon);
+#endif
   free(np->np_url);
   free(np->np_parent_url);
   free(np->np_how);
@@ -527,6 +541,7 @@ nav_page_direct_close_set(void *opaque, int v)
   }
 }
 
+#if ENABLE_BOOKMARKS
 
 /**
  *
@@ -581,6 +596,19 @@ nav_page_title_set(void *opaque, rstr_t *str)
  *
  */
 static void
+nav_page_icon_set(void *opaque, rstr_t *str)
+{
+  nav_page_t *np = opaque;
+  rstr_set(&np->np_icon, str);
+}
+
+#endif
+
+
+/**
+ *
+ */
+static void
 page_eventsink(void *opaque, event_t *e)
 {
   nav_page_t *np = opaque;
@@ -590,16 +618,6 @@ page_eventsink(void *opaque, event_t *e)
   }
 }
 
-
-/**
- *
- */
-static void
-nav_page_icon_set(void *opaque, rstr_t *str)
-{
-  nav_page_t *np = opaque;
-  rstr_set(&np->np_icon, str);
-}
 
 
 /**
@@ -659,6 +677,7 @@ nav_page_setup_prop(nav_page_t *np, const char *view)
 		   NULL);
 
 
+#if ENABLE_BOOKMARKS
   np->np_bookmarked = prop_create(np->np_prop_root, "bookmarked");
 
   prop_set_int(np->np_bookmarked, nav_page_is_bookmarked(np));
@@ -685,6 +704,7 @@ nav_page_setup_prop(nav_page_t *np, const char *view)
 		   PROP_TAG_CALLBACK_RSTR, nav_page_icon_set, np,
 		   PROP_TAG_MUTEX, &nav_mutex,
 		   NULL);
+#endif
 }
 
 
@@ -971,6 +991,7 @@ nav_open_errorf(prop_t *root, rstr_t *fmt, ...)
 }
 
 
+#if ENABLE_BOOKMARKS
 
 /**
  *
@@ -1535,3 +1556,4 @@ bookmarks_init(void)
                  NULL);
 
 }
+#endif

@@ -27,6 +27,7 @@ CONFIG_LIST="
  audiotest
  avahi
  bittorrent
+ bookmarks
  bonjour
  bspatch
  bughunt
@@ -642,28 +643,29 @@ EOF
 # Default enables
 #
 
-enable libav
-enable xmp
 enable audiotest
-enable metadata
-enable sqlite
-enable kvstore
+enable bittorrent
+enable bookmarks
 enable ftpclient
 enable ftpserver
-enable upnp
-enable bittorrent
-enable hls
-enable icecast
-enable usagereport
-enable nativesmb
-enable rar
-enable playqueue
-enable sid
-enable htsp
-enable media_settings
 enable glw_settings
-enable netlog
 enable gumbo
-enable upgrade
+enable hls
+enable htsp
+enable icecast
+enable kvstore
+enable libav
+enable media_settings
+enable metadata
+enable nativesmb
+enable netlog
+enable playqueue
 enable plugins
+enable rar
+enable sid
+enable sqlite
 enable stpp
+enable upgrade
+enable upnp
+enable usagereport
+enable xmp
