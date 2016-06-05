@@ -238,7 +238,7 @@ sp.createMultiOpt = function(id, title, options, callback, persistent) {
     var opt = model.options[initial];
     prop.select(opt);
     prop.link(opt, model.current);
-    model.value = opt_id;
+    model.value = initial;
     callback(initial);
   }
 
