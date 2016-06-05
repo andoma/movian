@@ -115,7 +115,11 @@ pixmap_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
     return fulhack(pict, src_w, src_h, dst_w, dst_h, with_alpha, margin);
 
   default:
+#ifdef __PPC__
+    dst_pix_fmt = AV_PIX_FMT_RGB24;
+#else
     dst_pix_fmt = AV_PIX_FMT_BGR32;
+#endif
     break;
   }
 
