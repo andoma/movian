@@ -32,4 +32,7 @@ exports.w3cwebsocket.prototype.send = function(d) {
 
 exports.w3cwebsocket.prototype.close = function(d) {
   Core.resourceDestroy(this._sock);
+  setTimeout(function() {
+    this.onclose();
+  }.bind(this), 0);
 }
