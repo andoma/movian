@@ -1599,7 +1599,7 @@ init_dev_settings(void)
 
   add_dev_bool("Debug UPNP",
 	       "upnp", &gconf.enable_upnp_debug);
-
+#if ENABLE_BITTORRENT
   add_dev_bool("Debug Bittorrent general events",
 	       "bt", &gconf.enable_torrent_debug);
 
@@ -1617,7 +1617,7 @@ init_dev_settings(void)
 
   add_dev_bool("Debug Bittorrent disk I/O",
 	       "btdiskio", &gconf.enable_torrent_diskio_debug);
-
+#endif
   add_dev_bool("Debug input events",
 	       "inputevents", &gconf.enable_input_event_debug);
 
