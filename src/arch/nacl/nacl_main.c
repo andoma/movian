@@ -135,6 +135,7 @@ static nacl_glw_root_t *uiroot;
 
 static void mainloop(nacl_glw_root_t *ngr);
 static void autohide_cursor(nacl_glw_root_t *ngr);
+static void hide_cursor(nacl_glw_root_t *ngr);
 
 /**
  *
@@ -472,7 +473,19 @@ Instance_DidChangeView(PP_Instance instance, PP_Resource view)
   uiroot->gr.gr_height = rect.size.height;
 
   init_ui(uiroot, 0);
+
+  int fs = ppb_fullscreen->IsFullscreen(g_Instance);
+
+  if(gconf.enable_input_event_debug)
+    TRACE(TRACE_DEBUG, "Input", "View changed to %d x %d%s",
+          uiroot->gr.gr_width, uiroot->gr.gr_height,
+          fs ? ", (Fullscreen)" : "");
+
+  glw_set_fullscreen(&uiroot->gr, fs);
+  if(fs)
+    hide_cursor(uiroot);
 }
+
 
 /**
  *
@@ -506,6 +519,9 @@ hide_cursor(nacl_glw_root_t *ngr)
     return;
 
   ngr->cursor_hidden = 1;
+
+  if(gconf.enable_input_event_debug)
+    TRACE(TRACE_DEBUG, "Input", "Cursor hidden");
 
   ppb_mousecursor->SetCursor(g_Instance, PP_MOUSECURSOR_TYPE_NONE, 0, NULL);
   gpe.type = GLW_POINTER_GONE;
@@ -545,6 +561,8 @@ show_cursor(nacl_glw_root_t *ngr)
 
   ngr->cursor_hidden = 0;
   ppb_mousecursor->SetCursor(g_Instance, PP_MOUSECURSOR_TYPE_POINTER, 0, NULL);
+  if(gconf.enable_input_event_debug)
+    TRACE(TRACE_DEBUG, "Input", "Cursor shown");
 }
 
 
@@ -630,11 +648,13 @@ handle_keydown(nacl_glw_root_t *ngr, PP_Resource input_event)
   if(code == KC_F11) {
     int fs = ppb_fullscreen->IsFullscreen(g_Instance);
     ppb_fullscreen->SetFullscreen(g_Instance, !fs);
-    glw_set_fullscreen(gr, fs);
-    hide_cursor(ngr);
     return 1;
   }
   hide_cursor(ngr);
+
+  if(gconf.enable_input_event_debug)
+    TRACE(TRACE_DEBUG, "Input", "Input keycode: %d mod: 0x%x",
+          code, mod);
 
   for(int i = 0; i < sizeof(keysym2action) / sizeof(*keysym2action); i++) {
 
@@ -688,6 +708,8 @@ handle_char(nacl_glw_root_t *ngr, PP_Resource input_event)
     memcpy(x, s, len);
     x[len] = 0;
     const char *X = x;
+    if(gconf.enable_input_event_debug)
+      TRACE(TRACE_DEBUG, "Input", "Input characters: %s", X);
     uint32_t uc = utf8_get(&X);
     if(uc > 31 && uc != 0xfffd)
       e = event_create_int(EVENT_UNICODE, uc);
@@ -725,6 +747,10 @@ handle_mouse_event(nacl_glw_root_t *ngr, PP_Resource mouse_event,
 
   PP_InputEvent_MouseButton ppbtn =
     ppb_mouseinputevent->GetButton(mouse_event);
+
+  if(gconf.enable_input_event_debug)
+    TRACE(TRACE_DEBUG, "Input", "Mouse %f %f type %d",
+          gpe.screen_x, gpe.screen_y, type);
 
   switch(type) {
   case PP_INPUTEVENT_TYPE_MOUSEDOWN:
@@ -788,6 +814,10 @@ handle_wheel_event(nacl_glw_root_t *ngr, PP_Resource wheel_event)
   gpe.screen_y = ngr->mouse_y;
   gpe.delta_x = pos.x;
   gpe.delta_y = -pos.y;
+
+  if(gconf.enable_input_event_debug)
+    TRACE(TRACE_DEBUG, "Input", "Wheel %f %f delta: %f %f",
+          gpe.screen_x, gpe.screen_y, gpe.delta_x, gpe.delta_y);
 
   gpe.type = GLW_POINTER_FINE_SCROLL;
   glw_lock(&ngr->gr);
