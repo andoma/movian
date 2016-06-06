@@ -285,13 +285,9 @@ typedef struct gconf {
 
   struct prop *settings_apps;
   struct prop *settings_sd;
-  struct prop *settings_general;
   struct prop *settings_dev;
   struct prop *settings_network;
   struct prop_concat *settings_look_and_feel;
-#if ENABLE_BITTORRENT
-  struct prop *settings_bittorrent;
-#endif
   struct setting *setting_av_volume; // Maybe move to audio.h
   struct setting *setting_av_sync;   // Maybe move to audio.h
 

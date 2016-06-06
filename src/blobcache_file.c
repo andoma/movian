@@ -955,7 +955,8 @@ blobcache_init(void)
 	pool_num(item_pool), current_cache_size / 1000000.0,
         maxsize / 1000000.0, buf);
 
-  settings_create_action(gconf.settings_general, _p("Clear cached files"),
+  prop_t *dir = setting_get_dir("general:actions");
+  settings_create_action(dir, _p("Clear cached files"),
 			 cache_clear, NULL, 0, NULL);
 
   hts_thread_create_joinable("blobcache", &bcthread, flushthread, NULL,

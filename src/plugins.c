@@ -1071,10 +1071,9 @@ plugins_setup_root_props(void)
 
   // Settings
 
-  settings_create_separator(gconf.settings_general,
-			  _p("Plugins"));
+  prop_t *dir = setting_get_dir("general:plugins");
 
-  setting_create(SETTING_STRING, gconf.settings_general,
+  setting_create(SETTING_STRING, dir,
                  SETTINGS_INITIAL_UPDATE,
                  SETTING_STORE("pluginconf", "alt_repo"),
                  SETTING_TITLE(_p("Alternate plugin Repository URL")),
@@ -1082,7 +1081,7 @@ plugins_setup_root_props(void)
                  SETTING_MUTEX(&plugin_mutex),
                  NULL);
 
-  setting_create(SETTING_STRING, gconf.settings_general,
+  setting_create(SETTING_STRING, dir,
                  SETTINGS_INITIAL_UPDATE,
                  SETTING_STORE("pluginconf", "betapasswords"),
                  SETTING_TITLE(_p("Beta testing passwords")),
@@ -1090,7 +1089,7 @@ plugins_setup_root_props(void)
                  SETTING_MUTEX(&plugin_mutex),
                  NULL);
 
-  setting_create(SETTING_BOOL, gconf.settings_general, SETTINGS_INITIAL_UPDATE,
+  setting_create(SETTING_BOOL, dir, SETTINGS_INITIAL_UPDATE,
                  SETTING_STORE("pluginconf", "autoupgrade"),
                  SETTING_TITLE(_p("Automatically upgrade plugins")),
                  SETTING_VALUE(1),

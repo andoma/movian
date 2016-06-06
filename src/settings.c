@@ -110,9 +110,7 @@ static void init_dev_settings(void);
 static void
 set_title2(prop_t *root, prop_t *title)
 {
-  prop_t *t = prop_create_multi(root, "metadata", "title", NULL);
-  prop_link(title, t);
-  prop_ref_dec(t);
+  prop_setv(root, "metadata", "title", NULL, PROP_SET_LINK, title);
 }
 
 
@@ -198,11 +196,8 @@ settings_add_dir(prop_t *parent, prop_t *title, const char *subtype,
 {
   prop_t *p = setting_add(parent, title, "settings", 0);
 
-  if(shortdesc != NULL) {
-    prop_t *tgt = prop_create_multi(p, "metadata", "shortdesc", NULL);
-    prop_link(shortdesc, tgt);
-    prop_ref_dec(tgt);
-  }
+  if(shortdesc != NULL)
+    prop_setv(p, "metadata", "shortdesc", NULL, PROP_SET_LINK, shortdesc);
 
   settings_add_dir_sup(p, url, icon, subtype);
   return p;
@@ -221,9 +216,7 @@ settings_add_url(prop_t *parent, prop_t *title,
   prop_t *p = setting_add(parent, title, "settings", flags);
 
   if(shortdesc != NULL) {
-    prop_t *tgt = prop_create_multi(p, "metadata", "shortdesc", NULL);
-    prop_link(shortdesc, tgt);
-    prop_ref_dec(tgt);
+    prop_setv(p, "metadata", "shortdesc", NULL, PROP_SET_LINK, shortdesc);
   }
 
   prop_set(p, "url",     PROP_SET_STRING, url);
@@ -285,7 +278,7 @@ settings_create_info(prop_t *parent, const char *image,
 		     prop_t *description)
 {
   prop_t *r = setting_add(parent, NULL, "info", 0);
-  prop_link(description, prop_create(r, "description"));
+  prop_set(r, "description", PROP_SET_LINK, description);
   if(image != NULL)
     prop_set(r, "image", PROP_SET_STRING, image);
 }
@@ -328,7 +321,7 @@ void
 settings_create_bound_string(prop_t *parent, prop_t *title, prop_t *value)
 {
   prop_t *p = setting_add(parent, title, "string", 0);
-  prop_link(value, prop_create(p, "value"));
+  prop_set(p, "value", PROP_SET_LINK, value);
 }
 
 
@@ -691,11 +684,10 @@ setting_create(int type, prop_t *model, int flags, ...)
   void *mtx = NULL;
   void *lockmgr = NULL;
   int tag;
-  const char *str;
+  const char *str, *str2;
   int initial_int = 0;
   const char *initial_str = NULL;
   int min = 0, max = 100, step = 1; // Just something
-  prop_t *opt;
   const char **optlist;
   va_list ap;
   int i32;
@@ -812,16 +804,14 @@ setting_create(int type, prop_t *model, int flags, ...)
     case SETTING_TAG_OPTION:
       str = va_arg(ap, const char *);
       prop_t *opttitle = va_arg(ap, prop_t *);
-      if(str != NULL) {
-        opt = prop_create(s->s_val, str);
-        prop_link(opttitle, prop_create(opt, "title"));
-      }
+      if(str != NULL)
+        prop_setv(s->s_val, str, "title", NULL, PROP_SET_LINK, opttitle);
       break;
 
     case SETTING_TAG_OPTION_CSTR:
-      opt = prop_create(s->s_val, va_arg(ap, const char *));
+      str2 = va_arg(ap, const char *);
       str = va_arg(ap, const char *);
-      prop_set(opt, "title", PROP_SET_STRING, str);
+      prop_setv(s->s_val, str2, "title", NULL, PROP_SET_STRING, str);
       break;
 
     case SETTING_TAG_OPTION_LIST:
@@ -830,8 +820,8 @@ setting_create(int type, prop_t *model, int flags, ...)
         break;
 
       while(*optlist) {
-        prop_t *opt = prop_create(s->s_val, optlist[0]);
-        prop_set(opt, "title", PROP_SET_STRING, optlist[1]);
+        prop_setv(s->s_val, optlist[0], "title", NULL,
+                  PROP_SET_STRING, optlist[1]);
         optlist += 2;
       }
       break;
@@ -852,7 +842,7 @@ setting_create(int type, prop_t *model, int flags, ...)
       break;
 
     case SETTING_TAG_ZERO_TEXT:
-      prop_link(va_arg(ap, prop_t *), prop_create(s->s_root, "zerotext"));
+      prop_set(s->s_root, "zerotext", PROP_SET_LINK, va_arg(ap, prop_t *));
       break;
 
     case SETTING_TAG_WRITE_PROP:
@@ -1319,12 +1309,9 @@ settings_init(void)
 
   prop_concat_add_source(pc, s1, NULL);
 
-  // Applications and plugins
+  // About
 
   n = prop_create_root(NULL);
-
-  // About and stuff
-
   settings_add_url(n,
 		   _p("About"), "about", NULL, NULL, "page:about",
 		   SETTINGS_RAW_NODES);
@@ -1351,13 +1338,6 @@ settings_init(void)
 
   n = prop_create(gconf.settings_sd, "nodes");
   prop_concat_add_source(pc, n, d);
-
-  // General settings
-
-  gconf.settings_general =
-    settings_add_dir(NULL, _p("General"), NULL, NULL,
-		     _p("System related settings"),
-		     "settings:general");
 
 
   gconf.settings_network =
@@ -1416,7 +1396,7 @@ static int
 be_settings_open(prop_t *page, const char *url0, int sync)
 {
   usage_page_open(sync, "Settings");
-  prop_link(settings_model, prop_create(page, "model"));
+  prop_set(page, "model", PROP_SET_LINK, settings_model);
   return 0;
 }
 
@@ -1439,8 +1419,9 @@ prop_t *
 makesep(prop_t *title)
 {
   prop_t *d = prop_create_root(NULL);
-  prop_link(title, prop_create(prop_create(d, "metadata"), "title"));
-  prop_set_string(prop_create(d, "type"), "separator");
+  if(title)
+    prop_setv(d, "metadata", "title", NULL, PROP_SET_LINK, title);
+  prop_set(d, "type", PROP_SET_STRING, "separator");
   return d;
 
 }
@@ -1631,12 +1612,23 @@ init_dev_settings(void)
 }
 
 
+static prop_t *
+addgroup(prop_concat_t *pc, prop_t *title)
+{
+  prop_t *p = prop_create_root(NULL);
+  prop_concat_add_source(pc, prop_create(p, "nodes"), makesep(title));
+  return p;
+}
+
+
+
 prop_t *
-setting_get_dir(const char *url)
+setting_get_dir(const char *key)
 {
   prop_t *r = NULL;
+  const char *k2;
   hts_mutex_lock(&settings_mutex);
-  if(!strcmp(url, "settings:tv")) {
+  if(!strcmp(key, "settings:tv")) {
     static prop_t *tvsettings;
     if(tvsettings == NULL) {
       tvsettings = settings_add_dir(NULL, _p("TV Control"),
@@ -1645,7 +1637,49 @@ setting_get_dir(const char *url)
                                     "settings:tv");
     }
     r = tvsettings;
+  } else if((k2 = mystrbegins(key, "general:")) != NULL) {
+
+    static prop_t *general;
+
+    static prop_t *actions;
+    static prop_t *filebrowse;
+    static prop_t *plugins;
+    static prop_t *runcontrol;
+    static prop_t *upgrade;
+
+    if(general == NULL) {
+      general = settings_add_dir(NULL, _p("General"), NULL, NULL,
+                                 _p("System related settings"),
+                                 "settings:general");
+      prop_concat_t *pc = prop_concat_create(prop_create(general, "nodes"));
+
+
+      actions    = addgroup(pc, NULL);
+      upgrade    = addgroup(pc, _p("Software upgrade"));
+      filebrowse = addgroup(pc, _p("File browsing"));
+      runcontrol = addgroup(pc, _p("Starting and stopping"));
+      plugins    = addgroup(pc, _p("Plugins"));
+    }
+
+    if(!strcmp(k2, "actions")) {
+      r = actions;
+    } else if(!strcmp(k2, "runcontrol")) {
+      r = runcontrol;
+    } else if(!strcmp(k2, "upgrade")) {
+      r = upgrade;
+    } else if(!strcmp(k2, "filebrowse")) {
+      r = filebrowse;
+    } else if(!strcmp(k2, "plugins")) {
+      r = plugins;
+    } else {
+
+      printf("setting key lookup \"%s\" not found\n", k2);
+      abort();
+    }
   }
+
+
+
   hts_mutex_unlock(&settings_mutex);
   return r;
 }

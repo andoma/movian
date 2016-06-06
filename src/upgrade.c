@@ -1299,10 +1299,9 @@ upgrade_init(void)
 
   prop_set_string(upgrade_status, "upToDate");
 
-  settings_create_separator(gconf.settings_general,
-			  _p("Software upgrade"));
+  prop_t *dir = setting_get_dir("general:upgrade");
 
-  setting_create(SETTING_MULTIOPT, gconf.settings_general,
+  setting_create(SETTING_MULTIOPT, dir,
                  SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Upgrade to releases from")),
                  SETTING_STORE("upgrade", "track-5-0"),
@@ -1314,7 +1313,7 @@ upgrade_init(void)
                  NULL);
 
 
-  setting_create(SETTING_BOOL, gconf.settings_general, SETTINGS_INITIAL_UPDATE,
+  setting_create(SETTING_BOOL, dir, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Notify about upgrades")),
                  SETTING_VALUE(1),
                  SETTING_STORE("upgrade", "check"),
@@ -1323,12 +1322,13 @@ upgrade_init(void)
                  NULL);
 
   prop_t *p = prop_create_root(NULL);
-  prop_link(_p("Check for updates now"),
-	    prop_create(prop_create(p, "metadata"), "title"));
-  prop_set_string(prop_create(p, "type"), "load");
-  prop_set_string(prop_create(p, "url"), "showtime:upgrade");
+  prop_setv(p, "metadata", "title", NULL, PROP_SET_LINK,
+            _p("Check for updates now"));
 
-  if(prop_set_parent(p, prop_create(gconf.settings_general, "nodes")))
+  prop_set(p, "type", PROP_SET_STRING, "movian");
+  prop_set(p, "url",  PROP_SET_STRING, "showtime:upgrade");
+
+  if(prop_set_parent(p, prop_create(dir, "nodes")))
      abort();
 
   inhibit_checks = 0;

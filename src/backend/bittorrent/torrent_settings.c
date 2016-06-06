@@ -60,10 +60,11 @@ set_torrent_upload_speed(void *opaque, int v)
 void
 torrent_settings_init(void)
 {
-  prop_t *s = gconf.settings_bittorrent;
+  prop_t *dir = setting_get_dir("general:filebrowse");
+  prop_t *s = settings_add_dir(dir, _p("BitTorrent"),
+                               NULL, NULL, NULL, "settings:bittorrent");
 
   char defpath[1024];
-
   int freespace = 10;
 
 #ifdef STOS
@@ -125,5 +126,4 @@ torrent_settings_init(void)
 
   allow_update = 1;
   torrent_diskio_scan(0);
-
 }

@@ -124,12 +124,13 @@ metadb_init(void)
 
   metadb_close(db);
 
-  if(r)
+  if(r) {
     metadb_pool = NULL; // Disable
-  else
-    settings_create_action(gconf.settings_general, _p("Clear all metadata"),
+  } else {
+    prop_t *dir = setting_get_dir("general:actions");
+    settings_create_action(dir, _p("Clear all metadata"),
 			   items_clear, NULL, 0, NULL);
-
+  }
 }
 
 

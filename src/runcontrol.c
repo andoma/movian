@@ -93,7 +93,9 @@ current_media_playstatus(void *opaque, const char *str)
 static void
 init_autostandby(void)
 {
-  setting_create(SETTING_INT, gconf.settings_general, SETTINGS_INITIAL_UPDATE,
+  prop_t *dir = setting_get_dir("general:runcontrol");
+
+  setting_create(SETTING_INT, dir, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Automatic standby")),
                  SETTING_STORE("runcontrol", "autostandby"),
                  SETTING_WRITE_INT(&standby_delay),
@@ -286,30 +288,29 @@ runcontrol_init(void)
        !gconf.can_not_exit))
     return;
 
-  settings_create_separator(gconf.settings_general,
-			  _p("Starting and stopping"));
+  prop_t *dir = setting_get_dir("general:runcontrol");
 
   if(gconf.can_standby) {
     init_autostandby();
     init_sleeptimer(rc);
-    settings_create_action(gconf.settings_general, _p("Standby"),
+    settings_create_action(dir, _p("Standby"),
 			   do_standby, NULL, 0, NULL);
   }
 
   if(gconf.can_poweroff)
-    settings_create_action(gconf.settings_general, _p("Power off system"),
+    settings_create_action(dir, _p("Power off system"),
 			   do_power_off, NULL, 0, NULL);
 
   if(gconf.can_logout)
-    settings_create_action(gconf.settings_general, _p("Logout"),
+    settings_create_action(dir, _p("Logout"),
 			   do_logout, NULL, 0, NULL);
 
   if(gconf.can_open_shell)
-    settings_create_action(gconf.settings_general, _p("Open shell"),
+    settings_create_action(dir, _p("Open shell"),
 			   do_open_shell, NULL, 0, NULL);
 
   if(!gconf.can_not_exit)
-    settings_create_action(gconf.settings_general, _p("Quit"),
+    settings_create_action(dir, _p("Quit"),
 			   do_exit, NULL, 0, NULL);
 
   if(gconf.shell_fd > 0) {

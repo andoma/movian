@@ -1427,38 +1427,33 @@ fileaccess_init(void)
   fa_indexer_init();
 #endif
 
-  settings_create_separator(gconf.settings_general, _p("File browsing"));
+  prop_t *dir = setting_get_dir("general:filebrowse");
 
-  setting_create(SETTING_BOOL, gconf.settings_general, SETTINGS_INITIAL_UPDATE,
+  setting_create(SETTING_BOOL, dir, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Enable file deletion from item menu")),
                  SETTING_WRITE_BOOL(&gconf.fa_allow_delete),
                  SETTING_STORE("faconf", "delete"),
                  NULL);
 
-  setting_create(SETTING_BOOL, gconf.settings_general, SETTINGS_INITIAL_UPDATE,
+  setting_create(SETTING_BOOL, dir, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Store per-file settings in filesystem")),
                  SETTING_WRITE_BOOL(&gconf.fa_kvstore_as_xattr),
                  SETTING_VALUE(1),
                  SETTING_STORE("faconf", "enablexattr"),
                  NULL);
 
-  setting_create(SETTING_BOOL, gconf.settings_general, SETTINGS_INITIAL_UPDATE,
+  setting_create(SETTING_BOOL, dir, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Show filename extensions")),
                  SETTING_WRITE_BOOL(&gconf.show_filename_extensions),
                  SETTING_STORE("faconf", "filenameextensions"),
                  NULL);
 
-  setting_create(SETTING_BOOL, gconf.settings_general, SETTINGS_INITIAL_UPDATE,
+  setting_create(SETTING_BOOL, dir, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Browse archives as folders")),
                  SETTING_WRITE_BOOL(&gconf.fa_browse_archives),
                  SETTING_VALUE(1),
                  SETTING_STORE("faconf", "browsearchives"),
                  NULL);
-#if ENABLE_BITTORRENT
-  gconf.settings_bittorrent =
-    settings_add_dir(gconf.settings_general, _p("BitTorrent"),
-                     NULL, NULL, NULL, "settings:bittorrent");
-#endif
   return 0;
 }
 
