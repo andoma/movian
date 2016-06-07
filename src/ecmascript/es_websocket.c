@@ -65,6 +65,9 @@ typedef struct es_websocket_client {
 
   char *ewc_status_str; // Current status, used for failure reporting
 
+  asyncio_timer_t ewc_timer;
+
+  int ewc_alive;
 
 } es_websocket_client_t;
 
@@ -236,6 +239,8 @@ es_websocket_client_net_destroy(void *aux)
     ewc->ewc_dns_lookup = NULL;
   }
 
+  asyncio_timer_disarm(&ewc->ewc_timer);
+
   free(ewc->ewc_ws.packet);
   ewc->ewc_ws.packet = NULL;
 
@@ -364,6 +369,10 @@ es_websocket_client_input_ws(void *opaque, int opcode, uint8_t *data, int len)
     htsbuf_append(&q, data, len);
     asyncio_sendq(ewc->ewc_connection, &q, 0);
     break;
+
+  case 10:
+    ewc->ewc_alive = 1;
+    break;
   default:
     break;
   }
@@ -395,6 +404,7 @@ es_websocket_client_input_http(es_websocket_client_t *ewc, htsbuf_queue_t *q)
       // Last line
 
       if(ewc->ewc_http_status == 101) {
+        ewc->ewc_alive = 1;
         ewc->ewc_state = EWC_CONNECTED;
         free(line);
 
@@ -456,7 +466,33 @@ es_websocket_client_input(void *opaque, htsbuf_queue_t *q)
 }
 
 
+/**
+ *
+ */
+static void
+es_websocket_timeout(void *aux)
+{
+  es_websocket_client_t *ewc = (es_websocket_client_t *)aux;
+  if(!ewc->ewc_alive) {
+    es_websocket_client_close(ewc, WS_STATUS_ABNORMAL_CLOSE, "Timeout");
+    es_websocket_client_net_destroy(ewc); // Will release the ref we have
+    return;
+  }
 
+  ewc->ewc_alive = 0;
+  htsbuf_queue_t q;
+  htsbuf_queue_init(&q, 0);
+  websocket_append_hdr(&q, 9, 4, NULL);
+  uint32_t payload = 0;
+  htsbuf_append(&q, &payload, 4);
+  asyncio_sendq(ewc->ewc_connection, &q, 0);
+  asyncio_timer_arm_delta_sec(&ewc->ewc_timer, 20);
+}
+
+
+/**
+ *
+ */
 static void
 es_websocket_client_connected(void *aux, const char *err)
 {
@@ -486,6 +522,9 @@ es_websocket_client_connected(void *aux, const char *err)
            ewc->ewc_path, ewc->ewc_hostname, key);
   asyncio_send(ewc->ewc_connection, buf, strlen(buf), 1);
   asyncio_send(ewc->ewc_connection, "\r\n", 2, 0);
+
+  asyncio_timer_init(&ewc->ewc_timer, es_websocket_timeout, ewc);
+  asyncio_timer_arm_delta_sec(&ewc->ewc_timer, 20);
 }
 
 /**
