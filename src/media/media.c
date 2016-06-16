@@ -874,3 +874,95 @@ mp_underrun(media_pipe_t *mp)
   mp->mp_hold_flags |= MP_HOLD_PRE_BUFFERING;
   mp_set_playstatus_by_hold_locked(mp, NULL);
 }
+
+static void
+sprintts(char *dst, size_t dstlen, int64_t ts)
+{
+  if(ts == PTS_UNSET)
+    snprintf(dst, dstlen, "UNSET");
+  else
+    //    snprintf(dst, dstlen, "%"PRId64, ts);
+    snprintf(dst, dstlen, "%.3f", ts / 1000000.0);
+}
+
+void
+media_discontinuity_debug(media_discontinuity_aux_t *aux,
+                          int64_t dts,
+                          int64_t pts,
+                          int epoch,
+                          int skip,
+                          const char *prefix)
+{
+  return;
+
+  int do_print = 0;
+
+  char ts1[16];
+  char ts2[16];
+  char ts3[16];
+  char ts4[16];
+  int64_t dts_delta = 0;
+  int64_t pts_delta = 0;
+
+  if(dts != PTS_UNSET && aux->dts != PTS_UNSET &&
+     llabs(dts - aux->dts) > 500000) {
+    dts_delta = dts - aux->dts;
+    do_print |= 1;
+  }
+
+  if(pts != PTS_UNSET && aux->pts != PTS_UNSET &&
+     llabs(pts - aux->pts) > 500000) {
+    pts_delta = pts - aux->pts;
+    do_print |= 2;
+  }
+
+  if(epoch != aux->epoch)
+    do_print |= 4;
+
+  if(skip != aux->skip)
+    do_print |= 8;
+
+  if(do_print) {
+    sprintts(ts1, sizeof(ts1), aux->dts);
+    sprintts(ts2, sizeof(ts2), dts);
+    sprintts(ts3, sizeof(ts3), aux->pts);
+    sprintts(ts4, sizeof(ts4), pts);
+
+    TRACE(TRACE_DEBUG, "DISCONT", "%6s: "
+          "DTS: %12s %c %-12s [%12"PRId64"]  "
+          "PTS: %12s %c %-12s [%12"PRId64"]  "
+          "epoch: %d %c %d   "
+          "skip: %d %c %d\n",
+          prefix,
+          ts1,
+          do_print & 1 ? '>' : '_',
+          ts2,
+          dts_delta,
+
+          ts3,
+          do_print & 2 ? '>' : '_',
+          ts4,
+          pts_delta,
+
+          aux->epoch,
+          do_print & 4 ? '>' : '_',
+          epoch,
+
+          aux->skip,
+          do_print & 8 ? '>' : '_',
+          skip
+          );
+  }
+
+  if(dts != PTS_UNSET)
+    aux->dts = dts;
+
+  if(pts != PTS_UNSET)
+    aux->pts = pts;
+
+  aux->epoch = epoch;
+  aux->skip = skip;
+}
+
+
+

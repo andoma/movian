@@ -22,6 +22,17 @@ TAILQ_HEAD(media_buf_queue, media_buf);
 
 struct media_pipe;
 
+
+/**
+ * Helper struct to track discontinuities
+ */
+typedef struct media_discontinuity_aux {
+  int64_t dts;
+  int64_t pts;
+  int epoch;
+  int skip;
+} media_discontinuity_aux_t;
+
 /**
  * Media queue
  */
@@ -69,6 +80,8 @@ typedef struct media_queue {
   uint64_t mq_meta_channel_layout;
   int mq_meta_width;
   int mq_meta_height;
+
+  media_discontinuity_aux_t mq_demux_debug;
 
 } media_queue_t;
 

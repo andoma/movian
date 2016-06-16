@@ -121,6 +121,8 @@ typedef struct audio_decoder {
   int64_t ad_last_pts;
   int64_t ad_saved_pts;
 
+  media_discontinuity_aux_t ad_debug_discont;
+
 } audio_decoder_t;
 
 audio_class_t *audio_driver_init(struct prop *asettings);

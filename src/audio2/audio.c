@@ -368,6 +368,13 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
   if(mb->mb_skip || mb->mb_stream != mq->mq_stream)
     return 0;
 
+  media_discontinuity_debug(&ad->ad_debug_discont,
+                            mb->mb_dts,
+                            mb->mb_pts,
+                            mp->mp_epoch,
+                            mb->mb_skip,
+                            "ADEC");
+
   if(mb->mb_cw == NULL) {
     frame->sample_rate = mb->mb_rate;
     frame->format = AV_SAMPLE_FMT_S16;

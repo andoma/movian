@@ -542,3 +542,11 @@ mp_check_underrun(media_pipe_t *mp)
      unlikely(TAILQ_FIRST(&mp->mp_audio.mq_q_data) == NULL))
     mp_underrun(mp);
 }
+
+void media_discontinuity_debug(media_discontinuity_aux_t *aux,
+                               int64_t dts,
+                               int64_t pts,
+                               int epoch,
+                               int skip,
+                               const char *prefix);
+

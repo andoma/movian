@@ -111,6 +111,10 @@ typedef struct video_decoder {
   const media_buf_meta_t *vd_reorder_current;
   int vd_seen_bframe;
 
+
+  media_discontinuity_aux_t vd_debug_discont_in;
+  media_discontinuity_aux_t vd_debug_discont_out;
+
 } video_decoder_t;
 
 video_decoder_t *video_decoder_create(media_pipe_t *mp);

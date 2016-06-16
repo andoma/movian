@@ -350,6 +350,13 @@ vd_thread(void *aux)
 	reinit = 0;
       }
 
+      media_discontinuity_debug(&vd->vd_debug_discont_in,
+                                mb->mb_dts,
+                                mb->mb_pts,
+                                mp->mp_epoch,
+                                mb->mb_skip,
+                                "VDEC");
+
       mc->decode(mc, vd, mq, mb, reqsize);
       update_vbitrate(mp, mq, mb, vd);
       reqsize = -1;

@@ -290,6 +290,14 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 	}
       }
 
+
+      media_discontinuity_debug(&mq->mq_demux_debug,
+                                mb->mb_dts,
+                                mb->mb_pts,
+                                mp->mp_epoch,
+                                mb->mb_skip,
+                                mq == &mp->mp_video ? "VDEMUX" : "ADEMUX");
+
       mb->mb_cw = cwvec[si] ? media_codec_ref(cwvec[si]) : NULL;
 
       mb->mb_stream = pkt.stream_index;

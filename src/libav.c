@@ -135,14 +135,24 @@ libav_deliver_frame(video_decoder_t *vd,
 #if 0
   static int64_t lastpts = AV_NOPTS_VALUE;
   if(lastpts != AV_NOPTS_VALUE) {
-    printf("DEC: %20"PRId64" : %-20"PRId64" %d %"PRId64" %6d %d\n", pts, pts - lastpts, mbm->mbm_drive_clock,
-           mbm->mbm_delta, duration, mbm->mbm_sequence);
+    printf(" VDEC: %20"PRId64" : %-20"PRId64" %d %"PRId64" %6d %d epoch=%d\n", pts, pts - lastpts, mbm->mbm_drive_clock,
+           mbm->mbm_user_time, duration, mbm->mbm_sequence, mbm->mbm_epoch);
+#if 0
     if(pts - lastpts > 1000000) {
       abort();
     }
+    #endif
   }
   lastpts = pts;
 #endif
+
+
+  media_discontinuity_debug(&vd->vd_debug_discont_out,
+                            mbm->mbm_dts,
+                            mbm->mbm_pts,
+                            mbm->mbm_epoch,
+                            mbm->mbm_skip,
+                            "VOUT");
 
   vd->vd_interlaced |=
     frame->interlaced_frame && !mbm->mbm_disable_deinterlacer;
