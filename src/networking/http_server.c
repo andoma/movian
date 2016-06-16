@@ -110,6 +110,7 @@ struct http_connection {
   void *hc_opaque;
 
   char hc_my_addr[128]; // hc_local_addr as text
+  char hc_remote_addr[128]; // hc_remote_addr as text
 
   websocket_state_t hc_ws;
 
@@ -1017,7 +1018,8 @@ http_ws_send_ping(void *aux)
   http_connection_t *hc = aux;
   hc->hc_ws_missing_ping++;
   if(hc->hc_ws_missing_ping == 2) {
-    TRACE(TRACE_DEBUG, "HTTP", "Websocket connection timed out");
+    TRACE(TRACE_DEBUG, "HTTP", "Websocket connection from %s timed out",
+          hc->hc_remote_addr);
     http_close(hc);
     return;
   }
@@ -1090,6 +1092,7 @@ http_accept(void *opaque, int fd, const net_addr_t *local_addr,
   htsbuf_queue_init(&hc->hc_output, 0);
 
   hc->hc_local_addr  = *local_addr;
+  net_fmt_host(hc->hc_remote_addr, sizeof(hc->hc_remote_addr), remote_addr);
 }
 
 
