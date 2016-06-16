@@ -51,6 +51,13 @@ nanosvg_decode(buf_t *buf, const image_meta_t *im,
 
   int orig_width = image->width;
   int orig_height = image->height;
+
+  if(orig_width < 1 || orig_height < 1) {
+    snprintf(errbuf, errlen, "Invalid SVG dimensions");
+    nsvgDelete(image);
+    return NULL;
+  }
+
   int w, h;
   float scale = 1;
   if(im->im_req_width != -1) {
