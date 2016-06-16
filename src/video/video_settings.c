@@ -144,7 +144,6 @@ video_settings_init(void)
                    SETTING_VALUE_ORIGIN("global"),
                    NULL);
 
-#ifdef PLATFORM_RPI
   video_settings.vinterpolate_setting =
     setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
                    SETTING_TITLE(_p("Video frame interpolation")),
@@ -152,7 +151,6 @@ video_settings_init(void)
                    SETTING_VALUE_ORIGIN("global"),
                    SETTING_VALUE(1),
                    NULL);
-#endif
 
   setting_create(SETTING_MULTIOPT, s, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Resume video playback")),
