@@ -141,7 +141,7 @@ glw_update_size(glw_root_t *gr)
   int base_size = bs1; // MIN(bs1, bs2);
 
   val = GLW_CLAMP(base_size + glw_settings.gs_size +
-                  gr->gr_skin_scale_adjustment, 8, 40);
+                  gr->gr_skin_scale_adjustment, 8, 80);
 
   if(gr->gr_current_size != val) {
     gr->gr_current_size = val;
