@@ -526,6 +526,8 @@ settings_string_set_value(setting_t *s, rstr_t *rstr)
 
   rstr_t *outval = rstr;
 
+  s->s_value_set = 1;
+
   if((rstr == NULL || rstr_get(rstr)[0] == 0))
     outval = s->s_default_str;
 
@@ -576,6 +578,34 @@ settings_string_callback(void *opaque, prop_event_t event, ...)
     break;
   }
   va_end(ap);
+}
+
+/**
+ *
+ */
+static void
+settings_str_inherited_value(void *opaque, rstr_t *v)
+{
+  setting_t *s = opaque;
+
+  rstr_set(&s->s_default_str, v);
+  prop_set(s->s_root, "defaultValue", PROP_SET_RSTRING, s->s_default_str);
+  printf("inherited value set to %s  set=%d\n", rstr_get(v), s->s_value_set);
+  if(s->s_value_set)
+    return;
+
+  if(s->s_flags & SETTINGS_DEBUG)
+    TRACE(TRACE_DEBUG, "Settings", "Value set to %s (inherited)", rstr_get(v));
+
+  prop_set_void_ex(s->s_val, s->s_sub);
+
+  if(s->s_callback != NULL) {
+    prop_callback_string_t *cb = s->s_callback;
+    cb(s->s_opaque, rstr_get(s->s_default_str));
+  }
+
+  if(s->s_ext_value)
+    prop_set_rstring(s->s_ext_value, s->s_default_str);
 }
 
 
@@ -692,6 +722,7 @@ setting_create(int type, prop_t *model, int flags, ...)
   va_list ap;
   int i32;
   struct setting_list *list;
+  prop_t *initial_value_prop = NULL;
 
   atomic_set(&s->s_refcount, 1);
   s->s_type = type;
@@ -783,6 +814,10 @@ setting_create(int type, prop_t *model, int flags, ...)
         initial_str = va_arg(ap, const char *);
         break;
       }
+      break;
+
+    case SETTING_TAG_VALUE_PROP:
+      initial_value_prop = va_arg(ap, prop_t *);
       break;
 
     case SETTING_TAG_RANGE:
@@ -980,6 +1015,16 @@ setting_create(int type, prop_t *model, int flags, ...)
                        PROP_TAG_MUTEX, mtx,
                        PROP_TAG_LOCKMGR, lockmgr,
                        NULL);
+
+    } else if(initial_value_prop != NULL) {
+      s->s_inherited_value_sub =
+        prop_subscribe(PROP_SUB_IGNORE_VOID,
+                       PROP_TAG_CALLBACK_INT, settings_int_inherited_value, s,
+                       PROP_TAG_ROOT, initial_value_prop,
+                       PROP_TAG_COURIER, pc,
+                       PROP_TAG_MUTEX, mtx,
+                       PROP_TAG_LOCKMGR, lockmgr,
+                       NULL);
     }
     break;
 
@@ -1014,7 +1059,7 @@ setting_create(int type, prop_t *model, int flags, ...)
 
     prop_set_rstring(s->s_val, initial);
 
-    if(flags & SETTINGS_INITIAL_UPDATE)
+    if(flags & SETTINGS_INITIAL_UPDATE && initial_value_prop == NULL)
       settings_string_set_value(s, initial);
 
     rstr_release(initial);
@@ -1027,6 +1072,17 @@ setting_create(int type, prop_t *model, int flags, ...)
                      PROP_TAG_MUTEX, mtx,
                      PROP_TAG_LOCKMGR, lockmgr,
                      NULL);
+
+    if(initial_value_prop != NULL) {
+      s->s_inherited_value_sub =
+        prop_subscribe(PROP_SUB_IGNORE_VOID,
+                       PROP_TAG_CALLBACK_RSTR, settings_str_inherited_value, s,
+                       PROP_TAG_ROOT, initial_value_prop,
+                       PROP_TAG_COURIER, pc,
+                       PROP_TAG_MUTEX, mtx,
+                       PROP_TAG_LOCKMGR, lockmgr,
+                       NULL);
+    }
     break;
 
 

@@ -82,6 +82,7 @@ enum {
   SETTING_TAG_TITLE = 1,
   SETTING_TAG_TITLE_CSTR,
   SETTING_TAG_VALUE,
+  SETTING_TAG_VALUE_PROP,
   SETTING_TAG_CALLBACK,
   SETTING_TAG_COURIER,
   SETTING_TAG_STORE,
@@ -106,6 +107,7 @@ enum {
 #define SETTING_TITLE(a)                        SETTING_TAG_TITLE, a
 #define SETTING_TITLE_CSTR(a)                   SETTING_TAG_TITLE_CSTR, a
 #define SETTING_VALUE(a)                        SETTING_TAG_VALUE, a
+#define SETTING_VALUE_PROP(a)                   SETTING_TAG_VALUE_PROP, a
 #define SETTING_CALLBACK(a, b)                  SETTING_TAG_CALLBACK, a, b
 #define SETTING_COURIER(a)                      SETTING_TAG_COURIER, a
 #define SETTING_STORE(a, b)                     SETTING_TAG_STORE, a, b
