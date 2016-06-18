@@ -534,18 +534,23 @@ static void
 set_language(void *opaque, const char *str)
 {
   char buf[200];
+  char iso639_1[3];
   nls_clear();
 
   if(!strcmp(str, "none")) {
     TRACE(TRACE_INFO, "i18n", "Unloading language definition");
     snprintf(gconf.lang, sizeof(gconf.lang), "en");
-    return;
-  }
-  snprintf(gconf.lang, sizeof(gconf.lang), "%s", str);
+  } else {
+    snprintf(gconf.lang, sizeof(gconf.lang), "%s", str);
 
-  snprintf(buf, sizeof(buf), "%s/lang/%s.lang", app_dataroot(), str);
-  TRACE(TRACE_INFO, "i18n", "Loading language %s", str);
-  nls_load_lang(buf);
+    snprintf(buf, sizeof(buf), "%s/lang/%s.lang", app_dataroot(), str);
+    TRACE(TRACE_INFO, "i18n", "Loading language %s", str);
+    nls_load_lang(buf);
+  }
+  memcpy(iso639_1, gconf.lang, 3);
+  iso639_1[2] = 0;
+  prop_setv(prop_get_global(), "i18n", "iso639_1", NULL, PROP_SET_STRING,
+            iso639_1);
 }
 
 
