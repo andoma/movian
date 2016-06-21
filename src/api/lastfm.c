@@ -126,8 +126,6 @@ lastfm_parse_albuminfo(void *db, htsmsg_t *xml, const char *artist,
     } else
       continue;
 
-    printf("Added albumart %s (%d x %d)\n", url, width, height);
-
     metadb_insert_albumart(db, album_id, url, width, height);
   }
 }
