@@ -1397,6 +1397,8 @@ static const token_attrib_t attribtab[] = {
   {"navPositional",         mod_flag, GLW2_POSITIONAL_NAVIGATION,  mod_flags2},
   {"clickable",             mod_flag, GLW2_CLICKABLE,              mod_flags2},
   {"fhpSpill",              mod_flag, GLW2_FHP_SPILL,              mod_flags2},
+  {"selectOnFocus",         mod_flag, GLW2_SELECT_ON_FOCUS,        mod_flags2},
+  {"selectOnHover",         mod_flag, GLW2_SELECT_ON_HOVER,        mod_flags2},
 
   {"fixedSize",       mod_flag, GLW_IMAGE_FIXED_SIZE,   mod_img_flags},
   {"bevelLeft",       mod_flag, GLW_IMAGE_BEVEL_LEFT,   mod_img_flags},

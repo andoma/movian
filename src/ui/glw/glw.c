@@ -433,7 +433,8 @@ update_in_path(glw_t *w)
   glw_t *p;
 
   for(p = w->glw_parent; p != NULL; p = p->glw_parent) {
-    if(p == gr->gr_current_focus) f |= GLW_IN_FOCUS_PATH;
+    if(p == gr->gr_current_focus && gr->gr_keyboard_mode)
+      f |= GLW_IN_FOCUS_PATH;
     if(p == gr->gr_pointer_hover) f |= GLW_IN_HOVER_PATH;
     if(p == gr->gr_pointer_press) f |= GLW_IN_PRESSED_PATH;
   }
@@ -1114,9 +1115,21 @@ glw_move(glw_t *w, glw_t *b)
 static void
 glw_fhp_update(glw_t *w, int or, int and)
 {
+  if(w->glw_flags & GLW_DESTROYING)
+    return;
+
+  if(w->glw_flags2 & GLW2_SELECT_ON_FOCUS && w->glw_originating_prop &&
+     !(w->glw_flags & GLW_IN_FOCUS_PATH) && (or & GLW_IN_FOCUS_PATH)) {
+    prop_select(w->glw_originating_prop);
+  }
+
+  if(w->glw_flags2 & GLW2_SELECT_ON_HOVER && w->glw_originating_prop &&
+     !(w->glw_flags & GLW_IN_HOVER_PATH) && (or & GLW_IN_HOVER_PATH)) {
+    prop_select(w->glw_originating_prop);
+  }
+
   w->glw_flags = (w->glw_flags | or) & and;
-  if(!(w->glw_flags & GLW_DESTROYING))
-    glw_signal0(w, GLW_SIGNAL_FHP_PATH_CHANGED, NULL);
+  glw_signal0(w, GLW_SIGNAL_FHP_PATH_CHANGED, NULL);
 }
 
 
@@ -1144,6 +1157,11 @@ glw_path_flood(glw_t *w, int or, int and)
 void
 glw_path_modify(glw_t *w, int set, int clr, glw_t *stop)
 {
+  if(!w->glw_root->gr_keyboard_mode) {
+    set &= ~GLW_IN_FOCUS_PATH;
+    clr |= GLW_IN_FOCUS_PATH;
+  }
+
   clr = ~clr; // Invert so we can just AND it
 
   glw_path_flood(w, set, clr);
@@ -2142,6 +2160,7 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
   if(gpe->type == GLW_POINTER_TOUCH_START) {
     gr->gr_touch_start_x = gpe->screen_x;
     gr->gr_touch_start_y = gpe->screen_y;
+    gr->gr_touch_mode = 1;
     prop_set(gr->gr_prop_ui, "touch", PROP_SET_INT, 1);
   }
 
@@ -2225,6 +2244,9 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
   TAILQ_FOREACH(c, &gr->gr_universe->glw_childs, glw_parent_link)
     if(glw_pointer_event0(gr, c, gpe, &hover, p, dir))
       break;
+
+  if(gr->gr_touch_mode)
+    return;
 
   if(gpe->type == GLW_POINTER_MOTION_UPDATE ||
      gpe->type == GLW_POINTER_MOTION_REFRESH)
@@ -3380,6 +3402,12 @@ glw_set_keyboard_mode(glw_root_t *gr, int on)
   if(gr->gr_universe != NULL)
     glw_update_dynamics_r(gr->gr_universe, GLW_VIEW_EVAL_FHP_CHANGE);
 
+  if(gr->gr_current_focus != NULL) {
+    if(on)
+      glw_path_modify(gr->gr_current_focus, GLW_IN_FOCUS_PATH, 0, NULL);
+    else
+      glw_path_modify(gr->gr_current_focus, 0, GLW_IN_FOCUS_PATH, NULL);
+  }
   glw_need_refresh(gr, 0);
   return 1;
 }

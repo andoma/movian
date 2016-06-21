@@ -4983,24 +4983,6 @@ glwf_isFocused(glw_view_eval_context_t *ec, struct token *self,
 
 
 /**
- * Return 1 if the current widget is in focus for navigation
- */
-static int
-glwf_isNavFocused(glw_view_eval_context_t *ec, struct token *self,
-                  token_t **argv, unsigned int argc)
-{
-  token_t *r;
-
-  ec->dynamic_eval |= GLW_VIEW_EVAL_FHP_CHANGE;
-
-  r = eval_alloc(self, ec, TOKEN_INT);
-  r->t_int = glw_is_focused(ec->w) && ec->w->glw_root->gr_keyboard_mode;
-  eval_push(ec, r);
-  return 0;
-}
-
-
-/**
  * Return 1 if the current widget is hovered
  */
 static int
@@ -7283,7 +7265,7 @@ static const token_func_t funcvec[] = {
   {"createChild", 1, glwf_createchild},
   {"delete", 1, glwf_delete},
   {"isFocused", 0, glwf_isFocused},
-  {"isNavFocused", 0, glwf_isNavFocused},
+  {"isNavFocused", 0, glwf_isFocused},
   {"isHovered", 0, glwf_isHovered},
   {"isPressed", 0, glwf_isPressed},
   {"focusedChild", 0, glwf_focusedChild},

@@ -924,6 +924,7 @@ typedef struct glw_root {
 
   int64_t gr_pointer_press_time;
 
+  int gr_touch_mode;
   float gr_touch_start_x;
   float gr_touch_start_y;
   float gr_touch_move_x;
@@ -1254,7 +1255,8 @@ typedef struct glw {
 #define GLW2_POSITIONAL_NAVIGATION  0x1000000
 #define GLW2_CLICKABLE              0x2000000 // Widget is clickable
 #define GLW2_FHP_SPILL              0x4000000
-
+#define GLW2_SELECT_ON_FOCUS        0x8000000
+#define GLW2_SELECT_ON_HOVER        0x10000000
 
   float glw_alpha;                   /* Alpha set by user */
   float glw_sharpness;               /* 1-Blur set by user */
