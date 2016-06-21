@@ -212,5 +212,12 @@ video_settings_init(void)
                  SETTING_STORE("videoplayback", "seekfwdstep"),
                  NULL);
 
-
+  setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Video buffer size")),
+                 SETTING_VALUE(48),
+                 SETTING_RANGE(16, 64),
+                 SETTING_UNIT_CSTR("MB"),
+                 SETTING_STORE("videoplayback", "videobuffersize"),
+                 SETTING_WRITE_INT(&video_settings.video_buffer_size),
+                 NULL);
 }

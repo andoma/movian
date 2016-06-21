@@ -43,6 +43,8 @@
 #include "media_settings.h"
 #include "misc/lockmgr.h"
 
+#include "video/video_settings.h"
+
 atomic_t media_buffer_hungry; /* Set if we try to fill media buffers
                                  Code can check this and avoid doing IO
                                  intensive tasks
@@ -755,7 +757,7 @@ mp_configure(media_pipe_t *mp, int flags, int buffer_size, int64_t duration,
     break;
 
   case MP_BUFFER_DEEP:
-    mp->mp_buffer_limit = 48 * 1024 * 1024;
+    mp->mp_buffer_limit = video_settings.video_buffer_size * 1024 * 1024;
     break;
   }
 

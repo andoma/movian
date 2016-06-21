@@ -51,6 +51,8 @@ struct video_settings {
 
   int seek_back_step;
   int seek_fwd_step;
+
+  int video_buffer_size;
 };
 
 extern struct video_settings video_settings;
