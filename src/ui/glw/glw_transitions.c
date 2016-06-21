@@ -95,7 +95,15 @@ trans_slide_horizontal(float b, float alpha, glw_rctx_t *rc)
 static void
 trans_slide_vertical(float b, float alpha, glw_rctx_t *rc)
 {
-  rc->rc_alpha = alpha * GLW_S(1 - fabs(b));
+  if(b > 0) {
+    b = GLW_S(b);
+  } else {
+    b = -GLW_S(-b);
+  }
+
+  rc->rc_alpha = alpha * (1 - b);
+
+
   glw_Translatef(rc, 0, 2 * b, 0);
 }
 
