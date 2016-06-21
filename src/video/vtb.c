@@ -131,15 +131,15 @@ emit_frame(vtb_decoder_t *vtbd, vtb_frame_t *vf, media_queue_t *mq)
       fi.fi_type = 'YUVP';
 
       CVPixelBufferLockBaseAddress(vf->vf_buf, 0);
-      
+
       for(int i = 0; i < 3; i++ ) {
         fi.fi_data[i]  = CVPixelBufferGetBaseAddressOfPlane(vf->vf_buf, i);
         fi.fi_pitch[i] = CVPixelBufferGetBytesPerRowOfPlane(vf->vf_buf, i);
       }
-      
+
       if(fi.fi_duration > 0)
         video_deliver_frame(vd, &fi);
-      
+
       CVPixelBufferUnlockBaseAddress(vf->vf_buf, 0);
       break;
 
@@ -151,7 +151,7 @@ emit_frame(vtb_decoder_t *vtbd, vtb_frame_t *vf, media_queue_t *mq)
         video_deliver_frame(vd, &fi);
       break;
   }
-  
+
 
 
   vtbd->vtbd_last_pts = vf->vf_mbm.mbm_pts;
@@ -364,7 +364,7 @@ video_vtb_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
     return 1;
   }
 
-  
+
   if(mcp == NULL || mcp->extradata == NULL || mcp->extradata_size == 0 ||
      ((const uint8_t *)mcp->extradata)[0] != 1)
     return h264_annexb_to_avc(mc, mp, &video_vtb_codec_create);
@@ -443,13 +443,13 @@ video_vtb_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 
   dict_set_int32(surface_dict, kCVPixelBufferWidthKey, mcp->width);
   dict_set_int32(surface_dict, kCVPixelBufferHeightKey, mcp->height);
-  
+
   if(1) {
     vtbd->vtbd_pixel_format = kCVPixelFormatType_420YpCbCr8BiPlanarFullRange;
   } else {
     vtbd->vtbd_pixel_format = kCVPixelFormatType_420YpCbCr8Planar;
   }
-  
+
   dict_set_int32(surface_dict, kCVPixelBufferPixelFormatTypeKey,
                  vtbd->vtbd_pixel_format);
 
