@@ -6540,9 +6540,9 @@ multiopt_storage_cb(void *opaque, rstr_t *rstr)
 /**
  *
  */
-static void
+static multiopt_item_t *
 multiopt_add_link(glwf_multiopt_extra_t *x, token_t *d,
-		  multiopt_item_t **up)
+		  multiopt_item_t **up, multiopt_item_t *after)
 {
   multiopt_item_t *mi;
   TAILQ_FOREACH(mi, &x->q, mi_link)
@@ -6552,7 +6552,11 @@ multiopt_add_link(glwf_multiopt_extra_t *x, token_t *d,
   if(mi == NULL) {
     mi = calloc(1, sizeof(multiopt_item_t));
     mi->mi_value = rstr_dup(d->t_uri);
-    TAILQ_INSERT_TAIL(&x->q, mi, mi_link);
+    if(after == NULL) {
+      TAILQ_INSERT_HEAD(&x->q, mi, mi_link);
+    } else {
+      TAILQ_INSERT_AFTER(&x->q, after, mi, mi_link);
+    }
   } else {
     mi->mi_mark = 0;
   }
@@ -6561,6 +6565,7 @@ multiopt_add_link(glwf_multiopt_extra_t *x, token_t *d,
 				   rstr_get(mi->mi_value)))
     *up = mi;
   rstr_set(&mi->mi_title, d->t_uri_title);
+  return mi;
 }
 
 
@@ -6569,7 +6574,8 @@ multiopt_add_link(glwf_multiopt_extra_t *x, token_t *d,
  */
 static int
 multiopt_add_vector(glwf_multiopt_extra_t *x, token_t *t0,
-		    multiopt_item_t **up, int chk)
+		    multiopt_item_t **up, int chk,
+                    multiopt_item_t **after)
 {
   token_t *t;
 
@@ -6581,12 +6587,12 @@ multiopt_add_vector(glwf_multiopt_extra_t *x, token_t *t0,
 
     for(t = t0->child; t != NULL; t = t->next)
       if(t->t_flags & TOKEN_F_SELECTED && t->type == TOKEN_URI)
-	multiopt_add_link(x, t, up);
+	*after = multiopt_add_link(x, t, up, *after);
   }
 
   for(t = t0->child; t != NULL; t = t->next)
     if(t->type == TOKEN_URI && !(t->t_flags & TOKEN_F_SELECTED))
-      multiopt_add_link(x, t, up);
+      *after = multiopt_add_link(x, t, up, *after);
   return 0;
 }
 
@@ -6699,6 +6705,7 @@ glwf_multiopt(glw_view_eval_context_t *ec, struct token *self,
   multiopt_item_t *u = NULL; // user preferred
   token_t *lp_vectors[16];
   int lp_num = 0;
+  multiopt_item_t *after = NULL;
 
   for(i = 0; i < argc; i++) {
     token_t *d;
@@ -6708,10 +6715,10 @@ glwf_multiopt(glw_view_eval_context_t *ec, struct token *self,
 
     switch(d->type) {
     case TOKEN_URI:
-      multiopt_add_link(x, d, &u);
+      after = multiopt_add_link(x, d, &u, after);
       break;
     case TOKEN_VECTOR:
-      if(multiopt_add_vector(x, d, &u, 1) && lp_num < 16)
+      if(multiopt_add_vector(x, d, &u, 1, &after) && lp_num < 16)
 	lp_vectors[lp_num++] = d;
       break;
 
@@ -6721,7 +6728,7 @@ glwf_multiopt(glw_view_eval_context_t *ec, struct token *self,
   }
 
   for(i = 0; i < lp_num; i++)
-    multiopt_add_vector(x, lp_vectors[i], &u, 0);
+    multiopt_add_vector(x, lp_vectors[i], &u, 0, &after);
 
   for(mi = TAILQ_FIRST(&x->q); mi != NULL; mi = n) {
     n = TAILQ_NEXT(mi, mi_link);
@@ -6736,7 +6743,7 @@ glwf_multiopt(glw_view_eval_context_t *ec, struct token *self,
 
       if(mi->mi_item == NULL) {
 	prop_t *q = prop_create_root(rstr_get(mi->mi_value));
-	prop_set_rstring(prop_create(q, "title"), mi->mi_title);
+	prop_set(q, "title", PROP_SET_RSTRING, mi->mi_title);
 	mi->mi_item = prop_ref_inc(q);
 
 	if(prop_set_parent(q, x->opts)) {
