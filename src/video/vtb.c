@@ -444,11 +444,11 @@ video_vtb_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   dict_set_int32(surface_dict, kCVPixelBufferWidthKey, mcp->width);
   dict_set_int32(surface_dict, kCVPixelBufferHeightKey, mcp->height);
 
-  if(1) {
+#if TARGET_OS_IPHONE
     vtbd->vtbd_pixel_format = kCVPixelFormatType_420YpCbCr8BiPlanarFullRange;
-  } else {
+#else
     vtbd->vtbd_pixel_format = kCVPixelFormatType_420YpCbCr8Planar;
-  }
+#endif
 
   dict_set_int32(surface_dict, kCVPixelBufferPixelFormatTypeKey,
                  vtbd->vtbd_pixel_format);
