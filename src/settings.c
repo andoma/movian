@@ -590,7 +590,7 @@ settings_str_inherited_value(void *opaque, rstr_t *v)
 
   rstr_set(&s->s_default_str, v);
   prop_set(s->s_root, "defaultValue", PROP_SET_RSTRING, s->s_default_str);
-  printf("inherited value set to %s  set=%d\n", rstr_get(v), s->s_value_set);
+
   if(s->s_value_set)
     return;
 
