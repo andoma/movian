@@ -32,7 +32,7 @@ widget(container_z, {
         widget(quad, {
           zoffset: 0;
           color: 0;
-          alpha: 0.3 + $view.isFocused;
+          alpha: 0.3 + $view.isNavFocused;
         });
 
         widget(label, {
@@ -53,7 +53,7 @@ widget(container_z, {
           font: "skin://fonts/RobotoCondensed-Regular.ttf";
           id: "textInput";
           focusable: true;
-          $view.isFocused = isFocused();
+          $view.isNavFocused = isNavFocused();
           bind($self.value);
         });
       });

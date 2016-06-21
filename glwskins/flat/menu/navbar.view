@@ -29,7 +29,7 @@ widget(expander_x, {
         align: center;
         source: "skin://icons/dot.png";
         size: 2em;
-        alpha: 0.4 + isFocused();
+        alpha: 0.4 + isNavFocused();
         color: sinewave(1) * 0.25 + 0.75;
         onEvent(right, {
           $view.showNavbar = false;

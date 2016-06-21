@@ -184,7 +184,7 @@
           fhpSpill: true;
           size: 1.2em;
           source: "skin://icons/ic_search_48px.svg";
-          alpha: 0.4 + isFocused();
+          alpha: 0.3 + isNavFocused();
         });
 
         zbox({

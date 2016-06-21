@@ -183,7 +183,7 @@ zbox({
           spacing: $ui.size;
 
           cloner($core.upgrade.changelog, container_x, {
-            alpha: isFocused() + 0.6;
+            alpha: isNavFocused() + 0.6;
 	    spacing: $ui.size;
 	    focusable: 0.1;
 
@@ -210,7 +210,7 @@ zbox({
           alpha: iir(canScroll(), 16);
           widget(quad, {
             GridItemHighlight();
-	    alpha: iir(0.3 + 0.3 * (isFocused() || isPressed()), 4) + isHovered();
+	    alpha: iir(0.3 + 0.3 * (isNavFocused() || isPressed()), 4) + isHovered();
           });
         });
       });
