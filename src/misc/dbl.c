@@ -32,7 +32,8 @@ double
 my_str2double(const char *str, const char **endp)
 {
   double ret = 1.0f;
-  int n = 0, m = 0, o = 0, e = 0;
+  int n = 0, m = 0, e = 0;
+  unsigned long long o = 0;
 
   while(*str && *str < 33)
     str++;
@@ -52,8 +53,11 @@ my_str2double(const char *str, const char **endp)
     str++;
 
     while(*str >= '0' && *str <= '9') {
-      o = o * 10 + *str++ - '0';
-      m--;
+      if(m > -16) {
+        o = o * 10 + *str - '0';
+        m--;
+      }
+      str++;
     }
 
     ret *= (n + pow(10, m) * o);
