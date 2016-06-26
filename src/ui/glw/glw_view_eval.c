@@ -5361,22 +5361,18 @@ glwf_canScroll(glw_view_eval_context_t *ec, struct token *self,
 /**
  * Evals the first arg, if true, the second arg is returned.
  * Otherwise the third arg is returned.
- * Equivivalent to the C ?: operator
+ * Somewhat equivivalent to the C ?: operator
  */
 static int
 glwf_select(glw_view_eval_context_t *ec, struct token *self,
 	    token_t **argv, unsigned int argc)
 {
-  token_t *a, *b, *c;
+  token_t *a;
 
   if((a = token_resolve(ec, argv[0])) == NULL)
     return -1;
-  if((b = token_resolve(ec, argv[1])) == NULL)
-    return -1;
-  if((c = token_resolve(ec, argv[2])) == NULL)
-    return -1;
 
-  eval_push(ec, token2bool(a) ? b : c);
+  eval_push(ec, token2bool(a) ? argv[1] : argv[2]);
   return 0;
 }
 
