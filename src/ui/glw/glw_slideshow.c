@@ -30,6 +30,8 @@ typedef struct glw_slideshow {
   int display_time;
   int transition_time;
 
+  int visible_childs;
+
 } glw_slideshow_t;
 
 
@@ -119,16 +121,18 @@ glw_slideshow_layout(glw_t *w, const glw_rctx_t *rc)
   if(c == NULL)
     return;
 
-  glw_schedule_refresh(gr, s->deadline);
-  if(s->deadline <= gr->gr_frame_start) {
-    s->deadline = gr->gr_frame_start + s->display_time;
-    c = glw_next_widget(c);
-    if(c == NULL)
-      c = glw_first_widget(&s->w);
-    if(c != NULL) {
-      s->w.glw_focused = c;
-      glw_focus_open_path_close_all_other(c);
-      glw_copy_constraints(&s->w, c);
+  if(s->visible_childs > 1) {
+    glw_schedule_refresh(gr, s->deadline);
+    if(s->deadline <= gr->gr_frame_start) {
+      s->deadline = gr->gr_frame_start + s->display_time;
+      c = glw_next_widget(c);
+      if(c == NULL)
+        c = glw_first_widget(&s->w);
+      if(c != NULL) {
+        s->w.glw_focused = c;
+        glw_focus_open_path_close_all_other(c);
+        glw_copy_constraints(&s->w, c);
+      }
     }
   }
 
@@ -241,7 +245,22 @@ static int
 glw_slideshow_callback(glw_t *w, void *opaque, glw_signal_t signal,
 		       void *extra)
 {
+  glw_slideshow_t *s = (glw_slideshow_t *)w;
+
   switch(signal) {
+  case GLW_SIGNAL_CHILD_CREATED:
+  case GLW_SIGNAL_CHILD_UNHIDDEN:
+    s->visible_childs++;
+    glw_need_refresh(w->glw_root, 0);
+    break;
+
+  case GLW_SIGNAL_CHILD_DESTROYED:
+    if(w->glw_flags & GLW_HIDDEN)
+      return 0;
+  case GLW_SIGNAL_CHILD_HIDDEN:
+    s->visible_childs--;
+    break;
+
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
     if(w->glw_focused == extra)
       glw_copy_constraints(w, extra);
