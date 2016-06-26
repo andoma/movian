@@ -126,6 +126,8 @@ void
 rstr_vec_free(rstr_vec_t *rv)
 {
   int i;
+  if(rv == NULL)
+    return;
   for(i = 0; i < rv->size; i++)
     rstr_release(rv->v[i]);
   free(rv);
