@@ -441,6 +441,8 @@ typedef struct ass_dialogue {
 
   int8_t ad_alignment;
   int8_t ad_absolute_pos;
+  
+  char ad_not_supported;
 
 } ass_dialoge_t;
 
@@ -487,7 +489,7 @@ ass_handle_override(ass_dialoge_t *ad, const char *src, int len,
       ad->ad_x = v1;
       ad->ad_y = v2;
       ad->ad_absolute_pos = 1;
-    } else if(!memcmp(str, "fscx", 4)) {
+    } else if(!memcmp(str, "fscx", 4)||!memcmp(str, "fscy", 4)) {
       v1 = atoi(str + 4);
       if(v1 > 0)
 	ad_txt_append(ad, TR_CODE_SIZE_PX + (v1 & 0xff));
@@ -496,7 +498,7 @@ ass_handle_override(ass_dialoge_t *ad, const char *src, int len,
       if(v1 > 3)
 	ad_txt_append(ad, TR_CODE_SIZE_PX + (v1 & 0xff));
 
-    } else if(str[0] == 'c' || (str[0] == '1' && str[1] == 'c')) {
+    } else if((str[0] == 'c' && str[1] == '&') || (str[0] == '1' && str[1] == 'c')) {
        ad_txt_append(ad, TR_CODE_COLOR | ass_parse_color(str+2));
     } else if((str[0] == '3' && str[1] == 'c')) {
        ad_txt_append(ad, TR_CODE_OUTLINE_COLOR | ass_parse_color(str+2));
@@ -506,7 +508,7 @@ ass_handle_override(ass_dialoge_t *ad, const char *src, int len,
       str += 2;
       cmd = strchr(str, '\\');
       if(cmd != NULL)
-	*cmd = 0;
+        *cmd = 0;
 
       ad_txt_append(ad, TR_CODE_FONT_FAMILY |
 		    freetype_family_id(str, fontdomain));
@@ -519,6 +521,13 @@ ass_handle_override(ass_dialoge_t *ad, const char *src, int len,
     } else if(str[0] == 'a' && str[1] == 'n') {
       // Alignment
       ad->ad_alignment = atoi(str+2);
+    } else if(str[0] == 't' && str[1] == '(') {
+        // ignore Animated transform
+      str = strchr(str, ')');
+    } else if(str[0] == 'p' && isd(str[1])) {
+        // ignore Drawing tags
+        ad->ad_not_supported=1;
+        return;
     } else {
 #ifdef ASS_DEBUG
       printf("ass: Can't handle override: %s\n", str);
@@ -643,10 +652,11 @@ ad_dialogue_decode(const ass_decoder_ctx_t *adc, const char *line,
     if(c == '{') {
       const char *end = strchr(str, '}');
       if(end == NULL)
-	break;
+        break;
 
       ass_handle_override(&ad, str, end - str, fontdomain);
-
+      if(ad.ad_not_supported)
+          return NULL;
       str = end + 1;
       continue;
     }
