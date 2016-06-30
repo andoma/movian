@@ -851,15 +851,16 @@ vo_deliver(ext_subtitles_t *es, video_overlay_t *vo, media_pipe_t *mp,
 {
   int64_t s = vo->vo_start;
   do {
-    es->es_cur = vo;
+        es->es_cur = vo;
 
-    video_overlay_t *dup = video_overlay_dup(vo);
+        video_overlay_t *dup = video_overlay_dup(vo);
 
-    dup->vo_start += user_time_to_pts;
-    dup->vo_stop  += user_time_to_pts;
+        dup->vo_start += user_time_to_pts;
+        dup->vo_stop  += user_time_to_pts;
 
-    video_overlay_enqueue(mp, dup);
-    vo = TAILQ_NEXT(vo, vo_link);
+        video_overlay_enqueue(mp, dup);
+        //printf("delivery %" PRId64 " %" PRId64 " - %" PRId64 ": %ls\n",user_time,vo->vo_start,vo->vo_stop,(wchar_t*)vo->vo_text);
+        vo = TAILQ_NEXT(vo, vo_link);
   } while(vo != NULL && vo->vo_start == s && vo->vo_stop > user_time);
 }
 
@@ -877,12 +878,14 @@ subtitles_pick(ext_subtitles_t *es, int64_t user_time, int64_t pts,
     return es->es_picker(es, pts);
 
   int64_t user_time_to_pts = pts - user_time;
-  if(vo != NULL) {
+  while(vo != NULL) {
     vo = TAILQ_NEXT(vo, vo_link);
     if(vo != NULL && vo->vo_start <= user_time && vo->vo_stop > user_time) {
       vo_deliver(es, vo, mp, user_time, user_time_to_pts);
       return;
     }
+    if(vo->vo_start>user_time)
+      break;
   }
 
   vo = es->es_cur;
@@ -892,10 +895,12 @@ subtitles_pick(ext_subtitles_t *es, int64_t user_time, int64_t pts,
   }
 
   TAILQ_FOREACH(vo, &es->es_entries, vo_link) {
-    if(vo->vo_start <= user_time && vo->vo_stop > user_time) {
+    if(vo->vo_start <= user_time && vo->vo_stop > user_time && vo->vo_start>user_time-1000000) {//don't re-delivery long standing item
       vo_deliver(es, vo, mp, user_time, user_time_to_pts);
       return;
     }
+    if(vo->vo_start>user_time)
+      break;
   }
   es->es_cur = NULL;
 }
