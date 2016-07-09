@@ -108,6 +108,7 @@ typedef enum {
   METADATA_IMAGE_BACKDROP = 2,
   METADATA_IMAGE_PORTRAIT = 3,
   METADATA_IMAGE_BANNER_WIDE = 4,
+  METADATA_IMAGE_THUMB = 5,
 } metadata_image_type_t;
 
 
@@ -176,9 +177,10 @@ typedef struct metadata {
   rstr_t *md_manufacturer;
   rstr_t *md_equipment;
 
-  rstr_t *md_backdrop;
-  rstr_t *md_icon;
-  rstr_t *md_banner_wide;
+  rstr_vec_t *md_backdrops;
+  rstr_vec_t *md_icons;
+  rstr_vec_t *md_wide_banners;
+  rstr_vec_t *md_thumbs;
 
   rstr_t *md_ext_id;
 

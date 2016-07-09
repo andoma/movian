@@ -702,7 +702,7 @@ metadb_get_album_art(void *db, const char *album, const char *artist)
 /**
  *
  */
-static rstr_t *
+static rstr_vec_t *
 metadb_get_video_art(void *db, int64_t videoitem_id, int type)
 {
   int rc;
@@ -721,13 +721,15 @@ metadb_get_video_art(void *db, int64_t videoitem_id, int type)
 
   sqlite3_bind_int64(sel, 1, videoitem_id);
   sqlite3_bind_int(sel, 2, type);
-  rc = db_step(sel);
-  rstr_t *r = NULL;
-  if(rc == SQLITE_ROW)
-    r = db_rstr(sel, 0);
+  rstr_vec_t *rv = NULL;
+  while((rc = db_step(sel)) == SQLITE_ROW) {
+    rstr_t *r = db_rstr(sel, 0);
+    rstr_vec_append(&rv, r);
+    rstr_release(r);
+  }
 
   sqlite3_finalize(sel);
-  return r;
+  return rv;
 }
 
 
@@ -1830,11 +1832,13 @@ metadb_get_videoinfo2(void *db, int64_t id, metadata_t **mdp)
     md->md_type        = sqlite3_column_int(sel, 9);
     md->md_id          = sqlite3_column_int64(sel, 10);
 
-    md->md_icon =
+    md->md_icons =
       metadb_get_video_art(db, id, METADATA_IMAGE_POSTER);
-    md->md_backdrop =
+    md->md_backdrops =
       metadb_get_video_art(db, id, METADATA_IMAGE_BACKDROP);
-    md->md_banner_wide =
+    md->md_thumbs =
+      metadb_get_video_art(db, id, METADATA_IMAGE_THUMB);
+    md->md_wide_banners =
       metadb_get_video_art(db, id, METADATA_IMAGE_BANNER_WIDE);
 
     md->md_genre = metadb_get_video_genre(db, id);
@@ -2008,10 +2012,11 @@ metadb_get_videoinfo(void *db, const char *url,
     md->md_metaitem_status = status;
     md->md_ext_id = db_rstr(sel, 11);
 
-    md->md_icon = metadb_get_video_art(db, vid, METADATA_IMAGE_POSTER);
-    md->md_backdrop = metadb_get_video_art(db, vid, METADATA_IMAGE_BACKDROP);
-    md->md_banner_wide =
+    md->md_icons = metadb_get_video_art(db, vid, METADATA_IMAGE_POSTER);
+    md->md_backdrops = metadb_get_video_art(db, vid, METADATA_IMAGE_BACKDROP);
+    md->md_wide_banners =
       metadb_get_video_art(db, vid, METADATA_IMAGE_BANNER_WIDE);
+    md->md_thumbs = metadb_get_video_art(db, vid, METADATA_IMAGE_THUMB);
     metadb_get_video_cast(db, vid, md);
 
     md->md_genre = metadb_get_video_genre(db, vid);

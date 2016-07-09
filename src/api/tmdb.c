@@ -114,7 +114,7 @@ getlang(void)
 static void
 update_cfgid(void)
 {
-  tmdb->ms_cfgid = 
+  tmdb->ms_cfgid = (1 << 24) |
     tmdb_language[0] | (tmdb_language[1] << 8) | (tmdb_use_orig_title << 16);
 }
 
@@ -171,6 +171,40 @@ insert_videoart(void *db, int64_t itemid, metadata_image_type_t type,
   char url[256];
   snprintf(url, sizeof(url), "tmdb:image:%s:%s", pfx, path);
   metadb_insert_videoart(db, itemid, url, type, 0, 0, 0, NULL, 0);
+}
+
+/**
+ *
+ */
+static void
+insert_videoarts(void *db, int64_t itemid, metadata_image_type_t type,
+                 htsmsg_t *list, const char *pfx)
+{
+  htsmsg_field_t *f;
+  int limit = 0;
+  HTSMSG_FOREACH(f, list) {
+    htsmsg_t *p = htsmsg_get_map_by_field(f);
+    if(p == NULL)
+      continue;
+
+    const char *path = htsmsg_get_str(p, "file_path");
+    if(path == NULL)
+      continue;
+
+    int width  = htsmsg_get_u32_or_default(p, "width", 0);
+    int height = htsmsg_get_u32_or_default(p, "height", 0);
+    double weight;
+    if(htsmsg_get_dbl(p, "vote_average", &weight))
+      weight = 0;
+
+    char url[256];
+    snprintf(url, sizeof(url), "tmdb:image:%s:%s", pfx, path);
+    metadb_insert_videoart(db, itemid, url, type, width, height,
+                           weight * 1000, NULL, 0);
+    limit++;
+    if(limit == 10)
+      break;
+  }
 }
 
 
@@ -361,8 +395,9 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id,
   char url[300];
   char errbuf[256];
   buf_t *result;
-
+  char image_language[30];
   snprintf(url, sizeof(url), "http://api.themoviedb.org/3/movie/%s", lookup_id);
+  snprintf(image_language, sizeof(image_language), "%s,null", getlang());
 
  retry:
   tmdb_check_rate_limit();
@@ -374,6 +409,8 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id,
                    FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
                    FA_LOAD_QUERY_ARG("api_key", TMDB_APIKEY),
                    FA_LOAD_QUERY_ARG("language", getlang()),
+                   FA_LOAD_QUERY_ARG("append_to_response", "images,trailers"),
+                   FA_LOAD_QUERY_ARG("include_image_language", image_language),
                    FA_LOAD_CACHE_INFO(cache_info),
                    FA_LOAD_RESPONSE_HEADERS(&response_headers),
                    FA_LOAD_PROTOCOL_CODE(&http_response_code),
@@ -435,12 +472,29 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id,
 
     if(itemid >= 0) {
 
+      metadb_delete_videoart(db, itemid);
+
       const char *s;
 
-      if((s = htsmsg_get_str(doc, "poster_path")) != NULL)
-	insert_videoart(db, itemid, METADATA_IMAGE_POSTER, s, "poster");
-      if((s = htsmsg_get_str(doc, "backdrop_path")) != NULL)
+      htsmsg_t *images = htsmsg_get_map(doc, "images");
+      htsmsg_t *backdrops =
+        images ? htsmsg_get_list(images, "backdrops") : NULL;
+      htsmsg_t *posters =
+        images ? htsmsg_get_list(images, "posters") : NULL;
+
+      if(backdrops != NULL) {
+        insert_videoarts(db, itemid, METADATA_IMAGE_BACKDROP, backdrops,
+                         "backdrop");
+      } else if((s = htsmsg_get_str(doc, "backdrop_path")) != NULL) {
 	insert_videoart(db, itemid, METADATA_IMAGE_BACKDROP, s, "backdrop");
+      }
+
+      if(posters != NULL) {
+        insert_videoarts(db, itemid, METADATA_IMAGE_POSTER, posters,
+                         "poster");
+      } else if((s = htsmsg_get_str(doc, "poster_path")) != NULL) {
+        insert_videoart(db, itemid, METADATA_IMAGE_POSTER, s, "poster");
+      }
 
       htsmsg_t *genres = htsmsg_get_list(doc, "genres");
       if(genres != NULL) {
@@ -737,12 +791,17 @@ tmdb_init(void)
   if(tmdb == NULL)
     return;
 
+  prop_t *globallang = prop_create_multi(prop_get_global(), "i18n",
+                                         "iso639_1", NULL);
+
   setting_create(SETTING_STRING, tmdb->ms_settings, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Language (ISO 639-1 code)")),
+                 SETTING_VALUE_PROP(globallang),
                  SETTING_CALLBACK(set_lang, NULL),
                  SETTING_STORE("tmdb", "language"),
                  NULL);
 
+  prop_ref_dec(globallang);
 
   setting_create(SETTING_BOOL, tmdb->ms_settings, SETTINGS_INITIAL_UPDATE,
                  SETTING_TITLE(_p("Use original title")),

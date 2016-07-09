@@ -99,12 +99,14 @@ metadata_destroy(metadata_t *md)
   rstr_release(md->md_description);
   rstr_release(md->md_tagline);
   rstr_release(md->md_imdb_id);
-  rstr_release(md->md_icon);
-  rstr_release(md->md_backdrop);
-  rstr_release(md->md_banner_wide);
   rstr_release(md->md_manufacturer);
   rstr_release(md->md_equipment);
   rstr_release(md->md_ext_id);
+
+  rstr_vec_free(md->md_icons);
+  rstr_vec_free(md->md_backdrops);
+  rstr_vec_free(md->md_wide_banners);
+  rstr_vec_free(md->md_thumbs);
 
   free(md->md_redirect);
 
@@ -261,8 +263,8 @@ metadata_to_proptree(const metadata_t *md, prop_t *proproot,
 			     md->md_artist);
   }
 
-  if(md->md_icon != NULL)
-    prop_set(proproot, "icon", PROP_SET_RSTRING, md->md_icon);
+  if(md->md_icons != NULL)
+    prop_set(proproot, "icon", PROP_SET_RSTRING, md->md_icons->v[0]);
 
   if(md->md_album) {
     prop_set(proproot, "album", PROP_SET_RSTRING, md->md_album);
