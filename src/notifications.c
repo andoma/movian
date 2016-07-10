@@ -545,8 +545,8 @@ load_site_news(void)
     no_news_before = servertime;
     htsmsg_add_u32(newsinfo, "nothingbefore", no_news_before);
     htsmsg_store_save(newsinfo, "sitenews");
-    htsmsg_release(newsinfo);
   }
+  htsmsg_release(newsinfo);
 
   htsmsg_t *doc = htsmsg_json_deserialize(buf_cstr(b));
   buf_release(b);

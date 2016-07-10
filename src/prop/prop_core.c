@@ -256,6 +256,9 @@ prop_ref_dec_traced(prop_t *p, const char *file, int line)
     printf("Prop %p was finalized by %s:%d\n", p, file, line);
   assert(p->hp_type == PROP_ZOMBIE);
 
+  if(!(p->hp_flags & PROP_NAME_NOT_ALLOCATED))
+    free((void *)p->hp_name);
+
   extern void prop_tag_dump(prop_t *p);
   prop_tag_dump(p);
 
@@ -294,6 +297,9 @@ prop_ref_dec_traced_locked(prop_t *p, const char *file, int line)
   if(p->hp_flags & PROP_REF_TRACED) 
     printf("Prop %p was finalized by %s:%d\n", p, file, line);
   assert(p->hp_type == PROP_ZOMBIE);
+
+  if(!(p->hp_flags & PROP_NAME_NOT_ALLOCATED))
+    free((void *)p->hp_name);
 
   extern void prop_tag_dump(prop_t *p);
   prop_tag_dump(p);

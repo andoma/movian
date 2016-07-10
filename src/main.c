@@ -313,6 +313,7 @@ generate_device_id(void)
   rstr_t *s = htsmsg_store_get_str("deviceid", "deviceid");
   if(s != NULL) {
     snprintf(gconf.device_id, sizeof(gconf.device_id), "%s", rstr_get(s));
+    rstr_release(s);
   } else {
     uint8_t d[20];
     char uuid[40];

@@ -6854,7 +6854,9 @@ glwf_setDefaultFont(glw_view_eval_context_t *ec, struct token *self,
     return -1;
 
   glw_root_t *gr = ec->w->glw_root;
-  rstr_t *r = glw_resolve_path(token2rstr(a), a->file, gr, NULL);
+  rstr_t *p = token2rstr(a);
+  rstr_t *r = glw_resolve_path(p, a->file, gr, NULL);
+  rstr_release(p);
   rstr_set(&gr->gr_default_font, r);
   rstr_release(r);
   glw_text_flush(ec->w->glw_root);

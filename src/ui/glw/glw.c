@@ -379,6 +379,7 @@ glw_release_root(glw_root_t *gr)
     return;
 
   hts_mutex_destroy(&gr->gr_mutex);
+  free(gr->gr_skin);
   free(gr);
 }
 

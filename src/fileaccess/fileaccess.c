@@ -1726,9 +1726,11 @@ fa_load(const char *url, ...)
     return data2;
   }
 
-  if(no_fallback)
+  if(no_fallback) {
+    free(filename);
     return NO_LOAD_METHOD;
-
+  }
+  
   fh = fap->fap_open(fap, filename, errbuf, errlen, 0, 0);
 #ifdef FA_DUMP
   fh->fh_dump_fd = -1;

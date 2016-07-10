@@ -167,6 +167,11 @@ thread_trampoline(void *aux)
 {
   trampoline_t *t = aux;
   void *r;
+  char title[17];
+  void *taux = t->aux;
+  void *(*func)(void *) = t->func;
+
+  snprintf(title, sizeof(title), "%s", t->title);
 
 #if defined(linux)
   errno = 0;
@@ -177,15 +182,16 @@ thread_trampoline(void *aux)
   pthread_setname_np(t->title);
 #endif
 
-  r = t->func(t->aux);
+  free(t->title);
+  free(t);
+
+  r = func(taux);
 #if ENABLE_EMU_THREAD_SPECIFICS
   hts_thread_exit_specific();
 #endif
   if(gconf.enable_thread_debug)
-    TRACE(TRACE_DEBUG, "thread", "Thread %s exited", t->title);
+    TRACE(TRACE_DEBUG, "thread", "Thread %s exited", title);
 
-  free(t->title);
-  free(t);
   return r;
 }
 

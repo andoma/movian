@@ -582,8 +582,10 @@ query_by_filename_or_dirname(void *db, const metadata_lazy_video_t *mlv,
   if(!metadata_filename_to_episode(rstr_get(mlv->mlv_filename),
 				   &season, &episode, &title)) {
 
-    if(msf->query_by_episode == NULL)
+    if(msf->query_by_episode == NULL) {
+      rstr_release(title);
       return METADATA_PERMANENT_ERROR;
+    }
 
     if(title == NULL) {
       if(mlv->mlv_folder != NULL)
