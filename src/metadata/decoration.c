@@ -74,6 +74,7 @@ struct deco_browse {
   int db_pending_flags;
 #define DB_PENDING_DEFERRED_ALBUM_ANALYSIS 0x1
 #define DB_PENDING_DEFERRED_VIDEO_ANALYSIS 0x2
+#define DB_PENDING_DEFERRED_UPDATE         0x4
 
 #define DB_PENDING_DEFERRED_FULL_ANALYSIS 0xffffffff
 
@@ -248,6 +249,17 @@ stem_analysis(deco_browse_t *db, deco_stem_t *ds)
   }
 }
 
+/**
+ *
+ */
+static void
+set_contents(deco_browse_t *db, const char *contents, int cacheok)
+{
+  kv_url_opt_set(db->db_url, KVSTORE_DOMAIN_SYS, "contents",
+                 KVSTORE_SET_STRING, cacheok ? contents : NULL);
+  prop_set_string(db->db_prop_contents, contents);
+}
+
 
 /**
  *
@@ -267,7 +279,7 @@ update_contents(deco_browse_t *db)
     if(db->db_current_contents == DB_CONTENTS_IMAGES)
       return;
     db->db_current_contents = DB_CONTENTS_IMAGES;
-    prop_set_string(db->db_prop_contents, "images");
+    set_contents(db, "images", 1);
     if(!(db->db_flags & DECO_FLAGS_NO_AUTO_SORTING)) {
       prop_nf_sort(db->db_pnf, "node.metadata.timestamp", 0, 1, NULL, 0);
       prop_nf_sort(db->db_pnf, NULL, 0, 2, NULL, 0);
@@ -280,7 +292,7 @@ update_contents(deco_browse_t *db)
       return;
     db->db_current_contents = DB_CONTENTS_ALBUM;
 
-    prop_set_string(db->db_prop_contents, "album");
+    set_contents(db, "album", 1);
 
     if(!(db->db_flags & DECO_FLAGS_NO_AUTO_SORTING)) {
       prop_nf_sort(db->db_pnf, "node.metadata.track", 0, 1, NULL, 0);
@@ -300,7 +312,7 @@ update_contents(deco_browse_t *db)
       return;
     db->db_current_contents = DB_CONTENTS_TV_SEASON;
 
-    prop_set_string(db->db_prop_contents, "tvseason");
+    set_contents(db, "tvseason", 0);
     if(!(db->db_flags & DECO_FLAGS_NO_AUTO_SORTING)) {
       prop_nf_sort(db->db_pnf, "node.metadata.episode.number", 0, 1, NULL, 0);
       prop_nf_sort(db->db_pnf, NULL, 0, 2, NULL, 0);
@@ -309,7 +321,7 @@ update_contents(deco_browse_t *db)
   }
 
   db->db_current_contents = 0;
-  prop_set_void(db->db_prop_contents);
+  set_contents(db, NULL, 1);
   prop_nf_sort(db->db_pnf, NULL, 0, 1, NULL, 0);
   prop_nf_sort(db->db_pnf, NULL, 0, 2, NULL, 0);
 }
@@ -326,8 +338,8 @@ type_analysis(deco_browse_t *db)
   } else {
     db->db_contents_mask &= ~DB_CONTENTS_IMAGES;
   }
-
-  update_contents(db);
+  db->db_pending_flags |= DB_PENDING_DEFERRED_UPDATE;
+  deco_pendings = 1;
 }
 
 
@@ -1224,6 +1236,11 @@ decorated_browse_create(prop_t *model, struct prop_nf *pnf, prop_t *items,
                    SETTING_CALLBACK(erase_playinfo, db),
                    NULL);
   prop_ref_dec(options);
+
+  rstr_t *contents = kv_url_opt_get_rstr(url, KVSTORE_DOMAIN_SYS, "contents");
+  prop_set_rstring(db->db_prop_contents, contents);
+  rstr_release(contents);
+
   hts_mutex_unlock(&deco_mutex);
   return db;
 }
