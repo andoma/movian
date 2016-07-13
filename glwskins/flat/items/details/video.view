@@ -1,0 +1,168 @@
+#define STAR_FULL() {
+  widget(icon, {
+    color: [1, 1, 0.5];
+    source: "dataroot://res/svg/Star.svg";
+  });
+}
+
+#define STAR_DIMMED() {
+  widget(icon, {
+    color: [0.33, 0.33, 0.16];
+    source: "dataroot://res/svg/Star.svg";
+  });
+}
+
+widget(container_y, {
+  width: $ui.width / 2;
+  margin: [0.5em, 3.5em, 0.5em, 0];
+  spacing: 0.5em;
+
+  widget(container_z, {
+    weight: -1.777777;
+    widget(deck, {
+
+      widget(slideshow, {
+        time: 6;
+        transitionTime: 1;
+        cloner($self.metadata.thumbs, backdrop, {
+          source: $self.url;
+          maxIntensity: 0.5;
+        });
+      });
+
+      widget(slideshow, {
+        time: 6;
+        transitionTime: 1;
+        cloner($self.metadata.backdrops, backdrop, {
+          source: $self.url;
+          maxIntensity: 0.5;
+        });
+      });
+
+      page: count($self.metadata.backdrops) > 0;
+
+    });
+
+    widget(container_y, {
+      filterConstraintX: true;
+      filterConstraintY: true;
+
+      margin: 0.5em;
+      spacing: 0.5em;
+
+      widget(container_x, {
+        height: 7em;
+        spacing: 0.5em;
+        widget(segway, {
+          direction: "left";
+          widget(image, {
+            aspectConstraint: true;
+            source: $self.metadata.icon;
+          });
+        });
+
+        widget(container_y, {
+          filterConstraintX: true;
+          spacing: 0.5em;
+
+          widget(deck, {
+
+            // Movie variant
+
+            widget(label, {
+              size: 1.3em;
+              filterConstraintX: true;
+              caption: select($self.metadata.year,
+                              fmt('%s <font color="#aaa" size="2">(%d)',
+                                  $self.metadata.title,
+                                  $self.metadata.year),
+                              $self.metadata.title);
+              style: "ListItemLabel";
+              shadow: true;
+            });
+
+            // TV Series variant
+
+            widget(container_y, {
+              spacing: 0.5em;
+              widget(label, {
+                caption: $self.metadata.episode.title;
+                size: 1.3em;
+                shadow: true;
+              });
+              widget(label, {
+                caption: fmt(_("Season %d - Episode %d"),
+                             $self.metadata.season.number,
+                             $self.metadata.episode.number);
+                shadow: true;
+              });
+            });
+            page: translate($self.metadata.vtype, 0,
+                            "tvseries", 1);
+          });
+          widget(label, {
+            autohide: true;
+            caption: $self.metadata.genre;
+            shadow: true;
+            maxlines: 3;
+          });
+
+          widget(container_x, {
+            hidden: isVoid($self.metadata.rating);
+            widget(container_z, {
+	      widget(container_x, {
+	        STAR_DIMMED();
+	        STAR_DIMMED();
+	        STAR_DIMMED();
+	        STAR_DIMMED();
+	        STAR_DIMMED();
+	      });
+	      widget(clip, {
+	        right: 1 - $self.metadata.rating / 100;
+	        widget(container_x, {
+	          STAR_FULL();
+	          STAR_FULL();
+	          STAR_FULL();
+	          STAR_FULL();
+	          STAR_FULL();
+	        });
+	      });
+            });
+            space(1);
+          });
+        });
+      });
+      space(1);
+      widget(label, {
+        align: right;
+        size: 0.8em;
+        hidden: isVoid($self.metadata.source);
+        caption: $self.metadata.source;
+        style: "ListItemLabelDimmed";
+      });
+    });
+  });
+
+  widget(label, {
+    autohide: true;
+    caption: $self.metadata.tagline;
+    maxlines: 3;
+    size: 1.2em;
+  });
+
+  widget(label, {
+    autohide: true;
+    caption: $self.metadata.description;
+    maxlines: 20;
+  });
+
+  widget(label, {
+    hidden: $self.playcount < 1;
+    caption: fmt(_pl("Seen %d times, %s", "Seen %d time, %s",
+                     $self.playcount),
+                 $self.playcount,
+                 timeAgo($core.clock.unixtime - $self.lastplayed));
+    style: "ListItemLabelDimmed";
+  });
+});
+
