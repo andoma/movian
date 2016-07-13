@@ -87,7 +87,7 @@ es_video_metadata_bind_duk(duk_context *ctx)
   int season    = es_prop_to_int(ctx,  2, "season", -1);
   int episode   = es_prop_to_int(ctx,  2, "episode", -1);
   rstr_t *imdb  = es_prop_to_rstr(ctx, 2, "imdb");
-  int duration  = es_prop_to_int(ctx,  2, "duration", 0);
+  int duration  = es_prop_to_int(ctx,  2, "duration", -1);
 
   em->mlv =
     metadata_bind_video_info(url, title, imdb, duration, root, NULL, 0, 0,

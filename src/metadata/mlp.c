@@ -431,7 +431,7 @@ struct metadata_lazy_video {
   prop_sub_t *mlv_trig_desc;
   prop_sub_t *mlv_trig_rating;
 
-  float mlv_duration;
+  int mlv_duration;
   unsigned char mlv_type;
   unsigned char mlv_lonely : 1;
   unsigned char mlv_passive : 1;
@@ -571,7 +571,7 @@ is_qtype_compat(int qa, int qb)
 static int64_t
 query_by_filename_or_dirname(void *db, const metadata_lazy_video_t *mlv,
 			     const metadata_source_funcs_t *msf, int *qtype,
-                             float duration, int lonely)
+                             int duration, int lonely)
 {
   int year;
   rstr_t *title;
@@ -807,7 +807,7 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
    *
    */
 
-  const float duration = mlv->mlv_duration;
+  int duration = mlv->mlv_duration;
   const int lonely = mlv->mlv_lonely;
 
   rstr_t *custom_title;
@@ -833,7 +833,7 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
 
 
   METADATA_TRACE("Processing '%s' "
-                 "custom_title=%s imdbid=%s lonely=%s duration=%f%s",
+                 "custom_title=%s imdbid=%s lonely=%s duration=%d%s",
                  rstr_get(mlv->mlv_url),
                  rstr_get(custom_title),
                  rstr_get(imdb_id),
@@ -847,12 +847,14 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
    * If duration is low skip this unless user have specified a custom query
    * or if we have an IMDB ID
    */
-  if(duration < METADATA_DURATION_LIMIT &&
+  if(duration != -1 && duration < METADATA_DURATION_LIMIT &&
      sq == NULL &&
      rstr_get(imdb_id) == NULL) {
     goto bad;
   }
 
+  if(duration == -1)
+    duration = 0;
 
   if(!refresh) {
     /**
@@ -1843,7 +1845,7 @@ mlv_options_cb(void *opaque, prop_event_t event, ...)
  */
 metadata_lazy_video_t *
 metadata_bind_video_info(rstr_t *url, rstr_t *filename,
-			 rstr_t *imdb_id, float duration,
+			 rstr_t *imdb_id, int duration,
 			 prop_t *root,
 			 rstr_t *folder, int lonely, int passive,
 			 int year, int season, int episode,
@@ -1923,7 +1925,7 @@ mlv_set_imdb_id(metadata_lazy_video_t *mlv, rstr_t *imdb_id)
  *
  */
 void
-mlv_set_duration(metadata_lazy_video_t *mlv, float duration)
+mlv_set_duration(metadata_lazy_video_t *mlv, int duration)
 {
   hts_mutex_lock(&metadata_mutex);
   if(mlv->mlv_duration != duration) {
@@ -1957,7 +1959,7 @@ mlv_set_lonely(metadata_lazy_video_t *mlv, int lonely)
  */
 int
 mlv_direct_query(void *db, rstr_t *url, rstr_t *filename,
-                 const char *imdb_id, float duration, const char *folder,
+                 const char *imdb_id, int duration, const char *folder,
                  int lonely)
 {
   metadata_lazy_video_t mlv;
