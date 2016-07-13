@@ -2,7 +2,6 @@
 
 
 widget(container_z, {
-
   height: 3em;
 
   ListItemBevel();
@@ -31,7 +30,9 @@ widget(container_z, {
         filterConstraintX: true;
 
         widget(label, {
-          caption: $self.metadata.title;
+          caption: fmt(_("Episode %d - %s"),
+                       $self.metadata.episode.number,
+                       $self.metadata.episode.title);
           style: "ListItemLabel";
         });
         space(1);

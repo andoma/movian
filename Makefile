@@ -420,6 +420,7 @@ SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
 			src/ui/glw/glw_layer.c \
 			src/ui/glw/glw_expander.c \
 			src/ui/glw/glw_resizer.c \
+			src/ui/glw/glw_segway.c \
 			src/ui/glw/glw_slider.c \
 			src/ui/glw/glw_rotator.c  \
 			src/ui/glw/glw_detachable.c  \

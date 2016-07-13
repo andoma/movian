@@ -54,10 +54,11 @@ multiopt($view.path,
 
 	 // Then comes internal views selected based on content
 	 translate($self.model.contents, void,
-		   "album",      makeUri(_("Album"),      "album.view"),
-		   "artist",     makeUri(_("Artist"),     "artist.view"),
-		   "images",     makeUri(_("Grid"),     "grid.view"),
-		   "grid",       makeUri(_("Grid"),     "grid.view"),
+		   "album",      makeUri(_("Album"),     "album.view"),
+		   "artist",     makeUri(_("Artist"),    "artist.view"),
+		   "images",     makeUri(_("Grid"),      "grid.view"),
+		   "grid",       makeUri(_("Grid"),      "grid.view"),
+		   "tvseason",   makeUri(_("TV Season"), "tvseason.view"),
 		   "searchresults", makeUri(_("Search results"), "searchresults.view")),
 
 	 select($self.model.safeui, void,

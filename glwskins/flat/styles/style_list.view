@@ -5,8 +5,8 @@ style(ListItemOuter, {
 });
 
 style(ListItem, {
-  padding: [$ui.xmargin, 0];
-  spacing: $ui.width / 50;
+  margin: [$ui.xmargin, 0, 0.5em, 0];
+  spacing: $ui.xmargin;
 });
 
 style(ListItemIcon_narrow, {
@@ -19,10 +19,10 @@ style(ListItemIcon_wide, {
 
 
 style(ListItemIcon, {
-  style: select($ui.aspect > 1, "ListItemIcon_wide", "ListItemIcon_narrow");
   size: 1.5em;
-  align: right;
-  margin: [0,1,1em,1];
+  width: 3.5em;
+  align: center;
+  margin: [0,1,0,1];
 });
 
 style(ListItemLabel, {

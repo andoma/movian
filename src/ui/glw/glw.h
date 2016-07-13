@@ -1087,7 +1087,7 @@ typedef struct glw_rctx {
   uint8_t rc_invisible : 1;    /* Not really visible in UI
                                 * Set when items are preloaded, etc
                                 */
-
+  uint8_t rc_segwayed : 1;
 } glw_rctx_t;
 
 

@@ -132,6 +132,25 @@
   });
 }
 
+#define PageHeader0(CONTENTS) {
+  widget(container_z, {
+    height: 3em;
+    zoffset: 10;
+    widget(quad, {
+      color: 0;
+      alpha: 0.2;
+    });
+    CONTENTS;
+
+    widget(container_x, {
+      hidden: !$nav.canGoBack;
+      BackButton();
+      space(1);
+    });
+  });
+}
+
+
 #define PageHeader(TITLE) {
   widget(container_z, {
     height: 3em;

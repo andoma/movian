@@ -6,7 +6,6 @@ $view.rightPaneExpansion = scurve($view.showRightPane, 0.3);
 widget(container_z, {
 
   widget(container_x, {
-
     widget(container_z, {
       filterConstraintX: true;
       widget(list_y, {
@@ -22,28 +21,29 @@ widget(container_z, {
         clipAlpha: 0.2;
         clipBlur: 1;
 
+        widget(label, {
+          size: 1.5em;
+          margin: [1em, 0, 0, 0];
+          caption: fmt(_("Season %d"), $self.model.season.number);
+        });
+
         cloner($self.model.nodes, loader, {
           selectOnFocus: true;
           selectOnHover: true;
           time: 0.1;
           effect: blend;
           noInitialTransform: true;
-          alt: "skin://items/list/default.view";
-          source: "skin://items/list/" + $self.type + ".view";
-        });
-
-        widget(loader, {
-          autohide: true;
-          noInitialTransform: true;
-          source: select($self.model.mayadd, "skin://items/list/add.view", "");
+//          alt: "skin://items/list/default.view";
+//          source: "skin://items/list/" + $self.type + ".view";
+          source: "skin://items/list/tvepisode.view";
         });
       });
 
       ScrollBar("scrollable", 3em, $ui.universeBottomHeight);
     });
 
-    widget(segway, {
-      direction: "right";
+    widget(expander_x, {
+      expansion: 1;
       widget(deck, {
         effect: slideVertical;
         time: 0.4;
@@ -67,6 +67,15 @@ widget(container_z, {
   });
   widget(container_y, {
     align: top;
-    PageHeader($self.model.metadata.title);
+    PageHeader0(
+      widget(deck, {
+        widget(image, {
+          filterConstraintX: true;
+          margin: [0, 0.3em];
+          source: $self.model.series.wideBanner;
+        });
+        page: 0;
+      });
+    );
   });
 });

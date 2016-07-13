@@ -17,9 +17,11 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
+
 #include "glw.h"
 #include "glw_transitions.h"
 #include "event.h"
+#include "misc/strtab.h"
 
 /**
  *
@@ -33,11 +35,18 @@ typedef struct {
   float delta;
 
   float v;
-  char rev;
 
-  char keep_next_hot;
-  char keep_prev_hot;
-  char keep_last_hot;
+  char rev : 1;
+  char keep_next_hot : 1;
+  char keep_prev_hot : 1;
+  char keep_last_hot : 1;
+  char preloaded_are_visible : 1;
+  char allow_transition : 1;
+
+  enum {
+    SEGWAY_DIRECTION_LEFT = 1,
+    SEGWAY_DIRECTION_RIGHT,
+  } segway_direction;
 
 } glw_deck_t;
 
@@ -111,11 +120,12 @@ deck_select_child(glw_t *w, glw_t *c, prop_t *origin)
     clear_constraints(w);
   }
 
-  if(gd->efx_conf != GLW_TRANS_NONE &&
+  if(gd->efx_conf != GLW_TRANS_NONE && gd->allow_transition &&
      (gd->last != NULL || !(w->glw_flags2 & GLW2_NO_INITIAL_TRANS)))
     gd->v = 0;
 
   glw_signal0(w, GLW_SIGNAL_RESELECT_CHANGED, NULL);
+  gd->allow_transition = 1;
   return GLW_SET_RERENDER_REQUIRED;
 }
 
@@ -127,6 +137,9 @@ static void
 glw_deck_layout(glw_t *w, const glw_rctx_t *rc)
 {
   glw_deck_t *gd = (glw_deck_t *)w;
+
+  if(unlikely(rc->rc_segwayed))
+    gd->allow_transition = 0;
 
   gd->delta = 1 / (gd->time * (1000000 / w->glw_root->gr_frameduration));
 
@@ -143,7 +156,8 @@ glw_deck_layout(glw_t *w, const glw_rctx_t *rc)
     gd->last = NULL;
 
   glw_rctx_t rc0 = *rc;
-  rc0.rc_invisible = 1;
+  if(!gd->preloaded_are_visible)
+    rc0.rc_invisible = 1;
 
   if(gd->last != NULL)
     glw_layout0(gd->last, &rc0);
@@ -342,6 +356,7 @@ glw_deck_ctor(glw_t *w)
 {
   glw_deck_t *gd = (glw_deck_t *)w;
   gd->v = 1.0;
+  gd->allow_transition = 1;
   clear_constraints(w);
 }
 
@@ -415,11 +430,19 @@ glw_deck_set_int_unresolved(glw_t *w, const char *a, int value,
     gd->keep_last_hot = value;
     return GLW_SET_LAYOUT_ONLY;
   }
+  if(!strcmp(a, "preloadedAreVisible")) {
+    gd->preloaded_are_visible = value;
+    return GLW_SET_LAYOUT_ONLY;
+  }
 
   return GLW_SET_NOT_RESPONDING;
 }
 
 
+static struct strtab segway_directions[] = {
+  { "left",    SEGWAY_DIRECTION_LEFT},
+  { "right",   SEGWAY_DIRECTION_RIGHT},
+};
 
 /**
  *
@@ -432,6 +455,11 @@ glw_deck_set_str_unresolved(glw_t *w, const char *a, rstr_t *value,
 
   if(!strcmp(a, "page"))
     return set_page_by_id(gd, rstr_get(value));
+
+  if(!strcmp(a, "segway")) {
+    gd->segway_direction = str2val(rstr_get(value), segway_directions);
+    return GLW_SET_RERENDER_REQUIRED;
+  }
 
   return GLW_SET_NOT_RESPONDING;
 }
