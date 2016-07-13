@@ -35,6 +35,11 @@ Thus, to start it, just type:
 
 Settings are stored in `~/.hts/showtime`
 
+If you want to build with extra debugging options for development these options might be of interest:
+
+	--cc=gcc-5 --extra-cflags=-fno-omit-frame-pointer --optlevel=g --sanitize=address --enable-bughunt
+
+
 ## How to build for Mac OS X
 
 To build for Mac OS X you need Xcode and yasm. Xcode should be installed from Mac Appstore.
