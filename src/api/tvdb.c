@@ -367,6 +367,7 @@ tvdb_query_by_episode(void *db, const char *item_url,
   result = fa_load("http://www.thetvdb.com/api/GetSeries.php",
                    FA_LOAD_ERRBUF(errbuf, sizeof(errbuf)),
                    FA_LOAD_QUERY_ARG("seriesname", title),
+                   FA_LOAD_QUERY_ARG("language", "all"),
                    FA_LOAD_FLAGS(FA_COMPRESSION),
                    NULL);
 
