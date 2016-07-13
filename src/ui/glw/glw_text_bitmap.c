@@ -684,8 +684,7 @@ glw_text_bitmap_event(glw_t *w, event_t *e)
     }
     return 1;
 
-  } else if(event_is_action(e, ACTION_ACTIVATE) ||
-            event_is_action(e, ACTION_ITEMMENU)) {
+  } else if(event_is_action(e, ACTION_ACTIVATE)) {
     
     gtb_caption_refresh(gtb);
 
