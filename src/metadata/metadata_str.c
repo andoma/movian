@@ -303,6 +303,7 @@ metadata_filename_to_episode(const char *s,
  *
  */
 const char *folder_to_season[] = {
+  "(.*)[ .]S([0-9][0-9])",
   "(.*)[ .]Season[ .]([0-9]+)",
   NULL
 };

@@ -147,7 +147,7 @@ SRCS +=	src/misc/ptrvec.c \
 	src/misc/lockmgr.c \
 	src/misc/prng.c \
 
-SRCS += ext/trex/trex.c
+SRCS += ext/minilibs/regexp.c
 
 SRCS-${CONFIG_BSPATCH} += ext/bspatch/bspatch.c
 

@@ -20,10 +20,11 @@
 #pragma once
 #include "config.h"
 
-#include "ext/trex/trex.h"
+#include "ext/minilibs/regexp.h"
 
 typedef struct {
-  TRex *r;
+  Reprog *r;
+  char *pat;
 } hts_regex_t;
 
 typedef struct {
@@ -36,31 +37,36 @@ typedef struct {
 static __inline int hts_regcomp(hts_regex_t *r, const char *pat)
 {
   const char *err;
-  return !(r->r = trex_compile(pat, &err));
+  r->pat = strdup(pat);
+  return !(r->r = myregcomp(pat, 0, &err));
 }
 
 static __inline int hts_regexec(hts_regex_t *r, const char *text,
                                 int nmatches, hts_regmatch_t *matches, int v)
 {
+  Resub m;
   int i;
-  TRexMatch m;
-  if(trex_match(r->r, text) == TRex_False)
+  printf("Comparing %s with pattern %s ... ", text ,r->pat);
+  if(myregexec(r->r, text, &m, 0)) {
+    printf("no match\n");
     return 1;
-  
-  for(i = 0; i < nmatches; i++) {
-    if(trex_getsubexp(r->r, i, &m) == TRex_False) {
-      matches[i].rm_so = -1;
-      matches[i].rm_eo = -1;
-    } else {
-      matches[i].rm_so = m.begin - text;
-      matches[i].rm_eo = matches[i].rm_so + m.len;
-    }
+  }
+  printf("MATCH\n");
+
+  for(i = 0; i < m.nsub && i < nmatches; i++) {
+    matches[i].rm_so = m.sub[i].sp - text;
+    matches[i].rm_eo = m.sub[i].ep - text;
+  }
+  for(; i < nmatches; i++) {
+    matches[i].rm_so = -1;
+    matches[i].rm_eo = -1;
   }
   return 0;
 }
 
 static __inline void hts_regfree(hts_regex_t *r)
 {
-  trex_free(r->r);
+  myregfree(r->r);
+  free(r->pat);
 }
 
