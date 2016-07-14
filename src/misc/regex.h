@@ -24,7 +24,6 @@
 
 typedef struct {
   Reprog *r;
-  char *pat;
 } hts_regex_t;
 
 typedef struct {
@@ -37,7 +36,6 @@ typedef struct {
 static __inline int hts_regcomp(hts_regex_t *r, const char *pat)
 {
   const char *err;
-  r->pat = strdup(pat);
   return !(r->r = myregcomp(pat, 0, &err));
 }
 
@@ -46,12 +44,9 @@ static __inline int hts_regexec(hts_regex_t *r, const char *text,
 {
   Resub m;
   int i;
-  printf("Comparing %s with pattern %s ... ", text ,r->pat);
   if(myregexec(r->r, text, &m, 0)) {
-    printf("no match\n");
     return 1;
   }
-  printf("MATCH\n");
 
   for(i = 0; i < m.nsub && i < nmatches; i++) {
     matches[i].rm_so = m.sub[i].sp - text;
@@ -67,6 +62,5 @@ static __inline int hts_regexec(hts_regex_t *r, const char *text,
 static __inline void hts_regfree(hts_regex_t *r)
 {
   myregfree(r->r);
-  free(r->pat);
 }
 
