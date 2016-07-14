@@ -61,7 +61,7 @@ multiopt($view.path,
 		   "tvseason",   makeUri(_("TV Season"), "tvseason.view"),
 		   "searchresults", makeUri(_("Search results"), "searchresults.view")),
 
-	 select($self.model.safeui, void,
+	 select($self.model.safeui || $self.model.type == "settings", void,
 		vectorize($core.glw.views.standard.directory)),
 	 makeUri(_("List"), "list.view"),
 	 select($self.model.type == "settings", void, makeUri(_("Grid"), "grid.view"))
