@@ -33,9 +33,9 @@ widget(container_z, {
           caption: fmt(_("Episode %d - %s"),
                        $self.metadata.episode.number,
                        $self.metadata.episode.title);
-          style: "ListItemLabel";
+          filterConstraintX: true;
+          ellipsize: true;
         });
-        space(1);
 
         widget(label, {
           margin: [1em, 0, 0, 0];
