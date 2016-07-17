@@ -507,7 +507,7 @@ fa_get_parts(const char *url, char *errbuf, size_t errsize)
  *
  */
 int
-fa_findfile(const char *path, const char *file, 
+fa_findfile(const char *path, const char *file,
 	    char *fullpath, size_t fullpathlen)
 {
   fa_dir_t *fd = fa_scandir(path, NULL, 0);
@@ -518,7 +518,7 @@ fa_findfile(const char *path, const char *file,
 
   RB_FOREACH(fde, &fd->fd_entries, fde_link)
     if(!strcasecmp(rstr_get(fde->fde_filename), file)) {
-      snprintf(fullpath, fullpathlen, "%s%s%s", path, 
+      snprintf(fullpath, fullpathlen, "%s%s%s", path,
 	       path[strlen(path)-1] == '/' ? "" : "/",
 	       rstr_get(fde->fde_filename));
       fa_dir_free(fd);
@@ -567,7 +567,7 @@ fa_unreference(fa_handle_t *fh)
 fa_handle_t *
 fa_notify_start(const char *url, void *opaque,
                 void (*change)(void *opaque,
-                               fa_notify_op_t op, 
+                               fa_notify_op_t op,
                                const char *filename,
                                const char *url,
                                int type))
@@ -662,12 +662,12 @@ static fa_dir_entry_t *
 fde_create(fa_dir_t *fd, const char *url, const char *filename, int type)
 {
   fa_dir_entry_t *fde;
- 
+
   if(filename[0] == '.')
     return NULL; /* Skip all dot-filenames */
 
   fde = calloc(1, sizeof(fa_dir_entry_t));
- 
+
   fde->fde_url      = rstr_alloc(url);
   fde->fde_filename = rstr_alloc(filename);
   fde->fde_type     = type;
@@ -945,7 +945,7 @@ verify_delete(const struct delscan_item_queue *diq)
 
   char tmp[512];
   int l = snprintf(tmp, sizeof(tmp), "%s\n", rstr_get(del));
-  
+
   if(files) {
     l += snprintf(tmp + l, sizeof(tmp) - l, rstr_get(ftxt), files);
     l += snprintf(tmp + l, sizeof(tmp) - l, "\n");
@@ -1000,7 +1000,7 @@ fa_unlink_recursive(const char *url, char *errbuf, size_t errsize, int verify)
       fa_dir_t *fd = fa_get_parts(path, errbuf, errsize);
       if(fd == NULL)
 	goto bad;
-      
+
       fa_dir_entry_t *fde;
       RB_FOREACH(fde, &fd->fd_entries, fde_link)
 	delitem_addr(&diq, fde->fde_url, 1000);
@@ -1013,19 +1013,19 @@ fa_unlink_recursive(const char *url, char *errbuf, size_t errsize, int verify)
     }
 
   } else if(st.fs_type == CONTENT_DIR) {
-    
+
     if(fap->fap_unlink == NULL || fap->fap_rmdir == NULL) {
       snprintf(errbuf, errsize,
 	       "Deleting not supported for this file system");
       goto bad;
     }
-    
+
     fa_rscan(url, delitem_add_fde, &diq);
   } else {
     snprintf(errbuf, errsize, "Can't delete this type");
     goto bad;
   }
-      
+
   if(verify && verify_delete(&diq) != MESSAGE_POPUP_OK) {
     snprintf(errbuf, errsize, "Canceled by user");
     goto bad;
@@ -1054,7 +1054,7 @@ fa_copy_from_fh(const char *to, fa_handle_t *src, char *errbuf, size_t errsize)
 {
   char tmp[8192];
 
- if(fa_parent(tmp, sizeof(tmp), to)) {
+  if(fa_parent(tmp, sizeof(tmp), to)) {
     snprintf(errbuf, errsize, "Unable to figure out parent dir for dest");
     fa_close(src);
     return -1;
@@ -1633,7 +1633,7 @@ fa_load(const char *url, ...)
             *cache_info_ptr = FA_CACHE_INFO_EXPIRED_FROM_CACHE;
 	  return buf;
 	}
-	
+
 	// It was not expired, return it
 	if(!is_expired) {
 	  free(etag);
@@ -1730,7 +1730,7 @@ fa_load(const char *url, ...)
     free(filename);
     return NO_LOAD_METHOD;
   }
-  
+
   fh = fap->fap_open(fap, filename, errbuf, errlen, 0, 0);
 #ifdef FA_DUMP
   fh->fh_dump_fd = -1;
@@ -1825,7 +1825,7 @@ fa_check_url(const char *url, char *errbuf, size_t errlen, int timeout_ms)
   if((filename = fa_resolve_proto(url, &fap, errbuf, errlen)) == NULL)
     return BACKEND_PROBE_NO_HANDLER;
 
-  
+
   r = fap->fap_stat(fap, filename, &fs, FA_NON_INTERACTIVE, errbuf, errlen);
   fap_release(fap);
   free(filename);
