@@ -198,6 +198,9 @@ src_cb(void *opaque, prop_event_t event, ...)
 	       q != NULL ? prop_tag_get(q, pcs) : find_next_out(pcs), NULL);
     break;
 
+  case PROP_SELECT_CHILD:
+    break;
+
   case PROP_SET_VOID:
     break;
 
