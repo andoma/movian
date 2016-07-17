@@ -181,6 +181,9 @@ src_cb(void *opaque, prop_event_t event, ...)
   case PROP_WANT_MORE_CHILDS:
     break;
 
+  case PROP_SELECT_CHILD:
+    break;
+
   default:
     fprintf(stderr, "prop_window can't handle event %d\n", event);
     abort();
