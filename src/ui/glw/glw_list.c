@@ -651,7 +651,7 @@ static glw_class_t glw_list_y = {
   .gc_name = "list_y",
   .gc_instance_size = sizeof(glw_list_t),
   .gc_parent_data_size = sizeof(glw_list_item_t),
-  .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY | GLW_CAN_HIDE_CHILDS,
+  .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY | GLW_CAN_HIDE_CHILDS | GLW_DRIVE_PAGINATION,
   .gc_layout = glw_list_layout_y,
   .gc_render = glw_list_render_y,
   .gc_set_int = glw_list_set_int,
@@ -675,7 +675,7 @@ static glw_class_t glw_list_x = {
   .gc_name = "list_x",
   .gc_instance_size = sizeof(glw_list_t),
   .gc_parent_data_size = sizeof(glw_list_item_t),
-  .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY | GLW_CAN_HIDE_CHILDS,
+  .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY | GLW_CAN_HIDE_CHILDS | GLW_DRIVE_PAGINATION,
 
   .gc_layout = glw_list_layout_x,
   .gc_render = glw_list_render_x,

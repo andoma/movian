@@ -441,6 +441,7 @@ typedef struct glw_class {
 #define GLW_NAVIGATION_SEARCH_BOUNDARY 0x1
 #define GLW_CAN_HIDE_CHILDS            0x2
 #define GLW_UNCONSTRAINED              0x4
+#define GLW_DRIVE_PAGINATION           0x8
 
   /**
    * Constructor

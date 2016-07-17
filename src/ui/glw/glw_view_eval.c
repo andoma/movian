@@ -1307,6 +1307,9 @@ clone_sig_handler(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   glw_root_t *gr;
   switch(signal) {
   case GLW_SIGNAL_ACTIVE:
+    if(!(sc->sc_sub.gps_widget->glw_class->gc_flags & GLW_DRIVE_PAGINATION))
+      break;
+
     if(!sc->sc_positions_valid)
       cloner_resequence(sc);
 
@@ -1320,6 +1323,9 @@ clone_sig_handler(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_INACTIVE:
+    if(!(sc->sc_sub.gps_widget->glw_class->gc_flags & GLW_DRIVE_PAGINATION))
+      break;
+
     if(!sc->sc_positions_valid)
       cloner_resequence(sc);
 
