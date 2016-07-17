@@ -25,7 +25,6 @@
 #include "fileaccess/http_client.h"
 #include "fileaccess/fileaccess.h"
 #include "misc/str.h"
-#include "misc/regex.h"
 #include "htsmsg/htsbuf.h"
 #include "task.h"
 

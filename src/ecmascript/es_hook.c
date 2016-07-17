@@ -22,7 +22,6 @@
 #include "ecmascript.h"
 #include "service.h"
 #include "arch/threads.h"
-#include "misc/regex.h"
 #include "backend/backend.h"
 
 LIST_HEAD(es_hook_list, es_hook);
