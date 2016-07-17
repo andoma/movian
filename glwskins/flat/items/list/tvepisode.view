@@ -38,6 +38,7 @@ widget(container_z, {
         });
 
         widget(label, {
+          autohide: true;
           margin: [1em, 0, 0, 0];
           caption: value2duration($self.metadata.duration);
         });
