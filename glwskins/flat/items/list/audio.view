@@ -13,8 +13,8 @@ widget(container_z, {
     style: "ListItem";
 
     widget(container_x, {
-      width: 6em;
-      align: right;
+      width: 3.5em;
+      align: center;
 
       widget(container_z, {
 
@@ -59,9 +59,9 @@ widget(container_z, {
 
     widget(label, {
       width: 5em;
+      margin: [0,0,1em,0];
       align: right;
       caption: value2duration($self.metadata.duration);
-      style: "ListItemLabel";
     });
   });
 });
