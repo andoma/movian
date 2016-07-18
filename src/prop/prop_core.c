@@ -5793,6 +5793,8 @@ void
 prop_mark_childs(prop_t *p)
 {
   prop_t *c;
+  if(p == NULL)
+    return;
   hts_mutex_lock(&prop_mutex);
   if(p->hp_type == PROP_DIR) {
     TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link)

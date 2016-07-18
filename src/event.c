@@ -163,6 +163,8 @@ static struct strtab actionnames[] = {
   { "MediaStats",            ACTION_SHOW_MEDIA_STATS },
   { "Home",                  ACTION_HOME },
   { "Reset",                 ACTION_RESET },
+  { "Copy",                  ACTION_COPY },
+  { "Paste",                 ACTION_PASTE },
 
   { "ChangeView",            ACTION_SWITCH_VIEW },
   { "FullscreenToggle",      ACTION_FULLSCREEN_TOGGLE },

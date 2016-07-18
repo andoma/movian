@@ -138,6 +138,11 @@ widget(container_x, {
                      },
                      $self.url == "page:home");
 
+      SIDEBAR_ACTION(_("Paste"),
+                     void,
+                     event("Paste"),
+                     !($self.model.canPaste && $core.clipboard.contents == "path"));
+
       SIDEBAR_ACTION(_("Reload page"),
                      "skin://icons/ic_refresh_48px.svg",
                      event("ReloadData"));

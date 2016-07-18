@@ -1935,6 +1935,10 @@ glw_event_to_widget(glw_t *w, event_t *e)
 
   // Then ascend all the way up to root
 
+  GLW_TRACE("Event '%s' bounced at widget '%s'%s",
+            event_sprint(e), glw_get_name(w),
+            gr->gr_current_focus == NULL ? ", Nothing is focused" : "");
+
   while(w != NULL) {
     w->glw_flags &= ~GLW_FLOATING_FOCUS; // Correct ??
 

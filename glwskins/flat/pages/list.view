@@ -23,6 +23,7 @@ widget(container_z, {
         clipBlur: 1;
 
         cloner($self.model.nodes, loader, {
+          onEvent(copy, deliverRef($core.clipboard.setFromItem, $self));
           selectOnFocus: true;
           selectOnHover: true;
           time: 0.1;

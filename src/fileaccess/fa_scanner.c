@@ -154,8 +154,9 @@ make_prop(fa_dir_entry_t *fde)
   prop_t *p = prop_create_root(NULL);
   prop_t *metadata;
 
-  prop_set_rstring(prop_create(p, "url"), fde->fde_url);
-  prop_set_rstring(prop_create(p, "filename"), fde->fde_filename);
+  prop_set(p, "url", PROP_SET_RSTRING, fde->fde_url);
+  prop_set(p, "filename", PROP_SET_RSTRING, fde->fde_filename);
+
   set_type(p, fde->fde_type);
 
   if(fde->fde_metadata != NULL) {
@@ -189,7 +190,7 @@ make_prop(fa_dir_entry_t *fde)
   fde->fde_prop = prop_ref_inc(p);
 
   prop_set(p, "canDelete", PROP_SET_INT, gconf.fa_allow_delete);
-
+  prop_set(p, "canCopy", PROP_SET_INT, 1);
 }
 
 /**
@@ -751,6 +752,7 @@ scanner_thread(void *aux)
     switch(mode) {
     case BROWSER_DIR:
       prop_set(s->s_model, "contents", PROP_SET_VOID);
+      prop_set(s->s_model, "canPaste", PROP_SET_INT, 1);
       browse_as_dir(s);
       doscan(s, 1);
       break;
@@ -760,12 +762,14 @@ scanner_thread(void *aux)
 
     case BROWSER_INDEX_ALBUMS:
       prop_set(s->s_model, "contents", PROP_SET_STRING, "albums");
+      prop_set(s->s_model, "canPaste", PROP_SET_INT, 0);
       metadata_browse(getdb(s), s->s_url, s->s_nodes, s->s_model,
                       LIBRARY_QUERY_ALBUMS, checkstop_index, s);
       break;
 
     case BROWSER_INDEX_ARTISTS:
       prop_set(s->s_model, "contents", PROP_SET_STRING, "artists");
+      prop_set(s->s_model, "canPaste", PROP_SET_INT, 0);
       metadata_browse(getdb(s), s->s_url, s->s_nodes, s->s_model,
                       LIBRARY_QUERY_ARTISTS, checkstop_index, s);
       break;

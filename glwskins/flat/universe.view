@@ -114,12 +114,43 @@ widget(container_z, {
           cloner($core.notifications.nodes, container_z, {
             widget(quad, {
               color: 0;
-              alpha: 0.2;
+              alpha: 0.6;
             });
 
             widget(label, {
               padding: [2em, 0.5em];
               caption: $self.text;
+            });
+          });
+
+          cloner($core.clipboard.copyprogress, container_z, {
+            quad({
+              color: 0;
+              alpha: 0.6;
+            });
+
+            hbox({
+              margin: [2em, 0.5em];
+              spacing: 2em;
+
+              label({
+                caption: fmt(_("Copying %d files"), $self.files);
+              });
+
+              vbox({
+                space(1);
+                zbox({
+                  quad({
+                    color: 0;
+                  });
+                  bar({
+                    fill: $self.completed / $self.total;
+                    color1: 1;
+                    color2: 1;
+                  });
+                });
+                space(1);
+              });
             });
           });
 

@@ -734,6 +734,8 @@ set_artwork(prop_t *p, const char *name, rstr_vec_t *vec)
   snprintf(plural, sizeof(plural), "%ss", name);
 
   prop_t *v = prop_create_r(p, plural);
+  if(v == NULL)
+    return;
   prop_mark_childs(v);
   for(int i = 0; i < vec->size; i++) {
     prop_t *x = prop_create_r(v, rstr_get(vec->v[i]));

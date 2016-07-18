@@ -636,17 +636,19 @@ glw_in_fullwindow(void *opaque, int val)
 
 
 
+- (void) copy: (NSNotification *)not
+{
+  event_t *e = event_create_action(ACTION_COPY);
+  prop_send_ext_event(eventSink, e);
+  event_release(e);
+}
+
+
 - (void) paste: (NSNotification *)not
 {
-  NSPasteboard *pb = [NSPasteboard generalPasteboard];
-
-  NSString *str = [pb stringForType:NSPasteboardTypeString];
-  if(str) {
-    const char *cstr = [str UTF8String];
-    event_t *e = event_create_str(EVENT_INSERT_STRING, cstr);
-    prop_send_ext_event(eventSink, e);
-    event_release(e);
-  }
+  event_t *e = event_create_action(ACTION_PASTE);
+  prop_send_ext_event(eventSink, e);
+  event_release(e);
 }
 
 

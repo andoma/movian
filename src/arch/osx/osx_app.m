@@ -128,6 +128,31 @@ restarthelper(void)
 }
 
 
+static void
+osx_clipboard_set(const char *str)
+{
+  NSPasteboard *pb = [NSPasteboard generalPasteboard];
+  [pb clearContents];
+  NSString *s = [[NSString alloc] initWithUTF8String: str];
+  [pb writeObjects:[NSArray arrayWithObject:s]];
+  [s release];
+}
+
+static rstr_t *
+osx_clipboard_get(void)
+{
+  NSPasteboard *pb = [NSPasteboard generalPasteboard];
+
+  NSString *str = [pb stringForType:NSPasteboardTypeString];
+  if(str) {
+    const char *cstr = [str UTF8String];
+    return rstr_alloc(cstr);
+  }
+  return NULL;
+}
+
+
+
 /**
  *
  */
@@ -156,6 +181,8 @@ main(int argc, char **argv)
   gconf.can_standby = 1;
   gconf.upgrade_path = getenv("UPGRADE_BINARY_PATH");
   gconf.can_restart = gconf.upgrade_path != NULL;
+  gconf.clipboard_set = osx_clipboard_set;
+  gconf.clipboard_get = osx_clipboard_get;
 
   get_device_id();
 
@@ -438,10 +465,16 @@ mainloop_courier_init(void)
   NSMenu *menuApp = [[NSMenu alloc] initWithTitle: @"Edit"];
 
   // -----------------------------------------------------------
+  menuitem = [[NSMenuItem alloc] initWithTitle:@"Copy"
+					action:@selector(copy:)
+				 keyEquivalent:@"c"];
+  [menuApp addItem: menuitem];
+  [menuitem release];
+
+  // -----------------------------------------------------------
   menuitem = [[NSMenuItem alloc] initWithTitle:@"Paste"
 					action:@selector(paste:)
 				 keyEquivalent:@"v"];
-  //  [menuitem setTarget: self];
   [menuApp addItem: menuitem];
   [menuitem release];
 

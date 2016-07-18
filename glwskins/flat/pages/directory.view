@@ -30,6 +30,8 @@ onEvent(menu,     { toggle($clone.showSidebar); },
 
 onEvent(ChangeView, deliverEvent($clone.settings.options, "Cycle"));
 
+onEvent(Paste, deliverRef($core.clipboard.pasteToModel, $self));
+
 multiopt($view.path,
 	 $clone.settings,
 	 _("Page layout"),

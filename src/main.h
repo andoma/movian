@@ -328,6 +328,9 @@ typedef struct gconf {
   void (*arch_dev_opts)(void (*addopt)(const char *title, const char *id,
                                        int *valp));
 
+  void (*clipboard_set)(const char *str);
+  rstr_t *(*clipboard_get)(void);
+
 } gconf_t;
 
 extern gconf_t gconf;

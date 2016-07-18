@@ -26,6 +26,7 @@ widget(container_z, {
     clipBlur: 1;
 
     cloner($self.model.nodes, loader, {
+      onEvent(copy, deliverRef($core.clipboard.setFromItem, $self));
       time: 0.1;
       effect: blend;
       noInitialTransform: true;

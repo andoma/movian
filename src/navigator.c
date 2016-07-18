@@ -189,6 +189,9 @@ static void nav_open0(navigator_t *nav, const char *url, const char *view,
 		      prop_t *item_model, prop_t *parent_model, const char *how,
                       const char *parent_url);
 
+
+static void nav_reload_page(nav_page_t *np);
+
 static void page_redirect(nav_page_t *np, const char *url);
 
 #if ENABLE_BOOKMARKS
@@ -612,7 +615,9 @@ static void
 page_eventsink(void *opaque, event_t *e)
 {
   nav_page_t *np = opaque;
-  if(event_is_type(e, EVENT_REDIRECT)) {
+  if(event_is_action(e, ACTION_RELOAD_DATA)) {
+    nav_reload_page(np);
+  } else if(event_is_type(e, EVENT_REDIRECT)) {
     const event_payload_t *ep = (const event_payload_t *)e;
     page_redirect(np, ep->payload);
   }
@@ -824,17 +829,9 @@ nav_fwd(navigator_t *nav)
  *
  */
 static void
-nav_reload_current(navigator_t *nav)
+nav_reload_page(nav_page_t *np)
 {
-  nav_page_t *np;
-
-  if((np = nav->nav_page_current) == NULL)
-    return;
-
-#if ENABLE_PLUGINS
-  plugins_reload_dev_plugin();
-#endif
-
+  navigator_t *nav = np->np_nav;
   TRACE(TRACE_INFO, "navigator", "Reloading %s", np->np_url);
 
   page_unsub(np);
@@ -849,8 +846,25 @@ nav_reload_current(navigator_t *nav)
   }
 
   nav_select(nav, np, NULL);
-    
   nav_open_backend(np);
+  printf("Done\n");
+}
+
+/**
+ *
+ */
+static void
+nav_reload_current(navigator_t *nav)
+{
+  nav_page_t *np;
+
+  if((np = nav->nav_page_current) == NULL)
+    return;
+
+#if ENABLE_PLUGINS
+  plugins_reload_dev_plugin();
+#endif
+  nav_reload_page(np);
 }
 
 
