@@ -1906,14 +1906,15 @@ glw_event_to_widget(glw_t *w, event_t *e)
             event_sprint(e), glw_get_name(w),
             gr->gr_current_focus == NULL ? ", Nothing is focused" : "");
 
+  if(glw_event_map_intercept(w, e, 1)) {
+    // glw_event_map_intercept() does GLW_TRACE() by itself
+    return 1;
+  }
+
   while(1) {
+
     if(!glw_path_in_focus(w))
       break;
-
-    if(glw_event_map_intercept(w, e, 1)) {
-      // glw_event_map_intercept() does GLW_TRACE() by itself
-      return 1;
-    }
 
     if(w->glw_flags2 & GLW2_POSITIONAL_NAVIGATION &&
        glw_navigate_matrix(w, e)) {
@@ -1930,14 +1931,19 @@ glw_event_to_widget(glw_t *w, event_t *e)
 
     if(w->glw_focused == NULL)
       break;
+
     w = w->glw_focused;
+    if(glw_event_map_intercept(w, e, 1)) {
+      // glw_event_map_intercept() does GLW_TRACE() by itself
+      return 1;
+    }
+
   }
 
   // Then ascend all the way up to root
 
-  GLW_TRACE("Event '%s' bounced at widget '%s'%s",
-            event_sprint(e), glw_get_name(w),
-            gr->gr_current_focus == NULL ? ", Nothing is focused" : "");
+  GLW_TRACE("Event '%s' bounced at widget '%s'",
+            event_sprint(e), glw_get_name(w));
 
   while(w != NULL) {
     w->glw_flags &= ~GLW_FLOATING_FOCUS; // Correct ??

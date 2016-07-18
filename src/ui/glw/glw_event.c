@@ -263,6 +263,10 @@ glw_event_map_deliverEvent_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
     }
     return;
   }
+  GLW_TRACE("Event-map at %s:%d relayed event '%s'",
+            rstr_get(gem->gem_file),
+            gem->gem_line,
+            event_sprint(de->event));
   prop_send_ext_event(de->target, de->event);
 }
 
