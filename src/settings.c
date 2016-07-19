@@ -1568,6 +1568,8 @@ init_dev_settings(void)
   add_dev_bool("Disable HTTP connection reuse",
 	       "nohttpreuse", &gconf.disable_http_reuse);
 
+  add_dev_bool("Enable indexer option",
+	       "enable_indexer", &gconf.enable_indexer);
 
   if(gconf.arch_dev_opts)
     gconf.arch_dev_opts(&add_dev_bool);
