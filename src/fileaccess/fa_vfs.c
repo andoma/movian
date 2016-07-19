@@ -161,9 +161,7 @@ vfs_scandir(fa_protocol_t *fap, fa_dir_t *fd, const char *url,
       fa_dir_add(fd, "vfs:///README.TXT", "README.TXT", CONTENT_FILE);
 
     LIST_FOREACH(vm, &vfs_exported_mappings, vm_link) {
-      char u[512];
-      snprintf(u, sizeof(u), "vfs:///%s", rstr_get(vm->vm_vdir));
-      fa_dir_add(fd, u, rstr_get(vm->vm_vdir), CONTENT_DIR);
+      fa_dir_add(fd, vm->vm_url, rstr_get(vm->vm_vdir), CONTENT_DIR);
     }
     hts_mutex_unlock(&vfs_mutex);
     return 0;
