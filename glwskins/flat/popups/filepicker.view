@@ -58,13 +58,11 @@ popup({
                       source: select($self.canGoBack,
                                      "skin://icons/ic_chevron_left_48px.svg",
                                      "skin://icons/ic_close_48px.svg");
-                      color: !isNavFocused();
                     });
                     label({
                       caption: select($self.canGoBack,
                                       _("Back"),
                                       _("Close"));
-                      color: !isNavFocused();
                       filterConstraintX: true;
                     });
                   });
@@ -97,11 +95,9 @@ popup({
                                     "directory", "ic_folder_48px",
 		                    "share",     "ic_folder_shared_48px"
                                    ) + ".svg";
-                        color: !isNavFocused();
                       });
                       label({
                         caption: $self.name;
-                        color: !isNavFocused();
                         filterConstraintX: true;
                       });
                     });
@@ -116,7 +112,6 @@ popup({
                             navOpen($self.url, void, void, void, "descend"));
                     icon({
                       source: "skin://icons/ic_chevron_right_48px.svg";
-                      color: !isNavFocused();
                     });
                   });
                 });
