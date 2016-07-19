@@ -104,8 +104,13 @@ widget(popup, {
                 "skin://icons/ic_check_48px.svg",
                 ""));
 
-      ITEM(_("Copy"), {
+      ITEM(_("Copy to clipboard"), {
         fireEvent(deliverRef($core.clipboard.setFromItem, $args));
+        $clone.itemMenu = false;
+      }, void, !$args.canCopy);
+
+      ITEM(_("Copy to location..."), {
+        fireEvent(deliverRef($core.clipboard.copyItem, $args));
         $clone.itemMenu = false;
       }, void, !$args.canCopy);
 

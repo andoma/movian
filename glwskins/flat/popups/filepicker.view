@@ -141,7 +141,7 @@ popup({
       label({
         hidden: !$self.dirmode;
         align: center;
-        caption: _("Folder mode, press right to open folder");
+        caption: _("Folder select mode, press right to open subfolder");
       });
     });
   });

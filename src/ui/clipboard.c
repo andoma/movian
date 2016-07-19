@@ -3,7 +3,9 @@
 #include "prop/prop.h"
 #include "clipboard.h"
 #include "fileaccess/fileaccess.h"
+#include "fileaccess/fa_filepicker.h"
 #include "task.h"
+#include "notifications.h"
 
 static hts_mutex_t clipboard_mutex;
 static rstr_t *clipboard_content;
@@ -14,19 +16,19 @@ static rstr_t *clipboard_content;
 static void
 clipboard_setFromItem(void *opaque, event_t *e)
 {
-  if(event_is_type(e, EVENT_PROPREF)) {
-    event_prop_t *ep = (event_prop_t *)e;
-    rstr_t *url = prop_get_string(ep->p, "url", NULL);
-    if(gconf.clipboard_set) {
-      gconf.clipboard_set(rstr_get(url));
-    } else {
-      hts_mutex_lock(&clipboard_mutex);
-      rstr_set(&clipboard_content, url);
-      hts_mutex_unlock(&clipboard_mutex);
-    }
-    rstr_release(url);
-    clipboard_validate_contents();
+  if(!event_is_type(e, EVENT_PROPREF))
+    return;
+  event_prop_t *ep = (event_prop_t *)e;
+  rstr_t *url = prop_get_string(ep->p, "url", NULL);
+  if(gconf.clipboard_set) {
+    gconf.clipboard_set(rstr_get(url));
+  } else {
+    hts_mutex_lock(&clipboard_mutex);
+    rstr_set(&clipboard_content, url);
+    hts_mutex_unlock(&clipboard_mutex);
   }
+  rstr_release(url);
+  clipboard_validate_contents();
 }
 
 
@@ -41,12 +43,14 @@ typedef struct clipboard_copy_job {
   prop_t *completed_prop;
   prop_t *files_prop;
 
+  char errbuf[256];
+
 } clipboard_copy_job_t;
 
 static int
 clipboard_copy_file(const char *src, const char *dst, clipboard_copy_job_t *j)
 {
-  fa_handle_t *sfh = fa_open(src, NULL, 0);
+  fa_handle_t *sfh = fa_open(src, j->errbuf, sizeof(j->errbuf));
   if(sfh == NULL)
     return 1;
 
@@ -55,8 +59,9 @@ clipboard_copy_file(const char *src, const char *dst, clipboard_copy_job_t *j)
   fa_url_get_last_component(filename, sizeof(filename), src);
   fa_pathjoin(dstpath, sizeof(dstpath), dst, filename);
 
-  fa_handle_t *dfh = fa_open_ex(dstpath, NULL, 0, FA_WRITE, NULL);
-  if(dst == NULL) {
+  fa_handle_t *dfh = fa_open_ex(dstpath, j->errbuf, sizeof(j->errbuf),
+                                FA_WRITE, NULL);
+  if(dfh == NULL) {
     fa_close(sfh);
     return 1;
   }
@@ -69,6 +74,7 @@ clipboard_copy_file(const char *src, const char *dst, clipboard_copy_job_t *j)
 
     if(fa_write(dfh, buf, r) != r) {
       rcode = 1;
+      snprintf(j->errbuf, sizeof(j->errbuf), "Write failure");
       break;
     }
     j->completed += r;
@@ -89,7 +95,7 @@ clipboard_copy_files0(const char *src, const char *dst, clipboard_copy_job_t *j)
   fa_stat_t st;
   char dstpath[1024];
 
-  if(fa_stat(src, &st, NULL, 0))
+  if(fa_stat(src, &st, j->errbuf, sizeof(j->errbuf)))
     return 1;
 
   if(st.fs_type == CONTENT_FILE) {
@@ -113,7 +119,7 @@ clipboard_copy_files0(const char *src, const char *dst, clipboard_copy_job_t *j)
       return 1;
   }
 
-  fa_dir_t *fd = fa_scandir(src, NULL, 0);
+  fa_dir_t *fd = fa_scandir(src, j->errbuf, sizeof(j->errbuf));
   if(fd == NULL)
     return 1;
   int rcode = 0;
@@ -151,8 +157,7 @@ static void
 clipboard_copy_files(const char *src, const char *dst)
 {
   clipboard_copy_job_t j = {};
-  TRACE(TRACE_DEBUG, "COPY", "Copy from %s to %s", src, dst);
-
+  TRACE(TRACE_DEBUG, "COPY", "Copy from %s to directory %s", src, dst);
 
   prop_t *p = prop_create(prop_create(prop_get_global(), "clipboard"),
                           "copyprogress");
@@ -164,13 +169,18 @@ clipboard_copy_files(const char *src, const char *dst)
   j.completed_prop = prop_create(n, "completed");
   j.files_prop = prop_create(n, "files");
 
-  if(clipboard_copy_files0(src, NULL, &j))
+  if(clipboard_copy_files0(src, NULL, &j)) {
+    notify_add(NULL, NOTIFY_ERROR, NULL, 5,
+               _("Copy failed: %s"), j.errbuf);
     return;
-
+  }
   TRACE(TRACE_DEBUG, "COPY", "Copy from %s total %"PRId64" bytes",
         src, j.total_bytes);
 
-  clipboard_copy_files0(src, dst, &j);
+  if(clipboard_copy_files0(src, dst, &j)) {
+    notify_add(NULL, NOTIFY_ERROR, NULL, 5,
+               _("Copy failed: %s"), j.errbuf);
+  }
   prop_destroy(n);
 }
 
@@ -248,15 +258,40 @@ clipboard_get(void)
  *
  */
 static void
+clipboard_copyItem(void *opaque, event_t *e)
+{
+  if(!event_is_type(e, EVENT_PROPREF))
+    return;
+  event_prop_t *ep = (event_prop_t *)e;
+  rstr_t *src = prop_get_string(ep->p, "url", NULL);
+
+  rstr_t *title = _("Target folder");
+  rstr_t *dst = filepicker_pick(rstr_get(title), FILEPICKER_DIRECTORIES);
+  rstr_release(title);
+  if(dst != NULL) {
+    clipboard_copy_files(rstr_get(src), rstr_get(dst));
+  }
+  rstr_release(src);
+}
+
+
+
+/**
+ *
+ */
+static void
 clipboard_init(void)
 {
   hts_mutex_init(&clipboard_mutex);
-  
 
-  
   prop_subscribe(0,
                  PROP_TAG_CALLBACK_EVENT, clipboard_setFromItem, NULL,
                  PROP_TAG_NAME("global", "clipboard", "setFromItem"),
+                 NULL);
+
+  prop_subscribe(0,
+                 PROP_TAG_CALLBACK_EVENT, clipboard_copyItem, NULL,
+                 PROP_TAG_NAME("global", "clipboard", "copyItem"),
                  NULL);
 
   prop_subscribe(0,

@@ -262,7 +262,7 @@ eventsink(void *opaque, prop_event_t event, ...)
 /**
  *
  */
-static rstr_t *
+rstr_t *
 filepicker_pick(const char *title, int flags)
 {
   filepicker_t fp = {0};

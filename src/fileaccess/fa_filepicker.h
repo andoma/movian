@@ -25,3 +25,6 @@
 
 void filepicker_pick_to_prop(const char *title, prop_t *target,
                              const char *current, int flags);
+
+rstr_t *filepicker_pick(const char *title, int flags);
+
