@@ -140,7 +140,7 @@ do_round(const char *prefix)
   metadb_close(db);
   if(r)
     return 0;
-  
+
   item_t *i;
   r = 0;
   TAILQ_FOREACH(i, &q, link) {
@@ -262,9 +262,9 @@ indexer_thread(void *aux)
   hts_mutex_lock(&indexer_mutex);
   while(1) {
   restart:
-    did_something = 0;    
+    did_something = 0;
     TAILQ_FOREACH(ir, &roots, ir_link) {
-      
+
       ir->ir_refcount++;
 
       int doroot = 0;
