@@ -130,11 +130,12 @@ es_route_create(duk_context *ctx)
   }
 
   er = es_resource_alloc(&es_resource_route);
-  if(hts_regcomp(&er->er_regex, str)) {
+  const char *errmsg;
+  if(hts_regcomp(&er->er_regex, str, &errmsg)) {
     hts_mutex_unlock(&route_mutex);
     free(er);
-    duk_error(ctx, DUK_ERR_ERROR, "Invalid regular expression for route %s",
-              str);
+    duk_error(ctx, DUK_ERR_ERROR,
+              "Invalid regular expression for route %s -- %s", str, errmsg);
   }
 
   er->er_pattern = strdup(str);
@@ -169,7 +170,7 @@ ecmascript_openuri(prop_t *page, const char *url, int sync)
   es_route_t *er;
 
   LIST_FOREACH(er, &routes, er_link)
-    if(!hts_regexec(&er->er_regex, url, 8, matches, 0))
+    if(!hts_regexec(&er->er_regex, url, 8, matches))
       break;
 
   if(er == NULL) {

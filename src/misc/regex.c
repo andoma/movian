@@ -17,21 +17,48 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
-#pragma once
 
-typedef struct {
-  void *r;
-} hts_regex_t;
+#include "main.h"
+#include "ext/minilibs/regexp.h"
+#include "regex.h"
 
-typedef struct {
-  int rm_so;
-  int rm_eo;
-} hts_regmatch_t;
+static HTS_MUTEX_DECL(regcompmutex);
 
-int hts_regcomp(hts_regex_t *r, const char *pat, const char **errmsg);
+int
+hts_regcomp(hts_regex_t *r, const char *pat, const char **errmsg)
+{
+  hts_mutex_lock(&regcompmutex);
+  r->r = myregcomp(pat, 0, errmsg);
+  hts_mutex_unlock(&regcompmutex);
+  return r->r == NULL;
+}
 
+int
+hts_regexec(hts_regex_t *r, const char *text,
+            int nmatches, hts_regmatch_t *matches)
+{
+  Resub m;
+  int i;
+  if(r->r == NULL)
+    return 1;
 
-int hts_regexec(hts_regex_t *r, const char *text,
-                int nmatches, hts_regmatch_t *matches);
+  if(myregexec(r->r, text, &m, 0))
+    return 1;
 
-void hts_regfree(hts_regex_t *r);
+  for(i = 0; i < m.nsub && i < nmatches; i++) {
+    matches[i].rm_so = m.sub[i].sp - text;
+    matches[i].rm_eo = m.sub[i].ep - text;
+  }
+  for(; i < nmatches; i++) {
+    matches[i].rm_so = -1;
+    matches[i].rm_eo = -1;
+  }
+  return 0;
+}
+
+void
+hts_regfree(hts_regex_t *r)
+{
+  myregfree(r->r);
+}
+

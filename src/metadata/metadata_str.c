@@ -319,9 +319,9 @@ metadata_folder_to_season(const char *s,
   int i;
   for(i = 0; folder_to_season[i] != NULL; i++) {
     hts_regex_t re;
-    if(!hts_regcomp(&re, folder_to_season[i])) {
+    if(!hts_regcomp(&re, folder_to_season[i], NULL)) {
       hts_regmatch_t matches[8];
-      if(!hts_regexec(&re, s, 8, matches, 0)) {
+      if(!hts_regexec(&re, s, 8, matches)) {
 	hts_regfree(&re);
 	if(seasonp != NULL)
 	  *seasonp = atoi(s + matches[2].rm_so);

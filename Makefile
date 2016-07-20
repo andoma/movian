@@ -147,6 +147,7 @@ SRCS +=	src/misc/ptrvec.c \
 	src/misc/cancellable.c \
 	src/misc/lockmgr.c \
 	src/misc/prng.c \
+	src/misc/regex.c \
 
 SRCS += ext/minilibs/regexp.c
 

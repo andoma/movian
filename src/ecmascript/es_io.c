@@ -547,13 +547,21 @@ es_http_inspector_create(duk_context *ctx)
   const char *str = duk_safe_to_string(ctx, 0);
   int async = duk_get_boolean(ctx, 2);
 
+  int l = strlen(str);
+  char *s = alloca(l + 2);
+
   if(str[0] != '^') {
-    int l = strlen(str);
-    char *s = alloca(l + 2);
     s[0] = '^';
     memcpy(s+1, str, l+1);
-    str = s;
+  } else {
+    memcpy(s, str, l+1);
   }
+
+  char *e = strstr(s, ".*");
+  if(e && e[2] == 0)
+    *e = 0;
+
+  str = s;
 
   es_context_t *ec = es_get(ctx);
 
@@ -562,12 +570,13 @@ es_http_inspector_create(duk_context *ctx)
   es_http_inspector_t *ehi;
 
   ehi = es_resource_alloc(&es_resource_http_inspector);
-  if(hts_regcomp(&ehi->ehi_regex, str)) {
+  const char *errmsg;
+  if(hts_regcomp(&ehi->ehi_regex, str, &errmsg)) {
     hts_mutex_unlock(&http_inspector_mutex);
     free(ehi);
     duk_error(ctx, DUK_ERR_ERROR,
-              "Invalid regular expression for http_inspector %s",
-              str);
+              "Invalid regular expression for http_inspector %s -- %s",
+              str, errmsg);
   }
 
   ehi->ehi_pattern = strdup(str);
@@ -790,13 +799,12 @@ es_http_inspector_run(void *aux)
 static int
 es_http_inspect(const char *url, http_request_inspection_t *hri)
 {
-  hts_regmatch_t matches[8];
   es_http_inspector_t *ehi;
 
   hts_mutex_lock(&http_inspector_mutex);
 
   LIST_FOREACH(ehi, &http_inspectors, ehi_link) {
-    if(!hts_regexec(&ehi->ehi_regex, url, 8, matches, 0))
+    if(!hts_regexec(&ehi->ehi_regex, url, 0, NULL))
       break;
   }
 

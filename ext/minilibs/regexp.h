@@ -17,7 +17,7 @@ enum {
 	REG_NOTBOL = 4,
 
 	/* limits */
-	REG_MAXSUB = 16
+	REG_MAXSUB = 8
 };
 
 struct Resub {

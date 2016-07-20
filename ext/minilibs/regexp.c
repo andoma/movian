@@ -31,7 +31,7 @@ static int chartorune(Rune *r, const char *s)
 }
 
 #define REPINF 255
-#define MAXTHREAD 1000
+#define MAXTHREAD_STACK 64
 #define MAXSUB REG_MAXSUB
 
 typedef struct Reclass Reclass;
@@ -951,15 +951,16 @@ static void spawn(Rethread *t, Reinst *pc, const char *sp, Resub *sub)
 
 static int match(Reinst *pc, const char *sp, const char *bol, int flags, Resub *out)
 {
-	Rethread ready[MAXTHREAD];
+	Rethread readystack[MAXTHREAD_STACK];
+        Rethread *ready = &readystack[0];
+        int readystacksize = MAXTHREAD_STACK;
 	Resub scratch;
 	Resub sub;
 	Rune c;
 	unsigned int nready;
 	int i;
-
 	/* queue initial thread */
-	spawn(ready + 0, pc, sp, out);
+	spawn(ready, pc, sp, out);
 	nready = 1;
 
 	/* run threads in stack order */
@@ -975,15 +976,35 @@ static int match(Reinst *pc, const char *sp, const char *bol, int flags, Resub *
 					out->sub[i].sp = sub.sub[i].sp;
 					out->sub[i].ep = sub.sub[i].ep;
 				}
+                                if(ready != &readystack[0])
+                                        free(ready);
 				return 1;
 			case I_JUMP:
 				pc = pc->x;
 				continue;
 			case I_SPLIT:
-				if (nready >= MAXTHREAD) {
+				if (nready >= 1000) {
 					fprintf(stderr, "regexec: backtrack overflow!\n");
+                                        if(ready != &readystack[0])
+                                                free(ready);
 					return 0;
 				}
+
+                                if(nready == readystacksize) {
+                                        readystacksize *= 2;
+                                        printf("Realloc to %d\n", readystacksize);
+                                        if(ready == &readystack[0]) {
+                                                ready = malloc(sizeof(Rethread) * readystacksize);
+                                                memcpy(ready, &readystack[0],
+                                                    MAXTHREAD_STACK *
+                                                    sizeof(Rethread));
+                                        } else {
+                                                ready = realloc(ready,
+                                                    readystacksize *
+                                                    sizeof(Rethread));
+                                        }
+                                }
+
 				spawn(&ready[nready++], pc->y, sp, &sub);
 				pc = pc->x;
 				continue;
@@ -1098,6 +1119,8 @@ static int match(Reinst *pc, const char *sp, const char *bol, int flags, Resub *
 		}
 dead: ;
 	}
+        if(ready != &readystack[0])
+                free(ready);
 	return 0;
 }
 
