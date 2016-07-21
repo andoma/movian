@@ -39,8 +39,6 @@ widget(container_z, {
           width: 1.5em;
           align: right;
           caption: $self.metadata.track;
-          color: iir(!isNavFocused(), 4);
-          shadow: iir(!isNavFocused(), 4);
         });
 
         widget(label, {
@@ -59,8 +57,8 @@ widget(container_z, {
         widget(label, {
           width: 5em;
           align: right;
+          margin: [0,0,1em,0];
           caption: value2duration($self.metadata.duration);
-          style: "ListItemLabel";
         });
       });
     });
