@@ -955,7 +955,7 @@ blobcache_init(void)
 	pool_num(item_pool), current_cache_size / 1000000.0,
         maxsize / 1000000.0, buf);
 
-  prop_t *dir = setting_get_dir("general:actions");
+  prop_t *dir = setting_get_dir("general:resets");
   settings_create_action(dir, _p("Clear cached files"),
 			 cache_clear, NULL, 0, NULL);
 

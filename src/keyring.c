@@ -61,7 +61,7 @@ keyring_init(void)
     persistent_keyring = htsmsg_create_map();
   temporary_keyring = htsmsg_create_map();
 
-  prop_t *dir = setting_get_dir("general:actions");
+  prop_t *dir = setting_get_dir("general:resets");
   settings_create_action(dir,
 			 _p("Forget remembered passwords"),
 			 keyring_clear, NULL, 0, NULL);

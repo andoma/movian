@@ -366,11 +366,11 @@ main_init(void)
 
   prop_init_late();
 
-  /* Notification framework */
-  notifications_init();
-
   /* Initialize settings */
   settings_init();
+
+  /* Notification framework */
+  notifications_init();
 
   TRACE(TRACE_DEBUG, "core", "Loading resources from %s", app_dataroot());
 

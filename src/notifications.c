@@ -30,6 +30,7 @@
 #include "fileaccess/fileaccess.h"
 #include "htsmsg/htsmsg_json.h"
 #include "misc/time.h"
+#include "settings.h"
 
 #if ENABLE_WEBPOPUP
 #include "ui/webpopup.h"
@@ -40,6 +41,8 @@ static prop_t *notify_prop_entries;
 static hts_mutex_t news_mutex;
 static htsmsg_t *dismissed_news_in;
 static htsmsg_t *dismissed_news_out;
+
+static int shownews;
 
 /**
  *
@@ -55,6 +58,18 @@ notifications_init(void)
   dismissed_news_out = htsmsg_create_map();
 
   notify_prop_entries = prop_create(root, "nodes");
+
+#if ENABLE_WEBPOPUP
+
+  prop_t *dir = setting_get_dir("general:misc");
+
+  setting_create(SETTING_BOOL, dir, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Show news on home screen")),
+                 SETTING_VALUE(1),
+                 SETTING_WRITE_BOOL(&shownews),
+                 SETTING_STORE("notifications", "shownews"),
+                 NULL);
+#endif
 }
 
 
@@ -502,6 +517,9 @@ parse_created_on_time(time_t *tp, const char *d)
 void
 load_site_news(void)
 {
+  if(!shownews)
+    return;
+
 #if ENABLE_WEBPOPUP
   struct http_header_list response_headers;
   buf_t *b;

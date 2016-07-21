@@ -127,7 +127,7 @@ metadb_init(void)
   if(r) {
     metadb_pool = NULL; // Disable
   } else {
-    prop_t *dir = setting_get_dir("general:actions");
+    prop_t *dir = setting_get_dir("general:resets");
     settings_create_action(dir, _p("Clear all metadata"),
 			   items_clear, NULL, 0, NULL);
   }
