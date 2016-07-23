@@ -25,38 +25,142 @@
 #include "metadata/metadata.h"
 #include "db/db_support.h"
 #include "fa_indexer.h"
+#include "fa_probe.h"
 #include "fileaccess.h"
 #include "htsmsg/htsmsg_store.h"
+
+#define INDEXER_TRACE(x, ...) do {                                   \
+    if(gconf.enable_indexer_debug)                                   \
+      TRACE(TRACE_DEBUG, "Indexer", x, ##__VA_ARGS__);               \
+  } while(0)
+
+extern int media_buffer_hungry;
+
+static void
+update_item(void *db, const fa_dir_entry_t *fsentry, const char *parent,
+            time_t parent_mtime)
+{
+  metadata_t *md;
+  metadata_index_status_t index_status = INDEX_STATUS_ANALYZED;
+
+  if(content_dirish(fsentry->fde_type)) {
+    md = fa_probe_dir(rstr_get(fsentry->fde_url));
+
+    if(md->md_contenttype == CONTENT_DIR) {
+      // Regular dirs need further scanning
+      index_status = INDEX_STATUS_UNSET;
+    }
+
+  } else {
+    md = fa_probe_metadata(rstr_get(fsentry->fde_url), NULL, 0,
+                           rstr_get(fsentry->fde_filename), NULL);
+  }
+  if(md == NULL)
+    return;
+
+  metadb_metadata_write(db, rstr_get(fsentry->fde_url),
+                        fsentry->fde_stat.fs_mtime,
+                        md, parent, parent_mtime,
+                        index_status);
+  metadata_destroy(md);
+}
+
+
+
+static int
+rescan_directory(const char *url, char *errbuf, size_t errlen, void *db,
+                 time_t fs_mtime)
+{
+  fa_dir_entry_t *fsentry, *dbentry, *n;
+
+  fa_dir_t *fsdir = fa_scandir(url, errbuf, errlen);
+  if(fsdir == NULL)
+    return -1;
+
+  RB_FOREACH(fsentry, &fsdir->fd_entries, fde_link) {
+    fa_dir_entry_stat(fsentry);
+    if(fsentry->fde_type == CONTENT_FILE) {
+      fsentry->fde_type =
+        contenttype_from_filename(rstr_get(fsentry->fde_filename));
+    }
+  }
+
+  fa_dir_t *dbdir = metadb_metadata_scandir(db, url, NULL);
+  if(dbdir == NULL)
+    dbdir = fa_dir_alloc();
+
+  for(dbentry = RB_FIRST(&dbdir->fd_entries); dbentry != NULL; dbentry = n) {
+    n = RB_NEXT(dbentry, fde_link);
+
+    fsentry = fa_dir_find(fsdir, dbentry->fde_url);
+    if(fsentry->fde_type == CONTENT_UNKNOWN)
+      fsentry = NULL;
+
+    if(fsentry != NULL) {
+
+      // Exist in fs and in db, check modification time and index status
+
+      if(fsentry->fde_stat.fs_mtime == dbentry->fde_stat.fs_mtime &&
+         dbentry->fde_md != NULL &&
+         dbentry->fde_md->md_index_status >= INDEX_STATUS_ANALYZED) {
+        // Ok, don't do anything
+      } else {
+        INDEXER_TRACE("Updating item %s", rstr_get(fsentry->fde_url));
+        update_item(db, fsentry, url, fs_mtime);
+      }
+      fa_dir_entry_free(fsdir, fsentry);
+    } else {
+      // Exist in DB but not in filesystem
+      INDEXER_TRACE("Removing item %s", rstr_get(dbentry->fde_url));
+      metadb_unparent_item(db, rstr_get(dbentry->fde_url));
+    }
+  }
+
+  RB_FOREACH(fsentry, &fsdir->fd_entries, fde_link) {
+    if(fsentry->fde_type == CONTENT_UNKNOWN)
+      continue;
+    INDEXER_TRACE("New item %s", rstr_get(fsentry->fde_url));
+    update_item(db, fsentry, url, fs_mtime);
+  }
+
+  fa_dir_free(fsdir);
+  fa_dir_free(dbdir);
+  return 0;
+}
+
 
 /**
  *
  */
 static void
-index_path(const char *url)
+index_directory(const char *url)
 {
   fa_stat_t fs;
   int err;
-  TRACE(TRACE_DEBUG, "Indexer", "Indexing %s", url);
-  if(!fa_stat(url, &fs, NULL, 0)) {
-    err = fa_scanner_scan(url, fs.fs_mtime);
+  char errbuf[512];
+  void *db = metadb_get();
+
+  if(!fa_stat_ex(url, &fs, errbuf, sizeof(errbuf), FA_NON_INTERACTIVE)) {
+    INDEXER_TRACE("Scanning path %s", url);
+    err = rescan_directory(url, errbuf, sizeof(errbuf), db, fs.fs_mtime);
   } else {
+    INDEXER_TRACE("Scanning %s failed -- %s", url, errbuf);
     err = 1;
   }
-
-  void *db = metadb_get();
   sqlite3_stmt *stmt;
+
+  // Update the index status for the scanned directory
   int rc = db_prepare(db, &stmt,
                       "UPDATE item "
                       "SET indexstatus = ?2 "
-                      "WHERE URL = ?1");
+                      "WHERE url = ?1");
   if(!rc) {
     sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
-    sqlite3_bind_int(stmt, 2, err ? INDEX_STATUS_ERROR : INDEX_STATUS_STATED);
+    sqlite3_bind_int(stmt, 2, err ? INDEX_STATUS_ERROR : INDEX_STATUS_ANALYZED);
     db_step(stmt);
     sqlite3_finalize(stmt);
   }
   metadb_close(db);
-  TRACE(TRACE_DEBUG, "Indexer", "Indexing %s done err=%d", url, err);
 }
 
 
@@ -66,8 +170,6 @@ TAILQ_HEAD(item_queue, item);
 typedef struct item {
   TAILQ_ENTRY(item) link;
   char *url;
-  int contenttype;
-  time_t mtime;
 } item_t;
 
 
@@ -106,8 +208,6 @@ get_items(void *db, struct item_queue *q, const char *pfx, const char *query)
     TAILQ_INSERT_TAIL(q, i, link);
     const char *url = (const char *)sqlite3_column_text(stmt, 0);
     i->url         = strdup(url);
-    i->contenttype = sqlite3_column_int(stmt, 1);
-    i->mtime =       sqlite3_column_int(stmt, 2);
   }
   sqlite3_finalize(stmt);
   return 0;
@@ -118,23 +218,22 @@ get_items(void *db, struct item_queue *q, const char *pfx, const char *query)
  *
  */
 static int
-do_round(const char *prefix)
+find_unprocessed_directory(const char *prefix)
 {
   char pfx[PATH_MAX];
   void *db = metadb_get();
 
   struct item_queue q;
-
   db_escape_path_query(pfx, sizeof(pfx), prefix);
 
   TAILQ_INIT(&q);
 
   int r = get_items(db, &q, pfx,
-                    "SELECT url, contenttype, mtime "
+                    "SELECT url "
                     "FROM item "
                     "WHERE url LIKE ?1 "
-                    "AND contenttype=1 "
-                    "AND indexstatus == 0 "
+                    "AND contenttype = 1 "
+                    "AND indexstatus = 0 "
                     "LIMIT 1");
 
   metadb_close(db);
@@ -144,7 +243,7 @@ do_round(const char *prefix)
   item_t *i;
   r = 0;
   TAILQ_FOREACH(i, &q, link) {
-    index_path(i->url);
+    index_directory(i->url);
     r = 1;
   }
   free_items(&q);
@@ -198,6 +297,32 @@ addroot(const char *url)
  *
  */
 static void
+clear_index_status(const char *url)
+{
+  char pfx[PATH_MAX];
+  db_escape_path_query(pfx, sizeof(pfx), url);
+  void *db = metadb_get();
+  sqlite3_stmt *stmt;
+  int rc;
+
+  rc = db_prepare(db, &stmt,
+                  "UPDATE item "
+                  "SET indexstatus = 0 "
+                  "WHERE url LIKE ?1 OR url = ?2");
+  if(!rc) {
+    sqlite3_bind_text(stmt, 1, pfx, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 2, url, -1, SQLITE_STATIC);
+    db_step(stmt);
+    sqlite3_finalize(stmt);
+  }
+  metadb_close(db);
+}
+
+
+/**
+ *
+ */
+static void
 save_state(void)
 {
   indexer_root_t *ir;
@@ -213,6 +338,24 @@ save_state(void)
   htsmsg_add_msg(m, "roots", r);
   htsmsg_store_save(m, "indexer");
   htsmsg_release(m);
+}
+
+
+/**
+ *
+ */
+int
+fa_indexer_enabled(const char *url)
+{
+  indexer_root_t *ir;
+  int rval = 0;
+  hts_mutex_lock(&indexer_mutex);
+  TAILQ_FOREACH(ir, &roots, ir_link) {
+    if(!strcmp(ir->ir_url, url))
+      rval = 1;
+  }
+  hts_mutex_unlock(&indexer_mutex);
+  return rval;
 }
 
 
@@ -234,7 +377,7 @@ fa_indexer_enable(const char *url, int on)
   if(on) {
     if(ir == NULL) {
       addroot(url);
-      TRACE(TRACE_DEBUG, "Indexer", "Creating indexed root at %s", url);
+      TRACE(TRACE_INFO, "Indexer", "Creating indexed root at %s", url);
       hts_cond_signal(&indexer_cond);
       save_state();
     }
@@ -242,7 +385,8 @@ fa_indexer_enable(const char *url, int on)
     if(ir != NULL) {
       TAILQ_REMOVE(&roots, ir, ir_link);
       ir_release(ir);
-      TRACE(TRACE_DEBUG, "Indexer", "Removing indexed root at %s", url);
+      TRACE(TRACE_INFO, "Indexer", "Removing indexed root at %s", url);
+      clear_index_status(url);
       save_state();
     }
   }
@@ -264,7 +408,6 @@ indexer_thread(void *aux)
   restart:
     did_something = 0;
     TAILQ_FOREACH(ir, &roots, ir_link) {
-
       ir->ir_refcount++;
 
       int doroot = 0;
@@ -276,10 +419,10 @@ indexer_thread(void *aux)
       hts_mutex_unlock(&indexer_mutex);
 
       if(doroot) {
-        index_path(ir->ir_url);
+        index_directory(ir->ir_url);
         did_something = 1;
       } else {
-        did_something |= do_round(ir->ir_url);
+        did_something |= find_unprocessed_directory(ir->ir_url);
       }
 
       hts_mutex_lock(&indexer_mutex);
@@ -293,7 +436,6 @@ indexer_thread(void *aux)
       if(!ir->ir_root_scanned)
         goto restart;
     }
-
     if(!did_something)
       hts_cond_wait(&indexer_cond, &indexer_mutex);
   }

@@ -1612,8 +1612,11 @@ init_dev_settings(void)
   add_dev_bool("Debug CEC",
 	       "cecdebug", &gconf.enable_cec_debug);
 #endif
-  add_dev_bool("Debug directory listing",
+  add_dev_bool("Debug directory listings",
 	       "fascannerdebug", &gconf.enable_fa_scanner_debug);
+
+  add_dev_bool("Debug library indexer",
+	       "indexerdebug", &gconf.enable_indexer_debug);
 
   add_dev_bool("Debug SMB/CIFS (Windows File Sharing)",
 	       "smbdebug", &gconf.enable_smb_debug);

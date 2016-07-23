@@ -242,6 +242,7 @@ typedef struct gconf {
   int enable_ftp_server_debug;
   int enable_cec_debug;
   int enable_fa_scanner_debug;
+  int enable_indexer_debug;
   int enable_smb_debug;
   int enable_mem_debug;
   int enable_nav_always_close;

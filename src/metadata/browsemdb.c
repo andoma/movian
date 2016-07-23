@@ -178,6 +178,7 @@ video_query(bmdb_t *b, void *db)
                       "SELECT i.url, p.url, i.contenttype "
                       "FROM item AS i, item AS p "
                       "WHERE i.url LIKE ?1 "
+                      "AND i.parent IS NOT NULL "
                       "AND (i.contenttype == 5 OR i.contenttype == 7) "
                       "AND i.parent = p.id"
                       );
@@ -215,6 +216,7 @@ albums_query(bmdb_t *b, void *db)
                       "AND audioitem.album_id = album.id "
                       "AND item.url LIKE ?1 "
                       "AND audioitem.ds_id = 1 "
+                      "AND item.parent IS NOT NULL "
                       "AND audioitem.artist_id = artist.id "
                       "GROUP BY album_id");
 
@@ -286,6 +288,7 @@ album_query(bmdb_t *b, void *db)
                   "WHERE audioitem.item_id = item.id "
                   "AND audioitem.artist_id = artist.id "
                   "AND album_id = ?1 "
+                  "AND parent IS NOT NULL "
                   "AND audioitem.ds_id = 1");
 
   if(rc != SQLITE_OK)
@@ -383,6 +386,7 @@ artists_query(bmdb_t *b, void *db)
                       "WHERE audioitem.item_id = item.id "
                       "AND audioitem.artist_id = artist.id "
                       "AND item.url like ?1 "
+                      "AND parent IS NOT NULL "
                       "AND audioitem.ds_id = 1 "
                       "GROUP by artist_id");
 
@@ -540,6 +544,9 @@ library_open(prop_t *page, const char *url, int sync)
   } else if((q = mystrbegins(url, "artist:")) != NULL) {
     b = bmdb_query_create(q, LIBRARY_QUERY_ARTIST, model);
     prop_set(model, "contents", PROP_SET_STRING, "artist");
+  } else if((q = mystrbegins(url, "videos:")) != NULL) {
+    b = bmdb_query_create(q, LIBRARY_QUERY_VIDEOS, model);
+
   } else {
     nav_open_error(page, "Invalid browse URL");
     return 0;

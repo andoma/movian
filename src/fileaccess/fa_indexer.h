@@ -21,3 +21,5 @@
 void fa_indexer_init(void);
 
 void fa_indexer_enable(const char *url, int on);
+
+int fa_indexer_enabled(const char *url);

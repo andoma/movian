@@ -91,6 +91,7 @@ typedef struct fa_dir_entry {
   char fde_statdone;
   char fde_ignore_cache;
   char fde_bound_to_metadb;
+  char fde_marked;
   struct fa_stat fde_stat;
 
 #if ENABLE_METADATA

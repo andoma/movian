@@ -1165,7 +1165,7 @@ metadb_insert_imageitem(sqlite3 *db, int64_t item_id, const metadata_t *md)
 /**
  *
  */
-int
+static int
 metadb_metadata_writex(void *db, const char *url, time_t mtime,
                        const metadata_t *md, const char *parent,
                        time_t parent_mtime,
@@ -1217,7 +1217,7 @@ metadb_metadata_writex(void *db, const char *url, time_t mtime,
              md->md_contenttype ? "contenttype=?2," : "",
              mtime              ? "mtime=?3," : "",
              parent_id          ? "parent=?4," : "",
-             indexstatus        ? "indexstatus=?5," : "");
+             indexstatus != INDEX_STATUS_NOCHANGE ? "indexstatus=?5," : "");
 
     char *x = strrchr(sql, ',');
     if(x != NULL) {
@@ -2136,8 +2136,8 @@ metadata_get(void *db, int item_id, int contenttype, get_cache_t *gc)
 {
   int64_t vi_id;
   metadata_t *md = metadata_create();
-  md->md_contenttype = contenttype; 
-
+  md->md_contenttype = contenttype;
+  
   int r;
   switch(md->md_contenttype) {
   case CONTENT_AUDIO:
@@ -2254,7 +2254,7 @@ metadb_metadata_scandir(void *db, const char *url, time_t *mtime)
   int rc;
 
   rc = db_prepare(db, &sel,
-		  "SELECT id, url, contenttype, mtime "
+		  "SELECT id, url, contenttype, mtime, indexstatus "
 		  "FROM item "
 		  "WHERE parent = ?1"
 		  );
@@ -2290,8 +2290,10 @@ metadb_metadata_scandir(void *db, const char *url, time_t *mtime)
       }
 
       fde->fde_md = metadata_get(db, item_id, contenttype, &gc);
-      if(fde->fde_md != NULL)
+      if(fde->fde_md != NULL) {
 	fde->fde_md->md_cache_status = METADATA_CACHE_STATUS_FULL;
+        fde->fde_md->md_index_status = sqlite3_column_int(sel, 4);
+      }
     }
   }
 

@@ -31,7 +31,6 @@
 #include "fileaccess.h"
 #include "fa_probe.h"
 #include "playqueue.h"
-#include "misc/strtab.h"
 #include "prop/prop_nodefilter.h"
 #include "prop/prop_linkselected.h"
 #include "plugins.h"
@@ -42,20 +41,13 @@
 #include "metadata/playinfo.h"
 #include "metadata/metadata_str.h"
 
-#define SCAN_TRACE(x, ...) do {                                \
-    if(gconf.enable_fa_scanner_debug)                          \
-      TRACE(TRACE_DEBUG, "FA", x, ##__VA_ARGS__);              \
+#define SCAN_TRACE(s, x, ...) do {                                   \
+    if(s->s_dbg)                                                     \
+      TRACE(TRACE_DEBUG, "FA", x, ##__VA_ARGS__);                    \
   } while(0)
 
 
 extern int media_buffer_hungry;
-
-typedef enum {
-  BROWSER_STOP,
-  BROWSER_DIR,
-  BROWSER_INDEX_ALBUMS,
-  BROWSER_INDEX_ARTISTS,
-} browser_mode_t;
 
 
 
@@ -70,8 +62,8 @@ typedef struct scanner {
   prop_t *s_loading;
   prop_t *s_model;
   prop_t *s_direct_close;
-  
-  browser_mode_t s_mode;
+
+  int s_running;
 
   fa_dir_t *s_fd;
 
@@ -83,29 +75,17 @@ typedef struct scanner {
 
   rstr_t *s_title;
 
-  browser_mode_t s_checkstop_cmp;
   deco_browse_t *s_db;
 
   prop_courier_t *s_pc;
+
+  int s_dbg;
 
 } scanner_t;
 
 
 static int rescan(scanner_t *s);
 static void browse_as_dir(scanner_t *s);
-
-
-/**
- *
- */
-static void
-set_mode(scanner_t *s, browser_mode_t mode)
-{
-  s->s_mode = mode;
-  fa_indexer_enable(s->s_url, mode != BROWSER_DIR);
-}
-
-
 
 
 /**
@@ -193,80 +173,6 @@ make_prop(fa_dir_entry_t *fde)
   prop_set(p, "canCopy", PROP_SET_INT, 1);
 }
 
-/**
- *
- */
-static struct strtab postfixtab[] = {
-  { "iso",             CONTENT_DVD },
-  
-  { "jpeg",            CONTENT_IMAGE },
-  { "jpg",             CONTENT_IMAGE },
-  { "png",             CONTENT_IMAGE },
-  { "gif",             CONTENT_IMAGE },
-  { "svg",             CONTENT_IMAGE },
-  
-  { "mp3",             CONTENT_AUDIO },
-  { "m4a",             CONTENT_AUDIO },
-  { "flac",            CONTENT_AUDIO },
-  { "aac",             CONTENT_AUDIO },
-  { "wma",             CONTENT_AUDIO },
-  { "ogg",             CONTENT_AUDIO },
-  { "spc",             CONTENT_AUDIO },
-  { "wav",             CONTENT_AUDIO },
-
-  { "mkv",             CONTENT_VIDEO },
-  { "avi",             CONTENT_VIDEO },
-  { "mov",             CONTENT_VIDEO },
-  { "m4v",             CONTENT_VIDEO },
-  { "ts",              CONTENT_VIDEO },
-  { "mpg",             CONTENT_VIDEO },
-  { "wmv",             CONTENT_VIDEO },
-  { "mp4",             CONTENT_VIDEO },
-  { "mts",             CONTENT_VIDEO },
-
-  { "sid",             CONTENT_ALBUM },
-
-  { "ttf",             CONTENT_FONT },
-  { "otf",             CONTENT_FONT },
-
-  { "pdf",             CONTENT_DOCUMENT },
-
-  { "nfo",             CONTENT_UNKNOWN },
-  { "gz",              CONTENT_UNKNOWN },
-  { "txt",             CONTENT_UNKNOWN },
-  { "srt",             CONTENT_UNKNOWN },
-  { "smi",             CONTENT_UNKNOWN },
-  { "ass",             CONTENT_UNKNOWN },
-  { "ssa",             CONTENT_UNKNOWN },
-  { "idx",             CONTENT_UNKNOWN },
-  { "sub",             CONTENT_UNKNOWN },
-  { "exe",             CONTENT_UNKNOWN },
-  { "tmp",             CONTENT_UNKNOWN },
-  { "db",              CONTENT_UNKNOWN },
-  { "pkg",             CONTENT_UNKNOWN },
-  { "elf",             CONTENT_UNKNOWN },
-  { "self",            CONTENT_UNKNOWN },
-};
-
-
-/**
- *
- */
-static int
-type_from_filename(const char *filename)
-{
-  int type;
-  const char *str;
-
-  if((str = strrchr(filename, '.')) == NULL)
-    return CONTENT_FILE;
-  str++;
-  
-  if((type = str2val(str, postfixtab)) == -1)
-    return CONTENT_FILE;
-  return type;
-}
-
 
 /**
  *
@@ -279,8 +185,9 @@ deep_probe(fa_dir_entry_t *fde, scanner_t *s)
 
   fde->fde_probestatus = FDE_PROBED_CONTENTS;
 
-  SCAN_TRACE("Deep probing %s -- content_type:%s",
-             rstr_get(fde->fde_url), content2type(fde->fde_type));
+  SCAN_TRACE(s, "Deep probing %s -- content_type:%s prop=%p",
+             rstr_get(fde->fde_url), content2type(fde->fde_type),
+             fde->fde_prop);
 
   if(fde->fde_type != CONTENT_UNKNOWN) {
 
@@ -294,14 +201,14 @@ deep_probe(fa_dir_entry_t *fde, scanner_t *s)
 
       fde->fde_md = metadb_metadata_get(getdb(s), rstr_get(fde->fde_url),
 					fde->fde_stat.fs_mtime);
-      SCAN_TRACE("%s: Metadata %sfound", rstr_get(fde->fde_url),
+      SCAN_TRACE(s, "%s: Metadata %sfound", rstr_get(fde->fde_url),
                  fde->fde_md ? "" : "not ");
     }
 
     if(fde->fde_statdone && meta != NULL)
       prop_set(meta, "timestamp", PROP_SET_INT, fde->fde_stat.fs_mtime);
 
-    metadata_index_status_t is = INDEX_STATUS_NIL;
+    metadata_index_status_t is = INDEX_STATUS_NOCHANGE;
 
     if(fde->fde_md == NULL) {
 
@@ -310,7 +217,7 @@ deep_probe(fa_dir_entry_t *fde, scanner_t *s)
       } else {
 	fde->fde_md = fa_probe_metadata(rstr_get(fde->fde_url), NULL, 0,
 					rstr_get(fde->fde_filename), NULL);
-        is = INDEX_STATUS_FILE_ANALYZED;
+        //        is = INDEX_STATUS_FILE_ANALYZED;
       }
     }
     
@@ -335,12 +242,12 @@ deep_probe(fa_dir_entry_t *fde, scanner_t *s)
           break;
         }
       }
-      SCAN_TRACE("%s: Cache status: %d",
+      SCAN_TRACE(s, "%s: Cache status: %d",
                  rstr_get(fde->fde_url), fde->fde_md->md_cache_status);
 
       switch(fde->fde_md->md_cache_status) {
       case METADATA_CACHE_STATUS_NO:
-        SCAN_TRACE("Storing item %s in DB parent:%s mtime:%d",
+        SCAN_TRACE(s, "Storing item %s in DB parent:%s mtime:%d",
                    rstr_get(fde->fde_url), s->s_url,
                    (int)fde->fde_stat.fs_mtime);
 	metadb_metadata_write(getdb(s), rstr_get(fde->fde_url),
@@ -406,15 +313,15 @@ analyzer(scanner_t *s, int probe)
   /* Scan all entries */
   RB_FOREACH(fde, &s->s_fd->fd_entries, fde_link) {
 
-    while(media_buffer_hungry && s->s_mode == BROWSER_DIR) 
+    while(media_buffer_hungry && s->s_running)
       sleep(1);
 
-    if(s->s_mode != BROWSER_DIR)
+    if(!s->s_running)
       break;
 
     if(fde->fde_probestatus == FDE_PROBED_NONE) {
       if(fde->fde_type == CONTENT_FILE)
-	fde->fde_type = type_from_filename(rstr_get(fde->fde_filename));
+	fde->fde_type = contenttype_from_filename(rstr_get(fde->fde_filename));
 
       fde->fde_probestatus = FDE_PROBED_FILENAME;
     }
@@ -429,14 +336,15 @@ analyzer(scanner_t *s, int probe)
  *
  */
 static scanner_t *
-scanner_create(const char *url, time_t mtime)
+scanner_create(const char *url, time_t mtime, int dbg)
 {
   scanner_t *s = calloc(1, sizeof(scanner_t));
   s->s_pc = prop_courier_create_waitable();
 
   s->s_url = strdup(url);
-  s->s_mode = BROWSER_DIR;
+  s->s_running = 1;
   s->s_mtime = mtime;
+  s->s_dbg = dbg;
   return s;
 }
 
@@ -452,6 +360,7 @@ scanner_destroy(scanner_t *s)
   prop_courier_destroy(s->s_pc);
   free(s);
 }
+
 
 /**
  *
@@ -474,11 +383,11 @@ scanner_release(scanner_t *s)
 static int
 scanner_entry_setup(scanner_t *s, fa_dir_entry_t *fde, const char *src)
 {
-  SCAN_TRACE("%s: File %s added by %s",
+  SCAN_TRACE(s, "%s: File %s added by %s",
              s->s_url, rstr_get(fde->fde_url), src);
 
   if(fde->fde_type == CONTENT_FILE)
-    fde->fde_type = type_from_filename(rstr_get(fde->fde_filename));
+    fde->fde_type = contenttype_from_filename(rstr_get(fde->fde_filename));
 
   if(s->s_nodes == NULL)
     return 0;
@@ -500,7 +409,7 @@ scanner_entry_setup(scanner_t *s, fa_dir_entry_t *fde, const char *src)
 static void
 scanner_entry_destroy(scanner_t *s, fa_dir_entry_t *fde, const char *src)
 {
-  SCAN_TRACE("%s: File %s removed by %s",
+  SCAN_TRACE(s, "%s: File %s removed by %s",
              s->s_url, rstr_get(fde->fde_url), src);
   metadb_unparent_item(getdb(s), rstr_get(fde->fde_url));
   if(fde->fde_prop != NULL)
@@ -556,12 +465,12 @@ rescan(scanner_t *s)
   int changed = 0;
   char errbuf[512];
   if((fd = fa_scandir(s->s_url, errbuf, sizeof(errbuf))) == NULL) {
-    SCAN_TRACE("%s: Rescanning failed: %s", s->s_url, errbuf);
+    SCAN_TRACE(s, "%s: Rescanning failed: %s", s->s_url, errbuf);
     return -1; 
   }
 
   if(s->s_fd->fd_count != fd->fd_count) {
-    SCAN_TRACE("%s: Rescanning found %d items, previously %d",
+    SCAN_TRACE(s, "%s: Rescanning found %d items, previously %d",
                s->s_url, fd->fd_count, s->s_fd->fd_count);
   }
 
@@ -620,7 +529,7 @@ rescan(scanner_t *s)
  *
  */
 static int
-doscan(scanner_t *s, int with_notify)
+doscan(scanner_t *s)
 {
   fa_dir_entry_t *fde;
   char errbuf[256];
@@ -633,12 +542,12 @@ doscan(scanner_t *s, int with_notify)
   if(s->s_fd == NULL) {
     s->s_fd = fa_scandir(s->s_url, errbuf, sizeof(errbuf));
     if(s->s_fd != NULL) {
-      SCAN_TRACE("%s: Found %d by directory scanning",
+      SCAN_TRACE(s, "%s: Found %d by directory scanning",
               s->s_url, s->s_fd->fd_count);
 
       if(gconf.enable_fa_scanner_debug) {
         RB_FOREACH(fde, &s->s_fd->fd_entries, fde_link) {
-          SCAN_TRACE("%s: File %s",
+          SCAN_TRACE(s, "%s: File %s",
                      s->s_url, rstr_get(fde->fde_url));
         }
       }
@@ -646,7 +555,7 @@ doscan(scanner_t *s, int with_notify)
       err = 0;
     }
   } else {
-    SCAN_TRACE("%s: Found %d items in cache",
+    SCAN_TRACE(s, "%s: Found %d items in cache",
                s->s_url, s->s_fd->fd_count);
     pending_rescan = 1;
   }
@@ -678,16 +587,17 @@ doscan(scanner_t *s, int with_notify)
   }
 
   if(pending_rescan) {
-    SCAN_TRACE("%s: Starting rescan", s->s_url);
+    SCAN_TRACE(s, "%s: Starting rescan", s->s_url);
     err = rescan(s);
-    SCAN_TRACE("%s: Rescan completed: %d", s->s_url, err);
+    SCAN_TRACE(s, "%s: Rescan completed: %d", s->s_url, err);
   }
 
   closedb(s);
+
 #if 0
   fa_handle_t *n = fa_notify_start(s->s_url, s, scanner_notification);
 #endif
-  while(s->s_mode == BROWSER_DIR)
+  while(s->s_running)
     prop_courier_wait_and_dispatch(s->s_pc);
 #if 0
   if(n != NULL)
@@ -716,65 +626,16 @@ cleanup_model(scanner_t *s)
 /**
  *
  */
-static int
-checkstop_index(void *opaque)
-{
-  scanner_t *s = opaque;
-  prop_courier_poll(s->s_pc);
-  return s->s_mode != s->s_checkstop_cmp;
-}
-
-
-/**
- *
- */
 static void *
 scanner_thread(void *aux)
 {
   scanner_t *s = aux;
 
-  browser_mode_t mode = -1;
+  prop_set(s->s_model, "contents", PROP_SET_VOID);
+  prop_set(s->s_model, "canPaste", PROP_SET_INT, 1);
+  browse_as_dir(s);
+  doscan(s);
 
-  while(s->s_mode != BROWSER_STOP) {
-
-    if(s->s_mode == mode) {
-      prop_courier_wait_and_dispatch(s->s_pc);
-      continue;
-    }
-
-    mode = s->s_mode;
-    cleanup_model(s);
-
-    s->s_checkstop_cmp = mode;
-
-    prop_set_int(s->s_loading, 1);
-
-    switch(mode) {
-    case BROWSER_DIR:
-      prop_set(s->s_model, "contents", PROP_SET_VOID);
-      prop_set(s->s_model, "canPaste", PROP_SET_INT, 1);
-      browse_as_dir(s);
-      doscan(s, 1);
-      break;
-
-    case BROWSER_STOP:
-      break;
-
-    case BROWSER_INDEX_ALBUMS:
-      prop_set(s->s_model, "contents", PROP_SET_STRING, "albums");
-      prop_set(s->s_model, "canPaste", PROP_SET_INT, 0);
-      metadata_browse(getdb(s), s->s_url, s->s_nodes, s->s_model,
-                      LIBRARY_QUERY_ALBUMS, checkstop_index, s);
-      break;
-
-    case BROWSER_INDEX_ARTISTS:
-      prop_set(s->s_model, "contents", PROP_SET_STRING, "artists");
-      prop_set(s->s_model, "canPaste", PROP_SET_INT, 0);
-      metadata_browse(getdb(s), s->s_url, s->s_nodes, s->s_model,
-                      LIBRARY_QUERY_ARTISTS, checkstop_index, s);
-      break;
-    }
-  }
   cleanup_model(s);
 
   closedb(s);
@@ -838,7 +699,7 @@ scanner_nodes_callback(void *opaque, prop_event_t event, ...)
   switch(event) {
   case PROP_DESTROYED:
     prop_unsubscribe(va_arg(ap, prop_sub_t *));
-    s->s_mode = BROWSER_STOP;
+    s->s_running = 0;
     scanner_release(s);
     break;
 
@@ -850,106 +711,6 @@ scanner_nodes_callback(void *opaque, prop_event_t event, ...)
     break;
   }
   va_end(ap);
-}
-
-
-/**
- *
- */
-static void
-set_indexed_mode(void *opaque, prop_event_t event, ...)
-{
-  scanner_t *s = opaque;
-  va_list ap;
-  prop_t *p;
-
-  va_start(ap, event);
-
-  switch(event) {
-  case PROP_DESTROYED:
-    prop_unsubscribe(va_arg(ap, prop_sub_t *));
-    scanner_release(s);
-    break;
-
-  case PROP_SELECT_CHILD:
-    p = va_arg(ap, prop_t *);
-    rstr_t *r = prop_get_name(p);
-    const char *val = rstr_get(r);
-    if(val != NULL) {
-      if(!strcmp(val, "off"))
-        set_mode(s, BROWSER_DIR);
-      if(!strcmp(val, "albums"))
-        set_mode(s, BROWSER_INDEX_ALBUMS);
-      if(!strcmp(val, "artists"))
-        set_mode(s, BROWSER_INDEX_ARTISTS);
-    }
-    kv_url_opt_set(s->s_url, KVSTORE_DOMAIN_SYS, "indexedmode",
-		   KVSTORE_SET_STRING, val);
-    rstr_release(r);
-    break;
-
-  default:
-    break;
-  }
-}
-
-
-/**
- *
- */
-static void
-add_indexed_option(scanner_t *s, prop_t *model)
-{
-  prop_t *parent = prop_create(model, "options");
-  prop_t *n = prop_create_root(NULL);
-  prop_t *m = prop_create(n, "metadata");
-  prop_t *options = prop_create(n, "options");
-
-  prop_set_string(prop_create(n, "type"), "multiopt");
-  prop_set_int(prop_create(n, "enabled"), 1);
-  prop_link(_p("Indexed mode"), prop_create(m, "title"));
-  
-  prop_t *off = prop_create_root("off");
-  prop_link(_p("Off"), prop_create(off, "title"));
-  if(prop_set_parent(off, options))
-    abort();
-
-  prop_t *albums = prop_create_root("albums");
-  prop_link(_p("Albums"), prop_create(albums, "title"));
-  if(prop_set_parent(albums, options))
-    abort();
-
-  prop_t *artists = prop_create_root("artists");
-  prop_link(_p("Artists"), prop_create(artists, "title"));
-  if(prop_set_parent(artists, options))
-    abort();
-
-  rstr_t *cur = kv_url_opt_get_rstr(s->s_url, KVSTORE_DOMAIN_SYS, 
-				    "indexedmode");
-
-  if(cur != NULL && !strcmp(rstr_get(cur), "albums")) {
-    prop_select(albums);
-    set_mode(s, BROWSER_INDEX_ALBUMS);
-  } else if(cur != NULL && !strcmp(rstr_get(cur), "artists")) {
-    prop_select(artists);
-    set_mode(s, BROWSER_INDEX_ARTISTS);
-  } else {
-    prop_select(off);
-    set_mode(s, BROWSER_DIR);
-  }
-  rstr_release(cur);
-  atomic_inc(&s->s_refcount);
-
-  prop_linkselected_create(options, n, "current", "value");
-
-  prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_TRACK_DESTROY,
-                 PROP_TAG_CALLBACK, set_indexed_mode, s,
-                 PROP_TAG_ROOT, options,
-                 PROP_TAG_COURIER, s->s_pc,
-                 NULL);
-
-  if(prop_set_parent(n, parent))
-    prop_destroy(n);
 }
 
 
@@ -1079,7 +840,7 @@ set_sort_dirs(void *opaque, prop_event_t event, ...)
     prop_unsubscribe(va_arg(ap, prop_sub_t *));
     scanner_release(s);
     break;
-    
+
   case PROP_SET_INT:
     val = va_arg(ap, int);
     prop_nf_sort(s->s_pnf, val ? "node.type" : NULL, 0, 0, typemap, 1);
@@ -1116,6 +877,64 @@ add_sort_option_dirfirst(scanner_t *s, prop_t *model)
   atomic_inc(&s->s_refcount);
   prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_TRACK_DESTROY,
 		 PROP_TAG_CALLBACK, set_sort_dirs, s,
+		 PROP_TAG_ROOT, value,
+		 NULL);
+
+  if(prop_set_parent(n, parent))
+    prop_destroy(n);
+}
+
+
+
+/**
+ *
+ */
+static void
+set_include_in_library(void *opaque, prop_event_t event, ...)
+{
+  scanner_t *s = opaque;
+  va_list ap;
+  int val;
+
+  va_start(ap, event);
+
+  switch(event) {
+  case PROP_DESTROYED:
+    prop_unsubscribe(va_arg(ap, prop_sub_t *));
+    scanner_release(s);
+    break;
+
+  case PROP_SET_INT:
+    val = va_arg(ap, int);
+    fa_indexer_enable(s->s_url, val);
+    break;
+
+  default:
+    break;
+  }
+}
+
+
+/**
+ *
+ */
+static void
+add_include_in_library(scanner_t *s, prop_t *model)
+{
+  prop_t *parent = prop_create(model, "options");
+  prop_t *n = prop_create_root(NULL);
+  prop_t *m = prop_create(n, "metadata");
+  prop_t *value = prop_create(n, "value");
+  int v = fa_indexer_enabled(s->s_url);
+
+  prop_set(n, "type", PROP_SET_STRING, "bool");
+  prop_set(n, "enabled", PROP_SET_INT, 1);
+  prop_set_int(value, v);
+  prop_set(m, "title", PROP_SET_LINK, _p("Include in library"));
+
+  atomic_inc(&s->s_refcount);
+  prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_TRACK_DESTROY,
+		 PROP_TAG_CALLBACK, set_include_in_library, s,
 		 PROP_TAG_ROOT, value,
 		 NULL);
 
@@ -1208,7 +1027,7 @@ fa_scanner_page(const char *url, time_t url_mtime,
                 prop_t *model, const char *playme,
                 prop_t *direct_close, rstr_t *title)
 {
-  scanner_t *s = scanner_create(url, url_mtime);
+  scanner_t *s = scanner_create(url, url_mtime, gconf.enable_fa_scanner_debug);
 
   /* One reference to the scanner thread
      and one to the scanner_stop subscription
@@ -1224,11 +1043,6 @@ fa_scanner_page(const char *url, time_t url_mtime,
   s->s_direct_close = prop_ref_inc(direct_close);
   s->s_title = rstr_dup(title);
 
-  if(gconf.enable_indexer)
-    add_indexed_option(s, model);
-
-  prop_t *onlysupported;
-
   s->s_pnf = prop_nf_create(prop_create(s->s_model, "nodes"),
                             s->s_nodes,
                             prop_create(s->s_model, "filter"),
@@ -1240,9 +1054,13 @@ fa_scanner_page(const char *url, time_t url_mtime,
 		       PROP_NF_CMP_EQ, 1, NULL, 
 		       PROP_NF_MODE_EXCLUDE);
 
+  if(gconf.enable_indexer)
+    add_include_in_library(s, s->s_model);
+
   add_sort_option_type(s, s->s_model);
   add_sort_option_dirfirst(s, s->s_model);
 
+  prop_t *onlysupported;
   add_only_supported_files(s, s->s_model, &onlysupported);
   prop_nf_pred_str_add(s->s_pnf, "node.type",
 		       PROP_NF_CMP_EQ, "unknown", onlysupported, 
@@ -1262,17 +1080,4 @@ fa_scanner_page(const char *url, time_t url_mtime,
                  NULL);
 
   scanner_thread(s);
-}
-
-
-/**
- *
- */
-int
-fa_scanner_scan(const char *url, time_t mtime)
-{
-  scanner_t *s = scanner_create(url, mtime);
-  int r = doscan(s, 0);
-  scanner_destroy(s);
-  return r;
 }

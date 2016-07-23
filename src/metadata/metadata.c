@@ -30,6 +30,7 @@
 #include "media/media.h"
 #include "htsmsg/htsmsg_json.h"
 #include "misc/str.h"
+#include "misc/strtab.h"
 
 #include "metadata.h"
 #include "metadata_sources.h"
@@ -371,4 +372,80 @@ metadata_qtypestr(int qtype)
   default:
     return "???";
   }
+}
+
+
+
+/**
+ *
+ */
+static struct strtab postfixtab[] = {
+  { "iso",             CONTENT_DVD },
+
+  { "jpeg",            CONTENT_IMAGE },
+  { "jpg",             CONTENT_IMAGE },
+  { "png",             CONTENT_IMAGE },
+  { "gif",             CONTENT_IMAGE },
+  { "svg",             CONTENT_IMAGE },
+
+  { "mp3",             CONTENT_AUDIO },
+  { "m4a",             CONTENT_AUDIO },
+  { "flac",            CONTENT_AUDIO },
+  { "aac",             CONTENT_AUDIO },
+  { "wma",             CONTENT_AUDIO },
+  { "ogg",             CONTENT_AUDIO },
+  { "spc",             CONTENT_AUDIO },
+  { "wav",             CONTENT_AUDIO },
+
+  { "mkv",             CONTENT_VIDEO },
+  { "avi",             CONTENT_VIDEO },
+  { "mov",             CONTENT_VIDEO },
+  { "m4v",             CONTENT_VIDEO },
+  { "ts",              CONTENT_VIDEO },
+  { "mpg",             CONTENT_VIDEO },
+  { "wmv",             CONTENT_VIDEO },
+  { "mp4",             CONTENT_VIDEO },
+  { "mts",             CONTENT_VIDEO },
+
+  { "sid",             CONTENT_ALBUM },
+
+  { "ttf",             CONTENT_FONT },
+  { "otf",             CONTENT_FONT },
+
+  { "pdf",             CONTENT_DOCUMENT },
+
+  { "nfo",             CONTENT_UNKNOWN },
+  { "gz",              CONTENT_UNKNOWN },
+  { "txt",             CONTENT_UNKNOWN },
+  { "srt",             CONTENT_UNKNOWN },
+  { "smi",             CONTENT_UNKNOWN },
+  { "ass",             CONTENT_UNKNOWN },
+  { "ssa",             CONTENT_UNKNOWN },
+  { "idx",             CONTENT_UNKNOWN },
+  { "sub",             CONTENT_UNKNOWN },
+  { "exe",             CONTENT_UNKNOWN },
+  { "tmp",             CONTENT_UNKNOWN },
+  { "db",              CONTENT_UNKNOWN },
+  { "pkg",             CONTENT_UNKNOWN },
+  { "elf",             CONTENT_UNKNOWN },
+  { "self",            CONTENT_UNKNOWN },
+};
+
+
+/**
+ *
+ */
+int
+contenttype_from_filename(const char *filename)
+{
+  int type;
+  const char *str;
+
+  if((str = strrchr(filename, '.')) == NULL)
+    return CONTENT_FILE;
+  str++;
+
+  if((type = str2val(str, postfixtab)) == -1)
+    return CONTENT_FILE;
+  return type;
 }

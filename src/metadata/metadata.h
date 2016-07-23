@@ -84,6 +84,9 @@ static inline int content_dirish(contenttype_t ct)
     ct == CONTENT_PLAYLIST;
 }
 
+int contenttype_from_filename(const char *filename);
+
+
 /**
  * Metadata types.
  * These are stored directly in the sqlite metadata database so they
@@ -118,11 +121,10 @@ typedef enum {
  * must never be changed
  */
 typedef enum {
-  INDEX_STATUS_NIL = 0,
+  INDEX_STATUS_NOCHANGE = -1,
+  INDEX_STATUS_UNSET = 0,
   INDEX_STATUS_ERROR = 1,
-  INDEX_STATUS_STATED = 2,
-  INDEX_STATUS_FILE_ANALYZED = 3,
-  INDEX_STATUS_METADATA_BOUND = 4,
+  INDEX_STATUS_ANALYZED = 2,
 } metadata_index_status_t;
 
 const char *content2type(contenttype_t ctype);
@@ -229,7 +231,7 @@ typedef struct metadata {
 #define METADATA_CACHE_STATUS_FULL       1
 #define METADATA_CACHE_STATUS_UNPARENTED 2
 
-
+  metadata_index_status_t md_index_status;
 
 } metadata_t;
 
@@ -329,12 +331,6 @@ void metadb_metadata_write(void *db, const char *url, time_t mtime,
 			   const metadata_t *md, const char *parent,
 			   time_t parent_mtime,
                            metadata_index_status_t indexstatus);
-
-int metadb_metadata_writex(void *db, const char *url, time_t mtime,
-                           const metadata_t *md, const char *parent,
-                           time_t parent_mtime,
-                           metadata_index_status_t indexstatus);
-
 
 metadata_t *metadb_metadata_get(void *db, const char *url, time_t mtime);
 
