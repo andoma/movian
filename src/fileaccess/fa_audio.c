@@ -70,7 +70,7 @@ audio_play_zipfile(fa_handle_t *fh, media_pipe_t *mp,
     fa_dir_entry_t *fde;
     RB_FOREACH(fde, &fd->fd_entries, fde_link) {
       e = be_file_playaudio(rstr_get(fde->fde_url), mp, errbuf, errlen,
-			    hold, NULL);
+			    hold, NULL, NULL);
       if(e != NULL)
 	goto out;
     }
@@ -120,7 +120,8 @@ seekflush(media_pipe_t *mp, media_buf_t **mbp)
  */
 event_t *
 be_file_playaudio(const char *url, media_pipe_t *mp,
-		  char *errbuf, size_t errlen, int hold, const char *mimetype)
+		  char *errbuf, size_t errlen, int hold, const char *mimetype,
+                  void *opaque)
 {
   AVFormatContext *fctx;
   AVCodecContext *ctx;

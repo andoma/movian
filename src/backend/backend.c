@@ -66,6 +66,8 @@ static int num_cached_images;
 static hts_mutex_t imageloader_mutex;
 static hts_cond_t imageloader_cond;
 
+static hts_lwmutex_t dyanamic_backends_mutex;
+static struct backend_list dynamic_backends;
 
 /**
  *
@@ -76,6 +78,29 @@ backend_register(backend_t *be)
   LIST_INSERT_HEAD(&backends, be, be_global_link);
 }
 
+/**
+ *
+ */
+void
+backend_register_dynamic(backend_t *be)
+{
+  hts_lwmutex_lock(&dyanamic_backends_mutex);
+  LIST_INSERT_HEAD(&dynamic_backends, be, be_global_link);
+  hts_lwmutex_unlock(&dyanamic_backends_mutex);
+}
+
+
+/**
+ *
+ */
+void
+backend_unregister_dynamic(backend_t *be)
+{
+  hts_lwmutex_lock(&dyanamic_backends_mutex);
+  LIST_REMOVE(be, be_global_link);
+  hts_lwmutex_unlock(&dyanamic_backends_mutex);
+}
+
 
 /**
  *
@@ -84,7 +109,7 @@ void
 backend_init(void)
 {
   backend_t *be;
-
+  hts_lwmutex_init(&dyanamic_backends_mutex);
   hts_mutex_init(&imageloader_mutex);
   hts_cond_init(&imageloader_cond, &imageloader_mutex);
 
@@ -138,13 +163,17 @@ backend_play_audio(const char *url, struct media_pipe *mp,
 		   char *errbuf, size_t errlen, int paused,
 		   const char *mimetype)
 {
-  backend_t *nb = backend_canhandle(url);
-  
-  if(nb == NULL || nb->be_play_audio == NULL) {
+  backend_t *be = backend_resolve(url);
+
+  if(be == NULL || be->be_play_audio == NULL) {
     snprintf(errbuf, errlen, "No backend for URL");
+    backend_release(be);
     return NULL;
   }
-  return nb->be_play_audio(url, mp, errbuf, errlen, paused, mimetype);
+  event_t *e = be->be_play_audio(url, mp, errbuf, errlen, paused, mimetype,
+                                 be->be_opaque);
+  backend_release(be);
+  return e;
 }
 
 
@@ -418,6 +447,27 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im0,
   return img;
 }
 
+/**
+ *
+ */
+backend_t *
+backend_resolve(const char *url)
+{
+  backend_t *be;
+  hts_lwmutex_lock(&dyanamic_backends_mutex);
+  LIST_FOREACH(be, &dynamic_backends, be_global_link) {
+    if(mystrbegins(url, be->be_prefix)) {
+      atomic_inc(&be->be_refcount);
+      break;
+    }
+  }
+  hts_lwmutex_unlock(&dyanamic_backends_mutex);
+
+  if(be != NULL)
+    return be;
+
+  return backend_canhandle(url);
+}
 
 /**
  *
@@ -509,6 +559,28 @@ backend_open(prop_t *page, const char *url, int sync)
   backend_t *be;
   char urlbuf[URL_MAX];
 
+  hts_lwmutex_lock(&dyanamic_backends_mutex);
+  LIST_FOREACH(be, &dynamic_backends, be_global_link) {
+    if(mystrbegins(url, be->be_prefix)) {
+      atomic_inc(&be->be_refcount);
+      break;
+    }
+  }
+  hts_lwmutex_unlock(&dyanamic_backends_mutex);
+
+  if(be != NULL) {
+    prop_set(page, "url", PROP_SET_STRING, url);
+    int err;
+    if(be->be_open2 == NULL) {
+      err = 1;
+    } else {
+      be->be_open2(page, url, sync, be->be_opaque);
+      err = 0;
+    }
+    backend_release(be);
+    return err;
+  }
+
   LIST_FOREACH(be, &backends, be_global_link) {
     if(be->be_flags & BACKEND_OPEN_CHECKS_URI) {
       if(be->be_open(page, url, sync))
@@ -597,7 +669,13 @@ backend_retain(backend_t *be)
 
 void backend_release(backend_t *be)
 {
-  if(be == NULL || atomic_dec(&be->be_refcount))
+  if(be == NULL)
+    return;
+
+  if(!(be->be_flags & BACKEND_DYNAMIC))
+    return;
+
+  if(atomic_dec(&be->be_refcount))
     return;
 
   be->be_destroy(be);

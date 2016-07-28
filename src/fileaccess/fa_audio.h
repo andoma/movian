@@ -25,7 +25,7 @@ struct fa_handle;
 
 event_t *be_file_playaudio(const char *url, media_pipe_t *mp,
 			   char *errbuf, size_t errlen, int hold,
-			   const char *mimetype);
+			   const char *mimetype, void *opaque);
 
 #if ENABLE_LIBGME
 event_t *fa_gme_playfile(media_pipe_t *mp, struct fa_handle *fh,

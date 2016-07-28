@@ -663,7 +663,8 @@ icecast_canhandle(const char *url)
  */
 static event_t *
 icecast_play_audio(const char *url, media_pipe_t *mp,
-		  char *errbuf, size_t errlen, int hold, const char *mimetype)
+                   char *errbuf, size_t errlen, int hold, const char *mimetype,
+                   void *opaque)
 {
   icecast_play_context_t ipc = {0};
   ipc.ipc_url = url + strlen("icecast:");

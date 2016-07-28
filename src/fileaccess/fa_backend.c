@@ -196,15 +196,17 @@ file_open_file(prop_t *page, const char *url, fa_stat_t *fs,
 
   if(md->md_redirect != NULL) {
     url = md->md_redirect;
-    backend_t *newbe = backend_canhandle(url);
+    backend_t *newbe = backend_resolve(url);
     if(newbe == NULL) {
       nav_open_errorf(page, _("Invalid URL from redirect"));
       return;
     }
     if(newbe != &be_file) {
       nav_redirect(page, url);
+      backend_release(newbe);
       return;
     }
+    backend_release(newbe);
   }
   prop_t *meta = prop_create_root("metadata");
 

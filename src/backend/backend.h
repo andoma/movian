@@ -102,6 +102,8 @@ typedef struct backend {
 
   int (*be_open)(prop_t *page, const char *url, int sync);
 
+  int (*be_open2)(prop_t *page, const char *url, int sync, void *opaque);
+
   struct event *(*be_play_video)(const char *url,
 				 struct media_pipe *mp,
 				 char *errbuf, size_t errlen,
@@ -111,7 +113,8 @@ typedef struct backend {
 
   struct event *(*be_play_audio)(const char *url, struct media_pipe *mp,
 				 char *errbuf, size_t errlen, int paused,
-				 const char *mimetype);
+				 const char *mimetype,
+                                 void *opaque);
 
   struct image *(*be_imageloader)(const char *url, const struct image_meta *im,
                                   char *errbuf, size_t errlen,
@@ -127,10 +130,12 @@ typedef struct backend {
 
   int (*be_resolve_item)(const char *url, prop_t *item);
 
-  // Only called for BACKEND_DYNAMIC instances
+  // Members below are only for BACKEND_DYNAMIC instances
   void (*be_destroy)(struct backend *be);
 
   void *be_opaque;
+
+  char *be_prefix;
 
 } backend_t;
 
@@ -172,6 +177,9 @@ struct image *backend_imageloader(rstr_t *url, const struct image_meta *im,
 backend_t *backend_canhandle(const char *url)
      attribute_unused_result;
 
+backend_t *backend_resolve(const char *url)
+     attribute_unused_result;
+
 
 backend_probe_result_t backend_probe(const char *url,
 				     char *errbuf, size_t errlen,
@@ -179,6 +187,10 @@ backend_probe_result_t backend_probe(const char *url,
      attribute_unused_result;
 
 void backend_register(backend_t *be);
+
+void backend_register_dynamic(backend_t *be);
+
+void backend_unregister_dynamic(backend_t *be);
 
 int backend_open_video(prop_t *page, const char *url, int sync);
 
