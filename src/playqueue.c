@@ -1049,7 +1049,7 @@ player_thread(void *aux)
   playqueue_event_t *pe;
   event_t *e;
   prop_t *p, *m;
-  char errbuf[100];
+  char errbuf[512];
   int startpaused = 0;
   while(1) {
     
