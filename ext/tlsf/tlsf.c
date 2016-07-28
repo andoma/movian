@@ -840,8 +840,6 @@ tlsf_pool tlsf_create(void* mem, size_t bytes)
 
 void tlsf_destroy(tlsf_pool pool)
 {
-	/* Nothing to do. */
-	pool = pool;
 }
 
 void* tlsf_malloc(tlsf_pool tlsf, size_t size)
