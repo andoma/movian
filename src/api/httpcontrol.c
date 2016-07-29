@@ -519,7 +519,7 @@ hc_hexdump(http_connection_t *hc, const char *remain, void *opaque,
  *
  */
 static int
-hc_echo_init(http_connection_t *hc)
+hc_echo_init(http_connection_t *hc, void *opaque)
 {
   TRACE(TRACE_DEBUG, "WS", "Connected to echo");
   return 0;
@@ -686,8 +686,8 @@ httpcontrol_init(void)
   http_path_add("/api/diag", NULL, hc_diagnostics, 1);
   http_path_add("/api/logfile", NULL, hc_logfile, 0);
   http_path_add("/api/replace", NULL, hc_binreplace, 1);
-  http_add_websocket("/api/ws/echo",
-		     hc_echo_init, hc_echo_data, hc_echo_fini);
+  http_add_websocket("/api/ws/echo", NULL,
+		     hc_echo_init, hc_echo_data, hc_echo_fini, NULL);
 
   http_path_add("/", NULL, hc_root, 1);
   http_path_add("/favicon.ico", NULL, hc_favicon, 1);

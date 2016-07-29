@@ -26,31 +26,42 @@
 #include "http.h"
 #include "asyncio.h"
 
+
+typedef struct http_path http_path_t;
+
 typedef struct http_connection http_connection_t;
 
-typedef int (http_callback_t)(http_connection_t *hc, 
+typedef int (http_callback_t)(http_connection_t *hc,
 			      const char *remain, void *opaque,
 			      http_cmd_t method);
 
-void *http_path_add(const char *path, void *opaque, http_callback_t *callback,
-		    int leaf);
+void http_path_remove(struct http_path *p);
+
+struct http_path *http_path_add(const char *path, void *opaque,
+                                http_callback_t *callback,
+                                int leaf);
 
 
-typedef int (websocket_callback_init_t)(http_connection_t *hc);
+typedef void (websocket_callback_removed_t)(void *path_opaque);
+
+typedef int (websocket_callback_connected_t)(http_connection_t *hc,
+                                             void *path_opaque);
 
 typedef int (websocket_callback_data_t)(http_connection_t *hc,
 					int opcode,
 					uint8_t *data,
 					size_t len,
-					void *opaque);
+					void *connection_opaque);
 
-typedef void (websocket_callback_fini_t)(http_connection_t *hc,
-					 void *opaque);
+typedef void (websocket_callback_disconnected_t)(http_connection_t *hc,
+                                                 void *connection_opaque);
 
-void *http_add_websocket(const char *path, 
-			 websocket_callback_init_t *init,
-			 websocket_callback_data_t *data,
-			 websocket_callback_fini_t *fini);
+struct http_path *http_add_websocket(const char *path,
+                                     void *opaque,
+                                     websocket_callback_connected_t *init,
+                                     websocket_callback_data_t *data,
+                                     websocket_callback_disconnected_t *fini,
+                                     websocket_callback_removed_t *removed);
 
 void websocket_send(http_connection_t *hc, int opcode, const void *data,
 		    size_t len);

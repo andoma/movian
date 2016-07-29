@@ -38,29 +38,31 @@
 #include "misc/bytestream.h"
 
 static LIST_HEAD(, http_path) http_paths;
+static HTS_LWMUTEX_DECL(http_paths_lwmutex);
+
 LIST_HEAD(http_connection_list, http_connection);
 int http_server_port;
 
 /**
  *
  */
-typedef struct http_path {
+struct http_path {
   LIST_ENTRY(http_path) hp_link;
   char *hp_path;
   void *hp_opaque;
   http_callback_t *hp_callback;
   int hp_len;
   int hp_mode;
-
+  atomic_t hp_refcount;
 #define HTTP_PATH_MODE_NORMAL    0
 #define HTTP_PATH_MODE_LEAF      1
 #define HTTP_PATH_MODE_WEBSOCKET 2
 
-
-  websocket_callback_init_t *hp_ws_init;
+  websocket_callback_connected_t *hp_ws_connected;
   websocket_callback_data_t *hp_ws_data;
-  websocket_callback_fini_t *hp_ws_fini;
-} http_path_t;
+  websocket_callback_disconnected_t *hp_ws_disconnected;
+  websocket_callback_removed_t *hp_ws_removed;
+};
 
 
 /**
@@ -106,7 +108,7 @@ struct http_connection {
 
   net_addr_t hc_local_addr;
 
-  const http_path_t *hc_path;
+  http_path_t *hc_path;
   void *hc_opaque;
 
   char hc_my_addr[128]; // hc_local_addr as text
@@ -162,6 +164,16 @@ http_get_post_data(http_connection_t *hc, size_t *sizep, int steal)
   return r;
 }
 
+/**
+ *
+ */
+static http_path_t *
+http_path_retain(http_path_t *hp)
+{
+  atomic_inc(&hp->hp_refcount);
+  return hp;
+}
+
 
 /**
  *
@@ -175,18 +187,20 @@ hp_cmp(const http_path_t *a, const http_path_t *b)
 /**
  * Add a callback for a given "virtual path" on our HTTP server
  */
-void *
+http_path_t *
 http_path_add(const char *path, void *opaque, http_callback_t *callback,
 	      int leaf)
 {
-  http_path_t *hp = malloc(sizeof(http_path_t));
-
+  http_path_t *hp = calloc(1, sizeof(http_path_t));
+  atomic_set(&hp->hp_refcount, 1);
   hp->hp_len = strlen(path);
   hp->hp_path = strdup(path);
   hp->hp_opaque = opaque;
   hp->hp_callback = callback;
   hp->hp_mode = !!leaf;
+  hts_lwmutex_lock(&http_paths_lwmutex);
   LIST_INSERT_SORTED(&http_paths, hp, hp_link, hp_cmp, http_path_t);
+  hts_lwmutex_unlock(&http_paths_lwmutex);
   return hp;
 }
 
@@ -194,28 +208,63 @@ http_path_add(const char *path, void *opaque, http_callback_t *callback,
 /**
  *
  */
-void *
+http_path_t *
 http_add_websocket(const char *path,
-		   websocket_callback_init_t *init,
+                   void *opaque,
+		   websocket_callback_connected_t *co,
 		   websocket_callback_data_t *data,
-		   websocket_callback_fini_t *fini)
+		   websocket_callback_disconnected_t *disco,
+                   websocket_callback_removed_t *removed)
 {
-  http_path_t *hp = malloc(sizeof(http_path_t));
-
+  http_path_t *hp = calloc(1, sizeof(http_path_t));
+  atomic_set(&hp->hp_refcount, 1);
+  hp->hp_opaque = opaque;
   hp->hp_len = strlen(path);
   hp->hp_path = strdup(path);
-  hp->hp_ws_init = init;
+  hp->hp_ws_connected = co;
   hp->hp_ws_data = data;
-  hp->hp_ws_fini = fini;
+  hp->hp_ws_disconnected = disco;
+  hp->hp_ws_removed = removed;
   hp->hp_mode = HTTP_PATH_MODE_WEBSOCKET;
+  hts_lwmutex_lock(&http_paths_lwmutex);
   LIST_INSERT_HEAD(&http_paths, hp, hp_link);
+  hts_lwmutex_unlock(&http_paths_lwmutex);
   return hp;
 }
 
 /**
  *
  */
-static const http_path_t *
+static void
+http_path_release(http_path_t *hp)
+{
+  if(hp == NULL || atomic_dec(&hp->hp_refcount))
+    return;
+
+  if(hp->hp_ws_removed != NULL)
+    hp->hp_ws_removed(hp->hp_opaque);
+
+  free(hp->hp_path);
+  free(hp);
+}
+
+
+/**
+ *
+ */
+void
+http_path_remove(struct http_path *hp)
+{
+  hts_lwmutex_lock(&http_paths_lwmutex);
+  LIST_REMOVE(hp, hp_link);
+  hts_lwmutex_unlock(&http_paths_lwmutex);
+  http_path_release(hp);
+}
+
+/**
+ *
+ */
+static http_path_t *
 http_resolve(http_connection_t *hc, char **remainp, char **argsp)
 {
   http_path_t *hp;
@@ -577,7 +626,7 @@ http_tokenize(char *buf, char **vec, int vecsize, int delimiter)
  *
  */
 static int
-http_cmd_start_websocket(http_connection_t *hc, const http_path_t *hp)
+http_cmd_start_websocket(http_connection_t *hc, http_path_t *hp)
 {
   sha1_decl(shactx);
   char sig[64];
@@ -592,7 +641,10 @@ http_cmd_start_websocket(http_connection_t *hc, const http_path_t *hp)
   }
 
   hc->hc_opaque = NULL;
-  if((err = hp->hp_ws_init(hc)) != 0)
+  assert(hc->hc_path == NULL);
+  hc->hc_path = http_path_retain(hp);
+
+  if((err = hp->hp_ws_connected(hc, hp->hp_opaque)) != 0)
     return http_error(hc, err, NULL);
 
   sha1_init(shactx);
@@ -614,7 +666,6 @@ http_cmd_start_websocket(http_connection_t *hc, const http_path_t *hp)
   asyncio_timer_init(&hc->hc_ws_timeout, http_ws_send_ping, hc);
   asyncio_timer_arm_delta_sec(&hc->hc_ws_timeout, 5);
 
-  hc->hc_path = hp;
   return 0;
 }
 
@@ -625,15 +676,21 @@ http_cmd_start_websocket(http_connection_t *hc, const http_path_t *hp)
 static int
 http_cmd_get(http_connection_t *hc, http_cmd_t method)
 {
-  const http_path_t *hp;
+  http_path_t *hp;
   char *remain;
   char *args;
+  int r = 0;
+  hts_lwmutex_lock(&http_paths_lwmutex);
 
   hp = http_resolve(hc, &remain, &args);
   if(hp == NULL || (hp->hp_mode && remain != NULL)) {
+    hts_lwmutex_unlock(&http_paths_lwmutex);
     http_error(hc, HTTP_STATUS_NOT_FOUND, NULL);
     return 0;
   }
+
+  hp = http_path_retain(hp);
+  hts_lwmutex_unlock(&http_paths_lwmutex);
 
   if(args != NULL)
     http_parse_uri_args(&hc->hc_req_args, args, 0);
@@ -644,19 +701,17 @@ http_cmd_get(http_connection_t *hc, http_cmd_t method)
   if(c && u && !strcasecmp(c, "Upgrade") && !strcasecmp(u, "websocket")) {
     if(hp->hp_mode != HTTP_PATH_MODE_WEBSOCKET) {
       http_error(hc, HTTP_STATUS_METHOD_NOT_ALLOWED, NULL);
-      return 0;
+    } else {
+      r = http_cmd_start_websocket(hc, hp);
     }
-    return http_cmd_start_websocket(hc, hp);
-  }
-
-  if(hp->hp_mode == HTTP_PATH_MODE_WEBSOCKET) {
+  } else if(hp->hp_mode == HTTP_PATH_MODE_WEBSOCKET) {
     // Websocket endpoint don't wanna deal with normal HTTP requests
     http_error(hc, HTTP_STATUS_METHOD_NOT_ALLOWED, NULL);
-    return 0;
+  } else {
+    http_exec(hc, hp, remain, method);
   }
-
-  http_exec(hc, hp, remain, method);
-  return 0;
+  http_path_release(hp);
+  return r;
 }
 
 
@@ -666,7 +721,7 @@ http_cmd_get(http_connection_t *hc, http_cmd_t method)
 static int
 http_read_post(http_connection_t *hc, htsbuf_queue_t *q)
 {
-  const http_path_t *hp;
+  http_path_t *hp;
   const char *content_type;
   char *v, *argv[2], *args, *remain;
   int n;
@@ -704,12 +759,17 @@ http_read_post(http_connection_t *hc, htsbuf_queue_t *q)
       http_parse_uri_args(&hc->hc_req_args, hc->hc_post_data, 0);
   }
 
+  hts_lwmutex_lock(&http_paths_lwmutex);
   hp = http_resolve(hc, &remain, &args);
   if(hp == NULL) {
+    hts_lwmutex_unlock(&http_paths_lwmutex);
     http_error(hc, HTTP_STATUS_NOT_FOUND, NULL);
     return 0;
   }
+  hp = http_path_retain(hp);
+  hts_lwmutex_unlock(&http_paths_lwmutex);
   http_exec(hc, hp, remain, HTTP_CMD_POST);
+  http_path_release(hp);
   return 0;
 }
 
@@ -999,12 +1059,13 @@ http_close(http_connection_t *hc)
   free(hc->hc_post_data);
   free(hc->hc_ws.packet);
 
-  if(hc->hc_path != NULL && hc->hc_path->hp_ws_fini != NULL)
-    hc->hc_path->hp_ws_fini(hc, hc->hc_opaque);
+  if(hc->hc_path != NULL && hc->hc_path->hp_ws_disconnected != NULL)
+    hc->hc_path->hp_ws_disconnected(hc, hc->hc_opaque);
 
   asyncio_timer_disarm(&hc->hc_ws_timeout);
 
   LIST_REMOVE(hc, hc_link);
+  http_path_release(hc->hc_path);
   free(hc);
 }
 

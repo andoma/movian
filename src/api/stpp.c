@@ -1210,7 +1210,7 @@ stpp_input(http_connection_t *hc, int opcode,
  *
  */
 static int
-stpp_init(http_connection_t *hc)
+stpp_init(http_connection_t *hc, void *opaque)
 {
   if(!stpp_controllee)
     return 403;
@@ -1262,7 +1262,7 @@ stpp_fini(http_connection_t *hc, void *opaque)
 static void
 ws_init(void)
 {
-  http_add_websocket("/api/stpp", stpp_init, stpp_input, stpp_fini);
+  http_add_websocket("/api/stpp", NULL, stpp_init, stpp_input, stpp_fini, NULL);
 }
 
 
