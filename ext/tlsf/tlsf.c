@@ -583,7 +583,7 @@ static void* block_prepare_used(pool_t* pool, block_header_t* block, size_t size
 	{
 		block_trim_free(pool, block, size);
 		block_mark_as_used(block);
-                pool->used += size;
+                pool->used += block_size(block);
 		p = block_to_ptr(block);
 	}
 	return p;
