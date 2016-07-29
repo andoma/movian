@@ -23,7 +23,7 @@
 #include "prop/prop_nodefilter.h"
 #include "ecmascript.h"
 #include "backend/backend_prop.h"
-
+#include "htsmsg/htsbuf.h"
 
 /**
  *
@@ -219,10 +219,23 @@ es_prop_get_value_duk(duk_context *ctx)
     duk_push_null(ctx);
     break;
   case PROP_DIR:
-    snprintf(tmp, sizeof(tmp), "[prop directory '%s']", p->hp_name);
-    hts_mutex_unlock(&prop_mutex);
-    duk_push_string(ctx, tmp);
-    break;
+    {
+      htsbuf_queue_t hq;
+      htsbuf_queue_init(&hq, 0);
+      prop_t *c;
+      htsbuf_qprintf(&hq, "[prop directory {");
+      const char *delim = "";
+      TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link) {
+        htsbuf_qprintf(&hq, "%s\"%s\"", delim, c->hp_name ?: "");
+        delim = ", ";
+      }
+      htsbuf_qprintf(&hq, "}]");
+      char *str = htsbuf_to_string(&hq);
+      hts_mutex_unlock(&prop_mutex);
+      duk_push_string(ctx, str);
+      free(str);
+      break;
+    }
   default:
     snprintf(tmp, sizeof(tmp), "[prop internal type %d]", p->hp_type);
     hts_mutex_unlock(&prop_mutex);
