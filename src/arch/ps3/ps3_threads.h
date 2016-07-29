@@ -215,5 +215,11 @@ hts_mutex_t name; \
    hts_mutex_init(&name); \
  }
 
+#define HTS_LWMUTEX_DECL(name) \
+hts_lwmutex_t name; \
+ static void  __attribute__((constructor)) global_mtx_init_ ## name(void) { \
+   hts_lwmutex_init(&name); \
+ }
+
 
 void mutex_dump_info(sys_mutex_t lock);
