@@ -66,7 +66,7 @@ mp_seek_in_queues(media_pipe_t *mp, int64_t user_time)
 	  break;
 	TAILQ_REMOVE(&mp->mp_audio.mq_q_data, mb, mb_link);
 	mp->mp_audio.mq_packets_current--;
-	mp->mp_buffer_current -= mb->mb_size;
+	mp->mp_buffer_current -= mb_buffered_size(mb);
 	media_buf_free_locked(mp, mb);
 	adrop++;
       }
@@ -78,7 +78,7 @@ mp_seek_in_queues(media_pipe_t *mp, int64_t user_time)
 	  break;
 	TAILQ_REMOVE(&mp->mp_video.mq_q_data, mb, mb_link);
 	mp->mp_video.mq_packets_current--;
-	mp->mp_buffer_current -= mb->mb_size;
+	mp->mp_buffer_current -= mb_buffered_size(mb);
 	media_buf_free_locked(mp, mb);
 	vdrop++;
       }

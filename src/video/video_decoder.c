@@ -237,7 +237,7 @@ vd_thread(void *aux)
 
 
     mq->mq_packets_current--;
-    mp->mp_buffer_current -= mb->mb_size;
+    mp->mp_buffer_current -= mb_buffered_size(mb);
     mq_update_stats(mp, mq, 1);
 
     hts_cond_signal(&mp->mp_backpressure);

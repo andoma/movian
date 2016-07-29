@@ -1317,7 +1317,7 @@ enqueue_buffer(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
     }
 
     // Check if buffer is full
-    if(mp->mp_buffer_current + mb->mb_size < mp->mp_buffer_limit &&
+    if(mp->mp_buffer_current + mb_buffered_size(mb) < mp->mp_buffer_limit &&
        mp->mp_buffer_delay < 60000000)
       break;
 
@@ -1365,7 +1365,7 @@ enqueue_buffer(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
       if(b->mb_data_type == MB_AUDIO || b->mb_data_type == MB_VIDEO) {
         TAILQ_REMOVE(&mq->mq_q_data, b, mb_link);
         mq->mq_packets_current--;
-        mp->mp_buffer_current -= b->mb_size;
+        mp->mp_buffer_current -= mb_buffered_size(b);
         media_buf_free_locked(mp, b);
       }
       b = next;

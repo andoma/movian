@@ -19,6 +19,7 @@
  */
 #pragma once
 #include "misc/queue.h"
+#include "misc/minmax.h"
 
 struct AVPacket;
 struct media_pipe;
@@ -152,6 +153,7 @@ typedef struct media_buf {
 
 } media_buf_t;
 
+#define mb_buffered_size(mb) MAX((mb)->mb_size, 4096)
 
 void copy_mbm_from_mb(media_buf_meta_t *mbm, const media_buf_t *mb);
 

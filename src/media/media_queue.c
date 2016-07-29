@@ -41,7 +41,7 @@ mq_flush_q(media_pipe_t *mp, media_queue_t *mq, struct media_buf_queue *q,
       continue;
     TAILQ_REMOVE(q, mb, mb_link);
     mq->mq_packets_current--;
-    mp->mp_buffer_current -= mb->mb_size;
+    mp->mp_buffer_current -= mb_buffered_size(mb);
     media_buf_free_locked(mp, mb);
   }
 }
@@ -225,7 +225,7 @@ mb_enqueue_with_events(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
     if(mp->mp_buffer_delay < mp->mp_max_realtime_delay) {
 
       // Check if buffer is full
-      if(mp->mp_buffer_current + mb->mb_size < mp->mp_buffer_limit)
+      if(mp->mp_buffer_current + mb_buffered_size(mb) < mp->mp_buffer_limit)
 	break;
     }
 
@@ -267,7 +267,7 @@ mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
   mp_update_buffer_delay(mp);
   mp_enqueue_check_pre_buffering(mp);
 
-  if(mp->mp_buffer_current + mb->mb_size > mp->mp_buffer_limit &&
+  if(mp->mp_buffer_current + mb_buffered_size(mb) > mp->mp_buffer_limit &&
      mq->mq_packets_current < 5) {
       hts_mutex_unlock(&mp->mp_mutex);
     return -1;
@@ -290,7 +290,7 @@ mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
   }
 
   mq->mq_packets_current++;
-  mp->mp_buffer_current += mb->mb_size;
+  mp->mp_buffer_current += mb_buffered_size(mb);
   mb->mb_epoch = mp->mp_epoch;
   mq_update_stats(mp, mq, 0);
   hts_cond_signal(&mq->mq_avail);
@@ -541,7 +541,7 @@ mb_enq(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
   }
   mq->mq_packets_current++;
   mb->mb_epoch = mp->mp_epoch;
-  mp->mp_buffer_current += mb->mb_size;
+  mp->mp_buffer_current += mb_buffered_size(mb);
 
   mq_update_stats(mp, mq, 0);
 
