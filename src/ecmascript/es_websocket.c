@@ -28,8 +28,10 @@
 #include "networking/asyncio.h"
 #include "networking/websocket.h"
 #include "networking/http.h"
+#include "networking/http_server.h"
 #include "misc/str.h"
 #include "misc/str.h"
+#include "misc/bytestream.h"
 #include "arch/arch.h"
 
 /**
@@ -193,7 +195,6 @@ es_websocket_client_input_task_fn(void *aux)
     es_push_root(ctx, ewc);
 
     duk_get_prop_string(ctx, -1, "onInput");
-
 
     if(t->opcode == 2) {
 
@@ -645,13 +646,496 @@ es_websocket_client_send(duk_context *ctx)
 
   asyncio_run_task(es_websocket_client_send_task_fn, t);
   return 0;
-
-
 }
+
+
+
+
+/**
+ *
+ */
+typedef struct es_websocket_server {
+  es_resource_t super;
+
+  http_path_t *ews_path;
+
+  char *ews_pathstr;
+
+} es_websocket_server_t;
+
+
+
+/**
+ *
+ */
+static void
+es_websocket_server_destroy(es_resource_t *eres)
+{
+  es_websocket_server_t *ews = (es_websocket_server_t *)eres;
+
+  http_path_remove(ews->ews_path);
+  ews->ews_path = NULL;
+
+  es_root_unregister(eres->er_ctx->ec_duk, ews);
+  es_resource_unlink(eres);
+}
+
+
+/**
+ *
+ */
+static void
+es_websocket_server_info(es_resource_t *eres, char *dst, size_t dstsize)
+{
+  es_websocket_server_t *ews = (es_websocket_server_t *)eres;
+  snprintf(dst, dstsize, "%s", ews->ews_pathstr);
+}
+
+
+
+static void
+es_websocket_server_finalizer(es_resource_t *eres)
+{
+  es_websocket_server_t *ews = (es_websocket_server_t *)eres;
+  free(ews->ews_pathstr);
+}
+
+
+/**
+ *
+ */
+static const es_resource_class_t es_resource_websocket_server = {
+  .erc_name = "websocket_server",
+  .erc_size = sizeof(es_websocket_server_t),
+  .erc_destroy = es_websocket_server_destroy,
+  .erc_info = es_websocket_server_info,
+  .erc_finalizer = es_websocket_server_finalizer,
+};
+
+
+/**
+ *
+ */
+typedef struct es_websocket_server_connection {
+  es_resource_t super;
+
+  es_websocket_server_t *ewsc_server;
+
+  http_connection_t *ewsc_hc; // May only be accessed on asyncio thread
+
+  task_group_t *ewsc_task_group;
+
+} es_websocket_server_connection_t;
+
+
+
+
+/**
+ *
+ */
+static void
+es_websocket_server_connection_destroy(es_resource_t *eres)
+{
+  es_websocket_server_connection_t *ewsc =
+    (es_websocket_server_connection_t *)eres;
+
+  es_root_unregister(eres->er_ctx->ec_duk, ewsc);
+
+  es_resource_release(&ewsc->ewsc_server->super);
+  ewsc->ewsc_server = NULL;
+
+  es_resource_unlink(eres);
+}
+
+
+/**
+ *
+ */
+static void
+es_websocket_server_connection_info(es_resource_t *eres,
+                                    char *dst, size_t dstsize)
+{
+  es_websocket_server_connection_t *ewsc =
+    (es_websocket_server_connection_t *)eres;
+  es_websocket_server_t *ews = ewsc->ewsc_server;
+  snprintf(dst, dstsize, "%s", ews->ews_pathstr);
+}
+
+
+/**
+ *
+ */
+static void
+es_websocket_server_connection_finalizer(es_resource_t *eres)
+{
+  es_websocket_server_connection_t *ewsc =
+    (es_websocket_server_connection_t *)eres;
+
+  task_group_destroy(ewsc->ewsc_task_group);
+}
+
+
+
+/**
+ *
+ */
+static const es_resource_class_t es_resource_websocket_server_connection = {
+  .erc_name = "websocket_server_connection",
+  .erc_size = sizeof(es_websocket_server_connection_t),
+  .erc_destroy = es_websocket_server_connection_destroy,
+  .erc_info = es_websocket_server_connection_info,
+  .erc_finalizer = es_websocket_server_connection_finalizer,
+};
+
+
+/**
+ *
+ */
+typedef struct es_websocket_server_connection_task {
+  es_websocket_server_connection_t *ewsc;
+  int opcode;
+  void *buf;
+  size_t bufsize;
+} es_websocket_server_connection_task_t;
+
+
+/**
+ *
+ */
+static es_websocket_server_connection_task_t *
+ewsc_maketask(es_websocket_server_connection_t *ewsc, int opcode)
+{
+  es_websocket_server_connection_task_t *t =
+    calloc(1, sizeof(es_websocket_server_connection_task_t));
+
+  es_resource_retain(&ewsc->super);
+  t->ewsc = ewsc;
+  t->opcode = opcode;
+  return t;
+}
+
+
+/**
+ *
+ */
+static void
+ewsc_freetask(es_websocket_server_connection_task_t *t)
+{
+  es_resource_release(&t->ewsc->super);
+  free(t->buf);
+  free(t);
+}
+
+
+/**
+ *
+ */
+static void
+ews_removed(void *opaque)
+{
+  es_resource_release(opaque);
+}
+
+/**
+ *
+ */
+static void
+ewsc_send_task_fn(void *aux)
+{
+  es_websocket_server_connection_task_t *t = aux;
+  es_websocket_server_connection_t *ewsc = t->ewsc;
+
+  if(ewsc->ewsc_hc != NULL)
+    websocket_send(ewsc->ewsc_hc, t->opcode, t->buf, t->bufsize);
+
+  ewsc_freetask(t);
+}
+
+
+
+static int
+ewsc_send(duk_context *ctx)
+{
+  duk_push_this(ctx);
+
+  es_websocket_server_connection_t *ewsc =
+    es_resource_get(ctx, -1, &es_resource_websocket_server_connection);
+
+  duk_size_t bufsize;
+  const void *buf;
+  int opcode;
+  buf = duk_get_buffer_data(ctx, 0, &bufsize);
+  if(buf != NULL) {
+    opcode = 2; // binary
+  } else {
+    buf = duk_to_string(ctx, 0);
+    bufsize = strlen(buf);
+    opcode = 1; // text
+  }
+
+  es_websocket_server_connection_task_t *t = ewsc_maketask(ewsc, opcode);
+  t->buf = malloc(bufsize);
+  memcpy(t->buf, buf, bufsize);
+  t->bufsize = bufsize;
+
+  asyncio_run_task(ewsc_send_task_fn, t);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+ewsc_close(duk_context *ctx)
+{
+  duk_push_this(ctx);
+  es_websocket_server_connection_t *ewsc =
+    es_resource_get(ctx, -1, &es_resource_websocket_server_connection);
+  es_websocket_server_connection_task_t *t = ewsc_maketask(ewsc, 8);
+
+  int code = duk_is_number(ctx, 0) ? duk_to_int(ctx, 0) : 1001;
+  const void *msg = NULL;
+  duk_size_t msgsize = 0;
+  if(duk_is_string(ctx, 1)) {
+    msg = duk_to_string(ctx, 1);
+    msgsize = strlen(msg);
+  }
+
+  t->bufsize = 2 + msgsize;
+  t->buf = malloc(t->bufsize);
+  wr16_be(t->buf, code);
+  memcpy(t->buf + 2, msg, msgsize);
+
+  asyncio_run_task(ewsc_send_task_fn, t);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static void
+es_websocket_server_connection_open_fn(void *aux)
+{
+  es_websocket_server_connection_task_t *t = aux;
+  es_websocket_server_connection_t *ewsc = t->ewsc;
+  es_context_t *ec = ewsc->super.er_ctx;
+  duk_context *ctx = ec->ec_duk;
+
+  es_context_begin(ec);
+
+  es_websocket_server_t *ews = ewsc->ewsc_server;
+  if(ews != NULL && !ews->super.er_zombie) {
+    es_push_root(ctx, ews);
+    duk_get_prop_string(ctx, -1, "onOpen");
+
+    int objidx = es_resource_push(ctx, &ewsc->super);
+
+    es_root_register(ctx, objidx, ewsc);
+
+    duk_push_c_lightfunc(ctx, ewsc_send, 1, 0, 0);
+    duk_put_prop_string(ctx, objidx, "send");
+
+    duk_push_c_lightfunc(ctx, ewsc_close, 2, 0, 0);
+    duk_put_prop_string(ctx, objidx, "close");
+
+    int rc = duk_pcall(ctx, 1);
+    if(rc)
+      es_dump_err(ctx);
+    duk_pop(ctx);
+  }
+  ewsc_freetask(t);
+  es_context_end(ec, 1);
+}
+
+
+/**
+ *
+ */
+static int
+ews_connected(http_connection_t *hc, void *path_opaque)
+{
+  es_websocket_server_t *ews = path_opaque;
+  es_context_t *ec = ews->super.er_ctx;
+
+  es_context_begin(ec);
+
+  es_websocket_server_connection_t *ewsc =
+    es_resource_alloc(&es_resource_websocket_server_connection);
+
+  ewsc->ewsc_task_group = task_group_create();
+
+  es_resource_link(&ewsc->super, ec, 0);
+
+  // Link to server definition
+  es_resource_retain(&ews->super);
+  ewsc->ewsc_server = ews;
+
+  // Take on reference owned by http connection (released by ews_disconnected)
+  es_resource_retain(&ewsc->super);
+  ewsc->ewsc_hc = hc;
+  http_set_opaque(hc, ewsc);
+
+  task_run_in_group(es_websocket_server_connection_open_fn,
+                    ewsc_maketask(ewsc, 0), ewsc->ewsc_task_group);
+
+  es_context_end(ec, 1);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static void
+es_websocket_server_connection_close_fn(void *aux)
+{
+  es_websocket_server_connection_task_t *t = aux;
+  es_websocket_server_connection_t *ewsc = t->ewsc;
+  es_context_t *ec = ewsc->super.er_ctx;
+  duk_context *ctx = ec->ec_duk;
+
+  es_context_begin(ec);
+  if(!ewsc->super.er_zombie) {
+    es_push_root(ctx, ewsc);
+    duk_get_prop_string(ctx, -1, "onClose");
+    int rc = duk_pcall(ctx, 0);
+    if(rc)
+      es_dump_err(ctx);
+    duk_pop(ctx);
+
+  }
+  ewsc_freetask(t);
+  es_resource_destroy(&ewsc->super);
+  es_context_end(ec, 1);
+}
+
+
+/**
+ *
+ */
+static void
+ews_disconnected(http_connection_t *hc, void *connection_opaque)
+{
+  es_websocket_server_connection_t *ewsc = connection_opaque;
+  es_context_t *ec = ewsc->super.er_ctx;
+
+  es_context_begin(ec);
+
+  task_run_in_group(es_websocket_server_connection_close_fn,
+                    ewsc_maketask(ewsc, 0), ewsc->ewsc_task_group);
+
+  es_resource_release(&ewsc->super);
+  ewsc->ewsc_hc = NULL;
+
+  es_context_end(ec, 1);
+}
+
+
+/**
+ *
+ */
+static void
+es_websocket_server_connection_input_fn(void *aux)
+{
+  es_websocket_server_connection_task_t *t = aux;
+  es_websocket_server_connection_t *ewsc = t->ewsc;
+  es_context_t *ec = ewsc->super.er_ctx;
+  duk_context *ctx = ec->ec_duk;
+
+  es_context_begin(ec);
+
+  if(!ewsc->super.er_zombie) {
+    es_push_root(ctx, ewsc);
+    duk_get_prop_string(ctx, -1, "onInput");
+
+    if(t->opcode == 2) {
+
+      void *ptr = duk_push_fixed_buffer(ctx, t->bufsize);
+      memcpy(ptr, t->buf, t->bufsize);
+      duk_push_buffer_object(ctx, -1, 0, t->bufsize, DUK_BUFOBJ_ARRAYBUFFER);
+      duk_swap_top(ctx, -1);
+      duk_pop(ctx);
+
+    } else {
+      duk_push_lstring(ctx, t->buf, t->bufsize);
+    }
+
+    int rc = duk_pcall(ctx, 1);
+    if(rc)
+      es_dump_err(ctx);
+    duk_pop(ctx);
+
+  }
+  ewsc_freetask(t);
+  es_context_end(ec, 0);
+}
+
+
+/**
+ *
+ */
+static int
+ews_input(http_connection_t *hc, int opcode,
+          uint8_t *data, size_t len, void *connection_opaque)
+{
+  es_websocket_server_connection_t *ewsc = connection_opaque;
+  es_context_t *ec = ewsc->super.er_ctx;
+
+  es_context_begin(ec);
+
+  es_websocket_server_connection_task_t *t = ewsc_maketask(ewsc, opcode);
+  // data is always nul terminated with an extra allocated byte
+  // not visible in 'len', pass that on
+  t->buf = malloc(len + 1);
+  memcpy(t->buf, data, len + 1);
+  t->bufsize = len;
+  task_run_in_group(es_websocket_server_connection_input_fn,
+                      t, ewsc->ewsc_task_group);
+
+  es_context_end(ec, 0);
+  return 0;
+}
+
+
+
+
+/**
+ *
+ */
+static int
+es_websocket_server_create(duk_context *ctx)
+{
+  es_context_t *ec = es_get(ctx);
+  const char *path = duk_safe_to_string(ctx, 0);
+
+  es_websocket_server_t *ews = es_resource_alloc(&es_resource_websocket_server);
+
+  es_resource_link(&ews->super, ec, 1);
+  ews->ews_pathstr = strdup(path);
+
+  // Take on reference owned by http server (released by ews_removed)
+  es_resource_retain(&ews->super);
+  ews->ews_path = http_add_websocket(path, ews,
+                                     ews_connected,
+                                     ews_input,
+                                     ews_disconnected,
+                                     ews_removed);
+  es_root_register(ctx, 1, ews);
+  es_resource_push(ctx, &ews->super);
+  return 1;
+}
+
+
+
 
 static const duk_function_list_entry fnlist_websocket[] = {
   { "clientCreate",  es_websocket_client_create, 3 },
   { "clientSend",    es_websocket_client_send, 2 },
+
+  { "serverCreate",  es_websocket_server_create, 2 },
+
   { NULL, NULL, 0}
 };
 
