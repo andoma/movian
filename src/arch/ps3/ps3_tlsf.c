@@ -64,11 +64,19 @@ static void __attribute__((constructor)) mallocsetup(void)
 
   total_avail = size;
   gpool = tlsf_create((void *)(intptr_t)heap_base, size);
+}
 
-  // Malloc is initialized now so we can safely do this
 
+/**
+ *
+ */
+static void
+tlsf_stats_init(void)
+{
   http_path_add("/api/memstats", NULL, memstats, 1);
 }
+
+INITME(INIT_GROUP_API, tlsf_stats_init, NULL, 0);
 
 
 typedef struct memstats {
