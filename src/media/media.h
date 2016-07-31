@@ -233,6 +233,7 @@ typedef struct media_pipe {
   hts_mutex_t mp_clock_mutex;
   int64_t mp_audio_clock;
   int64_t mp_audio_clock_avtime;
+  int64_t mp_realtime_delta;
   int mp_audio_clock_epoch;
   int mp_avdelta;           // Audio vs video delta (µs)
   int mp_svdelta;           // Subtitle vs video delta (µs)

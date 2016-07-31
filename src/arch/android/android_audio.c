@@ -239,14 +239,28 @@ android_audio_reconfig(audio_decoder_t *ad)
  *
  */
 static void
-buffer_callback(SLAndroidSimpleBufferQueueItf bq, void *context)
+buffer_callback(SLAndroidSimpleBufferQueueItf bqif, void *context)
 {
   decoder_t *d = context;
   media_pipe_t *mp = d->ad.ad_mp;
+#if 0
+  int64_t now = arch_get_avtime();
+  static int64_t last;
+  int64_t delta_realtime = now - last;
+  last = now;
+  SLAndroidSimpleBufferQueueState qs;
+  (*d->d_bif)->GetState(bqif, &qs);
+  /*
+  TRACE(TRACE_DEBUG, "SLES", "qstate: %d %d %lld",
+        qs.count, qs.index, delta_realtime);
+  */
+#endif
   hts_mutex_lock(&mp->mp_mutex);
   d->d_avail_buffers++;
   hts_cond_signal(&mp->mp_audio.mq_avail);
   hts_mutex_unlock(&mp->mp_mutex);
+
+  
 }
 
 
@@ -293,13 +307,33 @@ android_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
     media_pipe_t *mp = ad->ad_mp;
     hts_mutex_lock(&mp->mp_clock_mutex);
 
-    int delay = 42666; // 2 * 1024 samples in 48kHz
+    //    int delay = 42666; // 2 * 1024 samples in 48kHz
+    //    pts -= delay;
 
-    mp->mp_audio_clock = pts - delay;
-    mp->mp_audio_clock_epoch = epoch;
-    mp->mp_audio_clock_avtime = arch_get_avtime();
+    int64_t now = arch_get_avtime();
+#if 0
+    static int64_t last;
+    int64_t delta_realtime = now - last;
+    last = now;
+#endif
 
+    int64_t nowpts = now - pts + 350000;
+    if(mp->mp_audio_clock_epoch != epoch) {
+
+      mp->mp_audio_clock_epoch = epoch;
+      mp->mp_realtime_delta = nowpts;
+    } else {
+      int64_t realtime_delta = nowpts;
+      mp->mp_realtime_delta += (realtime_delta - mp->mp_realtime_delta) * 0.01;
+    }
+
+    mp->mp_audio_clock = pts - 42600;
+    mp->mp_audio_clock_avtime = now;
     hts_mutex_unlock(&mp->mp_clock_mutex);
+    /*
+    TRACE(TRACE_DEBUG, "SLES", "delta_realtime = %8lld -> %lld  %lld",
+          delta_realtime, nowpts, mp->mp_realtime_delta);
+    */
   }
 
   if(result)

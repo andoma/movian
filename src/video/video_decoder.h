@@ -129,5 +129,8 @@ int64_t  video_decoder_infer_pts(const media_buf_meta_t *mbm,
 				 video_decoder_t *vd,
 				 int is_bframe);
 
+void video_decoder_set_current_time(video_decoder_t *vd, int64_t user_time,
+                                    int epoch, int64_t pts, int drive_mode);
+
 #endif /* VIDEO_DECODER_H */
 

@@ -214,7 +214,9 @@ INITIALIZER(opendevurandom) {
 int64_t
 arch_get_avtime(void)
 {
-  return arch_get_ts();
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  return (ts.tv_sec * 1000000000LL + ts.tv_nsec) / 1000LL;
 }
 
 
