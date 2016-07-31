@@ -308,7 +308,7 @@ mac_audio_deliver(audio_decoder_t *ad, int samples,
 
   AudioQueueBufferRef b = getbuf(d, bytes);
   if(b == NULL)
-    return 1;
+    return -1;
 
   uint8_t *data[8] = {0};
   data[0] = (uint8_t *)b->mAudioData;

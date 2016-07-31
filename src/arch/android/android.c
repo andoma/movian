@@ -244,10 +244,11 @@ JNI_OnLoad(JavaVM *vm, void *reserved)
  *
  */
 JNIEXPORT void JNICALL
-Java_com_lonelycoder_mediaplayer_Core_coreInit(JNIEnv *env, jobject obj, jstring j_settings, jstring j_cachedir, jstring j_sdcard, jstring j_android_id, jint time_24hrs, jstring j_music, jstring j_pictures, jstring j_movies)
+Java_com_lonelycoder_mediaplayer_Core_coreInit(JNIEnv *env, jobject obj, jstring j_settings, jstring j_cachedir, jstring j_sdcard, jstring j_android_id, jint time_24hrs, jstring j_music, jstring j_pictures, jstring j_movies, jint audio_sample_rate, jint audio_frames_per_buffer)
 {
   char path[PATH_MAX];
   trace_arch(TRACE_INFO, "Core", "Native core initializing");
+
   gconf.trace_level = TRACE_DEBUG;
   gconf.time_format_system = time_24hrs ? TIME_FORMAT_24 : TIME_FORMAT_12;
 
@@ -305,6 +306,12 @@ Java_com_lonelycoder_mediaplayer_Core_coreInit(JNIEnv *env, jobject obj, jstring
                   "storage", NULL, 0, 1, SVC_ORIGIN_SYSTEM);
 
   android_nav = nav_spawn();
+
+  extern int android_system_audio_sample_rate;
+  extern int android_system_audio_frames_per_buffer;
+
+  android_system_audio_sample_rate = audio_sample_rate;
+  android_system_audio_frames_per_buffer = audio_frames_per_buffer;
 }
 
 

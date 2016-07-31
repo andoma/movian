@@ -27,6 +27,10 @@
 #include "video/video_decoder.h"
 #include "video/video_settings.h"
 #include "video/h264_annexb.h"
+#include "video/h264_parser.h"
+
+#define AVC_REORDER_SIZE 32
+#define AVC_REORDER_MASK (AVC_REORDER_SIZE-1)
 
 extern JavaVM *JVM;
 extern jclass STCore;
@@ -35,9 +39,6 @@ extern jclass STCore;
     if(gconf.enable_MediaCodec_debug)                                   \
       TRACE(TRACE_DEBUG, "MediaCodec", x, ##__VA_ARGS__);		\
   } while(0)
-
-#define PTS_IS_REORDER_INDEX
-
 
 
 
@@ -115,6 +116,8 @@ typedef struct android_video_codec {
 
   hts_mutex_t *avc_mutex;
   hts_cond_t *avc_cond;
+
+  h264_parser_t avc_h264_parser;
 
 } android_video_codec_t;
 
@@ -304,6 +307,35 @@ avc_get_output_buffers(JNIEnv *env, android_video_codec_t *avc)
 }
 
 
+
+
+static void
+fill_frame_info_from_pts(frame_info_t *fi,
+                         video_decoder_t *vd,
+                         android_video_codec_t *avc,
+                         int64_t pts)
+{
+  fi->fi_dar_num = avc->avc_out_width;
+  fi->fi_dar_den = avc->avc_out_height;
+  fi->fi_pts = pts;
+
+  for(int i = 0; i < AVC_REORDER_SIZE; i++) {
+    const media_buf_meta_t *mbm = &vd->vd_reorder[i];
+    if(mbm->mbm_pts == pts) {
+      fi->fi_epoch = mbm->mbm_epoch;
+      fi->fi_user_time = mbm->mbm_user_time;
+      fi->fi_drive_clock = mbm->mbm_drive_clock;
+      fi->fi_duration = mbm->mbm_duration;
+      AVC_TRACE("Dequeue buffer reorderslot:0x%lx -> %d "
+                "PTS=%"PRId64" duration=%d",
+                (long)pts, i, fi->fi_pts, fi->fi_duration);
+      return;
+    }
+  }
+}
+
+
+
 /**
  *
  */
@@ -312,12 +344,10 @@ get_output(JNIEnv *env, android_video_codec_t *avc, int loop,
            video_decoder_t *vd)
 {
   do {
-    TRACE(TRACE_DEBUG, "CLK", "deq out");
     int idx = (*env)->CallIntMethod(env, avc->avc_decoder,
                                     avc->avc_dequeueOutputBuffer,
                                     avc->avc_buffer_info,
                                     (jlong) 15000);
-    TRACE(TRACE_DEBUG, "CLK", "deq out = %d", idx);
     check_exception(env, "dequeueOutputBuffer");
 
     if(idx >= 0) {
@@ -329,26 +359,8 @@ get_output(JNIEnv *env, android_video_codec_t *avc, int loop,
 
       jlong pts = (*env)->GetLongField(env, avc->avc_buffer_info, f_pts);
       frame_info_t fi = {};
-      // We only support square pixels here
-      fi.fi_dar_num = avc->avc_out_width;
-      fi.fi_dar_den = avc->avc_out_height;
+      fill_frame_info_from_pts(&fi, vd, avc, pts);
 
-#ifdef PTS_IS_REORDER_INDEX
-      int slot = pts & VIDEO_DECODER_REORDER_MASK;
-      const media_buf_meta_t *mbm = &vd->vd_reorder[slot];
-      fi.fi_pts = mbm->mbm_pts;
-      fi.fi_epoch = mbm->mbm_epoch;
-      fi.fi_user_time = mbm->mbm_user_time;
-      fi.fi_drive_clock = mbm->mbm_drive_clock;
-      fi.fi_duration = mbm->mbm_duration;
-      AVC_TRACE("Dequeue buffer reorderslot:0x%lx -> %d "
-                "PTS=%"PRId64" duration=%d",
-                (long)pts, slot, fi.fi_pts, fi.fi_duration);
-#else
-      fi.fi_pts = pts;
-      fi.fi_epoch = 1;
-      fi.fi_drive_clock = 1;
-#endif
       if(avc->avc_direct) {
         fi.fi_type = 'SURF';
 
@@ -399,6 +411,44 @@ get_output(JNIEnv *env, android_video_codec_t *avc, int loop,
   } while(loop);
 }
 
+static int64_t
+store_metadata(video_decoder_t *vd, struct media_buf *mb,
+               android_video_codec_t *avc, media_codec_t *mc,
+               const void *data, int size)
+{
+  media_buf_meta_t *mbm = &vd->vd_reorder[vd->vd_reorder_ptr];
+  copy_mbm_from_mb(mbm, mb);
+  AVC_TRACE("Enqueue buffer reorderslot:%d PTS=%"PRId64,
+            vd->vd_reorder_ptr, mbm->mbm_pts);
+  vd->vd_reorder_ptr = (vd->vd_reorder_ptr + 1) & AVC_REORDER_MASK;
+  int is_bframe = 0;
+
+  switch(mc->codec_id) {
+
+  case AV_CODEC_ID_MPEG4:
+
+    if(mb->mb_size <= 7)
+      return 0;
+
+    int frame_type = 0;
+    const uint8_t *d = data;
+    if(d[0] == 0x00 && d[1] == 0x00 && d[2] == 0x01 && d[3] == 0xb6)
+      frame_type = d[4] >> 6;
+
+    if(frame_type == 2)
+      is_bframe = 1;
+    break;
+
+  case AV_CODEC_ID_H264:
+    h264_parser_decode_data(&avc->avc_h264_parser, data, size);
+    if(avc->avc_h264_parser.slice_type_nos == SLICE_TYPE_B)
+      is_bframe = 1;
+    break;
+  }
+
+  mbm->mbm_pts = video_decoder_infer_pts(mbm, vd, is_bframe);
+  return mbm->mbm_pts;
+}
 
 /**
  *
@@ -413,24 +463,14 @@ android_codec_decode(struct media_codec *mc, struct video_decoder *vd,
   (*JVM)->GetEnv(JVM, (void **)&env, JNI_VERSION_1_6);
 
   (*env)->PushLocalFrame(env, 64);
- 
+
   uint8_t *data = mb->mb_data;
   size_t size = mb->mb_size;
 
   if(avc->avc_annexb.extradata_injected)
     h264_to_annexb(&avc->avc_annexb, &data, &size);
 
-  jlong pts;
-#ifdef PTS_IS_REORDER_INDEX
-  media_buf_meta_t *mbm = &vd->vd_reorder[vd->vd_reorder_ptr];
-  copy_mbm_from_mb(mbm, mb);
-  pts = vd->vd_reorder_ptr | 0x010c0000;
-  AVC_TRACE("Enqueue buffer reorderslot:%d PTS=%"PRId64,
-            vd->vd_reorder_ptr, mbm->mbm_pts);
-  vd->vd_reorder_ptr = (vd->vd_reorder_ptr + 1) & VIDEO_DECODER_REORDER_MASK;
-#else
-  pts = mb->mb_pts;
-#endif
+  int64_t pts = store_metadata(vd, mb, avc, mc, data, size);
 
   int timeout = 0;
   const int flags = mb->mb_keyframe ? 1 : 0; // BUFFER_FLAG_KEY_FRAME
@@ -459,7 +499,6 @@ android_codec_flush(struct media_codec *mc, struct video_decoder *vd)
 {
 }
 
-
 /**
  *
  */
@@ -485,26 +524,7 @@ android_codec_decode_locked(struct media_codec *mc, struct video_decoder *vd,
     (*env)->PushLocalFrame(env, 64);
 
     frame_info_t fi = {};
-    // We only support square pixels here
-    fi.fi_dar_num = avc->avc_out_width;
-    fi.fi_dar_den = avc->avc_out_height;
-
-#ifdef PTS_IS_REORDER_INDEX
-    int slot = pts & VIDEO_DECODER_REORDER_MASK;
-    const media_buf_meta_t *mbm = &vd->vd_reorder[slot];
-    fi.fi_pts = mbm->mbm_pts;
-    fi.fi_epoch = mbm->mbm_epoch;
-    fi.fi_user_time = mbm->mbm_user_time;
-    fi.fi_drive_clock = mbm->mbm_drive_clock;
-    fi.fi_duration = mbm->mbm_duration;
-    AVC_TRACE("Dequeue buffer reorderslot:0x%lx -> %d "
-              "PTS=%"PRId64" duration=%d",
-              (long)pts, slot, fi.fi_pts, fi.fi_duration);
-#else
-    fi.fi_pts = pts;
-    fi.fi_epoch = 1;
-    fi.fi_drive_clock = 1;
-#endif
+    fill_frame_info_from_pts(&fi, vd, avc, pts);
 
     int64_t now = arch_get_avtime();
     media_pipe_t *mp = vd->vd_mp;
@@ -551,29 +571,16 @@ android_codec_decode_locked(struct media_codec *mc, struct video_decoder *vd,
   free(buf);
 
   hts_mutex_unlock(&vd->vd_mp->mp_mutex);
-  
+
   uint8_t *data = mb->mb_data;
   size_t size = mb->mb_size;
 
   if(avc->avc_annexb.extradata_injected)
     h264_to_annexb(&avc->avc_annexb, &data, &size);
 
-  jlong pts;
-#ifdef PTS_IS_REORDER_INDEX
-  media_buf_meta_t *mbm = &vd->vd_reorder[vd->vd_reorder_ptr];
-  copy_mbm_from_mb(mbm, mb);
-  pts = vd->vd_reorder_ptr | 0x010c0000;
-  AVC_TRACE("Enqueue buffer reorderslot:%d PTS=%"PRId64,
-            vd->vd_reorder_ptr, mbm->mbm_pts);
-  vd->vd_reorder_ptr = (vd->vd_reorder_ptr + 1) & VIDEO_DECODER_REORDER_MASK;
-#else
-  pts = mb->mb_pts;
-#endif
+  int64_t pts = store_metadata(vd, mb, avc, mc, data, size);
 
   const int flags = mb->mb_keyframe ? 1 : 0; // BUFFER_FLAG_KEY_FRAME
-
-  //  jmethodID mid;
-  //  jobject obj;
 
   JNIEnv *env;
   (*JVM)->GetEnv(JVM, (void **)&env, JNI_VERSION_1_6);
@@ -636,6 +643,7 @@ android_codec_close(struct media_codec *mc)
   (*env)->PopLocalFrame(env, NULL);
 
   free(avc->avc_extradata);
+  h264_parser_fini(&avc->avc_h264_parser);
   free(avc);
 }
 
@@ -854,8 +862,6 @@ android_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   // ------------------------------------------------
   // if setCallback() is available (Lollipop) we will run MediaCodec
   // in async mode
-#if 0
-  TRACE(TRACE_DEBUG, "Video", "setcallback mid=%p", mid);
 
   mid = (*env)->GetStaticMethodID(env, STCore, "setVideoDecoderWrapper",
                                   "(Landroid/media/MediaCodec;I)V");
@@ -865,18 +871,16 @@ android_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
     avc->avc_async = 0;
   } else {
     avc->avc_async = 1;
-    TRACE(TRACE_DEBUG, "Video", "Accelerated codec in async mode");
   }
-#endif
-    
+
   // ------------------------------------------------
 
   mid = (*env)->GetMethodID(env, avc->avc_MediaCodec, "configure", "(Landroid/media/MediaFormat;Landroid/view/Surface;Landroid/media/MediaCrypto;I)V");
-  
+
   (*env)->CallVoidMethod(env, avc->avc_decoder, mid, format,
                          surface, NULL, 0);
   check_exception(env, "MediaCodec.configure");
-  
+
   mid = (*env)->GetMethodID(env, avc->avc_MediaCodec, "start", "()V");
   (*env)->CallVoidMethod(env, avc->avc_decoder, mid);
   check_exception(env, "MediaCodec.start");
@@ -895,12 +899,19 @@ android_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   // -----------------------------------------------------------
 
     avc_get_output_buffers(env, avc);
-  
+
     // -----------------------------------------------------------
   }
 
 
-  TRACE(TRACE_DEBUG, "Video", "Accelerated codec for %s", type);
+  TRACE(TRACE_DEBUG, "Video", "Accelerated codec for %s%s",
+        type, avc->avc_async ? ", async mode" : " ");
+
+
+  if(mc->codec_id == AV_CODEC_ID_H264) {
+    h264_parser_init(&avc->avc_h264_parser, NULL, 0);
+  }
+
   return 0;
 }
 

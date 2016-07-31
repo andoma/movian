@@ -593,7 +593,7 @@ rpi_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
   }
 
   if((buf = oc->oc_avail) == NULL)
-    return 1;
+    return -1;
 
   oc->oc_avail = buf->pAppPrivate;
   oc->oc_inflight_buffers++;

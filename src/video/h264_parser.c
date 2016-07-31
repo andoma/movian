@@ -57,7 +57,7 @@ h264_parser_decode_sps(h264_parser_t *hp, bitstream_t *bs, h264_sps_t *sps)
   int profile = bs->read_bits(bs, 8);
   bs->skip_bits(bs, 8);
   int level = bs->read_bits(bs, 8);
-  int sps_id = bs->read_golomb_ue(bs);
+  unsigned int sps_id = bs->read_golomb_ue(bs);
 
   if(hp == NULL) {
     assert(sps != NULL);

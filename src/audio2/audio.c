@@ -654,7 +654,11 @@ audio_decode_thread(void *aux)
       if(ac->ac_deliver_locked != NULL) {
         r = ac->ac_deliver_locked(ad, samples, ad->ad_pts, ad->ad_epoch);
         if(r) {
-          hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
+          if(r == -1) {
+            hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
+          } else {
+            hts_cond_wait_timeout(&mq->mq_avail, &mp->mp_mutex, r);
+          }
           continue;
         }
       } else {
