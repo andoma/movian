@@ -28,6 +28,9 @@ msg: Esci da %s
 id: Go to Home screen
 msg: Vai alla Home
 
+id: Hide media info
+msg: Nascondi info del media
+
 id: Hide system info
 msg: Nascondi info di sistema
 
@@ -46,11 +49,17 @@ msg: Coda di riproduzione
 id: Power off
 msg: Spegni
 
-id: Reload current page
-msg: Ricarica pagina attuale
+id: Reload page
+msg: Ricarica pagina
+
+id: Show media info
+msg: Mostra informazioni media
 
 id: Show system info
 msg: Mostra informazioni sistema
+
+id: View log
+msg: Vedi log
 
 id: Suspend
 msg: Spegni PS3
