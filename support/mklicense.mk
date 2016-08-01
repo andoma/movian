@@ -2,12 +2,14 @@ LICENSEDEPS = \
 	support/mklicense.mk \
 	src/LICENSE \
 	ext/duktape/LICENSE.txt \
-	ext/duktape/LICENSE.txt \
 	ext/libav/LICENSE \
 	licenses/gumbo.txt \
 	licenses/freetype.txt \
-	ext/libntfs_ext/LICENSE_LIBNTFS \
 	licenses/bspatch.txt \
+
+ifeq ($(CONFIG_LIBNTFS), yes)
+LICENSEDEPS += ext/libntfs_ext/LICENSE_LIBNTFS
+endif
 
 ${BUILDDIR}/LICENSE: ${LICENSEDEPS}
 	echo >$@ "=================================================="

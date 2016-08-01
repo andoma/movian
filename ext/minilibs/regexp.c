@@ -983,7 +983,7 @@ static int match(Reinst *pc, const char *sp, const char *bol, int flags, Resub *
 				pc = pc->x;
 				continue;
 			case I_SPLIT:
-				if (nready >= 1000) {
+				if (nready >= 2000) {
 					fprintf(stderr, "regexec: backtrack overflow!\n");
                                         if(ready != &readystack[0])
                                                 free(ready);
@@ -992,7 +992,6 @@ static int match(Reinst *pc, const char *sp, const char *bol, int flags, Resub *
 
                                 if(nready == readystacksize) {
                                         readystacksize *= 2;
-                                        printf("Realloc to %d\n", readystacksize);
                                         if(ready == &readystack[0]) {
                                                 ready = malloc(sizeof(Rethread) * readystacksize);
                                                 memcpy(ready, &readystack[0],
