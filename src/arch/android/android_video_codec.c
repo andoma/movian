@@ -677,11 +677,13 @@ android_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
     return 1;
   }
 
+  TRACE(TRACE_DEBUG, "Video", "Trying to create codec for %s", type);
   JNIEnv *env;
   (*JVM)->GetEnv(JVM, (void **)&env, JNI_VERSION_1_6);
 
   class = (*env)->FindClass(env, "android/media/MediaCodec");
   if(!class) {
+    (*env)->ExceptionClear(env);
     TRACE(TRACE_DEBUG, "Video", "Unable to find Android MediaCodec class");
     return 1;
   }
