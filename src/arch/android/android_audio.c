@@ -69,7 +69,7 @@ typedef struct decoder {
   int64_t d_mark_ts;
   int64_t d_mark_samples;
 
-  int d_pause ;
+  int d_paused;
 
 } decoder_t;
 
@@ -331,7 +331,8 @@ android_audio_reconfig(audio_decoder_t *ad)
     d->d_timestamp[i] = PTS_UNSET;
 
   // set the player's state to playing
-  if((*d->d_pif)->SetPlayState(d->d_pif, SL_PLAYSTATE_PLAYING)) {
+  if((*d->d_pif)->SetPlayState(d->d_pif, d->d_paused ?
+                               SL_PLAYSTATE_PAUSED : SL_PLAYSTATE_PLAYING)) {
     TRACE(TRACE_ERROR, "SLES", "Unable to set playback state");
     return -1;
   }
@@ -442,8 +443,9 @@ static void
 android_audio_pause(audio_decoder_t *ad)
 {
   decoder_t *d = (decoder_t *)ad;
-  (*d->d_pif)->SetPlayState(d->d_pif, SL_PLAYSTATE_PAUSED);
-  d->d_pause = 1;
+  if(d->d_pif != NULL)
+    (*d->d_pif)->SetPlayState(d->d_pif, SL_PLAYSTATE_PAUSED);
+  d->d_paused = 1;
 }
 
 
@@ -454,8 +456,9 @@ static void
 android_audio_play(audio_decoder_t *ad)
 {
   decoder_t *d = (decoder_t *)ad;
-  (*d->d_pif)->SetPlayState(d->d_pif, SL_PLAYSTATE_PLAYING);
-  d->d_pause = 0;
+  if(d->d_pif != NULL)
+    (*d->d_pif)->SetPlayState(d->d_pif, SL_PLAYSTATE_PLAYING);
+  d->d_paused = 0;
 }
 
 
@@ -466,23 +469,6 @@ static void
 android_audio_flush(audio_decoder_t *ad)
 {
   decoder_t *d = (decoder_t *)ad;
-
-  //  if(d->d_pif == NULL)
-    //    return;
-
-  //  (*d->d_pif)->SetPlayState(d->d_pif, SL_PLAYSTATE_STOPPED);
-
-  //  (*d->d_bif)->Clear(d->d_bif);
-  /*
-  (*d->d_pif)->SetPlayState(d->d_pif,
-                            d->d_pause ? SL_PLAYSTATE_PAUSED :
-                            SL_PLAYSTATE_PLAYING);
-
-  (*d->d_pif)->SetCallbackEventsMask(d->d_pif, 0x1f);
-  (*d->d_pif)->SetPositionUpdatePeriod(d->d_pif, 100);
-
-  (*d->d_bif)->Enqueue(d->d_bif, d->d_pcmbuf, d->d_pcmbuf_size);
-  */
   d->d_read_ptr = 0;
   d->d_write_ptr = 1;
   __sync_synchronize();
