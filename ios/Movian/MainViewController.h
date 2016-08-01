@@ -1,5 +1,5 @@
 //
-//  GameViewController.h
+//  MainViewController.h
 //  Movian
 //
 //  Created by Andreas Öman on 03/06/15.
@@ -9,6 +9,6 @@
 #import <UIKit/UIKit.h>
 #import <GLKit/GLKit.h>
 
-@interface GameViewController : GLKViewController
+@interface MainViewController : GLKViewController
 
 @end

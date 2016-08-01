@@ -1,5 +1,5 @@
 //
-//  GameViewController.m
+//  MainViewController.m
 //  Movian
 //
 //  Created by Andreas Öman on 03/06/15.
@@ -8,7 +8,7 @@
 
 
 
-#import "GameViewController.h"
+#import "MainViewController.h"
 #import <OpenGLES/ES2/glext.h>
 #include <fenv.h>
 
@@ -16,7 +16,7 @@
 #include "ui/longpress.h"
 #include "navigator.h"
 
-@interface GameViewController () {
+@interface MainViewController () {
   lphelper_t longpress;
 }
 @property (strong, nonatomic) EAGLContext *context;
@@ -128,7 +128,7 @@ glw_in_fullwindow(void *opaque, int val)
 
 
 
-@implementation GameViewController
+@implementation MainViewController
 
 - (void)viewDidLoad
 {

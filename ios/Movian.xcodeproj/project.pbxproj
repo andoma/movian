@@ -338,12 +338,12 @@
 		6AB9264E1C0743CD002D59A6 /* mac_audio.c in Sources */ = {isa = PBXBuildFile; fileRef = 6AB9264D1C0743CD002D59A6 /* mac_audio.c */; };
 		6AC2B8761B1F23D700969FB4 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 6AC2B8751B1F23D700969FB4 /* main.m */; };
 		6AC2B8791B1F23D700969FB4 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 6AC2B8781B1F23D700969FB4 /* AppDelegate.m */; };
-		6AC2B8801B1F23D800969FB4 /* GameViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 6AC2B87F1B1F23D800969FB4 /* GameViewController.m */; };
+		6AC2B8801B1F23D800969FB4 /* MainViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 6AC2B87F1B1F23D800969FB4 /* MainViewController.m */; };
 		6AC2B8881B1F23D800969FB4 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 6AC2B8861B1F23D800969FB4 /* LaunchScreen.xib */; };
 		6AC938711C0E443E00D54769 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6AC938701C0E443E00D54769 /* Assets.xcassets */; };
 		6AD574EC1C15FD8100FCA17D /* libFreetype2-tvOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6AD574EB1C15FD8100FCA17D /* libFreetype2-tvOS.a */; };
 		6AD574EF1C15FDC600FCA17D /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 6AC2B8751B1F23D700969FB4 /* main.m */; };
-		6AD574F01C15FDC900FCA17D /* GameViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 6AC2B87F1B1F23D800969FB4 /* GameViewController.m */; };
+		6AD574F01C15FDC900FCA17D /* MainViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 6AC2B87F1B1F23D800969FB4 /* MainViewController.m */; };
 		6AD574F11C15FDCD00FCA17D /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 6AC2B8781B1F23D700969FB4 /* AppDelegate.m */; };
 		6AD574F41C15FE6E00FCA17D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6AC9386D1C0E443E00D54769 /* Main.storyboard */; };
 		6AD574F51C15FE7700FCA17D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 6AC2B8811B1F23D800969FB4 /* Main.storyboard */; };
@@ -717,8 +717,8 @@
 		6AC2B8751B1F23D700969FB4 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		6AC2B8771B1F23D700969FB4 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		6AC2B8781B1F23D700969FB4 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
-		6AC2B87E1B1F23D800969FB4 /* GameViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GameViewController.h; sourceTree = "<group>"; };
-		6AC2B87F1B1F23D800969FB4 /* GameViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GameViewController.m; sourceTree = "<group>"; };
+		6AC2B87E1B1F23D800969FB4 /* MainViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MainViewController.h; sourceTree = "<group>"; };
+		6AC2B87F1B1F23D800969FB4 /* MainViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MainViewController.m; sourceTree = "<group>"; };
 		6AC2B8821B1F23D800969FB4 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		6AC2B8841B1F23D800969FB4 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		6AC2B8871B1F23D800969FB4 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LaunchScreen.xib; sourceTree = "<group>"; };
@@ -1251,8 +1251,8 @@
 				6ADCCCB51B3001240099FB5A /* config.h */,
 				6AC2B8771B1F23D700969FB4 /* AppDelegate.h */,
 				6AC2B8781B1F23D700969FB4 /* AppDelegate.m */,
-				6AC2B87E1B1F23D800969FB4 /* GameViewController.h */,
-				6AC2B87F1B1F23D800969FB4 /* GameViewController.m */,
+				6AC2B87E1B1F23D800969FB4 /* MainViewController.h */,
+				6AC2B87F1B1F23D800969FB4 /* MainViewController.m */,
 				6AC2B8811B1F23D800969FB4 /* Main.storyboard */,
 				6AC2B8841B1F23D800969FB4 /* Images.xcassets */,
 				6AC2B8861B1F23D800969FB4 /* LaunchScreen.xib */,
@@ -2375,7 +2375,7 @@
 				6ADCCEEF1B304E5C0099FB5A /* decoration.c in Sources */,
 				6ADCCE721B304D390099FB5A /* vobsub.c in Sources */,
 				6ADCCE571B304C280099FB5A /* net_common.c in Sources */,
-				6AC2B8801B1F23D800969FB4 /* GameViewController.m in Sources */,
+				6AC2B8801B1F23D800969FB4 /* MainViewController.m in Sources */,
 				6ADCCF521B3065CE0099FB5A /* sqlite3.c in Sources */,
 				6ADCCE561B304C280099FB5A /* net_apple.c in Sources */,
 				6ADCCFDD1B30785D0099FB5A /* glw_playfield.c in Sources */,
@@ -2572,7 +2572,7 @@
 				6A35C2501C10423D00D8EA86 /* media_buf.c in Sources */,
 				6A35C1F41C1041C000D8EA86 /* fa_funopen.c in Sources */,
 				6A35C2771C10426F00D8EA86 /* http_server.c in Sources */,
-				6AD574F01C15FDC900FCA17D /* GameViewController.m in Sources */,
+				6AD574F01C15FDC900FCA17D /* MainViewController.m in Sources */,
 				6A35C1CD1C10418000D8EA86 /* mac_audio.c in Sources */,
 				6A35C28B1C10427C00D8EA86 /* prop_vector.c in Sources */,
 				6A35C2081C1041FC00D8EA86 /* glw_bar.c in Sources */,
