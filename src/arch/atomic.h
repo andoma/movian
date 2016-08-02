@@ -37,7 +37,7 @@ atomic_inc(atomic_t *a)
 static inline int __attribute__((warn_unused_result))
 atomic_add_and_fetch(atomic_t *a, int v)
 {
-  return __sync_add_and_fetch(&a->v, 1);
+  return __sync_add_and_fetch(&a->v, v);
 }
 
 static inline int
