@@ -856,6 +856,9 @@ media_global_hold(int on, int flag)
 
   for(i = 0; i < count; i++) {
     mp = mpv[i];
+    
+    if(!(mp->mp_flags & MP_VIDEO))
+      continue;
 
     if(on)
       mp_hold(mp, flag, NULL);

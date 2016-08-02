@@ -2088,6 +2088,11 @@
 					6AC2B86F1B1F23D700969FB4 = {
 						CreatedOnToolsVersion = 6.3;
 						DevelopmentTeam = R6G4NR96M9;
+						SystemCapabilities = {
+							com.apple.BackgroundModes = {
+								enabled = 1;
+							};
+						};
 					};
 					6AC9385F1C0E443E00D54769 = {
 						CreatedOnToolsVersion = 7.1.1;

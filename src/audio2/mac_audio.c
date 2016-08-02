@@ -19,12 +19,15 @@
  */
 #include <assert.h>
 #include <AudioToolbox/AudioQueue.h>
-
 #include <mach/mach_time.h>
 
 #include "main.h"
 #include "audio.h"
 #include "media/media.h"
+
+#if TARGET_OS_IOS == 1
+extern void ios_set_audio_status_enable(int on);
+#endif
 
 #define NUM_BUFS 8
 
@@ -145,8 +148,12 @@ static void
 mac_audio_fini(audio_decoder_t *ad)
 {
   decoder_t *d = (decoder_t *)ad;
-  if(d->aq)
+  if(d->aq) {
     AudioQueueDispose(d->aq, true);
+#if TARGET_OS_IOS == 1
+    ios_set_audio_status_enable(-1);
+#endif
+  }
 }
 
 
@@ -169,6 +176,10 @@ mac_audio_reconfig(audio_decoder_t *ad)
       d->buffers[i].avail = 0;
       d->buffers[i].size = 0;
     }
+  } else {
+#if TARGET_OS_IOS == 1
+    ios_set_audio_status_enable(1);
+#endif
   }
 
   AudioStreamBasicDescription desc = {0};
