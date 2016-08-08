@@ -50,6 +50,11 @@ vd_init_timings(video_decoder_t *vd)
   vd->vd_prevpts = AV_NOPTS_VALUE;
   vd->vd_nextpts = AV_NOPTS_VALUE;
   vd->vd_estimated_duration = 0;
+
+  for(int i = 0; i < VD_FRAME_SIZE_LEN; i++)
+    vd->vd_fps_array[i] = PTS_UNSET;
+
+  vd->vd_fps_delta = 0;
 }
 
 
@@ -82,6 +87,30 @@ void
 video_decoder_set_current_time(video_decoder_t *vd, int64_t user_time,
 			       int epoch, int64_t pts, int drive_mode)
 {
+  int64_t lastpts = vd->vd_fps_array[vd->vd_fps_ptr];
+  vd->vd_fps_array[vd->vd_fps_ptr] = pts;
+
+  vd->vd_fps_ptr = (vd->vd_fps_ptr + 1) & (ARRAYSIZE(vd->vd_fps_array) - 1);
+
+  if(pts != PTS_UNSET && lastpts != PTS_UNSET) {
+    int64_t delta = pts - lastpts;
+
+    if(delta < 10000000LL) {
+      if(vd->vd_fps_delta)
+        vd->vd_fps_delta += (delta - vd->vd_fps_delta) >> 4;
+      else
+        vd->vd_fps_delta = delta;
+      int64_t tmp = 100000000LL * VD_FRAME_SIZE_LEN / vd->vd_fps_delta;
+      float fps = tmp / 100.0;
+
+      if(fps != vd->vd_fps) {
+        vd->vd_fps = fps;
+        prop_set_float(vd->vd_mp->mp_prop_fps, vd->vd_fps);
+      }
+    }
+  }
+
+
   if(drive_mode == 2) {
     if(pts == PTS_UNSET || user_time == PTS_UNSET)
       return;

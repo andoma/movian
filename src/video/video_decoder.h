@@ -101,10 +101,21 @@ typedef struct video_decoder {
   int vd_frame_size[VD_FRAME_SIZE_LEN];
   int vd_frame_size_ptr;
 
+  /**
+   * Framerate
+   */
+  int vd_fps_ptr;
+  int64_t vd_fps_array[16];
+  int64_t vd_fps_delta;
+  float vd_fps;
+
+  // --
+
   void *vd_render_component;
 
+
   /**
-   * Reordering 
+   * Reordering
    */
   int vd_reorder_ptr;
   media_buf_meta_t vd_reorder[VIDEO_DECODER_REORDER_SIZE];

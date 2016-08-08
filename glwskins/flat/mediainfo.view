@@ -27,6 +27,10 @@ widget(container_x, {
                    $core.media.current.video.codec,
                    isVoid($core.media.current.video.codec));
 
+          InfoLine(_("Video framerate"),
+                   fmt("%2.2f", $core.media.current.fps),
+                   isVoid($core.media.current.fps));
+
           InfoLine(_("Video bitrate"),
                    fmt("%d kb/s", $core.media.current.video.bitrate),
                    isVoid($core.media.current.video.codec));

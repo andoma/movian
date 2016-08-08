@@ -277,6 +277,7 @@ typedef struct media_pipe {
   prop_t *mp_prop_playstatus;
   prop_t *mp_prop_pausereason;
   prop_t *mp_prop_currenttime;
+  prop_t *mp_prop_fps;
   prop_t *mp_prop_avdelta;
   prop_t *mp_prop_svdelta;
   prop_t *mp_prop_url;

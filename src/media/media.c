@@ -223,6 +223,7 @@ mp_create(const char *name, int flags)
   mp->mp_prop_playstatus  = prop_create(mp->mp_prop_root, "playstatus");
   mp->mp_prop_pausereason = prop_create(mp->mp_prop_root, "pausereason");
   mp->mp_prop_currenttime = prop_create(mp->mp_prop_root, "currenttime");
+  mp->mp_prop_fps = prop_create(mp->mp_prop_root, "fps");
 
   prop_set_float_clipping_range(mp->mp_prop_currenttime, 0, 10e6);
 
