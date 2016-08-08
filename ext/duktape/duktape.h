@@ -6,8 +6,8 @@
  *  include guard.  Other parts of the header are Duktape
  *  internal and related to platform/compiler/feature detection.
  *
- *  Git commit 83d557704ee63f68ab40b6fcb00995c9b3d6777c (v1.5.0).
- *  Git branch HEAD.
+ *  Git commit c3a0767c043afdea98c09f656dea9b7d266c4714 (v1.5.0-1-gc3a0767).
+ *  Git branch heads/v1.5.0.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -163,6 +163,7 @@ extern "C" {
  *  in Duktape web documentation.
  */
 
+struct duk_thread_state;
 struct duk_memory_functions;
 struct duk_function_list_entry;
 struct duk_number_list_entry;
@@ -170,6 +171,7 @@ struct duk_number_list_entry;
 /* duk_context is now defined in duk_config.h because it may also be
  * referenced there by prototypes.
  */
+typedef struct duk_thread_state duk_thread_state;
 typedef struct duk_memory_functions duk_memory_functions;
 typedef struct duk_function_list_entry duk_function_list_entry;
 typedef struct duk_number_list_entry duk_number_list_entry;
@@ -189,6 +191,10 @@ typedef void (*duk_debug_read_flush_function) (void *udata);
 typedef void (*duk_debug_write_flush_function) (void *udata);
 typedef duk_idx_t (*duk_debug_request_function) (duk_context *ctx, void *udata, duk_idx_t nvalues);
 typedef void (*duk_debug_detached_function) (void *udata);
+
+struct duk_thread_state {
+	char data[128];
+};
 
 struct duk_memory_functions {
 	duk_alloc_function alloc_func;
@@ -225,9 +231,9 @@ struct duk_number_list_entry {
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "83d557704ee63f68ab40b6fcb00995c9b3d6777c"
-#define DUK_GIT_DESCRIBE                  "v1.5.0"
-#define DUK_GIT_BRANCH                    "HEAD"
+#define DUK_GIT_COMMIT                    "c3a0767c043afdea98c09f656dea9b7d266c4714"
+#define DUK_GIT_DESCRIBE                  "v1.5.0-1-gc3a0767"
+#define DUK_GIT_BRANCH                    "heads/v1.5.0"
 
 /* Duktape debug protocol version used by this build. */
 #define DUK_DEBUG_PROTOCOL_VERSION        1
@@ -396,6 +402,9 @@ duk_context *duk_create_heap(duk_alloc_function alloc_func,
                              void *heap_udata,
                              duk_fatal_function fatal_handler);
 DUK_EXTERNAL_DECL void duk_destroy_heap(duk_context *ctx);
+
+DUK_EXTERNAL_DECL void duk_suspend(duk_context *ctx, duk_thread_state *state);
+DUK_EXTERNAL_DECL void duk_resume(duk_context *ctx, const duk_thread_state *state);
 
 #define duk_create_heap_default() \
 	duk_create_heap(NULL, NULL, NULL, NULL, NULL)
