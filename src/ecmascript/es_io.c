@@ -257,9 +257,7 @@ ehr_task(void *aux)
 
 
   es_context_t *ec = ehr->super.er_ctx;
-  duk_context *ctx = ec->ec_duk;
-
-  es_context_begin(ec);
+  duk_context *ctx = es_context_begin(ec);
 
   es_push_root(ctx, ehr);
 
@@ -280,7 +278,7 @@ ehr_task(void *aux)
 
   es_resource_destroy(&ehr->super);
 
-  es_context_end(ec, 1);
+  es_context_end(ec, 1, ctx);
 }
 
 
@@ -411,7 +409,12 @@ es_http_req(duk_context *ctx)
     return 0;
   }
 
+  duk_thread_state state;
+  es_context_suspend(ec, ctx, &state);
+
   es_http_do_request(ehr);
+
+  es_context_resume(ec, ctx, &state);
 
   if(ehr->ehr_error) {
     const char *err_url = mystrdupa(ehr->ehr_url);
@@ -746,12 +749,10 @@ es_http_inspector_run(void *aux)
   http_request_inspection_t *hri = insp->hri;
 
   es_context_t *ec = ehi->super.er_ctx;
-  es_context_begin(ec);
 
   es_debug(ec, "Inspecting %s using %s", insp->url, ehi->ehi_pattern);
 
-  duk_context *ctx = ec->ec_duk;
-
+  duk_context *ctx = es_context_begin(ec);
 
   // Setup object to pass to callback
 
@@ -787,7 +788,7 @@ es_http_inspector_run(void *aux)
     insp->rval = rval;
   }
 
-  es_context_end(ec, 1);
+  es_context_end(ec, 1, ctx);
 
   es_http_inspection_release(insp);
 }
@@ -800,6 +801,7 @@ static int
 es_http_inspect(const char *url, http_request_inspection_t *hri)
 {
   es_http_inspector_t *ehi;
+
 
   hts_mutex_lock(&http_inspector_mutex);
 

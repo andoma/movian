@@ -184,12 +184,10 @@ ecmascript_openuri(prop_t *page, const char *url, int sync)
 
   hts_mutex_unlock(&route_mutex);
 
-  es_context_begin(ec);
+  duk_context *ctx = es_context_begin(ec);
 
-
-  duk_context *ctx = ec->ec_duk;
   if(ctx == NULL) {
-    es_context_end(ec, 1);
+    es_context_end(ec, 1, ctx);
     es_resource_release(&er->super);
     return 1;
   }
@@ -231,7 +229,7 @@ ecmascript_openuri(prop_t *page, const char *url, int sync)
   }
   duk_pop(ctx);
 
-  es_context_end(ec, 1);
+  es_context_end(ec, 1, ctx);
   es_resource_release(&er->super);
 
   return 0;

@@ -607,7 +607,7 @@ es_context_create(const char *id, int flags, const char *url,
   ec->ec_bypass_file_acl_read  = !!(flags & ECMASCRIPT_FILE_BYPASS_ACL_READ);
   ec->ec_bypass_file_acl_write = !!(flags & ECMASCRIPT_FILE_BYPASS_ACL_WRITE);
 
-  hts_mutex_init_recursive(&ec->ec_mutex);
+  hts_mutex_init(&ec->ec_mutex);
   atomic_set(&ec->ec_refcount, 1);
 
   ec->ec_prop_unload_destroy = prop_vec_create(16);
@@ -662,28 +662,77 @@ es_context_release(es_context_t *ec)
 /**
  *
  */
-void
+duk_context *
 es_context_begin(es_context_t *ec)
 {
   atomic_inc(&ec->ec_refcount);
   hts_mutex_lock(&ec->ec_mutex);
+
+  if(ec->ec_thread != NULL) {
+    duk_context *ctx = ec->ec_thread;
+    ec->ec_thread = NULL;
+    return ctx;
+  }
+
+  int idx = duk_push_thread(ec->ec_duk);
+
+  duk_context *ctx = duk_get_context(ec->ec_duk, idx);
+  es_root_register(ec->ec_duk, idx, ctx);
+
+  duk_pop(ec->ec_duk);
+
+  return ctx;
 }
+
 
 /**
  *
  */
 void
-es_context_end(es_context_t *ec, int do_gc)
+es_context_suspend(es_context_t *ec, duk_context *ctx, duk_thread_state *state)
+{
+  duk_suspend(ctx, state);
+  hts_mutex_unlock(&ec->ec_mutex);
+}
+
+
+/**
+ *
+ */
+void
+es_context_resume(es_context_t *ec, duk_context *ctx, duk_thread_state *state)
+{
+  hts_mutex_lock(&ec->ec_mutex);
+  duk_resume(ctx, state);
+}
+
+
+/**
+ *
+ */
+void
+es_context_end(es_context_t *ec, int do_gc, duk_context *ctx)
 {
   if(ec->ec_duk != NULL) {
 
-    duk_set_top(ec->ec_duk, 0);
+    duk_set_top(ctx, 0);
+
+    if(ec->ec_thread == NULL) {
+      ec->ec_thread = ctx;
+    } else {
+      es_root_unregister(ec->ec_duk, ctx);
+    }
 
     if(do_gc)
       duk_gc(ec->ec_duk, 0);
 
     if(LIST_FIRST(&ec->ec_resources_permanent) == NULL) {
       // No more permanent resources, attached. Terminate context
+
+      if(ec->ec_thread != NULL) {
+        es_root_unregister(ec->ec_duk, ec->ec_thread);
+        ec->ec_thread = NULL;
+      }
 
       es_resource_t *er;
       while((er = LIST_FIRST(&ec->ec_resources_volatile)) != NULL) {
@@ -771,7 +820,7 @@ es_get_err_code(duk_context *ctx)
  *
  */
 static int
-es_load_and_compile(es_context_t *ec, const char *path)
+es_load_and_compile(es_context_t *ec, const char *path, duk_context *ctx)
 {
   char errbuf[256];
   buf_t *buf = fa_load(path,
@@ -782,8 +831,6 @@ es_load_and_compile(es_context_t *ec, const char *path)
     TRACE(TRACE_ERROR, rstr_get(ec->ec_id), "Unable to load %s", path);
     return -1;
   }
-
-  duk_context *ctx = ec->ec_duk;
 
   duk_push_lstring(ctx, buf_cstr(buf), buf_len(buf));
   buf_release(buf);
@@ -804,12 +851,11 @@ es_load_and_compile(es_context_t *ec, const char *path)
  *
  */
 static int
-es_exec(es_context_t *ec, const char *path)
+es_exec(es_context_t *ec, const char *path, duk_context *ctx)
 {
-  duk_context *ctx = ec->ec_duk;
   int rc;
 
-  if(es_load_and_compile(ec, path))
+  if(es_load_and_compile(ec, path, ctx))
     return -1;
 
   rc = duk_pcall(ctx, 0);
@@ -838,9 +884,7 @@ ecmascript_plugin_load(const char *id, const char *url,
   es_context_t *ec = es_context_create(id, flags | ECMASCRIPT_PLUGIN,
                                        url, storage);
 
-  es_context_begin(ec);
-
-  duk_context *ctx = ec->ec_duk;
+  duk_context *ctx = es_context_begin(ec);
 
   duk_push_global_object(ctx);
 
@@ -870,7 +914,8 @@ ecmascript_plugin_load(const char *id, const char *url,
 
     int64_t ts0 = arch_get_ts();
 
-    if(es_load_and_compile(ec, "dataroot://res/ecmascript/legacy/api-v1.js"))
+    if(es_load_and_compile(ec, "dataroot://res/ecmascript/legacy/api-v1.js",
+                           ctx))
       goto bad;
 
     int64_t ts1 = arch_get_ts();
@@ -882,7 +927,7 @@ ecmascript_plugin_load(const char *id, const char *url,
 
     int64_t ts2 = arch_get_ts();
 
-    if(es_load_and_compile(ec, url)) {
+    if(es_load_and_compile(ec, url, ctx)) {
       duk_pop(ctx);
       goto bad;
     }
@@ -904,11 +949,11 @@ ecmascript_plugin_load(const char *id, const char *url,
              ((int)(ts4 - ts3)) / 1000);
 
   } else {
-    es_exec(ec, url);
+    es_exec(ec, url, ctx);
   }
 
  bad:
-  es_context_end(ec, 1);
+  es_context_end(ec, 1, ctx);
 
   es_context_release(ec);
 
@@ -973,12 +1018,12 @@ ecmascript_plugin_unload(const char *id)
   if(ec == NULL)
     return;
 
-  es_context_begin(ec);
+  duk_context *ctx = es_context_begin(ec);
 
   while((er = LIST_FIRST(&ec->ec_resources_permanent)) != NULL)
     es_resource_destroy(er);
 
-  es_context_end(ec, 1);
+  es_context_end(ec, 1, ctx);
 }
 
 
@@ -998,11 +1043,12 @@ ecmascript_init(void)
 
   es_context_t *ec = es_context_create("cmdline", flags,
                                        gconf.load_ecmascript, "/tmp");
-  es_context_begin(ec);
 
-  es_exec(ec, gconf.load_ecmascript);
+  duk_context *ctx = es_context_begin(ec);
 
-  es_context_end(ec, 1);
+  es_exec(ec, gconf.load_ecmascript, ctx);
+
+  es_context_end(ec, 1, ctx);
   es_context_release(ec);
 }
 
@@ -1025,12 +1071,12 @@ ecmascript_fini(void)
     ec->ec_linked = 0;
     hts_mutex_unlock(&es_context_mutex);
 
-    es_context_begin(ec);
+    duk_context *ctx = es_context_begin(ec);
 
     while((er = LIST_FIRST(&ec->ec_resources_permanent)) != NULL)
       es_resource_destroy(er);
 
-    es_context_end(ec, 1);
+    es_context_end(ec, 1, ctx);
 
     hts_mutex_lock(&es_context_mutex);
   }
@@ -1049,9 +1095,9 @@ ecmascript_load(const char *ctxid, int flags, const char *url,
                 const char *storage)
 {
   es_context_t *ec = es_context_create(ctxid, flags, url, storage);
-  es_context_begin(ec);
-  es_exec(ec, url);
-  es_context_end(ec, 1);
+  duk_context *ctx = es_context_begin(ec);
+  es_exec(ec, url, ctx);
+  es_context_end(ec, 1, ctx);
   es_context_release(ec);
 }
 

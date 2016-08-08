@@ -139,9 +139,8 @@ timer_thread(void *aux)
     hts_mutex_unlock(&timer_mutex);
 
     es_context_t *ec = et->super.er_ctx;
-    es_context_begin(ec);
 
-    duk_context *ctx = ec->ec_duk;
+    duk_context *ctx = es_context_begin(ec);
 
     es_push_root(ctx, et);
     int rc = duk_pcall(ctx, 0);
@@ -153,7 +152,7 @@ timer_thread(void *aux)
     if(destroy)
       es_resource_destroy(&et->super);
 
-    es_context_end(ec, 0);
+    es_context_end(ec, 0, ctx);
 
     hts_mutex_lock(&timer_mutex);
     es_resource_release(&et->super);

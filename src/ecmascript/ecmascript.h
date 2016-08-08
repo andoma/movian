@@ -86,6 +86,8 @@ typedef struct es_context {
   hts_mutex_t ec_mutex;
   duk_context *ec_duk;
 
+  duk_context *ec_thread;
+
   // Resource that will keep the duktape context alive
   // This include stuff such as page routes, service handles, etc
   struct es_resource_list ec_resources_permanent;
@@ -205,9 +207,15 @@ es_context_retain(es_context_t *ec)
 
 void es_context_release(es_context_t *ec);
 
-void es_context_begin(es_context_t *ec);
+duk_context * attribute_unused_result es_context_begin(es_context_t *ec);
 
-void es_context_end(es_context_t *ec, int do_gc);
+void es_context_end(es_context_t *ec, int do_gc, duk_context *ctx);
+
+void es_context_suspend(es_context_t *ec, duk_context *ctx,
+                        duk_thread_state *state);
+
+void es_context_resume(es_context_t *ec, duk_context *ctx,
+                       duk_thread_state *state);
 
 es_context_t **ecmascript_get_all_contexts(void);
 

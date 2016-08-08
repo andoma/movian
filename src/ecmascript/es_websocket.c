@@ -105,9 +105,7 @@ es_websocket_client_close_task_fn(void *aux)
   es_websocket_client_t *ewc = t->ewc;
 
   es_context_t *ec = ewc->super.er_ctx;
-  duk_context *ctx = ec->ec_duk;
-
-  es_context_begin(ec);
+  duk_context *ctx = es_context_begin(ec);
 
   if(!ewc->super.er_zombie) {
     es_push_root(ctx, ewc);
@@ -121,7 +119,7 @@ es_websocket_client_close_task_fn(void *aux)
     duk_pop(ctx);
   }
 
-  es_context_end(ec, 1);
+  es_context_end(ec, 1, ctx);
   free(t->msg);
   free(t);
   es_resource_release(&ewc->super);
@@ -157,9 +155,7 @@ es_websocket_client_connect_task_fn(void *aux)
   es_websocket_client_t *ewc = aux;
 
   es_context_t *ec = ewc->super.er_ctx;
-  duk_context *ctx = ec->ec_duk;
-
-  es_context_begin(ec);
+  duk_context *ctx = es_context_begin(ec);
 
   if(!ewc->super.er_zombie) {
     es_push_root(ctx, ewc);
@@ -171,7 +167,7 @@ es_websocket_client_connect_task_fn(void *aux)
     duk_pop(ctx);
   }
 
-  es_context_end(ec, 1);
+  es_context_end(ec, 1, ctx);
   es_resource_release(&ewc->super);
 }
 
@@ -187,9 +183,7 @@ es_websocket_client_input_task_fn(void *aux)
   es_websocket_client_t *ewc = t->ewc;
 
   es_context_t *ec = ewc->super.er_ctx;
-  duk_context *ctx = ec->ec_duk;
-
-  es_context_begin(ec);
+  duk_context *ctx = es_context_begin(ec);
 
   if(!ewc->super.er_zombie) {
     es_push_root(ctx, ewc);
@@ -214,7 +208,7 @@ es_websocket_client_input_task_fn(void *aux)
     duk_pop(ctx);
   }
 
-  es_context_end(ec, 0);
+  es_context_end(ec, 0, ctx);
   es_resource_release(&ewc->super);
 
   free(t->buf);
@@ -921,9 +915,7 @@ es_websocket_server_connection_open_fn(void *aux)
   es_websocket_server_connection_task_t *t = aux;
   es_websocket_server_connection_t *ewsc = t->ewsc;
   es_context_t *ec = ewsc->super.er_ctx;
-  duk_context *ctx = ec->ec_duk;
-
-  es_context_begin(ec);
+  duk_context *ctx = es_context_begin(ec);
 
   es_websocket_server_t *ews = ewsc->ewsc_server;
   if(ews != NULL && !ews->super.er_zombie) {
@@ -946,7 +938,7 @@ es_websocket_server_connection_open_fn(void *aux)
     duk_pop(ctx);
   }
   ewsc_freetask(t);
-  es_context_end(ec, 1);
+  es_context_end(ec, 1, ctx);
 }
 
 
@@ -959,7 +951,7 @@ ews_connected(http_connection_t *hc, void *path_opaque)
   es_websocket_server_t *ews = path_opaque;
   es_context_t *ec = ews->super.er_ctx;
 
-  es_context_begin(ec);
+  duk_context *ctx = es_context_begin(ec);
 
   es_websocket_server_connection_t *ewsc =
     es_resource_alloc(&es_resource_websocket_server_connection);
@@ -980,7 +972,7 @@ ews_connected(http_connection_t *hc, void *path_opaque)
   task_run_in_group(es_websocket_server_connection_open_fn,
                     ewsc_maketask(ewsc, 0), ewsc->ewsc_task_group);
 
-  es_context_end(ec, 1);
+  es_context_end(ec, 1, ctx);
   return 0;
 }
 
@@ -994,9 +986,7 @@ es_websocket_server_connection_close_fn(void *aux)
   es_websocket_server_connection_task_t *t = aux;
   es_websocket_server_connection_t *ewsc = t->ewsc;
   es_context_t *ec = ewsc->super.er_ctx;
-  duk_context *ctx = ec->ec_duk;
-
-  es_context_begin(ec);
+  duk_context *ctx = es_context_begin(ec);
   if(!ewsc->super.er_zombie) {
     es_push_root(ctx, ewsc);
     duk_get_prop_string(ctx, -1, "onClose");
@@ -1008,7 +998,7 @@ es_websocket_server_connection_close_fn(void *aux)
   }
   ewsc_freetask(t);
   es_resource_destroy(&ewsc->super);
-  es_context_end(ec, 1);
+  es_context_end(ec, 1, ctx);
 }
 
 
@@ -1019,17 +1009,12 @@ static void
 ews_disconnected(http_connection_t *hc, void *connection_opaque)
 {
   es_websocket_server_connection_t *ewsc = connection_opaque;
-  es_context_t *ec = ewsc->super.er_ctx;
-
-  es_context_begin(ec);
 
   task_run_in_group(es_websocket_server_connection_close_fn,
                     ewsc_maketask(ewsc, 0), ewsc->ewsc_task_group);
 
   es_resource_release(&ewsc->super);
   ewsc->ewsc_hc = NULL;
-
-  es_context_end(ec, 1);
 }
 
 
@@ -1042,9 +1027,7 @@ es_websocket_server_connection_input_fn(void *aux)
   es_websocket_server_connection_task_t *t = aux;
   es_websocket_server_connection_t *ewsc = t->ewsc;
   es_context_t *ec = ewsc->super.er_ctx;
-  duk_context *ctx = ec->ec_duk;
-
-  es_context_begin(ec);
+  duk_context *ctx = es_context_begin(ec);
 
   if(!ewsc->super.er_zombie) {
     es_push_root(ctx, ewsc);
@@ -1069,7 +1052,7 @@ es_websocket_server_connection_input_fn(void *aux)
 
   }
   ewsc_freetask(t);
-  es_context_end(ec, 0);
+  es_context_end(ec, 0, ctx);
 }
 
 
@@ -1081,10 +1064,6 @@ ews_input(http_connection_t *hc, int opcode,
           uint8_t *data, size_t len, void *connection_opaque)
 {
   es_websocket_server_connection_t *ewsc = connection_opaque;
-  es_context_t *ec = ewsc->super.er_ctx;
-
-  es_context_begin(ec);
-
   es_websocket_server_connection_task_t *t = ewsc_maketask(ewsc, opcode);
   // data is always nul terminated with an extra allocated byte
   // not visible in 'len', pass that on
@@ -1092,9 +1071,8 @@ ews_input(http_connection_t *hc, int opcode,
   memcpy(t->buf, data, len + 1);
   t->bufsize = len;
   task_run_in_group(es_websocket_server_connection_input_fn,
-                      t, ewsc->ewsc_task_group);
+                    t, ewsc->ewsc_task_group);
 
-  es_context_end(ec, 0);
   return 0;
 }
 

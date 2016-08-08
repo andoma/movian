@@ -144,8 +144,8 @@ esp_query(subtitle_provider_t *SP, sub_scanner_t *ss, int score,
   es_sp_t *esp = SP->sp_opaque;
   es_context_t *ec = esp->super.er_ctx;
 
-  es_context_begin(ec);
-  duk_context *ctx = ec->ec_duk;
+  duk_context *ctx = es_context_begin(ec);
+
   if(ctx != NULL && ss != NULL) {
 
     extern ecmascript_native_class_t es_native_prop;
@@ -197,7 +197,7 @@ esp_query(subtitle_provider_t *SP, sub_scanner_t *ss, int score,
 
   }
   es_resource_release(&esp->super);
-  es_context_end(ec, 1);
+  es_context_end(ec, 1, ctx);
 }
 
 

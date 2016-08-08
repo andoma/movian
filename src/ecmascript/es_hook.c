@@ -107,9 +107,7 @@ es_hook_invoke(const char *type,
   for(int i = 0; i < cnt; i++) {
     eh = v[i];
     es_context_t *ec = eh->super.er_ctx;
-    es_context_begin(ec);
-
-    duk_context *ctx = ec->ec_duk;
+    duk_context *ctx = es_context_begin(ec);
 
     es_push_root(ctx, eh);
     int r = push_args(ctx, opaque);
@@ -119,7 +117,7 @@ es_hook_invoke(const char *type,
 
     duk_pop(ctx);
 
-    es_context_end(ec, 1);
+    es_context_end(ec, 1, ctx);
     es_resource_release(&eh->super);
   }
   return 0;

@@ -213,9 +213,8 @@ es_fap_open_task(void *aux)
   es_fa_handle_t *fah = aux;
   es_fap_t *ef = fah->fah_ef;
   es_context_t *ec = ef->super.er_ctx;
-  duk_context *ctx = ec->ec_duk;
 
-  es_context_begin(ec);
+  duk_context *ctx = es_context_begin(ec);
 
   es_push_root(ctx, ef);
   duk_get_prop_string(ctx, -1, "open");
@@ -228,7 +227,7 @@ es_fap_open_task(void *aux)
     es_dump_err(ctx);
   }
 
-  es_context_end(ec, 0);
+  es_context_end(ec, 0, ctx);
   fah_release(fah);
 }
 
@@ -309,9 +308,8 @@ es_fap_read_task(void *aux)
   es_fa_handle_t *fah = aux;
   es_fap_t *ef = fah->fah_ef;
   es_context_t *ec = ef->super.er_ctx;
-  duk_context *ctx = ec->ec_duk;
 
-  es_context_begin(ec);
+  duk_context *ctx = es_context_begin(ec);
 
   duk_set_top(ctx, 0);
 
@@ -335,7 +333,7 @@ es_fap_read_task(void *aux)
     es_dump_err(ctx);
   }
 
-  es_context_end(ec, 0);
+  es_context_end(ec, 0, ctx);
   fah_release(fah);
 }
 
@@ -361,13 +359,12 @@ es_fap_read(fa_handle_t *fh, void *buf, size_t size)
 
   es_fap_t *ef = fah->fah_ef;
   es_context_t *ec = ef->super.er_ctx;
-  duk_context *ctx = ec->ec_duk;
 
-  es_context_begin(ec);
+  duk_context *ctx = es_context_begin(ec);
   es_push_root(ctx, fah->fah_readbuf);
   duk_config_buffer(ctx, -1, NULL, 0);
   es_root_unregister(ctx, fah->fah_readbuf);
-  es_context_end(ec, 0);
+  es_context_end(ec, 0, ctx);
 
 
   switch(fah->fah_status) {
@@ -409,9 +406,7 @@ es_fap_close_task(void *aux)
   es_fa_handle_t *fah = aux;
   es_fap_t *ef = fah->fah_ef;
   es_context_t *ec = ef->super.er_ctx;
-  duk_context *ctx = ec->ec_duk;
-
-  es_context_begin(ec);
+  duk_context *ctx =  es_context_begin(ec);
 
   es_push_root(ctx, ef);
   duk_get_prop_string(ctx, -1, "close");
@@ -426,7 +421,7 @@ es_fap_close_task(void *aux)
   }
 
   es_root_unregister(ctx, fah);
-  es_context_end(ec, 1);
+  es_context_end(ec, 1, ctx);
   fah_release(fah);
 }
 
@@ -526,9 +521,7 @@ es_fap_stat_task(void *aux)
   es_fa_handle_t *fah = aux;
   es_fap_t *ef = fah->fah_ef;
   es_context_t *ec = ef->super.er_ctx;
-  duk_context *ctx = ec->ec_duk;
-
-  es_context_begin(ec);
+  duk_context *ctx = es_context_begin(ec);
 
   duk_set_top(ctx, 0);
 
@@ -543,7 +536,7 @@ es_fap_stat_task(void *aux)
     es_dump_err(ctx);
   }
 
-  es_context_end(ec, 0);
+  es_context_end(ec, 0, ctx);
   fah_release(fah);
 }
 
@@ -636,9 +629,8 @@ es_fap_redirect_task(void *aux)
   es_fa_handle_t *fah = aux;
   es_fap_t *ef = fah->fah_ef;
   es_context_t *ec = ef->super.er_ctx;
-  duk_context *ctx = ec->ec_duk;
 
-  es_context_begin(ec);
+  duk_context *ctx = es_context_begin(ec);
 
   duk_set_top(ctx, 0);
 
@@ -653,7 +645,7 @@ es_fap_redirect_task(void *aux)
     es_dump_err(ctx);
   }
 
-  es_context_end(ec, 0);
+  es_context_end(ec, 0, ctx);
   fah_release(fah);
 }
 
