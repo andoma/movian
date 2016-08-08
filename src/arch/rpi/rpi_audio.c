@@ -839,7 +839,7 @@ rpi_audio_deliver_coded(audio_decoder_t *ad, const void *data, size_t size,
   }
 
   if((buf = oc->oc_avail) == NULL)
-    return 1;
+    return -1;
 
   oc->oc_avail = buf->pAppPrivate;
   oc->oc_inflight_buffers++;
