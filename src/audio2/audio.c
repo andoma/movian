@@ -706,7 +706,7 @@ audio_decode_thread(void *aux)
         if(r) {
           TAILQ_INSERT_HEAD(&mq->mq_q_data, mb, mb_link);
           mq->mq_packets_current++;
-          mp->mp_buffer_current = mb_buffered_size(mb);
+          mp->mp_buffer_current += mb_buffered_size(mb);
 
           hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
           continue;
