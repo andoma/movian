@@ -36,6 +36,10 @@
 
 #include "ecmascript/ecmascript.h"
 
+#if ENABLE_VMIR
+#include "np/np.h"
+#endif
+
 typedef enum {
   PLUGIN_CAT_TV,
   PLUGIN_CAT_VIDEO,
@@ -45,6 +49,7 @@ typedef enum {
   PLUGIN_CAT_SUBTITLES,
   PLUGIN_CAT_OTHER,
   PLUGIN_CAT_GLWOSK,
+  PLUGIN_CAT_AUDIOENGINE,
   PLUGIN_CAT_num,
 } plugin_type_t;
 
@@ -56,6 +61,7 @@ static struct strtab catnames[] = {
   { "other",       PLUGIN_CAT_OTHER },
   { "glwview",     PLUGIN_CAT_GLWVIEW },
   { "glwosk",      PLUGIN_CAT_GLWOSK },
+  { "audioengine",  PLUGIN_CAT_AUDIOENGINE },
   { "subtitles",   PLUGIN_CAT_SUBTITLES },
 };
 
@@ -494,6 +500,17 @@ plugin_unload_ecmascript(plugin_t *pl)
 }
 
 
+/**
+ *
+ */
+#if ENABLE_VMIR
+static void
+plugin_unload_vmir(plugin_t *pl)
+{
+  np_plugin_unload(pl->pl_id);
+}
+#endif
+
 
 /**
  *
@@ -586,6 +603,30 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int flags)
     // No special tricks here, we always loads 'glwviews' from all plugins
     r = 0;
 
+#if ENABLE_VMIR
+  } else if(!strcmp(type, "bitcode")) {
+
+    const char *file = htsmsg_get_str(ctrl, "file");
+    if(file == NULL) {
+      snprintf(errbuf, errlen, "Missing \"file\" element in control file %s",
+               ctrlfile);
+      goto bad;
+    }
+    snprintf(fullpath, sizeof(fullpath), "%s/%s", url, file);
+    int version = htsmsg_get_u32_or_default(ctrl, "apiversion", 1);
+
+    int memory_size = htsmsg_get_u32_or_default(ctrl, "memory-size", 4096);
+    int stack_size  = htsmsg_get_u32_or_default(ctrl, "stack-size", 64);
+
+    hts_mutex_unlock(&plugin_mutex);
+    r = np_plugin_load(id, fullpath, errbuf, errlen, version, 0,
+                       memory_size * 1024, stack_size * 1024);
+    hts_mutex_lock(&plugin_mutex);
+    if(!r)
+      pl->pl_unload = plugin_unload_vmir;
+
+
+#endif
   } else if(!strcmp(type, "ecmascript")) {
 
     const char *file = htsmsg_get_str(ctrl, "file");
@@ -817,9 +858,16 @@ plugin_load_repo(void)
       if(id == NULL)
 	continue;
       const char *type = htsmsg_get_str(pm, "type");
-      if(type != NULL && !strcmp(type, "javascript"))
-        continue;
 
+      if(type != NULL) {
+        // Old Spidermonkey based plugins
+        if(!strcmp(type, "javascript"))
+          continue;
+#if !ENABLE_VMIR
+        if(!strcmp(type, "bitcode"))
+          continue;
+#endif
+      }
       if(is_plugin_blacklisted(id, version, NULL))
         continue;
 
@@ -994,6 +1042,10 @@ plugin_category_set_title_in_model(prop_t *model, int category)
 
   case PLUGIN_CAT_SUBTITLES:
     gn = _p("Subtitles");
+    break;
+
+  case PLUGIN_CAT_AUDIOENGINE:
+    gn = _p("Audio decoders");
     break;
 
   default:
@@ -1285,12 +1337,12 @@ plugin_install(plugin_t *pl, const char *package)
   TRACE(TRACE_INFO, "plugins", "Plugin %s valid ZIP archive %d bytes",
 	pl->pl_id, (int)b->b_size);
 
-  prop_link(_p("Installing"), status);
-
   snprintf(path, sizeof(path), "%s/installedplugins", gconf.persistent_path);
   fa_makedir(path);
 
   plugin_unload(pl);
+
+  prop_link(_p("Installing"), status);
 
   snprintf(path, sizeof(path), "%s/installedplugins/%s.zip",
 	   gconf.persistent_path, pl->pl_id);
@@ -1327,14 +1379,15 @@ plugin_install(plugin_t *pl, const char *package)
   arch_sync_path(path);
 #endif
 
-  prop_unlink(status);
   if(plugin_load(path, errbuf, sizeof(errbuf),
                  PLUGIN_LOAD_FORCE | PLUGIN_LOAD_AS_INSTALLED |
                  PLUGIN_LOAD_BY_USER)) {
+    prop_unlink(status);
     TRACE(TRACE_ERROR, "plugins", "Unable to load %s -- %s", path, errbuf);
     prop_set_string(status, errbuf);
     goto cleanup;
   }
+  prop_unlink(status);
   prop_ref_dec(status);
   return 0;
 }
@@ -1385,6 +1438,9 @@ open_categories(prop_t *model)
   add_category(nodes, PLUGIN_CAT_TV, "tv");
   add_category(nodes, PLUGIN_CAT_VIDEO, "movie");
   add_category(nodes, PLUGIN_CAT_MUSIC, "audiotrack");
+#if ENABLE_VMIR // A bit hackish
+  add_category(nodes, PLUGIN_CAT_AUDIOENGINE, "audiotrack");
+#endif
   add_category(nodes, PLUGIN_CAT_SUBTITLES, "subtitles");
   add_category(nodes, PLUGIN_CAT_OTHER, "other");
 #if !defined(PS3)

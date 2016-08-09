@@ -19,3 +19,6 @@
 [submodule "ios/freetype2-ios"]
 	path = ios/freetype2-ios
 	url = https://github.com/andoma/freetype2-ios.git
+[submodule "ext/vmir"]
+	path = ext/vmir
+	url = https://github.com/andoma/vmir

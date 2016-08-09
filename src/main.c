@@ -633,6 +633,10 @@ parse_opts(int argc, char **argv)
       gconf.load_ecmascript = argv[1];
       argc -= 2; argv += 2;
       continue;
+    } else if(!strcmp(argv[0], "--vmir-bitcode") && argc > 1) {
+      gconf.load_np = argv[1];
+      argc -= 2; argv += 2;
+      continue;
     } else if (!strcmp(argv[0], "-v") && argc > 1) {
       gconf.initial_view = argv[1];
       argc -= 2; argv += 2;

@@ -272,6 +272,8 @@ typedef struct gconf {
   const char *load_ecmascript;
   int bypass_ecmascript_acl;
 
+  const char *load_np;
+
   const char *initial_url;
   const char *initial_view;
 

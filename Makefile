@@ -739,6 +739,24 @@ SRCS-$(CONFIG_SQLITE) += src/ecmascript/es_sqlite.c
 ${BUILDDIR}/ext/duktape/%.o : CFLAGS = -Wall ${OPTFLAGS} \
  -fstrict-aliasing -std=c99 -DDUK_OPT_FASTINT #-DDUK_OPT_ASSERTIONS #-DDUK_OPT_DEBUG -DDUK_OPT_DPRINT -DDUK_OPT_DDPRINT -DDUK_OPT_DDDPRINT
 
+##############################################################
+# VMIR
+##############################################################
+
+SRCS-${CONFIG_VMIR} += \
+	ext/vmir/src/vmir.c \
+	ext/tlsf/tlsf.c \
+	src/np/np.c \
+	src/np/np_fs.c \
+	src/np/np_prop.c \
+	src/np/np_backend.c \
+	src/np/np_stats.c \
+
+${BUILDDIR}/ext/vmir/src/vmir.o : CFLAGS = ${CFLAGS_std} ${OPTFLAGS} -DVMIR_USE_TLSF -Iext/tlsf
+
+${BUILDDIR}/src/np/%.o : CFLAGS = ${CFLAGS_std} ${OPTFLAGS} -DNATIVEPLUGIN_HOST -Inativeplugin/include/
+
+
 
 ##############################################################
 # Gumbo

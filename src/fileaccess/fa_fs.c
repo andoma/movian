@@ -190,6 +190,17 @@ fs_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
   int i;
   int fd;
 
+
+  if(!strcmp(url, "/dev/stdout") || !strcmp(url, "/dev/stderr")) {
+    fd = open(url, O_WRONLY);
+    if(fd == -1) {
+      snprintf(errbuf, errlen, "%s", strerror(errno));
+      return NULL;
+    }
+    goto open_ok;
+  }
+
+  
   if(flags & FA_WRITE) {
 
     int open_flags = O_RDWR | O_CREAT;

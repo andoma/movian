@@ -38,6 +38,7 @@
 #include "metadata/playinfo.h"
 #include "misc/minmax.h"
 #include "usage.h"
+#include "backend/backend.h"
 
 #if ENABLE_LIBGME
 #include <gme/gme.h>
@@ -47,6 +48,7 @@
 #include <xmp.h>
 #endif
 
+#include "np/np.h"
 
 /**
  *
@@ -155,6 +157,25 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   if(pb[0] == 0x50 && pb[1] == 0x4b && pb[2] == 0x03 && pb[3] == 0x04)
     // ZIP File
     return audio_play_zipfile(fh, mp, errbuf, errlen, hold);
+
+  metadata_t *md = metadata_create();
+  if(np_fa_probe(fh, pb, psiz, md, url) == 0) {
+    fa_close_with_park(fh, 1);
+    event_t *e = NULL;
+    if(md->md_redirect == NULL) {
+      snprintf(errbuf, errlen, "External player provided no redirect URL");
+    } else if(!strcmp(md->md_redirect, url)) {
+      snprintf(errbuf, errlen, "Redirect loop %s -> %s", url, md->md_redirect);
+    } else {
+      TRACE(TRACE_DEBUG, "Audio", "%s redirects to %s",
+            url, md->md_redirect);
+      e = backend_play_audio(md->md_redirect, mp, errbuf, errlen, hold,
+                             mimetype);
+    }
+    metadata_destroy(md);
+    return e;
+  }
+  metadata_destroy(md);
 
   // First we need to check for a few other formats
 #if ENABLE_LIBGME

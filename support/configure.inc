@@ -110,6 +110,7 @@ CONFIG_LIST="
  webpopup
  xmp
  zlib
+ vmir
 "
 
 
@@ -444,11 +445,25 @@ gumbo_setup() {
 }
 
 
+
+#
+#
+#
+vmir_setup() {
+    if disabled vmir; then
+        return
+    fi
+
+    update_ext_submodule vmir
+}
+
+
 ext_setup() {
     libav_setup
     rtmpdump_setup
     xmp_setup
     gumbo_setup
+    vmir_setup
 }
 
 
