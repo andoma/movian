@@ -309,7 +309,7 @@ avc_get_output_buffers(JNIEnv *env, android_video_codec_t *avc)
 
 
 
-static void
+static int
 fill_frame_info_from_pts(frame_info_t *fi,
                          video_decoder_t *vd,
                          android_video_codec_t *avc,
@@ -329,9 +329,10 @@ fill_frame_info_from_pts(frame_info_t *fi,
       AVC_TRACE("Dequeue buffer reorderslot:0x%lx -> %d "
                 "PTS=%"PRId64" duration=%d",
                 (long)pts, i, fi->fi_pts, fi->fi_duration);
-      return;
+      return mbm->mbm_skip;
     }
   }
+  return 0;
 }
 
 
@@ -524,7 +525,7 @@ android_codec_decode_locked(struct media_codec *mc, struct video_decoder *vd,
     (*env)->PushLocalFrame(env, 64);
 
     frame_info_t fi = {};
-    fill_frame_info_from_pts(&fi, vd, avc, pts);
+    int skip = fill_frame_info_from_pts(&fi, vd, avc, pts);
 
     int64_t now = arch_get_avtime();
     media_pipe_t *mp = vd->vd_mp;
@@ -540,7 +541,7 @@ android_codec_decode_locked(struct media_codec *mc, struct video_decoder *vd,
               idx, fi.fi_pts, fi.fi_pts - ptsdelta, wt - now, rtd);
     ptsdelta = fi.fi_pts;
 
-    if(epoch == fi.fi_epoch) {
+    if(epoch == fi.fi_epoch && (wt - now) > 10000LL && !skip) {
       (*env)->CallVoidMethod(env, avc->avc_decoder,
                              avc->avc_releaseOutputBufferTimed,
                              idx, wt * 1000LL);
@@ -572,15 +573,30 @@ android_codec_decode_locked(struct media_codec *mc, struct video_decoder *vd,
 
   hts_mutex_unlock(&vd->vd_mp->mp_mutex);
 
-  uint8_t *data = mb->mb_data;
-  size_t size = mb->mb_size;
+  int rval;
 
-  if(avc->avc_annexb.extradata_injected)
+  uint8_t *data;
+  size_t size;
+  int64_t pts;
+  int flags;
+
+  if(avc->avc_annexb.extradata != NULL && !avc->avc_annexb.extradata_injected) {
+    data = avc->avc_annexb.extradata;
+    size = avc->avc_annexb.extradata_size;
+    pts = 0;
+    flags = 1;
+    rval = 1;
+    avc->avc_annexb.extradata_injected = 1;
+  } else {
+    data = mb->mb_data;
+    size = mb->mb_size;
     h264_to_annexb(&avc->avc_annexb, &data, &size);
 
-  int64_t pts = store_metadata(vd, mb, avc, mc, data, size);
+    pts = store_metadata(vd, mb, avc, mc, data, size);
+    flags = mb->mb_keyframe ? 1 : 0; // BUFFER_FLAG_KEY_FRAME
+    rval = 0;
+  }
 
-  const int flags = mb->mb_keyframe ? 1 : 0; // BUFFER_FLAG_KEY_FRAME
 
   JNIEnv *env;
   (*JVM)->GetEnv(JVM, (void **)&env, JNI_VERSION_1_6);
@@ -595,7 +611,7 @@ android_codec_decode_locked(struct media_codec *mc, struct video_decoder *vd,
   if(bb_size < size) {
     TRACE(TRACE_ERROR, "android", "Video packet buffer too small %d < %d",
           bb_size, size);
-    return idx;
+    return rval;
   }
   memcpy(bb_buf, data, size);
 
@@ -607,7 +623,7 @@ android_codec_decode_locked(struct media_codec *mc, struct video_decoder *vd,
   (*env)->PopLocalFrame(env, NULL);
 
   hts_mutex_lock(&vd->vd_mp->mp_mutex);
-  return 0;
+  return rval;
 }
 
 
@@ -719,7 +735,6 @@ android_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
     if(mcp->extradata != NULL && mcp->extradata_size) {
 
       if(mc->codec_id == AV_CODEC_ID_H264) {
-
         h264_to_annexb_init(&avc->avc_annexb, mcp->extradata,
                             mcp->extradata_size);
       } else {
@@ -813,43 +828,7 @@ android_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   mid = (*env)->GetStaticMethodID(env, ByteBuffer, "allocateDirect",
                                   "(I)Ljava/nio/ByteBuffer;");
 
-  const void *extradata;
-  int extradata_size;
 
-  if(avc->avc_annexb.extradata) {
-    extradata      = avc->avc_annexb.extradata;
-    extradata_size = avc->avc_annexb.extradata_size;
-    avc->avc_annexb.extradata_injected = 1;
-    hexdump("csd-0", extradata, extradata_size);
-  } else {
-    extradata      = avc->avc_extradata;
-    extradata_size = avc->avc_extradata_size;
-  }
-
-
-  if(extradata_size) {
-    jobject bb = (*env)->CallStaticObjectMethod(env, ByteBuffer,
-                                                mid,
-                                                extradata_size);
-    check_exception(env, "allocateDirect");
-
-    uint8_t *ptr = (*env)->GetDirectBufferAddress(env, bb);
-
-    memcpy(ptr, extradata, extradata_size);
-
-    mid = (*env)->GetMethodID(env, ByteBuffer, "limit",
-                              "(I)Ljava/nio/Buffer;");
-
-    (*env)->CallObjectMethod(env, bb, mid, extradata_size);
-    check_exception(env, "limit");
-
-    mid = (*env)->GetMethodID(env, MediaFormat, "setByteBuffer",
-                              "(Ljava/lang/String;Ljava/nio/ByteBuffer;)V");
-
-    (*env)->CallVoidMethod(env, format, mid,
-                           (*env)->NewStringUTF(env, "csd-0"), bb);
-    check_exception(env, "setByteBuffer");
-  }
   // ------------------------------------------------
 
   int surface;
