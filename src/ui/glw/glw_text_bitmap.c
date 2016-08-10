@@ -143,7 +143,7 @@ glw_text_bitmap_layout(glw_t *w, const glw_rctx_t *rc)
     glw_renderer_init_quad(&gtb->gtb_cursor_renderer);
 
   if(gtb->gtb_background_alpha > GLW_ALPHA_EPSILON &&
-     unlikely(!glw_renderer_initialized(&gtb->gtb_cursor_renderer))) {
+     unlikely(!glw_renderer_initialized(&gtb->gtb_background_renderer))) {
     glw_renderer_init_quad(&gtb->gtb_background_renderer);
     glw_renderer_vtx_pos(&gtb->gtb_background_renderer, 0, -1, -1, 0);
     glw_renderer_vtx_pos(&gtb->gtb_background_renderer, 1,  1, -1, 0);
