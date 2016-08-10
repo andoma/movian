@@ -95,7 +95,7 @@ video_decoder_set_current_time(video_decoder_t *vd, int64_t user_time,
   if(pts != PTS_UNSET && lastpts != PTS_UNSET) {
     int64_t delta = pts - lastpts;
 
-    if(delta < 10000000LL) {
+    if(delta < 10000000LL && delta > 10000LL) {
       if(vd->vd_fps_delta)
         vd->vd_fps_delta += (delta - vd->vd_fps_delta) >> 4;
       else
