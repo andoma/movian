@@ -464,6 +464,12 @@ android_codec_decode(struct media_codec *mc, struct video_decoder *vd,
 
   (*env)->PushLocalFrame(env, 64);
 
+  if(avc->avc_annexb.extradata != NULL && !avc->avc_annexb.extradata_injected) {
+    avc_enq(env, avc, avc->avc_annexb.extradata,
+            avc->avc_annexb.extradata_size, 0, 0, 10000);
+    avc->avc_annexb.extradata_injected = 1;
+  }
+
   uint8_t *data = mb->mb_data;
   size_t size = mb->mb_size;
 
