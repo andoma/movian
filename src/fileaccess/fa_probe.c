@@ -105,8 +105,11 @@ libav_metadata_rstr(AVDictionary *m, const char *key)
   const char *str;
   char *d;
 
-  if((tag = av_dict_get(m, key, NULL, AV_DICT_IGNORE_SUFFIX)) == NULL)
-    return NULL;
+  if((tag = av_dict_get(m, key, NULL, 0)) == NULL) {
+    if((tag = av_dict_get(m, key, NULL, AV_DICT_IGNORE_SUFFIX)) == NULL) {
+      return NULL;
+    }
+  }
 
   if(!utf8_verify(tag->value))
     return NULL;
