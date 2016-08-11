@@ -9,7 +9,7 @@
     "128": "st128.png"
   },
 
-  "minimum_chrome_version": "44",
+  "minimum_chrome_version": "45",
   "offline_enabled": true,
   "requirements": {
     "3D": {
