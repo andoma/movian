@@ -37,6 +37,7 @@
 @interface GLWView: GLKView <UIKeyInput>
 @property (nonatomic) prop_t *eventSink;
 @property (nonatomic) glw_rect_t rect;
+@property (nonatomic) glw_root_t *gr;
 @property (nonatomic) int oskscroll;
 @end
 
@@ -71,6 +72,7 @@
 
 - (void)openOSKforWidget:(struct glw *)w position:(const glw_rect_t *)rect
 {
+  self.gr = w->glw_root;
   self.rect = *rect;
   [self becomeFirstResponder];
 }
@@ -94,6 +96,11 @@
 - (void)keyboardWillBeHidden:(NSNotification*)aNotification
 {
   self.oskscroll = 0;
+  if(self.gr) {
+    glw_lock(self.gr);
+    glw_osk_close(self.gr);
+    glw_unlock(self.gr);
+  }
 }
 #endif
 

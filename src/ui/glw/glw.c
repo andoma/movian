@@ -59,8 +59,8 @@ const float glw_identitymtx[16] = {
   0,0,0,1};
 
 
-static void glw_osk_open(glw_root_t *gr, const char *title, const char *input,
-                         glw_t *w, int password);
+static void glw_osk_open_default(glw_root_t *gr, const char *title, const char *input,
+                                 glw_t *w, int password);
 
 
 /*
@@ -309,7 +309,7 @@ glw_init4(glw_root_t *gr,
   gr->gr_ui_start = arch_get_ts();
   gr->gr_frame_start = gr->gr_ui_start;
   glw_register_activity(gr);
-  gr->gr_open_osk = glw_osk_open;
+  gr->gr_open_osk = glw_osk_open_default;
   return 0;
 }
 
@@ -2404,6 +2404,15 @@ glw_dispatch_event(glw_root_t *gr, event_t *e)
 {
   runcontrol_activity();
 
+  if(gr->gr_osk_widget != NULL) {
+    if(event_is_type(e, EVENT_INSERT_STRING) ||
+       event_is_action(e, ACTION_ENTER) ||
+       event_is_action(e, ACTION_BS)) {
+      glw_event_to_widget(gr->gr_osk_widget, e);
+      return;
+    }
+  }
+  
   if(e->e_type == EVENT_REPAINT_UI) {
     glw_text_flush(gr);
     return;
@@ -3127,6 +3136,19 @@ glw_osk_text(void *opaque, const char *str)
   }
 }
 
+
+/**
+ *
+ */
+void
+glw_osk_close(glw_root_t *gr)
+{
+  glw_unref(gr->gr_osk_widget);
+  gr->gr_osk_widget = NULL;
+}
+
+
+
 /**
  *
  */
@@ -3144,13 +3166,12 @@ glw_osk_done(glw_root_t *gr, int submit)
       w->glw_class->gc_update_text(w, gr->gr_osk_revert);
     }
 
-    glw_unref(gr->gr_osk_widget);
     prop_unsubscribe(gr->gr_osk_text_sub);
     prop_unsubscribe(gr->gr_osk_ev_sub);
 
-    gr->gr_osk_widget = NULL;
     gr->gr_osk_text_sub = NULL;
     gr->gr_osk_ev_sub = NULL;
+    glw_osk_close(gr);
   }
 
   prop_t *osk = prop_create(gr->gr_prop_ui, "osk");
@@ -3184,42 +3205,55 @@ glw_osk_event(void *opaque, prop_event_t event, ...)
 /**
  *
  */
-static void
+void
 glw_osk_open(glw_root_t *gr, const char *title, const char *input,
-	     glw_t *w, int password)
+             glw_t *w, int password)
+{
+  mystrset(&gr->gr_osk_revert, input);
+  
+  if(gr->gr_osk_widget != NULL)
+    glw_unref(gr->gr_osk_widget);
+  
+  gr->gr_osk_widget = w;
+  glw_ref(w);
+  
+  gr->gr_open_osk(gr, title, input, w, password);
+}
+
+
+/**
+ *
+ */
+static void
+glw_osk_open_default(glw_root_t *gr, const char *title, const char *input,
+                     glw_t *w, int password)
 {
   prop_t *osk = prop_create(gr->gr_prop_ui, "osk");
-  mystrset(&gr->gr_osk_revert, input);
-
-  if(gr->gr_osk_widget != NULL) {
-    glw_unref(gr->gr_osk_widget);
-    prop_unsubscribe(gr->gr_osk_text_sub);
-    prop_unsubscribe(gr->gr_osk_ev_sub);
-  }
-
+  
+  prop_unsubscribe(gr->gr_osk_text_sub);
+  prop_unsubscribe(gr->gr_osk_ev_sub);
+  
   prop_set(osk, "title", PROP_SET_STRING, title);
   prop_set(osk, "text",  PROP_SET_STRING, input);
   prop_set(osk, "password", PROP_SET_INT, password);
   prop_set(osk, "show", PROP_SET_INT, 1);
-
-  gr->gr_osk_widget = w;
-  glw_ref(w);
-
+  
+  
   gr->gr_osk_text_sub =
-    prop_subscribe(0,
-		   PROP_TAG_CALLBACK_STRING, glw_osk_text, gr,
-		   PROP_TAG_NAME("ui", "osk", "text"),
-		   PROP_TAG_ROOT, gr->gr_prop_ui,
-		   PROP_TAG_COURIER, gr->gr_courier,
-		   NULL);
-
+  prop_subscribe(0,
+                 PROP_TAG_CALLBACK_STRING, glw_osk_text, gr,
+                 PROP_TAG_NAME("ui", "osk", "text"),
+                 PROP_TAG_ROOT, gr->gr_prop_ui,
+                 PROP_TAG_COURIER, gr->gr_courier,
+                 NULL);
+  
   gr->gr_osk_ev_sub =
-    prop_subscribe(0,
-		   PROP_TAG_CALLBACK, glw_osk_event, gr,
-		   PROP_TAG_NAME("ui", "osk", "eventSink"),
-		   PROP_TAG_ROOT, gr->gr_prop_ui,
-		   PROP_TAG_COURIER, gr->gr_courier,
-		   NULL);
+  prop_subscribe(0,
+                 PROP_TAG_CALLBACK, glw_osk_event, gr,
+                 PROP_TAG_NAME("ui", "osk", "eventSink"),
+                 PROP_TAG_ROOT, gr->gr_prop_ui,
+                 PROP_TAG_COURIER, gr->gr_courier,
+                 NULL);
 }
 
 

@@ -371,7 +371,7 @@ glw_text_bitmap_layout(glw_t *w, const glw_rctx_t *rc)
 
   gtb->gtb_paint_cursor =
     gtb->gtb_flags & GTB_PERMANENT_CURSOR ||
-    (w->glw_class == &glw_text && glw_is_focused(w));
+    (w->glw_class == &glw_text && (glw_is_focused(w) || gr->gr_osk_widget == w));
 
   if(gtb->gtb_paint_cursor && rc->rc_alpha > GLW_ALPHA_EPSILON)
     glw_need_refresh(gr, 0);
@@ -724,10 +724,10 @@ glw_text_bitmap_event(glw_t *w, event_t *e)
       if(event_is_action(e, ACTION_ACTIVATE) && e->e_flags & EVENT_MOUSE)
         return 1;
 
-      w->glw_root->gr_open_osk(w->glw_root,
-                               gtb->gtb_description,
-                               gtb->gtb_caption, w,
-                               gtb->gtb_flags & GTB_PASSWORD);
+      glw_osk_open(w->glw_root,
+                   gtb->gtb_description,
+                   gtb->gtb_caption, w,
+                   gtb->gtb_flags & GTB_PASSWORD);
     }
     return 1;
   }
