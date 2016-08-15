@@ -127,4 +127,4 @@
 #define CONFIG_GUMBO 1
 #define ENABLE_GUMBO 1
 #define ENABLE_PLUGINS 0
-
+#define ENABLE_BOOKMARKS 1
