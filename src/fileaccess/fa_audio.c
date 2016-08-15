@@ -40,7 +40,9 @@
 #include "usage.h"
 #include "backend/backend.h"
 
+#if ENABLE_VMIR
 #include "np/np.h"
+#endif
 
 /**
  *
@@ -150,6 +152,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
     // ZIP File
     return audio_play_zipfile(fh, mp, errbuf, errlen, hold);
 
+#if ENABLE_VMIR
   metadata_t *md = metadata_create();
   if(np_fa_probe(fh, pb, psiz, md, url) == 0) {
     fa_close_with_park(fh, 1);
@@ -168,6 +171,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
     return e;
   }
   metadata_destroy(md);
+#endif
 
   AVIOContext *avio = fa_libav_reopen(fh, 0);
 
