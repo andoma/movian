@@ -20,6 +20,7 @@ enable bspatch
 enable libcec
 enable avahi
 enable connman
+enable vmir
 
 show_help(){
   common_help
