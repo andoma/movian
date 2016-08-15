@@ -40,14 +40,6 @@
 #include "usage.h"
 #include "backend/backend.h"
 
-#if ENABLE_LIBGME
-#include <gme/gme.h>
-#endif
-
-#if ENABLE_XMP
-#include <xmp.h>
-#endif
-
 #include "np/np.h"
 
 /**
@@ -176,27 +168,6 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
     return e;
   }
   metadata_destroy(md);
-
-  // First we need to check for a few other formats
-#if ENABLE_LIBGME
-  if(*gme_identify_header(pb))
-    return fa_gme_playfile(mp, fh, errbuf, errlen, hold, url);
-#endif
-
-#if ENABLE_XMP
-  FILE *f = fa_fopen(fh, 0);
-
-  if(f != NULL) {
-    int r = xmp_test_modulef(f, NULL);
-    if(r == 0) {
-      e = fa_xmp_playfile(mp, f, errbuf, errlen, hold, url,
-                          fa_fsize(fh));
-      fclose(f);
-      return e;
-    }
-    fclose(f);
-  }
-#endif
 
   AVIOContext *avio = fa_libav_reopen(fh, 0);
 

@@ -105,6 +105,7 @@ enable inotify
 enable realpath
 enable webkit
 enable librtmp
+
 #enable airplay -- not functional yet
 #enable libxrandr  -- code does not really work yet
 
@@ -556,18 +557,6 @@ if enabled nvctrl; then
     check_header "NVCtrl/NVCtrl.h" || fatal "nvctrl" "Missing include file NVCtrl/NVCtrl.h"
     check_lib    "XNVCtrl"         || fatal "nvctrl" "Unable to link with libXNVCtrl"
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lXNVCtrl"
-fi
-
-
-
-#
-# libgme
-#
-if enabled libgme; then
-    
-    check_header "gme/gme.h" || fatal "libgme" "Missing include file gme/gme.h"
-    check_lib    "gme"       || fatal "libgme" "Unable to link with libgme"
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lgme"
 fi
 
 

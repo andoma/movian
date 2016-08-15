@@ -242,16 +242,12 @@ SRCS-$(CONFIG_LIBAV) += \
 	src/fileaccess/fa_video.c \
 	src/fileaccess/fa_audio.c \
 
-SRCS-$(CONFIG_XMP)             += src/fileaccess/fa_xmp.c
-SRCS-$(CONFIG_LIBGME)          += src/fileaccess/fa_gmefile.c
 SRCS-$(CONFIG_LOCATEDB)        += src/fileaccess/fa_locatedb.c
 SRCS-$(CONFIG_SPOTLIGHT)       += src/fileaccess/fa_spotlight.c
 SRCS-$(CONFIG_LIBNTFS)         += src/fileaccess/fa_ntfs.c
 SRCS-$(CONFIG_NATIVESMB)       += src/fileaccess/smb/fa_nativesmb.c \
 				  src/fileaccess/smb/nmb.c
 SRCS-$(CONFIG_RAR)             += src/fileaccess/fa_rar.c
-SRCS-$(CONFIG_SID)             += src/fileaccess/fa_sidfile.c \
-				  ext/audio/sid.c
 
 BUNDLES += res/fileaccess
 

@@ -95,7 +95,6 @@ fi
 
 libav_setup
 rtmpdump_setup
-xmp_setup
 gumbo_setup
 
 cat >> ${CONFIG_MAK} <<EOF

@@ -25,14 +25,6 @@
 #include <string.h>
 #include <ctype.h>
 
-#if ENABLE_LIBGME
-#include <gme/gme.h>
-#endif
-
-#if ENABLE_XMP
-#include "xmp.h"
-#endif
-
 #include "main.h"
 #include "fileaccess.h"
 #include "fa_probe.h"
@@ -442,117 +434,6 @@ fa_probe_iso(metadata_t *md, fa_handle_t *fh)
   return fa_probe_iso0(md, pb);
 }
 
-
-/**
- *
- */
-#if 0
-static int
-xmp_probe(metadata_t *md, const char *url, fa_handle_t *fh)
-{
-  struct xmp_test_info info;
-  FILE *f = fa_fopen(fh, 0);
-  if(f == NULL)
-    return 0;
-
-  int r = xmp_test_modulef(f, &info);
-  fclose(f);
-  if(r < 0)
-    return 0;
-
-  md->md_title  = rstr_alloc(info.name);
-  md->md_contenttype = CONTENT_AUDIO;
-  return 1;
-}
-#endif
-
-
-/**
- *
- */
-#if ENABLE_LIBGME
-static int
-gme_probe(metadata_t *md, const char *url, fa_handle_t *fh)
-{
-  uint8_t b4[4], *buf;
-  gme_err_t err;
-  Music_Emu *emu;
-  gme_info_t *info;
-  int tracks;
-  size_t size;
-  const char *type;
-
-  if(fa_read(fh, b4, 4) != 4)
-    return 0;
-
-  type = gme_identify_header(b4);
-
-  if(*type == 0)
-    return 0;
-
-  size = fa_fsize(fh);
-  if(size == -1)
-    return -1;
-
-  buf = malloc(size);
-
-  fa_seek(fh, 0, SEEK_SET);
-
-  if(fa_read(fh, buf, size) != size) {
-    free(buf);
-    return 0;
-  }
-
-
-  err = gme_open_data(buf, size, &emu, gme_info_only);
-  free(buf);
-  if(err != NULL)
-    return 0;
-
-  err = gme_track_info(emu, &info, 0);
-  if(err != NULL) {
-    gme_delete(emu);
-    return 0;
-  }
-
-  tracks = gme_track_count(emu);
-
-#if 0
-  printf("tracks   : %d\n", tracks);
-  printf("system   : %s\n", info->system);
-  printf("game     : %s\n", info->game);
-  printf("song     : %s\n", info->song);
-  printf("author   : %s\n", info->author);
-  printf("copyright: %s\n", info->copyright);
-  printf("comment  : %s\n", info->comment);
-  printf("dumper   : %s\n", info->dumper);
-#endif
-
-  if(tracks == 1) {
-
-    md->md_title  = info->song[0]   ? rstr_alloc(info->song)   : NULL;
-    md->md_album  = info->game[0]   ? rstr_alloc(info->game)   : NULL;
-    md->md_artist = info->author[0] ? rstr_alloc(info->author) : NULL;
-
-    md->md_duration = info->play_length / 1000.0;
-    md->md_contenttype = CONTENT_AUDIO;
-
-  } else {
-
-    md->md_title  = info->game[0] ? rstr_alloc(info->game)   : NULL;
-    md->md_artist = info->author[0] ? rstr_alloc(info->author) : NULL;
-
-    md->md_contenttype = CONTENT_ALBUM;
-    metdata_set_redirect(md, "gmefile://%s/", url);
-  }
-
-  gme_free_info(info);
-  gme_delete(emu);
-  return 1;
-}
-#endif
-
-
 /**
  *
  */
@@ -717,15 +598,6 @@ fa_probe_metadata(const char *url, char *errbuf, size_t errsize,
     }
   }
   fa_seek(fh, 0, SEEK_SET);
-
-#if 0
-#if ENABLE_XMP
-  if(xmp_probe(md, url, fh)) {
-    fa_close_with_park(fh, park);
-    return md;
-  }
-#endif
-#endif
 
   if(!fa_probe_iso(md, fh)) {
     fa_close_with_park(fh, park);
