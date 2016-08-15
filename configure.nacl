@@ -37,7 +37,7 @@ enable httpserver
 enable sqlite_vfs
 enable sqlite_locking
 enable glw_backend_opengl_es
-
+enable vmir
 
 disable ftpserver
 disable netlog
