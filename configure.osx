@@ -54,6 +54,7 @@ enable fsevents
 enable webpopup
 enable libpthread
 enable zlib
+enable vmir
 
 [ -f project.config ] && source project.config
 

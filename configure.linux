@@ -105,6 +105,7 @@ enable inotify
 enable realpath
 enable webkit
 enable librtmp
+enable vmir
 
 #enable airplay -- not functional yet
 #enable libxrandr  -- code does not really work yet

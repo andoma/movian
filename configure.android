@@ -37,6 +37,7 @@ enable httpserver
 enable libfreetype
 enable stdin
 enable openssl
+enable vmir
 
 [ -f project.config ] && source project.config
 
