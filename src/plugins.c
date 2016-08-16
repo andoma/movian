@@ -810,11 +810,17 @@ repo_get(const char *repo, char *errbuf, size_t errlen)
     return REPO_ERROR_NETWORK;
 
   json = htsmsg_json_deserialize(buf_cstr(b));
+
   buf_release(b);
 
   if(json == NULL) {
     snprintf(errbuf, errlen, "Malformed JSON in repository");
-    return NULL;
+
+    fa_load(repo,
+            FA_LOAD_QUERY_ARGVEC(qargs),
+            FA_LOAD_CACHE_EVICT(),
+            NULL);
+    return REPO_ERROR_NETWORK;
   }
 
   const int ver = htsmsg_get_u32_or_default(json, "version", 0);
