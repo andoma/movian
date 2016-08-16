@@ -176,7 +176,7 @@ is_plugin_blacklisted(const char *id, const char *version, rstr_t **reason)
  *
  */
 static const char *
-get_repo(void)
+repo_url(void)
 {
   return plugin_alt_repo_url && *plugin_alt_repo_url ?
     plugin_alt_repo_url : plugin_repo_url;
@@ -419,7 +419,7 @@ plugin_fill_prop(struct htsmsg *pm, struct prop *p,
       snprintf(url, sizeof(url), "%s/%s", basepath, icon);
       prop_set(metadata, "icon", PROP_SET_STRING,url);
     } else {
-      char *iconurl = url_resolve_relative_from_base(get_repo(), icon);
+      char *iconurl = url_resolve_relative_from_base(repo_url(), icon);
       prop_set(metadata, "icon", PROP_SET_STRING, iconurl);
       free(iconurl);
     }
@@ -832,11 +832,11 @@ plugin_load_repo(void)
 {
   plugin_t *pl, *next;
   char errbuf[512];
-  htsmsg_t *msg = repo_get(get_repo(), errbuf, sizeof(errbuf));
+  htsmsg_t *msg = repo_get(repo_url(), errbuf, sizeof(errbuf));
 
   if(msg == REPO_ERROR_NETWORK || msg == NULL) {
     TRACE(TRACE_ERROR, "plugins", "Unable to load repo %s -- %s",
-	  get_repo(), errbuf);
+	  repo_url(), errbuf);
     return msg == REPO_ERROR_NETWORK ? -1 : 0;
   }
 
@@ -881,7 +881,7 @@ plugin_load_repo(void)
 
       const char *dlurl = htsmsg_get_str(pm, "downloadURL");
       if(dlurl != NULL) {
-	char *package = url_resolve_relative_from_base(get_repo(), dlurl);
+	char *package = url_resolve_relative_from_base(repo_url(), dlurl);
 	free(pl->pl_package);
 	pl->pl_package = package;
       }
