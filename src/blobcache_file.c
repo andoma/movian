@@ -24,7 +24,7 @@
 #include "blobcache.h"
 #include "misc/pool.h"
 #include "misc/sha.h"
-#include "misc/md5.h"
+#include "misc/murmur3.h"
 #include "arch/arch.h"
 #include "arch/threads.h"
 #include "arch/atomic.h"
@@ -160,15 +160,7 @@ digest_key(const char *key, const char *stash)
 static uint64_t
 digest_content(const void *data, size_t len)
 {
-  union {
-    uint8_t d[16];
-    uint64_t u64;
-  } u;
-  md5_decl(ctx);
-  md5_init(ctx);
-  md5_update(ctx, data, len);
-  md5_final(ctx, u.d);
-  return u.u64;
+  return MurHash3_32(data, len, 0);
 }
 
 

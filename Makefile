@@ -148,6 +148,7 @@ SRCS +=	src/misc/ptrvec.c \
 	src/misc/lockmgr.c \
 	src/misc/prng.c \
 	src/misc/regex.c \
+	src/misc/murmur3.c \
 
 SRCS += ext/minilibs/regexp.c
 
