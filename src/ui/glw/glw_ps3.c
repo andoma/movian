@@ -333,6 +333,7 @@ osk_returned(glw_ps3_t *gp)
   if(!(w->glw_flags & GLW_DESTROYING) && w->glw_class->gc_update_text) {
     w->glw_class->gc_update_text(w, (const char *)buf);
   }
+  glw_osk_close(&gp->gr);
   glw_unlock(&gp->gr);
 }
 
