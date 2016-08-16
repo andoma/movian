@@ -25,6 +25,8 @@
 #include "misc/str.h"
 #include "navigator.h"
 
+#include <nacl/nacl_random.h>
+
 #include "ppapi/c/pp_errors.h"
 #include "ppapi/c/pp_module.h"
 #include "ppapi/c/pp_var.h"
@@ -940,33 +942,8 @@ nacl_fsinfo(uint64_t *size, uint64_t *avail, const char *fs)
 void
 arch_get_random_bytes(void *ptr, size_t size)
 {
-  struct PP_Var request = ppb_vardict->Create();
-  nacl_dict_set_str(request, "msgtype", "getrnd");
-  nacl_dict_set_int(request, "bytes", size);
-
-  struct PP_Var result = nacl_jsrpc(request);
-
-  struct PP_Var var_key = ppb_var->VarFromUtf8("data", 4);
-  struct PP_Var var_buf = ppb_vardict->Get(result, var_key);
-  ppb_var->Release(var_key);
-  uint32_t srclen;
-  if(!ppb_vararraybuf->ByteLength(var_buf, &srclen)) {
-    fprintf(stderr, "RAND FAIL no buffer len\n");
-    exit(1);
-  }
-  if(srclen != size) {
-    fprintf(stderr, "RAND FAIL len mismatch %zd %d\n", size, srclen);
-    exit(1);
-  }
-  const void *src = ppb_vararraybuf->Map(var_buf);
-  if(src == NULL) {
-    fprintf(stderr, "RAND FAIL no buffer\n");
-    exit(1);
-  }
-  memcpy(ptr, src, MIN(srclen, size));
-  ppb_vararraybuf->Unmap(var_buf);
-  ppb_var->Release(var_buf);
-  ppb_var->Release(result);
+  size_t written;
+  nacl_secure_random(ptr, size, &written);
 }
 
 
