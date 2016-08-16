@@ -52,7 +52,4 @@ void kv_url_opt_set(const char *url, int domain, const char *key,
 		    int type, ...);
 
 
-void kv_url_opt_set_deferred(const char *url, int domain, const char *key,
-                             int type, ...);
-
 void kvstore_deferred_flush(void);

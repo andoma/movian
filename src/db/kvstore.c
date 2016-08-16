@@ -807,88 +807,6 @@ kv_write_xattr(const kvstore_write_t *kw)
 }
 
 
-/**
- *
- */
-void
-kv_url_opt_set(const char *url, int domain, const char *key,
-	       int type, ...)
-{
-  void *db;
-  int rc;
-  uint64_t id;
-  va_list ap;
-
-  kvstore_write_t kw;
-  kw.kw_url    = (char *)url;
-  kw.kw_domain = domain;
-  kw.kw_key    = (char *)key;
-  kw.kw_type   = type & 0xff;
-  kw.kw_unimportant = type & KVSTORE_UNIMPORTANT;
-
-  va_start(ap, type);
-
-  switch(kw.kw_type) {
-  case KVSTORE_SET_INT:
-    kw.kw_int = va_arg(ap, int);
-    break;
-
-  case KVSTORE_SET_INT64:
-    kw.kw_int64 = va_arg(ap, int64_t);
-    break;
-
-  case KVSTORE_SET_STRING:
-    kw.kw_string = va_arg(ap, char *);
-    if(kw.kw_string == NULL)
-      kw.kw_type = KVSTORE_SET_VOID;
-    break;
-
-  default:
-    break;
-  }
-  va_end(ap);
-
-  if(gconf.fa_kvstore_as_xattr) {
-    if(!kv_write_xattr(&kw))
-      return;
-  }
-
-#ifdef STOS
-  if(kw.kw_unimportant)
-    return;
-#endif
-
-  db = kvstore_get();
-  if(db == NULL)
-    return;
-
- again:
-  if(db_begin(db)) {
-    kvstore_close(db);
-    return;
-  }
-
-  rc = get_url(db, url, &id);
-  if(rc == SQLITE_LOCKED) {
-    db_rollback_deadlock(db);
-    goto again;
-  }
-
-  if(rc != SQLITE_OK) {
-    db_rollback(db);
-    kvstore_close(db);
-    return;
-  }
-
-  rc = kv_write_db(db, &kw, id);
-  if(rc == SQLITE_LOCKED) {
-    db_rollback_deadlock(db);
-    goto again;
-  }
-  db_commit(db);
-  kvstore_close(db);
-}
-
 
 /**
  *
@@ -986,8 +904,8 @@ deferred_callout_fire(struct callout *c, void *opaque)
  *
  */
 void
-kv_url_opt_set_deferred(const char *url, int domain, const char *key,
-                        int type, ...)
+kv_url_opt_set(const char *url, int domain, const char *key,
+               int type, ...)
 {
   kvstore_write_t *kw;
   va_list ap;
@@ -1042,7 +960,7 @@ kv_url_opt_set_deferred(const char *url, int domain, const char *key,
 
   hts_mutex_unlock(&deferred_mutex);
 
-  callout_arm(&deferred_callout, deferred_callout_fire, NULL, 5);
+  callout_arm(&deferred_callout, deferred_callout_fire, NULL, 1);
   va_end(ap);
 }
 
@@ -1089,12 +1007,6 @@ kv_url_opt_set(const char *url, int domain, const char *key,
 {
 }
 
-
-void
-kv_url_opt_set_deferred(const char *url, int domain, const char *key,
-                        int type, ...)
-{
-}
 
 void
 kvstore_deferred_flush(void)

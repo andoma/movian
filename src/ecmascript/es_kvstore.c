@@ -100,18 +100,18 @@ es_kvstore_set(duk_context *ctx)
   const char *key = duk_to_string(ctx, 2);
 
   if(duk_is_boolean(ctx, 3)) {
-    kv_url_opt_set_deferred(url, domain, key, KVSTORE_SET_INT,
-                            (int)duk_get_boolean(ctx, 3));
+    kv_url_opt_set(url, domain, key, KVSTORE_SET_INT,
+                   (int)duk_get_boolean(ctx, 3));
 
   } else if(duk_is_number(ctx, 3)) {
-    kv_url_opt_set_deferred(url, domain, key, KVSTORE_SET_INT64,
-                            (int64_t)duk_get_number(ctx, 3));
+    kv_url_opt_set(url, domain, key, KVSTORE_SET_INT64,
+                   (int64_t)duk_get_number(ctx, 3));
 
   } else if(duk_is_object_coercible(ctx, 3)) {
-    kv_url_opt_set_deferred(url, domain, key, KVSTORE_SET_STRING,
-                            duk_get_string(ctx, 3));
+    kv_url_opt_set(url, domain, key, KVSTORE_SET_STRING,
+                   duk_get_string(ctx, 3));
   } else {
-    kv_url_opt_set_deferred(url, domain, key, KVSTORE_SET_VOID);
+    kv_url_opt_set(url, domain, key, KVSTORE_SET_VOID);
   }
   return 0;
 }

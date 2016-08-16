@@ -439,8 +439,8 @@ settings_int_set_value(setting_t *s, int v)
     break;
 
   case SETTING_STORETYPE_KVSTORE:
-    kv_url_opt_set_deferred(s->s_store_name, KVSTORE_DOMAIN_SETTING,
-                            s->s_id, KVSTORE_SET_INT, v);
+    kv_url_opt_set(s->s_store_name, KVSTORE_DOMAIN_SETTING,
+                   s->s_id, KVSTORE_SET_INT, v);
     break;
   }
 
@@ -546,9 +546,9 @@ settings_string_set_value(setting_t *s, rstr_t *rstr)
     break;
 
   case SETTING_STORETYPE_KVSTORE:
-    kv_url_opt_set_deferred(s->s_store_name, KVSTORE_DOMAIN_SETTING, s->s_id,
-                            rstr ? KVSTORE_SET_STRING : KVSTORE_SET_VOID,
-                            rstr_get(rstr));
+    kv_url_opt_set(s->s_store_name, KVSTORE_DOMAIN_SETTING, s->s_id,
+                   rstr ? KVSTORE_SET_STRING : KVSTORE_SET_VOID,
+                   rstr_get(rstr));
     break;
   }
 }
@@ -654,10 +654,10 @@ settings_multiopt_callback_ng(void *opaque, prop_event_t event, ...)
         break;
 
       case SETTING_STORETYPE_KVSTORE:
-	kv_url_opt_set_deferred(s->s_store_name, KVSTORE_DOMAIN_SETTING,
-				s->s_id,
-				name ? KVSTORE_SET_STRING : KVSTORE_SET_VOID,
-				rstr_get(name));
+	kv_url_opt_set(s->s_store_name, KVSTORE_DOMAIN_SETTING,
+                       s->s_id,
+                       name ? KVSTORE_SET_STRING : KVSTORE_SET_VOID,
+                       rstr_get(name));
       }
     }
 
@@ -1232,8 +1232,8 @@ setting_reset(setting_t *s)
     break;
 
   case SETTING_STORETYPE_KVSTORE:
-    kv_url_opt_set_deferred(s->s_store_name, KVSTORE_DOMAIN_SETTING, s->s_id,
-                            KVSTORE_SET_VOID);
+    kv_url_opt_set(s->s_store_name, KVSTORE_DOMAIN_SETTING, s->s_id,
+                   KVSTORE_SET_VOID);
     break;
   }
 
