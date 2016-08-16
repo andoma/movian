@@ -36,6 +36,8 @@
 
 #include "ecmascript/ecmascript.h"
 
+#include <libavutil/base64.h>
+
 #if ENABLE_VMIR
 #include "np/np.h"
 #endif
@@ -70,6 +72,7 @@ static const char *plugin_repo_url = PLUGINREPO;
 static char *plugin_alt_repo_url;
 static char *plugin_beta_passwords;
 static HTS_MUTEX_DECL(plugin_mutex);
+static HTS_MUTEX_DECL(autoplugin_mutex);
 
 static char **devplugins;
 
@@ -118,8 +121,14 @@ static void plugins_view_add(plugin_t *pl, const char *uit, const char *class,
                              int select_now, const char *filename);
 static void plugin_unload_views(plugin_t *pl);
 
-static int autoupgrade;
+static void autoplugin_clear(void);
+static void autoplugin_create_from_control(const char *id, htsmsg_t *ctrl,
+                                           int installed);
 
+static void autoplugin_set_installed(const char *id, int is_installed);
+
+static int autoupgrade;
+static int autoinstall;
 
 #define VERSION_ENCODE(a,b,c) ((a) * 10000000 + (b) * 100000 + (c))
 
@@ -201,6 +210,7 @@ set_beta_passwords(void *opaque, const char *value)
   mystrset(&plugin_beta_passwords, value);
 }
 
+
 /**
  *
  */
@@ -210,6 +220,7 @@ set_autoupgrade(void *opaque, int value)
   autoupgrade = value;
   plugin_autoupgrade();
 }
+
 
 /**
  *
@@ -708,6 +719,8 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int flags)
       plugin_prop_setup(ctrl, pl, url);
       pl->pl_installed = 1;
       mystrset(&pl->pl_inst_ver, htsmsg_get_str(ctrl, "version"));
+
+      autoplugin_set_installed(pl->pl_id, 1);
     }
 
     mystrset(&pl->pl_title, htsmsg_get_str(ctrl, "title") ?: id);
@@ -840,6 +853,9 @@ plugin_load_repo(void)
     return msg == REPO_ERROR_NETWORK ? -1 : 0;
   }
 
+  hts_mutex_lock(&autoplugin_mutex);
+  autoplugin_clear();
+
   htsmsg_t *r = htsmsg_get_list(msg, "plugins");
   if(r != NULL) {
     htsmsg_field_t *f;
@@ -885,6 +901,11 @@ plugin_load_repo(void)
 	free(pl->pl_package);
 	pl->pl_package = package;
       }
+
+      htsmsg_t *ctrl = htsmsg_get_map(pm, "control");
+      if(ctrl != NULL) {
+        autoplugin_create_from_control(id, ctrl, pl->pl_installed);
+      }
     }
 
     for(pl = LIST_FIRST(&plugins); pl != NULL; pl = next) {
@@ -897,6 +918,8 @@ plugin_load_repo(void)
       }
     }
   }
+
+  hts_mutex_unlock(&autoplugin_mutex);
 
   r = htsmsg_get_list(msg, "blacklist");
   if(r != NULL) {
@@ -1148,6 +1171,14 @@ plugins_setup_root_props(void)
                  SETTING_CALLBACK(set_autoupgrade, NULL),
                  SETTING_MUTEX(&plugin_mutex),
                  NULL);
+
+  setting_create(SETTING_BOOL, dir, SETTINGS_INITIAL_UPDATE,
+                 SETTING_STORE("pluginconf", "autoupgrade"),
+                 SETTING_TITLE(_p("Auto install plugins on demand")),
+                 SETTING_VALUE(1),
+                 SETTING_WRITE_INT(&autoinstall),
+                 SETTING_MUTEX(&plugin_mutex),
+                 NULL);
 }
 
 
@@ -1251,6 +1282,8 @@ static void
 plugin_remove(plugin_t *pl)
 {
   char path[PATH_MAX];
+
+  autoplugin_set_installed(pl->pl_id, 0);
 
   usage_event("Plugin remove", 1,
               USAGE_SEG("plugin", pl->pl_id));
@@ -1784,4 +1817,309 @@ plugin_uninstall(const char *id)
     plugin_remove(pl);
   }
   hts_mutex_unlock(&plugin_mutex);
+}
+
+
+/**
+ *
+ */
+LIST_HEAD(autoplugin_list, autoplugin);
+LIST_HEAD(autoplugin_trigger_list, autoplugin_trigger);
+
+static struct autoplugin_list autoplugins;
+
+typedef struct autoplugin {
+  LIST_ENTRY(autoplugin) ap_link;
+  char *ap_id;
+
+  int ap_is_installed;
+
+  struct autoplugin_trigger_list ap_triggers;
+
+} autoplugin_t;
+
+typedef enum {
+  APT_FILE_MAGIC,
+  APT_URI_PREFIX,
+} autoplugin_trigger_type_t;
+
+
+typedef struct autoplugin_trigger {
+  LIST_ENTRY(autoplugin_trigger) apt_link;
+
+  autoplugin_trigger_type_t apt_type;
+
+  int apt_offset;
+  int apt_length;
+
+  uint8_t *apt_data;
+  uint8_t *apt_mask;
+
+  char *apt_prefix;
+
+} autoplugin_trigger_t;
+
+
+static void
+autoplugin_set_installed(const char *id, int is_installed)
+{
+  autoplugin_t *ap;
+  hts_mutex_lock(&autoplugin_mutex);
+  LIST_FOREACH(ap, &autoplugins, ap_link) {
+    if(!strcmp(ap->ap_id, id))
+      ap->ap_is_installed = is_installed;
+  }
+  hts_mutex_unlock(&autoplugin_mutex);
+}
+
+
+
+static void
+autoplugin_trigger_destroy(autoplugin_trigger_t *apt)
+{
+  LIST_REMOVE(apt, apt_link);
+  free(apt->apt_data);
+  free(apt->apt_mask);
+  free(apt->apt_prefix);
+  free(apt);
+}
+
+
+static void
+autoplugin_destroy(autoplugin_t *ap)
+{
+  autoplugin_trigger_t *apt;
+  while((apt = LIST_FIRST(&ap->ap_triggers)) != NULL)
+    autoplugin_trigger_destroy(apt);
+  LIST_REMOVE(ap, ap_link);
+  free(ap->ap_id);
+  free(ap);
+}
+
+
+
+static void
+autoplugin_clear(void)
+{
+  autoplugin_t *ap;
+
+  while((ap = LIST_FIRST(&autoplugins)) != NULL)
+    autoplugin_destroy(ap);
+}
+
+
+
+static autoplugin_t *
+autoplugin_create(const char *pluginid, int is_installed)
+{
+  autoplugin_t *ap = calloc(1, sizeof(autoplugin_t));
+  ap->ap_id = strdup(pluginid);
+  ap->ap_is_installed = is_installed;
+  LIST_INSERT_HEAD(&autoplugins, ap, ap_link);
+  return ap;
+}
+
+
+
+
+static void
+autoplugin_trigger_add_file_magic(autoplugin_t *ap,
+                                  const void *data,
+                                  const void *mask,
+                                  int length,
+                                  int offset)
+{
+  autoplugin_trigger_t *apt = calloc(1, sizeof(autoplugin_trigger_t));
+  apt->apt_type = APT_FILE_MAGIC;
+  apt->apt_length = length;
+  apt->apt_offset = offset;
+  apt->apt_data = malloc(length);
+  memcpy(apt->apt_data, data, length);
+
+  apt->apt_mask = malloc(length);
+  memcpy(apt->apt_mask, mask, length);
+
+  LIST_INSERT_HEAD(&ap->ap_triggers, apt, apt_link);
+}
+
+
+static void
+autoplugin_trigger_add_prefix(autoplugin_t *ap,
+                              const char *str)
+{
+  autoplugin_trigger_t *apt = calloc(1, sizeof(autoplugin_trigger_t));
+  apt->apt_type = APT_URI_PREFIX;
+  apt->apt_prefix = strdup(str);
+  LIST_INSERT_HEAD(&ap->ap_triggers, apt, apt_link);
+}
+
+
+static void
+autoplugin_create_from_control(const char *id, htsmsg_t *control,
+                               int is_installed)
+{
+  autoplugin_t *ap = NULL;
+  htsmsg_t *ff = htsmsg_get_list(control, "fileformats");
+  if(ff != NULL) {
+
+    htsmsg_field_t *f;
+    HTSMSG_FOREACH(f, ff) {
+      htsmsg_t *o;
+      if((o = htsmsg_get_map_by_field(f)) == NULL)
+        continue;
+
+      const char *datastr = htsmsg_get_str(o, "data");
+      const char *maskstr = htsmsg_get_str(o, "mask");
+
+      if(datastr == NULL || maskstr == NULL)
+        continue;
+
+      void *data = malloc(strlen(datastr));
+      void *mask = malloc(strlen(maskstr));
+
+      int datalen = av_base64_decode(data, datastr, strlen(datastr));
+      int masklen = av_base64_decode(mask, maskstr, strlen(maskstr));
+
+      if(datalen == masklen) {
+        int offset = htsmsg_get_u32_or_default(o, "offset", 0);
+
+        if(ap == NULL)
+          ap = autoplugin_create(id, is_installed);
+
+        autoplugin_trigger_add_file_magic(ap, data, mask, datalen, offset);
+      }
+      free(data);
+      free(mask);
+    }
+  }
+
+  htsmsg_t *prefixlist = htsmsg_get_list(control, "uriprefixes");
+  if(prefixlist != NULL) {
+    htsmsg_field_t *f;
+    HTSMSG_FOREACH(f, prefixlist) {
+      if(f->hmf_type != HMF_STR)
+        continue;
+      if(ap == NULL)
+        ap = autoplugin_create(id, is_installed);
+      autoplugin_trigger_add_prefix(ap, f->hmf_str);
+    }
+  }
+}
+
+
+/**
+ *
+ */
+static int
+maskcmp(const uint8_t *buf, const uint8_t *data, const uint8_t *mask, int len)
+{
+  for(int i = 0; i < len; i++) {
+    if((buf[i] & mask[i]) != (data[i] & mask[i]))
+      return 1;
+  }
+  return 0;
+}
+
+
+static int
+plugin_autoinstall(const char *id)
+{
+  int errcode = -1;
+  hts_mutex_lock(&plugin_mutex);
+  plugin_t *pl = plugin_find(id, 0);
+  if(pl != NULL) {
+    errcode = plugin_install(pl, NULL);
+
+    if(!errcode) {
+      usage_event("Plugin autoinstall", 1,
+                  USAGE_SEG("plugin", id));
+      notify_add(NULL, NOTIFY_INFO, NULL, 5,
+                 _("Auto installed plugin %s (Version %s)"), pl->pl_title,
+                 pl->pl_inst_ver);
+    }
+  }
+  hts_mutex_unlock(&plugin_mutex);
+  return errcode;
+}
+
+
+/**
+ *
+ */
+void
+plugin_probe_for_autoinstall(fa_handle_t *fh, const uint8_t *buf, size_t len,
+                             const char *url)
+{
+  autoplugin_t *ap;
+  const char *installme = NULL;
+
+  if(!autoinstall)
+    return;
+
+  hts_mutex_lock(&autoplugin_mutex);
+
+  LIST_FOREACH(ap, &autoplugins, ap_link) {
+    autoplugin_trigger_t *apt;
+    if(ap->ap_is_installed)
+      continue;
+
+    LIST_FOREACH(apt, &ap->ap_triggers, apt_link) {
+      if(apt->apt_type == APT_FILE_MAGIC &&
+         apt->apt_offset + apt->apt_length <= len &&
+         !maskcmp(buf + apt->apt_offset, apt->apt_data, apt->apt_mask,
+                  apt->apt_length))
+        break;
+    }
+
+    if(apt != NULL) {
+      break;
+    }
+  }
+
+  if(ap != NULL)
+    installme = mystrdupa(ap->ap_id);
+
+  hts_mutex_unlock(&autoplugin_mutex);
+
+  if(installme != NULL)
+    plugin_autoinstall(installme);
+}
+
+
+
+int
+plugin_check_prefix_for_autoinstall(const char *uri)
+{
+  autoplugin_t *ap;
+  const char *installme = NULL;
+
+  if(!autoinstall)
+    return -1;
+
+  hts_mutex_lock(&autoplugin_mutex);
+
+  LIST_FOREACH(ap, &autoplugins, ap_link) {
+    autoplugin_trigger_t *apt;
+    if(ap->ap_is_installed)
+      continue;
+
+    LIST_FOREACH(apt, &ap->ap_triggers, apt_link) {
+      if(apt->apt_type == APT_URI_PREFIX &&
+         mystrbegins(uri, apt->apt_prefix))
+        break;
+    }
+    if(apt != NULL) {
+      break;
+    }
+  }
+
+  if(ap != NULL)
+    installme = mystrdupa(ap->ap_id);
+
+  hts_mutex_unlock(&autoplugin_mutex);
+
+  if(installme != NULL)
+    return plugin_autoinstall(installme);
+
+  return -1;
 }

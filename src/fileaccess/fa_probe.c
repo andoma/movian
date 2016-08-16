@@ -47,6 +47,10 @@
 #include "np/np.h"
 #endif
 
+#if ENABLE_PLUGINS
+#include "plugins.h"
+#endif
+
 /**
  *
  */
@@ -560,17 +564,21 @@ fa_probe_metadata(const char *url, char *errbuf, size_t errsize,
 
   metadata_t *md = metadata_create();
 
-  uint8_t buf[1025];
-
+  uint8_t buf[4097];
   int l = fa_read(fh, buf, sizeof(buf) - 1);
   if(l > 0) {
+    buf[l] = 0;
+
+#if ENABLE_PLUGINS
+    plugin_probe_for_autoinstall(fh, buf, l, url);
+#endif
+
 #if ENABLE_VMIR
     if(np_fa_probe(fh, buf, l, md, url) == 0) {
       fa_close_with_park(fh, park);
       return md;
     }
 #endif
-    buf[l] = 0;
     if(fa_probe_header(md, url, fh, filename, buf, l)) {
       fa_close_with_park(fh, park);
       return md;

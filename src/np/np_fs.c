@@ -103,6 +103,8 @@ np_fs_open(void *opaque, const char *path,
     if(flags & VMIR_FS_OPEN_APPEND) {
       myflags |= FA_APPEND;
     }
+  } else {
+    myflags |= FA_BUFFERED_BIG;
   }
 
   fa_handle_t *f = fa_open_ex(path, NULL, 0, myflags, NULL);

@@ -40,6 +40,10 @@
 #include "usage.h"
 #include "backend/backend.h"
 
+#if ENABLE_PLUGINS
+#include "plugins.h"
+#endif
+
 #if ENABLE_VMIR
 #include "np/np.h"
 #endif
@@ -131,7 +135,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   media_codec_t *cw;
   event_t *e;
   int registered_play = 0;
-  uint8_t pb[128];
+  uint8_t pb[4096];
   size_t psiz;
 
   mp->mp_seek_base = 0;
@@ -142,7 +146,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 
 
   psiz = fa_read(fh, pb, sizeof(pb));
-  if(psiz < sizeof(pb)) {
+  if(psiz < 128) {
     fa_close(fh);
     snprintf(errbuf, errlen, "File too small");
     return NULL;
@@ -151,6 +155,10 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   if(pb[0] == 0x50 && pb[1] == 0x4b && pb[2] == 0x03 && pb[3] == 0x04)
     // ZIP File
     return audio_play_zipfile(fh, mp, errbuf, errlen, hold);
+
+#if ENABLE_PLUGINS
+  plugin_probe_for_autoinstall(fh, pb, psiz, url);
+#endif
 
 #if ENABLE_VMIR
   metadata_t *md = metadata_create();

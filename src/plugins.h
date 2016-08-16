@@ -39,4 +39,10 @@ void plugin_select_view(const char *plugin_id, const char *filename);
 
 void plugin_uninstall(const char *id);
 
+struct fa_handle;
+void plugin_probe_for_autoinstall(struct fa_handle *fh, const uint8_t *buf,
+                                  size_t len, const char *url);
+
+int plugin_check_prefix_for_autoinstall(const char *url);
+
 #endif

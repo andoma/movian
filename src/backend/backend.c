@@ -36,6 +36,9 @@
 #include "media/media.h"
 #include "misc/minmax.h"
 
+#if ENABLE_PLUGINS
+#include "plugins.h"
+#endif
 
 prop_t *global_sources; // Move someplace else
 
@@ -550,6 +553,7 @@ static backend_t be_videoparams = {
 BE_REGISTER(videoparams);
 
 
+
 /**
  *
  */
@@ -558,6 +562,10 @@ backend_open(prop_t *page, const char *url, int sync)
 {
   backend_t *be;
   char urlbuf[URL_MAX];
+
+#if ENABLE_PLUGINS
+  plugin_check_prefix_for_autoinstall(url);
+#endif
 
   hts_lwmutex_lock(&dyanamic_backends_mutex);
   LIST_FOREACH(be, &dynamic_backends, be_global_link) {
@@ -591,17 +599,18 @@ backend_open(prop_t *page, const char *url, int sync)
 
   be = backend_canhandle(url);
 
-  if(be == NULL)
-    return 1;
+  if(be != NULL) {
+    if(be->be_normalize != NULL &&
+       !be->be_normalize(url, urlbuf, sizeof(urlbuf)))
+      url = urlbuf;
 
-  if(be->be_normalize != NULL &&
-     !be->be_normalize(url, urlbuf, sizeof(urlbuf)))
-    url = urlbuf;
+    prop_set(page, "url", PROP_SET_STRING, url);
 
-  prop_set(page, "url", PROP_SET_STRING, url);
+    be->be_open(page, url, sync);
+    return 0;
+  }
 
-  be->be_open(page, url, sync);
-  return 0;
+  return 1;
 }
 
 
