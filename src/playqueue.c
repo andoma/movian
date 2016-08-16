@@ -1142,6 +1142,8 @@ player_thread(void *aux)
 
     if(startpaused)
       mp_hold(mp, MP_HOLD_PAUSE, NULL);
+    else
+      mp_unhold(mp, MP_HOLD_PAUSE);
 
     e = backend_play_audio(pqe->pqe_url, mp, errbuf, sizeof(errbuf),
 			   startpaused, NULL);
