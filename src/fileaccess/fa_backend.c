@@ -223,6 +223,7 @@ file_open_file(prop_t *page, const char *url, fa_stat_t *fs,
     if(!file_open_audio(page, url, model)) {
       break;
     }
+    prop_set_int(loading, 0);
     playqueue_play(url, meta, 0);
     playqueue_open(page);
     meta = NULL;
