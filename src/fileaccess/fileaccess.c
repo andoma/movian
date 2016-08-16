@@ -1467,6 +1467,9 @@ typedef struct loadarg {
   const char *value;
 } loadarg_t;
 
+#define FA_LOAD_CACHE_STASH "fa-load"
+
+
 /**
  *
  */
@@ -1499,6 +1502,7 @@ fa_load(const char *url, ...)
   int protocol_code = 0;
   int *protocol_codep = &protocol_code;
   int no_fallback = 0;
+  int cache_evict = 0;
 
   va_list ap;
   va_start(ap, url);
@@ -1583,6 +1587,10 @@ fa_load(const char *url, ...)
       no_fallback = 1;
       break;
 
+    case FA_LOAD_TAG_CACHE_EVICT:
+      cache_evict = 1;
+      break;
+
     default:
       abort();
     }
@@ -1609,6 +1617,11 @@ fa_load(const char *url, ...)
     free(newurl);
   }
 
+  if(cache_evict) {
+    blobcache_evict(url, FA_LOAD_CACHE_STASH);
+    return NULL;
+  }
+
   if(locationptr != NULL)
     *locationptr = strdup(url);
 
@@ -1620,7 +1633,8 @@ fa_load(const char *url, ...)
     int max_age = 0;
 
     if(cache_control != BYPASS_CACHE && cache_control != DISABLE_CACHE) {
-      buf = blobcache_get(url, "fa_load", 1, &is_expired, &etag, &mtime);
+      buf = blobcache_get(url, FA_LOAD_CACHE_STASH,
+                          1, &is_expired, &etag, &mtime);
 
       if(buf != NULL) {
 	if(cache_control != NULL) {
@@ -1653,7 +1667,7 @@ fa_load(const char *url, ...)
     }
 
     if(cache_control == BYPASS_CACHE)
-      blobcache_get_meta(url, "fa_load", &etag, &mtime);
+      blobcache_get_meta(url, FA_LOAD_CACHE_STASH, &etag, &mtime);
 
     data2 = fap->fap_load(fap, filename, errbuf, errlen,
 			  &etag, &mtime, &max_age, flags, cb, opaque, c,
@@ -1711,8 +1725,8 @@ fa_load(const char *url, ...)
       if(flags & FA_IMPORTANT)
         bc_flags |= BLOBCACHE_IMPORTANT_ITEM;
 
-      no_change = blobcache_put(url, "fa_load", data2, max_age, etag, mtime,
-                                bc_flags);
+      no_change = blobcache_put(url, FA_LOAD_CACHE_STASH, data2, max_age,
+                                etag, mtime, bc_flags);
 
     } else {
       no_change = 0;

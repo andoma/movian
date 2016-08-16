@@ -406,7 +406,6 @@ load_index(void)
 }
 
 
-
 /**
  *
  */
@@ -719,6 +718,33 @@ prune_item(blobcache_item_t *p)
   make_filename(filename, sizeof(filename), p->bi_key_hash, 0);
   fa_unlink(filename, NULL, 0);
   pool_put(item_pool, p);
+}
+
+
+
+/**
+ *
+ */
+void
+blobcache_evict(const char *key, const char *stash)
+{
+  uint64_t dk = digest_key(key, stash);
+
+  hts_mutex_lock(&cache_lock);
+  if(bcstate == BLOBCACHE_RUN) {
+    blobcache_item_t *p, **q;
+    q = &hashvector[dk & ITEM_HASH_MASK];
+    while((p = *q) != NULL) {
+      if(p->bi_key_hash == dk) {
+        current_cache_size -= p->bi_size;
+        *q = p->bi_link;
+        prune_item(p);
+        break;
+      }
+      q = &p->bi_link;
+    }
+  }
+  hts_mutex_unlock(&cache_lock);
 }
 
 
