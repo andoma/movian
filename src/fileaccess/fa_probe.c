@@ -174,18 +174,6 @@ fa_probe_playlist(metadata_t *md, const char *url, uint8_t *pb, size_t pbsize)
 }
 #endif
 
-#if 0
-/**
- *
- */
-static void
-fa_probe_psid(metadata_t *md, const uint8_t *pb)
-{
-  md->md_title = rstr_from_bytes_len((const char *)pb + 0x16, 32, NULL, 0);
-  md->md_artist = rstr_from_bytes_len((const char *)pb + 0x36, 32, NULL, 0);
-}
-#endif
-
 
 /**
  *
@@ -243,15 +231,6 @@ fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh,
 {
   uint16_t flags;
 
-#if 0
-  if(l >= 256 && (!memcmp(buf, "PSID", 4) || !memcmp(buf, "RSID", 4))) {
-    fa_probe_psid(md, buf);
-    md->md_contenttype = CONTENT_ALBUM;
-    metdata_set_redirect(md, "sidfile://%s/", url);
-    return 1;
-  }
-#endif
-  
   if(l >= 256 && (!memcmp(buf, "d8:announce", 11))) {
     md->md_contenttype = CONTENT_ARCHIVE;
     metdata_set_redirect(md, "torrentfile://%s/", url);
