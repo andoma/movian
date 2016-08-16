@@ -81,7 +81,6 @@ mp_settings_clear(media_pipe_t *mp)
   setting_group_destroy(&mp->mp_settings_subtitle_dir);
 
   setting_group_destroy(&mp->mp_settings_other);
-  kvstore_deferred_flush();
 }
 
 
