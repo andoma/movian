@@ -734,9 +734,6 @@ playqueue_enqueue(prop_t *track)
  * This function is responsible for freeing (or using) the
  * supplied meta prop tree.
  *
- * If enq is set we don't clear the playqueue, instead we insert the
- * entry after the current track (or after the last enqueued track)
- *
  * That way users may 'stick in' track in the current playqueue
  */
 void
@@ -755,7 +752,7 @@ playqueue_play(const char *url, prop_t *metadata, int paused)
   pqe->pqe_playable = 1;
   if(prop_set_parent(metadata, pqe->pqe_node))
     abort();
-
+  pqe->pqe_originator = prop_ref_inc(pqe->pqe_node);
   prop_set(pqe->pqe_node, "url", PROP_SET_STRING, url);
   prop_set(pqe->pqe_node, "type", PROP_SET_STRING, "audio");
 
