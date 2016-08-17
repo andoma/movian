@@ -19,6 +19,7 @@
  */
 #include <assert.h>
 #include <stdio.h>
+#include <errno.h>
 
 #include "main.h"
 #include "blobcache.h"
