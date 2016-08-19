@@ -142,10 +142,24 @@ fa_resolve_proto(const char *url, fa_protocol_t **p,
 	continue;
     }
 
-    *p = fap;
     fap_retain(fap);
     hts_mutex_unlock(&fap_mutex);
-    return strdup(fap->fap_flags & FAP_INCLUDE_PROTO_IN_URL ? url0 : url);
+
+    const char *fname = fap->fap_flags & FAP_INCLUDE_PROTO_IN_URL ? url0 : url;
+
+
+    if(fap->fap_redirect != NULL) {
+      rstr_t *newurl = fap->fap_redirect(fap, fname);
+      if(newurl != NULL) {
+        fap_release(fap);
+        char *r = fa_resolve_proto(rstr_get(newurl), p, errbuf, errsize);
+        rstr_release(newurl);
+        return r;
+      }
+    }
+
+    *p = fap;
+    return strdup(fname);
   }
   hts_mutex_unlock(&fap_mutex);
   snprintf(errbuf, errsize, "Protocol %s not supported", buf);

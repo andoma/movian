@@ -102,8 +102,11 @@ typedef struct es_fa_handle {
   atomic_t fah_refcount;
 
   char *fah_url;
+  rstr_t *fah_redirect;
+
   char *fah_errbuf;
   size_t fah_errsize;
+
   int fah_flags;
 
   int fah_status;
@@ -139,6 +142,7 @@ fah_release(es_fa_handle_t *fah)
 
   es_resource_release(&fah->fah_ef->super);
   free(fah->fah_url);
+  rstr_release(fah->fah_redirect);
   free(fah);
 }
 
@@ -203,7 +207,7 @@ fah_ok_val(es_fa_handle_t *fah, int val)
 
 
 static void
-es_fa_open(void *aux)
+es_fap_open_task(void *aux)
 {
   es_fa_handle_t *fah = aux;
   es_fap_t *ef = fah->fah_ef;
@@ -254,7 +258,7 @@ es_fap_open(struct fa_protocol *fap, const char *url,
   hts_mutex_lock(&es_fa_mutex);
   fah->fah_status = ES_FA_WORKING;
 
-  task_run(es_fa_open, fah);
+  task_run(es_fap_open_task, fah);
 
   while(fah->fah_status == ES_FA_WORKING)
     hts_cond_wait(&es_fa_cond, &es_fa_mutex);
@@ -299,7 +303,7 @@ es_faprovider_openRespond(duk_context *ctx)
 
 
 static void
-es_fa_read(void *aux)
+es_fap_read_task(void *aux)
 {
   es_fa_handle_t *fah = aux;
   es_fap_t *ef = fah->fah_ef;
@@ -347,7 +351,7 @@ es_fap_read(fa_handle_t *fh, void *buf, size_t size)
   hts_mutex_lock(&es_fa_mutex);
   fah->fah_status = ES_FA_WORKING;
 
-  task_run(es_fa_read, fah_retain(fah));
+  task_run(es_fap_read_task, fah_retain(fah));
 
   while(fah->fah_status == ES_FA_WORKING)
     hts_cond_wait(&es_fa_cond, &es_fa_mutex);
@@ -367,8 +371,9 @@ es_fap_read(fa_handle_t *fh, void *buf, size_t size)
 
   switch(fah->fah_status) {
   case ES_FA_OK:
-    fah->fah_fpos += fah->fah_return_value;
-    return fah->fah_return_value;
+    size = MIN(size, fah->fah_return_value);
+    fah->fah_fpos += size;
+    return size;
 
   case ES_FA_CANCELLED:
   case ES_FA_ERROR:
@@ -398,7 +403,7 @@ es_faprovider_readRespond(duk_context *ctx)
 
 
 static void
-es_fa_close(void *aux)
+es_fap_close_task(void *aux)
 {
   es_fa_handle_t *fah = aux;
   es_fap_t *ef = fah->fah_ef;
@@ -435,7 +440,7 @@ es_fap_close(fa_handle_t *fh)
   hts_mutex_lock(&es_fa_mutex);
   fah->fah_status = ES_FA_WORKING;
 
-  task_run(es_fa_close, fah_retain(fah));
+  task_run(es_fap_close_task, fah_retain(fah));
 
   while(fah->fah_status == ES_FA_WORKING)
     hts_cond_wait(&es_fa_cond, &es_fa_mutex);
@@ -515,7 +520,7 @@ es_fap_fsize(fa_handle_t *handle)
 
 
 static void
-es_fa_stat(void *aux)
+es_fap_stat_task(void *aux)
 {
   es_fa_handle_t *fah = aux;
   es_fap_t *ef = fah->fah_ef;
@@ -562,7 +567,7 @@ es_fap_stat(struct fa_protocol *fap, const char *url,
   fah->fah_errbuf = errbuf;
   fah->fah_errsize = errsize;
   fah->fah_status = ES_FA_WORKING;
-  task_run(es_fa_stat, fah);
+  task_run(es_fap_stat_task, fah);
 
   hts_mutex_lock(&es_fa_mutex);
 
@@ -619,6 +624,90 @@ es_faprovider_statRespond(duk_context *ctx)
 
 
 
+
+
+
+
+
+static void
+es_fap_redirect_task(void *aux)
+{
+  es_fa_handle_t *fah = aux;
+  es_fap_t *ef = fah->fah_ef;
+  es_context_t *ec = ef->super.er_ctx;
+  duk_context *ctx = ec->ec_duk;
+
+  es_context_begin(ec);
+
+  duk_set_top(ctx, 0);
+
+  es_push_root(ctx, ef);
+  duk_get_prop_string(ctx, -1, "redirect");
+  es_push_native_obj(ctx, &es_native_fah, fah_retain(fah));
+  duk_push_string(ctx, fah->fah_url);
+
+  int rc = duk_pcall(ctx, 2);
+  if(rc) {
+    fah_exception(fah, ctx);
+    es_dump_err(ctx);
+  }
+
+  es_context_end(ec, 0);
+  fah_release(fah);
+}
+
+
+
+static rstr_t *
+es_fap_redirect(struct fa_protocol *fap, const char *url)
+{
+  es_fa_handle_t *fah = calloc(1, sizeof(es_fa_handle_t));
+  es_fap_t *ef = fap->fap_opaque;
+
+  fah->fah_url = strdup(url);
+
+  fah->fh.fh_proto = fap;
+  fah->fah_ef = ef;
+  es_resource_retain(&ef->super);
+
+  atomic_set(&fah->fah_refcount, 2);
+
+  fah->fah_status = ES_FA_WORKING;
+  task_run(es_fap_redirect_task, fah);
+
+  hts_mutex_lock(&es_fa_mutex);
+
+  while(fah->fah_status == ES_FA_WORKING)
+    hts_cond_wait(&es_fa_cond, &es_fa_mutex);
+
+  hts_mutex_unlock(&es_fa_mutex);
+  rstr_t *r = fah->fah_redirect;
+  fah->fah_redirect = NULL;
+  fah_release(fah);
+  return r;
+}
+
+
+static int
+es_faprovider_redirectRespond(duk_context *ctx)
+{
+  es_fa_handle_t *fah = es_get_native_obj(ctx, 0, &es_native_fah);
+
+  if(duk_get_boolean(ctx, 1)) {
+    const char *newurl = duk_get_string(ctx, 2);
+    rstr_release(fah->fah_redirect);
+    fah->fah_redirect = rstr_alloc(newurl);
+    fah_ok(fah);
+  } else {
+    fah_fail(fah, ctx);
+  }
+  return 0;
+}
+
+
+
+
+
 static int
 es_faprovider_register(duk_context *ctx)
 {
@@ -628,7 +717,7 @@ es_faprovider_register(duk_context *ctx)
   es_fap_t *ef = es_resource_alloc(&es_resource_fap);
 
   ef->fap.fap_opaque = ef;
-  if(es_prop_is_true(ctx, 1, "cachable"))
+  if(es_prop_is_true(ctx, 1, "cacheable"))
     ef->fap.fap_flags |= FAP_ALLOW_CACHE,
 
   ef->fap.fap_fini  = es_fap_fini;
@@ -639,6 +728,8 @@ es_faprovider_register(duk_context *ctx)
   ef->fap.fap_fsize = es_fap_fsize;
   ef->fap.fap_stat  = es_fap_stat;
 
+  if(es_prop_is_true(ctx, 1, "redirect"))
+    ef->fap.fap_redirect  = es_fap_redirect;
 
   ef->name = strdup(name);
   ef->fap.fap_name = ef->name;
@@ -660,6 +751,7 @@ static const duk_function_list_entry fnlist_faprovider[] = {
   { "readRespond",  es_faprovider_readRespond,  2 },
   { "closeRespond", es_faprovider_closeRespond, 1 },
   { "statRespond",  es_faprovider_statRespond,  5 },
+  { "redirectRespond",  es_faprovider_redirectRespond,  3 },
   { "setSize",      es_faprovider_setSize,      2 },
   { NULL, NULL, 0}
 };

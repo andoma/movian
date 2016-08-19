@@ -237,6 +237,10 @@ typedef struct fa_protocol {
    */
   int (*fap_no_parking)(fa_handle_t *fh);
 
+  /**
+   * Check if a file URL should be redirected to something else
+   */
+  rstr_t *(*fap_redirect)(struct fa_protocol *fap, const char *url);
 
   /**
    * For dynamic FAPs
