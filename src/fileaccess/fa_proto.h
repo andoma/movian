@@ -181,8 +181,11 @@ typedef struct fa_protocol {
   /**
    * Return all parts that relates to the given URL
    *
-   * For RAR archives this would be all part-files
-   * 
+   * For RAR archives this would be all part-files.
+   *
+   * This is used, for example, to to delete all .rXX files when
+   * deleting the original .rar file.
+   *
    */
   int (*fap_get_parts)(fa_dir_t *fa, const char *url,
 		       char *errbuf, size_t errsize);
