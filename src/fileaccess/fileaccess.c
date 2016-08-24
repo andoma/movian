@@ -1559,17 +1559,19 @@ fa_load(const char *url, ...)
     case FA_LOAD_TAG_QUERY_ARGVEC: {
       const char **args = va_arg(ap, const char **);
 
-      while(args[0] != NULL) {
-        if(args[1] != NULL) {
-          la = alloca(sizeof(loadarg_t));
-          la->key = args[0];
-          la->value = args[1];
-          SIMPLEQ_INSERT_TAIL(&qargs, la, link);
+      if(args != NULL) {
+        while(args[0] != NULL) {
+          if(args[1] != NULL) {
+            la = alloca(sizeof(loadarg_t));
+            la->key = args[0];
+            la->value = args[1];
+            SIMPLEQ_INSERT_TAIL(&qargs, la, link);
+          }
+          args += 2;
         }
-        args += 2;
       }
-    }
       break;
+    }
 
     case FA_LOAD_TAG_MIN_EXPIRE:
       min_expire = va_arg(ap, int);
