@@ -161,7 +161,7 @@ static void
 es_http_do_request(es_http_request_t *ehr)
 {
   if(ehr->ehr_cache &&
-     ehr->ehr_method == NULL &&
+     (ehr->ehr_method == NULL || !strcmp(ehr->ehr_method, "GET")) &&
      ehr->ehr_headreq == 0 &&
      ehr->ehr_postdata == NULL) {
 
