@@ -24,6 +24,7 @@
 #include "ecmascript.h"
 #include "task.h"
 
+#include "misc/minmax.h"
 #include "fileaccess/fa_proto.h"
 
 static hts_mutex_t es_fa_mutex;
