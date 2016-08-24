@@ -1614,6 +1614,8 @@ fa_load(const char *url, ...)
 
   va_end(ap);
 
+  *protocol_codep = 0;
+
   if(SIMPLEQ_FIRST(&qargs) != NULL) {
     // Construct URL with query args
     htsbuf_queue_t q;
@@ -1733,8 +1735,8 @@ fa_load(const char *url, ...)
      * cache for a given time), up max_age
      */
     max_age = MAX(min_expire, max_age);
-
     if(data2 && cache_control != DISABLE_CACHE &&
+       *protocol_codep < 300 &&
        (cache_control || max_age || etag || mtime)) {
 
       int bc_flags = 0;
