@@ -400,7 +400,7 @@ es_http_req(duk_context *ctx)
    * A few header types are OK to send though since I don't
    * think it will affect result that much
    */
-  if(ehr->ehr_cache)
+  if(ehr->ehr_cache && ehr->ehr_min_expire == 0)
     ehr->ehr_cache = !disable_cache_on_http_headers(&ehr->ehr_request_headers);
 
   if(duk_is_function(ctx, 2)) {
