@@ -169,7 +169,8 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 		  fa_handle_t *fh,
                   int resume_mode,
                   const char *title,
-                  htsmsg_t *vpi)
+                  htsmsg_t *vpi,
+                  prop_t *origin)
 {
   media_buf_t *mb = NULL;
   media_queue_t *mq = NULL;
@@ -203,7 +204,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
   if(fctx->duration != AV_NOPTS_VALUE)
     htsmsg_add_dbl(vpi, "duration", fctx->duration / 1000000.0f);
 
-  video_playback_info_invoke(VPI_START, vpi, mp->mp_prop_root);
+  video_playback_info_invoke(VPI_START, vpi, mp->mp_prop_root, origin);
 
   const int64_t offset = fctx->start_time != PTS_UNSET ? fctx->start_time : 0;
 
@@ -885,9 +886,10 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
   event_t *e;
   e = video_player_loop(fctx, cwvec, mp, va.flags, errbuf, errlen,
 			va.canonical_url, freetype_context, si, ci,
-			cwvec_size, fh, va.resume_mode, va.title, vpi);
+			cwvec_size, fh, va.resume_mode, va.title, vpi,
+                        va.origin);
 
-  video_playback_info_invoke(VPI_STOP, vpi, mp->mp_prop_root);
+  video_playback_info_invoke(VPI_STOP, vpi, mp->mp_prop_root, va.origin);
   htsmsg_release(vpi);
 
   seek_index_destroy(si);

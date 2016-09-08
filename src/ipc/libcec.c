@@ -303,7 +303,8 @@ activate_self(void *aux)
 
 
 static void
-libcec_vpi(vpi_op_t op, struct htsmsg *info, struct prop *p)
+libcec_vpi(vpi_op_t op, struct htsmsg *info, struct prop *p,
+           struct prop *origin)
 {
   if(!conn)
     return;

@@ -201,7 +201,8 @@ static int respond;
 
 
 static void
-rpi_tv_vpi(vpi_op_t op, struct htsmsg *info, struct prop *p)
+rpi_tv_vpi(vpi_op_t op, struct htsmsg *info, struct prop *p,
+           struct prop *origin)
 {
   if(!respond)
     return;

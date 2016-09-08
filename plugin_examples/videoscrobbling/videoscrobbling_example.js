@@ -40,6 +40,9 @@
 
  This can be used to query current position, etc during pause/resume
 
+ Also the origin item (the item that the video was started from, on the
+ "previous page" so to say) is also available as a third argument
+
 
 */
 
@@ -47,22 +50,24 @@ var videoscrobbler = require('movian/videoscrobbler');
 
 var vs = new videoscrobbler.VideoScrobbler();
 
-vs.onstart = function(data, prop) {
+vs.onstart = function(data, prop, origin) {
   print("Started playback session: " + data.id + " at position " + prop.currenttime + " (seconds)");
   print(JSON.stringify(data, null, 4));
+  print("The filename is: " + origin.filename);
+  require('movian/prop').print(origin);
 }
 
-vs.onstop = function(data, prop) {
+vs.onstop = function(data, prop, origin) {
   print("Stopped playback session: " + data.id + " at position " + prop.currenttime + " (seconds)");
   print(JSON.stringify(data, null, 4));
 }
 
-vs.onpause = function(data, prop) {
+vs.onpause = function(data, prop, origin) {
   print("Paused playback session: " + data.id + " at position " + prop.currenttime + " (seconds)");
   print(JSON.stringify(data, null, 4));
 }
 
-vs.onresume = function(data, prop) {
+vs.onresume = function(data, prop, origin) {
   print("Resumed playback session: " + data.id + " at position " + prop.currenttime + " (seconds)");
   print(JSON.stringify(data, null, 4));
 }

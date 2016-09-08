@@ -1035,9 +1035,10 @@ register_video_playback_info_handler(video_playback_info_handler_t *vpih)
 
 
 void
-video_playback_info_invoke(vpi_op_t op, struct htsmsg *vpi, struct prop *p)
+video_playback_info_invoke(vpi_op_t op, struct htsmsg *vpi, struct prop *p,
+                           struct prop *origin)
 {
   video_playback_info_handler_t *vpih;
   LIST_FOREACH(vpih, &vpi_handlers, link)
-    vpih->invoke(op, vpi, p);
+    vpih->invoke(op, vpi, p, origin);
 }

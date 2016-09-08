@@ -27,6 +27,7 @@ typedef struct video_scrobble_aux {
   vpi_op_t op;
   struct htsmsg *info;
   struct prop *p;
+  struct prop *origin;
 } video_scrobble_aux_t;
 
 
@@ -56,7 +57,8 @@ video_scrobble_push_args(duk_context *duk, void *opaque)
   }
 
   es_stprop_push(duk, vsa->p);
-  return 3;
+  es_stprop_push(duk, vsa->origin);
+  return 4;
 }
 
 
@@ -67,6 +69,7 @@ scrobble_video_task(void *aux)
   es_hook_invoke("videoscrobble", video_scrobble_push_args, vsa);
   htsmsg_release(vsa->info);
   prop_ref_dec(vsa->p);
+  prop_ref_dec(vsa->origin);
   free(vsa);
 }
 
@@ -75,12 +78,14 @@ scrobble_video_task(void *aux)
  *
  */
 static void
-es_scrobble_video(vpi_op_t op, struct htsmsg *info, struct prop *p)
+es_scrobble_video(vpi_op_t op, struct htsmsg *info, struct prop *p,
+                  struct prop *origin)
 {
   video_scrobble_aux_t *vsa = malloc(sizeof(video_scrobble_aux_t));
   vsa->op = op;
   vsa->info = htsmsg_copy(info);
   vsa->p = prop_ref_inc(p);
+  vsa->origin = prop_follow(origin);
 
   task_run(scrobble_video_task, vsa);
 }
