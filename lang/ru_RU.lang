@@ -528,20 +528,16 @@ msg: Общая громкость: %d дБ
 # ./src/api/stpp.c
 #
 id: Allow remote control
-# Missing translation
-msg: 
+msg: Разрешить дистанционное управление
 
 id: Device not available
-# Missing translation
-msg: 
+msg: Устройство недоступно
 
 id: Movians for remote control
-# Missing translation
-msg: 
+msg: Movians для дистанционного управления
 
 id: Remote control
-# Missing translation
-msg: 
+msg: Дистанционное управление
 
 #
 # ./src/api/tmdb.c
@@ -637,8 +633,7 @@ id: Audio delay
 msg: Задержка звука
 
 id: Audio gain
-# Missing translation
-msg: 
+msg: Усиление звука
 
 id: Setup audio output
 msg: Настройка аудиовыхода
@@ -734,8 +729,7 @@ id: Enable bittorrent
 msg: Включить битторрент
 
 id: Max upload speed
-# Missing translation
-msg: 
+msg: Максимальная скорость отдачи
 
 id: Max usage of free space for caching torrents
 msg: Максимальное использование свободного пространства для кэширования торрентов
@@ -786,8 +780,7 @@ msg: Рекордер
 # ./src/backend/playlist.c
 #
 id: Unable to open playlist
-# Missing translation
-msg: 
+msg: Не удалось открыть плейлист
 
 #
 # ./src/backend/search.c
@@ -832,8 +825,7 @@ id: Checking file contents
 msg: Проверка содержимого файла
 
 id: Invalid URL from redirect
-# Missing translation
-msg: 
+msg: Недопустимый URL-адрес перенаправления
 
 id: Unable to open file: %s
 msg: He удaлocь oткpыть фaйл: %s
@@ -1226,14 +1218,13 @@ id: Photos
 msg: Фото
 
 id: Remove bookmark
-# Missing translation
-msg: 
+msg: Удалить закладку
 
 id: Removed %s from homepage
 msg: %s удалено с главного экрана
 
 id: Removed bookmark: %s
-msg: Удалить закладки: %s
+msg: Удалены закладки: %s
 
 id: TV
 msg: ТВ
@@ -1272,16 +1263,13 @@ msg: TCP-порт сервера
 # ./src/networking/http_server.c
 #
 id: Power Off
-# Missing translation
-msg: 
+msg: Выключение
 
 id: Rebooting
-# Missing translation
-msg: 
+msg: Перезагрузка
 
 id: Restarting
-# Missing translation
-msg: 
+msg: Перезапуск
 
 id: Standby
 msg: Режим ожидания
@@ -1332,8 +1320,7 @@ id: Home page
 msg: Главный экран
 
 id: Installed
-# Missing translation
-msg: 
+msg: Установлено
 
 id: Installed plugins
 msg: Установленные плагины
@@ -1423,8 +1410,7 @@ msg: Потоковое видео
 # ./src/prop/prop_proxy.c
 #
 id: Remote exited
-# Missing translation
-msg: 
+msg: Выход удаленно
 
 #
 # ./src/runcontrol.c
@@ -1469,8 +1455,7 @@ id: Local network
 msg: Локальная сеть
 
 id: Remove from homepage
-# Missing translation
-msg: 
+msg: Удалить с домашней страницы
 
 #
 # ./src/settings.c
@@ -1638,8 +1623,7 @@ msg: Пользовательский интерфейс
 # ./src/ui/glw/glw_ps3.c
 #
 id: Dual-Shock Remote
-# Missing translation
-msg: 
+msg: Удаленное управление Dual-Shock
 
 id: Seek using L2 and R2 button
 msg: Перемотка видео кнопками L2 и R2
@@ -1675,8 +1659,7 @@ id: Screensaver delay
 msg: Задержка заставки
 
 id: Seconds per image
-# Missing translation
-msg: 
+msg: Секунд на изображение
 
 id: Use Bing images of the day
 msg: Испозовать изображения дня из Bing
@@ -1814,8 +1797,7 @@ id: Resume video playback
 msg: Boзoбнoвить вocпpoизвeдeниe видeo
 
 id: Show clock during playback
-# Missing translation
-msg: 
+msg: Отображение часов во время воспроизведения
 
 id: Step when seeking backward
 msg: Шаг при поиске назад
