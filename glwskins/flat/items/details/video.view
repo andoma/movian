@@ -12,6 +12,8 @@
   });
 }
 
+delta($parentview.expanded, !isPreloaded());
+
 widget(container_y, {
   width: $ui.width / 2;
   margin: [0.5em, 3.5em, 0.5em, 0];
@@ -53,13 +55,6 @@ widget(container_y, {
       widget(container_x, {
         height: 7em;
         spacing: 0.5em;
-        widget(segway, {
-          direction: "left";
-          widget(image, {
-            aspectConstraint: true;
-            source: $self.metadata.icon;
-          });
-        });
 
         widget(container_y, {
           filterConstraintX: true;
@@ -130,6 +125,10 @@ widget(container_y, {
             });
             space(1);
           });
+        });
+        widget(image, {
+          aspectConstraint: true;
+          source: $self.metadata.icon;
         });
       });
       space(1);

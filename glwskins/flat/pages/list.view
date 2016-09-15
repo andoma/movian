@@ -43,9 +43,12 @@ widget(container_z, {
       ScrollBar("scrollable", 3em, $ui.universeBottomHeight);
     });
 
-    widget(segway, {
-      direction: "right";
+    widget(expander_x, {
+      expansion: iir(delay(select($view.expanded, 1.0, 0.0), 0.1, 1.0), 4);
+      alwaysLayout: true;
       widget(deck, {
+        width: $ui.width / 2;
+
         effect: slideVertical;
         time: 0.4;
         noInitialTransform: true;
