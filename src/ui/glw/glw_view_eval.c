@@ -5712,9 +5712,10 @@ glwf_rand(glw_view_eval_context_t *ec, struct token *self,
 
 typedef struct glwf_delay_extra {
 
-  float oldval;
   float curval;
+  float nextval;
   int64_t deadline;
+  int waiting;
 
 } glwf_delay_extra_t;
 
@@ -5740,22 +5741,25 @@ glwf_delay(glw_view_eval_context_t *ec, struct token *self,
     return -1;
 
   f = token2float(ec, a);
-  if(f != e->curval) {
+
+  if(f != e->nextval) {
     // trig
-    e->oldval = e->curval;
     e->deadline = (int64_t)
       (token2float(ec, f >= e->curval ? b : c) * 1000000.0) +
       gr->gr_frame_start;
-    e->curval = f;
+    e->nextval = f;
   }
 
-  if(e->deadline > gr->gr_frame_start) {
-    f = e->oldval;
+  if(gr->gr_frame_start < e->deadline) {
+    e->waiting = 1;
+    f = e->curval;
+
     ec->dynamic_eval |= GLW_VIEW_EVAL_LAYOUT;
     glw_schedule_refresh(gr, e->deadline);
+
   } else {
-    eval_push(ec, a);
-    return 0;
+    e->waiting = 0;
+    f = e->curval = e->nextval;
   }
 
   r = eval_alloc(self, ec, TOKEN_FLOAT);
