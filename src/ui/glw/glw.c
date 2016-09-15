@@ -462,6 +462,16 @@ glw_layout0(glw_t *w, const glw_rctx_t *rc)
     }
   }
 
+  if(unlikely(rc->rc_preloaded != !!(w->glw_flags & GLW_PRELOADED))) {
+
+    if(rc->rc_preloaded)
+      w->glw_flags |= GLW_PRELOADED;
+    else
+      w->glw_flags &= ~GLW_PRELOADED;
+
+    mask |= GLW_VIEW_EVAL_ACTIVE;
+  }
+
   if(unlikely(w->glw_dynamic_eval & mask))
     glw_view_eval_layout(w, rc, mask);
 

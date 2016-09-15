@@ -5344,6 +5344,25 @@ glwf_isVisible(glw_view_eval_context_t *ec, struct token *self,
 }
 
 
+/**
+ * Return 1 if the current widget is preloaded
+ */
+static int
+glwf_isPreloaded(glw_view_eval_context_t *ec, struct token *self,
+                 token_t **argv, unsigned int argc)
+{
+  token_t *r;
+
+  ec->dynamic_eval |= GLW_VIEW_EVAL_ACTIVE;
+
+  r = eval_alloc(self, ec, TOKEN_INT);
+
+  r->t_int = ec->w->glw_flags & GLW_PRELOADED ? 1 : 0;
+  eval_push(ec, r);
+  return 0;
+}
+
+
 
 /**
  * Return 1 if the current widget is can to be scrolled / moved
@@ -7277,6 +7296,7 @@ static const token_func_t funcvec[] = {
   {"bind", 1, glwf_bind},
   {"delta", 2, glwf_delta, glwf_delta_ctor, glwf_delta_dtor},
   {"isVisible", 0, glwf_isVisible},
+  {"isPreloaded", 0, glwf_isPreloaded},
   {"canScroll", 0, glwf_canScroll},
   {"select", 3, glwf_select},
   {"trace", 2, glwf_trace},

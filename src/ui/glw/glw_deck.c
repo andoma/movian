@@ -156,6 +156,7 @@ glw_deck_layout(glw_t *w, const glw_rctx_t *rc)
     gd->last = NULL;
 
   glw_rctx_t rc0 = *rc;
+  rc0.rc_preloaded = 1;
   if(!gd->preloaded_are_visible)
     rc0.rc_invisible = 1;
 
