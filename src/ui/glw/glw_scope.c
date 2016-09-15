@@ -57,6 +57,7 @@ glw_scope_create(void)
   o->gs_roots[GLW_ROOT_ARGS].name   = "args";
   o->gs_roots[GLW_ROOT_CLONE].name  = "clone";
   o->gs_roots[GLW_ROOT_CORE].name   = "core";
+  o->gs_roots[GLW_ROOT_PARENTVIEW].name   = "parentview";
   o->gs_num_roots = GLW_ROOT_static;
   o->gs_refcount = 1;
   return o;

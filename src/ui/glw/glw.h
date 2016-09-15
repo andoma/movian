@@ -293,7 +293,8 @@ typedef struct glw_scope {
 #define GLW_ROOT_ARGS   3
 #define GLW_ROOT_CLONE  4
 #define GLW_ROOT_CORE   5
-#define GLW_ROOT_static 6
+#define GLW_ROOT_PARENTVIEW 6
+#define GLW_ROOT_static 7
 
   prop_root_t gs_roots[GLW_ROOT_static];
 

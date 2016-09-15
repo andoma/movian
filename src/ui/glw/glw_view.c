@@ -189,7 +189,9 @@ eval_loaded_view(glw_root_t *gr, glw_cached_view_t *gcv, glw_view_t *view,
   ec.ei = &ei;
 
   view->viewprop =  prop_create_root(NULL);
-  ec.scope = glw_scope_dup(scope, (1 << GLW_ROOT_VIEW));
+  ec.scope = glw_scope_dup(scope, (1 << GLW_ROOT_PARENTVIEW));
+  ec.scope->gs_roots[GLW_ROOT_PARENTVIEW].p =
+    ec.scope->gs_roots[GLW_ROOT_VIEW].p;
   ec.scope->gs_roots[GLW_ROOT_VIEW].p = prop_ref_inc(view->viewprop);
 
   ec.sublist = &ec.w->glw_prop_subscriptions;
