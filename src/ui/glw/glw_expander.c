@@ -28,6 +28,7 @@ typedef struct glw_expander {
   glw_t w;
   float expansion;
   int last;
+  int always_layout;
 } glw_expander_t;
 
 
@@ -74,7 +75,7 @@ glw_expander_layout(glw_t *w, const glw_rctx_t *rc)
   glw_t *c;
   glw_rctx_t rc0;
 
-  if(exp->expansion < GLW_ALPHA_EPSILON)
+  if(exp->expansion < GLW_ALPHA_EPSILON && !exp->always_layout)
     return;
 
   if((c = TAILQ_FIRST(&w->glw_childs)) == NULL)
@@ -191,6 +192,26 @@ glw_expander_set_float(glw_t *w, glw_attribute_t attrib, float value,
 }
 
 
+/**
+ *
+ */
+static int
+glw_expander_set_int_unresolved(glw_t *w, const char *a, int value,
+                                glw_style_t *gs)
+{
+  glw_expander_t *exp = (glw_expander_t *)w;
+
+  if(!strcmp(a, "alwaysLayout")) {
+    if(exp->always_layout == value)
+      return 0;
+    exp->always_layout = value;
+    return GLW_SET_LAYOUT_ONLY;
+  }
+  return GLW_SET_NOT_RESPONDING;
+}
+
+
+
 
 static glw_class_t glw_expander_x = {
   .gc_name = "expander_x",
@@ -200,6 +221,7 @@ static glw_class_t glw_expander_x = {
   .gc_set_float = glw_expander_set_float,
   .gc_ctor = glw_expander_ctor,
   .gc_signal_handler = glw_expander_callback,
+  .gc_set_int_unresolved = glw_expander_set_int_unresolved,
 };
 
 static glw_class_t glw_expander_y = {
@@ -210,6 +232,7 @@ static glw_class_t glw_expander_y = {
   .gc_set_float = glw_expander_set_float,
   .gc_signal_handler = glw_expander_callback,
   .gc_ctor = glw_expander_ctor,
+  .gc_set_int_unresolved = glw_expander_set_int_unresolved,
 };
 
 GLW_REGISTER_CLASS(glw_expander_x);
