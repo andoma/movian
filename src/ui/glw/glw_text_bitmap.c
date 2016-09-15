@@ -786,8 +786,6 @@ caption_set_internal(glw_text_bitmap_t *gtb, const char *str, int type)
   if(gtb->w.glw_flags2 & GLW2_AUTOHIDE) {
     if(str == NULL || *str == 0)
       glw_hide(&gtb->w);
-    else
-      glw_unhide(&gtb->w);
   }
 
   if(gtb->gtb_caption_type == PROP_STR_RICH)
@@ -1297,11 +1295,15 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
   }
 
   if(gtb->gtb_state == GTB_DIMENSIONING) {
-    gtb->gtb_state = GTB_NEED_RENDER;
     if(im != NULL) {
       gtb_set_constraints(gr, gtb, im);
       image_release(im);
+      gtb->gtb_state = GTB_NEED_RENDER;
+      if(gtb->w.glw_flags2 & GLW2_AUTOHIDE) {
+        glw_unhide(&gtb->w);
+      }
     } else {
+      gtb->gtb_state = GTB_IDLE;
       int lh = (gtb->gtb_default_size ?: gr->gr_current_size) *
 	gtb->gtb_size_scale;
       lh += gtb->gtb_padding[1] + gtb->gtb_padding[3];
@@ -1459,19 +1461,20 @@ mod_flags2(glw_t *w, int set, int clr)
 {
   glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
 
-  if(set & GLW2_AUTOHIDE && gtb->gtb_caption == NULL)
+  if(set & GLW2_AUTOHIDE && gtb->gtb_caption == NULL) {
     glw_hide(w);
+  }
 
-  if(clr & GLW2_AUTOHIDE)
+  if(clr & GLW2_AUTOHIDE) {
     glw_unhide(w);
-
+  }
 
   if((set | clr) & GLW2_SHADOW)
     gtb_update_epilogue(gtb, GTB_UPDATE_REALIZE);
 }
 
 
-/**
+/*
  *
  */
 static void
