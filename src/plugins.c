@@ -2099,7 +2099,7 @@ plugin_check_prefix_for_autoinstall(const char *uri)
   autoplugin_t *ap;
   const char *installme = NULL;
 
-  if(!autoinstall)
+  if(!autoinstall || devplugins)
     return -1;
 
   hts_mutex_lock(&autoplugin_mutex);
