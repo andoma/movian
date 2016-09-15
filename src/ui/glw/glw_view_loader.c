@@ -85,6 +85,21 @@ glw_loader_layout(glw_t *w, const glw_rctx_t *rc)
 /**
  *
  */
+static void
+unload_because_inactive(glw_t *w)
+{
+  glw_t *c, *next;
+  for(c = TAILQ_FIRST(&w->glw_childs); c != NULL; c = next) {
+    next = TAILQ_NEXT(c, glw_parent_link);
+    if(itemdata(c)->vl_tgt > 0) {
+      glw_destroy(c);
+    }
+  }
+}
+
+/**
+ *
+ */
 static int
 glw_loader_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
@@ -126,6 +141,10 @@ glw_loader_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     if(c == TAILQ_FIRST(&w->glw_childs))
       glw_copy_constraints(w, c);
     return 1;
+
+  case GLW_SIGNAL_INACTIVE:
+    unload_because_inactive(w);
+    return 0;
   }
   return 0;
 }
@@ -228,11 +247,16 @@ set_source(glw_t *w, rstr_t *url, int flags, glw_style_t *origin)
   glw_t *c;
 
   if(w->glw_flags2 & GLW2_DEBUG)
-    TRACE(TRACE_DEBUG, "GLW", "Loader loading %s",
-	  rstr_get(url) ?: "(void)");
+    TRACE(TRACE_DEBUG, "GLW", "%s: Loader loading %s",
+	  rstr_get(w->glw_id_rstr), rstr_get(url) ?: "(void)");
 
   if(!strcmp(rstr_get(url) ?: "", rstr_get(a->url) ?: ""))
     return;
+
+  if(!(w->glw_flags & GLW_ACTIVE)) {
+    while((c = TAILQ_FIRST(&w->glw_childs)) != NULL)
+      glw_destroy(c);
+  }
 
   rstr_release(a->url);
   a->url = rstr_dup(url);
