@@ -492,7 +492,7 @@ metadb_insert_videocast(void *db, int64_t videoitem_id,
 			int height,
 			const char *ext_id)
 {
-   sqlite3_stmt *ins;
+  sqlite3_stmt *ins;
   int rc;
 
   rc = db_prepare(db, &ins,
