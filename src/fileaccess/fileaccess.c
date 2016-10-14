@@ -2032,8 +2032,10 @@ fa_load_and_close(fa_handle_t *fh)
   } else {
 
     mem = mymalloc(size+1);
-    if(mem == NULL)
+    if(mem == NULL) {
+      fa_close(fh);
       return NULL;
+    }
 
     r = fa_read(fh, mem, size);
     fa_close(fh);
