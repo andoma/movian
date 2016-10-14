@@ -30,12 +30,12 @@ static const uint16_t big5table[] = {
 
 int
 big5_convert(const struct charset *cs, char *dst,
-             const char *src, int len, int strict)
+             const uint8_t *src, int len, int strict)
 {
   int outlen = 0;
 
   for(int i = 0; i < len; i++) {
-    if((uint8_t)*src < 0x80) {
+    if(*src < 0x80) {
       if(dst != NULL)
         *dst++ = *src;
       outlen++;

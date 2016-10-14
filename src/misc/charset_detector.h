@@ -17,4 +17,4 @@
  *  This program is also available under a commercial proprietary license.
  *  For more information, contact andreas@lonelycoder.com
  */
-const char *charset_detector(const char *str, int len, const char **langp);
+const char *charset_detector(const uint8_t *str, int len, const char **langp);

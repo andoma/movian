@@ -92,7 +92,7 @@ es_utf8_from_bytes_auto(duk_context *ctx, const char *bufstart, int bufsize)
     }
   }
 
-  return utf8_from_bytes(bufstart, bufsize, cs, NULL, 0);
+  return utf8_from_bytes((const uint8_t *)bufstart, bufsize, cs, NULL, 0);
 }
 
 

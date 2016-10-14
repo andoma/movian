@@ -113,11 +113,11 @@ typedef struct charset {
   const char *id, *title;
   const uint16_t *table;
   int (*convert)(const struct charset *cs, char *dst,
-                 const char *src, int len, int strict);
+                 const uint8_t *src, int len, int strict);
   const char **aliases;
 } charset_t;
 
-struct buf *utf8_from_bytes(const char *str, int len, const charset_t *cs,
+struct buf *utf8_from_bytes(const void *str, int len, const charset_t *cs,
                             char *msg, size_t msglen);
 
 struct rstr *rstr_from_bytes(const char *str, char *how, size_t howlen);

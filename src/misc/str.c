@@ -775,7 +775,7 @@ utf8_cleanup(const char *str)
  *
  */
 buf_t *
-utf8_from_bytes(const char *str, int len, const charset_t *cs,
+utf8_from_bytes(const void *str, int len, const charset_t *cs,
 		char *how, size_t howlen)
 {
   len = !len ? strlen(str) : len;
@@ -1285,7 +1285,7 @@ hexnibble(char c)
 
 static int
 convert_table(const struct charset *cs, char *dst,
-              const char *src, int len, int strict)
+              const uint8_t *src, int len, int strict)
 {
   int olen = 0;
   const uint16_t *cp = cs->table;
@@ -1307,7 +1307,7 @@ convert_table(const struct charset *cs, char *dst,
 
 static int
 convert_iso_8859_1(const struct charset *cs, char *dst,
-                   const char *src, int len, int strict)
+                   const uint8_t *src, int len, int strict)
 {
   int olen = 0;
 

@@ -669,7 +669,7 @@ ngram_search(const int32_t *table, int32_t value)
  *
  */
 static float
-parse_ngram(const int32_t *n, const uint8_t *map, const char *str, int len)
+parse_ngram(const int32_t *n, const uint8_t *map, const uint8_t *str, int len)
 {
   int ign_spc = 0;
   uint32_t ngram = 0;
@@ -705,14 +705,14 @@ parse_ngram(const int32_t *n, const uint8_t *map, const char *str, int len)
  *
  */
 const char *
-charset_detector(const char *str, int len, const char **lp)
+charset_detector(const uint8_t *str, int len, const char **lp)
 {
   int histogram[256] = {0};
   if(lp)
     *lp = NULL;
 
   for(int i = 0; i < len; i++)
-    histogram[(unsigned int)str[i]]++;
+    histogram[str[i]]++;
 
   int c1bytes = 0;
 
@@ -739,7 +739,7 @@ charset_detector(const char *str, int len, const char **lp)
       const int32_t *n = nl->ngrams;
       const char *lang = nl->lang;
       float c = parse_ngram(n, detector_table[i].map, str, len);
-       
+
       if(c > 0 && c > best_score) {
 	best = detector_table[i].encoding;
 	if(c1bytes && detector_table[i].encoding_alt)
