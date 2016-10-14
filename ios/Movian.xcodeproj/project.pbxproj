@@ -322,6 +322,7 @@
 		6A35C2CD1C104A9100D8EA86 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 6A35C2CC1C104A9100D8EA86 /* libz.tbd */; };
 		6A35C2CF1C104A9900D8EA86 /* libbz2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 6A35C2CE1C104A9900D8EA86 /* libbz2.tbd */; };
 		6A374FB11CCBA9EF007B8E30 /* prng.c in Sources */ = {isa = PBXBuildFile; fileRef = 6A374FB01CCBA9EF007B8E30 /* prng.c */; };
+		6A54B8681D66447D008DB15E /* murmur3.c in Sources */ = {isa = PBXBuildFile; fileRef = 6A54B8661D66447D008DB15E /* murmur3.c */; };
 		6A669FDE1C5035430042819C /* stpp.c in Sources */ = {isa = PBXBuildFile; fileRef = 6ADCCF191B304EFE0099FB5A /* stpp.c */; };
 		6A6AD6CE1C0E293000931F45 /* upgrade.c in Sources */ = {isa = PBXBuildFile; fileRef = 6A6AD6CB1C0E293000931F45 /* upgrade.c */; };
 		6A6AD6CF1C0E293000931F45 /* usage.c in Sources */ = {isa = PBXBuildFile; fileRef = 6A6AD6CD1C0E293000931F45 /* usage.c */; };
@@ -336,6 +337,8 @@
 		6A8385391B42811B002816FB /* glwskins in Resources */ = {isa = PBXBuildFile; fileRef = 6A8385371B42811B002816FB /* glwskins */; };
 		6A83853A1B42811B002816FB /* lang in Resources */ = {isa = PBXBuildFile; fileRef = 6A8385381B42811B002816FB /* lang */; };
 		6AB9264E1C0743CD002D59A6 /* mac_audio.c in Sources */ = {isa = PBXBuildFile; fileRef = 6AB9264D1C0743CD002D59A6 /* mac_audio.c */; };
+		6AC20CE21DB1446700312229 /* murmur3.c in Sources */ = {isa = PBXBuildFile; fileRef = 6A54B8661D66447D008DB15E /* murmur3.c */; };
+		6AC20CE41DB144BA00312229 /* clipboard.c in Sources */ = {isa = PBXBuildFile; fileRef = 6AD9F49F1D4FB32600F77BFC /* clipboard.c */; };
 		6AC2B8761B1F23D700969FB4 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 6AC2B8751B1F23D700969FB4 /* main.m */; };
 		6AC2B8791B1F23D700969FB4 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 6AC2B8781B1F23D700969FB4 /* AppDelegate.m */; };
 		6AC2B8801B1F23D800969FB4 /* MainViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 6AC2B87F1B1F23D800969FB4 /* MainViewController.m */; };
@@ -698,6 +701,8 @@
 		6A35C2CC1C104A9100D8EA86 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		6A35C2CE1C104A9900D8EA86 /* libbz2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libbz2.tbd; path = usr/lib/libbz2.tbd; sourceTree = SDKROOT; };
 		6A374FB01CCBA9EF007B8E30 /* prng.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = prng.c; sourceTree = "<group>"; };
+		6A54B8661D66447D008DB15E /* murmur3.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = murmur3.c; sourceTree = "<group>"; };
+		6A54B8671D66447D008DB15E /* murmur3.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = murmur3.h; sourceTree = "<group>"; };
 		6A6AD6CB1C0E293000931F45 /* upgrade.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = upgrade.c; path = ../src/upgrade.c; sourceTree = "<group>"; };
 		6A6AD6CC1C0E293000931F45 /* upgrade.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = upgrade.h; path = ../src/upgrade.h; sourceTree = "<group>"; };
 		6A6AD6CD1C0E293000931F45 /* usage.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = usage.c; path = ../src/usage.c; sourceTree = "<group>"; };
@@ -1369,6 +1374,8 @@
 		6ADCCC6D1B3000CC0099FB5A /* misc */ = {
 			isa = PBXGroup;
 			children = (
+				6A54B8661D66447D008DB15E /* murmur3.c */,
+				6A54B8671D66447D008DB15E /* murmur3.h */,
 				6AD9F4A11D4FB43600F77BFC /* regex.c */,
 				6AD9A4CA1D0030A1003BE227 /* lockmgr.c */,
 				6AD9A4CB1D0030A1003BE227 /* lockmgr.h */,
@@ -2285,6 +2292,7 @@
 				6ADCCE4E1B304C280099FB5A /* asyncio_http.c in Sources */,
 				6ADCCFE81B30785D0099FB5A /* glw_style.c in Sources */,
 				6ADCCFC21B30785D0099FB5A /* glw_clip.c in Sources */,
+				6A54B8681D66447D008DB15E /* murmur3.c in Sources */,
 				6ADCCF201B304EFE0099FB5A /* lastfm.c in Sources */,
 				6ADCCEC51B304DC80099FB5A /* search.c in Sources */,
 				6ADCD0021B30785D0099FB5A /* glw_view_support.c in Sources */,
@@ -2521,6 +2529,7 @@
 				6A35C2481C10423600D8EA86 /* jpeg.c in Sources */,
 				6A35C1EA1C1041C000D8EA86 /* fa_aes.c in Sources */,
 				6A35C2301C1041FC00D8EA86 /* glw_video_overlay.c in Sources */,
+				6AC20CE21DB1446700312229 /* murmur3.c in Sources */,
 				6A35C1F01C1041C000D8EA86 /* fa_cmp.c in Sources */,
 				6A35C24C1C10423600D8EA86 /* keyring.c in Sources */,
 				6A35C26A1C10425D00D8EA86 /* json.c in Sources */,
@@ -2719,6 +2728,7 @@
 				6A35C22B1C1041FC00D8EA86 /* glw_texture_opengl.c in Sources */,
 				6A35C2C71C1048A300D8EA86 /* htsp.c in Sources */,
 				6A35C2CA1C104A4F00D8EA86 /* ios_misc.c in Sources */,
+				6AC20CE41DB144BA00312229 /* clipboard.c in Sources */,
 				6A35C25D1C10424800D8EA86 /* playinfo.c in Sources */,
 				6A35C25A1C10424800D8EA86 /* metadata_str.c in Sources */,
 				6A35C1C51C10417300D8EA86 /* httpcontrol.c in Sources */,
