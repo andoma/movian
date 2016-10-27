@@ -749,6 +749,10 @@ gtb_realize(glw_text_bitmap_t *gtb)
   }
 
   if(direct) {
+    if(gtb->w.glw_flags2 & GLW2_AUTOHIDE) {
+      glw_unhide(&gtb->w);
+    }
+
     gtb->gtb_state = GTB_NEED_RENDER;
     glw_need_refresh(gr, 0);
   } else {
