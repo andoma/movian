@@ -483,11 +483,8 @@ glw_layout0(glw_t *w, const glw_rctx_t *rc)
                    rc->rc_width - w->glw_margin[2],
                    w->glw_margin[3]);
 
-    if(rc0.rc_width < 1)
-      rc0.rc_width = 1;
-
-    if(rc0.rc_height < 1)
-      rc0.rc_height = 1;
+    if(rc0.rc_width < 1 || rc0.rc_height < 1)
+      return;
 
     w->glw_class->gc_layout(w, &rc0);
   } else {
@@ -524,6 +521,8 @@ glw_render0(glw_t *w, const glw_rctx_t *rc)
                    rc->rc_height - w->glw_margin[1],
                    rc->rc_width - w->glw_margin[2],
                    w->glw_margin[3]);
+    if(rc0.rc_width < 1 || rc0.rc_height < 1)
+      return;
 
     w->glw_class->gc_render(w, &rc0);
   } else {
