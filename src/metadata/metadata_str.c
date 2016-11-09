@@ -257,14 +257,15 @@ metadata_filename_to_episode(const char *s,
     // Parse ' (#)#x## - '  format
     for(i = 3; i < len - 2; i++) {
       if(s[i] == 'x' && isnum(s[i + 1]) && isnum(s[i + 2]) &&
-         s[i + 3] == ' ' && s[i + 4] == '-' && s[i + 5] == ' ') {
+         (s[i + 3] == ' ' || s[i + 3] == '.')) {
         episode = atoi(s + i + 1);
-
-        if(isnum(s[i - 1]) && s[i - 2] == ' ') {
+        if(isnum(s[i - 1]) &&
+           (s[i - 2] == ' ' || s[i - 2] == '.')) {
           season = atoi(s + i - 1);
           i--;
           break;
-        } else if(isnum(s[i - 1]) && isnum(s[i - 2]) && s[i - 3] == ' ') {
+        } else if(isnum(s[i - 1]) && isnum(s[i - 2]) &&
+                  (s[i - 3] == ' ' || s[i - 3] == '.')) {
           season = atoi(s + i - 2);
           i-=2;
           break;
