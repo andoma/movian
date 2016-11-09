@@ -16,5 +16,5 @@ set -x
 
 set +x
 make ${JARGS} dist
-artifact build.osx/Movian.dmg dmg application/octet-stream Movian.dmg
+artifact build.osx/Movian.zip zip application/zip Movian.zip
 artifact build.osx/movian.bin bin application/octet-stream Movian.bin

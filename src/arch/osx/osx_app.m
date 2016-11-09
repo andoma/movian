@@ -55,7 +55,7 @@ arch_get_avtime(void)
 /**
  *
  */
-@interface App : NSObject <NSFileManagerDelegate>
+@interface App : NSObject <NSFileManagerDelegate, NSApplicationDelegate>
 {
   NSMenu *m_menubar;
 }

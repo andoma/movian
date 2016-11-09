@@ -67,7 +67,7 @@ ${PROG}.bin: ${PROG}.bundle
 .PHONY: dist
 dist: ${BUILDDIR}/dist/$(APPNAMEUSER).app/Contents/MacOS/$(APPNAME)
 	support/osx_checkbundlelink.sh ${PROG}.bin
-	support/mkdmg ${BUILDDIR}/dist/$(APPNAMEUSER).app $(APPNAMEUSER) support/$(APPNAMEUSER).app/Contents/Resources/hts.icns ${BUILDDIR}/$(APPNAMEUSER).dmg
+	cd ${BUILDDIR}/dist/ && zip -9r ${BUILDDIR}/$(APPNAMEUSER).zip $(APPNAMEUSER).app
 
 #
 #
@@ -75,7 +75,7 @@ dist: ${BUILDDIR}/dist/$(APPNAMEUSER).app/Contents/MacOS/$(APPNAME)
 clean: osx-clean
 
 osx-clean:
-	rm -rf ${BUILDDIR}/*.app ${BUILDDIR}/*.dmg 
+	rm -rf ${BUILDDIR}/*.app ${BUILDDIR}/*.zip
 
 
 ${BUILDDIR}/trampoline:	support/osx/trampoline.c
