@@ -206,6 +206,7 @@ typedef struct gconf {
   char *cache_path;
   char *persistent_path;
 
+  int max_video_buffer_size;
   int concurrency;
   int trace_level;
   int trace_to_syslog;

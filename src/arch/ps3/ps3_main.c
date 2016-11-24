@@ -424,6 +424,7 @@ ps3_early_init(int argc, char **argv)
     return;
   }
   my_trace(APPNAMEUSER" starting from %s\n", argv[0]);
+  gconf.max_video_buffer_size = 64;
   gconf.binary = strdup(argv[0]);
 
   snprintf(buf, sizeof(buf), "%s", argv[0]);

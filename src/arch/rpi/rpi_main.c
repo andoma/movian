@@ -117,6 +117,12 @@ rpi_get_revision(void)
     int rev = strtol(x, NULL, 16);
     rev &= 0xffffff;
     fclose(fp);
+
+    if(rev < 0xa) {
+      // Limit max video buffer size to 64 for 256MB systems RAM
+      gconf.max_video_buffer_size = 64;
+    }
+
     const char *model = val2str(rev, rpirevisions);
     if(model == NULL) {
       snprintf(gconf.device_type, sizeof(gconf.device_type),
