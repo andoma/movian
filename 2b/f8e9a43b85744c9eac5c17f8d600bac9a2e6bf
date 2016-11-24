@@ -1,0 +1,2 @@
+Make it possible to increase video buffer size to 128MB
+on systems with enough RAM
