@@ -884,7 +884,7 @@ subtitles_pick(ext_subtitles_t *es, int64_t user_time, int64_t pts,
       vo_deliver(es, vo, mp, user_time, user_time_to_pts);
       return;
     }
-    if(vo->vo_start>user_time)
+    if(vo != NULL && vo->vo_start > user_time)
       break;
   }
 
