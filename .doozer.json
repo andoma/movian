@@ -37,7 +37,7 @@
         "android-ndk": "http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86.bin"
 
       },
-      "buildcmd": "./Autobuild.sh -t ${TARGET} -j ${PARALLEL} -w ${WORKDIR}"
+      "buildcmd": "./Autobuild.sh -t ${TARGET} -j ${PARALLEL} -w ${WORKDIR} -v ${VERSION}"
     },
 
 
@@ -67,7 +67,7 @@
         "libsqlite3-dev",
         "libwebkitgtk-dev"
       ],
-      "buildcmd": "./Autobuild.sh -t ${TARGET} -j ${PARALLEL} -w ${WORKDIR}"
+      "buildcmd": "./Autobuild.sh -t ${TARGET} -j ${PARALLEL} -w ${WORKDIR} -v ${VERSION}"
     },
 
     "precise-i386": {
@@ -96,7 +96,7 @@
         "libsqlite3-dev",
         "libwebkitgtk-dev"
       ],
-      "buildcmd": "./Autobuild.sh -t ${TARGET} -j ${PARALLEL} -w ${WORKDIR}"
+      "buildcmd": "./Autobuild.sh -t ${TARGET} -j ${PARALLEL} -w ${WORKDIR} -v ${VERSION}"
     },
 
     "ps3": {
@@ -121,7 +121,7 @@
         "curl",
         "wget"
       ],
-      "buildcmd": "./Autobuild.sh -t ${TARGET} -j ${PARALLEL} -w ${WORKDIR}"
+      "buildcmd": "./Autobuild.sh -t ${TARGET} -j ${PARALLEL} -w ${WORKDIR} -v ${VERSION}"
     },
 
     "rpi": {
@@ -147,12 +147,12 @@
         "wget",
         "squashfs-tools"
       ],
-      "buildcmd": "./Autobuild.sh -t ${TARGET} -j ${PARALLEL} -w ${WORKDIR}"
+      "buildcmd": "./Autobuild.sh -t ${TARGET} -j ${PARALLEL} -w ${WORKDIR} -v ${VERSION}"
     },
 
     "osx": {
       "buildenv": "osx",
-      "buildcmd": "./Autobuild.sh -t ${TARGET} -j ${PARALLEL} -w ${WORKDIR}"
+      "buildcmd": "./Autobuild.sh -t ${TARGET} -j ${PARALLEL} -w ${WORKDIR} -v ${VERSION}"
     }
   }
 }

@@ -159,6 +159,8 @@ for opt do
   ;;
   --disable-dependency-tracking)
   ;;
+  --disable-silent-rules)
+  ;;
   *)
   common_opt $opt $optval
   esac

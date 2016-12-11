@@ -12,7 +12,7 @@ JARGS=""
 TARGET=""
 RELEASE="--release"
 WORKINGDIR="/var/tmp/showtime-autobuild"
-while getopts "vht:e:j:w:o:c:" OPTION
+while getopts "t:j:w:v:" OPTION
 do
   case $OPTION in
       t)
@@ -24,12 +24,21 @@ do
       w)
 	  WORKINGDIR="$OPTARG"
 	  ;;
+      v)
+	  VERSION="$OPTARG"
+	  ;;
   esac
 done
 
 if [[ -z $TARGET ]]; then
     echo "target (-t) not specified"
     exit 1
+fi
+
+
+echo "VERSION: $VERSION"
+if [ "$VERSION" = "unset" ] ; then
+    VERSION="0.0.0"
 fi
 
 #

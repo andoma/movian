@@ -13,6 +13,9 @@ override_dh_installdocs:
 override_dh_auto_build:
 	make ${JARGS}
 
+override_dh_auto_clean:
+	rm -rf build.*
+
 override_dh_strip:
 	dh_strip --dbg-package=showtime-dbg
 

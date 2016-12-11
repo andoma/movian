@@ -1,9 +1,8 @@
 CHANGELOG=debian/changelog
 
 NOW=`date -R`
-VER=`git describe | sed "s/\([0-9]*\)\.\([0-9]*\)-\([0-9]*\)-.*/\1.\2.\3/"`
 
-echo >${CHANGELOG} "showtime (${VER}) unstable; urgency=low"
+echo >${CHANGELOG} "showtime (${VERSION}) unstable; urgency=low"
 echo >>${CHANGELOG}
 echo >>${CHANGELOG} "  * The full changelog can be found at "
 echo >>${CHANGELOG} "    http://www.lonelycoder.com/showtime/download"
@@ -25,11 +24,11 @@ export USE_CCACHE
 
 dpkg-buildpackage -b -us -uc
 
-for a in ../showtime*${VER}*.deb; do
+for a in ../showtime*${VERSION}*.deb; do
     versioned_artifact "$a" deb application/x-deb `basename $a`
 done
 
-for a in ../showtime*${VER}*.changes; do
-    versioned_artifact "$a" changes text/plain `basename $a`
-done
+#for a in ../showtime*${VERSION}*.changes; do
+#    versioned_artifact "$a" changes text/plain `basename $a`
+#done
 
