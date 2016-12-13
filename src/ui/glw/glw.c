@@ -1189,9 +1189,11 @@ glw_path_modify(glw_t *w, int set, int clr, glw_t *stop)
     int old_flags = w->glw_flags;
     glw_fhp_update(w, set, clr);
 
-    if((old_flags ^ w->glw_flags) & GLW_IN_FOCUS_PATH)
-      glw_event_glw_action(w, w->glw_flags & GLW_IN_FOCUS_PATH ?
-                           "GainedFocus" : "LostFocus");
+    if((set | clr) & GLW_IN_FOCUS_PATH) {
+      if((old_flags ^ w->glw_flags) & GLW_IN_FOCUS_PATH)
+        glw_event_glw_action(w, w->glw_flags & GLW_IN_FOCUS_PATH ?
+                             "GainedFocus" : "LostFocus");
+    }
 
     if(w->glw_flags & GLW_FHP_SPILL_TO_CHILDS) {
       glw_t *c;
