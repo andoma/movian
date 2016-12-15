@@ -2,55 +2,53 @@
 
 
 
-widget(container_z, {
+widget(container_y, {
 
   focusable: true;
   onEvent(activate, playTrackFromSource($self, $parent.model));
 
-  widget(quad, {
-    hidden: !$clone.primaryColor;
-    color: $clone.primaryColor;
-  });
+  widget(container_z, {
 
-  widget(image, {
-    source: $self.metadata.icon;
-    color: 1 - 0.7 * iir($self.media.loading, 8);
-    $view.iconLoaded = isLoaded();
-    $clone.primaryColor = RGBToString(primaryColor() * 0.3);
-//    style: "GridBackdrop";
-  });
-
-
-  widget(container_y, {
-    space(0.5);
-    widget(throbber, {
-      alpha: iir($self.media.loading, 8);
+    widget(quad, {
+      hidden: !$clone.primaryColor;
+      color: $clone.primaryColor;
     });
-    space(0.5);
-  });
+
+    widget(image, {
+      source: $self.metadata.icon;
+      color: 1 - 0.7 * iir($self.media.loading, 8);
+      $view.iconLoaded = isLoaded();
+      $clone.primaryColor = RGBToString(primaryColor() * 0.3);
+      //    style: "GridBackdrop";
+    });
 
 
-  widget(icon, {
-    filterConstraintY: true;
-    hidden: $self.media.loading || ($view.iconLoaded && $self.media.playstatus != "play" && $self.media.playstatus != "pause");
-    style: "GridItemIcon";
-    source: translate($self.media.playstatus,
-                      "skin://icons/ic_audiotrack_48px.svg",
-                      "play", "skin://icons/ic_play_arrow_48px.svg",
-                      "pause", "skin://icons/ic_pause_48px.svg");
-  });
+    widget(container_y, {
+      space(0.5);
+      widget(throbber, {
+        alpha: iir($self.media.loading, 8);
+      });
+      space(0.5);
+    });
 
 
-  widget(container_y, {
-    filterConstraintY: true;
-    align: bottom;
-    widget(label, {
-      style: "GridLabel";
-      caption: $self.metadata.title;
+    widget(icon, {
+      filterConstraintY: true;
+      hidden: $self.media.loading || ($view.iconLoaded && $self.media.playstatus != "play" && $self.media.playstatus != "pause");
+      style: "GridItemIcon";
+      source: translate($self.media.playstatus,
+                        "skin://icons/ic_audiotrack_48px.svg",
+                        "play", "skin://icons/ic_play_arrow_48px.svg",
+                        "pause", "skin://icons/ic_pause_48px.svg");
+    });
+
+    widget(border, {
+      style: "GridBorder";
     });
   });
 
-  widget(border, {
-    style: "GridBorder";
+  widget(label, {
+    style: "GridLabel";
+    caption: $self.metadata.title;
   });
 });

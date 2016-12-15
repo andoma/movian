@@ -1,34 +1,33 @@
 #import "skin://theme.view"
 
-widget(container_z, {
-
+vbox({
 
   onEvent(activate, eventWithProp(pluginInfo, $self));
   focusable: true;
 
-  widget(quad, {
-    hidden: !$clone.primaryColor;
-    color: $clone.primaryColor;
-  });
+  zbox({
 
-  widget(image, {
-    margin: [1em, 0];
-    source: $self.metadata.icon;
-    $clone.primaryColor = RGBToString(primaryColor() * 0.3);
-    filterConstraintY: true;
-  });
-
-  widget(container_y, {
-    filterConstraintY: true;
-    align: bottom;
-    widget(label, {
-      style: "GridLabel";
-      caption: $self.metadata.title;
+    widget(quad, {
+      hidden: !$clone.primaryColor;
+      color: $clone.primaryColor;
     });
+
+    widget(image, {
+      margin: [1em, 0];
+      source: $self.metadata.icon;
+      $clone.primaryColor = RGBToString(primaryColor() * 0.3);
+      filterConstraintY: true;
+    });
+
+    widget(border, {
+      style: "GridBorder";
+    });
+
   });
 
-  widget(border, {
-    style: "GridBorder";
+  widget(label, {
+    style: "GridLabel";
+    caption: $self.metadata.title;
   });
 
 });

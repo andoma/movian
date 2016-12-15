@@ -240,15 +240,20 @@ glw_array_layout(glw_t *w, const glw_rctx_t *rc)
       cd->width = a->child_width_px;
       cd->col = column;
 
+      int req_item_height = 0;
+
       if(c->glw_flags & GLW_CONSTRAINT_Y) {
-        const int rh = glw_req_height(c);
-        req_row_height = GLW_MAX(req_row_height, rh);
-      } else if(c->glw_flags & GLW_CONSTRAINT_W && c->glw_req_weight < 0) {
-        const int h = a->child_width_px / -c->glw_req_weight;
-        req_row_height = GLW_MAX(req_row_height, h);
-      } else {
-        req_row_height = INT32_MAX;
+        req_item_height += glw_req_height(c);
       }
+
+      if(c->glw_flags & GLW_CONSTRAINT_W && c->glw_req_weight < 0) {
+        req_item_height += a->child_width_px / -c->glw_req_weight;
+      }
+
+      if(req_item_height)
+        req_row_height = GLW_MAX(req_row_height, req_item_height);
+      else
+        req_row_height = INT32_MAX;
     }
 
     cd->pos_y = ypos;

@@ -1,57 +1,54 @@
 #import "skin://theme.view"
 
-widget(container_z, {
+widget(container_y, {
   focusable: true;
   onEvent(activate, navOpen($self.url, void, $self, $parent.model, void, $parent.url));
 
-  widget(quad, {
-    hidden: !$clone.primaryColor;
-    color: $clone.primaryColor;
-  });
+  widget(container_z, {
+    widget(quad, {
+      hidden: !$clone.primaryColor;
+      color: $clone.primaryColor;
+    });
 
-  widget(image, {
-    source: $self.metadata.backdrop;
-    style: "GridBackdrop";
-  });
+    widget(image, {
+      source: $self.metadata.backdrop;
+      style: "GridBackdrop";
+    });
 
-  widget(image, {
-    hidden: select($self.metadata.backdrop, true, false);
+    widget(image, {
+      hidden: select($self.metadata.backdrop, true, false);
 
-    $clone.primaryColor = RGBToString(primaryColor() * 0.3);
+      $clone.primaryColor = RGBToString(primaryColor() * 0.3);
 
-    margin: select($self.metadata.icon, 0, [0, 0.5em, 0, 1.8em]);
-    filterConstraintY: true;
+      margin: select($self.metadata.icon, 0, [0, 1em, 0, 1em]);
 
-    source: $self.metadata.icon ?? (
-      "skin://icons/" +
-        select($self.subtype,
-               "ic_" + $self.subtype + "_48px",
-               translate($self.type,  "ic_help_48px",
-		         "server",    "server",
-		         "share",     "ic_folder_shared_48px",
-		         "store",     "ic_shopping_cart_48px",
-		         "directory", "ic_folder_48px",
-		         "file",      "ic_file_48px",
-		         "dvd",       "ic_album_48px",
-		         "album",     "ic_album_48px",
-		         "artist",    "ic_person_48px",
-		         "tv",        "ic_tv_48px",
-		         "playlist",  "ic_list_48px",
-	                 "movian",    "movian"
-	                )) + ".svg");
-  });
+      source: $self.metadata.icon ?? (
+        "skin://icons/" +
+          select($self.subtype,
+                 "ic_" + $self.subtype + "_48px",
+                 translate($self.type,  "ic_help_48px",
+		           "server",    "server",
+		           "share",     "ic_folder_shared_48px",
+		           "store",     "ic_shopping_cart_48px",
+		           "directory", "ic_folder_48px",
+		           "file",      "ic_file_48px",
+		           "dvd",       "ic_album_48px",
+		           "album",     "ic_album_48px",
+		           "artist",    "ic_person_48px",
+		           "tv",        "ic_tv_48px",
+		           "playlist",  "ic_list_48px",
+	                   "movian",    "movian"
+	                  )) + ".svg");
+    });
 
-  widget(container_y, {
-    filterConstraintY: true;
-    align: bottom;
-    widget(label, {
-      style: "GridLabel";
-      caption: $self.metadata.title;
+    widget(border, {
+      style: "GridBorder";
     });
   });
 
-  widget(border, {
-    style: "GridBorder";
+  widget(label, {
+    style: "GridLabel";
+    caption: $self.metadata.title;
   });
 
 });

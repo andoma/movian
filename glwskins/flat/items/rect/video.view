@@ -1,32 +1,31 @@
 #import "skin://theme.view"
 
-widget(container_z, {
+vbox({
 
   focusable: true;
   onEvent(activate, navOpen($self.url, void, $self, $parent.model, void, $parent.url));
   onEvent(itemMenu, eventWithProp(videoInfo, $self));
 
-  widget(quad, {
-    hidden: !$clone.primaryColor;
-    color: $clone.primaryColor;
-  });
+  zbox({
 
-  widget(image, {
-    source: $self.metadata.icon ?? ($self.url + "#cover");
-    style: "GridBackdrop";
-  });
+    widget(quad, {
+      hidden: !$clone.primaryColor;
+      color: $clone.primaryColor;
+    });
 
-  widget(container_y, {
-    filterConstraintY: true;
-    align: bottom;
-    widget(label, {
-      style: "GridLabel";
-      caption: $self.metadata.title;
+    widget(image, {
+      source: $self.metadata.icon ?? ($self.url + "#cover");
+      style: "GridBackdrop";
+    });
+
+    widget(border, {
+      style: "GridBorder";
     });
   });
 
-  widget(border, {
-    style: "GridBorder";
+  widget(label, {
+    style: "GridLabel";
+    caption: $self.metadata.title;
   });
 
 });
