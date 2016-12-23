@@ -136,16 +136,46 @@ nacl_audio_reconfig(audio_decoder_t *ad)
   pthread_mutex_init(&d->mutex, NULL);
   pthread_cond_init(&d->cond, NULL);
 
+  int sample_rate;
+  int tile_size;
 
-  int sample_rate = ppb_audioconfig->RecommendSampleRate(g_Instance);
+  sample_rate = ppb_audioconfig->RecommendSampleRate(g_Instance);
 
-  int tile_size = ppb_audioconfig->RecommendSampleFrameCount(g_Instance,
-                                                             sample_rate,
-                                                             1024);
+  tile_size = ppb_audioconfig->RecommendSampleFrameCount(g_Instance,
+                                                         sample_rate,
+                                                         1024);
 
   d->config = ppb_audioconfig->CreateStereo16Bit(g_Instance,
                                                  sample_rate,
                                                  tile_size);
+
+  if(d->config == 0) {
+    sample_rate = ad->ad_in_sample_rate;
+
+    tile_size = ppb_audioconfig->RecommendSampleFrameCount(g_Instance,
+                                                           sample_rate,
+                                                           1024);
+
+    d->config = ppb_audioconfig->CreateStereo16Bit(g_Instance,
+                                                   sample_rate,
+                                                   tile_size);
+    if(d->config == 0) {
+      sample_rate = 48000;
+
+      tile_size = ppb_audioconfig->RecommendSampleFrameCount(g_Instance,
+                                                             sample_rate,
+                                                             1024);
+
+      d->config = ppb_audioconfig->CreateStereo16Bit(g_Instance,
+                                                     sample_rate,
+                                                     tile_size);
+      if(d->config == 0) {
+        TRACE(TRACE_ERROR, "AUDIO",
+              "Unable to setup audio session. Audio will not work.");
+      }
+    }
+  }
+
 
   ad->ad_out_sample_format = AV_SAMPLE_FMT_FLT;
   ad->ad_out_sample_rate = sample_rate;
