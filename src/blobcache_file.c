@@ -202,7 +202,7 @@ save_index(void)
   fa_handle_t *fh = fa_open_ex(filename, errbuf, sizeof(errbuf),
                                FA_WRITE, NULL);
   if(fh == NULL) {
-    TRACE(TRACE_ERROR, "cache", "Unable to write index %s -- %s",
+    TRACE(TRACE_ERROR, "blobcache", "Unable to write index %s -- %s",
           filename, errbuf);
     return;
   }
@@ -286,7 +286,7 @@ load_index(void)
 
   fa_handle_t *fh = fa_open(filename, errbuf, sizeof(errbuf));
   if(fh == NULL) {
-    TRACE(TRACE_DEBUG, "cache", "Unable to open index %s -- %s",
+    TRACE(TRACE_DEBUG, "blobcache", "Unable to open index %s -- %s",
           filename, errbuf);
     return;
   }
@@ -692,11 +692,14 @@ prune_stale(void)
 	    snprintf(path3, sizeof(path3), "%s/bc2/%s/%s",
 		     gconf.cache_path, n1, n2);
 
+            hts_mutex_lock(&cache_lock);
+
 	    if(sscanf(n2, "%016"PRIx64, &k) != 1 ||
 	       lookup_item(k) == NULL) {
-	      TRACE(TRACE_DEBUG, "Blobcache", "Removed stale file %s", path3);
+	      TRACE(TRACE_DEBUG, "blobcache", "Removed stale file %s", path3);
 	      fa_unlink(path3, NULL, 0);
 	    }
+            hts_mutex_unlock(&cache_lock);
 	  }
 	}
         fa_dir_free(d2);
@@ -870,7 +873,18 @@ flushthread(void *aux)
 {
   blobcache_flush_t *bf;
 
+  prune_stale();
+
+  uint64_t maxsize = blobcache_compute_maxsize();
+
   hts_mutex_lock(&cache_lock);
+  prune_to_size(maxsize);
+
+  TRACE(TRACE_INFO, "blobcache",
+	"Initialized: %d items consuming %.2f MB "
+        "(out of maximum %.2f MB) on disk in %s/bc2",
+	pool_num(item_pool), current_cache_size / 1000000.0,
+        maxsize / 1000000.0, gconf.cache_path);
 
   // First make sure clock is valid
   while(bcstate == BLOBCACHE_RUN_BAD_CLOCK) {
@@ -884,7 +898,7 @@ flushthread(void *aux)
     }
   }
 
-  TRACE(TRACE_DEBUG, "Cache", "System time seems valid. Accepting writes");
+  TRACE(TRACE_DEBUG, "blobcache", "System time seems valid. Accepting writes");
 
   while(bcstate != BLOBCACHE_STOPPING) {
 
@@ -963,16 +977,7 @@ blobcache_init(void)
 
 
   load_index();
-  prune_stale();
 
-  uint64_t maxsize = blobcache_compute_maxsize();
-  prune_to_size(maxsize);
-
-  TRACE(TRACE_INFO, "blobcache",
-	"Initialized: %d items consuming %.2f MB "
-        "(out of maximum %.2f MB) on disk in %s",
-	pool_num(item_pool), current_cache_size / 1000000.0,
-        maxsize / 1000000.0, buf);
 
   prop_t *dir = setting_get_dir("general:resets");
   settings_create_action(dir, _p("Clear cached files"),
