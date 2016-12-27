@@ -20,6 +20,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include "main.h"
 #include "blobcache.h"
@@ -872,6 +873,8 @@ static void *
 flushthread(void *aux)
 {
   blobcache_flush_t *bf;
+
+  sleep(3);
 
   prune_stale();
 
