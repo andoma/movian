@@ -34,9 +34,6 @@
 #include "video/h264_annexb.h"
 #include "video/h264_parser.h"
 
-static int vdec_mpeg2_loaded;
-static int vdec_h264_loaded;
-
 #define VDEC_DETAILED_DEBUG 0
 
 #define VDEC_SPU_PRIO 100
@@ -129,21 +126,10 @@ typedef struct vdec_decoder {
 
 } vdec_decoder_t;
 
-/**
- *
- */
-static void
-video_ps3_vdec_init(void)
-{
-  vdec_mpeg2_loaded = !SysLoadModule(SYSMODULE_VDEC_MPEG2);
-  if(!vdec_mpeg2_loaded)
-    TRACE(TRACE_ERROR, "VDEC", "Unable to load MPEG2 decoder");
 
-  vdec_h264_loaded = !SysLoadModule(SYSMODULE_VDEC_H264);
-  if(!vdec_h264_loaded)
-    TRACE(TRACE_ERROR, "VDEC", "Unable to load H264 decoder");
-}
-
+static HTS_LWMUTEX_DECL(ps3_codec_sysmodule_mutex);
+static int vdec_mpeg2_loaded = -1;
+static int vdec_h264_loaded = -1;
 
 /**
  *
@@ -848,8 +834,16 @@ video_ps3_vdec_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 
   switch(mc->codec_id) {
   case AV_CODEC_ID_MPEG2VIDEO:
-    if(!vdec_mpeg2_loaded)
+
+    hts_lwmutex_lock(&ps3_codec_sysmodule_mutex);
+    if(vdec_mpeg2_loaded == -1)
+      vdec_mpeg2_loaded = !SysLoadModule(SYSMODULE_VDEC_MPEG2);
+
+    if(!vdec_mpeg2_loaded) {
+      hts_lwmutex_unlock(&ps3_codec_sysmodule_mutex);
       return no_lib(mp, "MPEG-2");
+    }
+    hts_lwmutex_unlock(&ps3_codec_sysmodule_mutex);
 
     dec_type.codec_type = VDEC_CODEC_TYPE_MPEG2;
     dec_type.profile_level = VDEC_MPEG2_MP_HL;
@@ -921,8 +915,15 @@ video_ps3_vdec_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
       }
     }
 
-    if(!vdec_h264_loaded) 
+    hts_lwmutex_lock(&ps3_codec_sysmodule_mutex);
+    if(vdec_h264_loaded == -1)
+      vdec_h264_loaded = !SysLoadModule(SYSMODULE_VDEC_H264);
+
+    if(!vdec_h264_loaded) {
+      hts_lwmutex_unlock(&ps3_codec_sysmodule_mutex);
       return no_lib(mp, "h264");
+    }
+    hts_lwmutex_unlock(&ps3_codec_sysmodule_mutex);
 
     dec_type.codec_type = VDEC_CODEC_TYPE_H264;
     if(mcp != NULL && mcp->level > 42) {
@@ -1017,4 +1018,4 @@ video_ps3_vdec_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   return 0;
 }
 
-REGISTER_CODEC(video_ps3_vdec_init, video_ps3_vdec_codec_create, 100);
+REGISTER_CODEC(NULL, video_ps3_vdec_codec_create, 100);
