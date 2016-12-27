@@ -329,8 +329,7 @@ glw_text_bitmap_layout(glw_t *w, const glw_rctx_t *rc)
     glw_renderer_vtx_st (&gtb->gtb_text_renderer, 3, 0, 0);
   }
 
-  if(w->glw_class == &glw_text && gtb->gtb_update_cursor &&
-     gtb->gtb_state == GTB_VALID) {
+  if(w->glw_class == &glw_text && gtb->gtb_update_cursor) {
 
     int i = gtb->gtb_edit_ptr;
     int left;
@@ -1293,6 +1292,7 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
     gtb->gtb_state = GTB_VALID;
     image_release(gtb->gtb_image);
     gtb->gtb_image = im;
+    gtb->gtb_update_cursor = 1;
     if(im != NULL && gtb->gtb_maxlines > 1) {
       gtb_set_constraints(gr, gtb, im);
     }
@@ -1308,6 +1308,8 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
       }
     } else {
       gtb->gtb_state = GTB_IDLE;
+      image_release(gtb->gtb_image);
+      gtb->gtb_image = NULL;
       int lh = (gtb->gtb_default_size ?: gr->gr_current_size) *
 	gtb->gtb_size_scale;
       lh += gtb->gtb_padding[1] + gtb->gtb_padding[3];
